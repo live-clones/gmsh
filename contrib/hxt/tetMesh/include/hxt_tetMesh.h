@@ -53,8 +53,8 @@ typedef struct {
 
   /* function giving the desired mesh size at a position in space,
      or NULL to use default function*/
-  double (*meshSizeFun)(double x, double y, double z,
-                        void* meshSizeData);
+  HXTStatus (*meshSizeFun)(double* coord, size_t n,
+                           void* meshSizeData);
   void* meshSizeData;  /* user pointer to give to meshSizeFun */
 
   /* function to recover missing features in a mesh */

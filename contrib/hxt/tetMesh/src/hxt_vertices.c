@@ -319,21 +319,21 @@ HXTStatus hxtVerticesSort(HXTVertex* const __restrict__  vertices, const uint32_
   return HXT_STATUS_OK;
 }
 
-static inline uint64_t getNodeInfoDist64(hxtNodeInfo*  const __restrict__ nodeInfo, const void* userData)
+static inline uint64_t getNodeInfoDist64(HXTNodeInfo*  const __restrict__ nodeInfo, const void* userData)
 {
   HXT_UNUSED(userData);
   return nodeInfo->hilbertDist;
 }
 
-HXTStatus hxtNodeInfoSort(hxtNodeInfo*  const __restrict__ array, const uint32_t n)
+HXTStatus hxtNodeInfoSort(HXTNodeInfo*  const __restrict__ array, const uint32_t n)
 {
   HXT_ASSERT(array!=NULL);
-  if(sizeof(hxtNodeInfo)==sizeof(HXTGroup2)){
+  if(sizeof(HXTNodeInfo)==sizeof(HXTGroup2)){
   	HXT_CHECK( group2_sort_v0((HXTGroup2*) array, n, ((UINT64_C(1)<<63)-1)) );
   }
   else {
   	// actually, this is always optimized away...
-	HXTSORT64_UNIFORM(hxtNodeInfo, array, n, ((UINT64_C(1)<<63)-1), getNodeInfoDist64, NULL);
+	HXTSORT64_UNIFORM(HXTNodeInfo, array, n, ((UINT64_C(1)<<63)-1), getNodeInfoDist64, NULL);
   }
   return HXT_STATUS_OK;
 }
@@ -354,7 +354,7 @@ static inline uint32_t getVertexDist32(HXTVertex* const __restrict__  v, const v
   return v->padding.hilbertDist;
 }
 
-static inline uint32_t getNodeInfoDist32(hxtNodeInfo*  const __restrict__ nodeInfo, const void* userData)
+static inline uint32_t getNodeInfoDist32(HXTNodeInfo*  const __restrict__ nodeInfo, const void* userData)
 {
   HXT_UNUSED(userData);
   return nodeInfo->hilbertDist;
@@ -372,13 +372,13 @@ HXTStatus hxtVerticesShuffle(HXTVertex* const __restrict__ vertices, const uint3
 }
 
 /* for the non-static function, use a 22 bit key and a sort with two pass so we don't need to copy */
-HXTStatus hxtNodeInfoShuffle(hxtNodeInfo* const __restrict__ nodeInfo, const uint32_t n){
+HXTStatus hxtNodeInfoShuffle(HXTNodeInfo* const __restrict__ nodeInfo, const uint32_t n){
   #pragma omp parallel for simd
   for (uint32_t i=0; i<n; i++){
     nodeInfo[i].hilbertDist = fastHash(i);
   }
 
-  HXTSORT32_UNIFORM(hxtNodeInfo, nodeInfo, n, UINT32_MAX, getNodeInfoDist32, NULL);
+  HXTSORT32_UNIFORM(HXTNodeInfo, nodeInfo, n, UINT32_MAX, getNodeInfoDist32, NULL);
   return HXT_STATUS_OK;
 }
 

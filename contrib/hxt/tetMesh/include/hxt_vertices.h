@@ -37,7 +37,7 @@ typedef struct {
 
 
 /**
- * \struct hxtNodeInfo
+ * \struct HXTNodeInfo
  * \brief Simple structure with a vertex index, a Hilbert/Moore coordinate and a status
  *
  * Simple structure with a vertex index, a Hilbert/Moore coordinate and a status
@@ -47,7 +47,7 @@ typedef struct {
   uint64_t hilbertDist;
   uint32_t node;
   HXTStatus status; // is the vertex inserted ? true, false or try_again
-} hxtNodeInfo;
+} HXTNodeInfo;
 
 
 /**
@@ -74,9 +74,9 @@ HXTStatus hxtMoore(HXTBbox* bbox, HXTVertex* vertices, const uint32_t n, const d
 HXTStatus hxtVerticesSort(HXTVertex* const vertices, const uint32_t n);
 
 /**
- * Same as hxtVerticesSort(), but sort \ref hxtNodeInfo following their hilbertDist structure member.
+ * Same as hxtVerticesSort(), but sort \ref HXTNodeInfo following their hilbertDist structure member.
  */
-HXTStatus hxtNodeInfoSort(hxtNodeInfo* const array, const uint32_t n);
+HXTStatus hxtNodeInfoSort(HXTNodeInfo* const array, const uint32_t n);
 
 /**
  * Shuffle vertices given in an array of \ref HXTVertex in a pseudo-random fashion (always the same random sequence).
@@ -84,8 +84,8 @@ HXTStatus hxtNodeInfoSort(hxtNodeInfo* const array, const uint32_t n);
 HXTStatus hxtVerticesShuffle(HXTVertex* const vertices, const uint32_t n);
 
 /**
- * Shuffle vertices given in an array of \ref hxtNodeInfo in a pseudo-random fashion (always the same random sequence).
+ * Shuffle vertices given in an array of \ref HXTNodeInfo in a pseudo-random fashion (always the same random sequence).
  */
-HXTStatus hxtNodeInfoShuffle(hxtNodeInfo* const array, const uint32_t n);
+HXTStatus hxtNodeInfoShuffle(HXTNodeInfo* const array, const uint32_t n);
 
 #endif

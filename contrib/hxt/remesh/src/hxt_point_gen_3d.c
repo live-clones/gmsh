@@ -227,7 +227,9 @@ HXTStatus hxtInterpolateFrame3d(HXTMesh *mesh,
   double frame[18];
   for (uint32_t i=0; i<18; i++) frame[i] = 0.;
 
-  HXT_CHECK(hxtOr3DgetScaledCrossInTetFromDir(triFrames,uv,frame));
+  int flagTrusted[3];
+  double crossQuality;
+  HXT_CHECK(hxtOr3DgetScaledCrossInTetFromDir(triFrames,uv,frame,&crossQuality,flagTrusted));
   sizes[0] = sizes[3] = norm(&frame[0]);
   sizes[1] = sizes[4] = norm(&frame[3]);
   sizes[2] = sizes[5] = norm(&frame[6]);

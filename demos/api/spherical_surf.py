@@ -15,5 +15,6 @@ gmsh.model.occ.synchronize()
 
 gmsh.model.removeEntities([(3, sph)])
 gmsh.model.removeEntities([(2, 2), (2, 4), (2, 6)], True)
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 gmsh.finalize()

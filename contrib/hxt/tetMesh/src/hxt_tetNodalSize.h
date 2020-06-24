@@ -16,8 +16,8 @@ HXTStatus hxtDestroyNodalSize(double** nodalSize);
 
 /// Compute sizes at vertices of the mesh from meshSizeFun
 HXTStatus hxtComputeNodalSizeFromFunction(HXTMesh* mesh, double* nodalSize,
-                                          double (*meshSizeFun)(double x, double y, double z,
-                                                                void* meshSizeData),
+                                          HXTStatus (*meshSizeFun)(double *coord, size_t n,
+                                                                   void* meshSizeData),
                                           void* meshSizeData);
 
 /// Compute sizes at vertices of the mesh from existing edges

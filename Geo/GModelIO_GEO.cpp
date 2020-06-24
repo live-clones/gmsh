@@ -1425,9 +1425,9 @@ gmshSurface *GEO_Internals::newGeometryPolarSphere(int tag, int centerTag,
 
 // GModel interface
 
-void GModel::_createGEOInternals() { _geo_internals = new GEO_Internals; }
+void GModel::createGEOInternals() { _geo_internals = new GEO_Internals; }
 
-void GModel::_deleteGEOInternals()
+void GModel::deleteGEOInternals()
 {
   if(_geo_internals) delete _geo_internals;
   _geo_internals = 0;

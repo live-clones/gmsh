@@ -66,6 +66,17 @@ double inv3x3(double mat[3][3], double inv[3][3])
   return det;
 }
 
+HXTStatus hxtVector(const double *v0, const double *v1, double *vec)
+{
+  vec[0] = v1[0] - v0[0];
+  vec[1] = v1[1] - v0[1];
+  vec[2] = v1[2] - v0[2];
+
+  normalize(vec);
+
+  return HXT_STATUS_OK;
+
+}
 
 // from Ginzburg
 double myDot(double *a, double *b)
@@ -182,6 +193,35 @@ double hxtAngle_0_pi(double *v0, double *v1)
   return angle;
 }
 
+double hxtAngleSigned(double *v0, double *v1, double *n)
+{
+  double cosTheta = myDot(v0,v1);
+  double temp[3];
+  myCrossprod(v0,v1,temp);
+  double sinTheta = myDot(temp,n);
+
+  double angle = atan2(sinTheta,cosTheta);
+  return angle;
+}
+
+double hxtAngle_0_2pi(double *v0, double *v1, double *n)
+{
+  double cosTheta = myDot(v0,v1);
+  double temp[3];
+  myCrossprod(v0,v1,temp);
+  double sinTheta = myDot(temp,n);
+
+  double angle = atan2(sinTheta,cosTheta);
+
+  if (angle<0) angle += 2*M_PI;
+  return angle;
+}
+
+
+
+
+
+
 // Euclidean distance of two points squared for comparison
 double distance2(double *a, double *b)
 {
@@ -189,7 +229,7 @@ double distance2(double *a, double *b)
   return myDot(p,p);
 }
 
-// Euclidean distance of two points squared for comparison
+// Euclidean distance of two points 
 double distance(double *a, double *b)
 {
   return sqrt(distance2(a,b));

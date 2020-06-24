@@ -5,11 +5,11 @@
 #include <Eigen/Eigenvalues>
 
 template<int N>
-static HXTStatus eigMat(double * __restrict__ mat,
-                        double * __restrict__ vp,
-                        double * __restrict__ dirPropres) {
+HXTStatus eigMat(double * __restrict__ mat,
+                 double * __restrict__ vp,
+                 double * __restrict__ dirPropres) {
   typedef Eigen::Matrix<double, N, N, Eigen::ColMajor> Matrix;
-  // typedef Eigen::Map<Matrix, Eigen::Unaligned> Map;
+  typedef Eigen::Map<Matrix, Eigen::Unaligned> Map;
 
   Matrix eig_mat(mat);
   Eigen::SelfAdjointEigenSolver<Matrix> solver(eig_mat);
@@ -46,9 +46,9 @@ extern "C" void dsyev_( char* jobz, char* uplo, int* n, double* a, int* lda,
                         double* w, double* work, int* lwork, int* info );
 
 template<int n>
-static HXTStatus eigMat(double * __restrict__ mat,
-                        double * __restrict__ vp,
-                        double * __restrict__ dirPropres) {
+HXTStatus eigMat(double * __restrict__ mat,
+                 double * __restrict__ vp,
+                 double * __restrict__ dirPropres) {
   /* Locals */
   int lda = n, info, lwork;
   double wkopt;

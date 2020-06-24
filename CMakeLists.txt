@@ -30,7 +30,6 @@ macro(opt OPTION HELP VALUE)
 endmacro()
 
 opt(3M "Enable proprietary 3M extension" OFF)
-opt(ACIS "Enable ACIS geometrical models (experimental)" ${DEFAULT})
 opt(ALGLIB "Enable ALGLIB (used by some mesh optimizers)" ${DEFAULT})
 opt(ANN "Enable ANN (used for fast point search in mesh/post)" ${DEFAULT})
 opt(BAMG "Enable Bamg 2D anisotropic mesh generator" ${DEFAULT})
@@ -88,6 +87,7 @@ opt(POST "Enable post-processing module (required by GUI)" ${DEFAULT})
 opt(POPPLER "Enable Poppler for displaying PDF documents (experimental)" OFF)
 opt(PRIVATE_API "Enable private API" OFF)
 opt(QUADMESHINGTOOLS "Enable QuadMeshingTools extensions" ${DEFAULT})
+opt(PRO "Enable PRO extensions" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
 opt(SLEPC "Enable SLEPc eigensolvers" OFF)
@@ -222,11 +222,9 @@ macro(set_config_option VARNAME STRING)
   message(STATUS "Found " ${STRING})
 endmacro()
 
-# check if the machine is 64 bits (this is more reliable than using
-# CMAKE_SIZEOF_VOID_P, which does not seem to work e.g. on some Suse
-# machines)
-check_type_size("void*" SIZEOF_VOID_P)
-if(SIZEOF_VOID_P EQUAL 8)
+# check the size of size_t
+check_type_size("size_t" SIZEOF_SIZE_T)
+if(SIZEOF_SIZE_T EQUAL 8)
   set_config_option(HAVE_64BIT_SIZE_T "64Bit")
 endif()
 
@@ -298,12 +296,12 @@ endif()
 
 if(ENABLE_OPENMP)
   find_package(OpenMP)
-  if(OpenMP_FOUND)
+  if(OpenMP_FOUND OR OPENMP_FOUND)
     set_config_option(HAVE_OPENMP "OpenMP")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   elseif(APPLE AND EXISTS "/opt/local/lib/libomp")
-    # just for testing the official Apple compiler with macports' libomp
+    # official Apple compiler with macports' libomp
     set_config_option(HAVE_OPENMP "OpenMP[MacPorts]")
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
@@ -311,6 +309,7 @@ if(ENABLE_OPENMP)
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/local/lib/libomp -lomp")
   elseif(APPLE AND EXISTS "/usr/local/lib/libomp.dylib")
+    # official Apple compiler with homebrew's libomp
     set_config_option(HAVE_OPENMP "OpenMP[usr/local]")
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
@@ -653,8 +652,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Fltk AND ENABLE_FLTK)
 endif()
 
 if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
-  if(CMAKE_OSX_DEPLOYMENT_TARGET)
-    if(${CMAKE_OSX_DEPLOYMENT_TARGET} VERSION_GREATER 10.11)
+  STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
+  if(OSX_SDK_VERSION)
+    if(${OSX_SDK_VERSION} VERSION_GREATER 10.11)
       set(GMSH_SRC ${GMSH_SRC};Fltk/touchBar.mm)
       set_config_option(HAVE_TOUCHBAR "TouchBar")
     endif()
@@ -770,8 +770,8 @@ if(ENABLE_ANN)
 endif()
 
 if(ENABLE_ALGLIB)
-  find_library(ALGLIB_LIB alglib PATH_SUFFIXES lib)
-  find_path(ALGLIB_INC "stdafx.h" PATH_SUFFIXES include)
+  find_library(ALGLIB_LIB alglib)
+  find_path(ALGLIB_INC "stdafx.h" PATH_SUFFIXES libalglib)
   if(ENABLE_SYSTEM_CONTRIB AND ALGLIB_LIB AND ALGLIB_INC)
     list(APPEND EXTERNAL_LIBRARIES ${ALGLIB_LIB})
     list(APPEND EXTERNAL_INCLUDES ${ALGLIB_INC})
@@ -919,8 +919,8 @@ if(HAVE_MESH)
   endif()
 
   if(ENABLE_VOROPP)
-    find_library(VOROPP_LIB voro++ PATH_SUFFIXES lib)
-    find_path(VOROPP_INC "voro++.hh" PATH_SUFFIXES include)
+    find_library(VOROPP_LIB voro++)
+    find_path(VOROPP_INC "voro++.hh" PATH_SUFFIXES voro++)
     if(ENABLE_SYSTEM_CONTRIB AND VOROPP_LIB AND VOROPP_INC)
       message(STATUS "Using system version of voro++")
       list(APPEND EXTERNAL_LIBRARIES ${VOROPP_LIB})
@@ -1205,7 +1205,10 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
   add_subdirectory(contrib/hxt)
   include_directories(BEFORE ${HXT_INC_DIRS})
   set_config_option(HAVE_HXT "Hxt")
-  set_config_option(HAVE_HXT3D "Hxt3D")
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pro AND ENABLE_PRO)
+  add_subdirectory(pro)
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools AND ENABLE_QUADMESHINGTOOLS)
@@ -1332,18 +1335,6 @@ if(ENABLE_OCC)
       add_definitions(-DOCC_CONVERT_SIGNALS)
     elseif(MSVC)
       add_definitions(-DWNT)
-    endif()
-  endif()
-endif()
-
-if(ENABLE_ACIS)
-  find_library(ACIS_LIB SpaACIS PATH_SUFFIXES bin/maci386)
-  if(ACIS_LIB)
-    find_path(ACIS_INC "kernapi.hxx" PATH_SUFFIXES include)
-    if(ACIS_INC)
-      set_config_option(HAVE_ACIS "Acis")
-      list(APPEND EXTERNAL_LIBRARIES ${ACIS_LIB})
-      list(APPEND EXTERNAL_INCLUDES ${ACIS_INC})
     endif()
   endif()
 endif()
@@ -1931,7 +1922,7 @@ if(MAKEINFO)
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(txt DEPENDS ${TEX_DIR}/gmsh.txt)
   add_custom_command(OUTPUT ${TEX_DIR}/gmsh.html DEPENDS ${TEX_SRC}
-    COMMAND ${MAKEINFO} --html --css-ref=http://gmsh.info/gmsh.css
+    COMMAND ${MAKEINFO} --html --css-ref=/gmsh.css
     --no-split --set-customization-variable
     EXTRA_HEAD='<meta name="viewport" content="width=device-width,initial-scale=1.0">'
     ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
@@ -2143,7 +2134,7 @@ message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
 mark_as_advanced(GMSH_EXTRA_VERSION
-                 ACIS_LIB ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
+                 ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
                  GMP_INC GMP_LIB MMG3D_INC MMG3D_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB

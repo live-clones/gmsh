@@ -130,8 +130,7 @@ static bool edgeSwapTestAngle(BDS_Edge *e, double min_cos)
   BDS_Face *f2 = e->faces(1);
   BDS_Point *n1[4];
   BDS_Point *n2[4];
-  f1->getNodes(n1);
-  f2->getNodes(n2);
+  if(!f1->getNodes(n1) || !f2->getNodes(n2)) return false;
   double norm1[3];
   double norm2[3];
   normal_triangle(n1[0], n1[1], n1[2], norm1);
@@ -913,8 +912,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 
   if(gf->getNativeType() != GEntity::GmshModel) {
     for(size_t i = 0; i < m.triangles.size(); i++) {
-      BDS_Point *pts[4];
-      m.triangles[i]->getNodes(pts);
       double val = BDS_Face_Validity(gf, m.triangles[i]);
       invalid += val < 0 ? 1 : 0;
     }
@@ -928,9 +925,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       bad = 0;
       invalid = 0;
       for(size_t i = 0; i < m.triangles.size(); i++) {
-        if(!m.triangles[i]->deleted) {
-          BDS_Point *pts[4];
-          m.triangles[i]->getNodes(pts);
+        BDS_Point *pts[4];
+        if(!m.triangles[i]->deleted && m.triangles[i]->getNodes(pts)) {
           pts[0]->config_modified = false;
           pts[1]->config_modified = false;
           pts[2]->config_modified = false;
@@ -938,15 +934,16 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       }
       for(size_t i = 0; i < m.triangles.size(); i++) {
         BDS_Point *pts[4];
-        m.triangles[i]->getNodes(pts);
-        double val = orientation * BDS_Face_Validity(gf, m.triangles[i]);
-        if(val <= 0.2) {
-          if(!m.triangles[i]->deleted && val <= 0) invalid++;
-          pts[0]->config_modified = true;
-          pts[1]->config_modified = true;
-          pts[2]->config_modified = true;
-          bad++;
-          if(val < 0) { invalid++; }
+        if(m.triangles[i]->getNodes(pts)) {
+          double val = orientation * BDS_Face_Validity(gf, m.triangles[i]);
+          if(val <= 0.2) {
+            if(!m.triangles[i]->deleted && val <= 0) invalid++;
+            pts[0]->config_modified = true;
+            pts[1]->config_modified = true;
+            pts[2]->config_modified = true;
+            bad++;
+            if(val < 0) { invalid++; }
+          }
         }
       }
       if(++ITER == 10) {

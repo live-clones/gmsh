@@ -733,21 +733,21 @@ the parametric coordinates `parametricCoord`. Only valid for `dim` equal to 0
 (with empty `parametricCoord`), 1 (with `parametricCoord` containing parametric
 coordinates on the curve) or 2 (with `parametricCoord` containing pairs of u, v
 parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).
-Return triplets of x, y, z coordinates in `points`, concatenated: [p1x, p1y,
-p1z, p2x, ...].
+Return triplets of x, y, z coordinates in `coord`, concatenated: [p1x, p1y, p1z,
+p2x, ...].
 
-Return `points`.
+Return `coord`.
 """
 function getValue(dim, tag, parametricCoord)
-    api_points_ = Ref{Ptr{Cdouble}}()
-    api_points_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGetValue, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_points_, api_points_n_, ierr)
+          dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_coord_, api_coord_n_, ierr)
     ierr[] != 0 && error("gmshModelGetValue returned non-zero error code: $(ierr[])")
-    points = unsafe_wrap(Array, api_points_[], api_points_n_[], own=true)
-    return points
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    return coord
 end
 
 """
@@ -854,10 +854,10 @@ function getNormal(tag, parametricCoord)
 end
 
 """
-    gmsh.model.getParametrization(dim, tag, points)
+    gmsh.model.getParametrization(dim, tag, coord)
 
-Get the parametric coordinates `parametricCoord` for the points `points` on the
-entity of dimension `dim` and tag `tag`. `points` are given as triplets of x, y,
+Get the parametric coordinates `parametricCoord` for the points `coord` on the
+entity of dimension `dim` and tag `tag`. `coord` are given as triplets of x, y,
 z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord`
 returns the parametric coordinates t on the curve (if `dim` = 1) or pairs of u
 and v coordinates concatenated on the surface (if `dim` = 2), i.e. [p1t, p2t,
@@ -865,13 +865,13 @@ and v coordinates concatenated on the surface (if `dim` = 2), i.e. [p1t, p2t,
 
 Return `parametricCoord`.
 """
-function getParametrization(dim, tag, points)
+function getParametrization(dim, tag, coord)
     api_parametricCoord_ = Ref{Ptr{Cdouble}}()
     api_parametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGetParametrization, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, convert(Vector{Cdouble}, points), length(points), api_parametricCoord_, api_parametricCoord_n_, ierr)
+          dim, tag, convert(Vector{Cdouble}, coord), length(coord), api_parametricCoord_, api_parametricCoord_n_, ierr)
     ierr[] != 0 && error("gmshModelGetParametrization returned non-zero error code: $(ierr[])")
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
     return parametricCoord
@@ -1472,8 +1472,8 @@ end
 Search the mesh for an element located at coordinates (`x`, `y`, `z`). This
 function performs a search in a spatial octree. If an element is found, return
 its tag, type and node tags, as well as the local coordinates (`u`, `v`, `w`)
-within the element corresponding to search location. If `dim` is >= 0, only
-search for elements of the given dimension. If `strict` is not set, use a
+within the reference element corresponding to search location. If `dim` is >= 0,
+only search for elements of the given dimension. If `strict` is not set, use a
 tolerance to find elements near the search location.
 
 Return `elementTag`, `elementType`, `nodeTags`, `u`, `v`, `w`.
@@ -1586,28 +1586,28 @@ end
 
 Get the properties of an element of type `elementType`: its name
 (`elementName`), dimension (`dim`), order (`order`), number of nodes
-(`numNodes`), coordinates of the nodes in the reference element (`nodeCoord`
-vector, of length `dim` times `numNodes`) and number of primary (first order)
-nodes (`numPrimaryNodes`).
+(`numNodes`), local coordinates of the nodes in the reference element
+(`localNodeCoord` vector, of length `dim` times `numNodes`) and number of
+primary (first order) nodes (`numPrimaryNodes`).
 
-Return `elementName`, `dim`, `order`, `numNodes`, `nodeCoord`, `numPrimaryNodes`.
+Return `elementName`, `dim`, `order`, `numNodes`, `localNodeCoord`, `numPrimaryNodes`.
 """
 function getElementProperties(elementType)
     api_elementName_ = Ref{Ptr{Cchar}}()
     api_dim_ = Ref{Cint}()
     api_order_ = Ref{Cint}()
     api_numNodes_ = Ref{Cint}()
-    api_nodeCoord_ = Ref{Ptr{Cdouble}}()
-    api_nodeCoord_n_ = Ref{Csize_t}()
+    api_localNodeCoord_ = Ref{Ptr{Cdouble}}()
+    api_localNodeCoord_n_ = Ref{Csize_t}()
     api_numPrimaryNodes_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementProperties, gmsh.lib), Cvoid,
           (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}),
-          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_nodeCoord_, api_nodeCoord_n_, api_numPrimaryNodes_, ierr)
+          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_localNodeCoord_, api_localNodeCoord_n_, api_numPrimaryNodes_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElementProperties returned non-zero error code: $(ierr[])")
     elementName = unsafe_string(api_elementName_[])
-    nodeCoord = unsafe_wrap(Array, api_nodeCoord_[], api_nodeCoord_n_[], own=true)
-    return elementName, api_dim_[], api_order_[], api_numNodes_[], nodeCoord, api_numPrimaryNodes_[]
+    localNodeCoord = unsafe_wrap(Array, api_localNodeCoord_[], api_localNodeCoord_n_[], own=true)
+    return elementName, api_dim_[], api_order_[], api_numNodes_[], localNodeCoord, api_numPrimaryNodes_[]
 end
 
 """
@@ -1688,93 +1688,95 @@ end
 
 Get the numerical quadrature information for the given element type
 `elementType` and integration rule `integrationType` (e.g. "Gauss4" for a Gauss
-quadrature suited for integrating 4th order polynomials). `integrationPoints`
-contains the u, v, w coordinates of the G integration points in the reference
-element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `integrationWeigths` contains the
-associated weights: [g1q, ..., gGq].
+quadrature suited for integrating 4th order polynomials). `localCoord` contains
+the u, v, w coordinates of the G integration points in the reference element:
+[g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights` contains the associated weights:
+[g1q, ..., gGq].
 
-Return `integrationPoints`, `integrationWeights`.
+Return `localCoord`, `weights`.
 """
 function getIntegrationPoints(elementType, integrationType)
-    api_integrationPoints_ = Ref{Ptr{Cdouble}}()
-    api_integrationPoints_n_ = Ref{Csize_t}()
-    api_integrationWeights_ = Ref{Ptr{Cdouble}}()
-    api_integrationWeights_n_ = Ref{Csize_t}()
+    api_localCoord_ = Ref{Ptr{Cdouble}}()
+    api_localCoord_n_ = Ref{Csize_t}()
+    api_weights_ = Ref{Ptr{Cdouble}}()
+    api_weights_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetIntegrationPoints, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, integrationType, api_integrationPoints_, api_integrationPoints_n_, api_integrationWeights_, api_integrationWeights_n_, ierr)
+          elementType, integrationType, api_localCoord_, api_localCoord_n_, api_weights_, api_weights_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetIntegrationPoints returned non-zero error code: $(ierr[])")
-    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], own=true)
-    integrationWeights = unsafe_wrap(Array, api_integrationWeights_[], api_integrationWeights_n_[], own=true)
-    return integrationPoints, integrationWeights
+    localCoord = unsafe_wrap(Array, api_localCoord_[], api_localCoord_n_[], own=true)
+    weights = unsafe_wrap(Array, api_weights_[], api_weights_n_[], own=true)
+    return localCoord, weights
 end
 
 """
-    gmsh.model.mesh.getJacobians(elementType, integrationPoints, tag = -1, task = 0, numTasks = 1)
+    gmsh.model.mesh.getJacobians(elementType, localCoord, tag = -1, task = 0, numTasks = 1)
 
 Get the Jacobians of all the elements of type `elementType` classified on the
-entity of tag `tag`, at the G integration points `integrationPoints` given as
+entity of tag `tag`, at the G evaluation points `localCoord` given as
 concatenated triplets of coordinates in the reference element [g1u, g1v, g1w,
 ..., gGu, gGv, gGw]. Data is returned by element, with elements in the same
 order as in `getElements` and `getElementsByType`. `jacobians` contains for each
-element the 9 entries of the 3x3 Jacobian matrix at each integration point. The
+element the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The
 matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw,
 e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc.
 `determinants` contains for each element the determinant of the Jacobian matrix
-at each integration point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points` contains
-for each element the x, y, z coordinates of the integration points. If `tag` <
-0, get the Jacobian data for all entities. If `numTasks` > 1, only compute and
+at each evaluation point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `coord` contains
+for each element the x, y, z coordinates of the evaluation points. If `tag` < 0,
+get the Jacobian data for all entities. If `numTasks` > 1, only compute and
 return the part of the data indexed by `task`.
 
-Return `jacobians`, `determinants`, `points`.
+Return `jacobians`, `determinants`, `coord`.
 """
-function getJacobians(elementType, integrationPoints, tag = -1, task = 0, numTasks = 1)
+function getJacobians(elementType, localCoord, tag = -1, task = 0, numTasks = 1)
     api_jacobians_ = Ref{Ptr{Cdouble}}()
     api_jacobians_n_ = Ref{Csize_t}()
     api_determinants_ = Ref{Ptr{Cdouble}}()
     api_determinants_n_ = Ref{Csize_t}()
-    api_points_ = Ref{Ptr{Cdouble}}()
-    api_points_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetJacobians, gmsh.lib), Cvoid,
           (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, tag, task, numTasks, ierr)
+          elementType, convert(Vector{Cdouble}, localCoord), length(localCoord), api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_coord_, api_coord_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetJacobians returned non-zero error code: $(ierr[])")
     jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], own=true)
     determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], own=true)
-    points = unsafe_wrap(Array, api_points_[], api_points_n_[], own=true)
-    return jacobians, determinants, points
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    return jacobians, determinants, coord
 end
 
 """
-    gmsh.model.mesh.getBasisFunctions(elementType, integrationPoints, functionSpaceType)
+    gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations = Cint[])
 
-Get the basis functions of the element of type `elementType` at the integration
-points `integrationPoints` (given as concatenated triplets of coordinates in the
+Get the basis functions of the element of type `elementType` at the evaluation
+points `localCoord` (given as concatenated triplets of coordinates in the
 reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
 `functionSpaceType` (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
 functions or their gradient, in the u, v, w coordinates of the reference
 element; or "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
 Legendre functions). `numComponents` returns the number C of components of a
 basis function. `basisFunctions` returns the value of the N basis functions at
-the integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
+the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
 [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
 functions that depend on the orientation of the elements, all values for the
-first orientation are returned first, followed by values for the secondd, etc.
-`numOrientations` returns the overall number of orientations.
+first orientation are returned first, followed by values for the second, etc.
+`numOrientations` returns the overall number of orientations. If
+`wantedOrientations` is not empty, only return the values for the desired
+orientation indices.
 
 Return `numComponents`, `basisFunctions`, `numOrientations`.
 """
-function getBasisFunctions(elementType, integrationPoints, functionSpaceType)
+function getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations = Cint[])
     api_numComponents_ = Ref{Cint}()
     api_basisFunctions_ = Ref{Ptr{Cdouble}}()
     api_basisFunctions_n_ = Ref{Csize_t}()
     api_numOrientations_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctions, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}),
-          elementType, convert(Vector{Cdouble}, integrationPoints), length(integrationPoints), functionSpaceType, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, api_numOrientations_, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          elementType, convert(Vector{Cdouble}, localCoord), length(localCoord), functionSpaceType, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, api_numOrientations_, convert(Vector{Cint}, wantedOrientations), length(wantedOrientations), ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctions returned non-zero error code: $(ierr[])")
     basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
     return api_numComponents_[], basisFunctions, api_numOrientations_[]
@@ -1801,6 +1803,23 @@ function getBasisFunctionsOrientationForElements(elementType, functionSpaceType,
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctionsOrientationForElements returned non-zero error code: $(ierr[])")
     basisFunctionsOrientation = unsafe_wrap(Array, api_basisFunctionsOrientation_[], api_basisFunctionsOrientation_n_[], own=true)
     return basisFunctionsOrientation
+end
+
+"""
+    gmsh.model.mesh.getNumberOfOrientations(elementType, functionSpaceType)
+
+Get the number of possible orientations for elements of type `elementType` and
+function space named `functionSpaceType`.
+
+Return an integer value.
+"""
+function getNumberOfOrientations(elementType, functionSpaceType)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelMeshGetNumberOfOrientations, gmsh.lib), Cint,
+          (Cint, Ptr{Cchar}, Ptr{Cint}),
+          elementType, functionSpaceType, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNumberOfOrientations returned non-zero error code: $(ierr[])")
+    return api__result__
 end
 
 """
@@ -2033,16 +2052,17 @@ function setSize(dimTags, size)
 end
 
 """
-    gmsh.model.mesh.setSizeAtParametricPoints(dim, tag, points, sizes)
+    gmsh.model.mesh.setSizeAtParametricPoints(dim, tag, parametricCoord, sizes)
 
-Set mesh size at given parametric point on the model entities `dimTags`.
-Currently only entities of dimension 1 (lines) are handled.
+Set mesh size constraints at the given parametric points `parametricCoord` on
+the model entity of dimension `dim` and tag `tag`. Currently only entities of
+dimension 1 (lines) are handled.
 """
-function setSizeAtParametricPoints(dim, tag, points, sizes)
+function setSizeAtParametricPoints(dim, tag, parametricCoord, sizes)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetSizeAtParametricPoints, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cdouble}, points), length(points), convert(Vector{Cdouble}, sizes), length(sizes), ierr)
+          dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), convert(Vector{Cdouble}, sizes), length(sizes), ierr)
     ierr[] != 0 && error("gmshModelMeshSetSizeAtParametricPoints returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2310,15 +2330,16 @@ function setPeriodic(dim, tags, tagsMaster, affineTransform)
 end
 
 """
-    gmsh.model.mesh.getPeriodicNodes(dim, tag)
+    gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
 
 Get the master entity `tagMaster`, the node tags `nodeTags` and their
 corresponding master node tags `nodeTagsMaster`, and the affine transform
-`affineTransform` for the entity of dimension `dim` and tag `tag`.
+`affineTransform` for the entity of dimension `dim` and tag `tag`. If
+`includeHighOrderNodes` is set, include high-order nodes in the returned data.
 
 Return `tagMaster`, `nodeTags`, `nodeTagsMaster`, `affineTransform`.
 """
-function getPeriodicNodes(dim, tag)
+function getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
     api_tagMaster_ = Ref{Cint}()
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
@@ -2328,8 +2349,8 @@ function getPeriodicNodes(dim, tag)
     api_affineTransform_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPeriodicNodes, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, api_tagMaster_, api_nodeTags_, api_nodeTags_n_, api_nodeTagsMaster_, api_nodeTagsMaster_n_, api_affineTransform_, api_affineTransform_n_, ierr)
+          (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          dim, tag, api_tagMaster_, api_nodeTags_, api_nodeTags_n_, api_nodeTagsMaster_, api_nodeTagsMaster_n_, api_affineTransform_, api_affineTransform_n_, includeHighOrderNodes, ierr)
     ierr[] != 0 && error("gmshModelMeshGetPeriodicNodes returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     nodeTagsMaster = unsafe_wrap(Array, api_nodeTagsMaster_[], api_nodeTagsMaster_n_[], own=true)

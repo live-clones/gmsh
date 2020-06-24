@@ -14,7 +14,7 @@ Rotate { {1,0,0}, {0,0,0}, Pi/2 } { Surface{1:2}; }
 BooleanFragments{ Surface{1:2}; Delete; }{}
 
 Recursive Delete {
-  Surface{2}; 
+  Surface{2};
 }
 
 Mesh 2;
@@ -26,7 +26,7 @@ OptimizeMesh "HighOrder";
 Plugin(AnalyseMeshQuality).ICNMeasure = 1;
 Plugin(AnalyseMeshQuality).JacobianDeterminant = 0;
 Plugin(AnalyseMeshQuality).IGEMeasure = 0;
-Plugin(AnalyseMeshQuality).DrawPView = 1;
+Plugin(AnalyseMeshQuality).CreateView = 1;
 Plugin(AnalyseMeshQuality).DimensionOfElements = 2;
 Plugin(AnalyseMeshQuality).Run;
 
@@ -34,4 +34,3 @@ minquality = View[PostProcessing.NbViews-1].Min;
 If (minquality < 0.1)
   Error("Quality is far too low. It should be 0.1, but is %22.15f instead", minquality);
 EndIf
-

@@ -1,4 +1,5 @@
 import gmsh
+import sys
 
 write_file = False
 write_one_file_per_partition = False
@@ -46,6 +47,7 @@ for e in entities:
         print(" - Parent: " + str(gmsh.model.getParent(e[0], e[1])))
         print(" - Boundary: " + str(gmsh.model.getBoundary([e])))
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

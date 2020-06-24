@@ -450,11 +450,11 @@ template <> int linearSystemCSRGmm<double>::systemSolve()
   gmm::csr_matrix_ref<double *, INDEX_TYPE *, INDEX_TYPE *, 0> ref(
     (double *)_a->array, (INDEX_TYPE *)_ai->array, (INDEX_TYPE *)_jptr->array,
     _b->size(), _b->size());
-  gmm::csr_matrix<double, 0> M;
+  gmm::csr_matrix<double> M;
   M.init_with(ref);
 
   //gmm::ildltt_precond<gmm::csr_matrix<double, 0> > P(M, 10, 1.e-10);
-  gmm::ilu_precond<gmm::csr_matrix<double, 0> > P(M);
+  gmm::ilu_precond<gmm::csr_matrix<double> > P(M);
   gmm::iteration iter(_tol);
   iter.set_noisy(_noisy);
   if(_method == "gmres")

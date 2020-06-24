@@ -404,8 +404,9 @@ struct cross2dPtrLessThan {
 
 
 static double closest_diff(const SVector3 &n,
-			 const cross2d &c1,
-			 const cross2d &c2)
+			   const cross2d &c1,
+			   const cross2d &c2,
+			   const SVector3 &nn)
 {
 
   SVector3 o_1 = c1.o_i;
@@ -418,7 +419,9 @@ static double closest_diff(const SVector3 &n,
   SVector3 x0, x1;  
   compat_orientation_extrinsic(o_1, n, o_2, n, x0, x1);
   double diff = acos(dot(x0,x1));
-  return diff;      
+  SVector3 s_ = crossprod(x0,x1);
+  double sign = dot(s_,nn) > 0 ? 1 : -1;
+  return diff * sign;      
 }
 
 
@@ -2057,7 +2060,7 @@ computeSingularities(std::vector<GFace*> &f,
                      std::map<MTriangle *, SVector3> &d1,
                      std::set<MVertex *, MVertexPtrLessThan> &singularities,
                      std::map<MVertex *, int> &indices,
-                     std::map<MVertex *, double> &K)
+                     std::map<MVertex *, double> &K, bool packAlgo = false)
 {
 
   FILE *f_ = NULL;
@@ -2118,7 +2121,12 @@ computeSingularities(std::vector<GFace*> &f,
           singularities.erase(it1);
         }
         else {
-          Msg::Warning("triangle %d (%lu %lu %lu) is singular",f[i]->triangles[j]->getNum(),v0->getNum(),v1->getNum(),v2->getNum());
+	  if (packAlgo) {
+	    singularities.erase(it0);
+	    singularities.erase(it1);
+	  }
+	  else
+	    Msg::Warning("triangle %d (%lu %lu %lu) is singular",f[i]->triangles[j]->getNum(),v0->getNum(),v1->getNum(),v2->getNum());
         }
       }          
     }
@@ -2142,7 +2150,9 @@ computeSingularities(std::vector<GFace*> &f,
           singularities.erase(it0);
         }
         else {
-          Msg::Warning("edge (%lu %lu) is singular",v0->getNum(),v1->getNum());
+	  if (packAlgo) singularities.erase(it0);
+	  else
+	    Msg::Warning("edge (%lu %lu) is singular",v0->getNum(),v1->getNum());
         }
       }
     }
@@ -2207,12 +2217,14 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
         MEdge e01 (v0,v1);
         MEdge e12 (v1,v2);
         MEdge e1 (v,v1);
+	SVector3 v_01 (v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
+	SVector3 v_12 (v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
+	SVector3 nn = crossprod(v_12,v_01);
         std::map<MEdge, cross2d, MEdgeLessThan>::iterator it01 = C.find(e01);
         std::map<MEdge, cross2d, MEdgeLessThan>::iterator it12 = C.find(e12);
         std::map<MEdge, cross2d, MEdgeLessThan>::iterator it1 = C.find(e1);
         if (it01 != C.end()  && it12 != C.end() && it1 != C.end()){
-          double diff=closest_diff (it1->second._nrml, it01->second, it12->second); 
-          
+          double diff=closest_diff (it1->second._nrml, it01->second, it12->second, nn);           
           diffs_external += diff;
         }
       }
@@ -2221,6 +2233,9 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
       source[v] = diffs_external-curvature;
       
       if (fabs(diffs_external/*-curvature*/) > .95*M_PI/2) {
+	//	printf("%12.5E\n",diffs_external);
+	if (diffs_external < 0) indices[v] = 3;
+	else indices[v] = 5;
         singularities.insert(v);
       }
     }
@@ -7160,6 +7175,27 @@ int computePerTriangleScaledCrossField(
     if (status_h != 0) {
       Msg::Error("Failed to compute H from cross field view");
       return -1;
+    }
+    { // transfer to pack algo
+      std::map<MVertex*, double> source;	     
+      computeSingularities(qLayout.C, qLayout.singularities, qLayout.indices, f,qLayout.gaussianCurvatures, source);
+      computeUniqueVectorPerTriangle(gm, f, qLayout.C, qLayout.d0, qLayout.d1);
+      computeSingularities(f,qLayout.d0,qLayout.d1, qLayout.singularities, qLayout.indices, qLayout.gaussianCurvatures, true);    
+      
+      std::string _ugly  = gm->getName()+"_singularities.txt";
+      std::string _ugly2 = gm->getName()+"_singularities.pos";
+      FILE *f__ = fopen (_ugly.c_str(), "w");
+      FILE *f2__ = fopen (_ugly2.c_str(), "w");
+      fprintf(f__,"%lu\n",qLayout.singularities.size());
+      fprintf(f2__,"View \"singularities\"{\n");
+      for (std::set<MVertex *, MVertexPtrLessThan>::iterator it = qLayout.singularities.begin(); it != qLayout.singularities.end();++it){
+	fprintf(f__,"%d %22.15E %22.15E %22.15E %d %d\n",qLayout.indices[*it],(*it)->x(),(*it)->y(),(*it)->z(),(*it)->onWhat()->dim(),
+		(*it)->onWhat()->tag());
+	fprintf(f2__,"SP(%22.15E, %22.15E, %22.15E){ %d};\n",(*it)->x(),(*it)->y(),(*it)->z(),qLayout.indices[*it]);
+      }
+      fclose(f__);
+      fprintf(f2__,"};\n");
+      fclose(f2__);
     }
   }
 

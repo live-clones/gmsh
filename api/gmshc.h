@@ -299,11 +299,11 @@ GMSH_API void gmshModelGetPartitions(const int dim,
  * parametric coordinates on the curve) or 2 (with `parametricCoord'
  * containing pairs of u, v parametric coordinates on the surface,
  * concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z coordinates
- * in `points', concatenated: [p1x, p1y, p1z, p2x, ...]. */
+ * in `coord', concatenated: [p1x, p1y, p1z, p2x, ...]. */
 GMSH_API void gmshModelGetValue(const int dim,
                                 const int tag,
                                 double * parametricCoord, size_t parametricCoord_n,
-                                double ** points, size_t * points_n,
+                                double ** coord, size_t * coord_n,
                                 int * ierr);
 
 /* Evaluate the derivative of the parametrization of the entity of dimension
@@ -353,15 +353,15 @@ GMSH_API void gmshModelGetNormal(const int tag,
                                  double ** normals, size_t * normals_n,
                                  int * ierr);
 
-/* Get the parametric coordinates `parametricCoord' for the points `points' on
- * the entity of dimension `dim' and tag `tag'. `points' are given as triplets
+/* Get the parametric coordinates `parametricCoord' for the points `coord' on
+ * the entity of dimension `dim' and tag `tag'. `coord' are given as triplets
  * of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
  * `parametricCoord' returns the parametric coordinates t on the curve (if
  * `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if
  * `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. */
 GMSH_API void gmshModelGetParametrization(const int dim,
                                           const int tag,
-                                          double * points, size_t points_n,
+                                          double * coord, size_t coord_n,
                                           double ** parametricCoord, size_t * parametricCoord_n,
                                           int * ierr);
 
@@ -614,9 +614,9 @@ GMSH_API void gmshModelMeshGetElement(const size_t elementTag,
 /* Search the mesh for an element located at coordinates (`x', `y', `z'). This
  * function performs a search in a spatial octree. If an element is found,
  * return its tag, type and node tags, as well as the local coordinates (`u',
- * `v', `w') within the element corresponding to search location. If `dim' is
- * >= 0, only search for elements of the given dimension. If `strict' is not
- * set, use a tolerance to find elements near the search location. */
+ * `v', `w') within the reference element corresponding to search location. If
+ * `dim' is >= 0, only search for elements of the given dimension. If `strict'
+ * is not set, use a tolerance to find elements near the search location. */
 GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
                                                    const double y,
                                                    const double z,
@@ -677,15 +677,15 @@ GMSH_API int gmshModelMeshGetElementType(const char * familyName,
 
 /* Get the properties of an element of type `elementType': its name
  * (`elementName'), dimension (`dim'), order (`order'), number of nodes
- * (`numNodes'), coordinates of the nodes in the reference element
- * (`nodeCoord' vector, of length `dim' times `numNodes') and number of
+ * (`numNodes'), local coordinates of the nodes in the reference element
+ * (`localNodeCoord' vector, of length `dim' times `numNodes') and number of
  * primary (first order) nodes (`numPrimaryNodes'). */
 GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
                                                 char ** elementName,
                                                 int * dim,
                                                 int * order,
                                                 int * numNodes,
-                                                double ** nodeCoord, size_t * nodeCoord_n,
+                                                double ** localNodeCoord, size_t * localNodeCoord_n,
                                                 int * numPrimaryNodes,
                                                 int * ierr);
 
@@ -749,34 +749,34 @@ GMSH_API void gmshModelMeshAddElementsByType(const int tag,
 /* Get the numerical quadrature information for the given element type
  * `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
  * Gauss quadrature suited for integrating 4th order polynomials).
- * `integrationPoints' contains the u, v, w coordinates of the G integration
- * points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
- * `integrationWeigths' contains the associated weights: [g1q, ..., gGq]. */
+ * `localCoord' contains the u, v, w coordinates of the G integration points
+ * in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights'
+ * contains the associated weights: [g1q, ..., gGq]. */
 GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType,
                                                 const char * integrationType,
-                                                double ** integrationPoints, size_t * integrationPoints_n,
-                                                double ** integrationWeights, size_t * integrationWeights_n,
+                                                double ** localCoord, size_t * localCoord_n,
+                                                double ** weights, size_t * weights_n,
                                                 int * ierr);
 
 /* Get the Jacobians of all the elements of type `elementType' classified on
- * the entity of tag `tag', at the G integration points `integrationPoints'
- * given as concatenated triplets of coordinates in the reference element
- * [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with
- * elements in the same order as in `getElements' and `getElementsByType'.
- * `jacobians' contains for each element the 9 entries of the 3x3 Jacobian
- * matrix at each integration point. The matrix is returned by column:
- * [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw,
- * e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for
- * each element the determinant of the Jacobian matrix at each integration
- * point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `points' contains for each
- * element the x, y, z coordinates of the integration points. If `tag' < 0,
- * get the Jacobian data for all entities. If `numTasks' > 1, only compute and
- * return the part of the data indexed by `task'. */
+ * the entity of tag `tag', at the G evaluation points `localCoord' given as
+ * concatenated triplets of coordinates in the reference element [g1u, g1v,
+ * g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the
+ * same order as in `getElements' and `getElementsByType'. `jacobians'
+ * contains for each element the 9 entries of the 3x3 Jacobian matrix at each
+ * evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu,
+ * e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
+ * Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for each element the
+ * determinant of the Jacobian matrix at each evaluation point: [e1g1, e1g2,
+ * ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z
+ * coordinates of the evaluation points. If `tag' < 0, get the Jacobian data
+ * for all entities. If `numTasks' > 1, only compute and return the part of
+ * the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetJacobians(const int elementType,
-                                        double * integrationPoints, size_t integrationPoints_n,
+                                        double * localCoord, size_t localCoord_n,
                                         double ** jacobians, size_t * jacobians_n,
                                         double ** determinants, size_t * determinants_n,
-                                        double ** points, size_t * points_n,
+                                        double ** coord, size_t * coord_n,
                                         const int tag,
                                         const size_t task,
                                         const size_t numTasks,
@@ -785,18 +785,18 @@ GMSH_API void gmshModelMeshGetJacobians(const int elementType,
 /* Preallocate data before calling `getJacobians' with `numTasks' > 1. For C
  * and C++ only. */
 GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
-                                                const int numIntegrationPoints,
-                                                const int jacobian,
-                                                const int determinant,
-                                                const int point,
+                                                const int numEvaluationPoints,
+                                                const int allocateJacobians,
+                                                const int allocateDeterminants,
+                                                const int allocateCoord,
                                                 double ** jacobians, size_t * jacobians_n,
                                                 double ** determinants, size_t * determinants_n,
-                                                double ** points, size_t * points_n,
+                                                double ** coord, size_t * coord_n,
                                                 const int tag,
                                                 int * ierr);
 
 /* Get the basis functions of the element of type `elementType' at the
- * integration points `integrationPoints' (given as concatenated triplets of
+ * evaluation points `localCoord' (given as concatenated triplets of
  * coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
  * for the function space `functionSpaceType' (e.g. "Lagrange" or
  * "GradLagrange" for Lagrange basis functions or their gradient, in the u, v,
@@ -804,17 +804,20 @@ GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
  * "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions).
  * `numComponents' returns the number C of components of a basis function.
  * `basisFunctions' returns the value of the N basis functions at the
- * integration points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
+ * evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
  * [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
  * functions that depend on the orientation of the elements, all values for
  * the first orientation are returned first, followed by values for the
- * secondd, etc. `numOrientations' returns the overall number of orientations. */
+ * second, etc. `numOrientations' returns the overall number of orientations.
+ * If `wantedOrientations' is not empty, only return the values for the
+ * desired orientation indices. */
 GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
-                                             double * integrationPoints, size_t integrationPoints_n,
+                                             double * localCoord, size_t localCoord_n,
                                              const char * functionSpaceType,
                                              int * numComponents,
                                              double ** basisFunctions, size_t * basisFunctions_n,
                                              int * numOrientations,
+                                             int * wantedOrientations, size_t wantedOrientations_n,
                                              int * ierr);
 
 /* Get the orientation index of the elements of type `elementType' in the
@@ -830,6 +833,12 @@ GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElements(const int ele
                                                                    const size_t task,
                                                                    const size_t numTasks,
                                                                    int * ierr);
+
+/* Get the number of possible orientations for elements of type `elementType'
+ * and function space named `functionSpaceType'. */
+GMSH_API int gmshModelMeshGetNumberOfOrientations(const int elementType,
+                                                  const char * functionSpaceType,
+                                                  int * ierr);
 
 /* Preallocate data before calling `getBasisFunctionsOrientationForElements'
  * with `numTasks' > 1. For C and C++ only. */
@@ -956,11 +965,12 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,
                                    const double size,
                                    int * ierr);
 
-/* Set mesh size at given parametric point on the model entities `dimTags'.
- * Currently only entities of dimension 1 (lines) are handled. */
+/* Set mesh size constraints at the given parametric points `parametricCoord'
+ * on the model entity of dimension `dim' and tag `tag'. Currently only
+ * entities of dimension 1 (lines) are handled. */
 GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim,
                                                      const int tag,
-                                                     double * points, size_t points_n,
+                                                     double * parametricCoord, size_t parametricCoord_n,
                                                      double * sizes, size_t sizes_n,
                                                      int * ierr);
 
@@ -1093,13 +1103,16 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim,
 
 /* Get the master entity `tagMaster', the node tags `nodeTags' and their
  * corresponding master node tags `nodeTagsMaster', and the affine transform
- * `affineTransform' for the entity of dimension `dim' and tag `tag'. */
+ * `affineTransform' for the entity of dimension `dim' and tag `tag'. If
+ * `includeHighOrderNodes' is set, include high-order nodes in the returned
+ * data. */
 GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
                                             const int tag,
                                             int * tagMaster,
                                             size_t ** nodeTags, size_t * nodeTags_n,
                                             size_t ** nodeTagsMaster, size_t * nodeTagsMaster_n,
                                             double ** affineTransform, size_t * affineTransform_n,
+                                            const int includeHighOrderNodes,
                                             int * ierr);
 
 /* Remove duplicate nodes in the mesh of the current model. */

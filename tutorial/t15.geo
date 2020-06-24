@@ -25,18 +25,18 @@ Characteristic Length {1:4} = lc;
 Point(5) = {0.02, 0.02, 0, lc};
 
 // One can force this point to be included ("embedded") in the 2D mesh, using
-// the "Point In Surface" command:
+// the `Point In Surface' command:
 Point{5} In Surface{1};
 
 // In the same way, one can force a curve to be embedded in the 2D mesh using
-// the "Curve in Surface" command:
+// the `Curve in Surface' command:
 Point(6) = {0.02, 0.12, 0, lc};
 Point(7) = {0.04, 0.18, 0, lc};
 Line(5) = {6, 7};
 Curve{5} In Surface{1};
 
-// One can also embed points and curves in a volume using the "Curve/Point In
-// Volume" commands:
+// One can also embed points and curves in a volume using the `Curve/Point In
+// Volume' commands:
 Extrude {0, 0, 0.1}{ Surface {1}; }
 
 p = newp;
@@ -48,8 +48,8 @@ Point(p+1) = {0.025, 0.15, 0.025, lc};
 Line(l) = {7, p+1};
 Curve{l} In Volume {1};
 
-// Finally, one can also embed a surface in a volume using the "Surface In
-// Volume" command:
+// Finally, one can also embed a surface in a volume using the `Surface In
+// Volume' command:
 Point(p+2) = {0.02, 0.12, 0.05, lc};
 Point(p+3) = {0.04, 0.12, 0.05, lc};
 Point(p+4) = {0.04, 0.18, 0.05, lc};
@@ -63,3 +63,8 @@ Curve Loop(ll) = {l+1:l+4};
 s = news;
 Plane Surface(s) = {ll};
 Surface{s} In Volume{1};
+
+// Note that with the OpenCASCADE kernel (see `t16.geo'), when the
+// `BooleanFragments' command is applied to entities of different dimensions,
+// the lower dimensional entities will be autmatically embedded in the higher
+// dimensional entities if necessary.

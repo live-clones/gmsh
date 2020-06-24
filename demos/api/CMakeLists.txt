@@ -86,7 +86,7 @@ if(PYTHON)
   file(GLOB DEMOS *.py)
   foreach(DEMO ${DEMOS})
     get_filename_component(DEMONAME ${DEMO} NAME_WE)
-    add_test(${DEMONAME}_py ${PYTHON} ${DEMO})
+    add_test(${DEMONAME}_py ${PYTHON} ${DEMO} -nopopup)
   endforeach()
 endif()
 

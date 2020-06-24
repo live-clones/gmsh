@@ -66,8 +66,9 @@ int GModel::_current = -1;
 
 GModel::GModel(const std::string &name)
   : _destroying(false), _name(name), _visible(1), _elementOctree(0),
-    _geo_internals(0), _occ_internals(0), _acis_internals(0), _fields(0),
-    _currentMeshEntity(0), _numPartitions(0), normals(0)
+    _geo_internals(0), _occ_internals(0), _acis_internals(0),
+    _parasolid_internals(0), _fields(0), _currentMeshEntity(0),
+    _numPartitions(0), normals(0)
 {
   _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
@@ -82,7 +83,7 @@ GModel::GModel(const std::string &name)
 
   // we always create an internal GEO model; other CAD internals are created
   // on-demand
-  _createGEOInternals();
+  createGEOInternals();
 
 #if defined(HAVE_MESH)
   _fields = new FieldManager();
@@ -105,8 +106,10 @@ GModel::~GModel()
   }
 
   destroy();
-  _deleteGEOInternals();
-  _deleteOCCInternals();
+  deleteGEOInternals();
+  deleteOCCInternals();
+  deleteACISInternals();
+  deleteParasolidInternals();
 #if defined(HAVE_MESH)
   delete _fields;
 #endif
@@ -193,7 +196,7 @@ void GModel::destroy(bool keepName)
 
   destroyMeshCaches();
 
-  _resetOCCInternals();
+  resetOCCInternals();
 
   if(normals) delete normals;
   normals = 0;
@@ -376,19 +379,33 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
 void GModel::remove(GRegion *r)
 {
   riter it = std::find(firstRegion(), lastRegion(), r);
-  if(it != (riter)regions.end()) regions.erase(it);
+  if(it != (riter)regions.end()) {
+    regions.erase(it);
+    std::vector<GFace *> f = r->faces();
+    for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); it++)
+      (*it)->delRegion(r);
+  }
 }
 
 void GModel::remove(GFace *f)
 {
   fiter it = std::find(firstFace(), lastFace(), f);
-  if(it != faces.end()) faces.erase(it);
+  if(it != faces.end()){
+    faces.erase(it);
+    std::vector<GEdge *> const &e = f->edges();
+    for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end(); it++)
+      (*it)->delFace(f);
+  }
 }
 
 void GModel::remove(GEdge *e)
 {
   eiter it = std::find(firstEdge(), lastEdge(), e);
-  if(it != edges.end()) edges.erase(it);
+  if(it != edges.end()) {
+    edges.erase(it);
+    if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
+    if(e->getEndVertex()) e->getEndVertex()->delEdge(e);
+  }
 }
 
 void GModel::remove(GVertex *v)
@@ -526,8 +543,10 @@ void GModel::getEntities(std::vector<GEntity *> &entities, int dim) const
   case 0:
     entities.insert(entities.end(), vertices.begin(), vertices.end());
     break;
-  case 1: entities.insert(entities.end(), edges.begin(), edges.end()); break;
-  case 2: entities.insert(entities.end(), faces.begin(), faces.end()); break;
+  case 1:
+    entities.insert(entities.end(), edges.begin(), edges.end()); break;
+  case 2:
+    entities.insert(entities.end(), faces.begin(), faces.end()); break;
   case 3:
     entities.insert(entities.end(), regions.begin(), regions.end());
     break;
@@ -2052,8 +2071,10 @@ void GModel::createGeometryOfDiscreteEntities()
 {
   Msg::StatusBar(true, "Creating geometry of discrete curves...");
   double t1 = Cpu(), w1 = TimeOfDay();
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
+  std::vector<GEntity*> curves;
+  getEntities(curves, 1);
+  for(std::size_t i = 0; i < curves.size(); i++) {
+    discreteEdge *de = dynamic_cast<discreteEdge *>(curves[i]);
     if(de) {
       if(de->createGeometry())
         Msg::Error("Could not create geometry of discrete curve %d", de->tag());
@@ -2068,14 +2089,19 @@ void GModel::createGeometryOfDiscreteEntities()
   Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
   t1 = Cpu();
   w1 = TimeOfDay();
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
-    discreteFace *df = dynamic_cast<discreteFace *>(*it);
+  std::vector<GEntity*> surfaces;
+  getEntities(surfaces, 2);
+  Msg::StartProgressMeter(surfaces.size());
+  for(std::size_t i = 0; i < surfaces.size(); i++) {
+    discreteFace *df = dynamic_cast<discreteFace *>(surfaces[i]);
     if(df) {
+      Msg::ProgressMeter(i, true, "Creating geometry");
       if(df->createGeometry())
         Msg::Error("Could not create geometry of discrete surface %d",
                    df->tag());
     }
   }
+  Msg::StopProgressMeter();
   t2 = Cpu();
   w2 = TimeOfDay();
   Msg::StatusBar(true,
@@ -2226,7 +2252,7 @@ void GModel::checkMeshCoherence(double tolerance)
       vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
                       entities[i]->mesh_vertices.end());
     MVertexRTree pos(eps);
-    std::set<MVertex *> duplicates;
+    std::set<MVertex *, MVertexPtrLessThan> duplicates;
     int num = pos.insert(vertices, true, &duplicates);
     if(num) {
       Msg::Error("%d duplicate node%s: see `duplicate_node.pos'", num,
@@ -3149,3 +3175,33 @@ void GModel::computeHomology()
   Msg::Error("Homology computation requires KBIPACK");
 #endif
 }
+
+#if !defined(HAVE_ACIS)
+
+void GModel::createACISInternals() { }
+
+void GModel::deleteACISInternals() { }
+
+int GModel::readACISSAT(const std::string &fn)
+{
+  Msg::Error("Gmsh must be compiled with ACIS support to load '%s'",
+             fn.c_str());
+  return 0;
+}
+
+#endif
+
+#if !defined(HAVE_PARASOLID)
+
+void GModel::createParasolidInternals() { }
+
+void GModel::deleteParasolidInternals() { }
+
+int GModel::readParasolid(const std::string &fn)
+{
+  Msg::Error("Gmsh must be compiled with Parasolid support to load '%s'",
+             fn.c_str());
+  return 0;
+}
+
+#endif

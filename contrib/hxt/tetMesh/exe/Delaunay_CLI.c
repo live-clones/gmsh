@@ -157,6 +157,7 @@ int main(int argc, char** argv) {
     .bbox = NULL,
     .nodalSizes = NULL,
     .numVerticesInMesh = 0,
+    .insertionFirst = 0,
     .partitionability = 0,
     .verbosity = verbosity,
     .reproducible = reproducible,
@@ -164,8 +165,8 @@ int main(int argc, char** argv) {
   };
 
   if(preserve_order) {
-    hxtNodeInfo* nodeInfo;
-    HXT_CHECK( hxtAlignedMalloc(&nodeInfo, sizeof(hxtNodeInfo)*mesh->vertices.num) );
+    HXTNodeInfo* nodeInfo;
+    HXT_CHECK( hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo)*mesh->vertices.num) );
 
     #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
     for (uint32_t i=0; i<mesh->vertices.num; i++) {

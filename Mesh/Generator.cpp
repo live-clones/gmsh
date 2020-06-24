@@ -1175,7 +1175,7 @@ static void relocateSlaveVertices(std::vector<GEntity *> &entities,
                 useClosestPoint ? " (using closest point)" : "");
       relocateSlaveVertices(slave, slave->correspondingVertices,
                             useClosestPoint);
-      relocateSlaveVertices(slave, slave->correspondingHOPoints,
+      relocateSlaveVertices(slave, slave->correspondingHighOrderVertices,
                             useClosestPoint);
     }
     else if(it->first->dim() == 1) {
@@ -1187,7 +1187,7 @@ static void relocateSlaveVertices(std::vector<GEntity *> &entities,
                 useClosestPoint ? " (using closest point)" : "");
       relocateSlaveVertices(slave, slave->correspondingVertices,
                             useClosestPoint);
-      relocateSlaveVertices(slave, slave->correspondingHOPoints,
+      relocateSlaveVertices(slave, slave->correspondingHighOrderVertices,
                             useClosestPoint);
     }
   }
@@ -1205,7 +1205,7 @@ void FixPeriodicMesh(GModel *m)
 
     if(src != NULL && src != tgt) {
       std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
-      std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHOPoints;
+      std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHighOrderVertices;
       p2p.clear();
 
       Msg::Info("Reconstructing periodicity for curve connection %d - %d",
@@ -1279,7 +1279,7 @@ void FixPeriodicMesh(GModel *m)
                 tgt->tag(), src->tag());
 
       std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
-      std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHOPoints;
+      std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHighOrderVertices;
       p2p.clear();
 
       if(tgt->getNumMeshElements() && v2v.empty()) {

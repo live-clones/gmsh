@@ -2,7 +2,6 @@
 # build image (add "--build-arg REBUILD_GMSH=123" to rebuild the Gmsh lib, where
 # 123 must be different from build to build)
 
-docker build -f Dockerfile.ubuntu18.10 -t onelab/ubuntu18.10 --build-arg REBUILD_GMSH=123 .
 docker build -f Dockerfile.ubuntu20.04 -t onelab/ubuntu20.04 --build-arg REBUILD_GMSH=123 .
 docker build -f Dockerfile.debian.wheezy.64bit -t onelab/debian.wheezy.64bit --build-arg REBUILD_GMSH=123 .
 docker build -f Dockerfile.debian.wheezy.32bit -t onelab/debian.wheezy.32bit --build-arg REBUILD_GMSH=123 .
@@ -10,13 +9,12 @@ docker build -f Dockerfile.debian.wheezy.32bit -t onelab/debian.wheezy.32bit --b
 # push image to docker-hub
 
 docker login
-docker push onelab/ubuntu18.10
 docker push onelab/ubuntu20.04
 docker push onelab/debian.wheezy.64bit
 docker push onelab/debian.wheezy.32bit
 
 # run something
 
-docker run onelab/ubuntu18.10 ls -al /'
-docker run -it onelab/ubuntu18.10 bash
+docker run onelab/ubuntu20.04 ls -al /'
+docker run -it onelab/ubuntu20.04 bash
 docker run -it onelab/debian.wheezy.64bit bash

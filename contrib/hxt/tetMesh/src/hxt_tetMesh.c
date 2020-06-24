@@ -108,11 +108,12 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
       HXT_INFO("Recovering %" HXTu64 " missing edge(s)",
                nbMissingLines);
 
+    uint32_t oldNumVertices = mesh->vertices.num;
     HXT_CHECK(options->recoveryFun(mesh, options->recoveryData));
 
-    if(delOptions.numVerticesInMesh < mesh->vertices.num) {
+    if(oldNumVertices < mesh->vertices.num) {
       HXT_INFO("Steiner(s) point(s) were inserted");
-      delOptions.numVerticesInMesh = mesh->vertices.num;
+      delOptions.numVerticesInMesh += mesh->vertices.num - oldNumVertices;
     }
 
     t[3] = omp_get_wtime();
@@ -153,8 +154,10 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
     HXT_CHECK(hxtCreateNodalSize(mesh, &delOptions.nodalSizes));
 
     if(options->meshSizeFun!=NULL) {
-      if(hxtComputeNodalSizeFromFunction(mesh, delOptions.nodalSizes, options->meshSizeFun, options->meshSizeData)!=HXT_STATUS_OK)
+      if(hxtComputeNodalSizeFromFunction(mesh, delOptions.nodalSizes, options->meshSizeFun, options->meshSizeData)!=HXT_STATUS_OK) {
+        HXT_WARNING("Initial sizes are interpolated instead of being fetched from the size map");
         HXT_CHECK(hxtComputeNodalSizeFromTrianglesAndLines(mesh, delOptions.nodalSizes));
+      }
     }
     else
       HXT_CHECK(hxtComputeNodalSizeFromTrianglesAndLines(mesh, delOptions.nodalSizes));

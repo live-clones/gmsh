@@ -653,7 +653,7 @@ int GModel::_readMSH2(const std::string &name)
   // or all master/slave (lower dimensional) entities will not have been created
   // when reading the file, which means that no model entities will exist to
   // store the periodic node information.
-  if(!CTX::instance()->mesh.ignorePeriodicity) {
+  if(!CTX::instance()->mesh.ignorePeriodicityMsh2) {
     rewind(fp);
 
     while(1) {
@@ -677,7 +677,7 @@ int GModel::_readMSH2(const std::string &name)
 
   // This post-processing step for periodic boundaries should be removed from
   // the MSH2 reader. Until then, we also disable it by default.
-  if(!CTX::instance()->mesh.ignorePeriodicity) {
+  if(!CTX::instance()->mesh.ignorePeriodicityMsh2) {
     alignPeriodicBoundaries();
   }
 

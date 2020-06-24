@@ -24,7 +24,7 @@
 #include "BackgroundMeshTools.h"
 #include "GModel.h"
 
-#if defined(HAVE_HXT3D)
+#if defined(HAVE_HXT)
 
 extern "C" {
 #include "hxt_tools.h"
@@ -43,23 +43,30 @@ static HXTStatus messageCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-static double meshSizeCallBack(double x, double y, double z, void *userData)
+static HXTStatus meshSizeCallBack(double* pts, size_t numPts, void *userData)
 {
   GRegion *gr = (GRegion *)userData;
-  double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0, x, y, z);
-  if(lc == MAX_LC && CTX::instance()->mesh.lcExtendFromBoundary) {
-    // let hxt compute the mesh size from the boundary mesh size
-    lc = 0.;
+
+  for(size_t i=0; i<numPts; i++) {
+    double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0,
+                                           pts[4 * i + 0],
+                                           pts[4 * i + 1],
+                                           pts[4 * i + 2]);
+    if(lc != MAX_LC || !CTX::instance()->mesh.lcExtendFromBoundary) {
+      // constrain by global lcMin and lcMax
+      lc = std::max(lc, CTX::instance()->mesh.lcMin);
+      lc = std::min(lc, CTX::instance()->mesh.lcMax);
+      // apply global scaling
+      if(gr->getMeshSizeFactor() != 1.0) lc *= gr->getMeshSizeFactor();
+        lc *= CTX::instance()->mesh.lcFactor;
+
+      // if(lc > 0.0)
+      pts[4 * i + 3] = lc;
+    }
+    // else pts[4 * i + 3] already contains the size computed by HXT
   }
-  else {
-    // constrain by global lcMin and lcMax
-    lc = std::max(lc, CTX::instance()->mesh.lcMin);
-    lc = std::min(lc, CTX::instance()->mesh.lcMax);
-    // apply global scaling
-    if(gr->getMeshSizeFactor() != 1.0) lc *= gr->getMeshSizeFactor();
-    lc *= CTX::instance()->mesh.lcFactor;
-  }
-  return lc;
+
+  return HXT_STATUS_OK;
 }
 
 static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions,
@@ -143,7 +150,6 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-
 HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
 		   std::vector<GFace *> allFaces,
 		   std::vector<GEdge *> allEdges,
@@ -180,6 +186,8 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
     gf->triangles.clear();
   }
 
+  uint16_t warning = 0;
+
   for(size_t i = 0; i < m->lines.num; i++) {
     uint32_t i0 = m->lines.node[2 * i + 0];
     uint32_t i1 = m->lines.node[2 * i + 1];
@@ -188,7 +196,10 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
     MVertex *v1 = c2v[i1];
     std::map<uint32_t, GEdge *>::iterator ge = i2e.find(c);
     if(ge == i2e.end()) {
-      Msg::Warning("Could not find curve for HXT color %d", c);
+      if(warning != c) {
+        warning = c;
+        Msg::Warning("Could not find curve for HXT color %d", c);
+      }
       continue;
     }
     if(!v0) {
@@ -214,7 +225,10 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
     MVertex *v2 = c2v[i2];
     std::map<uint32_t, GFace *>::iterator gf = i2f.find(c);
     if(gf == i2f.end()) {
-      Msg::Warning("Could not find surface for HXT color %d", c);
+      if(warning != c) {
+        warning = c;
+        Msg::Warning("Could not find surface for HXT color %d", c);
+      }
       continue;
     }
     if(!v0) {
@@ -259,7 +273,6 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
   Msg::Debug("End Hxt2Gmsh");
   return HXT_STATUS_OK;
 }
-
 
 HXTStatus Hxt2Gmsh(GModel *gm,
 		   HXTMesh *m,

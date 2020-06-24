@@ -90,6 +90,11 @@ int main(int argc, char **argv)
   gmsh::model::geo::synchronize();
   gmsh::model::mesh::embed(2, {s}, 3, 1);
 
+  // Note that with the OpenCASCADE kernel (see `t16.cpp'), when the
+  // `fragment()' function is applied to entities of different dimensions, the
+  // lower dimensional entities will be autmatically embedded in the higher
+  // dimensional entities if necessary.
+
   gmsh::model::mesh::generate(3);
 
   gmsh::write("t15.msh");

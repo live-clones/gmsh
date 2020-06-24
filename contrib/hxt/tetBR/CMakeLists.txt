@@ -38,3 +38,9 @@ target_link_libraries(hxt_tetBR
                       PUBLIC hxt_core
                       PRIVATE hxt_predicates m)
 
+if(HXT_ENABLE_OPENMP)
+  find_package(OpenMP 4)
+  if(OpenMP_CXX_FOUND)
+      target_link_libraries(hxt_tetBR PUBLIC OpenMP::OpenMP_CXX)
+  endif()
+endif()
