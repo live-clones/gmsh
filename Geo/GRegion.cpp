@@ -184,9 +184,7 @@ SBoundingBox3d GRegion::bounds(bool fast)
     for(; it != l_faces.end(); it++) res += (*it)->bounds(fast);
   }
   else {
-    int ipp = getNumMeshElements() / 20;
-    if(ipp < 1) ipp = 1;
-    for(std::size_t i = 0; i < getNumMeshElements(); i += ipp)
+    for(std::size_t i = 0; i < getNumMeshElements(); i++)
       for(std::size_t j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         res += getMeshElement(i)->getVertex(j)->point();
   }
