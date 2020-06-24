@@ -330,6 +330,8 @@ double OCCEdge::curvature(double par) const
 {
   const double eps = 1.e-15;
 
+  if(degenerate(0)) return eps;
+
   Standard_Real Crv;
   if(_curve.IsNull()) {
     Geom2dLProp_CLProps2d aCLProps(_curve2d, 2, eps);
