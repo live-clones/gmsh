@@ -1452,6 +1452,8 @@ void GenerateMesh(GModel *m, int ask)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, true);
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);
+  else if(m->getMeshStatus() >= 2 && CTX::instance()->mesh.algoSubdivide == 3)
+    BarycentricRefineMesh(m);
 
   if(m->getMeshStatus() && CTX::instance()->mesh.order > 1) {
     // Create high order elements
