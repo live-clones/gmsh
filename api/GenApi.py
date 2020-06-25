@@ -1600,13 +1600,12 @@ class API:
                 cpp = find_function('C++', path + '/' + name, cpp_data)
                 py = find_function('Python', path + '/' + name, py_data)
                 def write_matches(lang, matches, max_matches):
-                    git = 'https://gitlab.onelab.info/gmsh/gmsh/tree/master/'
                     f.write(lang + ' (')
                     for i in range(min(max_matches,
                                        len(matches))):  # write max 5 matches
                         if i > 0: f.write(', ')
-                        f.write('@url{' + git + matches[i][0][3:] + '#L' +
-                                str(matches[i][1]) + ',' +
+                        f.write('@url{@value{GITLAB-PREFIX}/' +  matches[i][0][3:] +
+                                '#L' + str(matches[i][1]) + ',' +
                                 os.path.basename(matches[i][0]) + '}')
                     if len(matches) > max_matches: f.write(', ...')
                     f.write(')')

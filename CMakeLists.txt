@@ -126,6 +126,13 @@ set(GMSH_SHORT_VERSION
 set(GMSH_VERSION "${GMSH_SHORT_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
+set(GMSH_GITLAB_PREFIX "https://gitlab.onelab.info/gmsh/gmsh")
+if(GMSH_RELEASE)
+  set(GMSH_GITLAB_PREFIX "${GMSH_GITLAB_PREFIX}/blob/gmsh_${GMSH_SHORT_VERSION}")
+else()
+  set(GMSH_GITLAB_PREFIX "${GMSH_GITLAB_PREFIX}/blob/master")
+endif()
+
 set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
 
 if(ENABLE_PRIVATE_API)
