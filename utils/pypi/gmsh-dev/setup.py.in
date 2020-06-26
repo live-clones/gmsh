@@ -7,6 +7,9 @@
 # https://opensource.org/licenses/GPL-2.0
 ########################################################################
 
+# Contributor(s):
+#   Alex Kaszynski
+
 from __future__ import print_function
 import os
 import shutil
@@ -19,6 +22,7 @@ from setuptools.dist import Distribution
 # Server and gmsh version
 server = 'https://gmsh.info/bin'
 version = '${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}'
+iversion = version + '' # installer version; + '-1' will create '.post1'
 
 # Determine file name and and url to be downloaded and installed
 system = platform.system().lower()
@@ -84,7 +88,7 @@ def package_files(directory):
 if __name__ == "__main__":
     setup(name            = 'gmsh-dev',
           packages=['gmsh'],
-        version           = version,
+        version           = iversion,
         description       = 'Gmsh app and SDK installer for the latest development snapshot. Gmsh is a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities.',
         long_description  = open('README.rst', 'r').read(),
         long_description_content_type='text/x-rst',
