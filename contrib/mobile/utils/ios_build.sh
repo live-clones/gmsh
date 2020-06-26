@@ -5,6 +5,8 @@ enable_occ=1
 enable_simulator=0
 #buildtype=Debug
 buildtype=Release
+version=2.3.4
+build=53 # must be incremented for each submitted build
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -28,6 +30,14 @@ while [[ $# -gt 0 ]]; do
   esac
   shift # past argument or value
 done
+
+# modify iOS/Onelab/Onelab-Info.plist
+#
+# <key>CFBundleShortVersionString</key><string>XXX</string>
+# <key>CFBundleVersion</key><string>YYY</string>
+mobile="${HOME}/src/gmsh/contrib/mobile"
+sed -i "" "s/.*CFBundleShortVersionString.*/    <key>CFBundleShortVersionString<\/key><string>${version}<\/string>/" ${mobile}/iOS/Onelab/Onelab-Info.plist
+sed -i "" "s/.*CFBundleVersion.*/    <key>CFBundleVersion<\/key><string>${build}<\/string>/" ${mobile}/iOS/Onelab/Onelab-Info.plist
 
 ios=ios
 iphoneos=iphoneos
