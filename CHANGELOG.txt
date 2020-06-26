@@ -1,3 +1,5 @@
+4.6.1 (Work-in-progress): improved VTK reader; small bug fixes.
+
 4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
 (without node insertion), and to only mesh non-meshed entities; added ability to
 only remesh parts of discrete models; added support for mesh size fields and
