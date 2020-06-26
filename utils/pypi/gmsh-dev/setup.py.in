@@ -82,7 +82,7 @@ def package_files(directory):
 
 # Run setup
 if __name__ == "__main__":
-    setup(name            = 'gmsh',
+    setup(name            = 'gmsh-dev',
           packages=['gmsh'],
         version           = version,
         description       = 'Gmsh app and SDK installer for the latest development snapshot. Gmsh is a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities.',
