@@ -80,18 +80,12 @@ def package_files(directory):
     return paths
 
 
-class BinaryDistribution(Distribution):
-    """Distribution which always forces a binary package with platform name"""
-    def has_ext_modules(foo):
-        return True
-
-
 # Run setup
 if __name__ == "__main__":
     setup(name            = 'gmsh',
           packages=['gmsh'],
         version           = version,
-        description       = 'Gmsh app and SDK installer. Gmsh is a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities.',
+        description       = 'Gmsh app and SDK installer for the latest development snapshot. Gmsh is a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities.',
         long_description  = open('README.rst', 'r').read(),
         long_description_content_type='text/x-rst',
         maintainer        = 'Christophe Geuzaine',
@@ -113,6 +107,5 @@ if __name__ == "__main__":
                             'Topic :: Scientific/Engineering'],
         scripts           = ['gmsh/gmsh', 'gmsh.bat'] if plat.startswith('Windows') else ['gmsh/gmsh'],
         package_data      = {'': package_files('gmsh')},
-        distclass=BinaryDistribution,
         setup_requires    = ['requests']
         )
