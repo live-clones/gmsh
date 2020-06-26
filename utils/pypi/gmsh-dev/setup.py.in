@@ -14,6 +14,7 @@ import platform
 import tarfile
 import zipfile
 from setuptools import setup
+from setuptools.dist import Distribution
 
 # Server and gmsh version
 server = 'https://gmsh.info/bin'
@@ -79,6 +80,12 @@ def package_files(directory):
     return paths
 
 
+class BinaryDistribution(Distribution):
+    """Distribution which always forces a binary package with platform name"""
+    def has_ext_modules(foo):
+        return True
+
+
 # Run setup
 if __name__ == "__main__":
     setup(name            = 'gmsh',
@@ -106,5 +113,6 @@ if __name__ == "__main__":
                             'Topic :: Scientific/Engineering'],
         scripts           = ['gmsh/gmsh', 'gmsh.bat'] if plat.startswith('Windows') else ['gmsh/gmsh'],
         package_data      = {'': package_files('gmsh')},
+        distclass=BinaryDistribution,
         setup_requires    = ['requests']
         )
