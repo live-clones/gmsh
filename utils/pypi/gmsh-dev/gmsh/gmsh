@@ -15,7 +15,7 @@ envval = os.environ[envvar] if envvar in os.environ.keys() else ''
 os.environ[envvar] = dirname + os.pathsep + envval
 
 # Run Gmsh command
-command = os.path.join(dirname, '../bin/gmsh')
+command = os.path.join(dirname, './bin/gmsh')
 subprocess.call([command] + sys.argv[1:])
 
 

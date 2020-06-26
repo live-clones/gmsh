@@ -9,13 +9,11 @@
 
 from __future__ import print_function
 import os
-import sys
+import shutil
 import platform
 import tarfile
 import zipfile
-from distutils import sysconfig
 from setuptools import setup
-from setuptools.command.install import install
 
 # Server and gmsh version
 server = 'https://gmsh.info/bin'
@@ -44,44 +42,47 @@ else:
     url = server + "/MacOSX/" + fname
 
 
-# Create wrapper for install class
-class DownloadAndInstall(install):
-    def run(self):
-        self._download()
-        self._extract()
-        self._include()
-        install.run(self)
-
-    def _download(self):
-        import requests
+def download_and_extract():
+    """Download and extract the gmsh binaries from https://gmsh.info/bin"""
+    import requests
+    if not os.path.isfile(fname):
         print('Downloading {}, please wait...'.format(url))
         sdk = requests.get(url, allow_redirects=True)
         with open(fname, "wb") as f:
             f.write(sdk.content)
 
-    def _extract(self):
-        print('Extracting {}, please wait...'.format(fname))
-        tar = tarfile.open(fname) if ext == '.tgz' else zipfile.ZipFile(fname, 'r')
-        tar.extractall()
+    print('Extracting {}, please wait...'.format(fname))
+    tar = tarfile.open(fname) if ext == '.tgz' else zipfile.ZipFile(fname, 'r')
+    tar.extractall()
 
-    def _include(self):
-        pth = open('gmsh.pth', 'w')
+    # move extracted contents into "gmsh" directory
+    for filename in os.listdir(name):
+        shutil.move(os.path.join(name, filename), 'gmsh')
+
+
+# check if the install contains the gmsh lib and download it if necessary
+if not os.path.isdir('gmsh/lib'):
+    download_and_extract()
+
+
+def package_files(directory):
+    """Provide a list of files for setup package_data"""
+    pth_file = 'gmsh.pth'
+    with open(pth_file, 'w') as pth:
         pth.write(name+'/lib\n')
         pth.write(name+'/bin')
-        pth.close()
-        site_dirpath = sysconfig.get_python_lib(prefix='')
-        dirs = [site_dirpath]
-        files = [['gmsh.pth']]
-        for (dirpath, dirnames, filenames) in os.walk(name):
-            dirs += [os.path.join(site_dirpath, dirpath)]
-            files += [[os.path.join(dirpath, file) for file in filenames]]
-        data_files = list(zip(dirs, files))
-        self.distribution.include(data_files=data_files)
+
+    paths = [os.path.join('..', pth_file)]
+    for (path, _, filenames) in os.walk(directory):
+        for filename in filenames:
+            paths.append(os.path.join('..', path, filename))
+    return paths
 
 
 # Run setup
 if __name__ == "__main__":
     setup(name            = 'gmsh',
+          packages=['gmsh'],
         version           = version,
         description       = 'Gmsh app and SDK installer. Gmsh is a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities.',
         long_description  = open('README.rst', 'r').read(),
@@ -103,8 +104,7 @@ if __name__ == "__main__":
                             'Programming Language :: C++',
                             'Programming Language :: Python :: Implementation :: CPython',
                             'Topic :: Scientific/Engineering'],
-        # data_files=data_files,
-        scripts           = ['gmsh', 'gmsh.bat'] if plat.startswith('Windows') else ['gmsh'],
-        cmdclass          = {'install': DownloadAndInstall},
+        scripts           = ['gmsh/gmsh', 'gmsh.bat'] if plat.startswith('Windows') else ['gmsh/gmsh'],
+        package_data      = {'': package_files('gmsh')},
         setup_requires    = ['requests']
         )
