@@ -461,6 +461,9 @@ pypi_official_release:
     - python3 setup.py sdist
     - twine upload dist/*
     - cd ../gmsh-dev
+    - python3 setup.py bdist_wheel
+    - FILE="$(ls dist/gmsh*cp*.whl)"
+    - mv -i -- "$FILE" "${FILE//-cp*-cp*-/-py3-none-}"
     - python3 setup.py sdist
     - twine upload dist/*
   tags:
