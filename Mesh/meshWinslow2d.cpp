@@ -472,8 +472,10 @@ static std::vector<MVertex*> buildBoundary (std::set<MElement*> &_e){
   veds.insert(veds.begin(),eds.begin(),eds.end());
   std::vector<std::vector<MVertex *> > vsorted;
   SortEdgeConsecutive(veds, vsorted);
-  
-  return vsorted[0];
+  if (vsorted.size() > 0) {
+    return vsorted[0];
+  }
+  return {};
 }
 
 static MVertex* countSing (  std::set<MElement*> &cavity,
@@ -541,7 +543,7 @@ static bool cavityMeshable (GFace *gf,
   }
 
   std::vector<int> corners;
-  bnd.resize(bnd.size() - 1);
+  if (bnd.size() > 0) bnd.resize(bnd.size() - 1);
   for (size_t i=0;i<bnd.size();i++){
     v2t_cont::iterator it = adj.find(bnd[i]);
     int inside = 0;
@@ -1702,7 +1704,10 @@ void  getSingularitiesFromFile (const std::string &fn,
   }
   
   FILE *f = fopen(fn.c_str(),"r");
-  if (!f) return;
+  if (!f) {
+    Msg::Error("file not found: %s", fn.c_str());
+    return;
+  }
   std::string fn2 = fn+".pos";
   FILE *ff = fopen (fn2.c_str(),"w");
   fprintf(ff,"View\" sing from file\"{\n");
@@ -1806,47 +1811,49 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
   }
 
   s.clear();
-  getSingularitiesFromFile (gm->getName()+"_singularities.txt", temp, s);
+  std::string sing_file = gm->getName()+"_singularities.txt";
+  Msg::Info("load singularities from file: %s", sing_file.c_str());
+  getSingularitiesFromFile (sing_file, temp, s);
 
   gm->writeMSH("after_smooth.msh", 4.0, false, true);
 
-  Msg::Info("Growing cavities for the %lu true isolated singularities found in the domain",s.size());
-  for (size_t i=0;i<temp.size();i++){
-    int ITER =0;
-    while (1) {
-      int C = computeMaximalCavities (temp[i], s);
-      if (C){
-	meshWinslow2d (temp[i],nIter/4, f, true);
-      }
-      if (C ==0) break;
-      if (ITER++ > 20)break;
-    }
-  }
-  
-  gm->writeMSH("after_grow.msh", 4.0, false, true);
-
-
-  
-  Msg::Info("Merging singularities : %lu true isolated singularities found in the domain",s.size());
-  
-  for (size_t i=0;i<temp.size();i++){
-    for (int j=0;j<10;j++)
-      mergeSingularities (temp[i], s, 3, j);
-  }
-  
-  for (int NIT = 0;NIT<4;NIT++){  
-    for (size_t i=0;i<tempe.size();i++)
-      meshWinslow1d (tempe[i],nIter/4, f);    
-
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
-    for (size_t i=0;i<temp.size();i++){
-      meshWinslow2d (temp[i],nIter/4, f, true);
-    }
-  }
-
-  gm->writeMSH("after_merge.msh", 4.0, false, true);
+//   Msg::Info("Growing cavities for the %lu true isolated singularities found in the domain",s.size());
+//   for (size_t i=0;i<temp.size();i++){
+//     int ITER =0;
+//     while (1) {
+//       int C = computeMaximalCavities (temp[i], s);
+//       if (C){
+// 	meshWinslow2d (temp[i],nIter/4, f, true);
+//       }
+//       if (C ==0) break;
+//       if (ITER++ > 20)break;
+//     }
+//   }
+//   
+//   gm->writeMSH("after_grow.msh", 4.0, false, true);
+// 
+// 
+//   
+//   Msg::Info("Merging singularities : %lu true isolated singularities found in the domain",s.size());
+//   
+//   for (size_t i=0;i<temp.size();i++){
+//     for (int j=0;j<10;j++)
+//       mergeSingularities (temp[i], s, 3, j);
+//   }
+//   
+//   for (int NIT = 0;NIT<4;NIT++){  
+//     for (size_t i=0;i<tempe.size();i++)
+//       meshWinslow1d (tempe[i],nIter/4, f);    
+// 
+// #if defined(_OPENMP)
+// #pragma omp parallel for schedule(dynamic)
+// #endif
+//     for (size_t i=0;i<temp.size();i++){
+//       meshWinslow2d (temp[i],nIter/4, f, true);
+//     }
+//   }
+// 
+//   gm->writeMSH("after_merge.msh", 4.0, false, true);
   
   
   //  return;

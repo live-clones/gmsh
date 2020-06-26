@@ -906,7 +906,7 @@ namespace QMT {
     }
     eavg /= uIEdges.size();
 
-    info("edge size: min={}, avg={}, max={}",emin,eavg,emax);
+    info("edge size: min={}, avg={}, max={} | bbox diag: {}",emin,eavg,emax,diag);
 
 
     /* prepare system */
@@ -963,6 +963,7 @@ namespace QMT {
       preprocess_sparsity_pattern(data);
 
 
+      /* Loop over the changing timesteps */
       double prev_dt = DBL_MAX;
       for (int iter = 0; iter < steps.size(); ++iter) {
         if (iter > 0 && steps[iter] > prev_dt) continue;
@@ -971,7 +972,7 @@ namespace QMT {
 
         info("  step {}/{} | dt = {}, linear system loop ...", iter+1, steps.size(), dt);
 
-        /* Update matrix with the new timestep */
+        /* Update LHS matrix with the new timestep */
         F(i,Acol.size()) {
           if (!dirichletEdge[i/2]) {
             Acol[i] = {i};
@@ -1002,7 +1003,8 @@ namespace QMT {
             error("failed to solve linear system");
             return false;
           }
-          FC(i,x.size(),!dirichletEdge[i/2]) x[i] *= dt;
+
+          // FC(i,x.size(),!dirichletEdge[i/2]) x[i] *= dt; // WHY THIS LINE WAS HERE ????
 
           // create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
           
