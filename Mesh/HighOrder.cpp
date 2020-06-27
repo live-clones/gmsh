@@ -1446,8 +1446,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   std::vector<MElement *> bad;
   double worst;
   checkHighOrderTriangles("Surface mesh", m, bad, worst);
-  // TEST:
-  //checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
+  checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
 
   Msg::StatusBar(true, "Done meshing order %d (Wall %gs, CPU %gs)", order,
                  w2 - w1, t2 - t1);
