@@ -1443,10 +1443,14 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   Msg::StopProgressMeter();
   double t2 = Cpu(), w2 = TimeOfDay();
 
+  // FIXME: temporary until we understand what's happening with BLAS+DLL on
+  // Windows
+#if !defined(WIN32)
   std::vector<MElement *> bad;
   double worst;
   checkHighOrderTriangles("Surface mesh", m, bad, worst);
   checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
+#endif
 
   Msg::StatusBar(true, "Done meshing order %d (Wall %gs, CPU %gs)", order,
                  w2 - w1, t2 - t1);
