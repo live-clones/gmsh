@@ -1348,6 +1348,14 @@ GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
+/* Add a polyline curve going through the points `pointTags'. If `tag' is
+ * positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Create a periodic curve if the first and last points are the
+ * same. Return the tag of the polyline curve. */
+GMSH_API int gmshModelGeoAddPolyline(int * pointTags, size_t pointTags_n,
+                                     const int tag,
+                                     int * ierr);
+
 /* Add a spline (Catmull-Rom) going through points sampling the curves in
  * `curveTags'. The density of sampling points on each curve is governed by
  * `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a

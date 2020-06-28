@@ -4782,6 +4782,17 @@ GMSH_API int gmsh::model::geo::addBezier(const std::vector<int> &pointTags,
   return outTag;
 }
 
+GMSH_API int gmsh::model::geo::addPolyline(const std::vector<int> &pointTags,
+                                         const int tag)
+{
+  if(!_isInitialized()) { throw -1; }
+  int outTag = tag;
+  if(!GModel::current()->getGEOInternals()->addLine(outTag, pointTags)) {
+    throw 1;
+  }
+  return outTag;
+}
+
 GMSH_API int
 gmsh::model::geo::addCompoundSpline(const std::vector<int> &curveTags,
                                     const int numIntervals, const int tag)

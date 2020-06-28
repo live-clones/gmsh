@@ -1536,6 +1536,15 @@ namespace gmsh { // Top-level functions
       GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
 
+      // gmsh::model::geo::addPolyline
+      //
+      // Add a polyline curve going through the points `pointTags'. If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Create a periodic curve if the first and last points are
+      // the same. Return the tag of the polyline curve.
+      GMSH_API int addPolyline(const std::vector<int> & pointTags,
+                               const int tag = -1);
+
       // gmsh::model::geo::addCompoundSpline
       //
       // Add a spline (Catmull-Rom) going through points sampling the curves in

@@ -2881,6 +2881,25 @@ function addBezier(pointTags, tag = -1)
 end
 
 """
+    gmsh.model.geo.addPolyline(pointTags, tag = -1)
+
+Add a polyline curve going through the points `pointTags`. If `tag` is positive,
+set the tag explicitly; otherwise a new tag is selected automatically. Create a
+periodic curve if the first and last points are the same. Return the tag of the
+polyline curve.
+
+Return an integer value.
+"""
+function addPolyline(pointTags, tag = -1)
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelGeoAddPolyline, gmsh.lib), Cint,
+          (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, pointTags), length(pointTags), tag, ierr)
+    ierr[] != 0 && error("gmshModelGeoAddPolyline returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
     gmsh.model.geo.addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
 
 Add a spline (Catmull-Rom) going through points sampling the curves in

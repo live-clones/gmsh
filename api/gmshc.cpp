@@ -1977,6 +1977,20 @@ GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n, const in
   return result_api_;
 }
 
+GMSH_API int gmshModelGeoAddPolyline(int * pointTags, size_t pointTags_n, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
+    result_api_ = gmsh::model::geo::addPolyline(api_pointTags_, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
 GMSH_API int gmshModelGeoAddCompoundSpline(int * curveTags, size_t curveTags_n, const int numIntervals, const int tag, int * ierr)
 {
   int result_api_ = 0;

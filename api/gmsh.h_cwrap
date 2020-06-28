@@ -2311,6 +2311,21 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
+      // Add a polyline curve going through the points `pointTags'. If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Create a periodic curve if the first and last points are
+      // the same. Return the tag of the polyline curve.
+      inline int addPolyline(const std::vector<int> & pointTags,
+                             const int tag = -1)
+      {
+        int ierr = 0;
+        int *api_pointTags_; size_t api_pointTags_n_; vector2ptr(pointTags, &api_pointTags_, &api_pointTags_n_);
+        int result_api_ = gmshModelGeoAddPolyline(api_pointTags_, api_pointTags_n_, tag, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_pointTags_);
+        return result_api_;
+      }
+
       // Add a spline (Catmull-Rom) going through points sampling the curves in
       // `curveTags'. The density of sampling points on each curve is governed by
       // `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a

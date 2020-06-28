@@ -3655,6 +3655,30 @@ class model:
             return api__result__
 
         @staticmethod
+        def addPolyline(pointTags, tag=-1):
+            """
+            gmsh.model.geo.addPolyline(pointTags, tag=-1)
+
+            Add a polyline curve going through the points `pointTags'. If `tag' is
+            positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Create a periodic curve if the first and last points are the
+            same. Return the tag of the polyline curve.
+
+            Return an integer value.
+            """
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
+            ierr = c_int()
+            api__result__ = lib.gmshModelGeoAddPolyline(
+                api_pointTags_, api_pointTags_n_,
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelGeoAddPolyline returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
         def addCompoundSpline(curveTags, numIntervals=5, tag=-1):
             """
             gmsh.model.geo.addCompoundSpline(curveTags, numIntervals=5, tag=-1)
