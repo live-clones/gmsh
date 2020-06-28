@@ -2395,6 +2395,21 @@ Return the tag of the Bezier curve.
 integer value
 @end table
 
+@item gmsh/model/geo/addPolyline
+Add a polyline curve going through the points @code{pointTags}. If @code{tag} is
+positive, set the tag explicitly; otherwise a new tag is selected automatically.
+Create a periodic curve if the first and last points are the same. Return the
+tag of the polyline curve.
+
+@table @asis
+@item Input:
+@code{pointTags}, @code{tag = -1}
+@item Output:
+-
+@item Return:
+integer value
+@end table
+
 @item gmsh/model/geo/addCompoundSpline
 Add a spline (Catmull-Rom) going through points sampling the curves in
 @code{curveTags}. The density of sampling points on each curve is governed by

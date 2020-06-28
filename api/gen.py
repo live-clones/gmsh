@@ -499,6 +499,9 @@ geo.add('addBSpline', doc, oint, ivectorint('pointTags'), iint('tag', '-1'))
 doc = '''Add a Bezier curve with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.  Return the tag of the Bezier curve.'''
 geo.add('addBezier', doc, oint, ivectorint('pointTags'), iint('tag', '-1'))
 
+doc = '''Add a polyline curve going through the points `pointTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Create a periodic curve if the first and last points are the same. Return the tag of the polyline curve.'''
+geo.add('addPolyline', doc, oint, ivectorint('pointTags'), iint('tag', '-1'))
+
 doc = '''Add a spline (Catmull-Rom) going through points sampling the curves in `curveTags'. The density of sampling points on each curve is governed by `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the spline.'''
 geo.add('addCompoundSpline', doc, oint, ivectorint('curveTags'), iint('numIntervals', '5'), iint('tag', '-1'))
 
