@@ -12,6 +12,7 @@
 #include "GFace.h"
 #include "MVertex.h"
 #include "MEdge.h"
+#include "MLine.h"
 #include "meshWinslow2d.h"
 #include "meshGFaceOptimize.h"
 #include "Field.h"
@@ -86,7 +87,7 @@ public:
   winslowStencil (MVertex *v,  const std::vector<MElement*> &_e) : elements (_e)
   {
     type = classOfStencil(_e);
-    if (type == 1 && (_e.size() == 4 || _e.size() == 3 || _e.size() == 5 || _e.size() == 6 || _e.size() == 7)){
+    if (type == 1 && _e.size() >= 3){
       stencil  = build_crown (v, _e);
       ptsStencil.resize(stencil.size());
       center = v;            
@@ -151,7 +152,7 @@ public:
   }
   
   double smooth (GEdge *ge){
-    return 0;
+    //    return 0;
     if (stencil.empty())return 0;
     SPoint3 p;    
     if (type == 1 && stencil.size() == 8){
@@ -307,6 +308,7 @@ int removeNodeWithTwoTriangles(GFace * gf, v2t_cont &adj) {
 
 int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
   //  return 0;
+  //  printf("coucou1\n");
   int nbDone=0;
   v2t_cont::iterator it = adj.begin();
   while(it != adj.end()) {
@@ -314,17 +316,17 @@ int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
     if (v->onWhat() == gf) {
       const std::vector<MElement *> e = it->second;
       if (e.size() == 6){
-	printf("coucou1 %lu\n",v->getNum());
+	//	printf("coucou1 %lu\n",v->getNum());
 	winslowStencil st (v, e);	
-	printf("coucou1 %lu %d\n",v->getNum(),st.type);
+	//	printf("coucou1 %lu %d\n",v->getNum(),st.type);
 	std::vector<MVertex *> crown = st.stencil;
-	printf("coucou1 %lu %lu\n",v->getNum(),crown.size());
+	//	printf("coucou1 %lu %lu\n",v->getNum(),crown.size());
 	int valences [12];
 	int n4 = 0;
 	int n3 = 0;
 	int index3[12];
 	for (int i=0;i<12;i++){
-	  printf("%d %lu \n",i,crown[i]->getNum());
+	  //	  printf("%d %lu \n",i,crown[i]->getNum());
 	  v2t_cont::iterator iti = adj.find(crown[i]);
 	  if (iti != adj.end()){
 	    valences[i] = iti->second.size();
@@ -332,7 +334,7 @@ int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
 	    if (valences[i] == 4) n4++;
 	  }
 	}
-	printf("coucou1 %lu %d %d\n",v->getNum(),n3,n4);
+	//	printf("coucou1 %lu %d %d\n",v->getNum(),n3,n4);
 	if (n3 + n4 == 12 && n3 < 3){
 	  int start = index3[0];
 	  double uv[2] = {0,0};
@@ -403,7 +405,7 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
 
   if (gf->triangles.size())return;
   Msg::Info ("Winslow Smoothing face %lu",gf->tag());
-  nIter = 200;
+  //  nIter = 200;
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
@@ -472,6 +474,10 @@ static std::vector<MVertex*> buildBoundary (std::set<MElement*> &_e){
   veds.insert(veds.begin(),eds.begin(),eds.end());
   std::vector<std::vector<MVertex *> > vsorted;
   SortEdgeConsecutive(veds, vsorted);
+  if (vsorted.empty()){
+    std::vector<MVertex *> empty;
+    return empty;
+  }
   
   return vsorted[0];
 }
@@ -544,12 +550,18 @@ static bool cavityMeshable (GFace *gf,
   bnd.resize(bnd.size() - 1);
   for (size_t i=0;i<bnd.size();i++){
     v2t_cont::iterator it = adj.find(bnd[i]);
+    if (it == adj.end()){
+      Msg::Warning("not in the adj list");
+      return false;
+    }
     int inside = 0;
     for (size_t j=0;j<it->second.size();j++){
       if (cavity.find(it->second[j]) != cavity.end()) inside ++;
     }
     if (inside == 1)corners.push_back(i);
   }
+
+  
   if (corners.size() == index && index == 3){
     int n0 = corners[1]-corners[0];
     int n1 = corners[2]-corners[1];
@@ -592,6 +604,7 @@ static bool cavityMeshable (GFace *gf,
     if ((n0 == n2 && abs(n1-n3) == 2) ||
 	(n1 == n3 && abs(n0-n2) == 2)){
       if (nb5 != 1 || nb3 != 1){
+	return false;// FIXME
 	return true;
       }
       return false;
@@ -654,10 +667,12 @@ static bool buildCavity (GFace *gf,
   bnd.clear();
   cavity.clear();
   v2t_cont::iterator it = adj.find(v);
+  
   cavity.insert(it->second.begin(), it->second.end());
   int iter = 0;
   while (iter++ < MAXITER){    
     bnd = buildBoundary (cavity);
+    if (bnd.empty())break;
     bool allCornersGood = true;
 
     for (size_t	i=0; i<bnd.size();i++){
@@ -665,10 +680,11 @@ static bool buildCavity (GFace *gf,
       if ((bnd[i]->onWhat()->dim() == 2 && itvv->second.size() != 4) ||
 	  (bnd[i]->onWhat()->dim() == 1 && itvv->second.size() != 2) ||
 	  (bnd[i]->onWhat()->dim() == 0 && itvv->second.size() != 1)) allCornersGood = false;
-    }    
+    }
     //    if (v->getNum() == 13308)printf("iter %d bnd size %lu %d\n",iter,bnd.size(),allCornersGood);
     //    if (allCornersGood)
     allCornersGood = removeConcaveCorners (adj,bnd,cavity);
+    if (bnd.empty())return false;
 
     int ns;
     *theSing = countSing (cavity, sing, ns);    
@@ -813,7 +829,7 @@ static int addAdjacentDipoles (GFace *gf,
   bnd = buildBoundary (cavity);
   int ITER = 0;
   while (!removeConcaveCorners (adj,bnd,cavity)){
-    if (ITER++ >20)break;
+    if (ITER++ >100)break;
   }
   if (cavityMeshable(gf,adj,bnd,cavity, newSings[sing])){
     bnd.resize(bnd.size() -1);
@@ -1575,7 +1591,6 @@ static void bunin (GFace * gf,
       MVertex *theSing = NULL;
       bool success = buildCavity (gf,v,adj, sing,
 				  bnd, cavity, index,&theSing, niter, singOnly);
-      //      printf("cpouc %lu %d\n",bnd.size(),success);
       if (success){	
 	// periodic
 	bnd.resize(bnd.size() -1);
@@ -1595,7 +1610,6 @@ static void bunin (GFace * gf,
       }
     }
   }
-
   {
     nbSing = 0;
     it = adj.begin();
@@ -1740,8 +1754,7 @@ void  getSingularitiesFromFile (const std::string &fn,
 
 
 void meshWinslow2d (GModel * gm, int nIter, Field *f) {
-
-
+  
   FieldManager *fields = gm->getFields();
   Field *cross_field = NULL;
   if(fields->getBackgroundField() > 0) {        
@@ -1761,10 +1774,28 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
   }
 
 
+  
   std::vector<GFace *> temp;
   temp.insert(temp.begin(), gm->firstFace(), gm->lastFace());
   std::vector<GEdge *> tempe;
   tempe.insert(tempe.begin(), gm->firstEdge(), gm->lastEdge());
+
+
+  // reclassify all seams on the face (all the rest is parameter space "free")
+  if (0){
+    for (size_t i=0;i<temp.size();i++){
+      std::vector<GEdge*> ed = 	temp[i]->edges();
+      for (size_t j=0;j<ed.size();j++){
+	if (ed[j]->isSeam(temp[i])){
+	  for (size_t k=0;k<ed[j]->lines.size();k++){
+	    ed[j]->lines[k]->getVertex(0)->setEntity(temp[i]);
+	    ed[j]->lines[k]->getVertex(1)->setEntity(temp[i]);
+	  }
+	}
+      }
+    }
+  }
+
   
   Msg::Info ("Winslow Smoothing the mesh");
 
@@ -1778,16 +1809,16 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
     //    findPhysicalGroupsForSingularities(gm,s);
     for (size_t i=0;i<temp.size();i++){
       bunin (temp[i], s, newSings, cross_field, 5, true) ;
-      meshWinslow2d (temp[i],nIter/4, f, true);
+      //      meshWinslow2d (temp[i],nIter/4, f, true);
     }
     //    s.clear();
     //    getSingularitiesFromFile (gm->getName()+"_singularities.txt", temp, s);
     for (size_t i=0;i<temp.size();i++){
       bunin (temp[i], s, newSings, cross_field, 5, false) ;
     }
-    for (size_t i=0;i<temp.size();i++){
-      bunin (temp[i], s, newSings, cross_field, 7, false) ;
-    }
+    //    for (size_t i=0;i<temp.size();i++){
+    //      bunin (temp[i], s, newSings, cross_field, 7, false) ;
+    //    }
   }
   gm->writeMSH("after_bunin.msh", 4.0, false, true);
   Msg::Info ("Gmsh Will merge some singularities : %lu true ones\n",s.size());
@@ -1827,12 +1858,12 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
 
 
   
-  Msg::Info("Merging singularities : %lu true isolated singularities found in the domain",s.size());
+  //  Msg::Info("Merging singularities : %lu true isolated singularities found in the domain",s.size());
   
-  for (size_t i=0;i<temp.size();i++){
-    for (int j=0;j<10;j++)
-      mergeSingularities (temp[i], s, 3, j);
-  }
+  //  for (size_t i=0;i<temp.size();i++){
+  //    for (int j=0;j<10;j++)
+  //      mergeSingularities (temp[i], s, 3, j);
+  //  }
   
   for (int NIT = 0;NIT<4;NIT++){  
     for (size_t i=0;i<tempe.size();i++)

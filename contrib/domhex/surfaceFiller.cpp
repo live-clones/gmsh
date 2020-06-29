@@ -102,6 +102,8 @@ bool compute4neighbors(
   }
   double rhs2[2] = {dot(t2, s1)*L, dot(t2, s2)*L}, covar2[2];
   if(!sys2x2(metric, rhs2, covar2)) {
+    Msg::Error("SINGULAR AT %g %g",midpoint.x(),midpoint.y());
+    return false;
     covar2[0] = 1.0;
     covar2[1] = 0.0;
     singular = true;
@@ -478,6 +480,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	fifo.push(sp);
 	double _min[2], _max[2];
 	sp->minmax(_min, _max);
+	printf("%g %g -- %g %g\n", _min[0], _min[1], _max[0], _max[1]);
 	rtree.Insert(_min, _max, sp);
       }
       else{
