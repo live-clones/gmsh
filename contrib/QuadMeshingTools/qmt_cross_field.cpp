@@ -1021,7 +1021,8 @@ namespace QMT {
             }
           }
           // info("            |   norm, min = {}, max = {}", nmi, nma);
-          if (nma > 1. + EPS) {
+          const double EPS_NORM = 1.e-2;
+          if (nma > 1. + EPS_NORM) {
             steps[iter] /= 10;
             dt = steps[iter];
             iter -= 1;
@@ -1033,7 +1034,7 @@ namespace QMT {
             FC(i,norms.size(),!dirichletEdge[i]) {
               linf = std::max(linf,norms[i]-prevNorms[i]);
             }
-            info("           |   system solved, norm diff max: {}", linf);
+            info("           |   system solved, norm diff max: {}, norm range: {} - {}", linf, nmi, nma);
             if (linf < 1.e-3) break;
           } else {
             info("           |   system solved");
