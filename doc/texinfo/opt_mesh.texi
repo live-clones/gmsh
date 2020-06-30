@@ -181,6 +181,11 @@ Display mesh hexahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderCheck
+Check high-order quality after generation@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.HighOrderIterMax
 Maximum number of iterations in high-order optimization pass@*
 Default value: @code{100}@*

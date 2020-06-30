@@ -6077,6 +6077,12 @@ double opt_mesh_order(OPT_ARGS_NUM)
   return CTX::instance()->mesh.order;
 }
 
+double opt_mesh_ho_check(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoCheck = (int)val;
+  return CTX::instance()->mesh.hoCheck;
+}
+
 double opt_mesh_ho_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.hoOptimize = (int)val;

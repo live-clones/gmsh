@@ -1105,6 +1105,13 @@ StringXNumber MeshOptions_Number[] = {
     "38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)" },
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
+  { F|O, "HighOrderCheck", opt_mesh_ho_check,
+#if defined(WIN32)
+    0, // unresolved issues on Windows 10 (#649, #734, #829, #901)
+#else
+    1,
+#endif
+    "Check high-order quality after generation"},
   { F|O, "HighOrderIterMax", opt_mesh_ho_iter_max, 100,
     "Maximum number of iterations in high-order optimization pass"},
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
