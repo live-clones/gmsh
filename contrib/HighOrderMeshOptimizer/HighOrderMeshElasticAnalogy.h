@@ -63,7 +63,8 @@ private:
                        elasticityTerm &El);
   void _computeMetricInfo(GFace *gf, MElement *e, fullMatrix<double> &J,
                           fullMatrix<double> &JT, fullVector<double> &D);
-  void _parallelMultUnassMatVect(std::vector<MElement *> &e, std::vector<fullMatrix<double>> &matElem, fullVector<double> &v, fullVector<double> &res);
+  void _parallelMultUnassMatVect(std::vector<MElement *> &e, std::vector<fullMatrix<double>> &matElem, fullVector<double> &v, fullVector<double> &res, std::vector<fullVector<double>> &redAX, std::vector<fullVector<double>> &vectElemLoc, std::vector<fullVector<double>> &resMultLoc);
+  void _parallelMultUnassMatVectV2(std::vector<MElement *> &e, fullVector<double> &matElemFlat, fullVector<double> &vScattered, fullVector<double> &resAssembled);
   double _applyIncrementalDisplacement(double max_incr,
                                        std::vector<MElement *> &v, bool mixed,
                                        double thres, char *meshName,
