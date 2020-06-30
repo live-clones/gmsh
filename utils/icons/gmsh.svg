@@ -16,7 +16,7 @@
    viewBox="0 0 1365.3333 1365.3333"
    sodipodi:docname="gmsh.svg"
    inkscape:version="1.0 (4035a4f, 2020-05-01)"
-   inkscape:export-filename="/Users/geuzaine/src/gmsh/utils/icons/gmsh.png"
+   inkscape:export-filename="/Users/geuzaine/src/gmsh/utils/icons/fwi.png"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96"
    inkscape:label="Standard Gmsh logo">
@@ -35,8 +35,20 @@
   <defs
      id="defs3946">
     <linearGradient
+       id="FWI_right"
+       inkscape:collect="always">
+      <stop
+         id="stop949"
+         offset="0"
+         style="stop-color:#803300;stop-opacity:1" />
+      <stop
+         id="stop951"
+         offset="1"
+         style="stop-color:#ff7f2a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient
        inkscape:collect="always"
-       id="linearGradient941">
+       id="PRO_right-0">
       <stop
          style="stop-color:#550000;stop-opacity:1"
          offset="0"
@@ -246,7 +258,7 @@
        x1="1078.3035"
        gradientUnits="userSpaceOnUse"
        id="linearGradient929"
-       xlink:href="#linearGradient941"
+       xlink:href="#PRO_right-0"
        inkscape:collect="always" />
     <linearGradient
        y2="1114.7246"
@@ -258,6 +270,15 @@
        id="linearGradient931"
        xlink:href="#Gmsh_bottom"
        inkscape:collect="always" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#FWI_right"
+       id="linearGradient119"
+       gradientUnits="userSpaceOnUse"
+       x1="1078.3035"
+       y1="1022.6629"
+       x2="615.56616"
+       y2="143.02209" />
   </defs>
   <sodipodi:namedview
      pagecolor="#ffffff"
@@ -268,17 +289,17 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1548"
+     inkscape:window-width="1527"
      inkscape:window-height="1005"
      id="namedview3944"
      showgrid="false"
      inkscape:zoom="0.39368371"
-     inkscape:cx="1133.9187"
+     inkscape:cx="928.16978"
      inkscape:cy="793.32962"
      inkscape:window-x="50"
      inkscape:window-y="23"
      inkscape:window-maximized="0"
-     inkscape:current-layer="svg3942"
+     inkscape:current-layer="g7632"
      inkscape:document-rotation="0" />
   <g
      inkscape:groupmode="layer"
@@ -345,6 +366,57 @@
            x="492.69046"
            id="tspan7626"
            sodipodi:role="line">FEM</tspan></text>
+    </g>
+  </g>
+  <g
+     style="display:none"
+     inkscape:label="Gmsh-FWI"
+     id="g117"
+     inkscape:groupmode="layer">
+    <g
+       inkscape:label="(null) copy"
+       id="g109"
+       transform="matrix(0.88396032,0,0,0.88396032,79.183481,110.34907)">
+      <path
+         style="fill:#000005;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter5509)"
+         d="M 673.62708,115.51411 98.44067,1213.322 1247.4576,1213.1864 Z"
+         id="path101"
+         inkscape:connector-curvature="0"
+         transform="matrix(0.72159828,0,0,0.72159828,196.23555,60.993139)" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path103"
+         d="m 682.32369,145.79111 0.0591,684.51755 414.01601,107.56086 z"
+         style="fill:url(#linearGradient119);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.722589;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccc"
+         inkscape:connector-curvature="0"
+         id="path105"
+         d="M 682.32369,145.79111 267.27016,937.9674 682.38279,830.30866 Z"
+         style="fill:#f7f7f7;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.721598px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccc"
+         inkscape:connector-curvature="0"
+         id="path107"
+         d="m 1096.3988,937.86952 -829.12864,0.0982 415.11263,-107.65874 z"
+         style="fill:url(#linearGradient7590);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.721598px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="g115"
+       inkscape:label="FWI text"
+       style="display:inline">
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;display:inline;fill:#d45500;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="510.69043"
+         y="1204.7993"
+         id="text113"><tspan
+           sodipodi:role="line"
+           id="tspan111"
+           x="510.69043"
+           y="1204.7993"
+           style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:192px;font-family:'Lucida Grande';-inkscape-font-specification:'Lucida Grande Semi-Bold';fill:#d45500;fill-opacity:1">FWI</tspan></text>
     </g>
   </g>
   <g
