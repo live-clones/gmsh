@@ -900,11 +900,10 @@ GMSH_API void gmsh::model::reparametrizeOnSurface(
   }
 }
 
-GMSH_API void
-gmsh::model::getClosestPoint(const int dim, const int tag,
-                             const std::vector<double> &coord,
-                             std::vector<double> &closestCoord,
-                             std::vector<double> &parametricCoord)
+GMSH_API void gmsh::model::getClosestPoint(const int dim, const int tag,
+                                           const std::vector<double> &coord,
+                                           std::vector<double> &closestCoord,
+                                           std::vector<double> &parametricCoord)
 {
   if(!_isInitialized()) { throw -1; }
   closestCoord.clear();
@@ -2261,8 +2260,7 @@ GMSH_API void gmsh::model::mesh::getJacobian(
   coord.resize(3 * numPoints);
   for(int k = 0; k < numPoints; k++) {
     double value[1256][3];
-    e->getGradShapeFunctions(localCoord[3 * k],
-                             localCoord[3 * k + 1],
+    e->getGradShapeFunctions(localCoord[3 * k], localCoord[3 * k + 1],
                              localCoord[3 * k + 2], value);
     gsf[k].resize(e->getNumShapeFunctions());
     for(std::size_t l = 0; l < e->getNumShapeFunctions(); l++) {
@@ -2272,8 +2270,8 @@ GMSH_API void gmsh::model::mesh::getJacobian(
     }
   }
   for(int k = 0; k < numPoints; k++) {
-    e->pnt(localCoord[3 * k], localCoord[3 * k + 1],
-           localCoord[3 * k + 2], &coord[3 * k]);
+    e->pnt(localCoord[3 * k], localCoord[3 * k + 1], localCoord[3 * k + 2],
+           &coord[3 * k]);
     determinants[k] = e->getJacobian(gsf[k], &jacobians[9 * k]);
   }
 }
@@ -2376,7 +2374,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       case TYPE_PNT: {
         basis = new HierarchicalBasisH1Point();
       } break;
-      default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
+      default:
+        Msg::Error("Unknown familyType %i for basis function type %s.",
+                   familyType, fsName.c_str());
+        throw 2;
       }
     }
     else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
@@ -2399,7 +2400,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       case TYPE_LIN: {
         basis = new HierarchicalBasisHcurlLine(fsOrder);
       } break;
-      default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
+      default:
+        Msg::Error("Unknown familyType %i for basis function type %s.",
+                   familyType, fsName.c_str());
+        throw 2;
       }
     }
     else {
@@ -2479,7 +2483,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     case TYPE_PNT: {
       element = new MPoint(vertices);
     } break;
-    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s.",
+                 familyType, fsName.c_str());
+      throw 2;
     }
 
     switch(numComponents) {
@@ -3082,7 +3089,10 @@ GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
   case TYPE_LIN: {
     basis = new HierarchicalBasisHcurlLine(basisOrder);
   } break;
-  default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
+  default:
+    Msg::Error("Unknown familyType %i for basis function type %s.", familyType,
+               fsName.c_str());
+    throw 2;
   }
   // compute the number of Element :
   std::size_t numElements = 0;
@@ -3157,7 +3167,10 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
     case TYPE_PNT: {
       basis = new HierarchicalBasisH1Point();
     } break;
-    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s.",
+                 familyType, fsName.c_str());
+      throw 2;
     }
   }
   else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
@@ -3180,7 +3193,10 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(order);
     } break;
-    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s.",
+                 familyType, fsName.c_str());
+      throw 2;
     }
   }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
@@ -3360,9 +3376,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
 }
 
 GMSH_API void gmsh::model::mesh::getKeysForElement(
-  const std::size_t elementTag, const std::string & functionSpaceType,
-  gmsh::vectorpair & keys, std::vector<double> & coord,
-  const bool generateCoord)
+  const std::size_t elementTag, const std::string &functionSpaceType,
+  gmsh::vectorpair &keys, std::vector<double> &coord, const bool generateCoord)
 {
   if(!_isInitialized()) { throw -1; }
   coord.clear();
@@ -3402,7 +3417,10 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     case TYPE_PNT: {
       basis = new HierarchicalBasisH1Point();
     } break;
-    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s.",
+                 familyType, fsName.c_str());
+      throw 2;
     }
   }
   else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
@@ -3425,15 +3443,16 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(order);
     } break;
-    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s.",
+                 familyType, fsName.c_str());
+      throw 2;
     }
   }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
           fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     keys.reserve(e->getNumVertices());
-    if(generateCoord) {
-      coord.reserve(3 * e->getNumVertices());
-    }
+    if(generateCoord) { coord.reserve(3 * e->getNumVertices()); }
     for(size_t k = 0; k < e->getNumVertices(); ++k) {
       keys.push_back(std::pair<int, std::size_t>(0, e->getVertex(k)->getNum()));
       if(generateCoord) {
@@ -3482,10 +3501,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   delete basis;
 
   keys.reserve(numDofsPerElement);
-  if(generateCoord) {
-    coord.reserve(3 * numDofsPerElement);
-  }
-    
+  if(generateCoord) { coord.reserve(3 * numDofsPerElement); }
+
   // vertices
   for(int k = 0; k < vSize; k++) {
     keys.push_back(std::pair<int, std::size_t>(0, e->getVertex(k)->getNum()));
@@ -3526,8 +3543,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       MFace face = e->getFaceSolin(jj);
       double coordFace[3] = {0., 0., 0.};
       if(generateCoord) {
-        for(std::size_t indexV = 0; indexV < face.getNumVertices();
-            ++indexV) {
+        for(std::size_t indexV = 0; indexV < face.getNumVertices(); ++indexV) {
           coordFace[0] += face.getVertex(indexV)->x();
           coordFace[1] += face.getVertex(indexV)->y();
           coordFace[2] += face.getVertex(indexV)->z();
@@ -3610,7 +3626,10 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
     case TYPE_PNT: {
       basis = new HierarchicalBasisH1Point();
     } break;
-    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s.",
+                 familyType, fsName.c_str());
+      throw 2;
     }
     int vSize = basis->getnVertexFunction();
     int bSize = basis->getnBubbleFunction();
@@ -3641,7 +3660,10 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(basisOrder);
     } break;
-    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 2;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s.",
+                 familyType, fsName.c_str());
+      throw 2;
     }
     int vSize = basis->getnVertexFunction();
     int bSize = basis->getnBubbleFunction();
@@ -3710,7 +3732,10 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     case TYPE_PNT: {
       basis = new HierarchicalBasisH1Point();
     } break;
-    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 3;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s.",
+                 familyType, fsName.c_str());
+      throw 3;
     }
   }
   else if(fsName == "HcurlLegendre" || fsName == "CurlHcurlLegendre") {
@@ -3733,7 +3758,10 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(basisOrder);
     } break;
-    default: Msg::Error("Unknown familyType %i for basis function type %s.", familyType, fsName.c_str()); throw 3;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s.",
+                 familyType, fsName.c_str());
+      throw 3;
     }
   }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
@@ -4106,20 +4134,28 @@ gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
                                        const double coef)
 {
   if(!_isInitialized()) { throw -1; }
-  GEdge *ge = GModel::current()->getEdgeByTag(tag);
-  if(!ge) {
-    Msg::Error("%s does not exist", _getEntityName(1, tag).c_str());
-    throw 2;
+  // for compatibility with geo files, try both tag and -tag
+  for(int sig = -1; sig <= 1; sig += 2) {
+    int t = sig * tag;
+    GEdge *ge = GModel::current()->getEdgeByTag(t);
+    if(ge) {
+      ge->meshAttributes.method = MESH_TRANSFINITE;
+      ge->meshAttributes.nbPointsTransfinite = numNodes;
+      ge->meshAttributes.typeTransfinite =
+        (meshType == "Progression" || meshType == "Power") ?
+          1 :
+          (meshType == "Bump") ? 2 : 1;
+      ge->meshAttributes.coeffTransfinite = std::abs(coef);
+      // in .geo file we use a negative tag to do this trick; it's a bad idea
+      if(coef < 0) ge->meshAttributes.typeTransfinite *= -1;
+    }
+    else {
+      if(t > 0) {
+        Msg::Error("%s does not exist", _getEntityName(1, t).c_str());
+        throw 2;
+      }
+    }
   }
-  ge->meshAttributes.method = MESH_TRANSFINITE;
-  ge->meshAttributes.nbPointsTransfinite = numNodes;
-  ge->meshAttributes.typeTransfinite =
-    (meshType == "Progression" || meshType == "Power") ?
-      1 :
-      (meshType == "Bump") ? 2 : 1;
-  ge->meshAttributes.coeffTransfinite = std::abs(coef);
-  // in .geo file we use a negative tag to do this trick; it's a bad idea
-  if(coef < 0) ge->meshAttributes.typeTransfinite *= -1;
 }
 
 GMSH_API void
@@ -4783,7 +4819,7 @@ GMSH_API int gmsh::model::geo::addBezier(const std::vector<int> &pointTags,
 }
 
 GMSH_API int gmsh::model::geo::addPolyline(const std::vector<int> &pointTags,
-                                         const int tag)
+                                           const int tag)
 {
   if(!_isInitialized()) { throw -1; }
   int outTag = tag;
@@ -5070,13 +5106,17 @@ gmsh::model::geo::mesh::setTransfiniteCurve(const int tag, const int nPoints,
                                             const double coef)
 {
   if(!_isInitialized()) { throw -1; }
-  int t = (meshType == "Progression" || meshType == "Power") ?
-            1 :
-            (meshType == "Bump") ? 2 : 1;
+  int type = (meshType == "Progression" || meshType == "Power") ?
+               1 :
+               (meshType == "Bump") ? 2 : 1;
   double c = std::abs(coef);
   // in .geo file we use a negative tag to do this trick; it's a bad idea
-  if(coef < 0) t = -t;
-  GModel::current()->getGEOInternals()->setTransfiniteLine(tag, nPoints, t, c);
+  if(coef < 0) type = -type;
+
+  // for compatibility with geo files, try both tag and -tag
+  for(int sig = -1; sig <= 1; sig += 2)
+    GModel::current()->getGEOInternals()->setTransfiniteLine(sig * tag, nPoints,
+                                                             type, c);
 }
 
 GMSH_API void gmsh::model::geo::mesh::setTransfiniteSurface(
@@ -5363,9 +5403,9 @@ gmsh::model::occ::addSurfaceFilling(const int wireTag, const int tag,
   return outTag;
 }
 
-GMSH_API int
-gmsh::model::occ::addBSplineFilling(const int wireTag, const int tag,
-                                    const std::string &type)
+GMSH_API int gmsh::model::occ::addBSplineFilling(const int wireTag,
+                                                 const int tag,
+                                                 const std::string &type)
 {
   if(!_isInitialized()) { throw -1; }
   _createOcc();
@@ -5377,9 +5417,9 @@ gmsh::model::occ::addBSplineFilling(const int wireTag, const int tag,
   return outTag;
 }
 
-GMSH_API int
-gmsh::model::occ::addBezierFilling(const int wireTag, const int tag,
-                                   const std::string &type)
+GMSH_API int gmsh::model::occ::addBezierFilling(const int wireTag,
+                                                const int tag,
+                                                const std::string &type)
 {
   if(!_isInitialized()) { throw -1; }
   _createOcc();
@@ -5395,7 +5435,8 @@ GMSH_API int gmsh::model::occ::addBSplineSurface(
   const std::vector<int> &pointTags, const int numPointsU, const int tag,
   const int degreeU, const int degreeV, const std::vector<double> &weights,
   const std::vector<double> &knotsU, const std::vector<double> &knotsV,
-  const std::vector<int> &multiplicitiesU, const std::vector<int> &multiplicitiesV)
+  const std::vector<int> &multiplicitiesU,
+  const std::vector<int> &multiplicitiesV)
 {
   if(!_isInitialized()) { throw -1; }
   int outTag = tag;
@@ -5407,13 +5448,14 @@ GMSH_API int gmsh::model::occ::addBSplineSurface(
   return outTag;
 }
 
-GMSH_API int gmsh::model::occ::addBezierSurface(
-  const std::vector<int> &pointTags, const int numPointsU, const int tag)
+GMSH_API int
+gmsh::model::occ::addBezierSurface(const std::vector<int> &pointTags,
+                                   const int numPointsU, const int tag)
 {
   if(!_isInitialized()) { throw -1; }
   int outTag = tag;
-  if(!GModel::current()->getOCCInternals()->addBezierSurface(
-       outTag, pointTags, numPointsU)) {
+  if(!GModel::current()->getOCCInternals()->addBezierSurface(outTag, pointTags,
+                                                             numPointsU)) {
     throw 1;
   }
   return outTag;
