@@ -26,10 +26,15 @@
 #if (defined (__STD_VERSION__) && (__STD_VERSION__ >= 199901L)) \
  || (defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)) // nextafter only from C99
 #include <math.h>
-#define nextbefore(x) nextafter(x,0.0);
+static inline double nextbeforef(double x) {
+  return nextafter(x,0.0);
+}
 #else
-#include <float.h>
-#define nextbefore(x) (x*(1.0-DBL_EPSILON))
+static inline double nextbeforef(double x) {
+  union {double f; int64_t d; } v = {x};
+  v.d--;
+  return v.f;
+}
 #endif
 
 // fill zorder and return first 3 bits
@@ -78,7 +83,7 @@ static inline uint64_t Zorder(uint32_t xyz[]) {
  * shift[i] must be between 0 and 1
  */
 // TODO: special function for AVX512: it can be super optimized !!! :-)
-HXTStatus hxtMoore(HXTBbox* bbox, HXTVertex* vertices, const uint32_t n, const double* shift)
+HXTStatus hxtMoore(HXTBbox* bbox, HXTVertex* vertices, const uint32_t n, const double* mid01)
 {
 HXT_ASSERT(vertices!=NULL);
 HXT_ASSERT(bbox!=NULL);
@@ -110,37 +115,50 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
 
   static const double hxtDeclareAligned defaultShift[3] = {0.5,0.5,0.5};
 
-  if(shift==NULL)
-    shift=defaultShift;
-
-/* this was a beautifull check of the parameters... */
-
-  double hxtDeclareAligned32 div1[4];
-  double hxtDeclareAligned32 div2[4];
-  double hxtDeclareAligned32 mean[4];
-  double hxtDeclareAligned32 min1[4];
-  double hxtDeclareAligned32 min2[4];
+  if(mid01==NULL)
+    mid01=defaultShift;
 
   const uint32_t nmax = 0x200000; // 1<<21
 
-  for (unsigned j=0; j<3; j++) {
-    double diff = bbox->max[j]-bbox->min[j];
+  double hxtDeclareAligned32 middle[4];
+  double hxtDeclareAligned32 f0[4];
+  double hxtDeclareAligned32 sub0[4];
+  double hxtDeclareAligned32 f1[4];
+  double hxtDeclareAligned32 sub1[4];
 
-    div1[j] = nextbefore(nmax/(2.0*shift[j]*diff));
-    div2[j] = nextbefore(nmax/(2.0*(1.0-shift[j])*diff));
-
-    min1[j] = -bbox->min[j]*div1[j];
-    min2[j] = -(bbox->max[j]-2.0*(1.0-shift[j])*diff)*div2[j];
-
-    mean[j] = bbox->min[j] + shift[j]*diff;
+  double widthMax = 0.0;
+  for(int i=0; i<3; i++) {
+    double width = bbox->max[i] - bbox->min[i];
+    if(width > widthMax)
+      widthMax = width;
   }
 
-#if defined(__FMA__) && defined(__AVX2__)
-  __m256d mean_v = _mm256_load_pd(mean);
-  __m256d min1_v = _mm256_load_pd(min1);
-  __m256d min2_v = _mm256_load_pd(min2);
-  __m256d div1_v = _mm256_load_pd(div1);
-  __m256d div2_v = _mm256_load_pd(div2);
+  for(int i=0; i<3; i++) {
+    double xmin;
+    double xmax;
+    if(widthMax > 1.5*(bbox->max[i] - bbox->min[i])) { // we want the bbox to stay relatively cubic
+      if(mid01[i]>=0.5) {
+        xmin = bbox->min[i];
+        xmax = bbox->min[i] + widthMax;
+      }
+      else {
+        xmax = bbox->max[i];
+        xmin = bbox->max[i] - widthMax;
+      }
+    }
+    else {
+      xmin = bbox->min[i];
+      xmax = bbox->max[i];
+    }
+
+    middle[i] = mid01[i] * (xmax - xmin) + xmin;
+    f0[i] = (nmax/2) / (middle[i] - xmin);
+    sub0[i] = xmin * f0[i];
+    f1[i] = (nmax/2) / (xmax - middle[i]);
+    sub1[i] = middle[i] * f1[i] - (nmax/2);
+    while((uint32_t) (xmax * f1[i] - sub1[i]) >= nmax)
+      f1[i] = nextbeforef(f1[i]);
+  }
 
   #pragma omp parallel
   {
@@ -149,15 +167,16 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
     {
       uint64_t hxtDeclareAligned zorder[32];
 
+      #pragma omp simd
       for (int j=0; j<32; j++) {
-        __m256d coord = _mm256_maskload_pd(vertices[32*i+j].coord, _mm256_set_epi64x(0, UINT64_MAX, UINT64_MAX, UINT64_MAX));
-        __m256d  mask = _mm256_cmp_pd(coord, mean_v, _CMP_GE_OS);
-        __m256d  v1 = _mm256_fmadd_pd(coord, div1_v, min1_v);
-        __m256d  v2 = _mm256_fmadd_pd(coord, div2_v, min2_v);
-        __m128i xyz_v = _mm256_cvtpd_epi32(_mm256_blendv_pd(v1, v2, mask));
-
-        uint32_t xyz[4];
-        _mm_store_si128((__m128i*) xyz, xyz_v);
+        uint32_t xyz[3];
+        for(int k=0; k<3; k++) {
+          double v = vertices[32*i+j].coord[k];
+          if(v < middle[k])
+            xyz[k] = v *f0[k] - sub0[k];
+          else
+            xyz[k] = v *f1[k] - sub1[k];
+        }
 
         zorder[j] = Zorder(xyz);
       }
@@ -209,14 +228,16 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
     for (uint32_t i=n/32*32; i<n; i++) {
       uint64_t zorder;
       {
-        __m256d coord = _mm256_maskload_pd(vertices[i].coord, _mm256_set_epi64x(0, UINT64_MAX, UINT64_MAX, UINT64_MAX));
-        __m256d  mask = _mm256_cmp_pd(coord, mean_v, _CMP_GE_OS);
-        __m256d  v1 = _mm256_fmadd_pd(coord, div1_v, min1_v);
-        __m256d  v2 = _mm256_fmadd_pd(coord, div2_v, min2_v);
-        __m128i xyz_v = _mm256_cvtpd_epi32(_mm256_blendv_pd(v1, v2, mask));
+        uint32_t xyz[3];
+        for(int k=0; k<3; k++) {
+          double v = vertices[i].coord[k];
+          if(v < middle[k])
+            xyz[k] = v *f0[k] - sub0[k];
+          else
+            xyz[k] = v *f1[k] - sub1[k];
+        }
 
-        uint32_t xyz[4];
-        _mm_store_si128((__m128i*) xyz, xyz_v);
+        xyz[2]/=4;
 
         zorder = Zorder(xyz);
       }
@@ -237,69 +258,6 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
       vertices[i].padding.hilbertDist = out;
     }
   }
-#else
-
-  #pragma omp parallel for simd
-  for (uint32_t i=0; i<n; i++)
-  {
-    uint64_t zorder;
-    uint16_t transform=0;
-    uint64_t out=0;
-    {
-      // if(vx<bbox->min[0] || vx>bbox->max[0] ||
-      //    vy<bbox->min[1] || vy>bbox->max[1] ||
-      //    vz<bbox->min[2] || vz>bbox->max[2]) {
-      //   /* if a tetrahedron contain a vertex that is outside the bounding box,
-      //      it will not be refined and will never be in any cavity.
-      //      The vertices outside the bounding box get the value UINT64_MAX as hilbert index
-      //   */
-      //   vertices[i].padding.hilbertDist = UINT64_MAX;
-      //   continue;
-      // }
-
-      double vx = vertices[i].coord[0];
-      double vy = vertices[i].coord[1];
-      double vz = vertices[i].coord[2];
-      if(vx < mean[0]){
-        vx = vx*div1[0]+min1[0];
-      }
-      else{
-        vx = vx*div2[0]+min2[0];
-      }
-      if(vy < mean[1]){
-        vy = vy*div1[1]+min1[1];
-      }
-      else{
-        vy = vy*div2[1]+min2[1];
-      }
-      if(vz < mean[2]){
-        vz = vz*div1[2]+min1[2];
-      }
-      else{
-        vz = vz*div2[2]+min2[2];
-      }
-
-      uint32_t xyz[4];
-      xyz[0] = vx;
-      xyz[1] = vy;
-      xyz[2] = vz;
-
-      zorder = Zorder(xyz);
-    }
-
-    transform = zorder>>54;
-    transform = moore_hilbert2[transform];
-    out = transform & 0x1FF;
-
-    for (int iter=45; iter>=0; iter-=9) {
-      transform = (transform & ~0x1FF) | (zorder>>iter & 0x1FF);
-      transform = hilbert3[transform];
-      out = (out << 9) | (transform & 0x1FF);
-    }
-        
-    vertices[i].padding.hilbertDist = out;
-  }
-#endif
 
   return HXT_STATUS_OK;
 }
@@ -381,7 +339,3 @@ HXTStatus hxtNodeInfoShuffle(HXTNodeInfo* const __restrict__ nodeInfo, const uin
   HXTSORT32_UNIFORM(HXTNodeInfo, nodeInfo, n, UINT32_MAX, getNodeInfoDist32, NULL);
   return HXT_STATUS_OK;
 }
-
-
-
-
