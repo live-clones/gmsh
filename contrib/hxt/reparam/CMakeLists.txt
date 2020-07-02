@@ -13,7 +13,7 @@ endif()
 # Options
 #################################################################################
 option(HXT_ENABLE_PETSC "USE PETSc as linear solver (requires petsc compile without mpi and for real numbers)" ON)
-option(HXT_REPARAM_OBJECT_ONLY "Do not create hxt_reparam library" OFF)
+option(HXT_REPARAM_OBJECT_ONLY "Do not create hxt_reparam library" ON)
 
 
 #################################################################################

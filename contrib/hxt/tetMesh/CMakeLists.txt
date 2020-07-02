@@ -12,7 +12,7 @@ endif()
 #################################################################################
 # Options
 #################################################################################
-option(HXT_TETMESH_OBJECT_ONLY "Do not create hxt_tetMesh library" OFF)
+option(HXT_TETMESH_OBJECT_ONLY "Do not create hxt_tetMesh library" ON)
 option(HXT_TETMESH_BUILD_CLI "build hxt_tetMesh CLI tools" ON)
 
 
@@ -71,7 +71,6 @@ target_link_libraries(hxt_tetMesh
                       PUBLIC hxt_core
                       PRIVATE hxt_predicates hxt_tetBR m)
 target_compile_features(hxt_tetMesh PRIVATE c_std_99)
-
 
 
 #################################################################################
