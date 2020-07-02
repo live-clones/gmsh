@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits>
 #include "GmshConfig.h"
 #include "GmshVersion.h"
 #include "GmshDefines.h"
