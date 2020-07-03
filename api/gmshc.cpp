@@ -3405,6 +3405,23 @@ GMSH_API void gmshViewAddHomogeneousModelData(const int tag, const int step, con
   }
 }
 
+GMSH_API void gmshViewGetHomogeneousModelData(const int tag, const int step, char ** dataType, size_t ** tags, size_t * tags_n, double ** data, size_t * data_n, double * time, int * numComponents, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_dataType_;
+    std::vector<std::size_t> api_tags_;
+    std::vector<double> api_data_;
+    gmsh::view::getHomogeneousModelData(tag, step, api_dataType_, api_tags_, api_data_, *time, *numComponents);
+    *dataType = strdup(api_dataType_.c_str());
+    vector2ptr(api_tags_, tags, tags_n);
+    vector2ptr(api_data_, data, data_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshViewAddListData(const int tag, const char * dataType, const int numEle, double * data, size_t data_n, int * ierr)
 {
   if(ierr) *ierr = 0;

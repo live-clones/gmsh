@@ -4876,9 +4876,9 @@ end
 
 Add homogeneous model-based post-processing data to the view with tag `tag`. The
 arguments have the same meaning as in `addModelData`, except that `data` is
-supposed to be homogeneous and is thus flattened in a single vector. This is
-always possible e.g. for "NodeData" and "ElementData", but only if data is
-associated to elements of the same type for "ElementNodeData".
+supposed to be homogeneous and is thus flattened in a single vector. For data
+types that can lead to different data sizes per tag (like "ElementNodeData"),
+the data should be padded.
 """
 function addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
     ierr = Ref{Cint}()
@@ -4917,6 +4917,35 @@ function getModelData(tag, step)
     tmp_api_data_ = unsafe_wrap(Array, api_data_[], api_data_nn_[], own=true)
     tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[], api_data_nn_[], own=true)
     data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], own=true) for i in 1:api_data_nn_[] ]
+    return dataType, tags, data, api_time_[], api_numComponents_[]
+end
+
+"""
+    gmsh.view.getHomogeneousModelData(tag, step)
+
+Get homogeneous model-based post-processing data from the view with tag `tag` at
+step `step`. The arguments have the same meaning as in `getModelData`, except
+that `data` is returned flattened in a single vector, with the appropriate
+padding if necessary.
+
+Return `dataType`, `tags`, `data`, `time`, `numComponents`.
+"""
+function getHomogeneousModelData(tag, step)
+    api_dataType_ = Ref{Ptr{Cchar}}()
+    api_tags_ = Ref{Ptr{Csize_t}}()
+    api_tags_n_ = Ref{Csize_t}()
+    api_data_ = Ref{Ptr{Cdouble}}()
+    api_data_n_ = Ref{Csize_t}()
+    api_time_ = Ref{Cdouble}()
+    api_numComponents_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshViewGetHomogeneousModelData, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cint}),
+          tag, step, api_dataType_, api_tags_, api_tags_n_, api_data_, api_data_n_, api_time_, api_numComponents_, ierr)
+    ierr[] != 0 && error("gmshViewGetHomogeneousModelData returned non-zero error code: $(ierr[])")
+    dataType = unsafe_string(api_dataType_[])
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    data = unsafe_wrap(Array, api_data_[], api_data_n_[], own=true)
     return dataType, tags, data, api_time_[], api_numComponents_[]
 end
 

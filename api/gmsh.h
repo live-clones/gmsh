@@ -2671,9 +2671,9 @@ namespace gmsh { // Top-level functions
     //
     // Add homogeneous model-based post-processing data to the view with tag `tag'.
     // The arguments have the same meaning as in `addModelData', except that `data'
-    // is supposed to be homogeneous and is thus flattened in a single vector. This
-    // is always possible e.g. for "NodeData" and "ElementData", but only if data
-    // is associated to elements of the same type for "ElementNodeData".
+    // is supposed to be homogeneous and is thus flattened in a single vector. For
+    // data types that can lead to different data sizes per tag (like
+    // "ElementNodeData"), the data should be padded.
     GMSH_API void addHomogeneousModelData(const int tag,
                                           const int step,
                                           const std::string & modelName,
@@ -2697,6 +2697,20 @@ namespace gmsh { // Top-level functions
                                std::vector<std::vector<double> > & data,
                                double & time,
                                int & numComponents);
+
+    // gmsh::view::getHomogeneousModelData
+    //
+    // Get homogeneous model-based post-processing data from the view with tag
+    // `tag' at step `step'. The arguments have the same meaning as in
+    // `getModelData', except that `data' is returned flattened in a single vector,
+    // with the appropriate padding if necessary.
+    GMSH_API void getHomogeneousModelData(const int tag,
+                                          const int step,
+                                          std::string & dataType,
+                                          std::vector<std::size_t> & tags,
+                                          std::vector<double> & data,
+                                          double & time,
+                                          int & numComponents);
 
     // gmsh::view::addListData
     //

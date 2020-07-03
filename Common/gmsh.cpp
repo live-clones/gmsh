@@ -6139,14 +6139,13 @@ GMSH_API void gmsh::view::addHomogeneousModelData(
                 partition);
 }
 
-GMSH_API void gmsh::view::getModelData(const int tag, const int step,
+#if defined(HAVE_POST)
+static stepData<double> *_getModelData(const int tag, const int step,
                                        std::string &dataType,
-                                       std::vector<std::size_t> &tags,
-                                       std::vector<std::vector<double> > &data,
-                                       double &time, int &numComponents)
+                                       double &time, int &numComponents,
+                                       int &numEnt, int &maxMult)
 {
   if(!_isInitialized()) { throw -1; }
-#if defined(HAVE_POST)
   PView *view = PView::getViewByTag(tag);
   if(!view) {
     Msg::Error("Unknown view with tag %d", tag);
@@ -6155,7 +6154,7 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
   PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(view->getData());
   if(!d) {
     Msg::Error("View with tag %d does not contain model data", tag);
-    return;
+    return 0;
   }
   if(d->getType() == PViewDataGModel::NodeData)
     dataType = "NodeData";
@@ -6175,15 +6174,34 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
                step);
     throw 2;
   }
-  tags.clear();
-  data.clear();
   time = s->getTime();
   numComponents = s->getNumComponents();
-  int numEnt = 0;
+  numEnt = 0;
+  maxMult = 0;
   for(std::size_t i = 0; i < s->getNumData(); i++) {
-    if(s->getData(i)) numEnt++;
+    if(s->getData(i)) {
+      numEnt++;
+      maxMult = std::max(maxMult, s->getMult(i));
+    }
   }
-  if(!numEnt) return;
+  return s;
+}
+#endif
+
+GMSH_API void gmsh::view::getModelData(const int tag, const int step,
+                                       std::string &dataType,
+                                       std::vector<std::size_t> &tags,
+                                       std::vector<std::vector<double> > &data,
+                                       double &time, int &numComponents)
+{
+  if(!_isInitialized()) { throw -1; }
+  tags.clear();
+  data.clear();
+#if defined(HAVE_POST)
+  int numEnt, maxMult;
+  stepData<double> *s = _getModelData(tag, step, dataType, time, numComponents,
+                                      numEnt, maxMult);
+  if(!s || !numComponents || !numEnt || !maxMult) return;
   data.resize(numEnt);
   tags.resize(numEnt);
   std::size_t j = 0;
@@ -6194,6 +6212,40 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
       int mult = s->getMult(i);
       data[j].resize(numComponents * mult);
       for(int k = 0; k < numComponents * mult; k++) data[j][k] = dd[k];
+      j++;
+    }
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+GMSH_API void gmsh::view::getHomogeneousModelData(const int tag, const int step,
+                                                  std::string &dataType,
+                                                  std::vector<std::size_t> &tags,
+                                                  std::vector<double> &data,
+                                                  double &time, int &numComponents)
+{
+  if(!_isInitialized()) { throw -1; }
+  tags.clear();
+  data.clear();
+#if defined(HAVE_POST)
+  int numEnt, maxMult;
+  stepData<double> *s = _getModelData(tag, step, dataType, time, numComponents,
+                                      numEnt, maxMult);
+  if(!s || !numComponents || !numEnt || !maxMult) return;
+  data.resize(numEnt * numComponents * maxMult, 0.);
+  tags.resize(numEnt);
+  std::size_t j = 0;
+  for(std::size_t i = 0; i < s->getNumData(); i++) {
+    double *dd = s->getData(i);
+    if(dd) {
+      tags[j] = i;
+      int mult = s->getMult(i);
+      for(int k = 0; k < numComponents * mult; k++) {
+        data[j * numComponents * maxMult + k] = dd[k];
+      }
       j++;
     }
   }

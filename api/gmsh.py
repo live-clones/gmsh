@@ -6169,9 +6169,8 @@ class view:
         Add homogeneous model-based post-processing data to the view with tag
         `tag'. The arguments have the same meaning as in `addModelData', except
         that `data' is supposed to be homogeneous and is thus flattened in a single
-        vector. This is always possible e.g. for "NodeData" and "ElementData", but
-        only if data is associated to elements of the same type for
-        "ElementNodeData".
+        vector. For data types that can lead to different data sizes per tag (like
+        "ElementNodeData"), the data should be padded.
         """
         api_tags_, api_tags_n_ = _ivectorsize(tags)
         api_data_, api_data_n_ = _ivectordouble(data)
@@ -6227,6 +6226,44 @@ class view:
             _ostring(api_dataType_),
             _ovectorsize(api_tags_, api_tags_n_.value),
             _ovectorvectordouble(api_data_, api_data_n_, api_data_nn_),
+            api_time_.value,
+            api_numComponents_.value)
+
+    @staticmethod
+    def getHomogeneousModelData(tag, step):
+        """
+        gmsh.view.getHomogeneousModelData(tag, step)
+
+        Get homogeneous model-based post-processing data from the view with tag
+        `tag' at step `step'. The arguments have the same meaning as in
+        `getModelData', except that `data' is returned flattened in a single
+        vector, with the appropriate padding if necessary.
+
+        Return `dataType', `tags', `data', `time', `numComponents'.
+        """
+        api_dataType_ = c_char_p()
+        api_tags_, api_tags_n_ = POINTER(c_size_t)(), c_size_t()
+        api_data_, api_data_n_ = POINTER(c_double)(), c_size_t()
+        api_time_ = c_double()
+        api_numComponents_ = c_int()
+        ierr = c_int()
+        lib.gmshViewGetHomogeneousModelData(
+            c_int(tag),
+            c_int(step),
+            byref(api_dataType_),
+            byref(api_tags_), byref(api_tags_n_),
+            byref(api_data_), byref(api_data_n_),
+            byref(api_time_),
+            byref(api_numComponents_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshViewGetHomogeneousModelData returned non-zero error code: ",
+                ierr.value)
+        return (
+            _ostring(api_dataType_),
+            _ovectorsize(api_tags_, api_tags_n_.value),
+            _ovectordouble(api_data_, api_data_n_.value),
             api_time_.value,
             api_numComponents_.value)
 
