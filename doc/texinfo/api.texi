@@ -4649,5 +4649,17 @@ Return CPU time.
 floating point value
 @end table
 
+@item gmsh/logger/getLastError
+Return last error message, if any.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{error}
+@item Return:
+-
+@end table
+
 @end ftable
 

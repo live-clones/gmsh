@@ -199,9 +199,7 @@ def initialize(argv=[], readConfigFiles=True):
         c_int(bool(readConfigFiles)),
         byref(ierr))
     if ierr.value != 0:
-        raise ValueError(
-            "gmshInitialize returned non-zero error code: ",
-            ierr.value)
+        raise Exception(logger.getLastError())
 
 def finalize():
     """
@@ -214,9 +212,7 @@ def finalize():
         byref(ierr))
     signal.signal(signal.SIGINT, oldsig)
     if ierr.value != 0:
-        raise ValueError(
-            "gmshFinalize returned non-zero error code: ",
-            ierr.value)
+        raise Exception(logger.getLastError())
 
 def open(fileName):
     """
@@ -231,9 +227,7 @@ def open(fileName):
         c_char_p(fileName.encode()),
         byref(ierr))
     if ierr.value != 0:
-        raise ValueError(
-            "gmshOpen returned non-zero error code: ",
-            ierr.value)
+        raise Exception(logger.getLastError())
 
 def merge(fileName):
     """
@@ -248,9 +242,7 @@ def merge(fileName):
         c_char_p(fileName.encode()),
         byref(ierr))
     if ierr.value != 0:
-        raise ValueError(
-            "gmshMerge returned non-zero error code: ",
-            ierr.value)
+        raise Exception(logger.getLastError())
 
 def write(fileName):
     """
@@ -263,9 +255,7 @@ def write(fileName):
         c_char_p(fileName.encode()),
         byref(ierr))
     if ierr.value != 0:
-        raise ValueError(
-            "gmshWrite returned non-zero error code: ",
-            ierr.value)
+        raise Exception(logger.getLastError())
 
 def clear():
     """
@@ -278,9 +268,7 @@ def clear():
     lib.gmshClear(
         byref(ierr))
     if ierr.value != 0:
-        raise ValueError(
-            "gmshClear returned non-zero error code: ",
-            ierr.value)
+        raise Exception(logger.getLastError())
 
 
 class option:
@@ -303,9 +291,7 @@ class option:
             c_double(value),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOptionSetNumber returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getNumber(name):
@@ -325,9 +311,7 @@ class option:
             byref(api_value_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOptionGetNumber returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return api_value_.value
 
     @staticmethod
@@ -345,9 +329,7 @@ class option:
             c_char_p(value.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOptionSetString returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getString(name):
@@ -367,9 +349,7 @@ class option:
             byref(api_value_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOptionGetString returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ostring(api_value_)
 
     @staticmethod
@@ -392,9 +372,7 @@ class option:
             c_int(a),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOptionSetColor returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getColor(name):
@@ -421,9 +399,7 @@ class option:
             byref(api_a_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOptionGetColor returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             api_r_.value,
             api_g_.value,
@@ -448,9 +424,7 @@ class model:
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelAdd returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def remove():
@@ -463,9 +437,7 @@ class model:
         lib.gmshModelRemove(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelRemove returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def list():
@@ -482,9 +454,7 @@ class model:
             byref(api_names_), byref(api_names_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelList returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorstring(api_names_, api_names_n_.value)
 
     @staticmethod
@@ -502,9 +472,7 @@ class model:
             byref(api_name_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetCurrent returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ostring(api_name_)
 
     @staticmethod
@@ -520,9 +488,7 @@ class model:
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelSetCurrent returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getEntities(dim=-1):
@@ -542,9 +508,7 @@ class model:
             c_int(dim),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetEntities returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
     @staticmethod
@@ -561,9 +525,7 @@ class model:
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelSetEntityName returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getEntityName(dim, tag):
@@ -582,9 +544,7 @@ class model:
             byref(api_name_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetEntityName returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ostring(api_name_)
 
     @staticmethod
@@ -605,9 +565,7 @@ class model:
             c_int(dim),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetPhysicalGroups returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
     @staticmethod
@@ -628,9 +586,7 @@ class model:
             byref(api_tags_), byref(api_tags_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetEntitiesForPhysicalGroup returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorint(api_tags_, api_tags_n_.value)
 
     @staticmethod
@@ -651,9 +607,7 @@ class model:
             byref(api_physicalTags_), byref(api_physicalTags_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetPhysicalGroupsForEntity returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorint(api_physicalTags_, api_physicalTags_n_.value)
 
     @staticmethod
@@ -669,16 +623,14 @@ class model:
         """
         api_tags_, api_tags_n_ = _ivectorint(tags)
         ierr = c_int()
-        api__result__ = lib.gmshModelAddPhysicalGroup(
+        api_result_ = lib.gmshModelAddPhysicalGroup(
             c_int(dim),
             api_tags_, api_tags_n_,
             c_int(tag),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelAddPhysicalGroup returned non-zero error code: ",
-                ierr.value)
-        return api__result__
+            raise Exception(logger.getLastError())
+        return api_result_
 
     @staticmethod
     def setPhysicalName(dim, tag, name):
@@ -694,9 +646,7 @@ class model:
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelSetPhysicalName returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getPhysicalName(dim, tag):
@@ -715,9 +665,7 @@ class model:
             byref(api_name_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetPhysicalName returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ostring(api_name_)
 
     @staticmethod
@@ -745,9 +693,7 @@ class model:
             c_int(bool(recursive)),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetBoundary returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
     @staticmethod
@@ -775,9 +721,7 @@ class model:
             c_int(dim),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetEntitiesInBoundingBox returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorpair(api_tags_, api_tags_n_.value)
 
     @staticmethod
@@ -809,9 +753,7 @@ class model:
             byref(api_zmax_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetBoundingBox returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             api_xmin_.value,
             api_ymin_.value,
@@ -830,13 +772,11 @@ class model:
         Return an integer value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshModelGetDimension(
+        api_result_ = lib.gmshModelGetDimension(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetDimension returned non-zero error code: ",
-                ierr.value)
-        return api__result__
+            raise Exception(logger.getLastError())
+        return api_result_
 
     @staticmethod
     def addDiscreteEntity(dim, tag=-1, boundary=[]):
@@ -853,16 +793,14 @@ class model:
         """
         api_boundary_, api_boundary_n_ = _ivectorint(boundary)
         ierr = c_int()
-        api__result__ = lib.gmshModelAddDiscreteEntity(
+        api_result_ = lib.gmshModelAddDiscreteEntity(
             c_int(dim),
             c_int(tag),
             api_boundary_, api_boundary_n_,
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelAddDiscreteEntity returned non-zero error code: ",
-                ierr.value)
-        return api__result__
+            raise Exception(logger.getLastError())
+        return api_result_
 
     @staticmethod
     def removeEntities(dimTags, recursive=False):
@@ -879,9 +817,7 @@ class model:
             c_int(bool(recursive)),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelRemoveEntities returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def removeEntityName(name):
@@ -895,9 +831,7 @@ class model:
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelRemoveEntityName returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def removePhysicalGroups(dimTags=[]):
@@ -913,9 +847,7 @@ class model:
             api_dimTags_, api_dimTags_n_,
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelRemovePhysicalGroups returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def removePhysicalName(name):
@@ -929,9 +861,7 @@ class model:
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelRemovePhysicalName returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getType(dim, tag):
@@ -950,9 +880,7 @@ class model:
             byref(api_entityType_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetType returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ostring(api_entityType_)
 
     @staticmethod
@@ -976,9 +904,7 @@ class model:
             byref(api_parentTag_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetParent returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             api_parentDim_.value,
             api_parentTag_.value)
@@ -1001,9 +927,7 @@ class model:
             byref(api_partitions_), byref(api_partitions_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetPartitions returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorint(api_partitions_, api_partitions_n_.value)
 
     @staticmethod
@@ -1031,9 +955,7 @@ class model:
             byref(api_coord_), byref(api_coord_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetValue returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectordouble(api_coord_, api_coord_n_.value)
 
     @staticmethod
@@ -1063,9 +985,7 @@ class model:
             byref(api_derivatives_), byref(api_derivatives_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetDerivative returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectordouble(api_derivatives_, api_derivatives_n_.value)
 
     @staticmethod
@@ -1091,9 +1011,7 @@ class model:
             byref(api_curvatures_), byref(api_curvatures_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetCurvature returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectordouble(api_curvatures_, api_curvatures_n_.value)
 
     @staticmethod
@@ -1123,9 +1041,7 @@ class model:
             byref(api_directionMin_), byref(api_directionMin_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetPrincipalCurvatures returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             _ovectordouble(api_curvatureMax_, api_curvatureMax_n_.value),
             _ovectordouble(api_curvatureMin_, api_curvatureMin_n_.value),
@@ -1153,9 +1069,7 @@ class model:
             byref(api_normals_), byref(api_normals_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetNormal returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectordouble(api_normals_, api_normals_n_.value)
 
     @staticmethod
@@ -1182,9 +1096,7 @@ class model:
             byref(api_parametricCoord_), byref(api_parametricCoord_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetParametrization returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value)
 
     @staticmethod
@@ -1207,9 +1119,7 @@ class model:
             byref(api_max_), byref(api_max_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetParametrizationBounds returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             _ovectordouble(api_min_, api_min_n_.value),
             _ovectordouble(api_max_, api_max_n_.value))
@@ -1229,16 +1139,14 @@ class model:
         """
         api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
         ierr = c_int()
-        api__result__ = lib.gmshModelIsInside(
+        api_result_ = lib.gmshModelIsInside(
             c_int(dim),
             c_int(tag),
             api_parametricCoord_, api_parametricCoord_n_,
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelIsInside returned non-zero error code: ",
-                ierr.value)
-        return api__result__
+            raise Exception(logger.getLastError())
+        return api_result_
 
     @staticmethod
     def getClosestPoint(dim, tag, coord):
@@ -1267,9 +1175,7 @@ class model:
             byref(api_parametricCoord_), byref(api_parametricCoord_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetClosestPoint returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             _ovectordouble(api_closestCoord_, api_closestCoord_n_.value),
             _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
@@ -1300,9 +1206,7 @@ class model:
             c_int(which),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelReparametrizeOnSurface returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectordouble(api_surfaceParametricCoord_, api_surfaceParametricCoord_n_.value)
 
     @staticmethod
@@ -1321,9 +1225,7 @@ class model:
             c_int(bool(recursive)),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelSetVisibility returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getVisibility(dim, tag):
@@ -1342,9 +1244,7 @@ class model:
             byref(api_value_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetVisibility returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return api_value_.value
 
     @staticmethod
@@ -1367,9 +1267,7 @@ class model:
             c_int(bool(recursive)),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelSetColor returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getColor(dim, tag):
@@ -1394,9 +1292,7 @@ class model:
             byref(api_a_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelGetColor returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             api_r_.value,
             api_g_.value,
@@ -1418,9 +1314,7 @@ class model:
             c_double(z),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshModelSetCoordinates returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
 
     class mesh:
@@ -1440,9 +1334,7 @@ class model:
                 c_int(dim),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGenerate returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def partition(numPart):
@@ -1456,9 +1348,7 @@ class model:
                 c_int(numPart),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshPartition returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def unpartition():
@@ -1471,9 +1361,7 @@ class model:
             lib.gmshModelMeshUnpartition(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshUnpartition returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def optimize(method, force=False, niter=1, dimTags=[]):
@@ -1497,9 +1385,7 @@ class model:
                 api_dimTags_, api_dimTags_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshOptimize returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def recombine():
@@ -1512,9 +1398,7 @@ class model:
             lib.gmshModelMeshRecombine(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshRecombine returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def refine():
@@ -1527,9 +1411,7 @@ class model:
             lib.gmshModelMeshRefine(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshRefine returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setOrder(order):
@@ -1543,9 +1425,7 @@ class model:
                 c_int(order),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetOrder returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def getLastEntityError():
@@ -1563,9 +1443,7 @@ class model:
                 byref(api_dimTags_), byref(api_dimTags_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetLastEntityError returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
         @staticmethod
@@ -1584,9 +1462,7 @@ class model:
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetLastNodeError returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
@@ -1605,9 +1481,7 @@ class model:
                 api_dimTags_, api_dimTags_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshClear returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True):
@@ -1644,9 +1518,7 @@ class model:
                 c_int(bool(returnParametricCoord)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNodes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value),
@@ -1675,9 +1547,7 @@ class model:
                 c_int(bool(returnParametricCoord)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNodesByElementType returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value),
@@ -1704,9 +1574,7 @@ class model:
                 byref(api_parametricCoord_), byref(api_parametricCoord_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNode returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectordouble(api_coord_, api_coord_n_.value),
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
@@ -1730,9 +1598,7 @@ class model:
                 api_parametricCoord_, api_parametricCoord_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetNode returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def rebuildNodeCache(onlyIfNecessary=True):
@@ -1746,9 +1612,7 @@ class model:
                 c_int(bool(onlyIfNecessary)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshRebuildNodeCache returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def rebuildElementCache(onlyIfNecessary=True):
@@ -1762,9 +1626,7 @@ class model:
                 c_int(bool(onlyIfNecessary)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshRebuildElementCache returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def getNodesForPhysicalGroup(dim, tag):
@@ -1788,9 +1650,7 @@ class model:
                 byref(api_coord_), byref(api_coord_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNodesForPhysicalGroup returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
@@ -1822,9 +1682,7 @@ class model:
                 api_parametricCoord_, api_parametricCoord_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshAddNodes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def reclassifyNodes():
@@ -1840,9 +1698,7 @@ class model:
             lib.gmshModelMeshReclassifyNodes(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshReclassifyNodes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def relocateNodes(dim=-1, tag=-1):
@@ -1860,9 +1716,7 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshRelocateNodes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def getElements(dim=-1, tag=-1):
@@ -1897,9 +1751,7 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElements returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorint(api_elementTypes_, api_elementTypes_n_.value),
                 _ovectorvectorsize(api_elementTags_, api_elementTags_n_, api_elementTags_nn_),
@@ -1926,9 +1778,7 @@ class model:
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElement returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 api_elementType_.value,
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
@@ -1968,9 +1818,7 @@ class model:
                 c_int(bool(strict)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementByCoordinates returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 api_elementTag_.value,
                 api_elementType_.value,
@@ -2004,9 +1852,7 @@ class model:
                 c_int(bool(strict)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementsByCoordinates returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorsize(api_elementTags_, api_elementTags_n_.value)
 
         @staticmethod
@@ -2036,9 +1882,7 @@ class model:
                 byref(api_w_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetLocalCoordinatesInElement returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 api_u_.value,
                 api_v_.value,
@@ -2063,9 +1907,7 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementTypes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorint(api_elementTypes_, api_elementTypes_n_.value)
 
         @staticmethod
@@ -2081,16 +1923,14 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelMeshGetElementType(
+            api_result_ = lib.gmshModelMeshGetElementType(
                 c_char_p(familyName.encode()),
                 c_int(order),
                 c_int(bool(serendip)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementType returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def getElementProperties(elementType):
@@ -2122,9 +1962,7 @@ class model:
                 byref(api_numPrimaryNodes_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementProperties returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ostring(api_elementName_),
                 api_dim_.value,
@@ -2162,9 +2000,7 @@ class model:
                 c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementsByType returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorsize(api_elementTags_, api_elementTags_n_.value),
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
@@ -2197,9 +2033,7 @@ class model:
                 api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshAddElements returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def addElementsByType(tag, elementType, elementTags, nodeTags):
@@ -2224,9 +2058,7 @@ class model:
                 api_nodeTags_, api_nodeTags_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshAddElementsByType returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def getIntegrationPoints(elementType, integrationType):
@@ -2252,9 +2084,7 @@ class model:
                 byref(api_weights_), byref(api_weights_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetIntegrationPoints returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectordouble(api_localCoord_, api_localCoord_n_.value),
                 _ovectordouble(api_weights_, api_weights_n_.value))
@@ -2297,9 +2127,7 @@ class model:
                 c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetJacobians returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectordouble(api_jacobians_, api_jacobians_n_.value),
                 _ovectordouble(api_determinants_, api_determinants_n_.value),
@@ -2337,9 +2165,7 @@ class model:
                 byref(api_coord_), byref(api_coord_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetJacobian returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectordouble(api_jacobians_, api_jacobians_n_.value),
                 _ovectordouble(api_determinants_, api_determinants_n_.value),
@@ -2385,9 +2211,7 @@ class model:
                 api_wantedOrientations_, api_wantedOrientations_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetBasisFunctions returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 api_numComponents_.value,
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value),
@@ -2418,9 +2242,7 @@ class model:
                 c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetBasisFunctionsOrientationForElements returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorint(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_.value)
 
         @staticmethod
@@ -2440,9 +2262,7 @@ class model:
                 byref(api_basisFunctionsOrientation_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetBasisFunctionsOrientationForElement returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return api_basisFunctionsOrientation_.value
 
         @staticmethod
@@ -2456,15 +2276,13 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelMeshGetNumberOfOrientations(
+            api_result_ = lib.gmshModelMeshGetNumberOfOrientations(
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNumberOfOrientations returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def getEdgeNumber(edgeNodes):
@@ -2485,9 +2303,7 @@ class model:
                 byref(api_edgeNum_), byref(api_edgeNum_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetEdgeNumber returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorint(api_edgeNum_, api_edgeNum_n_.value)
 
         @staticmethod
@@ -2509,9 +2325,7 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetLocalMultipliersForHcurl0 returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorint(api_localMultipliers_, api_localMultipliers_n_.value)
 
         @staticmethod
@@ -2540,9 +2354,7 @@ class model:
                 c_int(bool(returnCoord)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetKeysForElements returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorpair(api_keys_, api_keys_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
@@ -2567,9 +2379,7 @@ class model:
                 c_int(bool(returnCoord)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetKeysForElement returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorpair(api_keys_, api_keys_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
@@ -2585,15 +2395,13 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelMeshGetNumberOfKeysForElements(
+            api_result_ = lib.gmshModelMeshGetNumberOfKeysForElements(
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNumberOfKeysForElements returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def getInformationForElements(keys, elementType, functionSpaceType):
@@ -2619,9 +2427,7 @@ class model:
                 byref(api_infoKeys_), byref(api_infoKeys_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetInformationForElements returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_infoKeys_, api_infoKeys_n_.value)
 
         @staticmethod
@@ -2651,9 +2457,7 @@ class model:
                 c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetBarycenters returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
 
         @staticmethod
@@ -2683,9 +2487,7 @@ class model:
                 c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementEdgeNodes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
@@ -2717,9 +2519,7 @@ class model:
                 c_size_t(numTasks),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementFaceNodes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
@@ -2742,9 +2542,7 @@ class model:
                 byref(api_partitions_), byref(api_partitions_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetGhostElements returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorsize(api_elementTags_, api_elementTags_n_.value),
                 _ovectorint(api_partitions_, api_partitions_n_.value))
@@ -2764,9 +2562,7 @@ class model:
                 c_double(size),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetSize returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setSizeAtParametricPoints(dim, tag, parametricCoord, sizes):
@@ -2787,9 +2583,7 @@ class model:
                 api_sizes_, api_sizes_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetSizeAtParametricPoints returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
@@ -2809,9 +2603,7 @@ class model:
                 c_double(coef),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetTransfiniteCurve returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setTransfiniteSurface(tag, arrangement="Left", cornerTags=[]):
@@ -2834,9 +2626,7 @@ class model:
                 api_cornerTags_, api_cornerTags_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetTransfiniteSurface returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setTransfiniteVolume(tag, cornerTags=[]):
@@ -2854,9 +2644,7 @@ class model:
                 api_cornerTags_, api_cornerTags_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetTransfiniteVolume returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setRecombine(dim, tag):
@@ -2873,9 +2661,7 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetRecombine returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setSmoothing(dim, tag, val):
@@ -2892,9 +2678,7 @@ class model:
                 c_int(val),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetSmoothing returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setReverse(dim, tag, val=True):
@@ -2914,9 +2698,7 @@ class model:
                 c_int(bool(val)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetReverse returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setAlgorithm(dim, tag, val):
@@ -2933,9 +2715,7 @@ class model:
                 c_int(val),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetAlgorithm returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setSizeFromBoundary(dim, tag, val):
@@ -2953,9 +2733,7 @@ class model:
                 c_int(val),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetSizeFromBoundary returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setCompound(dim, tags):
@@ -2973,9 +2751,7 @@ class model:
                 api_tags_, api_tags_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetCompound returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setOutwardOrientation(tag):
@@ -2992,9 +2768,7 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetOutwardOrientation returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def embed(dim, tags, inDim, inTag):
@@ -3016,9 +2790,7 @@ class model:
                 c_int(inTag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshEmbed returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def removeEmbedded(dimTags, dim=-1):
@@ -3036,9 +2808,7 @@ class model:
                 c_int(dim),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshRemoveEmbedded returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def reorderElements(elementType, tag, ordering):
@@ -3056,9 +2826,7 @@ class model:
                 api_ordering_, api_ordering_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshReorderElements returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def renumberNodes():
@@ -3071,9 +2839,7 @@ class model:
             lib.gmshModelMeshRenumberNodes(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshRenumberNodes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def renumberElements():
@@ -3086,9 +2852,7 @@ class model:
             lib.gmshModelMeshRenumberElements(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshRenumberElements returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def setPeriodic(dim, tags, tagsMaster, affineTransform):
@@ -3115,9 +2879,7 @@ class model:
                 api_affineTransform_, api_affineTransform_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetPeriodic returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def getPeriodicNodes(dim, tag, includeHighOrderNodes=False):
@@ -3147,9 +2909,7 @@ class model:
                 c_int(bool(includeHighOrderNodes)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetPeriodicNodes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 api_tagMaster_.value,
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
@@ -3167,9 +2927,7 @@ class model:
             lib.gmshModelMeshRemoveDuplicateNodes(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshRemoveDuplicateNodes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def splitQuadrangles(quality=1., tag=-1):
@@ -3185,9 +2943,7 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSplitQuadrangles returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi):
@@ -3210,9 +2966,7 @@ class model:
                 c_double(curveAngle),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshClassifySurfaces returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def createGeometry(dimTags=[]):
@@ -3231,9 +2985,7 @@ class model:
                 api_dimTags_, api_dimTags_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshCreateGeometry returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def createTopology(makeSimplyConnected=True, exportDiscrete=True):
@@ -3253,9 +3005,7 @@ class model:
                 c_int(bool(exportDiscrete)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshCreateTopology returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def computeHomology(domainTags=[], subdomainTags=[], dims=[]):
@@ -3281,9 +3031,7 @@ class model:
                 api_dims_, api_dims_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshComputeHomology returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def computeCohomology(domainTags=[], subdomainTags=[], dims=[]):
@@ -3309,9 +3057,7 @@ class model:
                 api_dims_, api_dims_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshComputeCohomology returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def computeCrossField():
@@ -3330,9 +3076,7 @@ class model:
                 byref(api_viewTags_), byref(api_viewTags_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshComputeCrossField returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorint(api_viewTags_, api_viewTags_n_.value)
 
 
@@ -3353,15 +3097,13 @@ class model:
                 Return an integer value.
                 """
                 ierr = c_int()
-                api__result__ = lib.gmshModelMeshFieldAdd(
+                api_result_ = lib.gmshModelMeshFieldAdd(
                     c_char_p(fieldType.encode()),
                     c_int(tag),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelMeshFieldAdd returned non-zero error code: ",
-                        ierr.value)
-                return api__result__
+                    raise Exception(logger.getLastError())
+                return api_result_
 
             @staticmethod
             def remove(tag):
@@ -3375,9 +3117,7 @@ class model:
                     c_int(tag),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelMeshFieldRemove returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setNumber(tag, option, value):
@@ -3393,9 +3133,7 @@ class model:
                     c_double(value),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelMeshFieldSetNumber returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setString(tag, option, value):
@@ -3411,9 +3149,7 @@ class model:
                     c_char_p(value.encode()),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelMeshFieldSetString returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setNumbers(tag, option, value):
@@ -3430,9 +3166,7 @@ class model:
                     api_value_, api_value_n_,
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelMeshFieldSetNumbers returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setAsBackgroundMesh(tag):
@@ -3446,9 +3180,7 @@ class model:
                     c_int(tag),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelMeshFieldSetAsBackgroundMesh returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setAsBoundaryLayer(tag):
@@ -3462,9 +3194,7 @@ class model:
                     c_int(tag),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelMeshFieldSetAsBoundaryLayer returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
 
     class geo:
@@ -3487,7 +3217,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddPoint(
+            api_result_ = lib.gmshModelGeoAddPoint(
                 c_double(x),
                 c_double(y),
                 c_double(z),
@@ -3495,10 +3225,8 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddPoint returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addLine(startTag, endTag, tag=-1):
@@ -3512,16 +3240,14 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddLine(
+            api_result_ = lib.gmshModelGeoAddLine(
                 c_int(startTag),
                 c_int(endTag),
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddLine returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addCircleArc(startTag, centerTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
@@ -3537,7 +3263,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddCircleArc(
+            api_result_ = lib.gmshModelGeoAddCircleArc(
                 c_int(startTag),
                 c_int(centerTag),
                 c_int(endTag),
@@ -3547,10 +3273,8 @@ class model:
                 c_double(nz),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddCircleArc returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
@@ -3567,7 +3291,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddEllipseArc(
+            api_result_ = lib.gmshModelGeoAddEllipseArc(
                 c_int(startTag),
                 c_int(centerTag),
                 c_int(majorTag),
@@ -3578,10 +3302,8 @@ class model:
                 c_double(nz),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddEllipseArc returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addSpline(pointTags, tag=-1):
@@ -3597,15 +3319,13 @@ class model:
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddSpline(
+            api_result_ = lib.gmshModelGeoAddSpline(
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddSpline returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addBSpline(pointTags, tag=-1):
@@ -3621,15 +3341,13 @@ class model:
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddBSpline(
+            api_result_ = lib.gmshModelGeoAddBSpline(
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddBSpline returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addBezier(pointTags, tag=-1):
@@ -3644,15 +3362,13 @@ class model:
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddBezier(
+            api_result_ = lib.gmshModelGeoAddBezier(
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddBezier returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addPolyline(pointTags, tag=-1):
@@ -3668,15 +3384,13 @@ class model:
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddPolyline(
+            api_result_ = lib.gmshModelGeoAddPolyline(
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddPolyline returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addCompoundSpline(curveTags, numIntervals=5, tag=-1):
@@ -3692,16 +3406,14 @@ class model:
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddCompoundSpline(
+            api_result_ = lib.gmshModelGeoAddCompoundSpline(
                 api_curveTags_, api_curveTags_n_,
                 c_int(numIntervals),
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddCompoundSpline returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addCompoundBSpline(curveTags, numIntervals=20, tag=-1):
@@ -3717,16 +3429,14 @@ class model:
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddCompoundBSpline(
+            api_result_ = lib.gmshModelGeoAddCompoundBSpline(
                 api_curveTags_, api_curveTags_n_,
                 c_int(numIntervals),
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddCompoundBSpline returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addCurveLoop(curveTags, tag=-1):
@@ -3744,15 +3454,13 @@ class model:
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddCurveLoop(
+            api_result_ = lib.gmshModelGeoAddCurveLoop(
                 api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddCurveLoop returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addPlaneSurface(wireTags, tag=-1):
@@ -3768,15 +3476,13 @@ class model:
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddPlaneSurface(
+            api_result_ = lib.gmshModelGeoAddPlaneSurface(
                 api_wireTags_, api_wireTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddPlaneSurface returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addSurfaceFilling(wireTags, tag=-1, sphereCenterTag=-1):
@@ -3792,16 +3498,14 @@ class model:
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddSurfaceFilling(
+            api_result_ = lib.gmshModelGeoAddSurfaceFilling(
                 api_wireTags_, api_wireTags_n_,
                 c_int(tag),
                 c_int(sphereCenterTag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddSurfaceFilling returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addSurfaceLoop(surfaceTags, tag=-1):
@@ -3816,15 +3520,13 @@ class model:
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddSurfaceLoop(
+            api_result_ = lib.gmshModelGeoAddSurfaceLoop(
                 api_surfaceTags_, api_surfaceTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddSurfaceLoop returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addVolume(shellTags, tag=-1):
@@ -3840,15 +3542,13 @@ class model:
             """
             api_shellTags_, api_shellTags_n_ = _ivectorint(shellTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddVolume(
+            api_result_ = lib.gmshModelGeoAddVolume(
                 api_shellTags_, api_shellTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoAddVolume returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
@@ -3880,9 +3580,7 @@ class model:
                 c_int(bool(recombine)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoExtrude returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -3920,9 +3618,7 @@ class model:
                 c_int(bool(recombine)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoRevolve returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -3964,9 +3660,7 @@ class model:
                 c_int(bool(recombine)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoTwist returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -3985,9 +3679,7 @@ class model:
                 c_double(dz),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoTranslate returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def rotate(dimTags, x, y, z, ax, ay, az, angle):
@@ -4011,9 +3703,7 @@ class model:
                 c_double(angle),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoRotate returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def dilate(dimTags, x, y, z, a, b, c):
@@ -4036,9 +3726,7 @@ class model:
                 c_double(c),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoDilate returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def mirror(dimTags, a, b, c, d):
@@ -4058,9 +3746,7 @@ class model:
                 c_double(d),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoMirror returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def symmetrize(dimTags, a, b, c, d):
@@ -4081,9 +3767,7 @@ class model:
                 c_double(d),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoSymmetrize returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def copy(dimTags):
@@ -4102,9 +3786,7 @@ class model:
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoCopy returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -4122,9 +3804,7 @@ class model:
                 c_int(bool(recursive)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoRemove returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def removeAllDuplicates():
@@ -4138,9 +3818,7 @@ class model:
             lib.gmshModelGeoRemoveAllDuplicates(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoRemoveAllDuplicates returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def splitCurve(tag, pointTags):
@@ -4161,9 +3839,7 @@ class model:
                 byref(api_curveTags_), byref(api_curveTags_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoSplitCurve returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorint(api_curveTags_, api_curveTags_n_.value)
 
         @staticmethod
@@ -4177,14 +3853,12 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoGetMaxTag(
+            api_result_ = lib.gmshModelGeoGetMaxTag(
                 c_int(dim),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoGetMaxTag returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def setMaxTag(dim, maxTag):
@@ -4200,9 +3874,7 @@ class model:
                 c_int(maxTag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoSetMaxTag returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def synchronize():
@@ -4218,9 +3890,7 @@ class model:
             lib.gmshModelGeoSynchronize(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelGeoSynchronize returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
 
         class mesh:
@@ -4243,9 +3913,7 @@ class model:
                     c_double(size),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelGeoMeshSetSize returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setTransfiniteCurve(tag, nPoints, meshType="Progression", coef=1.):
@@ -4265,9 +3933,7 @@ class model:
                     c_double(coef),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelGeoMeshSetTransfiniteCurve returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setTransfiniteSurface(tag, arrangement="Left", cornerTags=[]):
@@ -4290,9 +3956,7 @@ class model:
                     api_cornerTags_, api_cornerTags_n_,
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelGeoMeshSetTransfiniteSurface returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setTransfiniteVolume(tag, cornerTags=[]):
@@ -4310,9 +3974,7 @@ class model:
                     api_cornerTags_, api_cornerTags_n_,
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelGeoMeshSetTransfiniteVolume returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setRecombine(dim, tag, angle=45.):
@@ -4330,9 +3992,7 @@ class model:
                     c_double(angle),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelGeoMeshSetRecombine returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setSmoothing(dim, tag, val):
@@ -4349,9 +4009,7 @@ class model:
                     c_int(val),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelGeoMeshSetSmoothing returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setReverse(dim, tag, val=True):
@@ -4371,9 +4029,7 @@ class model:
                     c_int(bool(val)),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelGeoMeshSetReverse returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setAlgorithm(dim, tag, val):
@@ -4390,9 +4046,7 @@ class model:
                     c_int(val),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelGeoMeshSetAlgorithm returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
             @staticmethod
             def setSizeFromBoundary(dim, tag, val):
@@ -4410,9 +4064,7 @@ class model:
                     c_int(val),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelGeoMeshSetSizeFromBoundary returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
 
     class occ:
@@ -4435,7 +4087,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddPoint(
+            api_result_ = lib.gmshModelOccAddPoint(
                 c_double(x),
                 c_double(y),
                 c_double(z),
@@ -4443,10 +4095,8 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddPoint returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addLine(startTag, endTag, tag=-1):
@@ -4460,16 +4110,14 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddLine(
+            api_result_ = lib.gmshModelOccAddLine(
                 c_int(startTag),
                 c_int(endTag),
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddLine returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addCircleArc(startTag, centerTag, endTag, tag=-1):
@@ -4484,17 +4132,15 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddCircleArc(
+            api_result_ = lib.gmshModelOccAddCircleArc(
                 c_int(startTag),
                 c_int(centerTag),
                 c_int(endTag),
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddCircleArc returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addCircle(x, y, z, r, tag=-1, angle1=0., angle2=2*pi):
@@ -4509,7 +4155,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddCircle(
+            api_result_ = lib.gmshModelOccAddCircle(
                 c_double(x),
                 c_double(y),
                 c_double(z),
@@ -4519,10 +4165,8 @@ class model:
                 c_double(angle2),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddCircle returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1):
@@ -4538,7 +4182,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddEllipseArc(
+            api_result_ = lib.gmshModelOccAddEllipseArc(
                 c_int(startTag),
                 c_int(centerTag),
                 c_int(majorTag),
@@ -4546,10 +4190,8 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddEllipseArc returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addEllipse(x, y, z, r1, r2, tag=-1, angle1=0., angle2=2*pi):
@@ -4568,7 +4210,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddEllipse(
+            api_result_ = lib.gmshModelOccAddEllipse(
                 c_double(x),
                 c_double(y),
                 c_double(z),
@@ -4579,10 +4221,8 @@ class model:
                 c_double(angle2),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddEllipse returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addSpline(pointTags, tag=-1):
@@ -4598,15 +4238,13 @@ class model:
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddSpline(
+            api_result_ = lib.gmshModelOccAddSpline(
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddSpline returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addBSpline(pointTags, tag=-1, degree=3, weights=[], knots=[], multiplicities=[]):
@@ -4627,7 +4265,7 @@ class model:
             api_knots_, api_knots_n_ = _ivectordouble(knots)
             api_multiplicities_, api_multiplicities_n_ = _ivectorint(multiplicities)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddBSpline(
+            api_result_ = lib.gmshModelOccAddBSpline(
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 c_int(degree),
@@ -4636,10 +4274,8 @@ class model:
                 api_multiplicities_, api_multiplicities_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddBSpline returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addBezier(pointTags, tag=-1):
@@ -4654,15 +4290,13 @@ class model:
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddBezier(
+            api_result_ = lib.gmshModelOccAddBezier(
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddBezier returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addWire(curveTags, tag=-1, checkClosed=False):
@@ -4679,16 +4313,14 @@ class model:
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddWire(
+            api_result_ = lib.gmshModelOccAddWire(
                 api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 c_int(bool(checkClosed)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddWire returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addCurveLoop(curveTags, tag=-1):
@@ -4706,15 +4338,13 @@ class model:
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddCurveLoop(
+            api_result_ = lib.gmshModelOccAddCurveLoop(
                 api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddCurveLoop returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addRectangle(x, y, z, dx, dy, tag=-1, roundedRadius=0.):
@@ -4729,7 +4359,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddRectangle(
+            api_result_ = lib.gmshModelOccAddRectangle(
                 c_double(x),
                 c_double(y),
                 c_double(z),
@@ -4739,10 +4369,8 @@ class model:
                 c_double(roundedRadius),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddRectangle returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addDisk(xc, yc, zc, rx, ry, tag=-1):
@@ -4756,7 +4384,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddDisk(
+            api_result_ = lib.gmshModelOccAddDisk(
                 c_double(xc),
                 c_double(yc),
                 c_double(zc),
@@ -4765,10 +4393,8 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddDisk returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addPlaneSurface(wireTags, tag=-1):
@@ -4785,15 +4411,13 @@ class model:
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddPlaneSurface(
+            api_result_ = lib.gmshModelOccAddPlaneSurface(
                 api_wireTags_, api_wireTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddPlaneSurface returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addSurfaceFilling(wireTag, tag=-1, pointTags=[]):
@@ -4809,16 +4433,14 @@ class model:
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddSurfaceFilling(
+            api_result_ = lib.gmshModelOccAddSurfaceFilling(
                 c_int(wireTag),
                 c_int(tag),
                 api_pointTags_, api_pointTags_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddSurfaceFilling returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addBSplineFilling(wireTag, tag=-1, type=""):
@@ -4836,16 +4458,14 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddBSplineFilling(
+            api_result_ = lib.gmshModelOccAddBSplineFilling(
                 c_int(wireTag),
                 c_int(tag),
                 c_char_p(type.encode()),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddBSplineFilling returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addBezierFilling(wireTag, tag=-1, type=""):
@@ -4863,16 +4483,14 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddBezierFilling(
+            api_result_ = lib.gmshModelOccAddBezierFilling(
                 c_int(wireTag),
                 c_int(tag),
                 c_char_p(type.encode()),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddBezierFilling returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[]):
@@ -4895,7 +4513,7 @@ class model:
             api_multiplicitiesU_, api_multiplicitiesU_n_ = _ivectorint(multiplicitiesU)
             api_multiplicitiesV_, api_multiplicitiesV_n_ = _ivectorint(multiplicitiesV)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddBSplineSurface(
+            api_result_ = lib.gmshModelOccAddBSplineSurface(
                 api_pointTags_, api_pointTags_n_,
                 c_int(numPointsU),
                 c_int(tag),
@@ -4908,10 +4526,8 @@ class model:
                 api_multiplicitiesV_, api_multiplicitiesV_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddBSplineSurface returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addBezierSurface(pointTags, numPointsU, tag=-1):
@@ -4927,16 +4543,14 @@ class model:
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddBezierSurface(
+            api_result_ = lib.gmshModelOccAddBezierSurface(
                 api_pointTags_, api_pointTags_n_,
                 c_int(numPointsU),
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddBezierSurface returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addSurfaceLoop(surfaceTags, tag=-1, sewing=False):
@@ -4953,16 +4567,14 @@ class model:
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddSurfaceLoop(
+            api_result_ = lib.gmshModelOccAddSurfaceLoop(
                 api_surfaceTags_, api_surfaceTags_n_,
                 c_int(tag),
                 c_int(bool(sewing)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddSurfaceLoop returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addVolume(shellTags, tag=-1):
@@ -4978,15 +4590,13 @@ class model:
             """
             api_shellTags_, api_shellTags_n_ = _ivectorint(shellTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddVolume(
+            api_result_ = lib.gmshModelOccAddVolume(
                 api_shellTags_, api_shellTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddVolume returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addSphere(xc, yc, zc, radius, tag=-1, angle1=-pi/2, angle2=pi/2, angle3=2*pi):
@@ -5002,7 +4612,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddSphere(
+            api_result_ = lib.gmshModelOccAddSphere(
                 c_double(xc),
                 c_double(yc),
                 c_double(zc),
@@ -5013,10 +4623,8 @@ class model:
                 c_double(angle3),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddSphere returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addBox(x, y, z, dx, dy, dz, tag=-1):
@@ -5031,7 +4639,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddBox(
+            api_result_ = lib.gmshModelOccAddBox(
                 c_double(x),
                 c_double(y),
                 c_double(z),
@@ -5041,10 +4649,8 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddBox returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addCylinder(x, y, z, dx, dy, dz, r, tag=-1, angle=2*pi):
@@ -5061,7 +4667,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddCylinder(
+            api_result_ = lib.gmshModelOccAddCylinder(
                 c_double(x),
                 c_double(y),
                 c_double(z),
@@ -5073,10 +4679,8 @@ class model:
                 c_double(angle),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddCylinder returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, angle=2*pi):
@@ -5093,7 +4697,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddCone(
+            api_result_ = lib.gmshModelOccAddCone(
                 c_double(x),
                 c_double(y),
                 c_double(z),
@@ -5106,10 +4710,8 @@ class model:
                 c_double(angle),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddCone returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addWedge(x, y, z, dx, dy, dz, tag=-1, ltx=0.):
@@ -5125,7 +4727,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddWedge(
+            api_result_ = lib.gmshModelOccAddWedge(
                 c_double(x),
                 c_double(y),
                 c_double(z),
@@ -5136,10 +4738,8 @@ class model:
                 c_double(ltx),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddWedge returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addTorus(x, y, z, r1, r2, tag=-1, angle=2*pi):
@@ -5154,7 +4754,7 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddTorus(
+            api_result_ = lib.gmshModelOccAddTorus(
                 c_double(x),
                 c_double(y),
                 c_double(z),
@@ -5164,10 +4764,8 @@ class model:
                 c_double(angle),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddTorus returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False, maxDegree=-1):
@@ -5196,9 +4794,7 @@ class model:
                 c_int(maxDegree),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddThruSections returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -5225,9 +4821,7 @@ class model:
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddThickSolid returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -5259,9 +4853,7 @@ class model:
                 c_int(bool(recombine)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccExtrude returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -5300,9 +4892,7 @@ class model:
                 c_int(bool(recombine)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccRevolve returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -5324,9 +4914,7 @@ class model:
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAddPipe returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -5356,9 +4944,7 @@ class model:
                 c_int(bool(removeVolume)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccFillet returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -5392,9 +4978,7 @@ class model:
                 c_int(bool(removeVolume)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccChamfer returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -5425,9 +5009,7 @@ class model:
                 c_int(bool(removeTool)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccFuse returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
@@ -5460,9 +5042,7 @@ class model:
                 c_int(bool(removeTool)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccIntersect returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
@@ -5495,9 +5075,7 @@ class model:
                 c_int(bool(removeTool)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccCut returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
@@ -5530,9 +5108,7 @@ class model:
                 c_int(bool(removeTool)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccFragment returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
@@ -5553,9 +5129,7 @@ class model:
                 c_double(dz),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccTranslate returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def rotate(dimTags, x, y, z, ax, ay, az, angle):
@@ -5579,9 +5153,7 @@ class model:
                 c_double(angle),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccRotate returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def dilate(dimTags, x, y, z, a, b, c):
@@ -5604,9 +5176,7 @@ class model:
                 c_double(c),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccDilate returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def mirror(dimTags, a, b, c, d):
@@ -5626,9 +5196,7 @@ class model:
                 c_double(d),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccMirror returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def symmetrize(dimTags, a, b, c, d):
@@ -5650,9 +5218,7 @@ class model:
                 c_double(d),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccSymmetrize returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def affineTransform(dimTags, a):
@@ -5671,9 +5237,7 @@ class model:
                 api_a_, api_a_n_,
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccAffineTransform returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def copy(dimTags):
@@ -5692,9 +5256,7 @@ class model:
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccCopy returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -5712,9 +5274,7 @@ class model:
                 c_int(bool(recursive)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccRemove returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def removeAllDuplicates():
@@ -5729,9 +5289,7 @@ class model:
             lib.gmshModelOccRemoveAllDuplicates(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccRemoveAllDuplicates returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True):
@@ -5759,9 +5317,7 @@ class model:
                 c_int(bool(makeSolids)),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccHealShapes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -5786,9 +5342,7 @@ class model:
                 c_char_p(format.encode()),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccImportShapes returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
@@ -5809,9 +5363,7 @@ class model:
                 c_int(dim),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccGetEntities returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
         @staticmethod
@@ -5839,9 +5391,7 @@ class model:
                 c_int(dim),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccGetEntitiesInBoundingBox returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectorpair(api_tags_, api_tags_n_.value)
 
         @staticmethod
@@ -5872,9 +5422,7 @@ class model:
                 byref(api_zmax_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccGetBoundingBox returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 api_xmin_.value,
                 api_ymin_.value,
@@ -5900,9 +5448,7 @@ class model:
                 byref(api_mass_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccGetMass returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return api_mass_.value
 
         @staticmethod
@@ -5927,9 +5473,7 @@ class model:
                 byref(api_z_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccGetCenterOfMass returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return (
                 api_x_.value,
                 api_y_.value,
@@ -5953,9 +5497,7 @@ class model:
                 byref(api_mat_), byref(api_mat_n_),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccGetMatrixOfInertia returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
             return _ovectordouble(api_mat_, api_mat_n_.value)
 
         @staticmethod
@@ -5969,14 +5511,12 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api__result__ = lib.gmshModelOccGetMaxTag(
+            api_result_ = lib.gmshModelOccGetMaxTag(
                 c_int(dim),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccGetMaxTag returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
+                raise Exception(logger.getLastError())
+            return api_result_
 
         @staticmethod
         def setMaxTag(dim, maxTag):
@@ -5992,9 +5532,7 @@ class model:
                 c_int(maxTag),
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccSetMaxTag returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def synchronize():
@@ -6010,9 +5548,7 @@ class model:
             lib.gmshModelOccSynchronize(
                 byref(ierr))
             if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelOccSynchronize returned non-zero error code: ",
-                    ierr.value)
+                raise Exception(logger.getLastError())
 
 
         class mesh:
@@ -6035,9 +5571,7 @@ class model:
                     c_double(size),
                     byref(ierr))
                 if ierr.value != 0:
-                    raise ValueError(
-                        "gmshModelOccMeshSetSize returned non-zero error code: ",
-                        ierr.value)
+                    raise Exception(logger.getLastError())
 
 
 class view:
@@ -6057,15 +5591,13 @@ class view:
         Return an integer value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshViewAdd(
+        api_result_ = lib.gmshViewAdd(
             c_char_p(name.encode()),
             c_int(tag),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewAdd returned non-zero error code: ",
-                ierr.value)
-        return api__result__
+            raise Exception(logger.getLastError())
+        return api_result_
 
     @staticmethod
     def remove(tag):
@@ -6079,9 +5611,7 @@ class view:
             c_int(tag),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewRemove returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getIndex(tag):
@@ -6095,14 +5625,12 @@ class view:
         Return an integer value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshViewGetIndex(
+        api_result_ = lib.gmshViewGetIndex(
             c_int(tag),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewGetIndex returned non-zero error code: ",
-                ierr.value)
-        return api__result__
+            raise Exception(logger.getLastError())
+        return api_result_
 
     @staticmethod
     def getTags():
@@ -6119,9 +5647,7 @@ class view:
             byref(api_tags_), byref(api_tags_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewGetTags returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorint(api_tags_, api_tags_n_.value)
 
     @staticmethod
@@ -6157,9 +5683,7 @@ class view:
             c_int(partition),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewAddModelData returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0):
@@ -6187,9 +5711,7 @@ class view:
             c_int(partition),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewAddHomogeneousModelData returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getModelData(tag, step):
@@ -6219,9 +5741,7 @@ class view:
             byref(api_numComponents_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewGetModelData returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             _ostring(api_dataType_),
             _ovectorsize(api_tags_, api_tags_n_.value),
@@ -6257,9 +5777,7 @@ class view:
             byref(api_numComponents_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewGetHomogeneousModelData returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             _ostring(api_dataType_),
             _ovectorsize(api_tags_, api_tags_n_.value),
@@ -6286,9 +5804,7 @@ class view:
             api_data_, api_data_n_,
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewAddListData returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getListData(tag):
@@ -6312,9 +5828,7 @@ class view:
             byref(api_data_), byref(api_data_n_), byref(api_data_nn_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewGetListData returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             _ovectorstring(api_dataType_, api_dataType_n_.value),
             _ovectorint(api_numElements_, api_numElements_n_.value),
@@ -6343,9 +5857,7 @@ class view:
             api_style_, api_style_n_,
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewAddListDataString returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getListDataStrings(tag, dim):
@@ -6370,9 +5882,7 @@ class view:
             byref(api_style_), byref(api_style_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewGetListDataStrings returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
             _ovectordouble(api_coord_, api_coord_n_.value),
             _ovectorstring(api_data_, api_data_n_.value),
@@ -6391,16 +5901,14 @@ class view:
         Return an integer value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshViewAddAlias(
+        api_result_ = lib.gmshViewAddAlias(
             c_int(refTag),
             c_int(bool(copyOptions)),
             c_int(tag),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewAddAlias returned non-zero error code: ",
-                ierr.value)
-        return api__result__
+            raise Exception(logger.getLastError())
+        return api_result_
 
     @staticmethod
     def copyOptions(refTag, tag):
@@ -6416,9 +5924,7 @@ class view:
             c_int(tag),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewCopyOptions returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def combine(what, how, remove=True, copyOptions=True):
@@ -6438,9 +5944,7 @@ class view:
             c_int(bool(copyOptions)),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewCombine returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[]):
@@ -6477,9 +5981,7 @@ class view:
             api_zElemCoord_, api_zElemCoord_n_,
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewProbe returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectordouble(api_value_, api_value_n_.value)
 
     @staticmethod
@@ -6497,9 +5999,7 @@ class view:
             c_int(bool(append)),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshViewWrite returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
 
 class plugin:
@@ -6521,9 +6021,7 @@ class plugin:
             c_double(value),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshPluginSetNumber returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def setString(name, option, value):
@@ -6539,9 +6037,7 @@ class plugin:
             c_char_p(value.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshPluginSetString returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def run(name):
@@ -6555,9 +6051,7 @@ class plugin:
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshPluginRun returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
 
 class graphics:
@@ -6576,9 +6070,7 @@ class graphics:
         lib.gmshGraphicsDraw(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshGraphicsDraw returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
 
 class fltk:
@@ -6598,9 +6090,7 @@ class fltk:
         lib.gmshFltkInitialize(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkInitialize returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def wait(time=-1.):
@@ -6616,9 +6106,7 @@ class fltk:
             c_double(time),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkWait returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def update():
@@ -6634,9 +6122,7 @@ class fltk:
         lib.gmshFltkUpdate(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkUpdate returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def awake(action=""):
@@ -6652,9 +6138,7 @@ class fltk:
             c_char_p(action.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkAwake returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def lock():
@@ -6667,9 +6151,7 @@ class fltk:
         lib.gmshFltkLock(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkLock returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def unlock():
@@ -6682,9 +6164,7 @@ class fltk:
         lib.gmshFltkUnlock(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkUnlock returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def run():
@@ -6699,9 +6179,7 @@ class fltk:
         lib.gmshFltkRun(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkRun returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def isAvailable():
@@ -6714,13 +6192,11 @@ class fltk:
         Return an integer value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshFltkIsAvailable(
+        api_result_ = lib.gmshFltkIsAvailable(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkIsAvailable returned non-zero error code: ",
-                ierr.value)
-        return api__result__
+            raise Exception(logger.getLastError())
+        return api_result_
 
     @staticmethod
     def selectEntities(dim=-1):
@@ -6734,16 +6210,14 @@ class fltk:
         """
         api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
-        api__result__ = lib.gmshFltkSelectEntities(
+        api_result_ = lib.gmshFltkSelectEntities(
             byref(api_dimTags_), byref(api_dimTags_n_),
             c_int(dim),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkSelectEntities returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
-            api__result__,
+            api_result_,
             _ovectorpair(api_dimTags_, api_dimTags_n_.value))
 
     @staticmethod
@@ -6757,15 +6231,13 @@ class fltk:
         """
         api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
         ierr = c_int()
-        api__result__ = lib.gmshFltkSelectElements(
+        api_result_ = lib.gmshFltkSelectElements(
             byref(api_elementTags_), byref(api_elementTags_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkSelectElements returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
-            api__result__,
+            api_result_,
             _ovectorsize(api_elementTags_, api_elementTags_n_.value))
 
     @staticmethod
@@ -6779,15 +6251,13 @@ class fltk:
         """
         api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
-        api__result__ = lib.gmshFltkSelectViews(
+        api_result_ = lib.gmshFltkSelectViews(
             byref(api_viewTags_), byref(api_viewTags_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshFltkSelectViews returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return (
-            api__result__,
+            api_result_,
             _ovectorint(api_viewTags_, api_viewTags_n_.value))
 
 
@@ -6809,9 +6279,7 @@ class onelab:
             c_char_p(format.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOnelabSet returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def get(name="", format="json"):
@@ -6831,9 +6299,7 @@ class onelab:
             c_char_p(format.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOnelabGet returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ostring(api_data_)
 
     @staticmethod
@@ -6852,9 +6318,7 @@ class onelab:
             api_value_, api_value_n_,
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOnelabSetNumber returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def setString(name, value):
@@ -6872,9 +6336,7 @@ class onelab:
             api_value_, api_value_n_,
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOnelabSetString returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getNumber(name):
@@ -6893,9 +6355,7 @@ class onelab:
             byref(api_value_), byref(api_value_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOnelabGetNumber returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectordouble(api_value_, api_value_n_.value)
 
     @staticmethod
@@ -6915,9 +6375,7 @@ class onelab:
             byref(api_value_), byref(api_value_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOnelabGetString returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorstring(api_value_, api_value_n_.value)
 
     @staticmethod
@@ -6932,9 +6390,7 @@ class onelab:
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOnelabClear returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def run(name="", command=""):
@@ -6951,9 +6407,7 @@ class onelab:
             c_char_p(command.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshOnelabRun returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
 
 class logger:
@@ -6974,9 +6428,7 @@ class logger:
             c_char_p(level.encode()),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshLoggerWrite returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def start():
@@ -6989,9 +6441,7 @@ class logger:
         lib.gmshLoggerStart(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshLoggerStart returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def get():
@@ -7008,9 +6458,7 @@ class logger:
             byref(api_log_), byref(api_log_n_),
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshLoggerGet returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
         return _ovectorstring(api_log_, api_log_n_.value)
 
     @staticmethod
@@ -7024,9 +6472,7 @@ class logger:
         lib.gmshLoggerStop(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshLoggerStop returned non-zero error code: ",
-                ierr.value)
+            raise Exception(logger.getLastError())
 
     @staticmethod
     def getWallTime():
@@ -7038,13 +6484,11 @@ class logger:
         Return a floating point value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshLoggerGetWallTime(
+        api_result_ = lib.gmshLoggerGetWallTime(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshLoggerGetWallTime returned non-zero error code: ",
-                ierr.value)
-        return api__result__
+            raise Exception(logger.getLastError())
+        return api_result_
 
     @staticmethod
     def getCpuTime():
@@ -7056,10 +6500,26 @@ class logger:
         Return a floating point value.
         """
         ierr = c_int()
-        api__result__ = lib.gmshLoggerGetCpuTime(
+        api_result_ = lib.gmshLoggerGetCpuTime(
             byref(ierr))
         if ierr.value != 0:
-            raise ValueError(
-                "gmshLoggerGetCpuTime returned non-zero error code: ",
-                ierr.value)
-        return api__result__
+            raise Exception(logger.getLastError())
+        return api_result_
+
+    @staticmethod
+    def getLastError():
+        """
+        gmsh.logger.getLastError()
+
+        Return last error message, if any.
+
+        Return `error'.
+        """
+        api_error_ = c_char_p()
+        ierr = c_int()
+        lib.gmshLoggerGetLastError(
+            byref(api_error_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception('Could not get last error')
+        return _ostring(api_error_)
