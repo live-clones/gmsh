@@ -1309,7 +1309,7 @@ class API:
                     fcwrap.write(", &ierr);\n")
                 else:
                     fcwrap.write("&ierr);\n")
-                if name == 'getLastError':
+                if name == 'getLastError': # special case for getLastError() function
                     fcwrap.write(indent + "  " + 'if(ierr) throw "Could not get last error";\n')
                 else:
                     fcwrap.write(indent + "  " + "if(ierr) throwLastError();\n")
@@ -1480,7 +1480,10 @@ class API:
                     ("," if not len(args) else "") + "),\n" + " " * 10 +
                     ", ".join(tuple(a.julia_arg
                                     for a in args) + ("ierr", )) + ")\n")
-            f.write('    ierr[] != 0 && error(gmsh.logger.getLastError())\n')
+            if name == "getLastError": # special case for getLastError() function
+                f.write('    ierr[] != 0 && error("Could not get last error")\n')
+            else:
+                f.write('    ierr[] != 0 && error(gmsh.logger.getLastError())\n')
             for a in args:
                 if a.julia_post: f.write("    " + a.julia_post + "\n")
             r = (["api_result_"]) if rtype else []

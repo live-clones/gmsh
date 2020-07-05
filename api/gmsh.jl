@@ -5667,7 +5667,7 @@ function getLastError()
     ccall((:gmshLoggerGetLastError, gmsh.lib), Cvoid,
           (Ptr{Ptr{Cchar}}, Ptr{Cint}),
           api_error_, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
+    ierr[] != 0 && error("Could not get last error")
     error = unsafe_string(api_error_[])
     return error
 end
