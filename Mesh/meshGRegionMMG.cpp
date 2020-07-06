@@ -48,7 +48,7 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
       kToMVertex[k] = it->second;
   }
 
-  // Store the Tetras from the Mmg structures into the gmsh structures
+  // Store the Tetras from the Mmg structures into the Gmsh structures
   for(int k = 1; k <= ne; k++) {
     int v1mmg, v2mmg, v3mmg, v4mmg;
     if(MMG3D_Get_tetrahedron(mmg, &v1mmg, &v2mmg, &v3mmg, &v4mmg, &ref, NULL) !=
@@ -60,15 +60,13 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
     MVertex *v3 = kToMVertex[v3mmg];
     MVertex *v4 = kToMVertex[v4mmg];
     if(!v1 || !v2 || !v3 || !v4) {
-      Msg::Error(
-        "Element %d Unknown Vertex in MMG2gmsh %d(%p) %d(%p) %d(%p) %d(%p)", k,
-        v1mmg, v1, v2mmg, v2, v3mmg, v3, v4mmg, v4);
+      Msg::Error("Mmg3d: unknown vertex in tetrahedron %d", k);
     }
     else
       gr->tetrahedra.push_back(new MTetrahedron(v1, v2, v3, v4));
   }
 
-  // Store the Triangles from the Mmg structures into the gmsh structures
+  // Store the Triangles from the Mmg structures into the Gmsh structures
   for(int k = 1; k <= nt; k++) {
     int v1mmg, v2mmg, v3mmg;
     if(MMG3D_Get_triangle(mmg, &v1mmg, &v2mmg, &v3mmg, &ref, NULL) != 1)
@@ -78,8 +76,7 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
     MVertex *v2 = kToMVertex[v2mmg];
     MVertex *v3 = kToMVertex[v3mmg];
     if(!v1 || !v2 || !v3) {
-      Msg::Error("Element %d Unknown Vertex in MMG2gmsh %d(%p) %d(%p) %d(%p)",
-                 k, v1mmg, v1, v2mmg, v2, v3mmg, v3);
+      Msg::Error("Mmg3d: unknown vertex in triangle %d", k);
     }
 #warning TODO: delete the old boundary faces from the Gmsh mesh and recover the newest from the Mmg mesh
     // else
@@ -314,31 +311,29 @@ void refineMeshMMG(GRegion *gr)
     MMG3D_Get_meshSize(mmg, NULL, &nT, NULL, NULL, NULL, NULL);
 
     // Mmg parameters : verbosity + nosurf option
-    int verb_mmg = 5; //(Msg::GetVerbosity() > 9) ? 3 : 0;
+    int verb_mmg = (Msg::GetVerbosity() < 2) ? -1 : Msg::GetVerbosity() - 4;
     if(MMG3D_Set_iparameter(mmg, sol, MMG3D_IPARAM_verbose, verb_mmg) != 1)
-      Msg::Error("Unable to set Mmg3d verbosity");
+      Msg::Error("Mmsg3d: unable to set verbosity");
 
     // Set the nosurf parameter to 1 to preserve the boundaries
     if(MMG3D_Set_iparameter(mmg, sol, MMG3D_IPARAM_nosurf, 1) != 1)
-      Msg::Error("Unable to preserve the boundaries (mmg3d)");
+      Msg::Error("Mmg3d: unable to preserve the boundaries");
 
     // Set the hausdorff parameter
     double sqrt3Inv = 0.57735026919;
     double hausd = 0.01 * sqrt3Inv * gr->bounds().diag();
 
-    if(MMG3D_Set_dparameter(mmg, sol, MMG3D_DPARAM_hausd, hausd) != 1)
-      Msg::Error("Unable to set the hausdorff parameter");
+    if(MMG3D_Set_dparameter(mmg, sol, MMG3D_DPARAM_hausd, hausd) != 1) {
+      Msg::Error("Mmg3d: unable to set the hausdorff parameter");
+    }
 
-    Msg::Debug("-------- GMSH LAUNCHES MMG3D ---------------");
-    int ierror = MMG3D_mmg3dlib(mmg, sol);
-    if(ierror != MMG5_SUCCESS)
-      Msg::Error("Mmg3d failure");
-
+    if(MMG3D_mmg3dlib(mmg, sol) != MMG5_SUCCESS) {
+      Msg::Error("Mmg3d: failed (iteration %d)", ITER);
+    }
     else {
-      Msg::Debug("-------- MG3D TERMINATED -------------------");
       MMG3D_Get_meshSize(mmg, &np, &nTnow, NULL, NULL, NULL, NULL);
-      Msg::Info("MMG3D succeeded (ITER=%d) %d vertices %d tetrahedra", ITER, np,
-                nTnow);
+      Msg::Info("Mmg3d: success (iteration %d) - %d nodes %d tetrahedra", ITER,
+                np, nTnow);
 
       // Here we should interact with BGM
       updateSizes(gr, mmg, sol, mmg2gmsh);
