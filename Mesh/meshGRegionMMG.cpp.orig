@@ -5,7 +5,7 @@
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
-#include "meshGRegionMMG3D.h"
+#include "meshGRegionMMG.h"
 
 #if defined(HAVE_MMG3D)
 
@@ -322,7 +322,7 @@ void refineMeshMMG(GRegion *gr)
 
 void refineMeshMMG(GRegion *gr)
 {
-  Msg::Error("This version of Gmsh is not compiled with MMG3D support");
+  Msg::Error("This version of Gmsh is not compiled with MMG support");
 }
 
 #endif

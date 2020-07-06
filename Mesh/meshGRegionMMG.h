@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef MESHGREGIONMMG3D_H
-#define MESHGREGIONMMG3D_H
+#ifndef MESH_GREGION_MMG_H
+#define MESH_GREGION_MMG_H
 
 class GRegion;
 

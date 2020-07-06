@@ -10,7 +10,7 @@
 #include "meshGRegion.h"
 #include "meshGRegionHxt.h"
 #include "meshGRegionNetgen.h"
-#include "meshGRegionMMG3D.h"
+#include "meshGRegionMMG.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "meshGRegionBoundaryRecovery.h"

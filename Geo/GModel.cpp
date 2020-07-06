@@ -52,7 +52,7 @@
 #include "meshPartition.h"
 #include "HighOrder.h"
 #include "meshMetric.h"
-#include "meshGRegionMMG3D.h"
+#include "meshGRegionMMG.h"
 #include "meshGFaceBamg.h"
 #include "meshRefine.h"
 #endif
