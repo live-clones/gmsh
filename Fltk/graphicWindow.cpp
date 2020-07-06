@@ -579,6 +579,8 @@ void file_quit_cb(Fl_Widget *w, void *data)
       wins.push_back(win);
     for (std::size_t i = 0; i < wins.size(); i++)
       wins[i]->hide();
+    // process remaining events
+    FlGui::check();
     // ... and destroy the GUI
     FlGui::instance()->destroy();
   }
