@@ -1,10 +1,14 @@
 #include <iostream>
 #include <queue>
 #include <vector>
+#include <unordered_set>
 
 #include "SPoint3.h"
 #include "SVector3.h"
+#include "MTetrahedron.h"
+#include "MTriangle.h"
 #include "Numeric.h"
+#include "robustPredicates.h"
 
 #include "hxt_octree.h"
 #include "hxt_boundary_recovery.h"
@@ -198,9 +202,9 @@ static inline void initializeCell(p4est_t* p4est, p4est_topidx_t which_tree, p4e
 
   data->isBoundary = false;
 
-  data->c[0] = center[0];
-  data->c[1] = center[1];
-  data->c[2] = center[2];
+  // data->c[0] = center[0];
+  // data->c[1] = center[1];
+  // data->c[2] = center[2];
 }
 
 /* Creates (allocates) the forestOptions structure. */
@@ -910,43 +914,43 @@ static void computeGradientCenter(p4est_iter_face_info_t * info, void *user_data
     }
 }
 
-static void correction(p4est_iter_face_info_t * info, void *user_data){
-  p4est_iter_face_side_t *side[2];
-  sc_array_t             *sides = &(info->sides);
-  size_data_t            *data;
-  size_data_t            *data_opp;
-  double                  s_avg, s[4], s_sum;
-  int                     which_face;
-  int                     which_face_opp;
-  // Index of current face on the opposite cell (0 if current is 1 and vice versa).
-  int                     iOpp; 
+// static void correction(p4est_iter_face_info_t * info, void *user_data){
+//   p4est_iter_face_side_t *side[2];
+//   sc_array_t             *sides = &(info->sides);
+//   size_data_t            *data;
+//   size_data_t            *data_opp;
+//   double                  s_avg, s[4], s_sum;
+//   int                     which_face;
+//   int                     which_face_opp;
+//   // Index of current face on the opposite cell (0 if current is 1 and vice versa).
+//   int                     iOpp; 
 
-  side[0] = p4est_iter_fside_array_index_int (sides, 0);
-  side[1] = p4est_iter_fside_array_index_int (sides, 1);
+//   side[0] = p4est_iter_fside_array_index_int (sides, 0);
+//   side[1] = p4est_iter_fside_array_index_int (sides, 1);
 
-  if(sides->elem_count == 2){
-    for(int i = 0; i < 2; i++){
-      iOpp = 1 - i;
-      which_face_opp = side[iOpp]->face; /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
-      // Current cells are hanging
-      if (side[i]->is_hanging){
-        data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-        double gradOpp[3], grad[3];
-        myGrad(data_opp->c[0], data_opp->c[1], data_opp->c[2], gradOpp);
-        // for(int jj = 0; jj < 3; ++jj){
-        //   data_opp->ds[jj] = gradOpp[jj];
-        // }
-        for(int jj = 0; jj < P4EST_HALF; ++jj){
-          data = (size_data_t *) side[i]->is.hanging.quad[jj]->p.user_data;
-          myGrad(data->c[0], data->c[1], data->c[2], grad);
-          for(int kk = 0; kk < 3; ++kk){
-            data->ds[kk] = grad[kk];
-          }
-        }
-      }      
-    }
-  }
-}
+//   if(sides->elem_count == 2){
+//     for(int i = 0; i < 2; i++){
+//       iOpp = 1 - i;
+//       which_face_opp = side[iOpp]->face; /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
+//       // Current cells are hanging
+//       if (side[i]->is_hanging){
+//         data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+//         double gradOpp[3], grad[3];
+//         myGrad(data_opp->c[0], data_opp->c[1], data_opp->c[2], gradOpp);
+//         // for(int jj = 0; jj < 3; ++jj){
+//         //   data_opp->ds[jj] = gradOpp[jj];
+//         // }
+//         for(int jj = 0; jj < P4EST_HALF; ++jj){
+//           data = (size_data_t *) side[i]->is.hanging.quad[jj]->p.user_data;
+//           myGrad(data->c[0], data->c[1], data->c[2], grad);
+//           for(int kk = 0; kk < 3; ++kk){
+//             data->ds[kk] = grad[kk];
+//           }
+//         }
+//       }      
+//     }
+//   }
+// }
 
 static inline void printGradient(p4est_iter_volume_info_t * info, void *user_data){
     size_data_t *data = (size_data_t *) info->quad->p.user_data;
@@ -998,7 +1002,7 @@ void smoothSize(p4est_iter_face_info_t * info, void *user_data){
 
     HXTForestOptions  *forestOptions = (HXTForestOptions*) user_data;
     double             alpha = forestOptions->gradation - 1.0;
-    double             tol = 1e-4;
+    double             tol = 1e-3;
 
     side[0] = p4est_iter_fside_array_index_int (sides, 0);
     side[1] = p4est_iter_fside_array_index_int (sides, 1);
@@ -1166,7 +1170,7 @@ HXTStatus hxtForestSetMaxGradient(HXTForest *forest){
 }
 
 HXTStatus hxtForestSizeSmoothing(HXTForest *forest){
-  double gradMax[3], tol = 1e-4, gradLinf = 1e22;
+  double gradMax[3], tol = 1e-3, gradLinf = 1e22;
   int iter = 0;
   int nmax = 100;
   // while(iter++ < forest->forestOptions->nRefine && gradLinf > tol + forest->forestOptions->gradation - 1.0){
@@ -1320,7 +1324,7 @@ HXTStatus hxtForestSearchOne(HXTForest *forest, double x, double y, double z, do
   return HXT_STATUS_OK;
 }
 
-static int hxtOctreeReplaceCallback(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
+static int replaceSize(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
 
     bool in_box;
     int is_leaf = local_num >= 0;
@@ -1597,8 +1601,348 @@ void eliminateTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, in
   }
 }
 
-HXTStatus hxtForestCloseSurfaces(HXTForest *forest){
+// To quickly sort 4 integers
+static int sort4(int *d){
+#define SWAP(x,y) if (d[y] < d[x]) { int tmp = d[x]; d[x] = d[y]; d[y] = tmp; }
+  SWAP(0, 1);
+  SWAP(2, 3);
+  SWAP(0, 2);
+  SWAP(1, 3);
+  SWAP(1, 2);
+#undef SWAP
+}
 
+static int commonFaceTetSlow(MTetrahedron *t1, MTetrahedron *t2){
+  int t10 = t1->getVertex(0)->getNum();
+  int t11 = t1->getVertex(1)->getNum();
+  int t12 = t1->getVertex(2)->getNum();
+  int t13 = t1->getVertex(3)->getNum();
+  int t20 = t2->getVertex(0)->getNum();
+  int t21 = t2->getVertex(1)->getNum();
+  int t22 = t2->getVertex(2)->getNum();
+  int t23 = t2->getVertex(3)->getNum();
+  std::vector<int> v1 = { t10, t11, t12, t13 }; 
+  std::vector<int> v2 = { t20, t21, t22, t23 };
+  std::sort(v1.begin(), v1.end()); 
+  std::sort(v2.begin(), v2.end()); 
+  std::vector<int> v(v1.size() + v2.size()); 
+  std::vector<int>::iterator it, st; 
+  it = std::set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), v.begin());
+  v.resize(it-v.begin());
+  return v.size();
+}
+
+static int commonFaceTetFast(MTetrahedron *t1, MTetrahedron *t2){
+  int t10 = t1->getVertex(0)->getNum();
+  int t11 = t1->getVertex(1)->getNum();
+  int t12 = t1->getVertex(2)->getNum();
+  int t13 = t1->getVertex(3)->getNum();
+  int t20 = t2->getVertex(0)->getNum();
+  int t21 = t2->getVertex(1)->getNum();
+  int t22 = t2->getVertex(2)->getNum();
+  int t23 = t2->getVertex(3)->getNum();
+
+  bool b0 = (t10 == t20) || (t10 == t21) || (t10 == t22) || (t10 == t23);
+  bool b1 = (t11 == t20) || (t11 == t21) || (t11 == t22) || (t11 == t23);
+  bool b2 = (t12 == t20) || (t12 == t21) || (t12 == t22) || (t12 == t23);
+  bool b3 = (t13 == t20) || (t13 == t21) || (t13 == t22) || (t13 == t23);
+
+  if(b0+b1+b2+b3 < 3){
+    return -1;
+  } else{
+    int v1[4]    = {t10, t11, t12, t13};
+    int v1cpy[4] = {t10, t11, t12, t13};
+    int v2[4]    = {t20, t21, t22, t23};
+    // int isSwapped1[5] = {0, 0, 0, 0, 0};
+    // int isSwapped2[5] = {0, 0, 0, 0, 0};
+    sort4(v1);
+    sort4(v2);
+    t10 = v1[0]; t11 = v1[1]; t12 = v1[2]; t13 = v1[3];
+    t20 = v2[0]; t21 = v2[1]; t22 = v2[2]; t23 = v2[3];
+
+    bool b00 = (t11==t21) && (t12==t22) && (t13==t23);
+    bool b01 = (t11==t20) && (t12==t22) && (t13==t23);
+    bool b02 = (t11==t20) && (t12==t21) && (t13==t23);
+    bool b03 = (t11==t20) && (t12==t21) && (t13==t22);
+
+    bool b10 = (t10==t21) && (t12==t22) && (t13==t23);
+    bool b11 = (t10==t20) && (t12==t22) && (t13==t23);
+    bool b12 = (t10==t20) && (t12==t21) && (t13==t23);
+    bool b13 = (t10==t20) && (t12==t21) && (t13==t22);
+
+    bool b20 = (t10==t21) && (t11==t22) && (t12==t23);
+    bool b21 = (t10==t20) && (t11==t22) && (t12==t23);
+    bool b22 = (t10==t20) && (t11==t21) && (t12==t23);
+    bool b23 = (t10==t20) && (t11==t21) && (t12==t22);
+
+    bool b30 = (t10==t21) && (t11==t22) && (t13==t23);
+    bool b31 = (t10==t20) && (t11==t22) && (t13==t23);
+    bool b32 = (t10==t20) && (t11==t21) && (t13==t23);
+    bool b33 = (t10==t20) && (t11==t21) && (t13==t22);
+
+    int missing = -1; // The vertex that is missing from the common face
+    if      (b00 || b01 || b02 || b03) missing = 0; //return 3;
+    else if (b10 || b11 || b12 || b13) missing = 1; //return 2;
+    else if (b20 || b21 || b22 || b23) missing = 3; //return 0;
+    else if (b30 || b31 || b32 || b33) missing = 2; //return 1;
+
+    if(missing >= 0){
+      if      (v1cpy[0] == v1[missing]) return 3;
+      else if (v1cpy[1] == v1[missing]) return 2;
+      else if (v1cpy[2] == v1[missing]) return 1;
+      else if (v1cpy[3] == v1[missing]) return 0;
+    }
+  }
+}
+
+static inline int commonFace(MTetrahedron *t1, MTetrahedron *t2){
+  int indCommonFaceInt1 = -1;
+  for(int i = 0; i < 4; ++i){
+    for(int j = 0; j < 4; ++j){
+      if(t1->getFace(i) == t2->getFace(j)){ indCommonFaceInt1 = i; goto skip; }
+    }
+  }
+  skip: ;
+  return indCommonFaceInt1;
+}
+
+// static int commonFace(std::vector<MFace> tetFaces, uint64_t t1, uint64_t t2){
+//   int indCommonFaceInt1 = -1;
+//   for(int i = 0; i < 4; ++i){
+//     for(int j = 0; j < 4; ++j){
+//       if(tetFaces[4*t1+i] == tetFaces[4*t2+j]){ indCommonFaceInt1 = i; goto skip; }
+//     }
+//   }
+//   skip: ;
+//   return indCommonFaceInt1;
+// }
+
+static bool sortClockwise(SPoint3 a, SPoint3 b, SPoint3 center, SVector3 normal){
+  // If dot(n, cross(A-C, B-C)) is positive, B is counterclockwise from A; if it's negative, B is clockwise from A.
+  SVector3 tmp = crossprod(SVector3(center,a),SVector3(center,b));
+  return dot(normal, tmp) <= 0;
+}
+
+HXTStatus medialAxis(HXTForest* forest){
+
+  HXTMesh *mesh     = forest->forestOptions->mesh;
+  int nLayersPerGap = forest->forestOptions->nodePerGap;
+  double hmin       = forest->forestOptions->hmin;
+  double hmax       = forest->forestOptions->hmax;
+
+  std::vector<MVertex*> allVertices;
+  std::vector<double> sizeAtVertices(mesh->vertices.num, DBL_MAX);
+  for(size_t i = 0; i < mesh->vertices.num; ++i){
+    allVertices.push_back(new MVertex(mesh->vertices.coord[4*i+0],
+                                      mesh->vertices.coord[4*i+1],
+                                      mesh->vertices.coord[4*i+2]));
+  }
+
+  int firstVertex = allVertices[0]->getNum();
+
+  // All tets
+  uint64_t count = 0;
+  std::vector<MTetrahedron*> allTets;
+  std::vector<std::vector<uint64_t>> tetIncidents;
+  std::vector<std::vector<MEdge>> edgIncidents;
+  for(uint32_t i = 0; i < mesh->vertices.num; ++i){
+    std::vector<uint64_t> vTet;
+    tetIncidents.push_back(vTet);
+    std::vector<MEdge> vEdg;
+    edgIncidents.push_back(vEdg);
+  }
+
+  for(size_t i = 0; i < mesh->tetrahedra.num; ++i){
+    if(mesh->tetrahedra.node[4*i+3] != HXT_GHOST_VERTEX){
+      allTets.push_back(new MTetrahedron(allVertices[ mesh->tetrahedra.node[4*i+0] ],
+                                         allVertices[ mesh->tetrahedra.node[4*i+1] ],
+                                         allVertices[ mesh->tetrahedra.node[4*i+2] ],
+                                         allVertices[ mesh->tetrahedra.node[4*i+3] ]) );
+
+      for(size_t j = 0; j < 4; ++j){
+        tetIncidents[ mesh->tetrahedra.node[4*i+j] ].push_back(count);
+      }
+      for(size_t j = 0; j < 6; ++j){
+        MEdge e = allTets[count]->getEdge(j);
+        edgIncidents[ allTets[count]->getEdge(j).getVertex(0)->getNum() - firstVertex ].push_back(e);
+        edgIncidents[ allTets[count]->getEdge(j).getVertex(1)->getNum() - firstVertex ].push_back(e);
+      }
+      ++count;
+    }
+  }
+
+  std::set<MEdge,MEdgeLessThan> axis;
+  int elemDrawn = 0;
+
+  FILE* file = fopen("medialAxis.pos", "w");
+  if(file==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
+
+  bool draw = true;
+  if(draw){
+    fprintf(file, "View \"medialAxis\" {\n");
+  }
+
+  int indFace;
+
+  for(size_t i = 0; i < mesh->vertices.num; ++i){
+    // Pôle de p : circumcenter le plus loin parmi les tets incidents à p
+    SPoint3 pole(0.,0.,0.),
+             tmp(0.,0.,0.),
+               p(mesh->vertices.coord[4*i+0], mesh->vertices.coord[4*i+1], mesh->vertices.coord[4*i+2]);
+    double d = 0.;
+
+    for(size_t j = 0; j < tetIncidents[i].size(); ++j){
+      tmp = allTets[ tetIncidents[i][j] ]->circumcenter();
+      if(p.distance(tmp) > d) pole = tmp;
+      d = fmax(d, p.distance(tmp));
+    }
+
+    // Pole vector
+    SPoint3 vp = pole - p;
+    double D = -(vp[0]*p[0] + vp[1]*p[1] + vp[2]*p[2]);
+    SPoint3 p1(0., 0., -D/vp[2]); // 2 points sur le plan qui passe par p et de normale vp
+    SPoint3 p2(0., -D/vp[1], 0.);
+
+    std::vector<MFace> up; // umbrella
+    // Boucle sur les voronoi edges (paires de centres)
+    double orientj, orientk;
+    for(size_t j = 0; j < tetIncidents[i].size(); ++j){
+      uint64_t tetj = tetIncidents[i][j];
+      SPoint3 cj = allTets[tetj]->circumcenter();  
+      for(size_t k = j; k < tetIncidents[i].size(); ++k){
+        uint64_t tetk = tetIncidents[i][k];
+        if( tetj != tetk ){
+          indFace = commonFaceTetFast(allTets[tetj], allTets[tetk]);
+          if(indFace >= 0){
+            SPoint3 ck = allTets[tetk]->circumcenter();
+            orientj = robustPredicates::orient3d((double*) p, (double*) p1, (double*) p2, (double*) cj);
+            orientk = robustPredicates::orient3d((double*) p, (double*) p1, (double*) p2, (double*) ck);
+            if(orientj*orientk < 0){
+              up.push_back(allTets[tetj]->getFace(indFace));
+              // break; ?
+            }
+          } 
+        }
+      }
+    }
+
+    double theta = M_PI/8., rho = 8., maxAngle, minRatio, localAngle, alpha0, alpha1;
+    std::vector<MEdge> checkedEdges;
+    bool checked;
+    for(size_t j = 0; j < edgIncidents[i].size(); ++j){ // boucler sur les aretes incidentes à p
+
+      MEdge e = edgIncidents[i][j];
+      checked = false;
+      for(size_t k = 0; k < checkedEdges.size(); ++k){
+        if(e == checkedEdges[k]){
+          checked = true;
+          break;
+        }
+      }
+
+      if(checked){ continue; }
+      else{ checkedEdges.push_back(e); }
+
+      maxAngle = 0.0;
+      minRatio = DBL_MAX;
+
+      uint32_t v0 = e.getVertex(0)->getNum() - firstVertex;
+      uint32_t v1 = e.getVertex(1)->getNum() - firstVertex;
+      if(v0 == i || v1 == i){
+        for(size_t l = 0; l < up.size(); ++l){
+          // Angle condition
+          localAngle = angle( e.tangent(), up[l].normal() );
+          localAngle = fmin(localAngle, fabs(M_PI - localAngle));
+          maxAngle = fmax(maxAngle, localAngle);
+
+          // Ratio condition
+          MTriangle tri(up[l].getVertex(0),up[l].getVertex(1),up[l].getVertex(2));
+          minRatio = fmin(minRatio, e.length() / tri.getOuterRadius());
+        }
+
+        if(maxAngle < M_PI/2. - theta || minRatio > rho){
+
+          double *n0 = forest->forestOptions->nodeNormals + 3*v0;
+          double *n1 = forest->forestOptions->nodeNormals + 3*v1;
+          alpha0 = angle(SVector3(n0), e.tangent());
+          alpha1 = angle(SVector3(n1), e.tangent());
+
+          if( fmin(alpha0, fabs(M_PI-alpha0)) < M_PI/8. && fmin(alpha1, fabs(M_PI-alpha1)) < M_PI/8.){
+            // Ajouter le dual de l'arête (en fait juste l'arête) et modifier la taille des deux extrémités
+            std::pair<std::set<MEdge, MEdgeLessThan>::iterator,bool> ret = axis.insert(e);
+
+            // if(ret.second){
+                double h = e.length()/nLayersPerGap;
+                h = fmax(h, hmin);
+                h = fmin(h, hmax);
+                sizeAtVertices[ v0 ] = fmin(h, sizeAtVertices[ v0 ]);
+                sizeAtVertices[ v1 ] = fmin(h, sizeAtVertices[ v1 ]);
+
+              if(draw){
+                // Turning around the edge to draw the facet
+                std::vector<SPoint3> centers;
+                for(size_t jj = 0; jj < tetIncidents[i].size(); ++jj){
+                  uint64_t tetj = tetIncidents[i][jj];
+                  for(size_t b = 0; b < 6; ++b){
+                    if(allTets[tetj]->getEdge(b) == e) centers.push_back(allTets[tetj]->circumcenter());
+                  }
+                }
+                if(centers.size() > 2){
+                  // Center of the face
+                  SPoint3 c(0.,0.,0.);
+                  for(size_t a = 0; a < centers.size(); ++a){
+                    c += centers[a];
+                  }
+                  c /= centers.size();
+                  SVector3 normal = crossprod(SVector3(c,centers[0]),SVector3(c,centers[1]));
+                  normal.normalize();
+                  // Sort clockwise around center
+                  sort(centers.begin(), centers.end(), [c,normal](SPoint3 a, SPoint3 b) { return sortClockwise(a,b,c,normal); });
+                  // Draw
+                  for(size_t a = 1; a < centers.size()-1; ++a){
+                    fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%d,%d,%d};\n",
+                      centers[0][0],centers[0][1],centers[0][2],
+                      centers[a][0],centers[a][1],centers[a][2],
+                      centers[a+1][0],centers[a+1][1],centers[a+1][2],
+                      0,(int) a, (int) a+1);
+                  }
+                  fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%d,%d,%d};\n",
+                      centers[0][0],centers[0][1],centers[0][2],
+                      centers[centers.size()-1][0],centers[centers.size()-1][1],centers[centers.size()-1][2],
+                      centers[1][0],centers[1][1],centers[1][2],
+                      0,(int) centers.size()-1, 1);
+                  ++elemDrawn;
+                } 
+              }
+            // } // if edge was inserted
+          } // if edges does not have a too large angle with normals to its extremities
+        } // if edge passes conditions
+      } // if i is an edge vertex
+    } // for incident edges
+  } // for vertices.num
+
+  if(draw){
+    fprintf(file, "};");
+    fclose(file);
+  }
+
+  // printf("%d faces drawn in the medial axis\n", elemDrawn);
+  // printf("%d edges in the medial axis\n", axis.size());
+
+  sc_array_t *points = sc_array_new_size(sizeof(size_point_t), mesh->vertices.num);
+  size_point_t *p_tmp;
+  for(size_t i = 0; i < mesh->vertices.num; ++i){
+    p_tmp = (size_point_t *) sc_array_index(points, i);
+    p_tmp->x = mesh->vertices.coord[(size_t) 4*i+0];
+    p_tmp->y = mesh->vertices.coord[(size_t) 4*i+1];
+    p_tmp->z = mesh->vertices.coord[(size_t) 4*i+2];
+    p_tmp->size = sizeAtVertices[i];
+  }
+  p4est_search(forest->p4est, NULL, replaceSize, points);
+
+}
+
+HXTStatus hxtForestCloseSurfaces(HXTForest *forest){
   // Pour chaque noeud : recuperer sa taille dans l'octree et prendre les triangles dans la boule de rayon h
   SPoint3 p = SPoint3();
   sc_array_t *points = sc_array_new_size(sizeof(size_point_t), 1);
@@ -1684,7 +2028,7 @@ HXTStatus hxtForestCloseSurfaces(HXTForest *forest){
             p_tmp->size = size;
 
             // On cherche dans l'octree et on remplace dans les quadrants associes aux noeuds
-            p4est_search(forest->p4est, NULL, hxtOctreeReplaceCallback, points);
+            p4est_search(forest->p4est, NULL, replaceSize, points);
           }
         // }
       }
@@ -1798,10 +2142,12 @@ void exportToHexCallback(p4est_iter_volume_info_t * info, void *user_data){
   z[0] = z[1] = z[2] = z[3] = center[2]-h - epsilon;
   z[4] = z[5] = z[6] = z[7] = center[2]+h + epsilon;
   
-  fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f,%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n", 
+  // fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f,%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n", 
+  fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f,%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%d, %d, %d, %d, %d, %d, %d, %d};\n", 
     x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3], 
     x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7], 
-    s, s, s, s, s, s, s, s);
+    q->level, q->level, q->level, q->level, q->level, q->level, q->level, q->level);
+    // s, s, s, s, s, s, s, s);
 }
 
 void exportToQuadCallback(p4est_iter_volume_info_t * info, void *user_data){

@@ -5,6 +5,7 @@
 
 // GMSH INCLUDES
 #include "rtree.h"
+#include "GModel.h"
 
 // P4EST INCLUDES
 #ifdef HAVE_P4EST
@@ -39,6 +40,7 @@ typedef struct HXTForestOptions{
   std::vector<std::function<double(double)>> *curvFunctions;
   std::vector<std::function<double(double)>> *xFunctions;
   std::vector<std::function<double(double)>> *yFunctions;
+  GModel *gmodel;
 } HXTForestOptions;
 
 // The structure containing the size field information
@@ -108,5 +110,7 @@ HXTStatus hxtL2NormGradient(HXTForest *forest, double *error);
 HXTStatus hxtLInfNormGradient(HXTForest *forest, double *error);
 HXTStatus hxtGetSmallestCellSize(HXTForest *forest, double *minsize);
 HXTStatus hxtGetLargestCellSize(HXTForest *forest, double *maxsize);
+
+HXTStatus medialAxis(HXTForest *forest);
 
 #endif

@@ -13,11 +13,56 @@
 #include "hxt_octree.h"
 #endif
 
+// Information needed to create and compute a forest of octrees
+typedef struct ForestOptions{
+  int           dim;
+  double        hmax;
+  double        hmin;
+  double        hbulk;
+  double        gradation;
+  int           nRefine;
+  int           nodePerTwoPi;
+  int           nodePerGap;
+  double       *bbox;
+  double      (*sizeFunction)(double, double, double, double);
+  RTree<uint64_t,double,3>  *triRTree;
+  HXTMesh                   *mesh;
+  double                    *nodalCurvature;
+  double                    *nodeNormals;
+  std::vector<std::function<double(double)>> *curvFunctions;
+  std::vector<std::function<double(double)>> *xFunctions;
+  std::vector<std::function<double(double)>> *yFunctions;
+} ForestOptions;
+
+// The structure containing the size field information (forest)
+typedef struct Forest{
+#ifdef HAVE_P4EST
+  p4est_t *p4est;
+#endif 
+  ForestOptions *forestOptions;
+} Forest;
+
+// // Data available on each tree cell
+// typedef struct size_data{
+//   double size;
+// #ifdef HAVE_P4EST
+//   double ds[P4EST_DIM]; // Size gradient
+// #endif
+//   double h; // The cell size
+//   // TODO : remplacer les double par un tableau de booleens qui indique si le voisin est full ou hanging
+//   // Comme ça il faudra juste ajouter h/2
+//   double h_xL, h_xR; // Half cell length for finite differences
+//   double h_yD, h_yU;
+//   double h_zB, h_zT;
+// } size_data_t;
+
 class automaticMeshSizeField : public Field {
 
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   struct HXTForest *forest;
   struct HXTForestOptions *forestOptions;
+  struct Forest *myForest;
+  struct ForestOptions *myForestOptions;
   HXTStatus updateHXT();
 #endif
 
@@ -48,7 +93,7 @@ class automaticMeshSizeField : public Field {
   {
     _forestFile       = fFile;
     _nPointsPerCircle = minElementsPerTwoPi ? minElementsPerTwoPi : 20;
-    _nPointsPerGap    = nLayersPerGap ? nLayersPerGap : 2;
+    _nPointsPerGap    = nLayersPerGap ? nLayersPerGap : 0;
     _hmin             = hmin;
     _hmax             = hmax;   
     _hbulk            = hbulk;
