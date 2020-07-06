@@ -5752,16 +5752,12 @@ The Gmsh Application Programming Interface (API) allows you to integrate
 the Gmsh library in your own application. By design, the Gmsh API is
 purely functional, and only uses elementary types from the target
 language. Currently supported languages are C++, C, Python and Julia.
-See the
-@url{@value{GITLAB-PREFIX}/tutorial/c++,tutorial/c++},
+See the @url{@value{GITLAB-PREFIX}/tutorial/c++,tutorial/c++},
 @url{@value{GITLAB-PREFIX}/tutorial/c,tutorial/c},
-@url{@value{GITLAB-PREFIX}/tutorial/python,tutorial/python}
-and
-@url{@value{GITLAB-PREFIX}/tutorial/julia,tutorial/julia}
-directories for the API @ref{Tutorial}. Other API examples are available
-in the
-@url{@value{GITLAB-PREFIX}/demos/api/,demos/api}
-directory.
+@url{@value{GITLAB-PREFIX}/tutorial/python,tutorial/python} and
+@url{@value{GITLAB-PREFIX}/tutorial/julia,tutorial/julia} directories
+from the @ref{Tutorial} for examples. For other API examples, see the
+@url{@value{GITLAB-PREFIX}/demos/api/,demos/api} directory.
 
 The different versions of the API are generated automatically from the
 master API definition file

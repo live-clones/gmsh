@@ -1278,8 +1278,8 @@ class API:
                     fc.write(cpp_namespace + name + "(" +
                              ", ".join(list((a.c_arg for a in args))) + ");\n")
                     fc.write("".join((a.c_post for a in args)))
-                    fc.write("  }\n  catch(int api_ierr_){\n    " +
-                             "if(ierr) *ierr = api_ierr_;\n  }\n")
+                    fc.write("  }\n  catch(const std::string &api_error_){\n    " +
+                             "if(ierr) *ierr = 1;\n  }\n")
                     if rtype:
                         fc.write("  return result_api_;\n")
                     fc.write("}\n\n")
@@ -1309,7 +1309,10 @@ class API:
                     fcwrap.write(", &ierr);\n")
                 else:
                     fcwrap.write("&ierr);\n")
-                fcwrap.write(indent + "  " + "if(ierr) throw ierr;\n")
+                if name == 'getLastError': # special case for getLastError() function
+                    fcwrap.write(indent + "  " + 'if(ierr) throw "Could not get last error";\n')
+                else:
+                    fcwrap.write(indent + "  " + "if(ierr) throwLastError();\n")
                 for a in args:
                     if a.cwrap_post:
                         fcwrap.write(indent + "  " + a.cwrap_post)
@@ -1344,6 +1347,16 @@ class API:
                     s = cwrap_utils.format(ns, "inline ").split('\n')
                     for line in s:
                         fcwrap.write("  " + line + "\n")
+                    fcwrap.write("  inline void throwLastError()\n")
+                    fcwrap.write("  {\n")
+                    fcwrap.write('     int ierr = 0;\n')
+                    fcwrap.write('     char *api_error_;\n')
+                    fcwrap.write('     gmshLoggerGetLastError(&api_error_, &ierr);\n')
+                    fcwrap.write('     if(ierr) throw "Could not get last error";\n');
+                    fcwrap.write('     std::string error = std::string(api_error_);\n')
+                    fcwrap.write('     gmshFree(api_error_);\n')
+                    fcwrap.write('     throw error;\n')
+                    fcwrap.write("  }\n\n")
                     fcwrap.write("}\n\n")
                     for module in self.modules:
                         write_module(module, "", "", "")
@@ -1379,7 +1392,7 @@ class API:
             for a in args:
                 if a.python_pre: f.write(indent + a.python_pre + "\n")
             f.write(indent + "ierr = c_int()\n")
-            f.write(indent + "api__result__ = " if (
+            f.write(indent + "api_result_ = " if (
                 (rtype is oint) or (rtype is odouble)) else (indent))
             c_name = c_mpath + name[0].upper() + name[1:]
             f.write("lib." + c_name + "(\n    " + indent +
@@ -1389,11 +1402,11 @@ class API:
             if name == "finalize": # special case for finalize() function
                 f.write(indent + "signal.signal(signal.SIGINT, oldsig)\n")
             f.write(indent + "if ierr.value != 0:\n")
-            f.write(indent + "    raise ValueError(\n")
-            f.write(indent + '        "' + c_name +
-                    ' returned non-zero error code: ",\n')
-            f.write(indent + "        ierr.value)\n")
-            r = (["api__result__"]) if rtype else []
+            if name == "getLastError": # special case for getLastError() function
+                f.write(indent + "    raise Exception('Could not get last error')\n")
+            else:
+                f.write(indent + "    raise Exception(logger.getLastError())\n")
+            r = (["api_result_"]) if rtype else []
             r += list((o.python_return for o in oargs))
             if len(r) != 0:
                 if len(r) == 1:
@@ -1455,7 +1468,7 @@ class API:
             for a in args:
                 if a.julia_pre: f.write("    " + a.julia_pre + "\n")
             f.write("    ierr = Ref{Cint}()\n    ")
-            f.write("api__result__ = " if (
+            f.write("api_result_ = " if (
                 (rtype is oint) or (rtype is odouble)) else "")
             c_name = c_mpath + name[0].upper() + name[1:]
             f.write("ccall((:" + c_name + ", " +
@@ -1467,11 +1480,13 @@ class API:
                     ("," if not len(args) else "") + "),\n" + " " * 10 +
                     ", ".join(tuple(a.julia_arg
                                     for a in args) + ("ierr", )) + ")\n")
-            f.write('    ierr[] != 0 && error("' + c_name +
-                    ' returned non-zero error code: $(ierr[])")\n')
+            if name == "getLastError": # special case for getLastError() function
+                f.write('    ierr[] != 0 && error("Could not get last error")\n')
+            else:
+                f.write('    ierr[] != 0 && error(gmsh.logger.getLastError())\n')
             for a in args:
                 if a.julia_post: f.write("    " + a.julia_post + "\n")
-            r = (["api__result__"]) if rtype else []
+            r = (["api_result_"]) if rtype else []
             r += list((o.julia_return for o in oargs))
             f.write("    return ")
             if len(r) == 0:

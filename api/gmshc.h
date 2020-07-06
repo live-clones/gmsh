@@ -2646,4 +2646,8 @@ GMSH_API double gmshLoggerGetWallTime(int * ierr);
 /* Return CPU time. */
 GMSH_API double gmshLoggerGetCpuTime(int * ierr);
 
+/* Return last error message, if any. */
+GMSH_API void gmshLoggerGetLastError(char ** error,
+                                     int * ierr);
+
 #endif

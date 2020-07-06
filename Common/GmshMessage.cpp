@@ -69,6 +69,7 @@ int Msg::_errorCount = 0;
 int Msg::_atLeastOneErrorInRun = 0;
 std::string Msg::_firstWarning;
 std::string Msg::_firstError;
+std::string Msg::_lastError;
 GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
 std::string Msg::_launchDate;
@@ -301,6 +302,11 @@ std::string Msg::GetFirstError()
   return _firstError;
 }
 
+std::string Msg::GetLastError()
+{
+  return _lastError;
+}
+
 void Msg::SetExecutableName(const std::string &name)
 {
   _execName.assign(name);
@@ -497,6 +503,8 @@ void Msg::Error(const char *fmt, ...)
   if(_logFile) fprintf(_logFile, "Error: %s\n", str);
   if(_callback) (*_callback)("Error", str);
   if(_client) _client->Error(str);
+  if(_firstError.empty()) _firstError = str;
+  _lastError = str;
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -504,7 +512,6 @@ void Msg::Error(const char *fmt, ...)
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
       + "Error   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    if(_firstError.empty()) _firstError = str;
     FlGui::instance()->setLastStatus
       (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
   }
@@ -841,7 +848,7 @@ void Msg::PrintTimers()
 void Msg::ResetErrorCounter()
 {
   _warningCount = 0; _errorCount = 0;
-  _firstWarning.clear(); _firstError.clear();
+  _firstWarning.clear(); _firstError.clear(); _lastError.clear();
 #if defined(HAVE_FLTK)
   if(FlGui::available()) FlGui::instance()->setLastStatus();
 #endif

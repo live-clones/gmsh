@@ -15,10 +15,9 @@ The `c++', `c', `python' and `julia' subdirectories contain the C++, C, Python
 and Julia tutorials, written using the Gmsh Application Programming Interface
 (API). You will need the Gmsh dynamic library and the associated header files
 (for C++ and C) or modules (for Python and Julia) to run them. Each subdirectory
-also contains additional information on how to run the tutorials for each
-supported language, as well as extended tutorials (starting with `x')
-introducing features available through the API but not available in `.geo'
-files.
+contains additional information on how to run the tutorials for each supported
+language, as well as extended tutorials (starting with `x') introducing features
+available through the API but not available in `.geo' files.
 
  * A binary Software Development Kit (SDK) for Windows, Linux and macOS, that
    contains the dynamic Gmsh library and the associated header and module files,

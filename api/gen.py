@@ -947,6 +947,9 @@ logger.add('getWallTime', doc, odouble)
 doc = '''Return CPU time.'''
 logger.add('getCpuTime', doc, odouble)
 
+doc = '''Return last error message, if any.'''
+logger.add('getLastError', doc, None, ostring('error'))
+
 ################################################################################
 
 api.write_cpp()

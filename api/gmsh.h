@@ -3026,6 +3026,11 @@ namespace gmsh { // Top-level functions
     // Return CPU time.
     GMSH_API double getCpuTime();
 
+    // gmsh::logger::getLastError
+    //
+    // Return last error message, if any.
+    GMSH_API void getLastError(std::string & error);
+
   } // namespace logger
 
 } // namespace gmsh

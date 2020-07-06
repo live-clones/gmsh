@@ -48,7 +48,7 @@ private:
   static double _startTime;
   // counters
   static int _warningCount, _errorCount, _atLeastOneErrorInRun;
-  static std::string _firstWarning, _firstError;
+  static std::string _firstWarning, _firstError, _lastError;
   // callback
   static GmshMessage *_callback;
   // command-line and startup time
@@ -117,6 +117,7 @@ public:
   static int GetErrorCount();
   static std::string GetFirstWarning();
   static std::string GetFirstError();
+  static std::string GetLastError();
   static double GetValue(const char *text, double defaultval);
   static std::string GetString(const char *text, const std::string &defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero,
