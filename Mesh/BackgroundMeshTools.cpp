@@ -271,24 +271,30 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y,
 SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
                         double Z)
 {
-  // Metrics based on element size
-
-  // Element size = min. between default lc and lc from point (if applicable),
-  // constrained by lcMin and lcMax
+  // default size to size of model
   double lc = CTX::instance()->lc;
+
+  // lc from points
   if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2)
     lc = std::min(lc, LC_MVertex_PNTS(ge, U, V));
+
+  // global lc from entity
   lc = std::min(lc, ge->getMeshSize());
+
+  // constrain by global min/max
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
+
   if(lc <= 0.) {
     Msg::Error("Wrong mesh element size lc = %g (lcmin = %g, lcmax = %g)", lc,
                CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
     lc = CTX::instance()->lc;
   }
+
+  // isotropic base metric
   SMetric3 m0(1. / (lc * lc));
 
-  // Intersect with metrics from fields if applicable
+  // intersect with metrics from fields if applicable
   FieldManager *fields = ge->model()->getFields();
   SMetric3 m1 = m0;
   if(fields->getBackgroundField() > 0) {
@@ -306,10 +312,14 @@ SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
     }
   }
 
-  // Intersect with metrics from curvature if applicable
+  // intersect with metrics from curvature if applicable
   SMetric3 m = (CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3) ?
                  intersection(m1, LC_MVertex_CURV_ANISO(ge, U, V)) :
                  m1;
+
+  // apply global size factor
+  if(CTX::instance()->mesh.lcFactor != 0 && CTX::instance()->mesh.lcFactor != 1.)
+    m *= 1. / (CTX::instance()->mesh.lcFactor * CTX::instance()->mesh.lcFactor);
 
   return m;
 }
