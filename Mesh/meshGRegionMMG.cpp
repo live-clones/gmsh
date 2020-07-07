@@ -2,6 +2,10 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
+//
+// Contributor(s):
+//   Algiane Froehly
+//
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -32,7 +36,10 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
   if(MMG3D_Get_meshSize(mmg, &np, &ne, NULL, &nt, NULL, &na) != 1)
     Msg::Error("Mmg3d: unable to get mesh size");
 
-  // Store the points from the Mmg structures into the gmsh structures
+  // Store the nodes from the Mmg structures into the gmsh structures
+
+  // TODO: when MMG is allowed to modify the surface mesh, reclassify nodes
+  // accordingly
   for(int k = 1; k <= np; k++) {
     if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, &ref, NULL, NULL) != 1)
       Msg::Error("Mmg3d: unable to get vertex %d", k);
@@ -48,7 +55,7 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
       kToMVertex[k] = it->second;
   }
 
-  // Store the Tetras from the Mmg structures into the Gmsh structures
+  // Store the tets from the Mmg structures into the Gmsh structures
   for(int k = 1; k <= ne; k++) {
     int v1mmg, v2mmg, v3mmg, v4mmg;
     if(MMG3D_Get_tetrahedron(mmg, &v1mmg, &v2mmg, &v3mmg, &v4mmg, &ref, NULL) !=
@@ -62,11 +69,16 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
     if(!v1 || !v2 || !v3 || !v4) {
       Msg::Error("Mmg3d: unknown vertex in tetrahedron %d", k);
     }
-    else
+    else {
       gr->tetrahedra.push_back(new MTetrahedron(v1, v2, v3, v4));
+    }
   }
 
-  // Store the Triangles from the Mmg structures into the Gmsh structures
+#if 0
+  // Store the triangles from the Mmg structures into the Gmsh structures
+
+  // TODO: allow MMG to remesh (some of the) input surfaces; then store the new
+  // mesh
   for(int k = 1; k <= nt; k++) {
     int v1mmg, v2mmg, v3mmg;
     if(MMG3D_Get_triangle(mmg, &v1mmg, &v2mmg, &v3mmg, &ref, NULL) != 1)
@@ -78,9 +90,11 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
     if(!v1 || !v2 || !v3) {
       Msg::Error("Mmg3d: unknown vertex in triangle %d", k);
     }
-#warning TODO: delete the old boundary faces from the Gmsh mesh and recover the newest from the Mmg mesh
-    // else
+    else{
+      // ...
+    }
   }
+#endif
 }
 
 static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
@@ -96,34 +110,14 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
   }
   int np = allVertices.size();
 
-  // Count mesh triangles and edges
+  // Count boundary triangles
   std::vector<GFace *> f = gr->faces();
-  // std::list<GEdge*> bdryEdges = gr->embeddedEdges();
-
   int nt = 0;
   for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
     nt += (*it)->triangles.size();
-
-#warning TODO: get the geometric edges from gmsh and set them into the Mmg mesh
-
-    // for (std::list<GEdge*>::iterator ited = (*it)->edges().begin();
-    //     ited != (*it)->edges().end(); ++ited){
-    //   if((*ited)->getCompound()){
-    //     GEdge *gec = (GEdge*)(*ited)->getCompound();
-    //     edgesSet.insert(gec);
-    //   }
-    //     else{
-    //     edgesSet.insert(*ited);
-    //   }
-    // }
   }
-  // bdryEdges.insert(bdryEdges.begin(), edgesSet.begin(), edgesSet.end());
 
-  //  int na = 0;
-  //  for (std::list<GEdge*>::iterator it=bdryEdges.begin();
-  //  it!=bdryEdges.end(); ++it){
-  //    na += (*it)->lines.size();
-  //  }
+  // TODO: also import mesh lines
 
   // Get mesh tetrahedra
   int ne = gr->tetrahedra.size();

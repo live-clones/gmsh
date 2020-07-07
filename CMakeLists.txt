@@ -973,7 +973,7 @@ if(HAVE_MESH)
   endif()
 
   if(ENABLE_MMG)
-    find_library(MMG_LIB Mmg)
+    find_library(MMG_LIB NAMES Mmg mmg)
     find_path(MMG_INC "libmmg.h" PATH_SUFFIXES mmg)
     if(MMG_LIB AND MMG_INC)
       list(APPEND EXTERNAL_LIBRARIES ${MMG_LIB})
@@ -2133,7 +2133,7 @@ message(STATUS "")
 
 mark_as_advanced(GMSH_EXTRA_VERSION
                  ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
-                 GMP_INC GMP_LIB MMG3D_INC MMG3D_LIB HDF5_LIB
+                 GMP_INC GMP_LIB MMG_INC MMG_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB
                  BISON FLEX MAKEINFO TEXI2PDF FLTK_CONFIG_SCRIPT

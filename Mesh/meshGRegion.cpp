@@ -184,7 +184,9 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
   // now do insertion of points
   if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
-    refineMeshMMG(gr);
+    for(std::size_t i = 0; i < regions.size(); i++) {
+      refineMeshMMG(regions[i]);
+    }
   }
   else if(CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY) {
     insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D,
