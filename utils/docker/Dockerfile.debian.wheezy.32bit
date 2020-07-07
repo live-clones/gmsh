@@ -105,7 +105,9 @@ RUN git clone https://github.com/fltk/fltk.git && cd fltk && make makeinclude &&
 # MMG
 # -----------------------
 
-RUN git clone https://github.com/MmgTools/mmg.git && cd mmg && mkdir build && cd build && cmake .. && make -j8 && make install && cd .. && rm -rf mmg
+# Disable MMG for now: it crashes on this 32 bit docker (problem allocating hash for edges)...
+
+# RUN git clone https://github.com/MmgTools/mmg.git && cd mmg && mkdir build && cd build && cmake .. && make -j8 && make install && cd .. && rm -rf mmg
 
 # -----------------------
 # Minimal Gmsh library
