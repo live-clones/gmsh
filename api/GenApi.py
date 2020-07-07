@@ -1400,7 +1400,8 @@ class API:
                         tuple((a.python_arg
                                for a in args)) + ("byref(ierr)", )) + ")\n")
             if name == "finalize": # special case for finalize() function
-                f.write(indent + "signal.signal(signal.SIGINT, oldsig)\n")
+                f.write(indent + "if oldsig is not None:\n")
+                f.write(indent + "    signal.signal(signal.SIGINT, oldsig)\n")
             f.write(indent + "if ierr.value != 0:\n")
             if name == "getLastError": # special case for getLastError() function
                 f.write(indent + "    raise Exception('Could not get last error')\n")

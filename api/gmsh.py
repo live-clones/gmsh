@@ -210,7 +210,8 @@ def finalize():
     ierr = c_int()
     lib.gmshFinalize(
         byref(ierr))
-    signal.signal(signal.SIGINT, oldsig)
+    if oldsig is not None:
+        signal.signal(signal.SIGINT, oldsig)
     if ierr.value != 0:
         raise Exception(logger.getLastError())
 
