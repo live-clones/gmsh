@@ -362,7 +362,8 @@ void refineMeshMMG(GRegion *gr)
 
 void refineMeshMMG(GRegion *gr)
 {
-  Msg::Error("This version of Gmsh is not compiled with MMG3D support");
+  Msg::Warning("This version of Gmsh is not compiled with MMG support: "
+               "skipping refinement");
 }
 
 #endif
