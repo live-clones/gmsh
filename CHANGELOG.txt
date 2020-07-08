@@ -1,4 +1,4 @@
-4.6.1 (Work-in-progress): API errors now throw exceptions with the last error
+4.7.0 (Work-in-progress): API errors now throw exceptions with the last error
 message (instead of an integer error code); new API to retrieve "homogeneous"
 model-based data, for improved Python performance; improved VTK reader; added
 initial support for MMG 5; small bug fixes.

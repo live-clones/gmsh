@@ -30,6 +30,7 @@
 // for each pair of vertices (an edge), we build a list of vertices that are the
 // high order representation of the edge. The ordering of vertices in the list
 // is supposed to be (by construction) consistent with the ordering of the pair.
+// FIXME: replace this by std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan>!
 typedef std::map<std::pair<MVertex *, MVertex *>, std::vector<MVertex *> >
   edgeContainer;
 
@@ -1343,20 +1344,40 @@ static void setHighOrderFromExistingMesh(GEdge *ge,
     MVertex *vMin, *vMax;
     getMinMaxVert(v[0], v[1], vMin, vMax);
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
-    for(std::size_t j = e->getNumPrimaryVertices(); j < e->getNumVertices(); j++) {
-      edgeVertices[p].push_back(v[j]);
+    if(edgeVertices.count(p) == 0) {
+      for(std::size_t j = e->getNumPrimaryVertices(); j < e->getNumVertices(); j++) {
+        edgeVertices[p].push_back(v[j]);
+      }
     }
   }
 }
 
-static void setHighOrderFromExistingMesh(GFace *ge,
+static void setHighOrderFromExistingMesh(GFace *gf,
+                                         edgeContainer &edgeVertices,
                                          faceContainer &faceVertices)
 {
-  for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
-    MElement *e = ge->getMeshElement(i);
+  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+    MElement *e = gf->getMeshElement(i);
+    for(std::size_t j = 0; j < e->getNumEdges(); j++) {
+      MEdge edg = e->getEdge(j);
+      MVertex *vMin, *vMax;
+      getMinMaxVert(edg.getVertex(0), edg.getVertex(1), vMin, vMax);
+      std::pair<MVertex *, MVertex *> p(vMin, vMax);
+      if(edgeVertices.count(p) == 0) {
+        std::vector<MVertex*> edgv;
+        e->getEdgeVertices(j, edgv);
+        for(std::size_t k = 2; k < edgv.size(); k++) {
+          edgeVertices[p].push_back(edgv[k]);
+        }
+      }
+    }
     MFace f = e->getFace(0);
-    for(std::size_t j = e->getNumPrimaryVertices(); j < e->getNumVertices(); j++) {
-      faceVertices[f].push_back(e->getVertex(j));
+    std::vector<MVertex*> facev;
+    if(faceVertices.count(f) == 0) {
+      e->getFaceVertices(0, facev);
+      for(std::size_t j = e->getNumPrimaryVertices() + e->getNumEdgeVertices(); j < facev.size(); j++) {
+        faceVertices[f].push_back(facev[j]);
+      }
     }
   }
 }
@@ -1424,7 +1445,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
       setHighOrder(*it, edgeVertices, faceVertices, linear,
                    incomplete, nPts);
     else
-      setHighOrderFromExistingMesh(*it, faceVertices);
+      setHighOrderFromExistingMesh(*it, edgeVertices, faceVertices);
     if((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
   }
 

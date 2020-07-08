@@ -102,8 +102,8 @@ opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by publ
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 6)
-set(GMSH_PATCH_VERSION 1)
+set(GMSH_MINOR_VERSION 7)
+set(GMSH_PATCH_VERSION 0)
 set(GMSH_EXTRA_VERSION "")
 set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
 
