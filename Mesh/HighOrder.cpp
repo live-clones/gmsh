@@ -30,7 +30,8 @@
 // for each pair of vertices (an edge), we build a list of vertices that are the
 // high order representation of the edge. The ordering of vertices in the list
 // is supposed to be (by construction) consistent with the ordering of the pair.
-// FIXME: replace this by std::map<MEdge, std::vector<MVertex *>, MEdgeLessThan>!
+// FIXME: replace this by std::map<MEdge, std::vector<MVertex *>,
+// MEdgeLessThan>!
 typedef std::map<std::pair<MVertex *, MVertex *>, std::vector<MVertex *> >
   edgeContainer;
 
@@ -74,9 +75,7 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
   // initialize as equidistant in parameter space
   u[0] = u0;
   double du = (uN - u0) / (N - 1);
-  for(int i = 1; i < N; i++) {
-    u[i] = u[i - 1] + du;
-  }
+  for(int i = 1; i < N; i++) { u[i] = u[i - 1] + du; }
 
   // return true;
 
@@ -96,9 +95,7 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
     for(int i = 0; i < M; i++) {
       u[i + 1] += eps;
       myresid(N, ge, u, Rp);
-      for(int j = 0; j < M; j++) {
-        J(i, j) = (Rp(j) - R(j)) / eps;
-      }
+      for(int j = 0; j < M; j++) { J(i, j) = (Rp(j) - R(j)) / eps; }
       u[i + 1] -= eps;
     }
 
@@ -107,17 +104,13 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
     else
       J.luSolve(R, DU);
 
-    for(int i = 0; i < M; i++) {
-      u[i + 1] -= underRelax * DU(i);
-    }
+    for(int i = 0; i < M; i++) { u[i + 1] -= underRelax * DU(i); }
 
     if(u[1] < u0) break;
     if(u[N - 2] > uN) break;
 
     double newt_norm = DU.norm();
-    if(newt_norm < PRECISION) {
-      return true;
-    }
+    if(newt_norm < PRECISION) { return true; }
   }
   return false;
 }
@@ -129,9 +122,7 @@ static bool computeGLLParametersP6(GEdge *ge, double u0, double uN, int N,
     -1.000000000000000, -0.830223896278567, -0.468848793470714, 0,
     0.468848793470714,  0.830223896278567,  1.000000000000000};
   double weight[6];
-  for(int i = 0; i < 6; ++i) {
-    weight[i] = GLLQL[i + 1] - GLLQL[i];
-  }
+  for(int i = 0; i < 6; ++i) { weight[i] = GLLQL[i + 1] - GLLQL[i]; }
 
   const double PRECISION = 1.e-6;
   const int MAX_ITER = 50;
@@ -146,9 +137,7 @@ static bool computeGLLParametersP6(GEdge *ge, double u0, double uN, int N,
   u[N - 1] = uN;
   double uMiddle = .5 * (u0 + uN);
   double du = .5 * (uN - u0);
-  for(int i = 1; i < N - 1; i++) {
-    u[i] = uMiddle + GLLQL[i] * du;
-  }
+  for(int i = 1; i < N - 1; i++) { u[i] = uMiddle + GLLQL[i] * du; }
 
   // create the tangent matrix
   const int M = N - 2;
@@ -166,9 +155,7 @@ static bool computeGLLParametersP6(GEdge *ge, double u0, double uN, int N,
     for(int i = 0; i < M; i++) {
       u[i + 1] += eps;
       myresid(N, ge, u, Rp, weight);
-      for(int j = 0; j < M; j++) {
-        J(i, j) = (Rp(j) - R(j)) / eps;
-      }
+      for(int j = 0; j < M; j++) { J(i, j) = (Rp(j) - R(j)) / eps; }
       u[i + 1] -= eps;
     }
 
@@ -177,17 +164,13 @@ static bool computeGLLParametersP6(GEdge *ge, double u0, double uN, int N,
     else
       J.luSolve(R, DU);
 
-    for(int i = 0; i < M; i++) {
-      u[i + 1] -= underRelax * DU(i);
-    }
+    for(int i = 0; i < M; i++) { u[i + 1] -= underRelax * DU(i); }
 
     if(u[1] < u0) break;
     if(u[N - 2] > uN) break;
 
     double newt_norm = DU.norm();
-    if(newt_norm < PRECISION) {
-      return true;
-    }
+    if(newt_norm < PRECISION) { return true; }
   }
   return false;
 }
@@ -437,8 +420,10 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
   }
   else if(p.first != p.second) {
     // Vertices already exist and edge is not a degenerated edge
-    Msg::Error("Mesh edges from different curves share nodes: create a finer mesh "
-               "(curve involved: %d)", ge->tag());
+    Msg::Error(
+      "Mesh edges from different curves share nodes: create a finer mesh "
+      "(curve involved: %d)",
+      ge->tag());
   }
   ve.insert(ve.end(), veEdge.begin(), veEdge.end());
 }
@@ -564,9 +549,7 @@ static void reorientQuadPoints(std::vector<MVertex *> &vtcs, int orientation,
   while(1) {
     // CORNERS
     int index = 0;
-    if(order == 0) {
-      start++;
-    }
+    if(order == 0) { start++; }
     else {
       int i1(0), i2(0), i3(0), i4(0);
       if(!swap) {
@@ -885,8 +868,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
 
 // Get new interior vertices for a 3D element
 static void getVolumeVertices(GRegion *gr, MElement *ele,
-                              std::vector<MVertex *> &newVertices,
-                              int nPts = 1)
+                              std::vector<MVertex *> &newVertices, int nPts = 1)
 {
   std::vector<MVertex *> boundaryVertices;
   {
@@ -947,8 +929,7 @@ static MTriangle *setHighOrder(MTriangle *t, GFace *gf,
                           v[0], v[1], v[2], 0, t->getPartition());
   }
   else {
-    if(!incomplete)
-      getFaceVertices(gf, t, v, faceVertices, linear, nPts);
+    if(!incomplete) getFaceVertices(gf, t, v, faceVertices, linear, nPts);
     return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2), v,
                           nPts + 1, 0, t->getPartition());
   }
@@ -995,8 +976,8 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   std::vector<MTriangle *> triangles2;
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     MTriangle *t = gf->triangles[i];
-    MTriangle *tNew = setHighOrder(t, gf, edgeVertices, faceVertices,
-                                   linear, incomplete, nPts);
+    MTriangle *tNew =
+      setHighOrder(t, gf, edgeVertices, faceVertices, linear, incomplete, nPts);
     triangles2.push_back(tNew);
     delete t;
   }
@@ -1005,8 +986,8 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   std::vector<MQuadrangle *> quadrangles2;
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *q = gf->quadrangles[i];
-    MQuadrangle *qNew = setHighOrder(q, gf, edgeVertices,
-                                     faceVertices, linear, incomplete, nPts);
+    MQuadrangle *qNew =
+      setHighOrder(q, gf, edgeVertices, faceVertices, linear, incomplete, nPts);
     quadrangles2.push_back(qNew);
     delete q;
   }
@@ -1079,8 +1060,7 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
   }
 }
 
-static MPrism *setHighOrder(MPrism *p, GRegion *gr,
-                            edgeContainer &edgeVertices,
+static MPrism *setHighOrder(MPrism *p, GRegion *gr, edgeContainer &edgeVertices,
                             faceContainer &faceVertices, bool incomplete,
                             int nPts)
 {
@@ -1125,9 +1105,7 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
   getEdgeVertices(gr, p, v, edgeVertices, nPts);
   if(!incomplete) {
     getFaceVertices(gr, p, v, faceVertices, nPts);
-    if(nPts > 1) {
-      getVolumeVertices(gr, p, v, nPts);
-    }
+    if(nPts > 1) { getVolumeVertices(gr, p, v, nPts); }
   }
   return new MPyramidN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                        p->getVertex(3), p->getVertex(4), v, nPts + 1, 0,
@@ -1141,8 +1119,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   std::vector<MTetrahedron *> tetrahedra2;
   for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     MTetrahedron *t = gr->tetrahedra[i];
-    MTetrahedron *tNew = setHighOrder(t, gr, edgeVertices,
-                                      faceVertices, incomplete, nPts);
+    MTetrahedron *tNew =
+      setHighOrder(t, gr, edgeVertices, faceVertices, incomplete, nPts);
     tetrahedra2.push_back(tNew);
     delete t;
   }
@@ -1151,8 +1129,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   std::vector<MHexahedron *> hexahedra2;
   for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
     MHexahedron *h = gr->hexahedra[i];
-    MHexahedron *hNew = setHighOrder(h, gr, edgeVertices,
-                                     faceVertices, incomplete, nPts);
+    MHexahedron *hNew =
+      setHighOrder(h, gr, edgeVertices, faceVertices, incomplete, nPts);
     hexahedra2.push_back(hNew);
     delete h;
   }
@@ -1161,8 +1139,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   std::vector<MPrism *> prisms2;
   for(std::size_t i = 0; i < gr->prisms.size(); i++) {
     MPrism *p = gr->prisms[i];
-    MPrism *pNew = setHighOrder(p, gr, edgeVertices, faceVertices,
-                                incomplete, nPts);
+    MPrism *pNew =
+      setHighOrder(p, gr, edgeVertices, faceVertices, incomplete, nPts);
     prisms2.push_back(pNew);
     delete p;
   }
@@ -1171,8 +1149,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   std::vector<MPyramid *> pyramids2;
   for(std::size_t i = 0; i < gr->pyramids.size(); i++) {
     MPyramid *p = gr->pyramids[i];
-    MPyramid *pNew = setHighOrder(p, gr, edgeVertices, faceVertices,
-                                  incomplete, nPts);
+    MPyramid *pNew =
+      setHighOrder(p, gr, edgeVertices, faceVertices, incomplete, nPts);
     pyramids2.push_back(pNew);
     delete p;
   }
@@ -1334,8 +1312,7 @@ static int getOrder(GEntity *ge)
   return 0;
 }
 
-static void setHighOrderFromExistingMesh(GEdge *ge,
-                                         edgeContainer &edgeVertices)
+static void setHighOrderFromExistingMesh(GEdge *ge, edgeContainer &edgeVertices)
 {
   for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
     MElement *e = ge->getMeshElement(i);
@@ -1345,26 +1322,26 @@ static void setHighOrderFromExistingMesh(GEdge *ge,
     getMinMaxVert(v[0], v[1], vMin, vMax);
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
     if(edgeVertices.count(p) == 0) {
-      for(std::size_t j = e->getNumPrimaryVertices(); j < e->getNumVertices(); j++) {
+      for(std::size_t j = e->getNumPrimaryVertices(); j < e->getNumVertices();
+          j++) {
         edgeVertices[p].push_back(v[j]);
       }
     }
   }
 }
 
-static void setHighOrderFromExistingMesh(GFace *gf,
-                                         edgeContainer &edgeVertices,
+static void setHighOrderFromExistingMesh(GFace *gf, edgeContainer &edgeVertices,
                                          faceContainer &faceVertices)
 {
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *e = gf->getMeshElement(i);
-    for(std::size_t j = 0; j < e->getNumEdges(); j++) {
+    for(int j = 0; j < e->getNumEdges(); j++) {
       MEdge edg = e->getEdge(j);
       MVertex *vMin, *vMax;
       getMinMaxVert(edg.getVertex(0), edg.getVertex(1), vMin, vMax);
       std::pair<MVertex *, MVertex *> p(vMin, vMax);
       if(edgeVertices.count(p) == 0) {
-        std::vector<MVertex*> edgv;
+        std::vector<MVertex *> edgv;
         e->getEdgeVertices(j, edgv);
         for(std::size_t k = 2; k < edgv.size(); k++) {
           edgeVertices[p].push_back(edgv[k]);
@@ -1372,10 +1349,11 @@ static void setHighOrderFromExistingMesh(GFace *gf,
       }
     }
     MFace f = e->getFace(0);
-    std::vector<MVertex*> facev;
+    std::vector<MVertex *> facev;
     if(faceVertices.count(f) == 0) {
       e->getFaceVertices(0, facev);
-      for(std::size_t j = e->getNumPrimaryVertices() + e->getNumEdgeVertices(); j < facev.size(); j++) {
+      for(std::size_t j = e->getNumPrimaryVertices() + e->getNumEdgeVertices();
+          j < facev.size(); j++) {
         faceVertices[f].push_back(facev[j]);
       }
     }
@@ -1442,8 +1420,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
     Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     if(getOrder(*it) != order)
-      setHighOrder(*it, edgeVertices, faceVertices, linear,
-                   incomplete, nPts);
+      setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
     else
       setHighOrderFromExistingMesh(*it, edgeVertices, faceVertices);
     if((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
