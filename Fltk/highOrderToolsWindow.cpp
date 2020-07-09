@@ -29,6 +29,7 @@
 #if defined(HAVE_OPTHOM)
 #include "HighOrderMeshOptimizer.h"
 #include "HighOrderMeshElasticAnalogy.h"
+#include "HighOrderMeshWinslow.hpp"
 #include "HighOrderMeshFastCurving.h"
 #endif
 
@@ -135,6 +136,36 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
     o->value[11]->deactivate();
     break;
   }
+  case 4: { // Winslow smoothing
+    o->choice[0]->deactivate();
+    o->choice[3]->deactivate();
+    o->value[1]->deactivate();
+    o->value[2]->deactivate();
+    o->value[3]->deactivate();
+    o->value[4]->deactivate();
+    o->value[5]->deactivate();
+    o->value[7]->deactivate();
+    o->value[8]->deactivate();
+    o->value[9]->deactivate();
+    o->value[10]->deactivate();
+    o->value[11]->deactivate();
+    break;
+  }
+  case 5: { // Curving boundary layers Winslow
+    o->choice[0]->deactivate();
+    o->choice[3]->deactivate();
+    o->value[1]->deactivate();
+    o->value[2]->deactivate();
+    o->value[3]->deactivate();
+    o->value[4]->deactivate();
+    o->value[5]->deactivate();
+    o->value[7]->deactivate();
+    o->value[8]->deactivate();
+    o->value[9]->deactivate();
+    o->value[10]->deactivate();
+    o->value[11]->deactivate();
+    break;
+  }
   }
 }
 
@@ -210,6 +241,15 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     }
     p.dim = dim;
     HighOrderMeshFastCurving(GModel::current(), p);
+    break;
+  }
+  case 4: { // Winslow smoothing
+    HighOrderMeshWinslow(GModel::current(), onlyVisible);
+    break;
+  }
+
+  case 5: { // Curving boundary layers Winslow
+    Msg::Error("Curving boundary layers with winslow not implemented yet");
     break;
   }
   }
@@ -322,6 +362,8 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"Elastic Analogy", 0, 0, 0},
     {"Fast Curving", 0, 0, 0},
     {"Curve boundary layers (3D is experimental)", 0, 0, 0},
+    {"Winslow smoothing", 0, 0, 0},
+    {"Curve boundary layers Winslow (unimplemented yet)", 0, 0, 0},
     {0}};
   choice[2] = new Fl_Choice(x, y, IW, BH, "Algorithm");
   choice[2]->align(FL_ALIGN_RIGHT);

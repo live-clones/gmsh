@@ -1684,7 +1684,7 @@ double highOrderTools::_applyIncrementalDisplacementOld(double max_incr, std::ve
       myAssembler.numberVertex(vert, 2, _tag);
     }
 
-    if(myAssembler.sizeOfR()) {
+    if(myAssembler.sizeOfR()){
       // assembly of the elasticity term on the
       for(std::size_t i = 0; i < v.size(); i++) {
 	SElement se(v[i]);
@@ -1789,6 +1789,7 @@ double highOrderTools::_applyIncrementalDisplacementOld(double max_incr, std::ve
 #endif
     //fprintf(fd, "$EndNodeData\n");
     //fclose(fd);
+    delete lsys;
   }
   // Check now if elements are ok
   if(computeCG)
@@ -1942,6 +1943,7 @@ double highOrderTools::_applyIncrementalDisplacement(double max_incr, std::vecto
     nlNewContext();
     // nlSolverParameteri(NL_SOLVER, NL_CG);
     nlSolverParameteri(NL_LEAST_SQUARES, NL_TRUE);
+    // nlSolverParameteri(NL_SOLVER, NL_CG);
     nlSolverParameteri(NL_NB_VARIABLES, _dim*listVertexNumbered.size());
     nlSolverParameteri(NL_MAX_ITERATIONS, 100000);
     // nlSolverParameteri(NL_PRECONDITIONER, NL_PRECOND_JACOBI);

@@ -6,12 +6,14 @@
 set(SRC
   HighOrderMeshOptimizer.cpp
   HighOrderMeshElasticAnalogy.cpp
+  HighOrderMeshWinslow.cpp
   HighOrderMeshFastCurving.cpp
   HighOrderMeshPeriodicity.cpp
   MetaEl.cpp
   BoundaryLayerCurver2D.cpp
   BoundaryLayerCurver3D.cpp
   OpenNL_psm.c
+  winslowTerm.cpp    
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
