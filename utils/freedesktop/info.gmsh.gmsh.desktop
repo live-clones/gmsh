@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+
+Name=Gmsh
+Comment=Three-dimensional finite element mesh generator with built-in pre- and post-processing facilities
+Categories=Science;NumericalAnalysis;
+
+Icon=gmsh
+Exec=gmsh
+Terminal=false
