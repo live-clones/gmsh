@@ -939,7 +939,7 @@ void _parallelApplyBC(fullVector<double> &u, fullVector<double> &bc, size_t nVer
 //   return;
 // }
 
-void highOrderTools::_parallelMultUnassMatVect(std::vector<MElement *> &e, std::vector<fullMatrix<double>> &matElem, fullVector<double> &v, fullVector<double> &res, std::vector<fullVector<double>> &redAX, std::vector<fullVector<double>> &vectElemLoc, std::vector<fullVector<double>> &resMultLoc){
+void highOrderTools::_parallelMultUnassMatVect(std::vector<MElement *> &e, std::vector<fullMatrix<double> > &matElem, fullVector<double> &v, fullVector<double> &res, std::vector<fullVector<double> > &redAX, std::vector<fullVector<double> > &vectElemLoc, std::vector<fullVector<double> > &resMultLoc){
   std::size_t nElem=matElem.size();
   int sizeRed=1;
 #if defined(_OPENMP)
@@ -1033,7 +1033,7 @@ void highOrderTools::_parallelMultUnassMatVect(std::vector<MElement *> &e, std::
   return;
 }
 
-void _parallelInitRedAX(std::vector<fullVector<double>> &redAX){
+void _parallelInitRedAX(std::vector<fullVector<double> > &redAX){
 #if defined(_OPENMP)
 #pragma omp for
 #endif
@@ -1071,7 +1071,7 @@ void _parallelThreadAssemble(MElement *ek, double *threadRed, fullVector<double>
   return;
 }
 
-void _parallelAssemble(fullVector<double> &res, std::vector<fullVector<double>> &redAX){
+void _parallelAssemble(fullVector<double> &res, std::vector<fullVector<double> > &redAX){
   int sizeRed=1;
 #if defined(_OPENMP)
   sizeRed=MAX_NUM_THREADS_OMP_;
@@ -1087,7 +1087,7 @@ void _parallelAssemble(fullVector<double> &res, std::vector<fullVector<double>> 
   return;
 }
 
-void _parallelMultUnassMatVectSave(std::vector<MElement *> &e, std::vector<fullMatrix<double>> &matElem, fullVector<double> &v, fullVector<double> &res, std::vector<fullVector<double>> &redAX){
+void _parallelMultUnassMatVectSave(std::vector<MElement *> &e, std::vector<fullMatrix<double> > &matElem, fullVector<double> &v, fullVector<double> &res, std::vector<fullVector<double> > &redAX){
   std::size_t nElem=matElem.size();
   int _dim=3;
   int sizeRed=1;
@@ -1185,7 +1185,7 @@ void highOrderTools::_parallelMultUnassMatVectV2(std::vector<MElement *> &e, ful
   fullVector<double> vScattered(dataVscattered,e.size()*nRowElem);
   fullVector<double> init(resAssembled.size());
   init.setAll(0.0);
-  std::vector<fullVector<double>> redAX(sizeRed,init);
+  std::vector<fullVector<double> > redAX(sizeRed,init);
   std::size_t nElem=e.size();
   fullVector<double> resScattered(vScattered.size());
 
@@ -1567,17 +1567,17 @@ void highOrderTools::_solveElasticAnalogyUnassembledCG(std::vector<MElement *> &
   redPS.resize(sizeRed,0.0);
   fullVector<double> initRed(nVertRenum*_dim);
   // initRed.setAll(0.0);
-  std::vector<fullVector<double>> redAX(sizeRed,initRed);
+  std::vector<fullVector<double> > redAX(sizeRed,initRed);
   fullVector<double> initLocVect(nVertElemMax*_dim);
-  std::vector<fullVector<double>> resMultLoc(sizeRed,initLocVect);
-  std::vector<fullVector<double>> vectElemLoc(sizeRed,initLocVect);
+  std::vector<fullVector<double> > resMultLoc(sizeRed,initLocVect);
+  std::vector<fullVector<double> > vectElemLoc(sizeRed,initLocVect);
   //Compute elementary matrices
   SElement se0(v[0]);
   const int nbR0 = El.sizeOfR(&se0);
   // double *matElemFlatDbl;
   // hxtAlignedMalloc(&matElemFlatDbl, sizeof(double)*v.size()*nbR0*nbR0);
     
-  std::vector<fullMatrix<double>> matElem;
+  std::vector<fullMatrix<double> > matElem;
   fullMatrix<double> init;
   matElem.resize(v.size(),init);
   for(std::size_t i = 0; i < v.size(); i++){
