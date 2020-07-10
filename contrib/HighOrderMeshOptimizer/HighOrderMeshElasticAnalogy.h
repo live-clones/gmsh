@@ -35,6 +35,7 @@
 
 #include "SVector3.h"
 #include "fullMatrix.h"
+#include "linearSystem.h"
 #include "dofManager.h"
 #include "elasticityTerm.h"
 
@@ -65,14 +66,14 @@ private:
                           fullMatrix<double> &JT, fullVector<double> &D);
   void _parallelMultUnassMatVect(std::vector<MElement *> &e, std::vector<fullMatrix<double>> &matElem, fullVector<double> &v, fullVector<double> &res, std::vector<fullVector<double>> &redAX, std::vector<fullVector<double>> &vectElemLoc, std::vector<fullVector<double>> &resMultLoc);
   void _parallelMultUnassMatVectV2(std::vector<MElement *> &e, fullVector<double> &matElemFlat, fullVector<double> &vScattered, fullVector<double> &resAssembled);
-  double _applyIncrementalDisplacementOld(double max_incr,
-                                       std::vector<MElement *> &v, bool mixed,
-                                       double thres, char *meshName,
-                                       std::vector<MElement *> &disto);
   double _applyIncrementalDisplacement(double max_incr,
-                                       std::vector<MElement *> &v, bool mixed,
+                                       std::vector<MElement *> &v,
                                        double thres, char *meshName,
                                        std::vector<MElement *> &disto);
+  void _solveElasticAnalogyOpenNl(std::vector<MElement *> &v, std::vector<MVertex *> &listVertexNumbered, double &timeSolve);
+  void _solveElasticAnalogyUnassembledCG(std::vector<MElement *> &v, fullVector<double> &x, std::vector<MVertex *> &listVertexNumbered, double &tCG);
+  void _solveElasticAnalogyDirect(std::vector<MElement *> &v, dofManager<double> &myAssembler, linearSystem<double> *lsys, std::set<MVertex *, MVertexPtrLessThan> &_vertices, double &tDirect);
+  
   void _moveToStraightSidedLocation(MElement *) const;
   void _computeStraightSidedPositions();
 
