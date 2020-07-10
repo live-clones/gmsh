@@ -163,7 +163,7 @@ protected:
 
   // loop over all vertices connected to elements and associate
   // geometrical entity
-  void _associateEntityWithMeshVertices(bool force = false);
+  void _associateEntityWithMeshVertices();
 
   // store the vertices in the geometrical entity they are associated
   // with, and delete those that are not associated with any entity
@@ -539,7 +539,7 @@ public:
   // recompute _vertexVectorCache if there is a dense vertex numbering or
   // _vertexMapCache if not.
   void rebuildMeshVertexCache(bool onlyIfNecessary = false);
-  
+
   // recompute _elementVectorCache if there is a dense element numbering or
   // _elementMapCache if not.
   void rebuildMeshElementCache(bool onlyIfNecessary = false);

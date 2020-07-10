@@ -2176,29 +2176,29 @@ void GModel::createGeometryOfDiscreteEntities
   }
 }
 
-void GModel::_associateEntityWithMeshVertices(bool force)
+void GModel::_associateEntityWithMeshVertices()
 {
   // loop on regions, then on faces, edges and vertices and store the entity
   // pointer in the the elements' vertices (this way we associate the entity of
   // lowest geometrical degree with each vertex)
   for(riter it = firstRegion(); it != lastRegion(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->tetrahedra, force);
-    _associateEntityWithElementVertices(*it, (*it)->hexahedra, force);
-    _associateEntityWithElementVertices(*it, (*it)->prisms, force);
-    _associateEntityWithElementVertices(*it, (*it)->pyramids, force);
-    _associateEntityWithElementVertices(*it, (*it)->trihedra, force);
-    _associateEntityWithElementVertices(*it, (*it)->polyhedra, force);
+    _associateEntityWithElementVertices(*it, (*it)->tetrahedra);
+    _associateEntityWithElementVertices(*it, (*it)->hexahedra);
+    _associateEntityWithElementVertices(*it, (*it)->prisms);
+    _associateEntityWithElementVertices(*it, (*it)->pyramids);
+    _associateEntityWithElementVertices(*it, (*it)->trihedra);
+    _associateEntityWithElementVertices(*it, (*it)->polyhedra);
   }
   for(fiter it = firstFace(); it != lastFace(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->triangles, force);
-    _associateEntityWithElementVertices(*it, (*it)->quadrangles, force);
-    _associateEntityWithElementVertices(*it, (*it)->polygons, force);
+    _associateEntityWithElementVertices(*it, (*it)->triangles);
+    _associateEntityWithElementVertices(*it, (*it)->quadrangles);
+    _associateEntityWithElementVertices(*it, (*it)->polygons);
   }
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->lines, force);
+    _associateEntityWithElementVertices(*it, (*it)->lines);
   }
   for(viter it = firstVertex(); it != lastVertex(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->points, force);
+    _associateEntityWithElementVertices(*it, (*it)->points);
   }
 }
 
