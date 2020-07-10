@@ -374,8 +374,6 @@ void highOrderWinslow::_picardIteration(std::vector<MElement *> &allElem, std::s
     Msg::Info("Solving linear system (%d unknowns)...", myAssembler.sizeOfR());
     // solve the system
     lsys->systemSolve();
-    printf("size of R:%i\n",myAssembler.sizeOfR());
-    printf("size of F:%i\n",myAssembler.sizeOfF());
   }
   //calcul matrice elementaire
   
@@ -390,18 +388,28 @@ double highOrderWinslow::applyWinslowTo(std::vector<MElement *> &all, double pre
     Msg::Error("Winslow high-order optimizer implemented only for 3D");
   }
   Msg::Info("Computing Winslow smoothing...");
+  for(std::size_t i = 0; i < all.size(); i++)
+    _moveToStraightSidedLocation(all[i]);
+  // Solutions containers
+  std::map<MVertex *, SVector3> currentSolution;
+  std::map<MVertex *, SVector3> newSolution;
   // indexing nodes ?
-  std::set<MVertex *, MVertexPtrLessThan> _vertices;
+  std::set<MVertex *, MVertexPtrLessThan> vertices;
   for(std::size_t i = 0; i < all.size(); i++) {
     for(int j = 0; j < all[i]->getNumVertices(); j++) {
       MVertex *vert = all[i]->getVertex(j);
-      _vertices.insert(vert);
+      vertices.insert(vert);
     }
   }
-  // while epsilon>precision
-  // -- fct picard iterations (*elem, currentSol, newSol)
-  // -- calcul epsilon
-  // apply displacements
+  double epsilon=1e10;
+  while(epsilon>precision){
+    // _picardIteration(all, vertices, currentSol, newSol);
+    // _computeErrorPicard(currentSol, newSol);
+    // -- fct picard iterations (*elem, currentSol, newSol)
+    // -- calcul epsilon
+    // apply displacements
+  }
+
   
   return 0.0;
 }

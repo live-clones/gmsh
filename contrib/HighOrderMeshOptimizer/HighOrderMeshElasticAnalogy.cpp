@@ -22,7 +22,6 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#include "hxt_tools.h"
 #include "HighOrderMeshElasticAnalogy.h"
 #include "GModel.h"
 #include "GmshConfig.h"
@@ -612,50 +611,7 @@ void highOrderTools::_computeStraightSidedPositions()
             _straightSidedLocation.size());
 }
 
-// double parallelPS(fullVector<double> &u, fullVector<double> &v){
-//   std::size_t N=u.size();
-// #if defined(_OPENMP)
-//   int sizeRed=MAX_NUM_THREADS_OMP_;
-//   // int nT=omp_get_num_threads();
-// #else
-//   intSizeRed=1;
-//   // int nT=1;
-// #endif
-//   std::vector<double> redPS;
-//   redPS.resize(sizeRed,0.0);
-// #if defined(_OPENMP)
-// #pragma omp parallel
-// #endif
-//   {
-// #if defined(_OPENMP)
-//     int nT=omp_get_num_threads();
-//     int threadID = omp_get_thread_num();
-// #else
-//     int nT=1;
-//     int threadID = 0;
-// #endif
-//     nT=omp_get_num_threads();
-//     size_t start=threadID*N/nT;
-//     size_t end= (threadID+1)*N/nT > N ? N : (threadID+1)*N/nT;
-//     fullVector<double> uThread(u.getDataPtr()+start,end-start);
-//     fullVector<double> vThread(v.getDataPtr()+start,end-start);
-//     // for(std::size_t k = start; k < end; k++)
-//     //   redPS[threadID]+=u[k]*v[k];
-//     redPS[threadID]=uThread*vThread;
-    
-//   }
-//   double ps=0.0;
-//   for(std::size_t k = 0; k < sizeRed; k++)
-//     ps+=redPS[k];
-//   return ps;
-// }
-
 double parallelPS(fullVector<double> &u, fullVector<double> &v, std::vector<double> &redPS){
-  std::size_t N=u.size();
-  int sizeRed=1;
-#if defined(_OPENMP)
-  sizeRed=MAX_NUM_THREADS_OMP_;
-#endif
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -669,7 +625,7 @@ double parallelPS(fullVector<double> &u, fullVector<double> &v, std::vector<doub
 #if defined(_OPENMP)
 #pragma omp for
 #endif
-    for(std::size_t k = 0; k < N; k++){
+    for(std::size_t k = 0; k < u.size(); k++){
       int threadID = 1;
 #if defined(_OPENMP)
       threadID = omp_get_thread_num();
@@ -683,51 +639,7 @@ double parallelPS(fullVector<double> &u, fullVector<double> &v, std::vector<doub
   return ps;
 }
 
-// void _parallelAxpy(fullVector<double> &u, fullVector<double> &x, double alpha = 1.){
-//   std::size_t N=u.size();
-// // #if defined(_OPENMP)
-// //   // int nT=MAX_NUM_THREADS_OMP_;
-// //   int nT=omp_get_num_threads();
-// // #else
-// //   int nT=1;
-// // #endif
-
-// #if defined(_OPENMP)
-// #pragma omp parallel
-// #endif
-//   {
-// #if defined(_OPENMP)
-//     int nT=omp_get_num_threads();
-//     // printf("threadID : %i\n",omp_get_thread_num());
-//     // printf("nT: %i\n",nT);
-//     int threadID = omp_get_thread_num();
-// #else
-//     int nT=1;
-//     int threadID = 0;
-// #endif
-//     nT=omp_get_num_threads();
-//     size_t start=threadID*N/nT;
-//     // size_t end=(threadID+1)*N/nT;
-//     size_t end= (threadID+1)*N/nT > N ? N : (threadID+1)*N/nT;
-//     // printf("start: %i // end: %i\n",start,end);
-//     fullVector<double> uThread(u.getDataPtr()+start,end-start);
-//     fullVector<double> xThread(x.getDataPtr()+start,end-start);
-//     // for(std::size_t k = start; k < end; k++)
-//     //   redPS[threadID]+=u[k]*v[k];
-//     uThread.axpy(xThread,alpha);
-//   }
-//   return;
-// }
-
 void _parallelAxpy(fullVector<double> &u, fullVector<double> &x, double alpha = 1.){
-  std::size_t N=u.size();
-// #if defined(_OPENMP)
-//   // int nT=MAX_NUM_THREADS_OMP_;
-//   int nT=omp_get_num_threads();
-// #else
-//   int nT=1;
-// #endif
-
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -735,50 +647,13 @@ void _parallelAxpy(fullVector<double> &u, fullVector<double> &x, double alpha = 
 #if defined(_OPENMP)
 #pragma omp for
 #endif
-    for(std::size_t k = 0; k < N; k++)
-      // uThread.axpy(xThread,alpha);
+    for(std::size_t k = 0; k < u.size(); k++)
       u(k)+=alpha*x(k);;
   }
   return;
 }
 
-// void _parallelFullVectorCopy(fullVector<double> &u, fullVector<double> &x){
-//   std::size_t N=u.size();
-// // #if defined(_OPENMP)
-// //   // int nT=MAX_NUM_THREADS_OMP_;
-// //   int nT=omp_get_num_threads();
-// // #else
-// //   int nT=1;
-// // #endif
-
-// #if defined(_OPENMP)
-// #pragma omp parallel
-// #endif
-//   {
-// #if defined(_OPENMP)
-//     int nT=omp_get_num_threads();
-//     // printf("threadID : %i\n",omp_get_thread_num());
-//     // printf("nT: %i\n",nT);
-//     int threadID = omp_get_thread_num();
-// #else
-//     int nT=1;
-//     int threadID = 0;
-// #endif
-//     // nT=omp_get_num_threads();
-//     size_t start=threadID*N/nT;
-//     // size_t end=(threadID+1)*N/nT;
-//     size_t end= (threadID+1)*N/nT > N ? N : (threadID+1)*N/nT;
-//     // printf("start: %i // end: %i\n",start,end);
-//     fullVector<double> uThread(u.getDataPtr()+start,end-start);
-//     fullVector<double> xThread(x.getDataPtr()+start,end-start);
-//     for(std::size_t k = 0; k < end-start; k++)
-//       uThread(k)=xThread(k);
-//   }
-//   return;
-// }
-
 void _parallelFullVectorCopy(fullVector<double> &u, fullVector<double> &x){
-  std::size_t N=u.size();
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -786,47 +661,13 @@ void _parallelFullVectorCopy(fullVector<double> &u, fullVector<double> &x){
 #if defined(_OPENMP)
 #pragma omp for
 #endif
-      for(std::size_t k = 0; k < N; k++)
+    for(std::size_t k = 0; k < u.size(); k++)
 	u(k)=x(k);
   }
   return;
 }
 
-// void _parallelFullVectorScale(fullVector<double> &u, double scaling){
-//   std::size_t N=u.size();
-// // #if defined(_OPENMP)
-// //   // int nT=MAX_NUM_THREADS_OMP_;
-// //   int nT=omp_get_num_threads();
-// // #else
-// //   int nT=1;
-// // #endif
-
-// #if defined(_OPENMP)
-// #pragma omp parallel
-// #endif
-//   {
-// #if defined(_OPENMP)
-//     int nT=omp_get_num_threads();
-//     // printf("threadID : %i\n",omp_get_thread_num());
-//     // printf("nT: %i\n",nT);
-//     int threadID = omp_get_thread_num();
-// #else
-//     int nT=1;
-//     int threadID = 0;
-// #endif
-//     nT=omp_get_num_threads();
-//     size_t start=threadID*N/nT;
-//     // size_t end=(threadID+1)*N/nT;
-//     size_t end= (threadID+1)*N/nT > N ? N : (threadID+1)*N/nT;
-//     fullVector<double> uThread(u.getDataPtr()+start,end-start);
-//     uThread.scale(scaling);
-//   }
-//   return;
-// }
-
 void _parallelFullVectorScale(fullVector<double> &u, double scaling){
-  std::size_t N=u.size();
-
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
@@ -834,21 +675,13 @@ void _parallelFullVectorScale(fullVector<double> &u, double scaling){
 #if defined(_OPENMP)
 #pragma omp for
 #endif
-    for(std::size_t k = 0; k < N; k++)
+    for(std::size_t k = 0; k < u.size(); k++)
       u(k)*=scaling;
   }
   return;
 }
 
 void _parallelApplyBC(fullVector<double> &u, fullVector<double> &bc, size_t nVertBnd){
-  std::size_t N=nVertBnd;
-// #if defined(_OPENMP)
-//   // int nT=MAX_NUM_THREADS_OMP_;
-//   int nT=omp_get_num_threads();
-// #else
-//   int nT=1;
-// #endif
-
 #if defined(_OPENMP)
 #pragma omp parallel
   {
@@ -865,174 +698,6 @@ void _parallelApplyBC(fullVector<double> &u, fullVector<double> &bc, size_t nVer
   return;
 }
 
-// void highOrderTools::_parallelMultUnassMatVect(std::vector<MElement *> &e, std::vector<fullMatrix<double>> &matElem, fullVector<double> &v, fullVector<double> &res){
-//   std::size_t nElem=matElem.size();
-// #if defined(_OPENMP)
-//   // int nT=MAX_NUM_THREADS_OMP_;
-//   // int nT=omp_get_num_threads();
-//   int sizeRed=MAX_NUM_THREADS_OMP_;
-// #else
-//   // int nT=1;
-//   int sizeRed=1;
-// #endif
-//   fullVector<double> init(v.size());
-//   init.setAll(0.0);
-//   std::vector<fullVector<double>> redAX(sizeRed,init);
-//   //split the vector v in parallel block
-// #if defined(_OPENMP)
-// #pragma omp parallel
-// #endif
-//   {
-// #if defined(_OPENMP)
-//     int nT=omp_get_num_threads();
-//     // printf("threadID : %i\n",omp_get_thread_num());
-//     // printf("nT: %i\n",nT);
-//     int threadID = omp_get_thread_num();
-// #else
-//     int nT=1;
-//     int threadID = 0;
-// #endif
-//     nT=omp_get_num_threads();
-//     size_t start=threadID*nElem/nT;
-//     // size_t end=(threadID+1)*nElem/nT;
-//     size_t end= (threadID+1)*nElem/nT > nElem ? nElem : (threadID+1)*nElem/nT;
-//     // printf("threadId %i :: start: %i // end: %i\n",threadID,start,end);
-//     for(std::size_t k = start; k < end; k++){
-//       fullVector<double> vectElem(matElem[k].size1());
-//       int nVertElem=e[k]->getNumVertices();
-//       for(std::size_t l=0; l < nVertElem; l++){
-// 	for(std::size_t d=0; d < _dim; d++){
-// 	  // vectElem.set(nVertElem*d+l, v(_dim*e[k]->getVertex(l)->getIndex()+d));
-// 	  int indLoc=nVertElem*d+l;
-// 	  // int indLoc=_dim*l+d;
-// 	  int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
-// 	  vectElem(indLoc) = v(indGlob);
-// 	}
-//       }
-//       fullVector<double> resMult(matElem[k].size1());
-//       matElem[k].mult(vectElem, resMult);
-//       fullVector<double> threadRed(redAX[threadID].getDataPtr(),redAX[threadID].size());
-//       for(std::size_t l=0; l < nVertElem; l++){
-// 	for(std::size_t d=0; d < _dim; d++){
-// 	  int indLoc=nVertElem*d+l;
-// 	  // int indLoc=_dim*l+d;
-// 	  int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
-// 	  threadRed(indGlob)+=resMult(indLoc);
-// 	}
-//       }
-//     }
-//   }
-//   //Sum reductions
-// #if defined(_OPENMP)
-// #pragma omp parallel
-//   {
-// #pragma omp for
-// #endif
-//     for(std::size_t k = 0; k < res.size(); k++){
-//       res(k)=0.0;
-//       for(std::size_t l = 0; l < sizeRed; l++)
-// 	res(k)+=redAX[l](k);
-//     }
-// #if defined(_OPENMP)
-//   }
-// #endif
-//   return;
-// }
-
-void highOrderTools::_parallelMultUnassMatVect(std::vector<MElement *> &e, std::vector<fullMatrix<double> > &matElem, fullVector<double> &v, fullVector<double> &res, std::vector<fullVector<double> > &redAX, std::vector<fullVector<double> > &vectElemLoc, std::vector<fullVector<double> > &resMultLoc){
-  std::size_t nElem=matElem.size();
-  int sizeRed=1;
-#if defined(_OPENMP)
-  sizeRed=MAX_NUM_THREADS_OMP_;
-#endif
-  // fullVector<double> init(v.size());
-  // init.setAll(0.0);
-  // std::vector<fullVector<double>> redAX(sizeRed,init);
-  //split the vector v in parallel block
-#if defined(_OPENMP)
-#pragma omp parallel
-#endif
-  {
-#if defined(_OPENMP)
-    const int threadID = omp_get_thread_num();
-#else
-    int threadID = 0;
-#endif
-#if defined(_OPENMP)
-#pragma omp for
-#endif
-    for(std::size_t k = 0; k < v.size(); k++){
-      res(k)=0.0;
-      // for(std::size_t r = 0; r < redAX.size(); r++){
-      // 	redAX[r](k)=0.0;
-      // }
-    }
-#if defined(_OPENMP)
-#pragma omp for
-#endif
-    for(std::size_t k = 0; k < e.size(); k++){
-      // fullVector<double> vectElem(vectElemLoc[threadID].getDataPtr(),matElem[k].size1());
-      int nVertElem=e[k]->getNumVertices();
-      for(std::size_t l=0; l < nVertElem; l++){
-      	for(std::size_t d=0; d < _dim; d++){
-      	  // vectElem.set(nVertElem*d+l, v(_dim*e[k]->getVertex(l)->getIndex()+d));
-      	  int indLoc=nVertElem*d+l;
-      	  // int indLoc=_dim*l+d;
-      	  int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
-      	  // vectElem(indLoc) = v(indGlob);
-	  vectElemLoc[threadID](indLoc) = v(indGlob);
-      	}
-      }
-      // double *resMult=resMultLoc[threadID].getDataPtr();
-      // fullVector<double> resMult(resMultLoc[threadID].getDataPtr(),matElem[k].size1());
-      // fullVector<double> *resMult=&(resMultLoc[threadID]);
-      // matElem[k].mult(vectElem, resMult);
-      // matElem[k].mult(vectElem, resMultLoc[threadID]);
-      matElem[k].mult(vectElemLoc[threadID], resMultLoc[threadID]);
-      // for(std::size_t i=0; i < matElem[k].size1(); i++){
-      // 	resMult[i]=0.0;
-      // 	// for(std::size_t j=0; j < matElem[k].size1(); j++){
-      // 	for(std::size_t l=0; l < nVertElem; l++){
-      // 	  for(std::size_t d=0; d < _dim; d++){
-      // 	    int indLoc=nVertElem*d+l;
-      // 	    int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
-      // 	    resMult[i]+=matElem[k](i,indLoc)*v(indGlob);
-      // 	  }
-      // 	}
-      // }
-	
-      // matElem[k].mult(vectElem, resMult);
-      // fullVector<double> threadRed(redAX[threadID].getDataPtr(),redAX[threadID].size());
-      // double *threadRed=redAX[threadID].getDataPtr();
-      for(std::size_t l=0; l < nVertElem; l++){
-	for(std::size_t d=0; d < _dim; d++){
-	  int indLoc=nVertElem*d+l;
-	  // int indLoc=_dim*l+d;
-	  int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
-	  // threadRed[indGlob]+=resMult(indLoc);
-#pragma omp atomic
-	  res(indGlob)=res(indGlob)+resMultLoc[threadID](indLoc);// ((*resMult)(indLoc));
-	}
-      }
-    }
-  }
-  //Sum reductions
-// #if defined(_OPENMP)
-// #pragma omp parallel
-//   {
-// #pragma omp for
-// #endif
-//     for(std::size_t k = 0; k < res.size(); k++){
-//       res(k)=0.0;
-//       for(std::size_t l = 0; l < sizeRed; l++)
-// 	res(k)+=redAX[l](k);
-//     }
-// #if defined(_OPENMP)
-//   }
-// #endif
-  return;
-}
-
 void _parallelInitRedAX(std::vector<fullVector<double> > &redAX){
 #if defined(_OPENMP)
 #pragma omp for
@@ -1045,25 +710,21 @@ void _parallelInitRedAX(std::vector<fullVector<double> > &redAX){
   return;
 }
 
-void _parallelGetLocalVect(MElement *ek, double *v, double *vectElem, int nVertElem, int dim){
+void _getLocalVect(MElement *ek, double *v, double *vectElem, int nVertElem, int dim){
   for(std::size_t l=0; l < nVertElem; l++){
     for(std::size_t d=0; d < dim; d++){
-      // vectElem.set(nVertElem*d+l, v(_dim*e[k]->getVertex(l)->getIndex()+d));
       int indLoc=nVertElem*d+l;
-      // int indLoc=_dim*l+d;
       int indGlob=dim*ek->getVertex(l)->getIndex()+d;
-      vectElem[indLoc] += v[indGlob];
+      vectElem[indLoc] = v[indGlob];
     }
   }
-
   return;
 }
 
-void _parallelThreadAssemble(MElement *ek, double *threadRed, fullVector<double> &resMult, int nVertElem, int dim){
+void _threadAssemble(MElement *ek, double *threadRed, fullVector<double> &resMult, int nVertElem, int dim){
   for(std::size_t l=0; l < nVertElem; l++){
     for(std::size_t d=0; d < dim; d++){
       int indLoc=nVertElem*d+l;
-      // int indLoc=_dim*l+d;
       int indGlob=dim*ek->getVertex(l)->getIndex()+d;
       threadRed[indGlob]+=resMult(indLoc);
     }
@@ -1072,53 +733,23 @@ void _parallelThreadAssemble(MElement *ek, double *threadRed, fullVector<double>
 }
 
 void _parallelAssemble(fullVector<double> &res, std::vector<fullVector<double> > &redAX){
-  int sizeRed=1;
-#if defined(_OPENMP)
-  sizeRed=MAX_NUM_THREADS_OMP_;
-#endif
 #if defined(_OPENMP)
 #pragma omp for
 #endif
   for(std::size_t k = 0; k < res.size(); k++){
     res(k)=0.0;
-    for(std::size_t l = 0; l < sizeRed; l++)
+    for(std::size_t l = 0; l < redAX.size(); l++)
       res(k)+=redAX[l](k);
   }
   return;
 }
 
 void _parallelMultUnassMatVectSave(std::vector<MElement *> &e, std::vector<fullMatrix<double> > &matElem, fullVector<double> &v, fullVector<double> &res, std::vector<fullVector<double> > &redAX){
-  std::size_t nElem=matElem.size();
   int _dim=3;
-  int sizeRed=1;
-#if defined(_OPENMP)
-  sizeRed=MAX_NUM_THREADS_OMP_;
-#endif
-  // fullVector<double> init(v.size());
-  // init.setAll(0.0);
-  // std::vector<fullVector<double>> redAX(sizeRed,init);
-  //split the vector v in parallel block
 #if defined(_OPENMP)
 #pragma omp parallel
 #endif
   {
-#if defined(_OPENMP)
-    int nT=omp_get_num_threads();
-    // printf("threadID : %i\n",omp_get_thread_num());
-    // printf("nT: %i\n",nT);
-    int threadIDOld = omp_get_thread_num();
-#else
-    int nT=1;
-    int threadIDOld = 0;
-#endif
-// #if defined(_OPENMP)
-// #pragma omp for
-// #endif
-//     for(std::size_t k = 0; k < v.size(); k++){
-//       for(std::size_t r = 0; r < redAX.size(); r++){
-// 	redAX[r](k)=0.0;
-//       }
-//     }
     _parallelInitRedAX(redAX);
 #if defined(_OPENMP)
 #pragma omp for
@@ -1130,143 +761,20 @@ void _parallelMultUnassMatVectSave(std::vector<MElement *> &e, std::vector<fullM
 #endif
       fullVector<double> vectElem(matElem[k].size1());
       int nVertElem=e[k]->getNumVertices();
-      // for(std::size_t l=0; l < nVertElem; l++){
-      // 	for(std::size_t d=0; d < _dim; d++){
-      // 	  // vectElem.set(nVertElem*d+l, v(_dim*e[k]->getVertex(l)->getIndex()+d));
-      // 	  int indLoc=nVertElem*d+l;
-      // 	  // int indLoc=_dim*l+d;
-      // 	  int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
-      // 	  vectElem(indLoc) = v(indGlob);
-      // 	}
-      // }
-      _parallelGetLocalVect(e[k], v.getDataPtr(), vectElem.getDataPtr(), nVertElem, _dim);
+      _getLocalVect(e[k], v.getDataPtr(), vectElem.getDataPtr(), nVertElem, _dim);
       fullVector<double> resMult(matElem[k].size1());
       matElem[k].mult(vectElem, resMult);
-      // fullVector<double> threadRed(redAX[threadID].getDataPtr(),redAX[threadID].size());
       double *threadRed=redAX[threadID].getDataPtr();
-      // for(std::size_t l=0; l < nVertElem; l++){
-      // 	for(std::size_t d=0; d < _dim; d++){
-      // 	  int indLoc=nVertElem*d+l;
-      // 	  // int indLoc=_dim*l+d;
-      // 	  int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
-      // 	  threadRed[indGlob]+=resMult(indLoc);
-      // 	}
-      // }
-      _parallelThreadAssemble(e[k], threadRed, resMult, nVertElem, _dim);
+      _threadAssemble(e[k], threadRed, resMult, nVertElem, _dim);
     }
     //Sum reductions
     _parallelAssemble(res, redAX);
-// #if defined(_OPENMP)
-// #pragma omp barrier
-// #endif
-// #if defined(_OPENMP)
-// #pragma omp for
-// #endif
-//     for(std::size_t k = 0; k < res.size(); k++){
-//       res(k)=0.0;
-//       for(std::size_t l = 0; l < sizeRed; l++)
-// 	res(k)+=redAX[l](k);
-//     }
   }
-  return;
-}
-
-void highOrderTools::_parallelMultUnassMatVectV2(std::vector<MElement *> &e, fullVector<double> &matElemFlat, fullVector<double> &vAssembled, fullVector<double> &resAssembled){
-  int sizeRed=1;
-#if defined(_OPENMP)
-  // int nT=MAX_NUM_THREADS_OMP_;
-  // int nT=omp_get_num_threads();
-  sizeRed=MAX_NUM_THREADS_OMP_;
-#endif
-  int nVerticesPerElem=e[0]->getNumVertices();
-  int nRowElem=nVerticesPerElem*_dim;
-  double *dataVscattered;
-  hxtAlignedMalloc(&dataVscattered, sizeof(double)*e.size()*nRowElem);
-  fullVector<double> vScattered(dataVscattered,e.size()*nRowElem);
-  fullVector<double> init(resAssembled.size());
-  init.setAll(0.0);
-  std::vector<fullVector<double> > redAX(sizeRed,init);
-  std::size_t nElem=e.size();
-  fullVector<double> resScattered(vScattered.size());
-
-#if defined(_OPENMP)
-#pragma omp parallel
-#endif
-  {
-#if defined(_OPENMP)
-#pragma omp for
-#endif
-    for(std::size_t k = 0; k < e.size(); k++){
-      for(std::size_t l=0; l < nVerticesPerElem; l++){
-	for(std::size_t d=0; d < _dim; d++){
-	  int indLoc=nVerticesPerElem*d+l;
-	  int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
-	  vScattered(nRowElem*k+indLoc)=vAssembled(indGlob);
-	}
-      }
-    }
-#if defined(_OPENMP)
-#pragma omp barrier
-#pragma omp for
-#endif
-    for(std::size_t k = 0; k < e.size(); k++){
-      for(std::size_t l = 0; l < nRowElem; l++){
-	for(std::size_t j = 0; j < nRowElem; j++){
-	  resScattered(nRowElem*k+l)+=matElemFlat(nRowElem*nRowElem*k+nRowElem*l+j)*vScattered(nRowElem*k+j);
-	}
-      }
-    }
-#if defined(_OPENMP)
-#pragma omp barrier
-#endif
-#if defined(_OPENMP)
-    int nT=omp_get_num_threads();
-    // printf("threadID : %i\n",omp_get_thread_num());
-    // printf("nT: %i\n",nT);
-    int threadID = omp_get_thread_num();
-#else
-    int nT=1;
-    int threadID = 0;
-#endif
-    size_t start=threadID*nElem/nT;
-    // size_t end=(threadID+1)*nElem/nT;
-    size_t end= (threadID+1)*nElem/nT > nElem ? nElem : (threadID+1)*nElem/nT;
-    fullVector<double> threadRed(redAX[threadID].getDataPtr(),redAX[threadID].size());
-    for(std::size_t k = start; k < end; k++){
-      for(std::size_t l=0; l < nVerticesPerElem; l++){
-	for(std::size_t d=0; d < _dim; d++){
-	  int indLoc=nVerticesPerElem*d+l;
-	  int indGlob=_dim*e[k]->getVertex(l)->getIndex()+d;
-	  threadRed(indGlob)+=resScattered(k*nRowElem+indLoc);
-	}
-      }
-    }
-  }
-
-  //Assembling resScattered
-#if defined(_OPENMP)
-#pragma omp parallel
-  {
-#pragma omp for
-#endif
-    for(std::size_t k = 0; k < resAssembled.size(); k++){
-      resAssembled(k)=0.0;
-      for(std::size_t l = 0; l < sizeRed; l++)
-	resAssembled(k)+=redAX[l](k);
-    }
-#if defined(_OPENMP)
-  }
-#endif
-  hxtAlignedFree(&dataVscattered);
   return;
 }
 
 void _parallelCGPart3(fullVector<double> &x, fullVector<double> &pk, fullVector<double> &pk1, fullVector<double> &rk, fullVector<double> &rk1, fullVector<double> &Apk, std::vector<double> &redPS, double &norm2Rk, double &norm2Rk1){
   std::size_t N=x.size();
-  int sizeRed=1;
-#if defined(_OPENMP)
-  sizeRed=MAX_NUM_THREADS_OMP_;
-#endif
   double alphak=0.0;
   double betak=0.0;
 #if defined(_OPENMP)
@@ -1343,8 +851,7 @@ void _parallelCGPart3(fullVector<double> &x, fullVector<double> &pk, fullVector<
 #endif
     for(std::size_t k = 0; k < N; k++){
       pk1(k)=rk1(k)+betak*pk(k);
-    }
-    
+    }   
   }
   return;
 }
@@ -1566,7 +1073,6 @@ void highOrderTools::_solveElasticAnalogyUnassembledCG(std::vector<MElement *> &
   std::vector<double> redPS;
   redPS.resize(sizeRed,0.0);
   fullVector<double> initRed(nVertRenum*_dim);
-  // initRed.setAll(0.0);
   std::vector<fullVector<double> > redAX(sizeRed,initRed);
   fullVector<double> initLocVect(nVertElemMax*_dim);
   std::vector<fullVector<double> > resMultLoc(sizeRed,initLocVect);
@@ -1574,8 +1080,6 @@ void highOrderTools::_solveElasticAnalogyUnassembledCG(std::vector<MElement *> &
   //Compute elementary matrices
   SElement se0(v[0]);
   const int nbR0 = El.sizeOfR(&se0);
-  // double *matElemFlatDbl;
-  // hxtAlignedMalloc(&matElemFlatDbl, sizeof(double)*v.size()*nbR0*nbR0);
     
   std::vector<fullMatrix<double> > matElem;
   fullMatrix<double> init;
@@ -1586,14 +1090,10 @@ void highOrderTools::_solveElasticAnalogyUnassembledCG(std::vector<MElement *> &
     const int nbC = El.sizeOfC(&se);
     matElem[i].resize(nbR,nbC);
     El.elementMatrix(&se, matElem[i]);
-    // for(std::size_t j = 0; j < nbR; j++)
-    //   for(std::size_t k = 0; k < nbC; k++)
-    // 	matElemFlatDbl[nbR*nbC*i+nbC*j+k]=matElem[i](j,k);  
   }
 
-  // fullVector<double> matElemFlat(matElemFlatDbl,v.size()*nbR0*nbR0);
 
-  //declare and init vectors for cg
+  //declare and init vectors for cg. Suffix R means vector poitning only to no dirichlet data
   fullVector<double> xR(x.getDataPtr()+nVertBnd*_dim,(nVertRenum-nVertBnd)*_dim);
   _parallelApplyBC(x,bcX,nVertBnd);
   fullVector<double> Ax(nVertRenum*_dim);
@@ -1618,10 +1118,7 @@ void highOrderTools::_solveElasticAnalogyUnassembledCG(std::vector<MElement *> &
   int nIt=0;
   int nItMax=10000;
   //-- calcul r0=b-Ax0 et p0=r0
-  // A.mult(x,Ax);
-  // _parallelMultUnassMatVect(v, matElem, x, Ax, redAX, vectElemLoc, resMultLoc);
   _parallelMultUnassMatVectSave(v, matElem, x, Ax, redAX);
-  // _parallelMultUnassMatVectV2(v, matElemFlat, x, Ax);
   _parallelFullVectorCopy(rk,AxR);
   _parallelFullVectorScale(rk,-1.0);
   fullVector<double> pk(p1.getDataPtr(),nVertRenum*_dim);
@@ -1639,13 +1136,10 @@ void highOrderTools::_solveElasticAnalogyUnassembledCG(std::vector<MElement *> &
   //-- tant que epsilon>precision
   while(epsilon>precision&&nIt<nItMax){
     //-->> alphak=norm(rk)/normA(pK)
-    // A.mult(pk,Apk);
-    // _parallelMultUnassMatVect(v, matElem, pk, Apk, redAX, vectElemLoc, resMultLoc);
     _parallelMultUnassMatVectSave(v, matElem, pk, Apk, redAX);
-    // _parallelMultUnassMatVectV2(v, matElemFlat, pk, Apk);
     _parallelCGPart3(xR, pkR, pk1R, rk, rk1, ApkR, redPS, norm2Rk, norm2Rk1);
     //-->> k=k+1
-    //-->> update rk pk and norm2Rk
+    //-->> update rk pk and norm2Rk (switching pointers)
     fullVector<double> temp(rk1.getDataPtr(),rk1.size());
     rk1.setAsProxy(rk,0,rk.size());
     rk.setAsProxy(temp,0,temp.size());
@@ -1664,7 +1158,6 @@ void highOrderTools::_solveElasticAnalogyUnassembledCG(std::vector<MElement *> &
       printf("--- iter %i epsilon : %g\n",nIt,epsilon);
   }
   printf("--- Converged iter %i epsilon : %g\n",nIt,epsilon);
-  // hxtAlignedFree(&matElemFlatDbl);
   tCG = Cpu()-t1;
 #if defined(_OPENMP)
   tCG = omp_get_wtime()-t1;
@@ -1750,7 +1243,7 @@ void highOrderTools::_solveElasticAnalogyOpenNl(std::vector<MElement *> &v, std:
   omp_set_nested(0);
 #endif
   nlNewContext();
-  nlSolverParameteri(NL_LEAST_SQUARES, NL_TRUE); // Least square solver because it seemed to be faster than CG with weak boundary conditions (no access to string boundary conditions in OpenNL if we use nlAddIJCoefficient() )
+  nlSolverParameteri(NL_LEAST_SQUARES, NL_TRUE); // Least square solver because it seemed to be faster than CG with weak boundary conditions (no access to strong boundary conditions in OpenNL if we use nlAddIJCoefficient() )
   // nlSolverParameteri(NL_SOLVER, NL_CG);
   nlSolverParameteri(NL_NB_VARIABLES, _dim*listVertexNumbered.size());
   nlSolverParameteri(NL_MAX_ITERATIONS, 100000);
