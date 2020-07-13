@@ -13,6 +13,7 @@
 #include <unistd.h>
 #endif
 
+#include <clocale>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -165,6 +166,11 @@ void Msg::Init(int argc, char **argv)
   // the onelab.py module or subclients automatically)
   addGmshPathToEnvironmentVar("PYTHONPATH");
   addGmshPathToEnvironmentVar("PATH");
+
+  // C locale will be UTF-8 enabled English + make sure decimal number use dot
+  // separator
+  std::setlocale(LC_ALL, "en_US.UTF-8");
+  std::setlocale(LC_NUMERIC, "en_US.UTF-8");
 
   InitializeOnelab("Gmsh");
 }
