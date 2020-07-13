@@ -54,7 +54,7 @@ Smit, Sauli Ruuska, Romain Boman, Fredrik Ekre, Mark Burton, Max Orok, Paul
 Cristini, Isuru Fernando, Jose Paulo Moitinho de Almeida, Sophie Le Bras,
 Alberto Escrig, Samy Mukadi, Peter Johnston, Bruno de Sousa Alves, Stefan
 Bruens, Luca Verzeroli, Tristan Seidlhofer, Ding Jiaming, Joost Gevaert, Marcus
-Calhoun-Lopez, Michel Zou.
+Calhoun-Lopez, Michel Zou, Sir Sunsheep, Mariano Forti.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
