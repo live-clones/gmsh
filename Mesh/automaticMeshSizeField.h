@@ -11,13 +11,13 @@
 
 #include "rtree.h"
 
-#if defined(HAVE_HXT) && defined(HAVE_P4EST)
+#if defined(HAVE_P4EST)
 // P4EST INCLUDES
-#ifdef HAVE_P4EST
 #include <p4est_to_p8est.h>
 #include <p8est_extended.h>
 #endif
 
+#if defined(HAVE_HXT)
 // HXT INCLUDES
 extern "C" {
   #include "hxt_tools.h"
@@ -38,7 +38,9 @@ typedef struct ForestOptions{
   double       *bbox;
   double      (*sizeFunction)(double, double, double, double);
   RTree<uint64_t,double,3>  *triRTree;
+#ifdef HAVE_HXT
   HXTMesh                   *mesh;
+#endif
   double                    *nodalCurvature;
   double                    *nodeNormals;
   std::vector<std::function<double(double)>> *curvFunctions;
@@ -72,6 +74,7 @@ typedef struct size_point{
   bool isFound;
 } size_point_t;
 
+#if defined(HAVE_HXT) && defined(HAVE_P4EST)
 HXTStatus forestOptionsCreate(ForestOptions **forestOptions);
 HXTStatus forestOptionsDelete(ForestOptions **forestOptions);
 
@@ -84,12 +87,11 @@ HXTStatus forestExport2D(Forest *forest, const char *forestFile);
 HXTStatus forestLoad(Forest **forest, const char* forestFile, const char *dataFile, ForestOptions *forestOptions);
 
 HXTStatus forestSearchOne(Forest *forest, double x, double y, double z, double *size, int linear);
+#endif
 
 class automaticMeshSizeField : public Field {
 
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
-  // struct HXTForest *forest;
-  // struct HXTForestOptions *forestOptions;
   struct Forest *forest;
   struct ForestOptions *forestOptions;
   HXTStatus updateHXT();

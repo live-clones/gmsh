@@ -1527,6 +1527,8 @@ HXTStatus forestSave(Forest *forest, const char *forestFile, const char *dataFil
   return HXT_STATUS_OK;
 }
 
+#endif
+
 /* ======================================================================================
    End functions from hxt_octree
    ====================================================================================== */
@@ -1552,7 +1554,8 @@ automaticMeshSizeField::~automaticMeshSizeField(){
 #endif
 }
 
-HXTStatus automaticMeshSizeField:: updateHXT(){
+#if defined(HAVE_HXT) && defined(HAVE_P4EST)
+HXTStatus automaticMeshSizeField::updateHXT(){
 
   if(!update_needed)
     return HXT_STATUS_OK;
