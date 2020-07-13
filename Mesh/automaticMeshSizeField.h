@@ -9,8 +9,21 @@
 #include "Field.h"
 #include "Context.h"
 
+#include "rtree.h"
+
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
-#include "hxt_octree.h"
+// P4EST INCLUDES
+#ifdef HAVE_P4EST
+#include <p4est_to_p8est.h>
+#include <p8est_extended.h>
+#endif
+
+// HXT INCLUDES
+extern "C" {
+  #include "hxt_tools.h"
+  #include "hxt_mesh.h"
+  #include "hxt_bbox.h"
+}
 #endif
 
 // Information needed to create and compute a forest of octrees
@@ -20,7 +33,6 @@ typedef struct ForestOptions{
   double        hmin;
   double        hbulk;
   double        gradation;
-  int           nRefine;
   int           nodePerTwoPi;
   int           nodePerGap;
   double       *bbox;
@@ -42,27 +54,44 @@ typedef struct Forest{
   ForestOptions *forestOptions;
 } Forest;
 
-// // Data available on each tree cell
-// typedef struct size_data{
-//   double size;
-// #ifdef HAVE_P4EST
-//   double ds[P4EST_DIM]; // Size gradient
-// #endif
-//   double h; // The cell size
-//   // TODO : remplacer les double par un tableau de booleens qui indique si le voisin est full ou hanging
-//   // Comme ça il faudra juste ajouter h/2
-//   double h_xL, h_xR; // Half cell length for finite differences
-//   double h_yD, h_yU;
-//   double h_zB, h_zT;
-// } size_data_t;
+// Data available on each tree cell
+typedef struct size_data{
+  double size;
+#ifdef HAVE_P4EST
+  double ds[3]; // Size gradient
+#endif
+  double h;     // Isotropic cell size
+} size_data_t;
+
+// A node to search in the tree
+typedef struct size_point{
+  double x;
+  double y;
+  double z;
+  double size;
+  bool isFound;
+} size_point_t;
+
+HXTStatus forestOptionsCreate(ForestOptions **forestOptions);
+HXTStatus forestOptionsDelete(ForestOptions **forestOptions);
+
+HXTStatus forestCreate(int argc, char **argv, Forest **forest, const char* filename, ForestOptions *forestOptions);
+HXTStatus forestDelete(Forest **forest);
+
+HXTStatus forestSave(Forest *forest, const char* forestFile, const char *dataFile);
+HXTStatus forestExport(Forest *forest, const char *forestFile);
+HXTStatus forestExport2D(Forest *forest, const char *forestFile);
+HXTStatus forestLoad(Forest **forest, const char* forestFile, const char *dataFile, ForestOptions *forestOptions);
+
+HXTStatus forestSearchOne(Forest *forest, double x, double y, double z, double *size, int linear);
 
 class automaticMeshSizeField : public Field {
 
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
-  struct HXTForest *forest;
-  struct HXTForestOptions *forestOptions;
-  struct Forest *myForest;
-  struct ForestOptions *myForestOptions;
+  // struct HXTForest *forest;
+  // struct HXTForestOptions *forestOptions;
+  struct Forest *forest;
+  struct ForestOptions *forestOptions;
   HXTStatus updateHXT();
 #endif
 
@@ -72,7 +101,6 @@ class automaticMeshSizeField : public Field {
   double _hmin, _hmax;
   double _hbulk;
   double _gradation;
-  int _nRefine;
   bool _smoothing, _gaps;
 
  public:
@@ -84,7 +112,6 @@ class automaticMeshSizeField : public Field {
                          double hmin = -1.0,
                          double hmax = -1.0,
                          double hbulk = -1.0,
-                         int nRefine = 100,
                          int smoothing = true,
                          int gaps = true)  
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
@@ -98,18 +125,17 @@ class automaticMeshSizeField : public Field {
     _hmax             = hmax;   
     _hbulk            = hbulk;
     _gradation        = (int) gradation ? gradation : 1.1;
-    _nRefine          = nRefine;
     _smoothing        = smoothing;
     _gaps             = gaps;
 
-    options["FileToLoad"] = new FieldOptionString(_forestFile,
+    options["p4estFileToLoad"] = new FieldOptionString(_forestFile,
                  "p4est file containing the size field",&update_needed);    
 
     options["nPointsPerCircle"] = new FieldOptionInt(_nPointsPerCircle,
 						     "Number of points per circle (adapt to curvature of surfaces)",&update_needed);
 
     options["nPointsPerGap"] = new FieldOptionInt(_nPointsPerGap,
-						  "Number of points in thin layers",&update_needed);
+						  "Number of layers of elements in thin layers",&update_needed);
 
     options["hMin"] = new FieldOptionDouble(_hmin,
                "Minimum size", &update_needed);
@@ -118,22 +144,16 @@ class automaticMeshSizeField : public Field {
                "Maximum size", &update_needed);
     
     options["hBulk"] = new FieldOptionDouble(_hbulk,
-					     "Size everywhere no size is prescribed", &update_needed);
+					     "Default size where it is not prescribed", &update_needed);
 
     options["gradation"] = new FieldOptionDouble(_gradation,
-						   "Maximum gradient of the size field",&update_needed);
-  
-    options["NRefine"] = new FieldOptionInt(_nRefine,
-					    "Initial refinement level for the octree",&update_needed);
+						   "Maximum growth ratio for the edges lengths",&update_needed);
 
-    options["Smoothing"] = new FieldOptionBool(_smoothing,
-              "Lissage ?",&update_needed);
+    options["smoothing"] = new FieldOptionBool(_smoothing,
+              "Enable size smoothing (should always be true)",&update_needed);
 
-    options["Gaps"] = new FieldOptionBool(_gaps,
-              "Tenir compte des gaps ?",&update_needed);
-
-    // options["TetMesh"] = new FieldOptionBool(_tetMesh,
-    //           "Generate 3D mesh ? (choose if surface mesh has already been recomputed)",&update_needed);
+    options["features"] = new FieldOptionBool(_gaps,
+              "Enable computation of local feature size (thin channels)",&update_needed);
 
     update_needed = true;
 

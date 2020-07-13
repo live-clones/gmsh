@@ -68,16 +68,6 @@ list(APPEND HXT_INC_DIRS
      contrib/hxt/reparam/src
      contrib/hxt/reparam/include)
 
-
-#################################################################################
-# HXT sizeField
-#################################################################################
-if(HAVE_P4EST)
-  append_gmsh_src(contrib/hxt/sizeField "hxt_octree.cpp;hxt_octree.h" )
-  list(APPEND HXT_INC_DIRS contrib/hxt/sizeField)
-endif()
-
-
 #################################################################################
 # HXT predicates
 #################################################################################

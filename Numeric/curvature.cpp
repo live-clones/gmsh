@@ -178,6 +178,10 @@ bool CurvatureRusinkiewicz(
 
   nodalCurvatures.resize(nVertices);
 
+  // for(int i = 0; i < nodes.size(); ++i){
+  //   nodalCurvatures[i] = std::make_pair(0.0,0.0);
+  // }
+
   std::vector<std::size_t> node2tri(3 * 2 * nTriangles);
 
   // first compute node normals and node-to-triangle connectivity
@@ -278,58 +282,115 @@ bool CurvatureRusinkiewicz(
       0.5 * (CURV[4 * i + 1] + CURV[4 * i + 2]);
   }
 
-  // get vertex curvatures by averaging triangle curvatures
-  std::size_t currentVertex = nVertices + 1;
-  std::size_t count = 0;
+  // =============================================================================
+  // 
+  // // get vertex curvatures by averaging triangle curvatures
+  // std::size_t currentVertex = nVertices + 1;
+  // std::size_t count = 0;
+  // double uP[3] = {0., 0., 0.}, vP[3] = {0., 0., 0.};
+  // double A = 0., B = 0., D = 0.;
+  // for(std::size_t i = 0; i < 6 * nTriangles; i += 2) {
+  //   std::size_t iVertex = node2tri[i];
+  //   std::size_t iTriangle = node2tri[i + 1];
+  //   if(currentVertex != iVertex) {
+  //     // compute the real stuff
+  //     if(currentVertex != nVertices + 1) {
+  //       A /= (double)count;
+  //       B /= (double)count;
+  //       D /= (double)count;
+  //       double lambda1, lambda2, v1x, v1y, v2x, v2y;
+  //       solveEig(A, B, B, D, &lambda1, &v1x, &v1y, &lambda2, &v2x, &v2y);
+
+  //       SVector3 cMax(fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]),
+  //                     fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]),
+  //                     fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]));
+  //       SVector3 cMin(fabs(lambda2) * (v2x * uP[0] + v2y * vP[0]),
+  //                     fabs(lambda2) * (v2x * uP[1] + v2y * vP[1]),
+  //                     fabs(lambda2) * (v2x * uP[2] + v2y * vP[2]));
+  //       nodalCurvatures[currentVertex] = std::make_pair(cMax, cMin);
+  //     }
+
+  //     count = 0;
+  //     A = 0.0;
+  //     B = 0.0;
+  //     D = 0.0;
+  //     computeLocalFrame(&nodeNormals[3 * iVertex], uP, vP);
+  //     currentVertex = iVertex;
+  //   }
+  //   unitNormal2Triangle(nodes[triangles[3 * iTriangle + 0]].data(),
+  //                       nodes[triangles[3 * iTriangle + 1]].data(),
+  //                       nodes[triangles[3 * iTriangle + 2]].data(), n, &surf);
+  //   double uF[3], vF[3];
+  //   makevector(nodes[triangles[3 * iTriangle + 0]].data(),
+  //              nodes[triangles[3 * iTriangle + 1]].data(), uF);
+  //   normalize(uF);
+  //   crossprod(n, uF, vF);
+  //   double *c = &CURV[4 * iTriangle];
+  //   double UP[3] = {dotprod(uP, uF), dotprod(uP, vF), 0};
+  //   normalize(UP);
+  //   double VP[3] = {dotprod(vP, uF), dotprod(vP, vF), 0};
+  //   normalize(VP);
+  //   A += (UP[0] * UP[0] * c[0] + 2 * UP[0] * UP[1] * c[1] + UP[1] * UP[1] * c[3]);
+  //   D += (VP[0] * VP[0] * c[0] + 2 * VP[0] * VP[1] * c[1] + VP[1] * VP[1] * c[3]);
+  //   B += (VP[0] * UP[0] * c[0] + (VP[1] * UP[0] + VP[0] * UP[1]) * c[1] +
+  //         VP[1] * UP[1] * c[3]);
+  //   count++;
+  // }
+
+  // =============================================================================
+
+  // The loop above does not always assign the curvature to the last vertex:
+  // this happens if too few triangles have a contribution.
+  // This should fix it, also it is more readable in my opinion.
+  uint64_t count = 0;
   double uP[3] = {0., 0., 0.}, vP[3] = {0., 0., 0.};
   double A = 0., B = 0., D = 0.;
-  for(std::size_t i = 0; i < 6 * nTriangles; i += 2) {
-    std::size_t iVertex = node2tri[i];
-    std::size_t iTriangle = node2tri[i + 1];
-    if(currentVertex != iVertex) {
-      // compute the real stuff
-      if(currentVertex != nVertices + 1) {
-        A /= (double)count;
-        B /= (double)count;
-        D /= (double)count;
-        double lambda1, lambda2, v1x, v1y, v2x, v2y;
-        solveEig(A, B, B, D, &lambda1, &v1x, &v1y, &lambda2, &v2x, &v2y);
-
-        SVector3 cMax(fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]),
-                      fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]),
-                      fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]));
-        SVector3 cMin(fabs(lambda2) * (v2x * uP[0] + v2y * vP[0]),
-                      fabs(lambda2) * (v2x * uP[1] + v2y * vP[1]),
-                      fabs(lambda2) * (v2x * uP[2] + v2y * vP[2]));
-        nodalCurvatures[currentVertex] = std::make_pair(cMax, cMin);
-      }
-
-      count = 0;
-      A = 0.0;
-      B = 0.0;
-      D = 0.0;
-      computeLocalFrame(&nodeNormals[3 * iVertex], uP, vP);
-      currentVertex = iVertex;
+  uint64_t iTriangle;
+  uint64_t ind = 0;
+  for(uint64_t iVert = 0; iVert < nVertices; ++iVert){
+    count = 0;
+    A = 0.0;
+    B = 0.0;
+    D = 0.0;
+    while(node2tri[2*ind+0] == iVert){
+      iTriangle = node2tri[2*ind+1];
+      computeLocalFrame (&nodeNormals[3*iVert], uP, vP);
+      // computing each curvature around a vertex
+      unitNormal2Triangle(nodes[triangles[3 * iTriangle + 0]].data(),
+                          nodes[triangles[3 * iTriangle + 1]].data(),
+                          nodes[triangles[3 * iTriangle + 2]].data(), n, &surf);
+      double uF[3],vF[3];
+      makevector(nodes[triangles[3 * iTriangle + 0]].data(),
+                 nodes[triangles[3 * iTriangle + 1]].data(), uF);
+      normalize(uF);
+      crossprod(n,uF,vF);    
+      double *c = &CURV[4*iTriangle];       
+      double UP[3] = {dotprod (uP,uF),dotprod (uP,vF),0};
+      normalize(UP);
+      double VP[3] = {dotprod (vP,uF),dotprod (vP,vF),0};
+      normalize(VP);
+      A += (UP[0]*UP[0]*c[0] + 2*UP[0]*UP[1]*c[1] + UP[1]*UP[1]*c[3]) ;
+      D += (VP[0]*VP[0]*c[0] + 2*VP[0]*VP[1]*c[1] + VP[1]*VP[1]*c[3]) ;
+      B += (VP[0]*UP[0]*c[0] + (VP[1]*UP[0]+VP[0]*UP[1])*c[1] + VP[1]*UP[1]*c[3]) ;
+      ++count;
+      ++ind;
+      if(ind >= 3*nTriangles) break;
     }
-    unitNormal2Triangle(nodes[triangles[3 * iTriangle + 0]].data(),
-                        nodes[triangles[3 * iTriangle + 1]].data(),
-                        nodes[triangles[3 * iTriangle + 2]].data(), n, &surf);
-    double uF[3], vF[3];
-    makevector(nodes[triangles[3 * iTriangle + 0]].data(),
-               nodes[triangles[3 * iTriangle + 1]].data(), uF);
-    normalize(uF);
-    crossprod(n, uF, vF);
-    double *c = &CURV[4 * iTriangle];
-    double UP[3] = {dotprod(uP, uF), dotprod(uP, vF), 0};
-    normalize(UP);
-    double VP[3] = {dotprod(vP, uF), dotprod(vP, vF), 0};
-    normalize(VP);
-    A += (UP[0] * UP[0] * c[0] + 2 * UP[0] * UP[1] * c[1] + UP[1] * UP[1] * c[3]);
-    D += (VP[0] * VP[0] * c[0] + 2 * VP[0] * VP[1] * c[1] + VP[1] * VP[1] * c[3]);
-    B += (VP[0] * UP[0] * c[0] + (VP[1] * UP[0] + VP[0] * UP[1]) * c[1] +
-          VP[1] * UP[1] * c[3]);
-    count++;
-  }
+    // printf("ind = %d - %d contributions pour le sommet %d\n", ind, count, iVert);
+    A /= (double) count;
+    B /= (double) count;
+    D /= (double) count;
+    double lambda1, lambda2, v1x, v1y, v2x, v2y;
+    solveEig(A, B, B, D, & lambda1, & v1x, &v1y, & lambda2, & v2x, & v2y );
+    // printf("Writing from %d to %d (available = %d)\n",6*iVert,6*iVert+5,6*nVertices-1);
+    SVector3 cMax(fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]),
+                  fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]),
+                  fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]));
+    SVector3 cMin(fabs(lambda2) * (v2x * uP[0] + v2y * vP[0]),
+                  fabs(lambda2) * (v2x * uP[1] + v2y * vP[1]),
+                  fabs(lambda2) * (v2x * uP[2] + v2y * vP[2]));
+    nodalCurvatures[iVert] = std::make_pair(cMax, cMin);
+  } // for iVert
 
   return true;
 }
