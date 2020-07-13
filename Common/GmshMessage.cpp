@@ -167,9 +167,10 @@ void Msg::Init(int argc, char **argv)
   addGmshPathToEnvironmentVar("PYTHONPATH");
   addGmshPathToEnvironmentVar("PATH");
 
-  // make sure to use the "C" locale; in particular this ensure that we will use
-  // a for for the decimal separator when writing ASCII mesh files
+  // make sure to use the "C" locale; in particular this ensures that we will
+  // use a dot for for the decimal separator when writing ASCII mesh files
   std::setlocale(LC_ALL, "C");
+  std::setlocale(LC_NUMERIC, "C");
 
   InitializeOnelab("Gmsh");
 }
