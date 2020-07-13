@@ -13,6 +13,7 @@
 #include <unistd.h>
 #endif
 
+#include <clocale>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -165,6 +166,10 @@ void Msg::Init(int argc, char **argv)
   // the onelab.py module or subclients automatically)
   addGmshPathToEnvironmentVar("PYTHONPATH");
   addGmshPathToEnvironmentVar("PATH");
+
+  // make sure to use the "C" locale; in particular this ensure that we will use
+  // a for for the decimal separator when writing ASCII mesh files
+  std::setlocale(LC_ALL, "C");
 
   InitializeOnelab("Gmsh");
 }
