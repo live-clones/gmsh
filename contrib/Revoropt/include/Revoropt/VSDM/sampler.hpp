@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -11,7 +11,7 @@
 #ifndef _REVOROPT_VSDM_SAMPLER_H_
 #define _REVOROPT_VSDM_SAMPLER_H_
 
-#include <eigen3/Eigen/Sparse>
+#include <Eigen/Sparse>
 #include <vector>
 
 namespace Revoropt {
@@ -75,7 +75,7 @@ class DiffSampler : public Sampler<Mesh> {
 
   /* Transfer a derivative wrt the samples to a derivative wrt. the vertices */
 
-  virtual void chain_derivative( 
+  virtual void chain_derivative(
       const double* sample_derivative,
       double* vertex_derivative,
       bool reset_output = true
@@ -121,20 +121,20 @@ class LinearSampler : public DiffSampler<Mesh> {
 
   /** Differenciation **/
 
-  void chain_derivative( 
+  void chain_derivative(
       const double* sample_derivative,
       double* vertex_derivative,
       bool reset_output = true
       ) const {
     //map the sample coordinates in a sample_size_ x 3 matrix
-    Eigen::Map< 
+    Eigen::Map<
         const Eigen::Matrix<double,Eigen::Dynamic,Dim>,
         Eigen::Unaligned,
         Eigen::Stride<1,Dim>
       > sdiff(sample_derivative, sample_size(), Dim) ;
 
     //map the mesh vertex coordinates in a vertex_size x 3 matrix
-    Eigen::Map< 
+    Eigen::Map<
         Eigen::Matrix<double,Eigen::Dynamic,Dim>,
         Eigen::Unaligned,
         Eigen::Stride<1,Dim>
@@ -180,7 +180,7 @@ class VertexSampler : public DiffSampler<Mesh> {
   /* set the mesh to sample */
   void set_mesh( const Mesh* mesh ) {
     samples_.assign(
-        mesh->vertices(), 
+        mesh->vertices(),
         mesh->vertices() + Dim * mesh->vertices_size()
         ) ;
   }
@@ -191,9 +191,9 @@ class VertexSampler : public DiffSampler<Mesh> {
                          double* vertex_derivative,
                          bool reset_output = true
                        ) const {
-    std::copy( 
-        sample_derivative, 
-        sample_derivative + Dim * sample_size(), 
+    std::copy(
+        sample_derivative,
+        sample_derivative + Dim * sample_size(),
         vertex_derivative
         ) ;
   }

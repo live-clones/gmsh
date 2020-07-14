@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -18,7 +18,7 @@
 #include "measure_def.hpp"
 #include "normals_def.hpp"
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <queue>
 
 namespace Revoropt {
@@ -62,7 +62,7 @@ void face_split( MeshBuilder* mesh,
     //indices of the new fces
     split_face_indices[0] = face ;
     //compatibility of the mesh face size is checked here
-    split_face_indices[1] = mesh->extend_faces(1,split_face_sizes[1]) ; 
+    split_face_indices[1] = mesh->extend_faces(1,split_face_sizes[1]) ;
   } else {
     //translate face vector to remove one face
     mesh->erase_faces(face, face+1) ;
@@ -143,11 +143,11 @@ void face_split( MeshBuilder* mesh,
 }
 
 /* Split an edge of a mesh builder. If the provided arrays are not NULL, returns
- * the indices and sizes of the new faces. The size of the arrays to provide is 
+ * the indices and sizes of the new faces. The size of the arrays to provide is
  * two in case of a border edge, and 4 otherwise.*/
 template<typename MeshBuilder>
-void edge_split( MeshBuilder* mesh, 
-                 unsigned int face, 
+void edge_split( MeshBuilder* mesh,
+                 unsigned int face,
                  unsigned int edge_index,
                  unsigned int* split_face_indices = NULL //output
                 ) {
@@ -182,7 +182,7 @@ void edge_split( MeshBuilder* mesh,
   Eigen::Map<const Vector> v2pos(mesh->vertex(v2)) ;
   Eigen::Map<Vector> vmidpos(mesh->vertex(vmid)) ;
   vmidpos = 0.5*(v1pos+v2pos) ;
-  
+
   //neighbouring face along the edge
   const unsigned int n_face = fneigh[edge_index] ;
 
@@ -190,8 +190,8 @@ void edge_split( MeshBuilder* mesh,
   if(n_face == MeshBuilder::NO_NEIGHBOUR) {
     //the edge is on the boundary, no neighbouring face to handle
     //split the face
-    face_split( mesh, 
-                face, edge_index, vmid, 
+    face_split( mesh,
+                face, edge_index, vmid,
                 split_face_indices
               ) ;
   } else {
@@ -204,13 +204,13 @@ void edge_split( MeshBuilder* mesh,
     //determine orientation
     const unsigned int shift = mesh->face(n_face)[n_edge_index]==v2 ? 0 : 1 ;
     //split the face
-    face_split( mesh, 
-                face, edge_index, vmid, 
+    face_split( mesh,
+                face, edge_index, vmid,
                 split_face_indices
               ) ;
     //split the neighbouring face
-    face_split( mesh, 
-                n_face, n_edge_index, vmid, 
+    face_split( mesh,
+                n_face, n_edge_index, vmid,
                 split_face_indices + 2
               ) ;
 
@@ -244,8 +244,8 @@ void edge_split( MeshBuilder* mesh,
 }
 
 template<typename Mesh, typename MeshBuilder>
-void split_longest_edge( const Mesh* input, 
-                         unsigned int niter, 
+void split_longest_edge( const Mesh* input,
+                         unsigned int niter,
                          MeshBuilder* mesh
                        ) {
   //dimension
@@ -325,13 +325,13 @@ void split_longest_edge( const Mesh* input,
     if(mesh->face_size(he.face) > 4) {
       longest_edge.erase(longest_edge.begin()+he.face) ;
     }
-    if( (split_nface != Mesh::NO_NEIGHBOUR) && 
+    if( (split_nface != Mesh::NO_NEIGHBOUR) &&
         (mesh->face_size(split_nface) > 4) ) {
       longest_edge.erase(longest_edge.begin()+split_nface) ;
     }
 
     //remove the edge from the heap
-    std::pop_heap(edge_heap.begin(), edge_heap.end()); 
+    std::pop_heap(edge_heap.begin(), edge_heap.end());
     edge_heap.pop_back() ;
 
     //resize longest edge array
@@ -394,8 +394,8 @@ namespace Bevel {
 
 /* criterion based on the normal to decide whether an edge needs splitting */
 template<typename Mesh>
-EdgeSplitType NormalSplitCriterion<Mesh>::edge_type( unsigned int face, 
-                                                     unsigned int edge 
+EdgeSplitType NormalSplitCriterion<Mesh>::edge_type( unsigned int face,
+                                                     unsigned int edge
                                                    ) const {
   //edge index
   const unsigned int edge_index = mesh_->face_offset(face) + edge ;
@@ -479,13 +479,13 @@ void normalize_triangle_split( const EdgeSplitType edge_types[3],
                              ) {
   /* precomputed triangle split type translation */
   static const unsigned char triangle_split_translate[64] = {
-    0 , 1 , 1 , 2 , 1 , 3 , 4 , 5 , 
-    1 , 6 , 3 , 7 , 2 , 7 , 5 , 8 , 
-    1 , 3 , 6 , 7 , 3 , 9 , 10, 11, 
-    4 , 10, 10, 12, 5 , 11, 13, 14, 
-    1 , 4 , 3 , 5 , 6 , 10, 10, 13, 
-    3 , 10, 9 , 11, 7 , 12, 11, 14, 
-    2 , 5 , 7 , 8 , 7 , 11, 12, 14, 
+    0 , 1 , 1 , 2 , 1 , 3 , 4 , 5 ,
+    1 , 6 , 3 , 7 , 2 , 7 , 5 , 8 ,
+    1 , 3 , 6 , 7 , 3 , 9 , 10, 11,
+    4 , 10, 10, 12, 5 , 11, 13, 14,
+    1 , 4 , 3 , 5 , 6 , 10, 10, 13,
+    3 , 10, 9 , 11, 7 , 12, 11, 14,
+    2 , 5 , 7 , 8 , 7 , 11, 12, 14,
     5 , 13, 11, 14, 8 , 14, 14, 15
   } ;
 
@@ -654,7 +654,7 @@ void face_split( const Mesh* mesh,
   static const unsigned char triangle_split_0[3]   = { //0 0 0
     0,1,2
   } ;
-  static const unsigned char triangle_split_1[6]   = { //1 0 0 
+  static const unsigned char triangle_split_1[6]   = { //1 0 0
     0,1,3,1,2,3
   } ;
   static const unsigned char triangle_split_2[9]   = { //3 0 0
@@ -732,14 +732,14 @@ void face_split( const Mesh* mesh,
   //normalize the triangle split
   FaceSplitType face_type ;
   normalize_triangle_split(edge_types, &face_type) ;
-  
+
   //collect the triangle boundary vertices
   std::vector<unsigned int> triangle_vertices ;
 //  std::cout << "face rotation " << face_type.rotation << std::endl ;
 //  std::cout << "face symetry " << std::boolalpha << face_type.symetry << std::endl ;
   for(int edge = 0; edge < 3; ++edge) {
     //compute the edge index given the normalization
-    const int edge_face_index = face_type.symetry ? 
+    const int edge_face_index = face_type.symetry ?
       (4+face_type.rotation-edge)%3 :
       (3-face_type.rotation+edge)%3 ;
 
@@ -750,7 +750,7 @@ void face_split( const Mesh* mesh,
     triangle_vertices.push_back(edge_start_vertex) ;
 
     //add the edge split vertices
-    const unsigned int* this_edge_split_verts = 
+    const unsigned int* this_edge_split_verts =
       edge_split_verts + 2*edge_face_index ;
     const EdgeSplitType edge_type = edge_types[edge_face_index] ;
 //    std::cout << "edge face index " << edge_face_index << std::endl ;
@@ -772,7 +772,7 @@ void face_split( const Mesh* mesh,
   }
 //  std::cout << "configuration : " << face_type.index << std::endl ;
 //  std::cout << "triangle vertices size : " << triangle_vertices.size() << std::endl ;
-  
+
   //add the necessary face split vertices
   if(face_type.index == 12) {
     //one face vertex to add
@@ -843,7 +843,7 @@ void face_split( const Mesh* mesh,
       //split vertices of the edge
       const unsigned int sv0 = triangle_vertices[1+3*i] ;
       const unsigned int sv1 = triangle_vertices[2+3*i] ;
-      //check whether 
+      //check whether
       //  1/ the edge split vertices were merged
       //  2/ the inner vertices along this edge are not too close
       if((sv0 == sv1) || ((fv[i] - fv[(i+1)%3]).norm() < radius)) {
@@ -908,13 +908,13 @@ void face_split( const Mesh* mesh,
 
 //  std::cout << "Adding split triangles" << std::endl ;
 //  std::cout << "Original size is " << (int) triangle_split_sizes[face_type.index] << std::endl ;
-  
+
   //add the new triangles if they are not degenerate
   //subdivision pattern for this triangle
   const unsigned char* split_triangles = triangle_patterns[face_type.index] ;
   //add the triangles
-  for( unsigned char triangle = 0 ; 
-       triangle < triangle_split_sizes[face_type.index] ; 
+  for( unsigned char triangle = 0 ;
+       triangle < triangle_split_sizes[face_type.index] ;
        ++triangle
      ) {
     //vertices of the triangle
@@ -950,11 +950,11 @@ void face_split( const Mesh* mesh,
 
 } //end of namespace Bevel
 
-template< typename Triangulation, 
-          typename TriangulationBuilder, 
+template< typename Triangulation,
+          typename TriangulationBuilder,
           typename Criterion >
-void bevel( const Triangulation* mesh, 
-            const Criterion* criterion, 
+void bevel( const Triangulation* mesh,
+            const Criterion* criterion,
             typename Triangulation::Scalar radius,
             TriangulationBuilder* mesh_builder //output
           ) {
@@ -972,7 +972,7 @@ void bevel( const Triangulation* mesh,
   //copy the vertices of the original mesh
   //FIXME problem if mesh has vertex offset
   split_verts.assign(
-    mesh->vertices(), 
+    mesh->vertices(),
     mesh->vertices() + Dim*mesh->vertices_size()
   ) ;
 
@@ -1004,7 +1004,7 @@ void bevel( const Triangulation* mesh,
         //get its a priori split type
         EdgeSplitType edge_type = criterion->edge_type(face, edge) ;
         //split and update the split type
-        edge_type = edge_split( mesh, face, edge, radius, edge_type, 
+        edge_type = edge_split( mesh, face, edge, radius, edge_type,
                                 split_verts, edge_split_verts ) ;
         //save the plis type
         edge_types.push_back(edge_type) ;
@@ -1055,13 +1055,13 @@ void bevel( const Triangulation* mesh,
     //face offset
     const unsigned int foffset = mesh->face_offset(face) ;
 //    std::cout << "face offset " << foffset << std::endl ;
-    face_split( mesh, face, radius, 
-                edge_types.data() + foffset, 
-                edge_split_verts.data() + 2*foffset, 
+    face_split( mesh, face, radius,
+                edge_types.data() + foffset,
+                edge_split_verts.data() + 2*foffset,
                 split_verts, split_faces
               ) ;
   }
-  
+
 //  std::cout << "face size " << split_faces.size() << std::endl ;
 //  std::cout << "vert size " << split_verts.size() << std::endl ;
   //swap content

@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -11,7 +11,7 @@
 #ifndef _REVOROPT_TOOLS_NORMALS_DEF_HPP_
 #define _REVOROPT_TOOLS_NORMALS_DEF_HPP_
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 /* Normal of a triangle, with the triangle area as norm */
 template<typename Scalar>

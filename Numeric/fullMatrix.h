@@ -12,6 +12,10 @@
 #include <cstdio>
 #include <complex>
 
+#if defined(HAVE_EIGEN)
+#include <Eigen/Dense>
+#endif
+
 template <class scalar> class fullMatrix;
 
 /**
@@ -139,9 +143,9 @@ public:
   fullVector<scalar> &operator=(const fullVector<scalar> &other)
   {
     if(this != &other) {
-      if((!resize(other.size(), false) && _r > 2 * other.size())) {
+      if((!resize(other._r, false) && _r > 2 * other._r)) {
         if(_data) delete[] _data;
-        _r = other.size();
+        _r = other._r;
         _data = new scalar[_r];
       }
       setAll(other);
@@ -166,7 +170,7 @@ public:
   {
 #ifdef _DEBUG
     if(r >= _r || r < 0) {
-      Msg::Error("Invalid index to access fullVector : %i (size = %i)", r, _r);
+      Msg::Error("Invalid index in vector: %i (size = %i)", r, _r);
       return;
     }
 #endif
@@ -420,6 +424,13 @@ private:
   scalar *_data; // pointer on the first element
   friend class fullVector<scalar>;
 
+#if defined(HAVE_EIGEN)
+  typedef Eigen::Map<
+    Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >
+    EigenMat;
+  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, 1> > EigenVec;
+#endif
+
 public:
   // constructor and destructor
   fullMatrix(scalar *original, int r, int c)
@@ -466,8 +477,8 @@ public:
   {
 #ifdef _DEBUG
     if(r >= _r || r < 0 || c >= _c || c < 0) {
-      Msg::Error("Invalid index to access fullMatrix : %i %i (size = %i %i)", r,
-                 c, _r, _c);
+      Msg::Error("Invalid index in dense matrix: %i %i (size = %i %i)", r, c,
+                 _r, _c);
       return 0;
     }
 #endif
@@ -482,8 +493,8 @@ public:
   {
 #ifdef _DEBUG
     if(r >= _r || r < 0 || c >= _c || c < 0) {
-      Msg::Error("Invalid index to access fullMatrix : %i %i (size = %i %i)", r,
-                 c, _r, _c);
+      Msg::Error("Invalid index in dense matrix: %i %i (size = %i %i)", r, c,
+                 _r, _c);
       return;
     }
 #endif
@@ -518,10 +529,10 @@ public:
   {
     if(nbRows == -1 && nbColumns != -1) nbRows = _r * _c / nbColumns;
     if(nbRows != -1 && nbColumns == -1) nbColumns = _r * _c / nbRows;
-    if(nbRows * nbColumns != size1() * size2())
-      Msg::Error("Invalid reshape, total number of entries must be equal (new "
-                 "%i x %i != old %i x %i)",
-                 nbRows, nbColumns, size1(), size2());
+    if(nbRows * nbColumns != _r * _c)
+      Msg::Error("Invalid dense matrix reshape: total number of entries must "
+                 "be equal (new %i x %i != old %i x %i)",
+                 nbRows, nbColumns, _r, _c);
     _r = nbRows;
     _c = nbColumns;
   }
@@ -557,7 +568,7 @@ public:
   void operator+=(const fullMatrix<scalar> &other)
   {
     if(_r != other._r || _c != other._c) {
-      Msg::Error("Sum matrices of different sizes");
+      Msg::Error("Cannot sum dense matrices of different sizes");
       return;
     }
     for(int i = 0; i < _r * _c; ++i) _data[i] += other._data[i];
@@ -566,8 +577,8 @@ public:
   {
 #ifdef _DEBUG
     if(i >= _r || i < 0 || j >= _c || j < 0) {
-      Msg::Error("Invalid index to access fullMatrix : %i %i (size = %i %i)", i,
-                 j, _r, _c);
+      Msg::Error("Invalid index to access dense matrix: %i %i (size = %i %i)",
+                 i, j, _r, _c);
       return 0;
     }
 #endif
@@ -577,8 +588,8 @@ public:
   {
 #ifdef _DEBUG
     if(i >= _r || i < 0 || j >= _c || j < 0) {
-      Msg::Error("Invalid index to access fullMatrix : %i %i (size = %i %i)", i,
-                 j, _r, _c);
+      Msg::Error("Invalid index to access dense matrix: %i %i (size = %i %i)",
+                 i, j, _r, _c);
       return _data[0];
     }
 #endif
@@ -594,8 +605,8 @@ public:
   void copy(const fullMatrix<scalar> &a)
   {
     if(_data && !_own_data) {
-      Msg::Error("fullMatrix::copy operation is prohibited for proxies, use "
-                 "setAll instead");
+      Msg::Error("Dense matrix copy prohibited for proxies, use setAll "
+                 "instead");
       return;
     }
     if(_r != a._r || _c != a._c) {
@@ -611,7 +622,7 @@ public:
   {
     c.scale(scalar(0.));
     for(int i = 0; i < _r; i++)
-      for(int j = 0; j < b.size2(); j++)
+      for(int j = 0; j < b._c; j++)
         for(int k = 0; k < _c; k++)
           c._data[i + _r * j] += (*this)(i, k) * b(k, j);
   }
@@ -637,7 +648,7 @@ public:
   void gemm_naive(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b,
                   scalar alpha = 1., scalar beta = 1.)
   {
-    fullMatrix<scalar> temp(a.size1(), b.size2());
+    fullMatrix<scalar> temp(a._r, b._c);
     a.mult_naive(b, temp);
     temp.scale(alpha);
     scale(beta);
@@ -661,7 +672,7 @@ public:
 #if !defined(HAVE_BLAS)
   {
     if(_r != m._r || _c != m._c) {
-      Msg::Error("fullMatrix size does not match");
+      Msg::Error("Dense matrix sizes do not match in setAll");
       return;
     }
     for(int i = 0; i < _r * _c; i++) _data[i] = m._data[i];
@@ -685,13 +696,13 @@ public:
   }
   inline void add(const fullMatrix<scalar> &m)
   {
-    for(int i = 0; i < size1(); i++)
-      for(int j = 0; j < size2(); j++) (*this)(i, j) += m(i, j);
+    for(int i = 0; i < _r; i++)
+      for(int j = 0; j < _c; j++) (*this)(i, j) += m(i, j);
   }
   inline void add(const fullMatrix<scalar> &m, const double &a)
   {
-    for(int i = 0; i < size1(); i++)
-      for(int j = 0; j < size2(); j++) (*this)(i, j) += a * m(i, j);
+    for(int i = 0; i < _r; i++)
+      for(int j = 0; j < _c; j++) (*this)(i, j) += a * m(i, j);
   }
   void mult(const fullVector<scalar> &x, fullVector<scalar> &y) const
 #if !defined(HAVE_BLAS)
@@ -712,20 +723,20 @@ public:
   ;
   inline fullMatrix<scalar> transpose() const
   {
-    fullMatrix<scalar> T(size2(), size1());
-    for(int i = 0; i < size1(); i++)
-      for(int j = 0; j < size2(); j++) T(j, i) = (*this)(i, j);
+    fullMatrix<scalar> T(_c, _r);
+    for(int i = 0; i < _r; i++)
+      for(int j = 0; j < _c; j++) T(j, i) = (*this)(i, j);
     return T;
   }
   inline void transposeInPlace()
   {
-    if(size1() != size2()) {
-      Msg::Error("Not a square matrix (size1: %d, size2: %d)", size1(),
-                 size2());
+    if(_r != _c) {
+      Msg::Error("In-place transposition requires a square matrix "
+                 "(size = %d %d)", _r, _c);
       return;
     }
     scalar t;
-    for(int i = 0; i < size1(); i++)
+    for(int i = 0; i < _r; i++)
       for(int j = 0; j < i; j++) {
         t = _data[i + _r * j];
         _data[i + _r * j] = _data[j + _r * i];
@@ -733,9 +744,22 @@ public:
       }
   }
   bool luSolve(const fullVector<scalar> &rhs, fullVector<scalar> &result)
-#if !defined(HAVE_LAPACK)
+#if defined(HAVE_EIGEN)
   {
-    Msg::Error("LU factorization and substitution requires LAPACK");
+    if(_r != _c || _r != rhs._r || _r != result._r) {
+      Msg::Error("Wrong sizes for dense linear system solve (size = %d %d, "
+                 "%d, %d)", _r, _c, result._r, rhs._r);
+      return false;
+    }
+    EigenMat A(_data, _r, _c);
+    EigenVec b(rhs._data, rhs._r);
+    EigenVec x(result._data, result._r);
+    x = A.colPivHouseholderQr().solve(b);
+    return true;
+  }
+#elif !defined(HAVE_LAPACK)
+  {
+    Msg::Error("LU factorization and substitution requires Eigen or LAPACK");
     return false;
   }
 #endif
@@ -757,48 +781,130 @@ public:
   }
 #endif
   ;
-  bool invertInPlace()
-#if !defined(HAVE_LAPACK)
+  bool invert(fullMatrix<scalar> &result) const
+#if defined(HAVE_EIGEN)
   {
-    Msg::Error("Matrix inversion requires LAPACK");
+    if(_r != _c) {
+      Msg::Error("Dense matrix inverse requires square matrix (size = %d %d)",
+                 _r, _c);
+      return false;
+    }
+    result.resize(_r, _c);
+    EigenMat A(_data, _r, _c);
+    EigenMat res(result._data, _r, _c);
+    res = A.inverse();
+    return true;
+  }
+#elif !defined(HAVE_LAPACK)
+  {
+    Msg::Error("Matrix inversion requires Eigen or LAPACK");
     return false;
   }
 #endif
   ;
+  bool invertInPlace()
+#if defined(HAVE_EIGEN)
+  {
+    if(_r != _c) {
+      Msg::Error("Dense matrix inversion requires square matrix (size = %d %d)",
+                 _r, _c);
+      return false;
+    }
+    EigenMat A(_data, _r, _c);
+    A = A.inverse();
+    return true;
+  }
+#elif !defined(HAVE_LAPACK)
+  {
+    Msg::Error("Dense matrix inversion requires LAPACK");
+    return false;
+  }
+#endif
+  ;
+  scalar determinant() const
+#if defined(HAVE_EIGEN)
+  {
+    EigenMat A(_data, _r, _c);
+    return A.determinant();
+  }
+#elif !defined(HAVE_LAPACK)
+  {
+    Msg::Error("Dense matrix inversion requires Eigen or LAPACK");
+    return false;
+  }
+#endif
+  ;
+  void swap(scalar *a, int inca, scalar *b, int incb, int n)
+  {
+    scalar tmp;
+    for(int i = 0; i < n; i++, a += inca, b += incb) {
+      tmp = (*a);
+      (*a) = (*b);
+      (*b) = tmp;
+    }
+  }
+  void eigSort(int n, scalar *wr, scalar *wi, scalar *VL, scalar *VR)
+  {
+    // Sort the eigenvalues/vectors in ascending order according to
+    // their real part. Warning: this will screw up the ordering if we
+    // have complex eigenvalues.
+    for(int i = 0; i < n - 1; i++) {
+      int k = i;
+      scalar ek = wr[i];
+      // search for something to swap
+      for(int j = i + 1; j < n; j++) {
+        const scalar ej = wr[j];
+        if(ej < ek) {
+          k = j;
+          ek = ej;
+        }
+      }
+      if(k != i) {
+        swap(&wr[i], 1, &wr[k], 1, 1);
+        swap(&wi[i], 1, &wi[k], 1, 1);
+        swap(&VL[n * i], 1, &VL[n * k], 1, n);
+        swap(&VR[n * i], 1, &VR[n * k], 1, n);
+      }
+    }
+  }
   bool eig(fullVector<double> &eigenValReal, fullVector<double> &eigenValImag,
            fullMatrix<scalar> &leftEigenVect,
            fullMatrix<scalar> &rightEigenVect, bool sortRealPart = false)
-#if !defined(HAVE_LAPACK)
+#if defined(HAVE_EIGEN)
   {
-    Msg::Error("Eigenvalue computations requires LAPACK");
+    EigenMat A(_data, _r, _c);
+    Eigen::EigenSolver<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic,
+                                     Eigen::RowMajor> > es(A);
+    if(es.info() != Eigen::Success) return false;
+    EigenVec evr(eigenValReal._data, eigenValReal._r);
+    evr = es.eigenvalues().real();
+    EigenVec evi(eigenValImag._data, eigenValImag._r);
+    evi = es.eigenvalues().imag();
+    Msg::Warning("Eigenvectors not filled yet!");
+    return 0.;
+  }
+#elif !defined(HAVE_LAPACK)
+  {
+    Msg::Error("Eigenvalue computation of dense matrices requires Eigen or "
+               "LAPACK");
     return false;
   }
 #endif
   ;
-  bool invert(fullMatrix<scalar> &result) const;
-
-  fullMatrix<scalar> cofactor(int i, int j) const
-  {
-    int ni = size1();
-    int nj = size2();
-    fullMatrix<scalar> cof(ni - 1, nj - 1);
-    for(int I = 0; I < ni; I++)
-      for(int J = 0; J < nj; J++)
-        if(J != j && I != i)
-          cof(I < i ? I : I - 1, J < j ? J : J - 1) = (*this)(I, J);
-    return cof;
-  }
-  scalar determinant() const;
-
   bool svd(fullMatrix<scalar> &V, fullVector<scalar> &S)
-#if !defined(HAVE_LAPACK)
+#if defined(HAVE_EIGEN)
   {
-    Msg::Error("Singular value decomposition requires LAPACK");
+    // TODO
+    return false;
+  }
+#elif !defined(HAVE_LAPACK)
+  {
+    Msg::Error("Singular value decomposition of dense matrices requires "
+               "Eigen or LAPACK");
     return false;
   }
 #endif
   ;
-
   void print(const std::string &name = "",
              const std::string &format = "") const;
 
@@ -807,7 +913,6 @@ public:
   {
     if(fread(_data, sizeof(scalar), _r * _c, f) != (size_t)_r) return;
   }
-
   // specific functions for dgshell
   void mult_naiveBlock(const fullMatrix<scalar> &b, const int ncol,
                        const int fcol, const int alpha, const int beta,
@@ -826,7 +931,6 @@ public:
   }
 #endif
   ;
-
   void multWithATranspose(const fullVector<scalar> &x, scalar alpha,
                           scalar beta, fullVector<scalar> &y) const
 #if !defined(HAVE_BLAS)
@@ -837,14 +941,13 @@ public:
   }
 #endif
   ;
-
   void copyOneColumn(const fullVector<scalar> &x, const int ind) const
   {
     int cind = _c * ind;
     for(int i = 0; i < _r; i++) _data[cind + i] = x(i);
   }
-
   bool getOwnData() const { return _own_data; };
   void setOwnData(bool ownData) { _own_data = ownData; };
 };
+
 #endif
