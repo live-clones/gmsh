@@ -283,7 +283,7 @@ GEntity::GeomType OCCEdge::geomType() const
       return BSpline;
     else if(_curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
       return Bezier;
-    else if(_curve2d->DynamicType() == STANDARD_TYPE(Geom_Conic))
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_Conic))
       return Conic;
     return Unknown;
   }
