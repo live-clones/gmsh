@@ -11,7 +11,6 @@
 #include <map>
 #include <set>
 #include "SBoundingBox3d.h"
-#include "fullMatrix.h"
 
 #define VAL_INF 1.e200
 
@@ -21,6 +20,7 @@ class GEntity;
 class MElement;
 class nameData;
 class OctreePost;
+template <class scalar> class fullMatrix;
 
 typedef std::map<int, std::vector<fullMatrix<double> *> > interpolationMatrices;
 

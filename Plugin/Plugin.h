@@ -18,10 +18,10 @@
 #include "GmshMessage.h"
 #include "PView.h"
 #include "PViewDataList.h"
-#include "fullMatrix.h"
 
 class PluginDialogBox;
 class Vertex;
+template <class scalar> class fullMatrix;
 
 class GMSH_Plugin {
 public:

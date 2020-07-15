@@ -8,6 +8,7 @@
 #include "Numeric.h"
 #include "GmshMessage.h"
 #include "OctreePost.h"
+#include "fullMatrix.h"
 
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 

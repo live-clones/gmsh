@@ -3,12 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <vector>
 #include "CondNumBasis.h"
-
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-
-#include <vector>
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
 #include "pointsGenerators.h"

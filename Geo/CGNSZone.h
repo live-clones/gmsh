@@ -9,12 +9,12 @@
 #ifndef CGNS_ZONE_H
 #define CGNS_ZONE_H
 
-#include "fullMatrix.h"
-#include "CGNSCommon.h"
-#include "CGNSRead.h"
 #include <string>
 #include <vector>
 #include <map>
+#include "GmshConfig.h"
+#include "CGNSCommon.h"
+#include "CGNSRead.h"
 
 #if defined(HAVE_LIBCGNS)
 

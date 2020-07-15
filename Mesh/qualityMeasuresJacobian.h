@@ -7,10 +7,11 @@
 #define QUALITY_MEASURES_JACOBIAN_H
 
 #include <vector>
-#include "fullMatrix.h"
 
 class bezierCoeff;
 class MElement;
+template <class scalar> class fullVector;
+template <class scalar> class fullMatrix;
 
 namespace jacobianBasedQuality {
 

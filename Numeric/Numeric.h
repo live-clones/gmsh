@@ -9,10 +9,11 @@
 #include <cmath>
 #include <vector>
 
-#include "fullMatrix.h"
 #include "SPoint2.h"
 #include "SPoint3.h"
 #include "SVector3.h"
+
+template <class scalar> class fullVector;
 
 template <class T> inline double myhypot(const T &a, const T &b)
 {

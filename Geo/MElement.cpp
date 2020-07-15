@@ -766,14 +766,11 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
 {
   double dJ = 0;
 
-  /**
-   * 'jac' is a row-major order array :
-   *
-   *  |0 1 2|
-   *  |3 4 5|
-   *  |6 7 8|
-   *
-   */
+  // 'jac' is a row-major order array :
+  //
+  //  |0 1 2|
+  //  |3 4 5|
+  //  |6 7 8|
 
   switch(ele->getDim()) {
   case 0: {

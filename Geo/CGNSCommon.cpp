@@ -6,9 +6,11 @@
 // Contributor(s):
 //   Thomas Toulorge
 
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "ElementType.h"
 #include "BergotBasis.h"
+#include "fullMatrix.h"
 #include "CGNSCommon.h"
 
 #if defined(HAVE_LIBCGNS)
