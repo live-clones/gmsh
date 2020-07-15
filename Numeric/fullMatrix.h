@@ -18,31 +18,11 @@
 
 template <class scalar> class fullMatrix;
 
-/**
-   @class fullVector
-   @brief Vector of scalar
+// An interface for vectors of scalars (real or complex, with simple or double
+// precision). The first index of a fullVector is 0. fullVectors can own their
+// scalars, or just be an access point to an other fullVector; such a fullVector
+// is called a proxy.
 
-   This class represents a vector of scalar.@n
-   Scalars can be real or complex, with simple or double precision.
-
-   The first index of a fullVector is @c 0.
-
-   fullVector%s can own their scalars,
-   or just be an access point to an other fullVector.@n
-   Such a fullVector is called a proxy.
-
-   @see fullVector::setAsProxy(const fullVector&, int, int)
-*/
-
-/**
-   @class fullMatrix
-   @brief Matrix of scalar
-
-   This class represents a matrix of scalar.@n
-   Scalars can be real or complex, with simple or double precision.
-*/
-
-// An abstract interface for vectors of scalar
 template <class scalar> class fullVector {
 private:
   int _r; // size of the vector
@@ -51,95 +31,37 @@ private:
   friend class fullMatrix<scalar>;
 
 public:
-  // constructor and destructor
-  /**
-     Instantiates a zero size fullVector.
-  */
+  // Instantiate a zero size fullVector
   fullVector(void) : _r(0), _data(0), _own_data(1) {}
-
-  /**
-     @param r A positive integer.
-
-     Instantiates a fullVector of size r filled with zeros.
-  */
+  // Instantiate a fullVector of size r filled with zeros
   fullVector(int r) : _r(r), _own_data(1)
   {
     _data = new scalar[_r];
     setAll(scalar(0.));
   }
-
-  /**
-     @param original A scalar pointer;
-     @param r A positive integer.
-
-     Instantiates a proxy fullVector given by:
-     [original[0], original[1], ..., original[r - 1]].
-  */
+  // Instantiate a proxy fullVector given by [original[0], original[1], ...,
+  // original[r - 1]]
   fullVector(scalar *original, int r)
   {
     _r = r;
     _own_data = false;
     _data = original;
   }
-
-  /**
-     @param other A fullVector.
-
-     Instantiates a fullVector, which is a copy (and not a proxy) of other.
-  */
+  // Instantiate a fullVector, which is a copy (and not a proxy) of other
   fullVector(const fullVector<scalar> &other) : _r(other._r), _own_data(1)
   {
     _data = new scalar[_r];
     for(int i = 0; i < _r; ++i) _data[i] = other._data[i];
   }
-
-  /**
-     Deletes this fullVector.
-  */
   ~fullVector()
   {
     if(_own_data && _data) delete[] _data;
   }
-
-  // get information (size, value)
-  /**
-     @return Returns the size of this fullVector
-  */
   inline int size() const { return _r; }
-
-  /**
-     @return Returns a const pointer to this fullVector data.@n
-     This pointer will point to the following memory segment:
-     [(*this)(0), (*this)(1), ..., (*this)(this->size() - 1)].
-  */
   inline const scalar *getDataPtr() const { return _data; }
-
-  /**
-     @return Returns a  pointer to this fullVector data.@n
-     This pointer will point to the following memory segment:
-     [(*this)(0), (*this)(1), ..., (*this)(this->size() - 1)].
-  */
   inline scalar *getDataPtr() { return _data; }
-
-  /**
-     @param i A vector index between 0 and size() - 1.
-     @returns Returns the ith scalar of this fullVector.
-  */
   inline scalar operator()(int i) const { return _data[i]; }
-
-  /**
-     @param i A vector index between 0 and size() - 1.
-     @returns Returns a reference to the ith scalar of this fullVector.
-  */
   inline scalar &operator()(int i) { return _data[i]; }
-
-  // copy
-  /**
-     @param other A fullVector.
-
-     The right hand side fullVector will become a copy of other,
-     and will loose its previous data.
-  */
   fullVector<scalar> &operator=(const fullVector<scalar> &other)
   {
     if(this != &other) {
@@ -152,20 +74,11 @@ public:
     }
     return *this;
   }
-
   void copy(const fullVector<scalar> &v, int i0, int ni, int desti0)
   {
     for(int i = i0, desti = desti0; i < i0 + ni; i++, desti++)
       (*this)(desti) = v(i);
   }
-
-  // set
-  /**
-     @param r A vector index between 0 and size() - 1;
-     @param v A scalar.
-
-     The rth value of this fullVector is set to v.
-  */
   inline void set(int r, scalar v)
   {
 #ifdef _DEBUG
@@ -176,31 +89,8 @@ public:
 #endif
     (*this)(r) = v;
   }
-
-  // operations
-  /**
-     @return Returns the @f$ L^2 @f$ norm of this fullVector.
-  */
-  inline scalar norm() const; // Specialised in this file
-
-  /**
-     @param r A positive integer;
-     @param resetValue A boolean (with default value equals to true).
-
-     Resizes this fullVector to r. Previous data may be damaged.@n
-     If resetValue is true, the fullVector data are set to zero.@n
-     If this fullVector was a proxy, it now owns its data.
-
-     @return Returns:
-     @li true if the previous data are damaged;
-     @li false if not (except if resetValue is true).
-
-     @warning
-     Nicolas: I'm not sure if this is exactly what resize does !
-
-     @todo
-     Check doc of fullVector::resize()
-  */
+  // Return the L^2 norm
+  inline scalar norm() const;
   bool resize(int r, bool resetValue = true)
   {
     if(_r < r || !_own_data) {
@@ -215,17 +105,8 @@ public:
     if(resetValue) setAll(scalar(0.));
     return false;
   }
-
-  /**
-     @param original A fullVector;
-     @param r_start A valid index of original;
-     @param r A number between 0 and original.size() - r_start.
-
-     This fullVector becomes a proxy of original, that is:
-     [original(r_start), ..., original(r_start + r - 1)].
-
-     Previous data are lost.
-  */
+  // this fullVector becomes a proxy of original, that is: [original(r_start),
+  // ..., original(r_start + r - 1)]. Previous data are lost
   void setAsProxy(const fullVector<scalar> &original, int r_start, int r)
   {
     if(_own_data && _data) delete[] _data;
@@ -233,16 +114,9 @@ public:
     _r = r;
     _data = original._data + r_start;
   }
-
-  /**
-     @param original A fullMatrix;
-     @param c A valid column index of original.
-
-     This fullVector becomes a proxy of original cth row, that is:
-     [original(0, c), ..., original(original.size1() - 1, c)].
-
-     Previous data are lost.
-  */
+  // This fullVector becomes a proxy of original matrix cth row, that is:
+  // [original(0, c), ..., original(original.size1() - 1, c)]. Previous data are
+  // lost
   void setAsProxy(const fullMatrix<scalar> &original, int c)
   {
     if(_own_data && _data) delete[] _data;
@@ -250,15 +124,7 @@ public:
     _r = original._r;
     _data = original._data + c * _r;
   }
-
-  /**
-     @param scalar A pointer to an array of scalar;
-     @param r The number of rows.
-
-     This fullVector becomes a proxy of the array.
-
-     Previous data are lost.
-  */
+  // This fullVector becomes a proxy of the array. Previous data are lost
   void setAsProxy(scalar *data, int r)
   {
     if(_own_data && _data) delete[] _data;
@@ -266,12 +132,6 @@ public:
     _r = r;
     _data = data;
   }
-
-  /**
-     @param s A scalar.
-
-     Multiplies all the data of this fullVector by s.
-  */
   inline void scale(const scalar s)
   {
     if(s == scalar(0.))
@@ -281,29 +141,10 @@ public:
     else
       for(int i = 0; i < _r; ++i) _data[i] *= s;
   }
-
-  /**
-     @param m A scalar.
-
-     Sets all the data of this fullVector to m.
-  */
   inline void setAll(const scalar &m)
   {
     for(int i = 0; i < _r; i++) set(i, m);
   }
-
-  /**
-     @param m A fullVector.
-
-     If:
-     @li @f$ v @f$ is this fullVector;
-     @li @f$ N @f$ is equal to this fullVector size,
-
-     then:
-     @f$ v(i) = m(i) \qquad \forall{} i \in \{0, \dots, N - 1\} @f$.
-
-     m.size() must be greater or equal to @f$ N @f$.
-  */
   void setAll(const fullVector<scalar> &m)
 #if !defined(HAVE_BLAS)
   {
@@ -311,33 +152,14 @@ public:
   }
 #endif
   ;
-
-  /**
-     @param other A fullVector.
-
-     @return Returns the scalar product of this fullVector with the other.
-  */
+  // Scalar product
   inline scalar operator*(const fullVector<scalar> &other)
   {
     scalar s = 0.;
     for(int i = 0; i < _r; ++i) s += _data[i] * other._data[i];
     return s;
   }
-
-  /**
-     @param x A fullVector;
-     @param alpha A scalar (by default set to one).
-
-     If:
-     @li @f$ v @f$ is this fullVector;
-     @li @f$ N @f$ is equal to this fullVector size,
-
-     then:
-     @f$ v(i) = v(i) + alpha \times{} x(i) \qquad
-     \forall{} i \in \{0, \dots, N - 1\} @f$.
-
-     x.size() must be greater or equal to @f$ N @f$.
-  */
+  // v(i) = v(i) + alpha * x(i)
   void axpy(const fullVector<scalar> &x, scalar alpha = 1.)
 #if !defined(HAVE_BLAS)
   {
@@ -345,52 +167,13 @@ public:
   }
 #endif
   ;
-
-  /**
-     @param x A fullVector.
-
-     If:
-     @li @f$ v @f$ is this fullVector;
-     @li @f$ N @f$ is equal to this fullVector size,
-
-     then:
-     @f$ v(i) = v(i) \times{} x(i) \qquad
-     \forall{} i \in \{0, \dots, N - 1\} @f$.
-
-     x.size() must be greater or equal to @f$ N @f$.
-  */
+  // v(i) = v(i) * x(i)
   void multTByT(const fullVector<scalar> &x)
   {
     for(int i = 0; i < _r; i++) _data[i] *= x._data[i];
   }
-
-  // printing and file treatment
-  /**
-     @param name A string in @c C style (set by default to "").
-
-     Prints on the standard output a string describing
-     this fullVector.
-
-     This string starts by name.
-  */
   void print(const std::string name = "", const std::string format = "") const;
-
-  /**
-     @param f A pointer to a FILE stream.
-
-     Writes a binary representation of this fullVector
-     into f.
-  */
   void binarySave(FILE *f) const { fwrite(_data, sizeof(scalar), _r, f); }
-
-  /**
-     @param f A pointer to a FILE stream containing a fullVector.
-
-     Loads a binary representation, of the fullVector in f,
-     into this fullVector.
-
-     @see fullVector::binarySave
-  */
   void binaryLoad(FILE *f)
   {
     if(fread(_data, sizeof(scalar), _r, f) != (size_t)_r) return;
@@ -416,23 +199,23 @@ inline std::complex<double> fullVector<std::complex<double> >::norm() const
   return std::complex<double>(sqrt(n), 0.);
 }
 
-// An abstract interface for dense matrix of scalar
+// An interface for dense matrix of scalars (real or complex, with simple or
+// double precision)
+
 template <class scalar> class fullMatrix {
 private:
-  bool _own_data; // should data be freed on delete ?
+  bool _own_data; // should data be freed on delete?
   int _r, _c; // size of the matrix
   scalar *_data; // pointer on the first element
   friend class fullVector<scalar>;
 
 #if defined(HAVE_EIGEN)
-  typedef Eigen::Map<
-    Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >
-    EigenMat;
+  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor> > EigenMat;
   typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, 1> > EigenVec;
 #endif
 
 public:
-  // constructor and destructor
   fullMatrix(scalar *original, int r, int c)
   {
     _r = r;
@@ -469,7 +252,6 @@ public:
   {
     if(_data && _own_data) delete[] _data;
   }
-
   // get information (size, value)
   inline int size1() const { return _r; }
   inline int size2() const { return _c; }
@@ -484,11 +266,8 @@ public:
 #endif
     return (*this)(r, c);
   }
-
   inline const scalar *getDataPtr() const { return _data; }
   inline scalar *getDataPtr() { return _data; }
-
-  // operations
   inline void set(int r, int c, scalar v)
   {
 #ifdef _DEBUG
@@ -507,10 +286,9 @@ public:
       for(int j = 0; j < _c; ++j) n += (*this)(i, j) * (*this)(i, j);
     return sqrt(n);
   }
-  bool
-  resize(int r, int c,
-         bool resetValue = true) // data will be owned (same as constructor)
+  bool resize(int r, int c, bool resetValue = true)
   {
+    // data will be owned (same as constructor)
     if((r * c > _r * _c) || !_own_data) {
       if(_own_data && _data) delete[] _data;
       _r = r;
@@ -618,18 +396,14 @@ public:
     }
     setAll(a);
   }
-  void mult_naive(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
+  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
+#if !defined(HAVE_BLAS)
   {
     c.scale(scalar(0.));
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < b._c; j++)
         for(int k = 0; k < _c; k++)
           c._data[i + _r * j] += (*this)(i, k) * b(k, j);
-  }
-  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
-#if !defined(HAVE_BLAS)
-  {
-    mult_naive(b, c);
   }
 #endif
   ;
@@ -645,22 +419,18 @@ public:
   }
 #endif
   ;
-  void gemm_naive(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b,
-                  scalar alpha = 1., scalar beta = 1.)
-  {
-    fullMatrix<scalar> temp(a._r, b._c);
-    a.mult_naive(b, temp);
-    temp.scale(alpha);
-    scale(beta);
-    add(temp);
-  }
   void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b,
             scalar alpha = 1., scalar beta = 1., bool transposeA = false,
             bool transposeB = false)
 #if !defined(HAVE_BLAS)
   {
-    gemm_naive(transposeA ? a.transpose() : a, transposeB ? b.transpose() : b,
-               alpha, beta);
+    const fullMatrix<scalar> &A = transposeA ? a.transpose() : a;
+    const fullMatrix<scalar> &B = transposeA ? b.transpose() : b;
+    fullMatrix<scalar> temp(A._r, B._c);
+    A.mult(B, temp);
+    temp.scale(alpha);
+    scale(beta);
+    add(temp);
   }
 #endif
   ;
@@ -868,8 +638,8 @@ public:
     }
   }
   bool eig(fullVector<double> &eigenValReal, fullVector<double> &eigenValImag,
-           fullMatrix<scalar> &leftEigenVect,
-           fullMatrix<scalar> &rightEigenVect, bool sortRealPart = false)
+           fullMatrix<scalar> &leftEigenVect, fullMatrix<scalar> &rightEigenVect,
+           bool sortRealPart = false)
 #if defined(HAVE_EIGEN)
   {
     EigenMat A(_data, _r, _c);
@@ -913,21 +683,15 @@ public:
   {
     if(fread(_data, sizeof(scalar), _r * _c, f) != (size_t)_r) return;
   }
-  // specific functions for dgshell
-  void mult_naiveBlock(const fullMatrix<scalar> &b, const int ncol,
-                       const int fcol, const int alpha, const int beta,
-                       fullVector<scalar> &c, const int row = 0) const
-  {
-    if(beta != 1) c.scale(beta);
-    for(int j = fcol; j < fcol + ncol; j++)
-      for(int k = 0; k < _c; k++)
-        c._data[j] += alpha * (*this)(row, k) * b(k, j);
-  }
   void multOnBlock(const fullMatrix<scalar> &b, const int ncol, const int fcol,
                    const int alpha, const int beta, fullVector<scalar> &c) const
 #if !defined(HAVE_BLAS)
   {
-    mult_naiveBlock(b, ncol, fcol, alpha, beta, c);
+    int row = 0;
+    if(beta != 1) c.scale(beta);
+    for(int j = fcol; j < fcol + ncol; j++)
+      for(int k = 0; k < _c; k++)
+        c._data[j] += alpha * (*this)(row, k) * b(k, j);
   }
 #endif
   ;
