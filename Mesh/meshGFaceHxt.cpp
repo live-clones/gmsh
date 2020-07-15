@@ -123,8 +123,10 @@ int meshGFaceHxt(GModel *gm)
 
   
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data,fmesh));
+  v2c.clear();
+  c2v.clear();
   HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
-  
+  gm->pruneMeshVertexAssociations();
   HXT_CHECK(hxtMeshDelete(&fmesh));
  
  
