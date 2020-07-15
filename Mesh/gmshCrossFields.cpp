@@ -2744,8 +2744,8 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
       SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
                    t->getVertex(2)->y() - t->getVertex(0)->y(),
                    t->getVertex(2)->z() - t->getVertex(0)->z());
-      SVector3 xx = crossprod(v20, v10);
-      xx.normalize();
+      SVector3 normal_to_triangle = crossprod(v20, v10);
+      normal_to_triangle.normalize();
 
       SElement se(t);
       l.addToMatrix(*myAssembler, &se);
@@ -2756,53 +2756,43 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
       std::map<MEdge, cross2d, MEdgeLessThan>::iterator it1 = C.find(e1);
       std::map<MEdge, cross2d, MEdgeLessThan>::iterator it2 = C.find(e2);
 
-      double a0 = it0->second._a;
-      double A1 =
-        it1->second._a + atan2(dot(it0->second._tgt2, it1->second._tgt),
-                               dot(it0->second._tgt, it1->second._tgt));
-      it0->second.normalize(A1);
-      double a1 = it0->second.lifting(A1);
-      double A2 =
-        it2->second._a + atan2(dot(it0->second._tgt2, it2->second._tgt),
-                               dot(it0->second._tgt, it2->second._tgt));
-      it0->second.normalize(A2);
-      double a2 = it0->second.lifting(A2);
-
       SVector3 x0, x1, x2, x3;
-      SVector3 t_i = crossprod(xx, it0->second._tgt);
-      t_i -= xx * dot(xx, t_i);
+      SVector3 t_i = crossprod(normal_to_triangle, it0->second._tgt);
+      t_i -= normal_to_triangle * dot(normal_to_triangle, t_i);
       t_i.normalize();
+
       SVector3 o_i = it0->second.o_i;
-      o_i -= xx * dot(xx, o_i);
+      o_i -= normal_to_triangle * dot(normal_to_triangle, o_i);
       o_i.normalize();
       SVector3 o_1 = it1->second.o_i;
-      o_1 -= xx * dot(xx, o_1);
+      o_1 -= normal_to_triangle * dot(normal_to_triangle, o_1);
       o_1.normalize();
       SVector3 o_2 = it2->second.o_i;
-      o_2 -= xx * dot(xx, o_2);
+      o_2 -= normal_to_triangle * dot(normal_to_triangle, o_2);
       o_2.normalize();
-      compat_orientation_extrinsic(o_i, xx, o_1, xx, x0, x1);
-      compat_orientation_extrinsic(o_i, xx, o_2, xx, x2, x3);
 
-      a0 = atan2(dot(t_i, o_i), dot(it0->second._tgt, o_i));
+      compat_orientation_extrinsic(o_i, normal_to_triangle, o_1, normal_to_triangle, x0, x1);
+      compat_orientation_extrinsic(o_i, normal_to_triangle, o_2, normal_to_triangle, x2, x3);
+      
+      double a0 = atan2(dot(t_i, o_i), dot(it0->second._tgt, o_i));
 
-      x0 -= xx * dot(xx, x0);
+      x0 -= normal_to_triangle * dot(normal_to_triangle, x0);
       x0.normalize();
-      x1 -= xx * dot(xx, x1);
+      x1 -= normal_to_triangle * dot(normal_to_triangle, x1);
       x1.normalize();
-      x2 -= xx * dot(xx, x2);
+      x2 -= normal_to_triangle * dot(normal_to_triangle, x2);
       x2.normalize();
-      x3 -= xx * dot(xx, x3);
+      x3 -= normal_to_triangle * dot(normal_to_triangle, x3);
       x3.normalize();
 
       it0->second.normalize(a0);
       it0->second._a = a0;
-      A1 = atan2(dot(t_i, x1), dot(it0->second._tgt, x1));
-      A2 = atan2(dot(t_i, x3), dot(it0->second._tgt, x3));
+      double A1 = atan2(dot(t_i, x1), dot(it0->second._tgt, x1));
+      double A2 = atan2(dot(t_i, x3), dot(it0->second._tgt, x3));
       it0->second.normalize(A1);
-      a1 = it0->second.lifting(A1);
+      double a1 = it0->second.lifting(A1);
       it0->second.normalize(A2);
-      a2 = it0->second.lifting(A2);
+      double a2 = it0->second.lifting(A2);
 
       double a[3] = {a0 + a2 - a1, a0 + a1 - a2, a1 + a2 - a0};
       double g[3] = {0, 0, 0};
@@ -2811,7 +2801,7 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
       SPoint3 pp = t->barycenter();
 
       SVector3 G(g[0], g[1], g[2]);
-      SVector3 GT = crossprod(G, xx);
+      SVector3 GT = crossprod(G, normal_to_triangle);
 
       double g1[3];
       a[0] = 1;

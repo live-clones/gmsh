@@ -405,7 +405,7 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
 
   if (gf->triangles.size())return;
   Msg::Info ("Winslow Smoothing face %lu",gf->tag());
-  //  nIter = 200;
+    nIter = 200;
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
@@ -547,7 +547,7 @@ static bool cavityMeshable (GFace *gf,
   }
 
   std::vector<int> corners;
-  bnd.resize(bnd.size() - 1);
+  if (bnd.size() > 0) bnd.resize(bnd.size() - 1);
   for (size_t i=0;i<bnd.size();i++){
     v2t_cont::iterator it = adj.find(bnd[i]);
     if (it == adj.end()){
@@ -1716,7 +1716,10 @@ void  getSingularitiesFromFile (const std::string &fn,
   }
   
   FILE *f = fopen(fn.c_str(),"r");
-  if (!f) return;
+  if (!f) {
+    Msg::Error("file not found: %s", fn.c_str());
+    return;
+  }
   std::string fn2 = fn+".pos";
   FILE *ff = fopen (fn2.c_str(),"w");
   fprintf(ff,"View\" sing from file\"{\n");
@@ -1809,12 +1812,13 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
     //    findPhysicalGroupsForSingularities(gm,s);
     for (size_t i=0;i<temp.size();i++){
       bunin (temp[i], s, newSings, cross_field, 5, true) ;
-      //      meshWinslow2d (temp[i],nIter/4, f, true);
+      meshWinslow2d (temp[i],nIter/4, f, true);
     }
     //    s.clear();
     //    getSingularitiesFromFile (gm->getName()+"_singularities.txt", temp, s);
     for (size_t i=0;i<temp.size();i++){
       bunin (temp[i], s, newSings, cross_field, 5, false) ;
+      meshWinslow2d (temp[i],nIter/4, f, true);
     }
     //    for (size_t i=0;i<temp.size();i++){
     //      bunin (temp[i], s, newSings, cross_field, 7, false) ;
@@ -1837,7 +1841,9 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
   }
 
   s.clear();
-  getSingularitiesFromFile (gm->getName()+"_singularities.txt", temp, s);
+  std::string sing_file = gm->getName()+"_singularities.txt";
+  Msg::Info("load singularities from file: %s", sing_file.c_str());
+  getSingularitiesFromFile (sing_file, temp, s);
 
   gm->writeMSH("after_smooth.msh", 4.0, false, true);
 
@@ -1878,7 +1884,6 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
   }
 
   gm->writeMSH("after_merge.msh", 4.0, false, true);
-  
   
   //  return;
   std::string name = gm->getName()+"_layout.pos";

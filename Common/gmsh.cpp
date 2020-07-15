@@ -1025,7 +1025,20 @@ GMSH_API void gmsh::model::mesh::computeCrossField(std::vector<int> &tags)
 {
   if(!_isInitialized()) { throw -1; }
 #if defined(HAVE_MESH)
-  if(computeStructuredQuadMesh(GModel::current(), tags)) throw 1;
+  /* TODO FIXME Maxence: horrible temporary hack to generate a background scaled cross field from the API */
+  if (tags.size() == 67) {
+    int nquads = tags[66];
+    Msg::Warning("Using the horrible code path to call computePerTriangleScaledCrossField, with %i quads", nquads);
+    CTX::instance()->mesh.numQuads = nquads;
+    // compute a scaled cross field "per triangle"
+    int viewTag = -1;
+    computePerTriangleScaledCrossField (GModel::current(), viewTag,
+        6,1,CTX::instance()->mesh.numQuads/4);// we split the whole mesh afterwards
+    tags.clear();
+    tags.push_back(viewTag);
+  } else {
+    if(computeStructuredQuadMesh(GModel::current(), tags)) throw 1;
+  }
 #else
   Msg::Error("computeStructuredQuadMesh requires the mesh module");
   throw - 1;
