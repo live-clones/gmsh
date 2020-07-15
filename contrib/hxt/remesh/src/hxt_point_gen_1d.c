@@ -573,6 +573,7 @@ HXTStatus hxtGetPointsOnLinesFromInputMesh(HXTMesh *mesh,
                                            HXTMesh *fmesh, 
                                            HXTPointGenParent *fparent)
 {
+  HXT_UNUSED(opt);
   HXT_INFO("");
   HXT_INFO("========= Get points on lines from input mesh ==========");
 

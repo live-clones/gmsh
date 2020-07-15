@@ -858,7 +858,8 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
                                      const double *sizemap, 
                                      const double *directions,
                                      HXTPointGenParent *parent,   
-                                     HXTMesh *fmesh) 
+                                     HXTMesh *fmesh,
+                                     uint32_t *bin) 
 {
 
   HXT_INFO("");
@@ -1097,6 +1098,12 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
         parent[numGenPoints].type = 4; 
         parent[numGenPoints].id= ct;
         HXT_CHECK(hxtAddPointInRTree(candidate,tol,numGenPoints,data));
+
+        if (bin[i] == 0) bin[numGenPoints] = 1;
+        if (bin[i] == 1) bin[numGenPoints] = 0;
+        if (bin[i] == UINT32_MAX) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Problem in binary index");
+
+
         fmesh->vertices.num++;
         numGenPoints++;
       }

@@ -27,6 +27,7 @@ double    hxtAngle(double *v0, double *v1);
 double    hxtAngle_0_pi(double *v0, double *v1);
 double    hxtAngleSigned(double *v0, double *v1, double *n);
 double    hxtAngle_0_2pi(double *v0, double *v1, double *n);
+double    hxtAngle3Vertices(double *v0, double *v1, double *v2);
 double    distance2(double *a, double *b);
 double    distance(double *a, double *b);
 

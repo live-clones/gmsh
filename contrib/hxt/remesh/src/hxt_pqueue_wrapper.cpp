@@ -1,10 +1,12 @@
 // Note that by default C++ creates a max-heap 
 // for priority queue 
+#include "hxt_pqueue_wrapper.h"
+
+#include "hxt_tools.h"
+
 #include <iostream> 
 #include <queue> 
 
-#include "hxt_pqueue_wrapper.h"
-#include "hxt_tools.h"
 
 #include "hxt_post_debugging.h"
 

@@ -217,8 +217,26 @@ double hxtAngle_0_2pi(double *v0, double *v1, double *n)
   return angle;
 }
 
+double hxtAngle3Vertices(double *v0, double *v1, double *v2)
+{
+  double a[3];
+  a[0] = v0[0] - v1[0];
+  a[1] = v0[1] - v1[1];
+  a[2] = v0[2] - v1[2];
+  double b[3];
+  b[0] = v2[0] - v1[0];
+  b[1] = v2[1] - v1[1];
+  b[2] = v2[2] - v1[2];
 
+  double c[3];
+  myCrossprod(a,b,c);
+  double sinA = norm(c);
+  double cosA = myDot(a,b);
 
+  double angle = atan2(sinA,cosA);
+
+  return angle;
+}
 
 
 
@@ -270,9 +288,9 @@ HXTStatus hxtSignedDistancePointEdge(double *p1, double *p2, double *p,
 
 // from gmsh Numeric.cpp 
 HXTStatus hxtSignedDistancePointTriangle(double *p1, double *p2, double *p3,
-				                              double *p, 
-				                              double *d, int *inside, double *closePt)
-				                              //double *d, double *closePt, int *inside)
+				                                 double *p, 
+				                                 double *d, int *inside, double *closePt)
+				                                 //double *d, double *closePt, int *inside)
 {
   double t1[3] = {p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2]};
   double t2[3] = {p3[0]-p1[0], p3[1]-p1[1], p3[2]-p1[2]};

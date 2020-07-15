@@ -15,6 +15,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
                                  HXTEdges *tedges,
                                  HXTPointGenParent *parent,
                                  uint64_t *p2t,
+                                 uint32_t *p2p,
                                  uint32_t *flagV,
                                  HXTMesh *nmesh);
 

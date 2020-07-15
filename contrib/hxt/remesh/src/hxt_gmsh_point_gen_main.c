@@ -28,6 +28,7 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
   HXT_INFO("Generate points on surfaces               %d",  opt->generateSurfaces);
   HXT_INFO("Generate points on volumes                %d",  opt->generateVolumes);
   HXT_INFO("Remesh triangulation                      %d",  opt->remeshSurfaces);
+  HXT_INFO("Convert to quad mesh                      %d",  opt->quadSurfaces);
   HXT_INFO("Walk method 2D                            %d",  opt->walkMethod2D);
   HXT_INFO("Walk method 3D                            %d",  opt->walkMethod3D);
   HXT_INFO("Compute directions                        %d",  opt->dirType);

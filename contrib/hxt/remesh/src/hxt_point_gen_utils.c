@@ -13,6 +13,75 @@ static double sign(double a){
   return a>=0 ? 1.:-1;
 }
 
+HXTStatus hxtMeshClear ( HXTMesh** mesh) {
+  // free on NULL pointer is well defined (it does nothing)
+
+  // vertices
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->vertices.coord) );
+
+  // tetrahedra
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.flag) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.neigh) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.neighType) );
+  // HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.subdet) );
+  
+  // hexahedra
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.flag) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.neigh) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.neighType) );
+
+  // prisms
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.flag) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.neigh) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.neighType) );
+
+  // pyramids
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->pyramids.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->pyramids.flag) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->pyramids.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->pyramids.neigh) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->pyramids.neighType) );
+
+  // triangles
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles.colors) );
+
+  // triangles2
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles2.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles2.colors) );
+
+  // quads
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->quads.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->quads.colors) );
+
+  // lines
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->lines.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->lines.colors) );
+
+  // points
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->points.node) );
+
+
+  // boundary representation
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.numSurfacesPerVolume) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.surfacesPerVolume) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.numCurvesPerSurface) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.curvesPerSurface) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.endPointsOfCurves) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.points) );
+
+  // reset every fields to zero
+  **mesh = (HXTMesh) {0};
+
+  //HXT_CHECK( hxtFree(mesh) );
+  return HXT_STATUS_OK;
+}
 
 
 //*****************************************************************************************
@@ -753,14 +822,14 @@ HXTStatus hxtCountMaxNumberOfTrianglesToEdges(HXTEdges *edges, uint64_t *maxNumT
   }
 
 
-    FILE *nm;
-    hxtPosInit("checkNonManifold.pos","lines",&nm);
-    for (uint32_t i=0; i<edges->numEdges; i++){
-      if (counter[i]<=2) continue;
-      uint32_t *v = edges->node + 2*i;
-      hxtPosAddLine(nm,&mesh->vertices.coord[4*v[0]],&mesh->vertices.coord[4*v[1]],0);
-    }
-    hxtPosFinish(nm);
+    /*FILE *nm;*/
+    /*hxtPosInit("checkNonManifold.pos","lines",&nm);*/
+    /*for (uint32_t i=0; i<edges->numEdges; i++){*/
+      /*if (counter[i]<=2) continue;*/
+      /*uint32_t *v = edges->node + 2*i;*/
+      /*hxtPosAddLine(nm,&mesh->vertices.coord[4*v[0]],&mesh->vertices.coord[4*v[1]],0);*/
+    /*}*/
+    /*hxtPosFinish(nm);*/
   
   *maxNumTri = maxCount;
   HXT_CHECK(hxtFree(&counter));

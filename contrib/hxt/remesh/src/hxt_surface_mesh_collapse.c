@@ -122,6 +122,7 @@ HXTStatus hxtCheckOrientation(HXTMesh *mesh,
 //**************************************************************************************************
 HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
                                           uint64_t *p2t,
+                                          uint32_t *p2p,
                                           uint32_t *flagV,
                                           HXTMesh *nmesh)
 {
@@ -171,6 +172,8 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
     cT++;
   }
 
+
+  // Update p2t
   uint64_t *np2t;
   HXT_CHECK(hxtMalloc(&np2t,nmesh->vertices.num*sizeof(uint64_t)));
   for (uint32_t i=0; i<nmesh->vertices.num; i++) np2t[i] = UINT64_MAX;
@@ -181,11 +184,29 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
   }
 
   for (uint32_t i=0; i<nmesh->vertices.num; i++){
-    if (np2t[i] == UINT64_MAX) return HXT_STATUS_ERROR;
+    if (np2t[i] == UINT64_MAX) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Transfer p2t error\n");
     p2t[i] = np2t[i];
   }
 
   HXT_CHECK(hxtFree(&np2t));
+
+
+  // Update p2p
+  uint32_t *np2p;
+  HXT_CHECK(hxtMalloc(&np2p,nmesh->vertices.num*sizeof(uint32_t)));
+  for (uint32_t i=0; i<nmesh->vertices.num; i++) np2p[i] = UINT32_MAX;
+
+  for (uint32_t i=0; i<tmesh->vertices.num; i++){
+    if (flagV[i] == UINT32_MAX) continue;
+    np2p[node2node[i]] = p2p[i];
+  }
+  for (uint32_t i=0; i<nmesh->vertices.num; i++){
+    //if(np2p[i] == UINT32_MAX) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Transfer p2p error\n");
+    p2p[i] = np2p[i];
+  }
+  HXT_CHECK(hxtFree(&np2p));
+
+
 
   HXT_CHECK(hxtFree(&node2node));
 
@@ -248,8 +269,7 @@ HXTStatus hxtSurfaceMeshCollapseSwap(const HXTMesh *mesh,
       //if (swapped) hxtTempPrintSwap(mesh,edges,i,1);
       //printf("Swapped = %d \n", swapped);
       //printf("\n");
-
-
+      
 
       //*************************************************************
       // Updating structures
@@ -338,6 +358,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
                                  HXTEdges *tedges, 
                                  HXTPointGenParent *tparent,
                                  uint64_t *p2t,
+                                 uint32_t *p2p,
                                  uint32_t *flagV,
                                  HXTMesh *nmesh) // to store final mesh 
 {
@@ -657,6 +678,12 @@ for (uint32_t kk=0; kk<10; kk++){
   HXT_INFO("Total Number of collapsed points       %d", countPointsCollapsed);
   HXT_INFO("Total Number of NOT Collapsed Points   %d", countPointsToDelete-countPointsCollapsed);
 
+
+
+  if (countPointsToDelete-countPointsCollapsed != 0 && opt->quadSurfaces == 1){
+    return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Some points were not collapsed - converting to quads cannot work");
+  }
+
   // TODO debug or delete
   uint32_t countNOT =0;
   for (uint32_t i=0; i<tmesh->vertices.num; i++){
@@ -686,7 +713,7 @@ for (uint32_t kk=0; kk<10; kk++){
   HXT_INFO("");
   HXT_INFO("Transfer to new mesh");
 
-  HXT_CHECK(hxtSurfaceMeshTransferToNewMesh(tmesh, p2t, flagV, nmesh));
+  HXT_CHECK(hxtSurfaceMeshTransferToNewMesh(tmesh, p2t, p2p, flagV, nmesh));
 
 
   //*************************************************

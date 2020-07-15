@@ -12,7 +12,8 @@
 
 #include "hxt_post_debugging.h"
 
-//FILE *out;
+//FILE *out; // output pointsClean
+//FILE *fil; // output pointsFiltered
 
 static double sign(double a){
   return a>=0 ? 1.:-1;
@@ -796,17 +797,17 @@ HXTStatus hxtWalkToCandidatePointPlanar(HXTEdges *edges,
       walk=-1;
     }
     else{
-    // If point is not on the triangle
-    // return the side of the triangle to continue search 
-    if(myDot(dD,dir)>0.0){
-      if (uvp[0] < 0 ){
-        walk=2;
-      }else if (uvp[1]<0){
-        walk=0;
-      }else{
-        walk=1;
+      // If point is not on the triangle
+      // return the side of the triangle to continue search 
+      if(myDot(dD,dir)>0.0){
+        if (uvp[0] < 0 ){
+          walk=2;
+        }else if (uvp[1]<0){
+          walk=0;
+        }else{
+          walk=1;
+        }
       }
-    }
     }
     // Intersection point was found 
     if (walk == -1) {
@@ -1305,6 +1306,80 @@ HXTStatus hxtWalkToCandidatePointRK4(HXTEdges *edges,
 
 }
 
+
+//*************************************************************************************************
+//*************************************************************************************************
+//
+// FUNCTION to find a candidate point with a RungeKutta4 scheme
+//
+//*************************************************************************************************
+//*************************************************************************************************
+HXTStatus hxtPointGenCreatePoint(HXTEdges *edges, 
+                                 uint64_t *edges2lines,
+                                 double *originPoint, 
+                                 uint64_t originTri,
+                                 double *normal,
+                                 double *dir,
+                                 double size,
+                                 const double *sizemap,
+                                 const double *directions,
+                                 int walkMethod2D,
+                                 double *candidate, // output point
+                                 uint64_t *parent)
+{
+
+  if (walkMethod2D == 0)
+    HXT_CHECK(hxtWalkToCandidatePoint(edges,
+                                      edges2lines,
+                                      originPoint,
+                                      originTri,
+                                      dir,
+                                      normal,
+                                      size,
+                                      candidate,
+                                      parent)); 
+
+
+  if (walkMethod2D == 1)
+    HXT_CHECK(hxtWalkToCandidatePointRK4(edges, 
+                                         edges2lines,
+                                         originPoint,
+                                         originTri,
+                                         dir,
+                                         size,
+                                         sizemap,
+                                         directions,
+                                         candidate, 
+                                         parent));
+
+
+
+  if (walkMethod2D == 2)
+    HXT_CHECK(hxtWalkToCandidatePointPlanar(edges,
+                                            edges2lines,
+                                            originPoint,
+                                            originTri,
+                                            dir,
+                                            size,
+                                            candidate,
+                                            parent)); 
+
+
+  if (walkMethod2D == 3)
+    HXT_CHECK(hxtWalkToCandidatePointPlanarRK4(edges, 
+                                               edges2lines,
+                                               originPoint,
+                                               originTri,
+                                               dir,
+                                               size,
+                                               sizemap,
+                                               directions,
+                                               candidate, 
+                                               parent));
+
+  return HXT_STATUS_OK;
+}
+
 //*************************************************************************************************
 //*************************************************************************************************
 //
@@ -1449,7 +1524,7 @@ if(0){
 
   hxtPosNewView(oct, "Box Small");
 
-  sizt = sizt*0.75;
+  sizt = sizt*threshold;
 
   dd[0] = (dirs1[0] + dirs2[0] ) /2.;
   dd[1] = (dirs1[1] + dirs2[1] ) /2.;
@@ -1550,6 +1625,9 @@ HXTStatus hxtPointGenCorrection(HXTEdges *edges,
 
   HXTMesh *mesh = edges->edg2mesh;
 
+  //===================================================================
+  // Find points from RTree
+  //===================================================================
   // Find biggest size 
   double size =0;
   for (int i=0; i<3; i++)
@@ -2156,7 +2234,8 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
 
                                           uint32_t  *numGeneratedPoints,
                                           double    *coords,
-                                          uint64_t  *parentTri)
+                                          uint64_t  *parentTri,
+                                          uint32_t  *bin)
 {
 
   HXT_UNUSED(opt);
@@ -2178,7 +2257,9 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
     double *cp = coords + 4*i ; 
     HXT_CHECK(hxtAddPointInRTree(cp,tol,i,data));
 
-    //hxtPosAddPoint(out,cp,mesh->triangles.colors[parentTri[i]]);
+    //hxtPosAddPoint(out,cp,mesh->triangles.colors[parentTri[i]]); // output pointsClean
+    //hxtPosAddText(out,cp,"%d",i); // output pointsClean
+
   }
 
   // A second auxillary rtree for surface triangles
@@ -2196,7 +2277,7 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
   //********************************************************
   // Create node connectivity during point generation 
   //********************************************************
-  // TODO
+  // TODO 
   uint32_t *node2node;
   HXT_CHECK(hxtMalloc(&node2node, numMaxPoints*4*sizeof(uint32_t)));
 
@@ -2216,6 +2297,7 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
   //********************************************************
   // Queue-like loop to generate points
   //********************************************************
+  
   uint32_t numGenPoints = 0;
   numGenPoints += numLinePoints;
 
@@ -2223,38 +2305,9 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
 
     // Take origin point
     double *originPoint = coords + 4*i;
-
     
     // Take parent triangle of origin point
     uint64_t originTri = parentTri[i];
-
-
-
-    // DISREGARD SINGULARITY POINTS
-    // Now taken as points with parent triangle inside the domain
-    // TODO fix this 
-    // Working for 2D case with open boundaries
-    
-    /*int bound = 0;*/
-    /*for (uint32_t j=0; j<3; j++)*/
-      /*if (edges->edg2tri[2*edges->tri2edg[3*originTri+j]+1] == UINT64_MAX) bound = 1;*/
-    /*if(bound != 1 && i<numLinePoints) continue;*/
-
-    //TEST TODO delete
-    // Starting from specific points
-    /*double x = originPoint[0];*/
-    /*double y = originPoint[1];*/
-    /*double dx = 0.05;*/
-    /*double dy = 0.05;*/
-    /*int cont = 1;*/
-    /*if (x > (0.5-dx) && x < (0.5+dx) && y<0) cont = 0; */
-    /*if (x > (0.5-dx) && x < (0.5+dx) && y>0) cont = 0; */
-    /*if (x > (-0.5-dx) && x < (-0.5+dx) ) cont = 0; */
-    /*if (y > (-dy) && y < (+dy) && x>0)  cont = 0; */
-    /*if (y > (-dy) && y < (+dy) && x<0)  cont = 0; */
-    /*if (cont && i < numLinePoints) continue;*/
-
-
 
     // Check if parent triangle has same color
     if (mesh->triangles.colors[originTri] != color){
@@ -2273,76 +2326,43 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
     // Get frame and sizes for candidate point 
     double sizes[6] = {0.};
     double frame[6*3] = {0.};
-    //HXT_CHECK(hxtGetDirectionsScaled(mesh,directions,sizemap,originTri,normal,uv,frame,sizes));
-    //HXT_CHECK(hxtInterpolateFrame(mesh,directions,sizemap,originTri,normal,uv,frame,sizes));
     HXT_CHECK(hxtGetDirections(mesh,directions,sizemap,originTri,normal,uv,frame,sizes));
 
-    int numPointsFromThisPoint = 0;
 
     // Find new points for 4 directions
     for(int nb = 0; nb<4; nb++){
 
       double dir[3] = {frame[3*nb+0],frame[3*nb+1],frame[3*nb+2]};
-      
       double size = sizes[nb];
 
+      //==================================================
       // Find if possible a candidate point
+      //==================================================
       double candidate[3] = {0.,0.,0.};
       uint64_t parent = UINT64_MAX;
 
-      if (opt->walkMethod2D == 0)
-        HXT_CHECK(hxtWalkToCandidatePoint(edges,
-                                          edges2lines,
-                                          originPoint,
-                                          originTri,
-                                          dir,
-                                          normal,
-                                          size,
-                                          candidate,
-                                          &parent)); 
+      HXT_CHECK(hxtPointGenCreatePoint(edges,
+                                       edges2lines,
+                                       originPoint,
+                                       originTri,
+                                       normal,
+                                       dir,
+                                       size,
+                                       sizemap,
+                                       directions,
+                                       opt->walkMethod2D,
+                                       candidate,
+                                       &parent));
 
 
-      if (opt->walkMethod2D == 1)
-        HXT_CHECK(hxtWalkToCandidatePointRK4(edges, 
-                                             edges2lines,
-                                             originPoint,
-                                             originTri,
-                                             dir,
-                                             size,
-                                             sizemap,
-                                             directions,
-                                             candidate, 
-                                             &parent));
+      if (parent == UINT64_MAX){
+        continue; // No point was found 
+      }
 
 
-
-      if (opt->walkMethod2D == 2)
-        HXT_CHECK(hxtWalkToCandidatePointPlanar(edges,
-                                                edges2lines,
-                                                originPoint,
-                                                originTri,
-                                                dir,
-                                                size,
-                                                candidate,
-                                                &parent)); 
-
-
-      if (opt->walkMethod2D == 3)
-        HXT_CHECK(hxtWalkToCandidatePointPlanarRK4(edges, 
-                                                   edges2lines,
-                                                   originPoint,
-                                                   originTri,
-                                                   dir,
-                                                   size,
-                                                   sizemap,
-                                                   directions,
-                                                   candidate, 
-                                                   &parent));
-
-
-      if (parent == UINT64_MAX) continue; // No point was found 
-
-
+      //==================================================
+      //  Filtering of point 
+      //==================================================
       // A candidate point with its parent triangle was found from intersection
       // we check now if we can insert this point
       int insert = 1;
@@ -2354,13 +2374,8 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
       // Get frame and sizes for candidate point 
       double sizesCandidate[6] = {0.};
       double frameCandidate[6*3] = {0.};
-      //HXT_CHECK(hxtGetDirectionsScaled(mesh,directions,sizemap,parent,normal,uv,frameCandidate,sizesCandidate));
-      //HXT_CHECK(hxtInterpolateFrame(mesh,directions,sizemap,parent,normal,uvCandidate,frameCandidate,sizesCandidate));
       HXT_CHECK(hxtGetDirections(mesh,directions,sizemap,parent,normal,uvCandidate,frameCandidate,sizesCandidate));
 
-
-      // FILTERING 
-      //HXT_CHECK(hxtPointGenFilter(coords,candidate,size,threshold,data,&insert));
       HXT_CHECK(hxtPointGenFilterAligned(mesh,
                                          coords,
                                          candidate, 
@@ -2371,14 +2386,22 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
                                          dataLine,
                                          &insert));
 
+      if (insert == 0 ){
+        //hxtPosAddPoint(fil,candidate,0); // output pointsFilter
+        //hxtPosAddText(fil,candidate,"%d_%d",i,nb); // output pointsFilter
+      }
 
 
+
+
+      //==================================================
       // (function of correction)
       // TODO 
+      //==================================================
       int flagCorrection = 0;
       if (insert && flagCorrection ){
 
-        double candidateNew[3] = {0,0,0};
+        double candidateNew[3] = {0};
         uint64_t parentNew = UINT64_MAX;
         HXT_CHECK(hxtPointGenCorrection(edges,
                                         edges2lines,
@@ -2401,8 +2424,7 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
           candidate[0] = candidateNew[0];
           candidate[1] = candidateNew[1];
           candidate[2] = candidateNew[2];
-  
-        }
+         }
  
         // Get barycentric coordinates for candidate point 
         double uvCandidate[2];
@@ -2429,29 +2451,32 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
 
       }
 
+      //==================================================
       // If is not filtered, insert the point
+      //==================================================
       if(insert){
+
         coords[4*numGenPoints+0] = candidate[0];
         coords[4*numGenPoints+1] = candidate[1];
         coords[4*numGenPoints+2] = candidate[2];
         parentTri[numGenPoints] = parent;
         HXT_CHECK(hxtAddPointInRTree(candidate,tol,numGenPoints,data));
+
+        if (bin[i] == 0) bin[numGenPoints] = 1;
+        if (bin[i] == 1) bin[numGenPoints] = 0;
+        if (bin[i] == UINT32_MAX) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Problem in binary index");
+
         numGenPoints++;
 
-        //hxtPosAddPoint(out,candidate,mesh->triangles.colors[parent]);
+        //hxtPosAddPoint(out,candidate,mesh->triangles.colors[parent]); // output pointsClean
+        //hxtPosAddText(out,candidate,"%d",numGenPoints-1); // output pointsClean
         //hxtPosAddLine(out,originPoint,candidate,0);
         //hxtPosAddVector(out, originPoint, dir);
         //hxtPosAddText(out,candidate,"%d\n", numGenPoints);
-        //if (numGenPoints == 203) return HXT_STATUS_ERROR;
         
-        numPointsFromThisPoint++;
       }
     }
 
-    if (numPointsFromThisPoint == 0){
-      //uint32_t *vv = mesh->triangles.node + 3*originTri;
-      //hxtPosAddTriangle(deb,&mesh->vertices.coord[4*vv[0]],&mesh->vertices.coord[4*vv[1]],&mesh->vertices.coord[4*vv[2]],0);
-    }
  
     // Terminating condition 
     if (i > numGenPoints-2) break;
@@ -2480,7 +2505,7 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
                                      const double *sizemap, 
                                      const double *directions,
                                      HXTPointGenParent *pointParent,   
-                                     HXTMesh *fmesh) 
+                                     HXTMesh *fmesh, uint32_t *bin) 
 {
 
   HXT_INFO("");
@@ -2618,12 +2643,20 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
     uint64_t *generatedPoints2tri;
     HXT_CHECK(hxtMalloc(&generatedPoints2tri,estNumVert*sizeof(uint64_t)));
 
+    // To store binary index of generated points
+    uint32_t *generatedPointsBin;
+    HXT_CHECK(hxtMalloc(&generatedPointsBin,estNumVert*sizeof(uint32_t)));
+    for (uint32_t i=0; i<estNumVert; i++) generatedPointsBin[i] = UINT32_MAX;
+
+
+
     // Insert line points to coordinates and points2tri arrays
     for (uint32_t i=0; i<numPointsOnLines; i++){
       generatedPointsCoords[4*i+0] = fmesh->vertices.coord[4*pointsOnLines[i]+0];
       generatedPointsCoords[4*i+1] = fmesh->vertices.coord[4*pointsOnLines[i]+1];
       generatedPointsCoords[4*i+2] = fmesh->vertices.coord[4*pointsOnLines[i]+2];
       generatedPoints2tri[i] = pointsOnLines2tri[i];
+      generatedPointsBin[i] = bin[pointsOnLines[i]];
     }
     HXT_CHECK(hxtFree(&pointsOnLines));
     HXT_CHECK(hxtFree(&pointsOnLines2tri));
@@ -2651,7 +2684,8 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
                                               
                                               &numGeneratedPoints,
                                               generatedPointsCoords,
-                                              generatedPoints2tri));
+                                              generatedPoints2tri,
+                                              generatedPointsBin));
  
     // Returns:
     //  numGeneratedPoints:    number of generated points + number of points on lines
@@ -2679,6 +2713,11 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
       fmesh->vertices.coord[4*fmesh->vertices.num+1] = generatedPointsCoords[4*j+1];
       fmesh->vertices.coord[4*fmesh->vertices.num+2] = generatedPointsCoords[4*j+2];
 
+      /*if (generatedPointsCoords[4*j+3] <0 ) bin[fmesh->vertices.num] = 0;*/
+      /*if (generatedPointsCoords[4*j+3] >0 ) bin[fmesh->vertices.num] = 1;*/
+      bin[fmesh->vertices.num ] = generatedPointsBin[j];
+ 
+
       pointParent[fmesh->vertices.num].type = 2;
       pointParent[fmesh->vertices.num].id = generatedPoints2tri[j];
 
@@ -2687,10 +2726,12 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
 
     HXT_CHECK(hxtFree(&generatedPointsCoords));
     HXT_CHECK(hxtFree(&generatedPoints2tri));
+    HXT_CHECK(hxtFree(&generatedPointsBin));
 
   }
 
-  //hxtPosFinish(out);
+  //hxtPosFinish(out); // output pointsClean
+  //hxtPosFinish(fil); // output pointsClean
 
 
   // TODO delete  

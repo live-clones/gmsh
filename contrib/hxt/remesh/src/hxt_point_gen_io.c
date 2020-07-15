@@ -369,5 +369,42 @@ HXTStatus hxtPointGenReadSingularities(const char *filename,
 }
 
 
+HXTStatus hxtPointGenReadBinIndices(const char *filename, 
+                                    uint32_t sizeVert,
+                                    uint32_t *numVert,
+                                    uint32_t **bin)
+{
+
+  FILE *fp = fopen(filename,"r");
+  if (fp == NULL)
+    return HXT_STATUS_ERROR;
+
+  rewind (fp);
+  size_t n;
+  char buf[BUFSIZ]={""};
+  while( fgets(buf, BUFSIZ, fp )!=NULL){
+
+    uint32_t nums = atoi(buf);
+    *numVert = nums;
+    HXT_CHECK(hxtMalloc(bin, sizeof( int )*sizeVert) );
+    if (bin == NULL)return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+    for(n=0;n<(size_t)nums;++n){
+      if(fgets(buf, BUFSIZ, fp )==NULL)
+        return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Failed to read line");
+      sscanf(buf, "%d", &(*bin)[(size_t) n] );
+    }
+ 
+    break;
+  }  
+
+  fclose(fp);
+ 
+
+
+
+  return HXT_STATUS_OK;
+}
+
+
 
 

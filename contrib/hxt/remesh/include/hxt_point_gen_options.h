@@ -26,6 +26,8 @@ typedef struct {
   int generateVolumes;        /**< Generate points on mesh volumes */
   int remeshSurfaces;         /**< Remesh surface with local mesh modifications */
 
+  int quadSurfaces;           /**< Convert final surface mesh to quad mesh  */
+
   int walkMethod2D;           /**<
                                *  - if 0: simple 
                                *  - if 1: Runge-Kutta 4

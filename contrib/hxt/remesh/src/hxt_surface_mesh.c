@@ -908,6 +908,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                          const double *sizemap,
                          HXTPointGenParent *parent,
                          uint64_t *p2t,
+                         uint32_t *p2p,
                          HXTMesh *fmesh,
                          HXTMesh *nmesh)
 {
@@ -1300,6 +1301,27 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
   for (uint32_t i=0; i<tmesh->vertices.num; i++) tparent[i].id = UINT64_MAX;
   HXT_CHECK(hxtCreateParentStructure(mesh,fmesh,tmesh,parent,tparent));
 
+  // Save p2p 
+  for (uint32_t i=0; i<numTotalVertices; i++){
+    if (flagV[i] != UINT32_MAX){
+      p2p[i] = flagV[i];
+    }
+  }
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    if (flagV[i] != UINT32_MAX){
+      p2p[mesh->vertices.num+flagV[i]] = UINT32_MAX;
+    }
+  }
+  int countGeneratedPointsNotInserted=0;
+  for (uint32_t i=mesh->vertices.num; i<numTotalVertices; i++){
+    if (p2p[i] != UINT32_MAX){
+      p2p[mesh->vertices.num+countGeneratedPointsNotInserted] = p2p[i];
+      countGeneratedPointsNotInserted++;
+    }
+  }
+
+
+
 
 
   uint32_t countVerticesToRemove = 0;
@@ -1328,6 +1350,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
                                    edges,
                                    tparent,
                                    p2t,
+                                   p2p,
                                    flagV,
                                    nmesh));
 

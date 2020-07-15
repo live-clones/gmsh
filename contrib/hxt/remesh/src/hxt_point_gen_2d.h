@@ -22,7 +22,7 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
                                      const double *sizemap, 
                                      const double *directions,
                                      HXTPointGenParent *pointParent,   
-                                     HXTMesh *fmesh); 
+                                     HXTMesh *fmesh, uint32_t *bin); 
 
 HXTStatus hxtGetPointsOnSurfacesFromInputMesh(HXTMesh *mesh, 
                                               HXTPointGenOptions *opt,

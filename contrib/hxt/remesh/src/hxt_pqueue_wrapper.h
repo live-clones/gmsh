@@ -1,8 +1,6 @@
 #ifndef HXT_PQUEUE_WRAPPER_H
 #define HXT_PQUEUE_WRAPPER_H
 
-
-
 #ifdef __cplusplus
 extern "C" {
 #include "hxt_message.h"

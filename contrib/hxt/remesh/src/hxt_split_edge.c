@@ -224,6 +224,54 @@ HXTStatus hxtSplitAllEdges (HXTMesh *mesh,
   return HXT_STATUS_OK;
 }
 
+HXTStatus hxtSplitEdgeIndex (HXTMesh *mesh, 
+                             HXTEdges *edges, 
+                             void (*metric)(double *x, void *data, double *m), 
+                             void *dataForMetric, 
+                             uint32_t index, uint32_t *ne)
+{
+  HXT_UNUSED(metric);
+  HXT_UNUSED(dataForMetric);
+
+  // Before everything, we should reallocate the mesh structure 
+  // given an estimation about the total number of splits 
+  //
+  //   mesh->vertices.coord 
+  //     increment vertices.num
+  //
+  //   mesh->triangles.node
+  //   mesh->triangles.colors
+  //     increment triangles.num
+  //
+  //   edges->tri2edg
+  //   edges->edg2tri
+  //   edges->node
+  //   edges->color
+  //     increment edges->numEdges
+  //
+  // Each edge split will create 
+  //  - one new vertex
+  //  - three new edges (1 new from split, 1 existing from split, one for each triangle of the current edge)
+  //  - two new triangles (4 in total = 2 new + 2 existing)
+  //
+  
+  int maxSplits = edges->numEdges + 1;
+  int maxVert   =   maxSplits;
+  int maxTri    = 2*maxSplits;
+  int maxEdg    = 3*maxSplits;
+  
+  HXT_CHECK(hxtAlignedRealloc(&mesh->vertices.coord,4*maxVert*sizeof(double)));
+  HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.node,3*maxTri*sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.colors,maxTri*sizeof(uint16_t)));
+  HXT_CHECK(hxtRealloc(&edges->tri2edg,3*maxTri*sizeof(uint32_t)));
+  HXT_CHECK(hxtRealloc(&edges->node,2*maxEdg*sizeof(uint32_t))); 
+  //HXT_CHECK(hxtRealloc(&edges->color,maxEdg*sizeof(uint16_t))); 
+  HXT_CHECK(hxtRealloc(&edges->edg2tri,2*maxEdg*sizeof(uint64_t))); 
+  
+  HXT_CHECK(hxtSplitEdge(mesh,edges,index,ne,0.5));
+
+  return HXT_STATUS_OK;
+}
 
 
 HXTStatus hxtSplitEdge  (HXTMesh *mesh, HXTEdges *edges, uint32_t ce, uint32_t *ne, double point )

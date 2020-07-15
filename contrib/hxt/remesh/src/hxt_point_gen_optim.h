@@ -3,6 +3,8 @@
 
 #include "hxt_mesh.h"
 
+#include "hxt_point_gen_options.h"
+
 HXTStatus hxtSurfaceMeshExportTriangleQuality(HXTMesh *nmesh, const double *sizemap);
 HXTStatus hxtSurfaceMeshExportAlignedEdges(HXTMesh *mesh, 
                                            HXTMesh *nmesh, 
@@ -11,5 +13,13 @@ HXTStatus hxtSurfaceMeshExportAlignedEdges(HXTMesh *mesh,
                                            const double *sizemap);
 
 HXTStatus hxtPointGenSmoothing(HXTMesh *mesh);
+
+
+HXTStatus hxtPointGenQuadSmoothing(HXTPointGenOptions *opt,
+                                   HXTMesh *omesh,
+                                   HXTMesh *mesh, 
+                                   uint64_t *p2t,
+                                   uint32_t *bin);
+
 
 #endif

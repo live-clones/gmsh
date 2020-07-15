@@ -60,4 +60,10 @@ HXTStatus hxtPointGenReadSingularities(const char *filename,
 
 
 
+HXTStatus hxtPointGenReadBinIndices(const char *filename, 
+                                    uint32_t sizeVert,
+                                    uint32_t *numVert,
+                                    uint32_t **bin);
+
+
 #endif

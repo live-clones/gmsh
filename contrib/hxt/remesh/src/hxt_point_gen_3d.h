@@ -11,6 +11,7 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
                                      const double *sizemap, 
                                      const double *directions,
                                      HXTPointGenParent *parent,   
-                                     HXTMesh *fmesh); 
+                                     HXTMesh *fmesh,
+                                     uint32_t *bin); 
 
 #endif

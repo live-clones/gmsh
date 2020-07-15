@@ -8,6 +8,14 @@ HXTStatus hxtSplitLongInteriorEdges (HXTMesh *mesh, HXTEdges *edges, void (*metr
 HXTStatus hxtSplitLongBoundaryEdges (HXTMesh *mesh, HXTEdges *edges, void (*metric)(double *x, void *data, double *m), void *dataForMetric, int *numSplits );
 HXTStatus hxtSplitAllEdges (HXTMesh *mesh, HXTEdges *edges, void (*metric)(double *x, void *data, double *m), void *dataForMetric, int *numSplits );
 
+
+HXTStatus hxtSplitEdgeIndex (HXTMesh *mesh, 
+                             HXTEdges *edges, 
+                             void (*metric)(double *x, void *data, double *m), 
+                             void *dataForMetric, 
+                             uint32_t index, uint32_t *ne);
+
+
 HXTStatus hxtSplitEdge  (HXTMesh *mesh, HXTEdges *edges, uint32_t ce, uint32_t *ne, double point );
 
 HXTStatus hxtSplitBoundaryEdge  (HXTMesh *mesh, HXTEdges *edges, uint32_t ce, double point );
