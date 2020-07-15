@@ -865,7 +865,7 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
       int t = tags[i];
       List_Suppress(p->Entities, &t, fcmp_int);
     }
-    if(!List_Nbr(p->Entities)) {
+    if(!List_Nbr(p->Entities) || tags.empty()) {
       switch(dim) {
       case 0: DeletePhysicalPoint(tag); break;
       case 1: DeletePhysicalLine(tag); break;

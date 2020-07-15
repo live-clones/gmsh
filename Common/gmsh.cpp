@@ -604,9 +604,13 @@ GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
     // - move the physical code from GEO factory to GModel:
     //    if a mesh is loaded the GEO sync will re-create the group in GModel...
     // - rewrite the unerlying code: it's slow
-    for(std::size_t i = 0; i < dimTags.size(); i++)
+    for(std::size_t i = 0; i < dimTags.size(); i++) {
+      std::vector<int> tags; // empty to delete the group
+      GModel::current()->getGEOInternals()->modifyPhysicalGroup
+        (dimTags[i].first, dimTags[i].second, 2, tags);
       GModel::current()->removePhysicalGroup(dimTags[i].first,
                                              dimTags[i].second);
+    }
   }
 }
 
