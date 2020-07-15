@@ -23,16 +23,16 @@ public:
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual SVector3 secondDer(double par) const;
-  ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return _c; }
+  virtual ModelType getNativeType() const { return GmshModel; }
+  virtual void *getNativePtr() const { return _c; }
   virtual std::string getAdditionalInfoString(bool multline = false);
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;
   virtual void resetMeshAttributes();
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   virtual void writeGEO(FILE *fp);
-  void discretize(double tol, std::vector<SPoint3> &dpts,
-                  std::vector<double> &ts);
+  virtual void discretize(double tol, std::vector<SPoint3> &dpts,
+                          std::vector<double> &ts);
   virtual bool degenerate(int dim) const;
   void resetNativePtr(Curve *edge, GVertex *v1, GVertex *v2);
 };

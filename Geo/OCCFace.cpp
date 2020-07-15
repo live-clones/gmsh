@@ -45,7 +45,6 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
   : GFace(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
 {
   _setup();
-  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(_s, num);
 
   if(CTX::instance()->debugSurface > 0 &&
      tag() == CTX::instance()->debugSurface)
@@ -54,9 +53,8 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
 
 OCCFace::~OCCFace()
 {
-  if(model()->getOCCInternals() && !model()->isBeingDestroyed()) {
+  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
     model()->getOCCInternals()->unbind(_s, tag()); // potentially slow
-  }
 }
 
 void OCCFace::_setup()

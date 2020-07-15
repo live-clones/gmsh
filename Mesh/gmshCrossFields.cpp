@@ -5811,6 +5811,23 @@ int computeCrossFieldAndH(GModel *gm,
 
   qLayout.getH (dataH);
   qLayout.getDir (dataDir,dataDirOrtho);
+
+  {  
+    std::map<MVertex*, double> source;	     
+    computeSingularities(qLayout.C, qLayout.singularities, qLayout.indices, f,qLayout.gaussianCurvatures, source);
+    computeUniqueVectorPerTriangle(gm, f, qLayout.C, qLayout.d0, qLayout.d1);
+    computeSingularities(f,qLayout.d0,qLayout.d1, qLayout.singularities, qLayout.indices, qLayout.gaussianCurvatures, true);    
+    
+    std::string _ugly  = gm->getName()+"_singularities.txt";
+    FILE *f__ = fopen (_ugly.c_str(), "w");
+    fprintf(f__,"%lu\n",qLayout.singularities.size());
+    for (std::set<MVertex *, MVertexPtrLessThan>::iterator it = qLayout.singularities.begin(); it != qLayout.singularities.end();++it){
+      fprintf(f__,"%d %22.15E %22.15E %22.15E %d %d\n",qLayout.indices[*it],(*it)->x(),(*it)->y(),(*it)->z(),(*it)->onWhat()->dim(),
+	      (*it)->onWhat()->tag());
+    }
+    fclose(f__);
+  }
+  
   return 0;
 #else
   Msg::Error("Cross field computation requires solver and post-pro module");

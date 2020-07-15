@@ -48,7 +48,6 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
   // build the reverse curve
   _c_rev = _c;
   _c_rev.Reverse();
-  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(_c, num);
 }
 
 OCCEdge::~OCCEdge()
@@ -198,7 +197,6 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
   return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, param);
 }
 
-// True if the edge is a seam for the given face
 bool OCCEdge::isSeam(const GFace *face) const
 {
   if(face->getNativeType() != GEntity::OpenCascadeModel) return false;
@@ -331,6 +329,8 @@ int OCCEdge::minimumDrawSegments() const
 double OCCEdge::curvature(double par) const
 {
   const double eps = 1.e-15;
+
+  if(degenerate(0)) return eps;
 
   Standard_Real Crv;
   if(_curve.IsNull()) {

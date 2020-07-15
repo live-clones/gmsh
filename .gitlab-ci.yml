@@ -219,7 +219,7 @@ windows64_official_release:
 
 windows64-sdk_official_snapshot:
   variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    EXTRA_OPTION: "-DENABLE_PACKAGE_STRIP=0 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
   tags:
     - windows64
@@ -418,6 +418,21 @@ doc_official_release:
     - docker
   only:
     - /^gmsh_.*$/
+
+# ----------------------------------------------
+# Cookbook
+# ----------------------------------------------
+
+doc_cookbook:
+  stage: .post
+  image: onelab/ubuntu20.04
+  <<: *ssh_config
+  script:
+    - mdbook build doc/cookbook
+    - scp -r doc/cookbook/book geuzaine@gmsh.info:.wwwgmsh/doc/cookbook
+  tags:
+    - linux64
+    - docker
 
 # ----------------------------------------------
 # PyPi package

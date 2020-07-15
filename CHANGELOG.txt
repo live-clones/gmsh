@@ -1,16 +1,23 @@
-4.6.0 (Work-in-progress): new options to only generate initial 2D or 3D meshes
-(without node insertion), and to only mesh non-meshed entities; added support
-for mesh size fields in HXT; improve reparametrization and partitioning code;
-new OCC API functions to reduce the number of synchronizations for complex
-models; MED output now preserves node and element tags; new functions and
-options to control the first tag of entities, nodes and elements; fixed
-duplicated entities in STEP output; small bug fixes.
+4.7.0 (Work-in-progress): API errors now throw exceptions with the last error
+message (instead of an integer error code); new API to retrieve "homogeneous"
+model-based data, for improved Python performance; improved VTK reader; added
+initial support for MMG 5; small bug fixes.
+
+4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
+(without node insertion), and to only mesh non-meshed entities; added ability to
+only remesh parts of discrete models; added support for mesh size fields and
+embedded entities in HXT; improved reparametrization and partitioning code; new
+OCC API functions to reduce the number of synchronizations for complex models;
+new OCC spline surface interfaces; new functions and options to control the
+first tag of entities, nodes and elements; fixed duplicated entities in STEP
+output; improved mesh subdivision and high-order pipeline; MED output now
+preserves node and element tags; small bug fixes.
 
 * Incompatible API changes: new optional arguments to mesh/clear,
-  mesh/createTopology, occ/addThruSections, mesh/getPeriodicNodes; new arguments
-  to mesh/getBasisFunctions; removed mesh/preallocateBasisFunctions,
-  mesh/precomputeBasisFunctions and mesh/getBasisFunctionsForElements; renamed
-  occ/setMeshSize as occ/mesh/setSize
+  mesh/createTopology, mesh/createGeometry, occ/addThruSections,
+  mesh/getPeriodicNodes; new arguments to mesh/getBasisFunctions; removed
+  mesh/preallocateBasisFunctions, mesh/precomputeBasisFunctions and
+  mesh/getBasisFunctionsForElements; renamed occ/setMeshSize as occ/mesh/setSize
 
 4.5.6 (March 30, 2020): better calculation of OCC bounding boxes using STL; API
 tutorials; small bug fixes.

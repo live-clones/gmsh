@@ -15,8 +15,8 @@ set(SRC
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGFaceHxt.cpp meshGRegionNetgen.cpp
     meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp
-    meshGRegionExtruded.cpp meshGRegionCarveHole.cpp 
-    meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
+    meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
+    meshGRegionLocalMeshMod.cpp meshGRegionMMG.cpp
   meshGRegionBoundaryLayer.cpp
   meshRelocateVertex.cpp
   meshMetric.cpp

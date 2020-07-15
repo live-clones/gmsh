@@ -1775,14 +1775,11 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
     Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
     return;
   }
-
-
   
   std::vector<GFace *> temp;
   temp.insert(temp.begin(), gm->firstFace(), gm->lastFace());
   std::vector<GEdge *> tempe;
   tempe.insert(tempe.begin(), gm->firstEdge(), gm->lastEdge());
-
 
   // reclassify all seams on the face (all the rest is parameter space "free")
   if (0){

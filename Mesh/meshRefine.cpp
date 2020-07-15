@@ -19,6 +19,8 @@
 #include "GmshMessage.h"
 #include "OS.h"
 #include "meshGFaceOptimize.h"
+#include "Generator.h"
+#include "Context.h"
 
 typedef std::map<MFace, std::vector<MVertex *>, MFaceLessThan> faceContainer;
 
@@ -471,6 +473,18 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
   // Create 2nd order mesh (using "2nd order complete" elements) to
   // generate vertex positions
   SetOrderN(m, 2, linear, false);
+
+  // Optimize high order elements
+  if(CTX::instance()->mesh.hoOptimize == 2 ||
+     CTX::instance()->mesh.hoOptimize == 3)
+    OptimizeMesh(m, "HighOrderElastic");
+
+  if(CTX::instance()->mesh.hoOptimize == 1 ||
+     CTX::instance()->mesh.hoOptimize == 2)
+    OptimizeMesh(m, "HighOrder");
+
+  if(CTX::instance()->mesh.hoOptimize == 4)
+    OptimizeMesh(m, "HighOrderFastCurving");
 
   // only used when splitting tets into hexes
   faceContainer faceVertices;

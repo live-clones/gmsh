@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits>
 #include "GmshConfig.h"
 #include "GmshVersion.h"
 #include "GmshDefines.h"
@@ -940,8 +941,7 @@ void PrintOptionsDoc()
     fprintf(file, "%s@ftable @code\n", warn);
     FieldManager &fields = *GModel::current()->getFields();
     for(std::map<std::string, FieldFactory *>::iterator it =
-          fields.map_type_name.begin();
-        it != fields.map_type_name.end(); it++) {
+          fields.mapTypeName.begin(); it != fields.mapTypeName.end(); it++) {
       fprintf(file, "@item %s\n", it->first.c_str());
       Field *f = (*it->second)();
       std::string field_description = f->getDescription();
@@ -2126,6 +2126,12 @@ std::string opt_print_parameter_command(OPT_ARGS_STR)
 }
 
 // Numeric option routines
+
+double opt_general_abort_on_error(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->abortOnError = (int)val;
+  return CTX::instance()->abortOnError;
+}
 
 double opt_general_initial_context(OPT_ARGS_NUM)
 {
@@ -6070,6 +6076,12 @@ double opt_mesh_order(OPT_ARGS_NUM)
       CTX::instance()->mesh.order);
 #endif
   return CTX::instance()->mesh.order;
+}
+
+double opt_mesh_ho_check(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoCheck = (int)val;
+  return CTX::instance()->mesh.hoCheck;
 }
 
 double opt_mesh_ho_optimize(OPT_ARGS_NUM)

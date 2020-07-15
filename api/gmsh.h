@@ -14,10 +14,6 @@
 // types from the C++ standard library. See `tutorial/c++' and `demos/api' for
 // examples.
 
-#if defined(_MSC_VER) && !defined(_USE_MATH_DEFINES)
-#define _USE_MATH_DEFINES
-#endif
-
 #include <cmath>
 #include <vector>
 #include <string>
@@ -35,6 +31,10 @@
 #endif
 #else
 #define GMSH_API
+#endif
+
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
 #endif
 
 namespace gmsh {
@@ -451,6 +451,20 @@ namespace gmsh { // Top-level functions
                           const int tag,
                           const std::vector<double> & parametricCoord);
 
+    // gmsh::model::getClosestPoint
+    //
+    // Get the points `closestCoord' on the entity of dimension `dim' and tag `tag'
+    // to the points `coord', by orthogonal projection. `coord' and `closestCoord'
+    // are given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z,
+    // p2x, ...]. `parametricCoord' returns the parametric coordinates t on the
+    // curve (if `dim' = 1) or pairs of u and v coordinates concatenated on the
+    // surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+    GMSH_API void getClosestPoint(const int dim,
+                                  const int tag,
+                                  const std::vector<double> & coord,
+                                  std::vector<double> & closestCoord,
+                                  std::vector<double> & parametricCoord);
+
     // gmsh::model::reparametrizeOnSurface
     //
     // Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
@@ -637,6 +651,11 @@ namespace gmsh { // Top-level functions
       //
       // Rebuild the node cache.
       GMSH_API void rebuildNodeCache(const bool onlyIfNecessary = true);
+
+      // gmsh::model::mesh::rebuildElementCache
+      //
+      // Rebuild the element cache.
+      GMSH_API void rebuildElementCache(const bool onlyIfNecessary = true);
 
       // gmsh::model::mesh::getNodesForPhysicalGroup
       //
@@ -913,6 +932,25 @@ namespace gmsh { // Top-level functions
                                          std::vector<double> & coord,
                                          const int tag = -1);
 
+      // gmsh::model::mesh::getJacobian
+      //
+      // Get the Jacobian for a single element `elementTag', at the G evaluation
+      // points `localCoord' given as concatenated triplets of coordinates in the
+      // reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians'
+      // contains the 9 entries of the 3x3 Jacobian matrix at each evaluation
+      // point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu,
+      // e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
+      // Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains the determinant of the
+      // Jacobian matrix at each evaluation point. `coord' contains the x, y, z
+      // coordinates of the evaluation points. This function relies on an internal
+      // cache (a vector in case of dense element numbering, a map otherwise); for
+      // large meshes accessing Jacobians in bulk is often preferable.
+      GMSH_API void getJacobian(const std::size_t elementTag,
+                                const std::vector<double> & localCoord,
+                                std::vector<double> & jacobians,
+                                std::vector<double> & determinants,
+                                std::vector<double> & coord);
+
       // gmsh::model::mesh::getBasisFunctions
       //
       // Get the basis functions of the element of type `elementType' at the
@@ -953,6 +991,13 @@ namespace gmsh { // Top-level functions
                                                             const int tag = -1,
                                                             const std::size_t task = 0,
                                                             const std::size_t numTasks = 1);
+
+      // gmsh::model::mesh::getBasisFunctionsOrientationForElement
+      //
+      // Get the orientation of a single element `elementTag'.
+      GMSH_API void getBasisFunctionsOrientationForElement(const std::size_t elementTag,
+                                                           const std::string & functionSpaceType,
+                                                           int & basisFunctionsOrientation);
 
       // gmsh::model::mesh::getNumberOfOrientations
       //
@@ -1000,6 +1045,15 @@ namespace gmsh { // Top-level functions
                                        std::vector<double> & coord,
                                        const int tag = -1,
                                        const bool returnCoord = true);
+
+      // gmsh::model::mesh::getKeysForElement
+      //
+      // Get the keys for a single element `elementTag'.
+      GMSH_API void getKeysForElement(const std::size_t elementTag,
+                                      const std::string & functionSpaceType,
+                                      gmsh::vectorpair & keys,
+                                      std::vector<double> & coord,
+                                      const bool returnCoord = true);
 
       // gmsh::model::mesh::getNumberOfKeysForElements
       //
@@ -1296,10 +1350,12 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::createGeometry
       //
-      // Create a parametrization for discrete curves and surfaces (i.e. curves and
-      // surfaces represented solely by a mesh, without an underlying CAD
-      // description), assuming that each can be parametrized with a single map.
-      GMSH_API void createGeometry();
+      // Create a geometry for the discrete entities `dimTags' (represented solely
+      // by a mesh, without an underlying CAD description), i.e. create a
+      // parametrization for discrete curves and surfaces, assuming that each can
+      // be parametrized with a single map. If `dimTags' is empty, create a
+      // geometry for all the discrete entities.
+      GMSH_API void createGeometry(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // gmsh::model::mesh::createTopology
       //
@@ -1479,6 +1535,15 @@ namespace gmsh { // Top-level functions
       // Return the tag of the Bezier curve.
       GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
+
+      // gmsh::model::geo::addPolyline
+      //
+      // Add a polyline curve going through the points `pointTags'. If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Create a periodic curve if the first and last points are
+      // the same. Return the tag of the polyline curve.
+      GMSH_API int addPolyline(const std::vector<int> & pointTags,
+                               const int tag = -1);
 
       // gmsh::model::geo::addCompoundSpline
       //
@@ -1982,13 +2047,68 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::addSurfaceFilling
       //
-      // Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
-      // set the tag explicitly; otherwise a new tag is selected automatically.
-      // Return the tag of the surface. If `pointTags' are provided, force the
-      // surface to pass through the given points.
+      // Add a surface filling the curve loop `wireTag'. If `tag' is positive, set
+      // the tag explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the surface. If `pointTags' are provided, force the surface to
+      // pass through the given points.
       GMSH_API int addSurfaceFilling(const int wireTag,
                                      const int tag = -1,
                                      const std::vector<int> & pointTags = std::vector<int>());
+
+      // gmsh::model::occ::addBSplineFilling
+      //
+      // Add a BSpline surface filling the curve loop `wireTag'. The curve loop
+      // should be made of 2, 3 or 4 BSpline curves. The optional `type' argument
+      // specifies the type of filling: "Stretch" creates the flattest patch,
+      // "Curved" (the default) creates the most rounded patch, and "Coons" creates
+      // a rounded patch with less depth than "Curved". If `tag' is positive, set
+      // the tag explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the surface.
+      GMSH_API int addBSplineFilling(const int wireTag,
+                                     const int tag = -1,
+                                     const std::string & type = "");
+
+      // gmsh::model::occ::addBezierFilling
+      //
+      // Add a Bezier surface filling the curve loop `wireTag'. The curve loop
+      // should be made of 2, 3 or 4 Bezier curves. The optional `type' argument
+      // specifies the type of filling: "Stretch" creates the flattest patch,
+      // "Curved" (the default) creates the most rounded patch, and "Coons" creates
+      // a rounded patch with less depth than "Curved". If `tag' is positive, set
+      // the tag explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the surface.
+      GMSH_API int addBezierFilling(const int wireTag,
+                                    const int tag = -1,
+                                    const std::string & type = "");
+
+      // gmsh::model::occ::addBSplineSurface
+      //
+      // Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
+      // control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1,
+      // Pu1v2, ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
+      // `multiplicitiesV' are not provided, default parameters are computed
+      // automatically. If `tag' is positive, set the tag explicitly; otherwise a
+      // new tag is selected automatically. Return the tag of the b-spline surface.
+      GMSH_API int addBSplineSurface(const std::vector<int> & pointTags,
+                                     const int numPointsU,
+                                     const int tag = -1,
+                                     const int degreeU = 3,
+                                     const int degreeV = 3,
+                                     const std::vector<double> & weights = std::vector<double>(),
+                                     const std::vector<double> & knotsU = std::vector<double>(),
+                                     const std::vector<double> & knotsV = std::vector<double>(),
+                                     const std::vector<int> & multiplicitiesU = std::vector<int>(),
+                                     const std::vector<int> & multiplicitiesV = std::vector<int>());
+
+      // gmsh::model::occ::addBezierSurface
+      //
+      // Add a Bezier surface with `pointTags' control points given as a single
+      // vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive,
+      // set the tag explicitly; otherwise a new tag is selected automatically.
+      // Return the tag of the b-spline surface.
+      GMSH_API int addBezierSurface(const std::vector<int> & pointTags,
+                                    const int numPointsU,
+                                    const int tag = -1);
 
       // gmsh::model::occ::addSurfaceLoop
       //
@@ -2551,9 +2671,9 @@ namespace gmsh { // Top-level functions
     //
     // Add homogeneous model-based post-processing data to the view with tag `tag'.
     // The arguments have the same meaning as in `addModelData', except that `data'
-    // is supposed to be homogeneous and is thus flattened in a single vector. This
-    // is always possible e.g. for "NodeData" and "ElementData", but only if data
-    // is associated to elements of the same type for "ElementNodeData".
+    // is supposed to be homogeneous and is thus flattened in a single vector. For
+    // data types that can lead to different data sizes per tag (like
+    // "ElementNodeData"), the data should be padded.
     GMSH_API void addHomogeneousModelData(const int tag,
                                           const int step,
                                           const std::string & modelName,
@@ -2578,12 +2698,32 @@ namespace gmsh { // Top-level functions
                                double & time,
                                int & numComponents);
 
+    // gmsh::view::getHomogeneousModelData
+    //
+    // Get homogeneous model-based post-processing data from the view with tag
+    // `tag' at step `step'. The arguments have the same meaning as in
+    // `getModelData', except that `data' is returned flattened in a single vector,
+    // with the appropriate padding if necessary.
+    GMSH_API void getHomogeneousModelData(const int tag,
+                                          const int step,
+                                          std::string & dataType,
+                                          std::vector<std::size_t> & tags,
+                                          std::vector<double> & data,
+                                          double & time,
+                                          int & numComponents);
+
     // gmsh::view::addListData
     //
-    // Add list-based post-processing data to the view with tag `tag'. `dataType'
-    // identifies the data: "SP" for scalar points, "VP", for vector points, etc.
-    // `numEle' gives the number of elements in the data. `data' contains the data
-    // for the `numEle' elements.
+    // Add list-based post-processing data to the view with tag `tag'. List-based
+    // datasets are independent from any model and any mesh. `dataType' identifies
+    // the data by concatenating the field type ("S" for scalar, "V" for vector,
+    // "T" for tensor) and the element type ("P" for point, "L" for line, "T" for
+    // triangle, "S" for tetrahedron, "I" for prism, "H" for hexaHedron, "Y" for
+    // pyramid). For example `dataType' should be "ST" for a scalar field on
+    // triangles. `numEle' gives the number of elements in the data. `data'
+    // contains the data for the `numEle' elements, concatenated, with node
+    // coordinates followed by values per node, repeated for each step: [e1x1, ...,
+    // e1xn, e1y1, ..., e1yn, e1z1, ..., e1zn, e1v1..., e1vN, e2x1, ...].
     GMSH_API void addListData(const int tag,
                               const std::string & dataType,
                               const int numEle,
@@ -2605,7 +2745,14 @@ namespace gmsh { // Top-level functions
     // contains 3 coordinates the string is positioned in the 3D model space ("3D
     // string"); if it contains 2 coordinates it is positioned in the 2D graphics
     // viewport ("2D string"). `data' contains one or more (for multistep views)
-    // strings. `style' contains pairs of styling parameters, concatenated.
+    // strings. `style' contains key-value pairs of styling parameters,
+    // concatenated. Available keys are "Font" (possible values: "Times-Roman",
+    // "Times-Bold", "Times-Italic", "Times-BoldItalic", "Helvetica", "Helvetica-
+    // Bold", "Helvetica-Oblique", "Helvetica-BoldOblique", "Courier", "Courier-
+    // Bold", "Courier-Oblique", "Courier-BoldOblique", "Symbol", "ZapfDingbats",
+    // "Screen"), "FontSize" and "Align" (possible values: "Left" or "BottomLeft",
+    // "Center" or "BottomCenter", "Right" or "BottomRight", "TopLeft",
+    // "TopCenter", "TopRight", "CenterLeft", "CenterCenter", "CenterRight").
     GMSH_API void addListDataString(const int tag,
                                     const std::vector<double> & coord,
                                     const std::vector<std::string> & data,
@@ -2878,6 +3025,11 @@ namespace gmsh { // Top-level functions
     //
     // Return CPU time.
     GMSH_API double getCpuTime();
+
+    // gmsh::logger::getLastError
+    //
+    // Return last error message, if any.
+    GMSH_API void getLastError(std::string & error);
 
   } // namespace logger
 

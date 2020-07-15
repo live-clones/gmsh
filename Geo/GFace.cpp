@@ -18,6 +18,7 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "OS.h"
+#include "discreteEdge.h"
 #include "discreteFace.h"
 #include "ExtrudeParams.h"
 
@@ -128,6 +129,44 @@ int GFace::delEdge(GEdge *edge)
   l_dirs.erase(itOri);
 
   return orientation;
+}
+
+void GFace::setBoundEdges(const std::vector<int> &tagEdges)
+{
+  std::vector<GEdge*> e;
+  for(std::size_t i = 0; i != tagEdges.size(); i++) {
+    GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
+    if(ge) {
+      e.push_back(ge);
+      ge->addFace(this);
+    }
+    else {
+      Msg::Error("Unknown curve %d in surface %d", tagEdges[i], tag());
+    }
+  }
+  GEdgeLoop el(e);
+  el.getEdges(l_edges);
+  el.getSigns(l_dirs);
+}
+
+void GFace::setBoundEdges(const std::vector<int> &tagEdges,
+                          const std::vector<int> &signEdges)
+{
+  if(signEdges.size() != tagEdges.size()) {
+    Msg::Error("Wrong number of curve signs in surface %d", tag());
+    setBoundEdges(tagEdges);
+  }
+  for(std::vector<int>::size_type i = 0; i != tagEdges.size(); i++) {
+    GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
+    if(ge) {
+      l_edges.push_back(ge);
+      l_dirs.push_back(signEdges[i]);
+      ge->addFace(this);
+    }
+    else {
+      Msg::Error("Unknown curve %d in surface %d", tagEdges[i], tag());
+    }
+  }
 }
 
 void GFace::deleteMesh()
@@ -244,9 +283,7 @@ SBoundingBox3d GFace::bounds(bool fast)
     for(; it != l_edges.end(); it++) res += (*it)->bounds(fast);
   }
   else {
-    int ipp = getNumMeshElements() / 20;
-    if(ipp < 1) ipp = 1;
-    for(std::size_t i = 0; i < getNumMeshElements(); i += ipp)
+    for(std::size_t i = 0; i < getNumMeshElements(); i++)
       for(std::size_t j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         res += getMeshElement(i)->getVertex(j)->point();
   }
@@ -2291,4 +2328,18 @@ void GFace::alignElementsWithMaster()
       }
     }
   }
+}
+
+bool GFace::isFullyDiscrete()
+{
+  if(geomType() != GEntity::DiscreteSurface) return false;
+  discreteFace *df = dynamic_cast<discreteFace*>(this);
+  if(df && df->haveParametrization()) return false;
+  std::vector<GEdge *> e = edges();
+  for(std::size_t i = 0; i < e.size(); i++) {
+    if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
+    discreteEdge *de = dynamic_cast<discreteEdge*>(e[i]);
+    if(de && de->haveParametrization()) return false;
+  }
+  return true;
 }

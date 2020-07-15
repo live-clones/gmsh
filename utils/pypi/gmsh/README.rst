@@ -3,7 +3,7 @@ gmsh
 ====
 
 The aim of this package is to download and install the `Gmsh app and SDK
-<http://gmsh.info>`_ in a pythonic way, i.e. via the ``pip`` command.
+<https://gmsh.info>`_ in a pythonic way, i.e. via the ``pip`` command.
 
 Installation should work under Linux, Windows and macOS for both Python 2 and 3.
 

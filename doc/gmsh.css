@@ -1,9 +1,9 @@
 * { line-height: 1.35; }
 
-html { max-width: 1200px; margin: auto; background: #ffffff/*#f4f4f4*/; color: #252525;
+html { max-width: 1500px; margin: auto; background: #ffffff/*#f4f4f4*/; color: #252525;
   font-family: helvetica,sans-serif; font-size: 95%; }
 
-body { margin: auto; padding: 15px; background-color: #ffffff; }
+body { margin: auto; padding: 25px; background-color: #ffffff; }
 
 a { text-decoration: none; color: #1a0dab; background: none; }
 a:visited { color: #660099; }
@@ -80,7 +80,7 @@ div.smallexample { margin-left: 0em; }
   #banner img { width: 90px; margin-bottom: 1ex; }
 }
 
-@media screen and (min-width: 1200px) {
+@media screen and (min-width: 1000px) {
   #banner { width: 250px; }
   #banner img { width: 250px; margin-bottom: 2.5ex; }
 }

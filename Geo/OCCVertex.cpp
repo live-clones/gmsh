@@ -23,7 +23,6 @@ OCCVertex::OCCVertex(GModel *m, TopoDS_Vertex v, int num, double lc)
   _x = pnt.X();
   _y = pnt.Y();
   _z = pnt.Z();
-  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(_v, num);
 }
 
 OCCVertex::~OCCVertex()

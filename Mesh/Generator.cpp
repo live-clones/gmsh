@@ -337,6 +337,8 @@ static void Mesh0D(GModel *m)
 
 static void Mesh1D(GModel *m)
 {
+  if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
+
   m->getFields()->initialize();
 
   if(TooManyElements(m, 1)) return;
@@ -368,6 +370,11 @@ static void Mesh1D(GModel *m)
   Msg::StartProgressMeter(nTot);
 
   while(1) {
+    if(CTX::instance()->abortOnError && Msg::GetErrorCount()) {
+      Msg::Error("Aborted 1D meshing");
+      break;
+    }
+
     int nPending = 0;
     const size_t sss = temp.size();
 #if defined(_OPENMP)
@@ -468,6 +475,8 @@ static void PrintMesh2dStatistics(GModel *m)
 
 static void Mesh2D(GModel *m)
 {
+  if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
+
   m->getFields()->initialize();
 
   if(TooManyElements(m, 2)) return;
@@ -512,6 +521,11 @@ static void Mesh2D(GModel *m)
     Msg::StartProgressMeter(nTot);
 
     while(1) {
+      if(CTX::instance()->abortOnError && Msg::GetErrorCount()) {
+        Msg::Error("Aborted 2D meshing");
+        break;
+      }
+
       int nPending = 0;
       std::vector<GFace *> temp;
       temp.insert(temp.begin(), f.begin(), f.end());
@@ -797,6 +811,8 @@ static void TestConformity(GModel *gm)
 
 static void Mesh3D(GModel *m)
 {
+  if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
+
   m->getFields()->initialize();
 
   if(TooManyElements(m, 3)) return;
@@ -857,6 +873,11 @@ static void Mesh3D(GModel *m)
 #endif
 
   for(std::size_t i = 0; i < connected.size(); i++) {
+    if(CTX::instance()->abortOnError && Msg::GetErrorCount()) {
+      Msg::Error("Aborted 3D meshing");
+      break;
+    }
+
     MeshDelaunayVolume(connected[i]);
 
 #if defined(HAVE_DOMHEX)
@@ -967,6 +988,8 @@ static void Mesh3D(GModel *m)
 
 void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 {
+  if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
+
   if(how != "" && how != "Gmsh" && how != "Optimize" && how != "Netgen" &&
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
@@ -1059,6 +1082,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 
 void AdaptMesh(GModel *m)
 {
+  if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
+
   Msg::StatusBar(true, "Adapting 3D mesh...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
@@ -1072,6 +1097,8 @@ void AdaptMesh(GModel *m)
 
 void RecombineMesh(GModel *m)
 {
+  if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
+
   Msg::StatusBar(true, "Recombining 2D mesh...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
@@ -1195,6 +1222,8 @@ static void relocateSlaveVertices(std::vector<GEntity *> &entities,
 
 void FixPeriodicMesh(GModel *m)
 {
+  if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
+
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
     GEdge *tgt = *it;
 
@@ -1379,8 +1408,9 @@ void GenerateMesh(GModel *m, int ask)
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
 
-  // Change any high order elements back into first order ones
-  SetOrder1(m);
+  // Change any high order elements back into first order ones (but skip
+  // discrete entities)
+  SetOrder1(m, false, true);
   FixPeriodicMesh(m);
 
   // 1D mesh
@@ -1426,6 +1456,8 @@ void GenerateMesh(GModel *m, int ask)
   }
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, false, true);
+  else if(m->getMeshStatus() >= 2 && CTX::instance()->mesh.algoSubdivide == 3)
+    BarycentricRefineMesh(m);
 
   if(m->getMeshStatus() && CTX::instance()->mesh.order > 1) {
     // Create high order elements

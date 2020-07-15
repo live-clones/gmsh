@@ -13,10 +13,17 @@ Spline(1) = {1, 5, 2};
 Spline(2) = {2, 6, 3};
 Spline(3) = {3, 4, 1};
 Curve Loop(1) = {1, 2, 3};
-// bspline surface bounded by curve loop 1
+
+// Bspline surface bounded by curve loop 1, constructed by optimization
 Surface(1) = {1};
+
+// BSpline filling
+BSpline Surface(2) = {1};
+
+// Bezier filling
+BSpline Surface(3) = {1};
 
 Point(7) = {-0.7, 0.1, -0.2, 1.0};
 Point(8) = {-0.67, 0.1, -0.2, 1.0};
-// same as 1, but passing through points 7 and 8
-Surface(2) = {1} Using Point {7,8};
+// Same as 1, but passing through points 7 and 8
+Surface(4) = {1} Using Point {7,8};

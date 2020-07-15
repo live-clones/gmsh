@@ -119,6 +119,10 @@ public:
     return false;
   }
 
+  void setBoundEdges(const std::vector<int> &tagEdges);
+  void setBoundEdges(const std::vector<int> &tagEdges,
+                     const std::vector<int> &signEdges);
+
   // direct access to embedded entities
   std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
   std::set<GVertex *, GEntityPtrLessThan> &embeddedVertices()
@@ -399,6 +403,8 @@ public:
 
   virtual bool reorder(const int elementType,
                        const std::vector<std::size_t> &ordering);
+
+  virtual bool isFullyDiscrete();
 };
 
 #endif

@@ -17,8 +17,7 @@ private:
 public:
   gmshFace(GModel *m, Surface *s);
   virtual ~gmshFace() {}
-  Range<double> parBounds(int i) const;
-  void setModelEdges(std::list<GEdge *> &);
+  virtual Range<double> parBounds(int i) const;
   using GFace::point;
   virtual GPoint point(double par1, double par2) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint,
@@ -31,8 +30,8 @@ public:
                          SVector3 &) const;
   virtual GEntity::GeomType geomType() const;
   virtual bool haveParametrization();
-  ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return _s; }
+  virtual ModelType getNativeType() const { return GmshModel; }
+  virtual void *getNativePtr() const { return _s; }
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
   virtual void resetMeshAttributes();
   void resetNativePtr(Surface *s);

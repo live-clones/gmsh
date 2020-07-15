@@ -43,12 +43,12 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
 
   //  printf("%d points per circle\n",_nPointsPerCircle);
 
-  if (!update_needed)return HXT_STATUS_OK;
+  if (!updateNeeded)return HXT_STATUS_OK;
 
   if (forest)hxtForestDelete(&forest);
   if (forestOptions)hxtForestOptionsDelete(&forestOptions);
 
-  update_needed = false;
+  updateNeeded = false;
   // --------------------------------------------------------
   // Soit on charge un fichier avec l'octree (ma préférence)
   // Soit on calcule "en live" l'octree ici

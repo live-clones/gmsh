@@ -76,6 +76,28 @@ Transfinite Surface {:};
 Recombine Surface {:};
 Transfinite Volume {:};
 
+/* Here's a way to apply these constraints in a more generic manner, e.g.
+   on an imported geometry,
+
+s() = Surface{:};
+For i In {0:#s()-1}
+  c() = Boundary { Surface{s(i)}; };
+  If(#c() == 4)
+    Transfinite Curve{c()} = n;
+    Transfinite Surface{s(i)};
+    Recombine Surface{s(i)};
+  EndIf
+EndFor
+
+v() = Volume{:};
+For i In {0:#v()-1}
+  s() = Boundary { Volume{v(i)}; };
+  If(#s() == 6)
+    Transfinite Volume{v(i)};
+  EndIf
+EndFor
+*/
+
 Physical Volume(1) = {85:95:2}; // ext volume
 Physical Surface(100) = {34,35,40,45,50,51}; // int surf
 Physical Surface(101) = {6,15,19,23,27,28}; // ext surf

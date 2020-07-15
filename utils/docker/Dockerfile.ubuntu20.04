@@ -9,6 +9,12 @@ RUN pip3 install twine
 # to convert a .fodt document, simply run
 # soffice --headless --convert-to pdf Tutorials.fodt
 
+RUN apt-get update && apt-get install -y cargo && apt-get clean
+RUN cargo install --root /opt/cargo mdbook --version "^0.3.7"
+
+# mmg
+RUN git clone https://github.com/MmgTools/mmg.git && cd mmg && mkdir build && cd build && cmake -DBUILD_SHARED_LIBS=1 .. && make -j8 && make install && cd .. && rm -rf mmg
+
 # "docker build --build-arg REBUILD_GMSH=somethingnew"
 ARG REBUILD_GMSH=
 
@@ -20,3 +26,4 @@ USER validator
 WORKDIR /home/validator
 RUN mkdir -p ~/.ssh
 RUN chmod 700 ~/.ssh
+ENV PATH="/opt/cargo/bin:${PATH}"

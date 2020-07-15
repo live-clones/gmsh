@@ -2,8 +2,6 @@
 
 @item ENABLE_3M
 Enable proprietary 3M extension (default: OFF)
-@item ENABLE_ACIS
-Enable ACIS geometrical models (experimental) (default: ON)
 @item ENABLE_ALGLIB
 Enable ALGLIB (used by some mesh optimizers) (default: ON)
 @item ENABLE_ANN
@@ -122,6 +120,8 @@ Enable PRO extensions (default: ON)
 Enable QuadTri structured meshing extensions (default: ON)
 @item ENABLE_REVOROPT
 Enable Revoropt (used for CVT remeshing) (default: OFF)
+@item ENABLE_RPATH
+Use RPATH in dynamically linked targets (default: ON)
 @item ENABLE_SLEPC
 Enable SLEPc eigensolvers (default: OFF)
 @item ENABLE_SOLVER

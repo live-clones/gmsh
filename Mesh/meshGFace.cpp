@@ -2851,24 +2851,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   return true;
 }
 
-static bool isFullyDiscrete(GFace *gf)
-{
-  if(gf->geomType() != GEntity::DiscreteSurface) return false;
-  // a discrete surface could actually be a gmshFace!
-  discreteFace *df = dynamic_cast<discreteFace*>(gf);
-  if(df && df->haveParametrization()) return false;
-  std::vector<GEdge *> e = gf->edges();
-  for(std::size_t i = 0; i < e.size(); i++) {
-    if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
-    discreteEdge *de = dynamic_cast<discreteEdge*>(e[i]);
-    if(de && de->haveParametrization()) return false;
-  }
-  return true;
-}
-
 void deMeshGFace::operator()(GFace *gf)
 {
-  if(isFullyDiscrete(gf)) return;
+  if(gf->isFullyDiscrete()) return;
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
@@ -3105,7 +3090,7 @@ void orientMeshGFace::operator()(GFace *gf)
     // now. This has implications for high-order periodic meshes: see comment in
     // FixPeriodicMesh().
   }
-  else if(isFullyDiscrete(gf) ||
+  else if(gf->isFullyDiscrete() ||
           gf->geomType() == GEntity::BoundaryLayerSurface) {
     // Don't do anything
   }

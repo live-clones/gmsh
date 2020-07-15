@@ -146,9 +146,9 @@ int main(int argc, char **argv)
      will save the mesh in the UNV format. You can also save the mesh in older
      versions of the MSH format: simply set
 
-     gmshOptionSetString("Mesh.MshFileVersion", "x.y", &ierr);
+     gmshOptionSetNumber("Mesh.MshFileVersion", x, &ierr);
 
-     for any version number `x.y'. As an alternative, you can also not specify
+     for any version number `x'. As an alternative, you can also not specify
      the format explicitly, and just choose a filename with the `.msh2' or
      `.msh4' extension. */
 

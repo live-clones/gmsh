@@ -28,7 +28,7 @@ gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 gmsh.model.geo.addPlaneSurface([1], 1)
 
 # Delete the surface and the left line, and replace the line with 3 new ones:
-gmsh.model.geo.remove([[2, 1], [1, 4]])
+gmsh.model.geo.remove([(2, 1), (1, 4)])
 
 p1 = gmsh.model.geo.addPoint(-0.05, 0.05, 0, lc)
 p2 = gmsh.model.geo.addPoint(-0.05, 0.1, 0, lc)

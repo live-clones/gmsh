@@ -166,9 +166,6 @@ optional codes in the contrib/ directory, each governed by their own license:
 
 * contrib/ALGLIB (C) Sergey Bochkanov (ALGLIB project);
 
-* contrib/mmg3d from MMG3D Version 4.0 (C) 2004-2011 Cecile Dobrzynski and
-  Pascal Frey (IPB - UPMC - INRIA);
-
 * contrib/blossom copyright (C) 1995-1997 Bill Cook et al.;
 
 * contrib/bamg from Freefem++ copyright (C) Frederic Hecht;

@@ -383,6 +383,20 @@ GMSH_API int gmshModelIsInside(const int dim,
                                double * parametricCoord, size_t parametricCoord_n,
                                int * ierr);
 
+/* Get the points `closestCoord' on the entity of dimension `dim' and tag
+ * `tag' to the points `coord', by orthogonal projection. `coord' and
+ * `closestCoord' are given as triplets of x, y, z coordinates, concatenated:
+ * [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric
+ * coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates
+ * concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u,
+ * p1v, p2u, ...]. */
+GMSH_API void gmshModelGetClosestPoint(const int dim,
+                                       const int tag,
+                                       double * coord, size_t coord_n,
+                                       double ** closestCoord, size_t * closestCoord_n,
+                                       double ** parametricCoord, size_t * parametricCoord_n,
+                                       int * ierr);
+
 /* Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
  * `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1,
  * reparametrize all the points corresponding to the parametric coordinates
@@ -541,6 +555,10 @@ GMSH_API void gmshModelMeshSetNode(const size_t nodeTag,
 /* Rebuild the node cache. */
 GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary,
                                             int * ierr);
+
+/* Rebuild the element cache. */
+GMSH_API void gmshModelMeshRebuildElementCache(const int onlyIfNecessary,
+                                               int * ierr);
 
 /* Get the nodes from all the elements belonging to the physical group of
  * dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord'
@@ -795,6 +813,24 @@ GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
                                                 const int tag,
                                                 int * ierr);
 
+/* Get the Jacobian for a single element `elementTag', at the G evaluation
+ * points `localCoord' given as concatenated triplets of coordinates in the
+ * reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians' contains
+ * the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The
+ * matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ...,
+ * e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du,
+ * etc. `determinants' contains the determinant of the Jacobian matrix at each
+ * evaluation point. `coord' contains the x, y, z coordinates of the
+ * evaluation points. This function relies on an internal cache (a vector in
+ * case of dense element numbering, a map otherwise); for large meshes
+ * accessing Jacobians in bulk is often preferable. */
+GMSH_API void gmshModelMeshGetJacobian(const size_t elementTag,
+                                       double * localCoord, size_t localCoord_n,
+                                       double ** jacobians, size_t * jacobians_n,
+                                       double ** determinants, size_t * determinants_n,
+                                       double ** coord, size_t * coord_n,
+                                       int * ierr);
+
 /* Get the basis functions of the element of type `elementType' at the
  * evaluation points `localCoord' (given as concatenated triplets of
  * coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
@@ -833,6 +869,12 @@ GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElements(const int ele
                                                                    const size_t task,
                                                                    const size_t numTasks,
                                                                    int * ierr);
+
+/* Get the orientation of a single element `elementTag'. */
+GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElement(const size_t elementTag,
+                                                                  const char * functionSpaceType,
+                                                                  int * basisFunctionsOrientation,
+                                                                  int * ierr);
 
 /* Get the number of possible orientations for elements of type `elementType'
  * and function space named `functionSpaceType'. */
@@ -875,6 +917,14 @@ GMSH_API void gmshModelMeshGetKeysForElements(const int elementType,
                                               const int tag,
                                               const int returnCoord,
                                               int * ierr);
+
+/* Get the keys for a single element `elementTag'. */
+GMSH_API void gmshModelMeshGetKeysForElement(const size_t elementTag,
+                                             const char * functionSpaceType,
+                                             int ** keys, size_t * keys_n,
+                                             double ** coord, size_t * coord_n,
+                                             const int returnCoord,
+                                             int * ierr);
 
 /* Get the number of keys by elements of type `elementType' for function space
  * named `functionSpaceType'. */
@@ -1137,10 +1187,13 @@ GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const double curveAngle,
                                             int * ierr);
 
-/* Create a parametrization for discrete curves and surfaces (i.e. curves and
- * surfaces represented solely by a mesh, without an underlying CAD
- * description), assuming that each can be parametrized with a single map. */
-GMSH_API void gmshModelMeshCreateGeometry(int * ierr);
+/* Create a geometry for the discrete entities `dimTags' (represented solely
+ * by a mesh, without an underlying CAD description), i.e. create a
+ * parametrization for discrete curves and surfaces, assuming that each can be
+ * parametrized with a single map. If `dimTags' is empty, create a geometry
+ * for all the discrete entities. */
+GMSH_API void gmshModelMeshCreateGeometry(int * dimTags, size_t dimTags_n,
+                                          int * ierr);
 
 /* Create a boundary representation from the mesh if the model does not have
  * one (e.g. when imported from mesh file formats with no BRep representation
@@ -1294,6 +1347,14 @@ GMSH_API int gmshModelGeoAddBSpline(int * pointTags, size_t pointTags_n,
 GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
+
+/* Add a polyline curve going through the points `pointTags'. If `tag' is
+ * positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Create a periodic curve if the first and last points are the
+ * same. Return the tag of the polyline curve. */
+GMSH_API int gmshModelGeoAddPolyline(int * pointTags, size_t pointTags_n,
+                                     const int tag,
+                                     int * ierr);
 
 /* Add a spline (Catmull-Rom) going through points sampling the curves in
  * `curveTags'. The density of sampling points on each curve is governed by
@@ -1738,14 +1799,65 @@ GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n,
                                          const int tag,
                                          int * ierr);
 
-/* Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
- * set the tag explicitly; otherwise a new tag is selected automatically.
- * Return the tag of the surface. If `pointTags' are provided, force the
- * surface to pass through the given points. */
+/* Add a surface filling the curve loop `wireTag'. If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the surface. If `pointTags' are provided, force the surface to
+ * pass through the given points. */
 GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
                                            const int tag,
                                            int * pointTags, size_t pointTags_n,
                                            int * ierr);
+
+/* Add a BSpline surface filling the curve loop `wireTag'. The curve loop
+ * should be made of 2, 3 or 4 BSpline curves. The optional `type' argument
+ * specifies the type of filling: "Stretch" creates the flattest patch,
+ * "Curved" (the default) creates the most rounded patch, and "Coons" creates
+ * a rounded patch with less depth than "Curved". If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the surface. */
+GMSH_API int gmshModelOccAddBSplineFilling(const int wireTag,
+                                           const int tag,
+                                           const char * type,
+                                           int * ierr);
+
+/* Add a Bezier surface filling the curve loop `wireTag'. The curve loop
+ * should be made of 2, 3 or 4 Bezier curves. The optional `type' argument
+ * specifies the type of filling: "Stretch" creates the flattest patch,
+ * "Curved" (the default) creates the most rounded patch, and "Coons" creates
+ * a rounded patch with less depth than "Curved". If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the surface. */
+GMSH_API int gmshModelOccAddBezierFilling(const int wireTag,
+                                          const int tag,
+                                          const char * type,
+                                          int * ierr);
+
+/* Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
+ * control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1,
+ * Pu1v2, ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
+ * `multiplicitiesV' are not provided, default parameters are computed
+ * automatically. If `tag' is positive, set the tag explicitly; otherwise a
+ * new tag is selected automatically. Return the tag of the b-spline surface. */
+GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n,
+                                           const int numPointsU,
+                                           const int tag,
+                                           const int degreeU,
+                                           const int degreeV,
+                                           double * weights, size_t weights_n,
+                                           double * knotsU, size_t knotsU_n,
+                                           double * knotsV, size_t knotsV_n,
+                                           int * multiplicitiesU, size_t multiplicitiesU_n,
+                                           int * multiplicitiesV, size_t multiplicitiesV_n,
+                                           int * ierr);
+
+/* Add a Bezier surface with `pointTags' control points given as a single
+ * vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the b-spline surface. */
+GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n,
+                                          const int numPointsU,
+                                          const int tag,
+                                          int * ierr);
 
 /* Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
  * positive, set the tag explicitly; otherwise a new tag is selected
@@ -2248,9 +2360,8 @@ GMSH_API void gmshViewAddModelData(const int tag,
 /* Add homogeneous model-based post-processing data to the view with tag
  * `tag'. The arguments have the same meaning as in `addModelData', except
  * that `data' is supposed to be homogeneous and is thus flattened in a single
- * vector. This is always possible e.g. for "NodeData" and "ElementData", but
- * only if data is associated to elements of the same type for
- * "ElementNodeData". */
+ * vector. For data types that can lead to different data sizes per tag (like
+ * "ElementNodeData"), the data should be padded. */
 GMSH_API void gmshViewAddHomogeneousModelData(const int tag,
                                               const int step,
                                               const char * modelName,
@@ -2275,10 +2386,29 @@ GMSH_API void gmshViewGetModelData(const int tag,
                                    int * numComponents,
                                    int * ierr);
 
-/* Add list-based post-processing data to the view with tag `tag'. `dataType'
- * identifies the data: "SP" for scalar points, "VP", for vector points, etc.
- * `numEle' gives the number of elements in the data. `data' contains the data
- * for the `numEle' elements. */
+/* Get homogeneous model-based post-processing data from the view with tag
+ * `tag' at step `step'. The arguments have the same meaning as in
+ * `getModelData', except that `data' is returned flattened in a single
+ * vector, with the appropriate padding if necessary. */
+GMSH_API void gmshViewGetHomogeneousModelData(const int tag,
+                                              const int step,
+                                              char ** dataType,
+                                              size_t ** tags, size_t * tags_n,
+                                              double ** data, size_t * data_n,
+                                              double * time,
+                                              int * numComponents,
+                                              int * ierr);
+
+/* Add list-based post-processing data to the view with tag `tag'. List-based
+ * datasets are independent from any model and any mesh. `dataType' identifies
+ * the data by concatenating the field type ("S" for scalar, "V" for vector,
+ * "T" for tensor) and the element type ("P" for point, "L" for line, "T" for
+ * triangle, "S" for tetrahedron, "I" for prism, "H" for hexaHedron, "Y" for
+ * pyramid). For example `dataType' should be "ST" for a scalar field on
+ * triangles. `numEle' gives the number of elements in the data. `data'
+ * contains the data for the `numEle' elements, concatenated, with node
+ * coordinates followed by values per node, repeated for each step: [e1x1,
+ * ..., e1xn, e1y1, ..., e1yn, e1z1, ..., e1zn, e1v1..., e1vN, e2x1, ...]. */
 GMSH_API void gmshViewAddListData(const int tag,
                                   const char * dataType,
                                   const int numEle,
@@ -2298,8 +2428,15 @@ GMSH_API void gmshViewGetListData(const int tag,
  * `coord' contains 3 coordinates the string is positioned in the 3D model
  * space ("3D string"); if it contains 2 coordinates it is positioned in the
  * 2D graphics viewport ("2D string"). `data' contains one or more (for
- * multistep views) strings. `style' contains pairs of styling parameters,
- * concatenated. */
+ * multistep views) strings. `style' contains key-value pairs of styling
+ * parameters, concatenated. Available keys are "Font" (possible values:
+ * "Times-Roman", "Times-Bold", "Times-Italic", "Times-BoldItalic",
+ * "Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-
+ * BoldOblique", "Courier", "Courier-Bold", "Courier-Oblique", "Courier-
+ * BoldOblique", "Symbol", "ZapfDingbats", "Screen"), "FontSize" and "Align"
+ * (possible values: "Left" or "BottomLeft", "Center" or "BottomCenter",
+ * "Right" or "BottomRight", "TopLeft", "TopCenter", "TopRight", "CenterLeft",
+ * "CenterCenter", "CenterRight"). */
 GMSH_API void gmshViewAddListDataString(const int tag,
                                         double * coord, size_t coord_n,
                                         char ** data, size_t data_n,
@@ -2508,5 +2645,9 @@ GMSH_API double gmshLoggerGetWallTime(int * ierr);
 
 /* Return CPU time. */
 GMSH_API double gmshLoggerGetCpuTime(int * ierr);
+
+/* Return last error message, if any. */
+GMSH_API void gmshLoggerGetLastError(char ** error,
+                                     int * ierr);
 
 #endif

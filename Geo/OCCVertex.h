@@ -27,8 +27,8 @@ public:
   virtual double y() const { return _y; }
   virtual double z() const { return _z; }
   virtual void setPosition(GPoint &p);
-  ModelType getNativeType() const { return OpenCascadeModel; }
-  void *getNativePtr() const { return (void *)&_v; }
+  virtual ModelType getNativeType() const { return OpenCascadeModel; }
+  virtual void *getNativePtr() const { return (void *)&_v; }
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
   TopoDS_Vertex getShape() { return _v; }
 };

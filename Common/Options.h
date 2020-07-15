@@ -143,6 +143,7 @@ std::string opt_print_parameter_command(OPT_ARGS_STR);
 
 // NUMBERS
 
+double opt_general_abort_on_error(OPT_ARGS_NUM);
 double opt_general_initial_context(OPT_ARGS_NUM);
 double opt_general_show_options_on_startup(OPT_ARGS_NUM);
 double opt_general_show_messages_on_startup(OPT_ARGS_NUM);
@@ -537,6 +538,7 @@ double opt_mesh_min_elements_2pi(OPT_ARGS_NUM);
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM);
 double opt_mesh_min_curv_points(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
+double opt_mesh_ho_check(OPT_ARGS_NUM);
 double opt_mesh_ho_optimize(OPT_ARGS_NUM);
 double opt_mesh_ho_periodic(OPT_ARGS_NUM);
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM);

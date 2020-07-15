@@ -129,8 +129,7 @@ HXTStatus hxtFillVolumeBrep(HXTMesh* mesh, uint64_t* tri2TetMap,
         tet1/=4;
         tet2/=4;
 
-        // we do a xor because the surface is not a bounding if the same volume is on both its sides
-        if((mesh->tetrahedra.colors[tet1]==color)^(mesh->tetrahedra.colors[tet2]==color)) {
+        if(mesh->tetrahedra.colors[tet1]==color || mesh->tetrahedra.colors[tet2]==color) {
           #pragma omp atomic write // this atomic should do nothing (it usually is already atomic)
           triangleColor[mesh->triangles.colors[tri]] = 1;
         }

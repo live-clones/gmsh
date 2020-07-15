@@ -33,7 +33,7 @@ struct contextMeshOptions {
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircPoints, minCurvPoints, minElementsPerTwoPi;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
-  int hoDistCAD;
+  int hoDistCAD, hoCheck;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanPoints;
@@ -133,6 +133,8 @@ public:
   std::vector<std::string> recentFiles;
   // create mesh statistics report (0: do nothing, 1: create, 2: append)
   int createAppendMeshStatReport;
+  // behavior on error
+  int abortOnError;
   // should we launch a solver at startup?
   int launchSolverAtStartup;
   // save session/option file on exit?

@@ -135,9 +135,9 @@ gmsh.write("t1.msh")
 # will save the mesh in the UNV format. You can also save the mesh in older
 # versions of the MSH format: simply set
 #
-#   gmsh.option.setString("Mesh.MshFileVersion", "x.y")
+#   gmsh.option.setNumber("Mesh.MshFileVersion", x)
 #
-# for any version number `x.y'. As an alternative, you can also not specify the
+# for any version number `x'. As an alternative, you can also not specify the
 # format explicitly, and just choose a filename with the `.msh2' or `.msh4'
 # extension.
 

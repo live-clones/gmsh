@@ -134,18 +134,18 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
   switch(entity->dim()) {
   case 1:
     if(boundingEntities.size() == 2) {
-      reinterpret_cast<discreteEdge *>(entity)->setBeginVertex(
+      reinterpret_cast<GEdge *>(entity)->setBeginVertex(
         reinterpret_cast<GVertex *>(boundingEntities[0]));
-      reinterpret_cast<discreteEdge *>(entity)->setEndVertex(
+      reinterpret_cast<GEdge *>(entity)->setEndVertex(
         reinterpret_cast<GVertex *>(boundingEntities[1]));
     }
     else if(boundingEntities.size() == 1) {
       if(boundingSign[0] == 1) {
-        reinterpret_cast<discreteEdge *>(entity)->setBeginVertex(
+        reinterpret_cast<GEdge *>(entity)->setBeginVertex(
           reinterpret_cast<GVertex *>(boundingEntities[0]));
       }
       else {
-        reinterpret_cast<discreteEdge *>(entity)->setEndVertex(
+        reinterpret_cast<GEdge *>(entity)->setEndVertex(
           reinterpret_cast<GVertex *>(boundingEntities[0]));
       }
     }
@@ -154,14 +154,13 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
     std::vector<int> tags(boundingEntities.size());
     for(std::size_t i = 0; i < boundingEntities.size(); i++)
       tags[i] = std::abs(boundingEntities[i]->tag());
-    reinterpret_cast<discreteFace *>(entity)->setBoundEdges(tags, boundingSign);
+    reinterpret_cast<GFace *>(entity)->setBoundEdges(tags, boundingSign);
   } break;
   case 3: {
     std::vector<int> tags(boundingEntities.size());
     for(std::size_t i = 0; i < boundingEntities.size(); i++)
       tags[i] = std::abs(boundingEntities[i]->tag());
-    reinterpret_cast<discreteRegion *>(entity)->setBoundFaces(tags,
-                                                              boundingSign);
+    reinterpret_cast<GRegion *>(entity)->setBoundFaces(tags, boundingSign);
   } break;
   default: break;
   }

@@ -402,8 +402,16 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
           TEdgeToGEdgeMap::iterator eIter = tEdgeToGEdge.find(te);
           if(eIter != tEdgeToGEdge.end())
             gFaceToGEdges[gf].insert(eIter->second);
-          else
-            tEdgeToGFaces[te].insert(gf);
+          else {
+            TEdgeToGFacesMap::iterator it = tEdgeToGFaces.find(te);
+            if(it != tEdgeToGFaces.end() && it->second.find(gf) != it->second.end()) {
+              // in bulk
+              tEdgeToGFaces.erase(it);
+            }
+            else{
+              tEdgeToGFaces[te].insert(gf);
+            }
+          }
         }
       }
     }
@@ -412,14 +420,16 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
   // create a GEdge for each face boundary, ie. for which edges have been
   // visited once
 
-  // create a GEdge for each bundle of GFaces
-
   GFacesToGEdgeMap gFacesToGEdge;
   TEdgeToGFacesMap::iterator it;
 
   for(it = tEdgeToGFaces.begin(); it != tEdgeToGFaces.end(); ++it) {
+
+    // FIXME: this will not create a GEdge for a GFace not connected to
+    // anything; we should add that.
+
     std::set<GFace *> &gfaces = it->second;
-    if(gfaces.size() > 1) {
+    //if(gfaces.size() > 1) {
       GFacesToGEdgeMap::iterator gfIter = gFacesToGEdge.find(gfaces);
 
       if(gfIter == gFacesToGEdge.end()) {
@@ -432,7 +442,7 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
           gFaceToGEdges[*gfIter].insert(de);
         gFacesToGEdge[gfaces] = de;
       }
-    }
+      //}
   }
 
   // create elements on new geometric edges
@@ -696,19 +706,7 @@ void GModel::createTopologyFromMesh()
   if(dim >= 2) createTopologyFromMesh2D(this, numE);
   if(dim >= 1) createTopologyFromMesh1D(this, numV);
 
-  _associateEntityWithMeshVertices(true); // force
-
-  std::vector<GEntity *> entities;
-  getEntities(entities);
-  std::set<MVertex *> vs;
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    vs.insert(entities[i]->mesh_vertices.begin(),
-              entities[i]->mesh_vertices.end());
-    entities[i]->mesh_vertices.clear();
-  }
-  std::vector<MVertex *> cc;
-  cc.insert(cc.begin(), vs.begin(), vs.end());
-  _storeVerticesInEntities(cc);
+  pruneMeshVertexAssociations();
 
   CTX::instance()->mesh.changed = ENT_ALL;
 

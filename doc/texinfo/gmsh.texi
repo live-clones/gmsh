@@ -152,7 +152,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 @cindex Download
 
 The source code and various pre-compiled versions of Gmsh (for Windows,
-Mac and Unix) can be downloaded from @uref{http://gmsh.info}.
+Mac and Unix) can be downloaded from @uref{https://gmsh.info}.
 Gmsh is also directly available in pre-packaged form in various Linux
 and BSD distributions (Debian, Ubuntu, FreeBSD, ...).
 
@@ -163,7 +163,7 @@ post-processing facilities}. International Journal for Numerical Methods
 in Engineering, Volume 79, Issue 11, pages 1309-1331, 2009''.  A
 preprint of that paper as well as other references and the latest news
 about Gmsh development are available on
-@uref{http://gmsh.info}.
+@uref{https://gmsh.info}.
 
 @c =========================================================================
 @c Copying Conditions
@@ -202,7 +202,7 @@ reflect on our reputation.
 The precise conditions of the license for Gmsh are found in the General
 Public License that accompanies the source code (@pxref{License}). Further
 information about this license is available from the GNU Project webpage
-@uref{http://www.gnu.org/copyleft/gpl-faq.html}.  Detailed copyright
+@uref{https://www.gnu.org/copyleft/gpl-faq.html}.  Detailed copyright
 information can be found in @ref{Copyright and credits}.
 
 If you want to integrate parts of Gmsh into a closed-source software, or
@@ -341,20 +341,20 @@ to data centralization, modification and re-dispatching.
 
 Examples on how to interface solvers are available in the source
 distribution (see
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers,utils/solvers}). A
+@url{@value{GITLAB-PREFIX}/utils/solvers,utils/solvers}). A
 full-featured solver interfaced in this manner is GetDP
-(@uref{http://getdp.info}), a general finite elements solver using mixed
+(@uref{https://getdp.info}), a general finite elements solver using mixed
 finite elements.
 
 Using the Gmsh API, Gmsh can also be embedded directly in your own
 solver, and ONELAB parameters can be used to interactively drive
 it. Examples on how to embed Gmsh in your solver, and build a custom
 graphical user interface to control it, are available in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api,demos/api}.
+@url{@value{GITLAB-PREFIX}/demos/api,demos/api}.
 See in particular
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py,custom_gui.py}
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py}
 and
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp,custom_gui.cpp}.
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp}.
 
 @c -------------------------------------------------------------------------
 @c Post-processing: scalar, vector and tensor field visualization
@@ -520,7 +520,7 @@ next chapter (@pxref{Running Gmsh on your system}) to learn how to
 launch Gmsh on your system, then go experiment with the GUI and the
 tutorial files (@pxref{Tutorial}) provided in the distribution.
 Screencasts that show how to use the GUI are available here:
-@uref{http://gmsh.info/screencasts/}.
+@uref{https://gmsh.info/screencasts/}.
 
 The aim of the reference manual is to explain everything you need to use
 Gmsh at the second level, i.e., using the built-in scripting language.
@@ -625,7 +625,7 @@ menu using `Window->Attach/Detach Menu'.)
 
 To open the first tutorial file (@pxref{Tutorial}), select the
 `File->Open' menu, and choose
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t1.geo,t1.geo}. When
+@url{@value{GITLAB-PREFIX}/tutorial/t1.geo,t1.geo}. When
 using a terminal, you can specify the file name directly on the command
 line, i.e.:
 
@@ -663,9 +663,9 @@ the command line, the first one defines the active model and the others
 are `merged' into this model. You can merge such files with the
 `File->Merge' menu. For example, to merge the post-processing views
 contained in the files
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/view1.pos,view1.pos}
+@url{@value{GITLAB-PREFIX}/tutorial/view1.pos,view1.pos}
 and
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/view5.msh,view5.msh}
+@url{@value{GITLAB-PREFIX}/tutorial/view5.msh,view5.msh}
 together with the geometry of the first tutorial @ref{t1}, you can type
 the following command:
 
@@ -718,7 +718,7 @@ to mesh the first tutorial in batch mode, just type:
 
 To mesh the same example, but with the background mesh available in the
 file
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/bgmesh.pos,bgmesh.pos},
+@url{@value{GITLAB-PREFIX}/tutorial/bgmesh.pos,bgmesh.pos},
 type:
 
 @example
@@ -1012,7 +1012,10 @@ through geometrical transformations, extrusions and boolean operations
 operations}).
 
 The next two cases allow to retrieve entities in a given bounding box,
-or get the bounding box of a given entity. The last five cases permit to
+or get the bounding box of a given entity, with the bounding box
+specified as (X min, Y min, Z min, X max, Y max, Z max). Beware that the
+order of coordinates is different than in the @code{BoundingBox} command
+for the scene: see @ref{General commands}. The last five cases permit to
 retrieve the mass or the center of mass of an entity, the coordinates of
 a given geometry point (@pxref{Points}), the elementary entities making
 up physical groups, and the tags of all (physical or elementary) points,
@@ -1155,7 +1158,7 @@ Colors expressions are hybrids between fixed-length braced
 @noindent The first case permits to use the X Windows names to refer to colors,
 e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3}, @dots{}
 (see
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Colors.h,Common/Colors.h}
+@url{@value{GITLAB-PREFIX}/Common/Colors.h,Common/Colors.h}
 in the source code for a complete list). The second case permits to
 define colors by using three expressions to specify their red, green and
 blue components (with values comprised between 0 and 255). The third
@@ -1750,8 +1753,10 @@ the views.
 @value{SYNC}
 
 @item BoundingBox @{ @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
-Forces the bounding box of the scene to the given @w{@var{expression}s} (X
-min, X max, Y min, Y max, Z min, Z max).
+Forces the bounding box of the scene to the given @w{@var{expression}s}
+(X min, X max, Y min, Y max, Z min, Z max). Beware that order of the
+coordinates is different than in the @code{BoundingBox} commands for
+model entities: see @ref{Floating point expressions}.
 
 @item Delete Model;
 Deletes the current model (all model entities and their associated
@@ -2083,6 +2088,16 @@ built-in kernel, the optional @code{In Sphere} argument forces the
 surface to be a spherical patch (the extra parameter gives the tag of
 the center of the sphere).
 
+@item BSpline Surface ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a BSpline surface filling. Only a single curve loop made of 2, 3
+or 4 BSpline curves can be provided. @code{BSpline Surface} is only
+available with the OpenCASCADE kernel.
+
+@item Bezier Surface ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a Bezier surface filling. Only a single curve loop made of 2, 3
+or 4 Bezier curves can be provided. @code{Bezier Surface} is only
+available with the OpenCASCADE kernel.
+
 @item Disk ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a disk. When four expressions are provided on the right hand
 side (3 coordinates of the center and the radius), the disk is circular.
@@ -2362,7 +2377,7 @@ As explained in @ref{Floating point expressions}, @var{boolean} can be
 used in an expression, in which case it returns the list of
 tags of the highest dimensional entities created by
 the boolean operation.  See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
+@url{@value{GITLAB-PREFIX}/demos/boolean/,demos/boolean}
 for examples.
 
 An alternative syntax exists for boolean operations, which can be used
@@ -2383,7 +2398,7 @@ tag @var{expression}.
 @end ftable
 
 Again, see
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
+@url{@value{GITLAB-PREFIX}/demos/boolean/,demos/boolean}
 for examples.
 
 Boolean operations are only available with the OpenCASCADE geometry kernel.
@@ -2690,17 +2705,17 @@ tetrahedralizations.
 @end itemize
 
 The ``Delaunay'' algorithm is currently the most robust and is the only
-one that supports embedded model entities and the automatic generation
-of hybrid meshes with pyramids. The @code{Field} mechanism to specify
-element sizes (@pxref{Specifying mesh element sizes}) is currently only
-supported by the ``Delaunay'' and ``HXT'' algorithms.
+one that supports the automatic generation of hybrid meshes with
+pyramids. Embedded model entities and the @code{Field} mechanism to
+specify element sizes (@pxref{Specifying mesh element sizes}) are
+currently only supported by the ``Delaunay'' and ``HXT'' algorithms.
 
 If your version of Gmsh is compiled with OpenMP support
 (@pxref{Compiling the source code}), most of the meshing steps can be
 performed in parallel:
 @itemize
 @item
-1D and 2D meshing is parallelized using a coarse-grain approach,
+1D and 2D meshing is parallelized using a coarse-grained approach,
 i.e. curves (resp. surfaces) are each meshed sequentially, but several
 curves (resp. surfaces) can be meshed at the same time.
 @item
@@ -2734,10 +2749,11 @@ those elements that belong to at least one physical group. (Different
 mesh file formats treat physical groups in slightly different ways,
 depending on their capability to define groups.)
 
-To save all mesh element wether or not physical groups are defined, use
- the @code{Mesh.SaveAll} option (@pxref{Mesh options list}) or specify
- @code{-save_all} on the command line. In some formats (e.g. MSH2),
- setting @code{Mesh.SaveAll=1} discards all physical group definitions.
+To save all mesh elements wether or not physical groups are defined, use
+the @code{Mesh.SaveAll} option (@pxref{Mesh options list}) or specify
+@code{-save_all} on the command line. In some formats (e.g. MSH2),
+setting @code{Mesh.SaveAll=1} will however discard all physical group
+definitions.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands
@@ -2786,18 +2802,17 @@ given geometry:
 First, if the two options @code{Mesh.CharacteristicLengthFromPoints} and
 @code{Mesh.CharacteristicLengthExtendFromBoundary} are set (they are by
 default; see @ref{Mesh options list}), you can simply specify desired
-mesh element sizes at the geometrical points of the model (with the
-@code{Point} command: see @ref{Points}). The size of the mesh elements
-will then be computed by interpolating these values inside the domain
-during mesh generation. This might sometimes lead to over-refinement in
-some areas, so that you may have to add ``dummy'' geometrical entities
-in the model in order to get the desired element sizes or use more
-advanced methods explained below.
+mesh element sizes at the geometrical points of the model. The size of
+the mesh elements will then be computed by interpolating these values
+inside the domain during mesh generation. This might sometimes lead to
+over-refinement in some areas, so that you may have to add ``dummy''
+geometrical entities in the model in order to get the desired element
+sizes or use more advanced methods explained below.
 @item
 Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
 not by default), the mesh will be adapted with respect to the curvature
-of the model entities and the value of @code{Mesh.MinimumCirclePoints},
-which gives the number of points per 2 Pi radians.
+of the model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
+which gives the number of elements per 2 Pi radians.
 @item
 Finally, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
@@ -3167,10 +3182,12 @@ with no BRep representation of the underlying model), clears any
 built-in CAD kernel entities, and exports the discrete entities in the
 built-in CAD kernel.
 
-@item CreateGeometry;
-Creates a parametrization for curves and surfaces that do not have one
-(i.e. discrete curves and surfaces represented solely by meshes, without
-an underlying CAD description).
+@item CreateGeometry < @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @} > ;
+Creates a geometry for discrete entities (represented solely by a mesh,
+without an underlying CAD description), i.e. create a parametrization
+for discrete curves and surfaces, assuming that each can be parametrized
+with a single map. If no entities are given, create a geometry for all
+discrete entities.
 
 @item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} < , @var{expression} > @};
 Classify (``color'') the surface mesh based on an angle threshold (the
@@ -3299,17 +3316,17 @@ external solver, you need to specify its name (@code{Solver.Name0},
 of all the solver options is given in @ref{Solver options
 list}. Examples on how to interface solvers are available in the source
 distribution (in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers,utils/solvers}
+@url{@value{GITLAB-PREFIX}/utils/solvers,utils/solvers}
 directory). A full-featured solver interfaced in this manner is GetDP
-(@uref{http://getdp.info}), a general finite element solver using mixed
+(@uref{https://getdp.info}), a general finite element solver using mixed
 finite elements.
 
 Using the Gmsh API, you can also directly embed Gmsh in your own solver,
 and use ONELAB for interactive parameter definition and
 modification. See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py,custom_gui.py}
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py}
 and
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp,custom_gui.cpp})
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp})
 for examples.
 
 @c =========================================================================
@@ -3384,7 +3401,7 @@ graphical window, or be automatically positioned in order to avoid overlaps.
 
 Sample post-processing files in human-readable ``parsed'' format and in
 the native MSH file format are available in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}
+@url{@value{GITLAB-PREFIX}/tutorial,tutorial}
 directory of Gmsh's distribution (@file{.pos} and @file{.msh}
 files). The ``parsed'' format is defined in the next section (cf. the
 @code{View} command); the MSH format is defined in @ref{File formats}.
@@ -5117,7 +5134,7 @@ the same for all other kinds of values.
 
 The following tutorials introduce new features gradually, starting with
 @ref{t1}. The corresponding files are available in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}
+@url{@value{GITLAB-PREFIX}/tutorial,tutorial}
 directory of the Gmsh distribution. The files starting with @code{t}
 introduce features available both in @code{.geo} scripts and through the
 @ref{Gmsh API}. The files starting with @code{x} introduce features that
@@ -5125,9 +5142,9 @@ are only available via the API.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
-@uref{http://gmsh.info/screencasts/}. To learn how to run the C++, C,
+@uref{https://gmsh.info/screencasts/}. To learn how to run the C++, C,
 Python and Julia API examples, see the respective subdirectories in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}.
+@url{@value{GITLAB-PREFIX}/tutorial,tutorial}.
 
 @menu
 * t1::  Geometry basics, elementary entities, physical groups
@@ -5163,15 +5180,15 @@ Python and Julia API examples, see the respective subdirectories in
 @section @code{t1}: Geometry basics, elementary entities, physical groups
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t1.geo,t1.geo}. Also
+@url{@value{GITLAB-PREFIX}/tutorial/t1.geo,t1.geo}. Also
 available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t1.cpp,t1.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t1.cpp,t1.cpp}),
 C
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c/t1.c,t1.c}),
+(@url{@value{GITLAB-PREFIX}/tutorial/c/t1.c,t1.c}),
 Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t1.py,t1.py})
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t1.py,t1.py})
 and Julia
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia/t1.jl,t1.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorial/julia/t1.jl,t1.jl}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t1.geo
@@ -5185,13 +5202,13 @@ and Julia
 @section @code{t2}: Transformations, extruded geometries, volumes
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t2.geo,t2.geo}. Also
+@url{@value{GITLAB-PREFIX}/tutorial/t2.geo,t2.geo}. Also
 available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t2.cpp,t2.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp,t2.cpp}),
 Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t2.py,t2.py})
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py,t2.py})
 and Julia
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia/t2.jl,t2.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorial/julia/t2.jl,t2.jl}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t2.geo
@@ -5205,13 +5222,13 @@ and Julia
 @section @code{t3}: Extruded meshes, parameters, options
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t3.geo,t3.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t3.geo,t3.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t3.cpp,t3.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp,t3.cpp}),
 Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t3.py,t3.py})
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py,t3.py})
 and Julia
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia/t3.jl,t3.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorial/julia/t3.jl,t3.jl}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t3.geo
@@ -5225,13 +5242,13 @@ and Julia
 @section @code{t4}: Built-in functions, holes in surfaces, annotations, entity colors
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t4.geo,t4.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t4.geo,t4.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t4.cpp,t4.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp,t4.cpp}),
 Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t4.py,t4.py})
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py,t4.py})
 and Julia
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia/t4.jl,t4.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorial/julia/t4.jl,t4.jl}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t4.geo
@@ -5245,13 +5262,13 @@ and Julia
 @section @code{t5}: Characteristic lengths, macros, loops, holes in volumes
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t5.geo,t5.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t5.geo,t5.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t5.cpp,t5.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp,t5.cpp}),
 Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t5.py,t5.py})
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t5.py,t5.py})
 and Julia
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia/t5.jl,t5.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorial/julia/t5.jl,t5.jl}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t5.geo
@@ -5265,11 +5282,11 @@ and Julia
 @section @code{t6}: Transfinite meshes
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t6.geo,t6.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t6.geo,t6.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t6.cpp,t6.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp,t6.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t6.py,t6.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t6.py,t6.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t6.geo
@@ -5283,11 +5300,11 @@ and Python
 @section @code{t7}: Background meshes
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t7.geo,t7.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t7.geo,t7.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t7.cpp,t7.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp,t7.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t7.py,t7.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py,t7.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t7.geo
@@ -5301,11 +5318,11 @@ and Python
 @section @code{t8}: Post-processing and animations
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t8.geo,t8.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t8.geo,t8.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t8.cpp,t8.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t8.cpp,t8.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t8.py,t8.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t8.py,t8.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t8.geo
@@ -5319,11 +5336,11 @@ and Python
 @section @code{t9}: Plugins
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t9.geo,t9.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t9.geo,t9.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t9.cpp,t9.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t9.cpp,t9.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t9.py,t9.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t9.py,t9.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t9.geo
@@ -5337,11 +5354,11 @@ and Python
 @section @code{t10}: Mesh size fields
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t10.geo,t10.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t10.geo,t10.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t10.cpp,t10.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp,t10.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t10.py,t10.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py,t10.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t10.geo
@@ -5355,11 +5372,11 @@ and Python
 @section @code{t11}: Unstructured quadrangular meshes
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t11.geo,t11.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t11.geo,t11.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t11.cpp,t11.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp,t11.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t11.py,t11.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t11.py,t11.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t11.geo
@@ -5373,11 +5390,11 @@ and Python
 @section @code{t12}: Cross-patch meshing with compounds
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t12.geo,t12.geo}/
+@url{@value{GITLAB-PREFIX}/tutorial/t12.geo,t12.geo}/
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t12.cpp,t12.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t12.cpp,t12.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t12.py,t12.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t12.py,t12.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t12.geo
@@ -5391,11 +5408,11 @@ and Python
 @section @code{t13}: Remeshing an STL file without an underlying CAD model
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t13.geo,t13.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t13.geo,t13.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t13.cpp,t13.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp,t13.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t13.py,t13.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t13.py,t13.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t13.geo
@@ -5409,11 +5426,11 @@ and Python
 @section @code{t14}: Homology and cohomology computation
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t14.geo,t14.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t14.geo,t14.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t14.cpp,t14.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t14.cpp,t14.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t14.py,t14.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t14.py,t14.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t14.geo
@@ -5427,11 +5444,11 @@ and Python
 @section @code{t15}: Embedded points, lines and surfaces
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t15.geo,t15.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t15.geo,t15.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t15.cpp,t15.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t15.cpp,t15.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t15.py,t15.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t15.py,t15.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t15.geo
@@ -5445,13 +5462,13 @@ and Python
 @section @code{t16}: Constructive Solid Geometry, OpenCASCADE geometry kernel
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t16.geo,t16.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t16.geo,t16.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t16.cpp,t16.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp,t16.cpp}),
 Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t16.py,t16.py})
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py,t16.py})
 and Julia
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia/t16.jl,t16.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorial/julia/t16.jl,t16.jl}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t16.geo
@@ -5465,11 +5482,11 @@ and Julia
 @section @code{t17}: Anisotropic background mesh
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t17.geo,t17.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t17.geo,t17.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t17.cpp,t17.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp,t17.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t17.py,t17.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t17.py,t17.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t17.geo
@@ -5483,11 +5500,11 @@ and Python
 @section @code{t18}: Periodic meshes
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t18.geo,t18.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t18.geo,t18.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t18.cpp,t18.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp,t18.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t18.py,t18.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t18.py,t18.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t18.geo
@@ -5501,11 +5518,11 @@ and Python
 @section @code{t19}: Thrusections, fillets, pipes, mesh size from curvature
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t19.geo,t19.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t19.geo,t19.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t19.cpp,t19.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp,t19.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t19.py,t19.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py,t19.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t19.geo
@@ -5519,11 +5536,11 @@ and Python
 @section @code{t20}: STEP import and manipulation, geometry partitioning
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t20.geo,t20.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t20.geo,t20.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t20.cpp,t20.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp,t20.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t20.py,t20.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t20.py,t20.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t20.geo
@@ -5537,11 +5554,11 @@ and Python
 @section @code{t21}: Mesh partitioning
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t21.geo,t21.geo}.
+@url{@value{GITLAB-PREFIX}/tutorial/t21.geo,t21.geo}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/t21.cpp,t21.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp,t21.cpp})
 and Python
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/t21.py,t21.py}).
+(@url{@value{GITLAB-PREFIX}/tutorial/python/t21.py,t21.py}).
 
 @smallformat
 @verbatiminclude ../../tutorial/t21.geo
@@ -5555,9 +5572,9 @@ and Python
 @section @code{x1}: Geometry and mesh data
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x1.py,x1.py}.
+@url{@value{GITLAB-PREFIX}/tutorial/python/x1.py,x1.py}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x1.cpp,x1.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x1.cpp,x1.cpp}).
 
 @smallformat
 @verbatiminclude ../../tutorial/python/x1.py
@@ -5571,9 +5588,9 @@ Also available in C++
 @section @code{x2}: Mesh import, discrete entities, hybrid models, terrain meshing
 
 See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python/x2.py,x2.py}.
+@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py,x2.py}.
 Also available in C++
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++/x2.cpp,x2.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp,x2.cpp}).
 
 @smallformat
 @verbatiminclude ../../tutorial/python/x2.py
@@ -5679,7 +5696,7 @@ All the options can be manipulated through the Gmsh API through the
 @appendix Compiling the source code
 
 Stable releases and source snapshots are available from
-@url{http://gmsh.info/src/}. You can also access the Git repository
+@url{https://gmsh.info/src/}. You can also access the Git repository
 directly:
 
 @enumerate
@@ -5702,7 +5719,7 @@ git pull
 
 Once you have the source code, you need to run CMake to configure your
 build (see the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/README.txt,README.txt}
+@url{@value{GITLAB-PREFIX}/README.txt,README.txt}
 file in the top-level source directory for detailed information on how
 to run CMake).
 
@@ -5735,32 +5752,28 @@ The Gmsh Application Programming Interface (API) allows you to integrate
 the Gmsh library in your own application. By design, the Gmsh API is
 purely functional, and only uses elementary types from the target
 language. Currently supported languages are C++, C, Python and Julia.
-See the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c++,tutorial/c++},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/c,tutorial/c},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/python,tutorial/python}
-and
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/julia,tutorial/julia}
-directories for the API @ref{Tutorial}. Other API examples are available
-in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
-directory.
+See the @url{@value{GITLAB-PREFIX}/tutorial/c++,tutorial/c++},
+@url{@value{GITLAB-PREFIX}/tutorial/c,tutorial/c},
+@url{@value{GITLAB-PREFIX}/tutorial/python,tutorial/python} and
+@url{@value{GITLAB-PREFIX}/tutorial/julia,tutorial/julia} directories
+from the @ref{Tutorial} for examples. For other API examples, see the
+@url{@value{GITLAB-PREFIX}/demos/api/,demos/api} directory.
 
 The different versions of the API are generated automatically from the
 master API definition file
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gen.py,api/gen.py}:
+@url{@value{GITLAB-PREFIX}/api/gen.py,api/gen.py}:
 
 @itemize @bullet
-@item C++ API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h,gmsh.h}
-@item C API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmshc.h,gmshc.h}
-@item Python API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,gmsh.py}
-@item Julia API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.jl,gmsh.jl}
+@item C++ API: @url{@value{GITLAB-PREFIX}/api/gmsh.h,gmsh.h}
+@item C API: @url{@value{GITLAB-PREFIX}/api/gmshc.h,gmshc.h}
+@item Python API: @url{@value{GITLAB-PREFIX}/api/gmsh.py,gmsh.py}
+@item Julia API: @url{@value{GITLAB-PREFIX}/api/gmsh.jl,gmsh.jl}
 @end itemize
 
 The additional
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h_cwrap,gmsh.h_cwrap}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h_cwrap,gmsh.h_cwrap}
 header redefines the C++ API in terms of the C API. This is provided as
-a convenience for users of the @url{http://gmsh.info/bin,binary Gmsh
+a convenience for users of the @url{https://gmsh.info/bin,binary Gmsh
 Software Development Kit (SDK)} whose C++ compiler Application Binary
 Interface (ABI) is not compatible with the ABI of the C++ compiler used
 to create the SDK. To use these C++ bindings of the C API instead of the
@@ -5851,14 +5864,14 @@ modify and create views.
 
 All the functions available in the API are given below. See the relevant
 header/module file for the exact definition in each supported language:
-in @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h,C++}
+in @url{@value{GITLAB-PREFIX}/api/gmsh.h,C++}
 @code{gmsh/model/geo/addPoint} will lead to a namespaced function
 @code{gmsh::model::geo::addPoint}, while in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,Python}
+@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python}
 and
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.jl,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia}
 it will lead to @code{gmsh.model.geo.addPoint}, and in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmshc.h,C} to
+@url{@value{GITLAB-PREFIX}/api/gmshc.h,C} to
 @code{gmshModelGeoAddPoint}. Output values are passed by reference in
 C++, as pointers in C and directly returned (after the return value, if
 any) in Python and Julia.
@@ -5905,70 +5918,70 @@ requests.
 
 Gmsh's code is structured in several subdirectories, roughly separated
 between the four core modules
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo,Geo},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Mesh,Mesh},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Solver,Solver},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post,Post}) and
+(@url{@value{GITLAB-PREFIX}/Geo,Geo},
+@url{@value{GITLAB-PREFIX}/Mesh,Mesh},
+@url{@value{GITLAB-PREFIX}/Solver,Solver},
+@url{@value{GITLAB-PREFIX}/Post,Post}) and
 associated utilities
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common,Common},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Numeric,Numeric})
+(@url{@value{GITLAB-PREFIX}/Common,Common},
+@url{@value{GITLAB-PREFIX}/Numeric,Numeric})
 on one hand, and the graphics
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Graphics,Graphics})
+(@url{@value{GITLAB-PREFIX}/Graphics,Graphics})
 and interface
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Fltk,Fltk},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Parser,Parser},
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api,api}) code on
+(@url{@value{GITLAB-PREFIX}/Fltk,Fltk},
+@url{@value{GITLAB-PREFIX}/Parser,Parser},
+@url{@value{GITLAB-PREFIX}/api,api}) code on
 the other.
 
 The geometry module is based on a model class
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GModel.h,Geo/GModel.h}),
+(@url{@value{GITLAB-PREFIX}/Geo/GModel.h,Geo/GModel.h}),
 and abstract entity classes for geometrical points
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GVertex.h,Geo/GVertex.h}),
+(@url{@value{GITLAB-PREFIX}/Geo/GVertex.h,Geo/GVertex.h}),
 curves
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GEdge.h,Geo/GEdge.h}),
+(@url{@value{GITLAB-PREFIX}/Geo/GEdge.h,Geo/GEdge.h}),
 surfaces
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GFace.h,Geo/GFace.h})
+(@url{@value{GITLAB-PREFIX}/Geo/GFace.h,Geo/GFace.h})
 and volumes
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GRegion.h,Geo/GRegion.h}).
+(@url{@value{GITLAB-PREFIX}/Geo/GRegion.h,Geo/GRegion.h}).
 Concrete implementations of these classes are provided for each
 supported CAD kernel
-(e.g. @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/gmshVertex.h,Geo/gmshVertex.h}
+(e.g. @url{@value{GITLAB-PREFIX}/Geo/gmshVertex.h,Geo/gmshVertex.h}
 for points in Gmsh's built-in CAD kernel, or
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/OCCVertex.h,Geo/OCCVertex.h}
+@url{@value{GITLAB-PREFIX}/Geo/OCCVertex.h,Geo/OCCVertex.h}
 for points from OpenCASCADE). All these elementary model entities derive
 from
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GEntity.h,Geo/GEntity.h}.
+@url{@value{GITLAB-PREFIX}/Geo/GEntity.h,Geo/GEntity.h}.
 Physical groups are simply stored as integer tags in the entities.
 
 A mesh is composed of elements: mesh points
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MPoint.h,Geo/MPoint.h}),
+(@url{@value{GITLAB-PREFIX}/Geo/MPoint.h,Geo/MPoint.h}),
 lines
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MLine.h,Geo/MLine.h}),
+(@url{@value{GITLAB-PREFIX}/Geo/MLine.h,Geo/MLine.h}),
 triangles
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MTriangle.h,Geo/MTriangle.h}),
+(@url{@value{GITLAB-PREFIX}/Geo/MTriangle.h,Geo/MTriangle.h}),
 quadrangles
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MQuadrangle.h,Geo/MQuadrangle.h}),
+(@url{@value{GITLAB-PREFIX}/Geo/MQuadrangle.h,Geo/MQuadrangle.h}),
 tetrahedra
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MTetrahedron.h,Geo/MTetrahedron.h}),
+(@url{@value{GITLAB-PREFIX}/Geo/MTetrahedron.h,Geo/MTetrahedron.h}),
 etc. All the mesh elements are derived from
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MElement.h,Geo/MElement.h},
+@url{@value{GITLAB-PREFIX}/Geo/MElement.h,Geo/MElement.h},
 and are stored in the corresponding model entities: one mesh point per
 geometrical point, mesh lines in geometrical curves, triangles and
 quadrangles in surfaces, etc. The elements are defined in terms of their
 nodes
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MVertex.h,Geo/MVertex.h}).
+(@url{@value{GITLAB-PREFIX}/Geo/MVertex.h,Geo/MVertex.h}).
 Each model entity stores only its internal nodes: nodes on boundaries or
 on embedded entities are stored in the associated bounding/embedded
 entity.
 
 The post-processing module is based on the concept of views
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PView.h,Post/PView.h})
+(@url{@value{GITLAB-PREFIX}/Post/PView.h,Post/PView.h})
 and abstract data containers (derived from
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewData.h,Post/PViewData.h}).
+@url{@value{GITLAB-PREFIX}/Post/PViewData.h,Post/PViewData.h}).
 Data can be either mesh-based
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewDataGModel.h,Post/PViewDataGModel.h}),
+(@url{@value{GITLAB-PREFIX}/Post/PViewDataGModel.h,Post/PViewDataGModel.h}),
 in which case the view is linked to one or more models, or list-based
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewDataList.h,Post/PViewDataLis.h}),
+(@url{@value{GITLAB-PREFIX}/Post/PViewDataList.h,Post/PViewDataLis.h}),
 in which case all the relevant geometrical information is self-contained
 in the view.
 
@@ -5996,7 +6009,7 @@ opening braces for functions on a separate line, opening braces for
 loops and tests on the same line, etc. You can use the
 @code{clang-format} tool to apply these rules automatically (the rules
 are defined in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/.clang-format,.clang-format}
+@url{@value{GITLAB-PREFIX}/.clang-format,.clang-format}
 file.)
 @item
 Always use the @code{Msg::} class to print information or errors
@@ -6020,24 +6033,24 @@ To add a new option in Gmsh:
 @enumerate
 @item
 create the option in the @code{CTX} class
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Context.h,Common/Context.h}
+(@url{@value{GITLAB-PREFIX}/Common/Context.h,Common/Context.h}
 if it's a classical option, or in the @code{PViewOptions} class
-(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewOptions.h,Post/PViewOptions.h})
+(@url{@value{GITLAB-PREFIX}/Post/PViewOptions.h,Post/PViewOptions.h})
 if it's a post-processing view-dependent option;
 @item
 in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/DefaultOptions.h,Common/DefaultOptions.h},
+@url{@value{GITLAB-PREFIX}/Common/DefaultOptions.h,Common/DefaultOptions.h},
 give a name (for the parser to be able to access it), a reference to a
 handling routine (i.e. @code{opt_XXX}) and a default value for this
 option;
 @item
 create the handling routine @code{opt_XXX} in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Options.cpp,Common/Options.cpp}
+@url{@value{GITLAB-PREFIX}/Common/Options.cpp,Common/Options.cpp}
 (and add the prototype in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Options.h,Common/Options.h});
+@url{@value{GITLAB-PREFIX}/Common/Options.h,Common/Options.h});
 @item
 optional: create the associated widget in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Fltk/optionWindow.cpp,Fltk/optionWindow.h};
+@url{@value{GITLAB-PREFIX}/Fltk/optionWindow.cpp,Fltk/optionWindow.h};
 @end enumerate
 
 @c =========================================================================
@@ -6100,7 +6113,7 @@ for the licensing constraints.
 
 @item Where can I find more information?
 
-@url{http://gmsh.info} is the primary location to obtain information
+@url{https://gmsh.info} is the primary location to obtain information
 about Gmsh. There you will for example find the complete reference
 manual and the @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug
 tracking database}.
@@ -6202,7 +6215,7 @@ post-processing data sets, or to change parameters according to
 @code{Print.Parameter}. To create fully customized animations or to use
 different output formats (AVI, MP4, etc.) you should write a
 script. Have a look at @ref{t8} or
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/post_processing/anim.script,demos/post_processing/anim.script}
+@url{@value{GITLAB-PREFIX}/demos/post_processing/anim.script,demos/post_processing/anim.script}
 for some examples.
 
 @item Can I change values in input fields with the mouse in the GUI?
@@ -6262,7 +6275,7 @@ load the file (@code{Merge "file.step";} or
 @code{ShapeFromFile("file.step");}) and add the relevant scripting
 commands after that to delete parts, create new parts or apply boolean
 operators. See
-e.g. @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/import.geo,demos/boolean/import.geo}.
+e.g. @url{@value{GITLAB-PREFIX}/demos/boolean/import.geo,demos/boolean/import.geo}.
 
 @item Why are there surfaces missing when I export a STEP as an unrolled @code{.geo} file?
 
@@ -6386,7 +6399,7 @@ mesh menu. You can select the order on the command line with e.g.
 
 Yes, you can import a surface mesh in any one of the supported mesh file
 formats, define a volume, and mesh it. For an example see
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/simple_geo/sphere-discrete.geo,demos/simple_geo/sphere-discrete.geo}.
+@url{@value{GITLAB-PREFIX}/demos/simple_geo/sphere-discrete.geo,demos/simple_geo/sphere-discrete.geo}.
 
 @item How do I define boundary conditions or material properties in Gmsh?
 
@@ -6429,7 +6442,7 @@ SIGE: signed inverse error on the gradient of FE solution
 @end itemize
 
 For the exact definitions, see
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/MElement.cpp,Geo/MElement.cpp}. The
+@url{@value{GITLAB-PREFIX}/Geo/MElement.cpp,Geo/MElement.cpp}. The
 graphs plot the the number of elements vs. the quality measure.
 
 @item How can I save a mesh file with a given (e.g. older) MSH file format version?
@@ -6463,14 +6476,14 @@ mesh partitions or not, etc. Given the number of possibilities,
 generating the appropriate information is thus best performed in the
 numerical solver itself. The Gmsh API makes these computations easy: see
 for example
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/neighbors.py,demos/api/neighbors.py}.
+@url{@value{GITLAB-PREFIX}/demos/api/neighbors.py,demos/api/neighbors.py}.
 
 @item Could mesh edges/faces be stored in the MSH file?
 
 Edge/faces can be easily generated from the information already
 available in the file (i.e. nodes and elements), or through the Gmsh
 API: see for example
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/faces.cpp,demos/api/faces.cpp}.
+@url{@value{GITLAB-PREFIX}/demos/api/faces.cpp,demos/api/faces.cpp}.
 
 @end enumerate
 
@@ -6492,7 +6505,7 @@ interact with external solvers. See @ref{Solver module}.
 The simplest (but rather crude) approach if to re-launch Gmsh everytime
 you want to visualize something (a simple C program showing how to do
 this is given in
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/misc/callgmsh.c,utils/misc/callgmsh.c}).
+@url{@value{GITLAB-PREFIX}/utils/misc/callgmsh.c,utils/misc/callgmsh.c}).
 
 Another approach is to modify your program so that it can communicate
 with Gmsh through ONELAB over a socket, select `Always listen to
@@ -6503,9 +6516,9 @@ listen for your program on the @code{Solver.SocketName} socket.
 Using the Gmsh API, you can also directly embed Gmsh in your own solver,
 and use ONELAB for interactive parameter definition and
 modification. See
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.py,custom_gui.py}
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py}
 and
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/custom_gui.cpp,custom_gui.cpp})
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp})
 for examples.
 @end enumerate
 
@@ -6591,7 +6604,7 @@ Evaluate plugin.
 You can save simple MPEG animations directly from the `File->Export'
 menu. For other formats you should write a script. Have a look at
 @ref{t8} or
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/post_processing/anim.script,demos/post_processing/anim.script}
+@url{@value{GITLAB-PREFIX}/demos/post_processing/anim.script,demos/post_processing/anim.script}
 for some examples.
 
 @item Is there a way to visualize only certain components of vector/tensor fields?

@@ -52,7 +52,7 @@
 #include "meshPartition.h"
 #include "HighOrder.h"
 #include "meshMetric.h"
-#include "meshGRegionMMG3D.h"
+#include "meshGRegionMMG.h"
 #include "meshGFaceBamg.h"
 #include "meshRefine.h"
 #endif
@@ -1376,26 +1376,43 @@ int GModel::setOrderN(int order, int linear, int incomplete)
 
 int GModel::getMeshStatus(bool countDiscrete)
 {
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteVolume &&
-                          (*it)->meshAttributes.method != MESH_NONE)) &&
-       ((*it)->tetrahedra.size() || (*it)->hexahedra.size() ||
-        (*it)->prisms.size() || (*it)->pyramids.size() ||
-        (*it)->polyhedra.size() || (*it)->trihedra.size()))
-      return 3;
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteSurface &&
-                          (*it)->meshAttributes.method != MESH_NONE)) &&
-       ((*it)->triangles.size() || (*it)->quadrangles.size() ||
-        (*it)->polygons.size()))
-      return 2;
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteCurve &&
-                          (*it)->meshAttributes.method != MESH_NONE)) &&
-       (*it)->lines.size())
-      return 1;
+  std::size_t numEle3D = 0;
+  bool toMesh3D = false;
+  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+    numEle3D += (*it)->getNumMeshElements();
+    if(countDiscrete && numEle3D) return 3;
+    if((*it)->geomType() != GEntity::DiscreteVolume &&
+       (*it)->meshAttributes.method != MESH_NONE) toMesh3D = true;
+  }
+  if(numEle3D && toMesh3D) return 3;
+
+  std::size_t numEle2D = 0;
+  bool toMesh2D = false, meshDone2D = true;
+  for(fiter it = firstFace(); it != lastFace(); ++it) {
+    numEle2D += (*it)->getNumMeshElements();
+    if(countDiscrete && numEle2D) return 2;
+    if((*it)->geomType() != GEntity::DiscreteSurface &&
+       (*it)->meshAttributes.method != MESH_NONE) toMesh2D = true;
+    if((*it)->meshStatistics.status != GEntity::DONE) meshDone2D = false;
+  }
+  if(numEle2D && toMesh2D && meshDone2D)
+    return 2;
+
+  std::size_t numEle1D = 0;
+  bool toMesh1D = false, meshDone1D = true;
+  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+    numEle1D += (*it)->getNumMeshElements();
+    if(countDiscrete && numEle1D) return 1;
+    if((*it)->geomType() != GEntity::DiscreteCurve &&
+       (*it)->meshAttributes.method != MESH_NONE) toMesh1D = true;
+    if((*it)->meshStatistics.status != GEntity::DONE) meshDone1D = false;
+  }
+  if(numEle1D && toMesh1D && meshDone1D)
+    return 1;
+
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;
+
   return -1;
 }
 
@@ -1659,6 +1676,43 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
   }
 }
 
+void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
+{
+  if(!onlyIfNecessary || (_elementVectorCache.empty() && _elementMapCache.empty())) {
+    Msg::Debug("Rebuilding mesh element cache");
+    _elementVectorCache.clear();
+    _elementMapCache.clear();
+    bool dense = false;
+    if(_maxElementNum == getNumMeshElements()) {
+      Msg::Debug("We have a dense element numbering in the cache");
+      dense = true;
+    }
+    else if(_maxElementNum < 10 * getNumMeshElements()) {
+      Msg::Debug(
+        "We have a fairly dense element numbering - still using cache vector");
+      dense = true;
+    }
+    std::vector<GEntity *> entities;
+    getEntities(entities);
+    if(dense) {
+      // numbering starts at 1
+      _elementVectorCache.resize(_maxElementNum + 1, (MElement *)0);
+      for(std::size_t i = 0; i < entities.size(); i++)
+        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+          MElement *e = entities[i]->getMeshElement(j);
+          _elementVectorCache[e->getNum()] = e;
+        }
+    }
+    else {
+      for(std::size_t i = 0; i < entities.size(); i++)
+        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+          MElement *e = entities[i]->getMeshElement(j);
+          _elementMapCache[e->getNum()] = e;
+        }
+    }
+  }
+}
+
 MVertex *GModel::getMeshVertexByTag(int n)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
@@ -1702,36 +1756,7 @@ MElement *GModel::getMeshElementByTag(int n)
 {
   if(_elementVectorCache.empty() && _elementMapCache.empty()) {
     Msg::Debug("Rebuilding mesh element cache");
-    _elementVectorCache.clear();
-    _elementMapCache.clear();
-    bool dense = false;
-    if(_maxElementNum == getNumMeshElements()) {
-      Msg::Debug("We have a dense element numbering in the cache");
-      dense = true;
-    }
-    else if(_maxElementNum < 10 * getNumMeshElements()) {
-      Msg::Debug(
-        "We have a fairly dense element numbering - still using cache vector");
-      dense = true;
-    }
-    std::vector<GEntity *> entities;
-    getEntities(entities);
-    if(dense) {
-      // numbering starts at 1
-      _elementVectorCache.resize(_maxElementNum + 1, (MElement *)0);
-      for(std::size_t i = 0; i < entities.size(); i++)
-        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-          MElement *e = entities[i]->getMeshElement(j);
-          _elementVectorCache[e->getNum()] = e;
-        }
-    }
-    else {
-      for(std::size_t i = 0; i < entities.size(); i++)
-        for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-          MElement *e = entities[i]->getMeshElement(j);
-          _elementMapCache[e->getNum()] = e;
-        }
-    }
+    rebuildMeshElementCache();
   }
 
   if(n < (int)_elementVectorCache.size())
@@ -2067,72 +2092,113 @@ static void _associateEntityWithElementVertices(GEntity *ge,
   }
 }
 
-void GModel::createGeometryOfDiscreteEntities()
+void GModel::createGeometryOfDiscreteEntities
+  (const std::vector<std::pair<int, int> > &dimTags)
 {
-  Msg::StatusBar(true, "Creating geometry of discrete curves...");
-  double t1 = Cpu(), w1 = TimeOfDay();
-  std::vector<GEntity*> curves;
-  getEntities(curves, 1);
-  for(std::size_t i = 0; i < curves.size(); i++) {
-    discreteEdge *de = dynamic_cast<discreteEdge *>(curves[i]);
-    if(de) {
-      if(de->createGeometry())
-        Msg::Error("Could not create geometry of discrete curve %d", de->tag());
-    }
-  }
-  double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true,
-                 "Done creating geometry of discrete curves "
-                 "(Wall %gs, CPU %gs)",
-                 w2 - w1, t2 - t1);
+  std::vector<discreteEdge *> e;
+  std::vector<discreteFace *> f;
+  std::vector<discreteRegion *> r;
 
-  Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
-  t1 = Cpu();
-  w1 = TimeOfDay();
-  std::vector<GEntity*> surfaces;
-  getEntities(surfaces, 2);
-  Msg::StartProgressMeter(surfaces.size());
-  for(std::size_t i = 0; i < surfaces.size(); i++) {
-    discreteFace *df = dynamic_cast<discreteFace *>(surfaces[i]);
-    if(df) {
-      Msg::ProgressMeter(i, true, "Creating geometry");
-      if(df->createGeometry())
-        Msg::Error("Could not create geometry of discrete surface %d",
-                   df->tag());
+  if(dimTags.empty()) {
+    for(eiter it = firstEdge(); it != lastEdge(); it++) {
+      discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
+      if(de) e.push_back(de);
+    }
+    for(fiter it = firstFace(); it != lastFace(); it++) {
+      discreteFace *df = dynamic_cast<discreteFace *>(*it);
+      if(df) f.push_back(df);
+    }
+    for(riter it = firstRegion(); it != lastRegion(); it++) {
+      discreteRegion *dr = dynamic_cast<discreteRegion *>(*it);
+      if(dr) r.push_back(dr);
     }
   }
-  Msg::StopProgressMeter();
-  t2 = Cpu();
-  w2 = TimeOfDay();
-  Msg::StatusBar(true,
-                 "Done creating geometry of discrete surfaces "
-                 "(Wall %gs, CPU %gs)",
-                 w2 - w1, t2 - t1);
+  else {
+    for(std::size_t i = 0; i < dimTags.size(); i++) {
+      int dim = dimTags[i].first;
+      int tag = dimTags[i].second;
+      if(dim == 1) {
+        discreteEdge *de = dynamic_cast<discreteEdge *>(getEdgeByTag(tag));
+        if(de) e.push_back(de);
+        else Msg::Error("No discrete curve with tag %d", tag);
+      }
+      else if(dim == 2) {
+        discreteFace *df = dynamic_cast<discreteFace *>(getFaceByTag(tag));
+        if(df) f.push_back(df);
+        else Msg::Error("No discrete surface with tag %d", tag);
+      }
+      else if(dim == 3) {
+        discreteRegion *dr = dynamic_cast<discreteRegion *>(getRegionByTag(tag));
+        if(dr) r.push_back(dr);
+        else Msg::Error("No discrete volume with tag %d", tag);
+      }
+    }
+  }
+
+  if(e.size()) {
+    Msg::StatusBar(true, "Creating geometry of discrete curves...");
+    double t1 = Cpu(), w1 = TimeOfDay();
+    for(std::size_t i = 0; i < e.size(); i++) {
+      if(e[i]->createGeometry())
+        Msg::Error("Could not create geometry of discrete curve %d", e[i]->tag());
+    }
+    double t2 = Cpu(), w2 = TimeOfDay();
+    Msg::StatusBar(true, "Done creating geometry of discrete curves "
+                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+  }
+
+  if(f.size()) {
+    Msg::StatusBar(true, "Creating geometry of discrete surfaces...");
+    double t1 = Cpu(), w1 = TimeOfDay();
+    Msg::StartProgressMeter(f.size());
+    for(std::size_t i = 0; i < f.size(); i++) {
+      Msg::ProgressMeter(i, true, "Creating geometry");
+      if(f[i]->createGeometry())
+        Msg::Error("Could not create geometry of discrete surface %d", f[i]->tag());
+    }
+    Msg::StopProgressMeter();
+    double t2 = Cpu();
+    double w2 = TimeOfDay();
+    Msg::StatusBar(true, "Done creating geometry of discrete surfaces "
+                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+  }
+
+  if(r.size()) {
+    Msg::StatusBar(true, "Creating geometry of discrete volumes...");
+    double t1 = Cpu(), w1 = TimeOfDay();
+    for(std::size_t i = 0; i < r.size(); i++) {
+      if(r[i]->createGeometry())
+        Msg::Error("Could not create geometry of discrete volume %d", r[i]->tag());
+    }
+    double t2 = Cpu(), w2 = TimeOfDay();
+    Msg::StatusBar(true, "Done creating geometry of discrete volumes "
+                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+  }
 }
 
-void GModel::_associateEntityWithMeshVertices(bool force)
+void GModel::_associateEntityWithMeshVertices()
 {
   // loop on regions, then on faces, edges and vertices and store the entity
   // pointer in the the elements' vertices (this way we associate the entity of
   // lowest geometrical degree with each vertex)
   for(riter it = firstRegion(); it != lastRegion(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->tetrahedra, force);
-    _associateEntityWithElementVertices(*it, (*it)->hexahedra, force);
-    _associateEntityWithElementVertices(*it, (*it)->prisms, force);
-    _associateEntityWithElementVertices(*it, (*it)->pyramids, force);
-    _associateEntityWithElementVertices(*it, (*it)->trihedra, force);
-    _associateEntityWithElementVertices(*it, (*it)->polyhedra, force);
+    _associateEntityWithElementVertices(*it, (*it)->tetrahedra);
+    _associateEntityWithElementVertices(*it, (*it)->hexahedra);
+    _associateEntityWithElementVertices(*it, (*it)->prisms);
+    _associateEntityWithElementVertices(*it, (*it)->pyramids);
+    _associateEntityWithElementVertices(*it, (*it)->trihedra);
+    _associateEntityWithElementVertices(*it, (*it)->polyhedra);
   }
   for(fiter it = firstFace(); it != lastFace(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->triangles, force);
-    _associateEntityWithElementVertices(*it, (*it)->quadrangles, force);
-    _associateEntityWithElementVertices(*it, (*it)->polygons, force);
+    _associateEntityWithElementVertices(*it, (*it)->triangles);
+    _associateEntityWithElementVertices(*it, (*it)->quadrangles);
+    _associateEntityWithElementVertices(*it, (*it)->polygons);
   }
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->lines, force);
+    _associateEntityWithElementVertices(*it, (*it)->lines);
   }
   for(viter it = firstVertex(); it != lastVertex(); ++it) {
-    _associateEntityWithElementVertices(*it, (*it)->points, force);
+    _associateEntityWithElementVertices(*it, (*it)->points);
   }
 }
 
@@ -2173,10 +2239,13 @@ void GModel::pruneMeshVertexAssociations()
   std::set<MVertex *, MVertexPtrLessThan> vertSet;
   getEntities(entities);
   for(std::size_t i = 0; i < entities.size(); i++) {
-    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-      MVertex *v = entities[i]->mesh_vertices[j];
-      v->setEntity(0);
-      vertSet.insert(v);
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      MElement *e = entities[i]->getMeshElement(j);
+      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+        MVertex *v = e->getVertex(k);
+        v->setEntity(0);
+        vertSet.insert(v);
+      }
     }
     entities[i]->mesh_vertices.clear();
   }
@@ -3197,9 +3266,30 @@ void GModel::createParasolidInternals() { }
 
 void GModel::deleteParasolidInternals() { }
 
-int GModel::readParasolid(const std::string &fn)
+int GModel::readParasolidXMT(const std::string &fn)
 {
-  Msg::Error("Gmsh must be compiled with Parasolid support to load '%s'",
+  Msg::Error("Gmsh must be compiled with Parasolid support to read '%s'",
+             fn.c_str());
+  return 0;
+}
+
+int GModel::writeParasolidXMT(const std::string &fn)
+{
+  Msg::Error("Gmsh must be compiled with Parasolid support to write '%s'",
+             fn.c_str());
+  return 0;
+}
+
+int GModel::readParasolidSTEP(const std::string &fn)
+{
+  Msg::Error("Gmsh must be compiled with Parasolid support to read '%s'",
+             fn.c_str());
+  return 0;
+}
+
+int GModel::writeParasolidSTEP(const std::string &fn)
+{
+  Msg::Error("Gmsh must be compiled with Parasolid support to write '%s'",
              fn.c_str());
   return 0;
 }

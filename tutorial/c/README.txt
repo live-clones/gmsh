@@ -5,7 +5,7 @@ To compile and run the C tutorials, you need the Gmsh dynamic library and the
 associated header file (`gmshc.h'). These can be either obtained
 
 - from the binary Software Development Kit (SDK) available on the Gmsh website
-  http://gmsh.info/bin/, for Windows, Linux and macOS. Download and uncompress
+  https://gmsh.info/bin/, for Windows, Linux and macOS. Download and uncompress
   the relevant gmsh*-sdk.* archive for your operating system. To compile the
   first tutorial, assuming that you are currently in the root directory of the
   SDK and that you are using the gcc compiler:

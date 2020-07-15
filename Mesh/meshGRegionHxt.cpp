@@ -28,13 +28,7 @@
 
 extern "C" {
 #include "hxt_tools.h"
-#include "hxt_boundary_recovery.h"
 #include "hxt_tetMesh.h"
-}
-
-static HXTStatus recoveryCallback(HXTMesh *mesh, void *userData)
-{
-  return hxt_boundary_recovery(mesh);
 }
 
 static HXTStatus messageCallback(HXTMessage *msg)
@@ -43,27 +37,16 @@ static HXTStatus messageCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-static HXTStatus meshSizeCallBack(double* pts, size_t numPts, void *userData)
+static HXTStatus nodalSizesCallBack(double* pts, size_t numPts, void *userData)
 {
   GRegion *gr = (GRegion *)userData;
 
-  for(size_t i=0; i<numPts; i++) {
+  for(size_t i = 0; i < numPts; i++) {
     double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0,
                                            pts[4 * i + 0],
                                            pts[4 * i + 1],
                                            pts[4 * i + 2]);
-    if(lc != MAX_LC || !CTX::instance()->mesh.lcExtendFromBoundary) {
-      // constrain by global lcMin and lcMax
-      lc = std::max(lc, CTX::instance()->mesh.lcMin);
-      lc = std::min(lc, CTX::instance()->mesh.lcMax);
-      // apply global scaling
-      if(gr->getMeshSizeFactor() != 1.0) lc *= gr->getMeshSizeFactor();
-        lc *= CTX::instance()->mesh.lcFactor;
-
-      // if(lc > 0.0)
-      pts[4 * i + 3] = lc;
-    }
-    // else pts[4 * i + 3] already contains the size computed by HXT
+    pts[4 * i + 3] = std::min(pts[4 * i + 3], lc);
   }
 
   return HXT_STATUS_OK;
@@ -503,13 +486,18 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     1, // int stat;
     1, // int refine;
     CTX::instance()->mesh.optimize, // int optimize;
-    CTX::instance()->mesh.optimizeThreshold, // double qualityMin;
-    0, // double (*qualityFun)
-    0, // void* qualityData;
-    meshSizeCallBack, // double (*meshSizeFun)
-    regions[0], // void* meshSizeData; // FIXME: should be dynamic!
-    recoveryCallback, // HXTStatus (*recoveryFun)
-    0 // void* recoveryData;
+    { // quality
+      0, // double (*callback)(.., userData)
+      0, // void* userData;
+      CTX::instance()->mesh.optimizeThreshold // double qualityMin;
+    },
+    { // nodalSize
+      nodalSizesCallBack, // HXTStatus (*callback)(double*, size_t, void* userData)
+      regions[0], // void* meshSizeData; // FIXME: should be dynamic!
+      CTX::instance()->mesh.lcMin,
+      CTX::instance()->mesh.lcMax,
+      CTX::instance()->mesh.lcFactor
+    }
   };
 
   HXT_CHECK(hxtTetMesh(mesh, &options));

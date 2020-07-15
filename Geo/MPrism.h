@@ -233,6 +233,11 @@ public:
                    _v[fSolin[numFace][2]], _v[fSolin[numFace][3]]);
     }
   }
+  virtual MVertex *getVertexVTK(int num)
+  {
+    static const int map[6] = {0,2,1,3,5,4};
+    return getVertex(map[num]);
+  }
 };
 
 /*

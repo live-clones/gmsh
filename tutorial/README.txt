@@ -7,7 +7,7 @@ the command line, run "gmsh t1.geo" (which will launch the GUI) or "gmsh t1.geo
 -2" (to perform 2D meshing in batch mode).
 
  * Binary versions of the Gmsh app for Windows, Linux and macOS can be
-   downloaded from http://gmsh.info. Several Linux distributions also ship the
+   downloaded from https://gmsh.info. Several Linux distributions also ship the
    Gmsh app. See the top-level `README.txt' file in the Gmsh source code for
    instructions on how to compile the app from source.
 
@@ -15,14 +15,13 @@ The `c++', `c', `python' and `julia' subdirectories contain the C++, C, Python
 and Julia tutorials, written using the Gmsh Application Programming Interface
 (API). You will need the Gmsh dynamic library and the associated header files
 (for C++ and C) or modules (for Python and Julia) to run them. Each subdirectory
-also contains additional information on how to run the tutorials for each
-supported language, as well as extended tutorials (starting with `x')
-introducing features available through the API but not available in `.geo'
-files.
+contains additional information on how to run the tutorials for each supported
+language, as well as extended tutorials (starting with `x') introducing features
+available through the API but not available in `.geo' files.
 
  * A binary Software Development Kit (SDK) for Windows, Linux and macOS, that
    contains the dynamic Gmsh library and the associated header and module files,
-   can be downloaded from http://gmsh.info. Python users can use `pip install
+   can be downloaded from https://gmsh.info. Python users can use `pip install
    --upgrade gmsh', which will download the binary SDK automatically, and
    install the files in the appropriate system directories. Several Linux
    distributions also ship the Gmsh SDK. See the top-level `README.txt' in the

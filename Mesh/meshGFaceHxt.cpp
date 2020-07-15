@@ -28,7 +28,7 @@ int meshGFaceHxt(GModel *gm)
 
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
-  
+
   std::map<int, std::vector<double> > dataH;
   std::map<int, std::vector<double> > dataDir;
   std::map<int, std::vector<double> > dataDirOrtho;

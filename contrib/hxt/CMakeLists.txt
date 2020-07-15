@@ -131,7 +131,6 @@ set(SRC
     hxt_tetFlag.c
     hxt_tetMesh.c
     hxt_tetNodalSize.c
-    hxt_tetNodalSize.h
     hxt_tetOpti.c
     hxt_tetOptiUtils.h
     hxt_tetPartition.h
@@ -151,6 +150,7 @@ set(INC
     hxt_tetDelaunay.h
     hxt_tetFlag.h
     hxt_tetMesh.h
+    hxt_tetNodalSize.h
     hxt_tetOpti.h
     hxt_tetRepair.h
     hxt_vertices.h

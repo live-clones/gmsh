@@ -27,7 +27,8 @@ typedef struct {
                          - `delaunayThreads<0`: use OMP_NUM_PROCS */
   int improveThreads;  /* Same as above but for mesh improvements operations */
   int reproducible;    /*The output mesh will be identical with this option
-                         if given
+                         if the machine and compiler are identical
+                         and if given
                           - the same vertices in the same order
                           - the same number of threads
                          WARNING: This option slows down the mesh generation
@@ -44,22 +45,35 @@ typedef struct {
                           above the threshold given by `qualityMin`
                           (Boolean option) */
 
-  double qualityMin;   /* Threshold for mesh improvement */
+  struct {    
+    /* function giving the quality of an element, or NULL to use default function*/
+    double (*callback)(double* p0, double* p1, double* p2, double* p3, void* userData);
 
-  /* function giving the quality of an element, or NULL to use default function*/
-  double (*qualityFun)(double* p0,double* p1, double* p2, double* p3,
-                       void* qualityData);
-  void* qualityData;   /* user pointer to give to qualityFun */
+    void* userData; /* user pointer given to callback */
 
-  /* function giving the desired mesh size at a position in space,
-     or NULL to use default function*/
-  HXTStatus (*meshSizeFun)(double* coord, size_t n,
-                           void* meshSizeData);
-  void* meshSizeData;  /* user pointer to give to meshSizeFun */
+    double min;  /* Threshold for mesh improvement (Hxt tries to improve all tet
+                    with a quality below quality.min */
+  } quality;
 
-  /* function to recover missing features in a mesh */
-  HXTStatus (*recoveryFun)(HXTMesh* mesh, void* recoveryData);
-  void* recoveryData;  /* user pointer to give to recoveryFun */
+
+  struct {
+    /* function giving the desired mesh size at a position in space,
+       or NULL to use default function*/
+    HXTStatus (*callback)(double* coord, size_t n, void* userData);
+
+    void* userData; /* user pointer given to callback */
+
+    /* if we want to insert a point p0 with size s0, and there is a point p1
+       with size s1 at a distance d, we check if
+
+       d > fmax(nodalSize.min, fmin(nodalSize.min, 0.5*(s0+s1))) * scaling
+
+      if it is not the case, the point is filtered out
+       */
+    double min;     /* default value: 0.0                                     */
+    double max;     /* default value: DBL_MAX (converted to DBL_MAX if <=0.0) */
+    double factor;  /* default value: 1.0     (converted to 1.0 if <=0.0)     */
+  } nodalSizes;
 } HXTTetMeshOptions;
 
 
@@ -73,8 +87,7 @@ typedef struct {
  *        .stat = 1,
  *        .refine = 1,
  *        .optimize = 1,
- *        .qualityMin = 0.35,
- *        .recoveryFun = hxt_boundary_recovery
+ *        .quality.min = 0.35,
  *      }
  *
  *    Everything that is not explicitely initialized is set to zero.
@@ -85,8 +98,7 @@ typedef struct {
  *     hxtTetMesh3d(mesh, &(HXTMesh3dOptions) {.refine=1,
  *                                             .optimize=1,
  *                                             .stat=1,
- *                                             .qualityMin=1,
- *                                             .bndRecovery=hxt_boundary_recovery });
+ *                                             .quality.min=0.35 });
  *
  *     This is even shorter than without using a structure.
  */

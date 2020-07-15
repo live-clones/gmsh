@@ -477,12 +477,8 @@ int tetgenmesh::reconstructmesh(void *p){
           face subloop;
           HXT_CHECK( hxtAlignedMalloc(&mesh->triangles.node,
                                      (mesh->triangles.num)*3*sizeof(uint32_t)) );
-          if (mesh->triangles.node == NULL)
-            return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
           HXT_CHECK( hxtAlignedMalloc(&mesh->triangles.colors,
                                      (mesh->triangles.num)*sizeof(uint16_t)) );
-          if (mesh->triangles.colors == NULL)
-            return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
           mesh->triangles.size = mesh->triangles.num;
           subloop.shver = 0;
           subfaces->traversalinit();

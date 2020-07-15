@@ -11,14 +11,12 @@
 class GModel;
 class MElement;
 
-void SetOrder1(GModel *m, bool onlyVisible = false);
+void SetOrder1(GModel *m, bool onlyVisible = false, bool skipDiscrete = false);
 void SetOrderN(GModel *m, int order, bool linear = true,
                bool incomplete = false, bool onlyVisible = false);
 void checkHighOrderTriangles(const char *cc, GModel *m,
                              std::vector<MElement *> &bad, double &minJGlob);
 void checkHighOrderTetrahedron(const char *cc, GModel *m,
                                std::vector<MElement *> &bad, double &minJGlob);
-void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
-                             bool &CAD);
 
 #endif

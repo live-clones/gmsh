@@ -13,6 +13,7 @@
 #include <unistd.h>
 #endif
 
+#include <clocale>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -69,6 +70,7 @@ int Msg::_errorCount = 0;
 int Msg::_atLeastOneErrorInRun = 0;
 std::string Msg::_firstWarning;
 std::string Msg::_firstError;
+std::string Msg::_lastError;
 GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
 std::string Msg::_launchDate;
@@ -164,6 +166,11 @@ void Msg::Init(int argc, char **argv)
   // the onelab.py module or subclients automatically)
   addGmshPathToEnvironmentVar("PYTHONPATH");
   addGmshPathToEnvironmentVar("PATH");
+
+  // make sure to use the "C" locale; in particular this ensures that we will
+  // use a dot for for the decimal separator when writing ASCII mesh files
+  std::setlocale(LC_ALL, "C");
+  std::setlocale(LC_NUMERIC, "C");
 
   InitializeOnelab("Gmsh");
 }
@@ -299,6 +306,11 @@ std::string Msg::GetFirstWarning()
 std::string Msg::GetFirstError()
 {
   return _firstError;
+}
+
+std::string Msg::GetLastError()
+{
+  return _lastError;
 }
 
 void Msg::SetExecutableName(const std::string &name)
@@ -497,6 +509,8 @@ void Msg::Error(const char *fmt, ...)
   if(_logFile) fprintf(_logFile, "Error: %s\n", str);
   if(_callback) (*_callback)("Error", str);
   if(_client) _client->Error(str);
+  if(_firstError.empty()) _firstError = str;
+  _lastError = str;
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -504,7 +518,6 @@ void Msg::Error(const char *fmt, ...)
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
       + "Error   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    if(_firstError.empty()) _firstError = str;
     FlGui::instance()->setLastStatus
       (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
   }
@@ -520,6 +533,13 @@ void Msg::Error(const char *fmt, ...)
     else
       fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
     fflush(stderr);
+  }
+
+  if(CTX::instance()->abortOnError == 2) {
+    throw 1;
+  }
+  else if(CTX::instance()->abortOnError == 3) {
+    Exit(1);
   }
 }
 
@@ -834,7 +854,7 @@ void Msg::PrintTimers()
 void Msg::ResetErrorCounter()
 {
   _warningCount = 0; _errorCount = 0;
-  _firstWarning.clear(); _firstError.clear();
+  _firstWarning.clear(); _firstError.clear(); _lastError.clear();
 #if defined(HAVE_FLTK)
   if(FlGui::available()) FlGui::instance()->setLastStatus();
 #endif
@@ -1145,6 +1165,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     if(name != "Gmsh"){ // load db from file:
       FILE *fp = Fopen(name.c_str(), "rb");
       if(fp){
+        Msg::Info("Reading ONELAB database '%s'", name.c_str());
         _onelabClient->fromFile(fp);
         fclose(fp);
       }

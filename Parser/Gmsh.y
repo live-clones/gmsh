@@ -1976,6 +1976,48 @@ Shape :
       $$.Type =  MSH_SURF_REGL;
       $$.Num = num;
     }
+  | tBSpline tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$4;
+      std::vector<int> wires; ListOfDouble2Vector($7, wires);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(wires.size() != 1) {
+          yymsg(0, "OpenCASCADE BSpline filling requires a single line loop");
+        }
+        else {
+          r = GModel::current()->getOCCInternals()->addBSplineFilling(num, wires[0]);
+        }
+      }
+      else{
+        yymsg(0, "BSpline surface only available with OpenCASCADE geometry kernel");
+      }
+      if(!r) yymsg(0, "Could not add BSpline surface");
+      List_Delete($7);
+      $$.Type = MSH_SURF_REGL;
+      $$.Num = num;
+    }
+  | tBezier tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$4;
+      std::vector<int> wires; ListOfDouble2Vector($7, wires);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(wires.size() != 1) {
+          yymsg(0, "OpenCASCADE BSpline filling requires a single line loop");
+        }
+        else {
+          r = GModel::current()->getOCCInternals()->addBezierFilling(num, wires[0]);
+        }
+      }
+      else{
+        yymsg(0, "Bezier surface only available with OpenCASCADE geometry kernel");
+      }
+      if(!r) yymsg(0, "Could not add Bezier surface");
+      List_Delete($7);
+      $$.Type = MSH_SURF_REGL;
+      $$.Num = num;
+    }
   | tEuclidian tCoordinates tEND
     {
       myGmshSurface = 0;
@@ -3588,6 +3630,13 @@ Command :
    | tCreateGeometry tEND
     {
       GModel::current()->createGeometryOfDiscreteEntities();
+    }
+   | tCreateGeometry '{' ListOfShapes '}'
+    {
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($3, dimTags);
+      GModel::current()->createGeometryOfDiscreteEntities(dimTags);
+      List_Delete($3);
     }
    | tRenumberMeshNodes tEND
     {

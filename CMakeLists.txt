@@ -59,7 +59,7 @@ opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEF
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
 opt(MESH "Enable mesh module (required by GUI)" ${DEFAULT})
 opt(METIS "Enable Metis mesh partitioner" ${DEFAULT})
-opt(MMG3D "Enable MMG3D 3D anisotropic mesh refinement" ${DEFAULT})
+opt(MMG "Enable MMG mesh adaptation interface" ${DEFAULT})
 opt(MPEG_ENCODE "Enable built-in MPEG movie encoder" ${DEFAULT})
 opt(MPI "Enable MPI (experimental, not used for meshing)" OFF)
 opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
@@ -90,6 +90,7 @@ opt(QUADMESHINGTOOLS "Enable QuadMeshingTools extensions" ${DEFAULT})
 opt(PRO "Enable PRO extensions" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
+opt(RPATH "Use RPATH in dynamically linked targets" ON)
 opt(SLEPC "Enable SLEPc eigensolvers" OFF)
 opt(SOLVER "Enable built-in finite element solvers (required for reparametrization)" ${DEFAULT})
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
@@ -102,7 +103,7 @@ opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by publ
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 6)
+set(GMSH_MINOR_VERSION 7)
 set(GMSH_PATCH_VERSION 0)
 set(GMSH_EXTRA_VERSION "")
 set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
@@ -126,6 +127,13 @@ set(GMSH_SHORT_VERSION
 set(GMSH_VERSION "${GMSH_SHORT_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
+set(GMSH_GITLAB_PREFIX "https://gitlab.onelab.info/gmsh/gmsh")
+if(GMSH_RELEASE)
+  set(GMSH_GITLAB_PREFIX "${GMSH_GITLAB_PREFIX}/blob/gmsh_${GMSH_SHORT_VERSION}")
+else()
+  set(GMSH_GITLAB_PREFIX "${GMSH_GITLAB_PREFIX}/blob/master")
+endif()
+
 set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
 
 if(ENABLE_PRIVATE_API)
@@ -136,9 +144,9 @@ if(ENABLE_PRIVATE_API)
           "(i.e. all the internal headers) and ship the stable public API instead "
           "(i.e. only the headers and modules in gmsh/api).")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h
-    Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
-    contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
-    contrib/MeshQualityOptimizer/*.h)
+    Post/*.h Plugin/*.h Graphics/*.h contrib/kbipack/*.h
+    contrib/DiscreteIntegration/*.h contrib/HighOrderMeshOptimizer/*.h
+    contrib/MeshOptimizer/*.h contrib/MeshQualityOptimizer/*.h)
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
       ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h ${HEADERS})
   get_property(IAMCHILD DIRECTORY PROPERTY PARENT_DIRECTORY)
@@ -194,7 +202,8 @@ if(APPLE)
   set(GMSH_OS "MacOSX")
 elseif(CYGWIN OR MSYS)
   # detect if we use the MinGW compilers on Cygwin - if we do, handle the build
-  # as a pure Windows build
+  # as a pure Windows build and make cmake find pure Windows import libraries
+  # (.lib)
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
      CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpmachine
@@ -204,6 +213,8 @@ elseif(CYGWIN OR MSYS)
       set(GMSH_OS "Windows")
       set(WIN32 1)
       add_definitions(-DWIN32)
+      set(CMAKE_FIND_LIBRARY_PREFIXES "lib" "")
+      set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".lib" ".LIB" ".dll" ".DLL")
     endif()
   endif()
 else()
@@ -241,16 +252,15 @@ if(ENABLE_BUILD_DYNAMIC)
   set(GMSH_OS "${GMSH_OS}-sdk")
 endif()
 
-if(APPLE)
-  # FIXME: change this once we understand rpaths - the options below do not work
-  set(CMAKE_MACOSX_RPATH 0)
-else()
-  # make sure that dynamic libraries can be found when installing/ displacing the
-  # binaries: from https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/
-  # RPATH-handling:
+if(ENABLE_RPATH)
+  set(CMAKE_MACOSX_RPATH 1)
+
+  # make sure that dynamic libraries can be found when installing/ displacing
+  # the binaries: from https://gitlab.kitware.com/cmake/community/wikis/doc/
+  # cmake/RPATH-handling:
 
   # use, i.e. don't skip the full RPATH for the build tree
-  set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+  set(CMAKE_SKIP_BUILD_RPATH FALSE)
 
   # when building, don't use the install RPATH already (but later on when
   # installing)
@@ -265,8 +275,15 @@ else()
   list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib"
        isSystemDir)
   if("${isSystemDir}" STREQUAL "-1")
-     set(CMAKE_INSTALL_RPATH "\\\$ORIGIN/../lib")
+    if(APPLE)
+      set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+    else()
+      set(CMAKE_INSTALL_RPATH "\\\$ORIGIN/../lib")
+    endif()
   endif()
+else()
+  set(CMAKE_MACOSX_RPATH 0)
+  set(CMAKE_SKIP_BUILD_RPATH TRUE)
 endif()
 
 if(MSVC)
@@ -310,7 +327,7 @@ if(ENABLE_OPENMP)
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/local/lib/libomp -lomp")
   elseif(APPLE AND EXISTS "/usr/local/lib/libomp.dylib")
     # official Apple compiler with homebrew's libomp
-    set_config_option(HAVE_OPENMP "OpenMP[usr/local]")
+    set_config_option(HAVE_OPENMP "OpenMP[Homebrew]")
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
     set(CMAKE_CXX_FLAGS
@@ -516,9 +533,11 @@ if(ENABLE_BLAS_LAPACK)
       endif()
     endif()
 
-    if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-      message(WARNING "Could not find Blas or Lapack: most meshing algorithms "
-              "will not be functional")
+    if(NOT ENABLE_PETSC)
+      if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+        message(WARNING "Could not find Blas or Lapack: most meshing algorithms "
+                "will not be functional")
+      endif()
     endif()
 
   endif()
@@ -954,17 +973,13 @@ if(HAVE_MESH)
     set_config_option(HAVE_BAMG "Bamg")
   endif()
 
-  if(ENABLE_MMG3D)
-    find_library(MMG3D_LIB mmg3d PATH_SUFFIXES lib)
-    find_path(MMG3D_INC "libmmg3d.h" PATH_SUFFIXES src include)
-    if(ENABLE_SYSTEM_CONTRIB AND MMG3D_LIB AND MMG3D_INC)
-      list(APPEND EXTERNAL_LIBRARIES ${MMG3D_LIB})
-      list(APPEND EXTERNAL_INCLUDES ${MMG3D_INC})
-      set_config_option(HAVE_MMG3D "Mmg3d[system]")
-    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/mmg3d)
-      add_subdirectory(contrib/mmg3d)
-      include_directories(contrib/mmg3d/build/sources)
-      set_config_option(HAVE_MMG3D "Mmg3d")
+  if(ENABLE_MMG)
+    find_library(MMG_LIB NAMES Mmg mmg)
+    find_path(MMG_INC "libmmg.h" PATH_SUFFIXES mmg)
+    if(MMG_LIB AND MMG_INC)
+      list(APPEND EXTERNAL_LIBRARIES ${MMG_LIB})
+      list(APPEND EXTERNAL_INCLUDES ${MMG_INC})
+      set_config_option(HAVE_MMG "Mmg")
     endif()
   endif()
 endif()
@@ -1654,6 +1669,11 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
       IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
   endif()
   target_link_libraries(shared ${LINK_LIBRARIES})
+  # don't define LC_RPATH in dylib for development, to not get endless warnings
+  # about code signing
+  if(APPLE AND NOT GMSH_RELEASE)
+    set_target_properties(shared PROPERTIES INSTALL_RPATH "")
+  endif()
   if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
     message(STATUS "Note: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
             "won't link. In MSVC change /MT to /MD in the shared project properties")
@@ -1687,9 +1707,9 @@ target_link_libraries(gmsh ${LINK_LIBRARIES})
 if(WIN32 AND NOT MSVC)
   set(FLAGS "-Wl,--stack,16777216 -mwindows")
   if(HAVE_64BIT_SIZE_T)
-    set(FLAGS "${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win64Icon.res")
+    set(FLAGS "${FLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win64Icon.res\"")
   else()
-    set(FLAGS "${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res")
+    set(FLAGS "${FLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res\"")
   endif()
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "${FLAGS} -static")
   if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
@@ -1842,14 +1862,6 @@ else()
   set(GMSH_DOC ${CMAKE_INSTALL_DOCDIR})
   set(GMSH_MAN ${CMAKE_INSTALL_MANDIR}/man1)
   set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
-endif()
-
-# FIXME: change this once we understand rpaths
-if(APPLE)
-  if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
-    set_target_properties(shared PROPERTIES INSTALL_NAME_DIR
-                          ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
-  endif()
 endif()
 
 # mark targets as optional so we can install them separately if needed
@@ -2106,21 +2118,21 @@ if(NOT DISABLE_GMSH_TESTS)
       add_test(${TEST}_cpp ${TEST})
     endforeach()
   endif()
-  # enable this once we have removed the interactive/graphical tests
-  # if(ENABLE_BUILD_DYNAMIC)
-  #   find_package(PythonInterp)
-  #   if(PYTHONINTERP_FOUND)
-  #     file(GLOB_RECURSE TESTFILES tutorial/python/*.py)
-  #     foreach(TESTFILE ${TESTFILES})
-  #       get_filename_component(TEST ${TESTFILE} NAME_WE)
-  #       add_test(NAME ${TEST}_py COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
-  #       set_property(TEST ${TEST}_py APPEND PROPERTY ENVIRONMENT
-  #                    "PYTHONPATH=${CMAKE_SOURCE_DIR}/api")
-  #       set_property(TEST ${TEST}_py APPEND PROPERTY ENVIRONMENT
-  #                    "LD_LIBRARY_PATH=${CMAKE_CURRENT_BINARY_DIR}")
-  #       endforeach()
-  #   endif()
-  # endif()
+  # enable this once we have worked out the path issues on the build machines
+  if(0 AND ENABLE_BUILD_DYNAMIC)
+    find_package(PythonInterp)
+    if(PYTHONINTERP_FOUND)
+      file(GLOB_RECURSE TESTFILES tutorial/python/*.py demos/api/*.py)
+      foreach(TESTFILE ${TESTFILES})
+        get_filename_component(TEST ${TESTFILE} NAME_WE)
+        add_test(NAME ${TEST}_py COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
+        set_property(TEST ${TEST}_py APPEND PROPERTY ENVIRONMENT
+                     "PYTHONPATH=${CMAKE_SOURCE_DIR}/api")
+        set_property(TEST ${TEST}_py APPEND PROPERTY ENVIRONMENT
+                     "LD_LIBRARY_PATH=${CMAKE_CURRENT_BINARY_DIR}")
+        endforeach()
+    endif()
+  endif()
 endif()
 
 message(STATUS "")
@@ -2135,7 +2147,7 @@ message(STATUS "")
 
 mark_as_advanced(GMSH_EXTRA_VERSION
                  ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
-                 GMP_INC GMP_LIB MMG3D_INC MMG3D_LIB HDF5_LIB
+                 GMP_INC GMP_LIB MMG_INC MMG_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB
                  BISON FLEX MAKEINFO TEXI2PDF FLTK_CONFIG_SCRIPT

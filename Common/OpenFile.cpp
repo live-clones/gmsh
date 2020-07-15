@@ -377,13 +377,14 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   }
   else if(ext == ".step" || ext == ".STEP" || ext == ".stp" || ext == ".STP") {
     status = GModel::current()->readOCCSTEP(fileName);
+    //status = GModel::current()->readParasolidSTEP(fileName);
   }
   else if(ext == ".sat" || ext == ".SAT") {
     status = GModel::current()->readACISSAT(fileName);
   }
   else if(ext == ".x_t" || ext == ".xmt_txt" ||
           ext == ".x_b" || ext == ".xmt_bin") {
-    status = GModel::current()->readParasolid(fileName);
+    status = GModel::current()->readParasolidXMT(fileName);
   }
   else if(ext == ".unv" || ext == ".UNV") {
     status = GModel::current()->readUNV(fileName);

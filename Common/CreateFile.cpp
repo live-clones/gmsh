@@ -91,6 +91,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".iges")     return FORMAT_IGES;
   else if(ext == ".igs")      return FORMAT_IGES;
   else if(ext == ".neu")      return FORMAT_NEU;
+  else if(ext == ".xmt_txt")  return FORMAT_XMT;
   else                        return -1;
 }
 
@@ -148,6 +149,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_IGES:    name = ".iges"; break;
   case FORMAT_STEP:    name = ".step"; break;
   case FORMAT_NEU:     name = ".neu"; mesh = true; break;
+  case FORMAT_XMT:     name = ".xmt_txt"; break;
   default:             name = ""; break;
   }
   if(onlyMeshFormats && !mesh) return "";
@@ -457,16 +459,31 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
   case FORMAT_BREP:
-    GModel::current()->writeOCCBREP(name);
+    if(GModel::current()->getOCCInternals())
+      GModel::current()->writeOCCBREP(name);
+    else
+      Msg::Error("No OpenCASCADE CAD data found for BREP export");
     break;
 
   case FORMAT_STEP:
-    GModel::current()->writeOCCSTEP(name);
+    if(GModel::current()->getParasolidInternals())
+      GModel::current()->writeParasolidSTEP(name);
+    else if(GModel::current()->getOCCInternals())
+      GModel::current()->writeOCCSTEP(name);
+    else
+      Msg::Error("No suitable CAD data found for STEP export");
     break;
 
   case FORMAT_NEU:
     GModel::current()->writeNEU
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+    break;
+
+  case FORMAT_XMT:
+    if(GModel::current()->getParasolidInternals())
+      GModel::current()->writeParasolidXMT(name);
+    else
+      Msg::Error("No Parasolid CAD data found for XMT export");
     break;
 
 #if defined(HAVE_FLTK)

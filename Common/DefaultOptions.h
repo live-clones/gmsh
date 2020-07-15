@@ -349,6 +349,8 @@ StringXString PrintOptions_String[] = {
 // NUMBERS
 
 StringXNumber GeneralOptions_Number[] = {
+  { F|O, "AbortOnError" , opt_general_abort_on_error , 0. ,
+    "Abort on error? (0: no, 1: abort meshing, 2: throw an exception, 3: exit)" },
   { F|O, "AlphaBlending" , opt_general_alpha_blending , 1. ,
     "Enable alpha blending (transparency) in post-processing views" },
   { F|O, "Antialiasing" , opt_general_antialiasing , 0. ,
@@ -1095,13 +1097,21 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "FirstNodeTag" , opt_mesh_first_node_tag , 1. ,
     "First tag (>= 1) of mesh nodes" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
-    "Allow transfinite constraints to be modified for Blossom or by global mesh size factor" },
+    "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
+    "by global mesh size factor" },
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO ,
     "Mesh output format (1: msh, 2: unv, 10: auto, 16: vtk, 19: vrml, 21: mail, "
     "26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, 33: med, 34: diff, "
     "38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)" },
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
+  { F|O, "HighOrderCheck", opt_mesh_ho_check,
+#if defined(WIN32)
+    0, // unresolved issues on Windows 10 (#649, #734, #829, #901)
+#else
+    1,
+#endif
+    "Check high-order quality after generation"},
   { F|O, "HighOrderIterMax", opt_mesh_ho_iter_max, 100,
     "Maximum number of iterations in high-order optimization pass"},
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
