@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstdio>
 #include <complex>
+#include <iostream>
 
 #if defined(HAVE_EIGEN)
 #include <Eigen/Dense>
@@ -210,8 +211,7 @@ private:
   friend class fullVector<scalar>;
 
 #if defined(HAVE_EIGEN)
-  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor> > EigenMat;
+  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> > EigenMat;
   typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, 1> > EigenVec;
 #endif
 
@@ -396,44 +396,11 @@ public:
     }
     setAll(a);
   }
-  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
-#if !defined(HAVE_BLAS)
+  void copyOneColumn(const fullVector<scalar> &x, const int ind) const
   {
-    c.scale(scalar(0.));
-    for(int i = 0; i < _r; i++)
-      for(int j = 0; j < b._c; j++)
-        for(int k = 0; k < _c; k++)
-          c._data[i + _r * j] += (*this)(i, k) * b(k, j);
+    int cind = _c * ind;
+    for(int i = 0; i < _r; i++) _data[cind + i] = x(i);
   }
-#endif
-  ;
-  void multTByT(const fullMatrix<scalar> &a)
-  {
-    for(int i = 0; i < _r * _c; i++) _data[i] *= a._data[i];
-  }
-  void axpy(const fullMatrix<scalar> &x, scalar alpha = 1.)
-#if !defined(HAVE_BLAS)
-  {
-    int n = _r * _c;
-    for(int i = 0; i < n; i++) _data[i] += alpha * x._data[i];
-  }
-#endif
-  ;
-  void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b,
-            scalar alpha = 1., scalar beta = 1., bool transposeA = false,
-            bool transposeB = false)
-#if !defined(HAVE_BLAS)
-  {
-    const fullMatrix<scalar> &A = transposeA ? a.transpose() : a;
-    const fullMatrix<scalar> &B = transposeA ? b.transpose() : b;
-    fullMatrix<scalar> temp(A._r, B._c);
-    A.mult(B, temp);
-    temp.scale(alpha);
-    scale(beta);
-    add(temp);
-  }
-#endif
-  ;
   inline void setAll(const scalar &m)
   {
     for(int i = 0; i < _r * _c; i++) _data[i] = m;
@@ -491,6 +458,43 @@ public:
   }
 #endif
   ;
+  void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
+#if !defined(HAVE_BLAS)
+  {
+    c.scale(scalar(0.));
+    for(int i = 0; i < _r; i++)
+      for(int j = 0; j < b._c; j++)
+        for(int k = 0; k < _c; k++)
+          c._data[i + _r * j] += (*this)(i, k) * b(k, j);
+  }
+#endif
+  ;
+  void multTByT(const fullMatrix<scalar> &a)
+  {
+    for(int i = 0; i < _r * _c; i++) _data[i] *= a._data[i];
+  }
+  void multOnBlock(const fullMatrix<scalar> &b, const int ncol, const int fcol,
+                   const int alpha, const int beta, fullVector<scalar> &c) const
+#if !defined(HAVE_BLAS)
+  {
+    int row = 0;
+    if(beta != 1) c.scale(beta);
+    for(int j = fcol; j < fcol + ncol; j++)
+      for(int k = 0; k < _c; k++)
+        c._data[j] += alpha * (*this)(row, k) * b(k, j);
+  }
+#endif
+  ;
+  void multWithATranspose(const fullVector<scalar> &x, scalar alpha,
+                          scalar beta, fullVector<scalar> &y) const
+#if !defined(HAVE_BLAS)
+  {
+    y.scale(beta);
+    for(int j = 0; j < _c; j++)
+      for(int i = 0; i < _r; i++) y._data[j] += alpha * (*this)(i, j) * x(i);
+  }
+#endif
+  ;
   inline fullMatrix<scalar> transpose() const
   {
     fullMatrix<scalar> T(_c, _r);
@@ -513,6 +517,29 @@ public:
         _data[j + _r * i] = t;
       }
   }
+  void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b,
+            scalar alpha = 1., scalar beta = 1., bool transposeA = false,
+            bool transposeB = false)
+#if !defined(HAVE_BLAS)
+  {
+    const fullMatrix<scalar> &A = transposeA ? a.transpose() : a;
+    const fullMatrix<scalar> &B = transposeA ? b.transpose() : b;
+    fullMatrix<scalar> temp(A._r, B._c);
+    A.mult(B, temp);
+    temp.scale(alpha);
+    scale(beta);
+    add(temp);
+  }
+#endif
+  ;
+  void axpy(const fullMatrix<scalar> &x, scalar alpha = 1.)
+#if !defined(HAVE_BLAS)
+  {
+    int n = _r * _c;
+    for(int i = 0; i < n; i++) _data[i] += alpha * x._data[i];
+  }
+#endif
+  ;
   bool luSolve(const fullVector<scalar> &rhs, fullVector<scalar> &result)
 #if defined(HAVE_EIGEN)
   {
@@ -521,10 +548,10 @@ public:
                  "%d, %d)", _r, _c, result._r, rhs._r);
       return false;
     }
-    EigenMat A(_data, _r, _c);
-    EigenVec b(rhs._data, rhs._r);
-    EigenVec x(result._data, result._r);
-    x = A.colPivHouseholderQr().solve(b);
+    EigenMat ma(_data, _r, _c);
+    EigenVec vb(rhs._data, rhs._r);
+    EigenVec vx(result._data, result._r);
+    vx = ma.colPivHouseholderQr().solve(vb);
     return true;
   }
 #elif !defined(HAVE_LAPACK)
@@ -560,9 +587,9 @@ public:
       return false;
     }
     result.resize(_r, _c);
-    EigenMat A(_data, _r, _c);
-    EigenMat res(result._data, _r, _c);
-    res = A.inverse();
+    EigenMat ma(_data, _r, _c);
+    EigenMat mi(result._data, _r, _c);
+    mi = ma.inverse();
     return true;
   }
 #elif !defined(HAVE_LAPACK)
@@ -580,8 +607,8 @@ public:
                  _r, _c);
       return false;
     }
-    EigenMat A(_data, _r, _c);
-    A = A.inverse();
+    EigenMat ma(_data, _r, _c);
+    ma = ma.inverse();
     return true;
   }
 #elif !defined(HAVE_LAPACK)
@@ -594,8 +621,8 @@ public:
   scalar determinant() const
 #if defined(HAVE_EIGEN)
   {
-    EigenMat A(_data, _r, _c);
-    return A.determinant();
+    EigenMat ma(_data, _r, _c);
+    return ma.determinant();
   }
 #elif !defined(HAVE_LAPACK)
   {
@@ -642,16 +669,25 @@ public:
            bool sortRealPart = false)
 #if defined(HAVE_EIGEN)
   {
-    EigenMat A(_data, _r, _c);
-    Eigen::EigenSolver<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic,
-                                     Eigen::RowMajor> > es(A);
-    if(es.info() != Eigen::Success) return false;
-    EigenVec evr(eigenValReal._data, eigenValReal._r);
-    evr = es.eigenvalues().real();
-    EigenVec evi(eigenValImag._data, eigenValImag._r);
-    evi = es.eigenvalues().imag();
-    Msg::Warning("Eigenvectors not filled yet!");
-    return 0.;
+    EigenMat ma(_data, _r, _c);
+    Eigen::EigenSolver<Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> > es(ma);
+    if(es.info() != Eigen::Success) {
+      Msg::Warning("Eigen could not compute eigenvalues/eigenvectors");
+      return false;
+    }
+    EigenVec vr(eigenValReal._data, eigenValReal._r);
+    vr = es.eigenvalues().real();
+    EigenVec vi(eigenValImag._data, eigenValImag._r);
+    vi = es.eigenvalues().imag();
+    EigenMat mr(rightEigenVect._data, rightEigenVect._r, rightEigenVect._c);
+    mr = es.eigenvectors().real();
+    EigenMat ml(leftEigenVect._data, leftEigenVect._r, leftEigenVect._c);
+    // FIXME: compute the true left eigenvectors!
+    ml = mr.transpose();
+    if(sortRealPart)
+      eigSort(_r, eigenValReal._data, eigenValImag._data,
+              leftEigenVect._data, rightEigenVect._data);
+    return true;
   }
 #elif !defined(HAVE_LAPACK)
   {
@@ -664,8 +700,16 @@ public:
   bool svd(fullMatrix<scalar> &V, fullVector<scalar> &S)
 #if defined(HAVE_EIGEN)
   {
-    // TODO
-    return false;
+    EigenMat ma(_data, _r, _c);
+    EigenMat mv(V._data, V._r, V._c);
+    EigenVec vs(S._data, S._r);
+    Eigen::BDCSVD
+      <Eigen::Matrix<scalar, Eigen::Dynamic, Eigen::Dynamic> >
+      svd(ma, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    ma = svd.matrixU();
+    mv = svd.matrixV();
+    vs = svd.singularValues();
+    return true;
   }
 #elif !defined(HAVE_LAPACK)
   {
@@ -677,38 +721,10 @@ public:
   ;
   void print(const std::string &name = "",
              const std::string &format = "") const;
-
   void binarySave(FILE *f) const { fwrite(_data, sizeof(scalar), _r * _c, f); }
   void binaryLoad(FILE *f)
   {
     if(fread(_data, sizeof(scalar), _r * _c, f) != (size_t)_r) return;
-  }
-  void multOnBlock(const fullMatrix<scalar> &b, const int ncol, const int fcol,
-                   const int alpha, const int beta, fullVector<scalar> &c) const
-#if !defined(HAVE_BLAS)
-  {
-    int row = 0;
-    if(beta != 1) c.scale(beta);
-    for(int j = fcol; j < fcol + ncol; j++)
-      for(int k = 0; k < _c; k++)
-        c._data[j] += alpha * (*this)(row, k) * b(k, j);
-  }
-#endif
-  ;
-  void multWithATranspose(const fullVector<scalar> &x, scalar alpha,
-                          scalar beta, fullVector<scalar> &y) const
-#if !defined(HAVE_BLAS)
-  {
-    y.scale(beta);
-    for(int j = 0; j < _c; j++)
-      for(int i = 0; i < _r; i++) y._data[j] += alpha * (*this)(i, j) * x(i);
-  }
-#endif
-  ;
-  void copyOneColumn(const fullVector<scalar> &x, const int ind) const
-  {
-    int cind = _c * ind;
-    for(int i = 0; i < _r; i++) _data[cind + i] = x(i);
   }
   bool getOwnData() const { return _own_data; };
   void setOwnData(bool ownData) { _own_data = ownData; };

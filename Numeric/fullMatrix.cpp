@@ -51,6 +51,20 @@ void F77NAME(zscal)(int *n, std::complex<double> *alpha,
                     std::complex<double> *x, int *incx);
 }
 
+template <> void fullVector<double>::setAll(const fullVector<double> &m)
+{
+  int stride = 1;
+  F77NAME(dcopy)(&_r, m._data, &stride, _data, &stride);
+}
+
+template <>
+void fullVector<std::complex<double> >::setAll(
+  const fullVector<std::complex<double> > &m)
+{
+  int stride = 1;
+  F77NAME(zcopy)(&_r, m._data, &stride, _data, &stride);
+}
+
 template <>
 void fullVector<double>::axpy(const fullVector<double> &x, double alpha)
 {
@@ -64,20 +78,6 @@ void fullVector<std::complex<double> >::axpy(
 {
   int M = _r, INCX = 1, INCY = 1;
   F77NAME(zaxpy)(&M, &alpha, x._data, &INCX, _data, &INCY);
-}
-
-template <> void fullVector<double>::setAll(const fullVector<double> &m)
-{
-  int stride = 1;
-  F77NAME(dcopy)(&_r, m._data, &stride, _data, &stride);
-}
-
-template <>
-void fullVector<std::complex<double> >::setAll(
-  const fullVector<std::complex<double> > &m)
-{
-  int stride = 1;
-  F77NAME(zcopy)(&_r, m._data, &stride, _data, &stride);
 }
 
 template <> void fullMatrix<int>::setAll(const fullMatrix<int> &m)
@@ -130,6 +130,11 @@ template <> void fullMatrix<std::complex<double> >::scale(const double s)
   F77NAME(zscal)(&N, &ss, _data, &stride);
 }
 
+template <> void fullMatrix<int>::scale(const double s)
+{
+  for(int i = 0; i < _r * _c; ++i) _data[i] *= s;
+}
+
 template <>
 void fullMatrix<double>::mult(const fullMatrix<double> &b,
                               fullMatrix<double> &c) const
@@ -156,53 +161,11 @@ void fullMatrix<std::complex<double> >::mult(
 }
 
 template <>
-void fullMatrix<double>::gemm(const fullMatrix<double> &a,
-                              const fullMatrix<double> &b, double alpha,
-                              double beta, bool transposeA, bool transposeB)
-{
-  int M = size1(), N = size2(), K = transposeA ? a.size1() : a.size2();
-  int LDA = a.size1(), LDB = b.size1(), LDC = size1();
-  F77NAME(dgemm)
-  (transposeA ? "T" : "N", transposeB ? "T" : "N", &M, &N, &K, &alpha, a._data,
-   &LDA, b._data, &LDB, &beta, _data, &LDC);
-}
-
-template <>
-void fullMatrix<std::complex<double> >::gemm(
-  const fullMatrix<std::complex<double> > &a,
-  const fullMatrix<std::complex<double> > &b, std::complex<double> alpha,
-  std::complex<double> beta, bool transposeA, bool transposeB)
-{
-  int M = size1(), N = size2(), K = transposeA ? a.size1() : a.size2();
-  int LDA = a.size1(), LDB = b.size1(), LDC = size1();
-  F77NAME(zgemm)
-  (transposeA ? "T" : "N", transposeB ? "T" : "N", &M, &N, &K, &alpha, a._data,
-   &LDA, b._data, &LDB, &beta, _data, &LDC);
-}
-
-template <>
-void fullMatrix<double>::axpy(const fullMatrix<double> &x, double alpha)
-{
-  int M = _r * _c, INCX = 1, INCY = 1;
-  F77NAME(daxpy)(&M, &alpha, x._data, &INCX, _data, &INCY);
-}
-
-template <>
 void fullMatrix<double>::mult(const fullVector<double> &x,
                               fullVector<double> &y) const
 {
   int M = _r, N = _c, LDA = _r, INCX = 1, INCY = 1;
   double alpha = 1., beta = 0.;
-  F77NAME(dgemv)
-  ("N", &M, &N, &alpha, _data, &LDA, x._data, &INCX, &beta, y._data, &INCY);
-}
-
-template <>
-void fullMatrix<double>::multAddy(const fullVector<double> &x,
-                                  fullVector<double> &y) const
-{
-  int M = _r, N = _c, LDA = _r, INCX = 1, INCY = 1;
-  double alpha = 1., beta = 1.;
   F77NAME(dgemv)
   ("N", &M, &N, &alpha, _data, &LDA, x._data, &INCX, &beta, y._data, &INCY);
 }
@@ -215,6 +178,16 @@ void fullMatrix<std::complex<double> >::mult(
   int M = _r, N = _c, LDA = _r, INCX = 1, INCY = 1;
   std::complex<double> alpha = 1., beta = 0.;
   F77NAME(zgemv)
+  ("N", &M, &N, &alpha, _data, &LDA, x._data, &INCX, &beta, y._data, &INCY);
+}
+
+template <>
+void fullMatrix<double>::multAddy(const fullVector<double> &x,
+                                  fullVector<double> &y) const
+{
+  int M = _r, N = _c, LDA = _r, INCX = 1, INCY = 1;
+  double alpha = 1., beta = 1.;
+  F77NAME(dgemv)
   ("N", &M, &N, &alpha, _data, &LDA, x._data, &INCX, &beta, y._data, &INCY);
 }
 
@@ -253,10 +226,38 @@ void fullMatrix<double>::multWithATranspose(const fullVector<double> &x,
   ("T", &M, &N, &alpha, _data, &LDA, x._data, &INCX, &beta, y._data, &INCY);
 }
 
-template <> void fullMatrix<int>::scale(const double s)
+template <>
+void fullMatrix<double>::gemm(const fullMatrix<double> &a,
+                              const fullMatrix<double> &b, double alpha,
+                              double beta, bool transposeA, bool transposeB)
 {
-  for(int i = 0; i < _r * _c; ++i) _data[i] *= s;
+  int M = size1(), N = size2(), K = transposeA ? a.size1() : a.size2();
+  int LDA = a.size1(), LDB = b.size1(), LDC = size1();
+  F77NAME(dgemm)
+  (transposeA ? "T" : "N", transposeB ? "T" : "N", &M, &N, &K, &alpha, a._data,
+   &LDA, b._data, &LDB, &beta, _data, &LDC);
 }
+
+template <>
+void fullMatrix<std::complex<double> >::gemm(
+  const fullMatrix<std::complex<double> > &a,
+  const fullMatrix<std::complex<double> > &b, std::complex<double> alpha,
+  std::complex<double> beta, bool transposeA, bool transposeB)
+{
+  int M = size1(), N = size2(), K = transposeA ? a.size1() : a.size2();
+  int LDA = a.size1(), LDB = b.size1(), LDC = size1();
+  F77NAME(zgemm)
+  (transposeA ? "T" : "N", transposeB ? "T" : "N", &M, &N, &K, &alpha, a._data,
+   &LDA, b._data, &LDB, &beta, _data, &LDC);
+}
+
+template <>
+void fullMatrix<double>::axpy(const fullMatrix<double> &x, double alpha)
+{
+  int M = _r * _c, INCX = 1, INCY = 1;
+  F77NAME(daxpy)(&M, &alpha, x._data, &INCX, _data, &INCY);
+}
+
 #endif
 
 #if defined(HAVE_LAPACK)
