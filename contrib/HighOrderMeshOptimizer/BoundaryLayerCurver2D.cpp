@@ -40,7 +40,6 @@
 #include "InnerVertexPlacement.h"
 #include "pointsGenerators.h"
 #include "qualityMeasuresJacobian.h"
-#include "nodalBasis.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"

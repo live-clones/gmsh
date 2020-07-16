@@ -32,13 +32,13 @@
 
 #include "MEdge.h"
 #include "MFace.h"
+#include "nodalBasis.h"
 #include "fullMatrix.h"
 
 class MElement;
 class GEntity;
 class MVertex;
 struct IntPt;
-struct nodalBasis;
 
 typedef std::pair<MElement *, std::vector<MElement *> > PairMElemVecMElem;
 typedef std::vector<PairMElemVecMElem> VecPairMElemVecMElem;

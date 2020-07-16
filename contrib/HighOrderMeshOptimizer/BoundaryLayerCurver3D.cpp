@@ -37,7 +37,6 @@
 #include "Options.h"
 #include "AnalyseMeshQuality.h"
 #include "InnerVertexPlacement.h"
-#include "nodalBasis.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
