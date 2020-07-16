@@ -8,6 +8,7 @@
 #include "BasisFactory.h"
 #include "Context.h"
 #include "pointsGenerators.h"
+#include "nodalBasis.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
@@ -598,4 +599,12 @@ void MPrismN::reverse()
   for(std::size_t i = 0; i < _vs.size(); ++i) {
     _vs[i] = oldv[indices[6 + i]];
   }
+}
+
+void MPrismN::getNode(int num, double &u, double &v, double &w) const
+{
+  const fullMatrix<double> &p = getFunctionSpace()->points;
+  u = p(num, 0);
+  v = p(num, 1);
+  w = p(num, 2);
 }

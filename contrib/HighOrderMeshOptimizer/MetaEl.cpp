@@ -33,6 +33,7 @@
 #include "MPrism.h"
 #include "MHexahedron.h"
 #include "BasisFactory.h"
+#include "nodalBasis.h"
 #include "MetaEl.h"
 
 std::map<int, MetaEl::metaInfoType> MetaEl::_metaInfo;

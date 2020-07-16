@@ -6,9 +6,7 @@
 #ifndef QUALITY_MEASURES_H
 #define QUALITY_MEASURES_H
 
-//#include "fullMatrix.h"
 #include <vector>
-//#include "SPoint3.h"
 
 class SPoint3;
 class SVector3;
@@ -21,6 +19,8 @@ class MTetrahedron;
 class MPrism;
 class MHexahedron;
 class MElement;
+template <class scalar> class fullVector;
+template <class scalar> class fullMatrix;
 
 class qmTriangle {
 public:

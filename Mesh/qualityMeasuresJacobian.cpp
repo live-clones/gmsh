@@ -11,6 +11,7 @@
 #include "bezierBasis.h"
 #include "JacobianBasis.h"
 #include "Numeric.h"
+#include "fullMatrix.h"
 
 // For regression tests:
 #include "GModel.h"

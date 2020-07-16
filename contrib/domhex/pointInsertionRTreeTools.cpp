@@ -10,6 +10,7 @@
 #include "BackgroundMeshManager.h"
 #include "pointInsertion.h"
 #include "GEntity.h"
+#include "fullMatrix.h"
 
 surfacePointWithExclusionRegion::surfacePointWithExclusionRegion(
   MVertex *v, SPoint2 p[4][NUMDIR], SPoint2 &_mp, SMetric3 &meshMetric,

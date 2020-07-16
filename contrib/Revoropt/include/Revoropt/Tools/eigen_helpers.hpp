@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -11,7 +11,7 @@
 #ifndef _REVOROPT_TOOLS_EIGEN_HELPERS_HPP_
 #define _REVOROPT_TOOLS_EIGEN_HELPERS_HPP_
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 #include <iostream>
 #include <sstream>

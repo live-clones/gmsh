@@ -6,7 +6,8 @@
 #ifndef GAUSS_INTEGRATION_H
 #define GAUSS_INTEGRATION_H
 
-#include "fullMatrix.h"
+template <class scalar> class fullVector;
+template <class scalar> class fullMatrix;
 
 struct IntPt {
   double pt[3];

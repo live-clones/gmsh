@@ -24,7 +24,7 @@
   #include "flann_backend.hpp"
 #endif
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <vector>
 #include <stack>
 #include <unordered_map>

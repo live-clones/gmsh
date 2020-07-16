@@ -1,7 +1,7 @@
 #ifndef _REVOROPT_TOOLS_INTERSECTIONS_DEF_HPP_
 #define _REVOROPT_TOOLS_INTERSECTIONS_DEF_HPP_
 
-#include "eigen3/Eigen/Dense"
+#include <Eigen/Dense>
 
 #include "intersections_fwd.hpp"
 
@@ -17,7 +17,7 @@ char orientation( const Scalar v0[2], const Scalar v1[2] ) {
 }
 
 /* Checks whether a point is in a segment (including endpoints)
- * If the offset pointer is provided, it is filled with the value of a 
+ * If the offset pointer is provided, it is filled with the value of a
  * such that p = p0 + a*(p1-p0). If the p is not in the segment, the point
  * q = p0 + a*(p1-p0) is the point of the segment nearest to p. */
 template<int Dim, typename Scalar>
@@ -74,12 +74,12 @@ bool point_in_segment( const Scalar p_coords[Dim],
 
 /* Segment intersection */
 /* Returns true if the segments are coplanar and intersect.
- * If the s0_offset pointer is provided, it is filled with the value of a 
+ * If the s0_offset pointer is provided, it is filled with the value of a
  *   such that the intersection I1 = p0 + a*(p1-p0). If the segments do not
  *   intersect, I0 is the point of [p0,p1] nearest to [p2,p3].
  * If the s1_offset pointer is provided, it is filled with the value of b
  *   such that the intersection I2 = p2 + b*(p3-p2). If the segments do not
- *   intersect, I1 is the point of [p2,p3] nearest to [p0,p1]. 
+ *   intersect, I1 is the point of [p2,p3] nearest to [p0,p1].
  * If the segments do not intersect, I0 and I1 are the points archieving the
  * smallest distance between [p0,p1] and [p2,p3]. */
 
@@ -143,7 +143,7 @@ class si_impl {
       P.row(1) /= P1_len ;
     }
 
-    //projection of one of each segment endpoints 
+    //projection of one of each segment endpoints
     //Dim dimensional vectors here, although 2d in the end
     Vector2 pp0 = Vector2::Zero() ;
     Vector2 pp2 = P*(p2-p0) ;
@@ -160,9 +160,9 @@ class si_impl {
     Vector2 pp3 = P*(p3-p0) ;
 
     //switch to 2D
-    const bool intersect_2d = si_impl<2,Scalar>::do_it( pp0.data(), 
-                                                        pp1.data(), 
-                                                        pp2.data(), 
+    const bool intersect_2d = si_impl<2,Scalar>::do_it( pp0.data(),
+                                                        pp1.data(),
+                                                        pp2.data(),
                                                         pp3.data(),
                                                         s0_offset,
                                                         s1_offset
@@ -359,12 +359,12 @@ bool segment_intersection( const Scalar p0_coords[2],
 }
 
 
-/* Checks whether a point is strictly in a sphere. 
+/* Checks whether a point is strictly in a sphere.
  * The *squared* radius is required */
 template<int Dim, typename Scalar>
-bool point_in_sphere( const Scalar point[Dim], 
-                      const Scalar center[Dim], 
-                      Scalar radius 
+bool point_in_sphere( const Scalar point[Dim],
+                      const Scalar center[Dim],
+                      Scalar radius
                     ) {
   //vector type
   typedef Eigen::Matrix<Scalar,Dim,1> Vector ;
@@ -380,10 +380,10 @@ bool point_in_sphere( const Scalar point[Dim],
 /* Intersection between the interior of a segment and a sphere.
  * Returns the number of intersections.
  * The *squared* radius is required.
- * The provided output array receives the intersections p 
+ * The provided output array receives the intersections p
  * as the values of u such that p = p1 + u(p2-p1) */
 template<int Dim, typename Scalar>
-unsigned char segment_sphere_intersections( const Scalar p0_coords[Dim], 
+unsigned char segment_sphere_intersections( const Scalar p0_coords[Dim],
                                             const Scalar p1_coords[Dim],
                                             const Scalar center[Dim],
                                             Scalar radius,
@@ -453,12 +453,12 @@ class pit_impl {
     typedef Eigen::Matrix<Scalar,Dim,1> Vector ;
     //2d vector type
     typedef Eigen::Matrix<Scalar,2,1> Vector2 ;
-  
+
     Eigen::Map<const Vector> p(p_coords) ;
     Eigen::Map<const Vector> x0(x0_coords) ;
     Eigen::Map<const Vector> x1(x1_coords) ;
     Eigen::Map<const Vector> x2(x2_coords) ;
-  
+
     //projection matrix
     Eigen::Matrix<Scalar,2,Dim,Eigen::RowMajor> P ;
     //base of the triangle
@@ -473,7 +473,7 @@ class pit_impl {
       return point_in_segment<Dim>(p_coords,x2_coords,x0_coords,bar_coords) ;
     }
     P.row(0) /= base_len ;
-  
+
     //height of the triangle
     P.row(1) = x2-x0 ;
     P.row(1) -= P.row(1).dot(P.row(0))*P.row(0) ;
@@ -524,7 +524,7 @@ class pit_impl {
       }
     }
     P.row(1) /= height_len ;
-  
+
     //project everything
     Vector2 pp, x0p, x1p, x2p ;
     pp = P*(p-x0) ;
@@ -536,15 +536,15 @@ class pit_impl {
     const Vector p_proj = p - P.transpose()*pp ;
     bool coplanar = p_proj.dot(p_proj) == 0 ;
     if((bar_coords == NULL) && (!coplanar)) return false ;
-  
+
     //switch to 2D
-    bool intersect =  pit_impl<2,Scalar>::do_it( pp.data(), 
-                                                 x0p.data(), 
-                                                 x1p.data(), 
+    bool intersect =  pit_impl<2,Scalar>::do_it( pp.data(),
+                                                 x0p.data(),
+                                                 x1p.data(),
                                                  x2p.data(),
                                                  bar_coords
                                                ) ;
-    
+
     return (coplanar && intersect) ;
   }
 } ;
@@ -560,7 +560,7 @@ class pit_impl<2,Scalar> {
                    ) {
     //Vector type
     typedef Eigen::Matrix<Scalar,2,1> Vector ;
-  
+
     //Query point
     Eigen::Map<const Vector> p(p_coords) ;
 
@@ -569,7 +569,7 @@ class pit_impl<2,Scalar> {
     x[0] = x0_coords ;
     x[1] = x1_coords ;
     x[2] = x2_coords ;
-  
+
     //matrix for sides and point vectors
     Eigen::Matrix<Scalar,4,3, Eigen::ColMajor> m ;
 
@@ -597,7 +597,7 @@ class pit_impl<2,Scalar> {
           //p is also on the wrong side of [x[(i+2)%3],x[i]]
           //x[(i+2)%3] is the vertex in common
           if( m.template block<2,1>(0,i).dot(
-              m.template block<2,1>(2,(i+1)%3))*twoarea 
+              m.template block<2,1>(2,(i+1)%3))*twoarea
               > 0
             ) {
             //the nearest side is [x[(i+2)%3],x[i]]

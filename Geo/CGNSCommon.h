@@ -17,8 +17,8 @@
 #if CGNS_VERSION < 3100
 typedef int cgsize_t
 #endif
-#include "fullMatrix.h"
 
+template <class scalar> class fullMatrix;
 
 int cgnsError(const char *file, const int line, const int fileIndex = -1);
 

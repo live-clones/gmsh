@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -13,8 +13,8 @@
 
 #include <Revoropt/RVD/rvd.hpp>
 
-#include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/Sparse>
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 namespace Revoropt {
 
@@ -44,13 +44,13 @@ class RegulTerm {
 
   public :
 
-  RegulTerm(bool reset_gradient = true) : 
+  RegulTerm(bool reset_gradient = true) :
       reset_gradient_(reset_gradient),
       factor_(1)
   {}
 
   /* Change the factor value. The default factor is 1/vsize where vsize is the
-   * number of vertices of the mesh. The provided factor will be divided by 
+   * number of vertices of the mesh. The provided factor will be divided by
    * vsize as well.*/
   template<typename Mesh>
   void build_matrix(const Mesh* mesh) {
@@ -124,9 +124,9 @@ class RegulTerm {
     //accumulate result for each coordinate
     for(int i = 0; i < Dim; ++i) {
       //Map the raw pointer data to Eigen vector
-      Eigen::Map< Eigen::VectorXd, 
-        Eigen::Unaligned, 
-        Eigen::Stride<0,Dim> 
+      Eigen::Map< Eigen::VectorXd,
+        Eigen::Unaligned,
+        Eigen::Stride<0,Dim>
           > g(data->g+i, data->n/Dim) ;
       Eigen::Map< const Eigen::VectorXd,
         Eigen::Unaligned,

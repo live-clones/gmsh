@@ -9,6 +9,7 @@
 #include "MElement.h"
 #include "PViewDataList.h"
 #include "BasisFactory.h"
+#include "nodalBasis.h"
 #include "CurvedBndDist.h"
 
 #if defined(HAVE_OPTHOM)

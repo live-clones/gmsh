@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -14,7 +14,7 @@
 #include <Revoropt/Tools/normals_def.hpp>
 #include <Revoropt/Neighbours/neighbourhood_def.hpp>
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <cassert>
 #include <cmath>
 #include <vector>
@@ -23,9 +23,9 @@ namespace Revoropt {
 
 /* Face normal */
 template<typename Mesh>
-void face_normal ( const Mesh* mesh, 
-                   unsigned int index, 
-                   typename Mesh::Scalar* output 
+void face_normal ( const Mesh* mesh,
+                   unsigned int index,
+                   typename Mesh::Scalar* output
                  ) {
   //scalar type
   typedef typename Mesh::Scalar Scalar ;
@@ -47,8 +47,8 @@ void face_normal ( const Mesh* mesh,
 
 /* Connected normals (based on the faces connected to the vertex) */
 template<typename Mesh>
-void connected_vertex_normals( const Mesh* mesh, 
-                               typename Mesh::Scalar* output 
+void connected_vertex_normals( const Mesh* mesh,
+                               typename Mesh::Scalar* output
                              ) {
   assert((Mesh::VertexDim == 3) && "normals are only defined for 3D meshes") ;
   //scalar type
@@ -115,28 +115,28 @@ class NeighNormalCompute {
   typedef typename Triangulation::Scalar Scalar ;
   typedef Eigen::Matrix<Scalar,3,1> Vector ;
 
-  NeighNormalCompute( const Triangulation* mesh, 
+  NeighNormalCompute( const Triangulation* mesh,
                       const Scalar* queries,
-                      const unsigned int* indices, 
+                      const unsigned int* indices,
                       Scalar radius,
                       Scalar* output,
                       bool translate_queries = true
-                    ) : mesh_(mesh), 
+                    ) : mesh_(mesh),
                         queries_(queries),
-                        indices_(indices), 
+                        indices_(indices),
                         translate_queries_(translate_queries),
-                        radius_(radius), 
+                        radius_(radius),
                         output_(output) {} ;
 
   NeighNormalCompute( const Triangulation* mesh,
                       const Scalar* queries,
                       Scalar radius,
-                      Scalar* output 
-                    ) : mesh_(mesh), 
+                      Scalar* output
+                    ) : mesh_(mesh),
                         queries_(queries),
-                        indices_(NULL), 
+                        indices_(NULL),
                         translate_queries_(false),
-                        radius_(radius), 
+                        radius_(radius),
                         output_(output) {} ;
 
   void operator()( unsigned int query,
@@ -149,11 +149,11 @@ class NeighNormalCompute {
     //vertices of the triangle
     const unsigned int* tverts = mesh_->face(triangle) ;
 
-    //area of the triangle portion within a ball 
+    //area of the triangle portion within a ball
     //of the provided radius around the query
     const Scalar clip_area = triangle_sphere_intersection_area<3>(
-      mesh_->vertex(tverts[0]), 
-      mesh_->vertex(tverts[1]), 
+      mesh_->vertex(tverts[0]),
+      mesh_->vertex(tverts[1]),
       mesh_->vertex(tverts[2]),
       q,
       radius_
@@ -186,7 +186,7 @@ class NeighNormalCompute {
 
 /* Robust normals on boundary vertices (handling disconnected meshes) */
 template<typename Mesh>
-void robust_vertex_normals( const Mesh* mesh, 
+void robust_vertex_normals( const Mesh* mesh,
                             typename Mesh::Scalar radius,
                             typename Mesh::Scalar* output
                           ) {
@@ -246,8 +246,8 @@ void robust_vertex_normals( const Mesh* mesh,
 
     //compute normals on geometric neighbourhoods
     NeighbourhoodComputer<Mesh> n_computer(mesh,queries.data(),bvsize) ;
-    NeighNormalCompute<Mesh> action( mesh, 
-                                     queries.data(), 
+    NeighNormalCompute<Mesh> action( mesh,
+                                     queries.data(),
                                      radius,
                                      output
                                    ) ;
@@ -267,7 +267,7 @@ void robust_vertex_normals( const Mesh* mesh,
 
 /* Robust normals on every vertex */
 template<typename Mesh>
-void full_robust_vertex_normals( const Mesh* mesh, 
+void full_robust_vertex_normals( const Mesh* mesh,
                                  typename Mesh::Scalar radius,
                                  typename Mesh::Scalar* output
                                ) {
@@ -290,8 +290,8 @@ void full_robust_vertex_normals( const Mesh* mesh,
     queries = vertex_copy.data() ;
   }
   //compute normals on geometric neighbourhoods
-  NeighbourhoodComputer<Mesh> n_computer( mesh, 
-                                          queries, 
+  NeighbourhoodComputer<Mesh> n_computer( mesh,
+                                          queries,
                                           mesh->vertices_size()
                                         ) ;
   NeighNormalCompute<Mesh> action( mesh,
@@ -313,8 +313,8 @@ void full_robust_vertex_normals( const Mesh* mesh,
 
 /* Connected edge normals based on the mesh connectivty */
 template< typename Mesh >
-void connected_edge_normals( const Mesh* mesh, 
-                             typename Mesh::Scalar* output 
+void connected_edge_normals( const Mesh* mesh,
+                             typename Mesh::Scalar* output
                            ) {
   assert((Mesh::VertexDim == 3) && "normals are only defined for 3D meshes") ;
   //scalar type
@@ -333,7 +333,7 @@ void connected_edge_normals( const Mesh* mesh,
 
   //edge layer
   EdgeLayer<Mesh> edge_layer(mesh) ;
-  
+
   //edge normals
   for(unsigned int edge = 0; edge < mesh->face_vertices_size(); ++edge) {
     Eigen::Map<Vector> enormal(output + 3*edge) ;
@@ -361,7 +361,7 @@ void connected_edge_normals( const Mesh* mesh,
 
 /* Robust edge normals */
 template<typename Mesh>
-void robust_edge_normals( const Mesh* mesh, 
+void robust_edge_normals( const Mesh* mesh,
                           typename Mesh::Scalar radius,
                           typename Mesh::Scalar* output
                         ) {

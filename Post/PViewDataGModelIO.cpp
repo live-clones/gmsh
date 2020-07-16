@@ -12,6 +12,7 @@
 #include "StringUtils.h"
 #include "OS.h"
 #include "Context.h"
+#include "fullMatrix.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 

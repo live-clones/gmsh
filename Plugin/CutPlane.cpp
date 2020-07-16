@@ -6,6 +6,7 @@
 #include "GmshConfig.h"
 #include "CutPlane.h"
 #include "Context.h"
+#include "fullMatrix.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"

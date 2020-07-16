@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "fullMatrix.h"
 #include "Numeric.h"
 
 double myatan2(double a, double b)

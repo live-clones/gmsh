@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include "GmshMessage.h"
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 

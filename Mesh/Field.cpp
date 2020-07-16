@@ -28,6 +28,7 @@
 #include "STensor3.h"
 #include "ExtrudeParams.h"
 #include "automaticMeshSizeField.h"
+#include "fullMatrix.h"
 #include "nanoflann.hpp"
 
 #if defined(HAVE_POST)

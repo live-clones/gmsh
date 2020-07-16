@@ -8,13 +8,14 @@
 
 #include <vector>
 #include <algorithm>
-#include "fullMatrix.h"
 #include "SPoint2.h"
 #include "simpleFunction.h"
 #include "Octree.h"
 #include "MElement.h"
 
+template <class scalar> class fullMatrix;
 class GFace;
+
 typedef struct CDList DListRecord, *DListPeek;
 typedef int PointNumero;
 
