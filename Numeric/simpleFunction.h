@@ -6,6 +6,8 @@
 #ifndef SIMPLE_FUNCTION_H
 #define SIMPLE_FUNCTION_H
 
+#include <map>
+
 // FIXME: Numeric/ should not depend on Geo/
 class MElement;
 
