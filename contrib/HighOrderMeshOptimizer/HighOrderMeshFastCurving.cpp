@@ -50,6 +50,7 @@
 #include "boundaryLayersData.h"
 #include "BoundaryLayerCurver.h"
 #include "FuncSpaceData.h"
+#include "nodalBasis.h"
 
 namespace {
 

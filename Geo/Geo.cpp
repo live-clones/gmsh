@@ -15,6 +15,7 @@
 #include "GeoInterpolation.h"
 #include "Context.h"
 #include "MVertexRTree.h"
+#include "fullMatrix.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"

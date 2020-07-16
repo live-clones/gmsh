@@ -5,6 +5,7 @@
 
 #include "intersectCurveSurface.h"
 #include "Numeric.h"
+#include "fullMatrix.h"
 
 static bool _kaboom(fullVector<double> &uvt, fullVector<double> &res,
                     void *_data);
@@ -27,15 +28,15 @@ struct intersectCurveSurfaceData {
       uvt(2) = newPoint[2];
       fullVector<double> res(3);
       _kaboom(uvt, res, this);
-      //      printf("start with %12.5E\n",res.norm());
+      // printf("start with %12.5E\n",res.norm());
       if(res.norm() < epsilon) return true;
 
       if(newton_fd(_kaboom, uvt, this)) {
-        //      printf("--- CONVERGED -----------\n");
+        // printf("--- CONVERGED -----------\n");
         newPoint[0] = uvt(0);
         newPoint[1] = uvt(1);
         newPoint[2] = uvt(2);
-        //	printf("newton done\n");
+        // printf("newton done\n");
         return true;
       }
     } catch(...) {

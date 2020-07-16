@@ -33,6 +33,7 @@
 #include "qualityMeasures.h"
 #include "Patch.h"
 #include "bezierBasis.h"
+#include "nodalBasis.h"
 
 Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
              const std::map<MElement *, GEntity *> &bndEl2Ent,

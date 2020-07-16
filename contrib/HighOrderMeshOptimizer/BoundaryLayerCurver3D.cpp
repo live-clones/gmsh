@@ -30,20 +30,22 @@
 #include "BasisFactory.h"
 #include "GFace.h"
 #include "bezierBasis.h"
-
 #include "gmshVertex.h"
 #include "Geo.h"
 #include "MLine.h"
 #include "GModel.h"
-#if defined(HAVE_POST)
-#include "PView.h"
-#endif
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#endif
 #include "Options.h"
 #include "AnalyseMeshQuality.h"
 #include "InnerVertexPlacement.h"
+#include "nodalBasis.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
+
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#endif
 
 namespace {
   void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,

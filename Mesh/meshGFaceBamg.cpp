@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <map>
 #include <iostream>
 #include "meshGFaceBamg.h"
 #include "GmshMessage.h"
@@ -13,12 +14,12 @@
 #include "MLine.h"
 #include "GmshConfig.h"
 #include "Context.h"
-#include <map>
 #include "BackgroundMeshTools.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "Options.h"
 #include "meshGFace.h"
 #include "MElementOctree.h"
+#include "fullMatrix.h"
 
 #if defined(HAVE_BAMG)
 

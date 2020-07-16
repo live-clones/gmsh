@@ -521,7 +521,7 @@ public:
   virtual int getTypeForVTK() const { return 32; }
   virtual MVertex *getVertexVTK(int num)
   {
-    static const int map[18] = {0, 1, 2, 3, 4, 5, 6, 9, 7, 
+    static const int map[18] = {0, 1, 2, 3, 4, 5, 6, 9, 7,
                                 12, 14, 13, 8, 10, 11, 15,17,16};
     return getVertex(map[num]);
   }
@@ -666,13 +666,7 @@ public:
     return "";
   }
   virtual void reverse();
-  virtual void getNode(int num, double &u, double &v, double &w) const
-  {
-    const fullMatrix<double> &p = getFunctionSpace()->points;
-    u = p(num, 0);
-    v = p(num, 1);
-    w = p(num, 2);
-  }
+  virtual void getNode(int num, double &u, double &v, double &w) const;
 };
 
 #endif

@@ -7,7 +7,6 @@
 #define MLINE_H
 
 #include "MElement.h"
-#include "nodalBasis.h"
 
 /*
  * MLine

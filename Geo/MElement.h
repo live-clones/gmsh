@@ -16,13 +16,14 @@
 #include "MVertex.h"
 #include "MEdge.h"
 #include "MFace.h"
-#include "nodalBasis.h"
-#include "polynomialBasis.h"
-#include "GaussIntegration.h"
 #include "FuncSpaceData.h"
+#include "GaussIntegration.h"
 
 class GModel;
+class nodalBasis;
 class JacobianBasis;
+template <class scalar> class fullVector;
+template <class scalar> class fullMatrix;
 
 // A mesh element.
 class MElement {
@@ -359,17 +360,7 @@ public:
                              double *jac) const;
   virtual double getJacobian(double u, double v, double w,
                              double jac[3][3]) const;
-  double getJacobian(double u, double v, double w, fullMatrix<double> &j) const
-  {
-    double JAC[3][3];
-    const double detJ = getJacobian(u, v, w, JAC);
-    for(int i = 0; i < 3; i++) {
-      j(i, 0) = JAC[i][0];
-      j(i, 1) = JAC[i][1];
-      j(i, 2) = JAC[i][2];
-    }
-    return detJ;
-  }
+  double getJacobian(double u, double v, double w, fullMatrix<double> &j) const;
   virtual double getPrimaryJacobian(double u, double v, double w,
                                     double jac[3][3]) const;
   double getJacobianDeterminant(double u, double v, double w) const

@@ -24,10 +24,12 @@
 #include "GEntity.h"
 #include "StringUtils.h"
 #include "Numeric.h"
+#include "nodalBasis.h"
 #include "CondNumBasis.h"
 #include "Context.h"
 #include "FuncSpaceData.h"
 #include "bezierBasis.h"
+#include "polynomialBasis.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasuresJacobian.h"
@@ -919,6 +921,19 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf,
     }
   }
   return _computeDeterminantAndRegularize(this, jac);
+}
+
+double MElement::getJacobian(double u, double v, double w,
+                             fullMatrix<double> &j) const
+{
+  double JAC[3][3];
+  const double detJ = getJacobian(u, v, w, JAC);
+  for(int i = 0; i < 3; i++) {
+    j(i, 0) = JAC[i][0];
+    j(i, 1) = JAC[i][1];
+    j(i, 2) = JAC[i][2];
+  }
+  return detJ;
 }
 
 double MElement::getPrimaryJacobian(double u, double v, double w,

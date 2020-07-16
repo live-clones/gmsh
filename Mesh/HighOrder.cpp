@@ -23,6 +23,7 @@
 #include "OS.h"
 #include "fullMatrix.h"
 #include "BasisFactory.h"
+#include "nodalBasis.h"
 #include "InnerVertexPlacement.h"
 #include "Context.h"
 #include "MFace.h"

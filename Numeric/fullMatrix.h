@@ -20,6 +20,8 @@
 #include <Eigen/Dense>
 #endif
 
+// TOOD: add Eigen versions of all BLAS calls - first and foremost BLAS3 calls
+
 template <class scalar> class fullMatrix;
 
 // An interface for vectors of scalars (real or complex, with simple or double

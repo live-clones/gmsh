@@ -6,6 +6,7 @@
 // Contributor(s):
 //   Thomas Toulorge
 
+#include <sstream>
 #include <string>
 #include <map>
 #include <utility>
