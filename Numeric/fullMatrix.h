@@ -14,6 +14,9 @@
 #include <iostream>
 
 #if defined(HAVE_EIGEN)
+#ifdef Success // in X11 header X.h
+#undef Success
+#endif
 #include <Eigen/Dense>
 #endif
 
