@@ -57,6 +57,10 @@
   #if __GNUC__>=6
     #pragma GCC diagnostic ignored "-Wignored-attributes"
   #endif
+  #if __GNUC__ == 7
+    // See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89325
+    #pragma GCC diagnostic ignored "-Wattributes"
+  #endif
 
 #endif
 
@@ -78,11 +82,6 @@
   #pragma diag_suppress 2671
   #pragma diag_suppress 2735
   #pragma diag_suppress 2737
-#endif
-
-#if __GNUC__==7
-  // See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89325
-  #pragma GCC diagnostic ignored "-Wattributes"
 #endif
 
 #endif // not EIGEN_WARNINGS_DISABLED
