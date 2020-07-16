@@ -5,23 +5,118 @@
 
 #include <algorithm>
 #include "STensor3.h"
+#include "fullMatrix.h"
 
-// compute the largest inscribed ellipsoid
+SMetric3::SMetric3(const double l1, // l1 = h1^-2
+                   const double l2, const double l3, const SVector3 &t1,
+                   const SVector3 &t2, const SVector3 &t3)
+{
+  // M = e^t * diag * e
+  // where the elements of diag are l_i = h_i^-2
+  // and the rows of e are the UNIT and ORTHOGONAL directions
+
+  fullMatrix<double> e(3, 3);
+  e(0, 0) = t1(0);
+  e(0, 1) = t1(1);
+  e(0, 2) = t1(2);
+  e(1, 0) = t2(0);
+  e(1, 1) = t2(1);
+  e(1, 2) = t2(2);
+  e(2, 0) = t3(0);
+  e(2, 1) = t3(1);
+  e(2, 2) = t3(2);
+  e.transposeInPlace();
+
+  fullMatrix<double> tmp(3, 3);
+  tmp(0, 0) = l1 * e(0, 0);
+  tmp(0, 1) = l2 * e(0, 1);
+  tmp(0, 2) = l3 * e(0, 2);
+  tmp(1, 0) = l1 * e(1, 0);
+  tmp(1, 1) = l2 * e(1, 1);
+  tmp(1, 2) = l3 * e(1, 2);
+  tmp(2, 0) = l1 * e(2, 0);
+  tmp(2, 1) = l2 * e(2, 1);
+  tmp(2, 2) = l3 * e(2, 2);
+
+  e.transposeInPlace();
+
+  _val[0] = tmp(0, 0) * e(0, 0) + tmp(0, 1) * e(1, 0) + tmp(0, 2) * e(2, 0);
+  _val[1] = tmp(1, 0) * e(0, 0) + tmp(1, 1) * e(1, 0) + tmp(1, 2) * e(2, 0);
+  _val[2] = tmp(1, 0) * e(0, 1) + tmp(1, 1) * e(1, 1) + tmp(1, 2) * e(2, 1);
+  _val[3] = tmp(2, 0) * e(0, 0) + tmp(2, 1) * e(1, 0) + tmp(2, 2) * e(2, 0);
+  _val[4] = tmp(2, 0) * e(0, 1) + tmp(2, 1) * e(1, 1) + tmp(2, 2) * e(2, 1);
+  _val[5] = tmp(2, 0) * e(0, 2) + tmp(2, 1) * e(1, 2) + tmp(2, 2) * e(2, 2);
+}
+
+void SMetric3::getMat(fullMatrix<double> &mat) const
+{
+  for(int i = 0; i < 3; i++) {
+    for(int j = 0; j < 3; j++) {
+      mat(i, j) = _val[getIndex(i, j)];
+    }
+  }
+}
+
+void SMetric3::setMat(const fullMatrix<double> &mat)
+{
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 3; j++) _val[getIndex(i, j)] = mat(i, j);
+}
+
+SMetric3 SMetric3::invert() const
+{
+  fullMatrix<double> m(3, 3);
+  getMat(m);
+  m.invertInPlace();
+  SMetric3 ithis;
+  ithis.setMat(m);
+  return ithis;
+}
+
+double SMetric3::determinant() const
+{
+  fullMatrix<double> m(3, 3);
+  getMat(m);
+  double det = m.determinant();
+  return det;
+}
+
+SMetric3 &SMetric3::operator*=(const SMetric3 &other)
+{
+  fullMatrix<double> m1(3, 3), m2(3, 3), m3(3, 3);
+  getMat(m1);
+  other.getMat(m2);
+  m1.mult(m2, m3);
+  setMat(m3);
+  return *this;
+}
+
+SMetric3 SMetric3::transform(fullMatrix<double> &V)
+{
+  fullMatrix<double> m(3, 3);
+  getMat(m);
+  fullMatrix<double> result(3, 3), temp(3, 3);
+  V.transpose().mult(m, temp);
+  temp.mult(V, result);
+  SMetric3 a;
+  a.setMat(result);
+  return a;
+}
+
+void SMetric3::eig(fullMatrix<double> &V, fullVector<double> &S,
+                   bool s) const
+{
+  fullMatrix<double> me(3, 3), right(3, 3);
+  fullVector<double> im(3);
+  getMat(me);
+  me.eig(S, im, V, right, s);
+}
 
 void SMetric3::print(const char *s) const
 {
   printf(" metric %s : %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E \n", s,
          (*this)(0, 0), (*this)(1, 1), (*this)(2, 2), (*this)(0, 1),
          (*this)(0, 2), (*this)(1, 2));
-}
-
-void STensor3::print(const char *s) const
-{
-  printf(
-    " tensor %s : \n"
-    " %12.5E %12.5E %12.5E \n %12.5E %12.5E %12.5E \n %12.5E %12.5E %12.5E \n",
-    s, (*this)(0, 0), (*this)(0, 1), (*this)(0, 2), (*this)(1, 0),
-    (*this)(1, 1), (*this)(1, 2), (*this)(2, 0), (*this)(2, 1), (*this)(2, 2));
 }
 
 SMetric3 intersection(const SMetric3 &m1, const SMetric3 &m2)
@@ -209,4 +304,37 @@ SMetric3 interpolation(const SMetric3 &m1, const SMetric3 &m2,
   im1 += im3;
   im1 += im4;
   return im1.invert();
+}
+
+void STensor3::getMat(fullMatrix<double> &mat) const
+{
+  for(int i = 0; i < 3; i++) {
+    for(int j = 0; j < 3; j++) {
+      mat(i, j) = _val[getIndex(i, j)];
+    }
+  }
+}
+
+void STensor3::setMat(const fullMatrix<double> &mat)
+{
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 3; j++) _val[getIndex(i, j)] = mat(i, j);
+}
+
+void STensor3::eig(fullMatrix<double> &V, fullVector<double> &S,
+                   bool s) const
+{
+  fullMatrix<double> me(3, 3), left(3, 3);
+  fullVector<double> im(3);
+  this->getMat(me);
+  me.eig(S, im, left, V, s);
+}
+
+void STensor3::print(const char *s) const
+{
+  printf(
+    " tensor %s : \n"
+    " %12.5E %12.5E %12.5E \n %12.5E %12.5E %12.5E \n %12.5E %12.5E %12.5E \n",
+    s, (*this)(0, 0), (*this)(0, 1), (*this)(0, 2), (*this)(1, 0),
+    (*this)(1, 1), (*this)(1, 2), (*this)(2, 0), (*this)(2, 1), (*this)(2, 2));
 }
