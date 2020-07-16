@@ -6,6 +6,7 @@
 #ifndef QUALITY_MEASURES_JACOBIAN_H
 #define QUALITY_MEASURES_JACOBIAN_H
 
+#include <stdio.h>
 #include <vector>
 
 class bezierCoeff;
