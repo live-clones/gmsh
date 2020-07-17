@@ -19,7 +19,7 @@
 #if defined(HAVE_NETGEN)
 
 namespace nglib {
-#include "nglib_gmsh.h"
+#include <nglib.h>
 }
 using namespace nglib;
 
