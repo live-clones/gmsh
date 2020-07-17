@@ -2427,8 +2427,8 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, 0, 0},
-        {"Frontal", 0, 0, 0},
-        {"HXT (experimental)", 0, 0, 0},
+        {"Frontal-Netgen", 0, 0, 0},
+        {"Delaunay-HXT", 0, 0, 0},
         {"MMG3D (experimental, single volume only)", 0, 0, 0},
         {"Initial Mesh Only (no node insertion)", 0, 0, 0},
         {0}

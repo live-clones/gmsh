@@ -1017,8 +1017,8 @@ StringXNumber MeshOptions_Number[] = {
     "5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, "
     "9: Packing of Parallelograms)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
-    "3D mesh algorithm (1: Delaunay, 3: Initial mesh only, 4: Frontal, "
-    "7: MMG3D, 9: R-tree, 10: HXT)" },
+    "3D mesh algorithm (1: Delaunay, 3: Initial mesh only, 4: Frontal-Netgen, "
+    "7: MMG3D, 9: R-tree, 10: Delaunay-HXT)" },
   { F|O, "AlgorithmSwitchOnFailure" , opt_mesh_algo_switch_on_failure , 1 ,
     "Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based "
     "algorithms, switching to MeshAdapt)"},
