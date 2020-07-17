@@ -320,7 +320,7 @@ template <> bool fullMatrix<double>::invert(fullMatrix<double> &result) const
   int M = size1(), N = size2(), lda = size1(), info;
   int *ipiv = new int[std::min(M, N)];
   if(result.size2() != M || result.size1() != N) {
-    if(result._own_data || !result._data)
+    if(result._ownData || !result._data)
       result.resize(M, N, false);
     else {
       Msg::Error("FullMatrix: Bad dimension, I cannot write in proxy");
