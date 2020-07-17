@@ -434,6 +434,46 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
 
 #endif
 
+// Specialisation of norm() and print()
+
+template <> double fullVector<double>::norm() const
+{
+  double n = 0.;
+  for(int i = 0; i < _r; ++i) n += _data[i] * _data[i];
+  return sqrt(n);
+}
+
+template <>
+std::complex<double> fullVector<std::complex<double> >::norm() const
+{
+  double n = 0.;
+  for(int i = 0; i < _r; ++i)
+    n += _data[i].real() * _data[i].real() + _data[i].imag() * _data[i].imag();
+  return std::complex<double>(sqrt(n), 0.);
+}
+
+template <>
+void fullVector<double>::print(const std::string name,
+                               const std::string format) const
+{
+  std::string rformat = (format == "") ? "%12.5E " : format;
+  printf("double %s[%d]=\n", name.c_str(), size());
+  printf("{  ");
+  for(int I = 0; I < size(); I++) { printf(rformat.c_str(), (*this)(I)); }
+  printf("};\n");
+}
+
+template <>
+void fullVector<int>::print(const std::string name,
+                            const std::string format) const
+{
+  std::string rformat = (format == "") ? "%12d " : format;
+  printf("double %s[%d]=\n", name.c_str(), size());
+  printf("{  ");
+  for(int I = 0; I < size(); I++) { printf(rformat.c_str(), (*this)(I)); }
+  printf("};\n");
+}
+
 template <>
 void fullMatrix<double>::print(const std::string &name,
                                const std::string &format) const
@@ -475,27 +515,5 @@ void fullMatrix<int>::print(const std::string &name,
     else
       printf("}\n");
   }
-  printf("};\n");
-}
-
-template <>
-void fullVector<double>::print(const std::string name,
-                               const std::string format) const
-{
-  std::string rformat = (format == "") ? "%12.5E " : format;
-  printf("double %s[%d]=\n", name.c_str(), size());
-  printf("{  ");
-  for(int I = 0; I < size(); I++) { printf(rformat.c_str(), (*this)(I)); }
-  printf("};\n");
-}
-
-template <>
-void fullVector<int>::print(const std::string name,
-                            const std::string format) const
-{
-  std::string rformat = (format == "") ? "%12d " : format;
-  printf("double %s[%d]=\n", name.c_str(), size());
-  printf("{  ");
-  for(int I = 0; I < size(); I++) { printf(rformat.c_str(), (*this)(I)); }
   printf("};\n");
 }

@@ -20,8 +20,6 @@
 #include <Eigen/Dense>
 #endif
 
-// TOOD: add Eigen versions of all BLAS calls - first and foremost BLAS3 calls
-
 template <class scalar> class fullMatrix;
 
 // An interface for vectors of scalars (real or complex, with simple or double
@@ -33,14 +31,18 @@ template <class scalar> class fullVector {
 private:
   int _r; // size of the vector
   scalar *_data; // pointer on the first element
-  bool _own_data;
+  bool _ownData;
   friend class fullMatrix<scalar>;
+
+#if defined(HAVE_EIGEN)
+  typedef Eigen::Map<Eigen::Matrix<scalar, Eigen::Dynamic, 1> > EigenVec;
+#endif
 
 public:
   // Instantiate a zero size fullVector
-  fullVector(void) : _r(0), _data(0), _own_data(1) {}
+  fullVector(void) : _r(0), _data(0), _ownData(1) {}
   // Instantiate a fullVector of size r filled with zeros
-  fullVector(int r) : _r(r), _own_data(1)
+  fullVector(int r) : _r(r), _ownData(1)
   {
     _data = new scalar[_r];
     setAll(scalar(0.));
@@ -50,18 +52,18 @@ public:
   fullVector(scalar *original, int r)
   {
     _r = r;
-    _own_data = false;
+    _ownData = false;
     _data = original;
   }
   // Instantiate a fullVector, which is a copy (and not a proxy) of other
-  fullVector(const fullVector<scalar> &other) : _r(other._r), _own_data(1)
+  fullVector(const fullVector<scalar> &other) : _r(other._r), _ownData(1)
   {
     _data = new scalar[_r];
     for(int i = 0; i < _r; ++i) _data[i] = other._data[i];
   }
   ~fullVector()
   {
-    if(_own_data && _data) delete[] _data;
+    if(_ownData && _data) delete[] _data;
   }
   inline int size() const { return _r; }
   inline const scalar *getDataPtr() const { return _data; }
@@ -96,14 +98,14 @@ public:
     (*this)(r) = v;
   }
   // Return the L^2 norm
-  inline scalar norm() const;
+  scalar norm() const;
   bool resize(int r, bool resetValue = true)
   {
-    if(_r < r || !_own_data) {
-      if(_own_data && _data) delete[] _data;
+    if(_r < r || !_ownData) {
+      if(_ownData && _data) delete[] _data;
       _r = r;
       _data = new scalar[_r];
-      _own_data = true;
+      _ownData = true;
       if(resetValue) setAll(scalar(0.));
       return true;
     }
@@ -115,8 +117,8 @@ public:
   // ..., original(r_start + r - 1)]. Previous data are lost
   void setAsProxy(const fullVector<scalar> &original, int r_start, int r)
   {
-    if(_own_data && _data) delete[] _data;
-    _own_data = false;
+    if(_ownData && _data) delete[] _data;
+    _ownData = false;
     _r = r;
     _data = original._data + r_start;
   }
@@ -125,34 +127,50 @@ public:
   // lost
   void setAsProxy(const fullMatrix<scalar> &original, int c)
   {
-    if(_own_data && _data) delete[] _data;
-    _own_data = false;
+    if(_ownData && _data) delete[] _data;
+    _ownData = false;
     _r = original._r;
     _data = original._data + c * _r;
   }
   // This fullVector becomes a proxy of the array. Previous data are lost
   void setAsProxy(scalar *data, int r)
   {
-    if(_own_data && _data) delete[] _data;
-    _own_data = false;
+    if(_ownData && _data) delete[] _data;
+    _ownData = false;
     _r = r;
     _data = data;
   }
   inline void scale(const scalar s)
   {
+#if defined(HAVE_EIGEN)
+    EigenVec vv(_data, _r);
+    vv *= s;
+#else
     if(s == scalar(0.))
       for(int i = 0; i < _r; ++i) _data[i] = scalar(0.);
     else if(s == -1.)
       for(int i = 0; i < _r; ++i) _data[i] = -_data[i];
     else
       for(int i = 0; i < _r; ++i) _data[i] *= s;
+#endif
   }
   inline void setAll(const scalar &m)
   {
+#if defined(HAVE_EIGEN)
+    EigenVec vv(_data, _r);
+    vv.setConstant(m);
+#else
     for(int i = 0; i < _r; i++) set(i, m);
+#endif
   }
   void setAll(const fullVector<scalar> &m)
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+  {
+    EigenVec vv(_data, _r);
+    EigenVec vm(m._data, m._r);
+    vv = vm;
+  }
+#elif !defined(HAVE_BLAS)
   {
     for(int i = 0; i < _r; i++) _data[i] = m._data[i];
   }
@@ -161,13 +179,23 @@ public:
   // Scalar product
   inline scalar operator*(const fullVector<scalar> &other)
   {
+#if defined(HAVE_EIGEN)
+    EigenVec vv(_data, _r), vother(other._data, other._r);
+    scalar s = vv.dot(vother);
+#else
     scalar s = 0.;
     for(int i = 0; i < _r; ++i) s += _data[i] * other._data[i];
     return s;
+#endif
   }
   // v(i) = v(i) + alpha * x(i)
   void axpy(const fullVector<scalar> &x, scalar alpha = 1.)
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+  {
+    EigenVec vv(_data, _r), vx(x._data, x._r);
+    vv.noalias() += alpha * vx;
+  }
+#elif !defined(HAVE_BLAS)
   {
     for(int i = 0; i < _r; i++) _data[i] += alpha * x._data[i];
   }
@@ -184,33 +212,16 @@ public:
   {
     if(fread(_data, sizeof(scalar), _r, f) != (size_t)_r) return;
   }
-
-  bool getOwnData() const { return _own_data; };
-  void setOwnData(bool ownData) { _own_data = ownData; };
+  bool getOwnData() const { return _ownData; };
+  void setOwnData(bool ownData) { _ownData = ownData; };
 };
-
-// Specialisation of fullVector<scalar>::norm() const
-template <> inline double fullVector<double>::norm() const
-{
-  double n = 0.;
-  for(int i = 0; i < _r; ++i) n += _data[i] * _data[i];
-  return sqrt(n);
-}
-template <>
-inline std::complex<double> fullVector<std::complex<double> >::norm() const
-{
-  double n = 0.;
-  for(int i = 0; i < _r; ++i)
-    n += _data[i].real() * _data[i].real() + _data[i].imag() * _data[i].imag();
-  return std::complex<double>(sqrt(n), 0.);
-}
 
 // An interface for dense matrix of scalars (real or complex, with simple or
 // double precision)
 
 template <class scalar> class fullMatrix {
 private:
-  bool _own_data; // should data be freed on delete?
+  bool _ownData; // should data be freed on delete?
   int _r, _c; // size of the matrix
   scalar *_data; // pointer on the first element
   friend class fullVector<scalar>;
@@ -225,37 +236,37 @@ public:
   {
     _r = r;
     _c = c;
-    _own_data = false;
+    _ownData = false;
     _data = original;
   }
   fullMatrix(fullMatrix<scalar> &original, int c_start, int c)
   {
     _c = c;
     _r = original._r;
-    _own_data = false;
+    _ownData = false;
     _data = original._data + c_start * _r;
   }
   fullMatrix(int r, int c, bool init0 = true) : _r(r), _c(c)
   {
     _data = new scalar[_r * _c];
-    _own_data = true;
+    _ownData = true;
     if(init0) setAll(scalar(0.));
   }
   fullMatrix(int r, int c, scalar *data)
-    : _r(r), _c(c), _data(data), _own_data(false)
+    : _r(r), _c(c), _data(data), _ownData(false)
   {
     setAll(scalar(0.));
   }
   fullMatrix(const fullMatrix<scalar> &other) : _r(other._r), _c(other._c)
   {
     _data = new scalar[_r * _c];
-    _own_data = true;
+    _ownData = true;
     for(int i = 0; i < _r * _c; ++i) _data[i] = other._data[i];
   }
-  fullMatrix() : _own_data(false), _r(0), _c(0), _data(0) {}
+  fullMatrix() : _ownData(false), _r(0), _c(0), _data(0) {}
   ~fullMatrix()
   {
-    if(_data && _own_data) delete[] _data;
+    if(_data && _ownData) delete[] _data;
   }
   // get information (size, value)
   inline int size1() const { return _r; }
@@ -294,12 +305,12 @@ public:
   bool resize(int r, int c, bool resetValue = true)
   {
     // data will be owned (same as constructor)
-    if((r * c > _r * _c) || !_own_data) {
-      if(_own_data && _data) delete[] _data;
+    if((r * c > _r * _c) || !_ownData) {
+      if(_ownData && _data) delete[] _data;
       _r = r;
       _c = c;
       _data = new scalar[_r * _c];
-      _own_data = true;
+      _ownData = true;
       if(resetValue) setAll(scalar(0.));
       return true;
     }
@@ -321,26 +332,26 @@ public:
   }
   void setAsProxy(const fullMatrix<scalar> &original)
   {
-    if(_data && _own_data) delete[] _data;
+    if(_data && _ownData) delete[] _data;
     _c = original._c;
     _r = original._r;
-    _own_data = false;
+    _ownData = false;
     _data = original._data;
   }
   void setAsProxy(const fullMatrix<scalar> &original, int c_start, int c)
   {
-    if(_data && _own_data) delete[] _data;
+    if(_data && _ownData) delete[] _data;
     _c = c;
     _r = original._r;
-    _own_data = false;
+    _ownData = false;
     _data = original._data + c_start * _r;
   }
   void setAsProxy(scalar *data, int r, int c)
   {
-    if(_data && _own_data) delete[] _data;
+    if(_data && _ownData) delete[] _data;
     _c = c;
     _r = r;
-    _own_data = false;
+    _ownData = false;
     _data = data;
   }
   fullMatrix<scalar> &operator=(const fullMatrix<scalar> &other)
@@ -387,17 +398,17 @@ public:
   }
   void copy(const fullMatrix<scalar> &a)
   {
-    if(_data && !_own_data) {
+    if(_data && !_ownData) {
       Msg::Error("Dense matrix copy prohibited for proxies, use setAll "
                  "instead");
       return;
     }
     if(_r != a._r || _c != a._c) {
-      if(_data && _own_data) delete[] _data;
+      if(_data && _ownData) delete[] _data;
       _r = a._r;
       _c = a._c;
       _data = new scalar[_r * _c];
-      _own_data = true;
+      _ownData = true;
     }
     setAll(a);
   }
@@ -408,10 +419,20 @@ public:
   }
   inline void setAll(const scalar &m)
   {
+#if defined(HAVE_EIGEN)
+    EigenMat ma(_data, _r, _c);
+    ma.setConstant(m);
+#else
     for(int i = 0; i < _r * _c; i++) _data[i] = m;
+#endif
   }
   void setAll(const fullMatrix<scalar> &m)
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+  {
+    EigenMat ma(_data, _r, _c), mm(m._data, m._r, m._c);
+    ma = mm;
+  }
+#elif !defined(HAVE_BLAS)
   {
     if(_r != m._r || _c != m._c) {
       Msg::Error("Dense matrix sizes do not match in setAll");
@@ -422,7 +443,12 @@ public:
 #endif
   ;
   void scale(const double s)
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+  {
+    EigenMat ma(_data, _r, _c);
+    ma *= s;
+  }
+#elif !defined(HAVE_BLAS)
   {
     if(s == 0.) // this is not really correct nan*0 (or inf*0) is expected to
                 // give nan
@@ -438,16 +464,32 @@ public:
   }
   inline void add(const fullMatrix<scalar> &m)
   {
+#if defined(HAVE_EIGEN)
+    EigenMat ma(_data, _r, _c), mm(m._data, m._r, m._c);
+    ma.noalias() += mm;
+#else
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++) (*this)(i, j) += m(i, j);
+#endif
   }
   inline void add(const fullMatrix<scalar> &m, const double &a)
   {
+#if defined(HAVE_EIGEN)
+    EigenMat ma(_data, _r, _c), mm(m._data, m._r, m._c);
+    ma.noalias() += a * mm;
+#else
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++) (*this)(i, j) += a * m(i, j);
+#endif
   }
   void mult(const fullVector<scalar> &x, fullVector<scalar> &y) const
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+  {
+    EigenMat ma(_data, _r, _c);
+    EigenVec vx(x._data, x._r), vy(y._data, y._r);
+    vy = ma * vx;
+  }
+#elif !defined(HAVE_BLAS)
   {
     y.scale(scalar(0.));
     for(int i = 0; i < _r; i++)
@@ -456,7 +498,13 @@ public:
 #endif
   ;
   void multAddy(const fullVector<scalar> &x, fullVector<scalar> &y) const
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+  {
+    EigenMat ma(_data, _r, _c);
+    EigenVec vx(x._data, x._r), vy(y._data, y._r);
+    vy += ma * vx;
+  }
+#elif !defined(HAVE_BLAS)
   {
     for(int i = 0; i < _r; i++)
       for(int j = 0; j < _c; j++) y._data[i] += (*this)(i, j) * x(j);
@@ -464,7 +512,12 @@ public:
 #endif
   ;
   void mult(const fullMatrix<scalar> &b, fullMatrix<scalar> &c) const
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN)
+  {
+    EigenMat ma(_data, _r, _c), mb(b._data, b._r, b._c), mc(c._data, c._r, c._c);
+    mc.noalias() = ma * mb;
+  }
+#elif !defined(HAVE_BLAS)
   {
     c.scale(scalar(0.));
     for(int i = 0; i < _r; i++)
@@ -731,8 +784,8 @@ public:
   {
     if(fread(_data, sizeof(scalar), _r * _c, f) != (size_t)_r) return;
   }
-  bool getOwnData() const { return _own_data; };
-  void setOwnData(bool ownData) { _own_data = ownData; };
+  bool getOwnData() const { return _ownData; };
+  void setOwnData(bool ownData) { _ownData = ownData; };
 };
 
 #endif
