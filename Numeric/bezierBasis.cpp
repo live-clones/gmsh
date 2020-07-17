@@ -612,13 +612,13 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
 {
   _r = lagCoeff.size1();
   _c = lagCoeff.size2();
-  _own_data = false;
+  _ownData = false;
   if(num == 0 && _pool0)
     _data = _pool0->giveBlock(this);
   else if(num == 1 && _pool1)
     _data = _pool1->giveBlock(this);
   else {
-    _own_data = true;
+    _ownData = true;
     _data = new double[_r * _c];
   }
 
@@ -632,13 +632,13 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
 {
   _r = lagCoeff.size();
   _c = 1;
-  _own_data = false;
+  _ownData = false;
   if(num == 0 && _pool0)
     _data = _pool0->giveBlock(this);
   else if(num == 1 && _pool1)
     _data = _pool1->giveBlock(this);
   else {
-    _own_data = true;
+    _ownData = true;
     _data = new double[_r * _c];
   }
 
@@ -653,19 +653,19 @@ bezierCoeff::bezierCoeff(const bezierCoeff &other, bool swap)
   _r = other._r;
   _c = other._c;
   if(swap) {
-    _own_data = other._own_data;
+    _ownData = other._ownData;
     _data = other._data;
-    const_cast<bezierCoeff &>(other)._own_data = false;
+    const_cast<bezierCoeff &>(other)._ownData = false;
     const_cast<bezierCoeff &>(other)._numPool = -1;
   }
   else {
-    _own_data = false;
+    _ownData = false;
     if(_numPool == 0 && _pool0)
       _data = _pool0->giveBlock(this);
     else if(_numPool == 1 && _pool1)
       _data = _pool1->giveBlock(this);
     else {
-      _own_data = true;
+      _ownData = true;
       _data = new double[_r * _c];
     }
   }
@@ -673,7 +673,7 @@ bezierCoeff::bezierCoeff(const bezierCoeff &other, bool swap)
 
 bezierCoeff::~bezierCoeff()
 {
-  if(_own_data)
+  if(_ownData)
     delete[] _data;
   else {
     if(_numPool == -1) return;
@@ -788,7 +788,7 @@ void bezierCoeff::releasePools()
 
 void bezierCoeff::updateDataPtr(long diff)
 {
-  if(_own_data)
+  if(_ownData)
     Msg::Error("I own data, cannot do that");
   else
     _data += diff;
