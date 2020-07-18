@@ -9,7 +9,7 @@ Enable ANN (used for fast point search in mesh/post) (default: ON)
 @item ENABLE_BAMG
 Enable Bamg 2D anisotropic mesh generator (default: ON)
 @item ENABLE_BLAS_LAPACK
-Enable BLAS/Lapack for linear algebra (required for meshing) (default: ON)
+Enable BLAS/Lapack for linear algebra (if Eigen if disabled) (default: OFF)
 @item ENABLE_BLOSSOM
 Enable Blossom algorithm (needed for full quad meshing) (default: ON)
 @item ENABLE_BUILD_LIB
@@ -38,6 +38,8 @@ Enable profiling compiler flags (default: OFF)
 Enable discrete integration (needed for levelsets) (default: ON)
 @item ENABLE_DOMHEX
 Enable experimental DOMHEX code (default: ON)
+@item ENABLE_EIGEN
+Enable Eigen for linear algebra (instead of Blas/Lapack) (default: ON)
 @item ENABLE_FLTK
 Enable FLTK graphical user interface (requires mesh/post) (default: ON)
 @item ENABLE_GETDP
@@ -60,8 +62,8 @@ Enable MED mesh and post file formats (default: ON)
 Enable mesh module (required by GUI) (default: ON)
 @item ENABLE_METIS
 Enable Metis mesh partitioner (default: ON)
-@item ENABLE_MMG3D
-Enable MMG3D 3D anisotropic mesh refinement (default: ON)
+@item ENABLE_MMG
+Enable Mmg mesh adaptation interface (default: ON)
 @item ENABLE_MPEG_ENCODE
 Enable built-in MPEG movie encoder (default: ON)
 @item ENABLE_MPI

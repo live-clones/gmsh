@@ -1,8 +1,8 @@
 4.7.0 (Work-in-progress): API errors now throw exceptions with the last error
 message (instead of an integer error code); new API to retrieve "homogeneous"
-model-based data, for improved Python performance; added support for Eigen as an
-alternative to BLAS/LAPACK; improved VTK reader; added initial support for MMG
-5; small bug fixes.
+model-based data, for improved Python performance; use Eigen by default instead
+of Blas/Lapack; improved VTK reader; removed bundled MMG3D and added initial
+support for stock MMG 5; small bug fixes.
 
 4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
 (without node insertion), and to only mesh non-meshed entities; added ability to

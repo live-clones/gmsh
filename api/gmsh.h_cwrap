@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.6).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.7).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -4164,6 +4164,39 @@ namespace gmsh { // Top-level functions
       coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       data.resize(api_data_n_); for(size_t i = 0; i < api_data_n_; ++i){ data[i] = std::string(api_data_[i]); gmshFree(api_data_[i]); } gmshFree(api_data_);
       style.resize(api_style_n_); for(size_t i = 0; i < api_style_n_; ++i){ style[i] = std::string(api_style_[i]); gmshFree(api_style_[i]); } gmshFree(api_style_);
+    }
+
+    // Set interpolation matrices for the element family `type' ("Line",
+    // "Triangle", "Quadrangle", "Tetrahedron", "Hexahedron", "Prism", "Pyramid")
+    // in the view `tag'. The approximation of the view's values over an element is
+    // written as a linear combination of `d' basis functions f_i(u, v, w) = sum_(j
+    // = 0, ..., `d' - 1) `coef'[i][j] u^`exp'[j][0] v^`exp'[j][1] w^`exp'[j][2], i
+    // = 0, ..., `d'-1, with u, v, w the coordinates in the reference element. The
+    // `coef' matrix (of size `d' x `d') and the `exp' matrix (of size `d' x 3) are
+    // stored as vectors, by row. If `dGeo' is positive, use `coefGeo' and `expGeo'
+    // to define the interpolation of the x, y, z coordinates of the element in
+    // terms of the u, v, w coordinates, in exactly the same way. If `d' < 0,
+    // remove the interpolation matrices.
+    inline void setInterpolationMatrices(const int tag,
+                                         const std::string & type,
+                                         const int d,
+                                         const std::vector<double> & coef,
+                                         const std::vector<double> & exp,
+                                         const int dGeo = 0,
+                                         const std::vector<double> & coefGeo = std::vector<double>(),
+                                         const std::vector<double> & expGeo = std::vector<double>())
+    {
+      int ierr = 0;
+      double *api_coef_; size_t api_coef_n_; vector2ptr(coef, &api_coef_, &api_coef_n_);
+      double *api_exp_; size_t api_exp_n_; vector2ptr(exp, &api_exp_, &api_exp_n_);
+      double *api_coefGeo_; size_t api_coefGeo_n_; vector2ptr(coefGeo, &api_coefGeo_, &api_coefGeo_n_);
+      double *api_expGeo_; size_t api_expGeo_n_; vector2ptr(expGeo, &api_expGeo_, &api_expGeo_n_);
+      gmshViewSetInterpolationMatrices(tag, type.c_str(), d, api_coef_, api_coef_n_, api_exp_, api_exp_n_, dGeo, api_coefGeo_, api_coefGeo_n_, api_expGeo_, api_expGeo_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_coef_);
+      gmshFree(api_exp_);
+      gmshFree(api_coefGeo_);
+      gmshFree(api_expGeo_);
     }
 
     // Add a post-processing view as an `alias' of the reference view with tag

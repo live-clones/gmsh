@@ -3482,6 +3482,21 @@ GMSH_API void gmshViewGetListDataStrings(const int tag, const int dim, double **
   }
 }
 
+GMSH_API void gmshViewSetInterpolationMatrices(const int tag, const char * type, const int d, double * coef, size_t coef_n, double * exp, size_t exp_n, const int dGeo, double * coefGeo, size_t coefGeo_n, double * expGeo, size_t expGeo_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coef_(coef, coef + coef_n);
+    std::vector<double> api_exp_(exp, exp + exp_n);
+    std::vector<double> api_coefGeo_(coefGeo, coefGeo + coefGeo_n);
+    std::vector<double> api_expGeo_(expGeo, expGeo + expGeo_n);
+    gmsh::view::setInterpolationMatrices(tag, type, d, api_coef_, api_exp_, dGeo, api_coefGeo_, api_expGeo_);
+  }
+  catch(const std::string &api_error_){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshViewAddAlias(const int refTag, const int copyOptions, const int tag, int * ierr)
 {
   int result_api_ = 0;

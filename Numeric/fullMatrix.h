@@ -533,7 +533,7 @@ public:
   }
   void multOnBlock(const fullMatrix<scalar> &b, const int ncol, const int fcol,
                    const int alpha, const int beta, fullVector<scalar> &c) const
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN) || !defined(HAVE_BLAS)
   {
     int row = 0;
     if(beta != 1) c.scale(beta);
@@ -545,7 +545,7 @@ public:
   ;
   void multWithATranspose(const fullVector<scalar> &x, scalar alpha,
                           scalar beta, fullVector<scalar> &y) const
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN) || !defined(HAVE_BLAS)
   {
     y.scale(beta);
     for(int j = 0; j < _c; j++)
@@ -578,7 +578,7 @@ public:
   void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b,
             scalar alpha = 1., scalar beta = 1., bool transposeA = false,
             bool transposeB = false)
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN) || !defined(HAVE_BLAS)
   {
     const fullMatrix<scalar> &A = transposeA ? a.transpose() : a;
     const fullMatrix<scalar> &B = transposeA ? b.transpose() : b;
@@ -591,7 +591,7 @@ public:
 #endif
   ;
   void axpy(const fullMatrix<scalar> &x, scalar alpha = 1.)
-#if !defined(HAVE_BLAS)
+#if defined(HAVE_EIGEN) || !defined(HAVE_BLAS)
   {
     int n = _r * _c;
     for(int i = 0; i < n; i++) _data[i] += alpha * x._data[i];
@@ -620,7 +620,7 @@ public:
 #endif
   ;
   bool luFactor(fullVector<int> &ipiv)
-#if !defined(HAVE_LAPACK)
+#if defined(HAVE_EIGEN) || !defined(HAVE_LAPACK)
   {
     Msg::Error("LU factorization requires LAPACK");
     return false;
@@ -629,7 +629,7 @@ public:
   ;
   bool luSubstitute(const fullVector<scalar> &rhs, fullVector<int> &ipiv,
                     fullVector<scalar> &result)
-#if !defined(HAVE_LAPACK)
+#if defined(HAVE_EIGEN) || !defined(HAVE_LAPACK)
   {
     Msg::Error("LU substitution requires LAPACK");
     return false;

@@ -6604,6 +6604,96 @@ GMSH_API void gmsh::view::getListDataStrings(const int tag, const int dim,
 #endif
 }
 
+GMSH_API void gmsh::view::setInterpolationMatrices
+  (const int tag, const std::string &type, const int d,
+   const std::vector<double> &coef, const std::vector<double> &exp,
+   const int dGeo, const std::vector<double> &coefGeo,
+   const std::vector<double> &expGeo)
+{
+  _checkInit();
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view) {
+    Msg::Error("Unknown view with tag %d", tag);
+    throw Msg::GetLastError();
+  }
+  PViewData *data = view->getData();
+  if(!data) {
+    Msg::Error("View with tag %d does not contain any data", tag);
+    throw Msg::GetLastError();
+  }
+
+  int itype = 0;
+  if(type == "Line") itype = TYPE_LIN;
+  else if(type == "Triangle") itype = TYPE_TRI;
+  else if(type == "Quadrange") itype = TYPE_QUA;
+  else if(type == "Tetrahedron") itype = TYPE_TET;
+  else if(type == "Pyramid") itype = TYPE_PYR;
+  else if(type == "Prism") itype = TYPE_PRI;
+  else if(type == "Hexahedron") itype = TYPE_HEX;
+  else {
+    Msg::Error("Unknown element family type '%s'", type.c_str());
+    throw Msg::GetLastError();
+  }
+
+  if(data->haveInterpolationMatrices(itype))
+    data->deleteInterpolationMatrices(itype);
+
+  if(d <= 0) return;
+
+  // field interpolation coefficients and exponents
+  if((int)coef.size() != d * d) {
+    Msg::Error("Wrong number of coefficients (%d != %d x %d)",
+               (int)coef.size(), d * d);
+    throw Msg::GetLastError();
+  }
+  if((int)exp.size() != d * 3) {
+    Msg::Error("Wrong number of exponents (%d != %d x 3)",
+               (int)exp.size(), d * 3);
+    throw Msg::GetLastError();
+  }
+  fullMatrix<double> F(d, d), P(d, 3);
+  for(int i = 0; i < d; i++) {
+    for(int j = 0; j < d; j++) {
+      F(i, j) = coef[d * i + j];
+    }
+    for(int j = 0; j < 3; j++) {
+      P(i, j) = exp[d * i + j];
+    }
+  }
+
+  if(dGeo <= 0) {
+    data->setInterpolationMatrices(itype, F, P);
+    return;
+  }
+
+  // geometry interpolation coefficients and exponents
+  if((int)coefGeo.size() != dGeo * dGeo) {
+    Msg::Error("Wrong number of coefficients (%d != %d x %d)",
+               (int)coefGeo.size(), dGeo * dGeo);
+    throw Msg::GetLastError();
+  }
+  if((int)expGeo.size() != dGeo * 3) {
+    Msg::Error("Wrong number of exponents (%d != %d x 3)",
+               (int)expGeo.size(), dGeo * 3);
+    throw Msg::GetLastError();
+  }
+  fullMatrix<double> Fg(dGeo, dGeo), Pg(dGeo, 3);
+  for(int i = 0; i < dGeo; i++) {
+    for(int j = 0; j < dGeo; j++) {
+      Fg(i, j) = coefGeo[dGeo * i + j];
+    }
+    for(int j = 0; j < 3; j++) {
+      Pg(i, j) = expGeo[dGeo * i + j];
+    }
+  }
+  data->setInterpolationMatrices(itype, F, P, Fg, Pg);
+#else
+  Msg::Error("Views require the post-processing module");
+  throw Msg::GetLastError();
+#endif
+}
+
 GMSH_API int gmsh::view::addAlias(const int refTag, const bool copyOptions,
                                   const int tag)
 {

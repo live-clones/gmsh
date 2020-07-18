@@ -825,6 +825,9 @@ view.add('addListDataString', doc, None, iint('tag'), ivectordouble('coord'), iv
 doc = '''Get list-based post-processing data strings (2D strings if `dim' = 2, 3D strings if `dim' = 3) from the view with tag `tag'. Return the coordinates in `coord', the strings in `data' and the styles in `style'.'''
 view.add('getListDataStrings', doc, None, iint('tag'), iint('dim'), ovectordouble('coord'), ovectorstring('data'), ovectorstring('style'))
 
+doc = '''Set interpolation matrices for the element family `type' ("Line", "Triangle", "Quadrangle", "Tetrahedron", "Hexahedron", "Prism", "Pyramid") in the view `tag'. The approximation of the view's values over an element is written as a linear combination of `d' basis functions f_i(u, v, w) = sum_(j = 0, ..., `d' - 1) `coef'[i][j] u^`exp'[j][0] v^`exp'[j][1] w^`exp'[j][2], i = 0, ..., `d'-1, with u, v, w the coordinates in the reference element. The `coef' matrix (of size `d' x `d') and the `exp' matrix (of size `d' x 3) are stored as vectors, by row. If `dGeo' is positive, use `coefGeo' and `expGeo' to define the interpolation of the x, y, z coordinates of the element in terms of the u, v, w coordinates, in exactly the same way. If `d' < 0, remove the interpolation matrices.'''
+view.add('setInterpolationMatrices', doc, None, iint('tag'), istring('type'), iint('d'), ivectordouble('coef'), ivectordouble('exp'), iint('dGeo', '0'), ivectordouble('coefGeo', 'std::vector<double>()', "[]", "[]"), ivectordouble('expGeo', 'std::vector<double>()', "[]", "[]"))
+
 doc = '''Add a post-processing view as an `alias' of the reference view with tag `refTag'. If `copyOptions' is set, copy the options of the reference view. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''
 view.add('addAlias', doc, oint, iint('refTag'), ibool('copyOptions', 'false', 'False'), iint('tag', '-1'))
 
