@@ -35,8 +35,8 @@ bool PViewData::finalize(bool computeMinMax,
 void PViewData::initAdaptiveData(int step, int level, double tol)
 {
   if(!_adaptive) {
-    Msg::Info("Initializing adaptive data %p interp size=%d", this,
-              _interpolation.size());
+    Msg::Debug("Initializing adaptive data %p interp size=%d", this,
+               _interpolation.size());
     _adaptive = new adaptiveData(this);
     _adaptive->changeResolution(step, level, tol);
   }
@@ -45,8 +45,8 @@ void PViewData::initAdaptiveData(int step, int level, double tol)
 void PViewData::initAdaptiveDataLight(int step, int level, double tol)
 {
   if(!_adaptive) {
-    Msg::Info("Initializing adaptive data %p interp size=%d", this,
-              _interpolation.size());
+    Msg::Debug("Initializing adaptive data %p interp size=%d", this,
+               _interpolation.size());
     // _outData in adaptive.h is only used for visualization of adapted views in
     // the GMSH GUI.  In some cases (export of adapted views under pvtu format,
     // use of GMSH as external lib), this object is not needed so avoid its
