@@ -10,17 +10,14 @@
 #include "fullMatrix.h"
 #include "GmshMessage.h"
 
-//#if defined(_MSC_VER)
-//#define F77NAME(x) (x)
-//#endif
-
 #if !defined(F77NAME)
 #define F77NAME(x) (x##_)
 #endif
 
 // Specialisation of fullVector/Matrix operations using BLAS and LAPACK
 
-#if defined(HAVE_BLAS)
+#if defined(HAVE_BLAS) && !defined(HAVE_EIGEN)
+
 extern "C" {
 void F77NAME(daxpy)(int *n, double *alpha, double *x, int *incx, double *y,
                     int *incy);
@@ -260,7 +257,7 @@ void fullMatrix<double>::axpy(const fullMatrix<double> &x, double alpha)
 
 #endif
 
-#if defined(HAVE_LAPACK)
+#if defined(HAVE_LAPACK) && !defined(HAVE_EIGEN)
 
 extern "C" {
 void F77NAME(dgesv)(int *N, int *nrhs, double *A, int *lda, int *ipiv,

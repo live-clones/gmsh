@@ -332,7 +332,7 @@ double MQuadrangle::getOuterRadius()
 
 double MQuadrangle::getInnerRadius()
 {
-#if defined(HAVE_LAPACK)
+#if defined(HAVE_LAPACK) || defined(HAVE_EIGEN)
   // get the coordinates (x, y, z) of the 4 points defining the Quad
   double x[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
   double y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
@@ -406,7 +406,7 @@ double MQuadrangle::getInnerRadius()
     }
   }
   return R;
-#else // HAVE_LAPACK
+#else
   // Default implementation. Not sure that the following give exactly
   // the same value as the HAVE_LAPACK case !
   // but same value for a square
@@ -437,7 +437,7 @@ double MQuadrangle::getInnerRadius()
 
   return 0.25 * sqrt((a * c + b * d) * (a * d + b * c) * (a * b + c * d) /
                      ((halfs - a) * (halfs - b) * (halfs - c) * (halfs - d)));
-#endif // HAVE_LAPACK
+#endif
 }
 
 void MQuadrangleN::reverse()
