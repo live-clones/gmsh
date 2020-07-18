@@ -2773,7 +2773,7 @@ namespace gmsh { // Top-level functions
     //
     // Set interpolation matrices for the element family `type' ("Line",
     // "Triangle", "Quadrangle", "Tetrahedron", "Hexahedron", "Prism", "Pyramid")
-    // in the view `tag'. The approximation of the view's values over an element is
+    // in the view `tag'. The approximation of the values over an element is
     // written as a linear combination of `d' basis functions f_i(u, v, w) = sum_(j
     // = 0, ..., `d' - 1) `coef'[i][j] u^`exp'[j][0] v^`exp'[j][1] w^`exp'[j][2], i
     // = 0, ..., `d'-1, with u, v, w the coordinates in the reference element. The
