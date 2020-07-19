@@ -4137,16 +4137,16 @@ coordinates in @code{coord}, the strings in @code{data} and the styles in
 @item gmsh/view/setInterpolationMatrices
 Set interpolation matrices for the element family @code{type} ("Line",
 "Triangle", "Quadrangle", "Tetrahedron", "Hexahedron", "Prism", "Pyramid") in
-the view @code{tag}. The approximation of the view}s values over an element is
-written as a linear combination of @code{d} basis functions f_i(u, v, w) =
-sum_(j = 0, ..., @code{d} - 1) @code{coef}[i][j] u^@code{exp}[j][0]
-v^@code{exp}[j][1] w^@code{exp}[j][2], i = 0, ..., @code{d}-1, with u, v, w the
-coordinates in the reference element. The @code{coef} matrix (of size @code{d} x
-@code{d}) and the @code{exp} matrix (of size @code{d} x 3) are stored as
-vectors, by row. If @code{dGeo} is positive, use @code{coefGeo} and
-@code{expGeo} to define the interpolation of the x, y, z coordinates of the
-element in terms of the u, v, w coordinates, in exactly the same way. If
-@code{d} < 0, remove the interpolation matrices.
+the view @code{tag}. The approximation of the values over an element is written
+as a linear combination of @code{d} basis functions f_i(u, v, w) = sum_(j = 0,
+..., @code{d} - 1) @code{coef}[i][j] u^@code{exp}[j][0] v^@code{exp}[j][1]
+w^@code{exp}[j][2], i = 0, ..., @code{d}-1, with u, v, w the coordinates in the
+reference element. The @code{coef} matrix (of size @code{d} x @code{d}) and the
+@code{exp} matrix (of size @code{d} x 3) are stored as vectors, by row. If
+@code{dGeo} is positive, use @code{coefGeo} and @code{expGeo} to define the
+interpolation of the x, y, z coordinates of the element in terms of the u, v, w
+coordinates, in exactly the same way. If @code{d} < 0, remove the interpolation
+matrices.
 
 @table @asis
 @item Input:
