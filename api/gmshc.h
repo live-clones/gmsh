@@ -684,8 +684,8 @@ GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * element
                                            const int tag,
                                            int * ierr);
 
-/* Return an element type given its family name `familyName' ("point", "line",
- * "triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron")
+/* Return an element type given its family name `familyName' ("Point", "Line",
+ * "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism", "Hexahedron")
  * and polynomial order `order'. If `serendip' is true, return the
  * corresponding serendip element type (element without interior nodes). */
 GMSH_API int gmshModelMeshGetElementType(const char * familyName,

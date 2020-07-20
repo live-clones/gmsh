@@ -1226,9 +1226,9 @@ namespace gmsh { // Top-level functions
         elementTypes.assign(api_elementTypes_, api_elementTypes_ + api_elementTypes_n_); gmshFree(api_elementTypes_);
       }
 
-      // Return an element type given its family name `familyName' ("point",
-      // "line", "triangle", "quadrangle", "tetrahedron", "pyramid", "prism",
-      // "hexahedron") and polynomial order `order'. If `serendip' is true, return
+      // Return an element type given its family name `familyName' ("Point",
+      // "Line", "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism",
+      // "Hexahedron") and polynomial order `order'. If `serendip' is true, return
       // the corresponding serendip element type (element without interior nodes).
       inline int getElementType(const std::string & familyName,
                                 const int order,

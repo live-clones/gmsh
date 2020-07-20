@@ -796,9 +796,9 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getElementType
       //
-      // Return an element type given its family name `familyName' ("point",
-      // "line", "triangle", "quadrangle", "tetrahedron", "pyramid", "prism",
-      // "hexahedron") and polynomial order `order'. If `serendip' is true, return
+      // Return an element type given its family name `familyName' ("Point",
+      // "Line", "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism",
+      // "Hexahedron") and polynomial order `order'. If `serendip' is true, return
       // the corresponding serendip element type (element without interior nodes).
       GMSH_API int getElementType(const std::string & familyName,
                                   const int order,

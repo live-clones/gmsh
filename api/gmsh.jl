@@ -1606,8 +1606,8 @@ end
 """
     gmsh.model.mesh.getElementType(familyName, order, serendip = false)
 
-Return an element type given its family name `familyName` ("point", "line",
-"triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron") and
+Return an element type given its family name `familyName` ("Point", "Line",
+"Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism", "Hexahedron") and
 polynomial order `order`. If `serendip` is true, return the corresponding
 serendip element type (element without interior nodes).
 

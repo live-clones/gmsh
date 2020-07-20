@@ -1819,27 +1819,18 @@ GMSH_API int gmsh::model::mesh::getElementType(const std::string &family,
                                                const bool serendip)
 {
   _checkInit();
-  int familyType = (family == "point") ?
-                     TYPE_PNT :
-                     (family == "line") ?
-                     TYPE_LIN :
-                     (family == "triangle") ?
-                     TYPE_TRI :
-                     (family == "quadrangle") ?
-                     TYPE_QUA :
-                     (family == "tetrahedron") ?
-                     TYPE_TET :
-                     (family == "pyramid") ?
-                     TYPE_PYR :
-                     (family == "prism") ?
-                     TYPE_PRI :
-                     (family == "hexahedron") ?
-                     TYPE_HEX :
-                     (family == "polygon") ?
-                     TYPE_POLYG :
-                     (family == "polyhedron") ?
-                     TYPE_POLYH :
-                     (family == "trihedron") ? TYPE_TRIH : -1;
+  int familyType =
+    (family == "Point" || family == "point") ? TYPE_PNT :
+    (family == "Line" || family == "line") ? TYPE_LIN :
+    (family == "Triangle" || family == "triangle") ? TYPE_TRI :
+    (family == "Quadrangle" || family == "quadrangle") ? TYPE_QUA :
+    (family == "Tetrahedron" || family == "tetrahedron") ? TYPE_TET :
+    (family == "Pyramid" || family == "pyramid") ? TYPE_PYR :
+    (family == "Prism" || family == "prism") ? TYPE_PRI :
+    (family == "Hexahedron" || family == "hexahedron") ? TYPE_HEX :
+    (family == "Polygon" || family == "polygon") ? TYPE_POLYG :
+    (family == "Polyhedron" || family == "polyhedron") ? TYPE_POLYH :
+    (family == "Trihedron" || family == "trihedron") ? TYPE_TRIH : -1;
   return ElementType::getType(familyType, order, serendip);
 }
 
@@ -6624,13 +6615,13 @@ GMSH_API void gmsh::view::setInterpolationMatrices
   }
 
   int itype = 0;
-  if(type == "Line") itype = TYPE_LIN;
-  else if(type == "Triangle") itype = TYPE_TRI;
-  else if(type == "Quadrange") itype = TYPE_QUA;
-  else if(type == "Tetrahedron") itype = TYPE_TET;
-  else if(type == "Pyramid") itype = TYPE_PYR;
-  else if(type == "Prism") itype = TYPE_PRI;
-  else if(type == "Hexahedron") itype = TYPE_HEX;
+  if(type == "Line" || type == "line") itype = TYPE_LIN;
+  else if(type == "Triangle" || type == "triangle") itype = TYPE_TRI;
+  else if(type == "Quadrangle" || type == "quadrangle") itype = TYPE_QUA;
+  else if(type == "Tetrahedron" || type == "tetrahedron") itype = TYPE_TET;
+  else if(type == "Pyramid" || type == "pyramid") itype = TYPE_PYR;
+  else if(type == "Prism" || type == "prism") itype = TYPE_PRI;
+  else if(type == "Hexahedron" || type == "hexahedron") itype = TYPE_HEX;
   else {
     Msg::Error("Unknown element family type '%s'", type.c_str());
     throw Msg::GetLastError();

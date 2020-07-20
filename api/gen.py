@@ -290,7 +290,7 @@ mesh.add('getLocalCoordinatesInElement', doc, None, isize('elementTag'), idouble
 doc = '''Get the types of elements in the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
 mesh.add('getElementTypes', doc, None, ovectorint('elementTypes'), iint('dim', '-1'), iint('tag', '-1'))
 
-doc = '''Return an element type given its family name `familyName' ("point", "line", "triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron") and polynomial order `order'. If `serendip' is true, return the corresponding serendip element type (element without interior nodes).'''
+doc = '''Return an element type given its family name `familyName' ("Point", "Line", "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism", "Hexahedron") and polynomial order `order'. If `serendip' is true, return the corresponding serendip element type (element without interior nodes).'''
 mesh.add('getElementType', doc, oint, istring('familyName'), iint('order'), ibool('serendip', 'false', 'False'))
 
 doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes'), local coordinates of the nodes in the reference element (`localNodeCoord' vector, of length `dim' times `numNodes') and number of primary (first order) nodes (`numPrimaryNodes').'''
