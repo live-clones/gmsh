@@ -21,7 +21,7 @@ NewModel;
 // Merge the first tutorial geometry:
 Merge "t1.geo";
 
-// Apply the view as the current background mesh:
+// Apply the view as the current background mesh size field:
 Background Mesh View[0];
 
 // In order to compute the mesh sizes from the background mesh only, and

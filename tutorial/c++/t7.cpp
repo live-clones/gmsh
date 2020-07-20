@@ -48,7 +48,7 @@ int main(int argc, char **argv)
   // Add the post-processing view as a new size field:
   int bg_field = gmsh::model::mesh::field::add("PostView");
 
-  // Apply the view as the current background mesh:
+  // Apply the view as the current background mesh size field:
   gmsh::model::mesh::field::setAsBackgroundMesh(bg_field);
 
   // In order to compute the mesh sizes from the background mesh only, and
