@@ -14,7 +14,9 @@ void winslowTerm::createData(MElement *e) const
   if(_data.find(e->getTypeForMSH()) != _data.end()) return;
   winslowDataAtGaussPoint d;
   int nbSF = (int)e->getNumShapeFunctions();
-  int integrationOrder = 2 * (e->getPolynomialOrder() - 1);
+  // int integrationOrder = 2 * (e->getPolynomialOrder() - 1);
+  int integrationOrder = 2 * e->getPolynomialOrder();
+  // int integrationOrder = 5 * e->getPolynomialOrder();
   int npts;
   IntPt *GP;
   double gs[100][3];
@@ -40,114 +42,202 @@ void winslowTerm::createData(MElement *e) const
   _data[e->getTypeForMSH()] = d;
 }
 
+void winslowTerm::createDataNode(MElement *e) const
+{
+  if(_dataNode.find(e->getTypeForMSH()) != _dataNode.end()) return;
+  winslowDataAtNode d;
+  int nbSF = (int)e->getNumShapeFunctions();
+  int integrationOrder = 2 * (e->getPolynomialOrder() - 1);
+  int npts;
+  IntPt *GP;
+  double gs[100][3];
+  for(int i = 0; i < e->getNumVertices(); i++) {
+    fullMatrix<double> a(nbSF, 3);
+    double u,v,w;
+    e->getNode(i,u,v,w);
+    e->getGradShapeFunctions(u, v, w, gs);
+    for(int j = 0; j < nbSF; j++) {
+      a(j, 0) = gs[j][0];
+      a(j, 1) = gs[j][1];
+      a(j, 2) = gs[j][2];
+    }
+    d.gradSF.push_back(a);
+    d.u.push_back(u);
+    d.v.push_back(v);
+    d.w.push_back(w);
+  }
+  _dataNode[e->getTypeForMSH()] = d;
+}
+
+// void winslowTerm::computeMetricContrav(fullMatrix<double> &metricContrav, double GradsComput[100][3], MElement *newEl) const{
+//   double covG[3][3]={{0.0}};
+//   double metricCovG[3][3]={{0.0}};
+//   double metricContravGARRAY[3][3]={{0.0}}; //xi,x (comput,phys)
+//   int nbSF = (int)newEl->getNumShapeFunctions();
+//   for(int k = 0; k < 3; k++)
+//     for(int l = 0; l < nbSF; l++){
+//       covG[0][k]+=GradsComput[l][k]*newEl->getVertex(l)->x();
+//       covG[1][k]+=GradsComput[l][k]*newEl->getVertex(l)->y();
+//       covG[2][k]+=GradsComput[l][k]*newEl->getVertex(l)->z();
+//     }
+//   for(int k = 0; k < 3; k++)
+//     for(int l = 0; l < 3; l++)
+//       for(int m = 0; m < 3; m++)
+//   	metricCovG[k][l]+=covG[m][k]*covG[m][l];
+//   inv3x3(metricCovG,metricContravGARRAY);
+//   for(int k = 0; k < 3; k++)
+//     for(int l = 0; l < 3; l++)
+//       metricContrav(k,l)=metricContravGARRAY[k][l];
+//       // metricContrav(k,l)=metricCovG[k][l];
+
+//   // double norm=0.0;
+//   // for(int k = 0; k < 3; k++)
+//   //   for(int l = 0; l < 3; l++){
+//   //     double idTerm=0.0;
+//   //     if(k==l)
+//   //       idTerm=1.0;
+//   //     norm+=(metricContrav(k,l)-idTerm)*(metricContrav(k,l)-idTerm);
+//   //   }
+//   // norm=sqrt(norm);
+//   // if(norm>1e-8){
+//   //   printf("pb metric\n");
+//   //   printf("norm : %g\n",norm);
+//   //   metricContrav.print();
+//   //   exit(0);
+//   // }
+  
+//   //DBG metric id
+//   // metricContrav.setAll(0.0);
+//   // for(int k = 0; k < 3; k++)
+//   //   metricContrav(k,k)=1.0;
+//   return;
+// }
+
+void winslowTerm::computeMetricContrav(fullMatrix<double> &metricContrav, int i , MElement *newEl, MElement *linEl) const{
+  double contravG[3][3]={{0.0}};
+  double metricCovG[3][3]={{0.0}}; //x,xi (phys,comput)
+  double metricContravGARRAY[3][3]={{0.0}}; //xi,x (comput,phys)
+  int nbSF = (int)newEl->getNumShapeFunctions();
+  winslowDataAtGaussPoint &d = _data[newEl->getTypeForMSH()];
+  const fullMatrix<double> &grads = d.gradSF[i];
+  double jacPhys[3][3], invjacPhys[3][3], GradsPhys[100][3];
+  const double detJPhys = newEl->getJacobian(grads, jacPhys);
+  inv3x3(jacPhys, invjacPhys);
+  for(int j = 0; j < nbSF; j++) {
+      GradsPhys[j][0] = invjacPhys[0][0] * grads(j, 0) + invjacPhys[0][1] * grads(j, 1) +
+                          invjacPhys[0][2] * grads(j, 2);
+      GradsPhys[j][1] = invjacPhys[1][0] * grads(j, 0) + invjacPhys[1][1] * grads(j, 1) +
+                          invjacPhys[1][2] * grads(j, 2);
+      GradsPhys[j][2] = invjacPhys[2][0] * grads(j, 0) + invjacPhys[2][1] * grads(j, 1) +
+                          invjacPhys[2][2] * grads(j, 2);
+    }
+  
+  for(int k = 0; k < 3; k++)
+    for(int l = 0; l < nbSF; l++){
+      contravG[0][k]+=GradsPhys[l][k]*linEl->getVertex(l)->x();
+      contravG[1][k]+=GradsPhys[l][k]*linEl->getVertex(l)->y();
+      contravG[2][k]+=GradsPhys[l][k]*linEl->getVertex(l)->z();
+    }
+
+  for(int k = 0; k < 3; k++)
+    for(int l = 0; l < 3; l++)
+      metricContrav(k,l)=contravG[k][l];
+  return;
+}
+
 void winslowTerm::elementMatrix(SElement *se, fullMatrix<double> &m) const
 {
   MElement *e = se->getMeshElement();
+  MElementFactory f;
+  std::vector<MVertex *> newVertices;
+  newVertices.reserve(e->getNumVertices());
+  for(int i = 0; i < e->getNumVertices(); i++){
+    MVertex *vert = e->getVertex(i);
+    double coordPhysicalX=(*_currentSolution)[vert][0];
+    double coordPhysicalY=(*_currentSolution)[vert][1];
+    double coordPhysicalZ=(*_currentSolution)[vert][2];
+    MVertex *newVert = new MVertex(coordPhysicalX,coordPhysicalY,coordPhysicalZ);
+    newVertices.push_back(newVert);
+  }  
+  MElement *newEl = f.create(e->getTypeForMSH(), newVertices);
+  
   createData(e);
-
-  int nbSF = (int)e->getNumShapeFunctions();
+  
   winslowDataAtGaussPoint &d = _data[e->getTypeForMSH()];
   int npts = d.u.size();
   m.setAll(0.);
-
-  double FACT = _e / (1 + _nu);
-  double C11 = FACT * (1 - _nu) / (1 - 2 * _nu);
-  double C12 = FACT * _nu / (1 - 2 * _nu);
-  double C44 = (C11 - C12) / 2;
-  const double C[6][6] = {{C11, C12, C12, 0, 0, 0}, {C12, C11, C12, 0, 0, 0},
-                          {C12, C12, C11, 0, 0, 0}, {0, 0, 0, C44, 0, 0},
-                          {0, 0, 0, 0, C44, 0},     {0, 0, 0, 0, 0, C44}};
-
-  fullMatrix<double> H(6, 6);
-  fullMatrix<double> B(6, 3 * nbSF);
-  fullMatrix<double> BTH(3 * nbSF, 6);
-  fullMatrix<double> BT(3 * nbSF, 6);
-  for(int i = 0; i < 6; i++)
-    for(int j = 0; j < 6; j++) H(i, j) = C[i][j];
-
-  double jac[3][3], invjac[3][3], Grads[100][3];
-  for(int i = 0; i < npts; i++) {
+  
+  int nbSF = (int)e->getNumShapeFunctions();
+  fullMatrix<double> metricContravG(3, 3); //xi,x (comput,physic)
+  fullMatrix<double> GradDiscr(nbSF, 3);
+  fullMatrix<double> GradDiscrT(3,  nbSF);
+  fullMatrix<double> metricContravGTimesGradDiscrT(3 , nbSF);
+  double jacComput[3][3], invjacComput[3][3], GradsComput[100][3];
+  for(int i = 0; i < npts; i++){
     const double weight = d.weight[i];
     const fullMatrix<double> &grads = d.gradSF[i];
-    const double detJ = e->getJacobian(grads, jac);
-    inv3x3(jac, invjac);
+    const double detJComput = e->getJacobian(grads, jacComput);
+    inv3x3(jacComput, invjacComput);
 
     for(int j = 0; j < nbSF; j++) {
-      Grads[j][0] = invjac[0][0] * grads(j, 0) + invjac[0][1] * grads(j, 1) +
-                    invjac[0][2] * grads(j, 2);
-      Grads[j][1] = invjac[1][0] * grads(j, 0) + invjac[1][1] * grads(j, 1) +
-                    invjac[1][2] * grads(j, 2);
-      Grads[j][2] = invjac[2][0] * grads(j, 0) + invjac[2][1] * grads(j, 1) +
-                    invjac[2][2] * grads(j, 2);
+      GradsComput[j][0] = invjacComput[0][0] * grads(j, 0) + invjacComput[0][1] * grads(j, 1) +
+                          invjacComput[0][2] * grads(j, 2);
+      GradsComput[j][1] = invjacComput[1][0] * grads(j, 0) + invjacComput[1][1] * grads(j, 1) +
+                          invjacComput[1][2] * grads(j, 2);
+      GradsComput[j][2] = invjacComput[2][0] * grads(j, 0) + invjacComput[2][1] * grads(j, 1) +
+                          invjacComput[2][2] * grads(j, 2);
+    }
+    for(int j = 0; j < nbSF; j++) {
+      GradDiscr(j, 0) = GradDiscrT(0, j) = GradsComput[j][0];
+      GradDiscr(j, 1) = GradDiscrT(1, j) = GradsComput[j][1];
+      GradDiscr(j, 2) = GradDiscrT(2, j) = GradsComput[j][2];
     }
 
-    B.setAll(0.);
-    BT.setAll(0.);
-
-    if(se->getShapeEnrichement() == se->getTestEnrichement()) {
-      for(int j = 0; j < nbSF; j++) {
-        BT(j, 0) = B(0, j) = Grads[j][0];
-        BT(j, 3) = B(3, j) = Grads[j][1];
-        BT(j, 5) = B(5, j) = Grads[j][2];
-
-        BT(j + nbSF, 1) = B(1, j + nbSF) = Grads[j][1];
-        BT(j + nbSF, 3) = B(3, j + nbSF) = Grads[j][0];
-        BT(j + nbSF, 4) = B(4, j + nbSF) = Grads[j][2];
-
-        BT(j + 2 * nbSF, 2) = B(2, j + 2 * nbSF) = Grads[j][2];
-        BT(j + 2 * nbSF, 4) = B(4, j + 2 * nbSF) = Grads[j][1];
-        BT(j + 2 * nbSF, 5) = B(5, j + 2 * nbSF) = Grads[j][0];
+    //Computing contravariant metric derivative
+    double ff[256];
+    se->nodalTestFunctions(d.u[i], d.v[i], d.w[i], ff);
+    fullMatrix<double> ffFM(nbSF,1);
+    for(int l = 0; l < nbSF; l++){
+      ffFM(l,0)=ff[l];
+    }
+    fullMatrix<double> alphaGauss(3,1);
+    alphaGauss.setAll(0.0);
+    for(int j=0;j<3;j++)
+      for(int l = 0; l < nbSF; l++){
+	MVertex *vert = e->getVertex(l);
+	alphaGauss(j,0) += (*_alpha)[vert][j]*ff[l];
       }
-    }
-    else {
-      /*
-      se->gradNodalTestFunctions (u, v, w, invjac,GradsT);
-      for (int j = 0; j < nbSF; j++){
-        BT(j, 0) = Grads[j][0]; B(0, j) = GradsT[j][0];
-        BT(j, 3) = Grads[j][1]; B(3, j) = GradsT[j][1];
-        BT(j, 5) = Grads[j][2]; B(5, j) = GradsT[j][2];
-
-        BT(j + nbSF, 1) = Grads[j][1]; B(1, j + nbSF) = GradsT[j][1];
-        BT(j + nbSF, 3) = Grads[j][0]; B(3, j + nbSF) = GradsT[j][0];
-        BT(j + nbSF, 4) = Grads[j][2]; B(4, j + nbSF) = GradsT[j][2];
-
-        BT(j + 2 * nbSF, 2) = Grads[j][2]; B(2, j + 2 * nbSF) = GradsT[j][2];
-        BT(j + 2 * nbSF, 4) = Grads[j][1]; B(4, j + 2 * nbSF) = GradsT[j][1];
-        BT(j + 2 * nbSF, 5) = Grads[j][0]; B(5, j + 2 * nbSF) = GradsT[j][0];
-      }
-      */
-    }
-
-    BTH.setAll(0.);
-    BTH.gemm(BT, H);
-    m.gemm(BTH, B, weight * detJ, 1.);
+    // //DBG norm alpha
+    // double norm=0.0;
+    // for(int j=0;j<3;j++)
+    //   norm+=alphaGauss(j,0)*alphaGauss(j,0);
+    // norm=sqrt(norm);
+    // if(norm>1e-10){
+    //   printf("norm alpha : %g\n",norm);
+    //   alphaGauss.print();
+    //   exit(0);
+    // }
+    //Compute contravariant metric
+    // computeMetricContrav(metricContravG, GradsComput, newEl);
+    computeMetricContrav(metricContravG, i, newEl, e);
+    
+    metricContravGTimesGradDiscrT.setAll(0.0);
+    metricContravG.mult(GradDiscrT,metricContravGTimesGradDiscrT);
+    
+    m.gemm(GradDiscr, metricContravGTimesGradDiscrT, weight * detJComput, 1.);
+    fullMatrix<double> alphaTimesGradDiscrT(1 , nbSF);
+    alphaGauss.transpose().mult(GradDiscrT,alphaTimesGradDiscrT);
+    m.gemm(ffFM, alphaTimesGradDiscrT, -1.0 * weight * detJComput, 1.);
   }
+  for(int i = 0; i < newVertices.size(); i++){
+    delete newVertices[i];
+  }
+  delete newEl;
+  return;
 }
 
 void winslowTerm::elementVector(SElement *se, fullVector<double> &m) const
 {
-  MElement *e = se->getMeshElement();
-  int nbSF = (int)e->getNumShapeFunctions();
-  int integrationOrder = 2 * e->getPolynomialOrder();
-  int npts;
-  IntPt *GP;
-  double jac[3][3];
-  double ff[256];
-  e->getIntegrationPoints(integrationOrder, &npts, &GP);
-
-  m.scale(0.);
-
-  for(int i = 0; i < npts; i++) {
-    const double u = GP[i].pt[0];
-    const double v = GP[i].pt[1];
-    const double w = GP[i].pt[2];
-    const double weight = GP[i].weight;
-    const double detJ = e->getJacobian(u, v, w, jac);
-    se->nodalTestFunctions(u, v, w, ff);
-    for(int j = 0; j < nbSF; j++) {
-      m(j) += _volumeForce.x() * ff[j] * weight * detJ * .5;
-      m(j + nbSF) += _volumeForce.y() * ff[j] * weight * detJ * .5;
-      m(j + 2 * nbSF) += _volumeForce.z() * ff[j] * weight * detJ * .5;
-    }
-  }
+  
+  return;
 }

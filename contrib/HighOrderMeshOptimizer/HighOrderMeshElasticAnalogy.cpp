@@ -860,8 +860,8 @@ double highOrderTools::_applyIncrementalDisplacement(double max_incr, std::vecto
   if(v.empty()) return 1.;
   elasticityTerm El(0, 1.0, .333, _tag);
   bool computeCG=true;
-  bool computeOpenNL=true;
-  bool computeDirect=true;
+  bool computeOpenNL=false;
+  bool computeDirect=false;
   bool compareCGDirect=computeCG&&computeDirect;
   bool compareONLDirect=computeOpenNL&&computeDirect;
   
@@ -949,45 +949,47 @@ double highOrderTools::_applyIncrementalDisplacement(double max_incr, std::vecto
       (*it)->z() += max_incr * az;
     }
   else if(computeOpenNL)
-    for(std::size_t i = 0; i < listVertexNumberedCG.size(); i++) {
-      MVertex *vert = listVertexNumberedCG[i];
+    for(std::size_t i = 0; i < listVertexNumberedOpenNL.size(); i++) {
+      MVertex *vert = listVertexNumberedOpenNL[i];
       vert->x() += max_incr * nlGetVariable(_dim*vert->getIndex()+0);
       vert->y() += max_incr * nlGetVariable(_dim*vert->getIndex()+1);
       vert->z() += max_incr * nlGetVariable(_dim*vert->getIndex()+2);
     }
-  else if(computeCG)
-    for(std::size_t i = 0; i < listVertexNumberedOpenNL.size(); i++) {
-      MVertex *vert = listVertexNumberedOpenNL[i];
+  else if(computeCG){
+    printf("update with CG sol\n");
+    for(std::size_t i = 0; i < listVertexNumberedCG.size(); i++) {
+      MVertex *vert = listVertexNumberedCG[i];
       vert->x() += max_incr * x(_dim*vert->getIndex()+0);
       vert->y() += max_incr * x(_dim*vert->getIndex()+1);
       vert->z() += max_incr * x(_dim*vert->getIndex()+2);
     }
+  }
   
   delete lsys;
 
-  // Check now if elements are ok
+  // // Check now if elements are ok
   double percentage = max_incr * 100.;
-  if(computeDirect)
-    while(1) {
-      std::vector<MElement *> disto;
-      double minD;
-      getDistordedElements(v, 0.5, disto, minD);
-      if(minD < thres) {
-	percentage -= 10.;
-	for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
-	    it != _vertices.end(); ++it) {
-	  double ax, ay, az;
-	  myAssembler.getDofValue(*it, 0, _tag, ax);
-	  myAssembler.getDofValue(*it, 1, _tag, ay);
-	  myAssembler.getDofValue(*it, 2, _tag, az);
-	  (*it)->x() -= .1 * ax;
-	  (*it)->y() -= .1 * ay;
-	  (*it)->z() -= .1 * az;
-	}
-      }
-      else
-	break;
-    }
+  // if(computeDirect)
+  //   while(1) {
+  //     std::vector<MElement *> disto;
+  //     double minD;
+  //     getDistordedElements(v, 0.5, disto, minD);
+  //     if(minD < thres) {
+  // 	percentage -= 10.;
+  // 	for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
+  // 	    it != _vertices.end(); ++it) {
+  // 	  double ax, ay, az;
+  // 	  myAssembler.getDofValue(*it, 0, _tag, ax);
+  // 	  myAssembler.getDofValue(*it, 1, _tag, ay);
+  // 	  myAssembler.getDofValue(*it, 2, _tag, az);
+  // 	  (*it)->x() -= .1 * ax;
+  // 	  (*it)->y() -= .1 * ay;
+  // 	  (*it)->z() -= .1 * az;
+  // 	}
+  //     }
+  //     else
+  // 	break;
+  //   }
   return percentage;
 }
 
@@ -1114,7 +1116,8 @@ void highOrderTools::_solveElasticAnalogyUnassembledCG(std::vector<MElement *> &
   fullVector<double> rk1(r2.getDataPtr()+nVertBnd*_dim,(nVertRenum-nVertBnd)*_dim);
   //
   double epsilon = 1e10;
-  double precision = 1e-10;
+  // double precision = 1e-10;
+  double precision = 1e-6;
   int nIt=0;
   int nItMax=10000;
   //-- calcul r0=b-Ax0 et p0=r0
@@ -1344,10 +1347,12 @@ void highOrderTools::_solveElasticAnalogyDirect(std::vector<MElement *> &v, dofM
 
   if(myAssembler.sizeOfR()){
     // assembly of the elasticity term on the
+    printf("assembling system\n");
     for(std::size_t i = 0; i < v.size(); i++) {
       SElement se(v[i]);
       El.addToMatrix(myAssembler, &se);
     }
+    printf("solving system\n");
     Msg::Info("Solving linear system (%d unknowns)...", myAssembler.sizeOfR());
     // solve the system
     lsys->systemSolve();

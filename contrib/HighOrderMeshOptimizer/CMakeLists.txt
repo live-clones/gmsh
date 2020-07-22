@@ -13,7 +13,8 @@ set(SRC
   BoundaryLayerCurver2D.cpp
   BoundaryLayerCurver3D.cpp
   OpenNL_psm.c
-  winslowTerm.cpp    
+  winslowTerm.cpp
+  winslowAlphaTerm.cpp
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

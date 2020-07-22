@@ -45,13 +45,14 @@ class GFace;
 class GRegion;
 
 class highOrderWinslow {
+  typedef std::map<MFace, std::vector<MElement *>, MFaceLessThan> MFaceVecMEltMap;
 private:
   GModel *_gm;
   const int _tag;
   // contains the position of vertices in a straight sided mesh
-  std::map<MVertex *, SVector3> _straightSidedLocation;
+  std::map<MVertex *, SVector3, MVertexPtrLessThan> _straightSidedLocation;
   // contains the position of vertices in the best curvilinear mesh available
-  std::map<MVertex *, SVector3> _targetLocation;
+  std::map<MVertex *, SVector3, MVertexPtrLessThan> _targetLocation;
   int _dim;
   void _clean()
   {
@@ -61,11 +62,15 @@ private:
   void _moveToStraightSidedLocation(MElement *) const;
   void _computeStraightSidedPositions();
   void _printJacobians(GModel *m, const char *nm);
-  void _picardIteration(std::vector<MElement *> &all, std::set<MVertex *, MVertexPtrLessThan> &vertices);
-  
+  void _picardPart1(std::vector<MElement *> &allElem, std::vector<MElement *> &boundaryElem, MFaceVecMEltMap &face2el, std::set<MVertex *, MVertexPtrLessThan> &vertices, std::map<MVertex *, SVector3> *currentSolution, std::map<MVertex *, SVector3> *alpha, int idAlphaComp);
+  void _picardPart2(std::vector<MElement *> &allElem, std::set<MVertex *, MVertexPtrLessThan> &vertices, std::map<MVertex *, SVector3> *alpha, std::map<MVertex *, SVector3> *currentSolution, std::map<MVertex *, SVector3> *newSolution, int idComponent);
+  void _picardIteration(std::vector<MElement *> &all, std::vector<MElement *> &boundaryElem, MFaceVecMEltMap &face2el, std::set<MVertex *, MVertexPtrLessThan> &vertices, std::map<MVertex *, SVector3> *currentSolution, std::map<MVertex *, SVector3> *newSolution);
+  double _computeErrorPicard(std::map<MVertex *, SVector3> *currentSolution, std::map<MVertex *, SVector3> *newSolution);
 public:
   highOrderWinslow(GModel *gm);
   highOrderWinslow(GModel *gm, GModel *mesh, int order);
+  void smoothMesh(GModel *m, bool onlyVisible);
+  
   inline SVector3 getSSL(MVertex *v) const
   {
     std::map<MVertex *, SVector3>::const_iterator it =
@@ -84,7 +89,9 @@ public:
       return SVector3(v->x(), v->y(), v->z());
   }
   void makePosViewWithJacobians(const char *nm);
-  double applyWinslowTo(std::vector<MElement *> &all, double precision);
+  void calcFace2Elements(GEntity *entity, MFaceVecMEltMap &face2el);
+  void applyWinslowTo(GModel *gm, std::vector<MElement *> &all,std::vector<MElement *> &boundaryElements, MFaceVecMEltMap &face2el, double precision);
+  void getBoundaryElementsRegionN(std::vector<MElement *> &boundaryElements, MFaceVecMEltMap &face2el, std::vector<MElement *> &eltsRegionN, std::vector<MElement *> &boundaryElementsRegionN);
 };
 
 #endif
