@@ -434,7 +434,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
       hxtPosInit("binIndices.pos","edges",&test);
       for (uint32_t i=0; i<nmesh->vertices.num; i++){
         hxtPosAddPoint(test,&nmesh->vertices.coord[4*i],0);
-        hxtPosAddText(test,&nmesh->vertices.coord[4*i],"%d",bin[p2p[i]]);
+        //hxtPosAddText(test,&nmesh->vertices.coord[4*i],"%d",bin[p2p[i]]);
 
       }
       hxtPosFinish(test);
@@ -445,6 +445,10 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     HXT_CHECK(hxtMalloc(&tbin,sizeof(uint32_t)*fmesh->vertices.size));
     for (uint32_t i=0; i<fmesh->vertices.size; i++) tbin[i] = bin[i];
     for (uint32_t i=0; i<nmesh->vertices.num; i++){
+      if (p2p[i] == UINT32_MAX){
+        bin[i] = 1;
+        continue;
+      }
       bin[i] = tbin[p2p[i]];
     }
     for (uint32_t i=nmesh->vertices.num; i<fmesh->vertices.size; i++){
@@ -454,7 +458,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
 
     // Convert final mesh "nmesh" to a quad mesh "qmesh"
     // and then rewrite qmesh onto nmesh
-    HXT_CHECK(hxtPointGenQuadSmoothing(opt,mesh,nmesh,p2t,bin));
+    HXT_CHECK(hxtPointGenQuadConvert(opt,mesh,nmesh,p2t,bin));
 
     if(opt->verbosity == 2){
       FILE *test;

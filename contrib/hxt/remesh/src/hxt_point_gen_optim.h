@@ -15,11 +15,11 @@ HXTStatus hxtSurfaceMeshExportAlignedEdges(HXTMesh *mesh,
 HXTStatus hxtPointGenSmoothing(HXTMesh *mesh);
 
 
-HXTStatus hxtPointGenQuadSmoothing(HXTPointGenOptions *opt,
-                                   HXTMesh *omesh,
-                                   HXTMesh *mesh, 
-                                   uint64_t *p2t,
-                                   uint32_t *bin);
+HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
+                                 HXTMesh *omesh,
+                                 HXTMesh *mesh, 
+                                 uint64_t *p2t,
+                                 uint32_t *bin);
 
 
 #endif

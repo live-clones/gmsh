@@ -2627,10 +2627,11 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
     // by using the bounding box of triangles
     clock_t time2 = clock();
     uint32_t estNumVert;
-    HXT_CHECK(hxtEstimateNumOfVerticesForColoredSurface(mesh,
-                                                        color,
-                                                        sizemap,
-                                                        &estNumVert));
+    // TODO 
+/*    HXT_CHECK(hxtEstimateNumOfVerticesForColoredSurface(mesh,*/
+                                                        /*color,*/
+                                                        /*sizemap,*/
+                                                        /*&estNumVert));*/
 
 
     estNumVert = fmesh->vertices.size; // TODO TODO TODO ATTENTION estimate number of vertices function not working problem with sanitizer 

@@ -630,9 +630,9 @@ HXTStatus hxtSurfaceMeshInsertLineVertex(HXTMesh *tmesh,
   // parent[cn].type == 1
   
   // Cases:
-  // - open surface -> 1 triangle adjacent
-  // - manifold -> 2 triangles adjacent
-  // - non-manifold -> >3 triangles adjacent
+  // - open surface ->    1 triangle adjacent
+  // - manifold     ->    2 triangles adjacent
+  // - non-manifold ->   >3 triangles adjacent
   
   uint64_t cl = parent[cn].id;   // current line 
   uint32_t ce = lines2edges[cl]; // corresponding current edge
@@ -1288,7 +1288,9 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
 
 
   HXT_INFO("");
-  HXT_INFO("    Total number of inserted points = %d \n", countPointsOnCorners+countPointsOnLines+countPointsOnTriangles);
+  HXT_INFO("    Number of inserted points            = %d", countPointsOnCorners+countPointsOnLines+countPointsOnTriangles);
+  HXT_INFO("    Number of intermediate mesh vertices = %d", tmesh->vertices.num);
+  HXT_INFO("    Number of intermediate mesh vertices = %d", numTotalVertices);
 
   //***********************************************************************************************
   // COLLAPSE
@@ -1336,7 +1338,6 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
 
   HXT_INFO_COND(opt->verbosity>0,"");
   HXT_INFO_COND(opt->verbosity>0,"Vertices to be removed                      %d", countVerticesToRemove);
-  HXT_INFO_COND(opt->verbosity>0,"Total Vertices to be removed                %d", countVerticesToRemove);
   HXT_INFO_COND(opt->verbosity>0,"Volume Vertices to be removed               %d", countVolumeVerticesToRemove);
   HXT_INFO_COND(opt->verbosity>0,"Surface Vertices to be removed              %d", countVerticesToRemove-countVolumeVerticesToRemove);
 

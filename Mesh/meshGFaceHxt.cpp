@@ -108,7 +108,7 @@ int meshGFaceHxt(GModel *gm)
   HXT_CHECK(hxtMeshCreate(&fmesh));
 
   // TODO 
-  HXTPointGenOptions opt = { .verbosity = 1,
+  HXTPointGenOptions opt = { .verbosity = 0,
                              .generateLines = 1,
                              .generateSurfaces = 1,
                              .generateVolumes = 0,
@@ -117,7 +117,7 @@ int meshGFaceHxt(GModel *gm)
                              .walkMethod2D = 0,
                              .walkMethod3D = 0,
                              .dirType = 0,
-                             .uniformSize = 0.08,
+                             .uniformSize = 0.2,
                              .areaThreshold = 10e-9,
                              .tolerance = 10e-9,
                              .numTris = 0};
