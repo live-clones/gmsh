@@ -1025,38 +1025,6 @@ static int searchAndAssignConstant(p4est_t * p4est, p4est_topidx_t which_tree, p
 }
 
 static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
-  bool in_box, is_leaf = local_num >= 0;
-  size_data_t   *data = (size_data_t *) q->p.user_data;
-  size_point_t  *p    = (size_point_t *) point;
-  ForestOptions *forestOptions = (ForestOptions *) p4est->user_pointer;
-  // We have to recompute the cell dimension h for the root (non leaves) octants 
-  // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
-  double h, center[3];
-  if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
-  else h = data->h;
-  getCellCenter(p4est, which_tree, q, center);
-
-  double epsilon = 1e-13;
-  in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
-  in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
-  in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
-  // in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
-  // in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
-  // in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
-
-  // A point can be on the exact boundary of two cells, hence we take the min.
-  if(in_box && is_leaf){
-    // p->size = fmin(p->size, data->size);
-    // p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
-    p->m = data->M;
-    // p->m.print("p->m");
-    p->isFound = true;
-  }
-
-  return in_box;
-}
-
-static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
   bool in_box = false, is_leaf = local_num >= 0;
   size_data_t   *data = (size_data_t *) q->p.user_data;
   size_point_t  *p    = (size_point_t *) point;
@@ -1460,8 +1428,6 @@ HXTStatus featureSize(Forest* forest){
   if(draw){
     fprintf(file, "};");
     fclose(file);
-    fprintf(file2, "};");
-    fclose(file2);
   }
 
   // // Assign feature size in the octree cells
