@@ -443,6 +443,7 @@ HXTStatus forestLoad(Forest **forest, const char* forestFile, const char *dataFi
   if(*forest == NULL) return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
 
   HXT_CHECK(loadGlobalData(forestOptions, dataFile));
+
   p4est_connectivity_t *connect;
   sc_MPI_Comm mpicomm = sc_MPI_COMM_WORLD;
   int load_data = true;
@@ -548,8 +549,9 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
     forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
 
     if(!candidates.empty()){
-      double kmax = -1.e22;
-      double kmin =  1.e22;
+      double kmax = -1.e22; // To get min curvature size
+      double kmin =  1.e22; 
+      double hf = DBL_MAX;  // To get min feature size
       for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
         for(int i = 0; i < 3; ++i){
           int node = forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
@@ -563,26 +565,25 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
 
           kmax = fmax(kmax,fmax(k1,k2));
           kmin = fmin(kmin,fmin(k1,k2));
+
+          hf = fmin(hf, (*forestOptions->featureSizeAtVertices)[node]);
         }
       }
 
-      // No curvature : the cell is not refined
-      if(fabs(kmax) < 1e-3){
-          return 0;
-      } else{
-        // There is curvature : the cell size should accurately represent the surface
-        // Cell is refined according to the chosen density of nodes
-        double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
-        double nElemPerCell = 2;
+      // There is curvature and/or feature size : the cell size should 
+      // accurately represent the surface and the feature size, so as not
+      // propagate small feature size far from the feature.
+      // Cell is refined according to the chosen density of nodes.
+      double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
+      double nElemPerCell = 2;
 
-        if(h > hc/nElemPerCell && h >= forestOptions->hmin){
-          return 1;
-        } else{
-          return 0;
-        }
+      if(h > fmin(hc/nElemPerCell, hf) && h >= forestOptions->hmin){
+        return 1;
+      } else{
+        return 0;
       }
     } else{ // candidates.empty()
-      // If the cell has no intersection with any triangle of the surface mesh, it is not refined.
+      // If the cell has no intersection with the surface mesh, it is not refined.
       return 0;
     }
   } else{
@@ -666,6 +667,7 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
 
     if(!candidates.empty()){
       double kmax = -1.0e22;
+      double hf = DBL_MAX;
       for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
         for(int i = 0; i < 3; ++i){
           int node = forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
@@ -675,9 +677,10 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
           norme2(v1, &k1);
           norme2(v2, &k2);
           kmax = fmax(kmax,fmax(k1,k2));
+          hf = fmin(hf, (*forestOptions->featureSizeAtVertices)[node]);
         }
       }
-      data->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, 2*M_PI/(forestOptions->nodePerTwoPi * kmax)));
+      data->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, fmin(hf, 2*M_PI/(forestOptions->nodePerTwoPi * kmax)) ));
       // data->size = kmax;
     }
     else{
@@ -1003,9 +1006,13 @@ static int searchAndAssignConstant(p4est_t * p4est, p4est_topidx_t which_tree, p
   else h = data->h;
   getCellCenter(p4est, which_tree, q, center);
 
-  in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
-  in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
-  in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
+  double epsilon = 1e-13;
+  in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
+  in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
+  in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
+  // in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
+  // in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
+  // in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
 
   // A point can be on the exact boundary of two cells, hence we take the min.
   if(in_box && is_leaf){
@@ -1029,9 +1036,48 @@ static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4e
   else h = data->h;
   getCellCenter(p4est, which_tree, q, center);
 
-  in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
-  in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
-  in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
+  double epsilon = 1e-13;
+  in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
+  in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
+  in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
+  // in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
+  // in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
+  // in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
+
+  // A point can be on the exact boundary of two cells, hence we take the min.
+  if(in_box && is_leaf){
+    // p->size = fmin(p->size, data->size);
+    // p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
+    p->m = data->M;
+    // p->m.print("p->m");
+    p->isFound = true;
+  }
+
+  return in_box;
+}
+
+static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
+  bool in_box = false, is_leaf = local_num >= 0;
+  size_data_t   *data = (size_data_t *) q->p.user_data;
+  size_point_t  *p    = (size_point_t *) point;
+  ForestOptions *forestOptions = (ForestOptions *) p4est->user_pointer;
+  // We have to recompute the cell dimension h for the root (non leaves) octants 
+  // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
+  double h, center[3];
+  // if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
+  // else h = data->h;
+  getCellSize(p4est, which_tree, q, &h);
+  getCellCenter(p4est, which_tree, q, center);
+
+  double epsilon = 1e-13;
+  in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
+  in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
+  in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
+
+  // // This misses some points...
+  // in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
+  // in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
+  // in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
 
   // A point can be on the exact boundary of two cells, hence we take the min.
   if(in_box && is_leaf){
@@ -1040,28 +1086,36 @@ static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4e
     p->isFound = true;
   }
 
+  // if(is_leaf && !p->isFound && fabs(p->y) < 1e-10){
+  //   printf("Point (%4.16e,%4.16e,%4.16e)\n", p->x, p->y, p->z);
+  //   printf("h = %4.16e, center = (%4.16e, %4.16e, %4.16e)\n", h, center[0], center[1], center[2]);
+  //   printf("%4.16e <= x <= %4.16e (%d)\n", center[0]-h/2., center[0]+h/2., (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.) );
+  //   printf("%4.16e <= y <= %4.16e (%d)\n", center[1]-h/2., center[1]+h/2., (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.) );
+  //   printf("%4.16e <= z <= %4.16e (%d)\n", center[2]-h/2., center[2]+h/2., (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.) );
+  // }
+
   return in_box;
 }
 
-static int replace(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
-    bool in_box, is_leaf = local_num >= 0;
-    size_data_t  *data = (size_data_t *) q->p.user_data;
-    size_point_t *p    = (size_point_t *) point;
-    double h, center[3];
-    if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
-    else h = data->h;
-    getCellCenter(p4est, which_tree, q, center);
+// static int replace(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
+//     bool in_box, is_leaf = local_num >= 0;
+//     size_data_t  *data = (size_data_t *) q->p.user_data;
+//     size_point_t *p    = (size_point_t *) point;
+//     double h, center[3];
+//     if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
+//     else h = data->h;
+//     getCellCenter(p4est, which_tree, q, center);
 
-    in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
-    in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
-    in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
+//     in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
+//     in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
+//     in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
 
-    if(in_box && is_leaf){
-        data->size = fmin(data->size, p->size);
-    }
+//     if(in_box && is_leaf){
+//         data->size = fmin(data->size, p->size);
+//     }
 
-    return in_box;
-}
+//     return in_box;
+// }
 
 /* Search for a single point in the tree structure and returns its size.
    See searchAndAssign for the detailed comments. */
@@ -1349,7 +1403,7 @@ HXTStatus featureSize(Forest* forest){
           alpha0 = angle(SVector3(n0), e.tangent());
           alpha1 = angle(SVector3(n1), e.tangent());
 
-          if( fmin(alpha0, fabs(M_PI-alpha0)) < M_PI/8. && fmin(alpha1, fabs(M_PI-alpha1)) < M_PI/8.){
+          if( fmin(alpha0, fabs(M_PI-alpha0)) < M_PI/20. && fmin(alpha1, fabs(M_PI-alpha1)) < M_PI/20.){
             // Add edge to the set (axis, though actually unused), modifiy size at its extrmities and draw the dual facet
             std::pair<std::set<MEdge, MEdgeLessThan>::iterator,bool> ret = axis.insert(e);
 
@@ -1406,19 +1460,25 @@ HXTStatus featureSize(Forest* forest){
   if(draw){
     fprintf(file, "};");
     fclose(file);
+    fprintf(file2, "};");
+    fclose(file2);
   }
 
-  // Assign feature size in the octree cells
-  sc_array_t *points = sc_array_new_size(sizeof(size_point_t), mesh->vertices.num);
-  size_point_t *p_tmp;
+  // // Assign feature size in the octree cells
+  // sc_array_t *points = sc_array_new_size(sizeof(size_point_t), mesh->vertices.num);
+  // size_point_t *p_tmp;
+  // for(size_t i = 0; i < mesh->vertices.num; ++i){
+  //   p_tmp = (size_point_t *) sc_array_index(points, i);
+  //   p_tmp->x = mesh->vertices.coord[(size_t) 4*i+0];
+  //   p_tmp->y = mesh->vertices.coord[(size_t) 4*i+1];
+  //   p_tmp->z = mesh->vertices.coord[(size_t) 4*i+2];
+  //   p_tmp->size = sizeAtVertices[i];
+  // }
+  // p4est_search(forest->p4est, NULL, replace, points);
+
   for(size_t i = 0; i < mesh->vertices.num; ++i){
-    p_tmp = (size_point_t *) sc_array_index(points, i);
-    p_tmp->x = mesh->vertices.coord[(size_t) 4*i+0];
-    p_tmp->y = mesh->vertices.coord[(size_t) 4*i+1];
-    p_tmp->z = mesh->vertices.coord[(size_t) 4*i+2];
-    p_tmp->size = sizeAtVertices[i];
+    (*forest->forestOptions->featureSizeAtVertices)[i] = sizeAtVertices[i];
   }
-  p4est_search(forest->p4est, NULL, replace, points);
 
   return HXT_STATUS_OK;
 
@@ -1930,6 +1990,8 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     if(_hmax < 0)
       _hmax = _hbulk;
 
+    std::vector<double> sizeAtVertices(mesh->vertices.num, DBL_MAX);
+
     forestOptions->dim = dim;
     forestOptions->hmax = _hmax;  
     forestOptions->hmin = _hmin;
@@ -1941,20 +2003,21 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     forestOptions->sizeFunction = NULL;
     forestOptions->nodalCurvature = nodalCurvature;
     forestOptions->nodeNormals = nodeNormals;
+    forestOptions->featureSizeAtVertices = &sizeAtVertices;
     forestOptions->triRTree = (dim == 3) ? &triRTree : NULL;
     forestOptions->mesh = mesh;
 
     HXT_CHECK(forestCreate(0, NULL, &forest, NULL, forestOptions));
 
     if(dim == 3){
-      if(_nPointsPerCircle > 0){
-        Msg::Info("Refining octree...");
-        HXT_CHECK(forestRefine(forest));
-      }
-      
       if(_nPointsPerGap > 0){
         Msg::Info("Detecting features...");
         HXT_CHECK(featureSize(forest));
+      }
+
+      if(_nPointsPerCircle > 0){
+        Msg::Info("Refining octree...");
+        HXT_CHECK(forestRefine(forest));
       }
 
       if(_smoothing){
@@ -2007,4 +2070,3 @@ void automaticMeshSizeField::update(){
   Msg::Error ("Gmsh has to be compiled with HXT and P4EST to use automaticMeshSizeField");
 #endif
 };
-

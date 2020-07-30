@@ -37,6 +37,7 @@ typedef struct ForestOptions{
   int           nodePerGap;
   double       *bbox;
   double      (*sizeFunction)(double, double, double, double);
+  std::vector<double>       *featureSizeAtVertices;
   RTree<uint64_t,double,3>  *triRTree;
 #ifdef HAVE_HXT
   HXTMesh                   *mesh;
@@ -46,6 +47,9 @@ typedef struct ForestOptions{
   std::vector<std::function<double(double)>> *curvFunctions;
   std::vector<std::function<double(double)>> *xFunctions;
   std::vector<std::function<double(double)>> *yFunctions;
+  FILE* file1;
+  FILE* file2;
+  FILE* file3;
 } ForestOptions;
 
 // The structure containing the size field information (forest)
@@ -162,6 +166,7 @@ class automaticMeshSizeField : public Field {
     if (fFile != "") update();
   }
 
+  virtual bool isotropic() const { return false; }
   const char *getName() { return "AutomaticMeshSizeField"; }
 
   std::string getDescription()
