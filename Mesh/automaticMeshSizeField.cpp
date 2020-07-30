@@ -588,40 +588,40 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
     }
   } else{
     // 2D curvature refinement is still a work in progress
-    double kmax = -1.e22;
-    double x, y;
-    bool inbox;
+    // double kmax = -1.e22;
+    // double x, y;
+    // bool inbox;
 
-    // Calculer kmax sur toutes les courbes
-    int n = 10;
-    double par[n];
-    for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n; 
+    // // Calculer kmax sur toutes les courbes
+    // int n = 10;
+    // double par[n];
+    // for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n; 
 
-    for(uint16_t i = 0; i < (*forestOptions->curvFunctions).size(); ++i){
-      for(uint16_t j = 0; j < n; ++j){
-        x = (*forestOptions->xFunctions)[i](par[j]);
-        y = (*forestOptions->yFunctions)[i](par[j]);
-        inbox  = (x <= center[0] + h/2.) && (x >= center[0] - h/2.);
-        inbox &= (y <= center[1] + h/2.) && (y >= center[1] - h/2.);
-        if(inbox) kmax = fmax(kmax, fabs((*forestOptions->curvFunctions)[i](par[j])));
-      }
-    }
+    // for(uint16_t i = 0; i < (*forestOptions->curvFunctions).size(); ++i){
+    //   for(uint16_t j = 0; j < n; ++j){
+    //     x = (*forestOptions->xFunctions)[i](par[j]);
+    //     y = (*forestOptions->yFunctions)[i](par[j]);
+    //     inbox  = (x <= center[0] + h/2.) && (x >= center[0] - h/2.);
+    //     inbox &= (y <= center[1] + h/2.) && (y >= center[1] - h/2.);
+    //     if(inbox) kmax = fmax(kmax, fabs((*forestOptions->curvFunctions)[i](par[j])));
+    //   }
+    // }
     
-    if(kmax > 0){
-      if(kmax < 1e-3){
-        return 0;
-      } else{
-        double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
-        int nElemPerCell = 1;
-         if(h > hc/nElemPerCell && h >= forestOptions->hmin){
-          return 1;
-        } else{
-          return 0;
-        }
-      }
-    } else{
+    // if(kmax > 0){
+    //   if(kmax < 1e-3){
+    //     return 0;
+    //   } else{
+    //     double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
+    //     int nElemPerCell = 1;
+    //      if(h > hc/nElemPerCell && h >= forestOptions->hmin){
+    //       return 1;
+    //     } else{
+    //       return 0;
+    //     }
+    //   }
+    // } else{
       return 0;
-    }  
+    // }  
   }
 }
 
@@ -688,29 +688,29 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
     }
   } else{
     // 2D
-    double kmax = -1.e22;
-    double x, y;
-    bool inbox;
+    // double kmax = -1.e22;
+    // double x, y;
+    // bool inbox;
 
-    // Calculer kmax sur toutes les courbes
-    int n = 10;
-    double par[n];
-    for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n; 
+    // // Calculer kmax sur toutes les courbes
+    // int n = 10;
+    // double par[n];
+    // for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n; 
 
-    for(uint16_t i = 0; i < (*forestOptions->curvFunctions).size(); ++i){
-      for(uint16_t j = 0; j < n; ++j){
-        x = (*forestOptions->xFunctions)[i](par[j]);
-        y = (*forestOptions->yFunctions)[i](par[j]);
-        inbox  = (x <= center[0] + h/2.) && (x >= center[0] - h/2.);
-        inbox &= (y <= center[1] + h/2.) && (y >= center[1] - h/2.);
-        if(inbox) kmax = fmax(kmax, fabs((*forestOptions->curvFunctions)[i](par[j])));
-      }
-    }
+    // for(uint16_t i = 0; i < (*forestOptions->curvFunctions).size(); ++i){
+    //   for(uint16_t j = 0; j < n; ++j){
+    //     x = (*forestOptions->xFunctions)[i](par[j]);
+    //     y = (*forestOptions->yFunctions)[i](par[j]);
+    //     inbox  = (x <= center[0] + h/2.) && (x >= center[0] - h/2.);
+    //     inbox &= (y <= center[1] + h/2.) && (y >= center[1] - h/2.);
+    //     if(inbox) kmax = fmax(kmax, fabs((*forestOptions->curvFunctions)[i](par[j])));
+    //   }
+    // }
     
-    if(kmax > 0){
-      double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
-      data->size = fmin(data->size, hc);
-    }
+    // if(kmax > 0){
+    //   double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
+    //   data->size = fmin(data->size, hc);
+    // }
   }
 }
 
@@ -1622,9 +1622,9 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     HXTMesh *mesh;
     double *nodalCurvature;
     double *nodeNormals;
-    std::vector<std::function<double(double)>> curvFunctions;
-    std::vector<std::function<double(double)>> xFunctions;
-    std::vector<std::function<double(double)>> yFunctions;
+    // std::vector<std::function<double(double)>> curvFunctions;
+    // std::vector<std::function<double(double)>> xFunctions;
+    // std::vector<std::function<double(double)>> yFunctions;
 
     int debug = true;
 
@@ -1916,6 +1916,9 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     }
 
     if(dim == 2){
+
+      Msg::Error ("2D size field is not yet operational");
+
       SBoundingBox3d bbox = GModel::current()->bounds();
       for(int i = 0; i < 3; ++i){
         bbox_vertices[i  ] = bbox.min()[i];
@@ -1926,19 +1929,16 @@ HXTStatus automaticMeshSizeField::updateHXT(){
       // nodalCurvature = NULL;
       nodeNormals = NULL;
 
-      for(std::set<GEdge*, GEntityPtrLessThan>::iterator it = GModel::current()->firstEdge(); it != GModel::current()->lastEdge(); ++it){
-        GEdge *e = *it;
-        curvFunctions.push_back([e](double par){ return e->curvature(par); });
-        xFunctions.push_back([e](double par){ return e->point(par).x(); });
-        yFunctions.push_back([e](double par){ return e->point(par).y(); });
-      }
+      // for(std::set<GEdge*, GEntityPtrLessThan>::iterator it = GModel::current()->firstEdge(); it != GModel::current()->lastEdge(); ++it){
+      //   GEdge *e = *it;
+      //   curvFunctions.push_back([e](double par){ return e->curvature(par); });
+      //   xFunctions.push_back([e](double par){ return e->point(par).x(); });
+      //   yFunctions.push_back([e](double par){ return e->point(par).y(); });
+      // }
 
-      forestOptions->curvFunctions = &curvFunctions;
-      forestOptions->xFunctions = &xFunctions;
-      forestOptions->yFunctions = &yFunctions;
-
-      printf("test : %f\n", (*forestOptions->xFunctions)[0](0.2));
-      printf("test : %f\n", (*forestOptions->yFunctions)[0](0.2));
+      // forestOptions->curvFunctions = &curvFunctions;
+      // forestOptions->xFunctions = &xFunctions;
+      // forestOptions->yFunctions = &yFunctions;
     }
 
     // Set the bulk size and the min size from the bbox

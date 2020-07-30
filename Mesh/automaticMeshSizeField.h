@@ -44,9 +44,9 @@ typedef struct ForestOptions{
 #endif
   double                    *nodalCurvature;
   double                    *nodeNormals;
-  std::vector<std::function<double(double)>> *curvFunctions;
-  std::vector<std::function<double(double)>> *xFunctions;
-  std::vector<std::function<double(double)>> *yFunctions;
+  // std::vector<std::function<double(double)>> *curvFunctions;
+  // std::vector<std::function<double(double)>> *xFunctions;
+  // std::vector<std::function<double(double)>> *yFunctions;
   FILE* file1;
   FILE* file2;
   FILE* file3;
