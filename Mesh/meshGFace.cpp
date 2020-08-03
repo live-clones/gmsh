@@ -965,9 +965,11 @@ static void modifyInitialMeshForBoundaryLayers(
                     v21->y(), v21->z(), l + 1, l + 1, l + 1);
         }
       }
-      for(std::size_t l = 0; l < myCol.size(); l++)
-        _columns->_toFirst[myCol[l]] = myCol[0];
-      _columns->_elemColumns[myCol[0]] = myCol;
+      if(myCol.size()) {
+        for(std::size_t l = 0; l < myCol.size(); l++)
+          _columns->_toFirst[myCol[l]] = myCol[0];
+        _columns->_elemColumns[myCol[0]] = myCol;
+      }
     }
   }
 
