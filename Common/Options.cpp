@@ -6095,6 +6095,12 @@ double opt_mesh_ho_periodic(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoPeriodic;
 }
 
+double opt_mesh_ho_save_periodic(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoSavePeriodic = (int)val;
+  return CTX::instance()->mesh.hoSavePeriodic;
+}
+
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.hoNLayers = (int)val;

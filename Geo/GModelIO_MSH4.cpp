@@ -2591,6 +2591,12 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
     GEntity *g_master = g_slave->getMeshMaster();
 
     if(g_slave != g_master) {
+
+      std::map<MVertex *, MVertex *> corrVert = g_slave->correspondingVertices;
+      if(CTX::instance()->mesh.hoSavePeriodic)
+        corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
+                        g_slave->correspondingHighOrderVertices.end());
+
       if(binary) {
         int gSlaveDim = g_slave->dim();
         int gSlaveTag = g_slave->tag();
@@ -2612,12 +2618,11 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
           fwrite(&numAffine, sizeof(std::size_t), 1, fp);
         }
 
-        std::size_t corrVertSize = g_slave->correspondingVertices.size();
+        std::size_t corrVertSize = corrVert.size();
         fwrite(&corrVertSize, sizeof(std::size_t), 1, fp);
 
-        for(std::map<MVertex *, MVertex *>::iterator it =
-              g_slave->correspondingVertices.begin();
-            it != g_slave->correspondingVertices.end(); ++it) {
+        for(std::map<MVertex *, MVertex *>::iterator it = corrVert.begin();
+            it != corrVert.end(); ++it) {
           std::size_t numFirst = it->first->getNum();
           std::size_t numSecond = it->second->getNum();
           fwrite(&numFirst, sizeof(std::size_t), 1, fp);
@@ -2648,11 +2653,10 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
           }
         }
 
-        fprintf(fp, "%lu\n", g_slave->correspondingVertices.size());
+        fprintf(fp, "%lu\n", corrVert.size());
 
-        for(std::map<MVertex *, MVertex *>::iterator it =
-              g_slave->correspondingVertices.begin();
-            it != g_slave->correspondingVertices.end(); ++it) {
+        for(std::map<MVertex *, MVertex *>::iterator it = corrVert.begin();
+            it != corrVert.end(); ++it) {
           fprintf(fp, "%lu %lu\n", it->first->getNum(), it->second->getNum());
         }
       }
