@@ -28,4 +28,8 @@ struct orientMeshGEdge {
 
 int MeshExtrudedCurve(GEdge *ge);
 
+// compute the target number of points on the curve considering all meshing options,
+// counting the boundary vertices
+int meshGEdgeTargetNumberOfPoints(GEdge *);
+
 #endif

@@ -2648,6 +2648,30 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
+        def setTransfiniteAutomatic(dimTags=[], cornerAngle=2.35, recombine=True):
+            """
+            gmsh.model.mesh.setTransfiniteAutomatic(dimTags=[], cornerAngle=2.35, recombine=True)
+
+            Set transfinite meshing constraints on the model entities in `dimTag'.
+            Transfinite meshing constraints are added to the curves of the quadrangular
+            surfaces and to the faces of 6-sided volumes. Quadragular faces with a
+            corner angle superior to `cornerAngle' (in radians) are ignored. The number
+            of points is automatically determined from the sizing constraints. If
+            `dimTag' is empty, the constraints are applied to all entities in the
+            model. If `recombine' is true, the recombine flag is automatically set on
+            the transfinite surfaces.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelMeshSetTransfiniteAutomatic(
+                api_dimTags_, api_dimTags_n_,
+                c_double(cornerAngle),
+                c_int(bool(recombine)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
         def setRecombine(dim, tag):
             """
             gmsh.model.mesh.setRecombine(dim, tag)

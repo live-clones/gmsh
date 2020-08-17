@@ -778,6 +778,104 @@ void meshGEdge::operator()(GEdge *ge)
   ge->meshStatistics.status = GEdge::DONE;
 }
 
+int meshGEdgeTargetNumberOfPoints(GEdge * ge) 
+{
+  if(ge->geomType() == GEntity::BoundaryLayerCurve) return 0;
+  if(ge->meshAttributes.method == MESH_NONE) return 0;
+  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return 0;
+  if(CTX::instance()->mesh.meshOnlyEmpty && ge->getNumMeshElements()) return 0;
+
+  // compute bounds
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  // first compute the length of the curve by integrating one
+  double length;
+  std::vector<IntPoint> Points;
+  if(ge->geomType() == GEntity::Line && ge->getBeginVertex() &&
+     ge->getBeginVertex() == ge->getEndVertex() &&
+     // do not consider closed lines as degenerated
+     (ge->position(0.5) - ge->getBeginVertex()->xyz()).norm() <
+       CTX::instance()->geom.tolerance)
+    length = 0.0; // special case to avoid infinite loop in integration
+  else
+    length = Integration(ge, t_begin, t_end, F_One(), Points,
+                         CTX::instance()->mesh.lcIntegrationPrecision *
+                         CTX::instance()->lc);
+  ge->setLength(length);
+  Points.clear();
+
+  if(length < CTX::instance()->mesh.toleranceEdgeLength) {
+    return 2;
+  }
+
+  // Integrate detJ/lc du
+  double a;
+  int N;
+  int filterMinimumN = 1;
+  if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.) {
+    Msg::Debug("Curve %d has a zero length", ge->tag());
+    a = 0.;
+    N = 1;
+  }
+  else if(ge->degenerate(0)) {
+    Msg::Debug("Curve %d is degenerated", ge->tag());
+    a = 0.;
+    N = 1;
+  }
+  else if(ge->meshAttributes.method == MESH_TRANSFINITE) {
+    a = Integration(ge, t_begin, t_end, F_Transfinite(), Points,
+                    CTX::instance()->mesh.lcIntegrationPrecision);
+    N = ge->meshAttributes.nbPointsTransfinite;
+    if(CTX::instance()->mesh.flexibleTransfinite &&
+       CTX::instance()->mesh.lcFactor)
+      N /= CTX::instance()->mesh.lcFactor;
+  }
+  else {
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_BAMG /* || blf*/) {
+      a = Integration(ge, t_begin, t_end, F_Lc_aniso(), Points,
+                      CTX::instance()->mesh.lcIntegrationPrecision);
+    }
+    else {
+      a = Integration(ge, t_begin, t_end, F_Lc(), Points,
+                      CTX::instance()->mesh.lcIntegrationPrecision);
+    }
+
+    // we should maybe provide an option to disable the smoothing
+    for(std::size_t i = 0; i < Points.size(); i++) {
+      IntPoint &pt = Points[i];
+      SVector3 der = ge->firstDer(pt.t);
+      pt.xp = der.norm();
+    }
+    filterMinimumN = ge->minimumMeshSegments() + 1;
+    N = std::max(filterMinimumN, (int)(a + 1.99));
+  }
+
+  // force odd number of points if blossom is used for recombination
+  if((ge->meshAttributes.method != MESH_TRANSFINITE ||
+      CTX::instance()->mesh.flexibleTransfinite) &&
+     CTX::instance()->mesh.algoRecombine != 0) {
+    std::vector<GFace *> const &faces = ge->faces();
+    if(CTX::instance()->mesh.recombineAll && faces.size()) {
+      if(N % 2 == 0) N++;
+      if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
+    }
+    else {
+      for(std::vector<GFace *>::const_iterator it = faces.begin();
+          it != faces.end(); it++) {
+        if((*it)->meshAttributes.recombine) {
+          if(N % 2 == 0) N++;
+          if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
+          break;
+        }
+      }
+    }
+  }
+
+  return N;
+}
+
 void orientMeshGEdge::operator()(GEdge *ge)
 {
   // apply user-specified mesh orientation constraints

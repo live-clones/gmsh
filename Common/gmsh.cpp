@@ -58,6 +58,7 @@
 
 #if defined(HAVE_MESH)
 #include "Field.h"
+#include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "gmshCrossFields.h"
 #endif
@@ -4248,6 +4249,103 @@ gmsh::model::mesh::setTransfiniteVolume(const int tag,
     }
   }
 }
+
+
+GMSH_API void
+gmsh::model::mesh::setTransfiniteAutomatic(const vectorpair &dimTags, const double cornerAngle, const bool recombine)
+{
+  _checkInit();
+  Msg::Debug("setTransfiniteAutomatic() with cornerAngle=%.3f, recombine=%i", cornerAngle, int(recombine));
+
+  /* Collect all quad 4-sided faces (from given faces and volumes) */
+  std::set<GFace*> faces;
+  if (dimTags.size() == 0) { /* Empty dimTag => all faces */
+    std::vector<GEntity *> entities;
+    GModel::current()->getEntities(entities, 2);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GFace *gf = static_cast<GFace *>(entities[i]);
+      if (gf->edges().size() == 4) {
+        faces.insert(gf);
+      }
+    }
+  } else {
+    for (std::size_t i = 0; i < dimTags.size(); ++i) {
+      if (dimTags[i].second == 2) {
+        int tag = dimTags[i].first;
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(!gf) {
+          Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
+          throw Msg::GetLastError();
+        }
+        if (gf->edges().size() == 4) {
+          faces.insert(gf);
+        }
+      } else if (dimTags[i].second == 3) {
+        int tag = dimTags[i].first;
+        GRegion *gr = GModel::current()->getRegionByTag(tag);
+        if(!gr) {
+          Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
+          throw Msg::GetLastError();
+        }
+        for (GFace* gf: gr->faces()) {
+          if (gf->edges().size() == 4) {
+            faces.insert(gf);
+          }
+        }
+      }
+    }
+  }
+
+  bool okf = MeshSetTransfiniteFacesAutomatic(faces, cornerAngle, recombine);
+  if (!okf) {
+    Msg::Error("failed to automatically set transfinite faces");
+    return;
+  }
+
+  /* Collect the 6-sided volumes (should verify they are topological balls) */
+  std::set<GRegion*> regions;
+  if (dimTags.size() == 0) { /* Empty dimTag => all faces */
+    std::vector<GEntity *> entities;
+    GModel::current()->getEntities(entities, 3);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GRegion *gr = static_cast<GRegion *>(entities[i]);
+      if (gr->faces().size() == 6) {
+        regions.insert(gr);
+      }
+    }
+  } else {
+    for (std::size_t i = 0; i < dimTags.size(); ++i) {
+      if (dimTags[i].second == 3) {
+        int tag = dimTags[i].first;
+        GRegion *gr = GModel::current()->getRegionByTag(tag);
+        if(!gr) {
+          Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
+          throw Msg::GetLastError();
+        }
+        if (gr->faces().size()) {
+          regions.insert(gr);
+        }
+      }
+    }
+  }
+
+  std::size_t nr = 0;
+  for (GRegion* gr: regions) {
+    bool transfinite = true;
+    for (GFace* gf: gr->faces()) {
+      if (gf->meshAttributes.method != MESH_TRANSFINITE) {
+        transfinite = false; break;
+      }
+      if (transfinite) {
+        gr->meshAttributes.method = MESH_TRANSFINITE;
+        nr += 1;
+      }
+    }
+  }
+  if (nr > 0) Msg::Debug("transfinite automatic: transfinite set on %li volumes", nr);
+}
+
+/* move stuff until here */
 
 GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag)
 {
