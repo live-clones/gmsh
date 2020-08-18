@@ -17,6 +17,10 @@
 #include "GmshMessage.h"
 #include "Numeric.h"
 
+#if __cplusplus >= 201103L || _MSVC_LANG >= 201103L
+  #include <array> // only available in C++11
+#endif
+
 /*
    s4 +-----c3-----+ s3
       |            |
@@ -537,6 +541,9 @@ int MeshTransfiniteSurface(GFace *gf)
   return 1;
 }
 
+#if __cplusplus >= 201103L || _MSVC_LANG >= 201103L
+/* The automatic transfinite code uses C++11 features (std::array, range loop) */
+
 bool id_loop_from_closed_pairs(const std::vector<std::array<int,2>>& pairs, std::vector<int>& loop) {
   /* warning: does not verify if the loop is closed, eg [1,2], [2,3] will produce [1,2,3] */
   loop.clear();
@@ -570,8 +577,6 @@ bool id_loop_from_closed_pairs(const std::vector<std::array<int,2>>& pairs, std:
 
   return true;
 }
-
-
 
 bool faceIsValidQuad(GFace* gf, double angle_threshold_rad) {
   if (gf->edges().size() != 4) return false;
@@ -695,9 +700,12 @@ void build_chords(const std::set<GFace*>& faces,
   }
 }
 
+#endif
+
 bool MeshSetTransfiniteFacesAutomatic(std::set<GFace*>& candidate_faces, 
     double cornerAngle, bool setRecombine) {
 
+#if __cplusplus >= 201103L || _MSVC_LANG >= 201103L
   /* Filter with topology and geometry */
   std::set<GFace*> faces;
   for (GFace* gf: candidate_faces)  if (faceIsValidQuad(gf, cornerAngle)) {
@@ -754,8 +762,9 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace*>& candidate_faces,
     }
   }
   Msg::Debug("transfinite automatic: transfinite set on %li faces", nf);
-
-
-
+#else
+  Msg::Error("MeshSetTransfiniteFacesAutomatic requires C++11 or more");
+  return false;
+#endif
   return true;
 }

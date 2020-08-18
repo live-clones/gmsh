@@ -4254,6 +4254,7 @@ gmsh::model::mesh::setTransfiniteVolume(const int tag,
 GMSH_API void
 gmsh::model::mesh::setTransfiniteAutomatic(const vectorpair &dimTags, const double cornerAngle, const bool recombine)
 {
+#if defined(HAVE_MESH)
   _checkInit();
   Msg::Debug("setTransfiniteAutomatic() with cornerAngle=%.3f, recombine=%i", cornerAngle, int(recombine));
 
@@ -4287,7 +4288,8 @@ gmsh::model::mesh::setTransfiniteAutomatic(const vectorpair &dimTags, const doub
           Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
           throw Msg::GetLastError();
         }
-        for (GFace* gf: gr->faces()) {
+        // for(GFace* gf: gr->faces()) { // C++11
+        for (std::size_t _i = 0; _i < gr->faces().size(); ++_i) { GFace* gf = gr->faces()[_i];
           if (gf->edges().size() == 4) {
             faces.insert(gf);
           }
@@ -4296,6 +4298,8 @@ gmsh::model::mesh::setTransfiniteAutomatic(const vectorpair &dimTags, const doub
     }
   }
 
+  /* Build the chords, compute the averaged number of points on each chord,
+   * assign the transfinite attributes */
   bool okf = MeshSetTransfiniteFacesAutomatic(faces, cornerAngle, recombine);
   if (!okf) {
     Msg::Error("failed to automatically set transfinite faces");
@@ -4330,9 +4334,11 @@ gmsh::model::mesh::setTransfiniteAutomatic(const vectorpair &dimTags, const doub
   }
 
   std::size_t nr = 0;
-  for (GRegion* gr: regions) {
+  // for (GRegion* gr: regions) { // C++11
+  for (std::set<GRegion*>::iterator grIt = regions.begin(); grIt != regions.end(); ++grIt) { GRegion* gr = *grIt;
     bool transfinite = true;
-    for (GFace* gf: gr->faces()) {
+    // for(GFace* gf: gr->faces()) { // C++11
+    for (std::size_t _i = 0; _i < gr->faces().size(); ++_i) { GFace* gf = gr->faces()[_i];
       if (gf->meshAttributes.method != MESH_TRANSFINITE) {
         transfinite = false; break;
       }
@@ -4343,9 +4349,11 @@ gmsh::model::mesh::setTransfiniteAutomatic(const vectorpair &dimTags, const doub
     }
   }
   if (nr > 0) Msg::Debug("transfinite automatic: transfinite set on %li volumes", nr);
+#else
+  Msg::Error("setTransfiniteAutomatic requires the MESH module");
+  throw Msg::GetLastError();
+#endif
 }
-
-/* move stuff until here */
 
 GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag)
 {
