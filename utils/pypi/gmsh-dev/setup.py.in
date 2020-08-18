@@ -69,7 +69,11 @@ class DownloadAndInstall(install):
         pth.write(name+'/lib\n')
         pth.write(name+'/bin')
         pth.close()
-        site_dirpath = sysconfig.get_python_lib(prefix='')
+        if plat.startswith('Windows'):
+            site_dirpath = "lib/site-packages"
+        else:
+            v = sys.version_info
+            site_dirpath = "lib/python{}.{}/site-packages".format(v.major, v.minor)
         dirs = [site_dirpath]
         files = [['gmsh.pth']]
         for (dirpath, dirnames, filenames) in os.walk(name):
