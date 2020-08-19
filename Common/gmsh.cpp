@@ -4250,6 +4250,22 @@ gmsh::model::mesh::setTransfiniteVolume(const int tag,
   }
 }
 
+int _eulerCharacteristic(GRegion* gr) {
+  std::set<GVertex*> vertices;
+  std::set<GEdge*> edges;
+  for (std::size_t _i = 0; _i < gr->faces().size(); ++_i) {
+    GFace* gf = gr->faces()[_i];
+    for (std::size_t j = 0; j < gf->edges().size(); ++j) {
+      GEdge* ge = gf->edges()[j];
+      edges.insert(ge);
+      vertices.insert(ge->getBeginVertex());
+      vertices.insert(ge->getEndVertex());
+    }
+  }
+  int X = int(vertices.size()) - int(edges.size()) + int(gr->faces().size());
+  return X;
+}
+
 
 GMSH_API void
 gmsh::model::mesh::setTransfiniteAutomatic(const vectorpair &dimTags, const double cornerAngle, const bool recombine)
@@ -4306,14 +4322,14 @@ gmsh::model::mesh::setTransfiniteAutomatic(const vectorpair &dimTags, const doub
     return;
   }
 
-  /* Collect the 6-sided volumes (should verify they are topological balls) */
+  /* Collect the 6-sided volumes with Euler characteristic equal to 2 (ie ball) */
   std::set<GRegion*> regions;
   if (dimTags.size() == 0) { /* Empty dimTag => all faces */
     std::vector<GEntity *> entities;
     GModel::current()->getEntities(entities, 3);
     for(std::size_t i = 0; i < entities.size(); i++) {
       GRegion *gr = static_cast<GRegion *>(entities[i]);
-      if (gr->faces().size() == 6) {
+      if (gr->faces().size() == 6 && _eulerCharacteristic(gr) == 2) {
         regions.insert(gr);
       }
     }
@@ -4326,7 +4342,7 @@ gmsh::model::mesh::setTransfiniteAutomatic(const vectorpair &dimTags, const doub
           Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
           throw Msg::GetLastError();
         }
-        if (gr->faces().size()) {
+        if (gr->faces().size() == 6 && _eulerCharacteristic(gr) == 2) {
           regions.insert(gr);
         }
       }
