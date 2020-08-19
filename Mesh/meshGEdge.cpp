@@ -533,18 +533,14 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   }
 }
 
-int meshGEdgeProcessing(GEdge *ge, int &N, std::vector<IntPoint> &Points,
-                        double &a, int &filterMinimumN)
+int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
+                        std::vector<IntPoint> &Points, double &a,
+                        int &filterMinimumN)
 {
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return 0;
   if(ge->meshAttributes.method == MESH_NONE) return 0;
   if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return 0;
   if(CTX::instance()->mesh.meshOnlyEmpty && ge->getNumMeshElements()) return 0;
-
-  // compute bounds
-  Range<double> bounds = ge->parBounds(0);
-  double t_begin = bounds.low();
-  double t_end = bounds.high();
 
   // first compute the length of the curve by integrating one
   double length;
@@ -562,7 +558,9 @@ int meshGEdgeProcessing(GEdge *ge, int &N, std::vector<IntPoint> &Points,
   ge->setLength(length);
   Points.clear();
 
-  if(length < CTX::instance()->mesh.toleranceEdgeLength) { return 2; }
+  if(length < CTX::instance()->mesh.toleranceEdgeLength) {
+    ge->setTooSmall(true);
+  }
 
   // Integrate detJ/lc du
   filterMinimumN = 1;
@@ -683,12 +681,11 @@ void meshGEdge::operator()(GEdge *ge)
   addBoundaryLayerPoints(ge, t_begin, t_end, _addBegin, _addEnd);
 
   // integration to get length, number of points, etc
-  int N = 0;
+  int N;
   std::vector<IntPoint> Points;
-  double a = 0.;
-  int filterMinimumN = 1;
-  meshGEdgeProcessing(ge, N, Points, a, filterMinimumN);
-  if(N == 0) return;
+  double a;
+  int filterMinimumN;
+  meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
 
   // printFandPrimitive(ge->tag(),Points);
 
@@ -709,7 +706,8 @@ void meshGEdge::operator()(GEdge *ge)
   else if(ge->getBeginVertex() == ge->getEndVertex() &&
           ge->getBeginVertex()->edges().size() == 1) {
     end_p = beg_p = ge->point(t_begin);
-    Msg::Debug("Meshing periodic closed curve");
+    Msg::Debug("Meshing periodic closed curve (tag %i, %i points)", ge->tag(),
+               N);
   }
   else {
     MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
@@ -797,10 +795,14 @@ void orientMeshGEdge::operator()(GEdge *ge)
 
 int meshGEdgeTargetNumberOfPoints(GEdge *ge)
 {
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
   int N = 0;
   std::vector<IntPoint> Points;
   double a = 0.;
   int filterMinimumN = 1;
-  meshGEdgeProcessing(ge, N, Points, a, filterMinimumN);
+  meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
   return N;
 }
