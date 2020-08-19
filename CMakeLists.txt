@@ -160,9 +160,6 @@ if(ENABLE_PRIVATE_API)
   endif()
 endif()
 
-if(NOT ENABLE_BUILD_SHARED)
-endif()
-
 set(ONELAB_PY contrib/onelab/python/onelab.py)
 set(GMSH_PY api/gmsh.py)
 set(GMSH_JL api/gmsh.jl)
