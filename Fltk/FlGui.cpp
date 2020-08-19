@@ -68,6 +68,17 @@ void FlGui::check(bool force)
 {
   if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
   Fl::check();
+
+  /* Workaround for much slower redraws on macOS Big Sur: limit Fl::check() to
+     60 fps
+  if(force) { Fl::check(); return; }
+  static double lastRefresh = 0.;
+  double start = TimeOfDay();
+  if(start - lastRefresh > 1. / 60.) {
+    lastRefresh = start;
+    Fl::check();
+  }
+  */
 }
 
 // wait (possibly indefinitely) for any events, then process them
