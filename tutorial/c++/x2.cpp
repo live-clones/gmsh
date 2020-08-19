@@ -141,8 +141,9 @@ int main(int argc, char **argv)
   int v1 = gmsh::model::geo::addVolume({sl1});
   gmsh::model::geo::synchronize();
 
-  // Set this to True to build a fully hex mesh:
+  // Set this to true to build a fully hex mesh:
   bool transfinite = false;
+  bool transfiniteAuto = false;
 
   if(transfinite) {
     int NN = 30;
@@ -158,6 +159,13 @@ int main(int argc, char **argv)
       gmsh::model::mesh::setSmoothing(tmp[i].first, tmp[i].second, 100);
     }
     gmsh::model::mesh::setTransfiniteVolume(v1);
+  }
+  else if(transfiniteAuto) {
+    gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 0.5);
+    gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.5);
+    // setTransfiniteAutomatic() uses the sizing constraints to set the number
+    // of points
+    gmsh::model::mesh::setTransfiniteAutomatic();
   }
   else {
     gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 0.05);
