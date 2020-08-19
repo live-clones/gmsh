@@ -55,4 +55,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N);
 
+bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
+                                      double cornerAngle = 2.35,
+                                      bool setRecombine = true);
+
 #endif

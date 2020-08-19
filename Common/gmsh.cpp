@@ -58,6 +58,7 @@
 
 #if defined(HAVE_MESH)
 #include "Field.h"
+#include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "gmshCrossFields.h"
 #endif
@@ -267,7 +268,7 @@ GMSH_API void gmsh::option::getColor(const std::string &name, int &r, int &g,
     b = CTX::instance()->unpackBlue(value);
     a = CTX::instance()->unpackAlpha(value);
   }
-  else{
+  else {
     Msg::Error("Could not get option '%s'", name.c_str());
     throw Msg::GetLastError();
   }
@@ -606,8 +607,8 @@ GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
     // - rewrite the unerlying code: it's slow
     for(std::size_t i = 0; i < dimTags.size(); i++) {
       std::vector<int> tags; // empty to delete the group
-      GModel::current()->getGEOInternals()->modifyPhysicalGroup
-        (dimTags[i].first, dimTags[i].second, 2, tags);
+      GModel::current()->getGEOInternals()->modifyPhysicalGroup(
+        dimTags[i].first, dimTags[i].second, 2, tags);
       GModel::current()->removePhysicalGroup(dimTags[i].first,
                                              dimTags[i].second);
     }
@@ -1820,17 +1821,27 @@ GMSH_API int gmsh::model::mesh::getElementType(const std::string &family,
 {
   _checkInit();
   int familyType =
-    (family == "Point" || family == "point") ? TYPE_PNT :
-    (family == "Line" || family == "line") ? TYPE_LIN :
-    (family == "Triangle" || family == "triangle") ? TYPE_TRI :
-    (family == "Quadrangle" || family == "quadrangle") ? TYPE_QUA :
-    (family == "Tetrahedron" || family == "tetrahedron") ? TYPE_TET :
-    (family == "Pyramid" || family == "pyramid") ? TYPE_PYR :
-    (family == "Prism" || family == "prism") ? TYPE_PRI :
-    (family == "Hexahedron" || family == "hexahedron") ? TYPE_HEX :
-    (family == "Polygon" || family == "polygon") ? TYPE_POLYG :
-    (family == "Polyhedron" || family == "polyhedron") ? TYPE_POLYH :
-    (family == "Trihedron" || family == "trihedron") ? TYPE_TRIH : -1;
+    (family == "Point" || family == "point") ?
+      TYPE_PNT :
+      (family == "Line" || family == "line") ?
+      TYPE_LIN :
+      (family == "Triangle" || family == "triangle") ?
+      TYPE_TRI :
+      (family == "Quadrangle" || family == "quadrangle") ?
+      TYPE_QUA :
+      (family == "Tetrahedron" || family == "tetrahedron") ?
+      TYPE_TET :
+      (family == "Pyramid" || family == "pyramid") ?
+      TYPE_PYR :
+      (family == "Prism" || family == "prism") ?
+      TYPE_PRI :
+      (family == "Hexahedron" || family == "hexahedron") ?
+      TYPE_HEX :
+      (family == "Polygon" || family == "polygon") ?
+      TYPE_POLYG :
+      (family == "Polyhedron" || family == "polyhedron") ?
+      TYPE_POLYH :
+      (family == "Trihedron" || family == "trihedron") ? TYPE_TRIH : -1;
   return ElementType::getType(familyType, order, serendip);
 }
 
@@ -2524,8 +2535,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       element = new MPoint(vertices);
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
 
@@ -3208,8 +3219,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       basis = new HierarchicalBasisH1Point();
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -3234,8 +3245,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       basis = new HierarchicalBasisHcurlLine(order);
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -3458,8 +3469,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       basis = new HierarchicalBasisH1Point();
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -3484,8 +3495,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       basis = new HierarchicalBasisHcurlLine(order);
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -3667,8 +3678,8 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
       basis = new HierarchicalBasisH1Point();
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
     int vSize = basis->getnVertexFunction();
@@ -3701,8 +3712,8 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
       basis = new HierarchicalBasisHcurlLine(basisOrder);
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
     int vSize = basis->getnVertexFunction();
@@ -3773,8 +3784,8 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
       basis = new HierarchicalBasisH1Point();
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -3799,8 +3810,8 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
       basis = new HierarchicalBasisHcurlLine(basisOrder);
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -4249,6 +4260,132 @@ gmsh::model::mesh::setTransfiniteVolume(const int tag,
   }
 }
 
+int _eulerCharacteristic(GRegion *gr)
+{
+  std::set<GVertex *> vertices;
+  std::set<GEdge *> edges;
+  for(std::size_t _i = 0; _i < gr->faces().size(); ++_i) {
+    GFace *gf = gr->faces()[_i];
+    for(std::size_t j = 0; j < gf->edges().size(); ++j) {
+      GEdge *ge = gf->edges()[j];
+      edges.insert(ge);
+      vertices.insert(ge->getBeginVertex());
+      vertices.insert(ge->getEndVertex());
+    }
+  }
+  int X = int(vertices.size()) - int(edges.size()) + int(gr->faces().size());
+  return X;
+}
+
+GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
+  const vectorpair &dimTags, const double cornerAngle, const bool recombine)
+{
+#if defined(HAVE_MESH)
+  _checkInit();
+  Msg::Debug("setTransfiniteAutomatic() with cornerAngle=%.3f, recombine=%i",
+             cornerAngle, int(recombine));
+
+  /* Collect all quad 4-sided faces (from given faces and volumes) */
+  std::set<GFace *> faces;
+  if(dimTags.size() == 0) { /* Empty dimTag => all faces */
+    std::vector<GEntity *> entities;
+    GModel::current()->getEntities(entities, 2);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GFace *gf = static_cast<GFace *>(entities[i]);
+      if(gf->edges().size() == 4) { faces.insert(gf); }
+    }
+  }
+  else {
+    for(std::size_t i = 0; i < dimTags.size(); ++i) {
+      if(dimTags[i].second == 2) {
+        int tag = dimTags[i].first;
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(!gf) {
+          Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
+          throw Msg::GetLastError();
+        }
+        if(gf->edges().size() == 4) { faces.insert(gf); }
+      }
+      else if(dimTags[i].second == 3) {
+        int tag = dimTags[i].first;
+        GRegion *gr = GModel::current()->getRegionByTag(tag);
+        if(!gr) {
+          Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
+          throw Msg::GetLastError();
+        }
+        // for(GFace* gf: gr->faces()) { // C++11
+        for(std::size_t _i = 0; _i < gr->faces().size(); ++_i) {
+          GFace *gf = gr->faces()[_i];
+          if(gf->edges().size() == 4) { faces.insert(gf); }
+        }
+      }
+    }
+  }
+
+  /* Build the chords, compute the averaged number of points on each chord,
+   * assign the transfinite attributes */
+  bool okf = MeshSetTransfiniteFacesAutomatic(faces, cornerAngle, recombine);
+  if(!okf) {
+    Msg::Error("failed to automatically set transfinite faces");
+    return;
+  }
+
+  /* Collect the 6-sided volumes with Euler characteristic equal to 2 (ie ball)
+   */
+  std::set<GRegion *> regions;
+  if(dimTags.size() == 0) { /* Empty dimTag => all faces */
+    std::vector<GEntity *> entities;
+    GModel::current()->getEntities(entities, 3);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GRegion *gr = static_cast<GRegion *>(entities[i]);
+      if(gr->faces().size() == 6 && _eulerCharacteristic(gr) == 2) {
+        regions.insert(gr);
+      }
+    }
+  }
+  else {
+    for(std::size_t i = 0; i < dimTags.size(); ++i) {
+      if(dimTags[i].second == 3) {
+        int tag = dimTags[i].first;
+        GRegion *gr = GModel::current()->getRegionByTag(tag);
+        if(!gr) {
+          Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
+          throw Msg::GetLastError();
+        }
+        if(gr->faces().size() == 6 && _eulerCharacteristic(gr) == 2) {
+          regions.insert(gr);
+        }
+      }
+    }
+  }
+
+  std::size_t nr = 0;
+  // for (GRegion* gr: regions) { // C++11
+  for(std::set<GRegion *>::iterator grIt = regions.begin();
+      grIt != regions.end(); ++grIt) {
+    GRegion *gr = *grIt;
+    bool transfinite = true;
+    // for(GFace* gf: gr->faces()) { // C++11
+    for(std::size_t _i = 0; _i < gr->faces().size(); ++_i) {
+      GFace *gf = gr->faces()[_i];
+      if(gf->meshAttributes.method != MESH_TRANSFINITE) {
+        transfinite = false;
+        break;
+      }
+      if(transfinite) {
+        gr->meshAttributes.method = MESH_TRANSFINITE;
+        nr += 1;
+      }
+    }
+  }
+  if(nr > 0)
+    Msg::Debug("transfinite automatic: transfinite set on %li volumes", nr);
+#else
+  Msg::Error("setTransfiniteAutomatic requires the MESH module");
+  throw Msg::GetLastError();
+#endif
+}
+
 GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag)
 {
   _checkInit();
@@ -4686,9 +4823,7 @@ GMSH_API void gmsh::model::mesh::field::setNumber(const int tag,
   _checkInit();
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
-  if(!o) {
-    throw Msg::GetLastError();
-  }
+  if(!o) { throw Msg::GetLastError(); }
   try {
     o->numericalValue(value);
   } catch(...) {
@@ -4709,9 +4844,7 @@ GMSH_API void gmsh::model::mesh::field::setString(const int tag,
   _checkInit();
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
-  if(!o) {
-    throw Msg::GetLastError();
-  }
+  if(!o) { throw Msg::GetLastError(); }
   try {
     o->string(value);
   } catch(...) {
@@ -4732,9 +4865,7 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
   _checkInit();
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
-  if(!o) {
-    throw Msg::GetLastError();
-  }
+  if(!o) { throw Msg::GetLastError(); }
   try {
     if(o->getType() == FIELD_OPTION_LIST) {
       std::list<int> vl;
@@ -5206,9 +5337,7 @@ GMSH_API void gmsh::model::geo::mesh::setSmoothing(const int dim, const int tag,
                                                    const int val)
 {
   _checkInit();
-  if(dim == 2) {
-    GModel::current()->getGEOInternals()->setSmoothing(tag, val);
-  }
+  if(dim == 2) { GModel::current()->getGEOInternals()->setSmoothing(tag, val); }
 }
 
 GMSH_API void gmsh::model::geo::mesh::setReverse(const int dim, const int tag,
@@ -6195,9 +6324,9 @@ GMSH_API void gmsh::view::addHomogeneousModelData(
 
 #if defined(HAVE_POST)
 static stepData<double> *_getModelData(const int tag, const int step,
-                                       std::string &dataType,
-                                       double &time, int &numComponents,
-                                       int &numEnt, int &maxMult)
+                                       std::string &dataType, double &time,
+                                       int &numComponents, int &numEnt,
+                                       int &maxMult)
 {
   _checkInit();
   PView *view = PView::getViewByTag(tag);
@@ -6253,8 +6382,8 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
   data.clear();
 #if defined(HAVE_POST)
   int numEnt, maxMult;
-  stepData<double> *s = _getModelData(tag, step, dataType, time, numComponents,
-                                      numEnt, maxMult);
+  stepData<double> *s =
+    _getModelData(tag, step, dataType, time, numComponents, numEnt, maxMult);
   if(!s || !numComponents || !numEnt || !maxMult) return;
   data.resize(numEnt);
   tags.resize(numEnt);
@@ -6275,19 +6404,18 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
 #endif
 }
 
-GMSH_API void gmsh::view::getHomogeneousModelData(const int tag, const int step,
-                                                  std::string &dataType,
-                                                  std::vector<std::size_t> &tags,
-                                                  std::vector<double> &data,
-                                                  double &time, int &numComponents)
+GMSH_API void gmsh::view::getHomogeneousModelData(
+  const int tag, const int step, std::string &dataType,
+  std::vector<std::size_t> &tags, std::vector<double> &data, double &time,
+  int &numComponents)
 {
   _checkInit();
   tags.clear();
   data.clear();
 #if defined(HAVE_POST)
   int numEnt, maxMult;
-  stepData<double> *s = _getModelData(tag, step, dataType, time, numComponents,
-                                      numEnt, maxMult);
+  stepData<double> *s =
+    _getModelData(tag, step, dataType, time, numComponents, numEnt, maxMult);
   if(!s || !numComponents || !numEnt || !maxMult) return;
   data.resize(numEnt * numComponents * maxMult, 0.);
   tags.resize(numEnt);
@@ -6595,11 +6723,11 @@ GMSH_API void gmsh::view::getListDataStrings(const int tag, const int dim,
 #endif
 }
 
-GMSH_API void gmsh::view::setInterpolationMatrices
-  (const int tag, const std::string &type, const int d,
-   const std::vector<double> &coef, const std::vector<double> &exp,
-   const int dGeo, const std::vector<double> &coefGeo,
-   const std::vector<double> &expGeo)
+GMSH_API void gmsh::view::setInterpolationMatrices(
+  const int tag, const std::string &type, const int d,
+  const std::vector<double> &coef, const std::vector<double> &exp,
+  const int dGeo, const std::vector<double> &coefGeo,
+  const std::vector<double> &expGeo)
 {
   _checkInit();
 #if defined(HAVE_POST)
@@ -6615,13 +6743,20 @@ GMSH_API void gmsh::view::setInterpolationMatrices
   }
 
   int itype = 0;
-  if(type == "Line" || type == "line") itype = TYPE_LIN;
-  else if(type == "Triangle" || type == "triangle") itype = TYPE_TRI;
-  else if(type == "Quadrangle" || type == "quadrangle") itype = TYPE_QUA;
-  else if(type == "Tetrahedron" || type == "tetrahedron") itype = TYPE_TET;
-  else if(type == "Pyramid" || type == "pyramid") itype = TYPE_PYR;
-  else if(type == "Prism" || type == "prism") itype = TYPE_PRI;
-  else if(type == "Hexahedron" || type == "hexahedron") itype = TYPE_HEX;
+  if(type == "Line" || type == "line")
+    itype = TYPE_LIN;
+  else if(type == "Triangle" || type == "triangle")
+    itype = TYPE_TRI;
+  else if(type == "Quadrangle" || type == "quadrangle")
+    itype = TYPE_QUA;
+  else if(type == "Tetrahedron" || type == "tetrahedron")
+    itype = TYPE_TET;
+  else if(type == "Pyramid" || type == "pyramid")
+    itype = TYPE_PYR;
+  else if(type == "Prism" || type == "prism")
+    itype = TYPE_PRI;
+  else if(type == "Hexahedron" || type == "hexahedron")
+    itype = TYPE_HEX;
   else {
     Msg::Error("Unknown element family type '%s'", type.c_str());
     throw Msg::GetLastError();
@@ -6634,23 +6769,19 @@ GMSH_API void gmsh::view::setInterpolationMatrices
 
   // field interpolation coefficients and exponents
   if((int)coef.size() != d * d) {
-    Msg::Error("Wrong number of coefficients (%d != %d x %d)",
-               (int)coef.size(), d * d);
+    Msg::Error("Wrong number of coefficients (%d != %d x %d)", (int)coef.size(),
+               d * d);
     throw Msg::GetLastError();
   }
   if((int)exp.size() != d * 3) {
-    Msg::Error("Wrong number of exponents (%d != %d x 3)",
-               (int)exp.size(), d * 3);
+    Msg::Error("Wrong number of exponents (%d != %d x 3)", (int)exp.size(),
+               d * 3);
     throw Msg::GetLastError();
   }
   fullMatrix<double> F(d, d), P(d, 3);
   for(int i = 0; i < d; i++) {
-    for(int j = 0; j < d; j++) {
-      F(i, j) = coef[d * i + j];
-    }
-    for(int j = 0; j < 3; j++) {
-      P(i, j) = exp[d * i + j];
-    }
+    for(int j = 0; j < d; j++) { F(i, j) = coef[d * i + j]; }
+    for(int j = 0; j < 3; j++) { P(i, j) = exp[d * i + j]; }
   }
 
   if(dGeo <= 0) {
@@ -6665,18 +6796,14 @@ GMSH_API void gmsh::view::setInterpolationMatrices
     throw Msg::GetLastError();
   }
   if((int)expGeo.size() != dGeo * 3) {
-    Msg::Error("Wrong number of exponents (%d != %d x 3)",
-               (int)expGeo.size(), dGeo * 3);
+    Msg::Error("Wrong number of exponents (%d != %d x 3)", (int)expGeo.size(),
+               dGeo * 3);
     throw Msg::GetLastError();
   }
   fullMatrix<double> Fg(dGeo, dGeo), Pg(dGeo, 3);
   for(int i = 0; i < dGeo; i++) {
-    for(int j = 0; j < dGeo; j++) {
-      Fg(i, j) = coefGeo[dGeo * i + j];
-    }
-    for(int j = 0; j < 3; j++) {
-      Pg(i, j) = expGeo[dGeo * i + j];
-    }
+    for(int j = 0; j < dGeo; j++) { Fg(i, j) = coefGeo[dGeo * i + j]; }
+    for(int j = 0; j < 3; j++) { Pg(i, j) = expGeo[dGeo * i + j]; }
   }
   data->setInterpolationMatrices(itype, F, P, Fg, Pg);
 #else

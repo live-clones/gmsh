@@ -1774,7 +1774,7 @@ Currently supported types are "Progression" (geometrical progression with power
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L152,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L147,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L148,terrain.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L77,terrain_stl.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L152,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L148,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L148,terrain.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L77,terrain_stl.py})
 @end table
 
 @item gmsh/model/mesh/setTransfiniteSurface
@@ -1794,7 +1794,7 @@ its boundary.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L156,x2.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.cpp#L14,get_data_perf.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/square.cpp#L7,square.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L149,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.py#L12,get_data_perf.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L150,terrain.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L79,terrain_stl.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L156,x2.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.cpp#L14,get_data_perf.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/square.cpp#L7,square.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L150,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.py#L12,get_data_perf.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L150,terrain.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L79,terrain_stl.py})
 @end table
 
 @item gmsh/model/mesh/setTransfiniteVolume
@@ -1810,7 +1810,28 @@ interpolation explicitly.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L160,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L152,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L153,terrain.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L82,terrain_stl.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L160,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L153,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L153,terrain.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L82,terrain_stl.py})
+@end table
+
+@item gmsh/model/mesh/setTransfiniteAutomatic
+Set transfinite meshing constraints on the model entities in @code{dimTag}.
+Transfinite meshing constraints are added to the curves of the quadrangular
+surfaces and to the faces of 6-sided volumes. Quadragular faces with a corner
+angle superior to @code{cornerAngle} (in radians) are ignored. The number of
+points is automatically determined from the sizing constraints. If @code{dimTag}
+is empty, the constraints are applied to all entities in the model. If
+@code{recombine} is true, the recombine flag is automatically set on the
+transfinite surfaces.
+
+@table @asis
+@item Input:
+@code{dimTags = []}, @code{cornerAngle = 2.35}, @code{recombine = True}
+@item Output:
+-
+@item Return:
+-
+@item Examples:
+Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L158,x2.py})
 @end table
 
 @item gmsh/model/mesh/setRecombine
@@ -1826,7 +1847,7 @@ recombine triangles into quadrangles) are supported.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L44,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L157,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t11.py#L42,t11.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L150,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L238,poisson.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L151,terrain.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L80,terrain_stl.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L44,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L157,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t11.py#L42,t11.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L151,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L238,poisson.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L151,terrain.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L80,terrain_stl.py})
 @end table
 
 @item gmsh/model/mesh/setSmoothing
@@ -1841,7 +1862,7 @@ and tag @code{tag}. @code{val} iterations of a Laplace smoother are applied.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L158,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L151,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L152,terrain.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L81,terrain_stl.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L158,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L152,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L152,terrain.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L81,terrain_stl.py})
 @end table
 
 @item gmsh/model/mesh/setReverse
@@ -3929,7 +3950,7 @@ associate a new tag. Return the view tag.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L111,t4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L246,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L18,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L17,view.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.cpp#L20,viewlist.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L119,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L28,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L20,x4.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L90,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L41,normals.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L111,t4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L246,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L18,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L17,view.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.cpp#L20,viewlist.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L119,t4.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L90,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L41,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L16,plugin.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L228,poisson.py}, ...)
 @end table
 
 @item gmsh/view/remove
@@ -4071,7 +4092,7 @@ followed by values per node, repeated for each step: [e1x1, ..., e1xn, e1y1,
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/demos/api/viewlist.cpp#L25,viewlist.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L50,x3.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L42,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/view_combine.py#L19,view_combine.py}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.py#L20,viewlist.py})
+C++ (@url{@value{GITLAB-PREFIX}/demos/api/viewlist.cpp#L25,viewlist.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/normals.py#L42,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/view_combine.py#L19,view_combine.py}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.py#L20,viewlist.py})
 @end table
 
 @item gmsh/view/getListData
@@ -4112,7 +4133,7 @@ Bold", "Times-Italic", "Times-BoldItalic", "Helvetica", "Helvetica-Bold",
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L115,t4.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L123,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L75,x3.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L115,t4.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L123,t4.py})
 @end table
 
 @item gmsh/view/getListDataStrings
@@ -4151,8 +4172,6 @@ matrices.
 -
 @item Return:
 -
-@item Examples:
-Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L90,x3.py})
 @end table
 
 @item gmsh/view/addAlias

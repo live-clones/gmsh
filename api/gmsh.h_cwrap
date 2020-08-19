@@ -1820,6 +1820,25 @@ namespace gmsh { // Top-level functions
         gmshFree(api_cornerTags_);
       }
 
+      // Set transfinite meshing constraints on the model entities in `dimTag'.
+      // Transfinite meshing constraints are added to the curves of the
+      // quadrangular surfaces and to the faces of 6-sided volumes. Quadragular
+      // faces with a corner angle superior to `cornerAngle' (in radians) are
+      // ignored. The number of points is automatically determined from the sizing
+      // constraints. If `dimTag' is empty, the constraints are applied to all
+      // entities in the model. If `recombine' is true, the recombine flag is
+      // automatically set on the transfinite surfaces.
+      inline void setTransfiniteAutomatic(const gmsh::vectorpair & dimTags = gmsh::vectorpair(),
+                                          const double cornerAngle = 2.35,
+                                          const bool recombine = true)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshSetTransfiniteAutomatic(api_dimTags_, api_dimTags_n_, cornerAngle, (int)recombine, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
+      }
+
       // Set a recombination meshing constraint on the model entity of dimension
       // `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
       // triangles into quadrangles) are supported.

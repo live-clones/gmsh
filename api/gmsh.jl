@@ -2235,6 +2235,28 @@ function setTransfiniteVolume(tag, cornerTags = Cint[])
 end
 
 """
+    gmsh.model.mesh.setTransfiniteAutomatic(dimTags = Tuple{Cint,Cint}[], cornerAngle = 2.35, recombine = true)
+
+Set transfinite meshing constraints on the model entities in `dimTag`.
+Transfinite meshing constraints are added to the curves of the quadrangular
+surfaces and to the faces of 6-sided volumes. Quadragular faces with a corner
+angle superior to `cornerAngle` (in radians) are ignored. The number of points
+is automatically determined from the sizing constraints. If `dimTag` is empty,
+the constraints are applied to all entities in the model. If `recombine` is
+true, the recombine flag is automatically set on the transfinite surfaces.
+"""
+function setTransfiniteAutomatic(dimTags = Tuple{Cint,Cint}[], cornerAngle = 2.35, recombine = true)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetTransfiniteAutomatic, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Cint, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, cornerAngle, recombine, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
     gmsh.model.mesh.setRecombine(dim, tag)
 
 Set a recombination meshing constraint on the model entity of dimension `dim`
