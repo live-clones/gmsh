@@ -1378,22 +1378,30 @@ int GModel::getMeshStatus(bool countDiscrete)
 {
   std::size_t numEle3D = 0;
   bool toMesh3D = false;
+  bool onlyVisible = CTX::instance()->mesh.meshOnlyVisible;
+
   for(riter it = firstRegion(); it != lastRegion(); ++it) {
-    numEle3D += (*it)->getNumMeshElements();
+    GRegion *gr = *it;
+    numEle3D += gr->getNumMeshElements();
     if(countDiscrete && numEle3D) return 3;
-    if((*it)->geomType() != GEntity::DiscreteVolume &&
-       (*it)->meshAttributes.method != MESH_NONE) toMesh3D = true;
+    if(gr->geomType() != GEntity::DiscreteVolume &&
+       gr->meshAttributes.method != MESH_NONE)
+      toMesh3D = true;
   }
   if(numEle3D && toMesh3D) return 3;
 
   std::size_t numEle2D = 0;
   bool toMesh2D = false, meshDone2D = true;
   for(fiter it = firstFace(); it != lastFace(); ++it) {
-    numEle2D += (*it)->getNumMeshElements();
+    GFace *gf = *it;
+    numEle2D += gf->getNumMeshElements();
     if(countDiscrete && numEle2D) return 2;
-    if((*it)->geomType() != GEntity::DiscreteSurface &&
-       (*it)->meshAttributes.method != MESH_NONE) toMesh2D = true;
-    if((*it)->meshStatistics.status != GEntity::DONE) meshDone2D = false;
+    if(gf->geomType() != GEntity::DiscreteSurface &&
+       gf->meshAttributes.method != MESH_NONE)
+      toMesh2D = true;
+    if(gf->meshStatistics.status != GEntity::DONE &&
+       (!onlyVisible || (onlyVisible && gf->getVisibility())))
+      meshDone2D = false;
   }
   if(numEle2D && toMesh2D && meshDone2D)
     return 2;
@@ -1401,11 +1409,15 @@ int GModel::getMeshStatus(bool countDiscrete)
   std::size_t numEle1D = 0;
   bool toMesh1D = false, meshDone1D = true;
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    numEle1D += (*it)->getNumMeshElements();
+    GEdge *ge = *it;
+    numEle1D += ge->getNumMeshElements();
     if(countDiscrete && numEle1D) return 1;
-    if((*it)->geomType() != GEntity::DiscreteCurve &&
-       (*it)->meshAttributes.method != MESH_NONE) toMesh1D = true;
-    if((*it)->meshStatistics.status != GEntity::DONE) meshDone1D = false;
+    if(ge->geomType() != GEntity::DiscreteCurve &&
+       ge->meshAttributes.method != MESH_NONE)
+      toMesh1D = true;
+    if(ge->meshStatistics.status != GEntity::DONE &&
+       (!onlyVisible || (onlyVisible && ge->getVisibility())))
+      meshDone1D = false;
   }
   if(numEle1D && toMesh1D && meshDone1D)
     return 1;
