@@ -343,7 +343,9 @@ if(ENABLE_OPENACC)
 endif()
 
 if(ENABLE_CXX11)
-  # in recent cmake versions we could do e.g. set(CMAKE_CXX_STANDARD 11)
+  # in cmake >= 3.1 we will do
+  # set(CMAKE_CXX_STANDARD 11)
+  # set(CMAKE_CXX_STANDARD_REQUIRED ON)
   check_cxx_compiler_flag("-std=c++11" STDCXX11)
   if(STDCXX11)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
