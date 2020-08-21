@@ -25,6 +25,7 @@
 #include "clippingWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
+#include "physicalGroupWindow.h"
 #include "onelabGroup.h"
 #include "helpWindow.h"
 #include "colorbarWindow.h"
@@ -608,8 +609,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   elementaryContext =
     new elementaryContextWindow(CTX::instance()->deltaFontSize);
   transformContext = new transformContextWindow(CTX::instance()->deltaFontSize);
-  physicalContext = new physicalContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
+  physicalGroup = new physicalGroupWindow(CTX::instance()->deltaFontSize);
   help = new helpWindow();
 
   // init solver plugin stuff
@@ -641,7 +642,7 @@ FlGui::~FlGui()
   delete manip;
   delete elementaryContext;
   delete transformContext;
-  delete physicalContext;
+  delete physicalGroup;
   delete meshContext;
   delete help;
   delete fullscreen;
@@ -1441,8 +1442,8 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->elementaryContext->win->show();
     if(FlGui::instance()->transformContext->win->shown())
       FlGui::instance()->transformContext->win->show();
-    if(FlGui::instance()->physicalContext->win->shown())
-      FlGui::instance()->physicalContext->win->show();
+    if(FlGui::instance()->physicalGroup->win->shown())
+      FlGui::instance()->physicalGroup->win->show();
     if(FlGui::instance()->meshContext->win->shown())
       FlGui::instance()->meshContext->win->show();
     if(FlGui::instance()->visibility->win->shown())
