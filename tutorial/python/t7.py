@@ -18,7 +18,7 @@ gmsh.option.setNumber("General.Terminal", 1)
 
 # Merge a list-based post-processing view containing the target mesh sizes:
 path = os.path.dirname(os.path.abspath(__file__))
-gmsh.merge(os.path.join(path, '..', 't7_bgmesh.pos'))
+gmsh.merge(os.path.join(path, os.pardir, 't7_bgmesh.pos'))
 
 # If the post-processing view was model-based instead of list-based (i.e. if it
 # was based on an actual mesh), we would need to create a new model to contain
