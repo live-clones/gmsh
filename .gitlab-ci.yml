@@ -24,8 +24,8 @@ linux64_ci:
     - cd build
     - export CXXFLAGS=-Werror
     - cmake ..
-    - make -j 4
-    - ctest -j 4 --output-on-failure
+    - make -j 8
+    - ctest -j 8 --output-on-failure
     - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorial/t5.geo -3
   tags:
     - linux64
@@ -39,17 +39,17 @@ linux64_compatibility_ci:
     - mkdir build
     - cd build
     - cmake -DDEFAULT=0 ..
-    - make -j 4
+    - make -j 8
     - cmake -DENABLE_PARSER=1 ..
-    - make -j 4
+    - make -j 8
     - cmake -DENABLE_POST=1 ..
-    - make -j 4
+    - make -j 8
     - cmake -DENABLE_MESH=1 -DENABLE_BUILD_DYNAMIC=1 -DENABLE_PRIVATE_API=1 -DENABLE_EIGEN=0 -DENABLE_WRAP_PYTHON=1 -DENABLE_PETSC=1 ..
-    - make -j 4
+    - make -j 8
     - rm -rf *
     - export CXXFLAGS=-std=c++98
     - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ..
-    - make -j 4
+    - make -j 8
   tags:
     - linux64
     - docker
@@ -61,8 +61,8 @@ windows64_ci:
     - md build
     - cd build
     - bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 .."
-    - bash -c "/usr/bin/make -j 4"
-    - bash -c "/usr/bin/ctest -j 4 --output-on-failure"
+    - bash -c "/usr/bin/make -j 8"
+    - bash -c "/usr/bin/ctest -j 8 --output-on-failure"
   tags:
     - windows64
     - shared
