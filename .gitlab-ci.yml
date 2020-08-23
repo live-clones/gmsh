@@ -93,10 +93,10 @@ windows64_msvc_ci:
     - mkdir build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/petsc-3.10.2 ${EXTRA_OPTION} ..
-    - make package -j 4
+    - make package -j 8
     - PKG=`ls gmsh-*.tar*`
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
-    - ctest -j 4 --output-on-failure
+    - ctest -j 8 --output-on-failure
   tags:
     - linux64
     - docker
