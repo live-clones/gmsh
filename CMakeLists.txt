@@ -3,7 +3,7 @@
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
 # do not warn about non-definition of WIN32 on Cygwin
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
@@ -18,6 +18,11 @@ else()
 endif()
 
 project(gmsh CXX C)
+
+# Require C++11 and C99
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 99)
 
 # this variable controls the default value of the options which are normally set
 # to ON (useful if you want to configure a minimal version of Gmsh: e.g. "cmake
@@ -43,8 +48,6 @@ opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
 opt(CGNS "Enable CGNS import/export (experimental)" ${DEFAULT})
 opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (experimental)" OFF)
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
-opt(CXX11 "Enable C++11" ON)
-opt(C99 "Enable C99" ON)
 opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
@@ -339,24 +342,6 @@ if(ENABLE_OPENACC)
     set_config_option(HAVE_OPENACC "OpenACC")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenACC_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenACC_CXX_FLAGS}")
-  endif()
-endif()
-
-if(ENABLE_CXX11)
-  # in cmake >= 3.1 we will do
-  # set(CMAKE_CXX_STANDARD 11)
-  # set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  check_cxx_compiler_flag("-std=c++11" STDCXX11)
-  if(STDCXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  endif()
-endif()
-
-if(ENABLE_C99)
-  # in recent cmake versions we could do e.g. set(CMAKE_C_STANDARD 99)
-  check_c_compiler_flag("-std=c99" STDC99)
-  if(STDC99)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
   endif()
 endif()
 
@@ -1723,7 +1708,6 @@ if(ENABLE_BUILD_ANDROID)
     message(FATAL_ERROR "Cannot compile Gmsh for android without android-cmake")
   endif()
   add_definitions(-D_GLIBCXX_USE_C99_MATH=1)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   set(CMAKE_BUILD_TYPE Release)
   set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
   set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)

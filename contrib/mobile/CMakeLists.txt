@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+
+set(CMAKE_CXX_STANDARD 11)
 
 if(APPLE)
   option(ENABLE_BUILD_IOS "Build XCode project for iOS (ARM)" OFF)
@@ -171,7 +173,6 @@ if(ENABLE_BUILD_ANDROID)
   set(CMAKE_BUILD_TYPE Release)
   add_definitions(-DBUILD_ANDROID)
   add_definitions(-DPICOJSON_USE_LOCALE=0)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
   set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)
   add_library(androidOnelab SHARED ${ONELAB_SRC})
