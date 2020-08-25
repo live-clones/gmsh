@@ -1472,6 +1472,11 @@ if(WALL AND NOT MSVC)
   if(WIND)
     set(WF "${WF} -Wno-misleading-indentation")
   endif()
+  check_cxx_compiler_flag("-Wno-attributes" WATTR)
+  if(WATTR)
+    # FIXME: remove this when GCC behaves more intelligently
+    set(WF "${WF} -Wno-attributes")
+  endif()
   set_compile_flags(WALL_SRC ${WF})
 endif()
 
