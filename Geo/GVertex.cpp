@@ -193,12 +193,7 @@ bool GVertex::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newPointsOrder[i] = points[ordering[i]];
       }
-#if __cplusplus >= 201103L
       points = std::move(newPointsOrder);
-#else
-      points = newPointsOrder;
-#endif
-
       return true;
     }
   }

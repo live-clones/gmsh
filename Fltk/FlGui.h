@@ -8,10 +8,8 @@
 
 #include <string>
 #include <vector>
-#include "SPoint2.h"
-#if __cplusplus >= 201103L
 #include <atomic>
-#endif
+#include "SPoint2.h"
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
@@ -53,11 +51,7 @@ private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
   static bool _finishedProcessingCommandLine;
-#if __cplusplus >= 201103L
   static std::atomic<int> _locked;
-#else
-  static int _locked;
-#endif
   std::string _lastStatus;
   bool _quitShouldExit;
 

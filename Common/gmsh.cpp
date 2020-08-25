@@ -4313,9 +4313,7 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
           Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
           throw Msg::GetLastError();
         }
-        // for(GFace* gf: gr->faces()) { // C++11
-        for(std::size_t _i = 0; _i < gr->faces().size(); ++_i) {
-          GFace *gf = gr->faces()[_i];
+        for(GFace* gf: gr->faces()) {
           if(gf->edges().size() == 4) { faces.insert(gf); }
         }
       }
@@ -4360,14 +4358,9 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
   }
 
   std::size_t nr = 0;
-  // for (GRegion* gr: regions) { // C++11
-  for(std::set<GRegion *>::iterator grIt = regions.begin();
-      grIt != regions.end(); ++grIt) {
-    GRegion *gr = *grIt;
+  for (GRegion* gr: regions) {
     bool transfinite = true;
-    // for(GFace* gf: gr->faces()) { // C++11
-    for(std::size_t _i = 0; _i < gr->faces().size(); ++_i) {
-      GFace *gf = gr->faces()[_i];
+    for(GFace* gf: gr->faces()) {
       if(gf->meshAttributes.method != MESH_TRANSFINITE) {
         transfinite = false;
         break;

@@ -843,18 +843,11 @@ GModel::piter GModel::setPhysicalName(piter pos, const std::string &name,
 {
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
-#if __cplusplus >= 201103L
   // Insertion complexity in O(1) if position points to the element that will
   // FOLLOW the inserted element.
   if(pos != lastPhysicalName()) ++pos;
   return _physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>(
                                       std::pair<int, int>(dim, number), name));
-#else
-  // Insertion complexity in O(1) if position points to the element that will
-  // PRECEDE the inserted element.
-  return _physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>(
-                                      std::pair<int, int>(dim, number), name));
-#endif
 }
 
 std::string GModel::getPhysicalName(int dim, int number) const
