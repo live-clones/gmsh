@@ -58,11 +58,7 @@
 FlGui *FlGui::_instance = 0;
 std::string FlGui::_openedThroughMacFinder = "";
 bool FlGui::_finishedProcessingCommandLine = false;
-#if __cplusplus >= 201103L
 std::atomic<int> FlGui::_locked(0);
-#else
-int FlGui::_locked = 0;
-#endif
 
 // check (now!) if there are any pending events, and process them
 void FlGui::check(bool force)

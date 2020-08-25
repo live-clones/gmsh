@@ -5,6 +5,7 @@
 
 #include <map>
 #include <queue>
+#include <array>
 #include "meshGFace.h"
 #include "meshGEdge.h"
 #include "GVertex.h"
@@ -16,10 +17,6 @@
 #include "Context.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
-
-#if __cplusplus >= 201103L || _MSVC_LANG >= 201103L
-#include <array> // only available in C++11
-#endif
 
 /*
    s4 +-----c3-----+ s3
@@ -542,10 +539,6 @@ int MeshTransfiniteSurface(GFace *gf)
   return 1;
 }
 
-#if __cplusplus >= 201103L || _MSVC_LANG >= 201103L
-/* The automatic transfinite code uses C++11 features (std::array, range loop)
- */
-
 bool id_loop_from_closed_pairs(const std::vector<std::array<int, 2> > &pairs,
                                std::vector<int> &loop)
 {
@@ -710,12 +703,9 @@ void build_chords(const std::set<GFace *> &faces,
   }
 }
 
-#endif
-
 bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
                                       double cornerAngle, bool setRecombine)
 {
-#if __cplusplus >= 201103L || _MSVC_LANG >= 201103L
   /* Filter with topology and geometry */
   std::set<GFace *> faces;
   for(GFace *gf : candidate_faces)
@@ -773,9 +763,5 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
     }
   }
   Msg::Debug("transfinite automatic: transfinite set on %li faces", nf);
-#else
-  Msg::Error("MeshSetTransfiniteFacesAutomatic requires C++11 or more");
-  return false;
-#endif
   return true;
 }

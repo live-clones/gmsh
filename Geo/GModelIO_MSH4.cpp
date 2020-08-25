@@ -3158,9 +3158,6 @@ int GModel::writePartitionedTopology(std::string &name)
     return 0;
   }
 
-#if __cplusplus < 201103L
-  char intToChar[20];
-#endif
   fprintf(fp, "Group{\n");
   fprintf(fp, "  // Part~{dim}~{parentPhysicalTag}~{part1}~{part2}~...\n\n");
   std::vector<std::map<int, std::string> > tagToString(4);
@@ -3169,28 +3166,11 @@ int GModel::writePartitionedTopology(std::string &name)
     for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it =
           allParts[i - 1].begin();
         it != allParts[i - 1].end(); ++it) {
-#if __cplusplus >= 201103L
       std::string partName = "Part~{" + std::to_string(i - 1) + "}~{" +
                              std::to_string(it->second.first) + "}";
-#else
-      std::string partName = "Part~{";
-      sprintf(intToChar, "%lu", i - 1);
-      partName += intToChar;
-      partName += "}~{";
-      sprintf(intToChar, "%d", it->second.first);
-      partName += intToChar;
-      partName += "}";
-#endif
       fprintf(fp, "  Part~{%lu}~{%d}", i - 1, it->second.first);
       for(size_t j = 0; j < it->second.second.size(); ++j) {
-#if __cplusplus >= 201103L
         partName += "~{" + std::to_string(it->second.second[j]) + "}";
-#else
-        partName += "~{";
-        sprintf(intToChar, "%d", it->second.second[j]);
-        partName += intToChar;
-        partName += "}";
-#endif
         fprintf(fp, "~{%d}", it->second.second[j]);
       }
       tagToString[i - 1].insert(

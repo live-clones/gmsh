@@ -1278,7 +1278,7 @@ class API:
                     fc.write(cpp_namespace + name + "(" +
                              ", ".join(list((a.c_arg for a in args))) + ");\n")
                     fc.write("".join((a.c_post for a in args)))
-                    fc.write("  }\n  catch(const std::string &api_error_){\n    " +
+                    fc.write("  }\n  catch(...){\n    " +
                              "if(ierr) *ierr = 1;\n  }\n")
                     if rtype:
                         fc.write("  return result_api_;\n")

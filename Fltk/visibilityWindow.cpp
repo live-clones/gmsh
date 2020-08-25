@@ -10,9 +10,7 @@
 typedef unsigned long intptr_t;
 #endif
 #include <string>
-#if __cplusplus >= 201103L
 #include <regex>
-#endif
 #include <sstream>
 #include <algorithm>
 #include <map>
@@ -72,7 +70,6 @@ public:
   {
     if(pattern.empty()) return true;
     std::string line(getBrowserLine(false));
-#if __cplusplus >= 201103L
     try{
       // icase for case-insensitive search
       if(std::regex_search(line, std::regex(pattern, std::regex_constants::icase)))
@@ -81,13 +78,6 @@ public:
     catch(...) {
       return false;
     }
-#else
-    std::transform(line.begin(), line.end(), line.begin(), ::tolower);
-    std::string pat(pattern);
-    std::transform(pat.begin(), pat.end(), pat.begin(), ::tolower);
-    if(line.find(pat) != std::string::npos)
-      return true;
-#endif
     return false;
   }
 };
@@ -1295,11 +1285,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
     Fl_Group *o = new Fl_Group(2 * WB + w1 + WB, height - 2 * BH - 3 * WB,
                                w2, BH);
-#if __cplusplus >= 201103L
     o->tooltip("Filter list using regular expression");
-#else
-    o->tooltip("Filter list");
-#endif
     o->box(FL_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
     search = new Fl_Input(2 * WB + w1 + WB + BH, height - 2 * BH - 3 * WB + 2,
