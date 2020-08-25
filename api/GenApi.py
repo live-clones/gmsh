@@ -1513,7 +1513,7 @@ class API:
                 f.write(
                     'const libname = Sys.iswindows() ? "' + ns +
                     '-{0}.{1}'.format(self.version_major, self.version_minor) +
-                    '" : "lib' + ns + '"\n')
+                    '.dll" : "lib' + ns + '"\n')
                 f.write('import Libdl\n')
                 f.write(
                     'const lib = Libdl.find_library([libname], [libdir])\n')
