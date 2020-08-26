@@ -4,6 +4,7 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
+#include <string.h>
 #include <vector>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -26,7 +27,6 @@ using namespace nglib;
 namespace netgen {
   extern std::ostream *mycout;
   extern std::ostream *myerr;
-  //extern std::ostream * testout;
 }
 
 static void getAllBoundingVertices(
