@@ -23,6 +23,12 @@ namespace nglib {
 }
 using namespace nglib;
 
+namespace netgen {
+  extern std::ostream *mycout;
+  extern std::ostream *myerr;
+  //extern std::ostream * testout;
+}
+
 static void getAllBoundingVertices(
   GRegion *gr, std::set<MVertex *, MVertexPtrLessThan> &allBoundingVertices)
 {
@@ -42,10 +48,60 @@ static void getAllBoundingVertices(
   }
 }
 
+class mystreambuf : public std::streambuf {
+  int index;
+  char txt[1024];
+public:
+  mystreambuf() : index(0) {}
+  int sync()
+  {
+    txt[index] = '\0';
+    if(!index || (index == 1 && (txt[0] == '.' || txt[0] == '+' ||
+                                 txt[0] == ' ' || txt[0] == '*'))){
+      // ignore these messages
+    }
+    else{
+      if(!strncmp(txt, "ERROR", 5)) { Msg::Error(txt); }
+      else if(!strncmp(txt, "WARNING", 7)) { Msg::Warning(txt); }
+      else { Msg::Info(txt); }
+    }
+    index = 0;
+    return 0;
+  }
+  int overflow(int ch)
+  {
+    if(index < 1023){
+      txt[index] = ch;
+      if(txt[index] == '\n' || txt[index] == '\r') txt[index] = ' ';
+      if(!index && txt[0] == ' '){
+        // skip initial spaces
+      }
+      else{
+        index++;
+      }
+    }
+    return 0;
+  }
+};
+
 static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
                                      std::vector<MVertex *> &numberedV)
 {
   Ng_Init();
+
+  // redefine output streams (hack until netgen provides an API to set the
+  // output stream)
+  static bool first = true;
+  static std::ostream *netgen_cout = 0;
+  static std::ostream *netgen_err = 0;
+  if(first){
+    netgen_cout = new std::ostream(new mystreambuf());
+    netgen_err = new std::ostream(new mystreambuf());
+    first = false;
+  }
+  netgen::mycout = netgen_cout;
+  netgen::myerr = netgen_err;
+
   Ng_Mesh *ngmesh = Ng_NewMesh();
 
   std::set<MVertex *, MVertexPtrLessThan> allBoundingVertices;
