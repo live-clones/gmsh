@@ -19,7 +19,7 @@ endif()
 
 project(gmsh CXX C)
 
-# Require C++11 and C99
+# require C++11 and request C99
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
