@@ -181,6 +181,11 @@ Display mesh hexahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderDistCAD
+Try to optimize distance to CAD in high-order optimizer?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.HighOrderIterMax
 Maximum number of iterations in high-order optimization pass@*
 Default value: @code{100}@*
@@ -211,13 +216,13 @@ Poisson ratio of the material used in the elastic smoother for high-order meshes
 Default value: @code{0.33}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderPrimSurfMesh
-Try to fix flipped surface mesh elements in high-order optimizer?@*
+@item Mesh.HighOrderSavePeriodic
+Save high-order nodes in periodic section of MSH files?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderDistCAD
-Try to optimize distance to CAD in high-order optimizer?@*
+@item Mesh.HighOrderPrimSurfMesh
+Try to fix flipped surface mesh elements in high-order optimizer?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

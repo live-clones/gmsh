@@ -33,7 +33,7 @@ struct contextMeshOptions {
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircPoints, minCurvPoints, minElementsPerTwoPi;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
-  int hoDistCAD;
+  int hoDistCAD, hoSavePeriodic;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanPoints;

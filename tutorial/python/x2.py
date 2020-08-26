@@ -140,6 +140,7 @@ gmsh.model.geo.synchronize()
 # Set this to True to build a fully hex mesh:
 #transfinite = True
 transfinite = False
+transfiniteAuto = False
 
 if transfinite:
     NN = 30
@@ -150,6 +151,12 @@ if transfinite:
         gmsh.model.mesh.setRecombine(s[0], s[1])
         gmsh.model.mesh.setSmoothing(s[0], s[1], 100)
     gmsh.model.mesh.setTransfiniteVolume(v1)
+elif transfiniteAuto:
+    gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.5)
+    gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.5)
+    # setTransfiniteAutomatic() uses the sizing constraints to set the number
+    # of points
+    gmsh.model.mesh.setTransfiniteAutomatic()
 else:
     gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.05)
     gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.05)

@@ -290,7 +290,7 @@ mesh.add('getLocalCoordinatesInElement', doc, None, isize('elementTag'), idouble
 doc = '''Get the types of elements in the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
 mesh.add('getElementTypes', doc, None, ovectorint('elementTypes'), iint('dim', '-1'), iint('tag', '-1'))
 
-doc = '''Return an element type given its family name `familyName' ("point", "line", "triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron") and polynomial order `order'. If `serendip' is true, return the corresponding serendip element type (element without interior nodes).'''
+doc = '''Return an element type given its family name `familyName' ("Point", "Line", "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism", "Hexahedron") and polynomial order `order'. If `serendip' is true, return the corresponding serendip element type (element without interior nodes).'''
 mesh.add('getElementType', doc, oint, istring('familyName'), iint('order'), ibool('serendip', 'false', 'False'))
 
 doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes'), local coordinates of the nodes in the reference element (`localNodeCoord' vector, of length `dim' times `numNodes') and number of primary (first order) nodes (`numPrimaryNodes').'''
@@ -382,6 +382,9 @@ mesh.add('setTransfiniteSurface', doc, None, iint('tag'), istring('arrangement',
 
 doc = '''Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.'''
 mesh.add('setTransfiniteVolume', doc, None, iint('tag'), ivectorint('cornerTags', 'std::vector<int>()', "[]", "[]"))
+
+doc = '''Set transfinite meshing constraints on the model entities in `dimTag'. Transfinite meshing constraints are added to the curves of the quadrangular surfaces and to the faces of 6-sided volumes. Quadragular faces with a corner angle superior to `cornerAngle' (in radians) are ignored. The number of points is automatically determined from the sizing constraints. If `dimTag' is empty, the constraints are applied to all entities in the model. If `recombine' is true, the recombine flag is automatically set on the transfinite surfaces.  '''
+mesh.add('setTransfiniteAutomatic', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"), idouble('cornerAngle', '2.35', '2.35', '2.35'), ibool('recombine', 'true', 'True'))
 
 doc = '''Set a recombination meshing constraint on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
 mesh.add('setRecombine', doc, None, iint('dim'), iint('tag'))

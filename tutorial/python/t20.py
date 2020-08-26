@@ -22,7 +22,7 @@ gmsh.model.add("t20")
 # Load a STEP file (using `importShapes' instead of `merge' allows to directly
 # retrieve the tags of the highest dimensional imported entities):
 path = os.path.dirname(os.path.abspath(__file__))
-v = gmsh.model.occ.importShapes(os.path.join(path, '..', 't20_data.step'))
+v = gmsh.model.occ.importShapes(os.path.join(path, os.pardir, 't20_data.step'))
 
 # If we had specified
 #

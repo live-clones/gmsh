@@ -21,7 +21,7 @@ const GMSH_API_VERSION = "4.7"
 const GMSH_API_VERSION_MAJOR = 4
 const GMSH_API_VERSION_MINOR = 7
 const libdir = dirname(@__FILE__)
-const libname = Sys.iswindows() ? "gmsh-4.7" : "libgmsh"
+const libname = Sys.iswindows() ? "gmsh-4.7.dll" : "libgmsh"
 import Libdl
 const lib = Libdl.find_library([libname], [libdir])
 
@@ -1606,8 +1606,8 @@ end
 """
     gmsh.model.mesh.getElementType(familyName, order, serendip = false)
 
-Return an element type given its family name `familyName` ("point", "line",
-"triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron") and
+Return an element type given its family name `familyName` ("Point", "Line",
+"Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism", "Hexahedron") and
 polynomial order `order`. If `serendip` is true, return the corresponding
 serendip element type (element without interior nodes).
 
@@ -2230,6 +2230,28 @@ function setTransfiniteVolume(tag, cornerTags = Cint[])
     ccall((:gmshModelMeshSetTransfiniteVolume, gmsh.lib), Cvoid,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
           tag, convert(Vector{Cint}, cornerTags), length(cornerTags), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.setTransfiniteAutomatic(dimTags = Tuple{Cint,Cint}[], cornerAngle = 2.35, recombine = true)
+
+Set transfinite meshing constraints on the model entities in `dimTag`.
+Transfinite meshing constraints are added to the curves of the quadrangular
+surfaces and to the faces of 6-sided volumes. Quadragular faces with a corner
+angle superior to `cornerAngle` (in radians) are ignored. The number of points
+is automatically determined from the sizing constraints. If `dimTag` is empty,
+the constraints are applied to all entities in the model. If `recombine` is
+true, the recombine flag is automatically set on the transfinite surfaces.
+"""
+function setTransfiniteAutomatic(dimTags = Tuple{Cint,Cint}[], cornerAngle = 2.35, recombine = true)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetTransfiniteAutomatic, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Cdouble, Cint, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, cornerAngle, recombine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

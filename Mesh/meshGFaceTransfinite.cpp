@@ -4,7 +4,10 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <map>
+#include <queue>
+#include <array>
 #include "meshGFace.h"
+#include "meshGEdge.h"
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -91,8 +94,8 @@ static void computeEdgeLoops(const GFace *gf,
 
   std::vector<GEdge *> edges;
   std::vector<int> ori;
-  for(std::size_t i = 0; i < e.size(); i++){
-    if(!e[i]->degenerate(0)){ // skip degenerate curves
+  for(std::size_t i = 0; i < e.size(); i++) {
+    if(!e[i]->degenerate(0)) { // skip degenerate curves
       edges.push_back(e[i]);
       ori.push_back(i < o.size() ? o[i] : 1);
     }
@@ -157,10 +160,11 @@ int MeshTransfiniteSurface(GFace *gf)
   // depends on it
   const std::vector<GEdge *> &edges = gf->edges();
   for(std::vector<GEdge *>::const_iterator it = edges.begin();
-      it != edges.end(); it++){
-    if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()){
+      it != edges.end(); it++) {
+    if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
       Msg::Error("Transfinite algorithm cannot be applied with curve %d which "
-                 "has no begin or end point", (*it)->tag());
+                 "has no begin or end point",
+                 (*it)->tag());
       return 0;
     }
   }
@@ -179,8 +183,8 @@ int MeshTransfiniteSurface(GFace *gf)
 
   if(indices.size() != 2) {
     int nh = indices.size() - 2;
-    Msg::Error("Surface %d is transfinite but has %d hole%s", gf->tag(),
-               nh, nh > 1 ? "s" : "");
+    Msg::Error("Surface %d is transfinite but has %d hole%s", gf->tag(), nh,
+               nh > 1 ? "s" : "");
     return 0;
   }
 
@@ -239,20 +243,20 @@ int MeshTransfiniteSurface(GFace *gf)
     int Lb = N4 - N3, Hb = m_vertices.size() - N4;
     if(Lb != L || Hb != H) {
       Msg::Error("Surface %d cannot be meshed using the transfinite algo "
-                 "(divisions %d != %d or %d != %d)", gf->tag(), Lb, L, Hb, H);
+                 "(divisions %d != %d or %d != %d)",
+                 gf->tag(), Lb, L, Hb, H);
       return 0;
     }
   }
   else {
     int Lb = m_vertices.size() - N3;
     if(Lb != L) {
-      Msg::Error(
-        "Surface %d cannot be meshed using the transfinite algo "
-        "(divisions %d != %d)", gf->tag(), L, Lb);
+      Msg::Error("Surface %d cannot be meshed using the transfinite algo "
+                 "(divisions %d != %d)",
+                 gf->tag(), L, Lb);
       return 0;
     }
   }
-
 
   std::vector<double> lengths_i;
   lengths_i.reserve(L);
@@ -533,4 +537,231 @@ int MeshTransfiniteSurface(GFace *gf)
 
   gf->meshStatistics.status = GFace::DONE;
   return 1;
+}
+
+bool id_loop_from_closed_pairs(const std::vector<std::array<int, 2> > &pairs,
+                               std::vector<int> &loop)
+{
+  /* warning: does not verify if the loop is closed, eg [1,2], [2,3] will
+   * produce [1,2,3] */
+  loop.clear();
+  if(pairs.size() < 2) return false;
+  loop.reserve(pairs.size());
+  std::vector<bool> done(pairs.size(), false);
+  loop.resize(2);
+  loop[0] = pairs[0][0];
+  loop[1] = pairs[0][1];
+  done[0] = true;
+  while(loop.size() != pairs.size()) {
+    int cv = loop.back();
+    bool found = false;
+    for(std::size_t i = 0; i < pairs.size(); ++i)
+      if(!done[i]) {
+        const std::array<int, 2> &vs = pairs[i];
+        if(vs[0] == cv) {
+          loop.push_back(vs[1]);
+          done[i] = true;
+          found = true;
+        }
+        else if(vs[1] == cv) {
+          loop.push_back(vs[0]);
+          done[i] = true;
+          found = true;
+        }
+      }
+    if(!found) {
+      loop.clear();
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool faceIsValidQuad(GFace *gf, double angle_threshold_rad)
+{
+  if(gf->edges().size() != 4) return false;
+
+  std::vector<std::array<int, 2> > vpairs;
+  for(GEdge *ge : gf->edges()) {
+    vpairs.push_back({ge->getBeginVertex()->tag(), ge->getEndVertex()->tag()});
+  }
+  std::vector<int> loop;
+  bool ok = id_loop_from_closed_pairs(vpairs, loop);
+  if(!ok || loop.size() != vpairs.size()) return false;
+
+  if(angle_threshold_rad > 0.) {
+    /* Check angle at each corner */
+    for(std::size_t i = 0; i < loop.size(); ++i) {
+      int v1 = loop[i];
+      int v2 = loop[(i + 1) % loop.size()];
+      int v3 = loop[(i + 2) % loop.size()];
+      SVector3 t21, t23;
+      for(GEdge *ge : gf->edges()) {
+        int e_v1 = ge->getBeginVertex()->tag();
+        int e_v2 = ge->getEndVertex()->tag();
+        if(e_v1 == v1 && e_v2 == v2) {
+          Range<double> range = ge->parBounds(0);
+          SVector3 t = ge->firstDer(range.high());
+          t.normalize();
+          t21 = -t;
+        }
+        else if(e_v1 == v2 && e_v2 == v1) {
+          Range<double> range = ge->parBounds(0);
+          SVector3 t = ge->firstDer(range.low());
+          t.normalize();
+          t21 = t;
+        }
+        else if(e_v1 == v2 && e_v2 == v3) {
+          Range<double> range = ge->parBounds(0);
+          SVector3 t = ge->firstDer(range.low());
+          t.normalize();
+          t23 = t;
+        }
+        else if(e_v1 == v3 && e_v2 == v2) {
+          Range<double> range = ge->parBounds(0);
+          SVector3 t = ge->firstDer(range.high());
+          t.normalize();
+          t23 = -t;
+        }
+      }
+      double agl = angle(t21, t23);
+      if(agl > angle_threshold_rad) {
+        Msg::Debug("quadrangular face %i rejected for automatic transfinite "
+                   "because corner angle = %.3f deg > threshold = %.3f deg\n",
+                   gf->tag(), 180. / M_PI * agl,
+                   180. / M_PI * angle_threshold_rad);
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+GEdge *quad_face_opposite_edge(GFace *face, GEdge *edge)
+{
+  if(face->edges().size() != 4) return nullptr;
+  GEdge *op = nullptr;
+  int v1 = edge->getBeginVertex()->tag();
+  int v2 = edge->getEndVertex()->tag();
+  bool edgeInside = false;
+  for(GEdge *ge : face->edges()) {
+    if(ge == edge) {
+      edgeInside = true;
+      continue;
+    }
+    int cv1 = ge->getBeginVertex()->tag();
+    int cv2 = ge->getEndVertex()->tag();
+    if(cv1 != v1 && cv1 != v2 && cv2 != v1 && cv2 != v2) {
+      if(op == nullptr) { op = ge; }
+      else { /* already found ? should not happen */
+        return nullptr;
+      }
+    }
+  }
+  if(!edgeInside) return nullptr;
+  return op;
+}
+
+void build_chords(const std::set<GFace *> &faces,
+                  std::vector<std::set<GEdge *> > &chords)
+{
+  /* Connectivity */
+  std::map<GEdge *, std::vector<GFace *> > edge2faces;
+  for(GFace *gf : faces)
+    for(GEdge *ge : gf->edges()) { edge2faces[ge].push_back(gf); }
+
+  Msg::Debug("build chords: %li faces, %li edges", faces.size(),
+             edge2faces.size());
+
+  std::map<GEdge *, bool> done;
+  for(auto &kv : edge2faces) {
+    GEdge *geInit = kv.first;
+    if(done.find(geInit) != done.end()) continue;
+
+    /* Breath first search starting from a GEdge */
+    std::queue<GEdge *> Q;
+    Q.push(geInit);
+    done[geInit] = true;
+
+    std::set<GEdge *> chord;
+    while(Q.size() > 0) {
+      GEdge *ge = Q.front();
+      Q.pop();
+      chord.insert(ge);
+      for(GFace *gf : edge2faces[ge]) {
+        GEdge *ge2 = quad_face_opposite_edge(gf, ge);
+        if(ge2 && done.find(ge2) == done.end()) {
+          Q.push(ge2);
+          done[ge2] = true;
+        }
+      }
+    }
+
+    if(chord.size() >= 2) { chords.push_back(chord); }
+  }
+}
+
+bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
+                                      double cornerAngle, bool setRecombine)
+{
+  /* Filter with topology and geometry */
+  std::set<GFace *> faces;
+  for(GFace *gf : candidate_faces)
+    if(faceIsValidQuad(gf, cornerAngle)) { faces.insert(gf); }
+
+  /* Build the topological chords in quad structure */
+  Msg::Debug(
+    "transfinite automatic: building chords from %li quadrangular faces ...",
+    faces.size());
+  std::vector<std::set<GEdge *> > chords;
+  build_chords(faces, chords);
+  Msg::Debug("... found %li chords", chords.size());
+
+  /* Determine the number of points, set the transfinite curves */
+  Msg::Debug("transfinite automatic: assigning number of points ...");
+  std::size_t ne = 0;
+  for(std::set<GEdge *> &chord : chords) {
+    double avgNbPoints = 0;
+    for(GEdge *ge : chord) {
+      int n = meshGEdgeTargetNumberOfPoints(ge);
+      avgNbPoints += double(n);
+    }
+    avgNbPoints /= chord.size();
+
+    int N = int(avgNbPoints + 0.5);
+    if(N == 0) N = 2;
+    if(N % 2 == 1) N = N + 1;
+
+    Msg::Debug("- chord with %li edges -> %i points\n", chord.size(), N);
+
+    for(GEdge *ge : chord) {
+      ge->meshAttributes.method = MESH_TRANSFINITE;
+      ge->meshAttributes.nbPointsTransfinite = N;
+      ge->meshAttributes.typeTransfinite = 1; /* Progression */
+      ge->meshAttributes.coeffTransfinite = 1.;
+      ne += 1;
+    }
+  }
+  Msg::Debug("transfinite automatic: transfinite set on %li edges", ne);
+
+  std::size_t nf = 0;
+  for(GFace *gf : faces) {
+    bool transfinite = true;
+    for(GEdge *ge : gf->edges()) {
+      if(ge->meshAttributes.method != MESH_TRANSFINITE) transfinite = false;
+    }
+    if(transfinite) {
+      nf += 1;
+      gf->meshAttributes.method = MESH_TRANSFINITE;
+      gf->meshAttributes.transfiniteArrangement = 1; /* Right */
+      if(setRecombine) {
+        gf->meshAttributes.recombine = 1;
+        gf->meshAttributes.recombineAngle = 45.;
+      }
+    }
+  }
+  Msg::Debug("transfinite automatic: transfinite set on %li faces", nf);
+  return true;
 }

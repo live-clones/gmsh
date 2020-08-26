@@ -1,8 +1,9 @@
 4.7.0 (Work-in-progress): API errors now throw exceptions with the last error
 message (instead of an integer error code); new API to retrieve "homogeneous"
-model-based data, for improved Python performance; use Eigen by default instead
-of Blas/Lapack; improved VTK reader; removed bundled MMG3D and added initial
-support for stock MMG 5; small bug fixes.
+model-based data (for improved Python performance) and to set interpolation
+matrices; use Eigen by default instead of Blas/Lapack for dense linear algebra;
+improved VTK reader; removed bundled Mmg3D and added initial support for Mmg 5;
+Gmsh now requires C++11; small bug fixes.
 
 4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
 (without node insertion), and to only mesh non-meshed entities; added ability to
@@ -316,7 +317,7 @@ FLTK 1.3); new tensor field visualization modes (eigenvectors, ellipsoid, etc.);
 added support for interpolation schemes in .msh file; added support for MED3
 format; rescale viewport around visible entities (shift+1:1 in GUI); unified
 post-processing field export; new experimental stereo+camera visualization mode;
-added experimental BAMG & MMG3D support for anisotropic mesh generation; new OCC
+added experimental BAMG & Mmg3D support for anisotropic mesh generation; new OCC
 cut & merge algorithm imported from Salome; new ability to connect extruded
 meshes to tetrahedral grids using pyramids; new homology solver; Abaqus (INP)
 mesh export; new Python and Java wrappers; bug fixes and small improvements all

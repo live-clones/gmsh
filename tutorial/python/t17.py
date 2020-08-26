@@ -29,7 +29,7 @@ gmsh.model.occ.synchronize()
 
 # Merge a post-processing view containing the target anisotropic mesh sizes
 path = os.path.dirname(os.path.abspath(__file__))
-gmsh.merge(os.path.join(path, '..', 't17_bgmesh.pos'))
+gmsh.merge(os.path.join(path, os.pardir, 't17_bgmesh.pos'))
 
 # Apply the view as the current background mesh
 bg_field = gmsh.model.mesh.field.add("PostView")

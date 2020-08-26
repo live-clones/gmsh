@@ -24,7 +24,7 @@ gmsh.option.setNumber("General.Terminal", 1)
 
 # Let us for example include a three-dimensional scalar view:
 path = os.path.dirname(os.path.abspath(__file__))
-gmsh.merge(os.path.join(path, '..', 'view3.pos'))
+gmsh.merge(os.path.join(path, os.pardir, 'view3.pos'))
 
 # We then set some options for the `Isosurface' plugin (which extracts an
 # isosurface from a 3D scalar view), and run it:

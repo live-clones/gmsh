@@ -290,8 +290,8 @@ class GmshClient : public GmshSocket {
       // try to connect socket to host:port
       const char *port = strstr(sockname, ":");
       int portno = atoi(port + 1);
-      int remotelen = (int)(strlen(sockname) - strlen(port));
       char *remote = strdup(sockname);
+      int remotelen = (int)(strlen(remote) - strlen(port));
       if(remotelen > 0)
         strncpy(remote, sockname, remotelen);
       if(remotelen >= 0)

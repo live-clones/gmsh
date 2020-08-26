@@ -1226,9 +1226,9 @@ namespace gmsh { // Top-level functions
         elementTypes.assign(api_elementTypes_, api_elementTypes_ + api_elementTypes_n_); gmshFree(api_elementTypes_);
       }
 
-      // Return an element type given its family name `familyName' ("point",
-      // "line", "triangle", "quadrangle", "tetrahedron", "pyramid", "prism",
-      // "hexahedron") and polynomial order `order'. If `serendip' is true, return
+      // Return an element type given its family name `familyName' ("Point",
+      // "Line", "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism",
+      // "Hexahedron") and polynomial order `order'. If `serendip' is true, return
       // the corresponding serendip element type (element without interior nodes).
       inline int getElementType(const std::string & familyName,
                                 const int order,
@@ -1818,6 +1818,25 @@ namespace gmsh { // Top-level functions
         gmshModelMeshSetTransfiniteVolume(tag, api_cornerTags_, api_cornerTags_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_cornerTags_);
+      }
+
+      // Set transfinite meshing constraints on the model entities in `dimTag'.
+      // Transfinite meshing constraints are added to the curves of the
+      // quadrangular surfaces and to the faces of 6-sided volumes. Quadragular
+      // faces with a corner angle superior to `cornerAngle' (in radians) are
+      // ignored. The number of points is automatically determined from the sizing
+      // constraints. If `dimTag' is empty, the constraints are applied to all
+      // entities in the model. If `recombine' is true, the recombine flag is
+      // automatically set on the transfinite surfaces.
+      inline void setTransfiniteAutomatic(const gmsh::vectorpair & dimTags = gmsh::vectorpair(),
+                                          const double cornerAngle = 2.35,
+                                          const bool recombine = true)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshSetTransfiniteAutomatic(api_dimTags_, api_dimTags_n_, cornerAngle, (int)recombine, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
       }
 
       // Set a recombination meshing constraint on the model entity of dimension

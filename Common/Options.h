@@ -540,6 +540,7 @@ double opt_mesh_min_curv_points(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
 double opt_mesh_ho_optimize(OPT_ARGS_NUM);
 double opt_mesh_ho_periodic(OPT_ARGS_NUM);
+double opt_mesh_ho_save_periodic(OPT_ARGS_NUM);
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM);
 double opt_mesh_ho_threshold_min(OPT_ARGS_NUM);
 double opt_mesh_ho_threshold_max(OPT_ARGS_NUM);

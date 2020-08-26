@@ -33,9 +33,9 @@ gmsh.model.geo.synchronize()
 
 # We merge some post-processing views to work on
 path = os.path.dirname(os.path.abspath(__file__))
-gmsh.merge(os.path.join(path, '..', 'view1.pos'))
-gmsh.merge(os.path.join(path, '..', 'view1.pos'))
-gmsh.merge(os.path.join(path, '..', 'view4.pos'))  # contains 2 views inside
+gmsh.merge(os.path.join(path, os.pardir, 'view1.pos'))
+gmsh.merge(os.path.join(path, os.pardir, 'view1.pos'))
+gmsh.merge(os.path.join(path, os.pardir, 'view4.pos'))  # contains 2 views inside
 
 # Gmsh can read post-processing views in various formats. Here the `view1.pos'
 # and `view4.pos' files are in the Gmsh "parsed" format, which is interpreted by

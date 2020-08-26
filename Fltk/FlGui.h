@@ -8,10 +8,8 @@
 
 #include <string>
 #include <vector>
-#include "SPoint2.h"
-#if __cplusplus >= 201103L
 #include <atomic>
-#endif
+#include "SPoint2.h"
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE + 1)
@@ -35,8 +33,8 @@ class clippingWindow;
 class manipWindow;
 class elementaryContextWindow;
 class transformContextWindow;
-class physicalContextWindow;
 class meshContextWindow;
+class physicalGroupWindow;
 class helpWindow;
 class onelabGroup;
 class Fl_Widget;
@@ -53,11 +51,7 @@ private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
   static bool _finishedProcessingCommandLine;
-#if __cplusplus >= 201103L
   static std::atomic<int> _locked;
-#else
-  static int _locked;
-#endif
   std::string _lastStatus;
   bool _quitShouldExit;
 
@@ -82,8 +76,8 @@ public:
   manipWindow *manip;
   elementaryContextWindow *elementaryContext;
   transformContextWindow *transformContext;
-  physicalContextWindow *physicalContext;
   meshContextWindow *meshContext;
+  physicalGroupWindow *physicalGroup;
   helpWindow *help;
   onelabGroup *onelab;
   openglWindow *fullscreen;

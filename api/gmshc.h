@@ -684,8 +684,8 @@ GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * element
                                            const int tag,
                                            int * ierr);
 
-/* Return an element type given its family name `familyName' ("point", "line",
- * "triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron")
+/* Return an element type given its family name `familyName' ("Point", "Line",
+ * "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism", "Hexahedron")
  * and polynomial order `order'. If `serendip' is true, return the
  * corresponding serendip element type (element without interior nodes). */
 GMSH_API int gmshModelMeshGetElementType(const char * familyName,
@@ -1052,6 +1052,19 @@ GMSH_API void gmshModelMeshSetTransfiniteSurface(const int tag,
 GMSH_API void gmshModelMeshSetTransfiniteVolume(const int tag,
                                                 int * cornerTags, size_t cornerTags_n,
                                                 int * ierr);
+
+/* Set transfinite meshing constraints on the model entities in `dimTag'.
+ * Transfinite meshing constraints are added to the curves of the quadrangular
+ * surfaces and to the faces of 6-sided volumes. Quadragular faces with a
+ * corner angle superior to `cornerAngle' (in radians) are ignored. The number
+ * of points is automatically determined from the sizing constraints. If
+ * `dimTag' is empty, the constraints are applied to all entities in the
+ * model. If `recombine' is true, the recombine flag is automatically set on
+ * the transfinite surfaces. */
+GMSH_API void gmshModelMeshSetTransfiniteAutomatic(int * dimTags, size_t dimTags_n,
+                                                   const double cornerAngle,
+                                                   const int recombine,
+                                                   int * ierr);
 
 /* Set a recombination meshing constraint on the model entity of dimension
  * `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine

@@ -104,6 +104,9 @@ static void Subdivide(GEdge *ge)
             MVertexPtrLessThanParam());
   for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++)
     ge->mesh_vertices[i]->setPolynomialOrder(1);
+  ge->correspondingVertices.insert(ge->correspondingHighOrderVertices.begin(),
+                                   ge->correspondingHighOrderVertices.end());
+  ge->correspondingHighOrderVertices.clear();
   ge->deleteVertexArrays();
 }
 
@@ -188,6 +191,9 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
 
   for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++)
     gf->mesh_vertices[i]->setPolynomialOrder(1);
+  gf->correspondingVertices.insert(gf->correspondingHighOrderVertices.begin(),
+                                   gf->correspondingHighOrderVertices.end());
+  gf->correspondingHighOrderVertices.clear();
   gf->deleteVertexArrays();
 }
 
@@ -485,6 +491,9 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
 
   if(CTX::instance()->mesh.hoOptimize == 4)
     OptimizeMesh(m, "HighOrderFastCurving");
+
+  // store periodic node correspondances
+  FixPeriodicMesh(m);
 
   // only used when splitting tets into hexes
   faceContainer faceVertices;
