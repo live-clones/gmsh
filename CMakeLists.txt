@@ -951,7 +951,7 @@ if(HAVE_MESH)
 
   if(ENABLE_NETGEN)
     find_library(NETGEN_LIB nglib)
-    find_path(NETGEN_INC "nglib.h")
+    find_path(NETGEN_INC "nglib.h" PATH_SUFFIXES netgen)
     if(NETGEN_LIB AND NETGEN_INC)
       list(APPEND EXTERNAL_LIBRARIES ${NETGEN_LIB})
       list(APPEND EXTERNAL_INCLUDES ${NETGEN_INC})
