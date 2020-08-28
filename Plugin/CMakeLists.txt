@@ -36,6 +36,7 @@ set(SRC
   SimplePartition.cpp Crack.cpp
   MeshSubEntities.cpp
   MeshVolume.cpp
+  MeshVolHexPercentage.cpp
   CVTRemesh.cpp
   ShowNeighborElements.cpp
   GaussPoints.cpp
