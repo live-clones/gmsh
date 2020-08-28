@@ -33,9 +33,7 @@ static void markMeshPoints(HXTMesh* mesh)
   }
 
   for(uint64_t i=0; i<mesh->points.num; i++) {
-    for(int j=0; j<2; j++) {
-      mesh->vertices.coord[4* mesh->lines.node[2*i+j] + 3] = 1.0;
-    }
+      mesh->vertices.coord[4* mesh->points.node[i] + 3] = 1.0;
   }
 }
 
