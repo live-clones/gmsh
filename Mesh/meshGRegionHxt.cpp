@@ -290,6 +290,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   std::vector<GFace *> surfaces;
   std::vector<GEdge *> curves;
   std::vector<GVertex *> points;
+  std::map<MVertex *, double> vlc;
 
   HXT_CHECK(getAllSurfacesOfAllRegions(regions, m, surfaces));
   HXT_CHECK(getAllCurvesOfAllSurfaces(surfaces, m, curves));
@@ -303,7 +304,10 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
       points.push_back(gv);
       npts += gv->points.size();
       for(size_t i = 0; i < gv->points.size(); i++) {
-        all.insert(gv->points[i]->getVertex(0));
+        MVertex *v = gv->points[i]->getVertex(0);
+        all.insert(v);
+        if(gv->prescribedMeshSizeAtVertex() != MAX_LC)
+          vlc[v] = gv->prescribedMeshSizeAtVertex();
       }
     }
   }
@@ -333,13 +337,17 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 
   size_t count = 0;
   c2v.resize(all.size());
-  for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
-    m->vertices.coord[4 * count + 0] = (*it)->x();
-    m->vertices.coord[4 * count + 1] = (*it)->y();
-    m->vertices.coord[4 * count + 2] = (*it)->z();
-    m->vertices.coord[4 * count + 3] = 0.0;
-    v2c[*it] = count;
-    c2v[count++] = *it;
+  for(MVertex *v : all) {
+    m->vertices.coord[4 * count + 0] = v->x();
+    m->vertices.coord[4 * count + 1] = v->y();
+    m->vertices.coord[4 * count + 2] = v->z();
+    auto it = vlc.find(v);
+    if(it != vlc.end())
+      m->vertices.coord[4 * count + 3] = it->second;
+    else
+      m->vertices.coord[4 * count + 3] = 0.0;
+    v2c[v] = count;
+    c2v[count++] = v;
   }
   all.clear();
 
