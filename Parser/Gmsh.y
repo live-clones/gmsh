@@ -54,6 +54,10 @@
 #include "drawContext.h"
 #endif
 
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#endif
+
 #if defined(HAVE_POPPLER)
 #include "gmshPopplerWrapper.h"
 #endif
@@ -218,7 +222,7 @@ struct doubleXstring{
 %token tHomology tCohomology tBetti tExists tFileExists tGetForced tGetForcedStr
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
-%token tNameToString tStringToName
+%token tNameToString tStringToName tUnsplitWindow
 
 %type <d> FExpr FExpr_Single DefineStruct NameStruct_Arg GetForced_Default
 %type <d> LoopOptions
@@ -3472,7 +3476,7 @@ Command :
   | String__Index String__Index String__Index '[' FExpr ']' tEND
     {
 #if defined(HAVE_POST) && defined(HAVE_MESH)
-      if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
+      if(!strcmp($1, "Background") && !strcmp($2, "Mesh") && !strcmp($3, "View")){
 	int index = (int)$5;
 	if(index >= 0 && index < (int)PView::list.size())
 	  GModel::current()->getFields()->setBackgroundMesh(index);
@@ -3486,13 +3490,13 @@ Command :
     }
   | String__Index FExpr tEND
     {
-      if(!strcmp($1, "Sleep")){
+      if(!strcmp($1, "Sleep")) {
 	SleepInSeconds($2);
       }
-      else if(!strcmp($1, "Remesh")){
+      else if(!strcmp($1, "Remesh")) {
 	yymsg(0, "Surface remeshing must be reinterfaced");
       }
-      else if(!strcmp($1, "Mesh")){
+      else if(!strcmp($1, "Mesh")) {
 	int lock = CTX::instance()->lock;
 	CTX::instance()->lock = 0;
         if(GModel::current()->getOCCInternals() &&
@@ -3503,21 +3507,43 @@ Command :
 	GModel::current()->mesh((int)$2);
 	CTX::instance()->lock = lock;
       }
-      else if(!strcmp($1, "SetOrder")){
+      else if(!strcmp($1, "SetOrder")) {
 #if defined(HAVE_MESH)
         SetOrderN(GModel::current(), $2, CTX::instance()->mesh.secondOrderLinear,
                   CTX::instance()->mesh.secondOrderIncomplete,
                   CTX::instance()->mesh.meshOnlyVisible);
 #endif
       }
-      else if(!strcmp($1, "PartitionMesh")){
+      else if(!strcmp($1, "PartitionMesh")) {
         GModel::current()->partitionMesh($2);
       }
-      else
+      else if(!strcmp($1, "SetCurrentWindow")) {
+#if defined(HAVE_FLTK)
+        FlGui::instance()->setCurrentOpenglWindow((int)$2);
+#endif
+      }
+      else if(!strcmp($1, "SplitCurrentWindowHorizontal")) {
+#if defined(HAVE_FLTK)
+        FlGui::instance()->splitCurrentOpenglWindow('h', $2);
+#endif
+      }
+      else if(!strcmp($1, "SplitCurrentWindowVertical")) {
+#if defined(HAVE_FLTK)
+        FlGui::instance()->splitCurrentOpenglWindow('v', $2);
+#endif
+      }
+      else {
 	yymsg(0, "Unknown command '%s'", $1);
+      }
       Free($1);
     }
-   | tPlugin '(' tSTRING ')' '.' tSTRING tEND
+  | tUnsplitWindow tEND
+    {
+#if defined(HAVE_FLTK)
+      FlGui::instance()->splitCurrentOpenglWindow('u');
+#endif
+    }
+  | tPlugin '(' tSTRING ')' '.' tSTRING tEND
      {
 #if defined(HAVE_PLUGINS)
        try {
@@ -3603,7 +3629,7 @@ Command :
       drawContext::global()->draw();
 #endif
     }
-   | tSetChanged tEND
+  | tSetChanged tEND
     {
 #if defined(HAVE_OPENGL)
      CTX::instance()->mesh.changed = ENT_ALL;
