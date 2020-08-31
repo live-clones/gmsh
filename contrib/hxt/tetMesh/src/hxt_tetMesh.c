@@ -144,6 +144,8 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   if(nbLinesNotInTriangles!=0)
     HXT_CHECK( hxtConstrainLinesNotInTriangles(mesh, lines2TetMap, lines2TriMap) );
 
+  // now that tetrahedra are flaged, we can proceed to colorize the mesh
+  HXT_ASSERT(mesh->tetrahedra.colors == NULL);
   HXT_CHECK( hxtColorMesh(mesh, &nbColors) );
 
   HXT_CHECK( hxtMapColorsToBrep(mesh, nbColors, tri2TetMap) );

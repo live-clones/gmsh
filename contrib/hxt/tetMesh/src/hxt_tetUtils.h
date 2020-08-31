@@ -34,7 +34,9 @@ extern "C" {
 static inline HXTStatus hxtTetrahedraReserve(HXTMesh* mesh, uint64_t totalTet){
   if(totalTet > mesh->tetrahedra.size){
     HXT_CHECK( hxtAlignedRealloc(&mesh->tetrahedra.flag, totalTet*sizeof(uint16_t)) );
-    HXT_CHECK( hxtAlignedRealloc(&mesh->tetrahedra.colors, totalTet*sizeof(uint16_t)) );
+    if(mesh->tetrahedra.colors != NULL) {
+      HXT_CHECK( hxtAlignedRealloc(&mesh->tetrahedra.colors, totalTet*sizeof(uint16_t)) );
+    }
     HXT_CHECK( hxtAlignedRealloc(&mesh->tetrahedra.node,   totalTet*4*sizeof(uint32_t)) );
     HXT_CHECK( hxtAlignedRealloc(&mesh->tetrahedra.neigh,  totalTet*4*sizeof(uint64_t)) );
     mesh->tetrahedra.size = totalTet;

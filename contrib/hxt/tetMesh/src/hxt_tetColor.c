@@ -16,9 +16,10 @@
  ***************************************************/
 HXTStatus hxtColorMesh(HXTMesh* mesh, uint16_t *nbColors) {
   uint64_t *stack;
-  HXT_CHECK(hxtMalloc(&stack,mesh->tetrahedra.num*sizeof(uint64_t))); 
-  // now that tetrahedra are flaged, we can proceed to colorize the mesh
-  memset(mesh->tetrahedra.colors, 0, mesh->tetrahedra.size*sizeof(uint16_t));
+  HXT_CHECK( hxtMalloc(&stack, sizeof(uint64_t)*mesh->tetrahedra.num));
+
+  HXT_CHECK( hxtMalloc(&mesh->tetrahedra.colors, sizeof(uint16_t)*mesh->tetrahedra.size) );
+  memset(mesh->tetrahedra.colors, 0, sizeof(uint16_t)*mesh->tetrahedra.size);
 
   uint16_t color = 1;
   uint16_t colorOut = 0;

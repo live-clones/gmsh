@@ -524,18 +524,18 @@ int tetgenmesh::reconstructmesh(void *p){
 
       // TODO: maybe free during recovery to save size...
       mesh->tetrahedra.num  = tetrahedrons->items;
+
+      HXT_ASSERT(mesh->tetrahedra.colors == NULL);
+
       if(mesh->tetrahedra.num > mesh->tetrahedra.size) {
         HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.node) );
         HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.neigh) );
-        HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.colors) );
         HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.flag) );
 
         HXT_CHECK( hxtAlignedMalloc(&mesh->tetrahedra.node,
                                    (mesh->tetrahedra.num)*4*sizeof(uint32_t)) );
         HXT_CHECK( hxtAlignedMalloc(&mesh->tetrahedra.neigh,
                                    (mesh->tetrahedra.num)*4*sizeof(uint64_t)) );
-        HXT_CHECK( hxtAlignedMalloc(&mesh->tetrahedra.colors,
-                                   (mesh->tetrahedra.num)*sizeof(uint16_t)) );
         HXT_CHECK( hxtAlignedMalloc(&mesh->tetrahedra.flag,
                                    (mesh->tetrahedra.num)*sizeof(uint16_t)) );
 
@@ -551,7 +551,6 @@ int tetgenmesh::reconstructmesh(void *p){
         p[2] = apex(tetloop);
         p[3] = oppo(tetloop);
 
-        mesh->tetrahedra.colors[counter] = 0;
         mesh->tetrahedra.flag[counter] = 0;
 
         for (tetloop.ver=0;tetloop.ver<4;tetloop.ver++){

@@ -41,7 +41,8 @@ HXTStatus hxtRemoveDeleted(HXTMesh* mesh)
     if(left >= right)
       break;
 
-    mesh->tetrahedra.colors[left] = mesh->tetrahedra.colors[right];
+    if(mesh->tetrahedra.colors != NULL)
+      mesh->tetrahedra.colors[left] = mesh->tetrahedra.colors[right];
     mesh->tetrahedra.flag[left] = mesh->tetrahedra.flag[right];
 
     // swap the two tetrahedra
