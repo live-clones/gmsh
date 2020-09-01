@@ -10,46 +10,6 @@
 #include "hxt_tetFlag.h"
 #include "hxt_sort.h"
 
-// // see http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
-// static inline uint32_t countSetBits(uint32_t v) {
-// #if defined(__GNUC__) || defined(__clang__)
-//   return __builtin_popcount(v);
-// #elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
-//   return __popcnt(v);
-// #else
-//   v = v - ((v >> 1) & 0x55555555);                    // reuse input as temporary
-//   v = (v & 0x33333333) + ((v >> 2) & 0x33333333);     // temp
-//   return ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24; // count
-// #endif
-// }
-
-// static uint32_t countSurfacesColors(HXTMesh* mesh)
-// {
-//   uint32_t maxSurfaceColor = 0;
-//   // #pragma omp parallel for reduction(max: maxSurfaceColor)
-//   for(uint64_t i=0; i<mesh->triangles.num; i++) {
-//     if(mesh->triangles.color[i] != HXT_COLOR_OUT && mesh->triangles.color[i] > maxSurfaceColor)
-//       maxSurfaceColor = mesh->triangles.color[i];
-//   }
-
-//   uint32_t* booleanArray;
-//   HXT_CHECK( hxtCalloc(&booleanArray, maxSurfaceColor/32 + 1, sizeof(uint32_t)) );
-
-//   for(uint64_t i=0; i<mesh->triangles.num; i++) {
-//     if(mesh->triangles.color[i] != HXT_COLOR_OUT) 
-//       booleanArray[mesh->triangles.color[i]/32] |= 1U<<(mesh->triangles.color[i]%32);
-//   }
-
-//   uint32_t numSurfaceColors = 0;
-//   for(uint64_t i=0; i<=maxSurfaceColor/32; i++) {
-//     numSurfaceColors += countSetBits(booleanArray[i]);
-//   }
-
-//   HXT_CHECK( hxtFree(&booleanArray) );
-
-//   return numSurfaceColors;
-// }
-
 typedef struct {
   uint32_t* surfaces;
   uint32_t numSurfaces;
@@ -202,8 +162,6 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
     }
   }
 
-  HXT_INFO("%d pairs", numPairs);
-
   HXT_CHECK( group1_sort(pairs, numPairs, maxPair) );
 
   // eliminate duplicates
@@ -214,8 +172,6 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
     pairs[++index] = pairs[i];
   }
   numPairs = index + 1;
-
-  HXT_INFO("%d pairs", numPairs);
 
   uint32_t* numSurfacesPerVolume;
   uint32_t* surfacesPerVolume;
@@ -245,24 +201,16 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
     mesh->brep.numVolumes = numVolumes;
     mesh->brep.numSurfacesPerVolume = numSurfacesPerVolume;
     mesh->brep.surfacesPerVolume = surfacesPerVolume;
-
-    uint64_t index = 0;
-    for(uint32_t i=0; i<numVolumes; i++) {
-      printf("volume %u, %u surfaces\n", i, numSurfacesPerVolume[i]);
-      for(uint32_t j=0; j<numSurfacesPerVolume[i]; j++) {
-        printf("%u\n", surfacesPerVolume[index++]);
-      }
-    }
   }
   else {
     // we have got to match the BREP together...
     HXT_ASSERT(mesh->brep.numSurfacesPerVolume!=NULL);
     HXT_ASSERT(mesh->brep.surfacesPerVolume!=NULL);
 
-    if(mesh->brep.numVolumes>numVolumes)
+    if(mesh->brep.numVolumes > numVolumes)
       return HXT_ERROR_MSG(HXT_STATUS_ERROR, "brep contains more volumes than there really are !");
 
-    if(mesh->brep.numVolumes<numVolumes)
+    if(mesh->brep.numVolumes < numVolumes)
       HXT_INFO("%u out of %u volumes will be refined", mesh->brep.numVolumes, numVolumes);
 
     uint64_t* pairsFromBREP;
@@ -322,21 +270,77 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
 
     index = 0;
     for(uint32_t i=0; i<mesh->brep.numVolumes; i++) {
-      volumes[numVolumes + i].surfaces = &surfacesPerVolume[index];
-      volumes[numVolumes + i].numSurfaces = numSurfacesPerVolume[i];
+      volumes[numVolumes + i].surfaces = &mesh->brep.surfacesPerVolume[index];
+      volumes[numVolumes + i].numSurfaces = mesh->brep.numSurfacesPerVolume[i];
       volumes[numVolumes + i].color = i;
       volumes[numVolumes + i].isFromOriginalBREP = 1;
+
+      index += mesh->brep.numSurfacesPerVolume[i];
     }
+
+    HXT_CHECK( hxtAlignedFree( &numSurfacesPerVolume ) );
 
     qsort(volumes, numVolumes + mesh->brep.numVolumes, sizeof(HXTBrepVolume), compareSortedVolumes);
 
-    for(uint32_t i=0; i<(numVolumes + mesh->brep.numVolumes); i++) {
-      HXT_INFO("%u: volume %u of BREP %d\n", i, volumes[i].color, volumes[i].isFromOriginalBREP);
+    uint32_t* volumeMap;
+    HXT_CHECK( hxtMalloc(&volumeMap, sizeof(uint32_t) * numVolumes) );
+    for(uint32_t i=0; i<numVolumes; i++) {
+      volumeMap[i] = HXT_COLOR_OUT;
     }
-    
 
-    HXT_CHECK( hxtAlignedFree( &numSurfacesPerVolume ) );
-    HXT_CHECK( hxtAlignedFree( &surfacesPerVolume ) );
+    uint32_t found = 0;
+    for(uint32_t i=1; i<(numVolumes + mesh->brep.numVolumes); i++) {
+      if(compareSortedVolumes(&volumes[i-1], &volumes[i]) == 0) { // volumes are the same
+        if(volumes[i-1].isFromOriginalBREP == volumes[i].isFromOriginalBREP) {
+          return HXT_ERROR_MSG(HXT_STATUS_ERROR, "duplicate volume %u and %u in %s Brep "
+                                                 "(volumes should be uniquely defined by the color of "
+                                                 "their bounding surfaces)", volumes[i-1].color, volumes[i].color,
+                                                 volumes[i].isFromOriginalBREP ? "original" : "reconstructed");
+        }
+        uint32_t original      = volumes[volumes[i].isFromOriginalBREP ? i   : i-1].color;
+        uint32_t reconstructed = volumes[volumes[i].isFromOriginalBREP ? i-1 : i  ].color;
+
+        volumeMap[reconstructed] = original;
+
+        found++;
+      }
+    }
+
+    HXT_CHECK( hxtAlignedFree(&surfacesPerVolume) );
+    HXT_CHECK( hxtFree(&volumes) );
+
+    if(found != mesh->brep.numVolumes)
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "some volumes of the BRep were not found");
+
+    // we give new number to all the volumes that are not in the BREP.
+    uint32_t notMeshedVolume = mesh->brep.numVolumes;
+    for(uint32_t i=0; i<numVolumes; i++) {
+      if(volumeMap[i] == HXT_COLOR_OUT) {
+        volumeMap[i] = notMeshedVolume++;
+      }
+    }
+
+    // detect changes in the mapping:
+    int changes = 0;
+    for(uint32_t i=0; i<numVolumes; i++) {
+      if(volumeMap[i] != i) {
+        changes = 1;
+        break;
+      }
+    }
+
+    if(changes) {
+      #pragma omp parallel for
+      for(uint64_t i=0; i<mesh->tetrahedra.num; i++) {
+        if(mesh->tetrahedra.color[i] == HXT_COLOR_OUT)
+          continue;
+        mesh->tetrahedra.color[i] = volumeMap[mesh->tetrahedra.color[i]];
+      }
+    }
+
+    HXT_INFO("All volumes of the BRep were found and colorized accordingly");
+
+    HXT_CHECK( hxtFree(&volumeMap) );
   }
 
   return HXT_STATUS_OK;
