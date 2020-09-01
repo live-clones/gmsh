@@ -114,7 +114,7 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
   HXT_CHECK( hxtColorMesh(mesh, &numVolumes) );
 
   if(mesh->triangles.color == NULL) {
-    HXT_WARNING("No surface colors => cannot verify BREP");
+    HXT_WARNING("No surface colors => cannot verify BRep !");
     return HXT_STATUS_OK;
   }
 
@@ -187,7 +187,19 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
 
   HXT_CHECK( hxtFree(&pairs) );
 
-  if(mesh->brep.numVolumes == 0) {
+  /* at this point, we constructed or own volume BRep in:
+   *  - numVolumes
+   *  - numSurfacesPerVolume
+   *  - surfacePerVolumes
+   *
+   * Now, either there is no existing BRep, in which case put our own one in mesh->brep
+   * or there is an existing BRep.
+   * In the latter case, we have to compare each volume of our reconstructed BRep against
+   * the original BRep. If the two volumes have the same definition, the color of our volume
+   * needs to correspond to the one of the original BRep.
+   */ 
+
+  if(mesh->brep.numVolumes == 0) { // no existing original BRep
   #ifndef NDEBUG
     if(mesh->brep.numSurfacesPerVolume!=NULL) {
       HXT_WARNING("mesh->brep.numSurfacesPerVolume is not null but numVolumes=0\nAttempting to free it");
@@ -202,13 +214,13 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
     mesh->brep.numSurfacesPerVolume = numSurfacesPerVolume;
     mesh->brep.surfacesPerVolume = surfacesPerVolume;
   }
-  else {
-    // we have got to match the BREP together...
+  else { // there is an existing BRep
+    // we have got to match the BREPs together...
     HXT_ASSERT(mesh->brep.numSurfacesPerVolume!=NULL);
     HXT_ASSERT(mesh->brep.surfacesPerVolume!=NULL);
 
     if(mesh->brep.numVolumes > numVolumes)
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "brep contains more volumes than there really are !");
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "BRep contains more volumes than there really are !");
 
     if(mesh->brep.numVolumes < numVolumes)
       HXT_INFO("%u out of %u volumes will be refined", mesh->brep.numVolumes, numVolumes);
@@ -338,9 +350,9 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
       }
     }
 
-    HXT_INFO("All volumes of the BRep were found and colorized accordingly");
-
     HXT_CHECK( hxtFree(&volumeMap) );
+
+    HXT_INFO("All volumes of the BRep were found and colorized accordingly");
   }
 
   return HXT_STATUS_OK;
