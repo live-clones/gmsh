@@ -81,57 +81,23 @@ int main(int argc, char** argv) {
       HXT_WARNING("Mesh file \"%s\" already contains volumes. We delete them",input);
 
       //tetrahedra
-      HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.colors) );
+      HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.color) );
       HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.node) );
       mesh->tetrahedra.num = 0;
       mesh->tetrahedra.size = 0;
-
-      // hexahedra
-      HXT_CHECK( hxtAlignedFree(&mesh->hexahedra.colors) );
-      HXT_CHECK( hxtAlignedFree(&mesh->hexahedra.flag) );
-      HXT_CHECK( hxtAlignedFree(&mesh->hexahedra.node) );
-      HXT_CHECK( hxtAlignedFree(&mesh->hexahedra.neigh) );
-      HXT_CHECK( hxtAlignedFree(&mesh->hexahedra.neighType) );
-      mesh->hexahedra.num = 0;
-      mesh->hexahedra.size = 0;
-
-      // prisms
-      HXT_CHECK( hxtAlignedFree(&mesh->prisms.colors) );
-      HXT_CHECK( hxtAlignedFree(&mesh->prisms.flag) );
-      HXT_CHECK( hxtAlignedFree(&mesh->prisms.node) );
-      HXT_CHECK( hxtAlignedFree(&mesh->prisms.neigh) );
-      HXT_CHECK( hxtAlignedFree(&mesh->prisms.neighType) );
-      mesh->prisms.num = 0;
-      mesh->prisms.size = 0;
-
-      // pyramids
-      HXT_CHECK( hxtAlignedFree(&mesh->pyramids.colors) );
-      HXT_CHECK( hxtAlignedFree(&mesh->pyramids.flag) );
-      HXT_CHECK( hxtAlignedFree(&mesh->pyramids.node) );
-      HXT_CHECK( hxtAlignedFree(&mesh->pyramids.neigh) );
-      HXT_CHECK( hxtAlignedFree(&mesh->pyramids.neighType) );
-      mesh->pyramids.num = 0;
-      mesh->pyramids.size = 0;
-
-      // quads
-      HXT_CHECK( hxtAlignedFree(&mesh->quads.node) );
-      HXT_CHECK( hxtAlignedFree(&mesh->quads.colors) );
-      mesh->quads.num = 0;
-      mesh->quads.num = 0;
-
     }
     if((mesh->lines.num!=0 || mesh->triangles.num!=0) && !preserve_order) {
       HXT_WARNING("Mesh file \"%s\" contains triangles and/or lines.\n"
                   "\tWe delete them unless the -p/--preserve-pts-order option is specified", input);
       // triangles
       HXT_CHECK( hxtAlignedFree(&mesh->triangles.node) );
-      HXT_CHECK( hxtAlignedFree(&mesh->triangles.colors) );
+      HXT_CHECK( hxtAlignedFree(&mesh->triangles.color) );
       mesh->triangles.num = 0;
       mesh->triangles.size = 0;
 
       // lines
       HXT_CHECK( hxtAlignedFree(&mesh->lines.node) );
-      HXT_CHECK( hxtAlignedFree(&mesh->lines.colors) );
+      HXT_CHECK( hxtAlignedFree(&mesh->lines.color) );
       mesh->lines.num = 0;
       mesh->lines.size = 0;
     }
@@ -184,10 +150,6 @@ int main(int argc, char** argv) {
 
   if(output!=NULL){
     HXT_INFO_COND(verbosity>0, "Writing result to \"%s\"", output);
-    #pragma omp parallel for
-    for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-      mesh->tetrahedra.colors[i] = 0;
-    }
     HXT_CHECK( hxtMeshWriteGmsh(mesh, output) );
   }
 

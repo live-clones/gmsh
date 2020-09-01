@@ -105,10 +105,10 @@ int main(int argc, char** argv) {
     FILE* fp = fopen(geoFile, "w");
     fprintf(fp, "Merge \"%s\"; // loads the 2d mesh of the volume\n", input);
 
-    uint16_t surf = 0;
-    for(uint16_t i=0; i<mesh->brep.numVolumes; i++) {
+    uint32_t surf = 0;
+    for(uint32_t i=0; i<mesh->brep.numVolumes; i++) {
       fprintf(fp, "Surface Loop(%u) = {%u", i+1, mesh->brep.surfacesPerVolume[surf++]);
-      for(uint16_t j=1; j<mesh->brep.numSurfacesPerVolume[i]; j++) {
+      for(uint32_t j=1; j<mesh->brep.numSurfacesPerVolume[i]; j++) {
         fprintf(fp, ",%u", mesh->brep.surfacesPerVolume[surf++]);
       }
       fprintf(fp, "};\nVolume(%u) = {%u};\n", i+1, i+1);

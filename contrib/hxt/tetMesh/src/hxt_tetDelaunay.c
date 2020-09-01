@@ -178,9 +178,9 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, 
 
   mesh->tetrahedra.num = 5;
 
-  if(mesh->tetrahedra.colors != NULL) {
+  if(mesh->tetrahedra.color != NULL) {
     for (uint64_t tet=0; tet<5; tet++){
-      mesh->tetrahedra.colors[tet] = UINT16_MAX;
+      mesh->tetrahedra.color[tet] = HXT_COLOR_OUT;
     }
   }
 
@@ -676,7 +676,7 @@ static inline void bndPush( TetLocal* local, uint16_t flag,
 }
 
 /* check if the cavity is star shaped
-   This isn't usefull for pure Delaunay but when we constrain cavity with colors,
+   This isn't usefull for pure Delaunay but when we constrain cavity with color,
    it is usefull */
 static HXTStatus isStarShaped(TetLocal* local, HXTMesh* mesh, const uint32_t vta, uint64_t* blindFaceIndex)
 {
@@ -784,20 +784,20 @@ static HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uin
 }
 
 
-static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uint32_t vta, const uint16_t color, const uint64_t prevDeleted) {
+static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uint32_t vta, const uint32_t color, const uint64_t prevDeleted) {
   // HXT_WARNING("a constrained edge was inside the cavity, recovering it");
 
   // all the tetrahedron have the same color 'color', we will use that color to flag them
   for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
     uint64_t delTet = local->deleted.array[i];
-    mesh->tetrahedra.colors[delTet] = 0;
+    mesh->tetrahedra.color[delTet] = 0;
   }
 
   for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
     uint64_t delTet = local->deleted.array[i];
     int exist = 1;
     for (int edge=0; exist && edge<6; edge++) {
-      if(getEdgeConstraint(mesh, delTet, edge) && (mesh->tetrahedra.colors[delTet] & (1U<<edge))==0) {
+      if(getEdgeConstraint(mesh, delTet, edge) && (mesh->tetrahedra.color[delTet] & (1U<<edge))==0) {
         unsigned in_facet;
         unsigned out_facet;
 
@@ -824,10 +824,10 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
           if(getDeletedFlag(mesh, curTet)!=0) {
             // mark that the edge as been treate
             #ifdef DEBUG
-              if((mesh->tetrahedra.colors[curTet] & (1U<<getEdgeFromFacets(in_facet, out_facet)))!=0)
+              if((mesh->tetrahedra.color[curTet] & (1U<<getEdgeFromFacets(in_facet, out_facet)))!=0)
                 return HXT_ERROR_MSG(HXT_STATUS_ERROR, "the flag says that the tet has already been processed for this edge...");
             #endif
-            mesh->tetrahedra.colors[curTet] |= (1U<<getEdgeFromFacets(in_facet, out_facet));
+            mesh->tetrahedra.color[curTet] |= (1U<<getEdgeFromFacets(in_facet, out_facet));
           }
           else {
             edgeIsSafe=1;
@@ -892,7 +892,7 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
             exist = 0;
 
           // printf("undeleting tetrahedron %lu\n", tetToUndelete);
-          mesh->tetrahedra.colors[tetToUndelete] = color;
+          mesh->tetrahedra.color[tetToUndelete] = color;
           HXT_CHECK( undeleteTetrahedron(local, mesh, tetToUndelete) );
         }
       }
@@ -901,7 +901,7 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
 
   for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
     uint64_t delTet = local->deleted.array[i];
-    mesh->tetrahedra.colors[delTet] = color;
+    mesh->tetrahedra.color[delTet] = color;
   }
 
   return HXT_STATUS_OK;
@@ -1157,7 +1157,7 @@ static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, c
 /****************************************
  * filling back the cavity (DelaunayBall)
  ****************************************/
-static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned char* __restrict__ verticesID, uint64_t* __restrict__ curTet, const uint32_t vta, const uint16_t color){
+static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned char* __restrict__ verticesID, uint64_t* __restrict__ curTet, const uint32_t vta, const uint32_t color){
   uint64_t clength = local->deleted.num;
   uint64_t blength = local->ball.num;
 
@@ -1174,8 +1174,8 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
     const uint64_t newTet = local->deleted.array[i + start];
     uint32_t* __restrict__ Node = mesh->tetrahedra.node + 4*newTet;
 
-    if(mesh->tetrahedra.colors != NULL) {
-      mesh->tetrahedra.colors[newTet] = color;
+    if(mesh->tetrahedra.color != NULL) {
+      mesh->tetrahedra.color[newTet] = color;
     }
     mesh->tetrahedra.flag[newTet] = 0;
 
@@ -1237,16 +1237,16 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
 
   HXT_CHECK( walking2Cavity(mesh, &local->partition, curTet, vta) );
 
-  uint16_t color;
-  if(mesh->tetrahedra.colors==NULL) {
-    color = UINT16_MAX;
+  uint32_t color;
+  if(mesh->tetrahedra.color==NULL) {
+    color = HXT_COLOR_OUT;
   }
   else {
-    color = mesh->tetrahedra.colors[*curTet];
-    /* if color==UINT16_MAX, the inserted point is not in any defined volume.
+    color = mesh->tetrahedra.color[*curTet];
+    /* if color==HXT_COLOR_OUT, the inserted point is not in any defined volume.
      * other than in a perfectDelaunay context, I don't see why anybody would
      * want such insertion. */
-    HXT_ASSERT(color != UINT16_MAX);
+    HXT_ASSERT(color != HXT_COLOR_OUT);
   }
 
   if(nodalSizes!=NULL && filterTet(mesh, nodalSizes, *curTet, vta)){
@@ -1264,7 +1264,7 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
     HXT_CHECK(status);
   }
 
-  if(mesh->tetrahedra.colors!=NULL) {
+  if(mesh->tetrahedra.color!=NULL) {
     if(edgeConstraint) {
       HXT_CHECK( respectEdgeConstraint(local, mesh, vta, color, prevDeleted) );
     }

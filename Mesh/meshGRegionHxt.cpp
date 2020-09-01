@@ -165,12 +165,12 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     gf->triangles.clear();
   }
 
-  uint16_t warning = 0;
+  uint32_t warning = 0;
 
   for(size_t i = 0; i < m->lines.num; i++) {
     uint32_t i0 = m->lines.node[2 * i + 0];
     uint32_t i1 = m->lines.node[2 * i + 1];
-    uint16_t c = m->lines.colors[i];
+    uint32_t c = m->lines.color[i];
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
     std::map<uint32_t, GEdge *>::iterator ge = i2e.find(c);
@@ -198,7 +198,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     uint32_t i0 = m->triangles.node[3 * i + 0];
     uint32_t i1 = m->triangles.node[3 * i + 1];
     uint32_t i2 = m->triangles.node[3 * i + 2];
-    uint16_t c = m->triangles.colors[i];
+    uint32_t c = m->triangles.color[i];
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
     MVertex *v2 = c2v[i2];
@@ -240,7 +240,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 #endif
     for(size_t i = 0; i < m->tetrahedra.num; i++) {
       uint32_t *i0 = &m->tetrahedra.node[4 * i + 0];
-      uint16_t c = m->tetrahedra.colors[i];
+      uint32_t c = m->tetrahedra.color[i];
       if(c < regions.size()) {
         MVertex *vv[4];
         GRegion *gr = regions[c];
@@ -335,14 +335,14 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   HXT_CHECK(
     hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
   HXT_CHECK(
-    hxtAlignedMalloc(&m->lines.colors, (m->lines.num) * sizeof(uint16_t)));
+    hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint32_t)));
 
   for(size_t j = 0; j < edges.size(); j++) {
     GEdge *ge = edges[j];
     for(size_t i = 0; i < ge->lines.size(); i++) {
       m->lines.node[2 * index + 0] = v2c[ge->lines[i]->getVertex(0)];
       m->lines.node[2 * index + 1] = v2c[ge->lines[i]->getVertex(1)];
-      m->lines.colors[index] = ge->tag();
+      m->lines.color[index] = ge->tag();
       index++;
     }
   }
@@ -350,8 +350,8 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   m->triangles.num = m->triangles.size = ntri;
   HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
                              (m->triangles.num) * 3 * sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedMalloc(&m->triangles.colors,
-                             (m->triangles.num) * sizeof(uint16_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.color,
+                             (m->triangles.num) * sizeof(uint32_t)));
 
   index = 0;
   for(size_t j = 0; j < faces.size(); j++) {
@@ -360,7 +360,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
       m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
       m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
       m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
-      m->triangles.colors[index] = gf->tag();
+      m->triangles.color[index] = gf->tag();
       index++;
     }
   }

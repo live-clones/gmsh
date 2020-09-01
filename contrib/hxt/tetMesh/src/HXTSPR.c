@@ -1618,7 +1618,7 @@ static inline HXTStatus rebuildMesh(SPRGrowingCavity* growingCav,
 {
   HXTDeleted* deleted = &local->deleted;
   HXTMesh* mesh = local->toSync->mesh;
-  uint16_t color = mesh->tetrahedra.colors[badTet];
+  uint32_t color = mesh->tetrahedra.color[badTet];
   uint16_t lastCheck = local->SPR.dateOfLastCheck;
   local->SPR.dateOfLastCreation = lastCheck;
 
@@ -1659,7 +1659,7 @@ static inline HXTStatus rebuildMesh(SPRGrowingCavity* growingCav,
     for(int j=0; j<4; j++)
       mesh->tetrahedra.node[4*meshTet + j] = SPR->points.array[v[j]].userID;
 
-    mesh->tetrahedra.colors[meshTet] = color;
+    mesh->tetrahedra.color[meshTet] = color;
     mesh->tetrahedra.flag[meshTet] = 0;
 
     unsigned index = get_compressed_index(v[0], v[1], v[2], v[3]);

@@ -560,7 +560,7 @@ HXTStatus hxtOptimizeTetrahedra(HXTMesh *mesh,
 
       HXT_INFO_COND(options->verbosity>0,
                     "Improving %10" HXTu64 " tet. on %3d thrd %s",
-                    roundBadTetIn, shared.numThreads, doSPR ? "(SPR)":"(S & ER)");
+                    roundBadTetIn, shared.numThreads, doSPR ? "(GSC)":"(S & ER)");
     }
     else {
       HXT_CHECK( badTets_update_among_conflicts(mesh, &shared) );

@@ -236,18 +236,18 @@ HXTStatus hxtTetReorder(HXTMesh* mesh)
   HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.node) );
   mesh->tetrahedra.node = newNode;
 
-  if(mesh->tetrahedra.colors != NULL) {
-    uint16_t* newColor;
-    HXT_CHECK( hxtAlignedMalloc(&newColor, mesh->tetrahedra.size*sizeof(uint16_t)));
+  if(mesh->tetrahedra.color != NULL) {
+    uint32_t* newColor;
+    HXT_CHECK( hxtAlignedMalloc(&newColor, mesh->tetrahedra.size*sizeof(uint32_t)));
 
     #pragma omp parallel for
     for (uint64_t i=0; i<nTet; i++) {
       uint64_t index = pair[i].v[1];
-      newColor[i] = mesh->tetrahedra.colors[index]; 
+      newColor[i] = mesh->tetrahedra.color[index]; 
     }
 
-    HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.colors) );
-    mesh->tetrahedra.colors = newColor;
+    HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.color) );
+    mesh->tetrahedra.color = newColor;
   }
 
   uint16_t* newFlag;
@@ -519,8 +519,8 @@ HXTStatus hxtAddGhosts(HXTMesh* mesh){
             mesh->tetrahedra.neigh[4*i+j] = 4*newGhost+3;
             mesh->tetrahedra.neigh[4*newGhost+3] = 4*i+j;
 
-            if(mesh->tetrahedra.colors != NULL) 
-              mesh->tetrahedra.colors[newGhost] = UINT16_MAX;
+            if(mesh->tetrahedra.color != NULL) 
+              mesh->tetrahedra.color[newGhost] = HXT_COLOR_OUT;
 
             mesh->tetrahedra.flag[newGhost] = 0;
             if(getFacetConstraint(mesh, i, j))

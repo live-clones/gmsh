@@ -27,7 +27,7 @@
 //   for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
 //     if(mesh->tetrahedra.node[4*i+3]==HXT_GHOST_VERTEX)
 //       continue;
-//     if(mesh->tetrahedra.colors[i]==UINT16_MAX)
+//     if(mesh->tetrahedra.color[i]==HXT_COLOR_OUT)
 //       continue;
 //     double* a = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*i+0];
 //     double* b = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*i+1];
@@ -83,7 +83,7 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   t[1] = omp_get_wtime();
 
   uint64_t nbMissingTriangles, nbLinesNotInTriangles, nbMissingLines=0;
-  uint16_t nbColors;
+  uint32_t nbColors;
   uint64_t* tri2TetMap = NULL;
   uint64_t* lines2TriMap = NULL;
   uint64_t* lines2TetMap = NULL;
@@ -145,10 +145,8 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
     HXT_CHECK( hxtConstrainLinesNotInTriangles(mesh, lines2TetMap, lines2TriMap) );
 
   // now that tetrahedra are flaged, we can proceed to colorize the mesh
-  HXT_ASSERT(mesh->tetrahedra.colors == NULL);
-  HXT_CHECK( hxtColorMesh(mesh, &nbColors) );
-
-  HXT_CHECK( hxtMapColorsToBrep(mesh, nbColors, tri2TetMap) );
+  HXT_ASSERT(mesh->tetrahedra.color == NULL);
+  HXT_CHECK( hxtMapColorsToBrep(mesh, tri2TetMap) );
 
   HXT_CHECK( hxtAlignedFree(&tri2TetMap) );
   HXT_CHECK( hxtAlignedFree(&lines2TetMap) );

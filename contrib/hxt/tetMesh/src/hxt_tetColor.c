@@ -10,26 +10,94 @@
 #include "hxt_tetFlag.h"
 #include "hxt_sort.h"
 
+// // see http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+// static inline uint32_t countSetBits(uint32_t v) {
+// #if defined(__GNUC__) || defined(__clang__)
+//   return __builtin_popcount(v);
+// #elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+//   return __popcnt(v);
+// #else
+//   v = v - ((v >> 1) & 0x55555555);                    // reuse input as temporary
+//   v = (v & 0x33333333) + ((v >> 2) & 0x33333333);     // temp
+//   return ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24; // count
+// #endif
+// }
+
+// static uint32_t countSurfacesColors(HXTMesh* mesh)
+// {
+//   uint32_t maxSurfaceColor = 0;
+//   // #pragma omp parallel for reduction(max: maxSurfaceColor)
+//   for(uint64_t i=0; i<mesh->triangles.num; i++) {
+//     if(mesh->triangles.color[i] != HXT_COLOR_OUT && mesh->triangles.color[i] > maxSurfaceColor)
+//       maxSurfaceColor = mesh->triangles.color[i];
+//   }
+
+//   uint32_t* booleanArray;
+//   HXT_CHECK( hxtCalloc(&booleanArray, maxSurfaceColor/32 + 1, sizeof(uint32_t)) );
+
+//   for(uint64_t i=0; i<mesh->triangles.num; i++) {
+//     if(mesh->triangles.color[i] != HXT_COLOR_OUT) 
+//       booleanArray[mesh->triangles.color[i]/32] |= 1U<<(mesh->triangles.color[i]%32);
+//   }
+
+//   uint32_t numSurfaceColors = 0;
+//   for(uint64_t i=0; i<=maxSurfaceColor/32; i++) {
+//     numSurfaceColors += countSetBits(booleanArray[i]);
+//   }
+
+//   HXT_CHECK( hxtFree(&booleanArray) );
+
+//   return numSurfaceColors;
+// }
+
+typedef struct {
+  uint32_t* surfaces;
+  uint32_t numSurfaces;
+  uint32_t color;
+  int isFromOriginalBREP;
+} HXTBrepVolume;
+
+static inline int compareSortedVolumes(const void* vv0, const void* vv1)
+{
+  HXTBrepVolume* v0 = (HXTBrepVolume*) vv0;
+  HXTBrepVolume* v1 = (HXTBrepVolume*) vv1;
+
+  if(v0->numSurfaces > v1->numSurfaces)
+    return 1;
+  else if(v0->numSurfaces < v1->numSurfaces)
+    return -1;
+
+  for(uint32_t i=0; i<v0->numSurfaces; i++) {
+    if(v0->surfaces[i] > v1->surfaces[i])
+      return 1;
+    else if(v0->surfaces[i] < v1->surfaces[i])
+      return -1;
+  }
+
+  return 0;
+}
+
 
 /***************************************************
  *      Coloring the mesh                          *
  ***************************************************/
-HXTStatus hxtColorMesh(HXTMesh* mesh, uint16_t *nbColors) {
+static HXTStatus hxtColorMesh(HXTMesh* mesh, uint32_t* numVolumes)
+{
   uint64_t *stack;
   HXT_CHECK( hxtMalloc(&stack, sizeof(uint64_t)*mesh->tetrahedra.num));
 
-  HXT_CHECK( hxtMalloc(&mesh->tetrahedra.colors, sizeof(uint16_t)*mesh->tetrahedra.size) );
-  memset(mesh->tetrahedra.colors, 0, sizeof(uint16_t)*mesh->tetrahedra.size);
+  HXT_CHECK( hxtAlignedMalloc(&mesh->tetrahedra.color, sizeof(uint32_t)*mesh->tetrahedra.size) );
+  memset(mesh->tetrahedra.color, 0, sizeof(uint32_t) * mesh->tetrahedra.size);
 
-  uint16_t color = 1;
-  uint16_t colorOut = 0;
+  uint32_t color = 1;
+  uint32_t colorOut = 0;
 
   while (1){
     uint64_t stackSize = 0;
     uint64_t first = UINT64_MAX;
 
     for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-      if(mesh->tetrahedra.colors[i]==0){
+      if(mesh->tetrahedra.color[i]==0){
         first = i;
         break;
       }
@@ -39,7 +107,7 @@ HXTStatus hxtColorMesh(HXTMesh* mesh, uint16_t *nbColors) {
       break;
 
     stack[stackSize++] = first;
-    mesh->tetrahedra.colors[first] = color;
+    mesh->tetrahedra.color[first] = color;
 
     for (uint64_t i=0; i<stackSize; i++) {
       uint64_t t = stack[i];
@@ -48,31 +116,31 @@ HXTStatus hxtColorMesh(HXTMesh* mesh, uint16_t *nbColors) {
         colorOut = color;
 
       for (unsigned j=0; j<4; j++) {
-        if(mesh->tetrahedra.neigh[4*t+j]!=HXT_NO_ADJACENT && getFacetConstraint(mesh, t, j)==0){ // the facet is not a boundary facet
+        if(mesh->tetrahedra.neigh[4*t+j]!=HXT_NO_ADJACENT && getFacetConstraint(mesh, t, j)==0) { // the facet is not a boundary facet
           uint64_t neigh = mesh->tetrahedra.neigh[4*t+j]/4;
-          if(mesh->tetrahedra.colors[neigh]==0){
+          if(mesh->tetrahedra.color[neigh]==0){
             stack[stackSize++] = neigh;
-            mesh->tetrahedra.colors[neigh] = color;
+            mesh->tetrahedra.color[neigh] = color;
           }
         }
       }
     }
     color++;
   }
-  *nbColors = color-2; // -2 because we began at one AND because colorout is not counted...
+  *numVolumes = color-2; // -2 because we began at one AND because colorout is not counted...
 
   HXT_CHECK( hxtFree(&stack) );
 
   #pragma omp parallel for
   for (uint64_t i=0;i<mesh->tetrahedra.num;i++){
-    if (mesh->tetrahedra.colors[i] == colorOut){
-      mesh->tetrahedra.colors[i] = UINT16_MAX;
+    if (mesh->tetrahedra.color[i] == colorOut){
+      mesh->tetrahedra.color[i] = HXT_COLOR_OUT;
     }
-    else if(mesh->tetrahedra.colors[i] > colorOut){
-      mesh->tetrahedra.colors[i]-=2;
+    else if(mesh->tetrahedra.color[i] > colorOut){
+      mesh->tetrahedra.color[i]-=2;
     }
     else {
-      mesh->tetrahedra.colors[i]--;
+      mesh->tetrahedra.color[i]--;
     }
   }
 
@@ -80,382 +148,196 @@ HXTStatus hxtColorMesh(HXTMesh* mesh, uint16_t *nbColors) {
 }
 
 
-
-HXTStatus hxtFillVolumeBrep(HXTMesh* mesh, uint64_t* tri2TetMap,
-                            uint16_t numVolumes, uint16_t** numSurfacesPerVolume_ptr, uint16_t** surfacesPerVolume_ptr)
+HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
 {
-  int nbTriangleColor = 0;
-  uint16_t colorTriMax = 0;
-  char triangleColor[65536] = {0};
+  uint32_t numVolumes;
+  HXT_CHECK( hxtColorMesh(mesh, &numVolumes) );
 
-  #pragma omp parallel for
-  for (uint64_t i=0; i<mesh->triangles.num; i++) {
-    #pragma omp atomic write
-    triangleColor[mesh->triangles.colors[i]] = 1;
+  if(mesh->triangles.color == NULL) {
+    HXT_WARNING("No surface colors => cannot verify BREP");
+    return HXT_STATUS_OK;
   }
 
-  #pragma omp parallel for reduction(+: nbTriangleColor) reduction(max: colorTriMax)
-  for (unsigned i=0; i<65536; i++) {
-    if(triangleColor[i]==1) {
-      nbTriangleColor++;
-      triangleColor[i] = 0;
-      if(i>colorTriMax)
-        colorTriMax = i;
+  uint64_t numPairs = 0;
+  uint64_t maxPair = 0;
+  uint64_t* pairs; // associate a volume and a surface color
+  HXT_CHECK( hxtMalloc(&pairs, sizeof(uint64_t) * 2 * mesh->triangles.num) );
+
+  uint64_t lastPair0 = UINT64_MAX;
+  uint64_t lastPair1 = UINT64_MAX;
+
+  for(uint64_t i=0; i<mesh->triangles.num; i++) {
+    if(mesh->triangles.color[i]==HXT_COLOR_OUT)
+      continue; // triangle is considered exterior
+
+    HXT_ASSERT(tri2TetMap[i]!=HXT_NO_ADJACENT);
+
+    uint64_t tet = tri2TetMap[i]/4;
+    uint64_t neigh = mesh->tetrahedra.neigh[tri2TetMap[i]];
+    
+
+    uint64_t color1 = mesh->tetrahedra.color[tet];
+    uint64_t color2 = neigh==HXT_NO_ADJACENT ? HXT_COLOR_OUT : mesh->tetrahedra.color[neigh/4];
+
+    if(color1 != HXT_COLOR_OUT) {
+      uint64_t pair = color1<<32 | mesh->triangles.color[i];
+      if(pair != lastPair0 && pair != lastPair1) {
+        pairs[numPairs++] = pair;
+        if(pair > maxPair)
+          maxPair = pair;
+        lastPair1 = lastPair0;
+        lastPair0 = pair;
+      }
     }
-  }
 
-  uint16_t* numSurfacesPerVolume;
-  uint16_t* surfacesPerVolume;
-  HXT_CHECK( hxtAlignedMalloc(&numSurfacesPerVolume, sizeof(uint16_t)*numVolumes) );
-
-  // a surface can only appear in two volumes. (this allocate to much, but usually not by a lot)
-  HXT_CHECK( hxtAlignedMalloc(&surfacesPerVolume, sizeof(uint16_t)*nbTriangleColor*2) );
-
-  const int maxThreads = omp_get_max_threads();
-  int *numColors;
-  HXT_CHECK( hxtAlignedMalloc(&numColors, maxThreads*sizeof(int)) );
-
-  int currentSurfaceIndex = 0;
-  int totalCount = 0;
-  
-  #pragma omp parallel
-  {
-    // for every tet-color
-    for (uint16_t color=0; color<numVolumes; color++) {
-      #pragma omp for
-      for (uint64_t tri=0; tri<mesh->triangles.num; tri++) {
-        // the tetrahedra on both sides of the triangle
-        uint64_t tet1 = tri2TetMap[tri];
-        uint64_t tet2 = mesh->tetrahedra.neigh[tet1];
-        tet1/=4;
-        tet2/=4;
-
-        if(mesh->tetrahedra.colors[tet1]==color || mesh->tetrahedra.colors[tet2]==color) {
-          #pragma omp atomic write // this atomic should do nothing (it usually is already atomic)
-          triangleColor[mesh->triangles.colors[tri]] = 1;
-        }
-      }
-
-      int threadID = omp_get_thread_num();
-      int localCount = 0;
-
-      #pragma omp for schedule(static)
-      for (uint16_t i=0; i<=colorTriMax; i++) {
-        if(triangleColor[i]==1) {
-          localCount++;
-        }
-      }
-
-      numColors[threadID] = localCount;
-
-      #pragma omp barrier
-      #pragma omp single
-      {
-        int nthreads = omp_get_num_threads();
-        currentSurfaceIndex+=totalCount;
-        totalCount = 0;
-        for (int thread=0; thread<nthreads; thread++) {
-          int tsum = totalCount + numColors[thread];
-          numColors[thread] = totalCount;
-          totalCount = tsum;
-        }
-
-        numSurfacesPerVolume[color] = totalCount;
-      }
-
-      #pragma omp for schedule(static)
-      for (uint16_t i=0; i<=colorTriMax; i++) {
-        if(triangleColor[i]==1) {
-          surfacesPerVolume[currentSurfaceIndex + numColors[threadID]] = i;
-          numColors[threadID]++;
-          triangleColor[i] = 0;
-        }
+    if(color2 != HXT_COLOR_OUT) {
+      uint64_t pair = color2<<32 | mesh->triangles.color[i];
+      if(pair != lastPair0 && pair != lastPair1) {
+        pairs[numPairs++] = pair;
+        if(pair > maxPair)
+          maxPair = pair;
+        lastPair1 = lastPair0;
+        lastPair0 = pair;
       }
     }
   }
 
-  *numSurfacesPerVolume_ptr = numSurfacesPerVolume;
-  *surfacesPerVolume_ptr = surfacesPerVolume;
-  
-  HXT_CHECK( hxtAlignedFree(&numColors) );
+  HXT_INFO("%d pairs", numPairs);
 
-  return HXT_STATUS_OK;
-}
+  HXT_CHECK( group1_sort(pairs, numPairs, maxPair) );
 
+  // eliminate duplicates
+  uint64_t index = 0;
+  for(uint64_t i=1; i<numPairs; i++) {
+    if(pairs[index] == pairs[i])
+      continue;
+    pairs[++index] = pairs[i];
+  }
+  numPairs = index + 1;
 
-static int compareVolumes(uint16_t numSurfaces1,
-                          uint16_t numSurfaces2,
-                          uint16_t* surfaces1,
-                          uint16_t* surfaces2)
-{
-  if(numSurfaces1<numSurfaces2)
-    return -1;
-  else if(numSurfaces1>numSurfaces2)
-    return 1;
+  HXT_INFO("%d pairs", numPairs);
 
-  int diff = 0;
-  uint64_t* surface1Sorted;
-  uint64_t* surface2Sorted;
-  HXT_CHECK( hxtAlignedMalloc(&surface1Sorted, numSurfaces1*sizeof(uint64_t)) );
-  HXT_CHECK( hxtAlignedMalloc(&surface2Sorted, numSurfaces1*sizeof(uint64_t)) );
+  uint32_t* numSurfacesPerVolume;
+  uint32_t* surfacesPerVolume;
+  HXT_CHECK( hxtAlignedMalloc(&numSurfacesPerVolume, sizeof(uint32_t) * numVolumes) );
+  memset(numSurfacesPerVolume, 0, sizeof(uint32_t) * numVolumes);
+  HXT_CHECK( hxtAlignedMalloc(&surfacesPerVolume, sizeof(uint32_t) * numPairs) );
 
-  uint64_t max1 = 0;
-  uint64_t max2 = 0;
-  for (uint16_t i=0; i<numSurfaces1; i++) {
-    surface1Sorted[i] = surfaces1[i];
-    if(surfaces1[i]>max1)
-      max1 = surfaces1[i];
-    surface2Sorted[i] = surfaces2[i];
-    if(surfaces2[i]>max2)
-      max2 = surfaces2[i];
+  for(uint64_t i=0; i<numPairs; i++) {
+    uint32_t volume = pairs[i] >> 32;
+    numSurfacesPerVolume[volume]++;
+    surfacesPerVolume[i] = pairs[i] & UINT32_MAX;
   }
 
-  if(max1!=max2) {
-    diff = max1 - max2;
-    goto endGoto;
-  }
+  HXT_CHECK( hxtFree(&pairs) );
 
-  HXT_CHECK( group1_sort(surface1Sorted, numSurfaces1, max1) );
-  HXT_CHECK( group1_sort(surface2Sorted, numSurfaces1, max1) );
-
-
-  for (uint16_t i=0; i<numSurfaces1; i++) {
-    if(surface1Sorted[i]!=surface2Sorted[i]) {
-      diff = surface1Sorted[i]-surface2Sorted[i];
-      goto endGoto;
-    }
-  }
-
-endGoto:
-  HXT_CHECK( hxtAlignedFree(&surface1Sorted) );
-  HXT_CHECK( hxtAlignedFree(&surface2Sorted) );
-
-  return diff;
-}
-
-
-static inline HXTStatus swapPairsIfNeeded(uint16_t numVolumes,
-                                         uint16_t* numSurfacesPerVolume,
-                                         uint16_t* surfacesPerVolume,
-                                         HXTGroup2* pairs)
-{
-  int alreadySwapped = 0;
-  for (int i=1; i<numVolumes; i++) {
-    if(pairs[i-1].v[1]==pairs[i].v[1]){
-      int vol1 = pairs[i-1].v[0];
-      int vol2 = pairs[i].v[0];
-      uint16_t start1 = numSurfacesPerVolume[vol1-1];
-      uint16_t end1 = numSurfacesPerVolume[vol1];
-      uint16_t start2 = numSurfacesPerVolume[vol2-1];
-      uint16_t end2 = numSurfacesPerVolume[vol2];
-      int comp = compareVolumes(end1-start1, end2-start2,
-                                &surfacesPerVolume[start1],
-                                &surfacesPerVolume[start2]);
-      if(comp > 0) {
-        if(alreadySwapped)
-          return HXT_ERROR_MSG(HXT_STATUS_ERROR, "The minimum surface of volume %d and %d appears more than twice...", vol1, vol2);
-        HXTGroup2 tmp = pairs[i-1];
-        pairs[i-1] = pairs[i];
-        pairs[i] = tmp;
-        alreadySwapped = 1;
-      }
-      else if (comp==0) {
-        return HXT_ERROR_MSG(HXT_STATUS_ERROR, "duplicated volume definition in the BREP");
-      }
-      else {
-        alreadySwapped = 0;
-      }
-    }
-  }
-  return HXT_STATUS_OK;
-}
-
-
-static HXTStatus getVolumesHashes(uint16_t numVolumes,
-                                  uint16_t* numSurfacesPerVolume,
-                                  uint16_t* surfacesPerVolume,
-                                  HXTGroup2* pairs)
-{
-  uint16_t maxMin = 0;
-
-  #pragma omp parallel for reduction(max:maxMin)
-  for (int vol=0; vol<numVolumes; vol++) {
-    pairs[vol].v[0] = vol;
-    uint16_t start = vol==0?0:numSurfacesPerVolume[vol-1];
-    uint16_t end = numSurfacesPerVolume[vol];
-
-    uint64_t hash = 0;
-    uint16_t minimum = UINT16_MAX;
-    while(start<end) {
-      uint16_t s = surfacesPerVolume[start++];
-
-      hash ^= (UINT64_C(1)<<(s & 31));
-      if(s < minimum)
-        minimum = s;
-    }
-
-    if(minimum > maxMin)
-      maxMin = minimum;
-
-    hash |= (uint64_t) minimum << 32;
-    pairs[vol].v[1] = hash;
-  }
-
-  HXT_CHECK( group2_sort_v1(pairs, numVolumes, (uint64_t) maxMin << 32) );
-
-  // it can happen that two volumes have the same hash. We must give them a unique order
-  HXT_CHECK( swapPairsIfNeeded(numVolumes, numSurfacesPerVolume, surfacesPerVolume, pairs) );
-
-  return HXT_STATUS_OK;
-}
-
-
-static HXTStatus matchVolumes(HXTMesh* mesh, uint16_t* numSurfacesPerVolume, uint16_t* surfacesPerVolume, uint16_t nbColors)
-{
-  HXTGroup2* ourPairs;
-  const uint16_t ourNumVolumes = nbColors;
-  const uint16_t theirNumVolumes = mesh->brep.numVolumes;
-  HXT_CHECK( hxtAlignedMalloc(&ourPairs, 2*ourNumVolumes*sizeof(HXTGroup2) ) );
-  HXTGroup2* theirPairs = ourPairs + ourNumVolumes;
-
-  // we make a scan so that we can do things in parallel...
-  int theirSum = 0;
-  for (uint16_t vol=0; vol<theirNumVolumes; vol++) {
-    theirSum+=mesh->brep.numSurfacesPerVolume[vol];
-    mesh->brep.numSurfacesPerVolume[vol] = theirSum;
-  }
-
-  int ourSum = 0;
-  for (uint16_t vol=0; vol<ourNumVolumes; vol++) {
-    ourSum+=numSurfacesPerVolume[vol];
-    numSurfacesPerVolume[vol] = ourSum;
-  }
-
-  HXT_CHECK( getVolumesHashes(ourNumVolumes,
-                              numSurfacesPerVolume,
-                              surfacesPerVolume, ourPairs) );
-  HXT_CHECK( getVolumesHashes(theirNumVolumes,
-                              mesh->brep.numSurfacesPerVolume,
-                              mesh->brep.surfacesPerVolume, theirPairs) );
-
-  // now that we sorted every volumes, see if they match
-  // ourPairs contains all volumes, while theirPairs can skip some volumes...
-  int ourIndex = 0;
-
-  // TODO: maybe volumes that do not correspond should be set to UINT16_MAX
-  int volNotCorresponding = theirNumVolumes;
-  for (int theirIndex=0; theirIndex<theirNumVolumes; theirIndex++) {
-    while (1) {
-
-      if(ourIndex>=ourNumVolumes)
-        return HXT_ERROR_MSG(HXT_STATUS_ERROR, "Volumes do not match the BREP");
-      
-      if(ourPairs[ourIndex].v[1]==theirPairs[theirIndex].v[1]){
-        if(ourIndex<ourNumVolumes-1 && ourPairs[ourIndex+1].v[1]==ourPairs[ourIndex].v[1]) {
-          // we have to check further because there was a collision in the hashes
-          uint16_t ourVol = ourPairs[ourIndex].v[0];
-          uint16_t theirVol = theirPairs[theirIndex].v[0];
-
-          uint16_t ourStart = ourVol==0? 0:numSurfacesPerVolume[ourVol-1];
-          uint16_t ourEnd = numSurfacesPerVolume[ourVol];
-          uint16_t theirStart = theirVol==0? 0:mesh->brep.numSurfacesPerVolume[theirVol-1];
-          uint16_t theirEnd = mesh->brep.numSurfacesPerVolume[theirVol];
-
-          int cmp = compareVolumes(ourEnd - ourStart, theirEnd - theirStart, 
-                                   &surfacesPerVolume[ourStart], &mesh->brep.surfacesPerVolume[theirStart]);
-
-          if(cmp==0) {
-            ourPairs[ourIndex++].v[1] = theirPairs[theirIndex].v[0];
-            break;
-          }
-        }
-        else {
-          ourPairs[ourIndex++].v[1] = theirPairs[theirIndex].v[0];
-          break;
-        }
-      }
-
-      ourPairs[ourIndex++].v[1] = volNotCorresponding++;
-    }
-  }
-
-  while(ourIndex<ourNumVolumes) {
-    ourPairs[ourIndex++].v[1] = volNotCorresponding++;
-  }
-
-  #pragma omp parallel for
-  for (int i=0; i<ourNumVolumes; i++) {
-    uint16_t ourVol = ourPairs[i].v[0];
-    uint16_t theirVol = ourPairs[i].v[1];
-
-    theirPairs[ourVol].v[1] = theirVol;
-  }
-
-  #pragma omp parallel for
-  for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-    uint16_t color = mesh->tetrahedra.colors[i];
-    if(color!=UINT16_MAX) {
-      mesh->tetrahedra.colors[i] = theirPairs[color].v[1];
-    }
-  }
-
-  #pragma omp parallel for
-  for (int vol=0; vol<theirNumVolumes; vol++) {
-    uint16_t start = vol==0?0:mesh->brep.numSurfacesPerVolume[vol-1];
-    uint16_t end = mesh->brep.numSurfacesPerVolume[vol];
-    mesh->brep.numSurfacesPerVolume[vol] = end-start;
-  }
-
-  HXT_CHECK( hxtAlignedFree(&ourPairs) );
-
-  return HXT_STATUS_OK;
-}
-
-
-
-HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint16_t nbColors, uint64_t* tri2TetMap)
-{
-  if(mesh->brep.numVolumes==0) {
+  if(mesh->brep.numVolumes == 0) {
   #ifndef NDEBUG
     if(mesh->brep.numSurfacesPerVolume!=NULL) {
       HXT_WARNING("mesh->brep.numSurfacesPerVolume is not null but numVolumes=0\nAttempting to free it");
-      HXT_CHECK( hxtFree(&mesh->brep.numSurfacesPerVolume) );
+      HXT_CHECK( hxtAlignedFree(&mesh->brep.numSurfacesPerVolume) );
     }
     if(mesh->brep.surfacesPerVolume!=NULL) {
       HXT_WARNING("mesh->brep.surfacesPerVolume is not null but numVolumes=0\nAttempting to free it");
-      HXT_CHECK( hxtFree(&mesh->brep.surfacesPerVolume) );
+      HXT_CHECK( hxtAlignedFree(&mesh->brep.surfacesPerVolume) );
     }
   #endif
-    mesh->brep.numVolumes = nbColors;
-    
-    HXT_CHECK( hxtFillVolumeBrep(mesh, tri2TetMap,
-                              nbColors,
-                              &mesh->brep.numSurfacesPerVolume,
-                              &mesh->brep.surfacesPerVolume) );
+    mesh->brep.numVolumes = numVolumes;
+    mesh->brep.numSurfacesPerVolume = numSurfacesPerVolume;
+    mesh->brep.surfacesPerVolume = surfacesPerVolume;
+
+    uint64_t index = 0;
+    for(uint32_t i=0; i<numVolumes; i++) {
+      printf("volume %u, %u surfaces\n", i, numSurfacesPerVolume[i]);
+      for(uint32_t j=0; j<numSurfacesPerVolume[i]; j++) {
+        printf("%u\n", surfacesPerVolume[index++]);
+      }
+    }
   }
   else {
-    if(mesh->brep.numVolumes>nbColors)
+    // we have got to match the BREP together...
+    HXT_ASSERT(mesh->brep.numSurfacesPerVolume!=NULL);
+    HXT_ASSERT(mesh->brep.surfacesPerVolume!=NULL);
+
+    if(mesh->brep.numVolumes>numVolumes)
       return HXT_ERROR_MSG(HXT_STATUS_ERROR, "brep contains more volumes than there really are !");
 
-    if(mesh->brep.numVolumes<nbColors)
-      HXT_INFO("%u out of %u volumes will be refined", mesh->brep.numVolumes, nbColors);
+    if(mesh->brep.numVolumes<numVolumes)
+      HXT_INFO("%u out of %u volumes will be refined", mesh->brep.numVolumes, numVolumes);
+
+    uint64_t* pairsFromBREP;
+    uint64_t numPairsFromBREP = 0;
+    uint64_t maxPairFromBREP = 0;
+    for(uint32_t i=0; i<mesh->brep.numVolumes; i++) {
+      numPairsFromBREP += mesh->brep.numSurfacesPerVolume[i];
+    }
+
+    HXT_CHECK( hxtMalloc(&pairsFromBREP, sizeof(uint64_t) * numPairsFromBREP) );
+
+    numPairsFromBREP = 0;
+    for(uint32_t i=0; i<mesh->brep.numVolumes; i++) {
+      for(uint32_t j=0; j<mesh->brep.numSurfacesPerVolume[i]; j++) {
+        uint64_t pair = (uint64_t) i << 32 | mesh->brep.surfacesPerVolume[numPairsFromBREP];
+        pairsFromBREP[numPairsFromBREP] = pair;
+        if(pair > maxPairFromBREP)
+          maxPairFromBREP = pair;
+        numPairsFromBREP++;
+      }
+    }
+
+    HXT_CHECK( group1_sort(pairsFromBREP, numPairsFromBREP, maxPairFromBREP) );
+
+    #ifndef NDEBUG
+    // error on duplicates
+    for(uint64_t i=1; i<numPairsFromBREP; i++) {
+      if(pairsFromBREP[i-1] == pairsFromBREP[i])
+        return HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicate surface in BRep volume definition");
+    }
+    #endif
+
+    // all this was to sort the BREP:
+    memset(mesh->brep.numSurfacesPerVolume, 0, sizeof(uint32_t) * mesh->brep.numVolumes);
+
+    for(uint64_t i=0; i<numPairsFromBREP; i++) {
+      uint32_t volume = pairsFromBREP[i] >> 32;
+      mesh->brep.numSurfacesPerVolume[volume]++;
+      mesh->brep.surfacesPerVolume[i] = pairsFromBREP[i] & UINT32_MAX;
+    }
+
+    HXT_CHECK( hxtFree(&pairsFromBREP) );
+
+    // sort the volumes by the hash and compare them...
+    HXTBrepVolume* volumes;
+    HXT_CHECK( hxtMalloc(&volumes, sizeof(HXTBrepVolume) * (numVolumes + mesh->brep.numVolumes)) );
+
+    uint64_t index = 0;
+    for(uint32_t i=0; i<numVolumes; i++) {
+      volumes[i].surfaces = &surfacesPerVolume[index];
+      volumes[i].numSurfaces = numSurfacesPerVolume[i];
+      volumes[i].color = i;
+      volumes[i].isFromOriginalBREP = 0;
+
+      index += numSurfacesPerVolume[i];
+    }
+
+    index = 0;
+    for(uint32_t i=0; i<mesh->brep.numVolumes; i++) {
+      volumes[numVolumes + i].surfaces = &surfacesPerVolume[index];
+      volumes[numVolumes + i].numSurfaces = numSurfacesPerVolume[i];
+      volumes[numVolumes + i].color = i;
+      volumes[numVolumes + i].isFromOriginalBREP = 1;
+    }
+
+    qsort(volumes, numVolumes + mesh->brep.numVolumes, sizeof(HXTBrepVolume), compareSortedVolumes);
+
+    for(uint32_t i=0; i<(numVolumes + mesh->brep.numVolumes); i++) {
+      HXT_INFO("%u: volume %u of BREP %d\n", i, volumes[i].color, volumes[i].isFromOriginalBREP);
+    }
     
-
-    // match our brep with the brep given...
-    uint16_t* numSurfacesPerVolume;
-    uint16_t* surfacesPerVolume;
-    HXT_CHECK( hxtFillVolumeBrep(mesh, tri2TetMap,
-                              nbColors,
-                              &numSurfacesPerVolume,
-                              &surfacesPerVolume) );
-
-    HXT_CHECK( matchVolumes(mesh, numSurfacesPerVolume, surfacesPerVolume, nbColors) );
-
 
     HXT_CHECK( hxtAlignedFree( &numSurfacesPerVolume ) );
     HXT_CHECK( hxtAlignedFree( &surfacesPerVolume ) );
   }
-
 
   return HXT_STATUS_OK;
 }
@@ -465,7 +347,7 @@ HXTStatus setFlagsToProcessOnlyVolumesInBrep(HXTMesh* mesh)
 {
   #pragma omp parallel for
   for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-    if(mesh->tetrahedra.colors[i]>=mesh->brep.numVolumes) {
+    if(mesh->tetrahedra.color[i]>=mesh->brep.numVolumes) {
       setProcessedFlag(mesh, i);
     }
     else {
