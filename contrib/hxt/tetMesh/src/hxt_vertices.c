@@ -123,7 +123,7 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
   double hxtDeclareAligned32 middle[4];
   double hxtDeclareAligned32 f0[4];
   double hxtDeclareAligned32 f1[4];
-  double semin = nmax/2;
+  double hxtDeclareAligned32 sub1[4];
 
   double widthMax = 0.0;
   for(int i=0; i<3; i++) {
@@ -151,9 +151,10 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
     }
 
     middle[i] = mid01[i] * (xmax - xmin) + xmin;
-    f0[i] = semin / (middle[i] - xmin);
-    f1[i] = semin / (xmax - middle[i]);
-    while((uint32_t) ((xmax - middle[i]) * f1[i] + semin) >= nmax){
+    f0[i] = (nmax/2) / (middle[i] - xmin);
+    f1[i] = (nmax/2) / (xmax - middle[i]);
+    sub1[i] = 2*middle[i] - xmax;
+    while((uint32_t) ((xmax - sub1[i]) * f1[i]) >= nmax){
       f1[i] = nextbeforef(f1[i]);
     }
   }
@@ -173,7 +174,7 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
           if(v < middle[k])
             xyz[k] = (v - bbox->min[k]) *f0[k];
           else
-            xyz[k] = (v - middle[k]) *f1[k] + semin;
+            xyz[k] = (v - sub1[k]) *f1[k];
         }
 
         zorder[j] = Zorder(xyz);
@@ -232,7 +233,7 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
           if(v < middle[k])
             xyz[k] = (v - bbox->min[k]) *f0[k];
           else
-            xyz[k] = (v - middle[k]) *f1[k] + semin;
+            xyz[k] = (v - sub1[k]) *f1[k];
         }
 
         xyz[2]/=4;
