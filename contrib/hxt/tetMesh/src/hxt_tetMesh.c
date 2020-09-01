@@ -77,11 +77,6 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   uint32_t numVerticesConstrained = mesh->vertices.num;
 
   HXT_INFO_COND(options->verbosity>0, "Creating an empty mesh with %u vertices", numVerticesConstrained);
-  // if(numVerticesConstrained==142) {
-  //   HXT_INFO("printing surface mesh for debugging purposes");
-  //   HXT_CHECK( hxtMeshWriteGmsh(mesh, "empty_mesh_bug_142.msh") );
-  // }
-
   HXT_CHECK( hxtEmptyMesh(mesh, &delOptions) );
   HXT_INFO_COND(options->verbosity>1, "Empty mesh finished\n");
 
