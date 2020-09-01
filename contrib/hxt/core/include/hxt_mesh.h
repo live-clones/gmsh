@@ -43,14 +43,13 @@ typedef struct {
   // lines
   struct {
     uint32_t* node;
-    // uint32_t* color;
+    uint32_t* color;
     uint64_t num;
     uint64_t size;
   } lines;
 
   struct {
     uint32_t* node;
-    // uint32_t* color;
     uint32_t num;
     uint32_t size;
   } points;
