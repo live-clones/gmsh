@@ -1249,6 +1249,22 @@ class model:
         return api_value_.value
 
     @staticmethod
+    def setVisibilityPerWindow(value, windowIndex=0):
+        """
+        gmsh.model.setVisibilityPerWindow(value, windowIndex=0)
+
+        Set the global visibility of the model per window to `value', where
+        `windowIndex' identifies the window in the window list.
+        """
+        ierr = c_int()
+        lib.gmshModelSetVisibilityPerWindow(
+            c_int(value),
+            c_int(windowIndex),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
+    @staticmethod
     def setColor(dimTags, r, g, b, a=255, recursive=False):
         """
         gmsh.model.setColor(dimTags, r, g, b, a=255, recursive=False)
@@ -6074,6 +6090,23 @@ class view:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
 
+    @staticmethod
+    def setVisibilityPerWindow(tag, value, windowIndex=0):
+        """
+        gmsh.view.setVisibilityPerWindow(tag, value, windowIndex=0)
+
+        Set the global visibility of the view `tag' per window to `value', where
+        `windowIndex' identifies the window in the window list.
+        """
+        ierr = c_int()
+        lib.gmshViewSetVisibilityPerWindow(
+            c_int(tag),
+            c_int(value),
+            c_int(windowIndex),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
 
 class plugin:
     """
@@ -6332,6 +6365,38 @@ class fltk:
         return (
             api_result_,
             _ovectorint(api_viewTags_, api_viewTags_n_.value))
+
+    @staticmethod
+    def splitCurrentWindow(how="v", ratio=0.5):
+        """
+        gmsh.fltk.splitCurrentWindow(how="v", ratio=0.5)
+
+        Split the current window horizontally (if `how' = "h") or vertically (if
+        `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.
+        """
+        ierr = c_int()
+        lib.gmshFltkSplitCurrentWindow(
+            c_char_p(how.encode()),
+            c_double(ratio),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
+    @staticmethod
+    def setCurrentWindow(windowIndex=0):
+        """
+        gmsh.fltk.setCurrentWindow(windowIndex=0)
+
+        Set the current window by speficying its index (starting at 0) in the list
+        of all windows. When new windows are created by splits, new windows are
+        appended at the end of the list.
+        """
+        ierr = c_int()
+        lib.gmshFltkSetCurrentWindow(
+            c_int(windowIndex),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
 
 
 class onelab:
