@@ -367,13 +367,13 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   HXT_CHECK(
     hxtAlignedMalloc(&m->points.node, (m->points.num) * sizeof(uint32_t)));
   HXT_CHECK(
-    hxtAlignedMalloc(&m->points.colors, (m->points.num) * sizeof(uint16_t)));
+    hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint32_t)));
   index = 0;
   for(size_t j = 0; j < points.size(); j++) {
     GVertex *gv = points[j];
     for(size_t i = 0; i < gv->points.size(); i++) {
       m->points.node[index] = v2c[gv->points[i]->getVertex(0)];
-      m->points.colors[index] = gv->tag();
+      m->points.color[index] = gv->tag();
       index++;
     }
   }

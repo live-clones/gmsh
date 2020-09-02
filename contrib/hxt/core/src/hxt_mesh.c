@@ -43,6 +43,7 @@ HXTStatus hxtMeshDelete ( HXTMesh** mesh) {
 
   // points
   HXT_CHECK( hxtAlignedFree(&(*mesh)->points.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->points.color) );
 
   // boundary representation
   HXT_CHECK( hxtAlignedFree(&(*mesh)->brep.numSurfacesPerVolume) );
