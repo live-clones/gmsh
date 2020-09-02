@@ -713,6 +713,17 @@ GMSH_API void gmshModelGetVisibility(const int dim, const int tag, int * value, 
   }
 }
 
+GMSH_API void gmshModelSetVisibilityPerWindow(const int value, const int windowIndex, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::setVisibilityPerWindow(value, windowIndex);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelSetColor(int * dimTags, size_t dimTags_n, const int r, const int g, const int b, const int a, const int recursive, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -3575,6 +3586,17 @@ GMSH_API void gmshViewWrite(const int tag, const char * fileName, const int appe
   }
 }
 
+GMSH_API void gmshViewSetVisibilityPerWindow(const int tag, const int value, const int windowIndex, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::view::setVisibilityPerWindow(tag, value, windowIndex);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshPluginSetNumber(const char * name, const char * option, const double value, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -3752,6 +3774,28 @@ GMSH_API int gmshFltkSelectViews(int ** viewTags, size_t * viewTags_n, int * ier
     if(ierr) *ierr = 1;
   }
   return result_api_;
+}
+
+GMSH_API void gmshFltkSplitCurrentWindow(const char * how, const double ratio, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::splitCurrentWindow(how, ratio);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshFltkSetCurrentWindow(const int windowIndex, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::setCurrentWindow(windowIndex);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
 }
 
 GMSH_API void gmshOnelabSet(const char * data, const char * format, int * ierr)

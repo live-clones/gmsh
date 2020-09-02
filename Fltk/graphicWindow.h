@@ -76,7 +76,7 @@ public:
   void attachMenu();
   void attachDetachMenu();
   bool isMenuDetached() { return _menuwin ? true : false; }
-  bool split(openglWindow *g, char how);
+  bool split(openglWindow *g, char how, double ratio);
   void setAnimButtons(int mode);
   void checkAnimButtons();
   int getMessageHeight();
