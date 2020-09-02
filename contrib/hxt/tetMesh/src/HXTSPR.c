@@ -941,7 +941,7 @@ static HXTStatus hxtSPR_advanced(SPRCavity* SPR) {
                                     step->tet.node[3], &index);
 
       // best quality could have changed if there was a rewind
-      if(qual <= SPR->tetrahedra.quality)
+      if(qual <= SPR->tetrahedra.quality || qual == -DBL_MAX)
         continue;
 
       int stop = 0;

@@ -40,12 +40,22 @@ static HXTStatus nodalSizesCallBack(double* pts, size_t numPts, void *userData)
 {
   GRegion *gr = (GRegion *)userData;
 
+  double lcGlob = CTX::instance()->lc;
+  int useInterpolatedSize = CTX::instance()->mesh.lcFromPoints;
+
+  HXT_INFO("%s using interpolated size", useInterpolatedSize ? "" : "Not");
+
   for(size_t i = 0; i < numPts; i++) {
-    double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0,
-                                           pts[4 * i + 0],
-                                           pts[4 * i + 1],
-                                           pts[4 * i + 2]);
-    pts[4 * i + 3] = std::min(pts[4 * i + 3], lc);
+    double lc = std::min(lcGlob,
+                         BGM_MeshSizeWithoutScaling(gr, 0, 0,
+                                                    pts[4 * i + 0],
+                                                    pts[4 * i + 1],
+                                                    pts[4 * i + 2])
+                         );
+    if(useInterpolatedSize && pts[4 * i + 3] > 0.0)
+      pts[4 * i + 3] = std::min(pts[4 * i + 3], lc);
+    else
+      pts[4 * i + 3] = lc;
   }
 
   return HXT_STATUS_OK;
@@ -378,6 +388,8 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
+
+
   HXTTetMeshOptions options = {
     0, // int defaultThreads;
     0, // int delaunayThreads;
@@ -397,7 +409,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
       regions[0], // void* meshSizeData; // FIXME: should be dynamic!
       CTX::instance()->mesh.lcMin,
       CTX::instance()->mesh.lcMax,
-      CTX::instance()->mesh.lcFactor
+      CTX::instance()->mesh.lcFactor * regions[0]->getMeshSizeFactor()
     }
   };
 

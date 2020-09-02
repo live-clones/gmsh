@@ -60,7 +60,9 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
     }
   }
 
+  delOptions->perfectDelaunay = 1;
   HXT_CHECK( hxtDelaunaySteadyVertices(mesh, delOptions, nodeInfo, numToInsert) );
+  delOptions->perfectDelaunay = 0;
 
 #ifdef DEBUG
   #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)

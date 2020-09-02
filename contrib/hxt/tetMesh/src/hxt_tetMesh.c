@@ -74,7 +74,22 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
                                    .reproducible = options->reproducible,
                                    .delaunayThreads = options->delaunayThreads};
 
+  HXTNodalSizes nodalSizes = {
+    .array = NULL,
+    .callback = options->nodalSizes.callback,
+    .userData = options->nodalSizes.userData,
+    .min = options->nodalSizes.min,
+    .max = options->nodalSizes.max,
+    .factor = options->nodalSizes.factor,
+    .enabled = 0  // only enabled for the refine step
+  };
+
   uint32_t numVerticesConstrained = mesh->vertices.num;
+
+  if(options->refine) {
+    HXT_CHECK(hxtNodalSizesInit(mesh, &nodalSizes));
+    delOptions.nodalSizes = &nodalSizes;
+  }
 
   HXT_INFO_COND(options->verbosity>0, "Creating an empty mesh with %u vertices", numVerticesConstrained);
   HXT_CHECK( hxtEmptyMesh(mesh, &delOptions) );
@@ -83,7 +98,6 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   t[1] = omp_get_wtime();
 
   uint64_t nbMissingTriangles, nbLinesNotInTriangles, nbMissingLines=0;
-  uint32_t nbColors;
   uint64_t* tri2TetMap = NULL;
   uint64_t* lines2TriMap = NULL;
   uint64_t* lines2TetMap = NULL;
@@ -155,28 +169,9 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   t[4] = omp_get_wtime();
 
   if(options->refine){
-    HXTNodalSizes nodalSizes = {
-      .array = NULL,
-      .callback = options->nodalSizes.callback,
-      .userData = options->nodalSizes.userData,
-      .min = options->nodalSizes.min,
-      .max = options->nodalSizes.max,
-      .factor = options->nodalSizes.factor
-    };
-    HXT_CHECK(hxtNodalSizesInit(mesh, &nodalSizes));
-
-    if(nodalSizes.callback!=NULL) {
-      if(hxtComputeNodalSizesFromFunction(mesh, &nodalSizes)!=HXT_STATUS_OK) {
-        HXT_WARNING("Initial sizes are interpolated instead of being fetched from the size map");
-        HXT_CHECK(hxtComputeNodalSizesFromTrianglesAndLines(mesh, &nodalSizes));
-      }
-    }
-    else
-      HXT_CHECK(hxtComputeNodalSizesFromTrianglesAndLines(mesh, &nodalSizes));
-
-    delOptions.nodalSizes = &nodalSizes;
-
     HXT_CHECK( setFlagsToProcessOnlyVolumesInBrep(mesh) );
+
+    nodalSizes.enabled = 1; // activate the filtering...
 
     HXT_CHECK( hxtRefineTetrahedra(mesh, &delOptions) );
 

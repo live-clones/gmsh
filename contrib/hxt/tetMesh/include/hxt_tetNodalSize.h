@@ -20,18 +20,11 @@ typedef struct {
   double min;
   double max;
   double factor;
+  int enabled;
 } HXTNodalSizes;
 
 HXTStatus hxtNodalSizesInit(HXTMesh* mesh, HXTNodalSizes* nodalSize);
 HXTStatus hxtNodalSizesDestroy(HXTNodalSizes* nodalSize);
-
-/// Compute sizes at vertices of the mesh from meshSizeFun
-HXTStatus hxtComputeNodalSizesFromFunction(HXTMesh* mesh, HXTNodalSizes* nodalSize);
-
-/// Compute sizes at vertices of the mesh from existing edges
-HXTStatus hxtComputeNodalSizesFromTrianglesAndLines(HXTMesh* mesh, HXTNodalSizes* nodalSize);
-HXTStatus hxtComputeNodalSizesFromMesh(HXTMesh* mesh, HXTNodalSizes* nodalSize);
-
 
 
 static inline double squareDist(double v0[3], double v1[3])
@@ -45,7 +38,7 @@ static inline double squareDist(double v0[3], double v1[3])
 
 static inline int isTooClose(double s0, double s1, double squareDist, const HXTNodalSizes* ns)
 {
-  if(s0!=DBL_MAX && s1!=DBL_MAX) {
+  if(s0>0.0 && s1>0.0) {
     double meanSize = fmin(ns->max, fmax(ns->min, 0.5*(s0+s1))) * ns->factor;
     if(squareDist < meanSize * meanSize) { // we won't enter this on overflow of meansize when max is too big...
       return 1;

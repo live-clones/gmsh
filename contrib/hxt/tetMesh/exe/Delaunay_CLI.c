@@ -125,6 +125,7 @@ int main(int argc, char** argv) {
     .numVerticesInMesh = 0,
     .insertionFirst = 0,
     .partitionability = 0,
+    .perfectDelaunay = 1,
     .verbosity = verbosity,
     .reproducible = reproducible,
     .delaunayThreads = nthreads
