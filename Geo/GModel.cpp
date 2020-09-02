@@ -1375,7 +1375,8 @@ int GModel::getMeshStatus(bool countDiscrete)
 
   for(riter it = firstRegion(); it != lastRegion(); ++it) {
     GRegion *gr = *it;
-    numEle3D += gr->getNumMeshElements();
+    if(countDiscrete || gr->geomType() != GEntity::DiscreteVolume)
+      numEle3D += gr->getNumMeshElements();
     if(countDiscrete && numEle3D) return 3;
     if(gr->geomType() != GEntity::DiscreteVolume &&
        gr->meshAttributes.method != MESH_NONE)
@@ -1387,7 +1388,8 @@ int GModel::getMeshStatus(bool countDiscrete)
   bool toMesh2D = false, meshDone2D = true;
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     GFace *gf = *it;
-    numEle2D += gf->getNumMeshElements();
+    if(countDiscrete || gf->geomType() != GEntity::DiscreteSurface)
+      numEle2D += gf->getNumMeshElements();
     if(countDiscrete && numEle2D) return 2;
     if(gf->geomType() != GEntity::DiscreteSurface &&
        gf->meshAttributes.method != MESH_NONE)
@@ -1403,7 +1405,8 @@ int GModel::getMeshStatus(bool countDiscrete)
   bool toMesh1D = false, meshDone1D = true;
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     GEdge *ge = *it;
-    numEle1D += ge->getNumMeshElements();
+    if(countDiscrete || ge->geomType() != GEntity::DiscreteCurve)
+      numEle1D += ge->getNumMeshElements();
     if(countDiscrete && numEle1D) return 1;
     if(ge->geomType() != GEntity::DiscreteCurve &&
        ge->meshAttributes.method != MESH_NONE)

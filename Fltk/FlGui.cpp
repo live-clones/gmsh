@@ -1142,11 +1142,25 @@ openglWindow *FlGui::getCurrentOpenglWindow()
     return graph[0]->gl[0];
 }
 
-void FlGui::splitCurrentOpenglWindow(char how)
+void FlGui::setCurrentOpenglWindow(int which)
+{
+  int ii = 0;
+  for(std::size_t i = 0; i < graph.size(); i++) {
+    for(std::size_t j = 0; j < graph[i]->gl.size(); j++) {
+      if(which == ii++) {
+        openglWindow::setLastHandled(graph[i]->gl[j]);
+        return;
+      }
+    }
+  }
+  openglWindow::setLastHandled(graph[0]->gl[0]);
+}
+
+void FlGui::splitCurrentOpenglWindow(char how, double ratio)
 {
   openglWindow *g = getCurrentOpenglWindow();
   for(std::size_t i = 0; i < graph.size(); i++) {
-    if(graph[i]->split(g, how)) break;
+    if(graph[i]->split(g, how, ratio)) break;
   }
 }
 

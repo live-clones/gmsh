@@ -146,6 +146,8 @@ core + others:
 
 tetMesh:
 
+ - compute Moore indices on the fly, only when few point to insert or few tetrahedra to optimize
+ - try a mesh improvement parallelization based on Geogram point-associated locks
  - add edge-collapse and point insertion
  - modify surface mesh up to a certain distance allowed
  - add a pass of smoothing aimed solely at mesh size control

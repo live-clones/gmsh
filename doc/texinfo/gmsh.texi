@@ -1728,6 +1728,20 @@ geometry kernel.
 @item Draw;
 Redraws the scene.
 
+@item SplitCurrentWindowHorizontal @var{expression};
+Splits the current window horizontally, with the ratio given by @var{expression}.
+
+@item SplitCurrentWindowVertical @var{expression};
+Splits the current window vertically, with the ratio given by @var{expression}.
+
+@item SetCurrentWindow @var{expression};
+Sets the current window by speficying its index (starting at 0) in the
+list of all windows. When new windows are created by splits, new windows
+are appended at the end of the list.
+
+@item UnsplitWindow;
+Restore a single window.
+
 @item SetChanged;
 Force the mesh and post-processing vertex arrays to be
 regenerated. Useful e.g. for creating animations with changing clipping

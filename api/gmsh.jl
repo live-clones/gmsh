@@ -1005,6 +1005,21 @@ function getVisibility(dim, tag)
 end
 
 """
+    gmsh.model.setVisibilityPerWindow(value, windowIndex = 0)
+
+Set the global visibility of the model per window to `value`, where
+`windowIndex` identifies the window in the window list.
+"""
+function setVisibilityPerWindow(value, windowIndex = 0)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetVisibilityPerWindow, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}),
+          value, windowIndex, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
     gmsh.model.setColor(dimTags, r, g, b, a = 255, recursive = false)
 
 Set the color of the model entities `dimTags` to the RGBA value (`r`, `g`, `b`,
@@ -5192,6 +5207,21 @@ function write(tag, fileName, append = false)
     return nothing
 end
 
+"""
+    gmsh.view.setVisibilityPerWindow(tag, value, windowIndex = 0)
+
+Set the global visibility of the view `tag` per window to `value`, where
+`windowIndex` identifies the window in the window list.
+"""
+function setVisibilityPerWindow(tag, value, windowIndex = 0)
+    ierr = Ref{Cint}()
+    ccall((:gmshViewSetVisibilityPerWindow, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          tag, value, windowIndex, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
 end # end of module view
 
 """
@@ -5460,6 +5490,37 @@ function selectViews()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
     return api_result_, viewTags
+end
+
+"""
+    gmsh.fltk.splitCurrentWindow(how = "v", ratio = 0.5)
+
+Split the current window horizontally (if `how` = "h") or vertically (if `how` =
+"v"), using ratio `ratio`. If `how` = "u", restore a single window.
+"""
+function splitCurrentWindow(how = "v", ratio = 0.5)
+    ierr = Ref{Cint}()
+    ccall((:gmshFltkSplitCurrentWindow, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Cdouble, Ptr{Cint}),
+          how, ratio, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.fltk.setCurrentWindow(windowIndex = 0)
+
+Set the current window by speficying its index (starting at 0) in the list of
+all windows. When new windows are created by splits, new windows are appended at
+the end of the list.
+"""
+function setCurrentWindow(windowIndex = 0)
+    ierr = Ref{Cint}()
+    ccall((:gmshFltkSetCurrentWindow, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}),
+          windowIndex, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
 end
 
 end # end of module fltk

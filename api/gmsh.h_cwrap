@@ -786,6 +786,16 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // Set the global visibility of the model per window to `value', where
+    // `windowIndex' identifies the window in the window list.
+    inline void setVisibilityPerWindow(const int value,
+                                       const int windowIndex = 0)
+    {
+      int ierr = 0;
+      gmshModelSetVisibilityPerWindow(value, windowIndex, &ierr);
+      if(ierr) throwLastError();
+    }
+
     // Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
     // `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255.
     // Apply the color setting recursively if `recursive' is true.
@@ -4299,6 +4309,17 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // Set the global visibility of the view `tag' per window to `value', where
+    // `windowIndex' identifies the window in the window list.
+    inline void setVisibilityPerWindow(const int tag,
+                                       const int value,
+                                       const int windowIndex = 0)
+    {
+      int ierr = 0;
+      gmshViewSetVisibilityPerWindow(tag, value, windowIndex, &ierr);
+      if(ierr) throwLastError();
+    }
+
   } // namespace view
 
   namespace plugin { // Plugin functions
@@ -4456,6 +4477,26 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
       viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
       return result_api_;
+    }
+
+    // Split the current window horizontally (if `how' = "h") or vertically (if
+    // `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.
+    inline void splitCurrentWindow(const std::string & how = "v",
+                                   const double ratio = 0.5)
+    {
+      int ierr = 0;
+      gmshFltkSplitCurrentWindow(how.c_str(), ratio, &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // Set the current window by speficying its index (starting at 0) in the list
+    // of all windows. When new windows are created by splits, new windows are
+    // appended at the end of the list.
+    inline void setCurrentWindow(const int windowIndex = 0)
+    {
+      int ierr = 0;
+      gmshFltkSetCurrentWindow(windowIndex, &ierr);
+      if(ierr) throwLastError();
     }
 
   } // namespace fltk

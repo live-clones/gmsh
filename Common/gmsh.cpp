@@ -81,6 +81,7 @@
 
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
+#include "openglWindow.h"
 #endif
 
 #if defined(HAVE_ONELAB)
@@ -1009,6 +1010,22 @@ GMSH_API void gmsh::model::getVisibility(const int dim, const int tag,
     throw Msg::GetLastError();
   }
   value = ge->getVisibility();
+}
+
+GMSH_API void gmsh::model::setVisibilityPerWindow(const int value,
+                                                  const int windowIndex)
+{
+  _checkInit();
+#if defined(HAVE_FLTK)
+  FlGui::instance()->setCurrentOpenglWindow(windowIndex);
+  drawContext *ctx =
+    FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+  GModel *m = GModel::current();
+  if(value)
+    ctx->show(m);
+  else
+    ctx->hide(m);
+#endif
 }
 
 GMSH_API void gmsh::model::setColor(const vectorpair &dimTags, const int r,
@@ -6949,6 +6966,32 @@ GMSH_API void gmsh::view::write(const int tag, const std::string &fileName,
 #endif
 }
 
+GMSH_API void gmsh::view::setVisibilityPerWindow(const int tag,
+                                                 const int value,
+                                                 const int windowIndex)
+{
+  _checkInit();
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view) {
+    Msg::Error("Unknown view with tag %d", tag);
+    throw Msg::GetLastError();
+  }
+#if defined(HAVE_FLTK)
+  FlGui::instance()->setCurrentOpenglWindow(windowIndex);
+  drawContext *ctx =
+    FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+  if(value)
+    ctx->show(view);
+  else
+    ctx->hide(view);
+#endif
+#else
+  Msg::Error("Views require the post-processing module");
+  throw Msg::GetLastError();
+#endif
+}
+
 // gmsh::plugin
 
 GMSH_API void gmsh::plugin::setNumber(const std::string &name,
@@ -7197,6 +7240,32 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
   return selectionCode(ret);
 #else
   return 0;
+#endif
+}
+
+GMSH_API void gmsh::fltk::splitCurrentWindow(const std::string & how,
+                                             const double ratio)
+{
+  _checkInit();
+#if defined(HAVE_FLTK)
+  if(how == "h")
+    FlGui::instance()->splitCurrentOpenglWindow('h', ratio);
+  else if(how == "v")
+    FlGui::instance()->splitCurrentOpenglWindow('v', ratio);
+  else if(how == "u")
+    FlGui::instance()->splitCurrentOpenglWindow('u');
+  else {
+    Msg::Error("Unknown window splitting method '%s'", how.c_str());
+    throw Msg::GetLastError();
+  }
+#endif
+}
+
+GMSH_API void gmsh::fltk::setCurrentWindow(const int windowIndex)
+{
+  _checkInit();
+#if defined(HAVE_FLTK)
+  FlGui::instance()->setCurrentOpenglWindow(windowIndex);
 #endif
 }
 

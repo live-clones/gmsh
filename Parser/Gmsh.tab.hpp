@@ -264,21 +264,22 @@
      tSetPartition = 480,
      tNameToString = 481,
      tStringToName = 482,
-     tAFFECTDIVIDE = 483,
-     tAFFECTTIMES = 484,
-     tAFFECTMINUS = 485,
-     tAFFECTPLUS = 486,
-     tOR = 487,
-     tAND = 488,
-     tNOTEQUAL = 489,
-     tEQUAL = 490,
-     tGREATERGREATER = 491,
-     tLESSLESS = 492,
-     tGREATEROREQUAL = 493,
-     tLESSOREQUAL = 494,
-     UNARYPREC = 495,
-     tMINUSMINUS = 496,
-     tPLUSPLUS = 497
+     tUnsplitWindow = 483,
+     tAFFECTDIVIDE = 484,
+     tAFFECTTIMES = 485,
+     tAFFECTMINUS = 486,
+     tAFFECTPLUS = 487,
+     tOR = 488,
+     tAND = 489,
+     tNOTEQUAL = 490,
+     tEQUAL = 491,
+     tGREATERGREATER = 492,
+     tLESSLESS = 493,
+     tGREATEROREQUAL = 494,
+     tLESSOREQUAL = 495,
+     UNARYPREC = 496,
+     tMINUSMINUS = 497,
+     tPLUSPLUS = 498
    };
 #endif
 /* Tokens.  */
@@ -507,28 +508,29 @@
 #define tSetPartition 480
 #define tNameToString 481
 #define tStringToName 482
-#define tAFFECTDIVIDE 483
-#define tAFFECTTIMES 484
-#define tAFFECTMINUS 485
-#define tAFFECTPLUS 486
-#define tOR 487
-#define tAND 488
-#define tNOTEQUAL 489
-#define tEQUAL 490
-#define tGREATERGREATER 491
-#define tLESSLESS 492
-#define tGREATEROREQUAL 493
-#define tLESSOREQUAL 494
-#define UNARYPREC 495
-#define tMINUSMINUS 496
-#define tPLUSPLUS 497
+#define tUnsplitWindow 483
+#define tAFFECTDIVIDE 484
+#define tAFFECTTIMES 485
+#define tAFFECTMINUS 486
+#define tAFFECTPLUS 487
+#define tOR 488
+#define tAND 489
+#define tNOTEQUAL 490
+#define tEQUAL 491
+#define tGREATERGREATER 492
+#define tLESSLESS 493
+#define tGREATEROREQUAL 494
+#define tLESSOREQUAL 495
+#define UNARYPREC 496
+#define tMINUSMINUS 497
+#define tPLUSPLUS 498
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 165 "Gmsh.y"
+#line 169 "Gmsh.y"
 {
   char *c;
   int i;
@@ -540,7 +542,7 @@ typedef union YYSTYPE
   struct TwoChar c2;
 }
 /* Line 1529 of yacc.c.  */
-#line 544 "Gmsh.tab.hpp"
+#line 546 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
