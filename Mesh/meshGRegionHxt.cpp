@@ -43,7 +43,7 @@ static HXTStatus nodalSizesCallBack(double* pts, size_t numPts, void *userData)
   double lcGlob = CTX::instance()->lc;
   int useInterpolatedSize = CTX::instance()->mesh.lcFromPoints;
 
-  HXT_INFO("%s using interpolated size", useInterpolatedSize ? "" : "Not");
+  HXT_INFO("Gmsh callback %suse interpolated size", useInterpolatedSize ? "" : "does not ");
 
   for(size_t i = 0; i < numPts; i++) {
     double lc = std::min(lcGlob,
@@ -388,8 +388,6 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
-
-
   HXTTetMeshOptions options = {
     0, // int defaultThreads;
     0, // int delaunayThreads;
@@ -405,6 +403,8 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
       CTX::instance()->mesh.optimizeThreshold // double qualityMin;
     },
     { // nodalSize
+
+      // FIXME: put NULL when the callback is not needed (when we use the interpolated point size anyway)
       nodalSizesCallBack, // HXTStatus (*callback)(double*, size_t, void* userData)
       regions[0], // void* meshSizeData; // FIXME: should be dynamic!
       CTX::instance()->mesh.lcMin,
@@ -414,8 +414,6 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   };
 
   HXT_CHECK(hxtTetMesh(mesh, &options));
-
-  // HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
 
   HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
   HXT_CHECK(hxtMeshDelete(&mesh));

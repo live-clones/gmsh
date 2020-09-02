@@ -89,7 +89,7 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4], 
   double num = 0;
   for(int i=0; i<4; i++) {
     double size = nodalSize[i];
-    if(size!=DBL_MAX && size>0.0) {
+    if(size>0.0) {
       avg += size;
       num+=1.0;
     }
@@ -103,10 +103,10 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4], 
     avg /= num;
   }
 
-  double s0 = nodalSize[0]!=DBL_MAX && nodalSize[0]>0.0 ? nodalSize[0] : avg;
-  double s1 = nodalSize[1]!=DBL_MAX && nodalSize[1]>0.0 ? nodalSize[1] : avg;
-  double s2 = nodalSize[2]!=DBL_MAX && nodalSize[2]>0.0 ? nodalSize[2] : avg;
-  double s3 = nodalSize[3]!=DBL_MAX && nodalSize[3]>0.0 ? nodalSize[3] : avg;
+  double s0 = nodalSize[0]>0.0 ? nodalSize[0] : avg;
+  double s1 = nodalSize[1]>0.0 ? nodalSize[1] : avg;
+  double s2 = nodalSize[2]>0.0 ? nodalSize[2] : avg;
+  double s3 = nodalSize[3]>0.0 ? nodalSize[3] : avg;
 
   // (e/s)^2  (e is the norm of the edge, s is the mean nodalSize over that edge)
   double e0l2 = squareDist(p[0], p[1])/(0.25*(s0 + s1)*(s0 + s1));
