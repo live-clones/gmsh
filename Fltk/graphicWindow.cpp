@@ -3866,6 +3866,7 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     gl.push_back(g2);
     _tile->add(g2);
     g2->show();
+    openglWindow::setLastHandled(g2);
   }
   else{
     double fact = (ratio <= 0.) ? 0.01 : (ratio >= 1.) ? 0.99 : ratio;
@@ -3893,6 +3894,7 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     _tile->add(g2);
 
     g2->show();
+    openglWindow::setLastHandled(g2);
   }
   return true;
 }
