@@ -495,6 +495,13 @@ namespace gmsh { // Top-level functions
                                 const int tag,
                                 int & value);
 
+    // gmsh::model::setVisibilityPerWindow
+    //
+    // Set the global visibility of the model per window to `value', where
+    // `windowIndex' identifies the window in the window list.
+    GMSH_API void setVisibilityPerWindow(const int value,
+                                         const int windowIndex = 0);
+
     // gmsh::model::setColor
     //
     // Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
@@ -2862,6 +2869,14 @@ namespace gmsh { // Top-level functions
                         const std::string & fileName,
                         const bool append = false);
 
+    // gmsh::view::setVisibilityPerWindow
+    //
+    // Set the global visibility of the view `tag' per window to `value', where
+    // `windowIndex' identifies the window in the window list.
+    GMSH_API void setVisibilityPerWindow(const int tag,
+                                         const int value,
+                                         const int windowIndex = 0);
+
   } // namespace view
 
   namespace plugin { // Plugin functions
@@ -2965,6 +2980,20 @@ namespace gmsh { // Top-level functions
     //
     // Select views in the user interface.
     GMSH_API int selectViews(std::vector<int> & viewTags);
+
+    // gmsh::fltk::splitCurrentWindow
+    //
+    // Split the current window horizontally (if `how' = "h") or vertically (if
+    // `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.
+    GMSH_API void splitCurrentWindow(const std::string & how = "v",
+                                     const double ratio = 0.5);
+
+    // gmsh::fltk::setCurrentWindow
+    //
+    // Set the current window by speficying its index (starting at 0) in the list
+    // of all windows. When new windows are created by splits, new windows are
+    // appended at the end of the list.
+    GMSH_API void setCurrentWindow(const int windowIndex = 0);
 
   } // namespace fltk
 

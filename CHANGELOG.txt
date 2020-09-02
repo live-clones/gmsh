@@ -2,8 +2,9 @@
 message (instead of an integer error code); new API to retrieve "homogeneous"
 model-based data (for improved Python performance) and to set interpolation
 matrices; use Eigen by default instead of Blas/Lapack for dense linear algebra;
-improved VTK reader; removed bundled Mmg3D and added initial support for Mmg 5;
-Gmsh now requires C++11; small bug fixes.
+added support for scripted window splitting; improved VTK reader; removed
+bundled Mmg3D and added support for stock Mmg5; Gmsh now requires C++11; small
+bug fixes.
 
 4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
 (without node insertion), and to only mesh non-meshed entities; added ability to

@@ -1327,8 +1327,9 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
                    theRegion.size(), faces_bound.size(), _w2 - _w1, _t2 - _t1);
         GRegion *myGRegion =
           getRegionFromBoundingFaces(gr->model(), faces_bound);
-        if(myGRegion) { // a geometrical region associated to the list of faces
-                        // has been found
+        if(myGRegion && myGRegion->tetrahedra.empty()) {
+          // a geometrical region (with no mesh) associated to the list of faces
+          // has been found
           Msg::Info("Found volume %d", myGRegion->tag());
           for(std::list<MTet4 *>::iterator it2 = theRegion.begin();
               it2 != theRegion.end(); ++it2) {

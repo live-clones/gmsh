@@ -132,8 +132,11 @@ public:
   void storeCurrentWindowsInfo();
   // get the last opengl window that received an event
   openglWindow *getCurrentOpenglWindow();
+  // override which opengl window should be considered as current, by given an
+  // absolute index amongst all the existing opengl windows
+  void setCurrentOpenglWindow(int which);
   // split the current opengl window
-  void splitCurrentOpenglWindow(char how);
+  void splitCurrentOpenglWindow(char how, double ratio = 0.5);
   // copy the current opengl window to the clipboard
   void copyCurrentOpenglWindowToClipboard();
   // select an entity in the most recent graphic window

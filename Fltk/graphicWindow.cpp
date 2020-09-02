@@ -265,10 +265,10 @@ static void file_window_cb(Fl_Widget *w, void *data)
     g2->getWindow()->show();
   }
   else if(str == "split_h"){
-    FlGui::instance()->splitCurrentOpenglWindow('h');
+    FlGui::instance()->splitCurrentOpenglWindow('h', 0.5);
   }
   else if(str == "split_v"){
-    FlGui::instance()->splitCurrentOpenglWindow('v');
+    FlGui::instance()->splitCurrentOpenglWindow('v', 0.5);
   }
   else if(str == "split_u"){
     FlGui::instance()->splitCurrentOpenglWindow('u');
@@ -3842,7 +3842,7 @@ int graphicWindow::getMenuPositionY()
   return _menuwin->y();
 }
 
-bool graphicWindow::split(openglWindow *g, char how)
+bool graphicWindow::split(openglWindow *g, char how, double ratio)
 {
   if(_tile->find(g) == _tile->children()) return false; // not found
 
@@ -3866,14 +3866,16 @@ bool graphicWindow::split(openglWindow *g, char how)
     gl.push_back(g2);
     _tile->add(g2);
     g2->show();
+    openglWindow::setLastHandled(g2);
   }
   else{
+    double fact = (ratio <= 0.) ? 0.01 : (ratio >= 1.) ? 0.99 : ratio;
     // make sure browser is not zero-size when adding children
     if(_browser && _browser->h() == 0) setMessageHeight(1);
     int x1 = g->x();
     int y1 = g->y();
-    int w1 = (how == 'h') ? g->w() / 2 : g->w();
-    int h1 = (how == 'h') ? g->h() : g->h() / 2;
+    int w1 = (how == 'h') ? (int)(g->w() * fact) : g->w();
+    int h1 = (how == 'h') ? g->h() : (int)(g->h() * fact);
 
     int x2 = (how == 'h') ? (g->x() + w1) : g->x();
     int y2 = (how == 'h') ? g->y() : (g->y() + h1);
@@ -3892,6 +3894,7 @@ bool graphicWindow::split(openglWindow *g, char how)
     _tile->add(g2);
 
     g2->show();
+    openglWindow::setLastHandled(g2);
   }
   return true;
 }

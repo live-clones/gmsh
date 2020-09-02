@@ -199,6 +199,9 @@ model.add('setVisibility', doc, None, ivectorpair('dimTags'), iint('value'), ibo
 doc = '''Get the visibility of the model entity of dimension `dim' and tag `tag'.'''
 model.add('getVisibility', doc, None, iint('dim'), iint('tag'), oint('value'))
 
+doc = '''Set the global visibility of the model per window to `value', where `windowIndex' identifies the window in the window list.'''
+model.add('setVisibilityPerWindow', doc, None, iint('value'), iint('windowIndex', '0'))
+
 doc = '''Set the color of the model entities `dimTags' to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255. Apply the color setting recursively if `recursive' is true.'''
 model.add('setColor', doc, None, ivectorpair('dimTags'), iint('r'), iint('g'), iint('b'), iint('a', '255'), ibool('recursive', 'false', 'False'))
 
@@ -846,6 +849,9 @@ view.add('probe', doc, None, iint('tag'), idouble('x'), idouble('y'), idouble('z
 doc = '''Write the view to a file `fileName'. The export format is determined by the file extension. Append to the file if `append' is set.'''
 view.add('write', doc, None, iint('tag'), istring('fileName'), ibool('append', 'false', 'False'))
 
+doc = '''Set the global visibility of the view `tag' per window to `value', where `windowIndex' identifies the window in the window list.'''
+view.add('setVisibilityPerWindow', doc, None, iint('tag'), iint('value'), iint('windowIndex', '0'))
+
 ################################################################################
 
 plugin = gmsh.add_module('plugin', 'plugin functions')
@@ -902,6 +908,12 @@ fltk.add('selectElements', doc, oint, ovectorsize('elementTags'))
 
 doc = '''Select views in the user interface.'''
 fltk.add('selectViews', doc, oint, ovectorint('viewTags'))
+
+doc = '''Split the current window horizontally (if `how' = "h") or vertically (if `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.'''
+fltk.add('splitCurrentWindow', doc, None, istring('how', '"v"'), idouble('ratio', '0.5'))
+
+doc = '''Set the current window by speficying its index (starting at 0) in the list of all windows. When new windows are created by splits, new windows are appended at the end of the list.'''
+fltk.add('setCurrentWindow', doc, None, iint('windowIndex', '0'))
 
 ################################################################################
 

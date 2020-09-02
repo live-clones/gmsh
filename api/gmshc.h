@@ -424,6 +424,12 @@ GMSH_API void gmshModelGetVisibility(const int dim,
                                      int * value,
                                      int * ierr);
 
+/* Set the global visibility of the model per window to `value', where
+ * `windowIndex' identifies the window in the window list. */
+GMSH_API void gmshModelSetVisibilityPerWindow(const int value,
+                                              const int windowIndex,
+                                              int * ierr);
+
 /* Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
  * `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
  * 255. Apply the color setting recursively if `recursive' is true. */
@@ -2540,6 +2546,13 @@ GMSH_API void gmshViewWrite(const int tag,
                             const int append,
                             int * ierr);
 
+/* Set the global visibility of the view `tag' per window to `value', where
+ * `windowIndex' identifies the window in the window list. */
+GMSH_API void gmshViewSetVisibilityPerWindow(const int tag,
+                                             const int value,
+                                             const int windowIndex,
+                                             int * ierr);
+
 /* Set the numerical option `option' to the value `value' for plugin `name'. */
 GMSH_API void gmshPluginSetNumber(const char * name,
                                   const char * option,
@@ -2609,6 +2622,18 @@ GMSH_API int gmshFltkSelectElements(size_t ** elementTags, size_t * elementTags_
 /* Select views in the user interface. */
 GMSH_API int gmshFltkSelectViews(int ** viewTags, size_t * viewTags_n,
                                  int * ierr);
+
+/* Split the current window horizontally (if `how' = "h") or vertically (if
+ * `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window. */
+GMSH_API void gmshFltkSplitCurrentWindow(const char * how,
+                                         const double ratio,
+                                         int * ierr);
+
+/* Set the current window by speficying its index (starting at 0) in the list
+ * of all windows. When new windows are created by splits, new windows are
+ * appended at the end of the list. */
+GMSH_API void gmshFltkSetCurrentWindow(const int windowIndex,
+                                       int * ierr);
 
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */
 GMSH_API void gmshOnelabSet(const char * data,
