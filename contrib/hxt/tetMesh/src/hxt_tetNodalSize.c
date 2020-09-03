@@ -12,7 +12,7 @@
 
 HXTStatus hxtNodalSizesInit(HXTMesh* mesh, HXTNodalSizes* nodalSizes)
 {
-  HXT_CHECK(hxtAlignedMalloc(&nodalSizes->array,mesh->vertices.num*sizeof(double)));
+  HXT_CHECK(hxtAlignedMalloc(&nodalSizes->array, mesh->vertices.num*sizeof(double)));
 
   /*********************************************************************
    first step: compute the missing nodalSizes from triangles and lines *
@@ -20,8 +20,8 @@ HXTStatus hxtNodalSizesInit(HXTMesh* mesh, HXTNodalSizes* nodalSizes)
   #pragma omp parallel for simd
   for (uint32_t i = 0; i<mesh->vertices.num; i++) {
     if(mesh->vertices.coord[4 * i + 3] <= 0.0) {
-      mesh->vertices.coord[4 * i + 3] = 0.0; // we use that as a counter to do the average...
-      nodalSizes->array[i] = 0.0;
+      mesh->vertices.coord[4 * i + 3] = 0.0;
+      nodalSizes->array[i] = 0.0; // we use that as a counter to do the average...
     }
     else {
       nodalSizes->array[i] = DBL_MAX;

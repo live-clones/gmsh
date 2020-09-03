@@ -282,7 +282,7 @@ static inline HXTStatus checkTetrahedron(HXTVertex* vertices, HXTPartition* part
 static inline void computeMeanNodalSize(TetLocal* local, HXTNodalSizes* nodalSizes, const uint32_t vta)
 {
   double vtaNodalSize = 0.0;
-  double denom = 0;
+  double denom = 0.0;
 
   for (uint64_t i = 0 ; i< local->ball.num ; i++) {
     for (unsigned j=0;j<3;j++) {
@@ -295,7 +295,8 @@ static inline void computeMeanNodalSize(TetLocal* local, HXTNodalSizes* nodalSiz
     }
   }
 
-  nodalSizes->array[vta] = vtaNodalSize / denom;
+  if(denom > 0.0)
+    nodalSizes->array[vta] = vtaNodalSize / denom;
 }
 
 
