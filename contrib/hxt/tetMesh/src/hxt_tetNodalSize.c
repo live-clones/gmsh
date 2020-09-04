@@ -20,11 +20,12 @@ HXTStatus hxtNodalSizesInit(HXTMesh* mesh, HXTNodalSizes* nodalSizes)
   #pragma omp parallel for simd
   for (uint32_t i = 0; i<mesh->vertices.num; i++) {
     if(mesh->vertices.coord[4 * i + 3] <= 0.0) {
-      mesh->vertices.coord[4 * i + 3] = 0.0;
-      nodalSizes->array[i] = 0.0; // we use that as a counter to do the average...
+      mesh->vertices.coord[4 * i + 3] = 0.0; // we use that as a counter to do the average...
+      nodalSizes->array[i] = 0.0;            // this will store the sum
     }
     else {
-      nodalSizes->array[i] = DBL_MAX;
+      nodalSizes->array[i] = mesh->vertices.coord[4 * i + 3];
+      mesh->vertices.coord[4 * i + 3] = DBL_MAX;
     }
   }
 
@@ -34,24 +35,23 @@ HXTStatus hxtNodalSizesInit(HXTMesh* mesh, HXTNodalSizes* nodalSizes)
         uint32_t n1 = mesh->triangles.node[3*i+j];
         uint32_t n2 = mesh->triangles.node[3*i+k];
 
-        if(nodalSizes->array[n1] == DBL_MAX &&
-           nodalSizes->array[n2] == DBL_MAX) // nothing to do here
-          continue;
-
         double *X1 = &mesh->vertices.coord[4 * n1];
         double *X2 = &mesh->vertices.coord[4 * n2];
+        if(X1[3] == DBL_MAX &&
+           X2[3] == DBL_MAX)
+          continue;
+
         double l = sqrt ((X1[0]-X2[0])*(X1[0]-X2[0])+
                          (X1[1]-X2[1])*(X1[1]-X2[1])+
                          (X1[2]-X2[2])*(X1[2]-X2[2]));
-
-        if(nodalSizes->array[n1] != DBL_MAX) {
-          nodalSizes->array[n1]++;
-          X1[3] += l;
+        if(X1[3] != DBL_MAX) {
+          X1[3]++;
+          nodalSizes->array[n1] += l;
         }
 
-        if(nodalSizes->array[n2] != DBL_MAX) {
-          nodalSizes->array[n2]++;
-          X2[3] += l;
+        if(X2[3] != DBL_MAX) {
+          X2[3]++;
+          nodalSizes->array[n2] += l;
         }
       }
     }
@@ -61,44 +61,32 @@ HXTStatus hxtNodalSizesInit(HXTMesh* mesh, HXTNodalSizes* nodalSizes)
       uint32_t n1 = mesh->lines.node[2*i+0];
       uint32_t n2 = mesh->lines.node[2*i+1];
 
-      if(nodalSizes->array[n1] == DBL_MAX &&
-         nodalSizes->array[n2] == DBL_MAX) // nothing to do here
-        continue;
-
       double *X1 = &mesh->vertices.coord[4 * n1];
       double *X2 = &mesh->vertices.coord[4 * n2];
+      if(X1[3] == DBL_MAX &&
+         X2[3] == DBL_MAX)
+        continue;
+
       double l = sqrt ((X1[0]-X2[0])*(X1[0]-X2[0])+
                        (X1[1]-X2[1])*(X1[1]-X2[1])+
                        (X1[2]-X2[2])*(X1[2]-X2[2]));
-      if(nodalSizes->array[n1] != DBL_MAX) {
-        nodalSizes->array[n1]++;
-        X1[3] += l;
+      if(X1[3] != DBL_MAX) {
+        X1[3]++;
+        nodalSizes->array[n1] += l;
       }
 
-      if(nodalSizes->array[n2] != DBL_MAX) {
-        nodalSizes->array[n2]++;
-        X2[3] += l;
+      if(X2[3] != DBL_MAX) {
+        X2[3]++;
+        nodalSizes->array[n2] += l;
       }
   }
 
   #pragma omp parallel for simd
   for (uint32_t i=0; i<mesh->vertices.num; i++)
   {
-    if(nodalSizes->array[i] == DBL_MAX)
+    if(mesh->vertices.coord[4 * i + 3] == DBL_MAX)
       continue;
-    mesh->vertices.coord[4 * i + 3] /= nodalSizes->array[i] * nodalSizes->factor;
-  }
-
-  /*********************************************************************
-   second step: call the callback function for better values           *
-   *********************************************************************/
-  if(nodalSizes->callback != NULL) {
-    HXT_CHECK( nodalSizes->callback(mesh->vertices.coord, mesh->vertices.num, nodalSizes->userData) );
-  }
-
-  #pragma omp parallel for simd
-  for (uint32_t i=0; i<mesh->vertices.num; i++) {
-    nodalSizes->array[i] = mesh->vertices.coord[4 * i + 3];
+    nodalSizes->array[i] /= mesh->vertices.coord[4 * i + 3] * nodalSizes->factor;
   }
 
   return HXT_STATUS_OK;

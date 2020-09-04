@@ -42,7 +42,7 @@ static HXTStatus nodalSizesCallBack(double *pts, size_t numPts, void *userData)
   GRegion *gr = (GRegion *)userData;
 
   double lcGlob = CTX::instance()->lc;
-  int useInterpolatedSize = CTX::instance()->mesh.lcFromPoints;
+  int useInterpolatedSize = CTX::instance()->mesh.lcExtendFromBoundary;
 
   HXT_INFO("Gmsh callback %suse interpolated size", useInterpolatedSize ? "" : "does not ");
 
@@ -353,11 +353,21 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
     m->vertices.coord[4 * count + 0] = v->x();
     m->vertices.coord[4 * count + 1] = v->y();
     m->vertices.coord[4 * count + 2] = v->z();
-    auto it = vlc.find(v);
-    if(it != vlc.end())
-      m->vertices.coord[4 * count + 3] = it->second;
-    else
+
+    double lc = BGM_MeshSizeWithoutScaling(v->onWhat(),
+                                           0, 0, // FIXME
+                                           v->x(), v->y(), v->z());
+    if(lc != MAX_LC || !CTX::instance()->mesh.lcExtendFromBoundary){
+      m->vertices.coord[4 * count + 3] = std::min(CTX::instance()->lc, lc);
+    }
+    else {
       m->vertices.coord[4 * count + 3] = 0.0;
+    }
+    if(CTX::instance()->mesh.lcFromPoints) {
+      auto it = vlc.find(v);
+      if(it != vlc.end())
+        m->vertices.coord[4 * count + 3] = it->second;
+    }
     v2c[v] = count;
     c2v[count++] = v;
   }
