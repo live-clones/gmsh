@@ -15,7 +15,7 @@
 
 typedef struct {
   double* array;
-  HXTStatus (*callback)(double *coord, size_t n, void* userData);
+  HXTStatus (*callback)(double *coord, uint32_t* volume, size_t n, void* userData);
   void* userData;
   double min;
   double max;

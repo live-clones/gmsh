@@ -414,8 +414,19 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
     }
 
     // second step (meshSizeCB): compute the effective mesh size at all these newly create points
-    if(delOptions->nodalSizes->callback!=NULL)
-      HXT_CHECK( delOptions->nodalSizes->callback(newVertices, totNewPts, delOptions->nodalSizes->userData) );
+    if(delOptions->nodalSizes->callback!=NULL) {
+      // give the colors too
+      uint32_t* newPtColors;
+      HXT_CHECK( hxtMalloc(&newPtColors, sizeof(uint32_t) * totNewPts) );
+
+      for(uint64_t i=0; i<totNewPts; i++) {
+        newPtColors[i] = mesh->tetrahedra.color[ptToTet[i]];
+      }
+
+      HXT_CHECK( delOptions->nodalSizes->callback(newVertices, newPtColors, totNewPts, delOptions->nodalSizes->userData) );
+
+      HXT_CHECK( hxtFree(newPtColors) );
+    }
 
 
     HXTStatus status;

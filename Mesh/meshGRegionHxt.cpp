@@ -37,9 +37,9 @@ static HXTStatus messageCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-static HXTStatus nodalSizesCallBack(double *pts, size_t numPts, void *userData)
+static HXTStatus nodalSizesCallBack(double *pts, uint32_t* volume, size_t numPts, void *userData)
 {
-  GRegion *gr = (GRegion *)userData;
+  std::vector<GRegion *>* allGR = (std::vector<GRegion *>*) userData;
 
   double lcGlob = CTX::instance()->lc;
   int useInterpolatedSize = CTX::instance()->mesh.lcExtendFromBoundary;
@@ -47,6 +47,7 @@ static HXTStatus nodalSizesCallBack(double *pts, size_t numPts, void *userData)
   HXT_INFO("Gmsh callback %suse interpolated size", useInterpolatedSize ? "" : "does not ");
 
   for(size_t i = 0; i < numPts; i++) {
+    GRegion *gr = (*allGR)[volume[i]];
     double lc = std::min(lcGlob,
                          BGM_MeshSizeWithoutScaling(gr, 0, 0,
                                                     pts[4 * i + 0],
@@ -452,7 +453,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 
       // FIXME: put NULL when the callback is not needed (when we use the interpolated point size anyway)
       nodalSizesCallBack, // HXTStatus (*callback)(double*, size_t, void* userData)
-      regions[0], // void* meshSizeData; // FIXME: should be dynamic!
+      &regions, // void* meshSizeData;
       CTX::instance()->mesh.lcMin,
       CTX::instance()->mesh.lcMax,
       CTX::instance()->mesh.lcFactor * regions[0]->getMeshSizeFactor()
