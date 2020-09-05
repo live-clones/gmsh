@@ -354,17 +354,8 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
     m->vertices.coord[4 * count + 0] = v->x();
     m->vertices.coord[4 * count + 1] = v->y();
     m->vertices.coord[4 * count + 2] = v->z();
-
-    double lc = BGM_MeshSizeWithoutScaling(v->onWhat(),
-                                           0, 0, // FIXME
-                                           v->x(), v->y(), v->z());
-    if(lc != MAX_LC || !CTX::instance()->mesh.lcExtendFromBoundary){
-      m->vertices.coord[4 * count + 3] = std::min(CTX::instance()->lc, lc);
-    }
-    else {
-      m->vertices.coord[4 * count + 3] = 0.0;
-    }
-    if(CTX::instance()->mesh.lcFromPoints) {
+    m->vertices.coord[4 * count + 3] = 0;
+    if(CTX::instance()->mesh.lcFromPoints) { // size on embedded points in volume
       auto it = vlc.find(v);
       if(it != vlc.end())
         m->vertices.coord[4 * count + 3] = it->second;
