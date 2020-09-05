@@ -286,7 +286,7 @@ static uint64_t* scanbsearch(uint64_t* array, uint64_t key, size_t num)
  *  3 the index of the first point it will create
  * To reserve the right number of points, we needs to know
  *  4 the total number of points
- * 
+ *
  *  1: startTet[t]
  *  2: startTet[t+1]  (startTet needs to be of size maxThreads+1)
  *  3: startPt[t]
@@ -415,6 +415,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
 
     // second step (meshSizeCB): compute the effective mesh size at all these newly create points
     if(delOptions->nodalSizes->callback!=NULL) {
+
       // give the colors too
       uint32_t* newPtColors;
       HXT_CHECK( hxtMalloc(&newPtColors, sizeof(uint32_t) * totNewPts) );
@@ -425,7 +426,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
 
       HXT_CHECK( delOptions->nodalSizes->callback(newVertices, newPtColors, totNewPts, delOptions->nodalSizes->userData) );
 
-      HXT_CHECK( hxtFree(newPtColors) );
+      HXT_CHECK( hxtFree(&newPtColors) );
     }
 
 
@@ -438,7 +439,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
       // we don't really need startPt and startTet anymore because points have been created
       // we recycle startPt to count how many point will be kept for each thread after
       // the filtering
-      startPt[threadID] = 0; 
+      startPt[threadID] = 0;
 
       #pragma omp for schedule(static)
       for(size_t i=0; i<totNewPts; i++) {
@@ -452,7 +453,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
 
         double* vtaCoord = &newVertices[4*i];
         double vtaSize = newVertices[4*i + 3];
-        
+
         if(isTooClose(s[0], vtaSize, squareDist(p[0], vtaCoord), delOptions->nodalSizes) ||
            isTooClose(s[1], vtaSize, squareDist(p[1], vtaCoord), delOptions->nodalSizes) ||
            isTooClose(s[2], vtaSize, squareDist(p[2], vtaCoord), delOptions->nodalSizes) ||
