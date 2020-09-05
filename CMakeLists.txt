@@ -1210,6 +1210,23 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
   add_subdirectory(contrib/hxt)
   include_directories(BEFORE ${HXT_INC_DIRS})
   set_config_option(HAVE_HXT "Hxt")
+  # do not use arithmetic contraction in predicates.c
+  if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
+    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+                                PROPERTIES COMPILE_FLAGS "/fp:strict")
+  elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+                                PROPERTIES COMPILE_FLAGS "-fp-model strict")
+  elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+                                PROPERTIES COMPILE_FLAGS  "-fno-unsafe-math-optimizations -ffp-contract=off")
+  else()
+    message(WARNING
+      "Unsupported compiler !
+       Make sure compiled functions from predicates.c
+       do NOT use extended double precision and follow IEEE754 standard.
+       It is crucial for the robustness of geometric predicates.")
+  endif()
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pro AND ENABLE_PRO)

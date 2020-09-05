@@ -16,7 +16,7 @@ typedef struct hxtEdgesStruct{
 
   uint32_t* node;// edg2vertices
 
-  uint16_t* color;// to be used ...
+  uint32_t* color;// to be used ...
 
   uint64_t* edg2tri;
   uint32_t* tri2edg;

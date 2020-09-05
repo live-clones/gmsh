@@ -266,7 +266,7 @@ int tetgenmesh::reconstructmesh(void *p){
       // Create an initial triangulation.
       makeshellface(subfaces, &newsh);
       setshvertices(newsh, p[0], p[1], p[2]);
-      setshellmark(newsh, mesh->triangles.colors[i]);
+      setshellmark(newsh, mesh->triangles.color[i]);
       recentsh = newsh;
 
       for (int j = 0; j < 3; j++) {
@@ -368,7 +368,7 @@ int tetgenmesh::reconstructmesh(void *p){
             setshvertices(newseg, p[0], p[1], NULL);
           }
         }
-        setshellmark(newseg, mesh->lines.colors[i]);
+        setshellmark(newseg, mesh->lines.color[i]);
       } // i
       
       delete [] shperverlist;
@@ -458,7 +458,7 @@ int tetgenmesh::reconstructmesh(void *p){
       if (reconstructingTriangularMeshIsRequired) {
         // restore 2D mesh ...
         HXT_CHECK( hxtAlignedFree(&(mesh->triangles.node)));
-        HXT_CHECK( hxtAlignedFree(&(mesh->triangles.colors)));      
+        HXT_CHECK( hxtAlignedFree(&(mesh->triangles.color)));      
         HXT_INFO("deleting %u triangles",mesh->triangles.num);
         mesh->triangles.num = 0; // firstindex; // in->firstnumber;
         {    
@@ -477,8 +477,8 @@ int tetgenmesh::reconstructmesh(void *p){
           face subloop;
           HXT_CHECK( hxtAlignedMalloc(&mesh->triangles.node,
                                      (mesh->triangles.num)*3*sizeof(uint32_t)) );
-          HXT_CHECK( hxtAlignedMalloc(&mesh->triangles.colors,
-                                     (mesh->triangles.num)*sizeof(uint16_t)) );
+          HXT_CHECK( hxtAlignedMalloc(&mesh->triangles.color,
+                                     (mesh->triangles.num)*sizeof(uint32_t)) );
           mesh->triangles.size = mesh->triangles.num;
           subloop.shver = 0;
           subfaces->traversalinit();
@@ -491,7 +491,7 @@ int tetgenmesh::reconstructmesh(void *p){
             mesh->triangles.node [3*iTriangle+0] = pointmark(p[0]);
             mesh->triangles.node [3*iTriangle+1] = pointmark(p[1]);
             mesh->triangles.node [3*iTriangle+2] = pointmark(p[2]);
-            mesh->triangles.colors[iTriangle]     = shellmark(subloop);
+            mesh->triangles.color[iTriangle]     = shellmark(subloop);
             iTriangle++;
             subloop.sh = shellfacetraverse(subfaces);
           }
@@ -524,18 +524,18 @@ int tetgenmesh::reconstructmesh(void *p){
 
       // TODO: maybe free during recovery to save size...
       mesh->tetrahedra.num  = tetrahedrons->items;
+
+      HXT_ASSERT(mesh->tetrahedra.color == NULL);
+
       if(mesh->tetrahedra.num > mesh->tetrahedra.size) {
         HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.node) );
         HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.neigh) );
-        HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.colors) );
         HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.flag) );
 
         HXT_CHECK( hxtAlignedMalloc(&mesh->tetrahedra.node,
                                    (mesh->tetrahedra.num)*4*sizeof(uint32_t)) );
         HXT_CHECK( hxtAlignedMalloc(&mesh->tetrahedra.neigh,
                                    (mesh->tetrahedra.num)*4*sizeof(uint64_t)) );
-        HXT_CHECK( hxtAlignedMalloc(&mesh->tetrahedra.colors,
-                                   (mesh->tetrahedra.num)*sizeof(uint16_t)) );
         HXT_CHECK( hxtAlignedMalloc(&mesh->tetrahedra.flag,
                                    (mesh->tetrahedra.num)*sizeof(uint16_t)) );
 
@@ -551,7 +551,6 @@ int tetgenmesh::reconstructmesh(void *p){
         p[2] = apex(tetloop);
         p[3] = oppo(tetloop);
 
-        mesh->tetrahedra.colors[counter] = 0;
         mesh->tetrahedra.flag[counter] = 0;
 
         for (tetloop.ver=0;tetloop.ver<4;tetloop.ver++){

@@ -178,8 +178,13 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, 
 
   mesh->tetrahedra.num = 5;
 
+  if(mesh->tetrahedra.color != NULL) {
+    for (uint64_t tet=0; tet<5; tet++){
+      mesh->tetrahedra.color[tet] = HXT_COLOR_OUT;
+    }
+  }
+
   for (uint64_t tet=0; tet<5; tet++){
-    mesh->tetrahedra.colors[tet] = UINT16_MAX;
     mesh->tetrahedra.flag[tet] = 0;
   }
 
@@ -274,6 +279,27 @@ static inline HXTStatus checkTetrahedron(HXTVertex* vertices, HXTPartition* part
 }
 
 
+static inline void computeMeanNodalSize(TetLocal* local, HXTNodalSizes* nodalSizes, const uint32_t vta)
+{
+  double vtaNodalSize = 0.0;
+  double denom = 0.0;
+
+  for (uint64_t i = 0 ; i< local->ball.num ; i++) {
+    for (unsigned j=0;j<3;j++) {
+      uint32_t nodej = local->ball.array[i].node[j];
+
+      if(nodej != HXT_GHOST_VERTEX && nodalSizes->array[nodej] > 0.0) {
+        vtaNodalSize += nodalSizes->array[nodej];
+        denom += 1.0;
+      }
+    }
+  }
+
+  if(denom > 0.0)
+    nodalSizes->array[vta] = vtaNodalSize / denom;
+}
+
+
 /* if one edge of the cavity is shorter than the nodalSize, return HXT_STATUS_INTERNAL */
 static inline HXTStatus filterCavity (TetLocal* local, HXTMesh *mesh, const HXTNodalSizes* nodalSizes, const uint32_t vta)
 {
@@ -284,10 +310,10 @@ static inline HXTStatus filterCavity (TetLocal* local, HXTMesh *mesh, const HXTN
     for (unsigned j=0;j<3;j++) {
       uint32_t nodej = local->ball.array[i].node[j];
 
-      if (j!=3 || nodej != HXT_GHOST_VERTEX){
+      if (nodej != HXT_GHOST_VERTEX){
         double *Xj = mesh->vertices.coord + 4*nodej;
         double otherNodalSize = nodalSizes->array[nodej];
-        if(otherNodalSize==DBL_MAX){
+        if(otherNodalSize <= 0.0){
           otherNodalSize = vtaNodalSize;
         }
         if( isTooClose(vtaNodalSize, otherNodalSize, squareDist(vtaCoord, Xj), nodalSizes) )
@@ -310,7 +336,7 @@ static inline HXTStatus filterTet(HXTMesh* mesh, const HXTNodalSizes* nodalSizes
     if (j!=3 || nodej != HXT_GHOST_VERTEX){
       double* Xj = vertices[nodej].coord;
       double otherNodalSize = nodalSizes->array[nodej];
-      if(otherNodalSize==DBL_MAX){
+      if(otherNodalSize <= 0.0){
         otherNodalSize = vtaNodalSize;
       }
       if( isTooClose(vtaNodalSize, otherNodalSize, squareDist(vtaCoord, Xj), nodalSizes) )
@@ -671,7 +697,7 @@ static inline void bndPush( TetLocal* local, uint16_t flag,
 }
 
 /* check if the cavity is star shaped
-   This isn't usefull for pure Delaunay but when we constrain cavity with colors,
+   This isn't usefull for pure Delaunay but when we constrain cavity with color,
    it is usefull */
 static HXTStatus isStarShaped(TetLocal* local, HXTMesh* mesh, const uint32_t vta, uint64_t* blindFaceIndex)
 {
@@ -779,20 +805,20 @@ static HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uin
 }
 
 
-static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uint32_t vta, const uint16_t color, const uint64_t prevDeleted) {
+static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uint32_t vta, const uint32_t color, const uint64_t prevDeleted) {
   // HXT_WARNING("a constrained edge was inside the cavity, recovering it");
 
   // all the tetrahedron have the same color 'color', we will use that color to flag them
   for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
     uint64_t delTet = local->deleted.array[i];
-    mesh->tetrahedra.colors[delTet] = 0;
+    mesh->tetrahedra.color[delTet] = 0;
   }
 
   for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
     uint64_t delTet = local->deleted.array[i];
     int exist = 1;
     for (int edge=0; exist && edge<6; edge++) {
-      if(getEdgeConstraint(mesh, delTet, edge) && (mesh->tetrahedra.colors[delTet] & (1U<<edge))==0) {
+      if(getEdgeConstraint(mesh, delTet, edge) && (mesh->tetrahedra.color[delTet] & (1U<<edge))==0) {
         unsigned in_facet;
         unsigned out_facet;
 
@@ -819,10 +845,10 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
           if(getDeletedFlag(mesh, curTet)!=0) {
             // mark that the edge as been treate
             #ifdef DEBUG
-              if((mesh->tetrahedra.colors[curTet] & (1U<<getEdgeFromFacets(in_facet, out_facet)))!=0)
+              if((mesh->tetrahedra.color[curTet] & (1U<<getEdgeFromFacets(in_facet, out_facet)))!=0)
                 return HXT_ERROR_MSG(HXT_STATUS_ERROR, "the flag says that the tet has already been processed for this edge...");
             #endif
-            mesh->tetrahedra.colors[curTet] |= (1U<<getEdgeFromFacets(in_facet, out_facet));
+            mesh->tetrahedra.color[curTet] |= (1U<<getEdgeFromFacets(in_facet, out_facet));
           }
           else {
             edgeIsSafe=1;
@@ -887,7 +913,7 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
             exist = 0;
 
           // printf("undeleting tetrahedron %lu\n", tetToUndelete);
-          mesh->tetrahedra.colors[tetToUndelete] = color;
+          mesh->tetrahedra.color[tetToUndelete] = color;
           HXT_CHECK( undeleteTetrahedron(local, mesh, tetToUndelete) );
         }
       }
@@ -896,7 +922,7 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
 
   for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
     uint64_t delTet = local->deleted.array[i];
-    mesh->tetrahedra.colors[delTet] = color;
+    mesh->tetrahedra.color[delTet] = color;
   }
 
   return HXT_STATUS_OK;
@@ -907,7 +933,7 @@ static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uin
  * it add those to local->deleted
  * it also maintain a local->ball array with all the information concerning the boundary of the cavity
  */
-static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t firstTet, const uint32_t vta, int* edgeConstraint){
+static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t firstTet, const uint32_t vta, int* edgeConstraint, int perfectDelaunay){
   // add tetrahedra to cavity
   local->deleted.array[local->deleted.num++] = firstTet;
   setDeletedFlag(mesh, firstTet);
@@ -921,7 +947,8 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
     const uint64_t* __restrict__ curNeigh = mesh->tetrahedra.neigh + 4*curTet;
     const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + 4*curTet;
 
-    *edgeConstraint += isAnyEdgeConstrained(mesh, curTet)!=0;
+    *edgeConstraint |= !perfectDelaunay && isAnyEdgeConstrained(mesh, curTet)!=0;
+    int facetConstrained = !perfectDelaunay && isAnyFacetConstrained(mesh, curTet)!=0;
 
     /* here we allocate enough space for the boundary (local->ball), the cavity (local->deleted) and the vertices (local->vertices) */
     HXT_CHECK( askForDeleted(&local->deleted, 4) );
@@ -931,16 +958,16 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
 
     /* and here we push stuff to local->ball or local->deleted, always keeping ghost tet at last place */
     uint64_t neigh = curNeigh[0]/4;
-    if(getDeletedFlag(mesh, neigh)==0 || getFacetConstraint(mesh, curTet, 0)){
-      if(getFacetConstraint(mesh, curTet, 0) || 
-        tetInsphere(mesh, neigh*4, vta)>=0){
+    if(getDeletedFlag(mesh, neigh)==0 || (facetConstrained && getFacetConstraint(mesh, curTet, 0))){
+      if((facetConstrained && getFacetConstraint(mesh, curTet, 0)) || 
+         tetInsphere(mesh, neigh*4, vta)>=0) {
         bndPush(local, mesh->tetrahedra.flag[curTet] & UINT16_C(0x107),
                        /* corresponds to :
                        getFacetConstraint(mesh, curTet, 0) | 
                        getEdgeConstraint(mesh, curTet, 0) |
                        getEdgeConstraint(mesh, curTet, 1) |
                        getEdgeConstraint(mesh, curTet, 2) */
-                       curNode[1], curNode[2], curNode[3], curNeigh[0]);
+                curNode[1], curNode[2], curNode[3], curNeigh[0]);
       }
       else{
         uint32_t node = mesh->tetrahedra.node[curNeigh[0]];
@@ -953,14 +980,14 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
     }
 
     neigh = curNeigh[1]/4;
-    if(getDeletedFlag(mesh, neigh)==0 || getFacetConstraint(mesh, curTet, 1)){
-      if(getFacetConstraint(mesh, curTet, 1) || 
-        tetInsphere(mesh, neigh*4, vta)>=0){
+    if(getDeletedFlag(mesh, neigh)==0 || (facetConstrained && getFacetConstraint(mesh, curTet, 1))){
+      if((facetConstrained && getFacetConstraint(mesh, curTet, 1)) || 
+         tetInsphere(mesh, neigh*4, vta)>=0) {
         bndPush(local, (getFacetConstraint(mesh, curTet, 1)>>1) |// constraint on facet 1 goes on facet 0
                        (getEdgeConstraint(mesh, curTet, 3)>>3) | // constraint on edge 3 (facet 1 2) goes on edge 0
                        (getEdgeConstraint(mesh, curTet, 0)<<1) | // constraint on edge 0 (facet 1 0) goes on edge 1
                        (getEdgeConstraint(mesh, curTet, 4)>>2),  // constraint on edge 4 (facet 1 3) goes on edge 2
-                       curNode[2], curNode[0], curNode[3], curNeigh[1]);
+                curNode[2], curNode[0], curNode[3], curNeigh[1]);
       }
       else{
         uint32_t node = mesh->tetrahedra.node[curNeigh[1]];
@@ -973,14 +1000,14 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
     }
 
     neigh = curNeigh[2]/4;
-    if(getDeletedFlag(mesh, neigh)==0 || getFacetConstraint(mesh, curTet, 2)){
-      if(getFacetConstraint(mesh, curTet, 2)|| 
-        tetInsphere(mesh, neigh*4, vta)>=0){
+    if(getDeletedFlag(mesh, neigh)==0 || (facetConstrained && getFacetConstraint(mesh, curTet, 2))){
+      if((facetConstrained && getFacetConstraint(mesh, curTet, 2))|| 
+         tetInsphere(mesh, neigh*4, vta)>=0) {
         bndPush(local, (getFacetConstraint(mesh, curTet, 2)>>2) |// constraint on facet 2 goes on facet 0
                        (getEdgeConstraint(mesh, curTet, 1)>>1) | // constraint on edge 1 (facet 2 0) goes on edge 0
                        (getEdgeConstraint(mesh, curTet, 3)>>2) | // constraint on edge 3 (facet 2 1) goes on edge 1
                        (getEdgeConstraint(mesh, curTet, 5)>>3),  // constraint on edge 5 (facet 2 3) goes on edge 2
-                       curNode[0], curNode[1], curNode[3], curNeigh[2]);
+                curNode[0], curNode[1], curNode[3], curNeigh[2]);
       }
       else{
         uint32_t node = mesh->tetrahedra.node[curNeigh[2]];
@@ -993,16 +1020,15 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
     }
 
     neigh = curNeigh[3]/4;
-    if(getDeletedFlag(mesh, neigh)==0 || getFacetConstraint(mesh, curTet, 3)){
-      if(getFacetConstraint(mesh, curTet, 3) || 
-        tetInsphere(mesh, neigh*4, vta)>=0){
-        
+    if(getDeletedFlag(mesh, neigh)==0 || (facetConstrained && getFacetConstraint(mesh, curTet, 3))){
+      if((facetConstrained && getFacetConstraint(mesh, curTet, 3)) || 
+         tetInsphere(mesh, neigh*4, vta)>=0) {
         bndPush(local, (getFacetConstraint(mesh, curTet, 3)>>3) |// constraint on facet 3 goes on facet 0
                        (getEdgeConstraint(mesh, curTet, 4)>>4) | // constraint on edge 4 (facet 3 1) goes on edge 0
                        (getEdgeConstraint(mesh, curTet, 2)>>1) | // constraint on edge 2 (facet 3 0) goes on edge 1
                        (getEdgeConstraint(mesh, curTet, 5)>>3),  // constraint on edge 5 (facet 3 2) goes on edge 2
                        // there are 2 valid order for nodes: 1,0,2,3 and 0,2,1,3
-                       curNode[1], curNode[0], curNode[2], curNeigh[3]);
+                curNode[1], curNode[0], curNode[2], curNeigh[3]);
       }
       else{
         uint32_t node = mesh->tetrahedra.node[curNeigh[3]];
@@ -1153,7 +1179,7 @@ static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, c
 /****************************************
  * filling back the cavity (DelaunayBall)
  ****************************************/
-static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned char* __restrict__ verticesID, uint64_t* __restrict__ curTet, const uint32_t vta, const uint16_t color){
+static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned char* __restrict__ verticesID, uint64_t* __restrict__ curTet, const uint32_t vta, const uint32_t color){
   uint64_t clength = local->deleted.num;
   uint64_t blength = local->ball.num;
 
@@ -1169,7 +1195,10 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
   {
     const uint64_t newTet = local->deleted.array[i + start];
     uint32_t* __restrict__ Node = mesh->tetrahedra.node + 4*newTet;
-    mesh->tetrahedra.colors[newTet] = color;
+
+    if(mesh->tetrahedra.color != NULL) {
+      mesh->tetrahedra.color[newTet] = color;
+    }
     mesh->tetrahedra.flag[newTet] = 0;
 
     /* we need to always put the ghost vertex at the fourth slot*/
@@ -1221,29 +1250,30 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
  ************************************************************/
 static HXTStatus insertion(HXT2Sync* shared2sync,
                            TetLocal* local,
+                           int perfectDelaunay,
                            unsigned char* verticesID,
-                           const HXTNodalSizes* nodalSizes,
+                           HXTNodalSizes* nodalSizes,
                            uint64_t* curTet,
-                           const uint32_t vta,
-                           int perfectlyDelaunay){
+                           const uint32_t vta){
   const uint64_t prevDeleted = local->deleted.num;
   HXTMesh* mesh = shared2sync->mesh;
 
   HXT_CHECK( walking2Cavity(mesh, &local->partition, curTet, vta) );
 
-  const uint16_t color = mesh->tetrahedra.colors[*curTet];
+  uint32_t color;
+  if(mesh->tetrahedra.color==NULL) {
+    color = HXT_COLOR_OUT;
+  }
+  else {
+    color = mesh->tetrahedra.color[*curTet];
+  }
 
-  /* if color==UINT16_MAX, the inserted point is not in any defined volume.
-   * other than in a perfectDelaunay context, I don't see why anybody would
-   * want such insertion. */
-  HXT_ASSERT(perfectlyDelaunay || color!=UINT16_MAX);
-
-  if(nodalSizes!=NULL && filterTet(mesh, nodalSizes, *curTet, vta)){
+  if(nodalSizes!=NULL && nodalSizes->enabled && filterTet(mesh, nodalSizes, *curTet, vta)){
     return HXT_STATUS_FALSE;
   }
 
   int edgeConstraint = 0;
-  HXTStatus status = diggingACavity(mesh, local, *curTet, vta, &edgeConstraint);
+  HXTStatus status = diggingACavity(mesh, local, *curTet, vta, &edgeConstraint, perfectDelaunay);
 
   if(status==HXT_STATUS_CONFLICT){
     restoreDeleted(mesh, local, prevDeleted);
@@ -1253,24 +1283,25 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
     HXT_CHECK(status);
   }
 
-  if(edgeConstraint) {
-    HXT_CHECK( respectEdgeConstraint(local, mesh, vta, color, prevDeleted) );
+  if(!perfectDelaunay) {
+    if(edgeConstraint) {
+      HXT_CHECK( respectEdgeConstraint(local, mesh, vta, color, prevDeleted) );
+    }
+    // reshape the cavity if it is not star shaped
+    HXT_CHECK( reshapeCavityIfNeeded(local, mesh, vta) );
   }
 
-  // a simple verification that should never happen
-  // uint64_t face = 0;
-  // if(!perfectlyDelaunay && isStarShaped(local, mesh, vta, &face)==HXT_STATUS_INTERNAL) {
-  //   restoreDeleted(mesh, local, prevDeleted);
-  //   return HXT_STATUS_FALSE;
-  // }
 
-  // reshape the cavity if it is not star shaped
-  if(!perfectlyDelaunay)
-    HXT_CHECK( reshapeCavityIfNeeded(local, mesh, vta) );
+  if(nodalSizes!=NULL) {
+    if(nodalSizes->array[vta] <= 0.0) {
+      // we have to compute the nodalsize
+      computeMeanNodalSize(local, nodalSizes, vta);
+    }
 
-  if(nodalSizes!=NULL && filterCavity(local, mesh, nodalSizes, vta)) {
-    restoreDeleted(mesh, local, prevDeleted);
-    return HXT_STATUS_FALSE;
+    if(nodalSizes->enabled && filterCavity(local, mesh, nodalSizes, vta)) {
+      restoreDeleted(mesh, local, prevDeleted);
+      return HXT_STATUS_FALSE;
+    }
   }
 
 
@@ -1338,7 +1369,6 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
 
   // third, divide indices in different passes
   const int maxPartitions = options->delaunayThreads;
-  const int perfectlyDelaunay = mesh->tetrahedra.num<=5;
 
   uint32_t passes[12];
   unsigned npasses = computePasses(passes, options->numVerticesInMesh, nToInsert, options->partitionability, maxPartitions);
@@ -1511,7 +1541,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
                 filtering vertices on the Moore curve
       ******************************************************/
       uint32_t mooreSkipped = 0;
-      if(options->nodalSizes!=NULL)
+      if(options->nodalSizes!=NULL && options->nodalSizes->enabled)
         mooreSkipped = filterOnMooreCurve(vertices, &nodeInfo[passStart], passLength, options->nodalSizes);
 
 
@@ -1717,11 +1747,11 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
             if(nodeInfo[passStart + passIndex].status==HXT_STATUS_TRYAGAIN){
               HXTStatus status = insertion(&shared2sync,
                                            &Locals[threadID],
+                                           options->perfectDelaunay,
                                            verticesID,
                                            options->nodalSizes,
                                            &curTet,
-                                           vta,
-                                           perfectlyDelaunay);
+                                           vta);
 
               switch(status){
                 case HXT_STATUS_DOUBLE_PT:

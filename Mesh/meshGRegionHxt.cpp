@@ -37,14 +37,27 @@ static HXTStatus messageCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-static HXTStatus nodalSizesCallBack(double *pts, size_t numPts, void *userData)
+static HXTStatus nodalSizesCallBack(double *pts, uint32_t* volume, size_t numPts, void *userData)
 {
-  GRegion *gr = (GRegion *)userData;
+  std::vector<GRegion *>* allGR = (std::vector<GRegion *>*) userData;
+
+  double lcGlob = CTX::instance()->lc;
+  int useInterpolatedSize = CTX::instance()->mesh.lcExtendFromBoundary;
+
+  HXT_INFO("Gmsh callback %suse interpolated size", useInterpolatedSize ? "" : "does not ");
 
   for(size_t i = 0; i < numPts; i++) {
-    double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0, pts[4 * i + 0],
-                                           pts[4 * i + 1], pts[4 * i + 2]);
-    pts[4 * i + 3] = std::min(pts[4 * i + 3], lc);
+    GRegion *gr = (*allGR)[volume[i]];
+    double lc = std::min(lcGlob,
+                         BGM_MeshSizeWithoutScaling(gr, 0, 0,
+                                                    pts[4 * i + 0],
+                                                    pts[4 * i + 1],
+                                                    pts[4 * i + 2])
+                         );
+    if(useInterpolatedSize && pts[4 * i + 3] > 0.0)
+      pts[4 * i + 3] = std::min(pts[4 * i + 3], lc);
+    else
+      pts[4 * i + 3] = lc;
   }
 
   return HXT_STATUS_OK;
@@ -166,12 +179,12 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     gf->triangles.clear();
   }
 
-  uint16_t warning = 0;
+  uint32_t warning = 0;
 
   for(size_t i = 0; i < m->lines.num; i++) {
     uint32_t i0 = m->lines.node[2 * i + 0];
     uint32_t i1 = m->lines.node[2 * i + 1];
-    uint16_t c = m->lines.colors[i];
+    uint32_t c = m->lines.color[i];
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
     std::map<uint32_t, GEdge *>::iterator ge = i2e.find(c);
@@ -199,7 +212,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     uint32_t i0 = m->triangles.node[3 * i + 0];
     uint32_t i1 = m->triangles.node[3 * i + 1];
     uint32_t i2 = m->triangles.node[3 * i + 2];
-    uint16_t c = m->triangles.colors[i];
+    uint32_t c = m->triangles.color[i];
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
     MVertex *v2 = c2v[i2];
@@ -241,7 +254,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 #endif
     for(size_t i = 0; i < m->tetrahedra.num; i++) {
       uint32_t *i0 = &m->tetrahedra.node[4 * i + 0];
-      uint16_t c = m->tetrahedra.colors[i];
+      uint32_t c = m->tetrahedra.color[i];
       if(c < regions.size()) {
         MVertex *vv[4];
         GRegion *gr = regions[c];
@@ -341,11 +354,21 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
     m->vertices.coord[4 * count + 0] = v->x();
     m->vertices.coord[4 * count + 1] = v->y();
     m->vertices.coord[4 * count + 2] = v->z();
-    auto it = vlc.find(v);
-    if(it != vlc.end())
-      m->vertices.coord[4 * count + 3] = it->second;
-    else
+
+    double lc = BGM_MeshSizeWithoutScaling(v->onWhat(),
+                                           0, 0, // FIXME
+                                           v->x(), v->y(), v->z());
+    if(lc != MAX_LC || !CTX::instance()->mesh.lcExtendFromBoundary){
+      m->vertices.coord[4 * count + 3] = std::min(CTX::instance()->lc, lc);
+    }
+    else {
       m->vertices.coord[4 * count + 3] = 0.0;
+    }
+    if(CTX::instance()->mesh.lcFromPoints) {
+      auto it = vlc.find(v);
+      if(it != vlc.end())
+        m->vertices.coord[4 * count + 3] = it->second;
+    }
     v2c[v] = count;
     c2v[count++] = v;
   }
@@ -355,13 +378,13 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   HXT_CHECK(
     hxtAlignedMalloc(&m->points.node, (m->points.num) * sizeof(uint32_t)));
   HXT_CHECK(
-    hxtAlignedMalloc(&m->points.colors, (m->points.num) * sizeof(uint16_t)));
+    hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint32_t)));
   index = 0;
   for(size_t j = 0; j < points.size(); j++) {
     GVertex *gv = points[j];
     for(size_t i = 0; i < gv->points.size(); i++) {
       m->points.node[index] = v2c[gv->points[i]->getVertex(0)];
-      m->points.colors[index] = gv->tag();
+      m->points.color[index] = gv->tag();
       index++;
     }
   }
@@ -370,14 +393,14 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   HXT_CHECK(
     hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
   HXT_CHECK(
-    hxtAlignedMalloc(&m->lines.colors, (m->lines.num) * sizeof(uint16_t)));
+    hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint32_t)));
   index = 0;
   for(size_t j = 0; j < curves.size(); j++) {
     GEdge *ge = curves[j];
     for(size_t i = 0; i < ge->lines.size(); i++) {
       m->lines.node[2 * index + 0] = v2c[ge->lines[i]->getVertex(0)];
       m->lines.node[2 * index + 1] = v2c[ge->lines[i]->getVertex(1)];
-      m->lines.colors[index] = ge->tag();
+      m->lines.color[index] = ge->tag();
       index++;
     }
   }
@@ -385,8 +408,8 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   m->triangles.num = m->triangles.size = ntri;
   HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
                              (m->triangles.num) * 3 * sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedMalloc(&m->triangles.colors,
-                             (m->triangles.num) * sizeof(uint16_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.color,
+                             (m->triangles.num) * sizeof(uint32_t)));
   index = 0;
   for(size_t j = 0; j < surfaces.size(); j++) {
     GFace *gf = surfaces[j];
@@ -394,7 +417,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
       m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
       m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
       m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
-      m->triangles.colors[index] = gf->tag();
+      m->triangles.color[index] = gf->tag();
       index++;
     }
   }
@@ -427,17 +450,17 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
       CTX::instance()->mesh.optimizeThreshold // double qualityMin;
     },
     { // nodalSize
-     nodalSizesCallBack, // HXTStatus (*callback)(double*, size_t, void* userData)
-     regions[0], // void* meshSizeData; // FIXME: should be dynamic!
-     CTX::instance()->mesh.lcMin,
-     CTX::instance()->mesh.lcMax,
-     CTX::instance()->mesh.lcFactor
+
+      // FIXME: put NULL when the callback is not needed (when we use the interpolated point size anyway)
+      nodalSizesCallBack, // HXTStatus (*callback)(double*, size_t, void* userData)
+      &regions, // void* meshSizeData;
+      CTX::instance()->mesh.lcMin,
+      CTX::instance()->mesh.lcMax,
+      CTX::instance()->mesh.lcFactor * regions[0]->getMeshSizeFactor()
     }
   };
 
   HXT_CHECK(hxtTetMesh(mesh, &options));
-
-  // HXT_CHECK(hxtMeshWriteGmsh(mesh, "hxt.msh"));
 
   HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
   HXT_CHECK(hxtMeshDelete(&mesh));
