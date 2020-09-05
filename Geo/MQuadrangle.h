@@ -395,6 +395,7 @@ public:
   virtual const char *getStringForPOS() const { return "SQ2"; }
   virtual const char *getStringForBDF() const { return "CQUAD9"; }
   virtual const char *getStringForDIFF() const { return "ElmB9n2D"; }
+  virtual const char *getStringForINP() const { return "M3D9"; /* bof */ }
   virtual const char *getStringForTOCHNOG() const { return "-quad9"; }
   virtual void reverse()
   {
