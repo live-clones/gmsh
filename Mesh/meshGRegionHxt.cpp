@@ -37,14 +37,16 @@ static HXTStatus messageCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-static HXTStatus nodalSizesCallBack(double *pts, uint32_t* volume, size_t numPts, void *userData)
+static HXTStatus nodalSizesCallBack(double *pts, uint32_t* volume,
+                                    size_t numPts, void *userData)
 {
   std::vector<GRegion *>* allGR = (std::vector<GRegion *>*) userData;
 
   double lcGlob = CTX::instance()->lc;
   int useInterpolatedSize = CTX::instance()->mesh.lcExtendFromBoundary;
 
-  HXT_INFO("Gmsh callback %suse interpolated size", useInterpolatedSize ? "" : "does not ");
+  HXT_INFO("Gmsh callback %suse interpolated size", useInterpolatedSize ?
+           "" : "does not ");
 
   for(size_t i = 0; i < numPts; i++) {
     GRegion *gr = (*allGR)[volume[i]];
@@ -52,8 +54,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t* volume, size_t numPts
                          BGM_MeshSizeWithoutScaling(gr, 0, 0,
                                                     pts[4 * i + 0],
                                                     pts[4 * i + 1],
-                                                    pts[4 * i + 2])
-                         );
+                                                    pts[4 * i + 2]));
     if(useInterpolatedSize && pts[4 * i + 3] > 0.0)
       pts[4 * i + 3] = std::min(pts[4 * i + 3], lc);
     else
