@@ -911,7 +911,6 @@ cwrap_header = """// {0}
 #include <vector>
 #include <string>
 #include <utility>
-#include <string.h>
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -960,7 +959,8 @@ template<typename t>
   *p = (char**){0}Malloc(sizeof(char*) * v.size());
   for(size_t i = 0; i < v.size(); ++i){{
     (*p)[i] = (char*){0}Malloc(sizeof(char) * (v[i].size() + 1));
-    strcpy((*p)[i], v[i].c_str());
+    for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
+    (*p)[i][v[i].size()] = '\\0';
   }}
   *size = v.size();
 }}

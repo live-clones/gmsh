@@ -46,7 +46,8 @@ void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_
   *p = (char**)gmshMalloc(sizeof(char*) * v.size());
   for(size_t i = 0; i < v.size(); ++i){
     (*p)[i] = (char*)gmshMalloc(sizeof(char) * (v[i].size() + 1));
-    strcpy((*p)[i], v[i].c_str());
+    for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
+    (*p)[i][v[i].size()] = '\0';
   }
   *size = v.size();
 }
