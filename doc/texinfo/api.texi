@@ -4350,7 +4350,7 @@ Draw all the OpenGL scenes.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t8.cpp#L149,t8.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L33,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t8.py#L179,t8.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L37,gui.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t8.cpp#L149,t8.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L33,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t8.py#L179,t8.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L37,gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/split_window.py#L43,split_window.py})
 @end table
 
 @end ftable
@@ -4370,7 +4370,7 @@ Create the FLTK graphical user interface. Can only be called in the main thread.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t8.cpp#L75,t8.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L72,custom_gui.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L10,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t8.py#L72,t8.py}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L72,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L9,gui.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t8.cpp#L75,t8.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L72,custom_gui.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L10,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t8.py#L72,t8.py}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L72,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L9,gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/split_window.py#L15,split_window.py})
 @end table
 
 @item gmsh/fltk/wait
@@ -4529,6 +4529,8 @@ single window.
 -
 @item Return:
 -
+@item Examples:
+Python (@url{@value{GITLAB-PREFIX}/demos/api/split_window.py#L20,split_window.py})
 @end table
 
 @item gmsh/fltk/setCurrentWindow
@@ -4543,6 +4545,8 @@ the end of the list.
 -
 @item Return:
 -
+@item Examples:
+Python (@url{@value{GITLAB-PREFIX}/demos/api/split_window.py#L35,split_window.py})
 @end table
 
 @end ftable
