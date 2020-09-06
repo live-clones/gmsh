@@ -286,7 +286,7 @@ int GmshBatch()
 {
   StartupMessage();
 
-  OpenProject(GModel::current()->getFileName());
+  OpenProject(GModel::current()->getFileName(), true); // warn if file missing
   bool open = false;
   for(std::size_t i = 0; i < CTX::instance()->files.size(); i++) {
     if(i == 0 && CTX::instance()->files[0][0] != '-') continue;
@@ -297,7 +297,7 @@ int GmshBatch()
     else if(CTX::instance()->files[i] == "-open")
       open = true;
     else if(open)
-      OpenProject(CTX::instance()->files[i]);
+      OpenProject(CTX::instance()->files[i], true); // warn if file missing
     else
       MergeFile(CTX::instance()->files[i]);
   }

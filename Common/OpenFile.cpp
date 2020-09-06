@@ -174,7 +174,7 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
 
 static std::vector<FILE *> openedFiles;
 
-int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
+int ParseFile(const std::string &fileName, bool close, bool errorIfMissing)
 {
 #if !defined(HAVE_PARSER)
   Msg::Error("Gmsh parser is not compiled in this version");
@@ -185,8 +185,8 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
   // fsetpos/fgetpos (used e.g. for user-defined functions)
   FILE *fp;
   if(!(fp = Fopen(fileName.c_str(), "rb"))) {
-    if(warnIfMissing)
-      Msg::Warning("Unable to open file '%s'", fileName.c_str());
+    if(errorIfMissing)
+      Msg::Error("Unable to open file '%s'", fileName.c_str());
     return 0;
   }
 
@@ -295,7 +295,7 @@ static int defineSolver(const std::string &name)
 }
 #endif
 
-int MergeFile(const std::string &fileName, bool warnIfMissing,
+int MergeFile(const std::string &fileName, bool errorIfMissing,
               bool setBoundingBox, bool importPhysicalsInOnelab,
               int partitionToRead)
 {
@@ -303,8 +303,8 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
   // contain binary data
   FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp) {
-    if(warnIfMissing)
-      Msg::Warning("Unable to open file '%s'", fileName.c_str());
+    if(errorIfMissing)
+      Msg::Error("Unable to open file '%s'", fileName.c_str());
     return 0;
   }
 
@@ -568,14 +568,14 @@ int MergeFile(const std::string &fileName, bool warnIfMissing,
 }
 
 int MergePostProcessingFile(const std::string &fileName, int showViews,
-                            bool showLastStep, bool warnIfMissing)
+                            bool showLastStep, bool errorIfMissing)
 {
 #if defined(HAVE_POST)
   // check if there is a mesh in the file
   FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp) {
-    if(warnIfMissing)
-      Msg::Warning("Unable to open file '%s'", fileName.c_str());
+    if(errorIfMissing)
+      Msg::Error("Unable to open file '%s'", fileName.c_str());
     return 0;
   }
   char header[256];
@@ -615,7 +615,7 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
     GModel::setCurrent(m);
   }
   int ret =
-    MergeFile(fileName, warnIfMissing, old->bounds().empty() ? true : false);
+    MergeFile(fileName, errorIfMissing, old->bounds().empty() ? true : false);
   GModel::setCurrent(old);
   old->setVisibility(1);
 
@@ -694,7 +694,7 @@ void ClearProject()
   Msg::ResetErrorCounter();
 }
 
-void OpenProject(const std::string &fileName)
+void OpenProject(const std::string &fileName, bool errorIfMissing)
 {
   if(CTX::instance()->lock) {
     Msg::Info("I'm busy! Ask me that later...");
@@ -738,7 +738,7 @@ void OpenProject(const std::string &fileName)
   ResetTemporaryBoundingBox();
 
   // merge the file
-  MergeFile(fileName, false);
+  MergeFile(fileName, errorIfMissing);
 
   // fill recent opened file list
   std::vector<std::string> tmp = CTX::instance()->recentFiles;

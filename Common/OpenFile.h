@@ -9,16 +9,16 @@
 #include <string>
 
 int ParseFile(const std::string &fileName, bool close,
-              bool warnIfMissing = false);
+              bool errorIfMissing = false);
 void ParseString(const std::string &str, bool inCurrentModelDir = false);
-void OpenProject(const std::string &filename);
+void OpenProject(const std::string &filename, bool errorIfMissing = false);
 void OpenProjectMacFinder(const char *fileName);
-int MergeFile(const std::string &fileName, bool warnIfMissing = false,
+int MergeFile(const std::string &fileName, bool errorIfMissing = false,
               bool setBoundingBox = true, bool importPhysicalsInOnelab = true,
               int partitionToRead = -1);
 int MergePostProcessingFile(const std::string &fileName, int showViews = 2,
                             bool showLastStep = false,
-                            bool warnIfMissing = false);
+                            bool errorIfMissing = false);
 void ClearProject();
 void SetBoundingBox(double xmin, double xmax, double ymin, double ymax,
                     double zmin, double zmax);
