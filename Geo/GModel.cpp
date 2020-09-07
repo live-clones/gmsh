@@ -1743,18 +1743,12 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
   std::map<int, std::vector<GEntity *> >::const_iterator it = groups.find(num);
   if(it == groups.end()) return;
   const std::vector<GEntity *> &entities = it->second;
-  std::set<MVertex *> sv;
+  std::set<MVertex *, MVertexPtrLessThan> sv;
   for(std::size_t i = 0; i < entities.size(); i++) {
-    if(dim == 0) {
-      GVertex *g = (GVertex *)entities[i];
-      sv.insert(g->mesh_vertices[0]);
-    }
-    else {
-      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-        MElement *e = entities[i]->getMeshElement(j);
-        for(std::size_t k = 0; k < e->getNumVertices(); k++)
-          sv.insert(e->getVertex(k));
-      }
+    for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+      MElement *e = entities[i]->getMeshElement(j);
+      for(std::size_t k = 0; k < e->getNumVertices(); k++)
+        sv.insert(e->getVertex(k));
     }
   }
   v.insert(v.begin(), sv.begin(), sv.end());
