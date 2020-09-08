@@ -1757,23 +1757,30 @@ void  getSingularitiesFromFile (const std::string &fn,
 
 
 void meshWinslow2d (GModel * gm, int nIter, Field *f) {
+  if (std::getenv("NO_SMOOTHING") != NULL) {
+    Msg::Info("smoothing and simplification disabled in meshWinslow2d (env var NO_SMOOTHING)");
+    return;
+  }
   if (std::getenv("NO_SIMPLIFICATION") != NULL) {
-    Msg::Info("simplification disabled in meshWinslow2d");
+    Msg::Info("simplification disabled in meshWinslow2d (env var NO_SIMPLIFICATION)");
     /* Simple smoothing */
     std::vector<GFace *> temp;
     temp.insert(temp.begin(), gm->firstFace(), gm->lastFace());
     std::vector<GEdge *> tempe;
     tempe.insert(tempe.begin(), gm->firstEdge(), gm->lastEdge());
 
+    int sIter = nIter/4;
+    sIter = 10;
+
     for (int NIT = 0;NIT<4;NIT++){  
       for (size_t i=0;i<tempe.size();i++)
-        meshWinslow1d (tempe[i],nIter/4, f);    
+        meshWinslow1d (tempe[i],sIter, f);    
 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
       for (size_t i=0;i<temp.size();i++){
-        meshWinslow2d (temp[i],nIter/4, f, false);
+        meshWinslow2d (temp[i],sIter, f, false);
       }
     }
 

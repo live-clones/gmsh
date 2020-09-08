@@ -681,6 +681,8 @@ void meshGEdge::operator()(GEdge *ge)
     }
   }
 
+  Msg::Debug("%i points, a=%e, Points.size()=%li, filterMinimumN=%i", N, a, Points.size(), filterMinimumN);
+
   // printFandPrimitive(ge->tag(),Points);
 
   // if the curve is periodic and if the begin vertex is identical to
