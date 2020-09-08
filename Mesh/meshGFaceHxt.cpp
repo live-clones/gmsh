@@ -117,10 +117,15 @@ int meshGFaceHxt(GModel *gm)
                              .walkMethod2D = 0,
                              .walkMethod3D = 0,
                              .dirType = 0,
-                             .uniformSize = 0.2,
+                             .uniformSize = 2.5,
                              .areaThreshold = 10e-9,
                              .tolerance = 10e-9,
                              .numTris = 0};
+
+  //printf("INPUT SIZE = \n");
+  //float temp = 0;
+  //scanf("%f",&temp);
+  //opt.uniformSize = temp;
 
   
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data,fmesh));
