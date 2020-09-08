@@ -51,7 +51,7 @@ RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=sna
 # HDF5
 # -----------------------
 
-RUN curl -O https://support.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.10.5.tar.gz && tar zxvf hdf5-1.10.5.tar.gz && cd hdf5-1.10.5 && ./configure --disable-shared --prefix=/usr/local && make && make install && cd .. && rm -rf hdf5-1.10.5.tar.gz hdf5-1.10.5
+RUN curl -L -O https://support.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.10.5.tar.gz && tar zxvf hdf5-1.10.5.tar.gz && cd hdf5-1.10.5 && ./configure --disable-shared --prefix=/usr/local && make && make install && cd .. && rm -rf hdf5-1.10.5.tar.gz hdf5-1.10.5
 
 # -----------------------
 # MED
@@ -69,7 +69,7 @@ RUN git clone https://github.com/CGNS/CGNS.git && cd CGNS && git checkout v3.4.0
 # PETSc
 # -----------------------
 
-RUN curl -O http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.10.2.tar.gz
+RUN curl -L -O http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.10.2.tar.gz
 RUN tar zxf petsc-3.10.2.tar.gz
 ENV PETSC_DIR ${PWD}/petsc-3.10.2
 
@@ -87,7 +87,7 @@ RUN sed -i 's|-lgfortran -lquadmath -lpthread -lstdc++ -ldl -lgfortran -lm -lgfo
 # SLEPc
 # -----------------------
 
-RUN curl -O https://slepc.upv.es/download/distrib/slepc-3.10.1.tar.gz
+RUN curl -L -O https://slepc.upv.es/download/distrib/slepc-3.10.1.tar.gz
 RUN tar zxf slepc-3.10.1.tar.gz
 ENV SLEPC_DIR ${PWD}/slepc-3.10.1
 ENV PETSC_ARCH real_mumps_seq
