@@ -238,7 +238,7 @@ std::vector<std::string> &Msg::GetCommandLineArgs()
 std::string Msg::GetCommandLineFull()
 {
   std::string tmp;
-  for(int i = 0; i < _commandLineArgs.size(); i++){
+  for(std::size_t i = 0; i < _commandLineArgs.size(); i++){
     if(i) tmp += " ";
     tmp += _commandLineArgs[i];
   }
