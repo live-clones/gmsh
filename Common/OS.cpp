@@ -321,7 +321,7 @@ void GetCommandLineArgs(int argc, char **argv,
   for(int i = 0; i < argc; i++) {
     char tmp[MAX_PATH];
     utf8FromUtf16(tmp, MAX_PATH, wargv[i], wcslen(wargv[i]));
-    args.push_back(tmp);
+    args[i] = tmp;
   }
   LocalFree(wargv);
 #else
