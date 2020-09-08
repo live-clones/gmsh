@@ -72,7 +72,7 @@ std::string Msg::_firstWarning;
 std::string Msg::_firstError;
 std::string Msg::_lastError;
 GmshMessage *Msg::_callback = 0;
-std::string Msg::_commandLine;
+std::vector<std::string> Msg::_commandLineArgs;
 std::string Msg::_launchDate;
 std::map<std::string, std::vector<double> > Msg::_commandLineNumbers;
 std::map<std::string, std::string> Msg::_commandLineStrings;
@@ -151,15 +151,12 @@ void Msg::Init(int argc, char **argv)
   time(&now);
   _launchDate = ctime(&now);
   _launchDate.resize(_launchDate.size() - 1);
-  _commandLine.clear();
-  for(int i = 0; i < argc; i++){
-    if(i) _commandLine += " ";
-    _commandLine += argv[i];
-  }
+
+  ::GetCommandLineArgs(argc, argv, _commandLineArgs);
 
   CTX::instance()->exeFileName = GetExecutableFileName();
-  if(CTX::instance()->exeFileName.empty() && argc && argv)
-    CTX::instance()->exeFileName = argv[0];
+  if(CTX::instance()->exeFileName.empty() && _commandLineArgs.size())
+    CTX::instance()->exeFileName = _commandLineArgs[0];
 
   // add the directory where the binary is installed to the path where Python
   // looks for modules, and to the path for executables (this allows us to find
@@ -233,9 +230,19 @@ std::string Msg::GetLaunchDate()
   return _launchDate;
 }
 
-std::string Msg::GetCommandLineArgs()
+std::vector<std::string> &Msg::GetCommandLineArgs()
 {
-  return _commandLine;
+  return _commandLineArgs;
+}
+
+std::string Msg::GetCommandLine()
+{
+  std::string tmp;
+  for(int i = 0; i < _commandLineArgs.size(); i++){
+    if(i) tmp += " ";
+    tmp += _commandLineArgs[i];
+  }
+  return tmp;
 }
 
 std::map<std::string, std::vector<double> > &Msg::GetCommandLineNumbers()

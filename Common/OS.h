@@ -12,6 +12,7 @@
 FILE *Fopen(const char *f, const char *mode);
 std::string GetEnvironmentVar(const std::string &var);
 void SetEnvironmentVar(const std::string &var, const std::string &val);
+void GetCommandLineArgs(int argc, char **argv, std::vector<std::string> &args);
 void SleepInSeconds(double s);
 void CheckResources();
 double Cpu();

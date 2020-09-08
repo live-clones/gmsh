@@ -52,7 +52,8 @@ private:
   // callback
   static GmshMessage *_callback;
   // command-line and startup time
-  static std::string _commandLine, _launchDate;
+  static std::vector<std::string> _commandLineArgs;
+  static std::string _launchDate;
   // command-line-specified numbers and strings
   static std::map<std::string, std::vector<double> > _commandLineNumbers;
   static std::map<std::string, std::string> _commandLineStrings;
@@ -87,7 +88,8 @@ public:
   static void SetLogFile(const std::string &name);
   static int GetVerbosity();
   static std::string GetLaunchDate();
-  static std::string GetCommandLineArgs();
+  static std::string GetCommandLine();
+  static std::vector<std::string> &GetCommandLineArgs();
   static std::map<std::string, std::vector<double> > &GetCommandLineNumbers();
   static std::map<std::string, std::string> &GetCommandLineStrings();
   static std::string PrintResources(bool printDate, bool printWallTime,

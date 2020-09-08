@@ -27,6 +27,6 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage();
 void PrintUsage(const std::string &name);
 std::vector<std::string> GetBuildInfo();
 void PrintBuildInfo();
-void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError);
+void GetOptions(bool readConfigFiles, bool exitOnError);
 
 #endif

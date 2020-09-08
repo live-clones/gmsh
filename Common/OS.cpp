@@ -311,6 +311,25 @@ void SetEnvironmentVar(const std::string &var, const std::string &val)
 #endif
 }
 
+void GetCommandLineArgs(int argc, char **argv,
+                        std::vector<std::string> &args)
+{
+#if defined(WIN32) && !defined(__CYGWIN__)
+  // use GetCommandLineW() to handle UTF command line arguments
+  wchar_t **wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
+  args.resize(argc);
+  for(int i = 0; i < argc; i++) {
+    char tmp[MAX_PATH];
+    utf8FromUtf16(tmp, MAX_PATH, wargv[i], wcslen(wargv[i]));
+    args.push_back(tmp);
+  }
+  LocalFree(wargv);
+#else
+  args.resize(argc);
+  for(int i = 0; i < argc; i++) args[i] = argv[i];
+#endif
+}
+
 void SleepInSeconds(double s)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)

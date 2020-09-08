@@ -82,7 +82,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
   InitOptions(0);
 
   // Read configuration files and command line options
-  GetOptions(argc, argv, readConfigFiles, exitOnCommandLineError);
+  GetOptions(readConfigFiles, exitOnCommandLineError);
 
   // Make sure we have enough resources (stack)
   CheckResources();
@@ -266,7 +266,7 @@ int GmshFinalize()
 static void StartupMessage()
 {
   Msg::Info("Running '%s' [Gmsh %s, %d node%s, max. %d thread%s]",
-            Msg::GetCommandLineArgs().c_str(), GMSH_VERSION, Msg::GetCommSize(),
+            Msg::GetCommandLine().c_str(), GMSH_VERSION, Msg::GetCommSize(),
             Msg::GetCommSize() > 1 ? "s" : "", Msg::GetMaxThreads(),
             Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
