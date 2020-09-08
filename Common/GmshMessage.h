@@ -88,7 +88,7 @@ public:
   static void SetLogFile(const std::string &name);
   static int GetVerbosity();
   static std::string GetLaunchDate();
-  static std::string GetCommandLine();
+  static std::string GetCommandLineFull();
   static std::vector<std::string> &GetCommandLineArgs();
   static std::map<std::string, std::vector<double> > &GetCommandLineNumbers();
   static std::map<std::string, std::string> &GetCommandLineStrings();
