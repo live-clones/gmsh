@@ -169,8 +169,8 @@ static unsigned int utf8toUtf16(const char *src, unsigned int srclen,
   return count;
 }
 
-static unsigned int utf8FromUtf16(char *dst, unsigned int dstlen,
-                                  const wchar_t *src, unsigned int srclen)
+unsigned int utf8FromUtf16(char *dst, unsigned int dstlen,
+                           const wchar_t *src, unsigned int srclen)
 {
   unsigned int i = 0;
   unsigned int count = 0;
@@ -309,30 +309,6 @@ void SetEnvironmentVar(const std::string &var, const std::string &val)
 #else
   setenv(var.c_str(), val.c_str(), 1);
 #endif
-}
-
-void GetCommandLineArgs(int argc, char **argv,
-                        std::vector<std::string> &args)
-{
-  if(!argc || !argv) { // this is valid
-    args.clear();
-    return;
-  }
-#if defined(WIN32) && !defined(__CYGWIN__)
-  // use GetCommandLineW() to handle UTF command line arguments
-  int wargc = 0;
-  wchar_t **wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
-  args.resize(wargc);
-  for(int i = 0; i < wargc; i++) {
-    char tmp[MAX_PATH];
-    utf8FromUtf16(tmp, MAX_PATH, wargv[i], wcslen(wargv[i]));
-    args[i] = tmp;
-  }
-  LocalFree(wargv);
-  if(wargc) return; // if !wargc, fall back on argv
-#endif
-  args.resize(argc);
-  for(int i = 0; i < argc; i++) args[i] = argv[i];
 }
 
 void SleepInSeconds(double s)

@@ -140,6 +140,7 @@ void Msg::Init(int argc, char **argv)
     if(val != "-info" && val != "-help" && val != "-version" && val != "-v")
       sargv[sargc++] = argv[i];
   }
+  sargv[sargc] = NULL;
   PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)
@@ -152,7 +153,9 @@ void Msg::Init(int argc, char **argv)
   _launchDate = ctime(&now);
   _launchDate.resize(_launchDate.size() - 1);
 
-  ::GetCommandLineArgs(argc, argv, _commandLineArgs);
+  _commandLineArgs.resize(argc);
+  for(int i = 0; i < argc; i++)
+    _commandLineArgs[i] = argv[i];
 
   CTX::instance()->exeFileName = GetExecutableFileName();
   if(CTX::instance()->exeFileName.empty() && _commandLineArgs.size())
