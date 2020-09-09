@@ -52,7 +52,8 @@ linux64_compatibility_ci:
   except:
     - tags
 
-windows64_ci:
+# VM currently broken
+.windows64_ci:
   script:
     - md build
     - cd build
