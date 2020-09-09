@@ -52,14 +52,13 @@ linux64_compatibility_ci:
   except:
     - tags
 
-# VM currently broken
-.windows64_ci:
+windows64_ci:
   script:
     - md build
     - cd build
-    - bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 .."
-    - bash -c "/usr/bin/make -j 8"
-    - bash -c "/usr/bin/ctest -j 8 --output-on-failure"
+    - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 .."
+    - c:\cygwin64\bin\bash -c "/usr/bin/make -j 8"
+    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 8 --output-on-failure"
   tags:
     - windows64
     - shared
