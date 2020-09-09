@@ -8,8 +8,8 @@
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 
-// in order to handle UTF command line arguments on Windows, use wmain() instead
-// of main() (we could also use main() and retrieve the "wide" args with
+// in order to handle non-ASCII command line arguments on Windows, use wmain()
+// instead of main() (we could also use main() and retrieve the "wide" args with
 // GetCommandLineW() later on, but this would have side-effects on the flow for
 // e.g. initializing the api); using wmain() with the mingw compilers requires
 // adding the "-municode" linker flag
@@ -17,7 +17,7 @@
 #include <windows.h>
 #include <wchar.h>
 
-char *toUTF8(wchar_t *src)
+static char *toUTF8(wchar_t *src)
 {
   if(!src) return NULL;
   size_t srclen = wcslen(src);
