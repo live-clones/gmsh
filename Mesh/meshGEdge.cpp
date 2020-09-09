@@ -287,7 +287,7 @@ static SPoint3 transform(MVertex *vsource, const std::vector<double> &tfo)
 static void copyMesh(GEdge *from, GEdge *to, int direction)
 {
   if(!from->getBeginVertex() || !from->getEndVertex() ||
-     !to->getBeginVertex() || !to->getEndVertex()){
+     !to->getBeginVertex() || !to->getEndVertex()) {
     Msg::Error("Cannot copy mesh on curves without begin/end points");
     return;
   }
@@ -317,8 +317,7 @@ static void copyMesh(GEdge *from, GEdge *to, int direction)
       // assume identical parametrisations (dangerous...)
       double u;
       v->getParameter(0, u);
-      newu =
-        (direction > 0) ? (u - u_min + to_u_min) : (u_max - u + to_u_min);
+      newu = (direction > 0) ? (u - u_min + to_u_min) : (u_max - u + to_u_min);
       gp = to->point(newu);
     }
     else {
@@ -384,9 +383,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
-    if(CTX::instance()->mesh.recombineAll) {
-      forceOdd = true;
-    }
+    if(CTX::instance()->mesh.recombineAll) { forceOdd = true; }
   }
 
   if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
@@ -415,9 +412,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
     }
     double lc = F_LcB()(ge, t);
     // double lc = v->getLc();
-    if(d < lc * .3) {
-      lengths.push_back(std::make_pair(lc / d, v));
-    }
+    if(d < lc * .3) { lengths.push_back(std::make_pair(lc / d, v)); }
     else
       v0 = v;
   }
@@ -444,9 +439,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
       std::vector<MVertex *>::iterator it = std::find(
         ge->mesh_vertices.begin(), ge->mesh_vertices.end(), lengths[i].second);
 
-      if(it != ge->mesh_vertices.end()) {
-        ge->mesh_vertices.erase(it);
-      }
+      if(it != ge->mesh_vertices.end()) { ge->mesh_vertices.erase(it); }
       delete lengths[i].second;
     }
   }
@@ -462,9 +455,7 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
   double LEdge = distance(ge->getBeginVertex()->mesh_vertices[0],
                           ge->getEndVertex()->mesh_vertices[0]);
   while(1) {
-    if(L > blf->thickness || L > LEdge * .4) {
-      break;
-    }
+    if(L > blf->thickness || L > LEdge * .4) { break; }
 
     SPoint3 p(gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
     v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p), 0,
@@ -542,62 +533,18 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   }
 }
 
-void meshGEdge::operator()(GEdge *ge)
+int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
+                        std::vector<IntPoint> &Points, double &a,
+                        int &filterMinimumN)
 {
-  // debug stuff
-  if(CTX::instance()->debugSurface > 0){
-    std::vector<GFace *> f = ge->faces();
-    bool found = false;
-    for (size_t i=0;i<f.size(); i++){
-      if(f[i]->tag() == CTX::instance()->debugSurface) {
-	found = true;
-      }
-    }
-    if(!found) return;
-  }
-
-  ge->model()->setCurrentMeshEntity(ge);
-
-  if (ge->degenerate(1)) {
-    ge->meshStatistics.status = GEdge::DONE;
-    return;
-  }
-
-  if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
-  if(ge->meshAttributes.method == MESH_NONE) return;
-  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
-  if(CTX::instance()->mesh.meshOnlyEmpty && ge->getNumMeshElements()) return;
-
-  // destroy the mesh if it exists
-  deMeshGEdge dem;
-  dem(ge);
-
-  if(MeshExtrudedCurve(ge)) return;
-
-  if(ge->getMeshMaster() != ge) {
-    GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
-    if(gef->meshStatistics.status == GEdge::PENDING) return;
-    Msg::Info("Meshing curve %d (%s) as a copy of curve %d", ge->tag(),
-              ge->getTypeString().c_str(), ge->getMeshMaster()->tag());
-    copyMesh(gef, ge, ge->masterOrientation);
-    ge->meshStatistics.status = GEdge::DONE;
-    return;
-  }
-
-  Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
-
-  // compute bounds
-  Range<double> bounds = ge->parBounds(0);
-  double t_begin = bounds.low();
-  double t_end = bounds.high();
-
-  // if a BL is ending at one of the ends, then create specific points
-  std::vector<MVertex *> _addBegin, _addEnd;
-  addBoundaryLayerPoints(ge, t_begin, t_end, _addBegin, _addEnd);
+  if(ge->geomType() == GEntity::BoundaryLayerCurve) return 0;
+  if(ge->meshAttributes.method == MESH_NONE) return 0;
+  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return 0;
+  if(CTX::instance()->mesh.meshOnlyEmpty && ge->getNumMeshElements()) return 0;
 
   // first compute the length of the curve by integrating one
   double length;
-  std::vector<IntPoint> Points;
+  Points.clear();
   if(ge->geomType() == GEntity::Line && ge->getBeginVertex() &&
      ge->getBeginVertex() == ge->getEndVertex() &&
      // do not consider closed lines as degenerated
@@ -607,7 +554,7 @@ void meshGEdge::operator()(GEdge *ge)
   else
     length = Integration(ge, t_begin, t_end, F_One(), Points,
                          CTX::instance()->mesh.lcIntegrationPrecision *
-                         CTX::instance()->lc);
+                           CTX::instance()->lc);
   ge->setLength(length);
   Points.clear();
 
@@ -616,9 +563,7 @@ void meshGEdge::operator()(GEdge *ge)
   }
 
   // Integrate detJ/lc du
-  double a;
-  int N;
-  int filterMinimumN = 1;
+  filterMinimumN = 1;
   if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.) {
     Msg::Debug("Curve %d has a zero length", ge->tag());
     a = 0.;
@@ -655,7 +600,7 @@ void meshGEdge::operator()(GEdge *ge)
     }
     if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
       a = smoothPrimitive(ge, std::sqrt(CTX::instance()->mesh.smoothRatio),
-			  Points);
+                          Points);
     filterMinimumN = ge->minimumMeshSegments() + 1;
     N = std::max(filterMinimumN, (int)(a + 1.99));
   }
@@ -681,7 +626,66 @@ void meshGEdge::operator()(GEdge *ge)
     }
   }
 
-  Msg::Debug("%i points, a=%e, Points.size()=%li, filterMinimumN=%i", N, a, Points.size(), filterMinimumN);
+  return N;
+}
+
+void meshGEdge::operator()(GEdge *ge)
+{
+  // debug stuff
+  if(CTX::instance()->debugSurface > 0) {
+    std::vector<GFace *> f = ge->faces();
+    bool found = false;
+    for(size_t i = 0; i < f.size(); i++) {
+      if(f[i]->tag() == CTX::instance()->debugSurface) { found = true; }
+    }
+    if(!found) return;
+  }
+
+  ge->model()->setCurrentMeshEntity(ge);
+
+  if(ge->degenerate(1)) {
+    ge->meshStatistics.status = GEdge::DONE;
+    return;
+  }
+
+  if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
+  if(ge->meshAttributes.method == MESH_NONE) return;
+  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
+  if(CTX::instance()->mesh.meshOnlyEmpty && ge->getNumMeshElements()) return;
+
+  // destroy the mesh if it exists
+  deMeshGEdge dem;
+  dem(ge);
+
+  if(MeshExtrudedCurve(ge)) return;
+
+  if(ge->getMeshMaster() != ge) {
+    GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
+    if(gef->meshStatistics.status == GEdge::PENDING) return;
+    Msg::Info("Meshing curve %d (%s) as a copy of curve %d", ge->tag(),
+              ge->getTypeString().c_str(), ge->getMeshMaster()->tag());
+    copyMesh(gef, ge, ge->masterOrientation);
+    ge->meshStatistics.status = GEdge::DONE;
+    return;
+  }
+
+  Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
+
+  // compute bounds
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  // if a BL is ending at one of the ends, then create specific points
+  std::vector<MVertex *> _addBegin, _addEnd;
+  addBoundaryLayerPoints(ge, t_begin, t_end, _addBegin, _addEnd);
+
+  // integration to get length, number of points, etc
+  int N;
+  std::vector<IntPoint> Points;
+  double a;
+  int filterMinimumN;
+  meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
 
   // printFandPrimitive(ge->tag(),Points);
 
@@ -702,7 +706,8 @@ void meshGEdge::operator()(GEdge *ge)
   else if(ge->getBeginVertex() == ge->getEndVertex() &&
           ge->getBeginVertex()->edges().size() == 1) {
     end_p = beg_p = ge->point(t_begin);
-    Msg::Debug("Meshing periodic closed curve");
+    Msg::Debug("Meshing periodic closed curve (tag %i, %i points)", ge->tag(),
+               N);
   }
   else {
     MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
@@ -786,4 +791,18 @@ void orientMeshGEdge::operator()(GEdge *ge)
   if(ge->meshAttributes.reverseMesh)
     for(std::size_t k = 0; k < ge->getNumMeshElements(); k++)
       ge->getMeshElement(k)->reverse();
+}
+
+int meshGEdgeTargetNumberOfPoints(GEdge *ge)
+{
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  int N = 0;
+  std::vector<IntPoint> Points;
+  double a = 0.;
+  int filterMinimumN = 1;
+  meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
+  return N;
 }
