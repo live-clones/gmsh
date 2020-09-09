@@ -169,8 +169,8 @@ static unsigned int utf8toUtf16(const char *src, unsigned int srclen,
   return count;
 }
 
-unsigned int utf8FromUtf16(char *dst, unsigned int dstlen,
-                           const wchar_t *src, unsigned int srclen)
+static unsigned int utf8FromUtf16(char *dst, unsigned int dstlen,
+                                  const wchar_t *src, unsigned int srclen)
 {
   unsigned int i = 0;
   unsigned int count = 0;

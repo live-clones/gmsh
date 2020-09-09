@@ -131,7 +131,7 @@ void GModel::setFileName(const std::string &fileName)
 GModel *GModel::current(int index)
 {
   if(list.empty()) {
-    Msg::Info("No current model available: creating one");
+    Msg::Debug("No current model available: creating one");
     new GModel();
   }
   if(index >= 0) _current = index;
