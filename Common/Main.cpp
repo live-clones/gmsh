@@ -10,6 +10,7 @@
 // necessary to handle UTF command line arguments on Windows
 #define _UNICODE
 #define UNICODE
+#include <windows.h>
 #include <wchar.h>
 #include <stdio.h>
 // from OS.cpp
