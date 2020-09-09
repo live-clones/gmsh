@@ -1703,7 +1703,7 @@ target_link_libraries(gmsh ${LINK_LIBRARIES})
 
 # Windows specific linker options
 if(WIN32 AND NOT MSVC)
-  set(FLAGS "-Wl,--stack,16777216 -static")
+  set(FLAGS "-Wl,--stack,16777216 -static -municode")
   if(HAVE_FLTK)
     set(FLAGS "${FLAGS} -mwindows")
   else()

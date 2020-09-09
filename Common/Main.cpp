@@ -6,17 +6,17 @@
 #include <stdlib.h>
 #include "GmshGlobal.h"
 
+// in order to handle UTF command line arguments on Windows, use wmain() instead
+// of main() (we could also use main() and retrieve the "wide" args with
+// GetCommandLineW() later on, but this would have side-effects on the flow for
+// e.g. initializing the api); using wmain() with the mingw compilers requires
+// adding the "-municode" linker flag
 #if defined(WIN32) && !defined(__CYGWIN__)
-// necessary to handle UTF command line arguments on Windows
-#define _UNICODE
-#define UNICODE
 #include <windows.h>
 #include <wchar.h>
-#include <stdio.h>
 // from OS.cpp
 extern unsigned int utf8FromUtf16(char *dst, unsigned int dstlen,
                                   const wchar_t *src, unsigned int srclen);
-extern "C"
 int wmain(int argc, wchar_t *wargv[], wchar_t *envp[])
 {
   char **argv = new char*[argc + 1];
