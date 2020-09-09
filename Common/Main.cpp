@@ -8,11 +8,13 @@
 #include "OS.h"
 
 #if defined(WIN32) && !defined(__CYGWIN__)
+#include <windows.h>
+#include <wchar.h>
 // necessary to handle UTF command line arguments
 int wmain(int argc, wchar_t *wargv[], wchar_t *envp[])
 {
   char **argv = new char*[argc + 1];
-  for(int i = 0; i < wargc; i++) {
+  for(int i = 0; i < argc; i++) {
     argv[i] = new char[MAX_PATH];
     utf8FromUtf16(argv[i], MAX_PATH, wargv[i], wcslen(wargv[i]));
   }
