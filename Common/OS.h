@@ -7,7 +7,6 @@
 #define OS_H
 
 #include <string>
-#include <vector>
 #include <stdio.h>
 
 FILE *Fopen(const char *f, const char *mode);
