@@ -6780,18 +6780,18 @@ GMSH_API void gmsh::view::setInterpolationMatrices(
   // field interpolation coefficients and exponents
   if((int)coef.size() != d * d) {
     Msg::Error("Wrong number of coefficients (%d != %d x %d)", (int)coef.size(),
-               d * d);
+               d, d);
     throw Msg::GetLastError();
   }
   if((int)exp.size() != d * 3) {
     Msg::Error("Wrong number of exponents (%d != %d x 3)", (int)exp.size(),
-               d * 3);
+               d);
     throw Msg::GetLastError();
   }
   fullMatrix<double> F(d, d), P(d, 3);
   for(int i = 0; i < d; i++) {
     for(int j = 0; j < d; j++) { F(i, j) = coef[d * i + j]; }
-    for(int j = 0; j < 3; j++) { P(i, j) = exp[d * i + j]; }
+    for(int j = 0; j < 3; j++) { P(i, j) = exp[3 * i + j]; }
   }
 
   if(dGeo <= 0) {
@@ -6802,18 +6802,18 @@ GMSH_API void gmsh::view::setInterpolationMatrices(
   // geometry interpolation coefficients and exponents
   if((int)coefGeo.size() != dGeo * dGeo) {
     Msg::Error("Wrong number of coefficients (%d != %d x %d)",
-               (int)coefGeo.size(), dGeo * dGeo);
+               (int)coefGeo.size(), dGeo, dGeo);
     throw Msg::GetLastError();
   }
   if((int)expGeo.size() != dGeo * 3) {
     Msg::Error("Wrong number of exponents (%d != %d x 3)", (int)expGeo.size(),
-               dGeo * 3);
+               dGeo);
     throw Msg::GetLastError();
   }
   fullMatrix<double> Fg(dGeo, dGeo), Pg(dGeo, 3);
   for(int i = 0; i < dGeo; i++) {
     for(int j = 0; j < dGeo; j++) { Fg(i, j) = coefGeo[dGeo * i + j]; }
-    for(int j = 0; j < 3; j++) { Pg(i, j) = expGeo[dGeo * i + j]; }
+    for(int j = 0; j < 3; j++) { Pg(i, j) = expGeo[3 * i + j]; }
   }
   data->setInterpolationMatrices(itype, F, P, Fg, Pg);
 #else
