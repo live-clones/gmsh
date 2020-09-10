@@ -4186,7 +4186,7 @@ matrices.
 @item Return:
 -
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L90,x3.py})
+Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L99,x3.py})
 @end table
 
 @item gmsh/view/addAlias

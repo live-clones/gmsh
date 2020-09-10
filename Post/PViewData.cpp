@@ -154,7 +154,6 @@ void PViewData::setInterpolationMatrices(int type,
                                          const fullMatrix<double> &expVal)
 {
   if(!type || _interpolation[type].size()) return;
-  coefVal.print();
   _interpolation[type].push_back(new fullMatrix<double>(coefVal));
   _interpolation[type].push_back(new fullMatrix<double>(expVal));
 }
