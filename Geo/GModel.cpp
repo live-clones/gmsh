@@ -2343,7 +2343,7 @@ void GModel::checkMeshCoherence(double tolerance)
     }
   }
 
-  // check for duplicate elements
+  // check for duplicate elements and inverted or zero-volume elements
   {
     Msg::Info("Checking for duplicate elements...");
     std::vector<MVertex *> vertices;
@@ -2363,6 +2363,27 @@ void GModel::checkMeshCoherence(double tolerance)
     int num = pos.insert(vertices, true);
     for(std::size_t i = 0; i < vertices.size(); i++) delete vertices[i];
     if(num) Msg::Error("%d duplicate element%s", num, num > 1 ? "s" : "");
+  }
+
+  // check for isolated nodes (not belonging to any elements
+  {
+    Msg::Info("Checking for isolated nodes...");
+    std::vector<GEntity *> entities2;
+    getEntities(entities2, getDim());
+    std::set<MVertex*, MVertexPtrLessThan> allv;
+    for(std::size_t i = 0; i < entities2.size(); i++) {
+      for(std::size_t j = 0; j < entities2[i]->getNumMeshElements(); j++) {
+        MElement *e = entities2[i]->getMeshElement(j);
+        for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+          allv.insert(e->getVertex(k));
+        }
+      }
+    }
+    int diff = (int)(getNumMeshVertices() - allv.size());
+    if(diff) {
+      Msg::Warning("%d node%s not connected to any %dD elements", diff,
+                   (diff > 1) ? "s": "", getDim());
+    }
   }
 
   Msg::StatusBar(true, "Done checking mesh coherence");
