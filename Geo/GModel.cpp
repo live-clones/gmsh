@@ -2369,7 +2369,7 @@ void GModel::checkMeshCoherence(double tolerance)
   {
     Msg::Info("Checking for isolated nodes...");
     std::vector<GEntity *> entities2;
-    getEntities(entities2, getDim());
+    getEntities(entities2, getMeshDim());
     std::set<MVertex*, MVertexPtrLessThan> allv;
     for(std::size_t i = 0; i < entities2.size(); i++) {
       for(std::size_t j = 0; j < entities2[i]->getNumMeshElements(); j++) {
@@ -2382,7 +2382,7 @@ void GModel::checkMeshCoherence(double tolerance)
     int diff = (int)(getNumMeshVertices() - allv.size());
     if(diff) {
       Msg::Warning("%d node%s not connected to any %dD elements", diff,
-                   (diff > 1) ? "s": "", getDim());
+                   (diff > 1) ? "s": "", getMeshDim());
     }
   }
 
