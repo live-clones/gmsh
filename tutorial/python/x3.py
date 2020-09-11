@@ -19,20 +19,18 @@ gmsh.option.setNumber("General.Terminal", 1)
 # are self-contained and simply contain lists of coordinates and values, element
 # by element, for 3 types of fields (scalar "S", vector "V" and tensor "T") and
 # several types of element shapes (point "P", line "L", triangle "T", quadrangle
-# "Q", tetrahedron "S", hexahedron "H", prism "I" and pyramid "Y").
-#
-# (See `x4.py' for examples about model-based datasets.)
+# "Q", tetrahedron "S", hexahedron "H", prism "I" and pyramid "Y"). (See `x4.py'
+# for a tutorial on model-based views.)
 
 # To create a list-based view one should first create a view:
-
 v1 = gmsh.view.add("A list-based view")
 
 # List-based data is then added by specifying the type as a 2 character string
 # that combines a field type and an element shape (e.g. "ST" for a scalar field
 # on triangles), the number of elements to be added, and the concatenated list
-# of coordinates (e.g. 3 x coordinates, 3 y coordinates, 3 z coordinates for
-# first order triangles) and values for each element (e.g. 3 values for first
-# order scalar triangles, repeated for each step if there are several time
+# of coordinates (e.g. 3 "x" coordinates, 3 "y" coordinates, 3 "z" coordinates
+# for first order triangles) and values for each element (e.g. 3 values for
+# first order scalar triangles, repeated for each step if there are several time
 # steps).
 
 # Let's create two triangles...
@@ -64,32 +62,32 @@ line = [
 ]
 for step in range(0, 10):
     # 3 vector components for each node (2 nodes here), for each step
-    line.extend([10 + step, 0, 0,
-                 10 + step, 0, 0])
+    line.extend([10. + step, 0., 0.,
+                 10. + step, 0., 0.])
 gmsh.view.addListData(v1, "VL", 1, line)
 
 # List-based data can also hold 2D (in window coordinates) and 3D (in model
 # coordinates) strings (see `t4.py'). Here we add a 2D string located on the
 # bottom-left of the window (with a 20 pixels offset), as well as a 3D string
 # located at model coordinates (0.5, 0.5. 0):
-gmsh.view.addListDataString(v1, [20, -20], ["Created with Gmsh"])
-gmsh.view.addListDataString(v1, [0.5, 1.5, 0],
+gmsh.view.addListDataString(v1, [20., -20.], ["Created with Gmsh"])
+gmsh.view.addListDataString(v1, [0.5, 1.5, 0.],
                             ["A multi-step list-based view"],
                             ["Align", "Center", "Font", "Helvetica"])
 
 # High-order datasets can be provided by setting the interpolation matrices
-# explicitly. Let's create a second view with second order interpolation a
+# explicitly. Let's create a second view with second order interpolation on
 # a 4-node quadrangle.
 
 # Add a new view:
 v2 = gmsh.view.add("Second order quad")
 
-# Set the node coordinates
+# Set the node coordinates:
 quad = [0., 1., 1., 0., # x coordinates of the 4 quadrangle nodes
         -1.2, -1.2, -0.2, -0.2, # y coordinates of the 4 quadrangle nodes
         0., 0., 0., 0.] # z coordinates of the 4 quadrangle nodes
 
-# Add nine values for second order interpolation
+# Add nine values that will be interpolated by second order basis functions
 quad.extend([1., 1., 1., 1., 3., 3., 3., 3., -3.])
 
 # Set the two interpolation matrices c[i][j] and e[i][j] defining the d = 9
@@ -119,16 +117,16 @@ gmsh.view.setInterpolationMatrices(v2, "Quadrangle", 9,
 # Note that two additional interpolation matrices could also be provided to
 # interpolate the geometry, i.e. to interpolate curved elements.
 
-# Add finally the data to the view:
+# Add the data to the view:
 gmsh.view.addListData(v2, "SQ", 1, quad)
 
-# In order to visualize the high-order field, one must activate the
-# `View.AdaptVisualizationGrid' option, set a visualization error threshold and
-# a maximum subdivision level (Gmsh does automatic mesh refinement to visualize
-# the high-order field with the requested accuracy):
+# In order to visualize the high-order field, one must activate adaptive
+# visualization, set a visualization error threshold and a maximum subdivision
+# level (Gmsh does automatic mesh refinement to visualize the high-order field
+# with the requested accuracy):
 gmsh.option.setNumber("View[1].AdaptVisualizationGrid", 1)
 gmsh.option.setNumber("View[1].TargetError", 1e-2)
-gmsh.option.setNumber("View[1].MaxRecursionLevel", 4)
+gmsh.option.setNumber("View[1].MaxRecursionLevel", 5)
 
 # Launch the GUI to see the results:
 if '-nopopup' not in sys.argv:
