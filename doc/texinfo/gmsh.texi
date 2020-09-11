@@ -5184,6 +5184,8 @@ Python and Julia API examples, see the respective subdirectories in
 * t21:: Mesh partitioning
 * x1::  Geometry and mesh data
 * x2::  Mesh import, discrete entities, hybrid models, terrain meshing
+* x3::  Post-processing data import: list-based
+* x4::  Post-processing data import: model-based
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5598,7 +5600,7 @@ Also available in C++
 @c x2
 @c -------------------------------------------------------------------------
 
-@node x2,  , x1, Tutorial
+@node x2, x3, x1, Tutorial
 @section @code{x2}: Mesh import, discrete entities, hybrid models, terrain meshing
 
 See
@@ -5608,6 +5610,38 @@ Also available in C++
 
 @smallformat
 @verbatiminclude ../../tutorial/python/x2.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x3
+@c -------------------------------------------------------------------------
+
+@node x3, x4, x2, Tutorial
+@section @code{x3}: Post-processing data import: list-based
+
+See
+@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py,x3.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp,x3.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorial/python/x3.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x4
+@c -------------------------------------------------------------------------
+
+@node x4,  , x3, Tutorial
+@section @code{x4}: Post-processing data import: model-based
+
+See
+@url{@value{GITLAB-PREFIX}/tutorial/python/x4.py,x4.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp,x4.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorial/python/x4.py
 @end smallformat
 
 @c =========================================================================
