@@ -6268,25 +6268,31 @@ _addModelData(const int tag, const int step, const std::string &modelName,
       throw Msg::GetLastError();
     }
   }
+  PViewDataGModel::DataType type;
+  if(dataType == "NodeData")
+    type = PViewDataGModel::NodeData;
+  else if(dataType == "ElementData")
+    type = PViewDataGModel::ElementData;
+  else if(dataType == "ElementNodeData")
+    type = PViewDataGModel::ElementNodeData;
+  else if(dataType == "GaussPointData")
+    type = PViewDataGModel::GaussPointData;
+  else if(dataType == "Beam")
+    type = PViewDataGModel::BeamData;
+  else {
+    Msg::Error("Unknown type of view to add '%s'", dataType.c_str());
+    throw Msg::GetLastError();
+  }
+
   PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(view->getData());
-  if(!d) { // change the view type
+  bool changeType = false;
+  if(d && d->getType() != type) {
+    Msg::Warning("Changing type of view to '%s'", dataType.c_str());
+    changeType = true;
+  }
+  if(!d || changeType) { // change view type
     std::string name = view->getData()->getName();
     delete view->getData();
-    PViewDataGModel::DataType type;
-    if(dataType == "NodeData")
-      type = PViewDataGModel::NodeData;
-    else if(dataType == "ElementData")
-      type = PViewDataGModel::ElementData;
-    else if(dataType == "ElementNodeData")
-      type = PViewDataGModel::ElementNodeData;
-    else if(dataType == "GaussPointData")
-      type = PViewDataGModel::GaussPointData;
-    else if(dataType == "Beam")
-      type = PViewDataGModel::BeamData;
-    else {
-      Msg::Error("Unknown type of view to add '%s'", dataType.c_str());
-      throw Msg::GetLastError();
-    }
     d = new PViewDataGModel(type);
     d->setName(name);
     d->setFileName(name + ".msh");
