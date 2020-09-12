@@ -9,7 +9,7 @@
 import gmsh
 
 # Gmsh can partition meshes using different algorithms, e.g. the graph
-# partitioner Metis or the `SimplePartition' plugin. For all the partitining
+# partitioner Metis or the `SimplePartition' plugin. For all the partitioning
 # algorithms, the relationship between mesh elements and mesh partitions is
 # encoded through the creation of new (discrete) elementary entities, called
 # "partition entities".
