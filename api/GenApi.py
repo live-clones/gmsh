@@ -745,8 +745,11 @@ def isizefun(name):
                     "            global api_" + name + "_\n" +
                     "            api_" + name + "_ = api_" + name + "_type_(" + name + ")")
     a.python_arg = "api_" + name + "_"
+    a.julia_pre = ("api_" + name + "_ = @cfunction($" + name +
+                   ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble))")
+    a.julia_arg = "api_" + name + "_"
+    a.julia_ctype = "Ptr{Cvoid}"
     return a
-
 
 class Module:
     def __init__(self, name, doc):

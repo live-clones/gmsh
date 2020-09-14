@@ -2198,6 +2198,23 @@ function setSizeAtParametricPoints(dim, tag, parametricCoord, sizes)
 end
 
 """
+    gmsh.model.mesh.setSizeCallback(callback)
+
+Set a global mesh size callback. The callback should take 5 arguments (`dim`,
+`tag`, `x`, `y` and `z`) and return the value of the mesh size at coordinates
+(`x`, `y`, `z`).
+"""
+function setSizeCallback(callback)
+    api_callback_ = @cfunction($callback, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble))
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetSizeCallback, gmsh.lib), Cvoid,
+          (Ptr{Cvoid}, Ptr{Cint}),
+          api_callback_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
     gmsh.model.mesh.removeSizeCallback()
 
 Remove the global mesh size callback.

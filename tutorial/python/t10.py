@@ -11,7 +11,6 @@
 # size "Fields".
 
 import gmsh
-import math
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)

@@ -378,7 +378,7 @@ doc = '''Set mesh size constraints at the given parametric points `parametricCoo
 mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
 
 doc = '''Set a global mesh size callback. The callback should take 5 arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at coordinates (`x', `y', `z').'''
-mesh.add_special('setSizeCallback', doc, ['nojulia'], None, isizefun('callback'))
+mesh.add('setSizeCallback', doc, None, isizefun('callback'))
 
 doc = '''Remove the global mesh size callback.'''
 mesh.add('removeSizeCallback', doc, None)
