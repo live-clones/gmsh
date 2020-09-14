@@ -2612,12 +2612,12 @@ class model:
             coordinates (`x', `y', `z').
             """
             global api_callback_type_
-            api_callback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double)
+            api_callback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_void_p)
             global api_callback_
-            api_callback_ = api_callback_type_(callback)
+            api_callback_ = api_callback_type_(lambda dim, tag, x, y, z, _ : callback(dim, tag, x, y, z))
             ierr = c_int()
             lib.gmshModelMeshSetSizeCallback(
-                api_callback_,
+                api_callback_, None,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

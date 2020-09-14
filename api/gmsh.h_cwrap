@@ -1792,7 +1792,7 @@ namespace gmsh { // Top-level functions
       {
         int ierr = 0;
         struct callback_caller_  {
-          static double call(int entity_dim, int entity_tag, double x, double y, double z, void *callbackp) {
+          static double call(int entity_dim, int entity_tag, double x, double y, double z, void * callbackp) {
             return (*static_cast<std::function<double(int,int,double,double,double)>*> (callbackp))(entity_dim, entity_tag, x, y, z);
           }
         };
