@@ -735,9 +735,9 @@ def iargcargv():
 
 def isizefun(name):
     a = arg(name, None, None, None, "", "", False)
-    a.cpp = "std::function<double(int,int,double,double,double)> " + name
-    a.c_arg = name
-    a.c = "double (*" + name + ")(int dim, int tag, double x, double y, double z)"
+    a.cpp = "std::function<double(int, int, double, double, double)> " + name
+    a.c_arg = "std::bind(" + name + ", std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, " + name + "_data)"
+    a.c = "double (*" + name + ")(int dim, int tag, double x, double y, double z, void * data), void * " + name + "_data"
     a.cwrap_arg = a.c_arg
     a.python_pre = ("global api_" + name + "_type_\n" +
                     "            api_" + name + "_type_ = " +

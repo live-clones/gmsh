@@ -1791,7 +1791,7 @@ namespace gmsh { // Top-level functions
       inline void setSizeCallback(std::function<double(int,int,double,double,double)> callback)
       {
         int ierr = 0;
-        gmshModelMeshSetSizeCallback(callback, &ierr);
+        gmshModelMeshSetSizeCallback(std::bind(callback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, callback_data), &ierr);
         if(ierr) throwLastError();
       }
 
