@@ -15,8 +15,7 @@
 
 double meshSizeCallback(int dim, int tag, double x, double y, double z)
 {
-  double val = 0.02 * x + 0.01;
-  return val;
+  return 0.02 * x + 0.01;
 }
 
 int main(int argc, char **argv)
@@ -113,7 +112,7 @@ int main(int argc, char **argv)
 
   gmsh::model::mesh::field::setAsBackgroundMesh(7);
 
-  // In the API we can also set a global mesh size callback, which is called
+  // The API also allows to set a global mesh size callback, which is called
   // each time the mesh size is queried
   gmsh::model::mesh::setSizeCallback(meshSizeCallback);
 

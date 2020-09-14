@@ -2200,7 +2200,7 @@ end
 """
     gmsh.model.mesh.removeSizeCallback()
 
-Remove global mesh size callback. For C and C++ only.
+Remove the global mesh size callback.
 """
 function removeSizeCallback()
     ierr = Ref{Cint}()

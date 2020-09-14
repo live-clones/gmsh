@@ -738,9 +738,13 @@ def isizefun(name):
     a.cpp = "double (*" + name + ")(int dim, int tag, double x, double y, double z)"
     a.c_arg = name
     a.c = a.cpp
-    a.c_pre = ""
-    a.c_post = ""
     a.cwrap_arg = a.c_arg
+    a.python_pre = ("global api_" + name + "_type_\n" +
+                    "            api_" + name + "_type_ = " +
+                    "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double)\n" +
+                    "            global api_" + name + "_\n" +
+                    "            api_" + name + "_ = api_" + name + "_type_(" + name + ")")
+    a.python_arg = "api_" + name + "_"
     return a
 
 
@@ -1382,6 +1386,7 @@ class API:
         def write_function(f, fun, c_mpath, py_mpath, indent):
             (rtype, name, args, doc, special) = fun
             if "onlycc++" in special: return
+            if "nopython" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
@@ -1463,6 +1468,7 @@ class API:
         def write_function(f, fun, c_mpath, jl_mpath):
             (rtype, name, args, doc, special) = fun
             if "onlycc++" in special: return
+            if "nojulia" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write('\n"""\n    ')

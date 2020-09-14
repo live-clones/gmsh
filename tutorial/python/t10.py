@@ -101,11 +101,10 @@ gmsh.model.mesh.field.setNumbers(7, "FieldsList", [2, 3, 5, 6])
 
 gmsh.model.mesh.field.setAsBackgroundMesh(7)
 
-# In the API we can also set a global mesh size callback, which is called each
+# The API also allows to set a global mesh size callback, which is called each
 # time the mesh size is queried
 def meshSizeCallback(dim, tag, x, y, z):
-    val = 0.02 * x + 0.01
-    return val
+    return 0.02 * x + 0.01
 gmsh.model.mesh.setSizeCallback(meshSizeCallback)
 
 # To determine the size of mesh elements, Gmsh locally computes the minimum of

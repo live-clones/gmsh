@@ -1785,7 +1785,9 @@ namespace gmsh { // Top-level functions
         gmshFree(api_sizes_);
       }
 
-      // Set global mesh size callback. For C and C++ only.
+      // Set a global mesh size callback. The callback should take 5 arguments
+      // (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
+      // coordinates (`x', `y', `z').
       inline void setSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z))
       {
         int ierr = 0;
@@ -1793,7 +1795,7 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
-      // Remove global mesh size callback. For C and C++ only.
+      // Remove the global mesh size callback.
       inline void removeSizeCallback()
       {
         int ierr = 0;

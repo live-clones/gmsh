@@ -1171,12 +1171,14 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::setSizeCallback
       //
-      // Set global mesh size callback. For C and C++ only.
+      // Set a global mesh size callback. The callback should take 5 arguments
+      // (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
+      // coordinates (`x', `y', `z').
       GMSH_API void setSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z));
 
       // gmsh::model::mesh::removeSizeCallback
       //
-      // Remove global mesh size callback. For C and C++ only.
+      // Remove the global mesh size callback.
       GMSH_API void removeSizeCallback();
 
       // gmsh::model::mesh::setTransfiniteCurve

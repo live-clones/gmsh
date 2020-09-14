@@ -1774,7 +1774,9 @@ entities of dimension 1 (lines) are handled.
 @end table
 
 @item gmsh/model/mesh/setSizeCallback
-Set global mesh size callback. For C and C++ only.
+Set a global mesh size callback. The callback should take 5 arguments
+(@code{dim}, @code{tag}, @code{x}, @code{y} and @code{z}) and return the value
+of the mesh size at coordinates (@code{x}, @code{y}, @code{z}).
 
 @table @asis
 @item Input:
@@ -1783,10 +1785,12 @@ Set global mesh size callback. For C and C++ only.
 -
 @item Return:
 -
+@item Examples:
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L117,t10.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L108,t10.py})
 @end table
 
 @item gmsh/model/mesh/removeSizeCallback
-Remove global mesh size callback. For C and C++ only.
+Remove the global mesh size callback.
 
 @table @asis
 @item Input:
@@ -2243,7 +2247,7 @@ the field tag.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L49,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L46,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L38,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L68,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L41,t17.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L44,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L44,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L57,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L35,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L113,adapt_mesh.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L49,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L51,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L38,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L68,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L41,t17.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L44,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L44,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L57,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L35,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L113,adapt_mesh.py})
 @end table
 
 @item gmsh/model/mesh/field/remove
@@ -2270,7 +2274,7 @@ Set the numerical option @code{option} to value @code{value} for field
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L48,t10.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L271,adapt_mesh.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L46,t10.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L114,adapt_mesh.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L53,t10.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L271,adapt_mesh.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L46,t10.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L114,adapt_mesh.py})
 @end table
 
 @item gmsh/model/mesh/field/setString
@@ -2284,7 +2288,7 @@ Set the string option @code{option} to value @code{value} for field @code{tag}.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L73,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L39,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L70,t13.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L70,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L59,t13.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L78,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L39,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L70,t13.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L70,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L59,t13.py})
 @end table
 
 @item gmsh/model/mesh/field/setNumbers
@@ -2299,7 +2303,7 @@ Set the numerical list option @code{option} to value @code{value} for field
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L47,t10.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L45,t10.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L52,t10.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L45,t10.py})
 @end table
 
 @item gmsh/model/mesh/field/setAsBackgroundMesh
@@ -2313,7 +2317,7 @@ Set the field @code{tag} as the background mesh size field.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L52,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L108,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L41,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L73,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L42,t17.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L47,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L102,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L62,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L36,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L115,adapt_mesh.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L52,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L113,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L41,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L73,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L42,t17.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L47,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L102,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L62,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L36,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L115,adapt_mesh.py})
 @end table
 
 @item gmsh/model/mesh/field/setAsBoundaryLayer

@@ -2603,11 +2603,31 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
+        def setSizeCallback(callback):
+            """
+            gmsh.model.mesh.setSizeCallback(callback)
+
+            Set a global mesh size callback. The callback should take 5 arguments
+            (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
+            coordinates (`x', `y', `z').
+            """
+            global api_callback_type_
+            api_callback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double)
+            global api_callback_
+            api_callback_ = api_callback_type_(callback)
+            ierr = c_int()
+            lib.gmshModelMeshSetSizeCallback(
+                api_callback_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
         def removeSizeCallback():
             """
             gmsh.model.mesh.removeSizeCallback()
 
-            Remove global mesh size callback. For C and C++ only.
+            Remove the global mesh size callback.
             """
             ierr = c_int()
             lib.gmshModelMeshRemoveSizeCallback(

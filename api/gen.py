@@ -377,10 +377,10 @@ mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 doc = '''Set mesh size constraints at the given parametric points `parametricCoord' on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 1 (lines) are handled.'''
 mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
 
-doc = '''Set global mesh size callback. For C and C++ only.'''
-mesh.add_special('setSizeCallback', doc, ['onlycc++'], None, isizefun('callback'))
+doc = '''Set a global mesh size callback. The callback should take 5 arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at coordinates (`x', `y', `z').'''
+mesh.add_special('setSizeCallback', doc, ['nojulia'], None, isizefun('callback'))
 
-doc = '''Remove global mesh size callback. For C and C++ only.'''
+doc = '''Remove the global mesh size callback.'''
 mesh.add('removeSizeCallback', doc, None)
 
 doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
