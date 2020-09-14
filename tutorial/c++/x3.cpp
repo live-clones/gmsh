@@ -83,6 +83,10 @@ int main(int argc, char **argv)
                                 {"A multi-step list-based view"},
                                 {"Align", "Center", "Font", "Helvetica"});
 
+  // Views can exported as files with the `write' function:
+  // gmsh::view::write(v1, "v1.pos"); // as a list-based view
+  // gmsh::view::write(v1, "v1.msh"); // converted to a model-based view
+
   // High-order datasets can be provided by setting the interpolation matrices
   // explicitly. Let's create a second view with second order interpolation on a
   // 4-node quadrangle.
