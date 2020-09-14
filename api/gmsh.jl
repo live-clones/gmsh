@@ -2205,12 +2205,11 @@ Set a global mesh size callback. The callback should take 5 arguments (`dim`,
 (`x`, `y`, `z`).
 """
 function setSizeCallback(callback)
-    api_dummy_ = Ref{Cint}
-    api_callback_ = @cfunction($callback, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
+    api_callback_ = @cfunction($callback, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble))
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetSizeCallback, gmsh.lib), Cvoid,
           (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}),
-          api_callback_, ierr)
+          api_callback_, C_NULL, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
