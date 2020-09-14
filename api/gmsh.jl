@@ -2198,6 +2198,20 @@ function setSizeAtParametricPoints(dim, tag, parametricCoord, sizes)
 end
 
 """
+    gmsh.model.mesh.removeSizeCallback()
+
+Remove global mesh size callback. For C and C++ only.
+"""
+function removeSizeCallback()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRemoveSizeCallback, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
     gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
 
 Set a transfinite meshing constraint on the curve `tag`, with `numNodes` nodes

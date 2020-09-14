@@ -1169,6 +1169,16 @@ namespace gmsh { // Top-level functions
                                               const std::vector<double> & parametricCoord,
                                               const std::vector<double> & sizes);
 
+      // gmsh::model::mesh::setSizeCallback
+      //
+      // Set global mesh size callback. For C and C++ only.
+      GMSH_API void setSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z));
+
+      // gmsh::model::mesh::removeSizeCallback
+      //
+      // Remove global mesh size callback. For C and C++ only.
+      GMSH_API void removeSizeCallback();
+
       // gmsh::model::mesh::setTransfiniteCurve
       //
       // Set a transfinite meshing constraint on the curve `tag', with `numNodes'

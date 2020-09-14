@@ -13,6 +13,12 @@
 #include <gmsh.h>
 #include <sstream>
 
+double meshSizeCallback(int dim, int tag, double x, double y, double z)
+{
+  double val = 0.02 * x + 0.01;
+  return val;
+}
+
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
@@ -107,6 +113,10 @@ int main(int argc, char **argv)
 
   gmsh::model::mesh::field::setAsBackgroundMesh(7);
 
+  // In the API we can also set a global mesh size callback, which is called
+  // each time the mesh size is queried
+  gmsh::model::mesh::setSizeCallback(meshSizeCallback);
+
   // To determine the size of mesh elements, Gmsh locally computes the minimum
   // of
   //
@@ -116,7 +126,8 @@ int main(int argc, char **argv)
   // 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based
   //    on the curvature and `Mesh.MinimumElementsPerTwoPi';
   // 4) the background mesh field;
-  // 5) any per-entity mesh size constraint.
+  // 5) any per-entity mesh size constraint;
+  // 6) the mesh size returned by the mesh size callback, if any.
   //
   // This value is then constrained in the interval
   // [`Mesh.CharacteristicLengthMin', `MeshCharacteristicLengthMax'] and

@@ -713,7 +713,9 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     return a
 
 
-def argcargv():
+# special types
+
+def iargcargv():
     a = arg("", None, None, None, "", "", False)
     a.cpp = "int argc = 0, char ** argv = 0"
     a.c_arg = "argc, argv"
@@ -729,6 +731,16 @@ def argcargv():
     a.julia_ctype = "Cint, Ptr{Ptr{Cchar}}"
     a.julia_arg = "length(argv), argv"
     a.texi = "(argc = 0)}, @code{argv = []"
+    return a
+
+def isizefun(name):
+    a = arg(name, None, None, None, "", "", False)
+    a.cpp = "double (*" + name + ")(int dim, int tag, double x, double y, double z)"
+    a.c_arg = name
+    a.c = a.cpp
+    a.c_pre = ""
+    a.c_post = ""
+    a.cwrap_arg = a.c_arg
     return a
 
 

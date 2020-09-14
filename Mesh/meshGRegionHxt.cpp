@@ -443,7 +443,8 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     },
     { // nodalSize
 
-      // FIXME: put NULL when the callback is not needed (when we use the interpolated point size anyway)
+      // FIXME: put NULL when the callback is not needed (when we use the
+      // interpolated point size anyway)
       nodalSizesCallBack, // HXTStatus (*callback)(double*, size_t, void* userData)
       &regions, // void* meshSizeData;
       CTX::instance()->mesh.lcMin,

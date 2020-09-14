@@ -42,6 +42,7 @@ struct contextMeshOptions {
   int renumber, compoundClassify, reparamMaxTriangles;
   double compoundLcFactor;
   unsigned int randomSeed;
+  double (*lcCallback)(int dim, int tag, double x, double y, double z);
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;

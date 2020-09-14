@@ -2603,6 +2603,19 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
+        def removeSizeCallback():
+            """
+            gmsh.model.mesh.removeSizeCallback()
+
+            Remove global mesh size callback. For C and C++ only.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRemoveSizeCallback(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
         def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
             """
             gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.)

@@ -505,7 +505,7 @@ overall model.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L77,x2.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.cpp#L11,discrete.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L63,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L63,faces.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L11,plugin.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L74,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.py#L10,discrete.py}, @url{@value{GITLAB-PREFIX}/demos/api/mesh_from_discrete_curve.py#L11,mesh_from_discrete_curve.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L9,plugin.py}, @url{@value{GITLAB-PREFIX}/demos/api/reparamOnFace.py#L23,reparamOnFace.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L77,x2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L24,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.cpp#L11,discrete.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L63,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L63,faces.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L74,x2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L23,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L75,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.py#L10,discrete.py}, @url{@value{GITLAB-PREFIX}/demos/api/mesh_from_discrete_curve.py#L11,mesh_from_discrete_curve.py}, ...)
 @end table
 
 @item gmsh/model/removeEntities
@@ -622,7 +622,7 @@ coordinates in @code{coord}, concatenated: [p1x, p1y, p1z, p2x, ...].
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L91,t2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L87,t2.py}, @url{@value{GITLAB-PREFIX}/demos/api/reparamOnFace.py#L21,reparamOnFace.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L36,terrain_stl.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L91,t2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L87,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L73,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/reparamOnFace.py#L21,reparamOnFace.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L36,terrain_stl.py})
 @end table
 
 @item gmsh/model/getDerivative
@@ -661,7 +661,7 @@ u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).
 @item Return:
 -
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/demos/api/normals.py#L28,normals.py})
+Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L38,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L28,normals.py})
 @end table
 
 @item gmsh/model/getPrincipalCurvatures
@@ -693,7 +693,7 @@ triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
 @item Return:
 -
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/demos/api/normals.py#L26,normals.py})
+Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L36,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L26,normals.py})
 @end table
 
 @item gmsh/model/getParametrization
@@ -725,7 +725,7 @@ entity of dimension @code{dim} and tag @code{tag}.
 @item Return:
 -
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/demos/api/reparamOnFace.py#L18,reparamOnFace.py})
+Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L70,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/reparamOnFace.py#L18,reparamOnFace.py})
 @end table
 
 @item gmsh/model/isInside
@@ -780,7 +780,7 @@ subset of entities, depending on the underyling geometrical representation.
 @item Return:
 -
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/demos/api/reparamOnFace.py#L20,reparamOnFace.py})
+Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L72,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/reparamOnFace.py#L20,reparamOnFace.py})
 @end table
 
 @item gmsh/model/setVisibility
@@ -866,7 +866,7 @@ Set the @code{x}, @code{y}, @code{z} coordinates of a geometrical point.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L78,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L75,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/reparamOnFace.py#L24,reparamOnFace.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L78,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L75,x2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L76,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/reparamOnFace.py#L24,reparamOnFace.py})
 @end table
 
 @end ftable
@@ -1043,7 +1043,7 @@ the entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x1.cpp#L76,x1.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L80,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/explore.cpp#L24,explore.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x1.py#L70,x1.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L15,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/explore.py#L20,explore.py}, @url{@value{GITLAB-PREFIX}/demos/api/flatten.py#L26,flatten.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L23,normals.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x1.cpp#L76,x1.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L67,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L80,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/explore.cpp#L24,explore.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x1.py#L70,x1.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L62,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L33,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L15,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/explore.py#L20,explore.py}, ...)
 @end table
 
 @item gmsh/model/mesh/getNodesByElementType
@@ -1149,7 +1149,7 @@ automatically assigned to the nodes.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L91,x2.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.cpp#L14,discrete.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L12,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L11,view.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L88,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.py#L13,discrete.py}, @url{@value{GITLAB-PREFIX}/demos/api/flatten.py#L37,flatten.py}, @url{@value{GITLAB-PREFIX}/demos/api/mesh_from_discrete_curve.py#L16,mesh_from_discrete_curve.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L10,plugin.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L91,x2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L27,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.cpp#L14,discrete.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L12,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L11,view.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L88,x2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L26,x4.py}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.py#L13,discrete.py}, @url{@value{GITLAB-PREFIX}/demos/api/flatten.py#L37,flatten.py}, @url{@value{GITLAB-PREFIX}/demos/api/mesh_from_discrete_curve.py#L16,mesh_from_discrete_curve.py}, ...)
 @end table
 
 @item gmsh/model/mesh/reclassifyNodes
@@ -1403,7 +1403,7 @@ are automatically assigned to the elements.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L97,x2.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L67,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L67,faces.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L94,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L59,terrain.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L97,x2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L29,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L67,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L67,faces.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L94,x2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L28,x4.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L59,terrain.py})
 @end table
 
 @item gmsh/model/mesh/getIntegrationPoints
@@ -1767,6 +1767,30 @@ entities of dimension 1 (lines) are handled.
 @table @asis
 @item Input:
 @code{dim}, @code{tag}, @code{parametricCoord}, @code{sizes}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/setSizeCallback
+Set global mesh size callback. For C and C++ only.
+
+@table @asis
+@item Input:
+@code{callback}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item gmsh/model/mesh/removeSizeCallback
+Remove global mesh size callback. For C and C++ only.
+
+@table @asis
+@item Input:
+-
 @item Output:
 -
 @item Return:
@@ -3322,7 +3346,7 @@ sphere.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L53,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L61,t18.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.cpp#L23,boolean.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L18,faces.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L21,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L47,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L59,t18.py}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.py#L23,boolean.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L20,gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L6,normals.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L53,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L61,t18.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.cpp#L23,boolean.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L18,faces.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L21,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L47,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L59,t18.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L16,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.py#L23,boolean.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L20,gui.py}, ...)
 @end table
 
 @item gmsh/model/occ/addBox
@@ -3339,7 +3363,7 @@ box.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L31,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L27,t18.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.cpp#L22,boolean.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L16,faces.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L20,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L28,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L26,t18.py}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.py#L22,boolean.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L19,gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/neighbors.py#L11,neighbors.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L31,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L27,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L60,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.cpp#L22,boolean.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L16,faces.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L28,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L26,t18.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L57,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L17,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.py#L22,boolean.py}, ...)
 @end table
 
 @item gmsh/model/occ/addCylinder
@@ -3606,7 +3630,7 @@ set.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L61,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L75,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L91,t20.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L44,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L23,edges.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L54,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L70,t18.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L73,t20.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L34,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_patches.py#L71,bspline_bezier_patches.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L61,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L75,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L91,t20.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L44,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L23,edges.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L54,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L70,t18.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L73,t20.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L34,t21.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L60,x5.py}, ...)
 @end table
 
 @item gmsh/model/occ/translate
@@ -3963,7 +3987,7 @@ associate a new tag. Return the view tag.
 @item Return:
 integer value
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L111,t4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L246,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L18,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L17,view.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.cpp#L20,viewlist.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L119,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L28,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L20,x4.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L90,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L41,normals.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L111,t4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L27,x3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L33,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L246,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L18,plugin.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L119,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L26,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L32,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L51,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L90,adapt_mesh.py}, ...)
 @end table
 
 @item gmsh/view/remove
@@ -4049,6 +4073,8 @@ single vector. For data types that can lead to different data sizes per tag
 -
 @item Return:
 -
+@item Examples:
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L46,x4.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L34,x4.py})
 @end table
 
 @item gmsh/view/getModelData
@@ -4105,7 +4131,7 @@ followed by values per node, repeated for each step: [e1x1, ..., e1xn, e1y1,
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/demos/api/viewlist.cpp#L25,viewlist.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L50,x3.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L42,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/view_combine.py#L19,view_combine.py}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.py#L20,viewlist.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L55,x3.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.cpp#L25,viewlist.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L48,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L52,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L42,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/view_combine.py#L19,view_combine.py}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.py#L20,viewlist.py})
 @end table
 
 @item gmsh/view/getListData
@@ -4146,7 +4172,7 @@ Bold", "Times-Italic", "Times-BoldItalic", "Helvetica", "Helvetica-Bold",
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L115,t4.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L123,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L75,x3.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L115,t4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L81,x3.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L123,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L73,x3.py})
 @end table
 
 @item gmsh/view/getListDataStrings
@@ -4186,7 +4212,7 @@ matrices.
 @item Return:
 -
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L99,x3.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L110,x3.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L101,x3.py})
 @end table
 
 @item gmsh/view/addAlias
@@ -4267,7 +4293,7 @@ file extension. Append to the file if @code{append} is set.
 @item Return:
 -
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L249,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L44,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L25,view.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.cpp#L27,viewlist.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L93,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L43,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L34,plugin.py}, @url{@value{GITLAB-PREFIX}/demos/api/view.py#L28,view.py}, @url{@value{GITLAB-PREFIX}/demos/api/view_combine.py#L26,view_combine.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L87,x3.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L249,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L44,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L25,view.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.cpp#L27,viewlist.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L79,x3.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L93,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L43,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L34,plugin.py}, @url{@value{GITLAB-PREFIX}/demos/api/view.py#L28,view.py}, ...)
 @end table
 
 @item gmsh/view/setVisibilityPerWindow

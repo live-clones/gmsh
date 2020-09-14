@@ -42,7 +42,7 @@ api = API(version_major, version_minor)
 gmsh = api.add_module('gmsh', 'top-level functions')
 
 doc = '''Initialize Gmsh. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options).'''
-gmsh.add('initialize', doc, None, argcargv(), ibool('readConfigFiles', 'true', 'True', 'true'))
+gmsh.add('initialize', doc, None, iargcargv(), ibool('readConfigFiles', 'true', 'True', 'true'))
 
 doc = '''Finalize Gmsh. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize', doc, None)
@@ -376,6 +376,12 @@ mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
 doc = '''Set mesh size constraints at the given parametric points `parametricCoord' on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 1 (lines) are handled.'''
 mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
+
+doc = '''Set global mesh size callback. For C and C++ only.'''
+mesh.add_special('setSizeCallback', doc, ['onlycc++'], None, isizefun('callback'))
+
+doc = '''Remove global mesh size callback. For C and C++ only.'''
+mesh.add('removeSizeCallback', doc, None)
 
 doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
 mesh.add('setTransfiniteCurve', doc, None, iint('tag'), iint('numNodes'), istring('meshType', '"Progression"'), idouble('coef', '1.'))
