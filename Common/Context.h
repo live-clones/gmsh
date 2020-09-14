@@ -43,7 +43,7 @@ struct contextMeshOptions {
   int renumber, compoundClassify, reparamMaxTriangles;
   double compoundLcFactor;
   unsigned int randomSeed;
-  std::function<double(int,int,double,double,double)> lcCallback;
+  std::function<double(int, int, double, double, double)> lcCallback;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
@@ -54,15 +54,14 @@ struct contextMeshOptions {
   double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
-  int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder,
-      cgnsConstructTopology, cgnsExportCPEX0045;
+  int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder;
+  int cgnsConstructTopology, cgnsExportCPEX0045;
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
-  int partitionCreatePhysicals, partitionSplitMeshFiles,
-    partitionSaveTopologyFile;
-  int partitionTriWeight, partitionQuaWeight, partitionTetWeight,
-    partitionHexWeight, partitionLinWeight;
+  int partitionCreatePhysicals, partitionSplitMeshFiles;
+  int partitionSaveTopologyFile, partitionTriWeight, partitionQuaWeight;
+  int partitionTetWeight, partitionHexWeight, partitionLinWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
