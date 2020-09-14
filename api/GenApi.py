@@ -738,7 +738,14 @@ def isizefun(name):
     a.cpp = "std::function<double(int, int, double, double, double)> " + name
     a.c_arg = "std::bind(" + name + ", std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, " + name + "_data)"
     a.c = "double (*" + name + ")(int dim, int tag, double x, double y, double z, void * data), void * " + name + "_data"
-    a.cwrap_arg = a.c_arg
+    a.cwrap_pre = "struct " + name + """_caller_  {
+          static double call(int entity_dim, int entity_tag, double x, double y, double z, void *callbackp) {
+            return (*static_cast<std::function<double(int,int,double,double,double)>*> (callbackp))(entity_dim, entity_tag, x, y, z);
+          }
+        };
+        auto *""" + name + "_ptr_ = new std::function<double(int,int,double,double,double)>("+name+""");
+"""
+    a.cwrap_arg = "&" + name + "_caller_::call, "+name+"_ptr_"
     a.python_pre = ("global api_" + name + "_type_\n" +
                     "            api_" + name + "_type_ = " +
                     "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double)\n" +

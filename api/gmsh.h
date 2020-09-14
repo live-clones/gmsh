@@ -1175,7 +1175,7 @@ namespace gmsh { // Top-level functions
       // Set a global mesh size callback. The callback should take 5 arguments
       // (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
       // coordinates (`x', `y', `z').
-      GMSH_API void setSizeCallback(std::function<double(int,int,double,double,double)> callback);
+      GMSH_API void setSizeCallback(std::function<double(int, int, double, double, double)> callback);
 
       // gmsh::model::mesh::removeSizeCallback
       //
