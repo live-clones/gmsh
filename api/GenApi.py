@@ -736,13 +736,18 @@ def iargcargv():
 def isizefun(name):
     a = arg(name, None, None, None, "", "", False)
     a.cpp = "std::function<double(int, int, double, double, double)> " + name
-    a.c_arg = "std::bind(" + name + ", std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, " + name + "_data)"
-    a.c = "double (*" + name + ")(int dim, int tag, double x, double y, double z, void * data), void * " + name + "_data"
+    a.c_arg = ("std::bind(" + name + ", std::placeholders::_1, " +
+               "std::placeholders::_2, std::placeholders::_3, " +
+               "std::placeholders::_4, std::placeholders::_5, " + name + "_data)")
+    a.c = ("double (*" + name + ")" +
+           "(int dim, int tag, double x, double y, double z, void * data), " +
+           "void * " + name + "_data")
     a.cwrap_pre = "struct " + name + """_caller_  {
           static double call(int dim, int tag, double x, double y, double z, void * callbackp_) {
-            return (*static_cast<std::function<double(int,int,double,double,double)>*> (callbackp_))(dim, tag, x, y, z);
+            return (*static_cast<std::function<double(int, int, double, double, double)>*> (callbackp_))(dim, tag, x, y, z);
           }
         };
+        // FIXME memory leak
         auto *""" + name + "_ptr_ = new std::function<double(int,int,double,double,double)>(" + name + """);
 """
     a.cwrap_arg = "&" + name + "_caller_::call, "+name+"_ptr_"
@@ -750,12 +755,13 @@ def isizefun(name):
                     "            api_" + name + "_type_ = " +
                     "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_void_p)\n" +
                     "            global api_" + name + "_\n" +
-                    "            api_" + name + "_ = api_" + name + "_type_(lambda dim, tag, x, y, z, _ : " + name + "(dim, tag, x, y, z))")
+                    "            api_" + name + "_ = api_" + name +
+                    "_type_(lambda dim, tag, x, y, z, _ : " + name + "(dim, tag, x, y, z))")
     a.python_arg = "api_" + name + "_, None"
-    a.julia_pre = ("api_" + name + "_ = @cfunction($" + name +
-                   ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble))")
+    a.julia_pre = ("api_dummy_ = Ref{Cint}\n    api_" + name + "_ = @cfunction($" + name +
+                   ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
     a.julia_arg = "api_" + name + "_"
-    a.julia_ctype = "Ptr{Cvoid}"
+    a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
     return a
 
 class Module:
