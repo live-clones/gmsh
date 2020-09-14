@@ -4200,7 +4200,7 @@ GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
 }
 
 GMSH_API void gmsh::model::mesh::setSizeCallback(
-  double (*callback)(int dim, int tag, double x, double y, double z))
+    std::function<double(int,int,double,double,double)> callback)
 {
   _checkInit();
   CTX::instance()->mesh.lcCallback = callback;
@@ -4209,7 +4209,7 @@ GMSH_API void gmsh::model::mesh::setSizeCallback(
 GMSH_API void gmsh::model::mesh::removeSizeCallback()
 {
   _checkInit();
-  CTX::instance()->mesh.lcCallback = NULL;
+  CTX::instance()->mesh.lcCallback = nullptr;
 }
 
 GMSH_API void
