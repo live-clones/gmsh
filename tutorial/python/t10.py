@@ -115,7 +115,8 @@ gmsh.model.mesh.setSizeCallback(meshSizeCallback)
 # 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based
 #    on the curvature and `Mesh.MinimumElementsPerTwoPi';
 # 4) the background mesh field;
-# 5) any per-entity mesh size constraint.
+# 5) any per-entity mesh size constraint;
+# 6) the mesh size returned by the mesh size callback, if any.
 #
 # This value is then constrained in the interval
 # [`Mesh.CharacteristicLengthMin', `Mesh.CharacteristicLengthMax'] and
