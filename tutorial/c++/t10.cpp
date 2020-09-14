@@ -13,11 +13,6 @@
 #include <gmsh.h>
 #include <sstream>
 
-double meshSizeCallback(int dim, int tag, double x, double y, double z)
-{
-  return 0.02 * x + 0.01;
-}
-
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
@@ -114,6 +109,9 @@ int main(int argc, char **argv)
 
   // The API also allows to set a global mesh size callback, which is called
   // each time the mesh size is queried
+  auto meshSizeCallback = [](int dim, int tag, double x, double y, double z) {
+    return 0.02 * x + 0.01;
+  };
   gmsh::model::mesh::setSizeCallback(meshSizeCallback);
 
   // To determine the size of mesh elements, Gmsh locally computes the minimum
