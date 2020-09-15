@@ -11,8 +11,9 @@
 # size "Fields".
 
 import gmsh
+import sys
 
-gmsh.initialize()
+gmsh.initialize(sys.argv)
 gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t10")
