@@ -2828,7 +2828,7 @@ not by default), the mesh will be adapted with respect to the curvature
 of the model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
 which gives the number of elements per 2 Pi radians.
 @item
-Finally, you can specify a general background mesh size, expressed as a
+Next, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
 @itemize @bullet
 @item
@@ -2863,14 +2863,19 @@ computed using other fields.
 
 The list of available fields with their options is given below. An
 example is available in @ref{t10}.
+@item
+Finally, using the Gmsh API you can also specify a global mesh size
+callback in C++, C, Python or Julia using
+@code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
+gmsh/model/mesh}).
 @end enumerate
 
-The three aforementioned methods can be used simultaneously, in which
-case the smallest element size is selected at any given point. In
-addition, boundary mesh sizes (on curves or surfaces) are interpolated
-inside the enclosed entity (surface or volume, respectively) if the
-option @code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is
-by default).
+All the aforementioned methods can be used simultaneously, in which case
+the smallest element size is selected at any given point. In addition,
+boundary mesh sizes (on curves or surfaces) are interpolated inside the
+enclosed entity (surface or volume, respectively) if the option
+@code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is by
+default).
 
 All element sizes are further constrained in the interval [
 @code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}

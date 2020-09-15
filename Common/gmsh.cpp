@@ -4199,6 +4199,19 @@ GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
   }
 }
 
+GMSH_API void gmsh::model::mesh::setSizeCallback(
+    std::function<double(int, int, double, double, double)> callback)
+{
+  _checkInit();
+  CTX::instance()->mesh.lcCallback = callback;
+}
+
+GMSH_API void gmsh::model::mesh::removeSizeCallback()
+{
+  _checkInit();
+  CTX::instance()->mesh.lcCallback = nullptr;
+}
+
 GMSH_API void
 gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
                                        const std::string &meshType,

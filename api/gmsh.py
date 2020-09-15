@@ -2603,6 +2603,39 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
+        def setSizeCallback(callback):
+            """
+            gmsh.model.mesh.setSizeCallback(callback)
+
+            Set a global mesh size callback. The callback should take 5 arguments
+            (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
+            coordinates (`x', `y', `z').
+            """
+            global api_callback_type_
+            api_callback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_void_p)
+            global api_callback_
+            api_callback_ = api_callback_type_(lambda dim, tag, x, y, z, _ : callback(dim, tag, x, y, z))
+            ierr = c_int()
+            lib.gmshModelMeshSetSizeCallback(
+                api_callback_, None,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
+        def removeSizeCallback():
+            """
+            gmsh.model.mesh.removeSizeCallback()
+
+            Remove the global mesh size callback.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRemoveSizeCallback(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
         def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
             """
             gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.)

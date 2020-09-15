@@ -1030,6 +1030,15 @@ GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim,
                                                      double * sizes, size_t sizes_n,
                                                      int * ierr);
 
+/* Set a global mesh size callback. The callback should take 5 arguments
+ * (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
+ * coordinates (`x', `y', `z'). */
+GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, void * data), void * callback_data,
+                                           int * ierr);
+
+/* Remove the global mesh size callback. */
+GMSH_API void gmshModelMeshRemoveSizeCallback(int * ierr);
+
 /* Set a transfinite meshing constraint on the curve `tag', with `numNodes'
  * nodes distributed according to `meshType' and `coef'. Currently supported
  * types are "Progression" (geometrical progression with power `coef') and

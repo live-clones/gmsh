@@ -713,7 +713,9 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     return a
 
 
-def argcargv():
+# special types
+
+def iargcargv():
     a = arg("", None, None, None, "", "", False)
     a.cpp = "int argc = 0, char ** argv = 0"
     a.c_arg = "argc, argv"
@@ -731,6 +733,38 @@ def argcargv():
     a.texi = "(argc = 0)}, @code{argv = []"
     return a
 
+def isizefun(name):
+    a = arg(name, None, None, None, "", "", False)
+    a.cpp = "std::function<double(int, int, double, double, double)> " + name
+    a.c_arg = ("std::bind(" + name + ", std::placeholders::_1, " +
+               "std::placeholders::_2, std::placeholders::_3, " +
+               "std::placeholders::_4, std::placeholders::_5, " + name + "_data)")
+    a.c = ("double (*" + name + ")" +
+           "(int dim, int tag, double x, double y, double z, void * data), " +
+           "void * " + name + "_data")
+    a.cwrap_pre = "struct " + name + """_caller_  {
+          static double call(int dim, int tag, double x, double y, double z, void * callbackp_) {
+            return (*static_cast<std::function<double(int, int, double, double, double)>*> (callbackp_))(dim, tag, x, y, z);
+          }
+        };
+        // FIXME memory leak
+        auto *""" + name + "_ptr_ = new std::function<double(int,int,double,double,double)>(" + name + """);
+"""
+    a.cwrap_arg = "&" + name + "_caller_::call, "+name+"_ptr_"
+    a.python_pre = ("global api_" + name + "_type_\n" +
+                    "            api_" + name + "_type_ = " +
+                    "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_void_p)\n" +
+                    "            global api_" + name + "_\n" +
+                    "            api_" + name + "_ = api_" + name +
+                    "_type_(lambda dim, tag, x, y, z, _ : " + name + "(dim, tag, x, y, z))")
+    a.python_arg = "api_" + name + "_, None"
+    a.julia_pre = (
+        "api_" + name + "__(dim, tag, x, y, z, data) = " + name + "(dim, tag, x, y, z)\n    " +
+        "api_" + name + "_ = @cfunction($api_" + name + "__" +
+                   ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
+    a.julia_arg = "api_" + name + "_, C_NULL"
+    a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
+    return a
 
 class Module:
     def __init__(self, name, doc):
@@ -771,6 +805,7 @@ cpp_header = """// {0}
 #include <vector>
 #include <string>
 #include <utility>
+#include <functional>
 
 #define {2}_API_VERSION "{4}.{5}"
 #define {2}_API_VERSION_MAJOR {4}
@@ -1370,6 +1405,7 @@ class API:
         def write_function(f, fun, c_mpath, py_mpath, indent):
             (rtype, name, args, doc, special) = fun
             if "onlycc++" in special: return
+            if "nopython" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
@@ -1451,6 +1487,7 @@ class API:
         def write_function(f, fun, c_mpath, jl_mpath):
             (rtype, name, args, doc, special) = fun
             if "onlycc++" in special: return
+            if "nojulia" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write('\n"""\n    ')

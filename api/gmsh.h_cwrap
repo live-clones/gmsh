@@ -1785,6 +1785,31 @@ namespace gmsh { // Top-level functions
         gmshFree(api_sizes_);
       }
 
+      // Set a global mesh size callback. The callback should take 5 arguments
+      // (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
+      // coordinates (`x', `y', `z').
+      inline void setSizeCallback(std::function<double(int, int, double, double, double)> callback)
+      {
+        int ierr = 0;
+        struct callback_caller_  {
+          static double call(int dim, int tag, double x, double y, double z, void * callbackp_) {
+            return (*static_cast<std::function<double(int, int, double, double, double)>*> (callbackp_))(dim, tag, x, y, z);
+          }
+        };
+        // FIXME memory leak
+        auto *callback_ptr_ = new std::function<double(int,int,double,double,double)>(callback);
+        gmshModelMeshSetSizeCallback(&callback_caller_::call, callback_ptr_, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Remove the global mesh size callback.
+      inline void removeSizeCallback()
+      {
+        int ierr = 0;
+        gmshModelMeshRemoveSizeCallback(&ierr);
+        if(ierr) throwLastError();
+      }
+
       // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
       // nodes distributed according to `meshType' and `coef'. Currently supported
       // types are "Progression" (geometrical progression with power `coef') and

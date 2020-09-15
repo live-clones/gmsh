@@ -229,10 +229,20 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
   // global lc from entity
   double l4 = ge ? ge->getMeshSize() : MAX_LC;
 
-  double l5 = (ge && ge->dim() == 1) ? ((GEdge*)ge)->prescribedMeshSizeAtParam(U) : MAX_LC;
+  double l5 = (ge && ge->dim() == 1) ?
+    ((GEdge*)ge)->prescribedMeshSizeAtParam(U) : MAX_LC;
+
+  // lc from callback
+  double l6 = MAX_LC;
+  if(CTX::instance()->mesh.lcCallback) {
+    int dim = (ge ? ge->dim() : -1);
+    int tag = (ge ? ge->tag() : -1);
+    l6 = CTX::instance()->mesh.lcCallback(dim, tag, X, Y, Z);
+  }
 
   // take the minimum
-  double lc = std::min(std::min(std::min(std::min(l1, l2), l3), l4),l5);
+  double lc = std::min(std::min(std::min(std::min(std::min(l1, l2), l3), l4),
+                                l5), l6);
 
   return lc;
 }

@@ -1,12 +1,13 @@
 4.7.0 (Work-in-progress): API errors now throw exceptions with the last error
 message (instead of an integer error code); new API to retrieve "homogeneous"
 model-based data (for improved Python performance), to set interpolation
-matrices and to assign "automatic" transfinite meshing constraints; added option
-to save high-order periodic node info; added support for scripted window
-splitting; improved VTK reader; added support for Unicode command line arguments
-on Windows; removed bundled Mmg3D and added support for stock Mmg5; Gmsh now
-requires C++11 and CMake 3.1, and uses Eigen by default instead of Blas/Lapack
-for dense linear algebra; small bug fixes.
+matrices for high-order datasets, to assign "automatic" transfinite meshing
+constraints and to pass native (C++, C, Python or Julia) mesh size callback;
+added option to save high-order periodic node info; added support for scripted
+window splitting; improved VTK reader; added support for Unicode command line
+arguments on Windows; removed bundled Mmg3D and added support for stock Mmg 5;
+Gmsh now requires C++11 and CMake 3.1, and uses Eigen by default instead of
+Blas/Lapack for dense linear algebra; small bug fixes.
 
 4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
 (without node insertion), and to only mesh non-meshed entities; added ability to

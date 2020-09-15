@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <functional>
 
 #define GMSH_API_VERSION "4.7"
 #define GMSH_API_VERSION_MAJOR 4
@@ -1168,6 +1169,18 @@ namespace gmsh { // Top-level functions
                                               const int tag,
                                               const std::vector<double> & parametricCoord,
                                               const std::vector<double> & sizes);
+
+      // gmsh::model::mesh::setSizeCallback
+      //
+      // Set a global mesh size callback. The callback should take 5 arguments
+      // (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
+      // coordinates (`x', `y', `z').
+      GMSH_API void setSizeCallback(std::function<double(int, int, double, double, double)> callback);
+
+      // gmsh::model::mesh::removeSizeCallback
+      //
+      // Remove the global mesh size callback.
+      GMSH_API void removeSizeCallback();
 
       // gmsh::model::mesh::setTransfiniteCurve
       //
