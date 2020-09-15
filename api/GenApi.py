@@ -758,8 +758,10 @@ def isizefun(name):
                     "            api_" + name + "_ = api_" + name +
                     "_type_(lambda dim, tag, x, y, z, _ : " + name + "(dim, tag, x, y, z))")
     a.python_arg = "api_" + name + "_, None"
-    a.julia_pre = ("api_" + name + "_ = @cfunction($" + name +
-                   ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble))")
+    a.julia_pre = (
+        "api_" + name + "__(dim, tag, x, y, z, data) = " + name + "(dim, tag, x, y, z)\n    " +
+        "api_" + name + "_ = @cfunction($api_" + name + "__" +
+                   ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
     a.julia_arg = "api_" + name + "_, C_NULL"
     a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
     return a
