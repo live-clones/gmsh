@@ -686,6 +686,7 @@ void meshGEdge::operator()(GEdge *ge)
   double a;
   int filterMinimumN;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
+  Msg::Debug("  target: %i points (minimum is %i, used %li integration points)", N, filterMinimumN, Points.size());
 
   // printFandPrimitive(ge->tag(),Points);
 
@@ -783,6 +784,7 @@ void meshGEdge::operator()(GEdge *ge)
     v0->z() = beg_p.z();
   }
   ge->meshStatistics.status = GEdge::DONE;
+  Msg::Debug("  -> curve mesh has %li interior points", ge->mesh_vertices.size());
 }
 
 void orientMeshGEdge::operator()(GEdge *ge)
