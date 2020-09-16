@@ -62,7 +62,10 @@ def _ovectorpair(ptr, size):
     return v
 
 def _ovectorint(ptr, size):
-    if size > 0 and use_numpy:
+    if use_numpy:
+        if size == 0 :
+            lib.gmshFree(ptr)
+            return numpy.ndarray((0,),numpy.int32)
         v = numpy.ctypeslib.as_array(ptr, (size, ))
         weakreffinalize(v, lib.gmshFree, ptr)
     else:
@@ -71,7 +74,10 @@ def _ovectorint(ptr, size):
     return v
 
 def _ovectorsize(ptr, size):
-    if size > 0 and use_numpy:
+    if use_numpy:
+        if size == 0 :
+            lib.gmshFree(ptr)
+            return numpy.ndarray((0,),numpy.uintp)
         v = numpy.ctypeslib.as_array(ptr, (size, ))
         weakreffinalize(v, lib.gmshFree, ptr)
     else:
@@ -80,7 +86,10 @@ def _ovectorsize(ptr, size):
     return v
 
 def _ovectordouble(ptr, size):
-    if size > 0 and use_numpy:
+    if use_numpy:
+        if size == 0 :
+            lib.gmshFree(ptr)
+            return numpy.ndarray((0,),numpy.float64)
         v = numpy.ctypeslib.as_array(ptr, (size, ))
         weakreffinalize(v, lib.gmshFree, ptr)
     else:
