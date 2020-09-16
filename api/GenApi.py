@@ -1078,7 +1078,7 @@ def _ovectorpair(ptr, size):
     return v
 
 def _ovectorint(ptr, size):
-    if use_numpy:
+    if size > 0 and use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size, ))
         weakreffinalize(v, lib.{6}Free, ptr)
     else:
@@ -1087,7 +1087,7 @@ def _ovectorint(ptr, size):
     return v
 
 def _ovectorsize(ptr, size):
-    if use_numpy:
+    if size > 0 and use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size, ))
         weakreffinalize(v, lib.{6}Free, ptr)
     else:
@@ -1096,7 +1096,7 @@ def _ovectorsize(ptr, size):
     return v
 
 def _ovectordouble(ptr, size):
-    if use_numpy:
+    if size > 0 and use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size, ))
         weakreffinalize(v, lib.{6}Free, ptr)
     else:
