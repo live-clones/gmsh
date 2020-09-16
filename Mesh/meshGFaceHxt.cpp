@@ -122,10 +122,10 @@ int meshGFaceHxt(GModel *gm)
                              .tolerance = 10e-9,
                              .numTris = 0};
 
-  //printf("INPUT SIZE = \n");
-  //float temp = 0;
-  //scanf("%f",&temp);
-  //opt.uniformSize = temp;
+  printf("INPUT SIZE = \n");
+  float temp = 0;
+  scanf("%f",&temp);
+  opt.uniformSize = temp;
 
   
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data,fmesh));

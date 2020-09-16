@@ -249,6 +249,7 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
   HXT_CHECK(hxtFree(&np2p));
 
 
+
   HXT_CHECK(hxtFree(&node2node));
 
   return HXT_STATUS_OK;
