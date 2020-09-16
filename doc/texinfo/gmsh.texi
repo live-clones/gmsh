@@ -2860,7 +2860,6 @@ computed using other fields.
 @item
 @dots{}
 @end itemize
-
 The list of available fields with their options is given below. An
 example is available in @ref{t10}.
 @item
