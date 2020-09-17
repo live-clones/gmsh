@@ -150,10 +150,14 @@ def _ivectordouble(o):
 def _ivectorpair(o):
     if use_numpy:
         array = numpy.ascontiguousarray(o, numpy.int32)
+        if(len(o) and (array.ndim != 2 or array.shape[1] != 2)):
+            raise Exception("Invalid data for input vector of pairs")
         ct = array.ctypes
         ct.array = array
-        return  ct, c_size_t(len(o) * 2)
+        return ct, c_size_t(len(o) * 2)
     else:
+        if(len(o) and len(o[0]) != 2):
+            raise Exception("Invalid data for input vector of pairs")
         return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
 
 def _ivectorstring(o):
