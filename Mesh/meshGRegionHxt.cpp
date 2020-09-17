@@ -18,6 +18,7 @@
 #include "GFace.h"
 #include "MTetrahedron.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MLine.h"
 #include "MPoint.h"
 #include "GmshMessage.h"
@@ -148,7 +149,7 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
   for(size_t i = 0; i < allEdges.size(); i++)
     i2e[allEdges[i]->tag()] = allEdges[i];
 
-  c2v.resize(m->vertices.num);
+  c2v.reserve(m->vertices.num);
   for(size_t i = c2v.size(); i < m->vertices.num; i++) {
     c2v[i] = NULL;
   }
@@ -166,7 +167,10 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
     for(size_t i = 0; i < gf->triangles.size(); i++) {
       delete gf->triangles[i];
     }
-    gf->triangles.clear();
+    for(size_t i = 0; i < gf->quadrangles.size(); i++) {
+      delete gf->quadrangles[i];
+    }
+    gf->quadrangles.clear();
   }
 
   uint16_t warning = 0;
@@ -177,6 +181,9 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
     uint16_t c = m->lines.colors[i];
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
+
+    printf("%lu %lu\n",i0,i1);
+    
     std::map<uint32_t, GEdge *>::iterator ge = i2e.find(c);
     if(ge == i2e.end()) {
       if(warning != c) {
@@ -189,11 +196,15 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
       double *x = &m->vertices.coord[4 * i0];
       // FIXME compute true coordinates
       v0 = new MEdgeVertex(x[0], x[1], x[2], ge->second, 0);
+      c2v[i0]=v0;
+      ge->second->mesh_vertices.push_back(v0);
     }
     if(!v1) {
       // FIXME compute true coordinates
       double *x = &m->vertices.coord[4 * i1];
       v1 = new MEdgeVertex(x[0], x[1], x[2], ge->second, 0);
+      c2v[i1]=v1;
+      ge->second->mesh_vertices.push_back(v1);
     }
     ge->second->lines.push_back(new MLine(v0, v1));
   }
@@ -218,20 +229,83 @@ HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions,
       // FIXME compute true coordinates
       double *x = &m->vertices.coord[4 * i0];
       v0 = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      c2v[i0]=v0;
+      gf->second->mesh_vertices.push_back(v0);
     }
     if(!v1) {
       // FIXME compute true coordinates
       double *x = &m->vertices.coord[4 * i1];
       v1 = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      c2v[i1]=v1;
+      gf->second->mesh_vertices.push_back(v1);
     }
     if(!v2) {
       // FIXME compute true coordinates
       double *x = &m->vertices.coord[4 * i2];
       v2 = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      c2v[i2]=v2;
+      gf->second->mesh_vertices.push_back(v2);
     }
     gf->second->triangles.push_back(new MTriangle(v0, v1, v2));
   }
 
+  printf("DEBUG ::: %lu %lu\n",m->quads.num,m->vertices.num);
+  
+
+  for(size_t i = 0; i < m->quads.num; i++) {
+    uint32_t i0 = m->quads.node[4 * i + 0];
+    uint32_t i1 = m->quads.node[4 * i + 1];
+    uint32_t i2 = m->quads.node[4 * i + 2];
+    uint32_t i3 = m->quads.node[4 * i + 3];
+
+
+    printf("%lu %lu %lu %lu\n",i0,i1,i2,i3);
+
+    uint16_t c = m->quads.colors[i];
+    MVertex *v0 = c2v[i0];
+    MVertex *v1 = c2v[i1];
+    MVertex *v2 = c2v[i2];
+    MVertex *v3 = c2v[i3];
+    std::map<uint32_t, GFace *>::iterator gf = i2f.find(c);
+    if(gf == i2f.end()) {
+      if(warning != c) {
+        warning = c;
+        Msg::Warning("Could not find surface for HXT color %d", c);
+      }
+      continue;
+    }
+    if(!v0) {
+      // FIXME compute true coordinates
+      double *x = &m->vertices.coord[4 * i0];
+      v0 = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      gf->second->mesh_vertices.push_back(v0);
+      c2v[i0]=v0;
+    }
+    if(!v1) {
+      // FIXME compute true coordinates
+      double *x = &m->vertices.coord[4 * i1];
+      v1 = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      gf->second->mesh_vertices.push_back(v1);
+      c2v[i1]=v1;
+    }
+    if(!v2) {
+      // FIXME compute true coordinates
+      double *x = &m->vertices.coord[4 * i2];
+      v2 = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      gf->second->mesh_vertices.push_back(v2);
+      c2v[i2]=v2;      
+    }
+    if(!v3) {
+      // FIXME compute true coordinates
+      double *x = &m->vertices.coord[4 * i3];
+      v3 = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      gf->second->mesh_vertices.push_back(v3);
+      c2v[i3]=v3;
+    }
+    gf->second->quadrangles.push_back(new MQuadrangle(v0, v1, v2,v3));
+  }
+
+  
   for(size_t i = 0; i < m->tetrahedra.num; i++) {
     uint32_t *i0 = &m->tetrahedra.node[4 * i + 0];
     uint16_t c = m->tetrahedra.colors[i];
