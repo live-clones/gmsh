@@ -1686,6 +1686,32 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
   std::vector<GEdge *> tempe;
   tempe.insert(tempe.begin(), gm->firstEdge(), gm->lastEdge());
 
+
+  if (std::getenv("NO_SMOOTHING") != NULL) {
+    Msg::Info("smoothing and simplification disabled in meshWinslow2d (env var NO_SMOOTHING)");
+    return;
+  }
+  if (std::getenv("NO_SIMPLIFICATION") != NULL) {
+    Msg::Info("simplification disabled in meshWinslow2d (env var NO_SIMPLIFICATION)");
+
+    int sIter = nIter/4;
+    sIter = 10;
+
+    for (int NIT = 0;NIT<4;NIT++){  
+      for (size_t i=0;i<tempe.size();i++)
+        meshWinslow1d (tempe[i],sIter, f);    
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+      for (size_t i=0;i<temp.size();i++){
+        meshWinslow2d (temp[i],sIter, f, false);
+      }
+    }
+
+    return;
+  }
+  
   std::map<MVertex*,int, MVertexPtrLessThan> newSings;
   std::map<MVertex *, int, MVertexPtrLessThan> s;
   bool singRead = getSingularitiesFromFile (gm->getName()+"_singularities.txt", temp, s);
@@ -1776,7 +1802,7 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
     int ITER =0;
     while (1) {
       int C = computeMaximalCavities (temp[i], s);
-      break;
+      //      break;
       if (!C || ITER++ > 20)break;
     }
   }

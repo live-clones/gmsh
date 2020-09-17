@@ -165,7 +165,7 @@ HXTStatus hxtCanWeCollapseBoundaryCavity (HXTMesh *mesh,
   HXT_UNUSED(vertices2lines);
   HXT_UNUSED(maxNumLinesToVertex);
   
-  double dotThreshold = 0.5; // TODO attention 
+  double dotThreshold = 0.99; // TODO attention 
 
   // The other node of the edge
   uint64_t vr = (edges->node[2*ce+0] == vd) ? edges->node[2*ce+1] : edges->node[2*ce+0];
@@ -502,7 +502,7 @@ HXTStatus hxtCanWeCollapseInteriorEdge(HXTMesh *mesh,
   HXT_UNUSED(vertices2lines);
   HXT_UNUSED(maxNumLinesToVertex);
 
-  double dotThreshold = 0.5; // TODO attention 
+  double dotThreshold = 0.99; // TODO attention 
   
   // Triangles that will be deleted
   uint64_t t0 = edges->edg2tri[2*ce+0];
@@ -964,6 +964,8 @@ HXTStatus hxtCollapseBoundaryEdge (HXTMesh *mesh,
   if (mesh->lines.node[2*ol+1] == vd) mesh->lines.node[2*ol+1] = vr;
 
   mesh->lines.colors[cl] = UINT16_MAX;
+
+  flagE[ce] = UINT32_MAX;
 
   // Update parent 
   if (parent[vr].type == 1) parent[vr].id = ol;

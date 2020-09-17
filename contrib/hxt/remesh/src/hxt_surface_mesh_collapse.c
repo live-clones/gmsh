@@ -129,7 +129,7 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
 
   for (uint32_t i=0; i<tmesh->vertices.num; i++) flagV[i] = UINT32_MAX;
 
-  int countDeletedTri = 0 ;
+  uint64_t countDeletedTri = 0 ;
   for (uint64_t i=0; i<tmesh->triangles.num; i++){
     if (tmesh->triangles.colors[i] == UINT16_MAX){
       countDeletedTri++;
@@ -158,7 +158,10 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
     nmesh->vertices.num++;
   }
 
-  nmesh->triangles.size = tmesh->triangles.num - countDeletedTri; //TODO what is a good estimation ???
+  //*************************************************************
+  // Triangles
+  //*************************************************************
+  nmesh->triangles.size = tmesh->triangles.num - countDeletedTri; 
   nmesh->triangles.num = nmesh->triangles.size;
   HXT_CHECK(hxtAlignedMalloc(&nmesh->triangles.node,(3*nmesh->triangles.size)*sizeof(uint32_t)));
   HXT_CHECK(hxtAlignedMalloc(&nmesh->triangles.colors,(nmesh->triangles.size)*sizeof(uint16_t)));
@@ -172,8 +175,45 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
     cT++;
   }
 
+  //*************************************************************
+  // Lines
+  //*************************************************************
+  uint64_t countDeletedLines = 0 ;
+  for (uint64_t i=0; i<tmesh->lines.num; i++){
+    if (tmesh->lines.colors[i] == UINT16_MAX){
+      countDeletedLines++;
+      continue;
+    }
+  }
+  nmesh->lines.size = tmesh->lines.num - countDeletedLines; 
+  nmesh->lines.num = nmesh->lines.size;
+  HXT_CHECK(hxtAlignedMalloc(&nmesh->lines.node,(2*nmesh->lines.size)*sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&nmesh->lines.colors,(nmesh->lines.size)*sizeof(uint16_t)));
+  uint64_t cL = 0;
+  for (uint64_t i=0; i<tmesh->lines.num; i++){
+    if (tmesh->lines.colors[i] == UINT16_MAX) continue;
+    nmesh->lines.node[2*cL+0] = node2node[tmesh->lines.node[2*i+0]];
+    nmesh->lines.node[2*cL+1] = node2node[tmesh->lines.node[2*i+1]];
+    nmesh->lines.colors[cL] = tmesh->lines.colors[i];
+    cL++;
+  }
 
+  //*************************************************************
+  // Points
+  //*************************************************************
+  nmesh->points.size = tmesh->points.size;
+  nmesh->points.num = nmesh->points.size;
+  HXT_CHECK(hxtAlignedMalloc(&nmesh->points.node,nmesh->points.size*sizeof(uint32_t)));
+  
+  for (uint64_t i=0; i<nmesh->points.num; i++){
+    nmesh->points.node[i] = node2node[tmesh->points.node[i]];
+  }
+  
+
+
+  //*************************************************************
   // Update p2t
+  //*************************************************************
   uint64_t *np2t;
   HXT_CHECK(hxtMalloc(&np2t,nmesh->vertices.num*sizeof(uint64_t)));
   for (uint32_t i=0; i<nmesh->vertices.num; i++) np2t[i] = UINT64_MAX;
@@ -191,7 +231,9 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
   HXT_CHECK(hxtFree(&np2t));
 
 
+  //*************************************************************
   // Update p2p
+  //*************************************************************
   uint32_t *np2p;
   HXT_CHECK(hxtMalloc(&np2p,nmesh->vertices.num*sizeof(uint32_t)));
   for (uint32_t i=0; i<nmesh->vertices.num; i++) np2p[i] = UINT32_MAX;
@@ -332,7 +374,7 @@ HXTStatus hxtSurfaceMeshCollapseSwap(const HXTMesh *mesh,
 
     }
 
-    HXT_INFO_COND(opt->verbosity>0,"%d - Number of swaps in collapsing %d", ii, numSwaps);
+    HXT_INFO_COND(opt->verbosity>0,"    --- %d - Number of swaps in collapsing %d", ii, numSwaps);
     if (numSwapsOld == numSwaps) break;
     numSwapsOld = numSwaps;
   }
@@ -357,8 +399,8 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
                                  HXTMesh *tmesh, // intermediate mesh with initial+generated points
                                  HXTEdges *tedges, 
                                  HXTPointGenParent *tparent,
-                                 uint64_t *p2t,
-                                 uint32_t *p2p,
+                                 uint64_t *p2t, // array with vertices to initial mesh triangles
+                                 uint32_t *p2p, // array with final mesh vertices to generate points index 
                                  uint32_t *flagV,
                                  HXTMesh *nmesh) // to store final mesh 
 {
@@ -467,194 +509,190 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
 
   uint32_t countPointsCollapsed = 0;
 
-for (uint32_t kkk=0; kkk<10; kkk++){
-
-  //***********************************************************************************************
-  //***********************************************************************************************
-  // For interior vertices
-  //***********************************************************************************************
-  //***********************************************************************************************
-  HXT_INFO("");
-  HXT_INFO("--- Removing points on interior");
-
-  uint32_t numCollapsedInteriorPoints = 0;
-  uint32_t old = numCollapsedInteriorPoints;
-
-
-for (uint32_t kk=0; kk<100; kk++){
-
-  for (uint32_t i=0; i<tmesh->vertices.num; i++){
-
-    uint32_t cv = i; 
-    //cv = (rand()%(tmesh->vertices.num-0+1))+0;
-
-    // Check if vertex is to be removed
-    if (flagV[cv] != UINT32_MAX) continue;
-
-    // Check if vertex is on the interior 
-    if (tparent[cv].type != 2) continue;
-
-    int collapsed = 0;
-    HXT_CHECK(hxtRemoveInteriorVertex(tmesh, 
-                                      tedges, 
-                                      tparent,
-                                      flagE, 
-                                      lines2edges,
-                                      edges2lines,
-                                      lines2triangles,
-                                      maxNumTriToLine,
-                                      vertices2lines,
-                                      maxNumLinesToVertex,
-                                      cv, 
-                                      &collapsed));
-
-    if (collapsed == 1){
-      flagV[cv] = 1;
-      countPointsCollapsed ++;
-      numCollapsedInteriorPoints++;
-    }
-
-    /*char buffer[32];*/
-    /*snprintf(buffer,sizeof(char)*32,"tmeshes/fm_%02i_%06i_%06i.msh",(int)kk,(int)numCollapsedInteriorPoints,(int)cv);*/
-    /*HXT_CHECK(hxtMeshWriteGmsh(tmesh, buffer));*/
-
-  }
-
-  HXT_INFO_COND(opt->verbosity>0,"Iteration %d collapsed = %d", kk, countPointsCollapsed);
-
-  int finalSwaps = 1;
-  HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
-                                       directions,
-                                       sizemap,
-                                       opt,
-                                       tmesh,
-                                       tedges,
-                                       flagE,
-                                       tparent,
-                                       edges2lines,
-                                       maxNumTriToLine,
-                                       lines2triangles,
-                                       kk,
-                                       finalSwaps));
-
-
-
-  if (old == numCollapsedInteriorPoints) break;
-  old = numCollapsedInteriorPoints;
-
-}
-
-
-
-
-  if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH4interiorcollapse.msh"));
-  
-  //***********************************************************************************************
-  // Swapping after collapse of points on interior   
-  //***********************************************************************************************
-  
-  HXT_INFO("--- Swaps after removing points on interior");
-
-  int numSwapsCollapseLines = 0;
-  HXT_INFO_COND(opt->verbosity>0,"Number of swaps = %d ", numSwapsCollapseLines);
-  HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
-                                       directions,
-                                       sizemap,
-                                       opt,
-                                       tmesh,
-                                       tedges,
-                                       flagE,
-                                       tparent,
-                                       edges2lines,
-                                       maxNumTriToLine,
-                                       lines2triangles,
-                                       0,
-                                       numSwapsCollapseLines));
-
-  if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH5interiorcollapseswap.msh"));
-
-
-
-
-
-  //***********************************************************************************************
-  //***********************************************************************************************
-  // For vertices on Lines
-  //***********************************************************************************************
-  //***********************************************************************************************
-  HXT_INFO("--- Collapsing points on lines");
-
-  uint32_t numCollapsedLines=0;
-
-  old = numCollapsedLines;
-
-for (uint32_t kk=0; kk<10; kk++){
-  for (uint32_t cv=0; cv<tmesh->vertices.num; cv++){
-
-    // Check if vertex is to be removed
-    if (flagV[cv] != UINT32_MAX) continue;
-
-    // Check if vertex is on the boundary 
-    if (tparent[cv].type != 1) continue;
+  uint32_t kkkTot = 10;
+  for (uint32_t kkk=0; kkk<kkkTot; kkk++){
+    HXT_INFO("");
+    HXT_INFO("--- Collapsing iteration %d/%d",kkk,kkkTot);
     
-    int collapsed = 0;
-    HXT_CHECK(hxtRemoveBoundaryVertex(tmesh,
-                                      tedges,
-                                      tparent,
-                                      flagE,
-                                      lines2edges,
-                                      edges2lines,
-                                      lines2triangles,
-                                      maxNumTriToLine,
-                                      vertices2lines,
-                                      maxNumLinesToVertex,
-                                      cv,
-                                      &collapsed));
-
-    if (collapsed == 1){
-      flagV[cv] = 1;
-      countPointsCollapsed ++;
-      numCollapsedLines++;
+    //***********************************************************************************************
+    //***********************************************************************************************
+    // For interior vertices
+    //***********************************************************************************************
+    //***********************************************************************************************
+    HXT_INFO("  --- Removing points on interior");
+    
+    uint32_t numCollapsedInteriorPoints = 0;
+    uint32_t old = numCollapsedInteriorPoints;
+    
+    
+    for (uint32_t kk=0; kk<100; kk++){
+    
+      for (uint32_t i=0; i<tmesh->vertices.num; i++){
+    
+        uint32_t cv = i; 
+    
+        // Check if vertex is to be removed
+        if (flagV[cv] != UINT32_MAX) continue;
+    
+        // Check if vertex is on the interior 
+        if (tparent[cv].type != 2) continue;
+    
+        int collapsed = 0;
+        HXT_CHECK(hxtRemoveInteriorVertex(tmesh, 
+                                          tedges, 
+                                          tparent,
+                                          flagE, 
+                                          lines2edges,
+                                          edges2lines,
+                                          lines2triangles,
+                                          maxNumTriToLine,
+                                          vertices2lines,
+                                          maxNumLinesToVertex,
+                                          cv, 
+                                          &collapsed));
+    
+        if (collapsed == 1){
+          flagV[cv] = 1;
+          countPointsCollapsed ++;
+          numCollapsedInteriorPoints++;
+        }
+    
+        /*char buffer[32];*/
+        /*snprintf(buffer,sizeof(char)*32,"tmeshes/fm_%02i_%06i_%06i.msh",(int)kk,(int)numCollapsedInteriorPoints,(int)cv);*/
+        /*HXT_CHECK(hxtMeshWriteGmsh(tmesh, buffer));*/
+    
+      }
+    
+      HXT_INFO_COND(opt->verbosity>0,"    --- Iteration %d collapsed = %d", kk, countPointsCollapsed);
+    
+      int finalSwaps = 1;
+      HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
+                                           directions,
+                                           sizemap,
+                                           opt,
+                                           tmesh,
+                                           tedges,
+                                           flagE,
+                                           tparent,
+                                           edges2lines,
+                                           maxNumTriToLine,
+                                           lines2triangles,
+                                           kk,
+                                           finalSwaps));
+    
+    
+    
+      if (old == numCollapsedInteriorPoints) break;
+      old = numCollapsedInteriorPoints;
+    
     }
 
-    /*char buffer[32];*/
-    /*snprintf(buffer,sizeof(char)*32,"tmeshes/fm_%06i_%06i.msh",(int)numCollapsedLines,(int)cv);*/
-    /*HXT_CHECK(hxtMeshWriteGmsh(tmesh, buffer));*/
-
-  }
-  HXT_INFO_COND(opt->verbosity>0,"Iteration %d collapsed = %d", kk, countPointsCollapsed);
-
-  int finalSwaps = 1;
-  HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
-                                       directions,
-                                       sizemap,
-                                       opt,
-                                       tmesh,
-                                       tedges,
-                                       flagE,
-                                       tparent,
-                                       edges2lines,
-                                       maxNumTriToLine,
-                                       lines2triangles,
-                                       kk,
-                                       finalSwaps));
-
-
-
-  if (old == numCollapsedLines) break;
-  old = numCollapsedLines;
-
-}
-
-
-  if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH6linecollapse.msh"));
+    
+    if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH4interiorcollapse.msh"));
+    
+    //***********************************************************************************************
+    // Swapping after collapse of points on interior   
+    //***********************************************************************************************
+    
+    HXT_INFO("  --- Swaps after removing points on interior");
+    
+    int numSwapsCollapseLines = 0;
+    HXT_INFO_COND(opt->verbosity>0,"  --- Number of swaps = %d ", numSwapsCollapseLines);
+    HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
+                                         directions,
+                                         sizemap,
+                                         opt,
+                                         tmesh,
+                                         tedges,
+                                         flagE,
+                                         tparent,
+                                         edges2lines,
+                                         maxNumTriToLine,
+                                         lines2triangles,
+                                         0,
+                                         numSwapsCollapseLines));
+    
+    if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH5interiorcollapseswap.msh"));
+    
+    //***********************************************************************************************
+    //***********************************************************************************************
+    // For vertices on Lines
+    //***********************************************************************************************
+    //***********************************************************************************************
+    HXT_INFO("  --- Collapsing points on lines");
+    
+    uint32_t numCollapsedLines=0;
+    
+    old = numCollapsedLines;
+    
+    for (uint32_t kk=0; kk<100; kk++){
+      for (uint32_t cv=0; cv<tmesh->vertices.num; cv++){
+    
+        // Check if vertex is to be removed
+        if (flagV[cv] != UINT32_MAX) continue;
+    
+        // Check if vertex is on the boundary 
+        if (tparent[cv].type != 1) continue;
+        
+        int collapsed = 0;
+        HXT_CHECK(hxtRemoveBoundaryVertex(tmesh,
+                                          tedges,
+                                          tparent,
+                                          flagE,
+                                          lines2edges,
+                                          edges2lines,
+                                          lines2triangles,
+                                          maxNumTriToLine,
+                                          vertices2lines,
+                                          maxNumLinesToVertex,
+                                          cv,
+                                          &collapsed));
+    
+        if (collapsed == 1){
+          flagV[cv] = 1;
+          countPointsCollapsed ++;
+          numCollapsedLines++;
+        }
+    
+        /*char buffer[32];*/
+        /*snprintf(buffer,sizeof(char)*32,"tmeshes/fm_%06i_%06i.msh",(int)numCollapsedLines,(int)cv);*/
+        /*HXT_CHECK(hxtMeshWriteGmsh(tmesh, buffer));*/
+    
+      }
+      HXT_INFO_COND(opt->verbosity>0,"    --- Iteration %d collapsed = %d", kk, countPointsCollapsed);
+    
+      int finalSwaps = 1;
+      HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
+                                           directions,
+                                           sizemap,
+                                           opt,
+                                           tmesh,
+                                           tedges,
+                                           flagE,
+                                           tparent,
+                                           edges2lines,
+                                           maxNumTriToLine,
+                                           lines2triangles,
+                                           kk,
+                                           finalSwaps));
+    
+    
+    
+      if (old == numCollapsedLines) break;
+      old = numCollapsedLines;
+    
+    }
+    
+    
+    if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH6linecollapse.msh"));
 
   }
 
   //***********************************************************************************************
   // Final swapping after collapsing edges
   //***********************************************************************************************
-  //  
+    
+  HXT_INFO("");
   HXT_INFO("--- Swaps final");
 
   int finalSwaps = 50;
@@ -674,27 +712,20 @@ for (uint32_t kk=0; kk<10; kk++){
 
   if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH7finalswaps.msh"));
 
-  HXT_INFO("");
-  HXT_INFO("Total Number of collapsed points       %d", countPointsCollapsed);
-  HXT_INFO("Total Number of NOT Collapsed Points   %d", countPointsToDelete-countPointsCollapsed);
-
-
-
-  if (countPointsToDelete-countPointsCollapsed != 0 && opt->quadSurfaces == 1){
-    return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Some points were not collapsed - converting to quads cannot work");
-  }
-
   // TODO debug or delete
-  uint32_t countNOT =0;
+  uint32_t countNOTcollapsedTotal =0;
+  uint32_t countNOTcollapsedLines =0;
   for (uint32_t i=0; i<tmesh->vertices.num; i++){
     if (tparent[i].type == 4) continue;
-    if (flagV[i] == UINT32_MAX) countNOT++;
+    if (flagV[i] == UINT32_MAX) countNOTcollapsedTotal++;
+    if (tparent[i].type != 2 && flagV[i] == UINT32_MAX) countNOTcollapsedLines++;
   }
-  if (countNOT != (countPointsToDelete-countPointsCollapsed))
+  if (countNOTcollapsedTotal != (countPointsToDelete-countPointsCollapsed))
     return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Problem in counting points not collapsed");
 
   // Write out not collapsed points
-  if(countNOT!=0){
+  if(countNOTcollapsedTotal!=0){
+    HXT_CHECK(hxtMeshWriteGmsh(tmesh, "finalmeshNOTcollapsed.msh"));
     FILE *nc;
     hxtPosInit("pointsNotCollapsed.pos","points",&nc);
     for (uint32_t i=0; i<tmesh->vertices.num; i++){
@@ -706,6 +737,20 @@ for (uint32_t kk=0; kk<10; kk++){
     }
     hxtPosFinish(nc);
   }
+
+
+
+  HXT_INFO("");
+  HXT_INFO("Total Number of collapsed points       %d", countPointsCollapsed);
+  HXT_INFO("Total Number of NOT Collapsed Points   %d", countPointsToDelete-countPointsCollapsed);
+  HXT_INFO("Number of NOT Collapsed Points lines   %d", countPointsToDelete-countPointsCollapsed);
+
+
+  /*if (countPointsToDelete-countPointsCollapsed != 0 && opt->quadSurfaces == 1){*/
+    /*return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Some points were not collapsed - converting to quads cannot work");*/
+  /*}*/
+
+
 
   //*************************************************
   // Transfer to new mesh 

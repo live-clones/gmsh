@@ -109,7 +109,7 @@ int meshGFaceHxt(GModel *gm)
   HXT_CHECK(hxtMeshCreate(&fmesh));
 
   // TODO 
-  HXTPointGenOptions opt = { .verbosity = 1,
+  HXTPointGenOptions opt = { .verbosity = 0,
                              .generateLines = 1,
                              .generateSurfaces = 1,
                              .generateVolumes = 0,
@@ -118,10 +118,15 @@ int meshGFaceHxt(GModel *gm)
                              .walkMethod2D = 0,
                              .walkMethod3D = 0,
                              .dirType = 0,
-                             .uniformSize = 0.08,
+                             .uniformSize = 2.5,
                              .areaThreshold = 10e-9,
                              .tolerance = 10e-9,
                              .numTris = 0};
+
+  printf("INPUT SIZE = \n");
+  float temp = 0;
+  scanf("%f",&temp);
+  opt.uniformSize = temp;
 
   
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data,fmesh));
@@ -129,7 +134,7 @@ int meshGFaceHxt(GModel *gm)
   c2v.clear();
   //  HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
 
-  GModel *gm2 = new GModel("circle");
+  GModel *gm2 = new GModel(gm->getName());
   
   gm2->readMSH("finalmesh.msh");	  	  
 

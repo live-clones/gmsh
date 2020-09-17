@@ -1021,7 +1021,7 @@ namespace QMT {
             }
           }
           // info("            |   norm, min = {}, max = {}", nmi, nma);
-          const double EPS_NORM = 1.e-2;
+          const double EPS_NORM = 1.e-1;
           if (nma > 1. + EPS_NORM) {
             steps[iter] /= 10;
             dt = steps[iter];

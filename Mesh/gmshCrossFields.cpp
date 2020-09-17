@@ -2019,7 +2019,8 @@ static bool isSingular (MVertex *v,
   std::vector<std::vector<MVertex *> > vsorted;
   SortEdgeConsecutive(contour, vsorted);
   // should be periodic
-  bool periodic = vsorted[0][0] == vsorted[0][vsorted[0].size()-1];
+  bool periodic = false;
+  if (vsorted.size() > 0) periodic = vsorted[0][0] == vsorted[0][vsorted[0].size()-1];
   if (periodic){
     vsorted[0].resize(vsorted[0].size()-1);
     double diffs = 0;
@@ -2204,7 +2205,8 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
     std::vector<std::vector<MVertex *> > vsorted;
     SortEdgeConsecutive(contour, vsorted);
 
-    bool periodic = vsorted[0][0] == vsorted[0][vsorted[0].size()-1];
+    bool periodic = false;
+    if (vsorted.size() > 0) periodic = vsorted[0][0] == vsorted[0][vsorted[0].size()-1];
 
     if (periodic){
       vsorted[0].resize(vsorted[0].size()-1);
@@ -2217,9 +2219,9 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
         MEdge e01 (v0,v1);
         MEdge e12 (v1,v2);
         MEdge e1 (v,v1);
-	SVector3 v_01 (v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
-	SVector3 v_12 (v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
-	SVector3 nn = crossprod(v_12,v_01);
+        SVector3 v_01 (v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
+        SVector3 v_12 (v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
+        SVector3 nn = crossprod(v_12,v_01);
         std::map<MEdge, cross2d, MEdgeLessThan>::iterator it01 = C.find(e01);
         std::map<MEdge, cross2d, MEdgeLessThan>::iterator it12 = C.find(e12);
         std::map<MEdge, cross2d, MEdgeLessThan>::iterator it1 = C.find(e1);
@@ -2231,11 +2233,11 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
       double curvature = 2*M_PI - K[v];
 
       source[v] = diffs_external-curvature;
-      
+
       if (fabs(diffs_external/*-curvature*/) > .95*M_PI/2) {
-	//	printf("%12.5E\n",diffs_external);
-	if (diffs_external < 0) indices[v] = 3;
-	else indices[v] = 5;
+        //	printf("%12.5E\n",diffs_external);
+        if (diffs_external < 0) indices[v] = 3;
+        else indices[v] = 5;
         singularities.insert(v);
       }
     }
