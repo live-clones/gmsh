@@ -112,19 +112,9 @@ namespace QMT {
       const BoundaryProjector* projector = NULL);
 
   /**
-   * @brief Compute a cross field (one cross per edge) with the successive heat diffusion 
-   * and projection. See the README.md for more details. Very fast if MUMPS is enabled.
-   *
-   * @param[in] meshName Name of the gmsh model that contains the triangulation used for the computation
-   * @param[out] crossFieldTag Index of the view that will contains the generated cross field
-   * @param[in] nbSteps Number of timesteps in the scheme. One timestep corresponds to a given diffusion length.
-   *                    Should be sufficient (>= 3) but not too much (<10) for fast computation. 
-   *                    nbSteps = 4 is a good trade-off.
-   * @param[in,out] edge_to_angle If not NULL, the function will fill the map with the cross angle (relative to the edge vector)
-   *                              for each edge [v1,v2] (with v1 < v2) of the triangulation.
-   * @param[in] bc_expansion_layers If non-zero, expand Dirichlet boundary conditions to adjacent layers of edges.
-   * @warning this function calls the gmsh API
-   * @return True if the computation succeed
+   * WARNING: deprecated, no longer available. 
+   * Can be replaced by compute_cross_field_with_multilevel_diffusion() combined
+   * with create_cross_field_theta_view()
    */
   bool compute_cross_field_with_heat(
       const std::string& meshName,
@@ -133,7 +123,10 @@ namespace QMT {
       std::map<std::pair<size_t,size_t>,double>* edge_to_angle = NULL,
       int bc_expansion_layers = 0);
 
-
+  bool create_cross_field_theta_view(
+      const std::string& meshName,
+      const std::map<std::array<size_t,2>,double>& edgeTheta,
+      int& crossFieldTag);
 
 
   /****************************************************************************************/

@@ -1,0 +1,42 @@
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+#ifndef FAST_SCALED_CROSS_FIELDS_H
+#define FAST_SCALED_CROSS_FIELDS_H
+
+#include <vector>
+#include <map>
+#include <string>
+class GModel;
+class GFace;
+class MEdge;
+class MEdgeLessThan;
+
+int computeScaledCrossFieldView(GModel* gm,
+    int& dataListViewTag, 
+    std::size_t targetNumberOfQuads,
+    int nbDiffusionLevels = 10, 
+    double thresholdNormConvergence = 1.e-3, 
+    int nbBoundaryExtensionLayer = 1,
+    const std::string& viewName = "scaled_cross_field");
+
+
+/* Sub-functions that may be called independantly */
+int extractTriangularMeshFromFaces(
+    const std::vector<GFace*>& faces,
+    std::vector<std::array<double,3> >& points,
+    std::vector<size_t>& pointTag,
+    std::vector<std::array<size_t,2> >& lines,
+    std::vector<std::array<size_t,3> >& triangles);
+
+int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map<std::array<size_t,2>, double>& edgeTheta,
+    int nbDiffusionLevels = 10, double thresholdNormConvergence = 1.e-3, int nbBoundaryExtensionLayer = 1);
+
+int computeCrossFieldScaling(const std::vector<GFace*>& faces, const std::map<std::array<size_t,2>, double>& edgeTheta,
+    std::size_t targetNumberOfQuads,
+    std::vector<std::size_t>& nodeTags, std::vector<double>& scaling);
+
+
+#endif
