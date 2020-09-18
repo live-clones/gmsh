@@ -9,6 +9,8 @@
 
 #include "hxt_split_edge.h"
 
+#include "hxt_rtree_wrapper.h"
+
 //#include "hxt_point_gen_realloc.h"
 //#include "hxt_split_edge.h"
 
@@ -223,221 +225,103 @@ HXTStatus hxtSurfaceMeshExportAlignedEdges(HXTMesh *mesh,
 //**********************************************************************************************************
 //**********************************************************************************************************
 //
-// SIMPLE SMOOTHING
+// FUNCTION: find closest triangle from rtree 
 //
 //**********************************************************************************************************
 //**********************************************************************************************************
-HXTStatus hxtPointGenSmoothing(HXTMesh *mesh)
+HXTStatus hxtPointGenProjectCloseRTree(HXTMesh *omesh, 
+                                      void *dataTri,
+                                      uint64_t ot,   // assigned triangle
+                                      double *pp,
+                                      uint64_t *nt,
+                                      double *np)
 {
+  //============================================================================
+  // Define a box size to search 
+  // taking into account the lenghts of the original triangle
+  double *p0 = omesh->vertices.coord + 4*omesh->triangles.node[3*ot+0];
+  double *p1 = omesh->vertices.coord + 4*omesh->triangles.node[3*ot+1];
+  double size = distance(p0,p1);
+  double box = 1*size;
 
-  HXTEdges* edges;
-  HXT_CHECK(hxtEdgesCreateNonManifold(mesh,&edges));
-
-  for (uint64_t ct=0; ct<mesh->triangles.num; ct++){
-
-    int bypass = 0;
-    for (uint64_t j=0; j<3; j++){
-      uint32_t ce = edges->tri2edg[3*ct+j];
-      uint64_t nt = edges->edg2tri[2*ce+0];
-      if (nt == ct) nt = edges->edg2tri[2*ce+1];
-      if (mesh->triangles.colors[ct] != mesh->triangles.colors[nt]) bypass = 1;
-    }
-    if (bypass == 1) continue;
-
-    uint32_t cv = mesh->triangles.node[3*ct+0]; 
-    int pass = 0;
-
-    for (uint32_t k=0; k<edges->numEdges; k++){
-      uint64_t t0 = edges->edg2tri[2*k+0];
-      uint64_t t1 = edges->edg2tri[2*k+1];
-      if (mesh->triangles.colors[t0] == mesh->triangles.colors[t1]) continue;
-      uint32_t v0 = edges->node[2*k+0];
-      uint32_t v1 = edges->node[2*k+1];
-      if (cv == v0 || cv == v1){
-        pass = 1; 
-        break;
-      }
-    }
-    if (pass == 1) continue;
-
-    uint64_t cavSize = 0;
-    uint64_t cavity[1000];
-    HXT_CHECK(hxtVertexCavity(mesh, edges, cv, ct, &cavSize, cavity));
-
-    // Build edges of that vertex
-    uint32_t cavSizeEdges = 0;
-    uint32_t cavityEdges[1000];
-    HXT_CHECK(hxtVertexCavityEdges(mesh, edges, cv, ct, &cavSizeEdges, cavityEdges));
-
-    double x = 0;
-    double y = 0;
-    double z = 0;
-    int vertNum = 0;
-    for (uint32_t kk =0 ;kk<cavSizeEdges; kk++){
-      uint32_t ce = cavityEdges[kk];
-      uint32_t v0 = edges->node[2*ce+0];
-      uint32_t v1 = edges->node[2*ce+1];
-      if (cv == v0){
-        x += mesh->vertices.coord[4*v1+0];
-        y += mesh->vertices.coord[4*v1+1];
-        z += mesh->vertices.coord[4*v1+2];
-      }else if (cv == v1){
-        x += mesh->vertices.coord[4*v0+0];
-        y += mesh->vertices.coord[4*v0+1];
-        z += mesh->vertices.coord[4*v0+2];
-      }else 
-        return HXT_STATUS_ERROR;
-      vertNum++;
-    }
-    mesh->vertices.coord[4*cv+0] = x/vertNum;
-    mesh->vertices.coord[4*cv+1] = y/vertNum;
-    mesh->vertices.coord[4*cv+2] = z/vertNum;
-
-  }
-
-  HXT_CHECK(hxtEdgesDelete(&edges));
-
-  return HXT_STATUS_OK; 
-}
+  double ppmin[3] = {pp[0] - box, pp[1] - box, pp[2] - box};
+  double ppmax[3] = {pp[0] + box, pp[1] + box, pp[2] + box};
  
-//**********************************************************************************************************
-//**********************************************************************************************************
-//
-// FUNCTION: projection of a point onto the original triangulation 
-//
-// TODO this is wrong, doesn't make sense to find the orthogonal projection to triangle 
-//
-//**********************************************************************************************************
-//**********************************************************************************************************
-HXTStatus hxtPointGenProjectSearchAllTriangles(HXTMesh *omesh, 
-                                               HXTEdges *oedges,
-                                               uint64_t ot,
-                                               double *op,   
-                                               uint64_t *nt,
-                                               double *np)
-{
+  //============================================================================
+  // Find close triangles from RTree of triangles  
+  uint64_t numCloseTris = 0;
+  uint64_t *idCloseTris = NULL;
+  HXT_CHECK(hxtRTreeSearch64(ppmin,ppmax,&numCloseTris,&idCloseTris,dataTri));
 
-  double tol = 10e-7;
-  double dist,t,closePt[3];
-  double minDist = 10e12;
-  for (uint32_t i=0; i<omesh->triangles.num; i++){
+  if (numCloseTris == 0){
+    return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Did not find close triangle, fix it !!!");
+    // SEARCH ALL TRIANGLES
+    /*double tol = 10e-7;*/
+    /*double dist,t,closePt[3];*/
+    /*double minDist = 10e12;*/
+    /*for (uint32_t i=0; i<omesh->triangles.num; i++){*/
+  
+      /*if (omesh->triangles.colors[i] != omesh->triangles.colors[ot]) continue;*/
+  
+        /*double *p0 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+0];*/
+        /*double *p1 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+1];*/
+        /*double *p2 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+2];*/
+        /*int inside = 0;*/
+        /*HXT_CHECK(hxtSignedDistancePointTriangle(p0,p1,p2,op,&dist,&inside,closePt));*/
+  
+        /*if (fabs(dist)<minDist && omesh->triangles.colors[ot] == omesh->triangles.colors[i]){*/
+          /*minDist = fabs(dist);*/
+          /**nt = i;*/
+          /*np[0] = closePt[0];*/
+          /*np[1] = closePt[1];*/
+          /*np[2] = closePt[2];*/
+        /*}*/
+    /*}*/
+  }
+  else{
 
-    if (omesh->triangles.colors[i] != omesh->triangles.colors[ot]) continue;
+    double minDist = 10e12;
+    for (uint64_t i=0; i<numCloseTris; i++){
+      uint64_t tri = idCloseTris[i];
+      double dist, closePt[3];
+      int in = 0;
+      HXT_CHECK(hxtSignedDistancePointTriangle(&omesh->vertices.coord[4*omesh->triangles.node[3*tri+0]],
+                                               &omesh->vertices.coord[4*omesh->triangles.node[3*tri+1]],
+                                               &omesh->vertices.coord[4*omesh->triangles.node[3*tri+2]],
+                                               pp,
+                                               &dist,
+                                               &in,
+                                               closePt));
 
-      double *p0 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+0];
-      double *p1 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+1];
-      double *p2 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+2];
-      int inside = 0;
-      HXT_CHECK(hxtSignedDistancePointTriangle(p0,p1,p2,op,&dist,&inside,closePt));
-
-      if (fabs(dist)<minDist && omesh->triangles.colors[ot] == omesh->triangles.colors[i]){
+      if (fabs(dist)<minDist && omesh->triangles.colors[ot] == omesh->triangles.colors[tri]){
         minDist = fabs(dist);
-        *nt = i;
+        *nt = tri;
         np[0] = closePt[0];
         np[1] = closePt[1];
         np[2] = closePt[2];
       }
+
+    }
+
   }
 
-  return HXT_STATUS_OK; 
-}
- 
-
-//**********************************************************************************************************
-//**********************************************************************************************************
-//
-// FUNCTION: projection of a point onto the original triangulation 
-//
-// TODO this is wrong, doesn't make sense to find the orthogonal projection to triangle 
-//
-//**********************************************************************************************************
-//**********************************************************************************************************
-HXTStatus hxtPointGenProject(HXTMesh *omesh, 
-                             HXTEdges *oedges,
-                             uint64_t ot,
-                             double *op,   
-                             uint64_t *nt,
-                             double *np)
-{
-
-  // Starting from original triangle ot 
-  // - take its plane
-  // - parallel from point op to the plane 
-  // - if it's inside the triangle (barycentric check) OK 
-  // - if not continue to next triangle (barycentric walk) 
-
-  uint64_t ct = ot;
-  int walkIter = 0;
-  int walk = 0;
-
-  while(walkIter<100){
-    double *p0 = omesh->vertices.coord + 4*omesh->triangles.node[3*ct+0];
-    double *p1 = omesh->vertices.coord + 4*omesh->triangles.node[3*ct+1];
-    double *p2 = omesh->vertices.coord + 4*omesh->triangles.node[3*ct+2];
-    double dist;
-    int inside;
-    double closePt[3];
-    HXT_CHECK(hxtSignedDistancePointTriangle(p0,p1,p2,op,&dist,&inside,closePt));
-
-    double uv[2];
-    HXT_CHECK(hxtGetBarycentric(omesh,ct,closePt,uv));
-
-    walk = 0;
-    if (fabs(dist)<10e-6 && uv[0] >= 0.0 && uv[1] >= 0.0 && 1.-uv[0]-uv[1] >= 0.0){
-      *nt = ct;
-      np[0] = closePt[0];
-      np[1] = closePt[1];
-      np[2] = closePt[2];
-
-      walk = -1;
-      break;
-    }
-    else{
-      if (uv[0] < 0 ){
-        walk=2;
-      }else if (uv[1]<0){
-        walk=0;
-      }else{
-        walk=1;
-      }
-    }
-
-    // Find next triangle to search 
-    uint64_t neigh;
-    hxtGetNeighbourTriangle(oedges, ct, walk, &neigh);
-    if (neigh == UINT64_MAX || omesh->triangles.colors[neigh] != omesh->triangles.colors[ot]){
-      walk = -100;
-      break;
-    }
-    else{
-      ct = neigh;
-    }
-    walkIter ++;
-  }
-
-  /*printf("%d \n", walk);*/
-  /*printf("%lu %lu \n", ot, *nt);*/
-  /*if (ot != *nt) printf("here\n");*/
-  /*printf("%f %f %f \n", op[0], op[1], op[2]);*/
-  /*printf("%f %f %f \n", np[0], np[1], np[2]);*/
-  /*if (1){ //ot != *nt){*/
-    /*FILE *test;*/
-    /*hxtPosInit("check.pos","points",&test);*/
-    /*hxtPosAddPoint(test,op,0);*/
-    /*hxtPosAddPoint(test,np,0);*/
-    /*uint32_t *ov = omesh->triangles.node + 3*ot;*/
-    /*uint32_t *nv = omesh->triangles.node + 3*(*nt);*/
-    /*hxtPosAddTriangle(test,&omesh->vertices.coord[4*ov[0]],&omesh->vertices.coord[4*ov[1]],&omesh->vertices.coord[4*ov[2]],0);*/
-    /*hxtPosAddTriangle(test,&omesh->vertices.coord[4*nv[0]],&omesh->vertices.coord[4*nv[1]],&omesh->vertices.coord[4*nv[2]],0);*/
-
-
-    /*hxtPosFinish(test);*/
-    /*//return HXT_STATUS_ERROR;*/
-  /*}*/
-
-
+  HXT_CHECK(hxtFree(&idCloseTris));
 
   return HXT_STATUS_OK;
+}
+
+//**********************************************************************************************************
+//**********************************************************************************************************
+//
+// SIMPLE SMOOTHING
+//
+//**********************************************************************************************************
+//**********************************************************************************************************
+HXTStatus hxtPointGenQuadSmoothing(HXTMesh *mesh)
+{
+
+
+  return HXT_STATUS_OK; 
 }
 
 //**********************************************************************************************************
@@ -997,9 +881,9 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTMesh *mesh,
 //**********************************************************************************************************
 HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
                                            HXTMesh *omesh,
-                                           HXTEdges *oedges,
                                            HXTMesh *mesh,
                                            HXTEdges *edges,
+                                           void *dataTri,
                                            uint32_t *isBoundary,
                                            uint64_t *p2t,
                                            uint32_t *bin)
@@ -1337,10 +1221,7 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
       if (p2t[i] == UINT64_MAX) return HXT_STATUS_ERROR;
       double np[3] = {mesh->vertices.coord[4*cv+0],mesh->vertices.coord[4*cv+1],mesh->vertices.coord[4*cv+2]};
 
-      HXT_CHECK(hxtPointGenProjectSearchAllTriangles(omesh,oedges,p2t[i],&mesh->vertices.coord[4*cv],&nt,np));
-      //HXT_CHECK(hxtPointGenProject(omesh,oedges,p2t[i],&mesh->vertices.coord[4*cv],&nt,np));
-
-
+      HXT_CHECK(hxtPointGenProjectCloseRTree(omesh,dataTri,p2t[i],&mesh->vertices.coord[4*cv],&nt,np));
 
       p2t[i] = nt;
       mesh->vertices.coord[4*cv+0] = np[0];
@@ -1493,14 +1374,23 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   HXT_INFO("========= Generation of bipartite quad mesh  ==========");
   HXT_INFO("");
 
+  // Create rtree with triangles of original mesh 
+  double tol = 10e-16;
+  void *dataTri;
+  HXT_CHECK(hxtRTreeCreate64(&dataTri));
+  for (uint64_t i=0; i<omesh->triangles.num; i++){
+    double *p0 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+0];
+    double *p1 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+1];
+    double *p2 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+2];
+    HXT_CHECK(hxtAddTriangleInRTree64(p0,p1,p2,tol,i,dataTri));
+  }
+
+
 
   // Create edges structure
   HXTEdges* edges;
   HXT_CHECK(hxtEdgesCreateNonManifold(mesh,&edges));
 
-  // Create edges structure for original mesh 
-  HXTEdges* oedges;
-  HXT_CHECK(hxtEdgesCreateNonManifold(omesh,&oedges));
 
 
   //==================================================================================
@@ -1544,9 +1434,7 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   for (uint64_t i=0; i<3*mesh->triangles.num; i++) flagTris[i] = UINT16_MAX;
 
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-
     uint32_t *v = mesh->triangles.node + 3*i;
-
     if (bin[v[0]] == bin[v[1]] && bin[v[1]] == bin[v[2]]){
       flagTris[i] = 1;
     }
@@ -1610,6 +1498,7 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       }
       else{
         // Search all triangles 
+        // TODO search with distance to triangle to find the true parent  
         for (uint64_t j=0; j<omesh->triangles.num; j++){
           if (omesh->triangles.colors[j] == color) p2t[v0] = j;
         }
@@ -1852,9 +1741,7 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       if (p2t[i] == UINT64_MAX) return HXT_STATUS_ERROR;
       double np[3] = {mesh->vertices.coord[4*cv+0],mesh->vertices.coord[4*cv+1],mesh->vertices.coord[4*cv+2]};
 
-      HXT_CHECK(hxtPointGenProjectSearchAllTriangles(omesh,oedges,p2t[i],&mesh->vertices.coord[4*cv],&nt,np));
-      //HXT_CHECK(hxtPointGenProject(omesh,oedges,p2t[i],&mesh->vertices.coord[4*cv],&nt,np));
-
+      HXT_CHECK(hxtPointGenProjectCloseRTree(omesh,dataTri,p2t[i],&mesh->vertices.coord[4*cv],&nt,np));
 
       p2t[i] = nt;
       mesh->vertices.coord[4*cv+0] = np[0];
@@ -1868,7 +1755,7 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   // Remove remaining bad triangles on the boundary
   //==================================================================================
   
-  HXT_CHECK(hxtPointGenQuadRemoveBadBoundary(opt,omesh,oedges,mesh,edges,isBoundary,p2t,bin));
+  HXT_CHECK(hxtPointGenQuadRemoveBadBoundary(opt,omesh,mesh,edges,dataTri,isBoundary,p2t,bin));
 
 
   //==================================================================================
@@ -1934,7 +1821,7 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   // Remove invalid quads and diamonds
   //==================================================================================
   
-  HXT_CHECK(hxtPointGenQuadRemoveInvalidQuads(mesh,edges,p2t,bin,isBoundary));
+  //HXT_CHECK(hxtPointGenQuadRemoveInvalidQuads(mesh,edges,p2t,bin,isBoundary));
 
   if(opt->verbosity==2) HXT_CHECK(hxtMeshWriteGmsh(mesh,"finalmeshInvalidQuads.msh"));
 
@@ -2014,10 +1901,10 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   // Clear things 
   //==================================================================================
 
+  HXT_CHECK(hxtRTreeDelete(&dataTri));
 
   HXT_CHECK(hxtFree(&flagTris));
   HXT_CHECK(hxtEdgesDelete(&edges));
-  HXT_CHECK(hxtEdgesDelete(&oedges));
   HXT_CHECK(hxtFree(&v2v));
   HXT_CHECK(hxtFree(&isBoundary));
 

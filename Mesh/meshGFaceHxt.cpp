@@ -7,6 +7,7 @@
 #include "GFace.h"
 #include "GmshMessage.h"
 #include "gmshCrossFields.h"
+#include "meshWinslow2d.h"
 
 #if defined(HAVE_HXT)
 extern "C" {
@@ -122,17 +123,25 @@ int meshGFaceHxt(GModel *gm)
                              .tolerance = 10e-9,
                              .numTris = 0};
 
-  //printf("INPUT SIZE = \n");
-  //float temp = 0;
-  //scanf("%f",&temp);
-  //opt.uniformSize = temp;
+  printf("INPUT SIZE = \n");
+  float temp = 0;
+  scanf("%f",&temp);
+  opt.uniformSize = temp;
 
   
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data,fmesh));
   v2c.clear();
   c2v.clear();
-  HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
-  gm->pruneMeshVertexAssociations();
+  //  HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
+
+  GModel *gm2 = new GModel(gm->getName());
+  
+  gm2->readMSH("finalmesh.msh");	  	  
+
+  printf("WINSLOW START\n");
+  meshWinslow2d (gm2);
+  printf("WINSLOW ENDS\n");
+  gm2->writeMSH("finalmesh_smoothed.msh", 4.0, false, true);	  	  
   HXT_CHECK(hxtMeshDelete(&fmesh));
  
  
@@ -141,7 +150,8 @@ int meshGFaceHxt(GModel *gm)
   free (data);
   HXT_CHECK(hxtMeshDelete(&mesh));
   
-
+  //  meshWinslow2d (gm);
+  
   return 0;
 }
 

@@ -12,9 +12,6 @@ HXTStatus hxtSurfaceMeshExportAlignedEdges(HXTMesh *mesh,
                                            const double *directions, 
                                            const double *sizemap);
 
-HXTStatus hxtPointGenSmoothing(HXTMesh *mesh);
-
-
 HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
                                  HXTMesh *omesh,
                                  HXTMesh *mesh, 

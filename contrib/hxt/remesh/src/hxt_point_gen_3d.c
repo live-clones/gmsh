@@ -956,8 +956,10 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
   uint32_t numGenPoints = 0;
   numGenPoints += fmesh->vertices.num;
 
+  uint32_t numSurfacePoints = numGenPoints;
+
   for (uint32_t i=0; i<fmesh->vertices.num; i++){
-    
+
     // Take coordinates of origin point
     double *originPoint = fmesh->vertices.coord + 4*i;
 

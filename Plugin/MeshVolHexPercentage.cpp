@@ -100,12 +100,14 @@ PView *GMSH_MeshVolHexPercentagePlugin::execute(PView *v)
   Msg::Info("hexes  = %d", hexes);
   Msg::Info("prisms = %d", prisms);
   Msg::Info("pyr    = %d", pyramids);
-  Msg::Info("total  =  %d", total);
+  Msg::Info("total  = %d\n", total);
 
 
+  double volRatio = volHex/vol;
   Msg::Info("Element ratio = %f", (float)hexes/(float)total);
-  Msg::Info("Volume ratio = %f", volHex/vol);
+  Msg::Info("Volume ratio = %f\n", volRatio);
 
+  Msg::Info("Hex volume  = %f", volHex);
   Msg::Info("Mesh volume (physical %d | dimension %d): %g",
             physical, dim, vol);
 
@@ -115,7 +117,7 @@ PView *GMSH_MeshVolHexPercentagePlugin::execute(PView *v)
   data2->SP.push_back(bbox.center().x());
   data2->SP.push_back(bbox.center().y());
   data2->SP.push_back(bbox.center().z());
-  data2->SP.push_back(vol);
+  data2->SP.push_back(volRatio);
   data2->NbSP = 1;
   v2->getOptions()->intervalsType = PViewOptions::Numeric;
   data2->setName("MeshVolHexPercentage");
