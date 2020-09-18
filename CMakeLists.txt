@@ -1324,19 +1324,18 @@ if(ENABLE_OCC)
     endif()
   endif()
 
-  # append OCC CAF libraries first...
-  if(NUM_OCC_CAF_LIBS EQUAL NUM_OCC_CAF_LIBS_REQUIRED)
-    set_config_option(HAVE_OCC_CAF "OpenCASCADE-CAF")
-    list(APPEND EXTERNAL_LIBRARIES ${OCC_CAF_LIBS} ${FREETYPE_LIBRARIES})
-    list(APPEND EXTERNAL_INCLUDES ${FREETYPE_INCLUDE_DIRS})
-    if(WIN32)
-      list(APPEND EXTERNAL_LIBRARIES "windowscodecs")
-      list(APPEND EXTERNAL_LIBRARIES "ole32")
-    endif()
-  endif()
-
-  # then append OCC libraries
   if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
+    # append OCC CAF libraries first...
+    if(NUM_OCC_CAF_LIBS EQUAL NUM_OCC_CAF_LIBS_REQUIRED)
+      set_config_option(HAVE_OCC_CAF "OpenCASCADE-CAF")
+      list(APPEND EXTERNAL_LIBRARIES ${OCC_CAF_LIBS} ${FREETYPE_LIBRARIES})
+      list(APPEND EXTERNAL_INCLUDES ${FREETYPE_INCLUDE_DIRS})
+      if(WIN32)
+        list(APPEND EXTERNAL_LIBRARIES "windowscodecs")
+        list(APPEND EXTERNAL_LIBRARIES "ole32")
+      endif()
+    endif()
+    # then append OCC libraries
     set_config_option(HAVE_OCC "OpenCASCADE")
     list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})
     list(APPEND EXTERNAL_INCLUDES ${OCC_INC})
