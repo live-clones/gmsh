@@ -1406,10 +1406,12 @@ GMSH_API int gmshModelGeoAddCompoundBSpline(int * curveTags, size_t curveTags_n,
  * `curveTags' should contain (signed) tags of model enties of dimension 1
  * forming a closed loop: a negative tag signifies that the underlying curve
  * is considered with reversed orientation. If `tag' is positive, set the tag
- * explicitly; otherwise a new tag is selected automatically. Return the tag
- * of the curve loop. */
+ * explicitly; otherwise a new tag is selected automatically. If `reorient' is
+ * set, automatically reorient the curves if necessary. Return the tag of the
+ * curve loop. */
 GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n,
                                       const int tag,
+                                      const int reorient,
                                       int * ierr);
 
 /* Add a plane surface defined by one or more curve loops `wireTags'. The

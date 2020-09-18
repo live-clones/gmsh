@@ -1605,10 +1605,12 @@ namespace gmsh { // Top-level functions
       // `curveTags' should contain (signed) tags of model enties of dimension 1
       // forming a closed loop: a negative tag signifies that the underlying curve
       // is considered with reversed orientation. If `tag' is positive, set the tag
-      // explicitly; otherwise a new tag is selected automatically. Return the tag
-      // of the curve loop.
+      // explicitly; otherwise a new tag is selected automatically. If `reorient'
+      // is set, automatically reorient the curves if necessary. Return the tag of
+      // the curve loop.
       GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
-                                const int tag = -1);
+                                const int tag = -1,
+                                const bool reorient = false);
 
       // gmsh::model::geo::addPlaneSurface
       //

@@ -3007,21 +3007,22 @@ function addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
 end
 
 """
-    gmsh.model.geo.addCurveLoop(curveTags, tag = -1)
+    gmsh.model.geo.addCurveLoop(curveTags, tag = -1, reorient = false)
 
 Add a curve loop (a closed wire) formed by the curves `curveTags`. `curveTags`
 should contain (signed) tags of model enties of dimension 1 forming a closed
 loop: a negative tag signifies that the underlying curve is considered with
 reversed orientation. If `tag` is positive, set the tag explicitly; otherwise a
-new tag is selected automatically. Return the tag of the curve loop.
+new tag is selected automatically. If `reorient` is set, automatically reorient
+the curves if necessary. Return the tag of the curve loop.
 
 Return an integer value.
 """
-function addCurveLoop(curveTags, tag = -1)
+function addCurveLoop(curveTags, tag = -1, reorient = false)
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelGeoAddCurveLoop, gmsh.lib), Cint,
-          (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, curveTags), length(curveTags), tag, ierr)
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, curveTags), length(curveTags), tag, reorient, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end

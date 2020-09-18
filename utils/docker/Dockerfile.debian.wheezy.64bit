@@ -54,12 +54,6 @@ RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=sna
 RUN curl -L -O https://support.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.10.5.tar.gz && tar zxvf hdf5-1.10.5.tar.gz && cd hdf5-1.10.5 && ./configure --disable-shared --prefix=/usr/local && make && make install && cd .. && rm -rf hdf5-1.10.5.tar.gz hdf5-1.10.5
 
 # -----------------------
-# MED
-# -----------------------
-
-RUN curl -L -O http://files.salome-platform.org/Salome/other/med-4.0.0.tar.gz && tar zxf med-4.0.0.tar.gz && cd med-4.0.0 && LIBS=-ldl ./configure --with-hdf5=/usr/local --enable-build-static --disable-shared --disable-python --disable-tests && make && make install && cd .. && rm -rf med-4.0.0.tar.gz med-4.0.0
-
-# -----------------------
 # CGNS
 # -----------------------
 
@@ -94,6 +88,12 @@ ENV PETSC_ARCH real_mumps_seq
 RUN cd ${SLEPC_DIR} && ./configure && make
 ENV PETSC_ARCH complex_mumps_seq
 RUN cd ${SLEPC_DIR} && ./configure && make
+
+# -----------------------
+# MED
+# -----------------------
+
+RUN curl -L -O http://files.salome-platform.org/Salome/other/med-4.1.0.tar.gz && tar zxf med-4.1.0.tar.gz && cd med-4.1.0 && LIBS=-ldl ./configure --with-hdf5=/usr/local --enable-build-static --disable-shared --disable-python --disable-fortran --disable-tests && make -i install && cd .. && rm -rf med-4.1.0.tar.gz med-4.1.0
 
 # -----------------------
 # FLTK

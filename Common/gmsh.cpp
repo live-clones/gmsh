@@ -5061,11 +5061,12 @@ gmsh::model::geo::addCompoundBSpline(const std::vector<int> &curveTags,
 }
 
 GMSH_API int gmsh::model::geo::addCurveLoop(const std::vector<int> &curveTags,
-                                            const int tag)
+                                            const int tag, const bool reorient)
 {
   _checkInit();
   int outTag = tag;
-  if(!GModel::current()->getGEOInternals()->addLineLoop(outTag, curveTags)) {
+  if(!GModel::current()->getGEOInternals()->addLineLoop(outTag, curveTags,
+                                                        reorient)) {
     throw Msg::GetLastError();
   }
   return outTag;

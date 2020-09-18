@@ -9,6 +9,8 @@ arguments on Windows; removed bundled Mmg3D and added support for stock Mmg 5;
 Gmsh now requires C++11 and CMake 3.1, and uses Eigen by default instead of
 Blas/Lapack for dense linear algebra; small bug fixes.
 
+* Incompatible API changes: new optional argument to geo/addCurveLoop
+
 4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
 (without node insertion), and to only mesh non-meshed entities; added ability to
 only remesh parts of discrete models; added support for mesh size fields and

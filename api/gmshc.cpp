@@ -2069,13 +2069,13 @@ GMSH_API int gmshModelGeoAddCompoundBSpline(int * curveTags, size_t curveTags_n,
   return result_api_;
 }
 
-GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n, const int tag, int * ierr)
+GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n, const int tag, const int reorient, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
-    result_api_ = gmsh::model::geo::addCurveLoop(api_curveTags_, tag);
+    result_api_ = gmsh::model::geo::addCurveLoop(api_curveTags_, tag, reorient);
   }
   catch(...){
     if(ierr) *ierr = 1;
