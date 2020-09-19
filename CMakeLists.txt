@@ -308,7 +308,7 @@ endif()
 # reduce memory usage of GCC on 32 bit systems
 if(NOT HAVE_64BIT_SIZE_T AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} --param ggc-min-expand=1 --param ggc-min-heapsize=1000000")
+      "${CMAKE_CXX_FLAGS} --param ggc-min-expand=1 --param ggc-min-heapsize=512000")
 endif()
 
 if(ENABLE_OPENMP)
