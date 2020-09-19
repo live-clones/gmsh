@@ -139,10 +139,7 @@ set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
 if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "
           "for expert Gmsh developers, not for regular Gmsh users, who should rely "
-          "on the stable public API (gmsh/api) instead. If you are repackaging Gmsh, "
-          "e.g. for a Linux distribution, please DO NOT distribute the private API "
-          "(i.e. all the internal headers) and ship the stable public API instead "
-          "(i.e. only the headers and modules in gmsh/api).")
+          "on the stable public API (gmsh/api) instead.")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h
     Post/*.h Plugin/*.h Graphics/*.h contrib/kbipack/*.h
     contrib/DiscreteIntegration/*.h contrib/HighOrderMeshOptimizer/*.h
@@ -306,6 +303,12 @@ if(MSVC)
       set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
     endif()
   endif()
+endif()
+
+# reduce memory usage of GCC on 32 bit systems
+if(NOT HAVE_64BIT_SIZE_T AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} --param ggc-min-expand=1 --param ggc-min-heapsize=1000000")
 endif()
 
 if(ENABLE_OPENMP)
@@ -1209,14 +1212,17 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
   set_config_option(HAVE_HXT "Hxt")
   # do not use arithmetic contraction in predicates.c
   if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
-    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
-                                PROPERTIES COMPILE_FLAGS "/fp:strict")
+    set_source_files_properties(
+        "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+        PROPERTIES COMPILE_FLAGS "/fp:strict")
   elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
-    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
-                                PROPERTIES COMPILE_FLAGS "-fp-model strict")
+    set_source_files_properties(
+        "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+        PROPERTIES COMPILE_FLAGS "-fp-model strict")
   elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
-                                PROPERTIES COMPILE_FLAGS  "-fno-unsafe-math-optimizations -ffp-contract=off")
+    set_source_files_properties(
+        "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+        PROPERTIES COMPILE_FLAGS  "-fno-unsafe-math-optimizations -ffp-contract=off")
   else()
     message(WARNING
       "Unsupported compiler !
@@ -1614,7 +1620,7 @@ if(NOT ENABLE_BUILD_DYNAMIC AND NOT ENABLE_BUILD_SHARED)
   endif()
 endif()
 
-# Linux-specific options
+# Linux-specific linker options
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   if(HAVE_OCC)
     find_library(RT_LIB rt)
@@ -1624,11 +1630,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   endif()
   if(CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Intel")
     add_definitions(-fPIC)
-  endif()
-  if(NOT HAVE_64BIT_SIZE_T)
-    # reduce gcc memory usage on 32 bit machines
-    set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} --param ggc-min-expand=1 --param ggc-min-heapsize=32768")
   endif()
 endif()
 
