@@ -1614,7 +1614,7 @@ if(NOT ENABLE_BUILD_DYNAMIC AND NOT ENABLE_BUILD_SHARED)
   endif()
 endif()
 
-# Linux-specific linking
+# Linux-specific options
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   if(HAVE_OCC)
     find_library(RT_LIB rt)
@@ -1624,6 +1624,11 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   endif()
   if(CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Intel")
     add_definitions(-fPIC)
+  endif()
+  if(NOT HAVE_64BIT_SIZE_T)
+    # reduce gcc memory usage on 32 bit machines
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} --param ggc-min-expand=1 --param ggc-min-heapsize=32768")
   endif()
 endif()
 
