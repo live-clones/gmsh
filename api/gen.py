@@ -34,8 +34,11 @@ with open(os.path.join(dirname, '..', 'CMakeLists.txt'), 'rt') as f:
     start = contents.find('GMSH_MINOR_VERSION') + 18
     end = contents.find(')', start)
     version_minor = int(contents[start:end])
+    start = contents.find('GMSH_PATCH_VERSION') + 18
+    end = contents.find(')', start)
+    version_patch = int(contents[start:end])
 
-api = API(version_major, version_minor)
+api = API(version_major, version_minor, version_patch)
 
 ################################################################################
 
