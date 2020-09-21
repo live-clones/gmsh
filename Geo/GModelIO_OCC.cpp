@@ -3355,8 +3355,9 @@ bool OCC_Internals::booleanOperator(
         Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
       else if(mapModified[i].Extent() == 0) { // not modified
-        outDimTags.push_back(std::pair<int, int>(dim, tag));
-        _toPreserve.insert(std::pair<int, int>(dim, tag));
+        auto ins = _toPreserve.insert(std::pair<int, int>(dim, tag));
+        if(ins.second) // it's not yet in outDimTags
+          outDimTags.push_back(std::pair<int, int>(dim, tag));
         Msg::Debug("BOOL (%d,%d) not modified", dim, tag);
       }
       else if(mapModified[i].Extent() == 1) { // replaced by single one
@@ -3367,8 +3368,9 @@ bool OCC_Internals::booleanOperator(
           if(tag != t)
             Msg::Info("Could not preserve tag of %dD object %d (->%d)", dim,
                       tag, t);
-          outDimTags.push_back(std::pair<int, int>(dim, t));
-          _toPreserve.insert(std::pair<int, int>(dim, t));
+          auto ins = _toPreserve.insert(std::pair<int, int>(dim, t));
+          if(ins.second) // it's not yet in outDimTags
+            outDimTags.push_back(std::pair<int, int>(dim, t));
         }
         Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
       }
