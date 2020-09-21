@@ -34,15 +34,18 @@ with open(os.path.join(dirname, '..', 'CMakeLists.txt'), 'rt') as f:
     start = contents.find('GMSH_MINOR_VERSION') + 18
     end = contents.find(')', start)
     version_minor = int(contents[start:end])
+    start = contents.find('GMSH_PATCH_VERSION') + 18
+    end = contents.find(')', start)
+    version_patch = int(contents[start:end])
 
-api = API(version_major, version_minor)
+api = API(version_major, version_minor, version_patch)
 
 ################################################################################
 
 gmsh = api.add_module('gmsh', 'top-level functions')
 
 doc = '''Initialize Gmsh. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options).'''
-gmsh.add('initialize', doc, None, argcargv(), ibool('readConfigFiles', 'true', 'True', 'true'))
+gmsh.add('initialize', doc, None, iargcargv(), ibool('readConfigFiles', 'true', 'True', 'true'))
 
 doc = '''Finalize Gmsh. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize', doc, None)
@@ -377,6 +380,12 @@ mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 doc = '''Set mesh size constraints at the given parametric points `parametricCoord' on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 1 (lines) are handled.'''
 mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
 
+doc = '''Set a global mesh size callback. The callback should take 5 arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at coordinates (`x', `y', `z').'''
+mesh.add('setSizeCallback', doc, None, isizefun('callback'))
+
+doc = '''Remove the global mesh size callback.'''
+mesh.add('removeSizeCallback', doc, None)
+
 doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
 mesh.add('setTransfiniteCurve', doc, None, iint('tag'), iint('numNodes'), istring('meshType', '"Progression"'), idouble('coef', '1.'))
 
@@ -514,8 +523,8 @@ geo.add('addCompoundSpline', doc, oint, ivectorint('curveTags'), iint('numInterv
 doc = '''Add a b-spline with control points sampling the curves in `curveTags'. The density of sampling points on each curve is governed by `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the b-spline.'''
 geo.add('addCompoundBSpline', doc, oint, ivectorint('curveTags'), iint('numIntervals', '20'), iint('tag', '-1'))
 
-doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of model enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
-geo.add('addCurveLoop', doc, oint, ivectorint('curveTags'), iint('tag', '-1'))
+doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of model enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `reorient' is set, automatically reorient the curves if necessary. Return the tag of the curve loop.'''
+geo.add('addCurveLoop', doc, oint, ivectorint('curveTags'), iint('tag', '-1'), ibool('reorient', 'false', 'False'))
 
 doc = '''Add a plane surface defined by one or more curve loops `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 geo.add('addPlaneSurface', doc, oint, ivectorint('wireTags'), iint('tag', '-1'))

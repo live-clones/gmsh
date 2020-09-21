@@ -2828,7 +2828,7 @@ not by default), the mesh will be adapted with respect to the curvature
 of the model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
 which gives the number of elements per 2 Pi radians.
 @item
-Finally, you can specify a general background mesh size, expressed as a
+Next, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
 @itemize @bullet
 @item
@@ -2860,17 +2860,21 @@ computed using other fields.
 @item
 @dots{}
 @end itemize
-
 The list of available fields with their options is given below. An
 example is available in @ref{t10}.
+@item
+Finally, using the Gmsh API you can also specify a global mesh size
+callback in C++, C, Python or Julia using
+@code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
+gmsh/model/mesh}).
 @end enumerate
 
-The three aforementioned methods can be used simultaneously, in which
-case the smallest element size is selected at any given point. In
-addition, boundary mesh sizes (on curves or surfaces) are interpolated
-inside the enclosed entity (surface or volume, respectively) if the
-option @code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is
-by default).
+All the aforementioned methods can be used simultaneously, in which case
+the smallest element size is selected at any given point. In addition,
+boundary mesh sizes (on curves or surfaces) are interpolated inside the
+enclosed entity (surface or volume, respectively) if the option
+@code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is by
+default).
 
 All element sizes are further constrained in the interval [
 @code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
@@ -5184,6 +5188,8 @@ Python and Julia API examples, see the respective subdirectories in
 * t21:: Mesh partitioning
 * x1::  Geometry and mesh data
 * x2::  Mesh import, discrete entities, hybrid models, terrain meshing
+* x3::  Post-processing data import: list-based
+* x4::  Post-processing data import: model-based
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5598,7 +5604,7 @@ Also available in C++
 @c x2
 @c -------------------------------------------------------------------------
 
-@node x2,  , x1, Tutorial
+@node x2, x3, x1, Tutorial
 @section @code{x2}: Mesh import, discrete entities, hybrid models, terrain meshing
 
 See
@@ -5608,6 +5614,38 @@ Also available in C++
 
 @smallformat
 @verbatiminclude ../../tutorial/python/x2.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x3
+@c -------------------------------------------------------------------------
+
+@node x3, x4, x2, Tutorial
+@section @code{x3}: Post-processing data import: list-based
+
+See
+@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py,x3.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp,x3.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorial/python/x3.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x4
+@c -------------------------------------------------------------------------
+
+@node x4,  , x3, Tutorial
+@section @code{x4}: Post-processing data import: model-based
+
+See
+@url{@value{GITLAB-PREFIX}/tutorial/python/x4.py,x4.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp,x4.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorial/python/x4.py
 @end smallformat
 
 @c =========================================================================

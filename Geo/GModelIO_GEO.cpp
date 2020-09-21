@@ -384,7 +384,8 @@ bool GEO_Internals::addCompoundBSpline(int &tag, const std::vector<int> &curveTa
   return _addCompoundSpline(tag, curveTags, numIntervals, true);
 }
 
-bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
+bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags,
+                                bool reorient)
 {
   if(tag >= 0 && FindEdgeLoop(tag)) {
     Msg::Error("GEO line loop with tag %d already exists", tag);
@@ -396,12 +397,12 @@ bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
     int t = curveTags[i];
     List_Add(tmp, &t);
   }
-  SortEdgesInLoop(tag, tmp);
+  bool ok = SortEdgesInLoop(tag, tmp, reorient);
   EdgeLoop *l = CreateEdgeLoop(tag, tmp);
   Tree_Add(EdgeLoops, &l);
   List_Delete(tmp);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)

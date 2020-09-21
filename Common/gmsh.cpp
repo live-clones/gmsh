@@ -4199,6 +4199,19 @@ GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
   }
 }
 
+GMSH_API void gmsh::model::mesh::setSizeCallback(
+    std::function<double(int, int, double, double, double)> callback)
+{
+  _checkInit();
+  CTX::instance()->mesh.lcCallback = callback;
+}
+
+GMSH_API void gmsh::model::mesh::removeSizeCallback()
+{
+  _checkInit();
+  CTX::instance()->mesh.lcCallback = nullptr;
+}
+
 GMSH_API void
 gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
                                        const std::string &meshType,
@@ -5048,11 +5061,12 @@ gmsh::model::geo::addCompoundBSpline(const std::vector<int> &curveTags,
 }
 
 GMSH_API int gmsh::model::geo::addCurveLoop(const std::vector<int> &curveTags,
-                                            const int tag)
+                                            const int tag, const bool reorient)
 {
   _checkInit();
   int outTag = tag;
-  if(!GModel::current()->getGEOInternals()->addLineLoop(outTag, curveTags)) {
+  if(!GModel::current()->getGEOInternals()->addLineLoop(outTag, curveTags,
+                                                        reorient)) {
     throw Msg::GetLastError();
   }
   return outTag;
@@ -5117,8 +5131,10 @@ static ExtrudeParams *_getExtrudeParams(const std::vector<int> &numElements,
     e->mesh.NbElmLayer = numElements;
     e->mesh.hLayer = heights;
     if(e->mesh.hLayer.empty()) {
-      e->mesh.NbLayer = 1;
-      e->mesh.hLayer.push_back(1.);
+      e->mesh.NbLayer = numElements.size();
+      for(int i = 0; i < e->mesh.NbLayer; i++) {
+        e->mesh.hLayer.push_back((i + 1.) / e->mesh.NbLayer);
+      }
     }
     else {
       e->mesh.NbLayer = heights.size();
@@ -6268,25 +6284,31 @@ _addModelData(const int tag, const int step, const std::string &modelName,
       throw Msg::GetLastError();
     }
   }
+  PViewDataGModel::DataType type;
+  if(dataType == "NodeData")
+    type = PViewDataGModel::NodeData;
+  else if(dataType == "ElementData")
+    type = PViewDataGModel::ElementData;
+  else if(dataType == "ElementNodeData")
+    type = PViewDataGModel::ElementNodeData;
+  else if(dataType == "GaussPointData")
+    type = PViewDataGModel::GaussPointData;
+  else if(dataType == "Beam")
+    type = PViewDataGModel::BeamData;
+  else {
+    Msg::Error("Unknown type of view to add '%s'", dataType.c_str());
+    throw Msg::GetLastError();
+  }
+
   PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(view->getData());
-  if(!d) { // change the view type
+  bool changeType = false;
+  if(d && d->getType() != type) {
+    Msg::Warning("Changing type of view to '%s'", dataType.c_str());
+    changeType = true;
+  }
+  if(!d || changeType) { // change view type
     std::string name = view->getData()->getName();
     delete view->getData();
-    PViewDataGModel::DataType type;
-    if(dataType == "NodeData")
-      type = PViewDataGModel::NodeData;
-    else if(dataType == "ElementData")
-      type = PViewDataGModel::ElementData;
-    else if(dataType == "ElementNodeData")
-      type = PViewDataGModel::ElementNodeData;
-    else if(dataType == "GaussPointData")
-      type = PViewDataGModel::GaussPointData;
-    else if(dataType == "Beam")
-      type = PViewDataGModel::BeamData;
-    else {
-      Msg::Error("Unknown type of view to add '%s'", dataType.c_str());
-      throw Msg::GetLastError();
-    }
     d = new PViewDataGModel(type);
     d->setName(name);
     d->setFileName(name + ".msh");
@@ -6780,18 +6802,18 @@ GMSH_API void gmsh::view::setInterpolationMatrices(
   // field interpolation coefficients and exponents
   if((int)coef.size() != d * d) {
     Msg::Error("Wrong number of coefficients (%d != %d x %d)", (int)coef.size(),
-               d * d);
+               d, d);
     throw Msg::GetLastError();
   }
   if((int)exp.size() != d * 3) {
     Msg::Error("Wrong number of exponents (%d != %d x 3)", (int)exp.size(),
-               d * 3);
+               d);
     throw Msg::GetLastError();
   }
   fullMatrix<double> F(d, d), P(d, 3);
   for(int i = 0; i < d; i++) {
     for(int j = 0; j < d; j++) { F(i, j) = coef[d * i + j]; }
-    for(int j = 0; j < 3; j++) { P(i, j) = exp[d * i + j]; }
+    for(int j = 0; j < 3; j++) { P(i, j) = exp[3 * i + j]; }
   }
 
   if(dGeo <= 0) {
@@ -6802,18 +6824,18 @@ GMSH_API void gmsh::view::setInterpolationMatrices(
   // geometry interpolation coefficients and exponents
   if((int)coefGeo.size() != dGeo * dGeo) {
     Msg::Error("Wrong number of coefficients (%d != %d x %d)",
-               (int)coefGeo.size(), dGeo * dGeo);
+               (int)coefGeo.size(), dGeo, dGeo);
     throw Msg::GetLastError();
   }
   if((int)expGeo.size() != dGeo * 3) {
     Msg::Error("Wrong number of exponents (%d != %d x 3)", (int)expGeo.size(),
-               dGeo * 3);
+               dGeo);
     throw Msg::GetLastError();
   }
   fullMatrix<double> Fg(dGeo, dGeo), Pg(dGeo, 3);
   for(int i = 0; i < dGeo; i++) {
     for(int j = 0; j < dGeo; j++) { Fg(i, j) = coefGeo[dGeo * i + j]; }
-    for(int j = 0; j < 3; j++) { Pg(i, j) = expGeo[dGeo * i + j]; }
+    for(int j = 0; j < 3; j++) { Pg(i, j) = expGeo[3 * i + j]; }
   }
   data->setInterpolationMatrices(itype, F, P, Fg, Pg);
 #else

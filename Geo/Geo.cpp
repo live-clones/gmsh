@@ -3376,12 +3376,12 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id,
   return true;
 }
 
-void SortEdgesInLoop(int num, List_T *edges, bool orient)
+bool SortEdgesInLoop(int num, List_T *edges, bool reorient)
 {
-  // This function sorts the edges in an EdgeLoop and detects any
-  // subloops. Warning: the input edges are supposed to be *oriented* (Without
-  // this sort, it is very difficult to write general scriptable surface
-  // generation in complex cases)
+  // This function sorts the edges in an edge loop; if reorient is set, it
+  // reorients the edges (and creates reversed edges if necessary). The routine
+  // also detects subloops if reorient is not set; this is useful for writing
+  // general scriptable surface generation in complex cases.
   Curve *c, *c0, *c1, *c2;
   int nbEdges = List_Nbr(edges);
   List_T *temp = List_Create(nbEdges, 1, sizeof(Curve *));
@@ -3395,7 +3395,7 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient)
         Msg::Debug("Aborting curve loop sort for discrete curve: "
                    "let's hope you know what you're doing ;-)");
         List_Delete(temp);
-        return;
+        return true;
       }
     }
     else {
@@ -3403,13 +3403,14 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient)
                  "let's hope you know what you're doing ;-)",
                  j);
       List_Delete(temp);
-      return;
+      return true;
     }
   }
   List_Reset(edges);
 
-  if(!List_Nbr(temp)) return;
+  if(!List_Nbr(temp)) return true;
 
+  bool ok = true;
   int j = 0, k = 0;
   c0 = c1 = *(Curve **)List_Pointer(temp, 0);
   List_Add(edges, &c1->Num);
@@ -3417,9 +3418,12 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient)
   while(List_Nbr(edges) < nbEdges) {
     for(int i = 0; i < List_Nbr(temp); i++) {
       c2 = *(Curve **)List_Pointer(temp, i);
-      // reverse loop if not ordered correctly !
-      if(orient && c1->end == c2->end) {
-        Curve *c2R = CreateReversedCurve(c2);
+      if(reorient && c1->end == c2->end) {
+        Curve *c2R = FindCurve(-c2->Num);
+        if(!c2R) {
+          Msg::Debug("Creating reversed curve -%d", -c2->Num);
+          c2R = CreateReversedCurve(c2);
+        }
         c2 = c2R;
       }
       if(c1->end == c2->beg) {
@@ -3441,10 +3445,12 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient)
     }
     if(j++ > nbEdges) {
       Msg::Error("Curve Loop %d is wrong", num);
+      ok = false;
       break;
     }
   }
   List_Delete(temp);
+  return ok;
 }
 
 bool SetSurfaceGeneratrices(Surface *s, List_T *loops)

@@ -318,6 +318,9 @@ std::string GEdge::getAdditionalInfoString(bool multline)
 
   if(_v0 && _v1) {
     sstream << "Boundary points: " << _v0->tag() << ", " << _v1->tag();
+    GPoint p0 = _v0->point();
+    GPoint p1 = _v1->point();
+    sstream << " (distance = " << p0.distance(p1) << ")";
     if(multline)
       sstream << "\n";
     else

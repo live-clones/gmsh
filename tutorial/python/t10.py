@@ -11,9 +11,9 @@
 # size "Fields".
 
 import gmsh
-import math
+import sys
 
-gmsh.initialize()
+gmsh.initialize(sys.argv)
 gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t10")
@@ -101,6 +101,12 @@ gmsh.model.mesh.field.setNumbers(7, "FieldsList", [2, 3, 5, 6])
 
 gmsh.model.mesh.field.setAsBackgroundMesh(7)
 
+# The API also allows to set a global mesh size callback, which is called each
+# time the mesh size is queried
+def meshSizeCallback(dim, tag, x, y, z):
+    return 0.02 * x + 0.01
+gmsh.model.mesh.setSizeCallback(meshSizeCallback)
+
 # To determine the size of mesh elements, Gmsh locally computes the minimum of
 #
 # 1) the size of the model bounding box;
@@ -109,7 +115,8 @@ gmsh.model.mesh.field.setAsBackgroundMesh(7)
 # 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based
 #    on the curvature and `Mesh.MinimumElementsPerTwoPi';
 # 4) the background mesh field;
-# 5) any per-entity mesh size constraint.
+# 5) any per-entity mesh size constraint;
+# 6) the mesh size returned by the mesh size callback, if any.
 #
 # This value is then constrained in the interval
 # [`Mesh.CharacteristicLengthMin', `Mesh.CharacteristicLengthMax'] and

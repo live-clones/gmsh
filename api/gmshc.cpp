@@ -1508,6 +1508,28 @@ GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim, const int ta
   }
 }
 
+GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, void * data), void * callback_data, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setSizeCallback(std::bind(callback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, callback_data));
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRemoveSizeCallback(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::removeSizeCallback();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshSetTransfiniteCurve(const int tag, const int numNodes, const char * meshType, const double coef, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2047,13 +2069,13 @@ GMSH_API int gmshModelGeoAddCompoundBSpline(int * curveTags, size_t curveTags_n,
   return result_api_;
 }
 
-GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n, const int tag, int * ierr)
+GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n, const int tag, const int reorient, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
-    result_api_ = gmsh::model::geo::addCurveLoop(api_curveTags_, tag);
+    result_api_ = gmsh::model::geo::addCurveLoop(api_curveTags_, tag, reorient);
   }
   catch(...){
     if(ierr) *ierr = 1;

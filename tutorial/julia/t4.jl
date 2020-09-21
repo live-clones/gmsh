@@ -79,20 +79,45 @@ factory.addCurveLoop([11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10], 23)
 
 factory.addPlaneSurface([23,21], 24)
 
-# FIXME: this will be implemented through the gmshView API
-#  View "comments" {
-#    T2(10, -10, 0){ StrCat("Created on ", Today, " with Gmsh") };
-#    T3(0, 0.11, 0, TextAttributes("Align", "Center", "Font", "Helvetica")){ "Hole" };
-#    T3(0, 0.09, 0, TextAttributes("Align", "Center")){ "file://image.png@0.01x0" };
-#    T3(-0.01, 0.09, 0, 0){ "file://image.png@0.01x0,0,0,1,0,1,0" };
-#    T3(0, 0.12, 0, TextAttributes("Align", "Center")){ "file://image.png@0.01x0#" };
-#    T2(350, -7, 0){ "file://image.png@20x0" };
-# };
-
 factory.synchronize()
+
+v = gmsh.view.add("comments")
+
+gmsh.view.addListDataString(v, [10, -10], ["Created with Gmsh"])
+
+gmsh.view.addListDataString(v, [0, 0.11, 0], ["Hole"],
+                            ["Align", "Center", "Font", "Helvetica"])
+
+gmsh.view.addListDataString(v, [0, 0.09, 0], ["file://../t4_image.png@0.01x0"],
+                            ["Align", "Center"])
+
+gmsh.view.addListDataString(v, [-0.01, 0.09, 0],
+                            ["file://../t4_image.png@0.01x0,0,0,1,0,1,0"])
+
+gmsh.view.addListDataString(v, [0, 0.12, 0],
+                            ["file://../t4_image.png@0.01x0#"],
+                            ["Align", "Center"])
+
+gmsh.view.addListDataString(v, [150, -7], ["file://../t4_image.png@20x0"])
+
+gmsh.option.setString("View[0].DoubleClickedCommand",
+                      "Printf('View[0] has been double-clicked!');")
+gmsh.option.setString(
+    "Geometry.DoubleClickedLineCommand",
+    "Printf('Curve %g has been double-clicked!', Geometry.DoubleClickedEntityTag);")
+
+gmsh.model.setColor([(2, 22)], 127, 127, 127)
+gmsh.model.setColor([(2, 24)], 160, 32, 240)
+gmsh.model.setColor([(1, i) for i in 1:14], 255, 0, 0)
+gmsh.model.setColor([(1, i) for i in 15:20], 255, 255, 0)
 
 gmsh.model.mesh.generate(2)
 
 gmsh.write("t4.msh")
+
+# Launch the GUI to see the results:
+if !("-nopopup" in ARGS)
+    gmsh.fltk.run()
+end
 
 gmsh.finalize()

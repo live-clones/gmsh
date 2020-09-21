@@ -6,8 +6,42 @@
 #include <stdlib.h>
 #include "GmshGlobal.h"
 
+#if defined(WIN32) && !defined(__CYGWIN__)
+
+// in order to handle non-ASCII command line arguments on Windows, use wmain()
+// instead of main() (we could also use main() and retrieve the "wide" args with
+// GetCommandLineW() later on, but this would have side-effects on the flow for
+// e.g. initializing the api); using wmain() with the mingw compilers requires
+// adding the "-municode" linker flag
+
+#include <windows.h>
+#include <wchar.h>
+
+static char *toUTF8(wchar_t *src)
+{
+  if(!src) return NULL;
+  size_t srclen = wcslen(src);
+  int len = WideCharToMultiByte(CP_UTF8, 0, src, srclen, 0, 0, NULL, NULL);
+  char *out = new char[len + 1];
+  if(out) {
+    WideCharToMultiByte(CP_UTF8, 0, src, srclen, out, len, NULL, NULL);
+    out[len] = '\0';
+  }
+  return out;
+}
+
+int wmain(int argc, wchar_t *wargv[], wchar_t *envp[])
+{
+  char **argv = new char*[argc + 1];
+  for(int i = 0; i < argc; i++)
+    argv[i] = toUTF8(wargv[i]);
+  argv[argc] = NULL;
+
+#else
+
 int main(int argc, char *argv[])
 {
+#endif
 #if defined(HAVE_FLTK)
   return GmshMainFLTK(argc, argv);
 #else

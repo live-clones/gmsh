@@ -52,6 +52,9 @@ int main(int argc, char **argv)
   gmsh::model::getEntities(entities);
 
   for(std::size_t i = 0; i < entities.size(); i++) {
+    // Dimension and tag of the entity:
+    int dim = entities[i].first, tag = entities[i].second;
+
     // Mesh data is made of `elements' (points, lines, triangles, ...), defined
     // by an ordered list of their `nodes'. Elements and nodes are identified by
     // `tags' as well (strictly positive identification numbers), and are stored
@@ -67,9 +70,6 @@ int main(int argc, char **argv)
     // tetrahedra, hexahedra, etc. and all the nodes not classified on its
     // boundary or on its embedded entities.
 
-    // Dimension and tag of the entity:
-    int dim = entities[i].first, tag = entities[i].second;
-
     // Get the mesh nodes for the entity (dim, tag):
     std::vector<std::size_t> nodeTags;
     std::vector<double> nodeCoords, nodeParams;
@@ -79,6 +79,9 @@ int main(int argc, char **argv)
     std::vector<int> elemTypes;
     std::vector<std::vector<std::size_t> > elemTags, elemNodeTags;
     gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, dim, tag);
+
+    // Elements can also be obtained by type, by using `getElementTypes()'
+    // followed by `getElementsByType()'.
 
     // Let's print a summary of the information available on the entity and its
     // mesh.

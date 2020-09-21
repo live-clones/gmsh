@@ -98,6 +98,7 @@ CTX::CTX() : debugSurface(-1), gamepad(0)
   mesh.minCircPoints = mesh.order = 0;
   mesh.secondOrderLinear = mesh.secondOrderIncomplete = 0;
   mesh.lightLines = 2;
+  mesh.lcCallback = NULL;
 }
 
 CTX::~CTX()

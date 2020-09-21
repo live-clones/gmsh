@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.7).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.7.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -1785,6 +1785,31 @@ namespace gmsh { // Top-level functions
         gmshFree(api_sizes_);
       }
 
+      // Set a global mesh size callback. The callback should take 5 arguments
+      // (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
+      // coordinates (`x', `y', `z').
+      inline void setSizeCallback(std::function<double(int, int, double, double, double)> callback)
+      {
+        int ierr = 0;
+        struct callback_caller_  {
+          static double call(int dim, int tag, double x, double y, double z, void * callbackp_) {
+            return (*static_cast<std::function<double(int, int, double, double, double)>*> (callbackp_))(dim, tag, x, y, z);
+          }
+        };
+        // FIXME memory leak
+        auto *callback_ptr_ = new std::function<double(int,int,double,double,double)>(callback);
+        gmshModelMeshSetSizeCallback(&callback_caller_::call, callback_ptr_, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Remove the global mesh size callback.
+      inline void removeSizeCallback()
+      {
+        int ierr = 0;
+        gmshModelMeshRemoveSizeCallback(&ierr);
+        if(ierr) throwLastError();
+      }
+
       // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
       // nodes distributed according to `meshType' and `coef'. Currently supported
       // types are "Progression" (geometrical progression with power `coef') and
@@ -2402,14 +2427,16 @@ namespace gmsh { // Top-level functions
       // `curveTags' should contain (signed) tags of model enties of dimension 1
       // forming a closed loop: a negative tag signifies that the underlying curve
       // is considered with reversed orientation. If `tag' is positive, set the tag
-      // explicitly; otherwise a new tag is selected automatically. Return the tag
-      // of the curve loop.
+      // explicitly; otherwise a new tag is selected automatically. If `reorient'
+      // is set, automatically reorient the curves if necessary. Return the tag of
+      // the curve loop.
       inline int addCurveLoop(const std::vector<int> & curveTags,
-                              const int tag = -1)
+                              const int tag = -1,
+                              const bool reorient = false)
       {
         int ierr = 0;
         int *api_curveTags_; size_t api_curveTags_n_; vector2ptr(curveTags, &api_curveTags_, &api_curveTags_n_);
-        int result_api_ = gmshModelGeoAddCurveLoop(api_curveTags_, api_curveTags_n_, tag, &ierr);
+        int result_api_ = gmshModelGeoAddCurveLoop(api_curveTags_, api_curveTags_n_, tag, (int)reorient, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_curveTags_);
         return result_api_;

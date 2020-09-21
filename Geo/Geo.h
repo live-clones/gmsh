@@ -243,7 +243,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *curves);
 int RecognizeLineLoop(List_T *liste, int *loop);
 int RecognizeSurfaceLoop(List_T *liste, int *loop);
 
-void SortEdgesInLoop(int num, List_T *edges, bool orient = false);
+bool SortEdgesInLoop(int num, List_T *edges, bool reorient = false);
 bool SetSurfaceGeneratrices(Surface *s, List_T *loops);
 bool SetVolumeSurfaces(Volume *v, List_T *loops);
 

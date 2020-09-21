@@ -5,9 +5,6 @@
 
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
-# do not warn about non-definition of WIN32 on Cygwin
-set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-
 # if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
 # build type to "RelWithDebInfo" ("-O2 -g" with gcc) prior to calling
 # project()
@@ -142,10 +139,7 @@ set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
 if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "
           "for expert Gmsh developers, not for regular Gmsh users, who should rely "
-          "on the stable public API (gmsh/api) instead. If you are repackaging Gmsh, "
-          "e.g. for a Linux distribution, please DO NOT distribute the private API "
-          "(i.e. all the internal headers) and ship the stable public API instead "
-          "(i.e. only the headers and modules in gmsh/api).")
+          "on the stable public API (gmsh/api) instead.")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h
     Post/*.h Plugin/*.h Graphics/*.h contrib/kbipack/*.h
     contrib/DiscreteIntegration/*.h contrib/HighOrderMeshOptimizer/*.h
@@ -309,6 +303,12 @@ if(MSVC)
       set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
     endif()
   endif()
+endif()
+
+# reduce memory usage of GCC on 32 bit systems
+if(NOT HAVE_64BIT_SIZE_T AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} --param ggc-min-expand=1 --param ggc-min-heapsize=512000")
 endif()
 
 if(ENABLE_OPENMP)
@@ -1212,14 +1212,17 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
   set_config_option(HAVE_HXT "Hxt")
   # do not use arithmetic contraction in predicates.c
   if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
-    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
-                                PROPERTIES COMPILE_FLAGS "/fp:strict")
+    set_source_files_properties(
+        "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+        PROPERTIES COMPILE_FLAGS "/fp:strict")
   elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
-    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
-                                PROPERTIES COMPILE_FLAGS "-fp-model strict")
+    set_source_files_properties(
+        "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+        PROPERTIES COMPILE_FLAGS "-fp-model strict")
   elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
-                                PROPERTIES COMPILE_FLAGS  "-fno-unsafe-math-optimizations -ffp-contract=off")
+    set_source_files_properties(
+        "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+        PROPERTIES COMPILE_FLAGS  "-fno-unsafe-math-optimizations -ffp-contract=off")
   else()
     message(WARNING
       "Unsupported compiler !
@@ -1327,19 +1330,18 @@ if(ENABLE_OCC)
     endif()
   endif()
 
-  # append OCC CAF libraries first...
-  if(NUM_OCC_CAF_LIBS EQUAL NUM_OCC_CAF_LIBS_REQUIRED)
-    set_config_option(HAVE_OCC_CAF "OpenCASCADE-CAF")
-    list(APPEND EXTERNAL_LIBRARIES ${OCC_CAF_LIBS} ${FREETYPE_LIBRARIES})
-    list(APPEND EXTERNAL_INCLUDES ${FREETYPE_INCLUDE_DIRS})
-    if(WIN32)
-      list(APPEND EXTERNAL_LIBRARIES "windowscodecs")
-      list(APPEND EXTERNAL_LIBRARIES "ole32")
-    endif()
-  endif()
-
-  # then append OCC libraries
   if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
+    # append OCC CAF libraries first...
+    if(NUM_OCC_CAF_LIBS EQUAL NUM_OCC_CAF_LIBS_REQUIRED)
+      set_config_option(HAVE_OCC_CAF "OpenCASCADE-CAF")
+      list(APPEND EXTERNAL_LIBRARIES ${OCC_CAF_LIBS} ${FREETYPE_LIBRARIES})
+      list(APPEND EXTERNAL_INCLUDES ${FREETYPE_INCLUDE_DIRS})
+      if(WIN32)
+        list(APPEND EXTERNAL_LIBRARIES "windowscodecs")
+        list(APPEND EXTERNAL_LIBRARIES "ole32")
+      endif()
+    endif()
+    # then append OCC libraries
     set_config_option(HAVE_OCC "OpenCASCADE")
     list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})
     list(APPEND EXTERNAL_INCLUDES ${OCC_INC})
@@ -1618,7 +1620,7 @@ if(NOT ENABLE_BUILD_DYNAMIC AND NOT ENABLE_BUILD_SHARED)
   endif()
 endif()
 
-# Linux-specific linking
+# Linux-specific linker options
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   if(HAVE_OCC)
     find_library(RT_LIB rt)
@@ -1706,13 +1708,18 @@ target_link_libraries(gmsh ${LINK_LIBRARIES})
 
 # Windows specific linker options
 if(WIN32 AND NOT MSVC)
-  set(FLAGS "-Wl,--stack,16777216 -mwindows")
+  set(FLAGS "-Wl,--stack,16777216 -static -municode")
+  if(HAVE_FLTK)
+    set(FLAGS "${FLAGS} -mwindows")
+  else()
+    set(FLAGS "${FLAGS} -mconsole")
+  endif()
   if(HAVE_64BIT_SIZE_T)
     set(FLAGS "${FLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win64Icon.res\"")
   else()
     set(FLAGS "${FLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res\"")
   endif()
-  set_target_properties(gmsh PROPERTIES LINK_FLAGS "${FLAGS} -static")
+  set_target_properties(gmsh PROPERTIES LINK_FLAGS "${FLAGS}")
   if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     set_target_properties(shared PROPERTIES LINK_FLAGS -static)
   endif()
@@ -2106,7 +2113,13 @@ if(NOT DISABLE_GMSH_TESTS)
       add_executable(${TEST} WIN32 ${TESTFILE})
       target_link_libraries(${TEST} shared)
       if(WIN32 AND NOT MSVC)
-        set_target_properties(${TEST} PROPERTIES LINK_FLAGS "-mwindows -static")
+        set(FLAGS "-static")
+        if(HAVE_FLTK)
+          set(FLAGS "${FLAGS} -mwindows")
+        else()
+          set(FLAGS "${FLAGS} -mconsole")
+        endif()
+        set_target_properties(${TEST} PROPERTIES LINK_FLAGS "${FLAGS}")
       endif()
       add_test(${TEST}_cpp ${TEST})
     endforeach()

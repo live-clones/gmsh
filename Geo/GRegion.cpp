@@ -174,6 +174,7 @@ void GRegion::resetMeshAttributes()
   meshAttributes.method = MESH_UNSTRUCTURED;
   meshAttributes.extrude = 0;
   meshAttributes.QuadTri = NO_QUADTRI;
+  meshAttributes.meshSize = MAX_LC;
 }
 
 SBoundingBox3d GRegion::bounds(bool fast)
