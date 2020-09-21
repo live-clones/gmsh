@@ -18,7 +18,7 @@ import os
 import platform
 from math import pi
 
-GMSH_API_VERSION = "4.7"
+GMSH_API_VERSION = "4.7.0"
 GMSH_API_VERSION_MAJOR = 4
 GMSH_API_VERSION_MINOR = 7
 GMSH_API_VERSION_PATCH = 0

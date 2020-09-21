@@ -1036,7 +1036,7 @@ import os
 import platform
 from math import pi
 
-{6}_API_VERSION = "{3}.{4}"
+{6}_API_VERSION = "{3}.{4}.{5}"
 {6}_API_VERSION_MAJOR = {3}
 {6}_API_VERSION_MINOR = {4}
 {6}_API_VERSION_PATCH = {5}
