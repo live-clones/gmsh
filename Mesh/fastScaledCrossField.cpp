@@ -152,16 +152,16 @@ int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map
 }
 
 static inline double compat_orientation_extrinsic(const SVector3 &o0,
-                                                  const SVector3 &n0,
-                                                  const SVector3 &o1,
-                                                  const SVector3 &n1,
-                                                  SVector3 &a1, SVector3 &b1)
+    const SVector3 &n0,
+    const SVector3 &o1,
+    const SVector3 &n1,
+    SVector3 &a1, SVector3 &b1)
 {
   SVector3 t0 = crossprod(n0, o0);
   SVector3 t1 = crossprod(n1, o1);
 
   const size_t permuts[8][2] = {{0, 0}, {1, 0}, {2, 0}, {3, 0},
-                                {0, 1}, {1, 1}, {2, 1}, {3, 1}};
+    {0, 1}, {1, 1}, {2, 1}, {3, 1}};
   SVector3 A[4]{o0, t0, -o0, -t0};
   SVector3 B[2]{o1, t1};
 
@@ -381,11 +381,11 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
       MTriangle *t = faces[i]->triangles[j];
 
       SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
-                   t->getVertex(1)->y() - t->getVertex(0)->y(),
-                   t->getVertex(1)->z() - t->getVertex(0)->z());
+          t->getVertex(1)->y() - t->getVertex(0)->y(),
+          t->getVertex(1)->z() - t->getVertex(0)->z());
       SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
-                   t->getVertex(2)->y() - t->getVertex(0)->y(),
-                   t->getVertex(2)->z() - t->getVertex(0)->z());
+          t->getVertex(2)->y() - t->getVertex(0)->y(),
+          t->getVertex(2)->z() - t->getVertex(0)->z());
       SVector3 normal_to_triangle = crossprod(v20, v10);
       normal_to_triangle.normalize();
 
@@ -437,7 +437,7 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
       SVector3 x0, x1, x2, x3;
       compat_orientation_extrinsic(o_i, normal_to_triangle, o_1, normal_to_triangle, x0, x1);
       compat_orientation_extrinsic(o_i, normal_to_triangle, o_2, normal_to_triangle, x2, x3);
-      
+
       double a0 = atan2(dot(t_i, o_i), dot(tgt0, o_i));
 
       x0 -= normal_to_triangle * dot(normal_to_triangle, x0);
@@ -493,7 +493,7 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
   }
   _lsys->systemSolve();
   Msg::Info("Conformal Factor Computed (%d unknowns)",
-            myAssembler->sizeOfR());
+      myAssembler->sizeOfR());
 
   /* Extract solution */
   scaling.resize(vs.size(),0.);
