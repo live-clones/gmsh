@@ -27,6 +27,15 @@ public:
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
+
+private:
+  void nodeData(int numComp,
+                double value,
+                std::map<int, std::vector<double> > &d);
+  void elementData(int numComp,
+                   double value,
+                   std::map<int, std::vector<double> > &d,
+                   int phys);
 };
 
 #endif
