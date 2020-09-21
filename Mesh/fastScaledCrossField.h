@@ -38,5 +38,12 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces, const std::map<st
     std::size_t targetNumberOfQuads,
     std::vector<std::size_t>& nodeTags, std::vector<double>& scaling);
 
+int extractPerTriangleScaledCrossFieldDirections(
+    const std::vector<GFace*>& faces, 
+    const std::map<std::array<size_t,2>, double>& edgeTheta, 
+    const std::vector<std::size_t>& nodeTags,
+    const std::vector<double>& scaling,
+    std::map<size_t, std::array<double,9> >& triangleDirections);
+
 
 #endif

@@ -526,7 +526,7 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
   return 0;
 }
 
-inline SVector3 tri_normal(MTriangle* t) {
+static inline SVector3 tri_normal(MTriangle* t) {
   SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
       t->getVertex(1)->y() - t->getVertex(0)->y(),
       t->getVertex(1)->z() - t->getVertex(0)->z());
@@ -545,15 +545,12 @@ inline SVector3 crouzeix_raviart_interpolation(SVector3 lambda, SVector3 edge_va
   return shape[0] * edge_values[0] + shape[1] * edge_values[1] + shape[2] * edge_values[2];
 }
 
-int createScaledCrossFieldView(
+int extractPerTriangleScaledCrossFieldDirections(
     const std::vector<GFace*>& faces, 
     const std::map<std::array<size_t,2>, double>& edgeTheta, 
     const std::vector<std::size_t>& nodeTags,
     const std::vector<double>& scaling,
-    const std::string& viewName,
-    int& dataListViewTag
-    ) {
-#if defined(HAVE_POST)
+    std::map<size_t, std::array<double,9> >& triangleDirections) {
 
   /* Accessible scaling values from vertex num */
   std::vector<double> num_to_scaling(nodeTags.size(),0.);
@@ -563,14 +560,13 @@ int createScaledCrossFieldView(
     num_to_scaling[v] = scaling[i];
   }
 
-  /* Combine cross directions and scaling to create view */
+  /* Combine cross directions and scaling, interpolate at triangle vertices */
   std::vector<double> datalist;
   for (GFace* gf: faces) {
     for (MTriangle* t: gf->triangles) {
       SVector3 N = tri_normal(t);
 
       /* Compute one branch at triangle vertices */
-
       SVector3 refCross = {0.,0.,0.};
       SVector3 avgCross = {0.,0.,0.};
       SVector3 lifted_dirs[3];
@@ -626,11 +622,51 @@ int createScaledCrossFieldView(
         edge_dirs[le] = se * lifted_dirs[le];
       }
       SVector3 vertex_dirs[3];
+      std::array<double,9> tDirs;
       for (size_t lv = 0; lv < 3; ++lv) {
         SVector3 lambda = {0.,0.,0.};
         lambda[lv] = 1.;
-        vertex_dirs[lv] = crouzeix_raviart_interpolation(lambda,edge_dirs);
+        SVector3 dir = crouzeix_raviart_interpolation(lambda,edge_dirs);
+        for (size_t d = 0; d < 3; ++d) {
+          tDirs[3*lv+d] = dir.data()[d];
+        }
       }
+      size_t tNum = t->getNum();
+      triangleDirections[tNum] = tDirs;
+    }
+  }
+
+  return true;
+}
+
+int createScaledCrossFieldView(
+    const std::vector<GFace*>& faces, 
+    const std::map<std::array<size_t,2>, double>& edgeTheta, 
+    const std::vector<std::size_t>& nodeTags,
+    const std::vector<double>& scaling,
+    const std::string& viewName,
+    int& dataListViewTag
+    ) {
+
+#if defined(HAVE_POST)
+  std::map<size_t, std::array<double,9> > triangleDirections;
+  int st = extractPerTriangleScaledCrossFieldDirections(faces, edgeTheta, nodeTags, scaling, triangleDirections);
+  if (st != 0) {
+    Msg::Error("failed to extract per triangle scaled directions");
+    return st;
+  }
+
+  /* Combine cross directions and scaling to create view */
+  std::vector<double> datalist;
+  for (GFace* gf: faces) {
+    for (MTriangle* t: gf->triangles) {
+      size_t tNum = t->getNum();
+      auto it = triangleDirections.find(tNum);
+      if (it == triangleDirections.end()) {
+        Msg::Error("Triangle %li not found in triangleDirections (CAD face %li)", tNum, gf->tag());
+        return -1;
+      }
+      const std::array<double,9> tDirs = it->second;
 
       /* Add triangle coords+vectors to view */
       for (size_t d = 0; d < 3; ++d) {
@@ -640,7 +676,7 @@ int createScaledCrossFieldView(
       }
       for (size_t lv = 0; lv < 3; ++lv) {
         for (size_t d = 0; d < 3; ++d) {
-          datalist.push_back(vertex_dirs[lv][d]);
+          datalist.push_back(tDirs[3*lv+d]);
         }
       }
     }
