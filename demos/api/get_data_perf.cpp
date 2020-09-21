@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(2);
 
   // create a post-processing dataset
-  gmsh::plugin::setNumber("NewView", 1.234);
+  gmsh::plugin::setNumber("NewView", "Value", 1.234);
   gmsh::plugin::run("NewView");
 
   // retrieve the dataset as a vector of vectors (one per tag)
