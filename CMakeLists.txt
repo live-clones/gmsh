@@ -1291,8 +1291,8 @@ if(ENABLE_OCC)
       set(OCC_LIBS)
       foreach(OCC ${OCC_LIBS_REQUIRED})
         find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
-                     lib bin ${OCC_SYS_NAME} ${OCC_SYS_NAME}/vc8
-                     ${OCC_SYS_NAME}/gcc)
+                     lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib
+                     ${OCC_SYS_NAME}/gcc/lib ${OCC_SYS_NAME}/gcc/bin)
         if(OCC_LIB)
 	  list(APPEND OCC_LIBS ${OCC_LIB})
         else()
@@ -1314,8 +1314,8 @@ if(ENABLE_OCC)
       set(OCC_CAF_LIBS)
       foreach(OCC ${OCC_CAF_LIBS_REQUIRED})
         find_library(OCC_CAF_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
-                     lib bin ${OCC_SYS_NAME} ${OCC_SYS_NAME}/vc8
-                     ${OCC_SYS_NAME}/gcc)
+                     lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib
+                     ${OCC_SYS_NAME}/gcc/lib ${OCC_SYS_NAME}/gcc/bin)
         if(OCC_CAF_LIB)
           list(APPEND OCC_CAF_LIBS ${OCC_CAF_LIB})
         else()
