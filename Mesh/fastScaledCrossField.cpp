@@ -636,7 +636,7 @@ int extractPerTriangleScaledCrossFieldDirections(
     }
   }
 
-  return true;
+  return 0;
 }
 
 int createScaledCrossFieldView(
@@ -760,7 +760,6 @@ int computeScaledCrossFieldView(GModel* gm,
   Msg::Error("Computation of scaled cross field requires the QuadMeshingTools module");
   return -1;
 #endif
-  return 0;
 
   return 0;
 }

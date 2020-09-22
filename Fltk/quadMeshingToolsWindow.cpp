@@ -27,18 +27,27 @@
 #include "Context.h"
 #include "Generator.h"
 
+#include "meshGFaceHxt.h" // for debugging
+
 #if defined(HAVE_QUADMESHINGTOOLS)
 #include "quad_meshing_tools.h"
 #endif
 
 static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 {
+  {
+    meshGFaceHxt(GModel::current());
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+    return;
+  }
   // // ONLY FOR TESTING NEW FUNCTION FOR JF
   // int vt = -1;
   // computePerTriangleScaledCrossField(GModel::current(),vt);
   // if(FlGui::available()) FlGui::instance()->updateViews(true, true);
   // drawContext::global()->draw();
   // return;
+
 
   QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
   opt.cross_field_iter = FlGui::instance()->quadmeshingtools->flv_cross_field_iter->value();

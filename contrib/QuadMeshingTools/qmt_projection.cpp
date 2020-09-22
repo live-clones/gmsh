@@ -696,11 +696,9 @@ namespace QMT {
     return true;
   }
 
-  using namespace GLog;
   void BoundaryProjector::show_projector(const std::string& viewPrefix) const {
-    GeoLog log;
     F(i,nodes.size()) {
-      log.add({nodes[i]},double(i),viewPrefix+std::string("_nodes"));
+      GeoLog::add({nodes[i]},double(i),viewPrefix+std::string("_nodes"));
     }
     FC(i,curve_tree.size(),curve_tree[i] != NULL) {
       vector<id> edges;
@@ -715,7 +713,7 @@ namespace QMT {
         id e = edges[le];
         vec3 p1 = M.points[M.lines[e][0]];
         vec3 p2 = M.points[M.lines[e][1]];
-        log.add({p1,p2},double(i),viewPrefix+"_c"+std::to_string(i));
+        GeoLog::add({p1,p2},double(i),viewPrefix+"_c"+std::to_string(i));
       }
     }
     FC(i,surface_tree.size(),surface_tree[i] != NULL) {
@@ -732,11 +730,11 @@ namespace QMT {
         vec3 p1 = M.points[M.triangles[t][0]];
         vec3 p2 = M.points[M.triangles[t][1]];
         vec3 p3 = M.points[M.triangles[t][2]];
-        log.add({p1,p2,p3},double(i),viewPrefix+"_s"+std::to_string(i));
+        GeoLog::add({p1,p2,p3},double(i),viewPrefix+"_s"+std::to_string(i));
       }
     }
 
-    log.toGmsh();
+    GeoLog::flush();
   }
 
   bool assignClosestEntities(QMesh& M, const BoundaryProjector& projector) {

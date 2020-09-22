@@ -291,19 +291,18 @@ namespace QMT {
     
     constexpr bool SHOW_ASSIGNEMENT = false;
     if (SHOW_ASSIGNEMENT) {
-      GLog::GeoLog log;
       F(v,M.points.size()) {
         if (smoothing_type[v] == ST_LAPLACIAN) {
-          log.add({M.points[v]},double(M.entity[v].second),"st_laplace");
+          GeoLog::add({M.points[v]},double(M.entity[v].second),"st_laplace");
         } else if (smoothing_type[v] == ST_BDR_ORTH_PROJ) {
-          log.add({M.points[v]},double(M.entity[v].second),"st_bdr_ortho");
+          GeoLog::add({M.points[v]},double(M.entity[v].second),"st_bdr_ortho");
         } else if (smoothing_type[v] == ST_WINSLOW_FD4) {
-          log.add({M.points[v]},double(M.entity[v].second),"st_winslow4");
+          GeoLog::add({M.points[v]},double(M.entity[v].second),"st_winslow4");
         } else {
-          log.add({M.points[v]},double(M.entity[v].second),"st_none");
+          GeoLog::add({M.points[v]},double(M.entity[v].second),"st_none");
         }
       }
-      log.toGmsh();
+      GeoLog::flush();
       projector->show_projector();
     }
 
