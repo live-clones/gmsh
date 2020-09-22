@@ -10,6 +10,7 @@
 // #include "gmshCrossFields.h"
 #include "fastScaledCrossField.h"
 #include "meshWinslow2d.h"
+#include "geolog.h"
 
 #if defined(HAVE_HXT)
 extern "C" {
@@ -36,6 +37,17 @@ static inline SVector3 tri_normal(MTriangle* t) {
   return normal_to_triangle;
 }
 
+inline std::array<double,3> convert(const SVector3& vec) {
+  return {vec.data()[0],vec.data()[1],vec.data()[2]};
+}
+
+inline std::vector<std::array<double,3> > convert(const std::vector<SVector3>& vecs) {
+  std::vector<std::array<double,3> > vecs2(vecs.size());
+  for (size_t i = 0; i < vecs2.size(); ++i) vecs2[i] = convert(vecs[i]);
+  return vecs2;
+}
+
+using vec3 = std::array<double,3>;
 
 int computeCrossFieldAndScalingForHxt(
     GModel* gm,
@@ -114,17 +126,28 @@ int computeCrossFieldAndScalingForHxt(
       SVector3 dir_orth = crossprod(dir,N);
       dir.normalize();
       dir_orth.normalize();
-      SVector3 candidates[4] = {dir,-1.*dir,dir_orth,-1.*dir_orth};
-      for (size_t k = 0; k < 4; ++k) {
-        double dp1 = dot(dir1,candidates[k]);
-        double dp2 = dot(dir2,candidates[k]);
-        if (dp1 > d1best) {
-          d1best = dp1;
-          d1bestV = candidates[k];
-        }
-        if (dp2 > d2best) {
-          d2best = dp2;
-          d2bestV = candidates[k];
+      
+      {
+        SVector3 pt = t->getVertex(lv)->point();
+        GeoLog::add(convert(pt), convert(dir),"dir");
+        GeoLog::add(convert(pt), convert(dir_orth),"dir_orth");
+      }
+      if (dir1.normSq() == 0. && dir2.normSq() == 0.) {
+        d1bestV = dir;
+        d2bestV = dir_orth;
+      } else {
+        SVector3 candidates[4] = {dir,-1.*dir,dir_orth,-1.*dir_orth};
+        for (size_t k = 0; k < 4; ++k) {
+          double dp1 = dot(dir1,candidates[k]);
+          double dp2 = dot(dir2,candidates[k]);
+          if (dp1 > d1best) {
+            d1best = dp1;
+            d1bestV = candidates[k];
+          }
+          if (dp2 > d2best) {
+            d2best = dp2;
+            d2bestV = candidates[k];
+          }
         }
       }
       for (size_t d = 0; d < 3; ++d) {
@@ -156,7 +179,12 @@ int computeCrossFieldAndScalingForHxt(
 
 
   for (MVertex* v: vertices) {
-    vertexDirections[v->getNum()] = vertexNumDirections[v->getNum()];
+    const std::array<double,7>& vDirs = vertexNumDirections[v->getNum()];
+    SVector3 dir1(vDirs[0],vDirs[1],vDirs[2]);
+    SVector3 dir2(vDirs[3],vDirs[4],vDirs[5]);
+    dir1.normalize();
+    dir2.normalize();
+    vertexDirections[v->getNum()] = {dir1[0],dir1[1],dir1[2], dir2[0],dir2[1],dir2[2], 0.};
   }
   for (size_t i = 0; i < nodeTags.size(); ++i) {
     vertexDirections[nodeTags[i]][6] = scaling[i];
@@ -207,6 +235,23 @@ int meshGFaceHxt(GModel *gm)
       }
     }
   }
+  for (MVertex* v: c2v) {
+    SVector3 d1(
+        vertexDirections[v->getNum()][0],
+        vertexDirections[v->getNum()][1],
+        vertexDirections[v->getNum()][2]);
+    SVector3 d2(
+        vertexDirections[v->getNum()][3],
+        vertexDirections[v->getNum()][4],
+        vertexDirections[v->getNum()][5]);
+    GeoLog::add(convert(v->point()),convert(d1),"d1");
+    GeoLog::add(convert(v->point()),convert(d2),"d2");
+    GeoLog::add(convert(v->point()),vertexDirections[v->getNum()][6],"sizemap");
+  }
+
+  GeoLog::flush();
+  return 0;
+
 
   // std::map<int, std::vector<double> > dataH;
   // std::map<int, std::vector<double> > dataDir;

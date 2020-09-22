@@ -305,7 +305,6 @@ namespace QMT_SMP_Utils {
 namespace QMT {
   using namespace QMT_Utils;
   using namespace QMT_SMP_Utils;
-  using namespace GLog;
 
   const id QQQ = 29063;
 
