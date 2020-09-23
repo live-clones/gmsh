@@ -60,10 +60,11 @@ typedef unsigned long intptr_t;
 
 #endif
 
+static bool isInitialized = false;
+
 int GmshInitialize(int argc, char **argv, bool readConfigFiles,
                    bool exitOnCommandLineError)
 {
-  static bool isInitialized = false;
   if(isInitialized) return 1;
   isInitialized = true;
 
@@ -259,6 +260,8 @@ int GmshFinalize()
   // Delete all Gmodels
   while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
   std::vector<GModel *>().swap(GModel::list);
+
+  isInitialized = false;
 
   return 1;
 }
