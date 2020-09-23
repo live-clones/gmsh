@@ -6,6 +6,7 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <algorithm>
 #include <gmsh.h>
 
 // Mesh sizes can be specified very accurately by providing a background mesh,
@@ -63,8 +64,10 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(2);
   gmsh::write("t7.msh");
 
-  // Show the mesh
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::vector<std::string> args(argv + 1, argv + argc);
+  if(!std::count(args.begin(), args.end(), "-nopopup"))
+    gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

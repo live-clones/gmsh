@@ -6,6 +6,7 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <algorithm>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
@@ -91,7 +92,9 @@ int main(int argc, char **argv)
   gmsh::view::write(t2, "x4_t2.msh");
 
   // Launch the GUI to see the results:
-  gmsh::fltk::run();
+  std::vector<std::string> args(argv + 1, argv + argc);
+  if(!std::count(args.begin(), args.end(), "-nopopup"))
+    gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

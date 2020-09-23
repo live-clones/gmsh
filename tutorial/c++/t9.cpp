@@ -15,6 +15,7 @@
 // namespace, or from the graphical interface (right click on the view button,
 // then `Plugins').
 
+#include <algorithm>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
@@ -75,7 +76,9 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("View[2].IntervalsType", 2);
 
   // show the GUI at the end
-  // gmsh::fltk::run();
+  std::vector<std::string> args(argv + 1, argv + argc);
+  if(!std::count(args.begin(), args.end(), "-nopopup"))
+    gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

@@ -72,7 +72,9 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("General.SmallAxes", 0);
 
   // Show the GUI
-  gmsh::fltk::initialize();
+  std::vector<std::string> args(argv + 1, argv + argc);
+  if(!std::count(args.begin(), args.end(), "-nopopup"))
+    gmsh::fltk::initialize();
 
   // We also set some options for each post-processing view:
   gmsh::option::setNumber("View[0].IntervalsType", 2);
@@ -161,7 +163,9 @@ int main(int argc, char **argv)
     }
   }
 
-  gmsh::fltk::run();
+  if(!std::count(args.begin(), args.end(), "-nopopup"))
+    gmsh::fltk::run();
+
   gmsh::finalize();
 
   return 0;
