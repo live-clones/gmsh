@@ -35,12 +35,12 @@
 
 static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 {
-  {
-    meshGFaceHxt(GModel::current());
-    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
-    drawContext::global()->draw();
-    return;
-  }
+  // {
+  //   meshGFaceHxt(GModel::current());
+  //   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  //   drawContext::global()->draw();
+  //   return;
+  // }
   // // ONLY FOR TESTING NEW FUNCTION FOR JF
   // int vt = -1;
   // computePerTriangleScaledCrossField(GModel::current(),vt);

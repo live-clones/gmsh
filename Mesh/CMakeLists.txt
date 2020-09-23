@@ -35,6 +35,7 @@ set(SRC
   gmshCrossFields.cpp
   automaticMeshSizeField.cpp
   fastScaledCrossField.cpp
+  meshQuadQuasiStructured.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

@@ -110,12 +110,12 @@ int extractTriangularMeshFromFaces(
       lines.push_back(line);
     }
   }
-
+  Msg::Debug("- %li points, %i lines, %i triangles", points.size(), lines.size(), triangles.size());
   return 0;
 }
 
 int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map<std::array<size_t,2>, double>& edgeTheta,
-    int nbDiffusionLevels, double thresholdNormConvergence, int nbBoundaryExtensionLayer) {
+    int nbDiffusionLevels, double thresholdNormConvergence, int nbBoundaryExtensionLayer, int verbosity) {
   /* note: edgeTheta keys (v1,v2) are sorted, v1 < v2 always */
   Msg::Debug("compute cross field with heat equation for %i faces ...", faces.size());
 #ifdef HAVE_QUADMESHINGTOOLS
@@ -131,7 +131,7 @@ int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map
   std::map<std::array<size_t,2>,double> edgeThetaLocal;
   bool okcf = QMT::compute_cross_field_with_multilevel_diffusion(
       points,lines,triangles,edgeThetaLocal,nbDiffusionLevels,
-      thresholdNormConvergence, nbBoundaryExtensionLayer);
+      thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
   if (!okcf) {
     Msg::Error("Failed to compute cross field for given faces");
     return -1;
@@ -203,6 +203,8 @@ static inline double cross_lifting(double _a, double a)
   }
   return DBL_MAX;
 }
+
+static inline double clamp(double x, double lower, double upper) { return std::min(upper, std::max(x, lower)); }
 
 int computeQuadSizeMapFromCrossFieldConformalFactor(
     const std::vector<GFace*>& faces, 
@@ -279,6 +281,27 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   /* for vertex common to multiple component, use flag done */
   std::vector<bool> done(num_to_scaling.size(),false); 
   for (size_t i = 0; i < components.size(); ++i) {
+    /* Compute H min/max outside corners and use it to clamp scaling */
+    double Hmin =  DBL_MAX;
+    double Hmax = -DBL_MAX;
+    for (GFace* gf: components[i]) {
+      for (MTriangle* t: gf->triangles) {
+        for (size_t lv = 0; lv < 3; ++lv) {
+          MVertex* v = t->getVertex(lv);
+          size_t num = t->getVertex(lv)->getNum();
+          if (num >= num_to_scaling.size()) {
+            Msg::Error("scaling not found for vertex %i", num);
+            return -1;
+          }
+          GVertex* gv = v->onWhat()->cast2Vertex();
+          if (gv == nullptr) {
+            Hmin = std::min(Hmin, num_to_scaling[num]);
+            Hmax = std::max(Hmax, num_to_scaling[num]);
+          }
+        }
+      }
+    }
+
     /* Compute integral of current size map */
     double integral = 0.;
     double smin = DBL_MAX;
@@ -290,11 +313,8 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
         double values[3] = {0,0,0};
         for (size_t lv = 0; lv < 3; ++lv) {
           size_t num = t->getVertex(lv)->getNum();
-          if (num >= num_to_scaling.size()) {
-            Msg::Error("scaling not found for vertex %i", num);
-            return -1;
-          }
           double H = num_to_scaling[num];
+          H = clamp(H, Hmin, Hmax);
           values[lv] = exp(-H);
           num_to_sizemap[num] = values[lv];
           smin = std::min(smin,values[lv]);
@@ -703,7 +723,8 @@ int computeScaledCrossFieldView(GModel* gm,
     int nbDiffusionLevels, 
     double thresholdNormConvergence, 
     int nbBoundaryExtensionLayer,
-    const std::string& viewName) {
+    const std::string& viewName,
+    int verbosity) {
   Msg::Debug("compute scaled cross field ...");
 #ifdef HAVE_QUADMESHINGTOOLS
   std::vector<GFace*> faces;
@@ -715,7 +736,7 @@ int computeScaledCrossFieldView(GModel* gm,
   for (GFace* gf: faces) {
     Msg::Debug("- compute cross field for face %i ...",gf->tag());
     int status = computeCrossFieldWithHeatEquation({gf}, edgeTheta, nbDiffusionLevels, thresholdNormConvergence,
-        nbBoundaryExtensionLayer);
+        nbBoundaryExtensionLayer, verbosity);
     if (status != 0) {
       Msg::Error("failed to compute cross field for face %i",gf->tag());
     }

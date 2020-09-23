@@ -20,7 +20,8 @@ int computeScaledCrossFieldView(GModel* gm,
     int nbDiffusionLevels = 10, 
     double thresholdNormConvergence = 1.e-3, 
     int nbBoundaryExtensionLayer = 1,
-    const std::string& viewName = "scaled_cross_field");
+    const std::string& viewName = "scaled_cross_field",
+    int verbosity = 3);
 
 
 /* Sub-functions that may be called independantly */
@@ -32,7 +33,7 @@ int extractTriangularMeshFromFaces(
     std::vector<std::array<size_t,3> >& triangles);
 
 int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map<std::array<size_t,2>, double>& edgeTheta,
-    int nbDiffusionLevels = 10, double thresholdNormConvergence = 1.e-3, int nbBoundaryExtensionLayer = 1);
+    int nbDiffusionLevels = 10, double thresholdNormConvergence = 1.e-3, int nbBoundaryExtensionLayer = 1, int verbosity = 3);
 
 int computeCrossFieldScaling(const std::vector<GFace*>& faces, const std::map<std::array<size_t,2>, double>& edgeTheta,
     std::size_t targetNumberOfQuads,

@@ -1126,29 +1126,33 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         i++;
         if(argv[i]) {
           if(!strncmp(argv[i], "MeshAdapt", 9) ||
-             !strncmp(argv[i], "meshadapt", 9) ||
-             !strncmp(argv[i], "iso", 3))
+              !strncmp(argv[i], "meshadapt", 9) ||
+              !strncmp(argv[i], "iso", 3))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_MESHADAPT);
           else if(!strncmp(argv[i], "auto", 4))
             CTX::instance()->mesh.algo2d = ALGO_2D_AUTO;
           else if(!strncmp(argv[i], "Delaunay2D", 5) ||
-                  !strncmp(argv[i], "del2d", 5) ||
-                  !strncmp(argv[i], "tri", 3))
+              !strncmp(argv[i], "del2d", 5) ||
+              !strncmp(argv[i], "tri", 3))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_DELAUNAY);
           else if(!strncmp(argv[i], "FrontalDelaunay2D", 16) ||
-                  !strncmp(argv[i], "front2d", 7) ||
-                  !strncmp(argv[i], "frontal", 7))
+              !strncmp(argv[i], "front2d", 7) ||
+              !strncmp(argv[i], "frontal", 7))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL);
           else if(!strncmp(argv[i], "bamg", 4))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_BAMG);
           else if(!strncmp(argv[i], "DelaunayFrontalForQuads", 23) ||
-                  !strncmp(argv[i], "delquad", 7))
+              !strncmp(argv[i], "delquad", 7))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL_QUAD);
           else if(!strncmp(argv[i], "PackingOfParallelograms", 23) ||
-                  !strncmp(argv[i], "pack", 4)){
-	    CTX::instance()->mesh.algoSubdivide = 1;
+              !strncmp(argv[i], "pack", 4)){
+            CTX::instance()->mesh.algoSubdivide = 1;
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
-	  }
+          }
+          else if(!strncmp(argv[i], "QuadQuasiStructured", 19) ||
+              !strncmp(argv[i], "quadqs", 4)){
+            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_QUAD_QUASI_STRUCT);
+          }
           else if(!strncmp(argv[i], "initial2d", 9))
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_INITIAL_ONLY);
           else if(!strncmp(argv[i], "del3d", 5) ||

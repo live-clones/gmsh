@@ -480,7 +480,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	fifo.push(sp);
 	double _min[2], _max[2];
 	sp->minmax(_min, _max);
-	printf("%g %g -- %g %g\n", _min[0], _min[1], _max[0], _max[1]);
+  Msg::Debug("%g %g -- %g %g\n", _min[0], _min[1], _max[0], _max[1]);
 	rtree.Insert(_min, _max, sp);
       }
       else{
