@@ -6,6 +6,7 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <algorithm>
 #include <gmsh.h>
 
 // In addition to creating geometries and meshes, the C++ API can also be used
