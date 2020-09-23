@@ -5,12 +5,15 @@
 #include "Context.h"
 #include "MVertex.h"
 #include "MTriangle.h"
+#include "MLine.h"
 #include "GFace.h"
 #include "GmshMessage.h"
 // #include "gmshCrossFields.h"
 #include "fastScaledCrossField.h"
 #include "meshWinslow2d.h"
 #include "geolog.h"
+
+#include "gmsh.h"
 
 #if defined(HAVE_HXT)
 extern "C" {
@@ -90,8 +93,7 @@ int computeCrossFieldAndScalingForHxt(
   /* Extract values at triangle corners */
   std::map<size_t, std::array<double,9> > triangleDirections;
   int st2 = extractPerTriangleScaledCrossFieldDirections(faces, edgeTheta, nodeTags, scaling, triangleDirections);
-  //if (st2 != 0) {
-  if (!st2) {
+  if (st2 != 0) {
     Msg::Error("failed to extract per triangle scaled directions");
     return -1;
   }
@@ -104,6 +106,33 @@ int computeCrossFieldAndScalingForHxt(
       t2ptr[tNum] = t;
     }
   }
+
+  std::set<size_t> isBoundary;
+  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+    GEdge *ge = *it;
+    for (size_t i=0; i<ge->lines.size(); i++){
+      MLine *l = ge->lines[i];
+
+      size_t n0 = l->getVertex(0)->getNum();
+      size_t n1 = l->getVertex(1)->getNum();
+
+
+      isBoundary.insert(n0);
+      isBoundary.insert(n1);
+
+
+
+      MVertex *v0 = l->getVertex(0);
+      MVertex *v1 = l->getVertex(1);
+      GeoLog::add(convert(v0->point()),1,"boundary");
+      GeoLog::add(convert(v1->point()),1,"boundary");
+
+
+
+    }
+  }
+
+ 
 
   std::array<double,7> zero7 = {0.,0.,0.,0.,0.,0.,0.};
   std::vector<std::array<double,7> > vertexNumDirections(vertices.size(),zero7);
@@ -126,6 +155,22 @@ int computeCrossFieldAndScalingForHxt(
       SVector3 dir_orth = crossprod(dir,N);
       dir.normalize();
       dir_orth.normalize();
+
+      std::set<size_t>::iterator it = isBoundary.find(num);
+      if (it != isBoundary.end() && dir1.normSq()==0 && dir2.normSq() == 0.){
+
+        for (size_t d = 0; d < 3; ++d) {
+          vDirs[d] = dir[d];
+          vDirs[3+d] = dir_orth[d];
+        }
+
+        SVector3 pt = t->getVertex(lv)->point();
+        GeoLog::add(convert(pt), convert(&vDirs[0]),"dir_a1");
+        GeoLog::add(convert(pt), convert(&vDirs[3]),"dir_a2");
+      }
+
+      if (it != isBoundary.end()) continue;
+
       
       {
         SVector3 pt = t->getVertex(lv)->point();
@@ -135,7 +180,8 @@ int computeCrossFieldAndScalingForHxt(
       if (dir1.normSq() == 0. && dir2.normSq() == 0.) {
         d1bestV = dir;
         d2bestV = dir_orth;
-      } else {
+      } 
+      else {
         SVector3 candidates[4] = {dir,-1.*dir,dir_orth,-1.*dir_orth};
         for (size_t k = 0; k < 4; ++k) {
           double dp1 = dot(dir1,candidates[k]);
@@ -156,27 +202,6 @@ int computeCrossFieldAndScalingForHxt(
       }
     }
   }
-
-  //for (const auto& kv: triangleDirections) {
-    //MTriangle* t = t2ptr[kv.first];
-    //if (t == NULL) continue;
-    //SVector3 N = tri_normal(t);
-    //for (size_t lv = 0; lv < 3; ++lv) {
-      //size_t num = t->getVertex(lv)->getNum();
-      //if (num >= vertexNumDirections.size()) vertexNumDirections.resize(num+1,zero7);
-      //std::array<double,7>& vDirs = vertexNumDirections[num];
-      //SVector3 dir1(vDirs[0],vDirs[1],vDirs[2]);
-
-      //SVector3 dir2 = crossprod(dir1,N);
-      //vDirs[3] = dir2[0];
-      //vDirs[4] = dir2[1];
-      //vDirs[5] = dir2[2];
-
-      //dir1.normalize();
-      //dir2.normalize();
-    //}
-  /*}*/
-
 
   for (MVertex* v: vertices) {
     const std::array<double,7>& vDirs = vertexNumDirections[v->getNum()];
@@ -204,6 +229,8 @@ int meshGFaceHxt(GModel *gm)
 
   HXT_CHECK(hxtSetMessageCallback(messageCallback));
 
+  gm->createTopologyFromMesh();
+
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
 
@@ -211,7 +238,14 @@ int meshGFaceHxt(GModel *gm)
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
 
-  size_t targetNumberOfQuads = 1000;
+  size_t targetNumberOfQuads = 10000;
+
+  printf("Target quad numbers = \n");
+  size_t temp = 0;
+  scanf("%d",&temp);
+  targetNumberOfQuads = temp;
+
+  
 
   std::map<size_t, std::array<double,7> > vertexDirections;
   int st = computeCrossFieldAndScalingForHxt(gm, targetNumberOfQuads, c2v, vertexDirections);
@@ -249,8 +283,10 @@ int meshGFaceHxt(GModel *gm)
     GeoLog::add(convert(v->point()),vertexDirections[v->getNum()][6],"sizemap");
   }
 
-  GeoLog::flush();
-  return 0;
+  //gmsh::initialize();
+  //GeoLog::flush();
+  //gmsh::fltk::run();
+  //return 0;
 
 
   // std::map<int, std::vector<double> > dataH;
@@ -335,7 +371,7 @@ int meshGFaceHxt(GModel *gm)
                              .generateVolumes = 0,
                              .remeshSurfaces = 1,
                              .quadSurfaces = 1,
-                             .walkMethod2D = 0,
+                             .walkMethod2D = 1,
                              .walkMethod3D = 0,
                              .dirType = 0,
                              .uniformSize = 1.0,
@@ -343,12 +379,7 @@ int meshGFaceHxt(GModel *gm)
                              .tolerance = 10e-9,
                              .numTris = 0};
 
-/*  printf("INPUT SIZE = \n");*/
-  //float temp = 0;
-  //scanf("%f",&temp);
-  //opt.uniformSize = temp;
 
-  
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh));
   v2c.clear();
   c2v.clear();
