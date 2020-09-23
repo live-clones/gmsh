@@ -21,5 +21,6 @@ namespace QMT {
       std::map<std::array<size_t,2>,double>& edgeTheta,
       int nbDiffusionLevels = 10,
       double thresholdNormConvergence = 1.e-2,
-      int nbBoundaryExtensionLayer = 1);
+      int nbBoundaryExtensionLayer = 1,
+      int verbosity = 3);
 }

@@ -178,6 +178,7 @@ int computeCrossFieldAndScalingForHxt(
 int meshGFaceHxt(GModel *gm)
 {
   Msg::Debug("mesh CAD faces with Hxt ...");
+  gm->createTopologyFromMesh();
 
   HXT_CHECK(hxtSetMessageCallback(messageCallback));
 

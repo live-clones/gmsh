@@ -707,7 +707,8 @@ namespace QMT {
       const vector<vector<id>>& uIEdgeToOld,
       size_t nb_layers,
       vector<bool>& dirichletEdge,
-      vector<vec2>& dirichletValue) {
+      vector<vec2>& dirichletValue,
+      int verbosity) {
     /* Look for expanded BC edges */
     vector<bool> extDirichletEdge = dirichletEdge;
     vector<id> new_edges;
@@ -728,10 +729,13 @@ namespace QMT {
       F(i,new_edges.size()) extDirichletEdge[new_edges[i]] = true;
     }
     if (new_edges.size() == 0) {
-      warn("no new edges to expand dirichlet boundary conditions");
+      if (verbosity >= 2)
+        warn("no new edges to expand dirichlet boundary conditions");
       return false;
     }
-    info("Dirichlet B.C. expansion: added {} edges (for {} layers)", new_edges.size(), nb_layers);
+
+    if (verbosity >= 2)
+      info("Dirichlet B.C. expansion: added {} edges (for {} layers)", new_edges.size(), nb_layers);
 
     /* Small system for BC expansion */
     vector<IJV> K_coefs;
@@ -875,7 +879,8 @@ namespace QMT {
       std::map<std::array<size_t,2>,double>& edgeTheta,
       int nbDiffusionLevels,
       double thresholdNormConvergence,
-      int nbBoundaryExtensionLayer) {
+      int nbBoundaryExtensionLayer,
+      int verbosity) {
     if (!QMT_CF_Utils::global_gmsh_initialized) {
       gmsh::initialize(0, 0, false);
       QMT_CF_Utils::global_gmsh_initialized = true;
@@ -907,7 +912,9 @@ namespace QMT {
     }
 
     double diag = bbox_diag(M.points);
-    info("input: {} points, {} lines, {} triangles, {} internal edges, bbox diag = {}", M.points.size(),M.lines.size(),M.triangles.size(),uIEdges.size(), diag);
+    if (verbosity > 0)
+      info("input: {} points, {} lines, {} triangles, {} internal edges, bbox diag = {}", M.points.size(),M.lines.size(),M.triangles.size(),uIEdges.size(), diag);
+
     if (uIEdges.size() == 0) {
       error("no internal edges");
       return false;
@@ -937,10 +944,11 @@ namespace QMT {
         nbc += 1;
       }
     }
-    info("boundary conditions: {} crosses fixed on edges", nbc);
+    if (verbosity >= 2)
+      info("boundary conditions: {} crosses fixed on edges", nbc);
 
     if (nbBoundaryExtensionLayer > 0) {
-      bool oke = expand_dirichlet_boundary_conditions(M, uIEdges, old2IEdge, uIEdgeToOld, nbBoundaryExtensionLayer, dirichletEdge, dirichletValue);
+      bool oke = expand_dirichlet_boundary_conditions(M, uIEdges, old2IEdge, uIEdgeToOld, nbBoundaryExtensionLayer, dirichletEdge, dirichletValue, verbosity);
       if (!oke) {
         warn("failed to expand dirichlet boundary conditions");
       }
@@ -950,7 +958,9 @@ namespace QMT {
       }
     }
 
-    info("compute stiffness matrix coefficients (Crouzeix-Raviart) ...");
+    if (verbosity >= 2)
+      info("compute stiffness matrix coefficients (Crouzeix-Raviart) ...");
+
     vector<IV> K_diag;
     vector<IJV> K_coefs;
     vector<double> rhs(2*uIEdges.size(),0.);
@@ -993,7 +1003,8 @@ namespace QMT {
     }
     eavg /= uIEdges.size();
 
-    info("edge size: min={}, avg={}, max={} | bbox diag: {}",emin,eavg,emax,diag);
+    if (verbosity >= 2)
+      info("edge size: min={}, avg={}, max={} | bbox diag: {}",emin,eavg,emax,diag);
 
 
     /* prepare system */
@@ -1009,7 +1020,10 @@ namespace QMT {
     
     double dtInitial = (0.1*diag)*(0.1*diag);
     double dtFinal = (3.*emin)*(3.*emin);
-    info("heat diffusion and projection loop ({} levels, {} unknowns, dt = {} .. {}) ...", nbDiffusionLevels, 2*uIEdges.size(),dtInitial, dtFinal);
+
+    if (verbosity >= 1)
+      info("heat diffusion and projection loop ({} levels, {} unknowns, dt = {} .. {}) ...", nbDiffusionLevels, 2*uIEdges.size(),dtInitial, dtFinal);
+
     double wti = gmsh::logger::getWallTime();
     F(e,uIEdges.size()) { 
       x[2*e+0] = dirichletValue[e][0];
@@ -1057,7 +1071,8 @@ namespace QMT {
         double dt = steps[iter];
         prev_dt = dt;
 
-        info("  step {}/{} | dt = {}, linear system loop ...", iter+1, steps.size(), dt);
+        if (verbosity >= 1)
+          info("  step {}/{} | dt = {}, linear system loop ...", iter+1, steps.size(), dt);
 
         /* Update LHS matrix with the new timestep */
         F(i,Acol.size()) {
@@ -1109,7 +1124,8 @@ namespace QMT {
             steps[iter] /= 10;
             dt = steps[iter];
             iter -= 1;
-            warn("           |   max(norm)={} (should be 1.), solve failed, new time step: dt = {}", nma, dt);
+            if (verbosity >= 2)
+              warn("           |   max(norm)={} (should be 1.), solve failed, new time step: dt = {}", nma, dt);
             break;
           }
           if (subiter > 0 || iter > 0) {
@@ -1117,10 +1133,12 @@ namespace QMT {
             FC(i,norms.size(),!dirichletEdge[i]) {
               linf = std::max(linf,norms[i]-prevNorms[i]);
             }
-            info("           |   system solved, norm diff max: {}, norm range: {} - {}", linf, nmi, nma);
+            if (verbosity >= 3)
+              info("           |   system solved, norm diff max: {}, norm range: {} - {}", linf, nmi, nma);
             if (linf < 1.e-3) break;
           } else {
-            info("           |   system solved");
+            if (verbosity >= 3)
+              info("           |   system solved");
           }
         }
       }
@@ -1128,7 +1146,8 @@ namespace QMT {
       destroy_linear_system(&data);
     }
     double et = gmsh::logger::getWallTime() - wti;
-    info("cross field elapsed time: {}", et);
+    if (verbosity >= 2)
+      info("cross field elapsed time: {}", et);
 
     { /* Export solution */
       F(e,uIEdges.size()) {

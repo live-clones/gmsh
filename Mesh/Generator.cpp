@@ -27,6 +27,7 @@
 #include "meshGRegionLocalMeshMod.h"
 #include "meshRelocateVertex.h"
 #include "meshRefine.h"
+#include "meshQuadQuasiStructured.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "ExtrudeParams.h"
@@ -508,10 +509,12 @@ static void Mesh2D(GModel *m)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;
 
-  // boundary layers are special: their generation (including vertices and curve
+  // - boundary layers are special: their generation (including vertices and curve
   // meshes) is global as it depends on a smooth normal field generated from the
   // surface mesh of the source surfaces
-  if(!Mesh2DWithBoundaryLayers(m)) {
+  // - quasi-structured quad meshing is special because it is global and the
+  // faces are not meshed independantly
+  if(!Mesh2DWithBoundaryLayers(m) && Mesh2DWithQuadQuasiStructured(m) != 0) {
     std::set<GFace *, GEntityPtrLessThan> f;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
       f.insert(*it);
