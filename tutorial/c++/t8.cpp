@@ -6,7 +6,7 @@
 //
 // -----------------------------------------------------------------------------
 
-#include <algorithm>
+#include <set>
 #include <gmsh.h>
 
 // In addition to creating geometries and meshes, the C++ API can also be used
@@ -73,9 +73,9 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("General.SmallAxes", 0);
 
   // Show the GUI
-  std::vector<std::string> args(argv + 1, argv + argc);
-  if(!std::count(args.begin(), args.end(), "-nopopup"))
-    gmsh::fltk::initialize();
+  std::set<std::string> args;
+  for(int i = 1; i < argc; i++) args.insert(argv[i]);
+  if(args.find("-nopopup") == args.end()) gmsh::fltk::initialize();
 
   // We also set some options for each post-processing view:
   gmsh::option::setNumber("View[0].IntervalsType", 2);
@@ -164,8 +164,7 @@ int main(int argc, char **argv)
     }
   }
 
-  if(!std::count(args.begin(), args.end(), "-nopopup"))
-    gmsh::fltk::run();
+  if(args.find("-nopopup") == args.end()) gmsh::fltk::run();
 
   gmsh::finalize();
 

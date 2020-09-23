@@ -2118,7 +2118,7 @@ if(NOT DISABLE_GMSH_TESTS)
         endif()
         set_target_properties(${TEST} PROPERTIES LINK_FLAGS "${FLAGS}")
       endif()
-      add_test(${TEST}_cpp ${TEST})
+      add_test(${TEST}_cpp ${TEST} -nopopup)
     endforeach()
   endif()
   # enable this once we have worked out the path issues on the build machines
