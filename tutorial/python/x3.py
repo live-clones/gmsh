@@ -75,9 +75,8 @@ gmsh.view.addListDataString(v1, [0.5, 1.5, 0.],
                             ["A multi-step list-based view"],
                             ["Align", "Center", "Font", "Helvetica"])
 
-# Views can exported as files with the `write' function:
-# gmsh.view.write(v1, "v1.pos") # as a list-based view
-# gmsh.view.write(v1, "v1.msh") # converted to a model-based view
+# List-based views can be saved to disk using `gmsh.view.write()':
+gmsh.view.write(v1, "x3.pos")
 
 # High-order datasets can be provided by setting the interpolation matrices
 # explicitly. Let's create a second view with second order interpolation on

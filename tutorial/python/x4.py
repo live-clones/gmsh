@@ -29,10 +29,10 @@ gmsh.model.mesh.addElementsByType(surf, 2, [1, 2], [1, 2, 3, 1, 3, 4])
 
 # We can now create a new model-based view, to which we add 10 steps of
 # node-based data:
-t = gmsh.view.add("A model-based view")
+t1 = gmsh.view.add("A model-based view")
 for step in range(0, 10):
     gmsh.view.addHomogeneousModelData(
-        t, step, "simple model", "NodeData",
+        t1, step, "simple model", "NodeData",
         [1, 2, 3, 4],  # tags of nodes
         [10., 10., 12. + step, 13. + step])  # data, per node
 
@@ -62,7 +62,7 @@ gmsh.model.mesh.generate(3)
 nodes, coord, _ = gmsh.model.mesh.getNodes()
 for step in range(11, 20):
     gmsh.view.addHomogeneousModelData(
-        t, step, "another model", "NodeData", nodes,
+        t1, step, "another model", "NodeData", nodes,
         [step * coord[i] for i in range(0, len(coord), 3)])
 
 # This feature allows to create seamless animations for time-dependent datasets
@@ -73,6 +73,14 @@ for step in range(11, 20):
 # high-order datasets can be specified as "ElementNodeData", with the
 # interpolation matrices specified in the same as as for list-based views (see
 # `x3.py').
+
+# Model-based views can be saved to disk using `gmsh.view.write()'; note that
+# saving a view based on multiple meshes (like the view `t1') will automatically
+# create several files. If the `PostProcessing.SaveMesh' option is set,
+# `gmsh.view.write()' will only save the view data, without the mesh (which
+# could be saved independently with `gmsh.write()').
+gmsh.view.write(t1, "x4_t1.msh")
+gmsh.view.write(t2, "x4_t2.msh")
 
 # Launch the GUI to see the results:
 if '-nopopup' not in sys.argv:

@@ -30,10 +30,10 @@ int main(int argc, char **argv)
 
   // We can now create a new model-based view, to which we add 10 steps of
   // node-based data:
-  int t = gmsh::view::add("A model-based view");
+  int t1 = gmsh::view::add("A model-based view");
   for(int step = 0; step < 10; step++) {
     gmsh::view::addHomogeneousModelData
-      (t, step, "simple model", "NodeData",
+      (t1, step, "simple model", "NodeData",
        {1, 2, 3, 4},  // tags of nodes
        {10., 10., 12. + step, 13. + step});  // data, per node
   }
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     for(std::size_t i = 0; i < coord.size(); i += 3)
       val.push_back(step * coord[i]);
     gmsh::view::addHomogeneousModelData
-      (t, step, "another model", "NodeData", nodes, val);
+      (t1, step, "another model", "NodeData", nodes, val);
   }
 
   // This feature allows to create seamless animations for time-dependent
@@ -81,6 +81,14 @@ int main(int argc, char **argv)
   // high-order datasets can be specified as "ElementNodeData", with the
   // interpolation matrices specified in the same as as for list-based views
   // (see `x3.cpp').
+
+  // Model-based views can be saved to disk using `gmsh::view::write()'; note
+  // that saving a view based on multiple meshes (like the view `t1') will
+  // automatically create several files. If the `PostProcessing.SaveMesh' option
+  // is set, `gmsh::view::write()' will only save the view data, without the
+  // mesh (which could be saved independently with `gmsh::write()').
+  gmsh::view::write(t1, "x4_t1.msh");
+  gmsh::view::write(t2, "x4_t2.msh");
 
   // Launch the GUI to see the results:
   gmsh::fltk::run();
