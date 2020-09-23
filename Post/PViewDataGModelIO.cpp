@@ -220,8 +220,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
   if(_steps.empty()) return true;
 
   if(hasMultipleMeshes()) {
-    Msg::Error("Export not done for multi-mesh views");
-    return false;
+    Msg::Info("Exporting multi-mesh view in separate files");
   }
 
   if(forceNodeData && _type != NodeData) {
@@ -233,153 +232,168 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
       "Cannot force ElementData for this dataset: saving native data");
   }
 
-  GModel *model = _steps[0]->getModel();
-
-  FILE *fp;
-  if(saveMesh) {
-    if(!model->writeMSH(fileName, version, binary, false, false, 1.0, 0, 0,
-                        multipleView))
-      return false;
-    // append data
-    fp = Fopen(fileName.c_str(), binary ? "ab" : "a");
-    if(!fp) {
-      Msg::Error("Unable to open file '%s'", fileName.c_str());
-      return false;
-    }
-  }
-  else {
-    if(multipleView) {
-      fp = Fopen(fileName.c_str(), binary ? "ab" : "a");
-      if(!fp) {
-        Msg::Error("Unable to open file '%s'", fileName.c_str());
-        return false;
-      }
-    }
-    else {
-      fp = Fopen(fileName.c_str(), binary ? "wb" : "w");
-      if(!fp) {
-        Msg::Error("Unable to open file '%s'", fileName.c_str());
-        return false;
-      }
-      fprintf(fp, "$MeshFormat\n");
-      fprintf(fp, "%g %d %d\n", 2.2, binary ? 1 : 0, (int)sizeof(double));
-      if(binary) {
-        int one = 1;
-        fwrite(&one, sizeof(int), 1, fp);
-        fprintf(fp, "\n");
-      }
-      fprintf(fp, "$EndMeshFormat\n");
-    }
-  }
-
-  if(saveInterpolationMatrices && haveInterpolationMatrices()) {
-    fprintf(fp, "$InterpolationScheme\n");
-    fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
-    fprintf(fp, "%d\n", (int)_interpolation.size());
-    for(interpolationMatrices::iterator it = _interpolation.begin();
-        it != _interpolation.end(); it++) {
-      if(it->second.size() >= 2) {
-        fprintf(fp, "%d\n2\n", it->first);
-        for(int mat = 0; mat < 2; mat++) {
-          int m = it->second[mat]->size1(), n = it->second[mat]->size2();
-          fprintf(fp, "%d %d\n", m, n);
-          for(int i = 0; i < m; i++) {
-            for(int j = 0; j < n; j++)
-              fprintf(fp, "%.16g ", it->second[mat]->get(i, j));
-            fprintf(fp, "\n");
-          }
-        }
-      }
-    }
-    fprintf(fp, "$EndInterpolationScheme\n");
-  }
+  FILE *fp = 0;
+  GModel *model0 = _steps[0]->getModel();
+  int numFile = 0;
 
   for(std::size_t step = 0; step < _steps.size(); step++) {
     int numEnt = 0, numComp = _steps[step]->getNumComponents();
     for(std::size_t i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) numEnt++;
-    if(numEnt) {
-      if(_type == NodeData) {
-        fprintf(fp, "$NodeData\n");
-        fprintf(fp, "1\n\"%s\"\n", getName().c_str());
-        fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
-        if(partitionNum)
-          fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt,
-                  partitionNum);
-        else
-          fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
-        for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
-          if(_steps[step]->getData(i)) {
-            MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
-            if(!v) {
-              Msg::Error("Unknown node %d in data", i);
-              fclose(fp);
-              return false;
-            }
-            int num = version >= 3.0 ? v->getNum() : v->getIndex();
-            if(binary) {
-              fwrite(&num, sizeof(int), 1, fp);
-              fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
-            }
-            else {
-              fprintf(fp, "%d", num);
-              for(int k = 0; k < numComp; k++)
-                fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
-              fprintf(fp, "\n");
-            }
-          }
+    if(!numEnt) continue; // skip step
+
+    // open file, save mesh and save interpolation matrices
+    if(!fp || _steps[step]->getModel() != model0) {
+      if(fp) fclose(fp);
+      std::string stepFileName = fileName;
+      if(hasMultipleMeshes()) {
+        std::ostringstream sstream;
+        std::vector<std::string> n = SplitFileName(fileName);
+        sstream << n[0] << n[1] << "_" << numFile++ << n[2];
+        stepFileName = sstream.str();
+        model0 = _steps[step]->getModel();
+      }
+      if(saveMesh) {
+        if(!_steps[step]->getModel()->writeMSH
+           (stepFileName, version, binary, false, false, 1.0, 0, 0, multipleView))
+          return false;
+        // append data
+        fp = Fopen(stepFileName.c_str(), binary ? "ab" : "a");
+        if(!fp) {
+          Msg::Error("Unable to open file '%s'", stepFileName.c_str());
+          return false;
         }
-        if(binary) fprintf(fp, "\n");
-        fprintf(fp, "$EndNodeData\n");
       }
       else {
-        if(_type == ElementNodeData)
-          fprintf(fp, "$ElementNodeData\n");
-        else
-          fprintf(fp, "$ElementData\n");
-        if(saveInterpolationMatrices && haveInterpolationMatrices())
-          fprintf(fp, "2\n\"%s\"\n\"INTERPOLATION_SCHEME\"\n",
-                  getName().c_str());
-        else
-          fprintf(fp, "1\n\"%s\"\n", getName().c_str());
-
-        fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
-        if(partitionNum)
-          fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt,
-                  partitionNum);
-        else
-          fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
-        for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
-          if(_steps[step]->getData(i)) {
-            MElement *e = model->getMeshElementByTag(i);
-            if(!e) {
-              Msg::Error("Unknown element %d in data", i);
-              fclose(fp);
-              return false;
-            }
-            int mult = _steps[step]->getMult(i);
-            int num = model->getMeshElementIndex(e);
-            if(binary) {
-              fwrite(&num, sizeof(int), 1, fp);
-              if(_type == ElementNodeData) fwrite(&mult, sizeof(int), 1, fp);
-              fwrite(_steps[step]->getData(i), sizeof(double), numComp * mult,
-                     fp);
-            }
-            else {
-              fprintf(fp, "%d", num);
-              if(_type == ElementNodeData) fprintf(fp, " %d", mult);
-              for(int k = 0; k < numComp * mult; k++)
-                fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
-              fprintf(fp, "\n");
+        if(multipleView) {
+          fp = Fopen(stepFileName.c_str(), binary ? "ab" : "a");
+          if(!fp) {
+            Msg::Error("Unable to open file '%s'", stepFileName.c_str());
+            return false;
+          }
+        }
+        else {
+          fp = Fopen(stepFileName.c_str(), binary ? "wb" : "w");
+          if(!fp) {
+            Msg::Error("Unable to open file '%s'", stepFileName.c_str());
+            return false;
+          }
+          fprintf(fp, "$MeshFormat\n");
+          fprintf(fp, "%g %d %d\n", version, binary ? 1 : 0, (int)sizeof(double));
+          if(binary) {
+            int one = 1;
+            fwrite(&one, sizeof(int), 1, fp);
+            fprintf(fp, "\n");
+          }
+          fprintf(fp, "$EndMeshFormat\n");
+        }
+      }
+      // save the interpolation matrix?
+      if(saveInterpolationMatrices && haveInterpolationMatrices()) {
+        fprintf(fp, "$InterpolationScheme\n");
+        fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
+        fprintf(fp, "%d\n", (int)_interpolation.size());
+        for(interpolationMatrices::iterator it = _interpolation.begin();
+            it != _interpolation.end(); it++) {
+          if(it->second.size() >= 2) {
+            fprintf(fp, "%d\n2\n", it->first);
+            for(int mat = 0; mat < 2; mat++) {
+              int m = it->second[mat]->size1(), n = it->second[mat]->size2();
+              fprintf(fp, "%d %d\n", m, n);
+              for(int i = 0; i < m; i++) {
+                for(int j = 0; j < n; j++)
+                  fprintf(fp, "%.16g ", it->second[mat]->get(i, j));
+                fprintf(fp, "\n");
+              }
             }
           }
         }
-        if(binary) fprintf(fp, "\n");
-        if(_type == ElementNodeData)
-          fprintf(fp, "$EndElementNodeData\n");
-        else
-          fprintf(fp, "$EndElementData\n");
+        fprintf(fp, "$EndInterpolationScheme\n");
       }
+    }
+
+    // save the data
+    if(_type == NodeData) {
+      fprintf(fp, "$NodeData\n");
+      fprintf(fp, "1\n\"%s\"\n", getName().c_str());
+      fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
+      if(partitionNum)
+        fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt,
+                partitionNum);
+      else
+        fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
+      for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
+        if(_steps[step]->getData(i)) {
+          MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
+          if(!v) {
+            Msg::Error("Unknown node %d in data", i);
+            fclose(fp);
+            return false;
+          }
+          int num = (version >= 3.0) ? v->getNum() : v->getIndex();
+          if(binary) {
+            fwrite(&num, sizeof(int), 1, fp);
+            fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
+          }
+          else {
+            fprintf(fp, "%d", num);
+            for(int k = 0; k < numComp; k++)
+              fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
+            fprintf(fp, "\n");
+          }
+        }
+      }
+      if(binary) fprintf(fp, "\n");
+      fprintf(fp, "$EndNodeData\n");
+    }
+    else {
+      if(_type == ElementNodeData)
+        fprintf(fp, "$ElementNodeData\n");
+      else
+        fprintf(fp, "$ElementData\n");
+      if(saveInterpolationMatrices && haveInterpolationMatrices())
+        fprintf(fp, "2\n\"%s\"\n\"INTERPOLATION_SCHEME\"\n",
+                getName().c_str());
+      else
+        fprintf(fp, "1\n\"%s\"\n", getName().c_str());
+
+      fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
+      if(partitionNum)
+        fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt,
+                partitionNum);
+      else
+        fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
+      for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
+        if(_steps[step]->getData(i)) {
+          MElement *e = _steps[step]->getModel()->getMeshElementByTag(i);
+          if(!e) {
+            Msg::Error("Unknown element %d in data", i);
+            fclose(fp);
+            return false;
+          }
+          int mult = _steps[step]->getMult(i);
+          int num = (version >= 3.0) ? e->getNum() :
+            _steps[step]->getModel()->getMeshElementIndex(e);
+          if(binary) {
+            fwrite(&num, sizeof(int), 1, fp);
+            if(_type == ElementNodeData) fwrite(&mult, sizeof(int), 1, fp);
+            fwrite(_steps[step]->getData(i), sizeof(double), numComp * mult,
+                   fp);
+          }
+          else {
+            fprintf(fp, "%d", num);
+            if(_type == ElementNodeData) fprintf(fp, " %d", mult);
+            for(int k = 0; k < numComp * mult; k++)
+              fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
+            fprintf(fp, "\n");
+          }
+        }
+      }
+      if(binary) fprintf(fp, "\n");
+      if(_type == ElementNodeData)
+        fprintf(fp, "$EndElementNodeData\n");
+      else
+        fprintf(fp, "$EndElementData\n");
     }
   }
 
