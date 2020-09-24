@@ -76,7 +76,7 @@ for step in range(11, 20):
 
 # Model-based views can be saved to disk using `gmsh.view.write()'; note that
 # saving a view based on multiple meshes (like the view `t1') will automatically
-# create several files. If the `PostProcessing.SaveMesh' option is set,
+# create several files. If the `PostProcessing.SaveMesh' option is not set,
 # `gmsh.view.write()' will only save the view data, without the mesh (which
 # could be saved independently with `gmsh.write()').
 gmsh.view.write(t1, "x4_t1.msh")
