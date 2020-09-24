@@ -1245,7 +1245,7 @@ static void geometry_elementary_set_factory_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string str((const char*)data);
-  add_infile("SetFactory(\"" + str + "\");", GModel::current()->getFileName());
+  set_factory(str, GModel::current()->getFileName());
   if(FlGui::available())
     Msg::StatusBar(false, "Setting %s factory", str.c_str());
 }

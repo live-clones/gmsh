@@ -823,41 +823,30 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
     (*it)->getVisibility() ? state[3][1].push_back((*it)->tag()) :
                              state[3][0].push_back((*it)->tag());
-  char tmp[256];
-  const char *labels[4] = {"Point", "Curve", "Surface", "Volume"};
-  std::string str;
-  int mode;
-  int on = 0, off = 0;
+  std::vector<std::pair<int, int> > entities;
+  int mode = 0, on = 0, off = 0;
   for(int i = 0; i < 4; i++) {
     on += state[i][1].size();
     off += state[i][0].size();
   }
   if(on > off) {
-    add_infile("Show \"*\";", GModel::current()->getFileName());
+    add_visibility_all(1, GModel::current()->getFileName());
     if(!off) return;
-    str += "Hide {\n";
     mode = 0;
   }
   else {
-    add_infile("Hide \"*\";", GModel::current()->getFileName());
+    add_visibility_all(0, GModel::current()->getFileName());
     if(!on) return;
-    str += "Show {\n";
     mode = 1;
   }
   for(int i = 0; i < 4; i++) {
     if(state[i][mode].size()) {
-      str += labels[i];
-      str += "{";
       for(std::size_t j = 0; j < state[i][mode].size(); j++) {
-        if(j) str += ",";
-        sprintf(tmp, "%d", state[i][mode][j]);
-        str += tmp;
+        entities.push_back(std::pair<int, int>(i, state[i][mode][j]));
       }
-      str += "};\n";
     }
   }
-  str += "}\n";
-  add_infile(str, GModel::current()->getFileName());
+  add_visibility(mode, entities, GModel::current()->getFileName());
   Msg::StatusBar(true, "Done appending visibility info");
 }
 

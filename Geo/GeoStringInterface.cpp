@@ -23,7 +23,7 @@
 #include "onelab.h"
 #endif
 
-void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
+static void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
 {
   const std::string &fileName = fileNameOrEmpty;
   if(fileName.empty()) {
@@ -176,6 +176,13 @@ static void check_occ(std::ostringstream &sstream)
   if(gmsh_yyfactory != "OpenCASCADE")
     sstream << "SetFactory(\"OpenCASCADE\");\n";
 #endif
+}
+
+void set_factory(const std::string &factory, const std::string &fileName)
+{
+  std::ostringstream sstream;
+  sstream << "SetFactory(\"" << factory << "\");";
+  add_infile(sstream.str(), fileName);
 }
 
 void add_charlength(const std::string &fileName, const std::vector<int> &l,
@@ -720,5 +727,24 @@ void delete_entities(const std::string &fileName,
   std::ostringstream sstream;
   if(recursive) sstream << "Recursive ";
   sstream << "Delete {\n  " << dimTags2String(l) << "\n}";
+  add_infile(sstream.str(), fileName);
+}
+
+void add_visibility_all(int mode, const std::string &fileName)
+{
+  if(mode)
+    add_infile("Show \"*\";", fileName);
+  else
+    add_infile("Hide \"*\";", fileName);
+}
+
+void add_visibility(int mode, const std::vector<std::pair<int, int> > &l,
+                    const std::string &fileName)
+{
+  std::ostringstream sstream;
+  if(mode)
+    sstream << "Show {\n  " << dimTags2String(l) << "\n}";
+  else
+    sstream << "Hide {\n  " << dimTags2String(l) << "\n}";
   add_infile(sstream.str(), fileName);
 }

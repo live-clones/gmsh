@@ -10,7 +10,7 @@
 #include <vector>
 #include "ListUtils.h"
 
-void add_infile(const std::string &text, const std::string &fileName);
+void set_factory(const std::string &factory, const std::string &fileName);
 void add_charlength(const std::string &fileName, const std::vector<int> &l,
                     const std::string &lc);
 void add_recosurf(const std::string &fileName, const std::vector<int> &l);
@@ -131,5 +131,8 @@ void coherence(const std::string &fileName);
 void delete_entities(const std::string &fileName,
                      const std::vector<std::pair<int, int> > &l,
                      bool recursive);
+void add_visibility_all(int mode, const std::string &fileName);
+void add_visibility(int mode, const std::vector<std::pair<int, int> > &l,
+                    const std::string &fileName);
 
 #endif
