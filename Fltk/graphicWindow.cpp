@@ -53,7 +53,7 @@ typedef unsigned long intptr_t;
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "findLinks.h"
-#include "GeoStringInterface.h"
+#include "scriptStringInterface.h"
 #include "CommandLine.h"
 #include "Options.h"
 #include "Context.h"

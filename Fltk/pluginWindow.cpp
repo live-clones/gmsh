@@ -29,7 +29,7 @@ typedef unsigned long intptr_t;
 #include "GModel.h"
 #include "MVertex.h"
 #include "Context.h"
-#include "GeoStringInterface.h"
+#include "scriptStringInterface.h"
 #include "StringUtils.h"
 #include "OS.h"
 

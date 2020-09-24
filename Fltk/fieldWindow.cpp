@@ -25,7 +25,7 @@
 #include "PView.h"
 #include "GmshMessage.h"
 #include "Field.h"
-#include "GeoStringInterface.h"
+#include "scriptStringInterface.h"
 #include "StringUtils.h"
 #include "Options.h"
 #include "Context.h"

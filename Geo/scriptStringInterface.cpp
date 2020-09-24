@@ -13,7 +13,7 @@
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "Geo.h"
-#include "GeoStringInterface.h"
+#include "scriptStringInterface.h"
 #include "OpenFile.h"
 #include "Context.h"
 #include "OS.h"

@@ -18,7 +18,7 @@
 #undef Convex
 #endif
 #include "GModelIO_OCC.h"
-#include "GeoStringInterface.h"
+#include "scriptStringInterface.h"
 #include "OpenFile.h"
 #include "Context.h"
 #include "Options.h"

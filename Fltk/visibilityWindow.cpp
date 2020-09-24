@@ -33,7 +33,7 @@ typedef unsigned long intptr_t;
 #include "MElement.h"
 #include "PView.h"
 #include "PViewData.h"
-#include "GeoStringInterface.h"
+#include "scriptStringInterface.h"
 #include "Options.h"
 #include "Context.h"
 #include "StringUtils.h"
