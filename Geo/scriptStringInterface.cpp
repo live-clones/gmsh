@@ -23,7 +23,8 @@
 #include "onelab.h"
 #endif
 
-static void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
+static void addInFile(const std::string &text,
+                      const std::string &fileNameOrEmpty)
 {
   const std::string &fileName = fileNameOrEmpty;
   if(fileName.empty()) {
@@ -95,9 +96,7 @@ static void add_infile(const std::string &text, const std::string &fileNameOrEmp
   fprintf(tmp_file, "%s\n", text.c_str());
   fclose(tmp_file);
   gmsh_yyin = Fopen(tmpFileName.c_str(), "r");
-  while(!feof(gmsh_yyin)) {
-    gmsh_yyparse();
-  }
+  while(!feof(gmsh_yyin)) { gmsh_yyparse(); }
   fclose(gmsh_yyin);
   gmsh_yyin = gmsh_yyin_old;
 
@@ -170,7 +169,7 @@ static std::string dimTags2String(const std::vector<std::pair<int, int> > &l)
   return sstream.str();
 }
 
-static void check_occ(std::ostringstream &sstream)
+static void checkOCC(std::ostringstream &sstream)
 {
 #if defined(HAVE_PARSER)
   if(gmsh_yyfactory != "OpenCASCADE")
@@ -178,32 +177,35 @@ static void check_occ(std::ostringstream &sstream)
 #endif
 }
 
-void set_factory(const std::string &factory, const std::string &fileName)
+void scriptSetFactory(const std::string &factory, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "SetFactory(\"" << factory << "\");";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_charlength(const std::string &fileName, const std::vector<int> &l,
-                    const std::string &lc)
+void scriptSetCharacteristicLength(const std::string &fileName,
+                                   const std::vector<int> &l,
+                                   const std::string &lc)
 {
   std::ostringstream sstream;
   sstream << "Characteristic Length {" << vector2String(l) << "} = " << lc
           << ";";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_recosurf(const std::string &fileName, const std::vector<int> &l)
+void scriptRecombineSurface(const std::string &fileName,
+                            const std::vector<int> &l)
 {
   std::ostringstream sstream;
   sstream << "Recombine Surface {" << vector2String(l) << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_trsfline(std::vector<int> &l, const std::string &fileName,
-                  const std::string &type, const std::string &typearg,
-                  const std::string &pts)
+void scriptSetTransfiniteLine(std::vector<int> &l, const std::string &fileName,
+                              const std::string &type,
+                              const std::string &typearg,
+                              const std::string &pts)
 {
   std::ostringstream sstream;
   sstream << "Transfinite Curve {";
@@ -214,11 +216,12 @@ void add_trsfline(std::vector<int> &l, const std::string &fileName,
   sstream << "} = " << pts;
   if(typearg.size()) sstream << " Using " << type << " " << typearg;
   sstream << ";";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_trsfsurf(std::vector<int> &l, const std::string &fileName,
-                  const std::string &dir)
+void scriptSetTransfiniteSurface(std::vector<int> &l,
+                                 const std::string &fileName,
+                                 const std::string &dir)
 {
   std::ostringstream sstream;
   sstream << "Transfinite Surface {" << l[0] << "}";
@@ -232,10 +235,11 @@ void add_trsfsurf(std::vector<int> &l, const std::string &fileName,
   }
   if(dir != "Left") sstream << " " << dir;
   sstream << ";";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_trsfvol(std::vector<int> &l, const std::string &fileName)
+void scriptSetTransfiniteVolume(std::vector<int> &l,
+                                const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Transfinite Volume{" << l[0] << "} = {";
@@ -244,11 +248,11 @@ void add_trsfvol(std::vector<int> &l, const std::string &fileName)
     sstream << l[i];
   }
   sstream << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_embedded(const std::string &fileName, const std::string &what,
-                  std::vector<int> &l, int dim, int tag)
+void scriptEmbed(const std::string &fileName, const std::string &what,
+                 std::vector<int> &l, int dim, int tag)
 {
   std::ostringstream sstream;
   sstream << what << "{" << vector2String(l) << "} In ";
@@ -257,12 +261,12 @@ void add_embedded(const std::string &fileName, const std::string &what,
   else
     sstream << "Volume{";
   sstream << tag << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_param(const std::string &par, const std::string &value,
-               const std::string &label, const std::string &path,
-               const std::string &fileName)
+void scriptAddParameter(const std::string &par, const std::string &value,
+                        const std::string &label, const std::string &path,
+                        const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << par << " = DefineNumber[ " << value;
@@ -276,55 +280,55 @@ void add_param(const std::string &par, const std::string &value,
   else
     sstream << par;
   sstream << "\" ];";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_point(const std::string &fileName, const std::string &x,
-               const std::string &y, const std::string &z,
-               const std::string &lc)
+void scriptAddPoint(const std::string &fileName, const std::string &x,
+                    const std::string &y, const std::string &z,
+                    const std::string &lc)
 {
   std::ostringstream sstream;
   sstream << "Point(" << GModel::current()->getMaxElementaryNumber(0) + 1
           << ") = {" << x << ", " << y << ", " << z;
   if(lc.size()) sstream << ", " << lc;
   sstream << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_field_option(int field_id, const std::string &option_name,
-                      const std::string &option_value,
-                      const std::string &fileName)
+void scriptAddFieldOption(int field_id, const std::string &option_name,
+                          const std::string &option_value,
+                          const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Field[" << field_id << "]." << option_name << " = "
           << option_value << ";";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_field(int field_id, const std::string &type_name,
-               const std::string &fileName)
+void scriptAddField(int field_id, const std::string &type_name,
+                    const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Field[" << field_id << "] = " << type_name << ";";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void delete_field(int field_id, const std::string &fileName)
+void scriptDeleteField(int field_id, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Delete Field [" << field_id << "];";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void set_background_field(int field_id, const std::string &fileName)
+void scriptSetBackgroundField(int field_id, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Background Field = " << field_id << ";";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_multline(const std::string &type, std::vector<int> &p,
-                  const std::string &fileName)
+void scriptAddCurve(const std::string &type, std::vector<int> &p,
+                    const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << type << "(" << GModel::current()->getMaxElementaryNumber(1) + 1
@@ -334,27 +338,27 @@ void add_multline(const std::string &type, std::vector<int> &p,
     sstream << p[i];
   }
   sstream << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_circle_arc(int p1, int p2, int p3, const std::string &fileName)
+void scriptAddCircleArc(int p1, int p2, int p3, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Circle(" << GModel::current()->getMaxElementaryNumber(1) + 1
           << ") = {" << p1 << ", " << p2 << ", " << p3 << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_ellipse_arc(int p1, int p2, int p3, int p4,
-                     const std::string &fileName)
+void scriptAddEllipseArc(int p1, int p2, int p3, int p4,
+                         const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Ellipse(" << GModel::current()->getMaxElementaryNumber(1) + 1
           << ") = {" << p1 << ", " << p2 << ", " << p3 << ", " << p4 << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_lineloop(List_T *list, const std::string &fileName, int *numloop)
+void scriptAddCurveLoop(List_T *list, const std::string &fileName, int *numloop)
 {
   if(RecognizeLineLoop(list, numloop)) return;
   *numloop = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
@@ -363,19 +367,20 @@ void add_lineloop(List_T *list, const std::string &fileName, int *numloop)
       *numloop, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
   std::ostringstream sstream;
   sstream << "Curve Loop(" << *numloop << ") = {" << list2String(list) << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_surf(const std::string &type, List_T *list,
-              const std::string &fileName)
+void scriptAddSurface(const std::string &type, List_T *list,
+                      const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << type << "(" << GModel::current()->getMaxElementaryNumber(2) + 1
           << ") = {" << list2String(list) << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_surfloop(List_T *list, const std::string &fileName, int *numloop)
+void scriptAddSurfaceLoop(List_T *list, const std::string &fileName,
+                          int *numloop)
 {
   if(RecognizeSurfaceLoop(list, numloop)) return;
   *numloop = GModel::current()->getGEOInternals()->getMaxTag(-2) + 1;
@@ -385,20 +390,22 @@ void add_surfloop(List_T *list, const std::string &fileName, int *numloop)
   std::ostringstream sstream;
   sstream << "Surface Loop(" << *numloop << ") = {" << list2String(list)
           << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_vol(List_T *list, const std::string &fileName)
+void scriptAddVolume(List_T *list, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Volume(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << list2String(list) << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_remove_physical(const std::string &fileName, const std::string &what,
-                         const std::vector<int> &l, const std::string &name,
-                         int forceTag, bool append, const std::string &mode)
+void scriptRemovePhysicalGroup(const std::string &fileName,
+                               const std::string &what,
+                               const std::vector<int> &l,
+                               const std::string &name, int forceTag,
+                               bool append, const std::string &mode)
 {
   std::ostringstream sstream;
   sstream << "Physical " << what << "(";
@@ -418,164 +425,165 @@ void add_remove_physical(const std::string &fileName, const std::string &what,
   else if(append)
     sstream << "+";
   sstream << "= {" << vector2String(l) << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_compound(const std::string &fileName, const std::string &type,
-                  const std::vector<int> &l)
+void scriptSetCompound(const std::string &fileName, const std::string &type,
+                       const std::vector<int> &l)
 {
   std::ostringstream sstream;
   sstream << "Compound " << type << " {" << vector2String(l) << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_circle(const std::string &fileName, const std::string &x,
-                const std::string &y, const std::string &z,
-                const std::string &r, const std::string &alpha1,
-                const std::string &alpha2)
+void scriptAddCircle(const std::string &fileName, const std::string &x,
+                     const std::string &y, const std::string &z,
+                     const std::string &r, const std::string &alpha1,
+                     const std::string &alpha2)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Circle(" << GModel::current()->getMaxElementaryNumber(1) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << r;
   if(alpha1.size()) sstream << ", " << alpha1;
   if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
   sstream << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_ellipse(const std::string &fileName, const std::string &x,
-                 const std::string &y, const std::string &z,
-                 const std::string &rx, const std::string &ry,
-                 const std::string &alpha1, const std::string &alpha2)
+void scriptAddEllipse(const std::string &fileName, const std::string &x,
+                      const std::string &y, const std::string &z,
+                      const std::string &rx, const std::string &ry,
+                      const std::string &alpha1, const std::string &alpha2)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Ellipse(" << GModel::current()->getMaxElementaryNumber(1) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry;
   if(alpha1.size()) sstream << ", " << alpha1;
   if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
   sstream << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_disk(const std::string &fileName, const std::string &x,
-              const std::string &y, const std::string &z, const std::string &rx,
-              const std::string &ry)
+void scriptAddDisk(const std::string &fileName, const std::string &x,
+                   const std::string &y, const std::string &z,
+                   const std::string &rx, const std::string &ry)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Disk(" << GModel::current()->getMaxElementaryNumber(2) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry
           << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_rectangle(const std::string &fileName, const std::string &x,
-                   const std::string &y, const std::string &z,
-                   const std::string &dx, const std::string &dy,
-                   const std::string &roundedRadius)
+void scriptAddRectangle(const std::string &fileName, const std::string &x,
+                        const std::string &y, const std::string &z,
+                        const std::string &dx, const std::string &dy,
+                        const std::string &roundedRadius)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Rectangle(" << GModel::current()->getMaxElementaryNumber(2) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy;
   if(roundedRadius.size()) sstream << ", " << roundedRadius;
   sstream << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_sphere(const std::string &fileName, const std::string &x,
-                const std::string &y, const std::string &z,
-                const std::string &r, const std::string &alpha1,
-                const std::string &alpha2, const std::string &alpha3)
+void scriptAddSphere(const std::string &fileName, const std::string &x,
+                     const std::string &y, const std::string &z,
+                     const std::string &r, const std::string &alpha1,
+                     const std::string &alpha2, const std::string &alpha3)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Sphere(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << r;
   if(alpha1.size()) sstream << ", " << alpha1;
   if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
   if(alpha1.size() && alpha2.size() && alpha3.size()) sstream << ", " << alpha3;
   sstream << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_cylinder(const std::string &fileName, const std::string &x,
-                  const std::string &y, const std::string &z,
-                  const std::string &dx, const std::string &dy,
-                  const std::string &dz, const std::string &r,
-                  const std::string &alpha)
+void scriptAddCylinder(const std::string &fileName, const std::string &x,
+                       const std::string &y, const std::string &z,
+                       const std::string &dx, const std::string &dy,
+                       const std::string &dz, const std::string &r,
+                       const std::string &alpha)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Cylinder(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
           << ", " << dz << ", " << r;
   if(alpha.size()) sstream << ", " << alpha;
   sstream << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_box(const std::string &fileName, const std::string &x,
-             const std::string &y, const std::string &z, const std::string &dx,
-             const std::string &dy, const std::string &dz)
+void scriptAddBox(const std::string &fileName, const std::string &x,
+                  const std::string &y, const std::string &z,
+                  const std::string &dx, const std::string &dy,
+                  const std::string &dz)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Box(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
           << ", " << dz << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_torus(const std::string &fileName, const std::string &x,
-               const std::string &y, const std::string &z,
-               const std::string &r1, const std::string &r2,
-               const std::string &alpha)
+void scriptAddTorus(const std::string &fileName, const std::string &x,
+                    const std::string &y, const std::string &z,
+                    const std::string &r1, const std::string &r2,
+                    const std::string &alpha)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Torus(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << r1 << ", " << r2;
   if(alpha.size()) sstream << ", " << alpha;
   sstream << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_cone(const std::string &fileName, const std::string &x,
-              const std::string &y, const std::string &z, const std::string &dx,
-              const std::string &dy, const std::string &dz,
-              const std::string &r1, const std::string &r2,
-              const std::string &alpha)
+void scriptAddCone(const std::string &fileName, const std::string &x,
+                   const std::string &y, const std::string &z,
+                   const std::string &dx, const std::string &dy,
+                   const std::string &dz, const std::string &r1,
+                   const std::string &r2, const std::string &alpha)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Cone(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
           << ", " << dz << ", " << r1 << ", " << r2;
   if(alpha.size()) sstream << ", " << alpha;
   sstream << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_wedge(const std::string &fileName, const std::string &x,
-               const std::string &y, const std::string &z,
-               const std::string &dx, const std::string &dy,
-               const std::string &dz, const std::string &ltx)
+void scriptAddWedge(const std::string &fileName, const std::string &x,
+                    const std::string &y, const std::string &z,
+                    const std::string &dx, const std::string &dy,
+                    const std::string &dz, const std::string &ltx)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Wedge(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
           << ", " << dz << ", " << ltx << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void translate(const std::string &fileName,
-               const std::vector<std::pair<int, int> > &l,
-               const std::string &tx, const std::string &ty,
-               const std::string &tz, bool duplicata)
+void scriptTranslate(const std::string &fileName,
+                     const std::vector<std::pair<int, int> > &l,
+                     const std::string &tx, const std::string &ty,
+                     const std::string &tz, bool duplicata)
 {
   std::ostringstream sstream;
   sstream << "Translate {" << tx << ", " << ty << ", " << tz << "} {\n  ";
@@ -583,14 +591,15 @@ void translate(const std::string &fileName,
   sstream << dimTags2String(l);
   if(duplicata) sstream << "}";
   sstream << "\n}";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void rotate(const std::string &fileName,
-            const std::vector<std::pair<int, int> > &l, const std::string &ax,
-            const std::string &ay, const std::string &az, const std::string &px,
-            const std::string &py, const std::string &pz,
-            const std::string &angle, bool duplicata)
+void scriptRotate(const std::string &fileName,
+                  const std::vector<std::pair<int, int> > &l,
+                  const std::string &ax, const std::string &ay,
+                  const std::string &az, const std::string &px,
+                  const std::string &py, const std::string &pz,
+                  const std::string &angle, bool duplicata)
 {
   std::ostringstream sstream;
   sstream << "Rotate {{" << ax << ", " << ay << ", " << az << "}, {" << px
@@ -599,13 +608,14 @@ void rotate(const std::string &fileName,
   sstream << dimTags2String(l);
   if(duplicata) sstream << "}";
   sstream << "\n}";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void dilate(const std::string &fileName,
-            const std::vector<std::pair<int, int> > &l, const std::string &cx,
-            const std::string &cy, const std::string &cz, const std::string &sx,
-            const std::string &sy, const std::string &sz, bool duplicata)
+void scriptDilate(const std::string &fileName,
+                  const std::vector<std::pair<int, int> > &l,
+                  const std::string &cx, const std::string &cy,
+                  const std::string &cz, const std::string &sx,
+                  const std::string &sy, const std::string &sz, bool duplicata)
 {
   std::ostringstream sstream;
   sstream << "Dilate {{" << cx << ", " << cy << ", " << cz << "}, {" << sx
@@ -614,13 +624,13 @@ void dilate(const std::string &fileName,
   sstream << dimTags2String(l);
   if(duplicata) sstream << "}";
   sstream << "\n}";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void symmetry(const std::string &fileName,
-              const std::vector<std::pair<int, int> > &l, const std::string &sa,
-              const std::string &sb, const std::string &sc,
-              const std::string &sd, bool duplicata)
+void scriptMirror(const std::string &fileName,
+                  const std::vector<std::pair<int, int> > &l,
+                  const std::string &sa, const std::string &sb,
+                  const std::string &sc, const std::string &sd, bool duplicata)
 {
   std::ostringstream sstream;
   sstream << "Symmetry {" << sa << ", " << sb << ", " << sc << ", " << sd
@@ -629,13 +639,14 @@ void symmetry(const std::string &fileName,
   sstream << dimTags2String(l);
   if(duplicata) sstream << "}";
   sstream << "\n}";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void extrude(const std::string &fileName,
-             const std::vector<std::pair<int, int> > &l, const std::string &tx,
-             const std::string &ty, const std::string &tz, bool extrudeMesh,
-             const std::string &layers, bool recombineMesh)
+void scriptExtrude(const std::string &fileName,
+                   const std::vector<std::pair<int, int> > &l,
+                   const std::string &tx, const std::string &ty,
+                   const std::string &tz, bool extrudeMesh,
+                   const std::string &layers, bool recombineMesh)
 {
   std::ostringstream sstream;
   sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  "
@@ -645,15 +656,16 @@ void extrude(const std::string &fileName,
     if(recombineMesh) sstream << "Recombine;";
   }
   sstream << "\n}";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void protude(const std::string &fileName,
-             const std::vector<std::pair<int, int> > &l, const std::string &ax,
-             const std::string &ay, const std::string &az,
-             const std::string &px, const std::string &py,
-             const std::string &pz, const std::string &angle, bool extrudeMesh,
-             const std::string &layers, bool recombineMesh)
+void scriptProtude(const std::string &fileName,
+                   const std::vector<std::pair<int, int> > &l,
+                   const std::string &ax, const std::string &ay,
+                   const std::string &az, const std::string &px,
+                   const std::string &py, const std::string &pz,
+                   const std::string &angle, bool extrudeMesh,
+                   const std::string &layers, bool recombineMesh)
 {
   std::ostringstream sstream;
   sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {" << px
@@ -664,15 +676,15 @@ void protude(const std::string &fileName,
     if(recombineMesh) sstream << "Recombine;";
   }
   sstream << "\n}";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_pipe(const std::string &fileName,
-              const std::vector<std::pair<int, int> > &l,
-              const std::vector<int> &l2)
+void scriptAddPipe(const std::string &fileName,
+                   const std::vector<std::pair<int, int> > &l,
+                   const std::vector<int> &l2)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   int wire = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
   if(GModel::current()->getOCCInternals())
     wire =
@@ -680,71 +692,73 @@ void add_pipe(const std::string &fileName,
   sstream << "Wire(" << wire << ") = {" << vector2String(l2) << "};\n";
   sstream << "Extrude { " << dimTags2String(l) << "} Using Wire {" << wire
           << "}\n";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void split_edge(int edge_id, List_T *vertices, const std::string &fileName)
+void scriptSplitCurve(int edge_id, List_T *vertices,
+                      const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Split Curve(" << edge_id << ") {" << list2String(vertices)
           << "};";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void apply_boolean(const std::string &fileName, const std::string &op,
+void scriptBoolean(const std::string &fileName, const std::string &op,
                    const std::vector<std::pair<int, int> > &object,
                    const std::vector<std::pair<int, int> > &tool,
                    int deleteObject, int deleteTool)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << op << "{ " << dimTags2String(object);
   if(deleteObject) sstream << "Delete; ";
   sstream << "}{ " << dimTags2String(tool);
   if(deleteTool) sstream << "Delete; ";
   sstream << "}";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void apply_fillet(const std::string &fileName, const std::vector<int> &regions,
+void scriptFillet(const std::string &fileName, const std::vector<int> &regions,
                   const std::vector<int> &edges, const std::string &radius)
 {
   std::ostringstream sstream;
-  check_occ(sstream);
+  checkOCC(sstream);
   sstream << "Fillet{" << vector2String(regions) << "}{" << vector2String(edges)
           << "}{" << radius << "}";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void coherence(const std::string &fileName)
+void scriptCoherence(const std::string &fileName)
 {
-  add_infile("Coherence;", fileName);
+  addInFile("Coherence;", fileName);
 }
 
-void delete_entities(const std::string &fileName,
-                     const std::vector<std::pair<int, int> > &l, bool recursive)
+void scriptDeleteEntities(const std::string &fileName,
+                          const std::vector<std::pair<int, int> > &l,
+                          bool recursive)
 {
   std::ostringstream sstream;
   if(recursive) sstream << "Recursive ";
   sstream << "Delete {\n  " << dimTags2String(l) << "\n}";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }
 
-void add_visibility_all(int mode, const std::string &fileName)
+void scriptSetVisibilityAll(int mode, const std::string &fileName)
 {
   if(mode)
-    add_infile("Show \"*\";", fileName);
+    addInFile("Show \"*\";", fileName);
   else
-    add_infile("Hide \"*\";", fileName);
+    addInFile("Hide \"*\";", fileName);
 }
 
-void add_visibility(int mode, const std::vector<std::pair<int, int> > &l,
-                    const std::string &fileName)
+void scriptSetVisibility(int mode, const std::vector<std::pair<int, int> > &l,
+                         const std::string &fileName)
 {
   std::ostringstream sstream;
   if(mode)
     sstream << "Show {\n  " << dimTags2String(l) << "\n}";
   else
     sstream << "Hide {\n  " << dimTags2String(l) << "\n}";
-  add_infile(sstream.str(), fileName);
+  addInFile(sstream.str(), fileName);
 }

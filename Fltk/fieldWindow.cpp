@@ -39,7 +39,7 @@ void field_cb(Fl_Widget *w, void *data)
 static void field_delete_cb(Fl_Widget *w, void *data)
 {
   Field *f = (Field *)FlGui::instance()->fields->editor_group->user_data();
-  delete_field(f->id, GModel::current()->getFileName());
+  scriptDeleteField(f->id, GModel::current()->getFileName());
   FlGui::instance()->fields->editField(NULL);
 }
 
@@ -48,7 +48,7 @@ static void field_new_cb(Fl_Widget *w, void *data)
   Fl_Menu_Button *mb = ((Fl_Menu_Button *)w);
   FieldManager *fields = GModel::current()->getFields();
   int id = fields->newId();
-  add_field(id, mb->text(), GModel::current()->getFileName());
+  scriptAddField(id, mb->text(), GModel::current()->getFileName());
   if((*fields)[id]) FlGui::instance()->fields->editField((*fields)[id]);
 }
 
@@ -60,9 +60,7 @@ static void field_apply_cb(Fl_Widget *w, void *data)
 static void field_browser_cb(Fl_Widget *w, void *data)
 {
   int selected = FlGui::instance()->fields->browser->value();
-  if(!selected) {
-    FlGui::instance()->fields->editField(NULL);
-  }
+  if(!selected) { FlGui::instance()->fields->editField(NULL); }
   Field *f = (Field *)FlGui::instance()->fields->browser->data(selected);
   FlGui::instance()->fields->editField(f);
 }
@@ -289,8 +287,8 @@ void fieldWindow::saveFieldOptions()
     } break;
     }
     if((*input)->changed()) {
-      add_field_option(f->id, it->first, sstream.str(),
-                       GModel::current()->getFileName());
+      scriptAddFieldOption(f->id, it->first, sstream.str(),
+                           GModel::current()->getFileName());
       (*input)->clear_changed();
     }
     input++;
@@ -298,11 +296,11 @@ void fieldWindow::saveFieldOptions()
   int is_bg_field = background_btn->value();
   FieldManager &fields = *GModel::current()->getFields();
   if(is_bg_field && fields.getBackgroundField() != f->id) {
-    set_background_field(f->id, GModel::current()->getFileName());
+    scriptSetBackgroundField(f->id, GModel::current()->getFileName());
     loadFieldList();
   }
   if(!is_bg_field && fields.getBackgroundField() == f->id) {
-    set_background_field(-1, GModel::current()->getFileName());
+    scriptSetBackgroundField(-1, GModel::current()->getFileName());
     loadFieldList();
   }
 }
@@ -352,18 +350,20 @@ void fieldWindow::loadFieldOptions()
     (*input)->clear_changed();
     input++;
   }
-  if(dynamic_cast<BoundaryLayerField*>(f)){
+  if(dynamic_cast<BoundaryLayerField *>(f)) {
     background_btn->value(0);
     background_btn->deactivate();
-    background_btn->tooltip("Boundary layer fields cannot be assigned in the "
-                            "graphical user interface: edit the file directly.");
+    background_btn->tooltip(
+      "Boundary layer fields cannot be assigned in the "
+      "graphical user interface: edit the file directly.");
   }
-  else{
-    background_btn->value(GModel::current()->getFields()->getBackgroundField() ==
-                          f->id);
+  else {
+    background_btn->value(
+      GModel::current()->getFields()->getBackgroundField() == f->id);
     background_btn->activate();
-    background_btn->tooltip("Only a single field can be set as background field.\n"
-                            "To combine multiple fields use the Min or Max fields.");
+    background_btn->tooltip(
+      "Only a single field can be set as background field.\n"
+      "To combine multiple fields use the Min or Max fields.");
   }
 }
 

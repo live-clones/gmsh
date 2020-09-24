@@ -97,11 +97,11 @@ static void draw_stl(std::vector<SPoint3> &vertices,
 
 static void elementary_add_parameter_cb(Fl_Widget *w, void *data)
 {
-  add_param(FlGui::instance()->elementaryContext->input[0]->value(),
-            FlGui::instance()->elementaryContext->input[1]->value(),
-            FlGui::instance()->elementaryContext->input[2]->value(),
-            FlGui::instance()->elementaryContext->input[3]->value(),
-            GModel::current()->getFileName());
+  scriptAddParameter(FlGui::instance()->elementaryContext->input[0]->value(),
+                     FlGui::instance()->elementaryContext->input[1]->value(),
+                     FlGui::instance()->elementaryContext->input[2]->value(),
+                     FlGui::instance()->elementaryContext->input[3]->value(),
+                     GModel::current()->getFileName());
   FlGui::instance()->resetVisibility();
   FlGui::instance()->rebuildTree(true);
 }
@@ -122,11 +122,11 @@ static void elementary_draw_point_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_point_cb(Fl_Widget *w, void *data)
 {
-  add_point(GModel::current()->getFileName(),
-            FlGui::instance()->elementaryContext->input[4]->value(),
-            FlGui::instance()->elementaryContext->input[5]->value(),
-            FlGui::instance()->elementaryContext->input[6]->value(),
-            FlGui::instance()->elementaryContext->input[7]->value());
+  scriptAddPoint(GModel::current()->getFileName(),
+                 FlGui::instance()->elementaryContext->input[4]->value(),
+                 FlGui::instance()->elementaryContext->input[5]->value(),
+                 FlGui::instance()->elementaryContext->input[6]->value(),
+                 FlGui::instance()->elementaryContext->input[7]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -173,13 +173,13 @@ static void elementary_draw_circle_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_circle_cb(Fl_Widget *w, void *data)
 {
-  add_circle(GModel::current()->getFileName(),
-             FlGui::instance()->elementaryContext->input[8]->value(),
-             FlGui::instance()->elementaryContext->input[9]->value(),
-             FlGui::instance()->elementaryContext->input[10]->value(),
-             FlGui::instance()->elementaryContext->input[11]->value(),
-             FlGui::instance()->elementaryContext->input[12]->value(),
-             FlGui::instance()->elementaryContext->input[13]->value());
+  scriptAddCircle(GModel::current()->getFileName(),
+                  FlGui::instance()->elementaryContext->input[8]->value(),
+                  FlGui::instance()->elementaryContext->input[9]->value(),
+                  FlGui::instance()->elementaryContext->input[10]->value(),
+                  FlGui::instance()->elementaryContext->input[11]->value(),
+                  FlGui::instance()->elementaryContext->input[12]->value(),
+                  FlGui::instance()->elementaryContext->input[13]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -227,14 +227,14 @@ static void elementary_draw_ellipse_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_ellipse_cb(Fl_Widget *w, void *data)
 {
-  add_ellipse(GModel::current()->getFileName(),
-              FlGui::instance()->elementaryContext->input[14]->value(),
-              FlGui::instance()->elementaryContext->input[15]->value(),
-              FlGui::instance()->elementaryContext->input[16]->value(),
-              FlGui::instance()->elementaryContext->input[17]->value(),
-              FlGui::instance()->elementaryContext->input[18]->value(),
-              FlGui::instance()->elementaryContext->input[19]->value(),
-              FlGui::instance()->elementaryContext->input[20]->value());
+  scriptAddEllipse(GModel::current()->getFileName(),
+                   FlGui::instance()->elementaryContext->input[14]->value(),
+                   FlGui::instance()->elementaryContext->input[15]->value(),
+                   FlGui::instance()->elementaryContext->input[16]->value(),
+                   FlGui::instance()->elementaryContext->input[17]->value(),
+                   FlGui::instance()->elementaryContext->input[18]->value(),
+                   FlGui::instance()->elementaryContext->input[19]->value(),
+                   FlGui::instance()->elementaryContext->input[20]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -273,12 +273,12 @@ static void elementary_draw_disk_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_disk_cb(Fl_Widget *w, void *data)
 {
-  add_disk(GModel::current()->getFileName(),
-           FlGui::instance()->elementaryContext->input[21]->value(),
-           FlGui::instance()->elementaryContext->input[22]->value(),
-           FlGui::instance()->elementaryContext->input[23]->value(),
-           FlGui::instance()->elementaryContext->input[24]->value(),
-           FlGui::instance()->elementaryContext->input[25]->value());
+  scriptAddDisk(GModel::current()->getFileName(),
+                FlGui::instance()->elementaryContext->input[21]->value(),
+                FlGui::instance()->elementaryContext->input[22]->value(),
+                FlGui::instance()->elementaryContext->input[23]->value(),
+                FlGui::instance()->elementaryContext->input[24]->value(),
+                FlGui::instance()->elementaryContext->input[25]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -319,13 +319,13 @@ static void elementary_draw_rectangle_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_rectangle_cb(Fl_Widget *w, void *data)
 {
-  add_rectangle(GModel::current()->getFileName(),
-                FlGui::instance()->elementaryContext->input[26]->value(),
-                FlGui::instance()->elementaryContext->input[27]->value(),
-                FlGui::instance()->elementaryContext->input[28]->value(),
-                FlGui::instance()->elementaryContext->input[29]->value(),
-                FlGui::instance()->elementaryContext->input[30]->value(),
-                FlGui::instance()->elementaryContext->input[31]->value());
+  scriptAddRectangle(GModel::current()->getFileName(),
+                     FlGui::instance()->elementaryContext->input[26]->value(),
+                     FlGui::instance()->elementaryContext->input[27]->value(),
+                     FlGui::instance()->elementaryContext->input[28]->value(),
+                     FlGui::instance()->elementaryContext->input[29]->value(),
+                     FlGui::instance()->elementaryContext->input[30]->value(),
+                     FlGui::instance()->elementaryContext->input[31]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -368,14 +368,14 @@ static void elementary_draw_sphere_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_sphere_cb(Fl_Widget *w, void *data)
 {
-  add_sphere(GModel::current()->getFileName(),
-             FlGui::instance()->elementaryContext->input[32]->value(),
-             FlGui::instance()->elementaryContext->input[33]->value(),
-             FlGui::instance()->elementaryContext->input[34]->value(),
-             FlGui::instance()->elementaryContext->input[35]->value(),
-             FlGui::instance()->elementaryContext->input[36]->value(),
-             FlGui::instance()->elementaryContext->input[37]->value(),
-             FlGui::instance()->elementaryContext->input[38]->value());
+  scriptAddSphere(GModel::current()->getFileName(),
+                  FlGui::instance()->elementaryContext->input[32]->value(),
+                  FlGui::instance()->elementaryContext->input[33]->value(),
+                  FlGui::instance()->elementaryContext->input[34]->value(),
+                  FlGui::instance()->elementaryContext->input[35]->value(),
+                  FlGui::instance()->elementaryContext->input[36]->value(),
+                  FlGui::instance()->elementaryContext->input[37]->value(),
+                  FlGui::instance()->elementaryContext->input[38]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   drawContext::setDrawGeomTransientFunction(0);
@@ -421,15 +421,15 @@ static void elementary_draw_cylinder_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_cylinder_cb(Fl_Widget *w, void *data)
 {
-  add_cylinder(GModel::current()->getFileName(),
-               FlGui::instance()->elementaryContext->input[39]->value(),
-               FlGui::instance()->elementaryContext->input[40]->value(),
-               FlGui::instance()->elementaryContext->input[41]->value(),
-               FlGui::instance()->elementaryContext->input[42]->value(),
-               FlGui::instance()->elementaryContext->input[43]->value(),
-               FlGui::instance()->elementaryContext->input[44]->value(),
-               FlGui::instance()->elementaryContext->input[45]->value(),
-               FlGui::instance()->elementaryContext->input[46]->value());
+  scriptAddCylinder(GModel::current()->getFileName(),
+                    FlGui::instance()->elementaryContext->input[39]->value(),
+                    FlGui::instance()->elementaryContext->input[40]->value(),
+                    FlGui::instance()->elementaryContext->input[41]->value(),
+                    FlGui::instance()->elementaryContext->input[42]->value(),
+                    FlGui::instance()->elementaryContext->input[43]->value(),
+                    FlGui::instance()->elementaryContext->input[44]->value(),
+                    FlGui::instance()->elementaryContext->input[45]->value(),
+                    FlGui::instance()->elementaryContext->input[46]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -470,13 +470,13 @@ static void elementary_draw_box_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_box_cb(Fl_Widget *w, void *data)
 {
-  add_box(GModel::current()->getFileName(),
-          FlGui::instance()->elementaryContext->input[47]->value(),
-          FlGui::instance()->elementaryContext->input[48]->value(),
-          FlGui::instance()->elementaryContext->input[49]->value(),
-          FlGui::instance()->elementaryContext->input[50]->value(),
-          FlGui::instance()->elementaryContext->input[51]->value(),
-          FlGui::instance()->elementaryContext->input[52]->value());
+  scriptAddBox(GModel::current()->getFileName(),
+               FlGui::instance()->elementaryContext->input[47]->value(),
+               FlGui::instance()->elementaryContext->input[48]->value(),
+               FlGui::instance()->elementaryContext->input[49]->value(),
+               FlGui::instance()->elementaryContext->input[50]->value(),
+               FlGui::instance()->elementaryContext->input[51]->value(),
+               FlGui::instance()->elementaryContext->input[52]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -517,13 +517,13 @@ static void elementary_draw_torus_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_torus_cb(Fl_Widget *w, void *data)
 {
-  add_torus(GModel::current()->getFileName(),
-            FlGui::instance()->elementaryContext->input[53]->value(),
-            FlGui::instance()->elementaryContext->input[54]->value(),
-            FlGui::instance()->elementaryContext->input[55]->value(),
-            FlGui::instance()->elementaryContext->input[56]->value(),
-            FlGui::instance()->elementaryContext->input[57]->value(),
-            FlGui::instance()->elementaryContext->input[58]->value());
+  scriptAddTorus(GModel::current()->getFileName(),
+                 FlGui::instance()->elementaryContext->input[53]->value(),
+                 FlGui::instance()->elementaryContext->input[54]->value(),
+                 FlGui::instance()->elementaryContext->input[55]->value(),
+                 FlGui::instance()->elementaryContext->input[56]->value(),
+                 FlGui::instance()->elementaryContext->input[57]->value(),
+                 FlGui::instance()->elementaryContext->input[58]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -570,16 +570,16 @@ static void elementary_draw_cone_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_cone_cb(Fl_Widget *w, void *data)
 {
-  add_cone(GModel::current()->getFileName(),
-           FlGui::instance()->elementaryContext->input[59]->value(),
-           FlGui::instance()->elementaryContext->input[60]->value(),
-           FlGui::instance()->elementaryContext->input[61]->value(),
-           FlGui::instance()->elementaryContext->input[62]->value(),
-           FlGui::instance()->elementaryContext->input[63]->value(),
-           FlGui::instance()->elementaryContext->input[64]->value(),
-           FlGui::instance()->elementaryContext->input[65]->value(),
-           FlGui::instance()->elementaryContext->input[66]->value(),
-           FlGui::instance()->elementaryContext->input[67]->value());
+  scriptAddCone(GModel::current()->getFileName(),
+                FlGui::instance()->elementaryContext->input[59]->value(),
+                FlGui::instance()->elementaryContext->input[60]->value(),
+                FlGui::instance()->elementaryContext->input[61]->value(),
+                FlGui::instance()->elementaryContext->input[62]->value(),
+                FlGui::instance()->elementaryContext->input[63]->value(),
+                FlGui::instance()->elementaryContext->input[64]->value(),
+                FlGui::instance()->elementaryContext->input[65]->value(),
+                FlGui::instance()->elementaryContext->input[66]->value(),
+                FlGui::instance()->elementaryContext->input[67]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -622,14 +622,14 @@ static void elementary_draw_wedge_cb(Fl_Widget *w, void *data)
 
 static void elementary_add_wedge_cb(Fl_Widget *w, void *data)
 {
-  add_wedge(GModel::current()->getFileName(),
-            FlGui::instance()->elementaryContext->input[68]->value(),
-            FlGui::instance()->elementaryContext->input[69]->value(),
-            FlGui::instance()->elementaryContext->input[70]->value(),
-            FlGui::instance()->elementaryContext->input[71]->value(),
-            FlGui::instance()->elementaryContext->input[72]->value(),
-            FlGui::instance()->elementaryContext->input[73]->value(),
-            FlGui::instance()->elementaryContext->input[74]->value());
+  scriptAddWedge(GModel::current()->getFileName(),
+                 FlGui::instance()->elementaryContext->input[68]->value(),
+                 FlGui::instance()->elementaryContext->input[69]->value(),
+                 FlGui::instance()->elementaryContext->input[70]->value(),
+                 FlGui::instance()->elementaryContext->input[71]->value(),
+                 FlGui::instance()->elementaryContext->input[72]->value(),
+                 FlGui::instance()->elementaryContext->input[73]->value(),
+                 FlGui::instance()->elementaryContext->input[74]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -683,9 +683,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[2]->value("");
       input[3] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Path");
       input[3]->value("Parameters");
-      for(int i = 0; i < 4; i++) {
-        input[i]->align(FL_ALIGN_RIGHT);
-      }
+      for(int i = 0; i < 4; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
                                      height - 3 * WB - 2 * BH, BB, BH, "Add");
@@ -1156,9 +1154,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       input[1]->value("0");
       input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "DZ");
       input[2]->value("1");
-      for(int i = 0; i < 3; i++) {
-        input[i]->align(FL_ALIGN_RIGHT);
-      }
+      for(int i = 0; i < 3; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, width - 4 * WB, BH,
                                     "Apply translation on copy");
       butt[0]->value(0);
@@ -1194,9 +1190,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       input[8]->value("0");
       input[9] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Angle");
       input[9]->value("Pi/4");
-      for(int i = 3; i < 10; i++) {
-        input[i]->align(FL_ALIGN_RIGHT);
-      }
+      for(int i = 3; i < 10; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
                                     "Apply rotation on copy");
       butt[1]->value(0);
@@ -1227,9 +1221,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       input[14]->value("0.5");
       input[15] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Scale Z");
       input[15]->value("0.5");
-      for(int i = 10; i < 16; i++) {
-        input[i]->align(FL_ALIGN_RIGHT);
-      }
+      for(int i = 10; i < 16; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, width - 4 * WB, BH,
                                     "Apply scaling on copy");
       butt[2]->value(0);
@@ -1247,9 +1239,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       input[18]->value("0");
       input[19] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Plane D");
       input[19]->value("1");
-      for(int i = 16; i < 20; i++) {
-        input[i]->align(FL_ALIGN_RIGHT);
-      }
+      for(int i = 16; i < 20; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
                                     "Apply symmetry on copy");
       butt[3]->value(0);
@@ -1328,9 +1318,7 @@ void transformContextWindow::show(int pane, bool extrude, bool selection)
     choice->activate();
   else
     choice->deactivate();
-  if(pane < 0 || pane > 6) {
-    group[0]->show();
-  }
+  if(pane < 0 || pane > 6) { group[0]->show(); }
   else {
     group[pane]->show();
     group[pane]->activate();
@@ -1371,9 +1359,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
       input[1]->value("10");
       input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Parameter");
       input[2]->value("1");
-      for(int i = 1; i < 3; i++) {
-        input[i]->align(FL_ALIGN_RIGHT);
-      }
+      for(int i = 1; i < 3; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       static Fl_Menu_Item menu_trsf_mesh[] = {
         {"Progression", 0, 0, 0}, {"Bump", 0, 0, 0}, {0}};
       choice[0] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Type");

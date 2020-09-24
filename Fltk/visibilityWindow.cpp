@@ -70,12 +70,12 @@ public:
   {
     if(pattern.empty()) return true;
     std::string line(getBrowserLine(false));
-    try{
+    try {
       // icase for case-insensitive search
-      if(std::regex_search(line, std::regex(pattern, std::regex_constants::icase)))
+      if(std::regex_search(line,
+                           std::regex(pattern, std::regex_constants::icase)))
         return true;
-    }
-    catch(...) {
+    } catch(...) {
       return false;
     }
     return false;
@@ -271,8 +271,10 @@ public:
         std::string name = GModel::list[i]->getName();
         if(GModel::list[i] == GModel::current()) name += " (Current Model)";
         Vis *v = new VisModel(GModel::list[i], i, name);
-        if(v->match(search)) _entities.push_back(v);
-        else delete v;
+        if(v->match(search))
+          _entities.push_back(v);
+        else
+          delete v;
       }
     }
     else if(type == ElementaryEntities) {
@@ -283,8 +285,10 @@ public:
         std::string name = m->getElementaryName(ge->dim(), ge->tag());
         if(name.empty()) name = oldLabels[ge->tag()];
         Vis *v = new VisElementary(ge, name);
-        if(v->match(search)) _entities.push_back(v);
-        else delete v;
+        if(v->match(search))
+          _entities.push_back(v);
+        else
+          delete v;
       }
     }
     else if(type == PhysicalEntities) {
@@ -297,16 +301,20 @@ public:
           std::string name = m->getPhysicalName(i, it->first);
           if(name.empty()) name = oldLabels[it->first];
           Vis *v = new VisPhysical(it->first, i, it->second, name);
-          if(v->match(search)) _entities.push_back(v);
-          else delete v;
+          if(v->match(search))
+            _entities.push_back(v);
+          else
+            delete v;
         }
       }
     }
     else if(type == MeshPartitions) {
-      for(std::size_t part = 0; part < m->getNumPartitions(); part++){
+      for(std::size_t part = 0; part < m->getNumPartitions(); part++) {
         Vis *v = new VisPartition(part + 1);
-        if(v->match(search)) _entities.push_back(v);
-        else delete v;
+        if(v->match(search))
+          _entities.push_back(v);
+        else
+          delete v;
       }
     }
     std::sort(_entities.begin(), _entities.end(), VisLessThan());
@@ -374,8 +382,8 @@ static void _rebuild_list_browser()
   VisibilityList::instance()->update(type, search);
 
   for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++) {
-    FlGui::instance()->visibility->browser->add
-      (VisibilityList::instance()->getBrowserLine(i).c_str());
+    FlGui::instance()->visibility->browser->add(
+      VisibilityList::instance()->getBrowserLine(i).c_str());
     if(VisibilityList::instance()->getVisibility(i))
       FlGui::instance()->visibility->browser->select(i + 1);
   }
@@ -798,8 +806,7 @@ void visibility_cb(Fl_Widget *w, void *data)
 
   _rebuild_list_browser();
 
-  if(tmp.find("list_only") == std::string::npos)
-    _rebuild_tree_browser(false);
+  if(tmp.find("list_only") == std::string::npos) _rebuild_tree_browser(false);
 
   FlGui::instance()->visibility->updatePerWindow(true);
 }
@@ -830,12 +837,12 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
     off += state[i][0].size();
   }
   if(on > off) {
-    add_visibility_all(1, GModel::current()->getFileName());
+    scriptSetVisibilityAll(1, GModel::current()->getFileName());
     if(!off) return;
     mode = 0;
   }
   else {
-    add_visibility_all(0, GModel::current()->getFileName());
+    scriptSetVisibilityAll(0, GModel::current()->getFileName());
     if(!on) return;
     mode = 1;
   }
@@ -846,7 +853,7 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
       }
     }
   }
-  add_visibility(mode, entities, GModel::current()->getFileName());
+  scriptSetVisibility(mode, entities, GModel::current()->getFileName());
   Msg::StatusBar(true, "Done appending visibility info");
 }
 
@@ -1128,9 +1135,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     if(ib == 'u' && !mode) { // undo only in hide mode
       _apply_visibility(2, physical, vertices, edges, faces, regions, elements);
     }
-    if(ib == 'q') {
-      break;
-    }
+    if(ib == 'q') { break; }
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -1145,8 +1150,7 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
   if(what == "item") {
     drawContext *ctx =
       FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
-    for(int i = 0; i < FlGui::instance()->visibility->per_window->size();
-        i++) {
+    for(int i = 0; i < FlGui::instance()->visibility->per_window->size(); i++) {
       if(i < (int)GModel::list.size()) {
         GModel *m = GModel::list[i];
         if(FlGui::instance()->visibility->per_window->selected(i + 1))
@@ -1198,8 +1202,8 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
                                height - 3 * WB - 2 * BH, "List");
 
     {
-      Fl_Group *gg = new Fl_Group(
-        2 * WB, WB + BH, cols[0] + cols[1] + cols[2] + cols[3], BH);
+      Fl_Group *gg = new Fl_Group(2 * WB, WB + BH,
+                                  cols[0] + cols[1] + cols[2] + cols[3], BH);
 
       Fl_Button *o0 = new Fl_Button(2 * WB, 2 * WB + BH, cols[0], BH / 2, "*");
       o0->box(FL_THIN_DOWN_BOX);
@@ -1260,7 +1264,8 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 
     static Fl_Menu_Item browser_type_table[] = {
       {"Models", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
-      {"Elementary entities", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
+      {"Elementary entities", 0, (Fl_Callback *)visibility_cb,
+       (void *)"list_only"},
       {"Physical groups", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
       {"Mesh partitions", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
       {0}};
@@ -1268,12 +1273,11 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     double w1 = 1.7 * CC;
     double w3 = CC;
     double w2 = (width - 6 * WB - w1 - w3);
-    browser_type =
-      new Fl_Choice(2 * WB, height - 2 * BH - 3 * WB, w1, BH);
+    browser_type = new Fl_Choice(2 * WB, height - 2 * BH - 3 * WB, w1, BH);
     browser_type->menu(browser_type_table);
 
-    Fl_Group *o = new Fl_Group(2 * WB + w1 + WB, height - 2 * BH - 3 * WB,
-                               w2, BH);
+    Fl_Group *o =
+      new Fl_Group(2 * WB + w1 + WB, height - 2 * BH - 3 * WB, w2, BH);
     o->tooltip("Filter list using regular expression");
     o->box(FL_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
@@ -1286,7 +1290,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     o->end();
 
     Fl_Return_Button *b1 = new Fl_Return_Button(
-    width - 2 * WB - w3, height - 2 * BH - 3 * WB, w3, BH, "Apply");
+      width - 2 * WB - w3, height - 2 * BH - 3 * WB, w3, BH, "Apply");
     b1->callback(visibility_browser_apply_cb);
 
     g->end();
@@ -1492,8 +1496,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   {
     int aw = (int)(3.5 * FL_NORMAL_SIZE);
 
-    Fl_Group *g =
-      new Fl_Group(WB, height - BH - WB, width - 2 * WB - CC, BH);
+    Fl_Group *g = new Fl_Group(WB, height - BH - WB, width - 2 * WB - CC, BH);
     g->resizable(NULL);
 
     Fl_Box *b = new Fl_Box(WB, height - BH - WB, aw, BH, "Apply");
@@ -1504,15 +1507,15 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     butt[0]->type(FL_TOGGLE_BUTTON);
     butt[0]->value(1);
 
-    butt[1] = new Fl_Check_Button(WB + 3 * aw + 2 * WB, height - BH - WB, 3 * aw,
-                                  BH, "to all models");
+    butt[1] = new Fl_Check_Button(WB + 3 * aw + 2 * WB, height - BH - WB,
+                                  3 * aw, BH, "to all models");
     butt[1]->type(FL_TOGGLE_BUTTON);
     butt[1]->value(1);
 
     g->end();
 
-    Fl_Button *o1 = new Fl_Button(width - CC - WB, height - BH - WB, CC,
-                                  BH, "Save");
+    Fl_Button *o1 =
+      new Fl_Button(width - CC - WB, height - BH - WB, CC, BH, "Save");
     o1->callback(visibility_save_cb);
   }
 
@@ -1528,8 +1531,8 @@ void visibilityWindow::show(bool redrawOnly)
   static bool first = true;
   if(win->shown() && redrawOnly)
     win->redraw();
-  else{
-    if(first){
+  else {
+    if(first) {
       browser_type->value(GModel::current()->noPhysicalGroups() ? 1 : 2);
       first = false;
     }
@@ -1562,7 +1565,8 @@ void visibilityWindow::updatePerWindow(bool force)
     PView *v = PView::list[i];
     std::ostringstream sstream;
     sstream << "View [" << i << "]";
-    if(v->getData()->getName().size()) sstream << " - " << v->getData()->getName();
+    if(v->getData()->getName().size())
+      sstream << " - " << v->getData()->getName();
     per_window->add(sstream.str().c_str());
     if(ctx->isVisible(v)) per_window->select(line, 1);
     line++;
