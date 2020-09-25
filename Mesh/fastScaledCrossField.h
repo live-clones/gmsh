@@ -17,12 +17,13 @@ class MEdgeLessThan;
 int computeScaledCrossFieldView(GModel* gm,
     int& dataListViewTag, 
     std::size_t targetNumberOfQuads,
-    int nbDiffusionLevels = 10, 
-    double thresholdNormConvergence = 1.e-3, 
-    int nbBoundaryExtensionLayer = 1,
+    int nbDiffusionLevels = 10,               /* Number of levels (fixed time-step length) */
+    double thresholdNormConvergence = 1.e-3,  /* At each level, iterate diffusion+projection until thresholdNormConvergence */
+    int nbBoundaryExtensionLayer = 1,         /* Extend boundary conditions on triangle-layers */
     const std::string& viewName = "scaled_cross_field",
-    int verbosity = 3);
-
+    int verbosity = 3,                        /* 0: nothing except errors, 1: terse comments, 2: a bit more, 3: detailed convergence info */
+    std::vector<std::array<double,4> >* singularities = NULL /* If not NULL, fill with positions of the detected singularities and indices */
+    );
 
 /* Sub-functions that may be called independantly */
 int extractTriangularMeshFromFaces(

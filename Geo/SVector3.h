@@ -134,6 +134,9 @@ public:
       P[i] += (a * y[i]);
     }
   }
+
+  /* implicit conversion to std::array<double,3> */
+  operator std::array<double,3>() const { return {P[0],P[1],P[2]}; }
 };
 
 inline double dot(const SVector3 &a, const SVector3 &b)

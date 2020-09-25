@@ -41,5 +41,4 @@ namespace GeoLog {
 
   /* Send the views to gmsh (deleting them in the process) */
   bool flush();
-
 }
