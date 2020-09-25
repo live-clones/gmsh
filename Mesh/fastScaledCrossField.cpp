@@ -717,6 +717,87 @@ int createScaledCrossFieldView(
   return 0;
 }
 
+
+int detectCrossFieldSingularities(
+    const std::vector<GFace*>& faces, 
+    const std::map<std::array<size_t,2>, double>& edgeTheta, 
+    const std::vector<std::size_t>& nodeTags,
+    const std::vector<double>& scaling,
+    std::vector<std::array<double,4> >& singularities) {
+  Msg::Warning("current dectection of singularities is very basic, just min and max of scaling inside faces");
+
+  /* Accessible scaling values from vertex num */
+  std::vector<double> num_to_scaling(nodeTags.size(),0.);
+  for (size_t i = 0; i < nodeTags.size(); ++i) {
+    size_t v = nodeTags[i];
+    if (v >= num_to_scaling.size()) num_to_scaling.resize(v+1,0.);
+    num_to_scaling[v] = scaling[i];
+  }
+
+  std::vector<std::vector<size_t> > numToAdjs(num_to_scaling.size());
+  std::vector<MVertex*> vertices(num_to_scaling.size());
+  for (GFace* gf: faces) {
+    std::fill(vertices.begin(),vertices.end(),(MVertex*)NULL);
+    for (size_t i = 0; i < numToAdjs.size(); ++i) if (numToAdjs[i].size() > 0) {
+      numToAdjs[i].clear();
+    }
+
+    for (MTriangle* t: gf->triangles) {
+      for (size_t le = 0; le < 3; ++le) {
+        MVertex* v1 = t->getVertex(le);
+        MVertex* v2 = t->getVertex((le+1)%3);
+        if (v1->onWhat()->cast2Face() != NULL) {
+          size_t num1 = v1->getNum();
+          numToAdjs[num1].push_back(v2->getNum());
+          vertices[num1] = v1;
+        }
+        if (v2->onWhat()->cast2Face() != NULL) {
+          size_t num2 = v2->getNum();
+          numToAdjs[num2].push_back(v1->getNum());
+          vertices[num2] = v2;
+        }
+      }
+    }
+    for (size_t i = 0; i < numToAdjs.size(); ++i) if (vertices[i] != NULL) {
+      std::vector<size_t> adj = numToAdjs[i];
+      /* unique adj */
+      std::sort( adj.begin(), adj.end() );
+      adj.erase( std::unique( adj.begin(), adj.end() ), adj.end() );
+
+      int nb_sup = 0;
+      int nb_inf = 0;
+      int nb_eq = 0;
+      double value = num_to_scaling[i];
+      for (size_t j = 0; j < adj.size(); ++j) {
+        double value2 = num_to_scaling[adj[j]];
+        double denom = std::max(std::abs(value),std::abs(value2));
+        if (denom < 1.e-16) continue;
+        double prop = (value-value2)/denom;
+        if (prop < -0.1) {
+          nb_inf += 1;
+        } else if (prop > 0.1) {
+          nb_sup += 1;
+        } else {
+          nb_eq += 1;
+        }
+      }
+      if (nb_eq != 0) continue; /* maybe bad idea ? rejecting "singular edge" ? */
+      if (nb_inf == 0 && nb_sup > 0) {
+        MVertex* v = vertices[i];
+        std::array<double,4> sing = {v->x(), v->y(), v->z(), -1.};
+        singularities.push_back(sing);
+      } else if (nb_inf > 0 && nb_sup == 0) {
+        MVertex* v = vertices[i];
+        std::array<double,4> sing = {v->x(), v->y(), v->z(), +1.};
+        singularities.push_back(sing);
+      }
+    }
+  }
+
+
+  return 0;
+}
+
 int computeScaledCrossFieldView(GModel* gm,
     int& dataListViewTag, 
     std::size_t targetNumberOfQuads,
@@ -724,7 +805,9 @@ int computeScaledCrossFieldView(GModel* gm,
     double thresholdNormConvergence, 
     int nbBoundaryExtensionLayer,
     const std::string& viewName,
-    int verbosity) {
+    int verbosity,
+    std::vector<std::array<double,4> >* singularities
+    ) {
   Msg::Debug("compute scaled cross field ...");
 #ifdef HAVE_QUADMESHINGTOOLS
   std::vector<GFace*> faces;
@@ -750,6 +833,13 @@ int computeScaledCrossFieldView(GModel* gm,
     return -1;
   }
 
+  if (singularities != NULL) {
+    int sts = detectCrossFieldSingularities(faces, edgeTheta, nodeTags, scaling, *singularities);
+    if (sts != 0) {
+      Msg::Error("failed to detect cross field singularities");
+    }
+  }
+
   /* Create data list view */
   int statusv = createScaledCrossFieldView(faces, edgeTheta, nodeTags, scaling,
       viewName, dataListViewTag);
@@ -758,9 +848,10 @@ int computeScaledCrossFieldView(GModel* gm,
     return -1;
   }
 
-  bool SHOW_H = false; // Debugging view to check H
+  bool SHOW_H = true; // Debugging view to check H
   if (SHOW_H) {
-    std::string name = "dev_H";
+    Msg::Warning("generating H view (saved at /tmp/H.pos), only for debugging/prototyping");
+    std::string name = "dbg_H";
     PViewDataGModel *d = new PViewDataGModel;
     d->setName(name);
     d->setFileName(name + ".msh");
@@ -784,4 +875,3 @@ int computeScaledCrossFieldView(GModel* gm,
 
   return 0;
 }
-

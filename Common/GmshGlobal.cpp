@@ -26,6 +26,7 @@ typedef unsigned long intptr_t;
 #include "robustPredicates.h"
 #include "BasisFactory.h"
 #include "gmshCrossFields.h"
+#include "fastScaledCrossField.h"
 #include "meshGFaceHxt.h"
 
 
@@ -351,8 +352,12 @@ int GmshBatch()
     else if(CTX::instance()->batch == 67){
       // compute a scaled cross field "per triangle"
       int viewTag = -1;
-      computePerTriangleScaledCrossField (GModel::current(), viewTag,
-					  6,1,CTX::instance()->mesh.numQuads/4);// we split the whole mesh afterwards
+
+      // computePerTriangleScaledCrossField (GModel::current(), viewTag,
+			// 		  6,1,CTX::instance()->mesh.numQuads/4);// we split the whole mesh afterwards
+      computeScaledCrossFieldView(GModel::current(), viewTag,
+					  CTX::instance()->mesh.numQuads/4, 6, 1.e-2, 1, "scaled_cross_field", 1);
+
       PView* crossField = PView::getViewByTag(viewTag);
       std::string posout = GModel::current()->getName() + "_scaled_crossfield.pos";
       crossField->getData()->writePOS(posout);

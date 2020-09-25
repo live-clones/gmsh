@@ -2093,7 +2093,7 @@ namespace QMT {
     /* Assume 'closed surface' graph, via infinite node if necessary */
 
     id eStart = gvStart/2;
-    /* Dijsktra algorithm */
+    /* Dijkstra algorithm */
     vector<double> dist(gv2ge.size(),DBL_MAX);
     vector<id> prev(gv2ge.size(),NO_ID);
     // vector<bool> visited(gv2ge.size(),false);
