@@ -113,7 +113,7 @@ std::string GMSH_CutSpherePlugin::getHelp() const
          "the elements inside (if `ExtractVolume' < 0) or "
          "outside (if `ExtractVolume' > 0) the sphere.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(CutSphere) creates one new view.";
+         "Plugin(CutSphere) creates one new list-based view.";
 }
 
 int GMSH_CutSpherePlugin::getNbOptions() const

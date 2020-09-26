@@ -113,7 +113,7 @@ std::string GMSH_CutPlanePlugin::getHelp() const
          "the elements on one side of the plane (depending "
          "on the sign of `ExtractVolume').\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(CutPlane) creates one new view.";
+         "Plugin(CutPlane) creates one new list-based view.";
 }
 
 int GMSH_CutPlanePlugin::getNbOptions() const

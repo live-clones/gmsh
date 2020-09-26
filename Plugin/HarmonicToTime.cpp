@@ -34,7 +34,7 @@ std::string GMSH_HarmonicToTimePlugin::getHelp() const
          "over 'NumPeriods' periods at frequency 'Frequency' [Hz].\n"
          "The '+' sign is used if `TimeSign'>0, the '-' sign otherwise.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(HarmonicToTime) creates one new view.";
+         "Plugin(HarmonicToTime) creates one new list-based view.";
 }
 
 int GMSH_HarmonicToTimePlugin::getNbOptions() const

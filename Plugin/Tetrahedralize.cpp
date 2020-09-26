@@ -28,7 +28,7 @@ std::string GMSH_TetrahedralizePlugin::getHelp() const
   return "Plugin(Tetrahedralize) tetrahedralizes the points in "
          "the view `View'.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Tetrahedralize) creates one new view.";
+         "Plugin(Tetrahedralize) creates one new list-based view.";
 }
 
 int GMSH_TetrahedralizePlugin::getNbOptions() const

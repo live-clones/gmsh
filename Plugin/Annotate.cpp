@@ -188,7 +188,7 @@ std::string GMSH_AnnotatePlugin::getHelp() const
          "the position (`X',`Y').\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(Annotate) is executed in-place for list-based "
-         "datasets or creates a new view for other datasets.";
+         "datasets or creates a new list-based view for other datasets.";
 }
 
 int GMSH_AnnotatePlugin::getNbOptions() const

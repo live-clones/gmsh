@@ -62,7 +62,7 @@ std::string GMSH_MathEvalPlugin::getHelp() const
          "Plugin(MathEval) creates one new view."
          "If `PhysicalRegion' < 0, the plugin is run "
          "on all physical regions.\n\n"
-         "Plugin(MathEval) creates one new view.";
+         "Plugin(MathEval) creates one new list-based view.";
 }
 
 int GMSH_MathEvalPlugin::getNbOptions() const

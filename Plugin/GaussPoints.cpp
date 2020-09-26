@@ -32,11 +32,10 @@ StringXNumber *GMSH_GaussPointsPlugin::getOption(int iopt)
 
 std::string GMSH_GaussPointsPlugin::getHelp() const
 {
-  return "Given an input mesh, Plugin(GaussPoints) creates a view containing "
-         "the Gauss points for a given polynomial `Order'.\n\n"
+  return "Given an input mesh, Plugin(GaussPoints) creates a list-based view "
+         "containing the Gauss points for a given polynomial `Order'.\n\n"
          "If `PhysicalGroup' is nonzero, the plugin only creates points for "
-         "the "
-         "elements belonging to the group.";
+         "the elements belonging to the group.";
 }
 
 PView *GMSH_GaussPointsPlugin::execute(PView *v)

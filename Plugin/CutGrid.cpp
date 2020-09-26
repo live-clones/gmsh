@@ -183,7 +183,7 @@ std::string GMSH_CutGridPlugin::getHelp() const
          "points depending on the values of `NumPointsU' and "
          "`NumPointsV'.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(CutGrid) creates one new view.";
+         "Plugin(CutGrid) creates one new list-based view.";
 }
 
 int GMSH_CutGridPlugin::getNbOptions() const

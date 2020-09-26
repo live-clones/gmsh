@@ -23,7 +23,7 @@ std::string GMSH_MinMaxPlugin::getHelp() const
          "space and time. If `Argument' = 1, the plugin calculates the "
          "min/max and the argmin/argmax. If `Visible' = 1, the plugin "
          "is only applied to visible entities.\n\n"
-         "Plugin(MinMax) creates two new views.";
+         "Plugin(MinMax) creates two new list-based views.";
 }
 
 int GMSH_MinMaxPlugin::getNbOptions() const

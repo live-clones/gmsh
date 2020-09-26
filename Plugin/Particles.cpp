@@ -166,7 +166,7 @@ std::string GMSH_ParticlesPlugin::getHelp() const
          "step size `DT' and `MaxIter' maximum number of "
          "iterations.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Particles) creates one new view containing "
+         "Plugin(Particles) creates one new list-based view containing "
          "multi-step vector points.";
 }
 

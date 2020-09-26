@@ -27,7 +27,7 @@ std::string GMSH_ExtractElementsPlugin::getHelp() const
          "it extracts visible elements. "
          "\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(ExtractElements) creates one new view.";
+         "Plugin(ExtractElements) creates one new list-based view.";
 }
 
 int GMSH_ExtractElementsPlugin::getNbOptions() const

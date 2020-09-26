@@ -20,10 +20,9 @@ GMSH_Plugin *GMSH_RegisterRemovePlugin() { return new GMSH_RemovePlugin(); }
 
 std::string GMSH_RemovePlugin::getHelp() const
 {
-  return "Plugin(Remove) removes the marked items "
-         "from the view `View'.\n\n"
-         "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Remove) is executed in-place.";
+  return "Plugin(Remove) removes the marked items from the list-based "
+         "view `View'.\n\nIf `View' < 0, the plugin is run on the current "
+         "view.\n\nPlugin(Remove) is executed in-place.";
 }
 
 int GMSH_RemovePlugin::getNbOptions() const

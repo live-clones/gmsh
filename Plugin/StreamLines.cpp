@@ -166,7 +166,7 @@ std::string GMSH_StreamLinesPlugin::getHelp() const
          "If `TimeStep' < 0, the plugin tries to compute "
          "streamlines of the unsteady flow.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(StreamLines) creates one new view. This "
+         "Plugin(StreamLines) creates one new list-based view. This "
          "view contains multi-step vector points if `OtherView' "
          "< 0, or single-step scalar lines if `OtherView' >= 0.";
 }

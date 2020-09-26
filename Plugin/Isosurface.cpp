@@ -90,8 +90,8 @@ std::string GMSH_IsosurfacePlugin::getHelp() const
          "If `OtherView' < 0, the plugin uses `View' as the value "
          "source.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Isosurface) creates as many views as there are "
-         "time steps in `View'.";
+         "Plugin(Isosurface) creates as many list-based views as there "
+         "are time steps in `View'.";
 }
 
 int GMSH_IsosurfacePlugin::getNbOptions() const

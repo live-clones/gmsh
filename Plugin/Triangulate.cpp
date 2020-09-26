@@ -38,7 +38,7 @@ std::string GMSH_TriangulatePlugin::getHelp() const
          "onto a plane. Algorithm selects the old (0) or new (1) "
          "meshing algorithm.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Triangulate) creates one new view.";
+         "Plugin(Triangulate) creates one new list-based view.";
 }
 
 int GMSH_TriangulatePlugin::getNbOptions() const

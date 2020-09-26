@@ -28,10 +28,6 @@ Enable CGNS import/export (experimental) (default: ON)
 Enable high-order CGNS import/export following CPEX0045 (experimental) (default: OFF)
 @item ENABLE_CAIRO
 Enable Cairo to render fonts (experimental) (default: ON)
-@item ENABLE_CXX11
-Enable C++11 (default: ON)
-@item ENABLE_C99
-Enable C99 (default: ON)
 @item ENABLE_PROFILE
 Enable profiling compiler flags (default: OFF)
 @item ENABLE_DINTEGRATION

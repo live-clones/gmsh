@@ -240,11 +240,11 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
     }
   }
 
-    // Hide elements
-#if defined(HAVE_OPENGL)
+  // Hide elements
   _hideWithThreshold(askedDim,
                      computeICN ? 2 : computeIGE ? 1 : computeJac ? 0 : -1);
   CTX::instance()->mesh.changed = (ENT_ALL);
+#if defined(HAVE_OPENGL)
   drawContext::global()->draw();
 #endif
 

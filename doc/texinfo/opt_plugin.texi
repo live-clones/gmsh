@@ -49,7 +49,7 @@ If `ThreeD' is equal to 1, the plugin inserts the string in model coordinates at
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Annotate) is executed in-place for list-based datasets or creates a new view for other datasets.
+Plugin(Annotate) is executed in-place for list-based datasets or creates a new list-based view for other datasets.
 String options:
 @table @code
 @item Text
@@ -134,7 +134,7 @@ Plugin(Curl) computes the curl of the field in the view `View'.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Curl) creates one new view.
+Plugin(Curl) creates one new list-based view.
 Numeric options:
 @table @code
 @item View
@@ -155,7 +155,7 @@ If `Boundary' is zero, the plugin interpolates the view inside the box; otherwis
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(CutBox) creates one new view.
+Plugin(CutBox) creates one new list-based view.
 Numeric options:
 @table @code
 @item X0
@@ -205,7 +205,7 @@ If `ConnectPoints' is zero, the plugin creates points; otherwise, the plugin gen
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(CutGrid) creates one new view.
+Plugin(CutGrid) creates one new list-based view.
 Numeric options:
 @table @code
 @item X0
@@ -261,7 +261,7 @@ If `ConnectPoints' is set, the plugin creates surface or line elements; otherwis
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(CutParametric) creates one new view.
+Plugin(CutParametric) creates one new list-based view.
 String options:
 @table @code
 @item X
@@ -298,7 +298,7 @@ If `ExtractVolume' is nonzero, the plugin extracts the elements on one side of t
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(CutPlane) creates one new view.
+Plugin(CutPlane) creates one new list-based view.
 Numeric options:
 @table @code
 @item A
@@ -326,7 +326,7 @@ If `ExtractVolume' is nonzero, the plugin extracts the elements inside (if `Extr
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(CutSphere) creates one new view.
+Plugin(CutSphere) creates one new list-based view.
 Numeric options:
 @table @code
 @item Xc
@@ -364,7 +364,7 @@ If `DistanceType' is 0, the plugin computes the geometrical Euclidean distance u
 @*
 Positive `MinScale' and `MaxScale' scale the distance function.@*
 @*
-Plugin(Distance) creates one new view.
+Plugin(Distance) creates one new list-based view.
 Numeric options:
 @table @code
 @item PhysicalPoint
@@ -386,7 +386,7 @@ Plugin(Divergence) computes the divergence of the field in the view `View'.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Divergence) creates one new view.
+Plugin(Divergence) creates one new list-based view.
 Numeric options:
 @table @code
 @item View
@@ -398,7 +398,7 @@ Plugin(Eigenvalues) computes the three real eigenvalues of each tensor in the vi
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Eigenvalues) creates three new scalar views.
+Plugin(Eigenvalues) creates three new list-based scalar views.
 Numeric options:
 @table @code
 @item View
@@ -412,7 +412,7 @@ If `ScaleByEigenvalues' is set, each eigenvector is scaled by its associated eig
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Eigenvectors) creates three new vector view.
+Plugin(Eigenvectors) creates three new list-based vector view.
 Numeric options:
 @table @code
 @item ScaleByEigenvalues
@@ -438,7 +438,7 @@ Plugin(ExtractElements) extracts some elements from the view `View'. If `MinVal'
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(ExtractElements) creates one new view.
+Plugin(ExtractElements) creates one new list-based view.
 Numeric options:
 @table @code
 @item MinVal
@@ -477,7 +477,7 @@ Default value: @code{1}
 @end table
 
 @item Plugin(GaussPoints)
-Given an input mesh, Plugin(GaussPoints) creates a view containing the Gauss points for a given polynomial `Order'.@*
+Given an input mesh, Plugin(GaussPoints) creates a list-based view containing the Gauss points for a given polynomial `Order'.@*
 @*
 If `PhysicalGroup' is nonzero, the plugin only creates points for the elements belonging to the group.
 Numeric options:
@@ -495,7 +495,7 @@ Plugin(Gradient) computes the gradient of the field in the view `View'.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Gradient) creates one new view.
+Plugin(Gradient) creates one new list-based view.
 Numeric options:
 @table @code
 @item View
@@ -514,7 +514,7 @@ The '+' sign is used if `TimeSign'>0, the '-' sign otherwise.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(HarmonicToTime) creates one new view.
+Plugin(HarmonicToTime) creates one new list-based view.
 Numeric options:
 @table @code
 @item RealPart
@@ -621,7 +621,7 @@ If `View' < 0, the plugin is run on the current view.@*
 @*
 If `OverTime' = i > -1 , the plugin integrates the scalar view over time instead of over space, starting at iteration i.If `Visible' = 1, the plugin only integrates overvisible entities.@*
 @*
-Plugin(Integrate) creates one new view.
+Plugin(Integrate) creates one new list-based view.
 Numeric options:
 @table @code
 @item View
@@ -643,7 +643,7 @@ If `OtherTimeStep' < 0, the plugin uses, for each time step in `View', the corre
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Isosurface) creates as many views as there are time steps in `View'.
+Plugin(Isosurface) creates as many list-based views as there are time steps in `View'.
 Numeric options:
 @table @code
 @item Value
@@ -671,7 +671,7 @@ If `View' contains tensor elements, the plugin directly uses the tensors as the 
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Lambda2) creates one new view.
+Plugin(Lambda2) creates one new list-based view.
 Numeric options:
 @table @code
 @item Eigenvalue
@@ -723,7 +723,7 @@ If `View' < 0, the plugin is run on the current view.@*
 @*
 Plugin(MathEval) creates one new view.If `PhysicalRegion' < 0, the plugin is run on all physical regions.@*
 @*
-Plugin(MathEval) creates one new view.
+Plugin(MathEval) creates one new list-based view.
 String options:
 @table @code
 @item Expression0
@@ -792,7 +792,7 @@ Plugin(MeshVolume) computes the volume of the mesh.@*
 @*
 Only the elements in the physical group `PhysicalGroup' of dimension `Dimension' are taken into account, unless 'PhysicalGroup' is negative, in which case all the elements of the given `Dimension' are considered. If `Dimension` is negative, all the elments are considered.@*
 @*
-Plugin(MeshVolume) creates one new view.
+Plugin(MeshVolume) creates one new list-based view.
 Numeric options:
 @table @code
 @item PhysicalGroup
@@ -806,7 +806,7 @@ Plugin(MinMax) computes the min/max of a view.@*
 @*
 If `View' < 0, the plugin is run on the current view. If `OverTime' = 1, the plugin calculates the min/max over space and time. If `Argument' = 1, the plugin calculates the min/max and the argmin/argmax. If `Visible' = 1, the plugin is only applied to visible entities.@*
 @*
-Plugin(MinMax) creates two new views.
+Plugin(MinMax) creates two new list-based views.
 Numeric options:
 @table @code
 @item View
@@ -950,7 +950,7 @@ Default value: @code{-1}
 @item Plugin(NewView)
 Plugin(NewView) creates a new model-based view from the current mesh, with `NumComp' field components, set to value `Value'.@*
 @*
-If `ViewTag' is positive, force that tag for the created view.
+If `ViewTag' is positive, force that tag for the created view. The view type is determined by `Type' (NodeData or ElementData). In the case of an ElementData type, the view can be restricted to a specific physical group with a positive `PhysicalGroup'.
 String options:
 @table @code
 @item Type
@@ -963,6 +963,8 @@ Default value: @code{1}
 @item Value
 Default value: @code{0}
 @item ViewTag
+Default value: @code{-1}
+@item PhysicalGroup
 Default value: @code{-1}
 @end table
 
@@ -981,7 +983,7 @@ Time stepping is done using a Newmark scheme with step size `DT' and `MaxIter' m
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Particles) creates one new view containing multi-step vector points.
+Plugin(Particles) creates one new list-based view containing multi-step vector points.
 Numeric options:
 @table @code
 @item X0
@@ -1041,7 +1043,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Remove)
-Plugin(Remove) removes the marked items from the view `View'.@*
+Plugin(Remove) removes the marked items from the list-based view `View'.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
@@ -1266,7 +1268,7 @@ If `TimeStep' < 0, the plugin tries to compute streamlines of the unsteady flow.
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(StreamLines) creates one new view. This view contains multi-step vector points if `OtherView' < 0, or single-step scalar lines if `OtherView' >= 0.
+Plugin(StreamLines) creates one new list-based view. This view contains multi-step vector points if `OtherView' < 0, or single-step scalar lines if `OtherView' >= 0.
 Numeric options:
 @table @code
 @item X0
@@ -1339,7 +1341,7 @@ Plugin(Tetrahedralize) tetrahedralizes the points in the view `View'.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Tetrahedralize) creates one new view.
+Plugin(Tetrahedralize) creates one new list-based view.
 Numeric options:
 @table @code
 @item View
@@ -1395,7 +1397,7 @@ Plugin(Triangulate) triangulates the points in the view `View', assuming that al
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(Triangulate) creates one new view.
+Plugin(Triangulate) creates one new list-based view.
 Numeric options:
 @table @code
 @item Algorithm

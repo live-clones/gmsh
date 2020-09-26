@@ -29,7 +29,7 @@ std::string GMSH_EigenvectorsPlugin::getHelp() const
          "scaled by its associated eigenvalue. The plugin "
          "gives an error if the eigenvectors are complex.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Eigenvectors) creates three new vector view.";
+         "Plugin(Eigenvectors) creates three new list-based vector view.";
 }
 
 int GMSH_EigenvectorsPlugin::getNbOptions() const
