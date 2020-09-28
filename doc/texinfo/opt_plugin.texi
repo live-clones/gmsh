@@ -2,28 +2,25 @@
 
 @ftable @code
 @item Plugin(AnalyseMeshQuality)
-Plugin(AnalyseMeshQuality) analyses the quality of all the elements of a given dimension. Depending on what is asked, it computes the minimum of the Jacobian determinant (J), the IGE quality measure (Inverse Gradient Error) and/or the ICN quality measure (Inverse Condition Number). Statistics are printed and, if requested, a post-processing view is created for each quality measure. The plugin hides elements for which the measure is greater than 'Hiding threshold'.@*
+Plugin(AnalyseMeshQuality) analyses the quality of the elements of a given dimension in the current model. Depending on the input parameters it computes the minimum of the Jacobian determinant (J), the IGE quality measure (Inverse Gradient Error) and/or the ICN quality measure (Condition Number). Statistics are printed and, if requested, a model-based post-processing view is created for each quality measure. The plugin can optionally hide elements by comparing the measure to a prescribed threshold.@*
 @*
-J is faster to compute but gives information only on element validity while the other measures also give information on element quality.@*
-The IGE measure is related to the error on the gradient of the finite element solution. It is the scaled Jacobian for quads and hexes and a new measure for triangles and tetrahedra.@*
-The ICN measure is related to the condition number of the stiffness matrix.@*
-(See the article "Efficient computation of the minimum of shape quality measures on curvilinear finite elements" for details.)@*
+J is faster to compute but gives information only on element validity while the other measures also give information on element quality. The IGE measure is related to the error on the gradient of the finite element solution. It is the scaled Jacobian for quads and hexes and a new measure for triangles and tetrahedra. The ICN measure is related to the condition number of the stiffness matrix. (See the article "Efficient computation of the minimum of shape quality measures on curvilinear finite elements" for details.)@*
 @*
 Parameters:@*
 @*
-- JacobianDeterminant = @{0, 1@}@*
+- `JacobianDeterminant': compute J?@*
 @*
-- IGEMeasure = @{0, 1@}@*
+- `IGEMeasure': compute IGE?@*
 @*
-- ICNMeasure = @{0, 1@}@*
+- `ICNMeasure': compute ICN?@*
 @*
-- HidingThreshold = [0, 1]: Hides all elements for which min(mu) is strictly greater than the threshold, where mu is ICN ifICNMeasure == 1, otherwise it is IGE if IGEMeasure == 1. If ICNMeasure == IGEMeasure == 0, nothing happens. If threshold == 0, hides all elements except invalid elements.@*
+- `HidingThreshold': hide all elements for which min(mu) is strictly greater than (if `ThresholdGreater' == 1) or less than (if `ThresholdGreater' == 0) the threshold, where mu is ICN if `ICNMeasure' == 1, IGE if `IGEMeasure' == 1 or min(J)/max(J) if `JacobianDeterminant' == 1.@*
 @*
-- CreateView = @{0, 1@}: Creates a post-processing view of min(J)/max(J), min(IGE) and/or min(ICN). If 'Recompute' = 1, new views are created.@*
+- `CreateView': create a model-based view of min(J)/max(J), min(IGE) and/or min(ICN)?@*
 @*
-- Recompute = @{0,1@}: Should be 1 if the mesh has changed.@*
+- `Recompute': force recomputation (set to 1 if the mesh has changed).@*
 @*
-- DimensionOfElements = @{-1, 1, 2, 3, 4@}: If == -1, analyse element of the highest dimension. If == 4, analyse 2D and 3D elements.
+- `DimensionOfElements': analyse elements of the given dimension if equal to 1, 2 or 3; analyse 2D and 3D elements if equal to 4; or analyse elements of the highest dimension if equal to -1.
 Numeric options:
 @table @code
 @item JacobianDeterminant
@@ -33,7 +30,9 @@ Default value: @code{0}
 @item ICNMeasure
 Default value: @code{0}
 @item HidingThreshold
-Default value: @code{9}
+Default value: @code{99}
+@item ThresholdGreater
+Default value: @code{1}
 @item CreateView
 Default value: @code{0}
 @item Recompute
@@ -632,6 +631,16 @@ Default value: @code{-1}
 Default value: @code{-1}
 @item Visible
 Default value: @code{1}
+@end table
+
+@item Plugin(Invisible)
+Plugin(Invisible) deletes (if `DeleteElements' is set) or reverses (if `ReverseElements' is set) all the invisible elements in the current model.
+Numeric options:
+@table @code
+@item DeleteElements
+Default value: @code{1}
+@item ReverseElements
+Default value: @code{0}
 @end table
 
 @item Plugin(Isosurface)
