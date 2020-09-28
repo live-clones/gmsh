@@ -20,6 +20,7 @@
 #include "CutBox.h"
 #include "Skin.h"
 #include "AnalyseMeshQuality.h"
+#include "Invisible.h"
 #include "CurvedBndDist.h"
 #include "MathEval.h"
 #include "ExtractElements.h"
@@ -275,6 +276,8 @@ void PluginManager::registerDefaultPlugins()
       "Summation", GMSH_RegisterSummationPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "BoundaryAngles", GMSH_RegisterBoundaryAnglesPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
+      "Invisible", GMSH_RegisterInvisiblePlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "AnalyseMeshQuality", GMSH_RegisterAnalyseMeshQualityPlugin()));

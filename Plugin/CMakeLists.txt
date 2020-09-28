@@ -43,6 +43,7 @@ set(SRC
   Summation.cpp
   BoundaryAngles.cpp
   MeshSizeFieldView.cpp
+  Invisible.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
