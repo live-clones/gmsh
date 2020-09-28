@@ -480,7 +480,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	fifo.push(sp);
 	double _min[2], _max[2];
 	sp->minmax(_min, _max);
-	printf("%g %g -- %g %g\n", _min[0], _min[1], _max[0], _max[1]);
+	//	printf("%g %g -- %g %g\n", _min[0], _min[1], _max[0], _max[1]);
 	rtree.Insert(_min, _max, sp);
       }
       else{
@@ -489,21 +489,6 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
       }
     }
   }
-
-  // patches
-  //  for (size_t i=0;i<toInsert.size(); i++){
-  //    SPoint2 midpoint;
-  //    compute4neighbors(gf,  toInsert[i], midpoint, newp, metricField, cross_field, 0,0,1 );
-  //    surfacePointWithExclusionRegion *sp =
-  //      new surfacePointWithExclusionRegion(toInsert[i], newp, midpoint, metricField);    
-    //    fifo.push(sp);
-  //    vertices.push_back(sp);
-  //    double _min[2], _max[2];
-  //    sp->minmax(_min, _max);
-  //    rtree.Insert(_min, _max, sp);
-  //  }
-  
-  //  printf("initially : %d vertices in the domain\n",vertices.size());
 
   while(!fifo.empty()) {
     //    printf("%d vertices in the domain\n",vertices.size());
