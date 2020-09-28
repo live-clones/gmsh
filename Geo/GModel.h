@@ -573,8 +573,8 @@ public:
   }
 
   // delete or reverse all invisble mesh elements
-  void removeInvisibleElements();
-  void reverseInvisibleElements();
+  std::size_t removeInvisibleElements();
+  std::size_t reverseInvisibleElements();
 
   // the list of partitions
   std::size_t getNumPartitions() const { return _numPartitions; }
