@@ -169,7 +169,7 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
       for(int i = 0; i < List_Nbr(_s->Generatrices); i++) {
         Curve *c;
         List_Read(_s->Generatrices, i, &c);
-        int N = (c->Typ == MSH_SEGM_LINE) ? 1 : NP;
+        int N = (c->Typ == MSH_SEGM_LINE && List_Nbr(c->Control_Points) == 2) ? 1 : NP;
         for(int j = 0; j < N; j++) {
           double u1 = (double)j / (double)N;
           double u2 = (double)(j + 1) / (double)N;
