@@ -37,7 +37,6 @@ public:
 class GMSH_AnalyseMeshQualityPlugin : public GMSH_PostPlugin {
 private:
   GModel *_m;
-  double _threshold;
 
 #if defined(HAVE_VISUDEV)
   // Pointwise data
@@ -60,7 +59,6 @@ public:
   GMSH_AnalyseMeshQualityPlugin()
   {
     _m = NULL;
-    _threshold = -1;
     for(int i = 0; i < 3; ++i) {
       _computedJac[i] = false;
       _computedIGE[i] = false;
@@ -85,10 +83,12 @@ private:
   void _computeMinMaxJandValidity(int dim);
   void _computeMinIGE(int dim);
   void _computeMinICN(int dim);
-  int _hideWithThreshold(int askedDim, int whichMeasure);
+  int _hideWithThreshold(int askedDim, int whichMeasure, double threshold,
+                         bool greater);
   void _printStatJacobian();
   void _printStatIGE();
   void _printStatICN();
+  void _clear(int askedDim);
 
 #if defined(HAVE_VISUDEV)
   void _computePointwiseQuantities(MElement *,
