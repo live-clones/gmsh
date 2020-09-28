@@ -1658,7 +1658,13 @@ class API:
                     "\n\n")
             f.write("@ftable @code\n")
             for rtype, name, args, doc, special in module.fs:
-                f.write("@item " + path + '/' + name + "\n")
+                tfull = path + '/' + name
+                if len(tfull) > 40: # insert discretionary hyphen if too long
+                    for i in range(40, len(tfull)):
+                        if tfull[i].isupper():
+                            tfull = tfull[:i] + '@-' + tfull[i:]
+                            break
+                f.write("@item " + tfull + "\n")
                 tdoc = doc.replace("`", "@code{").replace("'", "}")
                 f.write("\n".join(textwrap.wrap(tdoc, 80)) + "\n\n")
                 f.write("@table @asis\n")
