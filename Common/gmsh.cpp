@@ -6928,8 +6928,7 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
     throw Msg::GetLastError();
   }
   value.clear();
-  std::vector<double> val(9 * data->getNumTimeSteps());
-  bool found = false;
+  std::vector<double> val(9 * data->getNumTimeSteps() * 3);
   int qn = 0;
   double *qx = 0, *qy = 0, *qz = 0;
   if(xElemCoord.size() && yElemCoord.size() && zElemCoord.size() &&
@@ -6940,31 +6939,44 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
     qy = (double *)&yElemCoord[0];
     qz = (double *)&zElemCoord[0];
   }
+  int numSteps = (step < 0) ? data->getNumTimeSteps() : 1;
+  int mult = gradient ? 3 : 1;
+  int numVal = 0;
   switch(numComp) {
   case 1:
-    found = data->searchScalarWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
-                                      qx, qy, qz, gradient);
+    if(data->searchScalarWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
+                                 qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 1;
+    }
     break;
   case 3:
-    found = data->searchVectorWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
-                                      qx, qy, qz, gradient);
+    if(data->searchVectorWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
+                                 qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 3;
+    }
     break;
   case 9:
-    found = data->searchTensorWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
-                                      qx, qy, qz, gradient);
+    if(data->searchTensorWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
+                                 qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 9;
+    }
     break;
   default:
-    found = data->searchScalarWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
-                                      qx, qy, qz, gradient);
-    if(!found)
-      found = data->searchVectorWithTol(x, y, z, &val[0], step, 0, tolerance,
-                                        qn, qx, qy, qz, gradient);
-    if(!found)
-      found = data->searchTensorWithTol(x, y, z, &val[0], step, 0, tolerance,
-                                        qn, qx, qy, qz, gradient);
+    if(data->searchScalarWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
+                                 qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 1;
+    }
+    else if(data->searchVectorWithTol(x, y, z, &val[0], step, 0, tolerance,
+                                      qn, qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 3;
+    }
+    else if(data->searchTensorWithTol(x, y, z, &val[0], step, 0, tolerance,
+                                      qn, qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 9;
+    }
     break;
   }
-  if(found) value.insert(value.end(), val.begin(), val.end());
+  for(int i = 0; i < numVal; i++) value.push_back(val[i]);
 #else
   Msg::Error("Views require the post-processing module");
   throw Msg::GetLastError();
