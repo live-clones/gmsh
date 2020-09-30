@@ -106,27 +106,25 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > entities;
   gmsh::model::getEntities(entities);
 
-  for(std::vector<std::pair<int, int> >::iterator it = entities.begin();
-      it != entities.end(); it++) {
+  for(auto e: entities) {
     std::vector<int> partitions;
-    gmsh::model::getPartitions(it->first, it->second, partitions);
+    gmsh::model::getPartitions(e.first, e.second, partitions);
     if(partitions.size()) {
       std::string type;
-      gmsh::model::getType(it->first, it->second, type);
-      std::cout << "Entity (" << it->first << "," << it->second << ") "
+      gmsh::model::getType(e.first, e.second, type);
+      std::cout << "Entity (" << e.first << "," << e.second << ") "
                 << "of type " << type << "\n";
       std::cout << " - Partition(s):";
-      for(std::size_t i = 0; i < partitions.size(); i++)
-        std::cout << " " << partitions[i];
+      for(auto p: partitions) std::cout << " " << p;
       std::cout << "\n";
       int pdim, ptag;
-      gmsh::model::getParent(it->first, it->second, pdim, ptag);
+      gmsh::model::getParent(e.first, e.second, pdim, ptag);
       std::cout << " - Parent: (" << pdim << "," << ptag << ")\n";
       std::vector<std::pair<int, int> > bnd;
-      gmsh::model::getBoundary({*it}, bnd);
+      gmsh::model::getBoundary({e}, bnd);
       std::cout << " - Boundary:";
-      for(std::size_t i = 0; i < bnd.size(); i++)
-        std::cout << " (" << bnd[i].first << "," << bnd[i].second << ")";
+      for(auto b: bnd)
+        std::cout << " (" << b.first << "," << b.second << ")";
       std::cout << "\n";
     }
   }

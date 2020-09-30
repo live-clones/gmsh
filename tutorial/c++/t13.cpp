@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > s;
   gmsh::model::getEntities(s, 2);
   std::vector<int> sl;
-  for(std::size_t i = 0; i < s.size(); i++) sl.push_back(s[i].second);
+  for(auto surf : s) sl.push_back(surf.second);
   int l = gmsh::model::geo::addSurfaceLoop(sl);
   gmsh::model::geo::addVolume({l});
 

@@ -85,9 +85,9 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > in;
   gmsh::model::getEntitiesInBoundingBox(2 - eps, -eps, -eps, 2 + 1 + eps,
                                         1 + eps, 1 + eps, in, 3);
-  for(auto it = in.begin(); it != in.end(); ++it) {
-    auto it2 = std::find(out.begin(), out.end(), *it);
-    if(it2 != out.end()) out.erase(it2);
+  for(auto i : in) {
+    auto it = std::find(out.begin(), out.end(), i);
+    if(it != out.end()) out.erase(it);
   }
   gmsh::model::removeEntities(out, true); // Delete outside parts recursively
 
@@ -107,10 +107,10 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > sxmin;
   gmsh::model::getEntitiesInBoundingBox(2 - eps, -eps, -eps, 2 + eps, 1 + eps,
                                         1 + eps, sxmin, 2);
-  for(std::size_t i = 0; i < sxmin.size(); i++) {
+  for(auto i: sxmin) {
     // Then we get the bounding box of each left surface
     double xmin, ymin, zmin, xmax, ymax, zmax;
-    gmsh::model::getBoundingBox(sxmin[i].first, sxmin[i].second, xmin, ymin,
+    gmsh::model::getBoundingBox(i.first, i.second, xmin, ymin,
                                 zmin, xmax, ymax, zmax);
     // We translate the bounding box to the right and look for surfaces inside
     // it:
@@ -119,9 +119,9 @@ int main(int argc, char **argv)
                                           zmin - eps, xmax + eps + 1,
                                           ymax + eps, zmax + eps, sxmax, 2);
     // For all the matches, we compare the corresponding bounding boxes...
-    for(std::size_t j = 0; j < sxmax.size(); j++) {
+    for(auto j: sxmax) {
       double xmin2, ymin2, zmin2, xmax2, ymax2, zmax2;
-      gmsh::model::getBoundingBox(sxmax[j].first, sxmax[j].second, xmin2, ymin2,
+      gmsh::model::getBoundingBox(j.first, j.second, xmin2, ymin2,
                                   zmin2, xmax2, ymax2, zmax2);
       xmin2 -= 1;
       xmax2 -= 1;
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
       if(std::abs(xmin2 - xmin) < eps && std::abs(xmax2 - xmax) < eps &&
          std::abs(ymin2 - ymin) < eps && std::abs(ymax2 - ymax) < eps &&
          std::abs(zmin2 - zmin) < eps && std::abs(zmax2 - zmax) < eps) {
-        gmsh::model::mesh::setPeriodic(2, {sxmax[j].second}, {sxmin[i].second},
+        gmsh::model::mesh::setPeriodic(2, {j.second}, {i.second},
                                        translation);
       }
     }

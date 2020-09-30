@@ -51,9 +51,9 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > entities;
   gmsh::model::getEntities(entities);
 
-  for(std::size_t i = 0; i < entities.size(); i++) {
+  for(auto e : entities) {
     // Dimension and tag of the entity:
-    int dim = entities[i].first, tag = entities[i].second;
+    int dim = e.first, tag = e.second;
 
     // Mesh data is made of `elements' (points, lines, triangles, ...), defined
     // by an ordered list of their `nodes'. Elements and nodes are identified by
@@ -97,8 +97,8 @@ int main(int argc, char **argv)
 
     // * Number of mesh nodes and elements:
     int numElem = 0;
-    for(std::size_t j = 0; j < elemTags.size(); j++)
-      numElem += elemTags[j].size();
+    for(auto &tags : elemTags)
+      numElem += tags.size();
     std::cout << " - Mesh has " << nodeTags.size() << " nodes and " << numElem
               << " elements\n";
 
@@ -107,9 +107,8 @@ int main(int argc, char **argv)
     gmsh::model::getBoundary({{dim, tag}}, boundary);
     if(boundary.size()) {
       std::cout << " - Boundary entities: ";
-      for(std::size_t j = 0; j < boundary.size(); j++)
-        std::cout << "(" << boundary[j].first << "," << boundary[j].second
-                  << ") ";
+      for(auto b : boundary)
+        std::cout << "(" << b.first << "," << b.second << ") ";
       std::cout << "\n";
     }
 
@@ -118,11 +117,11 @@ int main(int argc, char **argv)
     gmsh::model::getPhysicalGroupsForEntity(dim, tag, physicalTags);
     if(physicalTags.size()) {
       std::cout << " - Physical group: ";
-      for(std::size_t j = 0; j < physicalTags.size(); j++) {
+      for(auto physTag : physicalTags) {
         std::string n;
-        gmsh::model::getPhysicalName(dim, physicalTags[j], n);
+        gmsh::model::getPhysicalName(dim, physTag, n);
         if(n.size()) n += " ";
-        std::cout << n << "(" << dim << ", " << physicalTags[j] << ") ";
+        std::cout << n << "(" << dim << ", " << physTag << ") ";
       }
       std::cout << "\n";
     }
@@ -132,8 +131,8 @@ int main(int argc, char **argv)
     gmsh::model::getPartitions(dim, tag, partitions);
     if(partitions.size()) {
       std::cout << " - Partition tags:";
-      for(std::size_t j = 0; j < partitions.size(); j++)
-        std::cout << " " << partitions[j];
+      for(auto part : partitions)
+        std::cout << " " << part;
       int parentDim, parentTag;
       gmsh::model::getParent(dim, tag, parentDim, parentTag);
       std::cout << " - parent entity (" << parentDim << "," << parentTag
@@ -141,16 +140,15 @@ int main(int argc, char **argv)
     }
 
     // * List all types of elements making up the mesh of the entity:
-    for(std::size_t j = 0; j < elemTypes.size(); j++) {
+    for(auto elemType : elemTypes) {
       std::string name;
       int d, order, numv, numpv;
       std::vector<double> param;
-      gmsh::model::mesh::getElementProperties(elemTypes[j], name, d, order,
+      gmsh::model::mesh::getElementProperties(elemType, name, d, order,
                                               numv, param, numpv);
       std::cout << " - Element type: " << name << ", order " << order << "\n";
       std::cout << "   with " << numv << " nodes in param coord: (";
-      for(std::size_t k = 0; k < param.size(); k++)
-        std::cout << param[k] << " ";
+      for(auto p : param) std::cout << p << " ";
       std::cout << ")\n";
     }
   }

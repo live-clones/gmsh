@@ -86,13 +86,13 @@ int main(int argc, char **argv)
   gmsh::model::getBoundary({{3, domain_tag}}, boundary_dimtags, false, false);
 
   std::vector<int> boundary_tags, complement_tags;
-  for(auto it = boundary_dimtags.begin(); it != boundary_dimtags.end(); ++it) {
-    complement_tags.push_back(it->second);
-    boundary_tags.push_back(it->second);
+  for(auto e: boundary_dimtags) {
+    complement_tags.push_back(e.second);
+    boundary_tags.push_back(e.second);
   }
-  for(auto it = terminal_tags.begin(); it != terminal_tags.end(); ++it) {
-    auto it2 = std::find(complement_tags.begin(), complement_tags.end(), *it);
-    if(it2 != complement_tags.end()) complement_tags.erase(it2);
+  for(auto t: terminal_tags) {
+    auto it = std::find(complement_tags.begin(), complement_tags.end(), t);
+    if(it != complement_tags.end()) complement_tags.erase(it);
   }
 
   // Whole domain surface

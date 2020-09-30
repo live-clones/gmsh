@@ -63,9 +63,9 @@ int main(int argc, char **argv)
   // ov contains all the generated entities of the same dimension as the input
   // entities:
   gmsh::logger::write("fragment produced volumes:");
-  for(std::size_t i = 0; i < ov.size(); i++)
-    gmsh::logger::write("(" + std::to_string(ov[i].first) + "," +
-                        std::to_string(ov[i].second) + ")");
+  for(auto e : ov)
+    gmsh::logger::write("(" + std::to_string(e.first) + "," +
+                        std::to_string(e.second) + ")");
 
   // ovv contains the parent-child relationships for all the input entities:
   gmsh::logger::write("before/after volume relations:");

@@ -149,14 +149,14 @@ int main(int argc, char **argv)
     int NN = 30;
     std::vector<std::pair<int, int> > tmp;
     gmsh::model::getEntities(tmp, 1);
-    for(std::size_t i = 0; i < tmp.size(); i++) {
-      gmsh::model::mesh::setTransfiniteCurve(tmp[i].second, NN);
+    for(auto c: tmp) {
+      gmsh::model::mesh::setTransfiniteCurve(c.second, NN);
     }
     gmsh::model::getEntities(tmp, 2);
-    for(std::size_t i = 0; i < tmp.size(); i++) {
-      gmsh::model::mesh::setTransfiniteSurface(tmp[i].second);
-      gmsh::model::mesh::setRecombine(tmp[i].first, tmp[i].second);
-      gmsh::model::mesh::setSmoothing(tmp[i].first, tmp[i].second, 100);
+    for(auto s: tmp) {
+      gmsh::model::mesh::setTransfiniteSurface(s.second);
+      gmsh::model::mesh::setRecombine(s.first, s.second);
+      gmsh::model::mesh::setSmoothing(s.first, s.second, 100);
     }
     gmsh::model::mesh::setTransfiniteVolume(v1);
   }
