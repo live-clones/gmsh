@@ -723,7 +723,7 @@ int detectCrossFieldSingularities(
     const std::map<std::array<size_t,2>, double>& edgeTheta, 
     const std::vector<std::size_t>& nodeTags,
     const std::vector<double>& scaling,
-    std::vector<std::array<double,4> >& singularities) {
+    std::vector<std::array<double,5> >& singularities) {
   Msg::Warning("current dectection of singularities is very basic, just min and max of scaling inside faces");
 
   /* Accessible scaling values from vertex num */
@@ -784,11 +784,11 @@ int detectCrossFieldSingularities(
       if (nb_eq != 0) continue; /* maybe bad idea ? rejecting "singular edge" ? */
       if (nb_inf == 0 && nb_sup > 0) {
         MVertex* v = vertices[i];
-        std::array<double,4> sing = {v->x(), v->y(), v->z(), -1.};
+        std::array<double,5> sing = {v->x(), v->y(), v->z(), -1., double(gf->tag())};
         singularities.push_back(sing);
       } else if (nb_inf > 0 && nb_sup == 0) {
         MVertex* v = vertices[i];
-        std::array<double,4> sing = {v->x(), v->y(), v->z(), +1.};
+        std::array<double,5> sing = {v->x(), v->y(), v->z(), +1., double(gf->tag())};
         singularities.push_back(sing);
       }
     }
@@ -806,7 +806,7 @@ int computeScaledCrossFieldView(GModel* gm,
     int nbBoundaryExtensionLayer,
     const std::string& viewName,
     int verbosity,
-    std::vector<std::array<double,4> >* singularities
+    std::vector<std::array<double,5> >* singularities
     ) {
   Msg::Debug("compute scaled cross field ...");
 #ifdef HAVE_QUADMESHINGTOOLS
