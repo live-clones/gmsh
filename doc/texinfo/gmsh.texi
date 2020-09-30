@@ -137,7 +137,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * Copyright and credits::       Copyright information and list of contributors
 * License::                     Complete copy of the license
 * Concept index::               Index of concepts
-* Syntax index::                Index of reserved keywords in the Gmsh language
+* Syntax index::                Index of command line, scripting and API syntax
 @end menu
 
 @c =========================================================================
@@ -5778,11 +5778,11 @@ to run CMake).
 Each build can be configured using a series of options, to selectively
 enable optional modules or features. Here is the list of CMake options:
 
-@ftable @code
+@table @code
 
 @include cmake_options.texi
 
-@end ftable
+@end table
 
 The wiki
 (@uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Gmsh-compilation})

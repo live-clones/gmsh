@@ -89,7 +89,7 @@ print(v1 + " with tag " + str(t1) + " has " + str(ns) + " time steps")
 # or probed directly using `gmsh.view.probe()' - here at point (0.9, 0.1, 0):
 print("Value at (0.9, 0.1, 0)", gmsh.view.probe(t1, 0.9, 0.1, 0))
 
-# List-based views can be saved to disk using `gmsh.view.write()':
+# Views can be saved to disk using `gmsh.view.write()':
 gmsh.view.write(t1, "x3.pos")
 
 # High-order datasets can be provided by setting the interpolation matrices
