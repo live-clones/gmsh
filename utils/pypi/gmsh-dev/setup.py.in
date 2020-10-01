@@ -56,7 +56,7 @@ class DownloadAndInstall(install):
     def _download(self):
         import requests
         print('Downloading {}, please wait...'.format(url))
-        sdk = requests.get(url, allow_redirects=True)
+        sdk = requests.get(url, allow_redirects=True, verify=False)
         with open(fname, "wb") as f:
             f.write(sdk.content)
 
