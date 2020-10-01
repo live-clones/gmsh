@@ -1000,18 +1000,61 @@ int detectCrossFieldSingularities(
     }
   }
 
-  if (true) { /* Vizualisation of singularities */
+  constexpr bool DBG_VIZU = true;
+  if (DBG_VIZU) { /* Vizualisation of singularities */
     for (size_t i = 0; i < singularities.size(); ++i) {
       std::array<double,3> p = {
         singularities[i][0],
         singularities[i][1],
         singularities[i][2]};
       double index = singularities[i][3];
-      GeoLog::add(p,index,"dbg_singularities");
+      GeoLog::add(p,index,"dbg_cf_singularities");
     }
     GeoLog::flush();
   }
 
+
+  return 0;
+}
+
+int addSingularitiesAtAcuteCorners(
+    const std::vector<GFace*>& faces,
+    double thresholdInDeg,
+    std::vector<std::array<double,5> >& singularities) {
+  constexpr bool DBG_VIZU = true;
+  for (GFace* gf: faces) {
+    std::unordered_map<MVertex*, double> cornerAngle;
+    std::unordered_map<MVertex*, std::vector<MTriangle*> > cornerToTris;
+    for (MTriangle* t: gf->triangles) {
+      for (size_t le = 0; le < 3; ++le) {
+        MVertex* v2 = t->getVertex((le+1)%3);
+        if (v2->onWhat()->cast2Vertex() != NULL) {
+          MVertex* v1 = t->getVertex(le);
+          MVertex* v3 = t->getVertex((le+2)%3);
+          double agl = std::abs(angle3Vertices(v1,v2,v3));
+          cornerAngle[v2] += agl;
+          cornerToTris[v2].push_back(t);
+        }
+      }
+    }
+    for (const auto& kv: cornerAngle) {
+      MVertex* v = kv.first;
+      double agl = kv.second;
+      if (agl * 180. / M_PI < thresholdInDeg)  {
+        std::vector<MTriangle*>& tris = cornerToTris[v];
+        if (tris.size() == 0) continue;
+        SVector3 p(0.,0.,0.);
+        for (MTriangle* t: tris) {
+          p += t->barycenter();
+        }
+        p = 1./double(tris.size()) * p; 
+        double indexVal3 = 1.;
+        singularities.push_back({p.x(),p.y(),p.z(),indexVal3,double(gf->tag())});
+        if (DBG_VIZU) GeoLog::add(p,indexVal3,"dbg_acute_singularities");
+      }
+    }
+  }
+  if (DBG_VIZU) GeoLog::flush();
 
   return 0;
 }
