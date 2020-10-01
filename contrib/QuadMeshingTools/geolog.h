@@ -1,41 +1,44 @@
 #pragma  once
 
 #include <vector>
+#include <array>
 #include <string>
-#include "qmt_types.hpp"
 
-namespace QMT {
-  namespace GLog {
-    struct GObj {
-      size_t n;
-      vec3 pts[8];
-      double values[8];
-      bool isVector;
-    };
+namespace GeoLog {
 
-    struct View {
-      std::string name;
-      std::vector<std::string> content;
-      std::vector<std::string> posOptions; /* for gmsh only */
-      std::vector<GObj> objs;
-    };
+  using vec3 = std::array<double,3>;
 
-    class GeoLog {
-      public:
-        GeoLog() : exportedToGmsh(false) {};
-        ~GeoLog();
-        bool add(const std::vector<vec3>& pts, double value, const std::string& view);
-        bool add(const std::vector<vec3>& pts, const std::vector<double>& values, const std::string& view);
-        bool addOptions(const std::vector<std::string>& strs, const std::string& view);
-        bool clear();
-        bool save(const std::string& path); /* .pos export (gmsh) */
-        bool addVector(vec3 pos, vec3 vec, const std::string& view);
-        bool toGmsh();
+  struct GObj {
+    std::vector<vec3> pts;
+    std::vector<double> values;
+    bool isCell = false;
+    bool isVector = false;
+    std::string text = "";
+  };
 
-      public:
-        std::vector<View> views;
-        bool exportedToGmsh;
-    };
-  }
+  struct View {
+    std::string name;
+    std::vector<GObj> objs;
+    std::vector<std::pair<std::string,double>> optionsSetNumber;
+  };
+
+  /* Global variable */
+  extern std::vector<View> views;
+
+  /* Global functions (fill the global views) */
+  /* - scalar values */
+  bool add(vec3 p, double value, const std::string& view);
+  bool add(const std::vector<vec3>& pts, double value, const std::string& view, bool isCell = false);
+  bool add(const std::vector<vec3>& pts, const std::vector<double>& values, const std::string& view, bool isCell = false);
+  /* - vector value (vector at center if multiple points) */
+  bool add(vec3 p, vec3 n, const std::string& view);
+  bool add(const std::vector<vec3>& pts, vec3 n, const std::string& view);
+  /* - text value (text at center if multiple points) */
+  bool add(vec3 p, const std::string& text, const std::string& view);
+  bool add(const std::vector<vec3>& pts, const std::string& text, const std::string& view);
+
+  View& get_global_view(const std::string& name);
+
+  /* Send the views to gmsh (deleting them in the process) */
+  bool flush();
 }
-

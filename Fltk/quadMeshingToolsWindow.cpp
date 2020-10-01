@@ -19,6 +19,7 @@
 #include "drawContext.h"
 #include "quadMeshingToolsWindow.h"
 #include "gmshCrossFields.h"
+#include "fastScaledCrossField.h"
 #include "paletteWindow.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -26,12 +27,20 @@
 #include "Context.h"
 #include "Generator.h"
 
+#include "meshGFaceHxt.h" // for debugging
+
 #if defined(HAVE_QUADMESHINGTOOLS)
 #include "quad_meshing_tools.h"
 #endif
 
 static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 {
+  // {
+  //   meshGFaceHxt(GModel::current());
+  //   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  //   drawContext::global()->draw();
+  //   return;
+  // }
   // // ONLY FOR TESTING NEW FUNCTION FOR JF
   // int vt = -1;
   // computePerTriangleScaledCrossField(GModel::current(),vt);
@@ -39,12 +48,21 @@ static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
   // drawContext::global()->draw();
   // return;
 
+
   QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
   opt.cross_field_iter = FlGui::instance()->quadmeshingtools->flv_cross_field_iter->value();
   opt.cross_field_bc_expansion = FlGui::instance()->quadmeshingtools->flv_bc_expansion->value();
   opt.cross_field_use_prescribed_if_available = FlGui::instance()->quadmeshingtools->check_cf_use_prescribed->value();
-  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
-  int status = computeCrossField(GModel::current(), opt, state);
+  int status = 0;
+  bool old = true;
+  if (old) {
+    QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+    status = computeCrossField(GModel::current(), opt, state);
+  } else {
+    int tag = -1;
+    status = computeScaledCrossFieldView(GModel::current(),
+        tag, 1000, opt.cross_field_iter, 1.e-2, opt.cross_field_bc_expansion);
+  }
   if (status != 0) {
     Msg::Error("failed to compute cross field");
   }

@@ -26,6 +26,7 @@ typedef unsigned long intptr_t;
 #include "robustPredicates.h"
 #include "BasisFactory.h"
 #include "gmshCrossFields.h"
+#include "fastScaledCrossField.h"
 #include "meshGFaceHxt.h"
 
 
@@ -351,11 +352,38 @@ int GmshBatch()
     else if(CTX::instance()->batch == 67){
       // compute a scaled cross field "per triangle"
       int viewTag = -1;
-      computePerTriangleScaledCrossField (GModel::current(), viewTag,
-					  6,1,CTX::instance()->mesh.numQuads/4);// we split the whole mesh afterwards
+
+      // computePerTriangleScaledCrossField (GModel::current(), viewTag,
+      //				   6,1,CTX::instance()->mesh.numQuads/4);// we split the whole mesh afterwards
+      std::vector<std::array<double,5> > singularities;
+      computeScaledCrossFieldView(GModel::current(), viewTag,
+				  CTX::instance()->mesh.numQuads/4, 6, 1.e-2, 1, "scaled_cross_field", 1,
+				  &singularities);
+      
+      
+      { // transfer to pack algo
+	std::string _ugly  = GModel::current()->getName()+"_singularities.txt";
+	std::string _ugly2 = GModel::current()->getName()+"_singularities.pos";
+	FILE *f__ = fopen (_ugly.c_str(), "w");
+	FILE *f2__ = fopen (_ugly2.c_str(), "w");
+	fprintf(f__,"%lu\n",singularities.size());
+	fprintf(f2__,"View \"singularities\"{\n");
+	for (size_t i = 0; i < singularities.size();++i){
+	  fprintf(f__,"%d %22.15E %22.15E %22.15E %d %d\n",(int) singularities[i][3],
+		  singularities[i][0],singularities[i][1],singularities[i][2],2,(int)singularities[i][4]);
+	  fprintf(f2__,"SP(%22.15E, %22.15E, %22.15E){ %d};\n",singularities[i][0],singularities[i][1],singularities[i][2], (int)singularities[i][2]);
+	}
+	fclose(f__);
+	fprintf(f2__,"};\n");
+	fclose(f2__);
+      }
+
       PView* crossField = PView::getViewByTag(viewTag);
       std::string posout = GModel::current()->getName() + "_scaled_crossfield.pos";
       crossField->getData()->writePOS(posout);
+      
+
+      
     }
     else if(CTX::instance()->batch == 68){
       // global surface remeshing

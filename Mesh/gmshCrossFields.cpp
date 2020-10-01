@@ -23,9 +23,11 @@
 
 #ifdef HAVE_QUADMESHINGTOOLS
 #include "quad_meshing_tools.h"
+#include "qmt_cross_field.h"
 #include "qmt_utils.hpp" /* for debug print macro */
 #include "geolog.h" /* for debug print macro */
 #include "gmsh.h"
+#include "fastScaledCrossField.h"
 #endif
 
 
@@ -64,6 +66,15 @@
 //     return a - D;
 //   }
 // }
+
+static void getFacesOfTheModel(GModel *gm, std::vector<GFace *> &f)
+{
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    GFace *gf = *it;
+    f.push_back(gf);
+  }
+}
+
 
 static inline double compat_orientation_extrinsic(const double *o0,
                                                   const double *n0,
@@ -4140,52 +4151,97 @@ public:
     fclose(_f);
   }
 
+
   int computeCrossFieldAndH()
   {
 #if defined(HAVE_QUADMESHINGTOOLS)
-    int nb_iter = 10;
+    /* Cross field parameters */
+    int nb_diffusion_levels = 10;
+    int bc_expansion_layers = 1;
+
     int cf_tag = -1;
     PView* theta = PView::getViewByName("theta");
     if (theta) cf_tag = theta->getTag();
-    std::map<std::pair<size_t,size_t>,double> edge_to_angle;
-    int bc_expansion_layers = 1;
-    bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,&edge_to_angle, bc_expansion_layers);
-    if (!okcf) {
-      Msg::Error("Failed to compute cross field");
-      //      return -1;
-    }
+
 
     std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
     std::vector<cross2d *> pc;
     for(it = C.begin(); it != C.end(); ++it) pc.push_back(&(it->second));
-    for(it = C.begin(); it != C.end(); ++it) {
-      std::pair<size_t,size_t> edge = std::make_pair(it->first.getMinVertex()->getNum(),
-          it->first.getMaxVertex()->getNum());
-      if (edge.first == edge.second) continue;
-      std::map<std::pair<size_t,size_t>,double>::iterator itr = edge_to_angle.find(edge);
-      double A = 0;
-      if (itr == edge_to_angle.end()) {
-        Msg::Error("Edge (%i,%i) not found in result", edge.first, edge.second);
-        abort();
-        // TODO debug this error when starting from .geo input
+    bool OLD = false;
+    if (OLD) {
+      std::map<std::pair<size_t,size_t>,double> edge_to_angle;
+      bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_diffusion_levels,&edge_to_angle, bc_expansion_layers);
+      if (!okcf) {
+        Msg::Error("Failed to compute cross field");
         return -1;
       }
-      else{
-        A = itr->second;
-      }
-      //      it->second.normalize(itr->second);
-      it->second._a = it->second._atemp = A;
-      it->second.o_i = it->second._tgt * cos(it->second._atemp) + it->second._tgt2 * sin(it->second._atemp);
-      it->second.o_i.normalize();
-      it->second._btemp = itr->second;
-      //      it->second.computeVector();
-      //it->second.computeAngle();
-      /* issue from here I guess: theta transfer not sufficient ? */
-    }
-    //    fastImplementationExtrinsic(C,1.e-9);
-    //    for(it = C.begin(); it != C.end(); ++it) it->second.computeAngle();
 
-    printCross("test.pos");
+      for(it = C.begin(); it != C.end(); ++it) {
+        std::pair<size_t,size_t> edge = std::make_pair(it->first.getMinVertex()->getNum(),
+            it->first.getMaxVertex()->getNum());
+        if (edge.first == edge.second) continue;
+        std::map<std::pair<size_t,size_t>,double>::iterator itr = edge_to_angle.find(edge);
+        double A = 0;
+        if (itr == edge_to_angle.end()) {
+          Msg::Error("Edge (%i,%i) not found in result", edge.first, edge.second);
+          abort();
+          // TODO debug this error when starting from .geo input
+          return -1;
+        }
+        else{
+          A = itr->second;
+        }
+        it->second._a = it->second._atemp = A;
+        it->second.o_i = it->second._tgt * cos(it->second._atemp) + it->second._tgt2 * sin(it->second._atemp);
+        it->second.o_i.normalize();
+        it->second._btemp = itr->second;
+      }
+      printCross("test.pos");
+    } else {
+      std::vector<GFace *> faces;
+      getFacesOfTheModel(gm, faces);
+      std::vector<std::array<double,3> > points;
+      std::vector<std::array<size_t,2> > lines;
+      std::vector<std::array<size_t,3> > triangles;
+      std::vector<size_t> pointTag;
+      extractTriangularMeshFromFaces(f, points, pointTag, lines, triangles);
+
+      std::map<std::array<size_t,2>,double> edgeThetaLocal;
+      double thresholdNormConvergence = 1.e-2;
+      bool okcf = QMT::compute_cross_field_with_multilevel_diffusion(
+          points,lines,triangles,edgeThetaLocal,nb_diffusion_levels,
+          thresholdNormConvergence, bc_expansion_layers);
+      if (!okcf) {
+        Msg::Error("Failed to compute cross field");
+        return -1;
+      }
+      std::map<std::array<size_t,2>,double> edgeTheta;
+      for (const auto& kv: edgeThetaLocal) {
+        std::array<size_t,2> vPairGlobal = {pointTag[kv.first[0]],pointTag[kv.first[1]]};
+        if (vPairGlobal[1] < vPairGlobal[0]) {
+          std::sort(vPairGlobal.begin(),vPairGlobal.end());
+        }
+        edgeTheta[vPairGlobal] = kv.second;
+      }
+
+      for(it = C.begin(); it != C.end(); ++it) {
+        std::array<size_t,2> edge = {it->first.getMinVertex()->getNum(),
+            it->first.getMaxVertex()->getNum()};
+        if (edge[0] == edge[1]) continue;
+        std::map<std::array<size_t,2>,double>::iterator itr = edgeTheta.find(edge);
+        double A = 0;
+        if (itr == edgeTheta.end()) {
+          Msg::Error("Edge (%i,%i) not found in result", edge[0], edge[1]);
+          return -1;
+        } else{
+          A = itr->second;
+        }
+        it->second._a = it->second._atemp = A;
+        it->second.o_i = it->second._tgt * cos(it->second._atemp) + it->second._tgt2 * sin(it->second._atemp);
+        it->second.o_i.normalize();
+        it->second._btemp = itr->second;
+      }
+    }
 
 #else
     computeCrossFieldExtrinsic(1.e-9);
@@ -5779,14 +5835,6 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
 #endif // from the beginning of the file
 
 
-static void getFacesOfTheModel(GModel *gm, std::vector<GFace *> &f)
-{
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    GFace *gf = *it;
-    f.push_back(gf);
-  }
-}
-
 
 int computeCrossFieldAndH(GModel *gm,
                           std::map<int, std::vector<double> > &dataH,
@@ -6186,11 +6234,36 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     PView* theta = PView::getViewByName("theta");
     if (theta) {delete theta; theta = NULL;}
 
-    bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,NULL,opt.cross_field_bc_expansion);
+    bool okcf = true;
+    bool OLD = false;
+    if (OLD) {
+      okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,nb_iter,NULL,opt.cross_field_bc_expansion);
+    } else {
+      std::vector<std::array<double,3> > points;
+      std::vector<std::array<size_t,2> > lines;
+      std::vector<std::array<size_t,3> > triangles;
+      std::vector<size_t> pointTag;
+      extractTriangularMeshFromFaces(f, points, pointTag, lines, triangles);
+      std::map<std::array<size_t,2>,double> edgeThetaLocal;
+      double thresholdNormConvergence = 1.e-2;
+      okcf = QMT::compute_cross_field_with_multilevel_diffusion(
+          points,lines,triangles,edgeThetaLocal,nb_iter,
+          thresholdNormConvergence, opt.cross_field_bc_expansion);
+      std::map<std::array<size_t,2>,double> edgeTheta;
+      for (const auto& kv: edgeThetaLocal) {
+        std::array<size_t,2> vPairGlobal = {pointTag[kv.first[0]],pointTag[kv.first[1]]};
+        if (vPairGlobal[1] < vPairGlobal[0]) {
+          std::sort(vPairGlobal.begin(),vPairGlobal.end());
+        } 
+        edgeTheta[vPairGlobal] = kv.second;
+      }
+      QMT::create_cross_field_theta_view(gm->getName(),edgeTheta,cf_tag);
+    }
     if (!okcf) {
       Msg::Error("Failed to compute cross field");
       return -1;
     }
+
 
     int h_tag = -1;
     int status_h = compute_H_from_cross_field_view(gm, qLayout, f, cf_tag, h_tag);

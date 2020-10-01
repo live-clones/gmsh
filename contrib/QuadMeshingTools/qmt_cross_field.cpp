@@ -5,6 +5,7 @@
 //
 // Author: Maxence Reberol
 
+#include "qmt_cross_field.h"
 #include "quad_meshing_tools.h"
 
 #include "qmt_types.hpp"
@@ -75,21 +76,32 @@ namespace QMT {
   constexpr bool DBG_VERBOSE = false;
 
 
-  inline double triangle_area(const TMesh& M, id t) {
+  inline double triangle_area(const SMesh& M, id t) {
     vec3 N = cross(M.points[M.triangles[t][2]]-M.points[M.triangles[t][0]],
         M.points[M.triangles[t][1]]-M.points[M.triangles[t][0]]);
     return length(N) / 2.;
   }
 
-  inline vec3 triangle_center(const TMesh& M, id t) {
+  inline vec3 triangle_center(const SMesh& M, id t) {
     return 1./3.*(M.points[M.triangles[t][0]]+M.points[M.triangles[t][1]]+M.points[M.triangles[t][2]]);
+  }
+
+  inline vec3 triangle_normal(const SMesh& M, id t) {
+    vec3 N = cross(M.points[M.triangles[t][2]]-M.points[M.triangles[t][0]],
+        M.points[M.triangles[t][1]]-M.points[M.triangles[t][0]]);
+    if (length(N) < EPS) {
+      error("triangle {} ({}): normal too small, length = {}", t, M.triangles[t], length(N));
+      return {DBL_MAX,DBL_MAX,DBL_MAX};
+    }
+    N = normalize(N);
+    return N;
   }
 
   inline vec3 triangle_normal(const TMesh& M, id t) {
     vec3 N = cross(M.points[M.triangles[t][2]]-M.points[M.triangles[t][0]],
         M.points[M.triangles[t][1]]-M.points[M.triangles[t][0]]);
     if (length(N) < EPS) {
-      error("triangle {}: normal too small, length = {}", t, length(N));
+      error("triangle {} ({}): normal too small, length = {}", t, M.triangles[t], length(N));
       return {DBL_MAX,DBL_MAX,DBL_MAX};
     }
     N = normalize(N);
@@ -109,7 +121,7 @@ namespace QMT {
   };
 
   /* two unknowns (x_2i, x_2i+1) for each edge */
-  bool stiffness_coefficient(const TMesh& M, 
+  bool stiffness_coefficient(const SMesh& M, 
       id e, 
       const vector<id2>& uIEdges,
       const vector<id>& old2IEdge,
@@ -160,7 +172,7 @@ namespace QMT {
         vec3 edg = M.points[aedge[1]]-M.points[aedge[0]];
         double len = length(edg);
         if (len < EPS) {
-          error("edge too small: t={}, k = {}, length = {}", t, k, len);
+          error("edge too small: t={}, k = {}, edge={}, length = {}", t, k, aedge, len);
           return false;
         }
         edg = (1./len) * edg;
@@ -259,7 +271,7 @@ namespace QMT {
 
   bool create_view_with_crosses(
       const std::string& name,
-      const TMesh& M,
+      const SMesh& M,
       const vector<id2>& uIEdges,
       const vector<vector<id>>& uIEdgeToOld,
       const vector<double>& x) {
@@ -404,7 +416,7 @@ namespace QMT {
         gmsh::view::probe(tagH, pt[0], pt[1], pt[2], values);
         if (values.size() == 0) {
           error("probe failed at pt = {}", pt);
-          return DBL_MAX;
+          return false;
         }
         H[v] = values[0];
       }
@@ -549,7 +561,7 @@ namespace QMT {
       gmsh::view::probe(tagSizeMap, pt[0], pt[1], pt[2], values);
       if (values.size() == 0) {
         error("probe failed at pt = {}", pt);
-        return DBL_MAX;
+        return false;
       }
       sizemap[v] = values[0];
     }
@@ -676,27 +688,27 @@ namespace QMT {
     return true;
   }
 
-  double bbox_diag(const TMesh& M) {
+  double bbox_diag(const std::vector<vec3>& points) {
     vec3 mi = {DBL_MAX,DBL_MAX,DBL_MAX};
     vec3 ma = {-DBL_MAX,-DBL_MAX,-DBL_MAX};
-    F(t,M.triangles.size()) F(lv,3) {
-      vec3 pt = M.points[M.triangles[t][lv]];
+    F(i,points.size()) {
       F(d,3) {
-        mi[d] = std::min(pt[d],mi[d]);
-        ma[d] = std::max(pt[d],ma[d]);
+        mi[d] = std::min(points[i][d],mi[d]);
+        ma[d] = std::max(points[i][d],ma[d]);
       }
     }
     return length(ma-mi);
   }
 
   bool expand_dirichlet_boundary_conditions(
-      const TMesh& M,
+      const SMesh& M,
       const vector<id2>& uIEdges,
       const vector<id>& old2IEdge,
       const vector<vector<id>>& uIEdgeToOld,
       size_t nb_layers,
       vector<bool>& dirichletEdge,
-      vector<vec2>& dirichletValue) {
+      vector<vec2>& dirichletValue,
+      int verbosity) {
     /* Look for expanded BC edges */
     vector<bool> extDirichletEdge = dirichletEdge;
     vector<id> new_edges;
@@ -717,10 +729,13 @@ namespace QMT {
       F(i,new_edges.size()) extDirichletEdge[new_edges[i]] = true;
     }
     if (new_edges.size() == 0) {
-      warn("no new edges to expand dirichlet boundary conditions");
+      if (verbosity >= 2)
+        warn("no new edges to expand dirichlet boundary conditions");
       return false;
     }
-    info("Dirichlet B.C. expansion: added {} edges (for {} layers)", new_edges.size(), nb_layers);
+
+    if (verbosity >= 2)
+      info("Dirichlet B.C. expansion: added {} edges (for {} layers)", new_edges.size(), nb_layers);
 
     /* Small system for BC expansion */
     vector<IJV> K_coefs;
@@ -752,31 +767,22 @@ namespace QMT {
     constexpr double EPS = 1.e-14;
     F(iter,nb_layers*10) {
       FC(e,uIEdges.size(),extDirichletEdge[e] && !dirichletEdge[e]) {
-        // if (iter == 0) { DBG("---"); DBG(iter,e); }
         F(d,2) {
           id i = 2*e+d;
           dirichletValue[e][d] = 0.;
-          // if (iter == 0) { DBG(" ", d,i); }
           F(l,A_col[i].size()) {
             id j = A_col[i][l];
             if (!extDirichletEdge[j/2]) continue;
-            // if (length(dirichletValue[j/2]) < 0.1) continue;
             double w = A_coef[i][l];
             dirichletValue[e][d] += -1. * w * dirichletValue[j/2][j%2];
-            // if (iter == 0) { DBG("   ", l, j, w, dirichletValue[j/2][j%2]); }
           }
-          // dirichletValue[e][d] /= sum;
-          // if (iter == 0) { DBG(" =>", dirichletValue[e][d]); }
         }
         double n2 = length(dirichletValue[e]);
         if (n2 < EPS) {
           continue;
-          // error("cannot project ! n2 = {}, dirichletValue[e] = {},{}", n2, dirichletValue[e][0], dirichletValue[e][1]);
-          // return false;
         }
         dirichletValue[e][0] /= n2;
         dirichletValue[e][1] /= n2;
-        // if (iter == 0) DBG("=>",n2,dirichletValue[e][0],dirichletValue[e][1]);
       }
     }
 
@@ -798,7 +804,19 @@ namespace QMT {
       gmsh::initialize(0, 0, false);
       QMT_CF_Utils::global_gmsh_initialized = true;
     }
-    info("compute cross field with successive heat diffusion and projection ...");
+    error("function compute_cross_field_with_heat() deprecated, please use compute_cross_field_with_multilevel_diffusion()");
+    return false;
+  }
+
+  bool create_cross_field_theta_view(
+      const std::string& meshName,
+      const std::map<std::array<size_t,2>,double>& edgeTheta,
+      int& crossFieldTag) {
+    if (!QMT_CF_Utils::global_gmsh_initialized) {
+      gmsh::initialize(0, 0, false);
+      QMT_CF_Utils::global_gmsh_initialized = true;
+    }
+    warn("create_cross_field_theta_view | kept for backward compatibility, should no longer be used");
 
     TMesh M;
     bool oki = import_TMesh_from_gmsh(meshName, M);
@@ -810,14 +828,93 @@ namespace QMT {
     vector<id2> uIEdges;
     vector<id> old2IEdge;
     vector<vector<id>> uIEdgeToOld;
-    bool oka = compute_triangle_adjacencies(M.triangles, M.triangle_neighbors, M.nm_triangle_neighbors, uIEdges, old2IEdge, uIEdgeToOld);
+    std::vector<sid3> triangle_neighbors;
+    std::vector<std::vector<id>> nm_triangle_neighbors;
+    bool oka = compute_triangle_adjacencies(M.triangles, triangle_neighbors, nm_triangle_neighbors, uIEdges, old2IEdge, uIEdgeToOld);
     if (!oka) {
       error("failed to compute mesh adjacencies");
       return false;
     }
 
-    double diag = bbox_diag(M);
-    info("input: {} points, {} lines, {} triangles, {} internal edges, bbox diag = {}", M.points.size(),M.lines.size(),M.triangles.size(),uIEdges.size(), diag);
+    { /* create the theta view */
+      std::string cname;
+      gmsh::model::getCurrent(cname);
+      std::vector<std::size_t> keys;
+      std::vector<std::vector<double> > values;
+      F(f,M.triangles.size()) {
+        keys.push_back(M.tri_elt_tags[f]);
+        std::vector<double> vals;
+        F(le,3) {
+          id v1 = M.triangles[f][le];
+          id v2 = M.triangles[f][(le+1)%3];
+          id2 edge = sorted(v1,v2);
+          std::array<size_t,2> vPair = {size_t(edge[0]),size_t(edge[1])};
+          auto it = edgeTheta.find(vPair);
+          if (it == edgeTheta.end()) {
+            error("edge ({},{}) not found in edgeTheta", v1,v2);
+            return false;
+          }
+          double theta = it->second;
+          vals.push_back(theta);
+        }
+        values.push_back(vals);
+      }
+      if (crossFieldTag < 0) {
+        info("create the 'theta' view");
+        crossFieldTag = gmsh::view::add("theta");
+      } else {
+        info("fill theta in the given view (tag = {})", crossFieldTag);
+      }
+      gmsh::view::addModelData(crossFieldTag, 0, cname, "ElementData", keys, values);
+    }
+
+    return true;
+
+  }
+
+  bool compute_cross_field_with_multilevel_diffusion(
+      const std::vector<std::array<double,3> >& points,
+      const std::vector<std::array<size_t,2> >& lines,
+      const std::vector<std::array<size_t,3> >& triangles,
+      std::map<std::array<size_t,2>,double>& edgeTheta,
+      int nbDiffusionLevels,
+      double thresholdNormConvergence,
+      int nbBoundaryExtensionLayer,
+      int verbosity) {
+    if (!QMT_CF_Utils::global_gmsh_initialized) {
+      gmsh::initialize(0, 0, false);
+      QMT_CF_Utils::global_gmsh_initialized = true;
+    }
+
+    /* Fill a SMesh data structure with the triangles */
+    SMesh M;
+    {
+      if(points.size() >= std::numeric_limits<id>::max()) {
+        error("too many points in the input: {}, not supported", points.size());
+        return false;
+      }
+      M.points = points;
+      M.lines.resize(lines.size());
+      M.triangles.resize(triangles.size());
+      F(i,M.lines.size()) F(j,2) M.lines[i][j] = lines[i][j];
+      F(i,M.triangles.size()) F(j,3) M.triangles[i][j] = triangles[i][j];
+    }
+
+    vector<id2> uIEdges;
+    vector<id> old2IEdge;
+    vector<vector<id>> uIEdgeToOld;
+    std::vector<sid3> triangle_neighbors;
+    std::vector<std::vector<id>> nm_triangle_neighbors;
+    bool oka = compute_triangle_adjacencies(M.triangles, triangle_neighbors, nm_triangle_neighbors, uIEdges, old2IEdge, uIEdgeToOld);
+    if (!oka) {
+      error("failed to compute mesh adjacencies");
+      return false;
+    }
+
+    double diag = bbox_diag(M.points);
+    if (verbosity > 0)
+      info("input: {} points, {} lines, {} triangles, {} internal edges, bbox diag = {}", M.points.size(),M.lines.size(),M.triangles.size(),uIEdges.size(), diag);
+
     if (uIEdges.size() == 0) {
       error("no internal edges");
       return false;
@@ -847,11 +944,11 @@ namespace QMT {
         nbc += 1;
       }
     }
-    info("boundary conditions: {} crosses fixed on edges", nbc);
+    if (verbosity >= 2)
+      info("boundary conditions: {} crosses fixed on edges", nbc);
 
-    bool DBG_AVOID_SOLVE = false;
-    if (bc_expansion_layers > 0) {
-      bool oke = expand_dirichlet_boundary_conditions(M, uIEdges, old2IEdge, uIEdgeToOld, bc_expansion_layers, dirichletEdge, dirichletValue);
+    if (nbBoundaryExtensionLayer > 0) {
+      bool oke = expand_dirichlet_boundary_conditions(M, uIEdges, old2IEdge, uIEdgeToOld, nbBoundaryExtensionLayer, dirichletEdge, dirichletValue, verbosity);
       if (!oke) {
         warn("failed to expand dirichlet boundary conditions");
       }
@@ -859,11 +956,11 @@ namespace QMT {
         x[2*e+0] = dirichletValue[e][0];
         x[2*e+1] = dirichletValue[e][1];
       }
-      // DBG_AVOID_SOLVE = true;
     }
 
-    if (!DBG_AVOID_SOLVE) {
-    info("compute stiffness matrix coefficients (Crouzeix-Raviart) ...");
+    if (verbosity >= 2)
+      info("compute stiffness matrix coefficients (Crouzeix-Raviart) ...");
+
     vector<IV> K_diag;
     vector<IJV> K_coefs;
     vector<double> rhs(2*uIEdges.size(),0.);
@@ -906,7 +1003,8 @@ namespace QMT {
     }
     eavg /= uIEdges.size();
 
-    info("edge size: min={}, avg={}, max={} | bbox diag: {}",emin,eavg,emax,diag);
+    if (verbosity >= 2)
+      info("edge size: min={}, avg={}, max={} | bbox diag: {}",emin,eavg,emax,diag);
 
 
     /* prepare system */
@@ -922,7 +1020,10 @@ namespace QMT {
     
     double dtInitial = (0.1*diag)*(0.1*diag);
     double dtFinal = (3.*emin)*(3.*emin);
-    info("heat diffusion and projection loop ({} steps, {} unknowns, dt = {} .. {}) ...", nbIter, 2*uIEdges.size(),dtInitial, dtFinal);
+
+    if (verbosity >= 1)
+      info("heat diffusion and projection loop ({} levels, {} unknowns, dt = {} .. {}) ...", nbDiffusionLevels, 2*uIEdges.size(),dtInitial, dtFinal);
+
     double wti = gmsh::logger::getWallTime();
     F(e,uIEdges.size()) { 
       x[2*e+0] = dirichletValue[e][0];
@@ -930,8 +1031,8 @@ namespace QMT {
     }
 
     vector<double> steps;
-    F(i,nbIter) { /* resolution transition */
-      double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbIter-1);
+    F(i,nbDiffusionLevels) { /* resolution transition */
+      double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbDiffusionLevels-1);
       steps.push_back(dt);
     }
 
@@ -970,7 +1071,8 @@ namespace QMT {
         double dt = steps[iter];
         prev_dt = dt;
 
-        info("  step {}/{} | dt = {}, linear system loop ...", iter+1, steps.size(), dt);
+        if (verbosity >= 1)
+          info("  step {}/{} | dt = {}, linear system loop ...", iter+1, steps.size(), dt);
 
         /* Update LHS matrix with the new timestep */
         F(i,Acol.size()) {
@@ -997,16 +1099,12 @@ namespace QMT {
           FC(i,B.size(),!dirichletEdge[i/2]) B[i] /= dt;
           set_rhs_values(B, data);
 
-          // info("           | solve ...");
           bool oks = solve(x, data);
           if (!oks) {
             error("failed to solve linear system");
             return false;
           }
 
-          // FC(i,x.size(),!dirichletEdge[i/2]) x[i] *= dt; // WHY THIS LINE WAS HERE ????
-
-          // create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
           
           /* Normalize cross field and gather norm stats */
           double nmi = DBL_MAX;
@@ -1026,7 +1124,8 @@ namespace QMT {
             steps[iter] /= 10;
             dt = steps[iter];
             iter -= 1;
-            warn("           |   max(norm)={} (should be 1.), solve failed, new time step: dt = {}", nma, dt);
+            if (verbosity >= 2)
+              warn("           |   max(norm)={} (should be 1.), solve failed, new time step: dt = {}", nma, dt);
             break;
           }
           if (subiter > 0 || iter > 0) {
@@ -1034,71 +1133,30 @@ namespace QMT {
             FC(i,norms.size(),!dirichletEdge[i]) {
               linf = std::max(linf,norms[i]-prevNorms[i]);
             }
-            info("           |   system solved, norm diff max: {}, norm range: {} - {}", linf, nmi, nma);
+            if (verbosity >= 3)
+              info("           |   system solved, norm diff max: {}, norm range: {} - {}", linf, nmi, nma);
             if (linf < 1.e-3) break;
           } else {
-            info("           |   system solved");
+            if (verbosity >= 3)
+              info("           |   system solved");
           }
         }
-        // create_view_with_crosses("crosses_"+std::to_string(iter),M, uIEdges, uIEdgeToOld, x);
       }
 
       destroy_linear_system(&data);
     }
     double et = gmsh::logger::getWallTime() - wti;
-    info("elapsed time: {}", et);
+    if (verbosity >= 2)
+      info("cross field elapsed time: {}", et);
 
-    if (false) {
-      info("create visualization view with crosses");
-      create_view_with_crosses("crosses", M, uIEdges, uIEdgeToOld, x);
-    }
-
-    if (edge_to_angle) {
-      info("fill the map edge_to_angle");
+    { /* Export solution */
       F(e,uIEdges.size()) {
         double len = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
         double theta = (len > EPS) ? 1./4*atan2(x[2*e+1]/len,x[2*e]/len) : 0.;
-        (*edge_to_angle)[std::make_pair(uIEdges[e][0],uIEdges[e][1])] = theta;
+        std::array<size_t,2> vPair = {uIEdges[e][0],uIEdges[e][1]};
+        edgeTheta[vPair] = theta;
       }
     }
-    } /* END OF DBG_AVOID_SOLVE */
-
-    { /* create the theta view */
-      std::string cname;
-      gmsh::model::getCurrent(cname);
-      std::vector<std::size_t> keys;
-      std::vector<std::vector<double> > values;
-      F(f,M.triangles.size()) {
-        keys.push_back(M.tri_elt_tags[f]);
-        std::vector<double> vals;
-        F(le,3) {
-          id v1 = M.triangles[f][le];
-          id v2 = M.triangles[f][(le+1)%3];
-          id e = old2IEdge[3*f+le];
-          double len = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
-          double theta = (len > EPS) ? 1./4*atan2(x[2*e+1]/len,x[2*e]/len) : 0.;
-          id2 edge = uIEdges[e];
-          vals.push_back(theta); /* WARNING: do not orient for compatibility with gmshCrossFields.cpp code */
-          // if (v1 == edge[0] && v2 == edge[1]) {
-          // } else if (v1 == edge[1] && v2 == edge[0]) {
-          //   vals.push_back(-theta);
-          // } else {
-          //   error("problem with triangle {}, local edge {}: v1={},v2={} but edge={}", f, le, v1, v2, edge);
-          //   return false;
-          // }
-        }
-        values.push_back(vals);
-      }
-      if (crossFieldTag < 0) {
-        info("create the 'theta' view");
-        crossFieldTag = gmsh::view::add("theta");
-      } else {
-        info("fill theta in the given view (tag = {})", crossFieldTag);
-      }
-      gmsh::view::addModelData(crossFieldTag, 0, cname, "ElementData", keys, values);
-    }
-
-    info("... done");
 
     return true;
   }

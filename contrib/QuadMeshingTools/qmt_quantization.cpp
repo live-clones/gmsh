@@ -553,41 +553,37 @@ namespace QMT_QZ_Utils {
   }
 
 
-  using namespace GLog;
   void debug_show_face_in_view(const QTMesh& M, id f, const std::string& viewName, const vector<id>& edge_n = {}) {
     const vector<id>& edges = M.faces[f].edges; 
-    GeoLog log;
     F(le,edges.size()) {
       const TEdge& te = M.edges[edges[le]];
       double val = (edge_n.size() > 0) ? edge_n[edges[le]] : double(le);
       F(i,te.pts.size()-1) {
-        log.add({te.pts[i],te.pts[i+1]},val,viewName);
+        GeoLog::add({te.pts[i],te.pts[i+1]},val,viewName);
       }
     }
-    log.toGmsh();
+    GeoLog::flush();
   }
 
   void debug_show_edge_in_view(const QTMesh& M, id e, const std::string& viewName) {
-    GeoLog log;
     const TEdge& te = M.edges[e];
-    log.add({M.vertices[te.vertices[0]].pt},0.,viewName);
-    log.add({M.vertices[te.vertices[1]].pt},0.,viewName);
+    GeoLog::add({M.vertices[te.vertices[0]].pt},0.,viewName);
+    GeoLog::add({M.vertices[te.vertices[1]].pt},0.,viewName);
     F(i,te.pts.size()-1) {
-      log.add({te.pts[i],te.pts[i+1]},{double(i),double(i+1)},viewName);
+      GeoLog::add({te.pts[i],te.pts[i+1]},std::vector<double>{double(i),double(i+1)},viewName);
     }
-    log.toGmsh();
+    GeoLog::flush();
   }
 
   void debug_show_qtmesh_in_view(const QTMesh& M, const std::string& viewName) {
-    GeoLog log;
     F(e,M.edges.size()) {
       const TEdge& te = M.edges[e];
       double val = double(e);
       F(i,te.pts.size()-1) {
-        log.add({te.pts[i],te.pts[i+1]},val,viewName);
+        GeoLog::add({te.pts[i],te.pts[i+1]},val,viewName);
       }
     }
-    log.toGmsh();
+    GeoLog::flush();
   }
 
   vec3 tedge_center(const QTMesh& M, id e, id shift = NO_ID) {
@@ -666,7 +662,6 @@ namespace QMT_QZ_Utils {
   }
 
   void debug_show_graph_in_view(const QTMesh& M, const vector<id3>& gedges, const vector<vector<id>>& gv2ge, const std::string& viewName) {
-    GeoLog log;
     F(i,gedges.size()) {
       id gv1 = gedges[i][0];
       id gv2 = gedges[i][1];
@@ -674,10 +669,10 @@ namespace QMT_QZ_Utils {
       if (gv1 == 2*M.edges.size() || gv2 == 2*M.edges.size()) continue;
       vec3 p1 = tedge_center(M, gv1/2, gv1%2);
       vec3 p2 = tedge_center(M, gv2/2, gv2%2);
-      log.add({p1,p2},{0.,1.},viewName + "_gedges");
+      GeoLog::add({p1,p2},std::vector<double>{0.,1.},viewName + "_gedges");
       vec3 mid = 0.5 * (p1+p2);
       vec3 dir = normalize(p2-p1);
-      log.addVector(mid, dir, viewName + "_gedges");
+      GeoLog::add(mid, dir, viewName + "_gedges");
     }
 
     // /* BFS from gvStart */
@@ -708,10 +703,10 @@ namespace QMT_QZ_Utils {
     //   if (gv1 == 2*M.edges.size() || gv2 == 2*M.edges.size()) continue;
     //   vec3 p1 = tedge_center(M, gv1/2, gv1%2);
     //   vec3 p2 = tedge_center(M, gv2/2, gv2%2);
-    //   log.add({p1,p2},{time[gv1],time[gv2]},"bfs_gv"+std::to_string(gvStart));
+    //   GeoLog::add({p1,p2},{time[gv1],time[gv2]},"bfs_gv"+std::to_string(gvStart));
     //   vec3 mid = 0.5 * (p1+p2);
     //   vec3 dir = normalize(p2-p1);
-    //   log.addVector(mid, dir, "bfs_gv"+std::to_string(gvStart)+"_dir");
+    //   GeoLog::addVector(mid, dir, "bfs_gv"+std::to_string(gvStart)+"_dir");
     // }
 
     // if (true) {
@@ -725,30 +720,29 @@ namespace QMT_QZ_Utils {
     //       if (gv1 == 2*M.edges.size() || gv2 == 2*M.edges.size()) continue;
     //       vec3 p1 = tedge_center(M, gv1/2, gv1%2);
     //       vec3 p2 = tedge_center(M, gv2/2, gv2%2);
-    //       log.add({p1,p2},{time[gv1],time[gv2]},"dfs_gv"+std::to_string(gvStart));
+    //       GeoLog::add({p1,p2},{time[gv1],time[gv2]},"dfs_gv"+std::to_string(gvStart));
     //       vec3 mid = 0.5 * (p1+p2);
     //       vec3 dir = normalize(p2-p1);
-    //       log.addVector(mid, dir, "dfs_gv"+std::to_string(gvStart)+"_dir");
+    //       GeoLog::addVector(mid, dir, "dfs_gv"+std::to_string(gvStart)+"_dir");
     //     }
     //   } else {
     //     error("DFS cycle not found");
     //   }
     // }
 
-    log.toGmsh();
+    GeoLog::flush();
   }
 
   void debug_show_tchord_in_view(const QTMesh& M, const vector<id>& tchord, const std::string& viewName) {
     if (tchord.size()<2) return;
-    GeoLog log;
     F(i,tchord.size()-1) {
       id e1 = tchord[i];
       id e2 = tchord[i+1];
       vec3 p1 = tedge_center(M, e1);
       vec3 p2 = tedge_center(M, e2);
-      log.add({p1,p2},double(i),viewName);
+      GeoLog::add({p1,p2},double(i),viewName);
     }
-    log.toGmsh();
+    GeoLog::flush();
   }
 
 }
@@ -756,7 +750,6 @@ namespace QMT_QZ_Utils {
 namespace QMT {
   using namespace QMT_Utils;
   using namespace QMT_QZ_Utils;
-  using namespace GLog;
 
   struct SizeMapR {
     int tag;
@@ -1501,11 +1494,10 @@ namespace QMT {
       if (vert.front() == vert.back()) {
         error("loop {}: got closed loop, should not happen, vert: {}" , i, vert);
         if (ERROR_VISU && vert.size() > 1) {
-          GeoLog log;
           F(j,vert.size()-1) {
-            log.add({M.points[vert[j]],M.points[vert[j+1]]},{double(j),double(1.+j)},"closed_loop_"+std::to_string(i));
+            GeoLog::add({M.points[vert[j]],M.points[vert[j+1]]},std::vector<double>{double(j),double(1.+j)},"closed_loop_"+std::to_string(i));
           }
-          log.toGmsh();
+          GeoLog::flush();
         }
         return false;
       }
@@ -1585,11 +1577,10 @@ namespace QMT {
             if (neig < 0 || neig == NO_SID || color[f] != color[neig/3]) {
               error("color {}: tri {}, le={}, neig={}, edge {} not found in lines", col, f, le, neig, sedge);
               if (ERROR_VISU) {
-                GeoLog log;
                 vec3 p1 = M.points[sedge[0]];
                 vec3 p2 = M.points[sedge[1]];
-                log.add({p1,p2},double(0),"edge_not_found_in_lines");
-                log.toGmsh();
+                GeoLog::add({p1,p2},double(0),"edge_not_found_in_lines");
+                GeoLog::flush();
               }
               return false;
             }
@@ -1724,11 +1715,10 @@ namespace QMT {
     }
 
     if (ERROR_VISU && failed_probes.size() > 0) {
-      GeoLog log;
       F(i,failed_probes.size()) {
-        log.add({failed_probes[i]},double(i), "edge_pts_length_probe_failures");
+        GeoLog::add({failed_probes[i]},double(i), "edge_pts_length_probe_failures");
       }
-      log.toGmsh();
+      GeoLog::flush();
     }
     RFC(failed_probes.size() > 0, "edge_pts_length | {} probe failures", failed_probes.size());
 
@@ -1828,11 +1818,10 @@ namespace QMT {
     }
 
     if (ERROR_VISU && failed_probes.size() > 0) {
-      GeoLog log;
       F(i,failed_probes.size()) {
-        log.add({failed_probes[i]},double(i), "compute_subdivided_edge_internal_points");
+        GeoLog::add({failed_probes[i]},double(i), "compute_subdivided_edge_internal_points");
       }
-      log.toGmsh();
+      GeoLog::flush();
     }
     RFC(failed_probes.size() > 0, "compute_subdivided_edge_internal_points | {} probe failures", failed_probes.size());
 
@@ -2104,7 +2093,7 @@ namespace QMT {
     /* Assume 'closed surface' graph, via infinite node if necessary */
 
     id eStart = gvStart/2;
-    /* Dijsktra algorithm */
+    /* Dijkstra algorithm */
     vector<double> dist(gv2ge.size(),DBL_MAX);
     vector<id> prev(gv2ge.size(),NO_ID);
     // vector<bool> visited(gv2ge.size(),false);
@@ -2171,7 +2160,6 @@ namespace QMT {
     if (!closed) {
       warn("finished dijkstra but didn't find a closed loop ... gvStart = {}", gvStart);
       if (false && ERROR_VISU) {
-        GeoLog log;
         FC(gv, gv2ge.size(), prev[gv] < gv2ge.size()) {
           id gv1 = prev[gv];
           id gv2 = gv;
@@ -2179,9 +2167,9 @@ namespace QMT {
           if (gv1 == 2*edge_n.size() || gv2 == 2*edge_n.size()) continue;
           vec3 p1 = tedge_center(Mdbg, gv1/2, gv1%2);
           vec3 p2 = tedge_center(Mdbg, gv2/2, gv2%2);
-          log.add({p1,p2},{dist[prev[gv]],dist[gv]},"PROB_prop_gv"+std::to_string(gvStart));
+          GeoLog::add({p1,p2},std::vector<double>{dist[prev[gv]],dist[gv]},"PROB_prop_gv"+std::to_string(gvStart));
         }
-        log.toGmsh();
+        GeoLog::flush();
       }
       return false;
     }
@@ -2209,16 +2197,15 @@ namespace QMT {
     }
 
     if (false) {
-      GeoLog log;
       F(i, path.size()) {
         id gv1 = path[i];
         id gv2 = path[(i+1)%path.size()];
         if (gv1 == 2*edge_n.size() || gv2 == 2*edge_n.size()) continue;
         vec3 p1 = tedge_center(Mdbg, gv1/2, gv1%2);
         vec3 p2 = tedge_center(Mdbg, gv2/2, gv2%2);
-        log.add({p1,p2},{double(i),double(i+2)},"_dbg_gvStart"+std::to_string(gvStart));
+        GeoLog::add({p1,p2},std::vector<double>{double(i),double(i+2)},"_dbg_gvStart"+std::to_string(gvStart));
       }
-      log.toGmsh();
+      GeoLog::flush();
     }
 
     return true;
@@ -2334,13 +2321,12 @@ namespace QMT {
     }
 
     // if (last == NO_ID && ERROR_VISU) {
-    //   GeoLog log;
     //   FC(gv, gv2ge.size(), prev[gv] < gv2ge.size()) {
     //     vec3 p1 = tedge_center(Mdbg, prev[gv]/2, prev[gv]%2);
     //     vec3 p2 = tedge_center(Mdbg, gv/2, gv%2);
-    //     log.add({p1,p2},{dist[prev[gv]],dist[gv]},"prop_gv"+std::to_string(gvStart));
+    //     GeoLog::add({p1,p2},{dist[prev[gv]],dist[gv]},"prop_gv"+std::to_string(gvStart));
     //   }
-    //   log.toGmsh();
+    //   GeoLog::flush();
     // }
     // RFC(last == NO_ID, "dijkstra issue, failed to propagate: finished but last = {}", last);
 
@@ -2387,24 +2373,22 @@ namespace QMT {
     F(i,path.size()) tchord[i] = path[i] / 2;
 
     if (ERROR_VISU && intersection(tchord,{3,90,99,5}).size() > 0) {
-      GeoLog log;
       F(i, path.size()-1) {
         vec3 p1 = tedge_center(Mdbg, path[i]/2, path[i]%2);
         vec3 p2 = tedge_center(Mdbg, path[i+1]/2, path[i+1]%2);
-        log.add({p1,p2},{double(i),double(i+2)},"_dbg_gvStart"+std::to_string(gvStart));
+        GeoLog::add({p1,p2},std::vector<double>{double(i),double(i+2)},"_dbg_gvStart"+std::to_string(gvStart));
       }
-      log.toGmsh();
+      GeoLog::flush();
     }
 
     const id DBG_ID = NO_ID;
     if (ERROR_VISU && eStart == DBG_ID) {
-      GeoLog log;
       F(i, path.size()-1) {
         vec3 p1 = tedge_center(Mdbg, path[i]/2, path[i]%2);
         vec3 p2 = tedge_center(Mdbg, path[i+1]/2, path[i+1]%2);
-        log.add({p1,p2},{double(i),double(i+2)},"_dbg_eStart"+std::to_string(DBG_ID));
+        GeoLog::add({p1,p2},std::vector<double>{double(i),double(i+2)},"_dbg_eStart"+std::to_string(DBG_ID));
       }
-      log.toGmsh();
+      GeoLog::flush();
     }
 
     return true;
@@ -2657,13 +2641,12 @@ namespace QMT {
       } else if (!finished && !prop) {
         error("tchord_propagation: failed to finish, eStart = {}", eStart);
         if (ERROR_VISU) {
-          GeoLog log;
           FC(e,e2ge.size(),parent[e] < e2ge.size()) {
             vec3 p1 = tedge_center(Mdbg, parent[e]);
             vec3 p2 = tedge_center(Mdbg, e);
-            log.add({p1,p2},{time[parent[e]],time[e]},"prop");
+            GeoLog::add({p1,p2},std::vector<double>{time[parent[e]],time[e]},"prop");
           }
-          log.toGmsh();
+          GeoLog::flush();
         }
         return false;
       }
