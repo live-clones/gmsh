@@ -10,9 +10,10 @@
 // (co)homology space bases using a mesh of a model.  The representative basis
 // chains are stored in the mesh as physical groups of Gmsh, one for each chain.
 
-#include <gmsh.h>
-#include <math.h>
+#include <set>
+#include <cmath>
 #include <algorithm>
+#include <gmsh.h>
 
 int main(int argc, char **argv)
 {
@@ -132,11 +133,15 @@ int main(int argc, char **argv)
   // Generate the mesh and perform the requested homology computations
   gmsh::model::mesh::generate(3);
 
-  gmsh::write("t14.msh");
-
   // For more information, see M. Pellikka, S. Suuriniemi, L. Kettunen and
   // C. Geuzaine. Homology and cohomology computation in finite element
   // modeling. SIAM Journal on Scientific Computing 35(5), pp. 1195-1214, 2013.
+
+  gmsh::write("t14.msh");
+
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

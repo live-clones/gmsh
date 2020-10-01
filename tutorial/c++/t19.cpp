@@ -9,6 +9,7 @@
 // The OpenCASCADE geometry kernel supports several useful features for solid
 // modelling.
 
+#include <set>
 #include <cmath>
 #include <cstdlib>
 #include <gmsh.h>
@@ -101,6 +102,10 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(3);
   gmsh::write("t19.msh");
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
+
+  gmsh::finalize();
   return 0;
 }

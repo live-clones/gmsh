@@ -9,6 +9,7 @@
 import gmsh
 import math
 import os
+import sys
 
 gmsh.initialize()
 
@@ -64,6 +65,8 @@ gmsh.model.mesh.field.setAsBackgroundMesh(f)
 gmsh.model.mesh.generate(3)
 gmsh.write('t13.msh')
 
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

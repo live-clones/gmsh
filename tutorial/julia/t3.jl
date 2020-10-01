@@ -37,4 +37,9 @@ gmsh.model.addPhysicalGroup(3, [1, 2, ov[2][2]], 101)
 gmsh.model.geo.synchronize()
 gmsh.model.mesh.generate(3)
 gmsh.write("t3.msh")
+
+if !("-nopopup" in ARGS)
+    gmsh.fltk.run()
+end
+
 gmsh.finalize()

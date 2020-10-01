@@ -75,10 +75,9 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("View[1].IntervalsType", 2);
   gmsh::option::setNumber("View[2].IntervalsType", 2);
 
-  // show the GUI at the end
-  std::set<std::string> args;
-  for(int i = 1; i < argc; i++) args.insert(argv[i]);
-  if(args.find("-nopopup") == args.end()) gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

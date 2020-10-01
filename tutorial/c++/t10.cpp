@@ -10,8 +10,9 @@
 // (see `t1.cpp') or using a background mesh (see `t7.cpp'), you can use general
 // mesh size "Fields".
 
-#include <gmsh.h>
+#include <set>
 #include <sstream>
+#include <gmsh.h>
 
 int main(int argc, char **argv)
 {
@@ -146,7 +147,9 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(2);
   gmsh::write("t10.msh");
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

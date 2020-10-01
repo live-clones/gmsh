@@ -12,6 +12,7 @@
 import gmsh
 import math
 import os
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -92,4 +93,8 @@ gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.3)
 gmsh.model.mesh.generate(3)
 gmsh.write("t19.msh")
 
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
+gmsh.finalize()

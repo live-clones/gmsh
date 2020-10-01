@@ -45,4 +45,8 @@ gmsh.model.mesh.generate(3)
 
 gmsh.write("t16.msh")
 
+if !("-nopopup" in ARGS)
+    gmsh.fltk.run()
+end
+
 gmsh.finalize()

@@ -6,8 +6,9 @@
 //
 // -----------------------------------------------------------------------------
 
-#include <gmsh.h>
+#include <set>
 #include <cstdio>
+#include <gmsh.h>
 
 void cheeseHole(double x, double y, double z, double r, double lc,
                 std::vector<int> &shells, std::vector<int> &volumes)
@@ -223,7 +224,9 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(3);
   gmsh::write("t5.msh");
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
 

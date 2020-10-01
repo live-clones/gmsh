@@ -67,7 +67,7 @@ gmsh.option.setNumber("View[0].SmoothNormals", 1)
 gmsh.option.setNumber("View[1].IntervalsType", 2)
 gmsh.option.setNumber("View[2].IntervalsType", 2)
 
-# show the GUI at the end
+# Launch the GUI to see the results:
 if '-nopopup' not in sys.argv:
     gmsh.fltk.run()
 

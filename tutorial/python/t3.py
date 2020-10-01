@@ -8,6 +8,7 @@
 
 import gmsh
 import math
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -89,8 +90,8 @@ r, g, b, a = gmsh.option.getColor("Geometry.Points")
 gmsh.option.setColor("Geometry.Surfaces", r, g, b, a)
 
 # Launch the GUI to see the effects of the color changes:
-
-# gmsh.fltk.run();
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 # When the GUI is launched, you can use the `Help->Current Options and
 # Workspace' menu to see the current values of all options. To save the options

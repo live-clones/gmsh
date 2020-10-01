@@ -10,6 +10,7 @@
 // geometry kernel, starting with version 3 Gmsh allows you to directly use
 // alternative geometry kernels. Here we will use the OpenCASCADE kernel.
 
+#include <set>
 #include <iostream>
 #include <gmsh.h>
 
@@ -138,8 +139,9 @@ int main(int argc, char **argv)
   std::cout << "Logger has recorded " << log.size() << " lines" << std::endl;
   gmsh::logger::stop();
 
-  // Show the GUI:
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

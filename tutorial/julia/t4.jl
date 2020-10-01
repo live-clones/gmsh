@@ -115,7 +115,6 @@ gmsh.model.mesh.generate(2)
 
 gmsh.write("t4.msh")
 
-# Launch the GUI to see the results:
 if !("-nopopup" in ARGS)
     gmsh.fltk.run()
 end

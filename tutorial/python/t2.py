@@ -157,4 +157,8 @@ gmsh.write("t2.msh")
 # a geometry constructed with the built-in kernel as an OpenCASCADE BRep file;
 # or export an OpenCASCADE model as an Unrolled GEO file.
 
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
 gmsh.finalize()

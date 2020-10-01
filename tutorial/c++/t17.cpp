@@ -14,8 +14,9 @@
 // a square. One should use bamg as 2d mesh generator to enable anisotropic
 // meshes in 2D.
 
+#include <set>
+#include <cmath>
 #include <gmsh.h>
-#include <math.h>
 
 int main(int argc, char **argv)
 {
@@ -49,6 +50,10 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(2);
 
   gmsh::write("t17.msh");
+
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

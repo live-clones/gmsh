@@ -138,6 +138,8 @@ gmsh.option.setNumber("Mesh.CharacteristicLengthFromCurvature", 0)
 gmsh.model.mesh.generate(2)
 gmsh.write("t10.msh")
 
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

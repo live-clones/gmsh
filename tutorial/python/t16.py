@@ -12,6 +12,7 @@
 
 import gmsh
 import math
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -118,7 +119,8 @@ log = gmsh.logger.get()
 print("Logger has recorded " + str(len(log)) + " lines")
 gmsh.logger.stop()
 
-# Show the GUI:
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

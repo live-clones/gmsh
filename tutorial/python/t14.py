@@ -140,4 +140,9 @@ gmsh.model.mesh.generate(3)
 # modeling. SIAM Journal on Scientific Computing 35(5), pp. 1195-1214, 2013.
 
 gmsh.write("t14.msh")
+
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
 gmsh.finalize()

@@ -17,6 +17,7 @@
 import gmsh
 import math
 import os
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -43,6 +44,8 @@ gmsh.option.setNumber("Mesh.Algorithm", 7)
 gmsh.model.mesh.generate(2)
 gmsh.write("t17.msh")
 
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

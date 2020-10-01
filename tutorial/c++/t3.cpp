@@ -6,6 +6,7 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <set>
 #include <cmath>
 #include <gmsh.h>
 
@@ -93,8 +94,8 @@ int main(int argc, char **argv)
   gmsh::option::setColor("Geometry.Surfaces", r, g, b, a);
 
   // Launch the GUI to see the effects of the color changes:
-
-  // gmsh::fltk::run();
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   // When the GUI is launched, you can use the `Help->Current Options and
   // Workspace' menu to see the current values of all options. To save the

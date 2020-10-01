@@ -6,6 +6,8 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <set>
+
 // The Gmsh C++ API is entirely defined in the `gmsh.h' header (which contains
 // the full documentation of all the functions in the API):
 #include <gmsh.h>
@@ -146,9 +148,11 @@ int main(int argc, char **argv)
   // the format explicitly, and just choose a filename with the `.msh2' or
   // `.msh4' extension.
 
-  // To visualize the model we could run the graphical user interface with:
-  //
-  // gmsh::fltk::run();
+  // To visualize the model we can run the graphical user interface with
+  // `gmsh::fltk::run()'. Here we run it only if the "-nopopup" is not provided
+  // in the command line arguments:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   // Note that starting with Gmsh 3.0, models can be built using other geometry
   // kernels than the default "built-in" kernel. To use the OpenCASCADE geometry

@@ -6,11 +6,12 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <set>
 #include <cmath>
 #include <cstdlib>
-#include <gmsh.h>
 #include <algorithm>
 #include <iostream>
+#include <gmsh.h>
 
 // Gmsh can partition meshes using different algorithms, e.g. the graph
 // partitioner Metis or the `SimplePartition' plugin. For all the partitioning
@@ -129,7 +130,9 @@ int main(int argc, char **argv)
     }
   }
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

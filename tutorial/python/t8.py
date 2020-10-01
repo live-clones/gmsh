@@ -67,7 +67,7 @@ gmsh.option.setNumber("General.Orthographic", 0)
 gmsh.option.setNumber("General.Axes", 0)
 gmsh.option.setNumber("General.SmallAxes", 0)
 
-# Show the GUI
+# Show the GUI:
 if '-nopopup' not in sys.argv:
     gmsh.fltk.initialize()
 

@@ -9,6 +9,7 @@
 # The Python API is entirely defined in the `gmsh.py' module (which contains the
 # full documentation of all the functions in the API):
 import gmsh
+import sys
 
 # Before using any functions in the Python API, Gmsh must be initialized:
 gmsh.initialize()
@@ -141,9 +142,11 @@ gmsh.write("t1.msh")
 # format explicitly, and just choose a filename with the `.msh2' or `.msh4'
 # extension.
 
-# To visualize the model we could run the graphical user interface with:
-#
-# gmsh.fltk.run()
+# To visualize the model we can run the graphical user interface with
+# `gmsh.fltk.run()'. Here we run it only if the "-nopopup" is not provided in
+# the command line arguments:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 # Note that starting with Gmsh 3.0, models can be built using other geometry
 # kernels than the default "built-in" kernel. To use the OpenCASCADE geometry
