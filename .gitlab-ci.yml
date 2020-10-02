@@ -137,6 +137,14 @@ linux64-sdk_official_release:
   only:
     - /^gmsh_.*$/
 
+linux64-nox-sdk_official_snapshot:
+  image: onelab/debian.wheezy.64bit
+  variables:
+    EXTRA_OPTION: "-DGMSH_EXTRA_VERSION=-nox -DENABLE_FLTK=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread'"
+  <<: *linux_official
+  except:
+    - tags
+
 linux32_official_snapshot:
   image: onelab/debian.wheezy.32bit
   variables:
@@ -290,7 +298,7 @@ windows32-sdk_official_release:
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/opt/local/lib/gcc5/libgfortran.a;/opt/local/lib/gcc5/libquadmath.a;/opt/local/lib/gcc5/gcc/x86_64-apple-darwin13/5.4.0/libgcc.a' -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_GMP=0 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc  ${EXTRA_OPTION} ..
+    - /usr/local/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/opt/local/lib/gcc5/libgfortran.a;/opt/local/lib/gcc5/libquadmath.a;/opt/local/lib/gcc5/gcc/x86_64-apple-darwin13/5.4.0/libgcc.a' -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_GMP=0 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc ${EXTRA_OPTION} ..
     - make package -j 2
     - PKG=`ls gmsh-*.[dt][ma][gr]*`
     - if [[ $PKG == *".dmg"* ]]; then scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp; fi
