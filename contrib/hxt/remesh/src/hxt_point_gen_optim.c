@@ -241,8 +241,19 @@ HXTStatus hxtPointGenProjectCloseRTree(HXTMesh *omesh,
   // taking into account the lenghts of the original triangle
   double *p0 = omesh->vertices.coord + 4*omesh->triangles.node[3*ot+0];
   double *p1 = omesh->vertices.coord + 4*omesh->triangles.node[3*ot+1];
+  double *p2 = omesh->vertices.coord + 4*omesh->triangles.node[3*ot+2];
   double size = distance(p0,p1);
-  double box = 2*size;
+
+  size = 0;
+  double s[3] = {0,0,0};
+  s[0] = distance(pp,p0);
+  s[1] = distance(pp,p1);
+  s[2] = distance(pp,p2);
+
+  for (uint32_t i=0; i<3; i++)
+    if (s[i]>size) size = s[i];
+
+  double box = 1*size;
   
 
   double ppmin[3] = {pp[0] - box, pp[1] - box, pp[2] - box};
@@ -742,6 +753,95 @@ double hxtPointGenQuadQuality(double *p0, double *p1, double *p2, double *p3)
   return quality;
 }
 
+//**********************************************************************************************************
+//**********************************************************************************************************
+//
+//**********************************************************************************************************
+//**********************************************************************************************************
+double hxtPointGenQuadScaledJacobian(double *p0, double *p1, double *p2, double *p3)
+{
+
+  double quality = 0.0;
+
+
+  double L0[3] = {p1[0]-p0[0],p1[1]-p0[1],p1[2]-p0[2]};
+  double L1[3] = {p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]};
+  double L2[3] = {p3[0]-p2[0],p3[1]-p2[1],p3[2]-p2[2]};
+  double L3[3] = {p0[0]-p3[0],p0[1]-p3[1],p0[2]-p3[2]};
+
+  double X1[3] = {(p1[0]-p0[0]) + (p2[0]-p3[0]), 
+                  (p1[1]-p0[1]) + (p2[1]-p3[1]), 
+                  (p1[2]-p0[2]) + (p2[2]-p3[2])}; 
+
+  double X2[3] = {(p2[0]-p1[0]) + (p3[0]-p0[0]), 
+                  (p2[1]-p1[1]) + (p3[1]-p0[1]), 
+                  (p2[2]-p1[2]) + (p3[2]-p0[2])}; 
+
+  double N0[3];
+  HXT_CHECK(myCrossprod(L3,L0,N0));
+  double N1[3];
+  HXT_CHECK(myCrossprod(L0,L1,N1));
+  double N2[3];
+  HXT_CHECK(myCrossprod(L1,L2,N2));
+  double N3[3];
+  HXT_CHECK(myCrossprod(L2,L3,N3));
+  double Nc[3];
+  HXT_CHECK(myCrossprod(X1,X2,Nc));
+  if (norm(Nc) < 1.e-10){
+    return 0.;
+  }
+
+
+  HXT_CHECK(normalize(Nc));
+  double a0 = myDot(Nc,N0);
+  double a1 = myDot(Nc,N1);
+  double a2 = myDot(Nc,N2);
+  double a3 = myDot(Nc,N3);
+  double len0 = norm(L0);
+  double len1 = norm(L1);
+  double len2 = norm(L2);
+  double len3 = norm(L3);
+
+  double sjac = a0/(len0*len3) < a1/(len0*len1) ? a0/(len0*len3) : a1/(len0*len1);
+
+  sjac = sjac < a2/(len1*len2) ? sjac : a2/(len1*len2) ;
+  sjac = sjac < a3/(len2*len3) ? sjac : a3/(len2*len3) ;
+
+  return sjac;
+
+  /*double quad_scaled_jacobian(const std::array<vec3,4>& pts) {*/
+    /*//  Based on Sandia Verdict document */
+    /*const vec3 L0 = pts[1] - pts[0];*/
+    /*const vec3 L1 = pts[2] - pts[1];*/
+    /*const vec3 L2 = pts[3] - pts[2];*/
+    /*const vec3 L3 = pts[0] - pts[3];*/
+    /*const vec3 X1 = (pts[1]-pts[0]) + (pts[2] - pts[3]);*/
+    /*const vec3 X2 = (pts[2]-pts[1]) + (pts[3] - pts[0]);*/
+    /*const vec3 N0 = cross(L3,L0);*/
+    /*const vec3 N1 = cross(L0,L1);*/
+    /*const vec3 N2 = cross(L1,L2);*/
+    /*const vec3 N3 = cross(L2,L3);*/
+    /*const vec3 Nc = cross(X1,X2);*/
+    /*if (length(Nc) < 1.e-10) {*/
+      /*return 0.;*/
+    /*}*/
+    /*const vec3 nc = normalize(Nc);*/
+    /*const double a0 = dot(nc,N0);*/
+    /*const double a1 = dot(nc,N1);*/
+    /*const double a2 = dot(nc,N2);*/
+    /*const double a3 = dot(nc,N3);*/
+    /*const double len0 = length(L0);*/
+    /*const double len1 = length(L1);*/
+    /*const double len2 = length(L2);*/
+    /*const double len3 = length(L3);*/
+    /*double sjac = std::min(a0/(len0*len3),a1/(len0*len1));*/
+    /*sjac = std::min(sjac,a2/(len1*len2));*/
+    /*sjac = std::min(sjac,a3/(len2*len3));*/
+    /*return sjac;*/
+  /*}*/
+
+}
+
 
 
 //**********************************************************************************************************
@@ -802,6 +902,8 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
     if (numEdgesPerVert[v0] > maxNum) maxNum = numEdgesPerVert[v0];
     if (numEdgesPerVert[v1] > maxNum) maxNum = numEdgesPerVert[v1];
   }
+
+  HXT_CHECK(hxtFree(&numEdgesPerVert));
 
  
   uint32_t *v2e;
@@ -880,6 +982,8 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
     }
 
   }
+
+  HXT_CHECK(hxtFree(&v2e));
 
 
   //============================================================
@@ -1357,7 +1461,7 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
     //TODO correct way to do it is to choose the edge that 
     //are not boundary edges (lines) 
     //ENSURE THAT WE CAN CORRECTLY BUILD EDGES2LINES
-    double lim = 160;
+    double lim = 170;
     if (isBoundary[v0] == 1 && a0>lim){
       for (uint32_t j=0; j<3; j++){
 
@@ -2215,6 +2319,23 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       mesh->points.node[i] = qmesh->points.node[i]; 
     }
   }
+
+
+  FILE *q;
+  hxtPosInit("quadQuality.pos","scaledJacobian",&q);
+  for (uint64_t i=0; i<mesh->quads.num; i++){
+    double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
+    double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
+    double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
+    double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
+    double qual = hxtPointGenQuadScaledJacobian(p0,p1,p2,p3);
+    hxtPosAddQuad(q,p0,p1,p2,p3,qual);
+  }
+  hxtPosFinish(q);
+
+
+
+  //HXT_CHECK(hxtSurfaceQuadSingularitiesOutput(mesh));
 
    
 

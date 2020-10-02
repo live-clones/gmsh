@@ -372,7 +372,7 @@ int meshGFaceHxt(GModel *gm)
                              .generateVolumes = 0,
                              .remeshSurfaces = 1,
                              .quadSurfaces = 1,
-                             .walkMethod2D = 1,
+                             .walkMethod2D = 0,
                              .walkMethod3D = 0,
                              .dirType = 0,
                              .uniformSize = 1.0,
@@ -380,6 +380,8 @@ int meshGFaceHxt(GModel *gm)
                              .tolerance = 10e-9,
                              .numTris = 0};
 
+
+  if (Msg::GetVerbosity() == 99) opt.verbosity = 2;
 
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh));
   v2c.clear();
