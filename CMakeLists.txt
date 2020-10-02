@@ -2082,29 +2082,55 @@ endif()
 
 include(CPack)
 
+macro(filter_tests IN OUT)
+  unset(${OUT})
+  foreach(FILE ${IN})
+    unset(BAD1)
+    unset(BAD2)
+    unset(BAD3)
+    # OS-specific
+    if(${GMSH_OS} MATCHES "Linux32")
+      # OCC STL generation crashes on our Linux32 docker
+      string(REGEX MATCH "t18" BAD1 ${FILE})
+    endif()
+    # OpenCASCADE
+    if(NOT HAVE_OCC AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+      file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*OpenCASCADE.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*occ\\.synchronize.*")
+      file(STRINGS ${FILE} BAD3 REGEX ".*occ::synchronize.*")
+    endif()
+    # Metis
+    if(NOT HAVE_METIS AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+      file(STRINGS ${FILE} BAD1 REGEX ".*PartitionMesh.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*mesh\\.partition.*")
+      file(STRINGS ${FILE} BAD3 REGEX ".*mesh::partition.*")
+    endif()
+    if(BAD1 OR BAD2 OR BAD3)
+      message("Skipping test " ${FILE})
+    else()
+      list(APPEND ${OUT} ${FILE})
+    endif()
+  endforeach()
+endmacro()
+
 if(NOT DISABLE_GMSH_TESTS)
   # disabling tests is useful when including this CMakeLists in an external project
   include(CTest)
-  file(GLOB_RECURSE TESTFILES
+  file(GLOB_RECURSE ALLFILES
        tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
        benchmarks/occ/*.geo)
-  # disable this test for now on our Linux32 machine - the current config
-  # crashes on the OCC STL generation
-  if(${GMSH_OS} MATCHES "Linux32")
-    list(REMOVE_ITEM TESTFILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/t18.geo)
-  endif()
+  filter_tests("${ALLFILES}" TESTFILES)
   foreach(TESTFILE ${TESTFILES})
     # use relative path for Cygwin/MinGW (the pure win exe built with the MinGW
     # compilers does not understand a full Cygwin-style path)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
-    if(HAVE_OCC OR NOT ${TEST} MATCHES "boolean" OR NOT ${TEST} MATCHES "occ")
-      add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
-    endif()
+    add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
   endforeach()
   # test c++ api tutorials with dynamic builds (except on 32 bit windows for
   # now: our win32 setup does not currently handle exceptions)
   if(ENABLE_BUILD_DYNAMIC AND NOT ${GMSH_OS} MATCHES "Windows32")
-    file(GLOB_RECURSE TESTFILES tutorial/c++/*.cpp)
+    file(GLOB_RECURSE ALLFILES tutorial/c++/*.cpp)
+    filter_tests("${ALLFILES}" TESTFILES)
     foreach(TESTFILE ${TESTFILES})
       get_filename_component(TEST ${TESTFILE} NAME_WE)
       add_executable(${TEST} WIN32 ${TESTFILE})
@@ -2125,7 +2151,8 @@ if(NOT DISABLE_GMSH_TESTS)
   if(0 AND ENABLE_BUILD_DYNAMIC)
     find_package(PythonInterp)
     if(PYTHONINTERP_FOUND)
-      file(GLOB_RECURSE TESTFILES tutorial/python/*.py demos/api/*.py)
+      file(GLOB_RECURSE ALLFILES tutorial/python/*.py demos/api/*.py)
+      filter_tests("${ALLFILES}" TESTFILES)
       foreach(TESTFILE ${TESTFILES})
         get_filename_component(TEST ${TESTFILE} NAME_WE)
         add_test(NAME ${TEST}_py COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
