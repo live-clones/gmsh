@@ -138,7 +138,7 @@ static void createQuadPatch (GFace* gf,
 }
 
 
-static int remeshCavity (GFace *gf,
+int remeshCavity (GFace *gf,
 			 int index,
 			 std::set<MElement*> &cavity,
 			 std::vector<MVertex*> &bnd,
@@ -150,8 +150,8 @@ static int remeshCavity (GFace *gf,
     std::set<MVertex*> internal;
     for (std::set<MElement*>::iterator it = cavity.begin(); it != cavity.end(); ++it){
       for (size_t i=0;i<(*it)->getNumVertices(); i++){
-	MVertex *v = (*it)->getVertex(i);
-	if (std::find(bnd.begin(), bnd.end(), v) == bnd.end())internal.insert(v);
+        MVertex *v = (*it)->getVertex(i);
+        if (std::find(bnd.begin(), bnd.end(), v) == bnd.end())internal.insert(v);
       }
     }
     for (std::set<MVertex*>::iterator it = internal.begin(); it != internal.end(); ++it){
@@ -172,6 +172,8 @@ static int remeshCavity (GFace *gf,
     }
     if (inside == 1)corners.push_back(i);
   }
+
+  //  printf(" ... index = %i, nb5=%i, nb3=%i, corners.size()=%li\n", index, nb5, nb3, corners.size());
 
   if (index == 5 && nb5 == 1 && nb3 == 0)return 0;
   if (index == 3 && nb3 == 1 && nb5 == 0)return 0;
@@ -201,6 +203,7 @@ static int remeshCavity (GFace *gf,
     int a0 = (n0+n1-n2)/2;
     int a1 = (n1+n2-n0)/2;
     int a2 = (n0+n2-n1)/2;
+    printf("... bnd.size()=%li, n0=%i, n1=%i, n2=%i\n", bnd.size(), n0, n1, n2);
 
     if (a0 <= 0 || a1 <= 0 || a2 <= 0)return -1;
     
@@ -1307,16 +1310,16 @@ static bool buildCavity (GFace *gf,
 	return true;
       }
     }
-    ///    std::set<MElement*> update_cavity;
+    std::set<MElement*> update_cavity;
     for (size_t	i=0; i<bnd.size();i++){
       v2t_cont::iterator itvv = adj.find(bnd[i]);
       cavity.insert(itvv->second.begin(), itvv->second.end());
-      //update_cavity.insert(itvv->second.begin(), itvv->second.end());
+      update_cavity.insert(itvv->second.begin(), itvv->second.end());
     }
-    //    size_t sb = bnd.size();
-    //        updateBoundary (update_cavity, cavity, bnd);    
-    //    if (sb == bnd.size())return false;
-    bnd = buildBoundary (cavity.begin(),cavity.end());
+    size_t sb = bnd.size();
+    updateBoundary (update_cavity, cavity, bnd);    
+    if (sb == bnd.size())return false;
+	//bnd = buildBoundary (cavity.begin(),cavity.end());
   }
   return false;
 }

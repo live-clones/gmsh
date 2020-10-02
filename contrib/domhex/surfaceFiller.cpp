@@ -316,7 +316,10 @@ void createSingularPatches (GFace *gf, std::map<MVertex *, int> &s, Field *f, st
 bool outBounds(SPoint2 p, GFace *gf){
   for (int i=0;i<2;i++){
     Range<double> bnds = gf->parBounds(i);
-    if (p[i] > bnds.high() || p[i] < bnds.low() ) return true;
+    if (p[i] > bnds.high() || p[i] < bnds.low() ) {
+      printf("%g %d out bound %12.5E %12.5E\n",p[i],i, bnds.low(), bnds.high());
+      return true;
+    }
   }
   return false;
 }
@@ -414,10 +417,6 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     return;
   }
 
-  std::map<MVertex *, int, MVertexPtrLessThan> cf_singularities;
-  //  std::vector<MVertex*> toInsert;
-  //  findPhysicalGroupsForSingularities(gf,cf_singularities);
-  //  createSingularPatches (gf, cf_singularities,cross_field,toInsert);
   
   const bool goNonLinear = true;
   
@@ -470,10 +469,10 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	  //	}
       }
     }
-    //    printf("%d vertices created %g %g %g\n",NP,du[0],du[1],du[2]);
+    printf("%d vertices created %g %g %g\n",NP,du[0],du[1],du[2]);
     for (int i=0;i<NP;i++){
       bool singular = !compute4neighbors(gf, *it, midpoint, newp, metricField, cross_field, du[i],dv[i],globalMult );
-      if (!singular && cf_singularities.find(*it) == cf_singularities.end()){
+      if (!singular){
 	surfacePointWithExclusionRegion *sp =
 	  new surfacePointWithExclusionRegion(*it, newp, midpoint, metricField);
 	vertices.push_back(sp);
@@ -511,16 +510,16 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	rtree.Insert(_min, _max, sp);
       }
        else{
-	 /*       	GPoint gp = gf->point(parent->_p[i]);
-       	MFaceVertex *v =
-       	  new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
-       	SPoint2 midpoint;
-       	compute4neighbors(gf, v, midpoint, newp, metricField, cross_field, 0, 0 , globalMult);
-       	surfacePointWithExclusionRegion *sp =
-       	  new surfacePointWithExclusionRegion(v, newp, midpoint, metricField,parent);
-	  if (inExclusionZone(parent->_v, parent->_p[i], rtree, vertices))
-	sp->print(f2, i);
-	 */
+	 GPoint gp = gf->point(parent->_p[i]);
+	 MFaceVertex *v =
+	   new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+	 SPoint2 midpoint;
+	 compute4neighbors(gf, v, midpoint, newp, metricField, cross_field, 0, 0 , globalMult);
+	 surfacePointWithExclusionRegion *sp =
+	   new surfacePointWithExclusionRegion(v, newp, midpoint, metricField,parent);
+	 if (!gf->containsParam(parent->_p[i]))
+	   sp->print(f2, i);	  
+	  //	 printf("AI\n");
        }
     }
   }
