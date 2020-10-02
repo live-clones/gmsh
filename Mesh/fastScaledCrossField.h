@@ -25,6 +25,15 @@ int computeScaledCrossFieldView(GModel* gm,
     std::vector<std::array<double,5> >* singularities = NULL /* If not NULL, fill with positions of the detected singularities and indices */
     );
 
+
+int addSingularitiesAtAcuteCorners(
+    const std::vector<GFace*>& faces,
+    double thresholdInDeg,  /* angle used to detect acute corners, typically angle=45. for compat. with cross fields */
+    std::vector<std::array<double,5> >& singularities);
+
+
+
+
 /* Sub-functions that may be called independantly */
 int extractTriangularMeshFromFaces(
     const std::vector<GFace*>& faces,

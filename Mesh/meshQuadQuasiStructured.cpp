@@ -278,7 +278,7 @@ namespace QSQ {
     size_t next;
     size_t opposite;
     /* Indices of other mesh entities */
-    size_t vertex;
+    size_t vertex; /* the one at the tip of the arrow */
     size_t face;
   };
 
@@ -302,6 +302,9 @@ namespace QSQ {
     inline size_t next(size_t he) const {return hedges[he].next; }
     inline size_t opposite(size_t he) const {return hedges[he].opposite; }
     inline size_t prev(size_t he) const {return hedges[he].prev; }
+    inline size_t vertex(size_t he, size_t lv) const {
+      return (lv == 0) ? hedges[prev(he)].vertex : hedges[he].vertex;
+    }
 
     std::vector<size_t> face_vertices(size_t f) const {
       size_t he = faces[f].he;
@@ -817,11 +820,30 @@ namespace QSQ {
 
     /* Methods */
     SCavity(MeshHalfEdges& M_) : M(M_) { }
+
+    int valenceInsideCavity(size_t v) {
+      vector<size_t> faces(6);
+      M.vertexFaces(v, faces);
+      int count = 0;
+      for (size_t f: faces) if (quads.find(f) != quads.end()) count += 1;
+      return count;
+    }
+
+    int valenceOutsideCavity(size_t v) {
+      vector<size_t> faces(6);
+      M.vertexFaces(v, faces);
+      int count = 0;
+      for (size_t f: faces) if (quads.find(f) == quads.end()) count += 1;
+      return count;
+    }
+
     bool init(size_t v, const std::vector<size_t>& quadsInit) {
       if (quadsInit.size() < 3 || quadsInit.size() > 6) {
         Msg::Error("SCavity init: expecting 3 to 6 quads around a common vertex");
         return false;
       }
+      /* Add quads and collect bdr half edges */
+      vector<size_t> hes;
       for (size_t f: quadsInit) {
         quads.insert(f);
         size_t he = M.faces[f].he;
@@ -829,10 +851,15 @@ namespace QSQ {
           size_t v1 = M.hedges[he].vertex;
           size_t v2 = M.hedges[M.prev(he)].vertex;
           if (v1 != v && v2 != v) {
-            // TODO HERE
+            hes.push_back(he);
           }
           he = M.next(he);
         } while (he != M.faces[f].he);
+      }
+      /* Order boundary half edges in sides */
+      for (size_t he0: hes) {
+
+
       }
 
       return true;
@@ -1134,6 +1161,7 @@ int computeScaledCrossField(GModel* gm, std::vector<std::array<double,5> >& sing
   int st = computeScaledCrossFieldView(gm, viewTag, targetNumberOfQuads, 
       nbDiffusionLevels, thresholdNormConvergence, nbBoundaryExtensionLayer, 
       name, verbosity, &singularities);
+  addSingularitiesAtAcuteCorners(model_faces(gm), 45., singularities);
   if (st == 0) {
     gm->getFields()->setBackgroundMesh(viewTag);
     // gm->getFields()->initialize(); // required ?
