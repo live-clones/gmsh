@@ -15,7 +15,6 @@ typedef unsigned long intptr_t;
 #include "StringUtils.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
-#include "PView.h"
 #include "Options.h"
 #include "GModel.h"
 
@@ -28,6 +27,10 @@ typedef unsigned long intptr_t;
 #include "FlGui.h"
 #include "onelabGroup.h"
 #include "drawContext.h"
+#endif
+
+#if defined(HAVE_POST)
+#include "PView.h"
 #endif
 
 #if defined(HAVE_ONELAB_METAMODEL)
@@ -449,7 +452,9 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 #if defined(HAVE_FLTK)
     int n = PView::list.size();
 #endif
+#if defined(HAVE_POST)
     PView::fillVertexArray(this, length, &message[0], swap);
+#endif
 #if defined(HAVE_FLTK)
     if(FlGui::available())
       FlGui::instance()->updateViews(n != (int)PView::list.size(), true);
