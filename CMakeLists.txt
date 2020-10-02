@@ -109,6 +109,7 @@ if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
 endif()
 set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
+set(GMSH_EXTRA_VERSION_ORIG ${GMSH_EXTRA_VERSION})
 
 if(NOT GMSH_RELEASE)
   find_package(Git)
@@ -2016,8 +2017,8 @@ set(CPACK_PACKAGE_DESCRIPTION_FILE ${WELCOME_FILE})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "3D finite element mesh generator with built-in CAD engine and post-processor")
 if(GMSH_EXTRA_VERSION MATCHES "-git.*") # so that we'll overwrite the archives
-  set(CPACK_PACKAGE_FILE_NAME gmsh-git-${GMSH_OS})
-  set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-git-source)
+  set(CPACK_PACKAGE_FILE_NAME gmsh${GMSH_EXTRA_VERSION_ORIG}-git-${GMSH_OS})
+  set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh${GMSH_EXTRA_VERSION_ORIG}-git-source)
 else()
   set(CPACK_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-${GMSH_OS})
   set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
@@ -2177,8 +2178,7 @@ message(STATUS " * C++ compiler: " ${CMAKE_CXX_COMPILER})
 message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
-mark_as_advanced(GMSH_EXTRA_VERSION
-                 ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
+mark_as_advanced(ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
                  GMP_INC GMP_LIB MMG_INC MMG_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB
