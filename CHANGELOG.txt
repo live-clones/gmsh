@@ -4,10 +4,11 @@ model-based data (for improved Python performance), to set interpolation
 matrices for high-order datasets, to assign "automatic" transfinite meshing
 constraints and to pass native (C++, C, Python or Julia) mesh size callback;
 added option to save high-order periodic node info; added support for scripted
-window splitting; improved VTK reader; added support for Unicode command line
-arguments on Windows; removed bundled Mmg3D and added support for stock Mmg 5;
-Gmsh now requires C++11 and CMake 3.1, and uses Eigen by default instead of
-Blas/Lapack for dense linear algebra; small bug fixes.
+window splitting; improved VTK reader; new MatrixOfInertia command; added
+support for Unicode command line arguments on Windows; removed bundled Mmg3D and
+added support for stock Mmg 5; Gmsh now requires C++11 and CMake 3.1, and uses
+Eigen by default instead of Blas/Lapack for dense linear algebra; small bug
+fixes.
 
 * Incompatible API changes: new optional argument to geo/addCurveLoop
 
