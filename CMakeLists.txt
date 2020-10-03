@@ -335,7 +335,7 @@ if(ENABLE_OPENMP)
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
-    list(APPEND EXTERNAL_LIBRARIES "-lomp")
+    list(APPEND EXTERNAL_LIBRARIES "-L/usr/local/lib -lomp")
   endif()
 endif()
 
