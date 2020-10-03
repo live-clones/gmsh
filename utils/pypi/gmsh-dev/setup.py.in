@@ -16,11 +16,12 @@ import zipfile
 from distutils import sysconfig
 from setuptools import setup
 from setuptools.command.install import install
+from ctypes.util import find_library
 
 # Server and gmsh version
 server = 'https://gmsh.info/bin'
 version = '${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}'
-iversion = version + '.dev0' # installer version
+iversion = version + '.dev1' # installer version
 
 # Determine file name and and url to be downloaded and installed
 system = platform.system().lower()
@@ -34,7 +35,13 @@ plat = 'MacOSX' if 'darwin' in system else plat
 if plat is None:
     raise TypeError(
             "Platform '{}' is not supported.".format(system+'-'+machine))
-name = "gmsh-git-{}-sdk".format(plat)
+
+# Download special non-graphical version on Linux64 if libX11 is not found
+if plat == 'Linux64' and find_library('X11') == None:
+    name = "gmsh-nox-git-{}-sdk".format(plat)
+else:
+    name = "gmsh-git-{}-sdk".format(plat)
+
 ext = '.zip' if plat.startswith('Windows') else '.tgz'
 fname = name + ext
 if plat.startswith('Linux'):
