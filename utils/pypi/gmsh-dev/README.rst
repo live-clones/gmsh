@@ -21,7 +21,7 @@ latest development snapshot::
 
     $ pip install --force-reinstall --no-cache-dir gmsh-dev
 
-After installation you can either the Gmsh app::
+After installation you can either run the Gmsh app::
 
     $ gmsh
 
