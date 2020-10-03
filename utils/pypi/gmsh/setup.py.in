@@ -7,20 +7,18 @@
 # https://opensource.org/licenses/GPL-2.0
 ########################################################################
 
-from __future__ import print_function
 import os
 import sys
 import platform
 import tarfile
 import zipfile
-from distutils import sysconfig
 from setuptools import setup
 from setuptools.command.install import install
 
 # Server and gmsh version
 server = 'https://gmsh.info/bin'
 version = '${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}'
-iversion = version + '' # installer version
+iversion = version + '' # installer version (add e.g. '.post1' for update)
 
 # Determine file name and and url to be downloaded and installed
 system = platform.system().lower()
