@@ -190,7 +190,7 @@ struct doubleXstring{
 %token tTextAttributes
 %token tBoundingBox tDraw tSetChanged tToday tFixRelativePath
 %token tCurrentDirectory tCurrentFileName
-%token tSyncModel tNewModel tMass tCenterOfMass
+%token tSyncModel tNewModel tMass tCenterOfMass tMatrixOfInertia
 %token tOnelabAction tOnelabRun tCodeName
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateGeometry tClassifySurfaces
@@ -5891,6 +5891,19 @@ FExpr_Multi :
       List_Add($$, &x);
       List_Add($$, &y);
       List_Add($$, &z);
+    }
+   | tMatrixOfInertia GeoEntity123 '{' FExpr '}'
+    {
+      $$ = List_Create(9, 1, sizeof(double));
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<double> mat;
+        GModel::current()->getOCCInternals()->getMatrixOfInertia($2, (int)$4, mat);
+        for(std::size_t i = 0; i < mat.size(); i++)
+          List_Add($$, &mat[i]);
+      }
+      else{
+        yymsg(0, "MatrixOfInertia only available with OpenCASCADE geometry kernel");
+      }
     }
   | Transform
     {

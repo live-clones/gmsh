@@ -986,6 +986,7 @@ List of expressions are also widely used, and are defined as:
   BoundingBox Point|Curve|Surface|Volume @{ @var{expression-list} @} |
   Mass Curve|Surface|Volume @{ @var{expression} @} |
   CenterOfMass Curve|Surface|Volume @{ @var{expression} @} |
+  MatrixOfInertia Curve|Surface|Volume @{ @var{expression} @} |
   Point @{ @var{expression} @} |
   Physical Point|Curve|Surface|Volume @{ @var{expression-list} @} |
   <Physical> Point|Curve|Surface|Volume @{ : @} |
@@ -1015,11 +1016,12 @@ The next two cases allow to retrieve entities in a given bounding box,
 or get the bounding box of a given entity, with the bounding box
 specified as (X min, Y min, Z min, X max, Y max, Z max). Beware that the
 order of coordinates is different than in the @code{BoundingBox} command
-for the scene: see @ref{General commands}. The last five cases permit to
-retrieve the mass or the center of mass of an entity, the coordinates of
-a given geometry point (@pxref{Points}), the elementary entities making
-up physical groups, and the tags of all (physical or elementary) points,
-curves, surfaces or volumes in the model. @value{SYNCS}
+for the scene: see @ref{General commands}. The last cases permit to
+retrieve the mass, the center of mass or the matrix of intertia of an
+entity, the coordinates of a given geometry point (@pxref{Points}), the
+elementary entities making up physical groups, and the tags of all
+(physical or elementary) points, curves, surfaces or volumes in the
+model. @value{SYNCS}
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
