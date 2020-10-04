@@ -19,7 +19,7 @@ from ctypes.util import find_library
 # Server and gmsh version
 server = 'https://gmsh.info/bin'
 version = '${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}'
-iversion = version + '.dev4' # installer version
+iversion = version + '.dev5' # installer version
 
 # Determine file name and and url to be downloaded and installed
 system = platform.system().lower()
