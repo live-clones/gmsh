@@ -6,7 +6,7 @@ gmsh-dev
 mesh generator with built-in pre- and post-processing facilities.
 
 The aim of this package is to download and install the latest development
-snapshot of the official Gmsh app and binary Software Development Kit SDK in a
+snapshot of the official Gmsh app and binary Software Development Kit (SDK) in a
 pythonic way, i.e. via the ``pip`` command. For the latest stable release, use
 the ``gmsh`` package instead.
 
