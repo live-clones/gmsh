@@ -19,7 +19,7 @@ from ctypes.util import find_library
 # Server and gmsh version
 server = 'https://gmsh.info/bin'
 version = '${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}'
-iversion = version + '.dev2' # installer version
+iversion = version + '.dev4' # installer version
 
 # Determine file name and and url to be downloaded and installed
 system = platform.system().lower()
@@ -34,8 +34,20 @@ if plat is None:
     raise TypeError(
             "Platform '{}' is not supported.".format(system+'-'+machine))
 
-# Download special non-graphical version on Linux64 if libX11 is not found
-if plat == 'Linux64' and find_library('X11') == None:
+# Download special non-graphical version on Linux64 if X11+OpenGL is not found
+# (the list of libraries is the list of graphic libraries explicitely referenced
+# by `fltk-config --use-gl --use-images --ldflags`)
+if plat == 'Linux64' and (find_library('GL') == None or
+                          find_library('GLU') == None or
+                          find_library('X11') == None or
+                          find_library('Xcursor') == None or
+                          find_library('Xext') == None or
+                          find_library('Xfixes') == None or
+                          find_library('Xft') == None or
+                          find_library('Xinerama') == None or
+                          find_library('Xrender') == None or
+                          find_library('fontconfig') == None):
+    print('X11 or OpenGL libraries not found: using -nox Gmsh SDK')
     name = "gmsh-nox-git-{}-sdk".format(plat)
 else:
     name = "gmsh-git-{}-sdk".format(plat)
