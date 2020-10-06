@@ -715,6 +715,7 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
 
 # special types
 
+
 def iargcargv():
     a = arg("", None, None, None, "", "", False)
     a.cpp = "int argc = 0, char ** argv = 0"
@@ -733,12 +734,14 @@ def iargcargv():
     a.texi = "(argc = 0)}, @code{argv = []"
     return a
 
+
 def isizefun(name):
     a = arg(name, None, None, None, "", "", False)
     a.cpp = "std::function<double(int, int, double, double, double)> " + name
     a.c_arg = ("std::bind(" + name + ", std::placeholders::_1, " +
                "std::placeholders::_2, std::placeholders::_3, " +
-               "std::placeholders::_4, std::placeholders::_5, " + name + "_data)")
+               "std::placeholders::_4, std::placeholders::_5, " + name +
+               "_data)")
     a.c = ("double (*" + name + ")" +
            "(int dim, int tag, double x, double y, double z, void * data), " +
            "void * " + name + "_data")
@@ -750,21 +753,24 @@ def isizefun(name):
         // FIXME memory leak
         auto *""" + name + "_ptr_ = new std::function<double(int,int,double,double,double)>(" + name + """);
 """
-    a.cwrap_arg = "&" + name + "_caller_::call, "+name+"_ptr_"
-    a.python_pre = ("global api_" + name + "_type_\n" +
-                    "            api_" + name + "_type_ = " +
-                    "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_void_p)\n" +
-                    "            global api_" + name + "_\n" +
-                    "            api_" + name + "_ = api_" + name +
-                    "_type_(lambda dim, tag, x, y, z, _ : " + name + "(dim, tag, x, y, z))")
+    a.cwrap_arg = "&" + name + "_caller_::call, " + name + "_ptr_"
+    a.python_pre = (
+        "global api_" + name + "_type_\n" + "            api_" + name +
+        "_type_ = " +
+        "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_void_p)\n"
+        + "            global api_" + name + "_\n" + "            api_" +
+        name + "_ = api_" + name + "_type_(lambda dim, tag, x, y, z, _ : " +
+        name + "(dim, tag, x, y, z))")
     a.python_arg = "api_" + name + "_, None"
     a.julia_pre = (
-        "api_" + name + "__(dim, tag, x, y, z, data) = " + name + "(dim, tag, x, y, z)\n    " +
-        "api_" + name + "_ = @cfunction($api_" + name + "__" +
-                   ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
+        "api_" + name + "__(dim, tag, x, y, z, data) = " + name +
+        "(dim, tag, x, y, z)\n    " + "api_" + name + "_ = @cfunction($api_" +
+        name + "__" +
+        ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
     a.julia_arg = "api_" + name + "_, C_NULL"
     a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
     return a
+
 
 class Module:
     def __init__(self, name, doc):
@@ -1252,46 +1258,58 @@ class API:
         self.copyright = copyright
         self.issues = issues
         self.modules = []
+        self.api_lineno = {'cpp': {}, 'c': {}, 'py': {}, 'jl': {}}
 
     def add_module(self, name, doc):
         module = Module(name, doc)
         self.modules.append(module)
         return module
 
+    def fwrite(self, f, s):
+        self.current_lineno += s.count('\n')
+        f.write(s)
+
+    def flog(self, lang, fname):
+        self.api_lineno[lang][fname] = self.current_lineno
+
     def write_cpp(self):
         def write_module(module, indent, cpp_mpath):
             cpp_mpath += module.name + "::"
-            f.write(indent + "namespace " + module.name + " { // " +
-                    capi(module.doc) + "\n\n")
+            self.fwrite(
+                f, indent + "namespace " + module.name + " { // " +
+                capi(module.doc) + "\n\n")
             indent += "  "
             for rtype, name, args, doc, special in module.fs:
                 rt = rtype.rcpp_type if rtype else "void"
-                f.write(indent + "// " + cpp_mpath + name + "\n" + indent +
-                        "//\n")
-                f.write(indent + "// " +
-                        ("\n" + indent +
-                         "// ").join(textwrap.wrap(doc, 80 - len(indent))) +
-                        "\n")
-
+                self.fwrite(
+                    f,
+                    indent + "// " + cpp_mpath + name + "\n" + indent + "//\n")
+                self.fwrite(
+                    f, indent + "// " + ("\n" + indent + "// ").join(
+                        textwrap.wrap(doc, 80 - len(indent))) + "\n")
                 fnameapi = indent + ns.upper(
                 ) + "_API " + rt + " " + name + "("
-                f.write(fnameapi)
+                self.flog('cpp', cpp_mpath.replace('::', '/') + name)
+                self.fwrite(f, fnameapi)
                 if args:
-                    f.write((",\n" + ' ' * len(fnameapi)).join(a.cpp
-                                                               for a in args))
-                f.write(");\n\n")
+                    self.fwrite(f, (",\n" + ' ' * len(fnameapi)).join(
+                        a.cpp for a in args))
+                self.fwrite(f, ");\n\n")
             for m in module.submodules:
                 write_module(m, indent, cpp_mpath)
-            f.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
+            self.fwrite(f,
+                        indent[:-2] + "} // namespace " + module.name + "\n\n")
 
+        self.current_lineno = 1
         with open(ns + ".h", "w") as f:
-            f.write(
+            self.fwrite(
+                f,
                 cpp_header.format(self.copyright, self.issues, ns.upper(),
                                   self.code, self.version_major,
                                   self.version_minor, self.version_patch, ns))
             for m in self.modules:
                 write_module(m, "", "")
-            f.write(cpp_footer)
+            self.fwrite(f, cpp_footer)
 
     def write_c(self):
         def write_module(module, c_namespace, cpp_namespace, indent):
@@ -1306,12 +1324,16 @@ class API:
             for rtype, name, args, doc, special in module.fs:
                 # *c.h
                 fname = c_namespace + name[0].upper() + name[1:]
-                f.write("\n/* " + "\n * ".join(textwrap.wrap(doc, 75)) +
-                        " */\n")
+                self.fwrite(
+                    f,
+                    "\n/* " + "\n * ".join(textwrap.wrap(doc, 75)) + " */\n")
                 fnameapi = ns.upper() + "_API " + (rtype.rc_type if rtype else
                                                    "void") + " " + fname + "("
-                f.write(fnameapi + (",\n" + ' ' * len(fnameapi)).join(
-                    list((a.c for a in args + (oint("ierr"), )))) + ");\n")
+                self.flog('c', cpp_namespace.replace('::', '/') + name)
+                self.fwrite(
+                    f, fnameapi + (",\n" + ' ' * len(fnameapi)).join(
+                        list((a.c for a in args + (oint("ierr"), )))) + ");\n")
+
                 if "rawc" not in special:
                     # *c.cpp
                     fc.write(ns.upper() + "_API " +
@@ -1362,10 +1384,13 @@ class API:
                     fcwrap.write(", &ierr);\n")
                 else:
                     fcwrap.write("&ierr);\n")
-                if name == 'getLastError': # special case for getLastError() function
-                    fcwrap.write(indent + "  " + 'if(ierr) throw "Could not get last error";\n')
+                if name == 'getLastError':  # special case for getLastError() function
+                    fcwrap.write(
+                        indent + "  " +
+                        'if(ierr) throw "Could not get last error";\n')
                 else:
-                    fcwrap.write(indent + "  " + "if(ierr) throwLastError();\n")
+                    fcwrap.write(indent + "  " +
+                                 "if(ierr) throwLastError();\n")
                 for a in args:
                     if a.cwrap_post:
                         fcwrap.write(indent + "  " + a.cwrap_post)
@@ -1377,14 +1402,16 @@ class API:
             fcwrap.write(indent[:-2] + "} // namespace " + module.name +
                          "\n\n")
 
+        self.current_lineno = 1
         with open(ns + "c.h", "w") as f:
             with open(ns + "c.cpp", "w") as fc:
                 with open(ns + ".h_cwrap", "w") as fcwrap:
-                    f.write(
-                        c_header.format(self.copyright, self.issues, ns.upper(),
-                                        self.code, self.version_major,
-                                        self.version_minor, self.version_patch,
-                                        ns))
+                    self.fwrite(
+                        f,
+                        c_header.format(self.copyright, self.issues,
+                                        ns.upper(), self.code,
+                                        self.version_major, self.version_minor,
+                                        self.version_patch, ns))
                     fc.write(
                         c_cpp_header.format(self.copyright, self.issues, ns,
                                             ns.upper()))
@@ -1394,7 +1421,8 @@ class API:
                     fcwrap.write(
                         cwrap_header.format(self.copyright, self.issues,
                                             ns.upper(), self.code,
-                                            self.version_major, self.version_minor,
+                                            self.version_major,
+                                            self.version_minor,
                                             self.version_patch, ns))
                     fcwrap.write("namespace " + ns + " {\n")
                     s = cwrap_utils.format(ns, "inline ").split('\n')
@@ -1404,16 +1432,19 @@ class API:
                     fcwrap.write("  {\n")
                     fcwrap.write('     int ierr = 0;\n')
                     fcwrap.write('     char *api_error_;\n')
-                    fcwrap.write('     gmshLoggerGetLastError(&api_error_, &ierr);\n')
-                    fcwrap.write('     if(ierr) throw "Could not get last error";\n');
-                    fcwrap.write('     std::string error = std::string(api_error_);\n')
+                    fcwrap.write(
+                        '     gmshLoggerGetLastError(&api_error_, &ierr);\n')
+                    fcwrap.write(
+                        '     if(ierr) throw "Could not get last error";\n')
+                    fcwrap.write(
+                        '     std::string error = std::string(api_error_);\n')
                     fcwrap.write('     gmshFree(api_error_);\n')
                     fcwrap.write('     throw error;\n')
                     fcwrap.write("  }\n\n")
                     fcwrap.write("}\n\n")
                     for module in self.modules:
                         write_module(module, "", "", "")
-                    f.write(c_footer)
+                    self.fwrite(f, c_footer)
                     fcwrap.write(cwrap_footer)
 
     def write_python(self):
@@ -1426,49 +1457,62 @@ class API:
             if "nopython" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
-            f.write("\n")
+            self.fwrite(f, "\n")
             if c_mpath != ns:
-                f.write(indent + "@staticmethod\n")
-            f.write(indent + "def " + name + "(" +
-                    ", ".join((parg(a) for a in iargs)) + "):\n")
+                self.fwrite(f, indent + "@staticmethod\n")
+            self.flog('py', py_mpath.replace('.', '/') + name)
+            self.fwrite(
+                f, indent + "def " + name + "(" + ", ".join(
+                    (parg(a) for a in iargs)) + "):\n")
             indent += "    "
-            f.write(indent + '"""\n')
-            f.write(indent + py_mpath + name + "(" +
-                    ", ".join(parg(a) for a in iargs) + ")\n\n")
-            f.write(indent + ("\n" + indent).join(textwrap.wrap(doc, 75)) +
-                    "\n")
+            self.fwrite(f, indent + '"""\n')
+            self.fwrite(
+                f, indent + py_mpath + name + "(" +
+                ", ".join(parg(a) for a in iargs) + ")\n\n")
+            self.fwrite(
+                f,
+                indent + ("\n" + indent).join(textwrap.wrap(doc, 75)) + "\n")
             if rtype or oargs:
-                f.write("\n" + indent + "Return " + ", ".join(
-                    ([("an " if rtype.rtexi_type == "integer value" else "a "
-                       ) + rtype.rtexi_type] if rtype else []) +
-                    [("`" + a.name + "'") for a in oargs]) + ".\n")
-            f.write(indent + '"""\n')
+                self.fwrite(
+                    f, "\n" + indent + "Return " +
+                    ", ".join(([("an " if rtype.rtexi_type ==
+                                 "integer value" else "a ") +
+                                rtype.rtexi_type] if rtype else []) +
+                              [("`" + a.name + "'") for a in oargs]) + ".\n")
+            self.fwrite(f, indent + '"""\n')
             for a in args:
-                if a.python_pre: f.write(indent + a.python_pre + "\n")
-            f.write(indent + "ierr = c_int()\n")
-            f.write(indent + "api_result_ = " if (
-                (rtype is oint) or (rtype is odouble)) else (indent))
+                if a.python_pre: self.fwrite(f, indent + a.python_pre + "\n")
+            self.fwrite(f, indent + "ierr = c_int()\n")
+            self.fwrite(
+                f, indent + "api_result_ = " if
+                ((rtype is oint) or (rtype is odouble)) else (indent))
             c_name = c_mpath + name[0].upper() + name[1:]
-            f.write("lib." + c_name + "(\n    " + indent +
-                    (",\n" + indent + "    ").join(
-                        tuple((a.python_arg
-                               for a in args)) + ("byref(ierr)", )) + ")\n")
-            if name == "finalize": # special case for finalize() function
-                f.write(indent + "if oldsig is not None:\n")
-                f.write(indent + "    signal.signal(signal.SIGINT, oldsig)\n")
-            f.write(indent + "if ierr.value != 0:\n")
-            if name == "getLastError": # special case for getLastError() function
-                f.write(indent + "    raise Exception('Could not get last error')\n")
+            self.fwrite(
+                f, "lib." + c_name + "(\n    " + indent +
+                (",\n" + indent + "    ").join(
+                    tuple((a.python_arg
+                           for a in args)) + ("byref(ierr)", )) + ")\n")
+            if name == "finalize":  # special case for finalize() function
+                self.fwrite(f, indent + "if oldsig is not None:\n")
+                self.fwrite(
+                    f, indent + "    signal.signal(signal.SIGINT, oldsig)\n")
+            self.fwrite(f, indent + "if ierr.value != 0:\n")
+            if name == "getLastError":  # special case for getLastError() function
+                self.fwrite(
+                    f, indent +
+                    "    raise Exception('Could not get last error')\n")
             else:
-                f.write(indent + "    raise Exception(logger.getLastError())\n")
+                self.fwrite(
+                    f, indent + "    raise Exception(logger.getLastError())\n")
             r = (["api_result_"]) if rtype else []
             r += list((o.python_return for o in oargs))
             if len(r) != 0:
                 if len(r) == 1:
-                    f.write(indent + "return " + r[0] + "\n")
+                    self.fwrite(f, indent + "return " + r[0] + "\n")
                 else:
-                    f.write(indent + "return (\n" + indent + "    " +
-                            (",\n" + indent + "    ").join(r) + ")\n")
+                    self.fwrite(
+                        f, indent + "return (\n" + indent + "    " +
+                        (",\n" + indent + "    ").join(r) + ")\n")
 
         def write_module(f, m, c_mpath, py_mpath, indent):
             if c_mpath:
@@ -1480,18 +1524,20 @@ class API:
             for fun in m.fs:
                 write_function(f, fun, c_mpath, py_mpath, indent)
             for module in m.submodules:
-                f.write("\n\n" + indent + "class " + module.name + ":\n")
+                self.fwrite(f,
+                            "\n\n" + indent + "class " + module.name + ":\n")
                 indentm = indent + "    "
-                f.write(indentm + '"""\n')
-                f.write(indentm +
-                        ("\n" +
-                         indentm).join(textwrap.wrap(capi(module.doc), 75)) +
-                        "\n")
-                f.write(indentm + '"""\n')
+                self.fwrite(f, indentm + '"""\n')
+                self.fwrite(
+                    f, indentm + ("\n" + indentm).join(
+                        textwrap.wrap(capi(module.doc), 75)) + "\n")
+                self.fwrite(f, indentm + '"""\n')
                 write_module(f, module, c_mpath, py_mpath, indentm)
 
+        self.current_lineno = 1
         with open(ns + ".py", "w") as f:
-            f.write(
+            self.fwrite(
+                f,
                 python_header.format(self.copyright, self.issues, self.code,
                                      self.version_major, self.version_minor,
                                      self.version_patch, ns.upper(), ns))
@@ -1508,75 +1554,89 @@ class API:
             if "nojulia" in special: return
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
-            f.write('\n"""\n    ')
-            f.write(jl_mpath + name + "(" + ", ".join(parg(a) for a in iargs) +
-                    ")\n\n")
-            f.write("\n".join(textwrap.wrap(doc, 80)).replace("'", "`") + "\n")
+            self.fwrite(f, '\n"""\n    ')
+            self.fwrite(
+                f, jl_mpath + name + "(" + ", ".join(parg(a)
+                                                     for a in iargs) + ")\n\n")
+            self.fwrite(
+                f, "\n".join(textwrap.wrap(doc, 80)).replace("'", "`") + "\n")
             if rtype or oargs:
-                f.write("\nReturn " + ", ".join((
-                    [("an " if rtype.rtexi_type == "integer value" else "a ") +
-                     rtype.rtexi_type] if rtype else []) +
-                                                [("`" + a.name + "`")
-                                                 for a in oargs]) + ".\n")
-            f.write('"""\n')
-            f.write("function " + name + "(" +
-                    ", ".join((parg(a) for a in iargs)) + ")\n")
+                self.fwrite(
+                    f, "\nReturn " +
+                    ", ".join(([("an " if rtype.rtexi_type ==
+                                 "integer value" else "a ") +
+                                rtype.rtexi_type] if rtype else []) +
+                              [("`" + a.name + "`") for a in oargs]) + ".\n")
+            self.fwrite(f, '"""\n')
+            self.flog('jl', jl_mpath.replace('.', '/') + name)
+            self.fwrite(
+                f, "function " + name + "(" + ", ".join(
+                    (parg(a) for a in iargs)) + ")\n")
             for a in args:
-                if a.julia_pre: f.write("    " + a.julia_pre + "\n")
-            f.write("    ierr = Ref{Cint}()\n    ")
-            f.write("api_result_ = " if (
-                (rtype is oint) or (rtype is odouble)) else "")
+                if a.julia_pre: self.fwrite(f, "    " + a.julia_pre + "\n")
+            self.fwrite(f, "    ierr = Ref{Cint}()\n    ")
+            self.fwrite(
+                f, "api_result_ = " if
+                ((rtype is oint) or (rtype is odouble)) else "")
             c_name = c_mpath + name[0].upper() + name[1:]
-            f.write("ccall((:" + c_name + ", " +
-                    ("" if c_mpath == ns else ns + ".") + "lib), " +
-                    ("Cvoid" if rtype is None else rtype.rjulia_type) + ",\n" +
-                    " " * 10 + "(" + ", ".join((tuple(a.julia_ctype
-                                                      for a in args) +
-                                                ("Ptr{Cint}", ))) +
-                    ("," if not len(args) else "") + "),\n" + " " * 10 +
-                    ", ".join(tuple(a.julia_arg
-                                    for a in args) + ("ierr", )) + ")\n")
-            if name == "getLastError": # special case for getLastError() function
-                f.write('    ierr[] != 0 && error("Could not get last error")\n')
+            self.fwrite(
+                f, "ccall((:" + c_name + ", " +
+                ("" if c_mpath == ns else ns + ".") + "lib), " +
+                ("Cvoid" if rtype is None else rtype.rjulia_type) + ",\n" +
+                " " * 10 + "(" + ", ".join(
+                    (tuple(a.julia_ctype for a in args) + ("Ptr{Cint}", ))) +
+                ("," if not len(args) else "") + "),\n" + " " * 10 +
+                ", ".join(tuple(a.julia_arg
+                                for a in args) + ("ierr", )) + ")\n")
+            if name == "getLastError":  # special case for getLastError() function
+                self.fwrite(
+                    f,
+                    '    ierr[] != 0 && error("Could not get last error")\n')
             else:
-                f.write('    ierr[] != 0 && error(gmsh.logger.getLastError())\n')
+                self.fwrite(
+                    f,
+                    '    ierr[] != 0 && error(gmsh.logger.getLastError())\n')
             for a in args:
-                if a.julia_post: f.write("    " + a.julia_post + "\n")
+                if a.julia_post: self.fwrite(f, "    " + a.julia_post + "\n")
             r = (["api_result_"]) if rtype else []
             r += list((o.julia_return for o in oargs))
-            f.write("    return ")
+            self.fwrite(f, "    return ")
             if len(r) == 0:
-                f.write("nothing")
+                self.fwrite(f, "nothing")
             else:
-                f.write(", ".join(r))
-            f.write("\nend\n")
+                self.fwrite(f, ", ".join(r))
+            self.fwrite(f, "\nend\n")
 
         def write_module(f, m, c_mpath, jl_mpath, level):
-            f.write('\n"""\n    ')
-            f.write("module " + jl_mpath + m.name + "\n\n")
-            f.write("\n".join(textwrap.wrap(capi(m.doc), 80)) + "\n")
-            f.write('"""\n')
-            f.write("module " + m.name + "\n\n")
+            self.fwrite(f, '\n"""\n    ')
+            self.fwrite(f, "module " + jl_mpath + m.name + "\n\n")
+            self.fwrite(f, "\n".join(textwrap.wrap(capi(m.doc), 80)) + "\n")
+            self.fwrite(f, '"""\n')
+            self.fwrite(f, "module " + m.name + "\n\n")
             if level == 1:
-                f.write('const {0}_API_VERSION = "{1}.{2}.{3}"\n'.format(
-                    ns.upper(), self.version_major, self.version_minor,
-                    self.version_patch))
-                f.write('const {0}_API_VERSION_MAJOR = {1}\n'.format(
-                    ns.upper(), self.version_major))
-                f.write('const {0}_API_VERSION_MINOR = {1}\n'.format(
-                    ns.upper(), self.version_minor))
-                f.write('const {0}_API_VERSION_PATCH = {1}\n'.format(
-                    ns.upper(), self.version_patch))
-                f.write('const libdir = dirname(@__FILE__)\n')
-                f.write(
-                    'const libname = Sys.iswindows() ? "' + ns +
+                self.fwrite(
+                    f, 'const {0}_API_VERSION = "{1}.{2}.{3}"\n'.format(
+                        ns.upper(), self.version_major, self.version_minor,
+                        self.version_patch))
+                self.fwrite(
+                    f, 'const {0}_API_VERSION_MAJOR = {1}\n'.format(
+                        ns.upper(), self.version_major))
+                self.fwrite(
+                    f, 'const {0}_API_VERSION_MINOR = {1}\n'.format(
+                        ns.upper(), self.version_minor))
+                self.fwrite(
+                    f, 'const {0}_API_VERSION_PATCH = {1}\n'.format(
+                        ns.upper(), self.version_patch))
+                self.fwrite(f, 'const libdir = dirname(@__FILE__)\n')
+                self.fwrite(
+                    f, 'const libname = Sys.iswindows() ? "' + ns +
                     '-{0}.{1}'.format(self.version_major, self.version_minor) +
                     '.dll" : "lib' + ns + '"\n')
-                f.write('import Libdl\n')
-                f.write(
-                    'const lib = Libdl.find_library([libname], [libdir])\n')
+                self.fwrite(f, 'import Libdl\n')
+                self.fwrite(
+                    f, 'const lib = Libdl.find_library([libname], [libdir])\n')
             else:
-                f.write("import " + ("." * level) + ns + "\n")
+                self.fwrite(f, "import " + ("." * level) + ns + "\n")
             if c_mpath:
                 c_mpath += m.name[0].upper() + m.name[1:]
                 jl_mpath += m.name + "."
@@ -1587,10 +1647,12 @@ class API:
                 write_function(f, fun, c_mpath, jl_mpath)
             for module in m.submodules:
                 write_module(f, module, c_mpath, jl_mpath, level + 1)
-            f.write("\nend # end of module " + m.name + "\n")
+            self.fwrite(f, "\nend # end of module " + m.name + "\n")
 
+        self.current_lineno = 1
         with open(ns + ".jl", "w") as f:
-            f.write(
+            self.fwrite(
+                f,
                 julia_header.format(self.copyright, self.issues, self.code,
                                     self.version_major, self.version_minor,
                                     self.version_patch))
@@ -1621,8 +1683,8 @@ class API:
             return data
 
         def find_function(lang, name, data):
-            only_unique = False # only report unique matches?
-            in_comments = True # report matches in comments?
+            only_unique = False  # only report unique matches?
+            in_comments = True  # report matches in comments?
             if lang == 'Python':
                 func = name.replace('/', '.')
                 comment = '#'
@@ -1659,7 +1721,7 @@ class API:
             f.write("@ftable @code\n")
             for rtype, name, args, doc, special in module.fs:
                 tfull = path + '/' + name
-                if len(tfull) > 40: # insert discretionary hyphen if too long
+                if len(tfull) > 40:  # insert discretionary hyphen if too long
                     for i in range(40, len(tfull)):
                         if tfull[i].isupper():
                             tfull = tfull[:i] + '@-' + tfull[i:]
@@ -1678,16 +1740,36 @@ class API:
                     for oarg in oargs) if len(oargs) else "-") + "\n")
                 f.write("@item " + "Return:\n" +
                         (rtype.rtexi_type if rtype else "-") + "\n")
+                f.write("@item " + "Language-specific definition:\n")
+                f.write("@url{@value{GITLAB-PREFIX}/api/gmsh.h#L" +
+                        str(self.api_lineno['cpp'][path + '/' + name]) +
+                        ",C++}")
+                f.write(", @url{@value{GITLAB-PREFIX}/api/gmshc.h#L" +
+                        str(self.api_lineno['c'][path + '/' + name]) + ",C}")
+                try:
+                    f.write(", @url{@value{GITLAB-PREFIX}/api/gmsh.py#L" +
+                            str(self.api_lineno['py'][path + '/' + name]) +
+                            ",Python}")
+                except:
+                    pass
+                try:
+                    f.write(", @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L" +
+                            str(self.api_lineno['jl'][path + '/' + name]) +
+                            ",Julia}")
+                except:
+                    pass
+                f.write("\n")
                 cpp = find_function('C++', path + '/' + name, cpp_data)
                 py = find_function('Python', path + '/' + name, py_data)
+
                 def write_matches(lang, matches, max_matches):
                     f.write(lang + ' (')
                     for i in range(min(max_matches,
                                        len(matches))):  # write max 5 matches
                         if i > 0: f.write(', ')
-                        f.write('@url{@value{GITLAB-PREFIX}/' +  matches[i][0][3:] +
-                                '#L' + str(matches[i][1]) + ',' +
-                                os.path.basename(matches[i][0]) + '}')
+                        f.write('@url{@value{GITLAB-PREFIX}/' +
+                                matches[i][0][3:] + '#L' + str(matches[i][1]) +
+                                ',' + os.path.basename(matches[i][0]) + '}')
                     if len(matches) > max_matches: f.write(', ...')
                     f.write(')')
 
