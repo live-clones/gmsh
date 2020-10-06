@@ -1596,79 +1596,86 @@ GMSH_API void gmshModelGeoSetMaxTag(const int dim,
 /* Synchronize the built-in CAD representation with the current Gmsh model.
  * This can be called at any time, but since it involves a non trivial amount
  * of processing, the number of synchronization points should normally be
- * minimized. */
+ * minimized. Without synchronization the entities in the built-in CAD
+ * representation are not available to any function outside of the built-in
+ * CAD kernel functions. */
 GMSH_API void gmshModelGeoSynchronize(int * ierr);
 
-/* Set a mesh size constraint on the model entities `dimTags'. Currently only
- * entities of dimension 0 (points) are handled. */
+/* Set a mesh size constraint on the entities `dimTags' in the built-in CAD
+ * kernel representation. Currently only entities of dimension 0 (points) are
+ * handled. */
 GMSH_API void gmshModelGeoMeshSetSize(int * dimTags, size_t dimTags_n,
                                       const double size,
                                       int * ierr);
 
-/* Set a transfinite meshing constraint on the curve `tag', with `numNodes'
- * nodes distributed according to `meshType' and `coef'. Currently supported
- * types are "Progression" (geometrical progression with power `coef') and
- * "Bump" (refinement toward both extremities of the curve). */
+/* Set a transfinite meshing constraint on the curve `tag' in the built-in CAD
+ * kernel representation, with `numNodes' nodes distributed according to
+ * `meshType' and `coef'. Currently supported types are "Progression"
+ * (geometrical progression with power `coef') and "Bump" (refinement toward
+ * both extremities of the curve). */
 GMSH_API void gmshModelGeoMeshSetTransfiniteCurve(const int tag,
                                                   const int nPoints,
                                                   const char * meshType,
                                                   const double coef,
                                                   int * ierr);
 
-/* Set a transfinite meshing constraint on the surface `tag'. `arrangement'
- * describes the arrangement of the triangles when the surface is not flagged
- * as recombined: currently supported values are "Left", "Right",
- * "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify
- * the (3 or 4) corners of the transfinite interpolation explicitly;
- * specifying the corners explicitly is mandatory if the surface has more that
- * 3 or 4 points on its boundary. */
+/* Set a transfinite meshing constraint on the surface `tag' in the built-in
+ * CAD kernel representation. `arrangement' describes the arrangement of the
+ * triangles when the surface is not flagged as recombined: currently
+ * supported values are "Left", "Right", "AlternateLeft" and "AlternateRight".
+ * `cornerTags' can be used to specify the (3 or 4) corners of the transfinite
+ * interpolation explicitly; specifying the corners explicitly is mandatory if
+ * the surface has more that 3 or 4 points on its boundary. */
 GMSH_API void gmshModelGeoMeshSetTransfiniteSurface(const int tag,
                                                     const char * arrangement,
                                                     int * cornerTags, size_t cornerTags_n,
                                                     int * ierr);
 
-/* Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
- * be used to specify the (6 or 8) corners of the transfinite interpolation
- * explicitly. */
+/* Set a transfinite meshing constraint on the surface `tag' in the built-in
+ * CAD kernel representation. `cornerTags' can be used to specify the (6 or 8)
+ * corners of the transfinite interpolation explicitly. */
 GMSH_API void gmshModelGeoMeshSetTransfiniteVolume(const int tag,
                                                    int * cornerTags, size_t cornerTags_n,
                                                    int * ierr);
 
-/* Set a recombination meshing constraint on the model entity of dimension
- * `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
- * triangles into quadrangles) are supported. */
+/* Set a recombination meshing constraint on the entity of dimension `dim' and
+ * tag `tag' in the built-in CAD kernel representation. Currently only
+ * entities of dimension 2 (to recombine triangles into quadrangles) are
+ * supported. */
 GMSH_API void gmshModelGeoMeshSetRecombine(const int dim,
                                            const int tag,
                                            const double angle,
                                            int * ierr);
 
-/* Set a smoothing meshing constraint on the model entity of dimension `dim'
- * and tag `tag'. `val' iterations of a Laplace smoother are applied. */
+/* Set a smoothing meshing constraint on the entity of dimension `dim' and tag
+ * `tag' in the built-in CAD kernel representation. `val' iterations of a
+ * Laplace smoother are applied. */
 GMSH_API void gmshModelGeoMeshSetSmoothing(const int dim,
                                            const int tag,
                                            const int val,
                                            int * ierr);
 
-/* Set a reverse meshing constraint on the model entity of dimension `dim' and
- * tag `tag'. If `val' is true, the mesh orientation will be reversed with
- * respect to the natural mesh orientation (i.e. the orientation consistent
- * with the orientation of the geometry). If `val' is false, the mesh is left
- * as-is. */
+/* Set a reverse meshing constraint on the entity of dimension `dim' and tag
+ * `tag' in the built-in CAD kernel representation. If `val' is true, the mesh
+ * orientation will be reversed with respect to the natural mesh orientation
+ * (i.e. the orientation consistent with the orientation of the geometry). If
+ * `val' is false, the mesh is left as-is. */
 GMSH_API void gmshModelGeoMeshSetReverse(const int dim,
                                          const int tag,
                                          const int val,
                                          int * ierr);
 
-/* Set the meshing algorithm on the model entity of dimension `dim' and tag
- * `tag'. Currently only supported for `dim' == 2. */
+/* Set the meshing algorithm on the entity of dimension `dim' and tag `tag' in
+ * the built-in CAD kernel representation. Currently only supported for `dim'
+ * == 2. */
 GMSH_API void gmshModelGeoMeshSetAlgorithm(const int dim,
                                            const int tag,
                                            const int val,
                                            int * ierr);
 
-/* Force the mesh size to be extended from the boundary, or not, for the model
- * entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
- * == 2. */
+/* Force the mesh size to be extended from the boundary, or not, for the
+ * entity of dimension `dim' and tag `tag' in the built-in CAD kernel
+ * representation. Currently only supported for `dim' == 2. */
 GMSH_API void gmshModelGeoMeshSetSizeFromBoundary(const int dim,
                                                   const int tag,
                                                   const int val,
@@ -2335,7 +2342,9 @@ GMSH_API void gmshModelOccSetMaxTag(const int dim,
 /* Synchronize the OpenCASCADE CAD representation with the current Gmsh model.
  * This can be called at any time, but since it involves a non trivial amount
  * of processing, the number of synchronization points should normally be
- * minimized. */
+ * minimized. Without synchronization the entities in the OpenCASCADE CAD
+ * representation are not available to any function outside of the OpenCASCADE
+ * CAD kernel functions. */
 GMSH_API void gmshModelOccSynchronize(int * ierr);
 
 /* Set a mesh size constraint on the model entities `dimTags'. Currently only

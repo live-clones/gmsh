@@ -5874,11 +5874,12 @@ directly within their respective CAD kernels (i.e. using functions from
 the @code{gmsh/model/geo} or @code{gmsh/model/occ} namespaces,
 respectively), as Gmsh does not translate across CAD formats but rather
 directly accesses the native representation. CAD entities must be
-@emph{synchronized} with the model in order to be meshed.  1D and 2D
-meshing algorithms use the @emph{parametrization} of the underlying
-geometrical curve or surface to generate the mesh. Discrete entities can
-be remeshed provided that a parametrization is explicitly recomputed for
-them.
+@emph{synchronized} with the model in order to be meshed, or, more
+generally, for functions outside of @code{gmsh/model/geo} or
+@code{gmsh/model/occ} to manipulate them. 1D and 2D meshing algorithms
+use the @emph{parametrization} of the underlying geometrical curve or
+surface to generate the mesh. Discrete entities can be remeshed provided
+that a parametrization is explicitly recomputed for them.
 @item
 Mesh data is made of @emph{elements} (points, lines, triangles,
 quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by

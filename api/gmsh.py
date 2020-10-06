@@ -3974,7 +3974,9 @@ class model:
             Synchronize the built-in CAD representation with the current Gmsh model.
             This can be called at any time, but since it involves a non trivial amount
             of processing, the number of synchronization points should normally be
-            minimized.
+            minimized. Without synchronization the entities in the built-in CAD
+            representation are not available to any function outside of the built-in
+            CAD kernel functions.
             """
             ierr = c_int()
             lib.gmshModelGeoSynchronize(
@@ -3993,8 +3995,9 @@ class model:
                 """
                 gmsh.model.geo.mesh.setSize(dimTags, size)
 
-                Set a mesh size constraint on the model entities `dimTags'. Currently only
-                entities of dimension 0 (points) are handled.
+                Set a mesh size constraint on the entities `dimTags' in the built-in CAD
+                kernel representation. Currently only entities of dimension 0 (points) are
+                handled.
                 """
                 api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
                 ierr = c_int()
@@ -4010,10 +4013,11 @@ class model:
                 """
                 gmsh.model.geo.mesh.setTransfiniteCurve(tag, nPoints, meshType="Progression", coef=1.)
 
-                Set a transfinite meshing constraint on the curve `tag', with `numNodes'
-                nodes distributed according to `meshType' and `coef'. Currently supported
-                types are "Progression" (geometrical progression with power `coef') and
-                "Bump" (refinement toward both extremities of the curve).
+                Set a transfinite meshing constraint on the curve `tag' in the built-in CAD
+                kernel representation, with `numNodes' nodes distributed according to
+                `meshType' and `coef'. Currently supported types are "Progression"
+                (geometrical progression with power `coef') and "Bump" (refinement toward
+                both extremities of the curve).
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetTransfiniteCurve(
@@ -4030,13 +4034,13 @@ class model:
                 """
                 gmsh.model.geo.mesh.setTransfiniteSurface(tag, arrangement="Left", cornerTags=[])
 
-                Set a transfinite meshing constraint on the surface `tag'. `arrangement'
-                describes the arrangement of the triangles when the surface is not flagged
-                as recombined: currently supported values are "Left", "Right",
-                "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify
-                the (3 or 4) corners of the transfinite interpolation explicitly;
-                specifying the corners explicitly is mandatory if the surface has more that
-                3 or 4 points on its boundary.
+                Set a transfinite meshing constraint on the surface `tag' in the built-in
+                CAD kernel representation. `arrangement' describes the arrangement of the
+                triangles when the surface is not flagged as recombined: currently
+                supported values are "Left", "Right", "AlternateLeft" and "AlternateRight".
+                `cornerTags' can be used to specify the (3 or 4) corners of the transfinite
+                interpolation explicitly; specifying the corners explicitly is mandatory if
+                the surface has more that 3 or 4 points on its boundary.
                 """
                 api_cornerTags_, api_cornerTags_n_ = _ivectorint(cornerTags)
                 ierr = c_int()
@@ -4053,9 +4057,9 @@ class model:
                 """
                 gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags=[])
 
-                Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
-                be used to specify the (6 or 8) corners of the transfinite interpolation
-                explicitly.
+                Set a transfinite meshing constraint on the surface `tag' in the built-in
+                CAD kernel representation. `cornerTags' can be used to specify the (6 or 8)
+                corners of the transfinite interpolation explicitly.
                 """
                 api_cornerTags_, api_cornerTags_n_ = _ivectorint(cornerTags)
                 ierr = c_int()
@@ -4071,9 +4075,10 @@ class model:
                 """
                 gmsh.model.geo.mesh.setRecombine(dim, tag, angle=45.)
 
-                Set a recombination meshing constraint on the model entity of dimension
-                `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
-                triangles into quadrangles) are supported.
+                Set a recombination meshing constraint on the entity of dimension `dim' and
+                tag `tag' in the built-in CAD kernel representation. Currently only
+                entities of dimension 2 (to recombine triangles into quadrangles) are
+                supported.
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetRecombine(
@@ -4089,8 +4094,9 @@ class model:
                 """
                 gmsh.model.geo.mesh.setSmoothing(dim, tag, val)
 
-                Set a smoothing meshing constraint on the model entity of dimension `dim'
-                and tag `tag'. `val' iterations of a Laplace smoother are applied.
+                Set a smoothing meshing constraint on the entity of dimension `dim' and tag
+                `tag' in the built-in CAD kernel representation. `val' iterations of a
+                Laplace smoother are applied.
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetSmoothing(
@@ -4106,11 +4112,11 @@ class model:
                 """
                 gmsh.model.geo.mesh.setReverse(dim, tag, val=True)
 
-                Set a reverse meshing constraint on the model entity of dimension `dim' and
-                tag `tag'. If `val' is true, the mesh orientation will be reversed with
-                respect to the natural mesh orientation (i.e. the orientation consistent
-                with the orientation of the geometry). If `val' is false, the mesh is left
-                as-is.
+                Set a reverse meshing constraint on the entity of dimension `dim' and tag
+                `tag' in the built-in CAD kernel representation. If `val' is true, the mesh
+                orientation will be reversed with respect to the natural mesh orientation
+                (i.e. the orientation consistent with the orientation of the geometry). If
+                `val' is false, the mesh is left as-is.
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetReverse(
@@ -4126,8 +4132,9 @@ class model:
                 """
                 gmsh.model.geo.mesh.setAlgorithm(dim, tag, val)
 
-                Set the meshing algorithm on the model entity of dimension `dim' and tag
-                `tag'. Currently only supported for `dim' == 2.
+                Set the meshing algorithm on the entity of dimension `dim' and tag `tag' in
+                the built-in CAD kernel representation. Currently only supported for `dim'
+                == 2.
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetAlgorithm(
@@ -4143,9 +4150,9 @@ class model:
                 """
                 gmsh.model.geo.mesh.setSizeFromBoundary(dim, tag, val)
 
-                Force the mesh size to be extended from the boundary, or not, for the model
-                entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
-                == 2.
+                Force the mesh size to be extended from the boundary, or not, for the
+                entity of dimension `dim' and tag `tag' in the built-in CAD kernel
+                representation. Currently only supported for `dim' == 2.
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetSizeFromBoundary(
@@ -5632,7 +5639,9 @@ class model:
             Synchronize the OpenCASCADE CAD representation with the current Gmsh model.
             This can be called at any time, but since it involves a non trivial amount
             of processing, the number of synchronization points should normally be
-            minimized.
+            minimized. Without synchronization the entities in the OpenCASCADE CAD
+            representation are not available to any function outside of the OpenCASCADE
+            CAD kernel functions.
             """
             ierr = c_int()
             lib.gmshModelOccSynchronize(
