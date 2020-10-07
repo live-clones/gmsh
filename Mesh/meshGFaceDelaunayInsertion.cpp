@@ -1675,7 +1675,7 @@ void bowyerWatsonParallelograms(
   recombineIntoQuads(gf, false, 0, false, .1);
   removeTwoQuadsNodes(gf);
   //removaeDiamonds(gf);
-  meshWinslow2d (gf);
+  //  meshWinslow2d (gf);
   
   splitElementsInBoundaryLayerIfNeeded(gf);
 }

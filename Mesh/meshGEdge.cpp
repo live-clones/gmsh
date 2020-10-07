@@ -100,6 +100,7 @@ struct F_Lc {
     else
       lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
     SVector3 der = ge->firstDer(t);
+
     return norm(der) / lc_here;
   }
 };

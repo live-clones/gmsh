@@ -2657,7 +2657,6 @@ int flagQuadMeshSingularNodesOnFace(
   return 0;
 }
 
-
 int flagQuadMeshSingularNodes(const std::vector<GFace*> faces,
     const std::vector<std::array<double,5> >& singularities,
     const std::map<int,int>& faceSum35,
