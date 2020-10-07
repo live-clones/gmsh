@@ -1454,7 +1454,9 @@ void GenerateMesh(GModel *m, int ask)
 
   // Subdivide into quads or hexas
   if(m->getMeshStatus() == 2 && CTX::instance()->mesh.algoSubdivide == 1){
+    m->writeMSH("unrefined.msh");
     RefineMesh(m, CTX::instance()->mesh.secondOrderLinear, true);
+    m->writeMSH("refined.msh");
     meshWinslow2d (m,10);
   }
   else if(m->getMeshStatus() == 3 && CTX::instance()->mesh.algoSubdivide == 2)

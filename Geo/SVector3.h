@@ -9,6 +9,7 @@
 #include "SPoint3.h"
 #include <string>
 #include <stdio.h>
+#include <array>
 #include "GmshMessage.h"
 
 // concrete class for vector of size 3
