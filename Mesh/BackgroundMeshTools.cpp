@@ -249,7 +249,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y,
 
   // min of all sizes
   lc = std::min(lc, BGM_MeshSizeWithoutScaling(ge, U, V, X, Y, Z));
-
+  
   // constrain by lcMin and lcMax
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
@@ -261,7 +261,10 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y,
   }
 
   // size factor from entity
-  if(ge && ge->getMeshSizeFactor() != 1.0) lc *= ge->getMeshSizeFactor();
+
+  if(ge && ge->getMeshSizeFactor() != 1.0) {
+    lc *= ge->getMeshSizeFactor();
+  }
 
   // global size factor
   return lc * CTX::instance()->mesh.lcFactor;

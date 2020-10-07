@@ -317,7 +317,6 @@ bool outBounds(SPoint2 p, GFace *gf){
   for (int i=0;i<2;i++){
     Range<double> bnds = gf->parBounds(i);
     if (p[i] > bnds.high() || p[i] < bnds.low() ) {
-      printf("%g %d out bound %12.5E %12.5E\n",p[i],i, bnds.low(), bnds.high());
       return true;
     }
   }
@@ -469,7 +468,6 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	  //	}
       }
     }
-    printf("%d vertices created %g %g %g\n",NP,du[0],du[1],du[2]);
     for (int i=0;i<NP;i++){
       bool singular = !compute4neighbors(gf, *it, midpoint, newp, metricField, cross_field, du[i],dv[i],globalMult );
       if (!singular){

@@ -359,7 +359,10 @@ int GmshBatch()
       computeScaledCrossFieldView(GModel::current(), viewTag,
 				  CTX::instance()->mesh.numQuads/4, 6, 1.e-2, 1, "scaled_cross_field", 1,
 				  &singularities);
-      
+      std::vector<GFace *> temp;
+      temp.insert(temp.begin(), GModel::current()->firstFace(), GModel::current()->lastFace());
+      addSingularitiesAtAcuteCorners(temp,45,singularities);
+
       
       { // transfer to pack algo
 	std::string _ugly  = GModel::current()->getName()+"_singularities.txt";

@@ -228,7 +228,7 @@ int meshGFaceHxt(GModel *gm)
   }
 
   GeoLog::flush();
-  return 0;
+  //  return 0;
 
 
   // std::map<int, std::vector<double> > dataH;
@@ -335,7 +335,7 @@ int meshGFaceHxt(GModel *gm)
   GModel *gm2 = new GModel(gm->getName());
   
   gm2->readMSH("finalmesh.msh");	  	  
-
+  
   printf("WINSLOW START\n");
   meshWinslow2d (gm2);
   printf("WINSLOW ENDS\n");
