@@ -1684,7 +1684,7 @@ class API:
 
         def find_function(lang, name, data):
             only_unique = False  # only report unique matches?
-            in_comments = True  # report matches in comments?
+            in_comments = False  # report matches in comments?
             if lang == 'Python':
                 func = name.replace('/', '.')
                 comment = '#'
