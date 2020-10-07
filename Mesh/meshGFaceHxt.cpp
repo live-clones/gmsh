@@ -11,6 +11,10 @@
 // #include "gmshCrossFields.h"
 #include "fastScaledCrossField.h"
 #include "meshWinslow2d.h"
+#include "Field.h"
+#include "meshGFaceOptimize.h"
+
+
 #include "geolog.h"
 
 #include "gmsh.h"
@@ -223,6 +227,75 @@ int computeCrossFieldAndScalingForHxt(
   return 0;
 }
 
+
+int getCrossFieldAndScaling(
+    GModel* gm,
+    Field *cross_field,
+    const std::vector<MVertex*>& vertices,
+    std::map<size_t, std::array<double,7> >& vertexDirections) 
+{
+  Msg::Debug("get cross field and scaling ...");
+
+  std::vector<GFace*> faces;
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    faces.push_back(*it);
+  }
+
+  for (GFace* gf: faces) {
+    v2t_cont adj;
+    buildVertexToElement(gf->triangles, adj);
+
+    std::map<MVertex*, double, MVertexPtrLessThan> sizes;
+    v2t_cont::iterator it = adj.begin();
+    while(it != adj.end()) {
+      MVertex *v = it->first;
+      SVector3 t1;
+      (*cross_field)(v->x(), v->y(), v->z(), t1, gf);
+      sizes[v] = t1.norm();
+      ++it;
+    }
+  }
+ 
+
+
+
+
+  std::array<double,7> zero7 = {0.,0.,0.,0.,0.,0.,0.};
+  std::vector<std::array<double,7> > vertexNumDirections(vertices.size(),zero7);
+ 
+  for (GFace* gf: faces) {
+    for (MTriangle* t: gf->triangles) {
+      if (t == NULL) continue;
+      SVector3 N = tri_normal(t);
+      for (size_t lv = 0; lv < 3; ++lv) {
+/*        size_t num = t->getVertex(lv)->getNum();*/
+        //if (num >= vertexNumDirections.size()) vertexNumDirections.resize(num+1,zero7);
+
+        MVertex *v = t->getVertex(lv);
+
+        std::cout << v->getNum() << std::endl;
+
+        std::cout << v->x() << std::endl;
+
+        SVector3 t1;
+
+        std::cout << v->onWhat() << std::endl;
+
+
+        int test = (*cross_field).numComponents(); 
+        std::cout << test << std::endl;
+        (*cross_field)(v->x(),v->y(),v->z(),t1,gf);
+        std::cout << "ok"<<std::endl;
+        //std::cout << t1.norm() << std::endl;
+      }
+ 
+    }
+  }
+
+
+  return 0;
+}
+
 int meshGFaceHxt(GModel *gm)
 {
   Msg::Debug("mesh CAD faces with Hxt ...");
@@ -231,6 +304,11 @@ int meshGFaceHxt(GModel *gm)
   HXT_CHECK(hxtSetMessageCallback(messageCallback));
 
   gm->createTopologyFromMesh();
+
+
+ 
+
+
 
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
@@ -245,6 +323,40 @@ int meshGFaceHxt(GModel *gm)
   size_t temp = 0;
   scanf("%d",&temp);
   targetNumberOfQuads = temp;
+
+
+
+
+
+  //Field *cross_field = NULL;
+  
+  //FieldManager *fields = gm->getFields();
+  //if(fields->getBackgroundField() > 0) {        
+    //cross_field = fields->get(fields->getBackgroundField());
+    //if(cross_field->numComponents() != 3) {// we hae a true scaled cross fields !!
+			//Msg::Error ("Packing of Parallelograms require a scaled cross field");
+			//Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
+			//Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
+			//return -1;
+    //}
+  //}
+  //else{
+		//Msg::Error ("Packing of Parallelograms require a scaled cross field");
+		//Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
+		//Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
+		//return -1;
+  //}
+  //std::cout << cross_field << std::endl;
+  //std::map<size_t, std::array<double,7> > vDir;
+  //int gt = getCrossFieldAndScaling(gm, cross_field, c2v, vDir);
+  //if (gt != 0) {
+    //Msg::Error("failed to get cross field and scaling");
+    //return -1;
+  //}
+
+
+	
+
 
   
 

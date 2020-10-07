@@ -17,7 +17,20 @@
 #include "meshGFaceOptimize.h"
 #include "Field.h"
 
+#include "discreteFace.h"
 
+
+//static GPoint CLOSESTPOINT (GFace *gf, const SPoint3 &p, double uv[2]){
+  //if (gf->geomType() == GEntity::DiscreteSurface){
+    //discreteFace* fd = dynamic_cast<discreteFace*>(gf);
+    //if (fd == NULL) {
+      //return GPoint(p.x(),p.y(),p.z(),gf,0,0);
+    //}
+    //printf("project\n");
+    //return fd->closestPoint(p,p.data());
+  //}
+  //return gf->closestPoint(p,uv);
+/*}*/
 
 static GPoint CLOSESTPOINT (GFace *gf, const SPoint3 &p, double uv[2]){
   if (gf->geomType() == GEntity::DiscreteSurface){
