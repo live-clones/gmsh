@@ -60,6 +60,8 @@ gmsh.model.geo.addPlaneSurface([13, 14], 15)
 
 e = gmsh.model.geo.extrude([(2, 15)], 0, 0, h)
 
+gmsh.model.geo.synchronize()
+
 # Create physical groups, which are used to define the domain of the
 # (co)homology computation and the subdomain of the relative (co)homology
 # computation.
@@ -104,8 +106,6 @@ gmsh.model.addPhysicalGroup(dim=2,
 gmsh.model.setPhysicalName(dim=2,
                            tag=complement_physical_tag,
                            name="Complement")
-
-gmsh.model.geo.synchronize()
 
 # Find bases for relative homology spaces of the domain modulo the four
 # terminals.

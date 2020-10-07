@@ -6,9 +6,8 @@
 //
 // -----------------------------------------------------------------------------
 
-// The OpenCASCADE geometry kernel allows to import STEP files and to modify
-// them. In this tutorial we will load a STEP geometry and partition it into
-// slices.
+// The OpenCASCADE CAD kernel allows to import STEP files and to modify them. In
+// this tutorial we will load a STEP geometry and partition it into slices.
 
 #include <set>
 #include <cmath>

@@ -120,8 +120,9 @@ end
 
 gmsh.model.geo.addVolume(shells, 186);
 
-gmsh.model.addPhysicalGroup(3, [186], 10);
 gmsh.model.geo.synchronize()
+
+gmsh.model.addPhysicalGroup(3, [186], 10);
 
 gmsh.model.mesh.generate(3)
 gmsh.write("t5.msh")

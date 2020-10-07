@@ -25,12 +25,12 @@ int main(int argc, char **argv)
   // new default (unnamed) model will be created on the fly, if necessary.
   gmsh::model::add("t1");
 
-  // The C++ API provides direct access to each supported geometry kernel. The
-  // built-in kernel is used in this first tutorial: the corresponding API
-  // functions live in the "gmsh::model::geo" namespace.
+  // The C++ API provides direct access to each supported geometry (CAD)
+  // kernel. The built-in kernel is used in this first tutorial: the
+  // corresponding API functions live in the "gmsh::model::geo" namespace.
 
   // The first type of `elementary entity' in Gmsh is a `Point'. To create a
-  // point with the built-in geometry kernel, the C++ API function is
+  // point with the built-in CAD kernel, the C++ API function is
   // gmsh::model::geo::addPoint():
   // - the first 3 arguments are the point coordinates (x, y, z)
   // - the next (optional) argument is the target mesh size (the "characteristic
@@ -90,6 +90,17 @@ int main(int argc, char **argv)
   // for an example of a surface with a hole):
   gmsh::model::geo::addPlaneSurface({1}, 1);
 
+  // Before they can be meshed (and, more generally, before they can be used by
+  // API functions outside of the built-in CAD kernel functions), the CAD
+  // entities must be synchronized with the Gmsh model, which will create the
+  // relevant Gmsh data structures. This is achieved by the
+  // gmsh.model.geo.synchronize() API call for the built-in CAD
+  // kernel. Synchronizations can be called at any time, but they involve a non
+  // trivial amount of processing; so while you could synchronize the internal
+  // CAD data after every CAD command, it is usually better to minimize the
+  // number of synchronization points.
+  gmsh::model::geo::synchronize();
+
   // At this level, Gmsh knows everything to display the rectangular surface 1
   // and to mesh it. An optional step is needed if we want to group elementary
   // geometrical entities into more meaningful groups, e.g. to define some
@@ -111,15 +122,6 @@ int main(int argc, char **argv)
   gmsh::model::addPhysicalGroup(1, {1, 2, 4}, 5);
   int ps = gmsh::model::addPhysicalGroup(2, {1});
   gmsh::model::setPhysicalName(2, ps, "My surface");
-
-  // Before it can be meshed, the internal geometrical representation must be
-  // synchronized with the Gmsh model, which will create the relevant Gmsh data
-  // structures. This is achieved by the gmsh::model::geo::synchronize() API
-  // call for the built-in geometry kernel. Synchronizations can be called at
-  // any time, but they involve a non trivial amount of processing; so while you
-  // could synchronize the internal CAD data after every CAD command, it is
-  // usually better to minimize the number of synchronization points.
-  gmsh::model::geo::synchronize();
 
   // We can then generate a 2D mesh...
   gmsh::model::mesh::generate(2);
@@ -155,13 +157,13 @@ int main(int argc, char **argv)
   if(!args.count("-nopopup")) gmsh::fltk::run();
 
   // Note that starting with Gmsh 3.0, models can be built using other geometry
-  // kernels than the default "built-in" kernel. To use the OpenCASCADE geometry
+  // kernels than the default "built-in" kernel. To use the OpenCASCADE CAD
   // kernel instead of the built-in kernel, you should use the functions in the
   // "gmsh::model::occ" namespace.
   //
-  // Different geometry kernels have different features. With OpenCASCADE,
-  // instead of defining the surface by successively defining 4 points, 4 curves
-  // and 1 curve loop, one can define the rectangular surface directly with
+  // Different CAD kernels have different features. With OpenCASCADE, instead of
+  // defining the surface by successively defining 4 points, 4 curves and 1
+  // curve loop, one can define the rectangular surface directly with
   //
   // gmsh::model::occ::addRectangle(.2, 0, 0, .1, .3);
   //

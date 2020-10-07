@@ -131,14 +131,16 @@ int main(int argc, char **argv)
     {{0, 103}, {0, 105}, {0, 109}, {0, 102}, {0, 28}, {0, 24}, {0, 6}, {0, 5}},
     lc * 3);
 
-  // We finally group volumes 129 and 130 in a single physical group with tag
-  // `1' and name "The volume":
+  // We finish by synchronizing the data from the built-in CAD kernel with the
+  // Gmsh model:
+  gmsh::model::geo::synchronize();
+
+  // We group volumes 129 and 130 in a single physical group with tag `1' and
+  // name "The volume":
   gmsh::model::addPhysicalGroup(3, {129, 130}, 1);
   gmsh::model::setPhysicalName(3, 1, "The volume");
 
-  // We finish by synchronizing the data from the built-in geometry kernel with
-  // the Gmsh model, and by generating and saving the mesh:
-  gmsh::model::geo::synchronize();
+  // We finally generate and save the mesh:
   gmsh::model::mesh::generate(3);
   gmsh::write("t2.msh");
 
@@ -146,13 +148,13 @@ int main(int argc, char **argv)
   // geometries, it is also sometimes useful to generate the `flat' geometry,
   // with an explicit representation of all the elementary entities.
   //
-  // With the built-in geometry kernel, this can be achieved by saving the model
-  // in the `Gmsh Unrolled GEO' format:
+  // With the built-in CAD kernel, this can be achieved by saving the model in
+  // the `Gmsh Unrolled GEO' format:
   //
   // gmsh::write("t2.geo_unrolled");
   //
-  // With the OpenCASCADE geometry kernel, unrolling the geometry can be
-  // achieved by exporting in the `OpenCASCADE BRep' format:
+  // With the OpenCASCADE CAD kernel, unrolling the geometry can be achieved by
+  // exporting in the `OpenCASCADE BRep' format:
   //
   // gmsh::write("t2.brep");
   //
@@ -160,10 +162,9 @@ int main(int argc, char **argv)
 
   // It is important to note that Gmsh never translates geometry data into a
   // common representation: all the operations on a geometrical entity are
-  // performed natively with the associated geometry kernel. Consequently, one
-  // cannot export a geometry constructed with the built-in kernel as an
-  // OpenCASCADE BRep file; or export an OpenCASCADE model as an Unrolled GEO
-  // file.
+  // performed natively with the associated CAD kernel. Consequently, one cannot
+  // export a geometry constructed with the built-in kernel as an OpenCASCADE
+  // BRep file; or export an OpenCASCADE model as an Unrolled GEO file.
 
   // Launch the GUI to see the results:
   std::set<std::string> args(argv, argv + argc);

@@ -79,10 +79,10 @@ ov2 = gmsh.model.geo.extrude([ov[2]], 0, 0, 0.12)
 gmsh.model.geo.mesh.setSize([(0,103), (0,105), (0,109), (0,102), (0,28),
                              (0, 24), (0,6), (0,5)], lc * 3)
 
+gmsh.model.geo.synchronize()
+
 gmsh.model.addPhysicalGroup(3, [129,130], 1)
 gmsh.model.setPhysicalName(3, 1, "The volume")
-
-gmsh.model.geo.synchronize()
 
 gmsh.model.mesh.generate(3)
 

@@ -32,9 +32,10 @@ ov = gmsh.model.geo.revolve([(2,28)], -0.1,0,0.1, 0,1,0, -pi/2, [7])
 ov = gmsh.model.geo.twist([(2,50)], 0,0.15,0.25, -2*h,0,0, 1,0,0,
                           angle*pi/180., [10], [], true)
 
+gmsh.model.geo.synchronize()
+
 gmsh.model.addPhysicalGroup(3, [1, 2, ov[2][2]], 101)
 
-gmsh.model.geo.synchronize()
 gmsh.model.mesh.generate(3)
 gmsh.write("t3.msh")
 

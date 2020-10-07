@@ -65,6 +65,8 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > e;
   gmsh::model::geo::extrude({{2, 15}}, 0, 0, h, e);
 
+  gmsh::model::geo::synchronize();
+
   // Create physical groups, which are used to define the domain of the
   // (co)homology computation and the subdomain of the relative (co)homology
   // computation.
@@ -105,8 +107,6 @@ int main(int argc, char **argv)
   int complement_physical_tag = 2003;
   gmsh::model::addPhysicalGroup(2, complement_tags, complement_physical_tag);
   gmsh::model::setPhysicalName(2, complement_physical_tag, "Complement");
-
-  gmsh::model::geo::synchronize();
 
   // Find bases for relative homology spaces of the domain modulo the four
   // terminals
