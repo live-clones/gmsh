@@ -20,7 +20,6 @@ int remeshCavity (GFace *gf,
 			 std::set<MElement*> &cavity,
 			 std::vector<MVertex*> &bnd,
        std::map<MVertex *, std::vector<MElement *>, MVertexPtrLessThan>& adj,
-			 std::map<MVertex*,int, MVertexPtrLessThan> &newSings,
-			 std::vector<MElement*>* newElements = NULL); /* If not null, get list of new quads */
+			 std::map<MVertex*,int, MVertexPtrLessThan> &newSings);
 
 #endif

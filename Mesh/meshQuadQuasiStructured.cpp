@@ -1322,6 +1322,8 @@ namespace QSQ {
     vector<int> valenceInCavity;
     /* singularities (flagged irregular) strictly inside */
     std::unordered_set<size_t> sings;
+    /* singularities (flagged irregular) strictly on the cavity on the cavity boundary */
+    std::unordered_set<size_t> singsBdr;
     /* irregular vertices (not sing.) inside, including bdr */
     std::unordered_set<size_t> irregular;
 
@@ -1372,6 +1374,8 @@ namespace QSQ {
       sort_unique(asings);
       for (size_t v: asings) if (valenceInCavity[v] == valence[v]) {
         sings.insert(v);
+      } else {
+        singsBdr.insert(v);
       }
       return true;
     }
@@ -1395,10 +1399,14 @@ namespace QSQ {
       do {
         size_t v2q = M.hedges[heq].vertex;
         valenceInCavity[v2q] += 1;
-        if (M.vertices[v2q].isSingularity && valenceInCavity[v2q] == valence[v2q]) {
-          DBG("new sing inside, bad ! abort", nq, v2q);
-          abort();
-          sings.insert(v2q);
+        if (M.vertices[v2q].isSingularity) {
+          if (valenceInCavity[v2q] == valence[v2q]) {
+            DBG("new sing inside, bad ! abort", nq, v2q);
+            abort();
+            sings.insert(v2q);
+          } else {
+            singsBdr.insert(v2q);
+          }
         } else if (vOnBoundary[v2q] && valence[v2q] != 2) {
           irregular.insert(v2q);
         } else if (!vOnBoundary[v2q] && valence[v2q] != 4) {
@@ -1942,8 +1950,7 @@ namespace QSQ {
     /* Remesh with gmsh */
     std::map<MVertex*,int, MVertexPtrLessThan> newSings;
     Msg::Info("remeshing cavity with %li quads, %li bdr vertices ...", quads.size(), bnd.size());
-    std::vector<MElement*> newQuads;
-    int status = remeshCavity(gf, cav.sides.size(), quads, bnd, adj, newSings, &newQuads);
+    int status = remeshCavity(gf, cav.sides.size(), quads, bnd, adj, newSings);
     Msg::Info("-> status=%i", status);
     if (status != 1) return false;
     for (const auto& kv: newSings) {
