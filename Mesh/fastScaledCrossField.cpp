@@ -19,6 +19,7 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "discreteEdge.h"
+#include "discreteFace.h"
 #include "Numeric.h"
 #include "gmsh.h"
 
@@ -311,6 +312,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
     double smax = -DBL_MAX;
     std::vector<size_t> vertices;
     vertices.reserve(nodeTags.size());
+    size_t ntris = 0;
     for (GFace* gf: components[i]) {
       for (MTriangle* t: gf->triangles) {
         double values[3] = {0,0,0};
@@ -326,10 +328,11 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
         }
         double a = std::abs(t->getVolume());
         integral += a * 1. / std::pow(1./3. * (values[0] + values[1] + values[2]),2);
+        ntris += 1;
       }
     }
     if (integral == 0.) {
-      Msg::Error("integral is 0 ...");
+      Msg::Error("total integral is 0 ... (%li components, %li triangles, smin=%.3e, smax=%.3e)", components.size(), ntris, smin, smax);
       return -1;
     }
     Msg::Debug("-- component %i (%i faces), exp(-H): min=%.3e, max=%.3e, integral=%.3e", 
@@ -1084,6 +1087,15 @@ int computeScaledCrossFieldView(GModel* gm,
     if (status != 0) {
       Msg::Error("failed to compute cross field for face %i",gf->tag());
     }
+  }
+
+  bool updateTopo = false;
+  for (GFace* gf: faces) {
+    discreteFace* df = dynamic_cast<discreteFace*>(gf);
+    if (df) { updateTopo = true; break; }
+  }
+  if (updateTopo) {
+    gm->createTopologyFromMesh();
   }
 
   std::vector<size_t> nodeTags;

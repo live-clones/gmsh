@@ -13,6 +13,7 @@
 #include "MVertex.h"
 #include "MEdge.h"
 #include "MLine.h"
+#include "discreteFace.h"
 #include "meshWinslow2d.h"
 #include "meshGFaceOptimize.h"
 #include "Field.h"
@@ -21,7 +22,11 @@
 
 static GPoint CLOSESTPOINT (GFace *gf, const SPoint3 &p, double uv[2]){
   if (gf->geomType() == GEntity::DiscreteSurface){
-    return GPoint(p.x(),p.y(),p.z(),gf,0,0);
+    discreteFace* fd = dynamic_cast<discreteFace*>(gf);
+    if (fd == NULL) {
+      return GPoint(p.x(),p.y(),p.z(),gf,0,0);
+    }
+    return fd->closestPoint(p,p.data());
   }
   return gf->closestPoint(p,uv);
 }
@@ -111,8 +116,9 @@ int remeshCavity (GFace *gf,
 			 std::set<MElement*> &cavity,
 			 std::vector<MVertex*> &bnd,
 			 v2t_cont &adj,
-			 std::map<MVertex*,int, MVertexPtrLessThan> &newSings){
-
+			 std::map<MVertex*,int, MVertexPtrLessThan> &newSings,
+			 std::vector<MElement*>* newElements /* If not null, get list of new quads */
+			 ){
   int nb5=0, nb3=0;
   {
     std::set<MVertex*> internal;
@@ -141,7 +147,7 @@ int remeshCavity (GFace *gf,
     if (inside == 1)corners.push_back(i);
   }
 
-  printf(" ... index = %i, nb5=%i, nb3=%i, corners.size()=%li\n", index, nb5, nb3, corners.size());
+  Msg::Debug("remeshCavity ... index = %i, nb5=%i, nb3=%i, corners.size()=%li\n", index, nb5, nb3, corners.size());
 
   if (index == 5 && nb5 == 1 && nb3 == 0)return 0;
   if (index == 3 && nb3 == 1 && nb5 == 0)return 0;
@@ -171,11 +177,11 @@ int remeshCavity (GFace *gf,
     int a0 = (n0+n1-n2)/2;
     int a1 = (n1+n2-n0)/2;
     int a2 = (n0+n2-n1)/2;
-    printf("... bnd.size()=%li, n0=%i, n1=%i, n2=%i\n", bnd.size(), n0, n1, n2);
+    // printf("... bnd.size()=%li, n0=%i, n1=%i, n2=%i\n", bnd.size(), n0, n1, n2);
 
     if (a0 <= 0 || a1 <= 0 || a2 <= 0)return -1;
     
-    if (a0 == a1 && a0 == a2)return 1;
+    // if (a0 == a1 && a0 == a2)return 1;
     
     if (a0+a2 != n0 || a0+a1 != n1 || a1+a2 != n2){
       printf("coucou %d %d %d\n",a0,a1,a2);
@@ -238,6 +244,10 @@ int remeshCavity (GFace *gf,
     for (size_t i=0;i<newQuads.size();i++){
       addToAdjacencyList (newQuads[i],adj);
     }
+    if (newElements != NULL) {
+      newElements->resize(newQuads.size());
+      for (size_t i=0;i<newQuads.size();i++) (*newElements)[i] = newQuads[i];
+    }
     return 1;
   }
   // 5 patch --> one singularity
@@ -272,21 +282,21 @@ int remeshCavity (GFace *gf,
       Msg::Info("non meshable blob with 5 corners found %d %d %d %d %d",a0,a1,a2,a3,a4);
       return 0;
     }
-    
+
     if (a0+a1-n0 ||
-	a2+a3-n1 ||
-	a1+a4-n2 ||
-	a0+a3-n3 ||
-	a2+a4-n4)
-      {
-	printf("--> n's %d %d %d %d %d\n",n0,n1,n2,n3,n4);
-	printf("--> a's %d %d %d %d %d\n",a0,a1,a2,a3,a4);
-	printf("5 patch found but impossible to mesh\n");
-	return -1;
-      }  
+        a2+a3-n1 ||
+        a1+a4-n2 ||
+        a0+a3-n3 ||
+        a2+a4-n4)
+    {
+      printf("--> n's %d %d %d %d %d\n",n0,n1,n2,n3,n4);
+      printf("--> a's %d %d %d %d %d\n",a0,a1,a2,a3,a4);
+      printf("5 patch found but impossible to mesh\n");
+      return -1;
+    }  
     else
-      {
-      }
+    {
+    }
 
 
     std::vector<MVertex*> vec_0_01; for (size_t i=0;i<=a0;i++)vec_0_01.push_back(bnd[(corners[0]+i)%bnd.size()]);
@@ -345,6 +355,10 @@ int remeshCavity (GFace *gf,
     for (size_t i=0;i<newQuads.size();i++){
       addToAdjacencyList (newQuads[i],adj);
     }
+    if (newElements != NULL) {
+      newElements->resize(newQuads.size());
+      for (size_t i=0;i<newQuads.size();i++) (*newElements)[i] = newQuads[i];
+    }
     return 1;
   }
   else if (corners.size() == index && index == 4){
@@ -363,65 +377,69 @@ int remeshCavity (GFace *gf,
       createQuadPatch (gf, vec_0_1, vec_1_2, vec_2_3, vec_3_0, newQuads);
 
       Msg::Info("  Quadrilateral patch (%lu quads -> %lu quads) with (%d,%d) sing. (3,5) replaced by a regular grid",
-		cavity.size(), newQuads.size(),nb3, nb5);
+          cavity.size(), newQuads.size(),nb3, nb5);
 
       for (std::set<MElement*>::iterator it = cavity.begin(); it != cavity.end() ; ++it){
-	MQuadrangle *q = dynamic_cast<MQuadrangle*>(*it);	      
-	if (!q)Msg::Error ("A non quad is present in the list of quad of face %lu",gf->tag());
-	gf->quadrangles.erase (std::remove(gf->quadrangles.begin(),gf->quadrangles.end(),q),gf->quadrangles.end());
-	removeFromAdjacencyList(*it,adj);
+        MQuadrangle *q = dynamic_cast<MQuadrangle*>(*it);	      
+        if (!q)Msg::Error ("A non quad is present in the list of quad of face %lu",gf->tag());
+        gf->quadrangles.erase (std::remove(gf->quadrangles.begin(),gf->quadrangles.end(),q),gf->quadrangles.end());
+        removeFromAdjacencyList(*it,adj);
       }
       for (size_t i=0;i<newQuads.size();i++){
-	addToAdjacencyList (newQuads[i],adj);
+        addToAdjacencyList (newQuads[i],adj);
+      }
+      if (newElements != NULL) {
+        newElements->resize(newQuads.size());
+        for (size_t i=0;i<newQuads.size();i++) (*newElements)[i] = newQuads[i];
       }
       return 1;
     }
     else if ((n0>1 && n1>1 && n2>1 && n3>1) &&
-	     ((n0 == n2 && abs(n1-n3) == 2) ||
-	      (n1 == n3 && abs(n0-n2) == 2))){
+        ((n0 == n2 && abs(n1-n3) == 2) ||
+         (n1 == n3 && abs(n0-n2) == 2))){
       // make the right rotation to allow one single implementation
       // n0 == n2
       // n1 + 2 = n3
 
       int a0,a1,a2,a3,start;
-      
+
       Msg::Info("found a cavity (bnd %lu) with 4 corners %d %d %d %d --> creation of a dipole",bnd.size(),n0,n1,n2,n3);
       if (n0 == n2 && n1+2 == n3){
-	a0 = n0/2;
-	a1 = n0 - a0 - 1;
-	a2 = n1/2;
-	a3 = n1 - a2;
+        a0 = n0/2;
+        a1 = n0 - a0 - 1;
+        a2 = n1/2;
+        a3 = n1 - a2;
 
-	//	printf("%d %d %d %d\n",a0,a1,a2,a3);
-	
-	start = corners[0];
+        //	printf("%d %d %d %d\n",a0,a1,a2,a3);
+
+        start = corners[0];
       }
       else if (n0 == n2 && n1-2 == n3){
-	a0 = n0/2;
-	a1 = n0 - a0 - 1;
-	a2 = n3/2;
-	a3 = n3 - a2;
-	start = corners[2];	
+        a0 = n0/2;
+        a1 = n0 - a0 - 1;
+        a2 = n3/2;
+        a3 = n3 - a2;
+        start = corners[2];	
       }
       else if (n1 == n3 && n0-2 == n2){
-	a0 = n1/2;
-	a1 = n1 - a0 - 1;
-	a2 = n2/2;
-	a3 = n2 - a2;
-	start = corners[1];	
+        a0 = n1/2;
+        a1 = n1 - a0 - 1;
+        a2 = n2/2;
+        a3 = n2 - a2;
+        start = corners[1];	
       }
       else if (n1 == n3 && n0+2 == n2){
-	a0 = n3/2;
-	a1 = n3 - a0 - 1;
-	a2 = n0/2;
-	a3 = n0 - a2;
-	start = corners[3];	
+        a0 = n3/2;
+        a1 = n3 - a0 - 1;
+        a2 = n0/2;
+        a3 = n0 - a2;
+        start = corners[3];	
       }
       else {
-	printf("TO DO found a cavity (bnd %lu) with 4 corners %d %d %d %d\n",bnd.size(),n0,n1,n2,n3);
-	return 0;
+        printf("TO DO found a cavity (bnd %lu) with 4 corners %d %d %d %d\n",bnd.size(),n0,n1,n2,n3);
+        return 0;
       }
-      
+
       std::vector<MVertex*> vec_00; for (size_t i=0;i<=a0;i++) vec_00.push_back(bnd[(start+i)%bnd.size()]);
       std::vector<MVertex*> vec_01; for (size_t i=0;i<=1 ;i++) vec_01.push_back(bnd[(start+a0+i)%bnd.size()]);
       std::vector<MVertex*> vec_02;  for (size_t i=0;i<=a1;i++) vec_02.push_back(bnd[(start+a0+1+i)%bnd.size()]);
@@ -439,47 +457,47 @@ int remeshCavity (GFace *gf,
       std::vector<MVertex*> vec_33;   for (size_t i=0;i<=a2;i++) vec_33.push_back(bnd[(start+a0+1+a1+a2+a3+a1+1+a0+a3+1+1+i)%bnd.size()]);
 
       MVertex *sing_5, *sing_3, *left, *right; 
-      
+
       double x,y,z;
       {
-	x = 0.5* (vec_02[0]->x()+vec_21[0]->x());
-	y = 0.5* (vec_02[0]->y()+vec_21[0]->y());
-	z = 0.5* (vec_02[0]->z()+vec_21[0]->z());
-	SPoint3 p (x,y,z);
-	double uv[2] = {0,0};
-	GPoint pp = CLOSESTPOINT(gf,p,uv);
-	sing_5 = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
-	gf->mesh_vertices.push_back(sing_5);
+        x = 0.5* (vec_02[0]->x()+vec_21[0]->x());
+        y = 0.5* (vec_02[0]->y()+vec_21[0]->y());
+        z = 0.5* (vec_02[0]->z()+vec_21[0]->z());
+        SPoint3 p (x,y,z);
+        double uv[2] = {0,0};
+        GPoint pp = CLOSESTPOINT(gf,p,uv);
+        sing_5 = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
+        gf->mesh_vertices.push_back(sing_5);
       }
       {
-	x = 0.5* (vec_01[0]->x()+vec_22[0]->x());
-	y = 0.5* (vec_01[0]->y()+vec_22[0]->y());
-	z = 0.5* (vec_01[0]->z()+vec_22[0]->z());
-	SPoint3 p (x,y,z);
-	double uv[2] = {0,0};
-	GPoint pp = CLOSESTPOINT(gf,p,uv);
-	sing_3 = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
-	gf->mesh_vertices.push_back(sing_3);
+        x = 0.5* (vec_01[0]->x()+vec_22[0]->x());
+        y = 0.5* (vec_01[0]->y()+vec_22[0]->y());
+        z = 0.5* (vec_01[0]->z()+vec_22[0]->z());
+        SPoint3 p (x,y,z);
+        double uv[2] = {0,0};
+        GPoint pp = CLOSESTPOINT(gf,p,uv);
+        sing_3 = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
+        gf->mesh_vertices.push_back(sing_3);
       }
       {
-	x = 0.25* vec_01[0]->x()+ 0.75*vec_22[0]->x();
-	y = 0.25* vec_01[0]->y()+ 0.75*vec_22[0]->y();
-	z = 0.25* vec_01[0]->z()+ 0.75*vec_22[0]->z();
-	SPoint3 p (x,y,z);
-	double uv[2] = {0,0};
-	GPoint pp = CLOSESTPOINT(gf,p,uv);
-	left = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
-	gf->mesh_vertices.push_back(left);
+        x = 0.25* vec_01[0]->x()+ 0.75*vec_22[0]->x();
+        y = 0.25* vec_01[0]->y()+ 0.75*vec_22[0]->y();
+        z = 0.25* vec_01[0]->z()+ 0.75*vec_22[0]->z();
+        SPoint3 p (x,y,z);
+        double uv[2] = {0,0};
+        GPoint pp = CLOSESTPOINT(gf,p,uv);
+        left = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
+        gf->mesh_vertices.push_back(left);
       }
       {
-	x = 0.75* vec_01[0]->x()+ 0.25*vec_22[0]->x();
-	y = 0.75* vec_01[0]->y()+ 0.25*vec_22[0]->y();
-	z = 0.75* vec_01[0]->z()+ 0.25*vec_22[0]->z();
-	SPoint3 p (x,y,z);
-	double uv[2] = {0,0};
-	GPoint pp = CLOSESTPOINT(gf,p,uv);
-	right = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
-	gf->mesh_vertices.push_back(right);
+        x = 0.75* vec_01[0]->x()+ 0.25*vec_22[0]->x();
+        y = 0.75* vec_01[0]->y()+ 0.25*vec_22[0]->y();
+        z = 0.75* vec_01[0]->z()+ 0.25*vec_22[0]->z();
+        SPoint3 p (x,y,z);
+        double uv[2] = {0,0};
+        GPoint pp = CLOSESTPOINT(gf,p,uv);
+        right = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
+        gf->mesh_vertices.push_back(right);
       }
 
       std::vector<MVertex*> vec_02_sing_5 = createVertices (gf,  vec_01[0], sing_5, a2);
@@ -492,11 +510,11 @@ int remeshCavity (GFace *gf,
       std::vector<MVertex*> vec_01_left = createVertices (gf,  vec_01[0], left, a2);
       std::vector<MVertex*> vec_left_sing_3  = createVertices (gf,   left, sing_3, 1);
       std::vector<MVertex*> vec_right_sing_3 = createVertices (gf,   right, sing_3, 1);
-      
+
       std::vector<MVertex*> vec_left_33   = createVertices (gf,   left, vec_33[0], a0);
       std::vector<MVertex*> vec_sing_3_32 = createVertices (gf,   sing_3, vec_32[0], a0);
       std::vector<MVertex*> vec_right_31 = createVertices (gf,   right, vec_31[0], a0);
-      
+
       std::vector<MQuadrangle*> newQuads;
       createQuadPatch (gf, vec_02, vec_10, vec_11_sing_5,reverseVector(vec_02_sing_5), newQuads);
       createQuadPatch (gf, vec_11, vec_20, vec_21_sing_5,reverseVector(vec_11_sing_5), newQuads);
@@ -504,7 +522,7 @@ int remeshCavity (GFace *gf,
       createQuadPatch (gf, vec_01, vec_02_sing_5, vec_sing_5_left,reverseVector(vec_01_left), newQuads);
       createQuadPatch (gf, reverseVector(vec_sing_5_left), vec_sing_5_right,vec_right_sing_3,reverseVector(vec_left_sing_3), newQuads);
       createQuadPatch (gf, reverseVector(vec_sing_5_right), reverseVector(vec_21_sing_5), vec_21, vec_22_right,newQuads);
-      
+
       createQuadPatch (gf, vec_00, vec_01_left, vec_left_33,vec_33, newQuads);
       createQuadPatch (gf, reverseVector(vec_left_33), vec_left_sing_3, vec_sing_3_32,vec_32, newQuads);
       createQuadPatch (gf, reverseVector(vec_sing_3_32), reverseVector(vec_right_sing_3), vec_right_31 ,vec_31, newQuads);
@@ -512,17 +530,21 @@ int remeshCavity (GFace *gf,
 
 
       Msg::Info("  Quadrilateral patch remeshed (%lu->%lu quads) with (%d,%d) sing (3,5) replaced by a 5/3 dipole (%lu %lu)",		
-		cavity.size(), newQuads.size(), nb3, nb5, sing_3->getNum(), sing_5->getNum());
+          cavity.size(), newQuads.size(), nb3, nb5, sing_3->getNum(), sing_5->getNum());
 
-      
+
       for (std::set<MElement*>::iterator it = cavity.begin(); it != cavity.end() ; ++it){
-	MQuadrangle *q = dynamic_cast<MQuadrangle*>(*it);	      
-	if (!q)Msg::Error ("A non quad is present in the list of quad of face %lu",gf->tag());
-	gf->quadrangles.erase (std::remove(gf->quadrangles.begin(),gf->quadrangles.end(),q),gf->quadrangles.end());
-	removeFromAdjacencyList(*it,adj);
+        MQuadrangle *q = dynamic_cast<MQuadrangle*>(*it);	      
+        if (!q)Msg::Error ("A non quad is present in the list of quad of face %lu",gf->tag());
+        gf->quadrangles.erase (std::remove(gf->quadrangles.begin(),gf->quadrangles.end(),q),gf->quadrangles.end());
+        removeFromAdjacencyList(*it,adj);
       }
       for (size_t i=0;i<newQuads.size();i++){
-	addToAdjacencyList (newQuads[i],adj);
+        addToAdjacencyList (newQuads[i],adj);
+      }
+      if (newElements != NULL) {
+        newElements->resize(newQuads.size());
+        for (size_t i=0;i<newQuads.size();i++) (*newElements)[i] = newQuads[i];
       }
       return 1;      
     }    
@@ -1089,14 +1111,14 @@ static bool cavityMeshable (GFace *gf,
     int n2 = corners[3]-corners[2];
     int n3 = bnd.size() - n0 - n1 - n2;
     if ((n0 == n1 && abs(n2-n3) == 2) ||
-	(n1 == n3 && abs(n0-n2) == 2)){
+        (n1 == n3 && abs(n0-n2) == 2)){
     }
 
     if ((n0 == n2 && abs(n1-n3) == 2) ||
-	(n1 == n3 && abs(n0-n2) == 2)){
+        (n1 == n3 && abs(n0-n2) == 2)){
       if (nb5 != 1 || nb3 != 1){
-	return false;// FIXME
-	return true;
+        return false;// FIXME
+        return true;
       }
       return false;
     }
