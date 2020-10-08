@@ -833,7 +833,6 @@ int detectCrossFieldSingularities(
     const std::vector<std::size_t>& nodeTags,
     const std::vector<double>& scaling,
     std::vector<std::array<double,5> >& singularities) {
-  Msg::Warning("current dectection of singularities is very basic, just min and max of scaling inside faces");
 
   /* Accessible scaling values from vertex num */
   std::vector<double> num_to_scaling(nodeTags.size(),0.);

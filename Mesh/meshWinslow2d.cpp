@@ -217,11 +217,10 @@ int remeshCavity (GFace *gf,
     int a0 = (n0+n1-n2)/2;
     int a1 = (n1+n2-n0)/2;
     int a2 = (n0+n2-n1)/2;
-    printf("... bnd.size()=%li, n0=%i, n1=%i, n2=%i\n", bnd.size(), n0, n1, n2);
 
     if (a0 <= 0 || a1 <= 0 || a2 <= 0)return -1;
     
-    if (a0 == a1 && a0 == a2)return 1;
+    // if (a0 == a1 && a0 == a2)return 1;
     
     if (a0+a2 != n0 || a0+a1 != n1 || a1+a2 != n2){
       return -1;
@@ -2056,3 +2055,4 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
   fprintf(_f,"};\n");
   fclose(_f); 
 }
+
