@@ -129,19 +129,31 @@ def _ovectorvectorpair(ptr, size, n):
 
 def _ivectorint(o):
     if use_numpy:
-        return numpy.ascontiguousarray(o, numpy.int32).ctypes, c_size_t(len(o))
+        array = numpy.ascontiguousarray(o, numpy.int32)
+        if(len(o) and array.ndim != 1):
+            raise Exception("Invalid data for input vector of integers")
+        ct = array.ctypes
+        ct.array = array
+        return ct, c_size_t(len(o))
     else:
         return (c_int * len(o))(*o), c_size_t(len(o))
 
 def _ivectorsize(o):
     if use_numpy:
-        return numpy.ascontiguousarray(o, numpy.uintp).ctypes, c_size_t(len(o))
+        array = numpy.ascontiguousarray(o, numpy.uintp)
+        if(len(o) and array.ndim != 1):
+            raise Exception("Invalid data for input vector of sizes")
+        ct = array.ctypes
+        ct.array = array
+        return ct, c_size_t(len(o))
     else:
         return (c_size_t * len(o))(*o), c_size_t(len(o))
 
 def _ivectordouble(o):
     if use_numpy:
         array = numpy.ascontiguousarray(o, numpy.float64)
+        if(len(o) and array.ndim != 1):
+            raise Exception("Invalid data for input vector of doubles")
         ct = array.ctypes
         ct.array = array
         return  ct, c_size_t(len(o))
