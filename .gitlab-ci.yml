@@ -430,6 +430,8 @@ doc_official_release:
 doc_cookbook:
   stage: .post
   image: onelab/ubuntu20.04
+  only:
+    - gmsh/gmsh
   <<: *ssh_config
   script:
     - mdbook build doc/cookbook
