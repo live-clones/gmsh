@@ -117,6 +117,11 @@ namespace {
       }
     }
 
+    // because we use a set_intersection later on, the vectors of vertmap should be sorted
+    for (auto &it: vertmap) {
+      std::sort(it.second.begin(), it.second.end());
+    }
+
     // determine which faces belong to which tetrahedra by comparing vertices
     IDTetFaceMap tetfacemap;
     for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
