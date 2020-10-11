@@ -23,7 +23,7 @@ for e in gmsh.model.getEntities():
 # 2) create a new model
 gmsh.model.add('model2')
 
-# 3) create discrete entities in the new model and fill the mesh
+# 3) create discrete entities in the new model and copy the mesh
 for e in sorted(m):
     gmsh.model.addDiscreteEntity(e[0], e[1], [b[1] for b in m[e][0]])
     gmsh.model.mesh.addNodes(e[0], e[1], m[e][1][0], m[e][1][1])
@@ -31,23 +31,23 @@ for e in sorted(m):
 
 
 # application example: say we want to mesh model1 with a mesh size inferred by
-# some error estimation computed on the mesh and stored as a post-processing
-# view on this mesh. We need a copy of the mesh: otheriwse the support of the
+# some error estimation computed on its mesh, stored as a post-processing view
+# based on this mesh. We need a copy of the mesh: otherwise the support of the
 # post-processing view will be destroyed when we remesh.
 
-# 4) create a post-processing view based on the mesh
+# 4) so we create a post-processing view based on the mesh copy (i.e. on model2)
 view = gmsh.view.add('bgView')
 nodes = gmsh.model.mesh.getNodes()
 gmsh.view.addHomogeneousModelData(view, 0, 'model2', 'NodeData',
                                   nodes[0], nodes[1][::3]/10.+0.01)
 
-# 5) create a mesh size field for model1, based on this view
+# 5) we create the mesh size field for model1, based on the view based on model2
 gmsh.model.setCurrent('model1')
 field = gmsh.model.mesh.field.add("PostView")
 gmsh.model.mesh.field.setNumber(field, "ViewTag", view)
 gmsh.model.mesh.field.setAsBackgroundMesh(field)
 
-# 6) and (re)mesh model1 a second time, using that field
+# 6) and we mesh model1 a second time, using the mesh size field
 gmsh.option.setNumber("Mesh.CharacteristicLengthExtendFromBoundary", 0)
 gmsh.option.setNumber("Mesh.Algorithm3D", 10)
 gmsh.model.mesh.clear()
