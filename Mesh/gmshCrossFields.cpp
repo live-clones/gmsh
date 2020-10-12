@@ -52,6 +52,8 @@
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
 
+#include "conformalMapping.h"
+
 // static inline double lifting(double a, double _a)
 // {
 //   double D = M_PI * .5;
@@ -6229,6 +6231,13 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     }
   } else {
 #if defined(HAVE_QUADMESHINGTOOLS)
+    //ALEX
+    ConformalMapping test(gm);
+    
+    printf("OK CA VA\n");
+    return 1;
+    exit(0);
+    //ALEX
     int nb_iter = opt.cross_field_iter;
     int cf_tag = -1;
     PView* theta = PView::getViewByName("theta");
