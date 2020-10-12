@@ -169,6 +169,7 @@ MyMesh::MyMesh(GModel *gm){
       isFeatureEdge[&(*insertData.first)]=false;
       MVertex *vK=t->getVertex(k);
       normalsVertex[vK]+=normal_to_triangle;
+      vertexToTriangles[vK].insert(t);
     }
   }
   for(std::map<const MEdge *, SVector3>::value_type& kv: normals)
@@ -265,6 +266,8 @@ MyMesh::MyMesh(MyMesh &originalMesh){
       triangleToEdges[t].push_back(&(*insertData.first));
       edgeToTriangles[&(*insertData.first)].push_back(t);
       isFeatureEdge[&(*insertData.first)]=false;
+      MVertex *vK=t->getVertex(k);
+      vertexToTriangles[vK].insert(t);
     }
   for(MLine *l: lines){
     std::set<MEdge, MEdgeLessThan>::iterator it=edges.find(l->getEdge(0));
@@ -322,7 +325,7 @@ void MyMesh::updateNormals(){
     kv.second.normalize();
 }
 
-void MyMesh::updateEdges(){
+void MyMesh::updateEdgesAndVertexToTri(){
   triangleToEdges.clear();
   for(MTriangle *t: triangles)
     for(int k=0;k<3;k++){
@@ -333,6 +336,8 @@ void MyMesh::updateEdges(){
       edgeToTriangles[&(*insertData.first)].push_back(t);
       if(insertData.second)
 	isFeatureEdge[&(*insertData.first)]=false;
+      MVertex *vK=t->getVertex(k);
+      vertexToTriangles[vK].insert(t);
     }
 }
 
@@ -418,8 +423,86 @@ void MyMesh::_computeDarbouxFrameOnFeatureVertices(){ //darboux frame with geode
   return;
 }
 
-void MyMesh::_computeGeodesicCurv(){
-  
+void MyMesh::_computeGaussCurv(){
+  MVertexPtrEqual isVertTheSame;
+  std::map<MVertex *, double, MVertexPtrLessThan> patchArea;
+  std::map<MVertex *, double, MVertexPtrLessThan> cotanL;
+  for(MTriangle *t: triangles){
+    for(int k=0; k<3; k++){
+      MVertex *v=t->getVertex(k);
+      MEdge e1=t->getEdge(k);
+      MEdge e2=t->getEdge((k-1+3)%3);
+      MVertex *v1=e1.getVertex(0);
+      if(isVertTheSame(v1,v))
+	v1=e1.getVertex(1);
+      MVertex *v2=e2.getVertex(0);
+      if(isVertTheSame(v2,v))
+	v2=e2.getVertex(1);
+      if(!isVertTheSame(e1.getVertex(0),v)&&!isVertTheSame(e1.getVertex(1),v)){
+	Msg::Error("Ups.");
+	return;
+      }
+      if(!isVertTheSame(e2.getVertex(0),v)&&!isVertTheSame(e2.getVertex(1),v)){
+	Msg::Error("Ups.");
+	return;
+      }
+      SVector3 v01(v1->x() - v->x(),
+		   v1->y() - v->y(),
+		   v1->z() - v->z());
+      v01.normalize();
+      SVector3 v02(v2->x() - v->x(),
+		   v2->y() - v->y(),
+		   v2->z() - v->z());
+      v02.normalize();
+      double angle = acos(dot(v01,v02));
+      gaussCurv[v]+=angle;
+      patchArea[v]+=t->getVolume();
+      cotanL[v]+=t->getEdge((k+1)%3).length()*t->getEdge((k+1)%3).length()/tan(angle);
+    }
+  }
+  //Correction for boundary vertices here //CAREFULL ! This is wrong. We have to project both tangent in the tangent space, compute angle between both, and the compute the angular deflect to this angle.
+  for(MVertex *v: featureVertices){
+    if(featureVertexToEdges[v].size()!=2){
+      Msg::Error("Can't compute Gaussian curvature on non manifold surface, or on manifold with feature lines. Consider splitting geometry along feature lines.");
+      return;
+    }
+    std::set<const MEdge *>::iterator itEdges=featureVertexToEdges[v].begin();
+    const MEdge *e1=*(itEdges);
+    itEdges++;
+    const MEdge *e2=*(itEdges);
+    double averageLength=(e1->length()+e2->length())/2.0;
+    SVector3 ghostPoint(v->x()-averageLength*_darbouxFrameVertices[v][1][0],
+			v->y()-averageLength*_darbouxFrameVertices[v][1][1],
+			v->z()-averageLength*_darbouxFrameVertices[v][1][2]);
+    MVertex *v1=e1->getVertex(0);
+    if(isVertTheSame(v1,v))
+      v1=e1->getVertex(1);
+    MVertex *v2=e2->getVertex(0);
+    if(isVertTheSame(v2,v))
+      v2=e2->getVertex(1);
+    SVector3 v01(v1->x() - v->x(),
+		 v1->y() - v->y(),
+		 v1->z() - v->z());
+    v01.normalize();
+    SVector3 v02(v2->x() - v->x(),
+		 v2->y() - v->y(),
+		 v2->z() - v->z());
+    v02.normalize();
+    SVector3 v0Ghost(ghostPoint[0] - v->x(),
+		     ghostPoint[1] - v->y(),
+		     ghostPoint[2] - v->z());
+    v0Ghost.normalize();
+    double angle1 = acos(dot(v0Ghost,v01));
+    gaussCurv[v]+=angle1;
+    double angle2 = acos(dot(v0Ghost,v02));
+    gaussCurv[v]+=angle2;
+  }
+  //gauss curvature
+  for(auto &kv: gaussCurv){
+    double value=kv.second;
+    // kv.second = (2*M_PI-value)/(patchArea[kv.first]/3.);
+    kv.second = (2*M_PI-value)/(patchArea[kv.first]/2.-cotanL[kv.first]/8.); //more accurate. Have to check if it's consistant with gauss theorem and FE discretization
+  }
   return;
 }
 
@@ -436,6 +519,7 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   Msg::Info("Creating cut graph");
   _createCutGraph();
   _currentMesh->computeGeoCharac();
+  _viewScalarVertex(_currentMesh->gaussCurv,"gaussian curavature"); //DBG
   // _featureCutMesh->computeGeoCharac();
   //Solve H here
   //create cutgraph and cut mesh along it
@@ -722,7 +806,7 @@ void ConformalMapping::_cutMeshOnFeatureLines(){
       }
     }
   }
-  _featureCutMesh->updateEdges();
+  _featureCutMesh->updateEdgesAndVertexToTri();
   _featureCutMesh->updateNormals();
   for(const MEdge *e: _featureCutMesh->featureDiscreteEdges){
     _featureCutMesh->featureVertices.insert(e->getVertex(0));

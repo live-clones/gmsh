@@ -16,12 +16,12 @@ class MyMesh{
   std::map<MVertex *, std::vector<SVector3>, MVertexPtrLessThan> _darbouxFrameVertices;
   void _computeDarbouxFrameOnFeatureVertices();
   void _computeGaussCurv();
-  void _computeGeodesicCurv(){}
+  void _computeGeodesicCurv(){};//probably useless, we will se later
   
  public:
   std::set<MVertex *, MVertexPtrLessThan> featureVertices;
   std::set<MVertex *, MVertexPtrLessThan> singularities;
-  std::map<MVertex *, int> singIndices;
+  std::map<MVertex *, int, MVertexPtrLessThan> singIndices;
   
   std::set<MLine *, MLinePtrLessThan> lines;
   std::map<MLine *, GEdge *, MLinePtrLessThan> linesEntities;
@@ -34,11 +34,12 @@ class MyMesh{
   std::map<const MEdge *, bool> isFeatureEdge;
 
   std::map<MVertex *, std::set<const MEdge *>, MVertexPtrLessThan> featureVertexToEdges;
+  std::map<MVertex *, std::set<MTriangle *, MElementPtrLessThan>, MVertexPtrLessThan> vertexToTriangles;
   std::map<MTriangle *, std::vector<const MEdge *>, MElementPtrLessThan> triangleToEdges;
   std::map<const MEdge *, std::vector<MTriangle *>> edgeToTriangles;
 
   std::map<MVertex *, double, MVertexPtrLessThan> gaussCurv;
-  std::map<MVertex *, double, MVertexPtrLessThan> geodesicCurv;
+  std::map<MVertex *, double, MVertexPtrLessThan> geodesicCurv; //probably useless
   std::map<const MEdge *, SVector3> normals;
   std::map<MVertex *, SVector3, MVertexPtrLessThan> normalsVertex;
   std::map<const MEdge *, Cross2D> manifoldBasis;
@@ -49,7 +50,7 @@ class MyMesh{
   MyMesh(GModel *gm);
   MyMesh(MyMesh &orginalMesh);
   void getSingularities(GModel *gm);
-  void updateEdges();
+  void updateEdgesAndVertexToTri();
   void updateNormals();
   
   /* MyMesh(GFace *gf){} */
@@ -64,7 +65,7 @@ class MyMesh{
     _computeGaussCurv();
   }
   void computeManifoldBasis(){
-
+    
   }
 };
 
