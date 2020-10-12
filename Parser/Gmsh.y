@@ -3637,12 +3637,23 @@ Command :
        PView::list[index]->setChanged(true);
 #endif
     }
+  | tCreateTopology '{' FExpr ',' FExpr '}' tEND
+    {
+      if($3) {
+        GModel::current()->makeDiscreteRegionsSimplyConnected();
+        GModel::current()->makeDiscreteFacesSimplyConnected();
+      }
+      GModel::current()->createTopologyFromMesh();
+      if($5) {
+        GModel::current()->exportDiscreteGEOInternals();
+      }
+    }
    | tCreateTopology tEND
     {
       GModel::current()->makeDiscreteRegionsSimplyConnected();
       GModel::current()->makeDiscreteFacesSimplyConnected();
       GModel::current()->createTopologyFromMesh();
-      // Warning: this clears GEO_Internals! Make it optional?
+      // Warning: this clears GEO_Internals!
       GModel::current()->exportDiscreteGEOInternals();
     }
   | tClassifySurfaces '{' FExpr ',' FExpr ',' FExpr '}' tEND

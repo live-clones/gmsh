@@ -3195,12 +3195,14 @@ and extruded meshes). @value{SYNC}
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
 
-@item CreateTopology;
+@item CreateTopology < @{ @var{expression} , @var{expression} @} > ;
 Creates a boundary representation from the mesh of the current model if
 the model does not have one (e.g. when imported from mesh file formats
-with no BRep representation of the underlying model), clears any
-built-in CAD kernel entities, and exports the discrete entities in the
-built-in CAD kernel.
+with no BRep representation of the underlying model). If the first
+optional argument is set (or not given), make all volumes and surfaces
+simply connected first; if the second optional argument is set (or not
+given), clear any built-in CAD kernel entities and export the discrete
+entities in the built-in CAD kernel.
 
 @item CreateGeometry < @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @} > ;
 Creates a geometry for discrete entities (represented solely by a mesh,
