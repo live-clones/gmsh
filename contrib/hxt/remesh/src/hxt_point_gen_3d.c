@@ -605,6 +605,7 @@ HXTStatus hxtPointGenFilterAligned3d(HXTMesh *mesh,
                                                &dist,
                                                &in,
                                                closePt));
+
       if (fabs(dist)<threshold*size){
         *pass = 0;
         HXT_CHECK(hxtFree(&idCloseTris));
@@ -633,6 +634,7 @@ HXTStatus hxtPointGenFilterAligned3d(HXTMesh *mesh,
 
   for (int i=0; i<numClose; i++){
     double *cp = coords + 4*idClose[i];
+
 
     // Project vector pp->cp to the two directions 
     double vec[3] = {cp[0]-pp[0],cp[1]-pp[1],cp[2]-pp[2]};
@@ -963,6 +965,7 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
     // Take coordinates of origin point
     double *originPoint = fmesh->vertices.coord + 4*i;
 
+
     // Take parent tetrahedron of origin point
     uint64_t originTet = UINT64_MAX;
     if (parent[i].type == 2){
@@ -1048,6 +1051,8 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
                                            dataTri,
                                            &insert));
 
+
+
       // (function of correction)
       // TODO 
       int flagCorrection = 0;
@@ -1090,6 +1095,7 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
                                              &insert));
 
       }
+
 
 
       // If is not filtered, insert the point

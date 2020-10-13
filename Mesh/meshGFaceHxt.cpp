@@ -499,6 +499,7 @@ int meshGFaceHxt(GModel *gm)
   v2c.clear();
   c2v.clear();
   //  HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
+  
 
   GModel *gm2 = new GModel(gm->getName());
   

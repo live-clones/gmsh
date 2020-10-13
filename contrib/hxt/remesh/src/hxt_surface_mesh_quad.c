@@ -1,20 +1,24 @@
+#include "hxt_surface_mesh_quad.h"
+
 #include "hxt_tools.h"
 #include "hxt_edge.h"
 #include "hxt_point_gen_utils.h"
 #include "hxt_point_gen_realloc.h"
 
-#include "hxt_triangle_quality.h"
 #include "hxt_point_gen_numerics.h"
-#include "hxt_point_gen_2d.h"
 
 #include "hxt_split_edge.h"
 
+#include "hxt_surface_mesh_processing.h"
+
 #include "hxt_rtree_wrapper.h"
 
-//#include "hxt_point_gen_realloc.h"
-//#include "hxt_split_edge.h"
+
+#include "hxt_point_gen_options.h"
+
 
 #include "hxt_post_debugging.h"
+
 
 uint32_t hammingDistance(uint32_t n1, uint32_t n2)
 {
@@ -29,198 +33,6 @@ uint32_t hammingDistance(uint32_t n1, uint32_t n2)
   return setBits;
 }
 
-//**********************************************************************************************************
-//**********************************************************************************************************
-// FUNCTION to export right-angles quality based on a 
-//          simple calculation based on distance from the circumference
-//**********************************************************************************************************
-//**********************************************************************************************************
-HXTStatus hxtSurfaceMeshExportTriangleQuality(HXTMesh *nmesh, const double *sizemap)
-{
-  HXT_UNUSED(sizemap);
-
-  //********************************************************************************
-  // Compute quality for all triangles
-  //********************************************************************************
-  
-  double *qual;
-  HXT_CHECK(hxtMalloc(&qual,nmesh->triangles.num*sizeof(double)));
-  for (uint64_t i=0; i<nmesh->triangles.num; i++) qual[i] = 0;
-
-  FILE* out;
-  hxtPosInit("checkQuality.pos","Scalar",&out);
-  for (uint32_t i=0; i<nmesh->triangles.num; i++){
-    if (nmesh->triangles.colors[i] == UINT16_MAX) continue;
-    double *p0 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+0];
-    double *p1 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+1];
-    double *p2 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+2];
-    qual[i] = hxtRightAngledQualitySimple(p0,p1,p2);
-    //hxtPosAddTriangle2(out,p0,p1,p2,qual[i]);
-  }
-
-  // Normalize quality 
-  double minQ = 1;
-  double maxQ = 0;
-  for (uint64_t i=0; i<nmesh->triangles.num; i++){
-    if (qual[i]<minQ) minQ = qual[i];
-    if (qual[i]>maxQ) maxQ = qual[i];
-  }
-
-  for (uint64_t i=0; i<nmesh->triangles.num; i++){
-    qual[i] = (qual[i]-minQ)/(maxQ-minQ);
-  }
-  for (uint32_t i=0; i<nmesh->triangles.num; i++){
-    if (nmesh->triangles.colors[i] == UINT16_MAX) continue;
-    double *p0 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+0];
-    double *p1 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+1];
-    double *p2 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+2];
-    hxtPosAddTriangle2(out,p0,p1,p2,qual[i]);
-  }
-  
-  HXT_CHECK(hxtFree(&qual));
-  hxtPosFinish(out);
-  
-  return HXT_STATUS_OK;
-}
-
-//**********************************************************************************************************
-//**********************************************************************************************************
-// EXPORT EDGES ALIGNED WITH CROSSFIELD
-//**********************************************************************************************************
-//**********************************************************************************************************
-HXTStatus hxtSurfaceMeshExportAlignedEdges(HXTMesh *mesh, 
-                                           HXTMesh *nmesh, 
-                                           uint64_t *p2t,
-                                           const double *directions, 
-                                           const double *sizemap)
-{
-
-  HXTEdges* edges;
-  HXT_CHECK(hxtEdgesCreateNonManifold(nmesh,&edges));
- 
-  //********************************************************************************
-  // Associate vertices of final nmesh with triangles of initial
-  //********************************************************************************
-  
-  // TODO delete, just for checking 
-  for (uint32_t i=0; i<nmesh->vertices.num; i++){
-    double *p = nmesh->vertices.coord + 4*i;
-    double uv[2];
-    double uvlim = -1e-12;
-    uint64_t ct = p2t[i];
-    uint64_t parent = UINT64_MAX;
-    HXT_CHECK(hxtGetBarycentric(mesh,ct,p,uv));
-    if (uv[0] >= uvlim && uv[1] >= uvlim && (1.-uv[0]-uv[1])>=uvlim){
-      parent = ct;
-    }
-    if (parent == UINT64_MAX) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"DID NOT FOUND PARENT TRIANGLE");
-  }
-  
-  //********************************************************************************
-  // CHECK ALIGNED EDGES
-  //********************************************************************************
-  //
-  // TODO continue
-  //
-  // 1. measure difference from cross branches
-  // 2. measure difference from prescribed size 
-  //
-  // Combine into a "quality"
-  // 
-  // associate omesh with initial mesh to get directions and sizes info 
-    
-  FILE* oct;
-  hxtPosInit("checkQualityEdges.pos","Edges",&oct);
-
-  for (uint32_t i=0; i<edges->numEdges; i++){
-    uint32_t *v = edges->node + 2*i;
-
-    double *p0 = nmesh->vertices.coord + 4*v[0];
-    double *p1 = nmesh->vertices.coord + 4*v[1];
-
-    double vec[3] = {p1[0]-p0[0],p1[1]-p0[1],p1[2]-p0[2]};
-    normalize(vec);
-
-
-    // TODO ATTENTION
-    // HERE WE TAKE THE DIRECTION FRAME FROM THE TWO ENDPOINTS OF THE EDGE 
-    // AND THEN WE INTERPOLATE THEM
-    //
-    // TOO MUCH TROUBLE, INSTEAD JUST FIND THE MIDPOINT PAREN TRIANGLE 
-
-    double uv0[2];
-    HXT_CHECK(hxtGetBarycentric(mesh,p2t[v[0]],p0,uv0));
-    // Compute normal to triangle
-    double normal0[3];
-    HXT_CHECK(normal2triangle(mesh,p2t[v[0]],normal0));
-    // Get frame and sizes for candidate point 
-    double sizes0[6] = {0.};
-    double frame0[6*3] = {0.};
-    HXT_CHECK(hxtGetDirections(mesh,directions,sizemap,p2t[v[0]],normal0,uv0,frame0,sizes0));
-
-
-    double uv1[2];
-    HXT_CHECK(hxtGetBarycentric(mesh,p2t[v[1]],p1,uv1));
-    // Compute normal to triangle
-    double normal1[3];
-    HXT_CHECK(normal2triangle(mesh,p2t[v[1]],normal1));
-    // Get frame and sizes for candidate point 
-    double sizes1[6] = {0.};
-    double frame1[6*3] = {0.};
-    HXT_CHECK(hxtGetDirections(mesh,directions,sizemap,p2t[v[1]],normal1,uv1,frame1,sizes1));
-
-
-    double dir0[3] = {0};
-    double dir1[3] = {0};
-
-    double dot0 = myDot(&frame0[0],&frame1[0]);
-    double dot1 = myDot(&frame0[0],&frame1[3]);
-    if (fabs(dot0) > fabs(dot1)){
-      if (dot0>0){
-        dir0[0] = (frame0[0] + frame1[0])/2.; 
-        dir0[1] = (frame0[1] + frame1[1])/2.; 
-        dir0[2] = (frame0[2] + frame1[2])/2.; 
-      }else{
-        dir0[0] = (frame0[0] - frame1[0])/2.; 
-        dir0[1] = (frame0[1] - frame1[1])/2.; 
-        dir0[2] = (frame0[2] - frame1[2])/2.; 
-      }
-    }else{
-      if (dot1>0){
-        dir0[0] = (frame0[0] + frame1[3])/2.; 
-        dir0[1] = (frame0[1] + frame1[4])/2.; 
-        dir0[2] = (frame0[2] + frame1[5])/2.; 
-      }else{
-        dir0[0] = (frame0[0] - frame1[3])/2.; 
-        dir0[1] = (frame0[1] - frame1[4])/2.; 
-        dir0[2] = (frame0[2] - frame1[5])/2.; 
-      }
-    }
-    double normal[3] = {(normal0[0]+normal1[0])/2,(normal0[1]+normal1[1])/2,(normal0[2]+normal1[2])/2};
-    myNormalizedCrossprod(normal,dir0,dir1);
-    normalize(dir0);
-    normalize(dir1);
-
-    /*hxtPosAddVector(oct,p0,&frame0[0]);*/
-    /*hxtPosAddVector(oct,p0,&frame0[3]);*/
-    /*hxtPosAddVector(oct,p1,&frame1[0]);*/
-    /*hxtPosAddVector(oct,p1,&frame1[3]);*/
-    double pp[3] = {(p0[0]+p1[0])/2,(p0[1]+p1[1])/2,(p0[2]+p1[2])/2};
-    hxtPosAddVector(oct,pp,dir0);
-    hxtPosAddVector(oct,pp,dir1);
-
-    double qdir = fmax(fabs(myDot(vec,dir0)),fabs(myDot(vec,dir1)));
-
-
-    if (qdir > 0.985 ) hxtPosAddLine(oct,p0,p1,0);
-  }
-  hxtPosFinish(oct);
-
-
-  HXT_CHECK(hxtEdgesDelete(&edges));
-
-  return HXT_STATUS_OK;
-}
 
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -268,7 +80,7 @@ HXTStatus hxtPointGenProjectCloseRTree(HXTMesh *omesh,
   //printf("%lu %f %f \n", numCloseTris, size, distance(p0,pp));
 
   if (numCloseTris == 0){
-    //return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Did not find close triangle, fix it !!!");
+    return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Did not find close triangle, fix it !!!");
     // SEARCH ALL TRIANGLES
     double tol = 10e-7;
     double dist,t,closePt[3];
@@ -452,280 +264,6 @@ HXTStatus hxtPointGenQuadBuildV2V(HXTEdges *edges,
   return HXT_STATUS_OK;
 }
 
-
-//**********************************************************************************************************
-//**********************************************************************************************************
-//
-// NEW LABELING 
-// 
-// Objective:
-// - quad edges should have a Hamming distance of 1 
-// - diagonals should have a Hamming distance of 2+ 
-//
-// ATTENTION: not possible like this 
-//
-//**********************************************************************************************************
-//**********************************************************************************************************
-HXTStatus hxtPointGenQuadRelabel(HXTMesh *mesh, HXTEdges *edges, uint32_t *bin)
-{
-
-  //==================================================================================
-  // Create vertex 2 vertex connectivity
-  uint32_t *v2v;
-  uint32_t maxv2v = 20;
-  HXT_CHECK(hxtMalloc(&v2v,mesh->vertices.num*sizeof(uint32_t)*maxv2v));
-  for (uint32_t i=0; i<maxv2v*mesh->vertices.num; i++) v2v[i] = UINT32_MAX;
-
-  for (uint32_t i=0; i<edges->numEdges; i++){
-    uint32_t v0 = edges->node[2*i+0];
-    uint32_t v1 = edges->node[2*i+1];
-
-    int insert0 = 1;
-    for (uint32_t j=0; j<maxv2v; j++){
-      if (v2v[maxv2v*v0+j] == v1) insert0 = 0;
-    }
-
-    int full = 1;
-    for (uint32_t j=0; j<maxv2v; j++){
-      if (v2v[maxv2v*v0+j] == UINT32_MAX) full = 0;
-    }
-    if (full == 1) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"v2v is full for %d", v0);
-
-    if (insert0 == 1){
-      for (uint32_t j=0; j<maxv2v; j++){
-        if (v2v[maxv2v*v0+j] == UINT32_MAX){
-          v2v[maxv2v*v0+j] = v1;
-          break;
-        }
-      }
-    }
-
-    int insert1 = 1;
-    for (uint32_t j=0; j<maxv2v; j++){
-      if (v2v[maxv2v*v1+j] == v0) insert1 = 0;
-    }
-    if(insert1 == 1){
-      for (uint32_t j=0; j<maxv2v; j++){
-        if (v2v[maxv2v*v1+j] == UINT32_MAX){
-          v2v[maxv2v*v1+j] = v0;
-          break;
-        }
-      }
-    }
-  }
-
-
-  //***********************************************************************************************
-  // Create new labeling array 
-  uint32_t *bin3;
-  HXT_CHECK(hxtMalloc(&bin3,mesh->vertices.num*sizeof(uint32_t)));
-  for (uint32_t i=0; i<mesh->vertices.num; i++) bin3[i] = UINT32_MAX;
-
-
-  //***********************************************************************************************
-  // Assign parent triangles
-  uint64_t *parentTri;
-  HXT_CHECK(hxtMalloc(&parentTri,mesh->vertices.num*sizeof(uint64_t)));
-  for (uint64_t i=0; i<mesh->triangles.num; i++){
-    uint32_t *v = mesh->triangles.node + 3*i;
-    parentTri[v[0]] = i;
-    parentTri[v[1]] = i;
-    parentTri[v[2]] = i;
-  }
-
-  //***********************************************************************************************
-  // Create constraints array 
-  uint32_t *constr;
-  HXT_CHECK(hxtMalloc(&constr,8*mesh->vertices.num*sizeof(uint32_t)));
-  for (uint32_t i=0; i<8*mesh->vertices.num; i++) constr[i] = 1;
-
-
-  //***********************************************************************************************
-  // Create propagate array 
-  uint32_t *pointList;
-  HXT_CHECK(hxtMalloc(&pointList,mesh->vertices.num*sizeof(uint32_t)));
-  for (uint32_t i=0; i<mesh->vertices.num; i++) pointList[i] = UINT32_MAX;
-  uint32_t pointListCount = 1;
-
-  //***********************************************************************************************
-  // Set starting point 
-  for (uint32_t i=0; i<mesh->vertices.num; i++){
-    uint32_t cv = i;
-
-    int count = 0;
-    for (uint32_t j=0; j<maxv2v; j++){
-      if (v2v[maxv2v*cv+j] == UINT32_MAX) continue;
-      count++;
-    }
-    if (count >5){
-      pointList[0] = i;
-      for (uint32_t j=0; j<8; j++){
-        if (bin[i] != j) constr[8*i+j] = 0;
-      }
-      break;
-    }
-  }
-
-
-
-  //***********************************************************************************************
-  // Propagate bin3 and constraints 
-  
-  uint32_t cavSize = 0;
-  uint32_t cavity[maxv2v];
-
-  for (uint32_t i=0; i<mesh->vertices.num; i++){
-
-    uint32_t cv = pointList[i];
-    if (cv == UINT32_MAX) break;
-
-
-    // Set bin3 for current vertex 
-    for (uint32_t j=0; j<8; j++){
-      if (constr[8*cv+j] == 1){
-        bin3[cv] = j;
-        break;
-      }
-    }
-
-
-
-    if (bin3[cv] == UINT32_MAX) continue;
-
-    printf("\n");
-    printf("First = %d - %d %d \n", cv, bin3[cv], bin[cv]);
-    for (uint32_t j=0; j<8; j++){
-      printf("  %d %d \n", j, constr[8*cv+j]);
-    }
-    
-    cavSize = 0;
-    for (uint32_t j=0; j<maxv2v; j++){
-      uint32_t ov = v2v[maxv2v*cv+j];
-      if (ov == UINT32_MAX) continue;
-
-      printf("  %d %d %d \n", j, cavSize, ov);
-      cavity[cavSize] = ov;
-      cavSize++;
-    }
-
-
-    // Set constraints 
-    for (uint32_t j=0; j<cavSize; j++){
-      uint32_t ov = cavity[j];
-
-      // Hamming distance of 2+
-      if (bin[cv] == bin[ov]){
-        for (uint32_t k=0; k<8; k++){
-          uint32_t temp = hammingDistance(bin3[cv],k);
-          if (temp == 0 || temp == 1) constr[8*ov+k] = 0;
-        }
-      }
-
-
-      // Hamming distance of 1
-      if (bin[cv] != bin[ov]){
-        for (uint32_t k=0; k<8; k++){
-          uint32_t temp = hammingDistance(bin3[cv],k);
-          if (temp != 1) constr[8*ov+k] = 0;
-        }
-      }
-
-    }
-
-
-    // Add points to queue
-    for (uint32_t j=0; j<cavSize; j++){
-      uint32_t ov = cavity[j];
-
-      int found = 1;
-      for (uint32_t k=0; k<pointListCount; k++){
-        if (pointList[k] == ov) found = 0;
-      }
-      if (found == 0) continue;
-
-      pointList[pointListCount] = ov;
-      pointListCount++;
-    }
-
-
-  }
-      
-
-
-  // Fill out the ones that were not assigned 
-  for (uint32_t i=0; i<mesh->vertices.num; i++){
-
-    uint32_t cv = i;
-
-    if (bin3[cv] != UINT32_MAX) continue;
-
-    bin3[cv] = bin[cv];
-  }
-
-
-        
-  for (uint32_t i=0; i<mesh->vertices.num; i++){
-
-    uint32_t cv = i;
-
-    if (bin3[cv] != UINT32_MAX) continue;
-
-    bin3[cv] = bin[cv];
-  }
-
-
-
-  for (uint32_t i=0; i<edges->numEdges; i++){
-    uint32_t v0 = edges->node[2*i+0];
-    uint32_t v1 = edges->node[2*i+1];
-
-
-    if (bin[v0] == bin[v1]) continue;
-
-
-    if (hammingDistance(bin3[v0],bin3[v1]) !=1){
-
-      uint64_t t0 = edges->edg2tri[2*i+0];
-
-      uint32_t ov0 = UINT32_MAX;
-  
-      for (uint32_t j=0; j<3; j++){
-        uint32_t vt1 = mesh->triangles.node[3*t0+j];
-        if (vt1 != v0 && vt1 != v1) ov0 = vt1;
-      }
-    }
-  }
-
-  {
-    FILE *test;
-    hxtPosInit("hamming.pos","points",&test);
-
-    for (uint32_t i=0; i<mesh->vertices.num;i++){
-      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],0);
-      hxtPosAddText(test,&mesh->vertices.coord[4*i],"%d",bin3[i]);
-    }
-    hxtPosNewView(test,"labels");
-    for (uint32_t i=0; i<mesh->vertices.num;i++){
-      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],0);
-      hxtPosAddText(test,&mesh->vertices.coord[4*i],"%d",i);
-    }
-    hxtPosFinish(test);
-  }
-
-  HXT_CHECK(hxtFree(&bin3));
-  HXT_CHECK(hxtFree(&constr));
-  HXT_CHECK(hxtFree(&parentTri));
-  HXT_CHECK(hxtFree(&pointList));
-  HXT_CHECK(hxtFree(&v2v));
-
-
-
-
-
-  return HXT_STATUS_OK; 
-}
-
-
 //**********************************************************************************************************
 //**********************************************************************************************************
 //
@@ -760,9 +298,6 @@ double hxtPointGenQuadQuality(double *p0, double *p1, double *p2, double *p3)
 //**********************************************************************************************************
 double hxtPointGenQuadScaledJacobian(double *p0, double *p1, double *p2, double *p3)
 {
-
-  double quality = 0.0;
-
 
   double L0[3] = {p1[0]-p0[0],p1[1]-p0[1],p1[2]-p0[2]};
   double L1[3] = {p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]};
@@ -986,6 +521,23 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
   HXT_CHECK(hxtFree(&v2e));
 
 
+  // Print out edges to be splitted
+  // TODO delete
+  if(opt->verbosity==2){
+    FILE *test;
+    hxtPosInit("splitEdgesInvalidQuads.pos","edges",&test);
+    for (uint32_t i=0; i<edges->numEdges; i++){
+
+      if (flagEdg[i] != UINT16_MAX){
+
+        uint32_t *v = edges->node + 2*i;
+        hxtPosAddLine(test,&mesh->vertices.coord[4*v[0]],&mesh->vertices.coord[4*v[1]],0);
+      }
+    }
+    hxtPosFinish(test);
+  }
+
+
   //============================================================
   // Split the edges the were flagged
   //============================================================
@@ -1177,7 +729,7 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
   // Smoothing
   //==================================================================================
   
-  HXT_CHECK(hxtPointGenQuadSmoothing(omesh,mesh,dataTri,isBoundary,p2t,v2vN,1));
+  HXT_CHECK(hxtPointGenQuadSmoothing(omesh,mesh,dataTri,isBoundary,p2t,v2vN,10));
 
   // Printing out 
   // TODO delete
@@ -1269,15 +821,6 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTMesh *mesh,
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"One quad only for vertex %d",i); 
   }
 
-  /*{*/
-    /*FILE *test;*/
-    /*hxtPosInit("checInvalidPoints.pos","points",&test);*/
-    /*for (uint32_t i=0; i<mesh->vertices.num; i++){*/
-      /*if (adj[i]==2 && isBoundary[i] !=1) */
-        /*hxtPosAddPoint(test,&mesh->vertices.coord[4*i],0);*/
-    /*}*/
-    /*hxtPosFinish(test);*/
-  /*}*/
 
   // Find and delete invalid quads
   uint64_t countDeletedTriangles = 0;
@@ -1307,8 +850,13 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTMesh *mesh,
     }
   }
 
-  /*printf(" count deleted triangles = %lu \n", countDeletedTriangles);*/
-  /*HXT_CHECK(hxtMeshWriteGmsh(mesh,"test1.msh"));*/
+  HXT_INFO("    Deleting %lu triangles", countDeletedTriangles);
+
+  uint64_t count=0;
+  for (uint64_t i=0; i<mesh->triangles.num; i++){
+    if (mesh->triangles.colors[i] == UINT16_MAX) count++;
+  }
+  
 
   // New index of vertices on triangles
   for (uint64_t i=0; i<mesh->triangles.num; i++){
@@ -1319,34 +867,33 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTMesh *mesh,
   }
 
 
-  /*{*/
-    /*FILE *test;*/
-    /*hxtPosInit("checInvalidTriangles.pos","points",&test);*/
-    /*for (uint32_t i=0; i<mesh->triangles.num; i++){*/
-      /*if (mesh->triangles.colors[i] != UINT16_MAX) continue;*/
-      /*uint32_t *v = mesh->triangles.node + 3*i;*/
-      /*hxtPosAddTriangle(test,&mesh->vertices.coord[4*v[0]],   */
-                             /*&mesh->vertices.coord[4*v[1]],   */
-                             /*&mesh->vertices.coord[4*v[2]],0);   */
-    /*}*/
-    /*hxtPosFinish(test);*/
-  /*}*/
-
-  // Delete triangles 
+  //*************************************************************
+  // Triangles
+  //*************************************************************
+  uint32_t *tris;
+  uint16_t *col;
+  HXT_CHECK(hxtAlignedMalloc(&tris,(3*mesh->triangles.size)*sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&col,(mesh->triangles.size)*sizeof(uint16_t)));
+  uint64_t cT = 0;
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-    if (mesh->triangles.colors[i] != UINT16_MAX) continue;
+    if (mesh->triangles.colors[i] == UINT16_MAX) continue;
+    tris[3*cT+0] = mesh->triangles.node[3*i+0];
+    tris[3*cT+1] = mesh->triangles.node[3*i+1];
+    tris[3*cT+2] = mesh->triangles.node[3*i+2];
+    col[cT] = mesh->triangles.colors[i];
+    cT++;
+  }
 
-    for (uint64_t j=i; j<mesh->triangles.num-1; j++){
-
-      mesh->triangles.node[3*j+0] = mesh->triangles.node[3*(j+1)+0];
-      mesh->triangles.node[3*j+1] = mesh->triangles.node[3*(j+1)+1];
-      mesh->triangles.node[3*j+2] = mesh->triangles.node[3*(j+1)+2];
-      mesh->triangles.colors[j] = mesh->triangles.colors[j+1];
-    }
+  for (uint64_t i=0; i<cT; i++){
+    mesh->triangles.node[3*i+0] = tris[3*i+0];
+    mesh->triangles.node[3*i+1] = tris[3*i+1];
+    mesh->triangles.node[3*i+2] = tris[3*i+2];
+    mesh->triangles.colors[i] = col[i];
   }
   mesh->triangles.num = mesh->triangles.num - countDeletedTriangles;
+  HXT_CHECK(hxtAlignedFree(&tris));
+  HXT_CHECK(hxtAlignedFree(&col));
 
-  //HXT_CHECK(hxtMeshWriteGmsh(mesh,"test2.msh"));
 
   // New vertices
   uint32_t countVertices = 0;
@@ -1363,9 +910,8 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTMesh *mesh,
     countVertices++;
 
   }
-  mesh->vertices.num = countVertices;
 
-  //HXT_CHECK(hxtMeshWriteGmsh(mesh,"test3.msh"));
+  mesh->vertices.num = countVertices;
 
   // Relabel triangle vertices
   for (uint64_t i=0; i<mesh->triangles.num; i++){
@@ -1388,17 +934,11 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTMesh *mesh,
   }
 
 
-  //HXT_CHECK(hxtMeshWriteGmsh(mesh,"test4.msh"));
-
-
   HXT_CHECK(hxtFree(&vInfo));
   HXT_CHECK(hxtFree(&v2v));
   HXT_CHECK(hxtFree(&adj));
   return HXT_STATUS_OK;
 }
-
-
-
 
 //**********************************************************************************************************
 //**********************************************************************************************************
@@ -1507,6 +1047,13 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
       }
     }
   }
+
+
+  uint32_t count = 0;
+  for (uint32_t i=0; i<edges->numEdges; i++){
+    if (flagEdg[i] == 1) count++;
+  }
+  HXT_INFO("    Splitting %d edges", count);
 
   // Print out edges to be splitted
   // TODO delete
@@ -1856,6 +1403,13 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   HXT_INFO("========= Generation of bipartite quad mesh  ==========");
   HXT_INFO("");
 
+
+
+
+
+
+
+
   // Create rtree with triangles of original mesh 
   double tol = 10e-16;
   void *dataTri;
@@ -1866,6 +1420,10 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
     double *p2 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+2];
     HXT_CHECK(hxtAddTriangleInRTree64(p0,p1,p2,tol,i,dataTri));
   }
+
+  //Realloc
+  HXT_CHECK(hxtVerticesReserve(mesh,mesh->vertices.num));
+  HXT_CHECK(hxtTrianglesReserve(mesh,mesh->triangles.num));
 
 
   // Create edges structure
@@ -1903,6 +1461,7 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
     isBoundary[mesh->lines.node[2*i+0]] = 1;
     isBoundary[mesh->lines.node[2*i+1]] = 1;
   }
+
 
 
   //==================================================================================
@@ -2184,18 +1743,39 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   
   HXT_CHECK(hxtPointGenQuadSmoothing(omesh,mesh,dataTri,isBoundary,p2t,v2v,1));
 
+
+  // Printing out 
+  // TODO delete
+  if(opt->verbosity==2){
+    hxtMeshWriteGmsh(mesh,"splitted3_smoothed.msh");
+    FILE *test;
+    hxtPosInit("binEdgesQuadSplit3_smoothed.pos","edges",&test);
+    for (uint64_t i=0; i<mesh->triangles.num; i++){
+      uint32_t *v = mesh->triangles.node + 3*i;
+  
+      if (bin[v[0]] == bin[v[1]] && bin[v[1]] == bin[v[2]]){
+        hxtPosAddTriangle(test,&mesh->vertices.coord[4*v[0]],&mesh->vertices.coord[4*v[1]],&mesh->vertices.coord[4*v[2]],0);
+        hxtPosAddText(test,&mesh->vertices.coord[4*v[0]],"%d",bin[v[0]]);
+        hxtPosAddText(test,&mesh->vertices.coord[4*v[1]],"%d",bin[v[1]]);
+        hxtPosAddText(test,&mesh->vertices.coord[4*v[2]],"%d",bin[v[2]]);
+      }
+
+    }
+    hxtPosFinish(test);
+  }
+
   //==================================================================================
   // Remove remaining bad triangles on the boundary
   //==================================================================================
   
   HXT_CHECK(hxtPointGenQuadRemoveBadBoundary(opt,omesh,mesh,edges,dataTri,isBoundary,p2t,bin));
 
-
   //==================================================================================
   // PRINT OUT 
   // TODO delete
   //==================================================================================
   if(opt->verbosity==2){
+
     FILE *test;
     hxtPosInit("binEdgesAfter.pos","points",&test);
     for (uint32_t i=0; i<mesh->vertices.num;i++){
@@ -2206,31 +1786,6 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
     for (uint32_t i=0; i<mesh->vertices.num;i++){
       hxtPosAddPoint(test,&mesh->vertices.coord[4*i],0);
       hxtPosAddText(test,&mesh->vertices.coord[4*i],"%d",i);
-    }
-
-    hxtPosNewView(test,"3");
-    for (uint32_t i=0; i<mesh->vertices.num;i++){
-      int count = 0;
-      for (uint32_t j=0; j<5; j++){
-        if (v2v[5*i+j] != UINT32_MAX) count++;
-      }
-      if (count == 3 && isBoundary[i] != 1) hxtPosAddPoint(test,&mesh->vertices.coord[4*i],0);
-    }
-    hxtPosNewView(test,"5");
-    for (uint32_t i=0; i<mesh->vertices.num;i++){
-      int count = 0;
-      for (uint32_t j=0; j<5; j++){
-        if (v2v[5*i+j] != UINT32_MAX) count++;
-      }
-      if (count == 5) hxtPosAddPoint(test,&mesh->vertices.coord[4*i],0);
-    }
-    hxtPosNewView(test,"6+");
-    for (uint32_t i=0; i<mesh->vertices.num;i++){
-      int count = 0;
-      for (uint32_t j=0; j<5; j++){
-        if (v2v[5*i+j] != UINT32_MAX) count++;
-      }
-      if (count == 5) hxtPosAddPoint(test,&mesh->vertices.coord[4*i],0);
     }
     hxtPosNewView(test,"badTris");
     for (uint32_t i=0; i<mesh->triangles.num;i++){
@@ -2251,11 +1806,11 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   if(opt->verbosity==2) HXT_CHECK(hxtMeshWriteGmsh(mesh,"finalmeshSmoothed.msh"));
 
   //==================================================================================
-  // Remove invalid quads and diamonds
+  // Remove invalid quads and diamonds TODO 
   //==================================================================================
   
-  HXT_CHECK(hxtPointGenQuadRemoveInvalidQuadsRobust(opt,omesh,mesh,edges,dataTri,isBoundary,p2t,bin));
-  //HXT_CHECK(hxtPointGenQuadRemoveInvalidQuads(mesh,edges,p2t,bin,isBoundary));
+  //HXT_CHECK(hxtPointGenQuadRemoveInvalidQuadsRobust(opt,omesh,mesh,edges,dataTri,isBoundary,p2t,bin));
+  HXT_CHECK(hxtPointGenQuadRemoveInvalidQuads(mesh,edges,p2t,bin,isBoundary));
 
   if(opt->verbosity==2) HXT_CHECK(hxtMeshWriteGmsh(mesh,"finalmeshInvalidQuads.msh"));
 
@@ -2263,10 +1818,12 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   HXT_CHECK(hxtEdgesCreateNonManifold(mesh,&edges));
 
 
+
+
+
   //==================================================================================
   // Create final quad mesh
   //==================================================================================
-
   HXTMesh *qmesh;
   hxtMeshCreate(&qmesh);
   
@@ -2282,7 +1839,6 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
     hxtPosFinish(test);
   }
 
- 
 
 
   //==================================================================================
@@ -2321,21 +1877,43 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   }
 
 
-  FILE *q;
-  hxtPosInit("quadQuality.pos","scaledJacobian",&q);
-  for (uint64_t i=0; i<mesh->quads.num; i++){
-    double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
-    double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
-    double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
-    double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
-    double qual = hxtPointGenQuadScaledJacobian(p0,p1,p2,p3);
-    hxtPosAddQuad(q,p0,p1,p2,p3,qual);
+  //==================================================================================
+  // Output quality and bad vertices
+  //==================================================================================
+  {
+    FILE *q;
+    hxtPosInit("quadQuality.pos","scaledJacobian",&q);
+    for (uint64_t i=0; i<mesh->quads.num; i++){
+      double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
+      double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
+      double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
+      double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
+      double qual = hxtPointGenQuadScaledJacobian(p0,p1,p2,p3);
+      hxtPosAddQuad(q,p0,p1,p2,p3,qual);
+    }
+    hxtPosFinish(q);
   }
-  hxtPosFinish(q);
+
+  {
+    FILE *q;
+    hxtPosInit("quadQualityBAD.pos","scaledJacobian",&q);
+    for (uint64_t i=0; i<mesh->quads.num; i++){
+      double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
+      double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
+      double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
+      double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
+      double qual = hxtPointGenQuadScaledJacobian(p0,p1,p2,p3);
+      if (qual<0.0)
+        hxtPosAddQuad(q,p0,p1,p2,p3,qual);
+    }
+    hxtPosFinish(q);
+  }
 
 
-
-  //HXT_CHECK(hxtSurfaceQuadSingularitiesOutput(mesh));
+  //==================================================================================
+  // Output singular vertices
+  //==================================================================================
+  HXT_CHECK(hxtSurfaceQuadSingularitiesOutput(mesh));
 
    
 
