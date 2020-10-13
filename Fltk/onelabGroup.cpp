@@ -1373,6 +1373,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   if(deleteWidgets) {
     // this needs to be performed after FlGui::check()
     Msg::Debug("Deleting onelabGroup widgets (%d)", (int)_treeWidgets.size());
+    // Fl::focus(0); // tentative fix for crash reported in #955
     for(std::size_t i = 0; i < delWidgets.size(); i++)
       Fl::delete_widget(delWidgets[i]);
     for(std::size_t i = 0; i < delStrings.size(); i++) free(delStrings[i]);

@@ -18,6 +18,7 @@
 #cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DINTEGRATION
 #cmakedefine HAVE_DOMHEX
+#cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_FLTK
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GMP

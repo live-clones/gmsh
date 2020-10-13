@@ -124,7 +124,7 @@ private:
   const bezierBasis *_basis;
   int _r, _c; // size of the matrix
   double *_data; // pointer on the first element
-  bool _own_data; // to know if data should be freed when object is deleted
+  bool _ownData; // to know if data should be freed when object is deleted
 
   static bezierCoeffMemoryPool *_pool0;
   static bezierCoeffMemoryPool *_pool1;

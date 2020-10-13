@@ -231,19 +231,28 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
         }
       }
     }
+    int xmin = 10000000, ymin = 10000000;
+    for(std::size_t i = 0; i < g->gl.size(); i++){
+      xmin = std::min(xmin, g->gl[i]->x());
+      ymin = std::min(ymin, g->gl[i]->y());
+    }
     int ww = 0, hh = 0;
     std::vector<PixelBuffer*> buffers;
     for(std::size_t i = 0; i < g->gl.size(); i++){
       openglWindow::setLastHandled(g->gl[i]);
-      buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(), format, type);
+      buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(),
+                               format, type);
       buffer->fill(CTX::instance()->batch);
       buffers.push_back(buffer);
-      ww = std::max(ww, g->gl[i]->x() + g->gl[i]->pixel_w());
-      hh = std::max(hh, g->gl[i]->y() + g->gl[i]->pixel_h());
+      int fact = g->gl[i]->getDrawContext()->isHighResolution() ? 2 : 1;
+      ww = std::max(ww, fact * (g->gl[i]->x() - xmin) + g->gl[i]->pixel_w());
+      hh = std::max(hh, fact * (g->gl[i]->y() - ymin) + g->gl[i]->pixel_h());
     }
     buffer = new PixelBuffer(ww, hh, format, type);
     for(std::size_t i = 0; i < g->gl.size(); i++){
-      buffer->copyPixels(g->gl[i]->x(), hh - g->gl[i]->h() - g->gl[i]->y(),
+      int fact = g->gl[i]->getDrawContext()->isHighResolution() ? 2 : 1;
+      buffer->copyPixels(fact * (g->gl[i]->x() - xmin),
+                         hh - g->gl[i]->pixel_h() - fact * (g->gl[i]->y() - ymin),
                          buffers[i]);
       delete buffers[i];
     }

@@ -53,7 +53,7 @@ std::string GMSH_DistancePlugin::getHelp() const
          "a diffusion constant equal to `DistanceType' time the maximum size "
          "of the bounding box of the mesh as in [Legrand et al. 2006].\n\n"
          "Positive `MinScale' and `MaxScale' scale the distance function.\n\n"
-         "Plugin(Distance) creates one new view.";
+         "Plugin(Distance) creates one new list-based view.";
 }
 
 int GMSH_DistancePlugin::getNbOptions() const

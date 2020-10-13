@@ -7,9 +7,10 @@
 # ------------------------------------------------------------------------------
 
 import gmsh
+import sys
 
 # Gmsh can partition meshes using different algorithms, e.g. the graph
-# partitioner Metis or the `SimplePartition' plugin. For all the partitining
+# partitioner Metis or the `SimplePartition' plugin. For all the partitioning
 # algorithms, the relationship between mesh elements and mesh partitions is
 # encoded through the creation of new (discrete) elementary entities, called
 # "partition entities".
@@ -98,6 +99,8 @@ for e in entities:
         print(" - Parent: " + str(gmsh.model.getParent(e[0], e[1])))
         print(" - Boundary: " + str(gmsh.model.getBoundary([e])))
 
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

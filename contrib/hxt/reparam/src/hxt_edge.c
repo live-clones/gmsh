@@ -469,14 +469,14 @@ HXTStatus hxtEdgesCreateNonManifold(HXTMesh *mesh, HXTEdges** edges)
           /*printf("%lu %lu %lu \n",i+mesh->points.num+mesh->lines.num+1,*/
                             /*edg2tri[e*2+0]+mesh->points.num+mesh->lines.num+1,*/
                             /*edg2tri[e*2+1]+mesh->points.num+mesh->lines.num+1);*/
-          /*printf("%d %d %d \n", mesh->triangles.colors[i],*/
-                                /*mesh->triangles.colors[edg2tri[e*2+0]],*/
-                                /*mesh->triangles.colors[edg2tri[e*2+1]]);*/
+          /*printf("%d %d %d \n", mesh->triangles.color[i],*/
+                                /*mesh->triangles.color[edg2tri[e*2+0]],*/
+                                /*mesh->triangles.color[edg2tri[e*2+1]]);*/
           /*uint64_t t1 = edg2tri[2*e+0];*/
           /*uint64_t t2 = edg2tri[2*e+1];*/
-          /*printf("%d %d %d %d \n", tri2edg[3*i +0], tri2edg[3*i +1], tri2edg[3*i +2], mesh->triangles.colors[i]);*/
-          /*printf("%d %d %d %d \n", tri2edg[3*t1+0], tri2edg[3*t1+1], tri2edg[3*t1+2], mesh->triangles.colors[t1]);*/
-          /*printf("%d %d %d %d \n", tri2edg[3*t2+0], tri2edg[3*t2+1], tri2edg[3*t2+2], mesh->triangles.colors[t2]);*/
+          /*printf("%d %d %d %d \n", tri2edg[3*i +0], tri2edg[3*i +1], tri2edg[3*i +2], mesh->triangles.color[i]);*/
+          /*printf("%d %d %d %d \n", tri2edg[3*t1+0], tri2edg[3*t1+1], tri2edg[3*t1+2], mesh->triangles.color[t1]);*/
+          /*printf("%d %d %d %d \n", tri2edg[3*t2+0], tri2edg[3*t2+1], tri2edg[3*t2+2], mesh->triangles.color[t2]);*/
           /*return HXT_ERROR_MSG( HXT_STATUS_ASSERTION_FAILED,*/
               /*"hxt_edge.c:\t topology is wrong for edge creation \n\t At least three triangles (%lu,%lu,%lu) share the same edge\n",i,edg2tri[e*2+0],edg2tri[e*2+1]);*/
         /*}*/

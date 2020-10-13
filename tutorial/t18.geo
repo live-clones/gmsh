@@ -79,7 +79,7 @@ Sxmin() = Surface In BoundingBox{2-eps, -eps, -eps, 2+eps, 1+eps, 1+eps};
 For i In {0:#Sxmin()-1}
   // Then we get the bounding box of each left surface
   bb() = BoundingBox Surface { Sxmin(i) };
-  // We translate the bounding box to the right and look for surfaces inside i
+  // We translate the bounding box to the right and look for surfaces inside it:
   Sxmax() = Surface In BoundingBox { bb(0)-eps+1, bb(1)-eps, bb(2)-eps,
                                      bb(3)+eps+1, bb(4)+eps, bb(5)+eps };
   // For all the matches, we compare the corresponding bounding boxes...

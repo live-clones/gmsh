@@ -136,7 +136,8 @@ private:
         MEdge E = _gf->triangles[i]->getEdge(j);
         SPoint2 p1, p2;
         reparamMeshEdgeOnFace(E.getVertex(0), E.getVertex(1), _gf, p1, p2);
-        std::map<MEdge, MVertex *, MEdgeLessThan>::iterator it = _middle.find(E);
+        std::map<MEdge, MVertex *, MEdgeLessThan>::iterator it =
+          _middle.find(E);
         std::map<MEdge, MVertex *, MEdgeLessThan>::iterator it2 = eds.find(E);
         m[j] = p1;
         if(it == _middle.end() && it2 == eds.end()) {
@@ -190,7 +191,8 @@ private:
         MEdge E = _gf->quadrangles[i]->getEdge(j);
         SPoint2 p1, p2;
         reparamMeshEdgeOnFace(E.getVertex(0), E.getVertex(1), _gf, p1, p2);
-        std::map<MEdge, MVertex *, MEdgeLessThan>::iterator it = _middle.find(E);
+        std::map<MEdge, MVertex *, MEdgeLessThan>::iterator it =
+          _middle.find(E);
         std::map<MEdge, MVertex *, MEdgeLessThan>::iterator it2 = eds.find(E);
         m[j] = p1;
         if(it == _middle.end() && it2 == eds.end()) {
@@ -328,16 +330,16 @@ static void copyMesh(GFace *source, GFace *target)
   std::vector<GVertex *> s_vtcs = source->vertices();
   s_vtcs.insert(s_vtcs.end(), source->embeddedVertices().begin(),
                 source->embeddedVertices().end());
-  for(std::vector<GEdge*>::iterator it = source->embeddedEdges().begin();
-      it != source->embeddedEdges().end(); it++){
+  for(std::vector<GEdge *>::iterator it = source->embeddedEdges().begin();
+      it != source->embeddedEdges().end(); it++) {
     if((*it)->getBeginVertex()) s_vtcs.push_back((*it)->getBeginVertex());
     if((*it)->getEndVertex()) s_vtcs.push_back((*it)->getEndVertex());
   }
   std::vector<GVertex *> t_vtcs = target->vertices();
   t_vtcs.insert(t_vtcs.end(), target->embeddedVertices().begin(),
                 target->embeddedVertices().end());
-  for(std::vector<GEdge*>::iterator it = target->embeddedEdges().begin();
-      it != target->embeddedEdges().end(); it++){
+  for(std::vector<GEdge *>::iterator it = target->embeddedEdges().begin();
+      it != target->embeddedEdges().end(); it++) {
     if((*it)->getBeginVertex()) t_vtcs.push_back((*it)->getBeginVertex());
     if((*it)->getEndVertex()) t_vtcs.push_back((*it)->getEndVertex());
   }
@@ -410,10 +412,9 @@ static void copyMesh(GFace *source, GFace *target)
     else {
       GEdge *ges = gesIter->second.first;
       if(checkEdges.find(ges) == checkEdges.end()) {
-        Msg::Error(
-          "Periodic meshing of surface %d with surface %d: "
-          "curve %d has periodic counterpart %d",
-          target->tag(), source->tag(), get->tag(), ges->tag());
+        Msg::Error("Periodic meshing of surface %d with surface %d: "
+                   "curve %d has periodic counterpart %d",
+                   target->tag(), source->tag(), get->tag(), ges->tag());
       }
       if(get->mesh_vertices.size() != ges->mesh_vertices.size()) {
         Msg::Error("Periodic meshing of surface %d with surface %d: "
@@ -463,10 +464,10 @@ static void copyMesh(GFace *source, GFace *target)
     MVertex *v1 = vs2vt[source->triangles[i]->getVertex(0)];
     MVertex *v2 = vs2vt[source->triangles[i]->getVertex(1)];
     MVertex *v3 = vs2vt[source->triangles[i]->getVertex(2)];
-    if(v1 && v2 && v3){
+    if(v1 && v2 && v3) {
       target->triangles.push_back(new MTriangle(v1, v2, v3));
     }
-    else{
+    else {
       Msg::Error("Could not find periodic counterpart of triangle nodes "
                  "%lu %lu %lu",
                  source->triangles[i]->getVertex(0)->getNum(),
@@ -483,7 +484,7 @@ static void copyMesh(GFace *source, GFace *target)
     if(v1 && v2 && v3 && v4) {
       target->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
     }
-    else{
+    else {
       Msg::Error("Could not find periodic counterpart of quadrangle nodes "
                  "%lu %lu %lu %lu",
                  source->quadrangles[i]->getVertex(0)->getNum(),
@@ -744,8 +745,7 @@ static bool algoDelaunay2D(GFace *gf)
   if(gf->getMeshingAlgo() == ALGO_2D_AUTO && gf->geomType() == GEntity::Plane)
     return true;
 
-  if(gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY)
-    return true;
+  if(gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) return true;
 
   return false;
 }
@@ -965,9 +965,11 @@ static void modifyInitialMeshForBoundaryLayers(
                     v21->y(), v21->z(), l + 1, l + 1, l + 1);
         }
       }
-      for(std::size_t l = 0; l < myCol.size(); l++)
-        _columns->_toFirst[myCol[l]] = myCol[0];
-      _columns->_elemColumns[myCol[0]] = myCol;
+      if(myCol.size()) {
+        for(std::size_t l = 0; l < myCol.size(); l++)
+          _columns->_toFirst[myCol[l]] = myCol[0];
+        _columns->_elemColumns[myCol[0]] = myCol;
+      }
     }
   }
 
@@ -1238,7 +1240,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                "nodes are considered once)",
                boundary.size());
     for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = boundary.begin();
-        it != boundary.end(); it++){
+        it != boundary.end(); it++) {
       Msg::Debug("Remaining node %lu", (*it)->getNum());
     }
     gf->meshStatistics.status = GFace::FAILED;
@@ -2653,13 +2655,13 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 1, gf);
   }
 
-  if(algoDelaunay2D(gf)){
+  if(algoDelaunay2D(gf)) {
     // Call this function to untangle elements in Cartesian space
     Msg::Debug("Delaunizing the initial mesh");
     int nb_swap;
     delaunayizeBDS(gf, *m, nb_swap);
   }
-  else{
+  else {
     // tag points that are degenerated
     modifyInitialMeshToRemoveDegeneracies(gf, *m, &recoverMap);
 
@@ -2936,30 +2938,16 @@ void meshGFace::operator()(GFace *gf, bool print)
   const char *algo = "Unknown";
 
   switch(gf->getMeshingAlgo()) {
-  case ALGO_2D_MESHADAPT:
-    algo = "MeshAdapt";
-    break;
+  case ALGO_2D_MESHADAPT: algo = "MeshAdapt"; break;
   case ALGO_2D_AUTO:
     algo = (gf->geomType() == GEntity::Plane) ? "Delaunay" : "MeshAdapt";
     break;
-  case ALGO_2D_INITIAL_ONLY:
-    algo = "Initial Mesh Only";
-    break;
-  case ALGO_2D_DELAUNAY:
-    algo = "Delaunay";
-    break;
-  case ALGO_2D_FRONTAL:
-    algo = "Frontal-Delaunay";
-    break;
-  case ALGO_2D_BAMG:
-    algo = "Bamg";
-    break;
-  case ALGO_2D_FRONTAL_QUAD:
-    algo = "Frontal-Delaunay for Quads";
-    break;
-  case ALGO_2D_PACK_PRLGRMS:
-    algo = "Packing of Parallelograms";
-    break;
+  case ALGO_2D_INITIAL_ONLY: algo = "Initial Mesh Only"; break;
+  case ALGO_2D_DELAUNAY: algo = "Delaunay"; break;
+  case ALGO_2D_FRONTAL: algo = "Frontal-Delaunay"; break;
+  case ALGO_2D_BAMG: algo = "Bamg"; break;
+  case ALGO_2D_FRONTAL_QUAD: algo = "Frontal-Delaunay for Quads"; break;
+  case ALGO_2D_PACK_PRLGRMS: algo = "Packing of Parallelograms"; break;
   case ALGO_2D_PACK_PRLGRMS_CSTR:
     algo = "Packing of Parallelograms Constrained";
     break;

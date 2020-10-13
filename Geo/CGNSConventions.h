@@ -11,7 +11,7 @@
 
 #include <vector>
 #include <string>
-#include "fullMatrix.h"
+#include "GmshConfig.h"
 #include "CGNSCommon.h"
 
 #if defined(HAVE_LIBCGNS)

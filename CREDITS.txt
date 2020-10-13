@@ -31,8 +31,9 @@ cleanup and performance improvements), Celestin Marot (HXT/tetMesh),
 Pierre-Alexandre Beaufort (HXT/reparam), Zhidong Han (LSDYNA export), Ismail
 Badia (hierarchical basis functions), Jeremy Theler (X3D export), Thomas
 Toulorge (high order mesh optimizer, new CGNS IO), Max Orok (binary PLY), Marek
-Wojciechowski (PyPi packaging). See comments in the sources for more
-information. If we forgot to list your contributions please send us an email!
+Wojciechowski (PyPi packaging), Maxence Reberol (automatic transfinite). See
+comments in the sources for more information. If we forgot to list your
+contributions please send us an email!
 
 Thanks to the following folks who have contributed by providing fresh ideas on
 theoretical or programming topics, who have sent patches, requests for changes
@@ -54,7 +55,8 @@ Smit, Sauli Ruuska, Romain Boman, Fredrik Ekre, Mark Burton, Max Orok, Paul
 Cristini, Isuru Fernando, Jose Paulo Moitinho de Almeida, Sophie Le Bras,
 Alberto Escrig, Samy Mukadi, Peter Johnston, Bruno de Sousa Alves, Stefan
 Bruens, Luca Verzeroli, Tristan Seidlhofer, Ding Jiaming, Joost Gevaert, Marcus
-Calhoun-Lopez, Michel Zou.
+Calhoun-Lopez, Michel Zou, Sir Sunsheep, Mariano Forti, Walter Steffe, Nico
+Schloemer, Simon Tournier, Alexandru Dadalau, Thomas Ulrich.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See

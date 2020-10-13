@@ -3725,6 +3725,7 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       view.choice[3] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
+      view.choice[3]->tooltip("View.GlyphLocation");
       view.choice[3]->menu(menu_glyph_loc);
       view.choice[3]->align(FL_ALIGN_RIGHT);
       view.choice[3]->callback(view_options_ok_cb);
@@ -3737,7 +3738,7 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       view.choice[15] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
                                       2 * WB + 10 * BH, (int)(0.85 * IW), BH);
-      view.choice[15]->tooltip("View.GlyphLocation");
+      view.choice[15]->tooltip("View.CenterGlyphs");
       view.choice[15]->menu(menu_glyph_center);
       view.choice[15]->callback(view_options_ok_cb);
 
