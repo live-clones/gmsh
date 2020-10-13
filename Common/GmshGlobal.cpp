@@ -357,7 +357,7 @@ int GmshBatch()
       //				   6,1,CTX::instance()->mesh.numQuads/4);// we split the whole mesh afterwards
       std::vector<std::array<double,5> > singularities;
       computeScaledCrossFieldView(GModel::current(), viewTag,
-				  CTX::instance()->mesh.numQuads/4, 6, 1.e-2, 1, "scaled_cross_field", 1,
+				  CTX::instance()->mesh.numQuads/4, 6, 1.e-2, 2, "scaled_cross_field", 1,
 				  &singularities);
       std::vector<GFace *> temp;
       temp.insert(temp.begin(), GModel::current()->firstFace(), GModel::current()->lastFace());
