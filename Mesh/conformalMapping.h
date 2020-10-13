@@ -39,13 +39,17 @@ class MyMesh{
   std::map<const MEdge *, std::vector<MTriangle *>> edgeToTriangles;
 
   std::map<MVertex *, double, MVertexPtrLessThan> gaussCurv;
-  std::map<MVertex *, double, MVertexPtrLessThan> geodesicCurv; //probably useless
+  std::map<MVertex *, double, MVertexPtrLessThan> geodesicCurv;
+
+  std::set<const MEdge *> edgesCutGraph;
+    
   std::map<const MEdge *, SVector3> normals;
   std::map<MVertex *, SVector3, MVertexPtrLessThan> normalsVertex;
   std::map<const MEdge *, Cross2D> manifoldBasis;
   
   std::map<MVertex *, double, MVertexPtrLessThan> H;
   std::map<const MEdge *, Cross2D> cross2D;
+  
   /* MyMesh(){} */
   MyMesh(GModel *gm);
   MyMesh(MyMesh &orginalMesh);
@@ -56,7 +60,7 @@ class MyMesh{
   /* MyMesh(GFace *gf){} */
   //DBG
   void viewNormals();
-  void viewDarbouxFrame();
+  void viewDarbouxFrame(size_t i);
   void viewMult(std::map<MVertex *, int> &multVert);
   //
   void computeGeoCharac(){
@@ -89,20 +93,13 @@ class ConformalMapping{
   std::set<MVertex *, MVertexPtrLessThan> _newVerticesInModel;
   std::set<MLine *, MElementPtrLessThan> _newLinesInModel;
 
-  void _getFeatureVertAndSing(){
-    /* for(const MEdge *e: _initialMesh->featureDiscreteEdges){ */
-    /*   _initialMesh->featureVertices.insert(e->getVertex(0)); */
-    /*   _initialMesh->featureVertices.insert(e->getVertex(1)); */
-    /* } */
-    //TODO singularities
-    /* _singularities.insert(_gm->getMeshVertexByTag(1246)); */
-    return;
-  };
+  void _getFeatureVertAndSing(){};//deprecated
   void _computeDistancesToBndAndSing();
   void _cutMeshOnFeatureLines();
   void _createCutGraph();
   std::set<const MEdge *> _createEdgeTree();
   void _trimEdgeTree(std::set<const MEdge *> &edgeTree);
+  void _computeH();
   void _cutMeshOnCutGraph(){}
   void _fitModelToInitMesh();
   void _fitModelToFeatureMesh();

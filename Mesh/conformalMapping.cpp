@@ -49,6 +49,16 @@
 //FOR DBG VIEWS ONLY
 #include "gmsh.h"
 
+#if defined(HAVE_SOLVER) && defined(HAVE_POST)
+#include "dofManager.h"
+#include "laplaceTerm.h"
+#include "linearSystemGmm.h"
+#include "linearSystemMUMPS.h"
+#include "linearSystemCSR.h"
+#include "linearSystemFull.h"
+#include "linearSystemPETSc.h"
+#endif
+
 static void getModelFaces(GModel *gm, std::set<GFace *> &f)
 {
   if(f.size()>0){
@@ -371,6 +381,7 @@ void MyMesh::_computeDarbouxFrameOnFeatureVertices(){ //darboux frame with geode
 		 v2->z() - v->z());
     v02.normalize();
     SVector3 normalV = normalsVertex[v];
+    normalV.normalize();
     SVector3 t01 = crossprod(normalV, v01);
     t01.normalize();
     double cosV02=dot(v02,v01);
@@ -425,8 +436,11 @@ void MyMesh::_computeDarbouxFrameOnFeatureVertices(){ //darboux frame with geode
 
 void MyMesh::_computeGaussCurv(){
   MVertexPtrEqual isVertTheSame;
+  std::map<MVertex *, double, MVertexPtrLessThan> angleRef;
   std::map<MVertex *, double, MVertexPtrLessThan> patchArea;
   std::map<MVertex *, double, MVertexPtrLessThan> cotanL;
+  std::map<MVertex *, double, MVertexPtrLessThan> weight;
+  std::map<MVertex *, double, MVertexPtrLessThan> patchLength;
   for(MTriangle *t: triangles){
     for(int k=0; k<3; k++){
       MVertex *v=t->getVertex(k);
@@ -458,6 +472,13 @@ void MyMesh::_computeGaussCurv(){
       gaussCurv[v]+=angle;
       patchArea[v]+=t->getVolume();
       cotanL[v]+=t->getEdge((k+1)%3).length()*t->getEdge((k+1)%3).length()/tan(angle);
+      angleRef[v]=2*M_PI;
+    }
+  }
+  for(MTriangle *t: triangles){
+    for(int k=0; k<3; k++){
+      MVertex *v=t->getVertex(k);
+      weight[v]=(patchArea[v]/2.-cotanL[v]/8.);
     }
   }
   //Correction for boundary vertices here //CAREFULL ! This is wrong. We have to project both tangent in the tangent space, compute angle between both, and the compute the angular deflect to this angle.
@@ -470,39 +491,72 @@ void MyMesh::_computeGaussCurv(){
     const MEdge *e1=*(itEdges);
     itEdges++;
     const MEdge *e2=*(itEdges);
-    double averageLength=(e1->length()+e2->length())/2.0;
-    SVector3 ghostPoint(v->x()-averageLength*_darbouxFrameVertices[v][1][0],
-			v->y()-averageLength*_darbouxFrameVertices[v][1][1],
-			v->z()-averageLength*_darbouxFrameVertices[v][1][2]);
     MVertex *v1=e1->getVertex(0);
     if(isVertTheSame(v1,v))
       v1=e1->getVertex(1);
     MVertex *v2=e2->getVertex(0);
     if(isVertTheSame(v2,v))
       v2=e2->getVertex(1);
-    SVector3 v01(v1->x() - v->x(),
-		 v1->y() - v->y(),
-		 v1->z() - v->z());
-    v01.normalize();
+    SVector3 v10(v->x() - v1->x(),
+		 v->y() - v1->y(),
+		 v->z() - v1->z());
+    v10.normalize();
     SVector3 v02(v2->x() - v->x(),
 		 v2->y() - v->y(),
 		 v2->z() - v->z());
     v02.normalize();
-    SVector3 v0Ghost(ghostPoint[0] - v->x(),
-		     ghostPoint[1] - v->y(),
-		     ghostPoint[2] - v->z());
-    v0Ghost.normalize();
-    double angle1 = acos(dot(v0Ghost,v01));
-    gaussCurv[v]+=angle1;
-    double angle2 = acos(dot(v0Ghost,v02));
-    gaussCurv[v]+=angle2;
+    std::vector<SVector3> darbouxVertex=_darbouxFrameVertices[v];
+    if(darbouxVertex.size()!=3){
+      Msg::Error("Can't compute Gaussian curvature on boundary. A darboux frame is not defined");
+      return;
+    }
+    SVector3 yBase(0.0,1.0,0.0);
+    SVector3 normalTest = darbouxVertex[2];
+    // SVector3 normalTest = darbouxVertex[2] - dot(yBase,darbouxVertex[2])*yBase;
+    // normalTest.normalize();
+    SVector3 v10Proj = v10 - dot(v10,normalTest)*normalTest;
+    v10Proj.normalize();
+    SVector3 v02Proj = v02 - dot(v02,normalTest)*normalTest;
+    v02Proj.normalize();
+    double cosAngleTang=dot(v10Proj,v02Proj);
+    if(cosAngleTang>1.)
+      cosAngleTang=1.;
+    if(cosAngleTang<-1.)
+      cosAngleTang=-1.;
+    double angleTan=acos(cosAngleTang);
+    double sign=0.0;
+    double angleGeo=angleTan;
+    if(dot(v02Proj,darbouxVertex[1])>0){//convexe
+      sign=1.0;
+    }
+    else{//concave
+      sign=-1.0;
+    }
+    angleTan=M_PI-sign*angleTan;
+    angleRef[v]=angleTan;
+    weight[v]=patchArea[v]/3.;
+    //Geodesic curvature
+    patchLength[v]=(e1->length()+e2->length());
+    geodesicCurv[v]=sign*angleGeo/(0.5*(e1->length()+e2->length()));
   }
   //gauss curvature
   for(auto &kv: gaussCurv){
     double value=kv.second;
-    // kv.second = (2*M_PI-value)/(patchArea[kv.first]/3.);
-    kv.second = (2*M_PI-value)/(patchArea[kv.first]/2.-cotanL[kv.first]/8.); //more accurate. Have to check if it's consistant with gauss theorem and FE discretization
+    kv.second = (angleRef[kv.first]-value); //Storing this because already integrated
+    // kv.second = (angleRef[kv.first]-value)/(patchArea[kv.first]/3.); //Less precise value of Gauss curvature, but consistent with linear FEM and Gauss Bonnet
+    
+    // kv.second = (angleRef[kv.first]-value)/(patchArea[kv.first]/2.-cotanL[kv.first]/8.); //more accurate. Have to check if it's consistant with gauss theorem and FE discretization
+    // kv.second = (angleRef[kv.first]-value)/weight[kv.first];
   }
+  //Check that all curvatures matches
+  double intGauss=0.0;
+  double intGeodesic=0.0;
+  for(const auto &kv: gaussCurv){
+    intGauss+=kv.second;
+    intGeodesic+=geodesicCurv[kv.first]*patchLength[kv.first]*0.5;
+  }
+  std::cout << "test : " << double() << std::endl;
+  std::cout << "value check : " << 22-(intGauss+intGeodesic)/(2*M_PI) << std::endl;
   return;
 }
 
@@ -510,22 +564,59 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
 {
   _initialMesh = new MyMesh(gm);
   _currentMesh=_initialMesh;
-  _getFeatureVertAndSing();
   // _initialMesh->viewNormals();
   //cut mesh on feature lines here
   Msg::Info("Cutting mesh on feature lines");
   _cutMeshOnFeatureLines();
   _currentMesh=_featureCutMesh;
+  _currentMesh->computeGeoCharac();
+  _viewScalarVertex(_currentMesh->gaussCurv,"gaussian curvature"); //DBG
+  //Solve H here
+  _computeH();
+  //create cutgraph and cut mesh along it
   Msg::Info("Creating cut graph");
   _createCutGraph();
-  _currentMesh->computeGeoCharac();
-  _viewScalarVertex(_currentMesh->gaussCurv,"gaussian curavature"); //DBG
-  // _featureCutMesh->computeGeoCharac();
-  //Solve H here
-  //create cutgraph and cut mesh along it
-  // _cutMeshOnCutGraph();
+  _cutMeshOnCutGraph();
   //solve crosses
   //parametrization
+}
+
+void ConformalMapping::_computeH(){
+  //fill _currentMesh->H
+#if defined(HAVE_SOLVER)
+#if defined(HAVE_PETSC)
+  linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_MUMPS)
+  linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
+#else
+  linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+#endif
+#endif
+  dofManager<double> *dof = new dofManager<double>(_lsys);
+  std::set<MVertex *, MVertexPtrLessThan> vertices;
+  for(MTriangle *t: _currentMesh->triangles){
+    for(int k=0;k<3;k++){
+      MVertex *vK = t->getVertex(k);
+      vertices.insert(vK);
+    }
+  }
+  for(MVertex *v: vertices){
+    dof->numberVertex(v, 0, 1);
+  }
+  simpleFunction<double> ONE(1.0);
+  laplaceTerm l(0, 1, &ONE);
+  //Matrix
+  for(MTriangle *t: _currentMesh->triangles){
+    SElement se(t);
+    l.addToMatrix(*dof, &se);
+  }
+  //right hand side
+  for(const auto &kv: _currentMesh->gaussCurv){
+    Dof E(kv.first->getNum(), Dof::createTypeWithTwoInts(0, 1));
+    _lsys->addToRightHandSide(dof->getDofNumber(E),-kv.second);//-K on RHS
+  }
+  //Neumann condition
+  return;
 }
 
 void ConformalMapping::_computeDistancesToBndAndSing(){
@@ -565,9 +656,9 @@ void ConformalMapping::_computeDistancesToBndAndSing(){
 void ConformalMapping::_createCutGraph(){
   Msg::Info("Computing distances");
   _computeDistancesToBndAndSing();
-  std::set<const MEdge *> edgeTree = _createEdgeTree();
-  _trimEdgeTree(edgeTree);
-  _viewEdges(edgeTree,"cutgraphTrimmed");  
+  _currentMesh->edgesCutGraph = _createEdgeTree();
+  _trimEdgeTree(_currentMesh->edgesCutGraph);
+  _viewEdges(_currentMesh->edgesCutGraph,"cutgraphTrimmed");  
 }
 
 std::set<const MEdge *> ConformalMapping::_createEdgeTree(){
@@ -848,14 +939,14 @@ void MyMesh::viewNormals(){ //for DBG only
 #endif
 }
 
-void MyMesh::viewDarbouxFrame(){ //for DBG only
+void MyMesh::viewDarbouxFrame(size_t i){ //for DBG only
 #if defined(HAVE_POST)
 
   std::vector<double> datalist;
   for(const auto &kv: _darbouxFrameVertices){
     MVertex *v=kv.first;
     std::vector<SVector3> darbouxFrame = kv.second;
-    for (size_t lv = 0; lv < 1; ++lv){
+    for (size_t lv = i; lv < i+1; ++lv){
       datalist.push_back(v->x());
       datalist.push_back(v->y());
       datalist.push_back(v->z());
