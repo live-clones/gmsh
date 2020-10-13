@@ -19,6 +19,7 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "discreteEdge.h"
+#include "discreteFace.h"
 #include "Numeric.h"
 #include "gmsh.h"
 
@@ -155,16 +156,16 @@ int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map
 }
 
 static inline double compat_orientation_extrinsic(const SVector3 &o0,
-                                                  const SVector3 &n0,
-                                                  const SVector3 &o1,
-                                                  const SVector3 &n1,
-                                                  SVector3 &a1, SVector3 &b1)
+    const SVector3 &n0,
+    const SVector3 &o1,
+    const SVector3 &n1,
+    SVector3 &a1, SVector3 &b1)
 {
   SVector3 t0 = crossprod(n0, o0);
   SVector3 t1 = crossprod(n1, o1);
 
   const size_t permuts[8][2] = {{0, 0}, {1, 0}, {2, 0}, {3, 0},
-                                {0, 1}, {1, 1}, {2, 1}, {3, 1}};
+    {0, 1}, {1, 1}, {2, 1}, {3, 1}};
   SVector3 A[4]{o0, t0, -o0, -t0};
   SVector3 B[2]{o1, t1};
 
@@ -311,6 +312,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
     double smax = -DBL_MAX;
     std::vector<size_t> vertices;
     vertices.reserve(nodeTags.size());
+    size_t ntris = 0;
     for (GFace* gf: components[i]) {
       for (MTriangle* t: gf->triangles) {
         double values[3] = {0,0,0};
@@ -326,10 +328,11 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
         }
         double a = std::abs(t->getVolume());
         integral += a * 1. / std::pow(1./3. * (values[0] + values[1] + values[2]),2);
+        ntris += 1;
       }
     }
     if (integral == 0.) {
-      Msg::Error("integral is 0 ...");
+      Msg::Error("total integral is 0 ... (%li components, %li triangles, smin=%.3e, smax=%.3e)", components.size(), ntris, smin, smax);
       return -1;
     }
     Msg::Debug("-- component %i (%i faces), exp(-H): min=%.3e, max=%.3e, integral=%.3e", 
@@ -404,11 +407,11 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
       MTriangle *t = faces[i]->triangles[j];
 
       SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
-                   t->getVertex(1)->y() - t->getVertex(0)->y(),
-                   t->getVertex(1)->z() - t->getVertex(0)->z());
+          t->getVertex(1)->y() - t->getVertex(0)->y(),
+          t->getVertex(1)->z() - t->getVertex(0)->z());
       SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
-                   t->getVertex(2)->y() - t->getVertex(0)->y(),
-                   t->getVertex(2)->z() - t->getVertex(0)->z());
+          t->getVertex(2)->y() - t->getVertex(0)->y(),
+          t->getVertex(2)->z() - t->getVertex(0)->z());
       SVector3 normal_to_triangle = crossprod(v20, v10);
       normal_to_triangle.normalize();
 
@@ -460,7 +463,7 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
       SVector3 x0, x1, x2, x3;
       compat_orientation_extrinsic(o_i, normal_to_triangle, o_1, normal_to_triangle, x0, x1);
       compat_orientation_extrinsic(o_i, normal_to_triangle, o_2, normal_to_triangle, x2, x3);
-      
+
       double a0 = atan2(dot(t_i, o_i), dot(tgt0, o_i));
 
       x0 -= normal_to_triangle * dot(normal_to_triangle, x0);
@@ -516,7 +519,7 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
   }
   _lsys->systemSolve();
   Msg::Info("Conformal Factor Computed (%d unknowns)",
-            myAssembler->sizeOfR());
+      myAssembler->sizeOfR());
 
   /* Extract solution */
   scaling.resize(vs.size(),0.);
@@ -830,7 +833,6 @@ int detectCrossFieldSingularities(
     const std::vector<std::size_t>& nodeTags,
     const std::vector<double>& scaling,
     std::vector<std::array<double,5> >& singularities) {
-  Msg::Warning("current dectection of singularities is very basic, just min and max of scaling inside faces");
 
   /* Accessible scaling values from vertex num */
   std::vector<double> num_to_scaling(nodeTags.size(),0.);
@@ -1084,6 +1086,15 @@ int computeScaledCrossFieldView(GModel* gm,
     if (status != 0) {
       Msg::Error("failed to compute cross field for face %i",gf->tag());
     }
+  }
+
+  bool updateTopo = false;
+  for (GFace* gf: faces) {
+    discreteFace* df = dynamic_cast<discreteFace*>(gf);
+    if (df) { updateTopo = true; break; }
+  }
+  if (updateTopo) {
+    gm->createTopologyFromMesh();
   }
 
   std::vector<size_t> nodeTags;

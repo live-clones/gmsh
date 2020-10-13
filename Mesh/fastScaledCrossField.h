@@ -32,8 +32,6 @@ int addSingularitiesAtAcuteCorners(
     std::vector<std::array<double,5> >& singularities);
 
 
-
-
 /* Sub-functions that may be called independantly */
 int extractTriangularMeshFromFaces(
     const std::vector<GFace*>& faces,
