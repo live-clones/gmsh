@@ -3,8 +3,9 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GaussIntegration.h"
 #include "GmshDefines.h"
+#include "GaussIntegration.h"
+#include "fullMatrix.h"
 
 static void pts2fullMatrix(int npts, IntPt *pts, fullMatrix<double> &pMatrix,
                            fullVector<double> &wMatrix)

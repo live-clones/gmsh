@@ -193,7 +193,7 @@ HXTStatus hxtDiscretizeLine(HXTMesh *mesh,
         points2lines[fmesh->vertices.num] = lines[j];
 
         // Build line 
-        fmesh->lines.colors[fmesh->lines.num] = mesh->lines.colors[lines[j]];
+        fmesh->lines.color[fmesh->lines.num] = mesh->lines.color[lines[j]];
         fmesh->lines.node[2*fmesh->lines.num+0] = fmesh->vertices.num-1;
         fmesh->lines.node[2*fmesh->lines.num+1] = fmesh->vertices.num;
 
@@ -210,7 +210,7 @@ HXTStatus hxtDiscretizeLine(HXTMesh *mesh,
   }
 
   // Build last line
-  fmesh->lines.colors[fmesh->lines.num] = mesh->lines.colors[lines[numLines-1]];
+  fmesh->lines.color[fmesh->lines.num] = mesh->lines.color[lines[numLines-1]];
   fmesh->lines.node[2*fmesh->lines.num+0] = fmesh->vertices.num-1;
   if (numPointsNew == 2) fmesh->lines.node[2*fmesh->lines.num+0] = startPointIndexFinal;
   fmesh->lines.node[2*fmesh->lines.num+1] = endPointIndexFinal;
@@ -585,7 +585,7 @@ HXTStatus hxtGetPointsOnLinesFromInputMesh(HXTMesh *mesh,
   for (uint64_t i=0; i<mesh->lines.num; i++){
     fmesh->lines.node[2*i+0] = mesh->lines.node[2*i+0];
     fmesh->lines.node[2*i+1] = mesh->lines.node[2*i+1];
-    fmesh->lines.colors[i] = mesh->lines.colors[i];
+    fmesh->lines.color[i] = mesh->lines.color[i];
     parent[mesh->lines.node[2*i+0]].type = 1;
     parent[mesh->lines.node[2*i+1]].type = 1;
     parent[mesh->lines.node[2*i+0]].id = i;

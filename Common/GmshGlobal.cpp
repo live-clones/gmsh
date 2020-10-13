@@ -62,10 +62,11 @@ typedef unsigned long intptr_t;
 
 #endif
 
+static bool isInitialized = false;
+
 int GmshInitialize(int argc, char **argv, bool readConfigFiles,
                    bool exitOnCommandLineError)
 {
-  static bool isInitialized = false;
   if(isInitialized) return 1;
   isInitialized = true;
 
@@ -84,7 +85,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
   InitOptions(0);
 
   // Read configuration files and command line options
-  GetOptions(argc, argv, readConfigFiles, exitOnCommandLineError);
+  GetOptions(readConfigFiles, exitOnCommandLineError);
 
   // Make sure we have enough resources (stack)
   CheckResources();
@@ -262,13 +263,15 @@ int GmshFinalize()
   while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
   std::vector<GModel *>().swap(GModel::list);
 
+  isInitialized = false;
+
   return 1;
 }
 
 static void StartupMessage()
 {
   Msg::Info("Running '%s' [Gmsh %s, %d node%s, max. %d thread%s]",
-            Msg::GetCommandLineArgs().c_str(), GMSH_VERSION, Msg::GetCommSize(),
+            Msg::GetCommandLineFull().c_str(), GMSH_VERSION, Msg::GetCommSize(),
             Msg::GetCommSize() > 1 ? "s" : "", Msg::GetMaxThreads(),
             Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
@@ -288,7 +291,7 @@ int GmshBatch()
 {
   StartupMessage();
 
-  OpenProject(GModel::current()->getFileName());
+  OpenProject(GModel::current()->getFileName(), true); // warn if file missing
   bool open = false;
   for(std::size_t i = 0; i < CTX::instance()->files.size(); i++) {
     if(i == 0 && CTX::instance()->files[0][0] != '-') continue;
@@ -299,7 +302,7 @@ int GmshBatch()
     else if(CTX::instance()->files[i] == "-open")
       open = true;
     else if(open)
-      OpenProject(CTX::instance()->files[i]);
+      OpenProject(CTX::instance()->files[i], true); // warn if file missing
     else
       MergeFile(CTX::instance()->files[i]);
   }

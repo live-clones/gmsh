@@ -1,6 +1,6 @@
 import gmsh
 
-gmsh.initialize(ARGS)
+gmsh.initialize(append!(["gmsh"], ARGS))
 
 # creates the FLTK user interface; this could also be called after the geometry
 # is created (or not at all - fltk.run() will do it automatically)

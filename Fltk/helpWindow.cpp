@@ -6,9 +6,7 @@
 #include <sstream>
 #include <algorithm>
 #include <string>
-#if __cplusplus >= 201103L
 #include <regex>
-#endif
 #include <FL/Fl_Help_View.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
@@ -287,7 +285,6 @@ void help_options_cb(Fl_Widget *w, void *data)
       FlGui::instance()->help->browser->add(s0[i].c_str(), d);
     }
     else {
-#if __cplusplus >= 201103L
       try{
         // icase for case-insensitive search
         if(std::regex_search(s0[i], std::regex(search, std::regex_constants::icase)))
@@ -295,12 +292,6 @@ void help_options_cb(Fl_Widget *w, void *data)
       }
       catch(...) {
       }
-#else
-      std::string tmp(s0[i]);
-      std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
-      if(tmp.find(search) != std::string::npos)
-        FlGui::instance()->help->browser->add(s0[i].c_str(), d);
-#endif
     }
   }
   FlGui::instance()->help->browser->topline(top);
@@ -448,11 +439,7 @@ helpWindow::helpWindow()
     showhelp->tooltip("Show help strings");
 
     Fl_Group *o = new Fl_Group(3 * WB + 2 * BW, WB, BW, BH);
-#if __cplusplus >= 201103L
     o->tooltip("Filter list using regular expression");
-#else
-    o->tooltip("Filter list");
-#endif
     o->box(FL_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
     search = new Fl_Input(3 * WB + 2 * BW + BH, WB + 2, BW - BH - 2, BH - 4,

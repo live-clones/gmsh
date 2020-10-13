@@ -2215,12 +2215,7 @@ bool GFace::reorder(const int elementType,
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newTrianglesOrder[i] = triangles[ordering[i]];
       }
-#if __cplusplus >= 201103L
       triangles = std::move(newTrianglesOrder);
-#else
-      triangles = newTrianglesOrder;
-#endif
-
       return true;
     }
   }
@@ -2238,12 +2233,7 @@ bool GFace::reorder(const int elementType,
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newQuadranglesOrder[i] = quadrangles[ordering[i]];
       }
-#if __cplusplus >= 201103L
       quadrangles = std::move(newQuadranglesOrder);
-#else
-      quadrangles = newQuadranglesOrder;
-#endif
-
       return true;
     }
   }
@@ -2261,12 +2251,7 @@ bool GFace::reorder(const int elementType,
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newPolygonsOrder[i] = polygons[ordering[i]];
       }
-#if __cplusplus >= 201103L
       polygons = std::move(newPolygonsOrder);
-#else
-      polygons = newPolygonsOrder;
-#endif
-
       return true;
     }
   }

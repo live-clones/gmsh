@@ -18,6 +18,7 @@
 #include "GmshMessage.h"
 #include "DivideAndConquer.h"
 #include "Numeric.h"
+#include "fullMatrix.h"
 #include "robustPredicates.h"
 #include "BackgroundMeshTools.h"
 #include "OS.h"

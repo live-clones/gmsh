@@ -137,7 +137,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * Copyright and credits::       Copyright information and list of contributors
 * License::                     Complete copy of the license
 * Concept index::               Index of concepts
-* Syntax index::                Index of reserved keywords in the Gmsh language
+* Syntax index::                Index of command line, scripting and API syntax
 @end menu
 
 @c =========================================================================
@@ -986,6 +986,7 @@ List of expressions are also widely used, and are defined as:
   BoundingBox Point|Curve|Surface|Volume @{ @var{expression-list} @} |
   Mass Curve|Surface|Volume @{ @var{expression} @} |
   CenterOfMass Curve|Surface|Volume @{ @var{expression} @} |
+  MatrixOfInertia Curve|Surface|Volume @{ @var{expression} @} |
   Point @{ @var{expression} @} |
   Physical Point|Curve|Surface|Volume @{ @var{expression-list} @} |
   <Physical> Point|Curve|Surface|Volume @{ : @} |
@@ -1015,11 +1016,12 @@ The next two cases allow to retrieve entities in a given bounding box,
 or get the bounding box of a given entity, with the bounding box
 specified as (X min, Y min, Z min, X max, Y max, Z max). Beware that the
 order of coordinates is different than in the @code{BoundingBox} command
-for the scene: see @ref{General commands}. The last five cases permit to
-retrieve the mass or the center of mass of an entity, the coordinates of
-a given geometry point (@pxref{Points}), the elementary entities making
-up physical groups, and the tags of all (physical or elementary) points,
-curves, surfaces or volumes in the model. @value{SYNCS}
+for the scene: see @ref{General commands}. The last cases permit to
+retrieve the mass, the center of mass or the matrix of intertia of an
+entity, the coordinates of a given geometry point (@pxref{Points}), the
+elementary entities making up physical groups, and the tags of all
+(physical or elementary) points, curves, surfaces or volumes in the
+model. @value{SYNCS}
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
@@ -1727,6 +1729,20 @@ geometry kernel.
 
 @item Draw;
 Redraws the scene.
+
+@item SplitCurrentWindowHorizontal @var{expression};
+Splits the current window horizontally, with the ratio given by @var{expression}.
+
+@item SplitCurrentWindowVertical @var{expression};
+Splits the current window vertically, with the ratio given by @var{expression}.
+
+@item SetCurrentWindow @var{expression};
+Sets the current window by speficying its index (starting at 0) in the
+list of all windows. When new windows are created by splits, new windows
+are appended at the end of the list.
+
+@item UnsplitWindow;
+Restore a single window.
 
 @item SetChanged;
 Force the mesh and post-processing vertex arrays to be
@@ -2814,7 +2830,7 @@ not by default), the mesh will be adapted with respect to the curvature
 of the model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
 which gives the number of elements per 2 Pi radians.
 @item
-Finally, you can specify a general background mesh size, expressed as a
+Next, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
 @itemize @bullet
 @item
@@ -2846,17 +2862,21 @@ computed using other fields.
 @item
 @dots{}
 @end itemize
-
 The list of available fields with their options is given below. An
 example is available in @ref{t10}.
+@item
+Finally, using the Gmsh API you can also specify a global mesh size
+callback in C++, C, Python or Julia using
+@code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
+gmsh/model/mesh}).
 @end enumerate
 
-The three aforementioned methods can be used simultaneously, in which
-case the smallest element size is selected at any given point. In
-addition, boundary mesh sizes (on curves or surfaces) are interpolated
-inside the enclosed entity (surface or volume, respectively) if the
-option @code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is
-by default).
+All the aforementioned methods can be used simultaneously, in which case
+the smallest element size is selected at any given point. In addition,
+boundary mesh sizes (on curves or surfaces) are interpolated inside the
+enclosed entity (surface or volume, respectively) if the option
+@code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is by
+default).
 
 All element sizes are further constrained in the interval [
 @code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
@@ -3175,12 +3195,14 @@ and extruded meshes). @value{SYNC}
 @item Coherence Mesh;
 Removes all duplicate mesh nodes.
 
-@item CreateTopology;
+@item CreateTopology < @{ @var{expression} , @var{expression} @} > ;
 Creates a boundary representation from the mesh of the current model if
 the model does not have one (e.g. when imported from mesh file formats
-with no BRep representation of the underlying model), clears any
-built-in CAD kernel entities, and exports the discrete entities in the
-built-in CAD kernel.
+with no BRep representation of the underlying model). If the first
+optional argument is set (or not given), make all volumes and surfaces
+simply connected first; if the second optional argument is set (or not
+given), clear any built-in CAD kernel entities and export the discrete
+entities in the built-in CAD kernel.
 
 @item CreateGeometry < @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @} > ;
 Creates a geometry for discrete entities (represented solely by a mesh,
@@ -5170,6 +5192,8 @@ Python and Julia API examples, see the respective subdirectories in
 * t21:: Mesh partitioning
 * x1::  Geometry and mesh data
 * x2::  Mesh import, discrete entities, hybrid models, terrain meshing
+* x3::  Post-processing data import: list-based
+* x4::  Post-processing data import: model-based
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5584,7 +5608,7 @@ Also available in C++
 @c x2
 @c -------------------------------------------------------------------------
 
-@node x2,  , x1, Tutorial
+@node x2, x3, x1, Tutorial
 @section @code{x2}: Mesh import, discrete entities, hybrid models, terrain meshing
 
 See
@@ -5594,6 +5618,38 @@ Also available in C++
 
 @smallformat
 @verbatiminclude ../../tutorial/python/x2.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x3
+@c -------------------------------------------------------------------------
+
+@node x3, x4, x2, Tutorial
+@section @code{x3}: Post-processing data import: list-based
+
+See
+@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py,x3.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp,x3.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorial/python/x3.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x4
+@c -------------------------------------------------------------------------
+
+@node x4,  , x3, Tutorial
+@section @code{x4}: Post-processing data import: model-based
+
+See
+@url{@value{GITLAB-PREFIX}/tutorial/python/x4.py,x4.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp,x4.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorial/python/x4.py
 @end smallformat
 
 @c =========================================================================
@@ -5726,11 +5782,11 @@ to run CMake).
 Each build can be configured using a series of options, to selectively
 enable optional modules or features. Here is the list of CMake options:
 
-@ftable @code
+@table @code
 
 @include cmake_options.texi
 
-@end ftable
+@end table
 
 The wiki
 (@uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Gmsh-compilation})
@@ -5820,11 +5876,12 @@ directly within their respective CAD kernels (i.e. using functions from
 the @code{gmsh/model/geo} or @code{gmsh/model/occ} namespaces,
 respectively), as Gmsh does not translate across CAD formats but rather
 directly accesses the native representation. CAD entities must be
-@emph{synchronized} with the model in order to be meshed.  1D and 2D
-meshing algorithms use the @emph{parametrization} of the underlying
-geometrical curve or surface to generate the mesh. Discrete entities can
-be remeshed provided that a parametrization is explicitly recomputed for
-them.
+@emph{synchronized} with the model in order to be meshed, or, more
+generally, for functions outside of @code{gmsh/model/geo} or
+@code{gmsh/model/occ} to manipulate them. 1D and 2D meshing algorithms
+use the @emph{parametrization} of the underlying geometrical curve or
+surface to generate the mesh. Discrete entities can be remeshed provided
+that a parametrization is explicitly recomputed for them.
 @item
 Mesh data is made of @emph{elements} (points, lines, triangles,
 quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by

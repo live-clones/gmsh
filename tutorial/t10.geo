@@ -78,7 +78,8 @@ Field[6].YMax = 0.6;
 // complete list. You can also create fields directly in the graphical user
 // interface by selecting `Define->Fields' in the `Mesh' module.
 
-// Finally, let's use the minimum of all the fields as the background mesh field
+// Finally, let's use the minimum of all the fields as the background mesh size
+// field
 Field[7] = Min;
 Field[7].FieldsList = {2, 3, 5, 6};
 Background Field = 7;
@@ -90,7 +91,7 @@ Background Field = 7;
 //    at geometrical points;
 // 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based on
 //    the curvature and `Mesh.MinimumElementsPerTwoPi';
-// 4) the background mesh field;
+// 4) the background mesh size field;
 // 5) any per-entity mesh size constraint.
 //
 // This value is then constrained in the interval
@@ -101,8 +102,8 @@ Background Field = 7;
 // `Mesh.CharacteristicLengthExtendFromBoundary' is set (which is the case by
 // default).
 //
-// When the element size is fully specified by a background mesh (as it is in
-// this example), it is thus often desirable to set
+// When the element size is fully specified by a background mesh size field (as
+// it is in this example), it is thus often desirable to set
 
 Mesh.CharacteristicLengthExtendFromBoundary = 0;
 Mesh.CharacteristicLengthFromPoints = 0;

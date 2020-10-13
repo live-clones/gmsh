@@ -67,7 +67,7 @@ HXTStatus hxtTransferInitialMeshToTempMesh(HXTMesh *mesh,
   for (uint32_t i=0; i<tmesh->lines.num; i++){
     tmesh->lines.node[2*i+0] = mesh->lines.node[2*i+0];
     tmesh->lines.node[2*i+1] = mesh->lines.node[2*i+1];
-    tmesh->lines.colors[i] = mesh->lines.colors[i];
+    tmesh->lines.color[i] = mesh->lines.color[i];
   }
 
   // Transfer triangles to temp mesh
@@ -75,7 +75,7 @@ HXTStatus hxtTransferInitialMeshToTempMesh(HXTMesh *mesh,
     tmesh->triangles.node[3*i+0] = mesh->triangles.node[3*i+0];
     tmesh->triangles.node[3*i+1] = mesh->triangles.node[3*i+1];
     tmesh->triangles.node[3*i+2] = mesh->triangles.node[3*i+2];
-    tmesh->triangles.colors[i] = mesh->triangles.colors[i];
+    tmesh->triangles.color[i] = mesh->triangles.color[i];
     p2t[tmesh->triangles.node[3*i+0]] = i;
     p2t[tmesh->triangles.node[3*i+1]] = i;
     p2t[tmesh->triangles.node[3*i+2]] = i;
@@ -210,7 +210,7 @@ HXTStatus hxtCheckEdgesAndMesh(HXTMesh *mesh, HXTEdges *edges)
     if (v0 == v1 || v0 == v2 || v1 == v2) 
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Triangle has 2 same nodes");
 
-    if (mesh->triangles.colors[t1] != mesh->triangles.colors[t0]) continue;
+    if (mesh->triangles.color[t1] != mesh->triangles.color[t0]) continue;
     for (uint32_t j=0; j<3; j++){
       if (n0 == mesh->triangles.node[3*t0+j]){
         if (n1 != mesh->triangles.node[3*t0+(j+2)%3]) 
@@ -531,18 +531,18 @@ HXTStatus hxtSurfaceMeshInsertInteriorVertex(HXTMesh *tmesh,
     int isBoundary1 = hxtIsTriOnBoundary(edges,edges2lines,t1);
 
     // TODO delete or debug
-    if (tmesh->triangles.colors[t0] != tmesh->triangles.colors[t1]){
+    if (tmesh->triangles.color[t0] != tmesh->triangles.color[t1]){
       FILE *dd;
       hxtPosInit("insertproblem.pos", "Check", &dd); 
       uint64_t t = t0;
       double *v0 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*t+0];
       double *v1 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*t+1];
       double *v2 = tmesh->vertices.coord + 4*tmesh->triangles.node[3*t+2];
-      hxtPosAddTriangle(dd,v0,v1,v2,tmesh->triangles.colors[t]);
+      hxtPosAddTriangle(dd,v0,v1,v2,tmesh->triangles.color[t]);
       hxtPosAddPoint(dd,pn,0);
       hxtPosFinish(dd);
       printf("%d %lu \n", parent[cn].type, parent[cn].id);
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insert point different colors %d", cn);
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insert point different color %d", cn);
     }
     
     uint32_t ne = UINT32_MAX;
@@ -688,7 +688,7 @@ HXTStatus hxtSurfaceMeshInsertLineVertex(HXTMesh *tmesh,
   // Create the new line
   tmesh->lines.node[2*tmesh->lines.num+0] = edges->node[2*ne+0];
   tmesh->lines.node[2*tmesh->lines.num+1] = edges->node[2*ne+1];
-  tmesh->lines.colors[tmesh->lines.num] = tmesh->lines.colors[cl];
+  tmesh->lines.color[tmesh->lines.num] = tmesh->lines.color[cl];
   uint64_t nl = tmesh->lines.num;
   tmesh->lines.num++;
 
@@ -795,8 +795,8 @@ HXTStatus hxtSurfaceMeshInsertionSwap(const HXTMesh *mesh,
 
       if (edges2lines[i] != UINT64_MAX) continue; // Do not swap if it's boundary line
 
-      if (tmesh->triangles.colors[edges->edg2tri[2*i+0]] == opt->skipColor) continue;
-      if (tmesh->triangles.colors[edges->edg2tri[2*i+1]] == opt->skipColor) continue;
+      if (tmesh->triangles.color[edges->edg2tri[2*i+0]] == opt->skipColor) continue;
+      if (tmesh->triangles.color[edges->edg2tri[2*i+1]] == opt->skipColor) continue;
 
       //hxtTempPrintSwap(mesh,edges,i,0);
 
@@ -835,7 +835,7 @@ HXTStatus hxtSurfaceMeshInsertionSwap(const HXTMesh *mesh,
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap same triangles for one edge");
       
       // TODO delete or debug mode
-      if (tmesh->triangles.colors[t0] == UINT16_MAX){ 
+      if (tmesh->triangles.color[t0] == UINT16_MAX){ 
         FILE *dd;
         hxtPosInit("cannotCollapseSwap.pos", "Check", &dd);
         double *v0 = tmesh->vertices.coord + 4*edges->node[2*i+0];
@@ -845,7 +845,7 @@ HXTStatus hxtSurfaceMeshInsertionSwap(const HXTMesh *mesh,
         HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESHcannotSwap.msh"));
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap color of t0 == UINT16_MAX");
       }
-      if (tmesh->triangles.colors[t1] == UINT16_MAX){
+      if (tmesh->triangles.color[t1] == UINT16_MAX){
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap color of t1 == UINT16_MAX");
       }
 
@@ -1103,7 +1103,7 @@ HXTStatus hxtSurfaceMesh(HXTPointGenOptions *opt,
 
   // QUADTRI 
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-    if (mesh->triangles.colors[i] != opt->skipColor) continue;
+    if (mesh->triangles.color[i] != opt->skipColor) continue;
     flagV[mesh->triangles.node[3*i+0]] = 1;
     flagV[mesh->triangles.node[3*i+1]] = 1;
     flagV[mesh->triangles.node[3*i+2]] = 1;
@@ -1438,14 +1438,14 @@ HXTStatus hxtGetSurfaceMesh(HXTPointGenOptions *opt,
   for (uint32_t i=0; i<mesh->lines.num; i++){
     nmesh->lines.node[2*i+0] = isOnSurface[mesh->lines.node[2*i+0]];
     nmesh->lines.node[2*i+1] = isOnSurface[mesh->lines.node[2*i+1]];
-    nmesh->lines.colors[i] = mesh->lines.colors[i];
+    nmesh->lines.color[i] = mesh->lines.color[i];
     nmesh->lines.num++;
   }
   for (uint32_t i=0; i<mesh->triangles.num; i++){
     nmesh->triangles.node[3*i+0] = isOnSurface[mesh->triangles.node[3*i+0]];
     nmesh->triangles.node[3*i+1] = isOnSurface[mesh->triangles.node[3*i+1]];
     nmesh->triangles.node[3*i+2] = isOnSurface[mesh->triangles.node[3*i+2]];
-    nmesh->triangles.colors[i] = mesh->triangles.colors[i];
+    nmesh->triangles.color[i] = mesh->triangles.color[i];
     nmesh->triangles.num++;
   }
 

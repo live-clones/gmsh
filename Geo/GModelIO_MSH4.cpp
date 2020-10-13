@@ -2591,6 +2591,12 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
     GEntity *g_master = g_slave->getMeshMaster();
 
     if(g_slave != g_master) {
+
+      std::map<MVertex *, MVertex *> corrVert = g_slave->correspondingVertices;
+      if(CTX::instance()->mesh.hoSavePeriodic)
+        corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
+                        g_slave->correspondingHighOrderVertices.end());
+
       if(binary) {
         int gSlaveDim = g_slave->dim();
         int gSlaveTag = g_slave->tag();
@@ -2612,12 +2618,11 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
           fwrite(&numAffine, sizeof(std::size_t), 1, fp);
         }
 
-        std::size_t corrVertSize = g_slave->correspondingVertices.size();
+        std::size_t corrVertSize = corrVert.size();
         fwrite(&corrVertSize, sizeof(std::size_t), 1, fp);
 
-        for(std::map<MVertex *, MVertex *>::iterator it =
-              g_slave->correspondingVertices.begin();
-            it != g_slave->correspondingVertices.end(); ++it) {
+        for(std::map<MVertex *, MVertex *>::iterator it = corrVert.begin();
+            it != corrVert.end(); ++it) {
           std::size_t numFirst = it->first->getNum();
           std::size_t numSecond = it->second->getNum();
           fwrite(&numFirst, sizeof(std::size_t), 1, fp);
@@ -2648,11 +2653,10 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
           }
         }
 
-        fprintf(fp, "%lu\n", g_slave->correspondingVertices.size());
+        fprintf(fp, "%lu\n", corrVert.size());
 
-        for(std::map<MVertex *, MVertex *>::iterator it =
-              g_slave->correspondingVertices.begin();
-            it != g_slave->correspondingVertices.end(); ++it) {
+        for(std::map<MVertex *, MVertex *>::iterator it = corrVert.begin();
+            it != corrVert.end(); ++it) {
           fprintf(fp, "%lu %lu\n", it->first->getNum(), it->second->getNum());
         }
       }
@@ -3154,9 +3158,6 @@ int GModel::writePartitionedTopology(std::string &name)
     return 0;
   }
 
-#if __cplusplus < 201103L
-  char intToChar[20];
-#endif
   fprintf(fp, "Group{\n");
   fprintf(fp, "  // Part~{dim}~{parentPhysicalTag}~{part1}~{part2}~...\n\n");
   std::vector<std::map<int, std::string> > tagToString(4);
@@ -3165,28 +3166,11 @@ int GModel::writePartitionedTopology(std::string &name)
     for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it =
           allParts[i - 1].begin();
         it != allParts[i - 1].end(); ++it) {
-#if __cplusplus >= 201103L
       std::string partName = "Part~{" + std::to_string(i - 1) + "}~{" +
                              std::to_string(it->second.first) + "}";
-#else
-      std::string partName = "Part~{";
-      sprintf(intToChar, "%lu", i - 1);
-      partName += intToChar;
-      partName += "}~{";
-      sprintf(intToChar, "%d", it->second.first);
-      partName += intToChar;
-      partName += "}";
-#endif
       fprintf(fp, "  Part~{%lu}~{%d}", i - 1, it->second.first);
       for(size_t j = 0; j < it->second.second.size(); ++j) {
-#if __cplusplus >= 201103L
         partName += "~{" + std::to_string(it->second.second[j]) + "}";
-#else
-        partName += "~{";
-        sprintf(intToChar, "%d", it->second.second[j]);
-        partName += intToChar;
-        partName += "}";
-#endif
         fprintf(fp, "~{%d}", it->second.second[j]);
       }
       tagToString[i - 1].insert(

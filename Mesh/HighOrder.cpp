@@ -23,6 +23,7 @@
 #include "OS.h"
 #include "fullMatrix.h"
 #include "BasisFactory.h"
+#include "nodalBasis.h"
 #include "InnerVertexPlacement.h"
 #include "Context.h"
 #include "MFace.h"
@@ -1441,12 +1442,10 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   Msg::StopProgressMeter();
   double t2 = Cpu(), w2 = TimeOfDay();
 
-  if(CTX::instance()->mesh.hoCheck) {
-    std::vector<MElement *> bad;
-    double worst;
-    checkHighOrderTriangles("Surface mesh", m, bad, worst);
-    checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
-  }
+  std::vector<MElement *> bad;
+  double worst;
+  checkHighOrderTriangles("Surface mesh", m, bad, worst);
+  checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
 
   Msg::StatusBar(true, "Done meshing order %d (Wall %gs, CPU %gs)", order,
                  w2 - w1, t2 - t1);

@@ -8,8 +8,8 @@
 
 #include <map>
 #include <vector>
-#include "fullMatrix.h"
 #include "JacobianBasis.h"
+#include "fullMatrix.h"
 
 class CondNumBasis {
 private:

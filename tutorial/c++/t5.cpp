@@ -6,8 +6,9 @@
 //
 // -----------------------------------------------------------------------------
 
-#include <gmsh.h>
+#include <set>
 #include <cstdio>
+#include <gmsh.h>
 
 void cheeseHole(double x, double y, double z, double r, double lc,
                 std::vector<int> &shells, std::vector<int> &volumes)
@@ -185,15 +186,15 @@ int main(int argc, char **argv)
   // other than the first one define holes:
   int ve = gmsh::model::geo::addVolume(shells);
 
-  // Note that using solid modelling with the OpenCASCADE geometry kernel, the
-  // same geometry could be built quite differently: see `t16.cpp'.
+  gmsh::model::geo::synchronize();
+
+  // Note that using solid modelling with the OpenCASCADE CAD kernel, the same
+  // geometry could be built quite differently: see `t16.cpp'.
 
   // We finally define a physical volume for the elements discretizing the cube,
   // without the holes (for which physical groups were already defined in the
   // `cheeseHole()' function):
   gmsh::model::addPhysicalGroup(3, {ve}, 10);
-
-  gmsh::model::geo::synchronize();
 
   // We could make only part of the model visible to only mesh this subset:
   // std::vector<std::pair<int, int> > ent;
@@ -223,7 +224,9 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(3);
   gmsh::write("t5.msh");
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
 

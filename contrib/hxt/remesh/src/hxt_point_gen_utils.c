@@ -20,7 +20,7 @@ HXTStatus hxtMeshClear ( HXTMesh** mesh) {
   HXT_CHECK( hxtAlignedFree(&(*mesh)->vertices.coord) );
 
   // tetrahedra
-  HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.color) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.flag) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.node) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.neigh) );
@@ -28,21 +28,21 @@ HXTStatus hxtMeshClear ( HXTMesh** mesh) {
   // HXT_CHECK( hxtAlignedFree(&(*mesh)->tetrahedra.subdet) );
   
   // hexahedra
-  HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.color) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.flag) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.node) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.neigh) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->hexahedra.neighType) );
 
   // prisms
-  HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.color) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.flag) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.node) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.neigh) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->prisms.neighType) );
 
   // pyramids
-  HXT_CHECK( hxtAlignedFree(&(*mesh)->pyramids.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->pyramids.color) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->pyramids.flag) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->pyramids.node) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->pyramids.neigh) );
@@ -50,19 +50,19 @@ HXTStatus hxtMeshClear ( HXTMesh** mesh) {
 
   // triangles
   HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles.node) );
-  HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles.color) );
 
   // triangles2
   HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles2.node) );
-  HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles2.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles2.color) );
 
   // quads
   HXT_CHECK( hxtAlignedFree(&(*mesh)->quads.node) );
-  HXT_CHECK( hxtAlignedFree(&(*mesh)->quads.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->quads.color) );
 
   // lines
   HXT_CHECK( hxtAlignedFree(&(*mesh)->lines.node) );
-  HXT_CHECK( hxtAlignedFree(&(*mesh)->lines.colors) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->lines.color) );
 
   // points
   HXT_CHECK( hxtAlignedFree(&(*mesh)->points.node) );
@@ -99,7 +99,7 @@ HXTStatus hxtExtractColoredSurface(HXTMesh *mesh, uint16_t color)
 
   uint64_t countTri = 0;
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-    if (mesh->triangles.colors[i] == color){
+    if (mesh->triangles.color[i] == color){
       countTri++;
     }
   }
@@ -110,8 +110,8 @@ HXTStatus hxtExtractColoredSurface(HXTMesh *mesh, uint16_t color)
     omesh->vertices.num++;
   }
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-    if (mesh->triangles.colors[i] == color){
-      omesh->triangles.colors[omesh->triangles.num] = mesh->triangles.colors[i];
+    if (mesh->triangles.color[i] == color){
+      omesh->triangles.color[omesh->triangles.num] = mesh->triangles.color[i];
       omesh->triangles.node[3*omesh->triangles.num+0] = mesh->triangles.node[3*i+0];
       omesh->triangles.node[3*omesh->triangles.num+1] = mesh->triangles.node[3*i+1];
       omesh->triangles.node[3*omesh->triangles.num+2] = mesh->triangles.node[3*i+2];
@@ -142,7 +142,7 @@ HXTStatus hxtCheckZeroAreaTriangles(HXTMesh *mesh, const char *filename)
     if (area<10e-12){
       FILE *lt;
       hxtPosInit("triangleWithZeroArea.pos", "Check", &lt); 
-      hxtPosAddTriangle(lt,v0,v1,v2,mesh->triangles.colors[i]);
+      hxtPosAddTriangle(lt,v0,v1,v2,mesh->triangles.color[i]);
       hxtPosNewView(lt,"Edge 0");
       hxtPosAddLine(lt,v0,v1,0);
       hxtPosNewView(lt,"Edge 1");
@@ -598,7 +598,7 @@ HXTStatus hxtPointGenOpenLines(HXTMesh *mesh)
 
   for (uint32_t i=0; i<edges->numEdges; i++){
     if (edges->edg2tri[2*i+1] == UINT64_MAX){
-      mesh->lines.colors[mesh->lines.num] = 0;
+      mesh->lines.color[mesh->lines.num] = 0;
       mesh->lines.node[2*mesh->lines.num+0] = edges->node[2*i+0];
       mesh->lines.node[2*mesh->lines.num+1] = edges->node[2*i+1];
       mesh->lines.num++;
@@ -637,7 +637,7 @@ HXTStatus hxtPointGenClassifyDihedralLines(HXTMesh *mesh, HXTEdges *edges)
     uint64_t t0 = edges->edg2tri[2*i+0];
     uint64_t t1 = edges->edg2tri[2*i+1];
 
-    if (mesh->triangles.colors[t0] != mesh->triangles.colors[t1]) continue;
+    if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
    
 //    uint32_t *nodes_of_t1 = &mesh->triangles.node[3*t0];
 //    uint32_t *nodes_of_t2 = &mesh->triangles.node[3*t1];
@@ -701,7 +701,7 @@ HXTStatus hxtPointGenClassifyDihedralLines(HXTMesh *mesh, HXTEdges *edges)
       uint64_t t0 = edges->edg2tri[2*i+0];
       uint64_t t1 = edges->edg2tri[2*i+1];
 
-      if (mesh->triangles.colors[t0] != mesh->triangles.colors[t1]) continue;
+      if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
 
 //      uint32_t *nodes_of_t1 = &mesh->triangles.node[3*t0];
 //      uint32_t *nodes_of_t2 = &mesh->triangles.node[3*t1];
@@ -715,7 +715,7 @@ HXTStatus hxtPointGenClassifyDihedralLines(HXTMesh *mesh, HXTEdges *edges)
       for (int i=0; i<3; i++)
         d += Nt1[i]*Nt2[i];
       if (fabs(d) < angleThreshold){
-        mesh->lines.colors[mesh->lines.num] = 0;
+        mesh->lines.color[mesh->lines.num] = 0;
         mesh->lines.node[2*mesh->lines.num+0] = edges->node[2*i+0];
         mesh->lines.node[2*mesh->lines.num+1] = edges->node[2*i+1];
         mesh->lines.num++;
@@ -735,7 +735,7 @@ HXTStatus hxtPointGenClassifyDihedralLines(HXTMesh *mesh, HXTEdges *edges)
         if (e0 == i || e1 == i || e2 == i) counter++;
       }
       if (counter == 4){
-        mesh->lines.colors[mesh->lines.num] = 0;
+        mesh->lines.color[mesh->lines.num] = 0;
         mesh->lines.node[2*mesh->lines.num+0] = edges->node[2*i+0];
         mesh->lines.node[2*mesh->lines.num+1] = edges->node[2*i+1];
         mesh->lines.num++;
@@ -949,7 +949,7 @@ HXTStatus hxtGetTrianglesToTetrahedra(HXTMesh *mesh,
       }
       // Count as well tetrahedra that are on color changes
       uint64_t neigh = mesh->tetrahedra.neigh[4*i+j]/4;
-      if (mesh->tetrahedra.colors[i] != mesh->tetrahedra.colors[neigh]){
+      if (mesh->tetrahedra.color[i] != mesh->tetrahedra.color[neigh]){
         countBT++;
         break;
       }
@@ -969,7 +969,7 @@ HXTStatus hxtGetTrianglesToTetrahedra(HXTMesh *mesh,
         break;
       }
       neigh = neigh/4;
-      if (mesh->tetrahedra.colors[i] != mesh->tetrahedra.colors[neigh]){
+      if (mesh->tetrahedra.color[i] != mesh->tetrahedra.color[neigh]){
         boundaryTetrahedra[countBT] = i;
         countBT++;
         break;
@@ -1106,14 +1106,14 @@ HXTStatus hxtGetBoundaryTetrahedraToTriangles(HXTMesh *mesh,
 //
 //  FUNCTION 
 //
-//    Get list of colors of triangles
-//    listColors array with size numColors is allocated inside the function 
+//    Get list of color of triangles
+//    listColor array with size numColor is allocated inside the function 
 //
 //*****************************************************************************************
 //*****************************************************************************************
-HXTStatus hxtGetLinesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t **listColors)
+HXTStatus hxtGetLinesColorList(HXTMesh *mesh, uint16_t *numColor, uint16_t **listColor)
 {
-  if(mesh->lines.colors == NULL) return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Mesh lines do not have colors");
+  if(mesh->lines.color == NULL) return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Mesh lines do not have color");
 
   uint16_t *tempList;
   HXT_CHECK(hxtMalloc(&tempList,mesh->lines.num*sizeof(uint16_t)));
@@ -1121,7 +1121,7 @@ HXTStatus hxtGetLinesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t **l
   uint16_t count = 0;
 
   for (uint64_t i=0; i<mesh->lines.num; i++){
-    uint16_t currentColor = mesh->lines.colors[i];
+    uint16_t currentColor = mesh->lines.color[i];
     int found = 1;
     for (uint16_t j=0; j<count; j++){
       if (currentColor == tempList[j]){
@@ -1135,20 +1135,20 @@ HXTStatus hxtGetLinesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t **l
     }
   }
 
-  *numColors = count;
-  HXT_CHECK(hxtMalloc(listColors,count*sizeof(uint16_t)));
-  for (uint16_t i=0; i<count; i++) (*listColors)[i] = tempList[i];
+  *numColor = count;
+  HXT_CHECK(hxtMalloc(listColor,count*sizeof(uint16_t)));
+  for (uint16_t i=0; i<count; i++) (*listColor)[i] = tempList[i];
 
   HXT_CHECK(hxtFree(&tempList));
 
   return HXT_STATUS_OK; 
 }
 
-// Get list of colors of triangles
-// listColors array with size numColors is allocated inside the function 
-HXTStatus hxtGetTrianglesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t **listColors)
+// Get list of color of triangles
+// listColor array with size numColor is allocated inside the function 
+HXTStatus hxtGetTrianglesColorList(HXTMesh *mesh, uint16_t *numColor, uint16_t **listColor)
 {
-  if(mesh->triangles.colors == NULL) return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Mesh triangles do not have colors");
+  if(mesh->triangles.color == NULL) return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Mesh triangles do not have color");
 
   uint16_t *tempList;
   HXT_CHECK(hxtMalloc(&tempList,mesh->triangles.num*sizeof(uint16_t)));
@@ -1156,7 +1156,7 @@ HXTStatus hxtGetTrianglesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t
   uint16_t count = 0;
 
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-    uint16_t currentColor = mesh->triangles.colors[i];
+    uint16_t currentColor = mesh->triangles.color[i];
     int found = 1;
     for (uint16_t j=0; j<count; j++){
       if (currentColor == tempList[j]){
@@ -1170,9 +1170,9 @@ HXTStatus hxtGetTrianglesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t
     }
   }
 
-  *numColors = count;
-  HXT_CHECK(hxtMalloc(listColors,count*sizeof(uint16_t)));
-  for (uint16_t i=0; i<count; i++) (*listColors)[i] = tempList[i];
+  *numColor = count;
+  HXT_CHECK(hxtMalloc(listColor,count*sizeof(uint16_t)));
+  for (uint16_t i=0; i<count; i++) (*listColor)[i] = tempList[i];
 
   HXT_CHECK(hxtFree(&tempList));
 
@@ -1280,7 +1280,7 @@ HXTStatus hxtVertexCavity(HXTMesh *mesh,
                           uint64_t *cavSize, 
                           uint64_t *cavity)
 {
-  uint16_t color = mesh->triangles.colors[ct];
+  uint16_t color = mesh->triangles.color[ct];
   if (color == UINT16_MAX) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Color in cavity is UINT16_MAX");
 
   uint64_t cavSizeTemp = 0;
@@ -1311,25 +1311,25 @@ HXTStatus hxtVertexCavity(HXTMesh *mesh,
     if (f == UINT64_MAX)
       return HXT_ERROR_MSG(HXT_STATUS_FAILED, "Could not close cavity for point %d", cv );
     if (f == fstart) break;
-    if (mesh->triangles.colors[f] != color){
+    if (mesh->triangles.color[f] != color){
       // TODO delete or debug
       HXT_CHECK(hxtMeshWriteGmsh(mesh,"FINALMESHdifferentcolor.msh"));
       FILE *dd;
-      hxtPosInit("triangleDifferentColors.pos", "Point", &dd); 
+      hxtPosInit("triangleDifferentColor.pos", "Point", &dd); 
       double *p = mesh->vertices.coord + 4*cv;
       hxtPosAddPoint(dd,p,0);
       for (uint64_t k=0; k<cavSizeTemp; k++){
-        hxtPosNewView(dd,"Triangle %lu %lu %d", k, cavity[k], mesh->triangles.colors[cavity[k]]);
+        hxtPosNewView(dd,"Triangle %lu %lu %d", k, cavity[k], mesh->triangles.color[cavity[k]]);
         uint64_t t = cavity[k];
         double *v0 = mesh->vertices.coord + 4*mesh->triangles.node[3*t+0];
         double *v1 = mesh->vertices.coord + 4*mesh->triangles.node[3*t+1];
         double *v2 = mesh->vertices.coord + 4*mesh->triangles.node[3*t+2];
-        hxtPosAddTriangle(dd,v0,v1,v2,mesh->triangles.colors[t]);
-        hxtPosAddLine(dd,v0,v1,mesh->triangles.colors[t]);
-        hxtPosAddLine(dd,v0,v2,mesh->triangles.colors[t]);
+        hxtPosAddTriangle(dd,v0,v1,v2,mesh->triangles.color[t]);
+        hxtPosAddLine(dd,v0,v1,mesh->triangles.color[t]);
+        hxtPosAddLine(dd,v0,v2,mesh->triangles.color[t]);
       }
       hxtPosFinish(dd);
-      return HXT_ERROR_MSG(HXT_STATUS_FAILED, "Triangle of different color in cavity %lu %d", ct,mesh->triangles.colors[f]);
+      return HXT_ERROR_MSG(HXT_STATUS_FAILED, "Triangle of different color in cavity %lu %d", ct,mesh->triangles.color[f]);
     }
     cavity[cavSizeTemp] = f;
     cavSizeTemp ++;
@@ -1371,7 +1371,7 @@ HXTStatus hxtBoundaryVertexCavity(HXTMesh *mesh,
   if (edges2lines[ce] == UINT64_MAX) 
     return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Current edge not a line (edges2lines)");
 
-  uint16_t color = mesh->triangles.colors[ct];
+  uint16_t color = mesh->triangles.color[ct];
   if (color == UINT16_MAX) 
     return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Color in cavity is UINT16_MAX");
 
@@ -1403,7 +1403,7 @@ HXTStatus hxtBoundaryVertexCavity(HXTMesh *mesh,
     if (edges2lines[ge] != UINT64_MAX){
       //uint64_t tri0 = edges->edg2tri[2*ge+0];
       //uint64_t tri1 = edges->edg2tri[2*ge+1];
-      //if (mesh->triangles.colors[tri0] == mesh->triangles.colors[tri1]) 
+      //if (mesh->triangles.color[tri0] == mesh->triangles.color[tri1]) 
         //return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Adjacent triangles have same color");
       break; 
     }
@@ -1416,10 +1416,10 @@ HXTStatus hxtBoundaryVertexCavity(HXTMesh *mesh,
       fe = ge;
     }
     if (f == UINT64_MAX) break;
-    if (mesh->triangles.colors[f] != mesh->triangles.colors[g]) 
+    if (mesh->triangles.color[f] != mesh->triangles.color[g]) 
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Problem in building vertex cavity");
     if (f == fstart) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Vertex is not on boundary");
-    if (mesh->triangles.colors[f] != color)
+    if (mesh->triangles.color[f] != color)
       return HXT_ERROR_MSG(HXT_STATUS_FAILED, "Triangle of different color in cavity");
     cavity[cavSizeTemp] = f;
     cavSizeTemp ++;
@@ -1517,8 +1517,8 @@ HXTStatus hxtBoundaryVertexCavityEdges(HXTMesh *mesh,
   if (edgeExist != 1) return HXT_ERROR_MSG(HXT_STATUS_ERROR, "Edge is not on triangle");
   if (edges2lines[ce] == UINT64_MAX) 
     return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Current edge not a line");
-  if (mesh->triangles.colors[edges->edg2tri[2*ce+0]] ==
-      mesh->triangles.colors[edges->edg2tri[2*ce+1]]) 
+  if (mesh->triangles.color[edges->edg2tri[2*ce+0]] ==
+      mesh->triangles.color[edges->edg2tri[2*ce+1]]) 
     return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Current edge not a line");
 
 
@@ -1547,7 +1547,7 @@ HXTStatus hxtBoundaryVertexCavityEdges(HXTMesh *mesh,
     if (edges2lines[ge] != UINT64_MAX){
       uint64_t tri0 = edges->edg2tri[2*ge+0];
       uint64_t tri1 = edges->edg2tri[2*ge+1];
-      if (mesh->triangles.colors[tri0] == mesh->triangles.colors[tri1]) 
+      if (mesh->triangles.color[tri0] == mesh->triangles.color[tri1]) 
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Adjacent triangles have same color");
       cavity[cavSizeTemp] = ge;
       cavSizeTemp ++;
@@ -1564,7 +1564,7 @@ HXTStatus hxtBoundaryVertexCavityEdges(HXTMesh *mesh,
       fe = ge;
     }
     if (f == UINT64_MAX) break;
-    if (mesh->triangles.colors[f] != mesh->triangles.colors[g]) 
+    if (mesh->triangles.color[f] != mesh->triangles.color[g]) 
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Problem in building vertex cavity");
     if (f == fstart) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Vertex is not on boundary");
     //cavity[cavSizeTemp] = fe;
@@ -1594,7 +1594,7 @@ HXTStatus hxtVertexFanPerimeter(HXTMesh *mesh,
                                 uint32_t *cavSize, 
                                 uint32_t *cavity)
 {
-  uint16_t color = mesh->triangles.colors[ct];
+  uint16_t color = mesh->triangles.color[ct];
   if (color == UINT16_MAX) 
     return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Color in cavity is UINT16_MAX");
 
@@ -1631,25 +1631,25 @@ HXTStatus hxtVertexFanPerimeter(HXTMesh *mesh,
     if (f == UINT64_MAX)
       return HXT_ERROR_MSG(HXT_STATUS_FAILED, "Could not close cavity for point %d", cv );
     if (f == fstart) break;
-    if (mesh->triangles.colors[f] != color){
+    if (mesh->triangles.color[f] != color){
       // TODO delete or debug
       HXT_CHECK(hxtMeshWriteGmsh(mesh,"FINALMESHdifferentcolor.msh"));
       FILE *dd;
-      hxtPosInit("triangleDifferentColors.pos", "Point", &dd); 
+      hxtPosInit("triangleDifferentColor.pos", "Point", &dd); 
       double *p = mesh->vertices.coord + 4*cv;
       hxtPosAddPoint(dd,p,0);
       for (uint64_t k=0; k<cavSizeTemp; k++){
-        hxtPosNewView(dd,"Triangle %lu %lu %d", k, cavity[k], mesh->triangles.colors[cavity[k]]);
+        hxtPosNewView(dd,"Triangle %lu %lu %d", k, cavity[k], mesh->triangles.color[cavity[k]]);
         uint64_t t = cavity[k];
         double *v0 = mesh->vertices.coord + 4*mesh->triangles.node[3*t+0];
         double *v1 = mesh->vertices.coord + 4*mesh->triangles.node[3*t+1];
         double *v2 = mesh->vertices.coord + 4*mesh->triangles.node[3*t+2];
-        hxtPosAddTriangle(dd,v0,v1,v2,mesh->triangles.colors[t]);
-        hxtPosAddLine(dd,v0,v1,mesh->triangles.colors[t]);
-        hxtPosAddLine(dd,v0,v2,mesh->triangles.colors[t]);
+        hxtPosAddTriangle(dd,v0,v1,v2,mesh->triangles.color[t]);
+        hxtPosAddLine(dd,v0,v1,mesh->triangles.color[t]);
+        hxtPosAddLine(dd,v0,v2,mesh->triangles.color[t]);
       }
       hxtPosFinish(dd);
-      return HXT_ERROR_MSG(HXT_STATUS_FAILED, "Triangle of different color in cavity %lu %d", ct,mesh->triangles.colors[f]);
+      return HXT_ERROR_MSG(HXT_STATUS_FAILED, "Triangle of different color in cavity %lu %d", ct,mesh->triangles.color[f]);
     }
     //cavity[cavSizeTemp] = f;
     //cavSizeTemp ++;
@@ -1684,7 +1684,7 @@ HXTStatus hxtBoundaryVertexFanPerimeter(HXTMesh *mesh,
   if (edges2lines[ce] == UINT64_MAX) 
     return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Current edge not a line");
 
-  uint16_t color = mesh->triangles.colors[ct];
+  uint16_t color = mesh->triangles.color[ct];
   if (color == UINT16_MAX) 
     return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Color in cavity is UINT16_MAX");
 
@@ -1739,7 +1739,7 @@ HXTStatus hxtBoundaryVertexFanPerimeter(HXTMesh *mesh,
  
     if (f == UINT64_MAX) 
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Problem in building vertex cavity");
-    if (mesh->triangles.colors[f] != mesh->triangles.colors[g]) 
+    if (mesh->triangles.color[f] != mesh->triangles.color[g]) 
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Problem in building vertex cavity");
     if (f == fstart) 
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Vertex is not on boundary");

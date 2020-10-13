@@ -122,7 +122,6 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
 
   double hxtDeclareAligned32 middle[4];
   double hxtDeclareAligned32 f0[4];
-  double hxtDeclareAligned32 sub0[4];
   double hxtDeclareAligned32 f1[4];
   double hxtDeclareAligned32 sub1[4];
 
@@ -153,11 +152,11 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
 
     middle[i] = mid01[i] * (xmax - xmin) + xmin;
     f0[i] = (nmax/2) / (middle[i] - xmin);
-    sub0[i] = xmin * f0[i];
     f1[i] = (nmax/2) / (xmax - middle[i]);
-    sub1[i] = middle[i] * f1[i] - (nmax/2);
-    while((uint32_t) (xmax * f1[i] - sub1[i]) >= nmax)
+    sub1[i] = 2*middle[i] - xmax;
+    while((uint32_t) ((xmax - sub1[i]) * f1[i]) >= nmax){
       f1[i] = nextbeforef(f1[i]);
+    }
   }
 
   #pragma omp parallel
@@ -173,9 +172,9 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
         for(int k=0; k<3; k++) {
           double v = vertices[32*i+j].coord[k];
           if(v < middle[k])
-            xyz[k] = v *f0[k] - sub0[k];
+            xyz[k] = (v - bbox->min[k]) *f0[k];
           else
-            xyz[k] = v *f1[k] - sub1[k];
+            xyz[k] = (v - sub1[k]) *f1[k];
         }
 
         zorder[j] = Zorder(xyz);
@@ -232,9 +231,9 @@ HXT_ASSERT_MSG(bbox->min[0]<bbox->max[0] ||
         for(int k=0; k<3; k++) {
           double v = vertices[i].coord[k];
           if(v < middle[k])
-            xyz[k] = v *f0[k] - sub0[k];
+            xyz[k] = (v - bbox->min[k]) *f0[k];
           else
-            xyz[k] = v *f1[k] - sub1[k];
+            xyz[k] = (v - sub1[k]) *f1[k];
         }
 
         xyz[2]/=4;

@@ -318,6 +318,9 @@ std::string GEdge::getAdditionalInfoString(bool multline)
 
   if(_v0 && _v1) {
     sstream << "Boundary points: " << _v0->tag() << ", " << _v1->tag();
+    GPoint p0 = _v0->point();
+    GPoint p1 = _v1->point();
+    sstream << " (distance = " << p0.distance(p1) << ")";
     if(multline)
       sstream << "\n";
     else
@@ -853,12 +856,7 @@ bool GEdge::reorder(const int elementType, const std::vector<std::size_t> &order
       newLinesOrder[i] = lines[ordering[i]];
     }
 
-#if __cplusplus >= 201103L
     lines = std::move(newLinesOrder);
-#else
-    lines = newLinesOrder;
-#endif
-
     return true;
   }
 

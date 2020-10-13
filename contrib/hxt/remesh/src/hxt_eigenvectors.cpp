@@ -1,5 +1,7 @@
 #include "hxt_eigenvectors.h"
 
+#define HXT_HAVE_EIGEN 1
+
 #ifdef HXT_HAVE_EIGEN
 
 #include <Eigen/Eigenvalues>
@@ -41,9 +43,16 @@ HXTStatus eigMat(double * __restrict__ mat,
 
 #include <stdlib.h>
 
+#if !defined(F77NAME)
+#define F77NAME(x) (x##_)
+#endif
+
+
 /* DSYEV prototype */
-extern "C" void dsyev_( char* jobz, char* uplo, int* n, double* a, int* lda,
-                        double* w, double* work, int* lwork, int* info );
+extern "C" {
+  void F77NAME(dsyev)( char* jobz, char* uplo, int* n, double* a, int* lda,
+		       double* w, double* work, int* lwork, int* info );
+}
 
 template<int n>
 HXTStatus eigMat(double * __restrict__ mat,
@@ -68,11 +77,11 @@ HXTStatus eigMat(double * __restrict__ mat,
   char vectors[] = "Vectors";
   char upper[] = "Upper";
 
-  dsyev_(vectors, upper, &m, a, &lda, w, &wkopt, &lwork, &info );
+  F77NAME(dsyev)(vectors, upper, &m, a, &lda, w, &wkopt, &lwork, &info );
   lwork = (int)wkopt;
   work = (double*)malloc( lwork*sizeof(double) );
   /* Solve eigenproblem */
-  dsyev_(vectors, upper, &m, a, &lda, w, work, &lwork, &info );
+  F77NAME(dsyev)(vectors, upper, &m, a, &lda, w, work, &lwork, &info );
 
   /* Free workspace */
   free( (void*)work );

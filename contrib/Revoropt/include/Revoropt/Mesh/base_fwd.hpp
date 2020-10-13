@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -11,7 +11,7 @@
 #ifndef _REVOROPT_MESH_BASE_FWD_HPP_
 #define _REVOROPT_MESH_BASE_FWD_HPP_
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 #include <type_traits>
 
@@ -74,7 +74,7 @@ class ROMeshBase
   public:
 
     friend class ROTriangulationWrapper<_VertexDim,_Scalar,_VertexOffset> ;
-  
+
     typedef _Scalar Scalar ;
 
     enum {
@@ -90,7 +90,7 @@ class ROMeshBase
 
   /** Protected construction this class is only meant to be derived **/
   protected:
-    ROMeshBase() : 
+    ROMeshBase() :
       vertices_(NULL),
       vertices_size_(0),
       faces_(NULL),
@@ -99,12 +99,12 @@ class ROMeshBase
       dirty_(false)
     {}
 
-    ROMeshBase( const Scalar* vertices, 
-                unsigned int vertices_size, 
-                const unsigned int* faces, 
+    ROMeshBase( const Scalar* vertices,
+                unsigned int vertices_size,
+                const unsigned int* faces,
                 const unsigned int* face_neighbourhoods,
                 unsigned int faces_size
-              ) : 
+              ) :
       vertices_(vertices),
       vertices_size_(vertices_size),
       faces_(faces),
@@ -131,7 +131,7 @@ class ROMeshBase
     typename std::enable_if<
       _VertexOffset == 0 && std::is_same<T,const Scalar*>::value,
       T
-    >::type vertices() const { 
+    >::type vertices() const {
       return vertices_ ;
     }
 
@@ -190,24 +190,24 @@ class ROMesh : public ROMeshBase<_VertexDim,_Scalar,_VertexOffset>
     friend class ROTriangulationWrapper<_VertexDim,_Scalar,_VertexOffset> ;
 
     template<
-      int _OtherSize, 
-      int _OtherDim, 
-      typename _OtherScalar, 
+      int _OtherSize,
+      int _OtherDim,
+      typename _OtherScalar,
       int _OtherOffset
     >
     friend class ROMeshWrapper ;
 
     template<
-      int _OtherSize, 
-      int _OtherDim, 
-      typename _OtherScalar, 
+      int _OtherSize,
+      int _OtherDim,
+      typename _OtherScalar,
       int _OtherOffset
     >
     friend class MeshWrapper ;
 
     template<
-      int _OtherSize, 
-      int _OtherDim, 
+      int _OtherSize,
+      int _OtherDim,
       typename _OtherScalar
     >
     friend class MeshBuilder ;
@@ -229,12 +229,12 @@ class ROMesh : public ROMeshBase<_VertexDim,_Scalar,_VertexOffset>
   protected:
     ROMesh() : Base() {}
 
-    ROMesh( const Scalar* vertices, 
-            unsigned int vertices_size, 
-            const unsigned int* faces, 
+    ROMesh( const Scalar* vertices,
+            unsigned int vertices_size,
+            const unsigned int* faces,
             const unsigned int* face_neighbourhoods,
             unsigned int faces_size
-          ) : Base( vertices, vertices_size, 
+          ) : Base( vertices, vertices_size,
                     faces, face_neighbourhoods, faces_size
                   ) {
     }
@@ -276,7 +276,7 @@ class ROMesh : public ROMeshBase<_VertexDim,_Scalar,_VertexOffset>
     /** Edges **/
 
     /* vertices of an edge */
-    void face_edge_vertices( unsigned int face_index, 
+    void face_edge_vertices( unsigned int face_index,
                              unsigned int edge,
                              unsigned int* v0,
                              unsigned int* v1
@@ -290,14 +290,14 @@ class ROMesh : public ROMeshBase<_VertexDim,_Scalar,_VertexOffset>
       *v1 = fverts[(edge+1)%fsize] ;
     }
 
-    unsigned int face_edge_end_vertex( unsigned int face_index, 
+    unsigned int face_edge_end_vertex( unsigned int face_index,
                                        unsigned int edge
                                      ) const {
       //edge vertices
       return face(face_index)[(edge+1)%face_size(face_index)] ;
     }
 
-    unsigned int face_edge_start_vertex( unsigned int face_index, 
+    unsigned int face_edge_start_vertex( unsigned int face_index,
                                          unsigned int edge
                                        ) const {
       //face vertices
@@ -315,9 +315,9 @@ class ROMesh : public ROMeshBase<_VertexDim,_Scalar,_VertexOffset>
     }
 
     /* index of an edge given by its vertices in a face (NO_INDEX if none) */
-    unsigned int edge_face_index( unsigned int face_index, 
-                                  unsigned int v1, 
-                                  unsigned int v2 
+    unsigned int edge_face_index( unsigned int face_index,
+                                  unsigned int v1,
+                                  unsigned int v2
                                 ) const ;
 
 } ;
@@ -331,7 +331,7 @@ template<
   typename _Scalar,
   int _VertexOffset
 >
-class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> : 
+class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
   public ROMeshBase<_VertexDim,_Scalar,_VertexOffset>
 {
   public:
@@ -339,30 +339,30 @@ class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
     friend class ROTriangulationWrapper<_VertexDim,_Scalar,_VertexOffset> ;
 
     template<
-      int _OtherSize, 
-      int _OtherDim, 
-      typename _OtherScalar, 
+      int _OtherSize,
+      int _OtherDim,
+      typename _OtherScalar,
       int _OtherOffset
     >
     friend class ROMeshWrapper ;
 
     template<
-      int _OtherSize, 
-      int _OtherDim, 
-      typename _OtherScalar, 
+      int _OtherSize,
+      int _OtherDim,
+      typename _OtherScalar,
       int _OtherOffset
     >
     friend class MeshWrapper ;
 
     template<
-      int _OtherSize, 
-      int _OtherDim, 
+      int _OtherSize,
+      int _OtherDim,
       typename _OtherScalar
     >
     friend class MeshBuilder ;
 
     typedef ROMeshBase<_VertexDim,_Scalar,_VertexOffset> Base ;
-  
+
     typedef _Scalar Scalar ;
 
     enum {
@@ -378,13 +378,13 @@ class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
   protected:
     ROMesh() : Base() {}
 
-    ROMesh( const Scalar* vertices, 
-            unsigned int vertices_size, 
-            const unsigned int* faces, 
-            const unsigned int* face_ends, 
+    ROMesh( const Scalar* vertices,
+            unsigned int vertices_size,
+            const unsigned int* faces,
+            const unsigned int* face_ends,
             const unsigned int* face_neighbourhoods,
             unsigned int faces_size
-          ) : Base( vertices, vertices_size, 
+          ) : Base( vertices, vertices_size,
                     faces, face_neighbourhoods, faces_size
                   ),
               face_ends_(face_ends) {
@@ -404,8 +404,8 @@ class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
 
     /* position of a face in the face array */
     unsigned int face_offset( unsigned int face_index ) const {
-      return face_index == 0 ? 
-        0 : 
+      return face_index == 0 ?
+        0 :
         face_ends_[face_index-1]  ;
     }
 
@@ -416,8 +416,8 @@ class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
 
     /* number of vertices of a face */
     unsigned int face_size( unsigned int face_index ) const {
-      return face_index == 0 ? 
-        face_ends_[face_index] : 
+      return face_index == 0 ?
+        face_ends_[face_index] :
         face_ends_[face_index] - face_ends_[face_index-1] ;
     }
 
@@ -436,7 +436,7 @@ class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
     /** Edges **/
 
     /* vertices of an edge */
-    void face_edge_vertices( unsigned int face_index, 
+    void face_edge_vertices( unsigned int face_index,
                              unsigned int edge,
                              unsigned int* v0,
                              unsigned int* v1
@@ -450,7 +450,7 @@ class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
       *v1 = fverts[(edge+1)%fsize] ;
     }
 
-    unsigned int face_edge_end_vertex( unsigned int face_index, 
+    unsigned int face_edge_end_vertex( unsigned int face_index,
                                        unsigned int edge
                                      ) const {
       //size of the face
@@ -461,7 +461,7 @@ class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
       return fverts[(edge+1)%fsize] ;
     }
 
-    unsigned int face_edge_start_vertex( unsigned int face_index, 
+    unsigned int face_edge_start_vertex( unsigned int face_index,
                                          unsigned int edge
                                        ) const {
       //face vertices
@@ -475,13 +475,13 @@ class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
     /* the neighbouring face of index i is aside the given face along the edge
      * starting at the vertex with index i within the face. */
     const unsigned int* face_neighbours( unsigned int face_index ) const {
-      return Base::face_neighbourhoods_ + face_offset(face_index) ; 
+      return Base::face_neighbourhoods_ + face_offset(face_index) ;
     }
 
     /* index of an edge given by its vertices in a face (NO_INDEX if none) */
-    unsigned int edge_face_index( unsigned int face_index, 
-                                  unsigned int v1, 
-                                  unsigned int v2 
+    unsigned int edge_face_index( unsigned int face_index,
+                                  unsigned int v1,
+                                  unsigned int v2
                                 ) const ;
 
   protected:
@@ -500,9 +500,9 @@ class ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
 /**{{{ Fixed size faces case **/
 
 template<
-  int _FaceSize = 3, 
-  int _VertexDim = 3, 
-  typename _Scalar = double, 
+  int _FaceSize = 3,
+  int _VertexDim = 3,
+  typename _Scalar = double,
   int _VertexOffset = 0
 >
 class Mesh : public ROMesh<_FaceSize,_VertexDim,_Scalar,_VertexOffset>
@@ -510,7 +510,7 @@ class Mesh : public ROMesh<_FaceSize,_VertexDim,_Scalar,_VertexOffset>
   public:
 
     typedef ROMesh<_FaceSize,_VertexDim,_Scalar,_VertexOffset> Base ;
-  
+
     typedef _Scalar Scalar ;
 
     enum {
@@ -526,18 +526,18 @@ class Mesh : public ROMesh<_FaceSize,_VertexDim,_Scalar,_VertexOffset>
   protected:
     Mesh() : Base() {}
 
-    Mesh( Scalar* vertices, 
-          unsigned int vertices_size, 
-          unsigned int* faces, 
+    Mesh( Scalar* vertices,
+          unsigned int vertices_size,
+          unsigned int* faces,
           unsigned int* face_neighbourhoods,
           unsigned int faces_size
-        ) : Base( vertices, vertices_size, 
+        ) : Base( vertices, vertices_size,
                   faces, face_neighbourhoods, faces_size
                 ) {
     }
 
   public:
-  
+
     /** Vertices **/
 
     using Base::vertices ;
@@ -546,8 +546,8 @@ class Mesh : public ROMesh<_FaceSize,_VertexDim,_Scalar,_VertexOffset>
     typename std::enable_if<
       _VertexOffset == 0 && std::is_same<T,Scalar*>::value,
       T
-    >::type vertices() { 
-      return const_cast<T>(Base::vertices()) ; 
+    >::type vertices() {
+      return const_cast<T>(Base::vertices()) ;
     }
 
     using Base::vertex ;
@@ -583,17 +583,17 @@ class Mesh : public ROMesh<_FaceSize,_VertexDim,_Scalar,_VertexOffset>
 /**{{{ Variable size faces case **/
 
 template<
-  int _VertexDim, 
-  typename _Scalar, 
+  int _VertexDim,
+  typename _Scalar,
   int _VertexOffset
 >
-class Mesh<Variable,_VertexDim,_Scalar,_VertexOffset> : 
+class Mesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
   public ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset>
 {
   public:
 
     typedef ROMesh<Variable,_VertexDim,_Scalar,_VertexOffset> Base ;
-  
+
     typedef _Scalar Scalar ;
 
     enum {
@@ -609,19 +609,19 @@ class Mesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
   protected:
     Mesh() : Base() {}
 
-    Mesh( Scalar* vertices, 
-          unsigned int vertices_size, 
-          unsigned int* faces, 
-          unsigned int* face_ends, 
+    Mesh( Scalar* vertices,
+          unsigned int vertices_size,
+          unsigned int* faces,
+          unsigned int* face_ends,
           unsigned int* face_neighbourhoods,
           unsigned int faces_size
-        ) : Base( vertices, vertices_size, 
+        ) : Base( vertices, vertices_size,
                   faces, face_ends, face_neighbourhoods, faces_size
                 ) {
     }
 
   public:
-  
+
     /** Vertices **/
 
     using Base::vertices ;
@@ -630,8 +630,8 @@ class Mesh<Variable,_VertexDim,_Scalar,_VertexOffset> :
     typename std::enable_if<
       _VertexOffset == 0 && std::is_same<T,Scalar*>::value,
       T
-    >::type vertices() { 
-      return const_cast<T>(Base::vertices()) ; 
+    >::type vertices() {
+      return const_cast<T>(Base::vertices()) ;
     }
 
     using Base::vertex ;

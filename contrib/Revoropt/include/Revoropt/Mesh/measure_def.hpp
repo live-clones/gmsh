@@ -6,7 +6,7 @@
 #include <Revoropt/Tools/measure_def.hpp>
 #include <Revoropt/Neighbours/neighbourhood_def.hpp>
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 namespace Revoropt {
 
@@ -17,7 +17,7 @@ template<typename Mesh>
 typename Mesh::Scalar mesh_face_area(const Mesh* mesh, unsigned int face) {
   //scalar type
   typedef typename Mesh::Scalar Scalar ;
-  
+
   //result
   double area = 0 ;
 
@@ -25,7 +25,7 @@ typename Mesh::Scalar mesh_face_area(const Mesh* mesh, unsigned int face) {
   unsigned int fsize = mesh->face_size(face) ;
   const unsigned int* fverts = mesh->face(face) ;
   for(unsigned int v = 1; v < fsize-1; ++v) {
-    area += triangle_area<Mesh::VertexDim,Scalar>( 
+    area += triangle_area<Mesh::VertexDim,Scalar>(
               mesh->vertex(fverts[0]),
               mesh->vertex(fverts[v]),
               mesh->vertex(fverts[v+1])
@@ -57,9 +57,9 @@ typename Mesh::Scalar mesh_area(const Mesh* mesh) {
 /*{{{ Edge length */
 
 template< typename Mesh >
-typename Mesh::Scalar edge_length_from_vertices( const Mesh* mesh, 
-                                                 unsigned int v0, 
-                                                 unsigned int v1 
+typename Mesh::Scalar edge_length_from_vertices( const Mesh* mesh,
+                                                 unsigned int v0,
+                                                 unsigned int v1
                                                ) {
   //scalar type
   typedef typename Mesh::Scalar Scalar ;
@@ -73,9 +73,9 @@ typename Mesh::Scalar edge_length_from_vertices( const Mesh* mesh,
 }
 
 template< typename Mesh >
-typename Mesh::Scalar edge_length_from_face_index( const Mesh* mesh, 
-                                                   unsigned int face, 
-                                                   unsigned int edge 
+typename Mesh::Scalar edge_length_from_face_index( const Mesh* mesh,
+                                                   unsigned int face,
+                                                   unsigned int edge
                                                  ) {
   //edge vertex indices
   const unsigned int v0 = mesh->face_edge_start_vertex(face, edge) ;
@@ -171,9 +171,9 @@ void mesh_longest_edge_vertices( const Mesh* mesh,
 /*{{{ Angles */
 
 template<typename Mesh>
-typename Mesh::Scalar face_angle_cos( const Mesh* mesh, 
-                                      unsigned int face, 
-                                      unsigned int vertex 
+typename Mesh::Scalar face_angle_cos( const Mesh* mesh,
+                                      unsigned int face,
+                                      unsigned int vertex
                                     ) {
   //size of the face
   const unsigned int fsize = mesh->face_size(face) ;
@@ -183,8 +183,8 @@ typename Mesh::Scalar face_angle_cos( const Mesh* mesh,
   const unsigned int prev = fverts[(vertex+fsize-1) % fsize] ;
   const unsigned int next = fverts[(vertex      +1) % fsize] ;
   //angle cosine
-  return angle_cos<Mesh::VertexDim>( mesh->vertex(vertex), 
-                                     mesh->vertex(prev), 
+  return angle_cos<Mesh::VertexDim>( mesh->vertex(vertex),
+                                     mesh->vertex(prev),
                                      mesh->vertex(next)
                                    ) ;
 }
@@ -253,23 +253,23 @@ class NeighDistanceCompute {
   enum { Dim = Triangulation::VertexDim } ;
   typedef Eigen::Matrix<Scalar,Dim,1> Vector ;
 
-  NeighDistanceCompute( const Triangulation* mesh, 
+  NeighDistanceCompute( const Triangulation* mesh,
                         const Scalar* queries,
-                        const unsigned int* indices, 
+                        const unsigned int* indices,
                         Scalar* output,
                         bool translate_queries = true
-                      ) : mesh_(mesh), 
+                      ) : mesh_(mesh),
                           queries_(queries),
-                          indices_(indices), 
+                          indices_(indices),
                           output_(output),
                           translate_queries_(translate_queries) {} ;
 
   NeighDistanceCompute( const Triangulation* mesh,
                         const Scalar* queries,
-                        Scalar* output 
-                      ) : mesh_(mesh), 
+                        Scalar* output
+                      ) : mesh_(mesh),
                           queries_(queries),
-                          indices_(NULL), 
+                          indices_(NULL),
                           output_(output),
                           translate_queries_(false) {} ;
 
@@ -277,7 +277,7 @@ class NeighDistanceCompute {
                    unsigned int triangle
                  ) {
     //position of the query
-    const unsigned int q_in_index = 
+    const unsigned int q_in_index =
       translate_queries_ ? indices_[query] : query ;
     const Scalar* qp = queries_ +Dim*q_in_index ;
     Eigen::Map<const Vector> qv(qp) ;
@@ -294,9 +294,9 @@ class NeighDistanceCompute {
     const Scalar distance = (uv[0]*x0+uv[1]*x1+(1-uv[0]-uv[1])*x2 - qv).norm() ;
 
     //assign the minimum distance
-    const unsigned int q_out_index = 
+    const unsigned int q_out_index =
       indices_ == NULL ? query : indices_[query] ;
-    output_[q_out_index] = 
+    output_[q_out_index] =
       distance < output_[q_out_index] ? distance : output_[q_out_index] ;
   }
 
@@ -343,8 +343,8 @@ void mesh_distances( const Mesh* mesh,
 /**{{{ Gradient of the mesh area wrt. its vertices **/
 
 template<typename Triangulation>
-void mesh_area_gradient( 
-    const Triangulation* mesh, 
+void mesh_area_gradient(
+    const Triangulation* mesh,
     double* output,
     double factor
     ) {
@@ -377,7 +377,7 @@ void mesh_area_gradient(
     for(unsigned int v = 0; v < 3; ++v) {
       const Scalar& base_len = e_len[(v+1)%3] ;
       const Vector& base = edges[(v+1)%3] ;
-      heights[v] = edges[(v+2)%3] 
+      heights[v] = edges[(v+2)%3]
                  - edges[(v+2)%3].dot(base) * base / (base_len*base_len) ;
       h_len[v] = heights[v].norm() ;
       degenerate |= (h_len[v] == 0) ;

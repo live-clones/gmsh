@@ -7,11 +7,11 @@
 #define POLYNOMIAL_BASIS_H
 
 #include <math.h>
+#include <iostream>
 #include <map>
 #include <vector>
 #include "fullMatrix.h"
 #include "nodalBasis.h"
-#include <iostream>
 
 class polynomialBasis : public nodalBasis {
 public:

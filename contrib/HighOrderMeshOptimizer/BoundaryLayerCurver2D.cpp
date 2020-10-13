@@ -31,22 +31,23 @@
 #include "GFace.h"
 #include "orthogonalBasis.h"
 #include "bezierBasis.h"
-
 #include "gmshVertex.h"
 #include "Geo.h"
 #include "MLine.h"
 #include "GModel.h"
-#if defined(HAVE_POST)
-#include "PView.h"
-#endif
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#endif
 #include "Options.h"
 #include "AnalyseMeshQuality.h"
 #include "InnerVertexPlacement.h"
 #include "pointsGenerators.h"
 #include "qualityMeasuresJacobian.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
+
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#endif
 
 namespace {
   void drawEquidistantPoints(GEdge *gedge, int N)
