@@ -22,6 +22,4 @@ int remeshCavity (GFace *gf,
        std::map<MVertex *, std::vector<MElement *>, MVertexPtrLessThan>& adj,
 			 std::map<MVertex*,int, MVertexPtrLessThan> &newSings);
 
-int removeValence6Nodes(GFace * gf, std::map<MVertex *, std::vector<MElement *>, MVertexPtrLessThan>& adj);
-
 #endif

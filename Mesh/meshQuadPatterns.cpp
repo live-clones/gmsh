@@ -32,6 +32,9 @@
 #include <unordered_set>
 #include "qmt_utils.hpp" // For debug printing
 #include "row_echelon_integer.hpp"
+#include "meshQuadData.hpp"
+#include "StringUtils.h"
+
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -109,7 +112,6 @@ namespace QuadPatternMatching {
 
 
 
-
   constexpr id NO_ID = (id) -1;
   inline id2 sorted(id v1, id v2) { if (v1 < v2) { return {v1,v2}; } else { return {v2,v1}; } }
   inline id2 sorted(id2 e) { if (e[0] < e[1]) { return {e[0],e[1]}; } else { return {e[1],e[0]}; } }
@@ -118,6 +120,31 @@ namespace QuadPatternMatching {
       return size_t(p[0]) << 32 | p[1];
     }
   };
+
+  struct vidHash {
+    size_t operator()(const std::vector<id>& p) const noexcept {
+      uint32_t hash = 0;
+      for (size_t i = 0; i < p.size(); ++i) {
+        hash += p[i];
+        hash += hash << 10;
+        hash ^= hash >> 6;
+      }
+      hash += hash << 3;
+      hash ^= hash >> 11;
+      hash += hash << 15;
+      return hash;
+    }
+  };
+
+
+  using Quadrangulation = std::vector< std::array<id,4> >;
+  /* Global variable, filled by load_disk_quadrangulations() with the data 
+   * in Mesh/meshQuadData.hpp */
+  std::vector< std::vector<Quadrangulation> > B_disk_quadrangulations;
+  /* Hash mapping from boundary valence loop (BVL) to disk_quadrangulations
+   * Useful for fast queries */
+  std::vector< std::unordered_map< std::vector<id>, std::vector<id>, vidHash > > B_BVL_ids;
+
 
   template<class T> 
     void sort_unique(std::vector<T>& vec) {
@@ -540,6 +567,69 @@ namespace QuadPatternMatching {
     return true;
   }
 
+  bool load_disk_quadrangulations() {
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+    {
+      if (B_disk_quadrangulations.size() != 0) {
+        B_disk_quadrangulations.clear();
+        B_BVL_ids.clear();
+      }
+      Msg::Info("loading disk quadrangulations ...");
+      B_disk_quadrangulations.reserve(20);
+      B_BVL_ids.reserve(20);
+      std::string data(disk_quadrangulations);
+      vector<std::string> lines = SplitString(data,'\n');
+      Quadrangulation qdrl;
+      vector<std::string> numbers;
+      vector<id> bdrValLoop;
+      for (size_t i = 0; i < lines.size(); ++i) {
+        numbers = SplitString(lines[i],' ');
+        if (numbers.size() < 7) continue;
+        size_t B = std::stoi(numbers[0]);
+        size_t I = std::stoi(numbers[1]);
+        size_t Q = std::stoi(numbers[2]);
+        if (numbers.size() != 3 + 4 * Q) {
+          Msg::Warning("load_disk_quadrangulations | wrong sizes: B=%li, I=%li, Q=%li and numbers.size = %li",
+              B, I, Q, numbers.size());
+          continue;
+        }
+        qdrl.resize(Q);
+        for (size_t j = 0; j < Q; ++j) {
+          for (size_t lv = 0; lv < 4; ++lv) {
+            qdrl[j][lv] = std::stoi(numbers[3 + 4 * j + lv]);
+          }
+        }
+
+        if (B >= B_disk_quadrangulations.size()) {
+          B_disk_quadrangulations.resize(B+1);
+          B_disk_quadrangulations[B].reserve(1000);
+          B_BVL_ids.resize(B+1);
+        }
+
+        id qId = B_disk_quadrangulations[B].size();
+        B_disk_quadrangulations[B].push_back(qdrl);
+
+        /* Assumes:
+         * - first B vertices are on the boundary 
+         * - canonical valence ordering according to boundary valence loop 
+         *   (should be compatible with the generator) */
+        bdrValLoop.clear();
+        bdrValLoop.resize(B,0);
+        for (size_t j = 0; j < Q; ++j) for (size_t lv = 0; lv < 4; ++lv){
+          id v = qdrl[j][lv];
+          if (v < B) bdrValLoop[v] += 1;
+        }
+        B_BVL_ids[B][bdrValLoop].push_back(qId);
+      }
+      Msg::Info("%li disk quadrangulations loaded", lines.size());
+    }
+    return true;
+  }
+
+
+
   bool computeQuadMeshValences(const vector<id4>& quads, vector<int>& valence) {
     valence.clear();
     valence.reserve(quads.size()*4);
@@ -612,7 +702,7 @@ namespace QuadPatternMatching {
         rotation = rot;
       }
     }
-
+    irregularity = best;
     return (best != DBL_MAX);
   }
 
@@ -816,17 +906,30 @@ int remeshFewQuads(GFace* gf,
     std::vector<bool> & vertexIsIrregular,             /* for each new vertex, true if irregular */
     std::vector<MElement*> & newElements               /* new quads inside the cavity */
     ) {
+  if (B_disk_quadrangulations.size() == 0) {
+    load_disk_quadrangulations();
+  }
 
   const vector<vector<id4> >* small_patterns = NULL;
-  if (bnd.size() == 12) {
-    small_patterns = &quad_meshes_12bdr;
-  } else if (bnd.size() == 8) {
-    small_patterns = &quad_meshes_8bdr;
-  } else if (bnd.size() == 10) {
-    small_patterns = &quad_meshes_10bdr;
+  bool OLD = false;
+  if (OLD) {
+    if (bnd.size() == 12) {
+      small_patterns = &quad_meshes_12bdr;
+    } else if (bnd.size() == 8) {
+      small_patterns = &quad_meshes_8bdr;
+    } else if (bnd.size() == 10) {
+      small_patterns = &quad_meshes_10bdr;
+    } else {
+      Msg::Error("no pattern for input (%li bnd vertices)", bnd.size());
+      return 1;
+    }
   } else {
-    Msg::Error("no pattern for input (%li bnd vertices)", bnd.size());
-    return 1;
+    if (bnd.size() < B_disk_quadrangulations.size() && B_disk_quadrangulations[bnd.size()].size() > 0) {
+      small_patterns = &(B_disk_quadrangulations[bnd.size()]);
+    } else {
+      Msg::Error("no pattern for input (%li bnd vertices)", bnd.size());
+      return 1;
+    }
   }
 
   const vector<vector<id4> >& qmeshes = *small_patterns;
@@ -834,13 +937,15 @@ int remeshFewQuads(GFace* gf,
   vector<int> valence;
 
   std::vector<std::pair<double,std::pair<size_t,int> > > irregularity_pattern_rotation;
+  DBG(bnd.size(),qmeshes.size());
   for (size_t i = 0; i < qmeshes.size(); ++i) {
     const vector<id4>& quads = qmeshes[i];
     computeQuadMeshValences(quads, valence);
-    double irregularity;
-    int rotation;
+    double irregularity = DBL_MAX;
+    int rotation = 0;
     bool found = computeBestMatchingConfiguration(quads, valence, bndIdealValence, bndAllowedValenceRange, rotation, irregularity);
     if (found) {
+      // DBG("  ", i, rotation, irregularity);
       irregularity_pattern_rotation.push_back({irregularity,{i,rotation}});
     }
   }

@@ -1175,6 +1175,7 @@ static bool PRINTBLOB (int B, std::set<MElement*> & cavity ,
   }
   fprintf(f,"};\n");
   fclose(f);
+  return true;
 }
 
 
