@@ -169,8 +169,6 @@ set(SRC
     hxt_point_gen_io.h
     hxt_point_gen_numerics.c
     hxt_point_gen_numerics.h
-    hxt_point_gen_optim.c
-    hxt_point_gen_optim.h
     hxt_point_gen_orientation.c
     hxt_point_gen_orientation.h
     hxt_point_gen_realloc.c
@@ -190,6 +188,10 @@ set(SRC
     hxt_surface_mesh.h
     hxt_surface_mesh_collapse.c
     hxt_surface_mesh_collapse.h
+    hxt_surface_mesh_processing.c
+    hxt_surface_mesh_processing.h
+    hxt_surface_mesh_quad.c
+    hxt_surface_mesh_quad.h
     hxt_swap_edge.c
     hxt_swap_edge.h
     hxt_triangle_quality.c

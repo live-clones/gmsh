@@ -496,9 +496,12 @@ int meshGFaceHxt(GModel *gm)
   if (Msg::GetVerbosity() == 99) opt.verbosity = 2;
 
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh));
+
+
   v2c.clear();
   c2v.clear();
   //  HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
+  
 
   GModel *gm2 = new GModel(gm->getName());
   

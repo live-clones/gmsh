@@ -5,7 +5,6 @@
 #include "hxt_surface_mesh_collapse.h"
 #include "hxt_point_gen_utils.h"
 #include "hxt_point_gen_realloc.h"
-#include "hxt_point_gen_optim.h"
 
 #include "hxt_collapse_edge.h"
 #include "hxt_swap_edge.h"

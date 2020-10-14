@@ -1588,9 +1588,12 @@ if(0){
     }
   }
 
+
   HXT_CHECK(hxtFree(&idClose));
   return HXT_STATUS_OK;
 }
+
+
 
 //*************************************************************************************************
 //*************************************************************************************************
@@ -2243,6 +2246,8 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
   double threshold = 0.72; // TODO put in options 
 
 
+  clock_t time0 = clock();
+
   //********************************************************
   // Create RTree for filtering 
   //********************************************************
@@ -2273,24 +2278,14 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
     }
   }
 
+  clock_t time1 = clock();
+  double time_rtree = (double)(time1 - time0) / CLOCKS_PER_SEC;
+  HXT_INFO_COND(opt->verbosity>0,"    Color %d Time generate rtree   %f", color, time_rtree);
+ 
 
-  //********************************************************
-  // Create node connectivity during point generation 
-  //********************************************************
-  // TODO 
-  uint32_t *node2node;
-  HXT_CHECK(hxtMalloc(&node2node, numMaxPoints*4*sizeof(uint32_t)));
 
-  for (uint64_t i=0; i<fmesh->lines.num; i++){
-    //double *p0 = fmesh->vertices.coord + 4*fmesh->lines.node[2*i+0];
-    //double *p1 = fmesh->vertices.coord + 4*fmesh->lines.node[2*i+1];
-    //hxtPosAddLine(out,p0,p1,0);
-    uint32_t v0 = fmesh->lines.node[2*i+0];
-    uint32_t v1 = fmesh->lines.node[2*i+1];
-    node2node[4*v0+0] = v1;
-    node2node[4*v1+2] = v0;
-  }
-  HXT_CHECK(hxtFree(&node2node));
+
+
 
   
 
@@ -2329,11 +2324,13 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
     HXT_CHECK(hxtGetDirections(mesh,directions,sizemap,originTri,normal,uv,frame,sizes));
 
 
+
     // Find new points for 4 directions
     for(int nb = 0; nb<4; nb++){
 
       double dir[3] = {frame[3*nb+0],frame[3*nb+1],frame[3*nb+2]};
       double size = sizes[nb];
+
 
       //==================================================
       // Find if possible a candidate point
@@ -2484,6 +2481,13 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
   }
 
   *numGeneratedPoints = numGenPoints;
+
+  clock_t time5 = clock();
+  double time_generate = (double)(time5 - time1) / CLOCKS_PER_SEC;
+  HXT_INFO_COND(opt->verbosity>0,"    Color %d Time generate points   %f", color, time_generate);
+ 
+
+
 
   HXT_CHECK(hxtRTreeDelete(&data));
   HXT_CHECK(hxtRTreeDelete(&dataLine));

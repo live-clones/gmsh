@@ -7,6 +7,7 @@
 #define POINTID 15
 #define LINEID 1
 #define TRIID 2
+#define QUADID 3
 #define TETID 4
 
 HXTStatus  hxtMeshCreate ( HXTMesh** mesh) {
@@ -36,6 +37,10 @@ HXTStatus hxtMeshDelete ( HXTMesh** mesh) {
   // triangles
   HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles.node) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles.color) );
+
+  // quads
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->quads.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->quads.color) );
 
   // lines
   HXT_CHECK( hxtAlignedFree(&(*mesh)->lines.node) );
@@ -130,6 +135,7 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
   m->lines.num = 0;
   m->points.num = 0;
   m->triangles.num = 0;
+  m->quads.num = 0;
   m->tetrahedra.num = 0;
 
   while(fgets(buf, BUFSIZ, fp )){    
@@ -147,6 +153,9 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
         }
         else if(etype==TRIID){ // triangles
           ++(m->triangles.num);
+        }
+        else if(etype==QUADID){ // quads
+          ++(m->quads.num);
         }
         else if(etype==LINEID){ // lines
           ++(m->lines.num);
@@ -181,6 +190,13 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
     if (m->triangles.color == NULL)return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
     m->triangles.size = m->triangles.num;
   }
+  if (m->quads.num){
+    HXT_CHECK( hxtAlignedMalloc(&m->quads.node, (m->quads.num)*4*sizeof(uint32_t)) );
+    if (m->quads.node == NULL)return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+    HXT_CHECK( hxtAlignedMalloc(&m->quads.color, (m->quads.num)*sizeof(uint32_t)) );
+    if (m->quads.color == NULL)return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+    m->quads.size = m->quads.num;
+  }
   if (m->lines.num){
     HXT_CHECK( hxtAlignedMalloc(&m->lines.node, (m->lines.num)*2*sizeof(uint32_t)) );
     if (m->lines.node == NULL)return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
@@ -203,6 +219,7 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
       int tmpK = atoi(buf);
       m->tetrahedra.num=0;
       m->triangles.num=0;
+      m->quads.num=0;
       m->lines.num=0;
       m->points.num=0;
       
@@ -235,6 +252,19 @@ static HXTStatus ReadElementsFromGmsh(FILE *fp, HXTMesh* m)
             m->triangles.color[m->triangles.num] = color;
           }
           ++m->triangles.num;
+        }
+        else if(etype==QUADID){ // quads
+          if(ntags==2){ // 
+            int a, b, c, d, color;
+            sscanf(buf, "%*d %*d %*d %*d %d  %d %d %d %d", 
+                   &color,&a, &b, &c, &d);
+            m->quads.node[4*m->quads.num+0] = a-1;
+            m->quads.node[4*m->quads.num+1] = b-1;
+            m->quads.node[4*m->quads.num+2] = c-1;
+            m->quads.node[4*m->quads.num+3] = d-1;
+            m->quads.color[m->quads.num] = color;
+          }
+          ++m->quads.num;
         }
         else if(etype==LINEID){ // lines
           if(ntags==2){ // 
@@ -328,6 +358,7 @@ HXTStatus  hxtMeshWriteGmsh  ( HXTMesh* mesh , const char *filename) {
           + mesh->points.num
           + mesh->lines.num
           + mesh->triangles.num
+          + mesh->quads.num
           );
 
   { /* print the elements */
@@ -355,6 +386,18 @@ HXTStatus  hxtMeshWriteGmsh  ( HXTMesh* mesh , const char *filename) {
                 mesh->triangles.node[i*3]+1,
                 mesh->triangles.node[i*3 + 1]+1,
                 mesh->triangles.node[i*3 + 2]+1);
+      }
+    }
+    for (i=0; i<mesh->quads.num; i++){
+      uint32_t myColor = mesh->quads.color ? mesh->quads.color[i] : 0;
+      if (myColor != HXT_COLOR_OUT) {
+        fprintf(file, "%" HXTu64 " %u 2 0 %u %u %u %u %u\n", ++index,QUADID,
+                myColor,
+                mesh->quads.node[i*4]+1,
+                mesh->quads.node[i*4 + 1]+1,
+                mesh->quads.node[i*4 + 2]+1,
+                mesh->quads.node[i*4 + 3]+1
+                );
       }
     }
     for (i=0; i<mesh->tetrahedra.num; i++){
