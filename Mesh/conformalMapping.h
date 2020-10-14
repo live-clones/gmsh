@@ -30,6 +30,7 @@ class MyMesh{
   std::map<const MEdge *, GEdge *> featureDiscreteEdgesEntities;
     
   std::set<MTriangle *, MElementPtrLessThan> triangles;
+  std::vector<std::set<MTriangle *, MElementPtrLessThan>> trianglesPatchs;
   std::set<MEdge, MEdgeLessThan> edges;
   std::map<const MEdge *, bool> isFeatureEdge;
 
@@ -56,10 +57,12 @@ class MyMesh{
   void getSingularities(GModel *gm);
   void updateEdgesAndVertexToTri();
   void updateNormals();
+  void createPatchs();
   
   /* MyMesh(GFace *gf){} */
   //DBG
   void viewNormals();
+  void viewPatchs();
   void viewDarbouxFrame(size_t i);
   void viewMult(std::map<MVertex *, int> &multVert);
   //
@@ -105,6 +108,7 @@ class ConformalMapping{
   void _fitModelToFeatureMesh();
   void _fitModelToCutGraphMesh();
   void _viewScalarVertex(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, const std::string& viewName="defaultName");
+  void _viewScalarTriangles(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, std::set<MTriangle *, MElementPtrLessThan> &triangles, const std::string& viewName="defaultName");
   void _viewEdges(std::set<const MEdge*> &edges, const std::string& viewName="defaultName");
   
  public:

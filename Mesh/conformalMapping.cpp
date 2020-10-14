@@ -42,6 +42,7 @@
 #include "MTriangle.h"
 #include "MLine.h"
 #include <queue>
+#include <stack>
 #include <limits>
 #include "GmshMessage.h"
 
@@ -218,7 +219,7 @@ void MyMesh::getSingularities(GModel *gm){
       for(size_t j = 0; j < it->second.size(); j++) {
         if(!it->second[j]->mesh_vertices.empty()){
 	  singularities.insert(it->second[j]->mesh_vertices[0]);
-	  singIndices[it->second[j]->mesh_vertices[0]] = -1;
+	  singIndices[it->second[j]->mesh_vertices[0]] = 1;
 	}
       }
     }
@@ -226,7 +227,7 @@ void MyMesh::getSingularities(GModel *gm){
       for(size_t j = 0; j < it->second.size(); j++) {
         if(!it->second[j]->mesh_vertices.empty()){
 	  singularities.insert(it->second[j]->mesh_vertices[0]);
-	  singIndices[it->second[j]->mesh_vertices[0]] = 1;
+	  singIndices[it->second[j]->mesh_vertices[0]] = -1;
 	}
       }
     }
@@ -234,7 +235,7 @@ void MyMesh::getSingularities(GModel *gm){
       for(size_t j = 0; j < it->second.size(); j++) {
         if(!it->second[j]->mesh_vertices.empty()){
 	  singularities.insert(it->second[j]->mesh_vertices[0]);
-	  singIndices[it->second[j]->mesh_vertices[0]] = 2;
+	  singIndices[it->second[j]->mesh_vertices[0]] = -2;
 	}
       }
     }
@@ -242,7 +243,7 @@ void MyMesh::getSingularities(GModel *gm){
       for(size_t j = 0; j < it->second.size(); j++) {
         if(!it->second[j]->mesh_vertices.empty()){
 	  singularities.insert(it->second[j]->mesh_vertices[0]);
-	  singIndices[it->second[j]->mesh_vertices[0]] = 4;
+	  singIndices[it->second[j]->mesh_vertices[0]] = -4;
 	}
       }
     }
@@ -250,7 +251,7 @@ void MyMesh::getSingularities(GModel *gm){
       for(size_t j = 0; j < it->second.size(); j++) {
         if(!it->second[j]->mesh_vertices.empty()){
 	  singularities.insert(it->second[j]->mesh_vertices[0]);
-	  singIndices[it->second[j]->mesh_vertices[0]] = -2;
+	  singIndices[it->second[j]->mesh_vertices[0]] = 2;
 	}
       }
     }
@@ -537,7 +538,8 @@ void MyMesh::_computeGaussCurv(){
     weight[v]=patchArea[v]/3.;
     //Geodesic curvature
     patchLength[v]=(e1->length()+e2->length());
-    geodesicCurv[v]=sign*angleGeo/(0.5*(e1->length()+e2->length()));
+    // geodesicCurv[v]=sign*angleGeo/(0.5*(e1->length()+e2->length()));
+    geodesicCurv[v]=sign*angleGeo; //Storing this because already integrated
   }
   //gauss curvature
   for(auto &kv: gaussCurv){
@@ -553,10 +555,64 @@ void MyMesh::_computeGaussCurv(){
   double intGeodesic=0.0;
   for(const auto &kv: gaussCurv){
     intGauss+=kv.second;
-    intGeodesic+=geodesicCurv[kv.first]*patchLength[kv.first]*0.5;
+    intGeodesic+=geodesicCurv[kv.first];
   }
+  
   std::cout << "test : " << double() << std::endl;
-  std::cout << "value check : " << 22-(intGauss+intGeodesic)/(2*M_PI) << std::endl;
+  std::cout << "value check : " << (intGauss+intGeodesic)/(2*M_PI) << std::endl;
+  double sum=0;
+  for(const auto &kv: singIndices){
+    sum+=(double)kv.second/4.;
+  }
+  std::cout << "sum sing : " << sum << std::endl;
+  return;
+}
+
+void MyMesh::createPatchs(){
+  trianglesPatchs.clear();
+  std::map<MTriangle *, bool, MElementPtrLessThan> trianglePassed;
+  std::stack<MTriangle *> stackTri;
+  for(MTriangle *t: triangles)
+    trianglePassed[t]=false;
+  MTriangle *triangleLeft=NULL;
+  for(auto &kv: trianglePassed){
+    if(!kv.second){
+      triangleLeft=kv.first;
+      break;
+    }
+  }
+  trianglePassed[triangleLeft]=true;
+  std::set<MTriangle *, MElementPtrLessThan> setPatchTri;
+  setPatchTri.insert(triangleLeft);
+  while(triangleLeft){
+    for(const MEdge *e: triangleToEdges[triangleLeft]){
+      if(!isFeatureEdge[e]){
+	for(MTriangle *t: edgeToTriangles[e]){
+	  if(!trianglePassed[t]){
+	    stackTri.push(t);
+	    trianglePassed[t]=true;
+	    setPatchTri.insert(t);
+	  }
+	}
+      }
+    }
+    if(!stackTri.empty()){
+      triangleLeft = stackTri.top();
+      stackTri.pop();
+    }
+    else{
+      trianglesPatchs.push_back(setPatchTri);
+      setPatchTri.clear();
+      triangleLeft=NULL;
+      for(auto &kv: trianglePassed){
+	if(!kv.second){
+	  triangleLeft=kv.first;
+	  setPatchTri.insert(triangleLeft);
+	  break;
+	}
+      }
+    }
+  }
   return;
 }
 
@@ -582,42 +638,179 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
 }
 
 void ConformalMapping::_computeH(){
-  //fill _currentMesh->H
+  _currentMesh->createPatchs();
+  _currentMesh->viewPatchs();
+  for(size_t k=0;k<_currentMesh->trianglesPatchs.size();k++){
+    std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[k];
+    //grabbing vertices we are interested in
+    std::map<MVertex *, int, MVertexPtrLessThan> patchSingIndices;
+    std::set<MVertex *, MVertexPtrLessThan> vertices;
+    for(MTriangle *t: tri){
+      for(int k=0;k<3;k++){
+	MVertex *vK = t->getVertex(k);
+	vertices.insert(vK);
+	if(_currentMesh->singIndices.find(vK)!=_currentMesh->singIndices.end()){
+	  patchSingIndices[vK]=_currentMesh->singIndices[vK];
+	}
+      }
+    }
+    //Check if everything matches (geometry characteristics and singularities)
+    bool canBeComputed=false;
+    double intGauss=0.0;
+    double intGeodesic=0.0;
+    for(MVertex *v: vertices){
+      intGauss+=_currentMesh->gaussCurv[v];
+      intGeodesic+=_currentMesh->geodesicCurv[v];
+    }
+    double sumSing=0;
+    for(const auto &kv: patchSingIndices){
+      sumSing+=((double)kv.second)/4.;
+    }
+    double checkSum=(intGauss+intGeodesic)/(2*M_PI)-sumSing;
+    if(fabs(checkSum)<1e-10){
+      canBeComputed=true;
+    }
+    else{
+      Msg::Error("Gauss and geodesic curvature not matching number of singularities on patch %i.",k);
+      Msg::Error("Patch %i miss singularities for a total indice of %g",k,checkSum*4.);
+      Msg::Error("Skipping computation of H on this patch.");
+    }
+    if(canBeComputed){
+      //fill _currentMesh->H
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
-  linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+      linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+      printf("petsc solver\n");
 #elif defined(HAVE_MUMPS)
-  linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
+      linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
+      printf("mmups solver\n");
 #else
-  linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+      linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+      printf("default solver\n");
 #endif
 #endif
-  dofManager<double> *dof = new dofManager<double>(_lsys);
-  std::set<MVertex *, MVertexPtrLessThan> vertices;
-  for(MTriangle *t: _currentMesh->triangles){
-    for(int k=0;k<3;k++){
-      MVertex *vK = t->getVertex(k);
-      vertices.insert(vK);
+      dofManager<double> *dof = new dofManager<double>(_lsys);
+
+      for(MVertex *v: vertices){
+	dof->numberVertex(v, 0, 1);
+      }
+      //Temporary numbering for average
+      dof->numberVertex(*(vertices.begin()), 1, 1);
+
+      simpleFunction<double> ONE(1.0);
+      laplaceTerm l(0, 1, &ONE);
+      //Matrix
+      for(MTriangle *t: tri){
+	SElement se(t);
+	l.addToMatrix(*dof, &se);
+      }
+      //right hand side
+      for(MVertex *v: vertices){
+	Dof E(v->getNum(), Dof::createTypeWithTwoInts(0, 1));
+	_lsys->addToRightHandSide(dof->getDofNumber(E),_currentMesh->gaussCurv[v]);
+      }
+      //Neumann condition
+      for(MVertex *v: vertices){
+	Dof E(v->getNum(), Dof::createTypeWithTwoInts(0, 1));
+	_lsys->addToRightHandSide(dof->getDofNumber(E),_currentMesh->geodesicCurv[v]);
+      }
+      //Singularities
+      for(const auto &kv: patchSingIndices){
+	Dof E(kv.first->getNum(), Dof::createTypeWithTwoInts(0, 1));
+	_lsys->addToRightHandSide(dof->getDofNumber(E), -2.0 * M_PI * ((double)kv.second) / 4.);
+      }
+      // AVERAGE (temporary fix)
+      Dof EAVG((*(vertices.begin()))->getNum(), Dof::createTypeWithTwoInts(1, 1));
+      for(MVertex *v: vertices){
+	Dof E(v->getNum(), Dof::createTypeWithTwoInts(0, 1));
+	dof->assembleSym(EAVG, E, 1);
+	//      dof->assemble(E, EAVG, 1);
+      }
+      _lsys->systemSolve();
+      for(MVertex *v: vertices){
+	dof->getDofValue(v, 0, 1, _currentMesh->H[v]);
+      }
+      delete _lsys;
+      delete dof;
     }
   }
-  for(MVertex *v: vertices){
-    dof->numberVertex(v, 0, 1);
-  }
-  simpleFunction<double> ONE(1.0);
-  laplaceTerm l(0, 1, &ONE);
-  //Matrix
-  for(MTriangle *t: _currentMesh->triangles){
-    SElement se(t);
-    l.addToMatrix(*dof, &se);
-  }
-  //right hand side
-  for(const auto &kv: _currentMesh->gaussCurv){
-    Dof E(kv.first->getNum(), Dof::createTypeWithTwoInts(0, 1));
-    _lsys->addToRightHandSide(dof->getDofNumber(E),-kv.second);//-K on RHS
-  }
-  //Neumann condition
+  _viewScalarTriangles(_currentMesh->H, _currentMesh->triangles, "H");
   return;
 }
+
+// void ConformalMapping::_computeHSave(){
+//   _currentMesh->createPatchs();
+//   _currentMesh->viewPatchs();
+//   for(std::set<MTriangle*, MElementPtrLessThan> tri: _currentMesh->trianglesPatchs){
+//     //grabbing vertices we are interested in
+//     std::set<MVertex *, MVertexPtrLessThan> vertices;
+//     for(MTriangle *t: _currentMesh->triangles){
+//       for(int k=0;k<3;k++){
+// 	MVertex *vK = t->getVertex(k);
+// 	vertices.insert(vK);
+//       }
+//     }
+//     //Check if everything matches (geometry characteristics and singularities)
+//     //fill _currentMesh->H
+// #if defined(HAVE_SOLVER)
+// #if defined(HAVE_PETSC)
+//     linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+//     printf("petsc solver\n");
+// #elif defined(HAVE_MUMPS)
+//     linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
+//     printf("mmups solver\n");
+// #else
+//     linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+//     printf("default solver\n");
+// #endif
+// #endif
+//     dofManager<double> *dof = new dofManager<double>(_lsys);
+
+//     for(MVertex *v: vertices){
+//       dof->numberVertex(v, 0, 1);
+//     }
+//     //Temporary numbering for average
+//     dof->numberVertex(*(vertices.begin()), 1, 1);
+
+//     simpleFunction<double> ONE(1.0);
+//     laplaceTerm l(0, 1, &ONE);
+//     //Matrix
+//     for(MTriangle *t: _currentMesh->triangles){
+//       SElement se(t);
+//       l.addToMatrix(*dof, &se);
+//     }
+//     //right hand side
+//     for(const auto &kv: _currentMesh->gaussCurv){
+//       Dof E(kv.first->getNum(), Dof::createTypeWithTwoInts(0, 1));
+//       _lsys->addToRightHandSide(dof->getDofNumber(E),kv.second);
+//     }
+//     //Neumann condition
+//     for(const auto &kv: _currentMesh->geodesicCurv){
+//       Dof E(kv.first->getNum(), Dof::createTypeWithTwoInts(0, 1));
+//       _lsys->addToRightHandSide(dof->getDofNumber(E),kv.second);
+//     }
+//     //Singularities
+//     for(const auto &kv: _currentMesh->singIndices){
+//       Dof E(kv.first->getNum(), Dof::createTypeWithTwoInts(0, 1));
+//       _lsys->addToRightHandSide(dof->getDofNumber(E), -2.0 * M_PI * (double)kv.second / 4.);
+//     }
+//     // AVERAGE (temporary fix)
+//     Dof EAVG((*(vertices.begin()))->getNum(), Dof::createTypeWithTwoInts(1, 1));
+//     for(MVertex *v: vertices){
+//       Dof E(v->getNum(), Dof::createTypeWithTwoInts(0, 1));
+//       dof->assembleSym(EAVG, E, 1);
+//       //      dof->assemble(E, EAVG, 1);
+//     }
+//     _lsys->systemSolve();
+//     for(MVertex *v: vertices){
+//       dof->getDofValue(v, 0, 1, _currentMesh->H[v]);
+//     }
+//     delete _lsys;
+//     delete dof;
+//   }
+//   _viewScalarTriangles(_currentMesh->H, _currentMesh->triangles, "H");
+//   return;
+// }
 
 void ConformalMapping::_computeDistancesToBndAndSing(){
   typedef std::pair<double, MVertex*> weightedVertex;
@@ -689,7 +882,7 @@ std::set<const MEdge *> ConformalMapping::_createEdgeTree(){
       break;
     }
   }
-  pQueue.push(weightedTri(triangleWeight[triangleLeft],triangleLeft));
+  // pQueue.push(weightedTri(triangleWeight[triangleLeft],triangleLeft));
   trianglePassed[triangleLeft]=true;
   while(triangleLeft){
     for(const MEdge *e: _currentMesh->triangleToEdges[triangleLeft]){
@@ -939,6 +1132,40 @@ void MyMesh::viewNormals(){ //for DBG only
 #endif
 }
 
+void MyMesh::viewPatchs(){ //for DBG only
+#if defined(HAVE_POST)
+  int tag=0;
+  gmsh::initialize();
+  Msg::Debug("create view '%s'","Triangle patchs");
+  int dataListViewTag = gmsh::view::add("Triangle patchs");
+  size_t nTri=0;
+  std::vector<double> datalist;
+  for(std::set<MTriangle*, MElementPtrLessThan> setTri: trianglesPatchs){
+    for(MTriangle *t: setTri){
+      datalist.push_back(t->getVertex(0)->x());
+      datalist.push_back(t->getVertex(1)->x());
+      datalist.push_back(t->getVertex(2)->x());
+      datalist.push_back(t->getVertex(0)->y());
+      datalist.push_back(t->getVertex(1)->y());
+      datalist.push_back(t->getVertex(2)->y());
+      datalist.push_back(t->getVertex(0)->z());
+      datalist.push_back(t->getVertex(1)->z());
+      datalist.push_back(t->getVertex(2)->z());
+      datalist.push_back(tag);
+      datalist.push_back(tag);
+      datalist.push_back(tag);
+      nTri++;
+    }
+    tag++;
+    // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
+  }
+  gmsh::view::addListData(dataListViewTag, "ST", nTri, datalist);
+#else 
+  Msg::Error("Cannot create view without POST module");
+  return;
+#endif
+}
+
 void MyMesh::viewDarbouxFrame(size_t i){ //for DBG only
 #if defined(HAVE_POST)
 
@@ -1025,6 +1252,35 @@ void ConformalMapping::_viewEdges(std::set<const MEdge*> &edges, const std::stri
   int dataListViewTag = gmsh::view::add(viewName);
   // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
   gmsh::view::addListData(dataListViewTag, "SL", edges.size(), datalist);
+#else 
+  Msg::Error("Cannot create view without POST module");
+  return;
+#endif
+}
+
+void ConformalMapping::_viewScalarTriangles(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, std::set<MTriangle *, MElementPtrLessThan> &triangles, const std::string& viewName){ //for DBG only
+#if defined(HAVE_POST)
+
+  std::vector<double> datalist;
+  for(MTriangle *t: triangles){
+    datalist.push_back(t->getVertex(0)->x());
+    datalist.push_back(t->getVertex(1)->x());
+    datalist.push_back(t->getVertex(2)->x());
+    datalist.push_back(t->getVertex(0)->y());
+    datalist.push_back(t->getVertex(1)->y());
+    datalist.push_back(t->getVertex(2)->y());
+    datalist.push_back(t->getVertex(0)->z());
+    datalist.push_back(t->getVertex(1)->z());
+    datalist.push_back(t->getVertex(2)->z());
+    datalist.push_back(scalar[t->getVertex(0)]);
+    datalist.push_back(scalar[t->getVertex(1)]);
+    datalist.push_back(scalar[t->getVertex(2)]);
+  }
+  gmsh::initialize();
+  Msg::Debug("create view '%s'",viewName);
+  int dataListViewTag = gmsh::view::add(viewName);
+  // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
+  gmsh::view::addListData(dataListViewTag, "ST", triangles.size(), datalist);
 #else 
   Msg::Error("Cannot create view without POST module");
   return;
