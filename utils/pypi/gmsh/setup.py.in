@@ -7,19 +7,18 @@
 # https://opensource.org/licenses/GPL-2.0
 ########################################################################
 
-from __future__ import print_function
 import os
 import sys
 import platform
 import tarfile
 import zipfile
-from distutils import sysconfig
 from setuptools import setup
 from setuptools.command.install import install
 
 # Server and gmsh version
 server = 'https://gmsh.info/bin'
 version = '${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}'
+iversion = version + '' # installer version (add e.g. '.post1' for update)
 
 # Determine file name and and url to be downloaded and installed
 system = platform.system().lower()
@@ -55,7 +54,7 @@ class DownloadAndInstall(install):
     def _download(self):
         import requests
         print('Downloading {}, please wait...'.format(url))
-        sdk = requests.get(url, allow_redirects=True)
+        sdk = requests.get(url, allow_redirects=True, verify=False)
         with open(fname, "wb") as f:
             f.write(sdk.content)
 
@@ -69,7 +68,11 @@ class DownloadAndInstall(install):
         pth.write(name+'/lib\n')
         pth.write(name+'/bin')
         pth.close()
-        site_dirpath = sysconfig.get_python_lib(prefix='')
+        if plat.startswith('Windows'):
+            site_dirpath = "lib/site-packages"
+        else:
+            v = sys.version_info
+            site_dirpath = "lib/python{}.{}/site-packages".format(v.major, v.minor)
         dirs = [site_dirpath]
         files = [['gmsh.pth']]
         for (dirpath, dirnames, filenames) in os.walk(name):
@@ -82,7 +85,7 @@ class DownloadAndInstall(install):
 # Run setup
 if __name__ == "__main__":
     setup(name            = 'gmsh',
-        version           = version,
+        version           = iversion,
         description       = 'Gmsh app and SDK installer. Gmsh is a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities.',
         long_description  = open('README.rst', 'r').read(),
         long_description_content_type='text/x-rst',

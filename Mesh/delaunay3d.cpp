@@ -1140,7 +1140,7 @@ void delaunayTrgl(const std::size_t numThreads,
               else if(neigh->getFace(3) == bndK[i].f)
                 neigh->T[3] = t;
               else {
-                Msg::Error("Datatrsucture Broken in Triangulation");
+                Msg::Error("Datastructure Broken in Triangulation");
                 break;
               }
             }

@@ -18,7 +18,7 @@ std::string GMSH_CurlPlugin::getHelp() const
   return "Plugin(Curl) computes the curl of the field "
          "in the view `View'.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Curl) creates one new view.";
+         "Plugin(Curl) creates one new list-based view.";
 }
 
 int GMSH_CurlPlugin::getNbOptions() const

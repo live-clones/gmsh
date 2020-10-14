@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 import gmsh
+import sys
 
 # "Compound" meshing constraints allow to generate meshes across surface
 # boundaries, which can be useful e.g. for imported CAD models (e.g. STEP) with
@@ -88,6 +89,8 @@ gmsh.model.mesh.setCompound(2, [1, 5, 10])
 gmsh.model.mesh.generate(2)
 gmsh.write('t12.msh')
 
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

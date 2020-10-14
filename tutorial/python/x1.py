@@ -47,6 +47,10 @@ print('Model ' + gmsh.model.getCurrent() + ' (' +
 entities = gmsh.model.getEntities()
 
 for e in entities:
+    # Dimension and tag of the entity:
+    dim = e[0]
+    tag = e[1]
+
     # Mesh data is made of `elements' (points, lines, triangles, ...), defined
     # by an ordered list of their `nodes'. Elements and nodes are identified by
     # `tags' as well (strictly positive identification numbers), and are stored
@@ -62,15 +66,14 @@ for e in entities:
     # tetrahedra, hexahedra, etc. and all the nodes not classified on its
     # boundary or on its embedded entities.
 
-    # Dimension and tag of the entity:
-    dim = e[0]
-    tag = e[1]
-
     # Get the mesh nodes for the entity (dim, tag):
     nodeTags, nodeCoords, nodeParams = gmsh.model.mesh.getNodes(dim, tag)
 
     # Get the mesh elements for the entity (dim, tag):
     elemTypes, elemTags, elemNodeTags = gmsh.model.mesh.getElements(dim, tag)
+
+    # Elements can also be obtained by type, by using `getElementTypes()'
+    # followed by `getElementsByType()'.
 
     # Let's print a summary of the information available on the entity and its
     # mesh.

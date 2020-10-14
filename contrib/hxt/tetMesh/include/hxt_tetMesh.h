@@ -59,7 +59,7 @@ typedef struct {
   struct {
     /* function giving the desired mesh size at a position in space,
        or NULL to use default function*/
-    HXTStatus (*callback)(double* coord, size_t n, void* userData);
+    HXTStatus (*callback)(double* coord, uint32_t* volume, size_t n, void* userData);
 
     void* userData; /* user pointer given to callback */
 

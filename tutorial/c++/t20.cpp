@@ -6,14 +6,14 @@
 //
 // -----------------------------------------------------------------------------
 
-// The OpenCASCADE geometry kernel allows to import STEP files and to modify
-// them. In this tutorial we will load a STEP geometry and partition it into
-// slices.
+// The OpenCASCADE CAD kernel allows to import STEP files and to modify them. In
+// this tutorial we will load a STEP geometry and partition it into slices.
 
+#include <set>
 #include <cmath>
 #include <cstdlib>
-#include <gmsh.h>
 #include <algorithm>
+#include <gmsh.h>
 
 int main(int argc, char **argv)
 {
@@ -140,8 +140,9 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(3);
   gmsh::write("t20.msh");
 
-  // Show the result:
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

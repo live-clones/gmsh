@@ -414,6 +414,8 @@ bool PView::write(const std::string &fileName, int format, bool append)
                             CTX::instance()->post.forceElementData);
     else if(ext == ".med")
       ret = _data->writeMED(fileName);
+    else if(ext == ".x3d")
+      ret = writeX3D(fileName);
     else
       ret = _data->writeTXT(fileName);
     break;

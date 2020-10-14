@@ -29,6 +29,7 @@
 
 #include <string>
 #include "MElement.h"
+#include "fullMatrix.h"
 
 class MetaEl {
 public:

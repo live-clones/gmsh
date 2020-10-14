@@ -10,9 +10,10 @@
 // (co)homology space bases using a mesh of a model.  The representative basis
 // chains are stored in the mesh as physical groups of Gmsh, one for each chain.
 
-#include <gmsh.h>
-#include <math.h>
+#include <set>
+#include <cmath>
 #include <algorithm>
+#include <gmsh.h>
 
 int main(int argc, char **argv)
 {
@@ -64,6 +65,8 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > e;
   gmsh::model::geo::extrude({{2, 15}}, 0, 0, h, e);
 
+  gmsh::model::geo::synchronize();
+
   // Create physical groups, which are used to define the domain of the
   // (co)homology computation and the subdomain of the relative (co)homology
   // computation.
@@ -86,13 +89,13 @@ int main(int argc, char **argv)
   gmsh::model::getBoundary({{3, domain_tag}}, boundary_dimtags, false, false);
 
   std::vector<int> boundary_tags, complement_tags;
-  for(auto it = boundary_dimtags.begin(); it != boundary_dimtags.end(); ++it) {
-    complement_tags.push_back(it->second);
-    boundary_tags.push_back(it->second);
+  for(auto e: boundary_dimtags) {
+    complement_tags.push_back(e.second);
+    boundary_tags.push_back(e.second);
   }
-  for(auto it = terminal_tags.begin(); it != terminal_tags.end(); ++it) {
-    auto it2 = std::find(complement_tags.begin(), complement_tags.end(), *it);
-    if(it2 != complement_tags.end()) complement_tags.erase(it2);
+  for(auto t: terminal_tags) {
+    auto it = std::find(complement_tags.begin(), complement_tags.end(), t);
+    if(it != complement_tags.end()) complement_tags.erase(it);
   }
 
   // Whole domain surface
@@ -104,8 +107,6 @@ int main(int argc, char **argv)
   int complement_physical_tag = 2003;
   gmsh::model::addPhysicalGroup(2, complement_tags, complement_physical_tag);
   gmsh::model::setPhysicalName(2, complement_physical_tag, "Complement");
-
-  gmsh::model::geo::synchronize();
 
   // Find bases for relative homology spaces of the domain modulo the four
   // terminals
@@ -132,11 +133,15 @@ int main(int argc, char **argv)
   // Generate the mesh and perform the requested homology computations
   gmsh::model::mesh::generate(3);
 
-  gmsh::write("t14.msh");
-
   // For more information, see M. Pellikka, S. Suuriniemi, L. Kettunen and
   // C. Geuzaine. Homology and cohomology computation in finite element
   // modeling. SIAM Journal on Scientific Computing 35(5), pp. 1195-1214, 2013.
+
+  gmsh::write("t14.msh");
+
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

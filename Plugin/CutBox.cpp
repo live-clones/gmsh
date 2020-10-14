@@ -301,7 +301,7 @@ std::string GMSH_CutBoxPlugin::getHelp() const
          "the box; otherwise the plugin interpolates the view at its "
          "boundary.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(CutBox) creates one new view.";
+         "Plugin(CutBox) creates one new list-based view.";
 }
 
 int GMSH_CutBoxPlugin::getNbOptions() const

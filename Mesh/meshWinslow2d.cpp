@@ -18,20 +18,7 @@
 #include "meshGFaceOptimize.h"
 #include "Field.h"
 
-#include "discreteFace.h"
-
-
-//static GPoint CLOSESTPOINT (GFace *gf, const SPoint3 &p, double uv[2]){
-  //if (gf->geomType() == GEntity::DiscreteSurface){
-    //discreteFace* fd = dynamic_cast<discreteFace*>(gf);
-    //if (fd == NULL) {
-      //return GPoint(p.x(),p.y(),p.z(),gf,0,0);
-    //}
-    //printf("project\n");
-    //return fd->closestPoint(p,p.data());
-  //}
-  //return gf->closestPoint(p,uv);
-/*}*/
+int BLOB = 1;
 
 static GPoint CLOSESTPOINT (GFace *gf, const SPoint3 &p, double uv[2], GEntity::GeomType GT){
   //  if (GT == GEntity::DiscreteSurface){
@@ -63,37 +50,11 @@ static std::vector<MVertex*> buildBoundary (ITERATOR beg, ITERATOR end){
   
   std::vector<std::vector<MVertex *> > vsorted;
   SortEdgeConsecutive(veds, vsorted);
-  if (vsorted.empty()){
+  if (vsorted.size() != 1){
     std::vector<MVertex *> empty;
     return empty;
   }
-  else if (vsorted.size() > 1){
-    printf("ARGHTTT %lu\n",vsorted.size());
-  }
 
-  /* Reverse vertices if necessary, to keep coherent with elements orientation */
-  {
-    MEdge e = veds[0];
-    MVertex* v1 = e.getVertex(0);
-    MVertex* v2 = e.getVertex(1);
-    auto it = std::find(vsorted[0].begin(),vsorted[0].end(),v1);
-    if (it == vsorted[0].end()) {
-      Msg::Error("buildBoundary(): vertex not found in sorted vertices, weird");
-      return vsorted[0];
-    }
-    size_t i = it - vsorted[0].begin();
-    size_t i_next = (i+1)%vsorted[0].size();
-    size_t i_prev = (i-1+vsorted[0].size())%vsorted[0].size();
-    if (vsorted[0][i_next] == v2) { 
-      // good ordering
-    } else if (vsorted[0][i_prev] == v2) { // apply reverse
-      std::reverse(vsorted[0].begin(),vsorted[0].end());
-    } else {
-      Msg::Error("buildBoundary(): second vertex not found in adjacent sorted vertices, weird");
-      return vsorted[0];
-    }
-  }
-  
   return vsorted[0];
 }
 
@@ -241,9 +202,7 @@ int remeshCavity (GFace *gf,
     int a2 = (n0+n2-n1)/2;
 
     if (a0 <= 0 || a1 <= 0 || a2 <= 0)return -1;
-    
-    // if (a0 == a1 && a0 == a2)return 1;
-    
+        
     if (a0+a2 != n0 || a0+a1 != n1 || a1+a2 != n2){
       return -1;
     }
@@ -485,7 +444,7 @@ int remeshCavity (GFace *gf,
 	start = corners[3];	
       }
       else {
-	//	printf("TO DO found a cavity (bnd %lu) with 4 corners %d %d %d %d\n",bnd.size(),n0,n1,n2,n3);
+	printf("TO DO found a cavity (bnd %lu) with 4 corners %d %d %d %d\n",bnd.size(),n0,n1,n2,n3);
 	return 0;
       }
       
@@ -592,7 +551,7 @@ int remeshCavity (GFace *gf,
 	addToAdjacencyList (newQuads[i],adj);
       }
       return 1;      
-    }    
+    }
   }
   return 0;
 }
@@ -879,7 +838,8 @@ static int removeValence2Nodes(GFace * gf, v2t_cont &adj) {
   -> Apply a unique pattern and modify the pattern to be a square
 */
 
-int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
+static int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
+  //  return 0;
   int nbDone=0;
   v2t_cont::iterator it = adj.begin();
 
@@ -889,7 +849,7 @@ int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
     if (v->onWhat() == gf) {
       const std::vector<MElement *> &e = it->second;     
       if (e.size() == 6){
-        SIX.push_back(v);
+	SIX.push_back(v);
       }
     }
     ++it;
@@ -900,31 +860,32 @@ int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
     const std::vector<MElement *> &e = it->second;     
     std::vector<MVertex *> bnd = buildBoundary (e.begin(),e.end());
     bnd.resize(bnd.size()-1);
-    if (bnd.size() != 12)Msg::Error("Impossible topology %d",bnd.size());
-
-
+    if (bnd.size() != 12){
+      Msg::Error("Impossible topology %d",bnd.size());
+      continue;
+    }
     int valences[12];
     //    int n4 = 0;
     //    int n3 = 0;
     int exterior[12];
-
+    
     // compute how many quads are exterior to the cavity
     for (int i=0;i<12;i++){
       exterior[i] = 0;
       v2t_cont::iterator iti = adj.find(bnd[i]);
       if (iti != adj.end()){
-        for (size_t j=0; j< iti->second.size() ; j++){
-          if (std::find(e.begin(),e.end(),iti->second[j]) == e.end()){
-            exterior[i]++;
-          }
-        }	    
-        valences[i] = iti->second.size();
+	for (size_t j=0; j< iti->second.size() ; j++){
+	  if (std::find(e.begin(),e.end(),iti->second[j]) == e.end()){
+	    exterior[i]++;
+	  }
+	}	    
+	valences[i] = iti->second.size();
       }
       else {
-        Msg::Error("Unknown vertex %d",bnd[i]->getNum());
+	Msg::Error("Unknown vertex %d",bnd[i]->getNum());
       }
     }
-
+    
     // the pattern adds alternatively 1 and 2 quads in the cavity
     int interior[12] = {1,2,1,2,2,2,1,2,1,2,2,2};
     int start = -1;
@@ -934,19 +895,19 @@ int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
       int total = 0;
       int worsti = 0;
       for (int j=0;j<12;j++){
-        int contribution_j = exterior[j] + interior[(j+i)%12];
-        total += abs (contribution_j-4);
-        worsti = std::max(worsti,abs (contribution_j-4));
+	int contribution_j = exterior[j] + interior[(j+i)%12];
+	total += abs (contribution_j-4);
+	worsti = std::max(worsti,abs (contribution_j-4));
       }
       //      printf("total[%d] = %d, ext = %d\n",i,total,exterior[i]);
       if (total < best){
-        best = total;
-        start = i;
-        worst = worsti;
+	best = total;
+	start = i;
+	worst = worsti;
       }
     }
     //    printf("best = %d worst %d i %d\n ",best, worst,start);
-
+    
     double uv[2] = {0,0};
     double x12 = 0.5*(v->x() + bnd[(start+1)%12]->x());
     double y12 = 0.5*(v->y() + bnd[(start+1)%12]->y());
@@ -956,11 +917,11 @@ int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
     double z13 = 0.5*(v->z() + bnd[(start+7)%12]->z());
     GPoint p0 = CLOSESTPOINT(gf,SPoint3(x12,y12,z12),uv, gf->geomType());
     GPoint p1 = CLOSESTPOINT(gf,SPoint3(x13,y13,z13),uv, gf->geomType());
-
+    
     MFaceVertex *v12 = new MFaceVertex (p0.x(),p0.y(),p0.z(),gf,p0.u(),p0.v()); 
     MFaceVertex *v13 = new MFaceVertex (p1.x(),p1.y(),p1.z(),gf,p1.u(),p1.v()); 
     //    MFaceVertex *v14 = new MFaceVertex (v->x(),v->y(),v->z(),gf,p1.u(),p1.v()); 
-
+    
     gf->mesh_vertices.push_back(v12);
     gf->mesh_vertices.push_back(v13);
     int t[8][4] = {
@@ -978,7 +939,7 @@ int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
     bnd.push_back(v);
 
     std::vector<MElement*> Es = e;
-
+    
     for (int i=0;i<6;i++){
       MQuadrangle *q = dynamic_cast<MQuadrangle*>(Es[i]);	      
       if (!q)Msg::Error ("A non quad is present in the list of quad of face %lu",gf->tag());
@@ -995,7 +956,7 @@ int removeValence6Nodes(GFace * gf, v2t_cont &adj) {
       gf->quadrangles.push_back(q);
       addToAdjacencyList (q,  adj);
     }
-
+    
     nbDone++;
   }
   if (nbDone)Msg::Info ("Removing %d valence 6 nodes ", nbDone);
@@ -1011,17 +972,17 @@ static void allowProjections (GFace * gf){
     if (ds && !ds->haveParametrization()){
       std::vector<MTriangle*> temp;
       for (size_t i=0; i< gf->quadrangles.size(); i++){
-        temp.push_back(new MTriangle (gf->quadrangles[i]->getVertex(0),
-              gf->quadrangles[i]->getVertex(1),
-              gf->quadrangles[i]->getVertex(2)));
-        temp.push_back(new MTriangle (gf->quadrangles[i]->getVertex(2),
-              gf->quadrangles[i]->getVertex(3),
-              gf->quadrangles[i]->getVertex(0)));
-
+	temp.push_back(new MTriangle (gf->quadrangles[i]->getVertex(0),
+				      gf->quadrangles[i]->getVertex(1),
+				      gf->quadrangles[i]->getVertex(2)));
+	temp.push_back(new MTriangle (gf->quadrangles[i]->getVertex(2),
+				      gf->quadrangles[i]->getVertex(3),
+				      gf->quadrangles[i]->getVertex(0)));
+	
       }
       if (ds) ds->createGeometryFromTriangulation(temp);
       for (size_t i=0; i< temp.size(); i++){
-        delete temp[i];
+	delete temp[i];
       }
     }
   }
@@ -1033,9 +994,9 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
 
   if (gf->triangles.size())return;
   GEntity::GeomType GT = gf->geomType();
-
+  
   allowProjections (gf);
-
+  
   v2t_cont adj;
   buildVertexToElement(gf->quadrangles, adj);
   v2t_cont::iterator it = adj.begin();
@@ -1051,7 +1012,7 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
     nIter = 1000;
     gf->isSphere(radius, c) ;
   }
-
+  
   while(it != adj.end()) {
     MVertex *v = it->first;
     if (v->onWhat() == gf) {      
@@ -1061,11 +1022,11 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
     }
     ++it;
   }
-
+  
   double dx0;
   for (int i=0;i<nIter;i++){
     double dx = 0;
-
+    
     for (size_t j=0;j<stencils.size();j++){
       double xx = stencils[j].smooth(gf,GT,radius,c);
       dx += xx ;
@@ -1091,33 +1052,33 @@ static MVertex* next_vertex (GFace *gf, MVertex *prev, MVertex *current, v2t_con
 
 static void printEdge (int num, MVertex *v1, MVertex *v2, FILE *f){
   fprintf(f,"SL(%g,%g,%g,%g,%g,%g) {%d,%d};\n",
-      v1->x(),v1->y(),v1->z(),
-      v2->x(),v2->y(),v2->z(),num,num);
+	  v1->x(),v1->y(),v1->z(),
+	  v2->x(),v2->y(),v2->z(),num,num);
 }
 
 static void printVertex (int num, MVertex *v1, FILE *f){
   fprintf(f,"SP(%g,%g,%g) {%d};\n",
-      v1->x(),v1->y(),v1->z(),num);
+	  v1->x(),v1->y(),v1->z(),num);
 }
 
 
 static void updateBoundary (std::set<MElement*> & _u,
-    std::set<MElement*> & _e,
-    std::vector<MVertex*>&bnd){
+			    std::set<MElement*> & _e,
+			    std::vector<MVertex*>&bnd){
 
   //  return;
   std::vector<MEdge> eds, veds;
   eds.reserve(2*_u.size());
 
   bnd.resize(bnd.size()-1);
-
+  
   for (size_t i=0; i<bnd.size();i++)
     eds.push_back(MEdge (bnd[i], bnd[(i+1)%bnd.size()]));
-
+  
   for (std::set<MElement*>::iterator ite = _u.begin(); ite != _u.end();++ite){
     if (_e.find(*ite) == _e.end()){
       for (size_t j=0;j<(size_t)(*ite)->getNumEdges();j++){
-        eds.push_back((*ite)->getEdge(j));
+	eds.push_back((*ite)->getEdge(j));
       }
     }
   }
@@ -1130,16 +1091,13 @@ static void updateBoundary (std::set<MElement*> & _u,
     if (i != eds.size()-1 && eds[i] == eds[i+1])i++;
     else veds.push_back(eds[i]);
   }
-
+  
   std::vector<std::vector<MVertex *> > vsorted;
   SortEdgeConsecutive(veds, vsorted);
 
-  if (vsorted.empty()){
+  if (vsorted.size() != 1){
     std::vector<MVertex *> empty;
     bnd = empty;
-  }
-  else if (vsorted.size() > 1){
-    printf("ARGHTTT %lu\n",vsorted.size());
   }
   else {
     bnd = vsorted[0];
@@ -1148,8 +1106,8 @@ static void updateBoundary (std::set<MElement*> & _u,
 
 
 static MVertex* countSing (  std::set<MElement*> &cavity,
-    std::map<MVertex *, int, MVertexPtrLessThan> &sing,
-    int &nb){
+			     std::map<MVertex *, int, MVertexPtrLessThan> &sing,
+			     int &nb){
 
   nb = 0;
   MVertex *theSing = NULL;
@@ -1157,12 +1115,12 @@ static MVertex* countSing (  std::set<MElement*> &cavity,
     for (size_t i=0;i<(*ite)->getNumVertices();i++){
       std::map<MVertex *, int, MVertexPtrLessThan>::iterator it = sing.find((*ite)->getVertex(i));
       if (it != sing.end() && theSing != it->first){
-        theSing = it->first;
-        nb++;
+	theSing = it->first;
+	nb++;
       }
     }    
   }
-
+  
   if (nb == 1) {
     //    printf("one single singularity %lu of index %d\n",theSing->getNum(),sing[theSing]);
     return theSing;
@@ -1180,8 +1138,8 @@ static MVertex* countSing (  std::set<MElement*> &cavity,
     for (std::set<MElement*>::iterator ite = cavity.begin(); ite != cavity.end(); ++ite){
       (*ite)->xyz2uvw(xyz,uvw);
       if ((*ite)->isInside(uvw[0],uvw[1],uvw[2])){
-        theSing = it->first;
-        nb++;
+	theSing = it->first;
+	nb++;
       }
     }
   }
@@ -1189,12 +1147,44 @@ static MVertex* countSing (  std::set<MElement*> &cavity,
   return NULL;
 }
 
+static bool PRINTBLOB (int B, std::set<MElement*> & cavity ,
+		       std::vector<MVertex*> &bnd)
+{
+  std::string aaa = "BLOB" + std::to_string(B) + ".pos";
+  FILE *f = fopen (aaa.c_str(),"w");
+  fprintf(f,"View \"\"{\n");
+  for (size_t i=0;i<bnd.size();i++){
+    fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%lu,%lu};\n",
+	    bnd[i]->x(),bnd[i]->y(),bnd[i]->z(),	  
+	    bnd[(i+1)%bnd.size()]->x(),bnd[(i+1)%bnd.size()]->y(),bnd[(i+1)%bnd.size()]->z(),B,B);
+  }
+  for ( std::set<MElement*>::iterator it = cavity.begin();it != cavity.end() ; ++it){
+    fprintf(f,"SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%lu,%lu,%lu,%lu};\n",
+	    (*it)->getVertex(0)->x(),
+	    (*it)->getVertex(0)->y(),
+	    (*it)->getVertex(0)->z(),
+	    (*it)->getVertex(1)->x(),
+	    (*it)->getVertex(1)->y(),
+	    (*it)->getVertex(1)->z(),
+	    (*it)->getVertex(2)->x(),
+	    (*it)->getVertex(2)->y(),
+	    (*it)->getVertex(2)->z(),
+	    (*it)->getVertex(3)->x(),
+	    (*it)->getVertex(3)->y(),
+	    (*it)->getVertex(3)->z(),B,B,B,B);
+  }
+  fprintf(f,"};\n");
+  fclose(f);
+}
+
+
+
 // SHOULD BE FASTER ... NOW OK
 static bool cavityMeshable (GFace *gf,
-    v2t_cont &adj,
-    std::vector<MVertex*> bnd,
-    std::set<MElement*> & cavity,
-    int index, bool debug_ = false){
+			    v2t_cont &adj,
+			    std::vector<MVertex*> bnd,
+			    std::set<MElement*> & cavity,
+			    int index, bool debug_ = false){
 
   int nb5=0, nb3=0;
   for (std::set<MElement*>::iterator it = cavity.begin(); it != cavity.end(); ++it){
@@ -1212,7 +1202,7 @@ static bool cavityMeshable (GFace *gf,
 
   for (size_t i=0;i<bnd.size();i++)bnd[i]->setIndex(0);
 
-
+  
   for (std::set<MElement*>::iterator it = cavity.begin(); it != cavity.end(); ++it){
     for (size_t i=0;i<(*it)->getNumVertices(); i++){
       MVertex *v = (*it)->getVertex(i);
@@ -1242,7 +1232,7 @@ static bool cavityMeshable (GFace *gf,
     if (inside == 1)corners.push_back(i);
   }
 
-
+  
   if (corners.size() == index && index == 3){
     if (nb3 == 1 && nb5 == 0)return false;
 
@@ -1253,7 +1243,7 @@ static bool cavityMeshable (GFace *gf,
     int a1 = (n1+n2-n0)/2;
     int a2 = (n0+n2-n1)/2;
 
-
+    
     if (a0 <= 0 || a1 <= 0 || a2 <= 0)return false;
     return true;
   }
@@ -1272,8 +1262,8 @@ static bool cavityMeshable (GFace *gf,
 
     if (a0 <=0 || a1 <=0 || a2 <=0 || a3 <=0 || a4 <=0){
       if (debug_){
-        Msg::Info("  Non meshable blob with 5 corners found %d %d %d %d %d",n0,n1,n2,n3,n4);
-        Msg::Info("                                         %d %d %d %d %d",a0,a1,a2,a3,a4);
+	Msg::Info("  Non meshable blob with 5 corners found %d %d %d %d %d",n0,n1,n2,n3,n4);
+	Msg::Info("                                         %d %d %d %d %d",a0,a1,a2,a3,a4);
       }
       return false;
     }
@@ -1284,51 +1274,53 @@ static bool cavityMeshable (GFace *gf,
     int n1 = corners[2]-corners[1];
     int n2 = corners[3]-corners[2];
     int n3 = bnd.size() - n0 - n1 - n2;
-    if (debug_){
-      Msg::Info("  Blob with 4 corners found %d %d %d %d",n0,n1,n2,n3);
-    }
+    //      if (debug_){
+	//      }
 
 
     if ((n0 == n1 && abs(n2-n3) == 2) ||
-        (n1 == n3 && abs(n0-n2) == 2)){
+	(n1 == n3 && abs(n0-n2) == 2)){
+      if (nb5 == nb3 && nb3 != 1)
+	return true;
+      return false;
     }
 
     if ((n0 == n2 && abs(n1-n3) == 2) ||
-        (n1 == n3 && abs(n0-n2) == 2)){
-      if (nb5 != 1 || nb3 != 1){
-        return false;// FIXME
-        return true;
-      }
+	(n1 == n3 && abs(n0-n2) == 2)){
+      if (nb5 == nb3 && nb3 != 1)
+	return true;
       return false;
     }
     if (n0 == n2 && n1 == n3 && (n0 != 2 || n1 != 2)){
       if (nb5 == 0 || nb3 == 0)return false;
       return true;
     }
+    Msg::Info("  Currently non meshable Blob with 4 corners found %d %d %d %d with %d %d",n0,n1,n2,n3,nb3,nb5);
+    PRINTBLOB (BLOB++,cavity, bnd);
   }
   return false;
 }
 
 static bool removeConcaveCorners (v2t_cont &adj,
-    std::vector<MVertex*> &bnd,
-    std::set<MElement*> & cavity){
+				  std::vector<MVertex*> &bnd,
+				  std::set<MElement*> & cavity){
   int iter = 0;
   while (1){
     std::vector<MElement*> toAdd;
     for (size_t i=0;i<bnd.size();i++){
       if (bnd[i]->onWhat()->dim() == 2){
-        v2t_cont::iterator it = adj.find(bnd[i]);
-        int n_outside = 0;
-        MElement *e = NULL;
-        for (size_t j=0;j<it->second.size();j++){
-          if (cavity.find(it->second[j]) == cavity.end()){
-            e = it->second[j];
-            n_outside ++;
-          }
-        }
-        if (n_outside == 1){
-          toAdd.push_back(e);
-        }
+	v2t_cont::iterator it = adj.find(bnd[i]);
+	int n_outside = 0;
+	MElement *e = NULL;
+	for (size_t j=0;j<it->second.size();j++){
+	  if (cavity.find(it->second[j]) == cavity.end()){
+	    e = it->second[j];
+	    n_outside ++;
+	  }
+	}
+	if (n_outside == 1){
+	  toAdd.push_back(e);
+	}
       }
     }
     if (toAdd.empty())break;
@@ -1344,17 +1336,17 @@ static bool removeConcaveCorners (v2t_cont &adj,
   }
   return true;
 }
-
+				  
 
 static bool buildCavity (GFace *gf,
-    MVertex *v, v2t_cont &adj,
-    std::map<MVertex *, int, MVertexPtrLessThan> &sing,
-    std::vector<MVertex*> &bnd,
-    std::set<MElement*> & cavity,
-    int &index,
-    MVertex **theSing,
-    int MAXITER,
-    bool singOnly = true) {
+			 MVertex *v, v2t_cont &adj,
+			 std::map<MVertex *, int, MVertexPtrLessThan> &sing,
+			 std::vector<MVertex*> &bnd,
+			 std::set<MElement*> & cavity,
+			 int &index,
+			 MVertex **theSing,
+			 int MAXITER,
+			 bool singOnly = true) {
 
   bnd.clear();
   cavity.clear();
@@ -1370,7 +1362,7 @@ static bool buildCavity (GFace *gf,
     fprintf(deb,"View \"\"{\n");
   }
 
-
+  
 
   int iter = 0;
   bnd = buildBoundary (cavity.begin(),cavity.end());
@@ -1381,8 +1373,8 @@ static bool buildCavity (GFace *gf,
     for (size_t	i=0; i<bnd.size();i++){
       v2t_cont::iterator itvv = adj.find(bnd[i]);
       if ((bnd[i]->onWhat()->dim() == 2 && itvv->second.size() != 4) ||
-          (bnd[i]->onWhat()->dim() == 1 && itvv->second.size() != 2) ||
-          (bnd[i]->onWhat()->dim() == 0 && itvv->second.size() != 1)) allCornersGood = false;
+	  (bnd[i]->onWhat()->dim() == 1 && itvv->second.size() != 2) ||
+	  (bnd[i]->onWhat()->dim() == 0 && itvv->second.size() != 1)) allCornersGood = false;
     }
     allCornersGood = removeConcaveCorners (adj,bnd,cavity);
     if (bnd.empty()){
@@ -1392,13 +1384,13 @@ static bool buildCavity (GFace *gf,
     if (debug_){
       Msg::Info("CAVITY %lu BND %lu ",cavity.size(),bnd.size());
       for (size_t i=0;i<bnd.size();i++){
-        fprintf(deb,"SL(%g,%g,%g,%g,%g,%g){%lu,%lu};\n",
-            bnd[i]->x(),bnd[i]->y(),bnd[i]->z(),	  
-            bnd[(i+1)%bnd.size()]->x(),bnd[(i+1)%bnd.size()]->y(),bnd[(i+1)%bnd.size()]->z(),bnd.size(),bnd.size());
+	fprintf(deb,"SL(%g,%g,%g,%g,%g,%g){%lu,%lu};\n",
+		bnd[i]->x(),bnd[i]->y(),bnd[i]->z(),	  
+		bnd[(i+1)%bnd.size()]->x(),bnd[(i+1)%bnd.size()]->y(),bnd[(i+1)%bnd.size()]->z(),bnd.size(),bnd.size());
       }
     }
 
-
+    
     int ns;
     *theSing = countSing (cavity, sing, ns);    
     index = *theSing ? sing [*theSing] : 4 ;
@@ -1407,8 +1399,8 @@ static bool buildCavity (GFace *gf,
     if (allCornersGood && index >= 0){
       //      printf(" --> checking\n");
       if (cavityMeshable(gf,adj,bnd,cavity, index, debug_)){
-        printf("the cavity is meshable %lu\n",cavity.size());
-        return true;
+	//	printf("the cavity is meshable %lu\n",cavity.size());
+	return true;
       }
     }
     std::set<MElement*> update_cavity;
@@ -1422,15 +1414,15 @@ static bool buildCavity (GFace *gf,
     if (sb == bnd.size()){
       return false;
     }
-    //bnd = buildBoundary (cavity.begin(),cavity.end());
+	//bnd = buildBoundary (cavity.begin(),cavity.end());
   }
 
   if (debug_){
     fprintf(deb,"};\n");
     fclose(deb);
   }
-
-
+  
+  
   return false;
 }
 
@@ -1450,10 +1442,10 @@ struct incidentSingularity {
 // get the real maximal cavity-------------------------------------------------------------
 
 static void computeCorners ( std::vector<MVertex*> &bnd ,
-    std::set<MElement*> &cavity,				
-    v2t_cont &adj,
-    std::vector<int>  &corners,
-    std::vector<std::vector<MElement*> >  &bnd_adj) {  
+		      std::set<MElement*> &cavity,				
+		      v2t_cont &adj,
+		      std::vector<int>  &corners,
+		      std::vector<std::vector<MElement*> >  &bnd_adj) {  
   for (size_t i=0;i<bnd.size();i++){
     v2t_cont::iterator it = adj.find(bnd[i]);
     bnd_adj.push_back(it->second);
@@ -1468,11 +1460,11 @@ static void computeCorners ( std::vector<MVertex*> &bnd ,
 }
 
 static void buildMaximalCavity (GFace *gf,
-    MVertex *sing,
-    std::vector<MVertex*> &_bnd,
-    std::set<MElement*> &_cavity,
-    v2t_cont &adj,
-    std::map<MVertex*,int, MVertexPtrLessThan> &newSings){    
+				MVertex *sing,
+				std::vector<MVertex*> &_bnd,
+				std::set<MElement*> &_cavity,
+				v2t_cont &adj,
+				std::map<MVertex*,int, MVertexPtrLessThan> &newSings){    
   v2t_cont::iterator it = adj.find(sing);
   int valence = newSings[sing];
   if (it == adj.end())return;
@@ -1482,10 +1474,10 @@ static void buildMaximalCavity (GFace *gf,
   std::set<MElement*> maximal_cavity;
   cavity.insert(it->second.begin(), it->second.end());
   maximal_cavity = cavity;
-
-  //  printf("FACE %lu computing maximal cavity for vertex %lu (%d)\n",gf->tag(),sing->getNum(),valence);
-
-  bool debug_ = (sing->getNum() == 458) && 0;
+  
+  //  printf("FACE %lu computing maximal cavity for vertex %lu (%d) cs %lu\n",gf->tag(),sing->getNum(),valence,cavity.size());
+  
+  bool debug_ = (sing->getNum() == 9519);
 
   FILE *deb = NULL;
   if (debug_){
@@ -1493,9 +1485,10 @@ static void buildMaximalCavity (GFace *gf,
     deb = fopen ("debugMaxCavity.pos", "w");
     fprintf(deb,"View \"\"{\n");
   }
-
+  
   while (1){
     bnd = buildBoundary (cavity.begin(),cavity.end());
+    if (bnd.empty())break;
     bnd.resize(bnd.size() - 1);
     /*bool allCornersGood = */removeConcaveCorners (adj,bnd,cavity);
     bnd = buildBoundary (cavity.begin(),cavity.end());
@@ -1506,14 +1499,14 @@ static void buildMaximalCavity (GFace *gf,
     if (debug_){
       Msg::Info("CAVITY %lu BND %lu COR %lu",cavity.size(),bnd.size(), corners.size());
       for (size_t i=0;i<bnd.size();i++){
-        fprintf(deb,"SL(%g,%g,%g,%g,%g,%g){%lu,%lu};\n",
-            bnd[i]->x(),bnd[i]->y(),bnd[i]->z(),	  
-            bnd[(i+1)%bnd.size()]->x(),bnd[(i+1)%bnd.size()]->y(),bnd[(i+1)%bnd.size()]->z(),bnd.size(),bnd.size());
+	fprintf(deb,"SL(%g,%g,%g,%g,%g,%g){%lu,%lu};\n",
+		bnd[i]->x(),bnd[i]->y(),bnd[i]->z(),	  
+		bnd[(i+1)%bnd.size()]->x(),bnd[(i+1)%bnd.size()]->y(),bnd[(i+1)%bnd.size()]->z(),bnd.size(),bnd.size());
       }
     }
 
 
-
+    
     if (corners.size() > valence+3)break;
     if (valence == corners.size()){
       maximal_cavity = cavity;
@@ -1535,35 +1528,35 @@ static void buildMaximalCavity (GFace *gf,
       if (i == corners.size()-1) n  = bnd.size() + corners[0] - corners[i] ;
       else n = corners[i+1]-corners[i];
       for (size_t j=0; j<=n; j++){
-        int index = (corners[i]+j)%bnd.size();
-        MVertex *v = bnd [index];
-        if (newSings.find(v) != newSings.end() ||
-            newSings.find(v) != newSings.end()){      
-          extend[i] = 0;
-          extend[(i+1)%corners.size()] = 0;
-        }
+	int index = (corners[i]+j)%bnd.size();
+	MVertex *v = bnd [index];
+	if (newSings.find(v) != newSings.end() ||
+	    newSings.find(v) != newSings.end()){      
+	  extend[i] = 0;
+	  extend[(i+1)%corners.size()] = 0;
+	}
       }      
     }
-
+    
     for (size_t i=0;i<corners.size();i++){
       int n;
       if (i == corners.size()-1) n  = bnd.size() + corners[0] - corners[i] ;
       else n = corners[i+1]-corners[i];
       std::set<MElement*> toExtend;
       if (extend[i] || extend[(i+1)%corners.size()]){      
-        int start = extend[i] ? 0:1;
-        int end   = extend[(i+1)%corners.size()] ? n+1:n;
-        for (size_t j=start; j<end ; j++){
-          int index = (corners[i]+j)%bnd.size();
-          std::vector<MElement*> &e = bnd_adj[index];
-          toExtend.insert(e.begin(),e.end());
-        }
-        cavity.insert(toExtend.begin(), toExtend.end());
+	int start = extend[i] ? 0:1;
+	int end   = extend[(i+1)%corners.size()] ? n+1:n;
+	for (size_t j=start; j<end ; j++){
+	  int index = (corners[i]+j)%bnd.size();
+	  std::vector<MElement*> &e = bnd_adj[index];
+	  toExtend.insert(e.begin(),e.end());
+	}
+	cavity.insert(toExtend.begin(), toExtend.end());
       }
     }
-    if (cavity.size() == cavSize)break;
+    if (cavity.size() <= cavSize)break;
   }
-
+  
   if (debug_){
     fprintf(deb,"};\n");
     fclose(deb);
@@ -1594,7 +1587,7 @@ int remeshMaximalCavities (GFace *gf, std::map<MVertex*,int, MVertexPtrLessThan>
     MVertex *v = it->first;
     int sing_index; 
     std::map<MVertex*,int, MVertexPtrLessThan>::iterator it2 = newSings.find(it->first);
-
+    
     if (it2 == newSings.end())sing_index = 4;
     else sing_index = it2->second;
 
@@ -1605,478 +1598,478 @@ int remeshMaximalCavities (GFace *gf, std::map<MVertex*,int, MVertexPtrLessThan>
       std::set<MElement*> cavity;
 
       buildMaximalCavity (gf,it->first,bnd,cavity,adj,newSings_);
-
+      
       if (bnd.empty()){
-        if (it->first->onWhat() == gf)newSings_.erase(it->first);
+	if (it->first->onWhat() == gf)newSings_.erase(it->first);
       }
       else {
-        fprintf(f,"SP(%g,%g,%g){%lu};\n",it->first->x(),
-            it->first->y(),it->first->z(), it->first->getNum());
-        for (size_t i=0;i<bnd.size();i++){
-          fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%lu,%lu};\n",
-              bnd[i]->x(),bnd[i]->y(),bnd[i]->z(),	  
-              bnd[(i+1)%bnd.size()]->x(),bnd[(i+1)%bnd.size()]->y(),bnd[(i+1)%bnd.size()]->z(),it->first->getNum(), it->first->getNum());
-        }
-        //	printf("MAX CAVITY for %lu (%lu)\n",v->getNum(),it->second.size());
-        if (remeshCavity (gf, sing_index, cavity, bnd, adj, newSings_) == 1){	
-          //	printf("cavity %lu remeshed\n",it->first->getNum());
-          counter++;
-        }
+	fprintf(f,"SP(%g,%g,%g){%lu};\n",it->first->x(),
+		it->first->y(),it->first->z(), it->first->getNum());
+	for (size_t i=0;i<bnd.size();i++){
+	  fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%lu,%lu};\n",
+		  bnd[i]->x(),bnd[i]->y(),bnd[i]->z(),	  
+		  bnd[(i+1)%bnd.size()]->x(),bnd[(i+1)%bnd.size()]->y(),bnd[(i+1)%bnd.size()]->z(),it->first->getNum(), it->first->getNum());
+	}
+	//	printf("MAX CAVITY for %lu (%lu)\n",v->getNum(),it->second.size());
+	if (remeshCavity (gf, sing_index, cavity, bnd, adj, newSings_) == 1){	
+	  //	printf("cavity %lu remeshed\n",it->first->getNum());
+	  counter++;
+	}
       }
     }
     ++it;
-    }
-    newSings = newSings_;
-
-    fprintf(f,"};\n");
-    fclose(f);
-    return counter;
   }
+  newSings = newSings_;
 
-  void computeSingularitesThroughCrossField (GFace * gf,  v2t_cont &adj, Field *f, 
-      std::map<MVertex *, int, MVertexPtrLessThan> &sing){  
+  fprintf(f,"};\n");
+  fclose(f);
+  return counter;
+}
 
-    std::map<MVertex*, double, MVertexPtrLessThan> sizes;
-    v2t_cont::iterator it = adj.begin();
-    while(it != adj.end()) {
-      MVertex *v = it->first;
-      SVector3 t1;
-      (*f)(v->x(), v->y(), v->z(), t1, gf);
-      sizes[v] = t1.norm();
-      ++it;
-    }
-
-    it = adj.begin();
-    while(it != adj.end()) {
-      MVertex *v = it->first;
-      const std::vector<MElement *> &e = it->second;
-      if (v->onWhat() == gf && e.size() != 0) {
-        double L = sizes[v];
-        std::set<MElement*> ee; ee.insert(e.begin(),e.end());
-        std::vector<MVertex*> b = buildBoundary (ee.begin(),ee.end());
-        bool MIN = true, MAX = true;
-        for (size_t i = 0 ; i < b.size(); i++){
-          double li = sizes[b[i]];
-          if (li > L) MAX = false;
-          if (li < L) MIN = false;	
-        }
-        if (MIN && !MAX)sing[v] = 3;
-        if (MAX && !MIN)sing[v] = 5;
+void computeSingularitesThroughCrossField (GFace * gf,  v2t_cont &adj, Field *f, 
+					   std::map<MVertex *, int, MVertexPtrLessThan> &sing){  
+  
+  std::map<MVertex*, double, MVertexPtrLessThan> sizes;
+  v2t_cont::iterator it = adj.begin();
+  while(it != adj.end()) {
+    MVertex *v = it->first;
+    SVector3 t1;
+    (*f)(v->x(), v->y(), v->z(), t1, gf);
+    sizes[v] = t1.norm();
+    ++it;
+  }
+  
+  it = adj.begin();
+  while(it != adj.end()) {
+    MVertex *v = it->first;
+    const std::vector<MElement *> &e = it->second;
+    if (v->onWhat() == gf && e.size() != 0) {
+      double L = sizes[v];
+      std::set<MElement*> ee; ee.insert(e.begin(),e.end());
+      std::vector<MVertex*> b = buildBoundary (ee.begin(),ee.end());
+      bool MIN = true, MAX = true;
+      for (size_t i = 0 ; i < b.size(); i++){
+	double li = sizes[b[i]];
+	if (li > L) MAX = false;
+	if (li < L) MIN = false;	
       }
-      ++it;
+      if (MIN && !MAX)sing[v] = 3;
+      if (MAX && !MIN)sing[v] = 5;
     }
+    ++it;
+  }
+}
+
+
+
+// -------------------------------------------
+static void bunin (GFace * gf,
+		   std::map<MVertex *, int, MVertexPtrLessThan> &sing,
+		   std::map<MVertex*,int, MVertexPtrLessThan> &newSings,
+		   Field *cross_field,
+		   int niter,
+		   bool singOnly) {
+
+  if (singOnly && sing.empty())return;
+  
+  std::string aaa = gf->model()->getName() + "cavities_face_" + std::to_string(gf->tag()) + "_" + std::to_string(niter) +".pos"; 
+  FILE *f = fopen (aaa.c_str(),"w");
+  fprintf(f,"View \"\"{\n");
+  v2t_cont adj;
+  buildVertexToElement(gf->quadrangles, adj);
+
+  //  if (sing.empty()) computeSingularitesThroughCrossField (gf,  adj, cross_field, sing);
+  //  if(Msg::GetVerbosity() == 99)
+    //    if (singOnly)gf->model()->writeMSH("before6.msh", 4.0, false, true);	  	  
+  removeValence6Nodes(gf, adj);
+  //    meshWinslow2d (gf, 10000, cross_field);
+  //  if(Msg::GetVerbosity() == 99)
+  //    if (singOnly)gf->model()->writeMSH("after6.msh", 4.0, false, true);	  	  
+  
+  //  exit(1);
+  
+  std::vector<MVertex*> sing_;
+  for (std::map<MVertex *, int, MVertexPtrLessThan>::iterator it =  sing.begin() ; it != sing.end(); ++it)  
+    sing_.push_back(it->first);
+
+  int nbSing = 0;
+  v2t_cont::iterator it = adj.begin();
+
+  while(it != adj.end()) {
+     MVertex *v = it->first;
+     const std::vector<MElement *> e = it->second;
+     if (v->onWhat() == gf && e.size() != 4 && e.size() != 0) {
+       nbSing ++;
+       sing_.push_back(v);
+       //       for (size_t i=0;i< e.size() ; i++){
+       //	 for (size_t j=0;j< e[i]->getNumVertices() ; j++){
+       //	   MVertex *vv = e[i]->getVertex(j);
+       //	   if (std::find(sing_.begin(), sing_.end(), vv)==sing_.end())sing_.push_back(vv);
+       //	 }
+       //       }
+     }
+     ++it;
   }
 
-
-
-  // -------------------------------------------
-  static void bunin (GFace * gf,
-      std::map<MVertex *, int, MVertexPtrLessThan> &sing,
-      std::map<MVertex*,int, MVertexPtrLessThan> &newSings,
-      Field *cross_field,
-      int niter,
-      bool singOnly) {
-
-    if (singOnly && sing.empty())return;
-
-    std::string aaa = gf->model()->getName() + "cavities_face_" + std::to_string(gf->tag()) + "_" + std::to_string(niter) +".pos"; 
-    FILE *f = fopen (aaa.c_str(),"w");
-    fprintf(f,"View \"\"{\n");
-    v2t_cont adj;
-    buildVertexToElement(gf->quadrangles, adj);
-
-    //  if (sing.empty()) computeSingularitesThroughCrossField (gf,  adj, cross_field, sing);
-    if(Msg::GetVerbosity() == 99)
-      if (singOnly)gf->model()->writeMSH("before6.msh", 4.0, false, true);	  	  
-    removeValence6Nodes(gf, adj);
-    //    meshWinslow2d (gf, 10000, cross_field);
-    if(Msg::GetVerbosity() == 99)
-      if (singOnly)gf->model()->writeMSH("after6.msh", 4.0, false, true);	  	  
-
-    //  exit(1);
-
-    std::vector<MVertex*> sing_;
-    for (std::map<MVertex *, int, MVertexPtrLessThan>::iterator it =  sing.begin() ; it != sing.end(); ++it)  
-      sing_.push_back(it->first);
-
-    int nbSing = 0;
-    v2t_cont::iterator it = adj.begin();
-
+  Msg::Info("Non local topological repair on surface %lu (iter %3d) --> found %d internal mesh sngs vs. %lu true sngs",gf->tag(),niter,nbSing,
+	    sing.size());
+  
+  int count = 0;
+  for ( std::vector<MVertex*>::iterator itv = sing_.begin() ; itv != sing_.end() ; ++itv) {
+    MVertex *v = *itv;
+    //    printf("treating %lu\n",v->getNum());
+    it = adj.find(v);
+    
+    if (it != adj.end() && v->onWhat() == gf && it->second.size() != 0) {
+      // compute a cavity that contains ONE "true" singularity
+      // but possibly more "mesh singularities" --> just keep one at
+      // thet end and replace the singularity by the remaining mesh
+      // one
+      std::vector<MVertex*> bnd;
+      std::set<MElement*> cavity ;
+      int index;
+      MVertex *theSing = NULL;
+      bool success = buildCavity (gf,v,adj, sing,
+				  bnd, cavity, index,&theSing, niter, singOnly);
+      if (success){	
+	// periodic
+	bnd.resize(bnd.size() -1);
+	bool ok = remeshCavity (gf, index, cavity, bnd, adj, newSings) == 1;
+	for (size_t i=0;i<bnd.size();i++){
+	  fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
+		  bnd[i]->x(),bnd[i]->y(),bnd[i]->z(),	  
+		  bnd[i+1]->x(),bnd[(i+1)%bnd.size()]->y(),bnd[(i+1)%bnd.size()]->z(),ok,ok);
+	}
+	if (ok){	
+	  if (success && theSing){
+	    sing.erase(theSing);
+	  }
+	  //	if (success){
+	  //	  int tag = success ? count:-count;
+	  std::string aaa = gf->model()->getName() + "cavities_face_" + std::to_string(gf->tag()) + "_" + std::to_string(singOnly) +"_" + std::to_string(count)+".msh"; 
+	  //	  if(Msg::GetVerbosity() == 99)
+	  //	    gf->model()->writeMSH(aaa, 4.0, false, true);	  	  
+	}
+	count ++;
+      }
+    }
+  }
+  {
+    nbSing = 0;
+    it = adj.begin();
     while(it != adj.end()) {
       MVertex *v = it->first;
       const std::vector<MElement *> e = it->second;
       if (v->onWhat() == gf && e.size() != 4 && e.size() != 0) {
-        nbSing ++;
-        sing_.push_back(v);
-        //       for (size_t i=0;i< e.size() ; i++){
-        //	 for (size_t j=0;j< e[i]->getNumVertices() ; j++){
-        //	   MVertex *vv = e[i]->getVertex(j);
-        //	   if (std::find(sing_.begin(), sing_.end(), vv)==sing_.end())sing_.push_back(vv);
-        //	 }
-        //       }
+	nbSing ++;
       }
       ++it;
+    }    
+  }
+  Msg::Info("Non local topological repair done --> %d internal mesh sngs vs. %lu + %lu true sngs",nbSing,
+	    sing.size(),newSings.size());
+  sing.insert(newSings.begin(), newSings.end());
+  newSings.clear();
+  
+  fprintf(f,"};\n");
+  fclose(f);
+}
+// -------------------------------------------
+
+
+
+void computeLayout (GFace * gf, FILE *f, std::map<MVertex*,int, MVertexPtrLessThan> &newSings) {
+
+  v2t_cont adj;
+  buildVertexToElement(gf->triangles, adj);
+  buildVertexToElement(gf->quadrangles, adj);
+  v2t_cont::iterator it = adj.begin();
+  int numSep = 1;
+  
+  while(it != adj.end()) {
+    MVertex *v = it->first;
+    const std::vector<MElement *> e = it->second;
+    if (v->onWhat() == gf && e.size() != 4 && newSings.find(v) != newSings.end()) {
+      fprintf(f,"SP(%g,%g,%g){%d};\n",v->x(),v->y(),v->z(),newSings[v]);
+      winslowStencil st (v, e);
+      std::vector<MVertex *> &crown = st.stencil;
+      printVertex (e.size(), v,f);
+      for (int i=1;i<crown.size();i+=2){
+	MVertex *prec    = v;
+	MVertex *current = crown[i];
+	MVertex *next  = NULL;
+	printEdge   (numSep, prec, current,f);
+	while (1){
+	  next = next_vertex (gf, prec, current, adj);
+	  if (!next)break;
+	  prec = current;
+	  current = next;
+	  printEdge (numSep, prec, current,f);
+	}
+	numSep++;
+      }      
     }
+    ++it;
+  }
+}
 
-    Msg::Info("Non local topological repair on surface %lu (iter %3d) --> found %d internal mesh sngs vs. %lu true sngs",gf->tag(),niter,nbSing,
-        sing.size());
 
-    int count = 0;
-    for ( std::vector<MVertex*>::iterator itv = sing_.begin() ; itv != sing_.end() ; ++itv) {
-      MVertex *v = *itv;
-      //    printf("treating %lu\n",v->getNum());
-      it = adj.find(v);
+// static void findPhysicalGroupsForSingularities(GModel *gm,
+//                                                std::map<MVertex *, int, MVertexPtrLessThan> &temp)
+// {
+ 
+//   std::map<int, std::vector<GEntity *> > groups[4];
+//   gm->getPhysicalGroups(groups);
+//   for(std::map<int, std::vector<GEntity *> >::iterator it = groups[0].begin();
+//       it != groups[0].end(); ++it) {
+//     std::string name = gm->getPhysicalName(0, it->first);
+//     if(name == "SINGULARITY_OF_INDEX_THREE") {
+//       for(size_t j = 0; j < it->second.size(); j++) {
+// 	if(!it->second[j]->mesh_vertices.empty())
+// 	  temp[it->second[j]->mesh_vertices[0]] = 3;
+//       }
+//     }
+//     else if(name == "SINGULARITY_OF_INDEX_FIVE") {
+//       for(size_t j = 0; j < it->second.size(); j++) {
+// 	if(!it->second[j]->mesh_vertices.empty())
+// 	  temp[it->second[j]->mesh_vertices[0]] = 5;
+//       }
+//     }
+//   }
+// }
 
-      if (it != adj.end() && v->onWhat() == gf && it->second.size() != 0) {
-        // compute a cavity that contains ONE "true" singularity
-        // but possibly more "mesh singularities" --> just keep one at
-        // thet end and replace the singularity by the remaining mesh
-        // one
-        std::vector<MVertex*> bnd;
-        std::set<MElement*> cavity ;
-        int index;
-        MVertex *theSing = NULL;
-        bool success = buildCavity (gf,v,adj, sing,
-            bnd, cavity, index,&theSing, niter, singOnly);
-        if (success){	
-          // periodic
-          bnd.resize(bnd.size() -1);
-          bool ok = remeshCavity (gf, index, cavity, bnd, adj, newSings) == 1;
-          for (size_t i=0;i<bnd.size();i++){
-            fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
-                bnd[i]->x(),bnd[i]->y(),bnd[i]->z(),	  
-                bnd[i+1]->x(),bnd[(i+1)%bnd.size()]->y(),bnd[(i+1)%bnd.size()]->z(),ok,ok);
-          }
-          if (ok){	
-            if (success && theSing){
-              sing.erase(theSing);
-            }
-            //	if (success){
-            //	  int tag = success ? count:-count;
-            std::string aaa = gf->model()->getName() + "cavities_face_" + std::to_string(gf->tag()) + "_" + std::to_string(singOnly) +"_" + std::to_string(count)+".msh"; 
-            if(Msg::GetVerbosity() == 99)
-              gf->model()->writeMSH(aaa, 4.0, false, true);	  	  
-          }
-          count ++;
-          }
-        }
-      }
-      {
-        nbSing = 0;
-        it = adj.begin();
-        while(it != adj.end()) {
-          MVertex *v = it->first;
-          const std::vector<MElement *> e = it->second;
-          if (v->onWhat() == gf && e.size() != 4 && e.size() != 0) {
-            nbSing ++;
-          }
-          ++it;
-        }    
-      }
-      Msg::Info("Non local topological repair done --> %d internal mesh sngs vs. %lu + %lu true sngs",nbSing,
-          sing.size(),newSings.size());
-      sing.insert(newSings.begin(), newSings.end());
-      newSings.clear();
 
-      fprintf(f,"};\n");
-      fclose(f);
+bool  getSingularitiesFromFile (const std::string &fn,
+				std::vector<GFace *> &temp,
+				std::map<MVertex*,int, MVertexPtrLessThan> &newSings){
+  
+  std::vector<MVertex*> s_3;
+  std::vector<MVertex*> s_5;
+  for (size_t i=0;i<temp.size();++i){
+    GFace *gf = temp[i];
+    v2t_cont adj;
+    buildVertexToElement(gf->quadrangles, adj);
+    v2t_cont::iterator it = adj.begin();
+    while (it !=adj.end()){
+      if (it->first->onWhat() == gf && it->second.size() == 3)s_3.push_back(it->first);
+      else if (it->first->onWhat() == gf && it->second.size() >= 5)s_5.push_back(it->first);
+      ++it;
     }
-    // -------------------------------------------
+  }
 
+  FILE *f = fopen(fn.c_str(),"r");
+  if (!f) {
+    Msg::Error("file not found: %s", fn.c_str());
+    return false;
+  }
+  std::string fn3 = fn+"_cross.pos";
+  std::string fn2 = fn+".pos";
+  FILE *ff = fopen (fn2.c_str(),"w");
+  FILE *ff3 = fopen (fn3.c_str(),"w");
+  fprintf(ff,"View\" sing from file\"{\n");
+  fprintf(ff3,"View\" sing from file not moved\"{\n");
 
-
-    void computeLayout (GFace * gf, FILE *f, std::map<MVertex*,int, MVertexPtrLessThan> &newSings) {
-
-      v2t_cont adj;
-      buildVertexToElement(gf->triangles, adj);
-      buildVertexToElement(gf->quadrangles, adj);
-      v2t_cont::iterator it = adj.begin();
-      int numSep = 1;
-
-      while(it != adj.end()) {
-        MVertex *v = it->first;
-        const std::vector<MElement *> e = it->second;
-        if (v->onWhat() == gf && e.size() != 4 && newSings.find(v) != newSings.end()) {
-          fprintf(f,"SP(%g,%g,%g){%d};\n",v->x(),v->y(),v->z(),newSings[v]);
-          winslowStencil st (v, e);
-          std::vector<MVertex *> &crown = st.stencil;
-          printVertex (e.size(), v,f);
-          for (int i=1;i<crown.size();i+=2){
-            MVertex *prec    = v;
-            MVertex *current = crown[i];
-            MVertex *next  = NULL;
-            printEdge   (numSep, prec, current,f);
-            while (1){
-              next = next_vertex (gf, prec, current, adj);
-              if (!next)break;
-              prec = current;
-              current = next;
-              printEdge (numSep, prec, current,f);
-            }
-            numSep++;
-          }      
-        }
-        ++it;
+  int n;
+  fscanf (f,"%d",&n);
+  for (int i=0;i<n;i++){
+    int dim, tag, index;
+    double x,y,z;
+    fscanf(f,"%d %lf %lf %lf %d %d",&index,&x,&y,&z,&dim,&tag);
+    fprintf(ff3,"SP(%lf,%lf,%lf){%d};\n",x,y,z,index);
+    MVertex s(x,y,z);
+    double distMin = 1.e22;
+    MVertex *found = NULL;
+    if (index == -1) index = 5;
+    else index = 3;
+    std::vector<MVertex*> &s_ = index == 3 ? s_3 : s_5;
+    for (size_t j=0;j<s_.size();j++){
+      MVertex *v = s_[j];
+      if (v->onWhat()->tag() == tag && newSings.find(v) == newSings.end()){
+	double dist = s.distance(v);
+	if (dist < distMin){
+	  distMin = dist;
+	  found = v;
+	}
       }
+    }    
+    if (found){
+      fprintf(ff,"SP(%g,%g,%g){%d};\n",found->x(),found->y(),found->z(),index);
+      newSings[found] = index;
     }
-
-
-    // static void findPhysicalGroupsForSingularities(GModel *gm,
-    //                                                std::map<MVertex *, int, MVertexPtrLessThan> &temp)
-    // {
-
-    //   std::map<int, std::vector<GEntity *> > groups[4];
-    //   gm->getPhysicalGroups(groups);
-    //   for(std::map<int, std::vector<GEntity *> >::iterator it = groups[0].begin();
-    //       it != groups[0].end(); ++it) {
-    //     std::string name = gm->getPhysicalName(0, it->first);
-    //     if(name == "SINGULARITY_OF_INDEX_THREE") {
-    //       for(size_t j = 0; j < it->second.size(); j++) {
-    // 	if(!it->second[j]->mesh_vertices.empty())
-    // 	  temp[it->second[j]->mesh_vertices[0]] = 3;
-    //       }
-    //     }
-    //     else if(name == "SINGULARITY_OF_INDEX_FIVE") {
-    //       for(size_t j = 0; j < it->second.size(); j++) {
-    // 	if(!it->second[j]->mesh_vertices.empty())
-    // 	  temp[it->second[j]->mesh_vertices[0]] = 5;
-    //       }
-    //     }
-    //   }
-    // }
-
-
-    bool  getSingularitiesFromFile (const std::string &fn,
-        std::vector<GFace *> &temp,
-        std::map<MVertex*,int, MVertexPtrLessThan> &newSings){
-
-      std::vector<MVertex*> s_3;
-      std::vector<MVertex*> s_5;
-      for (size_t i=0;i<temp.size();++i){
-        GFace *gf = temp[i];
-        v2t_cont adj;
-        buildVertexToElement(gf->quadrangles, adj);
-        v2t_cont::iterator it = adj.begin();
-        while (it !=adj.end()){
-          if (it->first->onWhat() == gf && it->second.size() == 3)s_3.push_back(it->first);
-          else if (it->first->onWhat() == gf && it->second.size() >= 5)s_5.push_back(it->first);
-          ++it;
-        }
-      }
-
-      FILE *f = fopen(fn.c_str(),"r");
-      if (!f) {
-        Msg::Error("file not found: %s", fn.c_str());
-        return false;
-      }
-      std::string fn3 = fn+"_cross.pos";
-      std::string fn2 = fn+".pos";
-      FILE *ff = fopen (fn2.c_str(),"w");
-      FILE *ff3 = fopen (fn3.c_str(),"w");
-      fprintf(ff,"View\" sing from file\"{\n");
-      fprintf(ff3,"View\" sing from file not moved\"{\n");
-
-      int n;
-      fscanf (f,"%d",&n);
-      for (int i=0;i<n;i++){
-        int dim, tag, index;
-        double x,y,z;
-        fscanf(f,"%d %lf %lf %lf %d %d",&index,&x,&y,&z,&dim,&tag);
-        fprintf(ff3,"SP(%lf,%lf,%lf){%d};\n",x,y,z,index);
-        MVertex s(x,y,z);
-        double distMin = 1.e22;
-        MVertex *found = NULL;
-        if (index == -1) index = 5;
-        else index = 3;
-        std::vector<MVertex*> &s_ = index == 3 ? s_3 : s_5;
-        for (size_t j=0;j<s_.size();j++){
-          MVertex *v = s_[j];
-          if (v->onWhat()->tag() == tag && newSings.find(v) == newSings.end()){
-            double dist = s.distance(v);
-            if (dist < distMin){
-              distMin = dist;
-              found = v;
-            }
-          }
-        }    
-        if (found){
-          fprintf(ff,"SP(%g,%g,%g){%d};\n",found->x(),found->y(),found->z(),index);
-          newSings[found] = index;
-        }
-      }
-      fprintf(ff,"};\n");
-      fclose(ff);
-      fprintf(ff3,"};\n");
-      fclose(ff3);
-      fclose(f);
-      return true;
-    }
+  }
+  fprintf(ff,"};\n");
+  fclose(ff);
+  fprintf(ff3,"};\n");
+  fclose(ff3);
+  fclose(f);
+  return true;
+}
 
 
 
-    void meshWinslow2d (GModel * gm, int nIter, Field *f) {
+void meshWinslow2d (GModel * gm, int nIter, Field *f) {
 
-      std::vector<GFace *> temp;
-      temp.insert(temp.begin(), gm->firstFace(), gm->lastFace());
-      std::vector<GEdge *> tempe;
-      tempe.insert(tempe.begin(), gm->firstEdge(), gm->lastEdge());
+  std::vector<GFace *> temp;
+  temp.insert(temp.begin(), gm->firstFace(), gm->lastFace());
+  std::vector<GEdge *> tempe;
+  tempe.insert(tempe.begin(), gm->firstEdge(), gm->lastEdge());
 
-      for (size_t i=0;i<temp.size();i++){
-        allowProjections (temp[i]);
-      }
+  for (size_t i=0;i<temp.size();i++){
+    allowProjections (temp[i]);
+  }
+  
+  if (std::getenv("NO_SMOOTHING") != NULL) {
+    Msg::Info("smoothing and simplification disabled in meshWinslow2d (env var NO_SMOOTHING)");
+    return;
+  }
+  if (std::getenv("NO_SIMPLIFICATION") != NULL) {
+    Msg::Info("simplification disabled in meshWinslow2d (env var NO_SIMPLIFICATION)");
 
-      if (std::getenv("NO_SMOOTHING") != NULL) {
-        Msg::Info("smoothing and simplification disabled in meshWinslow2d (env var NO_SMOOTHING)");
-        return;
-      }
-      if (std::getenv("NO_SIMPLIFICATION") != NULL) {
-        Msg::Info("simplification disabled in meshWinslow2d (env var NO_SIMPLIFICATION)");
+    int sIter = nIter/4;
+    sIter = 10;
 
-        int sIter = nIter/4;
-        sIter = 10;
-
-        for (int NIT = 0;NIT<4;NIT++){  
-          for (size_t i=0;i<tempe.size();i++)
-            meshWinslow1d (tempe[i],sIter, f);    
+    for (int NIT = 0;NIT<4;NIT++){  
+      for (size_t i=0;i<tempe.size();i++)
+        meshWinslow1d (tempe[i],sIter, f);    
 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
-          for (size_t i=0;i<temp.size();i++){
-            meshWinslow2d (temp[i],sIter, f, false);
-          }
-        }
-
-        return;
+      for (size_t i=0;i<temp.size();i++){
+        meshWinslow2d (temp[i],sIter, f, false);
       }
+    }
 
-      std::map<MVertex*,int, MVertexPtrLessThan> newSings;
-      std::map<MVertex *, int, MVertexPtrLessThan> s;
-      bool singRead = getSingularitiesFromFile (gm->getName()+"_singularities.txt", temp, s);
+    return;
+  }
+  
+  std::map<MVertex*,int, MVertexPtrLessThan> newSings;
+  std::map<MVertex *, int, MVertexPtrLessThan> s;
+  bool singRead = getSingularitiesFromFile (gm->getName()+"_singularities.txt", temp, s);
 
-      Field *cross_field = NULL;
-
-      if (!singRead){
-        FieldManager *fields = gm->getFields();
-        if(fields->getBackgroundField() > 0) {        
-          cross_field = fields->get(fields->getBackgroundField());
-          if(cross_field->numComponents() != 3) {// we hae a true scaled cross fields !!
-            Msg::Error ("Packing of Parallelograms require a scaled cross field");
-            Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
-            Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
-            return;
-          }
-        }
-        else {
-          Msg::Error ("Packing of Parallelograms require a scaled cross field");
-          Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
-          Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
-          return;
-        }
+  Field *cross_field = NULL;
+  
+  if (!singRead){
+    FieldManager *fields = gm->getFields();
+    if(fields->getBackgroundField() > 0) {        
+      cross_field = fields->get(fields->getBackgroundField());
+      if(cross_field->numComponents() != 3) {// we hae a true scaled cross fields !!
+	Msg::Error ("Packing of Parallelograms require a scaled cross field");
+	Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
+	Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
+	return;
       }
+    }
+    else {
+      Msg::Error ("Packing of Parallelograms require a scaled cross field");
+      Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
+      Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
+      return;
+    }
+  }
+  
 
-
-      // reclassify all seams on the face (all the rest is parameter space "free")
-      if (0){
-        for (size_t i=0;i<temp.size();i++){
-          std::vector<GEdge*> ed = 	temp[i]->edges();
-          for (size_t j=0;j<ed.size();j++){
-            if (ed[j]->isSeam(temp[i])){
-              for (size_t k=0;k<ed[j]->lines.size();k++){
-                ed[j]->lines[k]->getVertex(0)->setEntity(temp[i]);
-                ed[j]->lines[k]->getVertex(1)->setEntity(temp[i]);
-              }
-            }
-          }
-        }
+  // reclassify all seams on the face (all the rest is parameter space "free")
+  if (1){
+    for (size_t i=0;i<temp.size();i++){
+      std::vector<GEdge*> ed = 	temp[i]->edges();
+      for (size_t j=0;j<ed.size();j++){
+	if (ed[j]->isSeam(temp[i]) && ed[j]->faces().size() == 1){
+	  for (size_t k=0;k<ed[j]->lines.size();k++){
+	    ed[j]->lines[k]->getVertex(0)->setEntity(temp[i]);
+	    ed[j]->lines[k]->getVertex(1)->setEntity(temp[i]);
+	  }
+	}
       }
+    }
+  }
 
+  
+  Msg::Info ("Non local topological cleanup ");
 
-      Msg::Info ("Non local topological cleanup ");
-
-
-      if(Msg::GetVerbosity() == 99)
-        gm->writeMSH("before_bunin.msh", 4.0, false, true);
-
-      {
-        //    findPhysicalGroupsForSingularities(gm,s);
-        for (size_t i=0;i<temp.size();i++){
-          bunin (temp[i], s, newSings, cross_field, 5, true) ;
-          bunin (temp[i], s, newSings, cross_field, 5, true) ;
-          bunin (temp[i], s, newSings, cross_field, 15, true) ;
-        }
+  
+  //  if(Msg::GetVerbosity() == 99)
+    gm->writeMSH("before_bunin.msh", 4.0, false, true);
+  
+  {
+    //    findPhysicalGroupsForSingularities(gm,s);
+    for (size_t i=0;i<temp.size();i++){
+      bunin (temp[i], s, newSings, cross_field, 5, true) ;
+      bunin (temp[i], s, newSings, cross_field, 5, true) ;
+      bunin (temp[i], s, newSings, cross_field, 15, true) ;
+    }
 #if 1
-        if(Msg::GetVerbosity() == 99)
-          gm->writeMSH("between_bunin.msh", 4.0, false, true);
-        for (size_t i=0;i<temp.size();i++){
-          bunin (temp[i], s, newSings, cross_field, 5, false) ;
-          bunin (temp[i], s, newSings, cross_field, 6, false) ;
-          bunin (temp[i], s, newSings, cross_field, 15, false) ;
-        }
-#endif
-      }
-      if(Msg::GetVerbosity() == 99)
-        gm->writeMSH("after_bunin.msh", 4.0, false, true);
-
-      Msg::Info ("Winslow Smoothing\n");
-
-
-      for (int NIT = 0;NIT<2;NIT++){  
-        for (size_t i=0;i<tempe.size();i++)
-          meshWinslow1d (tempe[i],2, f);    
-      }
-
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
-      for (size_t i=0;i<temp.size();i++){
-        meshWinslow2d (temp[i],2, f, true);
-      }
-
-      s.clear();
-      std::string sing_file = gm->getName()+"_singularities.txt";
-      Msg::Info("load singularities from file: %s", sing_file.c_str());
-      getSingularitiesFromFile (sing_file, temp, s);
-
-      if(Msg::GetVerbosity() == 99)
-        gm->writeMSH("after_smooth.msh", 4.0, false, true);
-#if 1
-      Msg::Info("Growing cavities for the %lu true isolated singularities found in the domain",s.size());
-      for (size_t i=0;i<temp.size();i++){
-        int ITER =0;
-        while (1) {
-          int C = remeshMaximalCavities (temp[i], s, true);
-          //      break;
-          if (!C || ITER++ > 20)break;
-        }
-      }
-
-      if(Msg::GetVerbosity() == 99)
-        gm->writeMSH("after_grow.msh", 4.0, false, true);  
-
-      for (int NIT = 0;NIT<4;NIT++){  
-        for (size_t i=0;i<tempe.size();i++)
-          meshWinslow1d (tempe[i],nIter/4, f);    
-      }
-
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
-      for (size_t i=0;i<temp.size();i++){
-        meshWinslow2d (temp[i],nIter/4, f, true);
-      }
-
-      if(Msg::GetVerbosity() == 99)
-        gm->writeMSH("after_merge.msh", 4.0, false, true);
-#endif
-
-      //  return;
-      std::string name = gm->getName()+"_layout.pos";
-      FILE *_f = fopen(name.c_str(),"w");
-      fprintf(_f,"View\"Layout\"{\n");
-      for (size_t i=0;i<temp.size();i++)
-        computeLayout (temp[i], _f,s);
-      fprintf(_f,"};\n");
-      fclose(_f); 
+    if(Msg::GetVerbosity() == 99)
+      gm->writeMSH("between_bunin.msh", 4.0, false, true);
+    for (size_t i=0;i<temp.size();i++){
+      bunin (temp[i], s, newSings, cross_field, 5, false) ;
+      bunin (temp[i], s, newSings, cross_field, 6, false) ;
+      bunin (temp[i], s, newSings, cross_field, 15, false) ;
     }
+#endif
+  }
+  //  if(Msg::GetVerbosity() == 99)
+    gm->writeMSH("after_bunin.msh", 4.0, false, true);
+
+  Msg::Info ("Winslow Smoothing\n");
+
+  
+  for (int NIT = 0;NIT<2;NIT++){  
+    for (size_t i=0;i<tempe.size();i++)
+      meshWinslow1d (tempe[i],2, f);    
+  }
+  
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+  for (size_t i=0;i<temp.size();i++){
+    meshWinslow2d (temp[i],20, f, true);
+  }
+    
+  s.clear();
+  std::string sing_file = gm->getName()+"_singularities.txt";
+  Msg::Info("load singularities from file: %s", sing_file.c_str());
+  getSingularitiesFromFile (sing_file, temp, s);
+
+  //  if(Msg::GetVerbosity() == 99)
+    gm->writeMSH("after_smooth.msh", 4.0, false, true);
+#if 1
+  Msg::Info("Growing cavities for the %lu true isolated singularities found in the domain",s.size());
+  for (size_t i=0;i<temp.size();i++){
+    int ITER =0;
+    while (1) {
+      int C = remeshMaximalCavities (temp[i], s, true);
+      //      break;
+      if (!C || ITER++ > 20)break;
+    }
+  }
+  
+  //  if(Msg::GetVerbosity() == 99)
+    gm->writeMSH("after_grow.msh", 4.0, false, true);  
+
+  for (int NIT = 0;NIT<4;NIT++){  
+    for (size_t i=0;i<tempe.size();i++)
+      meshWinslow1d (tempe[i],nIter/4, f);    
+  }
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+  for (size_t i=0;i<temp.size();i++){
+    meshWinslow2d (temp[i],100, f, true);
+  }
+    
+  //  if(Msg::GetVerbosity() == 99)
+    gm->writeMSH("after_merge.msh", 4.0, false, true);
+#endif
+  
+  //  return;
+  std::string name = gm->getName()+"_layout.pos";
+  FILE *_f = fopen(name.c_str(),"w");
+  fprintf(_f,"View\"Layout\"{\n");
+  for (size_t i=0;i<temp.size();i++)
+    computeLayout (temp[i], _f,s);
+  fprintf(_f,"};\n");
+  fclose(_f); 
+}
 

@@ -27,7 +27,7 @@
 //   for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
 //     if(mesh->tetrahedra.node[4*i+3]==HXT_GHOST_VERTEX)
 //       continue;
-//     if(mesh->tetrahedra.colors[i]==UINT16_MAX)
+//     if(mesh->tetrahedra.color[i]==HXT_COLOR_OUT)
 //       continue;
 //     double* a = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*i+0];
 //     double* b = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*i+1];
@@ -74,7 +74,22 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
                                    .reproducible = options->reproducible,
                                    .delaunayThreads = options->delaunayThreads};
 
+  HXTNodalSizes nodalSizes = {
+    .array = NULL,
+    .callback = options->nodalSizes.callback,
+    .userData = options->nodalSizes.userData,
+    .min = options->nodalSizes.min,
+    .max = options->nodalSizes.max,
+    .factor = options->nodalSizes.factor,
+    .enabled = 0  // only enabled for the refine step
+  };
+
   uint32_t numVerticesConstrained = mesh->vertices.num;
+
+  if(options->refine) {
+    HXT_CHECK(hxtNodalSizesInit(mesh, &nodalSizes));
+    delOptions.nodalSizes = &nodalSizes;
+  }
 
   HXT_INFO_COND(options->verbosity>0, "Creating an empty mesh with %u vertices", numVerticesConstrained);
   HXT_CHECK( hxtEmptyMesh(mesh, &delOptions) );
@@ -83,7 +98,6 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   t[1] = omp_get_wtime();
 
   uint64_t nbMissingTriangles, nbLinesNotInTriangles, nbMissingLines=0;
-  uint16_t nbColors;
   uint64_t* tri2TetMap = NULL;
   uint64_t* lines2TriMap = NULL;
   uint64_t* lines2TetMap = NULL;
@@ -144,9 +158,9 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   if(nbLinesNotInTriangles!=0)
     HXT_CHECK( hxtConstrainLinesNotInTriangles(mesh, lines2TetMap, lines2TriMap) );
 
-  HXT_CHECK( hxtColorMesh(mesh, &nbColors) );
-
-  HXT_CHECK( hxtMapColorsToBrep(mesh, nbColors, tri2TetMap) );
+  // now that tetrahedra are flaged, we can proceed to colorize the mesh
+  HXT_ASSERT(mesh->tetrahedra.color == NULL);
+  HXT_CHECK( hxtMapColorsToBrep(mesh, tri2TetMap) );
 
   HXT_CHECK( hxtAlignedFree(&tri2TetMap) );
   HXT_CHECK( hxtAlignedFree(&lines2TetMap) );
@@ -155,28 +169,9 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   t[4] = omp_get_wtime();
 
   if(options->refine){
-    HXTNodalSizes nodalSizes = {
-      .array = NULL,
-      .callback = options->nodalSizes.callback,
-      .userData = options->nodalSizes.userData,
-      .min = options->nodalSizes.min,
-      .max = options->nodalSizes.max,
-      .factor = options->nodalSizes.factor
-    };
-    HXT_CHECK(hxtNodalSizesInit(mesh, &nodalSizes));
-
-    if(nodalSizes.callback!=NULL) {
-      if(hxtComputeNodalSizesFromFunction(mesh, &nodalSizes)!=HXT_STATUS_OK) {
-        HXT_WARNING("Initial sizes are interpolated instead of being fetched from the size map");
-        HXT_CHECK(hxtComputeNodalSizesFromTrianglesAndLines(mesh, &nodalSizes));
-      }
-    }
-    else
-      HXT_CHECK(hxtComputeNodalSizesFromTrianglesAndLines(mesh, &nodalSizes));
-
-    delOptions.nodalSizes = &nodalSizes;
-
     HXT_CHECK( setFlagsToProcessOnlyVolumesInBrep(mesh) );
+
+    nodalSizes.enabled = 1; // activate the filtering...
 
     HXT_CHECK( hxtRefineTetrahedra(mesh, &delOptions) );
 

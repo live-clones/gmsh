@@ -50,7 +50,7 @@ HXTStatus hxtSurfaceMeshExportTriangleQuality(HXTMesh *nmesh, const double *size
   FILE* out;
   hxtPosInit("checkQuality.pos","Scalar",&out);
   for (uint32_t i=0; i<nmesh->triangles.num; i++){
-    if (nmesh->triangles.colors[i] == UINT16_MAX) continue;
+    if (nmesh->triangles.color[i] == UINT16_MAX) continue;
     double *p0 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+0];
     double *p1 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+1];
     double *p2 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+2];
@@ -70,7 +70,7 @@ HXTStatus hxtSurfaceMeshExportTriangleQuality(HXTMesh *nmesh, const double *size
     qual[i] = (qual[i]-minQ)/(maxQ-minQ);
   }
   for (uint32_t i=0; i<nmesh->triangles.num; i++){
-    if (nmesh->triangles.colors[i] == UINT16_MAX) continue;
+    if (nmesh->triangles.color[i] == UINT16_MAX) continue;
     double *p0 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+0];
     double *p1 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+1];
     double *p2 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+2];
@@ -275,7 +275,7 @@ HXTStatus hxtPointGenProjectCloseRTree(HXTMesh *omesh,
     double minDist = 10e12;
     for (uint32_t i=0; i<omesh->triangles.num; i++){
   
-      if (omesh->triangles.colors[i] != omesh->triangles.colors[ot]) continue;
+      if (omesh->triangles.color[i] != omesh->triangles.color[ot]) continue;
   
         double *p0 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+0];
         double *p1 = omesh->vertices.coord + 4*omesh->triangles.node[3*i+1];
@@ -283,7 +283,7 @@ HXTStatus hxtPointGenProjectCloseRTree(HXTMesh *omesh,
         int inside = 0;
         HXT_CHECK(hxtSignedDistancePointTriangle(p0,p1,p2,pp,&dist,&inside,closePt));
   
-        if (fabs(dist)<minDist && omesh->triangles.colors[ot] == omesh->triangles.colors[i]){
+        if (fabs(dist)<minDist && omesh->triangles.color[ot] == omesh->triangles.color[i]){
           minDist = fabs(dist);
           *nt = i;
           np[0] = closePt[0];
@@ -308,7 +308,7 @@ HXTStatus hxtPointGenProjectCloseRTree(HXTMesh *omesh,
                                                &in,
                                                closePt));
 
-      if (fabs(dist)<minDist && omesh->triangles.colors[ot] == omesh->triangles.colors[tri]){
+      if (fabs(dist)<minDist && omesh->triangles.color[ot] == omesh->triangles.color[tri]){
         minDist = fabs(dist);
         *nt = tri;
         np[0] = closePt[0];
@@ -1000,7 +1000,7 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
     uint32_t ov1 = edges->node[2*i+1];
 
     if (t1 == UINT64_MAX) continue;
-    if (mesh->triangles.colors[t0] != mesh->triangles.colors[t1]) continue;
+    if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
 
     uint32_t newEdge = UINT32_MAX;
     HXT_CHECK(hxtSplitEdgeIndex(mesh,edges,NULL,NULL,i,&newEdge));
@@ -1010,15 +1010,15 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
 
     // Find parent triangle on initial mesh for new point
     p2t[v0] = UINT64_MAX;
-    uint16_t color = mesh->triangles.colors[t0];
-    if (omesh->triangles.colors[p2t[v1]] == color){
+    uint16_t color = mesh->triangles.color[t0];
+    if (omesh->triangles.color[p2t[v1]] == color){
       p2t[v0] = p2t[v1];
     }
     else{
       // Search all triangles 
       // TODO search with distance to triangle to find the true parent  
       for (uint64_t j=0; j<omesh->triangles.num; j++){
-        if (omesh->triangles.colors[j] == color) p2t[v0] = j;
+        if (omesh->triangles.color[j] == color) p2t[v0] = j;
       }
     }
 
@@ -1070,7 +1070,7 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
       uint64_t t0 = edges->edg2tri[2*ce+0];
       uint64_t t1 = edges->edg2tri[2*ce+1];
       if (t1 == UINT64_MAX) continue;
-      if (mesh->triangles.colors[t0] != mesh->triangles.colors[t1]) continue;
+      if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
 
       //uint64_t ot = t0 == i ? t1:t0;
       //if (flagTris[ot] == 0) continue;
@@ -1113,15 +1113,15 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
 
     // Find parent triangle on initial mesh for new point
     p2t[v0] = UINT64_MAX;
-    uint16_t color = mesh->triangles.colors[i];
-    if (omesh->triangles.colors[p2t[v1]] == color){
+    uint16_t color = mesh->triangles.color[i];
+    if (omesh->triangles.color[p2t[v1]] == color){
       p2t[v0] = p2t[v1];
     }
     else{
       // Search all triangles 
       // TODO search with distance to triangle to find the true parent  
       for (uint64_t j=0; j<omesh->triangles.num; j++){
-        if (omesh->triangles.colors[j] == color) p2t[v0] = j;
+        if (omesh->triangles.color[j] == color) p2t[v0] = j;
       }
     }
 
@@ -1292,8 +1292,8 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTMesh *mesh,
     if ( (adj[v0] == 2 && isBoundary[v0] != 1) ||
          (adj[v1] == 2 && isBoundary[v1] != 1) ){
 
-        mesh->triangles.colors[t0] = UINT16_MAX;
-        mesh->triangles.colors[t1] = UINT16_MAX;
+        mesh->triangles.color[t0] = UINT16_MAX;
+        mesh->triangles.color[t1] = UINT16_MAX;
 
         if (adj[v0]==2){
           adj[v0]=UINT32_MAX;
@@ -1323,7 +1323,7 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTMesh *mesh,
     /*FILE *test;*/
     /*hxtPosInit("checInvalidTriangles.pos","points",&test);*/
     /*for (uint32_t i=0; i<mesh->triangles.num; i++){*/
-      /*if (mesh->triangles.colors[i] != UINT16_MAX) continue;*/
+      /*if (mesh->triangles.color[i] != UINT16_MAX) continue;*/
       /*uint32_t *v = mesh->triangles.node + 3*i;*/
       /*hxtPosAddTriangle(test,&mesh->vertices.coord[4*v[0]],   */
                              /*&mesh->vertices.coord[4*v[1]],   */
@@ -1334,14 +1334,14 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTMesh *mesh,
 
   // Delete triangles 
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-    if (mesh->triangles.colors[i] != UINT16_MAX) continue;
+    if (mesh->triangles.color[i] != UINT16_MAX) continue;
 
     for (uint64_t j=i; j<mesh->triangles.num-1; j++){
 
       mesh->triangles.node[3*j+0] = mesh->triangles.node[3*(j+1)+0];
       mesh->triangles.node[3*j+1] = mesh->triangles.node[3*(j+1)+1];
       mesh->triangles.node[3*j+2] = mesh->triangles.node[3*(j+1)+2];
-      mesh->triangles.colors[j] = mesh->triangles.colors[j+1];
+      mesh->triangles.color[j] = mesh->triangles.color[j+1];
     }
   }
   mesh->triangles.num = mesh->triangles.num - countDeletedTriangles;
@@ -1469,7 +1469,7 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
         uint64_t tt1 = edges->edg2tri[2*edges->tri2edg[3*t0+j]+1];
 
         if (tt1 == UINT64_MAX) continue;
-        if (mesh->triangles.colors[tt0] != mesh->triangles.colors[tt1]) continue;
+        if (mesh->triangles.color[tt0] != mesh->triangles.color[tt1]) continue;
 
         flagEdg[edges->tri2edg[3*t0+j]] = bin[v0];
       }
@@ -1479,7 +1479,7 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
         uint64_t tt1 = edges->edg2tri[2*edges->tri2edg[3*t1+j]+1];
 
         if (tt1 == UINT64_MAX) continue;
-        if (mesh->triangles.colors[tt0] != mesh->triangles.colors[tt1]) continue;
+        if (mesh->triangles.color[tt0] != mesh->triangles.color[tt1]) continue;
 
         flagEdg[edges->tri2edg[3*t1+j]] = bin[v0];
       }
@@ -1491,7 +1491,7 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
         uint64_t tt1 = edges->edg2tri[2*edges->tri2edg[3*t0+j]+1];
 
         if (tt1 == UINT64_MAX) continue;
-        if (mesh->triangles.colors[tt0] != mesh->triangles.colors[tt1]) continue;
+        if (mesh->triangles.color[tt0] != mesh->triangles.color[tt1]) continue;
 
         flagEdg[edges->tri2edg[3*t0+j]] = bin[v1];
       }
@@ -1501,7 +1501,7 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
         uint64_t tt1 = edges->edg2tri[2*edges->tri2edg[3*t1+j]+1];
 
         if (tt1 == UINT64_MAX) continue;
-        if (mesh->triangles.colors[tt0] != mesh->triangles.colors[tt1]) continue;
+        if (mesh->triangles.color[tt0] != mesh->triangles.color[tt1]) continue;
 
         flagEdg[edges->tri2edg[3*t1+j]] = bin[v1];
       }
@@ -1538,7 +1538,7 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
     uint32_t ov1 = edges->node[2*i+1];
 
     if (t1 == UINT64_MAX) continue;
-    if (mesh->triangles.colors[t0] != mesh->triangles.colors[t1]) continue;
+    if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
 
     uint32_t newEdge = UINT32_MAX;
     HXT_CHECK(hxtSplitEdgeIndex(mesh,edges,NULL,NULL,i,&newEdge));
@@ -1548,15 +1548,15 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
 
     // Find parent triangle on initial mesh for new point
     p2t[v0] = UINT64_MAX;
-    uint16_t color = mesh->triangles.colors[t0];
-    if (omesh->triangles.colors[p2t[v1]] == color){
+    uint16_t color = mesh->triangles.color[t0];
+    if (omesh->triangles.color[p2t[v1]] == color){
       p2t[v0] = p2t[v1];
     }
     else{
       // Search all triangles 
       // TODO search with distance to triangle to find the true parent  
       for (uint64_t j=0; j<omesh->triangles.num; j++){
-        if (omesh->triangles.colors[j] == color) p2t[v0] = j;
+        if (omesh->triangles.color[j] == color) p2t[v0] = j;
       }
     }
 
@@ -1608,7 +1608,7 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
       uint64_t t0 = edges->edg2tri[2*ce+0];
       uint64_t t1 = edges->edg2tri[2*ce+1];
       if (t1 == UINT64_MAX) continue;
-      if (mesh->triangles.colors[t0] != mesh->triangles.colors[t1]) continue;
+      if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
 
       //uint64_t ot = t0 == i ? t1:t0;
       //if (flagTris[ot] == 0) continue;
@@ -1651,15 +1651,15 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
 
     // Find parent triangle on initial mesh for new point
     p2t[v0] = UINT64_MAX;
-    uint16_t color = mesh->triangles.colors[i];
-    if (omesh->triangles.colors[p2t[v1]] == color){
+    uint16_t color = mesh->triangles.color[i];
+    if (omesh->triangles.color[p2t[v1]] == color){
       p2t[v0] = p2t[v1];
     }
     else{
       // Search all triangles 
       // TODO search with distance to triangle to find the true parent  
       for (uint64_t j=0; j<omesh->triangles.num; j++){
-        if (omesh->triangles.colors[j] == color) p2t[v0] = j;
+        if (omesh->triangles.color[j] == color) p2t[v0] = j;
       }
     }
 
@@ -1798,15 +1798,15 @@ HXTStatus hxtPointGenQuadFinal(HXTMesh *mesh,
       if (vt2 != v0 && vt2 != v1) ov1 = vt2;
     }
 
-    if (mesh->triangles.colors[t0] == UINT16_MAX ||
-        mesh->triangles.colors[t1] == UINT16_MAX)
+    if (mesh->triangles.color[t0] == UINT16_MAX ||
+        mesh->triangles.color[t1] == UINT16_MAX)
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Deleted triangle in final quad formation");
 
     qmesh->quads.node[4*cq+0] = v0;
     qmesh->quads.node[4*cq+1] = ov0;
     qmesh->quads.node[4*cq+2] = v1;
     qmesh->quads.node[4*cq+3] = ov1;
-    qmesh->quads.colors[cq] = mesh->triangles.colors[t0];
+    qmesh->quads.color[cq] = mesh->triangles.color[t0];
     cq++;
 
   }
@@ -1820,7 +1820,7 @@ HXTStatus hxtPointGenQuadFinal(HXTMesh *mesh,
   for (uint64_t i=0; i<mesh->lines.num; i++){
     qmesh->lines.node[2*i+0] = mesh->lines.node[2*i+0];
     qmesh->lines.node[2*i+1] = mesh->lines.node[2*i+1];
-    qmesh->lines.colors[i] = mesh->lines.colors[i];
+    qmesh->lines.color[i] = mesh->lines.color[i];
   }
   for (uint64_t i=0; i<mesh->points.num; i++){
     qmesh->points.node[i] = mesh->points.node[i];
@@ -1892,7 +1892,7 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       isBoundary[v1] = 1;
       continue;
     }
-    if (mesh->triangles.colors[t0] != mesh->triangles.colors[t1]){
+    if (mesh->triangles.color[t0] != mesh->triangles.color[t1]){
       isBoundary[v0] = 1;
       isBoundary[v1] = 1;
       continue;
@@ -1950,7 +1950,7 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
     uint64_t t1 = edges->edg2tri[2*i+1];
 
     if (t1 == UINT64_MAX) continue;
-    if (mesh->triangles.colors[t0] != mesh->triangles.colors[t1]) continue;
+    if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
 
     if (flagTris[t0] == 1 && flagTris[t1] == 1){
 
@@ -1969,18 +1969,18 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
 
       // Find parent triangle on initial mesh for new point
       p2t[v0] = UINT64_MAX;
-      uint16_t color = mesh->triangles.colors[t0];
-      if (omesh->triangles.colors[p2t[v1]] == color){
+      uint16_t color = mesh->triangles.color[t0];
+      if (omesh->triangles.color[p2t[v1]] == color){
         p2t[v0] = p2t[v1];
       }
-      else if(omesh->triangles.colors[p2t[v2]]==color){
+      else if(omesh->triangles.color[p2t[v2]]==color){
         p2t[v0] = p2t[v2];
       }
       else{
         // Search all triangles 
         // TODO search with distance to triangle to find the true parent  
         for (uint64_t j=0; j<omesh->triangles.num; j++){
-          if (omesh->triangles.colors[j] == color) p2t[v0] = j;
+          if (omesh->triangles.color[j] == color) p2t[v0] = j;
         }
       }
 
@@ -2026,7 +2026,7 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       uint64_t t0 = edges->edg2tri[2*ce+0];
       uint64_t t1 = edges->edg2tri[2*ce+1];
       if (t1 == UINT64_MAX) continue;
-      if (mesh->triangles.colors[t0] != mesh->triangles.colors[t1]) continue;
+      if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
 
       //uint64_t ot = t0 == i ? t1:t0;
       //if (flagTris[ot] == 0) continue;
@@ -2074,18 +2074,18 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
 
     // Find parent triangle on initial mesh for new point
     p2t[v0] = UINT64_MAX;
-    uint16_t color = mesh->triangles.colors[i];
-    if (omesh->triangles.colors[p2t[v1]] == color){
+    uint16_t color = mesh->triangles.color[i];
+    if (omesh->triangles.color[p2t[v1]] == color){
       p2t[v0] = p2t[v1];
     }
-    else if(omesh->triangles.colors[p2t[v2]]==color){
+    else if(omesh->triangles.color[p2t[v2]]==color){
       p2t[v0] = p2t[v2];
     }
     else{
       // Search all triangles 
       // TODO search with distance to triangle to find the true parent  
       for (uint64_t j=0; j<omesh->triangles.num; j++){
-        if (omesh->triangles.colors[j] == color) p2t[v0] = j;
+        if (omesh->triangles.color[j] == color) p2t[v0] = j;
       }
     }
 
@@ -2304,14 +2304,14 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       mesh->quads.node[4*i+1] = qmesh->quads.node[4*i+1]; 
       mesh->quads.node[4*i+2] = qmesh->quads.node[4*i+2]; 
       mesh->quads.node[4*i+3] = qmesh->quads.node[4*i+3]; 
-      mesh->quads.colors[i] = qmesh->quads.colors[i];
+      mesh->quads.color[i] = qmesh->quads.color[i];
     }
     HXT_CHECK(hxtLinesReserve(mesh,qmesh->lines.num));
     mesh->lines.num = qmesh->lines.num;
     for (uint64_t i=0; i<qmesh->lines.num; i++){
       mesh->lines.node[2*i+0] = qmesh->lines.node[2*i+0]; 
       mesh->lines.node[2*i+1] = qmesh->lines.node[2*i+1]; 
-      mesh->lines.colors[i] = qmesh->lines.colors[i];
+      mesh->lines.color[i] = qmesh->lines.color[i];
     }
     HXT_CHECK(hxtPointsReserve(mesh,qmesh->points.num));
     mesh->points.num = qmesh->points.num;
