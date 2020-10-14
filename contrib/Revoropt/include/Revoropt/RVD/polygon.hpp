@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -11,7 +11,7 @@
 #ifndef _REVOROPT_RVD_POLYGON_HPP_
 #define _REVOROPT_RVD_POLYGON_HPP_
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <vector>
 #include <iostream>
 
@@ -40,7 +40,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
      * intersection between an edge of the input mesh and a bissector of the Voronoi
      * diagram, and FACE_VERTEX is the intersection between a face of the input mesh
      * and a Voronoi edge. */
-    
+
     enum Config {
       UNDEFINED,
       ORIGINAL,
@@ -60,14 +60,14 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
       reset(x1_id,mesh) ;
     }
     /* build an EDGE_VERTEX */
-    RVDVertex( unsigned int x1_id, unsigned int x2_id, 
+    RVDVertex( unsigned int x1_id, unsigned int x2_id,
                unsigned int v1_id, unsigned int v2_id,
                const Triangulation* mesh, const double* sites
              ) {
       reset(x1_id,x2_id,v1_id,v2_id,mesh,sites) ;
     }
     /* build a FACE_VERTEX */
-    RVDVertex( unsigned int x1_id, unsigned int x2_id, unsigned int x3_id, 
+    RVDVertex( unsigned int x1_id, unsigned int x2_id, unsigned int x3_id,
                unsigned int v1_id, unsigned int v2_id, unsigned int v3_id,
                const Triangulation* mesh, const double* sites
              ) {
@@ -100,7 +100,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
     }
 
     /* change into an EDGE_VERTEX */
-    void reset( unsigned int x1_id, unsigned int x2_id, 
+    void reset( unsigned int x1_id, unsigned int x2_id,
                 unsigned int v1_id, unsigned int v2_id,
                 const Triangulation* mesh, const double* sites
               ) {
@@ -126,7 +126,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
       const Vector mid_sites = 0.5*(v1+v2) ;
       const Vector edge = x2-x1 ;
 
-      const Vector pos = x1 
+      const Vector pos = x1
                        + ( diff_sites.dot(mid_sites - x1)
                            / diff_sites.dot(edge)
                          )
@@ -137,7 +137,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
     }
 
     /* change into a FACE_VERTEX */
-    void reset( unsigned int x1_id, unsigned int x2_id, unsigned int x3_id, 
+    void reset( unsigned int x1_id, unsigned int x2_id, unsigned int x3_id,
                 unsigned int v1_id, unsigned int v2_id, unsigned int v3_id,
                 const Triangulation* mesh, const double* sites
               ) {
@@ -172,24 +172,24 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
       const double det = (c1*c5-c2*c4) ;
 #ifdef DEBUG
       if(det == 0) {
-        std::cout << "0 determinant : " 
-                  << c1 << ", " 
-                  << c5 << ", " 
-                  << c2 << ", " 
+        std::cout << "0 determinant : "
+                  << c1 << ", "
+                  << c5 << ", "
+                  << c2 << ", "
                   << c4 << std::endl ;
-        std::cout << "Combinatorics : " 
+        std::cout << "Combinatorics : "
                   << combinatorics_[3] << ", "
                   << combinatorics_[4] << ", "
                   << combinatorics_[5] << std::endl ;
-        std::cout << "v1 : [" 
+        std::cout << "v1 : ["
                   << v1[0] << ", "
                   << v1[1] << ", "
                   << v1[2] << " ]" << std::endl ;
-        std::cout << "v2 : [ " 
+        std::cout << "v2 : [ "
                   << v2[0] << ", "
                   << v2[1] << ", "
                   << v2[2] << " ]" << std::endl ;
-        std::cout << "v3 : [" 
+        std::cout << "v3 : ["
                   << v3[0] << ", "
                   << v3[1] << ", "
                   << v3[2] << " ]" << std::endl ;
@@ -201,7 +201,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
 
       const Vector pos = x1 + bary1*(x2-x1) + bary2*(x3-x1) ;
 
-      //position becomes the 
+      //position becomes the
       this->array() = pos ;
     }
 
@@ -216,10 +216,10 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
      * since this is the default behaviour in Eigen. You can probably work
      * around this by #defining the EIGEN_DEFAULT_MATRIX_STORAGE_ORDER_OPTION
      * to Eigen::RowMajor, which would be dangerous and ugly. */
-    
-    void derivative( const int comb_index, 
-                     const Triangulation* mesh, 
-                     const double* sites, 
+
+    void derivative( const int comb_index,
+                     const Triangulation* mesh,
+                     const double* sites,
                      double* output
                    ) const {
       //fill result with zeros
@@ -239,7 +239,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
             output[Dim*i+i] = 1 ;
           }
           break ;
-        } 
+        }
         case EDGE_VERTEX: {
           //the vertex only depends on two vertices and two sites
           if((comb_index==2) || (comb_index==5)) break ;
@@ -253,7 +253,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
             e_site_derivative(comb_index,mesh,sites,output) ;
           }
           break ;
-        } 
+        }
         case FACE_VERTEX: {
           //check whether the derivative is requested wrt a vertex or a site
           if(comb_index < 3) {
@@ -264,14 +264,14 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
             f_site_derivative(comb_index,mesh,sites,output) ;
           }
           break ;
-        } 
+        }
       }
     }
-    
+
   private :
 
     /* Specific gradient computation for every non trivial configuration */
-    void e_vertex_derivative( const int comb_index, 
+    void e_vertex_derivative( const int comb_index,
                               const Triangulation* mesh,
                               const double* sites,
                               double* output
@@ -302,7 +302,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
       }
     }
 
-    void e_site_derivative( const int comb_index, 
+    void e_site_derivative( const int comb_index,
                             const Triangulation* mesh,
                             const double* sites,
                             double* output
@@ -318,7 +318,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
       //get the two vertices
       Eigen::Map<const Vector> x0(mesh->vertex(combinatorics_[0])) ;
       Eigen::Map<const Vector> x1(mesh->vertex(combinatorics_[1])) ;
-      
+
       //compute the gradient
       const Vector edge = x1-x0 ;
       const Vector site_diff = v1-v0 ;
@@ -329,7 +329,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
       grad.noalias() = grad/half_k ;
     }
 
-    void f_vertex_derivative( const int comb_index, 
+    void f_vertex_derivative( const int comb_index,
                               const Triangulation* mesh,
                               const double* sites,
                               double* output
@@ -377,7 +377,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
       grad.noalias() = a*grad ;
     }
 
-    void f_site_derivative( const int comb_index, 
+    void f_site_derivative( const int comb_index,
                             const Triangulation* mesh,
                             const double* sites,
                             double* output
@@ -398,7 +398,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
       Eigen::Map<const Vector> x1(mesh->vertex(combinatorics_[1])) ;
       Eigen::Map<const Vector> x2(mesh->vertex(combinatorics_[2])) ;
 
-      //compute the gradient 
+      //compute the gradient
       const double c0 = (x1-x0).dot(v0-v2) ;
       const double c1 = (x2-x0).dot(v0-v2) ;
       const double c2 = (x1-x0).dot(v2-v1) ;
@@ -413,7 +413,7 @@ class RVDVertex : public Eigen::Matrix<double,_Triangulation::VertexDim,1> {
       grad = grad * (v1-v2) * (v0-(*this)).transpose() ;
       grad.noalias() = grad/quarter_k ;
     }
-    
+
     /* Configuration */
     Config config_ ;
 
@@ -444,7 +444,7 @@ class RVDEdge {
   /* There are two kinds of edges. A FACE_EDGE comes from the initial edges of the
    * clipped triangle, and a BISECTOR_EDGE results from the intersection between
    * the triangle and a bisector. */
-  
+
   enum Config {
     FACE_EDGE,
     BISECTOR_EDGE
@@ -466,7 +466,7 @@ class RVDEdge {
 
 /* Beware that inheriting from stl vector can be dangerous, since the destructor
  * of vectors is not declared virtual. This not a problem here, since we do not
- * need a destructor, and we do not intend to cas RVDPolygon pointers as vector 
+ * need a destructor, and we do not intend to cas RVDPolygon pointers as vector
  * pointers.*/
 template<typename _Triangulation>
 class RVDPolygon : public std::vector< RVDEdge<_Triangulation> > {
@@ -504,7 +504,7 @@ class RVDPolygon : public std::vector< RVDEdge<_Triangulation> > {
       const unsigned int edge_vertex = triangle_verts[i] ;
       (*this)[i].vertex.reset(edge_vertex,mesh) ;
 
-      //assign edge combinatorics as its index within the triangle 
+      //assign edge combinatorics as its index within the triangle
       (*this)[i].combinatorics = i ;
     }
   }
@@ -516,4 +516,3 @@ class RVDPolygon : public std::vector< RVDEdge<_Triangulation> > {
 } //end of namespace Revoropt
 
 #endif
-

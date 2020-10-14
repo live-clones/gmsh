@@ -125,8 +125,14 @@ bool gmshEdge::haveParametrization()
 
 std::string gmshEdge::getAdditionalInfoString(bool multline)
 {
-  if(List_Nbr(_c->Control_Points) > 0) {
+  std::string info = GEdge::getAdditionalInfoString();
+
+  if(List_Nbr(_c->Control_Points) > 2) {
     std::ostringstream sstream;
+    if(multline)
+      sstream << "\n";
+    else
+      sstream << " ";
     sstream << "Control points: ";
     for(int i = 0; i < List_Nbr(_c->Control_Points); i++) {
       if(i) sstream << ", ";
@@ -134,31 +140,10 @@ std::string gmshEdge::getAdditionalInfoString(bool multline)
       List_Read(_c->Control_Points, i, &v);
       sstream << v->Num;
     }
-
-    if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude ||
-       meshAttributes.reverseMesh) {
-      if(multline)
-        sstream << "\n";
-      else
-        sstream << " ";
-      sstream << "Mesh attributes:";
-      if(meshAttributes.method == MESH_TRANSFINITE) {
-        sstream << " transfinite (" << meshAttributes.nbPointsTransfinite;
-        int type = meshAttributes.typeTransfinite;
-        if(std::abs(type) == 1)
-          sstream << ", progression "
-                  << gmsh_sign(type) * meshAttributes.coeffTransfinite;
-        else if(std::abs(type) == 2)
-          sstream << ", bump " << meshAttributes.coeffTransfinite;
-        sstream << ")";
-      }
-      if(meshAttributes.extrude) sstream << " extruded";
-      if(meshAttributes.reverseMesh) sstream << " reversed";
-    }
-    return sstream.str();
+    info += sstream.str();
   }
-  else
-    return GEdge::getAdditionalInfoString();
+
+  return info;
 }
 
 int gmshEdge::minimumMeshSegments() const

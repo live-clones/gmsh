@@ -49,6 +49,10 @@ typedef struct {
   double partitionability;    /**< a number between 0 and 1 telling if this mesh is good for making partitions.
                                    Generally, put 0 for an empty mesh, 1-(1/2)^n for a mesh refined n time */
 
+  int perfectDelaunay;        /**< set to 1 if the current mesh is perfectly Delaunay (no edge or facet constraints applied)
+                               *   and if you don't want any edge or facet constraints to be applied.
+                               *   This speeds up the empty mesh. */
+
   int verbosity;              /**<
                                *  - if verbosity<=0: don't print information.
                                *  - if verbosity==1: print basic information on each pass

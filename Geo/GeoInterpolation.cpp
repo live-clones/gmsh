@@ -6,7 +6,6 @@
 #include "GmshMessage.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
-#include "GeoStringInterface.h"
 #include "Numeric.h"
 #include "Context.h"
 

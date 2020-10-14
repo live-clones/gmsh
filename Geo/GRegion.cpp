@@ -174,6 +174,7 @@ void GRegion::resetMeshAttributes()
   meshAttributes.method = MESH_UNSTRUCTURED;
   meshAttributes.extrude = 0;
   meshAttributes.QuadTri = NO_QUADTRI;
+  meshAttributes.meshSize = MAX_LC;
 }
 
 SBoundingBox3d GRegion::bounds(bool fast)
@@ -679,12 +680,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newTetrahedraOrder[i] = tetrahedra[ordering[i]];
       }
-#if __cplusplus >= 201103L
       tetrahedra = std::move(newTetrahedraOrder);
-#else
-      tetrahedra = newTetrahedraOrder;
-#endif
-
       return true;
     }
   }
@@ -702,12 +698,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newHexahedraOrder[i] = hexahedra[ordering[i]];
       }
-#if __cplusplus >= 201103L
       hexahedra = std::move(newHexahedraOrder);
-#else
-      hexahedra = newHexahedraOrder;
-#endif
-
       return true;
     }
   }
@@ -725,12 +716,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newPrismsOrder[i] = prisms[ordering[i]];
       }
-#if __cplusplus >= 201103L
       prisms = std::move(newPrismsOrder);
-#else
-      prisms = newPrismsOrder;
-#endif
-
       return true;
     }
   }
@@ -748,12 +734,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newPyramidsOrder[i] = pyramids[ordering[i]];
       }
-#if __cplusplus >= 201103L
       pyramids = std::move(newPyramidsOrder);
-#else
-      pyramids = newPyramidsOrder;
-#endif
-
       return true;
     }
   }
@@ -771,12 +752,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newPolyhedraOrder[i] = polyhedra[ordering[i]];
       }
-#if __cplusplus >= 201103L
       polyhedra = std::move(newPolyhedraOrder);
-#else
-      polyhedra = newPolyhedraOrder;
-#endif
-
       return true;
     }
   }
@@ -794,12 +770,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newTrihedraOrder[i] = trihedra[ordering[i]];
       }
-#if __cplusplus >= 201103L
       trihedra = std::move(newTrihedraOrder);
-#else
-      trihedra = newTrihedraOrder;
-#endif
-
       return true;
     }
   }

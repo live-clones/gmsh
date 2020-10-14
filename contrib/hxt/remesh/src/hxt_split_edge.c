@@ -23,7 +23,7 @@ HXTStatus hxtSplitLongInteriorEdges (HXTMesh *mesh,
   
   HXT_CHECK(hxtAlignedRealloc(&mesh->vertices.coord,4*maxVert*sizeof(double)));
   HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.node,3*maxTri*sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.colors,maxTri*sizeof(uint16_t)));
+  HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.color,maxTri*sizeof(uint16_t)));
   HXT_CHECK(hxtRealloc(&edges->tri2edg,3*maxTri*sizeof(uint32_t)));
   HXT_CHECK(hxtRealloc(&edges->node,2*maxEdg*sizeof(uint32_t))); 
   //HXT_CHECK(hxtRealloc(&edges->color,maxEdg*sizeof(uint16_t))); 
@@ -55,7 +55,7 @@ HXTStatus hxtSplitLongInteriorEdges (HXTMesh *mesh,
     uint64_t t0 = edges->edg2tri[2*i+0];
     uint64_t t1 = edges->edg2tri[2*i+1];
 
-    if (mesh->triangles.colors[t0] != mesh->triangles.colors[t1]) continue;
+    if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
  
     uint32_t ne = UINT32_MAX;
     HXT_CHECK(hxtSplitEdge(mesh,edges,i,&ne,0.5));
@@ -88,7 +88,7 @@ HXTStatus hxtSplitLongBoundaryEdges(HXTMesh *mesh,
   
   HXT_CHECK(hxtAlignedRealloc(&mesh->vertices.coord,4*maxVert*sizeof(double)));
   HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.node,3*maxTri*sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.colors,maxTri*sizeof(uint16_t)));
+  HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.color,maxTri*sizeof(uint16_t)));
   HXT_CHECK(hxtRealloc(&edges->tri2edg,3*maxTri*sizeof(uint32_t)));
   HXT_CHECK(hxtRealloc(&edges->node,2*maxEdg*sizeof(uint32_t))); 
   //HXT_CHECK(hxtRealloc(&edges->color,maxEdg*sizeof(uint16_t))); 
@@ -120,7 +120,7 @@ HXTStatus hxtSplitLongBoundaryEdges(HXTMesh *mesh,
     uint64_t t0 = edges->edg2tri[2*i+0];
     uint64_t t1 = edges->edg2tri[2*i+1];
 
-    if (mesh->triangles.colors[t0] == mesh->triangles.colors[t1]) continue;
+    if (mesh->triangles.color[t0] == mesh->triangles.color[t1]) continue;
 
     // Get list of adjacent triangles for this line
     // TODO is the best option to allocate here every time ?
@@ -177,7 +177,7 @@ HXTStatus hxtSplitAllEdges (HXTMesh *mesh,
   //     increment vertices.num
   //
   //   mesh->triangles.node
-  //   mesh->triangles.colors
+  //   mesh->triangles.color
   //     increment triangles.num
   //
   //   edges->tri2edg
@@ -199,7 +199,7 @@ HXTStatus hxtSplitAllEdges (HXTMesh *mesh,
   
   HXT_CHECK(hxtAlignedRealloc(&mesh->vertices.coord,4*maxVert*sizeof(double)));
   HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.node,3*maxTri*sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.colors,maxTri*sizeof(uint16_t)));
+  HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.color,maxTri*sizeof(uint16_t)));
   HXT_CHECK(hxtRealloc(&edges->tri2edg,3*maxTri*sizeof(uint32_t)));
   HXT_CHECK(hxtRealloc(&edges->node,2*maxEdg*sizeof(uint32_t))); 
   //HXT_CHECK(hxtRealloc(&edges->color,maxEdg*sizeof(uint16_t))); 
@@ -240,7 +240,7 @@ HXTStatus hxtSplitEdgeIndex (HXTMesh *mesh,
   //     increment vertices.num
   //
   //   mesh->triangles.node
-  //   mesh->triangles.colors
+  //   mesh->triangles.color
   //     increment triangles.num
   //
   //   edges->tri2edg
@@ -262,7 +262,7 @@ HXTStatus hxtSplitEdgeIndex (HXTMesh *mesh,
   
   HXT_CHECK(hxtAlignedRealloc(&mesh->vertices.coord,4*maxVert*sizeof(double)));
   HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.node,3*maxTri*sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.colors,maxTri*sizeof(uint16_t)));
+  HXT_CHECK(hxtAlignedRealloc(&mesh->triangles.color,maxTri*sizeof(uint16_t)));
   HXT_CHECK(hxtRealloc(&edges->tri2edg,3*maxTri*sizeof(uint32_t)));
   HXT_CHECK(hxtRealloc(&edges->node,2*maxEdg*sizeof(uint32_t))); 
   //HXT_CHECK(hxtRealloc(&edges->color,maxEdg*sizeof(uint16_t))); 
@@ -322,8 +322,8 @@ HXTStatus hxtSplitEdge  (HXTMesh *mesh, HXTEdges *edges, uint32_t ce, uint32_t *
   uint64_t tti = mesh->triangles.num-2, ttj = tti+1;
   uint32_t e0 = edges->numEdges, e1=e0+1, e2=e1+1;
 
-  mesh->triangles.colors[tti] = mesh->triangles.colors[ti];
-  mesh->triangles.colors[ttj] = mesh->triangles.colors[tj];
+  mesh->triangles.color[tti] = mesh->triangles.color[ti];
+  mesh->triangles.color[ttj] = mesh->triangles.color[tj];
 
   for(uint32_t ic=0; ic<3; ic++){
     if(mesh->triangles.node[3*ti+ic]==ni && mesh->triangles.node[3*ti+(ic+1)%3]==nj){
@@ -455,7 +455,7 @@ HXTStatus hxtSplitBoundaryEdge  (HXTMesh *mesh, HXTEdges *edges, uint32_t ce, do
 
   uint64_t tti = mesh->triangles.num-1;
   uint32_t e0 = edges->numEdges, e1=e0+1;
-  mesh->triangles.colors[tti] = mesh->triangles.colors[ti];
+  mesh->triangles.color[tti] = mesh->triangles.color[ti];
 
   for(uint32_t ic=0; ic<3; ic++){
     if(mesh->triangles.node[3*ti+ic]==ni && mesh->triangles.node[3*ti+(ic+1)%3]==nj){
@@ -553,7 +553,7 @@ HXTStatus hxtSplitBoundaryLine(HXTMesh *mesh,
     triangles[numTris+i] = tti;
     uint32_t e1 = e0 + 1 + i; 
 
-    mesh->triangles.colors[tti] = mesh->triangles.colors[ti];
+    mesh->triangles.color[tti] = mesh->triangles.color[ti];
 
     for(uint32_t ic=0; ic<3; ic++){
       if(mesh->triangles.node[3*ti+ic]==ni && mesh->triangles.node[3*ti+(ic+1)%3]==nj){

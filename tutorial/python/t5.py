@@ -8,6 +8,7 @@
 
 import gmsh
 import math
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -181,15 +182,15 @@ for t in range(1, 6):
 # than the first one define holes:
 gmsh.model.geo.addVolume(shells, 186)
 
-# Note that using solid modelling with the OpenCASCADE geometry kernel, the same
+gmsh.model.geo.synchronize()
+
+# Note that using solid modelling with the OpenCASCADE CAD kernel, the same
 # geometry could be built quite differently: see `t16.py'.
 
 # We finally define a physical volume for the elements discretizing the cube,
 # without the holes (for which physical groups were already defined in the
 # `cheeseHole()' function):
 gmsh.model.addPhysicalGroup(3, [186], 10)
-
-gmsh.model.geo.synchronize()
 
 # We could make only part of the model visible to only mesh this subset:
 # ent = gmsh.model.getEntities()
@@ -218,6 +219,8 @@ gmsh.model.mesh.setAlgorithm(2, 33, 1)
 gmsh.model.mesh.generate(3)
 gmsh.write("t5.msh")
 
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

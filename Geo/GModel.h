@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -20,15 +21,8 @@
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
 
-// TODO C++11 remove this nasty stuff
-#if __cplusplus >= 201103L
-#include <unordered_map>
 #define hashmapMFace std::unordered_map<MFace, int, MFaceHash, MFaceEqual>
 #define hashmapMEdge std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual>
-#else
-#define hashmapMFace std::map<MFace, int, MFaceLessThan>
-#define hashmapMEdge std::map<MEdge, int, MEdgeLessThan>
-#endif
 
 template <class scalar> class simpleFunction;
 
@@ -579,8 +573,8 @@ public:
   }
 
   // delete or reverse all invisble mesh elements
-  void removeInvisibleElements();
-  void reverseInvisibleElements();
+  std::size_t removeInvisibleElements();
+  std::size_t reverseInvisibleElements();
 
   // the list of partitions
   std::size_t getNumPartitions() const { return _numPartitions; }

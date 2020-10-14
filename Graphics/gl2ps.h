@@ -2,35 +2,33 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2020 C. Geuzaine
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of either:
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of either:
  *
- * a) the GNU Library General Public License as published by the Free
- * Software Foundation, either version 2 of the License, or (at your
- * option) any later version; or
+ * a) the GNU Library General Public License as published by the Free Software
+ * Foundation, either version 2 of the License, or (at your option) any later
+ * version; or
  *
- * b) the GL2PS License as published by Christophe Geuzaine, either
- * version 2 of the License, or (at your option) any later version.
+ * b) the GL2PS License as published by Christophe Geuzaine, either version 2 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
- * the GNU Library General Public License or the GL2PS License for
- * more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See either the GNU Library General Public License
+ * or the GL2PS License for more details.
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library in the file named "COPYING.LGPL";
- * if not, write to the Free Software Foundation, Inc., 51 Franklin
- * Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * You should have received a copy of the GNU Library General Public License
+ * along with this library in the file named "COPYING.LGPL"; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301, USA.
  *
- * You should have received a copy of the GL2PS License with this
- * library in the file named "COPYING.GL2PS"; if not, I will be glad
- * to provide one.
+ * You should have received a copy of the GL2PS License with this library in the
+ * file named "COPYING.GL2PS"; if not, I will be glad to provide one.
  *
- * For the latest info about gl2ps and a full list of contributors,
- * see http://www.geuz.org/gl2ps/.
+ * For the latest info about gl2ps and a full list of contributors, see
+ * http://www.geuz.org/gl2ps/.
  *
- * Please report all bugs and problems to <gl2ps@geuz.org>.
+ * Please report all issues on https://gitlab.onelab.info/gl2ps/gl2ps/issues.
  */
 
 #ifndef GL2PS_H
@@ -90,14 +88,14 @@
 
 #define GL2PS_MAJOR_VERSION 1
 #define GL2PS_MINOR_VERSION 4
-#define GL2PS_PATCH_VERSION 2
+#define GL2PS_PATCH_VERSION 3
 #define GL2PS_EXTRA_VERSION ""
 
 #define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \
                        0.01 * GL2PS_MINOR_VERSION + \
                        0.0001 * GL2PS_PATCH_VERSION)
 
-#define GL2PS_COPYRIGHT "(C) 1999-2017 C. Geuzaine"
+#define GL2PS_COPYRIGHT "(C) 1999-2020 C. Geuzaine"
 
 /* Output file formats (the values and the ordering are important!) */
 

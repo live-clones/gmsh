@@ -14,6 +14,7 @@
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "ExtrudeParams.h"
+#include "BackgroundMeshTools.h"
 #include "Context.h"
 
 #if defined(HAVE_NETGEN)
@@ -317,7 +318,9 @@ void meshGRegionNetgen(GRegion *gr)
   meshNormalsPointOutOfTheRegion(gr);
   std::vector<MVertex *> numberedV;
   Ng_Mesh *ngmesh = buildNetgenStructure(gr, false, numberedV);
-  Ng_GenerateVolumeMesh(ngmesh, CTX::instance()->mesh.lcMax);
+  SPoint3 pt = gr->bounds().center();
+  double lc = BGM_MeshSize(gr, 0, 0, pt.x(), pt.y(), pt.z());
+  Ng_GenerateVolumeMesh(ngmesh, lc);
   TransferVolumeMesh(gr, ngmesh, numberedV);
   Ng_DeleteMesh(ngmesh);
   Ng_Exit();
@@ -351,7 +354,9 @@ void optimizeMeshGRegionNetgen::operator()(GRegion *gr, bool always)
   deMeshGRegion dem;
   dem(gr);
   // optimize mesh
-  Ng_OptimizeVolumeMesh(ngmesh, CTX::instance()->mesh.lcMax);
+  SPoint3 pt = gr->bounds().center();
+  double lc = BGM_MeshSize(gr, 0, 0, pt.x(), pt.y(), pt.z());
+  Ng_OptimizeVolumeMesh(ngmesh, lc);
   TransferVolumeMesh(gr, ngmesh, numberedV);
   Ng_DeleteMesh(ngmesh);
   Ng_Exit();

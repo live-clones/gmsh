@@ -35,7 +35,7 @@ HXTStatus hxtEstimateNumOfVerticesForColoredSurface(HXTMesh *mesh,
   // Count the number of triangles of this color
   uint64_t countColorTriangles=0;
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-    if (mesh->triangles.colors[i] == color) countColorTriangles++;
+    if (mesh->triangles.color[i] == color) countColorTriangles++;
   }
 
   // Store triangles barycenters and sizes
@@ -46,7 +46,7 @@ HXTStatus hxtEstimateNumOfVerticesForColoredSurface(HXTMesh *mesh,
 
   uint64_t counter = 0;
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-    if (mesh->triangles.colors[i] != color) continue;
+    if (mesh->triangles.color[i] != color) continue;
     double *v0 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+0];
     double *v1 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+0];
     double *v2 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+0];
@@ -98,7 +98,7 @@ HXTStatus hxtGetLineVerticesForColor(HXTMesh *mesh,
       uint32_t cp = parent[i].id;
       // TODO slow 
       for (uint64_t j=0; j<mesh->triangles.num; j++){
-        if (mesh->triangles.colors[j] != color) continue;
+        if (mesh->triangles.color[j] != color) continue;
         uint32_t *triV = mesh->triangles.node + 3*j;
         if (cp == triV[0] || cp == triV[1] || cp == triV[2]){
           points[count] = i;
@@ -113,7 +113,7 @@ HXTStatus hxtGetLineVerticesForColor(HXTMesh *mesh,
       for (uint64_t j=0; j<maxNumTriToLine; j++){
         uint64_t ct = lines2triangles[maxNumTriToLine*cl+j];
         if (ct == UINT64_MAX) continue;
-        if (mesh->triangles.colors[ct] == color){
+        if (mesh->triangles.color[ct] == color){
           points[count] = i;
           point2tri[count] = ct;
           count++;
@@ -122,7 +122,7 @@ HXTStatus hxtGetLineVerticesForColor(HXTMesh *mesh,
       }
     }
     else if (parent[i].type == 2){
-      if (mesh->triangles.colors[parent[i].id] == color){
+      if (mesh->triangles.color[parent[i].id] == color){
         points[count] = i;
         point2tri[count] = parent[i].id;
         count++;
@@ -724,7 +724,7 @@ HXTStatus hxtWalkToCandidatePointPlanarGiven(HXTEdges *edges,
     // Find next triangle to search 
     uint64_t neigh;
     hxtGetNeighbourTriangle(edges, ct, walk, &neigh);
-    if (neigh == UINT64_MAX || mesh->triangles.colors[neigh] != mesh->triangles.colors[ot]){
+    if (neigh == UINT64_MAX || mesh->triangles.color[neigh] != mesh->triangles.color[ot]){
       *parentFlag = UINT64_MAX;
       res[0] = op[0]; res[1] = op[1]; res[2] = op[2];
       return HXT_STATUS_OK; 
@@ -738,7 +738,7 @@ HXTStatus hxtWalkToCandidatePointPlanarGiven(HXTEdges *edges,
   // Last resort - search all triangles
   
   /*for (uint64_t i=0; i<mesh->triangles.num; i++){*/
-    /*if (mesh->triangles.colors[i] != mesh->triangles.colors[ot]) continue;*/
+    /*if (mesh->triangles.color[i] != mesh->triangles.color[ot]) continue;*/
 
     /*HXT_CHECK(hxtIntersectTriangleWithCircle(mesh, op, i, size, normal, dir, uvp, &walk, res));*/
 
@@ -853,7 +853,7 @@ HXTStatus hxtWalkToCandidatePointPlanar(HXTEdges *edges,
     // Find next triangle to search 
     uint64_t neigh;
     hxtGetNeighbourTriangle(edges, ct, walk, &neigh);
-    if (neigh == UINT64_MAX || mesh->triangles.colors[neigh] != mesh->triangles.colors[ot]){
+    if (neigh == UINT64_MAX || mesh->triangles.color[neigh] != mesh->triangles.color[ot]){
       *parentFlag = UINT64_MAX;
       res[0] = op[0]; res[1] = op[1]; res[2] = op[2];
       return HXT_STATUS_OK; 
@@ -960,7 +960,7 @@ HXTStatus hxtWalkToCandidatePoint(HXTEdges *edges,
     // Find next triangle to search 
     uint64_t neigh;
     hxtGetNeighbourTriangle(edges, ct, walk, &neigh);
-    if (neigh == UINT64_MAX || mesh->triangles.colors[neigh] != mesh->triangles.colors[ot]){
+    if (neigh == UINT64_MAX || mesh->triangles.color[neigh] != mesh->triangles.color[ot]){
       *parentFlag = UINT64_MAX;
       res[0] = op[0]; res[1] = op[1]; res[2] = op[2];
       return HXT_STATUS_OK; 
@@ -2256,7 +2256,7 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
   // Add line points in RTree
   for (uint32_t i=0; i<numLinePoints; i++){
     // Check if parent triangle has in fact the correct color
-    if (mesh->triangles.colors[parentTri[i]] != color){ 
+    if (mesh->triangles.color[parentTri[i]] != color){ 
       return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Parent triangle of point %d has different color",i);
     }
     double *cp = coords + 4*i ; 
@@ -2305,8 +2305,8 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
     uint64_t originTri = parentTri[i];
 
     // Check if parent triangle has same color
-    if (mesh->triangles.colors[originTri] != color){
-      printf("%d %d \n", color, mesh->triangles.colors[originTri]);
+    if (mesh->triangles.color[originTri] != color){
+      printf("%d %d \n", color, mesh->triangles.color[originTri]);
       return HXT_ERROR_MSG(HXT_STATUS_FAILED,"Parent triangle does not have same color");
     }
 
@@ -2520,7 +2520,7 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
   // Create list of colors of triangles
   uint16_t *triColors;
   uint16_t numTriColors;
-  HXT_CHECK(hxtGetTrianglesColorsList(mesh,&numTriColors,&triColors));
+  HXT_CHECK(hxtGetTrianglesColorList(mesh,&numTriColors,&triColors));
   HXT_INFO("Number of input mesh colors          %d", numTriColors);
   clock_t time01 = clock();
   double time_estimate = (double)(time01 - time00) / CLOCKS_PER_SEC;

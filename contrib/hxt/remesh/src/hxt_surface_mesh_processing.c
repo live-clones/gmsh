@@ -156,7 +156,8 @@ HXTStatus hxtSurfaceQuadSingularitiesOutput(HXTMesh *mesh)
   }
 
 
-  HXT_INFO("--- Singular points");
+  HXT_INFO("");
+  HXT_INFO("========= Singular points info =========");
   HXT_INFO("");
   HXT_INFO("     valence 1      : %d", c1);
   HXT_INFO("     valence 2      : %d", c2);
@@ -303,7 +304,7 @@ HXTStatus hxtSurfaceMeshSplitFullQuad(HXTMesh *mesh)
     mesh->triangles.node[3*mesh->triangles.num+0] = v[0];
     mesh->triangles.node[3*mesh->triangles.num+1] = v[1];
     mesh->triangles.node[3*mesh->triangles.num+2] = v[2];
-    mesh->triangles.colors[mesh->triangles.num] = mesh->quads.colors[i];
+    mesh->triangles.color[mesh->triangles.num] = mesh->quads.color[i];
     mesh->triangles.num++;
 
     double n1[3];
@@ -312,7 +313,7 @@ HXTStatus hxtSurfaceMeshSplitFullQuad(HXTMesh *mesh)
     mesh->triangles.node[3*mesh->triangles.num+0] = v[0];
     mesh->triangles.node[3*mesh->triangles.num+1] = v[2];
     mesh->triangles.node[3*mesh->triangles.num+2] = v[3];
-    mesh->triangles.colors[mesh->triangles.num] =  mesh->quads.colors[i];
+    mesh->triangles.color[mesh->triangles.num] =  mesh->quads.color[i];
     mesh->triangles.num++;
 
     double n2[3];
@@ -353,7 +354,7 @@ HXTStatus hxtSurfaceMeshSplitFullQuad(HXTMesh *mesh)
       mesh->triangles.node[3*mesh->triangles.num+0] = v[0];
       mesh->triangles.node[3*mesh->triangles.num+1] = v[1];
       mesh->triangles.node[3*mesh->triangles.num+2] = v[3];
-      mesh->triangles.colors[mesh->triangles.num] = mesh->quads.colors[i];
+      mesh->triangles.color[mesh->triangles.num] = mesh->quads.color[i];
       mesh->triangles.num++;
   
       double n1[3];
@@ -362,7 +363,7 @@ HXTStatus hxtSurfaceMeshSplitFullQuad(HXTMesh *mesh)
       mesh->triangles.node[3*mesh->triangles.num+0] = v[1];
       mesh->triangles.node[3*mesh->triangles.num+1] = v[2];
       mesh->triangles.node[3*mesh->triangles.num+2] = v[3];
-      mesh->triangles.colors[mesh->triangles.num] =  mesh->quads.colors[i];
+      mesh->triangles.color[mesh->triangles.num] =  mesh->quads.color[i];
       mesh->triangles.num++;
 
     }
@@ -398,7 +399,7 @@ HXTStatus hxtSurfaceMeshSplitFullQuad(HXTMesh *mesh)
   // Delete quads
   //******************************************************************
   HXT_CHECK( hxtAlignedFree(&mesh->quads.node) );
-  HXT_CHECK( hxtAlignedFree(&mesh->quads.colors) );
+  HXT_CHECK( hxtAlignedFree(&mesh->quads.color) );
   mesh->quads.num = 0 ;
   mesh->quads.size = 0 ;
 
@@ -425,7 +426,7 @@ HXTStatus hxtSurfaceMeshSplitQuads(HXTMesh *mesh, uint16_t *color)
   //******************************************************************
   uint16_t *triColors; 
   uint16_t numTriColors; 
-  HXT_CHECK(hxtGetTrianglesColorsList(mesh,&numTriColors,&triColors)); 
+  HXT_CHECK(hxtGetTrianglesColorList(mesh,&numTriColors,&triColors)); 
   HXT_INFO("Number of input mesh colors          %d", numTriColors); 
   for (uint16_t i=0; i<UINT16_MAX; i++){
     int found = 0;
@@ -455,13 +456,13 @@ HXTStatus hxtSurfaceMeshSplitQuads(HXTMesh *mesh, uint16_t *color)
     mesh->triangles.node[3*mesh->triangles.num+0] = v[0];
     mesh->triangles.node[3*mesh->triangles.num+1] = v[1];
     mesh->triangles.node[3*mesh->triangles.num+2] = v[2];
-    mesh->triangles.colors[mesh->triangles.num] = *color;
+    mesh->triangles.color[mesh->triangles.num] = *color;
     mesh->triangles.num++;
 
     mesh->triangles.node[3*mesh->triangles.num+0] = v[0];
     mesh->triangles.node[3*mesh->triangles.num+1] = v[2];
     mesh->triangles.node[3*mesh->triangles.num+2] = v[3];
-    mesh->triangles.colors[mesh->triangles.num] = *color;
+    mesh->triangles.color[mesh->triangles.num] = *color;
     mesh->triangles.num++;
   }
 
@@ -472,32 +473,32 @@ HXTStatus hxtSurfaceMeshSplitQuads(HXTMesh *mesh, uint16_t *color)
   HXT_CHECK(hxtEdgesCreateNonManifold(mesh,&edges));
   uint64_t countLines = 0;
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-    if (mesh->triangles.colors[i] == *color) continue;
+    if (mesh->triangles.color[i] == *color) continue;
     for (uint32_t j=0; j<3; j++){
       uint32_t ce = edges->tri2edg[3*i+j];
       uint64_t t0 = edges->edg2tri[2*ce+0];
       uint64_t t1 = edges->edg2tri[2*ce+1];
-      uint16_t c0 = mesh->triangles.colors[t0];
-      uint16_t c1 = mesh->triangles.colors[t1];
+      uint16_t c0 = mesh->triangles.color[t0];
+      uint16_t c1 = mesh->triangles.color[t1];
       if (c0 != *color && c1 != *color) continue;
       if(c0 != c1) countLines++;
     }
   }
   HXT_CHECK(hxtLinesReserve(mesh,countLines));
   for (uint64_t i=0; i<mesh->triangles.num; i++){
-    if (mesh->triangles.colors[i] == *color) continue;
+    if (mesh->triangles.color[i] == *color) continue;
     for (uint32_t j=0; j<3; j++){
       uint32_t ce = edges->tri2edg[3*i+j];
       uint64_t t0 = edges->edg2tri[2*ce+0];
       uint64_t t1 = edges->edg2tri[2*ce+1];
 
-      uint16_t c0 = mesh->triangles.colors[t0];
-      uint16_t c1 = mesh->triangles.colors[t1];
+      uint16_t c0 = mesh->triangles.color[t0];
+      uint16_t c1 = mesh->triangles.color[t1];
       if (c0 != *color && c1 != *color) continue;
       if(c0 != c1){
         mesh->lines.node[2*mesh->lines.num+0] = edges->node[2*ce+0];
         mesh->lines.node[2*mesh->lines.num+1] = edges->node[2*ce+1];
-        mesh->lines.colors[mesh->lines.num] = 0;
+        mesh->lines.color[mesh->lines.num] = 0;
         mesh->lines.num++;
       }
     }
@@ -533,7 +534,7 @@ HXTStatus hxtSurfaceMeshSplitQuads(HXTMesh *mesh, uint16_t *color)
   // Delete quads
   //******************************************************************
   HXT_CHECK( hxtAlignedFree(&mesh->quads.node) );
-  HXT_CHECK( hxtAlignedFree(&mesh->quads.colors) );
+  HXT_CHECK( hxtAlignedFree(&mesh->quads.color) );
   mesh->quads.num = 0 ;
   mesh->quads.size = 0 ;
 
@@ -745,7 +746,7 @@ HXTStatus hxtHexMeshBoundary(HXTMesh *mesh)
   mesh->quads.num = countBquads;
 
   HXT_CHECK( hxtAlignedFree(&mesh->hexahedra.node) );
-  HXT_CHECK( hxtAlignedFree(&mesh->hexahedra.colors) );
+  HXT_CHECK( hxtAlignedFree(&mesh->hexahedra.color) );
   mesh->hexahedra.num = 0 ;
   mesh->hexahedra.size = 0 ;
 
@@ -848,7 +849,7 @@ HXTStatus hxtSurfaceMeshExportTriangleQuality(HXTMesh *nmesh, const double *size
   FILE* out;
   hxtPosInit("checkQuality.pos","Scalar",&out);
   for (uint32_t i=0; i<nmesh->triangles.num; i++){
-    if (nmesh->triangles.colors[i] == UINT16_MAX) continue;
+    if (nmesh->triangles.color[i] == UINT16_MAX) continue;
     double *p0 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+0];
     double *p1 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+1];
     double *p2 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+2];
@@ -868,7 +869,7 @@ HXTStatus hxtSurfaceMeshExportTriangleQuality(HXTMesh *nmesh, const double *size
     qual[i] = (qual[i]-minQ)/(maxQ-minQ);
   }
   for (uint32_t i=0; i<nmesh->triangles.num; i++){
-    if (nmesh->triangles.colors[i] == UINT16_MAX) continue;
+    if (nmesh->triangles.color[i] == UINT16_MAX) continue;
     double *p0 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+0];
     double *p1 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+1];
     double *p2 = nmesh->vertices.coord + 4*nmesh->triangles.node[3*i+2];

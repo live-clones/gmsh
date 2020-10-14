@@ -30,7 +30,7 @@ HXTStatus hxtTempPrintCavity (HXTMesh *mesh,
   hxtPosNewView(tc,"Cavity");
 
   for (uint64_t i=0; i<cavSize; i++){
-    if (mesh->triangles.colors[cavity[i]] == UINT16_MAX) continue;
+    if (mesh->triangles.color[cavity[i]] == UINT16_MAX) continue;
     uint64_t ct = cavity[i];
     uint32_t *n = &mesh->triangles.node[3*ct+0]; 
     hxtPosAddTriangle(tc,&mesh->vertices.coord[4*n[0]],&mesh->vertices.coord[4*n[1]],&mesh->vertices.coord[4*n[2]],0);
@@ -370,7 +370,7 @@ HXTStatus hxtCanWeCollapseBoundaryEdge (HXTMesh *mesh,
     if (ct == UINT64_MAX) continue;
 
     // TODO delete or debug
-    if (mesh->triangles.colors[ct] == UINT16_MAX){
+    if (mesh->triangles.color[ct] == UINT16_MAX){
       hxtMeshWriteGmsh(mesh,"checkDeletedTri.msh");
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Deleted tri %lu", ct+mesh->lines.num+mesh->points.num+1);
     }
@@ -947,7 +947,7 @@ HXTStatus hxtCollapseBoundaryEdge (HXTMesh *mesh,
       }
 
     }
-    mesh->triangles.colors[dt] = UINT16_MAX;
+    mesh->triangles.color[dt] = UINT16_MAX;
 
     flagE[de] = UINT32_MAX;
   }
@@ -963,7 +963,7 @@ HXTStatus hxtCollapseBoundaryEdge (HXTMesh *mesh,
   if (mesh->lines.node[2*ol+0] == vd) mesh->lines.node[2*ol+0] = vr;
   if (mesh->lines.node[2*ol+1] == vd) mesh->lines.node[2*ol+1] = vr;
 
-  mesh->lines.colors[cl] = UINT16_MAX;
+  mesh->lines.color[cl] = UINT16_MAX;
 
   flagE[ce] = UINT32_MAX;
 
@@ -1126,8 +1126,8 @@ HXTStatus hxtCollapseInteriorEdge (HXTMesh *mesh,
   parent[vd].type = UINT8_MAX;
   parent[vd].id = UINT64_MAX;
 
-  mesh->triangles.colors[t0] = UINT16_MAX;
-  mesh->triangles.colors[t1] = UINT16_MAX;
+  mesh->triangles.color[t0] = UINT16_MAX;
+  mesh->triangles.color[t1] = UINT16_MAX;
 
   flagE[ce] = UINT32_MAX;
   flagE[de0] = UINT32_MAX;
@@ -1136,7 +1136,7 @@ HXTStatus hxtCollapseInteriorEdge (HXTMesh *mesh,
   // TODO DELETE DEBUG
   
   /*for (uint64_t i=0; i<mesh->triangles.num; i++){*/
-    /*if (mesh->triangles.colors[i] == UINT16_MAX) continue;*/
+    /*if (mesh->triangles.color[i] == UINT16_MAX) continue;*/
     /*for (uint32_t j=0; j<3; j++){*/
       /*uint32_t ee = edges->tri2edg[3*i+j];*/
       /*if (ee == ce) printf("ERROR1\n"); */
@@ -1235,7 +1235,7 @@ HXTStatus hxtRemoveInteriorVertex(HXTMesh *mesh,
 {
 
   uint64_t ct = parent[vd].id;
-  if (mesh->triangles.colors[ct] == UINT16_MAX) return HXT_STATUS_OK;
+  if (mesh->triangles.color[ct] == UINT16_MAX) return HXT_STATUS_OK;
  
 
   // Build cavity

@@ -147,13 +147,13 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     /*HXT_INFO("Mesh does not have lines - starting propagation from a random edge");*/
     /*// Create edges structure*/
     /*hxtLinesReserve(mesh,2);*/
-    /*mesh->lines.colors[0] = 0;*/
+    /*mesh->lines.color[0] = 0;*/
     /*mesh->lines.node[0] = edges->node[2*0+0];*/
     /*mesh->lines.node[1] = edges->node[2*0+1];*/
     /*mesh->lines.num++;*/
 
     /*for (uint64_t i=0; i<mesh->triangles.num; i++){*/
-      /*mesh->triangles.colors[i] = 1;*/
+      /*mesh->triangles.color[i] = 1;*/
     /*}*/
 
     /*opt->generateLines = 0;*/
@@ -194,7 +194,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     fmesh->points.num++;
 
     for (uint64_t i=0; i<mesh->triangles.num; i++){
-      mesh->triangles.colors[i] = 1;
+      mesh->triangles.color[i] = 1;
     }
 
     parent[0].type = 15;
@@ -530,8 +530,6 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     hxtPosFinish(out);
   }
  
-
-
   //**********************************************************************************************************
   //**********************************************************************************************************
   // Clear things

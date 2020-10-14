@@ -562,7 +562,7 @@ HXTStatus hxtEdgeRemoval_opti(ThreadLocal* local,
   }
 
   uint64_t start = deleted->num - 2*num_triangle_per_triangul;
-  double color = mesh->tetrahedra.colors[badTet];
+  double color = mesh->tetrahedra.color[badTet];
 
   // make the swap
   for (unsigned i=0; i<num_triangle_per_triangul; i++) {
@@ -584,7 +584,7 @@ HXTStatus hxtEdgeRemoval_opti(ThreadLocal* local,
       uint32_t* nodes = mesh->tetrahedra.node + 4*newTet_up;
       uint64_t* neigh = mesh->tetrahedra.neigh + 4*newTet_up;
 
-      mesh->tetrahedra.colors[newTet_up] = color;
+      mesh->tetrahedra.color[newTet_up] = color;
       mesh->tetrahedra.flag[newTet_up] = 0;
       qualityArray[newTet_up] = qual_up[tri];
       local->date->values[newTet_up].creation = local->date->current;
@@ -647,7 +647,7 @@ HXTStatus hxtEdgeRemoval_opti(ThreadLocal* local,
       uint32_t* nodes = mesh->tetrahedra.node + 4*newTet_down;
       uint64_t* neigh = mesh->tetrahedra.neigh + 4*newTet_down;
 
-      mesh->tetrahedra.colors[newTet_down] = color;
+      mesh->tetrahedra.color[newTet_down] = color;
       mesh->tetrahedra.flag[newTet_down] = 0;
       qualityArray[newTet_down] = qual_down[tri];
       local->date->values[newTet_down].creation = local->date->current;

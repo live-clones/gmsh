@@ -6,6 +6,7 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <set>
 #include <gmsh.h>
 
 // "Compound" meshing constraints allow to generate meshes across surface
@@ -92,7 +93,9 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(2);
   gmsh::write("t12.msh");
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
 
