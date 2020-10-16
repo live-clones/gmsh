@@ -5,9 +5,18 @@
 #include "MTriangle.h"
 #include "SVector3.h"
 
+class MyMesh;
+
 class Cross2D{
- public:
+ private:
   int test;
+ public:
+  MyMesh *_mesh;  
+  const MEdge *edge;
+  double theta;
+  Cross2D():_mesh(NULL),edge(NULL),theta(0.0){}
+ Cross2D(MyMesh *m,const MEdge *e, double thetaNormal ):_mesh(m),edge(e),theta(thetaNormal){}
+  SVector3 getClosestBranchToDirection(const SVector3 &direction){return SVector3();}
 };
 
 class MyMesh{
@@ -17,6 +26,7 @@ class MyMesh{
   void _computeDarbouxFrameOnFeatureVertices();
   void _computeGaussCurv();
   void _computeGeodesicCurv(){};//probably useless, we will se later
+  double _getAngleBetweenEdges(const MEdge &e,const MEdge &eRef, SVector3 &normal);
   
  public:
   std::set<MVertex *, MVertexPtrLessThan> featureVertices;
@@ -25,14 +35,16 @@ class MyMesh{
   
   std::set<MLine *, MLinePtrLessThan> lines;
   std::map<MLine *, GEdge *, MLinePtrLessThan> linesEntities;
-  
+
   std::set<const MEdge *> featureDiscreteEdges;
   std::map<const MEdge *, GEdge *> featureDiscreteEdgesEntities;
+  std::set<const MEdge *> cutGraphDiscreteEdges;  
     
   std::set<MTriangle *, MElementPtrLessThan> triangles;
   std::vector<std::set<MTriangle *, MElementPtrLessThan>> trianglesPatchs;
   std::set<MEdge, MEdgeLessThan> edges;
   std::map<const MEdge *, bool> isFeatureEdge;
+  std::map<const MEdge *, bool> isCutGraphEdge;
 
   std::map<MVertex *, std::set<const MEdge *>, MVertexPtrLessThan> featureVertexToEdges;
   std::map<MVertex *, std::set<MTriangle *, MElementPtrLessThan>, MVertexPtrLessThan> vertexToTriangles;
@@ -42,14 +54,12 @@ class MyMesh{
   std::map<MVertex *, double, MVertexPtrLessThan> gaussCurv;
   std::map<MVertex *, double, MVertexPtrLessThan> geodesicCurv;
 
-  std::set<const MEdge *> edgesCutGraph;
-    
   std::map<const MEdge *, SVector3> normals;
   std::map<MVertex *, SVector3, MVertexPtrLessThan> normalsVertex;
   std::map<const MEdge *, Cross2D> manifoldBasis;
   
   std::map<MVertex *, double, MVertexPtrLessThan> H;
-  std::map<const MEdge *, Cross2D> cross2D;
+  std::map<const MEdge *, Cross2D> crossField;
   
   /* MyMesh(){} */
   MyMesh(GModel *gm);
@@ -71,9 +81,7 @@ class MyMesh{
     _computeGeodesicCurv();	
     _computeGaussCurv();
   }
-  void computeManifoldBasis(){
-    
-  }
+  void computeManifoldBasis();
 };
 
 class ConformalMapping{
@@ -103,15 +111,19 @@ class ConformalMapping{
   std::set<const MEdge *> _createEdgeTree();
   void _trimEdgeTree(std::set<const MEdge *> &edgeTree);
   void _computeH();
-  void _cutMeshOnCutGraph(){}
+  void _cutMeshOnCutGraph();
+  void _createManifoldBasis(){_currentMesh->computeManifoldBasis();}
+  void _computeCrossesFromH(){}
   void _fitModelToInitMesh();
   void _fitModelToFeatureMesh();
   void _fitModelToCutGraphMesh();
   void _viewScalarVertex(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, const std::string& viewName="defaultName");
   void _viewScalarTriangles(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, std::set<MTriangle *, MElementPtrLessThan> &triangles, const std::string& viewName="defaultName");
-  void _viewEdges(std::set<const MEdge*> &edges, const std::string& viewName="defaultName");
+  void _viewCrosses(std::map<const MEdge *, Cross2D> crossField, const std::string& viewName="Crosses");
   
  public:
   ConformalMapping(GModel *gm);
   ~ConformalMapping();
+  static void _viewEdges(std::set<const MEdge*> &edges, const std::string& viewName="defaultName");
+  static void _viewScalarEdges(std::map<const MEdge *, double> &scalar, const std::string& viewName="defaultName");
 };
