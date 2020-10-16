@@ -17,6 +17,7 @@
 #include "meshWinslow2d.h"
 #include "meshGFaceOptimize.h"
 #include "Field.h"
+#include "geolog.h"
 
 int BLOB = 1;
 
@@ -577,7 +578,15 @@ static std::vector<MVertex*> build_crown (MVertex *v, const std::vector<MElement
   std::vector<std::vector<MVertex *> > vsorted;
   SortEdgeConsecutive(veds, vsorted);
 
-  if (vsorted.size() != 1)Msg::Error("vertex with elements that are disconnected");
+  if (vsorted.size() != 1) {
+    Msg::Error("vertex with elements that are disconnected, %li lists", vsorted.size());
+    for (size_t i = 0; i < vsorted.size(); ++i) {
+      for (MVertex* vv: vsorted[i]) {
+        GeoLog::add(SVector3(vv->point()),double(i),"!vertex_disco_elts");
+      }
+    }
+    GeoLog::flush();
+  }
   
   // start with a corner
   std::vector<MVertex *> result;
@@ -627,6 +636,8 @@ public:
     }
     else{
       Msg::Error("weird class of stencil %d %lu",type,_e.size());
+      GeoLog::add(SVector3(v->point()),double(0),"!weird_stencil");
+      GeoLog::flush();
     }
   }  
   SPoint3 new3dPositionCentroid (){

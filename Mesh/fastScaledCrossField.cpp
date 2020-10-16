@@ -535,6 +535,8 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
 
   delete _lsys;
 
+  // std::fill(scaling.begin(),scaling.end(),1.);
+
   Msg::Info("Compute quad mesh size map from conformal factor and %li target quads ...", 
       targetNumberOfQuads);
   int status = computeQuadSizeMapFromCrossFieldConformalFactor(faces, targetNumberOfQuads, 

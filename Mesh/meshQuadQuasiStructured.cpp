@@ -44,6 +44,8 @@ using std::array;
 namespace QSQ {
   constexpr bool DBG_VERBOSE = false;
 
+  constexpr bool PARANO = false;
+
   using vec3 = std::array<double,3>;
 
   template<class T>
@@ -1647,19 +1649,53 @@ namespace QSQ {
       return true;
     }
 
-  inline bool vertexOnBoundary(MVertex* v) {
+  inline bool vertexOnSeamCurve(GFace* gf, MVertex* v) {
     GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
-    GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
-    return (ge != NULL || gv != NULL);
+    if (ge == NULL) return false;
+    if (ge->isSeam(gf) && ge->faces().size() == 1) return true;
+    return false;
   }
 
-  inline void removeFromAdjacencyLists(MElement*e, 
-      std::unordered_map<MVertex *, std::vector<MElement *> >& adj_bdr,
-      std::unordered_map<MVertex *, std::vector<MElement *> >& adj_int)
+
+  /* Use vertexSupport() inside of simple dynamic_cast<> to
+   * deal with seam GEdge, which are not considered as boundary
+   * in this quad mesher */
+  const int CORNER = 1;
+  const int CURVE = 2;
+  const int SURFACE = 3;
+
+  inline int vertexSupport(GFace* gf, MVertex* v) {
+    GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
+    if (gv != NULL) return CORNER;
+    GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
+    if (ge != NULL) {
+      if (ge->isSeam(gf) && ge->faces().size() == 1) return SURFACE;
+      return CURVE;
+    }
+    GFace* gf2 = dynamic_cast<GFace*>(v->onWhat());
+    if (gf2 != NULL) return SURFACE;
+    return 0;
+  }
+
+  inline bool vertexOnBoundary(GFace* gf, MVertex* v) {
+    int vs = vertexSupport(gf,v);
+    return (vs == CORNER || vs == CURVE);
+  }
+
+  struct MVertexPtrHash {
+    size_t operator()(MVertex* v) const noexcept {
+      return v->getNum();
+    }
+  };
+  inline void removeFromAdjacencyLists(
+      GFace* gf,
+      MElement*e, 
+      std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_bdr,
+      std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_int)
   {
     for (size_t i=0;i<e->getNumVertices();i++){
       MVertex* v = e->getVertex(i);
-      if (vertexOnBoundary(v)) {
+      if (vertexOnBoundary(gf,v)) {
         auto it = adj_bdr.find(v);
         if (it != adj_bdr.end()){
           auto it2 = std::find(it->second.begin(),it->second.end(),e);
@@ -1674,11 +1710,13 @@ namespace QSQ {
       }
     }
   }
-  inline void removeFromAdjacencyLists(MVertex* v, 
-      std::unordered_map<MVertex *, std::vector<MElement *> >& adj_bdr,
-      std::unordered_map<MVertex *, std::vector<MElement *> >& adj_int)
+  inline void removeFromAdjacencyLists(
+      GFace* gf,
+      MVertex* v, 
+      std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_bdr,
+      std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_int)
   {
-    if (vertexOnBoundary(v)) {
+    if (vertexOnBoundary(gf,v)) {
       auto iti = adj_bdr.find(v);
       if (iti != adj_bdr.end()){
         adj_bdr.erase(iti);
@@ -1691,13 +1729,15 @@ namespace QSQ {
     }
   }
 
-  inline void addToAdjacencyLists(MElement*e, 
-      std::unordered_map<MVertex *, std::vector<MElement *> >& adj_bdr,
-      std::unordered_map<MVertex *, std::vector<MElement *> >& adj_int)
+  inline void addToAdjacencyLists(
+      GFace* gf,
+      MElement*e, 
+      std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_bdr,
+      std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_int)
   {
     for (size_t i=0;i<e->getNumVertices();i++){
       MVertex* v = e->getVertex(i);
-      if (vertexOnBoundary(v)) {
+      if (vertexOnBoundary(gf,v)) {
         adj_bdr[v].push_back(e);
       } else {
         adj_int[v].push_back(e);
@@ -1706,10 +1746,12 @@ namespace QSQ {
   }
 
   bool removeQuadDuet(GFace* gf, MVertex* v, 
-      std::unordered_map<MVertex *, std::vector<MElement *> >& adj_bdr,
-      std::unordered_map<MVertex *, std::vector<MElement *> >& adj_int)
+      std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_bdr,
+      std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_int,
+      std::vector<MElement*>* new_quads = NULL) /* fill with new quads if not null */
   {
-    if (vertexOnBoundary(v)) return false;
+    if (vertexSupport(gf,v) != SURFACE) return false;
+
     std::vector<MElement *> adjQuads = adj_int[v];
     if (adjQuads.size() != 2) {
       Msg::Error("removeQuadDuet | cancel, adjQuads.size()=%li",adjQuads.size());
@@ -1727,13 +1769,14 @@ namespace QSQ {
     /* Add new quad */
     MQuadrangle *q = new MQuadrangle (bnd[0],bnd[1],bnd[2],bnd[3]);
     gf->quadrangles.push_back(q);
+    if (new_quads != NULL) new_quads->push_back(q);
 
     /* Update adjacencies */
-    addToAdjacencyLists(q, adj_bdr, adj_int);
+    addToAdjacencyLists(gf, q, adj_bdr, adj_int);
 
     /* Remove old quads */
     for (MElement* f: adjQuads) {
-      removeFromAdjacencyLists(f,  adj_bdr, adj_int);
+      removeFromAdjacencyLists(gf, f,  adj_bdr, adj_int);
       auto it = std::find(gf->quadrangles.begin(),gf->quadrangles.end(), f);
       if (it != gf->quadrangles.end()) {
         gf->quadrangles.erase(it);
@@ -1746,63 +1789,217 @@ namespace QSQ {
     if (it1 != gf->mesh_vertices.end()) {
       gf->mesh_vertices.erase(it1);
     }
-    removeFromAdjacencyLists(v, adj_bdr, adj_int);
+    removeFromAdjacencyLists(gf, v, adj_bdr, adj_int);
 
-    Msg::Info("removed quad duet at vertex %li",v->getNum());
+    Msg::Debug("removed quad duet at vertex %li",v->getNum());
 
     delete v;
     v = NULL;
+
+    /* Check neighbors */
+    for (MVertex* bv: bnd) if (vertexSupport(gf, bv) == SURFACE) {
+      if (adj_int[bv].size() == 2) {
+        bool okr =removeQuadDuet(gf, bv, adj_bdr, adj_int, new_quads); /* recursive call ! */
+        if (!okr) {
+          Msg::Error("failed to recursively removed duets ...");
+          return false;
+        }
+      }
+    }
 
     return true;
   }
 
   int vertexIdealValence(MVertex* v, const std::unordered_map<MVertex *, double>& vAngle) {
-    GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
-    GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
-    if (ge == NULL && gv == NULL) return 4;
-    if (gv != NULL) {
-      auto it = vAngle.find(v);
-      if (it == vAngle.end()) return 2; /* assume flat corner if no angle */
-      return int(std::round(4. * it->second / (2. * M_PI)));
-    } else if (ge != NULL) {
-      auto it = vAngle.find(v);
-      if (it == vAngle.end()) return 2; /* assume flat corner if no angle */
-      return int(std::round(4. * it->second / (2. * M_PI)));
-    }
-    return 0;
+    auto it = vAngle.find(v);
+    if (it == vAngle.end()) return 4;
+    int ival = int(clamp(std::round(4. * it->second / (2. * M_PI)),1.,4.));
+    return ival;
   }
 
-  bool isCandidateForSmallRemeshing(
-      MVertex* v,
-      const std::vector<MElement *>& adjQuads,
-      const std::unordered_map<MVertex *, double>& vAngle) {
-    GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
-    GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
-    if (ge == NULL && gv == NULL) { /* inside GFace */
-      if (adjQuads.size() == 2) return true; /* quad duet */
-      if (adjQuads.size() >= 6) return true;
-    } else { /* on boundary */
-      int ival = vertexIdealValence(v, vAngle);
-      if (ge != NULL || ival == 2) { /* on curve, or flat corner */
-        if (adjQuads.size() == 3) return true;
-        if (adjQuads.size() == 4) return true;
-        // if (adjQuads.size() == 5) return true; // do not work well ?
+  bool slowVerifyMeshIsValid(GFace* gf) {
+    Msg::Debug("slow, verify mesh of face %i ...", gf->tag());
+    std::unordered_map<MVertex *, std::vector<MElement *> > adj;
+    std::map<array<size_t,2>, size_t> edgeVal;
+    for (MQuadrangle* f: gf->quadrangles) {
+      for (size_t lv = 0; lv < 4; ++lv) {
+        MVertex* v = f->getVertex(lv);
+        adj[v].push_back(f);
+        MVertex* v2 = f->getVertex((lv+1)%4);
+        if (v->getNum() < v2->getNum()) {
+          array<size_t,2> vpair = {v->getNum(),v2->getNum()};
+          edgeVal[vpair] += 1;
+        } else {
+          array<size_t,2> vpair =  {v2->getNum(),v->getNum()};
+          edgeVal[vpair] += 1;
+        }
       }
     }
-    return false;
+
+    bool ok = true;
+    for (auto& kv: edgeVal) {
+      if (kv.second > 2) {
+        Msg::Error("slowVerifyMeshIsValid | edge (%i,%i) non manifold, valence =  %i", kv.first[0],kv.first[1], kv.second);
+        ok = false;
+        continue;
+      }
+    }
+
+    for (auto& kv: adj) {
+      MVertex* v = kv.first;
+      vector<MElement*> quads = kv.second;
+      std::vector<MVertex*> bnd;
+      bool okb = buildBoundary(quads.begin(),quads.end(), bnd);
+      if (!okb) {
+        Msg::Error("slowVerifyMeshIsValid | failed to build boundary at vertex %i", v->getNum());
+        ok = false;
+        continue;
+      }
+      if (bnd.size() > 0 && bnd.back() == bnd.front()) bnd.resize(bnd.size()-1);
+    }
+
+    for (MVertex* v: gf->mesh_vertices) {
+      size_t num = v->getNum();
+      if (num == 0) Msg::Error("num should be >0 ?");
+      auto it = adj.find(v);
+      if (it == adj.end()) {
+        Msg::Error("slowVerifyMeshIsValid | vertex %i has no adjacent quads", v->getNum());
+        ok = false;
+      } else if (it->second.size() == 0) {
+        Msg::Error("slowVerifyMeshIsValid | vertex %i has no adjacent quads", v->getNum());
+        ok = false;
+      }
+
+    }
+    return ok;
+  }
+
+  double irregularityEnergyOnRing(GFace* gf, MVertex* v, 
+      const std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_bdr,
+      const std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_int,
+      const std::unordered_map<MVertex *, double>& vAngle
+      ) {
+    int vs = vertexSupport(gf,v);
+    auto& adj_cur = (vs == CORNER || vs == CURVE) ? adj_bdr : adj_int;
+    const std::vector<MElement*> quads = adj_cur.at(v);
+    std::set<MVertex*> bnd; /* not ordered */
+    for (MElement* f: quads) for (size_t lv = 0; lv < f->getNumVertices(); ++lv) {
+      MVertex* v2 = f->getVertex(lv);
+      if (v2 != v) bnd.insert(v2);
+    }
+    double irregularity = 0.;
+    for (MVertex* v2: bnd) {
+      int vs2 = vertexSupport(gf,v2);
+      auto& adj_cur2 = (vs2 == CORNER || vs2 == CURVE) ? adj_bdr : adj_int;
+      int val = adj_cur2.at(v2).size();
+      if (vs2 == CORNER || vs2 == CURVE) {
+        int ival = vertexIdealValence(v2, vAngle);
+        irregularity += std::pow(double(val-ival),2);
+      } else if (vs == SURFACE) {
+        irregularity += std::pow(double(val-4),2);
+      }
+    }
+    return irregularity;
+  }
+
+  bool remeshableVertexProperties(
+      GFace* gf, MVertex* v,
+      const std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_bdr,
+      const std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_int,
+      const std::unordered_map<MVertex *, double>& vAngle,
+      int& ideal,
+      vector<MElement*>& quads
+      ) {
+    int vs = vertexSupport(gf,v);
+    const auto& adj_cur = (vs == CORNER || vs == CURVE) ? adj_bdr : adj_int;
+    quads = adj_cur.at(v); /* copy */
+    /* Ideal quad valence on the vertex */
+    ideal = 4;
+    if (vs == CORNER) {
+      ideal = vertexIdealValence(v, vAngle);
+    } else if (vs == CURVE) {
+      ideal = 2;
+    }
+
+    /* Existing adjacent quads, check if current config is defect or not */
+    if (vs == CORNER && quads.size() == (size_t) ideal) return false;
+    if (vs == CURVE && quads.size() == 2) return false;
+    if (vs == SURFACE && 3 <= quads.size() && quads.size() <= 5) return false;
+
+    /* For valence 1 vertex on curves, need to grow the cavity a bit */
+    if (quads.size() == 1 && ((vs == CORNER && ideal >= 2) || (vs == CURVE && ideal >= 2))) {
+      for (size_t lv = 0; lv < 4; ++lv) {
+        MVertex* v2 = quads[0]->getVertex(lv);
+        int vs2 = vertexSupport(gf,v2);
+        const auto& adj_cur2 = (vs2 == CORNER || vs2 == CURVE) ? adj_bdr : adj_int;
+        auto it = adj_cur2.find(v2);
+        if (it != adj_cur2.end()) {
+          for (MElement* f2: it->second) {
+            quads.push_back(f2);
+          }
+        }
+      }
+      sort_unique(quads);
+    }
+
+    return true;
+  }
+
+  bool verticesStrictlyInsideCavity(GFace* gf, const std::vector<MElement*>& quads,
+      const std::vector<MVertex*>& bnd, std::vector<MVertex*>& inside) {
+    std::vector<MVertex*> vert;
+    vert.reserve(4*quads.size());
+    for (MElement* f: quads) for (size_t lv = 0; lv < 4; ++lv) {
+      MVertex* v = f->getVertex(lv);
+      vert.push_back(v);
+    }
+    sort_unique(vert);
+    inside = difference(vert,bnd);
+    return true;
+  }
+
+
+  int addAffectedVerticesToQueue(
+      int pass,
+      GFace* gf,
+      const std::vector<MElement*>& quads,
+      const std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_bdr,
+      const std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash>& adj_int,
+      const std::unordered_map<MVertex *, double>& vAngle,
+      std::priority_queue<std::pair<double,MVertex*>, std::vector<std::pair<double,MVertex*> > >& Q) {
+    int count = 0;
+    for (MElement* q: quads) {
+      /* check if quad still there, necessary because of recursive functions */
+      auto itq = std::find(gf->quadrangles.begin(),gf->quadrangles.end(),q);
+      if (itq != gf->quadrangles.end()) {
+        for (size_t lv = 0; lv < q->getNumVertices(); ++lv) {
+          MVertex* v2 = q->getVertex(lv);
+          int vs2 = vertexSupport(gf,v2);
+          if (vs2 != pass) continue;
+          double irreg2 = irregularityEnergyOnRing(gf, v2, adj_bdr, adj_int, vAngle);
+          if (irreg2 > 0) {
+            Q.push({irreg2,v2}); /* add to queue */
+            count += 1;
+          }
+        }
+      }
+    }
+    return count;
   }
 
 
   bool remeshSmallDefects(GFace* gf) {
+    Msg::Debug("remove small quad mesh defects on face %i (%li quads) ...", gf->tag(), gf->quadrangles.size());
     // TODO FROM HERE: corners to have valence 1 and valence 3 if possible
 
     std::unordered_map<MVertex *, double> vAngle; /* for flat corner on curves */
-    std::unordered_map<MVertex *, std::vector<MElement *> > adj_bdr;
-    std::unordered_map<MVertex *, std::vector<MElement *> > adj_int;
+    std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash> adj_bdr;
+    std::unordered_map<MVertex *, std::vector<MElement *>, MVertexPtrHash> adj_int;
     for (MQuadrangle* f: gf->quadrangles) {
       for (size_t lv = 0; lv < 4; ++lv) {
         MVertex* v = f->getVertex(lv);
-        if (vertexOnBoundary(v)) {
+        int vs = vertexSupport(gf,v);
+        if (vs == CORNER || vs == CURVE) {
           adj_bdr[v].push_back(f);
           MVertex* vPrev = f->getVertex((4+lv-1)%4);
           MVertex* vNext = f->getVertex((lv+1)%4);
@@ -1811,202 +2008,310 @@ namespace QSQ {
           SVector3 pCurr = v->point();
           double agl = angleVectors(pNext-pCurr,pPrev-pCurr);
           vAngle[v] += agl;
-        } else {
+        } else if (vs == SURFACE) {
           adj_int[v].push_back(f);
         }
       }
     }
 
-
-    constexpr int BOUNDARY = 0;
-    constexpr int INTERIOR = 1;
-    size_t count = 0;
-    for (int pass: {BOUNDARY, INTERIOR}) {
-      if (pass == BOUNDARY) {
-        Msg::Info("remove defects on face boundaries ...");
-      } else {
-        Msg::Info("remove defects on face interior ...");
+    if (false) {
+      for (auto& kv: adj_int) {
+        MVertex* v = kv.first;
+        GeoLog::add(SVector3(v->point()),4.,"SURFACE");
       }
-      bool remaining = true;
-      while (remaining) {
-        remaining = false;
-        auto& adj_cur = (pass == BOUNDARY) ? adj_bdr : adj_int;
-        for (auto& kv: adj_cur) {
-          MVertex* v = kv.first;
-          bool candidate = isCandidateForSmallRemeshing(v, kv.second, vAngle);
-          if (!candidate) continue;
+      for (auto& kv: adj_bdr) {
+        MVertex* v = kv.first;
+        if (vertexSupport(gf,v) == CORNER) {
+          GeoLog::add(SVector3(v->point()),double(vertexIdealValence(v,vAngle)),"CORNER");
+        } else if (vertexSupport(gf,v) == CURVE) {
+          GeoLog::add(SVector3(v->point()),double(vertexIdealValence(v,vAngle)),"CURVE");
+        }
+      }
+      GeoLog::flush();
+    }
 
-          vector<MElement*> quads = kv.second; /* copy ! */
-          std::vector<MVertex*> bnd;
-          bool okb = buildBoundary(quads.begin(),quads.end(), bnd);
-          if (!okb || bnd.size() < 4) {
-            Msg::Error("failed to build boundary around vertex quads");
-            continue;
-          }
-          if (bnd.back() == bnd.front()) bnd.resize(bnd.size()-1);
+    constexpr bool allowTemporaryDuet = true;
 
-          /* Check if quad duet */
-          if (pass == INTERIOR && quads.size() == 2 && bnd.size() == 4) { 
-            bool ok = removeQuadDuet(gf, v, adj_bdr, adj_int);
-            if (ok) { /* restart */
-              remaining = true;
-              count += 1;
-              break;
-            } else {
-              Msg::Error("detected quad duet but failed to remove it (v = %li)", v->getNum());
-              geolog_elements(adj_cur[v],"!duet_v"+std::to_string(v->getNum()));
-              GeoLog::flush();
-              return false;
-              continue;
-            }
-          }
+    size_t count[4] = {0,0,0,0};
+    for (int pass: {CORNER, CURVE, SURFACE}) {
+      gmsh::view::add("=== pass "+std::to_string(pass));
+      if (pass == CORNER) {
+        Msg::Debug("- remove defects on corners ...");
+      } else if (pass == CURVE) {
+        Msg::Debug("- remove defects on curves ...");
+      } else if (pass == SURFACE) {
+        Msg::Debug("- remove defects on interior ...");
+      }
 
-          bool cancel = false;
-          bool check_duet = false;
-          vector<int> bndIdealValence(bnd.size(),0);
-          vector<std::pair<int,int> > bndAllowedValenceRange(bnd.size());
-          for (size_t i = 0; i < bnd.size(); ++i) {
-            MVertex* bv = bnd[i];
-            int ival = vertexIdealValence(bv, vAngle);
-            bool onBdr = vertexOnBoundary(bv);
-            std::vector<MElement*> bvAdjQuads = onBdr ? adj_bdr[bv] : adj_int[bv];
-            std::vector<MElement*> exterior = difference(bvAdjQuads, quads);
-            bndIdealValence[i] = ival - int(exterior.size());
-            if (onBdr && ival == 2 && exterior.size() == 0) { /* on flat boundary */
-              bndAllowedValenceRange[i] = {2,2};
-            } else if (onBdr && ival == 2 && exterior.size() >= 1) { /* on flat boundary but cavity corner */
-              bndAllowedValenceRange[i] = {1,1};
-            } else if (!onBdr) { 
-              if (pass == BOUNDARY) { /* If first pass on boundary, we allow creation of 6/7 inside */
-                if (exterior.size() == 1) { /* warning: may generate quad duets, should check after */
-                  bndAllowedValenceRange[i] = {1,6}; 
-                  check_duet = true;
-                } else if (exterior.size() == 2) {
-                  bndAllowedValenceRange[i] = {1,5}; 
-                } else if (exterior.size() == 3) { 
-                  bndAllowedValenceRange[i] = {1,4}; 
-                } else if (exterior.size() == 4) { 
-                  bndAllowedValenceRange[i] = {1,3}; 
-                } else if (exterior.size() == 5) { 
-                  bndAllowedValenceRange[i] = {1,2}; 
-                } else if (exterior.size() >= 6) { 
-                  bndAllowedValenceRange[i] = {1,1}; 
-                }
-              } else {
-                if (exterior.size() == 1) { /* warning: may generate quad duets, should check after */
-                  bndAllowedValenceRange[i] = {1,4}; 
-                  check_duet = true;
-                } else if (exterior.size() == 2) { /* avoid 6+ */
-                  bndAllowedValenceRange[i] = {1,3}; 
-                } else if (exterior.size() == 3) { /* avoid 6+ */
-                  bndAllowedValenceRange[i] = {1,2}; 
-                } else if (exterior.size() == 4) { /* avoid 6+ */
-                  bndAllowedValenceRange[i] = {1,1}; 
-                } else if (exterior.size() >= 5) { /* bad, will generate 6+ ... */
-                  bndAllowedValenceRange[i] = {1,1}; 
-                }
-              }
-            } else {
-              Msg::Error("case not supported ... onBdr=%i, bvAdjQuads.size()=%li, exterior.size()=%li, ideal val=%i", onBdr, bvAdjQuads.size(), exterior.size(), ival);
-              cancel = true;
-            }
-          }
-          if (cancel) continue;
+      std::priority_queue<std::pair<double,MVertex*>, std::vector<std::pair<double,MVertex*> > > Q; 
 
-          std::vector<MVertex*> newVertices;
-          std::vector<bool> vertexIsIrregular;
-          std::vector<MElement*> newElements;
-          int status = remeshFewQuads(gf, bnd, bndIdealValence, bndAllowedValenceRange, 
-              newVertices, vertexIsIrregular, newElements);
-          if (status == 0) {
-            if (true) {
-              geolog_closed_curve(bnd, "scav_b"+std::to_string(bnd.size())+"_"+std::to_string(v->getNum()));
-              geolog_elements(quads,"scav_b"+std::to_string(bnd.size())+"_"+std::to_string(v->getNum()));
-              GeoLog::flush();
-            }
+      /* Initialize the priority queue */
+      auto& adj_cur = (pass == CORNER || pass == CURVE) ? adj_bdr : adj_int;
+      for (auto& kv: adj_cur) {
+        MVertex* v = kv.first;
+        int vs = vertexSupport(gf,v);
+        if (vs != pass) continue;
 
-            /* Remove old quads, update adjacency */
-            for (MElement* f: quads) {
-              MQuadrangle *q = dynamic_cast<MQuadrangle*>(f);	      
-              if (!q)Msg::Error ("A non quad is present in the list of quad of face %lu",gf->tag());
-              auto it = std::find(gf->quadrangles.begin(),gf->quadrangles.end(), q);
-              if (it != gf->quadrangles.end()) {
-                gf->quadrangles.erase(it);
-              }
-              removeFromAdjacencyLists(f,  adj_bdr, adj_int);
-              delete f;
-            }
+        double prio = irregularityEnergyOnRing(gf, v, adj_bdr, adj_int, vAngle);
+        Q.push({prio,v});
+      }
 
-            /* Check if inside vertex must be removed */
-            if (pass == INTERIOR && !vertexOnBoundary(v)) {
-              auto it1 = std::find(gf->mesh_vertices.begin(),gf->mesh_vertices.end(), v);
-              if (it1 != gf->mesh_vertices.end()) {
-                gf->mesh_vertices.erase(it1);
-              }
-              removeFromAdjacencyLists(v, adj_bdr, adj_int);
-              delete v;
-            }
+      while (Q.size() > 0) {
+        MVertex* v = Q.top().second;
+        Q.pop();
 
-            for (MElement* f: newElements) {
-              addToAdjacencyLists(f, adj_bdr, adj_int);
-            }
+        {
+          /* Check if vertex still exists, may have been removed */
+          auto it = adj_cur.find(v);
+          if (it == adj_cur.end()) continue; 
+        }
 
-            /* Check if quad duet (vertex valence 2 inside) have been created
-             * and remove them if so */
-            if (check_duet) {
-              for (MVertex* bv: bnd) if (!vertexOnBoundary(bv)) {
-                if (adj_int[bv].size() == 2) {
-                  bool ok = removeQuadDuet(gf, bv, adj_bdr, adj_int);
-                  if (!ok) { /* restart */
-                    geolog_elements(adj_int[bv],"!duet_bv"+std::to_string(bv->getNum()));
-                    GeoLog::flush();
-                    Msg::Error("detected quad duet but failed to remove it (bv = %li)", bv->getNum());
-                    continue;
-                  }
-                  count += 1;
-                }
-              }
-            }
+        int ideal = -1;
+        std::vector<MElement*> quads;
+        bool toRemesh = remeshableVertexProperties(gf, v, adj_bdr, adj_int, vAngle, ideal, quads);
+        if (!toRemesh) continue;
+        int vs = vertexSupport(gf, v);
 
-            /* Restart */
-            meshWinslow2d(gf, 10);
-            remaining = true;
-            count += 1;
+        /* Boundary around quads (includes v if on boundary) */
+        std::vector<MVertex*> bnd;
+        bool okb = buildBoundary(quads.begin(),quads.end(), bnd);
+        if (bnd.size() > 0 && bnd.back() == bnd.front()) bnd.resize(bnd.size()-1);
+        if (!okb || bnd.size() < 4) {
+          Msg::Error("failed to build boundary around vertex %li, bnd.size()=%li", v->getNum(), bnd.size());
+          continue;
+        }
+
+        /* Check if quad duet */
+        if (pass == SURFACE && quads.size() == 2 && bnd.size() == 4) { 
+          std::vector<MElement*> newQuads;
+          bool ok = removeQuadDuet(gf, v, adj_bdr, adj_int, &newQuads);
+          if (ok) { /* restart */
+            count[pass] += (int) newQuads.size();
+            addAffectedVerticesToQueue(pass, gf, newQuads, adj_bdr, adj_int, vAngle, Q);
             break;
           } else {
-            if (true) {
-              geolog_closed_curve(bnd, "!scav_b"+std::to_string(bnd.size())+"_"+std::to_string(v->getNum()));
-              geolog_elements(quads,"!scav_b"+std::to_string(bnd.size())+"_"+std::to_string(v->getNum()));
-              GeoLog::flush();
-            }
-            DBG("failed around", v->getNum(), bnd.size());
+            Msg::Error("detected quad duet but failed to remove it (v = %li)", v->getNum());
+            geolog_elements(adj_cur[v],"!duet_v"+std::to_string(v->getNum()));
+            GeoLog::flush();
+            continue;
           }
+        }
+
+        /* Build the cavity signature (ideal and allowed valences) which is required
+         * to find replacements in disk quadrangulations */
+        bool cancel = false;
+        bool check_duet = false;
+        vector<int> bndIdealValence(bnd.size(),0);
+        vector<std::pair<int,int> > bndAllowedValenceRange(bnd.size());
+        for (size_t i = 0; i < bnd.size(); ++i) {
+          MVertex* bv = bnd[i];
+          int bvs = vertexSupport(gf,bv);
+          bool onBdr = (bvs == CORNER || bvs == CURVE);
+          int bival = 4;
+          if (bvs == CORNER) {
+            bival = vertexIdealValence(bv,vAngle);
+          } else if (bvs == CURVE) {
+            bival = 2;
+          }
+          std::vector<MElement*> bvAdjQuads = onBdr ? adj_bdr[bv] : adj_int[bv];
+          std::vector<MElement*> exterior = difference(bvAdjQuads, quads);
+          bndIdealValence[i] = bival - int(exterior.size());
+          if (exterior.size() == 0) { /* boundary vertex "inside" the cavity, probably the one to remesh */
+            bndAllowedValenceRange[i] = {bival,bival};
+          } else if (bvs == CORNER) {
+            bndAllowedValenceRange[i] = {1,1};
+            if (exterior.size() == 1) check_duet = true;
+          } else if (bvs == CURVE) {
+            if (vs == CORNER) { /* When fixing corners, can degrade curves */
+              bndAllowedValenceRange[i] = {1,2};
+            } else {
+              bndAllowedValenceRange[i] = {1,1};
+            }
+            if (exterior.size() == 1) check_duet = true;
+          } else if (bvs == SURFACE) {
+            if (vs == CORNER || vs == CURVE) { /* When fixing corner/curve, can degrade surface */
+              if (exterior.size() == 1) { /* warning: may generate quad duets, should check after */
+                if (allowTemporaryDuet) {
+                  bndAllowedValenceRange[i] = {1,6};  /* allow val 2, 6 and 7 */
+                  check_duet = true;
+                } else {
+                  bndAllowedValenceRange[i] = {2,6};
+                }
+              } else if (exterior.size() == 2) { /* allow 6, 7 */
+                bndAllowedValenceRange[i] = {1,5}; 
+              } else if (exterior.size() == 3) { /* allow 6, 7 */
+                bndAllowedValenceRange[i] = {1,4};
+              } else if (exterior.size() == 4) {  /* allow 6, 7 */
+                bndAllowedValenceRange[i] = {1,3}; 
+              } else if (exterior.size() == 5) { /* allow 6, 7 */
+                bndAllowedValenceRange[i] = {1,2}; 
+              } else if (exterior.size() >= 6) { /* allow 7+, should minimize */
+                bndAllowedValenceRange[i] = {1,1}; 
+              }
+            } else {
+              if (exterior.size() == 1) { /* warning: may generate quad duets, should check after */
+                if (allowTemporaryDuet) {
+                  bndAllowedValenceRange[i] = {1,4}; 
+                  check_duet = true;
+                } else {
+                  bndAllowedValenceRange[i] = {2,4}; 
+                }
+              } else if (exterior.size() == 2) { /* avoid 6+ */
+                bndAllowedValenceRange[i] = {1,3}; 
+              } else if (exterior.size() == 3) { /* avoid 6+ */
+                bndAllowedValenceRange[i] = {1,2}; 
+              } else if (exterior.size() == 4) { /* avoid 6+ */
+                bndAllowedValenceRange[i] = {1,1}; 
+              } else if (exterior.size() >= 5) { /* bad, will generate 6+ ... */
+                bndAllowedValenceRange[i] = {1,1}; 
+              }
+            }
+          } else {
+            Msg::Error("case not supported ... onBdr=%i, bvAdjQuads.size()=%li, exterior.size()=%li, ideal val=%i", onBdr, bvAdjQuads.size(), exterior.size(), ideal);
+            GeoLog::add(SVector3(v->point()),0.,"!cns");
+            geolog_closed_curve(bnd, "!cns");
+            geolog_elements(quads,"!cns");
+            geolog_elements(exterior,"!cns_ext");
+            GeoLog::flush();
+            cancel = true;
+          }
+        }
+        if (cancel) continue;
+
+        /* Do the remeshing with matching disk quadrangulation */
+        std::vector<MVertex*> newVertices;
+        std::vector<bool> vertexIsIrregular;
+        std::vector<MElement*> newElements;
+        int status = remeshFewQuads(gf, bnd, bndIdealValence, bndAllowedValenceRange, 
+            newVertices, vertexIsIrregular, newElements);
+        if (status == 0) {
+          if (true) {
+            geolog_closed_curve(bnd, "scav_"+std::to_string(bnd.size())+"_"+std::to_string(v->getNum()));
+            geolog_elements(quads,"scav_"+std::to_string(bnd.size())+"_"+std::to_string(v->getNum()));
+            geolog_elements(newElements,"scav_"+std::to_string(bnd.size())+"_"+std::to_string(v->getNum())+"_rmsh");
+            GeoLog::flush();
+          }
+
+          /* Extract vertices inside cavity */
+          std::vector<MVertex*> inside;
+          verticesStrictlyInsideCavity(gf, quads, bnd, inside);
+
+          /* Remove old quads, update adjacency */
+          for (MElement* f: quads) {
+            MQuadrangle *q = dynamic_cast<MQuadrangle*>(f);	      
+            if (!q)Msg::Error ("A non quad is present in the list of quad of face %lu",gf->tag());
+            auto it = std::find(gf->quadrangles.begin(),gf->quadrangles.end(), q);
+            if (it != gf->quadrangles.end()) {
+              gf->quadrangles.erase(it);
+            }
+            removeFromAdjacencyLists(gf, f,  adj_bdr, adj_int);
+            delete f;
+          }
+
+          /* Check if inside vertices must be removed */
+          if (inside.size() > 0) {
+            for (MVertex* v2: inside) {
+              if (vertexSupport(gf,v2) == SURFACE) {
+                auto it1 = std::find(gf->mesh_vertices.begin(),gf->mesh_vertices.end(), v2);
+                if (it1 != gf->mesh_vertices.end()) {
+                  gf->mesh_vertices.erase(it1);
+                }
+                removeFromAdjacencyLists(gf, v2, adj_bdr, adj_int);
+                delete v2; v2 = NULL;
+              } else {
+                Msg::Error("remeshSmallDefects: vertex %li inside cavity but not in surface ? weird", v2->getNum());
+              }
+            }
+
+          }
+          for (MElement* f: newElements) {
+            addToAdjacencyLists(gf, f, adj_bdr, adj_int);
+          }
+
+          /* Check if quad duet (vertex valence 2 inside) have been created
+           * and remove them if so */
+          if (check_duet) {
+            for (MVertex* bv: bnd) {
+              auto it = adj_int.find(bv); /* necessary check because removeQuadDuet() may be recursive */
+              if (it != adj_int.end()) {
+                if (vertexSupport(gf,bv) == SURFACE) {
+                  if (adj_int[bv].size() == 2) {
+                    std::vector<MElement*> newQuads;
+                    bool ok = removeQuadDuet(gf, bv, adj_bdr, adj_int, &newQuads); /* may break bnd[] vector */
+                    if (ok) {
+                      count[pass] += (int) newQuads.size();
+                      addAffectedVerticesToQueue(pass, gf, newQuads, adj_bdr, adj_int, vAngle, Q);
+                    } else {
+                      Msg::Error("detected quad duet but failed to remove it (bv = %li)", bv->getNum());
+                      continue;
+                    }
+                    count[pass] += 1;
+                  }
+                }
+              }
+            }
+          }
+
+          /* Fill the priority queue */
+          addAffectedVerticesToQueue(pass, gf, newElements, adj_bdr, adj_int, vAngle, Q);
+
+          if (PARANO) {
+            bool valid = slowVerifyMeshIsValid(gf);
+            if (!valid) {
+              Msg::Error("invalid quad mesh");
+              return false;
+            }
+            meshWinslow2d(gf, 10);
+          }
+
+
+          count[pass] += 1;
+        } else {
+          if (true) {
+            geolog_closed_curve(bnd, "!scav_P"+std::to_string(pass)+"_b"+std::to_string(bnd.size())+"_"+std::to_string(v->getNum()));
+            geolog_elements(quads, "!scav_P"+std::to_string(pass)+"_b"+std::to_string(bnd.size())+"_"+std::to_string(v->getNum()));
+            GeoLog::flush();
+          }
+          Msg::Warning("failed to remesh around vertex %li (cavity with %li bdr vertices, %li quads)", v->getNum(),
+              bnd.size(), quads.size());
         }
       }
     }
 
-    Msg::Info("removed %li defects", count);
+    if (count[CORNER] + count[CURVE] + count[SURFACE] > 0) {
+      Msg::Info("- Face %i (%li quads): remeshed %li corner defects, %li curve defects, %li interior defects", 
+          gf->tag(), gf->quadrangles.size(), count[CORNER], count[CURVE], count[SURFACE]);
+    } else {
+      return true;
+    }
+
+    bool meshok = slowVerifyMeshIsValid(gf);
+    if (!meshok) {
+      Msg::Error("face %i, mesh no longer valid after removing defects ... (should never happen)", gf->tag());
+      return false;
+    }
 
     meshWinslow2d(gf, 100);
 
     { /* final check */
       for (auto& kv: adj_bdr) {
         MVertex* v = kv.first;
-        if (kv.second.size() != 2) {
-          GeoLog::add(SVector3(v->point()),double(kv.second.size()),"defect");
-          Msg::Error("defect at vertex %li: on flat curve/corner but %li adj quads",
+        if (vertexSupport(gf,v) == CORNER && kv.second.size() != (size_t) vertexIdealValence(v, vAngle))  {
+          GeoLog::add(SVector3(v->point()),double(kv.second.size()),"defect_gf" + std::to_string(gf->tag()) + "_bdr_" + std::to_string(kv.second.size()));
+          Msg::Warning("  - still defect at vertex %li: on corner but %li adj quads",
+              v->getNum(), adj_bdr[v].size());
+        }
+        if (vertexSupport(gf,v) == CURVE && kv.second.size() != 2) {
+          GeoLog::add(SVector3(v->point()),double(kv.second.size()),"defect_gf" + std::to_string(gf->tag()) + "_bdr_" + std::to_string(kv.second.size()));
+          Msg::Warning("  - still defect at vertex %li: on boundary but %li adj quads",
               v->getNum(), adj_bdr[v].size());
         }
       }
       for (auto& kv: adj_int) {
         MVertex* v = kv.first;
         if (kv.second.size() <= 2 || kv.second.size() > 5) {
-          if (kv.second.size() <= 2) {
-            GeoLog::add(SVector3(v->point()),double(kv.second.size()),"defect_il2");
-          } else {
-            GeoLog::add(SVector3(v->point()),double(kv.second.size()),"defect");
-          }
-          Msg::Error("defect at vertex %li: inside surface but %li adj quads",
+          GeoLog::add(SVector3(v->point()),double(kv.second.size()),"defect_gf" + std::to_string(gf->tag()) + "_int_" + std::to_string(kv.second.size()));
+          Msg::Warning("  - still defect at vertex %li: inside surface but %li adj quads",
               v->getNum(), adj_int[v].size());
         }
       }
@@ -2194,8 +2499,8 @@ namespace QSQ {
         /* Remesh the cavity */
         std::vector<MVertex*> newSingularities;
         size_t nq = gf->quadrangles.size();
-        // bool okr = remeshCavityWithGmsh(gf,fcav,newSingularities);
-        bool okr = remeshCavityWithQuadPatterns(gf,fcav,newSingularities);
+        bool okr = remeshCavityWithGmsh(gf,fcav,newSingularities);
+        // bool okr = remeshCavityWithQuadPatterns(gf,fcav,newSingularities);
         if (okr) { /* then cavity and M are no longer valid, restart */
           size_t nq2 = gf->quadrangles.size();
           if (nq2 == nq)  {
@@ -2771,9 +3076,9 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
     GFace* gf = faces[i];
     remeshSmallDefects(gf);
   }
+  printPatternUsage();
 
   return 0;
-
 
   /* Improve quad meshes with larger operators (cavity remeshing) */
   std::vector<std::vector<size_t> > faceSingularNodes;

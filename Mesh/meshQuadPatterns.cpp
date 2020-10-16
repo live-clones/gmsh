@@ -145,6 +145,8 @@ namespace QuadPatternMatching {
    * Useful for fast queries */
   std::vector< std::unordered_map< std::vector<id>, std::vector<id>, vidHash > > B_BVL_ids;
 
+  /* Keep track of pattern usage, just for statistics */
+  std::unordered_map<id2,id,id2Hash> usage_count;
 
   template<class T> 
     void sort_unique(std::vector<T>& vec) {
@@ -898,6 +900,10 @@ int remeshPatchWithQuadPattern(
   return 1;
 }
 
+void printPatternUsage() {
+  Msg::Info("disk quadrangulation remeshing, used %li distinct patterns", usage_count.size());
+}
+
 int remeshFewQuads(GFace* gf, 
     const std::vector<MVertex*>& bnd,
     const std::vector<int>& bndIdealValence,
@@ -937,7 +943,6 @@ int remeshFewQuads(GFace* gf,
   vector<int> valence;
 
   std::vector<std::pair<double,std::pair<size_t,int> > > irregularity_pattern_rotation;
-  DBG(bnd.size(),qmeshes.size());
   for (size_t i = 0; i < qmeshes.size(); ++i) {
     const vector<id4>& quads = qmeshes[i];
     computeQuadMeshValences(quads, valence);
@@ -950,11 +955,10 @@ int remeshFewQuads(GFace* gf,
     }
   }
   if (irregularity_pattern_rotation.size() == 0) {
-    Msg::Error("no pattern matching input");
-    DBG("  ", bnd.size());
-    DBG("  ", bndIdealValence);
-    DBG("  ", bndAllowedValenceRange);
-
+    Msg::Debug("remeshFewQuads: no pattern matching input allowed valence range");
+    // DBG("  ", bnd.size());
+    // DBG("  ", bndIdealValence);
+    // DBG("  ", bndAllowedValenceRange);
     return 1; /* no pattern matching allowed valence range */
   }
 
@@ -968,8 +972,10 @@ int remeshFewQuads(GFace* gf,
   bool ok = applyPatternToRemeshFewQuads(gf, bnd, bndIdealValence, bndAllowedValenceRange, rotation,
       quads, valence, newVertices, vertexIsIrregular, newElements);
   if (ok) {
-    Msg::Info("successfully remesh small cavity (%li bnd vertices) with %li quads", bnd.size(), newElements.size());
+    Msg::Debug("successfully remesh small cavity (%li bnd vertices) with %li quads", bnd.size(), newElements.size());
     laplacianSmoothing(newVertices, newElements,10);
+    id2 B_i = {(id)bnd.size(),(id)no};
+    usage_count[B_i] += 1;
     return 0;
   } else {
     Msg::Error("failed to remesh small cavity (%li bnd vertices) with %li quads", bnd.size(), newElements.size());

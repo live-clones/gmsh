@@ -43,5 +43,6 @@ int remeshFewQuads(GFace* gf,
     std::vector<MElement*> & newElements               /* new quads inside the cavity */
     );
 
+void printPatternUsage();
 
 #endif
