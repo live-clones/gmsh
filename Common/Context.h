@@ -116,8 +116,9 @@ private:
 public:
   CTX();
   ~CTX();
+  void init();
   static CTX *instance();
- public:
+
   // for debug purposes only, i.e. JF and CG personal use
   int debugSurface;
   // files on the command line and various file names

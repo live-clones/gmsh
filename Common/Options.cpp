@@ -465,6 +465,8 @@ static void PrintColorOptionsDoc(StringXColor s[], const char *prefix,
 
 void InitOptions(int num)
 {
+  CTX::instance()->init();
+
   // Default string options
   SetDefaultStringOptions(num, GeneralOptions_String);
   SetDefaultStringOptions(num, GeometryOptions_String);
