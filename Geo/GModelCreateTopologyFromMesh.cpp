@@ -240,42 +240,37 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
         MVertexToGVertexMap::iterator gIter = mVertexToGVertex.find(mv);
         if(gIter != mVertexToGVertex.end())
           gEdgeToGVertices[ge].insert(gIter->second);
-        else
-          mVertexToGEdges[mv].insert(ge);
+        else {
+          MVertexToGEdgesMap::iterator it = mVertexToGEdges.find(mv);
+          if(it != mVertexToGEdges.end() && it->second.find(ge) != it->second.end()) {
+            // in bulk
+            mVertexToGEdges.erase(it);
+          }
+          else{
+            mVertexToGEdges[mv].insert(ge);
+          }
+        }
       }
     }
   }
 
-  // now ensure a GVertex for each non-trivial bundle of GEdge
-
-  GEdgesToGVertexMap gEdgesToGVertex;
+  // now create any missing GVertex
 
   for(MVertexToGEdgesMap::iterator mvIter = mVertexToGEdges.begin();
       mvIter != mVertexToGEdges.end(); ++mvIter) {
     MVertex *mv = mvIter->first;
     std::set<GEdge *> &gEdges = mvIter->second;
-
-    if(gEdges.size() > 1) {
-      if(gEdgesToGVertex.find(gEdges) == gEdgesToGVertex.end()) {
-        num++;
-
-        discreteVertex *dv = new discreteVertex(
-          gm, gm->getMaxElementaryNumber(0) + 1, mv->x(), mv->y(), mv->z());
-        gm->add(dv);
-
-        mVertexToGVertex[mv] = dv;
-
-        MPoint *mp = new MPoint(mv);
-        dv->points.push_back(mp);
-
-        gEdgesToGVertex[gEdges] = dv;
-
-        for(std::set<GEdge *>::iterator gEIter = gEdges.begin();
-            gEIter != gEdges.end(); ++gEIter) {
-          GEdge *ge = *gEIter;
-          gEdgeToGVertices[ge].insert(dv);
-        }
-      }
+    num++;
+    discreteVertex *dv = new discreteVertex
+      (gm, gm->getMaxElementaryNumber(0) + 1, mv->x(), mv->y(), mv->z());
+    gm->add(dv);
+    mVertexToGVertex[mv] = dv;
+    MPoint *mp = new MPoint(mv);
+    dv->points.push_back(mp);
+    for(std::set<GEdge *>::iterator gEIter = gEdges.begin();
+        gEIter != gEdges.end(); ++gEIter) {
+      GEdge *ge = *gEIter;
+      gEdgeToGVertices[ge].insert(dv);
     }
   }
 
