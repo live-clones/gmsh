@@ -159,16 +159,16 @@ namespace QMT {
     state->nb_rows = nb_rows;
     *data = state;
 #if defined(HAVE_MUMPS)
-    info("using MUMPS (direct)");
+    Msg::Debug("using MUMPS (direct)");
 #elif defined(HAVE_PETSC)
-    info("using PETSc");
-    warn("please consider enabling the MUMPS solver (much faster solver and implementation, factorization computed one time per timestep)");
+    Msg::Warning("using PETSc");
+    Msg::Warning("please consider enabling the MUMPS solver (much faster solver and implementation, factorization computed one time per timestep)");
 #elif defined(HAVE_GMM)
-    info("using Gmm (iterative)");
-    warn("please consider enabling the MUMPS solver (much faster solver and implementation, factorization computed one time per timestep)");
+    Msg::Warning("using Gmm (iterative)");
+    Msg::Warning("please consider enabling the MUMPS solver (much faster solver and implementation, factorization computed one time per timestep)");
 #else
-    info("using Full");
-    warn("please consider enabling the MUMPS solver (much faster solver and implementation, factorization computed one time per timestep)");
+    Msg::Warning("using Full");
+    Msg::Warning("please consider enabling the MUMPS solver (much faster solver and implementation, factorization computed one time per timestep)");
 #endif
     return true;
 #else
