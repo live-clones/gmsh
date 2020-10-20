@@ -2430,6 +2430,7 @@ namespace QSQ {
 
     Msg::Info("remeshing cavity with %li quads, %li sides ...", cav.quads.size(), sides.size());
 
+    // if (sides.size() > 2) return false;
 
     std::vector<size_t> sideSizes(sides.size());
     for (size_t i = 0; i < sideSizes.size(); ++i) sideSizes[i] = sides[i].size();

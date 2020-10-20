@@ -281,6 +281,17 @@ namespace QuadPatternMatching {
     return true;
   }
 
+  double sum_sqrt(const vector<int>& values) {
+    double s = 0.;
+    for (const auto& v: values) s += sqrt(v);
+    return s;
+  }
+
+  bool all_strictly_positive(const vector<int>& values) {
+    for (const auto& v: values) if (v <= 0) return false;
+    return true;
+  }
+
   /* Struct to interface with row_echelon_integer.hpp */
   struct IMatrix {
     /* Data */
@@ -380,11 +391,9 @@ namespace QuadPatternMatching {
     }
 
     double solution_score(const std::vector<int>& x) {
-      if (x.size() != n-1) return 0.;
-      double score = 0.;
+      if (x.size() != (size_t) n-1) return 0.;
       for (int j = 0; j < n-1; ++j) {
         if (x[j] == 0) return 0.;
-        score += std::sqrt(double(x[j]));
       }
 
       /* Verify x is solution */
@@ -399,22 +408,120 @@ namespace QuadPatternMatching {
         }
       }
 
-      return score;
+      return sum_sqrt(x);
     }
 
-    double get_positive_solution_recursive(std::vector<int>& x) {
-      if (x.size() == 0) x.resize(n-1,0);
+    double get_positive_solution_DFS(std::vector<int>& x, int& count, int count_limit) {
+      if (x.size() == 0) {
+        x.resize(n-1,0);
+      }
+
+      if (all_strictly_positive(x)) count += 1;
+      if (count > count_limit) return 0.;
 
       /* Stop condition: x is solution and has positive score */
       double current_score = solution_score(x);
       if (current_score > 0.) return current_score;
 
-      std::vector<int> best_x;
-      double best_score = 0.;
 
+      double best_score = 0.;
+      vector<int> best_x;
       std::vector<int> undetermined;
       /* Loop from last line to first line */
       for (int i = m-1; i >= 0; --i) { 
+        undetermined.clear();
+        /* Check line */
+        int total = -1 * get(i,n-1);
+        for (int j = 0; j < n-1; ++j) {
+          int w = get(i,j);
+          if (w != 0) {
+            if (x[j] == 0) {
+              undetermined.push_back(j);
+            } else {
+              total -= w * x[j];
+            }
+          }
+        }
+        if (undetermined.size() == 0) {
+          if (total == 0) {
+            continue;
+          } else {
+            return 0.;
+          }
+        }
+
+        /* Fix one value and make recursive call */
+        double sum = 0.;
+        for (size_t k = 0; k < undetermined.size(); ++k) {
+          int j = undetermined[k];
+          int w = get(i,j);
+          sum += std::abs(w);
+        }
+        for (size_t k = 0; k < undetermined.size(); ++k) {
+          int j = undetermined[k];
+          int w = get(i,j);
+          double ideal_repartition = 1./sum * double(total);
+          int xmin = 1;
+          int xmax = int(double(total) / double(w));
+          if (xmax < 1) return 0.;
+
+          vector<std::pair<double,int> > prio_candidate;
+          for (int candidate = xmin; candidate < xmax+1; ++candidate) {
+            double dist = std::pow(ideal_repartition-candidate,2);
+            prio_candidate.push_back({dist,candidate});
+          }
+          std::sort(prio_candidate.begin(),prio_candidate.end());
+          vector<int> x2;
+          for (size_t l = 0; l < prio_candidate.size(); ++l) {
+            int candidate = prio_candidate[k].second;
+            x2 = x;
+            x2[j] = candidate;
+            double sub_score = get_positive_solution_DFS(x2, count, count_limit);
+            if (sub_score > 0.) { /* Found a solution ! Return this one */
+              x = x2;
+              return sub_score;
+            }
+            if (sub_score > best_score) {
+              best_score = sub_score;
+              best_x = x2;
+            }
+          }
+          for (int candidate = xmin; candidate < xmax+1; ++candidate) {
+            // double candidate_sum_sqrt = cur_sum_sqrt + std::sqrt(candidate);
+            // if (candidate_sum_sqrt <= score_filter) continue;
+          }
+        }
+      }
+      if (best_score > 0.) {
+        x = best_x;
+        return best_score;
+      }
+      return 0.;
+    }
+
+    double get_positive_solution_recursive(std::vector<int>& x, double& best_score) {
+      if (x.size() == 0) {
+        x.resize(n-1,0);
+        best_score = 0.;
+      }
+      static int count = 0;
+      count += 1;
+
+      /* Stop condition: x is solution and has positive score */
+      double current_score = solution_score(x);
+      DBG("   ", count, current_score, x);
+      if (current_score > best_score) {
+        best_score = current_score;
+        DBG("-> stop recursion, unroll", current_score, "->", best_score);
+        return current_score;
+      }
+
+      std::vector<int> best_x;
+      double best_score_b = best_score;
+      std::vector<int> undetermined;
+      /* Loop from last line to first line */
+      for (int i = m-1; i >= 0; --i) { 
+        undetermined.clear();
         /* Check line */
         int total = -1 * get(i,n-1);
         for (int j = 0; j < n-1; ++j) {
@@ -443,16 +550,20 @@ namespace QuadPatternMatching {
           int xmax = int(double(total) / double(w));
           if (xmax < 1) return 0.;
           for (int candidate = xmin; candidate < xmax+1; ++candidate) {
-            x[j] = candidate;
-            double score = get_positive_solution_recursive(x);
-            if (score > best_score) {
-              best_score = score;
-              best_x = x;
+            std::vector<int> x2 = x;
+            x2[j] = candidate;
+            double score = get_positive_solution_recursive(x2, best_score);
+            if (score == best_score && score > best_score_b) {
+              best_x = x2;
+              best_score_b = score;
             }
           }
         }
       }
-      return best_score;
+      if (best_x.size() > 0) {
+        x = best_x;
+      }
+      return best_score_b;
     }
 
   };
@@ -914,20 +1025,32 @@ namespace QuadPatternMatching {
       mat.set(s,nvars,-1. * (sideSizes[s]-1));
     }
     mat.tansform_to_row_reduced_echelon();
-    bool ok = mat.get_positive_solution(slt);
-    // double score = mat.get_positive_solution_recursive(slt);
-    // bool ok = (score > 0.);
-    if (ok) {
-      Msg::Info("solution found !");
-      DBG(slt);
+    bool use_recursive = true;
+    bool ok = false;
+    double score = 0.;
+    if (use_recursive) {
+      slt.clear();
+      int count = 0;
+      int count_limit = 1000; /* limit on the number of solution tried in the DFS */
+      score = mat.get_positive_solution_DFS(slt, count, count_limit);
+      DBG(score);
+      ok = (score > 0.);
     } else {
-      Msg::Info("solution not found !");
-      DBG(slt);
+      ok = mat.get_positive_solution(slt);
+      score = 0.;
+      for (int x_i: slt) score += std::sqrt(x_i);
+    }
+    if (ok) {
+      // Msg::Info("solution found !");
+      // DBG(slt);
+    } else {
+      // Msg::Info("solution not found !");
+      // DBG(slt);
       return 0.;
     }
-
-    double score = 0.;
-    for (int x_i: slt) score += std::sqrt(x_i);
+    if (ok) {
+      DBG("matched pattern", score, slt);
+    }
 
     return score;
   }
@@ -945,6 +1068,7 @@ namespace QuadPatternMatching {
     /* Initial config */
     {
       double match = checkPatternMatching(P, ssr, slt);
+      DBG(match);
       if (match > best) {
         best = match;
         rotation = rot;
@@ -956,6 +1080,7 @@ namespace QuadPatternMatching {
       rot += 1;
       std::rotate(ssr.begin(),ssr.begin()+1,ssr.end());
       double match = checkPatternMatching(P, ssr, slt);
+      DBG(match);
       if (match > best) {
         best = match;
         rotation = rot;
@@ -970,11 +1095,14 @@ namespace QuadPatternMatching {
       rot -= 1;
       std::rotate(ssr.begin(),ssr.begin()+1,ssr.end());
       double match = checkPatternMatching(P, ssr, slt);
+      DBG(match);
       if (match > best) {
         best = match;
         rotation = rot;
       }
     }
+
+    DBG("-", rotation, best);
 
     return best;
   }
@@ -986,9 +1114,13 @@ using namespace QuadPatternMatching;
 bool patchIsRemeshableWithQuadPattern(const std::vector<size_t>& sideSizes, 
     std::pair<size_t,int>& patternNoAndRot) {
   if (patterns.size() == 0) load_patterns();
+  DBG("---");
+  DBG("isRemeshable ?");
+  DBG(sideSizes);
 
   double best = 0.;
   for (size_t i = 0; i < patterns.size(); ++i) {
+    DBG(" ", i);
     const QuadMesh& P = patterns[i];
     if (sideSizes.size() != P.sides.size()) continue;
 
@@ -999,8 +1131,9 @@ bool patchIsRemeshableWithQuadPattern(const std::vector<size_t>& sideSizes,
       patternNoAndRot.second = rot;
       best = score;
     }
+    DBG("-",i,score);
   }
-  DBG(best,patternNoAndRot);
+  DBG("isRemeshable?", best, patternNoAndRot);
   return (best > 0.);
 }
 
