@@ -9,14 +9,21 @@ class MyMesh;
 
 class Cross2D{
  private:
-  int test;
+  std::vector<SVector3> _directions;
+  void _computeDirections();  
  public:
   MyMesh *_mesh;  
   const MEdge *edge;
   double theta;
-  Cross2D():_mesh(NULL),edge(NULL),theta(0.0){}
- Cross2D(MyMesh *m,const MEdge *e, double thetaNormal ):_mesh(m),edge(e),theta(thetaNormal){}
+ Cross2D():_mesh(NULL),edge(NULL),theta(0.0){}
+ Cross2D(MyMesh *m,const MEdge *e, double thetaNormal):_mesh(m),edge(e),theta(thetaNormal){_computeDirections();}
   SVector3 getClosestBranchToDirection(const SVector3 &direction){return SVector3();}
+  std::vector<SVector3> getDirections(){return _directions;}
+  SVector3 getDirection(size_t iDir){return _directions[iDir];}
+  SVector3 getEulerAngles(double &noNutation);
+  SVector3 getEulerAngles(std::vector<SVector3> baseRef, double &noNutation);
+  static std::vector<SVector3> getDirFromEulerAngles(const SVector3 &eulerAngles);
+  static std::vector<SVector3> getDirFromEulerAngles(std::vector<SVector3> baseRef, const SVector3 &eulerAngles);
 };
 
 class MyMesh{
@@ -113,13 +120,14 @@ class ConformalMapping{
   void _computeH();
   void _cutMeshOnCutGraph();
   void _createManifoldBasis(){_currentMesh->computeManifoldBasis();}
-  void _computeCrossesFromH(){}
+  void _computeCrossesFromH();
   void _fitModelToInitMesh();
   void _fitModelToFeatureMesh();
   void _fitModelToCutGraphMesh();
   void _viewScalarVertex(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, const std::string& viewName="defaultName");
   void _viewScalarTriangles(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, std::set<MTriangle *, MElementPtrLessThan> &triangles, const std::string& viewName="defaultName");
   void _viewCrosses(std::map<const MEdge *, Cross2D> crossField, const std::string& viewName="Crosses");
+  void _viewVectTri(std::map<const MTriangle *, SVector3, MElementPtrLessThan> crossField, const std::string& viewName="Crosses");
   
  public:
   ConformalMapping(GModel *gm);

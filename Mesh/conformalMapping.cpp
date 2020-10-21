@@ -166,6 +166,235 @@ static void getFaceLinesAndTriangles(GFace *gf, std::set<MLine *, MLinePtrLessTh
   addFaceTriangles(gf, t);
 }
 
+void liftEulerAngles(std::vector<SVector3> &vectEulerAngles){
+  SVector3 &eulerRef = vectEulerAngles[0];
+  //DBG solve periodicity here
+  for(size_t k=1;k<vectEulerAngles.size();k++){
+    SVector3 &euler = vectEulerAngles[k];
+    for(int i=0;i<3;i++){
+      if(fabs(euler[i]-2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
+	euler[i]=euler[i]-2*M_PI;
+      if(fabs(euler[i]+2*M_PI-eulerRef[i])<fabs(euler[i]-eulerRef[i]))
+	euler[i]=euler[i]+2*M_PI;
+    }
+  }
+  //DBG solve non unicity here
+  for(size_t k=1;k<vectEulerAngles.size();k++){
+    SVector3 &euler = vectEulerAngles[k];
+    if(fabs(euler[0]-M_PI-eulerRef[0])<fabs(euler[0]-eulerRef[0])){
+      /* printf("case 1\n"); */
+      euler[0]=euler[0]-M_PI;
+      euler[2]=euler[2]-M_PI;
+      euler[1]=-euler[1];
+      if(fabs(2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+	euler[1]=2*M_PI+euler[1];
+      }
+      if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+	euler[1]=-2*M_PI+euler[1];
+      }
+      if(fabs(2*M_PI+euler[2]-eulerRef[2])<fabs(euler[2]-eulerRef[2])){
+	euler[2]=2*M_PI+euler[2];
+      }
+      if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+	euler[2]=-2*M_PI+euler[2];
+      }
+    }
+    if(fabs(euler[0]+M_PI-eulerRef[0])<fabs(euler[0]-eulerRef[0])){
+      /* printf("case 2\n"); */
+      euler[0]=euler[0]+M_PI;
+      euler[2]=euler[2]-M_PI;
+      euler[1]=-euler[1];
+      if(fabs(2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+	euler[1]=2*M_PI+euler[1];
+      }
+      if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+	euler[1]=-2*M_PI+euler[1];
+      }
+      if(fabs(2*M_PI+euler[2]-eulerRef[2])<fabs(euler[2]-eulerRef[2])){
+	euler[2]=2*M_PI+euler[2];
+      }
+      if(fabs(-2*M_PI+euler[1]-eulerRef[1])<fabs(euler[1]-eulerRef[1])){
+	euler[2]=-2*M_PI+euler[2];
+      }
+    }
+  }
+  return;
+}
+
+void directionsToEulerAngle(const std::vector<SVector3> &dir, SVector3 &eulerAngles, double &flagNotUnique){
+  SVector3 u=dir[0];
+  SVector3 v=dir[1];
+  SVector3 w=dir[2];
+  
+  double psi=0.0;
+  double theta=0.0;
+  double phi=0.0;
+
+  int flagNoNutation=1;
+  double sign=0.0;
+  double phiPlusPsi=0.0;
+  if(fabs(w[2])<cos(1.*M_PI/180.0)) // if theta>M_PI-1deg or theta<1deg, snapped to M_PI or 0.
+    flagNoNutation=0.;
+
+  if(flagNoNutation){
+    if(w[2]<0){
+      theta=M_PI;
+      sign=-1.0;
+    }
+    else{
+      theta=0;
+      sign=1.0;
+    }
+    psi=0.0;
+    phiPlusPsi=atan2(-v[0],u[0]);
+    phi=phiPlusPsi;
+    eulerAngles[0]=psi;
+    eulerAngles[1]=theta;
+    eulerAngles[2]=phi;
+  }
+  else{
+    psi = atan2(w[0],-w[1]);
+    phi = atan2(u[2],v[2]);
+    if(fabs(cos(phi))>0.01)
+      theta=atan2(v[2]/cos(phi),w[2]);
+    else
+      theta=atan2(u[2]/sin(phi),w[2]);
+    eulerAngles[0]=psi;
+    eulerAngles[1]=theta;
+    eulerAngles[2]=phi;
+  }
+  flagNotUnique=sign;
+  return;
+}
+
+void Cross2D::_computeDirections(){
+  if(edge){
+    _directions.clear();
+    SVector3 eDir(edge->getVertex(1)->x() - edge->getVertex(0)->x(),
+		  edge->getVertex(1)->y() - edge->getVertex(0)->y(),
+		  edge->getVertex(1)->z() - edge->getVertex(0)->z());
+    eDir.normalize();
+    SVector3 normal=_mesh->normals[edge];
+    normal.normalize();
+    SVector3 t=crossprod(normal,eDir);
+    SVector3 U = cos(theta)*eDir + sin(theta)*t;
+    U.normalize();
+    SVector3 V = -sin(theta)*eDir + cos(theta)*t;
+    V.normalize();
+    _directions.push_back(U);
+    _directions.push_back(V);
+    _directions.push_back(normal);
+  }
+  return;
+}
+
+  //Warning !! No periodicity or lock problems are solved in this function. It is not needed because of characteristics of problem data and a well chosen reference base.
+  //If this function is needed in a different context, euler angles of each node at each node of the triangle have to be post treated in order to remove periodicity, lock, and non unicity of the representation
+SVector3 Cross2D::getEulerAngles(double &noNutation){
+  if(_directions.size()!=3){
+    _directions.clear();
+    _computeDirections();
+  }
+  SVector3 eulerAngles;
+  directionsToEulerAngle(_directions, eulerAngles, noNutation);
+  return eulerAngles;
+}
+
+SVector3 Cross2D::getEulerAngles(std::vector<SVector3> baseRef, double &noNutation){
+  if(_directions.size()!=3){
+    _directions.clear();
+    _computeDirections();
+  }
+  SVector3 eulerAngles;
+  fullMatrix<double> directionsFM(3,3);
+  fullMatrix<double> rotDirectionsFM(3,3);
+  fullMatrix<double> baseRefFM(3,3);
+  for(size_t k=0;k<3;k++)
+    baseRef[k].normalize();
+  for(size_t k=0;k<3;k++)
+    for(size_t l=0;l<3;l++){
+      directionsFM(k,l)=_directions[l][k];
+      baseRefFM(k,l)=baseRef[l][k];
+    }
+  //rotate directions here //DBG check if rotation is done properly CRITICAL
+  fullMatrix<double> intRes(3,3);//delete
+  directionsFM.mult(baseRefFM,intRes);//delete
+  baseRefFM.transposeInPlace();
+  baseRefFM.mult(directionsFM,rotDirectionsFM);//changed here
+  std::vector<SVector3> rotDir;
+  SVector3 init;
+  for(size_t k=0;k<3;k++)
+    rotDir.push_back(init);
+  for(size_t k=0;k<3;k++)
+    for(size_t l=0;l<3;l++)
+      rotDir[k][l]=rotDirectionsFM(l,k);
+  rotDirectionsFM.print("rotDir");
+  directionsToEulerAngle(rotDir, eulerAngles, noNutation);
+  return eulerAngles;
+}
+
+std::vector<SVector3> Cross2D::getDirFromEulerAngles(const SVector3 &eulerAngles){
+  std::vector<SVector3> dir(3,SVector3(0.0));
+  double c1 = cos(eulerAngles[0]);
+  double s1 = sin(eulerAngles[0]);
+  double c2 = cos(eulerAngles[1]);
+  double s2 = sin(eulerAngles[1]);
+  double c3 = cos(eulerAngles[2]);
+  double s3 = sin(eulerAngles[2]);
+  dir[0][0] = c1*c3-c2*s1*s3;
+  dir[0][1] = c2*c1*s3+c3*s1;
+  dir[0][2] = s3*s2;
+  
+  dir[1][0] = -c1*s3-c3*c2*s1;
+  dir[1][1] = c1*c2*c3-s1*s3;
+  dir[1][2] = c3*s2;
+
+  dir[2][0] = s2*s1;
+  dir[2][1] = -c1*s2;
+  dir[2][2] = c2;
+  
+  return dir;
+}
+
+std::vector<SVector3> Cross2D::getDirFromEulerAngles(std::vector<SVector3> baseRef, const SVector3 &eulerAngles){
+  fullMatrix<double> dirFM(3,3);
+  double c1 = cos(eulerAngles[0]);
+  double s1 = sin(eulerAngles[0]);
+  double c2 = cos(eulerAngles[1]);
+  double s2 = sin(eulerAngles[1]);
+  double c3 = cos(eulerAngles[2]);
+  double s3 = sin(eulerAngles[2]);
+  dirFM(0,0) = c1*c3-c2*s1*s3;
+  dirFM(0,1) = c2*c1*s3+c3*s1;
+  dirFM(0,2) = s3*s2;
+  
+  dirFM(1,0) = -c1*s3-c3*c2*s1;
+  dirFM(1,1) = c1*c2*c3-s1*s3;
+  dirFM(1,2) = c3*s2;
+
+  dirFM(2,0) = s2*s1;
+  dirFM(2,1) = -c1*s2;
+  dirFM(2,2) = c2;
+  dirFM.transposeInPlace();
+  fullMatrix<double> baseRefFM(3,3);
+  for(size_t k=0;k<3;k++)
+    baseRef[k].normalize();
+  for(size_t k=0;k<3;k++)
+    for(size_t l=0;l<3;l++)
+      baseRefFM(k,l)=baseRef[l][k];
+  // baseRefFM.transposeInPlace();
+  fullMatrix<double> intRes(3,3);//delete
+  fullMatrix<double> rotDirectionsFM(3,3);
+  dirFM.mult(baseRefFM,intRes);//delete
+  // baseRefFM.transposeInPlace();
+  baseRefFM.mult(dirFM,rotDirectionsFM); //critical //changed here
+  std::vector<SVector3> dir(3,SVector3(0.0));
+  for(size_t k=0;k<3;k++)
+    for(size_t l=0;l<3;l++)
+      dir[k][l]=rotDirectionsFM(l,k);
+  return dir;
+}
+
 MyMesh::MyMesh(GModel *gm){
   getAllLinesAndTriangles(gm, lines, linesEntities, triangles);
   for(MTriangle *t: triangles){
@@ -489,7 +718,6 @@ void MyMesh::_computeGaussCurv(){
       weight[v]=(patchArea[v]/2.-cotanL[v]/8.);
     }
   }
-  //Correction for boundary vertices here //CAREFULL ! This is wrong. We have to project both tangent in the tangent space, compute angle between both, and the compute the angular deflect to this angle.
   for(MVertex *v: featureVertices){
     if(featureVertexToEdges[v].size()!=2){
       Msg::Error("Can't compute Gaussian curvature on non manifold surface, or on manifold with feature lines. Consider splitting geometry along feature lines.");
@@ -638,16 +866,13 @@ double MyMesh::_getAngleBetweenEdges(const MEdge &e,const MEdge &eRef, SVector3 
 }
 
 void MyMesh::computeManifoldBasis(){
-  createPatchs();
+  if(trianglesPatchs.size()==0)
+    createPatchs();
   std::map<const MEdge *, double> theta;
-  for(const MEdge &e: edges){
-    theta[&e]=-10000;
-  }
-  for(size_t k=0;k<trianglesPatchs.size();k++){
-    std::set<MTriangle*, MElementPtrLessThan> tri = trianglesPatchs[k];
-    //grabbing vertices we are interested in
+  for(size_t kP=0;kP<trianglesPatchs.size();kP++){
+    std::set<MTriangle*, MElementPtrLessThan> tri = trianglesPatchs[kP];
+    //grabbing edges we are interested in
     std::map<const MEdge *, size_t> idEdge;
-    std::set<MVertex *, MVertexPtrLessThan> vertices;
     size_t id=0;
     for(MTriangle *t: tri){
       for(int k=0;k<3;k++){
@@ -674,7 +899,7 @@ void MyMesh::computeManifoldBasis(){
     dofManager<double> *dof = new dofManager<double>(_lsys);
     std::set<const MEdge*> dbgEdgeBC;
     dbgEdgeBC.insert(triangleToEdges[*(tri.begin())][0]);
-    ConformalMapping::_viewEdges(dbgEdgeBC,"edgeBC");
+    // ConformalMapping::_viewEdges(dbgEdgeBC,"edgeBC");
     Dof E0(idEdge[*(dbgEdgeBC.begin())], Dof::createTypeWithTwoInts(0, 1));
     Dof E02(idEdge[*(dbgEdgeBC.begin())], Dof::createTypeWithTwoInts(1, 1));
     dof->fixDof(E0,1.0);dof->fixDof(E02,0.0);
@@ -780,7 +1005,7 @@ void MyMesh::computeManifoldBasis(){
     delete dof;
   }
   for(const MEdge &e: edges){
-    crossField[&e]=Cross2D(this,&e,theta[&e]);
+    manifoldBasis[&e]=Cross2D(this,&e,theta[&e]);
   }
   ConformalMapping::_viewScalarEdges(theta,"theta"); //DBG
   return;
@@ -1011,14 +1236,17 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   std::cout << "Create manifold basis" << std::endl;
   _currentMesh->viewNormals();
   _createManifoldBasis();
-  _viewCrosses(_currentMesh->crossField,"manifold basis");
+  _viewCrosses(_currentMesh->manifoldBasis,"manifold basis");
   //solve crosses
-  // _computeCrossesFromH();
+  _computeCrossesFromH();
+  std::cout << "print crosses" << std::endl;
+  _viewCrosses(_currentMesh->crossField,"crossfield");
   //parametrization
 }
 
 void ConformalMapping::_computeH(){
-  _currentMesh->createPatchs();
+  if(_currentMesh->trianglesPatchs.size()==0)
+    _currentMesh->createPatchs();
   bool viewPatchForDebug=false;
   for(size_t k=0;k<_currentMesh->trianglesPatchs.size();k++){
     std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[k];
@@ -1117,6 +1345,301 @@ void ConformalMapping::_computeH(){
   }
   if(viewPatchForDebug)
     _currentMesh->viewPatchs();
+  return;
+}
+
+void ConformalMapping::_computeCrossesFromH(){
+  if(_currentMesh->trianglesPatchs.size()==0)
+    _currentMesh->createPatchs();
+  std::map<const MEdge *, double> theta;
+  std::map<const MTriangle *, SVector3, MElementPtrLessThan> gradHtri; //dbg
+  for(size_t kP=0;kP<_currentMesh->trianglesPatchs.size();kP++){
+    std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[kP];
+    //grabbing edges we are interested in and numbering dofs
+    std::map<const MEdge *, size_t> idEdge;
+    std::set<const MEdge*> edgeBC;
+    size_t id=0;
+    size_t nBC=0;
+    for(MTriangle *t: tri){
+      for(int k=0;k<3;k++){
+	const MEdge *eK = _currentMesh->triangleToEdges[t][k];
+	if(idEdge.find(eK)==idEdge.end()){
+	  idEdge[eK]=id;
+	  id++;
+	  if(_currentMesh->isFeatureEdge[eK]&&nBC<1){
+	    edgeBC.insert(eK);
+	    nBC++;
+	  }
+	}
+      }
+    }
+    //fill _currentMesh->manifoldBasis
+#if defined(HAVE_SOLVER)
+#if defined(HAVE_PETSC)
+    linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+    printf("petsc solver\n");
+#elif defined(HAVE_MUMPS)
+    linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
+    printf("mmups solver\n");
+#else
+    linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+    printf("default solver\n");
+#endif
+#endif
+    dofManager<double> *dof = new dofManager<double>(_lsys);
+    // ConformalMapping::_viewEdges(edgeBC,"edgeBC");
+    Dof E0(idEdge[*(edgeBC.begin())], Dof::createTypeWithTwoInts(0, 1));
+    dof->fixDof(E0,-_currentMesh->manifoldBasis[*(edgeBC.begin())].theta);
+    size_t nEdgesId=0;
+    for(const auto &kv: idEdge){
+      //numberdof here
+      Dof EdgeDof(kv.second, Dof::createTypeWithTwoInts(0, 1));
+      dof->numberDof(EdgeDof);
+      nEdgesId++;
+    }    
+    Msg::Info("Crosses system, %i unknowns...",idEdge.size());
+    Msg::Info(" ");
+    for(MTriangle *t: tri){
+      double V = t->getVolume();
+      SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
+		   t->getVertex(1)->y() - t->getVertex(0)->y(),
+		   t->getVertex(1)->z() - t->getVertex(0)->z());
+      SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
+		   t->getVertex(2)->y() - t->getVertex(0)->y(),
+		   t->getVertex(2)->z() - t->getVertex(0)->z());
+      SVector3 tNormal = crossprod(v10, v20);
+      tNormal.normalize();
+      double g1[3], g2[3], g3[3];
+      double a[3];
+      a[0] = 1;
+      a[1] = 0;
+      a[2] = 0;
+      t->interpolateGrad(a, 0, 0, 0, g1);
+      a[0] = 0;
+      a[1] = 1;
+      a[2] = 0;
+      t->interpolateGrad(a, 0, 0, 0, g2);
+      a[0] = 0;
+      a[1] = 0;
+      a[2] = 1;
+      t->interpolateGrad(a, 0, 0, 0, g3);
+      SVector3 G[3];
+      G[0] = SVector3(g1[0] + g2[0] - g3[0], g1[1] + g2[1] - g3[1],
+		      g1[2] + g2[2] - g3[2]);
+      G[1] = SVector3(g2[0] + g3[0] - g1[0], g2[1] + g3[1] - g1[1],
+		      g2[2] + g3[2] - g1[2]);
+      G[2] = SVector3(g1[0] + g3[0] - g2[0], g1[1] + g3[1] - g2[1],
+		      g1[2] + g3[2] - g2[2]);
+
+      std::vector<Cross2D*> basesTriEdge;
+      basesTriEdge.reserve(3);
+      for(size_t k=0;k<3;k++){
+	basesTriEdge.push_back(&(_currentMesh->manifoldBasis[_currentMesh->triangleToEdges[t][k]]));
+      }
+      //Choose baseRef and create euler lifting
+      double delta[4]={0.0,3.*M_PI/180.0,6.*M_PI/180.0,-3.*M_PI/180.0};
+      SVector3 initSV3(0.0);
+      std::vector<SVector3> baseRef(3,initSV3);
+      size_t idDelta=0;
+      double noNutation=1;
+      std::vector<SVector3> eulerAngles(3,initSV3);
+      printf("-----------------------------------------------------------------\n");
+      while(fabs(noNutation)>1e-10){
+	if(idDelta>3){
+	  Msg::Error("Bug base tri euler angles.");
+	  std::cout << "Bug base tri euler angles." << std::endl;
+	  return;
+	}
+	std::cout << "baseTriEdg0 / U: " << basesTriEdge[0]->getDirection(0)[0] << " / " << basesTriEdge[0]->getDirection(0)[1] << " / " << basesTriEdge[0]->getDirection(0)[2] << std::endl;
+	std::cout << "baseTriEdg0 / V: " << basesTriEdge[0]->getDirection(1)[0] << " / " << basesTriEdge[0]->getDirection(1)[1] << " / " << basesTriEdge[0]->getDirection(1)[2] << std::endl;
+	std::cout << "baseTriEdg0 / N: " << basesTriEdge[0]->getDirection(2)[0] << " / " << basesTriEdge[0]->getDirection(2)[1] << " / " << basesTriEdge[0]->getDirection(2)[2] << std::endl;
+	baseRef[0]=basesTriEdge[0]->getDirection(0);
+	baseRef[1]=cos(delta[idDelta])*basesTriEdge[0]->getDirection(1) + sin(delta[idDelta])*basesTriEdge[0]->getDirection(2);
+	baseRef[2]=-sin(delta[idDelta])*basesTriEdge[0]->getDirection(1) + cos(delta[idDelta])*basesTriEdge[0]->getDirection(2);
+	//
+	if(fabs(baseRef[0].norm()-1.)>1e-12||fabs(baseRef[1].norm()-1.)>1e-12||fabs(baseRef[2].norm()-1.)>1e-12){//dbg
+	  std::cout << "++++++ norms baseRef : " << baseRef[0].norm() << " / " << baseRef[1].norm() << " / " << baseRef[2].norm() << std::endl;
+	}
+	if(fabs(dot(baseRef[0],baseRef[1]))>1e-12||fabs(dot(baseRef[0],baseRef[2]))>1e-12||fabs(dot(baseRef[2],baseRef[1]))>1e-12){//dbg
+	  std::cout << "++++++ ps baseRef : " << dot(baseRef[0],baseRef[1]) << " / " << dot(baseRef[0],baseRef[2]) << " / " << dot(baseRef[2],baseRef[1]) << std::endl;
+	}
+	if(dot(baseRef[2],crossprod(baseRef[0],baseRef[1]))<0)//dbg
+	  std::cout << "++++++ direct : " << dot(baseRef[2],crossprod(baseRef[0],baseRef[1])) << std::endl;
+	//
+	double noNutationK=0.0;
+	noNutation=0.0;
+	printf("-------\n");
+	for(size_t k=0;k<3;k++){
+	  std::cout << "dir " << k << std::endl;
+	  eulerAngles[k]=basesTriEdge[k]->getEulerAngles(baseRef, noNutationK);
+	  if(fabs(noNutationK)>fabs(noNutation))
+	    noNutation=noNutationK;
+	}
+	printf("-------\n");
+	std::cout << "euler edge 0 : " << eulerAngles[0][0] << " / " << eulerAngles[0][1] << " / " << eulerAngles[0][2] << std::endl;
+	std::cout << "euler edge 1 : " << eulerAngles[1][0] << " / " << eulerAngles[1][1] << " / " << eulerAngles[1][2] << std::endl;
+	std::cout << "euler edge 2 : " << eulerAngles[2][0] << " / " << eulerAngles[2][1] << " / " << eulerAngles[2][2] << std::endl;
+	std::cout << "delta : " << delta[idDelta] << std::endl;
+	std::cout << "fabs w2 : " << cos(delta[idDelta]) << std::endl;
+	std::cout << "cosDelta : " << cos(delta[idDelta]) << std::endl;
+	std::cout << "sinDelta : " << sin(delta[idDelta]) << std::endl;
+	idDelta++;
+      }
+      //critical: lifting on euler angles have to be done !!
+      std::cout << "Before lifting" << std::endl;
+      std::cout << "euler edge 0 : " << eulerAngles[0][0] << " / " << eulerAngles[0][1] << " / " << eulerAngles[0][2] << std::endl;
+      std::cout << "euler edge 1 : " << eulerAngles[1][0] << " / " << eulerAngles[1][1] << " / " << eulerAngles[1][2] << std::endl;
+      std::cout << "euler edge 2 : " << eulerAngles[2][0] << " / " << eulerAngles[2][1] << " / " << eulerAngles[2][2] << std::endl;
+      liftEulerAngles(eulerAngles);
+      std::cout << "After lifting" << std::endl;
+      std::cout << "euler edge 0 : " << eulerAngles[0][0] << " / " << eulerAngles[0][1] << " / " << eulerAngles[0][2] << std::endl;
+      std::cout << "euler edge 1 : " << eulerAngles[1][0] << " / " << eulerAngles[1][1] << " / " << eulerAngles[1][2] << std::endl;
+      std::cout << "euler edge 2 : " << eulerAngles[2][0] << " / " << eulerAngles[2][1] << " / " << eulerAngles[2][2] << std::endl;
+      //Compute H and euler angles gradients
+      SVector3 HNodes(0.0);
+      for(size_t k=0;k<3;k++){
+	MVertex *vK=t->getVertex(k);
+	HNodes[k]=_featureCutMesh->H[_cutGraphToFeatureMeshVertex[vK]];
+      }
+      SVector3 gradH(0.0);
+      for(size_t k=0;k<3;k++)
+	gradH[k]=HNodes[0]*g1[k] + HNodes[1]*g2[k] + HNodes[2]*g3[k];
+      gradHtri[t]=gradH;
+      SVector3 psi(0.0), gamma(0.0), phi(0.0);
+      for(size_t k=0;k<3;k++){
+	psi[k]=eulerAngles[k][0];
+	gamma[k]=eulerAngles[k][1];
+	phi[k]=eulerAngles[k][2];
+      }
+      SVector3 gradPsi(0.0), gradPhi(0.0);
+      gradPsi=psi[0]*G[0]+psi[1]*G[1]+psi[2]*G[2];
+      gradPhi=phi[0]*G[0]+phi[1]*G[1]+phi[2]*G[2];
+      // std::cout << "psi : " << psi[0] << ", " << psi[1] << ", " << psi[2] << std::endl;
+      // std::cout << "gamma : " << gamma[0] << ", " << gamma[1] << ", " << gamma[2] << std::endl;
+      // std::cout << "phi : " << phi[0] << ", " << phi[1] << ", " << phi[2] << std::endl;
+      double psiGauss=(psi[0]+psi[1]+psi[2])/3.;
+      double gammaGauss=(gamma[0]+gamma[1]+gamma[2])/3.;
+      double phiGauss=(phi[0]+phi[1]+phi[2])/3.;
+      SVector3 eulerGauss(psiGauss,gammaGauss,phiGauss);
+      // std::cout << "GAUSS psi : " << psiGauss << ", gamma " << gammaGauss << ", phi" << phiGauss << std::endl;
+      // std::vector<SVector3> baseGauss = Cross2D::getDirFromEulerAngles(eulerGauss); // critical: euler are corresponding to chosen local basis, not XYZ...
+      std::vector<SVector3> baseGauss = Cross2D::getDirFromEulerAngles(baseRef, eulerGauss); // critical: euler are corresponding to chosen local basis, not XYZ...
+      //dbg
+      SVector3 eulerTest(0.0);
+      double flag=0.0;
+      directionsToEulerAngle(baseGauss, eulerTest, flag);
+      std::vector<SVector3> baseGaussTest = Cross2D::getDirFromEulerAngles(eulerTest);
+      SVector3 diffV(0.0);
+      for(size_t k=0;k<3;k++){
+	diffV=baseGauss[k]-baseGaussTest[k];
+	if(diffV.norm()>1e-12){
+	  std::cout << "pb euler angles " << std::endl;
+	}
+      }
+      //
+      SVector3 Ug=baseGauss[0];
+      SVector3 Vg=baseGauss[1];
+      // std::cout << "U0 : " << basesTriEdge[0]->getDirection(0)[0] << ", " << basesTriEdge[0]->getDirection(0)[1] << ", " << basesTriEdge[0]->getDirection(0)[2] << std::endl;
+      // std::cout << "V0 : " << basesTriEdge[0]->getDirection(1)[0] << ", " << basesTriEdge[0]->getDirection(1)[1] << ", " << basesTriEdge[0]->getDirection(1)[2] << std::endl;
+      // std::cout << "Ugauss : " << Ug[0] << ", " << Ug[1] << ", " << Ug[2] << std::endl;
+      // std::cout << "Vgauss : " << Vg[0] << ", " << Vg[1] << ", " << Vg[2] << std::endl;
+      SVector3 Gu(0.0);
+      for(size_t k=0; k<3; k++)
+	for(size_t l=0; l<3; l++)
+	  Gu[k]+=Ug[l]*G[k][l];
+      SVector3 Gv(0.0);
+      for(size_t k=0; k<3; k++)
+	for(size_t l=0; l<3; l++)
+	  Gv[k]+=Vg[l]*G[k][l];
+      fullMatrix<double> Kelem(3, 3);
+      for(size_t k=0; k<3; k++)
+	for(size_t l=0; l<3; l++)
+	  Kelem(k,l)=(Gu[k]*Gu[l]+Gv[k]*Gv[l])*V;
+      SVector3 Relem(0.0);
+      double Ru=(-dot(gradH,Vg)-dot(gradPhi,Ug)-cos(gammaGauss)*dot(gradPsi,Ug))*V; //init
+      double RuT=(-dot(gradH,Vg)-dot(phi,Gu)-cos(gammaGauss)*dot(psi,Gu))*V;
+      if(fabs(Ru-RuT)>1e-12)
+	printf("pb ru\n");
+      // double Ru=(-dot(gradH,Vg)+dot(gradPhi,Ug)+cos(gammaGauss)*dot(gradPsi,Ug))*V;
+      // double Ru=(-dot(gradH,Vg))*V; //dbg planar
+      double Rv=(dot(gradH,Ug)-dot(gradPhi,Vg)-cos(gammaGauss)*dot(gradPsi,Vg))*V; //init
+      double RvT=(dot(gradH,Ug)-dot(phi,Gv)-cos(gammaGauss)*dot(psi,Gv))*V;
+      if(fabs(Rv-RvT)>1e-12)
+	printf("pb rv\n");
+      // double Rv=(dot(gradH,Ug)+dot(gradPhi,Vg)+cos(gammaGauss)*dot(gradPsi,Vg))*V;
+      // double Rv=(dot(gradH,Ug))*V; //dbg planar
+      for(size_t k=0; k<3; k++){
+	Relem[k]=Gu[k]*Ru + Gv[k]*Rv;
+      }
+      for(size_t kE=0; kE<3; kE++){
+	Dof Ek(idEdge[_currentMesh->triangleToEdges[t][kE]], Dof::createTypeWithTwoInts(0, 1));
+	dof->assemble(Ek, Relem[kE]);
+      	for(size_t lE=0; lE<3; lE++){
+	  Dof El(idEdge[_currentMesh->triangleToEdges[t][lE]], Dof::createTypeWithTwoInts(0, 1));
+	  dof->assemble(Ek, El, Kelem(kE,lE));
+      	}
+      }
+    }
+    std::cout << "Crosses system, " << idEdge.size()<< " unknowns..." << std::endl;
+    _lsys->systemSolve();
+    for(const auto &kv: idEdge){
+      double valueTheta=0.0;
+      Dof c(kv.second, Dof::createTypeWithTwoInts(0, 1));
+      dof->getDofValue(c, valueTheta);
+      theta[kv.first]=valueTheta;
+    }
+    delete _lsys;
+    delete dof;
+  }
+  _viewVectTri(gradHtri, "gradH");//dbg
+  std::map<const MTriangle *, SVector3, MElementPtrLessThan> gradThetaTri; //dbg
+  for(MTriangle *t: _currentMesh->triangles){ //dbg
+    double V = t->getVolume();
+    SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
+		 t->getVertex(1)->y() - t->getVertex(0)->y(),
+		 t->getVertex(1)->z() - t->getVertex(0)->z());
+    SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
+		 t->getVertex(2)->y() - t->getVertex(0)->y(),
+		 t->getVertex(2)->z() - t->getVertex(0)->z());
+    SVector3 tNormal = crossprod(v10, v20);
+    tNormal.normalize();
+    double g1[3], g2[3], g3[3];
+    double a[3];
+    a[0] = 1;
+    a[1] = 0;
+    a[2] = 0;
+    t->interpolateGrad(a, 0, 0, 0, g1);
+    a[0] = 0;
+    a[1] = 1;
+    a[2] = 0;
+    t->interpolateGrad(a, 0, 0, 0, g2);
+    a[0] = 0;
+    a[1] = 0;
+    a[2] = 1;
+    t->interpolateGrad(a, 0, 0, 0, g3);
+    SVector3 G[3];
+    G[0] = SVector3(g1[0] + g2[0] - g3[0], g1[1] + g2[1] - g3[1],
+		    g1[2] + g2[2] - g3[2]);
+    G[1] = SVector3(g2[0] + g3[0] - g1[0], g2[1] + g3[1] - g1[1],
+		    g2[2] + g3[2] - g1[2]);
+    G[2] = SVector3(g1[0] + g3[0] - g2[0], g1[1] + g3[1] - g2[1],
+		    g1[2] + g3[2] - g2[2]);
+    SVector3 thetaElem(0.0);
+    size_t idE=0;
+    for(auto e: _currentMesh->triangleToEdges[t]){
+      thetaElem[idE] = theta[e];
+      idE++;
+    }
+    SVector3 gradTheta(0.0);
+    for(size_t k=0;k<3;k++)
+      gradTheta+=thetaElem[k]*G[k];
+    gradThetaTri[t] = gradTheta;
+  }
+  _viewVectTri(gradThetaTri, "gradTheta");//dbg
+  for(const MEdge &e: _currentMesh->edges){
+    _currentMesh->crossField[&e]=Cross2D(_currentMesh,&e,_currentMesh->manifoldBasis[&e].theta+theta[&e]);
+  }
+  ConformalMapping::_viewScalarEdges(theta, "theta CF");
   return;
 }
 
@@ -1496,13 +2019,13 @@ void ConformalMapping::_cutMeshOnCutGraph(){
       }
     }
     //add new feature MLine and MEdge if some where created
-    if(_cutGraphCutMesh->isFeatureEdge[fe]){
+    if(_featureCutMesh->isFeatureEdge[fe]){
       for(MTriangle *t:_featureCutMesh->edgeToTriangles[fe]){
 	MEdgeEqual isEdgeTheSame;
 	for(int k=0;k<3;k++){
 	  MEdge newEdgeK=t->getEdge(k);
 	  if(_cutGraphToFeatureMeshVertex[newEdgeK.getVertex(0)]!=NULL&&_cutGraphToFeatureMeshVertex[newEdgeK.getVertex(1)]!=NULL){
-	    MEdge edgeK(_featureToInitMeshVertex[newEdgeK.getVertex(0)],_featureToInitMeshVertex[newEdgeK.getVertex(1)]);
+	    MEdge edgeK(_cutGraphToFeatureMeshVertex[newEdgeK.getVertex(0)],_cutGraphToFeatureMeshVertex[newEdgeK.getVertex(1)]);
 	    if(isEdgeTheSame(edgeK,*fe)){
 	      std::pair<std::set<MEdge, MEdgeLessThan>::iterator,bool> insertData;
 	      insertData=_cutGraphCutMesh->edges.insert(newEdgeK);
@@ -1676,10 +2199,12 @@ void ConformalMapping::_viewScalarEdges(std::map<const MEdge *, double> &scalar,
     datalist.push_back(b.z());
     datalist.push_back(kv.second);
   }
-  gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
-  int dataListViewTag = gmsh::view::add(viewName);
-  gmsh::view::addListData(dataListViewTag, "SP", datalist.size()/(3+1), datalist);
+  if(!datalist.empty()){
+    gmsh::initialize();
+    Msg::Debug("create view '%s'",viewName);
+    int dataListViewTag = gmsh::view::add(viewName);
+    gmsh::view::addListData(dataListViewTag, "SP", datalist.size()/(3+1), datalist);
+  }
 #else 
   Msg::Error("Cannot create view without POST module");
   return;
@@ -1691,30 +2216,75 @@ void ConformalMapping::_viewCrosses(std::map<const MEdge *, Cross2D> crossField,
 
   std::vector<double> datalist;
   size_t nData=0;
-  for(const auto &kv: crossField){
+  for(auto &kv: crossField){
     SPoint3 b=kv.first->barycenter();
-    if(!(kv.second.theta==-10000)){
-      for(size_t k=0; k<2; k++){
-	datalist.push_back(b.x());
-	datalist.push_back(b.y());
-	datalist.push_back(b.z());
-	SVector3 vRef(kv.first->getVertex(1)->x() - kv.first->getVertex(0)->x(),
-		      kv.first->getVertex(1)->y() - kv.first->getVertex(0)->y(),
-		      kv.first->getVertex(1)->z() - kv.first->getVertex(0)->z());
-	vRef.normalize();
-	SVector3 normal=kv.second._mesh->normals[kv.first];
-	SVector3 t=crossprod(normal,vRef);
-	t.normalize();
-	double angle=kv.second.theta + k*M_PI/2.;
-	// double angle=kv.second.fourTheta;
-	SVector3 branche = cos(angle)*vRef + sin(angle)*t;
-	// SVector3 branche(cos(angle), sin(angle), 0.);
-	datalist.push_back(branche[0]);
-	datalist.push_back(branche[1]);
-	datalist.push_back(branche[2]);
-	nData++;
-      }
+    for(size_t k=0; k<2; k++){
+      datalist.push_back(b.x());
+      datalist.push_back(b.y());
+      datalist.push_back(b.z());
+      SVector3 vRef(kv.first->getVertex(1)->x() - kv.first->getVertex(0)->x(),
+		    kv.first->getVertex(1)->y() - kv.first->getVertex(0)->y(),
+		    kv.first->getVertex(1)->z() - kv.first->getVertex(0)->z());
+      vRef.normalize();
+      SVector3 normal=kv.second._mesh->normals[kv.first];
+      SVector3 t=crossprod(normal,vRef);
+      t.normalize();
+      double angle=kv.second.theta + k*M_PI/2.;
+      SVector3 branche = kv.second.getDirection(k);
+      datalist.push_back(branche[0]);
+      datalist.push_back(branche[1]);
+      datalist.push_back(branche[2]);
+      nData++;
     }
+    for(size_t k=0; k<2; k++){
+      datalist.push_back(b.x());
+      datalist.push_back(b.y());
+      datalist.push_back(b.z());
+      SVector3 vRef(kv.first->getVertex(1)->x() - kv.first->getVertex(0)->x(),
+		    kv.first->getVertex(1)->y() - kv.first->getVertex(0)->y(),
+		    kv.first->getVertex(1)->z() - kv.first->getVertex(0)->z());
+      vRef.normalize();
+      SVector3 normal=kv.second._mesh->normals[kv.first];
+      SVector3 t=crossprod(normal,vRef);
+      t.normalize();
+      double angle=kv.second.theta + k*M_PI/2.;
+      SVector3 branche = kv.second.getDirection(k);
+      datalist.push_back(-branche[0]);
+      datalist.push_back(-branche[1]);
+      datalist.push_back(-branche[2]);
+      nData++;
+    }
+  }
+  gmsh::initialize();
+  Msg::Debug("create view '%s'",viewName);
+  int dataListViewTag = gmsh::view::add(viewName);
+  // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
+  gmsh::view::addListData(dataListViewTag, "VP", nData, datalist);
+#else 
+  Msg::Error("Cannot create view without POST module");
+  return;
+#endif
+}
+
+void ConformalMapping::_viewVectTri(std::map<const MTriangle *, SVector3, MElementPtrLessThan> vectTri, const std::string& viewName){ //for DBG only
+#if defined(HAVE_POST)
+
+  std::vector<double> datalist;
+  size_t nData=0;
+  for(auto &kv: vectTri){
+    SVector3 b(0.0);
+    for(size_t k=0; k<3; k++){
+      b[0]+=kv.first->getVertex(k)->x()/3.;
+      b[1]+=kv.first->getVertex(k)->y()/3.;
+      b[2]+=kv.first->getVertex(k)->z()/3.;
+    }
+    datalist.push_back(b[0]);
+    datalist.push_back(b[1]);
+    datalist.push_back(b[2]);
+    datalist.push_back(kv.second.x());
+    datalist.push_back(kv.second.y());
+    datalist.push_back(kv.second.z());
+    nData++;
   }
   gmsh::initialize();
   Msg::Debug("create view '%s'",viewName);
