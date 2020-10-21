@@ -177,12 +177,12 @@ endif()
 set(GMSH_DATE "${DATE}")
 
 if(NOT GMSH_HOST)
-  execute_process(COMMAND hostname OUTPUT_VARIABLE HOSTNAME
+  execute_process(COMMAND hostname OUTPUT_VARIABLE HOST
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(NOT HOSTNAME)
-    set(HOSTNAME "unknown")
+  if(NOT HOST)
+    set(HOST "unknown")
   endif()
-  set(GMSH_HOST "${HOSTNAME}")
+  set(GMSH_HOST "${HOST}")
 endif()
 
 if(NOT GMSH_PACKAGER)
