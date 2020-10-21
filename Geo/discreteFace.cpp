@@ -293,7 +293,7 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
   SVector3 v21(t3d.getVertex(1)->x() - t3d.getVertex(0)->x(),
                t3d.getVertex(1)->y() - t3d.getVertex(0)->y(),
                t3d.getVertex(1)->z() - t3d.getVertex(0)->z());
-  SVector3 n = crossprod(v31, v21);
+  SVector3 n = crossprod(v21, v31);
   n.normalize();
   return n;
 }
