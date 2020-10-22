@@ -202,7 +202,7 @@ namespace QMT_Utils {
           std::forward<T>(rest)...);
     }
 
-  static std::string env_var(std::string const & key) {
+  inline std::string env_var(std::string const & key) {
     char * var;
     var = getenv(key.c_str());
     std::string strvar = "";

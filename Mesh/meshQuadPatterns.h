@@ -11,9 +11,13 @@
 class MVertex;
 class GFace;
 class MElement;
+class SPoint3;
 
 
-bool patchIsRemeshableWithQuadPattern(const std::vector<size_t>& sideSizes, std::pair<size_t,int>& patternNoAndRot);
+bool patchIsRemeshableWithQuadPattern(size_t Ncorners, 
+    const std::vector<size_t>& sideSizes, 
+    std::pair<size_t,int>& patternNoAndRot,
+    double& irregularityMeasure);
 
 /* Remesh a cavity (defined by its boundary arranged in sides) with a quad pattern
  * some important notes: 
@@ -26,7 +30,8 @@ int remeshPatchWithQuadPattern(GFace* gf,
     const std::pair<size_t,int>& patternNoAndRot,      /* pattern to use, from patchIsRemeshableWithQuadPattern */
     std::vector<MVertex*> & newVertices,               /* new vertices inside the cavity */
     std::vector<bool> & vertexIsIrregular,             /* for each new vertex, true if irregular */
-    std::vector<MElement*> & newElements               /* new quads inside the cavity */
+    std::vector<MElement*> & newElements,              /* new quads inside the cavity */
+    SPoint3* center = NULL
     );
 
 /* Remesh small cavity, useful to remove:
