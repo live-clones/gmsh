@@ -354,11 +354,38 @@ GMSH_API int gmshModelAddPhysicalGroup(const int dim, int * tags, size_t tags_n,
   return result_api_;
 }
 
+GMSH_API void gmshModelRemovePhysicalGroups(int * dimTags, size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::removePhysicalGroups(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelSetPhysicalName(const int dim, const int tag, const char * name, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     gmsh::model::setPhysicalName(dim, tag, name);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelRemovePhysicalName(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::removePhysicalName(name);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -468,33 +495,6 @@ GMSH_API void gmshModelRemoveEntityName(const char * name, int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::removeEntityName(name);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelRemovePhysicalGroups(int * dimTags, size_t dimTags_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::vectorpair api_dimTags_(dimTags_n/2);
-    for(size_t i = 0; i < dimTags_n/2; ++i){
-      api_dimTags_[i].first = dimTags[i * 2 + 0];
-      api_dimTags_[i].second = dimTags[i * 2 + 1];
-    }
-    gmsh::model::removePhysicalGroups(api_dimTags_);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelRemovePhysicalName(const char * name, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::removePhysicalName(name);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2356,6 +2356,36 @@ GMSH_API void gmshModelGeoSetMaxTag(const int dim, const int maxTag, int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::geo::setMaxTag(dim, maxTag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API int gmshModelGeoAddPhysicalGroup(const int dim, int * tags, size_t tags_n, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_(tags, tags + tags_n);
+    result_api_ = gmsh::model::geo::addPhysicalGroup(dim, api_tags_, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelGeoRemovePhysicalGroups(int * dimTags, size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::geo::removePhysicalGroups(api_dimTags_);
   }
   catch(...){
     if(ierr) *ierr = 1;

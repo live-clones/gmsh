@@ -419,12 +419,12 @@ GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
                                            const std::vector<int> &tags,
                                            const int tag)
 {
-  // FIXME: We currently still store the "original" physical groups in
-  // GEOInternals, because some operations in the built-in kernel directly
-  // manipulate physicals (most notably Coherence). Until we fully move the
-  // physicals to GModel, we need to add the physicals in GEOInternals and
-  // perform a hidden sync (which should not reset the mesh attributes of the
-  // entities of they have already been created...).
+  // FIXME: 1) the "master" physical group definitions are still stored in the
+  // buil-in CAD kernel, so that built-in CAD operations (e.g. Coherence) can
+  // track physical groups; and 2) the synchronization of the built-in CAD
+  // kernel triggers a reset of physical groups in GModel, followed by a
+  // copy. So we currently need to maintain both copies when playing with
+  // physical groups in the api at the model level.
   _checkInit();
   int outTag = tag;
   if(outTag < 0) {
@@ -438,8 +438,27 @@ GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
     Msg::Error("Could not add physical group");
     throw Msg::GetLastError();
   }
-  GModel::current()->getGEOInternals()->synchronize(GModel::current(), false);
+  GModel::current()->addPhysicalGroup(dim, outTag, tags);
   return outTag;
+}
+
+GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
+{
+  _checkInit();
+  if(dimTags.empty()) {
+    GModel::current()->getGEOInternals()->resetPhysicalGroups();
+    GModel::current()->removePhysicalGroups();
+  }
+  else {
+    // FIXME: rewrite the unerlying code: it's slow
+    for(std::size_t i = 0; i < dimTags.size(); i++) {
+      std::vector<int> tags; // empty to delete the group
+      GModel::current()->getGEOInternals()->modifyPhysicalGroup(
+        dimTags[i].first, dimTags[i].second, 2, tags);
+      GModel::current()->removePhysicalGroup(dimTags[i].first,
+                                             dimTags[i].second);
+    }
+  }
 }
 
 GMSH_API void gmsh::model::setPhysicalName(const int dim, const int tag,
@@ -447,6 +466,12 @@ GMSH_API void gmsh::model::setPhysicalName(const int dim, const int tag,
 {
   _checkInit();
   GModel::current()->setPhysicalName(name, dim, tag);
+}
+
+GMSH_API void gmsh::model::removePhysicalName(const std::string &name)
+{
+  _checkInit();
+  GModel::current()->removePhysicalName(name);
 }
 
 GMSH_API void gmsh::model::getPhysicalName(const int dim, const int tag,
@@ -592,34 +617,6 @@ GMSH_API void gmsh::model::removeEntityName(const std::string &name)
 {
   _checkInit();
   GModel::current()->removeElementaryName(name);
-}
-
-GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
-{
-  _checkInit();
-  if(dimTags.empty()) {
-    GModel::current()->getGEOInternals()->resetPhysicalGroups();
-    GModel::current()->removePhysicalGroups();
-  }
-  else {
-    // FIXME:
-    // - move the physical code from GEO factory to GModel:
-    //    if a mesh is loaded the GEO sync will re-create the group in GModel...
-    // - rewrite the unerlying code: it's slow
-    for(std::size_t i = 0; i < dimTags.size(); i++) {
-      std::vector<int> tags; // empty to delete the group
-      GModel::current()->getGEOInternals()->modifyPhysicalGroup(
-        dimTags[i].first, dimTags[i].second, 2, tags);
-      GModel::current()->removePhysicalGroup(dimTags[i].first,
-                                             dimTags[i].second);
-    }
-  }
-}
-
-GMSH_API void gmsh::model::removePhysicalName(const std::string &name)
-{
-  _checkInit();
-  GModel::current()->removePhysicalName(name);
 }
 
 GMSH_API void gmsh::model::getType(const int dim, const int tag,
@@ -5298,6 +5295,37 @@ GMSH_API void gmsh::model::geo::setMaxTag(const int dim, const int maxTag)
 {
   _checkInit();
   GModel::current()->getGEOInternals()->setMaxTag(dim, maxTag);
+}
+
+GMSH_API int gmsh::model::geo::addPhysicalGroup(const int dim,
+                                                const std::vector<int> &tags,
+                                                const int tag)
+{
+  _checkInit();
+  int outTag = tag;
+  if(outTag < 0)
+    outTag = GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1;
+  if(!GModel::current()->getGEOInternals()->modifyPhysicalGroup(dim, outTag, 0,
+                                                                tags)) {
+    Msg::Error("Could not add physical group");
+    throw Msg::GetLastError();
+  }
+  return outTag;
+}
+
+GMSH_API void gmsh::model::geo::removePhysicalGroups(const vectorpair &dimTags)
+{
+  _checkInit();
+  if(dimTags.empty()) {
+    GModel::current()->getGEOInternals()->resetPhysicalGroups();
+  }
+  else {
+    for(std::size_t i = 0; i < dimTags.size(); i++) {
+      std::vector<int> tags; // empty to delete the group
+      GModel::current()->getGEOInternals()->modifyPhysicalGroup(
+        dimTags[i].first, dimTags[i].second, 2, tags);
+    }
+  }
 }
 
 GMSH_API void gmsh::model::geo::synchronize()

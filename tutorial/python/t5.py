@@ -175,7 +175,7 @@ for t in range(1, 6):
     x += 0.166
     z += 0.166
     v = cheeseHole(x, y, z, r, lcar3, shells)
-    gmsh.model.addPhysicalGroup(3, [v], t)
+    gmsh.model.geo.addPhysicalGroup(3, [v], t)
 
 # The volume of the cube, without the 5 holes, is defined by 6 surface loops:
 # the first surface loop defines the exterior surface; the surface loops other

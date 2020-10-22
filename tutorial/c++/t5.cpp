@@ -176,7 +176,7 @@ int main(int argc, char **argv)
     x += 0.166;
     z += 0.166;
     cheeseHole(x, y, z, r, lcar3, shells, volumes);
-    gmsh::model::addPhysicalGroup(3, {volumes.back()}, t);
+    gmsh::model::geo::addPhysicalGroup(3, {volumes.back()}, t);
     std::printf("Hole %d (center = {%g,%g,%g}, radius = %g) has number %d!\n",
                 t, x, y, z, r, volumes.back());
   }

@@ -432,7 +432,10 @@ public:
     _physicalNames = names;
   }
 
-  // remove physical groups in the model
+  // add a physical group (made of elementary entities "tags")
+  void addPhysicalGroup(int dim, int tag, const std::vector<int> &tags);
+
+  // remove physical groups
   void removePhysicalGroups();
   void removePhysicalGroup(int dim, int num);
 
