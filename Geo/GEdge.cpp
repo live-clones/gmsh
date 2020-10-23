@@ -165,17 +165,11 @@ std::size_t GEdge::getNumMeshElementsByType(const int familyType) const
   return 0;
 }
 
-struct owns_parent {
-  // TODO C++11 use lambda instead
-  template <class T> bool operator()(T const *const line) const
-  {
-    return line->ownsParent();
-  }
-};
-
 std::size_t GEdge::getNumMeshParentElements()
 {
-  return std::count_if(lines.begin(), lines.end(), owns_parent());
+  return std::count_if(lines.begin(), lines.end(), [](const MLine *const line) {
+    return line->ownsParent();
+  });
 }
 
 void GEdge::getNumMeshElements(unsigned *const c) const
