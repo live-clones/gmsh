@@ -1076,9 +1076,8 @@ int computeScaledCrossFieldView(GModel* gm,
 
   std::map<std::array<size_t,2>,double> edgeTheta;
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
+  /* Compute the cross field on each face
+   * Not in parallel because the solver in computeCrossFieldWithHeatEquation may already be parallel (e.g. MUMPS) */
   for (GFace* gf: faces) {
     Msg::Info("- Face %i: compute cross field (%li triangles) ...",gf->tag(), gf->triangles.size());
     int status = computeCrossFieldWithHeatEquation({gf}, edgeTheta, nbDiffusionLevels, thresholdNormConvergence,
@@ -1149,7 +1148,7 @@ int computeScaledCrossFieldView(GModel* gm,
   }
 
   bool SHOW_H = true; // Debugging view to check H
-  if (SHOW_H) {
+  if (SHOW_H && !disableConformalScaling) {
     Msg::Warning("generating H view (saved at /tmp/H.pos), only for debugging/prototyping");
     std::string name = "dbg_H";
     PViewDataGModel *d = new PViewDataGModel;

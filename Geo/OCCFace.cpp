@@ -264,9 +264,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
                              const double initialGuess[2]) const
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  double a, b, c, d;
-  ShapeAnalysis::GetFaceUVBounds(_s, a, b, c, d);
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, a, b, c, d);
+  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, _umin, _umax, _vmin, _vmax);
 
   if(!proj.NbPoints()) {
     Msg::Debug("OCC projection of point on surface failed");

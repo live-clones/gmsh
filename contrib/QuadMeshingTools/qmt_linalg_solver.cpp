@@ -183,6 +183,10 @@ namespace QMT {
 #if defined(HAVE_MUMPS) && USE_MUMPS2
     state->sys->systemDestroy();
 #endif
+    if (state->sys != NULL) {
+      delete state->sys;
+      state->sys = NULL;
+    }
     delete state;
     *data = NULL;
     return true;

@@ -55,4 +55,7 @@ int remeshFewQuads(GFace* gf,
 
 void printPatternUsage();
 
+bool load_patterns();
+bool load_disk_quadrangulations();
+
 #endif

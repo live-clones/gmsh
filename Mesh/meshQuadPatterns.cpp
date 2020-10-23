@@ -9,6 +9,7 @@
 #include "meshGFace.h"
 #include "GmshMessage.h"
 #include "GFace.h"
+#include "discreteFace.h"
 #include "GModel.h"
 #include "MVertex.h"
 #include "MTriangle.h"
@@ -303,24 +304,6 @@ namespace QuadPatternMatching {
   /* Patterns are initialized at runtime, by the call to load_patterns() */
   std::vector<QuadMesh> patterns;
 
-  bool load_patterns() {
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-    {
-      if (patterns.size() != 0) patterns.clear();
-      Msg::Info("loading %li quad patterns", quad_meshes.size());
-      patterns.resize(quad_meshes.size());
-      for (size_t i = 0; i < quad_meshes.size(); ++i) {
-        bool ok = patterns[i].load(quad_meshes[i]);
-        if (!ok) {
-          Msg::Error("mesh quad patterns, failed to init pattern no %i", i);
-        }
-      }
-    }
-    return true;
-  }
-
   double sum_sqrt(const vector<int>& values) {
     double s = 0.;
     for (const auto& v: values) s += sqrt(v);
@@ -459,18 +442,23 @@ namespace QuadPatternMatching {
             double ideal_repartition = 1./sum * double(total);
             int xmin = 1;
             int xmax = int(double(total) / double(w));
-            if (xmax < 1) return 0.;
+            if (xmax < xmin) return 0.;
+
+            vector<std::pair<double,int> > prio_candidate;
+            if (xmax == xmin) {
+              prio_candidate.push_back({0.,xmin});
+            } else {
+              for (int candidate = xmin; candidate < xmax+1; ++candidate) {
+                double dist = std::pow(ideal_repartition-candidate,2);
+                prio_candidate.push_back({dist,candidate});
+              }
+            }
 
             // TODO: better priority, see 2 corner cases
-            vector<std::pair<double,int> > prio_candidate;
-            for (int candidate = xmin; candidate < xmax+1; ++candidate) {
-              double dist = std::pow(ideal_repartition-candidate,2);
-              prio_candidate.push_back({dist,candidate});
-            }
             std::sort(prio_candidate.begin(),prio_candidate.end());
             vector<int> x2;
             for (size_t l = 0; l < prio_candidate.size(); ++l) {
-              int candidate = prio_candidate[k].second;
+              int candidate = prio_candidate[l].second;
               x2 = x;
               x2[j] = candidate;
               double sub_score = get_positive_solution_DFS(x2, count, count_limit);
@@ -493,7 +481,8 @@ namespace QuadPatternMatching {
   };
 
 
-  std::vector<MVertex*> createVertices (GFace* gf, MVertex *v1, MVertex *v2, int n) {
+  std::vector<MVertex*> createVertices (GFace* gf, MVertex *v1, MVertex *v2, int n,
+      std::vector<MVertex*>& newVertices){
     std::vector<MVertex*> r;
     r.push_back(v1);
     for (int i=1;i<n;i++){
@@ -502,10 +491,16 @@ namespace QuadPatternMatching {
       double uv[2] = {0.,0.};
       MVertex *vNew = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
       GPoint proj = gf->closestPoint(vNew->point(),uv);
-      vNew->x() = proj.x();
-      vNew->y() = proj.y();
-      vNew->z() = proj.z();
+      if (proj.succeeded()) {
+        vNew->x() = proj.x();
+        vNew->y() = proj.y();
+        vNew->z() = proj.z();
+      } else {
+        vNew->point() = v1->point();
+        // Msg::Error("failed to project point (%f,%f,%f) on surface %i", vNew->x(),vNew->y(),vNew->z(), gf->tag());
+      }
       gf->mesh_vertices.push_back(vNew);
+      newVertices.push_back(vNew);
       r.push_back(vNew);
     }
     r.push_back(v2);
@@ -523,12 +518,13 @@ namespace QuadPatternMatching {
       const std::vector<MVertex*> &s1,
       const std::vector<MVertex*> &s2,
       const std::vector<MVertex*> &s3,
-      std::vector<MElement*> &newQuads){
+      std::vector<MElement*> &newQuads,
+      std::vector<MVertex*>& newVertices){
     std::vector< std::vector<MVertex*> > grid;
     grid.push_back(s0);
     std::vector<MVertex*> s3r = reverseVector(s3);
     for (size_t i=1;i<s3r.size()-1;i++){
-      grid.push_back(createVertices(gf,s3r[i],s1[i],s0.size()-1));
+      grid.push_back(createVertices(gf,s3r[i],s1[i],s0.size()-1,newVertices));
     }
     grid.push_back(reverseVector(s2));
 
@@ -649,10 +645,12 @@ namespace QuadPatternMatching {
     for (size_t v = 0; v < P.n; ++v) if (!P.vOnBdr[v]) {
       double vsum = 5.; /* weight on center */
       GPoint pp(vsum*center.x(),vsum*center.y(),vsum*center.z());
+      MVertex* oneVertexOnBoundary = NULL;
       for (size_t e: P.v2e[v]) {
         size_t v2 = (P.edges[e][0] != v) ? P.edges[e][0] : P.edges[e][1];
         if (P.vOnBdr[v2]) {
           SVector3 p2 = v2mv[v2]->point();
+          if (oneVertexOnBoundary == NULL) oneVertexOnBoundary = v2mv[v2];
           pp.x() += p2.x();
           pp.y() += p2.y();
           pp.z() += p2.z();
@@ -668,9 +666,16 @@ namespace QuadPatternMatching {
       double uv[2] = {0.,0.};
       MVertex *sing = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
       GPoint proj = gf->closestPoint(sing->point(),uv);
-      sing->x() = proj.x();
-      sing->y() = proj.y();
-      sing->z() = proj.z();
+      if (proj.succeeded()) {
+        sing->x() = proj.x();
+        sing->y() = proj.y();
+        sing->z() = proj.z();
+      } else {
+        if (oneVertexOnBoundary) {
+          sing->point() = oneVertexOnBoundary->point();
+        }
+        // Msg::Error("failed to project point (%f,%f,%f) on surface %i", sing->x(),sing->y(),sing->z(), gf->tag());
+      }
 
       gf->mesh_vertices.push_back(sing);
       newVertices.push_back(sing);
@@ -692,9 +697,9 @@ namespace QuadPatternMatching {
       int n_e = quantization[P.eChordId[e]];
       id2 vpair = sorted(v1,v2);
       if (v1 < v2) {
-        vpair2vertices[vpair] = createVertices (gf, mv1, mv2, n_e);
+        vpair2vertices[vpair] = createVertices (gf, mv1, mv2, n_e, newVertices);
       } else {
-        vpair2vertices[vpair] = createVertices (gf, mv2, mv1, n_e);
+        vpair2vertices[vpair] = createVertices (gf, mv2, mv1, n_e, newVertices);
       }
     }
 
@@ -724,73 +729,12 @@ namespace QuadPatternMatching {
         }
       }
       if (DBG_VIZU) GeoLog::flush();
-      createQuadPatch(gf, quadCurves[0], quadCurves[1], quadCurves[2], quadCurves[3], newElements);
+      createQuadPatch(gf, quadCurves[0], quadCurves[1], quadCurves[2], quadCurves[3], newElements, newVertices);
     }
+    vertexIsIrregular.resize(newVertices.size(),false);
 
     return true;
   }
-
-  bool load_disk_quadrangulations() {
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-    {
-      if (B_disk_quadrangulations.size() != 0) {
-        B_disk_quadrangulations.clear();
-        B_BVL_ids.clear();
-      }
-      Msg::Info("loading disk quadrangulations ...");
-      B_disk_quadrangulations.reserve(20);
-      B_BVL_ids.reserve(20);
-      std::string data(disk_quadrangulations);
-      vector<std::string> lines = SplitString(data,'\n');
-      Quadrangulation qdrl;
-      vector<std::string> numbers;
-      vector<id> bdrValLoop;
-      for (size_t i = 0; i < lines.size(); ++i) {
-        numbers = SplitString(lines[i],' ');
-        if (numbers.size() < 7) continue;
-        size_t B = std::stoi(numbers[0]);
-        size_t I = std::stoi(numbers[1]);
-        size_t Q = std::stoi(numbers[2]);
-        if (numbers.size() != 3 + 4 * Q) {
-          Msg::Warning("load_disk_quadrangulations | wrong sizes: B=%li, I=%li, Q=%li and numbers.size = %li",
-              B, I, Q, numbers.size());
-          continue;
-        }
-        qdrl.resize(Q);
-        for (size_t j = 0; j < Q; ++j) {
-          for (size_t lv = 0; lv < 4; ++lv) {
-            qdrl[j][lv] = std::stoi(numbers[3 + 4 * j + lv]);
-          }
-        }
-
-        if (B >= B_disk_quadrangulations.size()) {
-          B_disk_quadrangulations.resize(B+1);
-          B_disk_quadrangulations[B].reserve(1000);
-          B_BVL_ids.resize(B+1);
-        }
-
-        id qId = B_disk_quadrangulations[B].size();
-        B_disk_quadrangulations[B].push_back(qdrl);
-
-        /* Assumes:
-         * - first B vertices are on the boundary 
-         * - canonical valence ordering according to boundary valence loop 
-         *   (should be compatible with the generator) */
-        bdrValLoop.clear();
-        bdrValLoop.resize(B,0);
-        for (size_t j = 0; j < Q; ++j) for (size_t lv = 0; lv < 4; ++lv){
-          id v = qdrl[j][lv];
-          if (v < B) bdrValLoop[v] += 1;
-        }
-        B_BVL_ids[B][bdrValLoop].push_back(qId);
-      }
-      Msg::Info("%li disk quadrangulations loaded", lines.size());
-    }
-    return true;
-  }
-
 
 
   bool computeQuadMeshValences(const vector<id4>& quads, vector<int>& valence) {
@@ -941,6 +885,7 @@ namespace QuadPatternMatching {
     const std::vector<MVertex*>& newVertices,
     const std::vector<MElement*>& newElements,
     size_t iter = 10) {
+    Msg::Debug("laplacian smoothing with %li new vertices and %li new quads,%li iterations ... ", newVertices.size(), newElements.size(), iter);
 
     std::unordered_map<MVertex*,std::set<MVertex*>> v2v;
     for (MElement* f: newElements) {
@@ -951,18 +896,83 @@ namespace QuadPatternMatching {
         v2v[v2].insert(v1);
       }
     }
+
     for (size_t i = 0; i < iter; ++i) {
       for (MVertex* v: newVertices) {
-        SVector3 avg(0.,0.,0.);
+        SPoint3 avg(0.,0.,0.);
         double sum = 0.;
         for (MVertex* v2: v2v[v]) {
           avg += v2->point();
           sum += 1.;
         }
         if (sum == 0) continue;
-        v->x() = 1./sum * avg.x();
-        v->y() = 1./sum * avg.y();
-        v->z() = 1./sum * avg.z();
+        v->setXYZ(avg.x()/sum,avg.y()/sum,avg.z()/sum);
+      }
+    }
+
+    return true;
+  }
+
+  bool laplacianSmoothingInParametricDomain(
+      GFace* gf,
+      const std::vector<MVertex*>& newVertices,
+      const std::vector<MElement*>& newElements,
+      size_t iter = 10) {
+    Msg::Debug("laplacian smoothing in param. domain, with %li new vertices and %li new quads,%li iterations ... ", newVertices.size(), newElements.size(), iter);
+
+    std::unordered_map<MVertex*,std::set<MVertex*>> v2v;
+    for (MElement* f: newElements) {
+      for (size_t le = 0; le < 4; ++le) {
+        MVertex* v1 = f->getVertex(le);
+        MVertex* v2 = f->getVertex((le+1)%4);
+        v2v[v1].insert(v2);
+        v2v[v2].insert(v1);
+      }
+    }
+
+    std::unordered_map<MVertex*,SPoint2> uvs;
+    for (const auto& kv: v2v)  {
+      MVertex* v = kv.first;
+      bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
+      if (onGf) {
+        double uv0,uv1;
+        v->getParameter(0,uv0);
+        v->getParameter(1,uv1);
+        uvs[v] = SPoint2(uv0,uv1);
+      } else {
+        GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
+        if (ge != NULL) {
+          double t;
+          v->getParameter(0,t);
+          SPoint2 uv = ge->reparamOnFace(gf, t, -1);
+          uvs[v] = uv;
+        } else {
+          GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
+          SPoint2 uv = gv->reparamOnFace(gf,0);
+          uvs[v] = uv;
+        }
+      }
+    }
+
+    for (size_t i = 0; i < iter; ++i) {
+      for (MVertex* v: newVertices) {
+        SPoint2 avg(0.,0.);
+        double sum = 0.;
+        for (MVertex* v2: v2v[v]) {
+          avg += uvs[v2];
+          sum += 1.;
+        }
+        if (sum == 0) continue;
+        uvs[v] = SPoint2(avg.x()/sum,avg.y()/sum);
+      }
+    }
+    for (MVertex* v: newVertices) {
+      SPoint2 uv = uvs[v];
+      v->setParameter(0,uv[0]);
+      v->setParameter(1,uv[1]);
+      GPoint p = gf->point(uv);
+      if (p.succeeded()) {
+        v->setXYZ(p.x(),p.y(),p.z());
       }
     }
 
@@ -1055,13 +1065,89 @@ namespace QuadPatternMatching {
 
 using namespace QuadPatternMatching;
 
+bool load_patterns() {
+  if (patterns.size() != 0) return false;
+  {
+    Msg::Info("loading %li quad patterns", quad_meshes.size());
+    patterns.resize(quad_meshes.size());
+    for (size_t i = 0; i < quad_meshes.size(); ++i) {
+      bool ok = patterns[i].load(quad_meshes[i]);
+      if (!ok) {
+        Msg::Error("mesh quad patterns, failed to init pattern no %i", i);
+      }
+    }
+  }
+  return true;
+}
+
+bool load_disk_quadrangulations() {
+  if (B_disk_quadrangulations.size() != 0) return false;
+  {
+    Msg::Info("loading disk quadrangulations ...");
+    B_disk_quadrangulations.reserve(20);
+    B_BVL_ids.reserve(20);
+    std::string data(disk_quadrangulations);
+    vector<std::string> lines = SplitString(data,'\n');
+    Quadrangulation qdrl;
+    vector<std::string> numbers;
+    vector<id> bdrValLoop;
+    for (size_t i = 0; i < lines.size(); ++i) {
+      numbers = SplitString(lines[i],' ');
+      if (numbers.size() < 7) continue;
+      size_t B = std::stoi(numbers[0]);
+      size_t I = std::stoi(numbers[1]);
+      size_t Q = std::stoi(numbers[2]);
+      if (numbers.size() != 3 + 4 * Q) {
+        Msg::Warning("load_disk_quadrangulations | wrong sizes: B=%li, I=%li, Q=%li and numbers.size = %li",
+            B, I, Q, numbers.size());
+        continue;
+      }
+      qdrl.resize(Q);
+      for (size_t j = 0; j < Q; ++j) {
+        for (size_t lv = 0; lv < 4; ++lv) {
+          qdrl[j][lv] = std::stoi(numbers[3 + 4 * j + lv]);
+        }
+      }
+
+      if (B >= B_disk_quadrangulations.size()) {
+        B_disk_quadrangulations.resize(B+1);
+        B_disk_quadrangulations[B].reserve(1000);
+        B_BVL_ids.resize(B+1);
+      }
+
+      id qId = B_disk_quadrangulations[B].size();
+      B_disk_quadrangulations[B].push_back(qdrl);
+
+      /* Assumes:
+       * - first B vertices are on the boundary 
+       * - canonical valence ordering according to boundary valence loop 
+       *   (should be compatible with the generator) */
+      bdrValLoop.clear();
+      bdrValLoop.resize(B,0);
+      for (size_t j = 0; j < Q; ++j) for (size_t lv = 0; lv < 4; ++lv){
+        id v = qdrl[j][lv];
+        if (v < B) bdrValLoop[v] += 1;
+      }
+      B_BVL_ids[B][bdrValLoop].push_back(qId);
+    }
+    Msg::Info("%li disk quadrangulations loaded", lines.size());
+  }
+  return true;
+}
+
+
+
+
 bool patchIsRemeshableWithQuadPattern(
     size_t Ncorners,
     const std::vector<size_t>& sideSizes, 
     std::pair<size_t,int>& patternNoAndRot,
     double& irregularityMeasure) {
   irregularityMeasure = DBL_MAX;
-  if (patterns.size() == 0) load_patterns();
+  if (patterns.size() == 0) {
+    Msg::Error("patterns not loaded, please call load_patterns() before");
+    return false;
+  }
   // DBG("---");
   // DBG("isRemeshable ?", Ncorners, sideSizes);
 
@@ -1140,7 +1226,14 @@ int remeshPatchWithQuadPattern(
     Msg::Error("failed to add quads according to pattern, weird");
     return 1;
   }
-  laplacianSmoothing(newVertices, newElements,10);
+  GEntity::GeomType GT = gf->geomType();
+  discreteFace* df = dynamic_cast<discreteFace*>(gf);
+  if (df || GT == GEntity::Sphere) {
+    laplacianSmoothing(newVertices, newElements,newVertices.size());
+  } else {
+    laplacianSmoothingInParametricDomain(gf, newVertices, newElements, newVertices.size());
+  }
+
   return 0; /* ok ! */
 }
 
@@ -1156,8 +1249,10 @@ int remeshFewQuads(GFace* gf,
     std::vector<bool> & vertexIsIrregular,             /* for each new vertex, true if irregular */
     std::vector<MElement*> & newElements               /* new quads inside the cavity */
     ) {
+
   if (B_disk_quadrangulations.size() == 0) {
-    load_disk_quadrangulations();
+    Msg::Error("disk quadrangulations not loaded, please call load_disk_quadrangulations() before");
+    return false;
   }
 
   const vector<vector<id4> >* small_patterns = NULL;
