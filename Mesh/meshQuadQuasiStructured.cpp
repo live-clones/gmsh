@@ -46,6 +46,7 @@ using std::unordered_set;
 namespace QSQ {
   constexpr bool DBG_VERBOSE = false;
   constexpr bool DBG_VIZU = false;
+  bool SHOW_CAVITIES = false;
 
   constexpr bool PARANO = false;
 
@@ -413,10 +414,20 @@ namespace QSQ {
     std::vector<HalfEdge> hedges;
     std::vector<Face> faces;
 
-    inline size_t next(size_t he) const {return hedges[he].next; }
-    inline size_t opposite(size_t he) const {return hedges[he].opposite; }
-    inline size_t prev(size_t he) const {return hedges[he].prev; }
+    inline size_t next(size_t he) const {
+      if (he == NO_ID) return NO_ID;
+      return hedges[he].next; 
+    }
+    inline size_t opposite(size_t he) const {
+      if (he == NO_ID) return NO_ID;
+      return hedges[he].opposite; 
+    }
+    inline size_t prev(size_t he) const {
+      if (he == NO_ID) return NO_ID;
+      return hedges[he].prev;
+    }
     inline size_t vertex(size_t he, size_t lv) const {
+      if (he == NO_ID) return NO_ID;
       return (lv == 0) ? hedges[prev(he)].vertex : hedges[he].vertex;
     }
 
@@ -614,18 +625,108 @@ namespace QSQ {
     GeoLog::add(pts,values,viewName);
   }
 
-  int createMeshHalfEdges(GFace* gf, MeshHalfEdges& M, const std::vector<MVertex*>& singularVertices) {
+  inline si2 sorted(size_t v1, size_t v2) { if (v1 < v2) { return {v1,v2}; } else { return {v2,v1}; } }
+
+  bool buildAdjacencies(const vector<MQuadrangle*>& quadrangles, 
+      vector<array<size_t,4> >& adjacent) {
+
+    adjacent.resize(quadrangles.size());
+    unordered_map<si2,si2,si2hash> vPairToQuads;
+    for (size_t i = 0; i < quadrangles.size(); ++i) {
+      MElement* f = quadrangles[i];
+      adjacent[i] = {NO_ID,NO_ID,NO_ID,NO_ID};
+      for (size_t le = 0; le < 4; ++le) {
+        size_t v1 = f->getVertex(le)->getNum();
+        size_t v2 = f->getVertex((le+1)%4)->getNum();
+        si2 vPair = sorted(v1,v2);
+        auto it = vPairToQuads.find(vPair);
+        if (it == vPairToQuads.end()) {
+          vPairToQuads[vPair] = {4*i+le,NO_ID};
+        } else {
+          if (it->second[1] == NO_ID) {
+            size_t a2 = it->second[0];
+            if (a2 == NO_ID) {
+              Msg::Error("should not happen");
+              return false;
+            }
+            it->second[1] = 4*i+le;
+            size_t f2 = a2 / 4;
+            size_t le2 = a2 % 4;
+            adjacent[i][le] = 4*f2+le2;
+            adjacent[f2][le2] = 4*i+le;
+          } else {
+            Msg::Error("non manifold quad mesh");
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
+  bool reorientQuadranglesIfNecessary(vector<MQuadrangle*>& quads) {
+    vector<array<size_t,4> > adjacent;
+    bool oka = buildAdjacencies(quads, adjacent);
+    if (!oka) return false;
+
+    std::vector<bool> visited(quads.size(),false);
+    std::vector<bool> needInvert(quads.size(),false);
+    for (size_t fInit = 0; fInit < quads.size(); ++fInit) if (!visited[fInit]) {
+      std::queue<size_t> Q;
+      Q.push(fInit);
+      visited[fInit] = true;
+
+      while (Q.size()) {
+        size_t f = Q.front();
+        Q.pop();
+
+        for (size_t le = 0; le < 4; ++le) {
+          size_t v1 = quads[f]->getVertex(le)->getNum();
+          size_t v2 = quads[f]->getVertex((le+1)%4)->getNum();
+          size_t aa = adjacent[f][le];
+          if (aa == NO_ID) continue;
+          size_t f2 = aa/4;
+          if (visited[f2]) continue;
+          size_t le2 = aa%4;
+          size_t av1 = quads[f2]->getVertex(le2)->getNum();
+          size_t av2 = quads[f2]->getVertex((le2+1)%4)->getNum();
+          if (av1 == v1 && av2 == v2) { /* re-order ! */
+            if (!needInvert[f]) needInvert[f2] = true;
+          } else if (av1 == v2 && av2 == v1) { /* normal */
+            if (needInvert[f]) needInvert[f2] = true;
+          } else {
+            return false;
+          }
+          visited[f2] = true;
+          Q.push(f2);
+        }
+      }
+    }
+    size_t nbi = 0;
+    for (size_t f = 0; f < quads.size(); ++f) if (!needInvert[f]) {
+      MVertex* v1 = quads[f]->getVertex(1);
+      MVertex* v3 = quads[f]->getVertex(3);
+      quads[f]->setVertex(1,v3);
+      quads[f]->setVertex(3,v1);
+      nbi += 1;
+    }
+    Msg::Info("re-oriented %li quadrangles", nbi);
+    return true;
+  }
+
+  int createMeshHalfEdges(const std::vector<MQuadrangle*>& quadrangles, MeshHalfEdges& M, const std::vector<MVertex*>& singularVertices) {
     /* warning: does not scale on big big model because of numToHVertex */
     M.vertices.clear();
     M.hedges.clear();
     M.faces.clear();
 
     unordered_map<MVertex*,size_t> mv2new;
-    M.vertices.reserve(4*gf->quadrangles.size());
-    M.hedges.reserve(4*gf->quadrangles.size());
-    M.faces.reserve(gf->quadrangles.size());
+    M.vertices.reserve(4*quadrangles.size());
+    M.hedges.reserve(4*quadrangles.size());
+    M.faces.reserve(quadrangles.size());
 
-    for (MQuadrangle* q: gf->quadrangles) {
+    for (MQuadrangle* q: quadrangles) {
       /* Create vertices if necessary */
       size_t quad[4];
       for (size_t le = 0; le < 4; ++le) {
@@ -700,7 +801,7 @@ namespace QSQ {
       } else if (new2old[ni][1] == NO_ID) {
         new2old[ni][1] = i;
       } else {
-        Msg::Error("non manifold quad mesh (face with tag %i), cannot build half edge datastructure", gf->tag());
+        Msg::Error("non manifold quad mesh, cannot build half edge datastructure");
         return -1;
       }
     }
@@ -1258,15 +1359,15 @@ namespace QSQ {
         size_t v = M.hedges[he].vertex;
         int valOutside = valence[v] - valenceInCavity[v];
         if (!vOnBoundary[v] && valOutside == 1) return false;
-        // if (vOnBoundary[v] && valOutside == 0 && valence[v] >= 3) {
-        //   /* Check if corner */
-        //   MVertex* mv = M.vertices[v].ptr;
-        //   GVertex* gv = dynamic_cast<GVertex*>(mv->onWhat());
-        //   if (gv != NULL) {
-        //     /* Concave corner absorbed, bad */
-        //     return false;
-        //   }
-        // }
+        if (vOnBoundary[v] && valOutside == 0 && valence[v] >= 3) {
+          /* Check if corner */
+          MVertex* mv = M.vertices[v].ptr;
+          GVertex* gv = dynamic_cast<GVertex*>(mv->onWhat());
+          if (gv != NULL) {
+            /* Concave corner absorbed, bad */
+            return false;
+          }
+        }
       }
       return true;
     }
@@ -1359,13 +1460,14 @@ namespace QSQ {
             }
           }
           if (heInit == NO_ID || iInit == NO_ID) {
-            Msg::Error("weird, getFlipHalfEdgeCandidates, limit vertex (sing or concave) = %li, hesOnLimit.size() = %li, but he not found on cavity bdr",
+            Msg::Warning("getFlipHalfEdgeCandidates, limit vertex (sing or concave) = %li, hesOnLimit.size() = %li, but he not found on cavity bdr",
                 bs, hesOnLimit.size());
             return false;
             show = true;
             GeoLog::flush();
             gmsh::view::add("---");
             GeoLog::add(M.vertices[bs].p, double(hesOnLimit.size()),"!gfhec_not_on_bdr");
+            // return false;
             continue;
           }
           size_t i = iInit;
@@ -2655,7 +2757,6 @@ namespace QSQ {
       }
     } 
 
-    geolog_elements(newElements, "cavr4_after");
     if (newElements.size() > 0) {
       vector<MQuadrangle*> quadForWinslow(newElements.size());
       for (size_t i = 0; i < newElements.size(); ++i) {
@@ -2664,7 +2765,12 @@ namespace QSQ {
       }
       meshWinslow2d(gf, quadForWinslow, newVertices, 10);
     }
-    geolog_elements(newElements, "cavr4_after_smooth");
+
+    if (SHOW_CAVITIES) {
+      std::string cavity_name = "cav_s"+std::to_string(sideSizes.size())+"_after";
+      geolog_elements(newElements, cavity_name);
+      GeoLog::flush();
+    }
 
     return true;
   }
@@ -2688,7 +2794,7 @@ namespace QSQ {
 
       /* singularNodes is the list of singularities (irregular vertices to keep) in the 
        * GFace structure, the values are the vertex 'num' */
-      int st = createMeshHalfEdges(gf, M, singularVertices);
+      int st = createMeshHalfEdges(gf->quadrangles, M, singularVertices);
       if (st != 0) {
         Msg::Error("failed to generate half edge datastructure for face with tag %i", gf->tag());
         return st;
@@ -2742,9 +2848,11 @@ namespace QSQ {
         bool okg = G.growMaximal();
         if (!okg) continue;
 
-        {
-          int ns = fcav.updateSides();
-          geolog_fcavity(fcav, "cavr"+std::to_string(ns)+"_"+std::to_string(v)+"_before");
+        if (SHOW_CAVITIES) {
+          fcav.updateSides();
+          std::string cavity_name = "cav_s"+std::to_string(quads.size())+"_"+std::to_string(v);
+          gmsh::view::add("---");
+          geolog_fcavity(fcav, cavity_name + "_before");
         }
 
         /* Remesh the cavity */
@@ -2785,6 +2893,141 @@ namespace QSQ {
     return 0;
   }
 
+  int propagate35(GModel* gm, std::vector<MVertex*>& singularVertices) {
+    vector<MQuadrangle*> quadrangles;
+    for (GFace* gf: model_faces(gm)) {
+      append(quadrangles, gf->quadrangles);
+    }
+    Msg::Info("propagate 35 pairs on %li faces (total: %li quads)", gm->getFaces().size(), quadrangles.size());
+    bool oko = reorientQuadranglesIfNecessary(quadrangles);
+    if (!oko) {
+      Msg::Error("failed to re-orient quads");
+    }
+
+    MeshHalfEdges M;
+    vector<size_t> pairs35;
+    vector<size_t> singularities;
+    vector<size_t> irregularNodes;
+    std::unordered_set<MVertex*> vIs3Of35Pair;
+    std::unordered_set<MVertex*> vIs5Of35Pair;
+
+    /* singularNodes is the list of singularities (irregular vertices to keep) in the 
+     * GFace structure, the values are the vertex 'num' */
+    int st = createMeshHalfEdges(quadrangles, M, singularVertices);
+    if (st != 0) {
+      Msg::Error("failed to generate half edge datastructure");
+      return st;
+    }
+
+    Gardener G(M);
+
+    { /* Collect singularities and irregular vertices */
+      singularities.clear();
+      irregularNodes.clear();
+      for (size_t v = 0; v < M.vertices.size(); ++v) {
+        if (M.vertices[v].isSingularity) {
+          singularities.push_back(v);
+        } else if (G.vOnBoundary[v] && G.valence[v] != 2) {
+          MVertex* vp = M.vertices[v].ptr;
+          GVertex* gv = vp->onWhat()->cast2Vertex();
+          if (gv != nullptr)  continue; /* ignore corners */
+          irregularNodes.push_back(v);
+        } else if (!G.vOnBoundary[v] && G.valence[v] != 4) {
+          irregularNodes.push_back(v);
+        }
+      }
+    }
+
+    { /* Collect quads with pairs of 3-5 (or equivalent on boundary) */
+      pairs35.clear();
+      vector<size_t> vertIn35;
+      vector<size_t> fvert;
+      const array<int,4> indices35 = {3,4,5,4};
+      array<int,4> quadIndices = {0,0,0,0};
+      for (size_t f = 0; f < M.faces.size(); ++f) {
+        size_t n = M.face_vertices(f,fvert);
+        if (n != 4) {
+          Msg::Error("face %li is not a quad ? %li vertices", f, n);
+          return false;
+        }
+        bool cancel = false;
+        for (size_t lv = 0; lv < n; ++lv) {
+          quadIndices[lv] = G.valence[fvert[lv]];
+          if (quadIndices[lv] != 4) {
+            MVertex* v = M.vertices[fvert[lv]].ptr;
+            bool interior = (dynamic_cast<GFace*>(v->onWhat()) != NULL);
+            if (!interior) cancel = true;
+          }
+        }
+        if (cancel) continue;
+        quadIndices = rotateCanonical(quadIndices);
+        if (quadIndices == indices35) {
+          pairs35.push_back(f);
+          append(vertIn35,fvert);
+          for (size_t lv = 0; lv < n; ++lv) {
+            if (G.valence[fvert[lv]] == 3) {
+              vIs3Of35Pair.insert(M.vertices[fvert[lv]].ptr);
+            } else if (G.valence[fvert[lv]] == 5) {
+              vIs5Of35Pair.insert(M.vertices[fvert[lv]].ptr);
+            }
+          }
+        }
+      }
+      /* remove irregular nodes of 3-5 from list */
+      irregularNodes = difference(irregularNodes, vertIn35); 
+    }
+
+    vector<size_t> fvert;
+    for (size_t f: pairs35) {
+      size_t heStart = NO_ID;
+      size_t v0 = NO_ID;
+      M.face_vertices(f,fvert);
+      size_t he = M.faces[f].he;
+      for (size_t le = 0; le < 4; ++le) {
+        size_t v = M.vertex(he,1);
+        if (G.valence[v] == 5) {
+          v0 = v;
+          heStart = M.next(M.opposite(M.next(M.opposite(M.next(he)))));
+          break;
+        }
+        he = M.next(he);
+      }
+      if (heStart == NO_ID) continue;
+
+      vector<size_t> path;
+      he = heStart;
+      while (true) {
+        path.push_back(he);
+
+        size_t v2 = M.vertex(he,2);
+        // if (G.valence[v2] == 3 && vIs3Of35Pair.find(M.vertices[v2].ptr) != vIs3Of35Pair.end()) {
+        //   break;
+        // }
+        // if (G.valence[v2] == 5 && vIs5Of35Pair.find(M.vertices[v2].ptr) != vIs5Of35Pair.end()) {
+        //   break;
+        // }
+
+        int index = (G.vOnBoundary[v2]) ?  2 - G.valence[v2] : 4 - G.valence[v2];
+        bool regular = (index == 0);
+        if (!regular) break;
+
+        size_t he2 = M.next(M.opposite(M.next(he)));
+        if (he2 == NO_ID) { /* try the other way */
+          he2 = M.opposite(M.prev(M.opposite(M.prev(M.opposite(he)))));
+          if (he2 == NO_ID) break;
+        }
+        he = he2;
+      }
+
+      for (size_t i = 0; i < path.size(); ++i) {
+        geolog_halfedge(M, path[i], double(i), "path_"+std::to_string(heStart));
+      }
+      GeoLog::flush();
+    }
+
+    return 0;
+  }
+
   int remeshQuadrilateralPatches(GFace* gf, std::vector<MVertex*>& singularVertices) {
     Msg::Info("remeshQuadrilateralPatches ...");
 
@@ -2803,7 +3046,7 @@ namespace QSQ {
 
       /* singularNodes is the list of singularities (irregular vertices to keep) in the 
        * GFace structure, the values are the vertex 'num' */
-      int st = createMeshHalfEdges(gf, M, singularVertices);
+      int st = createMeshHalfEdges(gf->quadrangles, M, singularVertices);
       if (st != 0) {
         Msg::Error("failed to generate half edge datastructure for face with tag %i", gf->tag());
         return st;
@@ -2895,7 +3138,12 @@ namespace QSQ {
         bool okg = G.growMaximal();
         if (!okg) continue;
 
-        geolog_fcavity(fcav, "cavr4_"+std::to_string(quads[0])+"_before");
+        std::string cavity_name = "cav_s"+std::to_string(quads.size());
+        if (SHOW_CAVITIES) {
+          fcav.updateSides();
+          gmsh::view::add("---");
+          geolog_fcavity(fcav, cavity_name + "_before");
+        }
 
         /* Remesh the cavity */
         std::vector<MVertex*> newSingularities;
@@ -2915,7 +3163,7 @@ namespace QSQ {
           break;
         } else {
           Msg::Info("-> failed to remesh cavity");
-          geolog_fcavity(fcav, "failed_cav_q"+std::to_string(quads[0]));
+          geolog_fcavity(fcav, "!" + cavity_name);
         }
       }
     }
@@ -3477,6 +3725,8 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
       }
     }
   }
+  vector<MVertex*> singularVertices;
+  propagate35(gm, singularVertices);
   return 0;
 }
 
@@ -3486,6 +3736,10 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     return 1;
   }
   std::vector<GFace*> faces = model_faces(gm);
+
+  if (QMT_Utils::env_var("SHOW_CAVITIES").size() > 0) {
+    SHOW_CAVITIES = true;
+  }
 
   Msg::Info("Generate quasi-structured all-quadrilateral mesh ...");
 
