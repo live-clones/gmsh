@@ -208,108 +208,108 @@ bool compute4neighbors(
 
 // at crossfield singularities, directions are undefined
 // we draw a circle around
-void createSingularPatches (GFace *gf, std::map<MVertex *, int> &s, Field *f, std::vector<MVertex*> &toInsert){
+// static void createSingularPatches (GFace *gf, std::map<MVertex *, int> &s, Field *f, std::vector<MVertex*> &toInsert){
 
-  FILE *_f = fopen("patches.pos","w");
-  fprintf(_f,"View \"\"{\n");
-  for (std::map<MVertex *, int>::iterator it = s.begin();it != s.end() ; ++it){
-    SPoint2 midpoint;
-    SPoint2 newP[8];
-    SMetric3 metricField;
-    compute4neighbors(gf, it->first, midpoint, newP, metricField, f, 0, 0, it->second == 5 ? .25 : 1); 
-    //the 8 points (I know, it's strange ...)
-    //                 2  
-    //             7       6
-    //          1             3  
-    //             4       5
-    //                 0
+//   FILE *_f = fopen("patches.pos","w");
+//   fprintf(_f,"View \"\"{\n");
+//   for (std::map<MVertex *, int>::iterator it = s.begin();it != s.end() ; ++it){
+//     SPoint2 midpoint;
+//     SPoint2 newP[8];
+//     SMetric3 metricField;
+//     compute4neighbors(gf, it->first, midpoint, newP, metricField, f, 0, 0, it->second == 5 ? .25 : 1); 
+//     //the 8 points (I know, it's strange ...)
+//     //                 2  
+//     //             7       6
+//     //          1             3  
+//     //             4       5
+//     //                 0
 
-    // get the unit normal at that point
-    Pair<SVector3, SVector3> der =
-      gf->firstDer(SPoint2(midpoint[0], midpoint[1]));
-    SVector3 s1 = der.first();
-    SVector3 s2 = der.second();
-    SVector3 n = crossprod(s1, s2);
-    n.normalize();
+//     // get the unit normal at that point
+//     Pair<SVector3, SVector3> der =
+//       gf->firstDer(SPoint2(midpoint[0], midpoint[1]));
+//     SVector3 s1 = der.first();
+//     SVector3 s2 = der.second();
+//     SVector3 n = crossprod(s1, s2);
+//     n.normalize();
     
-    int loop [8] = {0,4,1,7,2,6,3,5};
-    SVector3 t0[8],t1[8];
-    GPoint p0[8];
-    std::vector<double> dots;
-    std::vector<SPoint3> pts;
-    for (int i=0;i<8;i++){
-      p0[i] = gf->point(newP[loop[i]]);
-      (*f)(p0[i].x(), p0[i].y(),p0[i].z(),t0[i], gf);      
-      t0[i] -= n*dot(t0[i],n);
-      t0[i].normalize();  
-      t1[i] = crossprod(n, t0[i]);
-      t1[i].normalize();
-    }
-    int nSamples = 30;
-    SPoint3 p(it->first->x(),it->first->y(),it->first->z());
-    for (int i=0;i<8;i++){
-      SVector3 t0i = t0[i];
-      SVector3 t1i = t1[i];
-      SVector3 t0n = t0[(i+1)%8];
-      SVector3 t1n = t1[(i+1)%8];
-      if (fabs(dot(t0i,t0n)) < fabs(dot(t0i,t1n))){
-	SVector3 temp_ = t0n;
-	t0n = t1n;
-	t1n = temp_;	
-      }
-      if (dot(t0i,t0n) < 0)t0n = t0n * (-1.0);
-      if (dot(t1i,t1n) < 0)t1n = t1n * (-1.0);
+//     int loop [8] = {0,4,1,7,2,6,3,5};
+//     SVector3 t0[8],t1[8];
+//     GPoint p0[8];
+//     std::vector<double> dots;
+//     std::vector<SPoint3> pts;
+//     for (int i=0;i<8;i++){
+//       p0[i] = gf->point(newP[loop[i]]);
+//       (*f)(p0[i].x(), p0[i].y(),p0[i].z(),t0[i], gf);      
+//       t0[i] -= n*dot(t0[i],n);
+//       t0[i].normalize();  
+//       t1[i] = crossprod(n, t0[i]);
+//       t1[i].normalize();
+//     }
+//     int nSamples = 30;
+//     SPoint3 p(it->first->x(),it->first->y(),it->first->z());
+//     for (int i=0;i<8;i++){
+//       SVector3 t0i = t0[i];
+//       SVector3 t1i = t1[i];
+//       SVector3 t0n = t0[(i+1)%8];
+//       SVector3 t1n = t1[(i+1)%8];
+//       if (fabs(dot(t0i,t0n)) < fabs(dot(t0i,t1n))){
+// 	SVector3 temp_ = t0n;
+// 	t0n = t1n;
+// 	t1n = temp_;	
+//       }
+//       if (dot(t0i,t0n) < 0)t0n = t0n * (-1.0);
+//       if (dot(t1i,t1n) < 0)t1n = t1n * (-1.0);
 
-      GPoint pi = p0[i];
-      GPoint pn = p0[(i+1)%8];
-      fprintf(_f,"SP(%g,%g,%g){%d};\n",
-	      pi.x(),pi.y(),pi.z(),i);
-      for (int j=0;j<nSamples;j++){
-	double xi = (double)j/(nSamples);
-	SPoint3 pij (pi.x()*(1-xi)+pn.x()*xi,pi.y()*(1-xi)+pn.y()*xi,pi.z()*(1-xi)+pn.z()*xi);
-	SVector3 vij = p-pij;
-	pts.push_back (pij);
-	vij.normalize();
-	SVector3 v0 = t0i*(1-xi) + t0n*xi;
-	SVector3 v1 = t1i*(1-xi) + t1n*xi;
-	v0.normalize();
-	v1.normalize();
-	double dot0 = fabs(dot(v0,vij));
-	double dot1 = fabs(dot(v1,vij));
-	dots.push_back(std::max(dot0,dot1));
-	fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",
-		pij.x(),pij.y(),pij.z(),
-		dot0*v0.x(),dot0*v0.y(),dot0*v0.z());
-	fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",
-		pij.x(),pij.y(),pij.z(),
-		dot1*v1.x(),dot1*v1.y(),dot1*v1.z());
-      }
-    }           
+//       GPoint pi = p0[i];
+//       GPoint pn = p0[(i+1)%8];
+//       fprintf(_f,"SP(%g,%g,%g){%d};\n",
+// 	      pi.x(),pi.y(),pi.z(),i);
+//       for (int j=0;j<nSamples;j++){
+// 	double xi = (double)j/(nSamples);
+// 	SPoint3 pij (pi.x()*(1-xi)+pn.x()*xi,pi.y()*(1-xi)+pn.y()*xi,pi.z()*(1-xi)+pn.z()*xi);
+// 	SVector3 vij = p-pij;
+// 	pts.push_back (pij);
+// 	vij.normalize();
+// 	SVector3 v0 = t0i*(1-xi) + t0n*xi;
+// 	SVector3 v1 = t1i*(1-xi) + t1n*xi;
+// 	v0.normalize();
+// 	v1.normalize();
+// 	double dot0 = fabs(dot(v0,vij));
+// 	double dot1 = fabs(dot(v1,vij));
+// 	dots.push_back(std::max(dot0,dot1));
+// 	fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",
+// 		pij.x(),pij.y(),pij.z(),
+// 		dot0*v0.x(),dot0*v0.y(),dot0*v0.z());
+// 	fprintf(_f,"VP(%g,%g,%g){%g,%g,%g};\n",
+// 		pij.x(),pij.y(),pij.z(),
+// 		dot1*v1.x(),dot1*v1.y(),dot1*v1.z());
+//       }
+//     }           
 
-    int nbMax = 0;
-    for (size_t i=0;i<pts.size();i++){
-      double V0 = dots[i];
-      double V1 = dots[(i+1)%pts.size()];
-      double V2 = dots[(i+2)%pts.size()];
-      if (V1 > V0 && V1 > V2){
-	double uvt[2] = {0,0};
-	GPoint pp = gf->closestPoint(pts[i] ,uvt);
-	MFaceVertex *vv = new MFaceVertex (pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
-	toInsert.push_back(vv);
-	nbMax++;
-      }
-    }
-    if (nbMax == it-> second)printf("singularity %lu has a good set of %d sampling points\n",it->first->getNum(),nbMax);
-    else {
-      toInsert.resize(toInsert.size() - nbMax);
-      printf("singularity %lu has a bad set of %d vs %d sampling points\n",it->first->getNum(),nbMax,it->second);
-    }
-  }
+//     int nbMax = 0;
+//     for (size_t i=0;i<pts.size();i++){
+//       double V0 = dots[i];
+//       double V1 = dots[(i+1)%pts.size()];
+//       double V2 = dots[(i+2)%pts.size()];
+//       if (V1 > V0 && V1 > V2){
+// 	double uvt[2] = {0,0};
+// 	GPoint pp = gf->closestPoint(pts[i] ,uvt);
+// 	MFaceVertex *vv = new MFaceVertex (pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
+// 	toInsert.push_back(vv);
+// 	nbMax++;
+//       }
+//     }
+//     if (nbMax == it-> second)printf("singularity %lu has a good set of %d sampling points\n",it->first->getNum(),nbMax);
+//     else {
+//       toInsert.resize(toInsert.size() - nbMax);
+//       printf("singularity %lu has a bad set of %d vs %d sampling points\n",it->first->getNum(),nbMax,it->second);
+//     }
+//   }
 			
-  fprintf(_f,"};\n");
-  fclose(_f);
+//   fprintf(_f,"};\n");
+//   fclose(_f);
   
-}
+// }
 
 
 

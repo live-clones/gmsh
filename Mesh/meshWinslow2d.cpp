@@ -1927,6 +1927,7 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
   tempe.insert(tempe.begin(), gm->firstEdge(), gm->lastEdge());
 
   for (size_t i=0;i<temp.size();i++){
+    printf("face %lu --> %lu quads\n",temp[i]->tag(),temp[i]->quadrangles.size());
     allowProjections (temp[i]);
   }
   
