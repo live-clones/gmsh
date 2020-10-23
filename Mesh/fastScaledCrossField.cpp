@@ -141,6 +141,9 @@ int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map
     return -1;
   }
 
+#if defined(_OPENMP)
+#pragma omp critical (append_theta)
+#endif
   for (const auto& kv: edgeThetaLocal) {
     std::array<size_t,2> vPairGlobal = {pointTag[kv.first[0]],pointTag[kv.first[1]]};
     if (vPairGlobal[1] < vPairGlobal[0]) {
@@ -148,6 +151,7 @@ int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map
     }
     edgeTheta[vPairGlobal] = kv.second;
   }
+
 #else
   Msg::Error("Diffusion-based cross field computation requires the QuadMeshingTools module");
   return -1;
@@ -534,17 +538,6 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
   }
 
   delete _lsys;
-
-  // std::fill(scaling.begin(),scaling.end(),1.);
-
-  Msg::Info("Compute quad mesh size map from conformal factor and %li target quads ...", 
-      targetNumberOfQuads);
-  int status = computeQuadSizeMapFromCrossFieldConformalFactor(faces, targetNumberOfQuads, 
-      nodeTags, scaling);
-  if (status != 0) {
-    Msg::Error("Failed to compute quad mesh size map");
-    return -1;
-  }
 
 #else 
   Msg::Error("Computing cross field scaling requires the SOLVER module");
@@ -1071,7 +1064,8 @@ int computeScaledCrossFieldView(GModel* gm,
     int nbBoundaryExtensionLayer,
     const std::string& viewName,
     int verbosity,
-    std::vector<std::array<double,5> >* singularities
+    std::vector<std::array<double,5> >* singularities,
+    bool disableConformalScaling
     ) {
   Msg::Debug("compute scaled cross field ...");
 #ifdef HAVE_QUADMESHINGTOOLS
@@ -1081,37 +1075,69 @@ int computeScaledCrossFieldView(GModel* gm,
   }
 
   std::map<std::array<size_t,2>,double> edgeTheta;
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
   for (GFace* gf: faces) {
-    Msg::Debug("- compute cross field for face %i ...",gf->tag());
+    Msg::Info("- Face %i: compute cross field (%li triangles) ...",gf->tag(), gf->triangles.size());
     int status = computeCrossFieldWithHeatEquation({gf}, edgeTheta, nbDiffusionLevels, thresholdNormConvergence,
         nbBoundaryExtensionLayer, verbosity);
     if (status != 0) {
-      Msg::Error("failed to compute cross field for face %i",gf->tag());
+      Msg::Error("failed to compute cross field on face %i",gf->tag());
     }
   }
 
-  bool updateTopo = false;
-  for (GFace* gf: faces) {
-    discreteFace* df = dynamic_cast<discreteFace*>(gf);
-    if (df) { updateTopo = true; break; }
-  }
-  if (updateTopo) {
-    gm->createTopologyFromMesh();
+  { /* For discrete meshes directly imported */
+    bool updateTopo = false;
+    for (GFace* gf: faces) {
+      discreteFace* df = dynamic_cast<discreteFace*>(gf);
+      if (df) { updateTopo = true; break; }
+    }
+    if (updateTopo) {
+      gm->createTopologyFromMesh();
+    }
   }
 
   std::vector<size_t> nodeTags;
   std::vector<double> scaling;
-  int status = computeCrossFieldScaling(faces, edgeTheta, targetNumberOfQuads, nodeTags, scaling);
-  if (status != 0) {
-    Msg::Error("failed to compute cross field scaling");
+  if (!disableConformalScaling) {
+    Msg::Info("Compute cross field conformal scaling (global) ...");
+    int status = computeCrossFieldScaling(faces, edgeTheta, targetNumberOfQuads, nodeTags, scaling);
+    if (status != 0) {
+      Msg::Error("failed to compute cross field scaling");
+      return -1;
+    }
+  } else {
+    Msg::Info("Cross field conformal scaling disabled");
+    for (const auto& kv: edgeTheta) {
+      for (size_t lv = 0; lv < 2; ++lv) {
+        size_t num = kv.first[lv];
+        nodeTags.push_back(num);
+      }
+    }
+    /* Sort unique */
+    std::sort(nodeTags.begin(), nodeTags.end() );
+    nodeTags.erase(std::unique( nodeTags.begin(), nodeTags.end() ), nodeTags.end() );
+    scaling.resize(nodeTags.size(), 1); /* uniform scaling */
+  }
+
+  Msg::Info("Compute quad mesh size map from conformal factor and %li target quads ...", 
+      targetNumberOfQuads);
+  int status2 = computeQuadSizeMapFromCrossFieldConformalFactor(faces, targetNumberOfQuads, 
+      nodeTags, scaling);
+  if (status2 != 0) {
+    Msg::Error("Failed to compute quad mesh size map");
     return -1;
   }
+
 
   if (singularities != NULL) {
     int sts = detectCrossFieldSingularities(faces, edgeTheta, nodeTags, scaling, *singularities);
     if (sts != 0) {
       Msg::Error("failed to detect cross field singularities");
     }
+    Msg::Info("Detected %li cross field singularities", singularities->size());
   }
 
   /* Create data list view */

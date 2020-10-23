@@ -22,7 +22,8 @@ int computeScaledCrossFieldView(GModel* gm,
     int nbBoundaryExtensionLayer = 1,         /* Extend boundary conditions on triangle-layers */
     const std::string& viewName = "scaled_cross_field",
     int verbosity = 3,                        /* 0: nothing except errors, 1: terse comments, 2: a bit more, 3: detailed convergence info */
-    std::vector<std::array<double,5> >* singularities = NULL /* If not NULL, fill with positions of the detected singularities and indices */
+    std::vector<std::array<double,5> >* singularities = NULL, /* If not NULL, fill with positions of the detected singularities and indices */
+    bool disableConformalScaling = false      /* Sometimes (complex corners), it is better to not use conformal scaling */
     );
 
 

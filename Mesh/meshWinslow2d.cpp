@@ -1000,9 +1000,59 @@ static void allowProjections (GFace * gf){
   // -----------------------------------------------------------
 }
 
+void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads, 
+    const std::vector<MVertex*>& freeVertices, int nIter, Field *f, bool remove) {
+  if (gf->triangles.size())return;
+  Msg::Debug("winslow 2D on %li quads, %li free vertices (face %i), %i iterations ...", quads.size(), freeVertices.size(),
+      gf->tag(), nIter);
+  GEntity::GeomType GT = gf->geomType();
+  
+  allowProjections (gf);
+  
+  v2t_cont adj;
+  buildVertexToElement(quads, adj);
+
+  std::vector<winslowStencil> stencils;
+
+  double radius;
+  SPoint3 c;
+  if (GT == GEntity::Plane){
+    nIter = 1000;
+  }
+  if (GT == GEntity::Sphere){
+    nIter = 1000;
+    gf->isSphere(radius, c) ;
+  }
+
+  for (MVertex* v: freeVertices) {
+    auto it = adj.find(v);
+    if (it == adj.end()) continue;
+    if (v->onWhat() == gf) { 
+      const std::vector<MElement *> &e = it->second;
+      winslowStencil st (v, e);
+      stencils.push_back(st);
+    }
+    ++it;
+  }
+  
+  
+  double dx0;
+  for (int i=0;i<nIter;i++){
+    double dx = 0;
+    
+    for (size_t j=0;j<stencils.size();j++){
+      double xx = stencils[j].smooth(gf,GT,radius,c);
+      dx += xx ;
+      //      printf("%lu %12.5E\n",j, xx);
+    }
+    if (i == 0)dx0 = dx;
+    if (dx < .002*dx0) break;
+    //    printf("%12.5E %12.5E\n",dx,dx0);
+  }  
+
+}
 
 void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
-
   if (gf->triangles.size())return;
   GEntity::GeomType GT = gf->geomType();
   

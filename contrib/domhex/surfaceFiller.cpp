@@ -198,7 +198,7 @@ bool compute4neighbors(
 	  newPoint[i][1] = pp.v();
 	}
 	else 
-	  Msg::Warning("Impossible to intersect with a circle of radius %g",L);
+	  Msg::Debug("Impossible to intersect with a circle of radius %g",L);
       }
     }    
   }
