@@ -920,45 +920,71 @@ namespace QuadPatternMatching {
       size_t iter = 10) {
     Msg::Debug("laplacian smoothing in param. domain, with %li new vertices and %li new quads,%li iterations ... ", newVertices.size(), newElements.size(), iter);
 
-    std::unordered_map<MVertex*,std::set<MVertex*>> v2v;
+    std::unordered_map<MVertex*,size_t> old2new;
+    size_t vcount = 0;
+    for (MVertex* v: newVertices) {
+      old2new[v] = vcount;
+      vcount += 1;
+    }
+    size_t nInterior = vcount;
+    vector<vector<size_t> > v2v(nInterior);
     for (MElement* f: newElements) {
       for (size_t le = 0; le < 4; ++le) {
         MVertex* v1 = f->getVertex(le);
         MVertex* v2 = f->getVertex((le+1)%4);
-        v2v[v1].insert(v2);
-        v2v[v2].insert(v1);
+        size_t nv1 = NO_ID;
+        auto it1 = old2new.find(v1);
+        if (it1 == old2new.end()) {
+          old2new[v1] = vcount;
+          nv1 = vcount;
+          vcount += 1;
+        } else {
+          nv1 = it1->second;
+        }
+        size_t nv2 = NO_ID;
+        auto it2 = old2new.find(v2);
+        if (it2 == old2new.end()) {
+          old2new[v2] = vcount;
+          vcount += 1;
+        } else {
+          nv2 = it2->second;
+        }
+        if (nv1 < nInterior) v2v[old2new[v1]].push_back(old2new[v2]);
+        if (nv2 < nInterior) v2v[old2new[v2]].push_back(old2new[v1]);
       }
     }
 
-    std::unordered_map<MVertex*,SPoint2> uvs;
-    for (const auto& kv: v2v)  {
+    vector<SPoint2> uvs(vcount);
+    for (auto& kv: old2new)  {
       MVertex* v = kv.first;
+      size_t idx = kv.second;
       bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
       if (onGf) {
         double uv0,uv1;
         v->getParameter(0,uv0);
         v->getParameter(1,uv1);
-        uvs[v] = SPoint2(uv0,uv1);
+        uvs[idx] = SPoint2(uv0,uv1);
       } else {
         GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
         if (ge != NULL) {
           double t;
           v->getParameter(0,t);
           SPoint2 uv = ge->reparamOnFace(gf, t, -1);
-          uvs[v] = uv;
+          uvs[idx] = uv;
         } else {
           GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
           SPoint2 uv = gv->reparamOnFace(gf,0);
-          uvs[v] = uv;
+          uvs[idx] = uv;
         }
       }
     }
 
+
     for (size_t i = 0; i < iter; ++i) {
-      for (MVertex* v: newVertices) {
+      for (size_t v = 0; v < nInterior; ++v) {
         SPoint2 avg(0.,0.);
         double sum = 0.;
-        for (MVertex* v2: v2v[v]) {
+        for (size_t v2: v2v[v]) {
           avg += uvs[v2];
           sum += 1.;
         }
@@ -967,7 +993,8 @@ namespace QuadPatternMatching {
       }
     }
     for (MVertex* v: newVertices) {
-      SPoint2 uv = uvs[v];
+      size_t idx = old2new[v];
+      SPoint2 uv = uvs[idx];
       v->setParameter(0,uv[0]);
       v->setParameter(1,uv[1]);
       GPoint p = gf->point(uv);
@@ -1228,10 +1255,11 @@ int remeshPatchWithQuadPattern(
   }
   GEntity::GeomType GT = gf->geomType();
   discreteFace* df = dynamic_cast<discreteFace*>(gf);
+  size_t iter = std::min(newVertices.size(),(size_t)1000);
   if (df || GT == GEntity::Sphere) {
-    laplacianSmoothing(newVertices, newElements,newVertices.size());
+    laplacianSmoothing(newVertices, newElements, iter);
   } else {
-    laplacianSmoothingInParametricDomain(gf, newVertices, newElements, newVertices.size());
+    laplacianSmoothingInParametricDomain(gf, newVertices, newElements, iter);
   }
 
   return 0; /* ok ! */
