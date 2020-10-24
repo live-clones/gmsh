@@ -63,7 +63,7 @@ FieldOption *Field::getOption(const std::string &optionName)
 {
   std::map<std::string, FieldOption *>::iterator it = options.find(optionName);
   if(it == options.end()) {
-    Msg::Error("field option :%s does not exist", optionName.c_str());
+    Msg::Error("Field option '%s' does not exist", optionName.c_str());
     return NULL;
   }
   return it->second;
@@ -219,7 +219,7 @@ public:
         input.close();
       } catch(...) {
         _errorStatus = true;
-        Msg::Error("Field %i : error reading file %s", this->id,
+        Msg::Error("Field %i: error reading file '%s'", this->id,
                    _fileName.c_str());
       }
       updateNeeded = false;
@@ -699,7 +699,7 @@ public:
            _delta;
       return sqrt(gx * gx + gy * gy + gz * gz);
     default:
-      Msg::Error("Field %i : Unknown kind (%i) of gradient", this->id, _kind);
+      Msg::Error("Field %i: unknown kind (%i) of gradient", this->id, _kind);
       return MAX_LC;
     }
   }
@@ -1045,7 +1045,7 @@ public:
     {
       if(updateNeeded) {
         if(!_expr.set_function(_f))
-          Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
+          Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
                      _f.c_str());
         updateNeeded = false;
       }
@@ -1099,7 +1099,7 @@ public:
       if(updateNeeded) {
         for(int i = 0; i < 6; i++) {
           if(!_expr.set_function(i, _f[i]))
-            Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
+            Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
                        _f[i].c_str());
         }
         updateNeeded = false;
@@ -1117,7 +1117,7 @@ public:
       if(updateNeeded) {
         for(int i = 0; i < 6; i++) {
           if(!_expr.set_function(i, _f[i]))
-            Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
+            Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
                        _f[i].c_str());
         }
         updateNeeded = false;
@@ -1402,7 +1402,7 @@ public:
     if(updateNeeded) {
       for(int i = 0; i < 3; i++) {
         if(!_expr[i].set_function(_f[i]))
-          Msg::Error("Field %i : Invalid matheval expression \"%s\"", this->id,
+          Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
                      _f[i].c_str());
       }
       updateNeeded = false;

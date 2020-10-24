@@ -180,10 +180,10 @@ void meshGFaceBamg(GFace *gf)
 
     try {
       refinedBamgMesh = Bamg(bamgMesh, args, mm11, mm12, mm22, false);
-      Msg::Info("bamg succeeded %d vertices %d triangles", refinedBamgMesh->nv,
+      Msg::Info("BAMG succeeded %d vertices %d triangles", refinedBamgMesh->nv,
                 refinedBamgMesh->nt);
     } catch(...) {
-      Msg::Error("bamg failed");
+      Msg::Error("BAMG failed");
       return;
     }
     delete[] mm11;
@@ -248,8 +248,7 @@ void meshGFaceBamg(GFace *gf)
 
 void meshGFaceBamg(GFace *gf)
 {
-  Msg::Error("This version of Gmsh is not compiled with Bidimensional "
-             "Anisotropic Mesh Generator (BAMG) support");
+  Msg::Error("This version of Gmsh is not compiled with BAMG support");
 }
 
 #endif

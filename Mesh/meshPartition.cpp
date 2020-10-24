@@ -2569,7 +2569,7 @@ int PartitionUsingThisSplit(GModel *model, std::size_t npart,
     elmToPartition[elmToPart[i].first] = elmToPart[i].second;
 
   if(elmToPartition.size() != graph.ne()) {
-    Msg::Error("All elements are not partitioned.");
+    Msg::Error("All elements are not partitioned");
     return 1;
   }
 

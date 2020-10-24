@@ -486,9 +486,8 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
 
 void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
 {
-  // if (recur > 20)printf("oufti %d\n",recur);
   if(t->isDeleted()) {
-    Msg::Error("a deleted triangle is a neighbor of a non deleted triangle");
+    Msg::Error("A deleted triangle is a neighbor of a non deleted triangle");
     return;
   }
   int iV = -1;

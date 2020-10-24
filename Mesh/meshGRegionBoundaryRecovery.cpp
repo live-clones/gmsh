@@ -1149,7 +1149,7 @@ namespace tetgenBR {
     }
     outfile = fopen(mefilename, "w");
     if(outfile == (FILE *)NULL) {
-      printf("File I/O Error:  Cannot create file %s.\n", mefilename);
+      Msg::Error("Could not open file '%s'", mefilename);
       return;
     }
 

@@ -796,8 +796,8 @@ double meshMetric::operator()(double x, double y, double z, GEntity *ge)
 {
   if(needMetricUpdate) updateMetrics();
   if(!setOfMetrics.size()) {
-    std::cout << "meshMetric::operator() : No metric defined ! " << std::endl;
-    throw;
+    Msg::Error("No metric defined");
+    return 0.;
   }
   SPoint3 xyz(x, y, z), uvw;
   double initialTol = MElement::getTolerance();
@@ -836,8 +836,8 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
     updateMetrics();
   }
   if(!setOfMetrics.size()) {
-    std::cout << "meshMetric::operator() : No metric defined ! " << std::endl;
-    throw;
+    Msg::Error("No metric defined");
+    return;
   }
   metr = SMetric3(1.e-22);
 
