@@ -5,8 +5,6 @@ import sys
 
 gmsh.initialize(sys.argv)
 
-gmsh.option.setNumber("General.Terminal", 1)
-
 gmsh.model.add("boolean")
 
 # from http://en.wikipedia.org/wiki/Constructive_solid_geometry

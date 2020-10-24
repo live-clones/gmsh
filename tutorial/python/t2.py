@@ -14,8 +14,6 @@ import math
 # in the same way as the standalone Gmsh app:
 gmsh.initialize(sys.argv)
 
-gmsh.option.setNumber("General.Terminal", 1)
-
 gmsh.model.add("t2")
 
 # Copied from t1.py...

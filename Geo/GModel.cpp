@@ -1475,8 +1475,8 @@ int GModel::getEdgeNumber(const MEdge &edge)
   hashmapMEdge::iterator it = _mapEdgeNum.find(edge);
   if(it != _mapEdgeNum.end()) { return _mapEdgeNum.find(edge)->second; }
   else {
-    Msg::Error("this edge does not exist in the mapEdgeNum");
-    throw 2;
+    Msg::Error("This edge does not exist in the mapEdgeNum");
+    return -1;
   }
 }
 int GModel::addMFace(const MFace &face)
@@ -2670,8 +2670,11 @@ void GModel::alignPeriodicBoundaries()
           MElement *srcElmt = mIter->second;
           std::vector<MVertex *> srcVtcs;
 
-          if(tgtTri && !dynamic_cast<MTriangle *>(srcElmt)) throw;
-          if(tgtQua && !dynamic_cast<MQuadrangle *>(srcElmt)) throw;
+          if((tgtTri && !dynamic_cast<MTriangle *>(srcElmt)) ||
+             (tgtQua && !dynamic_cast<MQuadrangle *>(srcElmt))) {
+            Msg::Error("Invalid source/target elements");
+            return;
+          }
 
           int rotation = 0;
           bool swap = false;

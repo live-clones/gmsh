@@ -6,8 +6,6 @@ import numpy as np
 
 gmsh.initialize()
 
-gmsh.option.setNumber("General.Terminal", 1)
-
 # Set a target mesh size
 lc = 2e-2
 

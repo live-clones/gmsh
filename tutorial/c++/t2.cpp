@@ -16,8 +16,6 @@ int main(int argc, char **argv)
   // line in the same way as the standalone Gmsh app:
   gmsh::initialize(argc, argv);
 
-  gmsh::option::setNumber("General.Terminal", 1);
-
   gmsh::model::add("t2");
 
   // Copied from t1.cpp...

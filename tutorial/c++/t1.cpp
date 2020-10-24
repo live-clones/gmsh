@@ -17,10 +17,6 @@ int main(int argc, char **argv)
   // Before using any functions in the C++ API, Gmsh must be initialized:
   gmsh::initialize();
 
-  // By default Gmsh will not print out any messages: in order to output
-  // messages on the terminal, just set the "General.Terminal" option to 1:
-  gmsh::option::setNumber("General.Terminal", 1);
-
   // We now add a new model, named "t1". If gmsh::model::add() is not called, a
   // new default (unnamed) model will be created on the fly, if necessary.
   gmsh::model::add("t1");

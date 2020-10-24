@@ -5,7 +5,6 @@ import sys
 
 gmsh.initialize()
 
-gmsh.option.setNumber("General.Terminal", 1)
 gmsh.option.setNumber("Mesh.Algorithm", 6)
 gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.75)
 gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.75)

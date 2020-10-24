@@ -1,7 +1,7 @@
 import gmsh
 
 gmsh.initialize()
-gmsh.option.setNumber('General.Terminal', 1)
+
 # load step file
 gmsh.open('as1-tu-203.stp')
 

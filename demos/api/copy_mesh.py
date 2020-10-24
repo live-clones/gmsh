@@ -1,7 +1,6 @@
 import gmsh
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # create a model with OCC and mesh it
 gmsh.model.add('model1')

@@ -2,7 +2,6 @@ import gmsh
 using JSON
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # set a full onelab db
 gmsh.onelab.set("""

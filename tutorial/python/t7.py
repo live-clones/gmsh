@@ -14,7 +14,6 @@ import sys
 # i.e., a post-processing view that contains the target characteristic lengths.
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # Merge a list-based post-processing view containing the target mesh sizes:
 path = os.path.dirname(os.path.abspath(__file__))

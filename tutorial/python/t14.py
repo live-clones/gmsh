@@ -15,8 +15,6 @@ import sys
 
 gmsh.initialize(sys.argv)
 
-gmsh.option.setNumber("General.Terminal", 1)
-
 # Create an example geometry
 gmsh.model.add("t14")
 

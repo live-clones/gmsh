@@ -24,7 +24,7 @@ import math
 # reparametrize) combined with a CAD representation of the underground.
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
+
 gmsh.model.add("x2")
 
 # We will create the terrain surface mesh from N x N input data points:

@@ -44,10 +44,10 @@ api = API(version_major, version_minor, version_patch)
 
 gmsh = api.add_module('gmsh', 'top-level functions')
 
-doc = '''Initialize Gmsh. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options).'''
+doc = '''Initialize Gmsh API. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options). Initializing the API sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2.'''
 gmsh.add('initialize', doc, None, iargcargv(), ibool('readConfigFiles', 'true', 'True', 'true'))
 
-doc = '''Finalize Gmsh. This must be called when you are done using the Gmsh API.'''
+doc = '''Finalize the Gmsh API. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize', doc, None)
 
 doc = '''Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents: opening a file with model data will create a new model.'''

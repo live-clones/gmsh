@@ -15,7 +15,6 @@ import os
 import sys
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t20")
 

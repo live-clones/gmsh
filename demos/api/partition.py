@@ -6,7 +6,6 @@ write_one_file_per_partition = False
 partition_using_metis = False
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # create a simple geometry and mesh it
 gmsh.model.add("test")

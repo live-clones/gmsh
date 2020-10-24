@@ -21,10 +21,6 @@ int main(int argc, char **argv)
      API the last argument of all functions returns the error code, if any. */
   gmshInitialize(argc, argv, 1, &ierr);
 
-  /* By default Gmsh will not print out any messages: in order to output
-     messages on the terminal, just set the "General.Terminal" option to 1: */
-  gmshOptionSetNumber("General.Terminal", 1, &ierr);
-
   /* We now add a new model, named "t1". If gmsh::model::add() is not called, a
      new default (unnamed) model will be created on the fly, if necessary. */
   gmshModelAdd("t1", &ierr);

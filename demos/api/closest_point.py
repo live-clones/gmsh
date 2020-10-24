@@ -2,7 +2,6 @@ import gmsh
 import sys
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # add a circle
 c = gmsh.model.occ.addCircle(0, 0, 0, 1)

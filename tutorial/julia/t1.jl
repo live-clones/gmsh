@@ -4,8 +4,6 @@ import gmsh
 
 gmsh.initialize()
 
-gmsh.option.setNumber("General.Terminal", 1)
-
 gmsh.model.add("t1")
 
 lc = 1e-2
