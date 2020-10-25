@@ -120,12 +120,13 @@ GMSH_API void gmsh::initialize(int argc, char **argv, bool readConfigFiles)
     Msg::Warning("Gmsh has aleady been initialized");
     return;
   }
-  // throw an exception as soon as an error occurs (to keep going after errors
-  // like in the Gmsh app, set "General.AbortOnError" to 0)
-  CTX::instance()->abortOnError = 2;
-  // show messages on the terminal (to disable this set "General.Terminal" to 0)
-  CTX::instance()->terminal = 1;
   if(GmshInitialize(argc, argv, readConfigFiles, false)) {
+    // throw an exception as soon as an error occurs, unless the GUI is running
+    // (to always keep going after errors like in the Gmsh app, set
+    // "General.AbortOnError" to 0)
+    CTX::instance()->abortOnError = 2;
+    // show messages on the terminal (to disable this set "General.Terminal" to 0)
+    CTX::instance()->terminal = 1;
     _initialized = 1;
     _argc = argc;
     _argv = new char *[_argc + 1];
@@ -6874,7 +6875,7 @@ GMSH_API void gmsh::graphics::draw()
 
 // gmsh::fltk
 
-static void error_handler(const char *fmt, ...)
+static void _errorHandlerFltk(const char *fmt, ...)
 {
   char str[5000];
   va_list args;
@@ -6884,11 +6885,17 @@ static void error_handler(const char *fmt, ...)
   Msg::Error("%s (FLTK internal error)", str);
 }
 
+static void _createFltk()
+{
+  if(!FlGui::available())
+    FlGui::instance(_argc, _argv, false,  _errorHandlerFltk);
+}
+
 GMSH_API void gmsh::fltk::initialize()
 {
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
-  FlGui::instance(_argc, _argv, false, error_handler);
+  _createFltk();
   FlGui::setFinishedProcessingCommandLine();
   FlGui::check(true);
 #else
@@ -6910,7 +6917,7 @@ GMSH_API void gmsh::fltk::wait(const double time)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, false, error_handler);
+  _createFltk();
   if(time >= 0)
     FlGui::wait(time, true);
   else
@@ -6944,7 +6951,7 @@ GMSH_API void gmsh::fltk::update()
 {
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, false, error_handler);
+  _createFltk();
   FlGui::instance()->updateViews(true, true);
 #else
   Msg::Error("Fltk not available");
@@ -6965,7 +6972,7 @@ GMSH_API void gmsh::fltk::run()
 {
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, false, error_handler);
+  _createFltk();
   FlGui::instance()->run(); // this calls draw() once
 #else
   Msg::Error("Fltk not available");
@@ -6991,7 +6998,7 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
   if(!_checkInit()) return -1;
   dimTags.clear();
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, false, error_handler);
+  _createFltk();
   char ret = 0;
   switch(dim) {
   case 0: ret = FlGui::instance()->selectEntity(ENT_POINT); break;
@@ -7023,7 +7030,7 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   if(!_checkInit()) return -1;
   elementTags.clear();
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, false, error_handler);
+  _createFltk();
   int old = CTX::instance()->pickElements;
   CTX::instance()->pickElements = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -7042,7 +7049,7 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
   if(!_checkInit()) return -1;
   viewTags.clear();
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, false, error_handler);
+  _createFltk();
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
   for(std::size_t i = 0; i < FlGui::instance()->selectedViews.size(); i++)
     viewTags.push_back(FlGui::instance()->selectedViews[i]->getTag());
@@ -7057,7 +7064,7 @@ GMSH_API void gmsh::fltk::splitCurrentWindow(const std::string &how,
 {
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, false, error_handler);
+  _createFltk();
   if(how == "h")
     FlGui::instance()->splitCurrentOpenglWindow('h', ratio);
   else if(how == "v")
@@ -7074,7 +7081,7 @@ GMSH_API void gmsh::fltk::setCurrentWindow(const int windowIndex)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()) FlGui::instance(_argc, _argv, false, error_handler);
+  _createFltk();
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
 #endif
 }
