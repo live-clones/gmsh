@@ -17,7 +17,7 @@ class Cross2D{
   double theta;
  Cross2D():_mesh(NULL),edge(NULL),theta(0.0){}
  Cross2D(MyMesh *m,const MEdge *e, double thetaNormal):_mesh(m),edge(e),theta(thetaNormal){_computeDirections();}
-  SVector3 getClosestBranchToDirection(const SVector3 &direction){return SVector3();}
+  SVector3 getClosestBranchToDirection(SVector3 direction);
   std::vector<SVector3> getDirections(){return _directions;}
   SVector3 getDirection(size_t iDir){return _directions[iDir];}
   SVector3 getEulerAngles(double &noNutation);
@@ -66,6 +66,8 @@ class MyMesh{
   std::map<const MEdge *, Cross2D> manifoldBasis;
   
   std::map<MVertex *, double, MVertexPtrLessThan> H;
+  std::map<MVertex *, double, MVertexPtrLessThan> potU;
+  std::map<MVertex *, double, MVertexPtrLessThan> potV;
   std::map<const MEdge *, Cross2D> crossField;
   
   /* MyMesh(){} */
@@ -121,6 +123,9 @@ class ConformalMapping{
   void _cutMeshOnCutGraph();
   void _createManifoldBasis(){_currentMesh->computeManifoldBasis();}
   void _computeCrossesFromH();
+  std::map<const MEdge*, SVector3> _getLifting(MyMesh *mesh, const std::set<MTriangle*, MElementPtrLessThan> &triangles, MTriangle* triangleInit, const SVector3 &dirRef);
+  void _solvePotOnPatch(const std::set<MTriangle*, MElementPtrLessThan> &tri, const SVector3 &dirRef, std::map<MVertex *, double, MVertexPtrLessThan> &pot);
+  void _computeParametrization();
   void _fitModelToInitMesh();
   void _fitModelToFeatureMesh();
   void _fitModelToCutGraphMesh();
