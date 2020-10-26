@@ -1068,7 +1068,7 @@ namespace QuadPatternMatching {
     double score = 0.;
     slt.clear();
     int count = 0;
-    int count_limit = 1000; /* limit on the number of solution tried in the DFS */
+    int count_limit = 100; /* limit on the number of solution tried in the DFS */
     score = mat.get_positive_solution_DFS(slt, count, count_limit);
 
     return score;

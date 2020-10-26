@@ -963,6 +963,8 @@ namespace QSQ {
     std::vector<uint8_t> side; /* side associated to each half-edge */
     std::unordered_set<size_t> quads; /* quads inside, unordered_set for queries */
 
+    std::vector<int> _tmp_val; /* for re-use in updateSides() */
+
 
     /* Methods */
     FCavity(MeshHalfEdges& M_) : M(M_) { }
@@ -1192,19 +1194,22 @@ namespace QSQ {
     int updateSides() {
       // if (DBG_VERBOSE) {DBG("updateSides ...");}
       side.resize(hes.size());
-      std::unordered_map<size_t,int> val;
+      _tmp_val.resize(M.vertices.size());
+      std::fill(_tmp_val.begin(),_tmp_val.end(),0);
+      // std::vector<int> val(M.vertices.size());
+      // std::unordered_map<size_t,int> val;
       for (size_t f: quads) {
         size_t he = M.faces[f].he;
         for (size_t lv = 0; lv < 4; ++lv) {
           size_t v = M.hedges[he].vertex;
-          val[v] += 1;
+          _tmp_val[v] += 1;
           he = M.hedges[he].next;
         }
       }
 
       std::unordered_set<size_t> corners;
-      for (const auto& kv: val) {
-        if (kv.second == 1) corners.insert(kv.first);
+      for (size_t i = 0; i < M.vertices.size(); ++i) if (_tmp_val[i] == 1) {
+        corners.insert(i);
       }
 
       // if (DBG_VERBOSE) {DBG(corners);}
@@ -1534,7 +1539,7 @@ namespace QSQ {
             }
           }
           if (heInit == NO_ID || iInit == NO_ID) {
-            Msg::Warning("getFlipHalfEdgeCandidates, limit vertex (sing or concave) = %li, hesOnLimit.size() = %li, but he not found on cavity bdr",
+            Msg::Debug("getFlipHalfEdgeCandidates, limit vertex (sing or concave) = %li, hesOnLimit.size() = %li, but he not found on cavity bdr",
                 bs, hesOnLimit.size());
             if (SHOW_CAVITIES) {
               GeoLog::flush();
@@ -2716,7 +2721,7 @@ namespace QSQ {
       }
     }
 
-    Msg::Info("remeshing cavity with %li quads, %li sides ...", cav.quads.size(), sides.size());
+    Msg::Debug("remeshing cavity with %li quads, %li sides ...", cav.quads.size(), sides.size());
 
     std::vector<MElement*> newElements;
     std::vector<MVertex*> newVertices;
@@ -2844,7 +2849,7 @@ namespace QSQ {
 
   int remeshCavitiesAroundSingularities(GFace* gf, std::vector<MVertex*>& singularVertices) 
   {
-    Msg::Info("- Face %i: remeshCavitiesAroundSingularities ...", gf->tag());
+    Msg::Debug("- Face %i: remeshCavitiesAroundSingularities ...", gf->tag());
 
     using std::priority_queue;
     using std::pair;
@@ -2951,8 +2956,9 @@ namespace QSQ {
     }
 
     if (count > 0) {
-      Msg::Info("winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
+      Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
       meshWinslow2d(gf, 100);
+      Msg::Info("- Face %i: remeshed %li cavities around singularities ...", gf->tag(), count);
     }
 
     return 0;
@@ -3423,7 +3429,7 @@ namespace QSQ {
   }
 
   int remeshQuadrilateralPatches(GFace* gf, std::vector<MVertex*>& singularVertices) {
-    Msg::Info("remeshQuadrilateralPatches ...");
+    Msg::Debug("- Face %i: remeshing quadrilateral cavities  ...", gf->tag());
 
     using std::priority_queue;
     using std::pair;
@@ -3548,8 +3554,9 @@ namespace QSQ {
     }
 
     if (count > 0) {
-      Msg::Info("winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
+      Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
       meshWinslow2d(gf, 100);
+      Msg::Info("- Face %i: remeshed %li quadrilateral cavities  ...", gf->tag(), count);
     }
 
     return 0;
@@ -3824,7 +3831,7 @@ int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFa
       int status = meshSimpleFaceWithPattern(gf, info);
       if (status == 0) {
         gf->meshStatistics.status = GFace::DONE;
-        Msg::Info("- Face %i: simple (topo. disk, %i convex corners), built quad meshes (%li elements) from simple pattern",
+        Msg::Info("- Face %i: simple topology (topo. is disk with %i convex corners), quad mesh (%li elements) built from simple pattern",
             gf->tag(), info.bdrValVertices[1].size(), gf->quadrangles.size());
       }
     }
@@ -4089,6 +4096,7 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
   /* Improve local defects (valence 6+, valence 3+ on curves, etc)
    * by checking all possible local remeshing in big list of
    * disk quadrangulations */
+  Msg::Info("Repair quad mesh defects (wrong valence on bdr. or valence 6+ inside) ...");
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -4103,6 +4111,7 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
   printPatternUsage();
 
   /* Improve quad meshes with larger operators (cavity remeshing) */
+  Msg::Info("Improve quad meshes with large cavity remeshing ...");
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -4212,9 +4221,8 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   if (s6 != 0) {
     Msg::Warning("failed to improve quad mesh topology, continue");
   }
+
   // TODO:
-  // - quad cavities starting from feature curves in GFace
-  // - cavities (random shape) starting from irregular vertices
   // - concave corner cavities
 
   return 0;
