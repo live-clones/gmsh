@@ -887,27 +887,61 @@ namespace QuadPatternMatching {
     size_t iter = 10) {
     Msg::Debug("laplacian smoothing with %li new vertices and %li new quads,%li iterations ... ", newVertices.size(), newElements.size(), iter);
 
-    std::unordered_map<MVertex*,std::set<MVertex*>> v2v;
+    std::unordered_map<MVertex*,size_t> old2new;
+    size_t vcount = 0;
+    for (MVertex* v: newVertices) {
+      old2new[v] = vcount;
+      vcount += 1;
+    }
+    size_t nInterior = vcount;
+    vector<vector<size_t> > v2v(nInterior);
     for (MElement* f: newElements) {
       for (size_t le = 0; le < 4; ++le) {
         MVertex* v1 = f->getVertex(le);
         MVertex* v2 = f->getVertex((le+1)%4);
-        v2v[v1].insert(v2);
-        v2v[v2].insert(v1);
+        size_t nv1 = NO_ID;
+        auto it1 = old2new.find(v1);
+        if (it1 == old2new.end()) {
+          old2new[v1] = vcount;
+          nv1 = vcount;
+          vcount += 1;
+        } else {
+          nv1 = it1->second;
+        }
+        size_t nv2 = NO_ID;
+        auto it2 = old2new.find(v2);
+        if (it2 == old2new.end()) {
+          old2new[v2] = vcount;
+          vcount += 1;
+        } else {
+          nv2 = it2->second;
+        }
+        if (nv1 < nInterior) v2v[old2new[v1]].push_back(old2new[v2]);
+        if (nv2 < nInterior) v2v[old2new[v2]].push_back(old2new[v1]);
       }
     }
-
+    vector<SVector3> pts(vcount);
+    for (auto& kv: old2new)  {
+      MVertex* v = kv.first;
+      size_t idx = kv.second;
+      pts[idx] = v->point();
+    }
     for (size_t i = 0; i < iter; ++i) {
-      for (MVertex* v: newVertices) {
-        SPoint3 avg(0.,0.,0.);
+      for (size_t v = 0; v < nInterior; ++v) {
+        SVector3 avg(0.,0.,0.);
         double sum = 0.;
-        for (MVertex* v2: v2v[v]) {
-          avg += v2->point();
+        for (size_t v2: v2v[v]) {
+          avg += pts[v2];
           sum += 1.;
         }
         if (sum == 0) continue;
-        v->setXYZ(avg.x()/sum,avg.y()/sum,avg.z()/sum);
+        pts[v] = SPoint3(avg.x()/sum,avg.y()/sum,avg.z()/sum);
       }
+    }
+    for (MVertex* v: newVertices) {
+      size_t idx = old2new[v];
+      SVector3 p = pts[idx];
+      v->setXYZ(p.x(),p.y(),p.z());
     }
 
     return true;
