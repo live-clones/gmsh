@@ -6,9 +6,6 @@ int main(int argc, char **argv)
   // initialize Gmsh
   gmsh::initialize(argc, argv);
 
-  // print messages on the terminal
-  gmsh::option::setNumber("General.Terminal", 1);
-
   // create a new Gmsh model
   gmsh::model::add("my test model");
 

@@ -34,7 +34,6 @@ public:
   virtual SPoint3 operator()(double u, double v) const
   {
     GPoint gp = gf->point(u, v);
-    if(!gp.succeeded()) throw gf;
     return SPoint3(gp.x(), gp.y(), gp.z());
   }
 };

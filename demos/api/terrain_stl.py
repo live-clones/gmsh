@@ -4,7 +4,6 @@ import os
 import sys
 
 gmsh.initialize(sys.argv)
-gmsh.option.setNumber('General.Terminal', 1)
 
 path = os.path.dirname(os.path.abspath(__file__))
 

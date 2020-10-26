@@ -393,7 +393,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++) {
     MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(ge->mesh_vertices[i]);
     if(!v) {
-      Msg::Error("in 1D mesh filterPoints");
+      Msg::Error("Node not classified on curve in 1D mesh filtering");
       return;
     }
     double d = distance(v, v0);

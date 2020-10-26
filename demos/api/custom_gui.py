@@ -13,6 +13,9 @@ gmsh.initialize()
 # hide the standard Gmsh modules
 gmsh.option.setNumber("General.ShowModuleMenu", 0)
 
+# don't print messages on the terminal
+gmsh.option.setNumber("General.Terminal", 0)
+
 # create some ONELAB parameters to control the number of iterations and
 # threads, the progress display and the custom ONELAB button (when pressed,
 # it will set the "ONELAB/Action" parameter to "should compute")

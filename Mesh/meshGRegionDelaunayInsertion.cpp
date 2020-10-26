@@ -69,7 +69,7 @@ static void testIfBoundaryIsRecovered(GRegion *gr)
     Msg::Info("All edges and faces are present in the initial mesh");
   }
   else {
-    Msg::Error("All edges and faces are NOT present in the initial mesh");
+    Msg::Error("All edges and faces are not present in the initial mesh");
   }
 }
 
@@ -666,7 +666,7 @@ void non_recursive_classify(MTet4 *t, std::list<MTet4 *> &theRegion,
     t = _stackounette.top();
     _stackounette.pop();
     if(!t) {
-      Msg::Error("A tetrahedron is not connected to a boundary face");
+      Msg::Warning("A tetrahedron is not connected to a boundary face");
       touchesOutsideBox = true;
     }
     else if(!t->onWhat()) {
@@ -1396,7 +1396,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
   while(1) {
     if(maxIter > 0 && ITER >= maxIter) break;
     if(allTets.empty()) {
-      Msg::Error("No tetrahedra in region %d", gr->tag());
+      Msg::Warning("No tetrahedra in region %d", gr->tag());
       break;
     }
 

@@ -212,11 +212,12 @@ def initialize(argv=[], readConfigFiles=True):
     """
     gmsh.initialize(argv=[], readConfigFiles=True)
 
-    Initialize Gmsh. This must be called before any call to the other functions
-    in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are
-    provided, they will be handled in the same way as the command line
-    arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh
-    configuration files (gmshrc and gmsh-options).
+    Initialize Gmsh API. This must be called before any call to the other
+    functions in the API. If `argc' and `argv' (or just `argv' in Python or
+    Julia) are provided, they will be handled in the same way as the command
+    line arguments in the Gmsh app. If `readConfigFiles' is set, read system
+    Gmsh configuration files (gmshrc and gmsh-options). Initializing the API
+    sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2.
     """
     api_argc_, api_argv_ = _iargcargv(argv)
     ierr = c_int()
@@ -231,7 +232,8 @@ def finalize():
     """
     gmsh.finalize()
 
-    Finalize Gmsh. This must be called when you are done using the Gmsh API.
+    Finalize the Gmsh API. This must be called when you are done using the Gmsh
+    API.
     """
     ierr = c_int()
     lib.gmshFinalize(

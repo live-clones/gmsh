@@ -120,7 +120,7 @@ SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
   case 2:
     return metric_based_on_surface_curvature((const GFace *)ge, U, V, iso_surf);
   }
-  Msg::Error("Curvature control impossible to compute for a volume!");
+  Msg::Error("Curvature control impossible to compute for a volume");
   return SMetric3();
 }
 

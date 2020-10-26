@@ -101,10 +101,10 @@ public:
     if(edges.size()) {
       char name[256];
       sprintf(name, "missingEdgesOnRegion%d.pos", gr->tag());
-      Msg::Error("Region %d : %d mesh edges that should be embedded are "
+      Msg::Warning("Region %d : %d mesh edges that should be embedded are "
                  "missing in the final mesh",
                  gr->tag(), (int)edges.size());
-      Msg::Error("Saving the missing edges in file %s", name);
+      Msg::Info("Saving the missing edges in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
       for(std::map<MEdge, GEdge *, MEdgeLessThan>::iterator it = edges.begin();
@@ -121,10 +121,10 @@ public:
     if(faces.size()) {
       char name[256];
       sprintf(name, "missingFacesOnRegion%d.pos", gr->tag());
-      Msg::Error("Volume %d : %d mesh faces that should be embedded are "
+      Msg::Warning("Volume %d : %d mesh faces that should be embedded are "
                  "missing in the final mesh",
                  gr->tag(), (int)faces.size());
-      Msg::Error("Saving the missing faces in file %s", name);
+      Msg::Info("Saving the missing faces in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
       for(std::map<MFace, GFace *, MFaceLessThan>::iterator it = faces.begin();
@@ -370,7 +370,7 @@ static void Mesh1D(GModel *m)
 
   while(1) {
     if(CTX::instance()->abortOnError && Msg::GetErrorCount()) {
-      Msg::Error("Aborted 1D meshing");
+      Msg::Warning("Aborted 1D meshing");
       break;
     }
 
@@ -521,7 +521,7 @@ static void Mesh2D(GModel *m)
 
     while(1) {
       if(CTX::instance()->abortOnError && Msg::GetErrorCount()) {
-        Msg::Error("Aborted 2D meshing");
+        Msg::Warning("Aborted 2D meshing");
         break;
       }
 
@@ -872,7 +872,7 @@ static void Mesh3D(GModel *m)
 
   for(std::size_t i = 0; i < connected.size(); i++) {
     if(CTX::instance()->abortOnError && Msg::GetErrorCount()) {
-      Msg::Error("Aborted 3D meshing");
+      Msg::Warning("Aborted 3D meshing");
       break;
     }
 
@@ -967,7 +967,7 @@ static void Mesh3D(GModel *m)
   }
   if(emptyRegionFound) {
     debugInfo << std::endl;
-    Msg::Error(debugInfo.str().c_str());
+    Msg::Warning(debugInfo.str().c_str());
   }
 
   Msg::SetNumThreads(prevNumThreads);

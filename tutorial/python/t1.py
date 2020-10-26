@@ -14,10 +14,6 @@ import sys
 # Before using any functions in the Python API, Gmsh must be initialized:
 gmsh.initialize()
 
-# By default Gmsh will not print out any messages: in order to output messages
-# on the terminal, just set the "General.Terminal" option to 1:
-gmsh.option.setNumber("General.Terminal", 1)
-
 # Next we add a new model named "t1" (if gmsh.model.add() is not called a new
 # unnamed model will be created on the fly, if necessary):
 gmsh.model.add("t1")

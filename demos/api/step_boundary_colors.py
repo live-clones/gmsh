@@ -3,8 +3,6 @@ import os
 
 gmsh.initialize()
 
-gmsh.option.setNumber("General.Terminal", 1)
-
 path = os.path.dirname(os.path.abspath(__file__))
 gmsh.merge(os.path.join(path, 'step_boundary_colors.stp'))
 

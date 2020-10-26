@@ -10,7 +10,6 @@ import gmsh
 import sys
 
 gmsh.initialize(sys.argv)
-gmsh.option.setNumber("General.Terminal", 1)
 
 # Contrary to list-based view (see `x3.py'), model-based views are based on one
 # or more meshes. Compared to list-based views, they are thus linked to one

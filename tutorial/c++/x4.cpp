@@ -12,7 +12,6 @@
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
-  gmsh::option::setNumber("General.Terminal", 1);
 
   // Contrary to list-based view (see `x3.cpp'), model-based views are based on
   // one or more meshes. Compared to list-based views, they are thus linked to

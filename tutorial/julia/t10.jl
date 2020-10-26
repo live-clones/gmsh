@@ -3,7 +3,6 @@
 import gmsh
 
 gmsh.initialize(append!(["gmsh"], ARGS))
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t10")
 

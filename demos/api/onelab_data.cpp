@@ -9,7 +9,6 @@ int main(int argc, char **argv)
   }
 
   gmsh::initialize();
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::open(argv[1]);
 

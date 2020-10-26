@@ -76,7 +76,6 @@ void cheeseHole(double x, double y, double z, double r, double lc,
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
-  gmsh::option::setNumber("General.Terminal", 1);
 
   double lcar1 = .1;
   double lcar2 = .0005;

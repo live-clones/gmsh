@@ -6,7 +6,6 @@ if len(sys.argv) < 2:
     exit(0)
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.open(sys.argv[1])
 

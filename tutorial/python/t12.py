@@ -39,7 +39,6 @@ import sys
 # 5. is governed by the `Mesh.CompoundClassify' option.
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 lc = 0.1
 

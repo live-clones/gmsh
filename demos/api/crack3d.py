@@ -3,8 +3,6 @@ import sys
 
 gmsh.initialize(sys.argv)
 
-gmsh.option.setNumber("General.Terminal", 1)
-
 # create 2 adjacent boxes + a smaller surface on the interface
 v1 = gmsh.model.occ.addBox(0, 0, 0, 1, 1, 1)
 v2 = gmsh.model.occ.addBox(0, 0, -1, 1, 1, 1)

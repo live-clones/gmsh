@@ -3,8 +3,6 @@ import sys
 
 gmsh.initialize(sys.argv)
 
-gmsh.option.setNumber("General.Terminal", 1)
-
 # create simple geometry
 gmsh.model.occ.addBox(-3, -2, -1, 6, 4, 2)
 gmsh.model.occ.synchronize()

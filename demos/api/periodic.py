@@ -1,7 +1,6 @@
 import gmsh
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("periodic")
 R = 2

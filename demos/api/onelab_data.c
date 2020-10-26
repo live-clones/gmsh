@@ -22,7 +22,6 @@ int main(int argc, char **argv)
   }
 
   gmshInitialize(0, 0, 1, &ierr); chk(ierr);
-  gmshOptionSetNumber("General.Terminal", 1, &ierr); chk(ierr);
 
   gmshOpen(argv[1], &ierr); chk(ierr);
 

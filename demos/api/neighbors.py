@@ -5,7 +5,6 @@ import sys
 # face) of all tets in the mesh
 
 gmsh.initialize(sys.argv)
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("my test model")
 gmsh.model.occ.addBox(0, 0, 0, 1, 1, 1)
