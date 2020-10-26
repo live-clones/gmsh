@@ -1495,10 +1495,12 @@ class API:
             for a in args:
                 if a.python_pre: self.fwrite(f, indent + a.python_pre + "\n")
             self.fwrite(f, indent + "ierr = c_int()\n")
+            c_name = c_mpath + name[0].upper() + name[1:]
+            if rtype is odouble:
+                self.fwrite(f, indent + "lib." + c_name + ".restype = c_double\n")
             self.fwrite(
                 f, indent + "api_result_ = " if
                 ((rtype is oint) or (rtype is odouble)) else (indent))
-            c_name = c_mpath + name[0].upper() + name[1:]
             self.fwrite(
                 f, "lib." + c_name + "(\n    " + indent +
                 (",\n" + indent + "    ").join(

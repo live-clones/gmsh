@@ -6772,6 +6772,7 @@ class logger:
         Return a floating point value.
         """
         ierr = c_int()
+        lib.gmshLoggerGetWallTime.restype = c_double
         api_result_ = lib.gmshLoggerGetWallTime(
             byref(ierr))
         if ierr.value != 0:
@@ -6788,6 +6789,7 @@ class logger:
         Return a floating point value.
         """
         ierr = c_int()
+        lib.gmshLoggerGetCpuTime.restype = c_double
         api_result_ = lib.gmshLoggerGetCpuTime(
             byref(ierr))
         if ierr.value != 0:
