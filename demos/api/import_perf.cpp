@@ -8,27 +8,33 @@ int main()
   int N = 2500;
 
   double tic = gmsh::logger::getWallTime();
-  std::vector<double> coords; // x, y, z coordinates of all the nodes
-  std::vector<std::size_t> nodes; // tags of corresponding nodes
-  std::vector<std::size_t> tris; // connectivities (node tags) of triangle elements
+  // x, y, z coordinates of all the nodes
+  std::vector<double> coords((N + 1) * (N + 1) * 3);
+  // tags of corresponding nodes
+  std::vector<std::size_t> nodes((N + 1) * (N + 1));
+  // connectivities (node tags) of triangle elements
+  std::vector<std::size_t> tris(N * N * 2 * 3);
 
   auto tag = [N](int i, int j) {
     return (N + 1) * i + j + 1;
   };
 
+  int k = 0, l = 0;
   for(int i = 0; i < N + 1; i++) {
     for(int j = 0; j < N + 1; j++) {
-      nodes.push_back(tag(i, j));
-      coords.push_back((double)i / N);
-      coords.push_back((double)j / N);
-      coords.push_back(0.05 * sin(10 * (double)(i + j) / N));
+      nodes[k] = tag(i, j);
+      coords[3 * k] = (double)i / N;
+      coords[3 * k + 1] = (double)j / N;
+      coords[3 * k + 2] = 0.05 * sin(10 * (double)(i + j) / N);
+      k++;
       if(i > 0 && j > 0) {
-        tris.push_back(tag(i - 1, j - 1));
-        tris.push_back(tag(i, j - 1));
-        tris.push_back(tag(i - 1, j));
-        tris.push_back(tag(i, j - 1));
-        tris.push_back(tag(i, j));
-        tris.push_back(tag(i - 1, j));
+        tris[6 * l] = tag(i - 1, j - 1);
+        tris[6 * l + 1] = tag(i, j - 1);
+        tris[6 * l + 2] = tag(i - 1, j);
+        tris[6 * l + 3] = tag(i, j - 1);
+        tris[6 * l + 4] = tag(i, j);
+        tris[6 * l + 5] = tag(i - 1, j);
+        l++;
       }
     }
   }
