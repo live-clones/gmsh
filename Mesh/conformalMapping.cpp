@@ -1605,6 +1605,7 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
     vertToVertDof[v]=v;
   }
   std::vector<MEdge> featEdgBC;
+  std::set<const MEdge *> cutGraphEdges;
   for(MTriangle *t: tri){
     for(const MEdge* e: _currentMesh->triangleToEdges[t]){
       if(_currentMesh->isFeatureEdge[e]){
@@ -1615,6 +1616,9 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
 	if(fabs(dot(edgVect,liftU[e]))<0.3) // TODO: check the lifting vector. We should have perfectly aligned crosses on feature edges
 	  featEdgBC.push_back(*e);
       }
+      else
+	if(_currentMesh->isCutGraphEdge[e])
+	  cutGraphEdges.insert(e);
     }
   }
   std::cout << "size feature edges: " << featEdgBC.size() << std::endl;
@@ -1658,7 +1662,7 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
     dirGauss.normalize();
     double HGauss=0.0;
     for(size_t k=0;k<3;k++)
-      HGauss+=_featureCutMesh->H[_cutGraphToFeatureMeshVertex[t->getVertex(k)]];
+      HGauss+=_featureCutMesh->H[_cutGraphToFeatureMeshVertex[t->getVertex(k)]]*(1./3.);
     dirGauss*=exp(-HGauss);
     fullMatrix<double> Kelem(3, 3);
     Kelem.setAll(0.0);
@@ -1684,6 +1688,34 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
 	MVertex* v2=t->getVertex(lE);
 	Dof El(vertToVertDof[v2]->getNum(), Dof::createTypeWithTwoInts(0, 1));
 	dof->assemble(Ek, El, Kelem(kE,lE));
+      }
+    }
+    //Neumann condition Critical
+    for(size_t kE=0;kE<3;kE++){
+      const MEdge* e=_currentMesh->triangleToEdges[t][kE];
+      if(!(_currentMesh->isFeatureEdge[e]) && (_currentMesh->isCutGraphEdge[e])){
+    	MVertex *v0=t->getVertex(kE);
+    	MVertex *v1=t->getVertex((kE+1)%3);
+    	SVector3 dirE(v1->x() - v0->x(),
+    		      v1->y() - v0->y(),
+    		      v1->z() - v0->z());
+    	dirE.normalize();
+    	SVector3 NeumRelem(0.0);
+    	Dof E0(v0->getNum(), Dof::createTypeWithTwoInts(0, 1));
+    	Dof E1(v1->getNum(), Dof::createTypeWithTwoInts(0, 1));
+    	SVector3 dirGaussLine = liftU[e];
+    	dirGaussLine.normalize();
+    	double HGaussLine=0.0;
+    	for(size_t k=0;k<3;k++)
+    	  HGaussLine+=_featureCutMesh->H[_cutGraphToFeatureMeshVertex[t->getVertex(k)]]*(1./2.);
+    	dirGaussLine*=exp(-HGaussLine);
+    	SVector3 normalManifold = _currentMesh->normals[e];
+    	normalManifold.normalize();
+    	SVector3 outNormal=crossprod(dirE,normalManifold);
+    	outNormal.normalize();
+    	double valBC=dot(dirGaussLine,outNormal);
+    	dof->assemble(E0, 0.5*valBC);
+    	dof->assemble(E1, 0.5*valBC);
       }
     }
   }
