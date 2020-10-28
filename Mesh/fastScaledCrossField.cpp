@@ -372,9 +372,9 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   return 0;
 }
 
-int computeCrossFieldScaling(const std::vector<GFace*>& faces, 
+int computeCrossFieldConformalScaling(const std::vector<GFace*>& faces, 
     const std::map<std::array<size_t,2>, double>& edgeTheta, 
-    std::size_t targetNumberOfQuads, std::vector<std::size_t>& nodeTags,
+    std::vector<std::size_t>& nodeTags,
     std::vector<double>& scaling) {
   Msg::Debug("compute cross field scaling ...");
 #if defined(HAVE_SOLVER)
@@ -1076,9 +1076,8 @@ int computeScaledCrossFieldView(GModel* gm,
 
   std::map<std::array<size_t,2>,double> edgeTheta;
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
+  /* Compute the cross field on each face
+   * Not in parallel because the solver in computeCrossFieldWithHeatEquation may already be parallel (e.g. MUMPS) */
   for (GFace* gf: faces) {
     Msg::Info("- Face %i: compute cross field (%li triangles) ...",gf->tag(), gf->triangles.size());
     int status = computeCrossFieldWithHeatEquation({gf}, edgeTheta, nbDiffusionLevels, thresholdNormConvergence,
@@ -1103,7 +1102,7 @@ int computeScaledCrossFieldView(GModel* gm,
   std::vector<double> scaling;
   if (!disableConformalScaling) {
     Msg::Info("Compute cross field conformal scaling (global) ...");
-    int status = computeCrossFieldScaling(faces, edgeTheta, targetNumberOfQuads, nodeTags, scaling);
+    int status = computeCrossFieldConformalScaling(faces, edgeTheta, nodeTags, scaling);
     if (status != 0) {
       Msg::Error("failed to compute cross field scaling");
       return -1;
@@ -1149,7 +1148,7 @@ int computeScaledCrossFieldView(GModel* gm,
   }
 
   bool SHOW_H = true; // Debugging view to check H
-  if (SHOW_H) {
+  if (SHOW_H && !disableConformalScaling) {
     Msg::Warning("generating H view (saved at /tmp/H.pos), only for debugging/prototyping");
     std::string name = "dbg_H";
     PViewDataGModel *d = new PViewDataGModel;
