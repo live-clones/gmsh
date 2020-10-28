@@ -1199,7 +1199,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       }
       else if(argv[i] == "-minterpreter") {
         i++;
-        if(i < argv[i].size())
+        if(i < argv.size())
           opt_solver_octave_interpreter(0, GMSH_SET, argv[i++]);
         else {
           Msg::Error("Missing interpreter name");
@@ -1335,7 +1335,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       }
       else if(argv[i] == "-fontsize") {
         i++;
-        if(i < argv[i].size())
+        if(i < argv.size())
           opt_general_fontsize(0, GMSH_SET, atoi(argv[i++].c_str()));
         else {
           Msg::Error("Missing number");
