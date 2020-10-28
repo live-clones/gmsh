@@ -372,9 +372,9 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   return 0;
 }
 
-int computeCrossFieldScaling(const std::vector<GFace*>& faces, 
+int computeCrossFieldConformalScaling(const std::vector<GFace*>& faces, 
     const std::map<std::array<size_t,2>, double>& edgeTheta, 
-    std::size_t targetNumberOfQuads, std::vector<std::size_t>& nodeTags,
+    std::vector<std::size_t>& nodeTags,
     std::vector<double>& scaling) {
   Msg::Debug("compute cross field scaling ...");
 #if defined(HAVE_SOLVER)
@@ -1102,7 +1102,7 @@ int computeScaledCrossFieldView(GModel* gm,
   std::vector<double> scaling;
   if (!disableConformalScaling) {
     Msg::Info("Compute cross field conformal scaling (global) ...");
-    int status = computeCrossFieldScaling(faces, edgeTheta, targetNumberOfQuads, nodeTags, scaling);
+    int status = computeCrossFieldConformalScaling(faces, edgeTheta, nodeTags, scaling);
     if (status != 0) {
       Msg::Error("failed to compute cross field scaling");
       return -1;

@@ -63,8 +63,9 @@ namespace QuadPatternMatching {
     /* pentagonal patch with one val5 singularity */
     {{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}},
 
-    /* quad patch with one val3 and one val5 singularities (on diagonal) */
-    {{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}, {8, 9, 10, 11}},
+    // Disabled
+    // /* quad patch with one val3 and one val5 singularities (on diagonal) */
+    // {{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}, {8, 9, 10, 11}},
 
     /* quad patch with one val3, one val5 singularities and two regular inside (3-5 pair for size transition) */
     {{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}, {9, 10, 12, 11}, {3, 13, 12, 10}, {8, 9, 11, 14}, {2, 15, 13, 3}},
@@ -78,8 +79,9 @@ namespace QuadPatternMatching {
     /* patch with one corner, three val3 singularities inside and one regular vertiex */
     {{0,1,6,5},{1,2,7,6},{2,3,8,7},{3,4,9,8},{4,5,6,9},{6,7,8,9}},
       
-    /* disk pattern (no corners) */
-    {{0,1,6,5},{1,2,7,6},{2,3,4,7},{0,5,4,3},{4,5,6,7}},
+    // Disabled 
+    // /* disk pattern (no corners) */
+    // {{0,1,6,5},{1,2,7,6},{2,3,4,7},{0,5,4,3},{4,5,6,7}},
 
   };
 
@@ -1065,6 +1067,12 @@ namespace QuadPatternMatching {
     }
     mat.tansform_to_row_reduced_echelon();
 
+    // TODO IDEA
+    // - give ideal_repartition to the get_positive_solution_DFS() fct ?
+    //   to control a bit the quantization
+    // - other idea: use row echelon to compute null space [x_kernel, ...] and find
+    //               solution x0 + lambda * x_kernel that maximize an objective 
+    //               function ?
     double score = 0.;
     slt.clear();
     int count = 0;
@@ -1203,7 +1211,8 @@ bool patchIsRemeshableWithQuadPattern(
     size_t Ncorners,
     const std::vector<size_t>& sideSizes, 
     std::pair<size_t,int>& patternNoAndRot,
-    double& irregularityMeasure) {
+    double& irregularityMeasure,
+    const std::vector<bool>& patternAllowed) {
   irregularityMeasure = DBL_MAX;
   if (patterns.size() == 0) {
     Msg::Error("patterns not loaded, please call load_patterns() before");
@@ -1214,6 +1223,9 @@ bool patchIsRemeshableWithQuadPattern(
 
   double irreg_min = DBL_MAX;
   for (size_t i = 0; i < patterns.size(); ++i) {
+    if (i < patternAllowed.size() && !patternAllowed[i]) {
+      continue;
+    }
     const QuadMesh& P = patterns[i];
     // DBG(" ", i, P.ncorners, P.sides.size());;
     if (Ncorners != P.ncorners) continue;

@@ -17,7 +17,8 @@ class SPoint3;
 bool patchIsRemeshableWithQuadPattern(size_t Ncorners, 
     const std::vector<size_t>& sideSizes, 
     std::pair<size_t,int>& patternNoAndRot,
-    double& irregularityMeasure);
+    double& irregularityMeasure,
+    const std::vector<bool>& patternAllowed = {});
 
 /* Remesh a cavity (defined by its boundary arranged in sides) with a quad pattern
  * some important notes: 

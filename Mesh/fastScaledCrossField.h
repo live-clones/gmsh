@@ -44,9 +44,14 @@ int extractTriangularMeshFromFaces(
 int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map<std::array<size_t,2>, double>& edgeTheta,
     int nbDiffusionLevels = 10, double thresholdNormConvergence = 1.e-3, int nbBoundaryExtensionLayer = 1, int verbosity = 3);
 
-int computeCrossFieldScaling(const std::vector<GFace*>& faces, const std::map<std::array<size_t,2>, double>& edgeTheta,
-    std::size_t targetNumberOfQuads,
+int computeCrossFieldConformalScaling(const std::vector<GFace*>& faces, const std::map<std::array<size_t,2>, double>& edgeTheta,
     std::vector<std::size_t>& nodeTags, std::vector<double>& scaling);
+
+int computeQuadSizeMapFromCrossFieldConformalFactor(
+    const std::vector<GFace*>& faces, 
+    std::size_t targetNumberOfQuads, 
+    const std::vector<std::size_t>& nodeTags,
+    std::vector<double>& scaling);
 
 int extractPerTriangleScaledCrossFieldDirections(
     const std::vector<GFace*>& faces, 

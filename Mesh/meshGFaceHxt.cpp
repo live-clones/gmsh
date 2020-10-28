@@ -85,11 +85,18 @@ int computeCrossFieldAndScalingForHxt(
     }
   }
 
-  /* Compute sizemap from cross field */
+  /* Compute conformal scaling (H) from cross field */
   std::vector<size_t> nodeTags;
   std::vector<double> scaling;
-  int status = computeCrossFieldScaling(faces, edgeTheta, targetNumberOfQuads, nodeTags, scaling);
+  int status = computeCrossFieldConformalScaling(faces, edgeTheta, nodeTags, scaling);
   if (status != 0) {
+    Msg::Error("failed to compute cross field scaling");
+    return -1;
+  }
+
+  /* Compute sizemap (changing scaling) */
+  int s2 = computeQuadSizeMapFromCrossFieldConformalFactor(faces, targetNumberOfQuads, nodeTags, scaling);
+  if (s2 != 0) {
     Msg::Error("failed to compute cross field scaling");
     return -1;
   }
