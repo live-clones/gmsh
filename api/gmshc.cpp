@@ -1338,13 +1338,15 @@ GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n, in
   }
 }
 
-GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType, int ** localMultipliers, size_t * localMultipliers_n, const int tag, int * ierr)
+GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType, int ** localMultipliers, size_t * localMultipliers_n, size_t ** elementTags, size_t * elementTags_n, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_localMultipliers_;
-    gmsh::model::mesh::getLocalMultipliersForHcurl0(elementType, api_localMultipliers_, tag);
+    std::vector<std::size_t> api_elementTags_;
+    gmsh::model::mesh::getLocalMultipliersForHcurl0(elementType, api_localMultipliers_, api_elementTags_, tag);
     vector2ptr(api_localMultipliers_, localMultipliers, localMultipliers_n);
+    vector2ptr(api_elementTags_, elementTags, elementTags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

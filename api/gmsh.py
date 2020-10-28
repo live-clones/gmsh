@@ -2360,18 +2360,22 @@ class model:
             H(curl) basis functions. Warning: this is an experimental feature and will
             probably change in a future release.
 
-            Return `localMultipliers'.
+            Return `localMultipliers', `elementTags'.
             """
             api_localMultipliers_, api_localMultipliers_n_ = POINTER(c_int)(), c_size_t()
+            api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetLocalMultipliersForHcurl0(
                 c_int(elementType),
                 byref(api_localMultipliers_), byref(api_localMultipliers_n_),
+                byref(api_elementTags_), byref(api_elementTags_n_),
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorint(api_localMultipliers_, api_localMultipliers_n_.value)
+            return (
+                _ovectorint(api_localMultipliers_, api_localMultipliers_n_.value),
+                _ovectorsize(api_elementTags_, api_elementTags_n_.value))
 
         @staticmethod
         def getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True):

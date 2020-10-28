@@ -1583,13 +1583,16 @@ namespace gmsh { // Top-level functions
       // probably change in a future release.
       inline void getLocalMultipliersForHcurl0(const int elementType,
                                                std::vector<int> & localMultipliers,
+                                               std::vector<std::size_t> & elementTags,
                                                const int tag = -1)
       {
         int ierr = 0;
         int *api_localMultipliers_; size_t api_localMultipliers_n_;
-        gmshModelMeshGetLocalMultipliersForHcurl0(elementType, &api_localMultipliers_, &api_localMultipliers_n_, tag, &ierr);
+        size_t *api_elementTags_; size_t api_elementTags_n_;
+        gmshModelMeshGetLocalMultipliersForHcurl0(elementType, &api_localMultipliers_, &api_localMultipliers_n_, &api_elementTags_, &api_elementTags_n_, tag, &ierr);
         if(ierr) throwLastError();
         localMultipliers.assign(api_localMultipliers_, api_localMultipliers_ + api_localMultipliers_n_); gmshFree(api_localMultipliers_);
+        elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
       }
 
       // Generate the `keys' for the elements of type `elementType' in the entity

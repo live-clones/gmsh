@@ -3090,7 +3090,7 @@ gmsh::model::mesh::getEdgeNumber(const std::vector<int> &edgeNodes,
 }
 
 GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
-  const int elementType, std::vector<int> &localMultipliers, const int tag)
+  const int elementType, std::vector<int> &localMultipliers,std::vector<size_t> &elementTags,const int tag)
 {
   localMultipliers.clear();
   int basisOrder = 0;
@@ -3135,11 +3135,13 @@ GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
   if(!numElements) return;
   int numberEdge = basis->getNumEdge();
   localMultipliers.resize(numElements * numberEdge, 1);
+  elementTags.resize(numElements);
   size_t indexNumElement = 0;
   for(std::size_t ii = 0; ii < entities.size(); ii++) {
     GEntity *ge = entities[ii];
     for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
       MElement *e = ge->getMeshElementByType(familyType, j);
+      elementTags[indexNumElement]=e->getNum();
       for(int iEdge = 0; iEdge < basis->getNumEdge(); iEdge++) {
         MEdge edge = e->getEdge(iEdge);
         if(edge.getMinVertex()->getNum() !=

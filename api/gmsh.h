@@ -1040,6 +1040,7 @@ namespace gmsh { // Top-level functions
       // probably change in a future release.
       GMSH_API void getLocalMultipliersForHcurl0(const int elementType,
                                                  std::vector<int> & localMultipliers,
+                                                 std::vector<std::size_t> & elementTags,
                                                  const int tag = -1);
 
       // gmsh::model::mesh::getKeysForElements

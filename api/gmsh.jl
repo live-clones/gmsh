@@ -1959,18 +1959,21 @@ Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
 H(curl) basis functions. Warning: this is an experimental feature and will
 probably change in a future release.
 
-Return `localMultipliers`.
+Return `localMultipliers`, `elementTags`.
 """
 function getLocalMultipliersForHcurl0(elementType, tag = -1)
     api_localMultipliers_ = Ref{Ptr{Cint}}()
     api_localMultipliers_n_ = Ref{Csize_t}()
+    api_elementTags_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetLocalMultipliersForHcurl0, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, api_localMultipliers_, api_localMultipliers_n_, tag, ierr)
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, api_localMultipliers_, api_localMultipliers_n_, api_elementTags_, api_elementTags_n_, tag, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     localMultipliers = unsafe_wrap(Array, api_localMultipliers_[], api_localMultipliers_n_[], own=true)
-    return localMultipliers
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
+    return localMultipliers, elementTags
 end
 
 """

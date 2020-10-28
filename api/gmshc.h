@@ -910,6 +910,7 @@ GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n,
  * probably change in a future release. */
 GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType,
                                                         int ** localMultipliers, size_t * localMultipliers_n,
+                                                        size_t ** elementTags, size_t * elementTags_n,
                                                         const int tag,
                                                         int * ierr);
 
