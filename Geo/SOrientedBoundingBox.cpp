@@ -374,11 +374,10 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
     rotation(1, 0) = -sine;
     rotation(1, 1) = cosine;
 
-    // TODO C++11 std::numeric_limits<double>
-    double max_x = -DBL_MAX;
-    double min_x = DBL_MAX;
-    double max_y = -DBL_MAX;
-    double min_y = DBL_MAX;
+    auto max_x = -std::numeric_limits<double>::max();
+    auto min_x = std::numeric_limits<double>::max();
+    auto max_y = -std::numeric_limits<double>::max();
+    auto min_y = std::numeric_limits<double>::max();
 
     for(int i = 0; i < record.numPoints; i++) {
       fullVector<double> pnt(2);
@@ -432,9 +431,9 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
       least_rectangle.axisY[1] = axis_rot2(1);
     }
   }
-  // TODO C++11 std::numeric_limits<double>::min() / max()
-  double min_pca = DBL_MAX;
-  double max_pca = -DBL_MAX;
+
+  auto min_pca = std::numeric_limits<double>::max();
+  auto max_pca = -std::numeric_limits<double>::max();
   for(int i = 0; i < num_vertices; i++) {
     min_pca = std::min(min_pca, projected(smallest_comp, i));
     max_pca = std::max(max_pca, projected(smallest_comp, i));
