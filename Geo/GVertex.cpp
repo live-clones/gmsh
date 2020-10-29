@@ -109,12 +109,10 @@ MElement *GVertex::getMeshElementByType(const int familyType,
 
 bool GVertex::isOnSeam(const GFace *gf) const
 {
-  // TODO C++11 std::find_if
-  std::vector<GEdge *>::const_iterator eIter = l_edges.begin();
-  for(; eIter != l_edges.end(); eIter++) {
-    if((*eIter)->isSeam(gf)) return true;
-  }
-  return false;
+  auto const location = std::find_if(begin(l_edges), end(l_edges), [&](GEdge *const edge) {
+      return edge->isSeam(gf);
+  });
+  return location != end(l_edges);
 }
 
 // faces that bound this entity or that this entity bounds.
