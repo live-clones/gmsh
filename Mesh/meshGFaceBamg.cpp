@@ -4,6 +4,7 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <map>
+#include <numeric>
 #include <iostream>
 #include "meshGFaceBamg.h"
 #include "GmshMessage.h"
@@ -138,12 +139,10 @@ void meshGFaceBamg(GFace *gf)
     bamgTriangles[i].init(bamgVertices, nodes, gf->tag());
   }
 
-  // TODO C++11 std::accumulate
-  int numEdges = 0;
-  for(std::vector<GEdge *>::const_iterator it = edges.begin();
-      it != edges.end(); ++it) {
-    numEdges += (*it)->lines.size();
-  }
+  const auto numEdges = std::accumulate(begin(edges), end(edges), std::size_t(0), [](std::size_t const partial_sum, const GEdge *const edge)
+    {
+        return partial_sum + edge->lines.size();
+    });
 
   Seg *bamgBoundary = new Seg[numEdges];
   int count = 0;
