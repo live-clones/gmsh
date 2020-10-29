@@ -1964,12 +1964,11 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
                            version);
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", faces.size());
-      // TODO C++11 std::transform or similiar
-      std::vector<int> tags;
-      tags.reserve(faces.size());
-      for(std::vector<GFace *>::const_iterator itf = faces.begin();
-          itf != faces.end(); itf++)
-        tags.push_back((*itf)->tag());
+
+      std::vector<int> tags(faces.size());
+      std::transform(cbegin(faces), cend(faces), begin(tags), [](const GFace *const face){
+         return face->tag();
+      });
 
       std::vector<int> signs(ori.begin(), ori.end());
 
