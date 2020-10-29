@@ -3010,7 +3010,6 @@ void meshGFace::operator()(GFace *gf, bool print)
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)
 {
-  // TODO C++11 use std::find_if
   bool found = false;
   for(std::size_t iElV = 0; iElV < el->getNumVertices(); iElV++) {
     MVertex *v = el->getVertex(iElV);
