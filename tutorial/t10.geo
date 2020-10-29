@@ -26,25 +26,26 @@ Curve Loop(5) = {1,2,3,4}; Plane Surface(6) = {5};
 // points 5 and on curve 2. This field returns the distance to point 5 and to
 // (100 equidistant points on) curve 2.
 Field[1] = Distance;
-Field[1].NodesList = {5};
-Field[1].NNodesByEdge = 100;
-Field[1].EdgesList = {2};
+Field[1].PointsList = {5};
+Field[1].CurvesList = {2};
+Field[1].NumPointsPerCurve = 100;
+
 
 // We then define a `Threshold' field, which uses the return value of the
 // `Distance' field 1 in order to define a simple change in element size
 // depending on the computed distances
 //
-// LcMax -                         /------------------
-//                               /
+// SizeMax -                     /------------------
+//                              /
 //                             /
-//                           /
-// LcMin -o----------------/
-//        |                |       |
-//      Point           DistMin DistMax
+//                            /
+// SizeMin -o----------------/
+//          |                |    |
+//        Point         DistMin  DistMax
 Field[2] = Threshold;
-Field[2].IField = 1;
-Field[2].LcMin = lc / 30;
-Field[2].LcMax = lc;
+Field[2].InField = 1;
+Field[2].SizeMin = lc / 30;
+Field[2].SizeMax = lc;
 Field[2].DistMin = 0.15;
 Field[2].DistMax = 0.5;
 
@@ -56,7 +57,7 @@ Field[3].F = "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101";
 // We could also combine MathEval with values coming from other fields. For
 // example, let's define a `Distance' field around point 1
 Field[4] = Distance;
-Field[4].NodesList = {1};
+Field[4].PointsList = {1};
 
 // We can then create a `MathEval' field with a function that depends on the
 // return value of the `Distance' field 4, i.e., depending on the distance to

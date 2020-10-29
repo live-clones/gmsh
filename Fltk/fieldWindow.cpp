@@ -240,6 +240,7 @@ void fieldWindow::saveFieldOptions()
   for(std::map<std::string, FieldOption *>::iterator it = f->options.begin();
       it != f->options.end(); it++) {
     FieldOption *option = it->second;
+    if(option->isDeprecated()) continue;
     sstream.str("");
     switch(option->getType()) {
     case FIELD_OPTION_STRING:
@@ -312,6 +313,7 @@ void fieldWindow::loadFieldOptions()
   for(std::map<std::string, FieldOption *>::iterator it = f->options.begin();
       it != f->options.end(); it++) {
     FieldOption *option = it->second;
+    if(option->isDeprecated()) continue;
     std::ostringstream vstr;
     std::list<int>::const_iterator list_it;
     std::list<double>::const_iterator listdouble_it;
@@ -399,6 +401,7 @@ void fieldWindow::editField(Field *f)
     help += std::string("<p><center><b>Options</b></center>");
   for(std::map<std::string, FieldOption *>::iterator it = f->options.begin();
       it != f->options.end(); it++) {
+    if(it->second->isDeprecated()) continue;
     Fl_Widget *input;
     help += std::string("<p><b>") + it->first + "</b>";
     help += " (<em>" + it->second->getTypeName() + "</em>): ";

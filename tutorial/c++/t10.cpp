@@ -44,25 +44,25 @@ int main(int argc, char **argv)
   // on points 5 and on curve 2. This field returns the distance to point 5 and
   // to (100 equidistant points on) curve 2.
   gmsh::model::mesh::field::add("Distance", 1);
-  gmsh::model::mesh::field::setNumbers(1, "NodesList", {5});
-  gmsh::model::mesh::field::setNumber(1, "NNodesByEdge", 100);
-  gmsh::model::mesh::field::setNumbers(1, "EdgesList", {2});
+  gmsh::model::mesh::field::setNumbers(1, "PointsList", {5});
+  gmsh::model::mesh::field::setNumbers(1, "CurvesList", {2});
+  gmsh::model::mesh::field::setNumber(1, "NumPointsPerCurve", 100);
 
   // We then define a `Threshold' field, which uses the return value of the
   // `Distance' field 1 in order to define a simple change in element size
   // depending on the computed distances
   //
-  // LcMax -                         /------------------
-  //                               /
+  // SizeMax -                     /------------------
+  //                              /
   //                             /
-  //                           /
-  // LcMin -o----------------/
-  //        |                |       |
-  //      Point           DistMin DistMax
+  //                            /
+  // SizeMin -o----------------/
+  //          |                |    |
+  //        Point         DistMin  DistMax
   gmsh::model::mesh::field::add("Threshold", 2);
-  gmsh::model::mesh::field::setNumber(2, "IField", 1);
-  gmsh::model::mesh::field::setNumber(2, "LcMin", lc / 30);
-  gmsh::model::mesh::field::setNumber(2, "LcMax", lc);
+  gmsh::model::mesh::field::setNumber(2, "InField", 1);
+  gmsh::model::mesh::field::setNumber(2, "SizeMin", lc / 30);
+  gmsh::model::mesh::field::setNumber(2, "SizeMax", lc);
   gmsh::model::mesh::field::setNumber(2, "DistMin", 0.15);
   gmsh::model::mesh::field::setNumber(2, "DistMax", 0.5);
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
   // We could also combine MathEval with values coming from other fields. For
   // example, let's define a `Distance' field around point 1
   gmsh::model::mesh::field::add("Distance", 4);
-  gmsh::model::mesh::field::setNumbers(4, "NodesList", {1});
+  gmsh::model::mesh::field::setNumbers(4, "PointsList", {1});
 
   // We can then create a `MathEval' field with a function that depends on the
   // return value of the `Distance' field 4, i.e., depending on the distance to
