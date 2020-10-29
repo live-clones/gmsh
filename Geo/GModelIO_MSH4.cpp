@@ -1954,11 +1954,12 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           parentEntityTag = pr->getParentEntity()->tag();
         }
         fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-        std::vector<int> partitions(pr->getPartitions().begin(),
-                                    pr->getPartitions().end()); // FIXME
-        fprintf(fp, "%lu ", partitions.size());
-        for(std::size_t i = 0; i < partitions.size(); i++)
-          fprintf(fp, "%d ", partitions[i]);
+
+        fprintf(fp, "%lu ", pr->getPartitions().size());
+
+        for(auto const partition : pr->getPartitions()) {
+            fprintf(fp, "%d ", partition);
+        }
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 3,
                            version);
@@ -1966,7 +1967,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       fprintf(fp, "%lu ", faces.size());
 
       std::vector<int> tags(faces.size());
-      std::transform(cbegin(faces), cend(faces), begin(tags), [](const GFace *const face){
+      std::transform(begin(faces), end(faces), begin(tags), [](const GFace *const face){
          return face->tag();
       });
 
@@ -1977,9 +1978,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           tags[i] *= (signs[i] > 0 ? 1 : -1);
       }
 
-      std::for_each(cbegin(tags), cend(tags), [](int const tag) {
-          fprintf(fp, "%d ", tags[i]);
-      });
+      for (auto const tag : tags) {
+        fprintf(fp, "%d ", tag);
+      }
       fprintf(fp, "\n");
     }
   }
