@@ -1,7 +1,7 @@
 SetFactory("OpenCASCADE");
 
-Mesh.CharacteristicLengthMin = 1;
-Mesh.CharacteristicLengthMax = 1;
+Mesh.MeshSizeMin = 1;
+Mesh.MeshSizeMax = 1;
 
 a() = ShapeFromFile("component8.step");
 

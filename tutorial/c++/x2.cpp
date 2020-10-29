@@ -162,15 +162,15 @@ int main(int argc, char **argv)
     gmsh::model::mesh::setTransfiniteVolume(v1);
   }
   else if(transfiniteAuto) {
-    gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 0.5);
-    gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.5);
+    gmsh::option::setNumber("Mesh.MeshSizeMin", 0.5);
+    gmsh::option::setNumber("Mesh.MeshSizeMax", 0.5);
     // setTransfiniteAutomatic() uses the sizing constraints to set the number
     // of points
     gmsh::model::mesh::setTransfiniteAutomatic();
   }
   else {
-    gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 0.05);
-    gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.05);
+    gmsh::option::setNumber("Mesh.MeshSizeMin", 0.05);
+    gmsh::option::setNumber("Mesh.MeshSizeMax", 0.05);
   }
 
   gmsh::model::mesh::generate(3);

@@ -88,26 +88,24 @@ Background Field = 7;
 // To determine the size of mesh elements, Gmsh locally computes the minimum of
 //
 // 1) the size of the model bounding box;
-// 2) if `Mesh.CharacteristicLengthFromPoints' is set, the mesh size specified
-//    at geometrical points;
-// 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based on
-//    the curvature and `Mesh.MinimumElementsPerTwoPi';
+// 2) if `Mesh.MeshSizeFromPoints' is set, the mesh size specified at
+//    geometrical points;
+// 3) if `Mesh.MeshSizeFromCurvature' is set, the mesh size based on the
+//    curvature and `Mesh.MinimumElementsPerTwoPi';
 // 4) the background mesh size field;
 // 5) any per-entity mesh size constraint.
 //
-// This value is then constrained in the interval
-// [`Mesh.CharacteristicLengthMin', `Mesh.CharacteristicLengthMax'] and
-// multiplied by `Mesh.CharacteristicLengthFactor'.  In addition, boundary mesh
-// sizes (on curves or surfaces) are interpolated inside the enclosed entity
-// (surface or volume, respectively) if the option
-// `Mesh.CharacteristicLengthExtendFromBoundary' is set (which is the case by
-// default).
+// This value is then constrained in the interval [`Mesh.MeshSizeMin',
+// `Mesh.MeshSizeMax'] and multiplied by `Mesh.MeshSizeFactor'.  In addition,
+// boundary mesh sizes (on curves or surfaces) are interpolated inside the
+// enclosed entity (surface or volume, respectively) if the option
+// `Mesh.MeshSizeExtendFromBoundary' is set (which is the case by default).
 //
 // When the element size is fully specified by a background mesh size field (as
 // it is in this example), it is thus often desirable to set
 
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
-Mesh.CharacteristicLengthFromPoints = 0;
-Mesh.CharacteristicLengthFromCurvature = 0;
+Mesh.MeshSizeExtendFromBoundary = 0;
+Mesh.MeshSizeFromPoints = 0;
+Mesh.MeshSizeFromCurvature = 0;
 
 // This will prevent over-refinement due to small mesh sizes on the boundary.

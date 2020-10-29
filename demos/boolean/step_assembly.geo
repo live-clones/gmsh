@@ -4,8 +4,8 @@ SetFactory("OpenCASCADE");
 vol() = ShapeFromFile("as1-tu-203.stp");
 
 Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 5;
-Mesh.CharacteristicLengthMax = 5;
+Mesh.MeshSizeMin = 5;
+Mesh.MeshSizeMax = 5;
 
 SyncModel;
 

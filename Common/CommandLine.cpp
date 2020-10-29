@@ -123,14 +123,14 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-ho_[min,max,nlayers]", "High-order optimization parameters "
                  "(Mesh.HighOrderThreshold[Min,Max], Mesh.HighOrderNumLayers)"));
   s.push_back(mp("-clscale value", "Set mesh element size factor "
-                 "(Mesh.CharacteristicLengthFactor)"));
+                 "(Mesh.MeshSizeFactor)"));
   s.push_back(mp("-clmin value", "Set minimum mesh element size "
-                 "(Mesh.CharacteristicLengthMin)"));
+                 "(Mesh.MeshSizeMin)"));
   s.push_back(mp("-clmax value", "Set maximum mesh element size "
-                 "(Mesh.CharacteristicLengthMax)"));
+                 "(Mesh.MeshSizeMax)"));
   s.push_back(mp("-clcurv value", "Compute mesh element size from curvature, with "
                  "given minimum number of elements per 2*pi radians "
-                 "(Mesh.CharacteristicLengthFromCurvature and "
+                 "(Mesh.MeshSizeFromCurvature and "
                  "Mesh.MinimumElementsPerTwoPi)"));
   s.push_back(mp("-aniso_max value", "Set maximum anisotropy for bamg "
                  "(Mesh.AnisoMax)"));

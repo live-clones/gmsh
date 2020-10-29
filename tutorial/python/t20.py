@@ -105,8 +105,8 @@ if surf:
     gmsh.model.removeEntities(gmsh.model.getEntities(0))
 
 # Finally, let's specify a global mesh size and mesh the partitioned model:
-gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 3)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 3)
+gmsh.option.setNumber("Mesh.MeshSizeMin", 3)
+gmsh.option.setNumber("Mesh.MeshSizeMax", 3)
 gmsh.model.mesh.generate(3)
 gmsh.write("t20.msh")
 

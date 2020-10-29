@@ -11,8 +11,8 @@ int main(int argc, char **argv)
   // from http://en.wikipedia.org/wiki/Constructive_solid_geometry
 
   gmsh::option::setNumber("Mesh.Algorithm", 6);
-  gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 0.4);
-  gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.4);
+  gmsh::option::setNumber("Mesh.MeshSizeMin", 0.4);
+  gmsh::option::setNumber("Mesh.MeshSizeMax", 0.4);
 
   double R = 1.4, Rs = R * .7, Rt = R * 1.25;
 

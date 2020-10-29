@@ -14,8 +14,8 @@ DefineConstant
  left = {1, Choices{0,1}, Name "Parameters/Terminals on the left?"}
  macro = {"title.script", Name "Macros/Add title",
           Macro "Gmsh", AutoCheck 0 /*, Highlight "Turquoise"*/ },
- showLines = {Geometry.Lines, Choices {0,1}, Name "Options/Show lines?",
-              GmshOption "Geometry.Lines", AutoCheck 0}
+ showLines = {Geometry.Curves, Choices {0,1}, Name "Options/Show curves?",
+              GmshOption "Geometry.Curves", AutoCheck 0}
 ];
 
 // inductor

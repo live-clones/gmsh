@@ -2815,33 +2815,33 @@ given geometry:
 
 @enumerate
 @item
-First, if the two options @code{Mesh.CharacteristicLengthFromPoints} and
-@code{Mesh.CharacteristicLengthExtendFromBoundary} are set (they are by
-default; see @ref{Mesh options list}), you can simply specify desired
-mesh element sizes at the geometrical points of the model. The size of
-the mesh elements will then be computed by interpolating these values
-inside the domain during mesh generation. This might sometimes lead to
+First, if the two options @code{Mesh.MeshSizeFromPoints} and
+@code{Mesh.MeshSizeExtendFromBoundary} are set (they are by default; see
+@ref{Mesh options list}), you can simply specify desired mesh element
+sizes at the geometrical points of the model. The size of the mesh
+elements will then be computed by interpolating these values inside the
+domain during mesh generation. This might sometimes lead to
 over-refinement in some areas, so that you may have to add ``dummy''
 geometrical entities in the model in order to get the desired element
 sizes or use more advanced methods explained below.
 @item
-Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
-not by default), the mesh will be adapted with respect to the curvature
-of the model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
+Second, if @code{Mesh.MeshSizeFromCurvature} is set (it is not by
+default), the mesh will be adapted with respect to the curvature of the
+model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
 which gives the number of elements per 2 Pi radians.
 @item
 Next, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
 @itemize @bullet
 @item
-The @code{Box} field specifies the size of the elements inside and outside
-of a parallelepipedic region.
+The @code{Box} field specifies the size of the elements inside and
+outside of a parallelepipedic region.
 @item
-The @code{Distance} field specifies the size of the mesh according to the
-distance to some model entities.
+The @code{Distance} field specifies the size of the mesh according to
+the distance to some model entities.
 @item
-The @code{MathEval} field specifies the size of the mesh using an explicit
-mathematical function.
+The @code{MathEval} field specifies the size of the mesh using an
+explicit mathematical function.
 @item
 The @code{PostView} field specifies an explicit background mesh in the
 form of a scalar post-processing view (see @ref{Post-processing
@@ -2875,22 +2875,20 @@ All the aforementioned methods can be used simultaneously, in which case
 the smallest element size is selected at any given point. In addition,
 boundary mesh sizes (on curves or surfaces) are interpolated inside the
 enclosed entity (surface or volume, respectively) if the option
-@code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is by
-default).
+@code{Mesh.MeshSizeExtendFromBoundary} is set (it is by default).
 
 All element sizes are further constrained in the interval [
-@code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
-] (which can also be provided on the command line with @code{-clmin} and
-@code{-clmax}). The resulting value is then finally multiplied by
-@code{Mesh.CharacteristicLengthFactor} (@code{-clscale} on the command
-line).
+@code{Mesh.MeshSizeMin}, @code{Mesh.MeshSizeMax} ] (which can also be
+provided on the command line with @code{-clmin} and @code{-clmax}). The
+resulting value is then finally multiplied by @code{Mesh.MeshSizeFactor}
+(@code{-clscale} on the command line).
 
 Note that when the element size is fully specified by a background mesh
 field, it is thus often desirable to set
 @smallexample
-Mesh.CharacteristicLengthFromPoints = 0;
-Mesh.CharacteristicLengthFromCurvature = 0;
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
+Mesh.MeshSizeFromPoints = 0;
+Mesh.MeshSizeFromCurvature = 0;
+Mesh.MeshSizeExtendFromBoundary = 0;
 @end smallexample
 to prevent over-refinement inside an entity due to small mesh sizes on
 its boundary.

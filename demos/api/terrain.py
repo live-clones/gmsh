@@ -152,8 +152,8 @@ if transfinite:
     gmsh.model.mesh.setTransfiniteVolume(v1)
     gmsh.model.mesh.setTransfiniteVolume(v2)
 else:
-    gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.05)
-    gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.05)
+    gmsh.option.setNumber('Mesh.MeshSizeMin', 0.05)
+    gmsh.option.setNumber('Mesh.MeshSizeMax', 0.05)
 
 #gmsh.model.mesh.generate(2)
 #gmsh.write('terrain.msh')

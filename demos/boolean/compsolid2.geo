@@ -1,8 +1,8 @@
 SetFactory("OpenCASCADE");
 
 //Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 0.2;
-Mesh.CharacteristicLengthMax = 0.2;
+Mesh.MeshSizeMin = 0.2;
+Mesh.MeshSizeMax = 0.2;
 
 DefineConstant[
   sph = {0, Choices{0,1}, Name "Make sphere a single volume"}

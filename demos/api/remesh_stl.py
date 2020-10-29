@@ -6,8 +6,8 @@ import sys
 gmsh.initialize()
 
 gmsh.option.setNumber("Mesh.Algorithm", 6)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.75)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.75)
+gmsh.option.setNumber("Mesh.MeshSizeMin", 0.75)
+gmsh.option.setNumber("Mesh.MeshSizeMax", 0.75)
 
 # load STL file
 path = os.path.dirname(os.path.abspath(__file__))

@@ -118,28 +118,26 @@ int main(int argc, char **argv)
   // of
   //
   // 1) the size of the model bounding box;
-  // 2) if `Mesh.CharacteristicLengthFromPoints' is set, the mesh size specified
-  //    at geometrical points;
-  // 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based
-  //    on the curvature and `Mesh.MinimumElementsPerTwoPi';
+  // 2) if `Mesh.MeshSizeFromPoints' is set, the mesh size specified at
+  //    geometrical points;
+  // 3) if `Mesh.MeshSizeFromCurvature' is set, the mesh size based on the
+  //    curvature and `Mesh.MinimumElementsPerTwoPi';
   // 4) the background mesh field;
   // 5) any per-entity mesh size constraint;
   // 6) the mesh size returned by the mesh size callback, if any.
   //
-  // This value is then constrained in the interval
-  // [`Mesh.CharacteristicLengthMin', `MeshCharacteristicLengthMax'] and
-  // multiplied by `Mesh.CharacteristicLengthFactor'.  In addition, boundary
-  // mesh sizes (on curves or surfaces) are interpolated inside the enclosed
-  // entity (surface or volume, respectively) if the option
-  // `Mesh.CharacteristicLengthExtendFromBoundary' is set (which is the case by
-  // default).
+  // This value is then constrained in the interval [`Mesh.MeshSizeMin',
+  // `MeshMeshSizeMax'] and multiplied by `Mesh.MeshSizeFactor'.  In addition,
+  // boundary mesh sizes (on curves or surfaces) are interpolated inside the
+  // enclosed entity (surface or volume, respectively) if the option
+  // `Mesh.MeshSizeExtendFromBoundary' is set (which is the case by default).
   //
   // When the element size is fully specified by a background mesh (as it is in
   // this example), it is thus often desirable to set
 
-  gmsh::option::setNumber("Mesh.CharacteristicLengthExtendFromBoundary", 0);
-  gmsh::option::setNumber("Mesh.CharacteristicLengthFromPoints", 0);
-  gmsh::option::setNumber("Mesh.CharacteristicLengthFromCurvature", 0);
+  gmsh::option::setNumber("Mesh.MeshSizeExtendFromBoundary", 0);
+  gmsh::option::setNumber("Mesh.MeshSizeFromPoints", 0);
+  gmsh::option::setNumber("Mesh.MeshSizeFromCurvature", 0);
 
   // This will prevent over-refinement due to small mesh sizes on the boundary.
 

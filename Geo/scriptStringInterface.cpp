@@ -184,9 +184,9 @@ void scriptSetFactory(const std::string &factory, const std::string &fileName)
   addInFile(sstream.str(), fileName);
 }
 
-void scriptSetCharacteristicLength(const std::string &fileName,
-                                   const std::vector<int> &l,
-                                   const std::string &lc)
+void scriptSetMeshSize(const std::string &fileName,
+                       const std::vector<int> &l,
+                       const std::string &lc)
 {
   std::ostringstream sstream;
   sstream << "Characteristic Length {" << vector2String(l) << "} = " << lc

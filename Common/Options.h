@@ -18,6 +18,7 @@
 #define GMSH_SESSIONRC (1 << 0)
 #define GMSH_OPTIONSRC (1 << 1)
 #define GMSH_FULLRC (1 << 2)
+#define GMSH_DEPRECATED (1 << 3)
 
 // action is a combination of GMSH_SET, GMSH_GET, GMSH_GUI
 

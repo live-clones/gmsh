@@ -22,7 +22,7 @@ lcar3 = .055
 # definitions), we could give a global scaling factor for all characteristic
 # lengths with e.g.
 #
-# gmsh.option.setNumber("Mesh.CharacteristicLengthFactor", 0.1);
+# gmsh.option.setNumber("Mesh.MeshSizeFactor", 0.1);
 #
 # Since we pass `argc' and `argv' to `gmsh.initialize()', we can also give the
 # option on the command line with the `-clscale' switch. For example, with:

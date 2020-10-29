@@ -10,8 +10,8 @@ gmsh.model.add("boolean")
 # from http://en.wikipedia.org/wiki/Constructive_solid_geometry
 
 gmsh.option.setNumber("Mesh.Algorithm", 6)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.4)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.4)
+gmsh.option.setNumber("Mesh.MeshSizeMin", 0.4)
+gmsh.option.setNumber("Mesh.MeshSizeMax", 0.4)
 
 R = 1.4
 Rs = R * .7
