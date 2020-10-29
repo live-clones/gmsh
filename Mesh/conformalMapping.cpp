@@ -1222,17 +1222,21 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   _currentMesh=_initialMesh;
   //cut mesh on feature lines here
   Msg::Info("Cutting mesh on feature lines");
+  std::cout << "Cutting mesh on feature lines" << std::endl;
   _cutMeshOnFeatureLines();
   _currentMesh=_featureCutMesh;
   Msg::Info("Compute geometric characteristics");
+  std::cout << "Compute geometric characteristics" << std::endl;
   _currentMesh->computeGeoCharac();
   // _viewScalarVertex(_currentMesh->gaussCurv,"gaussian curvature"); //DBG
   //Solve H here
   Msg::Info("Compute H");
+  std::cout << "Compute H" << std::endl;
   _computeH();
   _viewScalarTriangles(_currentMesh->H, _currentMesh->triangles, "H");
   //create cutgraph and cut mesh along it
   Msg::Info("Creating cut graph");
+  std::cout << "Creating cut graph" << std::endl;
   _createCutGraph();
   // _viewScalarVertex(_distanceToFeatureAndSing,"distances"); //DBG
   // Msg::Info("Cutting mesh on cut graph");
@@ -1345,9 +1349,12 @@ void ConformalMapping::_computeH(){
       for(MVertex *v: vertices){
 	Dof E(v->getNum(), Dof::createTypeWithTwoInts(0, 1));
 	dof->assembleSym(EAVG, E, 1);
+	dof->assembleSym(EAVG, EAVG, 0.0);
 	//      dof->assemble(E, EAVG, 1);
       }
+      std::cout << "solve" << std::endl;
       _lsys->systemSolve();
+      std::cout << "end solve" << std::endl;
       for(MVertex *v: vertices){
 	dof->getDofValue(v, 0, 1, _currentMesh->H[v]);
       }
@@ -1724,6 +1731,7 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
   for(MVertex *v: vertices){
     Dof E(v->getNum(), Dof::createTypeWithTwoInts(0, 1));
     dof->assembleSym(EAVG, E, 1);
+    dof->assembleSym(EAVG, EAVG, 0.0);
     //      dof->assemble(E, EAVG, 1);
   }
 
