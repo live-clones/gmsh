@@ -104,6 +104,7 @@
 #include <gce_MakeCirc.hxx>
 #include <gce_MakeElips.hxx>
 #include <gce_MakePln.hxx>
+#include <numeric>
 #include <utility>
 
 #include "OCCAttributes.h"
@@ -1235,10 +1236,12 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
             multiplicities.front(), multiplicities.back());
           return false;
         }
-        // TODO C++11 std::accumulate
-        std::size_t sum = 0;
-        for(std::size_t i = 0; i < multiplicities.size() - 1; i++)
-          sum += multiplicities[i];
+        const auto sum = std::accumulate(begin(multiplicities),
+                                         std::prev(std::end(multiplicities)),
+                                         std::size_t(0),
+                         [](std::size_t const partial_sum, int const multiplicity){
+                           return partial_sum + multiplicity;
+        });
         if(pointTags.size() - 1 != sum) {
           Msg::Error("Number of control points - 1 for periodic BSpline should "
                      "be equal to the sum of multiplicities for all knots "
@@ -1247,9 +1250,10 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         }
       }
       else {
-        std::size_t sum = 0;
-        for(std::size_t i = 0; i < multiplicities.size(); i++)
-          sum += multiplicities[i];
+        const auto sum = std::accumulate(begin(multiplicities), std::end(multiplicities), std::size_t(0),
+                           [](std::size_t const partial_sum, int const multiplicity){
+                             return partial_sum + multiplicity;
+        });
         if(pointTags.size() != sum - degree - 1) {
           Msg::Error("Number of control points for non-periodic BSpline should "
                      "be equal to the sum of multiplicities - degree - 1");
