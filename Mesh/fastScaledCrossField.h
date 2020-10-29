@@ -23,7 +23,8 @@ int computeScaledCrossFieldView(GModel* gm,
     const std::string& viewName = "scaled_cross_field",
     int verbosity = 3,                        /* 0: nothing except errors, 1: terse comments, 2: a bit more, 3: detailed convergence info */
     std::vector<std::array<double,5> >* singularities = NULL, /* If not NULL, fill with positions of the detected singularities and indices */
-    bool disableConformalScaling = false      /* Sometimes (complex corners), it is better to not use conformal scaling */
+    bool disableConformalScaling = false,      /* Sometimes (complex corners), it is better to not use conformal scaling */
+    double conformalScalingQuantileFiltering = 0.1 /* Alternative to disable (for corners): clamp it by removing exterior quantiles */
     );
 
 
