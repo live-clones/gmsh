@@ -6231,13 +6231,11 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     }
   } else {
 #if defined(HAVE_QUADMESHINGTOOLS)
-    //ALEX
-    ConformalMapping test(gm);
-    
-    printf("OK CA VA\n");
-    return 1;
-    exit(0);
-    //ALEX
+    // //ALEX
+    // std::map<MTriangle *, std::vector<std::vector<SVector3>>> crossEdgTri = ConformalMapping::computeScaledCrossesFromSingularities(gm);
+    // ConformalMapping::_viewCrossEdgTri(crossEdgTri, "dbg check");
+    // return 1;
+    // //ALEX
     int nb_iter = opt.cross_field_iter;
     int cf_tag = -1;
     PView* theta = PView::getViewByName("theta");

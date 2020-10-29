@@ -17,8 +17,14 @@ class Cross2D{
   double theta;
  Cross2D():_mesh(NULL),edge(NULL),theta(0.0){}
  Cross2D(MyMesh *m,const MEdge *e, double thetaNormal):_mesh(m),edge(e),theta(thetaNormal){_computeDirections();}
+ Cross2D(std::vector<SVector3> dirCross):_mesh(NULL),edge(NULL),theta(0.0){
+    _directions.push_back(dirCross[0]);_directions[0].normalize();
+    _directions.push_back(dirCross[1]);_directions[1].normalize();
+    _directions.push_back(dirCross[2]);_directions[2].normalize();
+  }
   SVector3 getClosestBranchToDirection(SVector3 direction);
   std::vector<SVector3> getDirections(){return _directions;}
+  double getTheta(){return theta;};
   SVector3 getDirection(size_t iDir){return _directions[iDir];}
   SVector3 getEulerAngles(double &noNutation);
   SVector3 getEulerAngles(std::vector<SVector3> baseRef, double &noNutation);
@@ -120,6 +126,9 @@ class ConformalMapping{
   std::set<const MEdge *> _createEdgeTree();
   void _trimEdgeTree(std::set<const MEdge *> &edgeTree);
   void _computeH();
+  void _restoreInitialMesh();
+  void _transferCrossesCutToInit();
+  void _computeHfromCrosses();
   void _cutMeshOnCutGraph();
   void _createManifoldBasis(){_currentMesh->computeManifoldBasis();}
   void _computeCrossesFromH();
@@ -132,11 +141,18 @@ class ConformalMapping{
   void _viewScalarVertex(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, const std::string& viewName="defaultName");
   void _viewScalarTriangles(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, std::set<MTriangle *, MElementPtrLessThan> &triangles, const std::string& viewName="defaultName");
   void _viewCrosses(std::map<const MEdge *, Cross2D> crossField, const std::string& viewName="Crosses");
-  void _viewVectTri(std::map<const MTriangle *, SVector3, MElementPtrLessThan> crossField, const std::string& viewName="Crosses");
+  void _viewVectTri(std::map<const MTriangle *, SVector3, MElementPtrLessThan> vect, const std::string& viewName="Vector");
   
  public:
   ConformalMapping(GModel *gm);
   ~ConformalMapping();
+  std::map<MTriangle *, std::vector<std::vector<SVector3>>> getTriEdgScaledCrosses();
   static void _viewEdges(std::set<const MEdge*> &edges, const std::string& viewName="defaultName");
   static void _viewScalarEdges(std::map<const MEdge *, double> &scalar, const std::string& viewName="defaultName");
+  static void _viewCrossEdgTri(std::map<MTriangle *, std::vector<std::vector<SVector3>>> &crossEdgTri, const std::string& viewName="defaultName");
+  
+  static std::map<MTriangle *, std::vector<std::vector<SVector3>>> computeScaledCrossesFromSingularities(GModel *gm){
+    ConformalMapping cm(gm);
+    return cm.getTriEdgScaledCrosses();
+  }
 };
