@@ -896,17 +896,15 @@ namespace tetgenBR {
             ++it) {
           // Find the GFace with tag = *it.
 
-          // TODO C++11 use std::find_if
-          GEdge *ge = NULL;
           int etag = *it;
-          for(std::vector<GEdge *>::const_iterator eit = e_list.begin();
-              eit != e_list.end(); ++eit) {
-            if((*eit)->tag() == etag) {
-              ge = (*eit);
-              break;
-            }
-          }
-          assert(ge != NULL);
+
+          const auto edge_location = std::find_if(begin(e_list), end(e_list), [&](GEdge *const edge) {
+                return edge->tag() == etag;
+          });
+
+          GEdge *ge = edge_location == end(e_list) ? nullptr : *edge_location;
+          assert(ge != nullptr);
+
           Msg::Info(" - Steiner points exist on curve %d", ge->tag());
           // Delete the old triangles.
           for(std::size_t i = 0; i < ge->lines.size(); i++)
@@ -951,7 +949,7 @@ namespace tetgenBR {
 
           GFace *gf = face_location == end(f_list) ? nullptr : *face_location;
           assert(gf != NULL);
-          
+
           // Delete the old triangles.
           Msg::Info(" - Steiner points exist on surface %d", gf->tag());
           for(std::size_t i = 0; i < gf->triangles.size(); i++)
