@@ -1976,7 +1976,10 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         for(std::size_t i = 0; i < tags.size(); i++)
           tags[i] *= (signs[i] > 0 ? 1 : -1);
       }
-      for(std::size_t i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
+
+      std::for_each(cbegin(tags), cend(tags), [](int const tag) {
+          fprintf(fp, "%d ", tags[i]);
+      });
       fprintf(fp, "\n");
     }
   }
