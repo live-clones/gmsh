@@ -356,7 +356,7 @@ HXTStatus hxtSignedDistancePointTriangle(double *p1, double *p2, double *p3,
       double temp[3] = {p2[0]+(p3[0]-p2[0])*t23,
                         p2[1]+(p3[1]-p2[1])*t23,
                         p2[2]+(p3[2]-p2[2])*t23};
-      if (distance2(p,temp)<fabs(*d)){
+      if (distance(p,temp)<fabs(*d)){
         closePt[0] = temp[0];
         closePt[1] = temp[1];
         closePt[2] = temp[2];

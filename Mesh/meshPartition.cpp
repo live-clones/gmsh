@@ -14,6 +14,7 @@
 #include <stack>
 #include <cstdlib>
 #include <map>
+#include <unordered_map>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -33,9 +34,6 @@ struct OriGEntityPtrFullLessThan {
 typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrFullLessThan>
   setorientity;
 
-// TODO C++11 remove the fallbacks
-#if __cplusplus >= 201103L
-#include <unordered_map>
 #define hashmap std::unordered_map
 #define hashmapentity                                                          \
   std::unordered_map<GEntity *, setorientity, GEntityPtrFullHash,              \
@@ -56,21 +54,6 @@ typedef std::set<std::pair<int, GEntity *>, OriGEntityPtrFullLessThan>
   std::unordered_map<MVertex *,                                                \
                      std::vector<std::pair<MElement *, std::vector<int> > >,   \
                      MVertexPtrHash, MVertexPtrEqual>
-#else
-#define hashmap std::map
-#define hashmapentity std::map<GEntity *, setorientity, GEntityPtrFullLessThan>
-#define hashmapelement std::map<MElement *, GEntity *, MElementPtrLessThan>
-#define hashmapelementpart std::map<MElement *, int, MElementPtrLessThan>
-#define hashmapface                                                            \
-  std::map<MFace, std::vector<std::pair<MElement *, std::vector<int> > >,      \
-           MFaceLessThan>
-#define hashmapedge                                                            \
-  std::map<MEdge, std::vector<std::pair<MElement *, std::vector<int> > >,      \
-           MEdgeLessThan>
-#define hashmapvertex                                                          \
-  std::map<MVertex *, std::vector<std::pair<MElement *, std::vector<int> > >,  \
-           MVertexPtrLessThan>
-#endif
 
 #if defined(HAVE_METIS)
 
@@ -1487,11 +1470,7 @@ static MElement *getReferenceElement(
       }
     }
     minSizeElementPairs.clear();
-#if __cplusplus >= 201103L
     minSizeElementPairs = std::move(minSizeElementPairsTmp);
-#else
-    minSizeElementPairs = minSizeElementPairsTmp;
-#endif
     minSizeElementPairsTmp.clear();
   }
 
@@ -2121,9 +2100,6 @@ static void addPhysical(GModel *model, GEntity *entity,
     numPartitions = static_cast<partitionVertex *>(entity)->numPartitions();
   }
 
-#if __cplusplus < 201103L
-  char intToChar[20];
-#endif
   std::vector<int> physical = parent->getPhysicalEntities();
   int dim = entity->dim();
   for(size_t phys = 0; phys < physical.size(); ++phys) {
@@ -2144,21 +2120,11 @@ static void addPhysical(GModel *model, GEntity *entity,
       else if(entity->dim() == 0) {
         partition = static_cast<partitionVertex *>(entity)->getPartition(i);
       }
-#if __cplusplus >= 201103L
       name += std::to_string(partition);
-#else
-      sprintf(intToChar, "%d", partition);
-      name += intToChar;
-#endif
     }
     name += "}_physical{";
-#if __cplusplus >= 201103L
     name +=
       std::to_string(physical[phys]) + "}_dim{" + std::to_string(dim) + "}";
-#else
-    sprintf(intToChar, "%d}_dim{%d}", physical[phys], dim);
-    name += intToChar;
-#endif
 
     int number = 0;
     hashmap<std::string, int>::iterator it = nameToNumber.find(name);
@@ -2192,20 +2158,10 @@ static void addPhysical(GModel *model, GEntity *entity,
       else if(entity->dim() == 0) {
         partition = static_cast<partitionVertex *>(entity)->getPartition(i);
       }
-#if __cplusplus >= 201103L
       name += std::to_string(partition);
-#else
-      sprintf(intToChar, "%d", partition);
-      name += intToChar;
-#endif
     }
     name += "}_";
-#if __cplusplus >= 201103L
     name += "physical{0}_dim{" + std::to_string(dim) + "}";
-#else
-    sprintf(intToChar, "physical{0}_dim{%d}", dim);
-    name += intToChar;
-#endif
 
     int number = 0;
     hashmap<std::string, int>::iterator it = nameToNumber.find(name);

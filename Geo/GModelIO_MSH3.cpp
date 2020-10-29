@@ -8,6 +8,7 @@
 #include <ctime>
 #include "GModel.h"
 #include "OS.h"
+#include "Context.h"
 #include "GmshMessage.h"
 #include "MElement.h"
 #include "MPoint.h"
@@ -703,10 +704,14 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
         fprintf(fp, "\n");
       }
 
-      fprintf(fp, "%d\n", (int)g_slave->correspondingVertices.size());
-      for(std::map<MVertex *, MVertex *>::iterator it =
-            g_slave->correspondingVertices.begin();
-          it != g_slave->correspondingVertices.end(); it++) {
+      std::map<MVertex *, MVertex *> corrVert = g_slave->correspondingVertices;
+      if(CTX::instance()->mesh.hoSavePeriodic)
+        corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
+                        g_slave->correspondingHighOrderVertices.end());
+
+      fprintf(fp, "%d\n", (int)corrVert.size());
+      for(std::map<MVertex *, MVertex *>::iterator it = corrVert.begin();
+          it != corrVert.end(); it++) {
         MVertex *v1 = it->first;
         MVertex *v2 = it->second;
         if(renumber)

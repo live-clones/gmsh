@@ -30,7 +30,7 @@ std::string GMSH_Lambda2Plugin::getHelp() const
          "velocities from which to derive the velocity "
          "gradient tensor.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Lambda2) creates one new view.";
+         "Plugin(Lambda2) creates one new list-based view.";
 }
 
 int GMSH_Lambda2Plugin::getNbOptions() const

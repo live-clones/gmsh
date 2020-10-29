@@ -57,7 +57,8 @@ public:
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
-  int createGeometry();
+  int  createGeometry();
+  void createGeometryFromTriangulation(std::vector<MTriangle*> &__triangles);
   virtual bool haveParametrization() { return !_param.empty(); }
   virtual void mesh(bool verbose);
   int trianglePosition(double par1, double par2, double &u, double &v) const;

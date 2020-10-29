@@ -50,23 +50,6 @@ public:
   void hide() { win->hide(); }
 };
 
-class physicalContextWindow {
-public:
-  Fl_Window *win;
-  Fl_Input_Choice *input[10];
-  Fl_Check_Button *butt[10];
-  Fl_Value_Input *value[10];
-  std::string mode;
-  bool append;
-  Fl_Color color;
-
-public:
-  physicalContextWindow(int deltaFontSize = 0);
-  ~physicalContextWindow() { Fl::delete_widget(win); }
-  void show(bool remove);
-  void hide() { win->hide(); }
-};
-
 class meshContextWindow {
 public:
   Fl_Window *win;

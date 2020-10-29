@@ -58,6 +58,7 @@
 
 #if defined(HAVE_MESH)
 #include "Field.h"
+#include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "gmshCrossFields.h"
 #endif
@@ -80,6 +81,7 @@
 
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
+#include "openglWindow.h"
 #endif
 
 #if defined(HAVE_ONELAB)
@@ -267,7 +269,7 @@ GMSH_API void gmsh::option::getColor(const std::string &name, int &r, int &g,
     b = CTX::instance()->unpackBlue(value);
     a = CTX::instance()->unpackAlpha(value);
   }
-  else{
+  else {
     Msg::Error("Could not get option '%s'", name.c_str());
     throw Msg::GetLastError();
   }
@@ -604,9 +606,13 @@ GMSH_API void gmsh::model::removePhysicalGroups(const vectorpair &dimTags)
     // - move the physical code from GEO factory to GModel:
     //    if a mesh is loaded the GEO sync will re-create the group in GModel...
     // - rewrite the unerlying code: it's slow
-    for(std::size_t i = 0; i < dimTags.size(); i++)
+    for(std::size_t i = 0; i < dimTags.size(); i++) {
+      std::vector<int> tags; // empty to delete the group
+      GModel::current()->getGEOInternals()->modifyPhysicalGroup(
+        dimTags[i].first, dimTags[i].second, 2, tags);
       GModel::current()->removePhysicalGroup(dimTags[i].first,
                                              dimTags[i].second);
+    }
   }
 }
 
@@ -1004,6 +1010,22 @@ GMSH_API void gmsh::model::getVisibility(const int dim, const int tag,
     throw Msg::GetLastError();
   }
   value = ge->getVisibility();
+}
+
+GMSH_API void gmsh::model::setVisibilityPerWindow(const int value,
+                                                  const int windowIndex)
+{
+  _checkInit();
+#if defined(HAVE_FLTK)
+  FlGui::instance()->setCurrentOpenglWindow(windowIndex);
+  drawContext *ctx =
+    FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+  GModel *m = GModel::current();
+  if(value)
+    ctx->show(m);
+  else
+    ctx->hide(m);
+#endif
 }
 
 GMSH_API void gmsh::model::setColor(const vectorpair &dimTags, const int r,
@@ -1825,27 +1847,28 @@ GMSH_API int gmsh::model::mesh::getElementType(const std::string &family,
                                                const bool serendip)
 {
   _checkInit();
-  int familyType = (family == "point") ?
-                     TYPE_PNT :
-                     (family == "line") ?
-                     TYPE_LIN :
-                     (family == "triangle") ?
-                     TYPE_TRI :
-                     (family == "quadrangle") ?
-                     TYPE_QUA :
-                     (family == "tetrahedron") ?
-                     TYPE_TET :
-                     (family == "pyramid") ?
-                     TYPE_PYR :
-                     (family == "prism") ?
-                     TYPE_PRI :
-                     (family == "hexahedron") ?
-                     TYPE_HEX :
-                     (family == "polygon") ?
-                     TYPE_POLYG :
-                     (family == "polyhedron") ?
-                     TYPE_POLYH :
-                     (family == "trihedron") ? TYPE_TRIH : -1;
+  int familyType =
+    (family == "Point" || family == "point") ?
+      TYPE_PNT :
+      (family == "Line" || family == "line") ?
+      TYPE_LIN :
+      (family == "Triangle" || family == "triangle") ?
+      TYPE_TRI :
+      (family == "Quadrangle" || family == "quadrangle") ?
+      TYPE_QUA :
+      (family == "Tetrahedron" || family == "tetrahedron") ?
+      TYPE_TET :
+      (family == "Pyramid" || family == "pyramid") ?
+      TYPE_PYR :
+      (family == "Prism" || family == "prism") ?
+      TYPE_PRI :
+      (family == "Hexahedron" || family == "hexahedron") ?
+      TYPE_HEX :
+      (family == "Polygon" || family == "polygon") ?
+      TYPE_POLYG :
+      (family == "Polyhedron" || family == "polyhedron") ?
+      TYPE_POLYH :
+      (family == "Trihedron" || family == "trihedron") ? TYPE_TRIH : -1;
   return ElementType::getType(familyType, order, serendip);
 }
 
@@ -2539,8 +2562,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       element = new MPoint(vertices);
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
 
@@ -3223,8 +3246,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       basis = new HierarchicalBasisH1Point();
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -3249,8 +3272,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       basis = new HierarchicalBasisHcurlLine(order);
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -3473,8 +3496,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       basis = new HierarchicalBasisH1Point();
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -3499,8 +3522,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       basis = new HierarchicalBasisHcurlLine(order);
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -3682,8 +3705,8 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
       basis = new HierarchicalBasisH1Point();
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
     int vSize = basis->getnVertexFunction();
@@ -3716,8 +3739,8 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
       basis = new HierarchicalBasisHcurlLine(basisOrder);
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
     int vSize = basis->getnVertexFunction();
@@ -3788,8 +3811,8 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
       basis = new HierarchicalBasisH1Point();
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -3814,8 +3837,8 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
       basis = new HierarchicalBasisHcurlLine(basisOrder);
     } break;
     default:
-      Msg::Error("Unknown familyType %i for basis function type %s",
-                 familyType, fsName.c_str());
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
       throw Msg::GetLastError();
     }
   }
@@ -4186,6 +4209,19 @@ GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
   }
 }
 
+GMSH_API void gmsh::model::mesh::setSizeCallback(
+    std::function<double(int, int, double, double, double)> callback)
+{
+  _checkInit();
+  CTX::instance()->mesh.lcCallback = callback;
+}
+
+GMSH_API void gmsh::model::mesh::removeSizeCallback()
+{
+  _checkInit();
+  CTX::instance()->mesh.lcCallback = nullptr;
+}
+
 GMSH_API void
 gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
                                        const std::string &meshType,
@@ -4262,6 +4298,125 @@ gmsh::model::mesh::setTransfiniteVolume(const int tag,
       if(gv) gr->meshAttributes.corners.push_back(gv);
     }
   }
+}
+
+int _eulerCharacteristic(GRegion *gr)
+{
+  std::set<GVertex *> vertices;
+  std::set<GEdge *> edges;
+  for(std::size_t _i = 0; _i < gr->faces().size(); ++_i) {
+    GFace *gf = gr->faces()[_i];
+    for(std::size_t j = 0; j < gf->edges().size(); ++j) {
+      GEdge *ge = gf->edges()[j];
+      edges.insert(ge);
+      vertices.insert(ge->getBeginVertex());
+      vertices.insert(ge->getEndVertex());
+    }
+  }
+  int X = int(vertices.size()) - int(edges.size()) + int(gr->faces().size());
+  return X;
+}
+
+GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
+  const vectorpair &dimTags, const double cornerAngle, const bool recombine)
+{
+#if defined(HAVE_MESH)
+  _checkInit();
+  Msg::Debug("setTransfiniteAutomatic() with cornerAngle=%.3f, recombine=%i",
+             cornerAngle, int(recombine));
+
+  /* Collect all quad 4-sided faces (from given faces and volumes) */
+  std::set<GFace *> faces;
+  if(dimTags.size() == 0) { /* Empty dimTag => all faces */
+    std::vector<GEntity *> entities;
+    GModel::current()->getEntities(entities, 2);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GFace *gf = static_cast<GFace *>(entities[i]);
+      if(gf->edges().size() == 4) { faces.insert(gf); }
+    }
+  }
+  else {
+    for(std::size_t i = 0; i < dimTags.size(); ++i) {
+      if(dimTags[i].second == 2) {
+        int tag = dimTags[i].first;
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(!gf) {
+          Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
+          throw Msg::GetLastError();
+        }
+        if(gf->edges().size() == 4) { faces.insert(gf); }
+      }
+      else if(dimTags[i].second == 3) {
+        int tag = dimTags[i].first;
+        GRegion *gr = GModel::current()->getRegionByTag(tag);
+        if(!gr) {
+          Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
+          throw Msg::GetLastError();
+        }
+        for(GFace* gf: gr->faces()) {
+          if(gf->edges().size() == 4) { faces.insert(gf); }
+        }
+      }
+    }
+  }
+
+  /* Build the chords, compute the averaged number of points on each chord,
+   * assign the transfinite attributes */
+  bool okf = MeshSetTransfiniteFacesAutomatic(faces, cornerAngle, recombine);
+  if(!okf) {
+    Msg::Error("failed to automatically set transfinite faces");
+    return;
+  }
+
+  /* Collect the 6-sided volumes with Euler characteristic equal to 2 (ie ball)
+   */
+  std::set<GRegion *> regions;
+  if(dimTags.size() == 0) { /* Empty dimTag => all faces */
+    std::vector<GEntity *> entities;
+    GModel::current()->getEntities(entities, 3);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GRegion *gr = static_cast<GRegion *>(entities[i]);
+      if(gr->faces().size() == 6 && _eulerCharacteristic(gr) == 2) {
+        regions.insert(gr);
+      }
+    }
+  }
+  else {
+    for(std::size_t i = 0; i < dimTags.size(); ++i) {
+      if(dimTags[i].second == 3) {
+        int tag = dimTags[i].first;
+        GRegion *gr = GModel::current()->getRegionByTag(tag);
+        if(!gr) {
+          Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
+          throw Msg::GetLastError();
+        }
+        if(gr->faces().size() == 6 && _eulerCharacteristic(gr) == 2) {
+          regions.insert(gr);
+        }
+      }
+    }
+  }
+
+  std::size_t nr = 0;
+  for (GRegion* gr: regions) {
+    bool transfinite = true;
+    for(GFace* gf: gr->faces()) {
+      if(gf->meshAttributes.method != MESH_TRANSFINITE) {
+        transfinite = false;
+        break;
+      }
+      if(transfinite) {
+        gr->meshAttributes.method = MESH_TRANSFINITE;
+        nr += 1;
+      }
+    }
+  }
+  if(nr > 0)
+    Msg::Debug("transfinite automatic: transfinite set on %li volumes", nr);
+#else
+  Msg::Error("setTransfiniteAutomatic requires the MESH module");
+  throw Msg::GetLastError();
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag)
@@ -4701,9 +4856,7 @@ GMSH_API void gmsh::model::mesh::field::setNumber(const int tag,
   _checkInit();
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
-  if(!o) {
-    throw Msg::GetLastError();
-  }
+  if(!o) { throw Msg::GetLastError(); }
   try {
     o->numericalValue(value);
   } catch(...) {
@@ -4724,9 +4877,7 @@ GMSH_API void gmsh::model::mesh::field::setString(const int tag,
   _checkInit();
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
-  if(!o) {
-    throw Msg::GetLastError();
-  }
+  if(!o) { throw Msg::GetLastError(); }
   try {
     o->string(value);
   } catch(...) {
@@ -4747,9 +4898,7 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
   _checkInit();
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
-  if(!o) {
-    throw Msg::GetLastError();
-  }
+  if(!o) { throw Msg::GetLastError(); }
   try {
     if(o->getType() == FIELD_OPTION_LIST) {
       std::list<int> vl;
@@ -4922,11 +5071,12 @@ gmsh::model::geo::addCompoundBSpline(const std::vector<int> &curveTags,
 }
 
 GMSH_API int gmsh::model::geo::addCurveLoop(const std::vector<int> &curveTags,
-                                            const int tag)
+                                            const int tag, const bool reorient)
 {
   _checkInit();
   int outTag = tag;
-  if(!GModel::current()->getGEOInternals()->addLineLoop(outTag, curveTags)) {
+  if(!GModel::current()->getGEOInternals()->addLineLoop(outTag, curveTags,
+                                                        reorient)) {
     throw Msg::GetLastError();
   }
   return outTag;
@@ -4991,8 +5141,10 @@ static ExtrudeParams *_getExtrudeParams(const std::vector<int> &numElements,
     e->mesh.NbElmLayer = numElements;
     e->mesh.hLayer = heights;
     if(e->mesh.hLayer.empty()) {
-      e->mesh.NbLayer = 1;
-      e->mesh.hLayer.push_back(1.);
+      e->mesh.NbLayer = numElements.size();
+      for(int i = 0; i < e->mesh.NbLayer; i++) {
+        e->mesh.hLayer.push_back((i + 1.) / e->mesh.NbLayer);
+      }
     }
     else {
       e->mesh.NbLayer = heights.size();
@@ -5221,9 +5373,7 @@ GMSH_API void gmsh::model::geo::mesh::setSmoothing(const int dim, const int tag,
                                                    const int val)
 {
   _checkInit();
-  if(dim == 2) {
-    GModel::current()->getGEOInternals()->setSmoothing(tag, val);
-  }
+  if(dim == 2) { GModel::current()->getGEOInternals()->setSmoothing(tag, val); }
 }
 
 GMSH_API void gmsh::model::geo::mesh::setReverse(const int dim, const int tag,
@@ -6144,25 +6294,31 @@ _addModelData(const int tag, const int step, const std::string &modelName,
       throw Msg::GetLastError();
     }
   }
+  PViewDataGModel::DataType type;
+  if(dataType == "NodeData")
+    type = PViewDataGModel::NodeData;
+  else if(dataType == "ElementData")
+    type = PViewDataGModel::ElementData;
+  else if(dataType == "ElementNodeData")
+    type = PViewDataGModel::ElementNodeData;
+  else if(dataType == "GaussPointData")
+    type = PViewDataGModel::GaussPointData;
+  else if(dataType == "Beam")
+    type = PViewDataGModel::BeamData;
+  else {
+    Msg::Error("Unknown type of view to add '%s'", dataType.c_str());
+    throw Msg::GetLastError();
+  }
+
   PViewDataGModel *d = dynamic_cast<PViewDataGModel *>(view->getData());
-  if(!d) { // change the view type
+  bool changeType = false;
+  if(d && d->getType() != type) {
+    Msg::Warning("Changing type of view to '%s'", dataType.c_str());
+    changeType = true;
+  }
+  if(!d || changeType) { // change view type
     std::string name = view->getData()->getName();
     delete view->getData();
-    PViewDataGModel::DataType type;
-    if(dataType == "NodeData")
-      type = PViewDataGModel::NodeData;
-    else if(dataType == "ElementData")
-      type = PViewDataGModel::ElementData;
-    else if(dataType == "ElementNodeData")
-      type = PViewDataGModel::ElementNodeData;
-    else if(dataType == "GaussPointData")
-      type = PViewDataGModel::GaussPointData;
-    else if(dataType == "Beam")
-      type = PViewDataGModel::BeamData;
-    else {
-      Msg::Error("Unknown type of view to add '%s'", dataType.c_str());
-      throw Msg::GetLastError();
-    }
     d = new PViewDataGModel(type);
     d->setName(name);
     d->setFileName(name + ".msh");
@@ -6210,9 +6366,9 @@ GMSH_API void gmsh::view::addHomogeneousModelData(
 
 #if defined(HAVE_POST)
 static stepData<double> *_getModelData(const int tag, const int step,
-                                       std::string &dataType,
-                                       double &time, int &numComponents,
-                                       int &numEnt, int &maxMult)
+                                       std::string &dataType, double &time,
+                                       int &numComponents, int &numEnt,
+                                       int &maxMult)
 {
   _checkInit();
   PView *view = PView::getViewByTag(tag);
@@ -6268,8 +6424,8 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
   data.clear();
 #if defined(HAVE_POST)
   int numEnt, maxMult;
-  stepData<double> *s = _getModelData(tag, step, dataType, time, numComponents,
-                                      numEnt, maxMult);
+  stepData<double> *s =
+    _getModelData(tag, step, dataType, time, numComponents, numEnt, maxMult);
   if(!s || !numComponents || !numEnt || !maxMult) return;
   data.resize(numEnt);
   tags.resize(numEnt);
@@ -6290,19 +6446,18 @@ GMSH_API void gmsh::view::getModelData(const int tag, const int step,
 #endif
 }
 
-GMSH_API void gmsh::view::getHomogeneousModelData(const int tag, const int step,
-                                                  std::string &dataType,
-                                                  std::vector<std::size_t> &tags,
-                                                  std::vector<double> &data,
-                                                  double &time, int &numComponents)
+GMSH_API void gmsh::view::getHomogeneousModelData(
+  const int tag, const int step, std::string &dataType,
+  std::vector<std::size_t> &tags, std::vector<double> &data, double &time,
+  int &numComponents)
 {
   _checkInit();
   tags.clear();
   data.clear();
 #if defined(HAVE_POST)
   int numEnt, maxMult;
-  stepData<double> *s = _getModelData(tag, step, dataType, time, numComponents,
-                                      numEnt, maxMult);
+  stepData<double> *s =
+    _getModelData(tag, step, dataType, time, numComponents, numEnt, maxMult);
   if(!s || !numComponents || !numEnt || !maxMult) return;
   data.resize(numEnt * numComponents * maxMult, 0.);
   tags.resize(numEnt);
@@ -6610,6 +6765,95 @@ GMSH_API void gmsh::view::getListDataStrings(const int tag, const int dim,
 #endif
 }
 
+GMSH_API void gmsh::view::setInterpolationMatrices(
+  const int tag, const std::string &type, const int d,
+  const std::vector<double> &coef, const std::vector<double> &exp,
+  const int dGeo, const std::vector<double> &coefGeo,
+  const std::vector<double> &expGeo)
+{
+  _checkInit();
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view) {
+    Msg::Error("Unknown view with tag %d", tag);
+    throw Msg::GetLastError();
+  }
+  PViewData *data = view->getData();
+  if(!data) {
+    Msg::Error("View with tag %d does not contain any data", tag);
+    throw Msg::GetLastError();
+  }
+
+  int itype = 0;
+  if(type == "Line" || type == "line")
+    itype = TYPE_LIN;
+  else if(type == "Triangle" || type == "triangle")
+    itype = TYPE_TRI;
+  else if(type == "Quadrangle" || type == "quadrangle")
+    itype = TYPE_QUA;
+  else if(type == "Tetrahedron" || type == "tetrahedron")
+    itype = TYPE_TET;
+  else if(type == "Pyramid" || type == "pyramid")
+    itype = TYPE_PYR;
+  else if(type == "Prism" || type == "prism")
+    itype = TYPE_PRI;
+  else if(type == "Hexahedron" || type == "hexahedron")
+    itype = TYPE_HEX;
+  else {
+    Msg::Error("Unknown element family type '%s'", type.c_str());
+    throw Msg::GetLastError();
+  }
+
+  if(data->haveInterpolationMatrices(itype))
+    data->deleteInterpolationMatrices(itype);
+
+  if(d <= 0) return;
+
+  // field interpolation coefficients and exponents
+  if((int)coef.size() != d * d) {
+    Msg::Error("Wrong number of coefficients (%d != %d x %d)", (int)coef.size(),
+               d, d);
+    throw Msg::GetLastError();
+  }
+  if((int)exp.size() != d * 3) {
+    Msg::Error("Wrong number of exponents (%d != %d x 3)", (int)exp.size(),
+               d);
+    throw Msg::GetLastError();
+  }
+  fullMatrix<double> F(d, d), P(d, 3);
+  for(int i = 0; i < d; i++) {
+    for(int j = 0; j < d; j++) { F(i, j) = coef[d * i + j]; }
+    for(int j = 0; j < 3; j++) { P(i, j) = exp[3 * i + j]; }
+  }
+
+  if(dGeo <= 0) {
+    data->setInterpolationMatrices(itype, F, P);
+    return;
+  }
+
+  // geometry interpolation coefficients and exponents
+  if((int)coefGeo.size() != dGeo * dGeo) {
+    Msg::Error("Wrong number of coefficients (%d != %d x %d)",
+               (int)coefGeo.size(), dGeo, dGeo);
+    throw Msg::GetLastError();
+  }
+  if((int)expGeo.size() != dGeo * 3) {
+    Msg::Error("Wrong number of exponents (%d != %d x 3)", (int)expGeo.size(),
+               dGeo);
+    throw Msg::GetLastError();
+  }
+  fullMatrix<double> Fg(dGeo, dGeo), Pg(dGeo, 3);
+  for(int i = 0; i < dGeo; i++) {
+    for(int j = 0; j < dGeo; j++) { Fg(i, j) = coefGeo[dGeo * i + j]; }
+    for(int j = 0; j < 3; j++) { Pg(i, j) = expGeo[3 * i + j]; }
+  }
+  data->setInterpolationMatrices(itype, F, P, Fg, Pg);
+#else
+  Msg::Error("Views require the post-processing module");
+  throw Msg::GetLastError();
+#endif
+}
+
 GMSH_API int gmsh::view::addAlias(const int refTag, const bool copyOptions,
                                   const int tag)
 {
@@ -6694,8 +6938,7 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
     throw Msg::GetLastError();
   }
   value.clear();
-  std::vector<double> val(9 * data->getNumTimeSteps());
-  bool found = false;
+  std::vector<double> val(9 * data->getNumTimeSteps() * 3);
   int qn = 0;
   double *qx = 0, *qy = 0, *qz = 0;
   if(xElemCoord.size() && yElemCoord.size() && zElemCoord.size() &&
@@ -6706,31 +6949,44 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
     qy = (double *)&yElemCoord[0];
     qz = (double *)&zElemCoord[0];
   }
+  int numSteps = (step < 0) ? data->getNumTimeSteps() : 1;
+  int mult = gradient ? 3 : 1;
+  int numVal = 0;
   switch(numComp) {
   case 1:
-    found = data->searchScalarWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
-                                      qx, qy, qz, gradient);
+    if(data->searchScalarWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
+                                 qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 1;
+    }
     break;
   case 3:
-    found = data->searchVectorWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
-                                      qx, qy, qz, gradient);
+    if(data->searchVectorWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
+                                 qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 3;
+    }
     break;
   case 9:
-    found = data->searchTensorWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
-                                      qx, qy, qz, gradient);
+    if(data->searchTensorWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
+                                 qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 9;
+    }
     break;
   default:
-    found = data->searchScalarWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
-                                      qx, qy, qz, gradient);
-    if(!found)
-      found = data->searchVectorWithTol(x, y, z, &val[0], step, 0, tolerance,
-                                        qn, qx, qy, qz, gradient);
-    if(!found)
-      found = data->searchTensorWithTol(x, y, z, &val[0], step, 0, tolerance,
-                                        qn, qx, qy, qz, gradient);
+    if(data->searchScalarWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
+                                 qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 1;
+    }
+    else if(data->searchVectorWithTol(x, y, z, &val[0], step, 0, tolerance,
+                                      qn, qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 3;
+    }
+    else if(data->searchTensorWithTol(x, y, z, &val[0], step, 0, tolerance,
+                                      qn, qx, qy, qz, gradient)) {
+      numVal = numSteps * mult * 9;
+    }
     break;
   }
-  if(found) value.insert(value.end(), val.begin(), val.end());
+  for(int i = 0; i < numVal; i++) value.push_back(val[i]);
 #else
   Msg::Error("Views require the post-processing module");
   throw Msg::GetLastError();
@@ -6748,6 +7004,32 @@ GMSH_API void gmsh::view::write(const int tag, const std::string &fileName,
     throw Msg::GetLastError();
   }
   view->write(fileName, 10, append);
+#else
+  Msg::Error("Views require the post-processing module");
+  throw Msg::GetLastError();
+#endif
+}
+
+GMSH_API void gmsh::view::setVisibilityPerWindow(const int tag,
+                                                 const int value,
+                                                 const int windowIndex)
+{
+  _checkInit();
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view) {
+    Msg::Error("Unknown view with tag %d", tag);
+    throw Msg::GetLastError();
+  }
+#if defined(HAVE_FLTK)
+  FlGui::instance()->setCurrentOpenglWindow(windowIndex);
+  drawContext *ctx =
+    FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+  if(value)
+    ctx->show(view);
+  else
+    ctx->hide(view);
+#endif
 #else
   Msg::Error("Views require the post-processing module");
   throw Msg::GetLastError();
@@ -7002,6 +7284,32 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
   return selectionCode(ret);
 #else
   return 0;
+#endif
+}
+
+GMSH_API void gmsh::fltk::splitCurrentWindow(const std::string & how,
+                                             const double ratio)
+{
+  _checkInit();
+#if defined(HAVE_FLTK)
+  if(how == "h")
+    FlGui::instance()->splitCurrentOpenglWindow('h', ratio);
+  else if(how == "v")
+    FlGui::instance()->splitCurrentOpenglWindow('v', ratio);
+  else if(how == "u")
+    FlGui::instance()->splitCurrentOpenglWindow('u');
+  else {
+    Msg::Error("Unknown window splitting method '%s'", how.c_str());
+    throw Msg::GetLastError();
+  }
+#endif
+}
+
+GMSH_API void gmsh::fltk::setCurrentWindow(const int windowIndex)
+{
+  _checkInit();
+#if defined(HAVE_FLTK)
+  FlGui::instance()->setCurrentOpenglWindow(windowIndex);
 #endif
 }
 

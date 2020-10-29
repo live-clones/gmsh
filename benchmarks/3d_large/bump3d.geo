@@ -1,7 +1,5 @@
 Include "bump_contour.geo";
 
-//Mesh.Algorithm = 6; //1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad
-Mesh.Algorithm3D = 1; //1=Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, 7=MMG3D
 Mesh.CharacteristicLengthFromPoints = 1;
 Mesh.CharacteristicLengthExtendFromBoundary = 1;
 

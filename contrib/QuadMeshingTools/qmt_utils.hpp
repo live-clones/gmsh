@@ -15,6 +15,8 @@
 #include <vector>
 #include <array>
 #include <algorithm>
+#include <unordered_set>
+#include <unordered_map>
 
 #define DBG(...) fprintf(stdout, "(DBG) %s:%i: ", __FILE__,__LINE__); QMT_Utils::show(std::cout, #__VA_ARGS__, __VA_ARGS__); fflush(stdout)
 
@@ -49,6 +51,26 @@ namespace QMT_Utils {
         }
       }
       os << "]";
+      return os;
+    }
+
+  template<class T>
+    std::ostream& operator<<(std::ostream& os, const std::unordered_set<T>& values) { 
+      os << "{";
+      for (const T& v: values) {
+        os << v << ", ";
+      }
+      os << "}";
+      return os;
+    }
+
+  template<class T1,class T2>
+    std::ostream& operator<<(std::ostream& os, const std::unordered_map<T1,T2>& values) { 
+      os << "{";
+      for (const auto& kv: values) {
+        os << kv.first << ": " << kv.second << ", ";
+      }
+      os << "}";
       return os;
     }
 
@@ -180,7 +202,7 @@ namespace QMT_Utils {
           std::forward<T>(rest)...);
     }
 
-  static std::string env_var(std::string const & key) {
+  inline std::string env_var(std::string const & key) {
     char * var;
     var = getenv(key.c_str());
     std::string strvar = "";

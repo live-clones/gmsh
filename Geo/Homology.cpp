@@ -6,6 +6,7 @@
 // Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
 #include "Homology.h"
+#include "fullMatrix.h"
 
 #if defined(HAVE_KBIPACK)
 

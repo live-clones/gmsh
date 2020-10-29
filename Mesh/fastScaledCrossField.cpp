@@ -6,6 +6,8 @@
 #include <vector>
 #include <stack>
 #include <queue>
+#include <unordered_map>
+#include <unordered_set>
 #include "OS.h"
 #include "GmshConfig.h"
 #include "fastScaledCrossField.h"
@@ -17,6 +19,7 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "discreteEdge.h"
+#include "discreteFace.h"
 #include "Numeric.h"
 #include "gmsh.h"
 
@@ -41,6 +44,7 @@
 
 #ifdef HAVE_QUADMESHINGTOOLS
 #include "qmt_cross_field.h"
+#include "geolog.h"
 #endif
 
 
@@ -137,6 +141,9 @@ int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map
     return -1;
   }
 
+#if defined(_OPENMP)
+#pragma omp critical (append_theta)
+#endif
   for (const auto& kv: edgeThetaLocal) {
     std::array<size_t,2> vPairGlobal = {pointTag[kv.first[0]],pointTag[kv.first[1]]};
     if (vPairGlobal[1] < vPairGlobal[0]) {
@@ -144,6 +151,7 @@ int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map
     }
     edgeTheta[vPairGlobal] = kv.second;
   }
+
 #else
   Msg::Error("Diffusion-based cross field computation requires the QuadMeshingTools module");
   return -1;
@@ -152,16 +160,16 @@ int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map
 }
 
 static inline double compat_orientation_extrinsic(const SVector3 &o0,
-                                                  const SVector3 &n0,
-                                                  const SVector3 &o1,
-                                                  const SVector3 &n1,
-                                                  SVector3 &a1, SVector3 &b1)
+    const SVector3 &n0,
+    const SVector3 &o1,
+    const SVector3 &n1,
+    SVector3 &a1, SVector3 &b1)
 {
   SVector3 t0 = crossprod(n0, o0);
   SVector3 t1 = crossprod(n1, o1);
 
   const size_t permuts[8][2] = {{0, 0}, {1, 0}, {2, 0}, {3, 0},
-                                {0, 1}, {1, 1}, {2, 1}, {3, 1}};
+    {0, 1}, {1, 1}, {2, 1}, {3, 1}};
   SVector3 A[4]{o0, t0, -o0, -t0};
   SVector3 B[2]{o1, t1};
 
@@ -308,6 +316,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
     double smax = -DBL_MAX;
     std::vector<size_t> vertices;
     vertices.reserve(nodeTags.size());
+    size_t ntris = 0;
     for (GFace* gf: components[i]) {
       for (MTriangle* t: gf->triangles) {
         double values[3] = {0,0,0};
@@ -323,10 +332,11 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
         }
         double a = std::abs(t->getVolume());
         integral += a * 1. / std::pow(1./3. * (values[0] + values[1] + values[2]),2);
+        ntris += 1;
       }
     }
     if (integral == 0.) {
-      Msg::Error("integral is 0 ...");
+      Msg::Error("total integral is 0 ... (%li components, %li triangles, smin=%.3e, smax=%.3e)", components.size(), ntris, smin, smax);
       return -1;
     }
     Msg::Debug("-- component %i (%i faces), exp(-H): min=%.3e, max=%.3e, integral=%.3e", 
@@ -362,9 +372,9 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   return 0;
 }
 
-int computeCrossFieldScaling(const std::vector<GFace*>& faces, 
+int computeCrossFieldConformalScaling(const std::vector<GFace*>& faces, 
     const std::map<std::array<size_t,2>, double>& edgeTheta, 
-    std::size_t targetNumberOfQuads, std::vector<std::size_t>& nodeTags,
+    std::vector<std::size_t>& nodeTags,
     std::vector<double>& scaling) {
   Msg::Debug("compute cross field scaling ...");
 #if defined(HAVE_SOLVER)
@@ -401,11 +411,11 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
       MTriangle *t = faces[i]->triangles[j];
 
       SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
-                   t->getVertex(1)->y() - t->getVertex(0)->y(),
-                   t->getVertex(1)->z() - t->getVertex(0)->z());
+          t->getVertex(1)->y() - t->getVertex(0)->y(),
+          t->getVertex(1)->z() - t->getVertex(0)->z());
       SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
-                   t->getVertex(2)->y() - t->getVertex(0)->y(),
-                   t->getVertex(2)->z() - t->getVertex(0)->z());
+          t->getVertex(2)->y() - t->getVertex(0)->y(),
+          t->getVertex(2)->z() - t->getVertex(0)->z());
       SVector3 normal_to_triangle = crossprod(v20, v10);
       normal_to_triangle.normalize();
 
@@ -457,7 +467,7 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
       SVector3 x0, x1, x2, x3;
       compat_orientation_extrinsic(o_i, normal_to_triangle, o_1, normal_to_triangle, x0, x1);
       compat_orientation_extrinsic(o_i, normal_to_triangle, o_2, normal_to_triangle, x2, x3);
-      
+
       double a0 = atan2(dot(t_i, o_i), dot(tgt0, o_i));
 
       x0 -= normal_to_triangle * dot(normal_to_triangle, x0);
@@ -513,7 +523,7 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
   }
   _lsys->systemSolve();
   Msg::Info("Conformal Factor Computed (%d unknowns)",
-            myAssembler->sizeOfR());
+      myAssembler->sizeOfR());
 
   /* Extract solution */
   scaling.resize(vs.size(),0.);
@@ -528,15 +538,6 @@ int computeCrossFieldScaling(const std::vector<GFace*>& faces,
   }
 
   delete _lsys;
-
-  Msg::Info("Compute quad mesh size map from conformal factor and %li target quads ...", 
-      targetNumberOfQuads);
-  int status = computeQuadSizeMapFromCrossFieldConformalFactor(faces, targetNumberOfQuads, 
-      nodeTags, scaling);
-  if (status != 0) {
-    Msg::Error("Failed to compute quad mesh size map");
-    return -1;
-  }
 
 #else 
   Msg::Error("Computing cross field scaling requires the SOLVER module");
@@ -717,14 +718,116 @@ int createScaledCrossFieldView(
   return 0;
 }
 
+int ordered_fan_around_vertex(const MVertex* v, const std::vector<MTriangle*>& tris,
+    std::vector<std::array<MVertex*,2> >& vPairs) {
+  vPairs.clear();
+  if (tris.size() < 3) return -1;
+
+  std::unordered_set<MTriangle*> done;
+  { /* Init */
+    MTriangle* t = tris[0];
+    for (size_t le = 0; le < 3; ++le) {
+      MVertex* v1 = t->getVertex(le);
+      MVertex* v2 = t->getVertex((le+1)%3);
+      if (v1 != v && v2 != v) {
+        vPairs.push_back({v1,v2});
+        done.insert(t);
+        break;
+      }
+    }
+  }
+
+  while (vPairs.back().back() != vPairs[0][0]) {
+    MVertex* last = vPairs.back().back();
+    /* Look for next edge connected to last */
+    bool found = false;
+    for (MTriangle* t: tris) {
+      if (done.find(t) != done.end()) continue;
+      for (size_t le = 0; le < 3; ++le) {
+        MVertex* v1 = t->getVertex(le);
+        MVertex* v2 = t->getVertex((le+1)%3);
+        if (v1 != v && v2 != v) {
+          if (v1 == last) {
+            vPairs.push_back({v1,v2});
+            done.insert(t);
+            found = true;
+            break;
+          } else if (v2 == last) {
+            vPairs.push_back({v2,v1});
+            done.insert(t);
+            found = true;
+            break;
+          }
+        }
+      }
+      if (found) break;
+    }
+    if (!found) {
+      Msg::Error("failed to order fan vertex pairs");
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+int local_frame(const MVertex* v, const std::vector<MTriangle*>& tris, 
+    SVector3& e_x, SVector3& e_y, SVector3& e_z) {
+  e_x = SVector3(DBL_MAX,DBL_MAX,DBL_MAX);
+  SVector3 avg(0.,0.,0.);
+  for (MTriangle* t: tris) {
+    avg += tri_normal(t);
+    if (e_x.x() == DBL_MAX) {
+      for (size_t le = 0; le < 3; ++le) {
+        MVertex* v1 = t->getVertex(le);
+        MVertex* v2 = t->getVertex((le+1)%3);
+        if (v1 == v) {
+          e_x = v2->point() - v1->point();
+          break;
+        } else if (v2 == v) {
+          e_x = v1->point() - v2->point();
+          break;
+        }
+      }
+    }
+  }
+  if (avg.norm() < 1.e-16) {
+    Msg::Error("local frame for %li triangles: avg normal = %.2f, %.2f, %.2f", 
+        tris.size(), avg.x(), avg.y(), avg.z());
+    return -1;
+  }
+  if (e_x.norm() < 1.e-16) {
+    Msg::Error("local frame for %li triangles: e_x = %.2f, %.2f, %.2f", 
+        tris.size(), e_x.x(), e_x.y(), e_x.z());
+    return -1;
+  }
+  e_x.normalize();
+  avg.normalize();
+  e_z = avg;
+  e_y = crossprod(e_z,e_x);
+  if (e_y.norm() < 1.e-16) {
+    Msg::Error("local frame for %li triangles: e_y = %.2f, %.2f, %.2f", 
+        tris.size(), e_y.x(), e_y.y(), e_y.z());
+    return -1;
+  }
+  e_y.normalize();
+
+  return 0;
+}
+inline double angle2PI(const SVector3& u, const SVector3& v, const SVector3& n) {
+  const double dp = dot(u,v);
+  const double tp = dot(n,crossprod(u,v));
+  double angle = atan2(tp,dp);
+  if (angle < 0) angle += 2. * M_PI;
+  return angle;
+}
 
 int detectCrossFieldSingularities(
     const std::vector<GFace*>& faces, 
     const std::map<std::array<size_t,2>, double>& edgeTheta, 
     const std::vector<std::size_t>& nodeTags,
     const std::vector<double>& scaling,
-    std::vector<std::array<double,4> >& singularities) {
-  Msg::Warning("current dectection of singularities is very basic, just min and max of scaling inside faces");
+    std::vector<std::array<double,5> >& singularities) {
 
   /* Accessible scaling values from vertex num */
   std::vector<double> num_to_scaling(nodeTags.size(),0.);
@@ -734,66 +837,248 @@ int detectCrossFieldSingularities(
     num_to_scaling[v] = scaling[i];
   }
 
-  std::vector<std::vector<size_t> > numToAdjs(num_to_scaling.size());
+  std::vector<std::vector<MTriangle*> > numToTris(num_to_scaling.size());
   std::vector<MVertex*> vertices(num_to_scaling.size());
   for (GFace* gf: faces) {
     std::fill(vertices.begin(),vertices.end(),(MVertex*)NULL);
-    for (size_t i = 0; i < numToAdjs.size(); ++i) if (numToAdjs[i].size() > 0) {
-      numToAdjs[i].clear();
+    for (size_t i = 0; i < numToTris.size(); ++i) if (numToTris[i].size() > 0) {
+      numToTris[i].clear();
     }
 
+    /* Get vertices and adjacent triangles */
+    for (MTriangle* t: gf->triangles) {
+      for (size_t le = 0; le < 3; ++le) {
+        MVertex* v1 = t->getVertex(le);
+        numToTris[v1->getNum()].push_back(t);
+        vertices[v1->getNum()] = v1;
+      }
+    }
+
+    /* Remove vertices on curves */
+    for (GEdge* ge: gf->edges()) {
+      for (MLine* l: ge->lines) {
+        for (size_t lv = 0; lv < 2; ++lv) {
+          MVertex* v1 = l->getVertex(lv);
+          vertices[v1->getNum()] = NULL;
+        }
+      }
+    }
+
+    /* Flag singular vertices */
+    std::vector<double> vertexIndex(vertices.size(),0.);
+    for (size_t i = 0; i < numToTris.size(); ++i) if (vertices[i] != NULL) {
+      MVertex* v = vertices[i];
+      std::vector<MTriangle*> tris = numToTris[i];
+      if (tris.size() == 0) continue;
+
+      SVector3 e_x, e_y, N;
+      int st = local_frame(v, tris, e_x, e_y, N);
+      if (st != 0) {
+        Msg::Error("no local frame for v=%li", v->getNum());
+        continue;
+      }
+
+      std::vector<std::array<MVertex*,2> > vPairs;
+      int st2 = ordered_fan_around_vertex(v, tris, vPairs);
+      if (st2 != 0) {
+        Msg::Error("no ordered fan around v=%li", v->getNum());
+        continue;
+      }
+
+      double angle_deficit = 2.*M_PI;
+      std::vector<SVector3> rep_vectors(vPairs.size()); /* cross field representation vector in local frame (+e_x,+e_y) */
+      for (size_t j = 0; j < vPairs.size(); ++j) {
+        MVertex* v1 = vPairs[j][0];
+        MVertex* v2 = vPairs[j][1];
+        angle_deficit -= angle3Vertices(v1, v, v2); /* gaussian curvature */
+
+        SVector3 tgt;
+        if (v1->getNum() < v2->getNum()) {
+          tgt = v2->point() - v1->point();
+        } else {
+          tgt = v1->point() - v2->point();
+        }
+        tgt.normalize();
+        SVector3 tgt2 = crossprod(N,tgt);
+        tgt2.normalize();
+        std::array<size_t,2> vPair = {v1->getNum(),v2->getNum()};
+        if (vPair[1] < vPair[0]) vPair = {v2->getNum(),v1->getNum()};
+        auto it = edgeTheta.find(vPair);
+        if (it == edgeTheta.end()) {
+          Msg::Error("Edge (%li,%li) not found in edgeTheta",vPair[0],vPair[1]);
+          return -1;
+        }
+        double A = it->second;
+
+        SVector3 branchInQuadrant;
+        bool found = false;
+        double dpmax = -DBL_MAX; size_t kmax = (size_t) -1;
+        for (size_t k = 0; k < 4; ++k) { /* Loop over branches */
+          SVector3 branch = tgt * cos(A+k*M_PI/2) + tgt2 * sin(A+k*M_PI/2);
+          if (dot(branch,e_x) >= 0. && dot(branch,e_y) >= 0.) {
+            branchInQuadrant = branch;
+            found = true;
+            break;
+          }
+          double dp = dot(branch,SVector3(std::sqrt(2),std::sqrt(2),0.));
+          if (dp > dpmax) {dpmax = dp; kmax = k;}
+        }
+        if (!found && kmax != (size_t)-1 ) { /* if numerical errors */
+          branchInQuadrant = tgt * cos(A+kmax*M_PI/2) + tgt2 * sin(A+kmax*M_PI/2);
+        }
+
+        double theta = acos(dot(branchInQuadrant,e_x));
+        rep_vectors[j] = {cos(4.*theta),sin(4.*theta),0.};
+      }
+      double sum_diff = 0.;
+      for (size_t j = 0; j < vPairs.size(); ++j) {
+        SVector3 vertical(0.,0.,1.);
+        const SVector3 r1 = rep_vectors[j];
+        const SVector3 r2 = rep_vectors[(j+1)%rep_vectors.size()];
+        double diff_angle = angle2PI(r1,r2,vertical);
+        if (diff_angle > M_PI) diff_angle -= 2.*M_PI;
+        sum_diff += diff_angle;
+      }
+      if (std::abs(sum_diff-2*M_PI) < 0.05*M_PI) {
+        vertexIndex[v->getNum()] = -1;
+      } else if (std::abs(sum_diff+2*M_PI) < 0.05*M_PI) {
+        vertexIndex[v->getNum()] = 1;
+      } else if (std::abs(sum_diff) > 0.05 * M_PI) {
+        Msg::Warning("singularity detection, v=%i, sum of diff is %.3f deg, ignored", v->getNum(), sum_diff);
+      }
+    }
+
+    /* Three types of singularities with Crouzeix-Raviart interpolation:
+     * - on vertex
+     * - on edge
+     * - on triangle */
+
+    /* triangle singularities */
+    for (MTriangle* t: gf->triangles) {
+      MVertex* v1 = t->getVertex(0);
+      MVertex* v2 = t->getVertex(1);
+      MVertex* v3 = t->getVertex(2);
+      for (double index: {-1.,1.}) {
+        if (vertexIndex[v1->getNum()] == index 
+            && vertexIndex[v2->getNum()] == index 
+            && vertexIndex[v3->getNum()] == index) {
+          SVector3 p = 1./3. * (v1->point()+v2->point()+v3->point());
+          singularities.push_back({p.x(),p.y(),p.z(),index,double(gf->tag())});
+          /* remove from list of available singularities */
+          vertexIndex[v1->getNum()] = 0.; 
+          vertexIndex[v2->getNum()] = 0.;
+          vertexIndex[v3->getNum()] = 0.;
+        }
+      }
+    }
+    /* edge singularities */
     for (MTriangle* t: gf->triangles) {
       for (size_t le = 0; le < 3; ++le) {
         MVertex* v1 = t->getVertex(le);
         MVertex* v2 = t->getVertex((le+1)%3);
-        if (v1->onWhat()->cast2Face() != NULL) {
-          size_t num1 = v1->getNum();
-          numToAdjs[num1].push_back(v2->getNum());
-          vertices[num1] = v1;
-        }
-        if (v2->onWhat()->cast2Face() != NULL) {
-          size_t num2 = v2->getNum();
-          numToAdjs[num2].push_back(v1->getNum());
-          vertices[num2] = v2;
+        for (double index: {-1.,1.}) {
+          if (vertexIndex[v1->getNum()] == index 
+              && vertexIndex[v2->getNum()] == index) {
+            SVector3 p = 1./2. * (v1->point()+v2->point());
+            singularities.push_back({p.x(),p.y(),p.z(),index,double(gf->tag())});
+            /* remove from list of available singularities */
+            vertexIndex[v1->getNum()] = 0.; 
+            vertexIndex[v2->getNum()] = 0.;
+          }
         }
       }
     }
-    for (size_t i = 0; i < numToAdjs.size(); ++i) if (vertices[i] != NULL) {
-      std::vector<size_t> adj = numToAdjs[i];
-      /* unique adj */
-      std::sort( adj.begin(), adj.end() );
-      adj.erase( std::unique( adj.begin(), adj.end() ), adj.end() );
-
-      int nb_sup = 0;
-      int nb_inf = 0;
-      int nb_eq = 0;
-      double value = num_to_scaling[i];
-      for (size_t j = 0; j < adj.size(); ++j) {
-        double value2 = num_to_scaling[adj[j]];
-        double denom = std::max(std::abs(value),std::abs(value2));
-        if (denom < 1.e-16) continue;
-        double prop = (value-value2)/denom;
-        if (prop < -0.1) {
-          nb_inf += 1;
-        } else if (prop > 0.1) {
-          nb_sup += 1;
-        } else {
-          nb_eq += 1;
-        }
-      }
-      if (nb_eq != 0) continue; /* maybe bad idea ? rejecting "singular edge" ? */
-      if (nb_inf == 0 && nb_sup > 0) {
-        MVertex* v = vertices[i];
-        std::array<double,4> sing = {v->x(), v->y(), v->z(), -1.};
-        singularities.push_back(sing);
-      } else if (nb_inf > 0 && nb_sup == 0) {
-        MVertex* v = vertices[i];
-        std::array<double,4> sing = {v->x(), v->y(), v->z(), +1.};
-        singularities.push_back(sing);
-      }
+    /* vertex singularities */
+    for (size_t v = 0; v < vertexIndex.size(); ++v) if (std::abs(vertexIndex[v]) == 1.) {
+      MVertex* vp = vertices[v];
+      SVector3 p = vp->point();
+      singularities.push_back({p.x(),p.y(),p.z(),vertexIndex[v],double(gf->tag())});
+      vertexIndex[v] = 0.; 
     }
   }
 
+  constexpr bool DBG_VIZU = true;
+  if (DBG_VIZU) { /* Vizualisation of singularities */
+    for (size_t i = 0; i < singularities.size(); ++i) {
+      std::array<double,3> p = {
+        singularities[i][0],
+        singularities[i][1],
+        singularities[i][2]};
+      double index = singularities[i][3];
+      GeoLog::add(p,index,"dbg_cf_singularities");
+    }
+    GeoLog::flush();
+  }
+
+
+  return 0;
+}
+
+int addSingularitiesAtAcuteCorners(
+    const std::vector<GFace*>& faces,
+    double thresholdInDeg,
+    std::vector<std::array<double,5> >& singularities) {
+  constexpr bool DBG_VIZU = true;
+  for (GFace* gf: faces) {
+    std::unordered_map<MVertex*, double> cornerAngle;
+    std::unordered_map<MVertex*, std::vector<MTriangle*> > cornerToTris;
+    for (MTriangle* t: gf->triangles) {
+      for (size_t le = 0; le < 3; ++le) {
+        MVertex* v2 = t->getVertex((le+1)%3);
+        if (v2->onWhat()->cast2Vertex() != NULL) {
+          MVertex* v1 = t->getVertex(le);
+          MVertex* v3 = t->getVertex((le+2)%3);
+          double agl = std::abs(angle3Vertices(v1,v2,v3));
+          cornerAngle[v2] += agl;
+          cornerToTris[v2].push_back(t);
+        }
+      }
+    }
+    for (const auto& kv: cornerAngle) {
+      MVertex* v = kv.first;
+      double agl = kv.second;
+      if (agl * 180. / M_PI < thresholdInDeg)  {
+        std::vector<MTriangle*>& tris = cornerToTris[v];
+        if (tris.size() == 0) continue;
+        SVector3 p(0.,0.,0.);
+        for (MTriangle* t: tris) {
+          p += t->barycenter();
+        }
+        p = 1./double(tris.size()) * p; 
+        double indexVal3 = 1.;
+        singularities.push_back({p.x(),p.y(),p.z(),indexVal3,double(gf->tag())});
+        if (DBG_VIZU) GeoLog::add(p,indexVal3,"dbg_acute_singularities");
+      }
+    }
+  }
+  if (DBG_VIZU) GeoLog::flush();
+
+  return 0;
+}
+
+int quantileFiltering(std::vector<double>& scaling, double critera = 0.01) {
+  std::vector<double> values = scaling;
+  std::sort(values.begin(),values.end());
+  size_t n = values.size();
+  double clamp_min = values[size_t(critera*double(n))];
+  double clamp_max = values[size_t((1.-critera)*double(n))];
+  for (size_t i = 0; i < scaling.size(); ++i) {
+    if (scaling[i] < clamp_min) {
+      scaling[i] = clamp_min;
+    } else if (scaling[i] > clamp_max) {
+      scaling[i] = clamp_max;
+    }
+  }
+
+  // Msg::Error("min:  %f", values.front());
+  // Msg::Error("0.01:  %f", values[size_t(0.01*double(n))]);
+  // Msg::Error("0.1:  %f", values[size_t(0.1*double(n))]);
+  // Msg::Error("0.25: %f", values[size_t(0.25*double(n))]);
+  // Msg::Error("0.5:  %f", values[size_t(0.5*double(n))]);
+  // Msg::Error("0.75: %f", values[size_t(0.75*double(n))]);
+  // Msg::Error("0.9:  %f", values[size_t(0.9*double(n))]);
+  // Msg::Error("0.99:  %f", values[size_t(0.99*double(n))]);
+  // Msg::Error("max:  %f", values.back());
 
   return 0;
 }
@@ -806,7 +1091,9 @@ int computeScaledCrossFieldView(GModel* gm,
     int nbBoundaryExtensionLayer,
     const std::string& viewName,
     int verbosity,
-    std::vector<std::array<double,4> >* singularities
+    std::vector<std::array<double,5> >* singularities,
+    bool disableConformalScaling,
+    double conformalScalingQuantileFiltering
     ) {
   Msg::Debug("compute scaled cross field ...");
 #ifdef HAVE_QUADMESHINGTOOLS
@@ -816,40 +1103,58 @@ int computeScaledCrossFieldView(GModel* gm,
   }
 
   std::map<std::array<size_t,2>,double> edgeTheta;
+
+  /* Compute the cross field on each face
+   * Not in parallel because the solver in computeCrossFieldWithHeatEquation may already be parallel (e.g. MUMPS) */
   for (GFace* gf: faces) {
-    Msg::Debug("- compute cross field for face %i ...",gf->tag());
+    Msg::Info("- Face %i: compute cross field (%li triangles) ...",gf->tag(), gf->triangles.size());
     int status = computeCrossFieldWithHeatEquation({gf}, edgeTheta, nbDiffusionLevels, thresholdNormConvergence,
         nbBoundaryExtensionLayer, verbosity);
     if (status != 0) {
-      Msg::Error("failed to compute cross field for face %i",gf->tag());
+      Msg::Error("failed to compute cross field on face %i",gf->tag());
+    }
+  }
+
+  { /* For discrete meshes directly imported */
+    bool updateTopo = false;
+    for (GFace* gf: faces) {
+      discreteFace* df = dynamic_cast<discreteFace*>(gf);
+      if (df) { updateTopo = true; break; }
+    }
+    if (updateTopo) {
+      gm->createTopologyFromMesh();
     }
   }
 
   std::vector<size_t> nodeTags;
   std::vector<double> scaling;
-  int status = computeCrossFieldScaling(faces, edgeTheta, targetNumberOfQuads, nodeTags, scaling);
-  if (status != 0) {
-    Msg::Error("failed to compute cross field scaling");
-    return -1;
-  }
-
-  if (singularities != NULL) {
-    int sts = detectCrossFieldSingularities(faces, edgeTheta, nodeTags, scaling, *singularities);
-    if (sts != 0) {
-      Msg::Error("failed to detect cross field singularities");
+  if (!disableConformalScaling) {
+    Msg::Info("Compute cross field conformal scaling (global) ...");
+    int status = computeCrossFieldConformalScaling(faces, edgeTheta, nodeTags, scaling);
+    if (status != 0) {
+      Msg::Error("failed to compute cross field scaling");
+      return -1;
     }
-  }
-
-  /* Create data list view */
-  int statusv = createScaledCrossFieldView(faces, edgeTheta, nodeTags, scaling,
-      viewName, dataListViewTag);
-  if (statusv != 0) {
-    Msg::Error("failed to create view");
-    return -1;
+    if (conformalScalingQuantileFiltering != 0) {
+      Msg::Warning("Apply quantile filtering on conformal scaling (clamp the %f-quantile extremities)",conformalScalingQuantileFiltering);
+      quantileFiltering(scaling, conformalScalingQuantileFiltering);
+    }
+  } else {
+    Msg::Info("Cross field conformal scaling disabled");
+    for (const auto& kv: edgeTheta) {
+      for (size_t lv = 0; lv < 2; ++lv) {
+        size_t num = kv.first[lv];
+        nodeTags.push_back(num);
+      }
+    }
+    /* Sort unique */
+    std::sort(nodeTags.begin(), nodeTags.end() );
+    nodeTags.erase(std::unique( nodeTags.begin(), nodeTags.end() ), nodeTags.end() );
+    scaling.resize(nodeTags.size(), 1); /* uniform scaling */
   }
 
   bool SHOW_H = true; // Debugging view to check H
-  if (SHOW_H) {
+  if (SHOW_H && !disableConformalScaling) {
     Msg::Warning("generating H view (saved at /tmp/H.pos), only for debugging/prototyping");
     std::string name = "dbg_H";
     PViewDataGModel *d = new PViewDataGModel;
@@ -866,6 +1171,32 @@ int computeScaledCrossFieldView(GModel* gm,
     std::string posout = "/tmp/H.pos";
     d->writePOS(posout, false, true, false);
     GmshMergeFile(posout);
+  }
+
+  Msg::Info("Compute quad mesh size map from conformal factor and %li target quads ...", 
+      targetNumberOfQuads);
+  int status2 = computeQuadSizeMapFromCrossFieldConformalFactor(faces, targetNumberOfQuads, 
+      nodeTags, scaling);
+  if (status2 != 0) {
+    Msg::Error("Failed to compute quad mesh size map");
+    return -1;
+  }
+
+
+  if (singularities != NULL) {
+    int sts = detectCrossFieldSingularities(faces, edgeTheta, nodeTags, scaling, *singularities);
+    if (sts != 0) {
+      Msg::Error("failed to detect cross field singularities");
+    }
+    Msg::Info("Detected %li cross field singularities", singularities->size());
+  }
+
+  /* Create data list view */
+  int statusv = createScaledCrossFieldView(faces, edgeTheta, nodeTags, scaling,
+      viewName, dataListViewTag);
+  if (statusv != 0) {
+    Msg::Error("failed to create view");
+    return -1;
   }
 
 #else

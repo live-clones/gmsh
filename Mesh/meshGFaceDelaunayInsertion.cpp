@@ -24,6 +24,7 @@
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
 #include "meshWinslow2d.h"
+#include "fullMatrix.h"
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertion.h"
@@ -1675,7 +1676,7 @@ void bowyerWatsonParallelograms(
   recombineIntoQuads(gf, false, 0, false, .1);
   removeTwoQuadsNodes(gf);
   //removaeDiamonds(gf);
-  meshWinslow2d (gf);
+  //  meshWinslow2d (gf);
   
   splitElementsInBoundaryLayerIfNeeded(gf);
 }

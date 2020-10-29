@@ -8,6 +8,7 @@
 
 #include <map>
 #include <string>
+#include "GmshConfig.h"
 #include "SVector3.h"
 #include "dofManager.h"
 #include "simpleFunction.h"
@@ -89,15 +90,14 @@ public:
   void setEdgeTemp(int edge, simpleFunction<double> *f);
   void setFaceTemp(int face, simpleFunction<double> *f);
   void solve();
-  virtual PView *buildTemperatureView(const std::string postFileName);
-  virtual PView *buildLagrangeMultiplierView(const std::string &postFileName);
   double computeL2Norm(simpleFunction<double> *f);
   double computeLagNorm(int tag, simpleFunction<double> *f);
+#if defined(HAVE_POST)
+  virtual PView *buildTemperatureView(const std::string postFileName);
+  virtual PView *buildLagrangeMultiplierView(const std::string &postFileName);
   PView *buildErrorEstimateView(const std::string &errorFileName,
                                 simpleFunction<double> *sol);
-  // std::pair<PView *, PView*> buildErrorEstimateView
-  //   (const std::string &errorFileName, const elasticityData &ref, double,
-  //   int);
+#endif
 };
 
 #endif

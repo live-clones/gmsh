@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -13,7 +13,7 @@
 
 #include "base_def.hpp"
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <ostream>
 #include <iostream>
 
@@ -178,8 +178,8 @@ class CatmullClark : public ROMesh<4, _VertexDim, _Scalar, 0>
     }
 
     /* Tools */
-    void set_vertices( 
-        const Scalar* ctrl_vertices, 
+    void set_vertices(
+        const Scalar* ctrl_vertices,
         unsigned int ctrl_vertices_size = 0 //for compatibility
         ) {
       ctrl_vertices_ = ctrl_vertices ;

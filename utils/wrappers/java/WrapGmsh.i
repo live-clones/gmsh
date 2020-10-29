@@ -11,7 +11,7 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "GRegion.h"
-#include "GeoStringInterface.h"
+#include "scriptStringInterface.h"
 #include "GEntity.h"
 #include "setWrapperGmsh.h"
 #include "listWrapperGmsh.h"

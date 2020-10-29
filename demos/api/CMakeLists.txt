@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
 # TODO: Gmsh should create a cmake file when installing the lib, so all the
 # external dependencies can be obtained automatically

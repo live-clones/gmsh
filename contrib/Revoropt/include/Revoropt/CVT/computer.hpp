@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -12,7 +12,7 @@
 #define _REVOROPT_CVT_COMPUTER_H_
 
 #include <stddef.h>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 #include <Revoropt/RVD/rvd.hpp>
 #include <Revoropt/RVD/polygon.hpp>
@@ -36,7 +36,7 @@ class BaseComputer {// : public RVD::Action<_Triangulation> {
                    mesh_(NULL), sites_(NULL),
                    triangle_weights_(NULL),
                    mesh_area_(0), mesh_boundary_length_(0),
-                   factor_(1), anisotropy_(1), 
+                   factor_(1), anisotropy_(1),
                    border_anisotropy_(1), border_weight_(0),
                    tolerance_(0) {
   }
@@ -65,16 +65,16 @@ class BaseComputer {// : public RVD::Action<_Triangulation> {
   }
 
   /* Parameter setting */
-  void set_factor( double factor ) { 
-    factor_ = factor ; 
+  void set_factor( double factor ) {
+    factor_ = factor ;
   }
 
-  void set_anisotropy( double anisotropy ) { 
-    anisotropy_ = anisotropy ; 
+  void set_anisotropy( double anisotropy ) {
+    anisotropy_ = anisotropy ;
   }
 
-  void set_border_anisotropy( double border_anisotropy ) { 
-    border_anisotropy_ = border_anisotropy ; 
+  void set_border_anisotropy( double border_anisotropy ) {
+    border_anisotropy_ = border_anisotropy ;
   }
 
   void set_border_weight( double border_weight ) {
@@ -140,10 +140,10 @@ class DirectComputer : public BaseComputer<_Triangulation> {
 
     //send triangles to the triangle backend
     for(unsigned int i=1; i<size-1; ++i) {
-      triangle_compute( site, 
-                        face, 
-                        polygon[0], 
-                        polygon[i], 
+      triangle_compute( site,
+                        face,
+                        polygon[0],
+                        polygon[i],
                         polygon[i+1]
                       ) ;
     }
@@ -161,10 +161,10 @@ class DirectComputer : public BaseComputer<_Triangulation> {
     //send bisector edges to the edge backend
     for(unsigned int i=0; i<size; ++i) {
       if(polygon[i].config == Edge::BISECTOR_EDGE) {
-        edge_compute( site, 
-                      face, 
-                      polygon[i], 
-                      polygon[(i+1)%size], 
+        edge_compute( site,
+                      face,
+                      polygon[i],
+                      polygon[(i+1)%size],
                       bar
                     ) ;
       }
@@ -175,11 +175,11 @@ class DirectComputer : public BaseComputer<_Triangulation> {
         if(polygon[i].config == RVD::FACE_EDGE) {
           //get edge index
           const unsigned int edge_index = polygon[i].combinatorics ;
-          //get the neighbours of the triangle 
-          const unsigned int* triangle_neighbours 
+          //get the neighbours of the triangle
+          const unsigned int* triangle_neighbours
             = mesh_->face_neighbours(triangle) ;
           //check whether the edge is a boundary edge
-          if( triangle_neighbours[edge_index] 
+          if( triangle_neighbours[edge_index]
               == Triangulation::NO_NEIGHBOUR
             ) {
             border_compute(site, polygon[i], polygon[(i+1)%size]) ;
@@ -214,38 +214,38 @@ class DirectComputer : public BaseComputer<_Triangulation> {
     const Vector& c1 = e1.vertex ;
     const Vector& c2 = e2.vertex ;
     const Vector& c3 = e3.vertex ;
-  
+
     //Triangle basis and area
     const Vector base = (c2-c1) ;
     const double base_len = base.norm() ;
     if(base_len <= tolerance_) return ;
     const Vector tb1 = base/base_len ;
-  
+
     Vector height = (c3-c1)  ;
     height -= height.dot(tb1)*tb1 ;
     const double height_len = height.norm() ;
     if(height_len <= tolerance_) return ;
     const Vector tb2 = height/height_len ;
-  
+
     //triangle weighting
-    const double tweight = triangle_weights_ == NULL ? 
-      1 : 
+    const double tweight = triangle_weights_ == NULL ?
+      1 :
       triangle_weights_[triangle] ;
     const double area = 0.5*base_len*height_len*tweight ;
-  
+
     if(area <= tolerance_) return ;
-  
+
     //site position
     Eigen::Map<const Vector> v(sites_ + Dim*site) ;
-  
+
     //function value
-  
+
     //site vectors
     Vector sv[3] ;
     sv[0] = v-c1 ;
     sv[1] = v-c2 ;
     sv[2] = v-c3 ;
-  
+
     //compute value
     double local_fx = 0;
     for (int i = 0; i < 3; ++i) {
@@ -254,9 +254,9 @@ class DirectComputer : public BaseComputer<_Triangulation> {
       }
     }
     local_fx /= 6 ;
-  
+
     //compute gradient
-  
+
     //centroid vector
     Vector g_vect = (c1+c2+c3)/3. ;
     g_vect = (v-g_vect) ;
@@ -280,7 +280,7 @@ class DirectComputer : public BaseComputer<_Triangulation> {
       g_vect += (anisotropy_*anisotropy_-1)
               * normal_component ;
     }
-  
+
     //store result, normalize by mesh area
     fx_ += (factor_/mesh_area_)*area*local_fx ;
     Eigen::Map<Vector> grad(g_ + Dim*site) ;
@@ -314,10 +314,10 @@ class DirectComputer : public BaseComputer<_Triangulation> {
     double edge_len = edge.norm() ;
     if(edge_len <= tolerance_) return ;
     edge /= edge_len ;
-  
+
     //triangle weighting
-    const double tweight = triangle_weights_ == NULL ? 
-      1 : 
+    const double tweight = triangle_weights_ == NULL ?
+      1 :
       triangle_weights_[face] ;
     edge_len *= tweight ;
 
@@ -329,7 +329,7 @@ class DirectComputer : public BaseComputer<_Triangulation> {
     edge_normal /= edge_normal_len ;
 
     const double boundary_speed_denom = edge_normal.dot(v1-v2) ;
-    const double abs_bsd = boundary_speed_denom < 0 ? 
+    const double abs_bsd = boundary_speed_denom < 0 ?
                            - boundary_speed_denom :
                            boundary_speed_denom ;
     if(abs_bsd <= tolerance_) return ;
@@ -346,7 +346,7 @@ class DirectComputer : public BaseComputer<_Triangulation> {
     //  nc1[i] = 0 ;
     //  nc2[i] = 0 ;
     //}
-    
+
     //gradient common part
     const double tmp = (anisotropy_*anisotropy_-1)
                      * (nc1.dot(nc1)-nc2.dot(nc2))
@@ -354,7 +354,7 @@ class DirectComputer : public BaseComputer<_Triangulation> {
                      * edge_len
                      //normalize by the mesh area FIXME for triangle weights
                      * factor_/mesh_area_ ;
-    
+
     //edge center
     const Vector edge_center = 0.5*(c1+c2) ;
 
@@ -514,7 +514,7 @@ class InverseComputer : public BaseComputer<_Triangulation> {
       vertex_gradient = *(c[i]) + g ;
 
       if(anisotropy_ > 1) {
-        vertex_gradient -= 
+        vertex_gradient -=
           12*(anisotropy_*anisotropy_-1)/h_len[i]*(*(c[(i+1)%3])-v).dot(h[i])*nv ;
       }
 
@@ -532,7 +532,7 @@ class InverseComputer : public BaseComputer<_Triangulation> {
         vert_g += factor_ * vertex_gradient / mesh_area_ ;
       } else {
         //get the number of mesh vertices involved
-        int comb_size = (c[i]->config() == Vertex::FACE_VERTEX) ? 3 : 2 ; 
+        int comb_size = (c[i]->config() == Vertex::FACE_VERTEX) ? 3 : 2 ;
 
         //for each vertex in the combinatorics, get the derivative of the RVD
         //Vertex wrt. the mesh vertex, and compose the derivatives.
@@ -557,4 +557,3 @@ class InverseComputer : public BaseComputer<_Triangulation> {
 } //end of namespace Revoropt
 
 #endif
-

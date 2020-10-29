@@ -1,6 +1,6 @@
 import gmsh
 
-gmsh.initialize(ARGS)
+gmsh.initialize()
 gmsh.model.add("sphere_cut")
 R = 1
 R1 = 0.95

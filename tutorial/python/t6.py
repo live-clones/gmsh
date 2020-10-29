@@ -8,6 +8,7 @@
 
 import gmsh
 import math
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -99,4 +100,9 @@ gmsh.option.setNumber("Mesh.Smoothing", 100)
 
 gmsh.model.mesh.generate(2)
 gmsh.write("t6.msh")
+
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
 gmsh.finalize()

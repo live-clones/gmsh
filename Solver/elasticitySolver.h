@@ -8,6 +8,7 @@
 
 #include <map>
 #include <string>
+#include "GmshConfig.h"
 #include "SVector3.h"
 #include "dofManager.h"
 #include "functionSpace.h"
@@ -105,6 +106,14 @@ public:
   void exportKb();
   void computeEffectiveStiffness(std::vector<double> stiff);
   void computeEffectiveStrain(std::vector<double> strain);
+  double computeDisplacementError(simpleFunction<double> *f0,
+                                  simpleFunction<double> *f1,
+                                  simpleFunction<double> *f2);
+  double computeL2Norm(simpleFunction<double> *f0, simpleFunction<double> *f1,
+                       simpleFunction<double> *f2);
+  double computeLagNorm(int tag, simpleFunction<double> *f);
+
+#if defined(HAVE_POST)
   virtual PView *buildDisplacementView(const std::string postFileName);
   virtual PView *buildStrainView(const std::string postFileName);
   virtual PView *buildStressesView(const std::string postFileName);
@@ -117,17 +126,7 @@ public:
                                 simpleFunction<double> *f0,
                                 simpleFunction<double> *f1,
                                 simpleFunction<double> *f2);
-  double computeDisplacementError(simpleFunction<double> *f0,
-                                  simpleFunction<double> *f1,
-                                  simpleFunction<double> *f2);
-  double computeL2Norm(simpleFunction<double> *f0, simpleFunction<double> *f1,
-                       simpleFunction<double> *f2);
-  double computeLagNorm(int tag, simpleFunction<double> *f);
-  // std::pair<PView *, PView*> buildErrorEstimateView
-  //   (const std::string &errorFileName, double, int);
-  // std::pair<PView *, PView*> buildErrorEstimateView
-  //   (const std::string &errorFileName, const elasticityData &ref, double,
-  //   int);
+#endif
 };
 
 #endif

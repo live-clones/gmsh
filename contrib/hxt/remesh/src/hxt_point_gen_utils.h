@@ -50,8 +50,8 @@ HXTStatus hxtGetVerticesToTriangles(HXTMesh *mesh, uint64_t *vertices2triangles)
 HXTStatus hxtGetTrianglesToTetrahedra(HXTMesh *mesh, uint64_t *tri2tet,uint64_t *lines2tet);
 HXTStatus hxtGetBoundaryTetrahedraToTriangles(HXTMesh *mesh, uint64_t **tet2tri);
 
-HXTStatus hxtGetLinesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t **listColors);
-HXTStatus hxtGetTrianglesColorsList(HXTMesh *mesh, uint16_t *numColors, uint16_t **listColors);
+HXTStatus hxtGetLinesColorList(HXTMesh *mesh, uint16_t *numColors, uint16_t **listColors);
+HXTStatus hxtGetTrianglesColorList(HXTMesh *mesh, uint16_t *numColors, uint16_t **listColors);
 
 // RTREE functions
 HXTStatus hxtPointGenFilter(double *coords,

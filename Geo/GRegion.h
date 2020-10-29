@@ -147,7 +147,14 @@ public:
     std::vector<GVertex *> corners;
     // structured/unstructured coupling using pyramids
     int QuadTri;
+    // global mesh size constraint for the volume
+    double meshSize;
   } meshAttributes;
+
+  virtual double getMeshSize() const
+  {
+    return meshAttributes.meshSize;
+  }
 
   // a array for accessing the transfinite vertices using a triplet of
   // indices

@@ -157,8 +157,8 @@ static inline int hxtPosAddTet(FILE* fp, const double* p1, const double* p2, con
   return HXT_POS_OK;
 }
 
-static inline int hxtPosAddQuad(FILE* fp, const double* p1, const double* p2, const double* p3, const double* p4, int color) {
-  if (fprintf(fp, "  SQ(%.6f,%.6f,%.6f, %.6f,%.6f,%.6f, %.6f,%.6f,%.6f, %.6f,%.6f,%.6f){%i,%i,%i,%i};\n", 
+static inline int hxtPosAddQuad(FILE* fp, const double* p1, const double* p2, const double* p3, const double* p4, double color) {
+  if (fprintf(fp, "  SQ(%.6f,%.6f,%.6f, %.6f,%.6f,%.6f, %.6f,%.6f,%.6f, %.6f,%.6f,%.6f){%f,%f,%f,%f};\n", 
         p1[0], p1[1], p1[2], 
         p2[0], p2[1], p2[2], 
         p3[0], p3[1], p3[2], 

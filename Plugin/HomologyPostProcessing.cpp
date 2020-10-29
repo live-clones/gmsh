@@ -13,6 +13,7 @@
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "Chain.h"
+#include "fullMatrix.h"
 #include "HomologyPostProcessing.h"
 
 #if defined(HAVE_KBIPACK)

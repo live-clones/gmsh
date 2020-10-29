@@ -5,7 +5,6 @@
 #include "hxt_surface_mesh_collapse.h"
 #include "hxt_point_gen_utils.h"
 #include "hxt_point_gen_realloc.h"
-#include "hxt_point_gen_optim.h"
 
 #include "hxt_collapse_edge.h"
 #include "hxt_swap_edge.h"
@@ -34,7 +33,7 @@ HXTStatus hxtCheckingParents(HXTMesh *tmesh, HXTPointGenParent *parent)
     uint64_t ct = parent[i].id;
     uint32_t *v = tmesh->triangles.node + 3*ct;
     if (v[0] != i && v[1] != i && v[2] != i) printf("PROBLEM\n");
-    if (tmesh->triangles.colors[ct] == UINT16_MAX) 
+    if (tmesh->triangles.color[ct] == UINT16_MAX) 
       printf("GRAVE ERROR\n");
   }
   for (uint32_t i=0; i<tmesh->vertices.num; i++){
@@ -44,26 +43,26 @@ HXTStatus hxtCheckingParents(HXTMesh *tmesh, HXTPointGenParent *parent)
     uint32_t *v = tmesh->lines.node + 2*cl;
     if (v[0] != i && v[1] != i) printf("PROBLEM\n");
 
-    if (tmesh->lines.colors[cl] == UINT16_MAX) 
+    if (tmesh->lines.color[cl] == UINT16_MAX) 
       printf("GRAVE ERROR\n");
   }
   for (uint64_t i=0; i<tmesh->triangles.num; i++){
-    if (tmesh->triangles.colors[i] == UINT16_MAX) continue;
+    if (tmesh->triangles.color[i] == UINT16_MAX) continue;
     uint32_t v0 = tmesh->triangles.node[3*i+0];
     uint32_t v1 = tmesh->triangles.node[3*i+1];
     uint32_t v2 = tmesh->triangles.node[3*i+2];
 
     if (parent[v0].type == 2){
       uint64_t ct = parent[v0].id;
-      if (tmesh->triangles.colors[ct] == UINT16_MAX) printf("ERROR\n");
+      if (tmesh->triangles.color[ct] == UINT16_MAX) printf("ERROR\n");
     }
     if (parent[v1].type == 2){
       uint64_t ct = parent[v1].id;
-      if (tmesh->triangles.colors[ct] == UINT16_MAX) printf("ERROR\n");
+      if (tmesh->triangles.color[ct] == UINT16_MAX) printf("ERROR\n");
     }
     if (parent[v2].type == 2){
       uint64_t ct = parent[v2].id;
-      if (tmesh->triangles.colors[ct] == UINT16_MAX) printf("ERROR\n");
+      if (tmesh->triangles.color[ct] == UINT16_MAX) printf("ERROR\n");
     }
   }
 
@@ -131,7 +130,7 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
 
   uint64_t countDeletedTri = 0 ;
   for (uint64_t i=0; i<tmesh->triangles.num; i++){
-    if (tmesh->triangles.colors[i] == UINT16_MAX){
+    if (tmesh->triangles.color[i] == UINT16_MAX){
       countDeletedTri++;
       continue;
     }
@@ -164,14 +163,14 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
   nmesh->triangles.size = tmesh->triangles.num - countDeletedTri; 
   nmesh->triangles.num = nmesh->triangles.size;
   HXT_CHECK(hxtAlignedMalloc(&nmesh->triangles.node,(3*nmesh->triangles.size)*sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedMalloc(&nmesh->triangles.colors,(nmesh->triangles.size)*sizeof(uint16_t)));
+  HXT_CHECK(hxtAlignedMalloc(&nmesh->triangles.color,(nmesh->triangles.size)*sizeof(uint16_t)));
   uint64_t cT = 0;
   for (uint64_t i=0; i<tmesh->triangles.num; i++){
-    if (tmesh->triangles.colors[i] == UINT16_MAX) continue;
+    if (tmesh->triangles.color[i] == UINT16_MAX) continue;
     nmesh->triangles.node[3*cT+0] = node2node[tmesh->triangles.node[3*i+0]];
     nmesh->triangles.node[3*cT+1] = node2node[tmesh->triangles.node[3*i+1]];
     nmesh->triangles.node[3*cT+2] = node2node[tmesh->triangles.node[3*i+2]];
-    nmesh->triangles.colors[cT] = tmesh->triangles.colors[i];
+    nmesh->triangles.color[cT] = tmesh->triangles.color[i];
     cT++;
   }
 
@@ -180,7 +179,7 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
   //*************************************************************
   uint64_t countDeletedLines = 0 ;
   for (uint64_t i=0; i<tmesh->lines.num; i++){
-    if (tmesh->lines.colors[i] == UINT16_MAX){
+    if (tmesh->lines.color[i] == UINT16_MAX){
       countDeletedLines++;
       continue;
     }
@@ -188,13 +187,13 @@ HXTStatus hxtSurfaceMeshTransferToNewMesh(HXTMesh *tmesh,
   nmesh->lines.size = tmesh->lines.num - countDeletedLines; 
   nmesh->lines.num = nmesh->lines.size;
   HXT_CHECK(hxtAlignedMalloc(&nmesh->lines.node,(2*nmesh->lines.size)*sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedMalloc(&nmesh->lines.colors,(nmesh->lines.size)*sizeof(uint16_t)));
+  HXT_CHECK(hxtAlignedMalloc(&nmesh->lines.color,(nmesh->lines.size)*sizeof(uint16_t)));
   uint64_t cL = 0;
   for (uint64_t i=0; i<tmesh->lines.num; i++){
-    if (tmesh->lines.colors[i] == UINT16_MAX) continue;
+    if (tmesh->lines.color[i] == UINT16_MAX) continue;
     nmesh->lines.node[2*cL+0] = node2node[tmesh->lines.node[2*i+0]];
     nmesh->lines.node[2*cL+1] = node2node[tmesh->lines.node[2*i+1]];
-    nmesh->lines.colors[cL] = tmesh->lines.colors[i];
+    nmesh->lines.color[cL] = tmesh->lines.color[i];
     cL++;
   }
 
@@ -287,8 +286,8 @@ HXTStatus hxtSurfaceMeshCollapseSwap(const HXTMesh *mesh,
       if (flagE[i] == UINT32_MAX) continue; // Do not swap if edge is already collapsed
       if (edges2lines[i] != UINT64_MAX) continue; // Do not swap if it's boundary line
 
-      if (tmesh->triangles.colors[tedges->edg2tri[2*i+0]] == opt->skipColor) continue;
-      if (tmesh->triangles.colors[tedges->edg2tri[2*i+1]] == opt->skipColor) continue;
+      if (tmesh->triangles.color[tedges->edg2tri[2*i+0]] == opt->skipColor) continue;
+      if (tmesh->triangles.color[tedges->edg2tri[2*i+1]] == opt->skipColor) continue;
 
       //hxtTempPrintSwap(mesh,edges,i,0);
 
@@ -331,7 +330,7 @@ HXTStatus hxtSurfaceMeshCollapseSwap(const HXTMesh *mesh,
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Insertion Swap same triangles for one edge");
  
       // TODO delete or debug mode
-      if (tmesh->triangles.colors[t0] == UINT16_MAX){ 
+      if (tmesh->triangles.color[t0] == UINT16_MAX){ 
         FILE *dd;
         hxtPosInit("cannotCollapseSwap.pos", "Check", &dd);
         double *v0 = tmesh->vertices.coord + 4*tedges->node[2*i+0];
@@ -341,7 +340,7 @@ HXTStatus hxtSurfaceMeshCollapseSwap(const HXTMesh *mesh,
         HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESHcannotSwap.msh"));
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Collapse Swap color of t0 == UINT64_MAX");
       }
-      if (tmesh->triangles.colors[t1] == UINT16_MAX){
+      if (tmesh->triangles.color[t1] == UINT16_MAX){
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Collapse Swap color of t1 == UINT64_MAX");
       }
 
@@ -414,12 +413,12 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
   // check if they get correctly created there 
 
   //***********************************************************************************************
-  // Create list of colors of triangles
+  // Create list of color of triangles
   //***********************************************************************************************
-  uint16_t *triColors;
-  uint16_t numTriColors;
-  HXT_CHECK(hxtGetTrianglesColorsList(tmesh,&numTriColors,&triColors));
-  HXT_INFO_COND(opt->verbosity>0,"Number of colors:  %d", numTriColors);
+  uint16_t *triColor;
+  uint16_t numTriColor;
+  HXT_CHECK(hxtGetTrianglesColorList(tmesh,&numTriColor,&triColor));
+  HXT_INFO_COND(opt->verbosity>0,"Number of color:  %d", numTriColor);
 
   //***********************************************************************************************
   // Create lines to edges array; 
@@ -769,7 +768,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
   HXT_CHECK(hxtFree(&lines2edges));
   HXT_CHECK(hxtFree(&edges2lines));
   HXT_CHECK(hxtFree(&lines2triangles));
-  HXT_CHECK(hxtFree(&triColors));
+  HXT_CHECK(hxtFree(&triColor));
 
   return HXT_STATUS_OK; 
 }

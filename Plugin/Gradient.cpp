@@ -18,7 +18,7 @@ std::string GMSH_GradientPlugin::getHelp() const
   return "Plugin(Gradient) computes the gradient of the "
          "field in the view `View'.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(Gradient) creates one new view.";
+         "Plugin(Gradient) creates one new list-based view.";
 }
 
 int GMSH_GradientPlugin::getNbOptions() const

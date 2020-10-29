@@ -574,8 +574,8 @@ HXTStatus hxtSwapEdge (HXTMesh *mesh,
   uint64_t t1 = edges->edg2tri[2*ce+1];
 
   // Ensure triangles t1 and t2 have the same color 
-  if(mesh->triangles.colors[t0] != mesh->triangles.colors[t1]){
-    return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Swapping edge with different colors");
+  if(mesh->triangles.color[t0] != mesh->triangles.color[t1]){
+    return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Swapping edge with different color");
   }
   // Ensure that we are not dealing with a boundary edge
   if (t0 == UINT64_MAX || t1 == UINT64_MAX){ 
@@ -881,7 +881,7 @@ HXTStatus hxtSwapEdge_old (HXTMesh *mesh,
   uint64_t t2 = edges->edg2tri[2*i+1];
 
   // ensure triangles t1 and t2 have the same color 
-  if(mesh->triangles.colors[t1] != mesh->triangles.colors[t2]) return HXT_STATUS_OK;
+  if(mesh->triangles.color[t1] != mesh->triangles.color[t2]) return HXT_STATUS_OK;
   // FIXME TODO check also angle between triangles ??? 
   
   if (t1 != (uint64_t)-1 && t2 != (uint64_t)-1) {

@@ -12,7 +12,7 @@
 class GModel;
 class GFace;
 class MEdge;
-class MEdgeLessThan;
+struct MEdgeLessThan;
 
 int computeScaledCrossFieldView(GModel* gm,
     int& dataListViewTag, 
@@ -22,8 +22,17 @@ int computeScaledCrossFieldView(GModel* gm,
     int nbBoundaryExtensionLayer = 1,         /* Extend boundary conditions on triangle-layers */
     const std::string& viewName = "scaled_cross_field",
     int verbosity = 3,                        /* 0: nothing except errors, 1: terse comments, 2: a bit more, 3: detailed convergence info */
-    std::vector<std::array<double,4> >* singularities = NULL /* If not NULL, fill with positions of the detected singularities and indices */
+    std::vector<std::array<double,5> >* singularities = NULL, /* If not NULL, fill with positions of the detected singularities and indices */
+    bool disableConformalScaling = false,      /* Sometimes (complex corners), it is better to not use conformal scaling */
+    double conformalScalingQuantileFiltering = 0.1 /* Alternative to disable (for corners): clamp it by removing exterior quantiles */
     );
+
+
+int addSingularitiesAtAcuteCorners(
+    const std::vector<GFace*>& faces,
+    double thresholdInDeg,  /* angle used to detect acute corners, typically angle=45. for compat. with cross fields */
+    std::vector<std::array<double,5> >& singularities);
+
 
 /* Sub-functions that may be called independantly */
 int extractTriangularMeshFromFaces(
@@ -36,9 +45,14 @@ int extractTriangularMeshFromFaces(
 int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map<std::array<size_t,2>, double>& edgeTheta,
     int nbDiffusionLevels = 10, double thresholdNormConvergence = 1.e-3, int nbBoundaryExtensionLayer = 1, int verbosity = 3);
 
-int computeCrossFieldScaling(const std::vector<GFace*>& faces, const std::map<std::array<size_t,2>, double>& edgeTheta,
-    std::size_t targetNumberOfQuads,
+int computeCrossFieldConformalScaling(const std::vector<GFace*>& faces, const std::map<std::array<size_t,2>, double>& edgeTheta,
     std::vector<std::size_t>& nodeTags, std::vector<double>& scaling);
+
+int computeQuadSizeMapFromCrossFieldConformalFactor(
+    const std::vector<GFace*>& faces, 
+    std::size_t targetNumberOfQuads, 
+    const std::vector<std::size_t>& nodeTags,
+    std::vector<double>& scaling);
 
 int extractPerTriangleScaledCrossFieldDirections(
     const std::vector<GFace*>& faces, 

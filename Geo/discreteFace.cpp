@@ -199,9 +199,12 @@ bool discreteFace_rtree_callback(std::pair<MTriangle *, MTriangle *> *t,
 GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                                   SVector3 *normal) const
 {
-  if(_param.empty()) return GPoint();
-
+  if(_param.empty())
+    return GPoint();
+  
+  
   dfWrapper wrapper(queryPoint);
+
   do {
     wrapper._distance = 1.e22;
     double MIN[3] = {queryPoint.x() - maxDistance, queryPoint.y() - maxDistance,
@@ -244,6 +247,9 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
               U * v03->y() + V * v13->y() + W * v23->y(),
               U * v03->z() + V * v13->z() + W * v23->z());
 
+  //  printf("%g %g %g vs %g %g %g\n",queryPoint.x() ,queryPoint.y(), queryPoint.z(),
+  //	 pp3.x(), pp3.y(), pp3.z());
+  
   return GPoint(pp3.x(), pp3.y(), pp3.z(), this, pp);
 }
 
@@ -485,6 +491,63 @@ void discreteFace::_computeSTLNormals()
   }
   for(std::size_t i = 0; i < N; i++) stl_normals[i].normalize();
 }
+
+
+// we wanna be able to get closest point to a fully discrrete
+// surface --> if a mesh exists, we create the 3D pieces of the _param
+// datatructure
+
+void discreteFace::createGeometryFromTriangulation(std::vector<MTriangle*> &__triangles){
+
+  if (!_param.empty())return;
+  if (__triangles.empty())return;  
+
+  Msg::Info("constructing a RTree using %d triangles",__triangles.size());
+  
+  std::map<MVertex*,size_t> geo_vertices;
+  size_t count = 0;
+
+  for(size_t i=0; i<__triangles.size(); i++){
+    for (size_t j=0;j<3;j++){
+      MVertex *v = __triangles[i]->getVertex(j);
+      std::map<MVertex*,size_t>::iterator it = geo_vertices.find(v);
+      if (it == geo_vertices.end()){
+	geo_vertices[v] = count++;
+	_param.v3d.push_back(MVertex(v->x(),v->y(),v->z()));
+	_param.v2d.push_back(MVertex(v->x(),v->y(),0));// FAKE !!
+      }
+    }
+  }
+  
+  for(size_t i=0; i<__triangles.size(); i++){
+    size_t a = geo_vertices[__triangles[i]->getVertex(0)];
+    size_t b = geo_vertices[__triangles[i]->getVertex(1)];
+    size_t c = geo_vertices[__triangles[i]->getVertex(2)];
+    _param.t2d.push_back( MTriangle(&_param.v2d[a], &_param.v2d[b], &_param.v2d[c]));
+    _param.t3d.push_back( MTriangle(&_param.v3d[a], &_param.v3d[b], &_param.v3d[c]));
+  }
+  
+  for(size_t j = 0; j < _param.t3d.size(); j++) {
+    double MIN[3] = {_param.t3d[j].getVertex(0)->x(),
+                     _param.t3d[j].getVertex(0)->y(),
+                     _param.t3d[j].getVertex(0)->z()};
+    double MAX[3] = {_param.t3d[j].getVertex(0)->x(),
+                     _param.t3d[j].getVertex(0)->y(),
+                     _param.t3d[j].getVertex(0)->z()};
+    for(int k = 1; k < 3; k++) {
+      MAX[0] = std::max(MAX[0], _param.t3d[j].getVertex(k)->x());
+      MIN[0] = std::min(MIN[0], _param.t3d[j].getVertex(k)->x());
+      MAX[1] = std::max(MAX[1], _param.t3d[j].getVertex(k)->y());
+      MIN[1] = std::min(MIN[1], _param.t3d[j].getVertex(k)->y());
+      MAX[2] = std::max(MAX[2], _param.t3d[j].getVertex(k)->z());
+      MIN[2] = std::min(MIN[2], _param.t3d[j].getVertex(k)->z());
+    }
+    std::pair<MTriangle *, MTriangle *> *tt =
+      new std::pair<MTriangle *, MTriangle *>(&_param.t3d[j], &_param.t2d[j]);
+    _param.rtree3d.Insert(MIN, MAX, tt);
+  }
+}
+
 
 void discreteFace::_createGeometryFromSTL()
 {

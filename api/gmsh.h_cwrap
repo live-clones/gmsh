@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.6).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.7.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -25,7 +25,6 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include <string.h>
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -73,7 +72,8 @@ namespace gmsh {
     *p = (char**)gmshMalloc(sizeof(char*) * v.size());
     for(size_t i = 0; i < v.size(); ++i){
       (*p)[i] = (char*)gmshMalloc(sizeof(char) * (v[i].size() + 1));
-      strcpy((*p)[i], v[i].c_str());
+      for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
+      (*p)[i][v[i].size()] = '\0';
     }
     *size = v.size();
   }
@@ -786,6 +786,16 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // Set the global visibility of the model per window to `value', where
+    // `windowIndex' identifies the window in the window list.
+    inline void setVisibilityPerWindow(const int value,
+                                       const int windowIndex = 0)
+    {
+      int ierr = 0;
+      gmshModelSetVisibilityPerWindow(value, windowIndex, &ierr);
+      if(ierr) throwLastError();
+    }
+
     // Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
     // `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255.
     // Apply the color setting recursively if `recursive' is true.
@@ -1226,9 +1236,9 @@ namespace gmsh { // Top-level functions
         elementTypes.assign(api_elementTypes_, api_elementTypes_ + api_elementTypes_n_); gmshFree(api_elementTypes_);
       }
 
-      // Return an element type given its family name `familyName' ("point",
-      // "line", "triangle", "quadrangle", "tetrahedron", "pyramid", "prism",
-      // "hexahedron") and polynomial order `order'. If `serendip' is true, return
+      // Return an element type given its family name `familyName' ("Point",
+      // "Line", "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism",
+      // "Hexahedron") and polynomial order `order'. If `serendip' is true, return
       // the corresponding serendip element type (element without interior nodes).
       inline int getElementType(const std::string & familyName,
                                 const int order,
@@ -1775,6 +1785,31 @@ namespace gmsh { // Top-level functions
         gmshFree(api_sizes_);
       }
 
+      // Set a global mesh size callback. The callback should take 5 arguments
+      // (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
+      // coordinates (`x', `y', `z').
+      inline void setSizeCallback(std::function<double(int, int, double, double, double)> callback)
+      {
+        int ierr = 0;
+        struct callback_caller_  {
+          static double call(int dim, int tag, double x, double y, double z, void * callbackp_) {
+            return (*static_cast<std::function<double(int, int, double, double, double)>*> (callbackp_))(dim, tag, x, y, z);
+          }
+        };
+        // FIXME memory leak
+        auto *callback_ptr_ = new std::function<double(int,int,double,double,double)>(callback);
+        gmshModelMeshSetSizeCallback(&callback_caller_::call, callback_ptr_, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Remove the global mesh size callback.
+      inline void removeSizeCallback()
+      {
+        int ierr = 0;
+        gmshModelMeshRemoveSizeCallback(&ierr);
+        if(ierr) throwLastError();
+      }
+
       // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
       // nodes distributed according to `meshType' and `coef'. Currently supported
       // types are "Progression" (geometrical progression with power `coef') and
@@ -1818,6 +1853,25 @@ namespace gmsh { // Top-level functions
         gmshModelMeshSetTransfiniteVolume(tag, api_cornerTags_, api_cornerTags_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_cornerTags_);
+      }
+
+      // Set transfinite meshing constraints on the model entities in `dimTag'.
+      // Transfinite meshing constraints are added to the curves of the
+      // quadrangular surfaces and to the faces of 6-sided volumes. Quadragular
+      // faces with a corner angle superior to `cornerAngle' (in radians) are
+      // ignored. The number of points is automatically determined from the sizing
+      // constraints. If `dimTag' is empty, the constraints are applied to all
+      // entities in the model. If `recombine' is true, the recombine flag is
+      // automatically set on the transfinite surfaces.
+      inline void setTransfiniteAutomatic(const gmsh::vectorpair & dimTags = gmsh::vectorpair(),
+                                          const double cornerAngle = 2.35,
+                                          const bool recombine = true)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshSetTransfiniteAutomatic(api_dimTags_, api_dimTags_n_, cornerAngle, (int)recombine, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
       }
 
       // Set a recombination meshing constraint on the model entity of dimension
@@ -2373,14 +2427,16 @@ namespace gmsh { // Top-level functions
       // `curveTags' should contain (signed) tags of model enties of dimension 1
       // forming a closed loop: a negative tag signifies that the underlying curve
       // is considered with reversed orientation. If `tag' is positive, set the tag
-      // explicitly; otherwise a new tag is selected automatically. Return the tag
-      // of the curve loop.
+      // explicitly; otherwise a new tag is selected automatically. If `reorient'
+      // is set, automatically reorient the curves if necessary. Return the tag of
+      // the curve loop.
       inline int addCurveLoop(const std::vector<int> & curveTags,
-                              const int tag = -1)
+                              const int tag = -1,
+                              const bool reorient = false)
       {
         int ierr = 0;
         int *api_curveTags_; size_t api_curveTags_n_; vector2ptr(curveTags, &api_curveTags_, &api_curveTags_n_);
-        int result_api_ = gmshModelGeoAddCurveLoop(api_curveTags_, api_curveTags_n_, tag, &ierr);
+        int result_api_ = gmshModelGeoAddCurveLoop(api_curveTags_, api_curveTags_n_, tag, (int)reorient, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_curveTags_);
         return result_api_;
@@ -2698,7 +2754,9 @@ namespace gmsh { // Top-level functions
       // Synchronize the built-in CAD representation with the current Gmsh model.
       // This can be called at any time, but since it involves a non trivial amount
       // of processing, the number of synchronization points should normally be
-      // minimized.
+      // minimized. Without synchronization the entities in the built-in CAD
+      // representation are not available to any function outside of the built-in
+      // CAD kernel functions.
       inline void synchronize()
       {
         int ierr = 0;
@@ -2708,8 +2766,9 @@ namespace gmsh { // Top-level functions
 
       namespace mesh { // Built-in CAD kernel meshing constraints
 
-        // Set a mesh size constraint on the model entities `dimTags'. Currently
-        // only entities of dimension 0 (points) are handled.
+        // Set a mesh size constraint on the entities `dimTags' in the built-in CAD
+        // kernel representation. Currently only entities of dimension 0 (points)
+        // are handled.
         inline void setSize(const gmsh::vectorpair & dimTags,
                             const double size)
         {
@@ -2720,10 +2779,11 @@ namespace gmsh { // Top-level functions
           gmshFree(api_dimTags_);
         }
 
-        // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
-        // nodes distributed according to `meshType' and `coef'. Currently
-        // supported types are "Progression" (geometrical progression with power
-        // `coef') and "Bump" (refinement toward both extremities of the curve).
+        // Set a transfinite meshing constraint on the curve `tag' in the built-in
+        // CAD kernel representation, with `numNodes' nodes distributed according
+        // to `meshType' and `coef'. Currently supported types are "Progression"
+        // (geometrical progression with power `coef') and "Bump" (refinement
+        // toward both extremities of the curve).
         inline void setTransfiniteCurve(const int tag,
                                         const int nPoints,
                                         const std::string & meshType = "Progression",
@@ -2734,13 +2794,14 @@ namespace gmsh { // Top-level functions
           if(ierr) throwLastError();
         }
 
-        // Set a transfinite meshing constraint on the surface `tag'. `arrangement'
-        // describes the arrangement of the triangles when the surface is not
-        // flagged as recombined: currently supported values are "Left", "Right",
-        // "AlternateLeft" and "AlternateRight". `cornerTags' can be used to
-        // specify the (3 or 4) corners of the transfinite interpolation
-        // explicitly; specifying the corners explicitly is mandatory if the
-        // surface has more that 3 or 4 points on its boundary.
+        // Set a transfinite meshing constraint on the surface `tag' in the built-
+        // in CAD kernel representation. `arrangement' describes the arrangement of
+        // the triangles when the surface is not flagged as recombined: currently
+        // supported values are "Left", "Right", "AlternateLeft" and
+        // "AlternateRight". `cornerTags' can be used to specify the (3 or 4)
+        // corners of the transfinite interpolation explicitly; specifying the
+        // corners explicitly is mandatory if the surface has more that 3 or 4
+        // points on its boundary.
         inline void setTransfiniteSurface(const int tag,
                                           const std::string & arrangement = "Left",
                                           const std::vector<int> & cornerTags = std::vector<int>())
@@ -2752,9 +2813,9 @@ namespace gmsh { // Top-level functions
           gmshFree(api_cornerTags_);
         }
 
-        // Set a transfinite meshing constraint on the surface `tag'. `cornerTags'
-        // can be used to specify the (6 or 8) corners of the transfinite
-        // interpolation explicitly.
+        // Set a transfinite meshing constraint on the surface `tag' in the built-
+        // in CAD kernel representation. `cornerTags' can be used to specify the (6
+        // or 8) corners of the transfinite interpolation explicitly.
         inline void setTransfiniteVolume(const int tag,
                                          const std::vector<int> & cornerTags = std::vector<int>())
         {
@@ -2765,9 +2826,10 @@ namespace gmsh { // Top-level functions
           gmshFree(api_cornerTags_);
         }
 
-        // Set a recombination meshing constraint on the model entity of dimension
-        // `dim' and tag `tag'. Currently only entities of dimension 2 (to
-        // recombine triangles into quadrangles) are supported.
+        // Set a recombination meshing constraint on the entity of dimension `dim'
+        // and tag `tag' in the built-in CAD kernel representation. Currently only
+        // entities of dimension 2 (to recombine triangles into quadrangles) are
+        // supported.
         inline void setRecombine(const int dim,
                                  const int tag,
                                  const double angle = 45.)
@@ -2777,8 +2839,9 @@ namespace gmsh { // Top-level functions
           if(ierr) throwLastError();
         }
 
-        // Set a smoothing meshing constraint on the model entity of dimension
-        // `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.
+        // Set a smoothing meshing constraint on the entity of dimension `dim' and
+        // tag `tag' in the built-in CAD kernel representation. `val' iterations of
+        // a Laplace smoother are applied.
         inline void setSmoothing(const int dim,
                                  const int tag,
                                  const int val)
@@ -2788,11 +2851,11 @@ namespace gmsh { // Top-level functions
           if(ierr) throwLastError();
         }
 
-        // Set a reverse meshing constraint on the model entity of dimension `dim'
-        // and tag `tag'. If `val' is true, the mesh orientation will be reversed
-        // with respect to the natural mesh orientation (i.e. the orientation
-        // consistent with the orientation of the geometry). If `val' is false, the
-        // mesh is left as-is.
+        // Set a reverse meshing constraint on the entity of dimension `dim' and
+        // tag `tag' in the built-in CAD kernel representation. If `val' is true,
+        // the mesh orientation will be reversed with respect to the natural mesh
+        // orientation (i.e. the orientation consistent with the orientation of the
+        // geometry). If `val' is false, the mesh is left as-is.
         inline void setReverse(const int dim,
                                const int tag,
                                const bool val = true)
@@ -2802,8 +2865,9 @@ namespace gmsh { // Top-level functions
           if(ierr) throwLastError();
         }
 
-        // Set the meshing algorithm on the model entity of dimension `dim' and tag
-        // `tag'. Currently only supported for `dim' == 2.
+        // Set the meshing algorithm on the entity of dimension `dim' and tag `tag'
+        // in the built-in CAD kernel representation. Currently only supported for
+        // `dim' == 2.
         inline void setAlgorithm(const int dim,
                                  const int tag,
                                  const int val)
@@ -2814,8 +2878,8 @@ namespace gmsh { // Top-level functions
         }
 
         // Force the mesh size to be extended from the boundary, or not, for the
-        // model entity of dimension `dim' and tag `tag'. Currently only supported
-        // for `dim' == 2.
+        // entity of dimension `dim' and tag `tag' in the built-in CAD kernel
+        // representation. Currently only supported for `dim' == 2.
         inline void setSizeFromBoundary(const int dim,
                                         const int tag,
                                         const int val)
@@ -3905,7 +3969,9 @@ namespace gmsh { // Top-level functions
       // Synchronize the OpenCASCADE CAD representation with the current Gmsh
       // model. This can be called at any time, but since it involves a non trivial
       // amount of processing, the number of synchronization points should normally
-      // be minimized.
+      // be minimized. Without synchronization the entities in the OpenCASCADE CAD
+      // representation are not available to any function outside of the
+      // OpenCASCADE CAD kernel functions.
       inline void synchronize()
       {
         int ierr = 0;
@@ -4166,6 +4232,39 @@ namespace gmsh { // Top-level functions
       style.resize(api_style_n_); for(size_t i = 0; i < api_style_n_; ++i){ style[i] = std::string(api_style_[i]); gmshFree(api_style_[i]); } gmshFree(api_style_);
     }
 
+    // Set interpolation matrices for the element family `type' ("Line",
+    // "Triangle", "Quadrangle", "Tetrahedron", "Hexahedron", "Prism", "Pyramid")
+    // in the view `tag'. The approximation of the values over an element is
+    // written as a linear combination of `d' basis functions f_i(u, v, w) = sum_(j
+    // = 0, ..., `d' - 1) `coef'[i][j] u^`exp'[j][0] v^`exp'[j][1] w^`exp'[j][2], i
+    // = 0, ..., `d'-1, with u, v, w the coordinates in the reference element. The
+    // `coef' matrix (of size `d' x `d') and the `exp' matrix (of size `d' x 3) are
+    // stored as vectors, by row. If `dGeo' is positive, use `coefGeo' and `expGeo'
+    // to define the interpolation of the x, y, z coordinates of the element in
+    // terms of the u, v, w coordinates, in exactly the same way. If `d' < 0,
+    // remove the interpolation matrices.
+    inline void setInterpolationMatrices(const int tag,
+                                         const std::string & type,
+                                         const int d,
+                                         const std::vector<double> & coef,
+                                         const std::vector<double> & exp,
+                                         const int dGeo = 0,
+                                         const std::vector<double> & coefGeo = std::vector<double>(),
+                                         const std::vector<double> & expGeo = std::vector<double>())
+    {
+      int ierr = 0;
+      double *api_coef_; size_t api_coef_n_; vector2ptr(coef, &api_coef_, &api_coef_n_);
+      double *api_exp_; size_t api_exp_n_; vector2ptr(exp, &api_exp_, &api_exp_n_);
+      double *api_coefGeo_; size_t api_coefGeo_n_; vector2ptr(coefGeo, &api_coefGeo_, &api_coefGeo_n_);
+      double *api_expGeo_; size_t api_expGeo_n_; vector2ptr(expGeo, &api_expGeo_, &api_expGeo_n_);
+      gmshViewSetInterpolationMatrices(tag, type.c_str(), d, api_coef_, api_coef_n_, api_exp_, api_exp_n_, dGeo, api_coefGeo_, api_coefGeo_n_, api_expGeo_, api_expGeo_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_coef_);
+      gmshFree(api_exp_);
+      gmshFree(api_coefGeo_);
+      gmshFree(api_expGeo_);
+    }
+
     // Add a post-processing view as an `alias' of the reference view with tag
     // `refTag'. If `copyOptions' is set, copy the options of the reference view.
     // If `tag' is positive use it (and remove the view with that tag if it already
@@ -4244,6 +4343,17 @@ namespace gmsh { // Top-level functions
     {
       int ierr = 0;
       gmshViewWrite(tag, fileName.c_str(), (int)append, &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // Set the global visibility of the view `tag' per window to `value', where
+    // `windowIndex' identifies the window in the window list.
+    inline void setVisibilityPerWindow(const int tag,
+                                       const int value,
+                                       const int windowIndex = 0)
+    {
+      int ierr = 0;
+      gmshViewSetVisibilityPerWindow(tag, value, windowIndex, &ierr);
       if(ierr) throwLastError();
     }
 
@@ -4404,6 +4514,26 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
       viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
       return result_api_;
+    }
+
+    // Split the current window horizontally (if `how' = "h") or vertically (if
+    // `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.
+    inline void splitCurrentWindow(const std::string & how = "v",
+                                   const double ratio = 0.5)
+    {
+      int ierr = 0;
+      gmshFltkSplitCurrentWindow(how.c_str(), ratio, &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // Set the current window by speficying its index (starting at 0) in the list
+    // of all windows. When new windows are created by splits, new windows are
+    // appended at the end of the list.
+    inline void setCurrentWindow(const int windowIndex = 0)
+    {
+      int ierr = 0;
+      gmshFltkSetCurrentWindow(windowIndex, &ierr);
+      if(ierr) throwLastError();
     }
 
   } // namespace fltk

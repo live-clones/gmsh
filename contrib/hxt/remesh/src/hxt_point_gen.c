@@ -6,8 +6,8 @@
 #include "hxt_point_gen_realloc.h"
 #include "hxt_point_gen_utils.h"
 #include "hxt_point_gen_io.h"
-#include "hxt_point_gen_optim.h"
-
+#include "hxt_surface_mesh_quad.h"
+#include "hxt_surface_mesh_processing.h"
 
 #include "hxt_bbox.h"
 #include "hxt_edge.h"
@@ -65,24 +65,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,sizemap,"sizesCurvature.msh"));
   }
 
-  //*************************************************************************************
-  //*************************************************************************************
-  // If mesh does not have lines start propagation from a random edge
-  // TODO 
-  if (mesh->lines.num == 0 && opt->generateSurfaces){
-    HXT_INFO("********** ATTENTION **********");
-    HXT_INFO("Mesh does not have lines - starting propagation from a random edge");
-    // Create edges structure
-    hxtLinesReserve(mesh,2);
-    mesh->lines.colors[0] = 0;
-    mesh->lines.node[0] = edges->node[0];
-    mesh->lines.node[1] = edges->node[1];
-    mesh->lines.num++;
 
-    for (uint64_t i=0; i<mesh->triangles.num; i++){
-      mesh->triangles.colors[i] = 1;
-    }
-  }
 
   //*************************************************************************************
   //*************************************************************************************
@@ -153,6 +136,31 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   HXT_CHECK(hxtMalloc(&parent, estNumVertices*sizeof(HXTPointGenParent)));
   for (uint32_t i=0; i<estNumVertices; i++) parent[i].type = UINT8_MAX;
   for (uint32_t i=0; i<estNumVertices; i++) parent[i].id = UINT64_MAX;
+
+
+  //*************************************************************************************
+  //*************************************************************************************
+  // If mesh does not have lines start propagation from a random edge
+  // TODO 
+/*  if (mesh->lines.num == 0 && opt->generateSurfaces){*/
+    /*HXT_INFO("********** ATTENTION **********");*/
+    /*HXT_INFO("Mesh does not have lines - starting propagation from a random edge");*/
+    /*// Create edges structure*/
+    /*hxtLinesReserve(mesh,2);*/
+    /*mesh->lines.color[0] = 0;*/
+    /*mesh->lines.node[0] = edges->node[2*0+0];*/
+    /*mesh->lines.node[1] = edges->node[2*0+1];*/
+    /*mesh->lines.num++;*/
+
+    /*for (uint64_t i=0; i<mesh->triangles.num; i++){*/
+      /*mesh->triangles.color[i] = 1;*/
+    /*}*/
+
+    /*opt->generateLines = 0;*/
+
+  /*}*/
+
+ 
   
   //**********************************************************************************************************
   //**********************************************************************************************************
@@ -160,11 +168,40 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
   //**********************************************************************************************************
 
-  if (opt->generateLines){
+  if (mesh->lines.num != 0 && opt->generateLines){
     HXT_CHECK(hxtGeneratePointsOnLines(mesh,opt,directions,sizemap,fmesh,parent));
   }
-  else if (opt->generateLines == 0 && opt->generateSurfaces == 1){
+  else if (mesh->lines.num != 0 && opt->generateLines == 0 && opt->generateSurfaces == 1){
     HXT_CHECK(hxtGetPointsOnLinesFromInputMesh(mesh,opt,fmesh,parent));
+  }
+  else if (mesh->lines.num == 0 && opt->generateSurfaces){
+    HXT_INFO("********** ATTENTION **********");
+    HXT_INFO("Mesh does not have lines - starting propagation from a random edge");
+
+    uint32_t seedNode = mesh->triangles.node[3*0+0];
+
+    hxtPointsReserve(mesh,1);
+    mesh->points.node[0] = seedNode;
+    mesh->points.num++;
+
+    fmesh->vertices.coord[0] = mesh->vertices.coord[4*seedNode+0];
+    fmesh->vertices.coord[1] = mesh->vertices.coord[4*seedNode+1];
+    fmesh->vertices.coord[2] = mesh->vertices.coord[4*seedNode+2];
+    fmesh->vertices.coord[3] = mesh->vertices.coord[4*seedNode+3];
+    fmesh->vertices.num++;
+
+    fmesh->points.node[0] = mesh->points.node[0];
+    fmesh->points.num++;
+
+    for (uint64_t i=0; i<mesh->triangles.num; i++){
+      mesh->triangles.color[i] = 1;
+    }
+
+    parent[0].type = 15;
+    parent[0].id = 0;
+
+
+
   }
     
   // Check if there is even number of points generated on lines 
@@ -200,7 +237,13 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   // Read bin file if we generate only volumes
   if (opt->generateLines == 0 && opt->generateSurfaces == 0 && opt->generateVolumes){
     uint32_t numVert = 0;
-    HXT_CHECK(hxtPointGenReadBinIndices("binInput.txt",fmesh->vertices.size,&numVert,&bin));
+    //HXT_CHECK(hxtPointGenReadBinIndices("binInput.txt",fmesh->vertices.size,&numVert,&bin));
+
+    // TODO ATTENTION HERE, IT WILL NOT GET INPUT BINARY INDICES FILE FOR 3D 
+    HXT_CHECK(hxtMalloc(&bin,sizeof(uint32_t)*fmesh->vertices.size));
+    for (uint32_t i=0; i<fmesh->vertices.size; i++) bin[i] = 0;
+
+
   }
   else{
     HXT_CHECK(hxtMalloc(&bin,sizeof(uint32_t)*fmesh->vertices.size));
@@ -218,6 +261,8 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
       if (bin[v1] == UINT32_MAX)
         bin[v1] = bin[v0] == 0 ? 1:0;
     }
+
+
   }
 
     
@@ -231,6 +276,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     hxtPosFinish(test);
   }
 
+
   //**********************************************************************************************************
   //**********************************************************************************************************
   // GENERATE POINTS ON SURFACES 
@@ -238,7 +284,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
 
   if (opt->generateSurfaces){
-    //HXT_CHECK(hxtGeneratePointsOnSurfacePropagate(opt,mesh,edges,sizemap,directions,parent,fmesh));
+    //HXT_CHECK(hxtGeneratePointsOnSurfacePropagate(opt,mesh,edges,sizemap,directions,parent,fmesh,bin));
     HXT_CHECK(hxtGeneratePointsOnSurface(opt,mesh,edges,sizemap,directions,parent,fmesh,bin));
   }
   else{
@@ -258,7 +304,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     FILE *test;
     hxtPosInit("binSurfaces.pos","bin",&test);
     for (uint32_t i=0; i<fmesh->vertices.num; i++){
-      hxtPosAddText(test,&fmesh->vertices.coord[4*i],"%d",bin[i]);
+      hxtPosAddPoint(test,&fmesh->vertices.coord[4*i],bin[i]);
     }
     hxtPosFinish(test);
   }
@@ -409,11 +455,10 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
   //**********************************************************************************************************
   if(0) HXT_CHECK(hxtSurfaceMeshExportTriangleQuality(nmesh,sizemap));
-  if(0) HXT_CHECK(hxtSurfaceMeshExportAlignedEdges(mesh,nmesh,p2t,directions,sizemap));
 
   //**********************************************************************************************************
   //**********************************************************************************************************
-  // Constructing a quad mesh template from binary indices 
+  // Constructing a quad mesh from binary indices 
   //**********************************************************************************************************
   //**********************************************************************************************************
 
@@ -425,7 +470,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
       FILE *test;
       hxtPosInit("binIndices.pos","edges",&test);
       for (uint32_t i=0; i<nmesh->vertices.num; i++){
-        hxtPosAddPoint(test,&nmesh->vertices.coord[4*i],0);
+        hxtPosAddPoint(test,&nmesh->vertices.coord[4*i],bin[p2p[i]]);
         //hxtPosAddText(test,&nmesh->vertices.coord[4*i],"%d",bin[p2p[i]]);
 
       }
@@ -476,10 +521,15 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     }
     fprintf(test,"\n");
     fclose(test);
+
+    FILE *out;
+    hxtPosInit("bin3D.pos","bin",&out);
+    for (uint32_t i=0; i<nmesh->vertices.num; i++){
+      hxtPosAddPoint(out,&nmesh->vertices.coord[4*i],bin[i]);
+    }
+    hxtPosFinish(out);
   }
  
-
-
   //**********************************************************************************************************
   //**********************************************************************************************************
   // Clear things

@@ -100,6 +100,7 @@ struct F_Lc {
     else
       lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
     SVector3 der = ge->firstDer(t);
+
     return norm(der) / lc_here;
   }
 };
@@ -686,7 +687,6 @@ void meshGEdge::operator()(GEdge *ge)
   double a;
   int filterMinimumN;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
-  Msg::Debug("  target: %i points (minimum is %i, used %li integration points)", N, filterMinimumN, Points.size());
 
   // printFandPrimitive(ge->tag(),Points);
 

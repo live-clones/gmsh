@@ -9,11 +9,7 @@
 #include <algorithm>
 #include <iterator>
 #include <limits>
-#if __cplusplus >= 201103L
 #include <unordered_map>
-#else
-#include <map>
-#endif
 #include "GModel.h"
 #include "OS.h"
 #include "MTriangle.h"
@@ -28,11 +24,7 @@ namespace {
   // This struct allows us to take advantage of C++11 unordered_map while
   // maintaining backwards compatibility with C++03
   template <typename Key, typename Value> struct hashMap {
-#if __cplusplus >= 201103L
     typedef std::unordered_map<Key, Value> _;
-#else
-    typedef std::map<Key, Value> _;
-#endif
   };
 
   const hashMap<std::string, unsigned>::_::value_type rawData[] = {
@@ -123,6 +115,11 @@ namespace {
           vertmap[tri->getVertex(j)->getNum()].push_back(tri->getNum());
         }
       }
+    }
+
+    // because we use a set_intersection later on, the vectors of vertmap should be sorted
+    for (auto &it: vertmap) {
+      std::sort(it.second.begin(), it.second.end());
     }
 
     // determine which faces belong to which tetrahedra by comparing vertices

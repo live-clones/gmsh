@@ -15,6 +15,7 @@
 #include "SOrientedBoundingBox.h"
 #include "fullMatrix.h"
 #include "SBoundingBox3d.h"
+#include "fullMatrix.h"
 
 #if defined(HAVE_MESH)
 #include "DivideAndConquer.h"

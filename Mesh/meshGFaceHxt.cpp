@@ -5,12 +5,19 @@
 #include "Context.h"
 #include "MVertex.h"
 #include "MTriangle.h"
+#include "MLine.h"
 #include "GFace.h"
 #include "GmshMessage.h"
 // #include "gmshCrossFields.h"
 #include "fastScaledCrossField.h"
 #include "meshWinslow2d.h"
+#include "Field.h"
+#include "meshGFaceOptimize.h"
+
+
 #include "geolog.h"
+
+#include "gmsh.h"
 
 #if defined(HAVE_HXT)
 extern "C" {
@@ -27,11 +34,11 @@ static HXTStatus messageCallback(HXTMessage *msg)
 
 static inline SVector3 tri_normal(MTriangle* t) {
   SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
-      t->getVertex(1)->y() - t->getVertex(0)->y(),
-      t->getVertex(1)->z() - t->getVertex(0)->z());
+               t->getVertex(1)->y() - t->getVertex(0)->y(),
+               t->getVertex(1)->z() - t->getVertex(0)->z());
   SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
-      t->getVertex(2)->y() - t->getVertex(0)->y(),
-      t->getVertex(2)->z() - t->getVertex(0)->z());
+               t->getVertex(2)->y() - t->getVertex(0)->y(),
+               t->getVertex(2)->z() - t->getVertex(0)->z());
   SVector3 normal_to_triangle = crossprod(v20, v10);
   normal_to_triangle.normalize();
   return normal_to_triangle;
@@ -78,11 +85,18 @@ int computeCrossFieldAndScalingForHxt(
     }
   }
 
-  /* Compute sizemap from cross field */
+  /* Compute conformal scaling (H) from cross field */
   std::vector<size_t> nodeTags;
   std::vector<double> scaling;
-  int status = computeCrossFieldScaling(faces, edgeTheta, targetNumberOfQuads, nodeTags, scaling);
+  int status = computeCrossFieldConformalScaling(faces, edgeTheta, nodeTags, scaling);
   if (status != 0) {
+    Msg::Error("failed to compute cross field scaling");
+    return -1;
+  }
+
+  /* Compute sizemap (changing scaling) */
+  int s2 = computeQuadSizeMapFromCrossFieldConformalFactor(faces, targetNumberOfQuads, nodeTags, scaling);
+  if (s2 != 0) {
     Msg::Error("failed to compute cross field scaling");
     return -1;
   }
@@ -103,6 +117,33 @@ int computeCrossFieldAndScalingForHxt(
       t2ptr[tNum] = t;
     }
   }
+
+  std::set<size_t> isBoundary;
+  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+    GEdge *ge = *it;
+    for (size_t i=0; i<ge->lines.size(); i++){
+      MLine *l = ge->lines[i];
+
+      size_t n0 = l->getVertex(0)->getNum();
+      size_t n1 = l->getVertex(1)->getNum();
+
+
+      isBoundary.insert(n0);
+      isBoundary.insert(n1);
+
+
+
+      MVertex *v0 = l->getVertex(0);
+      MVertex *v1 = l->getVertex(1);
+      GeoLog::add(convert(v0->point()),1,"boundary");
+      GeoLog::add(convert(v1->point()),1,"boundary");
+
+
+
+    }
+  }
+
+ 
 
   std::array<double,7> zero7 = {0.,0.,0.,0.,0.,0.,0.};
   std::vector<std::array<double,7> > vertexNumDirections(vertices.size(),zero7);
@@ -125,6 +166,22 @@ int computeCrossFieldAndScalingForHxt(
       SVector3 dir_orth = crossprod(dir,N);
       dir.normalize();
       dir_orth.normalize();
+
+      std::set<size_t>::iterator it = isBoundary.find(num);
+      if (it != isBoundary.end() && dir1.normSq()==0 && dir2.normSq() == 0.){
+
+        for (size_t d = 0; d < 3; ++d) {
+          vDirs[d] = dir[d];
+          vDirs[3+d] = dir_orth[d];
+        }
+
+        SVector3 pt = t->getVertex(lv)->point();
+        GeoLog::add(convert(pt), convert(&vDirs[0]),"dir_a1");
+        GeoLog::add(convert(pt), convert(&vDirs[3]),"dir_a2");
+      }
+
+      if (it != isBoundary.end()) continue;
+
       
       {
         SVector3 pt = t->getVertex(lv)->point();
@@ -134,7 +191,8 @@ int computeCrossFieldAndScalingForHxt(
       if (dir1.normSq() == 0. && dir2.normSq() == 0.) {
         d1bestV = dir;
         d2bestV = dir_orth;
-      } else {
+      } 
+      else {
         SVector3 candidates[4] = {dir,-1.*dir,dir_orth,-1.*dir_orth};
         for (size_t k = 0; k < 4; ++k) {
           double dp1 = dot(dir1,candidates[k]);
@@ -155,6 +213,7 @@ int computeCrossFieldAndScalingForHxt(
       }
     }
   }
+
   for (MVertex* v: vertices) {
     const std::array<double,7>& vDirs = vertexNumDirections[v->getNum()];
     SVector3 dir1(vDirs[0],vDirs[1],vDirs[2]);
@@ -175,12 +234,88 @@ int computeCrossFieldAndScalingForHxt(
   return 0;
 }
 
+
+int getCrossFieldAndScaling(
+    GModel* gm,
+    Field *cross_field,
+    const std::vector<MVertex*>& vertices,
+    std::map<size_t, std::array<double,7> >& vertexDirections) 
+{
+  Msg::Debug("get cross field and scaling ...");
+
+  std::vector<GFace*> faces;
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    faces.push_back(*it);
+  }
+
+  for (GFace* gf: faces) {
+    v2t_cont adj;
+    buildVertexToElement(gf->triangles, adj);
+
+    std::map<MVertex*, double, MVertexPtrLessThan> sizes;
+    v2t_cont::iterator it = adj.begin();
+    while(it != adj.end()) {
+      MVertex *v = it->first;
+      SVector3 t1;
+      (*cross_field)(v->x(), v->y(), v->z(), t1, gf);
+      sizes[v] = t1.norm();
+      ++it;
+    }
+  }
+ 
+
+
+
+
+  std::array<double,7> zero7 = {0.,0.,0.,0.,0.,0.,0.};
+  std::vector<std::array<double,7> > vertexNumDirections(vertices.size(),zero7);
+ 
+  for (GFace* gf: faces) {
+    for (MTriangle* t: gf->triangles) {
+      if (t == NULL) continue;
+      SVector3 N = tri_normal(t);
+      for (size_t lv = 0; lv < 3; ++lv) {
+/*        size_t num = t->getVertex(lv)->getNum();*/
+        //if (num >= vertexNumDirections.size()) vertexNumDirections.resize(num+1,zero7);
+
+        MVertex *v = t->getVertex(lv);
+
+        std::cout << v->getNum() << std::endl;
+
+        std::cout << v->x() << std::endl;
+
+        SVector3 t1;
+
+        std::cout << v->onWhat() << std::endl;
+
+
+        int test = (*cross_field).numComponents(); 
+        std::cout << test << std::endl;
+        (*cross_field)(v->x(),v->y(),v->z(),t1,gf);
+        std::cout << "ok"<<std::endl;
+        //std::cout << t1.norm() << std::endl;
+      }
+ 
+    }
+  }
+
+
+  return 0;
+}
+
 int meshGFaceHxt(GModel *gm)
 {
   Msg::Debug("mesh CAD faces with Hxt ...");
   gm->createTopologyFromMesh();
 
   HXT_CHECK(hxtSetMessageCallback(messageCallback));
+
+  gm->createTopologyFromMesh();
+
+
+ 
+
+
 
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
@@ -190,6 +325,47 @@ int meshGFaceHxt(GModel *gm)
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
 
   size_t targetNumberOfQuads = 10000;
+
+  printf("Target quad numbers = \n");
+  size_t temp = 0;
+  scanf("%d",&temp);
+  targetNumberOfQuads = temp;
+
+
+
+
+
+  //Field *cross_field = NULL;
+  
+  //FieldManager *fields = gm->getFields();
+  //if(fields->getBackgroundField() > 0) {        
+    //cross_field = fields->get(fields->getBackgroundField());
+    //if(cross_field->numComponents() != 3) {// we hae a true scaled cross fields !!
+			//Msg::Error ("Packing of Parallelograms require a scaled cross field");
+			//Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
+			//Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
+			//return -1;
+    //}
+  //}
+  //else{
+		//Msg::Error ("Packing of Parallelograms require a scaled cross field");
+		//Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
+		//Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
+		//return -1;
+  //}
+  //std::cout << cross_field << std::endl;
+  //std::map<size_t, std::array<double,7> > vDir;
+  //int gt = getCrossFieldAndScaling(gm, cross_field, c2v, vDir);
+  //if (gt != 0) {
+    //Msg::Error("failed to get cross field and scaling");
+    //return -1;
+  //}
+
+
+	
+
+
+  
 
   std::map<size_t, std::array<double,7> > vertexDirections;
   int st = computeCrossFieldAndScalingForHxt(gm, targetNumberOfQuads, c2v, vertexDirections);
@@ -227,8 +403,10 @@ int meshGFaceHxt(GModel *gm)
     GeoLog::add(convert(v->point()),vertexDirections[v->getNum()][6],"sizemap");
   }
 
-  GeoLog::flush();
-  return 0;
+  //gmsh::initialize();
+  //GeoLog::flush();
+  //gmsh::fltk::run();
+  //return 0;
 
 
   // std::map<int, std::vector<double> > dataH;
@@ -316,26 +494,26 @@ int meshGFaceHxt(GModel *gm)
                              .walkMethod2D = 0,
                              .walkMethod3D = 0,
                              .dirType = 0,
-                             .uniformSize = 2.5,
+                             .uniformSize = 1.0,
                              .areaThreshold = 10e-9,
                              .tolerance = 10e-9,
                              .numTris = 0};
 
-  printf("INPUT SIZE = \n");
-  float temp = 0;
-  scanf("%f",&temp);
-  opt.uniformSize = temp;
 
-  
+  if (Msg::GetVerbosity() == 99) opt.verbosity = 2;
+
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh));
+
+
   v2c.clear();
   c2v.clear();
   //  HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
+  
 
   GModel *gm2 = new GModel(gm->getName());
   
   gm2->readMSH("finalmesh.msh");	  	  
-
+  
   printf("WINSLOW START\n");
   meshWinslow2d (gm2);
   printf("WINSLOW ENDS\n");
