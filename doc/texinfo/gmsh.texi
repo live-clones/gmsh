@@ -6474,14 +6474,13 @@ See ``How can I display only selected parts of my model?''.
 
 @item How can I ``explore'' a mesh (for example, to see inside a complex structure)?
 
-You can use `Tools->Clipping Planes' to clip the region of
-interest. You can define up to 6 clipping planes in Gmsh (i.e., enough
-to define a ``cube'' inside your model) and each plane can clip either
-the geometry, the mesh, the post-processing views, or any combination
-of the above.  The clipping planes are defined using the four
-coefficients A,B,C,D of the equation A*x+B*y+C*y+D=0, which can be
-adjusted interactively by dragging the mouse in the input
-fields.
+You can use `Tools->Clipping' to clip the region of interest. You can
+define up to 6 clipping planes in Gmsh (i.e., enough to define a
+``cube'' inside your model) and each plane can clip either the geometry,
+the mesh, the post-processing views, or any combination of the above.
+The clipping planes are defined using the four coefficients A,B,C,D of
+the equation A*x+B*y+C*y+D=0, which can be adjusted interactively by
+dragging the mouse in the input fields.
 
 @item What is the signification of SICN, Gamma and SIGE in Tools->Statistics?
 
@@ -6591,7 +6590,7 @@ Use `Tools->Plugins->Cut Plane'.
 
 @item Can I save an isosurface to a file?
 
-Yes: first run `Tools->Plugins->Cut Map' to extract the isosurface,
+Yes: first run `Tools->Plugins->Isosurface' to extract the isosurface,
 then use `View->Export' to save the new view.
 
 @item Can Gmsh generate isovolumes?
@@ -6697,7 +6696,7 @@ Views;} in a script.
 
 @item How can I see ``inside'' a complicated post-processing view?
 
-Use `Tools->Clipping Planes'.
+Use `Tools->Clipping'.
 
 When viewing 3D scalar fields, you can also modify the colormap
 (`Tools->Options->View->Map') to make the iso-surfaces ``transparent'':
