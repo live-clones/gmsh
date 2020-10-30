@@ -210,7 +210,7 @@ struct doubleXstring{
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence
-%token tIntersect tMeshAlgorithm tReverseMesh tMeshSizeFromBoundary
+%token tIntersect tMeshAlgorithm tReverseMesh tMeshSize tMeshSizeFromBoundary
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts
 %token tRecombLaterals tTransfQuadTri
@@ -4494,11 +4494,31 @@ PeriodicTransform :
 ;
 
 Constraints :
-    tCharacteristic tLength ListOfDoubleOrAll tAFFECT FExpr tEND
+    tMeshSize ListOfDoubleOrAll tAFFECT FExpr tEND
     {
       // mesh sizes at vertices are stored in internal CAD data, as they can be
       // specified during vertex creation and copied around during CAD
       // operations
+      List_T *tmp = $2;
+      if(!$2){
+        tmp = List_Create(100, 100, sizeof(double));
+        getAllElementaryTags(0, tmp);
+      }
+      for(int i = 0; i < List_Nbr(tmp); i++){
+        double d;
+        List_Read(tmp, i, &d);
+        int tag = (int)d;
+        if(GModel::current()->getOCCInternals())
+          GModel::current()->getOCCInternals()->setMeshSize(0, tag, $4);
+        GModel::current()->getGEOInternals()->setMeshSize(0, tag, $4);
+        GVertex *gv = GModel::current()->getVertexByTag(tag);
+        if(gv) gv->setPrescribedMeshSizeAtVertex($4);
+      }
+      List_Delete(tmp);
+    }
+  // deprecated syntax: use MeshSize instead
+  | tCharacteristic tLength ListOfDoubleOrAll tAFFECT FExpr tEND
+    {
       List_T *tmp = $3;
       if(!$3){
         tmp = List_Create(100, 100, sizeof(double));

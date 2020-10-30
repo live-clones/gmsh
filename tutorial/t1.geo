@@ -14,16 +14,15 @@ lc = 1e-2;
 // This variable can then be used in the definition of Gmsh's simplest
 // `elementary entity', a `Point'. A Point is uniquely identified by a tag (a
 // strictly positive integer; here `1') and defined by a list of four numbers:
-// three coordinates (X, Y and Z), and a characteristic length (lc) that sets
-// the target element size at the point:
+// three coordinates (X, Y and Z) and the target mesh size (lc) close to the
+// point:
 
 Point(1) = {0, 0, 0, lc};
 
 // The distribution of the mesh element sizes will then be obtained by
-// interpolation of these characteristic lengths throughout the
-// geometry. Another method to specify characteristic lengths is to use general
-// mesh size Fields (see `t10.geo'). A particular case is the use of a
-// background mesh (see `t7.geo').
+// interpolation of these mesh sizes throughout the geometry. Another method to
+// specify mesh sizes is to use general mesh size Fields (see `t10.geo'). A
+// particular case is the use of a background mesh (see `t7.geo').
 
 // If no target mesh size of provided, a default uniform coarse size will be
 // used for the model, based on the overall model size.

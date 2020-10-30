@@ -236,6 +236,7 @@ MatrixOfInertia         return tMatrixOfInertia;
 Max                     return tMax;
 Memory                  return tMemory;
 MeshAlgorithm           return tMeshAlgorithm;
+MeshSize                return tMeshSize;
 MeshSizeFromBoundary    return tMeshSizeFromBoundary;
 Min                     return tMin;
 Modulo                  return tModulo;

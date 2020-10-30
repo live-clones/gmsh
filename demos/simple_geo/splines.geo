@@ -70,4 +70,4 @@ Translate {0,-1.5,0} {
 p2 = newp;
 Printf("p1 p2 = %g %g", p1, p2);
 
-Characteristic Length {p1:p2-1} = lc/5 ;
+MeshSize {p1:p2-1} = lc/5 ;

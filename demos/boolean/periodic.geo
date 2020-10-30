@@ -6,9 +6,9 @@ Torus(2) = {3,0,0, 1.5, 1, Pi/3};
 
 pts() = PointsOf{ Volume{1, 2}; };
 
-Characteristic Length{ pts() } = 0.4;
+MeshSize{ pts() } = 0.4;
 
-Characteristic Length{ 2 } = 0.01;
+MeshSize{ 2 } = 0.01;
 
 // Find bottom and top surfaces using a bounding box search:
 e = 1e-6;

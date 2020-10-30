@@ -2,7 +2,7 @@
 //
 //  Gmsh GEO tutorial 5
 //
-//  Characteristic lengths, macros, loops, holes in volumes
+//  Mesh sizes, macros, loops, holes in volumes
 //
 // -----------------------------------------------------------------------------
 
@@ -13,9 +13,9 @@ lcar2 = .0005;
 lcar3 = .055;
 
 // If we wanted to change these mesh sizes globally (without changing the above
-// definitions), we could give a global scaling factor for all characteristic
-// lengths on the command line with the `-clscale' option (or with
-// `Mesh.MeshSizeFactor' in an option file). For example, with:
+// definitions), we could give a global scaling factor for all mesh sizes on the
+// command line with the `-clscale' option (or with `Mesh.MeshSizeFactor' in an
+// option file). For example, with:
 //
 // > gmsh t5.geo -clscale 1
 //

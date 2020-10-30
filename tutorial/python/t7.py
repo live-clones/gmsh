@@ -11,7 +11,7 @@ import os
 import sys
 
 # Mesh sizes can be specified very accurately by providing a background mesh,
-# i.e., a post-processing view that contains the target characteristic lengths.
+# i.e., a post-processing view that contains the target mesh sizes.
 
 gmsh.initialize()
 

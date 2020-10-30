@@ -308,15 +308,15 @@ a surface will be forced to be faces of tetrahedra in the final 3D mesh
 only if the surface is part of the boundary of a volume, or if that
 surface has been explicitly embedded in the volume. This automatically
 ensures the conformity of the mesh when, for example, two volumes share
-a common surface. Every meshing step is constrained by a ``size field''
-(also called ``characteristic length field''), which prescribes the
-desired size of the elements in the mesh. This size field can be
-uniform, specified by values associated with points in the geometry, or
-defined by general ``fields'' (for example related to the distance to
-some boundary, to a arbitrary scalar field defined on another mesh,
-etc.): see @ref{Specifying mesh element sizes}. For each meshing step,
-all structured mesh directives are executed first, and serve as
-additional constraints for the unstructured parts.
+a common surface. Every meshing step is constrained by a mesh ``size
+field'', which prescribes the desired size of the elements in the
+mesh. This size field can be uniform, specified by values associated
+with points in the geometry, or defined by general ``fields'' (for
+example related to the distance to some boundary, to a arbitrary scalar
+field defined on another mesh, etc.): see @ref{Specifying mesh element
+sizes}. For each meshing step, all structured mesh directives are
+executed first, and serve as additional constraints for the unstructured
+parts.
 
 @c -------------------------------------------------------------------------
 @c Solver: external solver interface
@@ -2804,7 +2804,7 @@ In the Gmsh API, the mesh commands are available in the
 @node Specifying mesh element sizes, Structured grids, Mesh commands, Mesh commands
 @subsection Specifying mesh element sizes
 
-@cindex Characteristic lengths
+@cindex Mesh size
 @cindex Mesh, element size
 @cindex Size, elements
 @cindex Mesh, background
@@ -2897,7 +2897,7 @@ Here are the mesh commands that are related to the specification of
 mesh element sizes:
 
 @ftable @code
-@item Characteristic Length @{ @var{expression-list} @} = @var{expression};
+@item MeshSize @{ @var{expression-list} @} = @var{expression};
 Modify the prescribed mesh element size of the points whose
 tags are listed in @var{expression-list}. The new
 value is given by @var{expression}.
@@ -5171,7 +5171,7 @@ Python and Julia API examples, see the respective subdirectories in
 * t2::  Transformations, extruded geometries, volumes
 * t3::  Extruded meshes, parameters, options
 * t4::  Built-in functions, holes in surfaces, annotations, entity colors
-* t5::  Characteristic lengths, macros, loops, holes in volumes
+* t5::  Mesh sizes, macros, loops, holes in volumes
 * t6::  Transfinite meshes
 * t7::  Background meshes
 * t8::  Post-processing and animations
@@ -5281,7 +5281,7 @@ and Julia
 @c -------------------------------------------------------------------------
 
 @node t5, t6, t4, Tutorial
-@section @code{t5}: Characteristic lengths, macros, loops, holes in volumes
+@section @code{t5}: Mesh sizes, macros, loops, holes in volumes
 
 See
 @url{@value{GITLAB-PREFIX}/tutorial/t5.geo,t5.geo}.

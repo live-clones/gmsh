@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 
   // Create an example geometry
 
-  double m = 0.5; // mesh characteristic length
+  double m = 0.5; // mesh size
   double h = 2; // geometry height in the z-direction
 
   gmsh::model::geo::addPoint(0, 0, 0, m, 1);

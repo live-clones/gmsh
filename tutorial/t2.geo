@@ -99,10 +99,10 @@ Volume(129) = {128};
 
 Extrude {0, 0, 0.12} { Surface{my_new_surfs[1]}; }
 
-// The following command permits to manually assign a characteristic length to
-// some of the new points:
+// The following command permits to manually assign a mesh size to some of the
+// new points:
 
-Characteristic Length {103, 105, 109, 102, 28, 24, 6, 5} = lc * 3;
+MeshSize {103, 105, 109, 102, 28, 24, 6, 5} = lc * 3;
 
 // We finally group volumes 129 and 130 in a single physical group with tag `1'
 // and name "The volume":

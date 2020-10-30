@@ -2,7 +2,7 @@
 //
 //  Gmsh C++ tutorial 5
 //
-//  Characteristic lengths, holes in volumes
+//  Mesh sizes, holes in volumes
 //
 // -----------------------------------------------------------------------------
 
@@ -82,8 +82,8 @@ int main(int argc, char **argv)
   double lcar3 = .055;
 
   // If we wanted to change these mesh sizes globally (without changing the
-  // above definitions), we could give a global scaling factor for all
-  // characteristic lengths with e.g.
+  // above definitions), we could give a global scaling factor for all mesh
+  // sizes with e.g.
   //
   // gmsh::option::setNumber("Mesh.MeshSizeFactor", 0.1);
   //

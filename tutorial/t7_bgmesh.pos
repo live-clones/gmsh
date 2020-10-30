@@ -7,8 +7,7 @@
 // -----------------------------------------------------------------------------
 
 // This post-processing view contains scalar triangles. The values represent the
-// target characteristic mesh element sizes to be applied to the first tutorial,
-// t1.geo.
+// target mesh sizes to be applied to the first tutorial, t1.geo.
 //
 // There are two ways to use this view as a background mesh:
 //

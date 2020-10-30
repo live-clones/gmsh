@@ -10,7 +10,7 @@
 #include <gmsh.h>
 
 // Mesh sizes can be specified very accurately by providing a background mesh,
-// i.e., a post-processing view that contains the target characteristic lengths.
+// i.e., a post-processing view that contains the target mesh sizes.
 
 int main(int argc, char **argv)
 {

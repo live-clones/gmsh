@@ -35,7 +35,7 @@ Table of contents
 * t2: Transformations, extruded geometries, volumes
 * t3: Extruded meshes, parameters, options
 * t4: Built-in functions, holes in surfaces, annotations, entity colors
-* t5: Characteristic lengths, macros, loops, holes in volumes
+* t5: Mesh sizes, loops, holes in volumes
 * t6: Transfinite meshes
 * t7: Background meshes
 * t8: Post-processing and animations
