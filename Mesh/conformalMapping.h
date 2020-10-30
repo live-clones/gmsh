@@ -21,6 +21,14 @@ class Cross2D{
     _directions.push_back(dirCross[0]);_directions[0].normalize();
     _directions.push_back(dirCross[1]);_directions[1].normalize();
     _directions.push_back(dirCross[2]);_directions[2].normalize();
+    if(fabs(dot(_directions[2],crossprod(_directions[0],_directions[1]))-1)>1e-10){
+      std::cout << "wrong cross initialisation" << std::endl;
+      std::cout << "dir0 X dir1:" << crossprod(_directions[0],_directions[1])[0] << " " << crossprod(_directions[0],_directions[1])[1] << " " << crossprod(_directions[0],_directions[1])[2] << std::endl;
+      std::cout << "dir0: " << _directions[0][0] << " " << _directions[0][1] << " " << _directions[0][2] << std::endl;
+      std::cout << "dir1: " << _directions[1][0] << " " << _directions[1][1] << " " << _directions[1][2] << std::endl;
+      std::cout << "dir2: " << _directions[2][0] << " " << _directions[2][1] << " " << _directions[2][2] << std::endl;
+      exit(0);
+    }
   }
   SVector3 getClosestBranchToDirection(SVector3 direction);
   std::vector<SVector3> getDirections(){return _directions;}
@@ -55,6 +63,7 @@ class MyMesh{
     
   std::set<MTriangle *, MElementPtrLessThan> triangles;
   std::vector<std::set<MTriangle *, MElementPtrLessThan>> trianglesPatchs;
+  std::vector<bool> canTrianglePatchBeComputed;
   std::set<MEdge, MEdgeLessThan> edges;
   std::map<const MEdge *, bool> isFeatureEdge;
   std::map<const MEdge *, bool> isCutGraphEdge;
@@ -75,6 +84,7 @@ class MyMesh{
   std::map<MVertex *, double, MVertexPtrLessThan> potU;
   std::map<MVertex *, double, MVertexPtrLessThan> potV;
   std::map<const MEdge *, Cross2D> crossField;
+  std::map<const MEdge *, double> thetaCF;
   
   /* MyMesh(){} */
   MyMesh(GModel *gm);
