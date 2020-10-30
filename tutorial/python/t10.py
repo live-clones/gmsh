@@ -92,7 +92,7 @@ gmsh.model.mesh.field.setNumber(6, "YMax", 0.6)
 
 # Many other types of fields are available: see the reference manual for a
 # complete list. You can also create fields directly in the graphical user
-# interface by selecting `Define->Fields' in the `Mesh' module.
+# interface by selecting `Define->Size fields' in the `Mesh' module.
 
 # Finally, let's use the minimum of all the fields as the background mesh field:
 gmsh.model.mesh.field.add("Min", 7)
@@ -109,7 +109,6 @@ gmsh.model.mesh.setSizeCallback(meshSizeCallback)
 # To determine the size of mesh elements, Gmsh locally computes the minimum of
 #
 # 1) the size of the model bounding box;
-
 # 2) if `Mesh.MeshSizeFromPoints' is set, the mesh size specified at geometrical
 #    points;
 # 3) if `Mesh.MeshSizeFromCurvature' is set, the mesh size based on the

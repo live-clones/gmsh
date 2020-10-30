@@ -77,7 +77,7 @@ Field[6].YMax = 0.6;
 
 // Many other types of fields are available: see the reference manual for a
 // complete list. You can also create fields directly in the graphical user
-// interface by selecting `Define->Fields' in the `Mesh' module.
+// interface by selecting `Define->Size fields' in the `Mesh' module.
 
 // Finally, let's use the minimum of all the fields as the background mesh size
 // field
