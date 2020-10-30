@@ -1974,11 +1974,10 @@ public:
   const char *getName() { return "AttractorAnisoCurve"; }
   std::string getDescription()
   {
-    return "Compute the distance from the nearest curve in a list. Then the "
-           "mesh size can be specified independently in the direction normal "
-           "to the curve and in the direction parallel to the curve. (Each curve "
-           "is replaced by NumPointsPerCurve equidistant points and the distance "
-           "from those points is computed.)";
+    return "Compute the distance to the given curves and specify the mesh size "
+           "independently in the direction normal and parallel to the nearest curve. "
+           "(Each curve is replaced by NumPointsPerCurve equidistant points, to "
+           "which the distance is actually computed.)";
   }
   void update()
   {
@@ -2125,12 +2124,12 @@ public:
   const char *getName() { return "Attractor"; }
   std::string getDescription()
   {
-    return "Compute the distance from the nearest points, curves or surfaces. "
-           "Curves are replaced by NumPointsPerCurve equidistant points, and the "
-           "distance from those points is computed. Surfaces are replaced by a "
-           "point cloud, sampled according to NumPointsPerCurve and the size "
-           "of their bounding box. The Attractor is deprecated: use the Distance "
-           "field instead.";
+    return "Compute the distance to the given points, curves or surfaces. "
+           "(Curves are replaced by NumPointsPerCurve equidistant points, "
+           "to which the distance is actually computed. In the same way, "
+           "surfaces are replaced by a point cloud, sampled according to "
+           "NumPointsPerCurve and the size of their bounding box). "
+           "The Attractor is deprecated: use the Distance field instead.";
   }
   void getCoord(double x, double y, double z, double &cx, double &cy,
                 double &cz, GEntity *ge = NULL)
@@ -2602,11 +2601,11 @@ public:
   const char *getName() { return "DistanceField"; }
   std::string getDescription()
   {
-    return "Compute the distance from the nearest points, curves or surfaces. "
-           "Curves are replaced by NumPointsPerCurve equidistant points, and the "
-           "distance from those points is computed. Surfaces are replaced by a "
-           "point cloud, sampled according to NumPointsPerCurve and the size "
-           "of their bounding box.";
+    return "Compute the distance to the given points, curves or surfaces. "
+           "(Curves are replaced by NumPointsPerCurve equidistant points, "
+           "to which the distance is actually computed. In the same way, "
+           "surfaces are replaced by a point cloud, sampled according to "
+           "NumPointsPerCurve and the size of their bounding box).";
   }
   std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
   {
