@@ -151,7 +151,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
 
   // Zone names
   const size_t numPart = getNumPartitions();
-  std::vector<std::string> zoneName(numPart+1);
+  std::vector<std::string> zoneName(numPart + 1);
 
   // index mesh nodes, as CGNS does not store node tags
   if(noPhysicalGroups()) saveAll = true;
@@ -171,7 +171,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
 
   // initialize vertex -> (partition, local node index) for periodic and
   // interface entities
-  Msg::Info("Looking for periodic/interface vertices");
+  Msg::Info("Looking for periodic/interface vertices...");
   Vertex2LocalData interfVert2Local;
   initInterfVertex2LocalData(entitiesPer, entitiesInterf, interfVert2Local);
   Msg::Info("%i periodic/interface vertices found", interfVert2Local.size());
@@ -192,7 +192,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   }
   else {                                                // partitioned mesh
     std::vector<std::vector<GEntity *> > entitiesPart;
-    entitiesPart.resize(numPart+1);
+    entitiesPart.resize(numPart + 1);
     getEntitiesInPartitions(entities, entitiesPart);
     for(std::size_t iPart = 1; iPart <= numPart; iPart++) {
       printProgress("Writing partition", iPart, numPart);
