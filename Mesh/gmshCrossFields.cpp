@@ -30,8 +30,8 @@
 
 #if defined(HAVE_HXT)
 extern "C" {
-#include "hxt_api.h"
-#include "multiblock/hxt_quadMultiBlock.h"
+// #include "hxt_api.h"
+#include "hxt_quadMultiBlock.h"
 }
 #endif
 #include "meshGRegionHxt.h"
@@ -6006,7 +6006,6 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
       Msg::Warning("prescribed singularities not found, using heat-based cross field computation");
     }
   }
-
   if (use_prescribed) {
     Msg::Info("Computing cross field from %d prescribed singularities",
         temp.size());
@@ -6922,7 +6921,7 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
 #endif
 }
 
-
+//using cf computed without prescribed sing
 int splitMeshWithSeparatrices(GModel * gm, QuadMeshingState& state) {
   /* load theta (angle per edge) */
   int cf_tag = -1;
@@ -6934,15 +6933,10 @@ int splitMeshWithSeparatrices(GModel * gm, QuadMeshingState& state) {
   cf_tag = theta->getTag();
 
   HXTMesh *mesh;
-  HXTContext *context;
-  HXT_CHECK(hxtContextCreate(&context));
-  HXT_CHECK(hxtMeshCreate(context, &mesh));
+  HXT_CHECK(hxtMeshCreate(&mesh));
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
-  // hxtQuadMultiBlockNewMeshWithSing(mesh,cf_tag2);
-  // compute new crossfield with prescribed singularities
-  // retreive new theta view // needs JF or Max intervention
   Msg::Info("MBD | Generating separatrices to obtain split mesh");
   HXTMesh *splitMesh;
   hxtQuadMultiBlockDBG(mesh, cf_tag, &splitMesh);
@@ -7059,9 +7053,7 @@ int findAndMarkSingularities(GModel * gm){
   cf_tag = theta->getTag();
 
   HXTMesh *mesh;  
-  HXTContext *context;
-  HXT_CHECK(hxtContextCreate(&context));
-  HXT_CHECK(hxtMeshCreate(context, &mesh));
+  HXT_CHECK(hxtMeshCreate(&mesh));
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
@@ -7077,13 +7069,14 @@ int findAndMarkSingularities(GModel * gm){
     Msg::Warning("Already a model with the same name, deleting it");
     delete gg;
   }
+ 
   hxtQuadMultiBlockGetSingInfo(mesh, cf_tag, geoFileName);
   Msg::Info("MBD | New geometry ready");
  
   return 0;
 }
 
-
+//using cf computed on prescribed sing
 int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
   /* load theta (angle per edge) */
   int cf_tag = -1;
@@ -7095,17 +7088,17 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
   cf_tag = theta->getTag();
 
   HXTMesh *mesh;
-  HXTContext *context;
-  HXT_CHECK(hxtContextCreate(&context));
-  HXT_CHECK(hxtMeshCreate(context, &mesh));
+  HXT_CHECK(hxtMeshCreate(&mesh));
   std::map<MVertex *, int> v2c;
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
   
-  //DBG: Write geo with imposed sing
+  //DBG: Write geo/msh with imposed sing
   bool printLabels = true; bool onlyPhysicals = false;
-  std::string tempName="singImpose_" +gm->getName()+ "_.geo";
+  std::string tempName= "temp.geo";
   gm->writeGEO(tempName, printLabels, onlyPhysicals);
+  std::string tmp_path = "temp.msh";
+  gm->writeMSH(tmp_path, 4.1, false, true);
   //------------------------------------------------
   
   Msg::Info("MBD | Generating separatrices to obtain split mesh");

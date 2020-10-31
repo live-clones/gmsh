@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include "hxt_api.h" 
+/* #include "hxt_api.h"  */
 #include "hxt_mesh.h"
 
   /* HXTStatus hxtQuadMultiBlockTest(HXTMesh *mesh, int nbTurns, double critNorm, int flagTypePos, const char *fileName, const char *geoFile); */

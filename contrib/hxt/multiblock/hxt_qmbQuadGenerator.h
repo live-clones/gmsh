@@ -14,6 +14,7 @@
 extern "C"{
 #include "hxt_mesh.h"
 #include "hxt_edge.h"
+#include "hxt_tools.h"
 }
 
 class QuadGenerator
@@ -125,6 +126,7 @@ class QuadGenerator
   int correction(double *pointCoord, uint64_t triNum, uint64_t edgNum, double enteringAngle, double *direction);
   int candidatePoint(double *coordP, uint64_t triNum, uint64_t edgNum, double *alpha1, double *point, uint64_t *newTriNum, uint64_t *newEdgNum, double *alpha3);
   HXTStatus propagateKowalski(int sepID);
+  HXTStatus removeBouncingSepData();
   HXTStatus buildIntersectionTriValues();
   int findPatchID(uint64_t triNum, uint64_t *patchID);
   int groupingSep();
@@ -134,6 +136,7 @@ class QuadGenerator
   int globalIntersection();
   int comparison();
   int checkIfInPatch2(uint64_t triNum);
+  int addInUnsignedintVectIfNotPresent(std::vector<uint64_t> *vect, uint64_t value);
   int detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs);
   int cutLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs);
   int solveTangentialCrossings(std::vector<uint64_t> *limitCycleIDs);

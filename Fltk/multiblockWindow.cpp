@@ -33,18 +33,17 @@
 
 #if defined(HAVE_HXT)
 extern "C" {
-#include "hxt_api.h"
-#include "multiblock/hxt_quadMultiBlock.h"
+#include "hxt_quadMultiBlock.h"
 }
 #endif
 
 static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 {
-  QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  opt.cross_field_iter = FlGui::instance()->quadmeshingtools->flv_cross_field_iter->value();
-  opt.cross_field_bc_expansion = FlGui::instance()->quadmeshingtools->flv_bc_expansion->value();
-  opt.cross_field_use_prescribed_if_available = FlGui::instance()->quadmeshingtools->check_cf_use_prescribed->value(); 
-  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  QuadMeshingOptions& opt =  *FlGui::instance()->multiblock->opt;
+  opt.cross_field_iter = FlGui::instance()->multiblock->flv_cross_field_iter->value();
+  opt.cross_field_bc_expansion = FlGui::instance()->multiblock->flv_bc_expansion->value();
+  opt.cross_field_use_prescribed_if_available = FlGui::instance()->multiblock->check_cf_use_prescribed->value(); 
+  QuadMeshingState& state =  *FlGui::instance()->multiblock->qstate;
   int status = computeCrossField(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to compute cross field");
@@ -56,8 +55,8 @@ static void qmt_crossfield_generate_cb(Fl_Widget *w, void *data)
 
 static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
 {
-  const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  const QuadMeshingOptions& opt =  *FlGui::instance()->multiblock->opt;
+  QuadMeshingState& state =  *FlGui::instance()->multiblock->qstate;
   int status = showScaledCrosses(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to show scaled crosses");
@@ -68,11 +67,7 @@ static void qmt_crossfield_show_cb(Fl_Widget *w, void *data)
 
 static void qmt_compute_uv(Fl_Widget *w, void *data)
 {
-  // const QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  // QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
-
   int status = findAndMarkSingularities(GModel::current());
-
   if (status != 0) {
     Msg::Error("failed to find and mark singularities");
   }
@@ -82,7 +77,7 @@ static void qmt_compute_uv(Fl_Widget *w, void *data)
 
 static void qmt_cut_with_uv_isos(Fl_Widget *w, void *data)
 {
-  quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
+  multiblockWindow* win = FlGui::instance()->multiblock;
   QuadMeshingOptions& opt = *win->opt;
   QuadMeshingState& state = *win->qstate;
   opt.model_cut = std::string(win->fli_name_cut->value());
@@ -96,9 +91,9 @@ static void qmt_cut_with_uv_isos(Fl_Widget *w, void *data)
 
 static void qmt_quad_sizemap(Fl_Widget *w, void *data)
 {
-  QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
-  quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
+  QuadMeshingOptions& opt =  *FlGui::instance()->multiblock->opt;
+  QuadMeshingState& state =  *FlGui::instance()->multiblock->qstate;
+  multiblockWindow* win = FlGui::instance()->multiblock;
   opt.sizemap_nb_quads = size_t(win->flv_sizemap_nb_quads->value());
   int status = computeQuadSizeMap(GModel::current(), opt, state);
   if (status != 0) {
@@ -112,11 +107,11 @@ static void qmt_quad_sizemap(Fl_Widget *w, void *data)
 
 static void qmt_quad_generate(Fl_Widget *w, void *data)
 {
-  QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
-  quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
+  QuadMeshingOptions& opt =  *FlGui::instance()->multiblock->opt;
+  QuadMeshingState& state =  *FlGui::instance()->multiblock->qstate;
+  multiblockWindow* win = FlGui::instance()->multiblock;
   opt.model_quad_init = std::string(win->fli_name_qinit->value());
-  opt.fix_decomposition = FlGui::instance()->quadmeshingtools->check_fix_dcp->value();
+  opt.fix_decomposition = FlGui::instance()->multiblock->check_fix_dcp->value();
   int status = generateQuadMesh(GModel::current(), opt, state);
   if (status != 0) {
     Msg::Error("failed to generate initial quad mesh (quantization)");
@@ -127,9 +122,9 @@ static void qmt_quad_generate(Fl_Widget *w, void *data)
 
 static void qmt_quad_simplify(Fl_Widget *w, void *data)
 {
-  quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
-  QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  multiblockWindow* win = FlGui::instance()->multiblock;
+  QuadMeshingOptions& opt =  *FlGui::instance()->multiblock->opt;
+  QuadMeshingState& state =  *FlGui::instance()->multiblock->qstate;
   opt.simplify_size_factor = win->flv_simplify_factor->value();
   opt.model_quad = std::string(win->fli_name_qsmp->value());
   int status = simplifyQuadMesh(GModel::current(), opt, state);
@@ -142,9 +137,9 @@ static void qmt_quad_simplify(Fl_Widget *w, void *data)
 
 static void qmt_quad_smooth(Fl_Widget *w, void *data)
 {
-  quadMeshingToolsWindow* win = FlGui::instance()->quadmeshingtools;
-  QuadMeshingOptions& opt =  *FlGui::instance()->quadmeshingtools->opt;
-  QuadMeshingState& state =  *FlGui::instance()->quadmeshingtools->qstate;
+  multiblockWindow* win = FlGui::instance()->multiblock;
+  QuadMeshingOptions& opt =  *FlGui::instance()->multiblock->opt;
+  QuadMeshingState& state =  *FlGui::instance()->multiblock->qstate;
   opt.smoothing_explicit_iter = win->flv_smoothing_iter->value();
   int status = smoothQuadMesh(GModel::current(), opt, state);
   if (status != 0) {
@@ -154,7 +149,128 @@ static void qmt_quad_smooth(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+//SPECIAL FUNC for small window
+static void qmt_automate(Fl_Widget *w, void *data)
+{
+  multiblockWindow* win = FlGui::instance()->multiblock;
+  QuadMeshingOptions& opt = *win->opt;
+  QuadMeshingState& state = *win->qstate;
 
+  //TODO topology check
+  bool singExist=0;
+  GModel *gm=GModel::current();
+  std::map<int, std::vector<GEntity *>> groups[4];
+  gm->getPhysicalGroups(groups);
+  for(std::map<int, std::vector<GEntity *> >::iterator it = groups[0].begin();
+      it != groups[0].end(); ++it) {
+    std::string name = gm->getPhysicalName(0, it->first);
+    if(name == "SINGULARITY_OF_INDEX_THREE" || name == "SINGULARITY_OF_INDEX_FIVE" || name == "SINGULARITY_OF_INDEX_SIX" || name == "SINGULARITY_OF_INDEX_EIGHT"
+       || name == "SINGULARITY_OF_INDEX_TWO") 
+      singExist=1;
+  }
+
+  
+  if(FlGui::instance()->multiblock->check_cf_use_prescribed->value() && singExist){
+    //split mesh
+    int status = splitMeshWithPrescribedSing(GModel::current(), state); 
+    if (status != 0) {
+      Msg::Error("failed to generate split mesh");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+    
+    //max quads
+    opt.sizemap_nb_quads = size_t(win->flv_sizemap_nb_quads->value());
+    status = computeQuadSizeMap(GModel::current(), opt, state);
+    if (status != 0) {
+      Msg::Error("failed to compute quad sizemap");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    opt.sizemap_nb_quads = state.s_nb_quad_estimate;
+    win->flv_sizemap_nb_quads->value(opt.sizemap_nb_quads);
+    drawContext::global()->draw();
+    status = generateQuadMesh(GModel::current(), opt, state);
+    if (status != 0) {
+      Msg::Error("failed to generate initial quad mesh (quantization)");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+    status = simplifyQuadMesh(GModel::current(), opt, state);
+    if (status != 0) {
+      Msg::Error("failed to simplify quad mesh");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+    status = smoothQuadMesh(GModel::current(), opt, state);
+    if (status != 0) {
+      Msg::Error("failed to smooth quad mesh");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+  }
+  else{
+    //find sing
+    int status = findAndMarkSingularities(GModel::current());
+    if (status != 0) {
+      Msg::Error("failed to find and mark singularities");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+    //recompute cf
+    opt.cross_field_iter = 6;
+    opt.cross_field_bc_expansion = 1;
+    // opt.cross_field_use_prescribed_if_available = FlGui::instance()->multiblock->check_cf_use_prescribed->value());
+    opt.cross_field_use_prescribed_if_available = "1";
+    status = computeCrossField(GModel::current(), opt, state);
+    if (status != 0) {
+      Msg::Error("failed to compute cross field");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+
+    // split mesh
+    status = splitMeshWithPrescribedSing(GModel::current(), state); 
+    if (status != 0) {
+      Msg::Error("failed to generate split mesh");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+    
+    //max quads
+    opt.sizemap_nb_quads = size_t(win->flv_sizemap_nb_quads->value());
+    status = computeQuadSizeMap(GModel::current(), opt, state);
+    if (status != 0) {
+      Msg::Error("failed to compute quad sizemap");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    opt.sizemap_nb_quads = state.s_nb_quad_estimate;
+    win->flv_sizemap_nb_quads->value(opt.sizemap_nb_quads);
+    drawContext::global()->draw();
+    status = generateQuadMesh(GModel::current(), opt, state);
+    if (status != 0) {
+      Msg::Error("failed to generate initial quad mesh (quantization)");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+    status = simplifyQuadMesh(GModel::current(), opt, state);
+    if (status != 0) {
+      Msg::Error("failed to simplify quad mesh");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+    status = smoothQuadMesh(GModel::current(), opt, state);
+    if (status != 0) {
+      Msg::Error("failed to smooth quad mesh");
+    }
+    if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+    drawContext::global()->draw();
+  }
+
+  drawContext::global()->draw();
+}
+
+
+//LONG WINDOW START
 multiblockWindow::multiblockWindow(int deltaFontSize) {
   opt = new QuadMeshingOptions;
   qstate = new QuadMeshingState;
@@ -419,6 +535,101 @@ multiblockWindow::multiblockWindow(int deltaFontSize) {
   win->end();
   FL_NORMAL_SIZE += deltaFontSize;
 }
+//LONG WINDOW END
+
+
+
+
+//SHORT WINDOW START
+// multiblockWindow::multiblockWindow(int deltaFontSize) {
+//   opt = new QuadMeshingOptions;
+//   qstate = new QuadMeshingState;
+
+//   FL_NORMAL_SIZE -= deltaFontSize;
+//   int width = int(3.5 * IW) + 4 * WB;
+//   // int height = 28 * BH;
+//   int height = 9 * BH;
+//   win = new paletteWindow(width, height,
+//                           CTX::instance()->nonModalWindows ? true : false,
+//                           "Multiblock and meshing tools");
+//   win->box(GMSH_WINDOW_BOX);
+
+  
+//   /* Text information display */
+//   int y = WB;
+//   int x = 2 * WB;
+
+//   { /* Cross field box */
+//     // y += BH;
+//     Fl_Box *b = new Fl_Box(x - WB, y, width, BH, "Cross field computation");
+//     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+//     y += BH; /* ---------------------------- new line ---------------------------------*/
+
+//     flv_cross_field_iter = new Fl_Value_Input(x, y, IW, BH, "Diffusion/projection steps");
+//     flv_cross_field_iter->minimum(1);
+//     flv_cross_field_iter->maximum(100);
+//     if(CTX::instance()->inputScrolling) flv_cross_field_iter->step(1);
+//     flv_cross_field_iter->align(FL_ALIGN_RIGHT);
+//     flv_cross_field_iter->value(opt->cross_field_iter);
+//     y += BH; /* ---------------------------- new line ---------------------------------*/
+
+//     flv_bc_expansion = new Fl_Value_Input(x, y, IW, BH, "Boundary repulsion");
+//     flv_bc_expansion->minimum(0);
+//     flv_bc_expansion->maximum(10);
+//     if(CTX::instance()->inputScrolling) flv_bc_expansion->step(1);
+//     flv_bc_expansion->align(FL_ALIGN_RIGHT);
+//     flv_bc_expansion->value(opt->cross_field_bc_expansion);
+
+//     push_crossfield_gen = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Compute");
+//     push_crossfield_gen->callback(qmt_crossfield_generate_cb);
+
+//     y += BH; /* ---------------------------- new line ---------------------------------*/
+//     check_cf_use_prescribed = new Fl_Check_Button(x, y, width - 4 * WB, BH, "Use prescribed singularities (if available)");
+//     check_cf_use_prescribed->type(FL_TOGGLE_BUTTON);
+//     check_cf_use_prescribed->value(opt->cross_field_use_prescribed_if_available);
+
+//     push_crossfield_show = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Show");
+//     push_crossfield_show->callback(qmt_crossfield_show_cb);
+//     // if (!crossfield || !H) push_crossfield_show->clear_active();
+//   }
+
+//   { /* Seperator */
+//     y += BH / 2;
+//     y += BH / 2;
+//     Fl_Box *b = new Fl_Box(x, y + BH - WB, width - 4 * WB, 2);
+//     b->box(FL_ENGRAVED_FRAME);
+//     b->labeltype(FL_NO_LABEL);
+//   }
+
+//   { /* Quad meshing box */
+//     y += BH;
+//     Fl_Box *b =
+//       new Fl_Box(x - WB, y, width, BH, "Quad mesh generation via separatrix scheme");
+//     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+
+//     y += BH;
+//     Fl_Box *b2 = new Fl_Box(x, y, width - 4 * WB, BH);
+//     b2->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+//     b2->label("- requires a cross-field");
+
+
+//     y += BH; /* ---------------------------- new line ---------------------------------*/
+//     flv_sizemap_nb_quads = new Fl_Value_Input(x, y, IW, BH, "Number of  quads");
+//     flv_sizemap_nb_quads->minimum(1);
+//     flv_sizemap_nb_quads->maximum(1e7);
+//     if(CTX::instance()->inputScrolling) flv_sizemap_nb_quads->step(10);
+//     flv_sizemap_nb_quads->align(FL_ALIGN_RIGHT);
+//     flv_sizemap_nb_quads->value(opt->sizemap_nb_quads);
+ 
+//     push_compute_uv = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Generate");
+//     push_compute_uv->callback(qmt_automate);
+   
+//   }
+
+//   win->end();
+//   FL_NORMAL_SIZE += deltaFontSize;
+// }
+//SHORT WINDOW END
 
 multiblockWindow::~multiblockWindow() { 
   Fl::delete_widget(win); 

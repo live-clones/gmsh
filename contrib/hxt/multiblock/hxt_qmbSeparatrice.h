@@ -15,7 +15,9 @@ class Separatrice
   std::vector<uint64_t> getTriangles();
   std::vector<uint64_t>* getPTriangles();
   std::vector<uint64_t> getEdges();
+  std::vector<uint64_t>* getPEdges();
   std::vector<double> getAngles();
+  std::vector<double>* getPAngles();
   int addTriangle(uint64_t triNum);
   int addEdge(uint64_t edgNum);
   int addAngle(double angle);

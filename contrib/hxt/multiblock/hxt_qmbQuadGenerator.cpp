@@ -105,7 +105,8 @@ QuadGenerator::QuadGenerator(HXTMesh *mesh, int nbTurns, double critNorm, int fl
 {
   m_nbTurns=nbTurns;
   if(critNorm<0)
-    m_critNorm=0.6;
+    // m_critNorm=0.6;
+    m_critNorm=0.4;
   else
     m_critNorm=critNorm;
   m_flagTypePosCF=flagTypePos;
@@ -131,7 +132,8 @@ static inline int isPointDuplicate(double *point1, double *point2, double *norm)
   double b=point1[1]-point2[1];
   double c=point1[2]-point2[2];
   *norm=sqrt(a*a+b*b+c*c);
-  if(*norm<=1e-6)
+  //if(*norm<=1e-6) //old
+  if(*norm<=1e-10)
     return 1;
   else
     return 0;
@@ -2029,7 +2031,7 @@ int QuadGenerator::optimizeSizeofRadius(double *radius){
     }
   }
  
-  // *radius=3*minRadius;
+  //*radius=2*minRadius;
   *radius=0.5*minRadius;
   return 1;
 }
@@ -2120,155 +2122,164 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
     allCoord.push_back(point);
   }
   
-    std::vector<int> cornerGeoTags;
-    for(uint64_t i=0; i<m_vectCorner.size(); i++)
-      cornerGeoTags.push_back(-1);
-    for(uint64_t i=0; i<m_vectCorner.size(); i++){
-      Corner *c=&m_vectCorner[i];
-      if(!c->isFictive()){
-	std::array<double,3> *cPoint= c->getPCoord();
-	for(uint64_t j=0; j<allCoord.size(); j++){
-	  if((*cPoint)[0]==allCoord[j][0] && (*cPoint)[1]==allCoord[j][1] && (*cPoint)[2]==allCoord[j][2]){
-	    cornerGeoTags[i]=dimTagsPoints[j].second;
-	    break;
-	  }
+  std::vector<int> cornerGeoTags;
+  for(uint64_t i=0; i<m_vectCorner.size(); i++)
+    cornerGeoTags.push_back(-1);
+  for(uint64_t i=0; i<m_vectCorner.size(); i++){
+    Corner *c=&m_vectCorner[i];
+    if(!c->isFictive()){
+      std::array<double,3> *cPoint= c->getPCoord();
+      for(uint64_t j=0; j<allCoord.size(); j++){
+	if((*cPoint)[0]==allCoord[j][0] && (*cPoint)[1]==allCoord[j][1] && (*cPoint)[2]==allCoord[j][2]){
+	  cornerGeoTags[i]=dimTagsPoints[j].second;
+	  break;
 	}
       }
     }
-    double hmax=0.1, radius;
-    optimizeSizeofRadius(&radius);
-    // std::cout<<"Radius: "<<radius<<", mesh size: "<<hmax<<std::endl;
+  }
+  double hmax=0.1, radius;
+  optimizeSizeofRadius(&radius);
+  // std::cout<<"Radius: "<<radius<<", mesh size: "<<hmax<<std::endl;
  
-    int N=20;
-    // int N=50;
-    double x=0., y=0., z=0.;
-    int index=0;
-    std::vector<int> singThreeTags;
-    std::vector<int> singFiveTags;
-    //int num;
-    int lineTag=-1, pointTag=-1, singTag=-1, cornerTag=-1, loopTag=-1;
+  int N=10;
+  // int N=50;
+  double x=0., y=0., z=0.;
+  int index=0;
+  std::vector<int> singThreeTags;
+  std::vector<int> singFiveTags;
+  //int num;
+  int lineTag=-1, pointTag=-1, singTag=-1, cornerTag=-1, loopTag=-1;
   
-    //Singularities
-    for(uint64_t i=0; i<m_vectSing.size();i++){
-      Singularity *s=&(m_vectSing[i]);
-      if(!s->isDisabled()){
-	std::array<double,3> *coord= s->getPCoord();
-	uint64_t sEdg=s->getGlobalEdg();
-	uint64_t sTri=edges->edg2tri[2*sEdg+0]; //for surface color
-	std::vector<int> curvePointsTags;
-	std::vector<int> pointsTags;
-	std::vector<int> linesTags;
-	// singTag=gmsh::model::occ::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 10.*radius, -1);
-	singTag=gmsh::model::geo::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 10.*radius, -1);
-	pointsTags.push_back(singTag);
-	getSingIndex(i, &index);
-	std::cout<<"Singularity "<<i<<", index: "<<index<<std::endl;
-	if(index==3 || index==4) //doubled because of the vertex closeness
-	  singThreeTags.push_back(singTag);
-	if(index==5 || index==6) //doubled because of the vertex closeness
-	  singFiveTags.push_back(singTag);
-	//Disk around singularity
-	for(int j=0; j<N; j++){
-	  x=(*coord)[0]+radius*cos((1.0*j)/(1.0*N)*2.0*M_PI);
-	  y=(*coord)[1]+radius*sin((1.0*j)/(1.0*N)*2.0*M_PI);
-	  z=(*coord)[2];
-	  // pointTag=gmsh::model::occ::addPoint(x,y,z, radius, -1);
-	  pointTag=gmsh::model::geo::addPoint(x,y,z, radius, -1);
-	  pointsTags.push_back(pointTag);
-	  curvePointsTags.push_back(pointTag);
-	  // lineTag=gmsh::model::occ::addLine(singTag, pointTag, -1);
-	  lineTag=gmsh::model::geo::addLine(singTag, pointTag, -1);
-	  linesTags.push_back(lineTag);
-	}
-	std::vector<int> curveLinesTags;
-	for(uint64_t j=1; j<curvePointsTags.size(); j++){
-	  // lineTag=gmsh::model::occ::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
-	  lineTag=gmsh::model::geo::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
-	  linesTags.push_back(lineTag);
-	  curveLinesTags.push_back(lineTag);
-	  lineTag++;
-	}
-	// lineTag=gmsh::model::occ::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
-	lineTag=gmsh::model::geo::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
+  //Singularities
+  for(uint64_t i=0; i<m_vectSing.size();i++){
+    Singularity *s=&(m_vectSing[i]);
+    if(!s->isDisabled()){
+      std::array<double,3> *coord= s->getPCoord();
+      uint64_t sEdg=s->getGlobalEdg();
+      uint64_t sTri=edges->edg2tri[2*sEdg+0]; //for surface color
+      std::vector<int> curvePointsTags;
+      std::vector<int> pointsTags;
+      std::vector<int> linesTags;
+      // singTag=gmsh::model::occ::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 10.*radius, -1);
+      singTag=gmsh::model::geo::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 10.*radius, -1);
+      pointsTags.push_back(singTag);
+      getSingIndex(i, &index);
+      std::cout<<"Singularity "<<i<<", index: "<<index<<std::endl;
+      if(index==3 || index==4) //doubled because of the vertex closeness
+	singThreeTags.push_back(singTag);
+      if(index==5 || index==6) //doubled because of the vertex closeness
+	singFiveTags.push_back(singTag);
+      //Disk around singularity
+      for(int j=0; j<N; j++){
+	x=(*coord)[0]+radius*cos((1.0*j)/(1.0*N)*2.0*M_PI);
+	y=(*coord)[1]+radius*sin((1.0*j)/(1.0*N)*2.0*M_PI);
+	z=(*coord)[2];
+	// pointTag=gmsh::model::occ::addPoint(x,y,z, radius, -1);
+	pointTag=gmsh::model::geo::addPoint(x,y,z, radius, -1);
+	pointsTags.push_back(pointTag);
+	curvePointsTags.push_back(pointTag);	
+	// lineTag=gmsh::model::occ::addLine(singTag, pointTag, -1);
+	lineTag=gmsh::model::geo::addLine(singTag, pointTag, -1);
+	linesTags.push_back(lineTag);
+      }
+      std::vector<int> curveLinesTags;
+      for(uint64_t j=1; j<curvePointsTags.size(); j++){
+	// lineTag=gmsh::model::occ::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
+	lineTag=gmsh::model::geo::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
 	linesTags.push_back(lineTag);
 	curveLinesTags.push_back(lineTag);
-	//add Disk
-	// loopTag=gmsh::model::occ::addCurveLoop(curveLinesTags,-1);
-	loopTag=gmsh::model::geo::addCurveLoop(curveLinesTags,-1);
-	// loopTag=gmsh::model::occ::addBSpline(curveLinesTags,-1);
-	//Surface embeding
-	// gmsh::model::occ::synchronize();
-	gmsh::model::geo::synchronize();
-	gmsh::model::mesh::embed(0, pointsTags, 2, (int) colors[sTri]); //points
-	gmsh::model::mesh::embed(1, linesTags, 2, (int) colors[sTri]); //lines
-	gmsh::model::mesh::embed(1, curveLinesTags, 2, (int) colors[sTri]); //curve
+	lineTag++;
       }
+      // lineTag=gmsh::model::occ::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
+      lineTag=gmsh::model::geo::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
+      linesTags.push_back(lineTag);
+      curveLinesTags.push_back(lineTag);
+      //add Disk
+      // loopTag=gmsh::model::occ::addCurveLoop(curveLinesTags,-1);
+      loopTag=gmsh::model::geo::addCurveLoop(curveLinesTags,-1);
+      // loopTag=gmsh::model::occ::addBSpline(curveLinesTags,-1);
+      //Surface embeding
+      // gmsh::model::occ::synchronize();
+      gmsh::model::geo::synchronize();
+      gmsh::model::mesh::embed(0, pointsTags, 2, (int) colors[sTri]); //points
+      gmsh::model::mesh::embed(1, linesTags, 2, (int) colors[sTri]); //lines
+      gmsh::model::mesh::embed(1, curveLinesTags, 2, (int) colors[sTri]); //curve
     }
-    std::cout<<"Singualrities written!"<<std::endl;
-
-    //Corners
-    for(uint64_t i=0; i<m_vectCorner.size(); i++){
-      Corner *c=&m_vectCorner[i];
-      if(!c->isFictive()){
-	std::array<double,3> *coord= c->getPCoord();
-	std::vector<uint64_t> *cPatch=c->getPPatch();
-	// uint64_t cTri=(*cPatch)[0]; //for surface color
-	std::vector<int> tags;
-	if(cornerGeoTags[i]!=-1){
-	  cornerTag=cornerGeoTags[i];
-	  tags.push_back(cornerTag);
-	  getCornerIndex(i, &index);
-	  std::cout<<"Corner - existing: "<<i<<", index: "<<index<<std::endl;
-	  if(index==2 || index==3) //doubled because of the vertex closeness
-	    singThreeTags.push_back(cornerTag);
-	  if(index==4 || index==5) //doubled because of the vertex closeness
-	    singFiveTags.push_back(cornerTag);
-	}
-	else{
-	  // cornerTag=gmsh::model::occ::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 2*radius, -1);
-	  cornerTag=gmsh::model::geo::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 2*radius, -1);
-	  tags.push_back(cornerTag);
-	  gmsh::model::geo::synchronize();
-	  // gmsh::model::occ::synchronize();
-	  gmsh::model::mesh::embed(0, tags, 2, (int) colors[(*cPatch)[0]]); //points
-	  getCornerIndex(i, &index);
-	  std::cout<<"Corner: "<<i<<", index: "<<index<<std::endl;
-	  if(index==2 || index==3) //doubled because of the vertex closeness
-	    singThreeTags.push_back(cornerTag);
-	  if(index==4 || index==5) //doubled because of the vertex closeness
-	    singFiveTags.push_back(cornerTag);
-	  cornerTag++;
-	}
-      }
-    }
-    std::cout<<"Corners written!"<<std::endl;
-
-    int physicalGroup=-1;
-    physicalGroup=gmsh::model::addPhysicalGroup(0, singThreeTags, -1);
-    gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_THREE");
-    physicalGroup=gmsh::model::addPhysicalGroup(0, singFiveTags, -1);
-    gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_FIVE");
-    // gmsh::model::occ::synchronize();
-    gmsh::model::geo::synchronize();
-    std::cout<<"Geometry ready!"<<std::endl;
-    gmsh::fltk::run();
-    //gmsh::write("myGeoFile.geo_unrolled");
-    gmsh::finalize();
-
-    return HXT_STATUS_OK;
   }
+  std::cout<<"Singualrities written!"<<std::endl;
+
+  //Corners
+  for(uint64_t i=0; i<m_vectCorner.size(); i++){
+    Corner *c=&m_vectCorner[i];
+    if(!c->isFictive()){
+      std::array<double,3> *coord= c->getPCoord();
+      std::vector<uint64_t> *cPatch=c->getPPatch();
+      // uint64_t cTri=(*cPatch)[0]; //for surface color
+      std::vector<int> tags;
+      if(cornerGeoTags[i]!=-1){
+	//dbg start
+	// if(1){
+	//dbg end
+	cornerTag=cornerGeoTags[i];
+	tags.push_back(cornerTag);
+	getCornerIndex(i, &index);
+	std::cout<<"Corner - existing: "<<i<<", index: "<<index<<std::endl;
+	if(index==2 || index==3) //doubled because of the vertex closeness
+	  singThreeTags.push_back(cornerTag);
+	if(index==4 || index==5) //doubled because of the vertex closeness
+	  singFiveTags.push_back(cornerTag);
+      }
+      else{
+	// cornerTag=gmsh::model::occ::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 2*radius, -1);
+	cornerTag=gmsh::model::geo::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 2*radius, -1);
+	tags.push_back(cornerTag);
+	gmsh::model::geo::synchronize();
+	// gmsh::model::occ::synchronize();
+	gmsh::model::mesh::embed(0, tags, 2, (int) colors[(*cPatch)[0]]); //points
+	getCornerIndex(i, &index);
+	std::cout<<"Corner: "<<i<<", index: "<<index<<std::endl;
+	if(index==2 || index==3) //doubled because of the vertex closeness
+	  singThreeTags.push_back(cornerTag);
+	if(index==4 || index==5) //doubled because of the vertex closeness
+	  singFiveTags.push_back(cornerTag);
+	cornerTag++;
+      }
+    }
+  }
+  std::cout<<"Corners written!"<<std::endl;
+
+  int physicalGroup=-1;
+  physicalGroup=gmsh::model::addPhysicalGroup(0, singThreeTags, -1);
+  gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_THREE");
+  physicalGroup=gmsh::model::addPhysicalGroup(0, singFiveTags, -1);
+  gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_FIVE");
+  // gmsh::model::occ::synchronize();
+  gmsh::model::geo::synchronize();
+  //-----start meshing the model
+  int modelDim=gmsh::model::getDimension();
+  gmsh::model::mesh::generate(modelDim);
+  //-----end meshing the model
+  std::cout<<"Geometry ready!"<<std::endl;
+  // gmsh::fltk::run();
+  // gmsh::finalize();
+  
+
+  return HXT_STATUS_OK;
+}
 
 //------------------------------------------------------------------------------
 
 //2.a generate separatrices with presecribed singularities - H function crosses
 HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH)
 {
+  std::cout<<"--READING CF--"<<std::endl;
   HXT_CHECK(hxtEdgesCreate(m_triMesh,&m_triEdges));
   HXT_CHECK(hxtMalloc(&m_crossfield,2*m_triEdges->numEdges*sizeof(double)));
   for(uint64_t i=0;i<m_triEdges->numEdges;i++){
     m_crossfield[2*i+0]=directionsH[2*i+0];
     m_crossfield[2*i+1]=directionsH[2*i+1];
-  } 
+  }
+  std::cout<<"--READING CF FINISHED--"<<std::endl;
   std::cout<<"--COMPUTE SEPARATRICES--"<<std::endl;
   std::cout << "--Reading geo file to get singularities and corners--" << std::endl;
   std::vector<std::array<double,3>> allCoord;
@@ -2319,6 +2330,8 @@ HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH)
     std::cout<<"Sep: "<<i<<std::endl;
     propagateKowalski((int)i);
   }
+  std::cout << "--Remove data from bouncing sep--" << std::endl;
+  removeBouncingSepData();
   std::cout << "--Write separatrices--" << std::endl;
   hxtWriteSeparatricesPos("qmbSeparatrices.pos");
   std::cout<<"--Building intersection tri values--"<<std::endl;
@@ -2414,6 +2427,8 @@ HXTStatus QuadGenerator::computeSeparatrices(double *directionsCR)
     propagateKowalski(num);
     num++;
   }
+  std::cout << "--Remove data from bouncing sep--" << std::endl;
+  removeBouncingSepData();
   std::cout << "--Write separatrices--" << std::endl;
   hxtWriteSeparatricesPos("qmbSeparatrices.pos");
    std::cout<<"--Building intersection tri values--"<<std::endl;
@@ -3565,13 +3580,34 @@ HXTStatus QuadGenerator::propagateKowalski(int sepID){
       sep->addPoint(endPoint);
       uint64_t endTri=(uint64_t)-1;
       sep->addTriangle(endTri);
-      //push edg -1 too
+      sep->addEdge((uint64_t)-1);
+      sep->addAngle(*oldAngle);
       sep->setIsRemovable(1);
     }
   }   
   if(num>20000){
     std::cout<<"Num propagated elements: "<<num<<std::endl;
     std::cout<<"Check propagateKowalski, sepID: "<<sepID<<std::endl; 
+  }
+
+  return HXT_STATUS_OK;
+}
+
+HXTStatus QuadGenerator::removeBouncingSepData(){ //not erasing edg and angle data -> not used anywhere in code (+ not all corresponding data is saved)
+  for(uint64_t i=0; i<m_vectSep.size(); i++){
+    Separatrice *sep=&(m_vectSep[i]);
+    std::vector<uint64_t> *triangles = sep->getPTriangles();
+    std::vector<std::array<double,3>>  *points = sep->getPCoord();
+    std::vector<uint64_t>::iterator it1;
+    std::vector<std::array<double,3>>::iterator it2;
+    for(uint64_t j=2; j<(*triangles).size()-1; j++){
+      if((*triangles)[j-1] == (*triangles)[j]){
+	it1 = (*triangles).begin() + j-1;
+	it2 = (*points).begin() + j-1;
+        triangles->erase(it1);
+	points->erase(it2);	
+      }
+    }
   }
 
   return HXT_STATUS_OK;
@@ -3917,7 +3953,20 @@ int QuadGenerator::checkIfInPatch2(uint64_t triNum){
   return isInPatch;
 }
 
+int QuadGenerator::addInUnsignedintVectIfNotPresent(std::vector<uint64_t> *vect, uint64_t value){
+  int flag=0;
+  if(std::find(vect->begin(), vect->end(), value) == vect->end()){
+    vect->push_back(value);
+    flag=1;
+  }
+ 
+  return flag;
+}
+
+//Criterias: 1. intersecting same sep more than once; 2. ending on bdry under sharp angle
 int QuadGenerator::detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs){
+
+  //1. intersecting same sep more than once
   double point1[3], point2[3], point3[3], point4[3], newPoint[3];
   for(int i=0; i<3; i++){
     point1[i]=0.; point2[i]=0.; point3[i]=0.; point4[i]=0.; newPoint[i]=0.;
@@ -4006,6 +4055,25 @@ int QuadGenerator::detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleI
     }
   }
 
+
+  //2. ending on bdry under sharp angle
+  double alpha=0.0, limitAngle = 45.0;
+  for(uint64_t i=0; i<m_vectSep.size(); i++){
+    Separatrice *sep=&(m_vectSep[i]);
+    if(sep->isSaved() && !(sep->isBoundary())){
+      std::vector<uint64_t> *triangles=sep->getPTriangles();
+      if((*triangles)[triangles->size()-1] == (uint64_t)-1){
+	std::vector<double> angles = sep->getAngles();
+	alpha = angles[angles.size()-1];
+	std::cout<<"sep: "<<i<<" angle: "<<(alpha*180./M_PI)<<std::endl;
+	if((alpha*180./M_PI) < limitAngle   ||   (alpha*180.0/M_PI) > 180.0-limitAngle){
+	  if(addInUnsignedintVectIfNotPresent(&candidates, sep->getID())) //if sep is not already in candidates
+	    flag.push_back(1);
+	}
+      }
+    }
+  }
+  
   for(uint64_t i=0; i<flag.size(); i++)
     if(flag[i]==1)
       limitCycleIDs->push_back(candidates[i]);

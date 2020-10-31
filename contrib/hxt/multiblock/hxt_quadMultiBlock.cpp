@@ -2,7 +2,7 @@
 
 extern "C"
 {
-#include "hxt_api.h"
+// #include "hxt_api.h"
 #include "hxt_mesh.h"
 #include "hxt_tools.h"
 #include "hxt_edge.h"
@@ -53,7 +53,7 @@ HXTStatus hxtQuadMultiBlockGetSingInfo(HXTMesh *mesh, int tagCrossField, std::st
 	std::cout<<"data size should be 3"<<std::endl;
       }
       for(int j=0; j<3; j++){
-	double theta = (data[i])[j];
+	double theta = -(data[i])[j];
 	uint64_t globalEdg = edges->tri2edg[3*i+j];
 	uint32_t v1=mesh->triangles.node[3*i+(j)];
 	uint32_t v2=mesh->triangles.node[3*i+(j+1)%3];
@@ -164,11 +164,6 @@ HXTStatus hxtQuadMultiBlockGetSingInfo(HXTMesh *mesh, int tagCrossField, std::st
   return HXT_STATUS_OK;
 }
 
-
-
-
-
-
 HXTStatus hxtQuadMultiBlockDBG(HXTMesh *mesh, int tagCrossField, HXTMesh **splitMesh){
   HXTEdges *edges;
   HXT_CHECK(hxtEdgesCreate(mesh,&edges));
@@ -187,7 +182,7 @@ HXTStatus hxtQuadMultiBlockDBG(HXTMesh *mesh, int tagCrossField, HXTMesh **split
 	// return false;
       }
       for(int j=0; j<3; j++){
-	double theta = (data[i])[j];
+	double theta = -(data[i])[j];
 	uint64_t globalEdg = edges->tri2edg[3*i+j];
 	uint32_t v1=mesh->triangles.node[3*i+(j)];
 	uint32_t v2=mesh->triangles.node[3*i+(j+1)%3];
@@ -336,10 +331,6 @@ HXTStatus hxtQuadMultiBlockDBG(HXTMesh *mesh, int tagCrossField, HXTMesh **split
   HXT_CHECK(hxtFree(&crossfield));
   return HXT_STATUS_OK;
 }
-
-
-
-
 
 HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossField, HXTMesh **splitMesh){
   HXTEdges *edges;

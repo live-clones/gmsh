@@ -9,6 +9,7 @@
 extern "C"{
 #include "hxt_mesh.h"
 #include "hxt_edge.h"
+#include "hxt_tools.h"
 }
 
 class MultiBlock
@@ -28,7 +29,6 @@ class MultiBlock
   
  private:
   HXTEdges *m_Edges;
-  HXTContext *m_contextTri;
   HXTMesh *m_myTriMesh;
   std::vector<Separatrice> m_vectSep;
   std::vector<Singularity> m_vectSing;

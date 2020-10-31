@@ -7,8 +7,14 @@ extern "C"{
 #include "hxt_mesh.h"
 #include "hxt_edge.h"
 }
+#include <cmath>
 #include <iostream>
 #include <algorithm> 
+
+HXTStatus hxtNorm2V3(double v[3], double* norm2){
+  *norm2 = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+  return HXT_STATUS_OK;
+}
 
 MultiBlock:: MultiBlock(HXTEdges *edges, std::vector<Separatrice> vectSep, std::vector<Singularity> vectSing, std::vector<Corner> vectCorner)
 {
@@ -16,14 +22,11 @@ MultiBlock:: MultiBlock(HXTEdges *edges, std::vector<Separatrice> vectSep, std::
   m_vectSep=vectSep;
   m_vectSing=vectSing;
   m_vectCorner=vectCorner; 
-  m_contextTri=NULL;
   m_myTriMesh=NULL;
 }
 
 MultiBlock::~MultiBlock()
 {
-  if(m_contextTri)
-    hxtContextDelete(&m_contextTri);
   // if(m_myTriMesh)
   //   hxtMeshDelete(&m_myTriMesh); 
 }
@@ -97,8 +100,8 @@ static inline int isPointDuplicate(double *point1, double *point2, double *norm)
   double b=point1[1]-point2[1];
   double c=point1[2]-point2[2];
   *norm=sqrt(a*a+b*b+c*c);
-  //if(*norm<1e-10)
-  if(*norm<=1e-6)
+  //if(*norm<=1e-6)
+  if(*norm<=1.e-10)
     return 1;
   else
     return 0;
@@ -110,7 +113,7 @@ static inline int isPointDuplicateVec(std::array<double,3> *point1, std::array<d
   double c=(*point1)[2]-(*point2)[2];
   *norm=sqrt(a*a+b*b+c*c);
   // if(*norm<abs(1e-6))
-  if(*norm<1e-10)
+  if(*norm<=1.e-10)
     return 1;
   else
     return 0;
@@ -196,6 +199,7 @@ HXTStatus MultiBlock::splitTriMeshOnMBDecomp(){
   flagTriangles(&flag, &cSep, &cEdg, &cCoord);
   std::cout << "--Writing triangles and nodes--" << std::endl;
   hxtWriteFlaggedTriangles(flag, "flaggedTri.pos");
+  std::cout<<"--Writing nodes--"<<std::endl;
   hxtWriteFlaggedNodes(cCoord, "flaggedNodes.pos");
   std::vector<std::array<double,3>> coordOfEachVertex;
   std::vector<std::array<double,3>> allMeshNodes;
@@ -205,7 +209,7 @@ HXTStatus MultiBlock::splitTriMeshOnMBDecomp(){
   std::cout << "--Creating new triangles--" << std::endl;   
   createNewTriangles(flag, cSep, cCoord, &allMeshNodes, &allMeshTri, &allMeshLines, &allMeshLinesColors);
   std::cout << "--Writing nodes of new triangles--" << std::endl;
-  hxtWriteTriVert(allMeshNodes, "triVert1.pos" );
+  hxtWriteTriVert(allMeshNodes, "meshNodes.pos" );
   std::cout << "--Creating mesh--" << std::endl;
   createMyTriMesh(&allMeshNodes, &allMeshTri, &allMeshLines, &allMeshLinesColors);
   std::cout << "----SPLITTING TRI MESH ON MULTI-BLOCK DECOMPOSITION FINISHED----" << std::endl;
@@ -244,7 +248,8 @@ int MultiBlock::intersectionNodeForGraph2(uint64_t triNum, double *point1, doubl
   if(myDot(temp4,n)!=0){
     gamma = myDot(temp3,n)/myDot(temp4,n);
   }
-  if(alpha>-1e-9 && alpha<=1+1e-9 && gamma>-1e-9 && gamma<=1+1e-9){
+  if(alpha>-1.e-7 && alpha<=1.+1.e-7 && gamma>-1.e-7 && gamma<=1.+1.e-7){
+  //if(alpha>-1.e-3 && alpha<=1.+1.e-3 && gamma>-1.e-3 && gamma<=1.+1.e-3){ //DBG
     *flag=1;
     for(int i=0; i<3; i++){
       newPoint[i] = point1[i]+alpha*AB[i];
@@ -362,17 +367,20 @@ int MultiBlock::getGlobalEdg(uint64_t triNum, std::array<double,3> point, uint64
   double n[3]={0.,0.,0.};
 
   crossprod(AB,AP,n);
-  if(fabs(n[0])<1e-7 && fabs(n[1])<1e-7 && fabs(n[2])<1e-7){
+  if(fabs(n[0])<1.e-7 && fabs(n[1])<1.e-7 && fabs(n[2])<1.e-7){
+    // if(fabs(n[0])<=1.e-3 && fabs(n[1])<=1.e-3 && fabs(n[2])<=1.e-3){ //DBG
     *edgNum=edges->tri2edg[3*triNum+0];
   }else{
     crossprod(BC,BP,n);
     if(fabs(n[0])<1e-7 && fabs(n[1])<1e-7 && fabs(n[2])<1e-7){
+      //if(fabs(n[0])<=1e-3 && fabs(n[1])<=1e-3 && fabs(n[2])<=1e-3){ //DBG
       *edgNum=edges->tri2edg[3*triNum+1];
     }
     else{
       crossprod(AC,AP,n);
-      if(fabs(n[0])<1e-7 && fabs(n[1])<1e-7 && fabs(n[2])<1e-7){
-	*edgNum=edges->tri2edg[3*triNum+2];
+      if(fabs(n[0])<=1e-7 && fabs(n[1])<=1e-7 && fabs(n[2])<=1e-7){
+	//if(fabs(n[0])<=1e-3 && fabs(n[1])<=1e-3 && fabs(n[2])<=1e-3){ //DBG
+  	*edgNum=edges->tri2edg[3*triNum+2];
       }
     }
   }
@@ -386,6 +394,7 @@ int MultiBlock::flagTriangles(std::vector<int> *flag, std::vector<std::vector<in
   for(uint64_t i=0; i<mesh->triangles.num; i++)
     (*flag).push_back(0);
 
+  int globIndex;
   uint64_t e1,e2;
   std::vector<int> init1;
   std::vector<std::vector<int>> cutSep(mesh->triangles.num, init1);
@@ -469,13 +478,13 @@ int MultiBlock::flagTriangles(std::vector<int> *flag, std::vector<std::vector<in
       }
     }
   }
-
+ 
   for(uint64_t i=0; i<mesh->triangles.num; i++){
     (*cSep).push_back(cutSep[i]);
     (*cEdg).push_back(cutEdg[i]);
     (*cCoord).push_back(cutPoint[i]);
   }
-  
+ 
   return 1;
 }
 
@@ -498,12 +507,16 @@ int MultiBlock::isCloseToVert(std::array<double,3> *point, uint64_t edgNum, uint
 		(*point)[2]-vert[4*nodes[3*triNum+locEdg]+2]};
   //AP=alpha*AB
   double alpha=myDot(AP,AB)/myDot(AB,AB);
-  if(alpha<0.0005){
+  //if(alpha<0.0005){ //old
+  if(alpha<0.000005){
+    //if(alpha<0.005){ //DBG
     for(int i=0; i<3; i++)
       (*point)[i]=vert[4*nodes[3*triNum+locEdg]+i];
     flag=1;
   }
-  else if(alpha>0.9995){
+  //else if(alpha>0.9995){ //old
+  else if(alpha>0.999995){
+    //else if(alpha>(1-0.005)){ //DBG
     for(int i=0; i<3; i++)
       (*point)[i]=vert[4*nodes[3*triNum+(locEdg+1)%3]+i];    
     flag=1;
@@ -512,6 +525,8 @@ int MultiBlock::isCloseToVert(std::array<double,3> *point, uint64_t edgNum, uint
   
   return flag;
 }
+
+
 
 int MultiBlock::reorderPoints(std::vector<std::array<double,3>> points, std::vector<double> distances, std::vector<std::array<double,3>> *reorderedPoints){
 
@@ -552,22 +567,26 @@ int MultiBlock::orientateTriNodes(uint64_t triNum, std::vector<std::array<double
   std::vector<double> d2;
   std::vector<double> d3;
   double alpha=-1.0;
+  int globIndex=-1;
   //small func gives back the edge
   for(uint64_t i=0; i<cutEdg.size(); i++){
     if(edges->tri2edg[3*triNum+0]==cutEdg[i]){
-      if(!isCloseToVert(&((*cutPoints)[i]),cutEdg[i],triNum, &alpha)){ //not to double vertex
+      if(!isCloseToVert(&((*cutPoints)[i]), cutEdg[i],triNum, &alpha)){	//not to double vertex 
+	// if(!(isTriVert(triNum,(*cutPoints)[i], &globIndex))){
 	e1Points.push_back((*cutPoints)[i]);
 	d1.push_back(alpha);
       }
     }
     if(edges->tri2edg[3*triNum+1]==cutEdg[i]){
       if(!isCloseToVert(&((*cutPoints)[i]),cutEdg[i],triNum, &alpha)){ //not to double vertex
+	// if(!(isTriVert(triNum, (*cutPoints)[i], &globIndex))){
 	e2Points.push_back((*cutPoints)[i]);
 	d2.push_back(alpha);
       }
     }
     if(edges->tri2edg[3*triNum+2]==cutEdg[i]){
       if(!isCloseToVert(&((*cutPoints)[i]),cutEdg[i],triNum, &alpha)){ //not to double vertex
+	//if(!(isTriVert(triNum, (*cutPoints)[i], &globIndex))){
 	e3Points.push_back((*cutPoints)[i]);
 	d3.push_back(alpha);
       }
@@ -711,8 +730,7 @@ int MultiBlock::getConnectivity(uint64_t triNum, int flag, std::vector<std::arra
 	(*connectedNodes)[i].push_back(i+1); //node after
       }
     }
-
-    
+ 
     for(uint64_t i=0; i<cutSep.size(); i++){
       std::array<double,3> point1=cutPoints[2*i];
       std::array<double,3> point2=cutPoints[2*i+1];
@@ -724,16 +742,15 @@ int MultiBlock::getConnectivity(uint64_t triNum, int flag, std::vector<std::arra
       localLines->push_back(localLine);
       localLinesColors->push_back(cutSep[i]);
       if(ind2!=-1){
-      // if(ind2!=-1 && ind1!=-1){
+	//if(ind2!=-1 && ind1!=-1){ //DBG
 	addInIntVectIfNotPresent(&((*connectedNodes)[ind1]), ind2);
       }
       if(ind1!=-1){
-      // if(ind1!=-1 && ind2!=-1){
+	//if(ind1!=-1 && ind2!=-1){ //DBG
 	addInIntVectIfNotPresent(&((*connectedNodes)[ind2]), ind1);
       }
     }
   }
- 
   if(flag==3){
     //compute intersection and push it back in oriented points
     int cnt=0; //num of added intersection points
@@ -912,7 +929,7 @@ int MultiBlock::getConnectivity(uint64_t triNum, int flag, std::vector<std::arra
     HXT_CHECK(hxtFree(&connectedTri));
     HXT_CHECK(hxtFree(&connectedDir));
   }
-
+ 
   return 1;
 }
 
@@ -1136,9 +1153,55 @@ int MultiBlock::isTriVert(uint64_t triNum,std::array<double, 3> point, int *glob
     flag=1;
     *globIndex=nodes[3*triNum+2];
   }
-  
+
   return flag;
 }
+
+int isExistingMeshLine(std::vector<std::array<int,2>> *allMeshLines, std::array<int,2> lineIndices){
+  int exist=0;
+  for(uint64_t i=0; i<(*allMeshLines).size(); i++){
+    if((lineIndices[0]==(*allMeshLines)[i][0] && lineIndices[1]==(*allMeshLines)[i][1]) ||
+       (lineIndices[0]==(*allMeshLines)[i][1] && lineIndices[1]==(*allMeshLines)[i][0]))
+      exist=1;
+  }
+  return exist;
+}
+
+// int isExistingMeshElement(std::vector<std::array<int,3>> *allMeshTri,  std::array<int,3> vertIndices){
+//   int exist=0;
+//   for(uint64_t i=0; i<(*allMeshTri).size(); i++){
+//     if( ((*allMeshTri)[i][0]==vertIndices[0] || (*allMeshTri)[i][0]==vertIndices[1] ||(*allMeshTri)[i][0]==vertIndices[2]) &&
+// 	((*allMeshTri)[i][1]==vertIndices[0] || (*allMeshTri)[i][1]==vertIndices[1] ||(*allMeshTri)[i][1]==vertIndices[2]) &&
+// 	((*allMeshTri)[i][2]==vertIndices[0] || (*allMeshTri)[i][2]==vertIndices[1] ||(*allMeshTri)[i][2]==vertIndices[2]))
+//       exist=1;
+//   }
+//   return exist;
+// }
+
+// int isTriFlat(std::array<double,3> point1, std::array<double,3> point2, std::array<double,3> point3){
+//   int flat=0;
+//   double AB[3], AC[3], n[3];
+//   for(int i=0;i<3; i++){
+//     AB[i] = point2[i]-point1[i];
+//     AC[i] = point3[i]-point1[i];
+//     n[i] = 0.0;
+//   }
+  //normal check
+  // crossprod(AB,AC,n);
+  // double normABAC;
+  // hxtNorm2V3(n, &normABAC);
+  // if(normABAC<1e-5)
+  //   flat=1;
+
+  //angle check
+//   double normAB = sqrt(AB[0]*AB[0]+AB[1]*AB[1]+AB[2]*AB[2]);
+//   double normAC = sqrt(AC[0]*AC[0]+AC[1]*AC[1]+AC[2]*AC[2]);
+//   double alpha = acos(myDot(AB,AC)/(normAB*normAC));
+//   if (fabs(alpha*180.0/M_PI)<= 0.5  || fabs(alpha*180.0/M_PI)>= 179.5)
+//     flat=1;
+
+//   return flat;
+// }
 
 int MultiBlock::createNewTriangles(std::vector<int> flag, std::vector<std::vector<int>> cSep, std::vector<std::vector<std::array<double,3>>> cCoord, std::vector<std::array<double,3>> *allMeshNodes, std::vector<std::array<int,3>> *allMeshTri, std::vector<std::array<int,2>> *allMeshLines, std::vector<int> *allMeshLinesColors){ //giving back for mesh create
   int numCutPoints=0;
@@ -1159,7 +1222,7 @@ int MultiBlock::createNewTriangles(std::vector<int> flag, std::vector<std::vecto
     (*allMeshNodes).push_back(coord);
   }
   uint64_t start=(*allMeshNodes).size();
-  std::cout<<"FLAG on tri 6 is: "<<flag[6]<<std::endl;
+  //uint64_t start=0;
   for(uint64_t i=0; i<mesh->triangles.num; i++){
     if(flag[i]==0){ //not crossed with separatrice
       for(int j=0; j<3; j++)
@@ -1180,15 +1243,7 @@ int MultiBlock::createNewTriangles(std::vector<int> flag, std::vector<std::vecto
       getConnectivity(i, flag[i], cCoord[i],  cSep[i], &orientedPoints, &connectedNodes, &localLines, &localLinesColors);
       std::vector<std::array<int,3>> newTri;
       splitTriangle(orientedPoints, bndryPoints, connectedNodes, &newTri);
-      if(newTri.size()==0){ //triangles which edg is bnd sep
-	// for(int j=0; j<3; j++){
-	//   coord1[j]=vert[4*nodes[3*i+0]+j];
-	//   coord2[j]=vert[4*nodes[3*i+1]+j];
-	//   coord3[j]=vert[4*nodes[3*i+2]+j];
-	// }
-	// (*allMeshNodes).push_back(coord1);
-	// (*allMeshNodes).push_back(coord2);
-	// (*allMeshNodes).push_back(coord3);
+      if(newTri.size()==0){ //triangles which edg is bnd sep; no need to add coords -they already exist
 	for(int j=0; j<3; j++)
 	  vertIndices[j]=nodes[3*i+j];
 	(*allMeshTri).push_back(vertIndices);
@@ -1199,17 +1254,15 @@ int MultiBlock::createNewTriangles(std::vector<int> flag, std::vector<std::vecto
 	  convertIndToCoord(orientedPoints,localLines[j][1], &linePoint2);
 	  int ind=-1;
 	  if(isTriVert(i, linePoint1, &ind)){
-	    lineIndices[0]=ind; 
+	    lineIndices[0]=ind;
 	  }else{
-	    //addInPointsVectIfNotPresentCustomized(start, allMeshNodes, linePoint1, &ind);
-	    addInPointsVectIfNotPresentCustomized(0, allMeshNodes, linePoint1, &ind);
+	    addInPointsVectIfNotPresentCustomized(start, allMeshNodes, linePoint1, &ind);
 	    lineIndices[0]=ind;
 	  }
 	  if(isTriVert(i, linePoint2, &ind)){
-	    lineIndices[1]=ind; 
+	    lineIndices[1]=ind;
 	  }else{
-	    //addInPointsVectIfNotPresentCustomized(start, allMeshNodes, linePoint2, &ind);
-	    addInPointsVectIfNotPresentCustomized(0, allMeshNodes, linePoint2, &ind);
+	    addInPointsVectIfNotPresentCustomized(start, allMeshNodes, linePoint2, &ind);
 	    lineIndices[1]=ind;
 	  }
 	  allMeshLines->push_back(lineIndices);
@@ -1225,21 +1278,23 @@ int MultiBlock::createNewTriangles(std::vector<int> flag, std::vector<std::vecto
 	  convertIndToCoord(orientedPoints,localLines[j][1], &linePoint2);
 	  int ind=-1;
 	  if(isTriVert(i, linePoint1, &ind)){
-	    lineIndices[0]=ind; 
+	    lineIndices[0]=ind;
 	  }else{
-	    //addInPointsVectIfNotPresentCustomized(start, allMeshNodes, linePoint1, &ind);
-	    addInPointsVectIfNotPresentCustomized(0, allMeshNodes, linePoint1, &ind);
+	    addInPointsVectIfNotPresentCustomized(start, allMeshNodes, linePoint1, &ind);
 	    lineIndices[0]=ind;
 	  }
 	  if(isTriVert(i, linePoint2, &ind)){
-	    lineIndices[1]=ind; 
+	    lineIndices[1]=ind;
 	  }else{
-	    //addInPointsVectIfNotPresentCustomized(start, allMeshNodes, linePoint2, &ind);
-	    addInPointsVectIfNotPresentCustomized(0, allMeshNodes, linePoint2, &ind);
+	    addInPointsVectIfNotPresentCustomized(start, allMeshNodes, linePoint2, &ind);
 	    lineIndices[1]=ind;
 	  }
-	  allMeshLines->push_back(lineIndices);
-	  allMeshLinesColors->push_back(localLinesColors[j]);
+	  if(!isExistingMeshLine(allMeshLines,  lineIndices)){ //DBG
+	    allMeshLines->push_back(lineIndices);
+	    allMeshLinesColors->push_back(localLinesColors[j]);
+	  }else{
+	    std::cout<<"Existing line: "<<lineIndices[0]<<" "<<lineIndices[1]<<std::endl; //DBG
+	  }
 	}
 	//add allTriangles
 	for(uint64_t j=0; j<newTri.size(); j++){
@@ -1248,29 +1303,27 @@ int MultiBlock::createNewTriangles(std::vector<int> flag, std::vector<std::vecto
 	  convertIndToCoord(orientedPoints,newTri[j][1], &point2);
 	  convertIndToCoord(orientedPoints,newTri[j][2], &point3);
 	  
-	  //adding new nodes in the mesh
+	  //adding new nodes (and triangles)
 	  int ind=-1;
 	  if(isTriVert(i, point1, &ind)){
-	    vertIndices[0]=ind; 
+	    vertIndices[0]=ind;
 	  }else{
-	    // addInPointsVectIfNotPresentCustomized(start, allMeshNodes, point1, &ind);
-	    addInPointsVectIfNotPresentCustomized(0, allMeshNodes, point1, &ind);
+	    addInPointsVectIfNotPresentCustomized(start, allMeshNodes, point1, &ind);
 	    vertIndices[0]=ind;
 	  }
 	  if(isTriVert(i, point2, &ind)){
-	    vertIndices[1]=ind; 
+	    vertIndices[1]=ind;
 	  }else{
-	    // addInPointsVectIfNotPresentCustomized(start, allMeshNodes, point2, &ind);
-	    addInPointsVectIfNotPresentCustomized(0, allMeshNodes, point2, &ind);
+	    addInPointsVectIfNotPresentCustomized(start, allMeshNodes, point2, &ind);
 	    vertIndices[1]=ind;
 	  }
 	  if(isTriVert(i, point3, &ind)){
-	    vertIndices[2]=ind; 
+	    vertIndices[2]=ind;
 	  }else{
-	    // addInPointsVectIfNotPresentCustomized(start, allMeshNodes, point3, &ind);
-	    addInPointsVectIfNotPresentCustomized(0, allMeshNodes, point3, &ind);
+	    addInPointsVectIfNotPresentCustomized(start, allMeshNodes, point3, &ind);
 	    vertIndices[2]=ind;
 	  }
+	  // if(!isExistingMeshElement(allMeshTri, vertIndices)) //DBG
 	  (*allMeshTri).push_back(vertIndices);
 	}
       }
@@ -1280,8 +1333,7 @@ int MultiBlock::createNewTriangles(std::vector<int> flag, std::vector<std::vecto
 }
 
 HXTStatus MultiBlock::createMyTriMesh(std::vector<std::array<double,3>> *allMeshNodes, std::vector<std::array<int,3>> *allMeshTri, std::vector<std::array<int,2>> *allMeshLines, std::vector<int> *allMeshLinesColors){
-  hxtContextCreate(&m_contextTri);
-  HXT_CHECK(hxtMeshCreate(m_contextTri,&(m_myTriMesh)));
+  HXT_CHECK(hxtMeshCreate(&(m_myTriMesh)));
   // vertices
   m_myTriMesh->vertices.num = allMeshNodes->size();
   HXT_CHECK(hxtAlignedMalloc(&(m_myTriMesh->vertices.coord),4*(m_myTriMesh->vertices.num)*sizeof(double)));
@@ -1290,68 +1342,36 @@ HXTStatus MultiBlock::createMyTriMesh(std::vector<std::array<double,3>> *allMesh
       m_myTriMesh->vertices.coord[4*i+t] = (*allMeshNodes)[i][t];
     m_myTriMesh->vertices.coord[4*i+3] = 0.0;
   }
-  //DBG start------------------------------------------------
-  for(uint64_t i=0; i<m_myTriMesh->vertices.num; i++){
-    for(uint64_t j=0; j<m_myTriMesh->vertices.num; j++){
-      if(i!=j){
-	if(m_myTriMesh->vertices.coord[4*i+0] == m_myTriMesh->vertices.coord[4*j+0]  &&
-	   m_myTriMesh->vertices.coord[4*i+1] == m_myTriMesh->vertices.coord[4*j+1] &&
-	   m_myTriMesh->vertices.coord[4*i+2] == m_myTriMesh->vertices.coord[4*j+2] )
-	  std::cout<<"Duplicated vertices: "<<i<<" "<<j<<std::endl;
-      }
-    }
-  }
-  //DBG end------------------------------------------------
   
   // triangles
   m_myTriMesh->triangles.num = allMeshTri->size();
   HXT_CHECK(hxtAlignedMalloc(&(m_myTriMesh->triangles.node),3*(m_myTriMesh->triangles.num)*sizeof(uint64_t)));
-  for(uint64_t i=0; i<m_myTriMesh->triangles.num; i++){
-    for(int t=0; t<3; t++)
-      m_myTriMesh->triangles.node[3*i+t] = (*allMeshTri)[i][t];
-    //DBG start-------
-    if(m_myTriMesh->triangles.node[3*i+0]== m_myTriMesh->triangles.node[3*i+1] ||
-       m_myTriMesh->triangles.node[3*i+0]== m_myTriMesh->triangles.node[3*i+2] ||
-       m_myTriMesh->triangles.node[3*i+1]== m_myTriMesh->triangles.node[3*i+2])
-      std::cout<<"FLATEN TRI: "<<i<<std::endl;
-    //DBG end-------------------------
-  }
-  for(uint64_t i=0; i<m_myTriMesh->triangles.num; i++){
-    for(uint64_t j=0; j<m_myTriMesh->triangles.num; j++){
-      if(i!=j){
-	if(m_myTriMesh->triangles.node[3*i+0]== m_myTriMesh->triangles.node[3*j+0] &&
-	   m_myTriMesh->triangles.node[3*i+1]== m_myTriMesh->triangles.node[3*j+1] &&
-	   m_myTriMesh->triangles.node[3*i+2]== m_myTriMesh->triangles.node[3*j+2])
-	  std::cout<<"DUPLICATED TRI: "<<i<<" "<<j<<std::endl;
-      }
+  int numT=0;
+  for(uint64_t i=0; i<allMeshTri->size(); i++){
+    if((*allMeshTri)[i][0] != (*allMeshTri)[i][1] && (*allMeshTri)[i][0] != (*allMeshTri)[i][2] && (*allMeshTri)[i][1] != (*allMeshTri)[i][2]){ //not storing flatten tri
+      for(int t=0; t<3; t++)
+	m_myTriMesh->triangles.node[3*numT+t] = (*allMeshTri)[i][t];
+      numT++;
     }
   }
-
   
   // lines
   m_myTriMesh->lines.num = allMeshLines->size();
   HXT_CHECK(hxtAlignedMalloc(&(m_myTriMesh->lines.node),2*(m_myTriMesh->lines.num)*sizeof(uint32_t)));
   HXT_CHECK(hxtAlignedMalloc(&(m_myTriMesh->lines.colors),(m_myTriMesh->lines.num)*sizeof(uint16_t)));
-  for(uint64_t i=0; i<m_myTriMesh->lines.num; i++){
-    for(uint64_t t=0; t<2; t++)
-      m_myTriMesh->lines.node[2*i+t] = (uint32_t)(*allMeshLines)[i][t];
-    m_myTriMesh->lines.colors[i] = (uint16_t)((*allMeshLinesColors)[i]);
-    //DBG start-------
-    if(m_myTriMesh->lines.node[2*i+0] == m_myTriMesh->lines.node[2*i+1])
-      std::cout<<"FLATEN LINE: "<<i<<" Vertices: "<<m_myTriMesh->lines.node[2*i+0]<<" "<<m_myTriMesh->lines.node[2*i+1]<<std::endl;
-    //DBG end--------
-  }
-  for(uint64_t i=0; i<m_myTriMesh->lines.num; i++){
-    for(uint64_t j=0; j<m_myTriMesh->lines.num; j++){
-      if(i!=j){
-	if(m_myTriMesh->lines.node[2*i+0] == m_myTriMesh->lines.node[2*j+0] && m_myTriMesh->lines.node[2*i+1] == m_myTriMesh->lines.node[2*j+1])
-	  std::cout<<"DUPLICATED LINE: "<<i<<" "<<j<<std::endl;
-      }
+  int numL=0;
+  for(uint64_t i=0; i<allMeshLines->size(); i++){
+    if((*allMeshLines)[i][0] != (*allMeshLines)[i][1]){ // not storing flatten lines
+      for(uint64_t t=0; t<2; t++)
+	m_myTriMesh->lines.node[2*numL+t] = (uint32_t)(*allMeshLines)[i][t];
+      m_myTriMesh->lines.colors[numL] = (uint16_t)((*allMeshLinesColors)[i]);
+      numL++;
     }
   }
 
-  
   hxtMeshWriteGmsh(m_myTriMesh, "qmbMyTriMesh.msh");
+  std::cout<<"--New mesh written--"<<std::endl;
+  
   return HXT_STATUS_OK;
 }
 
@@ -1365,6 +1385,7 @@ HXTStatus MultiBlock::hxtWriteFlaggedTriangles(std::vector<int> flag, const char
   FILE *f = fopen(fileName,"w");
   fprintf(f,"View \"Triangles\" {\n");
   for(uint64_t i=0; i<mesh->triangles.num; i++){
+    if(i==542 || i==496){
     fprintf(f,"ST(");
     uint32_t vtri[3] = {mesh->triangles.node[3*i+0],mesh->triangles.node[3*i+1],mesh->triangles.node[3*i+2]};
     for(uint32_t j=0; j<3; j++){
@@ -1374,11 +1395,9 @@ HXTStatus MultiBlock::hxtWriteFlaggedTriangles(std::vector<int> flag, const char
     }
     fprintf(f,")");
     fprintf(f,"{");
-    if(i!=33112)
-      fprintf(f,"%i, %i, %i",flag[i],flag[i],flag[i]);
-    else
-      fprintf(f,"%i, %i, %i",4,4,4);
-    fprintf(f,"};\n");    
+    fprintf(f,"%i, %i, %i",flag[i],flag[i],flag[i]);
+    fprintf(f,"};\n");
+    }
   }
   fprintf(f,"};");
   fclose(f);
@@ -1392,7 +1411,7 @@ HXTStatus MultiBlock::hxtWriteFlaggedNodes(std::vector<std::vector<std::array<do
     std::vector<std::array<double,3>> points=cCoord[i];
     if(points.size()!=0){
       for(uint32_t j=0; j<points.size(); j++){
-	int color=(int)j;
+	int color=(int)i;
 	std::array<double,3> coord=points[j];
 	fprintf(f,"SP(%g,%g,%g){%i};\n", coord[0], coord[1], coord[2], color);
       }

@@ -75,8 +75,14 @@ std::vector<uint64_t>* Separatrice::getPTriangles(){
 std::vector<uint64_t> Separatrice::getEdges(){
   return  m_edges;
 }
+std::vector<uint64_t>* Separatrice::getPEdges(){
+  return &(m_edges);
+}
 std::vector<double> Separatrice::getAngles(){
   return m_enteringAngles;
+}
+std::vector<double>* Separatrice::getPAngles(){
+  return &(m_enteringAngles);
 }
 
 int Separatrice::addTriangle(uint64_t triNum){
