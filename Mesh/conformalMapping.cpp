@@ -830,6 +830,7 @@ void MyMesh::createPatchs(){
   }
   return;
 }
+
 double MyMesh::_getAngleBetweenEdges(const MEdge &e,const MEdge &eRef, SVector3 &normal){
   SVector3 vRef(eRef.getVertex(1)->x() - eRef.getVertex(0)->x(),
 		eRef.getVertex(1)->y() - eRef.getVertex(0)->y(),
@@ -845,6 +846,42 @@ double MyMesh::_getAngleBetweenEdges(const MEdge &e,const MEdge &eRef, SVector3 
   double sin=dot(v,t);
   return atan2(sin,cos);
 }
+
+// void MyMesh::_tryFixSing(std::set<MTriangle*, MElementPtrLessThan> patchTri){
+//   std::vector<MEdge> featEdgBC;
+//   std::set<const MEdge *> cutGraphEdges;
+//   for(MTriangle *t: patchTri){
+//     for(const MEdge* e: triangleToEdges[t]){
+//       if(isFeatureEdge[e]){
+// 	featEdgBC.push_back(*e);
+//       }
+//     }
+//   }
+//   std::vector<std::vector<MVertex *> > vSorted;
+//   SortEdgeConsecutive(featEdgBC, vSorted);
+//   std::map<MVertex* v, double> angleVertex;
+//   for(size_t k=0;k<vSorted.size();k++){
+//     for(size_t l=0;l<vSorted[k].size();l++){
+//       MEdge e1(vSorted[k][l],vSorted[k][(l+1)%vSorted[k].size()]);
+//       MEdge e2(vSorted[k][l],vSorted[k][(l+vSorted[k].size()-1)%vSorted[k].size()]);
+//       double l1=e1.length();
+//       double l2=e2.length();
+//       double sign=0.0;
+//       if(geodesicCurv[v]<=0)
+// 	sign=-1.0;
+//       else
+// 	sign=1.0;
+//       angleVertex[v]=2*geodesicCurv[v]/(l1+l2) + M_PI;
+//     }
+//   }
+//   for(auto &kv: angleVertex){
+//     if(!(singIndices[kv.first]!=0)){
+      
+//       singIdices[kv.first]=;
+//     }
+//   }
+//   return;
+// }
 
 void MyMesh::computeManifoldBasis(){
   if(trianglesPatchs.size()==0)
@@ -1359,6 +1396,7 @@ void ConformalMapping::_computeH(){
       _currentMesh->canTrianglePatchBeComputed[k]=true;
     }
     else{
+      // _currentMesh->_tryFixSing(tri);
       Msg::Error("Gauss and geodesic curvature not matching number of singularities on patch %i.",k);
       Msg::Error("Patch %i miss singularities for a total indice of %g",k,checkSum*4.);
       Msg::Error("Skipping computation of H on this patch.");

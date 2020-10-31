@@ -107,6 +107,7 @@ class MyMesh{
     _computeGaussCurv();
   }
   void computeManifoldBasis();
+  void _tryFixSing(std::set<MTriangle*, MElementPtrLessThan> patchTri);
 };
 
 class ConformalMapping{
