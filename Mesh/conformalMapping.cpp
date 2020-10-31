@@ -81,13 +81,28 @@ static void getModelFaces(GModel *gm, std::set<GFace *> &f)
 
 static void getModelEdges(GModel *gm, std::set<GEdge *> &e)
 {
+  std::set<GEntity *> eIgnored;
+  //Explicitly exclude feature edges removed
+  std::map<int, std::vector<GEntity *> > groups[4];
+  gm->getPhysicalGroups(groups);
+  for(std::map<int, std::vector<GEntity *> >::iterator it = groups[1].begin();
+      it != groups[1].end(); ++it) {
+    std::string name = gm->getPhysicalName(1, it->first);
+    if(name == "NOT_BC_CF") {
+      for(size_t j = 0; j < it->second.size(); j++) {
+	eIgnored.insert(it->second[j]);
+      }
+    }
+  }
   if(e.size()>0){
     Msg::Warning("Edges set not empty. Clearing it.");
     e.clear();
   }
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
     GEdge *ge = *it;
-    e.insert(ge);
+    // GEntity *ge1 = *it;
+    if(eIgnored.find(ge)==eIgnored.end())
+      e.insert(ge);
   }
 }
 
@@ -1360,6 +1375,14 @@ std::map<MTriangle *, std::vector<std::vector<SVector3>>> ConformalMapping::getT
   return triEdgScaledCrosses;
 }
 
+std::map<MVertex *, double, MVertexPtrLessThan> ConformalMapping::getH(){
+  std::map<MVertex *, double, MVertexPtrLessThan> returnH;
+  for(auto &kv: _currentMesh->H){
+    returnH[kv.first]=kv.second;
+  }
+  return returnH;
+}
+
 void ConformalMapping::_computeH(){
   if(_currentMesh->trianglesPatchs.size()==0)
     _currentMesh->createPatchs();
@@ -1411,7 +1434,7 @@ void ConformalMapping::_computeH(){
       printf("petsc solver\n");
 #elif defined(HAVE_MUMPS)
       linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
-      printf("mmups solver\n");
+      printf("mumps solver\n");
 #else
       linearSystemFull<double> *_lsys = new linearSystemFull<double>;
       printf("default solver\n");

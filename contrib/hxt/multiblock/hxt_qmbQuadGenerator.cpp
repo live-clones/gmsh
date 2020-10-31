@@ -2151,6 +2151,8 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
   int lineTag=-1, pointTag=-1, singTag=-1, cornerTag=-1, loopTag=-1;
   
   //Singularities
+  std::vector<int> allLinesTags;
+  std::vector<int> allCurveLinesTags;
   for(uint64_t i=0; i<m_vectSing.size();i++){
     Singularity *s=&(m_vectSing[i]);
     if(!s->isDisabled()){
@@ -2181,19 +2183,24 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
 	// lineTag=gmsh::model::occ::addLine(singTag, pointTag, -1);
 	lineTag=gmsh::model::geo::addLine(singTag, pointTag, -1);
 	linesTags.push_back(lineTag);
+	allLinesTags.push_back(lineTag);
       }
       std::vector<int> curveLinesTags;
       for(uint64_t j=1; j<curvePointsTags.size(); j++){
 	// lineTag=gmsh::model::occ::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
 	lineTag=gmsh::model::geo::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
 	linesTags.push_back(lineTag);
+	allLinesTags.push_back(lineTag);
 	curveLinesTags.push_back(lineTag);
+	allCurveLinesTags.push_back(lineTag);
 	lineTag++;
       }
       // lineTag=gmsh::model::occ::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
       lineTag=gmsh::model::geo::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
       linesTags.push_back(lineTag);
+      allLinesTags.push_back(lineTag);
       curveLinesTags.push_back(lineTag);
+      allCurveLinesTags.push_back(lineTag);
       //add Disk
       // loopTag=gmsh::model::occ::addCurveLoop(curveLinesTags,-1);
       loopTag=gmsh::model::geo::addCurveLoop(curveLinesTags,-1);
@@ -2206,7 +2213,7 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
       gmsh::model::mesh::embed(1, curveLinesTags, 2, (int) colors[sTri]); //curve
     }
   }
-  std::cout<<"Singualrities written!"<<std::endl;
+  std::cout<<"Singularities written!"<<std::endl;
 
   //Corners
   for(uint64_t i=0; i<m_vectCorner.size(); i++){
@@ -2253,6 +2260,11 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
   gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_THREE");
   physicalGroup=gmsh::model::addPhysicalGroup(0, singFiveTags, -1);
   gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_FIVE");
+  //adding tag on lines and line loops
+  physicalGroup=gmsh::model::addPhysicalGroup(1, allLinesTags, -1);
+  gmsh::model::setPhysicalName(1, physicalGroup, "NOT_BC_CF");
+  physicalGroup=gmsh::model::addPhysicalGroup(1, allCurveLinesTags, -1);
+  gmsh::model::setPhysicalName(0, physicalGroup, "NOT_BC_CF");
   // gmsh::model::occ::synchronize();
   gmsh::model::geo::synchronize();
   //-----start meshing the model
