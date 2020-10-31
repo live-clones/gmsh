@@ -105,6 +105,14 @@ int smoothQuadMesh(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingState&
 /* generate a view "crosses" with crosses scaled by H */
 int showScaledCrosses(GModel* gm, const QuadMeshingOptions& opt, QuadMeshingState& state);
 
+/* split mesh with separatrices without prescribed singularities */
+int splitMeshWithSeparatrices(GModel * gm, QuadMeshingState& state);
+
+/* find singularities and prepare geometry for remeshing */
+int findAndMarkSingularities(GModel * gm);
+
+/* split mesh with separatrices generated from prescribed singularities*/
+int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state);
 
 /*****************************************************************************/
 /* Wrappers to call QMT functions from outside the QuadMeshingTools pipeline */
@@ -122,5 +130,6 @@ int computePerTriangleScaledCrossField(
 
 /* smooth the current quad mesh (Winslow FDM), create boundary projector if not given */
 int smoothQuadMesh(GModel* gm, int explicit_iter = 100, void* data_boundary_projector = NULL);
+
 
 #endif

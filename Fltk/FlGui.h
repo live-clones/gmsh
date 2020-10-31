@@ -30,6 +30,7 @@ class statisticsWindow;
 class visibilityWindow;
 class highOrderToolsWindow;
 class quadMeshingToolsWindow;
+class multiblockWindow;
 class clippingWindow;
 class manipWindow;
 class elementaryContextWindow;
@@ -74,6 +75,7 @@ public:
   visibilityWindow *visibility;
   highOrderToolsWindow *highordertools;
   quadMeshingToolsWindow *quadmeshingtools;
+  multiblockWindow *multiblock;
   clippingWindow *clipping;
   manipWindow *manip;
   elementaryContextWindow *elementaryContext;

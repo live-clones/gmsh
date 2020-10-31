@@ -203,13 +203,31 @@ set(INC
     hxt_gmsh_point_gen_main.h
     hxt_point_gen_options.h
    )
-
 append_gmsh_src(contrib/hxt/remesh/src "${SRC}")
 append_gmsh_src(contrib/hxt/remesh/include "${INC}")
 list(APPEND HXT_INC_DIRS
      contrib/hxt/remesh/src
      contrib/hxt/remesh/include)
-
+#################################################################################
+# HXT multiblock
+#################################################################################
+set(SRC
+  hxt_quadMultiBlock.cpp
+  hxt_qmbSingularity.cpp
+  hxt_qmbCorner.cpp
+  hxt_qmbBoundaryLine.cpp
+  hxt_qmbBoundary.cpp
+  hxt_qmbSeparatrice.cpp
+  hxt_qmbSepGroup.cpp
+  hxt_qmbMultiBlock.cpp
+  hxt_qmbQuadGenerator.cpp
+  )
+set(INC
+    hxt_quadMultiBlock.h
+   )
+append_gmsh_src(contrib/hxt/multiblock "${SRC}")
+list(APPEND HXT_INC_DIRS
+  contrib/hxt/multiblock)
 
 #################################################################################
 # propagate HXT_INC_DIRS to parent CMakeLists
