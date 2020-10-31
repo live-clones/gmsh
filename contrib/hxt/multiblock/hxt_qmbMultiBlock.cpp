@@ -1358,13 +1358,13 @@ HXTStatus MultiBlock::createMyTriMesh(std::vector<std::array<double,3>> *allMesh
   // lines
   m_myTriMesh->lines.num = allMeshLines->size();
   HXT_CHECK(hxtAlignedMalloc(&(m_myTriMesh->lines.node),2*(m_myTriMesh->lines.num)*sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedMalloc(&(m_myTriMesh->lines.colors),(m_myTriMesh->lines.num)*sizeof(uint16_t)));
+  HXT_CHECK(hxtAlignedMalloc(&(m_myTriMesh->lines.color),(m_myTriMesh->lines.num)*sizeof(uint16_t)));
   int numL=0;
   for(uint64_t i=0; i<allMeshLines->size(); i++){
     if((*allMeshLines)[i][0] != (*allMeshLines)[i][1]){ // not storing flatten lines
       for(uint64_t t=0; t<2; t++)
 	m_myTriMesh->lines.node[2*numL+t] = (uint32_t)(*allMeshLines)[i][t];
-      m_myTriMesh->lines.colors[numL] = (uint16_t)((*allMeshLinesColors)[i]);
+      m_myTriMesh->lines.color[numL] = (uint16_t)((*allMeshLinesColors)[i]);
       numL++;
     }
   }

@@ -7434,7 +7434,7 @@ int splitMeshWithSeparatrices(GModel * gm, QuadMeshingState& state) {
 
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
-  std::map<MVertex *, int> v2c;
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
   Msg::Info("MBD | Generating separatrices to obtain split mesh");
@@ -7495,13 +7495,13 @@ int splitMeshWithSeparatrices(GModel * gm, QuadMeshingState& state) {
   //lines
   uint16_t maxLineTag=0;
   for(uint64_t i=0; i<splitMesh->lines.num; i++)
-    if(splitMesh->lines.colors[i]>maxLineTag)
-      maxLineTag=splitMesh->lines.colors[i];
+    if(splitMesh->lines.color[i]>maxLineTag)
+      maxLineTag=splitMesh->lines.color[i];
   std::vector<int> diffColors; diffColors.reserve(maxLineTag+1);
   std::vector<int> diffTags; diffTags.reserve(maxLineTag+1);
   for(uint64_t i=0; i<splitMesh->lines.num; i++){
-    if(std::find(diffColors.begin(), diffColors.end(), static_cast<int>(splitMesh->lines.colors[i])) == diffColors.end()){
-      diffColors.push_back(static_cast<int>(splitMesh->lines.colors[i]));
+    if(std::find(diffColors.begin(), diffColors.end(), static_cast<int>(splitMesh->lines.color[i])) == diffColors.end()){
+      diffColors.push_back(static_cast<int>(splitMesh->lines.color[i]));
       int lTag=gmsh::model::addDiscreteEntity(1);
       diffTags.push_back(lTag);
     }
@@ -7510,7 +7510,7 @@ int splitMeshWithSeparatrices(GModel * gm, QuadMeshingState& state) {
   for(uint64_t i=0; i<diffColors.size(); i++){
     std::vector<int> vecL; vecL.reserve(splitMesh->lines.num);
     for(uint64_t j=0; j<splitMesh->lines.num; j++){
-      if(diffColors[i]==static_cast<int>(splitMesh->lines.colors[j]))
+      if(diffColors[i]==static_cast<int>(splitMesh->lines.color[j]))
 	vecL.push_back(static_cast<int>(j));
     }
     coloredLines.push_back(vecL);
@@ -7554,7 +7554,7 @@ int findAndMarkSingularities(GModel * gm){
 
   HXTMesh *mesh;  
   HXT_CHECK(hxtMeshCreate(&mesh));
-  std::map<MVertex *, int> v2c;
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
   Msg::Info("MBD | Finding singularities and creating new geometry file");
@@ -7586,10 +7586,9 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
     return -1;
   }
   cf_tag = theta->getTag();
-
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
-  std::map<MVertex *, int> v2c;
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
   
@@ -7659,13 +7658,13 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
   //lines
   uint16_t maxLineTag=0;
   for(uint64_t i=0; i<splitMesh->lines.num; i++)
-    if(splitMesh->lines.colors[i]>maxLineTag)
-      maxLineTag=splitMesh->lines.colors[i];
+    if(splitMesh->lines.color[i]>maxLineTag)
+      maxLineTag=splitMesh->lines.color[i];
   std::vector<int> diffColors; diffColors.reserve(maxLineTag+1);
   std::vector<int> diffTags; diffTags.reserve(maxLineTag+1);
   for(uint64_t i=0; i<splitMesh->lines.num; i++){
-    if(std::find(diffColors.begin(), diffColors.end(), static_cast<int>(splitMesh->lines.colors[i])) == diffColors.end()){
-      diffColors.push_back(static_cast<int>(splitMesh->lines.colors[i]));
+    if(std::find(diffColors.begin(), diffColors.end(), static_cast<int>(splitMesh->lines.color[i])) == diffColors.end()){
+      diffColors.push_back(static_cast<int>(splitMesh->lines.color[i]));
       int lTag=gmsh::model::addDiscreteEntity(1);
       diffTags.push_back(lTag);
     }
@@ -7674,7 +7673,7 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
   for(uint64_t i=0; i<diffColors.size(); i++){
     std::vector<int> vecL; vecL.reserve(splitMesh->lines.num);
     for(uint64_t j=0; j<splitMesh->lines.num; j++){
-      if(diffColors[i]==static_cast<int>(splitMesh->lines.colors[j]))
+      if(diffColors[i]==static_cast<int>(splitMesh->lines.color[j]))
 	vecL.push_back(static_cast<int>(j));
     }
     coloredLines.push_back(vecL);

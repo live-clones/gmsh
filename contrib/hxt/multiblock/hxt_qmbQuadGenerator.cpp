@@ -2101,7 +2101,7 @@ int QuadGenerator::getSingIndex(int singID, int *index){
 HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
   HXTEdges* edges=m_triEdges;
   HXTMesh* mesh=edges->edg2mesh;
-  uint16_t *colors= mesh->triangles.colors;
+  uint16_t *colors= mesh->triangles.color;
 
   gmsh::initialize();
   // HXT_INFO("gmsh: merge the file %s", myGeoFile);
