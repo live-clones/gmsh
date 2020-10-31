@@ -91,6 +91,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".iges")     return FORMAT_IGES;
   else if(ext == ".igs")      return FORMAT_IGES;
   else if(ext == ".neu")      return FORMAT_NEU;
+  else if(ext == ".xmt_txt")  return FORMAT_XMT;
   else                        return -1;
 }
 
@@ -148,6 +149,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_IGES:    name = ".iges"; break;
   case FORMAT_STEP:    name = ".step"; break;
   case FORMAT_NEU:     name = ".neu"; mesh = true; break;
+  case FORMAT_XMT:     name = ".xmt_txt"; break;
   default:             name = ""; break;
   }
   if(onlyMeshFormats && !mesh) return "";
@@ -229,19 +231,28 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
         }
       }
     }
+    int xmin = 10000000, ymin = 10000000;
+    for(std::size_t i = 0; i < g->gl.size(); i++){
+      xmin = std::min(xmin, g->gl[i]->x());
+      ymin = std::min(ymin, g->gl[i]->y());
+    }
     int ww = 0, hh = 0;
     std::vector<PixelBuffer*> buffers;
     for(std::size_t i = 0; i < g->gl.size(); i++){
       openglWindow::setLastHandled(g->gl[i]);
-      buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(), format, type);
+      buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(),
+                               format, type);
       buffer->fill(CTX::instance()->batch);
       buffers.push_back(buffer);
-      ww = std::max(ww, g->gl[i]->x() + g->gl[i]->pixel_w());
-      hh = std::max(hh, g->gl[i]->y() + g->gl[i]->pixel_h());
+      int fact = g->gl[i]->getDrawContext()->isHighResolution() ? 2 : 1;
+      ww = std::max(ww, fact * (g->gl[i]->x() - xmin) + g->gl[i]->pixel_w());
+      hh = std::max(hh, fact * (g->gl[i]->y() - ymin) + g->gl[i]->pixel_h());
     }
     buffer = new PixelBuffer(ww, hh, format, type);
     for(std::size_t i = 0; i < g->gl.size(); i++){
-      buffer->copyPixels(g->gl[i]->x(), hh - g->gl[i]->h() - g->gl[i]->y(),
+      int fact = g->gl[i]->getDrawContext()->isHighResolution() ? 2 : 1;
+      buffer->copyPixels(fact * (g->gl[i]->x() - xmin),
+                         hh - g->gl[i]->pixel_h() - fact * (g->gl[i]->y() - ymin),
                          buffers[i]);
       delete buffers[i];
     }
@@ -457,16 +468,31 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
   case FORMAT_BREP:
-    GModel::current()->writeOCCBREP(name);
+    if(GModel::current()->getOCCInternals())
+      GModel::current()->writeOCCBREP(name);
+    else
+      Msg::Error("No OpenCASCADE CAD data found for BREP export");
     break;
 
   case FORMAT_STEP:
-    GModel::current()->writeOCCSTEP(name);
+    if(GModel::current()->getParasolidInternals())
+      GModel::current()->writeParasolidSTEP(name);
+    else if(GModel::current()->getOCCInternals())
+      GModel::current()->writeOCCSTEP(name);
+    else
+      Msg::Error("No suitable CAD data found for STEP export");
     break;
 
   case FORMAT_NEU:
     GModel::current()->writeNEU
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+    break;
+
+  case FORMAT_XMT:
+    if(GModel::current()->getParasolidInternals())
+      GModel::current()->writeParasolidXMT(name);
+    else
+      Msg::Error("No Parasolid CAD data found for XMT export");
     break;
 
 #if defined(HAVE_FLTK)

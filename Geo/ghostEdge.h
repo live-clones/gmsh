@@ -14,13 +14,13 @@
 
 class ghostEdge : public discreteEdge {
 private:
-  unsigned int _partition;
-  std::map<MElement *, unsigned int> _ghostCells;
+  int _partition;
+  std::map<MElement *, int> _ghostCells;
   bool _saveMesh;
   bool _haveMesh;
 
 public:
-  ghostEdge(GModel *model, const int num, const unsigned int partition)
+  ghostEdge(GModel *model, const int num, const int partition)
     : discreteEdge(model, num, NULL, NULL), _partition(partition),
       _ghostCells(), _saveMesh(false), _haveMesh(false)
   {
@@ -33,32 +33,32 @@ public:
     }
   }
   virtual GeomType geomType() const { return GhostCurve; }
-  virtual void setPartition(const unsigned int partition)
+  virtual void setPartition(const int partition)
   {
     _partition = partition;
   }
-  virtual unsigned int getPartition() const { return _partition; }
+  virtual int getPartition() const { return _partition; }
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
-  virtual std::map<MElement *, unsigned int> &getGhostCells()
+  virtual std::map<MElement *, int> &getGhostCells()
   {
     return _ghostCells;
   }
 
-  void addLine(MLine *l, unsigned int onWhichPartition)
+  void addLine(MLine *l, int onWhichPartition)
   {
     GEdge::addLine(l);
     _ghostCells.insert(
-      std::pair<MElement *, unsigned int>(l, onWhichPartition));
+      std::pair<MElement *, int>(l, onWhichPartition));
     model()->addGhostCells(l, _partition);
   }
-  void addElement(int type, MElement *e, unsigned int onWhichPartition)
+  void addElement(int type, MElement *e, int onWhichPartition)
   {
     GEdge::addElement(type, e);
     _ghostCells.insert(
-      std::pair<MElement *, unsigned int>(e, onWhichPartition));
+      std::pair<MElement *, int>(e, onWhichPartition));
     model()->addGhostCells(e, _partition);
   }
 

@@ -14,15 +14,16 @@
 #include "STensor3.h"
 #include "BackgroundMesh3D.h"
 #include "GEntity.h"
+#include "GFace.h"
 #include "rtree.h"
 
 static const double k1 = 0.61; // k1*h is the minimal distance between two nodes
 static const double k2 = 0.5; // k2*h is the minimal distance to the boundary
 static const double sqrt3 = 1.73205081;
-static const double FACTOR = .71;
+static const double FACTOR = .81;
 
-static const int NUMDIR = 1;
-static const double DIRS[NUMDIR] = {0.0};
+//static const int NUMDIR = 1;
+//static const double DIRS[NUMDIR] = {0.0};
 
 // static const int NUMDIR = 3;
 // static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
@@ -30,11 +31,11 @@ static const double DIRS[NUMDIR] = {0.0};
 class surfacePointWithExclusionRegion {
 public:
   MVertex *_v;
+  MVertex *_father;
   SPoint2 _center;
-  SPoint2 _p[4][NUMDIR];
+  SPoint2 _p[4];
   SPoint2 _q[4];
   SMetric3 _meshMetric;
-  double _distanceSummed;
   /*
      + p3
      p4   |
@@ -43,11 +44,11 @@ public:
      + p1
 
    */
-  surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[4][NUMDIR],
+  surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[8],
                                   SPoint2 &_mp, SMetric3 &meshMetric,
                                   surfacePointWithExclusionRegion *father = 0);
 
-  bool inExclusionZone(const SPoint2 &p);
+  bool inExclusionZone(const SPoint2 &p, MVertex *v);
   void minmax(double _min[2], double _max[2]) const;
   void print(FILE *f, int i);
 };
@@ -55,47 +56,18 @@ public:
 class my_wrapper {
 public:
   bool _tooclose;
+  MVertex *_parent;
   SPoint2 _p;
-  my_wrapper(const SPoint2 &sp);
+  my_wrapper(const SPoint2 &sp, MVertex *parent) :
+  _p(sp), _parent(parent), _tooclose(false){}
 };
 
-struct smoothness_point_pair {
-  double rank;
-  surfacePointWithExclusionRegion *ptr;
-};
+ bool rtree_callback(surfacePointWithExclusionRegion *neighbour,
+		     void *point);
 
-class compareSurfacePointWithExclusionRegionPtr_Smoothness {
-public:
-  inline bool operator()(const smoothness_point_pair &a,
-                         const smoothness_point_pair &b) const
-  {
-    if(a.rank == b.rank) {
-      if(a.ptr->_distanceSummed > b.ptr->_distanceSummed) return false;
-      if(a.ptr->_distanceSummed < b.ptr->_distanceSummed) return true;
-      return a.ptr < b.ptr;
-    }
-    return (a.rank < b.rank);
-  }
-};
-
-class compareSurfacePointWithExclusionRegionPtr {
-public:
-  inline bool operator()(const surfacePointWithExclusionRegion *a,
-                         const surfacePointWithExclusionRegion *b) const
-  {
-    if(a->_distanceSummed > b->_distanceSummed) return false;
-    if(a->_distanceSummed < b->_distanceSummed) return true;
-    return a < b;
-  }
-};
-
-extern bool rtree_callback(surfacePointWithExclusionRegion *neighbour,
-                           void *point);
-
-extern bool inExclusionZone(
-  SPoint2 &p,
-  RTree<surfacePointWithExclusionRegion *, double, 2, double> &rtree,
-  std::vector<surfacePointWithExclusionRegion *> &all);
+bool inExclusionZone(MVertex *parent,
+		     SPoint2 &p,
+		     RTree<surfacePointWithExclusionRegion *, double, 2, double> &rtree);
 
 class Wrapper3D {
 private:

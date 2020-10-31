@@ -6,8 +6,9 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <set>
+#include <cmath>
 #include <gmsh.h>
-#include <math.h>
 
 int main(int argc, char **argv)
 {
@@ -29,7 +30,10 @@ int main(int argc, char **argv)
   // We first classify ("color") the surfaces by splitting the original surface
   // along sharp geometrical features. This will create new discrete surfaces,
   // curves and points.
-  double angle = 40; // Angle for surface detection
+
+
+  // Angle between two triangles above which an edge is considered as sharp:
+  double angle = 40;
 
   // For complex geometries, patches can be too complex, too elongated or too
   // large to be parametrized; setting the following option will force the
@@ -54,7 +58,7 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > s;
   gmsh::model::getEntities(s, 2);
   std::vector<int> sl;
-  for(std::size_t i = 0; i < s.size(); i++) sl.push_back(s[i].second);
+  for(auto surf : s) sl.push_back(surf.second);
   int l = gmsh::model::geo::addSurfaceLoop(sl);
   gmsh::model::geo::addVolume({l});
 
@@ -71,7 +75,9 @@ int main(int argc, char **argv)
 
   gmsh::model::mesh::generate(3);
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

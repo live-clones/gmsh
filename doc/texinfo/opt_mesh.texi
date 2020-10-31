@@ -106,6 +106,11 @@ Compute mesh element sizes from values given at geometry points@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.CharacteristicLengthFromParametricPoints
+Compute mesh element sizes from values given at geometry points defining parametric curves@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Clip
 Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
 Default value: @code{0}@*
@@ -151,13 +156,18 @@ Element shrinking factor (between 0 and 1)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.FlexibleTransfinite
-Allow transfinite constraints to be modified for Blossom or by global mesh size factor@*
-Default value: @code{0}@*
+@item Mesh.FirstElementTag
+First tag (>= 1) of mesh elements@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.NewtonConvergenceTestXYZ
-Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)@*
+@item Mesh.FirstNodeTag
+First tag (>= 1) of mesh nodes@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.FlexibleTransfinite
+Allow transfinite constraints to be modified for recombination (e.g. Blossom) or by global mesh size factor@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -169,6 +179,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Hexahedra
 Display mesh hexahedra?@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderDistCAD
+Try to optimize distance to CAD in high-order optimizer?@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderIterMax
@@ -201,13 +216,13 @@ Poisson ratio of the material used in the elastic smoother for high-order meshes
 Default value: @code{0.33}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderPrimSurfMesh
-Try to fix flipped surface mesh elements in high-order optimizer?@*
+@item Mesh.HighOrderSavePeriodic
+Save high-order nodes in periodic section of MSH files?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderDistCAD
-Try to optimize distance to CAD in high-order optimizer?@*
+@item Mesh.HighOrderPrimSurfMesh
+Try to fix flipped surface mesh elements in high-order optimizer?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -436,6 +451,11 @@ Write partitioned meshes in MSH2 format using old style (i.e. by not referencing
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.ReparamMaxTriangles
+Maximum number of triangles in a single parametrization patch@*
+Default value: @code{250000}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.NbHexahedra
 Number of hexahedra in the current mesh (read-only)@*
 Default value: @code{0}@*
@@ -480,6 +500,11 @@ Saved in: @code{-}
 Number of triangles in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
+
+@item Mesh.NewtonConvergenceTestXYZ
+Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Normals
 Display size of normal vectors (in pixels)@*
@@ -591,9 +616,14 @@ Preserve element numbering in MSH2 format (will break meshes with multiple physi
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.IgnorePeriodicity
-Ignore alignment of periodic boundaries when reading the mesh in MSH2 format (used by ParaView plugin)@*
+@item Mesh.IgnoreParametrization
+Skip parametrization section when reading meshes in the MSH4 format.@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.IgnorePeriodicity
+Skip periodic node section and skip periodic boundary alignement step when reading meshes in the MSH2 format.@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombinationAlgorithm
@@ -637,7 +667,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveAll
-Save all elements, even if they don't belong to physical groups@*
+Save all elements, even if they don't belong to physical groups (for some mesh formats, this removes physical groups altogether)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 

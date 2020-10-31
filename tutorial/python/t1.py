@@ -9,6 +9,7 @@
 # The Python API is entirely defined in the `gmsh.py' module (which contains the
 # full documentation of all the functions in the API):
 import gmsh
+import sys
 
 # Before using any functions in the Python API, Gmsh must be initialized:
 gmsh.initialize()
@@ -21,12 +22,12 @@ gmsh.option.setNumber("General.Terminal", 1)
 # unnamed model will be created on the fly, if necessary):
 gmsh.model.add("t1")
 
-# The Python API provides direct access to each supported geometry kernel. The
-# built-in kernel is used in this first tutorial: the corresponding API
-# functions have the `gmsh.model.geo' prefix.
+# The Python API provides direct access to each supported geometry (CAD)
+# kernel. The built-in kernel is used in this first tutorial: the corresponding
+# API functions have the `gmsh.model.geo' prefix.
 
 # The first type of `elementary entity' in Gmsh is a `Point'. To create a point
-# with the built-in geometry kernel, the Python API function is
+# with the built-in CAD kernel, the Python API function is
 # gmsh.model.geo.addPoint():
 # - the first 3 arguments are the point coordinates (x, y, z)
 # - the next (optional) argument is the target mesh size (the "characteristic
@@ -75,7 +76,7 @@ gmsh.model.geo.addLine(4, 1, p4)
 # to be defined. A curve loop is defined by an ordered list of connected curves,
 # a sign being associated with each curve (depending on the orientation of the
 # curve to form a loop). The API function to create curve loops takes a list
-# of integers as first argument, and the curve loop tag (which must ne unique
+# of integers as first argument, and the curve loop tag (which must be unique
 # amongst curve loops) as the second (optional) argument:
 gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 
@@ -83,6 +84,16 @@ gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 # representing the external contour, since there are no holes--see `t4.py' for
 # an example of a surface with a hole):
 gmsh.model.geo.addPlaneSurface([1], 1)
+
+# Before they can be meshed (and, more generally, before they can be used by API
+# functions outside of the built-in CAD kernel functions), the CAD entities must
+# be synchronized with the Gmsh model, which will create the relevant Gmsh data
+# structures. This is achieved by the gmsh.model.geo.synchronize() API call for
+# the built-in CAD kernel. Synchronizations can be called at any time, but they
+# involve a non trivial amount of processing; so while you could synchronize the
+# internal CAD data after every CAD command, it is usually better to minimize
+# the number of synchronization points.
+gmsh.model.geo.synchronize()
 
 # At this level, Gmsh knows everything to display the rectangular surface 1 and
 # to mesh it. An optional step is needed if we want to group elementary
@@ -105,15 +116,6 @@ gmsh.model.addPhysicalGroup(1, [1, 2, 4], 5)
 ps = gmsh.model.addPhysicalGroup(2, [1])
 gmsh.model.setPhysicalName(2, ps, "My surface")
 
-# Before it can be meshed, the internal CAD representation must be synchronized
-# with the Gmsh model, which will create the relevant Gmsh data structures. This
-# is achieved by the gmsh.model.geo.synchronize() API call for the built-in
-# geometry kernel. Synchronizations can be called at any time, but they involve
-# a non trivial amount of processing; so while you could synchronize the
-# internal CAD data after every CAD command, it is usually better to minimize
-# the number of synchronization points.
-gmsh.model.geo.synchronize()
-
 # We can then generate a 2D mesh...
 gmsh.model.mesh.generate(2)
 
@@ -135,24 +137,26 @@ gmsh.write("t1.msh")
 # will save the mesh in the UNV format. You can also save the mesh in older
 # versions of the MSH format: simply set
 #
-#   gmsh.option.setString("Mesh.MshFileVersion", "x.y")
+#   gmsh.option.setNumber("Mesh.MshFileVersion", x)
 #
-# for any version number `x.y'. As an alternative, you can also not specify the
+# for any version number `x'. As an alternative, you can also not specify the
 # format explicitly, and just choose a filename with the `.msh2' or `.msh4'
 # extension.
 
-# To visualize the model we could run the graphical user interface with:
-#
-# gmsh.fltk.run()
+# To visualize the model we can run the graphical user interface with
+# `gmsh.fltk.run()'. Here we run it only if the "-nopopup" is not provided in
+# the command line arguments:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 # Note that starting with Gmsh 3.0, models can be built using other geometry
-# kernels than the default "built-in" kernel. To use the OpenCASCADE geometry
-# kernel instead of the built-in kernel, you should use the functions with the
+# kernels than the default "built-in" kernel. To use the OpenCASCADE CAD kernel
+# instead of the built-in kernel, you should use the functions with the
 # `gmsh.model.occ' prefix.
 #
-# Different geometry kernels have different features. With OpenCASCADE, instead
-# of defining the surface by successively defining 4 points, 4 curves and 1
-# curve loop, one can define the rectangular surface directly with
+# Different CAD kernels have different features. With OpenCASCADE, instead of
+# defining the surface by successively defining 4 points, 4 curves and 1 curve
+# loop, one can define the rectangular surface directly with
 #
 # gmsh.model.occ.addRectangle(.2, 0, 0, .1, .3)
 #

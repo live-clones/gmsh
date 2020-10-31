@@ -239,7 +239,7 @@ std::string GMSH_CutParametricPlugin::getHelp() const
          "If `ConnectPoints' is set, the plugin creates surface or line "
          "elements; otherwise, the plugin generates points.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(CutParametric) creates one new view.";
+         "Plugin(CutParametric) creates one new list-based view.";
 }
 
 int GMSH_CutParametricPlugin::getNbOptions() const

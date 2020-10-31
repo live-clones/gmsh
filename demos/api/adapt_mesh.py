@@ -58,9 +58,16 @@ print("Usage: adapt_mesh [intial lc] [target #elements] [dump files]")
 lc = 0.02
 N = 10000
 dumpfiles = False
-if len(sys.argv) > 1: lc = float(sys.argv[1])
-if len(sys.argv) > 2: N = int(sys.argv[2])
-if len(sys.argv) > 3: dumpfiles = int(sys.argv[3])
+gui = True
+
+argv = sys.argv
+if '-nopopup' in sys.argv:
+    gui = False
+    argv.remove('-nopopup')
+
+if len(argv) > 1: lc = float(sys.argv[1])
+if len(argv) > 2: N = int(sys.argv[2])
+if len(argv) > 3: dumpfiles = int(sys.argv[3])
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -123,6 +130,7 @@ gmsh.view.addModelData(err2_view, 0, "square2", "ElementData",
 if dumpfiles: gmsh.view.write(err2_view, "err2.pos")
 
 # show everything in the gui
-gmsh.fltk.run()
+if gui:
+    gmsh.fltk.run()
 
 gmsh.finalize()

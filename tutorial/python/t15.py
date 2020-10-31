@@ -15,6 +15,7 @@
 # dimensional entities.
 
 import gmsh
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -46,8 +47,8 @@ gmsh.model.geo.synchronize()
 # `embed()' function:
 gmsh.model.mesh.embed(0, [5], 2, 1)
 
-# In the same way, one use `embed()' to force a curve to be embedded in the 2D
-# mesh:
+# In the same way, one can use `embed()' to force a curve to be embedded in the
+# 2D mesh:
 gmsh.model.geo.addPoint(0.02, 0.12, 0., lc, 6)
 gmsh.model.geo.addPoint(0.04, 0.18, 0., lc, 7)
 gmsh.model.geo.addLine(6, 7, 5)
@@ -86,8 +87,17 @@ s = gmsh.model.geo.addPlaneSurface([ll])
 gmsh.model.geo.synchronize()
 gmsh.model.mesh.embed(2, [s], 3, 1)
 
+# Note that with the OpenCASCADE kernel (see `t16.py'), when the `fragment()'
+# function is applied to entities of different dimensions, the lower dimensional
+# entities will be autmatically embedded in the higher dimensional entities if
+# necessary.
+
 gmsh.model.mesh.generate(3)
 
 gmsh.write("t15.msh")
+
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

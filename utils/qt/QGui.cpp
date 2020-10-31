@@ -6,8 +6,9 @@
 #include <QtGui>
 #include <QWidget>
 #include <QSlider>
-#include "QGui.h"
+
 #include "graphicWindow.h"
+#include "QGui.h"
 
 class drawContextQt : public drawContextGlobal{
  public:

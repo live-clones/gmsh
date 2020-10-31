@@ -68,7 +68,11 @@ typedef enum
 #define HXT_ERROR(status)             HXT_ERROR_MSG(status,NULL)
 
 /* give trace message if status is not OK, but does not return */
+#ifdef NDEBUG
+#define HXT_TRACE_MSG(status, ...)    (void)0 // do nothing
+#else
 #define HXT_TRACE_MSG(status, ...)    hxtMessageTraceError(status, __func__, __FILE__, STRINGIFY(__LINE__), ## __VA_ARGS__ )
+#endif
 #define HXT_TRACE(status)             HXT_TRACE_MSG(status, NULL)
 
 /* give trace message and return the error status if not ok */
@@ -133,7 +137,10 @@ HXTStatus  hxtSetMessageCallback (HXTStatus (*hxtMsgCallback)(HXTMessage* msg));
 HXTStatus  hxtMessageInfo       ( const char* func, const char* file, const char* line, const char *fmt, ...);
 HXTStatus  hxtMessageWarning    ( const char* func, const char* file, const char* line, const char *fmt, ...);
 HXTStatus  hxtMessageError      ( HXTStatus status, const char* func, const char* file, const char* line, const char *fmt, ...);
+
+#ifndef NDEBUG
 HXTStatus  hxtMessageTraceError ( HXTStatus status, const char* func, const char* file, const char* line, const char *fmt, ...);
+#endif
 
 #ifdef __cplusplus
 }

@@ -24,10 +24,12 @@
 #include "GEntity.h"
 #include "StringUtils.h"
 #include "Numeric.h"
+#include "nodalBasis.h"
 #include "CondNumBasis.h"
 #include "Context.h"
 #include "FuncSpaceData.h"
 #include "bezierBasis.h"
+#include "polynomialBasis.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasuresJacobian.h"
@@ -291,34 +293,6 @@ double MElement::minScaledJacobian(bool knownValid, bool reversedOK)
   return jacobianBasedQuality::minIGEMeasure(this, knownValid, reversedOK);
 #else
   return 0.;
-#endif
-}
-
-double MElement::specialQuality()
-{
-#if defined(HAVE_MESH)
-  double minJ, maxJ;
-  jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
-  if(minJ <= 0.) return minJ;
-  //  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
-  //  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
-  return jacobianBasedQuality::minICNMeasure(this, true);
-#else
-  return 0;
-#endif
-}
-
-double MElement::specialQuality2()
-{
-#if defined(HAVE_MESH)
-  double minJ, maxJ;
-  jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
-  if(minJ <= 0.) return minJ;
-  //  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
-  //  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
-  return jacobianBasedQuality::minIGEMeasure(this, true);
-#else
-  return 0;
 #endif
 }
 
@@ -794,14 +768,11 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
 {
   double dJ = 0;
 
-  /**
-   * 'jac' is a row-major order array :
-   *
-   *  |0 1 2|
-   *  |3 4 5|
-   *  |6 7 8|
-   *
-   */
+  // 'jac' is a row-major order array :
+  //
+  //  |0 1 2|
+  //  |3 4 5|
+  //  |6 7 8|
 
   switch(ele->getDim()) {
   case 0: {
@@ -950,6 +921,19 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf,
     }
   }
   return _computeDeterminantAndRegularize(this, jac);
+}
+
+double MElement::getJacobian(double u, double v, double w,
+                             fullMatrix<double> &j) const
+{
+  double JAC[3][3];
+  const double detJ = getJacobian(u, v, w, JAC);
+  for(int i = 0; i < 3; i++) {
+    j(i, 0) = JAC[i][0];
+    j(i, 1) = JAC[i][1];
+    j(i, 2) = JAC[i][2];
+  }
+  return detJ;
 }
 
 double MElement::getPrimaryJacobian(double u, double v, double w,
@@ -2359,6 +2343,13 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
     if(name) *name = "Unknown";
     return -1;
   }
+}
+
+std::string MElement::getName()
+{
+  const char *name;
+  MElement::getInfoMSH(getTypeForMSH(), &name);
+  return name;
 }
 
 void MElement::getVerticesIdForMSH(std::vector<int> &verts)

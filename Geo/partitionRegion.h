@@ -11,12 +11,12 @@
 
 class partitionRegion : public discreteRegion {
 private:
-  std::vector<unsigned int> _partitions;
+  std::vector<int> _partitions;
   GEntity *_parentEntity;
 
 public:
   partitionRegion(GModel *model, int num,
-                  const std::vector<unsigned int> &partitions)
+                  const std::vector<int> &partitions)
     : discreteRegion(model, num), _partitions(partitions), _parentEntity(NULL)
   {
   }
@@ -25,7 +25,7 @@ public:
   {
   }
   partitionRegion(GModel *model,
-                  const std::vector<unsigned int> &partitions)
+                  const std::vector<int> &partitions)
     : discreteRegion(model), _partitions(partitions), _parentEntity(NULL)
   {
   }
@@ -33,19 +33,19 @@ public:
   virtual GeomType geomType() const { return PartitionVolume; }
   virtual void setParentEntity(GEntity *r) { _parentEntity = r; }
   virtual GEntity *getParentEntity() { return _parentEntity; }
-  virtual void setPartitions(std::vector<unsigned int> &partitions)
+  virtual void setPartitions(std::vector<int> &partitions)
   {
     _partitions = partitions;
   }
-  virtual const std::vector<unsigned int> &getPartitions() const
+  virtual const std::vector<int> &getPartitions() const
   {
     return _partitions;
   }
-  virtual unsigned int getPartition(unsigned int index) const
+  virtual int getPartition(std::size_t index) const
   {
     return _partitions[index];
   }
-  virtual unsigned int numPartitions() const { return _partitions.size(); }
+  virtual std::size_t numPartitions() const { return _partitions.size(); }
 };
 
 struct Less_partitionRegion
@@ -54,7 +54,7 @@ struct Less_partitionRegion
   {
     if(e1->numPartitions() < e2->numPartitions()) return true;
     if(e1->numPartitions() > e2->numPartitions()) return false;
-    for(unsigned int i = 0; i < e1->numPartitions(); i++) {
+    for(std::size_t i = 0; i < e1->numPartitions(); i++) {
       if(e1->getPartition(i) < e2->getPartition(i)) return true;
       if(e1->getPartition(i) > e2->getPartition(i)) return false;
     }

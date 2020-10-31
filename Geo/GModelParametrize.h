@@ -15,5 +15,10 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
 void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
                              bool addBoundary);
 int computeDiscreteCurvatures(GModel *gm);
+bool computeParametrization(const std::vector<MTriangle*> &triangles,
+                            std::vector<MVertex*> &nodes,
+                            std::vector<SPoint2> &stl_vertices_uv,
+                            std::vector<SPoint3> &stl_vertices_xyz,
+                            std::vector<int> &stl_triangles);
 
 #endif

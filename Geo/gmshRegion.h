@@ -11,17 +11,17 @@
 class Volume;
 
 class gmshRegion : public GRegion {
-protected:
-  ::Volume *v;
+private:
+  ::Volume *_v;
 
 public:
-  gmshRegion(GModel *m, ::Volume *_v);
+  gmshRegion(GModel *m, ::Volume *v);
   virtual ~gmshRegion() {}
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return v; }
+  void *getNativePtr() const { return _v; }
   virtual void resetMeshAttributes();
-  void resetNativePtr(::Volume *_v);
+  void resetNativePtr(::Volume *v);
 };
 
 #endif

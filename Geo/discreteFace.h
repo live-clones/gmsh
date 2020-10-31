@@ -35,6 +35,7 @@ private:
   param _param;
   void _createGeometryFromSTL();
   void _computeSTLNormals();
+  void _debugParametrization(bool uv);
 public:
   discreteFace(GModel *model, int num);
   discreteFace(GModel *model);
@@ -56,12 +57,10 @@ public:
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
-  int createGeometry();
+  int  createGeometry();
+  void createGeometryFromTriangulation(std::vector<MTriangle*> &__triangles);
   virtual bool haveParametrization() { return !_param.empty(); }
   virtual void mesh(bool verbose);
-  void setBoundEdges(const std::vector<int> &tagEdges);
-  void setBoundEdges(const std::vector<int> &tagEdges,
-                     const std::vector<int> &signEdges);
   int trianglePosition(double par1, double par2, double &u, double &v) const;
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
                                 const SVector3 &p, const double &R,

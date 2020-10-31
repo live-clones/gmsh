@@ -85,7 +85,7 @@ static void computeShapeFunctions(fullMatrix<double> *coeffs,
   \left(1-\zeta\right)^{max(i,j)}
   \mathcal P^{2 max(i,j),0}_k \left(2 \zeta -1\right)~|~i,j \leq p, k \leq p -
   max(i,j) \f$ and hence by the "monomials" \f$ \mu_{ijk} = \left(\frac{\xi
-  }{\1-\zeta}\right)^i \left(\frac{\eta}{\1-\zeta}\right)^j
+  }{1-\zeta}\right)^i \left(\frac{\eta}{1-\zeta}\right)^j
   \left(1-\zeta\right)^{max(i,j)} \zeta^k~|~i,j \leq p~,~k \leq p-max(i,j)
   \f$
 */

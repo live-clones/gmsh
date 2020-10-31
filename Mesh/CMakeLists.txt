@@ -15,11 +15,12 @@ set(SRC
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGFaceHxt.cpp meshGRegionNetgen.cpp
     meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp
-    meshGRegionExtruded.cpp meshGRegionCarveHole.cpp 
-    meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
+    meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
+    meshGRegionLocalMeshMod.cpp meshGRegionMMG.cpp
   meshGRegionBoundaryLayer.cpp
   meshRelocateVertex.cpp
   meshMetric.cpp
+  meshWinslow2d.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp
   BoundaryLayers.cpp
@@ -33,6 +34,10 @@ set(SRC
   filterElements.cpp
   gmshCrossFields.cpp
   automaticMeshSizeField.cpp
+  fastScaledCrossField.cpp
+  meshQuadQuasiStructured.cpp
+  conformalMapping.cpp
+  meshQuadPatterns.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

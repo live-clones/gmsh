@@ -70,6 +70,7 @@ public:
 
   void del(BDS_Edge *e)
   {
+    if(edges.empty()) return;
     edges.erase(std::remove(edges.begin(), edges.end(), e), edges.end());
   }
   std::vector<BDS_Face *> getTriangles() const;
@@ -112,16 +113,19 @@ public:
   {
     if(p1 == other->p1 || p1 == other->p2) return p1;
     if(p2 == other->p1 || p2 == other->p2) return p2;
+    Msg::Error("Edge %d %d has no common node with edge %d %d",
+               p1->iD, p2->iD, other->p1->iD, other->p2->iD);
     return 0;
   }
   BDS_Point *othervertex(const BDS_Point *p) const
   {
     if(p1 == p) return p2;
     if(p2 == p) return p1;
-    return NULL;
+    Msg::Error("Edge %d %d does not contain node %d", p1->iD, p2->iD, p->iD);
+    return 0;
   }
   void addface(BDS_Face *f) { _faces.push_back(f); }
-  bool operator<(const BDS_Edge &other) const
+  bool operator < (const BDS_Edge &other) const
   {
     if(*other.p1 < *p1) return true;
     if(*p1 < *other.p1) return false;
@@ -131,17 +135,18 @@ public:
   BDS_Face *otherFace(const BDS_Face *f) const
   {
     if(numfaces() != 2) {
-      Msg::Error("otherFace wrong, ony %d faces attached to edge %d %d",
-                 numfaces(), p1->iD, p2->iD);
+      Msg::Error("%d face(s) attached to edge %d %d", numfaces(),
+                 p1->iD, p2->iD);
       return 0;
     }
     if(f == _faces[0]) return _faces[1];
     if(f == _faces[1]) return _faces[0];
-    Msg::Error("otherFace wrong: the edge does not belong to the face");
+    Msg::Error("Edge %d %d does not belong to the face", p1->iD, p2->iD);
     return 0;
   }
   void del(BDS_Face *t)
   {
+    if(_faces.empty()) return;
     _faces.erase(std::remove_if(_faces.begin(), _faces.end(),
                                 std::bind2nd(std::equal_to<BDS_Face *>(), t)),
                  _faces.end());
@@ -165,48 +170,51 @@ public:
     e3->addface(this);
     if(e4) e4->addface(this);
   }
-
   int numEdges() const { return e4 ? 4 : 3; }
   BDS_Edge *oppositeEdge(BDS_Point *p)
   {
     if(e4) {
-      Msg::Error("oppositeEdge to point %d cannot be applied to a quad", p->iD);
+      Msg::Error("Opposite edge to point %d cannot be found for quad", p->iD);
       return 0;
     }
     if(e1->p1 != p && e1->p2 != p) return e1;
     if(e2->p1 != p && e2->p2 != p) return e2;
     if(e3->p1 != p && e3->p2 != p) return e3;
-    Msg::Error("point %d does not belong to this triangle", p->iD);
+    Msg::Error("Point %d does not belong to this triangle", p->iD);
     return 0;
   }
   BDS_Point *oppositeVertex(BDS_Edge *e)
   {
     if(e4) {
-      Msg::Error("oppositeVertex to edge %d %d cannot be applied to a quad",
+      Msg::Error("Opposite point to edge %d %d cannot be found for quad",
                  e->p1->iD, e->p2->iD);
       return 0;
     }
     if(e == e1) return e2->commonvertex(e3);
     if(e == e2) return e1->commonvertex(e3);
     if(e == e3) return e1->commonvertex(e2);
-    Msg::Error("edge  %d %d does not belong to this triangle", e->p1->iD,
+    Msg::Error("Edge %d %d does not belong to this triangle", e->p1->iD,
                e->p2->iD);
     return 0;
   }
-  inline void getNodes(BDS_Point *_n[4]) const
+  inline bool getNodes(BDS_Point *_n[4]) const
   {
     if(!e4) {
       _n[0] = e1->commonvertex(e3);
       _n[1] = e1->commonvertex(e2);
       _n[2] = e2->commonvertex(e3);
       _n[3] = 0;
+      if(_n[0] && _n[1] && _n[2]) return true;
     }
     else {
       _n[0] = e1->commonvertex(e4);
       _n[1] = e1->commonvertex(e2);
       _n[2] = e2->commonvertex(e3);
       _n[3] = e3->commonvertex(e4);
+      if(_n[0] && _n[1] && _n[2] && _n[3]) return true;
     }
+    Msg::Error("Invalid points in face");
+    return false;
   }
 
 public:

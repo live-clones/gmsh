@@ -16,6 +16,10 @@ extern "C" {
 #include "hxt_message.h"
 #include <string.h>
 #include <stdint.h>
+#include <math.h>
+#ifndef M_PI
+  #define M_PI 3.14159265358979323846264338327950
+#endif // !M_PI
 
 /* define SIMD ALIGNMENT */
 #ifndef SIMD_ALIGN

@@ -19,6 +19,34 @@
  * See contrib/QuadMeshingTools/README.md for a more detailed description */
 
 namespace QMT {
+  /* tempory solution to avoid initialization of gmsh api in each function that use
+   * the api (risk of crash if not initialized) */
+  extern bool gmsh_api_initialized;
+  void initialize_gmsh_api_if_necessary();
+
+  /**
+   * @brief Fill the triangular mesh M from the gmsh mesh in the model meshName
+   *
+   * @warning this function calls the gmsh API
+   * @param[in] meshName name of the model containing the mesh in gmsh, ignored if equals to "current"
+   * @param[out] M Output mesh containing lines and triangles
+   * @param[in] compute_adjacencies Fill the neighborhood datastructures
+   * @param[in] add_missing_non_manifold_lines If compute_adjacencies and a non-manifold edge is not in lines, add it
+   * @return True if the import succeed
+   */
+  bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M, 
+      bool compute_adjacencies = false, bool add_missing_non_manifold_lines = false);
+
+  /**
+   * @brief Fill the quad mesh M from the gmsh mesh in the model meshName
+   *
+   * @warning this function calls the gmsh API
+   * @param[in] meshName name of the model containing the mesh in gmsh, ignored if equals to "current"
+   * @param[out] M Output mesh containing lines and qquads
+   * @param[in] compute_adjacencies Fill the neighborhood datastructures
+   * @return True if the import succeed
+   */
+  bool import_QMesh_from_gmsh(const std::string& meshName, QMesh& M, bool compute_adjacencies = true);
 
   /**
    * @brief Generate a quadrilateral mesh (type QMesh) from a colored triangulation. Each
@@ -84,19 +112,9 @@ namespace QMT {
       const BoundaryProjector* projector = NULL);
 
   /**
-   * @brief Compute a cross field (one cross per edge) with the successive heat diffusion 
-   * and projection. See the README.md for more details. Very fast if MUMPS is enabled.
-   *
-   * @param[in] meshName Name of the gmsh model that contains the triangulation used for the computation
-   * @param[out] crossFieldTag Index of the view that will contains the generated cross field
-   * @param[in] nbSteps Number of timesteps in the scheme. One timestep corresponds to a given diffusion length.
-   *                    Should be sufficient (>= 3) but not too much (<10) for fast computation. 
-   *                    nbSteps = 4 is a good trade-off.
-   * @param[in,out] edge_to_angle If not NULL, the function will fill the map with the cross angle (relative to the edge vector)
-   *                              for each edge [v1,v2] (with v1 < v2) of the triangulation.
-   * @param[in] bc_expansion_layers If non-zero, expand Dirichlet boundary conditions to adjacent layers of edges.
-   * @warning this function calls the gmsh API
-   * @return True if the computation succeed
+   * WARNING: deprecated, no longer available. 
+   * Can be replaced by compute_cross_field_with_multilevel_diffusion() combined
+   * with create_cross_field_theta_view()
    */
   bool compute_cross_field_with_heat(
       const std::string& meshName,
@@ -105,27 +123,15 @@ namespace QMT {
       std::map<std::pair<size_t,size_t>,double>* edge_to_angle = NULL,
       int bc_expansion_layers = 0);
 
-
-  /**
-   * @brief Fill the triangular mesh M from the gmsh mesh in the model meshName
-   *
-   * @warning this function calls the gmsh API
-   * @param[in] meshName name of the model containing the mesh in gmsh, ignored if equals to "current"
-   * @param[out] M Output mesh containing lines and triangles
-   * @param[in] compute_adjacencies Fill the neighborhood datastructures
-   * @param[in] add_missing_non_manifold_lines If compute_adjacencies and a non-manifold edge is not in lines, add it
-   * @return True if the import succeed
-   */
-  bool import_TMesh_from_gmsh(const std::string& meshName, TMesh& M, bool compute_adjacencies = false,
-      bool add_missing_non_manifold_lines = false);
-
+  bool create_cross_field_theta_view(
+      const std::string& meshName,
+      const std::map<std::array<size_t,2>,double>& edgeTheta,
+      int& crossFieldTag);
 
 
   /****************************************************************************************/
   /******************************* prototypes, not ready **********************************/
   /****************************************************************************************/
-
-  bool import_QMesh_from_gmsh(const std::string& meshName, QMesh& M);
 
   bool fill_vertex_sizes_from_sizemap(QMesh& M, int sizemapTag, double size_uniform = 0.);
 
@@ -140,8 +146,34 @@ namespace QMT {
 
 
 
-  // TODO: verify this function, not sure if it works (see qmt cross field on smile2 model)
+  /* DataList view, only for visualization */
   bool create_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagH, bool viewIsModelData, const std::string& viewName, int& viewTag);
+
+  /* ModelData view, can be used for meshing */
+  bool create_per_triangle_scaled_cross_field_view(const std::string& meshName, int tagCrossField, int tagSizeMap, const std::string& viewName, int& viewTag);
+
+  bool convert_quad_mesh_to_tri_mesh(const QMesh& Q, TMesh& T);
+
+  bool simplify_quad_mesh_by_merging_irregular_vertices(
+      QMesh& M, 
+      int nb_collapse_max = -1,
+      const BoundaryProjector* projector = NULL);
+
+  /****************************************************************************************/
+  /* internal functions which are used in multiple QMT source files                       */
+  /****************************************************************************************/
+  bool compute_triangle_adjacencies(
+      const std::vector<id3>& triangles,
+      std::vector<sid3>& triangle_neighbors,
+      std::vector<std::vector<id>>& nm_triangle_neighbors,
+      std::vector<id2>& uIEdges,
+      std::vector<id>& old2IEdge,
+      std::vector<std::vector<id>>& uIEdgeToOld);
+
+  bool compute_quad_adjacencies(
+      const std::vector<id4>& quads,
+      std::vector<sid4>& quad_neighbors,
+      std::vector<std::vector<id>>& nm_quad_neighbors);
 
 }
 

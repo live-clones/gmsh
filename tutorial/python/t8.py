@@ -8,6 +8,7 @@
 
 import gmsh
 import os
+import sys
 
 # In addition to creating geometries and meshes, the Python API can also be used
 # to manipulate post-processing datasets (called "views" in Gmsh).
@@ -32,9 +33,9 @@ gmsh.model.geo.synchronize()
 
 # We merge some post-processing views to work on
 path = os.path.dirname(os.path.abspath(__file__))
-gmsh.merge(os.path.join(path, '..', 'view1.pos'))
-gmsh.merge(os.path.join(path, '..', 'view1.pos'))
-gmsh.merge(os.path.join(path, '..', 'view4.pos'))  # contains 2 views inside
+gmsh.merge(os.path.join(path, os.pardir, 'view1.pos'))
+gmsh.merge(os.path.join(path, os.pardir, 'view1.pos'))
+gmsh.merge(os.path.join(path, os.pardir, 'view4.pos'))  # contains 2 views inside
 
 # Gmsh can read post-processing views in various formats. Here the `view1.pos'
 # and `view4.pos' files are in the Gmsh "parsed" format, which is interpreted by
@@ -66,8 +67,9 @@ gmsh.option.setNumber("General.Orthographic", 0)
 gmsh.option.setNumber("General.Axes", 0)
 gmsh.option.setNumber("General.SmallAxes", 0)
 
-# Show the GUI
-gmsh.fltk.initialize()
+# Show the GUI:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.initialize()
 
 # We also set some options for each post-processing view:
 
@@ -191,5 +193,7 @@ for num in range(1, 4):
         # subprocess.call(call_ffmpeg1.split(' '))
         # subprocess.call(call_ffmpeg2.split(' '))
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
 gmsh.finalize()

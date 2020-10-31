@@ -11,7 +11,9 @@
 
 #if defined(HAVE_HXT)
 extern "C" {
+#include "hxt_message.h"
 #include "hxt_mesh.h"
+#include <stdint.h>
 }
 #endif
 
@@ -24,21 +26,21 @@ HXTStatus hxtGmshMsgCallback(HXTMessage *msg);
 int meshGRegionHxt(std::vector<GRegion *> &regions);
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
 		   HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v);
 
 HXTStatus Gmsh2Hxt(GModel *gm,
 		   HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v);
 
 HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v);
   
 
 HXTStatus Hxt2Gmsh(GModel *gm, HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
+		   std::map<MVertex *, uint32_t> &v2c,
 		   std::vector<MVertex *> &c2v);
 
 #endif

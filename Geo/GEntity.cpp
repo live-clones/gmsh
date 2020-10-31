@@ -57,6 +57,7 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
   switch(getNativeType()) {
   case OpenCascadeModel: sstream << " (OCC)"; break;
   case AcisModel: sstream << " (ACIS)"; break;
+  case ParasolidModel: sstream << " (Parasolid)"; break;
   default: break;
   }
 
@@ -266,9 +267,9 @@ void GEntity::copyMasterCoordinates()
       tv->z() = tgt[2];
     }
 
-    cvIter = correspondingHOPoints.begin();
+    cvIter = correspondingHighOrderVertices.begin();
 
-    for(; cvIter != correspondingHOPoints.end(); ++cvIter) {
+    for(; cvIter != correspondingHighOrderVertices.end(); ++cvIter) {
       MVertex *tv = cvIter->first;
       MVertex *sv = cvIter->second;
 

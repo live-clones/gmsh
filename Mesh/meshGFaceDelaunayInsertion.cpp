@@ -23,6 +23,8 @@
 #include "discreteFace.h"
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
+#include "meshWinslow2d.h"
+#include "fullMatrix.h"
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertion.h"
@@ -1460,7 +1462,7 @@ void buildBackgroundMesh(GFace *gf, bool crossFieldClosestPoint,
     int CurvControl = CTX::instance()->mesh.lcFromCurvature;
     CTX::instance()->mesh.lcFromCurvature = 0;
     // do a background mesh
-    bowyerWatson(gf, 40000, equivalence, parametricCoordinates);
+    bowyerWatson(gf, 4, equivalence, parametricCoordinates);
     // re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;
     // apply this to the BGM
@@ -1613,16 +1615,14 @@ void bowyerWatsonParallelograms(
   std::vector<SMetric3> metrics;
 
 #if defined(HAVE_DOMHEX)
-  if(old_algo_hexa())
     packingOfParallelograms(gf, packed, metrics);
-  else {
-    Filler2D f;
-    f.pointInsertion2D(gf, packed, metrics);
-  }
 #else
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
 
+  
+  Msg::Info("%lu Nodes created --> now staring insertion",packed.size());
+  
   if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)){
     Msg::Error("Invalid meshing data structure");
     return;
@@ -1665,80 +1665,19 @@ void bowyerWatsonParallelograms(
       }
     }
   }
-
+  //  //  if (gf->tag() == 3)
+  //    _printTris ("name.pos", AllTris.begin(), AllTris.end(), &DATA);
   transferDataStructure(gf, AllTris, DATA);
-  backgroundMesh::unset();
+  //  backgroundMesh::unset();
 
-  splitElementsInBoundaryLayerIfNeeded(gf);
-}
+  // pack is made for quads --> we do the quads taking into account
+  // the crossfield (i.e. edges that are aligned are preferred for combination)
 
-void bowyerWatsonParallelogramsConstrained(
-  GFace *gf, const std::set<MVertex *> &constr_vertices,
-  std::map<MVertex *, MVertex *> *equivalence,
-  std::map<MVertex *, SPoint2> *parametricCoordinates)
-{
-  std::set<MTri3 *, compareTri3Ptr> AllTris;
-  bidimMeshData DATA(equivalence, parametricCoordinates);
-  std::vector<MVertex *> packed;
-  std::vector<SMetric3> metrics;
-
-#if defined(HAVE_DOMHEX)
-  packingOfParallelogramsConstrained(gf, constr_vertices, packed, metrics);
-#else
-  Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
-#endif
-
-  if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)){
-    Msg::Error("Invalid meshing data structure");
-    return;
-  }
-
-  std::sort(packed.begin(), packed.end(), MVertexPtrLessThanLexicographic());
-
-  MTri3 *oneNewTriangle = 0;
-  for(std::size_t i = 0; i < packed.size();) {
-    MTri3 *worst = *AllTris.begin();
-    if(worst->isDeleted()) {
-      delete worst->tri();
-      delete worst;
-      AllTris.erase(AllTris.begin());
-    }
-    else {
-      double newPoint[2];
-      packed[i]->getParameter(0, newPoint[0]);
-      packed[i]->getParameter(1, newPoint[1]);
-      delete packed[i];
-      double metric[3];
-      buildMetric(gf, newPoint, metric);
-
-      bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA,
-                                  AllTris, 0, oneNewTriangle, &oneNewTriangle);
-      if(!success) oneNewTriangle = 0;
-      i++;
-    }
-
-    if(1.0 * AllTris.size() > 2.5 * DATA.vSizes.size()) {
-      std::set<MTri3 *, compareTri3Ptr>::iterator itd = AllTris.begin();
-      while(itd != AllTris.end()) {
-        if((*itd)->isDeleted()) {
-          delete *itd;
-          AllTris.erase(itd++);
-        }
-        else
-          itd++;
-      }
-    }
-  }
-
-  transferDataStructure(gf, AllTris, DATA);
-  for(std::size_t i = 0; i < gf->getNumMeshVertices(); i++) {
-    MVertex *vtest = gf->getMeshVertex(i);
-    double para0, para1;
-    vtest->getParameter(0, para0);
-    vtest->getParameter(1, para1);
-  }
-  backgroundMesh::unset();
-
+  recombineIntoQuads(gf, false, 0, false, .1);
+  removeTwoQuadsNodes(gf);
+  //removaeDiamonds(gf);
+  //  meshWinslow2d (gf);
+  
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
 

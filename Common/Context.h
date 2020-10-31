@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <functional>
 
 #define NUM_SOLVERS 10
 
@@ -24,7 +25,7 @@ struct contextMeshOptions {
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
   double anisoMax, smoothRatio;
-  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
+  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary, lcFromParametricPoints;
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
@@ -33,17 +34,18 @@ struct contextMeshOptions {
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircPoints, minCurvPoints, minElementsPerTwoPi;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
-  int hoDistCAD;
+  int hoDistCAD, hoSavePeriodic;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
-  int ignorePeriodicity, boundaryLayerFanPoints;
+  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
-  int renumber, compoundClassify;
+  int renumber, compoundClassify, reparamMaxTriangles;
   double compoundLcFactor;
   unsigned int randomSeed;
+  std::function<double(int, int, double, double, double)> lcCallback;
   // mesh IO
-  int fileFormat;
+  int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveTri, saveGroupsOfNodes, saveGroupsOfElements;
@@ -52,15 +54,14 @@ struct contextMeshOptions {
   double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
-  int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder,
-      cgnsConstructTopology, cgnsExportCPEX0045;
+  int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder;
+  int cgnsConstructTopology, cgnsExportCPEX0045;
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
-  int partitionCreatePhysicals, partitionSplitMeshFiles,
-    partitionSaveTopologyFile;
-  int partitionTriWeight, partitionQuaWeight, partitionTetWeight,
-    partitionHexWeight, partitionLinWeight;
+  int partitionCreatePhysicals, partitionSplitMeshFiles;
+  int partitionSaveTopologyFile, partitionTriWeight, partitionQuaWeight;
+  int partitionTetWeight, partitionHexWeight, partitionLinWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int partitionOldStyleMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
@@ -75,6 +76,7 @@ struct contextMeshOptions {
   double pointSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int smoothNormals, clip;
+  int numQuads;
 };
 
 struct contextGeometryOptions {
@@ -86,6 +88,7 @@ struct contextGeometryOptions {
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occUnionUnify;
+  int occThruSectionsDegree;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
@@ -131,6 +134,8 @@ public:
   std::vector<std::string> recentFiles;
   // create mesh statistics report (0: do nothing, 1: create, 2: append)
   int createAppendMeshStatReport;
+  // behavior on error
+  int abortOnError;
   // should we launch a solver at startup?
   int launchSolverAtStartup;
   // save session/option file on exit?

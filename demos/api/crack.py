@@ -2,7 +2,6 @@ import gmsh
 import sys
 
 gmsh.initialize(sys.argv)
-gmsh.fltk.initialize()
 
 gmsh.option.setNumber("General.Terminal", 1)
 
@@ -36,6 +35,7 @@ gmsh.model.mesh.generate(2)
 gmsh.plugin.setNumber("Crack", "PhysicalGroup", 101)
 gmsh.plugin.run("Crack")
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

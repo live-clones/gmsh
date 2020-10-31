@@ -19,7 +19,8 @@
           <string>geo</string>
           <string>brep</string><string>brp</string><string>rle</string>
           <string>igs</string><string>iges</string>
-          <string>stp</string><string>step</string></array>
+          <string>stp</string><string>step</string>
+          <string>xmt_txt</string></array>
         <key>CFBundleTypeIconFile</key><string>GmshGeo.icns</string>
         <key>CFBundleTypeName</key><string>Gmsh Geometry File</string>
         <key>CFBundleTypeOSTypes</key><array><string>GGEO</string></array>

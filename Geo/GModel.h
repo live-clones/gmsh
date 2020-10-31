@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -20,21 +21,15 @@
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
 
-// TODO C++11 remove this nasty stuff
-#if __cplusplus >= 201103L
-#include <unordered_map>
 #define hashmapMFace std::unordered_map<MFace, int, MFaceHash, MFaceEqual>
 #define hashmapMEdge std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual>
-#else
-#define hashmapMFace std::map<MFace, int, MFaceLessThan>
-#define hashmapMEdge std::map<MEdge, int, MEdgeLessThan>
-#endif
 
 template <class scalar> class simpleFunction;
 
 class GEO_Internals;
 class OCC_Internals;
 class ACIS_Internals;
+class Parasolid_Internals;
 class smooth_normals;
 class FieldManager;
 class gLevelset;
@@ -114,12 +109,14 @@ protected:
   // global cache storage of discrete curvatures
   std::map<MVertex *, std::pair<SVector3, SVector3> > _curvatures;
 
-  // Geo (Gmsh native) model internal data
+  // GEO (Gmsh native) model internal data
   GEO_Internals *_geo_internals;
-  // OpenCascade model internal data
+  // OpenCASCADE model internal data
   OCC_Internals *_occ_internals;
   // ACIS model internal data
   ACIS_Internals *_acis_internals;
+  // Parasolid model internal data
+  Parasolid_Internals *_parasolid_internals;
 
   // characteristic length (mesh size) fields
   FieldManager *_fields;
@@ -150,14 +147,6 @@ protected:
   std::size_t _numPartitions;
 
 protected:
-  void _createGEOInternals();
-  void _deleteGEOInternals();
-
-  void _deleteOCCInternals();
-  void _resetOCCInternals();
-
-  void _deleteACISInternals();
-
   // store the elements given in the map (indexed by elementary region
   // number) into the model, creating discrete geometrical entities on
   // the fly if needed
@@ -168,7 +157,7 @@ protected:
 
   // loop over all vertices connected to elements and associate
   // geometrical entity
-  void _associateEntityWithMeshVertices(bool force = false);
+  void _associateEntityWithMeshVertices();
 
   // store the vertices in the geometrical entity they are associated
   // with, and delete those that are not associated with any entity
@@ -312,10 +301,19 @@ public:
   void pruneMeshVertexAssociations();
 
   // access internal CAD representations
-  GEO_Internals *getGEOInternals() { return _geo_internals; }
+  void createGEOInternals();
   void createOCCInternals();
+  void createACISInternals();
+  void createParasolidInternals();
   OCC_Internals *getOCCInternals() { return _occ_internals; }
+  GEO_Internals *getGEOInternals() { return _geo_internals; }
   ACIS_Internals *getACISInternals() { return _acis_internals; }
+  Parasolid_Internals *getParasolidInternals() { return _parasolid_internals; }
+  void deleteGEOInternals();
+  void deleteOCCInternals();
+  void resetOCCInternals();
+  void deleteACISInternals();
+  void deleteParasolidInternals();
 
   // access characteristic length (mesh size) fields
   FieldManager *getFields() { return _fields; }
@@ -536,6 +534,10 @@ public:
   // _vertexMapCache if not.
   void rebuildMeshVertexCache(bool onlyIfNecessary = false);
 
+  // recompute _elementVectorCache if there is a dense element numbering or
+  // _elementMapCache if not.
+  void rebuildMeshElementCache(bool onlyIfNecessary = false);
+
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
 
@@ -571,12 +573,12 @@ public:
   }
 
   // delete or reverse all invisble mesh elements
-  void removeInvisibleElements();
-  void reverseInvisibleElements();
+  std::size_t removeInvisibleElements();
+  std::size_t reverseInvisibleElements();
 
   // the list of partitions
   std::size_t getNumPartitions() const { return _numPartitions; }
-  void setNumPartitions(unsigned int npart) { _numPartitions = npart; }
+  void setNumPartitions(std::size_t npart) { _numPartitions = npart; }
 
   // partition the mesh
   int partitionMesh(int num);
@@ -601,10 +603,10 @@ public:
   // remove duplicate mesh vertices
   int removeDuplicateMeshVertices(double tolerance);
 
-  // create a topology from the mesh if necessary, move the mesh of discrete
-  // entities to a geometry container, compute a parametrization for the
-  // discrete entities
-  void createGeometryOfDiscreteEntities();
+  // create a geometry (i.e. a parametrization for curves and surfaces) for the
+  // given discrete entities (or all of them if dimTags is empty)
+  void createGeometryOfDiscreteEntities(const std::vector<std::pair<int, int> >
+                                        &dimTags = std::vector<std::pair<int, int> >());
 
   // make discrete entities simply connected
   void makeDiscreteRegionsSimplyConnected();
@@ -706,6 +708,12 @@ public:
 
   // ACIS Model
   int readACISSAT(const std::string &name);
+
+  // Parasolid Model
+  int readParasolidXMT(const std::string &name);
+  int writeParasolidXMT(const std::string &name);
+  int readParasolidSTEP(const std::string &name);
+  int writeParasolidSTEP(const std::string &name);
 
   // Gmsh mesh file format
   int readMSH(const std::string &name);

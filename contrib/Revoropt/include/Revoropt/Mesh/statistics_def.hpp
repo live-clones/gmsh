@@ -1,5 +1,5 @@
 // @licstart revoropt
-// This file is part of Revoropt, a library for the computation and 
+// This file is part of Revoropt, a library for the computation and
 // optimization of restricted Voronoi diagrams.
 //
 // Copyright (C) 2013 Vincent Nivoliers <vincent.nivoliers@univ-lyon1.fr>
@@ -13,7 +13,7 @@
 
 #include <vector>
 #include <iostream>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 namespace Revoropt {
 
@@ -108,8 +108,8 @@ void edge_lengths( const Mesh* mesh, typename Mesh::Scalar* lengths ) {
 /* Histogram */
 
 template<typename Scalar>
-void histogram( const Scalar* data, unsigned int size, 
-                Scalar min, Scalar max, unsigned int bins, 
+void histogram( const Scalar* data, unsigned int size,
+                Scalar min, Scalar max, unsigned int bins,
                 unsigned int* output
               ) {
   //output must havs size bins
@@ -124,8 +124,8 @@ void histogram( const Scalar* data, unsigned int size,
 }
 
 template<typename Scalar>
-void histogram( const Scalar* data, unsigned int size, 
-                Scalar min, Scalar max, unsigned int bins, 
+void histogram( const Scalar* data, unsigned int size,
+                Scalar min, Scalar max, unsigned int bins,
                 const char* filename
               ) {
   std::vector<Scalar> histogram(bins,0) ;

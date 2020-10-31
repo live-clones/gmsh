@@ -1,4 +1,5 @@
 import gmsh
+import sys
 
 gmsh.initialize()
 
@@ -27,4 +28,7 @@ for name, tags in physicals.items():
     p = gmsh.model.addPhysicalGroup(3, tags)
     gmsh.model.setPhysicalName(3, p, name)
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
+gmsh.finalize()

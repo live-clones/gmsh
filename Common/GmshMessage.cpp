@@ -13,6 +13,7 @@
 #include <unistd.h>
 #endif
 
+#include <clocale>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -62,14 +63,16 @@ int Msg::_progressMeterCurrent = -1;
 int Msg::_progressMeterTotal = 0;
 std::map<std::string, double> Msg::_timers;
 bool Msg::_infoCpu = false;
+bool Msg::_infoMem = false;
 double Msg::_startTime = 0.;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
 int Msg::_atLeastOneErrorInRun = 0;
 std::string Msg::_firstWarning;
 std::string Msg::_firstError;
+std::string Msg::_lastError;
 GmshMessage *Msg::_callback = 0;
-std::string Msg::_commandLine;
+std::vector<std::string> Msg::_commandLineArgs;
 std::string Msg::_launchDate;
 std::map<std::string, std::vector<double> > Msg::_commandLineNumbers;
 std::map<std::string, std::string> Msg::_commandLineStrings;
@@ -137,6 +140,7 @@ void Msg::Init(int argc, char **argv)
     if(val != "-info" && val != "-help" && val != "-version" && val != "-v")
       sargv[sargc++] = argv[i];
   }
+  sargv[sargc] = NULL;
   PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)
@@ -148,21 +152,25 @@ void Msg::Init(int argc, char **argv)
   time(&now);
   _launchDate = ctime(&now);
   _launchDate.resize(_launchDate.size() - 1);
-  _commandLine.clear();
-  for(int i = 0; i < argc; i++){
-    if(i) _commandLine += " ";
-    _commandLine += argv[i];
-  }
+
+  _commandLineArgs.resize(argc);
+  for(int i = 0; i < argc; i++)
+    _commandLineArgs[i] = argv[i];
 
   CTX::instance()->exeFileName = GetExecutableFileName();
-  if(CTX::instance()->exeFileName.empty() && argc && argv)
-    CTX::instance()->exeFileName = argv[0];
+  if(CTX::instance()->exeFileName.empty() && _commandLineArgs.size())
+    CTX::instance()->exeFileName = _commandLineArgs[0];
 
   // add the directory where the binary is installed to the path where Python
   // looks for modules, and to the path for executables (this allows us to find
   // the onelab.py module or subclients automatically)
   addGmshPathToEnvironmentVar("PYTHONPATH");
   addGmshPathToEnvironmentVar("PATH");
+
+  // make sure to use the "C" locale; in particular this ensures that we will
+  // use a dot for for the decimal separator when writing ASCII mesh files
+  std::setlocale(LC_ALL, "C.UTF-8");
+  std::setlocale(LC_NUMERIC, "C");
 
   InitializeOnelab("Gmsh");
 }
@@ -225,9 +233,19 @@ std::string Msg::GetLaunchDate()
   return _launchDate;
 }
 
-std::string Msg::GetCommandLineArgs()
+std::vector<std::string> &Msg::GetCommandLineArgs()
 {
-  return _commandLine;
+  return _commandLineArgs;
+}
+
+std::string Msg::GetCommandLineFull()
+{
+  std::string tmp;
+  for(std::size_t i = 0; i < _commandLineArgs.size(); i++){
+    if(i) tmp += " ";
+    tmp += _commandLineArgs[i];
+  }
+  return tmp;
 }
 
 std::map<std::string, std::vector<double> > &Msg::GetCommandLineNumbers()
@@ -273,6 +291,11 @@ void Msg::SetInfoCpu(bool val)
   _infoCpu = val;
 }
 
+void Msg::SetInfoMem(bool val)
+{
+  _infoMem = val;
+}
+
 double &Msg::Timer(const std::string &str) { return _timers[str]; }
 
 int Msg::GetWarningCount()
@@ -293,6 +316,11 @@ std::string Msg::GetFirstWarning()
 std::string Msg::GetFirstError()
 {
   return _firstError;
+}
+
+std::string Msg::GetLastError()
+{
+  return _lastError;
 }
 
 void Msg::SetExecutableName(const std::string &name)
@@ -338,7 +366,7 @@ void Msg::Exit(int level)
     PetscFinalize();
 #endif
 #if defined(HAVE_MPI)
-    // force general abort (wven if the fatal error occurred on 1 cpu only)
+    // force general abort (even if the fatal error occurred on 1 cpu only)
     MPI_Abort(MPI_COMM_WORLD, level);
     int finalized;
     MPI_Finalized(&finalized);
@@ -373,7 +401,7 @@ void Msg::Exit(int level)
   PetscFinalize();
 #endif
 #if defined(HAVE_MPI)
-  int finalized; //Some PETSc versions call MPI_FINALIZE
+  int finalized; // Some PETSc versions call MPI_FINALIZE
   MPI_Finalized(&finalized);
   if (!finalized)
     MPI_Finalize();
@@ -491,6 +519,8 @@ void Msg::Error(const char *fmt, ...)
   if(_logFile) fprintf(_logFile, "Error: %s\n", str);
   if(_callback) (*_callback)("Error", str);
   if(_client) _client->Error(str);
+  if(_firstError.empty()) _firstError = str;
+  _lastError = str;
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -498,7 +528,6 @@ void Msg::Error(const char *fmt, ...)
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
       + "Error   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    if(_firstError.empty()) _firstError = str;
     FlGui::instance()->setLastStatus
       (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
   }
@@ -514,6 +543,13 @@ void Msg::Error(const char *fmt, ...)
     else
       fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
     fflush(stderr);
+  }
+
+  if(CTX::instance()->abortOnError == 2) {
+    throw 1;
+  }
+  else if(CTX::instance()->abortOnError == 3) {
+    Exit(1);
   }
 }
 
@@ -569,8 +605,8 @@ void Msg::Info(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-  if(_infoCpu){
-    std::string res = PrintResources(false, true, true, true);
+  if(_infoCpu || _infoMem){
+    std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
     strcat(str, res.c_str());
   }
 
@@ -666,8 +702,8 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-  if(_infoCpu){
-    std::string res = PrintResources(false, true, true, true);
+  if(_infoCpu || _infoMem){
+    std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
     strcat(str, res.c_str());
   }
 
@@ -828,7 +864,7 @@ void Msg::PrintTimers()
 void Msg::ResetErrorCounter()
 {
   _warningCount = 0; _errorCount = 0;
-  _firstWarning.clear(); _firstError.clear();
+  _firstWarning.clear(); _firstError.clear(); _lastError.clear();
 #if defined(HAVE_FLTK)
   if(FlGui::available()) FlGui::instance()->setLastStatus();
 #endif
@@ -1139,6 +1175,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     if(name != "Gmsh"){ // load db from file:
       FILE *fp = Fopen(name.c_str(), "rb");
       if(fp){
+        Msg::Info("Reading ONELAB database '%s'", name.c_str());
         _onelabClient->fromFile(fp);
         fclose(fp);
       }

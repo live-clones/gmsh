@@ -20,6 +20,7 @@
 #include "CutBox.h"
 #include "Skin.h"
 #include "AnalyseMeshQuality.h"
+#include "Invisible.h"
 #include "CurvedBndDist.h"
 #include "MathEval.h"
 #include "ExtractElements.h"
@@ -63,6 +64,7 @@
 #include "NewView.h"
 #include "MeshSubEntities.h"
 #include "MeshVolume.h"
+#include "MeshVolHexPercentage.h"
 #include "CVTRemesh.h"
 #include "ShowNeighborElements.h"
 #include "GaussPoints.h"
@@ -270,11 +272,15 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "MeshVolume", GMSH_RegisterMeshVolumePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
+      "MeshVolHexPercentage", GMSH_RegisterMeshVolHexPercentagePlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "GaussPoints", GMSH_RegisterGaussPointsPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "Summation", GMSH_RegisterSummationPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "BoundaryAngles", GMSH_RegisterBoundaryAnglesPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
+      "Invisible", GMSH_RegisterInvisiblePlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin *>(
       "AnalyseMeshQuality", GMSH_RegisterAnalyseMeshQualityPlugin()));

@@ -36,7 +36,7 @@ public:
     delete _rtree;
   }
   MVertex *insert(MVertex *v, bool warnIfExists = false,
-                  std::set<MVertex *> *duplicates = 0)
+                  std::set<MVertex *, MVertexPtrLessThan> *duplicates = 0)
   {
     MVertex *out;
     double _min[3] = {v->x() - _tol, v->y() - _tol, v->z() - _tol};
@@ -60,7 +60,7 @@ public:
     }
   }
   int insert(std::vector<MVertex *> &v, bool warnIfExists = false,
-             std::set<MVertex *> *duplicates = 0)
+             std::set<MVertex *, MVertexPtrLessThan> *duplicates = 0)
   {
     int num = 0;
     for(std::size_t i = 0; i < v.size(); i++)

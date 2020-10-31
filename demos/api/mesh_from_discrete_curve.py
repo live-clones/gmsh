@@ -28,6 +28,7 @@ gmsh.model.geo.synchronize()
 
 # mesh the surface
 gmsh.model.mesh.generate(2)
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

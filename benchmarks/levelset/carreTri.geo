@@ -33,7 +33,9 @@ Levelset Ellipsoid (4) = { {0,0,0}, {1,0,0}, 0.55, 0.55, 0.75 };
 
 Levelset Intersection (10) = {1,3};
 
-Levelset CutMesh {10};
+Levelset CutMeshTri {10};
 
 Physical Surface(1000) = {6};
 Physical Surface(2000) = {7};
+
+Save "aa.msh2";

@@ -71,6 +71,9 @@ public:
     l_faces.push_back(f);
     l_dirs.push_back(orientation);
   }
+  void setBoundFaces(const std::set<int> &tagFaces);
+  void setBoundFaces(const std::vector<int> &tagFaces,
+                     const std::vector<int> &signFaces);
 
   // direct access to embedded entities
   std::vector<GVertex *> &embeddedVertices() { return embedded_vertices; }
@@ -144,7 +147,14 @@ public:
     std::vector<GVertex *> corners;
     // structured/unstructured coupling using pyramids
     int QuadTri;
+    // global mesh size constraint for the volume
+    double meshSize;
   } meshAttributes;
+
+  virtual double getMeshSize() const
+  {
+    return meshAttributes.meshSize;
+  }
 
   // a array for accessing the transfinite vertices using a triplet of
   // indices
@@ -174,6 +184,8 @@ public:
   // set the reverseMesh constraint in the bounding surfaces so that the
   // boundary mesh has outward pointing normals, based on the STL triangulation
   bool setOutwardOrientationMeshConstraint();
+
+  virtual bool isFullyDiscrete();
 };
 
 #endif

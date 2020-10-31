@@ -5,7 +5,7 @@ To run the Julia tutorials, you need the Gmsh dynamic library and the Julia
 module (`gmsh.jl'). These can be either obtained
 
 - from the binary Software Development Kit (SDK) available on the Gmsh website
-  http://gmsh.info/bin/, for Windows, Linux and macOS. Download and uncompress
+  https://gmsh.info/bin/, for Windows, Linux and macOS. Download and uncompress
   the relevant gmsh*-sdk.* archive for your operating system and add the "lib"
   directory from the SDK to JULIA_LOAD_PATH, e.g., if you are currently in the
   root directory of the SDK:

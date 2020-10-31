@@ -946,7 +946,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
   }
 
-  double sliverLimit = 0.04;
+  double sliverLimit = 0.001;
   int nbESwap = 0, nbReloc = 0;
   double worstA = 0.0;
 
@@ -1031,8 +1031,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   }
 
   if(illegals.size()) {
-    Msg::Info("%d ill-shaped tets are still in the mesh",
-              illegals.size());
+    Msg::Warning("%d ill-shaped tets are still in the mesh",
+                 illegals.size());
   }
   else {
     Msg::Info("No ill-shaped tets in the mesh :-)");
@@ -1327,8 +1327,9 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
                    theRegion.size(), faces_bound.size(), _w2 - _w1, _t2 - _t1);
         GRegion *myGRegion =
           getRegionFromBoundingFaces(gr->model(), faces_bound);
-        if(myGRegion) { // a geometrical region associated to the list of faces
-                        // has been found
+        if(myGRegion && myGRegion->tetrahedra.empty()) {
+          // a geometrical region (with no mesh) associated to the list of faces
+          // has been found
           Msg::Info("Found volume %d", myGRegion->tag());
           for(std::list<MTet4 *>::iterator it2 = theRegion.begin();
               it2 != theRegion.end(); ++it2) {

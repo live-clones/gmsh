@@ -223,6 +223,39 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
+                                    bool &CAD)
+{
+  meshOrder = -1;
+  CAD = true;
+  complete = true;
+  // The following code does not allow to determine accurately if elements are
+  // complete or not. To be more precise, we should try to find a hexahedron if
+  // order = 2+, a prism or a pyramid if order = 3+ or a tet if order = 4+ and
+  // so on...  But it is more likely that we want complete elements so always
+  // setting true to 'complete' variable is acceptable.
+  for(GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
+    if((*itr)->getNumMeshElements()) {
+      meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder();
+      //complete = (meshOrder <= 2) ? true :
+      //  (*itr)->getMeshElement(0)->getNumVolumeVertices() ? true : false;
+      if((*itr)->isFullyDiscrete()) CAD = false;
+      break;
+    }
+  }
+  for(GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
+    if((*itf)->getNumMeshElements()) {
+      if(meshOrder == -1) {
+        meshOrder = (*itf)->getMeshElement(0)->getPolynomialOrder();
+        // complete = (meshOrder <= 2) ? 1 :
+        //   (*itf)->getMeshElement(0)->getNumFaceVertices();
+        if((*itf)->isFullyDiscrete()) CAD = false;
+        break;
+      }
+    }
+  }
+}
+
 highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 {
   getMeshInfoForHighOrder(GModel::current(), meshOrder, complete, CAD);

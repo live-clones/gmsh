@@ -17,6 +17,7 @@
 import gmsh
 import math
 import os
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -29,7 +30,7 @@ gmsh.model.occ.synchronize()
 
 # Merge a post-processing view containing the target anisotropic mesh sizes
 path = os.path.dirname(os.path.abspath(__file__))
-gmsh.merge(os.path.join(path, '..', 't17_bgmesh.pos'))
+gmsh.merge(os.path.join(path, os.pardir, 't17_bgmesh.pos'))
 
 # Apply the view as the current background mesh
 bg_field = gmsh.model.mesh.field.add("PostView")
@@ -43,5 +44,8 @@ gmsh.option.setNumber("Mesh.Algorithm", 7)
 gmsh.model.mesh.generate(2)
 gmsh.write("t17.msh")
 
-gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
 gmsh.finalize()

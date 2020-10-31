@@ -1,5 +1,6 @@
 import gmsh
 import math
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
@@ -35,5 +36,6 @@ gmsh.model.occ.addBSpline([201, 202, 203, 204], 200, 2, [], [0, 0.5, 1],
                           [3, 1, 3])
 
 gmsh.model.occ.synchronize()
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 gmsh.finalize()

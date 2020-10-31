@@ -40,19 +40,19 @@ class automaticMeshSizeField : public Field {
     _nRefine = 5;
 
     options["nPointsPerCircle"] = new FieldOptionInt(_nPointsPerCircle,
-						     "Number of points per circle (adapt to curvature of surfaces)",&update_needed);
+						     "Number of points per circle (adapt to curvature of surfaces)",&updateNeeded);
 
     options["nPointsPerGap"] = new FieldOptionInt(_nPointsPerGap,
-						  "Number of points in thin layers",&update_needed);
+						  "Number of points in thin layers",&updateNeeded);
 
     options["hBulk"] = new FieldOptionDouble(_hbulk,
-					     "Size everywhere no size is prescribed", &update_needed);
+					     "Size everywhere no size is prescribed", &updateNeeded);
 
     options["gradientMax"] = new FieldOptionDouble(_gradientMax,
-						   "Maximun gradient of the size field",&update_needed);
+						   "Maximun gradient of the size field",&updateNeeded);
 
     options["NRefine"] = new FieldOptionInt(_nRefine,
-					    "Initial refinement level for the octree",&update_needed);
+					    "Initial refinement level for the octree",&updateNeeded);
   }
   const char *getName() { return "AutomaticMeshSizeField"; }
 

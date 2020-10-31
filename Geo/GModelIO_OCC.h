@@ -189,6 +189,7 @@ public:
   void unbind(const TopoDS_Shell &shell, int tag, bool recursive = false);
   void unbind(const TopoDS_Solid &solid, int tag, bool recursive = false);
   void unbind(TopoDS_Shape shape, int dim, int tag, bool recursive = false);
+  void unbind();
 
   // set/get max tag of entity for each dimension (0, 1, 2, 3), as well as
   // -2 for shells and -1 for wires
@@ -230,6 +231,21 @@ public:
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>());
+  bool addBSplineFilling(int &tag, int wireTag,
+                         const std::string &type = "");
+  bool addBezierFilling(int &tag, int wireTag,
+                        const std::string &type = "");
+  bool addBSplineSurface(int &tag,
+                         const std::vector<int> &pointTags,
+                         const int numPointsU,
+                         const int degreeU, const int degreeV,
+                         const std::vector<double> &weights,
+                         const std::vector<double> &knotsU,
+                         const std::vector<double> &knotsV,
+                         const std::vector<int> &multiplicitiesU,
+                         const std::vector<int> &multiplicitiesV);
+  bool addBezierSurface(int &tag, const std::vector<int> &pointTags,
+                        const int numPointsU);
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
@@ -249,7 +265,8 @@ public:
   // thrusections and thick solids (can create multiple entities)
   bool addThruSections(int tag, const std::vector<int> &wireTags,
                        bool makeSolid, bool makeRuled,
-                       std::vector<std::pair<int, int> > &outDimTags);
+                       std::vector<std::pair<int, int> > &outDimTags,
+                       int maxDegree = -1);
   bool addThickSolid(int tag, int solidTag,
                      const std::vector<int> &excludeFaceTags, double offset,
                      std::vector<std::pair<int, int> > &outDimTags);
@@ -346,10 +363,6 @@ public:
   bool importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags);
 
-  // export all bound shapes to file
-  bool exportShapes(const std::string &fileName,
-                    const std::string &format = "");
-
   // apply various healing algorithms to try to fix the shapes
   bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
                   std::vector<std::pair<int, int> > &outDimTags,
@@ -361,6 +374,10 @@ public:
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);
+
+  // export all bound shapes to file
+  bool exportShapes(GModel *model, const std::string &fileName,
+                    const std::string &format = "");
 
   // queries
   bool getEntities(std::vector<std::pair<int, int> > &dimTags, int dim);
@@ -519,6 +536,33 @@ public:
   {
     return _error("add surface filling");
   }
+  bool addBSplineFilling(int &tag, int wireTag,
+                         const std::string &type = "")
+  {
+    return _error("add BSpline filling");
+  }
+  bool addBezierFilling(int &tag, int wireTag,
+                        const std::string &type = "")
+  {
+    return _error("add Bezier filling");
+  }
+  bool addBSplineSurface(int &tag,
+                         const std::vector<int> &pointTags,
+                         const int numPointsU,
+                         const int degreeU, const int degreeV,
+                         const std::vector<double> &weights,
+                         const std::vector<double> &knotsU,
+                         const std::vector<double> &knotsV,
+                         const std::vector<int> &multiplicitiesU,
+                         const std::vector<int> &multiplicitiesV)
+  {
+    return _error("add BSpline surface");
+  }
+  bool addBezierSurface(int &tag, const std::vector<int> &pointTags,
+                        const int numPointsU)
+  {
+    return _error("add Bezier surface");
+  }
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing)
   {
@@ -561,7 +605,8 @@ public:
   }
   bool addThruSections(int tag, const std::vector<int> &wireTags,
                        bool makeSolid, bool makeRuled,
-                       std::vector<std::pair<int, int> > &outDimTags)
+                       std::vector<std::pair<int, int> > &outDimTags,
+                       int maxDegree = -1)
   {
     return _error("add thrusection");
   }
@@ -698,10 +743,6 @@ public:
   {
     return _error("import shape");
   }
-  bool exportShapes(const std::string &fileName, const std::string &format = "")
-  {
-    return _error("export shape");
-  }
   bool healShapes(const std::vector<std::pair<int, int> > &inDimTags,
                   std::vector<std::pair<int, int> > &outDimTags,
                   double tolerance, bool fixDegenerated, bool fixSmallEdges,
@@ -711,6 +752,11 @@ public:
   }
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}
+  bool exportShapes(GModel *model, const std::string &fileName,
+                    const std::string &format = "")
+  {
+    return _error("export shape");
+  }
   bool getEntities(std::vector<std::pair<int, int> > &dimTags, int dim)
   {
     return false;

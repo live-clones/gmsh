@@ -21,17 +21,6 @@
 #include "meshPartition.h"
 #endif
 
-#if __cplusplus >= 201103L
-#include <unordered_map>
-#define hashmap std::unordered_map
-#else
-#include <map>
-#define hashmap std::map
-#endif
-
-int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
-                            hashmap<MElement *, unsigned int> &elmToPartition);
-
 StringXNumber SimplePartitionOptions_Number[] = {
   {GMSH_FULLRC, "NumSlicesX", NULL, 4.},
   {GMSH_FULLRC, "NumSlicesY", NULL, 1.},
@@ -42,8 +31,7 @@ StringXNumber SimplePartitionOptions_Number[] = {
 StringXString SimplePartitionOptions_String[] = {
   {GMSH_FULLRC, "MappingX", NULL, "t"},
   {GMSH_FULLRC, "MappingY", NULL, "t"},
-  {GMSH_FULLRC, "MappingZ", NULL, "t"}
-};
+  {GMSH_FULLRC, "MappingZ", NULL, "t"}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterSimplePartitionPlugin()
@@ -56,9 +44,11 @@ std::string GMSH_SimplePartitionPlugin::getHelp() const
 {
   return "Plugin(SimplePartition) partitions the current mesh into "
          "`NumSlicesX', `NumSlicesY' and `NumSlicesZ' slices along the X-, Y- "
-         "and Z-axis, respectively. The distribtion of these slices is governed "
+         "and Z-axis, respectively. The distribtion of these slices is "
+         "governed "
          "by `MappingX', `MappingY' and `MappingZ', where `t' is a normalized "
-         "absissa along each direction. (Setting `MappingX' to `t' will thus lead "
+         "absissa along each direction. (Setting `MappingX' to `t' will thus "
+         "lead "
          "to equidistant slices along the X-axis.)\n\n"
          "The plugin creates the topology of the partitioned entities if "
          "`CreateTopology' is set.";
@@ -98,12 +88,12 @@ void GMSH_SimplePartitionPlugin::run()
 
   GModel *m = GModel::current();
 
-  if(!m->getNumMeshElements()){
+  if(!m->getNumMeshElements()) {
     Msg::Error("Plugin(SimplePartition) requires a mesh");
     return;
   }
 
-  if(numSlicesX < 1 || numSlicesY < 1 || numSlicesZ < 1){
+  if(numSlicesX < 1 || numSlicesY < 1 || numSlicesZ < 1) {
     Msg::Error("Number of slices should be strictly positive");
     return;
   }
@@ -149,7 +139,7 @@ void GMSH_SimplePartitionPlugin::run()
 
   std::vector<GEntity *> entities;
   m->getEntities(entities);
-  hashmap<MElement *, unsigned int> elmToPartition;
+  std::vector<std::pair<MElement *, int> > elmToPartition;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
@@ -167,9 +157,10 @@ void GMSH_SimplePartitionPlugin::run()
                (emptyY || (ky == 0 && ppY[0] == point[1]) ||
                 (ppY[ky] < point[1] && point[1] <= ppY[ky + 1])) &&
                (emptyZ || (kz == 0 && ppZ[0] == point[2]) ||
-                (ppZ[kz] < point[2] && point[2] <= ppZ[kz + 1]))){
+                (ppZ[kz] < point[2] && point[2] <= ppZ[kz + 1]))) {
               part = kx * numSlicesY * numSlicesZ + ky * numSlicesZ + kz + 1;
-              elmToPartition.insert(std::pair<MElement *, unsigned int>(e, part));
+              elmToPartition.push_back(
+                std::pair<MElement *, unsigned int>(e, part));
               e->setPartition(part); // this will be removed
             }
           }

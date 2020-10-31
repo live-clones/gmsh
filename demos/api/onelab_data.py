@@ -2,7 +2,7 @@ import gmsh
 import sys
 
 if len(sys.argv) < 2:
-    print "Usage: " + sys.argv[0] + " file [options]"
+    print("Usage: " + sys.argv[0] + " file [options]")
     exit(0)
 
 gmsh.initialize()
@@ -14,6 +14,6 @@ gmsh.open(sys.argv[1])
 gmsh.onelab.run()
 
 json = gmsh.onelab.get()
-print json
+print(json)
 
 gmsh.finalize()

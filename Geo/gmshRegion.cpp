@@ -9,22 +9,22 @@
 #include "Geo.h"
 #include "GmshMessage.h"
 
-gmshRegion::gmshRegion(GModel *m, ::Volume *volume) : GRegion(m, volume->Num)
+gmshRegion::gmshRegion(GModel *m, ::Volume *v) : GRegion(m, v->Num)
 {
-  resetNativePtr(volume);
+  resetNativePtr(v);
   gmshRegion::resetMeshAttributes();
 }
 
-void gmshRegion::resetNativePtr(::Volume *volume)
+void gmshRegion::resetNativePtr(::Volume *v)
 {
-  v = volume;
+  _v = v;
   l_faces.clear();
   l_dirs.clear();
-  for(int i = 0; i < List_Nbr(v->Surfaces); i++) {
+  for(int i = 0; i < List_Nbr(_v->Surfaces); i++) {
     Surface *s;
-    List_Read(v->Surfaces, i, &s);
+    List_Read(_v->Surfaces, i, &s);
     int ori;
-    List_Read(v->SurfacesOrientations, i, &ori);
+    List_Read(_v->SurfacesOrientations, i, &ori);
     GFace *f = model()->getFaceByTag(abs(s->Num));
     if(f) {
       l_faces.push_back(f);
@@ -34,9 +34,9 @@ void gmshRegion::resetNativePtr(::Volume *volume)
     else
       Msg::Error("Unknown surface %d", s->Num);
   }
-  for(int i = 0; i < List_Nbr(v->SurfacesByTag); i++) {
+  for(int i = 0; i < List_Nbr(_v->SurfacesByTag); i++) {
     int is;
-    List_Read(v->SurfacesByTag, i, &is);
+    List_Read(_v->SurfacesByTag, i, &is);
     GFace *f = model()->getFaceByTag(abs(is));
     if(f) {
       l_faces.push_back(f);
@@ -50,15 +50,15 @@ void gmshRegion::resetNativePtr(::Volume *volume)
 
 void gmshRegion::resetMeshAttributes()
 {
-  meshAttributes.recombine3D = v->Recombine3D;
-  meshAttributes.method = v->Method;
-  meshAttributes.QuadTri = v->QuadTri;
-  meshAttributes.extrude = v->Extrude;
+  meshAttributes.recombine3D = _v->Recombine3D;
+  meshAttributes.method = _v->Method;
+  meshAttributes.QuadTri = _v->QuadTri;
+  meshAttributes.extrude = _v->Extrude;
   if(meshAttributes.method == MESH_TRANSFINITE) {
     meshAttributes.corners.clear();
-    for(int i = 0; i < List_Nbr(v->TrsfPoints); i++) {
+    for(int i = 0; i < List_Nbr(_v->TrsfPoints); i++) {
       Vertex *corn;
-      List_Read(v->TrsfPoints, i, &corn);
+      List_Read(_v->TrsfPoints, i, &corn);
       GVertex *gv = model()->getVertexByTag(corn->Num);
       if(gv)
         meshAttributes.corners.push_back(gv);
@@ -70,7 +70,7 @@ void gmshRegion::resetMeshAttributes()
 
 GEntity::GeomType gmshRegion::geomType() const
 {
-  switch(v->Typ) {
+  switch(_v->Typ) {
   case MSH_VOLUME_DISCRETE: return DiscreteVolume;
   default: return Volume;
   }

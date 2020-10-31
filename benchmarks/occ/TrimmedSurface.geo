@@ -16,7 +16,7 @@ Mesh 2;
 Plugin(AnalyseMeshQuality).ICNMeasure = 1;
 Plugin(AnalyseMeshQuality).JacobianDeterminant = 0;
 Plugin(AnalyseMeshQuality).IGEMeasure = 0;
-Plugin(AnalyseMeshQuality).DrawPView = 1;
+Plugin(AnalyseMeshQuality).CreateView = 1;
 Plugin(AnalyseMeshQuality).DimensionOfElements = 2;
 Plugin(AnalyseMeshQuality).Run;
 

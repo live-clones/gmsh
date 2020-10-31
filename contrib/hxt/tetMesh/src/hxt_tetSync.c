@@ -101,6 +101,6 @@ HXTStatus createNewDeleted(HXT2Sync* shared,
   }
 
   deleted->createdNew = 1;
-  deleted->num = DELETED_BUFFER_SIZE;
+  deleted->num += needed;
   return HXT_STATUS_OK;
 }

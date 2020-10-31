@@ -9,7 +9,7 @@ This is the binary Software Development Kit (SDK) for Gmsh ${GMSH_VERSION}:
 
 Gmsh is distributed under the terms of the GNU General Public License: see
 share/doc/gmsh/LICENSE.txt and share/doc/gmsh/CREDITS.txt. For additional Gmsh
-resources, see http://gmsh.info.
+resources, see https://gmsh.info.
 
 SDK layout:
 

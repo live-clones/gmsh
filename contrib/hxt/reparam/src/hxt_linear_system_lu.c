@@ -1,7 +1,3 @@
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "hxt_tools.h"
 #include "hxt_linear_system_lu.h"
 

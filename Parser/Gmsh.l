@@ -232,6 +232,7 @@ MPI_Rank                return tMPI_Rank;
 MPI_Size                return tMPI_Size;
 Macro                   return tMacro;
 Mass                    return tMass;
+MatrixOfInertia         return tMatrixOfInertia;
 Max                     return tMax;
 Memory                  return tMemory;
 MeshAlgorithm           return tMeshAlgorithm;
@@ -287,6 +288,7 @@ ScaleLastLayer          return tScaleLast;
 SetChanged              return tSetChanged;
 SetFactory              return tSetFactory;
 SetTag                  return tSetTag;
+SetMaxTag               return tSetMaxTag;
 SetNumber               return tSetNumber;
 SetPartition            return tSetPartition;
 SetString               return tSetString;
@@ -336,6 +338,7 @@ Translate               return tTranslate;
 
 UndefineConstant        return tUndefineConstant;
 Unique                  return tUnique;
+UnsplitWindow           return tUnsplitWindow;
 UpperCase               return tUpperCase;
 Using                   return tUsing;
 
@@ -469,7 +472,7 @@ void skip(const char *skip, const char *until)
 
     l = l_max;
 
-    for(i  =1; i < l; i++) {
+    for(i = 1; i < l; i++) {
       chars[i] = yyinput();
       if(feof(yyin)) {
 	l = i;

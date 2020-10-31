@@ -1,6 +1,5 @@
 #include "hxt_non_linear_solver.h"
 #include "hxt_tools.h"
-#include <math.h>
 
 HXTStatus hxtNewtonRaphson(HXTLinearSystem *nrSys, double *solution, int size, int maxiter, double tol, HXTNonLinearSolverCallbackF *fcb, HXTNonLinearSolverCallbackDF *dfcb, void *data) {
   double *delta, *rhs;

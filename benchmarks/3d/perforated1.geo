@@ -171,7 +171,7 @@ For ih In {1:nbrHoles/2}
     Hide { Point{newp-2:newp-1}; }
   EndFor
 
-  ppin[]  = Intersect Line {auxlin[0]:auxlin[N-1]} Surface {sPSin[0]};
+  ppin[]  = Intersect Curve {auxlin[0]:auxlin[N-1]} Surface {sPSin[0]};
 
   hin[ih-1]  = newl ; Spline(hin[ih-1])  = {ppin[],   ppin[0]};
 

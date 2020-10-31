@@ -537,6 +537,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_lc_from_curvature(0, GMSH_SET, o->mesh.butt[1]->value());
   opt_mesh_min_elements_2pi(0, GMSH_SET, o->mesh.value[1]->value());
   opt_mesh_lc_from_points(0, GMSH_SET, o->mesh.butt[5]->value());
+  opt_mesh_lc_from_parametric_points(0, GMSH_SET, o->mesh.butt[26]->value());
   opt_mesh_lc_extend_from_boundary(0, GMSH_SET, o->mesh.butt[16]->value());
   opt_mesh_optimize(0, GMSH_SET, o->mesh.butt[2]->value());
   opt_mesh_optimize_netgen(0, GMSH_SET, o->mesh.butt[24]->value());
@@ -591,6 +592,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[2]->value() == 5) ? ALGO_2D_FRONTAL_QUAD :
                   (o->mesh.choice[2]->value() == 6) ? ALGO_2D_PACK_PRLGRMS :
                   (o->mesh.choice[2]->value() == 7) ? ALGO_2D_INITIAL_ONLY :
+                  (o->mesh.choice[2]->value() == 8) ? ALGO_2D_QUAD_QUASI_STRUCT :
                   ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
@@ -2422,6 +2424,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Frontal-Delaunay for Quads (experimental)", 0, 0, 0},
         {"Packing of Parallelograms (experimental, planar only)", 0, 0, 0},
         {"Initial Mesh Only (no node insertion)", 0, 0, 0},
+        {"Quad quasi-structured (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
@@ -2539,15 +2542,22 @@ optionWindow::optionWindow(int deltaFontSize)
                             "Compute element sizes using point values");
       mesh.butt[5]->tooltip("Mesh.CharacteristicLengthFromPoints");
       mesh.butt[5]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[5]->callback(mesh_options_ok_cb);
+      mesh.butt[5]->callback(mesh_options_ok_cb,(void*)"mesh_lc_from_points");
 
-      mesh.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
+      mesh.butt[26] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
+                            "Compute element sizes using parametric point values");
+      mesh.butt[26]->tooltip("Mesh.CharacteristicLengthFromParametricPoints");
+      mesh.butt[26]->type(FL_TOGGLE_BUTTON);
+      mesh.butt[26]->callback(mesh_options_ok_cb);
+
+      mesh.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
         "Compute element sizes from curvature");
       mesh.butt[1]->tooltip("Mesh.CharacteristicLengthFromCurvature");
       mesh.butt[1]->type(FL_TOGGLE_BUTTON);
       mesh.butt[1]->callback(mesh_options_ok_cb, (void *)"mesh_curvature");
 
-      mesh.value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH,
+      mesh.value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW / 2, BH,
                                          "Number of elements per 2 pi radians");
       mesh.value[1]->tooltip("Mesh.MinimumElementsPerTwoPi");
       mesh.value[1]->minimum(3);
@@ -2557,20 +2567,20 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[1]->deactivate();
       mesh.value[1]->callback(mesh_options_ok_cb);
 
-      mesh.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
+      mesh.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
                                           "Extend element sizes from boundary");
       mesh.butt[16]->tooltip("Mesh.CharacteristicLengthExtendFromBoundary");
       mesh.butt[16]->type(FL_TOGGLE_BUTTON);
       mesh.butt[16]->callback(mesh_options_ok_cb);
 
-      mesh.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
+      mesh.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
                                          "Optimize quality of tetrahedra");
       mesh.butt[2]->tooltip("Mesh.Optimize");
       mesh.butt[2]->type(FL_TOGGLE_BUTTON);
       mesh.butt[2]->callback(mesh_options_ok_cb);
 
       mesh.butt[24] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
                             "Optimize quality of tetrahedra with Netgen");
       mesh.butt[24]->tooltip("Mesh.OptimizeNetgen");
       mesh.butt[24]->type(FL_TOGGLE_BUTTON);
@@ -2580,7 +2590,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[24]->callback(mesh_options_ok_cb);
 
       mesh.butt[3] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
                             "Optimize high-order meshes");
       mesh.butt[3]->tooltip("Mesh.HighOrderOptimize");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
@@ -3717,6 +3727,7 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       view.choice[3] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
+      view.choice[3]->tooltip("View.GlyphLocation");
       view.choice[3]->menu(menu_glyph_loc);
       view.choice[3]->align(FL_ALIGN_RIGHT);
       view.choice[3]->callback(view_options_ok_cb);
@@ -3729,7 +3740,7 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       view.choice[15] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
                                       2 * WB + 10 * BH, (int)(0.85 * IW), BH);
-      view.choice[15]->tooltip("View.GlyphLocation");
+      view.choice[15]->tooltip("View.CenterGlyphs");
       view.choice[15]->menu(menu_glyph_center);
       view.choice[15]->callback(view_options_ok_cb);
 

@@ -15,10 +15,6 @@
 HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions);
 
 /// Add points at tets circumcenter in order to fullfill a mesh size constraint 
-HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
-                              HXTDelaunayOptions* delOptions,
-                              double (*meshSizeFun)(double x, double y, double z,
-                                                    void* meshSizeData),
-                              void* meshSizeData);
+HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions);
 
 #endif

@@ -384,7 +384,8 @@ bool GEO_Internals::addCompoundBSpline(int &tag, const std::vector<int> &curveTa
   return _addCompoundSpline(tag, curveTags, numIntervals, true);
 }
 
-bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
+bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags,
+                                bool reorient)
 {
   if(tag >= 0 && FindEdgeLoop(tag)) {
     Msg::Error("GEO line loop with tag %d already exists", tag);
@@ -396,12 +397,12 @@ bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
     int t = curveTags[i];
     List_Add(tmp, &t);
   }
-  SortEdgesInLoop(tag, tmp);
+  bool ok = SortEdgesInLoop(tag, tmp, reorient);
   EdgeLoop *l = CreateEdgeLoop(tag, tmp);
   Tree_Add(EdgeLoops, &l);
   List_Delete(tmp);
   _changed = true;
-  return true;
+  return ok;
 }
 
 bool GEO_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
@@ -865,7 +866,7 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
       int t = tags[i];
       List_Suppress(p->Entities, &t, fcmp_int);
     }
-    if(!List_Nbr(p->Entities)) {
+    if(!List_Nbr(p->Entities) || tags.empty()) {
       switch(dim) {
       case 0: DeletePhysicalPoint(tag); break;
       case 1: DeletePhysicalLine(tag); break;
@@ -1425,9 +1426,9 @@ gmshSurface *GEO_Internals::newGeometryPolarSphere(int tag, int centerTag,
 
 // GModel interface
 
-void GModel::_createGEOInternals() { _geo_internals = new GEO_Internals; }
+void GModel::createGEOInternals() { _geo_internals = new GEO_Internals; }
 
-void GModel::_deleteGEOInternals()
+void GModel::deleteGEOInternals()
 {
   if(_geo_internals) delete _geo_internals;
   _geo_internals = 0;

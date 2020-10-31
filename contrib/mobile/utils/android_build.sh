@@ -3,6 +3,8 @@
 appname=Onelab
 enable_occ=1
 enable_simulator=0
+version=2.3.4
+build=53 # must be incremented for each submitted build
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -26,6 +28,14 @@ while [[ $# -gt 0 ]]; do
   esac
   shift # past argument or value
 done
+
+# modify Android/app/src/main/AndroidManifest.xml
+#
+#   android:versionName="XXX"
+#   android:versionCode="YYY"
+mobile="${HOME}/src/gmsh/contrib/mobile"
+sed -i "" "s/.*android:versionName.*/          android:versionName=\"${version}\"/" ${mobile}/Android/app/src/main/AndroidManifest.xml
+sed -i "" "s/.*android:versionCode.*/          android:versionCode=\"${build}\"/" ${mobile}/Android/app/src/main/AndroidManifest.xml
 
 android=android
 if [ $enable_simulator != 0 ]; then

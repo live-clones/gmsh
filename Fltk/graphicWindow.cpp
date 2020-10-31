@@ -30,6 +30,7 @@ typedef unsigned long intptr_t;
 #include "gamepadWindow.h"
 #include "statisticsWindow.h"
 #include "contextWindow.h"
+#include "physicalGroupWindow.h"
 #include "visibilityWindow.h"
 #include "highOrderToolsWindow.h"
 #include "clippingWindow.h"
@@ -52,7 +53,7 @@ typedef unsigned long intptr_t;
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "findLinks.h"
-#include "GeoStringInterface.h"
+#include "scriptStringInterface.h"
 #include "CommandLine.h"
 #include "Options.h"
 #include "Context.h"
@@ -117,8 +118,15 @@ static const char *input_formats =
 #endif
 #if defined(HAVE_OCC)
   "Geometry - OpenCASCADE BRep\t*.brep\n"
-  "Geometry - OpenCASCADE IGES\t*.{igs,iges}\n"
-  "Geometry - OpenCASCADE STEP\t*.{stp,step}\n"
+#endif
+#if defined(HAVE_PARASOLID)
+  "Geometry - Parasolid XMT\t*.xmt_txt\n"
+#endif
+#if defined(HAVE_OCC) || defined(HAVE_PARASOLID_STEP)
+  "Geometry - STEP\t*.{stp,step}\n"
+#endif
+#if defined(HAVE_OCC)
+  "Geometry - IGES\t*.{igs,iges}\n"
 #endif
   "Mesh - Gmsh MSH\t*.msh\n"
   "Mesh - Diffpack 3D\t*.diff\n"
@@ -263,10 +271,10 @@ static void file_window_cb(Fl_Widget *w, void *data)
     g2->getWindow()->show();
   }
   else if(str == "split_h"){
-    FlGui::instance()->splitCurrentOpenglWindow('h');
+    FlGui::instance()->splitCurrentOpenglWindow('h', 0.5);
   }
   else if(str == "split_v"){
-    FlGui::instance()->splitCurrentOpenglWindow('v');
+    FlGui::instance()->splitCurrentOpenglWindow('v', 0.5);
   }
   else if(str == "split_u"){
     FlGui::instance()->splitCurrentOpenglWindow('u');
@@ -284,6 +292,7 @@ static int _save_options(const char *name){ return optionsFileDialog(name); }
 static int _save_geo(const char *name){ return geoFileDialog(name); }
 static int _save_brep(const char *name){ CreateOutputFile(name, FORMAT_BREP); return 1; }
 static int _save_step(const char *name){ CreateOutputFile(name, FORMAT_STEP); return 1; }
+static int _save_xmt(const char *name){ CreateOutputFile(name, FORMAT_XMT); return 1; }
 static int _save_cgns(const char *name){ return cgnsFileDialog(name); }
 static int _save_unv(const char *name){ return unvinpFileDialog
     (name, "UNV Options", FORMAT_UNV); }
@@ -399,6 +408,7 @@ static int _save_auto(const char *name)
   case FORMAT_SVG  : return _save_svg(name);
   case FORMAT_TIKZ : return _save_tikz(name);
   case FORMAT_YUV  : return _save_yuv(name);
+  case FORMAT_XMT  : return _save_xmt(name);
   default :
     CreateOutputFile(name, FORMAT_AUTO);
     return 1;
@@ -417,8 +427,13 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Geometry - Gmsh Options\t*.opt", _save_options},
     {"Geometry - Gmsh Unrolled GEO\t*.geo_unrolled", _save_geo},
 #if defined(HAVE_OCC)
-    {"Geometry - OpenCASCADE STEP\t*.step", _save_step},
     {"Geometry - OpenCASCADE BRep\t*.brep", _save_brep},
+#endif
+#if defined(HAVE_PARASOLID)
+    {"Geometry - Parasolid XMT\t*.xmt_txt", _save_xmt},
+#endif
+#if defined(HAVE_OCC) || defined(HAVE_PARASOLID_STEP)
+    {"Geometry - STEP\t*.step", _save_step},
 #endif
     {"Mesh - Gmsh MSH\t*.msh", _save_msh},
     {"Mesh - Abaqus INP\t*.inp", _save_inp},
@@ -571,6 +586,8 @@ void file_quit_cb(Fl_Widget *w, void *data)
       wins.push_back(win);
     for (std::size_t i = 0; i < wins.size(); i++)
       wins[i]->hide();
+    // process remaining events
+    FlGui::check();
     // ... and destroy the GUI
     FlGui::instance()->destroy();
   }
@@ -617,7 +634,7 @@ void file_watch_cb(Fl_Widget *w, void *data)
 
 static void help_online_cb(Fl_Widget *w, void *data)
 {
-  fl_open_uri("http://gmsh.info/doc/texinfo/");
+  fl_open_uri("https://gmsh.info/doc/texinfo/");
 }
 
 static void help_basic_cb(Fl_Widget *w, void *data)
@@ -712,108 +729,108 @@ static void add_new_point_based_entity(const std::string &what, int pane)
     if(ib == 'e'){
       switch(pane){
       case 1:
-        add_point(GModel::current()->getFileName(),
-                  FlGui::instance()->elementaryContext->input[4]->value(),
-                  FlGui::instance()->elementaryContext->input[5]->value(),
-                  FlGui::instance()->elementaryContext->input[6]->value(),
-                  FlGui::instance()->elementaryContext->input[7]->value());
+        scriptAddPoint(GModel::current()->getFileName(),
+                       FlGui::instance()->elementaryContext->input[4]->value(),
+                       FlGui::instance()->elementaryContext->input[5]->value(),
+                       FlGui::instance()->elementaryContext->input[6]->value(),
+                       FlGui::instance()->elementaryContext->input[7]->value());
         break;
       case 2:
-        add_circle(GModel::current()->getFileName(),
-                   FlGui::instance()->elementaryContext->input[8]->value(),
-                   FlGui::instance()->elementaryContext->input[9]->value(),
-                   FlGui::instance()->elementaryContext->input[10]->value(),
-                   FlGui::instance()->elementaryContext->input[11]->value(),
-                   FlGui::instance()->elementaryContext->input[12]->value(),
-                   FlGui::instance()->elementaryContext->input[13]->value());
+        scriptAddCircle(GModel::current()->getFileName(),
+                        FlGui::instance()->elementaryContext->input[8]->value(),
+                        FlGui::instance()->elementaryContext->input[9]->value(),
+                        FlGui::instance()->elementaryContext->input[10]->value(),
+                        FlGui::instance()->elementaryContext->input[11]->value(),
+                        FlGui::instance()->elementaryContext->input[12]->value(),
+                        FlGui::instance()->elementaryContext->input[13]->value());
         break;
       case 3:
-        add_ellipse(GModel::current()->getFileName(),
-                    FlGui::instance()->elementaryContext->input[14]->value(),
-                    FlGui::instance()->elementaryContext->input[15]->value(),
-                    FlGui::instance()->elementaryContext->input[16]->value(),
-                    FlGui::instance()->elementaryContext->input[17]->value(),
-                    FlGui::instance()->elementaryContext->input[18]->value(),
-                    FlGui::instance()->elementaryContext->input[19]->value(),
-                    FlGui::instance()->elementaryContext->input[20]->value());
+        scriptAddEllipse(GModel::current()->getFileName(),
+                         FlGui::instance()->elementaryContext->input[14]->value(),
+                         FlGui::instance()->elementaryContext->input[15]->value(),
+                         FlGui::instance()->elementaryContext->input[16]->value(),
+                         FlGui::instance()->elementaryContext->input[17]->value(),
+                         FlGui::instance()->elementaryContext->input[18]->value(),
+                         FlGui::instance()->elementaryContext->input[19]->value(),
+                         FlGui::instance()->elementaryContext->input[20]->value());
         break;
       case 4:
-        add_disk(GModel::current()->getFileName(),
-                 FlGui::instance()->elementaryContext->input[21]->value(),
-                 FlGui::instance()->elementaryContext->input[22]->value(),
-                 FlGui::instance()->elementaryContext->input[23]->value(),
-                 FlGui::instance()->elementaryContext->input[24]->value(),
-                 FlGui::instance()->elementaryContext->input[25]->value());
+        scriptAddDisk(GModel::current()->getFileName(),
+                      FlGui::instance()->elementaryContext->input[21]->value(),
+                      FlGui::instance()->elementaryContext->input[22]->value(),
+                      FlGui::instance()->elementaryContext->input[23]->value(),
+                      FlGui::instance()->elementaryContext->input[24]->value(),
+                      FlGui::instance()->elementaryContext->input[25]->value());
         break;
       case 5:
-        add_rectangle(GModel::current()->getFileName(),
-                      FlGui::instance()->elementaryContext->input[26]->value(),
-                      FlGui::instance()->elementaryContext->input[27]->value(),
-                      FlGui::instance()->elementaryContext->input[28]->value(),
-                      FlGui::instance()->elementaryContext->input[29]->value(),
-                      FlGui::instance()->elementaryContext->input[30]->value(),
-                      FlGui::instance()->elementaryContext->input[31]->value());
+        scriptAddRectangle(GModel::current()->getFileName(),
+                           FlGui::instance()->elementaryContext->input[26]->value(),
+                           FlGui::instance()->elementaryContext->input[27]->value(),
+                           FlGui::instance()->elementaryContext->input[28]->value(),
+                           FlGui::instance()->elementaryContext->input[29]->value(),
+                           FlGui::instance()->elementaryContext->input[30]->value(),
+                           FlGui::instance()->elementaryContext->input[31]->value());
         break;
       case 6:
-        add_sphere(GModel::current()->getFileName(),
-                   FlGui::instance()->elementaryContext->input[32]->value(),
-                   FlGui::instance()->elementaryContext->input[33]->value(),
-                   FlGui::instance()->elementaryContext->input[34]->value(),
-                   FlGui::instance()->elementaryContext->input[35]->value(),
-                   FlGui::instance()->elementaryContext->input[36]->value(),
-                   FlGui::instance()->elementaryContext->input[37]->value(),
-                   FlGui::instance()->elementaryContext->input[38]->value());
+        scriptAddSphere(GModel::current()->getFileName(),
+                        FlGui::instance()->elementaryContext->input[32]->value(),
+                        FlGui::instance()->elementaryContext->input[33]->value(),
+                        FlGui::instance()->elementaryContext->input[34]->value(),
+                        FlGui::instance()->elementaryContext->input[35]->value(),
+                        FlGui::instance()->elementaryContext->input[36]->value(),
+                        FlGui::instance()->elementaryContext->input[37]->value(),
+                        FlGui::instance()->elementaryContext->input[38]->value());
         break;
       case 7:
-        add_cylinder(GModel::current()->getFileName(),
-                     FlGui::instance()->elementaryContext->input[39]->value(),
-                     FlGui::instance()->elementaryContext->input[40]->value(),
-                     FlGui::instance()->elementaryContext->input[41]->value(),
-                     FlGui::instance()->elementaryContext->input[42]->value(),
-                     FlGui::instance()->elementaryContext->input[43]->value(),
-                     FlGui::instance()->elementaryContext->input[44]->value(),
-                     FlGui::instance()->elementaryContext->input[45]->value(),
-                     FlGui::instance()->elementaryContext->input[46]->value());
+        scriptAddCylinder(GModel::current()->getFileName(),
+                          FlGui::instance()->elementaryContext->input[39]->value(),
+                          FlGui::instance()->elementaryContext->input[40]->value(),
+                          FlGui::instance()->elementaryContext->input[41]->value(),
+                          FlGui::instance()->elementaryContext->input[42]->value(),
+                          FlGui::instance()->elementaryContext->input[43]->value(),
+                          FlGui::instance()->elementaryContext->input[44]->value(),
+                          FlGui::instance()->elementaryContext->input[45]->value(),
+                          FlGui::instance()->elementaryContext->input[46]->value());
         break;
       case 8:
-        add_box(GModel::current()->getFileName(),
-                FlGui::instance()->elementaryContext->input[47]->value(),
-                FlGui::instance()->elementaryContext->input[48]->value(),
-                FlGui::instance()->elementaryContext->input[49]->value(),
-                FlGui::instance()->elementaryContext->input[50]->value(),
-                FlGui::instance()->elementaryContext->input[51]->value(),
-                FlGui::instance()->elementaryContext->input[52]->value());
+        scriptAddBox(GModel::current()->getFileName(),
+                     FlGui::instance()->elementaryContext->input[47]->value(),
+                     FlGui::instance()->elementaryContext->input[48]->value(),
+                     FlGui::instance()->elementaryContext->input[49]->value(),
+                     FlGui::instance()->elementaryContext->input[50]->value(),
+                     FlGui::instance()->elementaryContext->input[51]->value(),
+                     FlGui::instance()->elementaryContext->input[52]->value());
         break;
       case 9:
-        add_torus(GModel::current()->getFileName(),
-                  FlGui::instance()->elementaryContext->input[53]->value(),
-                  FlGui::instance()->elementaryContext->input[54]->value(),
-                  FlGui::instance()->elementaryContext->input[55]->value(),
-                  FlGui::instance()->elementaryContext->input[56]->value(),
-                  FlGui::instance()->elementaryContext->input[57]->value(),
-                  FlGui::instance()->elementaryContext->input[58]->value());
+        scriptAddTorus(GModel::current()->getFileName(),
+                       FlGui::instance()->elementaryContext->input[53]->value(),
+                       FlGui::instance()->elementaryContext->input[54]->value(),
+                       FlGui::instance()->elementaryContext->input[55]->value(),
+                       FlGui::instance()->elementaryContext->input[56]->value(),
+                       FlGui::instance()->elementaryContext->input[57]->value(),
+                       FlGui::instance()->elementaryContext->input[58]->value());
         break;
       case 10:
-        add_cone(GModel::current()->getFileName(),
-                 FlGui::instance()->elementaryContext->input[59]->value(),
-                 FlGui::instance()->elementaryContext->input[60]->value(),
-                 FlGui::instance()->elementaryContext->input[61]->value(),
-                 FlGui::instance()->elementaryContext->input[62]->value(),
-                 FlGui::instance()->elementaryContext->input[63]->value(),
-                 FlGui::instance()->elementaryContext->input[64]->value(),
-                 FlGui::instance()->elementaryContext->input[65]->value(),
-                 FlGui::instance()->elementaryContext->input[66]->value(),
-                 FlGui::instance()->elementaryContext->input[67]->value());
+        scriptAddCone(GModel::current()->getFileName(),
+                      FlGui::instance()->elementaryContext->input[59]->value(),
+                      FlGui::instance()->elementaryContext->input[60]->value(),
+                      FlGui::instance()->elementaryContext->input[61]->value(),
+                      FlGui::instance()->elementaryContext->input[62]->value(),
+                      FlGui::instance()->elementaryContext->input[63]->value(),
+                      FlGui::instance()->elementaryContext->input[64]->value(),
+                      FlGui::instance()->elementaryContext->input[65]->value(),
+                      FlGui::instance()->elementaryContext->input[66]->value(),
+                      FlGui::instance()->elementaryContext->input[67]->value());
         break;
       case 11:
-        add_wedge(GModel::current()->getFileName(),
-                  FlGui::instance()->elementaryContext->input[68]->value(),
-                  FlGui::instance()->elementaryContext->input[69]->value(),
-                  FlGui::instance()->elementaryContext->input[70]->value(),
-                  FlGui::instance()->elementaryContext->input[71]->value(),
-                  FlGui::instance()->elementaryContext->input[72]->value(),
-                  FlGui::instance()->elementaryContext->input[73]->value(),
-                  FlGui::instance()->elementaryContext->input[74]->value());
+        scriptAddWedge(GModel::current()->getFileName(),
+                       FlGui::instance()->elementaryContext->input[68]->value(),
+                       FlGui::instance()->elementaryContext->input[69]->value(),
+                       FlGui::instance()->elementaryContext->input[70]->value(),
+                       FlGui::instance()->elementaryContext->input[71]->value(),
+                       FlGui::instance()->elementaryContext->input[72]->value(),
+                       FlGui::instance()->elementaryContext->input[73]->value(),
+                       FlGui::instance()->elementaryContext->input[74]->value());
         break;
       }
       FlGui::instance()->resetVisibility();
@@ -863,7 +880,7 @@ static void add_new_multiline(const std::string &type)
     }
     if(ib == 'e') {
       if(p.size() >= 2)
-        add_multline(type, p, GModel::current()->getFileName());
+        scriptAddCurve(type, p, GModel::current()->getFileName());
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       drawContext::global()->draw();
@@ -924,7 +941,7 @@ static void add_new_line()
       break;
     }
     if(p.size() == 2) {
-      add_multline("Line", p, GModel::current()->getFileName());
+      scriptAddCurve("Line", p, GModel::current()->getFileName());
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       drawContext::global()->draw();
@@ -975,7 +992,8 @@ static void add_new_circle_arc()
       break;
     }
     if(p.size() == 3) {
-      add_circle_arc(p[0], p[1], p[2], GModel::current()->getFileName()); // begin, center, end
+      // begin, center, end
+      scriptAddCircleArc(p[0], p[1], p[2], GModel::current()->getFileName());
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       drawContext::global()->draw();
@@ -1029,7 +1047,7 @@ static void add_new_ellipse_arc()
       break;
     }
     if(p.size() == 4) {
-      add_ellipse_arc(p[0], p[1], p[2], p[3], GModel::current()->getFileName());
+      scriptAddEllipseArc(p[0], p[1], p[2], p[3], GModel::current()->getFileName());
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       drawContext::global()->draw();
@@ -1140,9 +1158,9 @@ static void add_new_surface_volume(int mode)
           FlGui::instance()->selectedFaces[0]->tag();
         if(selectContour(type, num, List1)) {
           if(type == ENT_CURVE)
-            add_lineloop(List1, GModel::current()->getFileName(), &num);
+            scriptAddCurveLoop(List1, GModel::current()->getFileName(), &num);
           else
-            add_surfloop(List1, GModel::current()->getFileName(), &num);
+            scriptAddSurfaceLoop(List1, GModel::current()->getFileName(), &num);
           List_Reset(List1);
           List_Add(List2, &num);
           while(1) {
@@ -1191,9 +1209,9 @@ static void add_new_surface_volume(int mode)
                   FlGui::instance()->selectedFaces[i]->tag();
                 if(selectContour(type, num, List1)) {
                   if(type == ENT_CURVE)
-                    add_lineloop(List1, GModel::current()->getFileName(), &num);
+                    scriptAddCurveLoop(List1, GModel::current()->getFileName(), &num);
                   else
-                    add_surfloop(List1, GModel::current()->getFileName(), &num);
+                    scriptAddSurfaceLoop(List1, GModel::current()->getFileName(), &num);
                   List_Reset(List1);
                   List_Add(List2, &num);
                 }
@@ -1207,11 +1225,11 @@ static void add_new_surface_volume(int mode)
           List_Unique(List2,fcmp_absint);
           if(List_Nbr(List2)) {
             switch (mode) {
-            case 0: add_surf("Plane Surface", List2,
-                             GModel::current()->getFileName()); break;
-            case 1: add_surf("Surface", List2,
-                             GModel::current()->getFileName()); break;
-            case 2: add_vol(List2, GModel::current()->getFileName()); break;
+            case 0: scriptAddSurface("Plane Surface", List2,
+                                     GModel::current()->getFileName()); break;
+            case 1: scriptAddSurface("Surface", List2,
+                                     GModel::current()->getFileName()); break;
+            case 2: scriptAddVolume(List2, GModel::current()->getFileName()); break;
             }
             FlGui::instance()->resetVisibility();
             GModel::current()->setSelection(0);
@@ -1234,7 +1252,7 @@ static void geometry_elementary_set_factory_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string str((const char*)data);
-  add_infile("SetFactory(\"" + str + "\");", GModel::current()->getFileName());
+  scriptSetFactory(str, GModel::current()->getFileName());
   if(FlGui::available())
     Msg::StatusBar(false, "Setting %s factory", str.c_str());
 }
@@ -1426,66 +1444,66 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
       if(dimTags.size()){
         switch (action) {
         case 0:
-          translate(GModel::current()->getFileName(), dimTags,
-                    FlGui::instance()->transformContext->input[0]->value(),
-                    FlGui::instance()->transformContext->input[1]->value(),
-                    FlGui::instance()->transformContext->input[2]->value(),
-                    FlGui::instance()->transformContext->butt[0]->value());
+          scriptTranslate(GModel::current()->getFileName(), dimTags,
+                          FlGui::instance()->transformContext->input[0]->value(),
+                          FlGui::instance()->transformContext->input[1]->value(),
+                          FlGui::instance()->transformContext->input[2]->value(),
+                          FlGui::instance()->transformContext->butt[0]->value());
           break;
         case 1:
-          rotate(GModel::current()->getFileName(), dimTags,
-                 FlGui::instance()->transformContext->input[6]->value(),
-                 FlGui::instance()->transformContext->input[7]->value(),
-                 FlGui::instance()->transformContext->input[8]->value(),
-                 FlGui::instance()->transformContext->input[3]->value(),
-                 FlGui::instance()->transformContext->input[4]->value(),
-                 FlGui::instance()->transformContext->input[5]->value(),
-                 FlGui::instance()->transformContext->input[9]->value(),
-                 FlGui::instance()->transformContext->butt[1]->value());
+          scriptRotate(GModel::current()->getFileName(), dimTags,
+                       FlGui::instance()->transformContext->input[6]->value(),
+                       FlGui::instance()->transformContext->input[7]->value(),
+                       FlGui::instance()->transformContext->input[8]->value(),
+                       FlGui::instance()->transformContext->input[3]->value(),
+                       FlGui::instance()->transformContext->input[4]->value(),
+                       FlGui::instance()->transformContext->input[5]->value(),
+                       FlGui::instance()->transformContext->input[9]->value(),
+                       FlGui::instance()->transformContext->butt[1]->value());
           break;
         case 2:
-          dilate(GModel::current()->getFileName(), dimTags,
-                 FlGui::instance()->transformContext->input[10]->value(),
-                 FlGui::instance()->transformContext->input[11]->value(),
-                 FlGui::instance()->transformContext->input[12]->value(),
-                 FlGui::instance()->transformContext->input[13]->value(),
-                 FlGui::instance()->transformContext->input[14]->value(),
-                 FlGui::instance()->transformContext->input[15]->value(),
-                 FlGui::instance()->transformContext->butt[2]->value());
+          scriptDilate(GModel::current()->getFileName(), dimTags,
+                       FlGui::instance()->transformContext->input[10]->value(),
+                       FlGui::instance()->transformContext->input[11]->value(),
+                       FlGui::instance()->transformContext->input[12]->value(),
+                       FlGui::instance()->transformContext->input[13]->value(),
+                       FlGui::instance()->transformContext->input[14]->value(),
+                       FlGui::instance()->transformContext->input[15]->value(),
+                       FlGui::instance()->transformContext->butt[2]->value());
           break;
         case 3:
-          symmetry(GModel::current()->getFileName(), dimTags,
-                   FlGui::instance()->transformContext->input[16]->value(),
-                   FlGui::instance()->transformContext->input[17]->value(),
-                   FlGui::instance()->transformContext->input[18]->value(),
-                   FlGui::instance()->transformContext->input[19]->value(),
-                   FlGui::instance()->transformContext->butt[3]->value());
+          scriptMirror(GModel::current()->getFileName(), dimTags,
+                       FlGui::instance()->transformContext->input[16]->value(),
+                       FlGui::instance()->transformContext->input[17]->value(),
+                       FlGui::instance()->transformContext->input[18]->value(),
+                       FlGui::instance()->transformContext->input[19]->value(),
+                       FlGui::instance()->transformContext->butt[3]->value());
           break;
         case 4:
-          extrude(GModel::current()->getFileName(), dimTags,
-                  FlGui::instance()->transformContext->input[0]->value(),
-                  FlGui::instance()->transformContext->input[1]->value(),
-                  FlGui::instance()->transformContext->input[2]->value(),
-                  FlGui::instance()->transformContext->butt[7]->value(),
-                  FlGui::instance()->transformContext->input[21]->value(),
-                  FlGui::instance()->transformContext->butt[8]->value());
+          scriptExtrude(GModel::current()->getFileName(), dimTags,
+                        FlGui::instance()->transformContext->input[0]->value(),
+                        FlGui::instance()->transformContext->input[1]->value(),
+                        FlGui::instance()->transformContext->input[2]->value(),
+                        FlGui::instance()->transformContext->butt[7]->value(),
+                        FlGui::instance()->transformContext->input[21]->value(),
+                        FlGui::instance()->transformContext->butt[8]->value());
           break;
         case 5:
-          protude(GModel::current()->getFileName(), dimTags,
-                  FlGui::instance()->transformContext->input[6]->value(),
-                  FlGui::instance()->transformContext->input[7]->value(),
-                  FlGui::instance()->transformContext->input[8]->value(),
-                  FlGui::instance()->transformContext->input[3]->value(),
-                  FlGui::instance()->transformContext->input[4]->value(),
-                  FlGui::instance()->transformContext->input[5]->value(),
-                  FlGui::instance()->transformContext->input[9]->value(),
-                  FlGui::instance()->transformContext->butt[9]->value(),
-                  FlGui::instance()->transformContext->input[22]->value(),
-                  FlGui::instance()->transformContext->butt[10]->value());
+          scriptProtude(GModel::current()->getFileName(), dimTags,
+                        FlGui::instance()->transformContext->input[6]->value(),
+                        FlGui::instance()->transformContext->input[7]->value(),
+                        FlGui::instance()->transformContext->input[8]->value(),
+                        FlGui::instance()->transformContext->input[3]->value(),
+                        FlGui::instance()->transformContext->input[4]->value(),
+                        FlGui::instance()->transformContext->input[5]->value(),
+                        FlGui::instance()->transformContext->input[9]->value(),
+                        FlGui::instance()->transformContext->butt[9]->value(),
+                        FlGui::instance()->transformContext->input[22]->value(),
+                        FlGui::instance()->transformContext->butt[10]->value());
           break;
         case 6:
-          delete_entities(GModel::current()->getFileName(), dimTags,
-                          FlGui::instance()->transformContext->butt[6]->value());
+          scriptDeleteEntities(GModel::current()->getFileName(), dimTags,
+                               FlGui::instance()->transformContext->butt[6]->value());
           break;
         case 7:
         case 11:
@@ -1498,14 +1516,14 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
                  (dimTags[i].first == 3 && what == "Volume"))
                 tags.push_back(dimTags[i].second);
             }
-            add_remove_physical(GModel::current()->getFileName(), what, tags,
-                                FlGui::instance()->physicalContext->input[0]->value(),
-                                FlGui::instance()->physicalContext->butt[0]->value() ? 0 :
-                                FlGui::instance()->physicalContext->value[0]->value(),
-                                FlGui::instance()->physicalContext->append,
-                                FlGui::instance()->physicalContext->mode);
+            scriptRemovePhysicalGroup(GModel::current()->getFileName(), what, tags,
+                                      FlGui::instance()->physicalGroup->input[0]->value(),
+                                      FlGui::instance()->physicalGroup->butt[0]->value() ? 0 :
+                                      FlGui::instance()->physicalGroup->value[0]->value(),
+                                      FlGui::instance()->physicalGroup->append,
+                                      FlGui::instance()->physicalGroup->mode);
           }
-          FlGui::instance()->physicalContext->show(action == 7 ? false : true);
+          FlGui::instance()->physicalGroup->show(action == 7 ? false : true);
           // ask clients to update the tree using the new physical definition
           onelab_cb(0, (void*)"check");
           break;
@@ -1517,8 +1535,8 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
                 tags.push_back(dimTags[i].second);
             }
             if(tags.size())
-              add_charlength(GModel::current()->getFileName(), tags,
-                             FlGui::instance()->meshContext->input[0]->value());
+              scriptSetCharacteristicLength(GModel::current()->getFileName(), tags,
+                                            FlGui::instance()->meshContext->input[0]->value());
           }
           break;
         case 9:
@@ -1528,7 +1546,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
               if(dimTags[i].first == 2 && what == "Surface")
                 tags.push_back(dimTags[i].second);
             }
-            add_recosurf(GModel::current()->getFileName(), tags);
+            scriptRecombineSurface(GModel::current()->getFileName(), tags);
           }
           break;
         case 10:
@@ -1540,7 +1558,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
                  (dimTags[i].first == 3 && what == "Volume"))
                 tags.push_back(dimTags[i].second);
             }
-            add_compound(GModel::current()->getFileName(), what, tags);
+            scriptSetCompound(GModel::current()->getFileName(), what, tags);
           }
           break;
         case 12:
@@ -1555,7 +1573,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
             for(std::size_t i = 0; i < dimTags.size(); i++){
               if(dimTags[i].first == 1) l.push_back(dimTags[i].second);
             }
-            add_pipe(GModel::current()->getFileName(), dimTagsSaved, l);
+            scriptAddPipe(GModel::current()->getFileName(), dimTagsSaved, l);
             dimTagsSaved.clear();
           }
           break;
@@ -1730,7 +1748,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
         Msg::Error("At least one tool must be selected");
       }
       else{
-        apply_boolean(GModel::current()->getFileName(), mode, object, tool,
+        scriptBoolean(GModel::current()->getFileName(), mode, object, tool,
                       FlGui::instance()->transformContext->butt[4]->value(),
                       tool.size() ?
                       FlGui::instance()->transformContext->butt[5]->value() : 0);
@@ -1818,7 +1836,7 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
         Msg::Error("At least one curve must be selected");
       }
       else{
-        apply_fillet(GModel::current()->getFileName(), regions, edges,
+        scriptFillet(GModel::current()->getFileName(), regions, edges,
                      FlGui::instance()->transformContext->input[20]->value());
         GModel::current()->setSelection(0);
         selectRegions = true;
@@ -1867,7 +1885,7 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
     if(ib == 'q')
       break;
     if(ib == 'e' && edge_to_split){
-      split_edge(edge_to_split->tag(), List1, GModel::current()->getFileName());
+      scriptSplitCurve(edge_to_split->tag(), List1, GModel::current()->getFileName());
       break;
     }
     for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
@@ -1885,7 +1903,7 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
 
 static void geometry_elementary_coherence_cb(Fl_Widget *w, void *data)
 {
-  coherence(GModel::current()->getFileName());
+  scriptCoherence(GModel::current()->getFileName());
 }
 
 static void geometry_physical_add_cb(Fl_Widget *w, void *data)
@@ -1896,18 +1914,18 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
     FlGui::instance()->callForSolverPlugin(0);
   else if(str == "Curve")
     FlGui::instance()->callForSolverPlugin(1);
-  FlGui::instance()->physicalContext->show(false);
+  FlGui::instance()->physicalGroup->show(false);
   action_point_line_surface_volume(7, str);
-  FlGui::instance()->physicalContext->hide();
+  FlGui::instance()->physicalGroup->hide();
 }
 
 static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string str((const char*)data);
-  FlGui::instance()->physicalContext->show(true);
+  FlGui::instance()->physicalGroup->show(true);
   action_point_line_surface_volume(11, str);
-  FlGui::instance()->physicalContext->hide();
+  FlGui::instance()->physicalGroup->hide();
 }
 
 void mesh_save_cb(Fl_Widget *w, void *data)
@@ -2149,7 +2167,7 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
   std::vector<int> tags;
-  computeCrossField (GModel::current(), tags);
+  computeStructuredQuadMesh (GModel::current(), tags);
   drawContext::global()->draw();
 }
 
@@ -2268,10 +2286,10 @@ static void mesh_define_transfinite(int dim)
     if(ib == 'e') {
       if(dim == 1) {
         if(p.size())
-          add_trsfline(p, GModel::current()->getFileName(),
-                       FlGui::instance()->meshContext->choice[0]->text(),
-                       FlGui::instance()->meshContext->input[2]->value(),
-                       FlGui::instance()->meshContext->input[1]->value());
+          scriptSetTransfiniteLine(p, GModel::current()->getFileName(),
+                                   FlGui::instance()->meshContext->choice[0]->text(),
+                                   FlGui::instance()->meshContext->input[2]->value(),
+                                   FlGui::instance()->meshContext->input[1]->value());
       }
       GModel::current()->setSelection(0);
       drawContext::global()->draw();
@@ -2350,14 +2368,14 @@ static void mesh_define_transfinite(int dim)
             switch (dim) {
             case 2:
               if((p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1))
-                add_trsfsurf(p, GModel::current()->getFileName(),
-                             FlGui::instance()->meshContext->choice[1]->text());
+                scriptSetTransfiniteSurface(p, GModel::current()->getFileName(),
+                                            FlGui::instance()->meshContext->choice[1]->text());
               else
                 Msg::Error("Wrong number of points for mesh constraint");
               break;
             case 3:
               if(p.size() == 6 + 1 || p.size() == 8 + 1)
-                add_trsfvol(p, GModel::current()->getFileName());
+                scriptSetTransfiniteVolume(p, GModel::current()->getFileName());
               else
                 Msg::Error("Wrong number of points for transfinite volume");
               break;
@@ -2481,7 +2499,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
         drawContext::global()->draw();
         int tag = (dim == 2) ? FlGui::instance()->selectedFaces[0]->tag() :
           FlGui::instance()->selectedRegions[0]->tag();
-        add_embedded(GModel::current()->getFileName(), what, entities, dim, tag);
+        scriptEmbed(GModel::current()->getFileName(), what, entities, dim, tag);
         GModel::current()->setSelection(0);
         selectEntities = true;
         entities.clear();
@@ -3831,7 +3849,7 @@ int graphicWindow::getMenuPositionY()
   return _menuwin->y();
 }
 
-bool graphicWindow::split(openglWindow *g, char how)
+bool graphicWindow::split(openglWindow *g, char how, double ratio)
 {
   if(_tile->find(g) == _tile->children()) return false; // not found
 
@@ -3855,14 +3873,16 @@ bool graphicWindow::split(openglWindow *g, char how)
     gl.push_back(g2);
     _tile->add(g2);
     g2->show();
+    openglWindow::setLastHandled(g2);
   }
   else{
+    double fact = (ratio <= 0.) ? 0.01 : (ratio >= 1.) ? 0.99 : ratio;
     // make sure browser is not zero-size when adding children
     if(_browser && _browser->h() == 0) setMessageHeight(1);
     int x1 = g->x();
     int y1 = g->y();
-    int w1 = (how == 'h') ? g->w() / 2 : g->w();
-    int h1 = (how == 'h') ? g->h() : g->h() / 2;
+    int w1 = (how == 'h') ? (int)(g->w() * fact) : g->w();
+    int h1 = (how == 'h') ? g->h() : (int)(g->h() * fact);
 
     int x2 = (how == 'h') ? (g->x() + w1) : g->x();
     int y2 = (how == 'h') ? g->y() : (g->y() + h1);
@@ -3881,6 +3901,7 @@ bool graphicWindow::split(openglWindow *g, char how)
     _tile->add(g2);
 
     g2->show();
+    openglWindow::setLastHandled(g2);
   }
   return true;
 }
@@ -4338,7 +4359,7 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_recombine_cb} ,
   {"0Modules/Mesh/Reclassify 2D",
    (Fl_Callback *)mesh_classify_cb} ,
-  {"0Modules/Mesh/Experimental/Compute quad layout",
+  {"0Modules/Mesh/Experimental/Compute structured quad mesh",
    (Fl_Callback *)mesh_cross_compute_cb} ,
 #if defined(HAVE_METIS)
   {"0Modules/Mesh/Experimental/Convert old partitioning",

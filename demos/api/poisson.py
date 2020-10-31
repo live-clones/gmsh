@@ -248,7 +248,8 @@ fem_solve()
 
 gmsh.option.setNumber("View[0].IntervalsType", 3)
 gmsh.option.setNumber("View[0].NbIso", 20)
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()
 

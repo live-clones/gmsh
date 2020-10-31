@@ -80,7 +80,8 @@ public:
     UnknownModel,
     GmshModel,
     OpenCascadeModel,
-    AcisModel
+    AcisModel,
+    ParasolidModel
   };
 
   // all known entity types
@@ -246,6 +247,11 @@ public:
   // does the entity have a parametrization?
   virtual bool haveParametrization() { return true; }
 
+  // is the entity and its bounding entities fully discrete (i.e. without
+  // parametrization for curves and surfaces), and should thus not be
+  // (re)meshed?
+  virtual bool isFullyDiscrete() { return !haveParametrization(); }
+
   // parametric bounds of the entity in the "i" direction.
   virtual Range<double> parBounds(int i) const { return Range<double>(0., 0.); }
 
@@ -394,8 +400,8 @@ public:
   // corresponding mesh vertices
   std::map<MVertex *, MVertex *> correspondingVertices;
 
-  // corresponding high order control points
-  std::map<MVertex *, MVertex *> correspondingHOPoints;
+  // corresponding high order vertices
+  std::map<MVertex *, MVertex *> correspondingHighOrderVertices;
 
   // reorder the mesh elements of the given type, according to ordering
   virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering)
@@ -405,9 +411,34 @@ public:
 };
 
 struct GEntityPtrLessThan {
-  bool operator()(GEntity const *const ent1, GEntity const *const ent2) const
+  // beware that this comparison function does *not* compare the entity
+  // dimension; this is on purpose
+  bool operator()(const GEntity *ent1, const GEntity *ent2) const
   {
     return ent1->tag() < ent2->tag();
+  }
+};
+
+struct GEntityPtrFullLessThan {
+  bool operator()(const GEntity *ent1, const GEntity *ent2) const
+  {
+    if(ent1->dim() != ent2->dim())
+      return ent1->dim() < ent2->dim();
+    return ent1->tag() < ent2->tag();
+  }
+};
+
+struct GEntityPtrFullEqual {
+  bool operator()(const GEntity *ent1, const GEntity *ent2) const
+  {
+    return (ent1->dim() == ent2->dim()) && (ent1->tag() == ent2->tag());
+  }
+};
+
+struct GEntityPtrFullHash {
+  size_t operator()(GEntity const *const ent) const
+  {
+    return 10 * ent->tag() + ent->dim();
   }
 };
 

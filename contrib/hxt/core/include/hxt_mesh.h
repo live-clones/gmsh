@@ -1,8 +1,6 @@
 #ifndef HXT_MESH_H
 #define HXT_MESH_H
 
-#define HXT_CORE_FILEIO
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,6 +12,9 @@ extern "C" {
 
 #define HXT_NO_ADJACENT UINT64_MAX
 
+#define HXT_COLOR_OUT UINT32_MAX
+  
+  
 /* Element types, same as Gmsh */
 typedef enum {
   HXT_NO_ELT = 0,
@@ -39,7 +40,7 @@ typedef struct {
     uint32_t* node;  // aligned (size = tetrahedra.size*4*sizeof(uint32_t))
     uint64_t* neigh; // aligned (size = tetrahedra.size*4*sizeof(uint64_t))
     uint8_t* neighType;
-    uint16_t* colors;
+    uint16_t* color;
     uint16_t* flag;
     uint64_t num;    // number of tetrahedra
     uint64_t size;   // reserved number of tetrahedra (size of the vector)
@@ -50,7 +51,7 @@ typedef struct {
     uint32_t* node;  // aligned (size = hexahedra.size*8*sizeof(uint32_t))
     uint64_t* neigh; // aligned (size = hexahedra.size*6*sizeof(uint64_t))
     uint8_t* neighType;
-    uint16_t* colors;
+    uint16_t* color;
     uint16_t* flag;
     uint64_t num;    // number of tetrahedra
     uint64_t size;   // reserved number of hexahedra (size of the vector)
@@ -61,7 +62,7 @@ typedef struct {
     uint32_t* node;  // aligned (size = prisms.size*6*sizeof(uint32_t))
     uint64_t* neigh; // aligned (size = prisms.size*5*sizeof(uint64_t))
     uint8_t* neighType;
-    uint16_t* colors;
+    uint16_t* color;
     uint16_t* flag;
     uint64_t num;    // number of tetrahedra
     uint64_t size;   // reserved number of prisms (size of the vector)
@@ -72,7 +73,7 @@ typedef struct {
     uint32_t* node;  // aligned (size = pyramids.size*5*sizeof(uint32_t))
     uint64_t* neigh; // aligned (size = pyramids.size*5*sizeof(uint64_t))
     uint8_t* neighType;
-    uint16_t* colors;
+    uint16_t* color;
     uint16_t* flag;
     uint64_t num;    // number of tetrahedra
     uint64_t size;   // reserved number of pyramids (size of the vector)
@@ -82,7 +83,7 @@ typedef struct {
   struct {
     uint32_t* node;
     uint64_t* neigh; 
-    uint16_t* colors;
+    uint16_t* color;
     uint64_t num;
     uint64_t size;
   } triangles;
@@ -90,7 +91,7 @@ typedef struct {
   struct {
     uint32_t* node;
     uint64_t* neigh; 
-    uint16_t* colors;
+    uint16_t* color;
     uint64_t num;
     uint64_t size;
   } triangles2;
@@ -98,7 +99,7 @@ typedef struct {
   // quads
   struct {
     uint32_t* node;
-    uint16_t* colors;
+    uint16_t* color;
     uint64_t num;
     uint64_t size;
   } quads;
@@ -106,17 +107,17 @@ typedef struct {
   // lines // TODO: consider writing a array of structure...
   struct {
     uint32_t* node;
-    uint16_t* colors;
+    uint16_t* color;
     uint64_t num;
     uint64_t size;
   } lines;
+
   struct {
     uint32_t* node;
-    uint16_t* colors;
+    uint16_t* color;
     uint32_t num;
     uint32_t size;
   } points;
-
 
   // boundary representation
   struct {
@@ -136,10 +137,10 @@ typedef struct {
 HXTStatus  hxtMeshCreate          ( HXTMesh** mesh);
 HXTStatus  hxtMeshDelete          ( HXTMesh** meshPtr);
 
-#ifdef HXT_CORE_FILEIO
+// mesh I/O
 HXTStatus  hxtMeshReadGmsh       ( HXTMesh* mesh, const char* filename);
 HXTStatus  hxtMeshWriteGmsh      ( HXTMesh* mesh, const char* filename);
-#endif
+
 
 #ifdef __cplusplus
 }

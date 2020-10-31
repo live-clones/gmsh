@@ -6,7 +6,7 @@ import sys
 # modified mesh in the same model.
 
 if len(sys.argv) < 2:
-    print "Usage: " + sys.argv[0] + " file.msh"
+    print("Usage: " + sys.argv[0] + " file.msh")
     exit(0)
 
 gmsh.initialize()
@@ -38,7 +38,8 @@ for e in entities:
     gmsh.model.mesh.addElements(e[0], e[1], elementTypes[e], elementTags[e],
                                 elementNodeTags[e])
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 #gmsh.write('flat.msh')
 
 gmsh.finalize()

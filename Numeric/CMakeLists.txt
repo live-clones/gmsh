@@ -33,8 +33,8 @@ set(SRC
     GaussLegendreSimplex.cpp
   GaussJacobi1D.cpp
   HilbertCurve.cpp
- robustPredicates.cpp
- decasteljau.cpp
+  robustPredicates.cpp
+  decasteljau.cpp
   mathEvaluator.cpp
   Iso.cpp
   approximationError.cpp
@@ -56,6 +56,7 @@ set(SRC
   HierarchicalBasisHcurlTetra.cpp
   HierarchicalBasisHcurlPri.cpp
   HierarchicalBasisHcurlLine.cpp
+  curvature.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

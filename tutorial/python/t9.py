@@ -8,6 +8,7 @@
 
 import gmsh
 import os
+import sys
 
 # Plugins can be added to Gmsh in order to extend its capabilities. For example,
 # post-processing plugins can modify views, or create new views based on
@@ -23,7 +24,7 @@ gmsh.option.setNumber("General.Terminal", 1)
 
 # Let us for example include a three-dimensional scalar view:
 path = os.path.dirname(os.path.abspath(__file__))
-gmsh.merge(os.path.join(path, '..', 'view3.pos'))
+gmsh.merge(os.path.join(path, os.pardir, 'view3.pos'))
 
 # We then set some options for the `Isosurface' plugin (which extracts an
 # isosurface from a 3D scalar view), and run it:
@@ -66,7 +67,8 @@ gmsh.option.setNumber("View[0].SmoothNormals", 1)
 gmsh.option.setNumber("View[1].IntervalsType", 2)
 gmsh.option.setNumber("View[2].IntervalsType", 2)
 
-# show the GUI at the end
-gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

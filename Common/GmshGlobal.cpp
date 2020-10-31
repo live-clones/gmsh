@@ -26,6 +26,7 @@ typedef unsigned long intptr_t;
 #include "robustPredicates.h"
 #include "BasisFactory.h"
 #include "gmshCrossFields.h"
+#include "fastScaledCrossField.h"
 #include "meshGFaceHxt.h"
 
 
@@ -61,10 +62,11 @@ typedef unsigned long intptr_t;
 
 #endif
 
+static bool isInitialized = false;
+
 int GmshInitialize(int argc, char **argv, bool readConfigFiles,
                    bool exitOnCommandLineError)
 {
-  static bool isInitialized = false;
   if(isInitialized) return 1;
   isInitialized = true;
 
@@ -83,7 +85,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
   InitOptions(0);
 
   // Read configuration files and command line options
-  GetOptions(argc, argv, readConfigFiles, exitOnCommandLineError);
+  GetOptions(readConfigFiles, exitOnCommandLineError);
 
   // Make sure we have enough resources (stack)
   CheckResources();
@@ -261,13 +263,15 @@ int GmshFinalize()
   while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
   std::vector<GModel *>().swap(GModel::list);
 
+  isInitialized = false;
+
   return 1;
 }
 
 static void StartupMessage()
 {
   Msg::Info("Running '%s' [Gmsh %s, %d node%s, max. %d thread%s]",
-            Msg::GetCommandLineArgs().c_str(), GMSH_VERSION, Msg::GetCommSize(),
+            Msg::GetCommandLineFull().c_str(), GMSH_VERSION, Msg::GetCommSize(),
             Msg::GetCommSize() > 1 ? "s" : "", Msg::GetMaxThreads(),
             Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
@@ -279,6 +283,7 @@ static void GoodbyeMessage()
   time(&now);
   std::string currtime = ctime(&now);
   currtime.resize(currtime.size() - 1);
+  Msg::SetInfoCpu(true); // always print cpu info at the end
   Msg::Info("Stopped on %s", currtime.c_str());
 }
 
@@ -286,7 +291,7 @@ int GmshBatch()
 {
   StartupMessage();
 
-  OpenProject(GModel::current()->getFileName());
+  OpenProject(GModel::current()->getFileName(), true); // warn if file missing
   bool open = false;
   for(std::size_t i = 0; i < CTX::instance()->files.size(); i++) {
     if(i == 0 && CTX::instance()->files[0][0] != '-') continue;
@@ -297,7 +302,7 @@ int GmshBatch()
     else if(CTX::instance()->files[i] == "-open")
       open = true;
     else if(open)
-      OpenProject(CTX::instance()->files[i]);
+      OpenProject(CTX::instance()->files[i], true); // warn if file missing
     else
       MergeFile(CTX::instance()->files[i]);
   }
@@ -347,17 +352,59 @@ int GmshBatch()
         (CTX::instance()->batchSomeValue * M_PI / 180., true, true, M_PI);
       GModel::current()->createGeometryOfDiscreteEntities();
     }
+    else if(CTX::instance()->batch == 67){
+      // compute a scaled cross field "per triangle"
+      int viewTag = -1;
+
+      // computePerTriangleScaledCrossField (GModel::current(), viewTag,
+      //				   6,1,CTX::instance()->mesh.numQuads/4);// we split the whole mesh afterwards
+      std::vector<std::array<double,5> > singularities;
+      computeScaledCrossFieldView(GModel::current(), viewTag,
+				  CTX::instance()->mesh.numQuads/4, 6, 1.e-2, 2, "scaled_cross_field", 1,
+				  &singularities);
+      std::vector<GFace *> temp;
+      temp.insert(temp.begin(), GModel::current()->firstFace(), GModel::current()->lastFace());
+      addSingularitiesAtAcuteCorners(temp,45,singularities);
+
+      
+      { // transfer to pack algo
+	std::string _ugly  = GModel::current()->getName()+"_singularities.txt";
+	std::string _ugly2 = GModel::current()->getName()+"_singularities.pos";
+	FILE *f__ = fopen (_ugly.c_str(), "w");
+	FILE *f2__ = fopen (_ugly2.c_str(), "w");
+	fprintf(f__,"%lu\n",singularities.size());
+	fprintf(f2__,"View \"singularities\"{\n");
+	for (size_t i = 0; i < singularities.size();++i){
+	  fprintf(f__,"%d %22.15E %22.15E %22.15E %d %d\n",(int) singularities[i][3],
+		  singularities[i][0],singularities[i][1],singularities[i][2],2,(int)singularities[i][4]);
+	  fprintf(f2__,"SP(%22.15E, %22.15E, %22.15E){ %d};\n",singularities[i][0],singularities[i][1],singularities[i][2], (int)singularities[i][2]);
+	}
+	fclose(f__);
+	fprintf(f2__,"};\n");
+	fclose(f2__);
+      }
+
+      PView* crossField = PView::getViewByTag(viewTag);
+      std::string posout = GModel::current()->getName() + "_scaled_crossfield.pos";
+      crossField->getData()->writePOS(posout);
+      
+
+      
+    }
     else if(CTX::instance()->batch == 68){
       // global surface remeshing
       meshGFaceHxt(GModel::current());
     }
     else if(CTX::instance()->batch == 69){
       std::vector<int> tags;
-      int result = computeCrossField (GModel::current(), tags);
-      GoodbyeMessage();
+      int result = computeStructuredQuadMesh (GModel::current(), tags);
+      if (result != 0) {
+        Msg::Error("Failed to compute structured quad mesh");
+      }
+      //      GoodbyeMessage();
       CTX::instance()->batch =0;
       // still a bug in allocation somewhere
-      exit(result);
+      //      exit(result);
     }
 #endif
   }

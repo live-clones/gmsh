@@ -12,7 +12,7 @@
 #include <vector>
 class GModel;
 
-int computeCrossField    (GModel *, std::vector<int> &tags);
+int computeStructuredQuadMesh(GModel *, std::vector<int> &tags);
 int computeCrossFieldAndH(GModel *gm,
 			  std::map<int, std::vector<double> > &dataH,
 			  std::map<int, std::vector<double> > &dataDir,
@@ -61,6 +61,7 @@ struct QuadMeshingState {
   int U_tag = -1;
   int V_tag = -1;
   void* data_uv_cuts = NULL;
+  void* data_uv_cuts_tj = NULL;
 
   /* cut model, triangulation */
   std::string model_cut = "";
@@ -112,5 +113,23 @@ int findAndMarkSingularities(GModel * gm);
 
 /* split mesh with separatrices generated from prescribed singularities*/
 int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state);
+
+/*****************************************************************************/
+/* Wrappers to call QMT functions from outside the QuadMeshingTools pipeline */
+/*****************************************************************************/
+
+/* generate a model data view "scaled_directions" with one branch of cross field per triangle, 
+ * scaled by a sizemap computed from H and adjusted to match sizemap_nb_quads */
+int computePerTriangleScaledCrossField(
+    GModel* gm,
+    int& viewTag,
+    int cross_field_iter         = 6,
+    int cross_field_bc_expansion = 1,
+    size_t sizemap_nb_quads      = 10000,
+    bool delete_other_tmp_views = true);
+
+/* smooth the current quad mesh (Winslow FDM), create boundary projector if not given */
+int smoothQuadMesh(GModel* gm, int explicit_iter = 100, void* data_boundary_projector = NULL);
+
 
 #endif

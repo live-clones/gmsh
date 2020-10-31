@@ -12,9 +12,11 @@
 struct MFaceHash : public std::unary_function<MFace, size_t> {
   size_t operator()(const MFace &f) const
   {
-    const MVertex *v[4] = {0, 0, 0, 0};
-    f.getOrderedVertices(v);
-    return HashFNV1a<sizeof(MVertex * [4])>::eval(v);
+    size_t v[4] = {0, 0, 0, 0};
+    for(size_t i = 0; i < f.getNumVertices(); i++) {
+      v[i] = f.getSortedVertex(i)->getNum();
+    }
+    return HashFNV1a<sizeof(size_t[4])>::eval(v);
   }
 };
 

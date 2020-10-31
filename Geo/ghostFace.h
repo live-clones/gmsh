@@ -16,13 +16,13 @@
 
 class ghostFace : public discreteFace {
 private:
-  unsigned int _partition;
-  std::map<MElement *, unsigned int> _ghostCells;
+  int _partition;
+  std::map<MElement *, int> _ghostCells;
   bool _saveMesh;
   bool _haveMesh;
 
 public:
-  ghostFace(GModel *model, const int num, const unsigned int partition)
+  ghostFace(GModel *model, const int num, const int partition)
     : discreteFace(model, num), _partition(partition), _ghostCells(),
       _saveMesh(false), _haveMesh(false)
   {
@@ -37,46 +37,46 @@ public:
     }
   }
   virtual GeomType geomType() const { return GhostSurface; }
-  virtual void setPartition(const unsigned int partition)
+  virtual void setPartition(const int partition)
   {
     _partition = partition;
   }
-  virtual unsigned int getPartition() const { return _partition; }
+  virtual int getPartition() const { return _partition; }
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
-  virtual std::map<MElement *, unsigned int> &getGhostCells()
+  virtual std::map<MElement *, int> &getGhostCells()
   {
     return _ghostCells;
   }
 
-  virtual void addTriangle(MTriangle *t, unsigned int onWhichPartition)
+  virtual void addTriangle(MTriangle *t, int onWhichPartition)
   {
     GFace::addTriangle(t);
     _ghostCells.insert(
-      std::pair<MElement *, unsigned int>(t, onWhichPartition));
+      std::pair<MElement *, int>(t, onWhichPartition));
     model()->addGhostCells(t, _partition);
   }
-  virtual void addQuadrangle(MQuadrangle *q, unsigned int onWhichPartition)
+  virtual void addQuadrangle(MQuadrangle *q, int onWhichPartition)
   {
     GFace::addQuadrangle(q);
     _ghostCells.insert(
-      std::pair<MElement *, unsigned int>(q, onWhichPartition));
+      std::pair<MElement *, int>(q, onWhichPartition));
     model()->addGhostCells(q, _partition);
   }
-  virtual void addPolygon(MPolygon *p, unsigned int onWhichPartition)
+  virtual void addPolygon(MPolygon *p, int onWhichPartition)
   {
     GFace::addPolygon(p);
     _ghostCells.insert(
-      std::pair<MElement *, unsigned int>(p, onWhichPartition));
+      std::pair<MElement *, int>(p, onWhichPartition));
     model()->addGhostCells(p, _partition);
   }
-  virtual void addElement(int type, MElement *e, unsigned int onWhichPartition)
+  virtual void addElement(int type, MElement *e, int onWhichPartition)
   {
     GFace::addElement(type, e);
     _ghostCells.insert(
-      std::pair<MElement *, unsigned int>(e, onWhichPartition));
+      std::pair<MElement *, int>(e, onWhichPartition));
     model()->addGhostCells(e, _partition);
   }
 

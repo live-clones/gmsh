@@ -43,13 +43,13 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   (*globalPara)->numBuckets = initial_buckets_num;
   *buckets_head = new octantBucket;
   if(!(*buckets_head)) {
-    Msg::Error("initializeOctantBuckets could not allocate enough space");
+    Msg::Error("Could not allocate octree buckets");
     return (0);
   } // if could not allocate buckets
 
   buckets = new octantBucket[8];
   if(!buckets) {
-    Msg::Error("initializeOctantBuckets could not allocate enough space");
+    Msg::Error("Could not allocate octree buckets");
     return (0);
   }
 
@@ -170,7 +170,7 @@ int addElement2Bucket(octantBucket *_bucket, void *_element, double *_minBB,
         ptr2 = ptr1;
         ptr1 = ptr1->next;
         if(ptrBucket == NULL) {
-          Msg::Error("Wrong , ptrBucket = NULL. A bug here!");
+          Msg::Error("Null bucket in octree");
           return 0;
         }
         ptr2->next = ptrBucket->lhead;
@@ -245,7 +245,7 @@ int subdivideOctantBucket(octantBucket *_bucket, globalInfo *_globalPara)
   // _bucket->next  = (octantBucket *) calloc(numBuck,sizeof(octantBucket));
 
   if(!_bucket->next) {
-    Msg::Error("subdivideOctantBucket could not allocate enough space");
+    Msg::Error("Could not allocate octree buckets");
     return 0;
   }
 
@@ -306,7 +306,7 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if(ptrBucket == NULL) {
     // this is not an error
-    Msg::Debug("The point is not in the domain");
+    Msg::Debug("Could not find point in octree");
     return NULL;
   }
 
@@ -317,13 +317,17 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
          _pt[0],_pt[1],_pt[2], ptrBucket->minPt[0],ptrBucket->minPt[1],ptrBucket->minPt[2],
          ptrBucket->maxPt[0],ptrBucket->maxPt[1],ptrBucket->maxPt[2], ptr1);
   if (ptr1 == NULL) {
-    printf("empty element list for centroid list!?\n, possible!");
+    printf("empty element list for centroid list!?\n");
   }
 #endif
 
+  int count = 0;
   while(ptr1 != NULL) {
     flag = xyzInElementBB(_pt, ptr1->region, BBElement);
-    if(flag == 1) flag = xyzInElement(ptr1->region, _pt);
+    if(flag == 1) {
+      flag = xyzInElement(ptr1->region, _pt);
+      count ++;
+    }
     if(flag == 1) {
       _globalPara->ptrToPrevElement = ptr1->region;
       return ptr1->region;
@@ -331,18 +335,22 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
     ptr1 = ptr1->next;
   }
 
+  //  printf("Point %22.15E %22.15E %22.15E is not found in all elements! It is not in the domain but is in %d bboxes\n",
+  //	 _pt[0],_pt[1],_pt[2], count);
+  
   for(iter = (ptrBucket->listBB).begin(); iter != (ptrBucket->listBB).end();
       iter++) {
     flag = xyzInElementBB(_pt, *iter, BBElement);
-    if(flag == 1) flag = xyzInElement(*iter, _pt);
+    if(flag == 1) {
+      flag = xyzInElement(*iter, _pt);
+    }
     if(flag == 1) {
       _globalPara->ptrToPrevElement = *iter;
       return *iter;
     }
   }
 
-  // printf("This point is not found in all elements! It is not in the domain
-  // \n");
+  
   return NULL;
 }
 
@@ -399,7 +407,7 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt,
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if(ptrBucket == NULL) {
-    Msg::Debug("The point is not in the domain");
+    Msg::Debug("Could not find point in octree");
     return NULL;
   }
 

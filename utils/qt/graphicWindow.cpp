@@ -4,6 +4,8 @@
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <QtGui>
+#include <QSlider>
+#include <QHBoxLayout>
 #include "GLWidget.h"
 #include "graphicWindow.h"
 

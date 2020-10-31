@@ -12,7 +12,7 @@ Circle(10) = {7,1,4};
 Line Loop(15) = {10,3,7};
 Surface(16) = {15} In Sphere{1};
 
- 
+
 N=50;
 lc1 = 0.05*radius;
 teta_c = 3*Pi/2-Pi/4;
@@ -28,7 +28,7 @@ For i In {0:N-1}
 	Line(i+13) = {1, 8+i};
 EndFor
 
-pp[] = Intersect Line {13:N+12} Surface {16};
+pp[] = Intersect Curve {13:N+12} Surface {16};
 
 Spline(1000) = {pp[], pp[0]};
 
@@ -39,4 +39,3 @@ Line Loop(16001) = {-1000};
 
 //Surface(20000) = {15};
 Surface(20000) = {15,16001} In Sphere{1};
-

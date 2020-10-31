@@ -14,6 +14,7 @@
 // Embedding constraints allow to force a mesh to be conformal to other lower
 // dimensional entities.
 
+#include <set>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
@@ -50,8 +51,8 @@ int main(int argc, char **argv)
   // the `embed()' function:
   gmsh::model::mesh::embed(0, {5}, 2, 1);
 
-  // In the same way, one use `embed()' to force a curve to be embedded in the
-  // 2D mesh:
+  // In the same way, one can use `embed()' to force a curve to be embedded in
+  // the 2D mesh:
   gmsh::model::geo::addPoint(0.02, 0.12, 0., lc, 6);
   gmsh::model::geo::addPoint(0.04, 0.18, 0., lc, 7);
   gmsh::model::geo::addLine(6, 7, 5);
@@ -90,9 +91,18 @@ int main(int argc, char **argv)
   gmsh::model::geo::synchronize();
   gmsh::model::mesh::embed(2, {s}, 3, 1);
 
+  // Note that with the OpenCASCADE kernel (see `t16.cpp'), when the
+  // `fragment()' function is applied to entities of different dimensions, the
+  // lower dimensional entities will be autmatically embedded in the higher
+  // dimensional entities if necessary.
+
   gmsh::model::mesh::generate(3);
 
   gmsh::write("t15.msh");
+
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

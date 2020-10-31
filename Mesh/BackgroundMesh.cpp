@@ -547,6 +547,13 @@ void backgroundMesh::updateSizes(GFace *_gf)
       MVertex *V1 = _2Dto3D[v1];
       std::map<MVertex *, double>::iterator s0 = _sizes.find(V0);
       std::map<MVertex *, double>::iterator s1 = _sizes.find(V1);
+      if (s0 == _sizes.end() || s1  == _sizes.end()) {
+        // Note: this Warning is disabled because it's too verbose in logs
+        //       is this behavior normal ? Was doing undefined behavior before
+        //       (detected by valgrind)
+        // Msg::Warning("in backgroundMesh::updateSizes(), vertex not found in maps");
+        continue;
+      }
       if(s0->second < s1->second)
         s1->second = std::min(s1->second, _beta * s0->second);
       else

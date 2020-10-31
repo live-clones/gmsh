@@ -16,13 +16,14 @@
 #include "MVertex.h"
 #include "MEdge.h"
 #include "MFace.h"
-#include "nodalBasis.h"
-#include "polynomialBasis.h"
-#include "GaussIntegration.h"
 #include "FuncSpaceData.h"
+#include "GaussIntegration.h"
 
 class GModel;
+class nodalBasis;
 class JacobianBasis;
+template <class scalar> class fullVector;
+template <class scalar> class fullMatrix;
 
 // A mesh element.
 class MElement {
@@ -267,8 +268,6 @@ public:
   }
   double minIsotropyMeasure(bool knownValid = false, bool reversedOk = false);
   double minScaledJacobian(bool knownValid = false, bool reversedOk = false);
-  double specialQuality();
-  double specialQuality2();
   virtual double angleShapeMeasure() { return 1.0; }
   virtual void scaledJacRange(double &jmin, double &jmax,
                               GEntity *ge = 0) const;
@@ -361,17 +360,7 @@ public:
                              double *jac) const;
   virtual double getJacobian(double u, double v, double w,
                              double jac[3][3]) const;
-  double getJacobian(double u, double v, double w, fullMatrix<double> &j) const
-  {
-    double JAC[3][3];
-    const double detJ = getJacobian(u, v, w, JAC);
-    for(int i = 0; i < 3; i++) {
-      j(i, 0) = JAC[i][0];
-      j(i, 1) = JAC[i][1];
-      j(i, 2) = JAC[i][2];
-    }
-    return detJ;
-  }
+  double getJacobian(double u, double v, double w, fullMatrix<double> &j) const;
   virtual double getPrimaryJacobian(double u, double v, double w,
                                     double jac[3][3]) const;
   double getJacobianDeterminant(double u, double v, double w) const
@@ -493,6 +482,7 @@ public:
   // return the number of vertices, as well as the element name if 'name' != 0
   static unsigned int getInfoMSH(const int typeMSH,
                                  const char **const name = 0);
+  std::string getName();
   virtual std::size_t getNumVerticesForMSH() { return getNumVertices(); }
   virtual void getVerticesIdForMSH(std::vector<int> &verts);
 
@@ -521,6 +511,20 @@ struct MElementPtrLessThan {
   bool operator()(const MElement *e1, const MElement *e2) const
   {
     return e1->getNum() < e2->getNum();
+  }
+};
+
+struct MElementPtrEqual {
+  bool operator()(const MElement *e1, const MElement *e2) const
+  {
+    return e1->getNum() == e2->getNum();
+  }
+};
+
+struct MElementPtrHash {
+  size_t operator()(const MElement *e) const
+  {
+    return e->getNum();
   }
 };
 

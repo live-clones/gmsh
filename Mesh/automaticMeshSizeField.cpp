@@ -2,6 +2,7 @@
 #include "GModel.h"
 #include "GRegion.h"
 #include "MVertex.h"
+#include "meshGRegionHxt.h"
 
 #ifdef HAVE_HXT
 extern "C" {
@@ -37,21 +38,17 @@ automaticMeshSizeField::~automaticMeshSizeField(){
 
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
 
-HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-		   std::map<MVertex *, int> &v2c,
-		   std::vector<MVertex *> &c2v);
-
 
 HXTStatus automaticMeshSizeField:: updateHXT(){
 
   //  printf("%d points per circle\n",_nPointsPerCircle);
 
-  if (!update_needed)return HXT_STATUS_OK;
+  if (!updateNeeded)return HXT_STATUS_OK;
 
   if (forest)hxtForestDelete(&forest);
   if (forestOptions)hxtForestOptionsDelete(&forestOptions);
 
-  update_needed = false;
+  updateNeeded = false;
   // --------------------------------------------------------
   // Soit on charge un fichier avec l'octree (ma préférence)
   // Soit on calcule "en live" l'octree ici
@@ -68,7 +65,7 @@ HXTStatus automaticMeshSizeField:: updateHXT(){
   // create HXT mesh structure
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
-  std::map<MVertex *, int> v2c;
+  std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 

@@ -9,6 +9,7 @@
 import gmsh
 import math
 import os
+import sys
 
 gmsh.initialize()
 
@@ -17,12 +18,14 @@ gmsh.option.setNumber("General.Terminal", 1)
 # Let's merge an STL mesh that we would like to remesh (from the parent
 # directory):
 path = os.path.dirname(os.path.abspath(__file__))
-gmsh.merge(os.path.join(path, '..', 't13_data.stl'))
+gmsh.merge(os.path.join(path, os.pardir, 't13_data.stl'))
 
 # We first classify ("color") the surfaces by splitting the original surface
 # along sharp geometrical features. This will create new discrete surfaces,
 # curves and points.
-angle = 40  # Angle for surface detection
+
+# Angle between two triangles above which an edge is considered as sharp:
+angle = 40
 
 # For complex geometries, patches can be too complex, too elongated or too large
 # to be parametrized; setting the following option will force the creation of
@@ -62,6 +65,8 @@ gmsh.model.mesh.field.setAsBackgroundMesh(f)
 gmsh.model.mesh.generate(3)
 gmsh.write('t13.msh')
 
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

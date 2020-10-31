@@ -156,8 +156,10 @@ else:
     gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.05)
     gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.05)
 
-gmsh.fltk.run()
 #gmsh.model.mesh.generate(2)
 #gmsh.write('terrain.msh')
+
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

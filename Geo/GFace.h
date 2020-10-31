@@ -78,12 +78,12 @@ public:
   GRegion *getRegion(int const num) const { return num == 0 ? r1 : r2; }
 
   // get number of regions
-  int numRegions() const { return (r1 != NULL) + (r2 != NULL); }
+  std::size_t numRegions() const { return (r1 != NULL) + (r2 != NULL); }
 
   std::list<GRegion *> regions() const
   {
     std::list<GRegion *> r;
-    for(int i = 0; i < numRegions(); i++) r.push_back(getRegion(i));
+    for(std::size_t i = 0; i < numRegions(); i++) r.push_back(getRegion(i));
     return r;
   }
 
@@ -118,6 +118,10 @@ public:
       if((*it)->tag() == iEdge) return true;
     return false;
   }
+
+  void setBoundEdges(const std::vector<int> &tagEdges);
+  void setBoundEdges(const std::vector<int> &tagEdges,
+                     const std::vector<int> &signEdges);
 
   // direct access to embedded entities
   std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
@@ -399,6 +403,8 @@ public:
 
   virtual bool reorder(const int elementType,
                        const std::vector<std::size_t> &ordering);
+
+  virtual bool isFullyDiscrete();
 };
 
 #endif

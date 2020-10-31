@@ -27,6 +27,7 @@
 #include "clippingWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
+#include "physicalGroupWindow.h"
 #include "onelabGroup.h"
 #include "helpWindow.h"
 #include "colorbarWindow.h"
@@ -59,17 +60,24 @@
 FlGui *FlGui::_instance = 0;
 std::string FlGui::_openedThroughMacFinder = "";
 bool FlGui::_finishedProcessingCommandLine = false;
-#if __cplusplus >= 201103L
 std::atomic<int> FlGui::_locked(0);
-#else
-int FlGui::_locked = 0;
-#endif
 
 // check (now!) if there are any pending events, and process them
 void FlGui::check(bool force)
 {
   if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
   Fl::check();
+
+  /* Workaround for much slower redraws on macOS Big Sur: limit Fl::check() to
+     60 fps
+  if(force) { Fl::check(); return; }
+  static double lastRefresh = 0.;
+  double start = TimeOfDay();
+  if(start - lastRefresh > 1. / 60.) {
+    lastRefresh = start;
+    Fl::check();
+  }
+  */
 }
 
 // wait (possibly indefinitely) for any events, then process them
@@ -601,8 +609,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   elementaryContext =
     new elementaryContextWindow(CTX::instance()->deltaFontSize);
   transformContext = new transformContextWindow(CTX::instance()->deltaFontSize);
-  physicalContext = new physicalContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
+  physicalGroup = new physicalGroupWindow(CTX::instance()->deltaFontSize);
   help = new helpWindow();
 
   // init solver plugin stuff
@@ -636,7 +644,7 @@ FlGui::~FlGui()
   delete manip;
   delete elementaryContext;
   delete transformContext;
-  delete physicalContext;
+  delete physicalGroup;
   delete meshContext;
   delete help;
   delete fullscreen;
@@ -1160,11 +1168,25 @@ openglWindow *FlGui::getCurrentOpenglWindow()
     return graph[0]->gl[0];
 }
 
-void FlGui::splitCurrentOpenglWindow(char how)
+void FlGui::setCurrentOpenglWindow(int which)
+{
+  int ii = 0;
+  for(std::size_t i = 0; i < graph.size(); i++) {
+    for(std::size_t j = 0; j < graph[i]->gl.size(); j++) {
+      if(which == ii++) {
+        openglWindow::setLastHandled(graph[i]->gl[j]);
+        return;
+      }
+    }
+  }
+  openglWindow::setLastHandled(graph[0]->gl[0]);
+}
+
+void FlGui::splitCurrentOpenglWindow(char how, double ratio)
 {
   openglWindow *g = getCurrentOpenglWindow();
   for(std::size_t i = 0; i < graph.size(); i++) {
-    if(graph[i]->split(g, how)) break;
+    if(graph[i]->split(g, how, ratio)) break;
   }
 }
 
@@ -1460,8 +1482,8 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->elementaryContext->win->show();
     if(FlGui::instance()->transformContext->win->shown())
       FlGui::instance()->transformContext->win->show();
-    if(FlGui::instance()->physicalContext->win->shown())
-      FlGui::instance()->physicalContext->win->show();
+    if(FlGui::instance()->physicalGroup->win->shown())
+      FlGui::instance()->physicalGroup->win->show();
     if(FlGui::instance()->meshContext->win->shown())
       FlGui::instance()->meshContext->win->show();
     if(FlGui::instance()->visibility->win->shown())

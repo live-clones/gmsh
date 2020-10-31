@@ -58,11 +58,13 @@ my_new_surfs[] = Translate {0.12, 0, 0} { Duplicata{ Surface{1, 11}; } };
 
 Printf("New surfaces '%g' and '%g'", my_new_surfs[0], my_new_surfs[1]);
 
-// In Gmsh lists use square brackets for their definition (mylist[] = {1,2,3};)
-// as well as to access their elements (myotherlist[] = {mylist[0],
-// mylist[2]};), with list indexing starting at 0. Parentheses can also be used
-// instead of square brackets, so that we could also write `thirdlist() =
-// {mylist(0), mylist(1)};'.
+// In Gmsh lists use square brackets for their definition (mylist[] = {1, 2,
+// 3};) as well as to access their elements (myotherlist[] = {mylist[0],
+// mylist[2]}; mythirdlist[] = myotherlist[];), with list indexing starting at
+// 0. To get the size of a list, use the hash (pound): len = #mylist[].
+//
+// Note that parentheses can also be used instead of square brackets, so that we
+// could also write `myfourthlist() = {mylist(0), mylist(1)};'.
 
 // Volumes are the fourth type of elementary entities in Gmsh. In the same way
 // one defines curve loops to build surfaces, one has to define surface loops

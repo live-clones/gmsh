@@ -26,6 +26,8 @@ gmsh.view.combine("elements", "all", remove = False)
 # gmsh.view.write(t, "data.pos")
 
 gmsh.view.addAlias(t)
-gmsh.fltk.run()
+
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

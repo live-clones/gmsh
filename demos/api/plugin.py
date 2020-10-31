@@ -19,7 +19,7 @@ gmsh.view.addModelData(t, 0, "test", "NodeData", [1, 2, 3, 4],
 
 # test getting data back
 dataType, tags, data, time, numComp = gmsh.view.getModelData(t, 0)
-print dataType, tags
+print(dataType, tags)
 
 # compute the iso-curve at value 11
 gmsh.plugin.setNumber("Isosurface", "Value", 11.)
@@ -34,6 +34,6 @@ if len(tags) == 1:
     gmsh.view.write(tags[0], "iso.msh")
     # test getting data back
     dataTypes, numElements, data = gmsh.view.getListData(tags[0])
-    print dataTypes, numElements
+    print(dataTypes, numElements)
 
 gmsh.finalize()

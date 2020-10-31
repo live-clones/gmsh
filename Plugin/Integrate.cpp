@@ -33,7 +33,7 @@ std::string GMSH_IntegratePlugin::getHelp() const
          "over time instead of over space, starting at iteration i."
          "If `Visible' = 1, the plugin only integrates over"
          "visible entities.\n\n"
-         "Plugin(Integrate) creates one new view.";
+         "Plugin(Integrate) creates one new list-based view.";
 }
 
 int GMSH_IntegratePlugin::getNbOptions() const

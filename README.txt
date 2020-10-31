@@ -8,7 +8,7 @@ libraries. See LICENSE.txt and CREDITS.txt for more information.
 
 See the doc/ and tutorial/ directories for documentation. The reference manual
 is located in doc/texinfo/. See the demos/ directory and the web site
-http://gmsh.info for additional examples.
+https://gmsh.info for additional examples.
 
 Building Gmsh from source code requires a C++ compiler and CMake
 (http://cmake.org). Building the graphical user interface requires FLTK 1.3.3 or

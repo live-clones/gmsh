@@ -1,6 +1,7 @@
 import gmsh
 import math
 import os
+import sys
 
 gmsh.initialize()
 
@@ -29,6 +30,7 @@ gmsh.model.geo.addVolume([l])
 gmsh.model.geo.synchronize()
 gmsh.model.mesh.generate(3)
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

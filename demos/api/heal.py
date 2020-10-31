@@ -13,5 +13,3 @@ gmsh.model.occ.healShapes()
 gmsh.model.occ.synchronize()
 
 gmsh.finalize()
-
-#gmsh.fltk.run()

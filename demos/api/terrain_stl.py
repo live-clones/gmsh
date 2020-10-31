@@ -84,6 +84,7 @@ else:
     gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 100)
     gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 100)
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

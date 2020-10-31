@@ -10,8 +10,9 @@
 // (see `t1.cpp') or using a background mesh (see `t7.cpp'), you can use general
 // mesh size "Fields".
 
-#include <gmsh.h>
+#include <set>
 #include <sstream>
+#include <gmsh.h>
 
 int main(int argc, char **argv)
 {
@@ -107,6 +108,13 @@ int main(int argc, char **argv)
 
   gmsh::model::mesh::field::setAsBackgroundMesh(7);
 
+  // The API also allows to set a global mesh size callback, which is called
+  // each time the mesh size is queried
+  auto meshSizeCallback = [](int dim, int tag, double x, double y, double z) {
+    return 0.02 * x + 0.01;
+  };
+  gmsh::model::mesh::setSizeCallback(meshSizeCallback);
+
   // To determine the size of mesh elements, Gmsh locally computes the minimum
   // of
   //
@@ -116,7 +124,8 @@ int main(int argc, char **argv)
   // 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based
   //    on the curvature and `Mesh.MinimumElementsPerTwoPi';
   // 4) the background mesh field;
-  // 5) any per-entity mesh size constraint.
+  // 5) any per-entity mesh size constraint;
+  // 6) the mesh size returned by the mesh size callback, if any.
   //
   // This value is then constrained in the interval
   // [`Mesh.CharacteristicLengthMin', `MeshCharacteristicLengthMax'] and
@@ -138,7 +147,9 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(2);
   gmsh::write("t10.msh");
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

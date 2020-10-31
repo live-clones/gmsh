@@ -696,9 +696,10 @@ namespace QMT {
     return true;
   }
 
-  using namespace GLog;
-  void BoundaryProjector::show_projector(const std::string& viewPrefix) {
-    GeoLog log;
+  void BoundaryProjector::show_projector(const std::string& viewPrefix) const {
+    F(i,nodes.size()) {
+      GeoLog::add({nodes[i]},double(i),viewPrefix+std::string("_nodes"));
+    }
     FC(i,curve_tree.size(),curve_tree[i] != NULL) {
       vector<id> edges;
       F(j,cTreeIdToEdges[i].size()) {
@@ -712,7 +713,7 @@ namespace QMT {
         id e = edges[le];
         vec3 p1 = M.points[M.lines[e][0]];
         vec3 p2 = M.points[M.lines[e][1]];
-        log.add({p1,p2},double(i),viewPrefix+"_c"+std::to_string(i));
+        GeoLog::add({p1,p2},double(i),viewPrefix+"_c"+std::to_string(i));
       }
     }
     FC(i,surface_tree.size(),surface_tree[i] != NULL) {
@@ -729,10 +730,11 @@ namespace QMT {
         vec3 p1 = M.points[M.triangles[t][0]];
         vec3 p2 = M.points[M.triangles[t][1]];
         vec3 p3 = M.points[M.triangles[t][2]];
-        log.add({p1,p2,p3},double(i),viewPrefix+"_s"+std::to_string(i));
+        GeoLog::add({p1,p2,p3},double(i),viewPrefix+"_s"+std::to_string(i));
       }
     }
-    log.toGmsh();
+
+    GeoLog::flush();
   }
 
   bool assignClosestEntities(QMesh& M, const BoundaryProjector& projector) {
@@ -757,6 +759,21 @@ namespace QMT {
       }
     }
     info("vertex to entity assignement: {} vertices -> {} to nodes, {} to curves and {} to surfaces",nv,nb[0],nb[1],nb[2]);
+    F(f,M.quads.size()) {
+      vec3 mid = 0.25 * (M.points[M.quads[f][0]] + M.points[M.quads[f][1]]
+          + M.points[M.quads[f][2]] + M.points[M.quads[f][3]]);
+      int dim = -1;
+      int tag = -1;
+      double dist = DBL_MAX;
+      bool okc = projector.closestEntity(mid,dist,dim,tag);
+      if (okc) {
+        M.quadEntity[f] = tag;
+      } else {
+        error("failed to assign closest entity to quad {}",f);
+        return false;
+      }
+    }
+    info("{} quads assigned to surface entities", M.quads.size());
     return true;
   }
 

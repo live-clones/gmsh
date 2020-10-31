@@ -2,7 +2,7 @@ import gmsh
 import sys
 
 if len(sys.argv) < 2:
-    print "Usage: " + sys.argv[0] + " file.geo [options]"
+    print("Usage: " + sys.argv[0] + " file.geo [options]")
     exit(0)
 
 gmsh.initialize()

@@ -16,6 +16,8 @@
 #include "GmshMessage.h"
 #include "VertexArray.h"
 #include "boundaryLayersData.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
 #include "ExtrudeParams.h"
 #include "GmshDefines.h"
 
@@ -172,6 +174,7 @@ void GRegion::resetMeshAttributes()
   meshAttributes.method = MESH_UNSTRUCTURED;
   meshAttributes.extrude = 0;
   meshAttributes.QuadTri = NO_QUADTRI;
+  meshAttributes.meshSize = MAX_LC;
 }
 
 SBoundingBox3d GRegion::bounds(bool fast)
@@ -182,9 +185,7 @@ SBoundingBox3d GRegion::bounds(bool fast)
     for(; it != l_faces.end(); it++) res += (*it)->bounds(fast);
   }
   else {
-    int ipp = getNumMeshElements() / 20;
-    if(ipp < 1) ipp = 1;
-    for(std::size_t i = 0; i < getNumMeshElements(); i += ipp)
+    for(std::size_t i = 0; i < getNumMeshElements(); i++)
       for(std::size_t j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         res += getMeshElement(i)->getVertex(j)->point();
   }
@@ -298,6 +299,43 @@ int GRegion::delFace(GFace *face)
   l_dirs.erase(itOri);
 
   return orientation;
+}
+
+void GRegion::setBoundFaces(const std::set<int> &tagFaces)
+{
+  for(std::set<int>::const_iterator it = tagFaces.begin(); it != tagFaces.end();
+      ++it) {
+    GFace *face = model()->getFaceByTag(*it);
+    if(face) {
+      l_faces.push_back(face);
+      face->addRegion(this);
+    }
+    else {
+      Msg::Error("Unknown surface %d in volume %d", *it, tag());
+    }
+  }
+}
+
+void GRegion::setBoundFaces(const std::vector<int> &tagFaces,
+                            const std::vector<int> &signFaces)
+{
+  if(tagFaces.size() != signFaces.size()) {
+    Msg::Error("Wrong number of surface signs in volume %d", tag());
+    std::set<int> tags;
+    tags.insert(tagFaces.begin(), tagFaces.end());
+    setBoundFaces(tags);
+  }
+  for(std::size_t i = 0; i != tagFaces.size(); i++) {
+    GFace *face = model()->getFaceByTag(tagFaces[i]);
+    if(face) {
+      l_faces.push_back(face);
+      face->addRegion(this);
+      l_dirs.push_back(signFaces[i]);
+    }
+    else {
+      Msg::Error("Unknown surface %d in volume %d", tagFaces[i], tag());
+    }
+  }
 }
 
 std::string GRegion::getAdditionalInfoString(bool multline)
@@ -642,12 +680,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newTetrahedraOrder[i] = tetrahedra[ordering[i]];
       }
-#if __cplusplus >= 201103L
       tetrahedra = std::move(newTetrahedraOrder);
-#else
-      tetrahedra = newTetrahedraOrder;
-#endif
-
       return true;
     }
   }
@@ -665,12 +698,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newHexahedraOrder[i] = hexahedra[ordering[i]];
       }
-#if __cplusplus >= 201103L
       hexahedra = std::move(newHexahedraOrder);
-#else
-      hexahedra = newHexahedraOrder;
-#endif
-
       return true;
     }
   }
@@ -688,12 +716,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newPrismsOrder[i] = prisms[ordering[i]];
       }
-#if __cplusplus >= 201103L
       prisms = std::move(newPrismsOrder);
-#else
-      prisms = newPrismsOrder;
-#endif
-
       return true;
     }
   }
@@ -711,12 +734,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newPyramidsOrder[i] = pyramids[ordering[i]];
       }
-#if __cplusplus >= 201103L
       pyramids = std::move(newPyramidsOrder);
-#else
-      pyramids = newPyramidsOrder;
-#endif
-
       return true;
     }
   }
@@ -734,12 +752,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newPolyhedraOrder[i] = polyhedra[ordering[i]];
       }
-#if __cplusplus >= 201103L
       polyhedra = std::move(newPolyhedraOrder);
-#else
-      polyhedra = newPolyhedraOrder;
-#endif
-
       return true;
     }
   }
@@ -757,12 +770,7 @@ bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newTrihedraOrder[i] = trihedra[ordering[i]];
       }
-#if __cplusplus >= 201103L
       trihedra = std::move(newTrihedraOrder);
-#else
-      trihedra = newTrihedraOrder;
-#endif
-
       return true;
     }
   }
@@ -922,5 +930,24 @@ bool GRegion::setOutwardOrientationMeshConstraint()
     }
   }
 
+  return true;
+}
+
+bool GRegion::isFullyDiscrete()
+{
+  if(geomType() != GEntity::DiscreteVolume) return false;
+  if(haveParametrization()) return false;
+  std::vector<GFace *> f = faces();
+  for(std::size_t i = 0; i < f.size(); i++) {
+    if(f[i]->geomType() != GEntity::DiscreteSurface) return false;
+    discreteFace *df = dynamic_cast<discreteFace*>(f[i]);
+    if(df && df->haveParametrization()) return false;
+  }
+  std::vector<GEdge *> e = edges();
+  for(std::size_t i = 0; i < e.size(); i++) {
+    if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
+    discreteEdge *de = dynamic_cast<discreteEdge*>(e[i]);
+    if(de && de->haveParametrization()) return false;
+  }
   return true;
 }

@@ -6,9 +6,7 @@
 #include <sstream>
 #include <algorithm>
 #include <string>
-#if __cplusplus >= 201103L
 #include <regex>
-#endif
 #include <FL/Fl_Help_View.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
@@ -287,7 +285,6 @@ void help_options_cb(Fl_Widget *w, void *data)
       FlGui::instance()->help->browser->add(s0[i].c_str(), d);
     }
     else {
-#if __cplusplus >= 201103L
       try{
         // icase for case-insensitive search
         if(std::regex_search(s0[i], std::regex(search, std::regex_constants::icase)))
@@ -295,12 +292,6 @@ void help_options_cb(Fl_Widget *w, void *data)
       }
       catch(...) {
       }
-#else
-      std::string tmp(s0[i]);
-      std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
-      if(tmp.find(search) != std::string::npos)
-        FlGui::instance()->help->browser->add(s0[i].c_str(), d);
-#endif
     }
   }
   FlGui::instance()->help->browser->topline(top);
@@ -326,8 +317,8 @@ helpWindow::helpWindow()
       << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
       << "<p>Copyright (C) 1997-2020"
       << "<br>Christophe Geuzaine and Jean-Francois Remacle"
-      << "<p><a href=\"http://gmsh.info/CREDITS.txt\">Credits</a> "
-      << "and <a href=\"http://gmsh.info/LICENSE.txt\">licensing "
+      << "<p><a href=\"https://gmsh.info/CREDITS.txt\">Credits</a> "
+      << "and <a href=\"https://gmsh.info/LICENSE.txt\">licensing "
       << "information</a>"
       << "<p>Please report all issues on "
       << "<a href=\"https://gitlab.onelab.info/gmsh/gmsh/issues\">"
@@ -357,7 +348,7 @@ helpWindow::helpWindow()
       << "." << MED_NUM_RELEASE
 #endif
       << "<li><i>Packaged by:</i> " << GetGmshPackager() << "</ul>"
-      << "<center>Visit <a href=\"http://gmsh.info\">http://gmsh.info</a> "
+      << "<center>Visit <a href=\"https://gmsh.info\">https://gmsh.info</a> "
       << "for more information</center>";
     o->value(sstream.str().c_str());
     o->link(help_link);
@@ -448,11 +439,7 @@ helpWindow::helpWindow()
     showhelp->tooltip("Show help strings");
 
     Fl_Group *o = new Fl_Group(3 * WB + 2 * BW, WB, BW, BH);
-#if __cplusplus >= 201103L
     o->tooltip("Filter list using regular expression");
-#else
-    o->tooltip("Filter list");
-#endif
     o->box(FL_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
     search = new Fl_Input(3 * WB + 2 * BW + BH, WB + 2, BW - BH - 2, BH - 4,

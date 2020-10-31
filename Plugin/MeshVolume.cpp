@@ -27,7 +27,7 @@ std::string GMSH_MeshVolumePlugin::getHelp() const
          "'PhysicalGroup' is negative, in which case all the elements of "
          "the given `Dimension' are considered. If `Dimension` is "
          "negative, all the elments are considered.\n\n"
-         "Plugin(MeshVolume) creates one new view.";
+         "Plugin(MeshVolume) creates one new list-based view.";
 }
 
 int GMSH_MeshVolumePlugin::getNbOptions() const
