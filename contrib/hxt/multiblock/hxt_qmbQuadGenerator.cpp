@@ -180,18 +180,20 @@ HXTStatus QuadGenerator::prepareGeoFile(std::string geoFileName, double *directi
   std::cout << "--Disable duplicates--" << std::endl;
   for(uint64_t t=0; t<m_vectSing.size(); t++)
     disableSepDuplicates((int) t);
+  for(uint64_t t=0; t<m_vectCorner.size(); t++)
+    disableCornerSepDuplicates((int) t);
   std::cout << "--Write separatrices initiation without duplicates--" << std::endl;
   hxtWriteInitSep("qmbInitiationNoDuplicates.pos");
   std::cout << "--Save bdry lines as separatrices--" << std::endl;
   saveBdryLinesAsSeparatrices();
   std::cout << "--Fill geo file--" << std::endl;
-  fillGeoFile(geoFileName);
+  // fillGeoFile(geoFileName);
+  fillGeoFileDBG(geoFileName);//DBG
   std::cout << "     <-END->" << std::endl;
   std::cout<<" " <<std::endl;
   
   return HXT_STATUS_OK;
 }
-
 
 HXTStatus QuadGenerator::loadDirectionFieldCR(HXTEdges *edges, const char *fileName, int nbTurns, double *crossfield)
 {
@@ -1947,6 +1949,28 @@ int QuadGenerator::getAllSepFromSing(int singID, std::vector<int> *separatricesI
   return 1;
 }
 
+int QuadGenerator::getAllSepFromCorner(int singID, std::vector<int> *separatricesIDs){
+  Corner *s=&(m_vectCorner[singID]);
+  std::array<double,3> *singCoord=s->getPCoord();
+  std::cout << "get sep from corner " << singID << std::endl;
+  for(uint64_t i=0; i<m_vectSep.size(); i++){
+    Separatrice *sep=&(m_vectSep[i]);
+    std::vector<std::array<double,3>> *sepPoints=sep->getPCoord();
+    double point1[3]={0.};
+    double point2[3]={0.};
+    double norm;
+    for(int j=0; j<3; j++){
+      point1[j]=(*singCoord)[j];
+      point2[j]=(*sepPoints)[0][j];
+    }
+    if(isPointDuplicate(point1, point2, &norm)){
+      (*separatricesIDs).push_back(i);
+    }
+  }
+  
+  return 1;
+}
+
 int QuadGenerator::getAngleBetweenSep(std::array<double,3> singCoord, std::array<double,3> P1, std::array<double,3> P2, double *alpha){
   double SP1[3], SP2[3];
   for(int i=0; i<3; i++){
@@ -1990,6 +2014,36 @@ HXTStatus QuadGenerator::disableSepDuplicates(int singID){
       }
     }
   }
+  return HXT_STATUS_OK;
+}
+
+HXTStatus QuadGenerator::disableCornerSepDuplicates(int singID){
+  Corner *s=&(m_vectCorner[singID]);
+  std::array<double,3> *singCoord=s->getPCoord();
+  std::vector<int> separatricesIDs;
+  getAllSepFromCorner(singID, &separatricesIDs);
+  std::vector<std::array<double,3>> initiationPoints;
+  for(uint64_t j=0; j<separatricesIDs.size(); j++){
+    Separatrice *sep=&(m_vectSep[separatricesIDs[j]]);
+    std::vector<std::array<double,3>> *sepPoints=sep->getPCoord();
+    initiationPoints.push_back((*sepPoints)[1]);
+  }
+  double alpha=-1;
+  if(initiationPoints.size()>0)
+    for(uint64_t k=0; k<initiationPoints.size()-1; k++){
+      for(uint64_t t=k+1; t<initiationPoints.size(); t++){
+	Separatrice *sep1=&(m_vectSep[separatricesIDs[k]]);
+	Separatrice *sep2=&(m_vectSep[separatricesIDs[t]]);
+	if(sep1->isSaved() && sep2->isSaved()){ 
+	  getAngleBetweenSep(*singCoord,initiationPoints[k],initiationPoints[t], &alpha);
+	  // if(alpha<=20.0){
+	  if(alpha<=25.0){
+	    Separatrice *sep=&(m_vectSep[separatricesIDs[t]]);
+	    sep->Disable();
+	  }
+	}
+      }
+    }
   return HXT_STATUS_OK;
 }
 
@@ -2141,7 +2195,7 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
   optimizeSizeofRadius(&radius);
   // std::cout<<"Radius: "<<radius<<", mesh size: "<<hmax<<std::endl;
  
-  int N=10;
+  int N=20;
   // int N=50;
   double x=0., y=0., z=0.;
   int index=0;
@@ -2279,6 +2333,144 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
   return HXT_STATUS_OK;
 }
 
+HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
+  HXTEdges* edges=m_triEdges;
+  HXTMesh* mesh=edges->edg2mesh;
+  uint16_t *colors= mesh->triangles.color;
+
+  gmsh::initialize();
+  // HXT_INFO("gmsh: merge the file %s", myGeoFile);
+  // gmsh::merge(myGeoFile);
+  HXT_INFO("gmsh: open the file %s", myGeoFile);
+  gmsh::open(myGeoFile);
+  // gmsh::model::occ::synchronize();
+  gmsh::model::geo::synchronize();
+  //identify corners from geo
+  double xmin=0., ymin=0., zmin=0., xmax=0., ymax=0., zmax=0.;
+  std::vector<std::array<double,3>> allCoord;
+  std::array<double,3> point;
+  gmsh::vectorpair dimTagsPoints;
+  gmsh::model::getEntities(dimTagsPoints,0); 
+  for(uint64_t i=0; i<dimTagsPoints.size(); i++){
+    gmsh::model::getBoundingBox(0, dimTagsPoints[i].second, xmin, ymin, zmin, xmax, ymax, zmax);
+    point[0]=xmin; point[1]=ymin; point[2]=zmin;
+    allCoord.push_back(point);
+  }
+  
+  std::vector<int> cornerGeoTags;
+  for(uint64_t i=0; i<m_vectCorner.size(); i++)
+    cornerGeoTags.push_back(-1);
+  for(uint64_t i=0; i<m_vectCorner.size(); i++){
+    Corner *c=&m_vectCorner[i];
+    if(!c->isFictive()){
+      std::array<double,3> *cPoint= c->getPCoord();
+      for(uint64_t j=0; j<allCoord.size(); j++){
+	if(fabs((*cPoint)[0]-allCoord[j][0])<1e-10 && fabs((*cPoint)[1]-allCoord[j][1])<1e-10 && fabs((*cPoint)[2]-allCoord[j][2])<1e-10){
+	  cornerGeoTags[i]=dimTagsPoints[j].second;
+	  break;
+	}
+      }
+    }
+  }
+  double hmax=0.1, radius;
+  optimizeSizeofRadius(&radius);
+  // std::cout<<"Radius: "<<radius<<", mesh size: "<<hmax<<std::endl;
+ 
+  int N=20;
+  // int N=50;
+  double x=0., y=0., z=0.;
+  int index=0;
+  std::vector<int> singThreeTags;
+  std::vector<int> singFiveTags;
+  //int num;
+  int lineTag=-1, pointTag=-1, singTag=-1, cornerTag=-1, loopTag=-1;
+  
+  //Singularities
+  std::vector<int> allLinesTags;
+  std::vector<int> allCurveLinesTags;
+  for(uint64_t i=0; i<m_vectSing.size();i++){
+    Singularity *s=&(m_vectSing[i]);
+    if(!s->isDisabled()){
+      std::array<double,3> *coord= s->getPCoord();
+      uint64_t sEdg=s->getGlobalEdg();
+      uint64_t sTri=edges->edg2tri[2*sEdg+0]; //for surface color
+      std::vector<int> curvePointsTags;
+      std::vector<int> pointsTags;
+      std::vector<int> linesTags;
+      // singTag=gmsh::model::occ::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 10.*radius, -1);
+      singTag=gmsh::model::geo::addPoint((*coord)[0],(*coord)[1],(*coord)[2], radius, -1);
+      pointsTags.push_back(singTag);
+      getSingIndex(i, &index);
+      std::cout<<"Singularity "<<i<<", index: "<<index<<std::endl;
+      if(index==3 || index==4) //doubled because of the vertex closeness
+	singThreeTags.push_back(singTag);
+      if(index==5 || index==6) //doubled because of the vertex closeness
+	singFiveTags.push_back(singTag);
+      gmsh::model::geo::synchronize();
+      gmsh::model::mesh::embed(0, pointsTags, 2, (int) colors[sTri]); //points
+    }
+  }
+  std::cout<<"Singularities written!"<<std::endl;
+
+  //Corners
+  for(uint64_t i=0; i<m_vectCorner.size(); i++){
+    Corner *c=&m_vectCorner[i];
+    if(!c->isFictive()){
+      std::array<double,3> *coord= c->getPCoord();
+      std::vector<uint64_t> *cPatch=c->getPPatch();
+      // uint64_t cTri=(*cPatch)[0]; //for surface color
+      std::vector<int> tags;
+      if(cornerGeoTags[i]!=-1){
+	//dbg start
+	// if(1){
+	//dbg end
+	cornerTag=cornerGeoTags[i];
+	tags.push_back(cornerTag);
+	getCornerIndex(i, &index);
+	std::cout<<"Corner - existing: "<<i<<", index: "<<index<<std::endl;
+	if(index==2 || index==3) //doubled because of the vertex closeness
+	  singThreeTags.push_back(cornerTag);
+	if(index==4 || index==5) //doubled because of the vertex closeness
+	  singFiveTags.push_back(cornerTag);
+      }
+      else{
+	// cornerTag=gmsh::model::occ::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 2*radius, -1);
+	cornerTag=gmsh::model::geo::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 2*radius, -1);
+	tags.push_back(cornerTag);
+	gmsh::model::geo::synchronize();
+	// gmsh::model::occ::synchronize();
+	gmsh::model::mesh::embed(0, tags, 2, (int) colors[(*cPatch)[0]]); //points
+	getCornerIndex(i, &index);
+	std::cout<<"Corner: "<<i<<", index: "<<index<<std::endl;
+	if(index==2 || index==3) //doubled because of the vertex closeness
+	  singThreeTags.push_back(cornerTag);
+	if(index==4 || index==5) //doubled because of the vertex closeness
+	  singFiveTags.push_back(cornerTag);
+	cornerTag++;
+      }
+    }
+  }
+  std::cout<<"Corners written!"<<std::endl;
+
+  int physicalGroup=-1;
+  physicalGroup=gmsh::model::addPhysicalGroup(0, singThreeTags, -1);
+  gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_THREE");
+  physicalGroup=gmsh::model::addPhysicalGroup(0, singFiveTags, -1);
+  gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_FIVE");
+  // gmsh::model::occ::synchronize();
+  gmsh::model::geo::synchronize();
+  //-----start meshing the model
+  int modelDim=gmsh::model::getDimension();
+  gmsh::model::mesh::generate(modelDim);
+  //-----end meshing the model
+  std::cout<<"Geometry ready!"<<std::endl;
+  // gmsh::fltk::run();
+  // gmsh::finalize();
+  
+
+  return HXT_STATUS_OK;
+}
+
 //------------------------------------------------------------------------------
 
 //2.a generate separatrices with presecribed singularities - H function crosses
@@ -2340,7 +2532,7 @@ HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH)
   uint64_t end=(m_vectSep.size()-m_vectBoundaryLine.size());
   for(uint64_t i=0; i<end; i++){
     std::cout<<"Sep: "<<i<<std::endl;
-    propagateKowalski((int)i);
+    propagateKowalskiH((int)i);
   }
   std::cout << "--Remove data from bouncing sep--" << std::endl;
   removeBouncingSepData();
@@ -2794,8 +2986,9 @@ int QuadGenerator::seedingSingularity(int sizeSeed, uint64_t edgToSeed, uint64_t
   double u[3], v[3], n[3];
   trianglebasis(m, vtri,u,v,n);
   *sizeP=0;
-  double *seeds;
-  HXT_CHECK(hxtMalloc(&seeds, sizeSeed*sizeof(double)));
+  // double *seeds;
+  std::vector<double> seeds(sizeSeed,0.0);
+  // HXT_CHECK(hxtMalloc(&seeds, sizeSeed*sizeof(double)));
   int flagSeedToAdd=1;
   for(int l=0; l<sizeSeed; l++)
     seeds[l]=(1.0*l+1.0)/(1.0*sizeSeed+1.0);
@@ -2823,7 +3016,6 @@ int QuadGenerator::seedingSingularity(int sizeSeed, uint64_t edgToSeed, uint64_t
       flagSeedToAdd=1;
     }
   }
-  HXT_CHECK(hxtFree(&seeds));
   return 1;
 }
 
@@ -3340,7 +3532,7 @@ int QuadGenerator::trialPoint(uint64_t triNum, uint64_t edgNum, double *coordP, 
   }
   else{
     std::cout<<"Check trialPoint function  - sep is hitting the vertex"<< std::endl;
-    // exit(0);
+    exit(0);
   }
   return 1;
 }
@@ -3538,7 +3730,7 @@ HXTStatus QuadGenerator::propagateKowalski(int sepID){
   double pointOld[3]={0.0};
   for(int i=0;i<3;i++)
     pointOld[i]=coordS[i];
-  while(flag==0 && edges->edg2tri[2*oldEdgNum+0]!=(uint64_t)-1 && edges->edg2tri[2*oldEdgNum+1]!=(uint64_t)-1 && num<20000){
+  while(flag==0 && edges->edg2tri[2*oldEdgNum+0]!=(uint64_t)-1 && edges->edg2tri[2*oldEdgNum+1]!=(uint64_t)-1 && num<2000){
     candidatePoint(point1, oldTriNum, oldEdgNum, oldAngle, point2, newTriNum,  newEdgNum, newAngle);
     std::array<double,3> patchPoint;
     int isInPatch=checkIfInPatch(*newTriNum, &patchPoint);
@@ -3600,6 +3792,107 @@ HXTStatus QuadGenerator::propagateKowalski(int sepID){
   if(num>20000){
     std::cout<<"Num propagated elements: "<<num<<std::endl;
     std::cout<<"Check propagateKowalski, sepID: "<<sepID<<std::endl; 
+  }
+
+  return HXT_STATUS_OK;
+}
+
+HXTStatus QuadGenerator::propagateKowalskiH(int sepID){
+  HXTEdges* edges=m_triEdges;
+  Separatrice *sep=&(m_vectSep[sepID]);
+  std::vector<double> angles=sep->getAngles();
+  if(sep->getPCoord()->size()!=2){ 
+    while(sep->getPCoord()->size()!=(angles.size()+1)){
+      sep->getPCoord()->pop_back();
+      sep->getPTriangles()->pop_back();
+    }
+  }                            
+  std::vector<uint64_t> triangles=sep->getTriangles();
+  std::vector<uint64_t> edgesS=sep->getEdges();
+  std::vector<std::array<double,3>> points=sep->getCoord();
+  int num=0;
+  uint64_t newEdgNum[1], newTriNum[1];
+  double newAngle[1], point2[3];
+  double coordS[3]={0.}, point1[3]={0.};
+  std::array<double,3> pointS=points[points.size()-2];
+  std::array<double,3> pointP=points[points.size()-1];
+  for(int i=0; i<3; i++){
+    coordS[i]=pointS[i];
+    point1[i]=pointP[i];
+  }
+  uint64_t oldTriNum=triangles[triangles.size()-1];
+  uint64_t oldEdgNum=edgesS[edgesS.size()-1];
+  double oldAngle[1];
+  double a=angles[angles.size()-1];
+  *oldAngle=a;
+  int flag=0;
+  int flagPropagationStarted=0;
+  int numOutOfPatch=0;
+  double pointOld[3]={0.0};
+  for(int i=0;i<3;i++)
+    pointOld[i]=coordS[i];
+  while(flag==0 && edges->edg2tri[2*oldEdgNum+0]!=(uint64_t)-1 && edges->edg2tri[2*oldEdgNum+1]!=(uint64_t)-1 && num<2000){
+    candidatePoint(point1, oldTriNum, oldEdgNum, oldAngle, point2, newTriNum,  newEdgNum, newAngle);
+    std::array<double,3> patchPoint;
+    int isInPatch=checkIfInPatch(*newTriNum, &patchPoint);
+    if((!isInPatch)&&(!flagPropagationStarted)){
+      numOutOfPatch++;
+      if(numOutOfPatch>3)
+	flagPropagationStarted=1;
+    }
+    //hit singular area!
+    if((isInPatch)&&(flagPropagationStarted)){
+      // if(isPointCorner(&patchPoint)){
+	sep->addTriangle(*newTriNum);
+	sep->addPoint(patchPoint);
+      // }
+      // else{
+      // 	bool discard;
+      // 	linkSepToSing(sep,oldTriNum,oldEdgNum,patchPoint,&discard);
+      // 	if(discard){
+      // 	  addLastPatchInIgnoredPatchs(sepID);
+      // 	  propagateKowalski(sepID);
+      // 	  sep->Disable(); 
+      // 	}
+      // }
+      flag=1;
+      num++;
+    }
+    //
+    if(flag==0){
+      num++;
+      oldTriNum=*newTriNum;
+      sep->addTriangle(oldTriNum);
+      oldEdgNum=*newEdgNum;
+      sep->addEdge(oldEdgNum);
+      *oldAngle=*newAngle;
+      sep->addAngle(*oldAngle);
+      std::array<double,3> endPoint={{0.0,0.0,0.0}};
+      for(int k=0; k<3;k++){
+	pointOld[k]=point1[k];
+	point1[k]=point2[k];
+	endPoint[k]=point1[k];
+      }
+      sep->addPoint(endPoint);
+    }
+  }
+  if(edges->edg2tri[2*oldEdgNum+0]==(uint64_t)-1 || edges->edg2tri[2*oldEdgNum+1]==(uint64_t)-1 ){
+    std::array<double,3> pointToTest = (*sep->getPCoord())[sep->getPCoord()->size()-1]; 
+    int isCorner=isPointCorner(&pointToTest); 
+    if(isCorner==0){//point is not a corner
+      num++;
+      std::array<double,3> endPoint={{-1.0,-1.0,-1.0}};
+      sep->addPoint(endPoint);
+      uint64_t endTri=(uint64_t)-1;
+      sep->addTriangle(endTri);
+      sep->addEdge((uint64_t)-1);
+      sep->addAngle(*oldAngle);
+      sep->setIsRemovable(1);
+    }
+  }   
+  if(num>20000){
+    std::cout<<"Num propagated elements: "<<num<<std::endl;
+    std::cout<<"Check propagateKowalskiH, sepID: "<<sepID<<std::endl; 
   }
 
   return HXT_STATUS_OK;

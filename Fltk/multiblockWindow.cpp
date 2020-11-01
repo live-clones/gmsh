@@ -81,12 +81,13 @@ static void qmt_cut_with_uv_isos(Fl_Widget *w, void *data)
   QuadMeshingOptions& opt = *win->opt;
   QuadMeshingState& state = *win->qstate;
   opt.model_cut = std::string(win->fli_name_cut->value());
-  int status = splitMeshWithPrescribedSing(GModel::current(), state); 
+  int status = splitMeshWithPrescribedSing(GModel::current(), state);
+  // int status = splitMeshWithSeparatrices(GModel::current(), state);
   if (status != 0) {
     Msg::Error("failed to generate split mesh");
   }
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
-  drawContext::global()->draw();
+  // if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  // drawContext::global()->draw();//DBG
 }
 
 static void qmt_quad_sizemap(Fl_Widget *w, void *data)

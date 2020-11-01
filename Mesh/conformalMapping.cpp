@@ -1272,10 +1272,10 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   Msg::Info("Create manifold basis");
   std::cout << "Create manifold basis" << std::endl;
   // _currentMesh->viewNormals();
-  _createManifoldBasis();
+  _createManifoldBasis();//
   // _viewCrosses(_currentMesh->manifoldBasis,"manifold basis");
   //solve crosses
-  _computeCrossesFromH();
+  _computeCrossesFromH();//
   // std::cout << "print crosses" << std::endl;
   // _viewCrosses(_currentMesh->crossField,"crossfield");
   //parametrization
@@ -1412,6 +1412,7 @@ void ConformalMapping::_computeH(){
     double sumSing=0;
     for(const auto &kv: patchSingIndices){
       sumSing+=((double)kv.second)/4.;
+      std::cout << "sing ind : " << kv.second << " detected" << std::endl;
     }
     double checkSum=(intGauss+intGeodesic)/(2*M_PI)-sumSing;
     if(fabs(checkSum)<1e-10){
@@ -1658,12 +1659,62 @@ void ConformalMapping::_computeHfromCrosses(){
   return;
 }
 
-void ConformalMapping::_restoreInitialMesh(){
-  for(MTriangle *t: _initialMesh->triangles){
-    for(size_t k=0;k<3;k++){
-      t->setVertex(k,_featureToInitMeshVertex[_cutGraphToFeatureMeshVertex[t->getVertex(k)]]);
+void ConformalMapping::deleteVertex(MVertex* v) {
+  if (v == NULL) return;
+  GFace* gf = dynamic_cast<GFace*>(v->onWhat());
+  if (gf != NULL) {
+    auto it = std::find(gf->mesh_vertices.begin(),gf->mesh_vertices.end(), v);
+    if (it != gf->mesh_vertices.end()) {
+      gf->mesh_vertices.erase(it);
+    }
+  } else {
+    GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
+    if (ge != NULL) {
+      auto it = std::find(ge->mesh_vertices.begin(),ge->mesh_vertices.end(), v);
+      if (it != ge->mesh_vertices.end()) {
+	ge->mesh_vertices.erase(it);
+      }
+    } else {
+      GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
+      if (gv != NULL) {
+	auto it = std::find(gv->mesh_vertices.begin(),gv->mesh_vertices.end(), v);
+	if (it != gv->mesh_vertices.end()) {
+	  gv->mesh_vertices.erase(it);
+	}
+      }
     }
   }
+  delete v;
+  v = NULL;
+}
+
+void ConformalMapping::_restoreInitialMesh(){
+  // std::cout << "restore initial mesh" << std::endl;
+  MVertexPtrEqual isVertTheSame;
+  std::set<MVertex*> verticesToDelete;
+  for(MTriangle *t: _initialMesh->triangles){//DBG
+    for(size_t k=0;k<3;k++){
+      // std::cout << "-------------------" << std::endl;
+      MVertex *oldVertex=_featureToInitMeshVertex[_cutGraphToFeatureMeshVertex[t->getVertex(k)]];
+      // std::cout << "old vert num: " << oldVertex->getNum() << std::endl;
+      MVertex* newVertex=t->getVertex(k);
+      // std::cout << "new vert num: " << newVertex->getNum() << std::endl;
+	    
+      t->setVertex(k,oldVertex);
+      if(!isVertTheSame(newVertex,oldVertex)){
+	verticesToDelete.insert(newVertex);
+	// std::cout << "add delete" << std::endl;
+      }
+      // else
+      // 	std::cout << "not add in delete" << std::endl;
+    }
+  }
+  for(MVertex* v: verticesToDelete){
+    // verticesToDelete.erase(v);
+    deleteVertex(v);
+    v=NULL;
+  }
+  // std::cout << "end retore intial mesh" << std::endl;
   return;
 }
 
@@ -2287,8 +2338,9 @@ void ConformalMapping::_cutMeshOnFeatureLines(){
 	  // double fact = (1.0+0.05*multVertexProcessed[currentVertex]);
 	  // newVertex = new MVertex(currentVertex->x()*fact,currentVertex->y()*fact,currentVertex->z()*fact,geVertex,0);
 	  // //
-	  newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z(),geVertex,0);
-	  geVertex->mesh_vertices.push_back(newVertex);
+	  newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z(),geVertex,0);//DBG
+	  geVertex->mesh_vertices.push_back(newVertex);//DBG
+	  // newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z());//DBG
 	}
 	trianglesQueue.clear();
 	std::vector<MVertex *>::iterator vertexProcessed=std::find(vertexProcessedPerTriangle[t].begin(),vertexProcessedPerTriangle[t].end(),currentVertex);
@@ -2343,7 +2395,7 @@ void ConformalMapping::_cutMeshOnFeatureLines(){
 	    
 	      _featureCutMesh->linesEntities[newLine]=_initialMesh->featureDiscreteEdgesEntities[fe];//TODO remove
 	      _featureCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]=_initialMesh->featureDiscreteEdgesEntities[fe];
-	      _featureCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]->addLine(newLine); //TODO has to be removed in the end
+	      // _featureCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]->addLine(newLine); //TODO has to be removed in the end
 	    }
 	  }
 	}
@@ -2406,8 +2458,9 @@ void ConformalMapping::_cutMeshOnCutGraph(){
 	  // double fact = (1.0+0.05*multVertexProcessed[currentVertex]);
 	  // newVertex = new MVertex(currentVertex->x()*fact,currentVertex->y()*fact,currentVertex->z()*fact,geVertex,0);
 	  // //
-	  newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z(),geVertex,0);
-	  geVertex->mesh_vertices.push_back(newVertex);
+	  newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z(),geVertex,0);//DBG
+	  geVertex->mesh_vertices.push_back(newVertex);//DBG
+	  // newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z());//DBG
 	}
 	trianglesQueue.clear();
 	std::vector<MVertex *>::iterator vertexProcessed=std::find(vertexProcessedPerTriangle[t].begin(),vertexProcessedPerTriangle[t].end(),currentVertex);
@@ -2463,7 +2516,7 @@ void ConformalMapping::_cutMeshOnCutGraph(){
 	    
 		_cutGraphCutMesh->linesEntities[newLine]=_featureCutMesh->featureDiscreteEdgesEntities[fe];//TODO remove
 		_cutGraphCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]=_featureCutMesh->featureDiscreteEdgesEntities[fe];
-		_cutGraphCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]->addLine(newLine); //TODO has to be removed in the end
+		// _cutGraphCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]->addLine(newLine); //TODO has to be removed in the end
 	      }
 	    }
 	  }
@@ -2488,12 +2541,12 @@ void ConformalMapping::_cutMeshOnCutGraph(){
 }
 
 ConformalMapping::~ConformalMapping(){
-  if(_initialMesh)
-    delete _initialMesh;
-  if(_featureCutMesh)
-    delete _featureCutMesh;
-  if(_cutGraphCutMesh)
-    delete _cutGraphCutMesh;
+  // if(_initialMesh)
+  //   delete _initialMesh;
+  // if(_featureCutMesh)
+  //   delete _featureCutMesh;
+  // if(_cutGraphCutMesh)
+  //   delete _cutGraphCutMesh;
 }
 
 void MyMesh::viewNormals(){ //for DBG only

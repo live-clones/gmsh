@@ -6207,7 +6207,7 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     std::map<MTriangle *, std::vector<std::vector<SVector3>>> crossEdgTri;
     std::map<MVertex *, double, MVertexPtrLessThan> H;
     ConformalMapping::computeScaledCrossesFromSingularities(gm,crossEdgTri,H);
-    ConformalMapping::_viewCrossEdgTri(crossEdgTri, "dbg check");
+    ConformalMapping::_viewCrossEdgTri(crossEdgTri, "CM::Crosses");
     int cf_tag = -1;
     std::set<MTriangle *, MElementPtrLessThan> tri;
     std::vector<std::size_t> keys;
@@ -6229,7 +6229,7 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
       for(size_t k=0;k<3;k++){
     	MEdge eK=t->getEdge(k);
     	MVertex *v0=eK.getVertex(0);
-	MVertex *v1=eK.getVertex(1);
+    	MVertex *v1=eK.getVertex(1);
     	SVector3 vE(v1->x() - v0->x(),
     		    v1->y() - v0->y(),
     		    v1->z() - v0->z());
@@ -6250,9 +6250,11 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     gmsh::model::getCurrent(cname);
     int crossFieldTag = gmsh::view::add("theta");
     gmsh::view::addModelData(crossFieldTag, 0, cname, "ElementData", keys, values);
-    // QMT::create_cross_field_theta_view(gm->getName(),edgeTheta,cf_tag);
-    ConformalMapping::_viewScalarTriangles(H,tri, "H");
-    //ALEX
+
+    PView* viewH = PView::getViewByName("H");
+    if (viewH) {delete viewH; viewH = NULL;}
+    ConformalMapping::_viewScalarTriangles(H,tri, "CM::H");
+    // ALEX
     if(0){
       std::map<int, std::vector<double> > dataTHETA;
 
@@ -7587,7 +7589,8 @@ int splitMeshWithSeparatrices(GModel * gm, QuadMeshingState& state) {
   gm = GModel::current();
   CTX::instance()->mesh.changed = ENT_ALL;
   Msg::Info("MBD | Split mesh shown in  gmsh");
-  
+  hxtMeshDelete(&mesh);
+  hxtMeshDelete(&splitMesh);
   return 0;
 }
 
@@ -7599,8 +7602,7 @@ int findAndMarkSingularities(GModel * gm){
     Msg::Error("required view 'theta' not found");
     return -1;
   }
-  cf_tag = theta->getTag();
-
+  cf_tag = theta->getTag();  
   HXTMesh *mesh;  
   HXT_CHECK(hxtMeshCreate(&mesh));
   std::map<MVertex *, uint32_t> v2c;
@@ -7621,12 +7623,13 @@ int findAndMarkSingularities(GModel * gm){
  
   hxtQuadMultiBlockGetSingInfo(mesh, cf_tag, geoFileName);
   Msg::Info("MBD | New geometry ready");
- 
+  hxtMeshDelete(&mesh);
   return 0;
 }
 
 //using cf computed on prescribed sing
 int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
+  std::cout << "splitMeshWithPrescribedSing" << std::endl;
   /* load theta (angle per edge) */
   int cf_tag = -1;
   PView* theta = PView::getViewByName("theta"); 
@@ -7635,23 +7638,34 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
     return -1;
   }
   cf_tag = theta->getTag();
+  //DBG
+  std::string tmp_path = "temp0.msh";
+  gm->writeMSH(tmp_path, 4.1, false, true);
+  std::cout << "mesh written" << std::endl;
+  //DBG
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
+  std::cout << "mesh allocated" << std::endl;
   std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
+  std::cout << "mesh converted" << std::endl;
   
   //DBG: Write geo/msh with imposed sing
   bool printLabels = true; bool onlyPhysicals = false;
   std::string tempName= "temp.geo";
-  gm->writeGEO(tempName, printLabels, onlyPhysicals);
-  std::string tmp_path = "temp.msh";
-  gm->writeMSH(tmp_path, 4.1, false, true);
+  std::cout << "geo being written" << std::endl;  
+  // gm->writeGEO(tempName, printLabels, onlyPhysicals);
+  std::cout << "geo written" << std::endl;
+  std::string tmp_path1 = "temp1.msh";
+  gm->writeMSH(tmp_path1, 4.1, false, true);
+  std::cout << "mesh written" << std::endl;
   //------------------------------------------------
   
   Msg::Info("MBD | Generating separatrices to obtain split mesh");
   HXTMesh *splitMesh;
   hxtQuadMultiBlockSplitWithPrescribedSing(mesh, cf_tag, &splitMesh);
+  std::cout << "mesh splitted" << std::endl;  
   Msg::Info("MBD | Split mesh generated");
   
   Msg::Info("MBD |  Exporting split mesh to gmsh");
@@ -7750,6 +7764,7 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
   gm = GModel::current();
   CTX::instance()->mesh.changed = ENT_ALL;
   Msg::Info("MBD | Split mesh shown in  gmsh");
-  
+  // hxtMeshDelete(&mesh);//CRITICAL
+  // hxtMeshDelete(&splitMesh);//CRITICAL
   return 0;
 }

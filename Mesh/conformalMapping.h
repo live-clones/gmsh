@@ -152,7 +152,7 @@ class ConformalMapping{
   void _viewScalarVertex(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, const std::string& viewName="defaultName");
   void _viewCrosses(std::map<const MEdge *, Cross2D> crossField, const std::string& viewName="Crosses");
   void _viewVectTri(std::map<const MTriangle *, SVector3, MElementPtrLessThan> vect, const std::string& viewName="Vector");
-  
+  void deleteVertex(MVertex* v); 
  public:
   ConformalMapping(GModel *gm);
   ~ConformalMapping();
