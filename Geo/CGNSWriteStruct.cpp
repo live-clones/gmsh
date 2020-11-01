@@ -37,8 +37,8 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
     // write x coordinates
     int cgIndexCoord = 0;
     std::vector<double> data(cgZoneSize[0] * cgZoneSize[1]);
-    for(std::size_t j = 0; j < jmax; j++) {
-      for(std::size_t i = 0; i < imax; i++) {
+    for(cgsize_t j = 0; j < jmax; j++) {
+      for(cgsize_t i = 0; i < imax; i++) {
         MVertex *v = gf->transfinite_vertices[i][j];
         data[cgZoneSize[0] * j + i] = v->x() * scalingFactor;
       }
@@ -48,8 +48,8 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
     // write y coordinates
-    for(std::size_t j = 0; j < jmax; j++) {
-      for(std::size_t i = 0; i < imax; i++) {
+    for(cgsize_t j = 0; j < jmax; j++) {
+      for(cgsize_t i = 0; i < imax; i++) {
         MVertex *v = gf->transfinite_vertices[i][j];
         data[cgZoneSize[0] * j + i] = v->y() * scalingFactor;
       }
@@ -59,8 +59,8 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
     // write z coordinates
-    for(std::size_t j = 0; j < jmax; j++) {
-      for(std::size_t i = 0; i < imax; i++) {
+    for(cgsize_t j = 0; j < jmax; j++) {
+      for(cgsize_t i = 0; i < imax; i++) {
         MVertex *v = gf->transfinite_vertices[i][j];
         data[cgZoneSize[0] * j + i] = v->z() * scalingFactor;
       }
@@ -99,9 +99,9 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
     // write x coordinates
     int cgIndexCoord = 0;
     std::vector<double> data(imax * jmax * kmax);
-    for(std::size_t k = 0; k < kmax; k++) {
-      for(std::size_t j = 0; j < jmax; j++) {
-        for(std::size_t i = 0; i < imax; i++) {
+    for(cgsize_t k = 0; k < kmax; k++) {
+      for(cgsize_t j = 0; j < jmax; j++) {
+        for(cgsize_t i = 0; i < imax; i++) {
           MVertex *v = gr->transfinite_vertices[i][j][k];
           data[imax * jmax * k + imax * j + i] = v->x() * scalingFactor;
         }
@@ -112,9 +112,9 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
     // write y coordinates
-    for(std::size_t k = 0; k < kmax; k++) {
-      for(std::size_t j = 0; j < jmax; j++) {
-        for(std::size_t i = 0; i < imax; i++) {
+    for(cgsize_t k = 0; k < kmax; k++) {
+      for(cgsize_t j = 0; j < jmax; j++) {
+        for(cgsize_t i = 0; i < imax; i++) {
           MVertex *v = gr->transfinite_vertices[i][j][k];
           data[imax * jmax * k + imax * j + i] = v->y() * scalingFactor;
         }
@@ -125,9 +125,9 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
     // write z coordinates
-    for(std::size_t k = 0; k < kmax; k++) {
-      for(std::size_t j = 0; j < jmax; j++) {
-        for(std::size_t i = 0; i < imax; i++) {
+    for(cgsize_t k = 0; k < kmax; k++) {
+      for(cgsize_t j = 0; j < jmax; j++) {
+        for(cgsize_t i = 0; i < imax; i++) {
           MVertex *v = gr->transfinite_vertices[i][j][k];
           data[imax * jmax * k + imax * j + i] = v->z() * scalingFactor;
         }
