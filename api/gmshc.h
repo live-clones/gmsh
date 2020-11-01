@@ -898,20 +898,15 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
                                                                            const int tag,
                                                                            int * ierr);
 
-/* Get the global edge identifier `edgeNum' for an input list of node pairs,
- * concatenated in the vector `edgeNodes'.  Warning: this is an experimental
- * feature and will probably change in a future release. */
-GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n,
-                                         int ** edgeNum, size_t * edgeNum_n,
-                                         int * ierr);
-
 /* Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
- * H(curl) basis functions. Warning: this is an experimental feature and will
- * probably change in a future release. */
-GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType,
+ * H(curl) basis functions and the global edge identifier `edgeNum' for an
+ * input list of node pairs, concatenated in the vector `edgeNodes'. Warning:
+ * this is an experimental feature and will probably change in a future
+ * release. */
+GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(size_t * edgeNodes, size_t edgeNodes_n,
+                                                        size_t * elementTags, size_t elementTags_n,
+                                                        size_t ** edgeNum, size_t * edgeNum_n,
                                                         int ** localMultipliers, size_t * localMultipliers_n,
-                                                        size_t ** elementTags, size_t * elementTags_n,
-                                                        const int tag,
                                                         int * ierr);
 
 /* Generate the `keys' for the elements of type `elementType' in the entity of

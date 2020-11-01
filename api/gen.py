@@ -341,11 +341,8 @@ mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('fun
 doc = '''Preallocate data before calling `getBasisFunctionsOrientationForElements' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateBasisFunctionsOrientationForElements', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
-doc = '''Get the global edge identifier `edgeNum' for an input list of node pairs, concatenated in the vector `edgeNodes'.  Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getEdgeNumber',doc,None,ivectorint('edgeNodes'),ovectorint('edgeNum'))
-
-doc = '''Get the local multipliers (to guarantee H(curl)-conformity) of the order 0 H(curl) basis functions. Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getLocalMultipliersForHcurl0',doc,None,iint('elementType'),ovectorint('localMultipliers'),ovectorsize('elementTags'),iint('tag','-1'))
+doc = '''Get the local multipliers (to guarantee H(curl)-conformity) of the order 0 H(curl) basis functions and the global edge identifier `edgeNum' for an input list of node pairs, concatenated in the vector `edgeNodes'. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getLocalMultipliersForHcurl0',doc,None,ivectorsize('edgeNodes'),ivectorsize('elementTags'),ovectorsize('edgeNum'),ovectorint('localMultipliers'))
 
 doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))

@@ -2330,52 +2330,34 @@ class model:
             return api_result_
 
         @staticmethod
-        def getEdgeNumber(edgeNodes):
+        def getLocalMultipliersForHcurl0(edgeNodes, elementTags):
             """
-            gmsh.model.mesh.getEdgeNumber(edgeNodes)
-
-            Get the global edge identifier `edgeNum' for an input list of node pairs,
-            concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-            feature and will probably change in a future release.
-
-            Return `edgeNum'.
-            """
-            api_edgeNodes_, api_edgeNodes_n_ = _ivectorint(edgeNodes)
-            api_edgeNum_, api_edgeNum_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetEdgeNumber(
-                api_edgeNodes_, api_edgeNodes_n_,
-                byref(api_edgeNum_), byref(api_edgeNum_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return _ovectorint(api_edgeNum_, api_edgeNum_n_.value)
-
-        @staticmethod
-        def getLocalMultipliersForHcurl0(elementType, tag=-1):
-            """
-            gmsh.model.mesh.getLocalMultipliersForHcurl0(elementType, tag=-1)
+            gmsh.model.mesh.getLocalMultipliersForHcurl0(edgeNodes, elementTags)
 
             Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
-            H(curl) basis functions. Warning: this is an experimental feature and will
-            probably change in a future release.
+            H(curl) basis functions and the global edge identifier `edgeNum' for an
+            input list of node pairs, concatenated in the vector `edgeNodes'. Warning:
+            this is an experimental feature and will probably change in a future
+            release.
 
-            Return `localMultipliers', `elementTags'.
+            Return `edgeNum', `localMultipliers'.
             """
+            api_edgeNodes_, api_edgeNodes_n_ = _ivectorsize(edgeNodes)
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            api_edgeNum_, api_edgeNum_n_ = POINTER(c_size_t)(), c_size_t()
             api_localMultipliers_, api_localMultipliers_n_ = POINTER(c_int)(), c_size_t()
-            api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetLocalMultipliersForHcurl0(
-                c_int(elementType),
+                api_edgeNodes_, api_edgeNodes_n_,
+                api_elementTags_, api_elementTags_n_,
+                byref(api_edgeNum_), byref(api_edgeNum_n_),
                 byref(api_localMultipliers_), byref(api_localMultipliers_n_),
-                byref(api_elementTags_), byref(api_elementTags_n_),
-                c_int(tag),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
-                _ovectorint(api_localMultipliers_, api_localMultipliers_n_.value),
-                _ovectorsize(api_elementTags_, api_elementTags_n_.value))
+                _ovectorsize(api_edgeNum_, api_edgeNum_n_.value),
+                _ovectorint(api_localMultipliers_, api_localMultipliers_n_.value))
 
         @staticmethod
         def getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True):

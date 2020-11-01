@@ -1563,36 +1563,27 @@ namespace gmsh { // Top-level functions
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
 
-      // Get the global edge identifier `edgeNum' for an input list of node pairs,
-      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-      // feature and will probably change in a future release.
-      inline void getEdgeNumber(const std::vector<int> & edgeNodes,
-                                std::vector<int> & edgeNum)
+      // Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
+      // H(curl) basis functions and the global edge identifier `edgeNum' for an
+      // input list of node pairs, concatenated in the vector `edgeNodes'. Warning:
+      // this is an experimental feature and will probably change in a future
+      // release.
+      inline void getLocalMultipliersForHcurl0(const std::vector<std::size_t> & edgeNodes,
+                                               const std::vector<std::size_t> & elementTags,
+                                               std::vector<std::size_t> & edgeNum,
+                                               std::vector<int> & localMultipliers)
       {
         int ierr = 0;
-        int *api_edgeNodes_; size_t api_edgeNodes_n_; vector2ptr(edgeNodes, &api_edgeNodes_, &api_edgeNodes_n_);
-        int *api_edgeNum_; size_t api_edgeNum_n_;
-        gmshModelMeshGetEdgeNumber(api_edgeNodes_, api_edgeNodes_n_, &api_edgeNum_, &api_edgeNum_n_, &ierr);
+        size_t *api_edgeNodes_; size_t api_edgeNodes_n_; vector2ptr(edgeNodes, &api_edgeNodes_, &api_edgeNodes_n_);
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        size_t *api_edgeNum_; size_t api_edgeNum_n_;
+        int *api_localMultipliers_; size_t api_localMultipliers_n_;
+        gmshModelMeshGetLocalMultipliersForHcurl0(api_edgeNodes_, api_edgeNodes_n_, api_elementTags_, api_elementTags_n_, &api_edgeNum_, &api_edgeNum_n_, &api_localMultipliers_, &api_localMultipliers_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_edgeNodes_);
+        gmshFree(api_elementTags_);
         edgeNum.assign(api_edgeNum_, api_edgeNum_ + api_edgeNum_n_); gmshFree(api_edgeNum_);
-      }
-
-      // Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
-      // H(curl) basis functions. Warning: this is an experimental feature and will
-      // probably change in a future release.
-      inline void getLocalMultipliersForHcurl0(const int elementType,
-                                               std::vector<int> & localMultipliers,
-                                               std::vector<std::size_t> & elementTags,
-                                               const int tag = -1)
-      {
-        int ierr = 0;
-        int *api_localMultipliers_; size_t api_localMultipliers_n_;
-        size_t *api_elementTags_; size_t api_elementTags_n_;
-        gmshModelMeshGetLocalMultipliersForHcurl0(elementType, &api_localMultipliers_, &api_localMultipliers_n_, &api_elementTags_, &api_elementTags_n_, tag, &ierr);
-        if(ierr) throwLastError();
         localMultipliers.assign(api_localMultipliers_, api_localMultipliers_ + api_localMultipliers_n_); gmshFree(api_localMultipliers_);
-        elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
       }
 
       // Generate the `keys' for the elements of type `elementType' in the entity

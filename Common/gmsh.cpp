@@ -3074,85 +3074,36 @@ gmsh::model::mesh::preallocateBasisFunctionsOrientationForElements(
   basisFunctionsOrientation.resize(numElements);
 }
 
-GMSH_API void
-gmsh::model::mesh::getEdgeNumber(const std::vector<int> &edgeNodes,
-                                 std::vector<int> &edgeNum)
-{
-  edgeNum.clear();
-  int numEdges = edgeNodes.size() / 2;
-  if(!numEdges) return;
-  edgeNum.resize(numEdges);
-  for(int i = 0; i < numEdges; i++) {
-    MEdge edge(GModel::current()->getMeshVertexByTag(edgeNodes[2 * i]),
-               GModel::current()->getMeshVertexByTag(edgeNodes[2 * i + 1]));
-    edgeNum[i] = GModel::current()->getEdgeNumber(edge);
-  }
-}
+
 
 GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
-  const int elementType, std::vector<int> &localMultipliers,std::vector<size_t> &elementTags,const int tag)
+  const std::vector<std::size_t> & edgeNodes,const std::vector<std::size_t> & elementTags,
+  std::vector<std::size_t> & edgeNum, std::vector<int> & localMultipliers)
 {
+  if(!_checkInit()) return;
   localMultipliers.clear();
-  int basisOrder = 0;
-  std::string fsName = "";
-  int dim = ElementType::getDimension(elementType);
-  std::map<int, std::vector<GEntity *> > typeEnt;
-  _getEntitiesForElementTypes(dim, tag, typeEnt);
-  HierarchicalBasis *basis(0);
-  const std::vector<GEntity *> &entities(typeEnt[elementType]);
-  int familyType = ElementType::getParentType(elementType);
-  switch(familyType) {
-  case TYPE_QUA: {
-    basis = new HierarchicalBasisHcurlQuad(basisOrder);
-  } break;
-  case TYPE_HEX: {
-    basis = new HierarchicalBasisHcurlBrick(basisOrder);
-  } break;
-  case TYPE_TRI: {
-    basis = new HierarchicalBasisHcurlTria(basisOrder);
-  } break;
-  case TYPE_TET: {
-    basis = new HierarchicalBasisHcurlTetra(basisOrder);
-  } break;
-  case TYPE_PRI: {
-    basis = new HierarchicalBasisHcurlPri(basisOrder);
-  } break;
-  case TYPE_LIN: {
-    basis = new HierarchicalBasisHcurlLine(basisOrder);
-  } break;
-  default:
-    Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-               fsName.c_str());
-    return;
-  }
-  // compute the number of Element :
-  std::size_t numElements = 0;
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
-    numElements += numElementsInEntitie;
-  }
-  if(!numElements) return;
-  int numberEdge = basis->getNumEdge();
-  localMultipliers.resize(numElements * numberEdge, 1);
-  elementTags.resize(numElements);
-  size_t indexNumElement = 0;
-  for(std::size_t ii = 0; ii < entities.size(); ii++) {
-    GEntity *ge = entities[ii];
-    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
-      MElement *e = ge->getMeshElementByType(familyType, j);
-      elementTags[indexNumElement]=e->getNum();
-      for(int iEdge = 0; iEdge < basis->getNumEdge(); iEdge++) {
-        MEdge edge = e->getEdge(iEdge);
-        if(edge.getMinVertex()->getNum() !=
-           unsigned(e->getVertexSolin(iEdge, 0))) {
-          localMultipliers[indexNumElement * numberEdge + iEdge] = -1;
-        }
+  edgeNum.clear();
+  std::size_t numEdges = edgeNodes.size() / 2;
+  if(!numEdges) return;
+  edgeNum.resize(numEdges);
+  localMultipliers.resize(numEdges,1);
+  for(std::size_t i = 0; i < numEdges; i++) {
+    MElement *e = GModel::current()->getMeshElementByTag(elementTags[i]);
+    for(int ithEdge = 0; ithEdge <  e->getNumEdges(); ithEdge++) {
+      MEdge edge = e->getEdge(ithEdge);
+      std::size_t v0=edgeNodes[2 * i] ;
+      std::size_t v1=edgeNodes[2 * i + 1];
+      if((v0== edge.getVertex(0)->getNum()  && v1 == edge.getVertex(1)->getNum())||
+         (v1== edge.getVertex(0)->getNum()  && v0 == edge.getVertex(1)->getNum())) {
+           edgeNum[i] = GModel::current()->getEdgeNumber(edge);
+           if(edge.getMinVertex()->getNum() !=
+              unsigned(e->getVertexSolin(ithEdge, 0))) {
+             localMultipliers[i] = -1;
+           }
+           break;
       }
-      indexNumElement++;
     }
   }
-  delete basis;
 }
 
 GMSH_API void gmsh::model::mesh::getKeysForElements(

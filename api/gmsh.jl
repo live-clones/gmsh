@@ -1932,48 +1932,28 @@ function getNumberOfOrientations(elementType, functionSpaceType)
 end
 
 """
-    gmsh.model.mesh.getEdgeNumber(edgeNodes)
-
-Get the global edge identifier `edgeNum` for an input list of node pairs,
-concatenated in the vector `edgeNodes`.  Warning: this is an experimental
-feature and will probably change in a future release.
-
-Return `edgeNum`.
-"""
-function getEdgeNumber(edgeNodes)
-    api_edgeNum_ = Ref{Ptr{Cint}}()
-    api_edgeNum_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetEdgeNumber, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cint}, edgeNodes), length(edgeNodes), api_edgeNum_, api_edgeNum_n_, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    edgeNum = unsafe_wrap(Array, api_edgeNum_[], api_edgeNum_n_[], own=true)
-    return edgeNum
-end
-
-"""
-    gmsh.model.mesh.getLocalMultipliersForHcurl0(elementType, tag = -1)
+    gmsh.model.mesh.getLocalMultipliersForHcurl0(edgeNodes, elementTags)
 
 Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
-H(curl) basis functions. Warning: this is an experimental feature and will
-probably change in a future release.
+H(curl) basis functions and the global edge identifier `edgeNum` for an input
+list of node pairs, concatenated in the vector `edgeNodes`. Warning: this is an
+experimental feature and will probably change in a future release.
 
-Return `localMultipliers`, `elementTags`.
+Return `edgeNum`, `localMultipliers`.
 """
-function getLocalMultipliersForHcurl0(elementType, tag = -1)
+function getLocalMultipliersForHcurl0(edgeNodes, elementTags)
+    api_edgeNum_ = Ref{Ptr{Csize_t}}()
+    api_edgeNum_n_ = Ref{Csize_t}()
     api_localMultipliers_ = Ref{Ptr{Cint}}()
     api_localMultipliers_n_ = Ref{Csize_t}()
-    api_elementTags_ = Ref{Ptr{Csize_t}}()
-    api_elementTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetLocalMultipliersForHcurl0, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, api_localMultipliers_, api_localMultipliers_n_, api_elementTags_, api_elementTags_n_, tag, ierr)
+          (Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Csize_t}, edgeNodes), length(edgeNodes), convert(Vector{Csize_t}, elementTags), length(elementTags), api_edgeNum_, api_edgeNum_n_, api_localMultipliers_, api_localMultipliers_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
+    edgeNum = unsafe_wrap(Array, api_edgeNum_[], api_edgeNum_n_[], own=true)
     localMultipliers = unsafe_wrap(Array, api_localMultipliers_[], api_localMultipliers_n_[], own=true)
-    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
-    return localMultipliers, elementTags
+    return edgeNum, localMultipliers
 end
 
 """

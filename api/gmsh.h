@@ -1025,23 +1025,17 @@ namespace gmsh { // Top-level functions
                                                                     std::vector<int> & basisFunctionsOrientation,
                                                                     const int tag = -1);
 
-      // gmsh::model::mesh::getEdgeNumber
-      //
-      // Get the global edge identifier `edgeNum' for an input list of node pairs,
-      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-      // feature and will probably change in a future release.
-      GMSH_API void getEdgeNumber(const std::vector<int> & edgeNodes,
-                                  std::vector<int> & edgeNum);
-
       // gmsh::model::mesh::getLocalMultipliersForHcurl0
       //
       // Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
-      // H(curl) basis functions. Warning: this is an experimental feature and will
-      // probably change in a future release.
-      GMSH_API void getLocalMultipliersForHcurl0(const int elementType,
-                                                 std::vector<int> & localMultipliers,
-                                                 std::vector<std::size_t> & elementTags,
-                                                 const int tag = -1);
+      // H(curl) basis functions and the global edge identifier `edgeNum' for an
+      // input list of node pairs, concatenated in the vector `edgeNodes'. Warning:
+      // this is an experimental feature and will probably change in a future
+      // release.
+      GMSH_API void getLocalMultipliersForHcurl0(const std::vector<std::size_t> & edgeNodes,
+                                                 const std::vector<std::size_t> & elementTags,
+                                                 std::vector<std::size_t> & edgeNum,
+                                                 std::vector<int> & localMultipliers);
 
       // gmsh::model::mesh::getKeysForElements
       //

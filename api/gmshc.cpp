@@ -1324,29 +1324,17 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
   }
 }
 
-GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n, int ** edgeNum, size_t * edgeNum_n, int * ierr)
+GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(size_t * edgeNodes, size_t edgeNodes_n, size_t * elementTags, size_t elementTags_n, size_t ** edgeNum, size_t * edgeNum_n, int ** localMultipliers, size_t * localMultipliers_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_edgeNodes_(edgeNodes, edgeNodes + edgeNodes_n);
-    std::vector<int> api_edgeNum_;
-    gmsh::model::mesh::getEdgeNumber(api_edgeNodes_, api_edgeNum_);
-    vector2ptr(api_edgeNum_, edgeNum, edgeNum_n);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType, int ** localMultipliers, size_t * localMultipliers_n, size_t ** elementTags, size_t * elementTags_n, const int tag, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
+    std::vector<std::size_t> api_edgeNodes_(edgeNodes, edgeNodes + edgeNodes_n);
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    std::vector<std::size_t> api_edgeNum_;
     std::vector<int> api_localMultipliers_;
-    std::vector<std::size_t> api_elementTags_;
-    gmsh::model::mesh::getLocalMultipliersForHcurl0(elementType, api_localMultipliers_, api_elementTags_, tag);
+    gmsh::model::mesh::getLocalMultipliersForHcurl0(api_edgeNodes_, api_elementTags_, api_edgeNum_, api_localMultipliers_);
+    vector2ptr(api_edgeNum_, edgeNum, edgeNum_n);
     vector2ptr(api_localMultipliers_, localMultipliers, localMultipliers_n);
-    vector2ptr(api_elementTags_, elementTags, elementTags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
