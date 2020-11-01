@@ -9,13 +9,13 @@
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 #include "CGNSWrite.h"
+#include "CGNSWriteStruct.h"
 #include "CGNSZone.h"
 #include "CGNSZoneStruct.h"
 #include "CGNSZoneUnstruct.h"
 #include "CGNSRead.h"
 
 #if defined(HAVE_LIBCGNS)
-
 
 int GModel::readCGNS(const std::string &name,
                      std::vector<std::vector<MVertex *> > &vertPerZone,
@@ -125,7 +125,7 @@ int GModel::readCGNS(const std::string &name,
 
 
 int GModel::writeCGNS(const std::string &name, bool saveAll,
-                      double scalingFactor)
+                      double scalingFactor, bool structured)
 {
   int cgnsErr;
 
@@ -149,7 +149,15 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   cgnsErr = cg_descriptor_write("About", "Created by Gmsh");
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
-  // Zone names
+  // try to write as structured grid (if it fails, write as unstructured)
+  if(structured && writeZonesStruct(this, scalingFactor, cgIndexFile,
+                                    cgIndexBase)) {
+    cgnsErr = cg_close(cgIndexFile);
+    if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__);
+    return 1;
+  }
+
+  // zone names
   const size_t numPart = getNumPartitions();
   std::vector<std::string> zoneName(numPart + 1);
 
@@ -171,10 +179,9 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
 
   // initialize vertex -> (partition, local node index) for periodic and
   // interface entities
-  Msg::Info("Looking for periodic/interface vertices...");
   Vertex2LocalData interfVert2Local;
   initInterfVertex2LocalData(entitiesPer, entitiesInterf, interfVert2Local);
-  Msg::Info("%i periodic/interface vertices found", interfVert2Local.size());
+  Msg::Info("%lu periodic/interface nodes", interfVert2Local.size());
 
   // write partitions and periodic/partition connectivities
   std::set<int> eleMshTypes;
@@ -245,7 +252,7 @@ int GModel::readCGNS(const std::string &name,
 
 
 int GModel::writeCGNS(const std::string &name, bool saveAll,
-                      double scalingFactor)
+                      double scalingFactor, bool structured)
 {
   Msg::Error("This version of Gmsh was compiled without CGNS support");
   return 0;
