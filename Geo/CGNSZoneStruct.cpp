@@ -141,8 +141,7 @@ namespace {
       break;
     default:
       Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
-                 "linear",
-                 order);
+                 "linear", order);
       mshEltType = MSH_HEX_8;
       if(!isShiftInit[0]) {
         initHexShift(1, shiftP1);
@@ -187,8 +186,6 @@ namespace {
                                 std::map<int, std::vector<MElement *> > *allElt,
                                 const std::vector<bool> &interfaceNode)
   {
-    Msg::Error("Creation of boundary elements for 2D structured blocks not "
-               "implemented");
     // node shift from (i, j, k) depending on order
     static bool isShiftInit[4] = {false, false, false, false};
     static int shiftP1[2], shiftP2[3], shiftP3[4], shiftP4[5];
@@ -231,8 +228,7 @@ namespace {
       break;
     default:
       Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
-                 "linear",
-                 order);
+                 "linear", order);
       mshEltType = MSH_LIN_2;
       if(!isShiftInit[0]) {
         initLinShift(1, shiftP1);
@@ -315,8 +311,7 @@ namespace {
       break;
     default:
       Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
-                 "linear",
-                 order);
+                 "linear", order);
       mshEltType = MSH_QUA_4;
       if(!isShiftInit[0]) {
         initQuadShift(1, shiftP1);

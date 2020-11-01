@@ -55,7 +55,7 @@ struct contextMeshOptions {
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder;
-  int cgnsConstructTopology, cgnsExportCPEX0045;
+  int cgnsConstructTopology, cgnsExportCPEX0045, cgnsExportStructured;
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;

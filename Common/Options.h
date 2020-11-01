@@ -557,6 +557,7 @@ double opt_mesh_cgns_import_ignore_bc(OPT_ARGS_NUM);
 double opt_mesh_cgns_import_ignore_solution(OPT_ARGS_NUM);
 double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM);
 double opt_mesh_cgns_export_cpex0045(OPT_ARGS_NUM);
+double opt_mesh_cgns_export_structured(OPT_ARGS_NUM);
 double opt_mesh_dual(OPT_ARGS_NUM);
 double opt_mesh_voronoi(OPT_ARGS_NUM);
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM);
