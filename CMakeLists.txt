@@ -59,6 +59,7 @@ opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
 opt(MESH "Enable mesh module (required by GUI)" ${DEFAULT})
+opt(MESQUITE "Enable Mesquite (Mesh Quality Improvement Toolkit)" ${DEFAULT})
 opt(METIS "Enable Metis mesh partitioner" ${DEFAULT})
 opt(MMG "Enable Mmg mesh adaptation interface" ${DEFAULT})
 opt(MPEG_ENCODE "Enable built-in MPEG movie encoder" ${DEFAULT})
@@ -1249,6 +1250,43 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools AND ENABLE_QUADME
   include_directories(BEFORE contrib/QuadMeshingTools)
 endif()
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/mesquite AND ENABLE_MESQUITE)
+  set_config_option(HAVE_MESQUITE "Mesquite")
+  add_subdirectory(contrib/mesquite)
+  include_directories(BEFORE
+    contrib/mesquite/include
+    contrib/mesquite/Control
+    contrib/mesquite/MappingFunction
+    contrib/mesquite/MappingFunction/Linear
+    contrib/mesquite/MappingFunction/Lagrange
+    contrib/mesquite/Mesh
+    contrib/mesquite/Misc
+    contrib/mesquite/ObjectiveFunction
+    contrib/mesquite/QualityAssessor
+    contrib/mesquite/QualityImprover
+    contrib/mesquite/QualityImprover/OptSolvers
+    contrib/mesquite/QualityImprover/Relaxation
+    contrib/mesquite/QualityMetric
+    contrib/mesquite/QualityMetric/Debug
+    contrib/mesquite/QualityMetric/Shape
+    contrib/mesquite/QualityMetric/Smoothness
+    contrib/mesquite/QualityMetric/Volume
+    contrib/mesquite/QualityMetric/Untangle
+    contrib/mesquite/QualityMetric/TMP
+    contrib/mesquite/TargetCalculator
+    contrib/mesquite/TargetMetric
+    contrib/mesquite/TargetMetric/Misc
+    contrib/mesquite/TargetMetric/Shape
+    contrib/mesquite/TargetMetric/ShapeOrient
+    contrib/mesquite/TargetMetric/ShapeSize
+    contrib/mesquite/TargetMetric/ShapeSizeOrient
+    contrib/mesquite/TargetMetric/Size
+    contrib/mesquite/TargetMetric/Untangle
+    contrib/mesquite/Wrappers
+    )
+  set_source_files_properties(${MESQUITE_SRC_PATHES} COMPILE_FLAGS ${MESQUITE_DEFINES})
+endif()
+
 if(ENABLE_OCC)
   set(OCC_MINIMAL_VERSION "6.9.1")
   if(WIN32)
@@ -1261,11 +1299,11 @@ if(ENABLE_OCC)
     set(OCC_SYS_NAME ${CMAKE_SYSTEM_NAME})
   endif()
   find_path(OCC_INC "Standard_Version.hxx" HINTS ENV CASROOT PATH_SUFFIXES
-            inc include include/oce opencascade include/opencascade
-            occt include/occt)
+    inc include include/oce opencascade include/opencascade
+    occt include/occt)
   if(OCC_INC)
     file(STRINGS ${OCC_INC}/Standard_Version.hxx
-         OCC_MAJOR REGEX "#define OCC_VERSION_MAJOR.*")
+      OCC_MAJOR REGEX "#define OCC_VERSION_MAJOR.*")
     file(STRINGS ${OCC_INC}/Standard_Version.hxx
          OCC_MINOR REGEX "#define OCC_VERSION_MINOR.*")
     file(STRINGS ${OCC_INC}/Standard_Version.hxx

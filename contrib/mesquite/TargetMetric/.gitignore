@@ -1,0 +1,6 @@
+# Latex output from derivs.tex
+*.aux
+*.log
+*.pdf
+*.ps
+*.toc

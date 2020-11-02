@@ -37,6 +37,7 @@ set(SRC
   fastScaledCrossField.cpp
   meshQuadQuasiStructured.cpp
   meshQuadPatterns.cpp
+  meshQuadGeometry.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
