@@ -36,6 +36,7 @@ set(SRC
   automaticMeshSizeField.cpp
   fastScaledCrossField.cpp
   meshQuadQuasiStructured.cpp
+  conformalMapping.cpp
   meshQuadPatterns.cpp
   meshQuadGeometry.cpp
 )
