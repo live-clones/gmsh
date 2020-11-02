@@ -1,5 +1,6 @@
 #ifndef HXT_QMBBOUNDARYLINE_H
 #define HXT_QMBBOUNDARYLINE_H
+#include <cstdint>
 #include <vector>
 #include "hxt_qmbCorner.h"
 #include <array>

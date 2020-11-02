@@ -2663,7 +2663,7 @@ void ConformalMapping::_viewScalarVertex(std::map<MVertex *, double, MVertexPtrL
     datalist.push_back(kv.second);
   }
   gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
+  Msg::Debug("create view '%s'",viewName.c_str());
   int dataListViewTag = gmsh::view::add(viewName);
   gmsh::view::addListData(dataListViewTag, "SP", datalist.size()/(3+1), datalist);
 #else 
@@ -2685,7 +2685,7 @@ void ConformalMapping::_viewScalarEdges(std::map<const MEdge *, double> &scalar,
   }
   if(!datalist.empty()){
     gmsh::initialize();
-    Msg::Debug("create view '%s'",viewName);
+    Msg::Debug("create view '%s'",viewName.c_str());
     int dataListViewTag = gmsh::view::add(viewName);
     gmsh::view::addListData(dataListViewTag, "SP", datalist.size()/(3+1), datalist);
   }
@@ -2716,7 +2716,7 @@ void ConformalMapping::_viewCrossEdgTri(std::map<MTriangle *, std::vector<std::v
   }
   if(!datalist.empty()){
     gmsh::initialize();
-    Msg::Debug("create view '%s'",viewName);
+    Msg::Debug("create view '%s'",viewName.c_str());
     int dataListViewTag = gmsh::view::add(viewName);
     gmsh::view::addListData(dataListViewTag, "VP", nData, datalist);
   }
@@ -2769,7 +2769,7 @@ void ConformalMapping::_viewCrosses(std::map<const MEdge *, Cross2D> crossField,
     }
   }
   gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
+  Msg::Debug("create view '%s'",viewName.c_str());
   int dataListViewTag = gmsh::view::add(viewName);
   // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
   gmsh::view::addListData(dataListViewTag, "VP", nData, datalist);
@@ -2800,7 +2800,7 @@ void ConformalMapping::_viewVectTri(std::map<const MTriangle *, SVector3, MEleme
     nData++;
   }
   gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
+  Msg::Debug("create view '%s'",viewName.c_str());
   int dataListViewTag = gmsh::view::add(viewName);
   // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
   gmsh::view::addListData(dataListViewTag, "VP", nData, datalist);
@@ -2825,7 +2825,7 @@ void ConformalMapping::_viewEdges(std::set<const MEdge*> &edges, const std::stri
     datalist.push_back(1.0);
   }
   gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
+  Msg::Debug("create view '%s'",viewName.c_str());
   int dataListViewTag = gmsh::view::add(viewName);
   // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
   gmsh::view::addListData(dataListViewTag, "SL", edges.size(), datalist);
@@ -2854,7 +2854,7 @@ void ConformalMapping::_viewScalarTriangles(std::map<MVertex *, double, MVertexP
     datalist.push_back(scalar[t->getVertex(2)]);
   }
   gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
+  Msg::Debug("create view '%s'",viewName.c_str());
   int dataListViewTag = gmsh::view::add(viewName);
   // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
   gmsh::view::addListData(dataListViewTag, "ST", triangles.size(), datalist);

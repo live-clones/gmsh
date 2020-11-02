@@ -1,6 +1,7 @@
 #ifndef HXT_QMBQUADGENERATOR_H
 #define HXT_QMBQUADGENERATOR_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include "hxt_qmbSingularity.h"

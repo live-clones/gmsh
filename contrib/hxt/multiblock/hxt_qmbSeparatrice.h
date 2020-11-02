@@ -1,5 +1,6 @@
 #ifndef HXT_QMBSEPARATRICE_H
 #define HXT_QMBSEPARATRICE_H
+#include <cstdint>
 #include <vector>
 #include <array>
 
