@@ -1862,7 +1862,11 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
       sign = -1;
     }
     else if(numf > 1){
+      double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
       SBoundingBox3d localbb = localEdge->bounds(true);
+      SBoundingBox3d localbbEps(localbb);
+      localbbEps += (localbbEps.min() - SPoint3(tol, tol, tol));
+      localbbEps += (localbbEps.max() + SPoint3(tol, tol, tol));
       std::pair<std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator,
                 std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator> ret =
         m_vtxToEdge.equal_range(forward);
@@ -1870,10 +1874,10 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
           it != ret.second; it++){
         SBoundingBox3d masterbb = it->second->bounds(true);
         masterbb.transform(tfo);
-        double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
-        masterbb += (masterbb.min() - SPoint3(tol, tol, tol));
-        masterbb += (masterbb.max() + SPoint3(tol, tol, tol));
-        if(masterbb.contains(localbb)){
+        SBoundingBox3d masterbbEps(masterbb);
+        masterbbEps += (masterbbEps.min() - SPoint3(tol, tol, tol));
+        masterbbEps += (masterbbEps.max() + SPoint3(tol, tol, tol));
+        if(masterbbEps.contains(localbb) && localbbEps.contains(masterbb)){
           masterEdge = it->second;
           sign = 1;
           break;
@@ -1881,7 +1885,11 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
       }
     }
     else if(numb > 1){
+      double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
       SBoundingBox3d localbb = localEdge->bounds(true);
+      SBoundingBox3d localbbEps(localbb);
+      localbbEps += (localbbEps.min() - SPoint3(tol, tol, tol));
+      localbbEps += (localbbEps.max() + SPoint3(tol, tol, tol));
       std::pair<std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator,
                 std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator> ret =
         m_vtxToEdge.equal_range(backward);
@@ -1889,10 +1897,10 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
           it != ret.second; it++){
         SBoundingBox3d masterbb = it->second->bounds(true);
         masterbb.transform(tfo);
-        double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
-        masterbb += (masterbb.min() - SPoint3(tol, tol, tol));
-        masterbb += (masterbb.max() + SPoint3(tol, tol, tol));
-        if(masterbb.contains(localbb)){
+        SBoundingBox3d masterbbEps(masterbb);
+        masterbbEps += (masterbbEps.min() - SPoint3(tol, tol, tol));
+        masterbbEps += (masterbbEps.max() + SPoint3(tol, tol, tol));
+        if(masterbbEps.contains(localbb) && localbbEps.contains(masterbb)){
           masterEdge = it->second;
           sign = -1;
           break;

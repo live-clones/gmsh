@@ -326,6 +326,7 @@ static void copyMesh(GEdge *from, GEdge *to, int direction)
       // Mesh.HighOrderPeriodic=2, which will do that
       newu = to->parFromPoint(p);
       gp = to->point(newu);
+      //gp = to->closestPoint(p, newu);
     }
     MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), to, newu);
     to->mesh_vertices.push_back(vv);
