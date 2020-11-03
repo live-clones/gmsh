@@ -1853,15 +1853,18 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     int sign = 0;
     GEdge *masterEdge = 0;
 
-    if(numf == 1){
+    // unique matches
+    if(!masterEdge && numf == 1 && numb == 0){
       masterEdge = m_vtxToEdge.find(forward)->second;
       sign = 1;
     }
-    else if(numb == 1){
+    if(!masterEdge && numb == 1 && numf == 0){
       masterEdge = m_vtxToEdge.find(backward)->second;
       sign = -1;
     }
-    else if(numf > 1){
+
+    // multiple matches (when several curves have the same begin/end points)
+    if(!masterEdge && numf){
       double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
       SBoundingBox3d localbb = localEdge->bounds(true);
       std::pair<std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator,
@@ -1879,7 +1882,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
         }
       }
     }
-    else if(numb > 1){
+    if(!masterEdge && numb){
       double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
       SBoundingBox3d localbb = localEdge->bounds(true);
       std::pair<std::map<std::pair<GVertex *, GVertex *>, GEdge *>::iterator,

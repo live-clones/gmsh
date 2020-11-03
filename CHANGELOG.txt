@@ -10,9 +10,10 @@ improved VTK reader; new MatrixOfInertia command; added support for Unicode
 command line arguments on Windows; uniformized commands, options and field
 option names to match the documented terminology (CharacteristicLength ->
 MeshSize, geometry Line -> Curve, ...; old names are still accepted, but
-deprecated); removed bundled Mmg3D and added support for stock Mmg 5; Gmsh now
-requires C++11 and CMake 3.1, and uses Eigen by default instead of Blas/Lapack
-for dense linear algebra; small bug fixes.
+deprecated); improved handling of complex periodic cases; removed bundled Mmg3D
+and added support for stock Mmg 5; Gmsh now requires C++11 and CMake 3.1, and
+uses Eigen by default instead of Blas/Lapack for dense linear algebra; small bug
+fixes.
 
 * Incompatible API changes: new optional argument to geo/addCurveLoop
 
