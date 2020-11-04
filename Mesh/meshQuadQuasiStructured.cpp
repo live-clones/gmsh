@@ -23,6 +23,7 @@
 
 
 #include "meshRefine.h"
+#include "discreteFace.h"
 #include "Generator.h"
 #include "PView.h"
 #include "PViewOptions.h"
@@ -30,6 +31,7 @@
 #include "geolog.h"
 #include "meshWinslow2d.h"
 #include "meshGEdge.h"
+#include "GModelIO_OCC.h"
 #include "gmsh.h"
 #include <queue>
 #include <unordered_map>
@@ -2616,10 +2618,26 @@ namespace QSQ {
 
     constexpr bool allowTemporaryDuet = true;
 
+    /* Set vertices around corner to doNotDegrade */
+    for (GVertex* gv: gf->vertices()) if (gv->mesh_vertices.size() > 0) {
+      MVertex* v = gv->mesh_vertices[0];
+      if (v == NULL) continue;
+      int ideal = vertexIdealValence(v, vAngle);
+      std::vector<MElement*>& quads = adj.at(v);
+      if ((int) quads.size() == ideal) {
+        std::vector<MVertex*> bnd;
+        bool okb = buildBoundary(quads.begin(),quads.end(), bnd);
+        if (okb) {
+          for (MVertex* bv: bnd) {
+            doNotDegrade.insert(bv);
+          }
+        }
+      }
+    }
+
     // TODO:
-    // afer CORNER pass, flag vertices on the
-    // corner fan so they can only be improved (valence -> 4)
-    // and not degraded
+    // - check quality after smoothing / untangling ?
+    // - repair curves if not interections with corner bnd ?
     size_t count[4] = {0,0,0,0};
     for (int pass: {CORNER, CURVE, SURFACE}) {
       if (pass == CORNER) {
@@ -4140,9 +4158,108 @@ namespace QSQ {
 
     return true;
   }
-}
 
+  bool projectGVerticesOnGEdges(const vector<GFace*>& faces, std::map<GEdge*, std::vector<GPoint> >& projections,
+      const std::map<GFace*, GFaceInfo>& faceInfo) {
+    std::unordered_map<GVertex*,std::set<GEdge*> > gv2ge;
+    std::unordered_map<GEdge*,int> geNbPoints;
+    for (GFace* gf: faces) {
+      discreteFace* df = dynamic_cast<discreteFace*>(gf);
+      if (df != NULL) {
+        Msg::Warning("project CAD vertices on CAD curves cannot be applied on discrete model");
+        return false;
+      }
+      for (GEdge* ge: gf->edges()) {
+        bool isTrueSeam = (ge->isSeam(gf) && ge->faces().size() == 1);
+        if (isTrueSeam) continue;
+        GVertex* v1 = ge->vertices()[0];
+        GVertex* v2 = ge->vertices()[1];
+        gv2ge[v1].insert(ge);
+        gv2ge[v2].insert(ge);
+        auto it = geNbPoints.find(ge);
+        if (it == geNbPoints.end()) {
+          geNbPoints[ge] = meshGEdgeTargetNumberOfPoints(ge); 
+        }
+      }
+    }
+
+
+    /* Loop over faces */
+    for (GFace* gf: faces) {
+      for (GVertex* gv: gf->vertices()) {
+        const std::set<GEdge*>& adjEdges = gv2ge[gv];
+        if (adjEdges.size() <= 1) continue;
+        {
+          bool isConcaveInGf = false;
+          auto it1 = faceInfo.find(gf);
+          if (it1 == faceInfo.end()) continue;
+          isConcaveInGf = (it1->second.bdrValVertices[3].find(gv) != it1->second.bdrValVertices[3].end());
+          if (!isConcaveInGf) continue;
+        }
+        /* Get raw approximatation of size map 
+         * TODO: better way without using GEdge target nb of points ? */
+        double avgSize = 0.;
+        {
+          double sum = 0.;
+          for (GEdge* ge: adjEdges) {
+            double len = ge->length();
+            if (len == 0. || geNbPoints[ge] < 2) continue;
+            avgSize += len/(double(geNbPoints[ge])-1.);
+            sum += 1;
+          }
+          if (sum == 0.) continue;
+          avgSize /= sum;
+        }
+
+        for (GEdge* ge: gf->edges()) {
+          bool isTrueSeam = (ge->isSeam(gf) && ge->faces().size() == 1);
+          if (isTrueSeam) continue;
+          bool adjToGv = (adjEdges.find(ge) != adjEdges.end());
+          if (adjToGv) continue;
+
+          double t = 0;
+          SPoint3 query(gv->point().x(),gv->point().y(),gv->point().z());
+          GPoint proj = ge->closestPoint(query,t);
+          if (proj.succeeded()) {
+            GPoint tmp = gv->point();
+            double dist = proj.distance(tmp);
+            if (dist < avgSize) {
+              double t_min = ge->getLowerBound();
+              double t_max = ge->getUpperBound();
+              double t = proj.u();
+              // DBG(ge->tag(), t,t_min,t_max);
+              if (t <= t_min || t >= t_max) continue;
+
+              /* Do not create projection too close to GEdge extremities or previous projs */
+              double distWithExistingProj = DBL_MAX;
+              std::vector<GPoint>& eprojs = projections[ge];
+              for (GPoint& ep: eprojs) {
+                distWithExistingProj = std::min(distWithExistingProj,proj.distance(ep));
+              }
+              distWithExistingProj = std::min(distWithExistingProj,ge->vertices()[0]->point().distance(proj));
+              distWithExistingProj = std::min(distWithExistingProj,ge->vertices()[1]->point().distance(proj));
+              if (distWithExistingProj < 0.2 * avgSize) continue;
+
+              vector<vec3> pts = {SVector3(query),SVector3(proj.x(),proj.y(),proj.z())};
+              GeoLog::add(pts,std::vector<double>{0.,1.},"projectCAD");
+              projections[ge].push_back(proj);
+            }
+          }
+        }
+      }
+    }
+
+
+    GeoLog::flush();
+
+    return true;
+  }
+}
 using namespace QSQ;
+
+namespace CAD {
+}
+using namespace CAD;
 
 int setQuadCoherentCurveTransfiniteConstraints(const std::vector<GFace*>& faces, const std::map<GFace*,GFaceInfo>& faceInfo) 
 {
@@ -4228,7 +4345,7 @@ int computeQuadCurveMeshConstraints(GModel* gm,
   return 0;
 }
 
-int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, bool forceEvenNbEdges = false) {
+int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, bool forceEvenNbEdges = false, bool alignWithGVertices = true) {
   /* Disable clscale because we have a sizemap 
    * that contains the scaling */
   double clscale = CTX::instance()->mesh.lcFactor;
@@ -4248,6 +4365,63 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
   }
 
   CTX::instance()->mesh.lcFactor = clscale;
+
+  if (alignWithGVertices) {
+    std::map<GEdge*, std::vector<GPoint> > projections;
+    bool okp = projectGVerticesOnGEdges(model_faces(gm), projections, faceInfo);
+    if (!okp) {
+      Msg::Warning("failed to project GVertices on GEdges");
+      return 0;
+    }
+    for (auto& kv: projections) {
+      GEdge* ge = kv.first;
+      std::vector<GPoint>& projs = kv.second;
+
+      vector<bool> done_k(projs.size(),false);
+      vector<bool> done_j(ge->mesh_vertices.size(),false);
+
+      bool running = true;
+      while (running) {
+        running = false;
+
+        double dmin = DBL_MAX;
+        size_t best_j = NO_ID;
+        size_t best_k = NO_ID;
+        for (size_t k = 0; k < projs.size(); ++k) if (!done_k[k]) {
+          SPoint3 p(projs[k].x(),projs[k].y(),projs[k].z());
+          for (size_t j = 0; j < ge->mesh_vertices.size(); ++j) if (!done_j[j]) {
+            MVertex* v = ge->mesh_vertices[j];
+            double dist = v->point().distance(p);
+            if (dist < dmin) {
+              best_j = j;
+              best_k = k;
+              dmin = dist;
+            }
+          }
+        }
+        if (best_j != NO_ID) {
+          GPoint& proj = projs[best_k];
+          MVertex* v = ge->mesh_vertices[best_j];
+
+          // DBG("---");
+          // DBG(ge->tag(),dmin,best_j,best_k,proj.u());
+          // DBG(v->getNum(), v->point().x(),v->point().y(),v->point().z());
+          // DBG(proj.x(),proj.y(),proj.z());
+
+          v->setXYZ(proj.x(),proj.y(),proj.z());
+          v->setParameter(0,proj.u());
+
+          done_j[best_j] = true;
+          done_k[best_k] = true;
+
+
+          running = true;
+        }
+      }
+    }
+  }
+
+
   return 0;
 }
 
@@ -4567,13 +4741,16 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
     transferSeamGEdgesVerticesToGFace(gf);
 
     if (gf->meshStatistics.status == GFace::PENDING) {
+      GFaceInfo& info = faceInfo.at(gf);
+      Msg::Info("- Face %i: chi = %i, corners: %li convex, %li concave, %li highly concave -> #val3 - #val5 = %i",
+          gf->tag(), info.chi, info.bdrValVertices[1].size(), info.bdrValVertices[3].size(), info.bdrValVertices[4].size(), info.intSumVal3mVal5);
       remeshSmallDefects(gf);
     }
   }
   printPatternUsage();
 
-  Msg::Error("early stop DBG");
-  return 0;
+  // Msg::Error("early stop DBG");
+  // return 0;
 
   /* Improve quad meshes with larger operators (cavity remeshing) */
   Msg::Info("Improve quad meshes with large cavity remeshing ...");
@@ -4622,6 +4799,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   if (CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT) {
     return 1;
   }
+
   std::vector<GFace*> faces = model_faces(gm);
 
   if (QMT_Utils::env_var("SHOW_CAVITIES").size() > 0) {
@@ -4655,7 +4833,9 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   }
 
   Msg::Info("[Step 3] Generate curve 1D meshes ...");
-  int s3 = generateCurve1DMeshes(gm, faceInfo);
+  bool forceEvenNbEdges = false;
+  bool alignWithGVertices = true;
+  int s3 = generateCurve1DMeshes(gm, faceInfo, forceEvenNbEdges, alignWithGVertices);
   if (s3 != 0) {
     Msg::Warning("failed to generate curve 1D meshes, abort");
     return s3;
@@ -4667,6 +4847,8 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     Msg::Warning("failed to generate 2D unstructured quad meshes, abort");
     return s4;
   }
+
+//  return 0;
 
   bool SHOW_ONLY_PATTERN_MESHING = false;
 
@@ -4703,11 +4885,11 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     Msg::Warning("failed to improve quad mesh topology, continue");
   }
 
-  Msg::Info("[Step 7] Optimize geometry of quad mesh ...");
-  int s7 = optimizeQuadMeshGeometry(gm, singularities, faceInfo);
-  if (s7 != 0) {
-    Msg::Warning("failed to optimize quad mesh geometry, continue");
-  }
+  // Msg::Info("[Step 7] Optimize geometry of quad mesh ...");
+  // int s7 = optimizeQuadMeshGeometry(gm, singularities, faceInfo);
+  // if (s7 != 0) {
+  //   Msg::Warning("failed to optimize quad mesh geometry, continue");
+  // }
 
   // TODO:
   // - concave corner cavities
