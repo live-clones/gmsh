@@ -2084,6 +2084,20 @@ int QuadGenerator::optimizeSizeofRadius(double *radius){
       }
     }
   }
+
+  // for(uint64_t i=0; i<m_vectCorner.size(); i++){
+  //   Corner *s=&(m_vectCorner[i]);
+  //   uint64_t sEdg = s->getEdges()[0];
+  //   for(int j=0; j<3; j++){
+  //     point1[j]=vert[4*edges->node[2*sEdg+0]+j];
+  //     point2[j]=vert[4*edges->node[2*sEdg+1]+j];
+  //   }
+  //   a=point1[0]-point2[0]; b=point1[1]-point2[1]; c=point1[2]-point2[2];
+  //   length=0.4*sqrt(a*a+b*b+c*c);
+  //   if(minRadius>length){
+  //     minRadius=length;
+  //   }
+  // }
  
   //*radius=2*minRadius;
   *radius=0.5*minRadius;
@@ -2327,9 +2341,8 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
   //-----end meshing the model
   std::cout<<"Geometry ready!"<<std::endl;
   // gmsh::fltk::run();
+  gmsh::fltk::awake("update");
   // gmsh::finalize();
-  
-
   return HXT_STATUS_OK;
 }
 
@@ -2451,12 +2464,24 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
     }
   }
   std::cout<<"Corners written!"<<std::endl;
-
+  std::cout << "radius : " << radius << std::endl;
   int physicalGroup=-1;
   physicalGroup=gmsh::model::addPhysicalGroup(0, singThreeTags, -1);
   gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_THREE");
+  // gmsh::vectorpair dimTagThree;
+  // for(size_t i=0;i<singThreeTags.size();i++){
+  //   std::pair<int,int> dimTagS(0,singThreeTags[i]);
+  //   dimTagThree.push_back(dimTagS);
+  // }
+  // gmsh::model::mesh::setSize(dimTagThree,radius);
   physicalGroup=gmsh::model::addPhysicalGroup(0, singFiveTags, -1);
   gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_FIVE");
+  // gmsh::vectorpair dimTagFive;
+  // for(size_t i=0;i<singFiveTags.size();i++){
+  //   std::pair<int,int> dimTagS(0,singFiveTags[i]);
+  //   dimTagFive.push_back(dimTagS);
+  // }
+  // gmsh::model::mesh::setSize(dimTagFive,radius);
   // gmsh::model::occ::synchronize();
   gmsh::model::geo::synchronize();
   //-----start meshing the model
@@ -2465,6 +2490,7 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
   //-----end meshing the model
   std::cout<<"Geometry ready!"<<std::endl;
   // gmsh::fltk::run();
+  gmsh::fltk::awake("update");
   // gmsh::finalize();
   
 
