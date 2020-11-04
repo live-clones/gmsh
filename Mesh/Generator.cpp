@@ -967,7 +967,7 @@ static void Mesh3D(GModel *m)
   }
   if(emptyRegionFound) {
     debugInfo << std::endl;
-    Msg::Warning(debugInfo.str().c_str());
+    Msg::Error(debugInfo.str().c_str());
   }
 
   Msg::SetNumThreads(prevNumThreads);
