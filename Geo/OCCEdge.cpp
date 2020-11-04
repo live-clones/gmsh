@@ -175,22 +175,28 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 {
   if(_curve.IsNull()) {
     Msg::Error("OCC curve is null in closestPoint");
-    return GPoint(0, 0);
+    GPoint proj(0,0);
+    proj.setNoSuccess();
+    return proj;
   }
 
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnCurve proj(pnt, _curve, _s0, _s1);
 
   if(!proj.NbPoints()) {
-    Msg::Error("OCC ProjectPointOnCurve failed");
-    return GPoint(0, 0);
+    Msg::Debug("OCC ProjectPointOnCurve failed");
+    GPoint proj(0,0);
+    proj.setNoSuccess();
+    return proj;
   }
 
   param = proj.LowerDistanceParameter();
 
   if(param < _s0 || param > _s1) {
-    Msg::Error("Point projection is out of edge bounds");
-    return GPoint(0, 0);
+    Msg::Debug("Point projection is out of edge bounds");
+    GPoint proj(0,0);
+    proj.setNoSuccess();
+    return proj;
   }
 
   pnt = proj.NearestPoint();

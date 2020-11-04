@@ -32,6 +32,131 @@ static HXTStatus messageCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
+int Gmsh2Hxt(GFace *gf, HXTMesh *m,
+		   std::map<MVertex *, uint32_t> &v2c,
+       std::vector<MVertex *> &c2v) 
+{
+  c2v.clear();
+  v2c.clear();
+
+  c2v.reserve(2*gf->mesh_vertices.size());
+  uint32_t vcount = 0;
+  std::vector<std::array<uint32_t,2> > lines;
+  std::vector<std::array<uint32_t,3> > triangles;
+  std::vector<std::array<uint32_t,4> > quads;
+  std::vector<uint16_t> lines_color;
+  std::vector<uint16_t> triangles_color;
+  std::vector<uint16_t> quads_color;
+
+  /* Loop over CAD curves (except seam) */
+  for (GEdge* ge: gf->edges()) {
+    for (MLine* l: ge->lines) {
+      std::array<uint32_t,2> line;
+      for (size_t lv = 0; lv < 2; ++lv) {
+        MVertex* v = l->getVertex(lv);
+        auto it = v2c.find(v);
+        if (it == v2c.end()) {
+          v2c[v] = vcount;
+          c2v.push_back(v);
+          vcount += 1;
+        } else {
+          line[lv] = it->second;
+        }
+      }
+      lines.push_back(line);
+      lines_color.push_back((uint16_t)ge->tag());
+    }
+  }
+
+  /* Loop over elements */
+  triangles.reserve(gf->triangles.size());
+  triangles_color.reserve(gf->triangles.size());
+  for (MTriangle* f: gf->triangles) {
+    std::array<uint32_t,3> tri;
+    for (size_t lv = 0; lv < 3; ++lv) {
+      MVertex* v = f->getVertex(lv);
+      auto it = v2c.find(v);
+      if (it == v2c.end()) {
+        v2c[v] = vcount;
+        c2v.push_back(v);
+        vcount += 1;
+      } else {
+        tri[lv] = it->second;
+      }
+    }
+    triangles.push_back(tri);
+    triangles_color.push_back((uint16_t)gf->tag());
+  }
+  quads.reserve(gf->quadrangles.size());
+  quads_color.reserve(gf->quadrangles.size());
+  for (MQuadrangle* f: gf->quadrangles) {
+    std::array<uint32_t,4> quad;
+    for (size_t lv = 0; lv < 4; ++lv) {
+      MVertex* v = f->getVertex(lv);
+      auto it = v2c.find(v);
+      if (it == v2c.end()) {
+        v2c[v] = vcount;
+        c2v.push_back(v);
+        quad[lv] = vcount;
+        vcount += 1;
+      } else {
+        quad[lv] = it->second;
+      }
+    }
+    quads.push_back(quad);
+    quads_color.push_back((uint16_t)gf->tag());
+  }
+  
+
+  /* Fill HXTMesh */
+  /* - vertices */
+  m->vertices.num = m->vertices.size = c2v.size();
+  HXT_CHECK(
+      hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
+  for (size_t i = 0; i < c2v.size(); ++i) {
+    MVertex* v = c2v[i];
+    m->vertices.coord[4 * i + 0] = v->x();
+    m->vertices.coord[4 * i + 1] = v->y();
+    m->vertices.coord[4 * i + 2] = v->z();
+    m->vertices.coord[4 * i + 3] = 0;
+  }
+
+  /* - lines */
+  m->lines.num = m->lines.size = lines.size();
+  HXT_CHECK(hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint16_t)));
+  for(size_t i = 0; i < lines.size(); i++) {
+    m->lines.node[2 * i + 0] = lines[i][0];
+    m->lines.node[2 * i + 1] = lines[i][1];
+    m->lines.color[i] = lines_color[i];
+  }
+
+  /* - triangles */
+  m->triangles.num = m->triangles.size = triangles.size();
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.node, (m->triangles.num) * 3 * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.color, (m->triangles.num) * sizeof(uint16_t)));
+  for(size_t i = 0; i < triangles.size(); i++) {
+    m->triangles.node[3 * i + 0] = triangles[i][0];
+    m->triangles.node[3 * i + 1] = triangles[i][1];
+    m->triangles.node[3 * i + 2] = triangles[i][2];
+    m->triangles.color[i] = triangles_color[i];
+  }
+
+  /* - quads */
+  m->quads.num = m->quads.size = quads.size();
+  HXT_CHECK(hxtAlignedMalloc(&m->quads.node, (m->quads.num) * 4 * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->quads.color, (m->quads.num) * sizeof(uint16_t)));
+  for(size_t i = 0; i < quads.size(); i++) {
+    m->quads.node[4 * i + 0] = quads[i][0];
+    m->quads.node[4 * i + 1] = quads[i][1];
+    m->quads.node[4 * i + 2] = quads[i][2];
+    m->quads.node[4 * i + 3] = quads[i][3];
+    m->quads.color[i] = quads_color[i];
+  }
+
+  return 0;
+}
+
 static inline SVector3 tri_normal(MTriangle* t) {
   SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
                t->getVertex(1)->y() - t->getVertex(0)->y(),
@@ -57,7 +182,7 @@ inline std::vector<std::array<double,3> > convert(const std::vector<SVector3>& v
 using vec3 = std::array<double,3>;
 
 int computeCrossFieldAndScalingForHxt(
-    GModel* gm,
+    std::vector<GFace*>& faces,
     size_t targetNumberOfQuads,
     const std::vector<MVertex*>& vertices,
     std::map<size_t, std::array<double,7> >& vertexDirections) 
@@ -65,10 +190,6 @@ int computeCrossFieldAndScalingForHxt(
   Msg::Debug("compute cross field and scaling for Hxt ...");
 
 #ifdef HAVE_QUADMESHINGTOOLS
-  std::vector<GFace*> faces;
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    faces.push_back(*it);
-  }
 
   int nbDiffusionLevels = 7;
   double thresholdNormConvergence = 1.e-2;
@@ -119,31 +240,22 @@ int computeCrossFieldAndScalingForHxt(
   }
 
   std::set<size_t> isBoundary;
-  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
-    GEdge *ge = *it;
+  for (GFace* gf: faces) for (GEdge* ge: gf->edges()) {
     for (size_t i=0; i<ge->lines.size(); i++){
       MLine *l = ge->lines[i];
 
       size_t n0 = l->getVertex(0)->getNum();
       size_t n1 = l->getVertex(1)->getNum();
 
-
       isBoundary.insert(n0);
       isBoundary.insert(n1);
-
-
 
       MVertex *v0 = l->getVertex(0);
       MVertex *v1 = l->getVertex(1);
       GeoLog::add(convert(v0->point()),1,"boundary");
       GeoLog::add(convert(v1->point()),1,"boundary");
-
-
-
     }
   }
-
- 
 
   std::array<double,7> zero7 = {0.,0.,0.,0.,0.,0.,0.};
   std::vector<std::array<double,7> > vertexNumDirections(vertices.size(),zero7);
@@ -322,6 +434,7 @@ int meshGFaceHxt(GModel *gm)
 
   std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
+  Gmsh2Hxt(gm, mesh, v2c, c2v);
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
 
   size_t targetNumberOfQuads = 10000;
@@ -331,44 +444,13 @@ int meshGFaceHxt(GModel *gm)
   scanf("%d",&temp);
   targetNumberOfQuads = temp;
 
-
-
-
-
-  //Field *cross_field = NULL;
-  
-  //FieldManager *fields = gm->getFields();
-  //if(fields->getBackgroundField() > 0) {        
-    //cross_field = fields->get(fields->getBackgroundField());
-    //if(cross_field->numComponents() != 3) {// we hae a true scaled cross fields !!
-			//Msg::Error ("Packing of Parallelograms require a scaled cross field");
-			//Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
-			//Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
-			//return -1;
-    //}
-  //}
-  //else{
-		//Msg::Error ("Packing of Parallelograms require a scaled cross field");
-		//Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
-		//Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
-		//return -1;
-  //}
-  //std::cout << cross_field << std::endl;
-  //std::map<size_t, std::array<double,7> > vDir;
-  //int gt = getCrossFieldAndScaling(gm, cross_field, c2v, vDir);
-  //if (gt != 0) {
-    //Msg::Error("failed to get cross field and scaling");
-    //return -1;
-  //}
-
-
-	
-
-
-  
+  std::vector<GFace*> faces;
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    faces.push_back(*it);
+  }
 
   std::map<size_t, std::array<double,7> > vertexDirections;
-  int st = computeCrossFieldAndScalingForHxt(gm, targetNumberOfQuads, c2v, vertexDirections);
+  int st = computeCrossFieldAndScalingForHxt(faces, targetNumberOfQuads, c2v, vertexDirections);
   if (st != 0) {
     Msg::Error("failed to compute cross field and scaling for hxt");
     return -1;
@@ -530,13 +612,141 @@ int meshGFaceHxt(GModel *gm)
   return 0;
 }
 
+int meshGFaceHxt(GFace *gf) {
+  Msg::Debug("- Face %li: generate quad mesh with hxt ...", gf->tag());
+  HXT_CHECK(hxtSetMessageCallback(messageCallback));
+
+  HXTMesh *mesh;
+  HXT_CHECK(hxtMeshCreate(&mesh));
+
+  std::map<MVertex *, uint32_t> v2c;
+  std::vector<MVertex *> c2v;
+  int status = Gmsh2Hxt(gf, mesh, v2c, c2v);
+  if (status != 0) {
+    Msg::Error("failed to convert face %i to HXTMesh", gf->tag());
+    return status;
+  }
+
+  size_t targetNumberOfQuads = gf->triangles.size()/2;
+  Msg::Debug("-- target number of quads: %li", targetNumberOfQuads);
+
+  std::map<size_t, std::array<double,7> > vertexDirections;
+  std::vector<GFace*> faces = {gf};
+  int st = computeCrossFieldAndScalingForHxt(faces, targetNumberOfQuads, c2v, vertexDirections);
+  if (st != 0) {
+    Msg::Error("failed to compute cross field and scaling for hxt");
+    return -1;
+  }
+
+  std::vector<double> data(7*c2v.size(),0.);
+  {
+    std::vector<MVertex*> v2ptr(c2v.size(),NULL);
+    for (MVertex* v: c2v) {
+      size_t num = v->getNum();
+      if (num >= v2ptr.size()) v2ptr.resize(num+1,NULL);
+      v2ptr[num] = v;
+    }
+    for (MVertex* v: c2v) {
+      uint32_t c = v2c[v];
+      for (size_t k = 0; k < 7; ++k) {
+        data[7*c+k] = vertexDirections[v->getNum()][k];
+      }
+    }
+  }
+  for (MVertex* v: c2v) {
+    SVector3 d1(
+        vertexDirections[v->getNum()][0],
+        vertexDirections[v->getNum()][1],
+        vertexDirections[v->getNum()][2]);
+    SVector3 d2(
+        vertexDirections[v->getNum()][3],
+        vertexDirections[v->getNum()][4],
+        vertexDirections[v->getNum()][5]);
+    GeoLog::add(convert(v->point()),convert(d1),"d1");
+    GeoLog::add(convert(v->point()),convert(d2),"d2");
+    GeoLog::add(convert(v->point()),vertexDirections[v->getNum()][6],"sizemap");
+  }
+
+  ///// HERE WE NEED THE CODE TO THE REMESHING STUFF
+   
+  HXTMesh *fmesh;
+  HXT_CHECK(hxtMeshCreate(&fmesh));
+
+  // TODO 
+  HXTPointGenOptions opt = { .verbosity = 0,
+                             .generateLines = 1,
+                             .generateSurfaces = 1,
+                             .generateVolumes = 0,
+                             .remeshSurfaces = 1,
+                             .quadSurfaces = 1,
+                             .walkMethod2D = 0,
+                             .walkMethod3D = 0,
+                             .dirType = 0,
+                             .uniformSize = 1.0,
+                             .areaThreshold = 10e-9,
+                             .tolerance = 10e-9,
+                             .numTris = 0};
+
+
+  if (Msg::GetVerbosity() == 99) opt.verbosity = 2;
+
+  HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh));
+
+  if (mesh->quads.size > 0) {
+    for (MTriangle* f: gf->triangles) { delete f; }
+    for (MQuadrangle* f: gf->quadrangles) { delete f; }
+    for (MVertex* v: gf->mesh_vertices) { delete v; }
+    gf->triangles.clear();
+    gf->quadrangles.clear();
+    gf->mesh_vertices.clear();
+
+    for (size_t f = 0; f < mesh->quads.size; ++f) {
+      MQuadrangle* q = new MQuadrangle(NULL,NULL,NULL,NULL);
+      for (size_t lv = 0; lv < 4; ++lv) {
+        uint32_t v = mesh->quads.node[4*f+lv];
+        if (v < c2v.size()) { /* existing vertex on boundary */
+          q->setVertex(lv,c2v[v]);
+        } else {
+          MVertex *vNew = new MFaceVertex(
+              mesh->vertices.coord[4*v+0],
+              mesh->vertices.coord[4*v+1],
+              mesh->vertices.coord[4*v+2],
+              gf,0.,0.);
+          q->setVertex(lv,vNew);
+        }
+      }
+      gf->quadrangles.push_back(q);
+    }
+  }
+
+  HXT_CHECK(hxtMeshDelete(&fmesh));
+  HXT_CHECK(hxtMeshDelete(&mesh));
+  
+  return 0;
+
+}
+
 
 #else
+
+int Hxt2Gmsh(GFace *gf, HXTMesh *m,
+		   std::map<MVertex *, uint32_t> &v2c,
+       std::vector<MVertex *> &c2v) 
+{
+  Msg::Error("Gmsh should be compiled with Hxt to enable this option");
+  return -1;
+}
 
 int meshGFaceHxt(GModel *gm)
 {
   Msg::Error("Gmsh should be compiled with Hxt to enable this option");
   return -1;
+}
+
+int meshGFaceHxt(GFace *gf) {
+  Msg::Error("Gmsh should be compiled with Hxt to enable this option");
+  return -1;
+
 }
 
 #endif

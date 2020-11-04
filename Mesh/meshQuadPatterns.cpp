@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include "meshQuadPatterns.h"
 #include <map>
 #include <iostream>
 #include "meshQuadQuasiStructured.h"
@@ -45,44 +46,51 @@ using std::vector;
 using std::array;
 
 namespace QuadPatternMatching {
+
+  const size_t PATTERN_QUAD_REGULAR = 0;
+  const size_t PATTERN_TRIANGLE = 1;
+  const size_t PATTERN_PENTAGON = 2;
+  const size_t PATTERN_QUAD_DIAG35 = 3;
+  const size_t PATTERN_QUAD_ALIGNED35 = 4;
+  const size_t PATTERN_QUAD_CHORD_UTURN = 5;
+  const size_t PATTERN_2CORNERS = 6;
+  const size_t PATTERN_1CORNER = 7;
+  const size_t PATTERN_DISK = 8;
+
   using id = uint32_t;
   using id2 = std::array<id,2>;
   using id4 = std::array<id,4>;
 
-
   /* Quad meshes of patterns, known at compile time
    * These patterns must be CONVEX
    * WARNING: orientation of quads must be coherent ! */
-  const std::vector<std::vector<id4> > quad_meshes = {
+  const std::vector<std::pair<size_t,std::vector<id4> > > quad_meshes = {
     /* regular quad patch */
-    {{0,1,2,3}},
+    {PATTERN_QUAD_REGULAR,{{0,1,2,3}}},
 
     /* triangular patch with one val3 singularity */
-    {{0,1,6,5},{1,2,3,6},{3,4,5,6}}, 
+    {PATTERN_TRIANGLE,{{0,1,6,5},{1,2,3,6},{3,4,5,6}}}, 
 
     /* pentagonal patch with one val5 singularity */
-    {{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}},
+    {PATTERN_PENTAGON,{{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}}},
 
-    // Disabled
-    // /* quad patch with one val3 and one val5 singularities (on diagonal) */
-    // {{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}, {8, 9, 10, 11}},
+    /* quad patch with one val3 and one val5 singularities (on diagonal) */
+    {PATTERN_QUAD_DIAG35,{{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}, {8, 9, 10, 11}}},
 
     /* quad patch with one val3, one val5 singularities and two regular inside (3-5 pair for size transition) */
-    {{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}, {9, 10, 12, 11}, {3, 13, 12, 10}, {8, 9, 11, 14}, {2, 15, 13, 3}},
+    {PATTERN_QUAD_ALIGNED35,{{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}, {9, 10, 12, 11}, {3, 13, 12, 10}, {8, 9, 11, 14}, {2, 15, 13, 3}}},
 
     /* quad patch with two val3, two val5 inside, size transition by having a chord making a U-turn */
-    {{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}, {9, 10, 12, 11}, {9, 11, 14, 13}, {8, 9, 13, 15}, {6, 7, 8, 15}},
+    {PATTERN_QUAD_CHORD_UTURN,{{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}, {9, 10, 12, 11}, {9, 11, 14, 13}, {8, 9, 13, 15}, {6, 7, 8, 15}}},
 
     /* patch with two corners, two val3 singularities inside (good for eye shape) */
-    {{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 3, 6, 5}, {4, 5, 6, 7}},
+    {PATTERN_2CORNERS,{{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 3, 6, 5}, {4, 5, 6, 7}}},
 
     /* patch with one corner, three val3 singularities inside and one regular vertiex */
-    {{0,1,6,5},{1,2,7,6},{2,3,8,7},{3,4,9,8},{4,5,6,9},{6,7,8,9}},
-      
-    // Disabled 
-    // /* disk pattern (no corners) */
-    // {{0,1,6,5},{1,2,7,6},{2,3,4,7},{0,5,4,3},{4,5,6,7}},
+    {PATTERN_1CORNER,{{0,1,6,5},{1,2,7,6},{2,3,8,7},{3,4,9,8},{4,5,6,9},{6,7,8,9}}},
 
+    /* disk pattern (no corners) */
+    {PATTERN_DISK,{{0,1,6,5},{1,2,7,6},{2,3,4,7},{0,5,4,3},{4,5,6,7}}},
   };
 
 
@@ -165,7 +173,8 @@ namespace QuadPatternMatching {
     return true;
   }
 
-  struct QuadMesh {
+  struct QuadMeshPattern {
+    size_t patternId;
     id n = 0;
     vector<id2> edges;
     vector<id4> quads; /* contains edge id's, not vertex ! */
@@ -178,7 +187,8 @@ namespace QuadPatternMatching {
     vector<vector<id> > sides;
     id ncorners;
 
-    bool load(const std::vector<id4>& quadVertices) {
+    bool load(size_t pId, const std::vector<id4>& quadVertices) {
+      patternId = pId;
       ncorners = 0;
       edges.reserve(2*quadVertices.size());
       quads.reserve(quadVertices.size());
@@ -295,7 +305,7 @@ namespace QuadPatternMatching {
     }
   };
 
-  double patternIrregularity(const QuadMesh& M) {
+  double patternIrregularity(const QuadMeshPattern& M) {
     double irreg = 0.;
     for (size_t i = 0; i < M.n; ++i) if (!M.vOnBdr[i]) {
       irreg += std::pow(double(M.v2e[i].size())-4.,2);
@@ -304,7 +314,7 @@ namespace QuadPatternMatching {
   }
 
   /* Patterns are initialized at runtime, by the call to load_patterns() */
-  std::vector<QuadMesh> patterns;
+  std::vector<QuadMeshPattern> patterns;
 
   double sum_sqrt(const vector<int>& values) {
     double s = 0.;
@@ -361,7 +371,7 @@ namespace QuadPatternMatching {
       return sum_sqrt(x);
     }
 
-    double get_positive_solution_DFS(std::vector<int>& x, int& count, int count_limit) {
+    double get_positive_solution_DFS(std::vector<int>& x, int& count, int count_limit, const std::vector<double>& x_ideal) {
       if (x.size() == 0) {
         x.resize(n-1,0);
         /* Check if a unknown is uncontrained. Happen with purely internal chords */
@@ -425,7 +435,7 @@ namespace QuadPatternMatching {
             if (candidate < 1) return 0.;
             vector<int> x2 = x;
             x2[j] = candidate;
-            double sub_score = get_positive_solution_DFS(x2, count, count_limit);
+            double sub_score = get_positive_solution_DFS(x2, count, count_limit, x_ideal);
             if (sub_score > 0.) { /* Found a solution ! Return this one */
               x = x2;
               return sub_score;
@@ -445,6 +455,9 @@ namespace QuadPatternMatching {
             int xmin = 1;
             int xmax = int(double(total) / double(w));
             if (xmax < xmin) return 0.;
+            if ((size_t)j < x_ideal.size()) {
+              ideal_repartition = x_ideal[j];
+            }
 
             vector<std::pair<double,int> > prio_candidate;
             if (xmax == xmin) {
@@ -463,7 +476,7 @@ namespace QuadPatternMatching {
               int candidate = prio_candidate[l].second;
               x2 = x;
               x2[j] = candidate;
-              double sub_score = get_positive_solution_DFS(x2, count, count_limit);
+              double sub_score = get_positive_solution_DFS(x2, count, count_limit, x_ideal);
               if (sub_score > 0.) { /* Found a solution ! Return this one */
                 x = x2;
                 return sub_score;
@@ -541,47 +554,43 @@ namespace QuadPatternMatching {
   }
 
   bool addQuadsAccordingToPattern(
-      const QuadMesh& P,
+      const QuadMeshPattern& P,
       const std::vector<int>& quantization,
       GFace* gf, 
       const std::vector<std::vector<MVertex*> >& sides, /* vertices on the boundary, not changed */
       std::vector<MVertex*>& newVertices,               /* new vertices inside the cavity */
       std::vector<bool>& vertexIsIrregular,             /* for each new vertex, true if irregular */
-      std::vector<MElement*>& newElements,               /* new quads inside the cavity */
-      SPoint3* givenCenter
+      std::vector<MElement*>& newElements               /* new quads inside the cavity */
       ) {
     constexpr bool DBG_VIZU = false;
     if (P.sides.size() != sides.size()) {
       Msg::Error("wrong input sizes ... pattern: %li sides, input: %li sides", P.sides.size(),sides.size());
+      return false;
     }
 
     std::unordered_map<id2, std::vector<MVertex*>, id2Hash> vpair2vertices;
     std::vector<MVertex*> v2mv(P.n,NULL);
     std::vector<MVertex*> vert;
+
     /* Associate exising vertices to pattern sides */
-
     SVector3 center(0.,0.,0.);
-    if (givenCenter) {
-      center = *givenCenter;
-    } else {
-      double csum = 0.;
-      for (size_t s = 0; s < sides.size(); ++s) {
-        for (size_t k = 0; k < sides[s].size(); ++k) {
-          center += sides[s][k]->point();
-          csum += 1.;
+    double csum = 0.;
+    for (size_t s = 0; s < sides.size(); ++s) {
+      for (size_t k = 0; k < sides[s].size(); ++k) {
+        center += sides[s][k]->point();
+        csum += 1.;
 
-          if (DBG_VIZU) {
-            if (k != sides[s].size()-1) {
-              vector<array<double,3>> pts = {SVector3(sides[s][k]->point()),SVector3(sides[s][k+1]->point())};
-              vector<double> values = {double(k),double(k+1)};
-              GeoLog::add(pts,values,"side_input_vert_"+std::to_string(s));
-            }
+        if (DBG_VIZU) {
+          if (k != sides[s].size()-1) {
+            vector<array<double,3>> pts = {SVector3(sides[s][k]->point()),SVector3(sides[s][k+1]->point())};
+            vector<double> values = {double(k),double(k+1)};
+            GeoLog::add(pts,values,"side_input_vert_"+std::to_string(s));
           }
         }
       }
-      if (csum == 0.) return false;
-      center = 1./csum * center;
     }
+    if (csum == 0.) return false;
+    center = 1./csum * center;
 
     // DBG("--------");
     for (size_t s = 0; s < P.sides.size(); ++s) {
@@ -887,7 +896,7 @@ namespace QuadPatternMatching {
     const std::vector<MVertex*>& newVertices,
     const std::vector<MElement*>& newElements,
     size_t iter = 10) {
-    Msg::Debug("laplacian smoothing with %li new vertices and %li new quads,%li iterations ... ", newVertices.size(), newElements.size(), iter);
+    Msg::Debug("laplacian smoothing with %li new vertices and %li new quads, %li iterations (no projection) ... ", newVertices.size(), newElements.size(), iter);
 
     std::unordered_map<MVertex*,size_t> old2new;
     size_t vcount = 0;
@@ -949,12 +958,90 @@ namespace QuadPatternMatching {
     return true;
   }
 
-  bool laplacianSmoothingInParametricDomain(
+  MVertex* centerOfElements(const std::vector<MElement*>& elements) {
+    std::map<std::array<MVertex*,2>,size_t> vPairCount;
+    std::unordered_map<MVertex*,std::unordered_set<MVertex*> > v2v;
+    for (MElement* f: elements) {
+      size_t N = f->getNumEdges();
+      for (size_t le = 0; le < N; ++le) {
+        MVertex* v1 = f->getVertex(le);
+        MVertex* v2 = f->getVertex((le+1)%N);
+        v2v[v1].insert(v2);
+        v2v[v2].insert(v1);
+        std::array<MVertex*,2> vPair = {v1,v2};
+        if (v2 < v1) {
+          vPair = {v2,v1};
+        }
+        vPairCount[vPair] += 1;
+      }
+    }
+
+    /* Init from boundary */
+    std::unordered_map<MVertex*,double> dist;
+    std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q; 
+    for (const auto& kv: vPairCount) if (kv.second == 1) {
+      dist[kv.first[0]] = 0.;
+      dist[kv.first[1]] = 0.;
+      Q.push({0.,kv.first[0]});
+      Q.push({0.,kv.first[1]});
+    }
+
+    /* Dijkstra propagation */
+    while (Q.size() > 0) {
+      MVertex* v = Q.top().second;
+      double cdist = Q.top().first;
+      Q.pop();
+      for (MVertex* v2: v2v[v]) {
+        double w_ij = v->distance(v2);
+        auto it = dist.find(v2);
+        if (it == dist.end() || cdist + w_ij < it->second) {
+          double new_dist = cdist + w_ij;
+          dist[v2] = cdist + w_ij;
+          Q.push({new_dist,v2});
+        }
+      }
+    }
+
+    double dmax = 0.;
+    MVertex* center = NULL;
+    for (const auto& kv: dist) {
+      if (kv.second > dmax) {
+        dmax = kv.second;
+        center = kv.first;
+      }
+    }
+    return center;
+  }
+
+  SVector3 projectPointLaplacian(GFace* gf, SVector3 currentPosition, SVector3 newAveragedPosition) {
+    double uv[2] = {0.,0.};
+    SPoint3 p(newAveragedPosition);
+    GPoint proj = gf->closestPoint(p,uv);
+    if (proj.succeeded()) {
+      return SVector3(proj.x(),proj.y(),proj.z());
+    } else {
+      p = (SPoint3(currentPosition) + SPoint3(newAveragedPosition)) * 0.5;
+      proj = gf->closestPoint(p,uv);
+      if (proj.succeeded()) {
+        return SVector3(proj.x(),proj.y(),proj.z());
+      }
+    }
+    return currentPosition;
+  }
+
+  bool laplacianSmoothingWithProjection(
       GFace* gf,
+      const std::vector<MElement*>& oldElements,
       const std::vector<MVertex*>& newVertices,
       const std::vector<MElement*>& newElements,
       size_t iter = 10) {
-    Msg::Debug("laplacian smoothing in param. domain, with %li new vertices and %li new quads,%li iterations ... ", newVertices.size(), newElements.size(), iter);
+    Msg::Debug("laplacian smoothing with %li new vertices and %li new quads, %li iterations (with projections) ... ", newVertices.size(), newElements.size(), iter);
+
+    SVector3 center(DBL_MAX,DBL_MAX,DBL_MAX);
+    if (oldElements.size() > 0) {
+      MVertex* oldv = centerOfElements(oldElements);
+      if (oldv) center = oldv->point();
+    }
 
     std::unordered_map<MVertex*,size_t> old2new;
     size_t vcount = 0;
@@ -987,10 +1074,88 @@ namespace QuadPatternMatching {
         }
         if (nv1 < nInterior) v2v[old2new[v1]].push_back(old2new[v2]);
         if (nv2 < nInterior) v2v[old2new[v2]].push_back(old2new[v1]);
+        if (center.x() == DBL_MAX && nv1 >= nInterior) {
+          center = v1->point();
+        }
+      }
+    }
+    vector<SVector3> pts(vcount);
+    for (auto& kv: old2new)  {
+      MVertex* v = kv.first;
+      size_t idx = kv.second;
+      pts[idx] = v->point();
+      if (kv.second < nInterior && center.x() != DBL_MAX) {
+        pts[idx] = center;
+      }
+    }
+    for (size_t i = 0; i < iter; ++i) {
+      for (size_t v = 0; v < nInterior; ++v) {
+        SVector3 avg(0.,0.,0.);
+        double sum = 0.;
+        for (size_t v2: v2v[v]) {
+          avg += pts[v2];
+          sum += 1.;
+        }
+        if (sum == 0) continue;
+        SVector3 np(avg.x()/sum,avg.y()/sum,avg.z()/sum);
+        if (i < 10) { /* easier projection at beginning */
+          np = 0.9 * pts[v] + 0.1 * np;
+        }
+        pts[v] = projectPointLaplacian(gf,pts[v],np);
+      }
+    }
+    for (MVertex* v: newVertices) {
+      size_t idx = old2new[v];
+      SVector3 p = pts[idx];
+      v->setXYZ(p.x(),p.y(),p.z());
+    }
+
+    return true;
+  }
+
+  bool laplacianSmoothingInParametricDomain(
+      GFace* gf,
+      const std::vector<MVertex*>& newVertices,
+      const std::vector<MElement*>& newElements,
+      size_t iter = 10) {
+    Msg::Debug("laplacian smoothing in param. domain, with %li new vertices and %li new quads,%li iterations ... ", newVertices.size(), newElements.size(), iter);
+
+    std::unordered_map<MVertex*,size_t> old2new;
+    size_t vcount = 0;
+    for (MVertex* v: newVertices) {
+      old2new[v] = vcount;
+      vcount += 1;
+    }
+    size_t nInterior = vcount;
+    vector<vector<size_t> > v2v(nInterior);
+    for (MElement* f: newElements) {
+      for (size_t le = 0; le < 4; ++le) {
+        MVertex* v1 = f->getVertex(le);
+        MVertex* v2 = f->getVertex((le+1)%4);
+        size_t nv1 = NO_ID;
+        auto it1 = old2new.find(v1);
+        if (it1 == old2new.end()) {
+          old2new[v1] = vcount;
+          nv1 = vcount;
+          vcount += 1;
+        } else {
+          nv1 = it1->second;
+        }
+        size_t nv2 = NO_ID;
+        auto it2 = old2new.find(v2);
+        if (it2 == old2new.end()) {
+          old2new[v2] = vcount;
+          nv2 = vcount;
+          vcount += 1;
+        } else {
+          nv2 = it2->second;
+        }
+        if (nv1 < nInterior) v2v[old2new[v1]].push_back(old2new[v2]);
+        if (nv2 < nInterior) v2v[old2new[v2]].push_back(old2new[v1]);
       }
     }
 
-    vector<SPoint2> uvs(vcount);
+    vector<SPoint2> uvs(vcount,SPoint2(DBL_MAX,DBL_MAX));
     for (auto& kv: old2new)  {
       MVertex* v = kv.first;
       size_t idx = kv.second;
@@ -1042,7 +1207,7 @@ namespace QuadPatternMatching {
     return true;
   }
 
-  double checkPatternMatching(const QuadMesh& P, const std::vector<size_t>& sideSizes, vector<int>& slt) {
+  double checkPatternMatching(const QuadMeshPattern& P, const std::vector<size_t>& sideSizes, vector<int>& slt) {
     slt.clear();
     size_t N = sideSizes.size();
     bool possible = true;
@@ -1073,16 +1238,32 @@ namespace QuadPatternMatching {
     // - other idea: use row echelon to compute null space [x_kernel, ...] and find
     //               solution x0 + lambda * x_kernel that maximize an objective 
     //               function ?
+    vector<double> ideal_repartition;
+    if (P.patternId == PATTERN_2CORNERS) {
+      ideal_repartition.resize(P.chords.size(),0);
+      size_t navg = (sideSizes[0] + sideSizes[1] - 2)/2;
+      for (size_t j = 0; j < P.chords.size(); ++j) {
+        if (P.chords[j].size() == 3) {
+          ideal_repartition[j] = 0.95 * navg;
+        } else if (P.chords[j].size() == 4) {
+          ideal_repartition[j] = 0.05 * navg;
+        } else {
+          Msg::Error("setting ideal_repartition for PATTERN_2CORNERS, should not happen");
+        }
+      }
+    } else if (P.patternId == PATTERN_DISK) {
+      // TODO: detect circular chord and use a smaller ideal_repartition on it
+    }
     double score = 0.;
     slt.clear();
     int count = 0;
     int count_limit = 100; /* limit on the number of solution tried in the DFS */
-    score = mat.get_positive_solution_DFS(slt, count, count_limit);
+    score = mat.get_positive_solution_DFS(slt, count, count_limit, ideal_repartition);
 
     return score;
   }
 
-  double checkPatternMatchingWithRotations(const QuadMesh& P, const std::vector<size_t>& sideSizes, int& rotation) {
+  double checkPatternMatchingWithRotations(const QuadMeshPattern& P, const std::vector<size_t>& sideSizes, int& rotation) {
     size_t N = sideSizes.size();
     if (P.sides.size() != N) return 0.;
 
@@ -1130,9 +1311,6 @@ namespace QuadPatternMatching {
     return best;
   }
 
-}
-
-using namespace QuadPatternMatching;
 
 bool load_patterns() {
   if (patterns.size() != 0) return false;
@@ -1140,13 +1318,21 @@ bool load_patterns() {
     Msg::Info("loading %li quad patterns", quad_meshes.size());
     patterns.resize(quad_meshes.size());
     for (size_t i = 0; i < quad_meshes.size(); ++i) {
-      bool ok = patterns[i].load(quad_meshes[i]);
+      bool ok = patterns[i].load(quad_meshes[i].first, quad_meshes[i].second);
       if (!ok) {
         Msg::Error("mesh quad patterns, failed to init pattern no %i", i);
       }
     }
   }
   return true;
+}
+
+std::vector<size_t> getAllLoadedPatterns() {
+  std::vector<size_t> pIds;
+  for (size_t i = 0; i < patterns.size(); ++i) {
+    pIds.push_back(patterns[i].patternId);
+  }
+  return pIds;
 }
 
 bool load_disk_quadrangulations() {
@@ -1208,11 +1394,12 @@ bool load_disk_quadrangulations() {
 
 
 bool patchIsRemeshableWithQuadPattern(
+    const std::vector<size_t>& patternsToCheck,
     size_t Ncorners,
     const std::vector<size_t>& sideSizes, 
     std::pair<size_t,int>& patternNoAndRot,
-    double& irregularityMeasure,
-    const std::vector<bool>& patternAllowed) {
+    double& irregularityMeasure
+    ) {
   irregularityMeasure = DBL_MAX;
   if (patterns.size() == 0) {
     Msg::Error("patterns not loaded, please call load_patterns() before");
@@ -1221,12 +1408,12 @@ bool patchIsRemeshableWithQuadPattern(
   // DBG("---");
   // DBG("isRemeshable ?", Ncorners, sideSizes);
 
+  vector<bool> check(patterns.size(),false);
+  for (size_t pId: patternsToCheck) check[pId] = true;
+
   double irreg_min = DBL_MAX;
-  for (size_t i = 0; i < patterns.size(); ++i) {
-    if (i < patternAllowed.size() && !patternAllowed[i]) {
-      continue;
-    }
-    const QuadMesh& P = patterns[i];
+  for (size_t i = 0; i < patterns.size(); ++i) if (check[i]) {
+    const QuadMeshPattern& P = patterns[i];
     // DBG(" ", i, P.ncorners, P.sides.size());;
     if (Ncorners != P.ncorners) continue;
     if (sideSizes.size() != P.sides.size()) continue;
@@ -1249,19 +1436,25 @@ bool patchIsRemeshableWithQuadPattern(
   return (irreg_min != DBL_MAX);
 }
 
+bool gfaceContainsSeamCurves(GFace* gf) {
+  for (GEdge* ge: gf->edges()) if (ge->isSeam(gf)) {
+    return true;
+  }
+  return false;
+}
 
 int remeshPatchWithQuadPattern(
     GFace* gf, 
     const std::vector<std::vector<MVertex*> >& sides, /* vertices on the boundary, not changed */
     const std::pair<size_t,int>& patternNoAndRot,     /* pattern to use, from patchIsRemeshableWithQuadPattern */
+    std::vector<MElement*> & oldElements,             /* elements to replace */
     std::vector<MVertex*>& newVertices,               /* new vertices inside the cavity */
     std::vector<bool>& vertexIsIrregular,             /* for each new vertex, true if irregular */
-    std::vector<MElement*>& newElements,               /* new quads inside the cavity */
-    SPoint3* center
+    std::vector<MElement*>& newElements                /* new quads inside the cavity */
     ) {
 
   size_t N = sides.size();
-  const QuadMesh& P = patterns[patternNoAndRot.first];
+  const QuadMeshPattern& P = patterns[patternNoAndRot.first];
   int rot = patternNoAndRot.second;
   if (P.sides.size() != N) {
     Msg::Error("sides not matching, shoud not happen (pattern has %li sides, but %li sides in input) ...", P.sides.size(), N);
@@ -1291,20 +1484,20 @@ int remeshPatchWithQuadPattern(
     return -1;
   }
 
-  // DBG("+++++ addQuadsAccordingToPattern ++++++");
-  // DBG(ssr);
-  // DBG(slt);
-  bool oka = addQuadsAccordingToPattern(P, slt, gf, sidesr, newVertices, vertexIsIrregular, newElements, center);
+  bool oka = addQuadsAccordingToPattern(P, slt, gf, sidesr, newVertices, vertexIsIrregular, newElements);
   if (!oka) {
     Msg::Error("failed to add quads according to pattern, weird");
     return 1;
   }
-  GEntity::GeomType GT = gf->geomType();
   discreteFace* df = dynamic_cast<discreteFace*>(gf);
-  size_t iter = std::min(newVertices.size(),(size_t)1000);
-  if (df || GT == GEntity::Sphere) {
-    laplacianSmoothing(newVertices, newElements, iter);
+  if (df || gfaceContainsSeamCurves(gf)) {
+    /* Use oldElements as a geometric support */
+    size_t iter = std::min((size_t)newVertices.size(),(size_t)100);
+    if (iter < 20) iter = 20;
+    laplacianSmoothingWithProjection(gf, oldElements, newVertices, newElements, iter);
   } else {
+    size_t iter = std::min((size_t)newVertices.size(),(size_t)1000);
+    if (iter < 30) iter = 30;
     laplacianSmoothingInParametricDomain(gf, newVertices, newElements, iter);
   }
 
@@ -1386,4 +1579,6 @@ int remeshFewQuads(GFace* gf,
   DBG(bndAllowedValenceRange);
 
   return 1;
+}
+
 }

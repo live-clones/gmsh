@@ -1056,6 +1056,33 @@ int addSingularitiesAtAcuteCorners(
   return 0;
 }
 
+int quantileFiltering(std::vector<double>& scaling, double critera = 0.01) {
+  std::vector<double> values = scaling;
+  std::sort(values.begin(),values.end());
+  size_t n = values.size();
+  double clamp_min = values[size_t(critera*double(n))];
+  double clamp_max = values[size_t((1.-critera)*double(n))];
+  for (size_t i = 0; i < scaling.size(); ++i) {
+    if (scaling[i] < clamp_min) {
+      scaling[i] = clamp_min;
+    } else if (scaling[i] > clamp_max) {
+      scaling[i] = clamp_max;
+    }
+  }
+
+  // Msg::Error("min:  %f", values.front());
+  // Msg::Error("0.01:  %f", values[size_t(0.01*double(n))]);
+  // Msg::Error("0.1:  %f", values[size_t(0.1*double(n))]);
+  // Msg::Error("0.25: %f", values[size_t(0.25*double(n))]);
+  // Msg::Error("0.5:  %f", values[size_t(0.5*double(n))]);
+  // Msg::Error("0.75: %f", values[size_t(0.75*double(n))]);
+  // Msg::Error("0.9:  %f", values[size_t(0.9*double(n))]);
+  // Msg::Error("0.99:  %f", values[size_t(0.99*double(n))]);
+  // Msg::Error("max:  %f", values.back());
+
+  return 0;
+}
+
 int computeScaledCrossFieldView(GModel* gm,
     int& dataListViewTag, 
     std::size_t targetNumberOfQuads,
@@ -1065,7 +1092,8 @@ int computeScaledCrossFieldView(GModel* gm,
     const std::string& viewName,
     int verbosity,
     std::vector<std::array<double,5> >* singularities,
-    bool disableConformalScaling
+    bool disableConformalScaling,
+    double conformalScalingQuantileFiltering
     ) {
   Msg::Debug("compute scaled cross field ...");
 #ifdef HAVE_QUADMESHINGTOOLS
@@ -1107,6 +1135,10 @@ int computeScaledCrossFieldView(GModel* gm,
       Msg::Error("failed to compute cross field scaling");
       return -1;
     }
+    if (conformalScalingQuantileFiltering != 0) {
+      Msg::Warning("Apply quantile filtering on conformal scaling (clamp the %f-quantile extremities)",conformalScalingQuantileFiltering);
+      quantileFiltering(scaling, conformalScalingQuantileFiltering);
+    }
   } else {
     Msg::Info("Cross field conformal scaling disabled");
     for (const auto& kv: edgeTheta) {
@@ -1119,6 +1151,26 @@ int computeScaledCrossFieldView(GModel* gm,
     std::sort(nodeTags.begin(), nodeTags.end() );
     nodeTags.erase(std::unique( nodeTags.begin(), nodeTags.end() ), nodeTags.end() );
     scaling.resize(nodeTags.size(), 1); /* uniform scaling */
+  }
+
+  bool SHOW_H = true; // Debugging view to check H
+  if (SHOW_H && !disableConformalScaling) {
+    Msg::Warning("generating H view (saved at /tmp/H.pos), only for debugging/prototyping");
+    std::string name = "dbg_H";
+    PViewDataGModel *d = new PViewDataGModel;
+    d->setName(name);
+    d->setFileName(name + ".msh");
+    std::map<int, std::vector<double> > dataH;
+    for (size_t i = 0; i < nodeTags.size(); ++i) {
+      std::vector<double> jj;
+      jj.push_back(scaling[i]);
+      dataH[nodeTags[i]] = jj;
+    }
+    d->addData(gm, dataH, 0, 0.0, 1, 1);
+    d->finalize();
+    std::string posout = "/tmp/H.pos";
+    d->writePOS(posout, false, true, false);
+    GmshMergeFile(posout);
   }
 
   Msg::Info("Compute quad mesh size map from conformal factor and %li target quads ...", 
@@ -1145,26 +1197,6 @@ int computeScaledCrossFieldView(GModel* gm,
   if (statusv != 0) {
     Msg::Error("failed to create view");
     return -1;
-  }
-
-  bool SHOW_H = true; // Debugging view to check H
-  if (SHOW_H && !disableConformalScaling) {
-    Msg::Warning("generating H view (saved at /tmp/H.pos), only for debugging/prototyping");
-    std::string name = "dbg_H";
-    PViewDataGModel *d = new PViewDataGModel;
-    d->setName(name);
-    d->setFileName(name + ".msh");
-    std::map<int, std::vector<double> > dataH;
-    for (size_t i = 0; i < nodeTags.size(); ++i) {
-      std::vector<double> jj;
-      jj.push_back(scaling[i]);
-      dataH[nodeTags[i]] = jj;
-    }
-    d->addData(gm, dataH, 0, 0.0, 1, 1);
-    d->finalize();
-    std::string posout = "/tmp/H.pos";
-    d->writePOS(posout, false, true, false);
-    GmshMergeFile(posout);
   }
 
 #else

@@ -1,0 +1,2461 @@
+\documentclass{report}
+\usepackage{amssymb}
+
+\title{ Target Metrics and Derivatives }
+
+%\author{Patrick Knupp \\
+%The Sandia National Laboratories \\
+%Albuquerque NM USA \\
+%pknupp@sandia.gov}
+%\author{Jason Kraftcheck \\
+%The University of Wisconsin-Madison \\
+%Madison, WI \\
+%kraftche@cae.wisc.edu}
+
+\date{28 October 2008}
+
+\begin{document}
+
+\maketitle
+%\begin{abstract} 
+%This document contains notes on TMP metrics and their derivaitves, \\
+% including: notes on the first and second derivatives of scalar \\
+% functions of matrices, a list of target metrics and their derivatives, \\
+% and notes on calculating the derivatives with respect to element node \\
+% coordinates given the corresponding deriviatives with of the target \\
+% metrics.
+%\end{abstract}
+
+\tableofcontents
+
+\chapter{Notation}
+
+\section{Functions of Matrices}
+
+Let $t_{i,j}$ denote the element in row $i$ and column $j$ of the matrix $T$.
+Let $f=f(T)$ be a scalar function on the set of $n \times n$ real matrices 
+$M_n$. \newline
+
+\noindent {\it In the manipulations below it is assumed that $f$ and all of 
+its first and second partial derivatives exist and are continuous. Some of the 
+TMP metrics do not satisfy this requirement.} For example, the first partial
+derivatives of the norm of $T$ to the first power (i.e. $|T|$) do not exist 
+when $T=0$. 
+They do exist everywhere else in $M_n$, however.  The first partial 
+derivatives of 
+the absolute value, $|det(T)|$, do not exist when $T$ is singular. Therefore,
+special care must be taken for metrics which include these expressions. 
+\newline
+
+\noindent {\bf Outer Products} \newline
+Let ${\bf a}=(a_1,...,a_n)$ and ${\bf z}=(z_1,...,z_n)$ be two vectors in 
+$R^n$.  The outer product ${\bf a} \otimes {\bf z}$ is a $n \times n$ matrix 
+with entries
+\begin{eqnarray}
+\left( {\bf a} \otimes {\bf z} \right)_{ij} = a_i \, z_j
+\end{eqnarray}
+
+\noindent Let $A^t = [{\bf a}_1,...,{\bf a}_n]$ and 
+$Z^t = [{\bf z}_1,...,{\bf z}_n]$ be two $n \times n$ matrices,
+with ${\bf a}_i$ and ${\bf z}_j$ being the $i^{th}$ and $j^{th}$ 
+row vectors of $A$ and $Z$, respectively. Define the 
+outer product $A \otimes Z$ of the two matrices to be an $n^2 \times n^2$ 
+matrix with sub-matrices
+\begin{eqnarray}
+\label{matrixouter}
+\left( A \otimes Z \right)_{ij} = {\bf a}_i \otimes {\bf z}_j
+\end{eqnarray}
+
+\noindent The previous can be expressed as
+\begin{eqnarray}
+A \otimes Z & = &
+\left[ \begin{array}{ccc|c|ccc}
+A_{11} Z_{11} &
+\ldots &
+A_{11} Z_{1n} &
+&
+A_{11} Z_{n1} &
+\ldots &
+A_{11} Z_{nn} \\
+\vdots & \ddots & \vdots &
+\ldots &
+\vdots & \ddots & \vdots \\
+A_{1n} Z_{11} &
+\ldots &
+A_{1n} Z_{1n} &
+&
+A_{1n} Z_{n1} &
+\ldots &
+A_{1n} Z_{nn} \\
+\hline
+& \vdots & & \ddots & & \vdots \\
+\hline
+A_{n1} Z_{11} &
+\ldots &
+A_{n1} Z_{1n} &
+&
+A_{n1} Z_{n1} &
+\ldots &
+A_{n1} Z_{nn} \\
+\vdots & \ddots & \vdots &
+\ldots &
+\vdots & \ddots & \vdots \\
+A_{nn} Z_{11} &
+\ldots &
+A_{nn} Z_{1n} &
+&
+A_{nn} Z_{n1} &
+\ldots &
+A_{nn} Z_{nn} 
+\end{array} \right] \nonumber \label{matrix-outer} \\
+\end{eqnarray}
+
+\section{First Derivatives}
+
+Let $\frac{\partial f}{\partial T}$ be the matrix of partial derivatives of the scalar function $f(T)$ where $T$ is a matrix, such that each element 
+$\left(\frac{\partial f}{\partial T}\right)_{i,j} = \frac{\partial f}{\partial \, t_{i,j}}$.
+
+\noindent Let $f=f(T)$ and $g=g(T)$
+\begin{eqnarray}
+\frac{\partial}{\partial T} \left( f \, g \right) & = & f \frac{\partial g}{\partial T} + g \frac{\partial f}{\partial T} \label{prod1} \\
+\frac{\partial}{\partial T} \left( \frac{f}{g} \right) & = & \frac{1}{g^2} \left\{ g \frac{\partial f}{\partial T} - f \frac{\partial g}{\partial T} \right\} \label{quotient1}
+\end{eqnarray}
+
+
+\section{Second Derivatives}
+
+Let $\frac{\partial^2 f}{\partial T_i \partial T_j}$ be the matrix of second partial derivatives with respect to the $i^{th}$ and $j^{th}$ rows of $T$:
+
+\begin{equation}
+\frac{\partial^2 f}{\partial T_i \partial T_j} = 
+\left[ \begin{array}{cccc}
+\frac{\partial^2 f}{\partial t_{i,1} \partial t_{j,1}} &
+\frac{\partial^2 f}{\partial t_{i,1} \partial t_{j,2}} &
+\ldots &
+\frac{\partial^2 f}{\partial t_{i,1} \partial t_{j,n}} \\
+\frac{\partial^2 f}{\partial t_{i,2} \partial t_{j,1}} &
+\frac{\partial^2 f}{\partial t_{i,2} \partial t_{j,2}} \\
+\vdots & & \ddots \\
+\frac{\partial^2 f}{\partial t_{i,n} \partial t_{j,1}} & & &
+\frac{\partial^2 f}{\partial t_{i,n} \partial t_{j,n}}
+\end{array} \right]
+\end{equation}
+
+and
+
+\begin{equation}
+\label{dsecelem}
+\left(\frac{\partial^2 f}{\partial T_i \partial T_j}\right)_{k,l} = 
+\frac{\partial^2 f}{\partial t_{i,k} \partial t_{j,l}}
+\end{equation}
+
+Thus the symmetric Hessian of $f(T)$, with the elements of $T$ occuring in row-major order, is composed of blocks of the form $\frac{\partial^2 f}{\partial T_i \partial T_j}$:
+
+\begin{eqnarray}
+\frac{\partial^2}{\partial T^2} f(T) & = &
+\left[ \begin{array}{c|c|c}
+\frac{\partial^2 f}{\partial T_1 \partial T_1} &
+\ldots &
+\frac{\partial^2 f}{\partial T_1 \partial T_n} \\
+\hline
+\vdots & \ddots \\
+\hline
+\frac{\partial^2 f}{\partial T_1 \partial T_n} & 
+\ldots & 
+\frac{\partial^2 f}{\partial T_n \partial T_n} \\
+\end{array} \right]
+\\ & = &
+\left[ \begin{array}{ccc|c|ccc}
+\frac{\partial^2 f}{\partial t_{1,1}^2} &
+\ldots &
+\frac{\partial^2 f}{\partial t_{1,1} \partial t_{1,n}} &
+&
+\frac{\partial^2 f}{\partial t_{1,1} \partial t_{n,1}} &
+\ldots &
+\frac{\partial^2 f}{\partial t_{1,1} \partial t_{n,n}} \\
+\vdots & \ddots & \vdots &
+\ldots &
+\vdots & \ddots & \vdots \\
+\frac{\partial^2 f}{\partial t_{1,n} \partial t_{1,1}} &
+\ldots &
+\frac{\partial^2 f}{\partial t_{1,n}^2} &
+&
+\frac{\partial^2 f}{\partial t_{1,n} \partial t_{n,1}} &
+\ldots &
+\frac{\partial^2 f}{\partial t_{1,n} \partial t_{n,n}} \\
+\hline
+& \vdots & & \ddots & & \vdots \\
+\hline
+\frac{\partial^2 f}{\partial t_{n,1} \partial t_{1,1}} &
+\ldots &
+\frac{\partial^2 f}{\partial t_{n,1} \partial t_{1,n}} &
+&
+\frac{\partial^2 f}{\partial t_{n,1}^2} &
+\ldots &
+\frac{\partial^2 f}{\partial t_{n,1} \partial t_{n,n}} \\
+\vdots & \ddots & \vdots &
+\ldots &
+\vdots & \ddots & \vdots \\
+\frac{\partial^2 f}{\partial t_{n,n} \partial t_{1,1}} &
+\ldots &
+\frac{\partial^2 f}{\partial t_{n,n} \partial t_{1,n}} &
+&
+\frac{\partial^2 f}{\partial t_{n,n} \partial t_{n,1}} &
+\ldots &
+\frac{\partial^2 f}{\partial t_{n,n}^2} 
+\end{array} \right] \nonumber \label{2nd-derv} \\
+\end{eqnarray}
+
+%\noindent The second derivatives can also be expressed in terms of 
+%matrix outer products and operators. For $T$ and $Z$ in $M_n$, define the 
+%derivative
+%\begin{eqnarray}
+%\frac{\partial Z}{\partial T} = \left( \frac{\partial}{\partial T} \otimes Z \right)^t
+%\end{eqnarray}
+%so that 
+%\begin{eqnarray}
+%\frac{\partial Z}{\partial T} & = &
+%\left[ \begin{array}{ccc|c|ccc}
+%\frac{\partial z_{1,1}}{\partial t_{1,1}} &
+%\ldots &
+%\frac{\partial z_{1,1}}{\partial t_{1,n}} &
+%&
+%\frac{\partial z_{1,1}}{\partial t_{n,1}} &
+%\ldots &
+%\frac{\partial z_{1,1}}{\partial t_{n,n}} \\
+%\vdots & \ddots & \vdots &
+%\ldots &
+%\vdots & \ddots & \vdots \\
+%\frac{\partial z_{1,n}}{\partial t_{1,1}} &
+%\ldots &
+%\frac{\partial z_{1,n}}{\partial t_{1,n}} &
+%&
+%\frac{\partial z_{1,n}}{\partial t_{n,1}} &
+%\ldots &
+%\frac{\partial z_{1,n}}{\partial t_{n,n}} \\
+%\hline
+%& \vdots & & \ddots & & \vdots \\
+%\hline
+%\frac{\partial z_{n,1}}{\partial t_{1,1}} &
+%\ldots &
+%\frac{\partial z_{n,1}}{\partial t_{1,n}} &
+%&
+%\frac{\partial z_{n,1}}{\partial t_{n,1}} &
+%\ldots &
+%\frac{\partial z_{n,1}}{\partial t_{n,n}} \\
+%\vdots & \ddots & \vdots &
+%\ldots &
+%\vdots & \ddots & \vdots \\
+%\frac{\partial z_{n,n}}{\partial t_{1,1}} &
+%\ldots &
+%\frac{\partial z_{n,n}}{\partial t_{1,n}} &
+%&
+%\frac{\partial z_{n,n}}{\partial t_{n,1}} &
+%\ldots &
+%\frac{\partial z_{n,n}}{\partial t_{n,n}} 
+%\end{array} \right] 
+%\end{eqnarray}
+
+%\noindent If one lets $Z = \frac{\partial f}{\partial T}$ in the previous,
+%one obtains \ref{2nd-derv}. \newline
+
+\noindent {\bf Product and Quotient Rules for the Second Derivative} \newline
+
+\noindent Let $f=f(T)$ and $g=g(T)$.
+\begin{eqnarray}
+\frac{\partial^2}{\partial T^2} \left( f \, g \right) & = & f \, \frac{\partial^2 g}{\partial T^2} + g \, \frac{\partial^2 f}{\partial T^2} + \frac{\partial f}{\partial T} \otimes \frac{\partial g}{\partial T} +  \frac{\partial g}{\partial T} \otimes \frac{\partial f}{\partial T} \label{prod2} \\
+\frac{\partial}{\partial T} \left( f \frac{\partial g}{\partial T} \right) & = & f \, \frac{\partial^2 g}{\partial T^2} + \frac{\partial f}{\partial T} \otimes \frac{\partial g}{\partial T} \label{diffusionopp} \\
+\frac{\partial^2}{\partial T^2} \left( \frac{f}{g} \right) & = & \frac{1}{g} \, \frac{\partial^2 f}{\partial T^2} - \frac{1}{g^2} \left\{ f \, \frac{\partial^2 g}{\partial T^2} - \frac{2f}{g} \left( \frac{\partial g}{\partial T} \otimes \frac{\partial g}{\partial T} \right) + \frac{\partial f}{\partial T} \otimes \frac{\partial g}{\partial T} +  \frac{\partial g}{\partial T} \otimes \frac{\partial f}{\partial T} \right\} \nonumber \label{quotient2} \\
+\end{eqnarray}
+
+\chapter{Basic Matrix Derivatives}
+
+
+\section{Chain rule for matrix multiplication}
+
+\subsection{\label{first}First Derivative}
+
+The following demonstrates that for the product of square matrices $T = A Z$,
+that $\frac{\partial f(T)}{\partial A} = \frac{\partial f(T)}{\partial T} Z^t$. \newline
+
+\noindent Beginning with the chain rule:
+
+\begin{equation} 
+\label{eqn0}
+\frac{\partial f}{\partial a_{i,j}} = 
+\sum_{l=1}^{n} \sum_{k=1}^{n} 
+\frac{\partial f}{\partial t_{l,k}} 
+\frac{\partial t_{l,k}}{\partial a_{i,j}}
+\end{equation}
+
+\noindent Since $T=AZ$, matrix multiplication gives:
+
+\begin{equation}
+\label{eqn1}
+t_{l,k} = \sum_{r=1}^n a_{l,r} z_{r,k}
+\end{equation}
+
+\noindent Taking the first derivative of Equation \ref{eqn1}:
+
+\begin{eqnarray}
+%\label{eqn2}
+\frac{\partial t_{l,k}}{\partial a_{i,j}} 
+  &=& \sum_{r=1}^n \delta_i^l \delta_j^r z_{r,k} \\
+  &=& \delta_i^l z_{j,k} \label{eqn2}
+\end{eqnarray}
+
+\noindent Substituting Equation \ref{eqn2} into \ref{eqn0}:
+
+\begin{eqnarray}
+\frac{\partial f}{\partial a_{i,j}} &=& \sum_{l=1}^n \sum_{k=1}^n
+ \frac{\partial f}{\partial t_{l,k}} \delta_i^l z_{j,k} \\
+&=& \sum_{k=1}^{n} \frac{ \partial f}{ \partial t_{i,k}} z_{j,k} \label{eqn4}
+\end{eqnarray}
+
+\noindent which is:
+
+\begin{equation}
+\frac{\partial f}{\partial A} = \frac{\partial f}{\partial T} Z^t
+\end{equation}
+
+
+\subsection{Second Derivative}
+
+Define:
+
+\begin{equation}
+C = \frac{\partial^2 f}{\partial A_i \partial A_j}
+\end{equation}
+
+\noindent for some $i$ and $j$ such that from Equation \ref{dsecelem}:
+
+\begin{equation}
+\label{chainsecondelem}
+c_{k,l} = \frac{\partial^2 f}{\partial a_{i,k} \partial a_{j,l}}
+\end{equation}
+
+\noindent Substituting Equation \ref{eqn4} into Equation \ref{chainsecondelem}:
+
+\begin{eqnarray}
+c_{k,l} &=& \frac{\partial}{\partial a_{i,k}} \sum_{p=1}^n \frac{ \partial f}{\partial t_{j,p}} z_{l,p} \\
+        &=& \sum_{p=1}^n \frac{\partial}{\partial t_{j,p}} \frac{\partial f}{\partial a_{i,k}} z_{l,p} \\
+\label{chainsecondr1}
+        &=& \sum_{p=1}^n \sum_{q=1}^n \frac{\partial^2 f}{ \partial t_{j,p} \partial t_{i,q}} z_{l,p} z_{k,q} 
+\end{eqnarray}
+
+\noindent Let:
+
+\begin{equation}
+D = \frac{\partial^2 f}{\partial T_i \partial T_j}
+\end{equation}
+which, given the definition in Equation \ref{dsecelem}:
+\begin{equation}
+d_{q,p} = \frac{\partial^2 f}{\partial t_{i,q} \partial t_{j,p}}
+\end{equation}
+
+\noindent Define matrices $X$ and $Y$:
+
+\begin{eqnarray}
+X &=& Z D \\
+Y &=& X Z^t = Z D Z^t
+\end{eqnarray}
+
+\noindent The elements of $X$ and $Y$ are then:
+
+\begin{eqnarray}
+x_{k,p} & = & \sum_{q=1}^n z_{k,q} d_{q,p} \\
+y_{k,l} & = & \sum_{p=1}^n x_{k,p} z_{l,p} \\ 
+        & = & \sum_{p=1}^n \sum_{q=1}^n z_{k,q} d_{q,p} z_{l,p} \\
+\label{chainsecondr2}
+        & = & \sum_{p=1}^n \sum_{q=1}^n \frac{\partial^2 f}{\partial t_{j,p} \partial t_{i,q}} z_{l,p} z_{k,q}
+\end{eqnarray}
+
+\noindent Equation \ref{chainsecondr1} is equal to Equation \ref{chainsecondr2}, so:
+
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial A_i \partial A_j} &=& C \\
+&=& Y \\
+&=& Z D Z^t \\
+&=& Z \frac{\partial^2 f}{\partial T_i \partial T_j} Z^t 
+\end{eqnarray}
+
+
+\section{Derivatives of Basic TMP Scalar Functions}
+All TMP metrics are functions of the matrices $A$, $Z$, or $T=AZ$.
+Each such metric in turn is some combination of the basic scalar functions
+$|T|^m$, $det(T)$, $tr(T)$, $tr(adj \, T)$, $|T^t T|$, or $|adj T|^2$.  
+Therefore, derivatives of these basic TMP functions will be derived first,
+to serve as the building blocks for TMP metrics.  \newline
+
+\noindent Throughout this document, let $\tau = det(T)$. Some of the 
+metrics include a user-supplied constant, $\gamma$. \newline
+
+\subsection{Derivatives of $tr(T)$}
+
+\begin{eqnarray}
+f(T) & = & tr(T) = \sum_{k=1}^n t_{k,k} \\
+\frac{\partial f}{\partial t_{i,j}} &=& \delta_i^j \\
+\frac{\partial f}{\partial T} &=& I 
+\end{eqnarray}
+
+\noindent All of the second derivatives are zero. \newline
+
+\subsection{Derivatives of $tr(adj \, T)$ \label{traj}}
+
+\noindent For $n=2$, $tr(adj \, T) = tr(T)$, so the results of 
+the previous section can be used. \newline
+
+\noindent For $n=3$, 
+\begin{eqnarray}
+tr( adj \, T ) = (t_{11} t_{22} - t_{12} t_{21})+ (t_{22} t_{33} - t_{23} t_{32})+ (t_{33} t_{11} - t_{13} t_{31})
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial}{\partial T} \, tr(adj \, T) = tr(T) \, I - T^t
+\end{eqnarray}
+
+\begin{equation}
+\label{tradj2}
+\frac{\partial^2}{\partial T^2} \, tr(adj \, T) =
+\left[ \begin{array}{ccccccccc}
+ 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 1 \\
+ 0 & 0 & 0 & -1 & 0 & 0 & 0 & 0 & 0 \\
+ 0 & 0 & 0 & 0 & 0 & 0 & -1 & 0 & 0 \\
+ 0 & -1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+ 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+ 0 & 0 & 0 & 0 & 0 & 0 & 0 & -1 & 0 \\
+ 0 & 0 & -1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+ 0 & 0 & 0 & 0 & 0 & -1 & 0 & 0 & 0 \\
+ 1 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0
+\end{array} \right]
+\end{equation}
+
+
+\subsection{Derivatives of $|T|^2$ \label{tsquared}}
+
+\begin{eqnarray}
+f(T) &=& |T|^2 = \sum_{i=1}^n \sum_{j=1}^n t_{i,j}^2 \\
+\label{tsquaredterm}
+\frac{\partial f}{\partial t_{i,j}} &=& 2 \, t_{i,j} \\
+\frac{\partial f}{\partial T} &=& 2 \, T
+\end{eqnarray}
+
+\noindent Beginning with Equation \ref{tsquaredterm}:
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial t_{i,j} \partial t_{k,l}} &=& 2 \delta_i^k \delta_j^l \\
+\left(\frac{\partial^2 f}{\partial T_i \partial T_j}\right)_{r,s} &=& 2 \delta_i^j \delta_r^s \\
+\frac{\partial^2 f}{\partial T_i \partial T_j} &=& 2 \delta_i^j I
+\end{eqnarray}
+
+\noindent All non-diagonal blocks of the Hessian are zero due to the $\delta_i^j$.  Thus, if $I_{n^2}$ is the $n^2 \times n^2$ identity matrix, then:
+
+\begin{equation}
+\frac{\partial^2}{\partial T^2} \, |T|^2 = 2 \, I_{n^2}
+\end{equation}
+
+\subsection{Derivatives of $f(T)=|T|^m$}
+Using \ref{tsquaredterm},
+\begin{eqnarray}
+2 \, T & = & \frac{\partial}{\partial T} |T|^2 \nonumber \\
+ & = & 2 \, |T| \frac{\partial}{\partial T} |T| \nonumber
+\end{eqnarray}
+so that when $T \neq 0$,
+\begin{eqnarray}
+\frac{\partial}{\partial T} |T| & = & \frac{T}{|T|}
+\end{eqnarray}
+Let $m=\pm 1, \pm 2,\pm 3,\ldots$  Then
+\begin{eqnarray}
+\frac{\partial}{\partial T} |T|^m & = & m \, |T|^{m-1} \frac{\partial }{\partial T}|T| \\
+ & = & m \, |T|^{m-2} \, T \label{firstdervoftm}
+\end{eqnarray}
+For $m=2,3,\ldots$, the latter formula is valid even when $T=0$. \newline
+
+\noindent Particularly useful are
+\begin{eqnarray}
+\label{tcubed}
+\frac{\partial}{\partial T} |T|^3 & = & 3 \, |T| \, T \\
+\frac{\partial}{\partial T} |T|^4 & = & 4 \, |T|^2 \, T 
+\end{eqnarray}
+
+\noindent {\bf Second Partial Derivatives of $f(T)=|T|^m$} \newline
+
+\noindent Write \ref{firstdervoftm} in index form as
+\begin{eqnarray}
+\frac{\partial}{\partial t_{i,j}} |T|^m & = & m |T|^{m-2} \, t_{i,j}
+\end{eqnarray}
+Then
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial t_{i,j} \partial t_{k,l}} = m \, \delta_i^k \delta_j^l |T|^{m-2} + m (m-2) \, t_{i,j} t_{k,l} |T|^{m-4}
+\end{eqnarray}
+and so we can write
+\begin{eqnarray}
+\frac{\partial^2}{\partial T^2} \, |T|^m = m \, \left\{ |T|^{m-2} \, I_{n^2} + (m-2) \, |T|^{m-4} \, \left( T \otimes T \right) \, \right\} \label{hesstm}
+\end{eqnarray}
+%and, for $m \neq 3$,
+%\begin{eqnarray}
+%\label{hesstm}
+%\frac{\partial^2 f}{\partial T_i \partial T_j} = m \,  |T|^{m-4} \, \left\{ \delta_i^j \, |T|^2 \, I + (m-2) S_{ij} \right\} 
+%\end{eqnarray}
+%with $S_{ij}$ an $n \times n$ matrix with entries
+%\begin{eqnarray}
+%\left( S_{ij} \right)_{r,s} = t_{i,r} \, t_{j,s} \label{sij}
+%\end{eqnarray}
+When $m=2$ or $m \geq 4$ the second derivatives exist for all $T \in M_3$.
+Otherwise, the second derivative exists everywhere except $T=0$. 
+The second derivative for $m=3$ is
+\begin{eqnarray}
+\label{hesst3}
+\frac{\partial^2}{\partial T^2} \, |T|^3 = 3 \, \left\{ |T| \, I_{n^2} + |T|^{-1} \, \left( T \otimes T \right) \, \right\}
+%\frac{\partial^2}{\partial T_i \partial T_j} \, |T|^3 = 3 \,  \delta_i^j \, |T| \, I 
+\end{eqnarray}
+%If $m<2$, the second derivative exists everywhere except $T=0$. \newline
+
+\subsection{Derivatives of $f(T)=|T^t T|^2$}
+
+\noindent The first derivative is
+\begin{eqnarray}
+\frac{\partial}{\partial T} \, |T^t T|^2 = 4 T \, T^t T \label{dttt}
+\end{eqnarray}
+
+\noindent To obtain the second derivatives, write
+\begin{eqnarray}
+\left( T^t T \right)_{r,s} = \sum_{\ell=1}^n t_{\ell,r} t_{\ell,s} 
+\end{eqnarray}
+and so
+\begin{eqnarray}
+\left( T \, T^t T \right)_{p,q} & = & \sum_{k=1}^n (T)_{p,k} \left( T^t T \right)_{k,q} \\
+ & = & \sum_{k=1}^n t_{p,k} \left( \sum_{\ell=1}^n t_{\ell,k} t_{\ell,q} \right)
+\end{eqnarray}
+Then \ref{dttt} can be written
+\begin{eqnarray}
+\frac{\partial}{\partial t_{p,q}} |T^t T|^2 = 4 \, \sum_{k=1}^n \sum_{\ell=1}^n  t_{p,k} t_{\ell,k} t_{\ell,q} 
+\end{eqnarray}
+Next,
+\begin{eqnarray} 
+\frac{\partial^2 f}{\partial t_{p,q} \partial t_{i,j}} & = & 4\, \sum_{k=1}^n \sum_{\ell=1}^n  \left\{ \delta_i^\ell \, \delta_j^q \, t_{p,k} \, t_{\ell,k} + \delta_i^\ell \, \delta_j^k \, t_{p,k} \, t_{\ell,q} + \delta_i^p \, \delta_j^k \, t_{\ell,q} \, t_{\ell,k} \right\} \nonumber \\
+ & = & 4 \left\{ t_{p,j} \, t_{i,q} + \sum_{k=1}^n \left( \delta_j^q \, t_{p,k} \, t_{i,k} + \delta_i^p \, t_{k,q} \, t_{k,j} \right) \right\} \\
+& = & 4 \left\{ \left( S_{pi} \right)_{j,q} + \delta_j^q (T T^t)_{p,i} + \delta_i^p (T^t T)_{q,j}\right\}
+\end{eqnarray}
+and finally
+\footnote{Beware: the notation on the left-hand-side of this equation has a problem: namely that permuting the indices $i$ and $j$ 
+does not give the same result on the left when one would expect it to. In fact
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial T_j \partial T_i} = \left( \frac{\partial^2 f}{\partial T_i \partial T_j} \right)^t
+\end{eqnarray}
+whereas in standard partial derivatives, one can perform the switch of the 
+indices without needing the transpose.} 
+\begin{eqnarray}
+\label{hessttt}
+\frac{\partial^2 f}{\partial T_i \partial T_j} = 4 \left( S_{ji} + (T T^t)_{i,j} \, I + \delta_j^i \, T^t T \right)
+\end{eqnarray}
+with $S_{ij}$ an $n \times n$ matrix with entries
+\begin{eqnarray}
+\left( S_{ij} \right)_{r,s} = t_{i,r} \, t_{j,s} \label{sij}
+\end{eqnarray}
+or 
+\begin{eqnarray}
+S &=& T \otimes T
+\end{eqnarray}
+\newline
+
+\subsection{Derivatives of $f(T)=|adj T|^2$ \label{nrm-adj}}
+For $T_{2 \times 2}$, 
+\begin{eqnarray}
+|adj T|^2 = |T|^2 
+\end{eqnarray}
+so the first and second derivatives are given in Section \ref{tsquared}. \newline
+
+\noindent For $T_{3 \times 3}$, the following identity holds
+\begin{eqnarray}
+2 \, |adj T|^2 = |T|^4 - |T^t T|^2
+\end{eqnarray}
+Taking the partial derivatives of both sides of the identity and using results 
+from the previous sections, the first derivative is
+\begin{eqnarray}
+\frac{\partial}{\partial T} |adj T|^2 = 2 \, \{ |T|^2 T - T T^t T \}
+\end{eqnarray}
+and, using \ref{hesstm} and \ref{hessttt}, the second derivative is
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial T_i \partial T_j} & = & \frac{1}{2} \frac{\partial^2 }{\partial T_i \partial T_j} |T|^4 - \frac{1}{2} \frac{\partial^2}{\partial T_i \partial T_j} |T^t T|^2 \nonumber \\
+ & = & 2 \, \{ \delta_i^j |T|^2 I + 2 S_{ij} \} - 2 \, \{ S_{ji} + (T T^t)_{i,j} I + \delta_j^i T^t T \} \nonumber \\
+ & = & 2 \, \left\{ \left( \delta_i^j \, |T|^2 - (T T^t)_{i,j} \right) I + 2 S_{ij}-S_{ji} - \delta_j^i T^t T \right\} \label{hess-nrm-adj}
+\end{eqnarray}
+with $S_{ij}$ defined in \ref{sij}. \newline
+
+\subsection{First Partial Derivative of $\tau=det(T)$ \label{tau}}
+
+\begin{eqnarray}
+f(T) &=& det(T) \\
+     &=& \sum_{k=1}^n t_{l,k} C_{l,k}(T) \quad \forall \quad 1 \le l \le n \\
+\label{det1}
+     &=& \sum_{k=1}^n (-1)^{l+k} t_{l,k} M_{l,k}(T) \quad \forall \quad 1 \le l \le n
+\end{eqnarray}
+
+\noindent For each term of $\frac{\partial f}{\partial T}$, take the partial derivative of of Equation \ref{det1} for $l = i$ with respect to the corresponding element of $T$:
+
+\begin{eqnarray}
+\frac{\partial f}{\partial t_{i,j}} &=& 
+\sum_{k=1}^n (-1)^{i+k} \left[
+ \frac{\partial t_{i,k}}{\partial t_{i,j}} M_{i,k}(T) + 
+ \frac{\partial M_{i,k}}{\partial t_{i,k}} t_{i,k} \right] \\
+ &=& \sum_{k=1}^n (-1)^{i+k} \left[
+ \delta^k_j M_{i,k}(T) + 
+ \frac{\partial M_{i,k}}{\partial t_{i,k}} t_{i,k} \right] \\
+\label{det2}
+ &=& (-1)^{i+j} M_{i,j}(T) + \sum_{k=1}^n (-1)^{i+k} \frac{\partial 
+   M_{i,k}}{\partial t_{i,k}} t_{i,k}
+\end{eqnarray}
+
+\noindent By definition, the minor for row $i$ and column $j$ contains terms from neither row $i$ nor column $j$. Therefore the partial derivative of a minor with respect to any term from either the corresponding row or column of the original matrix is zero:
+\begin{equation}\label{det3}
+\frac{\partial M_{i,j}}{\partial t_{i,k}} = 
+\frac{\partial M_{i,j}}{\partial t_{k,j}} = 0 \quad \forall \quad k
+\end{equation}
+
+\noindent Thus all the terms in the summation in Equation \ref{det2} are zero, leaving:
+
+\begin{equation}\label{det_deriv_term}
+\frac{\partial f}{\partial t_{i,j}} = (-1)^{i+j}M_{i,j}(T)
+\end{equation}
+which is the definition of the cofactor matrix of $T$, and the transpose of the definition of the adjoint of $T$:
+
+\begin{equation}
+\label{adjform}
+\frac{\partial \tau}{\partial T} = (adj(T))^t = adj(T^t)
+\end{equation}
+
+\subsection{Second Partial Derivative of $\tau=det(T)$}
+
+The partial derivative of Equation \ref{det_deriv_term} is:
+
+\begin{equation}
+\frac{\partial^2 f}{\partial t_{i,j} \partial t_{k,l}} = (-1)^{i+j}\frac{\partial M_{i,j}(T)}{\partial t_{k,l}}
+\end{equation}
+
+\noindent For a $2 \times 2$ matrix, $M_{i,j}(T) = t_{3-i,3-j}$:
+\begin{equation}
+\frac{\partial^2 f}{\partial t_{i,j} \partial t_{k,l}} = 
+(-1)^{i+j} \delta_{3-i}^k \delta_{3-j}^l
+\end{equation}
+
+\begin{equation}
+\left(\frac{\partial^2 f}{\partial T_i \partial T_j}\right)_{r,s} =
+(-1)^{i+r} \delta_{3-i}^j \delta_{3-r}^s
+\end{equation}
+
+\begin{equation}
+\label{2ndtau2d}
+\frac{\partial^2 \, \tau}{\partial T^2} =
+\left[ \begin{array}{cccc}
+0 & 0 & 0 & 1 \\
+0 & 0 & -1 & 0 \\
+0 & -1 & 0 & 0 \\
+1 & 0 & 0 & 0 
+\end{array} \right]
+\end{equation}
+
+\noindent For a $3 \times 3$ matrix, the Hessian of the determinant is:
+
+\begin{equation}
+\label{2ndtau3d}
+\frac{\partial^2 \tau}{\partial T^2} =
+\left[ \begin{array}{ccccccccc}
+ 0 & 0 & 0 & 0 & t_{3,3} & -t_{3,2} & 0 & -t_{2,3} & t_{2,2} \\
+ 0 & 0 & 0 & -t_{3,3} & 0 & t_{3,1} & t_{2,3} & 0 & -t_{2,1} \\
+ 0 & 0 & 0 & t_{3,2} & -t_{3,1} & 0 & -t_{2,2} & t_{2,1} & 0 \\
+ 0 & -t_{3,3} & t_{3,2} & 0 & 0 & 0 & 0 & t_{1,3} & -t_{1,2} \\
+ t_{3,3} & 0 & -t_{3,1} & 0 & 0 & 0 & -t_{1,3} & 0 & t_{1,1} \\
+ -t_{3,2} & t_{3,1} & 0 & 0 & 0 & 0 & t_{1,2} & -t_{1,1} & 0 \\
+ 0 & t_{2,3} & -t_{2,2} & 0 & -t_{1,3} & t_{1,2} & 0 & 0 & 0 \\
+ -t_{2,3} & 0 & t_{2,1} & t_{1,3} & 0 & -t_{1,1} & 0 & 0 & 0 \\
+ t_{2,2} & -t_{2,1} & 0 & -t_{1,2} & t_{1,1} & 0 & 0 & 0 & 0
+\end{array} \right]
+\end{equation}
+
+\noindent Each non-diagonal $3 \times 3$ block of the $3 \times 3$ result can be expressed as:
+
+\begin{equation}
+\label{3dtauhessblock}
+\frac{\partial^2 f}{\partial T_i \partial T_j}
+ = s\left[\begin{array}{ccc}
+0 & t_{k,3} & -t_{k,2} \\
+-t_{k,3} & 0 & t_{k,1} \\
+t_{k,2} & -t_{k,1} & 0 
+\end{array}\right]\end{equation}
+where 
+\begin{eqnarray}
+k &=& (3-i) + (3-j) \\
+s &=& (-1)^{i+j}\frac{i-j}{|i-j|}
+\end{eqnarray}
+
+\noindent Both the $2 \times 2$ and $3 \times 3$ results are composed of skew-symmetric $n \times n$ submatrices.  For the $3 \times 3$ result, the terms in a submatrix are the values from a single row of $T$.  The diagonal submatrices for both results are zero, and the diagonal terms of each submatrix are zero.
+
+\subsection{Derivatives of other Quantities Involving $\tau$}
+
+\subsubsection{Derivatives of $f(T)=\tau^\gamma$ \label{taugamma}}
+
+For any $\gamma \neq 0$ 
+\begin{eqnarray}
+\frac{\partial}{\partial T} \, \tau^\gamma = \gamma \, \tau^{\gamma-1} \, (adj T)^t
+\end{eqnarray}
+If $\gamma<1$, then the formula is only valid for $\tau \neq 0$. 
+Otherwise, the derivative at $\tau=0$ does not exist. \newline
+
+\noindent If $\tau \neq 0$, one can also write
+\begin{eqnarray}
+\frac{\partial}{\partial T} \, \tau^\gamma = \gamma \, \tau^{\gamma} \, T^{-t}
+\end{eqnarray}
+
+\noindent The second derivative is
+\begin{eqnarray}
+\frac{\partial^2}{\partial T^2} \tau^\gamma & = & \frac{\partial}{\partial T} \left( \frac{\partial}{\partial T} \tau^\gamma \right) \nonumber \\
+ & = &  \frac{\partial}{\partial T} \left( \gamma \tau^{\gamma-1} (adj T)^t \right) \nonumber \\
+ & = & \gamma \,  \frac{\partial}{\partial T} \left( \tau^{\gamma-1} \, \frac{\partial \tau}{\partial T} \right) \nonumber \\
+ & = & \gamma \, \left\{ \tau^{\gamma-1} \frac{\partial^2 \tau}{\partial T^2} + (\gamma-1) \, \tau^{\gamma-2} \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) \right\}
+\end{eqnarray}
+To complete this expression, use formulas \ref{adjform} and either 
+\ref{2ndtau2d} or \ref{2ndtau3d}. \newline
+
+\noindent If $\gamma < 2$, then the second derivative formula is only valid for $\tau \neq 0$. \newline
+
+\subsubsection{Derivatives of $f(T)=(\tau-1)^2$}
+
+\begin{eqnarray}
+\frac{\partial}{\partial T} \, (\tau-1)^2 & = & 2 \, (\tau-1) \, (adj T)^t  \label{tauminus1} \\
+\frac{\partial^2}{\partial T^2} \, (\tau-1)^2 & = & 2 \, \left\{ (\tau-1) \frac{\partial^2 \tau}{\partial T^2} + \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) \right\}  \label{tm1}
+\end{eqnarray}
+To complete this expression, use formulas \ref{adjform} and either 
+\ref{2ndtau2d} or \ref{2ndtau3d}. \newline
+
+\subsubsection{Derivatives of $f(T)=\ln(\tau)$}
+
+For $\tau>0$
+\begin{eqnarray}
+\frac{\partial}{\partial T} \, \ln(\tau) & = & \frac{1}{\tau} \, (adj T)^t \\
+ & = & T^{-t}
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial^2}{\partial T^2} \ln(\tau) & = & \frac{1}{\tau} \frac{\partial^2 \tau}{\partial T^2} - \frac{1}{\tau^2} \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right)
+\end{eqnarray}
+To complete this expression, use formulas \ref{adjform} and either 
+\ref{2ndtau2d} or \ref{2ndtau3d}. \newline
+
+\subsubsection{Derivatives of $f(T)=|\tau-\gamma|$ \label{abstau}}
+
+\begin{eqnarray}
+\frac{\partial}{\partial T} \, |\tau-\gamma| & = & \left\{ \begin{array}{cc} 
++(adj T)^t & \mbox{if $\tau> \gamma$} \\
+-(adj T)^t & \mbox{if $\tau< \gamma$}
+\end{array} \right.
+\end{eqnarray}
+The first derivative is undefined if $\tau=\gamma$. \newline
+
+\begin{eqnarray}
+\frac{\partial^2}{\partial T^2} |\tau-\gamma| & = & \left\{ \begin{array}{cc} 
++\frac{\partial^2 \tau}{\partial T^2} & \mbox{if $\tau>\gamma$} \\
+-\frac{\partial^2 \tau}{\partial T^2} & \mbox{if $\tau<\gamma$} \\
+\end{array} \right.
+\end{eqnarray}
+To complete this expression, use either formula 
+\ref{2ndtau2d} or \ref{2ndtau3d}. \newline
+
+\noindent The second derivative is undefined if $\tau=\gamma$. \newline
+
+% \section{Derivatives of $T^p$}
+% 
+% Define $T^p$ for any positive integer $p$ to be the product of $p$ instances of the matrix $T$.  Define $T^0 = I$.  The derivative of the first power is obvious:
+% \begin{eqnarray}
+% T^1 &=& T \\
+% (T^1)_{i,j} &=& t_{i,j} \\
+% \frac{\partial (T^1)_{i,j}}{\partial t_{r,s}} &=& \delta^i_r \delta^j_s \\
+% \frac{\partial T^1}{\partial t_{r,s}} &=& E_{r,s}
+% \end{eqnarray}
+% 
+% For the second power of $T$:
+% 
+% \begin{eqnarray}
+% T^2 &=& T T \\
+% (T^2)_{i,j} &=& \sum_{k=1}^n t_{i,k} t_{k,j} \\
+% \frac{\partial (T^2)_{i,j}}{\partial t_{r,s}} &=& 
+%   \sum_{k=1}^n \left( \delta^i_r \delta^k_s t_{k,j} 
+%   + t_{i,k} \delta^k_R \delta^j_s 
+%   \right) \\
+% \frac{\partial T^2}{\partial t_{r,s}} &=& \frac{\partial T}{\partial t_{r,s}} T 
+%   + T \frac{\partial T}{\partial t_{r,s}} 
+% \end{eqnarray}
+% 
+% And for the third power of $T$:
+% 
+% \begin{eqnarray}
+% T^3 &=& T T T\\
+% (T^3)_{i,j} &=& \sum_{p=1}^n \sum_{k=1}^n t_{i,k} t_{k,p} t_{p,j} \\
+% \frac{\partial (T^3)_{i,j}}{\partial t_{r,s}} &=& 
+%   \sum_{p=1}^n \sum_{k=1}^n \left( 
+%   \delta^i_r \delta^k_s t_{k,p} t_{p,j} 
+%   + t_{i,k} \delta^k_r \delta^p_s t_{p,j} 
+%   + t_{i,k} t_{k,p} \delta^p_r \delta^j_s 
+%   \right)\\
+% \frac{\partial T^3}{\partial t_{r,s}} &=& \frac{\partial T}{\partial t_{r,s}} T T + T \frac{\partial T}{\partial t_{r,s}} T + T T \frac{\partial T}{\partial t_{r,s}} 
+% \end{eqnarray}
+% 
+% And for the fourth power of $T$:
+% 
+% \begin{eqnarray}
+% T^4 &=& T T T T\\
+% (T^4)_{i,j} &=& \sum_{q=1}^n \sum_{p=1}^n \sum_{k=1}^n t_{i,k} t_{k,p} t_{p,q} t_{q,j} \\
+% \nonumber 
+% \frac{\partial (T^4)_{i,j}}{\partial t_{r,s}} &=& 
+%   \sum_{q=1}^n \sum_{p=1}^n \sum_{k=1}^n ( 
+%    \delta^i_r \delta^k_s t_{k,p} t_{p,q} t_{q,j} 
+%    + t_{i,k} \delta^k_r \delta^p_s t_{p,q} t_{q,j} \\ & & {} 
+%    + t_{i,k} t_{k,p} \delta^p_r \delta^q_s t_{q,j} 
+%    + t_{i,k} t_{k,p} t_{p,q} \delta^q_r \delta^j_s)\\
+% \frac{\partial T^4}{\partial t_{r,s}} &=& 
+%   \frac{\partial T}{\partial t_{r,s}} T T T 
+%   + T \frac{\partial T}{\partial t_{r,s}} T T 
+%   + T T \frac{\partial T}{\partial t_{r,s}} T 
+%   + T T T \frac{\partial T}{\partial t_{r,s}}
+% \end{eqnarray}
+% 
+% I'm not sure how to formalize the next step, but the pattern is clear:
+% 
+% \begin{equation}
+% \frac{\partial T^p}{\partial t_{r,s}}
+%  = \sum_{i=1}^p\left( T^{i-1} \frac{\partial T}{\partial t_{r,s}} T^{p-i} 
+%    \right) \quad \forall \quad p \in \mathbb{Z}, p > 0
+% \end{equation}
+% 
+% Going back to the formulas for single terms in the derivatives, we can simplify further: several of the summations can be eliminated because all but one 
+% of the terms are multiplied by a Kronecker delta equal to zero:
+% \begin{eqnarray}
+% \frac{\partial (T^1)_{i,j}}{\partial t_{r,s}} &=& \delta^i_r \delta^j_s \\
+% \frac{\partial (T^2)_{i,j}}{\partial t_{r,s}} &=& \delta^i_r t_{s,j} + t_{i,r} \delta^j_s \\
+% \frac{\partial (T^3)_{i,j}}{\partial t_{r,s}} &=& 
+% \delta_r^i \sum_{p=1}^n t_{s,p} t_{p,j} + t_{i,r} t_{s,j} + 
+% \delta_s^j \sum_{k=1}^n t_{i,k} t_{k,r} \\
+%  & = & \delta_r^i (T^2)^{s,j} + t_{i,r} t_{s,j}
+%  + \delta_s^j (T^2)_{i,r} \\
+% \nonumber
+% \frac{\partial (T^4)_{i,j}}{\partial t_{r,s}} &=& 
+% \delta^i_r \sum_{q=1}^n \sum_{p=1}^n t_{s,p} t_{p,q} t_{q,j} +
+% t_{i,r} \sum_{q=1}^n t_{s,q} t_{q,j} \\ & & {} +
+% t_{s,j} \sum_{k=1}^n t_{i,k} t_{k,r} +
+% \delta^j_s \sum_{p=1}^n \sum_{k=1}^n t_{i,k} t_{k,p} t_{p,r} \\
+%  & = & \delta^i_r (T^3)_{s,j} +
+% t_{i,r} (T^2)_{s,j} + 
+% t_{s,j} (T^2)_{i,r} +
+% \delta^j_s (T^3)_{i,r}
+% \end{eqnarray}
+% 
+% The pattern isn't evident yet, so for $T^5$:
+% 
+% \begin{eqnarray}{ccc}
+% (T^5)_{i,j} &=& \sum_{u=1}^n \sum_{q=1}^n \sum_{p=1}^n \sum_{k=1}^n
+% t_{i,k} t_{k,p} t_{p,q} t_{q,u} t_{u,j} \\
+% \nonumber
+% \frac{\partial (T^5)_{i,j}}{\partial t_{r,s}} &=&
+%   \sum_{u=1}^n \sum_{q=1}^n \sum_{p=1}^n \sum_{k=1}^n (
+%   \delta^i_r \delta^k_s t_{k,p} t_{p,q} t_{q,u} t_{u,j} \\ \nonumber & & {} +
+%   t_{i,k} \delta^k_r \delta^p_s t_{p,q} t_{q,u} t_{u,j} +
+%   t_{i,k} t_{k,p} \delta^p_r \delta^q_s t_{q,u} t_{u,j} \\ & & {} +
+%   t_{i,k} t_{k,p} t_{p,q} \delta^q_r \delta^u_s t_{u,j} +
+%   t_{i,k} t_{k,p} t_{p,q} t_{q,u} \delta^u_r \delta^j_s )\\
+% \nonumber
+% &=& \delta^i_r \sum_{u=1}^n \sum_{q=1}^n \sum_{p=1}^n t_{s,p} t_{p,q} t_{q,u} t_{u,j}
+%  + t_{i,r} \sum_{u=1}^n \sum_{q=1}^n t_{s,q} t_{q,u} t_{u,j}
+%  \\ \nonumber & & {} + 
+%  \sum_{u=1}^n \sum_{k=1}^n t_{i,k} t_{k,r} t_{s,u} t_{u,j}
+%  + t_{s,j} \sum_{p=1}^n \sum_{k=1}^n t_{i,k} t_{k,p} t_{p,r}
+%  \\ & & {} + 
+%  \delta^j_s \sum_{q=1}^n \sum_{p=1}^n \sum_{k=1}^n t_{i,k} t_{k,p} t_{p,q} t_{q,r} \\
+% \nonumber
+% &=& \delta^i_r (T^4)_{s,j} + t_{i,r} (T^3)_{s,j} + (T^2)_{i,r}(T^2)_{s,j}
+%   + t_{s,j} (T^3)_{i,r} + \delta^j_s (T^4)_{i,r} \\
+% \end{eqnarray}
+
+
+\chapter{Derivatives of target metrics}
+
+\section{Derivatives of terms $3 \times 2$ $A^{\prime\prime}$ with respect to $2 \times 2$ $A$}
+
+Let $W_{*,i}$ denote the $i^{th}$ column of the matrix $W$.
+
+\begin{eqnarray}
+n^\prime_w &=& \frac{W^\prime_{*,1} \times W^\prime_{*,2}}
+                   {|W^\prime_{*,1} \times W^\prime_{*,2}|} \\
+Z &=& \left[ \frac{W^\prime_{*,1}}{|W^\prime_{*,1}|}, 
+              n^\prime_w \times \frac{W^\prime_{*,1}}{|W^\prime_{*,1}|} \right] \\
+W &=& Z^t \times W^\prime \\
+n^{\prime\prime} &=& \frac{A^{\prime\prime}_{*,1} \times A^{\prime\prime}_{*,2}}
+                       {|A^{\prime\prime}_{*,1} \times A^{\prime\prime}_{*,2}|} \\
+n_r &=& \left\{ \begin{array}{ll} 
+         n^\prime_w & \textrm{if $(n^{\prime\prime} \cdot n^\prime_w) >= 0$} \\
+        -n^\prime_w & \textrm{if $(n^{\prime\prime} \cdot n^\prime_w) < 0$}
+        \end{array} \right. \\
+v &=& \frac{n_r \times n^{\prime\prime}}{|n_r \times n^{\prime\prime}|} \\
+R &=& \left[ v, n^{\prime\prime}, v \times n^{\prime\prime} \right] \\
+S &=& \left[ v, n_r, v \times n_r \right] \\
+T &=& S \times R^t \\
+A^\prime &=& T \times A^{\prime\prime} \\
+A &=& Z^t \times A^\prime
+\end{eqnarray}
+
+\section{Derivatives of Non-Barrier Metrics}
+
+\subsection{Derivatives of $\mu_n (T)=|T-I_n|^2$ \label{tmi}}
+
+\noindent  This metric preserves the shape, size, and orientation of the target and is valid for any $n$. \newline
+
+\begin{equation}
+\mu(T) = |T-I_n|^2 = \sum_{i=1}^n \sum_{j=1}^n (t_{i,j} - b_{i,j})^2
+\end{equation}
+
+\begin{equation}
+\frac{\partial \mu}{\partial t_{i,j}} = 2 (t_{i,j} - \delta_{i,j})
+\end{equation}
+
+\begin{equation}
+\frac{\partial \mu}{\partial T} = 2(T - I_n)
+\end{equation}
+
+
+\begin{equation}
+\frac{\partial^2 \mu}{\partial t_{i,j} \partial t_{k,l}} = 2 \delta^i_k \delta^j_l \end{equation}
+
+\begin{equation}
+\frac{\partial^2 \mu}{\partial T^2} = 2 I_{n^2}
+\end{equation}
+ 
+\noindent Alternatively, one can write
+\begin{eqnarray}
+|T-I_n|^2 = |T|^2 - 2 tr(T) + n
+\end{eqnarray}
+so that 
+\begin{eqnarray}
+\frac{\partial \mu}{\partial T} & = & \frac{\partial}{\partial T} |T|^2 - 2 \frac{\partial}{\partial T} tr(T) \nonumber \\
+ & = & 2 T - 2 I_n \nonumber \\
+ & = & 2 (T-I_n)
+\end{eqnarray}
+and similarly for the second derivatives. \newline
+
+\subsection{Derivatives of $\mu_2(T)=|T|^2 - 2 \, \tau = \frac{1}{2} \, |T-(adj T)^t|^2$ \label{2ds}}
+
+This metric preserves the shape of the target and applies to $n=2$ only. \newline
+
+\begin{eqnarray}
+\frac{\partial \mu}{\partial T} & = & 2 \, \left\{ T- (adj T)^t \right\}
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial^2 \mu}{\partial T_i \partial T_j} & = & 2 \delta_i^j I - 2 \frac{\partial^2 \, \tau}{\partial T_i \partial T_j} \nonumber \\
+ & = & 2 \, \left[ \begin{array}{cccc}
+1 & 0 & 0 & -1 \\
+0 & 1 & 1 & 0 \\
+0 & 1 & 1 & 0 \\
+-1 & 0 & 0 & 1 
+\end{array} \right]
+\end{eqnarray}
+
+\subsection{Derivatives of $\mu_2(T)=|T|^2 - 2 \, \psi(T) + 2$ \label{magic}}
+
+This metric preserves the shape and size of the target and applies to $n=2$ only. \newline 
+
+\begin{eqnarray}
+\psi(T) = \sqrt{|T|^2 + 2 \, \tau} \label{psi-def}
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial}{\partial T} \psi(T) = \frac{T + (adj T)^t}{\psi} \label{psi-1st}
+\end{eqnarray}
+
+\noindent The previous formula is valid for all $T$ except those $T$ 
+for which $\psi(T)=0$. The set of matices for which $\psi=0$ are those
+which satisfy $T^t T + \tau \, I = 0$ (they are the scaled-flips). \newline
+
+\noindent Let $s=t_{1,2}-t_{2,1}$. The following holds for $\psi \neq 0$
+\begin{eqnarray}
+\label{psi-2nd}
+\frac{\partial^2 \psi}{\partial T^2}
+ & = & \frac{1}{\psi^3} \, \left[ \begin{array}{cccc}
+s^2 & -s \, tr(T) & +s \, tr(T) & s^2 \\
+-s \, tr(T) & (tr \, T)^2 & -(tr \, T)^2 & -s \, tr(T) \\
++s \, tr(T) & -(tr \, T)^2 & (tr \, T)^2 & +s \, tr(T) \\
+s^2 & -s \, tr(T) & +s \, tr(T) & s^2
+\end{array} \right] \nonumber \\
+\end{eqnarray}
+
+\noindent The previous formulas give
+\begin{eqnarray}
+\label{psi1st}
+\frac{\partial \mu}{\partial T} = 2 \, \left( T - \frac{T + (adj T)^t}{\psi(T)} \right)
+\end{eqnarray}
+
+\begin{eqnarray}
+\label{psi2nd}
+\frac{\partial^2 \mu}{\partial T^2}  & = & 2 \, \left\{ I_4 - \frac{\partial^2 \psi}{\partial T^2} \right\}
+%2 \, \left\{ I_4 - \frac{1}{\psi^3} \, \left[ \begin{array}{cccc}
+%s^2 & -s \, tr(T) & +s \, tr(T) & s^2 \\
+%-s \, tr(T) & (tr \, T)^2 & -(tr \, T)^2 & -s \, tr(T) \\
+%+s \, tr(T) & -(tr \, T)^2 & (tr \, T)^2 & +s \, tr(T) \\
+%s^2 & -s \, tr(T) & +s \, tr(T) & s^2
+%\end{array} \right] \right\} \nonumber \\
+\end{eqnarray}
+ 
+\noindent In terms of a practical software implementation, there should be 
+added a check so that, given $T$, if $\psi(T) = 0$, then apply
+a random $\epsilon$ perturbation to each component of $T$ so that $\psi$ 
+is non-zero.  Then it is valid to apply \ref{psi1st} and \ref{psi2nd}. \newline
+
+\subsection{Derivatives of $\mu_2(T)=\frac{|T|^2 + 2}{2 \, \psi(T)}-1$ \label{magic2}}
+
+\noindent This metric preserves the shape and size of the target and applies
+to $n=2$ only. The metric has a 'barrier', not against singular matrices,
+but against scaled flips. Recall $T \in M_2$ is a scaled flip if and only if 
+$\psi(T)=0$.\footnote{Note that $\psi(T) \geq 0$ for all $T$.} Therefore, the metric is undefined on the set of 
+scaled flips, and it should be treated the same as a normal barrier metric 
+in that if $T$ is a scaled flip, then the implementation should return 
+{\it false} or {\it invalid}. \newline
+
+\noindent For $\psi> 0$,
+\begin{eqnarray}
+\mu_2(T)=\frac{|T|^2 + 2}{2 \, \psi(T)} - 1
+\end{eqnarray}
+where $\psi$ is defined in \ref{psi-def}. \newline
+
+\begin{eqnarray}
+\frac{\partial \mu_2}{\partial T} & = & \frac{1}{\psi^2} \, \left\{ \psi \, T - \left( \frac{1}{2} |T|^2 + 1 \right) \frac{\partial \psi}{\partial T} \right\} \\
+& = & \frac{1}{\psi} \, \left\{ T - (\mu_2+1) \,  \frac{\partial \psi}{\partial T} \right\} 
+\end{eqnarray}
+with $\frac{\partial \psi}{\partial T}$ given in \ref{psi-1st}. \newline
+
+\begin{eqnarray}
+\frac{\partial^2 \mu_2}{\partial T^2} & = & \frac{I_4}{\psi} - \frac{1}{\psi^2} \, \left\{ \psi \, (\mu_2+1) \, \frac{\partial^2 \psi}{\partial T^2} - 2 (\mu_2+1) \left( \frac{\partial \psi}{\partial T} \otimes \frac{\partial \psi}{\partial T} \right) + T \otimes \frac{\partial \psi}{\partial T} + \frac{\partial \psi}{\partial T} \otimes T \right\} \nonumber \\
+\end{eqnarray}
+
+\subsection{Derivatives of $\mu_n(T)=|T|^2 - \frac{1}{n} \, (tr \, T) |tr(T)|$ \label{si+}}
+
+This metric preserves the shape and orientation of the target and applies 
+to both $n=2$ and $n=3$. \newline
+
+\noindent The metric is
+\begin{eqnarray}
+\mu_n(T)=|T|^2 - \frac{1}{n} \, (tr \, T) \, |tr(T)|
+\end{eqnarray}
+
+\noindent The metric is differentiable on $M_n$, with
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial T} = 2 \, \left\{ T - \frac{1}{n} \, |tr(T)| \, I \right\} \label{derv1-si+}
+\end{eqnarray}
+
+\noindent The second derivative does not exist when $tr(T)=0$; otherwise 
+it is  
+\begin{eqnarray}
+\frac{\partial^2 \mu_n}{\partial T^2} = 2 \, \left\{ I_{n^2} - \frac{1}{n} \, \left( I \otimes I \right) \right\}
+\end{eqnarray}
+for $tr(T) > 0$, and 
+\begin{eqnarray}
+\frac{\partial^2 \mu_n}{\partial T^2} = 2 \, \left\{ I_{n^2} + \frac{1}{n} \, \left( I \otimes I \right) \right\}
+\end{eqnarray}
+for $tr(T) < 0$. \newline
+
+\subsection{Derivatives of $\mu_n(T) = (\tau-1)^2$ \label{tausqr} }
+
+\noindent This metric preserves the size of the target and is valid for both $n=2$ and $n=3$. \newline
+
+\noindent From section \ref{taugamma}
+\begin{eqnarray}
+\frac{\partial}{\partial T} \, (\tau-1)^2 = 2 \, (\tau-1) \, (adj T)^t
+\end{eqnarray}
+
+\noindent The second derivative is
+\begin{eqnarray}
+\frac{\partial^2}{\partial T^2} \, (\tau-1)^2 & = & 2 \, \left\{ (\tau-1) \frac{\partial^2 \tau}{\partial T^2} + \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) \right\}
+\end{eqnarray}
+To complete this expression, use formulas \ref{adjform} and either 
+\ref{2ndtau2d} or \ref{2ndtau3d}. \newline
+
+
+\subsection{Derivatives of $\mu_n(T) = \left\{ |\tau-\gamma| - \left( \tau-\gamma \right) \right\}^p$ \label{untangle1}}
+
+\noindent This metric is an untangler and applies to both $n=2$ and $n=3$. 
+For best results, we recommend $p > 2$.
+ 
+\begin{eqnarray}
+\mu_n(T) & = & \left\{ |\tau-\gamma| - \left( \tau-\gamma \right) \right\}^p \\
+         & = & \left\{ \begin{array}{cc} 
+ 2^p \, (\gamma-\tau)^p & \mbox{if $\tau<\gamma$} \\
+0                       & \mbox{if $\tau \geq \gamma$}
+\end{array} \right.
+\end{eqnarray}
+Note that the metric is continuous at all $\tau$ and at $\tau=\gamma$, in 
+particular. \newline
+
+\noindent The first derivative with respect to $T$ is
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial T} & = & \left\{ \begin{array}{cc} 
+- p \, 2^p \, (\gamma-\tau)^{p-1} \frac{\partial \tau}{\partial T} & \mbox{if $\tau<\gamma$} \\
+0                      & \mbox{if $\tau \geq \gamma$}
+\end{array} \right.
+\end{eqnarray}
+Note that the derivative is not continuous at $\tau=\gamma$ when $p \leq 1$. 
+Gradient-based methods should thus refrain from the case $p \leq 1$.
+
+\noindent The second derivative with respect to $T$ is
+\begin{eqnarray}
+\frac{\partial^2 \mu_n}{\partial T^2} & = & \left\{ \begin{array}{cc} 
+-p \, 2^p \, (\gamma-\tau)^{p-2} \left[ (\gamma-\tau) \frac{\partial^2 \tau}{\partial T^2} - (p-1) \, \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) \right] & \mbox{if $\tau<\gamma$} \\
+0                      & \mbox{if $\tau \geq \gamma$} 
+\end{array} \right. \nonumber \\
+\end{eqnarray}
+Note that the second derivative is not continous at $\tau=\gamma$ when 
+$p \leq 2$.   Therefore, it is advisable to require that $p > 2$ in 
+order that Hessian-based methods work properly. \newline
+
+\noindent To complete these expressions, use formulas \ref{adjform} and either 
+\ref{2ndtau2d} or \ref{2ndtau3d}. \newline
+
+\subsection{Derivatives of $\mu_n(T) = \frac{1}{2} \left( - \tau + \sqrt{\tau^2 + \left(\epsilon \, \bar{\tau} \right)^2} \right)$ \label{untangle2}}
+
+\noindent This is an untangle metric for both $n=2$ and $n=3$. Both 
+$\epsilon$ and $\bar{\tau}$ are parameters. \newline
+
+\begin{eqnarray} 
+\mu_n(T) = \frac{1}{2} \left( - \tau + \sqrt{\tau^2 + \left(\epsilon \, \bar{\tau} \right)^2} \right)
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial T} & = & \frac{1}{2} \left( -1 + \frac{\tau}{\sqrt{\tau^2 + \left(\epsilon \, \bar{\tau} \right)^2}} \right) \, (adj \, T)^t 
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial^2 \mu_n}{\partial T^2} & = & \frac{1}{2} \left\{ f \, \frac{\partial^2 \tau}{\partial T^2} + \frac{\partial f}{\partial T} \otimes (adj \, T)^t \right\} \\
+f & = & -1 +  \frac{\tau}{\sqrt{\tau^2 + \left(\epsilon \, \bar{\tau} \right)^2}} \\
+\frac{\partial f}{\partial T} & = & \frac{(\epsilon \, \bar{\tau})^2}{\left(\tau^2 + \left(\epsilon \, \bar{\tau} \right)^2 \right)^{3/2}} \, (adj T)^t
+\end{eqnarray}
+
+
+\subsection{Derivatives of $\mu_3(T) = |T|^3 - 3 \sqrt{3} \, \tau$ \label{shape3d}}
+
+\noindent This metric preserves the shape of the target and applies 
+to $n=3$ only. \newline
+
+\begin{eqnarray}
+\mu_3 (T) = |T|^3 - 3 \sqrt{3} \, \tau
+\end{eqnarray}
+
+\noindent From \ref{tcubed} and \ref{adjform}
+\begin{eqnarray}
+\frac{\partial \mu_3}{\partial T} & = & 3 |T| T - 3 \sqrt{3} \, (adj T)^t
+\end{eqnarray}
+The first derivative exists for all $T$. \newline
+
+\noindent From \ref{hesst3},
+\begin{eqnarray}
+\frac{\partial^2 \mu_3}{\partial T^2} = 3 \, \left\{ |T| \, I_9 + \frac{T \otimes T}{|T|} - \sqrt{3} \, \frac{\partial^2 \tau}{\partial T^2} \, \right\}
+\end{eqnarray}
+%\begin{eqnarray}
+%\frac{\partial^2 \mu_3}{\partial T_i \partial T_j} & = & 3 \, \delta_i^j \, |T| \, I - 3 \sqrt{3} \, \frac{\partial^2 \tau}{\partial T_i \partial T_j}
+%\end{eqnarray}
+To complete this expression, use formula \ref{2ndtau3d}. \newline
+
+\subsection{Derivatives of $\mu_3(T) = |T|^3 - 3 \sqrt{3} \, \tau + \gamma (\tau-1)^2$ \label{ss3d}}
+
+\noindent This metric preserves the shape and size of the target and applies
+to $n=3$ only. \newline
+
+\noindent This is a composite metric for in which the first two terms are the 
+same as the metric in the previous section and the last term was discussed
+in equations \ref{tauminus1} and \ref{tm1}. \newline 
+
+\begin{eqnarray}
+\mu_3 (T) & = & |T|^3 - 3 \sqrt{3} \, \tau + \gamma (\tau-1)^2 \\
+\frac{\partial \mu_3}{\partial T} & = & 3 |T| T - \{ 3 \sqrt{3} - 2 \gamma \, (\tau-1) \}  \, (adj T)^t \\ \nonumber
+\frac{\partial^2 \mu_3}{\partial T^2} & = & 3 \, \left\{ |T| \, I_9 + \frac{T \otimes T}{|T|} \right\} + 2 \gamma \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right)- \left\{ 3 \sqrt{3} \, - 2 \gamma (\tau-1) \right\} \, \frac{\partial^2 \tau}{\partial T^2}
+%\frac{\partial^2 \mu_3}{\partial T_i \partial T_j} & = & 3 \, \delta_i^j \, |T| \, I - \left\{ 3 \sqrt{3} \, - 2 \gamma (\tau-1) \right\} \, \frac{\partial^2 \tau}{\partial T_i \partial T_j}
+\end{eqnarray}
+To complete the last expression, use formula \ref{2ndtau3d}. \newline
+
+\subsection{Derivatives of $\mu_2(T)=|T^t T - \tau \, I|^2$ \label{shape2d}}
+
+This metric preserves the shape of the target applies to $n=2$ only. \newline
+
+\begin{eqnarray}
+\mu_2 (T) & = & |T^t T - \tau \, I|^2 \\
+          & = & |T^t T|^2 - 2 \tau |T|^2 + 2 \tau^2 \nonumber
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_2}{\partial T} & = & 4 \, \left\{ T T^t T - \tau T + \left( \tau - \frac{1}{2} |T|^2 \right) \, (adj T)^t \right\}
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial^2 \mu_2}{\partial T^2} & = & \frac{\partial^2}{\partial T^2} |T^t T|^2 - 2 \, \frac{\partial^2}{\partial T^2} \left( \tau |T|^2 \right) + 2 \, \frac{\partial^2}{\partial T^2} \tau^2
+\end{eqnarray}
+where the first term is given in \ref{hessttt}, and the second a third terms are
+\begin{eqnarray}
+\frac{\partial^2}{\partial T^2} \left( \tau \, |T|^2 \right) & = & 2 \, \left\{ \tau \, I_4 + \frac{1}{2} \, |T|^2 \, \frac{\partial^2 \tau}{\partial T^2} + (adj \, T)^t \otimes T + T \otimes (adj \, T)^t \right\} \nonumber \\
+ \\
+\frac{\partial^2}{\partial T^2} \tau^2 & = & 2 \, \left\{ \tau \frac{\partial^2 \tau}{\partial T^2} + \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right\}
+\end{eqnarray}
+
+\subsection{Derivatives of $\mu_2(T)=|T-(adj T)^t|^2 + \gamma (\tau-1)^2$ \label{ss2d} }
+
+This metric preserves the shape and size of the target and applies to $n=2$ only.
+\begin{eqnarray}
+\mu_2 (T) & = & |T-(adj T)^t|^2 + \gamma (\tau-1)^2 \\
+          & = & 2 \, |T|^2 - 4 \, \tau  + \gamma (\tau-1)^2
+\end{eqnarray}
+
+\noindent This is a composite metric, the first term being twice the 
+metric in Section \ref{2ds} and the second term being $\gamma$ times the
+expressions in \ref{tauminus1} and \ref{tm1}. The derivatives are accordingly 
+a linear combination of the derivatives of these two terms. \newline
+
+%\subsection{Derivatives of $\mu_3(T)=|T-(adj T)^t|^2 + \gamma (\tau-1)^2$ \label{ss3dalt} }
+
+%This metric preserves the shape and size of the target and applies to $n=3$ only.
+%\begin{eqnarray}
+%\mu_3 (T) & = & |T-(adj T)^t|^2 + \gamma (\tau-1)^2 \\
+%          & = & |T|^2 - 6 \, \tau + |adj T|^2 + \gamma (\tau-1)^2
+%\end{eqnarray}
+
+%\noindent This is a composite metric, the second term being $\gamma$ times the
+%expressions in \ref{tauminus1} and \ref{tm1}. The derivatives are accordingly 
+%a linear combination of the derivatives of these two terms. \newline
+
+%\noindent Let the first term be 
+%\begin{eqnarray}
+%\nu(T) & = & |T|^2 - 6 \, \tau + |adj T|^2 
+%\end{eqnarray}
+%The first derivative is
+%\begin{eqnarray}
+%\frac{\partial \nu}{\partial T} & = &  2 \, \left( 1 + |T|^2 \right) \, T - 6 \, (adj T)^t - 2 \, T \, T^t \, T
+%\end{eqnarray}
+%while the second derivative is
+%\begin{eqnarray}
+%\frac{\partial^2 \nu}{\partial T^2} & = & 2 \, I_9 + \frac{\partial^2}{\partial T^2} \, |adj T|^2 - 6\, \frac{\partial^2 \tau}{\partial T^2}
+%\end{eqnarray}
+%Expressions for the latter two terms are given in (\ref{hess-nrm-adj}) and (\ref{2ndtau3d}), respectively. \newline
+
+\subsection{Derivatives of $\mu_n(T)=|T| - \frac{1}{\sqrt{n}} \, (tr T)$ \label{sho} }
+
+\noindent This metric preserves the shape and orientation of the target and 
+applies to both $n=2$ and $n=3$.  \newline
+
+\begin{eqnarray}
+\mu(T) & = & |T| - \frac{1}{\sqrt{n}} \, \left( tr \, T \right) \\
+\frac{\partial \mu}{\partial T} & = & \frac{T}{|T|} - \frac{1}{\sqrt{n}} \, I \\\frac{\partial^2 \mu}{\partial T^2} & = & \frac{1}{|T|} \, \left\{ I_{n^2} - \frac{(T \otimes T)}{|T|^2}\right\}
+\end{eqnarray}
+The metric is non-differentiable at $T=0$. \newline
+
+\section{Derivatives of Barrier Metrics}
+
+\subsection{Derivatives of $\mu_n(T)=\frac{|T-I_n|^2}{2 \, \tau}$ \label{sso+}}
+
+\noindent This metric preserves the shape, size, and orientation of the target
+and applies to both $n=2$ and $n=3$. It is assumed that $\tau>0$, since 
+this is a barrier metric. \newline
+
+\noindent Define $g(T)=2 \tau$ so that
+\begin{eqnarray}
+\frac{\partial g}{\partial T} & = & 2 \, (adj T)^t \\
+\frac{\partial^2 g}{\partial T^2} & = & 2 \, \frac{\partial^2 \tau}{\partial T^2}
+\end{eqnarray}
+To complete this last expression, use either formula \ref{2ndtau2d} or \ref{2ndtau3d}. \newline
+
+\noindent Next, $f(T)=|T-I|^2$ is the metric in section \ref{tmi}. It's
+derivatives are given there as well. Then $\mu_n(T) = \frac{f(T)}{g(T)}$ 
+and formulas \ref{quotient1} and \ref{quotient2} may be used to calculate the derivatives.  \newline
+
+\noindent Explicitly, 
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial T} = \frac{1}{\tau} \, \left\{ \left( T - I_n \right) - \mu_n(T) \, \left[ adj(T) \right]^t \, \right\}
+\end{eqnarray}
+and 
+\begin{eqnarray}
+\frac{\partial^2}{\partial T^2} \, \mu_n & = & \frac{1}{\tau} \, I_{n^2} - \frac{\mu_n}{\tau^2} \, \left\{ \tau \, \frac{\partial^2 \tau}{\partial T^2} - 2 \, \left[ (adj \, T)^t \otimes (adj \, T)^t \right] \right\} \nonumber \\
+ & - & \frac{1}{\tau^2} \left\{ \, (T-I_n) \otimes (adj \, T)^t + (adj \, T)^t \otimes (T-I_n) \, \right\}
+\end{eqnarray}
+
+\subsection{Derivatives of $\mu_n(T)=|T^{-t}-I|^2$ \label{sso+2}}
+
+\noindent This metric preserves the shape, size, and orientation of the target
+and applies to both $n=2$ and $n=3$. \newline
+
+\noindent For $\tau>0$
+\begin{eqnarray}
+\mu_n (T) & = & |T^{-t}-I|^2 \\
+          & = & |T^{-1}-I|^2  \\
+          & = & |T^{-1}|^2 - 2 \, tr(T^{-1}) + n \\
+          & = & \frac{1}{\tau^2} \, |adj T|^2 - \frac{2}{\tau} \, tr(adj T) + n
+\end{eqnarray}
+
+\noindent {\bf The Case $n=2$}. \newline
+If $n=2$, the previous simplifies to
+\begin{eqnarray}
+\mu_2 (T) & = &  \frac{1}{\tau^2} \, |T|^2 - \frac{2}{\tau} \, tr(T) + 2
+\end{eqnarray}
+
+\noindent The dervatives for the case $n=2$ are
+\begin{eqnarray}
+\frac{\partial \mu_2}{\partial T} = \frac{2}{\tau^3} \left\{ \tau \, T - \tau^2 I + \left( \tau \, (tr T) - |T|^2 \right) \, (adj T)^t \right\}
+\end{eqnarray}
+
+
+\begin{eqnarray}
+\frac{\partial^2 \mu_2}{\partial T^2} = \frac{\partial^2}{\partial T^2} \frac{|T|^2}{\tau^2} - 2 \frac{\partial^2}{\partial T^2} \frac{tr(T)}{\tau}
+\end{eqnarray}
+with
+\begin{eqnarray}
+ \frac{\partial^2}{\partial T^2} \frac{|T|^2}{\tau^2} & = & \frac{2}{\tau^2} \, I_{4} \nonumber \\
+ & - & \frac{2}{\tau^4} \left\{ |T|^2 \left( \tau \, \frac{\partial^2 \tau}{\partial T^2} - 3 \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T}  \right) + 2 \tau \left( T \otimes \frac{\partial \tau}{\partial T} + \frac{\partial \tau}{\partial T} \otimes T \right) \right\} \nonumber \\
+\end{eqnarray}
+and 
+\begin{eqnarray}
+ \frac{\partial^2}{\partial T^2} \frac{tr(T)}{\tau} & = & -\frac{1}{\tau^2} \left\{ tr(T) \, \frac{\partial^2 \tau}{\partial T^2} -2 \frac{tr(T)}{\tau} \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) + I_2 \otimes \frac{\partial \tau}{\partial T} + \frac{\partial \tau}{\partial T} \otimes I_2 \right\} \nonumber \\
+\end{eqnarray}
+
+\noindent {\bf The Case $n=3$}. \newline
+\begin{eqnarray}
+\mu_3 (T) & = & \frac{1}{\tau^2} \, |adj T|^2 - \frac{2}{\tau} \, tr(adj T) + 3
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_3}{\partial T} &=& 
+  \frac{1}{\tau^2}\frac{\partial}{\partial T}|adj T|^2 +
+  \frac{2}{\tau^2}\left[ tr(adj T) - \frac{|adj T|^2}{\tau}\right ] \frac{\partial \tau}{\partial T} -
+  \frac{2}{\tau}\frac{\partial}{\partial T} tr(adj T) \\
+  & = & \nonumber 2 \left( 
+  \frac{1}{\tau^2}\left[ |T|^2 T - T T^t T \right] +
+  \frac{1}{\tau^2}\left[ tr(adj T) - \frac{|adj T|^2}{\tau}\right ] \frac{\partial \tau}{\partial T} -
+  \frac{1}{\tau}\left[ tr(T) I - T^t \right] \right) \\
+\frac{\partial^2 \mu_3}{\partial T^2} &=& \frac{\partial^2}{\partial T^2} \frac{|adj T|^2}{\tau^2} - 2 \frac{\partial^2}{\partial T^2} \frac{tr(adj \, T)}{\tau}
+\end{eqnarray}
+with
+\begin{eqnarray}
+\frac{\partial^2}{\partial T^2} \frac{|adj \, T|^2}{\tau^2} & = & \frac{1}{\tau^2} \, \frac{\partial^2}{\partial T^2} |adj \, T|^2 - \frac{1}{\tau^4} \, Y \label{adj-frac} \\
+Y & = & 2 |adj \, T|^2 \left( \tau \frac{\partial^2 \tau}{\partial T^2} + \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) - 8 |adj \, T|^2 \left( (adj \, T)^t \otimes (adj \, T)^t \right) \nonumber \label{yadj-frac} \\
+ & + & 2 \tau \, \left( \frac{\partial}{\partial T} |adj \, T|^2 \otimes (adj \, T)^t + (adj \, T)^t \otimes  \frac{\partial}{\partial T} |adj \, T|^2 \right) \\
+\frac{\partial^2}{\partial T^2} \frac{tr(adj \, T)}{\tau} & = & \frac{1}{\tau} \, \frac{\partial^2}{\partial T^2} tr(adj \, T) - \frac{1}{\tau^2} \, Z \\
+Z & = & tr(adj \, T) \frac{\partial^2 \tau}{\partial T^2} - 2 \frac{tr(adj \, T)}{\tau} \left( \frac{\partial \tau}{\partial T} \otimes  \frac{\partial \tau}{\partial T} \right) \nonumber \\
+ & + & \frac{\partial}{\partial T} tr(adj \, T) \otimes \frac{\partial \tau}{\partial T} + \frac{\partial \tau}{\partial T} \otimes  \frac{\partial}{\partial T} tr(adj \, T)
+\end{eqnarray}
+See Sections \ref{nrm-adj} and \ref{traj} for completion of the derivatives of 
+$|adj \, T|^2$ and $tr(adj \, T)$. \newline
+
+\subsection{Derivatives of $\mu_n(T) = \frac{1}{2\tau} \left( |T|^2 - \frac{1}{n} (tr \, T) |tr(T)| \right)$ \label{nu-over-tau}}
+
+\noindent This metric preserves the shape and orientation of the target and
+applies to both $n=2$ and $n=3$. \newline
+
+\noindent Let $\nu(T) = |T|^2 - \frac{1}{n} (tr \, T) |tr(T)|$, which is the 
+non-barrier metric in Section \ref{si+}. Then
+\begin{eqnarray}
+\mu_n(T) = \frac{\nu(T)}{2 \tau}
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial T} = \frac{1}{2 \tau^2} \, \left\{ \tau \frac{\partial \nu}{\partial T} - \nu \, (adj \, T)^t \right\}
+\end{eqnarray}
+with the derivative of $\nu$ given in \ref{derv1-si+}. \newline
+
+\begin{eqnarray}
+\frac{\partial^2 \mu_n}{\partial T^2} & = & \frac{1}{2 \tau} \frac{\partial^2 \nu}{\partial T^2} - \frac{1}{2 \tau^2} Z \\
+Z & = & \nu \frac{\partial^2 \tau}{\partial T^2} - 2 \frac{\nu}{\tau} \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) + \frac{\partial \nu}{\partial T} \otimes \frac{\partial \tau}{\partial T} + \frac{\partial \tau}{\partial T} \otimes \frac{\partial \nu}{\partial T}
+\end{eqnarray}
+
+\subsection{Derivatives of $\mu_n(T)=|T-T^{-t}|^2$ \label{ss+1} }
+
+\noindent This metric preserves the shape and size of the target and applies
+to both $n=2$ and $n=3$. \newline
+
+\noindent For $\tau>0$
+\begin{eqnarray}
+\mu_n(T) & = & |T-T^{-t}|^2 \\
+         & = & |T|^2 + |T^{-1}|^2 - 2 \, n \\
+         & = & |T|^2 + \frac{|adj \, T|^2}{\tau^2} - 2 \, n
+\end{eqnarray}
+
+\noindent The first derivative:
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial T} & = & 2 \, T + \frac{2}{\tau^3} \left\{ \tau \, |T|^2 T - \tau \, T \, T^t T - |adj \, T|^2 \, (adj \, T)^t \right\}
+\end{eqnarray}
+
+\noindent The second derivative:
+\begin{eqnarray}
+\frac{\partial^2 \mu_n}{\partial T^2} & = & 2 I_{n^2} + \frac{\partial^2}{\partial T^2} \left( \frac{|adj \, T|^2}{\tau^2} \right)
+\end{eqnarray}
+The last term is given in \ref{adj-frac} and \ref{yadj-frac}. \newline
+
+\noindent Recall that for $n=2$, $|adj \, T|^2=|T|^2$. So for $n=2$, the above formulas simplify to:
+
+\begin{eqnarray}
+\mu_2(T) & = & \left(1 + \frac{1}{\tau^2}\right) |T|^2 - 4 \\
+\frac{ \partial \mu_2 }{ \partial T } & = & 2 \left\{ 
+          \left(1 + \frac{1}{\tau^2}\right) T - \frac{|T|^2}{\tau^3} 
+          \frac{\partial \tau}{\partial T} \right\} \\
+\nonumber
+\frac{\partial^2 \mu_2}{\partial T^2} & = &
+          2 \left(1 + \frac{1}{\tau^2}\right) I -
+          \frac{4}{\tau^3}\left( T \otimes \frac{\partial \tau}{\partial T} +
+                                 \frac{\partial \tau}{\partial T} \otimes T \right) +
+          \frac{6 |T|^2}{\tau^4}\left( \frac{\partial \tau}{\partial T} \otimes
+                                       \frac{\partial \tau}{\partial T} \right) -
+          \frac{2 |T|^2}{\tau^3}\frac{\partial^2 \tau}{\partial T^2}
+\end{eqnarray}
+
+\subsection{Derivatives of $\mu_2(T)=|T|^2 - 2 \ln(\tau) - 2$ \label{ss+22d} }
+
+\noindent This metric preserves the shape and size of the target and applies
+to $n=2$. \newline
+
+\noindent For $\tau>0$
+\begin{eqnarray}
+\frac{\partial \mu}{\partial T} & = & 2 \, \left( T - \frac{1}{\tau} (adj T)^t \right) \\
+\frac{\partial^2 \mu}{\partial T^2} & = & 2 \, \left\{ I_{n^2}  - \frac{1}{\tau} \frac{\partial^2 \tau}{\partial T^2} + \frac{1}{\tau^2} \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) \right\}
+\end{eqnarray}
+To complete this expression, use formulas \ref{adjform} and either 
+\ref{2ndtau2d} or \ref{2ndtau3d}. \newline
+
+\subsection{Derivatives of $\mu_3(T)=|T|^3 - 3 \sqrt{3} \ln(\tau) - 3 \sqrt{3}$ \label{ss+23d}}
+
+\noindent This metric preserves the shape and size of the target and applies
+to $n=3$. \newline
+
+\noindent For $\tau>0$
+\begin{eqnarray}
+\mu_3(T) & = & |T|^3 - 3 \sqrt{3} \ln(\tau) - 3 \sqrt{3} 
+\end{eqnarray}
+
+\noindent The first deriviative:
+\begin{eqnarray}
+\frac{\partial \mu_3}{\partial T} & = & 3 \, |T| \, T - 3 \sqrt{3} \, \frac{1}{\tau} \, (adj \, T)^t \\
+ & = & 3 \, \left\{ |T| \, T - \sqrt{3} \, T^{-t} \right\}
+\end{eqnarray}
+
+\noindent The second derivative:
+\begin{eqnarray}
+\frac{\partial^2 \mu_3}{\partial T^2} & = & 3 \left\{ \, |T| \, I_{9} + \frac{T \otimes T}{|T|} \, \right\} - 3 \sqrt{3} \, \left\{ \frac{1}{\tau} \frac{\partial^2 \tau}{\partial T^2} - \frac{1}{\tau^2} \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) \right\} \nonumber \\
+\end{eqnarray}
+
+\subsection{Derivatives of $\mu_2(T)=\frac{|T|^2-2 \psi(T)+2}{2 \, \tau}$ \label{ss+32d}}
+
+\noindent This metric preserves the shape and size of the target and applies
+to $n=2$. \newline
+
+\noindent For $\tau>0$
+\begin{eqnarray}
+\mu_2(T) & = & \frac{|T|^2-2 \psi(T)+2}{2 \, \tau} \\
+         & = & \frac{\nu(T)}{2 \, \tau}
+\end{eqnarray}
+with $\nu(T) = |T|^2 - 2 \psi(T) + 2$ being the metric in Section \ref{magic}. 
+ \newline
+
+\noindent The first and second derivatives of $\mu_2$ in this section are the 
+same as the formulas in Section \ref{nu-over-tau}, but with the first and 
+second derivatives of $\nu$ from Section \ref{magic}.  \newline
+
+\subsection{Derivatives of $\mu_3(T)=\frac{1}{9} \, \kappa^2(T) - 1$ \label{s+1} }
+
+\noindent This metric preserves the shape of the target and applies
+to $n=3$, the $n=2$ case being related to Inverse Mean Ratio. \newline
+
+\noindent The condition number of $T$ is
+\begin{eqnarray}
+\kappa(T) & = & |T| \, |T^{-1}| \\
+          & = & |T| \, |adj(T)| / |\tau|
+\end{eqnarray}
+
+\noindent Since $\tau>0$, we can drop the absolute value to obtain
+\begin{eqnarray}
+\mu_3(T) & = & \frac{|T|^2 \, |adj(T)|^2}{9 \, \tau^2} - 1
+\end{eqnarray}
+
+\noindent The derivatives can be obtained from the derivatives of $|T|^2$,
+$|adj \, T|^2$, and $\tau^2$, along with the product and quotient rules 
+\ref{prod1}, \ref{quotient1}, \ref{prod2}, and \ref{quotient2}. \newline 
+
+\begin{eqnarray}
+\frac{ \partial \mu_3 }{ \partial T } & = & \frac{2}{ 9 \tau^2 } \left\{ \left( |adj T|^2 + |T|^4 \right) T - |T|^2 T T^t T - \frac{ |T|^2 |adj T|^2 }{\tau} \frac{\partial \tau}{\partial T} \right\} 
+\end{eqnarray}
+
+\begin{eqnarray}
+\nonumber
+\frac{\partial^2 \mu_3}{\partial T^2} &=& \frac{1}{9 \tau^2} \left\{
+   g \frac{\partial^2 f}{\partial T^2} + 
+   f \frac{\partial^2 g}{\partial T^2} + 
+   \left( \frac{\partial f}{\partial T} \otimes \frac{\partial g}{\partial T} + 
+           \frac{\partial g}{\partial T} \otimes \frac{\partial f}{\partial T} \right) \right. \\
+ \nonumber
+ &-& \frac{2 g}{\tau} \left( \frac{\partial f}{\partial T} \otimes \frac{\partial \tau}{\partial T} + 
+           \frac{\partial \tau}{\partial T} \otimes \frac{\partial f}{\partial T} \right) -
+    \frac{2 f}{\tau} \left( \frac{\partial g}{\partial T} \otimes \frac{\partial \tau}{\partial T} + 
+           \frac{\partial \tau}{\partial T} \otimes \frac{\partial g}{\partial T} \right) \\
+ &+& \left. \frac{6 f g}{\tau^2} \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) -
+    \frac{2 f g}{\tau} \frac{\partial^2 \tau}{\partial T^2} \right\} \\
+\nonumber f(T) &=& |T|^2 \\
+\nonumber g(T) &=& |adj T|^2 \\
+\nonumber \tau(T) &=& det(T)
+\end{eqnarray}
+
+\subsection{Derivatives of $\mu_n(T)=\tau + 1/\tau - 2$ \label{z+1} }
+
+\noindent This metric preserves the size of the target and applies
+to both $n=2$ and $n=3$. \newline
+
+\noindent For $\tau>0$
+\begin{eqnarray}
+\frac{\partial \mu}{\partial T} = \left( 1 - \frac{1}{\tau^2} \right) \, (adj T)^t
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial^2 \mu}{\partial T^2} = \left( 1 - \frac{1}{\tau^2} \right) \frac{\partial^2 \tau}{\partial T^2} + \frac{2}{\tau^3} \left( \frac{\partial \, \tau}{\partial T} \otimes \frac{\partial \, \tau}{\partial T} \right)
+\end{eqnarray}
+To complete this expression, use formulas \ref{adjform} and either 
+\ref{2ndtau2d} or \ref{2ndtau3d}. \newline
+
+\subsection{Derivatives of $\mu_2(T) = \frac{|T|^2}{2 \tau}-1$ \label{shape+2d} }
+
+\noindent This metric preserves the shape of the target and applies
+to $n=2$. It is the 2D Inverse Mean Ratio. It is a special case of the result
+in the Inverse Mean Ratio section below, but with an alternate derivation. \newline
+
+\noindent For $\tau>0$,
+\begin{eqnarray}
+\mu_2(T) = \frac{|T|^2}{2 \tau} - 1
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_2}{\partial T} = \frac{1}{2 \tau^2} \, \left\{ 2 \, \tau \, T - |T|^2 (adj \, T)^t \right\}
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial^2 \mu_2}{\partial T^2} & = & \frac{1}{\tau} I_4 - \frac{1}{2 \tau^2} Z \\
+Z & = & |T|^2 \frac{\partial^2 \tau}{\partial T^2} - 4 \mu_2 \left(\frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) + 2 \left( T \otimes \frac{\partial \tau}{\partial T} + \frac{\partial \tau}{\partial T} \otimes T \right) \nonumber \\
+\end{eqnarray}
+
+\subsection{Derivatives of $\mu_3(T)=\frac{|T|^3}{3 \sqrt{3} \tau}-1$ \label{shape+3d}}
+
+\noindent This metric preserves the shape of the target and applies
+to $n=3$. It is closely related to the 3D Inverse Mean Ratio. \newline
+
+\noindent For $\tau>0$
+\begin{eqnarray}
+\mu_3(T)=\frac{|T|^3}{3 \sqrt{3} \tau} - 1
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_3}{\partial T} & = & \frac{1}{3 \sqrt{3} \, \tau} \, \left\{ 3 \, |T| \, T - |T|^3 \, T^{-t} \right\}
+\end{eqnarray}
+
+
+\begin{eqnarray}
+\frac{\partial^2 \mu_3}{\partial T^2} & = & \frac{1}{\sqrt{3} \, \tau} \, \left\{ \, |T| \, I_9 + \frac{T \otimes T}{|T|} - \frac{1}{3 \, \tau} \, Z \right\} \\
+Z & = & |T|^3 \frac{\partial^2 \tau}{\partial T^2} - 2 \frac{|T|^3}{\tau} \left( \frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T} \right) \nonumber \\
+ & + & 3 \, |T| \left( T \otimes \frac{\partial \tau}{\partial T} + \frac{\partial \tau}{\partial T} \otimes T \right)
+\end{eqnarray}
+
+\subsection{Derivatives of $\mu_3(T)=\frac{|T|^2 + |adj T|^2}{6 \tau} - 1$ \label{ss+3d} }
+
+\noindent This metric preserves the shape and size of the target and applies
+to $n=3$. \newline
+
+\noindent For $\tau>0$
+\begin{eqnarray}
+\mu_3 (T) & = & \frac{|T|^2 + |adj T|^2}{6 \tau} - 1
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_3}{\partial T} & = & \frac{1}{\tau} \, \left\{ \frac{T}{3} \left[ \, (1+|T|^2) \, I - T^t T \right] - (\mu_3+1) \, (adj T)^t \right\}
+\end{eqnarray}
+
+\noindent To find the second derivative, let $f(T)=|T|^2 + |adj \, T|^2$ and
+$g(T)=6 \tau$.  Then the relation \ref{quotient2} can be applied, with
+\begin{eqnarray}
+\frac{\partial f}{\partial T} & = & 2 \, T \, \left\{ \left( 1 + |T|^2 \right) \, I - T^t T \right\} \\
+\frac{\partial^2 f}{\partial T^2} & = & 2 \, I_9 + \frac{\partial^2}{\partial T^2} \, |adj \, T|^2
+\end{eqnarray}
+The last derivative is basically given in \ref{hess-nrm-adj}. \newline
+
+\subsection{\label{sho_b}Derivatives of $\mu_n(T) = \frac{1}{2 \tau}\left[|T| - \frac{1}{\sqrt{n}}(tr T)\right] $ }
+
+\noindent This metric preserves the shape and orientation of the target and 
+applies to both $n=2$ and $n=3$.  It is the barrier form of the metric in Section \ref{sho_b}\newline
+
+\noindent Given:
+\begin{eqnarray}
+\frac{\partial}{\partial T}\left(\frac{1}{2 \tau}\right) &=& 
+  -\frac{1}{2 \tau^2}\frac{\partial \tau}{\partial T} \\
+\frac{\partial^2}{\partial T^2}\left(\frac{1}{2 \tau}\right) &=& \frac{1}{\tau^3}
+  \left[\frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T}\right]
+  - \frac{1}{2 \tau^2} \frac{\partial^2 \tau}{\partial T^2} 
+\end{eqnarray}
+Then by applying Section \ref{first} to the equations in Section \ref{sho}, we get:
+\begin{eqnarray}
+\mu(T) &=& \frac{1}{2 \tau}\left[|T| - \frac{1}{\sqrt{n}}(tr T)\right] \\
+\frac{\partial \mu}{\partial T} &=& \frac{1}{2 \tau^2}
+        \left[\frac{1}{\sqrt{n}}\left(tr T\right) - |T|\right]\frac{\partial \tau}{\partial T}
+        + \frac{1}{2 \tau}\left[\frac{T}{|T|} - \frac{1}{\sqrt{n}}I\right] \\
+      &=& \frac{1}{\tau}\left[\frac{1}{2}\left(\frac{T}{|T|} - \frac{1}{\sqrt{n}}I\right)
+        - \mu(T) \frac{\partial \tau}{\partial T}\right] \\
+\nonumber
+\frac{\partial^2 \mu}{\partial T^2} &=& 
+  \left(|T|-\frac{1}{\sqrt{n}}(tr T)\right)
+  \left[\frac{1}{\tau^3}\left(\frac{\partial \tau}{\partial T} \otimes \frac{\partial \tau}{\partial T}\right)
+      - \frac{1}{2\tau^2}\frac{\partial^2 \tau}{\partial T^2}\right]
+  + \frac{1}{2 \tau |T|}\left[I_n - \frac{1}{|T|^2}\left(T \otimes T\right)\right] \\
+ &-&\frac{1}{2\tau^2|T|}\left(T \otimes \frac{\partial \tau}{\partial T} + \frac{\partial \tau}{\partial T} \otimes T\right)
+  + \frac{1}{2\tau^2\sqrt{n}}\left(I \otimes \frac{\partial \tau}{\partial T} + \frac{\partial \tau}{\partial T} \otimes I\right)
+\end{eqnarray}
+
+\subsection{Derivatives of Inverse Mean Ratio, $\mu_n = \frac{|T|^2}{n \, det^{2/n}(T)}-1$ \label{imr}}
+
+\begin{eqnarray}
+f(T) & = & \frac{|T|^2}{n \, det^{2/n}(T)} \\
+g(T) & = & |T|^2 \\
+h(T) & = & det(T) \\
+e(T) & = & n \cdot h(T)^{2/n} \\
+f(T) & = & \frac{g(T)}{e(T)} 
+\end{eqnarray}
+ 
+\begin{eqnarray}
+\frac{\partial f}{\partial T} &=& \frac{
+\frac{\partial g}{\partial T} e(T) - 
+\frac{\partial e}{\partial h} \frac{\partial h}{\partial t} g(T)}
+{e^2(T)} \\
+&=& 
+\frac{2 T e(T) - 
+2 h(T)^\frac{2-n}{n} adj(T^t) g(T)}
+{e^2(T)} \\
+& = &  
+\frac{2 T}{e(T)} -
+\frac{2 h(T)^{\frac{2-n}{n}} adj^t(T) |T|^2}{e^2(T)} \\
+& = &  
+\frac{2 T}{n \cdot det(T)^{2/n}} -
+\frac{2 det(T)^{\frac{2-n}{n}} adj^t(T) |T|^2}{n^2 \cdot det(T)^{4/n}} \\
+& = &  
+\frac{2}{n \cdot det^{2/n}(T)}\left[ T - \frac{|T|^2}{n \cdot det(T)} adj(T^t) \right]
+\end{eqnarray}
+
+\noindent Begin the second derivative with the  expression for individual elements of the first derivative:
+
+\begin{eqnarray}
+\frac{\partial f}{\partial t_{i,j}} & = & 
+\frac{2}{n \cdot det^{2/n}(T)}\left[ t_{i,j} - \frac{|T|^2}{n \cdot det(T)} adj(T^t)_{i,j} \right] \\
+ & = & 
+\frac{2}{n}det^{-2/n}(T)\left[ t_{i,j} - \frac{1}{n}|T|^2 det^{-1}(T) adj(T^t)_{i,j}\right] \\
+ & = &
+\frac{2}{n} t_{i,j} det^{-2/n}(T) - \frac{2}{n^2} |T|^2 det^{\frac{-2}{n} - 1}(T) adj(T^t)_{i,j} 
+\end{eqnarray}
+
+\noindent And differentiate with respect to an element of $T$:
+
+\begin{eqnarray}
+\nonumber
+\frac{\partial^2 f}{\partial t_{i,j} \partial t_{k,l}} & = &
+\frac{2}{n} \delta_i^k \delta_j^l det^{-2/n}(T) 
+  - \frac{4}{n^2} t_{i,j} det^{\frac{-2}{n}-1}(T) adj(T^t)_{k,l} \\
+\nonumber
+  & & {} - \frac{4}{n^2}t_{k,l} det^{\frac{-2}{n} - 1}(T) adj(T^t)_{i,j} \\
+\nonumber
+  & & {} + \frac{4+2n}{n^3} |T|^2 det^{\frac{-2}{n} - 2}(T) adj(T^t)_{i,j} adj(T^t)_{k,l} \\
+  & & {} - \frac{2}{n^2} |T|^2 det^{\frac{-2}{n} - 1}(T) \frac{\partial adj(T^t)_{i,j}}{\partial t_{k,l}} \\
+ & = & \frac{2}{n \cdot det^{2/n}(T)} \delta_i^k \delta_j^l
+     + \frac{4 + 2n}{n^3 det^{\frac{2}{n}+2}(T)} |T|^2 adj(T^t)_{i,j} adj(T^t)_{k,l} \\
+\nonumber
+& & {} - \frac{2}{n^2 det^{\frac{2}{n}+1}} \left[ 
+     2 t_{k,l} adj(T^t)_{i,j} + 2 t_{i,j} adj(T^t)_{k,l}
+     + |T|^2 \frac{\partial adj(T^t)_{i,j}}{\partial t_{k,l}} \right] 
+\end{eqnarray}
+
+\noindent Returning to the Hessian notation for the second derivatives from Equation \ref{dsecelem}:
+
+
+\begin{eqnarray}
+\left(\frac{\partial^2 f}{\partial T_i \partial T_j}\right)_{r,s} &=&
+\frac{2}{n \cdot det^{2/n}(T)} \delta_i^j \delta_r^s
+     + \frac{4 + 2n}{n^3 det^{\frac{2}{n}+2}(T)} |T|^2 adj(T^t)_{i,r} adj(T^t)_{j,s} \\
+\nonumber
+& & {} - \frac{2}{n^2 det^{\frac{2}{n}+1}} \left[ 
+     2 t_{j,s} adj(T^t)_{i,r} + 2 t_{i,r} adj(T^t)_{j,s}
+     + |T|^2 \frac{\partial adj(T^t)_{i,r}}{\partial t_{j,s}} \right] 
+\end{eqnarray}
+
+\noindent Define $A = adj(T^t)$ and $A_i$ equal to the $i^th$ row of $A$.
+
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial T_i \partial T_j}
+&=& \frac{2 \delta_i^j}{n \cdot det^{2/n}(T)} I
++ \frac{4 + 2n}{n^3 det^{\frac{2}{n}+2}(T)} |T|^2 A_i^t A_j \\ \nonumber
+& & {} - \frac{2}{n^2 det^{\frac{2}{n}+1}} \left[ 
+2 A_i^t T_j + 2 T_i^t A_j + |T|^2 \frac{\partial^2 det(T)}{\partial T_i \partial T_j} \right]
+\end{eqnarray}
+
+\noindent Or if, instead, $A = adj(T)$, then
+
+\begin{eqnarray} \label{imrblockhess}
+\frac{\partial^2 f}{\partial T_i \partial T_j} 
+&=& \frac{2 \delta_i^j}{n \cdot det^{2/n}(T)} I
++ \frac{4 + 2n}{n^3 det^{\frac{2}{n}+2}(T)} |T|^2 A_j^t A_i \\ \nonumber
+& & {} - \frac{2}{n^2 det^{\frac{2}{n}+1}} \left[ 
+2 T_j^t A_i + 2 A_j^t T_i + |T|^2 \frac{\partial^2 det(T)}{\partial T_i \partial T_j} \right]
+\end{eqnarray}
+
+
+
+\noindent For $2 \times 2$ target matrices, Equation \ref{imrblockhess} simplifies to:
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial T_i \partial T_j}
+&=& \frac{\delta^i_j}{det(T)}I + \frac{|T|^2}{det^3(T)} A_j^t A_i \\ \nonumber
+& & {} - \frac{1}{det^2(T)} \left[ T_j^t A_i + A_j^t T_i 
++ \frac{|T|^2}{2} \frac{\partial^2 det(T)}{\partial T_i \partial T_j} \right]
+\end{eqnarray}
+
+\chapter{Derivatives of Functions of Metrics} 
+A function of a metric is a function $f(\mu)$ that takes a local quality metric
+$\mu$ to a real number. Since the value of $\mu$ is also a real number (usually
+non-negative), $f$ takes a real number to a real number. Because 
+$\mu = \mu(T)$ is a function of $T$, there is also an associated local quality 
+metric $\hat{\mu} = \hat{\mu}(T) = f(\mu(T))$. The metric $\hat{\mu}$ 
+is not a composition of metrics, it is the composition of a scalar function 
+with a metric, i.e., $\hat{\mu} = f \circ \mu$. \newline
+
+\noindent The derivatives of the associated local quality metric can be 
+expressed in terms of the derivatives of the original quality metric:
+
+\begin{eqnarray}
+\frac{\partial \hat{\mu}}{\partial T} & = & \left( \frac{\partial f}{\partial \mu} \right) \, \left( \frac{\partial \mu}{\partial T} \right) \\
+\frac{\partial^2 \hat{\mu}}{\partial T^2} & = & \left( \frac{\partial f}{\partial \mu} \right) \, \left( \frac{\partial^2 \mu}{\partial T^2} \right) + \left( \frac{\partial^2 f}{\partial \mu^2} \right) \, \left( \frac{\partial \mu}{\partial T} \otimes \frac{\partial \mu}{\partial T} \right)
+\end{eqnarray}
+The previous section of this document gives the deriviatives 
+$\frac{\partial \mu}{\partial T}$ and $\frac{\partial^2 \mu}{\partial T^2}$ 
+for a variety of particular metrics, so in this section we need only 
+concentrate on the derivatives $\frac{\partial f}{\partial \mu}$ and 
+$\frac{\partial^2 f}{\partial \mu^2}$ for a variety of specific functions $f$.
+
+
+
+\section{Untangle-like Functions \label{franks}}
+
+\begin{eqnarray}
+f(\mu) & = & \frac{1}{2^p} \, \left\{ |\sigma - \mu | - (\sigma - \mu) \right\}^p \\
+ & = & \left\{ \begin{array}{cc} 
+0 & \mbox{if $\mu \leq \sigma$} \\
+(\mu-\sigma)^p & \mbox{if $\mu > \sigma$}
+\end{array} \right.
+\end{eqnarray}
+with $\sigma$ a parameter and $p > 2$. Note that $f$ is continuous on 
+$-\infty < \mu < \infty$, and at $\mu = \sigma$ in particular. \newline
+
+\noindent The first derivative is
+\begin{eqnarray}
+\frac{\partial f}{\partial \mu}  & = & \left\{ \begin{array}{cc} 
+0 & \mbox{if $\mu \leq \sigma$} \\
+p \, (\mu-\sigma)^{p-1} & \mbox{if $\mu > \sigma$}
+\end{array} \right.
+\end{eqnarray}
+and exists everywhere provided $p>1$. \newline
+
+\noindent The second derivative is 
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial \mu^2}  & = & \left\{ \begin{array}{cc} 
+0 & \mbox{if $\mu \leq \sigma$} \\
+p \, (p-1) \, (\mu-\sigma)^{p-2} & \mbox{if $\mu > \sigma$}
+\end{array} \right.
+\end{eqnarray}
+and exists everywhere provided $p>2$. \newline
+
+\noindent Finally, the derivatives of $\hat{\mu}$ with respect to $T$ are
+\begin{eqnarray}
+\frac{\partial \hat{\mu}}{\partial T} = \left\{ \begin{array}{cc} 
+0 & \mbox{if $\mu \leq \sigma$} \\
+p \, (\mu-\sigma)^{p-1} \, \left( \frac{\partial \mu}{\partial T} \right) & \mbox{if $\mu > \sigma$}
+\end{array} \right.
+\end{eqnarray}
+and 
+\begin{eqnarray}
+\frac{\partial^2 \hat{\mu}}{\partial T^2} = \left\{ \begin{array}{cc} 
+0 & \mbox{if $\mu \leq \sigma$} \\
+p \, (\mu-\sigma)^{p-2} \, \left[ (\mu-\sigma) \, \left( \frac{\partial^2 \mu}{\partial T^2} \right) + (p-1) \, \left( \frac{\partial \mu}{\partial T} \otimes \frac{\partial \mu}{\partial T} \right) \right] & \mbox{if $\mu > \sigma$}
+\end{array} \right.
+\end{eqnarray}
+
+%\subsection{\label{franks} Derivatives of $\mu^\prime(T)=\{|d(T)| - d(T)\}^2$ }
+%\begin{eqnarray}
+%\mu^\prime(T) &=& \{|d(T)| - d(T)\}^2 \\
+% d(T)        &=& (\sigma - \epsilon) - \mu(T) \\
+% \frac{\partial \mu^\prime}{\partial T} 
+%    &=& 2 (|d| - d)\left(\frac{|d|}{d}-1\right)\frac{\partial d}{\partial T} \\
+%    &=& 4 (d - |d|)\frac{\partial d}{\partial T} \\
+%    &=& -4 (d - |d|)\frac{\partial \mu}{\partial T} \\
+%    &=& \left\{\begin{array}{ll}
+%         -8 d \frac{\partial \mu}{\partial T} & \textrm{if } d<0 \\
+%         0                                    & \textrm{if } d \ge 0 \\
+%         \end{array}\right. \\
+% \frac{\partial^2 \mu^\prime}{\partial T^2} 
+%    &=& \left\{\begin{array}{ll}
+%         8 \left( \frac{\partial \mu}{\partial T} \otimes \frac{\partial \mu}{\partial T} 
+%             - d \frac{\partial^2 \mu}{\partial T^2} \right) & \textrm{if } d<0 \\
+%         0                                    & \textrm{if } d>0 \\
+%         \end{array}\right. 
+%\end{eqnarray}
+         
+
+\chapter{Derivatives of Metrics that are Explicit Functions of $A$}
+Let $\omega = det(W)$. \newline
+
+\section{Derivatives of Non-Barrier Metrics}
+
+\subsection{\label{diff} Derivatives of $\mu_n(A)=|A-W|^2$}
+This is a Shape-Size-Orientation metric. \newline
+
+\begin{eqnarray}
+\mu_n (A) & = & |A-W|^2 \\
+          & = & |A|^2 - 2 \, tr(A^t W) + |W|^2 \nonumber
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial A} = 2 \, (A-W)
+\end{eqnarray}
+ 
+\begin{eqnarray}
+\frac{\partial^2 \mu_n}{\partial A^2} = 2 \, I_{n^2}
+\end{eqnarray}
+
+\subsection{\label{abs-size} Derivatives of $\mu_n = (\alpha-\omega)^2$}
+This is a Size metric. \newline
+
+\begin{eqnarray}
+\mu_n (A) & = & \left( \alpha - \omega \right)^2 \\
+          & = & \alpha^2 - 2 \, \alpha \, \omega + \omega^2 \nonumber
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial A} = 2 \, \left( \alpha - \omega \right) \, (adj A)^t
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial^2}{\partial A^2} \, (\alpha-\omega)^2 = 2 \, \left\{ (\alpha-\omega) \, \frac{\partial^2 \alpha}{\partial A^2} + \left( \frac{\partial \alpha}{\partial A} \otimes \frac{\partial \alpha}{\partial A} \right) \right\}
+\end{eqnarray}
+
+\subsection{\label{abs-unt} Derivatives of $\mu_n = \left\{ |\alpha-\gamma \, \omega|-(\alpha-\gamma \, \omega)\right\}^p$}
+This is an untangle metric, with $\gamma$ a positive parameter. For best
+results we reccomend $p>2$. \newline
+
+\begin{eqnarray}
+\mu_n & = & \left\{ |\alpha-\gamma \, \omega|-(\alpha-\gamma \, \omega)\right\}^p \\
+      & = & \left\{ \begin{array}{cc}  
+2^p \, (\gamma \, \omega - \alpha)^p & \mbox{if $\alpha-\gamma \, \omega < 0$} \\
+0 & \mbox{else}
+\end{array} \right. \nonumber
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial A} = \left\{ \begin{array}{cc} 
+-p \, 2^p (\gamma \, \omega - \alpha)^{p-1} \, (adj A)^t & \mbox{if $\alpha-\gamma \, \omega < 0$} \\
+0 & \mbox{else}
+\end{array} \right.
+\end{eqnarray}
+
+\subsection{\label{abs-shape} $\mu_2 = | A \, (adj W) - \left[ W \, (adj A) \right]^t |^2$}
+This is a 2D Shape metric. \newline
+
+\begin{eqnarray}
+\mu_2 & = & | A \, (adj W) - \left[ W \, (adj A) \right]^t |^2 \\
+      & = & | A \, (adj W) |^2 + | W \, (adj A) |^2 - 4 \, \alpha \, \omega \nonumber
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_2}{\partial A} = 4 \, A \, adj(W^t W) - 4 \, \omega \, (adj A)^t
+\end{eqnarray}
+
+%\subsection{\label{abs-shape} $\mu_2 = |\omega \, A - (adj A)^t \, W^t W|^2$}
+%This is a 2D Shape metric. \newline
+
+%\begin{eqnarray}
+%\mu_2 & = & |\omega \, A - (adj A)^t \, W^t W|^2 \\
+%      & = & \omega^2 \, |A|^2 + |(adj A)^t W^t W|^2 - 2 \, \alpha \, \omega \, |W|^2
+%\end{eqnarray}
+
+%\begin{eqnarray}
+%\frac{\partial \mu_2}{\partial A} = 2 \, A \, \left\{ \omega^2 \, I + adj(W^t W \, W^t W) \right\} -2 \, \omega \, |W|^2 \, (adj A)^t
+%\end{eqnarray}
+
+\subsection{\label{abs-shape-alt1} $\mu_2 = |\omega \, A^t A - \alpha \, W^t W|^2$}
+This is a 2D Shape metric. \newline
+
+\begin{eqnarray}
+\mu_2 & = & |\omega \, A^t A - \alpha \, W^t W|^2 \\
+      & = & \omega^2 \, |A^t A|^2 + \alpha^2 \, |W^t W|^2 - 2 \, \alpha \, \omega \, |A W^t|^2
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_2}{\partial A} = 4 \, \omega^2 \, A \, A^t A - 4 \, \alpha \, \omega \, A \, W^t W + 2 \, \left\{ \alpha \, |W^t W|^2 - \omega \, |A W^t|^2 \right\} \, (adj A)^t
+\end{eqnarray}
+
+\subsection{\label{abs-ShapeOr-alt2} $\mu_n = \left( |A| |W| - A \cdot W \right)^2$}
+This is a Shape+Orientation metric. \newline
+
+\begin{eqnarray}
+\mu_n & = & \left( |A| |W| - A \cdot W \right)^2 \\
+      & = & |A|^2 |W|^2 + (A \cdot W)^2 - 2 \, |A| |W| (A \cdot W) \nonumber
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial A} = 2 \, |W|^2 \, A + 2 \, (A \cdot W) \, W - 2 \, |W| \, \left\{ |A| \, W + (A \cdot W) \, \frac{A}{|A|} \right\}
+\end{eqnarray}
+
+\section{Derivatives of Barrier Metrics}
+
+\subsection{\label{abs-size-barrier} Derivatives of $\mu_n = \frac{\alpha}{\omega} + \frac{\omega}{\alpha} - 2$}
+This is a Size metric. \newline
+
+\begin{eqnarray}
+\mu_n(A) & = & \frac{\alpha}{\omega} + \frac{\omega}{\alpha} - 2 \\
+         & = & \frac{(\alpha-\omega)^2}{\alpha \, \omega} \nonumber
+\end{eqnarray}
+
+\begin{eqnarray}
+\frac{\partial \mu_n}{\partial A} = \left( \frac{\alpha^2 - \omega^2}{\alpha^2 \, \omega} \right) \, (adj A)^t
+\end{eqnarray}
+
+\subsection{\label{abs-SSO-barrier} $\mu_n = |A^{-1} - W^{-1}|^2$}
+This is a Shape+Size+Orientation metric. \newline
+
+\begin{eqnarray}
+\mu_n & = & |A^{-1} - W^{-1}|^2 \\
+      & = & |A^{-1}|^2 - 2 \, tr \left( W^{-t} \, A^{-1} \right) + |W^{-1}|^2
+\end{eqnarray}
+
+\subsection{\label{abs-ss-barrier} $\mu_n=|A - A^{-t} \, W^t W|^2$}
+This is a Shape+Size metric. \newline
+
+\begin{eqnarray}
+\mu_n & = & |A - A^{-t} \, W^t W|^2 \\
+      & = & |A|^2 + |W^t W \, A^{-1}|^2 - 2 |W|^2 \nonumber
+\end{eqnarray}
+
+\subsection{\label{abs-shape-barrier} Derivatives of $\mu_2 = \frac{1}{4 \, \alpha \, \omega} \, | A \, (adj W) - \left[ W \, (adj A) \right]^t |^2$}
+This is a 2D Shape metric. \newline
+
+\begin{eqnarray}
+\mu_2 & = & \frac{1}{4 \, \alpha \, \omega}\,  | A \, (adj W) - \left[ W \, (adj A) \right]^t |^2 \\
+      & = & \frac{| A \, (adj W) |^2 + | W \, (adj A) |^2}{4 \, \alpha \, \omega} - 1 \nonumber
+\end{eqnarray}
+
+%\begin{eqnarray}
+%\frac{\partial \mu_2}{\partial A} = 4 \, A \, adj(W^t W) - 4 \, \omega \, (adj A)^t
+%\end{eqnarray}
+
+\chapter{Derivatives of Element Quality Metrics}
+
+\section{Volume Case}
+
+\noindent {\bf The Map.} \newline
+Given a master element $M$ and a physical element 
+$E$ in $\Re^3$, 
+let there be a one-to-one onto map from $M$ to $E$ given by 
+\begin{eqnarray}
+x_m & = & x_m ( \xi_n )
+\end{eqnarray}
+where $m = 1, 2, 3$ and $n = 1, 2, 3$.  The map is usually a polynomial
+in the coordinates $\xi_n$.  Let the physical element contain K control 
+points $X_m^k$, with $k=1,\ldots,K$. The map is then generally written as 
+\begin{eqnarray}
+x_m & = & \sum_{k=1}^K N_k (\xi_n) X_m^k
+\end{eqnarray}
+with $N_k$ being the 'basis' polynomial in the master coordinates associated
+with the $k^{th}$ control point. \newline
+
+\noindent {\bf The Jacobian.} \newline
+The Jacobian of the map is a $3 \times 3$ matrix
+$A$, whose elements are
+\begin{eqnarray}
+A_{mn} = \frac{\partial x_m}{\partial \xi_n} 
+\end{eqnarray}
+Assuming the map has the form given in (2), we have
+\begin{eqnarray}
+A_{mn} = \sum_{k=1}^K \left( \frac{\partial N_k}{\partial \xi_n} \right) X_m^k 
+\end{eqnarray}
+The Jacobian is linear in the control points $X_m^k$. \newline
+
+\noindent The derivative of $A_{mn}$ with respect to the control point 
+coordinates is, with $\ell=1,\ldots,K$ and $p=1,2,3$
+\begin{eqnarray}
+\frac{\partial A_{mn}}{\partial X_p^\ell} & = &  \sum_{k=1}^K \left( \frac{\partial N_k}{\partial \xi_n} \right) \frac{\partial X_m^k}{\partial X_p^\ell} \\
+  & = &  \left( \frac{\partial N_\ell}{\partial \xi_n} \right) \frac{\partial X_m^\ell}{\partial X_p^\ell} \\
+  & = &  \left( \frac{\partial N_\ell}{\partial \xi_n} \right) \delta_{m p}
+\end{eqnarray}
+
+\noindent {\bf The Function $f(A)$ and its derivatives.} \newline
+Let $f$ be a multi-variable function from $\Re^9$ to $\Re$, given by 
+$f(A) = f(A_{11},A_{12},...,A_{33})$.  The derivative of $f$ with respect 
+to $A$ is defined as the matrix $df/dA$ with elements
+\begin{eqnarray}
+\left( \frac{df}{dA} \right)_{ij} & = & \frac{\partial f}{\partial A_{ij}}
+\end{eqnarray}
+The Hessian of $f$ with respect to $A$ is a tensor $d^2 f/ dA^2$ with elements
+\begin{eqnarray}
+\left( \frac{d^2 f}{d A^2} \right)_{rsij} = \frac{\partial^2 f}{\partial A_{rs} \partial A_{ij}}
+\end{eqnarray}
+
+\noindent {\bf The Gradient of $f$ with respect to the Control Points.} 
+\newline The gradient of $f$ with respect to the control points within an
+element is defined as a vector in $\Re^{3K}$ with components 
+$\frac{\partial f}{\partial X_m^k}$. We have
+\begin{eqnarray}
+\frac{\partial f}{\partial X_m^k} & = & \sum_{i=1}^3 \sum_{j=1}^3 \frac{\partial f}{\partial A_{ij}} \frac{\partial A_{ij}}{\partial X_m^k} \\
+& = & \sum_{i=1}^3 \sum_{j=1}^3 \frac{\partial f}{\partial A_{ij}} \frac{\partial N_k}{\partial \xi_j} \delta_{im} \\
+% & = & \sum_{i=1}^3 \sum_{j=1}^3 \frac{\partial f}{\partial A_{ij}} \frac{\partial}{\partial X_m^k} \left( \sum_{\ell=1}^K \frac{\partial N_\ell}{\partial \xi_j} X_i^\ell \right) \\ 
+% & = & \sum_{i=1}^3 \sum_{j=1}^3 \frac{\partial f}{\partial A_{ij}} \sum_{\ell=1}^K \left( \frac{\partial N_\ell}{\partial \xi_j} \right) \frac{\partial}{\partial X_m^k} X_i^\ell  \\
+ & = & \sum_{j=1}^3 \frac{\partial f}{\partial A_{mj}} \frac{\partial N_k}{\partial \xi_j}
+\end{eqnarray}
+
+\noindent {\bf The Hessian of $f$ with respect to the Control Points.} \newline
+The Hessian of $f$ with respect to the control points within an element is 
+defined as a $3K \times 3K$ matrix with components $\frac{\partial^2 f}{\partial X_n^\ell \partial X_m^k}$, with $\ell=1,\ldots,K$.  We have
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial X_n^\ell \partial X_m^k} & = & \frac{\partial}{\partial X_n^\ell} \left( \sum_{j=1}^3 \frac{\partial f}{\partial A_{mj}} \frac{\partial N_k}{\partial \xi_j} \right) \\
+& = & \sum_{j=1}^3  \frac{\partial}{\partial X_n^\ell} \left( \frac{\partial f}{\partial A_{mj}} \frac{\partial N_k}{\partial \xi_j} \right) \\
+& = & \sum_{j=1}^3  \left\{ \frac{\partial}{\partial X_n^\ell} \left( \frac{\partial f}{\partial A_{mj}} \right) \right\} \frac{\partial N_k}{\partial \xi_j} \\
+& = & \sum_{j=1}^3  \left\{ \sum_{r=1}^3 \sum_{s=1}^3 \frac{\partial}{\partial A_{rs}} \left( \frac{\partial f}{\partial A_{mj}} \right) \frac{\partial A_{rs}}{\partial X_n^\ell} \right\} \frac{\partial N_k}{\partial \xi_j} \\
+& = & \sum_{j=1}^3  \left\{ \sum_{r=1}^3 \sum_{s=1}^3 \left( \frac{\partial^2 f}{\partial A_{rs} \partial A_{mj}} \right) \frac{\partial N_\ell}{\partial \xi_s} \delta_{rn} \right\} \frac{\partial N_k}{\partial \xi_j} \\
+& = & \label{eqn:vol-hess} \sum_{j=1}^3  \sum_{s=1}^3 \left( \frac{\partial^2 f}{\partial A_{ns} \partial A_{mj}} \right) \frac{\partial N_\ell}{\partial \xi_s} \frac{\partial N_k}{\partial \xi_j}
+\end{eqnarray}
+For simple $f(A)$'s the Hessian will be sparse. \newline
+
+\noindent Equation (\ref{eqn:vol-hess}) can be expressed using matrix multiplication as follows:
+
+\begin{equation} \label{eqn:vol-hess-mat}
+\frac{\partial^2 f}{\partial X_n^\ell \partial X_m^k} =
+(\nabla N_l)^t \frac{\partial^2 f}{\partial A_n \partial A_m} \nabla N_k
+\end{equation}
+where $\nabla N_k = \left[\begin{array}{c} 
+\frac{\partial N_k}{\partial \xi_1} \\
+\frac{\partial N_k}{\partial \xi_2} \\
+\frac{\partial N_k}{\partial \xi_3} \end{array}\right]$ 
+and $\frac{\partial^2 f}{\partial A_n \partial A_m} = \left[\begin{array}{ccc}
+\frac{\partial^2 f}{\partial A_{n,1} \partial A_{m,1}} &
+\frac{\partial^2 f}{\partial A_{n,1} \partial A_{m,2}} &
+\frac{\partial^2 f}{\partial A_{n,1} \partial A_{m,3}} \\
+\frac{\partial^2 f}{\partial A_{n,2} \partial A_{m,1}} &
+\frac{\partial^2 f}{\partial A_{n,2} \partial A_{m,2}} &
+\frac{\partial^2 f}{\partial A_{n,2} \partial A_{m,3}} \\
+\frac{\partial^2 f}{\partial A_{n,3} \partial A_{m,1}} &
+\frac{\partial^2 f}{\partial A_{n,3} \partial A_{m,2}} &
+\frac{\partial^2 f}{\partial A_{n,3} \partial A_{m,3}} \end{array}\right]$.\newline
+
+
+\noindent Note that all these derivatives are local quantities, say at a sample point.  There would also be a global gradient and Hessian that can be assembled from these local pieces. \newline
+
+\noindent {\bf The function $f(T)$ and it's derivatives} \newline
+For the case $T = A W^{-1}$, some of the metrics are of the form $f=f(T)$,
+which is, indirectly, still a function of $A$.  For convennience, let
+$Z = W^{-1}$.  Then $T = A Z$, so that 
+\begin{eqnarray}
+T_{rs} = \sum_{k=1}^3 A_{rk} Z_{ks}
+\end{eqnarray}
+and 
+\begin{eqnarray}
+\frac{\partial T_{rs}}{\partial A_{ij}} & = & \sum_{k=1}^3 \frac{\partial A_{rk}}{\partial A_{ij}} Z_{ks} \\
+ & = & \sum_{k=1}^3 \delta_{ri} \delta_{kj} Z_{ks} \\
+ & = & \delta_{ri} \sum_{k=1}^3 \delta_{kj} Z_{ks} \\
+ & = & \delta_{ri} Z_{js}
+\end{eqnarray}
+Then we have
+\begin{eqnarray}
+\frac{\partial f}{\partial A_{ij}} & = & \sum_{r=1}^3 \sum_{s=1}^3 \frac{\partial f}{\partial T_{rs}} \frac{\partial T_{rs}}{\partial A_{ij}} \\
+ & = & \sum_{r=1}^3 \sum_{s=1}^3 \frac{\partial f}{\partial T_{rs}} \delta_{ri} Z_{js} \\
+ & = & \sum_{r=1}^3 \delta_{ri} \sum_{s=1}^3 \frac{\partial f}{\partial T_{rs}} Z_{sj}^t \\
+ & = & \sum_{s=1}^3 \frac{\partial f}{\partial T_{is}} Z_{sj}^t 
+\end{eqnarray}
+or, more compactly,
+\begin{eqnarray}
+\frac{\partial f}{\partial A} = \frac{\partial f}{\partial T} W^{-t}
+\end{eqnarray}
+Similarly, we have for the Hessian of $f(T)$
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial A_{pq} \partial A_{ij}} & = & \sum_{s=1}^3 \frac{\partial}{\partial A_{pq}} \left( \frac{\partial f}{\partial T_{is}} \right) Z_{sj}^t \\
+ & = & \sum_{s=1}^3 \sum_{p=1}^3 \sum_{q=1}^3  Z_{sj}^t \frac{\partial T_{pq}}{\partial A_{pq}}  \frac{\partial}{\partial T_{pq}} \left( \frac{\partial f}{\partial T_{is}} \right) \\
+ & = & \sum_{s=1}^3 \sum_{p=1}^3 \sum_{q=1}^3  Z_{sj}^t Z_{qq} \left( \frac{\partial^2 f}{\partial T_{pq} \partial T_{is}} \right)
+\end{eqnarray}
+
+\section{Surface Case}
+
+\noindent {\bf The Map.} \newline
+Given a 2D master element $M$ and a physical surface element 
+$E$ in $\Re^3$, let there be a map from $M$ to $E$ given by 
+\begin{eqnarray}
+x_m & = & x_m ( \xi_n )
+\end{eqnarray}
+where $m = 1, 2, 3$ and $n = 1, 2$.  The map is usually a polynomial
+in the coordinates $\xi_n$.  Let the physical element contain K control 
+points $X_m^k$, with $k=1,\ldots,K$. The map is then generally written as 
+\begin{eqnarray}
+x_m & = & \sum_{k=1}^K N_k (\xi_n) X_m^k \label{eqn33}
+\end{eqnarray}
+with $N_k$ being the 'basis' polynomial in the master coordinates associated
+with the $k^{th}$ control point. \newline
+
+\noindent {\bf The Jacobian.} \newline
+The Jacobian of the map is a $3 \times 2$ matrix
+$J$, whose elements are
+\begin{eqnarray}
+J_{mn} = \frac{\partial x_m}{\partial \xi_n} 
+\end{eqnarray}
+Assuming the map has the form given in (\ref{eqn33}), we have
+\begin{eqnarray}
+J_{mn} = \sum_{k=1}^K \left( \frac{\partial N_k}{\partial \xi_n} \right) X_m^k 
+\end{eqnarray}
+The Jacobian is linear in the control points $X_m^k$. \newline
+
+\noindent The derivative of $J_{mn}$ with respect to the control point 
+coordinates is, with $\ell=1,\ldots,K$ and $p=1,2,3$
+\begin{eqnarray}
+\frac{\partial J_{mn}}{\partial X_p^\ell} & = &  \sum_{k=1}^K \left( \frac{\partial N_k}{\partial \xi_n} \right) \frac{\partial X_m^k}{\partial X_p^\ell} \\
+  & = &  \left( \frac{\partial N_\ell}{\partial \xi_n} \right) \frac{\partial X_m^\ell}{\partial X_p^\ell} \\
+  & = &  \left( \frac{\partial N_\ell}{\partial \xi_n} \right) \delta_{m p}
+\end{eqnarray}
+
+\noindent {\bf Dependence of $A_{2 \times 2}$ on $J$} \newline
+The surface mesh optimization algorithm requires that $J_{3 \times 2}$ be 
+converted to a matrix $A_{2 \times 2}$ so that the 2D TMP metrics can be 
+used.\footnote{In the surface mesh TMP optimization paper, we use the notation
+$A_{3 \times 2}$ for $J_{3 \times 2}$ here.  Other than that difference, we 
+shall here use the notation that is in the surface paper.} 
+According to the surface TMP paper, $A_{2 \times 2}$ is related to 
+$J_{3 \times 2}$ as
+\begin{eqnarray}
+A_{2 \times 2} & = & \Theta^t \, \tilde{A}_{3 \times 2} \nonumber \\
+               & = & \Theta^t \, S_a \, J_{3 \times 2} \nonumber \\
+               & \equiv & M^t \, J_{3 \times 2}
+\end{eqnarray}
+with $M^t = \Theta^t \, S_a$ (or $M=S_a^t \, \Theta$). The matrix $M$ is
+$3 \times 2$ and is here assumed to be a constant with respect to the nodal 
+points of the map.\footnote{Strictly speacking, the matrix $M$ depends on 
+the control point coordinates.  If the surface curvature is small, however,
+the dependence is slight.} \newline
+
+%Similarly, the target matrix is $W^\prime_{3 \times 2}$, which is converted to the matrix $W_{2 \times 2}$. 
+\noindent Elements of $A_{2 \times 2}=M^t \, J$ are given by
+\begin{eqnarray}
+A_{ij} = \sum_{s=1}^3 \left( M^t \right)_{is} \, \left( J \right)_{sj}
+\end{eqnarray}
+for $i=1,2$ and $j=1,2$. We seek the derivative of the elements of $A$ with
+respect to the control point coordinates. 
+\begin{eqnarray}
+\frac{\partial A_{ij}}{\partial X_m^k} & = & \sum_{s=1}^3 \, (M^t)_{is} \, \frac{\partial J_{sj}}{\partial X_m^k} \nonumber \\
+ & = & \sum_{s=1}^3 \, (M^t)_{is} \, \left( \frac{\partial N_k}{\partial \xi_j} \right) \, \delta_{sm} \nonumber \\
+ & = & (M^t)_{im} \, \left( \frac{\partial N_k}{\partial \xi_j} \right)
+\end{eqnarray}
+
+
+%First, recall that $Z$ is independent of the control
+%point coordinates $X_m^k$ because the matrix is constructed from the 
+%$3 \times 2$ target matrix.  Second, the derivatives of $J$ with respect to
+%these coordinates have already been given in (38) above.  Third, the matrix $R$ is 
+%defined as $R = [{\bf v},{\bf n}_J,{\bf v} \times {\bf n}_J][{\bf v},{\bf n}_r,{\bf v} \times {\bf n}_r]^t$, where ${\bf N}_J = {\bf j}_1 \times {\bf j}_2$, 
+%with $J= [{\bf j}_1,{\bf j}_2]$ and ${\bf n}_J={\bf N}_J/|{\bf N}_J|$.
+%Additionally, let ${\bf N}_w^\prime = {\bf w}_1^\prime \times {\bf w}_2^\prime$, ${\bf n}_w^\prime = {\bf N}_w^\prime/|{\bf N}_w^\prime|$, so that 
+%${\bf n}_r = {\bf n}_w^\prime$ if ${\bf n}_J \cdot {\bf n}_w^\prime>0$ and 
+%-${\bf n}_w^\prime$ otherwise. Thus, ${\bf v}$ and ${\bf n}_J$ depend on 
+%$X_m^k$ while the other vectors do not. The dependence of $R$ on the control
+%point coordinates is thus complex. \newline
+
+%\noindent Small changes in the control point coordinates can result in large 
+%changes to $R$ if the surface curvature is large compared to the size
+%of the mesh elements. When the mesh under-resolves the surface curvature, 
+%one expects any mesh optimization algorithm that uses 'snap-to' 
+%functionality to fare poorly, so accuracy of the derivative of $R$ is  
+%immaterial.  \newline
+ 
+%\noindent For meshes that resolve the 
+%surface well, (i.e., have elements that are small compared to the radius of 
+%curvature), $R$ is a slowly-varying function of the 
+%control point coordinates.  In other words, when the surface is well resolved 
+%by the mesh elements, ${\bf n}_J$ is close to ${\bf n}_r$ and small
+%changes in the control point coordinates will result in small changes to $R$. 
+%The special case of a planar mesh is an example of this since then 
+%$R=I_{3 \times 3}$ is constant. Therefore, {\it we assume that the derivative 
+%of $R$ with respect to the control point coordinates is zero.} \newline
+
+\noindent {\bf The Function $f(A)$ and its derivatives.} \newline
+Let $f$ be a multi-variable function from $\Re^4$ to $\Re$, given by 
+$f(A) = f(A_{11},A_{12},...,A_{22})$.  The derivative of $f$ with respect 
+to $A$ is defined as the matrix $df/dA$ with elements
+\begin{eqnarray}
+\left( \frac{df}{dA} \right)_{ij} & = & \frac{\partial f}{\partial A_{ij}}
+\end{eqnarray}
+The Hessian of $f$ with respect to $A$ is a tensor $d^2 f/ dA^2$ with elements
+\begin{eqnarray}
+\left( \frac{d^2 f}{d A^2} \right)_{rsij} = \frac{\partial^2 f}{\partial A_{rs} \partial A_{ij}}
+\end{eqnarray}
+
+\noindent {\bf The Gradient of $f$ with respect to the Control Points.} 
+\newline The gradient of $f$ with respect to the control points within an
+element is defined as a vector in $\Re^{3K}$ with components 
+$\frac{\partial f}{\partial X_m^k}$. We have
+\begin{eqnarray}
+\frac{\partial f}{\partial X_m^k} & = & \sum_{i=1}^2 \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \frac{\partial A_{ij}}{\partial X_m^k} \nonumber \\
+ & = &  \sum_{i=1}^2 \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \, (M^t)_{im} \, \left( \frac{\partial N_k}{\partial \xi_j} \right) \nonumber \\
+ & = &  \sum_{i=1}^2 (M^t)_{im} \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \, \left( \frac{\partial N_k}{\partial \xi_j} \right) \label{eqn:surfgrad}
+\end{eqnarray}
+
+%\begin{eqnarray}
+%\frac{\partial f}{\partial X_m^k} & = & \sum_{i=1}^2 \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \frac{\partial A_{ij}}{\partial X_m^k} \nonumber \\
+% & = & \sum_{i=1}^2 \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \frac{\partial}{\partial X_m^k} \left\{ \left( RZ \right)^t J \right\}_{ij} \nonumber \\
+% & = & \sum_{i=1}^2 \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \frac{\partial}{\partial X_m^k} \left\{ \sum_{r=1}^3  \left[ (RZ)^t \right]_{ir} \left[ J \right]_{rj} \right\} \nonumber \\
+% & \approx & \sum_{i=1}^2 \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \left\{ \sum_{r=1}^3  \left[ (RZ)^t \right]_{ir}  \frac{\partial}{\partial X_m^k} \left[ J \right]_{rj} \right\} \nonumber \\
+% & = & \sum_{i=1}^2 \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \left\{ \sum_{r=1}^3  \left[ (RZ)^t \right]_{ir}  \left( \frac{\partial N_{k}}{\partial \xi_j} \right) \delta_{rm} \right\} \nonumber \\
+% & = & \sum_{i=1}^2 \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}}  \left( \frac{\partial N_{k}}{\partial \xi_j} \right) \left\{ \sum_{r=1}^3  \left[ (RZ)^t \right]_{ir} \delta_{rm} \right\} \nonumber \\
+% & = & \sum_{i=1}^2 \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \frac{\partial N_k}{\partial \xi_j} \left( RZ \right)_{mi} \nonumber \\
+% \label{eqn:surfgrad} & = & \sum_{i=1}^2  \left( RZ \right)_{mi} \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \frac{\partial N_k}{\partial \xi_j} 
+%\end{eqnarray}
+%Note the similarities and difference with equation (12). If 
+%$RZ = I$, as in the planar case, then this reduces to equation (12),
+%except the sums go from 1 to 2. \newline
+
+\noindent Equation (\ref{eqn:surfgrad}) can be expressed using matrix operations:
+\begin{equation}
+\frac{\partial f}{\partial X^k} = M \, \left( \frac{\partial f}{\partial A} \right) \, \nabla N_k
+\end{equation}
+where $\frac{\partial f}{\partial X^k} = \left[ \begin{array}{c} 
+\frac{\partial f}{\partial X^k_1} \\
+\frac{\partial f}{\partial X^k_2} \\
+\frac{\partial f}{\partial X^k_3} \end{array} \right]$
+and $\nabla N_k = \left[ \begin{array}{c} 
+\frac{\partial N_k}{\partial \xi_1} \\
+\frac{\partial N_k}{\partial \xi_2} \end{array} \right]$.
+
+\noindent Finally, recall that the vector $n_a$ is normal to the plane 
+defined by $J_{3 \times 2}$ and, further, 
+\begin{eqnarray}
+\sigma \, n_a^t \, M & = & \sigma \, n_a^t \, S_a^t \, \Theta \nonumber \\
+ & = & (S_a \, \sigma \, n_a)^t \, \Theta \nonumber \\
+ & = & u ^t \, \Theta \nonumber \\
+ & = & 0
+\end{eqnarray}
+From this, we see that 
+\begin{eqnarray}
+n_a^t \cdot \frac{\partial f}{\partial X^K} & = & 0 
+\end{eqnarray}
+and thus the deriviative lies in the plane defined by $n_a$. \newline
+
+\noindent {\bf The Hessian of $f$ with respect to the Control Points.} \newline
+The Hessian of $f$ with respect to the control points within an element is 
+defined as a $3K \times 3K$ matrix with components $\frac{\partial^2 f}{\partial X_n^\ell \partial X_m^k}$, with $\ell=1,\ldots,K$.  We have
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial X_n^\ell \partial X_m^k} & = & \frac{\partial}{\partial X_n^\ell} \left( \sum_{i=1}^2  \left( M^t \right)_{im} \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \frac{\partial N_k}{\partial \xi_j} \right) \nonumber \\
+& = &\sum_{i=1}^2 \left( M^t \right)_{im} \sum_{j=1}^2  \frac{\partial}{\partial X_n^\ell}  \left( \frac{\partial f}{\partial A_{ij}} \frac{\partial N_k}{\partial \xi_j} \right) \nonumber \\
+& = &\sum_{i=1}^2 \left( M^t \right)_{im} \sum_{j=1}^2 \frac{\partial N_k}{\partial \xi_j} \frac{\partial}{\partial X_n^\ell}  \left( \frac{\partial f}{\partial A_{ij}}  \right) \nonumber \\
+& = & \sum_{i=1}^2  \left( M^t \right)_{im} \sum_{j=1}^2  \frac{\partial N_k}{\partial \xi_j} \left\{ \sum_{r=1}^2 \sum_{s=1}^2 \frac{\partial A_{rs}}{\partial X_{n}^\ell} \frac{\partial}{\partial A_{rs}}  \left(  \frac{\partial f}{\partial A_{ij}}  \right) \right\}  \nonumber \\
+& = & \sum_{i=1}^2  \left( M^t \right)_{im} \sum_{j=1}^2  \frac{\partial N_k}{\partial \xi_j} \left\{ \sum_{r=1}^2 \sum_{s=1}^2 \frac{\partial A_{rs}}{\partial X_{n}^\ell} \left(  \frac{\partial^2 f}{\partial A_{rs} \partial A_{ij}}  \right) \right\}  \nonumber \\
+& = & \sum_{i=1}^2  \left( M^t \right)_{im} \sum_{j=1}^2 \frac{\partial N_k}{\partial \xi_j} \left\{ \sum_{r=1}^2 \sum_{s=1}^2 \left( M^t \right)_{rn} \frac{\partial N_\ell}{\partial \xi_s} \left( \frac{\partial^2 f}{\partial A_{rs} \partial A_{ij}}  \right)  \right\}  \nonumber \\
+& = & \sum_{i=1}^2  \left( M^t \right)_{im} \sum_{j=1}^2 \frac{\partial N_k}{\partial \xi_j} \left\{ \sum_{r=1}^2  \left( M^t \right)_{rn} \sum_{s=1}^2 \frac{\partial N_\ell}{\partial \xi_s} \left( \frac{\partial^2 f}{\partial A_{rs} \partial A_{ij}}  \right)  \right\} \nonumber \label{eqn:surf-hess-sum}
+\end{eqnarray}
+
+
+%\begin{eqnarray}
+%\frac{\partial^2 f}{\partial X_n^\ell \partial X_m^k} & = & \frac{\partial}{\partial X_n^\ell} \left( \sum_{i=1}^2  \left( RZ \right)_{mi} \sum_{j=1}^2 \frac{\partial f}{\partial A_{ij}} \frac{\partial N_k}{\partial \xi_j} \right) \nonumber \\
+%& \approx &\sum_{i=1}^2 \left( RZ \right)_{mi} \sum_{j=1}^2  \frac{\partial}{\partial X_n^\ell}  \left( \frac{\partial f}{\partial A_{ij}} \right) \frac{\partial N_k}{\partial \xi_j} \nonumber \\
+%& = & \sum_{i=1}^2  \left( RZ \right)_{mi} \sum_{j=1}^2  \frac{\partial N_k}{\partial \xi_j} \left\{ \sum_{r=1}^2 \sum_{s=1}^2 \frac{\partial A_{rs}}{\partial X_{n}^\ell} \frac{\partial}{\partial A_{rs}}  \left(  \frac{\partial f}{\partial A_{ij}}  \right) \right\}  \nonumber \\
+%& = & \sum_{i=1}^2  \left( RZ \right)_{mi} \sum_{j=1}^2  \frac{\partial N_k}{\partial \xi_j} \left\{ \sum_{r=1}^2 \sum_{s=1}^2 \frac{\partial A_{rs}}{\partial X_{n}^\ell} \left(  \frac{\partial^2 f}{\partial A_{rs} \partial A_{ij}}  \right) \right\}  \nonumber \\
+%& \approx & \sum_{i=1}^2  \left( RZ \right)_{mi} \sum_{j=1}^2 \frac{\partial N_k}{\partial \xi_j} \left\{ \sum_{r=1}^2 \sum_{s=1}^2 \left( RZ \right)_{rn}^t \frac{\partial N_\ell}{\partial \xi_s} \left( \frac{\partial^2 f}{\partial A_{rs} \partial A_{ij}}  \right)  \right\}  \nonumber \\
+%& = & \label{eqn:surf-hess-sum} \sum_{i=1}^2  \left( RZ \right)_{mi} \sum_{j=1}^2 \frac{\partial N_k}{\partial \xi_j} \left\{ \sum_{r=1}^2  \left( RZ \right)_{rn}^t \sum_{s=1}^2 \frac{\partial N_\ell}{\partial \xi_s} \left( \frac{\partial^2 f}{\partial A_{rs} \partial A_{ij}}  \right)  \right\} 
+%\end{eqnarray}
+%Note the similarities and difference with equation (18). If 
+%$RZ = I$, as in the planar case, then the Hessian reduces to equation (18),
+%except the sums go from 1 to 2.\newline
+
+\noindent Equation (\ref{eqn:surf-hess-sum}) can be reordered as:
+
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial X_n^\ell \partial X_m^k} 
+&=& \sum_{i=1}^2 \sum_{r=1}^2 (M^t)_{im} (M^t)_{rn}
+    \sum_{j=1}^2 \sum_{s=1}^2 \frac{\partial N_k}{\partial \xi_j}
+    \frac{\partial N_\ell}{\partial \xi_s}
+    \left( \frac{\partial^2 f}{\partial A_{rs} \partial A_{ij}} \right)
+    \nonumber 
+\end{eqnarray}
+and, in terms of block notation,
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial X_n^\ell \partial X_m^k} 
+&=& \sum_{i=1}^2 \sum_{r=1}^2 (M^t)_{im} (M^t)_{rn}
+    \sum_{j=1}^2 \sum_{s=1}^2 \frac{\partial N_k}{\partial \xi_j}
+    \frac{\partial N_\ell}{\partial \xi_s}
+    \left( \frac{\partial^2 f}{\partial A_i \partial A_r} \right)_{j,s} 
+    \nonumber \\
+&=& \label{eqn:surf-hess-summat} 
+    \sum_{i=1}^2 \sum_{r=1}^2 (M^t)_{im} (M^t)_{rn} 
+    \left[ (\nabla N_k)^t \frac{\partial^2 f}{\partial A_i \partial A_r}
+            \nabla N_\ell \right] 
+\end{eqnarray}
+
+\noindent The blocks $\ell,k$ of the Hessian with respect to the nodal 
+coordinates
+can be written as
+\begin{eqnarray}
+\frac{\partial^2 f}{\partial X^\ell \partial X^k} = M \, H^{\ell,k} \, M^t
+\end{eqnarray}
+where
+\begin{eqnarray}
+\left( H^{\ell,k} \right)_{i,r} = (\nabla N_k)^t \, \frac{\partial^2 f}{\partial A_i \partial A_r} \, \nabla N_\ell 
+\end{eqnarray}
+
+\noindent Each block of the Hessian matrix is singular because it has a 
+non-trivial null-space; this arises once again because $M^t \, n_a = 0$. 
+\newline
+
+%\noindent For a purely 2-dimensional case, a block of the Hessian containing 
+%derivatives with respect to the coordinates of two vertices $Y^\ell$ and $Y^k$ is:
+%\begin{equation} \label{eqn:hess-2d}
+%\frac{\partial^2 g}{\partial Y^\ell \partial Y^k} =
+%\left[ \begin{array}{cc}
+%\frac{\partial^2 g}{\partial Y^\ell_1 \partial Y^k_1} &
+%\frac{\partial^2 g}{\partial Y^\ell_1 \partial Y^k_2} \\
+%\frac{\partial^2 g}{\partial Y^\ell_2 \partial Y^k_1} &
+%\frac{\partial^2 g}{\partial Y^\ell_2 \partial Y^k_2} 
+%\end{array} \right] \end{equation}
+%\noindent And analogous to the 3-dimensional case from equation:
+%(\ref{eqn:vol-hess-mat}):
+%\begin{equation}
+%\left(\frac{\partial^2 g}{\partial Y^\ell \partial Y^k}\right)_{i,r}
+%= \frac{\partial^2 g}{\partial Y^\ell_i \partial Y^k_r}
+%= (\nabla N_\ell)^t \frac{\partial^2 f}{\partial A_i \partial A_r} \nabla N_k
+%\end{equation}
+%\noindent A block of the Hessian for the surface case can be expressed in terms of the corresonding 2D Hessian:
+%\begin{equation} \label{eqn:surf-hess-mat}
+%\frac{\partial^2 f}{\partial X^\ell \partial X^k}
+%= (RZ) \left(\frac{\partial^2 g}{\partial Y^\ell \partial Y^k}\right)^t (RZ)^t
+%\end{equation}
+%\noindent A single element $n,m$ of equation (\ref{eqn:surf-hess-mat}) is:
+%\begin{eqnarray}
+%\left(\frac{\partial^2 f}{\partial X^\ell \partial X^k}\right)_{n,m}
+%&=& \frac{\partial^2 f}{\partial X^\ell_n \partial X^k_m} \nonumber \\
+%&=& \left[(RZ) \left(\frac{\partial^2 g}{\partial Y^\ell \partial Y^k} \right)^t  (RZ)^t\right]_{n,m} 
+%    \nonumber \\
+%&=& \sum_{r=1}^2 (RZ)_{n,r} \left[ \left(\frac{\partial^2 g}{\partial Y^\ell \partial Y^k} \right)^t
+%    (RZ)^t \right]_{r,m} \nonumber \\
+%&=& \sum_{r=1}^2 (RZ)_{n,r} \sum_{i=1}^2 
+%    \left(\frac{\partial^2 g}{\partial Y^\ell \partial Y^k}\right)^t_{r,i} (RZ)^t_{i,m} 
+%    \nonumber \\
+%&=& \sum_{r=1}^2 (RZ)^t_{r,n} \sum_{i=1}^2 
+%    \left(\frac{\partial^2 g}{\partial Y^\ell \partial Y^k}\right)_{i,r} (RZ)_{m,i} 
+%    \nonumber \\
+%&=& \sum_{r=1}^2 \sum_{i=1}^2 (RZ)^t_{r,n} (RZ)_{m,i} \left[
+%    (\nabla N_\ell)^t \frac{\partial^2 f}{\partial A_i \partial A_r} \nabla N_k
+%    \right] \nonumber
+%\end{eqnarray}
+%\noindent which is equation (\ref{eqn:surf-hess-summat}). \newline
+
+%\noindent In the planer case ($RZ = I$), equation (\ref{eqn:surf-hess-mat}) results in 
+%a $3 \times 3$  matrix where the upper left $2 \times 2$ sub-block is exactly the 
+%corresponding Hessian block from 
+%the two-dimensional case and all terms corresponding to derivatives with respect to the 
+%coordinate of the third dimension are zero.  Each vertex-block of both the first and second derivatives is a transform using $RZ$ applied to the corresponding vertex-block from the 
+%two-dimensional derivatives.
+
+
+\chapter{Implementation Names}
+
+The table in this section is a map from class names in the Mesquite implementation to sections in this document describing the corresponding
+metric and its derivatives.  Section numbers in parantheses indicate
+metrics that are not yet implemented.  Entries with question marks indicate
+implementations for which there is no corresponding section in this document.\newline
+
+%\begin{tabular}{|c|c|c||c|c|}
+%\hline
+%Name & Rel 2D & Rel 3D & Abs 2D & Abs 3D \\
+%\hline
+%Shape & \ref{2ds} & \ref{shape3d} & \ref{abs-shape} & \\
+%ShapeAlt1 & \ref{shape2d} &  & \ref{abs-shape-alt1} & \\
+%\hline
+%ShapeBarrier & \ref{shape+2d} & \ref{shape+3d} & \ref{abs-shape-barrier} & \\
+%ShapeBarrierAlt1 &  & \ref{s+1} & & \\
+%InverseMeanRatio & \ref{imr} & \ref{imr} & & \\ \hline
+%\hline
+%ShapeOrient & \ref{sho} & \ref{sho} & & \\
+%ShapeOrientAlt1 & \ref{si+} & \ref{si+} & & \\
+%ShapeOrientAlt2 & & & \ref{abs-ShapeOr-alt2} & \ref{abs-ShapeOr-alt2} \\
+%\hline
+%ShapeOrientBarrier & \ref{sho_b} & \ref{sho_b} & & \\
+%ShapeOrientBarrierAlt1 & \ref{nu-over-tau} & \ref{nu-over-tau} & & \\ \hline
+%\hline
+%ShapeSize & \ref{magic} &  & & \\
+%ShapeSizeAlt1 & \ref{magic2} & & & \\
+%ShapeSizeAlt2 & \ref{ss2d} & \ref{ss3d} & & \\
+%\hline
+%ShapeSizeBarrier & \ref{ss+1} & \ref{ss+1} & \ref{abs-ss-barrier} & \\
+%ShapeSizeBarrierAlt1 & \ref{ss+32d} & \ref{ss+3d} & & \\
+%ShapeSizeBarrierAlt2 & \ref{ss+22d} & \ref{ss+23d} & & \\ \hline
+%\hline
+%ShapeSizeOrient & \ref{tmi} & \ref{tmi} &  \ref{diff} & \ref{diff} \\
+%\hline
+%ShapeSizeOrientBarrier & \ref{sso+} & \ref{sso+} & & \\
+%ShapeSizeOrientBarrierAlt1 & \ref{sso+2} & \ref{sso+2} & \ref{abs-SSO-barrier} %& \ref{abs-SSO-barrier} \\ \hline
+%\hline
+%Size & \ref{tausqr} & \ref{tausqr} & \ref{abs-size} & \ref{abs-size} \\
+%Tau & \ref{tau} & \ref{tau} & & \\
+%\hline
+%SizeBarrier & \ref{z+1} & \ref{z+1} & \ref{abs-size-barrier} & \ref{abs-size-barrier} \\ 
+%\hline
+%Squared & \ref{tsquared} & \ref{tsquared} & &  \\ \hline
+%\hline
+%UntangleAlt1 & \ref{untangle2} & \ref{untangle2} & & \\
+%UntangleBeta & \ref{untangle1} & \ref{untangle1} & \ref{abs-unt} & \ref{abs-unt} \\
+%UntangleMu & \ref{franks} & \ref{franks} & & \\
+%\hline
+%\end{tabular}
+
+\begin{tabular}{|c|c|c|}
+\hline
+Name & T & A,W \\
+\hline
+ShapeNB1 & \ref{2ds}, \ref{shape3d} & \\
+Shape2DNB1 & & \ref{abs-shape} \\
+Shape2DNB2 & \ref{shape2d} & \ref{abs-shape-alt1} \\
+\hline
+ShapeB1 & \ref{shape+2d}, \ref{shape+3d} & \\
+Shape2DB1 & & \ref{abs-shape-barrier} \\
+Shape3DB2 &  \ref{s+1} & \\
+InverseMeanRatio & \ref{imr} & \\ \hline
+\hline
+ShapeOrientNB1 & \ref{sho} & \ref{abs-ShapeOr-alt2} \\
+ShapeOrientNB2 & \ref{si+}  & \\
+\hline
+ShapeOrientB1 & \ref{sho_b} & \\
+ShapeOrientB2 & \ref{nu-over-tau} & \\ \hline
+\hline
+ShapeSize2DNB1 & \ref{magic} & \\
+ShapeSize3DNB1 & ? & \\
+ShapeSize2DNB2 & \ref{magic2} & \\
+ShapeSizeNB3 & \ref{ss2d}, \ref{ss3d} & \\
+\hline
+ShapeSizeB1 & \ref{ss+1} & \ref{abs-ss-barrier} \\
+ShapeSize2DB2 & \ref{ss+32d} & \\
+ShapeSize3DB2 &  \ref{ss+3d} & \\
+ShapeSizeB3 & \ref{ss+22d}, \ref{ss+23d} & \\ 
+ShapeSize3DB4 & ? & \\
+\hline
+\hline
+ShapeSizeOrientNB1 & \ref{tmi} & \ref{diff} \\
+\hline
+ShapeSizeOrientB1 & \ref{sso+} & \\
+ShapeSizeOrientB2 & \ref{sso+2} & \ref{abs-SSO-barrier} \\ 
+\hline
+\hline
+SizeNB1 & \ref{tausqr} & \ref{abs-size} \\
+Tau & \ref{tau} & \\
+\hline
+SizeB1 & \ref{z+1} & \ref{abs-size-barrier} \\ 
+\hline
+Squared & \ref{tsquared}  &  \\ \hline
+\hline
+Untangle1 & \ref{untangle2}  & \\
+UntangleBeta & \ref{untangle1} &  \ref{abs-unt} \\
+UntangleMu & \ref{franks}  & \\
+\hline
+\end{tabular}
+
+\end{document}

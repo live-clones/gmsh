@@ -30,6 +30,13 @@
 #include "fastScaledCrossField.h"
 #endif
 
+#if defined(HAVE_HXT)
+extern "C" {
+// #include "hxt_api.h"
+#include "hxt_quadMultiBlock.h"
+}
+#endif
+#include "meshGRegionHxt.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -51,6 +58,8 @@
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
 #include "linearSystemPETSc.h"
+
+#include "conformalMapping.h"
 
 // static inline double lifting(double a, double _a)
 // {
@@ -1628,6 +1637,8 @@ static bool computePotential(
     myAssembler.assembleSym(EAVG1, E1, 1.0);
     myAssembler.assembleSym(EAVG2, E2, 1.0);
   }
+  myAssembler.assemble(EAVG1, EAVG1, 0.0); //for petsc
+  myAssembler.assemble(EAVG2, EAVG2, 0.0); //for petsc
 #endif
   
   
@@ -4377,7 +4388,8 @@ public:
           SVector3 zz = crossprod(aa, ww);
           zz.normalize();
           sign = -dot(zz, xx);// > 0 ? -1 : 1;
-          //sign = dot(zz, xx) > 0 ? -1 : 1;
+	  // sign = dot(zz, xx);// > 0 ? -1 : 1;//temp fix
+          // sign = dot(zz, xx) > 0 ? -1 : 1;// was commented here
         }
         else
           printf("ARGH\n");
@@ -4388,10 +4400,10 @@ public:
 
       for(size_t i = 0; i < vsorted[j].size(); ++i) { SUM += CURVATURE[i]; }
 
-      //      printf("%22.15E %22.15E\n",SUM, CORR );
+      printf("%22.15E \n",SUM);
       for(size_t i = 0; i < vsorted[j].size(); ++i) {
         Dof E(vsorted[j][i]->getNum(), Dof::createTypeWithTwoInts(0, 1));
-        //        _lsys->addToRightHandSide(dof->getDofNumber(E),CURVATURE[i]);
+	_lsys->addToRightHandSide(dof->getDofNumber(E),CURVATURE[i]); //was commented here
       }
     }
 
@@ -4400,7 +4412,7 @@ public:
       Dof E(it->first->getNum(), Dof::createTypeWithTwoInts(0, 1));
       //      printf("%12.5E\n",it->second);
       double XXX = boundaries.find(it->first) == boundaries.end() ? -2*M_PI+it->second : -M_PI+it->second;
-      _lsys->addToRightHandSide(dof->getDofNumber(E),XXX);
+      // _lsys->addToRightHandSide(dof->getDofNumber(E),XXX); //for manifold. not using it it's buggy
       sum1 += XXX;
     }
 
@@ -4413,7 +4425,7 @@ public:
       SSUM += 2.0 * M_PI * (double)it->second / nbTurns;
     }
 
-    //    printf("%12.5E %12.5E\n",sum1,SSUM);
+    printf("%12.5E %12.5E\n",sum1,SSUM);
     
     // FIX DE LA MORT
     // AVERAGE
@@ -4425,7 +4437,7 @@ public:
       dof->assembleSym(EAVG, E, 1);
       //      dof->assemble(E, EAVG, 1);
     }
-
+    dof->assemble(EAVG, EAVG, 0.0); //for petsc
 
     _lsys->systemSolve();
     return dof;
@@ -6188,44 +6200,97 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
       Msg::Warning("prescribed singularities not found, using heat-based cross field computation");
     }
   }
-
   if (use_prescribed) {
+  // if (1) {//DBG
     Msg::Info("Computing cross field from %d prescribed singularities",
         temp.size());
-    std::map<int, std::vector<double> > dataTHETA;
-
-    const bool createViewTheta = true; /* - View 'theta' */
-    qLayout.computeCrossFieldAndH(&temp, dataTHETA, createViewTheta);
-
-
-
-    /* - View 'H' */
-    // int h_tag = -1;
-    std::map<int, std::vector<double> > dataH;
-    qLayout.getH(dataH);
-    std::map<int, double > dataH2;
-    for (const auto& kv: dataH) {
-      dataH2[kv.first] = kv.second[0];
+    //ALEX
+    std::map<MTriangle *, std::vector<std::vector<SVector3>>> crossEdgTri;
+    std::map<MVertex *, double, MVertexPtrLessThan> H;
+    ConformalMapping::computeScaledCrossesFromSingularities(gm,crossEdgTri,H);
+    // ConformalMapping::_viewCrossEdgTri(crossEdgTri, "CM::Crosses");;
+    int cf_tag = -1;
+    std::set<MTriangle *, MElementPtrLessThan> tri;
+    std::vector<std::size_t> keys;
+    std::vector<std::vector<double> > values;	
+    for(auto &kv: crossEdgTri){
+      MTriangle* t=kv.first;
+      tri.insert(kv.first);
+      SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
+    		   t->getVertex(1)->y() - t->getVertex(0)->y(),
+    		   t->getVertex(1)->z() - t->getVertex(0)->z());
+      SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
+    		   t->getVertex(2)->y() - t->getVertex(0)->y(),
+    		   t->getVertex(2)->z() - t->getVertex(0)->z());
+      // SVector3 tNormal = crossprod(v10, v20);
+      SVector3 tNormal = crossprod(v20, v10);
+      tNormal.normalize();
+      SVector3 thetaVect(0.0);
+      std::vector<double> valTri;
+      for(size_t k=0;k<3;k++){
+    	MEdge eK=t->getEdge(k);
+    	MVertex *v0=eK.getVertex(0);
+    	MVertex *v1=eK.getVertex(1);
+    	SVector3 vE(v1->x() - v0->x(),
+    		    v1->y() - v0->y(),
+    		    v1->z() - v0->z());
+    	vE.normalize();
+    	SVector3 V=crossprod(tNormal,vE);
+    	V.normalize();
+    	SVector3 branch=kv.second[k][0];
+    	double thetaE=atan2(dot(branch,V),dot(branch,vE));
+        valTri.push_back(thetaE);
+      }
+      keys.push_back(t->getNum());
+      values.push_back(valTri);
     }
-    PView* vH = PView::getViewByName("H");
-    if (vH) {delete vH; vH = NULL;}
-    if (!vH) {
-      Msg::Info("create a view 'H'");
-      vH = new PView();
-      vH->getData()->setName("H");
-      // h_tag = vH->getTag();
-    }
-    PViewDataList* d = dynamic_cast<PViewDataList*>(vH->getData());
-    if(!d) { // change the view type
-      delete vH->getData();
-      d = new PViewDataList();
-      d->setName("H");
-      vH->setData(d);
-    }
-    int sview = create_datalist_view_from_scalar_field(f, dataH2, d);
-    if (sview != 0) {
-      Msg::Error("Failed to create view with H");
-      return -1;
+    PView* theta = PView::getViewByName("theta");
+    if (theta) {delete theta; theta = NULL;}
+    gmsh::initialize();
+    std::string cname;
+    gmsh::model::getCurrent(cname);
+    int crossFieldTag = gmsh::view::add("theta");
+    gmsh::view::addModelData(crossFieldTag, 0, cname, "ElementData", keys, values);
+
+    PView* viewH = PView::getViewByName("CM::H");
+    if (viewH) {delete viewH; viewH = NULL;}
+    // ConformalMapping::_viewScalarTriangles(H,tri, "CM::H");
+    // ALEX
+    if(0){
+      std::map<int, std::vector<double> > dataTHETA;
+
+      const bool createViewTheta = true; /* - View 'theta' */
+      qLayout.computeCrossFieldAndH(&temp, dataTHETA, createViewTheta);
+
+    
+      /* - View 'H' */
+      // int h_tag = -1;
+      std::map<int, std::vector<double> > dataH;
+      qLayout.getH(dataH);
+      std::map<int, double > dataH2;
+      for (const auto& kv: dataH) {
+	dataH2[kv.first] = kv.second[0];
+      }
+      PView* vH = PView::getViewByName("H");
+      if (vH) {delete vH; vH = NULL;}
+      if (!vH) {
+	Msg::Info("create a view 'H'");
+	vH = new PView();
+	vH->getData()->setName("H");
+	// h_tag = vH->getTag();
+      }
+      PViewDataList* d = dynamic_cast<PViewDataList*>(vH->getData());
+      if(!d) { // change the view type
+	delete vH->getData();
+	d = new PViewDataList();
+	d->setName("H");
+	vH->setData(d);
+      }
+      int sview = create_datalist_view_from_scalar_field(f, dataH2, d);
+      if (sview != 0) {
+	Msg::Error("Failed to create view with H");
+	return -1;
+      }
     }
   } else {
 #if defined(HAVE_QUADMESHINGTOOLS)
@@ -7408,4 +7473,309 @@ int smoothQuadMesh(GModel* gm, int explicit_iter, void* data_boundary_projector)
 #endif
 }
 
+//using cf computed without prescribed sing
+int splitMeshWithSeparatrices(GModel * gm, QuadMeshingState& state) {
+  /* load theta (angle per edge) */
+  int cf_tag = -1;
+  PView* theta = PView::getViewByName("theta"); 
+  if (!theta) {
+    Msg::Error("required view 'theta' not found");
+    return -1;
+  }
+  cf_tag = theta->getTag();
 
+  HXTMesh *mesh;
+  HXT_CHECK(hxtMeshCreate(&mesh));
+  std::map<MVertex *, uint32_t> v2c;
+  std::vector<MVertex *> c2v;
+  HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
+  Msg::Info("MBD | Generating separatrices to obtain split mesh");
+  HXTMesh *splitMesh;
+  hxtQuadMultiBlockDBG(mesh, cf_tag, &splitMesh);
+  Msg::Info("MBD | Split mesh generated");
+  
+  Msg::Info("MBD |  Exporting split mesh to gmsh");
+  //projector
+#if defined(HAVE_QUADMESHINGTOOLS)
+  if (state.data_boundary_projector == NULL) {
+    QMT::TMesh boundary;
+    bool oki = QMT::import_TMesh_from_gmsh(gm->getName(),boundary);
+    if (!oki) {
+      Msg::Error("Failed to import triangular mesh");
+      return -1;
+    }
+    state.data_boundary_projector = (void*) new QMT::BoundaryProjector(boundary);
+    Msg::Debug("saved QMT::BoundaryProjector* in QuadMeshingState");
+  }
+#endif
+  
+  const std::string meshName=gm->getName() + "_Cut.msh";
+  GModel* gg = GModel::findByName(meshName);
+  if (gg) {
+    Msg::Warning("Already a model with the same name, deleting it");
+    delete gg;
+  }
+  gmsh::model::add(meshName);
+  gmsh::model::setCurrent(meshName);
+  //variables
+  std::vector<double> coords; coords.reserve(3*(splitMesh->vertices.num)); 
+  std::vector<size_t> nodeTags; nodeTags.reserve(splitMesh->vertices.num);
+  std::vector<std::vector<std::size_t>> elementTags; elementTags.reserve(splitMesh->triangles.num); 
+  std::vector<std::vector<std::size_t>> eltNodeTags; eltNodeTags.reserve(splitMesh->triangles.num);
+  std::vector<std::size_t> triInd; triInd.reserve(3); triInd.push_back(0); triInd.push_back(0); triInd.push_back(0);
+  std::vector<int> TRI_ID; TRI_ID.reserve(splitMesh->triangles.num);
+ 
+  int dim=2;
+  int tag=gmsh::model::addDiscreteEntity(2);
+  //vertices
+  for(uint64_t i=0; i<splitMesh->vertices.num; i++){
+    for(int j=0; j<3; j++)
+      coords.push_back(splitMesh->vertices.coord[4*i+j]);
+    nodeTags.push_back(i+1);
+  }
+  gmsh::model::mesh::addNodes(dim, tag, nodeTags, coords);
+  //triangles
+  for(uint64_t i=0; i<splitMesh->triangles.num; i++){
+    std::vector<size_t> val; val.reserve(1); val.push_back(static_cast<size_t>(i+1));
+    elementTags.push_back({val});
+    for(int j=0; j<3; j++)
+      triInd[j]=static_cast<size_t>(splitMesh->triangles.node[3*i+j] + 1);
+    eltNodeTags.push_back(triInd);
+    TRI_ID.push_back(2);
+  }
+  gmsh::model::mesh::addElements(dim, tag, TRI_ID, elementTags, eltNodeTags);
+  //lines
+  uint16_t maxLineTag=0;
+  for(uint64_t i=0; i<splitMesh->lines.num; i++)
+    if(splitMesh->lines.color[i]>maxLineTag)
+      maxLineTag=splitMesh->lines.color[i];
+  std::vector<int> diffColors; diffColors.reserve(maxLineTag+1);
+  std::vector<int> diffTags; diffTags.reserve(maxLineTag+1);
+  for(uint64_t i=0; i<splitMesh->lines.num; i++){
+    if(std::find(diffColors.begin(), diffColors.end(), static_cast<int>(splitMesh->lines.color[i])) == diffColors.end()){
+      diffColors.push_back(static_cast<int>(splitMesh->lines.color[i]));
+      int lTag=gmsh::model::addDiscreteEntity(1);
+      diffTags.push_back(lTag);
+    }
+  } 
+  std::vector<std::vector<int>> coloredLines; coloredLines.reserve(diffColors.size());
+  for(uint64_t i=0; i<diffColors.size(); i++){
+    std::vector<int> vecL; vecL.reserve(splitMesh->lines.num);
+    for(uint64_t j=0; j<splitMesh->lines.num; j++){
+      if(diffColors[i]==static_cast<int>(splitMesh->lines.color[j]))
+	vecL.push_back(static_cast<int>(j));
+    }
+    coloredLines.push_back(vecL);
+  }
+  int num=0;
+  for(uint64_t i=0; i<coloredLines.size();i++){
+    std::vector<std::vector<std::size_t>> lineNodeTags; lineNodeTags.reserve(coloredLines[i].size());
+    std::vector<std::size_t> lnInd; lnInd.reserve(2); lnInd.push_back(0); lnInd.push_back(0);
+    std::vector<std::vector<std::size_t>> lineTags; lineTags.reserve(coloredLines[i].size());
+    std::vector<int> L_ID; L_ID.reserve(coloredLines[i].size());
+    for(uint64_t j=0; j<coloredLines[i].size(); j++){
+      std::vector<size_t> val; val.reserve(1); val.push_back(static_cast<size_t>(num+j+1));
+      lineTags.push_back({val});
+      lnInd[0]=static_cast<size_t>(splitMesh->lines.node[2*coloredLines[i][j]+0] + 1);
+      lnInd[1]=static_cast<size_t>(splitMesh->lines.node[2*coloredLines[i][j]+1] + 1);
+      lineNodeTags.push_back(lnInd);
+      L_ID.push_back(1); 
+    }
+    num+=coloredLines[i].size()+1;
+    gmsh::model::mesh::addElements(1, diffTags[i], L_ID, lineTags, lineNodeTags);
+  }
+  std::cout<<"---------------FINIIIIIIIISHED!----------------"<<std::endl;
+  std::cout<<std::endl;
+  
+  gm = GModel::current();
+  CTX::instance()->mesh.changed = ENT_ALL;
+  Msg::Info("MBD | Split mesh shown in  gmsh");
+  hxtMeshDelete(&mesh);
+  hxtMeshDelete(&splitMesh);
+  return 0;
+}
+
+int findAndMarkSingularities(GModel * gm){
+  /* load theta (angle per edge) */
+  int cf_tag = -1;
+  PView* theta = PView::getViewByName("theta"); 
+  if (!theta) {
+    Msg::Error("required view 'theta' not found");
+    return -1;
+  }
+  cf_tag = theta->getTag();  
+  HXTMesh *mesh;  
+  HXT_CHECK(hxtMeshCreate(&mesh));
+  std::map<MVertex *, uint32_t> v2c;
+  std::vector<MVertex *> c2v;
+  HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
+  Msg::Info("MBD | Finding singularities and creating new geometry file");
+  
+  std::string geoFileName = gm->getName() + "_sing.geo";
+  bool printLabels = true; bool onlyPhysicals = false;
+  gm->writeGEO(geoFileName, printLabels, onlyPhysicals);
+  
+  std::string modelWithSingName = gm->getName() + "_sing";
+  GModel* gg = GModel::findByName(modelWithSingName);
+  if (gg) {
+    Msg::Warning("Already a model with the same name, deleting it");
+    delete gg;
+  }
+ 
+  hxtQuadMultiBlockGetSingInfo(mesh, cf_tag, geoFileName);
+  gg=GModel::findByName(modelWithSingName);
+  // if (gg) {
+  //   Msg::Warning("Model with singularities not found");
+  // }
+  // else
+  //   gm=gg;
+  Msg::Info("MBD | New geometry ready");
+  // std::string geoFileName2 = gm->getName() + "_sing2.geo";
+  // gm->writeGEO(geoFileName2, printLabels, onlyPhysicals);
+  hxtMeshDelete(&mesh);
+  return 0;
+}
+
+//using cf computed on prescribed sing
+int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
+  std::cout << "splitMeshWithPrescribedSing" << std::endl;
+  /* load theta (angle per edge) */
+  int cf_tag = -1;
+  PView* theta = PView::getViewByName("theta"); 
+  if (!theta) {
+    Msg::Error("required view 'theta' not found");
+    return -1;
+  }
+  cf_tag = theta->getTag();
+  //DBG
+  std::string tmp_path = "temp0.msh";
+  gm->writeMSH(tmp_path, 4.1, false, true);
+  std::cout << "mesh written" << std::endl;
+  //DBG
+  HXTMesh *mesh;
+  HXT_CHECK(hxtMeshCreate(&mesh));
+  std::cout << "mesh allocated" << std::endl;
+  std::map<MVertex *, uint32_t> v2c;
+  std::vector<MVertex *> c2v;
+  HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
+  std::cout << "mesh converted" << std::endl;
+  
+  //DBG: Write geo/msh with imposed sing
+  bool printLabels = true; bool onlyPhysicals = false;
+  std::string tempName= "temp.geo";
+  std::cout << "geo being written" << std::endl;  
+  gm->writeGEO(tempName, printLabels, onlyPhysicals);
+  std::cout << "geo written" << std::endl;
+  std::string tmp_path1 = "temp1.msh";
+  gm->writeMSH(tmp_path1, 4.1, false, true);
+  std::cout << "mesh written" << std::endl;
+  //------------------------------------------------
+  
+  Msg::Info("MBD | Generating separatrices to obtain split mesh");
+  HXTMesh *splitMesh;
+  hxtQuadMultiBlockSplitWithPrescribedSing(mesh, cf_tag, &splitMesh);
+  std::cout << "mesh splitted" << std::endl;
+  if (theta) {delete theta; theta = NULL;}//DBG
+  Msg::Info("MBD | Split mesh generated");
+  
+  Msg::Info("MBD |  Exporting split mesh to gmsh");
+  //projector
+#if defined(HAVE_QUADMESHINGTOOLS)
+  std::cout << "projection" << std::endl;
+  if (state.data_boundary_projector == NULL) {
+    QMT::TMesh boundary;
+    bool oki = QMT::import_TMesh_from_gmsh(gm->getName(),boundary);
+    if (!oki) {
+      Msg::Error("Failed to import triangular mesh");
+      return -1;
+    }
+    state.data_boundary_projector = (void*) new QMT::BoundaryProjector(boundary);
+    Msg::Debug("saved QMT::BoundaryProjector* in QuadMeshingState");
+  }
+#endif
+  std::cout << "mesh in new model" << std::endl;
+  const std::string meshName=gm->getName() + "_Cut.msh";
+  GModel* gg = GModel::findByName(meshName);
+  if (gg) {
+    Msg::Warning("Already a model with the same name, deleting it");
+    delete gg;
+  }
+  gmsh::model::add(meshName);
+  gmsh::model::setCurrent(meshName);
+  //variables
+  std::vector<double> coords; coords.reserve(3*(splitMesh->vertices.num)); 
+  std::vector<size_t> nodeTags; nodeTags.reserve(splitMesh->vertices.num);
+  std::vector<std::vector<std::size_t>> elementTags; elementTags.reserve(splitMesh->triangles.num); 
+  std::vector<std::vector<std::size_t>> eltNodeTags; eltNodeTags.reserve(splitMesh->triangles.num);
+  std::vector<std::size_t> triInd; triInd.reserve(3); triInd.push_back(0); triInd.push_back(0); triInd.push_back(0);
+  std::vector<int> TRI_ID; TRI_ID.reserve(splitMesh->triangles.num);
+ 
+  int dim=2;
+  int tag=gmsh::model::addDiscreteEntity(2);
+  //vertices
+  for(uint64_t i=0; i<splitMesh->vertices.num; i++){
+    for(int j=0; j<3; j++)
+      coords.push_back(splitMesh->vertices.coord[4*i+j]);
+    nodeTags.push_back(i+1);
+  }
+  gmsh::model::mesh::addNodes(dim, tag, nodeTags, coords);
+  //triangles
+  for(uint64_t i=0; i<splitMesh->triangles.num; i++){
+    std::vector<size_t> val; val.reserve(1); val.push_back(static_cast<size_t>(i+1));
+    elementTags.push_back({val});
+    for(int j=0; j<3; j++)
+      triInd[j]=static_cast<size_t>(splitMesh->triangles.node[3*i+j] + 1);
+    eltNodeTags.push_back(triInd);
+    TRI_ID.push_back(2);
+  }
+  gmsh::model::mesh::addElements(dim, tag, TRI_ID, elementTags, eltNodeTags);
+  //lines
+  uint16_t maxLineTag=0;
+  for(uint64_t i=0; i<splitMesh->lines.num; i++)
+    if(splitMesh->lines.color[i]>maxLineTag)
+      maxLineTag=splitMesh->lines.color[i];
+  std::vector<int> diffColors; diffColors.reserve(maxLineTag+1);
+  std::vector<int> diffTags; diffTags.reserve(maxLineTag+1);
+  for(uint64_t i=0; i<splitMesh->lines.num; i++){
+    if(std::find(diffColors.begin(), diffColors.end(), static_cast<int>(splitMesh->lines.color[i])) == diffColors.end()){
+      diffColors.push_back(static_cast<int>(splitMesh->lines.color[i]));
+      int lTag=gmsh::model::addDiscreteEntity(1);
+      diffTags.push_back(lTag);
+    }
+  } 
+  std::vector<std::vector<int>> coloredLines; coloredLines.reserve(diffColors.size());
+  for(uint64_t i=0; i<diffColors.size(); i++){
+    std::vector<int> vecL; vecL.reserve(splitMesh->lines.num);
+    for(uint64_t j=0; j<splitMesh->lines.num; j++){
+      if(diffColors[i]==static_cast<int>(splitMesh->lines.color[j]))
+	vecL.push_back(static_cast<int>(j));
+    }
+    coloredLines.push_back(vecL);
+  }
+  int num=0;
+  for(uint64_t i=0; i<coloredLines.size();i++){
+    std::vector<std::vector<std::size_t>> lineNodeTags; lineNodeTags.reserve(coloredLines[i].size());
+    std::vector<std::size_t> lnInd; lnInd.reserve(2); lnInd.push_back(0); lnInd.push_back(0);
+    std::vector<std::vector<std::size_t>> lineTags; lineTags.reserve(coloredLines[i].size());
+    std::vector<int> L_ID; L_ID.reserve(coloredLines[i].size());
+    for(uint64_t j=0; j<coloredLines[i].size(); j++){
+      std::vector<size_t> val; val.reserve(1); val.push_back(static_cast<size_t>(num+j+1));
+      lineTags.push_back({val});
+      lnInd[0]=static_cast<size_t>(splitMesh->lines.node[2*coloredLines[i][j]+0] + 1);
+      lnInd[1]=static_cast<size_t>(splitMesh->lines.node[2*coloredLines[i][j]+1] + 1);
+      lineNodeTags.push_back(lnInd);
+      L_ID.push_back(1); 
+    }
+    num+=coloredLines[i].size()+1;
+    gmsh::model::mesh::addElements(1, diffTags[i], L_ID, lineTags, lineNodeTags);
+  }
+  std::cout<<"---------------FINIIIIIIIISHED!----------------"<<std::endl;
+  std::cout<<std::endl;
+  
+  gm = GModel::current();
+  CTX::instance()->mesh.changed = ENT_ALL;
+  Msg::Info("MBD | Split mesh shown in  gmsh");
+  // hxtMeshDelete(&mesh);//CRITICAL
+  // hxtMeshDelete(&splitMesh);//CRITICAL
+  return 0;
+}
