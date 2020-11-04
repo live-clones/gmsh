@@ -25,6 +25,11 @@ class MultiBlock
   HXTStatus hxtWriteFlaggedTriangles(std::vector<int> flag, const char *fileName);
   HXTStatus hxtWriteFlaggedNodes(std::vector<std::vector<std::array<double,3>>> cCoord, const char *fileName);
   HXTStatus hxtWriteTriVert(std::vector<std::array<double,3>> vertices, const char *fileName);
+  //new
+  HXTStatus buildQuadLayout(); 
+  // HXTStatus getExtrVertIndFromSepID(int ID, std::vector<int> *extraVertIndices);
+  HXTStatus isExtrVertOnBdry(int ind, int *isBdry);
+  HXTStatus isExtrVertTjunction(int ind, int *isTjunction);
   
 
   
@@ -34,6 +39,28 @@ class MultiBlock
   std::vector<Separatrice> m_vectSep;
   std::vector<Singularity> m_vectSing;
   std::vector<Corner> m_vectCorner;
+
+  //new
+  //graph---------------
+  std::vector<std::vector<int>> m_sepGraphNodes;
+  std::vector<std::vector<uint64_t>> m_sepGraphTriangles;
+  std::vector<std::vector<std::array<double,3>>> m_sepGraphDirections;
+  //quads------------
+  std::vector<std::array<double,3>> m_extraordVertices; //each vector is the coordinates of an extraordinary vertice ID
+  std::vector<int> m_extraordVertBdry; //extraordinary vertices indices - which are on boundary
+  std::vector<int> m_extraordVertTjunc; //extraordinary vertices indices - which are T-junctions
+  std::vector<uint64_t> m_tri;
+  double m_minEdgLength; //probably not needed!!! 
+  std::vector<std::vector<int>> m_mbQuads; //each vector is quad vertices indices
+  std::vector<std::vector<std::array<double,3>>> m_mbEdges; //each vector is a collection of point defining the mbEdg
+  std::vector<std::vector<uint64_t>> m_mbEdg2Block;
+  std::vector<std::vector<uint64_t>> m_mbBlock2Edg;
+
+
+  bool m_mbDecompExists;
+  std::vector<uint64_t> m_totalElemPatches;
+
+
   
     
   //Methods
@@ -41,6 +68,7 @@ class MultiBlock
   int addInPointsVectIfNotPresent2(std::vector<std::array<double,3>> *vect, std::array<double,3> point);
   int addInPointsVectIfNotPresentCustomized(uint64_t begin,std::vector<std::array<double,3>> *vect, std::array<double,3> point, int *ind);
   HXTStatus addInIntVectIfNotPresent(std::vector<int> *vect, int value);
+  HXTStatus addInUnsgnIntVectIfNotPresent(std::vector<uint64_t> *vect, uint64_t value);
   int intersectionNodeForGraph2(uint64_t triNum, double *point1, double *point2, double *point3, double *point4, double *newPoint, int *flag);
   int mark(int *flaggedNodes, int size);
   int defineQuads(std::vector<std::vector<int>> graphConnectedNodes, int *quadsWithIndices, int *offset, int *numOffsets, int *sizesQuads, int *numQuads);
@@ -65,7 +93,39 @@ class MultiBlock
   int createNewTriangles(std::vector<int> flag, std::vector<std::vector<int>> cSep, std::vector<std::vector<std::array<double,3>>> cCoord,
 			 std::vector<std::array<double,3>> *allMeshNodes, std::vector<std::array<int,3>> *allMeshTri, std::vector<std::array<int,2>> *allMeshLines,
 			 std::vector<int> *allMeshLinesColors);
- 
+
+  //new
+  void buildTotalPatches();
+  int localIntersection2(int sepID1, int sepID2, std::vector<std::array<double,3>> *intersectionPoints,std::vector<uint64_t> *newTriangles, std::vector<std::array<double,3>> *directions, std::vector<double> *length);
+  int getGraphElements(std::vector<std::array<double,3>> *nodesCoord, std::vector<uint64_t> *triangles, std::vector<std::array<double,3>> *directions, std::vector<double> *distance, std::vector<int> *offset);
+  HXTStatus hxtWriteGraphNodes(std::vector<std::array<double,3>> nodesCoord, const char *fileName);
+  int isPointSingularity(double *point1);
+  int graphReordering(std::vector<std::array<double,3>> nodesCoord,std::vector<uint64_t> triangles, std::vector<std::array<double,3>> directions, std::vector<double> distance, std::vector<int> offset, std::vector<std::array<double,3>> *newNodes, std::vector<uint64_t> *newTriangles, std::vector<std::array<double,3>> *newDirections, std::vector<double> *newDistances, std::vector<int> *newOffsetGraph);
+  int fillGraphStruct(std::vector<std::array<double,3>> newNodes, std::vector<uint64_t> newTriangles,  std::vector<int> newOffset);
+  int putIDsInGraph(std::vector<std::array<double,3>> newNodes, std::vector<std::array<double,3>> newDirections,std::vector<uint64_t> newTriangles, std::vector<int> newOffset);
+  int nodesConnectivity(int *connectedNodes, uint64_t *connectedTri, double *connectedDir, int *offset, int *numOffsets);
+  int checkIfLoop(int cleanSepInd);
+  // int reorderingConnectivityNodes(int *connectedNodes, uint64_t *connectedTri, double *connectedDir, int *offset, int *numOffsets, int *newConnectedNodes, std::vector<std::vector<int>> *graphConnectedNodes);
+  int killDuplicates(std::vector<std::vector<int>> graphConnectedNodes, std::vector<std::vector<int>> *cleanGraphConnectedNodes,  int *cleanOffset);
+  int graphNodesOnBdry(int *nodesOnBdry, int *sizeNodesOnBdry);
+  int getCleanedSepIndFromSepID(int ID, int *ind);
+  int putCleanQuadsInStruct(int *quadsWithIndices, int *sizesQuads, int *numQuads);
+  int keepTheQuad(int *quadIndices, int *sizeQuadNodes);
+  int getSepCleanIDfrom2extVert(int ind1, int ind2);
+  int getSepIDFromCleanedSepInd(int ind, int *ID);
+  int isPointSingularityOrCornerVec(std::array<double,3> *point);
+  int getQuadEdgesData();
+  int getBlock2Edge();
+  int getEdge2Block();
+  HXTStatus collectTJunctionIndices();
+  HXTStatus getTriangularPatchesIDs(std::vector<int> *triPatchesIDs);
+  double getDistanceBetweeenTwoExtrVert(int sepIDNoLimCyc, int extrVertID, int tJuncVertID1);
+  int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID);
+  HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs);
+  HXTStatus getDataFromBlockEdgID(int edgID, std::vector<std::array<double, 3>> *pointsOnEdg, std::vector<uint64_t> *trianglesOnEdg);
+  int isPointInTri(std::array<double, 3> point1, std::array<double, 3> point2, std::array<double, 3> currPoint, double *alpha);
+  HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum);
+  
   
 };
 

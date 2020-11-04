@@ -155,7 +155,8 @@ HXTStatus hxtQuadMultiBlockGetSingInfo(HXTMesh *mesh, int tagCrossField, std::st
   fclose(myfile);
 
   int nbTurns=4;
-  double critNorm=0.8; //to be optional from user?
+  // double critNorm=0.8; //to be optional from user?
+  double critNorm=0.7;
   int flagTypePos=1;
   const char *fileName="myCrosses.pos";
   QuadGenerator qGen(mesh, nbTurns, critNorm, flagTypePos, fileName);
@@ -289,7 +290,8 @@ HXTStatus hxtQuadMultiBlockDBG(HXTMesh *mesh, int tagCrossField, HXTMesh **split
   fclose(myfile);
 
   int nbTurns=4;
-  double critNorm=0.8;
+  // double critNorm=0.8;
+  double critNorm=0.7;
   int flagTypePos=1;
   const char *fileName="myCrossesCR.pos";
   QuadGenerator qGen(mesh, nbTurns, critNorm, flagTypePos, fileName);
@@ -455,7 +457,8 @@ HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossFi
 
   
   int nbTurns=4;
-  double critNorm=0.8;
+  // double critNorm=0.8;
+  double critNorm=0.7; 
   int flagTypePos=1;
   const char *fileName="myCrossesH.pos";
   QuadGenerator qGen(mesh, nbTurns, critNorm, flagTypePos, fileName);

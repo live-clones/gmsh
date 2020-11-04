@@ -4468,6 +4468,7 @@ int QuadGenerator::cutLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs)
     }
     sep->getPCoord()->push_back(lastIntersectionPoint);
     sep->getPTriangles()->push_back(lastIntersectionTriangle);
+    sep->setIsLimitCycle(); //set in sep limit cycle
   }
 
   return 1;
