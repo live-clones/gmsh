@@ -86,8 +86,8 @@ static void qmt_cut_with_uv_isos(Fl_Widget *w, void *data)
   if (status != 0) {
     Msg::Error("failed to generate split mesh");
   }
-  // if(FlGui::available()) FlGui::instance()->updateViews(true, true);
-  // drawContext::global()->draw();//DBG
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  drawContext::global()->draw();//DBG
 }
 
 static void qmt_quad_sizemap(Fl_Widget *w, void *data)
