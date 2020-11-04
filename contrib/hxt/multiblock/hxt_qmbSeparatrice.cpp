@@ -18,6 +18,7 @@ Separatrice::Separatrice(int ID, std::vector<std::array<double,3>> nodesCoord, s
   m_isBoundary=0;
   m_isRemovable=0;
   m_linkAngle=0.0;
+  m_isLimitCycle=0;
 }
 
 uint64_t Separatrice::getSizeIgnoredPatch(){
@@ -139,6 +140,16 @@ int Separatrice::setLinkAngle(double angle){
 double Separatrice::getLinkAngle(){
   return m_linkAngle;
 }
+
+int Separatrice::setIsLimitCycle(){
+  m_isLimitCycle=1;
+  return 1;
+}
+
+bool Separatrice::getIsLimitCycle(){
+  return m_isLimitCycle;
+}
+
 Separatrice::~Separatrice()
 {
 

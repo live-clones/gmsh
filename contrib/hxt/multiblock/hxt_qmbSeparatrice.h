@@ -36,6 +36,8 @@ class Separatrice
   int setLinkAngle(double angle);
   double getLinkAngle();
   uint64_t getSizeIgnoredPatch();
+  int setIsLimitCycle();
+  bool getIsLimitCycle();
   
  private:
   int m_ID;
@@ -50,6 +52,7 @@ class Separatrice
   bool m_isBoundary;
   int m_loopType; //0 not loop, 1 a loop, 2 loop with start+end at singularity
   double m_linkAngle;
+  bool m_isLimitCycle; //0 if its not; 1 if the sep is limit cycle
  
   
 };
