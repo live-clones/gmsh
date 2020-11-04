@@ -382,9 +382,11 @@ int MultiBlock::getGlobalEdg(uint64_t triNum, std::array<double,3> point, uint64
 	//if(fabs(n[0])<=1e-3 && fabs(n[1])<=1e-3 && fabs(n[2])<=1e-3){ //DBG
   	*edgNum=edges->tri2edg[3*triNum+2];
       }
+      else{
+	*edgNum=(uint64_t)(-1);
+      }
     }
   }
-
   return 1;
 }
 
@@ -546,8 +548,7 @@ int MultiBlock::reorderPoints(std::vector<std::array<double,3>> points, std::vec
   return 1;
 }
 
-int MultiBlock::orientateTriNodes(uint64_t triNum, std::vector<std::array<double,3>> *cutPoints, std::vector<uint64_t> cutEdg,
-				  std::vector<std::array<double,3>> *orientedPoints){
+int MultiBlock::orientateTriNodes(uint64_t triNum, std::vector<std::array<double,3>> *cutPoints, std::vector<uint64_t> cutEdg, std::vector<std::array<double,3>> *orientedPoints){
   HXTEdges *edges=m_Edges;
   HXTMesh *mesh=edges->edg2mesh;
   double *vert = mesh->vertices.coord;
@@ -570,25 +571,27 @@ int MultiBlock::orientateTriNodes(uint64_t triNum, std::vector<std::array<double
   int globIndex=-1;
   //small func gives back the edge
   for(uint64_t i=0; i<cutEdg.size(); i++){
-    if(edges->tri2edg[3*triNum+0]==cutEdg[i]){
-      if(!isCloseToVert(&((*cutPoints)[i]), cutEdg[i],triNum, &alpha)){	//not to double vertex 
-	// if(!(isTriVert(triNum,(*cutPoints)[i], &globIndex))){
-	e1Points.push_back((*cutPoints)[i]);
-	d1.push_back(alpha);
+    if(cutEdg[i]!=(uint64_t)(-1)){
+      if(edges->tri2edg[3*triNum+0]==cutEdg[i]){
+	if(!isCloseToVert(&((*cutPoints)[i]), cutEdg[i],triNum, &alpha)){	//not to double vertex 
+	  // if(!(isTriVert(triNum,(*cutPoints)[i], &globIndex))){
+	  e1Points.push_back((*cutPoints)[i]);
+	  d1.push_back(alpha);
+	}
       }
-    }
-    if(edges->tri2edg[3*triNum+1]==cutEdg[i]){
-      if(!isCloseToVert(&((*cutPoints)[i]),cutEdg[i],triNum, &alpha)){ //not to double vertex
-	// if(!(isTriVert(triNum, (*cutPoints)[i], &globIndex))){
-	e2Points.push_back((*cutPoints)[i]);
-	d2.push_back(alpha);
+      if(edges->tri2edg[3*triNum+1]==cutEdg[i]){
+	if(!isCloseToVert(&((*cutPoints)[i]),cutEdg[i],triNum, &alpha)){ //not to double vertex
+	  // if(!(isTriVert(triNum, (*cutPoints)[i], &globIndex))){
+	  e2Points.push_back((*cutPoints)[i]);
+	  d2.push_back(alpha);
+	}
       }
-    }
-    if(edges->tri2edg[3*triNum+2]==cutEdg[i]){
-      if(!isCloseToVert(&((*cutPoints)[i]),cutEdg[i],triNum, &alpha)){ //not to double vertex
-	//if(!(isTriVert(triNum, (*cutPoints)[i], &globIndex))){
-	e3Points.push_back((*cutPoints)[i]);
-	d3.push_back(alpha);
+      if(edges->tri2edg[3*triNum+2]==cutEdg[i]){
+	if(!isCloseToVert(&((*cutPoints)[i]),cutEdg[i],triNum, &alpha)){ //not to double vertex
+	  //if(!(isTriVert(triNum, (*cutPoints)[i], &globIndex))){
+	  e3Points.push_back((*cutPoints)[i]);
+	  d3.push_back(alpha);
+	}
       }
     }
   }
@@ -933,7 +936,7 @@ int MultiBlock::getConnectivity(uint64_t triNum, int flag, std::vector<std::arra
   return 1;
 }
 
-int MultiBlock::split(std::vector<int> nodes, std::vector<std::array<int,3>> *triVertInd, std::vector<int> *rest){
+int MultiBlock::split(std::vector<int> nodes, std::vector<std::array<int,3>> *triVertInd, std::vector<int> *rest){//ALEX: to modify here. we have to check we are not creating a flat triangle
   //create first triangle
   std::array<int,3> vert;
   for(int i=0; i<3; i++)
@@ -973,6 +976,36 @@ int MultiBlock::isElementBnd(std::vector<std::array<double, 3>> bndNodes, std::v
   }
   
   return flag;
+}
+
+bool isTriTooFlat(std::array<double,3> p1,std::array<double,3> p2,std::array<double,3> p3){
+  bool isTooFlat=false;
+  double angles[3]={0.0};
+  double e0[3]={p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]};
+  double nn0 = sqrt(e0[0]*e0[0]+e0[1]*e0[1]+e0[2]*e0[2]);
+  if(nn0>1e-10){
+    e0[0]/=nn0;e0[1]/=nn0;e0[2]/=nn0;
+  }
+  double e1[3]={p3[0]-p2[0],p3[1]-p2[1],p3[2]-p2[2]};
+  double nn1 = sqrt(e1[0]*e1[0]+e1[1]*e1[1]+e1[2]*e1[2]);
+  if(nn1>1e-10){
+    e1[0]/=nn1;e1[1]/=nn1;e1[2]/=nn1;
+  }
+  double res[3]={0.0};
+  crossprod(e0,e1,res);
+  if(fabs(res[0])<1.e-7 && fabs(res[1])<1.e-7 && fabs(res[2])<1.e-7){
+    isTooFlat=true;
+  }
+  // return false;
+  return isTooFlat;
+}
+
+void circularVectPermutation(std::vector<int> &vect){
+  // int temp=vect[0];
+  for(size_t k=0;k<vect.size()-1;k++)
+    vect[k]=vect[k+1];
+  // vect[vect.size()-1]=temp;
+  vect[vect.size()-1]=vect[0];
 }
 
 //works on 1 single triangle
@@ -1025,12 +1058,34 @@ int MultiBlock::splitTriangle(std::vector<std::array<double,3>> orientedPoints, 
 	  nodes[k]=triIndices[k];
 	std::vector<int> rest;
 	std::vector<std::array<int,3>> trianglesVertInd;
+	//check if flat tri is next
+	std::array<double,3> p1, p2, p3;
+	convertIndToCoord(orientedPoints,nodes[0], &p1);
+	convertIndToCoord(orientedPoints,nodes[1], &p2);
+	convertIndToCoord(orientedPoints,nodes[2], &p3);
+	int cptPermut=0;
+	if(isTriTooFlat(p1, p2, p3)&&cptPermut<nodes.size()){
+	  circularVectPermutation(nodes);
+	  cptPermut++;
+	}
+	//
 	split(nodes, &trianglesVertInd, &rest);
 	for(uint64_t j=0; j<trianglesVertInd.size(); j++)
 	  (*newTri).push_back(trianglesVertInd[j]);
 	while(rest.size()!=0){//we dont have all triangles
 	  std::vector<std::array<int,3>> trianglesVertInd1;
 	  std::vector<int> rest2;
+	  //check if flat tri is next
+	  std::array<double,3> p1, p2, p3;
+	  convertIndToCoord(orientedPoints,rest[0], &p1);
+	  convertIndToCoord(orientedPoints,rest[1], &p2);
+	  convertIndToCoord(orientedPoints,rest[2], &p3);
+	  cptPermut=0;
+	  if(isTriTooFlat(p1, p2, p3)&&cptPermut<nodes.size()){
+	    circularVectPermutation(rest);
+	    cptPermut++;
+	  }
+	  //
 	  split(rest, &trianglesVertInd1, &rest2);
 	  for(uint64_t j=0; j<trianglesVertInd1.size(); j++)
 	    (*newTri).push_back(trianglesVertInd1[j]);
@@ -1119,10 +1174,13 @@ void MultiBlock::computeLocalCutEdges(uint64_t triNum,std::vector<std::array<dou
     hxtNorm2V3(n, &normCACP);
     if(normABAP<1e-8)
       (*localCutEdges)[k]=edges->tri2edg[3*triNum+0];
-    if(normBCBP<1e-8)
+    else if(normBCBP<1e-8)
       (*localCutEdges)[k]=edges->tri2edg[3*triNum+1];
-    if(normCACP<1e-8)
+    else if(normCACP<1e-8)
       (*localCutEdges)[k]=edges->tri2edg[3*triNum+2];
+    else{
+      (*localCutEdges)[k]=(uint64_t)(-1);
+    }
   }
   return;
 }
