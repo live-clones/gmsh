@@ -1012,6 +1012,9 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
   BDS_Edge *p1_op2 = find_edge(p1, op[1], e->faces(1));
   BDS_Edge *op2_p2 = find_edge(op[1], p2, e->faces(1));
 
+  // degenerate
+  if(p1_op1 == p1_op2 || op2_p2 == op1_p2) return false;
+
   if(e->faces(0)) {
     g1 = e->faces(0)->g;
     del_face(e->faces(0));
