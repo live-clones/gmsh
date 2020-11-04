@@ -81,13 +81,28 @@ static void getModelFaces(GModel *gm, std::set<GFace *> &f)
 
 static void getModelEdges(GModel *gm, std::set<GEdge *> &e)
 {
+  std::set<GEntity *> eIgnored;
+  //Explicitly exclude feature edges removed
+  std::map<int, std::vector<GEntity *> > groups[4];
+  gm->getPhysicalGroups(groups);
+  for(std::map<int, std::vector<GEntity *> >::iterator it = groups[1].begin();
+      it != groups[1].end(); ++it) {
+    std::string name = gm->getPhysicalName(1, it->first);
+    if(name == "NOT_BC_CF") {
+      for(size_t j = 0; j < it->second.size(); j++) {
+	eIgnored.insert(it->second[j]);
+      }
+    }
+  }
   if(e.size()>0){
     Msg::Warning("Edges set not empty. Clearing it.");
     e.clear();
   }
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
     GEdge *ge = *it;
-    e.insert(ge);
+    // GEntity *ge1 = *it;
+    if(eIgnored.find(ge)==eIgnored.end())
+      e.insert(ge);
   }
 }
 
@@ -830,6 +845,7 @@ void MyMesh::createPatchs(){
   }
   return;
 }
+
 double MyMesh::_getAngleBetweenEdges(const MEdge &e,const MEdge &eRef, SVector3 &normal){
   SVector3 vRef(eRef.getVertex(1)->x() - eRef.getVertex(0)->x(),
 		eRef.getVertex(1)->y() - eRef.getVertex(0)->y(),
@@ -846,11 +862,72 @@ double MyMesh::_getAngleBetweenEdges(const MEdge &e,const MEdge &eRef, SVector3 
   return atan2(sin,cos);
 }
 
+void MyMesh::_tryFixSing(std::set<MTriangle*, MElementPtrLessThan> patchTri){
+  std::vector<MEdge> featEdgBC;
+  std::set<const MEdge *> cutGraphEdges;
+  for(MTriangle *t: patchTri){
+    for(const MEdge* e: triangleToEdges[t]){
+      if(isFeatureEdge[e]){
+	featEdgBC.push_back(*e);
+      }
+    }
+  }
+  std::vector<std::vector<MVertex *> > vSorted;
+  SortEdgeConsecutive(featEdgBC, vSorted);
+  for(size_t k=0;k<vSorted.size();k++){
+    vSorted[k].erase(vSorted[k].end()-1);//We know that it is always a loop !
+  }
+  std::map<MVertex*, double> angleVertex;
+  // std::map<MVertex*, size_t> locInd;
+  // std::cout << "nLines : " << vSorted.size() << std::endl;
+  for(size_t k=0;k<vSorted.size();k++){
+    for(size_t l=0;l<vSorted[k].size();l++){
+      MVertex* v=vSorted[k][l];
+      MEdge e1(v,vSorted[k][(l+1)%vSorted[k].size()]);
+      MEdge e2(v,vSorted[k][(l+vSorted[k].size()-1)%vSorted[k].size()]);
+      // std::cout << "v-1: " << (l+vSorted[k].size()-1)%vSorted[k].size() << " / v-1: " << l << " / v+1: " << (l+1)%vSorted[k].size() << std::endl;
+      double l1=e1.length();
+      double l2=e2.length();
+      double sign=0.0;
+      if(geodesicCurv[v]<=0)
+	sign=-1.0;
+      else
+	sign=1.0;
+      // angleVertex[v]=2*geodesicCurv[v]/(l1+l2) + M_PI;//DBG
+      SVector3 ve1(e1.getVertex(1)->x() - e1.getVertex(0)->x(),
+    		   e1.getVertex(1)->y() - e1.getVertex(0)->y(),
+    		   e1.getVertex(1)->z() - e1.getVertex(0)->z());
+      ve1.normalize();
+      SVector3 ve2(e2.getVertex(1)->x() - e2.getVertex(0)->x(),
+    		   e2.getVertex(1)->y() - e2.getVertex(0)->y(),
+    		   e2.getVertex(1)->z() - e2.getVertex(0)->z());
+      ve2.normalize();
+      angleVertex[v]=acos(dot(ve1,ve2));
+      // std::cout << "l: " << l << " / l*1.0: " << l*1.0 << std::endl;
+      // locInd[v]=l;
+      // std::cout << "vertex num: " << v->getNum() << std::endl;
+      // std::cout << "val saved: " << locInd[v] << std::endl;
+    }
+  }
+  std::map<MVertex *, double, MVertexPtrLessThan> scalarInd;
+  for(auto &kv: angleVertex){
+    if(fabs(angleVertex[kv.first])<120.*M_PI/180.){
+      singIndices[kv.first]=1;
+      scalarInd[kv.first]=1;
+    }
+  }
+  // ConformalMapping::_viewScalarVertex(scalarInd, "indices"); 
+  return;
+}
+
 void MyMesh::computeManifoldBasis(){
   if(trianglesPatchs.size()==0)
     createPatchs();
   std::map<const MEdge *, double> theta;
   for(size_t kP=0;kP<trianglesPatchs.size();kP++){
+    if(kP==11){//DBG
+      std::cout << "patch " << kP << ", canBecomputed: " << canTrianglePatchBeComputed[kP] << std::endl;
+    }
     if(canTrianglePatchBeComputed[kP]){
       std::set<MTriangle*, MElementPtrLessThan> tri = trianglesPatchs[kP];
       //grabbing edges we are interested in
@@ -869,13 +946,13 @@ void MyMesh::computeManifoldBasis(){
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
       linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-      printf("petsc solver\n");
+      // printf("petsc solver\n");
 #elif defined(HAVE_MUMPS)
       linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
-      printf("mmups solver\n");
+      // printf("mmups solver\n");
 #else
       linearSystemFull<double> *_lsys = new linearSystemFull<double>;
-      printf("default solver\n");
+      // printf("default solver\n");
 #endif
 #endif
       dofManager<double> *dof = new dofManager<double>(_lsys);
@@ -985,6 +1062,7 @@ void MyMesh::computeManifoldBasis(){
       delete _lsys;
       delete dof;
     }
+    // }
   }
   for(const MEdge &e: edges){
     manifoldBasis[&e]=Cross2D(this,&e,theta[&e]);
@@ -1220,10 +1298,10 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   Msg::Info("Create manifold basis");
   std::cout << "Create manifold basis" << std::endl;
   // _currentMesh->viewNormals();
-  _createManifoldBasis();
+  _createManifoldBasis();//
   // _viewCrosses(_currentMesh->manifoldBasis,"manifold basis");
   //solve crosses
-  _computeCrossesFromH();
+  _computeCrossesFromH();//
   // std::cout << "print crosses" << std::endl;
   // _viewCrosses(_currentMesh->crossField,"crossfield");
   //parametrization
@@ -1243,6 +1321,66 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   _currentMesh=_initialMesh;
   _computeHfromCrosses();
   // _viewScalarTriangles(_currentMesh->H, _currentMesh->triangles, "H from crosses");
+  return;
+}
+
+ConformalMapping::ConformalMapping(GModel *gm, int dbg): _currentMesh(NULL), _gm(gm), _initialMesh(NULL), _featureCutMesh(NULL), _cutGraphCutMesh(NULL)
+{
+  _initialMesh = new MyMesh(gm);
+  _currentMesh=_initialMesh;
+  //cut mesh on feature lines here
+  Msg::Info("Cutting mesh on feature lines");
+  std::cout << "Cutting mesh on feature lines" << std::endl;
+  _cutMeshOnFeatureLines();
+  _currentMesh=_featureCutMesh;
+  Msg::Info("Compute geometric characteristics");
+  std::cout << "Compute geometric characteristics" << std::endl;
+  _currentMesh->computeGeoCharac();
+  // _viewScalarVertex(_currentMesh->gaussCurv,"gaussian curvature"); //DBG
+  //Solve H here
+  Msg::Info("Compute H");
+  std::cout << "Compute H" << std::endl;
+  _computeH();
+  _viewScalarTriangles(_currentMesh->H, _currentMesh->triangles, "H");
+  //create cutgraph and cut mesh along it
+  Msg::Info("Creating cut graph");
+  std::cout << "Creating cut graph" << std::endl;
+  _createCutGraph();
+  _viewEdges(_currentMesh->cutGraphDiscreteEdges,"cutgraphTrimmed");  
+  // _viewScalarVertex(_distanceToFeatureAndSing,"distances"); //DBG
+  // Msg::Info("Cutting mesh on cut graph");
+  Msg::Info("Cut mesh on cut graph");
+  std::cout << "Cut mesh on cut graph" << std::endl;
+  _cutMeshOnCutGraph();
+  _currentMesh=_cutGraphCutMesh;
+  // _currentMesh=_initialMesh;
+  //compute local smooth manifold basis
+  Msg::Info("Create manifold basis");
+  std::cout << "Create manifold basis" << std::endl;
+  // _currentMesh->viewNormals();
+  _createManifoldBasis();//
+  _viewCrosses(_currentMesh->manifoldBasis,"manifold basis");
+  //solve crosses
+  _computeCrossesFromH();//
+  // std::cout << "print crosses" << std::endl;
+  // _viewCrosses(_currentMesh->crossField,"crossfield");
+  //parametrization
+  // std::cout << "compute parametrization" << std::endl;
+  // _computeParametrization();
+
+  //compute relaxed H
+  _transferCrossesCutToInit();
+  for(size_t k=0;k<_featureCutMesh->trianglesPatchs.size();k++){
+    std::set<MTriangle *, MElementPtrLessThan> patchK=_featureCutMesh->trianglesPatchs[k];
+    _initialMesh->trianglesPatchs.push_back(patchK);
+    bool canBeComputed=_featureCutMesh->canTrianglePatchBeComputed[k];
+    _initialMesh->canTrianglePatchBeComputed.push_back(canBeComputed);
+  }
+  // _viewCrosses(_initialMesh->crossField,"crosses initial mesh");
+  _restoreInitialMesh();
+  _currentMesh=_initialMesh;
+  _computeHfromCrosses();
+  _viewScalarTriangles(_currentMesh->H, _currentMesh->triangles, "H from crosses");
   return;
 }
 
@@ -1305,9 +1443,11 @@ std::map<MTriangle *, std::vector<std::vector<SVector3>>> ConformalMapping::getT
     _currentMesh->createPatchs();
   std::set<MTriangle*, MElementPtrLessThan> tri;
   for(size_t kP=0;kP<_currentMesh->trianglesPatchs.size();kP++){
+    // if(kP==12){
     if(_currentMesh->canTrianglePatchBeComputed[kP])
       for(MTriangle* t: _currentMesh->trianglesPatchs[kP])
 	tri.insert(t);
+    // }
   }
   for(MTriangle *t: tri){
     for(const MEdge* e: _currentMesh->triangleToEdges[t]){
@@ -1323,12 +1463,22 @@ std::map<MTriangle *, std::vector<std::vector<SVector3>>> ConformalMapping::getT
   return triEdgScaledCrosses;
 }
 
+std::map<MVertex *, double, MVertexPtrLessThan> ConformalMapping::getH(){
+  std::map<MVertex *, double, MVertexPtrLessThan> returnH;
+  for(auto &kv: _currentMesh->H){
+    returnH[kv.first]=kv.second;
+  }
+  return returnH;
+}
+
 void ConformalMapping::_computeH(){
   if(_currentMesh->trianglesPatchs.size()==0)
     _currentMesh->createPatchs();
   bool viewPatchForDebug=false;
-  for(size_t k=0;k<_currentMesh->trianglesPatchs.size();k++){
-    std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[k];
+  for(size_t kP=0;kP<_currentMesh->trianglesPatchs.size();kP++){
+    // if(kP==12){//DBG
+    std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[kP];
+    // _currentMesh->_tryFixSing(tri);//DBG
     //grabbing vertices we are interested in
     std::map<MVertex *, int, MVertexPtrLessThan> patchSingIndices;
     std::set<MVertex *, MVertexPtrLessThan> vertices;
@@ -1352,31 +1502,40 @@ void ConformalMapping::_computeH(){
     double sumSing=0;
     for(const auto &kv: patchSingIndices){
       sumSing+=((double)kv.second)/4.;
+      // std::cout << "sing ind : " << kv.second << " detected" << std::endl;
     }
     double checkSum=(intGauss+intGeodesic)/(2*M_PI)-sumSing;
-    if(fabs(checkSum)<1e-10){
+    if(fabs(checkSum)<1e-7){
       canBeComputed=true;
-      _currentMesh->canTrianglePatchBeComputed[k]=true;
+      _currentMesh->canTrianglePatchBeComputed[kP]=true;
+      // if(kP==11){//DBG
+      // 	canBeComputed=false;
+      // 	_currentMesh->canTrianglePatchBeComputed[kP]=false;
+      // 	viewPatchForDebug=true;
+      // }//DBG
     }
     else{
-      Msg::Error("Gauss and geodesic curvature not matching number of singularities on patch %i.",k);
-      Msg::Error("Patch %i miss singularities for a total indice of %g",k,checkSum*4.);
+      // _currentMesh->_tryFixSing(tri);
+      std::cout << "Gauss and geodesic curvature not matching number of singularities on patch: " << kP << std::endl;
+      std::cout << "Patch: " << kP << " miss singularities for a total indice of: " << checkSum*4. << std::endl;;
+      Msg::Error("Gauss and geodesic curvature not matching number of singularities on patch %i.",kP);
+      Msg::Error("Patch %i miss singularities for a total indice of %g",kP,checkSum*4.);
       Msg::Error("Skipping computation of H on this patch.");
       viewPatchForDebug=true;
-      _currentMesh->canTrianglePatchBeComputed[k]=false;
+      _currentMesh->canTrianglePatchBeComputed[kP]=false;
     }
     if(canBeComputed){
       //fill _currentMesh->H
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
       linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-      printf("petsc solver\n");
+      // printf("petsc solver\n");
 #elif defined(HAVE_MUMPS)
       linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
-      printf("mmups solver\n");
+      // printf("mumps solver\n");
 #else
       linearSystemFull<double> *_lsys = new linearSystemFull<double>;
-      printf("default solver\n");
+      // printf("default solver\n");
 #endif
 #endif
       dofManager<double> *dof = new dofManager<double>(_lsys);
@@ -1391,6 +1550,8 @@ void ConformalMapping::_computeH(){
       laplaceTerm l(0, 1, &ONE);
       //Matrix
       for(MTriangle *t: tri){
+	// if(t->getNum()==5105)
+	//   std::cout << "volume tri: " << t->getVolume() << std::endl;
 	SElement se(t);
 	l.addToMatrix(*dof, &se);
       }
@@ -1417,18 +1578,19 @@ void ConformalMapping::_computeH(){
 	dof->assembleSym(EAVG, EAVG, 0.0); //for petsc
 	//      dof->assemble(E, EAVG, 1);
       }
-      std::cout << "solve" << std::endl;
+      std::cout << "solving H system for " << vertices.size() << " unknowns..." << std::endl;
       _lsys->systemSolve();
-      std::cout << "end solve" << std::endl;
       for(MVertex *v: vertices){
 	dof->getDofValue(v, 0, 1, _currentMesh->H[v]);
       }
       delete _lsys;
       delete dof;
     }
+    // }
   }
-  if(viewPatchForDebug)
+  if(viewPatchForDebug)//DBG
     _currentMesh->viewPatchs();
+  // _currentMesh->viewPatchs();
   return;
 }
 
@@ -1437,9 +1599,11 @@ void ConformalMapping::_computeHfromCrosses(){
     _currentMesh->createPatchs();
   std::set<MTriangle*, MElementPtrLessThan> tri;
   for(size_t kP=0;kP<_currentMesh->trianglesPatchs.size();kP++){
+    // if(kP==12){//DBG
     if(_currentMesh->canTrianglePatchBeComputed[kP])
       for(MTriangle* t: _currentMesh->trianglesPatchs[kP])
 	tri.insert(t);
+    // }
   }
   //grabbing vertices we are interested in
   std::set<MVertex *, MVertexPtrLessThan> vertices;
@@ -1453,13 +1617,13 @@ void ConformalMapping::_computeHfromCrosses(){
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
   linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-  printf("petsc solver\n");
+  // printf("petsc solver\n");
 #elif defined(HAVE_MUMPS)
   linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
-  printf("mmups solver\n");
+  // printf("mmups solver\n");
 #else
   linearSystemFull<double> *_lsys = new linearSystemFull<double>;
-  printf("default solver\n");
+  // printf("default solver\n");
 #endif
 #endif
   dofManager<double> *dof = new dofManager<double>(_lsys);
@@ -1597,12 +1761,62 @@ void ConformalMapping::_computeHfromCrosses(){
   return;
 }
 
-void ConformalMapping::_restoreInitialMesh(){
-  for(MTriangle *t: _initialMesh->triangles){
-    for(size_t k=0;k<3;k++){
-      t->setVertex(k,_featureToInitMeshVertex[_cutGraphToFeatureMeshVertex[t->getVertex(k)]]);
+void ConformalMapping::deleteVertex(MVertex* v) {
+  if (v == NULL) return;
+  GFace* gf = dynamic_cast<GFace*>(v->onWhat());
+  if (gf != NULL) {
+    auto it = std::find(gf->mesh_vertices.begin(),gf->mesh_vertices.end(), v);
+    if (it != gf->mesh_vertices.end()) {
+      gf->mesh_vertices.erase(it);
+    }
+  } else {
+    GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
+    if (ge != NULL) {
+      auto it = std::find(ge->mesh_vertices.begin(),ge->mesh_vertices.end(), v);
+      if (it != ge->mesh_vertices.end()) {
+	ge->mesh_vertices.erase(it);
+      }
+    } else {
+      GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
+      if (gv != NULL) {
+	auto it = std::find(gv->mesh_vertices.begin(),gv->mesh_vertices.end(), v);
+	if (it != gv->mesh_vertices.end()) {
+	  gv->mesh_vertices.erase(it);
+	}
+      }
     }
   }
+  delete v;
+  v = NULL;
+}
+
+void ConformalMapping::_restoreInitialMesh(){
+  // std::cout << "restore initial mesh" << std::endl;
+  MVertexPtrEqual isVertTheSame;
+  std::set<MVertex*> verticesToDelete;
+  for(MTriangle *t: _initialMesh->triangles){//DBG
+    for(size_t k=0;k<3;k++){
+      // std::cout << "-------------------" << std::endl;
+      MVertex *oldVertex=_featureToInitMeshVertex[_cutGraphToFeatureMeshVertex[t->getVertex(k)]];
+      // std::cout << "old vert num: " << oldVertex->getNum() << std::endl;
+      MVertex* newVertex=t->getVertex(k);
+      // std::cout << "new vert num: " << newVertex->getNum() << std::endl;
+	    
+      t->setVertex(k,oldVertex);
+      if(!isVertTheSame(newVertex,oldVertex)){
+	verticesToDelete.insert(newVertex);
+	// std::cout << "add delete" << std::endl;
+      }
+      // else
+      // 	std::cout << "not add in delete" << std::endl;
+    }
+  }
+  for(MVertex* v: verticesToDelete){
+    // verticesToDelete.erase(v);
+    deleteVertex(v);
+    v=NULL;
+  }
+  // std::cout << "end retore intial mesh" << std::endl;
   return;
 }
 
@@ -1620,6 +1834,7 @@ void ConformalMapping::_computeCrossesFromH(){
     _currentMesh->createPatchs();
   std::map<const MEdge *, double> theta;
   for(size_t kP=0;kP<_currentMesh->trianglesPatchs.size();kP++){
+    // if(kP==12){//DBG
     if(_currentMesh->canTrianglePatchBeComputed[kP]){
       std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[kP];
       //grabbing edges we are interested in and numbering dofs
@@ -1644,13 +1859,13 @@ void ConformalMapping::_computeCrossesFromH(){
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
       linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-      printf("petsc solver\n");
+      // printf("petsc solver\n");
 #elif defined(HAVE_MUMPS)
       linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
-      printf("mmups solver\n");
+      // printf("mmups solver\n");
 #else
       linearSystemFull<double> *_lsys = new linearSystemFull<double>;
-      printf("default solver\n");
+      // printf("default solver\n");
 #endif
 #endif
       dofManager<double> *dof = new dofManager<double>(_lsys);
@@ -1792,11 +2007,13 @@ void ConformalMapping::_computeCrossesFromH(){
       delete _lsys;
       delete dof;
     }
+    // }
   }
   for(const MEdge &e: _currentMesh->edges){
     _currentMesh->thetaCF[&e]=theta[&e];
     _currentMesh->crossField[&e]=Cross2D(_currentMesh,&e,_currentMesh->manifoldBasis[&e].theta+theta[&e]);
   }
+  // _viewScalarEdges(theta, "thetaCF");//DBG
   return;
 }
 
@@ -1847,13 +2064,13 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
   linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-  printf("petsc solver\n");
+  // printf("petsc solver\n");
 #elif defined(HAVE_MUMPS)
   linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
-  printf("mmups solver\n");
+  // printf("mmups solver\n");
 #else
   linearSystemFull<double> *_lsys = new linearSystemFull<double>;
-  printf("default solver\n");
+  // printf("default solver\n");
 #endif
 #endif
   //numbergin dof. Carefull, there is a boundary condition!
@@ -1870,19 +2087,40 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
 			 e->getVertex(1)->y() - e->getVertex(0)->y(),
 			 e->getVertex(1)->z() - e->getVertex(0)->z());
 	edgVect.normalize();
-	if(fabs(dot(edgVect,liftU[e]))<0.3) // TODO: check the lifting vector. We should have perfectly aligned crosses on feature edges
-	  featEdgBC.push_back(*e);
+	if(fabs(dot(edgVect,liftU[e]))<0.3){ // TODO: check the lifting vector. We should have perfectly aligned crosses on feature edges
+	  if(std::find(featEdgBC.begin(),featEdgBC.end(),*e)==featEdgBC.end())
+	    // featEdgBC.push_back(*e);
+	    cutGraphEdges.insert(e);
+	}
+	else{
+	  cutGraphEdges.insert(e);
+	}
+	    
       }
       else
 	if(_currentMesh->isCutGraphEdge[e])
 	  cutGraphEdges.insert(e);
     }
   }
-  std::cout << "size feature edges: " << featEdgBC.size() << std::endl;
+  //DBG
+  std::map<MVertex *, double, MVertexPtrLessThan> dirichletBC;
+  std::map<MVertex *, double, MVertexPtrLessThan> neumannBC;
+  for(MEdge &e: featEdgBC){
+    dirichletBC[e.getVertex(0)]=1;
+    dirichletBC[e.getVertex(1)]=1;
+  }
+  // _viewScalarVertex(dirichletBC, "dirichlet bc");
+  for(const MEdge *e: cutGraphEdges){
+    neumannBC[e->getVertex(0)]=1;
+    neumannBC[e->getVertex(1)]=1;
+  }
+  // _viewScalarVertex(neumannBC, "neumann bc");
+  //
+  // std::cout << "size feature edges: " << featEdgBC.size() << std::endl;
   
   std::vector<std::vector<MVertex *> > vSorted;
   SortEdgeConsecutive(featEdgBC, vSorted);
-  std::cout << "n Lines BC: " << vSorted.size() << std::endl;
+  // std::cout << "n Lines BC: " << vSorted.size() << std::endl;
   for(std::vector<MVertex *> &vectVert: vSorted){
     for(MVertex* v: vectVert)
       vertToVertDof[v]=vectVert[0];
@@ -1962,8 +2200,8 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
     	SVector3 dirGaussLine = liftU[e];
     	dirGaussLine.normalize();
     	double HGaussLine=0.0;
-    	for(size_t k=0;k<3;k++)
-    	  HGaussLine+=_featureCutMesh->H[_cutGraphToFeatureMeshVertex[t->getVertex(k)]]*(1./2.);
+    	for(size_t k=0;k<2;k++)
+    	  HGaussLine+=_featureCutMesh->H[_cutGraphToFeatureMeshVertex[e->getVertex(k)]]*(1./2.);
     	dirGaussLine*=exp(-HGaussLine);
     	SVector3 normalManifold = _currentMesh->normals[e];
     	normalManifold.normalize();
@@ -1993,18 +2231,56 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
   return;
 }
 
+void _transfoPot(const std::set<MTriangle*, MElementPtrLessThan> &tri, std::map<MVertex *, double, MVertexPtrLessThan> &potU, std::map<MVertex *, double, MVertexPtrLessThan> &potV){
+  std::set<MVertex *, MVertexPtrLessThan> vertices;
+  for(MTriangle *t: tri){
+    for(int k=0;k<3;k++){
+      MVertex *vK = t->getVertex(k);
+      vertices.insert(vK);
+    }
+  }
+  double maxPotU=0.0;//because average pot=0, so has to be a positive value
+  double minPotU=0.0;//because average pot=0, so has to be a negative value
+  for(MVertex* v: vertices){
+    if(potU[v]>maxPotU)
+      maxPotU=potU[v];
+    if(potU[v]<minPotU)
+      minPotU=potU[v];
+  }
+  for(MVertex* v: vertices){
+    potU[v]=(potU[v]-minPotU)/(maxPotU-minPotU);
+  }
+  double maxPotV=0.0;//because average pot=0, so has to be a positive value
+  double minPotV=0.0;//because average pot=0, so has to be a negative value
+  for(MVertex* v: vertices){
+    if(potV[v]>maxPotV)
+      maxPotV=potV[v];
+    if(potV[v]<minPotV)
+      minPotV=potV[v];
+  }
+  for(MVertex* v: vertices){
+    potV[v]=(potV[v]-minPotV)/(maxPotU-minPotU);
+  }
+  return;
+}
+
 void ConformalMapping::_computeParametrization(){
   if(_currentMesh->trianglesPatchs.size()==0)
     _currentMesh->createPatchs();
   for(size_t kP=0;kP<_currentMesh->trianglesPatchs.size();kP++){
+    // if(kP==12){//DBG
     std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[kP];
     SVector3 dirRefU=_currentMesh->crossField[_currentMesh->triangleToEdges[(*(tri.begin()))][0]].getDirection(0);
     SVector3 dirRefV=_currentMesh->crossField[_currentMesh->triangleToEdges[(*(tri.begin()))][0]].getDirection(1);
     _solvePotOnPatch(tri, dirRefU, _currentMesh->potU);
     _solvePotOnPatch(tri, dirRefV, _currentMesh->potV);
+    // _viewScalarTriangles(_currentMesh->potU, tri, "potU");
+    // _viewScalarTriangles(_currentMesh->potV, tri, "potV");
+    // }
+    _transfoPot(tri,_currentMesh->potU,_currentMesh->potV);
   }
-  _viewScalarTriangles(_currentMesh->potU, _currentMesh->triangles, "potU");
-  _viewScalarTriangles(_currentMesh->potV, _currentMesh->triangles, "potV");
+  // _viewScalarTriangles(_currentMesh->potU, _currentMesh->triangles, "potU");
+  // _viewScalarTriangles(_currentMesh->potV, _currentMesh->triangles, "potV");//DBG
   return;
 }
 
@@ -2226,8 +2502,9 @@ void ConformalMapping::_cutMeshOnFeatureLines(){
 	  // double fact = (1.0+0.05*multVertexProcessed[currentVertex]);
 	  // newVertex = new MVertex(currentVertex->x()*fact,currentVertex->y()*fact,currentVertex->z()*fact,geVertex,0);
 	  // //
-	  newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z(),geVertex,0);
-	  geVertex->mesh_vertices.push_back(newVertex);
+	  newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z(),geVertex,0);//DBG
+	  geVertex->mesh_vertices.push_back(newVertex);//DBG
+	  // newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z());//DBG
 	}
 	trianglesQueue.clear();
 	std::vector<MVertex *>::iterator vertexProcessed=std::find(vertexProcessedPerTriangle[t].begin(),vertexProcessedPerTriangle[t].end(),currentVertex);
@@ -2282,7 +2559,7 @@ void ConformalMapping::_cutMeshOnFeatureLines(){
 	    
 	      _featureCutMesh->linesEntities[newLine]=_initialMesh->featureDiscreteEdgesEntities[fe];//TODO remove
 	      _featureCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]=_initialMesh->featureDiscreteEdgesEntities[fe];
-	      _featureCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]->addLine(newLine); //TODO has to be removed in the end
+	      // _featureCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]->addLine(newLine); //TODO has to be removed in the end
 	    }
 	  }
 	}
@@ -2345,8 +2622,9 @@ void ConformalMapping::_cutMeshOnCutGraph(){
 	  // double fact = (1.0+0.05*multVertexProcessed[currentVertex]);
 	  // newVertex = new MVertex(currentVertex->x()*fact,currentVertex->y()*fact,currentVertex->z()*fact,geVertex,0);
 	  // //
-	  newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z(),geVertex,0);
-	  geVertex->mesh_vertices.push_back(newVertex);
+	  newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z(),geVertex,0);//DBG
+	  geVertex->mesh_vertices.push_back(newVertex);//DBG
+	  // newVertex = new MVertex(currentVertex->x(),currentVertex->y(),currentVertex->z());//DBG
 	}
 	trianglesQueue.clear();
 	std::vector<MVertex *>::iterator vertexProcessed=std::find(vertexProcessedPerTriangle[t].begin(),vertexProcessedPerTriangle[t].end(),currentVertex);
@@ -2396,13 +2674,13 @@ void ConformalMapping::_cutMeshOnCutGraph(){
 	      if(insertData.second){
 		_cutGraphCutMesh->isFeatureEdge[&(*insertData.first)]=true;
 		_cutGraphCutMesh->featureDiscreteEdges.insert(&(*insertData.first));
-		MLine *newLine;//TODO remove
-		newLine = new MLine((*(insertData.first)).getVertex(0),(*(insertData.first)).getVertex(1));//TODO remove
-		_cutGraphCutMesh->lines.insert(newLine);//TODO remove
+		// MLine *newLine;//TODO remove
+		// newLine = new MLine((*(insertData.first)).getVertex(0),(*(insertData.first)).getVertex(1));//TODO remove
+		// _cutGraphCutMesh->lines.insert(newLine);//TODO remove
 	    
-		_cutGraphCutMesh->linesEntities[newLine]=_featureCutMesh->featureDiscreteEdgesEntities[fe];//TODO remove
-		_cutGraphCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]=_featureCutMesh->featureDiscreteEdgesEntities[fe];
-		_cutGraphCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]->addLine(newLine); //TODO has to be removed in the end
+		// _cutGraphCutMesh->linesEntities[newLine]=_featureCutMesh->featureDiscreteEdgesEntities[fe];//TODO remove
+		// _cutGraphCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]=_featureCutMesh->featureDiscreteEdgesEntities[fe];
+		// // _cutGraphCutMesh->featureDiscreteEdgesEntities[&(*insertData.first)]->addLine(newLine); //TODO has to be removed in the end
 	      }
 	    }
 	  }
@@ -2427,12 +2705,12 @@ void ConformalMapping::_cutMeshOnCutGraph(){
 }
 
 ConformalMapping::~ConformalMapping(){
-  if(_initialMesh)
-    delete _initialMesh;
-  if(_featureCutMesh)
-    delete _featureCutMesh;
-  if(_cutGraphCutMesh)
-    delete _cutGraphCutMesh;
+  // if(_initialMesh)
+  //   delete _initialMesh;
+  // if(_featureCutMesh)
+  //   delete _featureCutMesh;
+  // if(_cutGraphCutMesh)
+  //   delete _cutGraphCutMesh;
 }
 
 void MyMesh::viewNormals(){ //for DBG only
@@ -2549,7 +2827,7 @@ void ConformalMapping::_viewScalarVertex(std::map<MVertex *, double, MVertexPtrL
     datalist.push_back(kv.second);
   }
   gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
+  Msg::Debug("create view '%s'",viewName.c_str());
   int dataListViewTag = gmsh::view::add(viewName);
   gmsh::view::addListData(dataListViewTag, "SP", datalist.size()/(3+1), datalist);
 #else 
@@ -2571,7 +2849,7 @@ void ConformalMapping::_viewScalarEdges(std::map<const MEdge *, double> &scalar,
   }
   if(!datalist.empty()){
     gmsh::initialize();
-    Msg::Debug("create view '%s'",viewName);
+    Msg::Debug("create view '%s'",viewName.c_str());
     int dataListViewTag = gmsh::view::add(viewName);
     gmsh::view::addListData(dataListViewTag, "SP", datalist.size()/(3+1), datalist);
   }
@@ -2602,7 +2880,7 @@ void ConformalMapping::_viewCrossEdgTri(std::map<MTriangle *, std::vector<std::v
   }
   if(!datalist.empty()){
     gmsh::initialize();
-    Msg::Debug("create view '%s'",viewName);
+    Msg::Debug("create view '%s'",viewName.c_str());
     int dataListViewTag = gmsh::view::add(viewName);
     gmsh::view::addListData(dataListViewTag, "VP", nData, datalist);
   }
@@ -2655,7 +2933,7 @@ void ConformalMapping::_viewCrosses(std::map<const MEdge *, Cross2D> crossField,
     }
   }
   gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
+  Msg::Debug("create view '%s'",viewName.c_str());
   int dataListViewTag = gmsh::view::add(viewName);
   // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
   gmsh::view::addListData(dataListViewTag, "VP", nData, datalist);
@@ -2686,7 +2964,7 @@ void ConformalMapping::_viewVectTri(std::map<const MTriangle *, SVector3, MEleme
     nData++;
   }
   gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
+  Msg::Debug("create view '%s'",viewName.c_str());
   int dataListViewTag = gmsh::view::add(viewName);
   // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
   gmsh::view::addListData(dataListViewTag, "VP", nData, datalist);
@@ -2711,7 +2989,7 @@ void ConformalMapping::_viewEdges(std::set<const MEdge*> &edges, const std::stri
     datalist.push_back(1.0);
   }
   gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
+  Msg::Debug("create view '%s'",viewName.c_str());
   int dataListViewTag = gmsh::view::add(viewName);
   // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
   gmsh::view::addListData(dataListViewTag, "SL", edges.size(), datalist);
@@ -2740,7 +3018,7 @@ void ConformalMapping::_viewScalarTriangles(std::map<MVertex *, double, MVertexP
     datalist.push_back(scalar[t->getVertex(2)]);
   }
   gmsh::initialize();
-  Msg::Debug("create view '%s'",viewName);
+  Msg::Debug("create view '%s'",viewName.c_str());
   int dataListViewTag = gmsh::view::add(viewName);
   // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
   gmsh::view::addListData(dataListViewTag, "ST", triangles.size(), datalist);

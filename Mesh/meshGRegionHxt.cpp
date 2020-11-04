@@ -383,8 +383,8 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
   std::set<MVertex *> all;
   std::map<MVertex *, double> vlc;
 
-  uint64_t index = 0, ntri = 0, nedg = 0, npts = 0, ntets=0;
-
+  uint64_t index = 0, ntri = 0, nedg = 0, ntets=0;
+  uint64_t npts = points.size();//FIX ALEX
   // embedded points in volumes (all other embedded points will be in the
   // curve/surface meshes already)
   for(GRegion *gr : regions) {
@@ -436,7 +436,8 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
     hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
 
   size_t count = 0;
-  c2v.resize(all.size());
+  // c2v.resize(all.size());
+  c2v.resize(all.size()+1);//DBG ALEX
   for(MVertex *v : all) {
     m->vertices.coord[4 * count + 0] = v->x();
     m->vertices.coord[4 * count + 1] = v->y();
@@ -449,20 +450,24 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
     }
     v2c[v] = count;
     c2v[count++] = v;
+    // c2v[count] = v;//TEST DBG ALEX
+    // count++;
   }
   all.clear();
 
   m->points.num = m->points.size = npts;
   HXT_CHECK(
     hxtAlignedMalloc(&m->points.node, (m->points.num) * sizeof(uint32_t)));
+  // HXT_CHECK(
+  //   hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint32_t)));
   HXT_CHECK(
-    hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint32_t)));
+  	    hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint16_t)));//ALEX
   index = 0;
   for(size_t j = 0; j < points.size(); j++) {
     GVertex *gv = points[j];
     for(size_t i = 0; i < gv->points.size(); i++) {
       m->points.node[index] = v2c[gv->points[i]->getVertex(0)];
-      m->points.color[index] = gv->tag();
+      m->points.color[index] = (uint16_t)gv->tag();
       index++;
     }
   }
@@ -472,15 +477,17 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
 
   HXT_CHECK(
     hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
+  // HXT_CHECK(
+  //   hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint32_t)));
   HXT_CHECK(
-    hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint32_t)));
+  	    hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint16_t)));//ALEX
   index = 0;
   for(size_t j = 0; j < curves.size(); j++) {
     GEdge *ge = curves[j];
     for(size_t i = 0; i < ge->lines.size(); i++) {
       m->lines.node[2 * index + 0] = v2c[ge->lines[i]->getVertex(0)];
       m->lines.node[2 * index + 1] = v2c[ge->lines[i]->getVertex(1)];
-      m->lines.color[index] = ge->tag();
+      m->lines.color[index] = (uint16_t)ge->tag();
       index++;
     }
   }
@@ -488,8 +495,10 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
   m->triangles.num = m->triangles.size = ntri;
   HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
                              (m->triangles.num) * 3 * sizeof(uint32_t)));
+  // HXT_CHECK(hxtAlignedMalloc(&m->triangles.color,
+  //                            (m->triangles.num) * sizeof(uint32_t)));
   HXT_CHECK(hxtAlignedMalloc(&m->triangles.color,
-                             (m->triangles.num) * sizeof(uint32_t)));
+                             (m->triangles.num) * sizeof(uint32_t)));//ALEX
   index = 0;
   for(size_t j = 0; j < surfaces.size(); j++) {
     GFace *gf = surfaces[j];
@@ -497,7 +506,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
       m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
       m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
       m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
-      m->triangles.color[index] = gf->tag();
+      m->triangles.color[index] = (uint16_t)gf->tag();
       index++;
     }
   }
@@ -516,7 +525,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
       m->tetrahedra.node[4 * index + 1] = v2c[gr->tetrahedra[i]->getVertex(1)];
       m->tetrahedra.node[4 * index + 2] = v2c[gr->tetrahedra[i]->getVertex(2)];
       m->tetrahedra.node[4 * index + 3] = v2c[gr->tetrahedra[i]->getVertex(3)];
-      m->tetrahedra.color[index] = gr->tag();
+      m->tetrahedra.color[index] = (uint16_t)gr->tag();
       index++;
     }
   }

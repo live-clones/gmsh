@@ -1,6 +1,7 @@
 #ifndef HXT_QMBMULTIBLOCK_H
 #define HXT_QMBMULTIBLOCK_H
 
+#include <cstdint>
 #include <vector>
 #include "hxt_qmbSeparatrice.h"
 #include "hxt_qmbSingularity.h"

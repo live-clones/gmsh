@@ -1,5 +1,6 @@
 #ifndef HXT_QMBSINGULARITY_H
 #define HXT_QMBSINGULARITY_H
+#include <cstdint>
 #include <vector>
 #include <array>
 

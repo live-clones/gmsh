@@ -19,6 +19,8 @@
 #include "Options.h"
 #include "fastScaledCrossField.h"
 #include "meshQuadPatterns.h"
+#include "meshQuadGeometry.h"
+
 
 #include "meshRefine.h"
 #include "Generator.h"
@@ -2590,6 +2592,7 @@ namespace QSQ {
     // TODO FROM HERE: detect and remove diamonds
 
     std::unordered_set<MVertex*> tried_bigger_cavity;
+    std::unordered_set<MVertex*> doNotDegrade;
 
     std::unordered_map<MVertex *, double> vAngle; /* for flat corner on curves */
     std::unordered_map<MVertex *, std::vector<MElement *>> adj;
@@ -2613,6 +2616,10 @@ namespace QSQ {
 
     constexpr bool allowTemporaryDuet = true;
 
+    // TODO:
+    // afer CORNER pass, flag vertices on the
+    // corner fan so they can only be improved (valence -> 4)
+    // and not degraded
     size_t count[4] = {0,0,0,0};
     for (int pass: {CORNER, CURVE, SURFACE}) {
       if (pass == CORNER) {
@@ -2728,6 +2735,35 @@ namespace QSQ {
               } else if (exterior.size() >= 6) { /* allow 7+, should minimize */
                 bndAllowedValenceRange[i] = {1,1}; 
               }
+              bool improveOnly = (doNotDegrade.find(bv) != doNotDegrade.end());
+              if (improveOnly) {
+                if (bvAdjQuads.size() == 4) { /* keep 4 */
+                  int valIn = 4 - int(exterior.size());
+                  bndAllowedValenceRange[i] = {valIn,valIn};
+                } else if (bvAdjQuads.size() == 3) { /* -> 3, 4  */
+                  if (exterior.size() == 1) {
+                    bndAllowedValenceRange[i] = {2,3};
+                  } else if (exterior.size() == 2) {
+                    bndAllowedValenceRange[i] = {1,2};
+                  } else {
+                    cancel = true;
+                    break;
+                  }
+                } else if (bvAdjQuads.size() == 5) { /* -> 4, 5  */
+                  if (exterior.size() == 1) {
+                    bndAllowedValenceRange[i] = {3,4};
+                  } else if (exterior.size() == 2) {
+                    bndAllowedValenceRange[i] = {2,3};
+                  } else if (exterior.size() == 3) {
+                    bndAllowedValenceRange[i] = {1,2};
+                  } else if (exterior.size() == 4) {
+                    bndAllowedValenceRange[i] = {1,1};
+                  } else {
+                    cancel = true;
+                    break;
+                  }
+                }
+              }
             } else {
               if (exterior.size() == 1) { /* warning: may generate quad duets, should check after */
                 if (allowTemporaryDuet) {
@@ -2790,6 +2826,12 @@ namespace QSQ {
           for (MElement* nf: newElements) {
             gf->quadrangles.push_back(dynamic_cast<MQuadrangle*>(nf));
             addToAdjacencyList(gf, nf, adj);
+          }
+          /* Flag the boundary for improvement only */
+          if (pass == CORNER) {
+            for (MVertex* v: bnd) {
+              doNotDegrade.insert(v);
+            }
           }
 
           if (true && DBG_VIZU) {
@@ -4530,6 +4572,9 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
   }
   printPatternUsage();
 
+  Msg::Error("early stop DBG");
+  return 0;
+
   /* Improve quad meshes with larger operators (cavity remeshing) */
   Msg::Info("Improve quad meshes with large cavity remeshing ...");
 #if defined(_OPENMP)
@@ -4557,6 +4602,17 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
   // propagate35(gm, singularVertices);
 
   Msg::Debug("... improve quad mesh topology done.");
+
+  return 0;
+}
+
+int optimizeQuadMeshGeometry(GModel* gm, const std::vector<std::array<double,5> >& singularities,
+    std::map<GFace*, GFaceInfo>& faceInfo) {
+
+  std::vector<GFace*> faces = model_faces(gm);
+  for (GFace* gf: faces) {
+    optimizeQuadGeometry(gf);
+  }
 
   return 0;
 }
@@ -4645,6 +4701,12 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   int s6 = improveQuadMeshTopology(gm, singularities, faceInfo);
   if (s6 != 0) {
     Msg::Warning("failed to improve quad mesh topology, continue");
+  }
+
+  Msg::Info("[Step 7] Optimize geometry of quad mesh ...");
+  int s7 = optimizeQuadMeshGeometry(gm, singularities, faceInfo);
+  if (s7 != 0) {
+    Msg::Warning("failed to optimize quad mesh geometry, continue");
   }
 
   // TODO:

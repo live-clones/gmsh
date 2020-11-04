@@ -2,6 +2,7 @@
 #define HXT_QMBCORNER_H
 #include <vector>
 #include <array>
+#include <cstdint>
 
 class Corner
 {

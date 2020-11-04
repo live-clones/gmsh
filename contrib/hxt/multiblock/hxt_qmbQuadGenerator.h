@@ -1,6 +1,7 @@
 #ifndef HXT_QMBQUADGENERATOR_H
 #define HXT_QMBQUADGENERATOR_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include "hxt_qmbSingularity.h"
@@ -32,6 +33,7 @@ class QuadGenerator
   //Geo file stuff
   HXTStatus prepareGeoFile(std::string geoFileName, double *crossfieldCR);
   HXTStatus fillGeoFile(std::string geoFileName);
+  HXTStatus fillGeoFileDBG(std::string geoFileName);
   //Separatrices stuff
   //generate separatrices with presecribed singularities - H function crosses
   HXTStatus computeSeparatricesOnExistingSing(double *directionsH);
@@ -97,8 +99,10 @@ class QuadGenerator
   int pointQ(uint64_t edgNum, uint64_t triNum, double eta, double *Q, double *alpha);
   HXTStatus initiationFromSingularities();
   int getAllSepFromSing(int singID, std::vector<int> *separatricesIDs);
+  int getAllSepFromCorner(int singID, std::vector<int> *separatricesIDs);
   int getAngleBetweenSep(std::array<double,3> singCoord, std::array<double,3> P1, std::array<double,3> P2, double *alpha);
   HXTStatus disableSepDuplicates(int singID);
+  HXTStatus disableCornerSepDuplicates(int singID);
   HXTStatus saveBdryLinesAsSeparatrices();
   int optimizeSizeofRadius(double *radius);
   int getCornerIndex(int cornerID, int *index);
@@ -126,6 +130,7 @@ class QuadGenerator
   int correction(double *pointCoord, uint64_t triNum, uint64_t edgNum, double enteringAngle, double *direction);
   int candidatePoint(double *coordP, uint64_t triNum, uint64_t edgNum, double *alpha1, double *point, uint64_t *newTriNum, uint64_t *newEdgNum, double *alpha3);
   HXTStatus propagateKowalski(int sepID);
+  HXTStatus propagateKowalskiH(int sepID);
   HXTStatus removeBouncingSepData();
   HXTStatus buildIntersectionTriValues();
   int findPatchID(uint64_t triNum, uint64_t *patchID);

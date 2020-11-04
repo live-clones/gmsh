@@ -198,7 +198,7 @@ HXTStatus MultiBlock::splitTriMeshOnMBDecomp(){
   std::cout << "--Flagging triangles--" << std::endl;
   flagTriangles(&flag, &cSep, &cEdg, &cCoord);
   std::cout << "--Writing triangles and nodes--" << std::endl;
-  hxtWriteFlaggedTriangles(flag, "flaggedTri.pos");
+  // hxtWriteFlaggedTriangles(flag, "flaggedTri.pos");
   std::cout<<"--Writing nodes--"<<std::endl;
   hxtWriteFlaggedNodes(cCoord, "flaggedNodes.pos");
   std::vector<std::array<double,3>> coordOfEachVertex;
@@ -977,7 +977,7 @@ int MultiBlock::isElementBnd(std::vector<std::array<double, 3>> bndNodes, std::v
 
 //works on 1 single triangle
 int MultiBlock::splitTriangle(std::vector<std::array<double,3>> orientedPoints, std::vector<std::array<double,3>> bndryPoints, std::vector<std::vector<int>> connectedNodes, std::vector<std::array<int,3>> *newTri){ 
-  int initAlloc=100;
+  int initAlloc=10000;
   int *triWithIndices;
   HXT_CHECK(hxtMalloc(&triWithIndices,orientedPoints.size()*initAlloc*sizeof(int)));
   int *offset;
@@ -1386,17 +1386,17 @@ HXTStatus MultiBlock::hxtWriteFlaggedTriangles(std::vector<int> flag, const char
   fprintf(f,"View \"Triangles\" {\n");
   for(uint64_t i=0; i<mesh->triangles.num; i++){
     if(i==542 || i==496){
-    fprintf(f,"ST(");
-    uint32_t vtri[3] = {mesh->triangles.node[3*i+0],mesh->triangles.node[3*i+1],mesh->triangles.node[3*i+2]};
-    for(uint32_t j=0; j<3; j++){
-      fprintf(f,"%f,%f,%f",mesh->vertices.coord[4*vtri[j]+0],mesh->vertices.coord[4*vtri[j]+1],mesh->vertices.coord[4*vtri[j]+2]);
-      if(j<2)
-        fprintf(f,",");
-    }
-    fprintf(f,")");
-    fprintf(f,"{");
-    fprintf(f,"%i, %i, %i",flag[i],flag[i],flag[i]);
-    fprintf(f,"};\n");
+      fprintf(f,"ST(");
+      uint32_t vtri[3] = {mesh->triangles.node[3*i+0],mesh->triangles.node[3*i+1],mesh->triangles.node[3*i+2]};
+      for(uint32_t j=0; j<3; j++){
+	fprintf(f,"%f,%f,%f",mesh->vertices.coord[4*vtri[j]+0],mesh->vertices.coord[4*vtri[j]+1],mesh->vertices.coord[4*vtri[j]+2]);
+	if(j<2)
+	  fprintf(f,",");
+      }
+      fprintf(f,")");
+      fprintf(f,"{");
+      fprintf(f,"%i, %i, %i",flag[i],flag[i],flag[i]);
+      fprintf(f,"};\n");
     }
   }
   fprintf(f,"};");

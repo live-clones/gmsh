@@ -333,6 +333,7 @@ HXTStatus hxtQuadMultiBlockDBG(HXTMesh *mesh, int tagCrossField, HXTMesh **split
 }
 
 HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossField, HXTMesh **splitMesh){
+  std::cout << "ok we are in th egood function" << std::endl;
   HXTEdges *edges;
   HXT_CHECK(hxtEdgesCreate(mesh,&edges));
   double *crossfield;
@@ -350,7 +351,7 @@ HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossFi
 	// return false;
       }
       for(int j=0; j<3; j++){
-	double theta = (data[i])[j];
+	double theta = -(data[i])[j];
 	uint64_t globalEdg = edges->tri2edg[3*i+j];
 	uint32_t v1=mesh->triangles.node[3*i+(j)];
 	uint32_t v2=mesh->triangles.node[3*i+(j+1)%3];
