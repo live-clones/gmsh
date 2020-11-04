@@ -193,8 +193,8 @@ void colorbarWindow::redraw_range(int a, int b)
     fl_draw("Ctrl+0, ..., Ctrl+9", xx0, yy0 + (i + 1) * fh);
     fl_draw("Select predefined colormap 10...19", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("F1, ..., F4", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Select predefined colormap 20...23", xx1, yy0 + (i + 1) * fh);
+    fl_draw("F1, ..., F5", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Select predefined colormap 20...24", xx1, yy0 + (i + 1) * fh);
     i++;
     fl_draw("mouse1", xx0, yy0 + (i + 1) * fh);
     fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * fh);
@@ -426,6 +426,10 @@ int colorbarWindow::handle(int event)
     }
     else if(Fl::test_shortcut(FL_F + 4)) {
       ColorTable_InitParam(23, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_F + 5)) {
+      ColorTable_InitParam(24, ct);
       compute = 1;
     }
     else if(Fl::test_shortcut(FL_CTRL + 'c') ||
