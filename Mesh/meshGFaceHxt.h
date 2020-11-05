@@ -14,11 +14,16 @@ class GFace;
 int meshGFaceHxt(GModel *gm);
 int meshGFaceHxt(GFace *gf);
 
+#if defined(HAVE_HXT)
+  #include "hxt_mesh.h"
+#else
+  struct HXTMesh;
+#endif
 #include <vector>
 #include <map>
 #include <cstdint>
-struct HXTMesh;
 class MVertex;
+
 
 int Gmsh2Hxt(GFace *gf, HXTMesh *m,
 		   std::map<MVertex *, uint32_t> &v2c,

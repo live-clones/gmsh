@@ -12,6 +12,7 @@ extern "C"{
 #include "hxt_edge.h"
 #include "hxt_tools.h"
 }
+#include <set>
 
 class MultiBlock
 {
@@ -56,6 +57,7 @@ class MultiBlock
   std::vector<std::vector<uint64_t>> m_mbEdgesTri; //each vector is a collection of point defining the mbEdg
   std::vector<std::vector<uint64_t>> m_mbEdg2Block;
   std::vector<std::vector<uint64_t>> m_mbBlock2Edg;
+  std::vector<std::set<uint64_t>> m_mbBlockTriPatchs; //tri indices patchs for each block
 
 
   bool m_mbDecompExists;
@@ -124,9 +126,11 @@ class MultiBlock
   int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID);
   HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs);
   HXTStatus getDataFromBlockEdgID(int edgID, std::vector<std::array<double, 3>> &pointsOnEdg, std::vector<uint64_t> &trianglesOnEdg);
+  HXTStatus createMbTriPatchs();
   int isPointInTri(std::array<double, 3> point1, std::array<double, 3> point2, std::array<double, 3> currPoint, double *alpha);
   HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum);
   HXTStatus dbgPosEdgData(const char *fileName);
+  HXTStatus dbgPosPatchData(const char *fileName);
 };
 
 #endif
