@@ -53,6 +53,7 @@ class MultiBlock
   double m_minEdgLength; //probably not needed!!! 
   std::vector<std::vector<int>> m_mbQuads; //each vector is quad vertices indices
   std::vector<std::vector<std::array<double,3>>> m_mbEdges; //each vector is a collection of point defining the mbEdg
+  std::vector<std::vector<uint64_t>> m_mbEdgesTri; //each vector is a collection of point defining the mbEdg
   std::vector<std::vector<uint64_t>> m_mbEdg2Block;
   std::vector<std::vector<uint64_t>> m_mbBlock2Edg;
 
@@ -111,7 +112,7 @@ class MultiBlock
   int getCleanedSepIndFromSepID(int ID, int *ind);
   int putCleanQuadsInStruct(int *quadsWithIndices, int *sizesQuads, int *numQuads);
   int keepTheQuad(int *quadIndices, int *sizeQuadNodes);
-  int getSepCleanIDfrom2extVert(int ind1, int ind2);
+  int getSepCleanIDfrom2extVert(int ind1, int ind2, int &dirSign);
   int getSepIDFromCleanedSepInd(int ind, int *ID);
   int isPointSingularityOrCornerVec(std::array<double,3> *point);
   int getQuadEdgesData();
@@ -122,11 +123,10 @@ class MultiBlock
   double getDistanceBetweeenTwoExtrVert(int sepIDNoLimCyc, int extrVertID, int tJuncVertID1);
   int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID);
   HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs);
-  HXTStatus getDataFromBlockEdgID(int edgID, std::vector<std::array<double, 3>> *pointsOnEdg, std::vector<uint64_t> *trianglesOnEdg);
+  HXTStatus getDataFromBlockEdgID(int edgID, std::vector<std::array<double, 3>> &pointsOnEdg, std::vector<uint64_t> &trianglesOnEdg);
   int isPointInTri(std::array<double, 3> point1, std::array<double, 3> point2, std::array<double, 3> currPoint, double *alpha);
   HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum);
-  
-  
+  HXTStatus dbgPosEdgData(const char *fileName);
 };
 
 #endif
