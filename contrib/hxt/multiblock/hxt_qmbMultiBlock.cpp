@@ -1601,6 +1601,12 @@ HXTStatus MultiBlock::buildQuadLayout(){
   // std::vector<uint64_t> trianglesOnEdg;
   // std::cout<<"grabingEdgData "<<std::endl;
   // getDataFromBlockEdgID(m_mbBlock2Edg[0][0], &pointsOnEdg, &trianglesOnEdg);
+
+  
+  std::cout<<"start printing"<<std::endl;
+  uint64_t triNum[1];
+  getTriNumFromPointCoord(m_extraordVertices[5], m_tri, triNum);
+  std::cout<<"Printing node and tri end"<<std::endl;
   std::cout<<"----Collecting data  FINISHED!----"<<std::endl;
  
   
@@ -2138,19 +2144,19 @@ int MultiBlock:: putIDsInGraph(std::vector<std::array<double,3>> newNodes, std::
   // int numExtr=0;
   // for(uint64_t k=0; k<m_sepGraphTriangles.size(); k++){
   //   for(uint64_t l=0; l<m_sepGraphTriangles[k].size(); l++){
-  //   fprintf(f,"ST(");
-  //   numExtr++;
-  //   uint32_t vtri[3] = {mesh->triangles.node[3*m_sepGraphTriangles[k][l]+0],mesh->triangles.node[3*m_sepGraphTriangles[k][l]+1],mesh->triangles.node[3*m_sepGraphTriangles[k][l]+2]};
-  //   for(uint32_t j=0; j<3; j++){
-  //     fprintf(f,"%f,%f,%f",mesh->vertices.coord[4*vtri[j]+0],mesh->vertices.coord[4*vtri[j]+1],mesh->vertices.coord[4*vtri[j]+2]);
-  //     if(j<2)
-  //       fprintf(f,",");
+  //     fprintf(f,"ST(");
+  //     numExtr++;
+  //     uint32_t vtri[3] = {mesh->triangles.node[3*m_sepGraphTriangles[k][l]+0],mesh->triangles.node[3*m_sepGraphTriangles[k][l]+1],mesh->triangles.node[3*m_sepGraphTriangles[k][l]+2]};
+  //     for(uint32_t j=0; j<3; j++){
+  // 	fprintf(f,"%f,%f,%f",mesh->vertices.coord[4*vtri[j]+0],mesh->vertices.coord[4*vtri[j]+1],mesh->vertices.coord[4*vtri[j]+2]);
+  // 	if(j<2)
+  // 	  fprintf(f,",");
+  //     }
+  //     fprintf(f,")");
+  //     fprintf(f,"{");
+  //     fprintf(f,"%i, %i, %i",numExtr,numExtr,numExtr);
+  //     fprintf(f,"};\n");    
   //   }
-  //   fprintf(f,")");
-  //   fprintf(f,"{");
-  //   fprintf(f,"%i, %i, %i",numExtr,numExtr,numExtr);
-  //   fprintf(f,"};\n");    
-  // }
   // }
   // fprintf(f,"};");
   // fclose(f);
@@ -2706,7 +2712,7 @@ int MultiBlock::getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID){
   if(v1!=-1 && v2!=-1 && v3!=-1 && v1!=v2 && v1!=v3 && v2!=v3){
     for(uint64_t s=0; s<m_mbQuads.size();s++){
       if(flag1==0 || flag2==0 || flag3==0){
-	//flag1=0; flag2=0; flag3=0;
+	flag1=0; flag2=0; flag3=0;
 	for(uint64_t m=0; m<m_mbQuads[s].size();m++){
 	  if(v1 == m_mbQuads[s][m])
 	    flag1=1;
@@ -2726,7 +2732,6 @@ int MultiBlock::getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID){
  
   return 1;
 }
-
 //finding the 2sep which contain Tjunction normal sep and a limit cycle)
 //finding the closest neighbour of the T-junction which is not boundary or a T-junction (on the separatrice witch is not a limit cycle) 
 //knowing T-junction node, its closest neighbours -> getting a block for correction 
@@ -2739,7 +2744,7 @@ HXTStatus MultiBlock::getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatches
   if(m_extraordVertTjunc.size()>0){
     for(uint64_t i=0; i<m_extraordVertTjunc.size(); i++){
       for(uint64_t j=0; j<m_vectSep.size(); j++){
-	double min=-1.0;
+	double min=std::numeric_limits<double>::max();
 	double distance=-1.0;
 	Separatrice *sep=&(m_vectSep[j]);
 	if(sep->isSaved() && !(sep->getIsLimitCycle())){ //separatrice which is not a limit cycle
@@ -2749,36 +2754,49 @@ HXTStatus MultiBlock::getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatches
 	  for(uint64_t k=0; k<m_sepGraphNodes[ind].size(); k++){
 	    if(m_extraordVertTjunc[i]==m_sepGraphNodes[ind][k]){
 	      //previous node
-	      if(k!=0 && !(isExtrVertOnBdry(m_sepGraphNodes[ind][k-1], &isBdry)) && !(isExtrVertTjunction(m_sepGraphNodes[ind][k-1], &isTjunction))){
+	      isExtrVertOnBdry(m_sepGraphNodes[ind][k-1], &isBdry);
+	      isExtrVertTjunction(m_sepGraphNodes[ind][k-1], &isTjunction);
+	      if(k!=0 && !(isBdry) && !(isTjunction)){
 		distance =  getDistanceBetweeenTwoExtrVert(sepID, m_sepGraphNodes[ind][k-1], m_extraordVertTjunc[i]);
-		if(distance>min){
+		if(distance<min){
 		  min=distance;
 		  nodeID1 = m_sepGraphNodes[ind][k-1];
 		}
-	      }  
-	      if(k==0 && !(isExtrVertOnBdry(m_sepGraphNodes[ind][m_sepGraphNodes[ind].size()-1], &isBdry)) && !(isExtrVertTjunction(m_sepGraphNodes[ind][m_sepGraphNodes[ind].size()-1], &isTjunction))){
-		distance =  getDistanceBetweeenTwoExtrVert(sepID, m_sepGraphNodes[ind][m_sepGraphNodes[ind].size()-1], m_extraordVertTjunc[i]);
-		if(distance>min){
-		  min=distance;
-		  nodeID1 = m_sepGraphNodes[ind][m_sepGraphNodes[ind].size()-1];
-		}
 	      }
-	    
+
+	      // isExtrVertOnBdry(m_sepGraphNodes[ind][m_sepGraphNodes[ind].size()-1], &isBdry);
+	      // isExtrVertTjunction(m_sepGraphNodes[ind][m_sepGraphNodes[ind].size()-1], &isTjunction); 
+	      // if(k==0 && !(isBdry) && !(isTjunction)){
+	      // 	distance =  getDistanceBetweeenTwoExtrVert(sepID, m_sepGraphNodes[ind][m_sepGraphNodes[ind].size()-1], m_extraordVertTjunc[i]);
+	      // 	if(distance<min){
+	      // 	  min=distance;
+	      // 	  nodeID1 = m_sepGraphNodes[ind][m_sepGraphNodes[ind].size()-1];
+	      // 	}
+	      // }
+	      // Never k==0 (if everything is good)
+	      
 	      //next node
-	      if((k!=m_sepGraphNodes[ind].size()-1) && !(isExtrVertOnBdry(m_sepGraphNodes[ind][k+1], &isBdry)) && !(isExtrVertTjunction(m_sepGraphNodes[ind][k+1], &isTjunction))){
+	      isExtrVertOnBdry(m_sepGraphNodes[ind][k+1], &isBdry);
+	      isExtrVertTjunction(m_sepGraphNodes[ind][k+1], &isTjunction);
+	      if((k!=m_sepGraphNodes[ind].size()-1) && !(isBdry) && !(isTjunction)){
 		distance =  getDistanceBetweeenTwoExtrVert(sepID, m_sepGraphNodes[ind][k+1], m_extraordVertTjunc[i]);
-		if(distance>min){
+		if(distance<min){
 		  min=distance;
 		  nodeID1 = m_sepGraphNodes[ind][k+1];
 		}
 	      }
-	      if((k==m_sepGraphNodes[ind].size()-1) && !(isExtrVertOnBdry(m_sepGraphNodes[ind][0], &isBdry)) && !(isExtrVertTjunction(m_sepGraphNodes[ind][0], &isTjunction))){
-		distance =  getDistanceBetweeenTwoExtrVert(sepID, m_sepGraphNodes[ind][0], m_extraordVertTjunc[i]);
-		if(distance>min){
-		  min=distance;
-		  nodeID1 = m_sepGraphNodes[ind][0];
-		}
-	      } 
+	      
+	      // isExtrVertOnBdry(m_sepGraphNodes[ind][0], &isBdry);
+	      // isExtrVertTjunction(m_sepGraphNodes[ind][0], &isTjunction);
+	      // if((k==m_sepGraphNodes[ind].size()-1) && !(isBdry) && !(isTjunction)){
+	      // 	distance =  getDistanceBetweeenTwoExtrVert(sepID, m_sepGraphNodes[ind][0], m_extraordVertTjunc[i]);
+	      // 	if(distance>min){
+	      // 	  min=distance;
+	      // 	  nodeID1 = m_sepGraphNodes[ind][0];
+	      // 	}
+	      // }
+	      // Never k==m_sepGraphNodes[ind].size()-1)  (if everything is good)
+	      
 	    }
 	  }
 	}
@@ -2805,6 +2823,7 @@ HXTStatus MultiBlock::getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatches
   return  HXT_STATUS_OK;
 }
 
+//Function not good	    
 HXTStatus MultiBlock::getDataFromBlockEdgID(int edgID, std::vector<std::array<double, 3>> *pointsOnEdg, std::vector<uint64_t> *trianglesOnEdg){
   std::vector<std::array<double,3>> edgPoints = m_mbEdges[edgID];
   int startInd=-1; int endInd=-1;
@@ -2815,11 +2834,15 @@ HXTStatus MultiBlock::getDataFromBlockEdgID(int edgID, std::vector<std::array<do
     if(isPointDuplicateVec(&m_mbEdges[edgID][1], &m_extraordVertices[i], &norm))
       endInd=i;
   }
+  std::cout<<"start and end ind: "<<startInd<<"; "<<endInd<<std::endl;
   int sepInd=getSepCleanIDfrom2extVert(startInd, endInd);
+  std::cout<<"Ind: "<<sepInd<<std::endl;
   int ID=-1;
   getSepIDFromCleanedSepInd(sepInd, &ID);
+  std::cout<<"sep id: "<<ID<<std::endl;
   uint64_t startTri = m_tri[startInd];
   uint64_t endTri = m_tri[endInd];
+  std::cout<<"Start and end tri "<<startTri<<" "<<endTri<<std::endl; 
   Separatrice *sep=&(m_vectSep[ID]);
   std::vector<uint64_t> *triangles = sep->getPTriangles();
   std::vector<std::array<double,3>> *pointCoord = sep->getPCoord();
@@ -2831,7 +2854,7 @@ HXTStatus MultiBlock::getDataFromBlockEdgID(int edgID, std::vector<std::array<do
       end = (int) i;
   }
 
-
+ std::cout<<"start and end: "<<start<<"; "<<end<<std::endl;
   for(uint64_t i=start; i<end+1; i++)
     trianglesOnEdg->push_back((*triangles)[i]);
  
@@ -2865,21 +2888,80 @@ int MultiBlock::isPointInTri(std::array<double, 3> point1, std::array<double, 3>
 }
 
 HXTStatus MultiBlock::getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum){
-  HXTEdges *edges=m_Edges;
-  HXTMesh *mesh=edges->edg2mesh;
+  HXTEdges *edges = m_Edges; 
+  HXTMesh *mesh = edges->edg2mesh; //from normal mesh
   double *vert = mesh->vertices.coord;
   uint32_t* nodes = mesh->triangles.node;
   *triNum = (uint64_t)-1;
-  std::array<double, 3> coordV1, coordV2;
-  for(uint64_t i=0; vectorTriangles.size(); i++){
-    for(int k=0; k<3; k++){
-      coordV1[k] = vert[4*nodes[3*vectorTriangles[i]+0]+k];
-      coordV2[k] = vert[4*nodes[3*vectorTriangles[i]+1]+k];
+  std::array<double, 3> coordV1 = {0.,0.,0.};
+  std::array<double, 3> coordV2 = {0.,0.,0.};
+  std::array<double, 3> coordV3 = {0.,0.,0.};
+  for(uint64_t i=0; i<vectorTriangles.size(); i++){
+    if((vectorTriangles[i] != (uint64_t)-1)){
+      for(int k=0; k<3; k++){
+	coordV1[k] = vert[4*nodes[3*vectorTriangles[i]+0]+k];
+	coordV2[k] = vert[4*nodes[3*vectorTriangles[i]+1]+k];
+	coordV2[k] = vert[4*nodes[3*vectorTriangles[i]+2]+k];
+      }
+    
+      double norm1, norm2;
+      if(!isPointDuplicateVec(&coordV1, &pointCoord, &norm1) && !isPointDuplicateVec(&coordV2, &pointCoord, &norm2)){	
+	double alpha=-1.0;
+	if(isPointInTri(coordV1, coordV2, pointCoord, &alpha))
+	  *triNum = vectorTriangles[i];
+      }
+      if((*triNum==(uint64_t)-1) && !isPointDuplicateVec(&coordV1, &pointCoord, &norm1) && !isPointDuplicateVec(&coordV3, &pointCoord, &norm2)){	
+	double alpha=-1.0;
+	if(isPointInTri(coordV1, coordV3, pointCoord, &alpha))
+	  *triNum = vectorTriangles[i];
+      }
+      if((*triNum==(uint64_t)-1) && !isPointDuplicateVec(&coordV2, &pointCoord, &norm1) && !isPointDuplicateVec(&coordV3, &pointCoord, &norm2)){	
+	double alpha=-1.0;
+	if(isPointInTri(coordV2, coordV3, pointCoord, &alpha))
+	  *triNum = vectorTriangles[i];
+      }
+      
     }
-    double alpha=-1.0;
-    if(isPointInTri(coordV1, coordV2, pointCoord, &alpha))
-      *triNum = vectorTriangles[i];
   }
+
+
+
+  
+
+  uint64_t *elemFlagged;
+  HXT_CHECK(hxtMalloc(&elemFlagged, mesh->triangles.num*sizeof(uint64_t)));
+  for(uint64_t i=0; i<mesh->triangles.num; i++)
+    elemFlagged[i]=0;
+  elemFlagged[(*triNum)]=1;
+  FILE *f = fopen("jovana.pos","w");
+  fprintf(f,"View \"Nodes\" {\n");
+  std::vector<std::array<double, 3>> nodesCoord;
+  nodesCoord.push_back(pointCoord);
+  for(uint64_t i=0; i<nodesCoord.size(); i++){
+    int color=static_cast<int>(i);
+    std::array<double,3> nodes=nodesCoord[i];
+    fprintf(f,"SP(%g,%g,%g){%i};\n", nodes[0], nodes[1], nodes[2], color);
+  }
+  fprintf(f,"};");
+  fprintf(f,"View \"Flagged patches\"{\n");
+  for(uint64_t i=0; i<mesh->triangles.num; i++){
+    fprintf(f,"ST(");
+    uint32_t vtri[3] = {mesh->triangles.node[3*i+0],mesh->triangles.node[3*i+1],mesh->triangles.node[3*i+2]};
+    for(uint32_t j=0; j<3; j++){
+      fprintf(f,"%f,%f,%f",mesh->vertices.coord[4*vtri[j]+0],mesh->vertices.coord[4*vtri[j]+1],mesh->vertices.coord[4*vtri[j]+2]);
+      if(j<2)
+        fprintf(f,",");
+    }
+    fprintf(f,")");
+    fprintf(f,"{");
+    fprintf(f,"%lX, %lX, %lX",elemFlagged[i],elemFlagged[i],elemFlagged[i]);
+    fprintf(f,"};\n");    
+  }
+  fprintf(f,"};");
+  fclose(f); 
+  HXT_CHECK(hxtFree(&elemFlagged));
+  
 
   return  HXT_STATUS_OK;
 }
+
