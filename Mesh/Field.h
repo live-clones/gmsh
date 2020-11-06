@@ -218,7 +218,6 @@ public:
            _fanPointTags.end();
   }
   int fanSize (int iV){
-    printf("couou %lu %lu\n",_fanPointTags.size(),_fanSizes.size());
     if (_fanPointTags.size() !=  _fanSizes.size())
       return CTX::instance()->mesh.boundaryLayerFanPoints;
     std::list<int>::iterator it1 = _fanPointTags.begin();

@@ -32,6 +32,6 @@ Field[1].hwall_n = 0.01;
 Field[1].thickness = 0.1;
 Field[1].ratio = 1.4;
 Field[1].FanNodesList = {1, 11}; // try e.g. removing 11
-Field[1].FanPointsSizesList = {3, 4}; // try e.g. removing 11
+Field[1].FanPointsSizesList = {5, 4}; // 5 elements for node 1 and 4 for node 11
 Field[1].Quads = 1;
 BoundaryLayer Field = 1;
