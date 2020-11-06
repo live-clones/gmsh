@@ -173,9 +173,10 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
         x.normalize();
 	// BUG FIX #1054 : the size should be divided by cos (theta /2)
 	// where cos theta is dot (N1[SIDE],N2[SIDE])
-	double theta = acos (dot (N1[SIDE],N2[SIDE]));
+	double theta = acos (fabs(dot (N1[SIDE],N2[SIDE])));
 	double fact = 1./cos (theta/2);
-	x *= fact;
+	//	printf("%12.5E\n",theta,fact);
+	x *= fabs(fact);
 	// END BUG FIX #1054 ...
         _dirs.push_back(x);
       }
