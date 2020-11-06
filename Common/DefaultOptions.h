@@ -69,7 +69,7 @@ StringXString GeneralOptions_String[] = {
   { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
     "Font used in the graphic window" },
   { F|O, "GraphicsFontEngine" , opt_general_graphics_font_engine , "Native" ,
-    "Set graphics font engine (Native, Cairo)" },
+    "Set graphics font engine (Native, StringTexture, Cairo)" },
   { F|O, "GraphicsFontTitle" , opt_general_graphics_font_title , "Helvetica" ,
     "Font used in the graphic window for titles" },
 
@@ -1622,7 +1622,7 @@ StringXNumber ViewOptions_Number[] = {
     "5: emc2000, 6: incadescent, 7: hot, 8: pink, 9: grayscale, 10: french, "
     "11: hsv, 12: spectrum, 13: bone, 14: spring, 15: summer, 16: autumm, "
     "17: winter, 18: cool, 19: copper, 20: magma, 21: inferno, 22: plasma, "
-    "23: viridis)"},
+    "23: viridis, 24: turbo)"},
   { F|O, "ColormapRotation" , opt_view_colormap_rotation , 0. ,
     "Incremental colormap rotation" },
   { F|O, "ColormapSwap" , opt_view_colormap_swap , 0. ,

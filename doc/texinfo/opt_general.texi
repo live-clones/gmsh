@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 4.7.0-git-8c479c1b8; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20201030; Build host: MacBook-Pro.local; Build options: 64Bit ALGLIB ANN Bamg Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen Fltk GMP Gmm Hxt Jpeg Kbipack MathEx Med Mesh Metis Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parasolid ParasolidSTEP Parser Plugins Png Post QuadTri Solver TetGen/BR TouchBar Voro++ Zlib; FLTK version: 1.4.0; OCC version: 7.4.1; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 4.7.0-git-f04159d59; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20201105; Build host: MacBook-Pro.local; Build options: 64Bit ALGLIB ANN Bamg Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen Fltk GMP Gmm Hxt Jpeg Kbipack MathEx Med Mesh Metis Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parasolid ParasolidSTEP Parser Plugins Png Post QuadTri Solver TetGen/BR TouchBar Voro++ Zlib; FLTK version: 1.4.0; OCC version: 7.4.1; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -82,7 +82,7 @@ Default value: @code{"Helvetica"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontEngine
-Set graphics font engine (Native, Cairo)@*
+Set graphics font engine (Native, StringTexture, Cairo)@*
 Default value: @code{"Native"}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -163,7 +163,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.7.0-git-8c479c1b8"}@*
+Default value: @code{"4.7.0-git-f04159d59"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern

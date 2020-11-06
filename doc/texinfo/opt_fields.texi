@@ -158,6 +158,10 @@ default value: @code{@{@}}
 Tags of points in the geometric model for which a fan is created@*
 type: list@*
 default value: @code{@{@}}
+@item FanPointsSizesList
+Number of elements in the fan for each fan node. If not present default value mesh.boundaryLayerFanPoints@*
+type: list@*
+default value: @code{@{@}}
 @item IntersectMetrics
 Intersect metrics of all surfaces@*
 type: integer@*
