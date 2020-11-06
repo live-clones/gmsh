@@ -626,6 +626,7 @@ public:
   std::vector<MVertex *> stencil;
   const std::vector<MElement*> elements;
   std::vector<SVector3> ptsStencil;
+  std::vector<SVector3> ptsStencilParam;
   winslowStencil (MVertex *v,  const std::vector<MElement*> &_e) : elements (_e)
   {
     type = classOfStencil(_e);
@@ -652,9 +653,40 @@ public:
     z /= stencil.size();
     return SPoint3(x,y,z);
   }
+  
+  SPoint2 new3dPosition4quadsParam (GFace *gf){
+    /* simple unit stencil */
+    double hx = 1.;
+    double hy = 1.; 
 
+    SPoint2 p;
+    center->getParameter(0, p[0]);
+    center->getParameter(1, p[1]);
+    Pair<SVector3, SVector3> t = gf->firstDer(p);
+    const int order[8] = {7,1,3,5,0,6,2,4};
+   
+    /* warning: 2D stencil but 3D coordinates */
+    double hx = 1.;
+    double hy = 1.; 
+    
+    /* 1. Compute the winslow coefficients (alpha_i, beta_i in the Karman paper) */
+    /*    a. Compute first order derivatives of the position */
+    SVector3 r_i[2];
+    r_i[0] = 1./hx * (ptsStencil[order[0]] - ptsStencil[order[2]]);
+    r_i[1] = 1./hy * (ptsStencil[order[1]] - ptsStencil[order[3]]);
+    /*    b. Compute the alpha_i coefficients */
+    double alpha_0 = dot(r_i[1],r_i[1]);
+    double alpha_1 = dot(r_i[0],r_i[0]);
+    /*    c. Compute the beta coefficient */
+    double beta =  dot(r_i[0],r_i[1]);
+    
+    
+    
+  }
+  
   SPoint3 new3dPosition4quads (){
-    for (size_t i=0;i<stencil.size();i++)ptsStencil[i] = SVector3(stencil[i]->x(),stencil[i]->y(),stencil[i]->z());
+    for (size_t i=0;i<stencil.size();i++)
+      ptsStencil[i] = SVector3(stencil[i]->x(),stencil[i]->y(),stencil[i]->z());
     /* Stencil:
      *   6---1---4
      *   |   |   |
@@ -682,7 +714,8 @@ public:
     double beta =  dot(r_i[0],r_i[1]);
     
     /* cross derivative */
-    SVector3 u_xy = 1./(4.*hx*hy) * ((ptsStencil[order[4]]-ptsStencil[order[6]]) + (ptsStencil[order[7]]-ptsStencil[order[5]]));
+    SVector3 u_xy = 1./(4.*hx*hy) * ((ptsStencil[order[4]]-ptsStencil[order[6]]) +
+				     (ptsStencil[order[7]]-ptsStencil[order[5]]));
     
     /* 2. Compute the "winslow new position" */
     double denom = 2. * alpha_0 / (hx*hx) + 2. * alpha_1 / (hy*hy);
@@ -1001,10 +1034,12 @@ static void allowProjections (GFace * gf){
 }
 
 void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads, 
-    const std::vector<MVertex*>& freeVertices, int nIter, Field *f, bool remove) {
+		    const std::vector<MVertex*>& freeVertices,
+		    int nIter, Field *f, bool remove) {
+  
   if (gf->triangles.size())return;
   Msg::Debug("winslow 2D on %li quads, %li free vertices (face %i), %i iterations ...", quads.size(), freeVertices.size(),
-      gf->tag(), nIter);
+	     gf->tag(), nIter);
   GEntity::GeomType GT = gf->geomType();
   
   allowProjections (gf);
@@ -1035,21 +1070,16 @@ void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads,
     ++it;
   }
   
-  
   double dx0;
   for (int i=0;i<nIter;i++){
     double dx = 0;
-    
     for (size_t j=0;j<stencils.size();j++){
       double xx = stencils[j].smooth(gf,GT,radius,c);
       dx += xx ;
-      //      printf("%lu %12.5E\n",j, xx);
     }
     if (i == 0)dx0 = dx;
     if (dx < .002*dx0) break;
-    //    printf("%12.5E %12.5E\n",dx,dx0);
   }  
-
 }
 
 void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
