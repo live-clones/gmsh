@@ -4,8 +4,8 @@ r = 1;
 Sphere(1) = {0,0,0, r};
 Sphere(2) = {2,0,0, r};
 
-Mesh.CharacteristicLengthMin = 0.1;
-Mesh.CharacteristicLengthMax = 0.1;
+Mesh.MeshSizeMin = 0.1;
+Mesh.MeshSizeMax = 0.1;
 
 // hide volume 2 (to test Plugin(Integrate)'s ability to only integrate on
 // what's visible)

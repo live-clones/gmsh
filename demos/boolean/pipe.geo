@@ -1,7 +1,7 @@
 SetFactory("OpenCASCADE");
 
-Mesh.CharacteristicLengthMin = 0.1;
-Mesh.CharacteristicLengthMax = 0.1;
+Mesh.MeshSizeMin = 0.1;
+Mesh.MeshSizeMax = 0.1;
 Geometry.NumSubEdges = 100; // nicer display of curve
 
 nturns = DefineNumber[ 1, Min 0.1, Max 1, Step 0.01, Name "Parameters/Turn" ];

@@ -3,7 +3,6 @@ import sys
 import math
 
 gmsh.initialize(sys.argv)
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("2d surface mesh with purely discrete boundary")
 

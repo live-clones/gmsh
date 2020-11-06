@@ -16,8 +16,6 @@ int main(int argc, char **argv)
   // line in the same way as the standalone Gmsh app:
   gmsh::initialize(argc, argv);
 
-  gmsh::option::setNumber("General.Terminal", 1);
-
   gmsh::model::add("t2");
 
   // Copied from t1.cpp...
@@ -32,6 +30,7 @@ int main(int argc, char **argv)
   gmsh::model::geo::addLine(4, 1, 4);
   gmsh::model::geo::addCurveLoop({4, 1, -2, 3}, 1);
   gmsh::model::geo::addPlaneSurface({1}, 1);
+  gmsh::model::geo::synchronize();
   gmsh::model::addPhysicalGroup(1, {1, 2, 4}, 5);
   int ps = gmsh::model::addPhysicalGroup(2, {1});
   gmsh::model::setPhysicalName(2, ps, "My surface");

@@ -55,7 +55,7 @@ struct contextMeshOptions {
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder;
-  int cgnsConstructTopology, cgnsExportCPEX0045;
+  int cgnsConstructTopology, cgnsExportCPEX0045, cgnsExportStructured;
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
@@ -116,8 +116,9 @@ private:
 public:
   CTX();
   ~CTX();
+  void init();
   static CTX *instance();
- public:
+
   // for debug purposes only, i.e. JF and CG personal use
   int debugSurface;
   // files on the command line and various file names

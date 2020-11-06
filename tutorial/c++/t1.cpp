@@ -17,10 +17,6 @@ int main(int argc, char **argv)
   // Before using any functions in the C++ API, Gmsh must be initialized:
   gmsh::initialize();
 
-  // By default Gmsh will not print out any messages: in order to output
-  // messages on the terminal, just set the "General.Terminal" option to 1:
-  gmsh::option::setNumber("General.Terminal", 1);
-
   // We now add a new model, named "t1". If gmsh::model::add() is not called, a
   // new default (unnamed) model will be created on the fly, if necessary.
   gmsh::model::add("t1");
@@ -33,18 +29,16 @@ int main(int argc, char **argv)
   // point with the built-in CAD kernel, the C++ API function is
   // gmsh::model::geo::addPoint():
   // - the first 3 arguments are the point coordinates (x, y, z)
-  // - the next (optional) argument is the target mesh size (the "characteristic
-  //   length") close to the point
+  // - the next (optional) argument is the target mesh size close to the point
   // - the last (optional) argument is the point tag (a stricly positive integer
   //   that uniquely identifies the point)
   double lc = 1e-2;
   gmsh::model::geo::addPoint(0, 0, 0, lc, 1);
 
   // The distribution of the mesh element sizes will be obtained by
-  // interpolation of these characteristic lengths throughout the
-  // geometry. Another method to specify characteristic lengths is to use
-  // general mesh size Fields (see `t10.cpp'). A particular case is the use of a
-  // background mesh (see `t7.cpp').
+  // interpolation of these mesh sizes throughout the geometry. Another method
+  // to specify mesh sizes is to use general mesh size Fields (see `t10.cpp'). A
+  // particular case is the use of a background mesh (see `t7.cpp').
   //
   // If no target mesh size of provided, a default uniform coarse size will be
   // used for the model, based on the overall model size.

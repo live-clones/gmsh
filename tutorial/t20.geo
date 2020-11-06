@@ -92,7 +92,7 @@ If(surf)
 EndIf
 
 // Finally, let's specify a global mesh size:
-Mesh.CharacteristicLengthMin = 3;
-Mesh.CharacteristicLengthMax = 3;
+Mesh.MeshSizeMin = 3;
+Mesh.MeshSizeMax = 3;
 
 // To partition the mesh instead of the geometry, see `t21.geo'.

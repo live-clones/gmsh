@@ -13,7 +13,6 @@
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
-  gmsh::option::setNumber("General.Terminal", 1);
 
   // Gmsh supports two types of post-processing data: "list-based" and
   // "model-based". Both types of data are handled through the `view' interface.

@@ -346,9 +346,9 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   char *str = new char[strl];
 
   if(partition)
-    Msg::Info("%d partition entities", nume);
+    Msg::Info("%d partition entit%s", nume, nume > 1 ? "ies" : "y");
   else
-    Msg::Info("%d entities", nume);
+    Msg::Info("%d entit%s", nume, nume > 1 ? "ies" : "y");
 
   for(int dim = 0; dim < 4; dim++) {
     for(std::size_t i = 0; i < numEntities[dim]; i++) {
@@ -494,7 +494,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
   std::pair<std::size_t, MVertex *> *vertexCache =
     new std::pair<std::size_t, MVertex *>[totalNumNodes];
 
-  Msg::Info("%lu nodes", totalNumNodes);
+  Msg::Info("%lu node%s", totalNumNodes, totalNumNodes > 1 ? "s" : "");
   Msg::StartProgressMeter(totalNumNodes);
 
   for(std::size_t i = 0; i < numBlock; i++) {
@@ -743,7 +743,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
   std::pair<std::size_t, MElement *> *elementCache =
     new std::pair<std::size_t, MElement *>[totalNumElements];
-  Msg::Info("%lu elements", totalNumElements);
+  Msg::Info("%lu element%s", totalNumElements, totalNumElements > 1 ? "s" : "");
   Msg::StartProgressMeter(totalNumElements);
 
   for(std::size_t i = 0; i < numBlock; i++) {

@@ -7,7 +7,7 @@
 // -----------------------------------------------------------------------------
 
 // Mesh sizes can be specified very accurately by providing a background mesh,
-// i.e., a post-processing view that contains the target characteristic lengths.
+// i.e., a post-processing view that contains the target mesh sizes.
 
 // Merge a list-based post-processing view containing the target mesh sizes:
 Merge "t7_bgmesh.pos";
@@ -26,9 +26,9 @@ Background Mesh View[0];
 
 // In order to compute the mesh sizes from the background mesh only, and
 // disregard any other size constraints, one can set:
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
-Mesh.CharacteristicLengthFromPoints = 0;
-Mesh.CharacteristicLengthFromCurvature = 0;
+Mesh.MeshSizeExtendFromBoundary = 0;
+Mesh.MeshSizeFromPoints = 0;
+Mesh.MeshSizeFromCurvature = 0;
 
 // See `t10.geo' for additional information: background meshes are actually a
 // particular case of general "mesh size fields".

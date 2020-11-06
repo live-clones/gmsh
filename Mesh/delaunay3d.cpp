@@ -877,7 +877,7 @@ static Tet *walk(Tet *t, Vert *v, int maxx, double &totSearch, int thread)
       investigatedTets.insert(t);
     }
     else if(tets.empty()) {
-      Msg::Error("Jump-and-Walk Failed (No neighbor)");
+      Msg::Error("Jump-and-walk failed (no neighbor)");
       return 0;
     }
     else {
@@ -885,7 +885,7 @@ static Tet *walk(Tet *t, Vert *v, int maxx, double &totSearch, int thread)
       tets.pop();
     }
   }
-  Msg::Error("Jump-and-Walk Failed (No neighbor)");
+  Msg::Error("Jump-and-walk failed (no neighbor)");
   return 0;
 }
 
@@ -1140,7 +1140,7 @@ void delaunayTrgl(const std::size_t numThreads,
               else if(neigh->getFace(3) == bndK[i].f)
                 neigh->T[3] = t;
               else {
-                Msg::Error("Datastructure Broken in Triangulation");
+                Msg::Error("Datastructure broken in triangulation");
                 break;
               }
             }

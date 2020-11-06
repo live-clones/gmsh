@@ -6,7 +6,6 @@ if length(ARGS) < 1
 end
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 gmsh.open(ARGS[1])
 
 # get all elementary entities in the model

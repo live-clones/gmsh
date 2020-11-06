@@ -71,13 +71,13 @@ Optimize high order meshes (Mesh.HighOrderOptimize)
 @item -ho_[min,max,nlayers]
 High-order optimization parameters (Mesh.HighOrderThreshold[Min,Max], Mesh.HighOrderNumLayers)
 @item -clscale value
-Set mesh element size factor (Mesh.CharacteristicLengthFactor)
+Set mesh element size factor (Mesh.MeshSizeFactor)
 @item -clmin value
-Set minimum mesh element size (Mesh.CharacteristicLengthMin)
+Set minimum mesh element size (Mesh.MeshSizeMin)
 @item -clmax value
-Set maximum mesh element size (Mesh.CharacteristicLengthMax)
+Set maximum mesh element size (Mesh.MeshSizeMax)
 @item -clcurv value
-Compute mesh element size from curvature, with given minimum number of elements per 2*pi radians (Mesh.CharacteristicLengthFromCurvature and Mesh.MinimumElementsPerTwoPi)
+Compute mesh element size from curvature, with given minimum number of elements per 2*pi radians (Mesh.MeshSizeFromCurvature and Mesh.MinimumElementsPerTwoPi)
 @item -aniso_max value
 Set maximum anisotropy for bamg (Mesh.AnisoMax)
 @item -smooth_ratio value

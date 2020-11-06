@@ -246,7 +246,7 @@ public:
           for(int k = 0; k < 2; k++) {
             MVertex *v = edges[i]->lines[j]->getVertex(k);
             std::set<blyr_mvertex>::iterator it = _vertices.find(v);
-            if(it == _vertices.end()) Msg::Error("error in blyr_manager");
+            if(it == _vertices.end()) Msg::Error("Unknow node in boundary layer");
             it->add_line(edges[i]->lines[j], edges[i]);
           }
         }
@@ -264,13 +264,13 @@ public:
           t_normals.find(t->getFace(0));
         SVector3 n;
         if(it == t_normals.end())
-          Msg::Error("BLYR ERROR");
+          Msg::Error("Unknown face in boundary layer");
         else
           n = it->second;
         for(int k = 0; k < 3; k++) {
           MVertex *v = t->getVertex(k);
           std::set<blyr_mvertex>::iterator it = _vertices.find(v);
-          if(it == _vertices.end()) Msg::Error("error in blyr_manager");
+          if(it == _vertices.end()) Msg::Error("Unknown node in boundary layer");
           it->add_triangle(t, n, bls[i]);
         }
       }
@@ -282,7 +282,7 @@ public:
     for(size_t i = 0; i < _ridges.size(); i++) {
       if(_ridges[i]._ge == ge) return &_ridges[i];
     }
-    Msg::Error("unknown ridge %d", ge->tag());
+    Msg::Error("Unknown ridge %d", ge->tag());
     return NULL;
   }
 
@@ -727,7 +727,7 @@ public:
             }
           }
           if(!gf)
-            Msg::Error("topological error in 3D Boundary Layer generation");
+            Msg::Error("Topological error in 3D boundary layer generation");
           GPoint gp = gf->closestPoint(p, initialGuess);
           printf("adding a point %g %g %g in face %d\n",
                  n.x(), n.y(), n.z(), gf->tag());
@@ -879,9 +879,8 @@ public:
           // ALREADY DONE (see function above)
         }
         else {
-          Msg::Error("corner with %d internal ridges and %d external ridges "
-                     "should be coded",
-                     nINTERNAL, nEXTERNAL);
+          Msg::Error("Corner with %d internal ridges and %d external ridges "
+                     "should be coded", nINTERNAL, nEXTERNAL);
           printf("EXTERNALS :");
           for(size_t i = 0; i < _externals.size(); i++)
             printf("%d ", _externals[i]->_ge->tag());
@@ -954,7 +953,7 @@ public:
             t = bounds.high() - thk / tgt.norm();
           }
           else
-            Msg::Error("topological error in boundary layer");
+            Msg::Error("Topological error in boundary layer");
           GPoint gp = ge->point(t);
           MEdgeVertex *mev = new MEdgeVertex(gp.x(), gp.y(), gp.z(), ge, t);
           ge->mesh_vertices.push_back(mev);

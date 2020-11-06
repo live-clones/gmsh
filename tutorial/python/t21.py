@@ -24,7 +24,6 @@ import sys
 # automatically if `Mesh.PartitionCreateTopology' is set.
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # Let us start by creating a simple geometry with two adjacent squares sharing
 # an edge:

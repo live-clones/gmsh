@@ -2,7 +2,6 @@ import gmsh
 import sys
 
 gmsh.initialize(sys.argv)
-gmsh.option.setNumber("General.Terminal", 1)
 
 # create a simple cartesian grid (you can make it finer e.g. by passing
 # "-clscale 0.01" on the command line)

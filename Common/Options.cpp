@@ -125,7 +125,7 @@ static void PrintStringOptions(int num, int level, int diff, int help,
 {
   int i = 0;
   while(s[i].str) {
-    if(s[i].level & level) {
+    if((s[i].level & level) && !(s[i].level & GMSH_DEPRECATED)) {
       if(!diff || s[i].function(num, GMSH_GET, "") != s[i].def) {
         char tmp[1024];
         sprintf(tmp, "%s%s = \"%s\";%s%s", prefix, s[i].str,
@@ -164,16 +164,18 @@ static void PrintStringOptionsDoc(StringXString s[], const char *prefix,
 {
   int i = 0;
   while(s[i].str) {
-    fprintf(file, "@item %s%s\n", prefix, s[i].str);
-    fprintf(file, "%s@*\n", s[i].help);
+    if(!(s[i].level & GMSH_DEPRECATED)) {
+      fprintf(file, "@item %s%s\n", prefix, s[i].str);
+      fprintf(file, "%s@*\n", s[i].help);
 
-    // sanitize the string for texinfo
-    std::string val = s[i].function(0, GMSH_GET, "");
-    for(std::size_t j = 1; j < val.size(); j++) {
-      if(val[j] == '\n' && val[j - 1] == '\n') val[j - 1] = '.';
+      // sanitize the string for texinfo
+      std::string val = s[i].function(0, GMSH_GET, "");
+      for(std::size_t j = 1; j < val.size(); j++) {
+        if(val[j] == '\n' && val[j - 1] == '\n') val[j - 1] = '.';
+      }
+      fprintf(file, "Default value: @code{\"%s\"}@*\n", val.c_str());
+      fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
     }
-    fprintf(file, "Default value: @code{\"%s\"}@*\n", val.c_str());
-    fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
     i++;
   }
 }
@@ -247,7 +249,7 @@ static void PrintNumberOptions(int num, int level, int diff, int help,
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
-    if(s[i].level & level) {
+    if((s[i].level & level) && !(s[i].level & GMSH_DEPRECATED)) {
       if(!diff || (s[i].function(num, GMSH_GET, 0) != s[i].def)) {
         sprintf(tmp, "%s%s = %.16g;%s%s", prefix, s[i].str,
                 s[i].function(num, GMSH_GET, 0), help ? " // " : "",
@@ -269,11 +271,13 @@ static void PrintNumberOptionsDoc(StringXNumber s[], const char *prefix,
 {
   int i = 0;
   while(s[i].str) {
-    fprintf(file, "@item %s%s\n", prefix, s[i].str);
-    fprintf(file, "%s@*\n", s[i].help);
-    fprintf(file, "Default value: @code{%g}@*\n",
-            s[i].function(0, GMSH_GET, 0));
-    fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
+    if(!(s[i].level & GMSH_DEPRECATED)) {
+      fprintf(file, "@item %s%s\n", prefix, s[i].str);
+      fprintf(file, "%s@*\n", s[i].help);
+      fprintf(file, "Default value: @code{%g}@*\n",
+              s[i].function(0, GMSH_GET, 0));
+      fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
+    }
     i++;
   }
 }
@@ -407,7 +411,7 @@ static void PrintColorOptions(int num, int level, int diff, int help,
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
-    if(s[i].level & level) {
+    if((s[i].level & level) && !(s[i].level & GMSH_DEPRECATED)) {
       unsigned int def;
       switch(CTX::instance()->colorScheme) {
       case 1:
@@ -450,13 +454,15 @@ static void PrintColorOptionsDoc(StringXColor s[], const char *prefix,
 {
   int i = 0;
   while(s[i].str) {
-    fprintf(file, "@item %sColor.%s\n", prefix, s[i].str);
-    fprintf(file, "%s@*\n", s[i].help);
-    fprintf(file, "Default value: @code{@{%d,%d,%d@}}@*\n",
-            CTX::instance()->unpackRed(s[i].function(0, GMSH_GET, 0)),
-            CTX::instance()->unpackGreen(s[i].function(0, GMSH_GET, 0)),
-            CTX::instance()->unpackBlue(s[i].function(0, GMSH_GET, 0)));
-    fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
+    if(!(s[i].level & GMSH_DEPRECATED)) {
+      fprintf(file, "@item %sColor.%s\n", prefix, s[i].str);
+      fprintf(file, "%s@*\n", s[i].help);
+      fprintf(file, "Default value: @code{@{%d,%d,%d@}}@*\n",
+              CTX::instance()->unpackRed(s[i].function(0, GMSH_GET, 0)),
+              CTX::instance()->unpackGreen(s[i].function(0, GMSH_GET, 0)),
+              CTX::instance()->unpackBlue(s[i].function(0, GMSH_GET, 0)));
+      fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
+    }
     i++;
   }
 }
@@ -465,6 +471,8 @@ static void PrintColorOptionsDoc(StringXColor s[], const char *prefix,
 
 void InitOptions(int num)
 {
+  CTX::instance()->init();
+
   // Default string options
   SetDefaultStringOptions(num, GeneralOptions_String);
   SetDefaultStringOptions(num, GeometryOptions_String);
@@ -951,8 +959,8 @@ void PrintOptionsDoc()
         fprintf(file, "Options:@*\n");
         fprintf(file, "@table @code\n");
         for(std::map<std::string, FieldOption *>::iterator it2 =
-              f->options.begin();
-            it2 != f->options.end(); it2++) {
+              f->options.begin(); it2 != f->options.end(); it2++) {
+          if(it2->second->isDeprecated()) continue;
           fprintf(file, "@item %s\n", it2->first.c_str());
           std::string val;
           it2->second->getTextRepresentation(val);
@@ -6192,6 +6200,14 @@ double opt_mesh_cgns_export_cpex0045(OPT_ARGS_NUM)
   return CTX::instance()->mesh.cgnsExportCPEX0045;
 }
 
+double opt_mesh_cgns_export_structured(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.cgnsExportStructured = (int)val;
+  }
+  return CTX::instance()->mesh.cgnsExportStructured;
+}
+
 double opt_mesh_dual(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { CTX::instance()->mesh.dual = (int)val; }
@@ -8683,8 +8699,8 @@ double opt_view_colormap_number(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     int n = (int)val;
-    if(n < 0) n = 23;
-    if(n > 23) n = 0;
+    if(n < 0) n = 24;
+    if(n > 24) n = 0;
     opt->colorTable.ipar[COLORTABLE_NUMBER] = n;
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);

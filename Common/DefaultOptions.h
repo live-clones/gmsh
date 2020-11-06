@@ -21,6 +21,7 @@
 #define S GMSH_SESSIONRC
 #define O GMSH_OPTIONSRC
 #define F GMSH_FULLRC
+#define D GMSH_DEPRECATED
 
 // STRINGS
 
@@ -139,7 +140,9 @@ StringXString GeneralOptions_String[] = {
 StringXString GeometryOptions_String[] = {
   { F|O, "DoubleClickedPointCommand" , opt_geometry_double_clicked_point_command, "" ,
     "Command parsed when double-clicking on a point" },
-  { F|O, "DoubleClickedLineCommand" , opt_geometry_double_clicked_curve_command, "" ,
+  { F|O, "DoubleClickedCurveCommand" , opt_geometry_double_clicked_curve_command, "" ,
+    "Command parsed when double-clicking on a line" },
+  { F|O|D, "DoubleClickedLineCommand" , opt_geometry_double_clicked_curve_command, "" ,
     "Command parsed when double-clicking on a line" },
   { F|O, "DoubleClickedSurfaceCommand" , opt_geometry_double_clicked_surface_command, "" ,
     "Command parsed when double-clicking on a surface" },
@@ -350,7 +353,8 @@ StringXString PrintOptions_String[] = {
 
 StringXNumber GeneralOptions_Number[] = {
   { F|O, "AbortOnError" , opt_general_abort_on_error , 0. ,
-    "Abort on error? (0: no, 1: abort meshing, 2: throw an exception, 3: exit)" },
+    "Abort on error? (0: no, 1: abort meshing, 2: throw an exception unless in "
+    "interactive mode, 3: throw an exception always, 4: exit)" },
   { F|O, "AlphaBlending" , opt_general_alpha_blending , 1. ,
     "Enable alpha blending (transparency) in post-processing views" },
   { F|O, "Antialiasing" , opt_general_antialiasing , 0. ,
@@ -849,6 +853,18 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "CopyMeshingMethod" , opt_geometry_copy_meshing_method, 0. ,
     "Copy meshing method (unstructured or transfinite) when duplicating geometrical "
     "entities with built-in geometry kernel?" },
+  { F|O, "Curves" , opt_geometry_curves , 1. ,
+    "Display geometry curves?" },
+  { F|O, "CurveNumbers" , opt_geometry_curves_num , 0. ,
+    "Display curve labels?" },
+  { F|O, "CurveSelectWidth" , opt_geometry_curve_sel_width , 3. ,
+    "Display width of selected curves (in pixels)" },
+  { F|O, "CurveType" , opt_geometry_curve_type , 0. ,
+    "Display curves as solid color segments (0), 3D cylinders (1) or tapered "
+    "cylinders (2)" },
+  { F|O, "CurveWidth" , opt_geometry_curve_width , 2. ,
+    "Display width of lines (in pixels)" },
+
   { F, "DoubleClickedEntityTag" , opt_geometry_double_clicked_entity_tag, 0. ,
     "Tag of last double-clicked geometrical entity" },
 
@@ -870,16 +886,16 @@ StringXNumber GeometryOptions_Number[] = {
     "Enable lighting for the geometry" },
   { F|O, "LightTwoSide" , opt_geometry_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
-  { F|O, "Lines" , opt_geometry_curves , 1. ,
+  { F|O|D, "Lines" , opt_geometry_curves , 1. ,
     "Display geometry curves?" },
-  { F|O, "LineNumbers" , opt_geometry_curves_num , 0. ,
+  { F|O|D, "LineNumbers" , opt_geometry_curves_num , 0. ,
     "Display curve labels?" },
-  { F|O, "LineSelectWidth" , opt_geometry_curve_sel_width , 3. ,
+  { F|O|D, "LineSelectWidth" , opt_geometry_curve_sel_width , 3. ,
     "Display width of selected curves (in pixels)" },
-  { F|O, "LineType" , opt_geometry_curve_type , 0. ,
+  { F|O|D, "LineType" , opt_geometry_curve_type , 0. ,
     "Display curves as solid color segments (0), 3D cylinders (1) or tapered "
     "cylinders (2)" },
-  { F|O, "LineWidth" , opt_geometry_curve_width , 2. ,
+  { F|O|D, "LineWidth" , opt_geometry_curve_width , 2. ,
     "Display width of lines (in pixels)" },
 
   { F|O, "MatchGeomAndMesh" , opt_geometry_match_geom_and_mesh, 0 ,
@@ -1051,22 +1067,25 @@ StringXNumber MeshOptions_Number[] = {
    "Reconstruct the model topology (BREP) after reading a CGNS file" },
   { F|O, "CgnsExportCPEX0045" , opt_mesh_cgns_export_cpex0045 , 0. ,
    "Use the CPEX0045 convention when exporting a high-order mesh to CGNS" },
-  { F|O, "CharacteristicLengthExtendFromBoundary" ,
+  { F|O, "CgnsExportStructured" , opt_mesh_cgns_export_structured , 0. ,
+   "Export transfinite meshes as structured CGNS grids" },
+  { F|O|D, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
     "Extend computation of mesh element sizes from the boundaries into the interior "
     "(for 3D Delaunay, use 1: longest or 2: shortest surface edge length)"},
-  { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
+  { F|O|D, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all mesh element sizes" },
-  { F|O, "CharacteristicLengthMin" , opt_mesh_lc_min, 0.0 ,
+  { F|O|D, "CharacteristicLengthMin" , opt_mesh_lc_min, 0.0 ,
     "Minimum mesh element size" },
-  { F|O, "CharacteristicLengthMax" , opt_mesh_lc_max, 1.e22,
+  { F|O|D, "CharacteristicLengthMax" , opt_mesh_lc_max, 1.e22,
     "Maximum mesh element size" },
-  { F|O, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
+  { F|O|D, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
     "Automatically compute mesh element sizes from curvature" },
-  { F|O, "CharacteristicLengthFromPoints" , opt_mesh_lc_from_points , 1. ,
+  { F|O|D, "CharacteristicLengthFromPoints" , opt_mesh_lc_from_points , 1. ,
     "Compute mesh element sizes from values given at geometry points" },
-  { F|O, "CharacteristicLengthFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
-    "Compute mesh element sizes from values given at geometry points defining parametric curves"},
+  { F|O|D, "CharacteristicLengthFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
+    "Compute mesh element sizes from values given at geometry points defining "
+    "parametric curves"},
   { F,   "Clip" , opt_mesh_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
@@ -1076,7 +1095,9 @@ StringXNumber MeshOptions_Number[] = {
     "How are surface mesh elements classified on compounds? (0: on the new discrete "
     "surface, 1: on the original geometrical surfaces - incompatible with e.g. high-order "
     "meshing)" },
-  { F|O, "CompoundCharacteristicLengthFactor" , opt_mesh_compound_lc_factor , 0.5 ,
+  { F|O|D, "CompoundCharacteristicLengthFactor" , opt_mesh_compound_lc_factor , 0.5 ,
+    "Mesh size factor applied to compound parts" },
+  { F|O, "CompoundMeshSizeFactor" , opt_mesh_compound_lc_factor , 0.5 ,
     "Mesh size factor applied to compound parts" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
@@ -1168,6 +1189,21 @@ StringXNumber MeshOptions_Number[] = {
     "Mesh only visible entities (experimental)" },
   { F|O, "MeshOnlyEmpty" , opt_mesh_mesh_only_empty, 0. ,
     "Mesh only entities that have no existing mesh" },
+  { F|O, "MeshSizeExtendFromBoundary" , opt_mesh_lc_extend_from_boundary, 1. ,
+    "Extend computation of mesh element sizes from the boundaries into the interior "
+    "(for 3D Delaunay, use 1: longest or 2: shortest surface edge length)"},
+  { F|O, "MeshSizeFactor" , opt_mesh_lc_factor , 1.0 ,
+    "Factor applied to all mesh element sizes" },
+  { F|O, "MeshSizeMin" , opt_mesh_lc_min, 0.0 ,
+    "Minimum mesh element size" },
+  { F|O, "MeshSizeMax" , opt_mesh_lc_max, 1.e22,
+    "Maximum mesh element size" },
+  { F|O, "MeshSizeFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
+    "Automatically compute mesh element sizes from curvature" },
+  { F|O, "MeshSizeFromPoints" , opt_mesh_lc_from_points , 1. ,
+    "Compute mesh element sizes from values given at geometry points" },
+  { F|O, "MeshSizeFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
+    "Compute mesh element sizes from values given at geometry points defining parametric curves"},
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
     "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
@@ -1975,7 +2011,10 @@ StringXColor GeometryOptions_Color[] = {
   { F|O, "Points" , opt_geometry_color_points ,
     {90, 90, 90, 255}, {90, 90, 90, 255}, {0, 0, 0, 255}, {178, 178, 178, 255},
     "Normal geometry point color" },
-  { F|O, "Lines" , opt_geometry_color_curves ,
+  { F|O, "Curves" , opt_geometry_color_curves ,
+    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {0, 0, 255, 255},
+    "Normal geometry curve color" },
+  { F|O|D, "Lines" , opt_geometry_color_curves ,
     {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {0, 0, 255, 255},
     "Normal geometry curve color" },
   { F|O, "Surfaces" , opt_geometry_color_surfaces ,
@@ -2158,5 +2197,6 @@ StringXColor PrintOptions_Color[] = {
 #undef S
 #undef O
 #undef F
+#undef D
 
 #endif

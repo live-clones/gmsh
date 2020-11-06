@@ -3,7 +3,6 @@
 import gmsh
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t5")
 
@@ -115,7 +114,7 @@ for t in 1:5
     x += 0.166
     z += 0.166
     v = cheeseHole(x, y, z, r, lcar3, shells)
-    gmsh.model.addPhysicalGroup(3, [v], t)
+    gmsh.model.geo.addPhysicalGroup(3, [v], t)
 end
 
 gmsh.model.geo.addVolume(shells, 186);

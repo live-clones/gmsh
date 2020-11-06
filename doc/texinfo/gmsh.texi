@@ -308,15 +308,15 @@ a surface will be forced to be faces of tetrahedra in the final 3D mesh
 only if the surface is part of the boundary of a volume, or if that
 surface has been explicitly embedded in the volume. This automatically
 ensures the conformity of the mesh when, for example, two volumes share
-a common surface. Every meshing step is constrained by a ``size field''
-(also called ``characteristic length field''), which prescribes the
-desired size of the elements in the mesh. This size field can be
-uniform, specified by values associated with points in the geometry, or
-defined by general ``fields'' (for example related to the distance to
-some boundary, to a arbitrary scalar field defined on another mesh,
-etc.): see @ref{Specifying mesh element sizes}. For each meshing step,
-all structured mesh directives are executed first, and serve as
-additional constraints for the unstructured parts.
+a common surface. Every meshing step is constrained by a mesh ``size
+field'', which prescribes the desired size of the elements in the
+mesh. This size field can be uniform, specified by values associated
+with points in the geometry, or defined by general ``fields'' (for
+example related to the distance to some boundary, to a arbitrary scalar
+field defined on another mesh, etc.): see @ref{Specifying mesh element
+sizes}. For each meshing step, all structured mesh directives are
+executed first, and serve as additional constraints for the unstructured
+parts.
 
 @c -------------------------------------------------------------------------
 @c Solver: external solver interface
@@ -2804,7 +2804,7 @@ In the Gmsh API, the mesh commands are available in the
 @node Specifying mesh element sizes, Structured grids, Mesh commands, Mesh commands
 @subsection Specifying mesh element sizes
 
-@cindex Characteristic lengths
+@cindex Mesh size
 @cindex Mesh, element size
 @cindex Size, elements
 @cindex Mesh, background
@@ -2815,33 +2815,33 @@ given geometry:
 
 @enumerate
 @item
-First, if the two options @code{Mesh.CharacteristicLengthFromPoints} and
-@code{Mesh.CharacteristicLengthExtendFromBoundary} are set (they are by
-default; see @ref{Mesh options list}), you can simply specify desired
-mesh element sizes at the geometrical points of the model. The size of
-the mesh elements will then be computed by interpolating these values
-inside the domain during mesh generation. This might sometimes lead to
+First, if the two options @code{Mesh.MeshSizeFromPoints} and
+@code{Mesh.MeshSizeExtendFromBoundary} are set (they are by default; see
+@ref{Mesh options list}), you can simply specify desired mesh element
+sizes at the geometrical points of the model. The size of the mesh
+elements will then be computed by interpolating these values inside the
+domain during mesh generation. This might sometimes lead to
 over-refinement in some areas, so that you may have to add ``dummy''
 geometrical entities in the model in order to get the desired element
 sizes or use more advanced methods explained below.
 @item
-Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
-not by default), the mesh will be adapted with respect to the curvature
-of the model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
+Second, if @code{Mesh.MeshSizeFromCurvature} is set (it is not by
+default), the mesh will be adapted with respect to the curvature of the
+model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
 which gives the number of elements per 2 Pi radians.
 @item
 Next, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
 @itemize @bullet
 @item
-The @code{Box} field specifies the size of the elements inside and outside
-of a parallelepipedic region.
+The @code{Box} field specifies the size of the elements inside and
+outside of a parallelepipedic region.
 @item
-The @code{Distance} field specifies the size of the mesh according to the
-distance to some model entities.
+The @code{Distance} field specifies the size of the mesh according to
+the distance to some model entities.
 @item
-The @code{MathEval} field specifies the size of the mesh using an explicit
-mathematical function.
+The @code{MathEval} field specifies the size of the mesh using an
+explicit mathematical function.
 @item
 The @code{PostView} field specifies an explicit background mesh in the
 form of a scalar post-processing view (see @ref{Post-processing
@@ -2875,22 +2875,20 @@ All the aforementioned methods can be used simultaneously, in which case
 the smallest element size is selected at any given point. In addition,
 boundary mesh sizes (on curves or surfaces) are interpolated inside the
 enclosed entity (surface or volume, respectively) if the option
-@code{Mesh.CharacteristicLengthExtendFromBoundary} is set (it is by
-default).
+@code{Mesh.MeshSizeExtendFromBoundary} is set (it is by default).
 
 All element sizes are further constrained in the interval [
-@code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
-] (which can also be provided on the command line with @code{-clmin} and
-@code{-clmax}). The resulting value is then finally multiplied by
-@code{Mesh.CharacteristicLengthFactor} (@code{-clscale} on the command
-line).
+@code{Mesh.MeshSizeMin}, @code{Mesh.MeshSizeMax} ] (which can also be
+provided on the command line with @code{-clmin} and @code{-clmax}). The
+resulting value is then finally multiplied by @code{Mesh.MeshSizeFactor}
+(@code{-clscale} on the command line).
 
 Note that when the element size is fully specified by a background mesh
 field, it is thus often desirable to set
 @smallexample
-Mesh.CharacteristicLengthFromPoints = 0;
-Mesh.CharacteristicLengthFromCurvature = 0;
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
+Mesh.MeshSizeFromPoints = 0;
+Mesh.MeshSizeFromCurvature = 0;
+Mesh.MeshSizeExtendFromBoundary = 0;
 @end smallexample
 to prevent over-refinement inside an entity due to small mesh sizes on
 its boundary.
@@ -2899,7 +2897,7 @@ Here are the mesh commands that are related to the specification of
 mesh element sizes:
 
 @ftable @code
-@item Characteristic Length @{ @var{expression-list} @} = @var{expression};
+@item MeshSize @{ @var{expression-list} @} = @var{expression};
 Modify the prescribed mesh element size of the points whose
 tags are listed in @var{expression-list}. The new
 value is given by @var{expression}.
@@ -5173,7 +5171,7 @@ Python and Julia API examples, see the respective subdirectories in
 * t2::  Transformations, extruded geometries, volumes
 * t3::  Extruded meshes, parameters, options
 * t4::  Built-in functions, holes in surfaces, annotations, entity colors
-* t5::  Characteristic lengths, macros, loops, holes in volumes
+* t5::  Mesh sizes, macros, loops, holes in volumes
 * t6::  Transfinite meshes
 * t7::  Background meshes
 * t8::  Post-processing and animations
@@ -5283,7 +5281,7 @@ and Julia
 @c -------------------------------------------------------------------------
 
 @node t5, t6, t4, Tutorial
-@section @code{t5}: Characteristic lengths, macros, loops, holes in volumes
+@section @code{t5}: Mesh sizes, macros, loops, holes in volumes
 
 See
 @url{@value{GITLAB-PREFIX}/tutorial/t5.geo,t5.geo}.
@@ -6476,14 +6474,13 @@ See ``How can I display only selected parts of my model?''.
 
 @item How can I ``explore'' a mesh (for example, to see inside a complex structure)?
 
-You can use `Tools->Clipping Planes' to clip the region of
-interest. You can define up to 6 clipping planes in Gmsh (i.e., enough
-to define a ``cube'' inside your model) and each plane can clip either
-the geometry, the mesh, the post-processing views, or any combination
-of the above.  The clipping planes are defined using the four
-coefficients A,B,C,D of the equation A*x+B*y+C*y+D=0, which can be
-adjusted interactively by dragging the mouse in the input
-fields.
+You can use `Tools->Clipping' to clip the region of interest. You can
+define up to 6 clipping planes in Gmsh (i.e., enough to define a
+``cube'' inside your model) and each plane can clip either the geometry,
+the mesh, the post-processing views, or any combination of the above.
+The clipping planes are defined using the four coefficients A,B,C,D of
+the equation A*x+B*y+C*y+D=0, which can be adjusted interactively by
+dragging the mouse in the input fields.
 
 @item What is the signification of SICN, Gamma and SIGE in Tools->Statistics?
 
@@ -6593,7 +6590,7 @@ Use `Tools->Plugins->Cut Plane'.
 
 @item Can I save an isosurface to a file?
 
-Yes: first run `Tools->Plugins->Cut Map' to extract the isosurface,
+Yes: first run `Tools->Plugins->Isosurface' to extract the isosurface,
 then use `View->Export' to save the new view.
 
 @item Can Gmsh generate isovolumes?
@@ -6699,7 +6696,7 @@ Views;} in a script.
 
 @item How can I see ``inside'' a complicated post-processing view?
 
-Use `Tools->Clipping Planes'.
+Use `Tools->Clipping'.
 
 When viewing 3D scalar fields, you can also modify the colormap
 (`Tools->Options->View->Map') to make the iso-surfaces ``transparent'':

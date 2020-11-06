@@ -17,8 +17,8 @@ SetFactory("OpenCASCADE");
 // constraint works!):
 
 Box(1) = {0, 0, 0, 1, 1, 1};
-Characteristic Length {:} = 0.1;
-Characteristic Length {1} = 0.02;
+MeshSize {:} = 0.1;
+MeshSize {1} = 0.02;
 
 // To impose that the mesh on surface 2 (the right side of the cube) should
 // match the mesh from surface 1 (the left side), the following periodicity
@@ -66,9 +66,9 @@ Recursive Delete{ Volume{v()}; }
 
 // We now set a non-uniform mesh size constraint (again to check results
 // visually):
-Characteristic Length { PointsOf{ Volume{vin()}; }} = 0.1;
+MeshSize { PointsOf{ Volume{vin()}; }} = 0.1;
 p() = Point In BoundingBox{2-eps, -eps, -eps, 2+eps, eps, eps};
-Characteristic Length {p()} = 0.001;
+MeshSize {p()} = 0.001;
 
 // We now identify corresponding surfaces on the left and right sides of the
 // geometry automatically.

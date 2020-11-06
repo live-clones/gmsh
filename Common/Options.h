@@ -18,6 +18,7 @@
 #define GMSH_SESSIONRC (1 << 0)
 #define GMSH_OPTIONSRC (1 << 1)
 #define GMSH_FULLRC (1 << 2)
+#define GMSH_DEPRECATED (1 << 3)
 
 // action is a combination of GMSH_SET, GMSH_GET, GMSH_GUI
 
@@ -556,6 +557,7 @@ double opt_mesh_cgns_import_ignore_bc(OPT_ARGS_NUM);
 double opt_mesh_cgns_import_ignore_solution(OPT_ARGS_NUM);
 double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM);
 double opt_mesh_cgns_export_cpex0045(OPT_ARGS_NUM);
+double opt_mesh_cgns_export_structured(OPT_ARGS_NUM);
 double opt_mesh_dual(OPT_ARGS_NUM);
 double opt_mesh_voronoi(OPT_ARGS_NUM);
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM);

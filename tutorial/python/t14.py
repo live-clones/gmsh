@@ -15,12 +15,10 @@ import sys
 
 gmsh.initialize(sys.argv)
 
-gmsh.option.setNumber("General.Terminal", 1)
-
 # Create an example geometry
 gmsh.model.add("t14")
 
-m = 0.5  # mesh characteristic length
+m = 0.5  # mesh size
 h = 2  # geometry height in the z-direction
 
 gmsh.model.geo.addPoint(0, 0, 0, m, 1)

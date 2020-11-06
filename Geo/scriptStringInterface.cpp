@@ -123,7 +123,7 @@ static void addInFile(const std::string &text,
     Msg::ImportPhysicalGroupsInOnelab();
     Msg::SetOnelabChanged(1);
   }
-  else if(text.find("Characteristic") != std::string::npos) {
+  else if(text.find("MeshSize") != std::string::npos) {
     // only ask to remesh and re-save
     Msg::SetOnelabChanged(2);
   }
@@ -184,13 +184,12 @@ void scriptSetFactory(const std::string &factory, const std::string &fileName)
   addInFile(sstream.str(), fileName);
 }
 
-void scriptSetCharacteristicLength(const std::string &fileName,
-                                   const std::vector<int> &l,
-                                   const std::string &lc)
+void scriptSetMeshSize(const std::string &fileName,
+                       const std::vector<int> &l,
+                       const std::string &lc)
 {
   std::ostringstream sstream;
-  sstream << "Characteristic Length {" << vector2String(l) << "} = " << lc
-          << ";";
+  sstream << "MeshSize {" << vector2String(l) << "} = " << lc << ";";
   addInFile(sstream.str(), fileName);
 }
 

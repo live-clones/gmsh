@@ -63,7 +63,7 @@ FieldOption *Field::getOption(const std::string &optionName)
 {
   std::map<std::string, FieldOption *>::iterator it = options.find(optionName);
   if(it == options.end()) {
-    Msg::Error("field option :%s does not exist", optionName.c_str());
+    Msg::Error("Field option '%s' does not exist", optionName.c_str());
     return NULL;
   }
   return it->second;
@@ -146,6 +146,8 @@ private:
 public:
   StructuredField()
   {
+    _data = 0;
+
     options["FileName"] =
       new FieldOptionPath(_fileName, "Name of the input file", &updateNeeded);
     _textFormat = false;
@@ -160,7 +162,6 @@ public:
     options["OutsideValue"] = new FieldOptionDouble(
       _outsideValue, "Value of the field outside the grid (only used if the "
                      "\"SetOutsideValue\" option is true).");
-    _data = 0;
   }
   std::string getDescription()
   {
@@ -219,7 +220,7 @@ public:
         input.close();
       } catch(...) {
         _errorStatus = true;
-        Msg::Error("Field %i : error reading file %s", this->id,
+        Msg::Error("Field %i: error reading file '%s'", this->id,
                    _fileName.c_str());
       }
       updateNeeded = false;
@@ -254,36 +255,40 @@ public:
 
 class LonLatField : public Field {
 private:
-  int _iField, _fromStereo;
+  int _inField, _fromStereo;
   double _stereoRadius;
 
 public:
   std::string getDescription()
   {
-    return "Evaluate Field[IField] in geographic coordinates (longitude, "
+    return "Evaluate Field[InField] in geographic coordinates (longitude, "
            "latitude):\n\n"
-           "  F = Field[IField](atan(y/x), asin(z/sqrt(x^2+y^2+z^2))";
+           "  F = Field[InField](atan(y/x), asin(z/sqrt(x^2+y^2+z^2))";
   }
   LonLatField()
   {
-    _iField = 1;
-    options["IField"] =
-      new FieldOptionInt(_iField, "Index of the field to evaluate.");
+    _inField = 1;
     _fromStereo = 0;
     _stereoRadius = 6371e3;
 
+    options["InField"] =
+      new FieldOptionInt(_inField, "Tag of the field to evaluate");
     options["FromStereo"] = new FieldOptionInt(
-      _fromStereo, "if = 1, the mesh is in stereographic coordinates. "
+      _fromStereo, "If = 1, the mesh is in stereographic coordinates: "
                    "xi = 2Rx/(R+z),  eta = 2Ry/(R+z)");
     options["RadiusStereo"] = new FieldOptionDouble(
-      _stereoRadius, "radius of the sphere of the stereograpic coordinates");
+      _stereoRadius, "Radius of the sphere of the stereograpic coordinates");
+
+    // deprecated names
+    options["IField"] =
+      new FieldOptionInt(_inField, "Tag of the field to evaluate", 0, true);
   }
   const char *getName() { return "LonLat"; }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    Field *field = GModel::current()->getFields()->get(_iField);
-    if(!field || _iField == id) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(_inField);
+    if(!field || _inField == id) return MAX_LC;
     if(_fromStereo == 1) {
       double xi = x;
       double eta = y;
@@ -316,6 +321,7 @@ public:
   BoxField()
   {
     _vIn = _vOut = _xMin = _xMax = _yMin = _yMax = _zMin = _zMax = _thick = 0;
+
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the box");
     options["VOut"] = new FieldOptionDouble(_vOut, "Value outside the box");
     options["XMin"] =
@@ -410,21 +416,18 @@ public:
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the cylinder");
     options["VOut"] =
       new FieldOptionDouble(_vOut, "Value outside the cylinder");
-
     options["XCenter"] =
       new FieldOptionDouble(_xc, "X coordinate of the cylinder center");
     options["YCenter"] =
       new FieldOptionDouble(_yc, "Y coordinate of the cylinder center");
     options["ZCenter"] =
       new FieldOptionDouble(_zc, "Z coordinate of the cylinder center");
-
     options["XAxis"] =
       new FieldOptionDouble(_xa, "X component of the cylinder axis");
     options["YAxis"] =
       new FieldOptionDouble(_ya, "Y component of the cylinder axis");
     options["ZAxis"] =
       new FieldOptionDouble(_za, "Z component of the cylinder axis");
-
     options["Radius"] = new FieldOptionDouble(_R, "Radius");
   }
   const char *getName() { return "Cylinder"; }
@@ -471,7 +474,6 @@ public:
 
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the ball");
     options["VOut"] = new FieldOptionDouble(_vOut, "Value outside the ball");
-
     options["XCenter"] =
       new FieldOptionDouble(_xc, "X coordinate of the ball center");
     options["YCenter"] =
@@ -540,24 +542,48 @@ public:
     options["X2"] = new FieldOptionDouble(_x2, "X coordinate of endpoint 2");
     options["Y2"] = new FieldOptionDouble(_y2, "Y coordinate of endpoint 2");
     options["Z2"] = new FieldOptionDouble(_z2, "Z coordinate of endpoint 2");
-
-    options["R1_inner"] =
+    options["InnerR1"] =
       new FieldOptionDouble(_r1i, "Inner radius of Frustum at endpoint 1");
-    options["R1_outer"] =
+    options["OuterR1"] =
       new FieldOptionDouble(_r1o, "Outer radius of Frustum at endpoint 1");
-    options["R2_inner"] =
+    options["InnerR2"] =
       new FieldOptionDouble(_r2i, "Inner radius of Frustum at endpoint 2");
-    options["R2_outer"] =
+    options["OuterR2"] =
       new FieldOptionDouble(_r2o, "Outer radius of Frustum at endpoint 2");
-
-    options["V1_inner"] =
+    options["InnerV1"] =
       new FieldOptionDouble(_v1i, "Element size at point 1, inner radius");
-    options["V1_outer"] =
+    options["OuterV1"] =
       new FieldOptionDouble(_v1o, "Element size at point 1, outer radius");
-    options["V2_inner"] =
+    options["InnerV2"] =
       new FieldOptionDouble(_v2i, "Element size at point 2, inner radius");
-    options["V2_outer"] =
+    options["OuterV2"] =
       new FieldOptionDouble(_v2o, "Element size at point 2, outer radius");
+
+    // deprecated names
+    options["R1_inner"] =
+      new FieldOptionDouble(_r1i, "Inner radius of Frustum at endpoint 1",
+                            0, true);
+    options["R1_outer"] =
+      new FieldOptionDouble(_r1o, "Outer radius of Frustum at endpoint 1",
+                            0, true);
+    options["R2_inner"] =
+      new FieldOptionDouble(_r2i, "Inner radius of Frustum at endpoint 2",
+                            0, true);
+    options["R2_outer"] =
+      new FieldOptionDouble(_r2o, "Outer radius of Frustum at endpoint 2",
+                            0, true);
+    options["V1_inner"] =
+      new FieldOptionDouble(_v1i, "Element size at point 1, inner radius",
+                            0, true);
+    options["V1_outer"] =
+      new FieldOptionDouble(_v1o, "Element size at point 1, outer radius",
+                            0, true);
+    options["V2_inner"] =
+      new FieldOptionDouble(_v2i, "Element size at point 2, inner radius",
+                            0, true);
+    options["V2_outer"] =
+      new FieldOptionDouble(_v2o, "Element size at point 2, outer radius",
+                            0, true);
   }
   const char *getName() { return "Frustum"; }
   using Field::operator();
@@ -590,7 +616,7 @@ public:
 
 class ThresholdField : public Field {
 protected:
-  int _iField;
+  int _inField;
   double _dMin, _dMax, _lcMin, _lcMax;
   bool _sigmoid, _stopAtDistMax;
 
@@ -598,42 +624,51 @@ public:
   virtual const char *getName() { return "Threshold"; }
   virtual std::string getDescription()
   {
-    return "F = LCMin if Field[IField] <= DistMin,\n"
-           "F = LCMax if Field[IField] >= DistMax,\n"
-           "F = interpolation between LcMin and LcMax if DistMin < "
-           "Field[IField] < DistMax";
+    return "F = SizeMin if Field[InField] <= DistMin,\n"
+           "F = SizeMax if Field[InField] >= DistMax,\n"
+           "F = interpolation between SizeMin and SizeMax if DistMin < "
+           "Field[InField] < DistMax";
   }
   ThresholdField()
   {
-    _iField = 0;
+    _inField = 0;
     _dMin = 1;
     _dMax = 10;
     _lcMin = 0.1;
     _lcMax = 1;
     _sigmoid = false;
     _stopAtDistMax = false;
-    options["IField"] =
-      new FieldOptionInt(_iField, "Index of the field to evaluate");
+
+    options["InField"] =
+      new FieldOptionInt(_inField, "Tag of the field to evaluate");
     options["DistMin"] = new FieldOptionDouble(
-      _dMin, "Distance from entity up to which element size will be LcMin");
+      _dMin, "Distance from entity up to which element size will be SizeMin");
     options["DistMax"] = new FieldOptionDouble(
-      _dMax, "Distance from entity after which element size will be LcMax");
-    options["LcMin"] =
+      _dMax, "Distance from entity after which element size will be SizeMax");
+    options["SizeMin"] =
       new FieldOptionDouble(_lcMin, "Element size inside DistMin");
-    options["LcMax"] =
+    options["SizeMax"] =
       new FieldOptionDouble(_lcMax, "Element size outside DistMax");
     options["Sigmoid"] = new FieldOptionBool(
-      _sigmoid, "True to interpolate between LcMin and LcMax using a sigmoid, "
+      _sigmoid, "True to interpolate between SizeMin and LcMax using a sigmoid, "
                 "false to interpolate linearly");
     options["StopAtDistMax"] = new FieldOptionBool(
       _stopAtDistMax, "True to not impose element size outside DistMax (i.e., "
-                      "F = a very big value if Field[IField] > DistMax)");
+                      "F = a very big value if Field[InField] > DistMax)");
+
+    // deprecated names
+    options["IField"] =
+      new FieldOptionInt(_inField, "Tag of the field to evaluate", 0, true);
+    options["LcMin"] =
+      new FieldOptionDouble(_lcMin, "Element size inside DistMin", 0, true);
+    options["LcMax"] =
+      new FieldOptionDouble(_lcMax, "Element size outside DistMax", 0, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    Field *field = GModel::current()->getFields()->get(_iField);
-    if(!field || _iField == id) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(_inField);
+    if(!field || _inField == id) return MAX_LC;
     double r = ((*field)(x, y, z) - _dMin) / (_dMax - _dMin);
     r = std::max(std::min(r, 1.), 0.);
     double lc;
@@ -651,34 +686,37 @@ public:
 
 class GradientField : public Field {
 private:
-  int _iField, _kind;
+  int _inField, _kind;
   double _delta;
 
 public:
   const char *getName() { return "Gradient"; }
   std::string getDescription()
   {
-    return "Compute the finite difference gradient of Field[IField]:\n\n"
-           "  F = (Field[IField](X + Delta/2) - "
-           "       Field[IField](X - Delta/2)) / Delta";
+    return "Compute the finite difference gradient of Field[InField]:\n\n"
+           "  F = (Field[InField](X + Delta/2) - "
+           "       Field[InField](X - Delta/2)) / Delta";
   }
-  GradientField() : _iField(0), _kind(3), _delta(CTX::instance()->lc / 1e4)
+  GradientField() : _inField(0), _kind(3), _delta(CTX::instance()->lc / 1e4)
   {
-    _iField = 1;
+    _inField = 1;
     _kind = 0;
     _delta = 0.;
-    options["IField"] = new FieldOptionInt(_iField, "Field index");
+
+    options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Kind"] = new FieldOptionInt(
-      _kind,
-      "Component of the gradient to evaluate: 0 for X, 1 for Y, 2 for Z, "
+      _kind, "Component of the gradient to evaluate: 0 for X, 1 for Y, 2 for Z, "
       "3 for the norm");
     options["Delta"] = new FieldOptionDouble(_delta, "Finite difference step");
+
+    // deprecated names
+    options["IField"] = new FieldOptionInt(_inField, "Input field tag", 0, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    Field *field = GModel::current()->getFields()->get(_iField);
-    if(!field || _iField == id) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(_inField);
+    if(!field || _inField == id) return MAX_LC;
     double gx, gy, gz;
     switch(_kind) {
     case 0: /* x */
@@ -699,7 +737,7 @@ public:
            _delta;
       return sqrt(gx * gx + gy * gy + gz * gz);
     default:
-      Msg::Error("Field %i : Unknown kind (%i) of gradient", this->id, _kind);
+      Msg::Error("Field %i: unknown kind (%i) of gradient", this->id, _kind);
       return MAX_LC;
     }
   }
@@ -707,23 +745,28 @@ public:
 
 class CurvatureField : public Field {
 private:
-  int _iField;
+  int _inField;
   double _delta;
 
 public:
   const char *getName() { return "Curvature"; }
   std::string getDescription()
   {
-    return "Compute the curvature of Field[IField]:\n\n"
-           "  F = div(norm(grad(Field[IField])))";
+    return "Compute the curvature of Field[InField]:\n\n"
+           "  F = div(norm(grad(Field[InField])))";
   }
-  CurvatureField() : _iField(0), _delta(CTX::instance()->lc / 1e4)
+  CurvatureField() : _inField(0), _delta(CTX::instance()->lc / 1e4)
   {
-    _iField = 1;
+    _inField = 1;
     _delta = 0.;
-    options["IField"] = new FieldOptionInt(_iField, "Field index");
+
+    options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Delta"] =
       new FieldOptionDouble(_delta, "Step of the finite differences");
+
+    // deprecated names
+    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
+                                           0, true);
   }
   void grad_norm(Field &f, double x, double y, double z, double *g)
   {
@@ -738,8 +781,8 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    Field *field = GModel::current()->getFields()->get(_iField);
-    if(!field || _iField == id) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(_inField);
+    if(!field || _inField == id) return MAX_LC;
     double grad[6][3];
     grad_norm(*field, x + _delta / 2, y, z, grad[0]);
     grad_norm(*field, x - _delta / 2, y, z, grad[1]);
@@ -755,7 +798,7 @@ public:
 
 class MaxEigenHessianField : public Field {
 private:
-  int _iField;
+  int _inField;
   double _delta;
 
 public:
@@ -763,23 +806,28 @@ public:
   std::string getDescription()
   {
     return "Compute the maximum eigenvalue of the Hessian matrix of "
-           "Field[IField], with the gradients evaluated by finite "
+           "Field[InField], with the gradients evaluated by finite "
            "differences:\n\n"
-           "  F = max(eig(grad(grad(Field[IField]))))";
+           "  F = max(eig(grad(grad(Field[InField]))))";
   }
-  MaxEigenHessianField() : _iField(0), _delta(CTX::instance()->lc / 1e4)
+  MaxEigenHessianField() : _inField(0), _delta(CTX::instance()->lc / 1e4)
   {
-    _iField = 1;
+    _inField = 1;
     _delta = 0.;
-    options["IField"] = new FieldOptionInt(_iField, "Field index");
+
+    options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Delta"] =
       new FieldOptionDouble(_delta, "Step used for the finite differences");
+
+    // deprecated names
+    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
+                                           0, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    Field *field = GModel::current()->getFields()->get(_iField);
-    if(!field || _iField == id) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(_inField);
+    if(!field || _inField == id) return MAX_LC;
     double mat[3][3], eig[3];
     mat[1][0] = mat[0][1] = (*field)(x + _delta / 2, y + _delta / 2, z) +
                             (*field)(x - _delta / 2, y - _delta / 2, z) -
@@ -804,31 +852,36 @@ public:
 
 class LaplacianField : public Field {
 private:
-  int _iField;
+  int _inField;
   double _delta;
 
 public:
   const char *getName() { return "Laplacian"; }
   std::string getDescription()
   {
-    return "Compute finite difference the Laplacian of Field[IField]:\n\n"
+    return "Compute finite difference the Laplacian of Field[InField]:\n\n"
            "  F = G(x+d,y,z) + G(x-d,y,z) +\n"
            "      G(x,y+d,z) + G(x,y-d,z) +\n"
            "      G(x,y,z+d) + G(x,y,z-d) - 6 * G(x,y,z),\n\n"
-           "where G=Field[IField] and d=Delta";
+           "where G = Field[InField] and d = Delta";
   }
-  LaplacianField() : _iField(0), _delta(CTX::instance()->lc / 1e4)
+  LaplacianField() : _inField(0), _delta(CTX::instance()->lc / 1e4)
   {
-    _iField = 1;
+    _inField = 1;
     _delta = 0.1;
-    options["IField"] = new FieldOptionInt(_iField, "Field index");
+
+    options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Delta"] = new FieldOptionDouble(_delta, "Finite difference step");
+
+    // deprecated names
+    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
+                                           0, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    Field *field = GModel::current()->getFields()->get(_iField);
-    if(!field || _iField == id) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(_inField);
+    if(!field || _inField == id) return MAX_LC;
     return ((*field)(x + _delta, y, z) + (*field)(x - _delta, y, z) +
             (*field)(x, y + _delta, z) + (*field)(x, y - _delta, z) +
             (*field)(x, y, z + _delta) + (*field)(x, y, z - _delta) -
@@ -839,7 +892,7 @@ public:
 
 class MeanField : public Field {
 private:
-  int _iField;
+  int _inField;
   double _delta;
 
 public:
@@ -851,19 +904,23 @@ public:
            "       G(x,y+delta,z) + G(x,y-delta,z) +\n"
            "       G(x,y,z+delta) + G(x,y,z-delta) +\n"
            "       G(x,y,z)) / 7,\n\n"
-           "where G=Field[IField]";
+           "where G = Field[InField]";
   }
-  MeanField() : _iField(0), _delta(CTX::instance()->lc / 1e4)
+  MeanField() : _inField(0), _delta(CTX::instance()->lc / 1e4)
   {
-    options["IField"] = new FieldOptionInt(_iField, "Field index");
+    options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Delta"] =
       new FieldOptionDouble(_delta, "Distance used to compute the mean value");
+
+    // deprecated names
+    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
+                                           0, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    Field *field = GModel::current()->getFields()->get(_iField);
-    if(!field || _iField == id) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(_inField);
+    if(!field || _inField == id) return MAX_LC;
     return ((*field)(x + _delta, y, z) + (*field)(x - _delta, y, z) +
             (*field)(x, y + _delta, z) + (*field)(x, y - _delta, z) +
             (*field)(x, y, z + _delta) + (*field)(x, y, z - _delta) +
@@ -1031,9 +1088,9 @@ private:
 public:
   MathEvalField()
   {
+    _f = "F2 + Sin(z)";
     options["F"] = new FieldOptionString(
       _f, "Mathematical function to evaluate.", &updateNeeded);
-    _f = "F2 + Sin(z)";
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
@@ -1045,7 +1102,7 @@ public:
     {
       if(updateNeeded) {
         if(!_expr.set_function(_f))
-          Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
+          Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
                      _f.c_str());
         updateNeeded = false;
       }
@@ -1071,24 +1128,39 @@ public:
   virtual bool isotropic() const { return false; }
   MathEvalFieldAniso()
   {
-    options["m11"] = new FieldOptionString(
-      _f[0], "element 11 of the metric tensor.", &updateNeeded);
     _f[0] = "F2 + Sin(z)";
-    options["m22"] = new FieldOptionString(
-      _f[1], "element 22 of the metric tensor.", &updateNeeded);
     _f[1] = "F2 + Sin(z)";
-    options["m33"] = new FieldOptionString(
-      _f[2], "element 33 of the metric tensor.", &updateNeeded);
     _f[2] = "F2 + Sin(z)";
-    options["m12"] = new FieldOptionString(
-      _f[3], "element 12 of the metric tensor.", &updateNeeded);
     _f[3] = "F2 + Sin(z)";
-    options["m13"] = new FieldOptionString(
-      _f[4], "element 13 of the metric tensor.", &updateNeeded);
     _f[4] = "F2 + Sin(z)";
-    options["m23"] = new FieldOptionString(
-      _f[5], "element 23 of the metric tensor.", &updateNeeded);
     _f[5] = "F2 + Sin(z)";
+
+    options["M11"] = new FieldOptionString(
+      _f[0], "Element 11 of the metric tensor", &updateNeeded);
+    options["M22"] = new FieldOptionString(
+      _f[1], "Element 22 of the metric tensor", &updateNeeded);
+    options["M33"] = new FieldOptionString(
+      _f[2], "Element 33 of the metric tensor", &updateNeeded);
+    options["M12"] = new FieldOptionString(
+      _f[3], "Element 12 of the metric tensor", &updateNeeded);
+    options["M13"] = new FieldOptionString(
+      _f[4], "Element 13 of the metric tensor", &updateNeeded);
+    options["M23"] = new FieldOptionString(
+      _f[5], "Element 23 of the metric tensor", &updateNeeded);
+
+    // deprecated names
+    options["m11"] = new FieldOptionString(
+      _f[0], "Element 11 of the metric tensor", &updateNeeded, true);
+    options["m22"] = new FieldOptionString(
+      _f[1], "Element 22 of the metric tensor", &updateNeeded, true);
+    options["m33"] = new FieldOptionString(
+      _f[2], "Element 33 of the metric tensor", &updateNeeded, true);
+    options["m12"] = new FieldOptionString(
+      _f[3], "Element 12 of the metric tensor", &updateNeeded, true);
+    options["m13"] = new FieldOptionString(
+      _f[4], "Element 13 of the metric tensor", &updateNeeded, true);
+    options["m23"] = new FieldOptionString(
+      _f[5], "Element 23 of the metric tensor", &updateNeeded, true);
   }
   void operator()(double x, double y, double z, SMetric3 &metr, GEntity *ge = 0)
   {
@@ -1099,7 +1171,7 @@ public:
       if(updateNeeded) {
         for(int i = 0; i < 6; i++) {
           if(!_expr.set_function(i, _f[i]))
-            Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
+            Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
                        _f[i].c_str());
         }
         updateNeeded = false;
@@ -1117,7 +1189,7 @@ public:
       if(updateNeeded) {
         for(int i = 0; i < 6; i++) {
           if(!_expr.set_function(i, _f[i]))
-            Msg::Error("Field %i: Invalid matheval expression \"%s\"", this->id,
+            Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
                        _f[i].c_str());
         }
         updateNeeded = false;
@@ -1279,9 +1351,10 @@ private:
 public:
   ExternalProcessField()
   {
-    options["CommandLine"] =
-      new FieldOptionString(_cmdLine, "Command line to launch.", &updateNeeded);
     _cmdLine = "";
+
+    options["CommandLine"] =
+      new FieldOptionString(_cmdLine, "Command line to launch", &updateNeeded);
   }
   ~ExternalProcessField() { closePipes(); }
   using Field::operator();
@@ -1375,24 +1448,29 @@ class ParametricField : public Field {
 private:
   MathEvalExpression _expr[3];
   std::string _f[3];
-  int _iField;
+  int _inField;
 
 public:
   ParametricField()
   {
-    _iField = 1;
-    options["IField"] = new FieldOptionInt(_iField, "Field index");
+    _inField = 1;
+
+    options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["FX"] = new FieldOptionString(
       _f[0], "X component of parametric function", &updateNeeded);
     options["FY"] = new FieldOptionString(
       _f[1], "Y component of parametric function", &updateNeeded);
     options["FZ"] = new FieldOptionString(
       _f[2], "Z component of parametric function", &updateNeeded);
+
+    // deprecated names
+    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
+                                           0, true);
   }
   std::string getDescription()
   {
-    return "Evaluate Field IField in parametric coordinates:\n\n"
-           "  F = Field[IField](FX,FY,FZ)\n\n"
+    return "Evaluate Field[InField] in parametric coordinates:\n\n"
+           "  F = Field[InField](FX,FY,FZ)\n\n"
            "See the MathEval Field help to get a description of valid FX, FY "
            "and FZ expressions.";
   }
@@ -1402,13 +1480,13 @@ public:
     if(updateNeeded) {
       for(int i = 0; i < 3; i++) {
         if(!_expr[i].set_function(_f[i]))
-          Msg::Error("Field %i : Invalid matheval expression \"%s\"", this->id,
+          Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
                      _f[i].c_str());
       }
       updateNeeded = false;
     }
-    Field *field = GModel::current()->getFields()->get(_iField);
-    if(!field || _iField == id) return MAX_LC;
+    Field *field = GModel::current()->getFields()->get(_inField);
+    if(!field || _inField == id) return MAX_LC;
     return (*field)(_expr[0].evaluate(x, y, z), _expr[1].evaluate(x, y, z),
                     _expr[2].evaluate(x, y, z));
   }
@@ -1429,16 +1507,21 @@ public:
     _octree = 0;
     _viewIndex = 0;
     _viewTag = -1;
+    _cropNegativeValues = true;
     updateNeeded = true; // in case we don't set IView or ViewTag explicitely
-    options["IView"] = new FieldOptionInt(
+
+    options["ViewIndex"] = new FieldOptionInt(
       _viewIndex, "Post-processing view index", &updateNeeded);
     options["ViewTag"] =
       new FieldOptionInt(_viewTag, "Post-processing view tag", &updateNeeded);
-    _cropNegativeValues = true;
     options["CropNegativeValues"] = new FieldOptionBool(
       _cropNegativeValues, "return LC_MAX instead of a negative value (this "
                            "option is needed for backward compatibility with "
                            "the BackgroundMesh option");
+
+    // deprecated names
+    options["IView"] = new FieldOptionInt(
+      _viewIndex, "Post-processing view index", &updateNeeded, true);
   }
   ~PostViewField()
   {
@@ -1741,18 +1824,31 @@ public:
 
 class RestrictField : public Field {
 private:
-  int _iField;
+  int _inField;
   std::list<int> _pointTags, _curveTags, _surfaceTags, _volumeTags;
 
 public:
   RestrictField()
   {
-    _iField = 1;
-    options["IField"] = new FieldOptionInt(_iField, "Field index");
-    options["VerticesList"] = new FieldOptionList(_pointTags, "Point tags");
-    options["EdgesList"] = new FieldOptionList(_curveTags, "Curve tags");
-    options["FacesList"] = new FieldOptionList(_surfaceTags, "Surface tags");
-    options["RegionsList"] = new FieldOptionList(_volumeTags, "Volume tags");
+    _inField = 1;
+
+    options["InField"] = new FieldOptionInt(_inField, "Input field tag");
+    options["PointsList"] = new FieldOptionList(_pointTags, "Point tags");
+    options["CurvesList"] = new FieldOptionList(_curveTags, "Curve tags");
+    options["SurfacesList"] = new FieldOptionList(_surfaceTags, "Surface tags");
+    options["VolumesList"] = new FieldOptionList(_volumeTags, "Volume tags");
+
+    // deprecated names
+    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
+                                           0, true);
+    options["VerticesList"] = new FieldOptionList(_pointTags, "Point tags",
+                                                  0, true);
+    options["EdgesList"] = new FieldOptionList(_curveTags, "Curve tags",
+                                               0, true);
+    options["FacesList"] = new FieldOptionList(_surfaceTags, "Surface tags",
+                                                  0, true);
+    options["RegionsList"] = new FieldOptionList(_volumeTags, "Volume tags",
+                                                 0, true);
   }
   std::string getDescription()
   {
@@ -1762,8 +1858,8 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
-    Field *f = (GModel::current()->getFields()->get(_iField));
-    if(!f || _iField == id) return MAX_LC;
+    Field *f = (GModel::current()->getFields()->get(_inField));
+    if(!f || _inField == id) return MAX_LC;
     if(!ge) return (*f)(x, y, z);
     if((ge->dim() == 0 && std::find(_pointTags.begin(), _pointTags.end(),
                                     ge->tag()) != _pointTags.end()) ||
@@ -1798,7 +1894,7 @@ private:
   ANNdistArray _dist;
   std::list<int> _curveTags;
   double _dMin, _dMax, _lMinTangent, _lMaxTangent, _lMinNormal, _lMaxNormal;
-  int _nNodesByCurve;
+  int _numPointsPerCurve;
   std::vector<SVector3> _tg;
 
 public:
@@ -1806,7 +1902,7 @@ public:
   {
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
-    _nNodesByCurve = 20;
+    _numPointsPerCurve = 20;
     updateNeeded = true;
     _dMin = 0.1;
     _dMax = 0.5;
@@ -1814,29 +1910,56 @@ public:
     _lMinTangent = 0.5;
     _lMaxNormal = 0.5;
     _lMaxTangent = 0.5;
-    options["EdgesList"] = new FieldOptionList(
+
+    options["CurvesList"] = new FieldOptionList(
       _curveTags, "Tags of curves in the geometric model", &updateNeeded);
-    options["NNodesByEdge"] = new FieldOptionInt(
-      _nNodesByCurve, "Number of nodes used to discretized each curve",
+    options["NumPointsPerCurve"] = new FieldOptionInt(
+      _numPointsPerCurve, "Number of points used to discretized each curve",
       &updateNeeded);
+    options["DistMin"] = new FieldOptionDouble(
+      _dMin, "Minimum distance, below this distance from the curves, "
+      "prescribe the minimum mesh sizes");
+    options["DistMax"] = new FieldOptionDouble(
+      _dMax, "Maxmium distance, above this distance from the curves, prescribe "
+      "the maximum mesh sizes");
+    options["SizeMinTangent"] = new FieldOptionDouble(
+      _lMinTangent, "Minimum mesh size in the direction tangeant to the "
+      "closest curve");
+    options["SizeMaxTangent"] = new FieldOptionDouble(
+      _lMaxTangent, "Maximum mesh size in the direction tangeant to the "
+      "closest curve");
+    options["SizeMinNormal"] = new FieldOptionDouble(
+      _lMinNormal, "Minimum mesh size in the direction normal to the "
+      "closest curve");
+    options["SizeMaxNormal"] = new FieldOptionDouble(
+      _lMaxNormal, "Maximum mesh size in the direction normal to the "
+      "closest curve");
+
+    // deprecated names
+    options["EdgesList"] = new FieldOptionList(
+      _curveTags, "Tags of curves in the geometric model", &updateNeeded, true);
+    options["NNodesByEdge"] = new FieldOptionInt(
+      _numPointsPerCurve, "Number of points used to discretized each curve",
+      &updateNeeded, true);
     options["dMin"] = new FieldOptionDouble(
       _dMin, "Minimum distance, below this distance from the curves, "
-             "prescribe the minimum mesh sizes.");
+      "prescribe the minimum mesh sizes", 0, true);
     options["dMax"] = new FieldOptionDouble(
       _dMax, "Maxmium distance, above this distance from the curves, prescribe "
-             "the maximum mesh sizes.");
+      "the maximum mesh sizes", 0, true);
     options["lMinTangent"] = new FieldOptionDouble(
-      _lMinTangent,
-      "Minimum mesh size in the direction tangeant to the closest curve.");
+      _lMinTangent, "Minimum mesh size in the direction tangeant to the "
+      "closest curve", 0, true);
     options["lMaxTangent"] = new FieldOptionDouble(
-      _lMaxTangent,
-      "Maximum mesh size in the direction tangeant to the closest curve.");
+      _lMaxTangent, "Maximum mesh size in the direction tangeant to the "
+      "closest curve", 0, true);
     options["lMinNormal"] = new FieldOptionDouble(
-      _lMinNormal,
-      "Minimum mesh size in the direction normal to the closest curve.");
+      _lMinNormal, "Minimum mesh size in the direction normal to the "
+      "closest curve", 0, true);
     options["lMaxNormal"] = new FieldOptionDouble(
-      _lMaxNormal,
-      "Maximum mesh size in the direction normal to the closest curve.");
+      _lMaxNormal, "Maximum mesh size in the direction normal to the "
+      "closest curve", 0, true);
+
     // make sure all internal GEO CAD data has been synced with GModel
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
   }
@@ -1851,14 +1974,10 @@ public:
   const char *getName() { return "AttractorAnisoCurve"; }
   std::string getDescription()
   {
-    return "Compute the distance from the nearest curve in a list. Then the "
-           "mesh "
-           "size can be specified independently in the direction normal to the "
-           "curve "
-           "and in the direction parallel to the curve (Each curve "
-           "is replaced by NNodesByEdge equidistant nodes and the distance "
-           "from those "
-           "nodes is computed.)";
+    return "Compute the distance to the given curves and specify the mesh size "
+           "independently in the direction normal and parallel to the nearest curve. "
+           "(Each curve is replaced by NumPointsPerCurve equidistant points, to "
+           "which the distance is actually computed.)";
   }
   void update()
   {
@@ -1866,7 +1985,7 @@ public:
       annDeallocPts(_zeroNodes);
       delete _kdTree;
     }
-    int totpoints = _nNodesByCurve * _curveTags.size();
+    int totpoints = _numPointsPerCurve * _curveTags.size();
     if(totpoints) { _zeroNodes = annAllocPts(totpoints, 3); }
     _tg.resize(totpoints);
     int k = 0;
@@ -1874,8 +1993,8 @@ public:
         it != _curveTags.end(); ++it) {
       GEdge *e = GModel::current()->getEdgeByTag(*it);
       if(e) {
-        for(int i = 1; i < _nNodesByCurve - 1; i++) {
-          double u = (double)i / (_nNodesByCurve - 1);
+        for(int i = 1; i < _numPointsPerCurve - 1; i++) {
+          double u = (double)i / (_numPointsPerCurve - 1);
           Range<double> b = e->parBounds(0);
           double t = b.low() + u * (b.high() - b.low());
           GPoint gp = e->point(t);
@@ -1940,13 +2059,13 @@ private:
   std::vector<AttractorInfo> _infos;
   int _xFieldId, _yFieldId, _zFieldId;
   Field *_xField, *_yField, *_zField;
-  int _nNodesByCurve;
+  int _numPointsPerCurve;
   ANNidxArray _index;
   ANNdistArray _dist;
 
 public:
   AttractorField(int dim, int tag, int nbe)
-    : _kdTree(0), _zeroNodes(0), _nNodesByCurve(nbe)
+    : _kdTree(0), _zeroNodes(0), _numPointsPerCurve(nbe)
   {
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
@@ -1964,27 +2083,36 @@ public:
   {
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
-    _nNodesByCurve = 20;
-    options["NodesList"] = new FieldOptionList(
-      _pointTags, "Tags of points in the geometric model", &updateNeeded);
-    options["EdgesList"] = new FieldOptionList(
-      _curveTags, "Tags of curves in the geometric model", &updateNeeded);
-    options["NNodesByEdge"] = new FieldOptionInt(
-      _nNodesByCurve, "Number of nodes used to discretized each curve",
-      &updateNeeded);
-    options["FacesList"] = new FieldOptionList(
-      _surfaceTags,
-      "Tags of surfaces in the geometric model (Warning, this feature "
-      "is still experimental. It might (read: will probably) give wrong "
-      "results for complex surfaces)",
-      &updateNeeded);
+    _numPointsPerCurve = 20;
     _xFieldId = _yFieldId = _zFieldId = -1;
+
+    options["PointsList"] = new FieldOptionList(
+      _pointTags, "Tags of points in the geometric model", &updateNeeded);
+    options["CurvesList"] = new FieldOptionList(
+      _curveTags, "Tags of curves in the geometric model", &updateNeeded);
+    options["SurfacesList"] = new FieldOptionList(
+      _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded);
+    options["NumPointsPerCurve"] = new FieldOptionInt(
+      _numPointsPerCurve, "Number of points used to discretize each curve "
+      "(and surface, relative to their bounding box size)",
+      &updateNeeded);
     options["FieldX"] = new FieldOptionInt(
-      _xFieldId, "Id of the field to use as x coordinate.", &updateNeeded);
+      _xFieldId, "Tag of the field to use as x coordinate", &updateNeeded);
     options["FieldY"] = new FieldOptionInt(
-      _yFieldId, "Id of the field to use as y coordinate.", &updateNeeded);
+      _yFieldId, "Tag of the field to use as y coordinate", &updateNeeded);
     options["FieldZ"] = new FieldOptionInt(
-      _zFieldId, "Id of the field to use as z coordinate.", &updateNeeded);
+      _zFieldId, "Tag of the field to use as z coordinate", &updateNeeded);
+
+    // deprecated names
+    options["NodesList"] = new FieldOptionList(
+      _pointTags, "Tags of points in the geometric model", &updateNeeded, true);
+    options["EdgesList"] = new FieldOptionList(
+      _curveTags, "Tags of curves in the geometric model", &updateNeeded, true);
+    options["FacesList"] = new FieldOptionList(
+      _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded, true);
+    options["NNodesByEdge"] = new FieldOptionInt(
+      _numPointsPerCurve, "Number of points used to discretize each curve "
+      "(and surface, relative to their bounding box size)", &updateNeeded, true);
   }
   ~AttractorField()
   {
@@ -1996,12 +2124,12 @@ public:
   const char *getName() { return "Attractor"; }
   std::string getDescription()
   {
-    return "Compute the distance from the nearest node in a list. It can also "
-           "be used to compute the distance from curves, in which case each "
-           "curve is replaced by NNodesByEdge equidistant nodes and the "
-           "distance "
-           "from those nodes is computed. Attractor is deprecated: use "
-           "Distance instead.";
+    return "Compute the distance to the given points, curves or surfaces. "
+           "(Curves are replaced by NumPointsPerCurve equidistant points, "
+           "to which the distance is actually computed. In the same way, "
+           "surfaces are replaced by a point cloud, sampled according to "
+           "NumPointsPerCurve and the size of their bounding box). "
+           "The Attractor is deprecated: use the Distance field instead.";
   }
   void getCoord(double x, double y, double z, double &cx, double &cy,
                 double &cz, GEntity *ge = NULL)
@@ -2053,7 +2181,7 @@ public:
           else {
             SBoundingBox3d bb = f->bounds();
             SVector3 dd = bb.max() - bb.min();
-            double maxDist = dd.norm() / _nNodesByCurve;
+            double maxDist = dd.norm() / _numPointsPerCurve;
             f->fillPointCloud(maxDist, &points, &uvpoints);
             offset.push_back(points.size());
           }
@@ -2091,7 +2219,7 @@ public:
               _infos.push_back(AttractorInfo(*it, 1, u, 0));
             }
           }
-          int NNN = _nNodesByCurve - e->mesh_vertices.size();
+          int NNN = _numPointsPerCurve - e->mesh_vertices.size();
           for(int i = 1; i < NNN - 1; i++) {
             double u = (double)i / (NNN - 1);
             Range<double> b = e->parBounds(0);
@@ -2123,10 +2251,10 @@ public:
             count++;
           }
           else {
-            for(int i = 0; i < _nNodesByCurve; i++) {
-              for(int j = 0; j < _nNodesByCurve; j++) {
-                double u = (double)i / (_nNodesByCurve - 1);
-                double v = (double)j / (_nNodesByCurve - 1);
+            for(int i = 0; i < _numPointsPerCurve; i++) {
+              for(int j = 0; j < _numPointsPerCurve; j++) {
+                double u = (double)i / (_numPointsPerCurve - 1);
+                double v = (double)j / (_numPointsPerCurve - 1);
                 Range<double> b1 = f->parBounds(0);
                 Range<double> b2 = f->parBounds(1);
                 double t1 = b1.low() + u * (b1.high() - b1.low());
@@ -2300,9 +2428,10 @@ private:
 public:
   OctreeField()
   {
-    options["InField"] = new FieldOptionInt
-      (_inFieldId, "Id of the field to use as x coordinate.", &updateNeeded);
     _root = NULL;
+
+    options["InField"] = new FieldOptionInt
+      (_inFieldId, "Id of the field to represent on the octree", &updateNeeded);
   }
   ~OctreeField()
   {
@@ -2409,7 +2538,7 @@ class DistanceField : public Field {
   std::vector<AttractorInfo> _infos;
   int _xFieldId, _yFieldId, _zFieldId;
   Field *_xField, *_yField, *_zField;
-  int _nNodesByCurve;
+  int _numPointsPerCurve;
   PointCloud _P;
   my_kd_tree_t *_index;
   PC2KD _pc2kd;
@@ -2419,30 +2548,40 @@ class DistanceField : public Field {
 public:
   DistanceField() : _index(NULL), _pc2kd(_P), _outIndex(0), _outDistSqr(0)
   {
-    _nNodesByCurve = 20;
-    options["NodesList"] = new FieldOptionList(
-      _pointTags, "Tags of points in the geometric model", &updateNeeded);
-    options["EdgesList"] = new FieldOptionList(
-      _curveTags, "Tags of curves in the geometric model", &updateNeeded);
-    options["NNodesByEdge"] = new FieldOptionInt(
-      _nNodesByCurve, "Number of nodes used to discretized each curve",
-      &updateNeeded);
-    options["FacesList"] = new FieldOptionList(
-      _surfaceTags,
-      "Tags of surfaces in the geometric model (Warning, this feature "
-      "is still experimental. It might (read: will probably) give wrong "
-      "results for complex surfaces)",
-      &updateNeeded);
+    _numPointsPerCurve = 20;
     _xFieldId = _yFieldId = _zFieldId = -1;
+
+    options["PointsList"] = new FieldOptionList(
+      _pointTags, "Tags of points in the geometric model", &updateNeeded);
+    options["CurvesList"] = new FieldOptionList(
+      _curveTags, "Tags of curves in the geometric model", &updateNeeded);
+    options["SurfacesList"] = new FieldOptionList(
+      _surfaceTags, "Tags of surfaces in the geometric model",
+      &updateNeeded);
+    options["NumPointsPerCurve"] = new FieldOptionInt(
+      _numPointsPerCurve, "Number of points used to discretized each curve "
+      "(and surface, relative to their bounding box size)", &updateNeeded);
     options["FieldX"] = new FieldOptionInt(
-      _xFieldId, "Id of the field to use as x coordinate.", &updateNeeded);
+      _xFieldId, "Id of the field to use as x coordinate", &updateNeeded);
     options["FieldY"] = new FieldOptionInt(
-      _yFieldId, "Id of the field to use as y coordinate.", &updateNeeded);
+      _yFieldId, "Id of the field to use as y coordinate", &updateNeeded);
     options["FieldZ"] = new FieldOptionInt(
-      _zFieldId, "Id of the field to use as z coordinate.", &updateNeeded);
+      _zFieldId, "Id of the field to use as z coordinate", &updateNeeded);
+
+    // deprecated names
+    options["NodesList"] = new FieldOptionList(
+      _pointTags, "Tags of points in the geometric model", &updateNeeded, true);
+    options["EdgesList"] = new FieldOptionList(
+      _curveTags, "Tags of curves in the geometric model", &updateNeeded, true);
+    options["NNodesByEdge"] = new FieldOptionInt(
+      _numPointsPerCurve, "Number of points used to discretized each curve "
+      "(and surface, relative to their bounding box size)", &updateNeeded, true);
+    options["FacesList"] = new FieldOptionList(
+      _surfaceTags, "Tags of surfaces in the geometric model",
+      &updateNeeded, true);
   }
   DistanceField(int dim, int tag, int nbe)
-    : _nNodesByCurve(nbe), _index(NULL), _pc2kd(_P), _outIndex(0),
+    : _numPointsPerCurve(nbe), _index(NULL), _pc2kd(_P), _outIndex(0),
       _outDistSqr(0)
   {
     if(dim == 0)
@@ -2462,11 +2601,11 @@ public:
   const char *getName() { return "DistanceField"; }
   std::string getDescription()
   {
-    return "Compute the distance from the nearest node in a list. It can also "
-           "be used to compute the distance from curves, in which case each "
-           "curve is replaced by NNodesByEdge equidistant nodes and the "
-           "distance "
-           "from those nodes is computed.";
+    return "Compute the distance to the given points, curves or surfaces. "
+           "(Curves are replaced by NumPointsPerCurve equidistant points, "
+           "to which the distance is actually computed. In the same way, "
+           "surfaces are replaced by a point cloud, sampled according to "
+           "NumPointsPerCurve and the size of their bounding box).";
   }
   std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
   {
@@ -2507,7 +2646,7 @@ public:
           else {
             SBoundingBox3d bb = f->bounds();
             SVector3 dd = bb.max() - bb.min();
-            double maxDist = dd.norm() / _nNodesByCurve;
+            double maxDist = dd.norm() / _numPointsPerCurve;
             std::vector<SPoint2> uvpoints;
             f->fillPointCloud(maxDist, &points, &uvpoints);
             for(std::size_t i = 0; i < uvpoints.size(); i++)
@@ -2540,7 +2679,7 @@ public:
               _infos.push_back(AttractorInfo(*it, 1, t, 0));
             }
           }
-          int NNN = _nNodesByCurve - e->mesh_vertices.size();
+          int NNN = _numPointsPerCurve - e->mesh_vertices.size();
           for(int i = 1; i < NNN - 1; i++) {
             double u = (double)i / (NNN - 1);
             Range<double> b = e->parBounds(0);
@@ -2576,7 +2715,7 @@ const char *BoundaryLayerField::getName() { return "BoundaryLayer"; }
 
 std::string BoundaryLayerField::getDescription()
 {
-  return "hwall * ratio^(dist/hwall)";
+  return "Insert a 2D boundary layer mesh next to some curves in the model.";
 }
 
 BoundaryLayerField::BoundaryLayerField()
@@ -2588,44 +2727,63 @@ BoundaryLayerField::BoundaryLayerField()
   tgtAnisoRatio = 1.e10;
   iRecombine = 0;
   iIntersect = 0;
-  options["EdgesList"] = new FieldOptionList(
-    _curveTags,
-    "Tags of curves in the geometric model for which a boundary "
-    "layer is needed",
-    &updateNeeded);
-  options["FanNodesList"] =
-    new FieldOptionList(_fanPointTags,
-                        "Tags of points in the geometric model for which a fan "
-                        "is created",
-                        &updateNeeded);
-  options["NodesList"] = new FieldOptionList(
-    _pointTags,
-    "Tags of points in the geometric model for which a boundary "
-    "layer ends",
-    &updateNeeded);
+
+  options["CurvesList"] = new FieldOptionList(
+    _curveTags, "Tags of curves in the geometric model for which a boundary "
+    "layer is needed", &updateNeeded);
+  options["FanPointsList"] = new FieldOptionList(
+    _fanPointTags, "Tags of points in the geometric model for which a fan "
+    "is created", &updateNeeded);
+  options["PointsList"] = new FieldOptionList(
+    _pointTags, "Tags of points in the geometric model for which a boundary "
+    "layer ends", &updateNeeded);
+  options["Size"] = new FieldOptionDouble(
+    hWallN, "Mesh size normal to the curve");
+  options["SizesList"] = new FieldOptionListDouble(
+    _hWallNNodes, "Mesh size normal to the curve, per point (overwrites "
+    "Size when defined)");
+  options["Ratio"] = new FieldOptionDouble(
+    ratio, "Size ratio between two successive layers");
+  options["SizeFar"] = new FieldOptionDouble(
+    hFar, "Element size far from the curves");
+  options["Thickness"] = new FieldOptionDouble(
+    thickness, "Maximal thickness of the boundary layer");
   options["Quads"] = new FieldOptionInt(
     iRecombine, "Generate recombined elements in the boundary layer");
   options["IntersectMetrics"] =
-    new FieldOptionInt(iIntersect, "Intersect metrics of all faces");
-  options["hwall_n"] =
-    new FieldOptionDouble(hWallN, "Mesh Size Normal to the The Wall");
-  options["hwall_n_nodes"] = new FieldOptionListDouble(
-    _hWallNNodes, "Mesh Size Normal to the The Wall at nodes (overwrite "
-                  "hwall_n when defined)");
+    new FieldOptionInt(iIntersect, "Intersect metrics of all surfaces");
   options["AnisoMax"] = new FieldOptionDouble(
     tgtAnisoRatio, "Threshold angle for creating a mesh fan in the boundary "
-                   "layer");
-  options["ratio"] =
-    new FieldOptionDouble(ratio, "Size Ratio Between Two Successive Layers");
-  options["hfar"] =
-    new FieldOptionDouble(hFar, "Element size far from the wall");
-  options["thickness"] =
-    new FieldOptionDouble(thickness, "Maximal thickness of the boundary layer");
-  options["ExcludedFaceList"] =
-    new FieldOptionList(_excludedSurfaceTags,
-                        "Tags of surfaces in the geometric model where the "
-                        "boundary layer should not be applied",
-                        &updateNeeded);
+    "layer");
+  options["ExcludedSurfacesList"] = new FieldOptionList(
+    _excludedSurfaceTags, "Tags of surfaces in the geometric model where the "
+    "boundary layer should not be contructed", &updateNeeded);
+
+  // deprecated names
+  options["EdgesList"] = new FieldOptionList(
+    _curveTags, "Tags of curves in the geometric model for which a boundary "
+    "layer is needed", &updateNeeded, true);
+  options["FanNodesList"] = new FieldOptionList(
+    _fanPointTags, "Tags of points in the geometric model for which a fan "
+    "is created", &updateNeeded, true);
+  options["NodesList"] = new FieldOptionList(
+    _pointTags, "Tags of points in the geometric model for which a boundary "
+    "layer ends", &updateNeeded, true);
+  options["hwall_n"] = new FieldOptionDouble(
+    hWallN, "Mesh size normal to the curvem per point (overwrites "
+    "Size when defined)", 0, true);
+  options["hwall_n_nodes"] = new FieldOptionListDouble(
+    _hWallNNodes, "Mesh size normal to the curve, per point (overwrites "
+    "Size when defined)", 0, true);
+  options["ratio"] = new FieldOptionDouble(
+    ratio, "Size ratio between two successive layers", 0, true);
+  options["hfar"] = new FieldOptionDouble(
+    hFar, "Element size far from the wall", 0, true);
+  options["thickness"] = new FieldOptionDouble(
+    thickness, "Maximal thickness of the boundary layer", 0, true);
+  options["ExcludedFaceList"] = new FieldOptionList(
+    _excludedSurfaceTags, "Tags of surfaces in the geometric model where the "
+    "boundary layer should not be constructed", &updateNeeded, true);
 }
 
 void BoundaryLayerField::removeAttractors()

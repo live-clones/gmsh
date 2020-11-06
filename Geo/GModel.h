@@ -432,7 +432,10 @@ public:
     _physicalNames = names;
   }
 
-  // remove physical groups in the model
+  // add a physical group (made of elementary entities "tags")
+  void addPhysicalGroup(int dim, int tag, const std::vector<int> &tags);
+
+  // remove physical groups
   void removePhysicalGroups();
   void removePhysicalGroup(int dim, int num);
 
@@ -789,7 +792,7 @@ public:
                std::vector<std::vector<MVertex *> > &vertPerZone,
                std::vector<std::vector<MElement *> > &eltPerZone);
   int writeCGNS(const std::string &name, bool saveAll = false,
-                double scalingFactor = 1.0);
+                double scalingFactor = 1.0, bool structured = false);
 
   // Med "Modele d'Echange de Donnees" file format (the static routine
   // is allowed to load multiple models/meshes)

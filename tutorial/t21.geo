@@ -26,7 +26,7 @@ SetFactory("OpenCASCADE");
 Rectangle(1) = {0, 0, 0, 1, 1};
 Rectangle(2) = {1, 0, 0, 1, 1};
 BooleanFragments{ Surface{1}; Delete; }{ Surface{2}; Delete; }
-Characteristic Length {:} = 0.05;
+MeshSize {:} = 0.05;
 
 // We create one physical group for each square, and we mesh the resulting
 // geometry:

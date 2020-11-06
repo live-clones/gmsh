@@ -33,7 +33,7 @@
 
 // The mesh of the individual entities performed in Step 1. should usually be
 // finer than the desired final mesh; this can be controlled with the
-// `Mesh.CompoundCharacteristicLengthFactor' option.
+// `Mesh.CompoundMeshSizeFactor' option.
 
 // The optional reclassification on the underlying elementary entities in Step
 // 5. is governed by the `Mesh.CompoundClassify' option.
@@ -41,7 +41,6 @@
 int main(int argc, char **argv)
 {
   gmsh::initialize();
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t12");
 

@@ -1,7 +1,7 @@
 
 SetFactory("OpenCASCADE");
 
-Geometry.LineNumbers = 1;
+Geometry.CurveNumbers = 1;
 
 xw_ = 0.1; yw_ = 0.1;
 s_wire = news;

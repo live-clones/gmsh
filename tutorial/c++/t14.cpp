@@ -18,13 +18,12 @@
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t14");
 
   // Create an example geometry
 
-  double m = 0.5; // mesh characteristic length
+  double m = 0.5; // mesh size
   double h = 2; // geometry height in the z-direction
 
   gmsh::model::geo::addPoint(0, 0, 0, m, 1);

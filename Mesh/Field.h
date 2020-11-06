@@ -49,7 +49,7 @@ public:
 class FieldOption {
 private:
   std::string _help;
-
+  bool _deprecated;
 protected:
   bool *status;
   inline void modified()
@@ -58,8 +58,8 @@ protected:
   }
 
 public:
-  FieldOption(const std::string &help, bool *_status)
-    : _help(help), status(_status)
+  FieldOption(const std::string &help, bool *_status, bool deprecated)
+    : _help(help), _deprecated(deprecated), status(_status)
   {
   }
   virtual ~FieldOption() {}
@@ -95,6 +95,7 @@ public:
   virtual void listdouble(std::list<double> value) {}
   virtual std::string string() const { return ""; }
   virtual void string(const std::string value) {}
+  bool isDeprecated() { return _deprecated; }
 };
 
 class Field {
@@ -240,9 +241,9 @@ class FieldOptionString : public FieldOption {
 public:
   std::string &val;
   virtual FieldOptionType getType() { return FIELD_OPTION_STRING; }
-  FieldOptionString(std::string &_val, const std::string &_help,
-                    bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionString(std::string &_val, const std::string &help,
+                    bool *status = 0, bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   void string(const std::string value)
@@ -263,8 +264,9 @@ class FieldOptionDouble : public FieldOption {
 public:
   double &val;
   FieldOptionType getType() { return FIELD_OPTION_DOUBLE; }
-  FieldOptionDouble(double &_val, const std::string &_help, bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionDouble(double &_val, const std::string &help,
+                    bool *status = 0, bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   double numericalValue() const { return val; }
@@ -286,8 +288,9 @@ class FieldOptionInt : public FieldOption {
 public:
   int &val;
   FieldOptionType getType() { return FIELD_OPTION_INT; }
-  FieldOptionInt(int &_val, const std::string &_help, bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionInt(int &_val, const std::string &help, bool *status = 0,
+                 bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   double numericalValue() const { return val; }
@@ -308,9 +311,9 @@ class FieldOptionList : public FieldOption {
 public:
   std::list<int> &val;
   FieldOptionType getType() { return FIELD_OPTION_LIST; }
-  FieldOptionList(std::list<int> &_val, const std::string &_help,
-                  bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionList(std::list<int> &_val, const std::string &help,
+                  bool *status = 0, bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   void list(std::list<int> value)
@@ -336,9 +339,9 @@ class FieldOptionListDouble : public FieldOption {
 public:
   std::list<double> &val;
   FieldOptionType getType() { return FIELD_OPTION_LIST_DOUBLE; }
-  FieldOptionListDouble(std::list<double> &_val, const std::string &_help,
-                        bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionListDouble(std::list<double> &_val, const std::string &help,
+                        bool *status = 0, bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   void listdouble(std::list<double> value)
@@ -364,9 +367,9 @@ public:
 class FieldOptionPath : public FieldOptionString {
 public:
   virtual FieldOptionType getType() { return FIELD_OPTION_PATH; }
-  FieldOptionPath(std::string &_val, const std::string &_help,
-                  bool *_status = 0)
-    : FieldOptionString(_val, _help, _status)
+  FieldOptionPath(std::string &val, const std::string &help,
+                  bool *status = 0, bool deprecated = false)
+    : FieldOptionString(val, help, status, deprecated)
   {
   }
 };
@@ -375,8 +378,9 @@ class FieldOptionBool : public FieldOption {
 public:
   bool &val;
   FieldOptionType getType() { return FIELD_OPTION_BOOL; }
-  FieldOptionBool(bool &_val, const std::string &_help, bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionBool(bool &_val, const std::string &help, bool *status = 0,
+                  bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   double numericalValue() const { return val; }

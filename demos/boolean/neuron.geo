@@ -1,8 +1,8 @@
 SetFactory("OpenCASCADE");
 
 //Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 1;
-Mesh.CharacteristicLengthMax = 1;
+Mesh.MeshSizeMin = 1;
+Mesh.MeshSizeMax = 1;
 
 Macro dendrite
   ll() = {};

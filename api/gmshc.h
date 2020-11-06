@@ -37,16 +37,18 @@
 GMSH_API void gmshFree(void *p);
 GMSH_API void *gmshMalloc(size_t n);
 
-/* Initialize Gmsh. This must be called before any call to the other functions
- * in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are
- * provided, they will be handled in the same way as the command line
- * arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh
- * configuration files (gmshrc and gmsh-options). */
+/* Initialize Gmsh API. This must be called before any call to the other
+ * functions in the API. If `argc' and `argv' (or just `argv' in Python or
+ * Julia) are provided, they will be handled in the same way as the command
+ * line arguments in the Gmsh app. If `readConfigFiles' is set, read system
+ * Gmsh configuration files (gmshrc and gmsh-options). Initializing the API
+ * sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2. */
 GMSH_API void gmshInitialize(int argc, char ** argv,
                              const int readConfigFiles,
                              int * ierr);
 
-/* Finalize Gmsh. This must be called when you are done using the Gmsh API. */
+/* Finalize the Gmsh API. This must be called when you are done using the Gmsh
+ * API. */
 GMSH_API void gmshFinalize(int * ierr);
 
 /* Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling
@@ -188,11 +190,20 @@ GMSH_API int gmshModelAddPhysicalGroup(const int dim,
                                        const int tag,
                                        int * ierr);
 
+/* Remove the physical groups `dimTags' from the current model. If `dimTags'
+ * is empty, remove all groups. */
+GMSH_API void gmshModelRemovePhysicalGroups(int * dimTags, size_t dimTags_n,
+                                            int * ierr);
+
 /* Set the name of the physical group of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelSetPhysicalName(const int dim,
                                        const int tag,
                                        const char * name,
                                        int * ierr);
+
+/* Remove the physical name `name' from the current model. */
+GMSH_API void gmshModelRemovePhysicalName(const char * name,
+                                          int * ierr);
 
 /* Get the name of the physical group of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetPhysicalName(const int dim,
@@ -262,15 +273,6 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
 /* Remove the entity name `name' from the current model. */
 GMSH_API void gmshModelRemoveEntityName(const char * name,
                                         int * ierr);
-
-/* Remove the physical groups `dimTags' of the current model. If `dimTags' is
- * empty, remove all groups. */
-GMSH_API void gmshModelRemovePhysicalGroups(int * dimTags, size_t dimTags_n,
-                                            int * ierr);
-
-/* Remove the physical name `name' from the current model. */
-GMSH_API void gmshModelRemovePhysicalName(const char * name,
-                                          int * ierr);
 
 /* Get the type of the entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetType(const int dim,
@@ -1316,19 +1318,21 @@ GMSH_API int gmshModelGeoAddPoint(const double x,
                                   const int tag,
                                   int * ierr);
 
-/* Add a straight line segment between the two points with tags `startTag' and
- * `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag
- * is selected automatically. Return the tag of the line. */
+/* Add a straight line segment in the built-in CAD representation, between the
+ * two points with tags `startTag' and `endTag'. If `tag' is positive, set the
+ * tag explicitly; otherwise a new tag is selected automatically. Return the
+ * tag of the line. */
 GMSH_API int gmshModelGeoAddLine(const int startTag,
                                  const int endTag,
                                  const int tag,
                                  int * ierr);
 
-/* Add a circle arc (strictly smaller than Pi) between the two points with
- * tags `startTag' and `endTag', with center `centertag'. If `tag' is
- * positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. If (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane
- * of the circle arc. Return the tag of the circle arc. */
+/* Add a circle arc (strictly smaller than Pi) in the built-in CAD
+ * representation, between the two points with tags `startTag' and `endTag',
+ * and with center `centerTag'. If `tag' is positive, set the tag explicitly;
+ * otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0,
+ * 0, 0), explicitly set the plane of the circle arc. Return the tag of the
+ * circle arc. */
 GMSH_API int gmshModelGeoAddCircleArc(const int startTag,
                                       const int centerTag,
                                       const int endTag,
@@ -1338,12 +1342,12 @@ GMSH_API int gmshModelGeoAddCircleArc(const int startTag,
                                       const double nz,
                                       int * ierr);
 
-/* Add an ellipse arc (strictly smaller than Pi) between the two points
- * `startTag' and `endTag', with center `centerTag' and major axis point
- * `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
- * tag is selected automatically. If (`nx', `ny', `nz') != (0, 0, 0),
- * explicitly set the plane of the circle arc. Return the tag of the ellipse
- * arc. */
+/* Add an ellipse arc (strictly smaller than Pi) in the built-in CAD
+ * representation, between the two points `startTag' and `endTag', and with
+ * center `centerTag' and major axis point `majorTag'. If `tag' is positive,
+ * set the tag explicitly; otherwise a new tag is selected automatically. If
+ * (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane of the circle
+ * arc. Return the tag of the ellipse arc. */
 GMSH_API int gmshModelGeoAddEllipseArc(const int startTag,
                                        const int centerTag,
                                        const int majorTag,
@@ -1354,105 +1358,113 @@ GMSH_API int gmshModelGeoAddEllipseArc(const int startTag,
                                        const double nz,
                                        int * ierr);
 
-/* Add a spline (Catmull-Rom) curve going through the points `pointTags'. If
- * `tag' is positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Create a periodic curve if the first and last points are the
- * same. Return the tag of the spline curve. */
+/* Add a spline (Catmull-Rom) curve in the built-in CAD representation, going
+ * through the points `pointTags'. If `tag' is positive, set the tag
+ * explicitly; otherwise a new tag is selected automatically. Create a
+ * periodic curve if the first and last points are the same. Return the tag of
+ * the spline curve. */
 GMSH_API int gmshModelGeoAddSpline(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Add a cubic b-spline curve with `pointTags' control points. If `tag' is
- * positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Creates a periodic curve if the first and last points are
- * the same. Return the tag of the b-spline curve. */
+/* Add a cubic b-spline curve in the built-in CAD representation, with
+ * `pointTags' control points. If `tag' is positive, set the tag explicitly;
+ * otherwise a new tag is selected automatically. Creates a periodic curve if
+ * the first and last points are the same. Return the tag of the b-spline
+ * curve. */
 GMSH_API int gmshModelGeoAddBSpline(int * pointTags, size_t pointTags_n,
                                     const int tag,
                                     int * ierr);
 
-/* Add a Bezier curve with `pointTags' control points. If `tag' is positive,
- * set the tag explicitly; otherwise a new tag is selected automatically.
- * Return the tag of the Bezier curve. */
+/* Add a Bezier curve in the built-in CAD representation, with `pointTags'
+ * control points. If `tag' is positive, set the tag explicitly; otherwise a
+ * new tag is selected automatically.  Return the tag of the Bezier curve. */
 GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Add a polyline curve going through the points `pointTags'. If `tag' is
- * positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Create a periodic curve if the first and last points are the
- * same. Return the tag of the polyline curve. */
+/* Add a polyline curve in the built-in CAD representation, going through the
+ * points `pointTags'. If `tag' is positive, set the tag explicitly; otherwise
+ * a new tag is selected automatically. Create a periodic curve if the first
+ * and last points are the same. Return the tag of the polyline curve. */
 GMSH_API int gmshModelGeoAddPolyline(int * pointTags, size_t pointTags_n,
                                      const int tag,
                                      int * ierr);
 
-/* Add a spline (Catmull-Rom) going through points sampling the curves in
- * `curveTags'. The density of sampling points on each curve is governed by
- * `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a
- * new tag is selected automatically. Return the tag of the spline. */
+/* Add a spline (Catmull-Rom) curve in the built-in CAD representation, going
+ * through points sampling the curves in `curveTags'. The density of sampling
+ * points on each curve is governed by `numIntervals'. If `tag' is positive,
+ * set the tag explicitly; otherwise a new tag is selected automatically.
+ * Return the tag of the spline. */
 GMSH_API int gmshModelGeoAddCompoundSpline(int * curveTags, size_t curveTags_n,
                                            const int numIntervals,
                                            const int tag,
                                            int * ierr);
 
-/* Add a b-spline with control points sampling the curves in `curveTags'. The
- * density of sampling points on each curve is governed by `numIntervals'. If
- * `tag' is positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Return the tag of the b-spline. */
+/* Add a b-spline curve in the built-in CAD representation, with control
+ * points sampling the curves in `curveTags'. The density of sampling points
+ * on each curve is governed by `numIntervals'. If `tag' is positive, set the
+ * tag explicitly; otherwise a new tag is selected automatically. Return the
+ * tag of the b-spline. */
 GMSH_API int gmshModelGeoAddCompoundBSpline(int * curveTags, size_t curveTags_n,
                                             const int numIntervals,
                                             const int tag,
                                             int * ierr);
 
-/* Add a curve loop (a closed wire) formed by the curves `curveTags'.
- * `curveTags' should contain (signed) tags of model enties of dimension 1
- * forming a closed loop: a negative tag signifies that the underlying curve
- * is considered with reversed orientation. If `tag' is positive, set the tag
- * explicitly; otherwise a new tag is selected automatically. If `reorient' is
- * set, automatically reorient the curves if necessary. Return the tag of the
- * curve loop. */
+/* Add a curve loop (a closed wire) in the built-in CAD representation, formed
+ * by the curves `curveTags'. `curveTags' should contain (signed) tags of
+ * model entities of dimension 1 forming a closed loop: a negative tag
+ * signifies that the underlying curve is considered with reversed
+ * orientation. If `tag' is positive, set the tag explicitly; otherwise a new
+ * tag is selected automatically. If `reorient' is set, automatically reorient
+ * the curves if necessary. Return the tag of the curve loop. */
 GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n,
                                       const int tag,
                                       const int reorient,
                                       int * ierr);
 
-/* Add a plane surface defined by one or more curve loops `wireTags'. The
- * first curve loop defines the exterior contour; additional curve loop define
- * holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is
- * selected automatically. Return the tag of the surface. */
+/* Add a plane surface in the built-in CAD representation, defined by one or
+ * more curve loops `wireTags'. The first curve loop defines the exterior
+ * contour; additional curve loop define holes. If `tag' is positive, set the
+ * tag explicitly; otherwise a new tag is selected automatically. Return the
+ * tag of the surface. */
 GMSH_API int gmshModelGeoAddPlaneSurface(int * wireTags, size_t wireTags_n,
                                          const int tag,
                                          int * ierr);
 
-/* Add a surface filling the curve loops in `wireTags'. Currently only a
- * single curve loop is supported; this curve loop should be composed by 3 or
- * 4 curves only. If `tag' is positive, set the tag explicitly; otherwise a
- * new tag is selected automatically. Return the tag of the surface. */
+/* Add a surface in the built-in CAD representation, filling the curve loops
+ * in `wireTags' using transfinite interpolation. Currently only a single
+ * curve loop is supported; this curve loop should be composed by 3 or 4
+ * curves only. If `tag' is positive, set the tag explicitly; otherwise a new
+ * tag is selected automatically. Return the tag of the surface. */
 GMSH_API int gmshModelGeoAddSurfaceFilling(int * wireTags, size_t wireTags_n,
                                            const int tag,
                                            const int sphereCenterTag,
                                            int * ierr);
 
-/* Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
- * positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Return the tag of the shell. */
+/* Add a surface loop (a closed shell) formed by `surfaceTags' in the built-in
+ * CAD representation.  If `tag' is positive, set the tag explicitly;
+ * otherwise a new tag is selected automatically. Return the tag of the shell. */
 GMSH_API int gmshModelGeoAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,
                                         const int tag,
                                         int * ierr);
 
-/* Add a volume (a region) defined by one or more shells `shellTags'. The
- * first surface loop defines the exterior boundary; additional surface loop
- * define holes. If `tag' is positive, set the tag explicitly; otherwise a new
- * tag is selected automatically. Return the tag of the volume. */
+/* Add a volume (a region) in the built-in CAD representation, defined by one
+ * or more shells `shellTags'. The first surface loop defines the exterior
+ * boundary; additional surface loop define holes. If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the volume. */
 GMSH_API int gmshModelGeoAddVolume(int * shellTags, size_t shellTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Extrude the model entities `dimTags' by translation along (`dx', `dy',
- * `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
- * empty, also extrude the mesh: the entries in `numElements' give the number
- * of elements in each layer. If `height' is not empty, it provides the
- * (cumulative) height of the different layers, normalized to 1. If `dx' ==
- * `dy' == `dz' == 0, the entities are extruded along their normal. */
+/* Extrude the entities `dimTags' in the built-in CAD representation, using a
+ * translation along (`dx', `dy', `dz'). Return extruded entities in
+ * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
+ * entries in `numElements' give the number of elements in each layer. If
+ * `height' is not empty, it provides the (cumulative) height of the different
+ * layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are
+ * extruded along their normal. */
 GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -1463,13 +1475,14 @@ GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Extrude the model entities `dimTags' by rotation of `angle' radians around
- * the axis of revolution defined by the point (`x', `y', `z') and the
- * direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi.
- * Return extruded entities in `outDimTags'. If `numElements' is not empty,
- * also extrude the mesh: the entries in `numElements' give the number of
- * elements in each layer. If `height' is not empty, it provides the
- * (cumulative) height of the different layers, normalized to 1. */
+/* Extrude the entities `dimTags' in the built-in CAD representation, using a
+ * rotation of `angle' radians around the axis of revolution defined by the
+ * point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle
+ * should be strictly smaller than Pi. Return extruded entities in
+ * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
+ * entries in `numElements' give the number of elements in each layer. If
+ * `height' is not empty, it provides the (cumulative) height of the different
+ * layers, normalized to 1. */
 GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -1484,14 +1497,14 @@ GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Extrude the model entities `dimTags' by a combined translation and rotation
- * of `angle' radians, along (`dx', `dy', `dz') and around the axis of
- * revolution defined by the point (`x', `y', `z') and the direction (`ax',
- * `ay', `az'). The angle should be strictly smaller than Pi. Return extruded
- * entities in `outDimTags'. If `numElements' is not empty, also extrude the
- * mesh: the entries in `numElements' give the number of elements in each
- * layer. If `height' is not empty, it provides the (cumulative) height of the
- * different layers, normalized to 1. */
+/* Extrude the entities `dimTags' in the built-in CAD representation, using a
+ * combined translation and rotation of `angle' radians, along (`dx', `dy',
+ * `dz') and around the axis of revolution defined by the point (`x', `y',
+ * `z') and the direction (`ax', `ay', `az'). The angle should be strictly
+ * smaller than Pi. Return extruded entities in `outDimTags'. If `numElements'
+ * is not empty, also extrude the mesh: the entries in `numElements' give the
+ * number of elements in each layer. If `height' is not empty, it provides the
+ * (cumulative) height of the different layers, normalized to 1. */
 GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const double x,
                                 const double y,
@@ -1509,16 +1522,17 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const int recombine,
                                 int * ierr);
 
-/* Translate the model entities `dimTags' along (`dx', `dy', `dz'). */
+/* Translate the entities `dimTags' in the built-in CAD representation along
+ * (`dx', `dy', `dz'). */
 GMSH_API void gmshModelGeoTranslate(int * dimTags, size_t dimTags_n,
                                     const double dx,
                                     const double dy,
                                     const double dz,
                                     int * ierr);
 
-/* Rotate the model entities `dimTags' of `angle' radians around the axis of
- * revolution defined by the point (`x', `y', `z') and the direction (`ax',
- * `ay', `az'). */
+/* Rotate the entities `dimTags' in the built-in CAD representation by `angle'
+ * radians around the axis of revolution defined by the point (`x', `y', `z')
+ * and the direction (`ax', `ay', `az'). */
 GMSH_API void gmshModelGeoRotate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
@@ -1529,9 +1543,9 @@ GMSH_API void gmshModelGeoRotate(int * dimTags, size_t dimTags_n,
                                  const double angle,
                                  int * ierr);
 
-/* Scale the model entities `dimTag' by factors `a', `b' and `c' along the
- * three coordinate axes; use (`x', `y', `z') as the center of the homothetic
- * transformation. */
+/* Scale the entities `dimTag' in the built-in CAD representation by factors
+ * `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as
+ * the center of the homothetic transformation. */
 GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
@@ -1541,8 +1555,8 @@ GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n,
                                  const double c,
                                  int * ierr);
 
-/* Mirror the model entities `dimTag', with respect to the plane of equation
- * `a' * x + `b' * y + `c' * z + `d' = 0. */
+/* Mirror the entities `dimTag' in the built-in CAD representation, with
+ * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0. */
 GMSH_API void gmshModelGeoMirror(int * dimTags, size_t dimTags_n,
                                  const double a,
                                  const double b,
@@ -1550,9 +1564,10 @@ GMSH_API void gmshModelGeoMirror(int * dimTags, size_t dimTags_n,
                                  const double d,
                                  int * ierr);
 
-/* Mirror the model entities `dimTag', with respect to the plane of equation
- * `a' * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror',
- * which will be deprecated in a future release.) */
+/* Mirror the entities `dimTag' in the built-in CAD representation, with
+ * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+ * (This is a synonym for `mirror', which will be deprecated in a future
+ * release.) */
 GMSH_API void gmshModelGeoSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double a,
                                      const double b,
@@ -1560,23 +1575,26 @@ GMSH_API void gmshModelGeoSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double d,
                                      int * ierr);
 
-/* Copy the entities `dimTags'; the new entities are returned in `outDimTags'. */
+/* Copy the entities `dimTags' in the built-in CAD representation; the new
+ * entities are returned in `outDimTags'. */
 GMSH_API void gmshModelGeoCopy(int * dimTags, size_t dimTags_n,
                                int ** outDimTags, size_t * outDimTags_n,
                                int * ierr);
 
-/* Remove the entities `dimTags'. If `recursive' is true, remove all the
- * entities on their boundaries, down to dimension 0. */
+/* Remove the entities `dimTags' in the built-in CAD representation. If
+ * `recursive' is true, remove all the entities on their boundaries, down to
+ * dimension 0. */
 GMSH_API void gmshModelGeoRemove(int * dimTags, size_t dimTags_n,
                                  const int recursive,
                                  int * ierr);
 
-/* Remove all duplicate entities (different entities at the same geometrical
- * location). */
+/* Remove all duplicate entities in the built-in CAD representation (different
+ * entities at the same geometrical location). */
 GMSH_API void gmshModelGeoRemoveAllDuplicates(int * ierr);
 
-/* Split the model curve of tag `tag' on the control points `pointTags'.
- * Return the tags `curveTags' of the newly created curves. */
+/* Split the curve of tag `tag' in the built-in CAD representation, on the
+ * control points `pointTags'. Return the tags `curveTags' of the newly
+ * created curves. */
 GMSH_API void gmshModelGeoSplitCurve(const int tag,
                                      int * pointTags, size_t pointTags_n,
                                      int ** curveTags, size_t * curveTags_n,
@@ -1592,6 +1610,19 @@ GMSH_API int gmshModelGeoGetMaxTag(const int dim,
 GMSH_API void gmshModelGeoSetMaxTag(const int dim,
                                     const int maxTag,
                                     int * ierr);
+
+/* Add a physical group of dimension `dim', grouping the entities with tags
+ * `tags' in the built-in CAD representation. Return the tag of the physical
+ * group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. */
+GMSH_API int gmshModelGeoAddPhysicalGroup(const int dim,
+                                          int * tags, size_t tags_n,
+                                          const int tag,
+                                          int * ierr);
+
+/* Remove the physical groups `dimTags' from the built-in CAD representation.
+ * If `dimTags' is empty, remove all groups. */
+GMSH_API void gmshModelGeoRemovePhysicalGroups(int * dimTags, size_t dimTags_n,
+                                               int * ierr);
 
 /* Synchronize the built-in CAD representation with the current Gmsh model.
  * This can be called at any time, but since it involves a non trivial amount
@@ -1694,28 +1725,30 @@ GMSH_API int gmshModelOccAddPoint(const double x,
                                   const int tag,
                                   int * ierr);
 
-/* Add a straight line segment between the two points with tags `startTag' and
- * `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag
- * is selected automatically. Return the tag of the line. */
+/* Add a straight line segment in the OpenCASCADE CAD representation, between
+ * the two points with tags `startTag' and `endTag'. If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the line. */
 GMSH_API int gmshModelOccAddLine(const int startTag,
                                  const int endTag,
                                  const int tag,
                                  int * ierr);
 
-/* Add a circle arc between the two points with tags `startTag' and `endTag',
- * with center `centerTag'. If `tag' is positive, set the tag explicitly;
- * otherwise a new tag is selected automatically. Return the tag of the circle
- * arc. */
+/* Add a circle arc in the OpenCASCADE CAD representation, between the two
+ * points with tags `startTag' and `endTag', with center `centerTag'. If `tag'
+ * is positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Return the tag of the circle arc. */
 GMSH_API int gmshModelOccAddCircleArc(const int startTag,
                                       const int centerTag,
                                       const int endTag,
                                       const int tag,
                                       int * ierr);
 
-/* Add a circle of center (`x', `y', `z') and radius `r'. If `tag' is
- * positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. If `angle1' and `angle2' are specified, create a circle arc
- * between the two angles. Return the tag of the circle. */
+/* Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE
+ * CAD representation. If `tag' is positive, set the tag explicitly; otherwise
+ * a new tag is selected automatically. If `angle1' and `angle2' are
+ * specified, create a circle arc between the two angles. Return the tag of
+ * the circle. */
 GMSH_API int gmshModelOccAddCircle(const double x,
                                    const double y,
                                    const double z,
@@ -1725,11 +1758,12 @@ GMSH_API int gmshModelOccAddCircle(const double x,
                                    const double angle2,
                                    int * ierr);
 
-/* Add an ellipse arc between the two points `startTag' and `endTag', with
- * center `centerTag' and major axis point `majorTag'. If `tag' is positive,
- * set the tag explicitly; otherwise a new tag is selected automatically.
- * Return the tag of the ellipse arc. Note that OpenCASCADE does not allow
- * creating ellipse arcs with the major radius smaller than the minor radius. */
+/* Add an ellipse arc in the OpenCASCADE CAD representation, between the two
+ * points `startTag' and `endTag', and with center `centerTag' and major axis
+ * point `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a
+ * new tag is selected automatically. Return the tag of the ellipse arc. Note
+ * that OpenCASCADE does not allow creating ellipse arcs with the major radius
+ * smaller than the minor radius. */
 GMSH_API int gmshModelOccAddEllipseArc(const int startTag,
                                        const int centerTag,
                                        const int majorTag,
@@ -1738,13 +1772,13 @@ GMSH_API int gmshModelOccAddEllipseArc(const int startTag,
                                        int * ierr);
 
 /* Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
- * x- and y-axes respectively. If `tag' is positive, set the tag explicitly;
- * otherwise a new tag is selected automatically. If `angle1' and `angle2' are
- * specified, create an ellipse arc between the two angles. Return the tag of
- * the ellipse. Note that OpenCASCADE does not allow creating ellipses with
- * the major radius (along the x-axis) smaller than or equal to the minor
- * radius (along the y-axis): rotate the shape or use `addCircle' in such
- * cases. */
+ * x- and y-axes, respectively, in the OpenCASCADE CAD representation. If
+ * `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. If `angle1' and `angle2' are specified, create an ellipse
+ * arc between the two angles. Return the tag of the ellipse. Note that
+ * OpenCASCADE does not allow creating ellipses with the major radius (along
+ * the x-axis) smaller than or equal to the minor radius (along the y-axis):
+ * rotate the shape or use `addCircle' in such cases. */
 GMSH_API int gmshModelOccAddEllipse(const double x,
                                     const double y,
                                     const double z,
@@ -1755,20 +1789,21 @@ GMSH_API int gmshModelOccAddEllipse(const double x,
                                     const double angle2,
                                     int * ierr);
 
-/* Add a spline (C2 b-spline) curve going through the points `pointTags'. If
- * `tag' is positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Create a periodic curve if the first and last points are the
- * same. Return the tag of the spline curve. */
+/* Add a spline (C2 b-spline) curve in the OpenCASCADE CAD representation,
+ * going through the points `pointTags'. If `tag' is positive, set the tag
+ * explicitly; otherwise a new tag is selected automatically. Create a
+ * periodic curve if the first and last points are the same. Return the tag of
+ * the spline curve. */
 GMSH_API int gmshModelOccAddSpline(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Add a b-spline curve of degree `degree' with `pointTags' control points. If
- * `weights', `knots' or `multiplicities' are not provided, default parameters
- * are computed automatically. If `tag' is positive, set the tag explicitly;
- * otherwise a new tag is selected automatically. Create a periodic curve if
- * the first and last points are the same. Return the tag of the b-spline
- * curve. */
+/* Add a b-spline curve of degree `degree' in the OpenCASCADE CAD
+ * representation, with `pointTags' control points. If `weights', `knots' or
+ * `multiplicities' are not provided, default parameters are computed
+ * automatically. If `tag' is positive, set the tag explicitly; otherwise a
+ * new tag is selected automatically. Create a periodic curve if the first and
+ * last points are the same. Return the tag of the b-spline curve. */
 GMSH_API int gmshModelOccAddBSpline(int * pointTags, size_t pointTags_n,
                                     const int tag,
                                     const int degree,
@@ -1777,37 +1812,38 @@ GMSH_API int gmshModelOccAddBSpline(int * pointTags, size_t pointTags_n,
                                     int * multiplicities, size_t multiplicities_n,
                                     int * ierr);
 
-/* Add a Bezier curve with `pointTags' control points. If `tag' is positive,
- * set the tag explicitly; otherwise a new tag is selected automatically.
- * Return the tag of the Bezier curve. */
+/* Add a Bezier curve in the OpenCASCADE CAD representation, with `pointTags'
+ * control points. If `tag' is positive, set the tag explicitly; otherwise a
+ * new tag is selected automatically. Return the tag of the Bezier curve. */
 GMSH_API int gmshModelOccAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Add a wire (open or closed) formed by the curves `curveTags'. Note that an
- * OpenCASCADE wire can be made of curves that share geometrically identical
- * (but topologically different) points. If `tag' is positive, set the tag
- * explicitly; otherwise a new tag is selected automatically. Return the tag
- * of the wire. */
+/* Add a wire (open or closed) in the OpenCASCADE CAD representation, formed
+ * by the curves `curveTags'. Note that an OpenCASCADE wire can be made of
+ * curves that share geometrically identical (but topologically different)
+ * points. If `tag' is positive, set the tag explicitly; otherwise a new tag
+ * is selected automatically. Return the tag of the wire. */
 GMSH_API int gmshModelOccAddWire(int * curveTags, size_t curveTags_n,
                                  const int tag,
                                  const int checkClosed,
                                  int * ierr);
 
-/* Add a curve loop (a closed wire) formed by the curves `curveTags'.
- * `curveTags' should contain tags of curves forming a closed loop. Note that
- * an OpenCASCADE curve loop can be made of curves that share geometrically
- * identical (but topologically different) points. If `tag' is positive, set
- * the tag explicitly; otherwise a new tag is selected automatically. Return
- * the tag of the curve loop. */
+/* Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
+ * formed by the curves `curveTags'. `curveTags' should contain tags of curves
+ * forming a closed loop. Note that an OpenCASCADE curve loop can be made of
+ * curves that share geometrically identical (but topologically different)
+ * points. If `tag' is positive, set the tag explicitly; otherwise a new tag
+ * is selected automatically. Return the tag of the curve loop. */
 GMSH_API int gmshModelOccAddCurveLoop(int * curveTags, size_t curveTags_n,
                                       const int tag,
                                       int * ierr);
 
-/* Add a rectangle with lower left corner at (`x', `y', `z') and upper right
- * corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, set the tag
- * explicitly; otherwise a new tag is selected automatically. Round the
- * corners if `roundedRadius' is nonzero. Return the tag of the rectangle. */
+/* Add a rectangle in the OpenCASCADE CAD representation, with lower left
+ * corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' +
+ * `dy', `z'). If `tag' is positive, set the tag explicitly; otherwise a new
+ * tag is selected automatically. Round the corners if `roundedRadius' is
+ * nonzero. Return the tag of the rectangle. */
 GMSH_API int gmshModelOccAddRectangle(const double x,
                                       const double y,
                                       const double z,
@@ -1817,9 +1853,10 @@ GMSH_API int gmshModelOccAddRectangle(const double x,
                                       const double roundedRadius,
                                       int * ierr);
 
-/* Add a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis
- * and `ry' along the y-axis. If `tag' is positive, set the tag explicitly;
- * otherwise a new tag is selected automatically. Return the tag of the disk. */
+/* Add a disk in the OpenCASCADE CAD representation, with center (`xc', `yc',
+ * `zc') and radius `rx' along the x-axis and `ry' along the y-axis. If `tag'
+ * is positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Return the tag of the disk. */
 GMSH_API int gmshModelOccAddDisk(const double xc,
                                  const double yc,
                                  const double zc,
@@ -1828,54 +1865,56 @@ GMSH_API int gmshModelOccAddDisk(const double xc,
                                  const int tag,
                                  int * ierr);
 
-/* Add a plane surface defined by one or more curve loops (or closed wires)
- * `wireTags'. The first curve loop defines the exterior contour; additional
- * curve loop define holes. If `tag' is positive, set the tag explicitly;
- * otherwise a new tag is selected automatically. Return the tag of the
- * surface. */
+/* Add a plane surface in the OpenCASCADE CAD representation, defined by one
+ * or more curve loops (or closed wires) `wireTags'. The first curve loop
+ * defines the exterior contour; additional curve loop define holes. If `tag'
+ * is positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Return the tag of the surface. */
 GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n,
                                          const int tag,
                                          int * ierr);
 
-/* Add a surface filling the curve loop `wireTag'. If `tag' is positive, set
- * the tag explicitly; otherwise a new tag is selected automatically. Return
- * the tag of the surface. If `pointTags' are provided, force the surface to
- * pass through the given points. */
+/* Add a surface in the OpenCASCADE CAD representation, filling the curve loop
+ * `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a new
+ * tag is selected automatically. Return the tag of the surface. If
+ * `pointTags' are provided, force the surface to pass through the given
+ * points. */
 GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
                                            const int tag,
                                            int * pointTags, size_t pointTags_n,
                                            int * ierr);
 
-/* Add a BSpline surface filling the curve loop `wireTag'. The curve loop
- * should be made of 2, 3 or 4 BSpline curves. The optional `type' argument
- * specifies the type of filling: "Stretch" creates the flattest patch,
- * "Curved" (the default) creates the most rounded patch, and "Coons" creates
- * a rounded patch with less depth than "Curved". If `tag' is positive, set
- * the tag explicitly; otherwise a new tag is selected automatically. Return
- * the tag of the surface. */
+/* Add a BSpline surface in the OpenCASCADE CAD representation, filling the
+ * curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline
+ * curves. The optional `type' argument specifies the type of filling:
+ * "Stretch" creates the flattest patch, "Curved" (the default) creates the
+ * most rounded patch, and "Coons" creates a rounded patch with less depth
+ * than "Curved". If `tag' is positive, set the tag explicitly; otherwise a
+ * new tag is selected automatically. Return the tag of the surface. */
 GMSH_API int gmshModelOccAddBSplineFilling(const int wireTag,
                                            const int tag,
                                            const char * type,
                                            int * ierr);
 
-/* Add a Bezier surface filling the curve loop `wireTag'. The curve loop
- * should be made of 2, 3 or 4 Bezier curves. The optional `type' argument
- * specifies the type of filling: "Stretch" creates the flattest patch,
- * "Curved" (the default) creates the most rounded patch, and "Coons" creates
- * a rounded patch with less depth than "Curved". If `tag' is positive, set
- * the tag explicitly; otherwise a new tag is selected automatically. Return
- * the tag of the surface. */
+/* Add a Bezier surface in the OpenCASCADE CAD representation, filling the
+ * curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 Bezier
+ * curves. The optional `type' argument specifies the type of filling:
+ * "Stretch" creates the flattest patch, "Curved" (the default) creates the
+ * most rounded patch, and "Coons" creates a rounded patch with less depth
+ * than "Curved". If `tag' is positive, set the tag explicitly; otherwise a
+ * new tag is selected automatically. Return the tag of the surface. */
 GMSH_API int gmshModelOccAddBezierFilling(const int wireTag,
                                           const int tag,
                                           const char * type,
                                           int * ierr);
 
-/* Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
- * control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1,
- * Pu1v2, ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
- * `multiplicitiesV' are not provided, default parameters are computed
- * automatically. If `tag' is positive, set the tag explicitly; otherwise a
- * new tag is selected automatically. Return the tag of the b-spline surface. */
+/* Add a b-spline surface of degree `degreeU' x `degreeV' in the OpenCASCADE
+ * CAD representation, with `pointTags' control points given as a single
+ * vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `weights', `knotsU',
+ * `knotsV', `multiplicitiesU' or `multiplicitiesV' are not provided, default
+ * parameters are computed automatically. If `tag' is positive, set the tag
+ * explicitly; otherwise a new tag is selected automatically. Return the tag
+ * of the b-spline surface. */
 GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n,
                                            const int numPointsU,
                                            const int tag,
@@ -1888,38 +1927,41 @@ GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n,
                                            int * multiplicitiesV, size_t multiplicitiesV_n,
                                            int * ierr);
 
-/* Add a Bezier surface with `pointTags' control points given as a single
- * vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set
- * the tag explicitly; otherwise a new tag is selected automatically. Return
- * the tag of the b-spline surface. */
+/* Add a Bezier surface in the OpenCASCADE CAD representation, with
+ * `pointTags' control points given as a single vector [Pu1v1, ...
+ * Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set the tag
+ * explicitly; otherwise a new tag is selected automatically. Return the tag
+ * of the b-spline surface. */
 GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n,
                                           const int numPointsU,
                                           const int tag,
                                           int * ierr);
 
-/* Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
- * positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Return the tag of the surface loop. Setting `sewing' allows
- * to build a shell made of surfaces that share geometrically identical (but
- * topologically different) curves. */
+/* Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,
+ * formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly;
+ * otherwise a new tag is selected automatically. Return the tag of the
+ * surface loop. Setting `sewing' allows to build a shell made of surfaces
+ * that share geometrically identical (but topologically different) curves. */
 GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,
                                         const int tag,
                                         const int sewing,
                                         int * ierr);
 
-/* Add a volume (a region) defined by one or more surface loops `shellTags'.
- * The first surface loop defines the exterior boundary; additional surface
- * loop define holes. If `tag' is positive, set the tag explicitly; otherwise
- * a new tag is selected automatically. Return the tag of the volume. */
+/* Add a volume (a region) in the OpenCASCADE CAD representation, defined by
+ * one or more surface loops `shellTags'. The first surface loop defines the
+ * exterior boundary; additional surface loop define holes. If `tag' is
+ * positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Return the tag of the volume. */
 GMSH_API int gmshModelOccAddVolume(int * shellTags, size_t shellTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Add a sphere of center (`xc', `yc', `zc') and radius `r'. The optional
- * `angle1' and `angle2' arguments define the polar angle opening (from -Pi/2
- * to Pi/2). The optional `angle3' argument defines the azimuthal opening
- * (from 0 to 2*Pi). If `tag' is positive, set the tag explicitly; otherwise a
- * new tag is selected automatically. Return the tag of the sphere. */
+/* Add a sphere of center (`xc', `yc', `zc') and radius `r' in the OpenCASCADE
+ * CAD representation. The optional `angle1' and `angle2' arguments define the
+ * polar angle opening (from -Pi/2 to Pi/2). The optional `angle3' argument
+ * defines the azimuthal opening (from 0 to 2*Pi). If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the sphere. */
 GMSH_API int gmshModelOccAddSphere(const double xc,
                                    const double yc,
                                    const double zc,
@@ -1930,10 +1972,10 @@ GMSH_API int gmshModelOccAddSphere(const double xc,
                                    const double angle3,
                                    int * ierr);
 
-/* Add a parallelepipedic box defined by a point (`x', `y', `z') and the
- * extents along the x-, y- and z-axes. If `tag' is positive, set the tag
- * explicitly; otherwise a new tag is selected automatically. Return the tag
- * of the box. */
+/* Add a parallelepipedic box in the OpenCASCADE CAD representation, defined
+ * by a point (`x', `y', `z') and the extents along the x-, y- and z-axes. If
+ * `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Return the tag of the box. */
 GMSH_API int gmshModelOccAddBox(const double x,
                                 const double y,
                                 const double z,
@@ -1943,12 +1985,12 @@ GMSH_API int gmshModelOccAddBox(const double x,
                                 const int tag,
                                 int * ierr);
 
-/* Add a cylinder, defined by the center (`x', `y', `z') of its first circular
- * face, the 3 components (`dx', `dy', `dz') of the vector defining its axis
- * and its radius `r'. The optional `angle' argument defines the angular
- * opening (from 0 to 2*Pi). If `tag' is positive, set the tag explicitly;
- * otherwise a new tag is selected automatically. Return the tag of the
- * cylinder. */
+/* Add a cylinder in the OpenCASCADE CAD representation, defined by the center
+ * (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
+ * `dz') of the vector defining its axis and its radius `r'. The optional
+ * `angle' argument defines the angular opening (from 0 to 2*Pi). If `tag' is
+ * positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. Return the tag of the cylinder. */
 GMSH_API int gmshModelOccAddCylinder(const double x,
                                      const double y,
                                      const double z,
@@ -1960,12 +2002,12 @@ GMSH_API int gmshModelOccAddCylinder(const double x,
                                      const double angle,
                                      int * ierr);
 
-/* Add a cone, defined by the center (`x', `y', `z') of its first circular
- * face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
- * and the two radii `r1' and `r2' of the faces (these radii can be zero). If
- * `tag' is positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. `angle' defines the optional angular opening (from 0 to
- * 2*Pi). Return the tag of the cone. */
+/* Add a cone in the OpenCASCADE CAD representation, defined by the center
+ * (`x', `y', `z') of its first circular face, the 3 components of the vector
+ * (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of the
+ * faces (these radii can be zero). If `tag' is positive, set the tag
+ * explicitly; otherwise a new tag is selected automatically. `angle' defines
+ * the optional angular opening (from 0 to 2*Pi). Return the tag of the cone. */
 GMSH_API int gmshModelOccAddCone(const double x,
                                  const double y,
                                  const double z,
@@ -1978,11 +2020,12 @@ GMSH_API int gmshModelOccAddCone(const double x,
                                  const double angle,
                                  int * ierr);
 
-/* Add a right angular wedge, defined by the right-angle point (`x', `y', `z')
- * and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag'
- * is positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. The optional argument `ltx' defines the top extent along the
- * x-axis. Return the tag of the wedge. */
+/* Add a right angular wedge in the OpenCASCADE CAD representation, defined by
+ * the right-angle point (`x', `y', `z') and the 3 extends along the x-, y-
+ * and z-axes (`dx', `dy', `dz'). If `tag' is positive, set the tag
+ * explicitly; otherwise a new tag is selected automatically. The optional
+ * argument `ltx' defines the top extent along the x-axis. Return the tag of
+ * the wedge. */
 GMSH_API int gmshModelOccAddWedge(const double x,
                                   const double y,
                                   const double z,
@@ -1993,10 +2036,11 @@ GMSH_API int gmshModelOccAddWedge(const double x,
                                   const double ltx,
                                   int * ierr);
 
-/* Add a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and
- * `r2'. If `tag' is positive, set the tag explicitly; otherwise a new tag is
- * selected automatically. The optional argument `angle' defines the angular
- * opening (from 0 to 2*Pi). Return the tag of the wedge. */
+/* Add a torus in the OpenCASCADE CAD representation, defined by its center
+ * (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, set the
+ * tag explicitly; otherwise a new tag is selected automatically. The optional
+ * argument `angle' defines the angular opening (from 0 to 2*Pi). Return the
+ * tag of the wedge. */
 GMSH_API int gmshModelOccAddTorus(const double x,
                                   const double y,
                                   const double z,
@@ -2006,13 +2050,13 @@ GMSH_API int gmshModelOccAddTorus(const double x,
                                   const double angle,
                                   int * ierr);
 
-/* Add a volume (if the optional argument `makeSolid' is set) or surfaces
- * defined through the open or closed wires `wireTags'. If `tag' is positive,
- * set the tag explicitly; otherwise a new tag is selected automatically. The
- * new entities are returned in `outDimTags'. If the optional argument
- * `makeRuled' is set, the surfaces created on the boundary are forced to be
- * ruled surfaces. If `maxDegree' is positive, set the maximal degree of
- * resulting surface. */
+/* Add a volume (if the optional argument `makeSolid' is set) or surfaces in
+ * the OpenCASCADE CAD representation, defined through the open or closed
+ * wires `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a
+ * new tag is selected automatically. The new entities are returned in
+ * `outDimTags'. If the optional argument `makeRuled' is set, the surfaces
+ * created on the boundary are forced to be ruled surfaces. If `maxDegree' is
+ * positive, set the maximal degree of resulting surface. */
 GMSH_API void gmshModelOccAddThruSections(int * wireTags, size_t wireTags_n,
                                           int ** outDimTags, size_t * outDimTags_n,
                                           const int tag,
@@ -2021,11 +2065,12 @@ GMSH_API void gmshModelOccAddThruSections(int * wireTags, size_t wireTags_n,
                                           const int maxDegree,
                                           int * ierr);
 
-/* Add a hollowed volume built from an initial volume `volumeTag' and a set of
- * faces from this volume `excludeSurfaceTags', which are to be removed. The
- * remaining faces of the volume become the walls of the hollowed solid, with
- * thickness `offset'. If `tag' is positive, set the tag explicitly; otherwise
- * a new tag is selected automatically. */
+/* Add a hollowed volume in the OpenCASCADE CAD representation, built from an
+ * initial volume `volumeTag' and a set of faces from this volume
+ * `excludeSurfaceTags', which are to be removed. The remaining faces of the
+ * volume become the walls of the hollowed solid, with thickness `offset'. If
+ * `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+ * automatically. */
 GMSH_API void gmshModelOccAddThickSolid(const int volumeTag,
                                         int * excludeSurfaceTags, size_t excludeSurfaceTags_n,
                                         const double offset,
@@ -2033,11 +2078,12 @@ GMSH_API void gmshModelOccAddThickSolid(const int volumeTag,
                                         const int tag,
                                         int * ierr);
 
-/* Extrude the model entities `dimTags' by translation along (`dx', `dy',
- * `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
- * empty, also extrude the mesh: the entries in `numElements' give the number
- * of elements in each layer. If `height' is not empty, it provides the
- * (cumulative) height of the different layers, normalized to 1. */
+/* Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
+ * a translation along (`dx', `dy', `dz'). Return extruded entities in
+ * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
+ * entries in `numElements' give the number of elements in each layer. If
+ * `height' is not empty, it provides the (cumulative) height of the different
+ * layers, normalized to 1. */
 GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -2048,14 +2094,14 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Extrude the model entities `dimTags' by rotation of `angle' radians around
- * the axis of revolution defined by the point (`x', `y', `z') and the
- * direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
- * `numElements' is not empty, also extrude the mesh: the entries in
- * `numElements' give the number of elements in each layer. If `height' is not
- * empty, it provides the (cumulative) height of the different layers,
- * normalized to 1. When the mesh is extruded the angle should be strictly
- * smaller than 2*Pi. */
+/* Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
+ * a rotation of `angle' radians around the axis of revolution defined by the
+ * point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded
+ * entities in `outDimTags'. If `numElements' is not empty, also extrude the
+ * mesh: the entries in `numElements' give the number of elements in each
+ * layer. If `height' is not empty, it provides the (cumulative) height of the
+ * different layers, normalized to 1. When the mesh is extruded the angle
+ * should be strictly smaller than 2*Pi. */
 GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -2070,8 +2116,8 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Add a pipe by extruding the entities `dimTags' along the wire `wireTag'.
- * Return the pipe in `outDimTags'. */
+/* Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
+ * `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'. */
 GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,
                                   const int wireTag,
                                   int ** outDimTags, size_t * outDimTags_n,
@@ -2107,10 +2153,11 @@ GMSH_API void gmshModelOccChamfer(int * volumeTags, size_t volumeTags_n,
                                   int * ierr);
 
 /* Compute the boolean union (the fusion) of the entities `objectDimTags' and
- * `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
- * positive, try to set the tag explicitly (only valid if the boolean
- * operation results in a single entity). Remove the object if `removeObject'
- * is set. Remove the tool if `removeTool' is set. */
+ * `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting
+ * entities in `outDimTags'. If `tag' is positive, try to set the tag
+ * explicitly (only valid if the boolean operation results in a single
+ * entity). Remove the object if `removeObject' is set. Remove the tool if
+ * `removeTool' is set. */
 GMSH_API void gmshModelOccFuse(int * objectDimTags, size_t objectDimTags_n,
                                int * toolDimTags, size_t toolDimTags_n,
                                int ** outDimTags, size_t * outDimTags_n,
@@ -2121,10 +2168,11 @@ GMSH_API void gmshModelOccFuse(int * objectDimTags, size_t objectDimTags_n,
                                int * ierr);
 
 /* Compute the boolean intersection (the common parts) of the entities
- * `objectDimTags' and `toolDimTags'. Return the resulting entities in
- * `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
- * valid if the boolean operation results in a single entity). Remove the
- * object if `removeObject' is set. Remove the tool if `removeTool' is set. */
+ * `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
+ * Return the resulting entities in `outDimTags'. If `tag' is positive, try to
+ * set the tag explicitly (only valid if the boolean operation results in a
+ * single entity). Remove the object if `removeObject' is set. Remove the tool
+ * if `removeTool' is set. */
 GMSH_API void gmshModelOccIntersect(int * objectDimTags, size_t objectDimTags_n,
                                     int * toolDimTags, size_t toolDimTags_n,
                                     int ** outDimTags, size_t * outDimTags_n,
@@ -2135,10 +2183,11 @@ GMSH_API void gmshModelOccIntersect(int * objectDimTags, size_t objectDimTags_n,
                                     int * ierr);
 
 /* Compute the boolean difference between the entities `objectDimTags' and
- * `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
- * positive, try to set the tag explicitly (only valid if the boolean
- * operation results in a single entity). Remove the object if `removeObject'
- * is set. Remove the tool if `removeTool' is set. */
+ * `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting
+ * entities in `outDimTags'. If `tag' is positive, try to set the tag
+ * explicitly (only valid if the boolean operation results in a single
+ * entity). Remove the object if `removeObject' is set. Remove the tool if
+ * `removeTool' is set. */
 GMSH_API void gmshModelOccCut(int * objectDimTags, size_t objectDimTags_n,
                               int * toolDimTags, size_t toolDimTags_n,
                               int ** outDimTags, size_t * outDimTags_n,
@@ -2149,10 +2198,11 @@ GMSH_API void gmshModelOccCut(int * objectDimTags, size_t objectDimTags_n,
                               int * ierr);
 
 /* Compute the boolean fragments (general fuse) of the entities
- * `objectDimTags' and `toolDimTags'. Return the resulting entities in
- * `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
- * valid if the boolean operation results in a single entity). Remove the
- * object if `removeObject' is set. Remove the tool if `removeTool' is set. */
+ * `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
+ * Return the resulting entities in `outDimTags'. If `tag' is positive, try to
+ * set the tag explicitly (only valid if the boolean operation results in a
+ * single entity). Remove the object if `removeObject' is set. Remove the tool
+ * if `removeTool' is set. */
 GMSH_API void gmshModelOccFragment(int * objectDimTags, size_t objectDimTags_n,
                                    int * toolDimTags, size_t toolDimTags_n,
                                    int ** outDimTags, size_t * outDimTags_n,
@@ -2162,16 +2212,17 @@ GMSH_API void gmshModelOccFragment(int * objectDimTags, size_t objectDimTags_n,
                                    const int removeTool,
                                    int * ierr);
 
-/* Translate the model entities `dimTags' along (`dx', `dy', `dz'). */
+/* Translate the entities `dimTags' in the OpenCASCADE CAD representation
+ * along (`dx', `dy', `dz'). */
 GMSH_API void gmshModelOccTranslate(int * dimTags, size_t dimTags_n,
                                     const double dx,
                                     const double dy,
                                     const double dz,
                                     int * ierr);
 
-/* Rotate the model entities `dimTags' of `angle' radians around the axis of
- * revolution defined by the point (`x', `y', `z') and the direction (`ax',
- * `ay', `az'). */
+/* Rotate the entities `dimTags' in the OpenCASCADE CAD representation by
+ * `angle' radians around the axis of revolution defined by the point (`x',
+ * `y', `z') and the direction (`ax', `ay', `az'). */
 GMSH_API void gmshModelOccRotate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
@@ -2182,9 +2233,9 @@ GMSH_API void gmshModelOccRotate(int * dimTags, size_t dimTags_n,
                                  const double angle,
                                  int * ierr);
 
-/* Scale the model entities `dimTag' by factors `a', `b' and `c' along the
- * three coordinate axes; use (`x', `y', `z') as the center of the homothetic
- * transformation. */
+/* Scale the entities `dimTags' in the OpenCASCADE CAD representation by
+ * factors `a', `b' and `c' along the three coordinate axes; use (`x', `y',
+ * `z') as the center of the homothetic transformation. */
 GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
@@ -2194,7 +2245,7 @@ GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
                                  const double c,
                                  int * ierr);
 
-/* Apply a symmetry transformation to the model entities `dimTag', with
+/* Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
  * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0. */
 GMSH_API void gmshModelOccMirror(int * dimTags, size_t dimTags_n,
                                  const double a,
@@ -2203,7 +2254,7 @@ GMSH_API void gmshModelOccMirror(int * dimTags, size_t dimTags_n,
                                  const double d,
                                  int * ierr);
 
-/* Apply a symmetry transformation to the model entities `dimTag', with
+/* Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
  * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
  * (This is a synonym for `mirror', which will be deprecated in a future
  * release.) */
@@ -2216,31 +2267,33 @@ GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
 
 /* Apply a general affine transformation matrix `a' (16 entries of a 4x4
  * matrix, by row; only the 12 first can be provided for convenience) to the
- * model entities `dimTag'. */
+ * entities `dimTags' in the OpenCASCADE CAD representation. */
 GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n,
                                           double * a, size_t a_n,
                                           int * ierr);
 
-/* Copy the entities `dimTags'; the new entities are returned in `outDimTags'. */
+/* Copy the entities `dimTags' in the OpenCASCADE CAD representation; the new
+ * entities are returned in `outDimTags'. */
 GMSH_API void gmshModelOccCopy(int * dimTags, size_t dimTags_n,
                                int ** outDimTags, size_t * outDimTags_n,
                                int * ierr);
 
-/* Remove the entities `dimTags'. If `recursive' is true, remove all the
- * entities on their boundaries, down to dimension 0. */
+/* Remove the entities `dimTags' in the OpenCASCADE CAD representation. If
+ * `recursive' is true, remove all the entities on their boundaries, down to
+ * dimension 0. */
 GMSH_API void gmshModelOccRemove(int * dimTags, size_t dimTags_n,
                                  const int recursive,
                                  int * ierr);
 
-/* Remove all duplicate entities (different entities at the same geometrical
- * location) after intersecting (using boolean fragments) all highest
- * dimensional entities. */
+/* Remove all duplicate entities in the OpenCASCADE CAD representation
+ * (different entities at the same geometrical location) after intersecting
+ * (using boolean fragments) all highest dimensional entities. */
 GMSH_API void gmshModelOccRemoveAllDuplicates(int * ierr);
 
 /* Apply various healing procedures to the entities `dimTags' (or to all the
- * entities in the model if `dimTags' is empty). Return the healed entities in
- * `outDimTags'. Available healing options are listed in the Gmsh reference
- * manual. */
+ * entities in the model if `dimTags' is empty) in the OpenCASCADE CAD
+ * representation. Return the healed entities in `outDimTags'. Available
+ * healing options are listed in the Gmsh reference manual. */
 GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n,
                                      int * dimTags, size_t dimTags_n,
                                      const double tolerance,
@@ -2251,11 +2304,12 @@ GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n,
                                      const int makeSolids,
                                      int * ierr);
 
-/* Import BREP, STEP or IGES shapes from the file `fileName'. The imported
- * entities are returned in `outDimTags'. If the optional argument
- * `highestDimOnly' is set, only import the highest dimensional entities in
- * the file. The optional argument `format' can be used to force the format of
- * the file (currently "brep", "step" or "iges"). */
+/* Import BREP, STEP or IGES shapes from the file `fileName' in the
+ * OpenCASCADE CAD representation. The imported entities are returned in
+ * `outDimTags'. If the optional argument `highestDimOnly' is set, only import
+ * the highest dimensional entities in the file. The optional argument
+ * `format' can be used to force the format of the file (currently "brep",
+ * "step" or "iges"). */
 GMSH_API void gmshModelOccImportShapes(const char * fileName,
                                        int ** outDimTags, size_t * outDimTags_n,
                                        const int highestDimOnly,
@@ -2347,8 +2401,9 @@ GMSH_API void gmshModelOccSetMaxTag(const int dim,
  * CAD kernel functions. */
 GMSH_API void gmshModelOccSynchronize(int * ierr);
 
-/* Set a mesh size constraint on the model entities `dimTags'. Currently only
- * entities of dimension 0 (points) are handled. */
+/* Set a mesh size constraint on the entities `dimTags' in the OpenCASCADE CAD
+ * representation. Currently only entities of dimension 0 (points) are
+ * handled. */
 GMSH_API void gmshModelOccMeshSetSize(int * dimTags, size_t dimTags_n,
                                       const double size,
                                       int * ierr);

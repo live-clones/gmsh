@@ -21,10 +21,6 @@ int main(int argc, char **argv)
      API the last argument of all functions returns the error code, if any. */
   gmshInitialize(argc, argv, 1, &ierr);
 
-  /* By default Gmsh will not print out any messages: in order to output
-     messages on the terminal, just set the "General.Terminal" option to 1: */
-  gmshOptionSetNumber("General.Terminal", 1, &ierr);
-
   /* We now add a new model, named "t1". If gmsh::model::add() is not called, a
      new default (unnamed) model will be created on the fly, if necessary. */
   gmshModelAdd("t1", &ierr);
@@ -37,18 +33,16 @@ int main(int argc, char **argv)
      point with the built-in CAD kernel, the C API function is
      gmshModelGeoAddPoint():
      - the first 3 arguments are the point coordinates (x, y, z)
-     - the next argument is the target mesh size (the "characteristic length")
-       close to the point
+     - the next argument is the target mesh size close to the point
      - the next argument is the point tag (a stricly positive integer that
        uniquely identifies the point); if the tag is set to -1, the function
        will return a new tag */
   gmshModelGeoAddPoint(0, 0, 0, lc, 1, &ierr);
 
   /* The distribution of the mesh element sizes will be obtained by
-     interpolation of these characteristic lengths throughout the
-     geometry. Another method to specify characteristic lengths is to use
-     general mesh size Fields. A particular case is the use of a background
-     mesh.
+     interpolation of these mesh sizes throughout the geometry. Another method
+     to specify mesh sizes is to use general mesh size Fields. A particular case
+     is the use of a background mesh.
 
      If no target mesh size of provided, a default uniform coarse size will be
      used for the model, based on the overall model size.

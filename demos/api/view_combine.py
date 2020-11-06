@@ -2,7 +2,6 @@ import gmsh
 import sys
 
 gmsh.initialize(sys.argv)
-gmsh.option.setNumber("General.Terminal", 1)
 
 tri1 = [0., 1., 1., 0., 0., 1., 0., 0., 0.]
 tri2 = [0., 1., 0., 0., 1., 1., 0., 0., 0.]

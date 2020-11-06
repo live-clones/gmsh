@@ -3,7 +3,6 @@
 import gmsh
 
 gmsh.initialize(append!(["gmsh"], ARGS))
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t10")
 
@@ -64,9 +63,9 @@ function meshSizeCallback(dim, tag, x, y, z)
 end
 gmsh.model.mesh.setSizeCallback(meshSizeCallback)
 
-gmsh.option.setNumber("Mesh.CharacteristicLengthExtendFromBoundary", 0)
-gmsh.option.setNumber("Mesh.CharacteristicLengthFromPoints", 0)
-gmsh.option.setNumber("Mesh.CharacteristicLengthFromCurvature", 0)
+gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
 
 gmsh.model.mesh.generate(2)
 gmsh.write("t10.msh")

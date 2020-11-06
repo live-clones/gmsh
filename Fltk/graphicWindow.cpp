@@ -1529,7 +1529,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
                 tags.push_back(dimTags[i].second);
             }
             if(tags.size())
-              scriptSetCharacteristicLength(GModel::current()->getFileName(), tags,
+              scriptSetMeshSize(GModel::current()->getFileName(), tags,
                                             FlGui::instance()->meshContext->input[0]->value());
           }
           break;
@@ -2879,7 +2879,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
     opt_mesh_volumes_faces(0, GMSH_SET|GMSH_GUI,
                            !opt_mesh_volumes_faces(0, GMSH_GET, 0));
   else if(what == "mesh_size")
-    numberOrStringOptionChooser("Mesh", 0, "CharacteristicLengthFactor",
+    numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor",
                                 true, "Factor", true, 0.01, 100, 0.01);
   else if(what == "view_element_outlines"){
     int set = 0;

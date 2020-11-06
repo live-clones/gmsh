@@ -2,7 +2,7 @@
 #
 #  Gmsh Python tutorial 5
 #
-#  Characteristic lengths, holes in volumes
+#  Mesh sizes, holes in volumes
 #
 # ------------------------------------------------------------------------------
 
@@ -11,7 +11,6 @@ import math
 import sys
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t5")
 
@@ -20,10 +19,10 @@ lcar2 = .0005
 lcar3 = .055
 
 # If we wanted to change these mesh sizes globally (without changing the above
-# definitions), we could give a global scaling factor for all characteristic
-# lengths with e.g.
+# definitions), we could give a global scaling factor for all mesh sizes with
+# e.g.
 #
-# gmsh.option.setNumber("Mesh.CharacteristicLengthFactor", 0.1);
+# gmsh.option.setNumber("Mesh.MeshSizeFactor", 0.1);
 #
 # Since we pass `argc' and `argv' to `gmsh.initialize()', we can also give the
 # option on the command line with the `-clscale' switch. For example, with:
@@ -175,7 +174,7 @@ for t in range(1, 6):
     x += 0.166
     z += 0.166
     v = cheeseHole(x, y, z, r, lcar3, shells)
-    gmsh.model.addPhysicalGroup(3, [v], t)
+    gmsh.model.geo.addPhysicalGroup(3, [v], t)
 
 # The volume of the cube, without the 5 holes, is defined by 6 surface loops:
 # the first surface loop defines the exterior surface; the surface loops other

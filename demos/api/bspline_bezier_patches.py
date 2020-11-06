@@ -2,7 +2,6 @@ import gmsh
 import sys
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.occ.addPoint(0.1,0,-0.1)
 gmsh.model.occ.addPoint(1,0,0)

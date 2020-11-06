@@ -326,6 +326,7 @@ static void copyMesh(GEdge *from, GEdge *to, int direction)
       // Mesh.HighOrderPeriodic=2, which will do that
       newu = to->parFromPoint(p);
       gp = to->point(newu);
+      //gp = to->closestPoint(p, newu);
     }
     MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), to, newu);
     to->mesh_vertices.push_back(vv);
@@ -393,7 +394,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++) {
     MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(ge->mesh_vertices[i]);
     if(!v) {
-      Msg::Error("in 1D mesh filterPoints");
+      Msg::Error("Node not classified on curve in 1D mesh filtering");
       return;
     }
     double d = distance(v, v0);

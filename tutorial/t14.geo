@@ -12,7 +12,7 @@
 
 // Create an example geometry
 
-m = 0.5; // mesh characteristic length
+m = 0.5; // mesh size
 h = 2; // height in the z-direction
 
 Point(1) = {0, 0, 0, m};   Point(2) = {10, 0, 0, m};

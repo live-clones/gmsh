@@ -24,7 +24,7 @@ import math
 # reparametrize) combined with a CAD representation of the underground.
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
+
 gmsh.model.add("x2")
 
 # We will create the terrain surface mesh from N x N input data points:
@@ -152,14 +152,14 @@ if transfinite:
         gmsh.model.mesh.setSmoothing(s[0], s[1], 100)
     gmsh.model.mesh.setTransfiniteVolume(v1)
 elif transfiniteAuto:
-    gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.5)
-    gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.5)
+    gmsh.option.setNumber('Mesh.MeshSizeMin', 0.5)
+    gmsh.option.setNumber('Mesh.MeshSizeMax', 0.5)
     # setTransfiniteAutomatic() uses the sizing constraints to set the number
     # of points
     gmsh.model.mesh.setTransfiniteAutomatic()
 else:
-    gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 0.05)
-    gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 0.05)
+    gmsh.option.setNumber('Mesh.MeshSizeMin', 0.05)
+    gmsh.option.setNumber('Mesh.MeshSizeMax', 0.05)
 
 gmsh.model.mesh.generate(3)
 gmsh.write('x2.msh')

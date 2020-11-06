@@ -551,22 +551,25 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
 
   std::sort(edges.begin(), edges.end(), edges_sort);
 
-  int count = 0;
-  double mink = MINE_;
   for(std::size_t i = 0; i < edges.size(); i++) {
     BDS_Edge *e = edges[i].second;
     if(!e->deleted &&
        (neighboringModified(e->p1) || neighboringModified(e->p2))) {
-      count++;
+
       double lone1 = 0.;
-      bool collapseP1Allowed = true;
+      bool collapseP1Allowed = false;
+      if (e->p1->iD > MAXNP){
+        lone1 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p1);
+        collapseP1Allowed =
+          std::abs(lone1 - 1.0) < std::abs(edges[i].first - 1.0);
+      }
 
       double lone2 = 0.;
       bool collapseP2Allowed = false;
       if(e->p2->iD > MAXNP) {
-        // lone2 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p2);
+        lone2 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p2);
         collapseP2Allowed =
-          true; // std::abs(lone2-1.0) < std::abs(edges[i].first - 1.0);
+          std::abs(lone2 - 1.0) < std::abs(edges[i].first - 1.0);
       }
 
       BDS_Point *p = 0;
@@ -578,20 +581,11 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
       }
       else if(collapseP1Allowed && !collapseP2Allowed)
         p = e->p1;
-      else if(collapseP1Allowed && !collapseP2Allowed)
+      else if(collapseP2Allowed && !collapseP1Allowed)
         p = e->p2;
 
-      bool res = false;
-      if(p) {
-        res = m.collapse_edge_parametric(e, p);
-        if(!res && collapseP1Allowed && collapseP2Allowed) {
-          res = m.collapse_edge_parametric(e, p == e->p1 ? e->p2 : e->p1);
-        }
-      }
-      if(res)
+      if(p && m.collapse_edge_parametric(e, p))
         nb_collaps++;
-      else if(!e->p1->degenerated || !e->p2->degenerated)
-        mink = std::min(mink, edges[i].first);
     }
   }
   t += (Cpu() - t1);

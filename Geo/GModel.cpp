@@ -775,17 +775,24 @@ void GModel::getPhysicalGroups(
   }
 }
 
+void GModel::addPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
+{
+  for(auto t : tags) {
+    GEntity *ge = getEntityByTag(dim, std::abs(t));
+    if(ge)
+      ge->physicals.push_back((t > 0) ? tag : -tag);
+    else
+      Msg::Warning("Unknown entity of dimension %d and tag %d in physical group "
+                   "%d", dim, t, tag);
+  }
+}
+
 void GModel::removePhysicalGroups()
 {
   std::vector<GEntity *> entities;
   getEntities(entities);
   for(std::size_t i = 0; i < entities.size(); i++)
     entities[i]->physicals.clear();
-
-  // we cannot remove the names here, as removePhysicalGroups() is used in
-  // GModelIO_GEO for the synchronization. We need to add an explicit cleanup of
-  // physical names + move all physical defintions directly in GModel.
-  // _physicalNames.clear();
 }
 
 void GModel::removePhysicalGroup(int dim, int tag)
@@ -797,7 +804,7 @@ void GModel::removePhysicalGroup(int dim, int tag)
   for(std::size_t i = 0; i < entities.size(); i++) {
     std::vector<int> p;
     for(std::size_t j = 0; j < entities[i]->physicals.size(); j++)
-      if(entities[i]->physicals[j] != tag)
+      if(std::abs(entities[i]->physicals[j]) != tag)
         p.push_back(entities[i]->physicals[j]);
     entities[i]->physicals = p;
   }
@@ -1468,8 +1475,8 @@ int GModel::getEdgeNumber(const MEdge &edge)
   hashmapMEdge::iterator it = _mapEdgeNum.find(edge);
   if(it != _mapEdgeNum.end()) { return _mapEdgeNum.find(edge)->second; }
   else {
-    Msg::Error("this edge does not exist in the mapEdgeNum");
-    throw 2;
+    Msg::Error("This edge does not exist in the mapEdgeNum");
+    return -1;
   }
 }
 int GModel::addMFace(const MFace &face)
@@ -2663,8 +2670,11 @@ void GModel::alignPeriodicBoundaries()
           MElement *srcElmt = mIter->second;
           std::vector<MVertex *> srcVtcs;
 
-          if(tgtTri && !dynamic_cast<MTriangle *>(srcElmt)) throw;
-          if(tgtQua && !dynamic_cast<MQuadrangle *>(srcElmt)) throw;
+          if((tgtTri && !dynamic_cast<MTriangle *>(srcElmt)) ||
+             (tgtQua && !dynamic_cast<MQuadrangle *>(srcElmt))) {
+            Msg::Error("Invalid source/target elements");
+            return;
+          }
 
           int rotation = 0;
           bool swap = false;

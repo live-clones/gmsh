@@ -14,7 +14,6 @@ import sys
 # to manipulate post-processing datasets (called "views" in Gmsh).
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # We first create a simple geometry
 lc = 1e-2

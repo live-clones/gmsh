@@ -11,7 +11,6 @@ import math
 import sys
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t3")
 
@@ -27,6 +26,7 @@ gmsh.model.geo.addLine(3, 4, 3)
 gmsh.model.geo.addLine(4, 1, 4)
 gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 gmsh.model.geo.addPlaneSurface([1], 1)
+gmsh.model.geo.synchronize()
 gmsh.model.addPhysicalGroup(1, [1, 2, 4], 5)
 ps = gmsh.model.addPhysicalGroup(2, [1])
 gmsh.model.setPhysicalName(2, ps, "My surface")

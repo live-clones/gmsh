@@ -507,8 +507,6 @@ void Msg::Error(const char *fmt, ...)
   _errorCount++;
   _atLeastOneErrorInRun = 1;
 
-  if(GetVerbosity() < 1) return;
-
   char str[5000];
   va_list args;
   va_start(args, fmt);
@@ -516,39 +514,46 @@ void Msg::Error(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-  if(_logFile) fprintf(_logFile, "Error: %s\n", str);
-  if(_callback) (*_callback)("Error", str);
-  if(_client) _client->Error(str);
   if(_firstError.empty()) _firstError = str;
   _lastError = str;
 
+  if(GetVerbosity() >= 1) {
+    if(_logFile) fprintf(_logFile, "Error: %s\n", str);
+    if(_callback) (*_callback)("Error", str);
+    if(_client) _client->Error(str);
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    FlGui::check();
-    std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
-      + "Error   : " + str;
-    FlGui::instance()->addMessage(tmp.c_str());
-    FlGui::instance()->setLastStatus
-      (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
-  }
-#endif
-
-  if(CTX::instance()->terminal){
-    const char *c0 = "", *c1 = "";
-    if(!streamIsFile(stderr) && streamIsVT100(stderr)){
-      c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
+    if(FlGui::available()){
+      FlGui::check();
+      std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
+        + "Error   : " + str;
+      FlGui::instance()->addMessage(tmp.c_str());
+      FlGui::instance()->setLastStatus
+        (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
     }
-    if(_commSize > 1)
-      fprintf(stderr, "%sError   : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
-    else
-      fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
-    fflush(stderr);
+#endif
+    if(CTX::instance()->terminal){
+      const char *c0 = "", *c1 = "";
+      if(!streamIsFile(stderr) && streamIsVT100(stderr)){
+        c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
+      }
+      if(_commSize > 1)
+        fprintf(stderr, "%sError   : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
+      else
+        fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
+      fflush(stderr);
+    }
   }
 
   if(CTX::instance()->abortOnError == 2) {
-    throw 1;
+#if defined(HAVE_FLTK)
+    if(FlGui::available()) return; // don't throw if GUI is running
+#endif
+    throw _lastError;
   }
   else if(CTX::instance()->abortOnError == 3) {
+    throw _lastError;
+  }
+  else if(CTX::instance()->abortOnError == 4) {
     Exit(1);
   }
 }

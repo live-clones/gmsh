@@ -47,8 +47,7 @@ set(SRC
   CGNSConventions.cpp
   CGNSZone.cpp
     CGNSZoneStruct.cpp CGNSZoneUnstruct.cpp
-  CGNSRead.cpp
-  CGNSWrite.cpp
+  CGNSRead.cpp CGNSWrite.cpp CGNSWriteStruct.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

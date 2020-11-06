@@ -19,7 +19,7 @@ Include "t1.geo";
 
 // We change the mesh size to generate coarser mesh
 lc = lc * 4;
-Characteristic Length {1:4} = lc;
+MeshSize {1:4} = lc;
 
 // We define a new point
 Point(5) = {0.02, 0.02, 0, lc};

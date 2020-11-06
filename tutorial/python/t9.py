@@ -20,7 +20,6 @@ import sys
 # `Plugins').
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # Let us for example include a three-dimensional scalar view:
 path = os.path.dirname(os.path.abspath(__file__))

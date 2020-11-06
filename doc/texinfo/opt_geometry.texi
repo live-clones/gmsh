@@ -6,7 +6,7 @@ Command parsed when double-clicking on a point@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.DoubleClickedLineCommand
+@item Geometry.DoubleClickedCurveCommand
 Command parsed when double-clicking on a line@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
@@ -39,6 +39,31 @@ Saved in: @code{-}
 @item Geometry.CopyMeshingMethod
 Copy meshing method (unstructured or transfinite) when duplicating geometrical entities with built-in geometry kernel?@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.Curves
+Display geometry curves?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.CurveNumbers
+Display curve labels?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.CurveSelectWidth
+Display width of selected curves (in pixels)@*
+Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.CurveType
+Display curves as solid color segments (0), 3D cylinders (1) or tapered cylinders (2)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.CurveWidth
+Display width of lines (in pixels)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.DoubleClickedEntityTag
@@ -79,31 +104,6 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.LightTwoSide
 Light both sides of surfaces (leads to slower rendering)@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.Lines
-Display geometry curves?@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.LineNumbers
-Display curve labels?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.LineSelectWidth
-Display width of selected curves (in pixels)@*
-Default value: @code{3}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.LineType
-Display curves as solid color segments (0), 3D cylinders (1) or tapered cylinders (2)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.LineWidth
-Display width of lines (in pixels)@*
-Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.MatchGeomAndMesh
@@ -381,7 +381,7 @@ Normal geometry point color@*
 Default value: @code{@{90,90,90@}}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.Color.Lines
+@item Geometry.Color.Curves
 Normal geometry curve color@*
 Default value: @code{@{0,0,255@}}@*
 Saved in: @code{General.OptionsFileName}

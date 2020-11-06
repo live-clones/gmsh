@@ -537,8 +537,8 @@ int SubdivideExtrudedMesh(GModel *m)
           break;
         }
         else{
-          Msg::Error("Unable to subdivide extruded mesh: change surface mesh or");
-          Msg::Error("recombine extrusion instead");
+          Msg::Error("Unable to subdivide extruded mesh: change surface mesh or "
+                     "recombine extrusion instead");
           return -1;
         }
       }

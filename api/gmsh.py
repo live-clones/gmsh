@@ -212,11 +212,12 @@ def initialize(argv=[], readConfigFiles=True):
     """
     gmsh.initialize(argv=[], readConfigFiles=True)
 
-    Initialize Gmsh. This must be called before any call to the other functions
-    in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are
-    provided, they will be handled in the same way as the command line
-    arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh
-    configuration files (gmshrc and gmsh-options).
+    Initialize Gmsh API. This must be called before any call to the other
+    functions in the API. If `argc' and `argv' (or just `argv' in Python or
+    Julia) are provided, they will be handled in the same way as the command
+    line arguments in the Gmsh app. If `readConfigFiles' is set, read system
+    Gmsh configuration files (gmshrc and gmsh-options). Initializing the API
+    sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2.
     """
     api_argc_, api_argv_ = _iargcargv(argv)
     ierr = c_int()
@@ -231,7 +232,8 @@ def finalize():
     """
     gmsh.finalize()
 
-    Finalize Gmsh. This must be called when you are done using the Gmsh API.
+    Finalize the Gmsh API. This must be called when you are done using the Gmsh
+    API.
     """
     ierr = c_int()
     lib.gmshFinalize(
@@ -660,6 +662,22 @@ class model:
         return api_result_
 
     @staticmethod
+    def removePhysicalGroups(dimTags=[]):
+        """
+        gmsh.model.removePhysicalGroups(dimTags=[])
+
+        Remove the physical groups `dimTags' from the current model. If `dimTags'
+        is empty, remove all groups.
+        """
+        api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+        ierr = c_int()
+        lib.gmshModelRemovePhysicalGroups(
+            api_dimTags_, api_dimTags_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
+    @staticmethod
     def setPhysicalName(dim, tag, name):
         """
         gmsh.model.setPhysicalName(dim, tag, name)
@@ -670,6 +688,20 @@ class model:
         lib.gmshModelSetPhysicalName(
             c_int(dim),
             c_int(tag),
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
+    @staticmethod
+    def removePhysicalName(name):
+        """
+        gmsh.model.removePhysicalName(name)
+
+        Remove the physical name `name' from the current model.
+        """
+        ierr = c_int()
+        lib.gmshModelRemovePhysicalName(
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
@@ -855,36 +887,6 @@ class model:
         """
         ierr = c_int()
         lib.gmshModelRemoveEntityName(
-            c_char_p(name.encode()),
-            byref(ierr))
-        if ierr.value != 0:
-            raise Exception(logger.getLastError())
-
-    @staticmethod
-    def removePhysicalGroups(dimTags=[]):
-        """
-        gmsh.model.removePhysicalGroups(dimTags=[])
-
-        Remove the physical groups `dimTags' of the current model. If `dimTags' is
-        empty, remove all groups.
-        """
-        api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
-        ierr = c_int()
-        lib.gmshModelRemovePhysicalGroups(
-            api_dimTags_, api_dimTags_n_,
-            byref(ierr))
-        if ierr.value != 0:
-            raise Exception(logger.getLastError())
-
-    @staticmethod
-    def removePhysicalName(name):
-        """
-        gmsh.model.removePhysicalName(name)
-
-        Remove the physical name `name' from the current model.
-        """
-        ierr = c_int()
-        lib.gmshModelRemovePhysicalName(
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
@@ -3333,9 +3335,10 @@ class model:
             """
             gmsh.model.geo.addLine(startTag, endTag, tag=-1)
 
-            Add a straight line segment between the two points with tags `startTag' and
-            `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag
-            is selected automatically. Return the tag of the line.
+            Add a straight line segment in the built-in CAD representation, between the
+            two points with tags `startTag' and `endTag'. If `tag' is positive, set the
+            tag explicitly; otherwise a new tag is selected automatically. Return the
+            tag of the line.
 
             Return an integer value.
             """
@@ -3354,11 +3357,12 @@ class model:
             """
             gmsh.model.geo.addCircleArc(startTag, centerTag, endTag, tag=-1, nx=0., ny=0., nz=0.)
 
-            Add a circle arc (strictly smaller than Pi) between the two points with
-            tags `startTag' and `endTag', with center `centertag'. If `tag' is
-            positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. If (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane
-            of the circle arc. Return the tag of the circle arc.
+            Add a circle arc (strictly smaller than Pi) in the built-in CAD
+            representation, between the two points with tags `startTag' and `endTag',
+            and with center `centerTag'. If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0,
+            0, 0), explicitly set the plane of the circle arc. Return the tag of the
+            circle arc.
 
             Return an integer value.
             """
@@ -3381,12 +3385,12 @@ class model:
             """
             gmsh.model.geo.addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.)
 
-            Add an ellipse arc (strictly smaller than Pi) between the two points
-            `startTag' and `endTag', with center `centerTag' and major axis point
-            `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
-            tag is selected automatically. If (`nx', `ny', `nz') != (0, 0, 0),
-            explicitly set the plane of the circle arc. Return the tag of the ellipse
-            arc.
+            Add an ellipse arc (strictly smaller than Pi) in the built-in CAD
+            representation, between the two points `startTag' and `endTag', and with
+            center `centerTag' and major axis point `majorTag'. If `tag' is positive,
+            set the tag explicitly; otherwise a new tag is selected automatically. If
+            (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane of the circle
+            arc. Return the tag of the ellipse arc.
 
             Return an integer value.
             """
@@ -3410,10 +3414,11 @@ class model:
             """
             gmsh.model.geo.addSpline(pointTags, tag=-1)
 
-            Add a spline (Catmull-Rom) curve going through the points `pointTags'. If
-            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Create a periodic curve if the first and last points are the
-            same. Return the tag of the spline curve.
+            Add a spline (Catmull-Rom) curve in the built-in CAD representation, going
+            through the points `pointTags'. If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. Create a
+            periodic curve if the first and last points are the same. Return the tag of
+            the spline curve.
 
             Return an integer value.
             """
@@ -3432,10 +3437,11 @@ class model:
             """
             gmsh.model.geo.addBSpline(pointTags, tag=-1)
 
-            Add a cubic b-spline curve with `pointTags' control points. If `tag' is
-            positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Creates a periodic curve if the first and last points are
-            the same. Return the tag of the b-spline curve.
+            Add a cubic b-spline curve in the built-in CAD representation, with
+            `pointTags' control points. If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Creates a periodic curve if
+            the first and last points are the same. Return the tag of the b-spline
+            curve.
 
             Return an integer value.
             """
@@ -3454,9 +3460,9 @@ class model:
             """
             gmsh.model.geo.addBezier(pointTags, tag=-1)
 
-            Add a Bezier curve with `pointTags' control points. If `tag' is positive,
-            set the tag explicitly; otherwise a new tag is selected automatically.
-            Return the tag of the Bezier curve.
+            Add a Bezier curve in the built-in CAD representation, with `pointTags'
+            control points. If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically.  Return the tag of the Bezier curve.
 
             Return an integer value.
             """
@@ -3475,10 +3481,10 @@ class model:
             """
             gmsh.model.geo.addPolyline(pointTags, tag=-1)
 
-            Add a polyline curve going through the points `pointTags'. If `tag' is
-            positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Create a periodic curve if the first and last points are the
-            same. Return the tag of the polyline curve.
+            Add a polyline curve in the built-in CAD representation, going through the
+            points `pointTags'. If `tag' is positive, set the tag explicitly; otherwise
+            a new tag is selected automatically. Create a periodic curve if the first
+            and last points are the same. Return the tag of the polyline curve.
 
             Return an integer value.
             """
@@ -3497,10 +3503,11 @@ class model:
             """
             gmsh.model.geo.addCompoundSpline(curveTags, numIntervals=5, tag=-1)
 
-            Add a spline (Catmull-Rom) going through points sampling the curves in
-            `curveTags'. The density of sampling points on each curve is governed by
-            `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a
-            new tag is selected automatically. Return the tag of the spline.
+            Add a spline (Catmull-Rom) curve in the built-in CAD representation, going
+            through points sampling the curves in `curveTags'. The density of sampling
+            points on each curve is governed by `numIntervals'. If `tag' is positive,
+            set the tag explicitly; otherwise a new tag is selected automatically.
+            Return the tag of the spline.
 
             Return an integer value.
             """
@@ -3520,10 +3527,11 @@ class model:
             """
             gmsh.model.geo.addCompoundBSpline(curveTags, numIntervals=20, tag=-1)
 
-            Add a b-spline with control points sampling the curves in `curveTags'. The
-            density of sampling points on each curve is governed by `numIntervals'. If
-            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Return the tag of the b-spline.
+            Add a b-spline curve in the built-in CAD representation, with control
+            points sampling the curves in `curveTags'. The density of sampling points
+            on each curve is governed by `numIntervals'. If `tag' is positive, set the
+            tag explicitly; otherwise a new tag is selected automatically. Return the
+            tag of the b-spline.
 
             Return an integer value.
             """
@@ -3543,13 +3551,13 @@ class model:
             """
             gmsh.model.geo.addCurveLoop(curveTags, tag=-1, reorient=False)
 
-            Add a curve loop (a closed wire) formed by the curves `curveTags'.
-            `curveTags' should contain (signed) tags of model enties of dimension 1
-            forming a closed loop: a negative tag signifies that the underlying curve
-            is considered with reversed orientation. If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. If `reorient' is
-            set, automatically reorient the curves if necessary. Return the tag of the
-            curve loop.
+            Add a curve loop (a closed wire) in the built-in CAD representation, formed
+            by the curves `curveTags'. `curveTags' should contain (signed) tags of
+            model entities of dimension 1 forming a closed loop: a negative tag
+            signifies that the underlying curve is considered with reversed
+            orientation. If `tag' is positive, set the tag explicitly; otherwise a new
+            tag is selected automatically. If `reorient' is set, automatically reorient
+            the curves if necessary. Return the tag of the curve loop.
 
             Return an integer value.
             """
@@ -3569,10 +3577,11 @@ class model:
             """
             gmsh.model.geo.addPlaneSurface(wireTags, tag=-1)
 
-            Add a plane surface defined by one or more curve loops `wireTags'. The
-            first curve loop defines the exterior contour; additional curve loop define
-            holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is
-            selected automatically. Return the tag of the surface.
+            Add a plane surface in the built-in CAD representation, defined by one or
+            more curve loops `wireTags'. The first curve loop defines the exterior
+            contour; additional curve loop define holes. If `tag' is positive, set the
+            tag explicitly; otherwise a new tag is selected automatically. Return the
+            tag of the surface.
 
             Return an integer value.
             """
@@ -3591,10 +3600,11 @@ class model:
             """
             gmsh.model.geo.addSurfaceFilling(wireTags, tag=-1, sphereCenterTag=-1)
 
-            Add a surface filling the curve loops in `wireTags'. Currently only a
-            single curve loop is supported; this curve loop should be composed by 3 or
-            4 curves only. If `tag' is positive, set the tag explicitly; otherwise a
-            new tag is selected automatically. Return the tag of the surface.
+            Add a surface in the built-in CAD representation, filling the curve loops
+            in `wireTags' using transfinite interpolation. Currently only a single
+            curve loop is supported; this curve loop should be composed by 3 or 4
+            curves only. If `tag' is positive, set the tag explicitly; otherwise a new
+            tag is selected automatically. Return the tag of the surface.
 
             Return an integer value.
             """
@@ -3614,9 +3624,9 @@ class model:
             """
             gmsh.model.geo.addSurfaceLoop(surfaceTags, tag=-1)
 
-            Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
-            positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Return the tag of the shell.
+            Add a surface loop (a closed shell) formed by `surfaceTags' in the built-in
+            CAD representation.  If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the shell.
 
             Return an integer value.
             """
@@ -3635,10 +3645,11 @@ class model:
             """
             gmsh.model.geo.addVolume(shellTags, tag=-1)
 
-            Add a volume (a region) defined by one or more shells `shellTags'. The
-            first surface loop defines the exterior boundary; additional surface loop
-            define holes. If `tag' is positive, set the tag explicitly; otherwise a new
-            tag is selected automatically. Return the tag of the volume.
+            Add a volume (a region) in the built-in CAD representation, defined by one
+            or more shells `shellTags'. The first surface loop defines the exterior
+            boundary; additional surface loop define holes. If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the volume.
 
             Return an integer value.
             """
@@ -3657,12 +3668,13 @@ class model:
             """
             gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False)
 
-            Extrude the model entities `dimTags' by translation along (`dx', `dy',
-            `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
-            empty, also extrude the mesh: the entries in `numElements' give the number
-            of elements in each layer. If `height' is not empty, it provides the
-            (cumulative) height of the different layers, normalized to 1. If `dx' ==
-            `dy' == `dz' == 0, the entities are extruded along their normal.
+            Extrude the entities `dimTags' in the built-in CAD representation, using a
+            translation along (`dx', `dy', `dz'). Return extruded entities in
+            `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
+            entries in `numElements' give the number of elements in each layer. If
+            `height' is not empty, it provides the (cumulative) height of the different
+            layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are
+            extruded along their normal.
 
             Return `outDimTags'.
             """
@@ -3690,13 +3702,14 @@ class model:
             """
             gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
 
-            Extrude the model entities `dimTags' by rotation of `angle' radians around
-            the axis of revolution defined by the point (`x', `y', `z') and the
-            direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi.
-            Return extruded entities in `outDimTags'. If `numElements' is not empty,
-            also extrude the mesh: the entries in `numElements' give the number of
-            elements in each layer. If `height' is not empty, it provides the
-            (cumulative) height of the different layers, normalized to 1.
+            Extrude the entities `dimTags' in the built-in CAD representation, using a
+            rotation of `angle' radians around the axis of revolution defined by the
+            point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle
+            should be strictly smaller than Pi. Return extruded entities in
+            `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
+            entries in `numElements' give the number of elements in each layer. If
+            `height' is not empty, it provides the (cumulative) height of the different
+            layers, normalized to 1.
 
             Return `outDimTags'.
             """
@@ -3728,14 +3741,14 @@ class model:
             """
             gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
 
-            Extrude the model entities `dimTags' by a combined translation and rotation
-            of `angle' radians, along (`dx', `dy', `dz') and around the axis of
-            revolution defined by the point (`x', `y', `z') and the direction (`ax',
-            `ay', `az'). The angle should be strictly smaller than Pi. Return extruded
-            entities in `outDimTags'. If `numElements' is not empty, also extrude the
-            mesh: the entries in `numElements' give the number of elements in each
-            layer. If `height' is not empty, it provides the (cumulative) height of the
-            different layers, normalized to 1.
+            Extrude the entities `dimTags' in the built-in CAD representation, using a
+            combined translation and rotation of `angle' radians, along (`dx', `dy',
+            `dz') and around the axis of revolution defined by the point (`x', `y',
+            `z') and the direction (`ax', `ay', `az'). The angle should be strictly
+            smaller than Pi. Return extruded entities in `outDimTags'. If `numElements'
+            is not empty, also extrude the mesh: the entries in `numElements' give the
+            number of elements in each layer. If `height' is not empty, it provides the
+            (cumulative) height of the different layers, normalized to 1.
 
             Return `outDimTags'.
             """
@@ -3770,7 +3783,8 @@ class model:
             """
             gmsh.model.geo.translate(dimTags, dx, dy, dz)
 
-            Translate the model entities `dimTags' along (`dx', `dy', `dz').
+            Translate the entities `dimTags' in the built-in CAD representation along
+            (`dx', `dy', `dz').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3788,9 +3802,9 @@ class model:
             """
             gmsh.model.geo.rotate(dimTags, x, y, z, ax, ay, az, angle)
 
-            Rotate the model entities `dimTags' of `angle' radians around the axis of
-            revolution defined by the point (`x', `y', `z') and the direction (`ax',
-            `ay', `az').
+            Rotate the entities `dimTags' in the built-in CAD representation by `angle'
+            radians around the axis of revolution defined by the point (`x', `y', `z')
+            and the direction (`ax', `ay', `az').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3812,9 +3826,9 @@ class model:
             """
             gmsh.model.geo.dilate(dimTags, x, y, z, a, b, c)
 
-            Scale the model entities `dimTag' by factors `a', `b' and `c' along the
-            three coordinate axes; use (`x', `y', `z') as the center of the homothetic
-            transformation.
+            Scale the entities `dimTag' in the built-in CAD representation by factors
+            `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as
+            the center of the homothetic transformation.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3835,8 +3849,8 @@ class model:
             """
             gmsh.model.geo.mirror(dimTags, a, b, c, d)
 
-            Mirror the model entities `dimTag', with respect to the plane of equation
-            `a' * x + `b' * y + `c' * z + `d' = 0.
+            Mirror the entities `dimTag' in the built-in CAD representation, with
+            respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3855,9 +3869,10 @@ class model:
             """
             gmsh.model.geo.symmetrize(dimTags, a, b, c, d)
 
-            Mirror the model entities `dimTag', with respect to the plane of equation
-            `a' * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror',
-            which will be deprecated in a future release.)
+            Mirror the entities `dimTag' in the built-in CAD representation, with
+            respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+            (This is a synonym for `mirror', which will be deprecated in a future
+            release.)
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3876,7 +3891,8 @@ class model:
             """
             gmsh.model.geo.copy(dimTags)
 
-            Copy the entities `dimTags'; the new entities are returned in `outDimTags'.
+            Copy the entities `dimTags' in the built-in CAD representation; the new
+            entities are returned in `outDimTags'.
 
             Return `outDimTags'.
             """
@@ -3896,8 +3912,9 @@ class model:
             """
             gmsh.model.geo.remove(dimTags, recursive=False)
 
-            Remove the entities `dimTags'. If `recursive' is true, remove all the
-            entities on their boundaries, down to dimension 0.
+            Remove the entities `dimTags' in the built-in CAD representation. If
+            `recursive' is true, remove all the entities on their boundaries, down to
+            dimension 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3913,8 +3930,8 @@ class model:
             """
             gmsh.model.geo.removeAllDuplicates()
 
-            Remove all duplicate entities (different entities at the same geometrical
-            location).
+            Remove all duplicate entities in the built-in CAD representation (different
+            entities at the same geometrical location).
             """
             ierr = c_int()
             lib.gmshModelGeoRemoveAllDuplicates(
@@ -3927,8 +3944,9 @@ class model:
             """
             gmsh.model.geo.splitCurve(tag, pointTags)
 
-            Split the model curve of tag `tag' on the control points `pointTags'.
-            Return the tags `curveTags' of the newly created curves.
+            Split the curve of tag `tag' in the built-in CAD representation, on the
+            control points `pointTags'. Return the tags `curveTags' of the newly
+            created curves.
 
             Return `curveTags'.
             """
@@ -3974,6 +3992,44 @@ class model:
             lib.gmshModelGeoSetMaxTag(
                 c_int(dim),
                 c_int(maxTag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
+        def addPhysicalGroup(dim, tags, tag=-1):
+            """
+            gmsh.model.geo.addPhysicalGroup(dim, tags, tag=-1)
+
+            Add a physical group of dimension `dim', grouping the entities with tags
+            `tags' in the built-in CAD representation. Return the tag of the physical
+            group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0.
+
+            Return an integer value.
+            """
+            api_tags_, api_tags_n_ = _ivectorint(tags)
+            ierr = c_int()
+            api_result_ = lib.gmshModelGeoAddPhysicalGroup(
+                c_int(dim),
+                api_tags_, api_tags_n_,
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+
+        @staticmethod
+        def removePhysicalGroups(dimTags=[]):
+            """
+            gmsh.model.geo.removePhysicalGroups(dimTags=[])
+
+            Remove the physical groups `dimTags' from the built-in CAD representation.
+            If `dimTags' is empty, remove all groups.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelGeoRemovePhysicalGroups(
+                api_dimTags_, api_dimTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -4212,9 +4268,10 @@ class model:
             """
             gmsh.model.occ.addLine(startTag, endTag, tag=-1)
 
-            Add a straight line segment between the two points with tags `startTag' and
-            `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag
-            is selected automatically. Return the tag of the line.
+            Add a straight line segment in the OpenCASCADE CAD representation, between
+            the two points with tags `startTag' and `endTag'. If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the line.
 
             Return an integer value.
             """
@@ -4233,10 +4290,10 @@ class model:
             """
             gmsh.model.occ.addCircleArc(startTag, centerTag, endTag, tag=-1)
 
-            Add a circle arc between the two points with tags `startTag' and `endTag',
-            with center `centerTag'. If `tag' is positive, set the tag explicitly;
-            otherwise a new tag is selected automatically. Return the tag of the circle
-            arc.
+            Add a circle arc in the OpenCASCADE CAD representation, between the two
+            points with tags `startTag' and `endTag', with center `centerTag'. If `tag'
+            is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the circle arc.
 
             Return an integer value.
             """
@@ -4256,10 +4313,11 @@ class model:
             """
             gmsh.model.occ.addCircle(x, y, z, r, tag=-1, angle1=0., angle2=2*pi)
 
-            Add a circle of center (`x', `y', `z') and radius `r'. If `tag' is
-            positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. If `angle1' and `angle2' are specified, create a circle arc
-            between the two angles. Return the tag of the circle.
+            Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE
+            CAD representation. If `tag' is positive, set the tag explicitly; otherwise
+            a new tag is selected automatically. If `angle1' and `angle2' are
+            specified, create a circle arc between the two angles. Return the tag of
+            the circle.
 
             Return an integer value.
             """
@@ -4282,11 +4340,12 @@ class model:
             """
             gmsh.model.occ.addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1)
 
-            Add an ellipse arc between the two points `startTag' and `endTag', with
-            center `centerTag' and major axis point `majorTag'. If `tag' is positive,
-            set the tag explicitly; otherwise a new tag is selected automatically.
-            Return the tag of the ellipse arc. Note that OpenCASCADE does not allow
-            creating ellipse arcs with the major radius smaller than the minor radius.
+            Add an ellipse arc in the OpenCASCADE CAD representation, between the two
+            points `startTag' and `endTag', and with center `centerTag' and major axis
+            point `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. Return the tag of the ellipse arc. Note
+            that OpenCASCADE does not allow creating ellipse arcs with the major radius
+            smaller than the minor radius.
 
             Return an integer value.
             """
@@ -4308,13 +4367,13 @@ class model:
             gmsh.model.occ.addEllipse(x, y, z, r1, r2, tag=-1, angle1=0., angle2=2*pi)
 
             Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
-            x- and y-axes respectively. If `tag' is positive, set the tag explicitly;
-            otherwise a new tag is selected automatically. If `angle1' and `angle2' are
-            specified, create an ellipse arc between the two angles. Return the tag of
-            the ellipse. Note that OpenCASCADE does not allow creating ellipses with
-            the major radius (along the x-axis) smaller than or equal to the minor
-            radius (along the y-axis): rotate the shape or use `addCircle' in such
-            cases.
+            x- and y-axes, respectively, in the OpenCASCADE CAD representation. If
+            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. If `angle1' and `angle2' are specified, create an ellipse
+            arc between the two angles. Return the tag of the ellipse. Note that
+            OpenCASCADE does not allow creating ellipses with the major radius (along
+            the x-axis) smaller than or equal to the minor radius (along the y-axis):
+            rotate the shape or use `addCircle' in such cases.
 
             Return an integer value.
             """
@@ -4338,10 +4397,11 @@ class model:
             """
             gmsh.model.occ.addSpline(pointTags, tag=-1)
 
-            Add a spline (C2 b-spline) curve going through the points `pointTags'. If
-            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Create a periodic curve if the first and last points are the
-            same. Return the tag of the spline curve.
+            Add a spline (C2 b-spline) curve in the OpenCASCADE CAD representation,
+            going through the points `pointTags'. If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. Create a
+            periodic curve if the first and last points are the same. Return the tag of
+            the spline curve.
 
             Return an integer value.
             """
@@ -4360,12 +4420,12 @@ class model:
             """
             gmsh.model.occ.addBSpline(pointTags, tag=-1, degree=3, weights=[], knots=[], multiplicities=[])
 
-            Add a b-spline curve of degree `degree' with `pointTags' control points. If
-            `weights', `knots' or `multiplicities' are not provided, default parameters
-            are computed automatically. If `tag' is positive, set the tag explicitly;
-            otherwise a new tag is selected automatically. Create a periodic curve if
-            the first and last points are the same. Return the tag of the b-spline
-            curve.
+            Add a b-spline curve of degree `degree' in the OpenCASCADE CAD
+            representation, with `pointTags' control points. If `weights', `knots' or
+            `multiplicities' are not provided, default parameters are computed
+            automatically. If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. Create a periodic curve if the first and
+            last points are the same. Return the tag of the b-spline curve.
 
             Return an integer value.
             """
@@ -4391,9 +4451,9 @@ class model:
             """
             gmsh.model.occ.addBezier(pointTags, tag=-1)
 
-            Add a Bezier curve with `pointTags' control points. If `tag' is positive,
-            set the tag explicitly; otherwise a new tag is selected automatically.
-            Return the tag of the Bezier curve.
+            Add a Bezier curve in the OpenCASCADE CAD representation, with `pointTags'
+            control points. If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. Return the tag of the Bezier curve.
 
             Return an integer value.
             """
@@ -4412,11 +4472,11 @@ class model:
             """
             gmsh.model.occ.addWire(curveTags, tag=-1, checkClosed=False)
 
-            Add a wire (open or closed) formed by the curves `curveTags'. Note that an
-            OpenCASCADE wire can be made of curves that share geometrically identical
-            (but topologically different) points. If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. Return the tag
-            of the wire.
+            Add a wire (open or closed) in the OpenCASCADE CAD representation, formed
+            by the curves `curveTags'. Note that an OpenCASCADE wire can be made of
+            curves that share geometrically identical (but topologically different)
+            points. If `tag' is positive, set the tag explicitly; otherwise a new tag
+            is selected automatically. Return the tag of the wire.
 
             Return an integer value.
             """
@@ -4436,12 +4496,12 @@ class model:
             """
             gmsh.model.occ.addCurveLoop(curveTags, tag=-1)
 
-            Add a curve loop (a closed wire) formed by the curves `curveTags'.
-            `curveTags' should contain tags of curves forming a closed loop. Note that
-            an OpenCASCADE curve loop can be made of curves that share geometrically
-            identical (but topologically different) points. If `tag' is positive, set
-            the tag explicitly; otherwise a new tag is selected automatically. Return
-            the tag of the curve loop.
+            Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
+            formed by the curves `curveTags'. `curveTags' should contain tags of curves
+            forming a closed loop. Note that an OpenCASCADE curve loop can be made of
+            curves that share geometrically identical (but topologically different)
+            points. If `tag' is positive, set the tag explicitly; otherwise a new tag
+            is selected automatically. Return the tag of the curve loop.
 
             Return an integer value.
             """
@@ -4460,10 +4520,11 @@ class model:
             """
             gmsh.model.occ.addRectangle(x, y, z, dx, dy, tag=-1, roundedRadius=0.)
 
-            Add a rectangle with lower left corner at (`x', `y', `z') and upper right
-            corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. Round the
-            corners if `roundedRadius' is nonzero. Return the tag of the rectangle.
+            Add a rectangle in the OpenCASCADE CAD representation, with lower left
+            corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' +
+            `dy', `z'). If `tag' is positive, set the tag explicitly; otherwise a new
+            tag is selected automatically. Round the corners if `roundedRadius' is
+            nonzero. Return the tag of the rectangle.
 
             Return an integer value.
             """
@@ -4486,9 +4547,10 @@ class model:
             """
             gmsh.model.occ.addDisk(xc, yc, zc, rx, ry, tag=-1)
 
-            Add a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis
-            and `ry' along the y-axis. If `tag' is positive, set the tag explicitly;
-            otherwise a new tag is selected automatically. Return the tag of the disk.
+            Add a disk in the OpenCASCADE CAD representation, with center (`xc', `yc',
+            `zc') and radius `rx' along the x-axis and `ry' along the y-axis. If `tag'
+            is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the disk.
 
             Return an integer value.
             """
@@ -4510,11 +4572,11 @@ class model:
             """
             gmsh.model.occ.addPlaneSurface(wireTags, tag=-1)
 
-            Add a plane surface defined by one or more curve loops (or closed wires)
-            `wireTags'. The first curve loop defines the exterior contour; additional
-            curve loop define holes. If `tag' is positive, set the tag explicitly;
-            otherwise a new tag is selected automatically. Return the tag of the
-            surface.
+            Add a plane surface in the OpenCASCADE CAD representation, defined by one
+            or more curve loops (or closed wires) `wireTags'. The first curve loop
+            defines the exterior contour; additional curve loop define holes. If `tag'
+            is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the surface.
 
             Return an integer value.
             """
@@ -4533,10 +4595,11 @@ class model:
             """
             gmsh.model.occ.addSurfaceFilling(wireTag, tag=-1, pointTags=[])
 
-            Add a surface filling the curve loop `wireTag'. If `tag' is positive, set
-            the tag explicitly; otherwise a new tag is selected automatically. Return
-            the tag of the surface. If `pointTags' are provided, force the surface to
-            pass through the given points.
+            Add a surface in the OpenCASCADE CAD representation, filling the curve loop
+            `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a new
+            tag is selected automatically. Return the tag of the surface. If
+            `pointTags' are provided, force the surface to pass through the given
+            points.
 
             Return an integer value.
             """
@@ -4556,13 +4619,13 @@ class model:
             """
             gmsh.model.occ.addBSplineFilling(wireTag, tag=-1, type="")
 
-            Add a BSpline surface filling the curve loop `wireTag'. The curve loop
-            should be made of 2, 3 or 4 BSpline curves. The optional `type' argument
-            specifies the type of filling: "Stretch" creates the flattest patch,
-            "Curved" (the default) creates the most rounded patch, and "Coons" creates
-            a rounded patch with less depth than "Curved". If `tag' is positive, set
-            the tag explicitly; otherwise a new tag is selected automatically. Return
-            the tag of the surface.
+            Add a BSpline surface in the OpenCASCADE CAD representation, filling the
+            curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline
+            curves. The optional `type' argument specifies the type of filling:
+            "Stretch" creates the flattest patch, "Curved" (the default) creates the
+            most rounded patch, and "Coons" creates a rounded patch with less depth
+            than "Curved". If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. Return the tag of the surface.
 
             Return an integer value.
             """
@@ -4581,13 +4644,13 @@ class model:
             """
             gmsh.model.occ.addBezierFilling(wireTag, tag=-1, type="")
 
-            Add a Bezier surface filling the curve loop `wireTag'. The curve loop
-            should be made of 2, 3 or 4 Bezier curves. The optional `type' argument
-            specifies the type of filling: "Stretch" creates the flattest patch,
-            "Curved" (the default) creates the most rounded patch, and "Coons" creates
-            a rounded patch with less depth than "Curved". If `tag' is positive, set
-            the tag explicitly; otherwise a new tag is selected automatically. Return
-            the tag of the surface.
+            Add a Bezier surface in the OpenCASCADE CAD representation, filling the
+            curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 Bezier
+            curves. The optional `type' argument specifies the type of filling:
+            "Stretch" creates the flattest patch, "Curved" (the default) creates the
+            most rounded patch, and "Coons" creates a rounded patch with less depth
+            than "Curved". If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. Return the tag of the surface.
 
             Return an integer value.
             """
@@ -4606,12 +4669,13 @@ class model:
             """
             gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[])
 
-            Add a b-spline surface of degree `degreeU' x `degreeV' with `pointTags'
-            control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1,
-            Pu1v2, ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or
-            `multiplicitiesV' are not provided, default parameters are computed
-            automatically. If `tag' is positive, set the tag explicitly; otherwise a
-            new tag is selected automatically. Return the tag of the b-spline surface.
+            Add a b-spline surface of degree `degreeU' x `degreeV' in the OpenCASCADE
+            CAD representation, with `pointTags' control points given as a single
+            vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `weights', `knotsU',
+            `knotsV', `multiplicitiesU' or `multiplicitiesV' are not provided, default
+            parameters are computed automatically. If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. Return the tag
+            of the b-spline surface.
 
             Return an integer value.
             """
@@ -4643,10 +4707,11 @@ class model:
             """
             gmsh.model.occ.addBezierSurface(pointTags, numPointsU, tag=-1)
 
-            Add a Bezier surface with `pointTags' control points given as a single
-            vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set
-            the tag explicitly; otherwise a new tag is selected automatically. Return
-            the tag of the b-spline surface.
+            Add a Bezier surface in the OpenCASCADE CAD representation, with
+            `pointTags' control points given as a single vector [Pu1v1, ...
+            Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. Return the tag
+            of the b-spline surface.
 
             Return an integer value.
             """
@@ -4666,11 +4731,11 @@ class model:
             """
             gmsh.model.occ.addSurfaceLoop(surfaceTags, tag=-1, sewing=False)
 
-            Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
-            positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Return the tag of the surface loop. Setting `sewing' allows
-            to build a shell made of surfaces that share geometrically identical (but
-            topologically different) curves.
+            Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,
+            formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the
+            surface loop. Setting `sewing' allows to build a shell made of surfaces
+            that share geometrically identical (but topologically different) curves.
 
             Return an integer value.
             """
@@ -4690,10 +4755,11 @@ class model:
             """
             gmsh.model.occ.addVolume(shellTags, tag=-1)
 
-            Add a volume (a region) defined by one or more surface loops `shellTags'.
-            The first surface loop defines the exterior boundary; additional surface
-            loop define holes. If `tag' is positive, set the tag explicitly; otherwise
-            a new tag is selected automatically. Return the tag of the volume.
+            Add a volume (a region) in the OpenCASCADE CAD representation, defined by
+            one or more surface loops `shellTags'. The first surface loop defines the
+            exterior boundary; additional surface loop define holes. If `tag' is
+            positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the volume.
 
             Return an integer value.
             """
@@ -4712,11 +4778,12 @@ class model:
             """
             gmsh.model.occ.addSphere(xc, yc, zc, radius, tag=-1, angle1=-pi/2, angle2=pi/2, angle3=2*pi)
 
-            Add a sphere of center (`xc', `yc', `zc') and radius `r'. The optional
-            `angle1' and `angle2' arguments define the polar angle opening (from -Pi/2
-            to Pi/2). The optional `angle3' argument defines the azimuthal opening
-            (from 0 to 2*Pi). If `tag' is positive, set the tag explicitly; otherwise a
-            new tag is selected automatically. Return the tag of the sphere.
+            Add a sphere of center (`xc', `yc', `zc') and radius `r' in the OpenCASCADE
+            CAD representation. The optional `angle1' and `angle2' arguments define the
+            polar angle opening (from -Pi/2 to Pi/2). The optional `angle3' argument
+            defines the azimuthal opening (from 0 to 2*Pi). If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the sphere.
 
             Return an integer value.
             """
@@ -4740,10 +4807,10 @@ class model:
             """
             gmsh.model.occ.addBox(x, y, z, dx, dy, dz, tag=-1)
 
-            Add a parallelepipedic box defined by a point (`x', `y', `z') and the
-            extents along the x-, y- and z-axes. If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. Return the tag
-            of the box.
+            Add a parallelepipedic box in the OpenCASCADE CAD representation, defined
+            by a point (`x', `y', `z') and the extents along the x-, y- and z-axes. If
+            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the box.
 
             Return an integer value.
             """
@@ -4766,12 +4833,12 @@ class model:
             """
             gmsh.model.occ.addCylinder(x, y, z, dx, dy, dz, r, tag=-1, angle=2*pi)
 
-            Add a cylinder, defined by the center (`x', `y', `z') of its first circular
-            face, the 3 components (`dx', `dy', `dz') of the vector defining its axis
-            and its radius `r'. The optional `angle' argument defines the angular
-            opening (from 0 to 2*Pi). If `tag' is positive, set the tag explicitly;
-            otherwise a new tag is selected automatically. Return the tag of the
-            cylinder.
+            Add a cylinder in the OpenCASCADE CAD representation, defined by the center
+            (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
+            `dz') of the vector defining its axis and its radius `r'. The optional
+            `angle' argument defines the angular opening (from 0 to 2*Pi). If `tag' is
+            positive, set the tag explicitly; otherwise a new tag is selected
+            automatically. Return the tag of the cylinder.
 
             Return an integer value.
             """
@@ -4796,12 +4863,12 @@ class model:
             """
             gmsh.model.occ.addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, angle=2*pi)
 
-            Add a cone, defined by the center (`x', `y', `z') of its first circular
-            face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
-            and the two radii `r1' and `r2' of the faces (these radii can be zero). If
-            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. `angle' defines the optional angular opening (from 0 to
-            2*Pi). Return the tag of the cone.
+            Add a cone in the OpenCASCADE CAD representation, defined by the center
+            (`x', `y', `z') of its first circular face, the 3 components of the vector
+            (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of the
+            faces (these radii can be zero). If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. `angle' defines
+            the optional angular opening (from 0 to 2*Pi). Return the tag of the cone.
 
             Return an integer value.
             """
@@ -4827,11 +4894,12 @@ class model:
             """
             gmsh.model.occ.addWedge(x, y, z, dx, dy, dz, tag=-1, ltx=0.)
 
-            Add a right angular wedge, defined by the right-angle point (`x', `y', `z')
-            and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag'
-            is positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. The optional argument `ltx' defines the top extent along the
-            x-axis. Return the tag of the wedge.
+            Add a right angular wedge in the OpenCASCADE CAD representation, defined by
+            the right-angle point (`x', `y', `z') and the 3 extends along the x-, y-
+            and z-axes (`dx', `dy', `dz'). If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. The optional
+            argument `ltx' defines the top extent along the x-axis. Return the tag of
+            the wedge.
 
             Return an integer value.
             """
@@ -4855,10 +4923,11 @@ class model:
             """
             gmsh.model.occ.addTorus(x, y, z, r1, r2, tag=-1, angle=2*pi)
 
-            Add a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and
-            `r2'. If `tag' is positive, set the tag explicitly; otherwise a new tag is
-            selected automatically. The optional argument `angle' defines the angular
-            opening (from 0 to 2*Pi). Return the tag of the wedge.
+            Add a torus in the OpenCASCADE CAD representation, defined by its center
+            (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, set the
+            tag explicitly; otherwise a new tag is selected automatically. The optional
+            argument `angle' defines the angular opening (from 0 to 2*Pi). Return the
+            tag of the wedge.
 
             Return an integer value.
             """
@@ -4881,13 +4950,13 @@ class model:
             """
             gmsh.model.occ.addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False, maxDegree=-1)
 
-            Add a volume (if the optional argument `makeSolid' is set) or surfaces
-            defined through the open or closed wires `wireTags'. If `tag' is positive,
-            set the tag explicitly; otherwise a new tag is selected automatically. The
-            new entities are returned in `outDimTags'. If the optional argument
-            `makeRuled' is set, the surfaces created on the boundary are forced to be
-            ruled surfaces. If `maxDegree' is positive, set the maximal degree of
-            resulting surface.
+            Add a volume (if the optional argument `makeSolid' is set) or surfaces in
+            the OpenCASCADE CAD representation, defined through the open or closed
+            wires `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a
+            new tag is selected automatically. The new entities are returned in
+            `outDimTags'. If the optional argument `makeRuled' is set, the surfaces
+            created on the boundary are forced to be ruled surfaces. If `maxDegree' is
+            positive, set the maximal degree of resulting surface.
 
             Return `outDimTags'.
             """
@@ -4911,11 +4980,12 @@ class model:
             """
             gmsh.model.occ.addThickSolid(volumeTag, excludeSurfaceTags, offset, tag=-1)
 
-            Add a hollowed volume built from an initial volume `volumeTag' and a set of
-            faces from this volume `excludeSurfaceTags', which are to be removed. The
-            remaining faces of the volume become the walls of the hollowed solid, with
-            thickness `offset'. If `tag' is positive, set the tag explicitly; otherwise
-            a new tag is selected automatically.
+            Add a hollowed volume in the OpenCASCADE CAD representation, built from an
+            initial volume `volumeTag' and a set of faces from this volume
+            `excludeSurfaceTags', which are to be removed. The remaining faces of the
+            volume become the walls of the hollowed solid, with thickness `offset'. If
+            `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+            automatically.
 
             Return `outDimTags'.
             """
@@ -4938,11 +5008,12 @@ class model:
             """
             gmsh.model.occ.extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False)
 
-            Extrude the model entities `dimTags' by translation along (`dx', `dy',
-            `dz'). Return extruded entities in `outDimTags'. If `numElements' is not
-            empty, also extrude the mesh: the entries in `numElements' give the number
-            of elements in each layer. If `height' is not empty, it provides the
-            (cumulative) height of the different layers, normalized to 1.
+            Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
+            a translation along (`dx', `dy', `dz'). Return extruded entities in
+            `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
+            entries in `numElements' give the number of elements in each layer. If
+            `height' is not empty, it provides the (cumulative) height of the different
+            layers, normalized to 1.
 
             Return `outDimTags'.
             """
@@ -4970,14 +5041,14 @@ class model:
             """
             gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
 
-            Extrude the model entities `dimTags' by rotation of `angle' radians around
-            the axis of revolution defined by the point (`x', `y', `z') and the
-            direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
-            `numElements' is not empty, also extrude the mesh: the entries in
-            `numElements' give the number of elements in each layer. If `height' is not
-            empty, it provides the (cumulative) height of the different layers,
-            normalized to 1. When the mesh is extruded the angle should be strictly
-            smaller than 2*Pi.
+            Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
+            a rotation of `angle' radians around the axis of revolution defined by the
+            point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded
+            entities in `outDimTags'. If `numElements' is not empty, also extrude the
+            mesh: the entries in `numElements' give the number of elements in each
+            layer. If `height' is not empty, it provides the (cumulative) height of the
+            different layers, normalized to 1. When the mesh is extruded the angle
+            should be strictly smaller than 2*Pi.
 
             Return `outDimTags'.
             """
@@ -5009,8 +5080,8 @@ class model:
             """
             gmsh.model.occ.addPipe(dimTags, wireTag)
 
-            Add a pipe by extruding the entities `dimTags' along the wire `wireTag'.
-            Return the pipe in `outDimTags'.
+            Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
+            `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'.
 
             Return `outDimTags'.
             """
@@ -5096,10 +5167,11 @@ class model:
             gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean union (the fusion) of the entities `objectDimTags' and
-            `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
-            positive, try to set the tag explicitly (only valid if the boolean
-            operation results in a single entity). Remove the object if `removeObject'
-            is set. Remove the tool if `removeTool' is set.
+            `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting
+            entities in `outDimTags'. If `tag' is positive, try to set the tag
+            explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
             """
@@ -5129,10 +5201,11 @@ class model:
             gmsh.model.occ.intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean intersection (the common parts) of the entities
-            `objectDimTags' and `toolDimTags'. Return the resulting entities in
-            `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
-            valid if the boolean operation results in a single entity). Remove the
-            object if `removeObject' is set. Remove the tool if `removeTool' is set.
+            `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
+            Return the resulting entities in `outDimTags'. If `tag' is positive, try to
+            set the tag explicitly (only valid if the boolean operation results in a
+            single entity). Remove the object if `removeObject' is set. Remove the tool
+            if `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
             """
@@ -5162,10 +5235,11 @@ class model:
             gmsh.model.occ.cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean difference between the entities `objectDimTags' and
-            `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
-            positive, try to set the tag explicitly (only valid if the boolean
-            operation results in a single entity). Remove the object if `removeObject'
-            is set. Remove the tool if `removeTool' is set.
+            `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting
+            entities in `outDimTags'. If `tag' is positive, try to set the tag
+            explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
             """
@@ -5195,10 +5269,11 @@ class model:
             gmsh.model.occ.fragment(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean fragments (general fuse) of the entities
-            `objectDimTags' and `toolDimTags'. Return the resulting entities in
-            `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
-            valid if the boolean operation results in a single entity). Remove the
-            object if `removeObject' is set. Remove the tool if `removeTool' is set.
+            `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
+            Return the resulting entities in `outDimTags'. If `tag' is positive, try to
+            set the tag explicitly (only valid if the boolean operation results in a
+            single entity). Remove the object if `removeObject' is set. Remove the tool
+            if `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
             """
@@ -5227,7 +5302,8 @@ class model:
             """
             gmsh.model.occ.translate(dimTags, dx, dy, dz)
 
-            Translate the model entities `dimTags' along (`dx', `dy', `dz').
+            Translate the entities `dimTags' in the OpenCASCADE CAD representation
+            along (`dx', `dy', `dz').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -5245,9 +5321,9 @@ class model:
             """
             gmsh.model.occ.rotate(dimTags, x, y, z, ax, ay, az, angle)
 
-            Rotate the model entities `dimTags' of `angle' radians around the axis of
-            revolution defined by the point (`x', `y', `z') and the direction (`ax',
-            `ay', `az').
+            Rotate the entities `dimTags' in the OpenCASCADE CAD representation by
+            `angle' radians around the axis of revolution defined by the point (`x',
+            `y', `z') and the direction (`ax', `ay', `az').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -5269,9 +5345,9 @@ class model:
             """
             gmsh.model.occ.dilate(dimTags, x, y, z, a, b, c)
 
-            Scale the model entities `dimTag' by factors `a', `b' and `c' along the
-            three coordinate axes; use (`x', `y', `z') as the center of the homothetic
-            transformation.
+            Scale the entities `dimTags' in the OpenCASCADE CAD representation by
+            factors `a', `b' and `c' along the three coordinate axes; use (`x', `y',
+            `z') as the center of the homothetic transformation.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -5292,7 +5368,7 @@ class model:
             """
             gmsh.model.occ.mirror(dimTags, a, b, c, d)
 
-            Apply a symmetry transformation to the model entities `dimTag', with
+            Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
             respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -5312,7 +5388,7 @@ class model:
             """
             gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
 
-            Apply a symmetry transformation to the model entities `dimTag', with
+            Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
             respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
             (This is a synonym for `mirror', which will be deprecated in a future
             release.)
@@ -5336,7 +5412,7 @@ class model:
 
             Apply a general affine transformation matrix `a' (16 entries of a 4x4
             matrix, by row; only the 12 first can be provided for convenience) to the
-            model entities `dimTag'.
+            entities `dimTags' in the OpenCASCADE CAD representation.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_a_, api_a_n_ = _ivectordouble(a)
@@ -5353,7 +5429,8 @@ class model:
             """
             gmsh.model.occ.copy(dimTags)
 
-            Copy the entities `dimTags'; the new entities are returned in `outDimTags'.
+            Copy the entities `dimTags' in the OpenCASCADE CAD representation; the new
+            entities are returned in `outDimTags'.
 
             Return `outDimTags'.
             """
@@ -5373,8 +5450,9 @@ class model:
             """
             gmsh.model.occ.remove(dimTags, recursive=False)
 
-            Remove the entities `dimTags'. If `recursive' is true, remove all the
-            entities on their boundaries, down to dimension 0.
+            Remove the entities `dimTags' in the OpenCASCADE CAD representation. If
+            `recursive' is true, remove all the entities on their boundaries, down to
+            dimension 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -5390,9 +5468,9 @@ class model:
             """
             gmsh.model.occ.removeAllDuplicates()
 
-            Remove all duplicate entities (different entities at the same geometrical
-            location) after intersecting (using boolean fragments) all highest
-            dimensional entities.
+            Remove all duplicate entities in the OpenCASCADE CAD representation
+            (different entities at the same geometrical location) after intersecting
+            (using boolean fragments) all highest dimensional entities.
             """
             ierr = c_int()
             lib.gmshModelOccRemoveAllDuplicates(
@@ -5406,9 +5484,9 @@ class model:
             gmsh.model.occ.healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True)
 
             Apply various healing procedures to the entities `dimTags' (or to all the
-            entities in the model if `dimTags' is empty). Return the healed entities in
-            `outDimTags'. Available healing options are listed in the Gmsh reference
-            manual.
+            entities in the model if `dimTags' is empty) in the OpenCASCADE CAD
+            representation. Return the healed entities in `outDimTags'. Available
+            healing options are listed in the Gmsh reference manual.
 
             Return `outDimTags'.
             """
@@ -5434,11 +5512,12 @@ class model:
             """
             gmsh.model.occ.importShapes(fileName, highestDimOnly=True, format="")
 
-            Import BREP, STEP or IGES shapes from the file `fileName'. The imported
-            entities are returned in `outDimTags'. If the optional argument
-            `highestDimOnly' is set, only import the highest dimensional entities in
-            the file. The optional argument `format' can be used to force the format of
-            the file (currently "brep", "step" or "iges").
+            Import BREP, STEP or IGES shapes from the file `fileName' in the
+            OpenCASCADE CAD representation. The imported entities are returned in
+            `outDimTags'. If the optional argument `highestDimOnly' is set, only import
+            the highest dimensional entities in the file. The optional argument
+            `format' can be used to force the format of the file (currently "brep",
+            "step" or "iges").
 
             Return `outDimTags'.
             """
@@ -5672,8 +5751,9 @@ class model:
                 """
                 gmsh.model.occ.mesh.setSize(dimTags, size)
 
-                Set a mesh size constraint on the model entities `dimTags'. Currently only
-                entities of dimension 0 (points) are handled.
+                Set a mesh size constraint on the entities `dimTags' in the OpenCASCADE CAD
+                representation. Currently only entities of dimension 0 (points) are
+                handled.
                 """
                 api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
                 ierr = c_int()
@@ -6692,6 +6772,7 @@ class logger:
         Return a floating point value.
         """
         ierr = c_int()
+        lib.gmshLoggerGetWallTime.restype = c_double
         api_result_ = lib.gmshLoggerGetWallTime(
             byref(ierr))
         if ierr.value != 0:
@@ -6708,6 +6789,7 @@ class logger:
         Return a floating point value.
         """
         ierr = c_int()
+        lib.gmshLoggerGetCpuTime.restype = c_double
         api_result_ = lib.gmshLoggerGetCpuTime(
             byref(ierr))
         if ierr.value != 0:

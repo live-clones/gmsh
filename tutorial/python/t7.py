@@ -11,10 +11,9 @@ import os
 import sys
 
 # Mesh sizes can be specified very accurately by providing a background mesh,
-# i.e., a post-processing view that contains the target characteristic lengths.
+# i.e., a post-processing view that contains the target mesh sizes.
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # Merge a list-based post-processing view containing the target mesh sizes:
 path = os.path.dirname(os.path.abspath(__file__))
@@ -48,9 +47,9 @@ gmsh.model.mesh.field.setAsBackgroundMesh(bg_field)
 
 # In order to compute the mesh sizes from the background mesh only, and
 # disregard any other size constraints, one can set:
-gmsh.option.setNumber("Mesh.CharacteristicLengthExtendFromBoundary", 0)
-gmsh.option.setNumber("Mesh.CharacteristicLengthFromPoints", 0)
-gmsh.option.setNumber("Mesh.CharacteristicLengthFromCurvature", 0)
+gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
 
 # See `t10.py' for additional information: background meshes are actually a
 # particular case of general "mesh size fields".

@@ -14,7 +14,6 @@ import gmsh
 import sys
 
 gmsh.initialize(sys.argv)
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t10")
 
@@ -42,25 +41,25 @@ gmsh.model.geo.synchronize()
 # points 5 and on curve 2. This field returns the distance to point 5 and to
 # (100 equidistant points on) curve 2.
 gmsh.model.mesh.field.add("Distance", 1)
-gmsh.model.mesh.field.setNumbers(1, "NodesList", [5])
-gmsh.model.mesh.field.setNumber(1, "NNodesByEdge", 100)
-gmsh.model.mesh.field.setNumbers(1, "EdgesList", [2])
+gmsh.model.mesh.field.setNumbers(1, "PointsList", [5])
+gmsh.model.mesh.field.setNumbers(1, "CurvesList", [2])
+gmsh.model.mesh.field.setNumber(1, "NumPointsPerCurve", 100)
 
 # We then define a `Threshold' field, which uses the return value of the
 # `Distance' field 1 in order to define a simple change in element size
 # depending on the computed distances
 #
-# LcMax -                         /------------------
-#                               /
+# SizeMax -                     /------------------
+#                              /
 #                             /
-#                           /
-# LcMin -o----------------/
-#        |                |       |
-#      Point           DistMin DistMax
+#                            /
+# SizeMin -o----------------/
+#          |                |    |
+#        Point         DistMin  DistMax
 gmsh.model.mesh.field.add("Threshold", 2)
-gmsh.model.mesh.field.setNumber(2, "IField", 1)
-gmsh.model.mesh.field.setNumber(2, "LcMin", lc / 30)
-gmsh.model.mesh.field.setNumber(2, "LcMax", lc)
+gmsh.model.mesh.field.setNumber(2, "InField", 1)
+gmsh.model.mesh.field.setNumber(2, "SizeMin", lc / 30)
+gmsh.model.mesh.field.setNumber(2, "SizeMax", lc)
 gmsh.model.mesh.field.setNumber(2, "DistMin", 0.15)
 gmsh.model.mesh.field.setNumber(2, "DistMax", 0.5)
 
@@ -73,7 +72,7 @@ gmsh.model.mesh.field.setString(3, "F",
 # We could also combine MathEval with values coming from other fields. For
 # example, let's define a `Distance' field around point 1
 gmsh.model.mesh.field.add("Distance", 4)
-gmsh.model.mesh.field.setNumbers(4, "NodesList", [1])
+gmsh.model.mesh.field.setNumbers(4, "PointsList", [1])
 
 # We can then create a `MathEval' field with a function that depends on the
 # return value of the `Distance' field 4, i.e., depending on the distance to
@@ -93,7 +92,7 @@ gmsh.model.mesh.field.setNumber(6, "YMax", 0.6)
 
 # Many other types of fields are available: see the reference manual for a
 # complete list. You can also create fields directly in the graphical user
-# interface by selecting `Define->Fields' in the `Mesh' module.
+# interface by selecting `Define->Size fields' in the `Mesh' module.
 
 # Finally, let's use the minimum of all the fields as the background mesh field:
 gmsh.model.mesh.field.add("Min", 7)
@@ -110,28 +109,26 @@ gmsh.model.mesh.setSizeCallback(meshSizeCallback)
 # To determine the size of mesh elements, Gmsh locally computes the minimum of
 #
 # 1) the size of the model bounding box;
-# 2) if `Mesh.CharacteristicLengthFromPoints' is set, the mesh size specified
-#    at geometrical points;
-# 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based
-#    on the curvature and `Mesh.MinimumElementsPerTwoPi';
+# 2) if `Mesh.MeshSizeFromPoints' is set, the mesh size specified at geometrical
+#    points;
+# 3) if `Mesh.MeshSizeFromCurvature' is set, the mesh size based on the
+#    curvature and `Mesh.MinimumElementsPerTwoPi';
 # 4) the background mesh field;
 # 5) any per-entity mesh size constraint;
 # 6) the mesh size returned by the mesh size callback, if any.
 #
-# This value is then constrained in the interval
-# [`Mesh.CharacteristicLengthMin', `Mesh.CharacteristicLengthMax'] and
-# multiplied by `Mesh.CharacteristicLengthFactor'.  In addition, boundary
-# mesh sizes (on curves or surfaces) are interpolated inside the enclosed
-# entity (surface or volume, respectively) if the option
-# `Mesh.CharacteristicLengthExtendFromBoundary' is set (which is the case by
-# default).
+# This value is then constrained in the interval [`Mesh.MeshSizeMin',
+# `Mesh.MeshSizeMax'] and multiplied by `Mesh.MeshSizeFactor'.  In addition,
+# boundary mesh sizes (on curves or surfaces) are interpolated inside the
+# enclosed entity (surface or volume, respectively) if the option
+# `Mesh.MeshSizeExtendFromBoundary' is set (which is the case by default).
 #
 # When the element size is fully specified by a background mesh (as it is in
 # this example), it is thus often desirable to set
 
-gmsh.option.setNumber("Mesh.CharacteristicLengthExtendFromBoundary", 0)
-gmsh.option.setNumber("Mesh.CharacteristicLengthFromPoints", 0)
-gmsh.option.setNumber("Mesh.CharacteristicLengthFromCurvature", 0)
+gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
+gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
 
 # This will prevent over-refinement due to small mesh sizes on the boundary.
 

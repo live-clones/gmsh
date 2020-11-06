@@ -1,6 +1,6 @@
 SetFactory("OpenCASCADE");
 
-//Geometry.LineNumbers = 1;
+//Geometry.CurveNumbers = 1;
 Geometry.SurfaceNumbers = 1;
 
 DefineConstant[

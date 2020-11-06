@@ -8,5 +8,5 @@ Surface Loop(1) = {1};
 Volume(1) = {1};
 
 // use this to force a coarse mesh inside
-//Mesh.CharacteristicLengthExtendFromBoundary = 0;
-//Mesh.CharacteristicLengthMax = 0.5;
+//Mesh.MeshSizeExtendFromBoundary = 0;
+//Mesh.MeshSizeMax = 0.5;

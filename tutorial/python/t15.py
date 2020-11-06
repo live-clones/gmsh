@@ -18,7 +18,6 @@ import gmsh
 import sys
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # Copied from t1.py...
 lc = 1e-2

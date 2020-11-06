@@ -1,7 +1,6 @@
 import gmsh
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # create a model with OCC and mesh it
 gmsh.model.add('model1')
@@ -48,7 +47,7 @@ gmsh.model.mesh.field.setNumber(field, "ViewTag", view)
 gmsh.model.mesh.field.setAsBackgroundMesh(field)
 
 # 6) and we mesh model1 a second time, using the mesh size field
-gmsh.option.setNumber("Mesh.CharacteristicLengthExtendFromBoundary", 0)
+gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
 gmsh.option.setNumber("Mesh.Algorithm3D", 10)
 gmsh.model.mesh.clear()
 gmsh.model.mesh.generate(3)

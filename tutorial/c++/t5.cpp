@@ -2,7 +2,7 @@
 //
 //  Gmsh C++ tutorial 5
 //
-//  Characteristic lengths, holes in volumes
+//  Mesh sizes, holes in volumes
 //
 // -----------------------------------------------------------------------------
 
@@ -76,17 +76,16 @@ void cheeseHole(double x, double y, double z, double r, double lc,
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
-  gmsh::option::setNumber("General.Terminal", 1);
 
   double lcar1 = .1;
   double lcar2 = .0005;
   double lcar3 = .055;
 
   // If we wanted to change these mesh sizes globally (without changing the
-  // above definitions), we could give a global scaling factor for all
-  // characteristic lengths with e.g.
+  // above definitions), we could give a global scaling factor for all mesh
+  // sizes with e.g.
   //
-  // gmsh::option::setNumber("Mesh.CharacteristicLengthFactor", 0.1);
+  // gmsh::option::setNumber("Mesh.MeshSizeFactor", 0.1);
   //
   // Since we pass `argc' and `argv' to `gmsh::initialize()', we can also give
   // the option on the command line with the `-clscale' switch. For example,
@@ -176,7 +175,7 @@ int main(int argc, char **argv)
     x += 0.166;
     z += 0.166;
     cheeseHole(x, y, z, r, lcar3, shells, volumes);
-    gmsh::model::addPhysicalGroup(3, {volumes.back()}, t);
+    gmsh::model::geo::addPhysicalGroup(3, {volumes.back()}, t);
     std::printf("Hole %d (center = {%g,%g,%g}, radius = %g) has number %d!\n",
                 t, x, y, z, r, volumes.back());
   }
