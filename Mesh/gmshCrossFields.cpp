@@ -6201,13 +6201,14 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     }
   }
   if (use_prescribed) {
+  // if (1) {//DBG
     Msg::Info("Computing cross field from %d prescribed singularities",
         temp.size());
     //ALEX
     std::map<MTriangle *, std::vector<std::vector<SVector3>>> crossEdgTri;
     std::map<MVertex *, double, MVertexPtrLessThan> H;
     ConformalMapping::computeScaledCrossesFromSingularities(gm,crossEdgTri,H);
-    ConformalMapping::_viewCrossEdgTri(crossEdgTri, "CM::Crosses");
+    // ConformalMapping::_viewCrossEdgTri(crossEdgTri, "CM::Crosses");;
     int cf_tag = -1;
     std::set<MTriangle *, MElementPtrLessThan> tri;
     std::vector<std::size_t> keys;
@@ -6251,9 +6252,9 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     int crossFieldTag = gmsh::view::add("theta");
     gmsh::view::addModelData(crossFieldTag, 0, cname, "ElementData", keys, values);
 
-    PView* viewH = PView::getViewByName("H");
+    PView* viewH = PView::getViewByName("CM::H");
     if (viewH) {delete viewH; viewH = NULL;}
-    ConformalMapping::_viewScalarTriangles(H,tri, "CM::H");
+    // ConformalMapping::_viewScalarTriangles(H,tri, "CM::H");
     // ALEX
     if(0){
       std::map<int, std::vector<double> > dataTHETA;
@@ -7609,11 +7610,11 @@ int findAndMarkSingularities(GModel * gm){
   std::vector<MVertex *> c2v;
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
   Msg::Info("MBD | Finding singularities and creating new geometry file");
-
+  
   std::string geoFileName = gm->getName() + "_sing.geo";
   bool printLabels = true; bool onlyPhysicals = false;
   gm->writeGEO(geoFileName, printLabels, onlyPhysicals);
-
+  
   std::string modelWithSingName = gm->getName() + "_sing";
   GModel* gg = GModel::findByName(modelWithSingName);
   if (gg) {
@@ -7622,7 +7623,15 @@ int findAndMarkSingularities(GModel * gm){
   }
  
   hxtQuadMultiBlockGetSingInfo(mesh, cf_tag, geoFileName);
+  gg=GModel::findByName(modelWithSingName);
+  // if (gg) {
+  //   Msg::Warning("Model with singularities not found");
+  // }
+  // else
+  //   gm=gg;
   Msg::Info("MBD | New geometry ready");
+  // std::string geoFileName2 = gm->getName() + "_sing2.geo";
+  // gm->writeGEO(geoFileName2, printLabels, onlyPhysicals);
   hxtMeshDelete(&mesh);
   return 0;
 }
@@ -7655,7 +7664,7 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
   bool printLabels = true; bool onlyPhysicals = false;
   std::string tempName= "temp.geo";
   std::cout << "geo being written" << std::endl;  
-  // gm->writeGEO(tempName, printLabels, onlyPhysicals);
+  gm->writeGEO(tempName, printLabels, onlyPhysicals);
   std::cout << "geo written" << std::endl;
   std::string tmp_path1 = "temp1.msh";
   gm->writeMSH(tmp_path1, 4.1, false, true);
@@ -7665,12 +7674,14 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
   Msg::Info("MBD | Generating separatrices to obtain split mesh");
   HXTMesh *splitMesh;
   hxtQuadMultiBlockSplitWithPrescribedSing(mesh, cf_tag, &splitMesh);
-  std::cout << "mesh splitted" << std::endl;  
+  std::cout << "mesh splitted" << std::endl;
+  if (theta) {delete theta; theta = NULL;}//DBG
   Msg::Info("MBD | Split mesh generated");
   
   Msg::Info("MBD |  Exporting split mesh to gmsh");
   //projector
 #if defined(HAVE_QUADMESHINGTOOLS)
+  std::cout << "projection" << std::endl;
   if (state.data_boundary_projector == NULL) {
     QMT::TMesh boundary;
     bool oki = QMT::import_TMesh_from_gmsh(gm->getName(),boundary);
@@ -7682,7 +7693,7 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
     Msg::Debug("saved QMT::BoundaryProjector* in QuadMeshingState");
   }
 #endif
-  
+  std::cout << "mesh in new model" << std::endl;
   const std::string meshName=gm->getName() + "_Cut.msh";
   GModel* gg = GModel::findByName(meshName);
   if (gg) {

@@ -7,7 +7,26 @@
 #define MESH_GFACE_HXT_H
 
 class GModel;
+class GFace;
+
+
 // remeshing -- Christos's work
 int meshGFaceHxt(GModel *gm);
+int meshGFaceHxt(GFace *gf);
+
+#if defined(HAVE_HXT)
+  #include "hxt_mesh.h"
+#else
+  struct HXTMesh;
+#endif
+#include <vector>
+#include <map>
+#include <cstdint>
+class MVertex;
+
+
+int Gmsh2Hxt(GFace *gf, HXTMesh *m,
+		   std::map<MVertex *, uint32_t> &v2c,
+		   std::vector<MVertex *> &c2v);
 
 #endif

@@ -113,7 +113,8 @@ QuadGenerator::QuadGenerator(HXTMesh *mesh, int nbTurns, double critNorm, int fl
   m_filePosCF=fileName;
   //clean mesh here
   m_triMesh=mesh;
-  m_sizeSeeding=1000;
+  // m_sizeSeeding=1000;//
+  m_sizeSeeding=50;//Carefull ! this value is linked to epsilon in trialpoint. they have to be coherent
   m_mBlock=NULL;
 }
 
@@ -1982,7 +1983,9 @@ int QuadGenerator::getAngleBetweenSep(std::array<double,3> singCoord, std::array
     nSP1+=SP1[k]*SP1[k];
     nSP2+=SP2[k]*SP2[k];
   }
-  double cosAlpha=myDot(SP1, SP2)/(sqrt(nSP1)*sqrt(nSP2));
+  nSP1=sqrt(nSP1);
+  nSP2=sqrt(nSP2);
+  double cosAlpha=myDot(SP1, SP2)/(nSP1*nSP2);
   *alpha=acos(cosAlpha)*180./M_PI;
     
   return 1;
@@ -2029,6 +2032,7 @@ HXTStatus QuadGenerator::disableCornerSepDuplicates(int singID){
     initiationPoints.push_back((*sepPoints)[1]);
   }
   double alpha=-1;
+  std::cout << "----------------------" << std::endl;
   if(initiationPoints.size()>0)
     for(uint64_t k=0; k<initiationPoints.size()-1; k++){
       for(uint64_t t=k+1; t<initiationPoints.size(); t++){
@@ -2084,6 +2088,20 @@ int QuadGenerator::optimizeSizeofRadius(double *radius){
       }
     }
   }
+
+  // for(uint64_t i=0; i<m_vectCorner.size(); i++){
+  //   Corner *s=&(m_vectCorner[i]);
+  //   uint64_t sEdg = s->getEdges()[0];
+  //   for(int j=0; j<3; j++){
+  //     point1[j]=vert[4*edges->node[2*sEdg+0]+j];
+  //     point2[j]=vert[4*edges->node[2*sEdg+1]+j];
+  //   }
+  //   a=point1[0]-point2[0]; b=point1[1]-point2[1]; c=point1[2]-point2[2];
+  //   length=0.4*sqrt(a*a+b*b+c*c);
+  //   if(minRadius>length){
+  //     minRadius=length;
+  //   }
+  // }
  
   //*radius=2*minRadius;
   *radius=0.5*minRadius;
@@ -2327,9 +2345,8 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
   //-----end meshing the model
   std::cout<<"Geometry ready!"<<std::endl;
   // gmsh::fltk::run();
+  gmsh::fltk::awake("update");
   // gmsh::finalize();
-  
-
   return HXT_STATUS_OK;
 }
 
@@ -2451,12 +2468,24 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
     }
   }
   std::cout<<"Corners written!"<<std::endl;
-
+  std::cout << "radius : " << radius << std::endl;
   int physicalGroup=-1;
   physicalGroup=gmsh::model::addPhysicalGroup(0, singThreeTags, -1);
   gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_THREE");
+  // gmsh::vectorpair dimTagThree;
+  // for(size_t i=0;i<singThreeTags.size();i++){
+  //   std::pair<int,int> dimTagS(0,singThreeTags[i]);
+  //   dimTagThree.push_back(dimTagS);
+  // }
+  // gmsh::model::mesh::setSize(dimTagThree,radius);
   physicalGroup=gmsh::model::addPhysicalGroup(0, singFiveTags, -1);
   gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_FIVE");
+  // gmsh::vectorpair dimTagFive;
+  // for(size_t i=0;i<singFiveTags.size();i++){
+  //   std::pair<int,int> dimTagS(0,singFiveTags[i]);
+  //   dimTagFive.push_back(dimTagS);
+  // }
+  // gmsh::model::mesh::setSize(dimTagFive,radius);
   // gmsh::model::occ::synchronize();
   gmsh::model::geo::synchronize();
   //-----start meshing the model
@@ -2465,6 +2494,7 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
   //-----end meshing the model
   std::cout<<"Geometry ready!"<<std::endl;
   // gmsh::fltk::run();
+  gmsh::fltk::awake("update");
   // gmsh::finalize();
   
 
@@ -2524,6 +2554,8 @@ HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH)
   std::cout << "--Disable initiation duplicates--" << std::endl;
   for(uint64_t t=0; t<m_vectSing.size(); t++)
     disableSepDuplicates((int) t);
+  for(uint64_t t=0; t<m_vectCorner.size(); t++)
+    disableCornerSepDuplicates((int) t);
   std::cout << "--Write separatrices initiation without duplicates--" << std::endl;
   hxtWriteInitSep("qmbInitiationNoDuplicates.pos");
   std::cout << "--Save bdry lines as separatrices--" << std::endl;
@@ -3482,12 +3514,15 @@ int QuadGenerator::trialPoint(uint64_t triNum, uint64_t edgNum, double *coordP, 
     else
       gamma=(dv*PCu/du-PCv)/(CAv-dv*CAu/du);
   }
+  //Alex: try tu push away from nodes for further splittrimesh. Repulsion parameter
+  // double epsilon=1e-2;
+  double epsilon = 0.1*(1./m_sizeSeeding);
   if(!isParallelBC&&beta>=0&&beta<1){
   // if(!isParallelBC&&beta>=0&&beta<=1){
-    if(fabs(beta)<1e-6)
-      beta=1e-6;
-    if(fabs(1-beta)<1e-6)
-      beta=1-1e-6;
+    if(fabs(beta)<epsilon)//Alex: try tu push away from nodes for further splittrimesh
+      beta=epsilon;
+    if(fabs(1-beta)<epsilon)
+      beta=1-epsilon;
     for(int j=0; j<3; j++){
       pointCoord[j] = B[j]+beta*BC[j];
     }
@@ -3508,10 +3543,10 @@ int QuadGenerator::trialPoint(uint64_t triNum, uint64_t edgNum, double *coordP, 
   }
  else if(!isParallelCA&&gamma>=0&&gamma<1){
   //else if(!isParallelCA&&gamma>=0&&gamma<=1){
-    if(fabs(gamma)<1e-6)
-      gamma=1e-6;
-    if(fabs(1-gamma)<1e-6)
-      gamma=1-1e-6;
+    if(fabs(gamma)<epsilon)
+      gamma=epsilon;
+    if(fabs(1-gamma)<epsilon)
+      gamma=1-epsilon;
     for(int j=0; j<3; j++){
       pointCoord[j] = C[j]+gamma*CA[j];
     }
@@ -4433,6 +4468,7 @@ int QuadGenerator::cutLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs)
     }
     sep->getPCoord()->push_back(lastIntersectionPoint);
     sep->getPTriangles()->push_back(lastIntersectionTriangle);
+    sep->setIsLimitCycle(); //set in sep limit cycle
   }
 
   return 1;

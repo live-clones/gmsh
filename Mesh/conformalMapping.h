@@ -149,15 +149,16 @@ class ConformalMapping{
   void _fitModelToInitMesh();
   void _fitModelToFeatureMesh();
   void _fitModelToCutGraphMesh();
-  void _viewScalarVertex(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, const std::string& viewName="defaultName");
   void _viewCrosses(std::map<const MEdge *, Cross2D> crossField, const std::string& viewName="Crosses");
   void _viewVectTri(std::map<const MTriangle *, SVector3, MElementPtrLessThan> vect, const std::string& viewName="Vector");
   void deleteVertex(MVertex* v); 
  public:
   ConformalMapping(GModel *gm);
+  ConformalMapping(GModel *gm, int dbg);
   ~ConformalMapping();
   std::map<MTriangle *, std::vector<std::vector<SVector3>>> getTriEdgScaledCrosses();
   std::map<MVertex *, double, MVertexPtrLessThan> getH();
+  static void _viewScalarVertex(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, const std::string& viewName="defaultName");
   static void _viewScalarTriangles(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, std::set<MTriangle *, MElementPtrLessThan> &triangles, const std::string& viewName="defaultName");
   static void _viewEdges(std::set<const MEdge*> &edges, const std::string& viewName="defaultName");
   static void _viewScalarEdges(std::map<const MEdge *, double> &scalar, const std::string& viewName="defaultName");
@@ -165,6 +166,7 @@ class ConformalMapping{
   
   static void computeScaledCrossesFromSingularities(GModel *gm,std::map<MTriangle *, std::vector<std::vector<SVector3>>> &crossEdgTri, std::map<MVertex *, double, MVertexPtrLessThan> &H){
     ConformalMapping cm(gm);
+    /* ConformalMapping cm(gm,1); */
     crossEdgTri=cm.getTriEdgScaledCrosses();
     H=cm.getH();
     return;
