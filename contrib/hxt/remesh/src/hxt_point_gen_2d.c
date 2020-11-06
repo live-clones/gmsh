@@ -96,7 +96,7 @@ HXTStatus hxtGetLineVerticesForColor(HXTMesh *mesh,
   for (uint32_t i=0; i<fmesh->vertices.num; i++){
     if (parent[i].type == 15){
       uint32_t cp = parent[i].id;
-      // TODO slow 
+      // TODO slow, but just for a few feature points  
       for (uint64_t j=0; j<mesh->triangles.num; j++){
         if (mesh->triangles.color[j] != color) continue;
         uint32_t *triV = mesh->triangles.node + 3*j;
@@ -2210,8 +2210,6 @@ HXTStatus hxtPointGenCorrection(HXTEdges *edges,
   HXT_CHECK(hxtFree(&idClose));
   return HXT_STATUS_OK;
 }
-
-
 
 
 
