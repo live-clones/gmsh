@@ -155,7 +155,7 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2, int side)
 
 static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
                               BoundaryLayerColumns *_columns,
-                              std::vector<SVector3> &_dirs, bool fan)
+                              std::vector<SVector3> &_dirs, bool fan, int fanSize)
 {
   std::vector<SVector3> N1, N2;
   for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
@@ -205,7 +205,7 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
         }
         double frac = fabs(AMAX - AMIN) / M_PI;
         int n =
-          (int)(frac * CTX::instance()->mesh.boundaryLayerFanPoints + 0.5);
+          (int)(frac * fanSize /*CTX::instance()->mesh.boundaryLayerFanPoints*/ + 0.5);
         int fanSize = fan ? n : 0;
         _columns->addFan(_myVert, ee[0], ee[1], true);
         for(int i = -1; i <= fanSize; i++) {
@@ -460,7 +460,9 @@ bool buildAdditionalPoints2D(GFace *gf)
 
       bool fan =
         (*it)->onWhat()->dim() == 0 && blf->isFanNode((*it)->onWhat()->tag());
-
+      int  fanSize = fan ? blf->fanSize((*it)->onWhat()->tag()) : 0;
+            
+      
       for(std::multimap<MVertex *, MVertex *>::iterator itm =
             _columns->_non_manifold_edges.lower_bound(*it);
           itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
@@ -477,7 +479,7 @@ bool buildAdditionalPoints2D(GFace *gf)
       else if(_connections.size() == 2) {
         MEdge e1(*it, _connections[0]);
         MEdge e2(*it, _connections[1]);
-        treat2Connections(gf, *it, e1, e2, _columns, _dirs, fan);
+        treat2Connections(gf, *it, e1, e2, _columns, _dirs, fan, fanSize);
       }
       else if(_connections.size() == 1) {
         MEdge e1(*it, _connections[0]);
@@ -537,11 +539,11 @@ bool buildAdditionalPoints2D(GFace *gf)
           }
           double frac = fabs(AMAX - AMIN) / M_PI;
           int n =
-            (int)(frac * CTX::instance()->mesh.boundaryLayerFanPoints + 0.5);
-          int fanSize = fan ? n : 0;
+            (int)(frac * fanSize + 0.5);
+          int fanSize2 = fan ? n : 0;
           if(fan) _columns->addFan(*it, e1, e1, true);
-          for(int i = -1; i <= fanSize; i++) {
-            double t = (double)(i + 1) / (fanSize + 1);
+          for(int i = -1; i <= fanSize2; i++) {
+            double t = (double)(i + 1) / (fanSize2 + 1);
             double alpha = t * AMAX + (1. - t) * AMIN;
             SVector3 x(cos(alpha), sin(alpha), 0);
             x.normalize();

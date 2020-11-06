@@ -2734,6 +2734,9 @@ BoundaryLayerField::BoundaryLayerField()
   options["FanPointsList"] = new FieldOptionList(
     _fanPointTags, "Tags of points in the geometric model for which a fan "
     "is created", &updateNeeded);
+  options["FanPointsSizesList"] = new FieldOptionList(
+    _fanSizes, "Number of elements in the fan for each fan node. "
+    "If not present default value mesh.boundaryLayerFanPoints", &updateNeeded);
   options["PointsList"] = new FieldOptionList(
     _pointTags, "Tags of points in the geometric model for which a boundary "
     "layer ends", &updateNeeded);
