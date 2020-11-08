@@ -2129,7 +2129,7 @@ public:
            "to which the distance is actually computed. In the same way, "
            "surfaces are replaced by a point cloud, sampled according to "
            "NumPointsPerCurve and the size of their bounding box). "
-           "The Attractor is deprecated: use the Distance field instead.";
+           "The Attractor field is deprecated: use the Distance field instead.";
   }
   void getCoord(double x, double y, double z, double &cx, double &cy,
                 double &cz, GEntity *ge = NULL)
