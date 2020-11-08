@@ -2405,10 +2405,10 @@ when it is known beforehand that the operation will result in a single
 @item BooleanIntersection ( @var{expression} ) = @{ @var{boolean-list} @} @{ @var{boolean-list} @};
 Computes the intersection of the object and the tool and assign the
 result the tag @var{expression}.
-@item BooleanUnion @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+@item BooleanUnion  ( @var{expression} ) = @{ @var{boolean-list} @} @{ @var{boolean-list} @};
 Computes the union of the object and the tool and assign the result
 the tag @var{expression}.
-@item BooleanDifference @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+@item BooleanDifference  ( @var{expression} ) = @{ @var{boolean-list} @} @{ @var{boolean-list} @};
 Subtract the tool from the object and assign the result the
 tag @var{expression}.
 @end ftable
