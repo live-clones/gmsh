@@ -401,9 +401,14 @@ double TimeOfDay()
   _ftime(&localTime);
   return localTime.time + 1.e-3 * localTime.millitm;
 #else
-  struct timeval t;
-  gettimeofday(&t, NULL);
-  return t.tv_sec + 1.e-6 * t.tv_usec;
+  // clock_gettime has less overhead than gettimeofday (e.g. no timezone
+  // adjustment)
+  struct timespec t;
+  clock_gettime(CLOCK_REALTIME, &t);
+  return t.tv_sec + 1.e-9 * t.tv_nsec;
+  // struct timeval t;
+  // gettimeofday(&t, NULL);
+  // return t.tv_sec + 1.e-6 * t.tv_usec;
 #endif
 }
 
