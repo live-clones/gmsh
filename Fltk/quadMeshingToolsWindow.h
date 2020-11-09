@@ -37,6 +37,7 @@ public:
   Fl_Button *push_quad_generate;
   Fl_Button *push_quad_simplify;
   Fl_Button *push_quad_smooth;
+  Fl_Button *push_quad_show_base_complex;
   Fl_Check_Button *check_cf_use_prescribed;
   Fl_Check_Button *check_fix_dcp;
   Fl_Value_Input* flv_cross_field_iter;

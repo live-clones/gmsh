@@ -13,6 +13,7 @@
 #include "meshWinslow2d.h"
 #include "Field.h"
 #include "meshGFaceOptimize.h"
+#include "qmt_utils.hpp"
 
 
 #include "geolog.h"
@@ -57,6 +58,7 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
         auto it = v2c.find(v);
         if (it == v2c.end()) {
           v2c[v] = vcount;
+          line[lv] = vcount;
           c2v.push_back(v);
           vcount += 1;
         } else {
@@ -78,6 +80,7 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
       auto it = v2c.find(v);
       if (it == v2c.end()) {
         v2c[v] = vcount;
+        tri[lv] = vcount;
         c2v.push_back(v);
         vcount += 1;
       } else {
@@ -96,8 +99,8 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
       auto it = v2c.find(v);
       if (it == v2c.end()) {
         v2c[v] = vcount;
-        c2v.push_back(v);
         quad[lv] = vcount;
+        c2v.push_back(v);
         vcount += 1;
       } else {
         quad[lv] = it->second;

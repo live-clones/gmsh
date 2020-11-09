@@ -271,13 +271,14 @@ namespace QSQ {
       return true;
     }
 
-  void geolog_elements(const std::vector<MElement*>& elts, const std::string& name) {
+  void geolog_elements(const std::vector<MElement*>& elts, const std::string& name,
+      double value = 0.) {
     for (MElement* f: elts) {
       vector<array<double,3> > pts(f->getNumVertices());
       for (size_t i = 0; i < pts.size(); ++i) {
         pts[i] = SVector3(f->getVertex(i)->point());
       }
-      vector<double> values(pts.size(),double(f->getNum()));
+      vector<double> values(pts.size(),value);
       GeoLog::add(pts,values,name);
     }
   }
@@ -3666,6 +3667,115 @@ namespace QSQ {
     return 0;
   }
 
+  bool buildQuadMeshBaseComplex(GModel* gm) {
+    vector<MQuadrangle*> quadrangles;
+    for (GFace* gf: model_faces(gm)) {
+      append(quadrangles, gf->quadrangles);
+    }
+    Msg::Info("build quad mesh base complex on %li faces (total: %li quads)", gm->getFaces().size(), quadrangles.size());
+    bool oko = reorientQuadranglesIfNecessary(quadrangles);
+    if (!oko) {
+      Msg::Error("failed to re-orient quads");
+    }
+
+    MeshHalfEdges M;
+
+    /* singularNodes is the list of singularities (irregular vertices to keep) in the 
+     * GFace structure, the values are the vertex 'num' */
+
+    vector<MVertex*> singularVertices;
+    int st = createMeshHalfEdges(quadrangles, M, singularVertices);
+    if (st != 0) {
+      Msg::Error("failed to generate half edge datastructure");
+      return st;
+    }
+
+    /* Loop over interior irregular vertices, trace seperatrices */
+    double count = 0.;
+    Gardener G(M);
+    std::vector<size_t> hesStart;
+    vector<bool> isBCEdge(M.hedges.size(),false);
+    for (size_t v = 0; v < M.vertices.size(); ++v) {
+      if (G.vOnBoundary[v]) continue;
+      if (G.valence[v] == 4) continue;
+
+      M.vertexHalfEdges(v, hesStart);
+      for (size_t a: hesStart) {
+        size_t he0 = M.opposite(a);
+        if (he0 == NO_ID) continue;
+        if (isBCEdge[he0]) continue;
+
+        count += 1.;
+        vector<size_t> path;
+        size_t he = he0;
+        while (true) {
+          path.push_back(he);
+          size_t v2 = M.vertex(he,2);
+          int index = (G.vOnBoundary[v2]) ?  2 - G.valence[v2] : 4 - G.valence[v2];
+          bool regular = (index == 0);
+          if (!regular) break;
+
+          size_t he2 = M.next(M.opposite(M.next(he)));
+          if (he2 == NO_ID) { /* try the other way */
+            he2 = M.opposite(M.prev(M.opposite(M.prev(M.opposite(he)))));
+            if (he2 == NO_ID) break;
+          }
+          he = he2;
+        }
+
+        for (size_t hep: path) {
+          isBCEdge[hep] = true;
+          size_t hop = M.opposite(hep);
+          if (hop != NO_ID) isBCEdge[hop] = true;
+          geolog_halfedge(M, hep, double(count), "base_complex");
+        }
+      }
+    }
+
+    /* Quad colors via BFS */
+    {
+      std::vector<int> color(M.faces.size(),0);
+      int colorCount = 0;
+      std::vector<size_t> qhes;
+      for (size_t f0 = 0; f0 < M.faces.size(); ++f0) if (color[f0] == 0) {
+        colorCount += 1;
+        std::queue<size_t> Q;
+        Q.push(f0);
+        color[f0] = colorCount;
+
+        while (Q.size()) {
+          size_t f = Q.front();
+          color[f] = colorCount;
+          Q.pop();
+          size_t he = M.faces[f].he;
+          do {
+            he = M.hedges[he].next;
+            if (!isBCEdge[he]) {
+              size_t he_op = M.opposite(he);
+              if (he_op == NO_ID) continue;
+              size_t f_op = M.hedges[he_op].face;
+              if (color[f_op] == 0) {
+                color[f_op] = colorCount;
+                Q.push(f_op);
+              }
+            }
+          } while (he != M.faces[f].he);
+        }
+      }
+      Msg::Info("%i partitions in base complex (%li CAD faces, %li quads)",
+          colorCount, model_faces(gm).size(), M.faces.size());
+      for (size_t f = 0; f < M.faces.size(); ++f) {
+        MElement* elt = M.faces[f].ptr;
+        geolog_elements({elt}, "base_complex", double(color[f]));
+      }
+    }
+
+    gmsh::initialize();
+    GeoLog::flush();
+
+    return true;
+  }
+
   bool getQuadsAjacentToGEdges(
       MeshHalfEdges& M,
       const vector<GEdge*>& gedges,
@@ -4268,9 +4378,10 @@ namespace QSQ {
 }
 using namespace QSQ;
 
-namespace CAD {
+int showQuadMeshBaseComplex(GModel* gm) {
+  buildQuadMeshBaseComplex(gm);
+  return 0;
 }
-using namespace CAD;
 
 int setQuadCoherentCurveTransfiniteConstraints(const std::vector<GFace*>& faces, const std::map<GFace*,GFaceInfo>& faceInfo) 
 {
@@ -4483,7 +4594,6 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
       if (gf->meshStatistics.status == GFace::PENDING) {
         discreteFace* df = dynamic_cast<discreteFace*>(gf);
         bool forceDiscrete = (CTX::instance()->mesh.quadqsUseDiscreteGeometry > 0);
-        DBG(df, forceDiscrete, gf->triangles.size());
         if ((df != NULL || forceDiscrete) && gf->triangles.size() != 0) {
           meshGFaceHxt(gf);
           Msg::Debug("-- Face %i: %li quads and %li triangles built with meshGFaceHxt", 
@@ -4524,6 +4634,22 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
     Msg::Error("- Face %i: no quads and no triangles, ignore", gf->tag());
     gf->meshStatistics.status = GFace::FAILED; 
     continue;
+  }
+
+  constexpr bool SHOW_VIEW_QUADTRI = true;
+  if (SHOW_VIEW_QUADTRI) {
+    std::vector<MElement*> tris;
+    std::vector<MElement*> quads;
+    for (GFace* gf: faces) {
+      tris.reserve(gf->triangles.size());
+      quads.reserve(gf->quadrangles.size());
+      for (MElement* f: gf->triangles) tris.push_back(f);
+      for (MElement* f: gf->quadrangles) quads.push_back(f);
+      geolog_elements(quads, "quadtri",0.);
+      geolog_elements(tris, "quadtri",1.);
+    }
+    GeoLog::flush();
+    gm->writeMSH("quadtri.msh",2.2,false,true);
   }
 
   bool secondOrderLinear = false; /* which value to use ? */
@@ -4901,7 +5027,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     return s4;
   }
 
-  return 0;
+  // return 0;
 
   bool SHOW_ONLY_PATTERN_MESHING = false;
 
