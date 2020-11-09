@@ -303,6 +303,7 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp("Alt+x", "Set X view"));
   s.push_back(mp("Alt+y", "Set Y view"));
   s.push_back(mp("Alt+z", "Set Z view"));
+  s.push_back(mp("Alt+1", "Set 1:1 view"));
   s.push_back(mp("Alt+Shift+a", "Hide/show small axes"));
   s.push_back(mp("Alt+Shift+b", "Hide/show mesh volume faces"));
   s.push_back(mp("Alt+Shift+c", "Loop through predefined colormaps"));
@@ -316,6 +317,8 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp("Alt+Shift+x", "Set -X view"));
   s.push_back(mp("Alt+Shift+y", "Set -Y view"));
   s.push_back(mp("Alt+Shift+z", "Set -Z view"));
+  s.push_back(mp("Alt+Shift+1", "Reset bounding box around visible entities"));
+  s.push_back(mp("Alt+" + cc + "+1", "Sync scale between viewports"));
   return s;
 }
 

@@ -1,4 +1,4 @@
-4.7.1 (Work-in-progress): small bug fixes.
+4.7.1 (Work-in-progress): small bug fixes and improvements.
 
 4.7.0 (November 5, 2020): API errors now throw exceptions with the last error
 message (instead of an integer error code); API functions now print messages on

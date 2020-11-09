@@ -2,7 +2,7 @@
 
 @ftable @code
 @item Attractor
-Compute the distance to the given points, curves or surfaces. (Curves are replaced by NumPointsPerCurve equidistant points, to which the distance is actually computed. In the same way, surfaces are replaced by a point cloud, sampled according to NumPointsPerCurve and the size of their bounding box). The Attractor is deprecated: use the Distance field instead.@*
+Compute the distance to the given points, curves or surfaces. (Curves are replaced by NumPointsPerCurve equidistant points, to which the distance is actually computed. In the same way, surfaces are replaced by a point cloud, sampled according to NumPointsPerCurve and the size of their bounding box). The Attractor field is deprecated: use the Distance field instead.@*
 Options:@*
 @table @code
 @item CurvesList

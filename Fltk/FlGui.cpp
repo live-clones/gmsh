@@ -925,6 +925,13 @@ int FlGui::testGlobalShortcuts(int event)
     status_xyz1p_cb(0, (void *)"z");
     status = 1;
   }
+  else if(Fl::test_shortcut(FL_ALT + '1') ||
+          Fl::test_shortcut(FL_ALT + FL_SHIFT + '1') ||
+          Fl::test_shortcut(FL_ALT + FL_CTRL + '1') ||
+          Fl::test_shortcut(FL_ALT + FL_META + '1')) {
+    status_xyz1p_cb(0, (void *)"1:1");
+    status = 1;
+  }
   else if(Fl::test_shortcut(FL_ALT + 'o')) {
     status_options_cb(0, (void *)"p");
     status = 1;

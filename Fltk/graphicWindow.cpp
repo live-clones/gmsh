@@ -2699,9 +2699,9 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
     drawContext *ctx = gls[i]->getDrawContext();
     if(!strcmp(str, "r")){
       // rotate +90 or -90 (shift) degress around axis perp to the
-      // screen, or sync rotation with first window (alt)
+      // screen, or sync rotation with first window (Ctrl)
       double axis[3] = {0., 0., 1.};
-      if(Fl::event_state(FL_ALT)){
+      if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META)){
         if(i != 0){
           drawContext *ctx0 = gls[0]->getDrawContext();
           ctx->setQuaternion(ctx0->quaternion[0], ctx0->quaternion[1],
@@ -2770,7 +2770,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
 	ctx->camera.lookAtCg();
       }
       else{
-	if(Fl::event_state(FL_ALT)){
+        if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META)){
 	  if(i != 0){
 	    drawContext *ctx0 = gls[0]->getDrawContext();
 	    for(int j = 0; j < 3; j++){
@@ -3637,12 +3637,13 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   x += sw;
   _butt[4] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
   _butt[4]->callback(status_xyz1p_cb, (void *)"r");
-  _butt[4]->tooltip("Rotate +90 or -90 (Shift) degrees, or sync rotations (Alt)");
+  _butt[4]->tooltip("Rotate +90 or -90 (Shift) degrees, or sync rotations (Ctrl)");
   x += sw;
   _butt[3] = new Fl_Button(x, mh + glheight + mheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
   _butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
-  _butt[3]->tooltip("Set unit scale, sync scale between viewports (Alt), "
-                   "or reset bounding box around visible entities (Shift)");
+  _butt[3]->tooltip("Set unit scale, sync scale between viewports (Ctrl), "
+                   "or reset bounding box around visible entities (Shift) "
+                    "(Alt+1, Alt+Ctrl+1, Alt+Shift+1)");
   x += 1.75 * FL_NORMAL_SIZE;
   _butt[9] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "S");
   _butt[9]->callback(status_options_cb, (void *)"S");
