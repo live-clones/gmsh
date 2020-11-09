@@ -42,14 +42,34 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
 
   c2v.reserve(2*gf->mesh_vertices.size());
   uint32_t vcount = 0;
+  std::vector<uint32_t> nodes;
   std::vector<std::array<uint32_t,2> > lines;
   std::vector<std::array<uint32_t,3> > triangles;
   std::vector<std::array<uint32_t,4> > quads;
+  std::vector<uint16_t> nodes_color;
   std::vector<uint16_t> lines_color;
   std::vector<uint16_t> triangles_color;
   std::vector<uint16_t> quads_color;
 
-  /* Loop over CAD curves (except seam) */
+  /* Loop over CAD nodes */
+  for (GVertex* gv: gf->vertices()) if (gv->vertices().size() == 1){
+    if (gf->vertices()[0]->mesh_vertices.size() != 1) continue;
+    MVertex* v = gf->vertices()[0]->mesh_vertices[0];
+    auto it = v2c.find(v);
+    size_t nv = 0;
+    if (it == v2c.end()) {
+      v2c[v] = vcount;
+      nv = vcount;
+      c2v.push_back(v);
+      vcount += 1;
+    } else {
+      nv = it->second;
+    }
+    nodes.push_back(nv);
+    nodes_color.push_back((uint16_t)gv->tag());
+  }
+
+  /* Loop over CAD curves */
   for (GEdge* ge: gf->edges()) {
     for (MLine* l: ge->lines) {
       std::array<uint32_t,2> line;
@@ -122,6 +142,15 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
     m->vertices.coord[4 * i + 1] = v->y();
     m->vertices.coord[4 * i + 2] = v->z();
     m->vertices.coord[4 * i + 3] = 0;
+  }
+
+  /* - points */
+  m->points.num = m->points.size = nodes.size();
+  HXT_CHECK(hxtAlignedMalloc(&m->points.node, (m->points.num) * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint16_t)));
+  for(size_t i = 0; i < nodes.size(); i++) {
+    m->points.node[i] = nodes[i];
+    m->points.color[i] = nodes_color[i];
   }
 
   /* - lines */
@@ -437,7 +466,6 @@ int meshGFaceHxt(GModel *gm)
 
   std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
-  Gmsh2Hxt(gm, mesh, v2c, c2v);
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
 
   size_t targetNumberOfQuads = 10000;
@@ -629,6 +657,7 @@ int meshGFaceHxt(GFace *gf) {
     Msg::Error("failed to convert face %i to HXTMesh", gf->tag());
     return status;
   }
+  hxtMeshWriteGmsh(mesh, "convert.msh");
 
   size_t targetNumberOfQuads = gf->triangles.size()/2;
   Msg::Debug("-- target number of quads: %li", targetNumberOfQuads);
@@ -696,6 +725,8 @@ int meshGFaceHxt(GFace *gf) {
   HXTStatus stgp = hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh);
   if (stgp != HXT_STATUS_OK) {
     Msg::Error("hxtGmshPointGenMain: wrong output status");
+    HXT_CHECK(hxtMeshDelete(&fmesh));
+    HXT_CHECK(hxtMeshDelete(&mesh));
     return -1;
   }
 
