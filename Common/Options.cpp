@@ -2180,6 +2180,12 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
   return CTX::instance()->guiColorScheme;
 }
 
+double opt_general_gui_refresh_rate(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->guiRefreshRate = val;
+  return CTX::instance()->guiRefreshRate;
+}
+
 double opt_general_graphics_fontsize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->glFontSize = (int)val;

@@ -146,8 +146,8 @@ public:
   std::string display;
   // FLTK theme
   std::string guiTheme;
-  // FLTK color scheme
-  int guiColorScheme;
+  // FLTK color scheme and max refresh rate
+  int guiColorScheme, guiRefreshRate;
   // print messages on to the terminal?
   int terminal;
   // number of graphical windows/tiles

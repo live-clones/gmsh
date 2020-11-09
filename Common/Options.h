@@ -150,6 +150,7 @@ double opt_general_show_options_on_startup(OPT_ARGS_NUM);
 double opt_general_show_messages_on_startup(OPT_ARGS_NUM);
 double opt_general_fontsize(OPT_ARGS_NUM);
 double opt_general_gui_color_scheme(OPT_ARGS_NUM);
+double opt_general_gui_refresh_rate(OPT_ARGS_NUM);
 double opt_general_graphics_fontsize(OPT_ARGS_NUM);
 double opt_general_graphics_fontsize_title(OPT_ARGS_NUM);
 double opt_general_graphics_position0(OPT_ARGS_NUM);

@@ -63,19 +63,21 @@ std::atomic<int> FlGui::_locked(0);
 // check (now!) if there are any pending events, and process them
 void FlGui::check(bool force)
 {
-  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
-  Fl::check();
-
-  /* Workaround for much slower redraws on macOS Big Sur: limit Fl::check() to
-     60 fps
   if(force) { Fl::check(); return; }
+
+  if(Msg::GetThreadNum() > 0 || _locked > 0) return;
+
   static double lastRefresh = 0.;
-  double start = TimeOfDay();
-  if(start - lastRefresh > 1. / 60.) {
-    lastRefresh = start;
+  if(CTX::instance()->guiRefreshRate > 0) { // necessary e.g. on macOS Big Sur
+    double start = TimeOfDay();
+    if(start - lastRefresh > 1. / CTX::instance()->guiRefreshRate) {
+      lastRefresh = start;
+      Fl::check();
+    }
+  }
+  else {
     Fl::check();
   }
-  */
 }
 
 // wait (possibly indefinitely) for any events, then process them
