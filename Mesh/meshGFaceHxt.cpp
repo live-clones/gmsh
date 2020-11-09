@@ -674,7 +674,7 @@ int meshGFaceHxt(GFace *gf) {
 
   // TODO 
   HXTPointGenOptions opt = { .verbosity = 0,
-                             .generateLines = 1,
+                             .generateLines = 0,
                              .generateSurfaces = 1,
                              .generateVolumes = 0,
                              .remeshSurfaces = 1,
@@ -718,6 +718,7 @@ int meshGFaceHxt(GFace *gf) {
       }
       gf->quadrangles.push_back(q);
     }
+    gf->meshStatistics.status = GFace::DONE;
   }
 
   HXT_CHECK(hxtMeshDelete(&fmesh));

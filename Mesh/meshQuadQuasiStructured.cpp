@@ -37,6 +37,9 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "qmt_utils.hpp" // For debug printing
+#if defined(HAVE_HXT)
+#include "meshGFaceHxt.h"
+#endif
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -4478,11 +4481,22 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
 #endif
     for (GFace* gf: faces) {
       if (gf->meshStatistics.status == GFace::PENDING) {
-        gf->setMeshingAlgo(ALGO_2D_PACK_PRLGRMS);
-        gf->mesh(true);
-        Msg::Debug("-- Face %i: %li quads and %li triangles built with ALGO_2D_PACK_PRLGRMS", 
-            gf->tag(), gf->quadrangles.size(), gf->triangles.size());
-        gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
+        discreteFace* df = dynamic_cast<discreteFace*>(gf);
+        bool forceDiscrete = (CTX::instance()->mesh.quadqsUseDiscreteGeometry > 0);
+        DBG(df, forceDiscrete, gf->triangles.size());
+        if ((df != NULL || forceDiscrete) && gf->triangles.size() != 0) {
+          meshGFaceHxt(gf);
+          Msg::Debug("-- Face %i: %li quads and %li triangles built with meshGFaceHxt", 
+              gf->tag(), gf->quadrangles.size(), gf->triangles.size());
+        } else if (!df && gf->triangles.size() == 0) {
+          gf->setMeshingAlgo(ALGO_2D_PACK_PRLGRMS);
+          gf->mesh(true);
+          Msg::Debug("-- Face %i: %li quads and %li triangles built with ALGO_2D_PACK_PRLGRMS", 
+              gf->tag(), gf->quadrangles.size(), gf->triangles.size());
+          gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
+        } else {
+          Msg::Error("- Face %i: case not supported (not discrete with triangles, not CAD without triangles)", gf->tag());
+        }
 
         #if defined(_OPENMP)
         #pragma omp critical
@@ -4802,6 +4816,31 @@ int optimizeQuadMeshGeometry(GModel* gm, const std::vector<std::array<double,5> 
   return 0;
 }
 
+bool useDiscreteGeometry(GModel* gm) {
+  if (CTX::instance()->mesh.quadqsUseDiscreteGeometry) {
+    return true;
+  }
+  for (GFace* gf: model_faces(gm)) {
+    discreteFace* df = dynamic_cast<discreteFace*>(gf);
+    if (df) {
+      if (gf->triangles.size() == 0) {
+        Msg::Error("- Face %li: discrete geometry but no triangles", gf->tag());
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+bool triangulatedMeshAlreadyExists(GModel* gm) {
+  for (GFace* gf: model_faces(gm)) {
+    if (gf->triangles.size() == 0) return false;
+  }
+  return true;
+}
+
+
+
 int Mesh2DWithQuadQuasiStructured(GModel* gm)
 {
   if (CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT) {
@@ -4816,11 +4855,13 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
 
   Msg::Info("Generate quasi-structured all-quadrilateral mesh ...");
 
-  Msg::Info("[Step 1] Generate initial triangulation ...");
-  int s1 = generateInitialTriangulation(gm);
-  if (s1 != 0) {
-    Msg::Error("failed to generate initial triangulation, abort");
-    return s1;
+  if (!triangulatedMeshAlreadyExists(gm)) {
+    Msg::Info("[Step 1] Generate initial triangulation ...");
+    int s1 = generateInitialTriangulation(gm);
+    if (s1 != 0) {
+      Msg::Error("failed to generate initial triangulation, abort");
+      return s1;
+    }
   }
 
   /* Use the triangulation to compute CAD face information 
@@ -4840,13 +4881,17 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     return s2;
   }
 
-  Msg::Info("[Step 3] Generate curve 1D meshes ...");
-  bool forceEvenNbEdges = false;
-  bool alignWithGVertices = true;
-  int s3 = generateCurve1DMeshes(gm, faceInfo, forceEvenNbEdges, alignWithGVertices);
-  if (s3 != 0) {
-    Msg::Warning("failed to generate curve 1D meshes, abort");
-    return s3;
+  if (!useDiscreteGeometry(gm)) {
+    Msg::Info("[Step 3] Generate curve 1D meshes ...");
+    bool forceEvenNbEdges = false;
+    bool alignWithGVertices = true;
+    int s3 = generateCurve1DMeshes(gm, faceInfo, forceEvenNbEdges, alignWithGVertices);
+    if (s3 != 0) {
+      Msg::Warning("failed to generate curve 1D meshes, abort");
+      return s3;
+    }
+  } else {
+    for (GFace* gf: faces) gf->meshStatistics.status = GFace::PENDING;
   }
 
   Msg::Info("[Step 4] Generate unstructured quad meshes ...");
@@ -4856,7 +4901,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     return s4;
   }
 
-  // return 0;
+  return 0;
 
   bool SHOW_ONLY_PATTERN_MESHING = false;
 

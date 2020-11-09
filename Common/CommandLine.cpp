@@ -549,7 +549,11 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
         }
-    }
+      }
+      else if(argv[i] == "-quadqsUseDiscreteGeometry") {
+        CTX::instance()->mesh.quadqsUseDiscreteGeometry = 1;
+        i++;
+      }
     else if(argv[i] == "-part") {
         i++;
         if(i < argv.size()) {
