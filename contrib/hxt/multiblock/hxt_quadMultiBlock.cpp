@@ -212,30 +212,26 @@ HXTStatus hxtQuadMultiBlockDBG(HXTMesh *mesh, int tagCrossField, HXTMesh **split
     for(int t=0; t<2; t++){// for each triangle
       uint64_t numTri = edges->edg2tri[2*i+t];  
       if (numTri != (uint64_t)-1){
+	int locEdgNum=0;
+	for(int j=0; j<3; j++){
+	  uint32_t edgJ=edges->tri2edg[3*numTri+j];
+	  if(edgJ==i)
+	    locEdgNum=j;
+	}
 	double U[3]={0.}, V[3]={0.}, n[3]={0.};
-	uint32_t vtri[3] = {mesh->triangles.node[3*numTri+0],mesh->triangles.node[3*numTri+1],mesh->triangles.node[3*numTri+2]};
+	uint32_t vtri[3] = {mesh->triangles.node[3*numTri+locEdgNum],mesh->triangles.node[3*numTri+(locEdgNum+1)%3],mesh->triangles.node[3*numTri+(locEdgNum+2)%3]};
 	HXT_CHECK(QuadGenerator::trianglebasis(mesh,vtri,U,V,n));
-	if(n[2]>0)
-	  sign=1.0;
-	else
-	  sign=-1.0;
 	for(int j=0; j<3; j++){
 	  uint32_t edgJ=edges->tri2edg[3*numTri+j];
 	  if(edgJ!=i){
-	    // //get global edge number
-	    // uint32_t vtri[3] = {mesh->triangles.node[3*numTri+0],mesh->triangles.node[3*numTri+1],mesh->triangles.node[3*numTri+2]};
-	    // int edgNumG = -1;
-	    // for(int k=0; k<3; k++) // looking for global edge numbering
-	    //   if( (vtri[(edgJ+0)%3] == edges->node[2*edges->tri2edg[3*numTri+k]+0] || vtri[(edgJ+0)%3] == edges->node[2*edges->tri2edg[3*numTri+k]+1]) &&
-	    // 	  (vtri[(edgJ+1)%3] == edges->node[2*edges->tri2edg[3*numTri+k]+0] || vtri[(edgJ+1)%3] == edges->node[2*edges->tri2edg[3*numTri+k]+1]) )
-	    // 	edgNumG = edges->tri2edg[3*numTri+k];
 	    double *v0J = mesh->vertices.coord +4*edges->node[2*edgJ+0];
 	    double *v1J = mesh->vertices.coord +4*edges->node[2*edgJ+1];
 	    double eJ[3] = {v1J[0]-v0J[0],v1J[1]-v0J[1],v1J[2]-v0J[2]};
 	    double normJ = sqrt(eJ[0]*eJ[0]+eJ[1]*eJ[1]+eJ[2]*eJ[2]);
 	    eJ[0] /= normJ; eJ[1] /= normJ; eJ[2] /= normJ;
-	    // double fJ[3] = {n[1]*eJ[2]-n[2]*eJ[1], n[2]*eJ[0]-n[0]*eJ[2], n[0]*eJ[1]-n[1]*eJ[0]};
-	    double alpha = sign*atan2(eJ[1],eJ[0]);
+	    double cosEdgJ=eJ[0]*U[0]+eJ[1]*U[1]+eJ[2]*U[2];
+	    double sinEdgJ=eJ[0]*V[0]+eJ[1]*V[1]+eJ[2]*V[2];
+	    double alpha=atan2(sinEdgJ,cosEdgJ);
 	    double cosEJglob=crossfield[2*edgJ+0]*cos(4.0*alpha)-crossfield[2*edgJ+1]*sin(4.0*alpha);
 	    double sinEJglob=crossfield[2*edgJ+0]*sin(4.0*alpha)+crossfield[2*edgJ+1]*cos(4*alpha);
 	    sumCos+=cosEJglob;
@@ -369,7 +365,7 @@ HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossFi
   //collapsing norm for finding singularities
   double *crossfield2;
   HXT_CHECK(hxtMalloc(&crossfield2,2*edges->numEdges*sizeof(double)));
-  for(uint64_t i=0; i<edges->numEdges; i++){
+  for(uint32_t i=0; i<edges->numEdges; i++){
     double sumCos=0.0;
     double sumSin=0.0;
     double *v0 = mesh->vertices.coord +4*edges->node[2*i+0];
@@ -380,32 +376,28 @@ HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossFi
     int nAverage=0;
     double sign=1.0;
     for(int t=0; t<2; t++){// for each triangle
-      uint64_t numTri = edges->edg2tri[2*i+t];  
+      uint64_t numTri = edges->edg2tri[2*i+t];
       if (numTri != (uint64_t)-1){
+	int locEdgNum=0;
+	for(int j=0; j<3; j++){
+	  uint32_t edgJ=edges->tri2edg[3*numTri+j];
+	  if(edgJ==i)
+	    locEdgNum=j;
+	}
 	double U[3]={0.}, V[3]={0.}, n[3]={0.};
-	uint32_t vtri[3] = {mesh->triangles.node[3*numTri+0],mesh->triangles.node[3*numTri+1],mesh->triangles.node[3*numTri+2]};
+	uint32_t vtri[3] = {mesh->triangles.node[3*numTri+locEdgNum],mesh->triangles.node[3*numTri+(locEdgNum+1)%3],mesh->triangles.node[3*numTri+(locEdgNum+2)%3]};
 	HXT_CHECK(QuadGenerator::trianglebasis(mesh,vtri,U,V,n));
-	if(n[2]>0)
-	  sign=1.0;
-	else
-	  sign=-1.0;
 	for(int j=0; j<3; j++){
 	  uint32_t edgJ=edges->tri2edg[3*numTri+j];
 	  if(edgJ!=i){
-	    // //get global edge number
-	    // uint32_t vtri[3] = {mesh->triangles.node[3*numTri+0],mesh->triangles.node[3*numTri+1],mesh->triangles.node[3*numTri+2]};
-	    // int edgNumG = -1;
-	    // for(int k=0; k<3; k++) // looking for global edge numbering
-	    //   if( (vtri[(edgJ+0)%3] == edges->node[2*edges->tri2edg[3*numTri+k]+0] || vtri[(edgJ+0)%3] == edges->node[2*edges->tri2edg[3*numTri+k]+1]) &&
-	    // 	  (vtri[(edgJ+1)%3] == edges->node[2*edges->tri2edg[3*numTri+k]+0] || vtri[(edgJ+1)%3] == edges->node[2*edges->tri2edg[3*numTri+k]+1]) )
-	    // 	edgNumG = edges->tri2edg[3*numTri+k];
 	    double *v0J = mesh->vertices.coord +4*edges->node[2*edgJ+0];
 	    double *v1J = mesh->vertices.coord +4*edges->node[2*edgJ+1];
 	    double eJ[3] = {v1J[0]-v0J[0],v1J[1]-v0J[1],v1J[2]-v0J[2]};
 	    double normJ = sqrt(eJ[0]*eJ[0]+eJ[1]*eJ[1]+eJ[2]*eJ[2]);
 	    eJ[0] /= normJ; eJ[1] /= normJ; eJ[2] /= normJ;
-	    // double fJ[3] = {n[1]*eJ[2]-n[2]*eJ[1], n[2]*eJ[0]-n[0]*eJ[2], n[0]*eJ[1]-n[1]*eJ[0]};
-	    double alpha = sign*atan2(eJ[1],eJ[0]);
+	    double cosEdgJ=eJ[0]*U[0]+eJ[1]*U[1]+eJ[2]*U[2];
+	    double sinEdgJ=eJ[0]*V[0]+eJ[1]*V[1]+eJ[2]*V[2];
+	    double alpha=atan2(sinEdgJ,cosEdgJ);
 	    double cosEJglob=crossfield[2*edgJ+0]*cos(4.0*alpha)-crossfield[2*edgJ+1]*sin(4.0*alpha);
 	    double sinEJglob=crossfield[2*edgJ+0]*sin(4.0*alpha)+crossfield[2*edgJ+1]*cos(4*alpha);
 	    sumCos+=cosEJglob;

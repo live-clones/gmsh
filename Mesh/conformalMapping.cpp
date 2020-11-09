@@ -925,9 +925,9 @@ void MyMesh::computeManifoldBasis(){
     createPatchs();
   std::map<const MEdge *, double> theta;
   for(size_t kP=0;kP<trianglesPatchs.size();kP++){
-    if(kP==11){//DBG
-      std::cout << "patch " << kP << ", canBecomputed: " << canTrianglePatchBeComputed[kP] << std::endl;
-    }
+    // if(kP==11){//DBG
+    //   std::cout << "patch " << kP << ", canBecomputed: " << canTrianglePatchBeComputed[kP] << std::endl;
+    // }
     if(canTrianglePatchBeComputed[kP]){
       std::set<MTriangle*, MElementPtrLessThan> tri = trianglesPatchs[kP];
       //grabbing edges we are interested in
@@ -1365,8 +1365,8 @@ ConformalMapping::ConformalMapping(GModel *gm, int dbg): _currentMesh(NULL), _gm
   // std::cout << "print crosses" << std::endl;
   // _viewCrosses(_currentMesh->crossField,"crossfield");
   //parametrization
-  // std::cout << "compute parametrization" << std::endl;
-  // _computeParametrization();
+  std::cout << "compute parametrization" << std::endl;
+  _computeParametrization();
 
   //compute relaxed H
   _transferCrossesCutToInit();
@@ -2089,12 +2089,12 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
 	edgVect.normalize();
 	if(fabs(dot(edgVect,liftU[e]))<0.3){ // TODO: check the lifting vector. We should have perfectly aligned crosses on feature edges
 	  if(std::find(featEdgBC.begin(),featEdgBC.end(),*e)==featEdgBC.end())
-	    // featEdgBC.push_back(*e);
-	    cutGraphEdges.insert(e);
+	    featEdgBC.push_back(*e);// dirichlet boundary condition
+	    // cutGraphEdges.insert(e);//if we want neumann condition everywhere
 	}
-	else{
-	  cutGraphEdges.insert(e);
-	}
+	// else{
+	//   cutGraphEdges.insert(e);
+	// }
 	    
       }
       else
@@ -2109,18 +2109,18 @@ void ConformalMapping::_solvePotOnPatch(const std::set<MTriangle*, MElementPtrLe
     dirichletBC[e.getVertex(0)]=1;
     dirichletBC[e.getVertex(1)]=1;
   }
-  // _viewScalarVertex(dirichletBC, "dirichlet bc");
+  _viewScalarVertex(dirichletBC, "dirichlet bc");
   for(const MEdge *e: cutGraphEdges){
     neumannBC[e->getVertex(0)]=1;
     neumannBC[e->getVertex(1)]=1;
   }
-  // _viewScalarVertex(neumannBC, "neumann bc");
+  _viewScalarVertex(neumannBC, "neumann bc");
   //
   // std::cout << "size feature edges: " << featEdgBC.size() << std::endl;
   
   std::vector<std::vector<MVertex *> > vSorted;
   SortEdgeConsecutive(featEdgBC, vSorted);
-  // std::cout << "n Lines BC: " << vSorted.size() << std::endl;
+  std::cout << "n Lines BC: " << vSorted.size() << std::endl;
   for(std::vector<MVertex *> &vectVert: vSorted){
     for(MVertex* v: vectVert)
       vertToVertDof[v]=vectVert[0];
@@ -2264,20 +2264,58 @@ void _transfoPot(const std::set<MTriangle*, MElementPtrLessThan> &tri, std::map<
   return;
 }
 
+void _testPotCut(const std::set<MTriangle*, MElementPtrLessThan> &tri, std::map<MVertex *, double, MVertexPtrLessThan> &potU, std::map<MVertex *, double, MVertexPtrLessThan> &potV, std::map<MVertex *, double, MVertexPtrLessThan> &potRes){
+  std::set<MVertex *, MVertexPtrLessThan> vertices;
+  for(MTriangle *t: tri){
+    for(int k=0;k<3;k++){
+      MVertex *vK = t->getVertex(k);
+      vertices.insert(vK);
+    }
+  }
+  double maxPotU=0.0;//because average pot=0, so has to be a positive value
+  double minPotU=0.0;//because average pot=0, so has to be a negative value
+  for(MVertex* v: vertices){
+    if(potU[v]>maxPotU)
+      maxPotU=potU[v];
+    if(potU[v]<minPotU)
+      minPotU=potU[v];
+  }
+  double maxPotV=0.0;//because average pot=0, so has to be a positive value
+  double minPotV=0.0;//because average pot=0, so has to be a negative value
+  for(MVertex* v: vertices){
+    if(potV[v]>maxPotV)
+      maxPotV=potV[v];
+    if(potV[v]<minPotV)
+      minPotV=potV[v];
+  }
+  for(MVertex* v: vertices){
+    potRes[v]=(maxPotV/maxPotU)*potU[v]-potV[v];
+  }
+  return;
+}
+
 void ConformalMapping::_computeParametrization(){
   if(_currentMesh->trianglesPatchs.size()==0)
     _currentMesh->createPatchs();
   for(size_t kP=0;kP<_currentMesh->trianglesPatchs.size();kP++){
-    // if(kP==12){//DBG
-    std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[kP];
-    SVector3 dirRefU=_currentMesh->crossField[_currentMesh->triangleToEdges[(*(tri.begin()))][0]].getDirection(0);
-    SVector3 dirRefV=_currentMesh->crossField[_currentMesh->triangleToEdges[(*(tri.begin()))][0]].getDirection(1);
-    _solvePotOnPatch(tri, dirRefU, _currentMesh->potU);
-    _solvePotOnPatch(tri, dirRefV, _currentMesh->potV);
-    // _viewScalarTriangles(_currentMesh->potU, tri, "potU");
-    // _viewScalarTriangles(_currentMesh->potV, tri, "potV");
-    // }
-    _transfoPot(tri,_currentMesh->potU,_currentMesh->potV);
+    if(kP==12||kP==10){//DBG
+      std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[kP];
+      SVector3 dirRefU=_currentMesh->crossField[_currentMesh->triangleToEdges[(*(tri.begin()))][0]].getDirection(0);
+      SVector3 dirRefV=_currentMesh->crossField[_currentMesh->triangleToEdges[(*(tri.begin()))][0]].getDirection(1);
+      _solvePotOnPatch(tri, dirRefU, _currentMesh->potU);
+      _solvePotOnPatch(tri, dirRefV, _currentMesh->potV);
+      // _viewScalarTriangles(_currentMesh->potU, tri, "potU");
+      // _viewScalarTriangles(_currentMesh->potV, tri, "potV");
+      // }
+      _transfoPot(tri,_currentMesh->potU,_currentMesh->potV);
+      std::map<MVertex *, double, MVertexPtrLessThan> cutPot;
+      _testPotCut(tri,_currentMesh->potU,_currentMesh->potV,cutPot);
+      if(kP==12||kP==10){
+	_viewScalarTriangles(_currentMesh->potU, tri, "potU");
+	_viewScalarTriangles(_currentMesh->potV, tri, "potV");
+	_viewScalarTriangles(cutPot, tri, "potCut");
+      }
+    }
   }
   // _viewScalarTriangles(_currentMesh->potU, _currentMesh->triangles, "potU");
   // _viewScalarTriangles(_currentMesh->potV, _currentMesh->triangles, "potV");//DBG
