@@ -20,6 +20,7 @@
 #include "quadMeshingToolsWindow.h"
 #include "gmshCrossFields.h"
 #include "fastScaledCrossField.h"
+#include "meshQuadQuasiStructured.h"
 #include "paletteWindow.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -179,6 +180,14 @@ static void qmt_quad_smooth(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void qmt_quad_show_base_complex(Fl_Widget *w, void *data)
+{
+  showQuadMeshBaseComplex(GModel::current());
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+  drawContext::global()->draw();
+}
+
+
 
 quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
   opt = new QuadMeshingOptions;
@@ -186,7 +195,7 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
 
   FL_NORMAL_SIZE -= deltaFontSize;
   int width = int(3.5 * IW) + 4 * WB;
-  int height = 28 * BH;
+  int height = 29 * BH;
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
                           "Quad meshing tools");
@@ -392,6 +401,23 @@ quadMeshingToolsWindow::quadMeshingToolsWindow(int deltaFontSize) {
     push_quad_smooth = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Smooth");
     push_quad_smooth->callback(qmt_quad_smooth);
   }
+
+  { /* Seperator */
+    y += BH / 2;
+    y += BH / 2;
+    Fl_Box *b = new Fl_Box(x, y + BH - WB, width - 4 * WB, 2);
+    b->box(FL_ENGRAVED_FRAME);
+    b->labeltype(FL_NO_LABEL);
+  }
+
+  { /* Base complex box */
+    y += BH;
+    Fl_Box *b = new Fl_Box(x - WB, y, width, BH, "Quad base complex");
+    b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+    push_quad_show_base_complex = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Show");
+    push_quad_show_base_complex->callback(qmt_quad_show_base_complex);
+  }
+  
 
   win->end();
   FL_NORMAL_SIZE += deltaFontSize;

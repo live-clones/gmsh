@@ -125,12 +125,20 @@ class MultiBlock
   double getDistanceBetweeenTwoExtrVert(int sepIDNoLimCyc, int extrVertID, int tJuncVertID1);
   int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID);
   HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs);
+ 
+  
+  double normDiffVect(std::array<double,3> *coordP1, std::array<double,3> *coordP2);
+  double computeDiscreteLineLengthModified(std::vector<std::array<double,3>> *pCoordLine, std::vector<double> hVal);
+  HXTStatus lineDiscretization(std::vector<std::array<double,3>> *line, std::vector<double> hVal, uint64_t partition, std::vector<std::array<double,3>> *newLine);
+  
+
   HXTStatus getDataFromBlockEdgID(int edgID, std::vector<std::array<double, 3>> &pointsOnEdg, std::vector<uint64_t> &trianglesOnEdg);
   HXTStatus createMbTriPatchs();
   int isPointInTri(std::array<double, 3> point1, std::array<double, 3> point2, std::array<double, 3> currPoint, double *alpha);
   HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum);
   HXTStatus dbgPosEdgData(const char *fileName);
   HXTStatus dbgPosPatchData(const char *fileName);
+
 };
 
 #endif

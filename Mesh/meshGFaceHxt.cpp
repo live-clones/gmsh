@@ -693,9 +693,15 @@ int meshGFaceHxt(GFace *gf) {
 
   if (Msg::GetVerbosity() == 99) opt.verbosity = 2;
 
-  HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh));
+  HXTStatus stgp = hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh);
+  if (stgp != HXT_STATUS_OK) {
+    Msg::Error("hxtGmshPointGenMain: wrong output status");
+    return -1;
+  }
+
 
   if (fmesh->quads.size > 0) {
+    Msg::Debug("- Face %i: %li quads in output of meshGFaceHxt", gf->tag(), fmesh->quads.size);
     for (MTriangle* f: gf->triangles) { delete f; }
     for (MQuadrangle* f: gf->quadrangles) { delete f; }
     for (MVertex* v: gf->mesh_vertices) { delete v; }
@@ -722,6 +728,8 @@ int meshGFaceHxt(GFace *gf) {
       gf->quadrangles.push_back(q);
     }
     gf->meshStatistics.status = GFace::DONE;
+  } else {
+    Msg::Error("- Face %i: no quads in output of meshGFaceHxt", gf->tag());
   }
 
   HXT_CHECK(hxtMeshDelete(&fmesh));
