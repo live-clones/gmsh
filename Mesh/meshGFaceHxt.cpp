@@ -52,9 +52,9 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
   std::vector<uint16_t> quads_color;
 
   /* Loop over CAD nodes */
-  for (GVertex* gv: gf->vertices()) if (gv->vertices().size() == 1){
-    if (gf->vertices()[0]->mesh_vertices.size() != 1) continue;
-    MVertex* v = gf->vertices()[0]->mesh_vertices[0];
+  for (GVertex* gv: gf->vertices())  {
+    if (gv->mesh_vertices.size() != 1) continue;
+    MVertex* v = gv->mesh_vertices[0];
     auto it = v2c.find(v);
     size_t nv = 0;
     if (it == v2c.end()) {
