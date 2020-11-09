@@ -692,7 +692,7 @@ int meshGFaceHxt(GFace *gf) {
 
   HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh));
 
-  if (mesh->quads.size > 0) {
+  if (fmesh->quads.size > 0) {
     for (MTriangle* f: gf->triangles) { delete f; }
     for (MQuadrangle* f: gf->quadrangles) { delete f; }
     for (MVertex* v: gf->mesh_vertices) { delete v; }
@@ -700,18 +700,19 @@ int meshGFaceHxt(GFace *gf) {
     gf->quadrangles.clear();
     gf->mesh_vertices.clear();
 
-    for (size_t f = 0; f < mesh->quads.size; ++f) {
+    for (size_t f = 0; f < fmesh->quads.size; ++f) {
       MQuadrangle* q = new MQuadrangle(NULL,NULL,NULL,NULL);
       for (size_t lv = 0; lv < 4; ++lv) {
-        uint32_t v = mesh->quads.node[4*f+lv];
+        uint32_t v = fmesh->quads.node[4*f+lv];
         if (v < c2v.size()) { /* existing vertex on boundary */
           q->setVertex(lv,c2v[v]);
         } else {
           MVertex *vNew = new MFaceVertex(
-              mesh->vertices.coord[4*v+0],
-              mesh->vertices.coord[4*v+1],
-              mesh->vertices.coord[4*v+2],
+              fmesh->vertices.coord[4*v+0],
+              fmesh->vertices.coord[4*v+1],
+              fmesh->vertices.coord[4*v+2],
               gf,0.,0.);
+          gf->addMeshVertex(vNew);
           q->setVertex(lv,vNew);
         }
       }

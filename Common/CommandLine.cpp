@@ -1157,9 +1157,8 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           else if(argv[i] == "PackingOfParallelograms" || argv[i] == "pack"){
             CTX::instance()->mesh.algoSubdivide = 1;
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
-	  }
-          else if(argv[i] == "QuadQuasiStructured" ||
-              argv[i] == "quadqs"){
+          }
+          else if(argv[i] == "QuadQuasiStructured" || argv[i] == "quadqs"){
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_QUAD_QUASI_STRUCT);
           }
           else if(argv[i] == "initial2d")

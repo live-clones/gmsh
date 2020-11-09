@@ -2917,8 +2917,10 @@ namespace QSQ {
       // return false;
     }
 
-    Msg::Debug("-- Face %i: winslow smoothing (%li quads) ...", gf->tag(), gf->quadrangles.size());
-    meshWinslow2d(gf, 10);
+    if (gf->quadrangles.size() < 1000) {
+      Msg::Debug("-- Face %i: winslow smoothing (%li quads) ...", gf->tag(), gf->quadrangles.size());
+      meshWinslow2d(gf, 10);
+    }
 
     { /* final check */
       Msg::Debug("-- Face %i: counting remaining defects ...", gf->tag());
@@ -3090,12 +3092,14 @@ namespace QSQ {
     } 
 
     if (newElements.size() > 0) {
-      Msg::Debug("-- Winslow smoothing of cavity (%li quads) ...", newElements.size());
-      vector<MQuadrangle*> quadForWinslow(newElements.size());
-      for (size_t i = 0; i < newElements.size(); ++i) {
-        quadForWinslow[i] = dynamic_cast<MQuadrangle*>(newElements[i]);
+      if (newElements.size() < 1000) { // TODO: a fast smoothing... somehow
+        Msg::Debug("-- Winslow smoothing of cavity (%li quads) ...", newElements.size());
+        vector<MQuadrangle*> quadForWinslow(newElements.size());
+        for (size_t i = 0; i < newElements.size(); ++i) {
+          quadForWinslow[i] = dynamic_cast<MQuadrangle*>(newElements[i]);
+        }
+        meshWinslow2d(gf, quadForWinslow, newVertices, 10);
       }
-      meshWinslow2d(gf, quadForWinslow, newVertices, 10);
     }
 
     if (SHOW_CAVITIES) {
@@ -3216,8 +3220,10 @@ namespace QSQ {
     }
 
     if (count > 0) {
-      Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
-      meshWinslow2d(gf, 100);
+      if (gf->quadrangles.size() < 1000) {
+        Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
+        meshWinslow2d(gf, 10);
+      }
       Msg::Info("- Face %i: remeshed %li cavities around singularities ...", gf->tag(), count);
     }
 
@@ -3854,8 +3860,10 @@ namespace QSQ {
     }
 
     if (count > 0) {
-      Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
-      meshWinslow2d(gf, 100);
+      if (gf->quadrangles.size() < 1000) {
+        Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
+        meshWinslow2d(gf, 10);
+      }
       Msg::Info("- Face %i: remeshed %li quadrilateral cavities  ...", gf->tag(), count);
     }
 
@@ -4848,7 +4856,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     return s4;
   }
 
-//  return 0;
+  // return 0;
 
   bool SHOW_ONLY_PATTERN_MESHING = false;
 
