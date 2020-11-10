@@ -664,11 +664,7 @@ public:
     center->getParameter(1, p[1]);
     Pair<SVector3, SVector3> t = gf->firstDer(p);
     const int order[8] = {7,1,3,5,0,6,2,4};
-   
-    /* warning: 2D stencil but 3D coordinates */
-    double hx = 1.;
-    double hy = 1.; 
-    
+       
     /* 1. Compute the winslow coefficients (alpha_i, beta_i in the Karman paper) */
     /*    a. Compute first order derivatives of the position */
     SVector3 r_i[2];

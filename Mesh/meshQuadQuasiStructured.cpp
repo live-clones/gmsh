@@ -4848,8 +4848,8 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     return s4;
   }
 
-//  return 0;
-
+  gm->writeMSH("step4.msh");
+  
   bool SHOW_ONLY_PATTERN_MESHING = false;
 
   /* Pattern required by step 5 and 6 */
@@ -4867,6 +4867,8 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     Msg::Warning("failed to generate pattern-based quad meshes, abort");
     return s5;
   }
+
+  gm->writeMSH("step5.msh");
 
   /* For visu */
   if (SHOW_ONLY_PATTERN_MESHING) {

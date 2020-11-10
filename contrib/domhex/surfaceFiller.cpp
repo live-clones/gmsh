@@ -386,16 +386,18 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
                              std::vector<SMetric3> &metrics)
 {
 
-  char ccc[256];
-  sprintf(ccc, "points%d.pos", gf->tag());
   FILE *f = NULL;
-  f = Fopen(ccc, "w");
-  sprintf(ccc, "e_points%d.pos", gf->tag());
   FILE *f2 = NULL;
-  f2 = Fopen(ccc, "w");
-  if(f) fprintf(f, "View \"\"{\n");
-  if(f2) fprintf(f2, "View \"\"{\n");
-
+  if(Msg::GetVerbosity() == 99) {
+    char ccc[256];
+    sprintf(ccc, "points%d.pos", gf->tag());
+    f = Fopen(ccc, "w");
+    sprintf(ccc, "e_points%d.pos", gf->tag());
+    f2 = Fopen(ccc, "w");
+    if(f) fprintf(f, "View \"\"{\n");
+    if(f2) fprintf(f2, "View \"\"{\n");
+  }
+  
   FieldManager *fields = gf->model()->getFields();
   Field *cross_field = NULL;
   SVector3 t1;
@@ -493,37 +495,42 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     fifo.pop();
     for(int i = 0; i < 4; i++) {
       if(!close2sing (singularities,gf,parent->_p[i],cross_field)
-	 && !inExclusionZone(parent->_v, parent->_p[i], rtree) && !outBounds(parent->_p[i],gf) && gf->containsParam(parent->_p[i])) {
-	GPoint gp = gf->point(parent->_p[i]);
-	MFaceVertex *v =
-	  new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
-	SPoint2 midpoint;
-	compute4neighbors(gf, v, midpoint, newp, metricField, cross_field,0, 0, globalMult);
-	surfacePointWithExclusionRegion *sp =
-	  new surfacePointWithExclusionRegion(v, newp, midpoint, metricField, parent);
-	fifo.push(sp);
-	vertices.push_back(sp);
-	double _min[2], _max[2];
-	sp->minmax(_min, _max);
-	rtree.Insert(_min, _max, sp);
-      }
-       else{
-	 GPoint gp = gf->point(parent->_p[i]);
-	 MFaceVertex *v =
-	   new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
-	 SPoint2 midpoint;
-	 compute4neighbors(gf, v, midpoint, newp, metricField, cross_field, 0, 0 , globalMult);
-	 surfacePointWithExclusionRegion *sp =
-	   new surfacePointWithExclusionRegion(v, newp, midpoint, metricField,parent);
-	 if (!gf->containsParam(parent->_p[i]))
-	   sp->print(f2, i);	  
+	 && !inExclusionZone(parent->_v, parent->_p[i], rtree) &&
+	 !outBounds(parent->_p[i],gf) &&
+	 gf->containsParam(parent->_p[i]))
+	{
+	  GPoint gp = gf->point(parent->_p[i]);
+	  MFaceVertex *v =
+	    new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+	  SPoint2 midpoint;
+	  compute4neighbors(gf, v, midpoint, newp, metricField, cross_field,0, 0, globalMult);
+	  surfacePointWithExclusionRegion *sp =
+	    new surfacePointWithExclusionRegion(v, newp, midpoint, metricField, parent);
+	  fifo.push(sp);
+	  vertices.push_back(sp);
+	  double _min[2], _max[2];
+	  sp->minmax(_min, _max);
+	  rtree.Insert(_min, _max, sp);
+	}
+      else{
+	if(Msg::GetVerbosity() == 99) {
+	  GPoint gp = gf->point(parent->_p[i]);
+	  MFaceVertex *v =
+	    new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+	  SPoint2 midpoint;
+	  compute4neighbors(gf, v, midpoint, newp, metricField, cross_field, 0, 0 , globalMult);
+	  surfacePointWithExclusionRegion *sp =
+	    new surfacePointWithExclusionRegion(v, newp, midpoint, metricField,parent);
+	  if (!gf->containsParam(parent->_p[i]))
+	    sp->print(f2, i);	  
 	  //	 printf("AI\n");
-       }
+	}
+      }
     }
   }
   // add the vertices as additional vertices in the surface mesh
   for(unsigned int i = 0; i < vertices.size(); i++) {
-    vertices[i]->print(f, i);
+    if (f)vertices[i]->print(f, i);
     if(vertices[i]->_v->onWhat() == gf) {
       packed.push_back(vertices[i]->_v);
       metrics.push_back(vertices[i]->_meshMetric);
@@ -532,10 +539,12 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     }
     delete vertices[i];
   }
-  fprintf(f2, "};");
-  fclose(f2);
-  fprintf(f, "};");
-  fclose(f);
+  if (f){
+    fprintf(f2, "};");
+    fclose(f2);
+    fprintf(f, "};");
+    fclose(f);
+  }
 }
 
 /* OLD STUFF 
