@@ -3,8 +3,6 @@
 
 #include "hxt_mesh.h"
 
-HXTStatus hxtSurfaceQuadSingularitiesOutput(HXTMesh *mesh);
-
 HXTStatus hxtSurfaceMeshSplitFullQuad(HXTMesh *mesh);
 
 HXTStatus hxtSurfaceMeshSplitQuads(HXTMesh *mesh, uint16_t *color);
