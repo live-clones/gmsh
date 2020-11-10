@@ -313,17 +313,16 @@ bool compute4neighbors(
 
 
 
-bool outBounds(SPoint2 p, GFace *gf){
-  for (int i=0;i<2;i++){
-    Range<double> bnds = gf->parBounds(i);
-    if (p[i] > bnds.high() || p[i] < bnds.low() ) {
-      return true;
-    }
+static bool outBounds(SPoint2 p, double minu, double maxu, double minv, double maxv){
+  if (p.x() > maxu || p.x() <  minu || p.y() > maxv || p.y() <  minv){
+    printf("OUT BOUND %g %g\n",p.x(),p.y());
+    return true;
+
   }
   return false;
 }
 
-bool close2sing(std::vector<MVertex*> &s, GFace *gf, SPoint2 p, Field *f){
+static bool close2sing(std::vector<MVertex*> &s, GFace *gf, SPoint2 p, Field *f){
 
   if (s.empty())return false;
   GPoint gp = gf->point(p);
@@ -443,6 +442,9 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   SPoint2 newp[8];
   std::set<MVertex *, MVertexPtrLessThan>::iterator it = bnd_vertices.begin();
 
+  double maxu = -1.e22,minu = 1.e22;
+  double maxv = -1.e22,minv = 1.e22;
+  
   std::vector<MVertex*> singularities;  
   for(; it != bnd_vertices.end(); ++it) {
 
@@ -475,6 +477,10 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
       if (!singular){
 	surfacePointWithExclusionRegion *sp =
 	  new surfacePointWithExclusionRegion(*it, newp, midpoint, metricField);
+	minu = std::min(midpoint.x(),minu);
+	maxu = std::max(midpoint.x(),maxu);
+	minv = std::min(midpoint.y(),minv);
+	maxv = std::max(midpoint.y(),maxv);
 	vertices.push_back(sp);
 	fifo.push(sp);
 	double _min[2], _max[2];
@@ -488,6 +494,8 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     }
   }
 
+  printf("bounds = %g %g %g %g \n",minu,maxu,minv,maxv);
+  
   while(!fifo.empty()) {
     //    printf("%d vertices in the domain\n",vertices.size());
     //    if (vertices.size() > 5000)break;
@@ -496,7 +504,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     for(int i = 0; i < 4; i++) {
       if(!close2sing (singularities,gf,parent->_p[i],cross_field)
 	 && !inExclusionZone(parent->_v, parent->_p[i], rtree) &&
-	 !outBounds(parent->_p[i],gf) &&
+	 !outBounds(parent->_p[i],minu,maxu,minv,maxv) &&
 	 gf->containsParam(parent->_p[i]))
 	{
 	  GPoint gp = gf->point(parent->_p[i]);

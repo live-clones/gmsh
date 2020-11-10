@@ -13,6 +13,7 @@
 #include "meshWinslow2d.h"
 #include "Field.h"
 #include "meshGFaceOptimize.h"
+#include "qmt_utils.hpp"
 
 
 #include "geolog.h"
@@ -41,14 +42,34 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
 
   c2v.reserve(2*gf->mesh_vertices.size());
   uint32_t vcount = 0;
+  std::vector<uint32_t> nodes;
   std::vector<std::array<uint32_t,2> > lines;
   std::vector<std::array<uint32_t,3> > triangles;
   std::vector<std::array<uint32_t,4> > quads;
+  std::vector<uint16_t> nodes_color;
   std::vector<uint16_t> lines_color;
   std::vector<uint16_t> triangles_color;
   std::vector<uint16_t> quads_color;
 
-  /* Loop over CAD curves (except seam) */
+  /* Loop over CAD nodes */
+  for (GVertex* gv: gf->vertices())  {
+    if (gv->mesh_vertices.size() != 1) continue;
+    MVertex* v = gv->mesh_vertices[0];
+    auto it = v2c.find(v);
+    size_t nv = 0;
+    if (it == v2c.end()) {
+      v2c[v] = vcount;
+      nv = vcount;
+      c2v.push_back(v);
+      vcount += 1;
+    } else {
+      nv = it->second;
+    }
+    nodes.push_back(nv);
+    nodes_color.push_back((uint16_t)gv->tag());
+  }
+
+  /* Loop over CAD curves */
   for (GEdge* ge: gf->edges()) {
     for (MLine* l: ge->lines) {
       std::array<uint32_t,2> line;
@@ -57,6 +78,7 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
         auto it = v2c.find(v);
         if (it == v2c.end()) {
           v2c[v] = vcount;
+          line[lv] = vcount;
           c2v.push_back(v);
           vcount += 1;
         } else {
@@ -78,6 +100,7 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
       auto it = v2c.find(v);
       if (it == v2c.end()) {
         v2c[v] = vcount;
+        tri[lv] = vcount;
         c2v.push_back(v);
         vcount += 1;
       } else {
@@ -96,8 +119,8 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
       auto it = v2c.find(v);
       if (it == v2c.end()) {
         v2c[v] = vcount;
-        c2v.push_back(v);
         quad[lv] = vcount;
+        c2v.push_back(v);
         vcount += 1;
       } else {
         quad[lv] = it->second;
@@ -119,6 +142,15 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
     m->vertices.coord[4 * i + 1] = v->y();
     m->vertices.coord[4 * i + 2] = v->z();
     m->vertices.coord[4 * i + 3] = 0;
+  }
+
+  /* - points */
+  m->points.num = m->points.size = nodes.size();
+  HXT_CHECK(hxtAlignedMalloc(&m->points.node, (m->points.num) * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint16_t)));
+  for(size_t i = 0; i < nodes.size(); i++) {
+    m->points.node[i] = nodes[i];
+    m->points.color[i] = nodes_color[i];
   }
 
   /* - lines */
@@ -434,7 +466,6 @@ int meshGFaceHxt(GModel *gm)
 
   std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
-  Gmsh2Hxt(gm, mesh, v2c, c2v);
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
 
   size_t targetNumberOfQuads = 10000;
@@ -626,6 +657,7 @@ int meshGFaceHxt(GFace *gf) {
     Msg::Error("failed to convert face %i to HXTMesh", gf->tag());
     return status;
   }
+  hxtMeshWriteGmsh(mesh, "convert.msh");
 
   size_t targetNumberOfQuads = gf->triangles.size()/2;
   Msg::Debug("-- target number of quads: %li", targetNumberOfQuads);
@@ -674,7 +706,7 @@ int meshGFaceHxt(GFace *gf) {
 
   // TODO 
   HXTPointGenOptions opt = { .verbosity = 0,
-                             .generateLines = 1,
+                             .generateLines = 0,
                              .generateSurfaces = 1,
                              .generateVolumes = 0,
                              .remeshSurfaces = 1,
@@ -690,9 +722,17 @@ int meshGFaceHxt(GFace *gf) {
 
   if (Msg::GetVerbosity() == 99) opt.verbosity = 2;
 
-  HXT_CHECK(hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh));
+  HXTStatus stgp = hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh);
+  if (stgp != HXT_STATUS_OK) {
+    Msg::Error("hxtGmshPointGenMain: wrong output status");
+    HXT_CHECK(hxtMeshDelete(&fmesh));
+    HXT_CHECK(hxtMeshDelete(&mesh));
+    return -1;
+  }
 
-  if (mesh->quads.size > 0) {
+
+  if (fmesh->quads.size > 0) {
+    Msg::Debug("- Face %i: %li quads in output of meshGFaceHxt", gf->tag(), fmesh->quads.size);
     for (MTriangle* f: gf->triangles) { delete f; }
     for (MQuadrangle* f: gf->quadrangles) { delete f; }
     for (MVertex* v: gf->mesh_vertices) { delete v; }
@@ -700,23 +740,27 @@ int meshGFaceHxt(GFace *gf) {
     gf->quadrangles.clear();
     gf->mesh_vertices.clear();
 
-    for (size_t f = 0; f < mesh->quads.size; ++f) {
+    for (size_t f = 0; f < fmesh->quads.size; ++f) {
       MQuadrangle* q = new MQuadrangle(NULL,NULL,NULL,NULL);
       for (size_t lv = 0; lv < 4; ++lv) {
-        uint32_t v = mesh->quads.node[4*f+lv];
+        uint32_t v = fmesh->quads.node[4*f+lv];
         if (v < c2v.size()) { /* existing vertex on boundary */
           q->setVertex(lv,c2v[v]);
         } else {
           MVertex *vNew = new MFaceVertex(
-              mesh->vertices.coord[4*v+0],
-              mesh->vertices.coord[4*v+1],
-              mesh->vertices.coord[4*v+2],
+              fmesh->vertices.coord[4*v+0],
+              fmesh->vertices.coord[4*v+1],
+              fmesh->vertices.coord[4*v+2],
               gf,0.,0.);
+          gf->addMeshVertex(vNew);
           q->setVertex(lv,vNew);
         }
       }
       gf->quadrangles.push_back(q);
     }
+    gf->meshStatistics.status = GFace::DONE;
+  } else {
+    Msg::Error("- Face %i: no quads in output of meshGFaceHxt", gf->tag());
   }
 
   HXT_CHECK(hxtMeshDelete(&fmesh));

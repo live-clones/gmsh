@@ -10,4 +10,7 @@ class GModel;
 
 int Mesh2DWithQuadQuasiStructured(GModel* gm);
 
+/* visualization */
+int showQuadMeshBaseComplex(GModel* gm);
+
 #endif
