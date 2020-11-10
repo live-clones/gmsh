@@ -3013,39 +3013,14 @@ namespace QSQ {
         return 1;
       }
 
-      /* Remove internal vertices and quads */
-      vector<MVertex*> bnd;
-      buildBoundary(quads.begin(),quads.end(),bnd);
-      vector<MVertex*> inside;
-      verticesStrictlyInsideCavity(quads, bnd, inside);
-      for (MElement* elt: quads) {
-        MQuadrangle *q = dynamic_cast<MQuadrangle*>(elt);	      
-        if (!q)Msg::Error ("A non quad is present in the list of quad of face %lu",gf->tag());
-        gf->quadrangles.erase (std::remove(gf->quadrangles.begin(),gf->quadrangles.end(),q),gf->quadrangles.end());
-        delete q;
-      }
-      for (MVertex* v: inside) {
-        GEntity* entity = v->onWhat();
-        if (entity != NULL) {
-          auto it = std::find(entity->mesh_vertices.begin(),entity->mesh_vertices.end(),v);
-          if (it != entity->mesh_vertices.end()) {
-            entity->mesh_vertices.erase(it);
-          } else {
-            Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not found in its GEntity, weird");
-          }
-        } else {
-          Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not in a GEntity ? weird");
-        }
-        delete v;
-      }
-
       /* Check orientation of the remeshed cavity compared to input,
        * and invert if required */
       /* - oriented boundary */
       unordered_set<si2,si2hash> oedges;
-      for (size_t i = 0; i < bnd.size()-1; ++i) {
-        oedges.insert({bnd[i]->getNum(),bnd[i+1]->getNum()});
-      }
+      oedges.insert({sides[0][0]->getNum(),sides[0][1]->getNum()});
+      // for (size_t i = 0; i < bnd.size()-1; ++i) {
+      //   oedges.insert({bnd[i]->getNum(),bnd[i+1]->getNum()});
+      // }
       bool found = false;
       bool orientation_ok = true;
       for (MElement* f: newElements) {
@@ -3987,7 +3962,11 @@ namespace QSQ {
     vector<GEdge *> const &edges = gf->edges();
 
     unordered_map<GVertex*,vector<GEdge*> > v2e;
-    for (GEdge* ge: edges) for (GVertex* gv: ge->vertices()) v2e[gv].push_back(ge);
+    for (GEdge* ge: edges) {
+      if (ge->periodic(0)) continue;
+      for (GVertex* gv: ge->vertices()) v2e[gv].push_back(ge);
+    }
+    for (auto& kv: v2e) { sort_unique(kv.second); }
 
     std::set<GVertex*> corners = info.bdrValVertices[1];
     bool disk = (corners.size() == 0 && info.bdrValVertices[2].size() > 0);
@@ -3999,7 +3978,7 @@ namespace QSQ {
     /* Sort CAD edges in sides */
     vector<vector<GEdge*> > sides;
     vector<vector<bool> > sidesInv;
-    for (GEdge* e0: edges) {
+    for (GEdge* e0: edges) if (!e0->periodic(0)) {
       GVertex* v1 = e0->vertices()[0];
       GVertex* v2 = e0->vertices()[1];
       bool v1IsCorner = (corners.find(v1) != corners.end());
@@ -4009,10 +3988,16 @@ namespace QSQ {
         sidesInv.resize(1);
       }
 
+      size_t infLoop = 0;
       GVertex* v = v1;
       GEdge* e = e0;
       bool inv = false;
       do {
+        infLoop += 1;
+        if (infLoop > 1e6) {
+          Msg::Warning("infinite loop in edges of face %i, cancel simple quad mesh", gf->tag());
+          return -1;
+        }
         bool vIsCorner = (corners.find(v) != corners.end());
         if (vIsCorner) {
           sides.resize(sides.size()+1);
@@ -4037,7 +4022,7 @@ namespace QSQ {
           e_next = (v2e[v_next][0] != e) ? v2e[v_next][0] : v2e[v_next][1];
         } else {
           Msg::Warning("non manifold edge loop around face %li, cancel simple quad mesh", gf->tag());
-          return false;
+          return -1;
         }
 
         e = e_next;
@@ -4086,7 +4071,7 @@ namespace QSQ {
     if (sides.size() == 1) {
       if (sides[0].size() < 1) {
         Msg::Warning("not enough vertices on face loop for quad meshing (%li vert)", sides[0].size());
-        return 1;
+        return -1;
       }
       if (disk) {
         if (sides[0].front() == sides[0].back()) {
@@ -4115,29 +4100,27 @@ namespace QSQ {
     // TODO: keep disk (and others curved patterns?) if good curvature
     bool meshable = patchIsRemeshableWithQuadPattern(patternsToCheck,Ncorners, sideSizes, patternNoAndRot, irreg);
     if (meshable) {
-      std::vector<MQuadrangle*> oldQuads = gf->quadrangles;
-      std::vector<MVertex*> oldVertices = gf->mesh_vertices;
-
-      std::vector<MElement*> oldElements; // TODO
+      std::vector<MElement*> oldElements;
+      oldElements.reserve(gf->quadrangles.size()+gf->triangles.size());
+      for (MElement* f: gf->triangles) oldElements.push_back(f);
+      for (MElement* f: gf->quadrangles) oldElements.push_back(f);
 
       std::vector<MVertex*> newVertices;
       std::vector<bool> vertexIsIrregular;
       std::vector<MElement*> newElements;
       int status = remeshPatchWithQuadPattern(gf, sideVertices, patternNoAndRot, oldElements, newVertices, vertexIsIrregular, newElements);
       if (status == 0) {
-        /* Remove old mesh elements */
-        gf->quadrangles = difference(gf->quadrangles, oldQuads);
-        gf->mesh_vertices = difference(gf->mesh_vertices, oldVertices);
-        Msg::Debug("- Face %li: winslow smoothing ...", gf->tag());
+        // Msg::Debug("- Face %li: winslow smoothing ...", gf->tag());
         // meshWinslow2d(gf, 10);
         gf->meshStatistics.status = GFace::DONE;
         return 0;
       } else {
         Msg::Error("Face %li, failed to remesh with selected quad pattern, weird", gf->tag());
-        return 1;
+        return -1;
       }
     } 
-    return 1;
+    Msg::Debug("- Face %li: no matching quad pattern");
+    return -1;
   }
 
   inline int closestPositiveOdd(double x) {
@@ -5010,7 +4993,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   if (!useDiscreteGeometry(gm)) {
     Msg::Info("[Step 3] Generate curve 1D meshes ...");
     bool forceEvenNbEdges = false;
-    bool alignWithGVertices = true;
+    bool alignWithGVertices = false;
     int s3 = generateCurve1DMeshes(gm, faceInfo, forceEvenNbEdges, alignWithGVertices);
     if (s3 != 0) {
       Msg::Warning("failed to generate curve 1D meshes, abort");

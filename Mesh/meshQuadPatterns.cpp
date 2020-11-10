@@ -136,6 +136,17 @@ namespace QuadPatternMatching {
       vec.erase( std::unique( vec.begin(), vec.end() ), vec.end() );
     }
 
+  template<class T> 
+    std::vector<T> difference(const std::vector<T>& v1, const std::vector<T>& v2) {
+      std::vector<T> s1 = v1;
+      std::vector<T> s2 = v2;
+      sort_unique(s1);
+      sort_unique(s2);
+      std::vector<T> s3;
+      set_difference(s1.begin(),s1.end(),s2.begin(),s2.end(), std::inserter(s3,s3.begin()));
+      return s3;
+    }
+
   bool build_quad_chord(const vector<id4>& quadEdges, const vector<vector<id> >& e2f, id eStart, std::vector<id>& chordEdges) {
     chordEdges.size();
 
@@ -1484,11 +1495,14 @@ int remeshPatchWithQuadPattern(
     return -1;
   }
 
+  /* Add the new vertices and quads in the GFace */
   bool oka = addQuadsAccordingToPattern(P, slt, gf, sidesr, newVertices, vertexIsIrregular, newElements);
   if (!oka) {
     Msg::Error("failed to add quads according to pattern, weird");
-    return 1;
+    return -1;
   }
+
+  /* Basic smoothing of the geometry */
   discreteFace* df = dynamic_cast<discreteFace*>(gf);
   if (df || gfaceContainsSeamCurves(gf)) {
     /* Use oldElements as a geometric support */
@@ -1499,6 +1513,42 @@ int remeshPatchWithQuadPattern(
     size_t iter = std::min((size_t)newVertices.size(),(size_t)1000);
     if (iter < 30) iter = 30;
     laplacianSmoothingInParametricDomain(gf, newVertices, newElements, iter);
+  }
+
+  /* Remove old vertices and elements */
+  std::vector<MVertex*> inside;
+  {
+    vector<MVertex*> bnd;
+    for (auto& side: sides) for (MVertex* v: side) {
+      bnd.push_back(v);
+    }
+    sort_unique(bnd);
+    std::vector<MVertex*> vert;
+    vert.reserve(4*oldElements.size());
+    for (MElement* f: oldElements) for (size_t lv = 0; lv < f->getNumVertices(); ++lv) {
+      MVertex* v = f->getVertex(lv);
+      vert.push_back(v);
+    }
+    sort_unique(vert);
+    inside = difference(vert,bnd);
+  }
+  for (MElement* elt: oldElements) {
+    gf->removeElement(elt->getType(),elt);
+    delete elt;
+  }
+  for (MVertex* v: inside) {
+    GEntity* entity = v->onWhat();
+    if (entity != NULL) {
+      auto it = std::find(entity->mesh_vertices.begin(),entity->mesh_vertices.end(),v);
+      if (it != entity->mesh_vertices.end()) {
+        entity->mesh_vertices.erase(it);
+      } else {
+        Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not found in its GEntity, weird");
+      }
+    } else {
+      Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not in a GEntity ? weird");
+    }
+    delete v;
   }
 
   return 0; /* ok ! */
