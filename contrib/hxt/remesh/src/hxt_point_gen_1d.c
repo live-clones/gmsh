@@ -241,9 +241,9 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
                                    HXTPointGenParent *parent)
 {
 
-  HXT_INFO("");
-  HXT_INFO("========= Generating points on lines ==========");
-  HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"========= Generating points on lines ==========");
+  HXT_INFO_COND(opt->verbosity>=1,"");
 
   HXT_ASSERT_MSG(mesh->lines.num != 0, "Mesh does not have lines");
 
@@ -390,7 +390,7 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
       uint32_t curr = start;
       uint64_t line0, line1;
 
-      HXT_INFO_COND(opt->verbosity>0,"Start %d %lu %lu - %d %d", start+1, currentLine, currentLine + mesh->points.num, node0, node1);
+      HXT_INFO_COND(opt->verbosity>=2,"Start %d %lu %lu - %d %d", start+1, currentLine, currentLine + mesh->points.num, node0, node1);
 
       while(1){
 
@@ -424,7 +424,7 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
       // At this point we have the ordered array orderLines with numOrderLines lines (i.e. boundary edges)
       numProcessedLines += numOrderLines;
 
-      HXT_INFO_COND(opt->verbosity>0,"Corner point %3d - Number of boundary edges %3lu - Number of processed lines %3lu", start, numOrderLines, numProcessedLines);
+      HXT_INFO_COND(opt->verbosity>=2,"Corner point %3d - Number of boundary edges %3lu - Number of processed lines %3lu", start, numOrderLines, numProcessedLines);
 
       HXT_CHECK(hxtDiscretizeLine(mesh,directions,sizemap,numOrderLines,orderLines,start,cornerpoints,fmesh,pointParent));
 
@@ -505,7 +505,7 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
 
     // At this point we have the ordered array orderLines with numOrderLines lines (i.e. boundary edges)
     numProcessedLines += numOrderLines;
-    HXT_INFO_COND(opt->verbosity>0,"Closed line loop - Number of boundary edges %3lu - Number of processed lines %3lu", numOrderLines, numProcessedLines);
+    HXT_INFO_COND(opt->verbosity>=2,"Closed line loop - Number of boundary edges %3lu - Number of processed lines %3lu", numOrderLines, numProcessedLines);
 
     HXT_CHECK(hxtDiscretizeLine(mesh,directions,sizemap,numOrderLines,orderLines,start,cornerpoints,fmesh,pointParent));
     numClosedLoops++;
@@ -539,14 +539,14 @@ HXTStatus hxtGeneratePointsOnLines(HXTMesh *mesh,
 
 
 
-  HXT_INFO_COND(opt->verbosity>0,"");
-  HXT_INFO_COND(opt->verbosity>0,"Initial mesh number of lines         %lu", mesh->lines.num);
-  HXT_INFO_COND(opt->verbosity>0,"Number of actual corners:            %d",  numCorners);
-  HXT_INFO_COND(opt->verbosity>0,"Number of start points:              %d",  countStartPoints);
-  HXT_INFO_COND(opt->verbosity>0,"Number of closed lineloops:          %lu", numClosedLoops);
-  HXT_INFO_COND(opt->verbosity>0,"Number of fmesh vertices:            %d",  fmesh->vertices.num);
-  HXT_INFO_COND(opt->verbosity>0,"Number of fmesh corner points:       %d",  fmesh->points.num);
-  HXT_INFO_COND(opt->verbosity>0,"Number of fmesh lines:               %lu", fmesh->lines.num);
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"Initial mesh number of lines         %lu", mesh->lines.num);
+  HXT_INFO_COND(opt->verbosity>=1,"Number of actual corners:            %d",  numCorners);
+  HXT_INFO_COND(opt->verbosity>=1,"Number of start points:              %d",  countStartPoints);
+  HXT_INFO_COND(opt->verbosity>=1,"Number of closed lineloops:          %lu", numClosedLoops);
+  HXT_INFO_COND(opt->verbosity>=1,"Number of fmesh vertices:            %d",  fmesh->vertices.num);
+  HXT_INFO_COND(opt->verbosity>=1,"Number of fmesh corner points:       %d",  fmesh->points.num);
+  HXT_INFO_COND(opt->verbosity>=1,"Number of fmesh lines:               %lu", fmesh->lines.num);
 
   HXT_CHECK(hxtFree(&pointParent));
 
@@ -574,8 +574,8 @@ HXTStatus hxtGetPointsOnLinesFromInputMesh(HXTMesh *mesh,
                                            HXTPointGenParent *fparent)
 {
   HXT_UNUSED(opt);
-  HXT_INFO("");
-  HXT_INFO("========= Get points on lines from input mesh ==========");
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"========= Get points on lines from input mesh ==========");
 
   HXTPointGenParent *parent;
   HXT_CHECK(hxtMalloc(&parent,mesh->vertices.num*sizeof(HXTPointGenParent)));
@@ -596,6 +596,7 @@ HXTStatus hxtGetPointsOnLinesFromInputMesh(HXTMesh *mesh,
     fmesh->points.node[i] = mesh->points.node[i];
     parent[mesh->points.node[i]].type = 15;
     parent[mesh->points.node[i]].id = mesh->points.node[i];
+
     fmesh->points.num++;
   }
 
@@ -612,6 +613,185 @@ HXTStatus hxtGetPointsOnLinesFromInputMesh(HXTMesh *mesh,
   }
 
   HXT_CHECK(hxtFree(&parent));
+
+  return HXT_STATUS_OK;
+}
+
+//*****************************************************************************************
+//*****************************************************************************************
+//
+//  FUNCTION to assign binary indices to input lines
+//
+//*****************************************************************************************
+//*****************************************************************************************
+HXTStatus hxtAssignLineBinIndices(HXTMesh *mesh, uint32_t *bin)
+{
+
+  // A. Flag corner points
+  uint32_t *cornerflag;
+  HXT_CHECK(hxtMalloc(&cornerflag,mesh->vertices.num*sizeof(uint32_t)));
+  for (uint32_t i=0; i<mesh->vertices.num; i++) cornerflag[i] = 0;
+  HXT_CHECK(hxtFlagBoundaryCorners(mesh,cornerflag));
+
+  // B. Count maximum lines connected to a vertex
+  uint32_t maxLinesToPoint = 0; // maximum number of lines starting from a corner
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    if (cornerflag[i] > maxLinesToPoint) maxLinesToPoint = cornerflag[i];
+  }
+
+  // C. Create points to lines array 
+  // Array node2line to store boundary edges (lines) for each point 
+  uint64_t *node2line;
+  HXT_CHECK(hxtMalloc(&node2line, maxLinesToPoint*mesh->vertices.num*sizeof(uint64_t)));
+  for (uint64_t i=0; i<maxLinesToPoint*mesh->vertices.num; i++) node2line[i] = UINT64_MAX;
+
+  for (uint64_t i=0; i<mesh->lines.num; i++){
+    for (uint32_t j=0; j<2; j++){
+      uint32_t currentPoint = mesh->lines.node[2*i+j];
+      for (uint32_t k=0; k<maxLinesToPoint; k++){
+        // Add line to node in position k if is empty
+        if(node2line[maxLinesToPoint*currentPoint+k] == UINT64_MAX){
+          node2line[maxLinesToPoint*currentPoint+k] = i;
+          break;
+        }
+        // Break if line already exists in node2line
+        if(node2line[maxLinesToPoint*currentPoint+k] == i){
+          break;
+        }
+      }
+    }
+  }
+
+
+  // D. Store feature points
+  uint32_t countCornerPoints = 0;
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    if (cornerflag[i] == 1 || cornerflag[i] >2) countCornerPoints++;
+  }
+  uint32_t *cornerpoints;
+  HXT_CHECK(hxtMalloc(&cornerpoints,countCornerPoints*sizeof(uint32_t)));
+
+  uint32_t counter = 0;
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    if (cornerflag[i] == 1 || cornerflag[i] > 2){
+      cornerpoints[counter] = i;
+      counter++;
+    }
+  }
+  if (countCornerPoints!=counter)
+    return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Points were counted wrongly");
+
+  if (counter>0) bin[cornerpoints[0]] = 0;
+
+  // E. Starting from corner assign binary indices
+
+  // Array to flag already processed lines (boundary edges)
+ 
+  // E1. Propagate from corners to corners and discretize 
+  
+  for (uint32_t i=0; i<countCornerPoints; i++){
+    uint32_t start = cornerpoints[i];
+
+    // Iterate for all lines starting from that corner 
+    for (uint32_t j=0; j<cornerflag[start]; j++){
+
+      uint64_t currentLine = node2line[maxLinesToPoint*start+j];
+      HXT_ASSERT_MSG(currentLine != UINT64_MAX, "Point to lines not well defined");
+
+      uint32_t node0 = mesh->lines.node[2*currentLine+0];
+      uint32_t node1 = mesh->lines.node[2*currentLine+1];
+      HXT_ASSERT_MSG(node0 != node1, "A closed loop line should not be here");
+      HXT_ASSERT_MSG(start != node0 || start != node1, "Corner is not contained on line");
+
+      uint32_t curr = start;
+      uint64_t line0, line1;
+
+
+      while(1){
+
+        // nodes of current line 
+        node0 = mesh->lines.node[2*currentLine+0];
+        node1 = mesh->lines.node[2*currentLine+1];
+
+        // next node
+        uint32_t next = (node0 == curr) ? node1 : node0;
+        HXT_ASSERT_MSG(next != curr, "A closed loop line should not be here");
+
+        bin[next] = bin[curr]==0?1:0;
+        bin[next] = bin[curr]==1?0:1;
+
+        if (next == start) break; // the line loop is closed 
+
+        if (cornerflag[next] != 2) break; // Found another corner 
+
+        // lines of next node 
+        line0 = node2line[maxLinesToPoint*next+0];
+        line1 = node2line[maxLinesToPoint*next+1];
+
+        currentLine = (line0 == currentLine) ? line1 : line0;
+
+        curr = next;
+        
+      }
+
+
+    }
+
+  }
+
+
+  // E2. Process remaining lines without corners  
+  
+  for (uint32_t i=0; i<mesh->lines.num; i++){
+
+    uint64_t currentLine = i;
+
+    uint32_t node0 = mesh->lines.node[2*currentLine+0];
+    uint32_t node1 = mesh->lines.node[2*currentLine+1];
+    HXT_ASSERT_MSG(node0 != node1, "A closed loop line should not be here");
+
+    if (bin[node0] != UINT32_MAX && bin[node1] != UINT32_MAX) continue;
+    bin[node0] = 0;
+
+    // We start from node0 of the first non processed line we encounter
+    // We add this start node also in the list of corners 
+    uint32_t start = node0;
+
+    uint32_t curr = start;
+
+    uint32_t line0, line1;
+
+    while(1){
+      
+      // nodes of current line 
+      node0 = mesh->lines.node[2*currentLine+0];
+      node1 = mesh->lines.node[2*currentLine+1];
+
+      // next node
+      uint32_t next = (node0 == curr) ? node1 : node0;
+      HXT_ASSERT_MSG(next != curr, "A closed loop line should not be here");
+
+      bin[next] = bin[curr]==0?1:0;
+      bin[next] = bin[curr]==1?0:1;
+
+      if (next == start) break; // the line loop is closed 
+
+      // lines of next node 
+      line0 = node2line[maxLinesToPoint*next+0];
+      line1 = node2line[maxLinesToPoint*next+1];
+
+      currentLine = (line0 == currentLine) ? line1 : line0;
+
+      curr = next;
+        
+    }
+
+  }
+
+
+  HXT_CHECK(hxtFree(&cornerflag));
+  HXT_CHECK(hxtFree(&node2line));
+  HXT_CHECK(hxtFree(&cornerpoints));
 
   return HXT_STATUS_OK;
 }

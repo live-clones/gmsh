@@ -864,9 +864,9 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
                                      uint32_t *bin) 
 {
 
-  HXT_INFO("");
-  HXT_INFO("========= Generating points on volumes ==========");
-  HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"========= Generating points on volumes ==========");
+  HXT_INFO_COND(opt->verbosity>=1,"");
   
   double threshold = 0.72; // TODO 
 
@@ -889,7 +889,7 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   clock_t time01 = clock();
   double time_estimate = (double)(time01-time00) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"Time to create tri2tet  %f", time_estimate); 
+  HXT_INFO_COND(opt->verbosity>=1,"Time to create tri2tet  %f", time_estimate); 
 
   
 
@@ -901,10 +901,10 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
   /*for (uint64_t i=0; i < mesh->triangles.num; i++) tri2tetTEST[i] = UINT64_MAX;*/
   /*uint64_t missing;*/
   /*HXT_CHECK(hxtGetTri2TetMap(mesh,tri2tet,&missing));*/
-  /*HXT_INFO_COND(opt->verbosity>0,"Missing = %lu", missing);*/
+  /*HXT_INFO_COND(opt->verbosity>=1,"Missing = %lu", missing);*/
   /*clock_t time12 = clock();*/
   /*time_estimate = (double)(time12-time11) / CLOCKS_PER_SEC;*/
-  /*HXT_INFO_COND(opt->verbosity>0,"Time to create tri2tet TEST  %f", time_estimate); */
+  /*HXT_INFO_COND(opt->verbosity>=1,"Time to create tri2tet TEST  %f", time_estimate); */
 
   /*for (uint64_t i=0; i<mesh->triangles.num; i++){*/
     /*tri2tet[i] = tri2tet[i]/4;*/
@@ -926,7 +926,7 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   clock_t time02 = clock();
   time_estimate = (double)(time02-time01) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"Time to create rtree          %f", time_estimate); 
+  HXT_INFO_COND(opt->verbosity>=1,"Time to create rtree          %f", time_estimate); 
 
 
   // A second auxillary rtree for surface triangles
@@ -944,21 +944,24 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   clock_t time02b = clock();
   time_estimate = (double)(time02b-time02) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"Time to create rtree for tri  %f", time_estimate);
+  HXT_INFO_COND(opt->verbosity>=1,"Time to create rtree for tri  %f", time_estimate);
 
 
   //********************************************************
   // Queue-like loop to generate points
   //********************************************************
-  HXT_INFO("");
-  HXT_INFO_COND(opt->walkMethod3D==0,"Walking method to candidate point - simple");
-  HXT_INFO_COND(opt->walkMethod3D==1,"Walking method to candidate point - RungeKutta4");
+  //
+  if(opt->verbosity>=1){
+    HXT_INFO_COND(opt->verbosity>=1,"");
+    HXT_INFO_COND(opt->walkMethod3D==0,"Walking method to candidate point - simple");
+    HXT_INFO_COND(opt->walkMethod3D==1,"Walking method to candidate point - RungeKutta4");
+  }
 
 
   uint32_t numGenPoints = 0;
   numGenPoints += fmesh->vertices.num;
 
-  uint32_t numSurfacePoints = numGenPoints;
+  //uint32_t numSurfacePoints = numGenPoints;
 
   for (uint32_t i=0; i<fmesh->vertices.num; i++){
 
@@ -1125,7 +1128,7 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   clock_t time03 = clock();
   time_estimate = (double)(time03-time02) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"Time to generate points  %f", time_estimate); 
+  HXT_INFO_COND(opt->verbosity>=1,"Time to generate points  %f", time_estimate); 
 
   // Cleaning things 
   HXT_CHECK(hxtRTreeDelete(&data));
