@@ -381,7 +381,6 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
 		   std::vector<MVertex *> &c2v)
 {
   std::set<MVertex *> all;
-<<<<<<< HEAD
 
   uint64_t ntets = 0;
   uint64_t ntri = 0;
@@ -394,24 +393,6 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
     npts ++;
     for(size_t i = 0; i < gv->points.size(); i++) {
       all.insert(gv->points[i]->getVertex(0));
-=======
-  std::map<MVertex *, double> vlc;
-
-  uint64_t index = 0, ntri = 0, nedg = 0, ntets=0;
-  uint64_t npts = points.size();//FIX ALEX
-  // embedded points in volumes (all other embedded points will be in the
-  // curve/surface meshes already)
-  for(GRegion *gr : regions) {
-    for(GVertex *gv : gr->embeddedVertices()) {
-      points.push_back(gv);
-      npts += gv->points.size();
-      for(size_t i = 0; i < gv->points.size(); i++) {
-        MVertex *v = gv->points[i]->getVertex(0);
-        all.insert(v);
-        if(gv->prescribedMeshSizeAtVertex() != MAX_LC)
-          vlc[v] = gv->prescribedMeshSizeAtVertex();
-      }
->>>>>>> 5c893ee831092fa2cf4b76d92db8ac3fb7647247
     }
   }
 
@@ -451,7 +432,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
     hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
 
   size_t count = 0;
-<<<<<<< HEAD
+
   c2v.resize(all.size());
   for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
     m->vertices.coord[4 * count + 0] = (*it)->x();
@@ -460,24 +441,6 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
     m->vertices.coord[4 * count + 3] = 0.0;
     v2c[*it] = count;
     c2v[count++] = *it;
-=======
-  // c2v.resize(all.size());
-  c2v.resize(all.size()+1);//DBG ALEX
-  for(MVertex *v : all) {
-    m->vertices.coord[4 * count + 0] = v->x();
-    m->vertices.coord[4 * count + 1] = v->y();
-    m->vertices.coord[4 * count + 2] = v->z();
-    m->vertices.coord[4 * count + 3] = 0;
-    if(CTX::instance()->mesh.lcFromPoints) { // size on embedded points in volume
-      auto it = vlc.find(v);
-      if(it != vlc.end())
-        m->vertices.coord[4 * count + 3] = it->second;
-    }
-    v2c[v] = count;
-    c2v[count++] = v;
-    // c2v[count] = v;//TEST DBG ALEX
-    // count++;
->>>>>>> 5c893ee831092fa2cf4b76d92db8ac3fb7647247
   }
   all.clear();
 
@@ -485,24 +448,11 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
   m->points.num = m->points.size = npts;
   uint64_t index = 0;
 
-  HXT_CHECK(
-<<<<<<< HEAD
-	    hxtAlignedMalloc(&m->points.node, (m->points.num) * 1 * sizeof(uint32_t)));
-  HXT_CHECK(
-	    hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint32_t)));
-  
+  HXT_CHECK(hxtAlignedMalloc(&m->points.node, (m->points.num) * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint16_t)));
+  index = 0;
   for(size_t j = 0; j < vertices.size(); j++) {
     GVertex *gv = vertices[j];
-=======
-    hxtAlignedMalloc(&m->points.node, (m->points.num) * sizeof(uint32_t)));
-  // HXT_CHECK(
-  //   hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint32_t)));
-  HXT_CHECK(
-  	    hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint16_t)));//ALEX
-  index = 0;
-  for(size_t j = 0; j < points.size(); j++) {
-    GVertex *gv = points[j];
->>>>>>> 5c893ee831092fa2cf4b76d92db8ac3fb7647247
     for(size_t i = 0; i < gv->points.size(); i++) {
       m->points.node[index] = v2c[gv->points[i]->getVertex(0)];
       m->points.color[index] = (uint16_t)gv->tag();
@@ -514,22 +464,11 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
   m->lines.num = m->lines.size = nedg;
   index = 0;
 
-  HXT_CHECK(
-    hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
-  // HXT_CHECK(
-  //   hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint32_t)));
-  HXT_CHECK(
-<<<<<<< HEAD
-    hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint32_t)));
-
+  HXT_CHECK(hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint16_t)));
+  index = 0;
   for(size_t j = 0; j < edges.size(); j++) {
     GEdge *ge = edges[j];
-=======
-  	    hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint16_t)));//ALEX
-  index = 0;
-  for(size_t j = 0; j < curves.size(); j++) {
-    GEdge *ge = curves[j];
->>>>>>> 5c893ee831092fa2cf4b76d92db8ac3fb7647247
     for(size_t i = 0; i < ge->lines.size(); i++) {
       m->lines.node[2 * index + 0] = v2c[ge->lines[i]->getVertex(0)];
       m->lines.node[2 * index + 1] = v2c[ge->lines[i]->getVertex(1)];
@@ -541,10 +480,8 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions,
   m->triangles.num = m->triangles.size = ntri;
   HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
                              (m->triangles.num) * 3 * sizeof(uint32_t)));
-  // HXT_CHECK(hxtAlignedMalloc(&m->triangles.color,
-  //                            (m->triangles.num) * sizeof(uint32_t)));
   HXT_CHECK(hxtAlignedMalloc(&m->triangles.color,
-                             (m->triangles.num) * sizeof(uint32_t)));//ALEX
+                             (m->triangles.num) * sizeof(uint16_t)));
   index = 0;
   for(size_t j = 0; j < faces.size(); j++) {
     GFace *gf = faces[j];
