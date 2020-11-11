@@ -1694,10 +1694,10 @@ HXTStatus MultiBlock::buildQuadLayout(){
   for(uint64_t mt=0; mt<tJunctionPatchesIDs.size(); mt++)
     std::cout<<"T-junc patch ID: "<<tJunctionPatchesIDs[mt]<<std::endl;
 
-
-  dbgPosEdgData("dbgEdgData.pos");
-  createMbTriPatchs();
-  dbgPosPatchData("dbgBlockPatch.pos");
+  
+  // dbgPosEdgData("dbgEdgData.pos"); 
+  // createMbTriPatchs();
+  // dbgPosPatchData("dbgBlockPatch.pos");
   // std::vector<std::array<double, 3>> pointsOnEdg;
   // std::vector<uint64_t> trianglesOnEdg;
   // std::cout<<"grabingEdgData "<<std::endl;
@@ -1706,7 +1706,10 @@ HXTStatus MultiBlock::buildQuadLayout(){
   
   std::cout<<"start printing"<<std::endl;
   uint64_t triNumX[1];
-  getTriNumFromPointCoord(m_extraordVertices[2], m_tri, triNumX);
+  std::array<double, 3> pointX; pointX[0]=m_extraordVertices[17][0]; pointX[1]=m_extraordVertices[17][1]; pointX[2]=m_extraordVertices[17][2];
+  std::cout<<"PointX: "<<pointX[0]<<" "<<pointX[1]<<" "<<pointX[2]<<std::endl;
+  getTriNumFromPointCoord(pointX, m_tri, triNumX);
+  std::cout<<"triNum: "<<triNumX[0]<<std::endl;
   std::cout<<"Printing node and tri end"<<std::endl;
   
   // --------------------------------------------------------------------------
@@ -3134,85 +3137,66 @@ HXTStatus MultiBlock::dbgPosPatchData(const char *fileName){
 }
 
 
-int MultiBlock::isPointInTri(std::array<double, 3> point1, std::array<double, 3> point2, std::array<double, 3> currPoint, double *alpha){
-
-  int flag=0;
-  *alpha=-1.0;
-  double AB[3], AP[3];
-  for(int i=0; i<3; i++){
-    AB[i]=point2[i]-point1[i];
-    AP[i]=currPoint[i]-point1[i];
-  }
-
-  double val=sqrt(AP[0]*AP[0]+AP[1]*AP[1]+AP[2]*AP[2])/sqrt(AB[0]*AB[0]+AB[1]*AB[1]+AB[2]*AB[2]);
+int MultiBlock::isPointInTri(uint64_t tri, std::array<double, 3> point){
+  HXTEdges *edges = m_Edges; 
+  HXTMesh *mesh = edges->edg2mesh; //from starting, original mesh
+  double *vert = mesh->vertices.coord;
+  uint32_t* nodes = mesh->triangles.node;
+  double orientationABM, orientationBCM, orientationCAM;
+  int pointIsInTri=0;
   
-  if(val>1e-6 && val<1.0001){
-    flag=1;
-    *alpha=val;
-  }
-  
-  return flag;
+  double AB[3]={vert[4*nodes[3*tri+1]+0]-vert[4*nodes[3*tri+0]+0], vert[4*nodes[3*tri+1]+1]-vert[4*nodes[3*tri+0]+1], vert[4*nodes[3*tri+1]+2]-vert[4*nodes[3*tri+0]+2]};
+  double AC[3]={vert[4*nodes[3*tri+2]+0]-vert[4*nodes[3*tri+0]+0], vert[4*nodes[3*tri+2]+1]-vert[4*nodes[3*tri+0]+1], vert[4*nodes[3*tri+2]+2]-vert[4*nodes[3*tri+0]+2]};
+  double AM[3]={point[0]-vert[4*nodes[3*tri+0]+0],point[1]-vert[4*nodes[3*tri+0]+1],point[2]-vert[4*nodes[3*tri+0]+2]};
+  double nABC[3]={0.0,0.0,0.0}; double AMxAB[3]={0.0,0.0,0.0}; double AMxAC[3]={0.0,0.0,0.0}; double  ACxAB[3]={0.0,0.0,0.0};
+  crossprod(AB, AC, nABC);
+  crossprod(AM, AB, AMxAB);
+  crossprod(AM, AC, AMxAC);
+  crossprod(AC, AB, ACxAB);
+
+  double alpha = myDot(AMxAC, nABC)/myDot(nABC, nABC);
+  double beta = myDot(AMxAB, nABC)/myDot(ACxAB, nABC);
+  double numError =1e-10;
+  if((alpha>-numError) && (beta>-numError) && (alpha<1.0+numError) && beta<(1-alpha+numError))
+    pointIsInTri=1;
+    
+  return pointIsInTri;
 }
 
 HXTStatus MultiBlock::getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum){
-  HXTEdges *edges = m_Edges; 
-  HXTMesh *mesh = edges->edg2mesh; //from normal mesh
-  double *vert = mesh->vertices.coord;
-  uint32_t* nodes = mesh->triangles.node;
-  std::array<double, 3> coordV1 = {0.,0.,0.};
-  std::array<double, 3> coordV2 = {0.,0.,0.};
-  std::array<double, 3> coordV3 = {0.,0.,0.};
-  std::cout<<"Point: "<<pointCoord[0]<<" "<<pointCoord[1]<<" "<<pointCoord[2]<<std::endl;
-  double norm1=-1.0; double norm2=-1.0;
-  double alpha=-1.0;
+
   int found=0;
+  int pointIsInTri=0;
   *triNum = (uint64_t)-1;
   for(uint64_t i=0; i<vectorTriangles.size(); i++){
     if(found==0){
-      for(int k=0; k<3; k++){
-	coordV1[k] = vert[4*nodes[3*(vectorTriangles[i])+0]+k];
-	coordV2[k] = vert[4*nodes[3*(vectorTriangles[i])+1]+k];
-	coordV2[k] = vert[4*nodes[3*(vectorTriangles[i])+2]+k];
+      pointIsInTri = isPointInTri(vectorTriangles[i],  pointCoord);
+      if(pointIsInTri == 1){
+	*triNum = vectorTriangles[i];
+	found = 1;
       }
-      if(!(isPointDuplicateVec(&coordV1, &pointCoord, &norm1)) && !(isPointDuplicateVec(&coordV2, &pointCoord, &norm2))){
-	if(isPointInTri(coordV1, coordV2, pointCoord, &alpha)){
-	  *triNum = vectorTriangles[i];
-	  found=1; 
-	  std::cout<<"position1, tri number: "<<*triNum<<std::endl;
-	}
-      }
-      if((found==0) && !(isPointDuplicateVec(&coordV1, &pointCoord, &norm1)) && !(isPointDuplicateVec(&coordV3, &pointCoord, &norm2))){
-	if(isPointInTri(coordV1, coordV3, pointCoord, &alpha)){
-	  *triNum = vectorTriangles[i];
-	  found=1;
-	  std::cout<<"position2, tri number: "<<*triNum<<std::endl;
-	}
-      }
-      if((found==0) && !(isPointDuplicateVec(&coordV2, &pointCoord, &norm1)) && !(isPointDuplicateVec(&coordV3, &pointCoord, &norm2))){
-	if(isPointInTri(coordV2, coordV3, pointCoord, &alpha)){
-	  *triNum = vectorTriangles[i];
-	  found=1;
-	  std::cout<<"position3, tri number: "<<*triNum<<std::endl;
-	}
-      } 
     }
   }
 
+  if(*triNum == (uint64_t)-1){
+    std::cout << "++++++++++++++++++++++++ no triangle found +++++++++++++++++++" << std::endl;
+  }
+
+
+  
   //print DBG file--------------------------------------------------------------
+  HXTEdges *edges = m_Edges; 
+  HXTMesh *mesh = edges->edg2mesh; //from starting, original mesh
+  double *vert = mesh->vertices.coord;
+  uint32_t* nodes = mesh->triangles.node;
   uint64_t *elemFlagged;
   HXT_CHECK(hxtMalloc(&elemFlagged, mesh->triangles.num*sizeof(uint64_t)));
   for(uint64_t i=0; i<mesh->triangles.num; i++)
     elemFlagged[i]=0;
   elemFlagged[(*triNum)]=1;
-  // for(uint64_t i=0; i<m_tri.size(); i++)
-  //   elemFlagged[m_tri[i]]=static_cast<int>(i) + 5;
   FILE *f = fopen("jovana.pos","w");
   fprintf(f,"View \"Nodes\" {\n");
   fprintf(f,"SP(%g,%g,%g){%i};\n", pointCoord[0],pointCoord[1], pointCoord[2], 1); 
-  // for(uint64_t i=0; i<m_extraordVertices.size(); i++){
-  //   int color=static_cast<int>(i) + 5;
-  //   fprintf(f,"SP(%g,%g,%g){%i};\n", m_extraordVertices[i][0], m_extraordVertices[i][1], m_extraordVertices[i][2], color); 
-  // }
   fprintf(f,"};");
   fprintf(f,"View \"Flagged patches\"{\n");
   for(uint64_t i=0; i<mesh->triangles.num; i++){
@@ -3235,6 +3219,8 @@ HXTStatus MultiBlock::getTriNumFromPointCoord(std::array<double, 3> pointCoord, 
 
   return  HXT_STATUS_OK;
 }
+
+
 
 double MultiBlock::normDiffVect(std::array<double,3> *coordP1, std::array<double,3> *coordP2){
   double L=0;

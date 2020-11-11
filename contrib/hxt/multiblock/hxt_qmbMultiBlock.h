@@ -134,7 +134,7 @@ class MultiBlock
 
   HXTStatus getDataFromBlockEdgID(int edgID, std::vector<std::array<double, 3>> &pointsOnEdg, std::vector<uint64_t> &trianglesOnEdg);
   HXTStatus createMbTriPatchs();
-  int isPointInTri(std::array<double, 3> point1, std::array<double, 3> point2, std::array<double, 3> currPoint, double *alpha);
+  int isPointInTri(uint64_t triNum, std::array<double, 3> point);
   HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum);
   HXTStatus dbgPosEdgData(const char *fileName);
   HXTStatus dbgPosPatchData(const char *fileName);
