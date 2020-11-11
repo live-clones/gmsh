@@ -130,9 +130,16 @@ class MultiBlock
   double getDistanceBetweeenTwoExtrVert(int sepIDNoLimCyc, int extrVertID, int tJuncVertID1);
   int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID);
   HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs);
+ 
+  
+  double normDiffVect(std::array<double,3> *coordP1, std::array<double,3> *coordP2);
+  double computeDiscreteLineLengthModified(std::vector<std::array<double,3>> *pCoordLine, std::vector<double> hVal);
+  HXTStatus lineDiscretization(std::vector<std::array<double,3>> *line, std::vector<double> hVal, uint64_t partition, std::vector<std::array<double,3>> *newLine);
+  
+
   HXTStatus getDataFromBlockEdgID(int edgID, std::vector<std::array<double, 3>> &pointsOnEdg, std::vector<uint64_t> &trianglesOnEdg);
   HXTStatus createMbTriPatchs();
-  int isPointInTri(std::array<double, 3> point1, std::array<double, 3> point2, std::array<double, 3> currPoint, double *alpha);
+  int isPointInTri(uint64_t triNum, std::array<double, 3> point);
   HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum);
   HXTStatus getCrossesLifting(const std::vector<uint64_t> &tri, const std::vector<uint64_t> &glob2LocTri, std::vector<std::array<double,3>> &lift, uint64_t triInit, std::array<double,3> dirRef);
   HXTStatus computePatchsParametrization();
@@ -140,6 +147,7 @@ class MultiBlock
   HXTStatus dbgPosFlagSetTri(const std::set<uint64_t> &tri, const char *fileName);
   HXTStatus dbgPosParametrization(const char *fileName);
   HXTStatus dbgPosPatchData(const char *fileName);
+
 };
 
 class TriangleParametrization

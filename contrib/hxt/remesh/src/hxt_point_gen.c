@@ -97,13 +97,13 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //*************************************************************************************
   // Create and allocate 
   //*************************************************************************************
-  HXT_INFO("");
-  HXT_INFO("Initial mesh num of vertices         %d",  mesh->vertices.num);
-  HXT_INFO("Initial mesh num of points           %d",  mesh->points.num);
-  HXT_INFO("Initial mesh num of lines            %lu",  mesh->lines.num);
-  HXT_INFO("Initial mesh num of triangles        %lu",  mesh->triangles.num);
-  HXT_INFO("Initial mesh num of quads            %lu",  mesh->quads.num);
-  HXT_INFO("Initial mesh num of tetrahedra       %lu",  mesh->tetrahedra.num);
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"Initial mesh num of vertices         %d",  mesh->vertices.num);
+  HXT_INFO_COND(opt->verbosity>=1,"Initial mesh num of points           %d",  mesh->points.num);
+  HXT_INFO_COND(opt->verbosity>=1,"Initial mesh num of lines            %lu",  mesh->lines.num);
+  HXT_INFO_COND(opt->verbosity>=1,"Initial mesh num of triangles        %lu",  mesh->triangles.num);
+  HXT_INFO_COND(opt->verbosity>=1,"Initial mesh num of quads            %lu",  mesh->quads.num);
+  HXT_INFO_COND(opt->verbosity>=1,"Initial mesh num of tetrahedra       %lu",  mesh->tetrahedra.num);
 
   // Estimate number of generated vertices 
   uint32_t estNumVertices = 0;
@@ -126,10 +126,10 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   uint64_t estNumLines = estNumVertices; // TODO that is a big number for mesh lines! - reallocate down
   HXT_CHECK(hxtLinesReserve(fmesh, estNumLines));
 
-  HXT_INFO("");
-  HXT_INFO("Allocated mesh num of vertices       %d",  fmesh->vertices.size); 
-  HXT_INFO("Allocated mesh num of points         %d",  fmesh->points.size); 
-  HXT_INFO("Allocated mesh num of lines          %lu", fmesh->lines.size); 
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"Allocated mesh num of vertices       %d",  fmesh->vertices.size); 
+  HXT_INFO_COND(opt->verbosity>=1,"Allocated mesh num of points         %d",  fmesh->points.size); 
+  HXT_INFO_COND(opt->verbosity>=1,"Allocated mesh num of lines          %lu", fmesh->lines.size); 
   
   // Create structure for parent elements of generated points 
   HXTPointGenParent *parent;
@@ -143,8 +143,8 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   // If mesh does not have lines start propagation from a random edge
   // TODO 
 /*  if (mesh->lines.num == 0 && opt->generateSurfaces){*/
-    /*HXT_INFO("********** ATTENTION **********");*/
-    /*HXT_INFO("Mesh does not have lines - starting propagation from a random edge");*/
+    /*HXT_INFO_COND(opt->verbosity>=1,"********** ATTENTION **********");*/
+    /*HXT_INFO_COND(opt->verbosity>=1,"Mesh does not have lines - starting propagation from a random edge");*/
     /*// Create edges structure*/
     /*hxtLinesReserve(mesh,2);*/
     /*mesh->lines.color[0] = 0;*/
@@ -175,8 +175,8 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     HXT_CHECK(hxtGetPointsOnLinesFromInputMesh(mesh,opt,fmesh,parent));
   }
   else if (mesh->lines.num == 0 && opt->generateSurfaces){
-    HXT_INFO("********** ATTENTION **********");
-    HXT_INFO("Mesh does not have lines - starting propagation from a random edge");
+    HXT_INFO_COND(opt->verbosity>=0,"********** ATTENTION **********");
+    HXT_INFO_COND(opt->verbosity>=0,"Mesh does not have lines - starting propagation from a random point");
 
     uint32_t seedNode = mesh->triangles.node[3*0+0];
 
@@ -224,8 +224,8 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
 
   if (opt->verbosity > 1) HXT_CHECK(hxtMeshWriteGmsh(fmesh, "FINALMESHlines.msh"));
 
-  HXT_INFO("");
-  HXT_INFO("Number of points generated on lines = %d", fmesh->vertices.num);
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"Number of points generated on lines    = %d", fmesh->vertices.num);
 
   uint32_t numberOfPointsOnLines = fmesh->vertices.num;
 
@@ -245,7 +245,19 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
 
 
   }
+  else if (opt->generateLines == 0 && opt->generateSurfaces == 1){
+    // The input is given so we have to assign binary indices
+    // to each discrete lineloop
+        
+    HXT_CHECK(hxtMalloc(&bin,sizeof(uint32_t)*fmesh->vertices.size));
+    for (uint32_t i=0; i<fmesh->vertices.size; i++) bin[i] = UINT32_MAX;
+
+    HXT_CHECK(hxtAssignLineBinIndices(fmesh,bin));
+  }
   else{
+    // Lines were discretized between feature points 
+    // so we can assign binary indices on the corners and then on interior
+    
     HXT_CHECK(hxtMalloc(&bin,sizeof(uint32_t)*fmesh->vertices.size));
     for (uint32_t i=0; i<fmesh->vertices.size; i++) bin[i] = UINT32_MAX;
 
@@ -256,13 +268,12 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     for (uint32_t i=0; i<fmesh->lines.num; i++){
       uint32_t v0 = fmesh->lines.node[2*i+0];
       uint32_t v1 = fmesh->lines.node[2*i+1];
+      if (bin[v0] != UINT32_MAX && bin[v1] != UINT32_MAX) continue;
       if (bin[v0] == UINT32_MAX)
         bin[v0] = bin[v1] == 0 ? 1:0;
       if (bin[v1] == UINT32_MAX)
         bin[v1] = bin[v0] == 0 ? 1:0;
     }
-
-
   }
 
     
@@ -271,10 +282,36 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     FILE *test;
     hxtPosInit("binLines.pos","bin",&test);
     for (uint32_t i=0; i<fmesh->vertices.num; i++){
-      hxtPosAddText(test,&fmesh->vertices.coord[4*i],"%d",bin[i]);
+      hxtPosAddPoint(test,&fmesh->vertices.coord[4*i],bin[i]);
     }
     hxtPosFinish(test);
   }
+
+ 
+  /*// Write out lines with same binary index */
+  /*// TODO delete*/
+  /*{*/
+    /*FILE *test;*/
+    /*hxtPosInit("checkBadLines.pos","edg",&test);*/
+    /*for (uint32_t i=0; i<fmesh->lines.num; i++){*/
+      /*uint32_t v0 = fmesh->lines.node[2*i+0];*/
+      /*uint32_t v1 = fmesh->lines.node[2*i+1];*/
+      /*if (bin[v0] == bin[v1]) */
+        /*hxtPosAddLine(test,&fmesh->vertices.coord[4*v0],&fmesh->vertices.coord[4*v1],0);*/
+    /*}*/
+    /*hxtPosFinish(test);*/
+  /*}*/
+
+  // Check correct bipartite input of lines 
+  for (uint32_t i=0; i<fmesh->lines.num; i++){
+    uint32_t v0 = fmesh->lines.node[2*i+0];
+    uint32_t v1 = fmesh->lines.node[2*i+1];
+    if (bin[v0] == bin[v1] && bin[v0] != UINT32_MAX) 
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Boundary edge with same index");
+    if (bin[v0] == UINT32_MAX)
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Boundary point without binary index");
+  }
+
 
 
   //**********************************************************************************************************
@@ -291,16 +328,16 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     HXT_CHECK(hxtGetPointsOnSurfacesFromInputMesh(mesh,opt,fmesh,parent));
   }
 
-  if (opt->verbosity > 1) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh,"pointsSurface.pos"));
+  if (opt->verbosity>=2) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh,"pointsSurface.pos"));
 
   uint32_t numberOfPointsOnSurfaces = fmesh->vertices.num - numberOfPointsOnLines;
 
-  HXT_INFO("");
-  HXT_INFO("Number of points generated on surfaces = %d", numberOfPointsOnSurfaces);
-  HXT_INFO("Number of points generated on TOTAL    = %d", fmesh->vertices.num);
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"Number of points generated on surfaces = %d", numberOfPointsOnSurfaces);
+  HXT_INFO_COND(opt->verbosity>=1,"Number of points generated TOTAL       = %d", fmesh->vertices.num);
 
   // TODO delete
-  if(opt->verbosity == 2){
+  if(opt->verbosity>=2){
     FILE *test;
     hxtPosInit("binSurfaces.pos","bin",&test);
     for (uint32_t i=0; i<fmesh->vertices.num; i++){
@@ -362,16 +399,16 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   
     HXT_CHECK(hxtGeneratePointsOnVolumes(mesh,opt,sizemap,directions,parent,fmesh,bin));
   
-    if (opt->verbosity > 1) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh,"pointsVolume.pos"));
+    if (opt->verbosity>=2) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh,"pointsVolume.pos"));
 
   }
   uint32_t numberOfPointsOnVolumes = fmesh->vertices.num - numberOfPointsOnLines - numberOfPointsOnSurfaces;
-  HXT_INFO("");
-  HXT_INFO("Number of points generated on volumes  = %d", numberOfPointsOnVolumes);
-  HXT_INFO("Number of points generated on TOTAL    = %d", fmesh->vertices.num);
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"Number of points generated on volumes  = %d", numberOfPointsOnVolumes);
+  HXT_INFO_COND(opt->verbosity>=0,"PointGen | Number of points generated TOTAL       = %d", fmesh->vertices.num);
 
 
-  if(opt->verbosity == 2){
+  if(opt->verbosity >= 2){
     FILE *test;
     hxtPosInit("binVolumes.pos","bin",&test);
     for (uint32_t i=0; i<fmesh->vertices.num; i++){
@@ -462,10 +499,10 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   //**********************************************************************************************************
   //**********************************************************************************************************
 
-  HXT_CHECK(hxtMeshWriteGmsh(nmesh, "finalmeshTriangles.msh"));
+  if (opt->verbosity>=1) HXT_CHECK(hxtMeshWriteGmsh(nmesh, "finalmeshTriangles.msh"));
   if (opt->quadSurfaces == 1){
 
-    if(opt->verbosity == 2){
+    if(opt->verbosity>=2){
       HXT_CHECK(hxtMeshWriteGmsh(nmesh, "finalmeshNOSMOOTH.msh"));
       FILE *test;
       hxtPosInit("binIndices.pos","edges",&test);
@@ -497,7 +534,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     // and then rewrite qmesh onto nmesh
     HXT_CHECK(hxtPointGenQuadConvert(opt,mesh,nmesh,p2t,bin));
 
-    if(opt->verbosity == 2){
+    if(opt->verbosity>=2){
       FILE *test;
       hxtPosInit("binIndicesAfter.pos","edges",&test);
       for (uint32_t i=0; i<nmesh->vertices.num; i++){
@@ -513,7 +550,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
 
 
   // Output binary indices for subsequent input to volume point generation
-  if(opt->verbosity==2){
+  if(opt->verbosity>=1){
     FILE *test = fopen("binInput.txt","w");
     fprintf(test,"%d\n",nmesh->vertices.num);
     for (uint32_t i=0; i<nmesh->vertices.num; i++){
@@ -530,6 +567,9 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     hxtPosFinish(out);
   }
  
+
+  if(opt->quadSurfaces) HXT_INFO_COND(opt->verbosity>=0,"PointGen | Input: %lu triangles - Output: %lu quads",mesh->triangles.num, nmesh->quads.num);
+
   //**********************************************************************************************************
   //**********************************************************************************************************
   // Clear things

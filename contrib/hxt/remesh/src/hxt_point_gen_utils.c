@@ -1106,7 +1106,7 @@ HXTStatus hxtGetBoundaryTetrahedraToTriangles(HXTMesh *mesh,
 //
 //  FUNCTION 
 //
-//    Get list of color of triangles
+//    Get list of colors of triangles
 //    listColor array with size numColor is allocated inside the function 
 //
 //*****************************************************************************************

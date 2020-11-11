@@ -36,6 +36,7 @@ struct contextMeshOptions {
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD, hoSavePeriodic;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
+  int quadqsUseDiscreteGeometry;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
