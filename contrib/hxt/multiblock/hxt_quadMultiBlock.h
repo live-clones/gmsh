@@ -13,7 +13,7 @@ extern "C" {
   /* HXTStatus hxtQuadMultiBlockGetSingInfo(HXTMesh *mesh,int nbTurns, double critNorm, int flagTypePos, const char *fileName, const char *geoFile); */
   HXTStatus hxtQuadMultiBlockGetSingInfo(HXTMesh *mesh, int tagCrossField, std::string geoFileName);
   HXTStatus hxtQuadMultiBlockDBG(HXTMesh *mesh, int tagCrossField, HXTMesh **splitMesh);
-  HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossField, HXTMesh **splitMesh);
+  HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossField, HXTMesh **splitMesh,int tagH);
 
 #ifdef __cplusplus
 }

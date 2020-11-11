@@ -330,7 +330,7 @@ HXTStatus hxtQuadMultiBlockDBG(HXTMesh *mesh, int tagCrossField, HXTMesh **split
   return HXT_STATUS_OK;
 }
 
-HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossField, HXTMesh **splitMesh){
+HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossField, HXTMesh **splitMesh, int tagH){
   std::cout << "ok we are in th egood function" << std::endl;
   HXTEdges *edges;
   HXT_CHECK(hxtEdgesCreate(mesh,&edges));
@@ -455,14 +455,40 @@ HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossFi
   fprintf(myfile,"};");
   fclose(myfile);
 
-  
+  double *scalingFactor=NULL;
+  HXT_CHECK(hxtMalloc(&scalingFactor,edges->numEdges*sizeof(double)));
+  std::string dataType1;
+  std::vector<std::size_t> tags1;
+  std::vector<std::vector<double>> data1;
+  double time1;
+  int numComponents1;
+  gmsh::view::getModelData(tagH, 0, dataType1, tags1, data1, time1, numComponents1);
+  if (dataType1 == "ElementData" && tags1.size() == mesh->triangles.num){
+    for(uint64_t i=0; i<tags1.size(); i++){
+      if(data1[i].size() != 3) {
+	std::cout<<"data size should be 1"<<std::endl;
+	// return false;
+      }
+      double H[3]={0.0};
+      for(int j=0; j<3; j++)
+        H[j] = (data1[i])[j];
+      double Hedg[3]={H[0]+H[1]-H[2],H[2]+H[0]-H[1],H[1]+H[2]-H[0]};
+      for(int j=0; j<3; j++){
+	uint64_t globalEdg = edges->tri2edg[3*i+j];
+	scalingFactor[globalEdg] = exp(Hedg[j]);
+      }
+    }
+  }else {
+    std::cout<<"problem with 'theta' view, mesh contains "<< mesh->triangles.num<<" triangles but "<<tags.size()<< " tags in view "<<std::endl;
+    // return false;
+  } 
   int nbTurns=4;
   // double critNorm=0.8;
   double critNorm=0.7; 
   int flagTypePos=1;
   const char *fileName="myCrossesH.pos";
   QuadGenerator qGen(mesh, nbTurns, critNorm, flagTypePos, fileName);
-  qGen.computeSeparatricesOnExistingSing(crossfield);
+  qGen.computeSeparatricesOnExistingSing(crossfield,scalingFactor);
   qGen.splitTriMeshOnMBDecomp();
   (*splitMesh)=qGen.getSplitTriMeshOnMBDecomp();
 
