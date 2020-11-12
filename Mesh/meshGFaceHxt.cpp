@@ -735,25 +735,36 @@ int meshGFaceHxt(GFace *gf) {
     Msg::Debug("- Face %i: %li quads in output of meshGFaceHxt", gf->tag(), fmesh->quads.size);
     for (MTriangle* f: gf->triangles) { delete f; }
     for (MQuadrangle* f: gf->quadrangles) { delete f; }
-    for (MVertex* v: gf->mesh_vertices) { delete v; }
+    for (MVertex* v: gf->mesh_vertices) { 
+      uint32_t c = v2c[v];
+      if (c < c2v.size()) c2v[c] = NULL;
+      delete v; 
+    }
     gf->triangles.clear();
     gf->quadrangles.clear();
     gf->mesh_vertices.clear();
 
+    std::unordered_map<uint32_t,MVertex*> outOld2New;
     for (size_t f = 0; f < fmesh->quads.size; ++f) {
       MQuadrangle* q = new MQuadrangle(NULL,NULL,NULL,NULL);
       for (size_t lv = 0; lv < 4; ++lv) {
         uint32_t v = fmesh->quads.node[4*f+lv];
-        if (v < c2v.size()) { /* existing vertex on boundary */
+        if (v < c2v.size() && c2v[v] != NULL && dynamic_cast<GFace*>(c2v[v]->onWhat()) == NULL) { /* existing vertex on boundary */
           q->setVertex(lv,c2v[v]);
         } else {
-          MVertex *vNew = new MFaceVertex(
-              fmesh->vertices.coord[4*v+0],
-              fmesh->vertices.coord[4*v+1],
-              fmesh->vertices.coord[4*v+2],
-              gf,0.,0.);
-          gf->addMeshVertex(vNew);
-          q->setVertex(lv,vNew);
+          auto it = outOld2New.find(v);
+          if (it != outOld2New.end()) {
+            q->setVertex(lv,it->second);
+          } else {
+            MVertex *vNew = new MFaceVertex(
+                fmesh->vertices.coord[4*v+0],
+                fmesh->vertices.coord[4*v+1],
+                fmesh->vertices.coord[4*v+2],
+                gf,0.,0.);
+            gf->addMeshVertex(vNew);
+            q->setVertex(lv,vNew);
+            outOld2New[v] = vNew;
+          }
         }
       }
       gf->quadrangles.push_back(q);
