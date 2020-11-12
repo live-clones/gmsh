@@ -383,6 +383,107 @@ int computeCrossFieldAndScalingForHxt(
   return 0;
 }
 
+int readScaledCrossFieldFromBackgroundField(
+    std::vector<GFace*>& faces,
+    const std::vector<MVertex*>& vertices,
+    std::map<size_t, std::array<double,7> >& vertexDirections) {
+
+  Field* cross_field = NULL;
+  if (faces.size() == 0) return -1;
+  FieldManager *fields = faces[0]->model()->getFields();
+  if(fields->getBackgroundField() > 0) {        
+    cross_field = fields->get(fields->getBackgroundField());
+    if(cross_field->numComponents() != 3) {// we hae a true scaled cross fields !!
+      Msg::Error("The background field has the wrong number of components (expect 3)");
+      return -1;
+    }
+  } else {
+    Msg::Error("No background field");
+    return -1;
+  }
+
+  if (cross_field->updateNeeded) {
+    cross_field->update(); /* build octree ? */
+  }
+
+  std::array<double,7> zero7 = {0.,0.,0.,0.,0.,0.,0.};
+  for (MVertex* v: vertices) {
+    vertexDirections[v->getNum()] = zero7;
+  }
+
+  std::set<size_t> isBoundary;
+  for (GFace* gf: faces) for (GEdge* ge: gf->edges()) {
+    for (size_t i=0; i<ge->lines.size(); i++){
+      MLine *l = ge->lines[i];
+      size_t n0 = l->getVertex(0)->getNum();
+      size_t n1 = l->getVertex(1)->getNum();
+      isBoundary.insert(n0);
+      isBoundary.insert(n1);
+    }
+  }
+
+  for (GFace* gf: faces) {
+    for (MTriangle* t: gf->triangles) {
+      SVector3 N = tri_normal(t);
+      for (size_t lv = 0; lv < 3; ++lv) {
+        MVertex* v = t->getVertex(lv);
+        size_t num = v->getNum();
+
+        std::array<double,7>& vDirs = vertexDirections[num];
+        SVector3 dir1(vDirs[0],vDirs[1],vDirs[2]);
+        SVector3 dir2(vDirs[3],vDirs[4],vDirs[5]);
+        double d1best = -DBL_MAX;
+        double d2best = -DBL_MAX;
+        SVector3 d1bestV;
+        SVector3 d2bestV;
+
+
+        SVector3 dir;
+        (*cross_field)(v->x(), v->y(), v->z(), dir);
+        SVector3 dir_orth = crossprod(dir,N);
+        vDirs[6] = dir.norm();
+
+        dir.normalize();
+        dir_orth.normalize();
+
+        std::set<size_t>::iterator it = isBoundary.find(num);
+        if (it != isBoundary.end() && dir1.normSq()==0 && dir2.normSq() == 0.){
+          for (size_t d = 0; d < 3; ++d) {
+            vDirs[d] = dir[d];
+            vDirs[3+d] = dir_orth[d];
+          }
+        }
+        if (it != isBoundary.end()) continue;
+        if (dir1.normSq() == 0. && dir2.normSq() == 0.) {
+          d1bestV = dir;
+          d2bestV = dir_orth;
+        } 
+        else {
+          SVector3 candidates[4] = {dir,-1.*dir,dir_orth,-1.*dir_orth};
+          for (size_t k = 0; k < 4; ++k) {
+            double dp1 = dot(dir1,candidates[k]);
+            double dp2 = dot(dir2,candidates[k]);
+            if (dp1 > d1best) {
+              d1best = dp1;
+              d1bestV = candidates[k];
+            }
+            if (dp2 > d2best) {
+              d2best = dp2;
+              d2bestV = candidates[k];
+            }
+          }
+        }
+        for (size_t d = 0; d < 3; ++d) {
+          vDirs[d] += d1bestV[d];
+          vDirs[3+d] += d2bestV[d];
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
 
 int getCrossFieldAndScaling(
     GModel* gm,
@@ -676,12 +777,22 @@ int meshGFaceHxt(GFace *gf) {
   size_t targetNumberOfQuads = gf->triangles.size()/2;
   Msg::Debug("-- target number of quads: %li", targetNumberOfQuads);
 
+  constexpr bool RECOMPUTE_CROSS_FIELD = false;
   std::map<size_t, std::array<double,7> > vertexDirections;
-  std::vector<GFace*> faces = {gf};
-  int st = computeCrossFieldAndScalingForHxt(faces, targetNumberOfQuads, c2v, vertexDirections);
-  if (st != 0) {
-    Msg::Error("failed to compute cross field and scaling for hxt");
-    return -1;
+  if (RECOMPUTE_CROSS_FIELD) {
+    std::vector<GFace*> faces = {gf};
+    int st = computeCrossFieldAndScalingForHxt(faces, targetNumberOfQuads, c2v, vertexDirections);
+    if (st != 0) {
+      Msg::Error("failed to compute cross field and scaling for hxt");
+      return -1;
+    }
+  } else {
+    std::vector<GFace*> faces = {gf};
+    int st = readScaledCrossFieldFromBackgroundField(faces, c2v, vertexDirections);
+    if (st != 0) {
+      Msg::Error("failed to read cross field and scaling from background field");
+      return -1;
+    }
   }
 
   std::vector<double> data(7*c2v.size(),0.);

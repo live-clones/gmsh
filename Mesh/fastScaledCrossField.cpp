@@ -472,7 +472,6 @@ int adaptSizeMapToSmallFeatures(
     if (v >= num_to_scalingPos.size()) num_to_scalingPos.resize(v+1,0.);
     num_to_scalingPos[v] = i;
   }
-  DBG(minDistToOtherFeature.size());
   for (const auto& kv: minDistToOtherFeature) {
     size_t num = kv.first->getNum();
     double mdist = kv.second;
@@ -1127,6 +1126,34 @@ int detectCrossFieldSingularities(
 
   return 0;
 }
+void create_view_with_sizemap(
+    const std::vector<GFace*>& faces, 
+    const std::vector<std::size_t>& nodeTags,
+    const std::vector<double>& scaling,
+    const std::string& name) {
+  std::vector<size_t> num_to_scalingPos(nodeTags.size(),(size_t)-1);
+  for (size_t i = 0; i < nodeTags.size(); ++i) {
+    size_t v = nodeTags[i];
+    if (v >= num_to_scalingPos.size()) num_to_scalingPos.resize(v+1,0.);
+    num_to_scalingPos[v] = i;
+  }
+
+  std::vector<std::array<double,3> > pts(3);
+  std::vector<double> values(3);
+  for (GFace* gf: faces) {
+    for (MTriangle* t: gf->triangles) {
+      pts[0] = SVector3(t->getVertex(0)->point());
+      pts[1] = SVector3(t->getVertex(1)->point());
+      pts[2] = SVector3(t->getVertex(2)->point());
+      values[0] = scaling[num_to_scalingPos[t->getVertex(0)->getNum()]];
+      values[1] = scaling[num_to_scalingPos[t->getVertex(1)->getNum()]];
+      values[2] = scaling[num_to_scalingPos[t->getVertex(2)->getNum()]];
+      GeoLog::add(pts,values,name);
+    }
+  }
+  gmsh::initialize();
+  GeoLog::flush();
+}
 
 int addSingularitiesAtAcuteCorners(
     const std::vector<GFace*>& faces,
@@ -1317,6 +1344,9 @@ int computeScaledCrossFieldView(GModel* gm,
     Msg::Error("failed to create view");
     return -1;
   }
+
+  constexpr bool SHOW_SIZEMAP = true;
+  if (SHOW_SIZEMAP) create_view_with_sizemap(faces, nodeTags, scaling, "dbg_sizemap");
 
 #else
   Msg::Error("Computation of scaled cross field requires the QuadMeshingTools module");
