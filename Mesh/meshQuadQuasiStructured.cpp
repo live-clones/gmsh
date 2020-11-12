@@ -4656,8 +4656,6 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
   bool useDiscrete = useDiscreteGeometry(gm);
   bool applyMidpointSubdiv = !useDiscrete;
 
-  Msg::Error("disable MPS");
-  applyMidpointSubdiv = false;
   /* Generate quad dominant mesh */
 
   std::vector<GFace*> faces = model_faces(gm);
