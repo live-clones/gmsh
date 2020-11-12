@@ -212,6 +212,12 @@ list(APPEND HXT_INC_DIRS
 # HXT multiblock
 #################################################################################
 set(SRC
+  ../reparam/include/hxt_linear_system.h
+  ../reparam/src/hxt_linear_system.c
+  ../reparam/src/hxt_linear_system_lu.c
+  ../reparam/src/hxt_linear_system_lu.h
+  ../reparam/src/hxt_linear_system_petsc.c
+  ../reparam/src/hxt_linear_system_petsc.h
   hxt_quadMultiBlock.cpp
   hxt_qmbSingularity.cpp
   hxt_qmbCorner.cpp
@@ -221,14 +227,24 @@ set(SRC
   hxt_qmbSepGroup.cpp
   hxt_qmbMultiBlock.cpp
   hxt_qmbQuadGenerator.cpp
+
+  # hxt_linear_system_petsc.c
+  # hxt_linear_system_petsc.h
   )
 set(INC
     hxt_quadMultiBlock.h
+    
    )
 append_gmsh_src(contrib/hxt/multiblock "${SRC}")
+# list(APPEND HXT_INC_DIRS
+#      contrib/hxt/multiblock)
 list(APPEND HXT_INC_DIRS
-  contrib/hxt/multiblock)
-
+     contrib/hxt/multiblock
+     contrib/hxt/reparam/src
+     contrib/hxt/reparam/include)
+if(HAVE_PETSC)
+        set_config_option(HXT_HAVE_PETSC "PETSc")
+endif()
 #################################################################################
 # propagate HXT_INC_DIRS to parent CMakeLists
 #################################################################################

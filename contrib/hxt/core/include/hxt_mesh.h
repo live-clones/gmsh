@@ -13,8 +13,6 @@ extern "C" {
 #define HXT_NO_ADJACENT UINT64_MAX
 
 #define HXT_COLOR_OUT UINT32_MAX
-  
-  
 /* Element types, same as Gmsh */
 typedef enum {
   HXT_NO_ELT = 0,

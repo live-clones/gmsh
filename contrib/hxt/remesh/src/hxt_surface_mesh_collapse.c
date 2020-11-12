@@ -373,7 +373,7 @@ HXTStatus hxtSurfaceMeshCollapseSwap(const HXTMesh *mesh,
 
     }
 
-    HXT_INFO_COND(opt->verbosity>0,"    --- %d - Number of swaps in collapsing %d", ii, numSwaps);
+    HXT_INFO_COND(opt->verbosity>=2,"    --- %d - Number of swaps in collapsing %d", ii, numSwaps);
     if (numSwapsOld == numSwaps) break;
     numSwapsOld = numSwaps;
   }
@@ -404,9 +404,9 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
                                  HXTMesh *nmesh) // to store final mesh 
 {
 
-  HXT_INFO("");
-  HXT_INFO("========= Surface Remeshing - Removing Initial Vertices  ==========");
-  HXT_INFO_COND(opt->verbosity>0,"");
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"========= Surface Remeshing - Removing Initial Vertices  ==========");
+  HXT_INFO_COND(opt->verbosity>=2,"");
    
 
   // TODO normally we could take the following structures as input from insertion step
@@ -418,7 +418,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
   uint16_t *triColor;
   uint16_t numTriColor;
   HXT_CHECK(hxtGetTrianglesColorList(tmesh,&numTriColor,&triColor));
-  HXT_INFO_COND(opt->verbosity>0,"Number of color:  %d", numTriColor);
+  HXT_INFO_COND(opt->verbosity>=2,"Number of color:  %d", numTriColor);
 
   //***********************************************************************************************
   // Create lines to edges array; 
@@ -443,7 +443,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
   //***********************************************************************************************
   uint64_t maxNumTriToLine = 0; // maximum number of triangles adjacent to a line
   HXT_CHECK(hxtCountMaxNumberOfTrianglesToEdges(tedges,&maxNumTriToLine));
-  HXT_INFO_COND(opt->verbosity>0,"Number of max tri to line:  %lu", maxNumTriToLine);
+  HXT_INFO_COND(opt->verbosity>=2,"Number of max tri to line:  %lu", maxNumTriToLine);
   uint64_t *lines2triangles;
   HXT_CHECK(hxtMalloc(&lines2triangles,maxNumTriToLine*tmesh->lines.size*sizeof(uint64_t)));
   for (uint64_t i=0; i<maxNumTriToLine*tmesh->lines.size; i++) lines2triangles[i] = UINT64_MAX;
@@ -454,7 +454,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
   //***********************************************************************************************
   uint64_t maxNumLinesToVertex = 0;
   HXT_CHECK(hxtCountMaxNumberOfLinesToVertices(tmesh,&maxNumLinesToVertex));
-  HXT_INFO_COND(opt->verbosity>0,"Number of max lines to vertex:  %lu", maxNumLinesToVertex);
+  HXT_INFO_COND(opt->verbosity>=2,"Number of max lines to vertex:  %lu", maxNumLinesToVertex);
 
   // TODO we do not really need maxNumLinesToVertex
   // since we are concerned only with boundary vertices that are not corners
@@ -510,15 +510,15 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
 
   uint32_t kkkTot = 10;
   for (uint32_t kkk=0; kkk<kkkTot; kkk++){
-    HXT_INFO("");
-    HXT_INFO("--- Collapsing iteration %d/%d",kkk,kkkTot);
+    HXT_INFO_COND(opt->verbosity>=1,"");
+    HXT_INFO_COND(opt->verbosity>=1,"--- Collapsing iteration %d/%d",kkk,kkkTot);
     
     //***********************************************************************************************
     //***********************************************************************************************
     // For interior vertices
     //***********************************************************************************************
     //***********************************************************************************************
-    HXT_INFO("  --- Removing points on interior");
+    HXT_INFO_COND(opt->verbosity>=1,"  --- Removing points on interior");
     
     uint32_t numCollapsedInteriorPoints = 0;
     uint32_t old = numCollapsedInteriorPoints;
@@ -562,7 +562,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
     
       }
     
-      HXT_INFO_COND(opt->verbosity>0,"    --- Iteration %d collapsed = %d", kk, countPointsCollapsed);
+      HXT_INFO_COND(opt->verbosity>=2,"    --- Iteration %d collapsed = %d", kk, countPointsCollapsed);
     
       int finalSwaps = 1;
       HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
@@ -587,16 +587,16 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
     }
 
     
-    if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH4interiorcollapse.msh"));
+    if (opt->verbosity>=2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH4interiorcollapse.msh"));
     
     //***********************************************************************************************
     // Swapping after collapse of points on interior   
     //***********************************************************************************************
     
-    HXT_INFO("  --- Swaps after removing points on interior");
+    HXT_INFO_COND(opt->verbosity>=1,"  --- Swaps after removing points on interior");
     
     int numSwapsCollapseLines = 0;
-    HXT_INFO_COND(opt->verbosity>0,"  --- Number of swaps = %d ", numSwapsCollapseLines);
+    HXT_INFO_COND(opt->verbosity>=2,"  --- Number of swaps = %d ", numSwapsCollapseLines);
     HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
                                          directions,
                                          sizemap,
@@ -611,14 +611,14 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
                                          0,
                                          numSwapsCollapseLines));
     
-    if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH5interiorcollapseswap.msh"));
+    if (opt->verbosity>=2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH5interiorcollapseswap.msh"));
     
     //***********************************************************************************************
     //***********************************************************************************************
     // For vertices on Lines
     //***********************************************************************************************
     //***********************************************************************************************
-    HXT_INFO("  --- Collapsing points on lines");
+    HXT_INFO_COND(opt->verbosity>=1,"  --- Collapsing points on lines");
     
     uint32_t numCollapsedLines=0;
     
@@ -658,7 +658,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
         /*HXT_CHECK(hxtMeshWriteGmsh(tmesh, buffer));*/
     
       }
-      HXT_INFO_COND(opt->verbosity>0,"    --- Iteration %d collapsed = %d", kk, countPointsCollapsed);
+      HXT_INFO_COND(opt->verbosity>=2,"    --- Iteration %d collapsed = %d", kk, countPointsCollapsed);
     
       int finalSwaps = 1;
       HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
@@ -683,7 +683,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
     }
     
     
-    if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH6linecollapse.msh"));
+    if (opt->verbosity>=2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH6linecollapse.msh"));
 
   }
 
@@ -691,8 +691,8 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
   // Final swapping after collapsing edges
   //***********************************************************************************************
     
-  HXT_INFO("");
-  HXT_INFO("--- Swaps final");
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"--- Swaps final");
 
   int finalSwaps = 50;
   HXT_CHECK(hxtSurfaceMeshCollapseSwap(mesh,
@@ -709,7 +709,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
                                        0,
                                        finalSwaps));
 
-  if (opt->verbosity == 2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH7finalswaps.msh"));
+  if (opt->verbosity>=2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH7finalswaps.msh"));
 
   // TODO debug or delete
   uint32_t countNOTcollapsedTotal =0;
@@ -739,10 +739,10 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
 
 
 
-  HXT_INFO("");
-  HXT_INFO("Total Number of collapsed points       %d", countPointsCollapsed);
-  HXT_INFO("Total Number of NOT Collapsed Points   %d", countPointsToDelete-countPointsCollapsed);
-  HXT_INFO("Number of NOT Collapsed Points lines   %d", countPointsToDelete-countPointsCollapsed);
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"Total Number of collapsed points       %d", countPointsCollapsed);
+  HXT_INFO_COND(opt->verbosity>=1,"Total Number of NOT Collapsed Points   %d", countPointsToDelete-countPointsCollapsed);
+  HXT_INFO_COND(opt->verbosity>=1,"Number of NOT Collapsed Points lines   %d", countPointsToDelete-countPointsCollapsed);
 
 
   /*if (countPointsToDelete-countPointsCollapsed != 0 && opt->quadSurfaces == 1){*/
@@ -754,8 +754,8 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
   //*************************************************
   // Transfer to new mesh 
   //*************************************************
-  HXT_INFO("");
-  HXT_INFO("Transfer to new mesh");
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"Transfer to new mesh");
 
   HXT_CHECK(hxtSurfaceMeshTransferToNewMesh(tmesh, p2t, p2p, flagV, nmesh));
 

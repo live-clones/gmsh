@@ -96,7 +96,7 @@ HXTStatus hxtGetLineVerticesForColor(HXTMesh *mesh,
   for (uint32_t i=0; i<fmesh->vertices.num; i++){
     if (parent[i].type == 15){
       uint32_t cp = parent[i].id;
-      // TODO slow 
+      // TODO slow, but just for a few feature points  
       for (uint64_t j=0; j<mesh->triangles.num; j++){
         if (mesh->triangles.color[j] != color) continue;
         uint32_t *triV = mesh->triangles.node + 3*j;
@@ -2214,8 +2214,6 @@ HXTStatus hxtPointGenCorrection(HXTEdges *edges,
 
 
 
-
-
 //*************************************************************************************************
 //*************************************************************************************************
 //
@@ -2280,7 +2278,7 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
 
   clock_t time1 = clock();
   double time_rtree = (double)(time1 - time0) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"    Color %d Time generate rtree   %f", color, time_rtree);
+  HXT_INFO_COND(opt->verbosity>=2,"    Color %d Time generate rtree   %f", color, time_rtree);
  
 
 
@@ -2512,19 +2510,19 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
                                      HXTMesh *fmesh, uint32_t *bin) 
 {
 
-  HXT_INFO("");
-  HXT_INFO("========= Generating points on surfaces ==========");
-  HXT_INFO("");
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"========= Generating points on surfaces ==========");
+  HXT_INFO_COND(opt->verbosity>=1,"");
   
   clock_t time00 = clock();
   // Create list of colors of triangles
   uint16_t *triColors;
   uint16_t numTriColors;
   HXT_CHECK(hxtGetTrianglesColorList(mesh,&numTriColors,&triColors));
-  HXT_INFO("Number of input mesh colors          %d", numTriColors);
+  HXT_INFO_COND(opt->verbosity>=1,"Number of input mesh colors          %d", numTriColors);
   clock_t time01 = clock();
   double time_estimate = (double)(time01 - time00) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"Time to create tricolors    %f", time_estimate);
+  HXT_INFO_COND(opt->verbosity>=1,"Time to create tricolors    %f", time_estimate);
 
 
   // Create lines to edges array;
@@ -2533,7 +2531,7 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
   HXT_CHECK(hxtGetLinesToEdges(edges,lines2edges));
   clock_t time02 = clock();
   time_estimate = (double)(time02 - time01) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"Time to create lines2edges    %f", time_estimate);
+  HXT_INFO_COND(opt->verbosity>=1,"Time to create lines2edges    %f", time_estimate);
 
 
   // Create edges to lines array;
@@ -2543,7 +2541,7 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
   HXT_CHECK(hxtGetEdgesToLines(edges,lines2edges,edges2lines));
   clock_t time03 = clock();
   time_estimate = (double)(time03 - time02) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"Time to create edges2lines    %f", time_estimate);
+  HXT_INFO_COND(opt->verbosity>=1,"Time to create edges2lines    %f", time_estimate);
 
 
   // Create lines to triangles array
@@ -2553,7 +2551,7 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
   HXT_CHECK(hxtCountMaxNumberOfTrianglesToEdges(edges,&maxNumTriToLine));
   clock_t time04 = clock();
   time_estimate = (double)(time04 - time03) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"Time to create tri2line    %f", time_estimate);
+  HXT_INFO_COND(opt->verbosity>=1,"Time to create tri2line    %f", time_estimate);
 
   uint64_t *lines2triangles;
   HXT_CHECK(hxtMalloc(&lines2triangles,maxNumTriToLine*mesh->lines.num*sizeof(uint64_t)));
@@ -2561,12 +2559,12 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
   HXT_CHECK(hxtGetLinesToTriangles(edges,maxNumTriToLine,edges2lines,lines2triangles));
   clock_t time05 = clock();
   time_estimate = (double)(time05 - time04) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"Time to create lines2triangles    %f", time_estimate);
+  HXT_INFO_COND(opt->verbosity>=1,"Time to create lines2triangles    %f", time_estimate);
 
 
-  HXT_INFO("Number of max triangles per line     %lu", maxNumTriToLine);
+  HXT_INFO_COND(opt->verbosity>=1,"Number of max triangles per line     %lu", maxNumTriToLine);
   if (maxNumTriToLine>2){
-    HXT_INFO("***** non-manifold input mesh *****");
+    HXT_INFO_COND(opt->verbosity>=0,"***** non-manifold input mesh *****");
 
   }
 
@@ -2578,14 +2576,15 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
   // *********************************************************************************
   // Iterate per color 
   
-  HXT_INFO_COND(opt->walkMethod2D==0,"Walking method to candidate point - simple");
-  HXT_INFO_COND(opt->walkMethod2D==1,"Walking method to candidate point - RungeKutta4");
-  HXT_INFO_COND(opt->walkMethod2D==2,"Walking method to candidate point - planar simple");
-  HXT_INFO_COND(opt->walkMethod2D==3,"Walking method to candidate point - planar RungeKutta4");
+  if(opt->verbosity>=1){
+    HXT_INFO_COND(opt->walkMethod2D==0,"Walking method to candidate point - simple");
+    HXT_INFO_COND(opt->walkMethod2D==1,"Walking method to candidate point - RungeKutta4");
+    HXT_INFO_COND(opt->walkMethod2D==2,"Walking method to candidate point - planar simple");
+    HXT_INFO_COND(opt->walkMethod2D==3,"Walking method to candidate point - planar RungeKutta4");
+  }
 
-
-  HXT_INFO_COND(opt->verbosity>0,"");
-  HXT_INFO_COND(opt->verbosity>0,"Generating points per discrete colored surface");
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"Generating points per discrete colored surface");
 
   
   //uint32_t numTotalPointsOnLines = fmesh->vertices.num; // Image TODO delete
@@ -2622,7 +2621,7 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
 
     clock_t time1 = clock();
     double time_linepoints = (double)(time1 - time0) / CLOCKS_PER_SEC;
-    HXT_INFO_COND(opt->verbosity>0,"Color %2d Time for line points   %f", color, time_linepoints);
+    HXT_INFO_COND(opt->verbosity>=2,"Color %2d Time for line points   %f", color, time_linepoints);
 
 
 
@@ -2669,7 +2668,7 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
 
     clock_t time3 = clock();
     double time_estimate = (double)(time3 - time2) / CLOCKS_PER_SEC;
-    HXT_INFO_COND(opt->verbosity>0,"Color %d Time estimate numvert  %f", color, time_estimate);
+    HXT_INFO_COND(opt->verbosity>=2,"Color %d Time estimate numvert  %f", color, time_estimate);
 
    
     // Generate points on this colored surface
@@ -2701,8 +2700,8 @@ HXTStatus hxtGeneratePointsOnSurface(HXTPointGenOptions *opt,
     clock_t time5 = clock();
     double time_generate = (double)(time5 - time4) / CLOCKS_PER_SEC;
 
-    HXT_INFO_COND(opt->verbosity>0,"Color %d Time generate points   %f", color, time_generate);
-    HXT_INFO_COND(opt->verbosity>0,
+    HXT_INFO_COND(opt->verbosity>=2,"Color %d Time generate points   %f", color, time_generate);
+    HXT_INFO_COND(opt->verbosity>=2,
         "Color %2d  ||  Line points %5d  ||  Generated points %5d",color,numPointsOnLines,numGeneratedPoints);
 
     
@@ -2784,8 +2783,8 @@ HXTStatus hxtGetPointsOnSurfacesFromInputMesh(HXTMesh *mesh,
 {
   HXT_UNUSED(opt);
 
-  HXT_INFO("");
-  HXT_INFO("========= Get points on surfaces from input mesh ==========");
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"========= Get points on surfaces from input mesh ==========");
 
   // We already have points on lines plus lines/points in fmesh 
   // so we need to add points from triangles plus the parent triangle

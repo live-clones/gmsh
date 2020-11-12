@@ -16,4 +16,8 @@ HXTStatus hxtGetPointsOnLinesFromInputMesh(HXTMesh *mesh,
                                           HXTPointGenOptions *opt,
                                           HXTMesh *fmesh, 
                                           HXTPointGenParent *parent);
+
+HXTStatus hxtAssignLineBinIndices(HXTMesh *mesh, uint32_t *bin);
+
+
 #endif
