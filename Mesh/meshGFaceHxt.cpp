@@ -765,13 +765,16 @@ int meshGFaceHxt(GFace *gf) {
   }
 
 
-  printf("\n");
-  printf("COLOR = %d \n", mesh->triangles.color[0]);
-  printf("\n");
+  //TODO delete
+  {
+    printf("\n");
+    printf("COLOR = %d \n", mesh->triangles.color[0]);
+    printf("\n");
 
-  char buffer[32];
-  snprintf(buffer,sizeof(char)*32,"convert_%i.msh",(int)mesh->triangles.color[0]);
-  hxtMeshWriteGmsh(mesh, buffer);
+    char buffer[32];
+    snprintf(buffer,sizeof(char)*32,"convert_%i.msh",(int)mesh->triangles.color[0]);
+    hxtMeshWriteGmsh(mesh, buffer);
+  }  
   hxtMeshWriteGmsh(mesh, "convert.msh");
 
   size_t targetNumberOfQuads = gf->triangles.size()/2;
@@ -805,6 +808,22 @@ int meshGFaceHxt(GFace *gf) {
     }
     for (MVertex* v: c2v) {
       uint32_t c = v2c[v];
+
+      
+      SVector3 dir1(vertexDirections[v->getNum()][0], 
+                    vertexDirections[v->getNum()][1], 
+                    vertexDirections[v->getNum()][2]);
+      SVector3 dir2(vertexDirections[v->getNum()][3], 
+                    vertexDirections[v->getNum()][4], 
+                    vertexDirections[v->getNum()][5]);
+      dir1.normalize();
+      dir2.normalize();
+      for (size_t k=0; k<3; k++){
+        vertexDirections[v->getNum()][k] = dir1[k];
+        vertexDirections[v->getNum()][k+3] = dir2[k];
+      }
+ 
+
       for (size_t k = 0; k < 7; ++k) {
         data[7*c+k] = vertexDirections[v->getNum()][k];
       }
@@ -823,6 +842,13 @@ int meshGFaceHxt(GFace *gf) {
     GeoLog::add(convert(v->point()),convert(d2),"d2");
     GeoLog::add(convert(v->point()),vertexDirections[v->getNum()][6],"sizemap");
   }
+
+  //gmsh::initialize();
+  //GeoLog::flush();
+  //gmsh::fltk::run();
+  //return 0;
+
+
 
   ///// HERE WE NEED THE CODE TO THE REMESHING STUFF
    

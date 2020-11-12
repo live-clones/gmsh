@@ -483,6 +483,14 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
         FILE *test;
         hxtPosInit("checkNonManifoldPoint.pos","point",&test);
         hxtPosAddPoint(test,&tmesh->vertices.coord[4*v],0);
+        for (uint64_t k=0; k<maxNumLinesToVertex; k++){
+          if (vertices2lines[maxNumLinesToVertex*v+k] == UINT64_MAX) continue;
+          uint64_t cL = vertices2lines[maxNumLinesToVertex*v+k];
+          uint32_t v0 = tmesh->lines.node[2*cL+0];
+          uint32_t v1 = tmesh->lines.node[2*cL+1];
+          hxtPosAddLine(test,&tmesh->vertices.coord[4*v0],&tmesh->vertices.coord[4*v1],0);
+
+        }
         hxtPosFinish(test);
         return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Vertex with more than 2 lines is not a corner");
       }
