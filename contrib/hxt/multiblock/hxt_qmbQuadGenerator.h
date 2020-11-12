@@ -36,7 +36,7 @@ class QuadGenerator
   HXTStatus fillGeoFileDBG(std::string geoFileName);
   //Separatrices stuff
   //generate separatrices with presecribed singularities - H function crosses
-  HXTStatus computeSeparatricesOnExistingSing(double *directionsH);
+  HXTStatus computeSeparatricesOnExistingSing(double *directionsH, double *scalingFactor);
   //generate separatrices without presecribed singularities - CR  crosses
   HXTStatus computeSeparatrices(double *directionsCR);
   HXTStatus hxtWriteSeparatricesPos(const char *fileName);
@@ -52,6 +52,7 @@ class QuadGenerator
   int m_nbTurns;
   double m_critNorm;
   double *m_crossfield;
+  double *m_scalingFactorCrosses;
   int m_flagTypePosCF;
   const char *m_filePosCF;
   HXTMesh *m_triMesh;

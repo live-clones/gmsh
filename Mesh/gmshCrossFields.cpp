@@ -6252,9 +6252,9 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     int crossFieldTag = gmsh::view::add("theta");
     gmsh::view::addModelData(crossFieldTag, 0, cname, "ElementData", keys, values);
 
-    PView* viewH = PView::getViewByName("CM::H");
+    PView* viewH = PView::getViewByName("H");
     if (viewH) {delete viewH; viewH = NULL;}
-    // ConformalMapping::_viewScalarTriangles(H,tri, "CM::H");
+    ConformalMapping::_viewScalarTriangles(H,tri, "H");
     // ALEX
     if(0){
       std::map<int, std::vector<double> > dataTHETA;
@@ -7647,6 +7647,13 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
     return -1;
   }
   cf_tag = theta->getTag();
+  int H_tag = -1;
+  PView* viewH = PView::getViewByName("H"); 
+  if (!viewH) {
+    Msg::Error("required view 'H' not found");
+    return -1;
+  }
+  H_tag = viewH->getTag();
   //DBG
   std::string tmp_path = "temp0.msh";
   gm->writeMSH(tmp_path, 4.1, false, true);
@@ -7673,7 +7680,7 @@ int splitMeshWithPrescribedSing(GModel * gm, QuadMeshingState& state) {
   
   Msg::Info("MBD | Generating separatrices to obtain split mesh");
   HXTMesh *splitMesh;
-  hxtQuadMultiBlockSplitWithPrescribedSing(mesh, cf_tag, &splitMesh);
+  hxtQuadMultiBlockSplitWithPrescribedSing(mesh, cf_tag, &splitMesh, H_tag);
   std::cout << "mesh splitted" << std::endl;
   if (theta) {delete theta; theta = NULL;}//DBG
   Msg::Info("MBD | Split mesh generated");

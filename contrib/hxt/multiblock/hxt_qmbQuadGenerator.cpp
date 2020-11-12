@@ -2504,7 +2504,7 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
 //------------------------------------------------------------------------------
 
 //2.a generate separatrices with presecribed singularities - H function crosses
-HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH)
+HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH, double *scalingFactor)
 {
   std::cout<<"--READING CF--"<<std::endl;
   HXT_CHECK(hxtEdgesCreate(m_triMesh,&m_triEdges));
@@ -2512,6 +2512,11 @@ HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH)
   for(uint64_t i=0;i<m_triEdges->numEdges;i++){
     m_crossfield[2*i+0]=directionsH[2*i+0];
     m_crossfield[2*i+1]=directionsH[2*i+1];
+  }
+  if(scalingFactor){
+    HXT_CHECK(hxtMalloc(&m_scalingFactorCrosses,m_triEdges->numEdges*sizeof(double)));
+    for(uint64_t i=0;i<m_triEdges->numEdges;i++)
+      m_scalingFactorCrosses[i]=scalingFactor[i];
   }
   std::cout<<"--READING CF FINISHED--"<<std::endl;
   std::cout<<"--COMPUTE SEPARATRICES--"<<std::endl;
@@ -4742,10 +4747,11 @@ HXTStatus QuadGenerator::hxtWriteEverything(const char *fileName){
 
 HXTStatus QuadGenerator::splitTriMeshOnMBDecomp()
 {
+  
   if(m_mBlock)
     m_mBlock->splitTriMeshOnMBDecomp();
   else{
-    m_mBlock = new MultiBlock(m_triEdges, m_vectSep, m_vectSing, m_vectCorner);
+    m_mBlock = new MultiBlock(m_triEdges, m_vectSep, m_vectSing, m_vectCorner, m_crossfield, m_scalingFactorCrosses);
     m_mBlock->splitTriMeshOnMBDecomp();
   }
   return HXT_STATUS_OK;
