@@ -70,7 +70,12 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
   }
 
   /* Loop over CAD curves */
-  for (GEdge* ge: gf->edges()) {
+  std::vector<GEdge*> edges = gf->edges();
+  std::sort(edges.begin(),edges.end());
+  edges.erase(std::unique(edges.begin(),edges.end()),edges.end());
+
+  //for (GEdge* ge: gf->edges()) {
+  for (GEdge* ge: edges){
     for (MLine* l: ge->lines) {
       std::array<uint32_t,2> line;
       for (size_t lv = 0; lv < 2; ++lv) {
@@ -657,6 +662,15 @@ int meshGFaceHxt(GFace *gf) {
     Msg::Error("failed to convert face %i to HXTMesh", gf->tag());
     return status;
   }
+
+
+  printf("\n");
+  printf("COLOR = %d \n", mesh->triangles.color[0]);
+  printf("\n");
+
+  char buffer[32];
+  snprintf(buffer,sizeof(char)*32,"convert_%i.msh",(int)mesh->triangles.color[0]);
+  hxtMeshWriteGmsh(mesh, buffer);
   hxtMeshWriteGmsh(mesh, "convert.msh");
 
   size_t targetNumberOfQuads = gf->triangles.size()/2;
