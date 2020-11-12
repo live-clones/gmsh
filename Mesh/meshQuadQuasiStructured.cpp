@@ -4522,7 +4522,8 @@ int computeScaledCrossField(GModel* gm, std::vector<std::array<double,5> >& sing
   int verbosity = 0;
   int st = computeScaledCrossFieldView(gm, viewTag, targetNumberOfQuads, 
       nbDiffusionLevels, thresholdNormConvergence, nbBoundaryExtensionLayer, 
-      name, verbosity, &singularities, disableConformalScaling, adaptSmallFeatures);
+      name, verbosity, &singularities, disableConformalScaling, 
+      0.1, adaptSmallFeatures);
   double acute = 30.;
   addSingularitiesAtAcuteCorners(model_faces(gm), acute, singularities);
   if (st == 0) {
