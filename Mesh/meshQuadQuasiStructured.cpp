@@ -3760,7 +3760,8 @@ namespace QSQ {
           isBCEdge[hep] = true;
           size_t hop = M.opposite(hep);
           if (hop != NO_ID) isBCEdge[hop] = true;
-          geolog_halfedge(M, hep, double(count), "base_complex");
+          geolog_halfedge(M, hep, double(0.), "base_complex");
+          // geolog_halfedge(M, hep, double(count), "base_complex");
         }
       }
     }
@@ -4091,8 +4092,14 @@ namespace QSQ {
       break;
     }
 
+    if (disk && gf->edges().size() == 1 && gf->edges()[0]->periodic(0)) {
+      sides = {gf->edges()};
+      sidesInv = {{false}};
+    }
+
     if (sides.size() == 0) {
       Msg::Debug("face %i (%li edges), failed to build sides",gf->tag(),edges.size());
+      DBG(disk);
       return -1;
     }
 
@@ -4503,6 +4510,7 @@ int computeScaledCrossField(GModel* gm, std::vector<std::array<double,5> >& sing
   int nbDiffusionLevels = 3;
   double thresholdNormConvergence = 1.e-2;
   int nbBoundaryExtensionLayer = 1;
+  bool adaptSmallFeatures = true;
   std::string name = "scaled_cross_field";
   {
     PView* view_s = PView::getViewByName(name);
@@ -4514,7 +4522,7 @@ int computeScaledCrossField(GModel* gm, std::vector<std::array<double,5> >& sing
   int verbosity = 0;
   int st = computeScaledCrossFieldView(gm, viewTag, targetNumberOfQuads, 
       nbDiffusionLevels, thresholdNormConvergence, nbBoundaryExtensionLayer, 
-      name, verbosity, &singularities, disableConformalScaling);
+      name, verbosity, &singularities, disableConformalScaling, adaptSmallFeatures);
   double acute = 30.;
   addSingularitiesAtAcuteCorners(model_faces(gm), acute, singularities);
   if (st == 0) {
@@ -4648,6 +4656,8 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
   bool useDiscrete = useDiscreteGeometry(gm);
   bool applyMidpointSubdiv = !useDiscrete;
 
+  Msg::Error("disable MPS");
+  applyMidpointSubdiv = false;
   /* Generate quad dominant mesh */
 
   std::vector<GFace*> faces = model_faces(gm);
@@ -4985,6 +4995,7 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
       transferSeamGEdgesVerticesToGFace(gf);
 
       if (gf->meshStatistics.status == GFace::PENDING) {
+        if (gf->triangles.size() > 0) continue;
         GFaceInfo& info = faceInfo.at(gf);
         Msg::Info("- Face %i: chi = %i, corners: %li convex, %li concave, %li highly concave -> #val3 - #val5 = %i",
             gf->tag(), info.chi, info.bdrValVertices[1].size(), info.bdrValVertices[3].size(), info.bdrValVertices[4].size(), info.intSumVal3mVal5);
@@ -5009,6 +5020,7 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
     for (size_t i = 0; i < faces.size(); ++i) {
       GFace* gf = faces[i];
       if (gf->meshStatistics.status == GFace::PENDING) {
+        if (gf->triangles.size() > 0) continue;
         size_t nSingVal3, nSingVal5;
         vector<MVertex*> singularVertices;
         singularVerticesFromFloatingSingularities(gf, singularities, singularVertices, nSingVal3, nSingVal5);
@@ -5019,9 +5031,6 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
           continue;
         }
       }
-
-      Msg::Debug("- Face %i: winslow smoothing (%li quads) ...", gf->tag(), gf->quadrangles.size());
-      meshWinslow2d(gf,1000);
     }
     if (EXPORT_MESHES) gm->writeMSH("qqs_after_cavities.msh",2.2,false,true);
   }
@@ -5043,6 +5052,7 @@ int optimizeQuadMeshGeometry(GModel* gm, const std::vector<std::array<double,5> 
     std::vector<GFace*> faces = model_faces(gm);
     for (GFace* gf: faces) {
       if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+      if (gf->triangles.size() > 0) continue;
 
       optimizeQuadGeometry(gf);
     }
@@ -5164,6 +5174,14 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   if (s7 != 0) {
     Msg::Warning("failed to optimize quad mesh geometry, continue");
   }
+
+  for (GFace* gf: faces) {
+    if (gf->quadrangles.size() < 1000) {
+      Msg::Debug("- Face %i: winslow smoothing (%li quads) ...", gf->tag(), gf->quadrangles.size());
+      meshWinslow2d(gf,100);
+    }
+  }
+
 
   // TODO:
   // - concave corner cavities
