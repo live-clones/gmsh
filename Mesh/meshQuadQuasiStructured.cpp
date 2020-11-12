@@ -4469,7 +4469,9 @@ int generateInitialTriangulation(GModel* gm) {
   // CTX::instance()->mesh.minElementsPerTwoPi = 40;
   CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
   CTX::instance()->lock = 0;
+  CTX::instance()->mesh.recombineAll = 1; /* force odd number in GEdge sampling */
   GenerateMesh(gm, 1);
+  CTX::instance()->mesh.recombineAll = 0;
   GenerateMesh(gm, 2);
   CTX::instance()->lock = 1;
   CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
