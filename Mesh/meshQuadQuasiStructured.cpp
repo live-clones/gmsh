@@ -4436,6 +4436,14 @@ namespace QSQ {
 }
 using namespace QSQ;
 
+bool CADgeometryIsAvailable(GModel* gm) {
+  for (GFace* gf: model_faces(gm)) {
+    discreteFace* df = dynamic_cast<discreteFace*>(gf);
+    if (df) return false;
+  }
+  return true;
+}
+
 bool useDiscreteGeometry(GModel* gm) {
   bool useDiscrete = false;
   if (CTX::instance()->mesh.quadqsUseDiscreteGeometry) {
@@ -4464,7 +4472,7 @@ int setQuadCoherentCurveTransfiniteConstraints(const std::vector<GFace*>& faces,
   return 0;
 }
 
-int generateInitialTriangulation(GModel* gm) {
+int generateInitialTriangulation(GModel* gm, bool onlySurface = false) {
   std::vector<GFace*> faces = model_faces(gm);
   // for (GFace* gf: faces) gf->setMeshingAlgo(ALGO_2D_FRONTAL);
 
@@ -4476,9 +4484,11 @@ int generateInitialTriangulation(GModel* gm) {
   // CTX::instance()->mesh.minElementsPerTwoPi = 40;
   CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
   CTX::instance()->lock = 0;
-  CTX::instance()->mesh.recombineAll = 1; /* force odd number in GEdge sampling */
-  GenerateMesh(gm, 1);
-  CTX::instance()->mesh.recombineAll = 0;
+  if (!onlySurface) {
+    CTX::instance()->mesh.recombineAll = 1; /* force odd number in GEdge sampling */
+    GenerateMesh(gm, 1);
+    CTX::instance()->mesh.recombineAll = 0;
+  }
   GenerateMesh(gm, 2);
   CTX::instance()->lock = 1;
   CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
@@ -5112,7 +5122,9 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     return s2;
   }
 
-  if (!useDiscreteGeometry(gm)) {
+  // if (!useDiscreteGeometry(gm)) {
+  // TODO: if useDiscreteGeometry, implement discrete curve resampling 
+  if (CADgeometryIsAvailable(gm)) {
     Msg::Info("[Step 3] Generate curve 1D meshes ...");
     bool forceEvenNbEdges = false;
     bool alignWithGVertices = false;
@@ -5121,8 +5133,17 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
       Msg::Warning("failed to generate curve 1D meshes, abort");
       return s3;
     }
+    if (useDiscreteGeometry(gm)) {
+      int stt = generateInitialTriangulation(gm, true);
+      if (stt != 0) {
+        Msg::Error("failed to generate triangulation after curve remeshing, abort");
+        return stt;
+      }
+    }
   } else {
     for (GFace* gf: faces) gf->meshStatistics.status = GFace::PENDING;
+
+    // If no CAD, use Christos remeshing on the whole gm ?
   }
 
   /* Pattern required by steps 4, 5 and 6 */
