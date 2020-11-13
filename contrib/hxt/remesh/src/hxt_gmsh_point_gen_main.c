@@ -15,35 +15,35 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
                               HXTMesh *fmesh)
 {
 
-  HXT_INFO("");
-  HXT_INFO("=============================================================");
-  HXT_INFO("           POINT GENERATION MAIN"); 
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"=============================================================");
+  HXT_INFO_COND(opt->verbosity>=1,"           POINT GENERATION MAIN"); 
 
   // Do not remesh anything if points are not generated
   if (opt->generateLines==0 && opt->generateSurfaces==0) opt->remeshSurfaces = 0;
 
-  HXT_INFO("");
-  HXT_INFO("Verbosity level                           %d",  opt->verbosity);
-  HXT_INFO("Generate points on lines                  %d",  opt->generateLines);
-  HXT_INFO("Generate points on surfaces               %d",  opt->generateSurfaces);
-  HXT_INFO("Generate points on volumes                %d",  opt->generateVolumes);
-  HXT_INFO("Remesh triangulation                      %d",  opt->remeshSurfaces);
-  HXT_INFO("Convert to quad mesh                      %d",  opt->quadSurfaces);
-  HXT_INFO("Walk method 2D                            %d",  opt->walkMethod2D);
-  HXT_INFO("Walk method 3D                            %d",  opt->walkMethod3D);
-  HXT_INFO("Compute directions                        %d",  opt->dirType);
-  HXT_INFO("Uniform background size                   %f",  opt->uniformSize);
-  HXT_INFO("Desired number of output triangles        %lu", opt->numTris);
-  HXT_INFO("");
+  HXT_INFO_COND(opt->verbosity>=1,"");
+  HXT_INFO_COND(opt->verbosity>=1,"Verbosity level                           %d",  opt->verbosity);
+  HXT_INFO_COND(opt->verbosity>=1,"Generate points on lines                  %d",  opt->generateLines);
+  HXT_INFO_COND(opt->verbosity>=1,"Generate points on surfaces               %d",  opt->generateSurfaces);
+  HXT_INFO_COND(opt->verbosity>=1,"Generate points on volumes                %d",  opt->generateVolumes);
+  HXT_INFO_COND(opt->verbosity>=1,"Remesh triangulation                      %d",  opt->remeshSurfaces);
+  HXT_INFO_COND(opt->verbosity>=1,"Convert to quad mesh                      %d",  opt->quadSurfaces);
+  HXT_INFO_COND(opt->verbosity>=1,"Walk method 2D                            %d",  opt->walkMethod2D);
+  HXT_INFO_COND(opt->verbosity>=1,"Walk method 3D                            %d",  opt->walkMethod3D);
+  HXT_INFO_COND(opt->verbosity>=1,"Compute directions                        %d",  opt->dirType);
+  HXT_INFO_COND(opt->verbosity>=1,"Uniform background size                   %f",  opt->uniformSize);
+  HXT_INFO_COND(opt->verbosity>=1,"Desired number of output triangles        %lu", opt->numTris);
+  HXT_INFO_COND(opt->verbosity>=1,"");
 
   if (mesh->tetrahedra.num == 0 && (opt->generateVolumes || opt->dirType))
       return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Input mesh does not have tetrahedra");
 
   if (mesh->tetrahedra.num != 0 && opt->generateVolumes){
-    HXT_INFO("Computing Adjacencies of Tetrahedral input mesh");
+    HXT_INFO_COND(opt->verbosity>=1,"Computing Adjacencies of Tetrahedral input mesh");
     HXT_CHECK(hxtTetAdjacencies(mesh));
   }
- 
+
   //**********************************************************
   // Create and read directions and sizemap arrays from input 
   //**********************************************************
@@ -77,18 +77,21 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
     sizemap[3*i+2] = data[7*i+6]*opt->uniformSize;
  
   }
-  HXT_CHECK(hxtPointGenWriteDirections(mesh,directions,"GMSH_TEST_directionsPoints.pos"));
-  HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,h_function,"GMSH_TEST_hfunction.pos"));
+  if (opt->verbosity>=1){
+   HXT_CHECK(hxtPointGenWriteDirections(mesh,directions,"GMSH_TEST_directionsPoints.pos"));
+   HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,h_function,"GMSH_TEST_sizemap.pos"));
+   HXT_CHECK(hxtPointGenWriteScalarPoints(mesh,h_function,"GMSH_TEST_sizemap_points.pos"));
+  }
 
   //**********************************************************
   // If there is specified number of output triangles
   // scale the input sizemap
   //**********************************************************
   if (opt->numTris){
-    HXT_INFO("Scaling sizemap for estimated %lu final triangles",opt->numTris);
+    HXT_INFO_COND(opt->verbosity>=1,"Scaling sizemap for estimated %lu final triangles",opt->numTris);
     HXT_CHECK(hxtPointGenSizemapFromNelements(mesh,opt->numTris,sizemap));
   }
-  HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,sizemap,"GMSH_TEST_sizemap.pos"));
+  //HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,sizemap,"GMSH_TEST_sizemap.pos"));
   
   //**********************************************************
   // Point Generation Main Program 
@@ -100,7 +103,7 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
   //**********************************************************
   const char *meshoutput = "finalmesh.msh";
   if (meshoutput){
-    HXT_INFO("Writing final mesh to \"%s\"", meshoutput);
+    HXT_INFO_COND(opt->verbosity>=0,"Writing final mesh to \"%s\"", meshoutput);
     HXT_CHECK(hxtMeshWriteGmsh(fmesh,meshoutput));
   }
 

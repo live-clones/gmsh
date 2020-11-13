@@ -42,40 +42,15 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
 
   c2v.reserve(2*gf->mesh_vertices.size());
   uint32_t vcount = 0;
-  std::vector<uint32_t> nodes;
   std::vector<std::array<uint32_t,2> > lines;
   std::vector<std::array<uint32_t,3> > triangles;
   std::vector<std::array<uint32_t,4> > quads;
-  std::vector<uint16_t> nodes_color;
   std::vector<uint16_t> lines_color;
   std::vector<uint16_t> triangles_color;
   std::vector<uint16_t> quads_color;
 
-  /* Loop over CAD nodes */
-  for (GVertex* gv: gf->vertices())  {
-    if (gv->mesh_vertices.size() != 1) continue;
-    MVertex* v = gv->mesh_vertices[0];
-    auto it = v2c.find(v);
-    size_t nv = 0;
-    if (it == v2c.end()) {
-      v2c[v] = vcount;
-      nv = vcount;
-      c2v.push_back(v);
-      vcount += 1;
-    } else {
-      nv = it->second;
-    }
-    nodes.push_back(nv);
-    nodes_color.push_back((uint16_t)gv->tag());
-  }
-
-  /* Loop over CAD curves */
-  std::vector<GEdge*> edges = gf->edges();
-  std::sort(edges.begin(),edges.end());
-  edges.erase(std::unique(edges.begin(),edges.end()),edges.end());
-
-  //for (GEdge* ge: gf->edges()) {
-  for (GEdge* ge: edges){
+  /* Loop over CAD curves (except seam) */
+  for (GEdge* ge: gf->edges()) {
     for (MLine* l: ge->lines) {
       std::array<uint32_t,2> line;
       for (size_t lv = 0; lv < 2; ++lv) {
@@ -147,15 +122,6 @@ int Gmsh2Hxt(GFace *gf, HXTMesh *m,
     m->vertices.coord[4 * i + 1] = v->y();
     m->vertices.coord[4 * i + 2] = v->z();
     m->vertices.coord[4 * i + 3] = 0;
-  }
-
-  /* - points */
-  m->points.num = m->points.size = nodes.size();
-  HXT_CHECK(hxtAlignedMalloc(&m->points.node, (m->points.num) * sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint16_t)));
-  for(size_t i = 0; i < nodes.size(); i++) {
-    m->points.node[i] = nodes[i];
-    m->points.color[i] = nodes_color[i];
   }
 
   /* - lines */
@@ -383,107 +349,6 @@ int computeCrossFieldAndScalingForHxt(
   return 0;
 }
 
-int readScaledCrossFieldFromBackgroundField(
-    std::vector<GFace*>& faces,
-    const std::vector<MVertex*>& vertices,
-    std::map<size_t, std::array<double,7> >& vertexDirections) {
-
-  Field* cross_field = NULL;
-  if (faces.size() == 0) return -1;
-  FieldManager *fields = faces[0]->model()->getFields();
-  if(fields->getBackgroundField() > 0) {        
-    cross_field = fields->get(fields->getBackgroundField());
-    if(cross_field->numComponents() != 3) {// we hae a true scaled cross fields !!
-      Msg::Error("The background field has the wrong number of components (expect 3)");
-      return -1;
-    }
-  } else {
-    Msg::Error("No background field");
-    return -1;
-  }
-
-  if (cross_field->updateNeeded) {
-    cross_field->update(); /* build octree ? */
-  }
-
-  std::array<double,7> zero7 = {0.,0.,0.,0.,0.,0.,0.};
-  for (MVertex* v: vertices) {
-    vertexDirections[v->getNum()] = zero7;
-  }
-
-  std::set<size_t> isBoundary;
-  for (GFace* gf: faces) for (GEdge* ge: gf->edges()) {
-    for (size_t i=0; i<ge->lines.size(); i++){
-      MLine *l = ge->lines[i];
-      size_t n0 = l->getVertex(0)->getNum();
-      size_t n1 = l->getVertex(1)->getNum();
-      isBoundary.insert(n0);
-      isBoundary.insert(n1);
-    }
-  }
-
-  for (GFace* gf: faces) {
-    for (MTriangle* t: gf->triangles) {
-      SVector3 N = tri_normal(t);
-      for (size_t lv = 0; lv < 3; ++lv) {
-        MVertex* v = t->getVertex(lv);
-        size_t num = v->getNum();
-
-        std::array<double,7>& vDirs = vertexDirections[num];
-        SVector3 dir1(vDirs[0],vDirs[1],vDirs[2]);
-        SVector3 dir2(vDirs[3],vDirs[4],vDirs[5]);
-        double d1best = -DBL_MAX;
-        double d2best = -DBL_MAX;
-        SVector3 d1bestV;
-        SVector3 d2bestV;
-
-
-        SVector3 dir;
-        (*cross_field)(v->x(), v->y(), v->z(), dir);
-        SVector3 dir_orth = crossprod(dir,N);
-        vDirs[6] = dir.norm();
-
-        dir.normalize();
-        dir_orth.normalize();
-
-        std::set<size_t>::iterator it = isBoundary.find(num);
-        if (it != isBoundary.end() && dir1.normSq()==0 && dir2.normSq() == 0.){
-          for (size_t d = 0; d < 3; ++d) {
-            vDirs[d] = dir[d];
-            vDirs[3+d] = dir_orth[d];
-          }
-        }
-        if (it != isBoundary.end()) continue;
-        if (dir1.normSq() == 0. && dir2.normSq() == 0.) {
-          d1bestV = dir;
-          d2bestV = dir_orth;
-        } 
-        else {
-          SVector3 candidates[4] = {dir,-1.*dir,dir_orth,-1.*dir_orth};
-          for (size_t k = 0; k < 4; ++k) {
-            double dp1 = dot(dir1,candidates[k]);
-            double dp2 = dot(dir2,candidates[k]);
-            if (dp1 > d1best) {
-              d1best = dp1;
-              d1bestV = candidates[k];
-            }
-            if (dp2 > d2best) {
-              d2best = dp2;
-              d2bestV = candidates[k];
-            }
-          }
-        }
-        for (size_t d = 0; d < 3; ++d) {
-          vDirs[d] += d1bestV[d];
-          vDirs[3+d] += d2bestV[d];
-        }
-      }
-    }
-  }
-
-  return 0;
-}
-
 
 int getCrossFieldAndScaling(
     GModel* gm,
@@ -572,6 +437,7 @@ int meshGFaceHxt(GModel *gm)
 
   std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
+  Gmsh2Hxt(gm, mesh, v2c, c2v);
   HXT_CHECK(Gmsh2Hxt(gm, mesh, v2c, c2v));
 
   size_t targetNumberOfQuads = 10000;
@@ -764,38 +630,15 @@ int meshGFaceHxt(GFace *gf) {
     return status;
   }
 
-
-  //TODO delete
-  {
-    printf("\n");
-    printf("COLOR = %d \n", mesh->triangles.color[0]);
-    printf("\n");
-
-    char buffer[32];
-    snprintf(buffer,sizeof(char)*32,"convert_%i.msh",(int)mesh->triangles.color[0]);
-    hxtMeshWriteGmsh(mesh, buffer);
-  }  
-  hxtMeshWriteGmsh(mesh, "convert.msh");
-
   size_t targetNumberOfQuads = gf->triangles.size()/2;
   Msg::Debug("-- target number of quads: %li", targetNumberOfQuads);
 
-  constexpr bool RECOMPUTE_CROSS_FIELD = false;
   std::map<size_t, std::array<double,7> > vertexDirections;
-  if (RECOMPUTE_CROSS_FIELD) {
-    std::vector<GFace*> faces = {gf};
-    int st = computeCrossFieldAndScalingForHxt(faces, targetNumberOfQuads, c2v, vertexDirections);
-    if (st != 0) {
-      Msg::Error("failed to compute cross field and scaling for hxt");
-      return -1;
-    }
-  } else {
-    std::vector<GFace*> faces = {gf};
-    int st = readScaledCrossFieldFromBackgroundField(faces, c2v, vertexDirections);
-    if (st != 0) {
-      Msg::Error("failed to read cross field and scaling from background field");
-      return -1;
-    }
+  std::vector<GFace*> faces = {gf};
+  int st = computeCrossFieldAndScalingForHxt(faces, targetNumberOfQuads, c2v, vertexDirections);
+  if (st != 0) {
+    Msg::Error("failed to compute cross field and scaling for hxt");
+    return -1;
   }
 
   std::vector<double> data(7*c2v.size(),0.);
@@ -808,22 +651,6 @@ int meshGFaceHxt(GFace *gf) {
     }
     for (MVertex* v: c2v) {
       uint32_t c = v2c[v];
-
-      
-      SVector3 dir1(vertexDirections[v->getNum()][0], 
-                    vertexDirections[v->getNum()][1], 
-                    vertexDirections[v->getNum()][2]);
-      SVector3 dir2(vertexDirections[v->getNum()][3], 
-                    vertexDirections[v->getNum()][4], 
-                    vertexDirections[v->getNum()][5]);
-      dir1.normalize();
-      dir2.normalize();
-      for (size_t k=0; k<3; k++){
-        vertexDirections[v->getNum()][k] = dir1[k];
-        vertexDirections[v->getNum()][k+3] = dir2[k];
-      }
- 
-
       for (size_t k = 0; k < 7; ++k) {
         data[7*c+k] = vertexDirections[v->getNum()][k];
       }
@@ -842,13 +669,6 @@ int meshGFaceHxt(GFace *gf) {
     GeoLog::add(convert(v->point()),convert(d2),"d2");
     GeoLog::add(convert(v->point()),vertexDirections[v->getNum()][6],"sizemap");
   }
-
-  //gmsh::initialize();
-  //GeoLog::flush();
-  //gmsh::fltk::run();
-  //return 0;
-
-
 
   ///// HERE WE NEED THE CODE TO THE REMESHING STUFF
    
@@ -876,53 +696,46 @@ int meshGFaceHxt(GFace *gf) {
   HXTStatus stgp = hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh);
   if (stgp != HXT_STATUS_OK) {
     Msg::Error("hxtGmshPointGenMain: wrong output status");
-    HXT_CHECK(hxtMeshDelete(&fmesh));
-    HXT_CHECK(hxtMeshDelete(&mesh));
     return -1;
   }
 
 
   if (fmesh->quads.size > 0) {
+<<<<<<< HEAD
+=======
     Msg::Debug("- Face %i: %li quads in output of meshGFaceHxt", gf->tag(), fmesh->quads.size);
+>>>>>>> b310172371715589d9534e3bb0666fb0432abd9b
     for (MTriangle* f: gf->triangles) { delete f; }
     for (MQuadrangle* f: gf->quadrangles) { delete f; }
-    for (MVertex* v: gf->mesh_vertices) { 
-      uint32_t c = v2c[v];
-      if (c < c2v.size()) c2v[c] = NULL;
-      delete v; 
-    }
+    for (MVertex* v: gf->mesh_vertices) { delete v; }
     gf->triangles.clear();
     gf->quadrangles.clear();
     gf->mesh_vertices.clear();
 
-    std::unordered_map<uint32_t,MVertex*> outOld2New;
     for (size_t f = 0; f < fmesh->quads.size; ++f) {
       MQuadrangle* q = new MQuadrangle(NULL,NULL,NULL,NULL);
       for (size_t lv = 0; lv < 4; ++lv) {
         uint32_t v = fmesh->quads.node[4*f+lv];
-        if (v < c2v.size() && c2v[v] != NULL && dynamic_cast<GFace*>(c2v[v]->onWhat()) == NULL) { /* existing vertex on boundary */
+        if (v < c2v.size()) { /* existing vertex on boundary */
           q->setVertex(lv,c2v[v]);
         } else {
-          auto it = outOld2New.find(v);
-          if (it != outOld2New.end()) {
-            q->setVertex(lv,it->second);
-          } else {
-            MVertex *vNew = new MFaceVertex(
-                fmesh->vertices.coord[4*v+0],
-                fmesh->vertices.coord[4*v+1],
-                fmesh->vertices.coord[4*v+2],
-                gf,0.,0.);
-            gf->addMeshVertex(vNew);
-            q->setVertex(lv,vNew);
-            outOld2New[v] = vNew;
-          }
+          MVertex *vNew = new MFaceVertex(
+              fmesh->vertices.coord[4*v+0],
+              fmesh->vertices.coord[4*v+1],
+              fmesh->vertices.coord[4*v+2],
+              gf,0.,0.);
+          gf->addMeshVertex(vNew);
+          q->setVertex(lv,vNew);
         }
       }
       gf->quadrangles.push_back(q);
     }
     gf->meshStatistics.status = GFace::DONE;
+<<<<<<< HEAD
+=======
   } else {
     Msg::Error("- Face %i: no quads in output of meshGFaceHxt", gf->tag());
+>>>>>>> b310172371715589d9534e3bb0666fb0432abd9b
   }
 
   HXT_CHECK(hxtMeshDelete(&fmesh));

@@ -169,6 +169,7 @@ class ConformalMapping{
     /* ConformalMapping cm(gm,1); */
     crossEdgTri=cm.getTriEdgScaledCrosses();
     H=cm.getH();
+    std::cout << "---DONE---" << std::endl;
     return;
   }
 };

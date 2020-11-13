@@ -44,6 +44,7 @@
 
 #ifdef HAVE_QUADMESHINGTOOLS
 #include "qmt_cross_field.h"
+#include "qmt_utils.hpp"
 #include "geolog.h"
 #endif
 
@@ -367,6 +368,118 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   for (size_t i = 0; i < nodeTags.size(); ++i) {
     size_t v = nodeTags[i];
     scaling[i] = num_to_sizemap[v];
+  }
+
+  return 0;
+}
+
+double project_point_segment(const SPoint3& query, const SPoint3& a, const SPoint3& b, SPoint3& proj, double& lambda) {
+  double l = a.distance(b);
+  double t = dot(query-a,b-a);
+  if (t <= 0. || l == 0.) {
+    proj = a;
+    lambda = 1.;
+    return query.distance(a);
+  } else if (t > l) {
+    proj = b;
+    lambda = 0.;
+    return query.distance(b);
+  }
+  lambda = 1. - t / (l*l);
+  SVector3 p = a * lambda + b * (1. - lambda);
+  proj.setPosition(p.x(),p.y(),p.z());
+  return query.distance(proj);
+}
+
+int adaptSizeMapToSmallFeatures(
+    const std::vector<GFace*>& faces, 
+    const std::vector<std::size_t>& nodeTags,
+    std::vector<double>& scaling) {
+  std::unordered_map<MVertex*,double> minDistToOtherFeature;
+  for (GFace* gf: faces) {
+    std::unordered_map<GVertex*,std::set<GEdge*> > gv2ge;
+    std::unordered_map<MVertex*,std::vector<MLine*> > v2l;
+    for (GEdge* ge: gf->edges()) {
+      GVertex* v1 = ge->vertices()[0];
+      GVertex* v2 = ge->vertices()[1];
+      gv2ge[v1].insert(ge);
+      gv2ge[v2].insert(ge);
+      for (MLine* l: ge->lines) {
+        v2l[l->getVertex(0)].push_back(l);
+        v2l[l->getVertex(1)].push_back(l);
+      }
+    }
+
+    for (MTriangle* t: gf->triangles) {
+      MVertex* vert[3] = { t->getVertex(0), t->getVertex(1), t->getVertex(2) };
+      bool candidate = true;
+      for (size_t lv = 0; lv < 3; ++lv) {
+        if (dynamic_cast<GFace*>(vert[lv]->onWhat()) != NULL) {
+          candidate = false;
+          break;
+        }
+      }
+      if (!candidate) continue;
+      for (size_t le = 0; le < 3; ++le) {
+        const std::vector<MLine*>& ml0 = v2l[vert[le]];
+        const std::vector<MLine*>& ml1 = v2l[vert[(le+1)%3]];
+        const std::vector<MLine*>& ml2 = v2l[vert[(le+2)%3]];
+        if (   QMT_Utils::intersection(ml0,ml1).size() == 1
+            && QMT_Utils::intersection(ml0,ml2).size() == 0
+            && QMT_Utils::intersection(ml1,ml2).size() == 0) {
+          /* Project vert[2] on (vert[0],vert[1]) */
+          SPoint3 proj;
+          double lambda;
+          double dist = project_point_segment( vert[(le+2)%3]->point(),
+              vert[le]->point(), vert[(le+1)%3]->point(), proj, lambda);
+          for (size_t lv = 0; lv < 3; ++lv) {
+            auto it = minDistToOtherFeature.find(vert[lv]);
+            if (it == minDistToOtherFeature.end()) {
+              minDistToOtherFeature[vert[lv]] = dist;
+            } else if (dist < it->second) {
+              it->second = dist;
+            }
+          }
+          break;
+        }
+      }
+    }
+    /* Extension to adjacent triangles */
+    std::unordered_map<MVertex*,double> existing = minDistToOtherFeature;
+    for (MTriangle* t: gf->triangles) {
+      for (size_t lv = 0; lv < 3; ++lv) {
+        MVertex* v = t->getVertex(lv);
+        auto it = existing.find(v);
+        if (it == existing.end()) continue;
+        double dist = it->second;
+        for (size_t lv2 = 0; lv2 < 3; ++lv2) if (lv2 != lv) {
+          MVertex* v2 = t->getVertex(lv2);
+          auto it2 = minDistToOtherFeature.find(v2);
+          if (it2 == minDistToOtherFeature.end()) {
+            minDistToOtherFeature[v2] = dist;
+          } else if (dist < it->second) {
+            it->second = dist;
+          }
+        }
+      }
+    }
+  }
+
+  /* Adjust sizemap */
+  std::vector<size_t> num_to_scalingPos(nodeTags.size(),(size_t)-1);
+  for (size_t i = 0; i < nodeTags.size(); ++i) {
+    size_t v = nodeTags[i];
+    if (v >= num_to_scalingPos.size()) num_to_scalingPos.resize(v+1,0.);
+    num_to_scalingPos[v] = i;
+  }
+  for (const auto& kv: minDistToOtherFeature) {
+    size_t num = kv.first->getNum();
+    double mdist = kv.second;
+    size_t nt = num_to_scalingPos[num];
+    if (nt == (size_t)-1) continue;
+    if (scaling[nt] > mdist) {
+      scaling[nt] = 1. * mdist;
+    }
   }
 
   return 0;
@@ -1013,6 +1126,34 @@ int detectCrossFieldSingularities(
 
   return 0;
 }
+void create_view_with_sizemap(
+    const std::vector<GFace*>& faces, 
+    const std::vector<std::size_t>& nodeTags,
+    const std::vector<double>& scaling,
+    const std::string& name) {
+  std::vector<size_t> num_to_scalingPos(nodeTags.size(),(size_t)-1);
+  for (size_t i = 0; i < nodeTags.size(); ++i) {
+    size_t v = nodeTags[i];
+    if (v >= num_to_scalingPos.size()) num_to_scalingPos.resize(v+1,0.);
+    num_to_scalingPos[v] = i;
+  }
+
+  std::vector<std::array<double,3> > pts(3);
+  std::vector<double> values(3);
+  for (GFace* gf: faces) {
+    for (MTriangle* t: gf->triangles) {
+      pts[0] = SVector3(t->getVertex(0)->point());
+      pts[1] = SVector3(t->getVertex(1)->point());
+      pts[2] = SVector3(t->getVertex(2)->point());
+      values[0] = scaling[num_to_scalingPos[t->getVertex(0)->getNum()]];
+      values[1] = scaling[num_to_scalingPos[t->getVertex(1)->getNum()]];
+      values[2] = scaling[num_to_scalingPos[t->getVertex(2)->getNum()]];
+      GeoLog::add(pts,values,name);
+    }
+  }
+  gmsh::initialize();
+  GeoLog::flush();
+}
 
 int addSingularitiesAtAcuteCorners(
     const std::vector<GFace*>& faces,
@@ -1093,7 +1234,8 @@ int computeScaledCrossFieldView(GModel* gm,
     int verbosity,
     std::vector<std::array<double,5> >* singularities,
     bool disableConformalScaling,
-    double conformalScalingQuantileFiltering
+    double conformalScalingQuantileFiltering,
+    bool adaptSizeToSmallFeatures
     ) {
   Msg::Debug("compute scaled cross field ...");
 #ifdef HAVE_QUADMESHINGTOOLS
@@ -1182,6 +1324,10 @@ int computeScaledCrossFieldView(GModel* gm,
     return -1;
   }
 
+  if (adaptSizeToSmallFeatures) {
+    Msg::Info("Adapt size map to locally match small features");
+    adaptSizeMapToSmallFeatures(faces, nodeTags, scaling);
+  }
 
   if (singularities != NULL) {
     int sts = detectCrossFieldSingularities(faces, edgeTheta, nodeTags, scaling, *singularities);
@@ -1198,6 +1344,9 @@ int computeScaledCrossFieldView(GModel* gm,
     Msg::Error("failed to create view");
     return -1;
   }
+
+  constexpr bool SHOW_SIZEMAP = true;
+  if (SHOW_SIZEMAP) create_view_with_sizemap(faces, nodeTags, scaling, "dbg_sizemap");
 
 #else
   Msg::Error("Computation of scaled cross field requires the QuadMeshingTools module");
