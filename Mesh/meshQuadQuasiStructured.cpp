@@ -5126,7 +5126,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   // TODO: if useDiscreteGeometry, implement discrete curve resampling 
   if (CADgeometryIsAvailable(gm)) {
     Msg::Info("[Step 3] Generate curve 1D meshes ...");
-    bool forceEvenNbEdges = false;
+    bool forceEvenNbEdges = (CTX::instance()->mesh.quadqsUseDiscreteGeometry == 1);
     bool alignWithGVertices = false;
     int s3 = generateCurve1DMeshes(gm, faceInfo, forceEvenNbEdges, alignWithGVertices);
     if (s3 != 0) {
