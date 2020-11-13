@@ -26,13 +26,16 @@ class MultiBlock
 			    std::vector<std::array<int,2>> *allMeshLines, std::vector<int> *allMeshLinesColors);
   HXTMesh* getMyTriMesh();
   HXTStatus hxtWriteFlaggedTriangles(std::vector<int> flag, const char *fileName);
-  HXTStatus hxtWriteFlaggedNodes(std::vector<std::vector<std::array<double,3>>> cCoord, const char *fileName);
+  HXTStatus hxtWriteFlaggedNodes(std::vector<std::vector<std::array<double,3>>> cCoord, const char *fileName); 
   HXTStatus hxtWriteTriVert(std::vector<std::array<double,3>> vertices, const char *fileName);
   //new
   HXTStatus buildQuadLayout(); 
   // HXTStatus getExtrVertIndFromSepID(int ID, std::vector<int> *extraVertIndices);
   HXTStatus isExtrVertOnBdry(int ind, int *isBdry);
   HXTStatus isExtrVertTjunction(int ind, int *isTjunction);
+  HXTStatus meshQuadLayout(std::vector<double> hVal);
+  HXTStatus createQuadMesh();
+  HXTMesh* getQuadMesh();
   
 
   
@@ -42,6 +45,7 @@ class MultiBlock
   std::vector<Separatrice> m_vectSep;
   std::vector<Singularity> m_vectSing;
   std::vector<Corner> m_vectCorner;
+
   double *m_crossfield;
   double *m_scalingFactorCrosses;
   std::vector<std::vector<uint64_t>> m_vertToTri;
@@ -63,6 +67,13 @@ class MultiBlock
   std::vector<std::vector<uint64_t>> m_mbEdg2Block;
   std::vector<std::vector<uint64_t>> m_mbBlock2Edg;
   std::vector<std::set<uint64_t>> m_mbBlockTriPatchs; //tri indices patchs for each block
+  std::vector<std::vector<uint64_t>> m_Sheets;
+  std::vector<uint64_t> m_partitionPerEdge;
+  std::vector<std::array<double,3>> m_coordVerticesDiscretization;
+  std::vector<std::vector<uint64_t>> m_discrMbEdges;
+  std::vector<std::vector<uint64_t>> m_discrQuads;
+  HXTMesh *m_quadMesh;
+  // std::vector<std::vector<uint64_t>> m_discrHfuncEdges;
 
 
   bool m_mbDecompExists;
@@ -130,7 +141,7 @@ class MultiBlock
   HXTStatus collectTJunctionIndices();
   HXTStatus getTriangularPatchesIDs(std::vector<int> *triPatchesIDs);
   double getDistanceBetweeenTwoExtrVert(int sepIDNoLimCyc, int extrVertID, int tJuncVertID1);
-  int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID);
+  int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID); 
   HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs);
  
   
@@ -141,8 +152,8 @@ class MultiBlock
 
   HXTStatus getDataFromBlockEdgID(int edgID, std::vector<std::array<double, 3>> &pointsOnEdg, std::vector<uint64_t> &trianglesOnEdg);
   HXTStatus createMbTriPatchs();
-  int isPointInTri(uint64_t triNum, std::array<double, 3> point);
-  HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum);
+  int isPointInTri(uint64_t triNum, std::array<double, 3> point, double *alpha, double *beta);
+  HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum, double *alpha, double *beta);
   HXTStatus getCrossesLifting(const std::vector<uint64_t> &tri, const std::vector<uint64_t> &glob2LocTri, std::vector<std::array<double,3>> &lift, uint64_t triInit, std::array<double,3> dirRef);
   HXTStatus parametrizeBock(uint64_t idBlock, BlockParametrization &blockParam);
   HXTStatus computePatchsParametrization();
@@ -150,6 +161,13 @@ class MultiBlock
   HXTStatus dbgPosFlagSetTri(const std::set<uint64_t> &tri, const char *fileName);
   HXTStatus dbgPosParametrization(const char *fileName);
   HXTStatus dbgPosPatchData(const char *fileName);
+  //meshing
+  int getParallelEdg(int blockNum, uint64_t edg1, uint64_t *edg2);
+  int getAllSheets();
+  int computeAdequatePartitionPerEdge(double sizeofElement, std::vector<double> hVal);
+  void getExtrVertIDmbEdg(uint64_t extrID[2],int edgID);
+  HXTStatus discretizeEdges(std::vector<double> hVal);
+  HXTStatus discretizeQuads();
 
 };
 

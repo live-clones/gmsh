@@ -1477,25 +1477,36 @@ public:
     return true;
   }
   void operator()(double x, double y, double z, SVector3 &v, GEntity *ge = 0){
+    PView *vie = getView();
+    if(!vie) {
+      Msg::Info("PostViewField: no view");
+      v.data()[0] = MAX_LC; v.data()[1] = MAX_LC; v.data()[2] = MAX_LC;
+      return;
+    }
+    if(updateNeeded) {
+      if(_octree) delete _octree;
+      _octree = new OctreePost(vie);
+      updateNeeded = false;
+    }
     if (numComponents() == 3){// scaled cross field
       double values[3];
       if(!_octree->searchVectorWithTol(x, y, z, values, 0, 0, .05)){
-	if(!_octree->searchVectorWithTol(x, y, z, values, 0, 0, .1)){
-	  Msg::Debug("No vector element found containing point (%g,%g,%g)", x, y, z);
-	}
-	else {
-	  v = SVector3(values[0],values[1],values[2]);
-	}
+        if(!_octree->searchVectorWithTol(x, y, z, values, 0, 0, .1)){
+          Msg::Debug("No vector element found containing point (%g,%g,%g)", x, y, z);
+        }
+        else {
+          v = SVector3(values[0],values[1],values[2]);
+        }
       }
       else{
-	v = SVector3(values[0],values[1],values[2]);
+        v = SVector3(values[0],values[1],values[2]);
       }
     }
     else {
       Msg::Info("No vector element ");
     }
   }
-  
+
   double operator()(double x, double y, double z, GEntity *ge = 0)
   {
     PView *v = getView();
@@ -1511,16 +1522,16 @@ public:
     if (numComponents() == 3){// scaled cross field
       double values[3];
       if(!_octree->searchVectorWithTol(x, y, z, values, 0, 0, 0.05)){
-	Msg::Info("No vector element found containing point (%g,%g,%g)", x, y, z);
+        Msg::Info("No vector element found containing point (%g,%g,%g)", x, y, z);
       }
       else{
-	l = sqrt (values[0]*values[0]+values[1]*values[1]+values[2]*values[2]);
+        l = sqrt (values[0]*values[0]+values[1]*values[1]+values[2]*values[2]);
       }
     }
-    
+
     else if (numComponents() == 1){
       if(!_octree->searchScalarWithTol(x, y, z, &l, 0, 0, 0.05)){
-	Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
+        Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
       }
     }
     else {

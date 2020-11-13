@@ -62,6 +62,9 @@ MultiBlock:: MultiBlock(HXTEdges *edges, std::vector<Separatrice> vectSep, std::
   m_vectSing=vectSing;
   m_vectCorner=vectCorner; 
   m_myTriMesh=NULL;
+
+  m_quadMesh=NULL; 
+
   m_crossfield=crossfield;
   m_scalingFactorCrosses=scalingFactorCrosses;
   std::vector<uint64_t> initVect;
@@ -70,12 +73,15 @@ MultiBlock:: MultiBlock(HXTEdges *edges, std::vector<Separatrice> vectSep, std::
     for(size_t l=0;l<3;l++)
       m_vertToTri[m_Edges->edg2mesh->triangles.node[3*k+l]].push_back(k);
   }
+
 }
 
 MultiBlock::~MultiBlock()
 {
   // if(m_myTriMesh)
-  //   hxtMeshDelete(&m_myTriMesh); 
+  //   hxtMeshDelete(&m_myTriMesh);
+  // if(m_quadMesh)
+  //   hxtMeshDelete(&m_quadMesh);
 }
 
 static void normalize(double *d)
@@ -280,6 +286,18 @@ HXTStatus MultiBlock::splitTriMeshOnMBDecomp(){
   std::cout << "----SPLITTING TRI MESH ON MULTI-BLOCK DECOMPOSITION FINISHED----" << std::endl;
 
   buildQuadLayout(); //new
+
+  std::cout<<"------------Start meshing----------"<<std::endl;
+  std::vector<double> hVal;
+  HXTEdges *edges=m_Edges;
+  HXTMesh *mesh=edges->edg2mesh;
+  for(uint64_t v=0; v<mesh->vertices.num; v++) 
+    hVal.push_back(1.0);    
+  meshQuadLayout(hVal);
+  std::cout<<"Storing quad mesh"<<std::endl;
+  createQuadMesh();
+  std::cout<<"----Meshing  FINISHED!----"<<std::endl;
+   
   return HXT_STATUS_OK;
 }
 
@@ -1720,7 +1738,7 @@ HXTStatus MultiBlock::buildQuadLayout(){
   std::cout<<"----BUILDING QUADS FINISHED!----"<<std::endl;
 
   //new functions start-------------------------------------------
-  std::cout<<"----COLLECTING BLOCKS DATA!----"<<std::endl;
+  // std::cout<<"----COLLECTING BLOCKS DATA!----"<<std::endl;
   // std::cout<<"SEP GRAPH STRUCTURE"<<std::endl;
   // for(uint64_t j=0; j<m_vectSep.size(); j++){
   //   Separatrice *sep=&(m_vectSep[j]);
@@ -1751,15 +1769,17 @@ HXTStatus MultiBlock::buildQuadLayout(){
   //   }
   // }
   // std::cout<<"Num duplicates: "<<numDoubles<<std::endl;
-  std::cout<<"collect T-junction indices"<<std::endl;
-  collectTJunctionIndices();
-  std::cout<<"num T-junctions: "<< m_extraordVertTjunc.size()<<std::endl;
-  // killDuplicatesSepTjunction();//ALEX
-  getQuadEdgesData();
-  std::cout<<"block2edg"<<std::endl;
-  getBlock2Edge();
-  std::cout<<"edg2block"<<std::endl;
-  getEdge2Block();
+
+  // std::cout<<"collect T-junction indices"<<std::endl;
+  // collectTJunctionIndices();
+  // std::cout<<"num T-junctions: "<< m_extraordVertTjunc.size()<<std::endl;
+  // // killDuplicatesSepTjunction();//ALEX
+  // getQuadEdgesData();
+  // std::cout<<"block2edg"<<std::endl;
+  // getBlock2Edge();
+  // std::cout<<"edg2block"<<std::endl;
+  // getEdge2Block();
+
 
   // for(uint64_t t=0; t<m_mbQuads.size(); t++){
   //   std::cout<<"Block: "<<t <<" nVertices: "<<m_mbQuads[t].size()<<", nEdges: "<< m_mbBlock2Edg[t].size()<<std::endl;
@@ -1777,27 +1797,29 @@ HXTStatus MultiBlock::buildQuadLayout(){
   //     std::cout << m_mbEdg2Block[t][k] << " , ";
   //   std::cout << std::endl;
   // }
-  
-  std::cout<<"triPatches"<<std::endl;
-  std::vector<int> triPatchesIDs;
-  getTriangularPatchesIDs(&triPatchesIDs);
-  std::cout<<"num triPatches: "<< triPatchesIDs.size()<<std::endl;
-  std::cout<<"T-junction patches"<<std::endl;
-  std::vector<int> tJunctionPatchesIDs;
-  getTJunctionsPatchesIDs(&tJunctionPatchesIDs);
-  std::cout<<"num T-junction patches: "<< tJunctionPatchesIDs.size()<<std::endl;
-  for(uint64_t mt=0; mt<tJunctionPatchesIDs.size(); mt++)
-    std::cout<<"T-junc patch ID: "<<tJunctionPatchesIDs[mt]<<std::endl;
 
-  dbgPosEdgData("dbgEdgData.pos");
-  std::cout << "printed dbgEdgData.pos" << std::endl;
-  createMbTriPatchs();
-  std::cout << "created mb tri patches" << std::endl;
-  dbgPosPatchData("dbgBlockPatch.pos");
-  std::cout << "printed dbgBlockPatchData.pos" << std::endl;
-  std::cout << "create patches parametrization" << std::endl;
-  computePatchsParametrization();
   
+  // std::cout<<"triPatches"<<std::endl;
+  // std::vector<int> triPatchesIDs;
+  // getTriangularPatchesIDs(&triPatchesIDs);
+  // std::cout<<"num triPatches: "<< triPatchesIDs.size()<<std::endl;
+  // std::cout<<"T-junction patches"<<std::endl;
+  // std::vector<int> tJunctionPatchesIDs;
+  // getTJunctionsPatchesIDs(&tJunctionPatchesIDs);
+  // std::cout<<"num T-junction patches: "<< tJunctionPatchesIDs.size()<<std::endl;
+  // for(uint64_t mt=0; mt<tJunctionPatchesIDs.size(); mt++)
+  //   std::cout<<"T-junc patch ID: "<<tJunctionPatchesIDs[mt]<<std::endl;
+
+  
+  // dbgPosEdgData("dbgEdgData.pos"); 
+  // createMbTriPatchs();
+  // dbgPosPatchData("dbgBlockPatch.pos");
+  // std::vector<std::array<double, 3>> pointsOnEdg;
+  // std::vector<uint64_t> trianglesOnEdg;
+  // std::cout<<"grabingEdgData "<<std::endl;
+  // getDataFromBlockEdgID(m_mbBlock2Edg[0][0], pointsOnEdg, trianglesOnEdg);
+
+
   
   // std::cout<<"start printing"<<std::endl;
   // uint64_t triNumX[1];
@@ -1817,7 +1839,7 @@ HXTStatus MultiBlock::buildQuadLayout(){
   //   hVal.push_back(1.0+s*0.1);
   // std::cout<<"length of edg: "<<m_mbEdges[0].size()<<std::endl;
   // lineDiscretization(&m_mbEdges[0], hVal, partition, &newLine);
-   std::cout<<"----Collecting data  FINISHED!----"<<std::endl;
+
   //new functions end
   
   
@@ -2341,7 +2363,7 @@ int MultiBlock:: putIDsInGraph(std::vector<std::array<double,3>> newNodes, std::
     std::vector<uint64_t> vectTrianglesID;
     std::vector<int> vectNodesID;
     for(int s=0; s<num;s++){
-      // addInUnsgnIntVectIfNotPresent(&vectTrianglesID, trianglesID[s]);
+      //addInUnsgnIntVectIfNotPresent(&vectTrianglesID, trianglesID[s]);
       //addInIntVectIfNotPresent(&vectNodesID, nodesID[s]);
       vectTrianglesID.push_back(trianglesID[s]);
       vectNodesID.push_back(nodesID[s]);
@@ -2828,61 +2850,55 @@ int MultiBlock::getQuadEdgesData(){
 }
 
 int MultiBlock::getBlock2Edge(){
-  std::array<double,3> firstPoint, lastPoint;
-  std::vector<std::array<double,3>> edgPoints;
+
+  std::array<double,3> firstPoint={0.,0.,0.};
+  std::array<double,3> lastPoint={0.,0.,0.};
   for(uint64_t i=0; i<m_mbQuads.size(); i++){
     std::vector<uint64_t> blockEdges;
-    std::vector<int> nodes;
     std::vector<std::array<double,3>> pointsCoord;
-    for(uint64_t s=0; s<m_mbQuads[i].size(); s++){
-      nodes.push_back(m_mbQuads[i][s]);
-      pointsCoord.push_back(m_extraordVertices[nodes[s]]);
-    }
-    for(uint64_t j=0; j<m_mbEdges.size(); j++){
-      edgPoints=m_mbEdges[j];
-      uint64_t end=edgPoints.size()-1;
-      firstPoint=edgPoints[0];
-      lastPoint=edgPoints[end];
-      double norm=-1.;
-      // for(uint64_t k=0; k<m_mbEdges[j].size()-1;k++){
-      for(uint64_t k=0; k<pointsCoord.size()-1;k++){
+    for(uint64_t s=0; s<m_mbQuads[i].size(); s++)
+      pointsCoord.push_back(m_extraordVertices[m_mbQuads[i][s]]);
+    for(uint64_t k=0; k<pointsCoord.size()-1;k++){
+      for(uint64_t j=0; j<m_mbEdges.size(); j++){
+	firstPoint=m_mbEdges[j][0];
+	lastPoint=m_mbEdges[j][m_mbEdges[j].size()-1];
+	double norm=-1.;
 	if((isPointDuplicateVec(&firstPoint, &pointsCoord[k], &norm) && isPointDuplicateVec(&lastPoint, &pointsCoord[k+1], &norm)) ||
 	   (isPointDuplicateVec(&firstPoint, &pointsCoord[k+1], &norm)&& isPointDuplicateVec(&lastPoint, &pointsCoord[k], &norm))){
 	  blockEdges.push_back(j);
 	}
       }
+    }
+    for(uint64_t j=0; j<m_mbEdges.size(); j++){
+      firstPoint=m_mbEdges[j][0];
+      lastPoint=m_mbEdges[j][m_mbEdges[j].size()-1];
+      double norm=-1.;
       if((isPointDuplicateVec(&firstPoint, &pointsCoord[0], &norm) && isPointDuplicateVec(&lastPoint, &pointsCoord[pointsCoord.size()-1], &norm)) ||
 	 (isPointDuplicateVec(&firstPoint, &pointsCoord[pointsCoord.size()-1], &norm)&& isPointDuplicateVec(&lastPoint, &pointsCoord[0], &norm)))
 	blockEdges.push_back(j);
     }
     m_mbBlock2Edg.push_back(blockEdges);
   }
+  
   return 1;
 }
 
+
 int MultiBlock::getEdge2Block(){
   for(uint64_t i=0; i<m_mbEdges.size(); i++){
-    std::vector<uint64_t> qVal;
+    std::vector<uint64_t>  qVal;
     for(uint64_t j=0; j<m_mbQuads.size(); j++){
       for(uint64_t k=0; k<m_mbBlock2Edg[j].size(); k++){
-	if(m_mbBlock2Edg[j][k]==i){
+	if(m_mbBlock2Edg[j][k]==i){ 
 	  qVal.push_back(j);
 	}
       }   
-    }
+    } 
     m_mbEdg2Block.push_back(qVal);
   }
   return 1;
 }
 
-//is it needed?
-// HXTStatus MultiBlock::getExtrVertIndFromSepID(int ID, std::vector<int> *extraVertIndices){
-//   int ind=-1;
-//   getCleanedSepIndFromSepID(ID, &ind);
-//   extraVertIndices = m_sepGraphNodes[ind];
-  
-//   return HXT_STATUS_OK;
-// }
 
 HXTStatus MultiBlock::collectTJunctionIndices(){
   for(uint64_t i=0; i<m_vectSep.size(); i++){
@@ -3758,8 +3774,10 @@ HXTStatus MultiBlock::dbgPosPatchData(const char *fileName){
   return HXT_STATUS_OK;
 }
 
-
-int MultiBlock::isPointInTri(uint64_t tri, std::array<double, 3> point){
+//ADD alpha nad beta in return
+int MultiBlock::isPointInTri(uint64_t tri, std::array<double, 3> point, double *distance1, double *distance2){
+  *distance1 = -1.0;
+  *distance2 = -1.0;
   HXTEdges *edges = m_Edges; 
   HXTMesh *mesh = edges->edg2mesh; //from starting, original mesh
   double *vert = mesh->vertices.coord;
@@ -3779,20 +3797,25 @@ int MultiBlock::isPointInTri(uint64_t tri, std::array<double, 3> point){
   double alpha = myDot(AMxAC, nABC)/myDot(nABC, nABC);
   double beta = myDot(AMxAB, nABC)/myDot(ACxAB, nABC);
   double numError =1e-10;
-  if((alpha>-numError) && (beta>-numError) && (alpha<1.0+numError) && beta<(1-alpha+numError))
+  if((alpha>-numError) && (beta>-numError) && (alpha<1.0+numError) && beta<(1-alpha+numError)){
     pointIsInTri=1;
-    
+    *distance1 = alpha;
+    *distance2 = beta;
+  } 
+  
   return pointIsInTri;
 }
 
-HXTStatus MultiBlock::getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum){
+HXTStatus MultiBlock::getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum, double *alpha, double *beta){
 
+  *alpha = -1.0;
+  *beta = -1.0;
   int found=0;
   int pointIsInTri=0;
   *triNum = (uint64_t)-1;
   for(uint64_t i=0; i<vectorTriangles.size(); i++){
     if(found==0){
-      pointIsInTri = isPointInTri(vectorTriangles[i],  pointCoord);
+      pointIsInTri = isPointInTri(vectorTriangles[i],  pointCoord, alpha, beta);
       if(pointIsInTri == 1){
 	*triNum = vectorTriangles[i];
 	found = 1;
@@ -3807,36 +3830,36 @@ HXTStatus MultiBlock::getTriNumFromPointCoord(std::array<double, 3> pointCoord, 
 
   
   //print DBG file--------------------------------------------------------------
-  HXTEdges *edges = m_Edges; 
-  HXTMesh *mesh = edges->edg2mesh; //from starting, original mesh
-  double *vert = mesh->vertices.coord;
-  uint32_t* nodes = mesh->triangles.node;
-  uint64_t *elemFlagged;
-  HXT_CHECK(hxtMalloc(&elemFlagged, mesh->triangles.num*sizeof(uint64_t)));
-  for(uint64_t i=0; i<mesh->triangles.num; i++)
-    elemFlagged[i]=0;
-  elemFlagged[(*triNum)]=1;
-  FILE *f = fopen("jovana.pos","w");
-  fprintf(f,"View \"Nodes\" {\n");
-  fprintf(f,"SP(%g,%g,%g){%i};\n", pointCoord[0],pointCoord[1], pointCoord[2], 1); 
-  fprintf(f,"};");
-  fprintf(f,"View \"Flagged patches\"{\n");
-  for(uint64_t i=0; i<mesh->triangles.num; i++){
-    fprintf(f,"ST(");
-    uint32_t vtri[3] = {mesh->triangles.node[3*i+0],mesh->triangles.node[3*i+1],mesh->triangles.node[3*i+2]};
-    for(uint32_t j=0; j<3; j++){
-      fprintf(f,"%f,%f,%f",mesh->vertices.coord[4*vtri[j]+0],mesh->vertices.coord[4*vtri[j]+1],mesh->vertices.coord[4*vtri[j]+2]);
-      if(j<2)
-        fprintf(f,",");
-    }
-    fprintf(f,")");
-    fprintf(f,"{");
-    fprintf(f,"%i, %i, %i",elemFlagged[i],elemFlagged[i],elemFlagged[i]);
-    fprintf(f,"};\n");    
-  }
-  fprintf(f,"};");
-  fclose(f); 
-  HXT_CHECK(hxtFree(&elemFlagged));
+  // HXTEdges *edges = m_Edges; 
+  // HXTMesh *mesh = edges->edg2mesh; //from starting, original mesh
+  // double *vert = mesh->vertices.coord;
+  // uint32_t* nodes = mesh->triangles.node;
+  // uint64_t *elemFlagged;
+  // HXT_CHECK(hxtMalloc(&elemFlagged, mesh->triangles.num*sizeof(uint64_t)));
+  // for(uint64_t i=0; i<mesh->triangles.num; i++)
+  //   elemFlagged[i]=0;
+  // elemFlagged[(*triNum)]=1;
+  // FILE *f = fopen("jovana.pos","w");
+  // fprintf(f,"View \"Nodes\" {\n");
+  // fprintf(f,"SP(%g,%g,%g){%i};\n", pointCoord[0],pointCoord[1], pointCoord[2], 1); 
+  // fprintf(f,"};");
+  // fprintf(f,"View \"Flagged patches\"{\n");
+  // for(uint64_t i=0; i<mesh->triangles.num; i++){
+  //   fprintf(f,"ST(");
+  //   uint32_t vtri[3] = {mesh->triangles.node[3*i+0],mesh->triangles.node[3*i+1],mesh->triangles.node[3*i+2]};
+  //   for(uint32_t j=0; j<3; j++){
+  //     fprintf(f,"%f,%f,%f",mesh->vertices.coord[4*vtri[j]+0],mesh->vertices.coord[4*vtri[j]+1],mesh->vertices.coord[4*vtri[j]+2]);
+  //     if(j<2)
+  //       fprintf(f,",");
+  //   }
+  //   fprintf(f,")");
+  //   fprintf(f,"{");
+  //   fprintf(f,"%i, %i, %i",elemFlagged[i],elemFlagged[i],elemFlagged[i]);
+  //   fprintf(f,"};\n");    
+  // }
+  // fprintf(f,"};");
+  // fclose(f); 
+  // HXT_CHECK(hxtFree(&elemFlagged));
   
 
   return  HXT_STATUS_OK;
@@ -3917,4 +3940,364 @@ HXTStatus MultiBlock::lineDiscretization(std::vector<std::array<double,3>> *line
   fclose(f); 
   
   return HXT_STATUS_OK;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
+  std::cout<<"collect T-junction indices"<<std::endl;
+  collectTJunctionIndices();
+  std::cout<<"num T-junctions: "<< m_extraordVertTjunc.size()<<std::endl;
+  std::cout<<"--Store points of quad edges--"<<std::endl;
+  getQuadEdgesData();
+  std::cout<<"--Get Block2Edg--"<<std::endl; 
+  getBlock2Edge();
+  std::cout<<"--Get Edge2Block--"<<std::endl;
+  getEdge2Block();
+
+  for(uint64_t t=0; t<m_mbQuads.size(); t++){
+    std::cout<<"Block: "<<t <<" nVertices: "<<m_mbQuads[t].size()<<", nEdges: "<< m_mbBlock2Edg[t].size()<<std::endl;
+    for(uint64_t k=0; k<m_mbQuads[t].size(); k++)
+      std::cout << m_mbQuads[t][k] << " , " ;
+    std::cout << std::endl;
+    std::cout << "edges : ";
+    for(uint64_t k=0; k<m_mbBlock2Edg[t].size(); k++)
+      std::cout << m_mbBlock2Edg[t][k] << " , ";
+    std::cout << std::endl;
+  }
+  for(uint64_t t=0; t<m_mbEdg2Block.size(); t++){
+    std::cout << "edge : " << t << " nBlocks : " << m_mbEdg2Block[t].size() << std::endl;
+    for(uint64_t k=0; k<m_mbEdg2Block[t].size(); k++)
+      std::cout << m_mbEdg2Block[t][k] << " , ";
+    std::cout << std::endl;
+  }
+  std::cout<<"triPatches"<<std::endl;
+  std::vector<int> triPatchesIDs;
+  getTriangularPatchesIDs(&triPatchesIDs);
+  std::cout<<"num triPatches: "<< triPatchesIDs.size()<<std::endl;
+  std::cout<<"T-junction patches"<<std::endl;
+  std::vector<int> tJunctionPatchesIDs;
+  getTJunctionsPatchesIDs(&tJunctionPatchesIDs);
+  std::cout<<"num T-junction patches: "<< tJunctionPatchesIDs.size()<<std::endl;
+  for(uint64_t mt=0; mt<tJunctionPatchesIDs.size(); mt++)
+    std::cout<<"T-junc patch ID: "<<tJunctionPatchesIDs[mt]<<std::endl;
+
+  dbgPosEdgData("dbgEdgData.pos"); 
+  //createMbTriPatchs();
+  // dbgPosPatchData("dbgBlockPatch.pos");
+  // std::vector<std::array<double, 3>> pointsOnEdg;
+  // std::vector<uint64_t> trianglesOnEdg;
+  // std::cout<<"grabingEdgData "<<std::endl;
+  // getDataFromBlockEdgID(m_mbBlock2Edg[0][0], &pointsOnEdg, &trianglesOnEdg);
+  
+   
+  std::cout<<"--Get sheets--"<<std::endl;
+  getAllSheets();
+  std::cout<<"Num sheets: "<<m_Sheets.size()<<std::endl;
+  for(uint64_t s=0; s<m_Sheets.size(); s++){
+    std::cout<<"sheet "<<s<<", edges:";
+    for(uint64_t l=0; l<m_Sheets[s].size(); l++)
+      std::cout<<" "<<m_Sheets[s][l];
+    std::cout << std::endl;
+  }
+  std::cout<<" "<<std::endl;
+  std::cout<<"--Get and store partition per edge--"<<std::endl;
+  computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);  
+  // computeAdequatePartitionPerEdge(m_sizeQuadMesh, hVal);
+  for(uint64_t i=0;i<m_extraordVertices.size();i++){
+    m_coordVerticesDiscretization.push_back(m_extraordVertices[i]);
+  }
+  std::cout<<"--Discretize edges--"<<std::endl;
+  discretizeEdges(hVal);
+  std::cout<<"--Discretize quads--"<<std::endl;
+  discretizeQuads();
+  // m_meshMbQuadsExists=1;
+  
+  return HXT_STATUS_OK;
+}
+
+
+int MultiBlock::getParallelEdg(int blockNum, uint64_t edg1, uint64_t *edg2){
+  uint64_t e1, e2, e3, e4;
+  if(blockNum!=-1){ 
+    e1=m_mbBlock2Edg[blockNum][0];
+    e2=m_mbBlock2Edg[blockNum][1];
+    e3=m_mbBlock2Edg[blockNum][2];
+    e4=m_mbBlock2Edg[blockNum][3];
+    if(edg1==e1)
+      *edg2=e3;
+    if(edg1==e2)
+      *edg2=e4;
+    if(edg1==e3)
+      *edg2=e1;
+    if(edg1==e4)
+      *edg2=e2;
+  }else{
+    *edg2=(uint64_t)-1;
+  }
+  
+  return 1;
+}
+
+int MultiBlock::getAllSheets(){
+  std::vector<bool> edgCollected(m_mbEdges.size(),0);
+  std::vector<uint64_t> currentSheet;
+  m_Sheets.reserve(100);
+  for(uint64_t ie=0; ie<m_mbEdges.size(); ie++){
+    if(!(edgCollected[ie])){
+      currentSheet.clear();
+      currentSheet.reserve(100);
+      uint64_t q0 = (uint64_t)(-1);
+      uint64_t q1 = (uint64_t)(-1);
+      q0 = m_mbEdg2Block[ie][0];
+      if(m_mbEdg2Block[ie].size()>1)
+	q1 = m_mbEdg2Block[ie][1];
+      uint64_t currentEdg=ie;
+      uint64_t currentQ = q0;
+      uint64_t nextEdg;	
+      bool didLoop=0;
+      while(!didLoop && currentQ!=(uint64_t)-1){
+	currentSheet.push_back(currentEdg);
+	edgCollected[currentEdg]=1;
+	getParallelEdg(currentQ, currentEdg, &nextEdg);
+	if(nextEdg==ie)
+	  didLoop=1;
+	currentEdg=nextEdg;
+	q0 = m_mbEdg2Block[currentEdg][0];
+	q1=(uint64_t)(-1);
+	if(m_mbEdg2Block[currentEdg].size()>1)
+	  q1 = m_mbEdg2Block[currentEdg][1];
+	if(q0!=currentQ)
+	  currentQ=q0;
+	else if(q1!=(uint64_t)-1 && q1!=currentQ)
+	  currentQ=q1;
+	else
+	  currentQ=(uint64_t)-1;
+      }
+      if(!didLoop){
+	currentSheet.push_back(nextEdg);
+	edgCollected[nextEdg]=1;
+      }
+      q1=(uint64_t)(-1);
+      if(m_mbEdg2Block[ie].size()>1)
+	q1 = m_mbEdg2Block[ie][1];
+      currentEdg=ie;
+      currentQ=q1;
+      if(currentQ!=(uint64_t)-1){
+	getParallelEdg(currentQ, currentEdg, &nextEdg);
+	if(nextEdg==ie)
+	  didLoop=1;
+	currentEdg=nextEdg;
+	q0 = m_mbEdg2Block[currentEdg][0];
+	q1=(uint64_t)(-1);
+	if(m_mbEdg2Block[currentEdg].size()>1)
+	  q1 = m_mbEdg2Block[currentEdg][1];
+	if(q0!=currentQ)
+	  currentQ=q0;
+	else if(q1!=(uint64_t)-1 && q1!=currentQ)
+	  currentQ=q1;
+	else
+	  currentQ=(uint64_t)-1;
+      }	
+      while(!didLoop && currentQ!=(uint64_t)-1){
+	currentSheet.push_back(currentEdg);
+	edgCollected[currentEdg]=1;
+	getParallelEdg(currentQ, currentEdg, &nextEdg);
+	if(nextEdg==ie)
+	  didLoop=1;
+	currentEdg=nextEdg;
+	q0 = m_mbEdg2Block[currentEdg][0];
+	q1=(uint64_t)(-1);
+	if(m_mbEdg2Block[currentEdg].size()>1)
+	  q1 = m_mbEdg2Block[currentEdg][1];
+	if(q0!=currentQ)
+	  currentQ=q0;
+	else if(q1!=(uint64_t)-1 && q1!=currentQ)
+	  currentQ=q1;
+	else
+	  currentQ=(uint64_t)-1;
+      }
+      if(!didLoop){
+	currentSheet.push_back(nextEdg);
+	edgCollected[nextEdg]=1;
+      }
+      m_Sheets.push_back(currentSheet);
+    }
+  }
+  return 1;
+}
+
+int MultiBlock::computeAdequatePartitionPerEdge(double sizeofElement, std::vector<double> hVal){
+  int *partitionPerSheet;
+  HXT_CHECK(hxtMalloc(&partitionPerSheet, (m_Sheets.size())*sizeof(int)));
+  double length=-1.;
+  int  minPartition;
+  uint64_t edgNum, currentEdg;
+  std::vector<std::array<double,3>> pCoordLine;
+  std::vector<uint64_t> sheetEdges;
+  //  getting partition per sheet
+  for(uint64_t i=0; i<m_Sheets.size(); i++){
+    sheetEdges=m_Sheets[i];
+    int *partitions;
+    HXT_CHECK(hxtMalloc(&partitions, (sheetEdges.size())*sizeof(int)));
+    for(uint64_t j=0; j<m_Sheets[i].size(); j++){   
+      edgNum=sheetEdges[j];
+      pCoordLine=m_mbEdges[edgNum];
+      length=computeDiscreteLineLengthModified(&pCoordLine, hVal);
+      partitions[j]=(int)(length/sizeofElement);
+      if(partitions[j]==0)
+  	partitions[j]+=1;
+      else{
+  	if((sizeofElement-length/(1.0*partitions[j]+1))<(length/(1.0*partitions[j])-sizeofElement))
+  	  partitions[j]+=1;
+      }
+    }
+    minPartition=partitions[0];
+    for(uint64_t k=1; k<m_Sheets[i].size(); k++){
+      if(minPartition>partitions[k])
+  	minPartition=partitions[k];
+    }
+    partitionPerSheet[i]=minPartition;
+    HXT_CHECK(hxtFree(&partitions));
+  }
+   
+  //get and store partition per edge
+  for(uint64_t i=0; i<m_mbEdges.size(); i++){
+    currentEdg=i;
+    uint64_t sheetNumber=0;
+    for(uint64_t j=0; j<m_Sheets.size(); j++){
+      sheetEdges=m_Sheets[j];
+      for(uint64_t k=0; k<sheetEdges.size(); k++){
+	if(sheetEdges[k]==currentEdg){
+	  sheetNumber=j;
+	}
+      }
+    }
+    m_partitionPerEdge.push_back(partitionPerSheet[sheetNumber]);
+  }
+
+   
+  HXT_CHECK(hxtFree(&partitionPerSheet));    
+  return 1;
+}
+
+void MultiBlock::getExtrVertIDmbEdg(uint64_t extrID[2],int edgID){
+  for(uint64_t i=0;i<m_extraordVertices.size();i++){
+    if(normDiffVect(&((m_mbEdges[edgID])[0]), &(m_extraordVertices[i]))<=1e-10)
+      extrID[0]=i;
+    if(normDiffVect(&((m_mbEdges[edgID])[(m_mbEdges[edgID]).size()-1]), &(m_extraordVertices[i]))<=1e-10)
+      extrID[1]=i;
+  }
+  return;
+}
+
+HXTStatus MultiBlock::discretizeEdges(std::vector<double> hVal){
+  std::vector<uint64_t> a;
+  m_discrMbEdges.resize(m_mbEdges.size(),a);
+  for(uint64_t i=0;i<m_mbEdges.size();i++){
+    std::array<double,3> init={{10.0,10.0,10.0}};
+    std::vector<std::array<double,3>> coordDiscrEdg(m_partitionPerEdge[i]+1,init);
+    lineDiscretization(&(m_mbEdges[i]), hVal, m_partitionPerEdge[i],&coordDiscrEdg);
+    (m_discrMbEdges[i]).reserve(m_partitionPerEdge[i]+1);
+    uint64_t extrID[2];
+    getExtrVertIDmbEdg(extrID, i);
+    (m_discrMbEdges[i]).push_back(extrID[0]);
+    for(uint64_t k=1;k<coordDiscrEdg.size()-1;k++){
+      m_coordVerticesDiscretization.push_back(coordDiscrEdg[k]);
+      (m_discrMbEdges[i]).push_back(m_coordVerticesDiscretization.size()-1);
+    }
+    (m_discrMbEdges[i]).push_back(extrID[1]);
+  }
+  return HXT_STATUS_OK;
+}
+
+HXTStatus MultiBlock::discretizeQuads(){
+  FILE *f = fopen("quadMesh.pos","w");  
+  fprintf(f,"View \"Transfinite quads\"{\n");
+  
+  for(uint64_t i=0;i<m_mbQuads.size();i++){
+    std::vector<int> mbNodesID = m_mbQuads[i];
+    std::vector<uint64_t> mbEdgesID =  m_mbBlock2Edg[i];
+    uint64_t extrID[2];
+    getExtrVertIDmbEdg(extrID, mbEdgesID[0]);
+    std::vector<uint64_t> pointsEdg1 = m_discrMbEdges[mbEdgesID[0]];
+    if((int)extrID[0]!=mbNodesID[0])
+      std::reverse(std::begin(pointsEdg1),std::end(pointsEdg1));
+    std::vector<uint64_t> pointsEdg2 = m_discrMbEdges[mbEdgesID[1]];
+    getExtrVertIDmbEdg(extrID, mbEdgesID[1]);
+    if((int)extrID[0]!=mbNodesID[1])
+      std::reverse(std::begin(pointsEdg2),std::end(pointsEdg2));
+    std::vector<uint64_t> pointsEdg3 = m_discrMbEdges[mbEdgesID[2]];
+    getExtrVertIDmbEdg(extrID, mbEdgesID[2]);
+    if((int)extrID[0]!=mbNodesID[3])
+      std::reverse(std::begin(pointsEdg3),std::end(pointsEdg3));
+    getExtrVertIDmbEdg(extrID, mbEdgesID[3]);
+    std::vector<uint64_t> pointsEdg4 = m_discrMbEdges[mbEdgesID[3]];
+    getExtrVertIDmbEdg(extrID, mbEdgesID[3]);
+    if((int)extrID[0]!=mbNodesID[0])
+      std::reverse(std::begin(pointsEdg4),std::end(pointsEdg4));
+    uint64_t nPointsEdg1 = pointsEdg1.size();
+    uint64_t nPointsEdg2 = pointsEdg2.size();
+    std::vector<uint64_t> transfinitePoints(nPointsEdg1*nPointsEdg2,1);
+    for(uint64_t j=0; j<nPointsEdg2; j++){
+      transfinitePoints[j]=pointsEdg4[j];
+      transfinitePoints[(nPointsEdg1-1)*nPointsEdg2+j]=pointsEdg2[j];
+    }
+    for(uint64_t k=1; k<nPointsEdg1-1; k++){
+      transfinitePoints[k*nPointsEdg2+0]=pointsEdg1[k];
+      transfinitePoints[k*nPointsEdg2+nPointsEdg2-1]=pointsEdg3[k];
+    }
+    for(uint64_t k=1; k<nPointsEdg1-1; k++){
+      for(uint64_t j=1; j<nPointsEdg2-1; j++){
+	double u=(1.0*k)/(1.0*nPointsEdg1-1.0);
+	double v=(1.0*j)/(1.0*nPointsEdg2-1.0);
+	std::array<double,3> newTpoint={{0.0,0.0,0.0}};
+	for(int t=0; t<3; t++)
+	  newTpoint[t] = (1. - u) * (m_coordVerticesDiscretization[pointsEdg4[j]])[t] + u * (m_coordVerticesDiscretization[pointsEdg2[j]])[t] + (1. - v) * (m_coordVerticesDiscretization[pointsEdg1[k]])[t] + v *(m_coordVerticesDiscretization[pointsEdg3[k]])[t] -((1. - u) * (1. - v) * (m_coordVerticesDiscretization[pointsEdg4[0]])[t] + u * (1. - v) * (m_coordVerticesDiscretization[pointsEdg2[0]])[t] + u * v * (m_coordVerticesDiscretization[pointsEdg2[pointsEdg2.size()-1]])[t] + (1. - u) * v * (m_coordVerticesDiscretization[pointsEdg4[pointsEdg4.size()-1]])[t]);
+	m_coordVerticesDiscretization.push_back(newTpoint);
+	transfinitePoints[k*nPointsEdg2+j]=m_coordVerticesDiscretization.size()-1;
+	fprintf(f,"SP(%g,%g,%g){%i};\n", newTpoint[0], newTpoint[1], newTpoint[2], 1);
+      }
+    }
+    for(uint64_t k=1; k<nPointsEdg1; k++)
+      for(uint64_t j=1; j<nPointsEdg2; j++){
+	std::vector<uint64_t> nodesQuadInd;
+	nodesQuadInd.resize(4,1);
+	nodesQuadInd[0]= transfinitePoints[(k-1)*nPointsEdg2+(j-1)];
+	nodesQuadInd[1]= transfinitePoints[(k)*nPointsEdg2+(j-1)];
+	nodesQuadInd[2]= transfinitePoints[(k)*nPointsEdg2+(j)];
+	nodesQuadInd[3]= transfinitePoints[(k-1)*nPointsEdg2+(j)];
+	m_discrQuads.push_back(nodesQuadInd);
+      }
+  }
+  
+  fprintf(f,"};");
+  fclose(f);
+  
+  return HXT_STATUS_OK;
+}
+
+HXTStatus MultiBlock::createQuadMesh(){
+  HXT_CHECK(hxtMeshCreate(&(m_quadMesh)));
+  // vertices
+  m_quadMesh->vertices.num = m_coordVerticesDiscretization.size();
+  HXT_CHECK(hxtAlignedMalloc(&(m_quadMesh->vertices.coord),4*(m_quadMesh->vertices.num)*sizeof(double)));
+  for(uint64_t i=0; i<m_quadMesh->vertices.num; i++){
+    for(int t=0; t<3; t++)
+      m_quadMesh->vertices.coord[4*i+t] = (m_coordVerticesDiscretization[i])[t];
+    m_quadMesh->vertices.coord[4*i+3] = 0.0;
+  }
+  // quads
+  m_quadMesh->quads.num = m_discrQuads.size();
+  HXT_CHECK(hxtAlignedMalloc(&(m_quadMesh->quads.node),4*(m_quadMesh->quads.num)*sizeof(uint64_t)));
+  for(uint64_t i=0; i<m_quadMesh->quads.num; i++)
+    for(int t=0; t<4; t++)
+      m_quadMesh->quads.node[4*i+t] = (m_discrQuads[i])[t];
+  hxtMeshWriteGmsh(m_quadMesh, "qmbFinal.msh");
+  
+  return HXT_STATUS_OK;
+}
+
+HXTMesh* MultiBlock::getQuadMesh(){
+  return m_quadMesh;
 }

@@ -79,7 +79,8 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
   }
   if (opt->verbosity>=1){
    HXT_CHECK(hxtPointGenWriteDirections(mesh,directions,"GMSH_TEST_directionsPoints.pos"));
-   HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,h_function,"GMSH_TEST_hfunction.pos"));
+   HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,h_function,"GMSH_TEST_sizemap.pos"));
+   HXT_CHECK(hxtPointGenWriteScalarPoints(mesh,h_function,"GMSH_TEST_sizemap_points.pos"));
   }
 
   //**********************************************************

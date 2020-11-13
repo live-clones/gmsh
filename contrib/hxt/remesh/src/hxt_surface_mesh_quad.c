@@ -811,6 +811,10 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
       }
 
     }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
+    }
     hxtPosFinish(test);
   }
 
@@ -912,6 +916,10 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
       }
 
     }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
+    }
     hxtPosFinish(test);
   }
 
@@ -959,6 +967,10 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuadsRobust(HXTPointGenOptions *opt,
         hxtPosAddText(test,&mesh->vertices.coord[4*v[2]],"%d",bin[v[2]]);
       }
 
+    }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
     }
     hxtPosFinish(test);
   }
@@ -1051,11 +1063,11 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTPointGenOptions *opt,
         mesh->triangles.color[t0] = UINT16_MAX;
         mesh->triangles.color[t1] = UINT16_MAX;
 
-        if (adj[v0]==2){
+        if (adj[v0]==2 && isBoundary[v0]!=1){
           adj[v0]=UINT32_MAX;
           vInfo[v0].newInd = v1;
         }
-        if (adj[v1]==2){
+        if (adj[v1]==2 && isBoundary[v1]!=1){
           adj[v1]=UINT32_MAX;
           vInfo[v1].newInd = v0;
         }
@@ -1088,6 +1100,10 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTPointGenOptions *opt,
         hxtPosAddTriangle(test,&mesh->vertices.coord[4*v[0]],&mesh->vertices.coord[4*v[1]],&mesh->vertices.coord[4*v[2]],0);
       }
 
+    }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
     }
     hxtPosFinish(test);
   }
@@ -1150,6 +1166,7 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTPointGenOptions *opt,
 
   mesh->vertices.num = countVertices;
 
+
   // Relabel triangle vertices
   for (uint64_t i=0; i<mesh->triangles.num; i++){
     uint32_t *v = mesh->triangles.node + 3*i;
@@ -1157,6 +1174,7 @@ HXTStatus hxtPointGenQuadRemoveInvalidQuads(HXTPointGenOptions *opt,
     v[1] = vInfo[v[1]].newInd;
     v[2] = vInfo[v[2]].newInd;
   }
+
 
   // Relabel lines vertices
   for (uint64_t i=0; i<mesh->lines.num; i++){
@@ -1292,6 +1310,12 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
   }
   HXT_INFO_COND(opt->verbosity>=1,"    Splitting %d edges", count);
 
+  //Realloc
+  HXT_CHECK(hxtVerticesReserve(mesh,mesh->vertices.size+count));
+  HXT_CHECK(hxtTrianglesReserve(mesh,mesh->triangles.size+count*4));
+
+
+
   // Print out edges to be splitted
   // TODO delete
   if(opt->verbosity>=2){
@@ -1368,6 +1392,10 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
         hxtPosAddText(test,&mesh->vertices.coord[4*v[2]],"%d",bin[v[2]]);
       }
 
+    }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
     }
     hxtPosFinish(test);
   }
@@ -1470,6 +1498,10 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
       }
 
     }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
+    }
     hxtPosFinish(test);
   }
 
@@ -1516,6 +1548,10 @@ HXTStatus hxtPointGenQuadRemoveBadBoundary(HXTPointGenOptions *opt,
         hxtPosAddText(test,&mesh->vertices.coord[4*v[2]],"%d",bin[v[2]]);
       }
 
+    }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
     }
     hxtPosFinish(test);
   }
@@ -1706,10 +1742,12 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   HXT_CHECK(hxtMalloc(&flagTris,3*mesh->triangles.num*sizeof(uint16_t)));
   for (uint64_t i=0; i<3*mesh->triangles.num; i++) flagTris[i] = UINT16_MAX;
 
+  uint64_t countSplitTri=0;
   for (uint64_t i=0; i<mesh->triangles.num; i++){
     uint32_t *v = mesh->triangles.node + 3*i;
     if (bin[v[0]] == bin[v[1]] && bin[v[1]] == bin[v[2]]){
       flagTris[i] = 1;
+      countSplitTri++;
     }
   }
 
@@ -1729,6 +1767,10 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       hxtPosAddText(test,&mesh->vertices.coord[4*v[1]],"%d",bin[v[1]]);
       hxtPosAddText(test,&mesh->vertices.coord[4*v[2]],"%d",bin[v[2]]);
 
+    }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
     }
     hxtPosFinish(test);
   }
@@ -1798,6 +1840,10 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       hxtPosAddText(test,&mesh->vertices.coord[4*v[1]],"%d",bin[v[1]]);
       hxtPosAddText(test,&mesh->vertices.coord[4*v[2]],"%d",bin[v[2]]);
 
+    }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
     }
     hxtPosFinish(test);
   }
@@ -1906,6 +1952,10 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       }
 
     }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
+    }
     hxtPosFinish(test);
   }
 
@@ -1995,6 +2045,10 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       }
 
     }
+    hxtPosNewView(test,"bin");
+    for (uint32_t i=0; i<mesh->vertices.num; i++){
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
+    }
     hxtPosFinish(test);
   }
 
@@ -2013,8 +2067,7 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
     FILE *test;
     hxtPosInit("binEdgesAfter.pos","points",&test);
     for (uint32_t i=0; i<mesh->vertices.num;i++){
-      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],0);
-      hxtPosAddText(test,&mesh->vertices.coord[4*i],"%d",bin[i]);
+      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],bin[i]);
     }
     hxtPosNewView(test,"label");
     for (uint32_t i=0; i<mesh->vertices.num;i++){

@@ -202,7 +202,7 @@ namespace QMT_Utils {
           std::forward<T>(rest)...);
     }
 
-  inline std::string env_var(std::string const & key) {
+  inline std::string env_var(const std::string& key) {
     char * var;
     var = getenv(key.c_str());
     std::string strvar = "";
@@ -210,6 +210,33 @@ namespace QMT_Utils {
       strvar = std::string(var);
     }
     return strvar;
+  }
+
+  inline void read_from_env(const std::string& key, double& value) {
+    std::string str = env_var(key);
+    if (str.size() == 0) return;
+    value = std::stod(str);
+  }
+
+  inline void read_from_env(const std::string& key, int& value) {
+    std::string str = env_var(key);
+    if (str.size() == 0) return;
+    value = std::stoi(str);
+  }
+
+  inline void read_from_env(const std::string& key, bool& value) {
+    std::string str = env_var(key);
+    if (str.size() > 0) {
+      if (str == "0" || str == "false" || str == "False") {
+        value = false;
+      } else if (str == "1" || str == "true" || str == "True") {
+        value = true;
+      }
+    }
+  }
+
+  inline void read_from_env(const std::string& key, std::string& value) {
+    value = env_var(key);
   }
 }
 
