@@ -4520,7 +4520,7 @@ int computeScaledCrossField(GModel* gm, std::vector<std::array<double,5> >& sing
   int nbDiffusionLevels = 3;
   double thresholdNormConvergence = 1.e-2;
   int nbBoundaryExtensionLayer = 1;
-  bool adaptSmallFeatures = true;
+  bool adaptSmallFeatures = false;
   std::string name = "scaled_cross_field";
   {
     PView* view_s = PView::getViewByName(name);
@@ -5197,7 +5197,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   }
 
   for (GFace* gf: faces) {
-    if (gf->quadrangles.size() < 1000) {
+    if (gf->quadrangles.size() < 5000) {
       Msg::Debug("- Face %i: winslow smoothing (%li quads) ...", gf->tag(), gf->quadrangles.size());
       meshWinslow2d(gf,100);
     }
