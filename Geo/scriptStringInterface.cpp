@@ -42,16 +42,13 @@ static void addInFile(const std::string &text,
     if(ext.size() && ext != ".geo" && ext != ".GEO") {
       std::ostringstream sstream;
       sstream << "A scripting command is going to be appended to a non-`.geo' "
-                 "file. Are\n"
-                 "you sure you want to proceed?\n\n"
+                 "file. Are\nyou sure you want to proceed?\n\n"
                  "You probably want to create a new `.geo' file containing the "
-                 "command\n"
-                 "`Merge \""
+                 "command\n`Merge \""
               << split[1] + split[2]
               << "\";' and use that file instead.\n\n"
                  "(To disable this warning in the future, select `Enable "
-                 "expert mode'\n"
-                 "in the option dialog.)";
+                 "expert mode'\nin the option dialog.)";
       int ret = Msg::GetAnswer(sstream.str().c_str(), 2, "Cancel",
                                "Proceed as is", "Create new `.geo' file");
       if(ret == 2) {
@@ -60,8 +57,7 @@ static void addInFile(const std::string &text,
           if(!StatFile(newFileName)) {
             std::ostringstream sstream;
             sstream << "File '" << newFileName
-                    << "' already exists.\n\n"
-                       "Do you want to replace it?";
+                    << "' already exists.\n\nDo you want to replace it?";
             if(!Msg::GetAnswer(sstream.str().c_str(), 0, "Cancel", "Replace"))
               return;
           }
@@ -159,29 +155,70 @@ static std::string dimTags2String(const std::vector<std::pair<int, int> > &l)
 {
   std::ostringstream sstream;
   for(std::size_t i = 0; i < l.size(); i++) {
-    switch(l[i].first) {
-    case 0: sstream << "Point{" << l[i].second << "}; "; break;
-    case 1: sstream << "Curve{" << l[i].second << "}; "; break;
-    case 2: sstream << "Surface{" << l[i].second << "}; "; break;
-    case 3: sstream << "Volume{" << l[i].second << "}; "; break;
+    if(CTX::instance()->scriptLang == "geo") {
+      switch(l[i].first) {
+      case 0: sstream << "Point{" << l[i].second << "}; "; break;
+      case 1: sstream << "Curve{" << l[i].second << "}; "; break;
+      case 2: sstream << "Surface{" << l[i].second << "}; "; break;
+      case 3: sstream << "Volume{" << l[i].second << "}; "; break;
+      }
+    }
+    else if(CTX::instance()->scriptLang == "py" ||
+            CTX::instance()->scriptLang == "jl") {
+      if(i) sstream << ", ";
+      sstream << "(" << l[i].first << ", " << l[i].second << ")";
+    }
+    else if(CTX::instance()->scriptLang == "cpp") {
+      if(i) sstream << ", ";
+      sstream << "{" << l[i].first << ", " << l[i].second << "}";
+    }
+    else {
+      Msg::Error("Unhandled language ('%s') in script generator",
+                 CTX::instance()->scriptLang.c_str());
     }
   }
   return sstream.str();
 }
 
+static std::string currentFactory = "geo";
+
 static void checkOCC(std::ostringstream &sstream)
 {
 #if defined(HAVE_PARSER)
-  if(gmsh_yyfactory != "OpenCASCADE")
+  if(gmsh_yyfactory != "OpenCASCADE") {
     sstream << "SetFactory(\"OpenCASCADE\");\n";
+    currentFactory = "occ";
+    return;
+  }
 #endif
+  if(CTX::instance()->scriptLang == "geo")
+    sstream << "SetFactory(\"OpenCASCADE\");\n";
+  currentFactory = "occ";
 }
 
 void scriptSetFactory(const std::string &factory, const std::string &fileName)
 {
+  if(factory == "OpenCASCADE")
+    currentFactory = "occ";
+  else
+    currentFactory = "geo";
+  if(CTX::instance()->scriptLang != "geo") return;
   std::ostringstream sstream;
   sstream << "SetFactory(\"" << factory << "\");";
   addInFile(sstream.str(), fileName);
+}
+
+static std::string api(const std::string &name, const std::string &args = "")
+{
+  if(CTX::instance()->scriptLang == "py" ||
+     CTX::instance()->scriptLang == "jl")
+    return ReplaceSubString("/", ".", name) + "(" + args + ")";
+  else if(CTX::instance()->scriptLang == "cpp")
+    return ReplaceSubString("/", "::", name) + "(" + args + ");";
+
+  Msg::Error("Unhandled language ('%s') in script generator",
+             CTX::instance()->scriptLang.c_str());
+  return "";
 }
 
 void scriptSetMeshSize(const std::string &fileName,
@@ -189,7 +226,10 @@ void scriptSetMeshSize(const std::string &fileName,
                        const std::string &lc)
 {
   std::ostringstream sstream;
-  sstream << "MeshSize {" << vector2String(l) << "} = " << lc << ";";
+  if(CTX::instance()->scriptLang == "geo")
+    sstream << "MeshSize {" << vector2String(l) << "} = " << lc << ";";
+  else
+    sstream << api("gmsh/model/mesh/setSize", vector2String(l) + "," + lc);
   addInFile(sstream.str(), fileName);
 }
 
@@ -197,7 +237,13 @@ void scriptRecombineSurface(const std::string &fileName,
                             const std::vector<int> &l)
 {
   std::ostringstream sstream;
-  sstream << "Recombine Surface {" << vector2String(l) << "};";
+  if(CTX::instance()->scriptLang == "geo")
+    sstream << "Recombine Surface {" << vector2String(l) << "};";
+  else if(currentFactory == "geo")
+    sstream << api("gmsh/model/geo/mesh/setRecombine", vector2String(l));
+  else
+    sstream << api("gmsh/model/occ/synchronize") << "\n"
+            << api("gmsh/model/mesh/setRecombine", vector2String(l));
   addInFile(sstream.str(), fileName);
 }
 

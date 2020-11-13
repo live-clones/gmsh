@@ -1297,6 +1297,12 @@ std::string opt_general_recent_file9(OPT_ARGS_STR)
   return CTX::instance()->recentFiles[9];
 }
 
+std::string opt_general_scripting_language(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->scriptLang = val;
+  return CTX::instance()->scriptLang;
+}
+
 std::string opt_general_editor(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->editor = val;
