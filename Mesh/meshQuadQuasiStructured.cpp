@@ -4629,6 +4629,8 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
 int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo) {
   CTX::instance()->lock = 0;
   std::vector<GFace*> faces = model_faces(gm);
+  size_t count = 0;
+  // TODO: parallel !
   for (GFace* gf: faces) {
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     GFaceInfo& info = faceInfo[gf];
@@ -4641,10 +4643,11 @@ int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFa
         gf->meshStatistics.status = GFace::DONE;
         Msg::Info("- Face %i: simple topology (topo. is disk with %i convex corners), quad mesh (%li elements) built from simple pattern",
             gf->tag(), info.bdrValVertices[1].size(), gf->quadrangles.size());
+        count += 1;
       }
     }
   }
-
+  Msg::Info("Pattern-based quad meshes built on %li/%li CAD faces", count + 1, faces.size());
   return 0;
 }
 
