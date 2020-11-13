@@ -6212,7 +6212,8 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     int cf_tag = -1;
     std::set<MTriangle *, MElementPtrLessThan> tri;
     std::vector<std::size_t> keys;
-    std::vector<std::vector<double> > values;	
+    std::vector<std::vector<double> > values;
+    std::vector<std::vector<double> > valuesH;
     for(auto &kv: crossEdgTri){
       MTriangle* t=kv.first;
       tri.insert(kv.first);
@@ -6222,11 +6223,12 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
       SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
     		   t->getVertex(2)->y() - t->getVertex(0)->y(),
     		   t->getVertex(2)->z() - t->getVertex(0)->z());
-      // SVector3 tNormal = crossprod(v10, v20);
+      // SVector3 tNormal = crossprod(v10, v20); //for consistency with Max way of storing theta
       SVector3 tNormal = crossprod(v20, v10);
       tNormal.normalize();
       SVector3 thetaVect(0.0);
       std::vector<double> valTri;
+      std::vector<double> valTriH;
       for(size_t k=0;k<3;k++){
     	MEdge eK=t->getEdge(k);
     	MVertex *v0=eK.getVertex(0);
@@ -6239,10 +6241,13 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     	V.normalize();
     	SVector3 branch=kv.second[k][0];
     	double thetaE=atan2(dot(branch,V),dot(branch,vE));
+	double hE=H[t->getVertex(k)];
         valTri.push_back(thetaE);
+	valTriH.push_back(hE);
       }
       keys.push_back(t->getNum());
       values.push_back(valTri);
+      valuesH.push_back(valTriH);
     }
     PView* theta = PView::getViewByName("theta");
     if (theta) {delete theta; theta = NULL;}
@@ -6254,7 +6259,9 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
 
     PView* viewH = PView::getViewByName("H");
     if (viewH) {delete viewH; viewH = NULL;}
-    ConformalMapping::_viewScalarTriangles(H,tri, "H");
+    int HTag = gmsh::view::add("H");
+    gmsh::view::addModelData(HTag, 0, cname, "ElementData", keys, valuesH);
+    ConformalMapping::_viewScalarTriangles(H,tri, "CM::H");
     // ALEX
     if(0){
       std::map<int, std::vector<double> > dataTHETA;
