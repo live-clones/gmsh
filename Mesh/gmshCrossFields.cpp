@@ -4214,8 +4214,8 @@ public:
       std::vector<std::array<double,3> > points;
       std::vector<std::array<size_t,2> > lines;
       std::vector<std::array<size_t,3> > triangles;
-      std::vector<size_t> pointTag;
-      extractTriangularMeshFromFaces(f, points, pointTag, lines, triangles);
+      std::vector<MVertex*> origin;
+      extractTriangularMeshFromFaces(f, points, origin, lines, triangles);
 
       std::map<std::array<size_t,2>,double> edgeThetaLocal;
       double thresholdNormConvergence = 1.e-2;
@@ -4228,7 +4228,7 @@ public:
       }
       std::map<std::array<size_t,2>,double> edgeTheta;
       for (const auto& kv: edgeThetaLocal) {
-        std::array<size_t,2> vPairGlobal = {pointTag[kv.first[0]],pointTag[kv.first[1]]};
+        std::array<size_t,2> vPairGlobal = {origin[kv.first[0]]->getNum(),origin[kv.first[1]]->getNum()};
         if (vPairGlobal[1] < vPairGlobal[0]) {
           std::sort(vPairGlobal.begin(),vPairGlobal.end());
         }
@@ -6307,8 +6307,8 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
       std::vector<std::array<double,3> > points;
       std::vector<std::array<size_t,2> > lines;
       std::vector<std::array<size_t,3> > triangles;
-      std::vector<size_t> pointTag;
-      extractTriangularMeshFromFaces(f, points, pointTag, lines, triangles);
+      std::vector<MVertex*> origin;
+      extractTriangularMeshFromFaces(f, points, origin, lines, triangles);
       std::map<std::array<size_t,2>,double> edgeThetaLocal;
       double thresholdNormConvergence = 1.e-2;
       okcf = QMT::compute_cross_field_with_multilevel_diffusion(
@@ -6316,7 +6316,7 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
           thresholdNormConvergence, opt.cross_field_bc_expansion);
       std::map<std::array<size_t,2>,double> edgeTheta;
       for (const auto& kv: edgeThetaLocal) {
-        std::array<size_t,2> vPairGlobal = {pointTag[kv.first[0]],pointTag[kv.first[1]]};
+        std::array<size_t,2> vPairGlobal = {origin[kv.first[0]]->getNum(),origin[kv.first[1]]->getNum()};
         if (vPairGlobal[1] < vPairGlobal[0]) {
           std::sort(vPairGlobal.begin(),vPairGlobal.end());
         } 

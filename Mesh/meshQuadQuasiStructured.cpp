@@ -1910,7 +1910,7 @@ namespace QSQ {
     {
       if (current == NULL) return false;
       FCavity& cav = *current;
-      Msg::Debug("growMaximal: start with %li quads, %li half-edges on bdr ...", cav.quads.size(), cav.hes.size());
+      if (DBG_VERBOSE) Msg::Debug("growMaximal: start with %li quads, %li half-edges on bdr ...", cav.quads.size(), cav.hes.size());
       bool running = true;
       size_t nb = 0;
       FlipInfo info;
@@ -1925,7 +1925,7 @@ namespace QSQ {
         running = false;
         bool okc = getFlipHalfEdgeCandidates(candidates);
         if (!okc) {
-          Msg::Debug("growMaximal: failed to get flip half edge candidates");
+          if (DBG_VERBOSE) Msg::Debug("growMaximal: failed to get flip half edge candidates");
           break;
         }
         for (size_t k = 0; k < candidates.size(); ++k) {
@@ -1940,7 +1940,7 @@ namespace QSQ {
             markNewQuad(info.nq);
             bool okf = convexify();
             if (!okf) {
-              Msg::Debug("growMaximal: failed to convexity, stop growth");
+              if (DBG_VERBOSE) Msg::Debug("growMaximal: failed to convexify, stop growth");
               running = false;
               break;
             }
@@ -1949,7 +1949,7 @@ namespace QSQ {
         if (running) {
           bool convex = isConvex();
           if (!convex) {
-            Msg::Debug("growMaximal: cavity not convex, stop growth");
+            if (DBG_VERBOSE) Msg::Debug("growMaximal: cavity not convex, stop growth");
             running = false;
             // geolog_fcavity(cav, "!convex");
             break;
@@ -1983,7 +1983,7 @@ namespace QSQ {
                 }
 
                 double irreg = DBL_MAX;
-                Msg::Debug("growMaximal: check if cavity is remeshable");
+                if (DBG_VERBOSE) Msg::Debug("growMaximal: check if cavity is remeshable");
                 bool remeshable = cavityIsRemeshable(cav, irreg, patternsToCheckRefined);
                 if (remeshable && irreg <= lastIrregularity && irreg < currentCavityIrregularity) {
                   /* Do not choose a pattern if strictly worse irregularity */
@@ -1996,7 +1996,8 @@ namespace QSQ {
             }
           }
         }
-      }
+      } /* end of the while-loop growth */
+
       if (lastNbIrregular > 0) {
         if (M.faces.size() == cav.quads.size() && lastNbIrregular == (size_t) cavityTargetNbOfSides) {
           /* cavity is full face, which is triangle or quad or pentagon with the right number
@@ -2480,15 +2481,19 @@ namespace QSQ {
   bool growAroundQuads(
       const std::unordered_map<MVertex *, std::vector<MElement *> >& adj,
       vector<MElement*>& quads) {
-    for (size_t lv = 0; lv < 4; ++lv) {
-      MVertex* v2 = quads[0]->getVertex(lv);
-      auto it = adj.find(v2);
-      if (it != adj.end()) {
-        for (MElement* f2: it->second) {
-          quads.push_back(f2);
+    vector<MElement*> newQuads;
+    for (MElement* q: quads) {
+      for (size_t lv = 0; lv < 4; ++lv) {
+        MVertex* v2 = q->getVertex(lv);
+        auto it = adj.find(v2);
+        if (it != adj.end()) {
+          for (MElement* f2: it->second) {
+            newQuads.push_back(f2);
+          }
         }
       }
     }
+    append(quads,newQuads);
     sort_unique(quads);
     return true;
   }
@@ -3016,6 +3021,7 @@ namespace QSQ {
       ) {
     MeshHalfEdges& M = cav.M;
 
+    /* Collect vertices on each side of the cavity */
     uint8_t smax = 0;
     std::vector<std::vector<MVertex*> > sides;
     for (size_t i0 = 0; i0 < cav.hes.size(); ++i0) {
@@ -3957,7 +3963,7 @@ namespace QSQ {
           void* ptr = prio_quads[i].second.first;
           if (ptr == NULL) continue;
           bool alreadyTried = (tried.find(ptr) != tried.end());
-          if (alreadyTried) continue;;
+          if (alreadyTried) continue;
           /* Init */
           tried.insert(ptr);
           FCavity fcav(M);

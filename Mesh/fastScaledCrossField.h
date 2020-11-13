@@ -8,11 +8,16 @@
 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <string>
 class GModel;
 class GFace;
 class MEdge;
+class MVertex;
+class MTriangle;
 struct MEdgeLessThan;
+struct MEdgeHash;
+struct MEdgeEqual;
 
 int computeScaledCrossFieldView(GModel* gm,
     int& dataListViewTag, 
@@ -28,39 +33,64 @@ int computeScaledCrossFieldView(GModel* gm,
     bool adaptSizeMapToSmallFeatures = false
     );
 
-
 int addSingularitiesAtAcuteCorners(
     const std::vector<GFace*>& faces,
     double thresholdInDeg,  /* angle used to detect acute corners, typically angle=45. for compat. with cross fields */
     std::vector<std::array<double,5> >& singularities);
 
 
-/* Sub-functions that may be called independantly */
+/* Sub-functions that may be called independantly, 
+ * for a better control on what is done on each GFace */
+
+int computeCrossFieldWithHeatEquation(
+    const std::vector<GFace*>& faces, 
+    std::unordered_map<MEdge,double,MEdgeHash,MEdgeEqual>& edgeTheta,
+    int nbDiffusionLevels = 10, 
+    double thresholdNormConvergence = 1.e-3, 
+    int nbBoundaryExtensionLayer = 1, 
+    int verbosity = 3);
+
+int getConnectedSurfaceComponents(const std::vector<GFace*>& faces,
+    std::vector<std::vector<GFace*> >& components);
+
+int distributeQuadsBasedOnArea(
+    size_t totalNumberOfQuads,
+    const std::vector<std::vector<GFace*> >& components,
+    std::vector<size_t>& componentNumberOfQuads);
+
+int getFacesTriangles(const std::vector<GFace*>& faces, std::vector<MTriangle*>& triangles);
+
+int computeCrossFieldConformalScaling(
+    const std::vector<MTriangle*>& triangles, 
+    const std::unordered_map<MEdge,double,MEdgeHash,MEdgeEqual>& edgeTheta,
+    std::unordered_map<MVertex*,double>& scaling);
+
+int quantileFiltering(std::unordered_map<MVertex*,double>& scaling, double critera = 0.01);
+
+int computeQuadSizeMapFromCrossFieldConformalFactor(
+    const std::vector<MTriangle*>& triangles, 
+    std::size_t targetNumberOfQuads, 
+    std::unordered_map<MVertex*,double>& scaling);
+
+int extractPerTriangleScaledCrossFieldDirections(
+    const std::vector<MTriangle*>& triangles, 
+    const std::unordered_map<MEdge,double,MEdgeHash,MEdgeEqual>& edgeTheta,
+    const std::unordered_map<MVertex*,double>& scaling,
+    std::unordered_map<MTriangle*, std::array<double,9> >& triangleDirections);
+
 int extractTriangularMeshFromFaces(
     const std::vector<GFace*>& faces,
     std::vector<std::array<double,3> >& points,
-    std::vector<size_t>& pointTag,
+    std::vector<MVertex*>& origin,
     std::vector<std::array<size_t,2> >& lines,
     std::vector<std::array<size_t,3> >& triangles);
 
-int computeCrossFieldWithHeatEquation(const std::vector<GFace*>& faces, std::map<std::array<size_t,2>, double>& edgeTheta,
-    int nbDiffusionLevels = 10, double thresholdNormConvergence = 1.e-3, int nbBoundaryExtensionLayer = 1, int verbosity = 3);
-
-int computeCrossFieldConformalScaling(const std::vector<GFace*>& faces, const std::map<std::array<size_t,2>, double>& edgeTheta,
-    std::vector<std::size_t>& nodeTags, std::vector<double>& scaling);
-
-int computeQuadSizeMapFromCrossFieldConformalFactor(
-    const std::vector<GFace*>& faces, 
-    std::size_t targetNumberOfQuads, 
-    const std::vector<std::size_t>& nodeTags,
-    std::vector<double>& scaling);
-
-int extractPerTriangleScaledCrossFieldDirections(
-    const std::vector<GFace*>& faces, 
-    const std::map<std::array<size_t,2>, double>& edgeTheta, 
-    const std::vector<std::size_t>& nodeTags,
-    const std::vector<double>& scaling,
-    std::map<size_t, std::array<double,9> >& triangleDirections);
+int createScaledCrossFieldView(
+    const std::vector<MTriangle*>& triangles, 
+    const std::unordered_map<MEdge,double,MEdgeHash,MEdgeEqual>& edgeTheta,
+    const std::unordered_map<MVertex*,double>& scaling,
+    const std::string& viewName,
+    int& dataListViewTag);
 
 
 #endif
