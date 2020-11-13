@@ -1047,11 +1047,7 @@ void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads,
 
   double radius;
   SPoint3 c;
-  if (GT == GEntity::Plane){
-    nIter = 1000;
-  }
   if (GT == GEntity::Sphere){
-    nIter = 1000;
     gf->isSphere(radius, c) ;
   }
 

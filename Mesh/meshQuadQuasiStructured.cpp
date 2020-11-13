@@ -45,6 +45,8 @@
 #include <omp.h>
 #endif
 
+const int NITERWINSLOW = 0;
+
 using std::vector;
 using std::array;
 using std::unordered_map;
@@ -2921,9 +2923,9 @@ namespace QSQ {
       // return false;
     }
 
-    if (gf->quadrangles.size() < 1000) {
+    if (gf->quadrangles.size() < 1000000) {
       Msg::Debug("-- Face %i: winslow smoothing (%li quads) ...", gf->tag(), gf->quadrangles.size());
-      meshWinslow2d(gf, 10);
+      //      meshWinslow2d(gf, 10);
     }
 
     { /* final check */
@@ -3071,13 +3073,13 @@ namespace QSQ {
     } 
 
     if (newElements.size() > 0) {
-      if (newElements.size() < 1000) { // TODO: a fast smoothing... somehow
+      if (newElements.size() < 10000000) { // TODO: a fast smoothing... somehow
         Msg::Debug("-- Winslow smoothing of cavity (%li quads) ...", newElements.size());
         vector<MQuadrangle*> quadForWinslow(newElements.size());
         for (size_t i = 0; i < newElements.size(); ++i) {
           quadForWinslow[i] = dynamic_cast<MQuadrangle*>(newElements[i]);
         }
-        meshWinslow2d(gf, quadForWinslow, newVertices, 10);
+	//        meshWinslow2d(gf, quadForWinslow, newVertices, 10);
       }
     }
 
@@ -3199,9 +3201,9 @@ namespace QSQ {
     }
 
     if (count > 0) {
-      if (gf->quadrangles.size() < 1000) {
+      if (gf->quadrangles.size() < 10000000) {
         Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
-        meshWinslow2d(gf, 10);
+	//        meshWinslow2d(gf, 10);
       }
       Msg::Info("- Face %i: remeshed %li cavities around singularities ...", gf->tag(), count);
     }
@@ -3948,9 +3950,9 @@ namespace QSQ {
     }
 
     if (count > 0) {
-      if (gf->quadrangles.size() < 1000) {
+      if (gf->quadrangles.size() < 1000000) {
         Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
-        meshWinslow2d(gf, 10);
+        if (NITERWINSLOW)meshWinslow2d(gf, NITERWINSLOW);
       }
       Msg::Info("- Face %i: remeshed %li quadrilateral cavities  ...", gf->tag(), count);
     }
@@ -4455,21 +4457,31 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
    * that contains the scaling */
   double clscale = CTX::instance()->mesh.lcFactor;
   CTX::instance()->mesh.lcFactor = 1.;
-
-  computeQuadCurveMeshConstraints(gm, faceInfo, forceEvenNbEdges);
+  int lcFromPoints = CTX::instance()->mesh.lcFromPoints;
+  CTX::instance()->mesh.lcFromPoints = 0;
+  //  computeQuadCurveMeshConstraints(gm, faceInfo, forceEvenNbEdges);
 
   /* Remove triangulations */
   std::for_each(gm->firstFace(), gm->lastFace(), deMeshGFace());
 
   std::vector<GEdge*> edges = model_edges(gm);
+
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
   for (GEdge* ge: edges) {
+    std::vector<double> temp = ge->_lc;
+    ge->_lc.clear();
     ge->mesh(false);
+    ge->_lc = temp;
   }
+#if defined(_OPENMP)
+#pragma omp barrier
+#endif
+
 
   CTX::instance()->mesh.lcFactor = clscale;
+  CTX::instance()->mesh.lcFromPoints = lcFromPoints;
 
   if (alignWithGVertices) {
     std::map<GEdge*, std::vector<GPoint> > projections;
@@ -4556,6 +4568,8 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
    * that contains the scaling */
   double clscale = CTX::instance()->mesh.lcFactor;
   CTX::instance()->mesh.lcFactor = 1.;
+  int lcFromPoints = CTX::instance()->mesh.lcFromPoints;
+  CTX::instance()->mesh.lcFromPoints = 0;
 
 
   /* Generate quad dominant mesh */
@@ -4581,14 +4595,14 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
           meshGFaceHxt(gf);
           Msg::Debug("-- Face %i: %li quads and %li triangles built with meshGFaceHxt", 
               gf->tag(), gf->quadrangles.size(), gf->triangles.size());
-        } else if (!df && gf->triangles.size() == 0) {
+        } else if (!df/* && gf->triangles.size() == 0*/) {
           gf->setMeshingAlgo(ALGO_2D_PACK_PRLGRMS);
           gf->mesh(true);
           Msg::Debug("-- Face %i: %li quads and %li triangles built with ALGO_2D_PACK_PRLGRMS", 
               gf->tag(), gf->quadrangles.size(), gf->triangles.size());
           gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
         } else {
-          Msg::Error("- Face %i: case not supported (not discrete with triangles, not CAD without triangles)", gf->tag());
+          Msg::Error("- Face %i: case not supported (not discrete with %i triangles, not CAD without triangles)", gf->tag(),gf->triangles.size());
         }
 
         #if defined(_OPENMP)
@@ -4639,6 +4653,7 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
   RefineMesh(gm, secondOrderLinear, true, false);
 
   CTX::instance()->mesh.lcFactor = clscale;
+  CTX::instance()->mesh.lcFromPoints = lcFromPoints;
   Msg::Debug("Done generating unstructured quadrilateral mesh");
   return 0;
 }
@@ -4903,7 +4918,7 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
     }
 
     // Msg::Debug("- Face %i: winslow smoothing (%li quads) ...", gf->tag(), gf->quadrangles.size());
-    // meshWinslow2d(gf,100);
+    if (NITERWINSLOW)meshWinslow2d(gf,NITERWINSLOW);
   }
 
   // vector<MVertex*> singularVertices;
@@ -5010,10 +5025,6 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     return s4;
   }
 
-  gm->writeMSH("step4.msh");
-  
-  // return 0;
-
   bool SHOW_ONLY_PATTERN_MESHING = false;
 
   /* Pattern required by step 5 and 6 */
@@ -5031,8 +5042,6 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     Msg::Warning("failed to generate pattern-based quad meshes, abort");
     return s5;
   }
-
-  gm->writeMSH("step5.msh");
 
   /* For visu */
   if (SHOW_ONLY_PATTERN_MESHING) {
@@ -5059,7 +5068,6 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
 
   // TODO:
   // - concave corner cavities
-  gm->writeMSH("step6.msh");
 
   Msg::Debug("... quasi-structured quadrilateral meshing done.");
   return 0;

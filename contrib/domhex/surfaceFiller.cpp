@@ -60,7 +60,7 @@ bool compute4neighbors(
   SVector3 t1;
   (*f)(v_center->x(), v_center->y(), v_center->z(), t1, gf);
   double L = t1.norm()*mult;
-  //      printf("L = %12.5E\n",L);
+  //  printf("L = %12.5E\n",L);
   metricField = SMetric3(1. / (L * L));
   
   // get the unit normal at that point
@@ -315,7 +315,7 @@ bool compute4neighbors(
 
 static bool outBounds(SPoint2 p, double minu, double maxu, double minv, double maxv){
   if (p.x() > maxu || p.x() <  minu || p.y() > maxv || p.y() <  minv){
-    printf("OUT BOUND %g %g\n",p.x(),p.y());
+    //    printf("OUT BOUND %g %g\n",p.x(),p.y());
     return true;
 
   }
@@ -494,7 +494,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     }
   }
 
-  printf("bounds = %g %g %g %g \n",minu,maxu,minv,maxv);
+  //  printf("bounds = %g %g %g %g \n",minu,maxu,minv,maxv);
   
   while(!fifo.empty()) {
     //    printf("%d vertices in the domain\n",vertices.size());
@@ -504,8 +504,8 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     for(int i = 0; i < 4; i++) {
       if(!close2sing (singularities,gf,parent->_p[i],cross_field)
 	 && !inExclusionZone(parent->_v, parent->_p[i], rtree) &&
-	 !outBounds(parent->_p[i],minu,maxu,minv,maxv) &&
-	 gf->containsParam(parent->_p[i]))
+	 !outBounds(parent->_p[i],minu,maxu,minv,maxv)&&
+	gf->containsParam(parent->_p[i]))
 	{
 	  GPoint gp = gf->point(parent->_p[i]);
 	  MFaceVertex *v =

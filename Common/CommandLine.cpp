@@ -406,7 +406,8 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
   // it was later set to 1 in the option file)
   int terminal = CTX::instance()->terminal;
   CTX::instance()->terminal = 99;
-
+  CTX::instance()->mesh.quadqsUseDiscreteGeometry = 0;
+  
 #if defined(HAVE_PARSER)
   if(readConfigFiles) {
     ParseFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName,
