@@ -5133,18 +5133,16 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
       Msg::Warning("failed to generate curve 1D meshes, abort");
       return s3;
     }
-    if (useDiscreteGeometry(gm)) {
+    if (CTX::instance()->mesh.quadqsUseDiscreteGeometry) { /* Rebuild the triangulation */
       int stt = generateInitialTriangulation(gm, true);
       if (stt != 0) {
         Msg::Error("failed to generate triangulation after curve remeshing, abort");
         return stt;
       }
     }
-  } else {
-    for (GFace* gf: faces) gf->meshStatistics.status = GFace::PENDING;
-
-    // If no CAD, use Christos remeshing on the whole gm ?
   }
+
+  for (GFace* gf: faces) gf->meshStatistics.status = GFace::PENDING;
 
   /* Pattern required by steps 4, 5 and 6 */
   {
