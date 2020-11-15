@@ -120,6 +120,23 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
   }
 }
 
+#if defined(HAVE_FLTK)
+static void FlGuiRateLimitedCheck()
+{
+  static double lastRefresh = 0.;
+  if(CTX::instance()->guiRefreshRate > 0) {
+    double start = TimeOfDay();
+    if(start - lastRefresh > 1. / CTX::instance()->guiRefreshRate) {
+      lastRefresh = start;
+      FlGui::check();
+    }
+  }
+  else {
+    FlGui::check();
+  }
+}
+#endif
+
 void Msg::Init(int argc, char **argv)
 {
   _startTime = TimeOfDay();
@@ -280,8 +297,8 @@ void Msg::StopProgressMeter()
   _progressMeterTotal = 0;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::check();
     FlGui::instance()->setProgress("", 0, 0, 1);
+    FlGui::check();
   }
 #endif
 }
@@ -523,12 +540,12 @@ void Msg::Error(const char *fmt, ...)
     if(_client) _client->Error(str);
 #if defined(HAVE_FLTK)
     if(FlGui::available()){
-      FlGui::check();
       std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
         + "Error   : " + str;
       FlGui::instance()->addMessage(tmp.c_str());
       FlGui::instance()->setLastStatus
         (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
+      FlGui::check();
     }
 #endif
     if(CTX::instance()->terminal){
@@ -577,12 +594,12 @@ void Msg::Warning(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.")
       + "Warning : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstWarning.empty()) _firstWarning = str;
     FlGui::instance()->setLastStatus();
+    FlGui::check();
   }
 #endif
 
@@ -621,9 +638,9 @@ void Msg::Info(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::check();
     std::string tmp = std::string("Info    : ") + str;
     FlGui::instance()->addMessage(tmp.c_str());
+    FlGuiRateLimitedCheck();
   }
 #endif
 
@@ -661,10 +678,10 @@ void Msg::Direct(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
       + str;
     FlGui::instance()->addMessage(tmp.c_str());
+    FlGuiRateLimitedCheck();
   }
 #endif
 
@@ -718,12 +735,12 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(log) FlGui::check();
     if(!log || GetVerbosity() > 4)
       FlGui::instance()->setStatus(str);
     if(log){
       std::string tmp = std::string("Info    : ") + str;
       FlGui::instance()->addMessage(tmp.c_str());
+      FlGuiRateLimitedCheck();
     }
   }
 #endif
@@ -830,8 +847,8 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
     if(FlGui::available() && GetVerbosity() > 4){
-      FlGui::check();
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
+      FlGuiRateLimitedCheck();
     }
 #endif
     if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
