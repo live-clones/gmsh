@@ -299,25 +299,31 @@ public:
   // to a different value than -1.
   bool searchScalar(double x, double y, double z, double *values, int step = -1,
                     double *size = 0, int qn = 0, double *qx = 0,
-                    double *qy = 0, double *qz = 0, bool grad = false);
+                    double *qy = 0, double *qz = 0, bool grad = false,
+                    int dim = -1);
   bool searchScalarWithTol(double x, double y, double z, double *values,
                            int step = -1, double *size = 0, double tol = 1.e-2,
                            int qn = 0, double *qx = 0, double *qy = 0,
-                           double *qz = 0, bool grad = false);
+                           double *qz = 0, bool grad = false,
+                           int dim = -1);
   bool searchVector(double x, double y, double z, double *values, int step = -1,
                     double *size = 0, int qn = 0, double *qx = 0,
-                    double *qy = 0, double *qz = 0, bool grad = false);
+                    double *qy = 0, double *qz = 0, bool grad = false,
+                    int dim = -1);
   bool searchVectorWithTol(double x, double y, double z, double *values,
                            int step = -1, double *size = 0, double tol = 1.e-2,
                            int qn = 0, double *qx = 0, double *qy = 0,
-                           double *qz = 0, bool grad = false);
+                           double *qz = 0, bool grad = false,
+                           int dim = -1);
   bool searchTensor(double x, double y, double z, double *values, int step = -1,
                     double *size = 0, int qn = 0, double *qx = 0,
-                    double *qy = 0, double *qz = 0, bool grad = false);
+                    double *qy = 0, double *qz = 0, bool grad = false,
+                    int dim = -1);
   bool searchTensorWithTol(double x, double y, double z, double *values,
                            int step = -1, double *size = 0, double tol = 1.e-2,
                            int qn = 0, double *qx = 0, double *qy = 0,
-                           double *qz = 0, bool grad = false);
+                           double *qz = 0, bool grad = false,
+                           int dim = -1);
 
   // I/O routines
   virtual bool writeSTL(const std::string &fileName);
