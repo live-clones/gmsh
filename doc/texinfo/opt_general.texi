@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 4.7.1-git-4b687a6b7; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20201106; Build host: MacBook-Pro; Build options: 64Bit ALGLIB ANN Bamg Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen Fltk GMP Gmm Hxt Jpeg Kbipack MathEx Med Mesh Metis Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parasolid ParasolidSTEP Parser Plugins Png Post QuadTri Solver TetGen/BR TouchBar Voro++ Zlib; FLTK version: 1.4.0; OCC version: 7.5.0; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 4.7.1-git-ab8186512; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20201114; Build host: MacBook-Pro.local; Build options: 64Bit ALGLIB ANN Bamg Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen Fltk GMP Gmm Hxt Jpeg Kbipack MathEx Med Mesh Metis Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parasolid ParasolidSTEP Parser Plugins Png Post QuadTri Solver TetGen/BR TouchBar Voro++ Zlib; FLTK version: 1.4.0; OCC version: 7.5.0; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -163,7 +163,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.7.1-git-4b687a6b7"}@*
+Default value: @code{"4.7.1-git-ab8186512"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -613,8 +613,8 @@ Saved in: @code{General.SessionFileName}
 
 @item General.FltkRefreshRate
 FLTK user interface maximum refresh rate, per second (0: no limit)@*
-Default value: @code{0}@*
-Saved in: @code{General.SessionFileName}
+Default value: @code{5}@*
+Saved in: @code{General.OptionsFileName}
 
 @item General.FontSize
 Size of the font in the user interface, in pixels (-1: automatic)@*
