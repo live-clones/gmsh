@@ -107,6 +107,7 @@ class MyMesh{
     _computeGaussCurv();
   }
   void computeManifoldBasis();
+  bool _isEulerEqualSumSing(const std::set<MVertex *, MVertexPtrLessThan> &vertices, const std::map<MVertex *, int, MVertexPtrLessThan> &singIndices);
   void _tryFixSing(std::set<MTriangle*, MElementPtrLessThan> patchTri);
 };
 
