@@ -464,9 +464,6 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
   double *X = (double *)in, *Y = &X[nbNod], *Z = &X[2 * nbNod],
          *V = &X[3 * nbNod], U[3];
 
-  //  for (int i=0;i<3*9*3;i++)printf("%g ", X[i]);
-  //  printf("\n");
-
   elementFactory factory;
   element *e = factory.create(nbNod, dim, X, Y, Z);
   if(!e) return false;
@@ -617,7 +614,6 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
     if(m) {
       MElement *e = getElement(P, m, qn, qx, qy, qz, dim);
       if(_getValue(e, 1, P, step, values, size, grad)) {
-        printf("ele dim = %d\n", e->getDim());
         return true;
       }
     }
