@@ -6707,7 +6707,8 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
                                 const bool gradient, const double tolerance,
                                 const std::vector<double> &xElemCoord,
                                 const std::vector<double> &yElemCoord,
-                                const std::vector<double> &zElemCoord)
+                                const std::vector<double> &zElemCoord,
+                                const int dim)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_POST)
@@ -6739,33 +6740,33 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
   switch(numComp) {
   case 1:
     if(data->searchScalarWithTol(x, y, z, &val[0], step, 0, tolerance, qn, qx,
-                                 qy, qz, gradient)) {
+                                 qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 1;
     }
     break;
   case 3:
     if(data->searchVectorWithTol(x, y, z, &val[0], step, 0, tolerance, qn, qx,
-                                 qy, qz, gradient)) {
+                                 qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 3;
     }
     break;
   case 9:
     if(data->searchTensorWithTol(x, y, z, &val[0], step, 0, tolerance, qn, qx,
-                                 qy, qz, gradient)) {
+                                 qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 9;
     }
     break;
   default:
     if(data->searchScalarWithTol(x, y, z, &val[0], step, 0, tolerance, qn, qx,
-                                 qy, qz, gradient)) {
+                                 qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 1;
     }
     else if(data->searchVectorWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
-                                      qx, qy, qz, gradient)) {
+                                      qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 3;
     }
     else if(data->searchTensorWithTol(x, y, z, &val[0], step, 0, tolerance, qn,
-                                      qx, qy, qz, gradient)) {
+                                      qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 9;
     }
     break;

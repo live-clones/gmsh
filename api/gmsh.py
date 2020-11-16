@@ -6186,9 +6186,9 @@ class view:
             raise Exception(logger.getLastError())
 
     @staticmethod
-    def probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[]):
+    def probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1):
         """
-        gmsh.view.probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[])
+        gmsh.view.probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1)
 
         Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
         the value at step `step' is `step' is positive. Return only values with
@@ -6218,6 +6218,7 @@ class view:
             api_xElemCoord_, api_xElemCoord_n_,
             api_yElemCoord_, api_yElemCoord_n_,
             api_zElemCoord_, api_zElemCoord_n_,
+            c_int(dim),
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())

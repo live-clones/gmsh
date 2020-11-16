@@ -2944,7 +2944,8 @@ namespace gmsh { // Top-level functions
                         const double tolerance = 0.,
                         const std::vector<double> & xElemCoord = std::vector<double>(),
                         const std::vector<double> & yElemCoord = std::vector<double>(),
-                        const std::vector<double> & zElemCoord = std::vector<double>());
+                        const std::vector<double> & zElemCoord = std::vector<double>(),
+                        const int dim = -1);
 
     // gmsh::view::write
     //

@@ -2613,6 +2613,7 @@ GMSH_API void gmshViewProbe(const int tag,
                             double * xElemCoord, size_t xElemCoord_n,
                             double * yElemCoord, size_t yElemCoord_n,
                             double * zElemCoord, size_t zElemCoord_n,
+                            const int dim,
                             int * ierr);
 
 /* Write the view to a file `fileName'. The export format is determined by the
