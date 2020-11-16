@@ -3255,6 +3255,8 @@ HXTStatus MultiBlock::getCrossesLifting(const std::vector<uint64_t> &tri, const 
   lift.resize(3*tri.size(),init);
 
   std::map<uint64_t, bool> trianglePassed;
+  for(uint64_t t=0;t<mesh->triangles.num;t++)//mesh triangles not belonging to tri will not be took into account
+    trianglePassed[t]=true;
   std::stack<uint64_t> stackTri;
   for(uint64_t t: tri)
     trianglePassed[t]=false;
@@ -3262,7 +3264,7 @@ HXTStatus MultiBlock::getCrossesLifting(const std::vector<uint64_t> &tri, const 
   trianglePassed[triangleLeft]=true;
   std::map<uint64_t, std::array<double,3>> mapTriDir;
   mapTriDir[triInit] = dirRef;
-  while(triangleLeft){
+  while(triangleLeft!=(uint64_t)(-1)){
     uint32_t vtri[3] = {mesh->triangles.node[3*triangleLeft+0],mesh->triangles.node[3*triangleLeft+1],mesh->triangles.node[3*triangleLeft+2]};
     double U[3]={0.}, V[3]={0.}, n[3]={0.};	
     trianglebasis(mesh,vtri,U,V,n);
@@ -3273,14 +3275,15 @@ HXTStatus MultiBlock::getCrossesLifting(const std::vector<uint64_t> &tri, const 
       const double *v1 = mesh->vertices.coord + 4*edges->node[2*edgeRefGlob+1];
       double edgeK[3]={v1[0]-v0[0],v1[1]-v0[1],v1[2]-v0[2]};
       normalize(edgeK);
-      double cos4Theta=m_crossfield[2*edgeRefGlob+0]*myDot(edgeK,U) - m_crossfield[2*edgeRefGlob+1]*myDot(edgeK,V);
-      double sin4Theta=m_crossfield[2*edgeRefGlob+1]*myDot(edgeK,U) + m_crossfield[2*edgeRefGlob+0]*myDot(edgeK,V);;
+      double alphaEdg=atan2(myDot(edgeK,V),myDot(edgeK,U));
+      double cos4Theta=m_crossfield[2*edgeRefGlob+0]*cos(4*alphaEdg) - m_crossfield[2*edgeRefGlob+1]*sin(4*alphaEdg);
+      double sin4Theta=m_crossfield[2*edgeRefGlob+1]*cos(4*alphaEdg) + m_crossfield[2*edgeRefGlob+0]*sin(4*alphaEdg);
       double theta=atan2(sin4Theta,cos4Theta)/4.;
       std::vector<std::array<double,3>> dirCross;
       for(size_t l=0;l<4;l++){
 	std::array<double,3> dirL={{0.0,0.0,0.0}};
 	for(size_t m=0;m<3;m++)
-	  dirL[k]=cos(theta+k*M_PI/4.)*U[k]+sin(theta+k*M_PI/4.)*V[k];
+	  dirL[m]=cos(theta+l*M_PI/2.)*U[m]+sin(theta+l*M_PI/2.)*V[m];
 	dirCross.push_back(dirL);
       }
       double valMin=1000;
@@ -3326,74 +3329,236 @@ HXTStatus MultiBlock::computePatchsParametrization(){
   int argc=1;
   HXT_CHECK(hxtInitializeLinearSystems(&argc, NULL));
   for(size_t iB=0;iB<m_mbBlockTriPatchs.size();iB++){
-    //create patch tri numerotation
-    size_t nTriangles = m_mbBlockTriPatchs[iB].size();
-    uint32_t* nodesLoc;
-    HXT_CHECK(hxtAlignedMalloc(&nodesLoc, 3*nTriangles*sizeof(uint32_t)));
-    std::vector<uint64_t> loc2GlobTri;
-    std::vector<uint64_t> glob2LocTri(mesh->triangles.num,0);
-    std::vector<bool> flaggedVert(mesh->vertices.num,false);
-    std::vector<uint32_t> loc2GlobVert;
-    std::vector<uint32_t> glob2LocVert(mesh->vertices.num,0);
-    for(uint64_t t: m_mbBlockTriPatchs[iB]){
-      for(size_t l=0;l<3;l++)
-	flaggedVert[mesh->triangles.node[3*t+l]]=true;
+    BlockParametrization blockParam(mesh);
+    parametrizeBock(iB, blockParam);
+    std::string nameTest="dbgParam_" + std::to_string(iB) + ".pos";
+    blockParam.dbgPosParam(nameTest.c_str());
+  }
+  return  HXT_STATUS_OK;
+}
+
+HXTStatus BlockParametrization::dbgPosParam(const char *fileName){
+  HXTMesh *mesh = m_mesh;
+  FILE *f = fopen(fileName,"w");
+  fprintf(f,"View \"point BC\" {\n");
+  fprintf(f,"SP(%.16g,%.16g,%.16g){%.16g};\n", pointBC[0], pointBC[1], pointBC[2], 1.0);
+  fprintf(f,"};");
+  fprintf(f,"View \"potU\" {\n");
+  for(uint64_t triNum: m_triangles){
+    // std::array<double,3> point1={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+    // std::array<double,3> point2={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+2]}};
+    // std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+    // triNum=m_triangles[m_trianglesGlobalToParam[triNum]];//DBG
+    std::array<uint32_t,3> globVertInd={{mesh->triangles.node[3*triNum+0],mesh->triangles.node[3*triNum+1],mesh->triangles.node[3*triNum+2]}};
+    std::array<uint32_t,3> locVertInd={{m_nodesGlobalToParam[globVertInd[0]],m_nodesGlobalToParam[globVertInd[1]],m_nodesGlobalToParam[globVertInd[2]]}};
+    uint32_t iV0=globVertInd[0];
+    uint32_t iV1=globVertInd[1];
+    uint32_t iV2=globVertInd[2];
+    // uint32_t iV0=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[0]]];
+    // uint32_t iV1=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[1]]];
+    // uint32_t iV2=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[2]]];
+    std::array<double,3> point1={{mesh->vertices.coord[4*iV0+0],mesh->vertices.coord[4*iV0+1],mesh->vertices.coord[4*iV0+2]}};
+    std::array<double,3> point2={{mesh->vertices.coord[4*iV1+0],mesh->vertices.coord[4*iV1+1],mesh->vertices.coord[4*iV1+2]}};
+    std::array<double,3> point3={{mesh->vertices.coord[4*iV2+0],mesh->vertices.coord[4*iV2+1],mesh->vertices.coord[4*iV2+2]}};
+    fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n", point1[0],  point1[1],  point1[2],  point2[0],  point2[1],  point2[2],  point3[0],  point3[1],  point3[2], m_nodesParamCoord[locVertInd[0]][0], m_nodesParamCoord[locVertInd[1]][0], m_nodesParamCoord[locVertInd[2]][0]);
+  }
+  fprintf(f,"};");
+  // fprintf(f,"View \"liftUdbg\" {\n");
+  // for(uint64_t triNum: m_triangles){
+  //   // std::array<double,3> point1={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+  //   // std::array<double,3> point2={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+2]}};
+  //   // std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+  //   std::array<uint32_t,3> globVertInd={{mesh->triangles.node[3*triNum+0],mesh->triangles.node[3*triNum+1],mesh->triangles.node[3*triNum+2]}};
+  //   std::array<uint32_t,3> locVertInd={{m_nodesGlobalToParam[globVertInd[0]],m_nodesGlobalToParam[globVertInd[1]],m_nodesGlobalToParam[globVertInd[2]]}};
+  //   uint32_t iV0=globVertInd[0];
+  //   uint32_t iV1=globVertInd[1];
+  //   uint32_t iV2=globVertInd[2];
+  //   // uint32_t iV0=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[0]]];
+  //   // uint32_t iV1=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[1]]];
+  //   // uint32_t iV2=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[2]]];
+  //   std::array<double,3> point1={{mesh->vertices.coord[4*iV0+0],mesh->vertices.coord[4*iV0+1],mesh->vertices.coord[4*iV0+2]}};
+  //   std::array<double,3> point2={{mesh->vertices.coord[4*iV1+0],mesh->vertices.coord[4*iV1+1],mesh->vertices.coord[4*iV1+2]}};
+  //   std::array<double,3> point3={{mesh->vertices.coord[4*iV2+0],mesh->vertices.coord[4*iV2+1],mesh->vertices.coord[4*iV2+2]}};
+  //   fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n", (point1[0]+point2[0]+point3[0])/3., (point1[1]+point2[1]+point3[1])/3., (point1[2]+point2[2]+point3[2])/3., liftU[m_trianglesGlobalToParam[triNum]][0], liftU[m_trianglesGlobalToParam[triNum]][1], liftU[m_trianglesGlobalToParam[triNum]][2]);
+  // }
+  // fprintf(f,"};");
+  // fprintf(f,"View \"scalingDBG\" {\n");
+  // for(uint64_t triNum: m_triangles){
+  //   // std::array<double,3> point1={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+  //   // std::array<double,3> point2={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+2]}};
+  //   // std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+  //   std::array<uint32_t,3> globVertInd={{mesh->triangles.node[3*triNum+0],mesh->triangles.node[3*triNum+1],mesh->triangles.node[3*triNum+2]}};
+  //   std::array<uint32_t,3> locVertInd={{m_nodesGlobalToParam[globVertInd[0]],m_nodesGlobalToParam[globVertInd[1]],m_nodesGlobalToParam[globVertInd[2]]}};
+  //   uint32_t iV0=globVertInd[0];
+  //   uint32_t iV1=globVertInd[1];
+  //   uint32_t iV2=globVertInd[2];
+  //   // uint32_t iV0=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[0]]];
+  //   // uint32_t iV1=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[1]]];
+  //   // uint32_t iV2=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[2]]];
+  //   std::array<double,3> point1={{mesh->vertices.coord[4*iV0+0],mesh->vertices.coord[4*iV0+1],mesh->vertices.coord[4*iV0+2]}};
+  //   std::array<double,3> point2={{mesh->vertices.coord[4*iV1+0],mesh->vertices.coord[4*iV1+1],mesh->vertices.coord[4*iV1+2]}};
+  //   std::array<double,3> point3={{mesh->vertices.coord[4*iV2+0],mesh->vertices.coord[4*iV2+1],mesh->vertices.coord[4*iV2+2]}};
+  //   fprintf(f,"ST(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n", point1[0], point1[1], point1[2], point2[0], point2[1], point2[2], point3[0], point3[1], point3[2], scaling[m_trianglesGlobalToParam[triNum]], scaling[m_trianglesGlobalToParam[triNum]], scaling[m_trianglesGlobalToParam[triNum]]);
+  // }
+  // fprintf(f,"};");
+  fprintf(f,"View \"potV\" {\n");
+  for(uint64_t triNum: m_triangles){
+    // std::array<double,3> point1={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+    // std::array<double,3> point2={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+2]}};
+    // std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+    std::array<uint32_t,3> globVertInd={{mesh->triangles.node[3*triNum+0],mesh->triangles.node[3*triNum+1],mesh->triangles.node[3*triNum+2]}};
+    std::array<uint32_t,3> locVertInd={{m_nodesGlobalToParam[globVertInd[0]],m_nodesGlobalToParam[globVertInd[1]],m_nodesGlobalToParam[globVertInd[2]]}};
+    uint32_t iV0=globVertInd[0];
+    uint32_t iV1=globVertInd[1];
+    uint32_t iV2=globVertInd[2];
+    std::array<double,3> point1={{mesh->vertices.coord[4*iV0+0],mesh->vertices.coord[4*iV0+1],mesh->vertices.coord[4*iV0+2]}};
+    std::array<double,3> point2={{mesh->vertices.coord[4*iV1+0],mesh->vertices.coord[4*iV1+1],mesh->vertices.coord[4*iV1+2]}};
+    std::array<double,3> point3={{mesh->vertices.coord[4*iV2+0],mesh->vertices.coord[4*iV2+1],mesh->vertices.coord[4*iV2+2]}};
+    fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n", point1[0],  point1[1],  point1[2],  point2[0],  point2[1],  point2[2],  point3[0],  point3[1],  point3[2], m_nodesParamCoord[locVertInd[0]][1], m_nodesParamCoord[locVertInd[1]][1], m_nodesParamCoord[locVertInd[2]][1]);
+  }
+  fprintf(f,"};");
+  // fprintf(f,"View \"liftVdbg\" {\n");
+  // for(uint64_t triNum: m_triangles){
+  //   // std::array<double,3> point1={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+  //   // std::array<double,3> point2={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+2]}};
+  //   // std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+  //   std::array<uint32_t,3> globVertInd={{mesh->triangles.node[3*triNum+0],mesh->triangles.node[3*triNum+1],mesh->triangles.node[3*triNum+2]}};
+  //   std::array<uint32_t,3> locVertInd={{m_nodesGlobalToParam[globVertInd[0]],m_nodesGlobalToParam[globVertInd[1]],m_nodesGlobalToParam[globVertInd[2]]}};
+  //   uint32_t iV0=globVertInd[0];
+  //   uint32_t iV1=globVertInd[1];
+  //   uint32_t iV2=globVertInd[2];
+  //   // uint32_t iV0=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[0]]];
+  //   // uint32_t iV1=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[1]]];
+  //   // uint32_t iV2=m_nodesParamToGlobal[m_nodesGlobalToParam[globVertInd[2]]];
+  //   std::array<double,3> point1={{mesh->vertices.coord[4*iV0+0],mesh->vertices.coord[4*iV0+1],mesh->vertices.coord[4*iV0+2]}};
+  //   std::array<double,3> point2={{mesh->vertices.coord[4*iV1+0],mesh->vertices.coord[4*iV1+1],mesh->vertices.coord[4*iV1+2]}};
+  //   std::array<double,3> point3={{mesh->vertices.coord[4*iV2+0],mesh->vertices.coord[4*iV2+1],mesh->vertices.coord[4*iV2+2]}};
+  //   fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n", (point1[0]+point2[0]+point3[0])/3., (point1[1]+point2[1]+point3[1])/3., (point1[2]+point2[2]+point3[2])/3., liftV[m_trianglesGlobalToParam[triNum]][0], liftV[m_trianglesGlobalToParam[triNum]][1], liftV[m_trianglesGlobalToParam[triNum]][2]);
+  // }
+  // fprintf(f,"};");
+  fclose(f);
+  return HXT_STATUS_OK;
+}
+
+HXTStatus MultiBlock::parametrizeBock(uint64_t idBlock, BlockParametrization &blockParam){
+  HXTEdges* edges=m_Edges;
+  HXTMesh *mesh = edges->edg2mesh;
+  uint64_t iB=idBlock;
+  //create patch tri numerotation
+  size_t nTriangles = m_mbBlockTriPatchs[iB].size();
+  uint32_t* nodesLoc;
+  HXT_CHECK(hxtAlignedMalloc(&nodesLoc, 3*nTriangles*sizeof(uint32_t)));
+  std::vector<uint64_t> loc2GlobTri;
+  std::vector<uint64_t> glob2LocTri(mesh->triangles.num,0);
+  std::vector<bool> flaggedVert(mesh->vertices.num,false);
+  std::vector<uint32_t> loc2GlobVert;
+  std::vector<uint32_t> glob2LocVert(mesh->vertices.num,(uint32_t)(-1));
+  for(uint64_t t: m_mbBlockTriPatchs[iB]){
+    for(size_t l=0;l<3;l++)
+      flaggedVert[mesh->triangles.node[3*t+l]]=true;
+  }
+  for(uint32_t k=0;k<mesh->vertices.num;k++){
+    if(flaggedVert[k]){
+      loc2GlobVert.push_back(k);
+      glob2LocVert[k]=loc2GlobVert.size()-1;
     }
-    for(uint32_t k=0;k<mesh->vertices.num;k++){
-      if(flaggedVert[k]){
-	loc2GlobVert.push_back(k);
-	glob2LocVert[k]=loc2GlobVert.size()-1;
+  }
+  for(uint64_t t: m_mbBlockTriPatchs[iB]){
+    loc2GlobTri.push_back(t);
+    glob2LocTri[t]=loc2GlobTri.size()-1;
+    for(size_t l=0;l<3;l++){
+      nodesLoc[3*glob2LocTri[t]+l]=glob2LocVert[mesh->triangles.node[3*t+l]];
+    }
+  }
+  //DBG
+  if(nTriangles!=loc2GlobTri.size()){
+    std::cout << "error counting triangles number" << std::endl;
+    exit(0);
+  }
+  for(uint32_t k=0;k<loc2GlobTri.size();k++){
+    if(k!=glob2LocTri[loc2GlobTri[k]]){
+      std::cout << "error building correspondance triangles tables" << std::endl;
+      exit(0);
+    }
+  }
+  for(uint32_t k=0;k<loc2GlobVert.size();k++){
+    if(k!=glob2LocVert[loc2GlobVert[k]]){
+      std::cout << "error building correspondance vertices tables" << std::endl;
+      exit(0);
+    }
+  }
+  for(uint64_t k=0;k<loc2GlobTri.size();k++){
+    for(size_t l=0;l<3;l++){
+      if(loc2GlobVert[nodesLoc[3*k+l]]!=mesh->triangles.node[3*loc2GlobTri[k]+l]){
+  	std::cout << "error new connectivity" << std::endl;
+	std::cout << "patch: " << iB << std::endl;
+  	exit(0);
       }
     }
-    size_t k=0;	
-    for(uint64_t t: m_mbBlockTriPatchs[iB]){
-      for(size_t l=0;l<3;l++){
-	nodesLoc[3*k+l]=glob2LocVert[mesh->triangles.node[3*t+l]];
-      }
-      loc2GlobTri.push_back(t);
-      glob2LocTri[t]=loc2GlobTri.size()-1;
-      k++;
-    }
-    std::vector<std::array<double,3>> coordLoc;
-    for(size_t k=0;k<loc2GlobVert.size();k++){
-      uint32_t globInd=loc2GlobVert[k];
-      std::array<double,3> coord={{mesh->vertices.coord[4*globInd+0],mesh->vertices.coord[4*globInd+1],mesh->vertices.coord[4*globInd+2]}};
-      coordLoc.push_back(coord);
-    }
-    std::vector<std::array<double,3>> liftU;//3*triLocNum+edgLoc
-    std::vector<std::array<double,3>> liftV;//3*triLocNum+edgLoc
-    uint64_t refTriGlob=loc2GlobTri[0];
-    uint32_t vtri[3] = {mesh->triangles.node[3*refTriGlob+0],mesh->triangles.node[3*refTriGlob+1],mesh->triangles.node[3*refTriGlob+2]};
-    double U[3]={0.}, V[3]={0.}, n[3]={0.};	
-    trianglebasis(mesh,vtri,U,V,n);
-    std::array<double,3> dirRefU;
-    std::array<double,3> dirRefV;
-    uint32_t edgeRefGlob=edges->tri2edg[3*refTriGlob+0];
-    double theta=atan2(m_crossfield[2*edgeRefGlob+1],m_crossfield[2*edgeRefGlob+0])/4.;
-    for(size_t k=0;k<3;k++){
-      dirRefU[k]=cos(theta)*U[k]+sin(theta)*V[k];
-      dirRefV[k]=-sin(theta)*U[k]+cos(theta)*V[k];
-    }
-    getCrossesLifting(loc2GlobTri,glob2LocTri,liftU,refTriGlob,dirRefU);
-    getCrossesLifting(loc2GlobTri,glob2LocTri,liftV,refTriGlob,dirRefV);
+  }
+  //
+  std::vector<std::array<double,3>> coordLoc;
+  for(size_t k=0;k<loc2GlobVert.size();k++){
+    uint32_t globInd=loc2GlobVert[k];
+    std::array<double,3> coord={{mesh->vertices.coord[4*globInd+0],mesh->vertices.coord[4*globInd+1],mesh->vertices.coord[4*globInd+2]}};
+    coordLoc.push_back(coord);
+  }
+  std::vector<std::array<double,3>> liftU;//3*triLocNum+edgLoc
+  std::array<double,3> init={{0.0,0.0,0.0}};//DBG
+  liftU.resize(3*nTriangles,init);//DBG
+  std::vector<std::array<double,3>> liftV;//3*triLocNum+edgLoc
+  liftV.resize(3*nTriangles,init);//DBG
+  uint64_t refTriGlob=loc2GlobTri[0];
+  uint32_t vtriRef[3] = {mesh->triangles.node[3*refTriGlob+0],mesh->triangles.node[3*refTriGlob+1],mesh->triangles.node[3*refTriGlob+2]};
+  double U[3]={0.}, V[3]={0.}, n[3]={0.};	
+  trianglebasis(mesh,vtriRef,U,V,n);
+  std::array<double,3> dirRefU;
+  std::array<double,3> dirRefV;
+  uint32_t edgeRefGlob=edges->tri2edg[3*refTriGlob+0];
+  double theta=atan2(m_crossfield[2*edgeRefGlob+1],m_crossfield[2*edgeRefGlob+0])/4.;
+  for(size_t k=0;k<3;k++){
+    dirRefU[k]=cos(theta)*U[k]+sin(theta)*V[k];
+    dirRefV[k]=-sin(theta)*U[k]+cos(theta)*V[k];
+  }
+  getCrossesLifting(loc2GlobTri,glob2LocTri,liftU,refTriGlob,dirRefU);
+  getCrossesLifting(loc2GlobTri,glob2LocTri,liftV,refTriGlob,dirRefV);
 
-    HXTLinearSystem *sys;
-    // we definitely use PETSc solver if it is enabled
-    // #if defined(HAVE_PETSC)
-    //     std::cout << "have petsc" << std::endl;
-    //     HXT_CHECK(hxtLinearSystemCreatePETSc(&nrSys,nTriangles,3,2,edges->tri2edg,"-pc_type lu"));
-    // #else
-    HXT_CHECK(hxtLinearSystemCreateLU(&sys,nTriangles,3,1,nodesLoc));
-    // HXT_CHECK(hxtLinearSystemLUCreate(&sys,nTriangles,3,1,nodesLoc));
-    // #endif
-    double *rhsU;
-    HXT_CHECK(hxtMalloc(&rhsU, loc2GlobVert.size()*sizeof(double)));
-    double *rhsV;
-    HXT_CHECK(hxtMalloc(&rhsV, loc2GlobVert.size()*sizeof(double)));
+  HXTLinearSystem *sys;
+  // we definitely use PETSc solver if it is enabled
+  // #if defined(HAVE_PETSC)
+  //     std::cout << "have petsc" << std::endl;
+  //     HXT_CHECK(hxtLinearSystemCreatePETSc(&nrSys,nTriangles,3,2,edges->tri2edg,"-pc_type lu"));
+  // #else
+  HXT_CHECK(hxtLinearSystemCreateLU(&sys,nTriangles,3,1,nodesLoc));
+  // HXT_CHECK(hxtLinearSystemLUCreate(&sys,nTriangles,3,1,nodesLoc));
+  // #endif
+  double *rhsU;
+  HXT_CHECK(hxtMalloc(&rhsU, loc2GlobVert.size()*sizeof(double)));
+  double *rhsV;
+  HXT_CHECK(hxtMalloc(&rhsV, loc2GlobVert.size()*sizeof(double)));
+  for(size_t k=0; k<loc2GlobVert.size(); k++){
+    rhsU[k]=0.0;
+    rhsV[k]=0.0;
+  }
 
-    for(size_t iT=0;iT<nTriangles;iT++){
-      double grad[3][3] = {{-1.,-1.,0.},{1.,0.,0.},{0.,1.,0.}};
+  //DBG
+  blockParam.liftU.clear();
+  blockParam.liftU.reserve(nTriangles);
+  // blockParam.liftU.resize(nTriangles,init);
+  blockParam.liftV.clear();
+  blockParam.liftV.reserve(nTriangles);
+  blockParam.scaling.clear();
+  blockParam.scaling.reserve(nTriangles);
+  //
+  for(size_t iT=0;iT<nTriangles;iT++){
+    double vtri[9] = {0.};
+    for(int i=0; i<3; i++)
+      for(int j=0; j<3; j++)
+	vtri[3*i+j] = mesh->vertices.coord[4*loc2GlobVert[nodesLoc[3*iT+i]]+j];
+    // uint32_t vtri[3] = {mesh->triangles.node[3*loc2GlobTri[iT]+0],mesh->triangles.node[3*loc2GlobTri[iT]+1],mesh->triangles.node[3*loc2GlobTri[iT]+2]};
+    double grad[3][3] = {{-1.,-1.,0.},{1.,0.,0.},{0.,1.,0.}};
   
+<<<<<<< HEAD
       double jac[3][3];// = {{vtri[3]-vtri[0],vtri[4]-vtri[1],vtri[5]-vtri[2]},
       // {vtri[6]-vtri[0],vtri[7]-vtri[1],vtri[8]-vtri[2]},
       //		  {0,0,0}};
@@ -3408,51 +3573,129 @@ HXTStatus MultiBlock::computePatchsParametrization(){
 	  dphidx[i][1] += grad[i][j]*invjac[1][j];
 	  dphidx[i][2] += grad[i][j]*invjac[2][j];
 	}
+=======
+    double jac[3][3] = {{vtri[3]-vtri[0],vtri[4]-vtri[1],vtri[5]-vtri[2]},
+			{vtri[6]-vtri[0],vtri[7]-vtri[1],vtri[8]-vtri[2]},
+			{0,0,0}};
+    HXT_CHECK(myNormalizedCrossprod(jac[0],jac[1],jac[2]));
+    double dJac, invjac[3][3];
+    HXT_CHECK(hxtInv3x3(jac,invjac,&dJac));
+    double dphidx[3][3];
+    for(uint32_t i=0; i<3; i++){
+      dphidx[i][0] = dphidx[i][1] = dphidx[i][2] = 0;
+      for (uint32_t j = 0; j < 3; ++j) {
+	dphidx[i][0] += grad[i][j]*invjac[0][j];
+	dphidx[i][1] += grad[i][j]*invjac[1][j];
+	dphidx[i][2] += grad[i][j]*invjac[2][j];
+>>>>>>> 1f2e6a02c823ee56208fec925a7f77b11f533b04
       }
-      double localMatrix[3*3]={0.0};
-      for(size_t k=0; k<3; k++)
-	for(size_t l=0; l<3; l++)
-	  for(size_t m=0; m<3; m++)
-	    localMatrix[3*k+l]+=dphidx[k][m]*dphidx[l][m]*dJac/2.;
-      HXT_CHECK(hxtLinearSystemAddToMatrix(sys,iT,iT,localMatrix));
-      std::array<double,3> dirGaussU={{0.0,0.0,0.0}};
-      std::array<double,3> dirGaussV={{0.0,0.0,0.0}};
-      for(size_t k=0; k<3; k++)
-	for(size_t l=0; l<3; l++){
-	  dirGaussU[k]+=liftU[3*iT+l][k]*1./3.;
-	  dirGaussV[k]+=liftV[3*iT+l][k]*1./3.;
-	}
-      double scalingLoc=0.0;
-      for(size_t k=0; k<3; k++)
-	scalingLoc+=m_scalingFactorCrosses[3*loc2GlobTri[iT]]*1./3.;
-      for(size_t k=0; k<3; k++){
-	dirGaussU[k]*=scalingLoc;
-	dirGaussV[k]*=scalingLoc;
-      }
-      double localRhsU[3]={0.0};
-      double localRhsV[3]={0.0};
-      for(size_t k=0; k<3; k++)
-	for(size_t l=0; l<3; l++){
-	  localRhsU[k]+=dphidx[k][l]*dirGaussU[l]*dJac/2.;
-	  localRhsV[k]+=dphidx[k][l]*dirGaussV[l]*dJac/2.;
-	}
-      HXT_CHECK(hxtLinearSystemAddToRhs(sys,rhsU,iT,localRhsU));
-      HXT_CHECK(hxtLinearSystemAddToRhs(sys,rhsV,iT,localRhsV));
     }
-    int iv=0;
-    HXT_CHECK(hxtLinearSystemSetMatrixRowIdentity(sys,iv,0)); //BC. we fix a given node at 0 to remove all problems related to mean value not determined;
-    double *solPotU;
-    double *solPotV;
-    HXT_CHECK(hxtMalloc(&solPotU, loc2GlobVert.size()*sizeof(double)));
-    HXT_CHECK(hxtMalloc(&solPotV, loc2GlobVert.size()*sizeof(double)));
-    HXT_CHECK(hxtLinearSystemSolve(sys,rhsU,solPotU));
-    HXT_CHECK(hxtLinearSystemSolve(sys,rhsV,solPotV));
-    HXT_CHECK(hxtLinearSystemDelete(&sys));
-    HXT_CHECK(hxtFree(&solPotU));
-    HXT_CHECK(hxtFree(&solPotV));
-    HXT_CHECK(hxtAlignedFree(&nodesLoc));
+    double localMatrix[3*3]={0.0};
+    for(size_t k=0; k<3; k++)
+      for(size_t l=0; l<3; l++)
+	for(size_t m=0; m<3; m++)
+	  localMatrix[3*k+l]+=dphidx[k][m]*dphidx[l][m]*dJac/2.;
+    HXT_CHECK(hxtLinearSystemAddToMatrix(sys,iT,iT,localMatrix));
+    std::array<double,3> dirGaussU={{0.0,0.0,0.0}};
+    std::array<double,3> dirGaussV={{0.0,0.0,0.0}};
+    // for(size_t k=0; k<3; k++)//DBG
+    //   for(size_t l=0; l<3; l++){
+    // 	dirGaussU[k]+=liftU[3*iT+l][k]*1./3.;
+    // 	dirGaussV[k]+=liftV[3*iT+l][k]*1./3.;
+    //   }
+    for(size_t k=0; k<3; k++)//DBG
+      for(size_t l=0; l<3; l++){
+	dirGaussU[k]+=liftU[3*iT+l][k];
+	dirGaussV[k]+=liftV[3*iT+l][k];
+      }
+    double scalingLoc=0.0;
+    for(size_t k=0; k<3; k++)
+      scalingLoc+=(exp(-m_scalingFactorCrosses[3*loc2GlobTri[iT]+k]))*1./3.;
+    // for(size_t k=2; k<3; k++)//DBG
+    //   scalingLoc+=(exp(-m_scalingFactorCrosses[3*loc2GlobTri[iT]+k]));
+    for(size_t k=0; k<3; k++){
+      dirGaussU[k]*=scalingLoc;
+      dirGaussV[k]*=scalingLoc;
+    }
+    //DBG
+    blockParam.liftU.push_back(dirGaussU);
+    blockParam.scaling.push_back(scalingLoc);
+    // blockParam.liftU.push_back(liftU[3*iT+0]);//DBG
+    blockParam.liftV.push_back(dirGaussV);
+    //
+    // std::array<double,3> dbgGrad={{1.0,0.0,0.0}};//DBG
+    double localRhsU[3]={0.0};
+    double localRhsV[3]={0.0};
+    for(size_t k=0; k<3; k++)
+      for(size_t l=0; l<3; l++){
+    	localRhsU[k]+=dphidx[k][l]*dirGaussU[l]*dJac/2.;
+    	localRhsV[k]+=dphidx[k][l]*dirGaussV[l]*dJac/2.;
+      }
+    // for(size_t k=0; k<3; k++)//DBG
+    //   for(size_t l=0; l<3; l++){
+    // 	localRhsU[k]+=dphidx[k][l]*dbgGrad[l]*dJac/2.;
+    // 	localRhsV[k]+=dphidx[k][l]*dbgGrad[l]*dJac/2.;
+    //   }
+    HXT_CHECK(hxtLinearSystemAddToRhs(sys,rhsU,iT,localRhsU));
+    HXT_CHECK(hxtLinearSystemAddToRhs(sys,rhsV,iT,localRhsV));
   }
-  return  HXT_STATUS_OK;
+  //BC
+  int iv=0;
+  // std::array<double,3> coordPointIv={{mesh->vertices.coord[4*loc2GlobVert[iv]+0],mesh->vertices.coord[4*loc2GlobVert[iv]+1],mesh->vertices.coord[4*loc2GlobVert[iv]+2]}};
+  // while(isPointSingularityOrCornerVec(&coordPointIv)){
+  //   iv++;
+  //   coordPointIv[0]=mesh->vertices.coord[4*loc2GlobVert[iv]+0];
+  //   coordPointIv[1]=mesh->vertices.coord[4*loc2GlobVert[iv]+1];
+  //   coordPointIv[2]=mesh->vertices.coord[4*loc2GlobVert[iv]+2];
+  // }
+  HXT_CHECK(hxtLinearSystemSetMatrixRowIdentity(sys,iv,0)); //BC. we fix a given node at 0 to remove all problems related to mean value not determined;
+  HXT_CHECK(hxtLinearSystemSetRhsEntry(sys,rhsU,iv,0,0));
+  HXT_CHECK(hxtLinearSystemSetRhsEntry(sys,rhsV,iv,0,0));
+  
+  blockParam.pointBC={{mesh->vertices.coord[4*loc2GlobVert[iv]+0],mesh->vertices.coord[4*loc2GlobVert[iv]+1],mesh->vertices.coord[4*loc2GlobVert[iv]+2]}};
+  //
+  double *solPotU;
+  double *solPotV;
+  HXT_CHECK(hxtMalloc(&solPotU, loc2GlobVert.size()*sizeof(double)));
+  HXT_CHECK(hxtMalloc(&solPotV, loc2GlobVert.size()*sizeof(double)));
+  HXT_CHECK(hxtLinearSystemSolve(sys,rhsU,solPotU));
+  HXT_CHECK(hxtLinearSystemSolve(sys,rhsV,solPotV));
+  HXT_CHECK(hxtLinearSystemDelete(&sys));
+
+  //Fill blockParametrization object
+  blockParam.m_triangles.clear();
+  blockParam.m_triangles.reserve(loc2GlobTri.size());
+  for(size_t k=0;k<loc2GlobTri.size();k++){
+    blockParam.m_triangles.push_back(loc2GlobTri[k]);
+  }
+  blockParam.m_nodesParamCoord.clear();
+  blockParam.m_nodesParamCoord.reserve(loc2GlobVert.size());
+  for(size_t k=0;k<loc2GlobVert.size();k++){
+    std::array<double,3> paramCoord={{0.0,0.0,0.0}};
+    paramCoord[0]=solPotU[k];
+    paramCoord[1]=solPotV[k];
+    blockParam.m_nodesParamCoord.push_back(paramCoord);
+  }
+  blockParam.m_nodesParamToGlobal.clear();
+  blockParam.m_nodesParamToGlobal.reserve(loc2GlobVert.size());
+  for(size_t k=0;k<loc2GlobVert.size();k++){
+    blockParam.m_nodesParamToGlobal.push_back(loc2GlobVert[k]);
+  }
+  blockParam.m_nodesGlobalToParam.clear();
+  blockParam.m_nodesGlobalToParam.reserve(glob2LocVert.size());
+  for(size_t k=0;k<glob2LocVert.size();k++){
+    blockParam.m_nodesGlobalToParam.push_back(glob2LocVert[k]);
+  }
+  blockParam.m_trianglesGlobalToParam.clear();
+  blockParam.m_trianglesGlobalToParam.reserve(glob2LocTri.size());
+  for(size_t k=0;k<glob2LocTri.size();k++){
+    blockParam.m_trianglesGlobalToParam.push_back(glob2LocTri[k]);
+  }
+  
+  HXT_CHECK(hxtFree(&solPotU));
+  HXT_CHECK(hxtFree(&solPotV));
+  HXT_CHECK(hxtAlignedFree(&nodesLoc));
+  return HXT_STATUS_OK;
 }
 
 HXTStatus MultiBlock::dbgPosFlagSetTri(const std::set<uint64_t> &tri, const char *fileName){
@@ -3463,7 +3706,7 @@ HXTStatus MultiBlock::dbgPosFlagSetTri(const std::set<uint64_t> &tri, const char
   for(uint64_t triNum: tri){
     std::array<double,3> point1={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
     std::array<double,3> point2={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+2]}};
-    std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+    std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+2]}};
     fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%i,%i,%i};\n", point1[0],  point1[1],  point1[2],  point2[0],  point2[1],  point2[2],  point3[0],  point3[1],  point3[2], 1,1,1);
   }
   fprintf(f,"};");  
@@ -3488,7 +3731,7 @@ HXTStatus MultiBlock::dbgPosEdgData(const char *fileName){
       uint64_t triNum=trianglesOnEdg[i];
       std::array<double,3> point1={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
       std::array<double,3> point2={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+2]}};
-      std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+      std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+2]}};
       fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%i,%i,%i};\n", point1[0],  point1[1],  point1[2],  point2[0],  point2[1],  point2[2],  point3[0],  point3[1],  point3[2], k,k,k);
 
     }
@@ -3515,7 +3758,7 @@ HXTStatus MultiBlock::dbgPosParametrization(const char *fileName){
       uint64_t triNum=trianglesOnEdg[i];
       std::array<double,3> point1={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
       std::array<double,3> point2={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+2]}};
-      std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+      std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+2]}};
       fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%i,%i,%i};\n", point1[0],  point1[1],  point1[2],  point2[0],  point2[1],  point2[2],  point3[0],  point3[1],  point3[2], k,k,k);
 
     }
@@ -3538,7 +3781,7 @@ HXTStatus MultiBlock::dbgPosPatchData(const char *fileName){
     for(uint64_t triNum: m_mbBlockTriPatchs[k]){
       std::array<double,3> point1={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
       std::array<double,3> point2={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+1]+2]}};
-      std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+0]+2]}};
+      std::array<double,3> point3={{mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+0],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+1],mesh->vertices.coord[4*mesh->triangles.node[3*triNum+2]+2]}};
       fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%i,%i,%i};\n", point1[0],  point1[1],  point1[2],  point2[0],  point2[1],  point2[2],  point3[0],  point3[1],  point3[2], k,k,k);
 
     }

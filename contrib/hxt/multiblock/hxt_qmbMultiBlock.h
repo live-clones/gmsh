@@ -14,6 +14,8 @@ extern "C"{
 }
 #include <set>
 
+class BlockParametrization;
+
 class MultiBlock
 {
  public:
@@ -153,6 +155,7 @@ class MultiBlock
   int isPointInTri(uint64_t triNum, std::array<double, 3> point, double *alpha, double *beta);
   HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum, double *alpha, double *beta);
   HXTStatus getCrossesLifting(const std::vector<uint64_t> &tri, const std::vector<uint64_t> &glob2LocTri, std::vector<std::array<double,3>> &lift, uint64_t triInit, std::array<double,3> dirRef);
+  HXTStatus parametrizeBock(uint64_t idBlock, BlockParametrization &blockParam);
   HXTStatus computePatchsParametrization();
   HXTStatus dbgPosEdgData(const char *fileName);
   HXTStatus dbgPosFlagSetTri(const std::set<uint64_t> &tri, const char *fileName);
@@ -168,22 +171,30 @@ class MultiBlock
 
 };
 
-class TriangleParametrization
+class BlockParametrization
 {
  public:
-  TriangleParametrization();
-  ~TriangleParametrization();
+  BlockParametrization(HXTMesh *m):m_mesh(m){};
+  ~BlockParametrization(){};
 
   std::array<double,3> getPhysCoordFromParamCoord(std::array<double,3> paramCoord, uint64_t globNumTriHint=(uint64_t)(-1)){};
   std::array<double,3> getParamCoordFromPhysCoord(std::array<double,3> physCoord, uint64_t globNumTriHint=(uint64_t)(-1)){};
   uint64_t getBelongingTriangleFromParamCoord(std::array<double,3> paramCoord){};
   uint64_t getBelongingTriangleFromPhysCoord(std::array<double,3> physCoord){};
-  
+
+  HXTStatus dbgPosParam(const char *fileName);
+    
   HXTMesh *m_mesh;
   std::vector<uint64_t> m_triangles;
+  std::vector<uint64_t> m_trianglesGlobalToParam;
   std::vector<std::array<double,3>> m_nodesParamCoord;
   std::vector<uint32_t> m_nodesParamToGlobal;
   std::vector<uint32_t> m_nodesGlobalToParam;
+
+  std::vector<double> scaling;//for dbg only
+  std::vector<std::array<double,3>> liftU;//for dbg only
+  std::vector<std::array<double,3>> liftV;//for dbg only
+  std::array<double,3> pointBC;//for dbg only
   
 };
 
