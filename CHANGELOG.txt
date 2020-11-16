@@ -1,3 +1,7 @@
+4.8.0 (Work-in-progress): small bug fixes.
+
+* Incompatible API changes: new optional argument to view/probe
+
 4.7.1 (November 16, 2020): small bug fixes and improvements.
 
 4.7.0 (November 5, 2020): API errors now throw exceptions with the last error
