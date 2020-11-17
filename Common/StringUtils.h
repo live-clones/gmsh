@@ -26,6 +26,8 @@ std::string ReplaceSubString(const std::string &olds, const std::string &news,
 void ConvertToHTML(std::string &in);
 bool SplitOptionName(const std::string &fullName, std::string &category,
                      std::string &name, int &index);
-std::vector<std::string> SplitString(const std::string &msg, char separator);
+std::vector<std::string> SplitString(const std::string &msg, char separator,
+                                     bool removeWhiteSpace = false);
+std::string RemoveWhiteSpace(const std::string &s);
 
 #endif
