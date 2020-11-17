@@ -155,7 +155,7 @@ class MultiBlock
   int isPointInTri(uint64_t triNum, std::array<double, 3> point, double *alpha, double *beta);
   HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum, double *alpha, double *beta);
   HXTStatus getCrossesLifting(const std::vector<uint64_t> &tri, const std::vector<uint64_t> &glob2LocTri, std::vector<std::array<double,3>> &lift, uint64_t triInit, std::array<double,3> dirRef);
-  HXTStatus parametrizeBock(uint64_t idBlock, BlockParametrization &blockParam);
+  HXTStatus parametrizeBlock(uint64_t idBlock, BlockParametrization &blockParam);
   HXTStatus computePatchsParametrization();
   HXTStatus dbgPosEdgData(const char *fileName);
   HXTStatus dbgPosFlagSetTri(const std::set<uint64_t> &tri, const char *fileName);

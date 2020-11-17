@@ -1770,15 +1770,15 @@ HXTStatus MultiBlock::buildQuadLayout(){
   // }
   // std::cout<<"Num duplicates: "<<numDoubles<<std::endl;
 
-  // std::cout<<"collect T-junction indices"<<std::endl;
-  // collectTJunctionIndices();
-  // std::cout<<"num T-junctions: "<< m_extraordVertTjunc.size()<<std::endl;
-  // // killDuplicatesSepTjunction();//ALEX
-  // getQuadEdgesData();
-  // std::cout<<"block2edg"<<std::endl;
-  // getBlock2Edge();
-  // std::cout<<"edg2block"<<std::endl;
-  // getEdge2Block();
+  std::cout<<"collect T-junction indices"<<std::endl;
+  collectTJunctionIndices();
+  std::cout<<"num T-junctions: "<< m_extraordVertTjunc.size()<<std::endl;
+  // killDuplicatesSepTjunction();//ALEX
+  getQuadEdgesData();
+  std::cout<<"block2edg"<<std::endl;
+  getBlock2Edge();
+  std::cout<<"edg2block"<<std::endl;
+  getEdge2Block();
 
 
   // for(uint64_t t=0; t<m_mbQuads.size(); t++){
@@ -1811,12 +1811,13 @@ HXTStatus MultiBlock::buildQuadLayout(){
   //   std::cout<<"T-junc patch ID: "<<tJunctionPatchesIDs[mt]<<std::endl;
 
   
-  // dbgPosEdgData("dbgEdgData.pos"); 
-  // createMbTriPatchs();
-  // dbgPosPatchData("dbgBlockPatch.pos");
-  // std::vector<std::array<double, 3>> pointsOnEdg;
-  // std::vector<uint64_t> trianglesOnEdg;
-  // std::cout<<"grabingEdgData "<<std::endl;
+  dbgPosEdgData("dbgEdgData.pos"); 
+  createMbTriPatchs();
+  dbgPosPatchData("dbgBlockPatch.pos");
+  computePatchsParametrization();
+  std::vector<std::array<double, 3>> pointsOnEdg;
+  std::vector<uint64_t> trianglesOnEdg;
+  std::cout<<"grabingEdgData "<<std::endl;
   // getDataFromBlockEdgID(m_mbBlock2Edg[0][0], pointsOnEdg, trianglesOnEdg);
 
 
@@ -3330,7 +3331,7 @@ HXTStatus MultiBlock::computePatchsParametrization(){
   HXT_CHECK(hxtInitializeLinearSystems(&argc, NULL));
   for(size_t iB=0;iB<m_mbBlockTriPatchs.size();iB++){
     BlockParametrization blockParam(mesh);
-    parametrizeBock(iB, blockParam);
+    parametrizeBlock(iB, blockParam);
     std::string nameTest="dbgParam_" + std::to_string(iB) + ".pos";
     blockParam.dbgPosParam(nameTest.c_str());
   }
@@ -3440,7 +3441,7 @@ HXTStatus BlockParametrization::dbgPosParam(const char *fileName){
   return HXT_STATUS_OK;
 }
 
-HXTStatus MultiBlock::parametrizeBock(uint64_t idBlock, BlockParametrization &blockParam){
+HXTStatus MultiBlock::parametrizeBlock(uint64_t idBlock, BlockParametrization &blockParam){
   HXTEdges* edges=m_Edges;
   HXTMesh *mesh = edges->edg2mesh;
   uint64_t iB=idBlock;
@@ -3448,6 +3449,7 @@ HXTStatus MultiBlock::parametrizeBock(uint64_t idBlock, BlockParametrization &bl
   size_t nTriangles = m_mbBlockTriPatchs[iB].size();
   uint32_t* nodesLoc;
   HXT_CHECK(hxtAlignedMalloc(&nodesLoc, 3*nTriangles*sizeof(uint32_t)));
+  // HXT_CHECK(hxtMalloc(&nodesLoc, 3*nTriangles*sizeof(uint32_t)));
   std::vector<uint64_t> loc2GlobTri;
   std::vector<uint64_t> glob2LocTri(mesh->triangles.num,0);
   std::vector<bool> flaggedVert(mesh->vertices.num,false);
@@ -3525,12 +3527,16 @@ HXTStatus MultiBlock::parametrizeBock(uint64_t idBlock, BlockParametrization &bl
 
   HXTLinearSystem *sys;
   // we definitely use PETSc solver if it is enabled
-  // #if defined(HAVE_PETSC)
+  // #if defined(HXT_HAVE_PETSC)
   //     std::cout << "have petsc" << std::endl;
-  //     HXT_CHECK(hxtLinearSystemCreatePETSc(&nrSys,nTriangles,3,2,edges->tri2edg,"-pc_type lu"));
+  //     exit(0);
+  // #else
+  //     std::cout << "not have petsc" << std::endl;
+  //     exit(0);
+  // #endif
+  // HXT_CHECK(hxtLinearSystemCreatePETSc(&sys,nTriangles,3,2,edges->tri2edg,"-pc_type lu"));
   // #else
   HXT_CHECK(hxtLinearSystemCreateLU(&sys,nTriangles,3,1,nodesLoc));
-  // HXT_CHECK(hxtLinearSystemLUCreate(&sys,nTriangles,3,1,nodesLoc));
   // #endif
   double *rhsU;
   HXT_CHECK(hxtMalloc(&rhsU, loc2GlobVert.size()*sizeof(double)));
@@ -3553,8 +3559,9 @@ HXTStatus MultiBlock::parametrizeBock(uint64_t idBlock, BlockParametrization &bl
   for(size_t iT=0;iT<nTriangles;iT++){
     double vtri[9] = {0.};
     for(int i=0; i<3; i++)
-      for(int j=0; j<3; j++)
+      for(int j=0; j<3; j++){
 	vtri[3*i+j] = mesh->vertices.coord[4*loc2GlobVert[nodesLoc[3*iT+i]]+j];
+      }
     // uint32_t vtri[3] = {mesh->triangles.node[3*loc2GlobTri[iT]+0],mesh->triangles.node[3*loc2GlobTri[iT]+1],mesh->triangles.node[3*loc2GlobTri[iT]+2]};
     double grad[3][3] = {{-1.,-1.,0.},{1.,0.,0.},{0.,1.,0.}};
   
@@ -3678,6 +3685,7 @@ HXTStatus MultiBlock::parametrizeBock(uint64_t idBlock, BlockParametrization &bl
   HXT_CHECK(hxtFree(&solPotU));
   HXT_CHECK(hxtFree(&solPotV));
   HXT_CHECK(hxtAlignedFree(&nodesLoc));
+  // HXT_CHECK(hxtFree(&nodesLoc));
   return HXT_STATUS_OK;
 }
 
@@ -3945,15 +3953,15 @@ HXTStatus MultiBlock::lineDiscretization(std::vector<std::array<double,3>> *line
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
-  std::cout<<"collect T-junction indices"<<std::endl;
-  collectTJunctionIndices();
-  std::cout<<"num T-junctions: "<< m_extraordVertTjunc.size()<<std::endl;
-  std::cout<<"--Store points of quad edges--"<<std::endl;
-  getQuadEdgesData();
-  std::cout<<"--Get Block2Edg--"<<std::endl; 
-  getBlock2Edge();
-  std::cout<<"--Get Edge2Block--"<<std::endl;
-  getEdge2Block();
+  // std::cout<<"collect T-junction indices"<<std::endl;
+  // collectTJunctionIndices();
+  // std::cout<<"num T-junctions: "<< m_extraordVertTjunc.size()<<std::endl;
+  // std::cout<<"--Store points of quad edges--"<<std::endl;
+  // getQuadEdgesData();
+  // std::cout<<"--Get Block2Edg--"<<std::endl; 
+  // getBlock2Edge();
+  // std::cout<<"--Get Edge2Block--"<<std::endl;
+  // getEdge2Block();
 
   for(uint64_t t=0; t<m_mbQuads.size(); t++){
     std::cout<<"Block: "<<t <<" nVertices: "<<m_mbQuads[t].size()<<", nEdges: "<< m_mbBlock2Edg[t].size()<<std::endl;
@@ -3982,7 +3990,7 @@ HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
   for(uint64_t mt=0; mt<tJunctionPatchesIDs.size(); mt++)
     std::cout<<"T-junc patch ID: "<<tJunctionPatchesIDs[mt]<<std::endl;
 
-  dbgPosEdgData("dbgEdgData.pos"); 
+  // dbgPosEdgData("dbgEdgData.pos"); 
   //createMbTriPatchs();
   // dbgPosPatchData("dbgBlockPatch.pos");
   // std::vector<std::array<double, 3>> pointsOnEdg;
