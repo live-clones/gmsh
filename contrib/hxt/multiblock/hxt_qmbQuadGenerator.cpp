@@ -2514,8 +2514,8 @@ HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH, 
     m_crossfield[2*i+1]=directionsH[2*i+1];
   }
   if(scalingFactor){
-    HXT_CHECK(hxtMalloc(&m_scalingFactorCrosses,m_triEdges->numEdges*sizeof(double)));
-    for(uint64_t i=0;i<m_triEdges->numEdges;i++)
+    HXT_CHECK(hxtMalloc(&m_scalingFactorCrosses,3*m_triMesh->triangles.num*sizeof(double)));
+    for(uint64_t i=0;i<3*m_triMesh->triangles.num;i++)
       m_scalingFactorCrosses[i]=scalingFactor[i];
   }
   std::cout<<"--READING CF FINISHED--"<<std::endl;

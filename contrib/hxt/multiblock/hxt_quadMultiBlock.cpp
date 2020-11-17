@@ -456,7 +456,7 @@ HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossFi
   fclose(myfile);
 
   double *scalingFactor=NULL;
-  HXT_CHECK(hxtMalloc(&scalingFactor,edges->numEdges*sizeof(double)));
+  HXT_CHECK(hxtMalloc(&scalingFactor,3*mesh->triangles.num*sizeof(double)));
   std::string dataType1;
   std::vector<std::size_t> tags1;
   std::vector<std::vector<double>> data1;
@@ -466,20 +466,23 @@ HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossFi
   if (dataType1 == "ElementData" && tags1.size() == mesh->triangles.num){
     for(uint64_t i=0; i<tags1.size(); i++){
       if(data1[i].size() != 3) {
-	std::cout<<"data size should be 1"<<std::endl;
+	std::cout<<"data size should be 3"<<std::endl;
 	// return false;
       }
       double H[3]={0.0};
       for(int j=0; j<3; j++)
         H[j] = (data1[i])[j];
-      double Hedg[3]={H[0]+H[1]-H[2],H[2]+H[0]-H[1],H[1]+H[2]-H[0]};
+	// H[j] = (data1[i])[0];//DBG
+      // double Hedg[3]={H[0]+H[1]-H[2],H[2]+H[0]-H[1],H[1]+H[2]-H[0]};
       for(int j=0; j<3; j++){
-	uint64_t globalEdg = edges->tri2edg[3*i+j];
-	scalingFactor[globalEdg] = exp(Hedg[j]);
+	// uint64_t globalEdg = edges->tri2edg[3*i+j];
+	// scalingFactor[globalEdg] = exp(Hedg[j]);
+	// scalingFactor[3*i+j] = exp(H[j]);
+	scalingFactor[3*i+j] = H[j];
       }
     }
   }else {
-    std::cout<<"problem with 'theta' view, mesh contains "<< mesh->triangles.num<<" triangles but "<<tags.size()<< " tags in view "<<std::endl;
+    std::cout<<"problem with 'H' view, mesh contains "<< mesh->triangles.num<<" triangles but "<<tags.size()<< " tags in view "<<std::endl;
     // return false;
   } 
   int nbTurns=4;
@@ -493,5 +496,6 @@ HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossFi
   (*splitMesh)=qGen.getSplitTriMeshOnMBDecomp();
 
   HXT_CHECK(hxtFree(&crossfield));
+  HXT_CHECK(hxtFree(&scalingFactor));
   return HXT_STATUS_OK;
 }
