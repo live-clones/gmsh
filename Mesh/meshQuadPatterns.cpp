@@ -692,9 +692,18 @@ namespace QuadPatternMatching {
         sing->x() = proj.x();
         sing->y() = proj.y();
         sing->z() = proj.z();
+        sing->setParameter(0,proj.u());
+        sing->setParameter(1,proj.v());
       } else {
         if (oneVertexOnBoundary) {
-          sing->point() = oneVertexOnBoundary->point();
+          sing->setXYZ(
+              oneVertexOnBoundary->point().x(),
+              oneVertexOnBoundary->point().y(),
+              oneVertexOnBoundary->point().z());
+          oneVertexOnBoundary->getParameter(0,uv[0]);
+          oneVertexOnBoundary->getParameter(1,uv[1]);
+          sing->setParameter(0,uv[0]);
+          sing->setParameter(1,uv[1]);
         }
         // Msg::Error("failed to project point (%f,%f,%f) on surface %i", sing->x(),sing->y(),sing->z(), gf->tag());
       }
@@ -1024,16 +1033,20 @@ namespace QuadPatternMatching {
     return center;
   }
 
-  SVector3 projectPointLaplacian(GFace* gf, SVector3 currentPosition, SVector3 newAveragedPosition) {
+  SVector3 projectPointLaplacian(GFace* gf, SVector3 currentPosition, SVector3 newAveragedPosition,
+      SPoint2& newUv) {
+    newUv[0] = DBL_MAX;
     double uv[2] = {0.,0.};
     SPoint3 p(newAveragedPosition);
     GPoint proj = gf->closestPoint(p,uv);
     if (proj.succeeded()) {
+      newUv.setPosition(proj.u(),proj.v());
       return SVector3(proj.x(),proj.y(),proj.z());
     } else {
       p = (SPoint3(currentPosition) + SPoint3(newAveragedPosition)) * 0.5;
       proj = gf->closestPoint(p,uv);
       if (proj.succeeded()) {
+        newUv.setPosition(proj.u(),proj.v());
         return SVector3(proj.x(),proj.y(),proj.z());
       }
     }
@@ -1047,6 +1060,7 @@ namespace QuadPatternMatching {
       const std::vector<MElement*>& newElements,
       size_t iter = 10) {
     Msg::Debug("laplacian smoothing with %li new vertices and %li new quads, %li iterations (with projections) ... ", newVertices.size(), newElements.size(), iter);
+    discreteFace* df = dynamic_cast<discreteFace*>(gf);
 
     SVector3 center(DBL_MAX,DBL_MAX,DBL_MAX);
     if (oldElements.size() > 0) {
@@ -1091,6 +1105,7 @@ namespace QuadPatternMatching {
       }
     }
     vector<SVector3> pts(vcount);
+    vector<SPoint2> uvs(vcount);
     for (auto& kv: old2new)  {
       MVertex* v = kv.first;
       size_t idx = kv.second;
@@ -1112,13 +1127,17 @@ namespace QuadPatternMatching {
         if (i < 10) { /* easier projection at beginning */
           np = 0.9 * pts[v] + 0.1 * np;
         }
-        pts[v] = projectPointLaplacian(gf,pts[v],np);
+        pts[v] = projectPointLaplacian(gf,pts[v],np,uvs[v]);
       }
     }
     for (MVertex* v: newVertices) {
       size_t idx = old2new[v];
       SVector3 p = pts[idx];
       v->setXYZ(p.x(),p.y(),p.z());
+      if (!df && uvs[idx][0] != DBL_MAX) {
+        v->setParameter(0,uvs[idx][0]);
+        v->setParameter(1,uvs[idx][1]);
+      }
     }
 
     return true;
