@@ -312,6 +312,7 @@ HXTStatus hxtLinearSystemLUCreate(HXTLinearSystemLU **pSystem, int nElements, in
   HXTLinearSystemLU *system;
   HXT_CHECK( hxtMalloc(&system, sizeof(HXTLinearSystemLU)) );
   *pSystem = system;
+  system->flaglu=0;
   system->nFields = nFields;
   system->nNodesByElement = nNodesByElement;
   system->nElements = nElements;
