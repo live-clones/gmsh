@@ -1250,21 +1250,21 @@ namespace QuadPatternMatching {
     //               solution x0 + lambda * x_kernel that maximize an objective 
     //               function ?
     vector<double> ideal_repartition;
-    if (P.patternId == PATTERN_2CORNERS) {
-      ideal_repartition.resize(P.chords.size(),0);
-      size_t navg = (sideSizes[0] + sideSizes[1] - 2)/2;
-      for (size_t j = 0; j < P.chords.size(); ++j) {
-        if (P.chords[j].size() == 3) {
-          ideal_repartition[j] = 0.95 * navg;
-        } else if (P.chords[j].size() == 4) {
-          ideal_repartition[j] = 0.05 * navg;
-        } else {
-          Msg::Error("setting ideal_repartition for PATTERN_2CORNERS, should not happen");
-        }
-      }
-    } else if (P.patternId == PATTERN_DISK) {
-      // TODO: detect circular chord and use a smaller ideal_repartition on it
-    }
+    // if (P.patternId == PATTERN_2CORNERS) {
+    //   ideal_repartition.resize(P.chords.size(),0);
+    //   size_t navg = (sideSizes[0] + sideSizes[1] - 2)/2;
+    //   for (size_t j = 0; j < P.chords.size(); ++j) {
+    //     if (P.chords[j].size() == 3) {
+    //       ideal_repartition[j] = 0.95 * navg;
+    //     } else if (P.chords[j].size() == 4) {
+    //       ideal_repartition[j] = 0.05 * navg;
+    //     } else {
+    //       Msg::Error("setting ideal_repartition for PATTERN_2CORNERS, should not happen");
+    //     }
+    //   }
+    // } else if (P.patternId == PATTERN_DISK) {
+    //   // TODO: detect circular chord and use a smaller ideal_repartition on it
+    // }
     double score = 0.;
     slt.clear();
     int count = 0;
