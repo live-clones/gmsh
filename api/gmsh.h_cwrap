@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.7.1).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.8.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -4378,7 +4378,8 @@ namespace gmsh { // Top-level functions
     // `gradient' is set. Probes with a geometrical tolerance (in the reference
     // unit cube) of `tolerance' if `tolerance' is not zero. Return the result from
     // the element described by its coordinates if `xElementCoord', `yElementCoord'
-    // and `zElementCoord' are provided.
+    // and `zElementCoord' are provided. If `dim' is >= 0, return only elements of
+    // the specified dimension.
     inline void probe(const int tag,
                       const double x,
                       const double y,
