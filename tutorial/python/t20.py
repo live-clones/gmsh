@@ -31,12 +31,8 @@ v = gmsh.model.occ.importShapes(os.path.join(path, os.pardir, 't20_data.step'))
 # meters (instead of the default, which is millimeters).
 
 # Get the bounding box of the volume:
-gmsh.model.occ.synchronize()
-xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
+xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.occ.getBoundingBox(
     v[0][0], v[0][1])
-
-# Note that the synchronization step can be avoided in Gmsh >= 4.6 by using
-# `gmsh.model.occ.getBoundingBox()' instead of `gmsh.model.getBoundingBox()'.
 
 # We want to slice the model into N slices, and either keep the volume slices
 # or just the surfaces obtained by the cutting:
@@ -74,11 +70,7 @@ gmsh.model.occ.fragment(v, s)
 # Now remove all the surfaces (and their bounding entities) that are not on the
 # boundary of a volume, i.e. the parts of the cutting planes that "stick out" of
 # the volume:
-gmsh.model.occ.synchronize()
-gmsh.model.occ.remove(gmsh.model.getEntities(2), True)
-
-# The previous synchronization step can be avoided in Gmsh >= 4.6 by using
-# `gmsh.model.occ.getEntities()' instead of `gmsh.model.getEntities()'.
+gmsh.model.occ.remove(gmsh.model.occ.getEntities(2), True)
 
 gmsh.model.occ.synchronize()
 

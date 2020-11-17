@@ -552,7 +552,7 @@ StringXNumber GeneralOptions_Number[] = {
     "windows" },
   { F|S, "FltkColorScheme" , opt_general_gui_color_scheme , 0. ,
     "FLTK user interface color theme (0: standard, 1:dark)" },
-  { F|O, "FltkRefreshRate" , opt_general_gui_refresh_rate , 0. ,
+  { F|O, "FltkRefreshRate" , opt_general_gui_refresh_rate , 5. ,
     "FLTK user interface maximum refresh rate, per second (0: no limit)" },
   { F|O, "FontSize" , opt_general_fontsize , -1. ,
     "Size of the font in the user interface, in pixels (-1: automatic)" },

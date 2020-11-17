@@ -40,14 +40,9 @@ int main(int argc, char **argv)
   // meters (instead of the default, which is millimeters).
 
   // Get the bounding box of the volume:
-  gmsh::model::occ::synchronize();
   double xmin, ymin, zmin, xmax, ymax, zmax;
-  gmsh::model::getBoundingBox(v[0].first, v[0].second, xmin, ymin, zmin, xmax,
-                              ymax, zmax);
-
-  // Note that the synchronization step can be avoided in Gmsh >= 4.6 by using
-  // `gmsh::model::occ::getBoundingBox()' instead of
-  // `gmsh::model::getBoundingBox()'.
+  gmsh::model::occ::getBoundingBox(v[0].first, v[0].second, xmin, ymin, zmin,
+                                   xmax, ymax, zmax);
 
   // We want to slice the model into N slices, and either keep the volume slices
   // or just the surfaces obtained by the cutting:
@@ -92,12 +87,8 @@ int main(int argc, char **argv)
   // Now remove all the surfaces (and their bounding entities) that are not on
   // the boundary of a volume, i.e. the parts of the cutting planes that "stick
   // out" of the volume:
-  gmsh::model::occ::synchronize();
-  gmsh::model::getEntities(tmp, 2);
+  gmsh::model::occ::getEntities(tmp, 2);
   gmsh::model::occ::remove(tmp, true);
-
-  // The previous synchronization step can be avoided in Gmsh >= 4.6 by using
-  // `gmsh::model::occ::getEntities()' instead of `gmsh::model::getEntities()'.
 
   gmsh::model::occ::synchronize();
 
