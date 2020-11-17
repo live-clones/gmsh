@@ -6208,7 +6208,7 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     std::map<MTriangle *, std::vector<std::vector<SVector3>>> crossEdgTri;
     std::map<MVertex *, double, MVertexPtrLessThan> H;
     ConformalMapping::computeScaledCrossesFromSingularities(gm,crossEdgTri,H);
-    // ConformalMapping::_viewCrossEdgTri(crossEdgTri, "CM::Crosses");;
+    ConformalMapping::_viewCrossEdgTri(crossEdgTri, "CM::Crosses");;
     int cf_tag = -1;
     std::set<MTriangle *, MElementPtrLessThan> tri;
     std::vector<std::size_t> keys;
@@ -6255,12 +6255,14 @@ int computeCrossField(GModel * gm, const QuadMeshingOptions& opt, QuadMeshingSta
     std::string cname;
     gmsh::model::getCurrent(cname);
     int crossFieldTag = gmsh::view::add("theta");
-    gmsh::view::addModelData(crossFieldTag, 0, cname, "ElementData", keys, values);
+    if(keys.size()>0)
+      gmsh::view::addModelData(crossFieldTag, 0, cname, "ElementData", keys, values);
 
     PView* viewH = PView::getViewByName("H");
     if (viewH) {delete viewH; viewH = NULL;}
     int HTag = gmsh::view::add("H");
-    gmsh::view::addModelData(HTag, 0, cname, "ElementData", keys, valuesH);
+    if(keys.size()>0)
+      gmsh::view::addModelData(HTag, 0, cname, "ElementData", keys, valuesH);
     ConformalMapping::_viewScalarTriangles(H,tri, "CM::H");
     // ALEX
     if(0){

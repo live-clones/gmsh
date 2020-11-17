@@ -862,6 +862,25 @@ double MyMesh::_getAngleBetweenEdges(const MEdge &e,const MEdge &eRef, SVector3 
   return atan2(sin,cos);
 }
 
+bool MyMesh::_isEulerEqualSumSing(const std::set<MVertex *, MVertexPtrLessThan> &vertices, const std::map<MVertex *, int, MVertexPtrLessThan> &singIndices){
+  double intGauss=0.0;
+  double intGeodesic=0.0;
+  for(MVertex *v: vertices){
+    intGauss+=gaussCurv[v];
+    intGeodesic+=geodesicCurv[v];
+  }
+  double sumSing=0;
+  for(const auto &kv: singIndices){
+    sumSing+=((double)kv.second)/4.;
+  }
+  double checkSum=(intGauss+intGeodesic)/(2*M_PI)-sumSing;
+  if(fabs(checkSum)<1e-7){
+    return true;
+  }
+  else
+    return false;
+}
+
 void MyMesh::_tryFixSing(std::set<MTriangle*, MElementPtrLessThan> patchTri){
   std::vector<MEdge> featEdgBC;
   std::set<const MEdge *> cutGraphEdges;
@@ -878,45 +897,29 @@ void MyMesh::_tryFixSing(std::set<MTriangle*, MElementPtrLessThan> patchTri){
     vSorted[k].erase(vSorted[k].end()-1);//We know that it is always a loop !
   }
   std::map<MVertex*, double> angleVertex;
-  // std::map<MVertex*, size_t> locInd;
-  // std::cout << "nLines : " << vSorted.size() << std::endl;
   for(size_t k=0;k<vSorted.size();k++){
     for(size_t l=0;l<vSorted[k].size();l++){
       MVertex* v=vSorted[k][l];
-      MEdge e1(v,vSorted[k][(l+1)%vSorted[k].size()]);
-      MEdge e2(v,vSorted[k][(l+vSorted[k].size()-1)%vSorted[k].size()]);
-      // std::cout << "v-1: " << (l+vSorted[k].size()-1)%vSorted[k].size() << " / v-1: " << l << " / v+1: " << (l+1)%vSorted[k].size() << std::endl;
-      double l1=e1.length();
-      double l2=e2.length();
-      double sign=0.0;
-      if(geodesicCurv[v]<=0)
-	sign=-1.0;
-      else
-	sign=1.0;
-      // angleVertex[v]=2*geodesicCurv[v]/(l1+l2) + M_PI;//DBG
-      SVector3 ve1(e1.getVertex(1)->x() - e1.getVertex(0)->x(),
-    		   e1.getVertex(1)->y() - e1.getVertex(0)->y(),
-    		   e1.getVertex(1)->z() - e1.getVertex(0)->z());
-      ve1.normalize();
-      SVector3 ve2(e2.getVertex(1)->x() - e2.getVertex(0)->x(),
-    		   e2.getVertex(1)->y() - e2.getVertex(0)->y(),
-    		   e2.getVertex(1)->z() - e2.getVertex(0)->z());
-      ve2.normalize();
-      angleVertex[v]=acos(dot(ve1,ve2));
-      // std::cout << "l: " << l << " / l*1.0: " << l*1.0 << std::endl;
-      // locInd[v]=l;
-      // std::cout << "vertex num: " << v->getNum() << std::endl;
-      // std::cout << "val saved: " << locInd[v] << std::endl;
+      angleVertex[v]=geodesicCurv[v];
     }
   }
   std::map<MVertex *, double, MVertexPtrLessThan> scalarInd;
   for(auto &kv: angleVertex){
-    if(fabs(angleVertex[kv.first])<120.*M_PI/180.){
-      singIndices[kv.first]=1;
-      scalarInd[kv.first]=1;
+    if(singIndices.find(kv.first)==singIndices.end()){
+      if(angleVertex[kv.first]>=M_PI/4.){
+	singIndices[kv.first]=1;
+	scalarInd[kv.first]=1;
+      }
+      if(angleVertex[kv.first]<=-M_PI/4. && angleVertex[kv.first]>=-3*M_PI/4.){
+	singIndices[kv.first]=-1;
+	scalarInd[kv.first]=-1;
+      }
+      if(angleVertex[kv.first]<-3*M_PI/4.){
+	singIndices[kv.first]=-2;
+	scalarInd[kv.first]=-2;
+      }
     }
   }
-  // ConformalMapping::_viewScalarVertex(scalarInd, "indices"); 
   return;
 }
 
@@ -1064,9 +1067,11 @@ void MyMesh::computeManifoldBasis(){
     }
     // }
   }
+  std::cout << "create cross2D manifold basis" << std::endl;
   for(const MEdge &e: edges){
     manifoldBasis[&e]=Cross2D(this,&e,theta[&e]);
   }
+  std::cout << "end create cross2D manifold basis" << std::endl;
   return;
 }
 
@@ -1301,6 +1306,8 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   _createManifoldBasis();//
   // _viewCrosses(_currentMesh->manifoldBasis,"manifold basis");
   //solve crosses
+  Msg::Info("Compute crosses from H");
+  std::cout << "Compute crosses from H" << std::endl;
   _computeCrossesFromH();//
   // std::cout << "print crosses" << std::endl;
   // _viewCrosses(_currentMesh->crossField,"crossfield");
@@ -1309,6 +1316,8 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   // _computeParametrization();
 
   //compute relaxed H
+  Msg::Info("transfert data to initial mesh");
+  std::cout << "transfert data to initial mesh" << std::endl;
   _transferCrossesCutToInit();
   for(size_t k=0;k<_featureCutMesh->trianglesPatchs.size();k++){
     std::set<MTriangle *, MElementPtrLessThan> patchK=_featureCutMesh->trianglesPatchs[k];
@@ -1317,8 +1326,12 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
     _initialMesh->canTrianglePatchBeComputed.push_back(canBeComputed);
   }
   // _viewCrosses(_initialMesh->crossField,"crosses initial mesh");
+  Msg::Info("restore initial mesh");
+  std::cout << "restore initial mesh" << std::endl;
   _restoreInitialMesh();
   _currentMesh=_initialMesh;
+  Msg::Info("compute H from crosses");
+  std::cout << "compute H from crosses" << std::endl;
   _computeHfromCrosses();
   // _viewScalarTriangles(_currentMesh->H, _currentMesh->triangles, "H from crosses");
   return;
@@ -1478,7 +1491,6 @@ void ConformalMapping::_computeH(){
   for(size_t kP=0;kP<_currentMesh->trianglesPatchs.size();kP++){
     // if(kP==12){//DBG
     std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[kP];
-    // _currentMesh->_tryFixSing(tri);//DBG
     //grabbing vertices we are interested in
     std::map<MVertex *, int, MVertexPtrLessThan> patchSingIndices;
     std::set<MVertex *, MVertexPtrLessThan> vertices;
@@ -1492,34 +1504,31 @@ void ConformalMapping::_computeH(){
       }
     }
     //Check if everything matches (geometry characteristics and singularities)
-    bool canBeComputed=false;
-    double intGauss=0.0;
-    double intGeodesic=0.0;
-    for(MVertex *v: vertices){
-      intGauss+=_currentMesh->gaussCurv[v];
-      intGeodesic+=_currentMesh->geodesicCurv[v];
-    }
-    double sumSing=0;
-    for(const auto &kv: patchSingIndices){
-      sumSing+=((double)kv.second)/4.;
-      // std::cout << "sing ind : " << kv.second << " detected" << std::endl;
-    }
-    double checkSum=(intGauss+intGeodesic)/(2*M_PI)-sumSing;
-    if(fabs(checkSum)<1e-7){
-      canBeComputed=true;
+    bool canBeComputed=_currentMesh->_isEulerEqualSumSing(vertices,patchSingIndices);
+    if(canBeComputed){
       _currentMesh->canTrianglePatchBeComputed[kP]=true;
-      // if(kP==11){//DBG
-      // 	canBeComputed=false;
-      // 	_currentMesh->canTrianglePatchBeComputed[kP]=false;
-      // 	viewPatchForDebug=true;
-      // }//DBG
     }
     else{
-      // _currentMesh->_tryFixSing(tri);
+      Msg::Warning("Patch %i has incompatible number of singularities. Trying to fix with automatic corner identification...", kP);
+      std::cout << "Patch " << kP << " has incompatible number of singularities. Trying to fix with automatic corner identification..." << std::endl;
+      _currentMesh->_tryFixSing(tri);//DBG
+      patchSingIndices.clear();
+      for(MTriangle *t: tri){
+      	for(int k=0;k<3;k++){
+      	  MVertex *vK = t->getVertex(k);
+      	  vertices.insert(vK);
+      	  if(_currentMesh->singIndices.find(vK)!=_currentMesh->singIndices.end()){
+      	    patchSingIndices[vK]=_currentMesh->singIndices[vK];
+      	  }
+      	}
+      }
+      canBeComputed=_currentMesh->_isEulerEqualSumSing(vertices,patchSingIndices);
+    }
+    if(!canBeComputed){
       std::cout << "Gauss and geodesic curvature not matching number of singularities on patch: " << kP << std::endl;
-      std::cout << "Patch: " << kP << " miss singularities for a total indice of: " << checkSum*4. << std::endl;;
+      // std::cout << "Patch: " << kP << " miss singularities for a total indice of: " << checkSum*4. << std::endl;;
       Msg::Error("Gauss and geodesic curvature not matching number of singularities on patch %i.",kP);
-      Msg::Error("Patch %i miss singularities for a total indice of %g",kP,checkSum*4.);
+      // Msg::Error("Patch %i miss singularities for a total indice of %g",kP,checkSum*4.);
       Msg::Error("Skipping computation of H on this patch.");
       viewPatchForDebug=true;
       _currentMesh->canTrianglePatchBeComputed[kP]=false;
@@ -1631,7 +1640,8 @@ void ConformalMapping::_computeHfromCrosses(){
     dof->numberVertex(v, 0, 1);
   }
   //Temporary numbering for average
-  dof->numberVertex(*(vertices.begin()), 1, 1);    
+  if(vertices.size()>0)
+    dof->numberVertex(*(vertices.begin()), 1, 1);
   Msg::Info("H from crosses, %i unknowns...",vertices.size());
   for(MTriangle *t: tri){
     double V = t->getVolume();
@@ -1744,15 +1754,17 @@ void ConformalMapping::_computeHfromCrosses(){
     }
   }
   // AVERAGE (temporary fix)
-  Dof EAVG((*(vertices.begin()))->getNum(), Dof::createTypeWithTwoInts(1, 1));
-  for(MVertex *v: vertices){
-    Dof E(v->getNum(), Dof::createTypeWithTwoInts(0, 1));
-    dof->assembleSym(EAVG, E, 1);
-    dof->assembleSym(EAVG, EAVG, 0.0); //for petsc
-    //      dof->assemble(E, EAVG, 1);
+  if(vertices.size()>0){
+    Dof EAVG((*(vertices.begin()))->getNum(), Dof::createTypeWithTwoInts(1, 1));
+    for(MVertex *v: vertices){
+      Dof E(v->getNum(), Dof::createTypeWithTwoInts(0, 1));
+      dof->assembleSym(EAVG, E, 1);
+      dof->assembleSym(EAVG, EAVG, 0.0); //for petsc
+      //      dof->assemble(E, EAVG, 1);
+    }
+    std::cout << "H to crosses system, " << vertices.size()<< " unknowns..." << std::endl;
+    _lsys->systemSolve();
   }
-  std::cout << "H to crosses system, " << vertices.size()<< " unknowns..." << std::endl;
-  _lsys->systemSolve();
   for(MVertex *v: vertices){
     dof->getDofValue(v, 0, 1, _currentMesh->H[v]);
   }
@@ -2009,10 +2021,12 @@ void ConformalMapping::_computeCrossesFromH(){
     }
     // }
   }
+  std::cout << "create thetaCF and crosses fields" << std::endl;
   for(const MEdge &e: _currentMesh->edges){
     _currentMesh->thetaCF[&e]=theta[&e];
     _currentMesh->crossField[&e]=Cross2D(_currentMesh,&e,_currentMesh->manifoldBasis[&e].theta+theta[&e]);
   }
+  std::cout << "end create thetaCF and crosses fields" << std::endl;
   // _viewScalarEdges(theta, "thetaCF");//DBG
   return;
 }
@@ -2916,9 +2930,9 @@ void ConformalMapping::_viewCrossEdgTri(std::map<MTriangle *, std::vector<std::v
       }
     }
   }
-  if(!datalist.empty()){
-    gmsh::initialize();
-    Msg::Debug("create view '%s'",viewName.c_str());
+  gmsh::initialize();
+  Msg::Debug("create view '%s'",viewName.c_str());
+  if(!datalist.empty()){	
     int dataListViewTag = gmsh::view::add(viewName);
     gmsh::view::addListData(dataListViewTag, "VP", nData, datalist);
   }
@@ -3057,9 +3071,11 @@ void ConformalMapping::_viewScalarTriangles(std::map<MVertex *, double, MVertexP
   }
   gmsh::initialize();
   Msg::Debug("create view '%s'",viewName.c_str());
-  int dataListViewTag = gmsh::view::add(viewName);
-  // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
-  gmsh::view::addListData(dataListViewTag, "ST", triangles.size(), datalist);
+  if(!datalist.empty()){	
+    int dataListViewTag = gmsh::view::add(viewName);
+    // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
+    gmsh::view::addListData(dataListViewTag, "ST", triangles.size(), datalist);
+  }
 #else 
   Msg::Error("Cannot create view without POST module");
   return;
