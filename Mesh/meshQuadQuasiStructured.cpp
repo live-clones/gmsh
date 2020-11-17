@@ -1240,7 +1240,7 @@ namespace QSQ {
   }
 
   inline int valenceInsideQuads(const MeshHalfEdges& M, const std::unordered_set<size_t>& quads, size_t v) {
-    constexpr size_t BSIZE = 24;
+    constexpr size_t BSIZE = 48;
     size_t faces[BSIZE];
     int val = M.vertexFaces(v, faces);
     if ((size_t) val >= BSIZE) {
@@ -4757,7 +4757,7 @@ int computeScaledCrossField(GModel* gm,
     const GFaceInfo& info = faceInfo.at(gf);
     if (info.chi == 1 && info.bdrValVertices[1].size() >= 2 
         && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
-      nbDiffusionLevels = 0; /* simple face, no need for acurate computation */
+      nbDiffusionLevels = 2; /* simple face, no need for acurate computation */
     }
 
     Msg::Info("- Face %i: compute cross field (%li triangles, %i diffusion levels) ...",
@@ -4864,7 +4864,7 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
   double clscale = CTX::instance()->mesh.lcFactor;
   CTX::instance()->mesh.lcFactor = 1.;
 
-  computeQuadCurveMeshConstraints(gm, faceInfo, forceEvenNbEdges);
+  // computeQuadCurveMeshConstraints(gm, faceInfo, forceEvenNbEdges);
 
   /* Remove triangulations */
   std::for_each(gm->firstFace(), gm->lastFace(), deMeshGFace());
