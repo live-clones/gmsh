@@ -39,6 +39,7 @@ set(SRC
   conformalMapping.cpp
   meshQuadPatterns.cpp
   meshQuadGeometry.cpp
+  meshSurfaceProjection.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
