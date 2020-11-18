@@ -1097,9 +1097,10 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
          Unew >= umin && Vnew >= vmin) {
         if(onSurface && err2 > 1.e-4 * CTX::instance()->lc &&
            !CTX::instance()->mesh.NewtonConvergenceTestXYZ) {
-          Msg::Warning("Converged for i=%d j=%d (err=%g iter=%d) BUT "
-                       "xyz error = %g in point (%e,%e,%e) on surface %d",
-                       i, j, err, iter, err2, X, Y, Z, tag());
+          Msg::Warning("Converged at iter. %d for initial guess (%d,%d) "
+                       "with uv error = %g, but xyz error = %g in point "
+                       "(%e,%e,%e) on surface %d",
+                       iter, i, j, err, err2, X, Y, Z, tag());
         }
 
         if(onSurface && err2 > 1.e-4 * CTX::instance()->lc &&

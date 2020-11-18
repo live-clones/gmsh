@@ -4667,6 +4667,12 @@ double opt_geometry_occ_import_labels(OPT_ARGS_NUM)
   return CTX::instance()->geom.occImportLabels;
 }
 
+double opt_geometry_occ_use_generic_closest_point(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occUseGenericClosestPoint = (int)val;
+  return CTX::instance()->geom.occUseGenericClosestPoint;
+}
+
 double opt_geometry_old_circle(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.oldCircle = (int)val;

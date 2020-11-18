@@ -183,11 +183,8 @@ SBoundingBox3d OCCFace::bounds(bool fast)
 
 Range<double> OCCFace::parBounds(int i) const
 {
-  double umin2, umax2, vmin2, vmax2;
-
-  ShapeAnalysis::GetFaceUVBounds(_s, umin2, umax2, vmin2, vmax2);
-  if(i == 0) return Range<double>(umin2, umax2);
-  return Range<double>(vmin2, vmax2);
+  if(i == 0) return Range<double>(_umin, _umax);
+  return Range<double>(_vmin, _vmax);
 }
 
 SVector3 OCCFace::normal(const SPoint2 &param) const
@@ -229,44 +226,21 @@ void OCCFace::secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
 GPoint OCCFace::point(double par1, double par2) const
 {
   double pp[2] = {par1, par2};
-
-#if 1
   gp_Pnt val = _occface->Value(par1, par2);
   return GPoint(val.X(), val.Y(), val.Z(), this, pp);
-#else // this is horribly slow!
-  double umin2, umax2, vmin2, vmax2;
-
-  ShapeAnalysis::GetFaceUVBounds(_s, umin2, umax2, vmin2, vmax2);
-
-  double du = umax2 - umin2;
-  double dv = vmax2 - vmin2;
-
-  if(par1 > (umax2 + .1 * du) || par1 < (umin2 - .1 * du) ||
-     par2 > (vmax2 + .1 * dv) || par2 < (vmin2 - .1 * dv)) {
-    GPoint p(0, 0, 0, this, pp);
-    p.setNoSuccess();
-    return p;
-  }
-
-  try {
-    gp_Pnt val;
-    val = _occface->Value(par1, par2);
-    return GPoint(val.X(), val.Y(), val.Z(), this, pp);
-  } catch(Standard_OutOfRange) {
-    GPoint p(0, 0, 0, this, pp);
-    p.setNoSuccess();
-    return p;
-  }
-#endif
 }
 
 GPoint OCCFace::closestPoint(const SPoint3 &qp,
                              const double initialGuess[2]) const
 {
+#if defined(HAVE_ALGLIB)
+  // less robust but can be much faster
+  if(CTX::instance()->geom.occUseGenericClosestPoint)
+    return GFace::closestPoint(qp, initialGuess);
+#endif
+
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  double a, b, c, d;
-  ShapeAnalysis::GetFaceUVBounds(_s, a, b, c, d);
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, a, b, c, d);
+  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, _umin, _umax, _vmin, _vmax);
 
   if(!proj.NbPoints()) {
     Msg::Debug("OCC projection of point on surface failed");
@@ -291,6 +265,10 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
 {
+  // less robust but can be much faster
+  if(CTX::instance()->geom.occUseGenericClosestPoint)
+    return GFace::parFromPoint(qp);
+
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnSurf proj(pnt, _occface, _umin, _umax, _vmin, _vmax);
   if(!proj.NbPoints()) {

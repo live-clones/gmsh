@@ -948,6 +948,9 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCUnionUnify" , opt_geometry_occ_union_unify , 1. ,
     "Try to unify faces and edges (remove internal seams) which lie on the same geometry "
     "after performing a boolean union with the OpenCASCADE kernel" },
+  { F|O, "OCCUseGenericClosestPoint" , opt_geometry_occ_use_generic_closest_point , 0. ,
+    "Use generic algrithm to compute point projections in the OpenCASCADE kernel "
+    "(less robust, but significally faster in some configurations)" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. ,
     "Model display offset along X-axis (in model coordinates)" },
   { F,   "OffsetY" , opt_geometry_offset1 , 0. ,
