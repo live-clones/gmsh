@@ -6,6 +6,7 @@
 #include <map>
 #include <iostream>
 #include "meshQuadQuasiStructured.h"
+#include "meshSurfaceProjection.h"
 #include "meshGFace.h"
 #include "GmshMessage.h"
 #include "GFace.h"
@@ -22,6 +23,7 @@
 #include "meshQuadGeometry.h"
 
 
+#include "OS.h"
 #include "meshRefine.h"
 #include "discreteFace.h"
 #include "Generator.h"
@@ -387,6 +389,203 @@ namespace QSQ {
     int V = vertices.size();
     return V - E + S;
   }
+
+  double project_point_segment(const SPoint3& query, const SPoint3& a, const SPoint3& b, SPoint3& proj, double& lambda) {
+    double l = a.distance(b);
+    double t = dot(query-a,b-a);
+    if (t <= 0. || l == 0.) {
+      proj = a;
+      lambda = 1.;
+      return query.distance(a);
+    } else if (t > l) {
+      proj = b;
+      lambda = 0.;
+      return query.distance(b);
+    }
+    lambda = 1. - t / (l*l);
+    SVector3 p = a * lambda + b * (1. - lambda);
+    proj.setPosition(p.x(),p.y(),p.z());
+    return query.distance(proj);
+  }
+
+  inline double distance2(const SPoint3& a, const SPoint3& b) {
+    const double dx = a.x() - b.x();
+    const double dy = a.y() - b.y();
+    const double dz = a.z() - b.z();
+    return dx*dx+dy*dy+dz*dz;
+  }
+
+  inline double distance_point_segment_squared(const SPoint3& query, const SPoint3& a, const SPoint3& b) {
+    const double l2 = distance2(a,b);
+    const double t = dot(query-a,b-a);
+    if (t <= 0. || l2 == 0.) {
+      return distance2(query,a);
+    } else if (t > l2) {
+      return distance2(query,b);
+    }
+    const double lambda = 1. - t / l2;
+    SPoint3 proj(lambda * a + (1. - lambda) * b);
+    return distance2(query,proj);
+  }
+
+
+  double distanceToGEdgeMesh(const SPoint3& query, GEdge* ge) {
+    // warning: not very efficient ...
+    double mdist2 = DBL_MAX;
+    for (MLine* l: ge->lines) {
+      MVertex* v1 = l->getVertex(0);
+      MVertex* v2 = l->getVertex(1);
+      mdist2 = std::min(mdist2,distance_point_segment_squared(query,v1->point(),v2->point()));
+    }
+    return std::sqrt(mdist2);
+  }
+
+  bool computeMinimumDistanceToNonAdjacentGEdges(GFace* gf,
+      std::unordered_map<MVertex*,double>& minDistToOtherFeature) {
+    /* TODO: Slow, quadratic complexity, should be replaced by knn ? */
+
+    std::unordered_map<GVertex*,std::vector<GEdge*> > gv2ge;
+    std::unordered_map<MVertex*,std::vector<MLine*> > v2l;
+    for (GEdge* ge: gf->edges()) {
+      GVertex* v1 = ge->vertices()[0];
+      GVertex* v2 = ge->vertices()[1];
+      gv2ge[v1].push_back(ge);
+      gv2ge[v2].push_back(ge);
+    }
+
+    /* Check distance from GVertex to non-adjacent GEdge */
+    for (GVertex* gv: gf->vertices()) {
+      if (gv->mesh_vertices.size() == 1) {
+        for (GEdge* ge: gf->edges()) {
+          auto itc = std::find(gv2ge[gv].begin(),gv2ge[gv].end(),ge);
+          if (itc != gv2ge[gv].end()) continue;
+          MVertex* v = gv->mesh_vertices[0];
+          double dist = distanceToGEdgeMesh(v->point(),ge);
+          auto it = minDistToOtherFeature.find(v);
+          if (it == minDistToOtherFeature.end()) {
+            minDistToOtherFeature[v] = dist;
+          } else if (dist < it->second) {
+            it->second = dist;
+          }
+        }
+      }
+    }
+
+    /* Check distance from MVertex* to non-adjacent GEdge */
+    for (GEdge* ge: gf->edges()) {
+      std::vector<GEdge*> adj_edges = gv2ge[ge->vertices()[0]];
+      append(adj_edges,gv2ge[ge->vertices()[1]]);
+      std::vector<GEdge*> others = difference(gf->edges(),adj_edges);
+      for (GEdge* ge2: others) {
+        for (MVertex* v: ge->mesh_vertices) {
+          double dist = distanceToGEdgeMesh(v->point(),ge2);
+          auto it = minDistToOtherFeature.find(v);
+          if (it == minDistToOtherFeature.end()) {
+            minDistToOtherFeature[v] = dist;
+          } else if (dist < it->second) {
+            it->second = dist;
+          }
+        }
+      }
+    }
+      
+    return true;
+  }
+
+  bool buildVertexToVertex(const std::vector<GFace*>& faces, 
+      std::unordered_map<MVertex*,std::unordered_set<MVertex*> >& v2v) {
+    for (GFace* gf: faces) {
+      for (MElement* f: gf->triangles) {
+        size_t N = f->getNumEdges();
+        for (size_t le = 0; le < N; ++le) {
+          MVertex* v1 = f->getVertex(le);
+          MVertex* v2 = f->getVertex((le+1)%N);
+          v2v[v1].insert(v2);
+          v2v[v2].insert(v1);
+        }
+      }
+      for (MElement* f: gf->quadrangles) {
+        size_t N = f->getNumEdges();
+        for (size_t le = 0; le < N; ++le) {
+          MVertex* v1 = f->getVertex(le);
+          MVertex* v2 = f->getVertex((le+1)%N);
+          v2v[v1].insert(v2);
+          v2v[v2].insert(v1);
+        }
+      }
+    }
+    return true;
+  }
+
+  bool adaptSizeMapToSmallFeatures(
+      const std::vector<GFace*>& faces, 
+      std::unordered_map<MVertex*,double>& sizemap,
+      double smallestMultiplier = 0.1,
+      double gradientMax = 1.4) { /* to avoid very small size map */
+    std::unordered_map<MVertex*,double> minDistToOtherFeature;
+    for (GFace* gf: faces) {
+      computeMinimumDistanceToNonAdjacentGEdges(gf, minDistToOtherFeature);
+    }
+
+    /* Propage minDistToOtherFeature from boundary to interior, with maximal gradient */
+    /* Clamp with smallest multiplier to avoid very small sizes */
+    std::unordered_map<MVertex*,double> values;
+    for (auto& kv: minDistToOtherFeature) {
+      MVertex* v = kv.first;
+      auto it = sizemap.find(v);
+      if (it == sizemap.end()) continue;
+      double size = it->second;
+      if (kv.second < smallestMultiplier * size) {
+        values[v] = smallestMultiplier * size;
+      } else if (kv.second < size){
+        values[v] = kv.second;
+      }
+    }
+
+
+    /* Dijkstra propagation */
+    std::unordered_map<MVertex*,std::unordered_set<MVertex*> > v2v;
+    buildVertexToVertex(faces, v2v);
+
+    std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q; 
+    for (const auto& kv: values) {
+      Q.push({kv.second,kv.first});
+    }
+
+    /* Dijkstra propagation */
+    while (Q.size() > 0) {
+      MVertex* v = Q.top().second;
+      double cdist = Q.top().first;
+      Q.pop();
+      for (MVertex* v2: v2v[v]) {
+        double w_ij = v->distance(v2) * (gradientMax-1.);
+        auto it = values.find(v2);
+        if (it == values.end() || cdist + w_ij < it->second) {
+          double new_value = cdist + w_ij;
+          auto it2 = sizemap.find(v2);
+          if (it2 != sizemap.end() && new_value > it2->second) {
+            /* No need to propagate in regions where sizemap is
+             * already sufficiently fine */
+            continue;
+          }
+          values[v2] = new_value;
+          Q.push({new_value,v2});
+        }
+      }
+    }
+
+    /* Blending sizemap with propagation from small features */
+    for (auto& kv: values) {
+      MVertex* v = kv.first;
+      auto it = sizemap.find(v);
+      if (it != sizemap.end() && kv.second < it->second) {
+        it->second = kv.second; /* replace sizemap with propagated value */
+      }
+    }
+
+    return true;
+  }
+
 
 
   struct GFaceInfo {
@@ -1043,7 +1242,7 @@ namespace QSQ {
   }
 
   inline int valenceInsideQuads(const MeshHalfEdges& M, const std::unordered_set<size_t>& quads, size_t v) {
-    constexpr size_t BSIZE = 24;
+    constexpr size_t BSIZE = 48;
     size_t faces[BSIZE];
     int val = M.vertexFaces(v, faces);
     if ((size_t) val >= BSIZE) {
@@ -1910,7 +2109,7 @@ namespace QSQ {
     {
       if (current == NULL) return false;
       FCavity& cav = *current;
-      Msg::Debug("growMaximal: start with %li quads, %li half-edges on bdr ...", cav.quads.size(), cav.hes.size());
+      if (DBG_VERBOSE) Msg::Debug("growMaximal: start with %li quads, %li half-edges on bdr ...", cav.quads.size(), cav.hes.size());
       bool running = true;
       size_t nb = 0;
       FlipInfo info;
@@ -1925,7 +2124,7 @@ namespace QSQ {
         running = false;
         bool okc = getFlipHalfEdgeCandidates(candidates);
         if (!okc) {
-          Msg::Debug("growMaximal: failed to get flip half edge candidates");
+          if (DBG_VERBOSE) Msg::Debug("growMaximal: failed to get flip half edge candidates");
           break;
         }
         for (size_t k = 0; k < candidates.size(); ++k) {
@@ -1940,7 +2139,7 @@ namespace QSQ {
             markNewQuad(info.nq);
             bool okf = convexify();
             if (!okf) {
-              Msg::Debug("growMaximal: failed to convexity, stop growth");
+              if (DBG_VERBOSE) Msg::Debug("growMaximal: failed to convexify, stop growth");
               running = false;
               break;
             }
@@ -1949,7 +2148,7 @@ namespace QSQ {
         if (running) {
           bool convex = isConvex();
           if (!convex) {
-            Msg::Debug("growMaximal: cavity not convex, stop growth");
+            if (DBG_VERBOSE) Msg::Debug("growMaximal: cavity not convex, stop growth");
             running = false;
             // geolog_fcavity(cav, "!convex");
             break;
@@ -1983,7 +2182,7 @@ namespace QSQ {
                 }
 
                 double irreg = DBL_MAX;
-                Msg::Debug("growMaximal: check if cavity is remeshable");
+                if (DBG_VERBOSE) Msg::Debug("growMaximal: check if cavity is remeshable");
                 bool remeshable = cavityIsRemeshable(cav, irreg, patternsToCheckRefined);
                 if (remeshable && irreg <= lastIrregularity && irreg < currentCavityIrregularity) {
                   /* Do not choose a pattern if strictly worse irregularity */
@@ -1996,7 +2195,8 @@ namespace QSQ {
             }
           }
         }
-      }
+      } /* end of the while-loop growth */
+
       if (lastNbIrregular > 0) {
         if (M.faces.size() == cav.quads.size() && lastNbIrregular == (size_t) cavityTargetNbOfSides) {
           /* cavity is full face, which is triangle or quad or pentagon with the right number
@@ -2480,15 +2680,19 @@ namespace QSQ {
   bool growAroundQuads(
       const std::unordered_map<MVertex *, std::vector<MElement *> >& adj,
       vector<MElement*>& quads) {
-    for (size_t lv = 0; lv < 4; ++lv) {
-      MVertex* v2 = quads[0]->getVertex(lv);
-      auto it = adj.find(v2);
-      if (it != adj.end()) {
-        for (MElement* f2: it->second) {
-          quads.push_back(f2);
+    vector<MElement*> newQuads;
+    for (MElement* q: quads) {
+      for (size_t lv = 0; lv < 4; ++lv) {
+        MVertex* v2 = q->getVertex(lv);
+        auto it = adj.find(v2);
+        if (it != adj.end()) {
+          for (MElement* f2: it->second) {
+            newQuads.push_back(f2);
+          }
         }
       }
     }
+    append(quads,newQuads);
     sort_unique(quads);
     return true;
   }
@@ -3016,6 +3220,7 @@ namespace QSQ {
       ) {
     MeshHalfEdges& M = cav.M;
 
+    /* Collect vertices on each side of the cavity */
     uint8_t smax = 0;
     std::vector<std::vector<MVertex*> > sides;
     for (size_t i0 = 0; i0 < cav.hes.size(); ++i0) {
@@ -3957,7 +4162,7 @@ namespace QSQ {
           void* ptr = prio_quads[i].second.first;
           if (ptr == NULL) continue;
           bool alreadyTried = (tried.find(ptr) != tried.end());
-          if (alreadyTried) continue;;
+          if (alreadyTried) continue;
           /* Init */
           tried.insert(ptr);
           FCavity fcav(M);
@@ -4508,7 +4713,28 @@ size_t numberOfTriangles(GModel* gm) {
   return N;
 }
 
-int computeScaledCrossField(GModel* gm, std::vector<std::array<double,5> >& singularities) {
+void create_view_with_sizemap(
+    const std::vector<MTriangle*>& triangles, 
+    const std::unordered_map<MVertex*,double>& scaling,
+    const std::string& name) {
+  std::vector<std::array<double,3> > pts(3);
+  std::vector<double> values(3);
+  for (MTriangle* t: triangles) {
+    pts[0] = SVector3(t->getVertex(0)->point());
+    pts[1] = SVector3(t->getVertex(1)->point());
+    pts[2] = SVector3(t->getVertex(2)->point());
+    values[0] = scaling.at(t->getVertex(0));
+    values[1] = scaling.at(t->getVertex(1));
+    values[2] = scaling.at(t->getVertex(2));
+    GeoLog::add(pts,values,name);
+  }
+  gmsh::initialize();
+  GeoLog::flush();
+}
+
+int computeScaledCrossField(GModel* gm, 
+    const std::map<GFace*, GFaceInfo>& faceInfo,
+    std::vector<std::array<double,5> >& singularities) {
   int viewTag = -1;
   int targetNumberOfQuads = 0.5*numberOfTriangles(gm);
   bool useDiscrete = useDiscreteGeometry(gm);
@@ -4517,10 +4743,89 @@ int computeScaledCrossField(GModel* gm, std::vector<std::array<double,5> >& sing
     targetNumberOfQuads *= 0.25; /* because of future midpoint subdivision */
   }
   bool disableConformalScaling = false; /* On some corners, H tends to infinity and may destroy the size map */
-  int nbDiffusionLevels = 3;
   double thresholdNormConvergence = 1.e-2;
   int nbBoundaryExtensionLayer = 1;
-  bool adaptSmallFeatures = false;
+  int verbosity = 0;
+  double conformalScalingQuantileFiltering = 0.1;
+
+  vector<GFace*> faces = model_faces(gm);
+
+  /* Compute the cross field on each face
+   * Not in parallel because the solver in computeCrossFieldWithHeatEquation may already be parallel (e.g. MUMPS) */
+  std::unordered_map<MEdge,double,MEdgeHash,MEdgeEqual> edgeTheta;
+  for (GFace* gf: faces) {
+    int nbDiffusionLevels = 4;
+    /* Check if convex topological disk */
+    const GFaceInfo& info = faceInfo.at(gf);
+    if (info.chi == 1 && info.bdrValVertices[1].size() >= 2 
+        && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
+      nbDiffusionLevels = 2; /* simple face, no need for acurate computation */
+    }
+
+    Msg::Info("- Face %i: compute cross field (%li triangles, %i diffusion levels) ...",
+        gf->tag(), gf->triangles.size(), nbDiffusionLevels);
+    int status = computeCrossFieldWithHeatEquation({gf}, edgeTheta, nbDiffusionLevels, thresholdNormConvergence,
+        nbBoundaryExtensionLayer, verbosity);
+    if (status != 0) {
+      Msg::Error("failed to compute cross field on face %i",gf->tag());
+    }
+  }
+
+  std::unordered_map<MVertex*,double> scaling;
+  std::vector<MTriangle*> triangles;
+  getFacesTriangles(faces, triangles);
+  if (!disableConformalScaling) {
+    Msg::Info("Compute cross field conformal scaling (global, %li faces) ...", faces.size());
+    int status = computeCrossFieldConformalScaling(triangles, edgeTheta, scaling);
+    if (status != 0) {
+      Msg::Error("failed to compute cross field scaling");
+      return -1;
+    }
+    if (conformalScalingQuantileFiltering != 0) {
+      Msg::Warning("Apply quantile filtering on conformal scaling (clamp the %f-quantile extremities)",conformalScalingQuantileFiltering);
+      quantileFiltering(scaling, conformalScalingQuantileFiltering);
+    }
+  } else {
+    Msg::Info("Cross field conformal scaling disabled");
+    for (const auto& kv: edgeTheta) {
+      scaling[kv.first.getMinVertex()] = 1.;
+      scaling[kv.first.getMaxVertex()] = 1.;
+    }
+  }
+
+  Msg::Info("Compute quad mesh size map from conformal factor and %li target quads ...", 
+      targetNumberOfQuads);
+  std::vector<std::vector<GFace*> > components;
+  getConnectedSurfaceComponents(faces, components);
+  std::vector<size_t> componentNumberOfQuads;
+  distributeQuadsBasedOnArea(targetNumberOfQuads, components, componentNumberOfQuads);
+  for (size_t i = 0; i < components.size(); ++i) {
+    std::vector<MTriangle*> componentTriangles;
+    getFacesTriangles(components[i],componentTriangles);
+    int status2 = computeQuadSizeMapFromCrossFieldConformalFactor(componentTriangles, componentNumberOfQuads[i], scaling);
+    if (status2 != 0) {
+      Msg::Error("Failed to compute quad mesh size map");
+      return -1;
+    }
+  }
+
+  int sts = detectCrossFieldSingularities(faces, edgeTheta, singularities);
+  if (sts != 0) {
+    Msg::Error("failed to detect cross field singularities");
+  }
+  Msg::Info("Detected %li cross field singularities", singularities.size());
+
+  double smallestMultiplier = 0.05;
+  double gradientMax = 1.2;
+  bool oka = adaptSizeMapToSmallFeatures(faces, scaling, smallestMultiplier, gradientMax);
+  if (!oka) {
+    Msg::Error("failed to adapt size map to smallest features");
+  }
+
+  constexpr bool SHOW_SIZEMAP = true;
+  if (SHOW_SIZEMAP) create_view_with_sizemap(triangles, scaling, "dbg_sizemap");
+
+  /* Create data list view */
   std::string name = "scaled_cross_field";
   {
     PView* view_s = PView::getViewByName(name);
@@ -4528,21 +4833,20 @@ int computeScaledCrossField(GModel* gm, std::vector<std::array<double,5> >& sing
       viewTag = view_s->getTag();
     }
   }
-  singularities.clear();
-  int verbosity = 0;
-  int st = computeScaledCrossFieldView(gm, viewTag, targetNumberOfQuads, 
-      nbDiffusionLevels, thresholdNormConvergence, nbBoundaryExtensionLayer, 
-      name, verbosity, &singularities, disableConformalScaling, 
-      0.1, adaptSmallFeatures);
-  double acute = 30.;
-  addSingularitiesAtAcuteCorners(model_faces(gm), acute, singularities);
-  if (st == 0) {
-    gm->getFields()->setBackgroundMesh(viewTag);
-    // gm->getFields()->initialize(); // required ?
-    // PView* view_s = PView::getViewByName(name);
-    // if (view_s) view_s->getOptions()->visible = 0;
+  int statusv = createScaledCrossFieldView(triangles, edgeTheta, scaling, name, viewTag);
+  if (statusv != 0) {
+    Msg::Error("failed to create view");
+    return -1;
   }
-  return st;
+
+  Msg::Info("Add singularities at acute corners");
+  double acute = 30.;
+  addSingularitiesAtAcuteCorners(faces, acute, singularities);
+
+  Msg::Info("Set background field from scaled cross field");
+  gm->getFields()->setBackgroundMesh(viewTag);
+
+  return 0;
 }
 
 
@@ -4562,7 +4866,7 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
   double clscale = CTX::instance()->mesh.lcFactor;
   CTX::instance()->mesh.lcFactor = 1.;
 
-  computeQuadCurveMeshConstraints(gm, faceInfo, forceEvenNbEdges);
+  // computeQuadCurveMeshConstraints(gm, faceInfo, forceEvenNbEdges);
 
   /* Remove triangulations */
   std::for_each(gm->firstFace(), gm->lastFace(), deMeshGFace());
@@ -5081,9 +5385,31 @@ bool triangulatedMeshAlreadyExists(GModel* gm) {
 }
 
 
+int readSingularitiesFromFile(GModel* gm, std::vector<std::array<double,5> >& singularities, bool showInView = false) {
+  std::string path = gm->getName()+"_singularities.txt";
+  FILE *f = fopen(path.c_str(),"r");
+  if (!f) {
+    Msg::Error("file not found: %s", path.c_str());
+    return -1;
+  }
+  int n;
+  fscanf (f,"%d",&n);
+  for (int i=0;i<n;i++){
+    int dim, tag, index;
+    double x,y,z;
+    fscanf(f,"%d %lf %lf %lf %d %d",&index,&x,&y,&z,&dim,&tag);
+    singularities.push_back({x,y,z,double(index),double(tag)});
+    if (showInView) GeoLog::add({x,y,z},double(index),"dbg_sing_from_file");
+  }
+  fclose(f);
+  if (showInView) GeoLog::flush();
+  return 0;
+}
+
 
 int Mesh2DWithQuadQuasiStructured(GModel* gm)
 {
+  gmsh::initialize(); /* for debugging views with GeoLog */
   if (CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT) {
     return 1;
   }
@@ -5105,6 +5431,12 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     }
   }
 
+  /* Discrete projections */
+  std::map<GFace*,std::unique_ptr<SurfaceProjector> > projectors;
+  for (GFace* gf: faces) {
+    projectors[gf] = std::unique_ptr<SurfaceProjector>(new SurfaceProjector(gf));
+  }
+
   /* Use the triangulation to compute CAD face information 
    * (nb corners of each valence, euler characteristic, etc) */
   std::map<GFace*, GFaceInfo> faceInfo;
@@ -5114,12 +5446,22 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     if (ok) faceInfo[gf] = info;
   }
 
-  Msg::Info("[Step 2] Generate scaled cross field ...");
   std::vector<std::array<double,5> > singularities;
-  int s2 = computeScaledCrossField(gm, singularities);
-  if (s2 != 0) {
-    Msg::Error("failed to compute scaled cross field, abort");
-    return s2;
+  if (gm->getFields()->getBackgroundField() > 0) {
+    Msg::Info("[Step 2] Using existing background field");
+    bool showInView = true;
+    int sr = readSingularitiesFromFile(gm, singularities, showInView);
+    if (sr != 0) {
+      Msg::Error("failed to read singularities from file");
+    }
+    Msg::Info("- read %li singularities from file", singularities.size());
+  } else {
+    Msg::Info("[Step 2] Generate scaled cross field ...");
+    int s2 = computeScaledCrossField(gm, faceInfo, singularities);
+    if (s2 != 0) {
+      Msg::Error("failed to compute scaled cross field, abort");
+      return s2;
+    }
   }
 
   // if (!useDiscreteGeometry(gm)) {
@@ -5196,11 +5538,18 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     Msg::Warning("failed to optimize quad mesh geometry, continue");
   }
 
+  constexpr bool useSurfaceProjection = true;
   for (GFace* gf: faces) {
-    if (gf->quadrangles.size() < 5000) {
-      Msg::Debug("- Face %i: winslow smoothing (%li quads) ...", gf->tag(), gf->quadrangles.size());
-      meshWinslow2d(gf,100);
+    size_t iters = 100;
+    Msg::Debug("- Face %i: winslow smoothing (%li quads, %li iters) ...", gf->tag(), gf->quadrangles.size(), iters);
+    double t1 = Cpu();
+    if (useSurfaceProjection) {
+      meshWinslow2d(gf, iters, NULL, false, projectors[gf].get());
+    } else {
+      meshWinslow2d(gf, iters, NULL, false);
     }
+    double t2 = Cpu();
+    Msg::Debug("done. (CPU %gs)", t2 - t1);
   }
 
 

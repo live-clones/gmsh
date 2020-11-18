@@ -1031,9 +1031,13 @@ namespace QMT {
     }
 
     vector<double> steps;
-    F(i,nbDiffusionLevels) { /* resolution transition */
-      double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbDiffusionLevels-1);
-      steps.push_back(dt);
+    if (nbDiffusionLevels > 1) {
+      F(i,nbDiffusionLevels) { /* resolution transition */
+        double dt = dtInitial + (dtFinal-dtInitial) * double(i)/double(nbDiffusionLevels-1);
+        steps.push_back(dt);
+      }
+    } else {
+      steps.push_back(dtFinal);
     }
 
     {

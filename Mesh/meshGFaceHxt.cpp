@@ -6,6 +6,8 @@
 #include "MVertex.h"
 #include "MTriangle.h"
 #include "MLine.h"
+#include "MEdge.h"
+#include "MEdgeHash.h"
 #include "GFace.h"
 #include "GmshMessage.h"
 // #include "gmshCrossFields.h"
@@ -233,7 +235,7 @@ int computeCrossFieldAndScalingForHxt(
   int nbBoundaryExtensionLayer = 1;
 
   /* Compute cross field */
-  std::map<std::array<size_t,2>,double> edgeTheta;
+  std::unordered_map<MEdge,double,MEdgeHash,MEdgeEqual> edgeTheta;
   for (GFace* gf: faces) {
     Msg::Debug("- compute cross field for face %i ...",gf->tag());
     int status = computeCrossFieldWithHeatEquation({gf}, edgeTheta, nbDiffusionLevels, thresholdNormConvergence,
@@ -244,37 +246,40 @@ int computeCrossFieldAndScalingForHxt(
   }
 
   /* Compute conformal scaling (H) from cross field */
-  std::vector<size_t> nodeTags;
-  std::vector<double> scaling;
-  int status = computeCrossFieldConformalScaling(faces, edgeTheta, nodeTags, scaling);
+  std::unordered_map<MVertex*,double> scaling;
+  std::vector<MTriangle*> triangles;
+  getFacesTriangles(faces, triangles);
+  int status = computeCrossFieldConformalScaling(triangles, edgeTheta, scaling);
   if (status != 0) {
     Msg::Error("failed to compute cross field scaling");
     return -1;
   }
 
   /* Compute sizemap (changing scaling) */
-  int s2 = computeQuadSizeMapFromCrossFieldConformalFactor(faces, targetNumberOfQuads, nodeTags, scaling);
-  if (s2 != 0) {
-    Msg::Error("failed to compute cross field scaling");
-    return -1;
+  Msg::Info("Compute quad mesh size map from conformal factor and %li target quads ...", 
+      targetNumberOfQuads);
+  std::vector<std::vector<GFace*> > components;
+  getConnectedSurfaceComponents(faces, components);
+  std::vector<size_t> componentNumberOfQuads;
+  distributeQuadsBasedOnArea(targetNumberOfQuads, components, componentNumberOfQuads);
+  for (size_t i = 0; i < components.size(); ++i) {
+    std::vector<MTriangle*> componentTriangles;
+    getFacesTriangles(components[i],componentTriangles);
+    int status2 = computeQuadSizeMapFromCrossFieldConformalFactor(componentTriangles, componentNumberOfQuads[i], scaling);
+    if (status2 != 0) {
+      Msg::Error("Failed to compute quad mesh size map");
+      return -1;
+    }
   }
 
   /* Extract values at triangle corners */
-  std::map<size_t, std::array<double,9> > triangleDirections;
-  int st2 = extractPerTriangleScaledCrossFieldDirections(faces, edgeTheta, nodeTags, scaling, triangleDirections);
+  std::unordered_map<MTriangle*, std::array<double,9> > triangleDirections;
+  int st2 = extractPerTriangleScaledCrossFieldDirections(triangles, edgeTheta, scaling, triangleDirections);
   if (st2 != 0) {
     Msg::Error("failed to extract per triangle scaled directions");
     return -1;
   }
 
-  std::vector<MTriangle*> t2ptr(triangleDirections.size(),NULL);
-  for (GFace* gf: faces) {
-    for (MTriangle* t: gf->triangles) {
-      size_t tNum = t->getNum();
-      if (tNum >= t2ptr.size()) t2ptr.resize(tNum+1,NULL);
-      t2ptr[tNum] = t;
-    }
-  }
 
   std::set<size_t> isBoundary;
   for (GFace* gf: faces) for (GEdge* ge: gf->edges()) {
@@ -297,7 +302,7 @@ int computeCrossFieldAndScalingForHxt(
   std::array<double,7> zero7 = {0.,0.,0.,0.,0.,0.,0.};
   std::vector<std::array<double,7> > vertexNumDirections(vertices.size(),zero7);
   for (const auto& kv: triangleDirections) {
-    MTriangle* t = t2ptr[kv.first];
+    MTriangle* t = kv.first;
     if (t == NULL) continue;
     SVector3 N = tri_normal(t);
     for (size_t lv = 0; lv < 3; ++lv) {
@@ -370,9 +375,7 @@ int computeCrossFieldAndScalingForHxt(
     dir1.normalize();
     dir2.normalize();
     vertexDirections[v->getNum()] = {dir1[0],dir1[1],dir1[2], dir2[0],dir2[1],dir2[2], 0.};
-  }
-  for (size_t i = 0; i < nodeTags.size(); ++i) {
-    vertexDirections[nodeTags[i]][6] = scaling[i];
+    vertexDirections[v->getNum()][6] = scaling[v];
   }
 
 #else

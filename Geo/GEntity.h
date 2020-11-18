@@ -71,6 +71,12 @@ public: // these will become protected at some point
   std::set<MElement *> curvedBLElements;
 
 public:
+  // A generic way to attach "objects" to a GEntity
+  // should be used carefully, the user must know the type
+  // and manually free the objects after use
+  std::map<std::string,void*> storage_ptrs;
+
+public:
   // make a set of all the vertices in the entity, with/without closure
   void addVerticesInSet(std::set<MVertex *> &, bool closure) const;
 
