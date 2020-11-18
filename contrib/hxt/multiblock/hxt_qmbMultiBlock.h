@@ -62,6 +62,7 @@ class MultiBlock
   std::vector<uint64_t> m_tri;
   double m_minEdgLength; //probably not needed!!! 
   std::vector<std::vector<int>> m_mbQuads; //each vector is quad vertices indices
+  std::vector<BlockParametrization> m_mbQuadParametrization; //each vector is quad vertices indices
   std::vector<std::vector<std::array<double,3>>> m_mbEdges; //each vector is a collection of point defining the mbEdg
   std::vector<std::vector<uint64_t>> m_mbEdgesTri; //each vector is a collection of point defining the mbEdg
   std::vector<std::vector<uint64_t>> m_mbEdg2Block;
@@ -146,9 +147,10 @@ class MultiBlock
  
   
   double normDiffVect(std::array<double,3> *coordP1, std::array<double,3> *coordP2);
+  double computeDiscreteLineLength(std::vector<std::array<double,3>> *pCoordLine);
   double computeDiscreteLineLengthModified(std::vector<std::array<double,3>> *pCoordLine, std::vector<double> hVal);
   HXTStatus lineDiscretization(std::vector<std::array<double,3>> *line, std::vector<double> hVal, uint64_t partition, std::vector<std::array<double,3>> *newLine);
-  
+  HXTStatus lineDiscretizationUniform(std::vector<std::array<double,3>> *line, uint64_t partition, std::vector<std::array<double,3>> *newLine);
 
   HXTStatus getDataFromBlockEdgID(int edgID, std::vector<std::array<double, 3>> &pointsOnEdg, std::vector<uint64_t> &trianglesOnEdg);
   HXTStatus createMbTriPatchs();
@@ -177,11 +179,12 @@ class BlockParametrization
   BlockParametrization(HXTMesh *m):m_mesh(m){};
   ~BlockParametrization(){};
 
-  std::array<double,3> getPhysCoordFromParamCoord(std::array<double,3> paramCoord, uint64_t globNumTriHint=(uint64_t)(-1)){};
-  std::array<double,3> getParamCoordFromPhysCoord(std::array<double,3> physCoord, uint64_t globNumTriHint=(uint64_t)(-1)){};
+  std::array<double,3> getPhysCoordFromParamCoord(std::array<double,3> paramCoord, uint64_t globNumTriHint=(uint64_t)(-1));
+  std::array<double,3> getParamCoordFromPhysCoord(std::array<double,3> physCoord, uint64_t globNumTriHint=(uint64_t)(-1));
   uint64_t getBelongingTriangleFromParamCoord(std::array<double,3> paramCoord){};
   uint64_t getBelongingTriangleFromPhysCoord(std::array<double,3> physCoord){};
-
+  int isPointInTri(std::vector<std::array<double,3>> tri, std::array<double, 3> point, double *baryCoord1, double *baryCoord2);
+  
   HXTStatus dbgPosParam(const char *fileName);
     
   HXTMesh *m_mesh;
