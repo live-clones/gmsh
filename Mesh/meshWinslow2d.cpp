@@ -15,6 +15,7 @@
 #include "MEdge.h"
 #include "MLine.h"
 #include "meshWinslow2d.h"
+#include "meshSurfaceProjection.h"
 #include "meshGFaceOptimize.h"
 #include "Field.h"
 #include "geolog.h"
@@ -726,7 +727,7 @@ public:
   }
 
 
-  double smooth (GFace *gf, GEntity::GeomType GT, double radius, SPoint3 &c){
+  double smooth (GFace *gf, GEntity::GeomType GT, double radius, SPoint3 &c, SurfaceProjector* sp, size_t& cache){
     if (stencil.empty())return 0;
     SPoint3 p;    
     //    printf("coucou1\n");
@@ -748,8 +749,8 @@ public:
     //    printf("coucou3\n");
     if (GT == GEntity::Plane){
       dx = sqrt ((p.x()-center->x())*(p.x()-center->x())+
-		 (p.y()-center->y())*(p.y()-center->y())+
-		 (p.z()-center->z())*(p.z()-center->z()));			
+          (p.y()-center->y())*(p.y()-center->y())+
+          (p.z()-center->z())*(p.z()-center->z()));			
       center->setXYZ(p.x(),p.y(),p.z());
     }
     else if (GT == GEntity::Sphere){
@@ -758,20 +759,23 @@ public:
       vv *= radius;
       p= SPoint3(c.x() + vv.x(),c.y() + vv.y(),c.z() + vv.z());
       dx = sqrt ((p.x()-center->x())*(p.x()-center->x())+
-		 (p.y()-center->y())*(p.y()-center->y())+
-		 (p.z()-center->z())*(p.z()-center->z()));			
+          (p.y()-center->y())*(p.y()-center->y())+
+          (p.z()-center->z())*(p.z()-center->z()));			
       center->setXYZ(p.x(),p.y(),p.z());
     }
     else {
-      //    printf("coucou3a\n");
-      GPoint gp = CLOSESTPOINT(gf,p,uv, GT);
-      //    printf("coucou3b\n");
+      GPoint gp;
+      if (sp) {
+        sp->closestPoint(p.data(), cache, false);
+      } else {
+        gp = CLOSESTPOINT(gf,p,uv, GT);
+      }
       if (!gp.succeeded()){
-	return 0;
+        return 0;
       }
       dx = sqrt ((gp.x()-center->x())*(gp.x()-center->x())+
-		 (gp.y()-center->y())*(gp.y()-center->y())+
-		 (gp.z()-center->z())*(gp.z()-center->z()));			
+          (gp.y()-center->y())*(gp.y()-center->y())+
+          (gp.z()-center->z())*(gp.z()-center->z()));			
       center->setXYZ(gp.x(),gp.y(),gp.z());
       center->setParameter(0,gp.u());
       center->setParameter(1,gp.v());
@@ -1001,7 +1005,7 @@ static void allowProjections (GFace * gf){
 }
 
 void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads, 
-    const std::vector<MVertex*>& freeVertices, int nIter, Field *f, bool remove) {
+    const std::vector<MVertex*>& freeVertices, int nIter, Field *f, bool remove, SurfaceProjector* sp) {
   if (gf->triangles.size())return;
   Msg::Debug("winslow 2D on %li quads, %li free vertices (face %i), %i iterations ...", quads.size(), freeVertices.size(),
       gf->tag(), nIter);
@@ -1037,11 +1041,12 @@ void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads,
   
   
   double dx0;
+  std::vector<size_t> cache_tris(stencils.size(),(size_t)-1);
   for (int i=0;i<nIter;i++){
     double dx = 0;
     
     for (size_t j=0;j<stencils.size();j++){
-      double xx = stencils[j].smooth(gf,GT,radius,c);
+      double xx = stencils[j].smooth(gf,GT,radius,c,sp,cache_tris[j]);
       dx += xx ;
       //      printf("%lu %12.5E\n",j, xx);
     }
@@ -1052,7 +1057,7 @@ void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads,
 
 }
 
-void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
+void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove, SurfaceProjector* sp) {
   if (gf->triangles.size())return;
   GEntity::GeomType GT = gf->geomType();
   
@@ -1084,12 +1089,13 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
     ++it;
   }
   
+  std::vector<size_t> cache_tris(stencils.size(),(size_t)-1);
   double dx0;
   for (int i=0;i<nIter;i++){
     double dx = 0;
     
     for (size_t j=0;j<stencils.size();j++){
-      double xx = stencils[j].smooth(gf,GT,radius,c);
+      double xx = stencils[j].smooth(gf,GT,radius,c,sp,cache_tris[j]);
       dx += xx ;
       //      printf("%lu %12.5E\n",j, xx);
     }

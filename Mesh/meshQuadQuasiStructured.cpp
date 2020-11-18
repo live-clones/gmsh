@@ -5383,9 +5383,31 @@ bool triangulatedMeshAlreadyExists(GModel* gm) {
 }
 
 
+int readSingularitiesFromFile(GModel* gm, std::vector<std::array<double,5> >& singularities, bool showInView = false) {
+  std::string path = gm->getName()+"_singularities.txt";
+  FILE *f = fopen(path.c_str(),"r");
+  if (!f) {
+    Msg::Error("file not found: %s", path.c_str());
+    return -1;
+  }
+  int n;
+  fscanf (f,"%d",&n);
+  for (int i=0;i<n;i++){
+    int dim, tag, index;
+    double x,y,z;
+    fscanf(f,"%d %lf %lf %lf %d %d",&index,&x,&y,&z,&dim,&tag);
+    singularities.push_back({x,y,z,double(index),double(tag)});
+    if (showInView) GeoLog::add({x,y,z},double(index),"dbg_sing_from_file");
+  }
+  fclose(f);
+  if (showInView) GeoLog::flush();
+  return 0;
+}
+
 
 int Mesh2DWithQuadQuasiStructured(GModel* gm)
 {
+  gmsh::initialize(); /* for debugging views with GeoLog */
   if (CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT) {
     return 1;
   }
@@ -5416,12 +5438,22 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     if (ok) faceInfo[gf] = info;
   }
 
-  Msg::Info("[Step 2] Generate scaled cross field ...");
   std::vector<std::array<double,5> > singularities;
-  int s2 = computeScaledCrossField(gm, faceInfo, singularities);
-  if (s2 != 0) {
-    Msg::Error("failed to compute scaled cross field, abort");
-    return s2;
+  if (gm->getFields()->getBackgroundField() > 0) {
+    Msg::Info("[Step 2] Using existing background field");
+    bool showInView = true;
+    int sr = readSingularitiesFromFile(gm, singularities, showInView);
+    if (sr != 0) {
+      Msg::Error("failed to read singularities from file");
+    }
+    Msg::Info("- read %li singularities from file", singularities.size());
+  } else {
+    Msg::Info("[Step 2] Generate scaled cross field ...");
+    int s2 = computeScaledCrossField(gm, faceInfo, singularities);
+    if (s2 != 0) {
+      Msg::Error("failed to compute scaled cross field, abort");
+      return s2;
+    }
   }
 
   // if (!useDiscreteGeometry(gm)) {

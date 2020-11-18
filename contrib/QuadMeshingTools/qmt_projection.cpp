@@ -288,9 +288,6 @@ namespace QMT {
     return sqrDistance;
   }
 
-
-
-
   struct PointCloud {
     PointCloud(const std::vector<vec3>& pts_):pts(pts_){}
     const std::vector<vec3> pts;
