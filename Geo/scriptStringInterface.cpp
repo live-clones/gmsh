@@ -297,15 +297,20 @@ void scriptSetTransfiniteLine(std::vector<int> &l, const std::string &fileName,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Transfinite Curve {";
-    for(std::size_t i = 0; i < l.size(); i++) {
-      if(i) sstream << ", ";
-      sstream << l[i];
+    if(lang == "geo") {
+      sstream << "Transfinite Curve {";
+      for(std::size_t i = 0; i < l.size(); i++) {
+        if(i) sstream << ", ";
+        sstream << l[i];
+      }
+      sstream << "} = " << pts;
+      if(typearg.size()) sstream << " Using " << type << " " << typearg;
+      sstream << ";";
+      addInFile(sstream.str(), fileName, lang);
     }
-    sstream << "} = " << pts;
-    if(typearg.size()) sstream << " Using " << type << " " << typearg;
-    sstream << ";";
-    addInFile(sstream.str(), fileName, lang);
+    else {
+      // TODO
+    }
   }
 }
 
@@ -315,18 +320,23 @@ void scriptSetTransfiniteSurface(std::vector<int> &l,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Transfinite Surface {" << l[0] << "}";
-    if(l.size() > 1) {
-      sstream << " = {";
-      for(std::size_t i = 1; i < l.size(); i++) {
-        if(i > 1) sstream << ", ";
-        sstream << l[i];
+    if(lang == "geo") {
+      sstream << "Transfinite Surface {" << l[0] << "}";
+      if(l.size() > 1) {
+        sstream << " = {";
+        for(std::size_t i = 1; i < l.size(); i++) {
+          if(i > 1) sstream << ", ";
+          sstream << l[i];
+        }
+        sstream << "}";
       }
-      sstream << "}";
+      if(dir != "Left") sstream << " " << dir;
+      sstream << ";";
+      addInFile(sstream.str(), fileName, lang);
     }
-    if(dir != "Left") sstream << " " << dir;
-    sstream << ";";
-    addInFile(sstream.str(), fileName, lang);
+    else {
+      // TODO
+    }
   }
 }
 
@@ -335,13 +345,18 @@ void scriptSetTransfiniteVolume(std::vector<int> &l,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Transfinite Volume{" << l[0] << "} = {";
-    for(std::size_t i = 1; i < l.size(); i++) {
-      if(i > 1) sstream << ", ";
-      sstream << l[i];
+    if(lang == "geo") {
+      sstream << "Transfinite Volume{" << l[0] << "} = {";
+      for(std::size_t i = 1; i < l.size(); i++) {
+        if(i > 1) sstream << ", ";
+        sstream << l[i];
+      }
+      sstream << "};";
+      addInFile(sstream.str(), fileName, lang);
     }
-    sstream << "};";
-    addInFile(sstream.str(), fileName, lang);
+    else {
+      // TODO
+    }
   }
 }
 
@@ -350,13 +365,18 @@ void scriptEmbed(const std::string &fileName, const std::string &what,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << what << "" << vector2String(l, lang) << " In ";
-    if(dim == 2)
-      sstream << "Surface{";
-    else
-      sstream << "Volume{";
-    sstream << tag << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << what << "" << vector2String(l, lang) << " In ";
+      if(dim == 2)
+        sstream << "Surface{";
+      else
+        sstream << "Volume{";
+      sstream << tag << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -366,18 +386,23 @@ void scriptAddParameter(const std::string &par, const std::string &value,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << par << " = DefineNumber[ " << value;
-    sstream << ", Name \"";
-    if(path.size() && label.size())
-      sstream << path << "/" << label;
-    else if(path.size())
-      sstream << path << "/" << par;
-    else if(label.size())
-      sstream << label;
-    else
-      sstream << par;
-    sstream << "\" ];";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << par << " = DefineNumber[ " << value;
+      sstream << ", Name \"";
+      if(path.size() && label.size())
+        sstream << path << "/" << label;
+      else if(path.size())
+        sstream << path << "/" << par;
+      else if(label.size())
+        sstream << label;
+      else
+        sstream << par;
+      sstream << "\" ];";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -387,11 +412,16 @@ void scriptAddPoint(const std::string &fileName, const std::string &x,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Point(" << GModel::current()->getMaxElementaryNumber(0) + 1
-            << ") = {" << x << ", " << y << ", " << z;
-    if(lc.size()) sstream << ", " << lc;
-    sstream << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Point(" << GModel::current()->getMaxElementaryNumber(0) + 1
+              << ") = {" << x << ", " << y << ", " << z;
+      if(lc.size()) sstream << ", " << lc;
+      sstream << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -401,9 +431,14 @@ void scriptAddFieldOption(int field_id, const std::string &option_name,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Field[" << field_id << "]." << option_name << " = "
-            << option_value << ";";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Field[" << field_id << "]." << option_name << " = "
+              << option_value << ";";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -412,8 +447,13 @@ void scriptAddField(int field_id, const std::string &type_name,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Field[" << field_id << "] = " << type_name << ";";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Field[" << field_id << "] = " << type_name << ";";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -421,8 +461,13 @@ void scriptDeleteField(int field_id, const std::string &fileName)
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Delete Field [" << field_id << "];";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Delete Field [" << field_id << "];";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -430,8 +475,13 @@ void scriptSetBackgroundField(int field_id, const std::string &fileName)
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Background Field = " << field_id << ";";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Background Field = " << field_id << ";";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -440,14 +490,19 @@ void scriptAddCurve(const std::string &type, std::vector<int> &p,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << type << "(" << GModel::current()->getMaxElementaryNumber(1) + 1
-            << ") = {";
-    for(std::size_t i = 0; i < p.size(); i++) {
-      if(i) sstream << ", ";
-      sstream << p[i];
+    if(lang == "geo") {
+      sstream << type << "(" << GModel::current()->getMaxElementaryNumber(1) + 1
+              << ") = {";
+      for(std::size_t i = 0; i < p.size(); i++) {
+        if(i) sstream << ", ";
+        sstream << p[i];
+      }
+      sstream << "};";
+      addInFile(sstream.str(), fileName, lang);
     }
-    sstream << "};";
-    addInFile(sstream.str(), fileName, lang);
+    else {
+      // TODO
+    }
   }
 }
 
@@ -455,9 +510,14 @@ void scriptAddCircleArc(int p1, int p2, int p3, const std::string &fileName)
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Circle(" << GModel::current()->getMaxElementaryNumber(1) + 1
-            << ") = {" << p1 << ", " << p2 << ", " << p3 << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Circle(" << GModel::current()->getMaxElementaryNumber(1) + 1
+              << ") = {" << p1 << ", " << p2 << ", " << p3 << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -466,9 +526,14 @@ void scriptAddEllipseArc(int p1, int p2, int p3, int p4,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Ellipse(" << GModel::current()->getMaxElementaryNumber(1) + 1
-            << ") = {" << p1 << ", " << p2 << ", " << p3 << ", " << p4 << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Ellipse(" << GModel::current()->getMaxElementaryNumber(1) + 1
+              << ") = {" << p1 << ", " << p2 << ", " << p3 << ", " << p4 << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -482,9 +547,14 @@ void scriptAddCurveLoop(List_T *list, const std::string &fileName, int *numloop)
 
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Curve Loop(" << *numloop << ") = "
-            << list2String(list, lang) << ";";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Curve Loop(" << *numloop << ") = "
+              << list2String(list, lang) << ";";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -493,9 +563,14 @@ void scriptAddSurface(const std::string &type, List_T *list,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << type << "(" << GModel::current()->getMaxElementaryNumber(2) + 1
-            << ") = " << list2String(list, lang) << ";";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << type << "(" << GModel::current()->getMaxElementaryNumber(2) + 1
+              << ") = " << list2String(list, lang) << ";";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -510,9 +585,14 @@ void scriptAddSurfaceLoop(List_T *list, const std::string &fileName,
 
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Surface Loop(" << *numloop << ") = "
-            << list2String(list, lang) << ";";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Surface Loop(" << *numloop << ") = "
+              << list2String(list, lang) << ";";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -520,9 +600,14 @@ void scriptAddVolume(List_T *list, const std::string &fileName)
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Volume(" << GModel::current()->getMaxElementaryNumber(3) + 1
-            << ") = " << list2String(list, lang) << ";";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Volume(" << GModel::current()->getMaxElementaryNumber(3) + 1
+              << ") = " << list2String(list, lang) << ";";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -534,24 +619,29 @@ void scriptRemovePhysicalGroup(const std::string &fileName,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Physical " << what << "(";
-    if(name.size()) {
-      sstream << "\"" << name << "\"";
-      if(forceTag) sstream << ", " << forceTag;
+    if(lang == "geo") {
+      sstream << "Physical " << what << "(";
+      if(name.size()) {
+        sstream << "\"" << name << "\"";
+        if(forceTag) sstream << ", " << forceTag;
+      }
+      else {
+        sstream << (forceTag ?
+                    forceTag :
+                    GModel::current()->getGEOInternals()->getMaxPhysicalTag() +
+                    1);
+      }
+      sstream << ") ";
+      if(mode == "Remove")
+        sstream << "-";
+      else if(append)
+        sstream << "+";
+      sstream << "= " << vector2String(l, lang) << ";";
+      addInFile(sstream.str(), fileName, lang);
     }
     else {
-      sstream << (forceTag ?
-                  forceTag :
-                  GModel::current()->getGEOInternals()->getMaxPhysicalTag() +
-                  1);
+      // TODO
     }
-    sstream << ") ";
-    if(mode == "Remove")
-      sstream << "-";
-    else if(append)
-      sstream << "+";
-    sstream << "= " << vector2String(l, lang) << ";";
-    addInFile(sstream.str(), fileName, lang);
   }
 }
 
@@ -560,8 +650,13 @@ void scriptSetCompound(const std::string &fileName, const std::string &type,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Compound " << type << " " << vector2String(l, lang) << ";";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Compound " << type << " " << vector2String(l, lang) << ";";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -573,12 +668,17 @@ void scriptAddCircle(const std::string &fileName, const std::string &x,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Circle(" << GModel::current()->getMaxElementaryNumber(1) + 1
-            << ") = {" << x << ", " << y << ", " << z << ", " << r;
-    if(alpha1.size()) sstream << ", " << alpha1;
-    if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
-    sstream << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Circle(" << GModel::current()->getMaxElementaryNumber(1) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << r;
+      if(alpha1.size()) sstream << ", " << alpha1;
+      if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
+      sstream << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -590,12 +690,17 @@ void scriptAddEllipse(const std::string &fileName, const std::string &x,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Ellipse(" << GModel::current()->getMaxElementaryNumber(1) + 1
-            << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry;
-    if(alpha1.size()) sstream << ", " << alpha1;
-    if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
-    sstream << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Ellipse(" << GModel::current()->getMaxElementaryNumber(1) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry;
+      if(alpha1.size()) sstream << ", " << alpha1;
+      if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
+      sstream << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -606,10 +711,15 @@ void scriptAddDisk(const std::string &fileName, const std::string &x,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Disk(" << GModel::current()->getMaxElementaryNumber(2) + 1
-            << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry
-            << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Disk(" << GModel::current()->getMaxElementaryNumber(2) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry
+              << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -621,11 +731,16 @@ void scriptAddRectangle(const std::string &fileName, const std::string &x,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Rectangle(" << GModel::current()->getMaxElementaryNumber(2) + 1
-            << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy;
-    if(roundedRadius.size()) sstream << ", " << roundedRadius;
-    sstream << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Rectangle(" << GModel::current()->getMaxElementaryNumber(2) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy;
+      if(roundedRadius.size()) sstream << ", " << roundedRadius;
+      sstream << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -637,13 +752,18 @@ void scriptAddSphere(const std::string &fileName, const std::string &x,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Sphere(" << GModel::current()->getMaxElementaryNumber(3) + 1
-            << ") = {" << x << ", " << y << ", " << z << ", " << r;
-    if(alpha1.size()) sstream << ", " << alpha1;
-    if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
-    if(alpha1.size() && alpha2.size() && alpha3.size()) sstream << ", " << alpha3;
-    sstream << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Sphere(" << GModel::current()->getMaxElementaryNumber(3) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << r;
+      if(alpha1.size()) sstream << ", " << alpha1;
+      if(alpha1.size() && alpha2.size()) sstream << ", " << alpha2;
+      if(alpha1.size() && alpha2.size() && alpha3.size()) sstream << ", " << alpha3;
+      sstream << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -656,12 +776,17 @@ void scriptAddCylinder(const std::string &fileName, const std::string &x,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Cylinder(" << GModel::current()->getMaxElementaryNumber(3) + 1
-            << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
-            << ", " << dz << ", " << r;
-    if(alpha.size()) sstream << ", " << alpha;
-    sstream << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Cylinder(" << GModel::current()->getMaxElementaryNumber(3) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
+              << ", " << dz << ", " << r;
+      if(alpha.size()) sstream << ", " << alpha;
+      sstream << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -673,10 +798,15 @@ void scriptAddBox(const std::string &fileName, const std::string &x,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Box(" << GModel::current()->getMaxElementaryNumber(3) + 1
-            << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
-            << ", " << dz << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Box(" << GModel::current()->getMaxElementaryNumber(3) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
+              << ", " << dz << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -688,11 +818,16 @@ void scriptAddTorus(const std::string &fileName, const std::string &x,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Torus(" << GModel::current()->getMaxElementaryNumber(3) + 1
-            << ") = {" << x << ", " << y << ", " << z << ", " << r1 << ", " << r2;
-    if(alpha.size()) sstream << ", " << alpha;
-    sstream << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Torus(" << GModel::current()->getMaxElementaryNumber(3) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << r1 << ", " << r2;
+      if(alpha.size()) sstream << ", " << alpha;
+      sstream << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -705,12 +840,17 @@ void scriptAddCone(const std::string &fileName, const std::string &x,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Cone(" << GModel::current()->getMaxElementaryNumber(3) + 1
-            << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
-            << ", " << dz << ", " << r1 << ", " << r2;
-    if(alpha.size()) sstream << ", " << alpha;
-    sstream << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Cone(" << GModel::current()->getMaxElementaryNumber(3) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
+              << ", " << dz << ", " << r1 << ", " << r2;
+      if(alpha.size()) sstream << ", " << alpha;
+      sstream << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -722,10 +862,15 @@ void scriptAddWedge(const std::string &fileName, const std::string &x,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Wedge(" << GModel::current()->getMaxElementaryNumber(3) + 1
-            << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
-            << ", " << dz << ", " << ltx << "};";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Wedge(" << GModel::current()->getMaxElementaryNumber(3) + 1
+              << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
+              << ", " << dz << ", " << ltx << "};";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -736,12 +881,17 @@ void scriptTranslate(const std::string &fileName,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Translate {" << tx << ", " << ty << ", " << tz << "} {\n  ";
-    if(duplicata) sstream << "Duplicata { ";
-    sstream << dimTags2String(l, lang);
-    if(duplicata) sstream << "}";
-    sstream << "\n}";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Translate {" << tx << ", " << ty << ", " << tz << "} {\n  ";
+      if(duplicata) sstream << "Duplicata { ";
+      sstream << dimTags2String(l, lang);
+      if(duplicata) sstream << "}";
+      sstream << "\n}";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -754,13 +904,18 @@ void scriptRotate(const std::string &fileName,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Rotate {{" << ax << ", " << ay << ", " << az << "}, {" << px
-            << ", " << py << ", " << pz << "}, " << angle << "} {\n  ";
-    if(duplicata) sstream << "Duplicata { ";
-    sstream << dimTags2String(l, lang);
-    if(duplicata) sstream << "}";
-    sstream << "\n}";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Rotate {{" << ax << ", " << ay << ", " << az << "}, {" << px
+              << ", " << py << ", " << pz << "}, " << angle << "} {\n  ";
+      if(duplicata) sstream << "Duplicata { ";
+      sstream << dimTags2String(l, lang);
+      if(duplicata) sstream << "}";
+      sstream << "\n}";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -772,13 +927,18 @@ void scriptDilate(const std::string &fileName,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Dilate {{" << cx << ", " << cy << ", " << cz << "}, {" << sx
-            << ", " << sy << ", " << sz << "}} {\n  ";
-    if(duplicata) sstream << "Duplicata { ";
-    sstream << dimTags2String(l, lang);
-    if(duplicata) sstream << "}";
-    sstream << "\n}";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Dilate {{" << cx << ", " << cy << ", " << cz << "}, {" << sx
+              << ", " << sy << ", " << sz << "}} {\n  ";
+      if(duplicata) sstream << "Duplicata { ";
+      sstream << dimTags2String(l, lang);
+      if(duplicata) sstream << "}";
+      sstream << "\n}";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -789,13 +949,18 @@ void scriptMirror(const std::string &fileName,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Symmetry {" << sa << ", " << sb << ", " << sc << ", " << sd
-            << "} {\n  ";
-    if(duplicata) sstream << "Duplicata { ";
-    sstream << dimTags2String(l, lang);
-    if(duplicata) sstream << "}";
-    sstream << "\n}";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Symmetry {" << sa << ", " << sb << ", " << sc << ", " << sd
+              << "} {\n  ";
+      if(duplicata) sstream << "Duplicata { ";
+      sstream << dimTags2String(l, lang);
+      if(duplicata) sstream << "}";
+      sstream << "\n}";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -807,14 +972,19 @@ void scriptExtrude(const std::string &fileName,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  "
-            << dimTags2String(l, lang);
-    if(extrudeMesh) {
-      sstream << "Layers {" << layers << "}; ";
-      if(recombineMesh) sstream << "Recombine;";
+    if(lang == "geo") {
+      sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  "
+              << dimTags2String(l, lang);
+      if(extrudeMesh) {
+        sstream << "Layers {" << layers << "}; ";
+        if(recombineMesh) sstream << "Recombine;";
+      }
+      sstream << "\n}";
+      addInFile(sstream.str(), fileName, lang);
     }
-    sstream << "\n}";
-    addInFile(sstream.str(), fileName, lang);
+    else {
+      // TODO
+    }
   }
 }
 
@@ -828,15 +998,20 @@ void scriptProtude(const std::string &fileName,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {" << px
-            << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
-            << dimTags2String(l, lang);
-    if(extrudeMesh) {
-      sstream << "Layers{" << layers << "}; ";
-      if(recombineMesh) sstream << "Recombine;";
+    if(lang == "geo") {
+      sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {" << px
+              << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
+              << dimTags2String(l, lang);
+      if(extrudeMesh) {
+        sstream << "Layers{" << layers << "}; ";
+        if(recombineMesh) sstream << "Recombine;";
+      }
+      sstream << "\n}";
+      addInFile(sstream.str(), fileName, lang);
     }
-    sstream << "\n}";
-    addInFile(sstream.str(), fileName, lang);
+    else {
+      // TODO
+    }
   }
 }
 
@@ -847,14 +1022,19 @@ void scriptAddPipe(const std::string &fileName,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    int wire = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
-    if(GModel::current()->getOCCInternals())
-      wire =
-        std::max(wire, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
-    sstream << "Wire(" << wire << ") = " << vector2String(l2, lang) << ";\n";
-    sstream << "Extrude { " << dimTags2String(l, lang) << "} Using Wire {"
-            << wire << "}\n";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      int wire = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
+      if(GModel::current()->getOCCInternals())
+        wire =
+          std::max(wire, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
+      sstream << "Wire(" << wire << ") = " << vector2String(l2, lang) << ";\n";
+      sstream << "Extrude { " << dimTags2String(l, lang) << "} Using Wire {"
+              << wire << "}\n";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -863,9 +1043,14 @@ void scriptSplitCurve(int edge_id, List_T *vertices,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    sstream << "Split Curve {" << edge_id << "} Point "
-            << list2String(vertices, lang) << ";";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Split Curve {" << edge_id << "} Point "
+              << list2String(vertices, lang) << ";";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -877,12 +1062,17 @@ void scriptBoolean(const std::string &fileName, const std::string &op,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << op << "{ " << dimTags2String(object, lang);
-    if(deleteObject) sstream << "Delete; ";
-    sstream << "}{ " << dimTags2String(tool, lang);
-    if(deleteTool) sstream << "Delete; ";
-    sstream << "}";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << op << "{ " << dimTags2String(object, lang);
+      if(deleteObject) sstream << "Delete; ";
+      sstream << "}{ " << dimTags2String(tool, lang);
+      if(deleteTool) sstream << "Delete; ";
+      sstream << "}";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -892,16 +1082,26 @@ void scriptFillet(const std::string &fileName, const std::vector<int> &regions,
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     checkOCC(sstream, lang);
-    sstream << "Fillet " << vector2String(regions, lang)
-            << vector2String(edges, lang) << "{" << radius << "}";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      sstream << "Fillet " << vector2String(regions, lang)
+              << vector2String(edges, lang) << "{" << radius << "}";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
 void scriptCoherence(const std::string &fileName)
 {
   for(auto &lang: CTX::instance()->scriptLang) {
-    addInFile("Coherence;", fileName, lang);
+    if(lang == "geo") {
+      addInFile("Coherence;", fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -911,19 +1111,29 @@ void scriptDeleteEntities(const std::string &fileName,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    if(recursive) sstream << "Recursive ";
-    sstream << "Delete {\n  " << dimTags2String(l, lang) << "\n}";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      if(recursive) sstream << "Recursive ";
+      sstream << "Delete {\n  " << dimTags2String(l, lang) << "\n}";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
 void scriptSetVisibilityAll(int mode, const std::string &fileName)
 {
   for(auto &lang: CTX::instance()->scriptLang) {
-    if(mode)
-      addInFile("Show \"*\";", fileName, lang);
-    else
-      addInFile("Hide \"*\";", fileName, lang);
+    if(lang == "geo") {
+      if(mode)
+        addInFile("Show \"*\";", fileName, lang);
+      else
+        addInFile("Hide \"*\";", fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
 
@@ -932,10 +1142,15 @@ void scriptSetVisibility(int mode, const std::vector<std::pair<int, int> > &l,
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    if(mode)
-      sstream << "Show {\n  " << dimTags2String(l, lang) << "\n}";
-    else
-      sstream << "Hide {\n  " << dimTags2String(l, lang) << "\n}";
-    addInFile(sstream.str(), fileName, lang);
+    if(lang == "geo") {
+      if(mode)
+        sstream << "Show {\n  " << dimTags2String(l, lang) << "\n}";
+      else
+        sstream << "Hide {\n  " << dimTags2String(l, lang) << "\n}";
+      addInFile(sstream.str(), fileName, lang);
+    }
+    else {
+      // TODO
+    }
   }
 }
