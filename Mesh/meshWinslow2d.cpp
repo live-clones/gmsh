@@ -573,8 +573,6 @@ static std::vector<MVertex*> build_crown (MVertex *v, const std::vector<MElement
     }
   }
 
-  
-
   std::vector<std::vector<MVertex *> > vsorted;
   SortEdgeConsecutive(veds, vsorted);
 
@@ -626,8 +624,10 @@ public:
   std::vector<MVertex *> stencil;
   const std::vector<MElement*> elements;
   std::vector<SVector3> ptsStencil;
-  std::vector<SVector3> ptsStencilParam;
-  winslowStencil (MVertex *v,  const std::vector<MElement*> &_e) : elements (_e)
+  ;
+  winslowStencil (MVertex *v,
+		  const std::vector<MElement*> &_e,
+		  GFace *gf = NULL) : elements (_e)
   {
     type = classOfStencil(_e);
     if (type == 1 && _e.size() >= 3){
@@ -641,6 +641,18 @@ public:
       GeoLog::flush();
     }
   }  
+
+  bool computeParameters (GFace *gf, std::vector<SPoint2> &ptsStencilParam){
+    ptsStencilParam.resize(stencil.size());    
+    for (size_t i=0; i< stencil.size();i++){
+      if (stencil[i]->onWhat() != gf)return false;
+      if (!reparamMeshVertexOnFace(stencil[i],gf,ptsStencilParam[i])){
+	return false;
+      }	  
+    }
+    return true;
+  }
+
   SPoint3 new3dPositionCentroid (){
     double x=0,y=0,z=0;
     for (size_t i=0;i<stencil.size();i++){
@@ -653,30 +665,85 @@ public:
     z /= stencil.size();
     return SPoint3(x,y,z);
   }
-  
-  SPoint2 new3dPosition4quadsParam (GFace *gf){
+
+  // parameter space sm
+  SPoint2 new3dPosition4quadsParam (GFace *gf, std::vector<SPoint2> &ptsStencilParam){
     /* simple unit stencil */
     double hx = 1.;
     double hy = 1.; 
-
+    
     SPoint2 p;
     center->getParameter(0, p[0]);
     center->getParameter(1, p[1]);
+    
     Pair<SVector3, SVector3> t = gf->firstDer(p);
+
+    SVector3 dudu,dvdv,dudv;
+    gf->secondDer(p, dudu, dvdv,dudv);
+
     const int order[8] = {7,1,3,5,0,6,2,4};
        
-    /* 1. Compute the winslow coefficients (alpha_i, beta_i in the Karman paper) */
-    /*    a. Compute first order derivatives of the position */
-    SVector3 r_i[2];
-    r_i[0] = 1./hx * (ptsStencil[order[0]] - ptsStencil[order[2]]);
-    r_i[1] = 1./hy * (ptsStencil[order[1]] - ptsStencil[order[3]]);
-    /*    b. Compute the alpha_i coefficients */
-    double alpha_0 = dot(r_i[1],r_i[1]);
-    double alpha_1 = dot(r_i[0],r_i[0]);
-    /*    c. Compute the beta coefficient */
-    double beta =  dot(r_i[0],r_i[1]);
+    /* Grid Generation §9 page 23 */
+
+    const double dudxi  = 1./hx * (ptsStencilParam[order[0]].x() - ptsStencilParam[order[2]].x());
+    const double dudeta = 1./hy * (ptsStencilParam[order[1]].x() - ptsStencilParam[order[3]].x());
+    const double dvdxi  = 1./hx * (ptsStencilParam[order[0]].y() - ptsStencilParam[order[2]].y());
+    const double dvdeta = 1./hy * (ptsStencilParam[order[1]].y() - ptsStencilParam[order[3]].y());
+    const double J = dudxi*dvdeta-dudeta*dvdxi;
+
+    const double gbar11 = dot(t.first(),t.first());
+    const double gbar12 = dot(t.first(),t.second());
+    const double gbar22 = dot(t.second(),t.second());
+    const double Jbar = sqrt (gbar11*gbar22-gbar12*gbar12);    
     
+    const double g11 = gbar11*dudxi*dudxi + 2*gbar12*dudxi*dvdxi+gbar22*dvdxi*dvdxi;
+    const double g22 = gbar11*dudeta*dudeta + 2*gbar12*dudeta*dvdeta+gbar22*dvdeta*dvdeta;
+    const double g12 = gbar11*dudxi*dudeta + gbar12*(dudxi*dvdeta+dudeta*dvdxi)+gbar22*dvdxi*dvdeta;
+      
     
+    const double gbar11u = 2*dot(t.first(),dudu);
+    const double gbar11v = 2*dot(t.first(),dudv);    
+    const double gbar22u = 2*dot(t.second(),dudv);
+    const double gbar22v = 2*dot(t.second(),dvdv);
+    const double gbar12u = dot(t.first(),dudv) + dot(t.second(),dudu);
+    const double gbar12v = dot(t.first(),dvdv) + dot(t.second(),dudv);
+    
+    const double uip1j = ptsStencilParam[order[0]].x();  
+    const double uim1j = ptsStencilParam[order[2]].x();  
+    const double uijp1 = ptsStencilParam[order[1]].x();  
+    const double uijm1 = ptsStencilParam[order[3]].x();  
+    const double uip1jp1 = ptsStencilParam[order[4]].x();  
+    const double uim1jp1 = ptsStencilParam[order[6]].x();  
+    const double uim1jm1 = ptsStencilParam[order[7]].x();  
+    const double uip1jm1 = ptsStencilParam[order[5]].x();  
+    
+    const double vip1j = ptsStencilParam[order[0]].y();  
+    const double vim1j = ptsStencilParam[order[2]].y();  
+    const double vijp1 = ptsStencilParam[order[1]].y();  
+    const double vijm1 = ptsStencilParam[order[3]].y();  
+    const double vip1jp1 = ptsStencilParam[order[4]].y();  
+    const double vim1jp1 = ptsStencilParam[order[6]].y();  
+    const double vim1jm1 = ptsStencilParam[order[7]].y();  
+    const double vip1jm1 = ptsStencilParam[order[5]].y();  
+
+    const double Jbaru = (1./(2*Jbar))*(gbar11*gbar22u+gbar22*gbar11u-2*gbar12*gbar12u);
+    const double Jbarv = (1./(2*Jbar))*(gbar11*gbar22v+gbar22*gbar11v-2*gbar12*gbar12v);
+
+    const double Delta2u = (1./(Jbar))*(Jbar*(gbar22u-gbar12v)-(gbar22*Jbaru-gbar12*Jbarv));
+    const double Delta2v = (1./(Jbar))*(Jbar*(gbar11v-gbar12u)-(gbar11*Jbarv-gbar12*Jbaru));
+
+    //    printf("G = %g %g %g  Gbar %g %g %g\n",g11,g22,g12,gbar11,gbar22,gbar12);
+    
+    // formulas 9.26a and 9.26b
+    double uij = (1./(4*(g11+g22))) * (2*g22*(uip1j+uim1j) + 2*g11*(uijp1+uijm1)-2*g12*(uip1jp1-uim1jp1-uip1jm1+uim1jm1) - 2*J*J*Delta2u); 
+    double vij = (1./(4*(g11+g22))) * (2*g22*(vip1j+vim1j) + 2*g11*(vijp1+vijm1)-2*g12*(vip1jp1-vim1jp1-vip1jm1+vim1jm1) - 2*J*J*Delta2v); 
+    
+    //    uij = 0.25*(uip1j+uim1j+uijp1+uijm1);
+    //    vij = 0.25*(vip1j+vim1j+vijp1+vijm1);
+    
+    SPoint2 pp (uij,vij);
+    
+    return pp*1.1-p*.1;
     
   }
   
@@ -720,7 +787,8 @@ public:
 				    + alpha_1/(hy*hy) * (ptsStencil[order[1]] + ptsStencil[order[3]])
 				    - 2. * beta * u_xy
 				    );
-    SPoint3 p (newPos.x(),newPos.y(),newPos.z());
+    const double w = 1.7;
+    SPoint3 p (w*newPos.x()+(1.-w)*center->x(),w*newPos.y()+(1.-w)*center->y(),w*newPos.z()+(1.-w)*center->z());
     return p;
   }
   
@@ -757,47 +825,22 @@ public:
 
   double smooth (GFace *gf, GEntity::GeomType GT, double radius, SPoint3 &c){
     if (stencil.empty())return 0;
-    SPoint3 p;    
-    //    printf("coucou1\n");
-    if (type == 1 && stencil.size() == 8){      
-      p = new3dPosition4quads();
-    }
-    else if (type == 1 && stencil.size() == 6){
-      p = new3dPositionCentroid();
-    }
-    else if (type == 1 && stencil.size() == 10){
-      p = new3dPositionCentroid();
-    }
-    else {
-      return 0;
-    }
-    //    printf("coucou2\n");
-    double uv[2] ; center->getParameter(0,uv[0]);center->getParameter(1,uv[1]);
-    double dx;
-    //    printf("coucou3\n");
-    if (GT == GEntity::Plane){
-      dx = sqrt ((p.x()-center->x())*(p.x()-center->x())+
-		 (p.y()-center->y())*(p.y()-center->y())+
-		 (p.z()-center->z())*(p.z()-center->z()));			
-      center->setXYZ(p.x(),p.y(),p.z());
-    }
-    else if (GT == GEntity::Sphere){
-      SVector3 vv = p - c;
-      vv.normalize();
-      vv *= radius;
-      p= SPoint3(c.x() + vv.x(),c.y() + vv.y(),c.z() + vv.z());
-      dx = sqrt ((p.x()-center->x())*(p.x()-center->x())+
-		 (p.y()-center->y())*(p.y()-center->y())+
-		 (p.z()-center->z())*(p.z()-center->z()));			
-      center->setXYZ(p.x(),p.y(),p.z());
-    }
-    else {
-      //    printf("coucou3a\n");
-      GPoint gp = CLOSESTPOINT(gf,p,uv, GT);
-      //    printf("coucou3b\n");
-      if (!gp.succeeded()){
-	return 0;
-      }
+
+    double dx = 0;
+    std::vector<SPoint2> ptsStencilParam;
+    bool paramAvailable = false;//computeParameters (gf, ptsStencilParam);
+    
+    bool param = paramAvailable &&
+      GT != GEntity::Sphere &&
+      GT != GEntity::Plane  &&
+      type == 1 &&
+      stencil.size() == 8;
+
+    //    printf("param = %d\n",param,paramAvailable);
+    
+    if (/*0 &&*/ param){// parameter plane
+      SPoint2 p2  = new3dPosition4quadsParam (gf, ptsStencilParam);
+      GPoint gp = gf->point(p2);
       dx = sqrt ((gp.x()-center->x())*(gp.x()-center->x())+
 		 (gp.y()-center->y())*(gp.y()-center->y())+
 		 (gp.z()-center->z())*(gp.z()-center->z()));			
@@ -805,8 +848,53 @@ public:
       center->setParameter(0,gp.u());
       center->setParameter(1,gp.v());
     }
-    //    printf("coucou5\n");
-    //    getchar();
+    else {// 3D + projection 
+      SPoint3 p ;
+      if (type == 1 && stencil.size() == 8){      
+	p = new3dPosition4quads();
+      }
+      else if (type == 1 && stencil.size() == 6){
+	p = new3dPositionCentroid();
+      }
+      else if (type == 1 && stencil.size() == 10){
+	p = new3dPositionCentroid();
+      }
+      else {
+	return 0;
+      }
+      double uv[2] ; center->getParameter(0,uv[0]);center->getParameter(1,uv[1]);
+      //    printf("coucou3\n");
+      if (GT == GEntity::Plane){
+	dx = sqrt ((p.x()-center->x())*(p.x()-center->x())+
+		   (p.y()-center->y())*(p.y()-center->y())+
+		   (p.z()-center->z())*(p.z()-center->z()));			
+	center->setXYZ(p.x(),p.y(),p.z());
+      }
+      else if (GT == GEntity::Sphere){
+	SVector3 vv = p - c;
+	vv.normalize();
+	vv *= radius;
+	p= SPoint3(c.x() + vv.x(),c.y() + vv.y(),c.z() + vv.z());
+	dx = sqrt ((p.x()-center->x())*(p.x()-center->x())+
+		   (p.y()-center->y())*(p.y()-center->y())+
+		   (p.z()-center->z())*(p.z()-center->z()));			
+	center->setXYZ(p.x(),p.y(),p.z());
+      }
+      else {
+	//    printf("coucou3a\n");
+	GPoint gp = CLOSESTPOINT(gf,p,uv, GT);
+	//    printf("coucou3b\n");
+	if (!gp.succeeded()){
+	  return 0;
+	}
+	dx = sqrt ((gp.x()-center->x())*(gp.x()-center->x())+
+		   (gp.y()-center->y())*(gp.y()-center->y())+
+		   (gp.z()-center->z())*(gp.z()-center->z()));			
+	center->setXYZ(gp.x(),gp.y(),gp.z());
+	center->setParameter(0,gp.u());
+	center->setParameter(1,gp.v());
+      }
+    }
     return dx;
   }
 };
@@ -1043,6 +1131,7 @@ void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads,
   v2t_cont adj;
   buildVertexToElement(quads, adj);
 
+  
   std::vector<winslowStencil> stencils;
 
   double radius;
@@ -1056,7 +1145,7 @@ void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads,
     if (it == adj.end()) continue;
     if (v->onWhat() == gf) { 
       const std::vector<MElement *> &e = it->second;
-      winslowStencil st (v, e);
+      winslowStencil st (v, e, gf);
       stencils.push_back(st);
     }
     ++it;
@@ -1077,6 +1166,20 @@ void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads,
 void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
   if (gf->triangles.size())return;
   GEntity::GeomType GT = gf->geomType();
+
+  // for (size_t i=0;i<gf->mesh_vertices.size();i++){
+  //   double u,v;
+  //   gf->mesh_vertices[i]->getParameter(0,u);
+  //   gf->mesh_vertices[i]->getParameter(1,v);
+  //   if (u == 0 && v == 0){
+  //     double uv[2];
+  //     SPoint3 xxx (gf->mesh_vertices[i]->x(),gf->mesh_vertices[i]->y(),gf->mesh_vertices[i]->z());
+  //     GPoint gp = gf->closestPoint(xxx,uv);
+  //     gf->mesh_vertices[i]->setParameter(0,gp.u());
+  //     gf->mesh_vertices[i]->setParameter(1,gp.v());
+  //   }
+  // }    
+
   
   allowProjections (gf);
   
@@ -1100,7 +1203,7 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
     MVertex *v = it->first;
     if (v->onWhat() == gf) {      
       const std::vector<MElement *> &e = it->second;
-      winslowStencil st (v, e);
+      winslowStencil st (v, e, gf);
       stencils.push_back(st);
     }
     ++it;
@@ -1125,7 +1228,7 @@ static MVertex* next_vertex (GFace *gf, MVertex *prev, MVertex *current, v2t_con
   v2t_cont::iterator it = adj.find(current);
   const std::vector<MElement *> e = it->second;
   if (current->onWhat() != gf || e.size() != 4)return NULL;
-  winslowStencil st (current, e);
+  winslowStencil st (current, e, gf);
   std::vector<MVertex *> &crown = st.stencil;
   for (size_t i=0;i<crown.size();i++){
     if (crown[i] == prev)return crown[(i+4)%8];    
@@ -1875,7 +1978,7 @@ void computeLayout (GFace * gf, FILE *f, std::map<MVertex*,int, MVertexPtrLessTh
     const std::vector<MElement *> e = it->second;
     if (v->onWhat() == gf && e.size() != 4 && newSings.find(v) != newSings.end()) {
       fprintf(f,"SP(%g,%g,%g){%d};\n",v->x(),v->y(),v->z(),newSings[v]);
-      winslowStencil st (v, e);
+      winslowStencil st (v, e, gf);
       std::vector<MVertex *> &crown = st.stencil;
       printVertex (e.size(), v,f);
       for (int i=1;i<crown.size();i+=2){

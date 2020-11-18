@@ -3558,22 +3558,6 @@ HXTStatus MultiBlock::parametrizeBock(uint64_t idBlock, BlockParametrization &bl
     // uint32_t vtri[3] = {mesh->triangles.node[3*loc2GlobTri[iT]+0],mesh->triangles.node[3*loc2GlobTri[iT]+1],mesh->triangles.node[3*loc2GlobTri[iT]+2]};
     double grad[3][3] = {{-1.,-1.,0.},{1.,0.,0.},{0.,1.,0.}};
   
-<<<<<<< HEAD
-      double jac[3][3];// = {{vtri[3]-vtri[0],vtri[4]-vtri[1],vtri[5]-vtri[2]},
-      // {vtri[6]-vtri[0],vtri[7]-vtri[1],vtri[8]-vtri[2]},
-      //		  {0,0,0}};
-      HXT_CHECK(myNormalizedCrossprod(jac[0],jac[1],jac[2]));
-      double dJac, invjac[3][3];
-      HXT_CHECK(hxtInv3x3(jac,invjac,&dJac));
-      double dphidx[3][3];
-      for(uint32_t i=0; i<3; i++){
-	dphidx[i][0] = dphidx[i][1] = dphidx[i][2] = 0;
-	for (uint32_t j = 0; j < 3; ++j) {
-	  dphidx[i][0] += grad[i][j]*invjac[0][j];
-	  dphidx[i][1] += grad[i][j]*invjac[1][j];
-	  dphidx[i][2] += grad[i][j]*invjac[2][j];
-	}
-=======
     double jac[3][3] = {{vtri[3]-vtri[0],vtri[4]-vtri[1],vtri[5]-vtri[2]},
 			{vtri[6]-vtri[0],vtri[7]-vtri[1],vtri[8]-vtri[2]},
 			{0,0,0}};
@@ -3587,7 +3571,6 @@ HXTStatus MultiBlock::parametrizeBock(uint64_t idBlock, BlockParametrization &bl
 	dphidx[i][0] += grad[i][j]*invjac[0][j];
 	dphidx[i][1] += grad[i][j]*invjac[1][j];
 	dphidx[i][2] += grad[i][j]*invjac[2][j];
->>>>>>> 1f2e6a02c823ee56208fec925a7f77b11f533b04
       }
     }
     double localMatrix[3*3]={0.0};

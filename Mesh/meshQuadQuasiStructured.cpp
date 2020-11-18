@@ -45,7 +45,7 @@
 #include <omp.h>
 #endif
 
-const int NITERWINSLOW = 100;
+const int NITERWINSLOW = 300;
 
 using std::vector;
 using std::array;
@@ -3260,7 +3260,7 @@ namespace QSQ {
 
     if (count > 0) {
       if (gf->quadrangles.size() < 10000000) {
-        Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
+	//        Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
 	//        meshWinslow2d(gf, 10);
       }
       Msg::Info("- Face %i: remeshed %li cavities around singularities ...", gf->tag(), count);
@@ -4010,8 +4010,8 @@ namespace QSQ {
 
     if (count > 0) {
       if (gf->quadrangles.size() < 1000000) {
-        Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
-        if (NITERWINSLOW)meshWinslow2d(gf, NITERWINSLOW);
+	//        Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
+	//        if (NITERWINSLOW)meshWinslow2d(gf, NITERWINSLOW);
       }
       Msg::Info("- Face %i: remeshed %li quadrilateral cavities  ...", gf->tag(), count);
     }
@@ -5057,7 +5057,7 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
           continue;
         }
       }
-      if (NITERWINSLOW)meshWinslow2d(gf,NITERWINSLOW);
+      //      if (NITERWINSLOW)meshWinslow2d(gf,NITERWINSLOW);
     }
     if (EXPORT_MESHES) gm->writeMSH("qqs_after_cavities.msh",2.2,false,true);
   }
@@ -5209,11 +5209,13 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     Msg::Warning("failed to optimize quad mesh geometry, continue");
   }
 
+  gm->writeMSH("before_winslow.msh",2.2,false,true);
+
   for (GFace* gf: faces) {
-    if (gf->quadrangles.size() < 5000) {
+    //    if (gf->quadrangles.size() < 5000) {
       Msg::Debug("- Face %i: winslow smoothing (%li quads) ...", gf->tag(), gf->quadrangles.size());
       meshWinslow2d(gf,100);
-    }
+      //    }
   }
 
 
