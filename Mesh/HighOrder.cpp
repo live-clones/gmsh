@@ -191,7 +191,9 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
     const double t = i * fact;
     u[i] = u0 + (uN - u0) * t;
     v[i] = v0 + (vN - v0) * t;
-    if(geodesic) {
+    // FIXME: don't use closestPoint for plane surfaces, as it's very slow with
+    // OCC
+    if(geodesic && gf->geomType() != GEntity::Plane) {
       SPoint3 pc(t * pN + (1. - t) * p0);
       double guess[2] = {u[i], v[i]};
       GPoint gp = gf->closestPoint(pc, guess);
@@ -343,7 +345,7 @@ static bool getEdgeVerticesOnGeo(GFace *gf, MVertex *v0, MVertex *v1,
       // FIXME: using the geodesic is sometimes a bad idea when the edge is "far
       // away" from the surface (e.g. on the diameter of a circle!)
       computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], pnt0, pnt1,
-                                   nPts + 2, true, US, VS);
+                                   nPts + 2, false, US, VS);
     }
   }
   else {
@@ -683,13 +685,17 @@ static void getFaceVerticesOnGeo(GFace *gf,
     }
     MVertex *v;
     if(reparamOK) {
-      // GPoint gp = gf->point(SPoint2(GUESS[0], GUESS[1]));
-      // closest point is not necessary (slow and for high quality HO
-      // meshes it should be optimized anyway afterwards + closest point
-      // is still buggy (e.g. BFGS for a plane "Ruled Surface")
-      GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
-      // AJ: ClosestPoint is absolutely necessary when the parameterization
-      // is degenerate...
+      // FIXME closest point is not always necessary (slow and for high quality
+      // HO meshes it should be optimized anyway afterwards + closest point is
+      // still buggy e.g. BFGS for a plane "Ruled Surface"); AJ: ClosestPoint is
+      // absolutely necessary when the parameterization is degenerate...
+      GPoint gp;
+      if(gf->geomType() == GEntity::Plane) {
+        gp = gf->point(SPoint2(GUESS[0], GUESS[1]));
+      }
+      else {
+        gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
+      }
       if(gp.g()) {
         v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
       }
