@@ -126,13 +126,7 @@ void OCCFace::_setup()
   ShapeAnalysis::GetFaceUVBounds(_s, _umin, _umax, _vmin, _vmax);
   Msg::Debug("OCC surface %d with %d parameter bounds (%g,%g)(%g,%g)", tag(),
              l_edges.size(), _umin, _umax, _vmin, _vmax);
-  // we do that for the projections to converge on the borders of the surface
-  const double du = _umax - _umin;
-  const double dv = _vmax - _vmin;
-  _umin -= std::max(fabs(du) / 100.0, 1e-12);
-  _vmin -= std::max(fabs(dv) / 100.0, 1e-12);
-  _umax += std::max(fabs(du) / 100.0, 1e-12);
-  _vmax += std::max(fabs(dv) / 100.0, 1e-12);
+
   _occface = BRep_Tool::Surface(_s);
 
   if(OCCFace::geomType() == GEntity::Sphere) {
@@ -239,8 +233,16 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
     return GFace::closestPoint(qp, initialGuess);
 #endif
 
+  // little tolerance to converge on the borders of the surface
+  const double du = _umax - _umin;
+  const double dv = _vmax - _vmin;
+  double umin = _umin - std::max(fabs(du) / 100.0, 1e-12);
+  double vmin = _vmin - std::max(fabs(dv) / 100.0, 1e-12);
+  double umax = _umax + std::max(fabs(du) / 100.0, 1e-12);
+  double vmax = _vmax + std::max(fabs(dv) / 100.0, 1e-12);
+
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, _umin, _umax, _vmin, _vmax);
+  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
 
   if(!proj.NbPoints()) {
     Msg::Debug("OCC projection of point on surface failed");
@@ -270,7 +272,16 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
     return GFace::parFromPoint(qp);
 
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, _umin, _umax, _vmin, _vmax);
+
+  // little tolerance to converge on the borders of the surface
+  const double du = _umax - _umin;
+  const double dv = _vmax - _vmin;
+  double umin = _umin - std::max(fabs(du) / 100.0, 1e-12);
+  double vmin = _vmin - std::max(fabs(dv) / 100.0, 1e-12);
+  double umax = _umax + std::max(fabs(du) / 100.0, 1e-12);
+  double vmax = _vmax + std::max(fabs(dv) / 100.0, 1e-12);
+
+  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
   if(!proj.NbPoints()) {
     Msg::Error("OCC projection of point on surface failed");
     return GFace::parFromPoint(qp);
