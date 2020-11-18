@@ -56,6 +56,7 @@ std::string opt_general_recent_file6(OPT_ARGS_STR);
 std::string opt_general_recent_file7(OPT_ARGS_STR);
 std::string opt_general_recent_file8(OPT_ARGS_STR);
 std::string opt_general_recent_file9(OPT_ARGS_STR);
+std::string opt_general_scripting_languages(OPT_ARGS_STR);
 std::string opt_general_editor(OPT_ARGS_STR);
 std::string opt_general_watch_file_pattern(OPT_ARGS_STR);
 std::string opt_general_gui_theme(OPT_ARGS_STR);

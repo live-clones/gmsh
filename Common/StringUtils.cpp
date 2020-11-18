@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <regex>
 #if defined(__CYGWIN__)
 #include <sys/cygwin.h>
 #endif
@@ -177,6 +178,12 @@ bool SplitOptionName(const std::string &fullName, std::string &category,
   return true;
 }
 
+std::string RemoveWhiteSpace(const std::string &s)
+{
+  std::regex r("\\s+");
+  return std::regex_replace(s, r, "");
+}
+
 static std::string getNextTokenInString(const std::string &msg,
                                         std::string::size_type &first,
                                         char separator)
@@ -199,11 +206,17 @@ static std::string getNextTokenInString(const std::string &msg,
   return next;
 }
 
-std::vector<std::string> SplitString(const std::string &msg, char separator)
+std::vector<std::string> SplitString(const std::string &msg, char separator,
+                                     bool removeWhiteSpace)
 {
   std::vector<std::string> out;
   std::string::size_type first = 0;
-  while(first != std::string::npos)
-    out.push_back(getNextTokenInString(msg, first, separator));
+  while(first != std::string::npos) {
+    if(removeWhiteSpace)
+      out.push_back(RemoveWhiteSpace
+                    (getNextTokenInString(msg, first, separator)));
+    else
+      out.push_back(getNextTokenInString(msg, first, separator));
+  }
   return out;
 }

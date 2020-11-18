@@ -156,6 +156,8 @@ public:
   std::string editor;
   // pattern of files to watch out for
   std::string watchFilePattern;
+  // script generator languages ("geo", "py", ...)
+  std::vector<std::string> scriptLang;
   // show tootips in the GUI?
   int tooltips;
   // enable input field scrolling (moving the mouse to change numbers)
