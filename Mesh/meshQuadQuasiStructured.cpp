@@ -6,6 +6,7 @@
 #include <map>
 #include <iostream>
 #include "meshQuadQuasiStructured.h"
+#include "meshSurfaceProjection.h"
 #include "meshGFace.h"
 #include "GmshMessage.h"
 #include "GFace.h"
@@ -22,6 +23,7 @@
 #include "meshQuadGeometry.h"
 
 
+#include "OS.h"
 #include "meshRefine.h"
 #include "discreteFace.h"
 #include "Generator.h"
@@ -5429,6 +5431,12 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     }
   }
 
+  /* Discrete projections */
+  std::map<GFace*,std::unique_ptr<SurfaceProjector> > projectors;
+  for (GFace* gf: faces) {
+    projectors[gf] = std::unique_ptr<SurfaceProjector>(new SurfaceProjector(gf));
+  }
+
   /* Use the triangulation to compute CAD face information 
    * (nb corners of each valence, euler characteristic, etc) */
   std::map<GFace*, GFaceInfo> faceInfo;
@@ -5530,11 +5538,18 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     Msg::Warning("failed to optimize quad mesh geometry, continue");
   }
 
+  constexpr bool useSurfaceProjection = true;
   for (GFace* gf: faces) {
-    if (gf->quadrangles.size() < 5000) {
-      Msg::Debug("- Face %i: winslow smoothing (%li quads) ...", gf->tag(), gf->quadrangles.size());
-      meshWinslow2d(gf,100);
+    size_t iters = 100;
+    Msg::Debug("- Face %i: winslow smoothing (%li quads, %li iters) ...", gf->tag(), gf->quadrangles.size(), iters);
+    double t1 = Cpu();
+    if (useSurfaceProjection) {
+      meshWinslow2d(gf, iters, NULL, false, projectors[gf].get());
+    } else {
+      meshWinslow2d(gf, iters, NULL, false);
     }
+    double t2 = Cpu();
+    Msg::Debug("done. (CPU %gs)", t2 - t1);
   }
 
 

@@ -410,6 +410,7 @@ bool SurfaceProjector::initialize(GFace* gf_) {
   PointCloud* _pc = new PointCloud(pts);
   PointCloudAdaptor<PointCloud>* _pca = new PointCloudAdaptor<PointCloud>(*_pc);
   static_kd_tree_t* _tree = new static_kd_tree_t(3, *_pca, KDTreeSingleIndexAdaptorParams(10));
+  _tree->buildIndex();
   tree = (void*) _tree;
   pc = (void*) _pc;
   pca = (void*) _pca;
@@ -462,7 +463,8 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
   std::vector<double> dists(N_search);
   size_t Nf = ttree->knnSearch(query.data(), N_search, &ids[0], &dists[0]);
   if (Nf == 0) {
-    Msg::Error("closestPoint in SurfaceProjector: no closest point in the kdtree");
+    Msg::Error("closestPoint in SurfaceProjector: no closest point in the kdtree (%li points) for query (%f,%f,%f)",
+        ttree->size(), query[0],query[1],query[2]);
     GPoint fail(DBL_MAX,DBL_MAX,DBL_MAX,NULL);
     fail.setNoSuccess();
     return fail;
@@ -512,10 +514,8 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
         d2min = d2;
         if (uvs.size() > 0) {
           proj = GPoint(cproj[0],cproj[1],cproj[2],gf,u,v);
-          return proj;
         } else {
           proj = GPoint(cproj[0],cproj[1],cproj[2],gf);
-          return proj;
         }
       }
 
