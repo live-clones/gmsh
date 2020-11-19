@@ -5020,7 +5020,8 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
-    for (GFace* gf: faces) {
+    for (size_t i = 0; i < faces.size(); ++i) {
+      GFace* gf = faces[i];
       if (gf->meshStatistics.status == GFace::PENDING) {
         if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
         GFaceInfo& info = faceInfo[gf];
