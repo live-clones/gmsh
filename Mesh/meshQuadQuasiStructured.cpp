@@ -4901,8 +4901,8 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
-  for (GEdge* ge: edges) {
-    ge->mesh(false);
+  for (size_t i = 0; i < edges.size(); ++i) {
+    edges[i]->mesh(false);
   }
 
   CTX::instance()->mesh.lcFactor = clscale;
