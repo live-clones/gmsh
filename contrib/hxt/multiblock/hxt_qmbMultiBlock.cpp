@@ -292,7 +292,10 @@ HXTStatus MultiBlock::splitTriMeshOnMBDecomp(){
   HXTEdges *edges=m_Edges;
   HXTMesh *mesh=edges->edg2mesh;
   for(uint64_t v=0; v<mesh->vertices.num; v++) 
-    hVal.push_back(1.0);    
+    hVal.push_back(1.0);
+  for(uint64_t t=0; t<mesh->triangles.num; t++)
+    for(size_t k=0;k<3;k++)
+      hVal[mesh->triangles.node[3*t+k]]=exp(-m_scalingFactorCrosses[3*t+k]);
   meshQuadLayout(hVal);
   std::cout<<"Storing quad mesh"<<std::endl;
   createQuadMesh();
@@ -3329,13 +3332,138 @@ HXTStatus MultiBlock::computePatchsParametrization(){
   HXTMesh *mesh = edges->edg2mesh;
   int argc=1;
   HXT_CHECK(hxtInitializeLinearSystems(&argc, NULL));
+  m_mbQuadParametrization.clear();
   for(size_t iB=0;iB<m_mbBlockTriPatchs.size();iB++){
     BlockParametrization blockParam(mesh);
     parametrizeBlock(iB, blockParam);
+    m_mbQuadParametrization.push_back(blockParam);
     std::string nameTest="dbgParam_" + std::to_string(iB) + ".pos";
     blockParam.dbgPosParam(nameTest.c_str());
   }
   return  HXT_STATUS_OK;
+}
+
+int BlockParametrization::isPointInTri(std::vector<std::array<double,3>> tri, std::array<double, 3> point, double *distance1, double *distance2){
+  *distance1 = -1.0;
+  *distance2 = -1.0;
+  int pointIsInTri=0;
+  double AB[3]={tri[1][0]-tri[0][0], tri[1][1]-tri[0][1], tri[1][2]-tri[0][2]};
+  double AC[3]={tri[2][0]-tri[0][0], tri[2][1]-tri[0][1], tri[2][2]-tri[0][2]};
+  double AM[3]={point[0]-tri[0][0],point[1]-tri[0][1],point[2]-tri[0][2]};
+  double nABC[3]={0.0,0.0,0.0}; double AMxAB[3]={0.0,0.0,0.0}; double AMxAC[3]={0.0,0.0,0.0}; double  ACxAB[3]={0.0,0.0,0.0};
+  crossprod(AB, AC, nABC);
+  crossprod(AM, AB, AMxAB);
+  crossprod(AM, AC, AMxAC);
+  crossprod(AC, AB, ACxAB);
+
+  double alpha = myDot(AMxAC, nABC)/myDot(nABC, nABC);
+  double beta = myDot(AMxAB, nABC)/myDot(ACxAB, nABC);
+  double numError =1e-10;
+  if((alpha>-numError) && (beta>-numError) && (alpha<1.0+numError) && beta<(1-alpha+numError)){
+    pointIsInTri=1;
+    *distance1 = alpha;
+    *distance2 = beta;
+  } 
+  
+  return pointIsInTri;
+}
+
+std::array<double,3> BlockParametrization::getPhysCoordFromParamCoord(std::array<double,3> paramCoord, uint64_t globNumTriHint){
+  double *coords=m_mesh->vertices.coord;
+  std::array<double,3> physicalCoord={{0.,0.,0.}};
+  int isPointBelongingToTri=0;
+  double alpha=0.0;
+  double beta=0.0;
+  if(globNumTriHint!=(uint64_t)(-1)){
+    uint32_t* nodes = m_mesh->triangles.node+3*globNumTriHint;
+    std::vector<std::array<double,3>> tri;
+    tri.reserve(3);
+    for(size_t k=0;k<3;k++){
+      uint32_t nodeLocK=m_nodesGlobalToParam[nodes[k]];
+      std::array<double,3> coordK=m_nodesParamCoord[nodeLocK];
+      tri.push_back(coordK);
+    }
+    isPointBelongingToTri=isPointInTri(tri, paramCoord, &alpha, &beta);
+    if(isPointBelongingToTri){
+      for(size_t k=0;k<3;k++){
+  	physicalCoord[k]=alpha*(coords[4*nodes[1]+k]-coords[4*nodes[0]+k])+beta*(coords[4*nodes[2]+k]-coords[4*nodes[0]+k]) + coords[4*nodes[0]+k];
+      }
+    }
+  }
+  if(!isPointBelongingToTri){
+    for(size_t k=0;k<m_triangles.size();k++){
+      uint64_t globTriNum=m_triangles[k];
+      uint32_t* nodes = m_mesh->triangles.node+3*globTriNum;
+      std::vector<std::array<double,3>> tri;
+      tri.reserve(3);
+      for(size_t k=0;k<3;k++){
+	uint32_t nodeLocK=m_nodesGlobalToParam[nodes[k]];
+	std::array<double,3> coordK=m_nodesParamCoord[nodeLocK];
+	tri.push_back(coordK);
+      }
+      isPointBelongingToTri=isPointInTri(tri, paramCoord, &alpha, &beta);
+      if(isPointBelongingToTri){
+	for(size_t k=0;k<3;k++){
+	  physicalCoord[k]=alpha*(coords[4*nodes[1]+k]-coords[4*nodes[0]+k])+beta*(coords[4*nodes[2]+k]-coords[4*nodes[0]+k]) + coords[4*nodes[0]+k];
+	}
+	break;
+      }
+    }
+  }
+  if(!isPointBelongingToTri){
+    std::cout << "Unable to find point in parametric space" << std::endl;
+    exit(0);
+  }
+  return physicalCoord;
+}
+
+std::array<double,3> BlockParametrization::getParamCoordFromPhysCoord(std::array<double,3> physCoord, uint64_t globNumTriHint){
+  double *coords=m_mesh->vertices.coord;
+  std::array<double,3> paramCoord={{0.,0.,0.}};
+  int isPointBelongingToTri=0;
+  double alpha=0.0;
+  double beta=0.0;
+  if(globNumTriHint!=(uint64_t)(-1)){
+    uint32_t* nodes = m_mesh->triangles.node+3*globNumTriHint;
+    std::vector<std::array<double,3>> tri;
+    tri.reserve(3);
+    for(size_t k=0;k<3;k++){
+      std::array<double,3> coordK={{coords[4*nodes[k]+0],coords[4*nodes[k]+1],coords[4*nodes[k]+2]}};
+      tri.push_back(coordK);
+    }
+    isPointBelongingToTri=isPointInTri(tri, physCoord, &alpha, &beta);
+    if(isPointBelongingToTri){
+      std::array<uint32_t,3> nodesParamTri={{m_nodesGlobalToParam[nodes[0]],m_nodesGlobalToParam[nodes[1]],m_nodesGlobalToParam[nodes[2]]}};
+      for(size_t k=0;k<3;k++){
+        paramCoord[k]=alpha*(m_nodesParamCoord[nodesParamTri[1]][k]-m_nodesParamCoord[nodesParamTri[0]][k])+beta*(m_nodesParamCoord[nodesParamTri[2]][k]-m_nodesParamCoord[nodesParamTri[0]][k]) + m_nodesParamCoord[nodesParamTri[0]][k];
+      }
+    }
+  }
+  if(!isPointBelongingToTri){
+    for(size_t k=0;k<m_triangles.size();k++){
+      uint64_t globTriNum=m_triangles[k];
+      uint32_t* nodes = m_mesh->triangles.node+3*globTriNum;
+      std::vector<std::array<double,3>> tri;
+      tri.reserve(3);
+      for(size_t k=0;k<3;k++){
+	std::array<double,3> coordK={{coords[4*nodes[k]+0],coords[4*nodes[k]+1],coords[4*nodes[k]+2]}};
+	tri.push_back(coordK);
+      }
+      isPointBelongingToTri=isPointInTri(tri, physCoord, &alpha, &beta);
+      if(isPointBelongingToTri){
+	std::array<uint32_t,3> nodesParamTri={{m_nodesGlobalToParam[nodes[0]],m_nodesGlobalToParam[nodes[1]],m_nodesGlobalToParam[nodes[2]]}};
+	for(size_t k=0;k<3;k++){
+	  paramCoord[k]=alpha*(m_nodesParamCoord[nodesParamTri[1]][k]-m_nodesParamCoord[nodesParamTri[0]][k])+beta*(m_nodesParamCoord[nodesParamTri[2]][k]-m_nodesParamCoord[nodesParamTri[0]][k]) + m_nodesParamCoord[nodesParamTri[0]][k];
+	}
+	break;
+      }
+    }
+  }
+  if(!isPointBelongingToTri){
+    std::cout << "Unable to find point in parametric space" << std::endl;
+    exit(0);
+  }
+  return paramCoord;
 }
 
 HXTStatus BlockParametrization::dbgPosParam(const char *fileName){
@@ -3805,6 +3933,7 @@ int MultiBlock::isPointInTri(uint64_t tri, std::array<double, 3> point, double *
   double alpha = myDot(AMxAC, nABC)/myDot(nABC, nABC);
   double beta = myDot(AMxAB, nABC)/myDot(ACxAB, nABC);
   double numError =1e-10;
+  std::cout << "alpha: " << alpha << " / beta: " << beta << std::endl;
   if((alpha>-numError) && (beta>-numError) && (alpha<1.0+numError) && beta<(1-alpha+numError)){
     pointIsInTri=1;
     *distance1 = alpha;
@@ -3883,6 +4012,16 @@ double MultiBlock::normDiffVect(std::array<double,3> *coordP1, std::array<double
   return L;
 }
 
+double MultiBlock::computeDiscreteLineLength(std::vector<std::array<double,3>> *pCoordLine){
+  double length=0.0;
+  for(uint64_t i=0;i<pCoordLine->size()-1;i++){
+    std::array<double,3> *coordP1 = &((*pCoordLine)[i]);
+    std::array<double,3> *coordP2 = &((*pCoordLine)[i+1]);
+    length+=normDiffVect(coordP2,coordP1);
+  } 
+  return length;
+}
+
 double MultiBlock::computeDiscreteLineLengthModified(std::vector<std::array<double,3>> *pCoordLine, std::vector<double> hVal){
   double length=0.0;
   for(uint64_t i=0;i<pCoordLine->size()-1;i++){
@@ -3928,6 +4067,62 @@ HXTStatus MultiBlock::lineDiscretization(std::vector<std::array<double,3>> *line
     	coordNewPoint[i]=precPoint[i] + alpha*(((*line)[currentIndice])[i]-precPoint[i]);
       }
       cumulLength+=precLength+alpha*normDiffVect(&((*line)[currentIndice]),&precPoint)*((hVal[currentIndice-1]+hVal[currentIndice])/2.0);
+    }
+    (*newLine)[nAddPoints]=coordNewPoint;
+    nAddPoints++;
+  }
+  std::array<double,3> coordNewPoint={{0.0,0.0,0.0}};
+  for(uint64_t i=0;i<coordNewPoint.size();i++)
+    coordNewPoint[i]=((*line)[line->size()-1])[i];
+  (*newLine)[nAddPoints]=coordNewPoint;
+  nAddPoints++;
+  FILE *f = fopen("newLine.pos","w");
+  fprintf(f,"View \"Nodes\" {\n");
+
+  for(uint64_t i=0; i<newLine->size(); i++){
+    int color=static_cast<int>(i);
+    fprintf(f,"SP(%g,%g,%g){%i};\n", (*newLine)[i][0], (*newLine)[i][1], (*newLine)[i][2], color);
+  }
+  fprintf(f,"};");
+  fclose(f); 
+  
+  return HXT_STATUS_OK;
+}
+
+HXTStatus MultiBlock::lineDiscretizationUniform(std::vector<std::array<double,3>> *line, uint64_t partition, std::vector<std::array<double,3>> *newLine){
+  double edgLength=computeDiscreteLineLength(line);
+  double elemLength=edgLength/(1.0*partition);
+  std::cout<<"edgLength: "<<edgLength<<std::endl;
+  int currentIndice=1;
+  (*newLine)[0]=(*line)[0];
+  int nAddPoints=1;
+  std::array<double,3> precPoint={{0.0,0.0,0.0}};
+  double cumulLength=0.0;
+  double currentLength=0.0;
+  for(uint64_t k=0;k<partition-1;k++){
+    double precLength=0.0;
+    currentLength=0.0;
+    precPoint=(*newLine)[nAddPoints-1];
+    currentLength+=normDiffVect(&((*line)[currentIndice]),&precPoint);
+    while(currentLength<elemLength){
+      precPoint=(*line)[currentIndice];
+      currentIndice++;
+      if(currentIndice==(int)line->size())
+	break;
+      precLength=currentLength;
+      currentLength+=normDiffVect(&((*line)[currentIndice]),&precPoint);
+    }
+    std::array<double,3> coordNewPoint={{0.0,0.0,0.0}};
+    if(currentIndice==(int)line->size()){
+      for(uint64_t i=0;i<coordNewPoint.size();i++)
+    	coordNewPoint[i]=((*line)[line->size()-1])[i];
+    }
+    else{
+      double alpha=(elemLength-precLength)/(normDiffVect(&((*line)[currentIndice]),&precPoint));
+      for(uint64_t i=0;i<coordNewPoint.size();i++){
+    	coordNewPoint[i]=precPoint[i] + alpha*(((*line)[currentIndice])[i]-precPoint[i]);
+      }
+      cumulLength+=precLength+alpha*normDiffVect(&((*line)[currentIndice]),&precPoint);
     }
     (*newLine)[nAddPoints]=coordNewPoint;
     nAddPoints++;
@@ -4010,7 +4205,9 @@ HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
   }
   std::cout<<" "<<std::endl;
   std::cout<<"--Get and store partition per edge--"<<std::endl;
-  computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);  
+  computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);
+  // computeAdequatePartitionPerEdge(m_minEdgLength/(2.0), hVal);
+  // computeAdequatePartitionPerEdge(3*m_minEdgLength, hVal);
   // computeAdequatePartitionPerEdge(m_sizeQuadMesh, hVal);
   for(uint64_t i=0;i<m_extraordVertices.size();i++){
     m_coordVerticesDiscretization.push_back(m_extraordVertices[i]);
@@ -4055,6 +4252,7 @@ int MultiBlock::getAllSheets(){
     if(!(edgCollected[ie])){
       currentSheet.clear();
       currentSheet.reserve(100);
+      //Check if block is not quad. In this case, consider that it's not part of the domain (puting -1 or something in this manner)
       uint64_t q0 = (uint64_t)(-1);
       uint64_t q1 = (uint64_t)(-1);
       q0 = m_mbEdg2Block[ie][0];
@@ -4151,7 +4349,8 @@ int MultiBlock::computeAdequatePartitionPerEdge(double sizeofElement, std::vecto
     for(uint64_t j=0; j<m_Sheets[i].size(); j++){   
       edgNum=sheetEdges[j];
       pCoordLine=m_mbEdges[edgNum];
-      length=computeDiscreteLineLengthModified(&pCoordLine, hVal);
+      // length=computeDiscreteLineLengthModified(&pCoordLine, hVal);
+      length=computeDiscreteLineLength(&pCoordLine);
       partitions[j]=(int)(length/sizeofElement);
       if(partitions[j]==0)
   	partitions[j]+=1;
@@ -4199,19 +4398,96 @@ void MultiBlock::getExtrVertIDmbEdg(uint64_t extrID[2],int edgID){
   return;
 }
 
+// HXTStatus MultiBlock::discretizeEdges(std::vector<double> hVal){
+//   std::vector<uint64_t> a;
+//   m_discrMbEdges.resize(m_mbEdges.size(),a);
+//   for(uint64_t i=0;i<m_mbEdges.size();i++){
+//     std::array<double,3> init={{10.0,10.0,10.0}};
+//     std::vector<std::array<double,3>> coordDiscrEdg(m_partitionPerEdge[i]+1,init);
+//     std::vector<double> hValLine;
+//     hValLine.reserve(m_mbEdges[i].size());
+//     for(size_t k=0;k<m_mbEdges[i].size();k++){
+//       double alpha=0.0;
+//       double beta=0.0;
+//       int isPointInTriBool=isPointInTri(m_mbEdgesTri[i][k], m_mbEdges[i][k], &alpha, &beta);
+//       if(!isPointInTriBool){
+// 	std::cout << "pb m_mbEdgesTri" << std::endl;
+// 	std::cout << "tri: " << m_mbEdgesTri[i][k] << std::endl;
+// 	exit(0);
+//       }
+//       uint32_t *nodesTri=m_Edges->edg2mesh->triangles.node + 3*m_mbEdgesTri[i][k];
+//       // double hNode=hVal[k];
+//       double hNode=(1-alpha-beta)*hVal[nodesTri[0]] + alpha*hVal[nodesTri[1]] + beta*hVal[nodesTri[2]];
+//       hValLine.push_back(hNode);
+//     }
+//     lineDiscretization(&(m_mbEdges[i]), hVal, m_partitionPerEdge[i],&coordDiscrEdg);
+//     // lineDiscretizationUniform(&(m_mbEdges[i]), m_partitionPerEdge[i],&coordDiscrEdg);
+//     (m_discrMbEdges[i]).reserve(m_partitionPerEdge[i]+1);
+//     uint64_t extrID[2];
+//     getExtrVertIDmbEdg(extrID, i);
+//     (m_discrMbEdges[i]).push_back(extrID[0]);
+//     for(uint64_t k=1;k<coordDiscrEdg.size()-1;k++){
+//       m_coordVerticesDiscretization.push_back(coordDiscrEdg[k]);
+//       (m_discrMbEdges[i]).push_back(m_coordVerticesDiscretization.size()-1);
+//     }
+//     (m_discrMbEdges[i]).push_back(extrID[1]);
+//   }
+//   return HXT_STATUS_OK;
+// }
+
 HXTStatus MultiBlock::discretizeEdges(std::vector<double> hVal){
   std::vector<uint64_t> a;
   m_discrMbEdges.resize(m_mbEdges.size(),a);
   for(uint64_t i=0;i<m_mbEdges.size();i++){
     std::array<double,3> init={{10.0,10.0,10.0}};
-    std::vector<std::array<double,3>> coordDiscrEdg(m_partitionPerEdge[i]+1,init);
-    lineDiscretization(&(m_mbEdges[i]), hVal, m_partitionPerEdge[i],&coordDiscrEdg);
+    std::vector<std::array<double,3>> coordDiscrEdgParam(m_partitionPerEdge[i]+1,init);
+    std::vector<double> hValLine;
+    hValLine.reserve(m_mbEdges[i].size());
+    for(size_t k=0;k<m_mbEdges[i].size();k++){
+      double alpha=0.0;
+      double beta=0.0;
+      int isPointInTriBool=isPointInTri(m_mbEdgesTri[i][k], m_mbEdges[i][k], &alpha, &beta);
+      if(!isPointInTriBool){
+	std::cout << "pb m_mbEdgesTri" << std::endl;
+	std::cout << "tri: " << m_mbEdgesTri[i][k] << std::endl;
+	exit(0);
+      }
+      uint32_t *nodesTri=m_Edges->edg2mesh->triangles.node + 3*m_mbEdgesTri[i][k];
+      // double hNode=hVal[k];
+      double hNode=(1-alpha-beta)*hVal[nodesTri[0]] + alpha*hVal[nodesTri[1]] + beta*hVal[nodesTri[2]];
+      hValLine.push_back(hNode);
+    }
+    std::vector<std::array<double,3>> paramLine;
+    paramLine.reserve(m_mbEdges[i].size());
+    double currentLength=0.0;
+    for(size_t k=0;k<m_mbEdges[i].size()-1;k++){
+      std::array<double,3> currentParamPoint={{currentLength,0.,0.}};
+      paramLine.push_back(currentParamPoint);
+      std::array<double,3> *coordP1 = &(m_mbEdges[i][k]);
+      std::array<double,3> *coordP2 = &(m_mbEdges[i][k+1]);
+      currentLength+=normDiffVect(coordP2,coordP1)*(hValLine[k]+hValLine[k+1])/2.;
+    }
+    std::array<double,3> lastParamPoint={{currentLength,0.,0.}};
+    paramLine.push_back(lastParamPoint);
+    lineDiscretizationUniform(&(paramLine), m_partitionPerEdge[i],&coordDiscrEdgParam);
     (m_discrMbEdges[i]).reserve(m_partitionPerEdge[i]+1);
     uint64_t extrID[2];
     getExtrVertIDmbEdg(extrID, i);
     (m_discrMbEdges[i]).push_back(extrID[0]);
-    for(uint64_t k=1;k<coordDiscrEdg.size()-1;k++){
-      m_coordVerticesDiscretization.push_back(coordDiscrEdg[k]);
+    for(uint64_t k=1;k<coordDiscrEdgParam.size()-1;k++){
+      size_t indLoc=0;
+      for(size_t l=0;l<m_mbEdges[i].size();l++){
+	if(paramLine[l][0]>coordDiscrEdgParam[k][0])
+	  break;
+	indLoc=l;
+      }
+      std::array<double,3> coordPhysical={{0.,0.,0.}};
+      double factLocLine=0.0;
+      factLocLine=(coordDiscrEdgParam[k][0]-paramLine[indLoc][0])/(paramLine[indLoc+1][0]-paramLine[indLoc][0]);
+      for(size_t l=0;l<3;l++){
+	coordPhysical[l]=m_mbEdges[i][indLoc][l]+factLocLine*(m_mbEdges[i][indLoc+1][l]-m_mbEdges[i][indLoc][l]);
+      }
+      m_coordVerticesDiscretization.push_back(coordPhysical);
       (m_discrMbEdges[i]).push_back(m_coordVerticesDiscretization.size()-1);
     }
     (m_discrMbEdges[i]).push_back(extrID[1]);
@@ -4224,59 +4500,102 @@ HXTStatus MultiBlock::discretizeQuads(){
   fprintf(f,"View \"Transfinite quads\"{\n");
   
   for(uint64_t i=0;i<m_mbQuads.size();i++){
-    std::vector<int> mbNodesID = m_mbQuads[i];
-    std::vector<uint64_t> mbEdgesID =  m_mbBlock2Edg[i];
-    uint64_t extrID[2];
-    getExtrVertIDmbEdg(extrID, mbEdgesID[0]);
-    std::vector<uint64_t> pointsEdg1 = m_discrMbEdges[mbEdgesID[0]];
-    if((int)extrID[0]!=mbNodesID[0])
-      std::reverse(std::begin(pointsEdg1),std::end(pointsEdg1));
-    std::vector<uint64_t> pointsEdg2 = m_discrMbEdges[mbEdgesID[1]];
-    getExtrVertIDmbEdg(extrID, mbEdgesID[1]);
-    if((int)extrID[0]!=mbNodesID[1])
-      std::reverse(std::begin(pointsEdg2),std::end(pointsEdg2));
-    std::vector<uint64_t> pointsEdg3 = m_discrMbEdges[mbEdgesID[2]];
-    getExtrVertIDmbEdg(extrID, mbEdgesID[2]);
-    if((int)extrID[0]!=mbNodesID[3])
-      std::reverse(std::begin(pointsEdg3),std::end(pointsEdg3));
-    getExtrVertIDmbEdg(extrID, mbEdgesID[3]);
-    std::vector<uint64_t> pointsEdg4 = m_discrMbEdges[mbEdgesID[3]];
-    getExtrVertIDmbEdg(extrID, mbEdgesID[3]);
-    if((int)extrID[0]!=mbNodesID[0])
-      std::reverse(std::begin(pointsEdg4),std::end(pointsEdg4));
-    uint64_t nPointsEdg1 = pointsEdg1.size();
-    uint64_t nPointsEdg2 = pointsEdg2.size();
-    std::vector<uint64_t> transfinitePoints(nPointsEdg1*nPointsEdg2,1);
-    for(uint64_t j=0; j<nPointsEdg2; j++){
-      transfinitePoints[j]=pointsEdg4[j];
-      transfinitePoints[(nPointsEdg1-1)*nPointsEdg2+j]=pointsEdg2[j];
-    }
-    for(uint64_t k=1; k<nPointsEdg1-1; k++){
-      transfinitePoints[k*nPointsEdg2+0]=pointsEdg1[k];
-      transfinitePoints[k*nPointsEdg2+nPointsEdg2-1]=pointsEdg3[k];
-    }
-    for(uint64_t k=1; k<nPointsEdg1-1; k++){
-      for(uint64_t j=1; j<nPointsEdg2-1; j++){
-	double u=(1.0*k)/(1.0*nPointsEdg1-1.0);
-	double v=(1.0*j)/(1.0*nPointsEdg2-1.0);
-	std::array<double,3> newTpoint={{0.0,0.0,0.0}};
-	for(int t=0; t<3; t++)
-	  newTpoint[t] = (1. - u) * (m_coordVerticesDiscretization[pointsEdg4[j]])[t] + u * (m_coordVerticesDiscretization[pointsEdg2[j]])[t] + (1. - v) * (m_coordVerticesDiscretization[pointsEdg1[k]])[t] + v *(m_coordVerticesDiscretization[pointsEdg3[k]])[t] -((1. - u) * (1. - v) * (m_coordVerticesDiscretization[pointsEdg4[0]])[t] + u * (1. - v) * (m_coordVerticesDiscretization[pointsEdg2[0]])[t] + u * v * (m_coordVerticesDiscretization[pointsEdg2[pointsEdg2.size()-1]])[t] + (1. - u) * v * (m_coordVerticesDiscretization[pointsEdg4[pointsEdg4.size()-1]])[t]);
-	m_coordVerticesDiscretization.push_back(newTpoint);
-	transfinitePoints[k*nPointsEdg2+j]=m_coordVerticesDiscretization.size()-1;
-	fprintf(f,"SP(%g,%g,%g){%i};\n", newTpoint[0], newTpoint[1], newTpoint[2], 1);
+    std::cout << "n edg block; " << m_mbQuads[i].size() << std::endl;
+    if(m_mbQuads[i].size()==4){
+      // std::cout << "discretize quad " << i << std::endl;
+      bool hasParametrization=false;
+      if(m_mbQuadParametrization.size()!=0)
+	hasParametrization=true;
+      std::vector<int> mbNodesID = m_mbQuads[i];
+      std::vector<uint64_t> mbEdgesID =  m_mbBlock2Edg[i];
+      uint64_t extrID[2];
+      getExtrVertIDmbEdg(extrID, mbEdgesID[0]);
+      std::vector<uint64_t> pointsEdg1 = m_discrMbEdges[mbEdgesID[0]];
+      if((int)extrID[0]!=mbNodesID[0])
+	std::reverse(std::begin(pointsEdg1),std::end(pointsEdg1));
+      std::vector<uint64_t> pointsEdg2 = m_discrMbEdges[mbEdgesID[1]];
+      getExtrVertIDmbEdg(extrID, mbEdgesID[1]);
+      if((int)extrID[0]!=mbNodesID[1])
+	std::reverse(std::begin(pointsEdg2),std::end(pointsEdg2));
+      std::vector<uint64_t> pointsEdg3 = m_discrMbEdges[mbEdgesID[2]];
+      getExtrVertIDmbEdg(extrID, mbEdgesID[2]);
+      if((int)extrID[0]!=mbNodesID[3])
+	std::reverse(std::begin(pointsEdg3),std::end(pointsEdg3));
+      getExtrVertIDmbEdg(extrID, mbEdgesID[3]);
+      std::vector<uint64_t> pointsEdg4 = m_discrMbEdges[mbEdgesID[3]];
+      getExtrVertIDmbEdg(extrID, mbEdgesID[3]);
+      if((int)extrID[0]!=mbNodesID[0])
+	std::reverse(std::begin(pointsEdg4),std::end(pointsEdg4));
+      uint64_t nPointsEdg1 = pointsEdg1.size();
+      uint64_t nPointsEdg2 = pointsEdg2.size();
+      std::vector<uint64_t> transfinitePoints(nPointsEdg1*nPointsEdg2,1);
+      for(uint64_t j=0; j<nPointsEdg2; j++){
+	transfinitePoints[j]=pointsEdg4[j];
+	transfinitePoints[(nPointsEdg1-1)*nPointsEdg2+j]=pointsEdg2[j];
       }
-    }
-    for(uint64_t k=1; k<nPointsEdg1; k++)
-      for(uint64_t j=1; j<nPointsEdg2; j++){
-	std::vector<uint64_t> nodesQuadInd;
-	nodesQuadInd.resize(4,1);
-	nodesQuadInd[0]= transfinitePoints[(k-1)*nPointsEdg2+(j-1)];
-	nodesQuadInd[1]= transfinitePoints[(k)*nPointsEdg2+(j-1)];
-	nodesQuadInd[2]= transfinitePoints[(k)*nPointsEdg2+(j)];
-	nodesQuadInd[3]= transfinitePoints[(k-1)*nPointsEdg2+(j)];
-	m_discrQuads.push_back(nodesQuadInd);
+      for(uint64_t k=1; k<nPointsEdg1-1; k++){
+	transfinitePoints[k*nPointsEdg2+0]=pointsEdg1[k];
+	transfinitePoints[k*nPointsEdg2+nPointsEdg2-1]=pointsEdg3[k];
       }
+      std::array<double,3> coordPointEdg20={{m_coordVerticesDiscretization[pointsEdg2[0]][0],m_coordVerticesDiscretization[pointsEdg2[0]][1],m_coordVerticesDiscretization[pointsEdg2[0]][2]}};
+      std::array<double,3> oldCoordPointEdg20=coordPointEdg20;
+      if(hasParametrization){
+	coordPointEdg20=m_mbQuadParametrization[i].getParamCoordFromPhysCoord(coordPointEdg20);
+	// //test phys->param then param-> phys
+	// coordPointEdg20=m_mbQuadParametrization[i].getPhysCoordFromParamCoord(coordPointEdg20);
+	// double normDiff=sqrt((coordPointEdg20[0]-oldCoordPointEdg20[0])*(coordPointEdg20[0]-oldCoordPointEdg20[0]) + (coordPointEdg20[1]-oldCoordPointEdg20[1])*(coordPointEdg20[1]-oldCoordPointEdg20[1]) + (coordPointEdg20[2]-oldCoordPointEdg20[2])*(coordPointEdg20[2]-oldCoordPointEdg20[2]));
+	// if(normDiff>1e-10){
+	// 	std::cout << "pb back and forth phys param. Normdiff=" << normDiff << std::endl;
+	// 	  exit(0);
+	// }
+	// coordPointEdg20=m_mbQuadParametrization[i].getParamCoordFromPhysCoord(coordPointEdg20);
+      }
+      std::array<double,3> coordPointEdg2End={{m_coordVerticesDiscretization[pointsEdg2[pointsEdg2.size()-1]][0],m_coordVerticesDiscretization[pointsEdg2[pointsEdg2.size()-1]][1],m_coordVerticesDiscretization[pointsEdg2[pointsEdg2.size()-1]][2]}};
+      if(hasParametrization)
+	coordPointEdg2End=m_mbQuadParametrization[i].getParamCoordFromPhysCoord(coordPointEdg2End);
+      std::array<double,3> coordPointEdg40={{m_coordVerticesDiscretization[pointsEdg4[0]][0],m_coordVerticesDiscretization[pointsEdg4[0]][1],m_coordVerticesDiscretization[pointsEdg4[0]][2]}};
+      if(hasParametrization)
+	coordPointEdg40=m_mbQuadParametrization[i].getParamCoordFromPhysCoord(coordPointEdg40);
+      std::array<double,3> coordPointEdg4End={{m_coordVerticesDiscretization[pointsEdg4[pointsEdg4.size()-1]][0],m_coordVerticesDiscretization[pointsEdg4[pointsEdg4.size()-1]][1],m_coordVerticesDiscretization[pointsEdg4[pointsEdg4.size()-1]][2]}};
+      if(hasParametrization)
+	coordPointEdg4End=m_mbQuadParametrization[i].getParamCoordFromPhysCoord(coordPointEdg4End);
+      for(uint64_t k=1; k<nPointsEdg1-1; k++){
+	std::array<double,3> coordPointEdg1k={{m_coordVerticesDiscretization[pointsEdg1[k]][0],m_coordVerticesDiscretization[pointsEdg1[k]][1],m_coordVerticesDiscretization[pointsEdg1[k]][2]}};
+	if(hasParametrization)
+	  coordPointEdg1k=m_mbQuadParametrization[i].getParamCoordFromPhysCoord(coordPointEdg1k);
+	std::array<double,3> coordPointEdg3k={{m_coordVerticesDiscretization[pointsEdg3[k]][0],m_coordVerticesDiscretization[pointsEdg3[k]][1],m_coordVerticesDiscretization[pointsEdg3[k]][2]}};
+	if(hasParametrization)
+	  coordPointEdg3k=m_mbQuadParametrization[i].getParamCoordFromPhysCoord(coordPointEdg3k);
+	for(uint64_t j=1; j<nPointsEdg2-1; j++){
+	  double u=(1.0*k)/(1.0*nPointsEdg1-1.0);
+	  double v=(1.0*j)/(1.0*nPointsEdg2-1.0);
+	  std::array<double,3> newTpoint={{0.0,0.0,0.0}};
+	  std::array<double,3> coordPointEdg2j={{m_coordVerticesDiscretization[pointsEdg2[j]][0],m_coordVerticesDiscretization[pointsEdg2[j]][1],m_coordVerticesDiscretization[pointsEdg2[j]][2]}};
+	  if(hasParametrization)
+	    coordPointEdg2j=m_mbQuadParametrization[i].getParamCoordFromPhysCoord(coordPointEdg2j);
+	  std::array<double,3> coordPointEdg4j={{m_coordVerticesDiscretization[pointsEdg4[j]][0],m_coordVerticesDiscretization[pointsEdg4[j]][1],m_coordVerticesDiscretization[pointsEdg4[j]][2]}};
+	  if(hasParametrization)
+	    coordPointEdg4j=m_mbQuadParametrization[i].getParamCoordFromPhysCoord(coordPointEdg4j);
+	  for(int t=0; t<3; t++)
+	    newTpoint[t] = (1. - u) * coordPointEdg4j[t] + u * coordPointEdg2j[t] + (1. - v) * coordPointEdg1k[t] + v *coordPointEdg3k[t] -((1. - u) * (1. - v) * coordPointEdg40[t] + u * (1. - v) * coordPointEdg20[t] + u * v * coordPointEdg2End[t] + (1. - u) * v * coordPointEdg4End[t]);
+	  if(hasParametrization)
+	    newTpoint=m_mbQuadParametrization[i].getPhysCoordFromParamCoord(newTpoint);
+	  m_coordVerticesDiscretization.push_back(newTpoint);
+	  transfinitePoints[k*nPointsEdg2+j]=m_coordVerticesDiscretization.size()-1;
+	  fprintf(f,"SP(%g,%g,%g){%i};\n", newTpoint[0], newTpoint[1], newTpoint[2], 1);
+	}
+      }
+      for(uint64_t k=1; k<nPointsEdg1; k++)
+	for(uint64_t j=1; j<nPointsEdg2; j++){
+	  std::vector<uint64_t> nodesQuadInd;
+	  nodesQuadInd.resize(4,1);
+	  nodesQuadInd[0]= transfinitePoints[(k-1)*nPointsEdg2+(j-1)];
+	  nodesQuadInd[1]= transfinitePoints[(k)*nPointsEdg2+(j-1)];
+	  nodesQuadInd[2]= transfinitePoints[(k)*nPointsEdg2+(j)];
+	  nodesQuadInd[3]= transfinitePoints[(k-1)*nPointsEdg2+(j)];
+	  m_discrQuads.push_back(nodesQuadInd);
+	}
+    }
   }
   
   fprintf(f,"};");
