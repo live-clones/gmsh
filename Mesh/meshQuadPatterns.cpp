@@ -35,6 +35,7 @@
 #include "qmt_utils.hpp" // For debug printing
 #include "row_echelon_integer.hpp"
 #include "meshQuadData.hpp"
+#include "meshSurfaceProjection.h"
 #include "StringUtils.h"
 
 
@@ -508,22 +509,37 @@ namespace QuadPatternMatching {
 
 
   std::vector<MVertex*> createVertices (GFace* gf, MVertex *v1, MVertex *v2, int n,
-      std::vector<MVertex*>& newVertices){
+      std::vector<MVertex*>& newVertices, SurfaceProjector* sp = NULL){
     std::vector<MVertex*> r;
     r.push_back(v1);
+    double uv1[2] = {0.,0.};
+    double uv2[2] = {0.,0.};
+    v1->getParameter(0,uv1[0]);
+    v1->getParameter(1,uv1[1]);
+    v2->getParameter(0,uv2[0]);
+    v2->getParameter(1,uv2[1]);
     for (int i=1;i<n;i++){
       double xi = (double)i/n;
       SPoint3 p ((1.-xi)*v1->x()+xi*v2->x(),(1.-xi)*v1->y()+xi*v2->y(),(1.-xi)*v1->z()+xi*v2->z());
       double uv[2] = {0.,0.};
+      uv[0] = (1.-xi)*uv1[0]+xi*uv2[0];
+      uv[1] = (1.-xi)*uv1[1]+xi*uv2[1];
       MVertex *vNew = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
-      GPoint proj = gf->closestPoint(vNew->point(),uv);
-      if (proj.succeeded()) {
-        vNew->x() = proj.x();
-        vNew->y() = proj.y();
-        vNew->z() = proj.z();
+      GPoint proj;
+      if (sp != NULL) {
+        size_t cache = (size_t) -1;
+        proj = sp->closestPoint(vNew->point(), cache, true);
       } else {
-        vNew->point() = v1->point();
-        // Msg::Error("failed to project point (%f,%f,%f) on surface %i", vNew->x(),vNew->y(),vNew->z(), gf->tag());
+        proj = gf->closestPoint(vNew->point(),uv);
+      }
+      if (proj.succeeded()) {
+        vNew->setXYZ(proj.x(), proj.y(), proj.z());
+        vNew->setParameter(0,proj.u());
+        vNew->setParameter(1,proj.v());
+      } else {
+        vNew->setXYZ(p.x(), p.y(), p.z());
+        vNew->setParameter(0,uv[0]);
+        vNew->setParameter(1,uv[1]);
       }
       gf->mesh_vertices.push_back(vNew);
       newVertices.push_back(vNew);
@@ -545,12 +561,13 @@ namespace QuadPatternMatching {
       const std::vector<MVertex*> &s2,
       const std::vector<MVertex*> &s3,
       std::vector<MElement*> &newQuads,
-      std::vector<MVertex*>& newVertices){
+      std::vector<MVertex*>& newVertices,
+      SurfaceProjector* sp = NULL){
     std::vector< std::vector<MVertex*> > grid;
     grid.push_back(s0);
     std::vector<MVertex*> s3r = reverseVector(s3);
     for (size_t i=1;i<s3r.size()-1;i++){
-      grid.push_back(createVertices(gf,s3r[i],s1[i],s0.size()-1,newVertices));
+      grid.push_back(createVertices(gf,s3r[i],s1[i],s0.size()-1,newVertices,sp));
     }
     grid.push_back(reverseVector(s2));
 
@@ -571,7 +588,9 @@ namespace QuadPatternMatching {
       const std::vector<std::vector<MVertex*> >& sides, /* vertices on the boundary, not changed */
       std::vector<MVertex*>& newVertices,               /* new vertices inside the cavity */
       std::vector<bool>& vertexIsIrregular,             /* for each new vertex, true if irregular */
-      std::vector<MElement*>& newElements               /* new quads inside the cavity */
+      std::vector<MElement*>& newElements,              /* new quads inside the cavity */
+      MVertex* oldCenter = NULL,                        /* initial guess for new positions */
+      SurfaceProjector* sp = NULL
       ) {
     constexpr bool DBG_VIZU = false;
     if (P.sides.size() != sides.size()) {
@@ -585,23 +604,27 @@ namespace QuadPatternMatching {
 
     /* Associate exising vertices to pattern sides */
     SVector3 center(0.,0.,0.);
-    double csum = 0.;
-    for (size_t s = 0; s < sides.size(); ++s) {
-      for (size_t k = 0; k < sides[s].size(); ++k) {
-        center += sides[s][k]->point();
-        csum += 1.;
+    if (oldCenter) {
+      center = oldCenter->point();
+    } else {
+      double csum = 0.;
+      for (size_t s = 0; s < sides.size(); ++s) {
+        for (size_t k = 0; k < sides[s].size(); ++k) {
+          center += sides[s][k]->point();
+          csum += 1.;
 
-        if (DBG_VIZU) {
-          if (k != sides[s].size()-1) {
-            vector<array<double,3>> pts = {SVector3(sides[s][k]->point()),SVector3(sides[s][k+1]->point())};
-            vector<double> values = {double(k),double(k+1)};
-            GeoLog::add(pts,values,"side_input_vert_"+std::to_string(s));
+          if (DBG_VIZU) {
+            if (k != sides[s].size()-1) {
+              vector<array<double,3>> pts = {SVector3(sides[s][k]->point()),SVector3(sides[s][k+1]->point())};
+              vector<double> values = {double(k),double(k+1)};
+              GeoLog::add(pts,values,"side_input_vert_"+std::to_string(s));
+            }
           }
         }
       }
+      if (csum == 0.) return false;
+      center = 1./csum * center;
     }
-    if (csum == 0.) return false;
-    center = 1./csum * center;
 
     // DBG("--------");
     for (size_t s = 0; s < P.sides.size(); ++s) {
@@ -665,24 +688,32 @@ namespace QuadPatternMatching {
 
     /* Create vertices on internal points */
     for (size_t v = 0; v < P.n; ++v) if (!P.vOnBdr[v]) {
-      double vsum = 5.; /* weight on center */
-      GPoint pp(vsum*center.x(),vsum*center.y(),vsum*center.z());
       MVertex* oneVertexOnBoundary = NULL;
-      for (size_t e: P.v2e[v]) {
-        size_t v2 = (P.edges[e][0] != v) ? P.edges[e][0] : P.edges[e][1];
-        if (P.vOnBdr[v2]) {
-          SVector3 p2 = v2mv[v2]->point();
-          if (oneVertexOnBoundary == NULL) oneVertexOnBoundary = v2mv[v2];
-          pp.x() += p2.x();
-          pp.y() += p2.y();
-          pp.z() += p2.z();
-          vsum += 1;
+      GPoint pp;
+      if (oldCenter) {
+        double uv[2];
+        oldCenter->getParameter(0,uv[0]);
+        oldCenter->getParameter(1,uv[1]);
+        pp = GPoint(oldCenter->x(),oldCenter->y(),oldCenter->z(),gf, uv[0],uv[1]);
+      } else {
+        double vsum = 5.; /* weight on center */
+        pp = GPoint(vsum*center.x(),vsum*center.y(),vsum*center.z());
+        for (size_t e: P.v2e[v]) {
+          size_t v2 = (P.edges[e][0] != v) ? P.edges[e][0] : P.edges[e][1];
+          if (P.vOnBdr[v2]) {
+            SVector3 p2 = v2mv[v2]->point();
+            if (oneVertexOnBoundary == NULL) oneVertexOnBoundary = v2mv[v2];
+            pp.x() += p2.x();
+            pp.y() += p2.y();
+            pp.z() += p2.z();
+            vsum += 1;
+          }
         }
-      }
-      if (vsum > 1) {
-        pp.x() /= vsum;
-        pp.y() /= vsum;
-        pp.z() /= vsum;
+        if (vsum > 1) {
+          pp.x() /= vsum;
+          pp.y() /= vsum;
+          pp.z() /= vsum;
+        }
       }
 
       double uv[2] = {0.,0.};
@@ -728,9 +759,9 @@ namespace QuadPatternMatching {
       int n_e = quantization[P.eChordId[e]];
       id2 vpair = sorted(v1,v2);
       if (v1 < v2) {
-        vpair2vertices[vpair] = createVertices (gf, mv1, mv2, n_e, newVertices);
+        vpair2vertices[vpair] = createVertices (gf, mv1, mv2, n_e, newVertices, sp);
       } else {
-        vpair2vertices[vpair] = createVertices (gf, mv2, mv1, n_e, newVertices);
+        vpair2vertices[vpair] = createVertices (gf, mv2, mv1, n_e, newVertices, sp);
       }
     }
 
@@ -760,7 +791,7 @@ namespace QuadPatternMatching {
         }
       }
       if (DBG_VIZU) GeoLog::flush();
-      createQuadPatch(gf, quadCurves[0], quadCurves[1], quadCurves[2], quadCurves[3], newElements, newVertices);
+      createQuadPatch(gf, quadCurves[0], quadCurves[1], quadCurves[2], quadCurves[3], newElements, newVertices, sp);
     }
     vertexIsIrregular.resize(newVertices.size(),false);
 
@@ -1480,7 +1511,8 @@ int remeshPatchWithQuadPattern(
     std::vector<MElement*> & oldElements,             /* elements to replace */
     std::vector<MVertex*>& newVertices,               /* new vertices inside the cavity */
     std::vector<bool>& vertexIsIrregular,             /* for each new vertex, true if irregular */
-    std::vector<MElement*>& newElements                /* new quads inside the cavity */
+    std::vector<MElement*>& newElements,              /* new quads inside the cavity */
+    SurfaceProjector* sp                              /* a quick way to project on GFace triangulation */
     ) {
 
   size_t N = sides.size();
@@ -1515,23 +1547,33 @@ int remeshPatchWithQuadPattern(
   }
 
   /* Add the new vertices and quads in the GFace */
-  bool oka = addQuadsAccordingToPattern(P, slt, gf, sidesr, newVertices, vertexIsIrregular, newElements);
+  MVertex* oldCenter = centerOfElements(oldElements);
+  bool oka = addQuadsAccordingToPattern(P, slt, gf, sidesr, newVertices, vertexIsIrregular, newElements, oldCenter, sp);
   if (!oka) {
     Msg::Error("failed to add quads according to pattern, weird");
     return -1;
   }
 
   /* Basic smoothing of the geometry */
-  discreteFace* df = dynamic_cast<discreteFace*>(gf);
-  if (df || gfaceContainsSeamCurves(gf)) {
-    /* Use oldElements as a geometric support */
+  if (sp != NULL) {
+    std::vector<MQuadrangle*> newQuads(newElements.size());
+    for (size_t i = 0; i < newElements.size(); ++i) 
+      newQuads[i] = dynamic_cast<MQuadrangle*>(newElements[i]);
     size_t iter = std::min((size_t)newVertices.size(),(size_t)100);
     if (iter < 20) iter = 20;
-    laplacianSmoothingWithProjection(gf, oldElements, newVertices, newElements, iter);
+    meshWinslow2d(gf, newQuads, newVertices, iter, NULL, false, sp);
   } else {
-    size_t iter = std::min((size_t)newVertices.size(),(size_t)1000);
-    if (iter < 30) iter = 30;
-    laplacianSmoothingInParametricDomain(gf, newVertices, newElements, iter);
+    discreteFace* df = dynamic_cast<discreteFace*>(gf);
+    if (df || gfaceContainsSeamCurves(gf)) {
+      /* Use oldElements as a geometric support */
+      size_t iter = std::min((size_t)newVertices.size(),(size_t)100);
+      if (iter < 20) iter = 20;
+      laplacianSmoothingWithProjection(gf, oldElements, newVertices, newElements, iter);
+    } else {
+      size_t iter = std::min((size_t)newVertices.size(),(size_t)1000);
+      if (iter < 30) iter = 30;
+      laplacianSmoothingInParametricDomain(gf, newVertices, newElements, iter);
+    }
   }
 
   /* Remove old vertices and elements */

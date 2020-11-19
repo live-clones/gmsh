@@ -12,6 +12,7 @@ class MVertex;
 class GFace;
 class MElement;
 class SPoint3;
+class SurfaceProjector;
 
 /*******************************/
 /* Hand-made pattern remeshing */
@@ -54,7 +55,8 @@ int remeshPatchWithQuadPattern(GFace* gf,
     std::vector<MElement*> & oldElements,              /* elements to replace */
     std::vector<MVertex*> & newVertices,               /* new vertices inside the cavity */
     std::vector<bool> & vertexIsIrregular,             /* for each new vertex, true if irregular */
-    std::vector<MElement*> & newElements               /* new quads inside the cavity */
+    std::vector<MElement*> & newElements,              /* new quads inside the cavity */
+    SurfaceProjector* sp = NULL                        /* a quick way to project on GFace triangulation */
     );
 
 
