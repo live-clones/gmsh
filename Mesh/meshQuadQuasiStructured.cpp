@@ -4996,7 +4996,8 @@ int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFa
   return 0;
 }
 
-int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo) {
+int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
+    bool doNotMeshSimplePatterns = true) {
   /* Disable clscale because we have a sizemap 
    * that contains the scaling */
   double clscale = CTX::instance()->mesh.lcFactor;
@@ -5026,7 +5027,7 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
         if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
         GFaceInfo& info = faceInfo[gf];
         /* Check if quad mesh pattern for simple CAD face */
-        if (info.chi == 1 && info.bdrValVertices[1].size() >= 0 
+        if (doNotMeshSimplePatterns && info.chi == 1 && info.bdrValVertices[1].size() >= 0 
             && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
           /* Check if there is a quad pattern */
           int status = meshSimpleFaceWithPattern(gf, info, true, applyMidpointSubdiv);
@@ -5471,8 +5472,13 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     }
   }
 
+  /* Compute a cross field on the triangulation, 
+   * or use a existing background if avalaible */
   std::vector<std::array<double,5> > singularities;
-  if (gm->getFields()->getBackgroundField() > 0) {
+  FieldManager *fields = gm->getFields();
+  bool crossFieldFromBackgroundField = (fields->getBackgroundField() > 0 
+      && fields->get(fields->getBackgroundField())->numComponents() == 3);
+  if (crossFieldFromBackgroundField) {
     Msg::Info("[Step 2] Using existing background field");
     bool showInView = true;
     int sr = readSingularitiesFromFile(gm, singularities, showInView);
@@ -5520,8 +5526,9 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   }
 
 
+  bool doNotMeshSimplePatterns = !crossFieldFromBackgroundField;
   Msg::Info("[Step 4] Generate unstructured quad meshes ...");
-  int s4 = generateUnstructuredQuadMeshes(gm, faceInfo);
+  int s4 = generateUnstructuredQuadMeshes(gm, faceInfo, doNotMeshSimplePatterns);
   if (s4 != 0) {
     Msg::Warning("failed to generate 2D unstructured quad meshes, abort");
     return s4;
@@ -5531,15 +5538,17 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
 
   bool SHOW_ONLY_PATTERN_MESHING = false;
 
-  /* After Step 4 because the midpoint subdivision helps */
-  Msg::Info("[Step 5] Generate pattern-based quad meshes in simple faces ...");
-  int s5 = generatePatternBasedQuadMeshesOnSimpleFaces(gm, faceInfo);
-  if (s5 != 0) {
-    Msg::Warning("failed to generate pattern-based quad meshes, abort");
-    return s5;
+  if (!doNotMeshSimplePatterns) {
+    /* After Step 4 because the midpoint subdivision helps */
+    Msg::Info("[Step 5] Generate pattern-based quad meshes in simple faces ...");
+    int s5 = generatePatternBasedQuadMeshesOnSimpleFaces(gm, faceInfo);
+    if (s5 != 0) {
+      Msg::Warning("failed to generate pattern-based quad meshes, abort");
+      return s5;
+    }
+    if (EXPORT_MESHES) gm->writeMSH("qqs_simpleCADfaces.msh",2.2,false,true);
+    if (EXPORT_MESHES) showMesh(faces, "qqs_simpleCADfaces");
   }
-  if (EXPORT_MESHES) gm->writeMSH("qqs_simpleCADfaces.msh",2.2,false,true);
-  if (EXPORT_MESHES) showMesh(faces, "qqs_simpleCADfaces");
 
   /* For visu */
   if (SHOW_ONLY_PATTERN_MESHING) {
