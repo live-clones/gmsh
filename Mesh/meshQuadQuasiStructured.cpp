@@ -58,7 +58,7 @@ namespace QSQ {
   constexpr bool DBG_VERBOSE = false;
   constexpr bool DBG_VIZU = false;
   bool SHOW_CAVITIES = false;
-  constexpr bool EXPORT_MESHES = false;
+  constexpr bool EXPORT_MESHES = true;
 
   constexpr bool PARANO = false;
 
@@ -2848,6 +2848,7 @@ namespace QSQ {
   bool remeshSmallDefects(GFace* gf) {
     Msg::Debug("- Face %i: remove small quad mesh defects (%li input quads) ...", gf->tag(), gf->quadrangles.size());
     size_t nq_in = gf->quadrangles.size();
+    if (gf->quadrangles.size() == 0) return false;
 
     // TODO FROM HERE: detect and remove diamonds
 
@@ -4667,6 +4668,8 @@ bool useDiscreteGeometry(GModel* gm) {
 }
 
 bool showMesh(const vector<GFace*>& faces, const std::string& name) {
+  Msg::Warning("showMesh disabled, too slow");
+  return false;
   std::vector<MElement*> tris;
   std::vector<MElement*> quads;
   for (GFace* gf: faces) {
@@ -5023,6 +5026,7 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
 #endif
     for (size_t i = 0; i < faces.size(); ++i) {
       GFace* gf = faces[i];
+      if (gf == NULL) continue;
       if (gf->meshStatistics.status == GFace::PENDING) {
         if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
         GFaceInfo& info = faceInfo[gf];
@@ -5329,11 +5333,18 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
 #endif
     for (size_t i = 0; i < faces.size(); ++i) {
       GFace* gf = faces[i];
+      if (gf == NULL) continue;
       transferSeamGEdgesVerticesToGFace(gf);
 
       if (gf->meshStatistics.status == GFace::PENDING) {
         if (gf->triangles.size() > 0) continue;
-        GFaceInfo& info = faceInfo.at(gf);
+        if (gf->quadrangles.size() == 0) continue;
+        auto it = faceInfo.find(gf);
+        if (it == faceInfo.end()) {
+          Msg::Error("- Face %i: info not found, weird", gf->tag());
+          continue;
+        }
+        GFaceInfo& info = it->second;
         Msg::Info("- Face %i: chi = %i, corners: %li convex, %li concave, %li highly concave -> #val3 - #val5 = %i",
             gf->tag(), info.chi, info.bdrValVertices[1].size(), info.bdrValVertices[3].size(), info.bdrValVertices[4].size(), info.intSumVal3mVal5);
         remeshSmallDefects(gf);
@@ -5357,8 +5368,10 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
 #endif
     for (size_t i = 0; i < faces.size(); ++i) {
       GFace* gf = faces[i];
+      if (gf == NULL) continue;
       if (gf->meshStatistics.status == GFace::PENDING) {
         if (gf->triangles.size() > 0) continue;
+        if (gf->quadrangles.size() == 0) continue;
         size_t nSingVal3, nSingVal5;
         vector<MVertex*> singularVertices;
         singularVerticesFromFloatingSingularities(gf, singularities, singularVertices, nSingVal3, nSingVal5);
@@ -5469,6 +5482,9 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     if (ok) {
       faceInfo[gf] = info;
       faceInfo[gf].sp = projectors[gf].get();
+    } else {
+      Msg::Error("failed to fill GFace info for face %i",gf->tag());
+      faceInfo[gf] = info;
     }
   }
 
@@ -5526,7 +5542,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   }
 
 
-  bool doNotMeshSimplePatterns = !crossFieldFromBackgroundField;
+  bool doNotMeshSimplePatterns = crossFieldFromBackgroundField;
   Msg::Info("[Step 4] Generate unstructured quad meshes ...");
   int s4 = generateUnstructuredQuadMeshes(gm, faceInfo, doNotMeshSimplePatterns);
   if (s4 != 0) {
