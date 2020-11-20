@@ -60,7 +60,7 @@ namespace QSQ {
   constexpr bool DBG_VERBOSE = false;
   constexpr bool DBG_VIZU = false;
   bool SHOW_CAVITIES = false;
-  constexpr bool EXPORT_MESHES = true;
+  constexpr bool EXPORT_MESHES = false;
 
   constexpr bool PARANO = false;
 
@@ -596,6 +596,7 @@ namespace QSQ {
     std::set<GVertex*> cornerIsNonManifold;
     std::array<std::set<GVertex*>,5> bdrValVertices;
     int intSumVal3mVal5 = 0;
+    SurfaceProjector* sp = NULL;
   };
 
   bool fillGFaceInfo(GFace* gf, GFaceInfo& info) {
@@ -2905,12 +2906,12 @@ namespace QSQ {
         if (skipCorners) continue;
         Msg::Debug("- remove defects on corners ...");
       } else if (pass == CURVE) {
-        bool skipCurves = false;
+        bool skipCurves = true;
         QMT_Utils::read_from_env("quadqsSkipCurveDefects", skipCurves);
         if (skipCurves) continue;
         Msg::Debug("- remove defects on curves ...");
       } else if (pass == SURFACE) {
-        bool skipInterior = false;
+        bool skipInterior = true;
         QMT_Utils::read_from_env("quadqsSkipInteriorDefects", skipInterior);
         if (skipInterior) continue;
         Msg::Debug("- remove defects on interior ...");
@@ -3218,7 +3219,8 @@ namespace QSQ {
   }
 
   bool remeshCavityWithQuadPatterns(GFace* gf, FCavity& cav, std::vector<MVertex*>& newSingularities,
-      const std::vector<size_t>& patternsToCheck
+      const std::vector<size_t>& patternsToCheck,
+      SurfaceProjector* sp = NULL
       ) {
     MeshHalfEdges& M = cav.M;
 
@@ -3272,7 +3274,7 @@ namespace QSQ {
       }
 
       std::vector<bool> vertexIsIrregular;
-      int status = remeshPatchWithQuadPattern(gf, sides, patternNoAndRot, quads, newVertices, vertexIsIrregular, newElements);
+      int status = remeshPatchWithQuadPattern(gf, sides, patternNoAndRot, quads, newVertices, vertexIsIrregular, newElements, sp);
       if (status != 0) {
         Msg::Error("Face %li, failed to remesh with selected quad pattern, weird", gf->tag());
         return 1;
@@ -3357,7 +3359,7 @@ namespace QSQ {
 
 
   int remeshCavitiesAroundSingularities(GFace* gf, std::vector<MVertex*>& singularVertices, 
-      const std::vector<size_t>& patternsToCheck) 
+      const std::vector<size_t>& patternsToCheck, SurfaceProjector* sp = NULL) 
   {
     Msg::Debug("- Face %i: remeshCavitiesAroundSingularities ...", gf->tag());
 
@@ -3438,7 +3440,7 @@ namespace QSQ {
         /* Remesh the cavity */
         std::vector<MVertex*> newSingularities;
         size_t nq = gf->quadrangles.size();
-        bool okr = remeshCavityWithQuadPatterns(gf,fcav,newSingularities,patternsToCheck);
+        bool okr = remeshCavityWithQuadPatterns(gf,fcav,newSingularities,patternsToCheck,sp);
         if (okr) { /* then cavity and M are no longer valid, restart */
           size_t nq2 = gf->quadrangles.size();
           if (nq2 == nq)  {
@@ -4077,7 +4079,7 @@ namespace QSQ {
   }
 
   int remeshQuadrilateralPatches(GFace* gf, std::vector<MVertex*>& singularVertices,
-      const std::vector<size_t>& patternsToCheck) {
+      const std::vector<size_t>& patternsToCheck, SurfaceProjector* sp = NULL) {
     Msg::Debug("- Face %i: remeshing quadrilateral cavities  ...", gf->tag());
 
     /* Remeshing parameters */
@@ -4195,7 +4197,7 @@ namespace QSQ {
           std::vector<MVertex*> newSingularities;
           size_t nq = gf->quadrangles.size();
 
-          bool okr = remeshCavityWithQuadPatterns(gf,fcav,newSingularities,patternsToCheck);
+          bool okr = remeshCavityWithQuadPatterns(gf,fcav,newSingularities,patternsToCheck,sp);
           if (okr) { /* then cavity and M are no longer valid, restart */
             size_t nq2 = gf->quadrangles.size();
             if (nq2 == nq)  {
@@ -4390,7 +4392,7 @@ namespace QSQ {
       std::vector<MVertex*> newVertices;
       std::vector<bool> vertexIsIrregular;
       std::vector<MElement*> newElements;
-      int status = remeshPatchWithQuadPattern(gf, sideVertices, patternNoAndRot, oldElements, newVertices, vertexIsIrregular, newElements);
+      int status = remeshPatchWithQuadPattern(gf, sideVertices, patternNoAndRot, oldElements, newVertices, vertexIsIrregular, newElements, info.sp);
       if (status == 0) {
         // Msg::Debug("- Face %li: winslow smoothing ...", gf->tag());
         // meshWinslow2d(gf, 10);
@@ -4666,6 +4668,21 @@ bool useDiscreteGeometry(GModel* gm) {
   return useDiscrete;
 }
 
+bool showMesh(const vector<GFace*>& faces, const std::string& name) {
+  std::vector<MElement*> tris;
+  std::vector<MElement*> quads;
+  for (GFace* gf: faces) {
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    tris.reserve(gf->triangles.size());
+    quads.reserve(gf->quadrangles.size());
+    for (MElement* f: gf->triangles) tris.push_back(f);
+    for (MElement* f: gf->quadrangles) quads.push_back(f);
+    geolog_elements(quads, name,0.);
+    geolog_elements(tris, name,1.);
+  }
+  GeoLog::flush();
+  return true;
+}
 
 int showQuadMeshBaseComplex(GModel* gm) {
   buildQuadMeshBaseComplex(gm);
@@ -4874,6 +4891,15 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
   /* Remove triangulations */
   std::for_each(gm->firstFace(), gm->lastFace(), deMeshGFace());
 
+  int algoRecombineOld = CTX::instance()->mesh.algoRecombine;
+  int flexibleTransfiniteOld = CTX::instance()->mesh.flexibleTransfinite;
+  int meshRecombineAllOld = CTX::instance()->mesh.recombineAll;
+  if (forceEvenNbEdges) {
+    CTX::instance()->mesh.flexibleTransfinite = 1;
+    CTX::instance()->mesh.algoRecombine = 2;
+    CTX::instance()->mesh.recombineAll = 1;
+  }
+
   std::vector<GEdge*> edges = model_edges(gm);
 
 #if defined(_OPENMP)
@@ -4947,6 +4973,11 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
       }
     }
   }
+  if (forceEvenNbEdges) {
+    CTX::instance()->mesh.algoRecombine = algoRecombineOld;
+    CTX::instance()->mesh.flexibleTransfinite = flexibleTransfiniteOld;
+    CTX::instance()->mesh.recombineAll = meshRecombineAllOld;
+  }
 
 
   return 0;
@@ -4977,7 +5008,8 @@ int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFa
   return 0;
 }
 
-int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo) {
+int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
+    bool doNotMeshSimplePatterns = true) {
   /* Disable clscale because we have a sizemap 
    * that contains the scaling */
   double clscale = CTX::instance()->mesh.lcFactor;
@@ -5003,12 +5035,13 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
-    for (GFace* gf: faces) {
+    for (size_t i = 0; i < faces.size(); ++i) {
+      GFace* gf = faces[i];
       if (gf->meshStatistics.status == GFace::PENDING) {
         if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
         GFaceInfo& info = faceInfo[gf];
         /* Check if quad mesh pattern for simple CAD face */
-        if (info.chi == 1 && info.bdrValVertices[1].size() >= 0 
+        if (doNotMeshSimplePatterns && info.chi == 1 && info.bdrValVertices[1].size() >= 0 
             && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
           /* Check if there is a quad pattern */
           int status = meshSimpleFaceWithPattern(gf, info, true, applyMidpointSubdiv);
@@ -5065,26 +5098,14 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
   CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
 
   constexpr bool SHOW_VIEW_QUADTRI = true;
-  if (SHOW_VIEW_QUADTRI) {
-    std::vector<MElement*> tris;
-    std::vector<MElement*> quads;
-    for (GFace* gf: faces) {
-      if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
-      tris.reserve(gf->triangles.size());
-      quads.reserve(gf->quadrangles.size());
-      for (MElement* f: gf->triangles) tris.push_back(f);
-      for (MElement* f: gf->quadrangles) quads.push_back(f);
-      geolog_elements(quads, "quadtri",0.);
-      geolog_elements(tris, "quadtri",1.);
-    }
-    GeoLog::flush();
-  }
+  if (EXPORT_MESHES) showMesh(faces, "qqs_quadtri");
   if (EXPORT_MESHES) gm->writeMSH("qqs_quadtri.msh",2.2,false,true);
 
   if (applyMidpointSubdiv) {
     bool secondOrderLinear = false; /* which value to use ? */
     RefineMesh(gm, secondOrderLinear, true, false);
     if (EXPORT_MESHES) gm->writeMSH("qqs_subdiv.msh",2.2,false,true);
+    if (EXPORT_MESHES) showMesh(faces, "qqs_subdiv");
   }
 
   CTX::instance()->mesh.lcFactor = clscale;
@@ -5172,7 +5193,7 @@ int move35pairsToSingularities(MeshHalfEdges& M) {
   return 0;
 }
 
-int improveQuadMeshOfFace(GFace* gf, vector<MVertex*>& singularVertices) {
+int improveQuadMeshOfFace(GFace* gf, vector<MVertex*>& singularVertices, SurfaceProjector* sp = NULL) {
   bool running = true;
   while (running) {
     running = false;
@@ -5180,15 +5201,15 @@ int improveQuadMeshOfFace(GFace* gf, vector<MVertex*>& singularVertices) {
 
     { /* 1st pass: check regular quad patch remeshing only */
       const vector<size_t> patternsToCheck = {PATTERN_QUAD_REGULAR};
-      remeshQuadrilateralPatches(gf, singularVertices, patternsToCheck);
+      remeshQuadrilateralPatches(gf, singularVertices, patternsToCheck, sp);
     }
     {
       const vector<size_t> patternsToCheck = {PATTERN_TRIANGLE,PATTERN_PENTAGON};
-      remeshCavitiesAroundSingularities(gf, singularVertices, patternsToCheck);
+      remeshCavitiesAroundSingularities(gf, singularVertices, patternsToCheck, sp);
     }
     {
       const vector<size_t> patternsToCheck = {PATTERN_QUAD_REGULAR, PATTERN_QUAD_DIAG35, PATTERN_QUAD_ALIGNED35, PATTERN_QUAD_CHORD_UTURN};
-      remeshQuadrilateralPatches(gf, singularVertices, patternsToCheck);
+      remeshQuadrilateralPatches(gf, singularVertices, patternsToCheck, sp);
     }
     // TODO: move 35 pairs inside patch ?
 
@@ -5333,6 +5354,7 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
       }
     }
     if (EXPORT_MESHES) gm->writeMSH("qqs_wo_defects.msh",2.2,false,true);
+    if (EXPORT_MESHES) showMesh(faces, "qqs_wo_defects");
     printPatternUsage();
   }
 
@@ -5364,6 +5386,7 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
       //      if (NITERWINSLOW)meshWinslow2d(gf,NITERWINSLOW);
     }
     if (EXPORT_MESHES) gm->writeMSH("qqs_after_cavities.msh",2.2,false,true);
+    if (EXPORT_MESHES) showMesh(faces, "qqs_after_cavities");
   }
 
   // vector<MVertex*> singularVertices;
@@ -5458,11 +5481,19 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   for (GFace* gf: faces) {
     GFaceInfo info;
     bool ok = fillGFaceInfo(gf, info);
-    if (ok) faceInfo[gf] = info;
+    if (ok) {
+      faceInfo[gf] = info;
+      faceInfo[gf].sp = projectors[gf].get();
+    }
   }
 
+  /* Compute a cross field on the triangulation, 
+   * or use a existing background if avalaible */
   std::vector<std::array<double,5> > singularities;
-  if (gm->getFields()->getBackgroundField() > 0) {
+  FieldManager *fields = gm->getFields();
+  bool crossFieldFromBackgroundField = (fields->getBackgroundField() > 0 
+      && fields->get(fields->getBackgroundField())->numComponents() == 3);
+  if (crossFieldFromBackgroundField) {
     Msg::Info("[Step 2] Using existing background field");
     bool showInView = true;
     int sr = readSingularitiesFromFile(gm, singularities, showInView);
@@ -5510,8 +5541,9 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   }
 
 
+  bool doNotMeshSimplePatterns = !crossFieldFromBackgroundField;
   Msg::Info("[Step 4] Generate unstructured quad meshes ...");
-  int s4 = generateUnstructuredQuadMeshes(gm, faceInfo);
+  int s4 = generateUnstructuredQuadMeshes(gm, faceInfo, doNotMeshSimplePatterns);
   if (s4 != 0) {
     Msg::Warning("failed to generate 2D unstructured quad meshes, abort");
     return s4;
@@ -5519,14 +5551,17 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
 
   bool SHOW_ONLY_PATTERN_MESHING = false;
 
-  /* After Step 4 because the midpoint subdivision helps */
-  Msg::Info("[Step 5] Generate pattern-based quad meshes in simple faces ...");
-  int s5 = generatePatternBasedQuadMeshesOnSimpleFaces(gm, faceInfo);
-  if (s5 != 0) {
-    Msg::Warning("failed to generate pattern-based quad meshes, abort");
-    return s5;
+  if (!doNotMeshSimplePatterns) {
+    /* After Step 4 because the midpoint subdivision helps */
+    Msg::Info("[Step 5] Generate pattern-based quad meshes in simple faces ...");
+    int s5 = generatePatternBasedQuadMeshesOnSimpleFaces(gm, faceInfo);
+    if (s5 != 0) {
+      Msg::Warning("failed to generate pattern-based quad meshes, abort");
+      return s5;
+    }
+    if (EXPORT_MESHES) gm->writeMSH("qqs_simpleCADfaces.msh",2.2,false,true);
+    if (EXPORT_MESHES) showMesh(faces, "qqs_simpleCADfaces");
   }
-  if (EXPORT_MESHES) gm->writeMSH("qqs_simpleCADfaces.msh",2.2,false,true);
 
   /* For visu */
   if (SHOW_ONLY_PATTERN_MESHING) {
