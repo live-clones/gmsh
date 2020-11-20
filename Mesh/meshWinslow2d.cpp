@@ -826,75 +826,56 @@ public:
 
   double smooth (GFace *gf, GEntity::GeomType GT, double radius, SPoint3 &c, SurfaceProjector* sp, size_t& cache){
     if (stencil.empty())return 0;
-
-    double dx = 0;
-    std::vector<SPoint2> ptsStencilParam;
-    bool paramAvailable = false;//computeParameters (gf, ptsStencilParam);
-    
-    bool param = paramAvailable &&
-      GT != GEntity::Sphere &&
-      GT != GEntity::Plane  &&
-      type == 1 &&
-      stencil.size() == 8;
-
-    //    printf("param = %d\n",param,paramAvailable);
-    
-    if (/*0 &&*/ param){// parameter plane
-      SPoint2 p2  = new3dPosition4quadsParam (gf, ptsStencilParam);
-      GPoint gp = gf->point(p2);
+    SPoint3 p;    
+    //    printf("coucou1\n");
+    if (type == 1 && stencil.size() == 8){      
+      p = new3dPosition4quads();
+    }
+    else if (type == 1 && stencil.size() == 6){
+      p = new3dPositionCentroid();
+    }
+    else if (type == 1 && stencil.size() == 10){
+      p = new3dPositionCentroid();
+    }
+    else {
+      return 0;
+    }
+    //    printf("coucou2\n");
+    double uv[2] ; center->getParameter(0,uv[0]);center->getParameter(1,uv[1]);
+    double dx;
+    //    printf("coucou3\n");
+    if (GT == GEntity::Plane){
+      dx = sqrt ((p.x()-center->x())*(p.x()-center->x())+
+          (p.y()-center->y())*(p.y()-center->y())+
+          (p.z()-center->z())*(p.z()-center->z()));			
+      center->setXYZ(p.x(),p.y(),p.z());
+    }
+    else if (GT == GEntity::Sphere){
+      SVector3 vv = p - c;
+      vv.normalize();
+      vv *= radius;
+      p= SPoint3(c.x() + vv.x(),c.y() + vv.y(),c.z() + vv.z());
+      dx = sqrt ((p.x()-center->x())*(p.x()-center->x())+
+          (p.y()-center->y())*(p.y()-center->y())+
+          (p.z()-center->z())*(p.z()-center->z()));			
+      center->setXYZ(p.x(),p.y(),p.z());
+    }
+    else {
+      GPoint gp;
+      if (sp) {
+        gp = sp->closestPoint(p.data(), cache, true);
+      } else {
+        gp = CLOSESTPOINT(gf,p,uv, GT);
+      }
+      if (!gp.succeeded()){
+        return 0;
+      }
       dx = sqrt ((gp.x()-center->x())*(gp.x()-center->x())+
           (gp.y()-center->y())*(gp.y()-center->y())+
           (gp.z()-center->z())*(gp.z()-center->z()));			
       center->setXYZ(gp.x(),gp.y(),gp.z());
       center->setParameter(0,gp.u());
       center->setParameter(1,gp.v());
-    }
-    else {// 3D + projection 
-      SPoint3 p ;
-      if (type == 1 && stencil.size() == 8){      
-	p = new3dPosition4quads();
-      }
-      else if (type == 1 && stencil.size() == 6){
-	p = new3dPositionCentroid();
-      }
-      else if (type == 1 && stencil.size() == 10){
-	p = new3dPositionCentroid();
-      }
-      else {
-	return 0;
-      }
-      double uv[2] ; center->getParameter(0,uv[0]);center->getParameter(1,uv[1]);
-      //    printf("coucou3\n");
-      if (GT == GEntity::Plane){
-	dx = sqrt ((p.x()-center->x())*(p.x()-center->x())+
-		   (p.y()-center->y())*(p.y()-center->y())+
-		   (p.z()-center->z())*(p.z()-center->z()));			
-	center->setXYZ(p.x(),p.y(),p.z());
-      }
-      else if (GT == GEntity::Sphere){
-	SVector3 vv = p - c;
-	vv.normalize();
-	vv *= radius;
-	p= SPoint3(c.x() + vv.x(),c.y() + vv.y(),c.z() + vv.z());
-	dx = sqrt ((p.x()-center->x())*(p.x()-center->x())+
-		   (p.y()-center->y())*(p.y()-center->y())+
-		   (p.z()-center->z())*(p.z()-center->z()));			
-	center->setXYZ(p.x(),p.y(),p.z());
-      }
-      else {
-	//    printf("coucou3a\n");
-	GPoint gp = CLOSESTPOINT(gf,p,uv, GT);
-	//    printf("coucou3b\n");
-	if (!gp.succeeded()){
-	  return 0;
-	}
-	dx = sqrt ((gp.x()-center->x())*(gp.x()-center->x())+
-		   (gp.y()-center->y())*(gp.y()-center->y())+
-		   (gp.z()-center->z())*(gp.z()-center->z()));			
-	center->setXYZ(gp.x(),gp.y(),gp.z());
-	center->setParameter(0,gp.u());
-	center->setParameter(1,gp.v());
-      }
     }
     return dx;
   }
