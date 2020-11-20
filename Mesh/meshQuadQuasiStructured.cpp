@@ -449,10 +449,19 @@ namespace QSQ {
     std::unordered_map<GVertex*,std::vector<GEdge*> > gv2ge;
     std::unordered_map<MVertex*,std::vector<MLine*> > v2l;
     for (GEdge* ge: gf->edges()) {
-      GVertex* v1 = ge->vertices()[0];
-      GVertex* v2 = ge->vertices()[1];
-      gv2ge[v1].push_back(ge);
-      gv2ge[v2].push_back(ge);
+      double len = ge->length();
+      for (GVertex* gv: ge->vertices()) {
+        gv2ge[gv].push_back(ge);
+        if (gv->mesh_vertices.size() == 0) {
+          MVertex* v = gv->mesh_vertices[9];
+          auto it = minDistToOtherFeature.find(v);
+          if (it == minDistToOtherFeature.end()) {
+            minDistToOtherFeature[v] = len;
+          } else if (len < it->second) {
+            it->second = len;
+          }
+        }
+      }
     }
 
     /* Check distance from GVertex to non-adjacent GEdge */
@@ -524,6 +533,11 @@ namespace QSQ {
       std::unordered_map<MVertex*,double>& sizemap,
       double smallestMultiplier = 0.1,
       double gradientMax = 1.4) { /* to avoid very small size map */
+
+    // TODO:
+    // - take into account prescribed sizes
+    // - take into account size map ?
+
     std::unordered_map<MVertex*,double> minDistToOtherFeature;
     for (GFace* gf: faces) {
       computeMinimumDistanceToNonAdjacentGEdges(gf, minDistToOtherFeature);
@@ -2916,12 +2930,12 @@ namespace QSQ {
         if (skipCorners) continue;
         Msg::Debug("- remove defects on corners ...");
       } else if (pass == CURVE) {
-        bool skipCurves = true;
+        bool skipCurves = false;
         QMT_Utils::read_from_env("quadqsSkipCurveDefects", skipCurves);
         if (skipCurves) continue;
         Msg::Debug("- remove defects on curves ...");
       } else if (pass == SURFACE) {
-        bool skipInterior = true;
+        bool skipInterior = false;
         QMT_Utils::read_from_env("quadqsSkipInteriorDefects", skipInterior);
         if (skipInterior) continue;
         Msg::Debug("- remove defects on interior ...");
