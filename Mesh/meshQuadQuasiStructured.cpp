@@ -639,9 +639,18 @@ namespace QSQ {
         }
       }
     }
+    std::unordered_set<GVertex*> boundaryCADcorners;
+    for (GEdge* ge: gf->edges()) for (GVertex* gv: ge->vertices()) {
+      boundaryCADcorners.insert(gv);
+    }
+
     /* Check if corner is manifold */
     for (const auto& kv: corner2tris) {
       GVertex* gv = kv.first;
+      {
+        auto it = boundaryCADcorners.find(gv);
+        if (it == boundaryCADcorners.end()) continue; /* ignore interior GVertex */
+      }
       std::vector<MElement*> elts = kv.second;
       vector<MVertex*> bnd;
       bool okb = buildBoundary(elts.begin(),elts.end(), bnd);
@@ -660,7 +669,7 @@ namespace QSQ {
       } else if (angle_deg < 360.) {
         info.bdrValVertices[4].insert(gv);
       } else {
-        Msg::Error("weird angle, corner (surf=%i,node=%i), angle = %f deg", gf->tag(), gv->tag(), angle_deg);
+        Msg::Warning("CAD vertex (surf=%i,node=%i) has angle = %f deg (interior node ?)", gf->tag(), gv->tag(), angle_deg);
         continue;
       }
     }
@@ -5000,7 +5009,7 @@ int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFa
 }
 
 int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
-    bool doNotMeshSimplePatterns = true) {
+    bool usePatternsOnSimpleCADFaces = true) {
   /* Disable clscale because we have a sizemap 
    * that contains the scaling */
   double clscale = CTX::instance()->mesh.lcFactor;
@@ -5030,8 +5039,12 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
       if (gf->meshStatistics.status == GFace::PENDING) {
         if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
         GFaceInfo& info = faceInfo[gf];
+
+        Msg::Debug("- Face %i: chi = %i, corners: %li convex, %li concave, %li highly concave -> #val3 - #val5 = %i",
+            gf->tag(), info.chi, info.bdrValVertices[1].size(), info.bdrValVertices[3].size(), info.bdrValVertices[4].size(), info.intSumVal3mVal5);
+
         /* Check if quad mesh pattern for simple CAD face */
-        if (doNotMeshSimplePatterns && info.chi == 1 && info.bdrValVertices[1].size() >= 0 
+        if (usePatternsOnSimpleCADFaces && info.chi == 1 && info.bdrValVertices[1].size() >= 0 
             && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
           /* Check if there is a quad pattern */
           int status = meshSimpleFaceWithPattern(gf, info, true, applyMidpointSubdiv);
@@ -5542,9 +5555,9 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   }
 
 
-  bool doNotMeshSimplePatterns = crossFieldFromBackgroundField;
+  bool usePatternsOnSimpleCADFaces = !crossFieldFromBackgroundField;
   Msg::Info("[Step 4] Generate unstructured quad meshes ...");
-  int s4 = generateUnstructuredQuadMeshes(gm, faceInfo, doNotMeshSimplePatterns);
+  int s4 = generateUnstructuredQuadMeshes(gm, faceInfo, usePatternsOnSimpleCADFaces);
   if (s4 != 0) {
     Msg::Warning("failed to generate 2D unstructured quad meshes, abort");
     return s4;
@@ -5554,7 +5567,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
 
   bool SHOW_ONLY_PATTERN_MESHING = false;
 
-  if (!doNotMeshSimplePatterns) {
+  if (usePatternsOnSimpleCADFaces) {
     /* After Step 4 because the midpoint subdivision helps */
     Msg::Info("[Step 5] Generate pattern-based quad meshes in simple faces ...");
     int s5 = generatePatternBasedQuadMeshesOnSimpleFaces(gm, faceInfo);
