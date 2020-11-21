@@ -104,7 +104,7 @@ IntPt *getGQQPts(int order)
     }
     GQQGL[n] = intpt;
   }
-  return GQQ[n];
+  return GQQGL[n];
 }
 
 int getNGQQPts(int order)

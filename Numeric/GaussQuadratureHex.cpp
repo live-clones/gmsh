@@ -108,7 +108,7 @@ IntPt *getGQHPts(int order)
     }
     GQHGL[n] = intpt;
   }
-  return GQH[n];
+  return GQHGL[n];
 }
 
 int getNGQHPts(int order)
