@@ -3,34 +3,29 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshMessage.h"
+#include <map>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
-IntPt *GQL[20] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static std::map<int, IntPt*> GQL;
 
 IntPt *getGQLPts(int order)
 {
-  // Number of Gauss Point:
-  // (order + 1) / 2 *ROUNDED UP*
+  // Number of Gauss Point: (order + 1) / 2 *ROUNDED UP*
   int n = (order + 1) / (double)2 + 0.5;
-  int index = n;
-  if(index >= (int)(sizeof(GQL) / sizeof(IntPt *))) {
-    Msg::Error("Increase size of GQL in gauss quadrature line");
-    index = 0;
-  }
-  if(!GQL[index]) {
+  if(!GQL.count(n)) {
     double *pt, *wt;
     gmshGaussLegendre1D(n, &pt, &wt);
-    GQL[index] = new IntPt[n];
+    IntPt *intpt = new IntPt[n];
     for(int i = 0; i < n; i++) {
-      GQL[index][i].pt[0] = pt[i];
-      GQL[index][i].pt[1] = 0.0;
-      GQL[index][i].pt[2] = 0.0;
-      GQL[index][i].weight = wt[i];
+      intpt[i].pt[0] = pt[i];
+      intpt[i].pt[1] = 0.0;
+      intpt[i].pt[2] = 0.0;
+      intpt[i].weight = wt[i];
     }
+    GQL[n] = intpt;
   }
-  return GQL[index];
+  return GQL[n];
 }
 
 int getNGQLPts(int order) { return (order + 1) / (double)2 + 0.5; }

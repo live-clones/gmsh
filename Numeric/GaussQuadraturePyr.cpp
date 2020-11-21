@@ -3,28 +3,16 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshMessage.h"
+#include <map>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 #include "GaussJacobi1D.h"
 
-IntPt *getGQPyrPts(int order);
-int getNGQPyrPts(int order);
-
-IntPt *GQPyr[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static std::map<int, IntPt *> GQPyr;
 
 IntPt *getGQPyrPts(int order)
 {
-  int index = order;
-
-  if(index >= (int)(sizeof(GQPyr) / sizeof(IntPt *))) {
-    Msg::Error("Increase size of GQPyr in gauss quadrature pyr");
-    index = 0;
-  }
-
-  if(!GQPyr[index]) {
+  if(!GQPyr.count(order)) {
     int nbPtUV = order / 2 + 1;
     int nbPtW = order / 2 + 1;
     int nbPtUV2 = nbPtUV * nbPtUV;
@@ -35,7 +23,7 @@ IntPt *getGQPyrPts(int order)
     double *GJ20Pt, *GJ20Wt;
     getGaussJacobiQuadrature(2, 0, nbPtW, &GJ20Pt, &GJ20Wt);
 
-    GQPyr[index] = new IntPt[getNGQPyrPts(order)];
+    IntPt *intpt = new IntPt[getNGQPyrPts(order)];
 
     int l = 0;
     for(int i = 0; i < getNGQPyrPts(order); i++) {
@@ -54,21 +42,21 @@ IntPt *getGQPyrPts(int order)
 
       // now incorporate the Duffy transformation from pyramid to hexahedron
 
-      GQPyr[index][l].pt[0] = 0.5 * (1 - wp) * up;
-      GQPyr[index][l].pt[1] = 0.5 * (1 - wp) * vp;
-      GQPyr[index][l].pt[2] = 0.5 * (1 + wp);
+      intpt[l].pt[0] = 0.5 * (1 - wp) * up;
+      intpt[l].pt[1] = 0.5 * (1 - wp) * vp;
+      intpt[l].pt[2] = 0.5 * (1 + wp);
 
       wt *= 0.125;
-      GQPyr[index][l++].weight = wt * 4. / 3.;
+      intpt[l++].weight = wt * 4. / 3.;
     }
+    GQPyr[order] = intpt;
   }
-  return GQPyr[index];
+  return GQPyr[order];
 }
 
 int getNGQPyrPts(int order)
 {
   int nbPtUV = order / 2 + 1;
   int nbPtW = order / 2 + 1;
-
   return nbPtUV * nbPtUV * nbPtW;
 }

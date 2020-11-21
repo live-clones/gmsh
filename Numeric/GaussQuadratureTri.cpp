@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshMessage.h"
+#include <map>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
@@ -87,7 +87,6 @@ IntPt GQT8[16] = {
   {{0.728492392955404, 0.263112829634638, 0.}, 0.013615157087217}};
 
 IntPt *GQT[9] = {GQT1, GQT1, GQT2, GQT3, GQT4, GQT5, GQT6, GQT7, GQT8};
-IntPt *GQTdegen[17] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int GQTnPt[9] = {1, 1, 3, 4, 6, 7, 12, 13, 16};
 
 // -----------------------------------------------------------------------------
@@ -878,33 +877,26 @@ IntPt triP20Solin[79] = {
 // 3 negative weights, 9 points outside of the triangle,  total sum of the
 // weights is 0.5
 
-IntPt *GQTSolin[21] = {
+static IntPt *GQTSolin[21] = {
   triP1Solin,  triP1Solin,  triP2Solin,  triP3Solin,  triP4Solin,  triP5Solin,
   triP6Solin,  triP7Solin,  triP8Solin,  triP9Solin,  triP10Solin, triP11Solin,
   triP12Solin, triP13Solin, triP14Solin, triP15Solin, triP16Solin, triP17Solin,
   triP18Solin, triP19Solin, triP20Solin};
-
-int GQTnPtSolin[21] = {1,  1,  3,  4,  6,  7,  12, 13, 16, 19, 25,
-                       27, 33, 37, 42, 48, 52, 61, 70, 73, 79};
-
-IntPt *getGQTPts(int order);
-int getNGQTPts(int order);
+static int GQTnPtSolin[21] = {1,  1,  3,  4,  6,  7,  12, 13, 16, 19, 25,
+                              27, 33, 37, 42, 48, 52, 61, 70, 73, 79};
+static std::map<int, IntPt*> GQTGL;
 
 IntPt *getGQTPts(int order)
 {
   if(order < 21) return GQTSolin[order];
   int n = (order + 3) / 2;
-  int index = n - 4;
-  if(index >= (int)(sizeof(GQTdegen) / sizeof(IntPt *))) {
-    Msg::Error("Increase size of GQTdegen in gauss quadrature tri");
-    index = 0;
-  }
-  if(!GQTdegen[index]) {
+  if(!GQTGL.count(n)) {
     int npts = n * n;
-    GQTdegen[index] = new IntPt[npts];
-    GaussLegendreTri(n, n, GQTdegen[index]);
+    IntPt *intpt = new IntPt[npts];
+    GaussLegendreTri(n, n, intpt);
+    GQTGL[n] = intpt;
   }
-  return GQTdegen[index];
+  return GQTGL[n];
 }
 
 int getNGQTPts(int order)
