@@ -91,7 +91,8 @@ IntPt *getGQHPts(int order)
 {
   if(order <= 2) return GQH[order];
   int n = (order + 1) / (float)2 + 0.5;
-  if(GQHGL.size() < order + 1) GQHGL.resize(order + 1, nullptr);
+  if(static_cast<int>(GQHGL.size()) < order + 1)
+    GQHGL.resize(order + 1, nullptr);
   if(!GQHGL[order]) {
     double *pt, *wt;
     gmshGaussLegendre1D(n, &pt, &wt);

@@ -12,7 +12,8 @@ static std::vector<IntPt *> GQPyr(40, nullptr);
 
 IntPt *getGQPyrPts(int order)
 {
-  if(GQPyr.size() < order + 1) GQPyr.resize(order + 1, nullptr);
+  if(static_cast<int>(GQPyr.size()) < order + 1)
+    GQPyr.resize(order + 1, nullptr);
   if(!GQPyr[order]) {
     int nbPtUV = order / 2 + 1;
     int nbPtW = order / 2 + 1;

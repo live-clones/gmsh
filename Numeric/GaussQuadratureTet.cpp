@@ -3347,7 +3347,8 @@ IntPt *getGQTetPts(int order)
 {
   if(order < 22) return GQTetSolin[order];
   int n = (order + 4) / 2;
-  if(GQTetGL.size() < order + 1) GQTetGL.resize(order + 1, nullptr);
+  if(static_cast<int>(GQTetGL.size()) < order + 1)
+    GQTetGL.resize(order + 1, nullptr);
   if(!GQTetGL[order]) {
     int npts = n * n * n;
     IntPt *intpt = new IntPt[npts];

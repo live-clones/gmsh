@@ -89,7 +89,8 @@ IntPt *getGQQPts(int order)
 {
   if(order <= 2) return GQQ[order];
   int n = (order + 1) / (float)2 + 0.5;
-  if(GQQGL.size() < order + 1) GQQGL.resize(order + 1, nullptr);
+  if(static_cast<int>(GQQGL.size()) < order + 1)
+    GQQGL.resize(order + 1, nullptr);
   if(!GQQGL[order]) {
     double *pt, *wt;
     gmshGaussLegendre1D(n, &pt, &wt);
