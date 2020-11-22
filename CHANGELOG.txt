@@ -1,4 +1,5 @@
-4.8.0 (Work-in-progress): small bug fixes.
+4.8.0 (Work-in-progress): improved performance of high-order meshing of OCC
+models; small bug fixes.
 
 * Incompatible API changes: new optional argument to view/probe
 
