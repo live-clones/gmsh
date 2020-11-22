@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <map>
+#include <vector>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
@@ -3341,19 +3341,20 @@ static IntPt *GQTetSolin[22] = {
 static int GQTetnPtSolin[22] = {1,   1,   4,   5,   11,   14,  24,  31,
                                 43,  53,  126, 126, 210,  210, 330, 330,
                                 495, 495, 715, 715, 1001, 1001};
-static std::map<int, IntPt*> GQTetGL;
+static std::vector<IntPt*> GQTetGL(40, nullptr);
 
 IntPt *getGQTetPts(int order)
 {
   if(order < 22) return GQTetSolin[order];
   int n = (order + 4) / 2;
-  if(!GQTetGL.count(order)) {
+  if(GQTetGL.size() < order + 1) GQTetGL.resize(order + 1, nullptr);
+  if(!GQTetGL[order]) {
     int npts = n * n * n;
     IntPt *intpt = new IntPt[npts];
     GaussLegendreTet(n, n, n, intpt);
-    GQTetGL[n] = intpt;
+    GQTetGL[order] = intpt;
   }
-  return GQTetGL[n];
+  return GQTetGL[order];
 }
 
 int getNGQTetPts(int order)

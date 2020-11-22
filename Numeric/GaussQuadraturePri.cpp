@@ -3,18 +3,19 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <map>
+#include <vector>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
-static std::map<int, IntPt*> GQP;
+static std::vector<IntPt*> GQP(40, nullptr);
 
 IntPt *getGQPriPts(int order)
 {
   int nLin = (order + 3) / 2;
   int nTri = getNGQTPts(order);
   int n = nLin * nTri;
-  if(!GQP.count(n)) {
+  if(GQP.size() < order + 1) GQP.resize(order + 1, nullptr);
+  if(!GQP[order]) {
     double *linPt, *linWt;
     IntPt *triPts = getGQTPts(order);
     gmshGaussLegendre1D(nLin, &linPt, &linWt);
@@ -28,9 +29,9 @@ IntPt *getGQPriPts(int order)
         intpt[l++].weight = triPts[i].weight * linWt[j];
       }
     }
-    GQP[n] = intpt;
+    GQP[order] = intpt;
   }
-  return GQP[n];
+  return GQP[order];
 }
 
 int getNGQPriPts(int order)

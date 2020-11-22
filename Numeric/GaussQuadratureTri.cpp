@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <map>
+#include <vector>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
@@ -884,19 +884,20 @@ static IntPt *GQTSolin[21] = {
   triP18Solin, triP19Solin, triP20Solin};
 static int GQTnPtSolin[21] = {1,  1,  3,  4,  6,  7,  12, 13, 16, 19, 25,
                               27, 33, 37, 42, 48, 52, 61, 70, 73, 79};
-static std::map<int, IntPt*> GQTGL;
+static std::vector<IntPt*> GQTGL(40, nullptr);
 
 IntPt *getGQTPts(int order)
 {
   if(order < 21) return GQTSolin[order];
   int n = (order + 3) / 2;
-  if(!GQTGL.count(n)) {
+  if(GQTGL.size() < order + 1) GQTGL.resize(order + 1, nullptr);
+  if(!GQTGL[order]) {
     int npts = n * n;
     IntPt *intpt = new IntPt[npts];
     GaussLegendreTri(n, n, intpt);
-    GQTGL[n] = intpt;
+    GQTGL[order] = intpt;
   }
-  return GQTGL[n];
+  return GQTGL[order];
 }
 
 int getNGQTPts(int order)

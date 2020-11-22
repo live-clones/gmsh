@@ -3,16 +3,17 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <map>
+#include <vector>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 #include "GaussJacobi1D.h"
 
-static std::map<int, IntPt *> GQPyr;
+static std::vector<IntPt *> GQPyr(40, nullptr);
 
 IntPt *getGQPyrPts(int order)
 {
-  if(!GQPyr.count(order)) {
+  if(GQPyr.size() < order + 1) GQPyr.resize(order + 1, nullptr);
+  if(!GQPyr[order]) {
     int nbPtUV = order / 2 + 1;
     int nbPtW = order / 2 + 1;
     int nbPtUV2 = nbPtUV * nbPtUV;

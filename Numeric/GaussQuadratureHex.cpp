@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include <map>
+#include <vector>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
@@ -85,13 +85,14 @@ IntPt GQH34[34] = {
 
 static IntPt *GQH[3] = {GQH1, GQH6, GQH34};
 static int GQHnPt[3] = {1, 6, 34};
-static std::map<int, IntPt*> GQHGL;
+static std::vector<IntPt*> GQHGL(40, nullptr);
 
 IntPt *getGQHPts(int order)
 {
   if(order <= 2) return GQH[order];
   int n = (order + 1) / (float)2 + 0.5;
-  if(!GQHGL.count(n)) {
+  if(GQHGL.size() < order + 1) GQHGL.resize(order + 1, nullptr);
+  if(!GQHGL[order]) {
     double *pt, *wt;
     gmshGaussLegendre1D(n, &pt, &wt);
     IntPt *intpt = new IntPt[n * n * n];
@@ -106,9 +107,9 @@ IntPt *getGQHPts(int order)
         }
       }
     }
-    GQHGL[n] = intpt;
+    GQHGL[order] = intpt;
   }
-  return GQHGL[n];
+  return GQHGL[order];
 }
 
 int getNGQHPts(int order)
