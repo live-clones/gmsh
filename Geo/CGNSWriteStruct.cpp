@@ -5,12 +5,229 @@
 //
 
 #include <math.h>
+#include <sstream>
 #include "GModel.h"
 #include "Context.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 
+// The structured CGNS writer follows ICEM-like conventions (significantly
+// different from those used in our unstructured CGNS writer):
+// - structured 3D (resp. 2D) meshes contain one zone per volume (resp.
+//   surface); no zones are created for lower dimensional entities
+// - interfaces between zones are 1-to-1, with point ranges (not point
+//   lists)
+// - physical groups for the highest dimensional entities are directly
+//   encoded at the begning of the zone name (no families are created)
+// - boundary conditions are created for physical groups of lower
+//   dimensions
+
 #if defined(HAVE_LIBCGNS)
+
+static std::string dimName(int dim)
+{
+  if(dim == 3) return "Volume";
+  else if(dim == 2) return "Surface";
+  else if(dim == 1) return "Curve";
+  else return "Point";
+}
+
+static std::string getZoneName(GEntity *ge)
+{
+  std::ostringstream sstream;
+  for(auto t: ge->physicals) {
+    std::string n = ge->model()->getPhysicalName(ge->dim(), t);
+    if(n.empty())
+      sstream << "Physical" << dimName(ge->dim()) << t << "_";
+    else
+      sstream << n << "_";
+  }
+  sstream << dimName(ge->dim()) << ge->tag();
+  return sstream.str();
+}
+
+static std::string getInterfaceName(GEntity *ge1, GEntity *ge2)
+{
+  std::ostringstream sstream;
+  sstream << "Interface_" << dimName(ge1->dim()) << ge1->tag()
+          << "_" << dimName(ge2->dim()) << ge2->tag();
+  return sstream.str();
+}
+
+static void computeTransform(const std::vector<cgsize_t> &pointRange,
+                             const std::vector<cgsize_t> &pointDonorRange,
+                             int transform[2])
+{
+  // This routine was written with the financial aid of of Indian Institute of
+  // Technology Hyderabad - BRNS sponsored project in 2018, under the guidance
+  // of Prof. Vinayak Eswaran <eswar@iith.ac.in>
+
+  if(pointRange.size() != 4 || pointDonorRange.size() != 4) {
+    Msg::Error("Invalid point ranges to compute tranform - using default");
+    transform[0] = 1;
+    transform[1] = 2;
+    return;
+  }
+
+  int a1 = pointDonorRange[2] - pointDonorRange[0];
+  int a2 = pointDonorRange[3] - pointDonorRange[1];
+  int b1 = pointRange[2] - pointRange[0];
+  int b2 = pointRange[3] - pointRange[1];
+
+  // In the interface face, if one index is varying, the other should remain
+  // constant and hence one of a1, a2, b1, b2 should be zero (in 2D): (Index2 -
+  // Begin2) = T.(Index1 - Begin1); (Index1 - Begin1) = Transpose[T].(Index2 -
+  // Begin2)
+  int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+  if(b2 == 0) {
+    x1 = a1 / b1;
+    y1 = a2 / b1;
+    if(x1 == 0) {
+      y2 = 0;
+      if(y1 < 0) x2 = 1;
+      else x2 = -1;
+    }
+    else if(y1 == 0) {
+      x2 = 0;
+      if(x1 > 0) y2 = 1;
+      else y2 = -1;
+    }
+  }
+  else if(b1 == 0) {
+    x2 = a1 / b2;
+    y2 = a2 / b2;
+    if(x2 == 0) {
+      y1 = 0;
+      if(y2 > 0) x1 = 1;
+      else x1 = -1;
+    }
+    else if(y2 == 0) {
+      x1 = 0;
+      if(x2 < 0) y1 = 1;
+      else y1 = -1;
+    }
+  }
+  else {
+    Msg::Warning("Could not find transform matrix for zone - using default");
+    transform[0] = 1;
+    transform[1] = 2;
+    return;
+  }
+
+  if(x1 == 1) transform[0] = 1;
+  else if(x1 == -1) transform[0] = -1;
+  if(x2 == 1) transform[1] = 1;
+  else if(x2 == -1) transform[1] = -1;
+
+  if(y1 == 1) transform[0] = 2;
+  else if(y1 == -1) transform[0] = -2;
+  if(y2 == 1) transform[1] = 2;
+  else if(y2 == -1) transform[1] = -2;
+}
+
+static int writeInterface(int cgIndexFile, int cgIndexBase, int cgIndexZone,
+                          GFace *gf, GFace *gf2)
+{
+  std::vector<std::vector<MVertex *> > &v = gf->transfinite_vertices;
+  cgsize_t imax = v.size(), jmax = v[0].size();
+  std::vector<std::vector<MVertex *> > &v2 = gf2->transfinite_vertices;
+  cgsize_t imax2 = v2.size(), jmax2 = v2[0].size();
+
+  int edge[][4] = {{0, 0, imax - 1, 0},
+                   {imax - 1, 0, imax - 1, jmax - 1},
+                   {imax - 1, jmax - 1, 0, jmax - 1},
+                   {0, jmax - 1, 0, 0}};
+  int edge2[][4] = {{0, 0, imax2 - 1, 0},
+                    {imax2 - 1, 0, imax2 - 1, jmax2 - 1},
+                    {imax2 - 1, jmax2 - 1, 0, jmax2 - 1},
+                    {0, jmax2 - 1, 0, 0}};
+
+  std::vector<cgsize_t> pointRange, pointDonorRange;
+
+  bool found = false;
+  for(int i = 0; i < 4; i++) {
+    for(int i2 = 0; i2 < 4; i2++) {
+      if(v[edge[i][0]][edge[i][1]] == v2[edge2[i2][0]][edge2[i2][1]] &&
+         v[edge[i][2]][edge[i][3]] == v2[edge2[i2][2]][edge2[i2][3]]) {
+        pointRange = {edge[i][0] + 1, edge[i][1] + 1,
+                      edge[i][2] + 1, edge[i][3] + 1};
+        pointDonorRange = {edge2[i2][0] + 1, edge2[i2][1] + 1,
+                           edge2[i2][2] + 1, edge2[i2][3] + 1};
+        found = true;
+        break;
+      }
+      else if(v[edge[i][0]][edge[i][1]] == v2[edge2[i2][2]][edge2[i2][3]] &&
+              v[edge[i][2]][edge[i][3]] == v2[edge2[i2][0]][edge2[i2][1]]) {
+        pointRange = {edge[i][0] + 1, edge[i][1] + 1,
+                      edge[i][2] + 1, edge[i][3] + 1};
+        pointDonorRange = {edge2[i2][2] + 1, edge2[i2][3] + 1,
+                           edge2[i2][0] + 1, edge2[i2][1] + 1};
+        found = true;
+        break;
+      }
+    }
+    if(found) break;
+  }
+
+  if(found) {
+    int transform[2];
+    computeTransform(pointRange, pointDonorRange, transform);
+    int cgIndexConn;
+    if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                     getInterfaceName(gf, gf2).c_str(),
+                     getZoneName(gf2).c_str(), &pointRange[0],
+                     &pointDonorRange[0], transform, &cgIndexConn)) {
+      return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    }
+  }
+  else {
+    Msg::Warning("Could not identify interface between surfaces %d and %d",
+                 gf->tag(), gf2->tag());
+  }
+  return 1;
+}
+
+static int writeBC(int cgIndexFile, int cgIndexBase, int cgIndexZone,
+                   GFace *gf, GEdge *ge)
+{
+  std::vector<std::vector<MVertex *> > &v = gf->transfinite_vertices;
+  cgsize_t imax = v.size(), jmax = v[0].size();
+
+  GVertex *gv1 = ge->getBeginVertex(), *gv2 = ge->getEndVertex();
+  if(!gv1 || !gv2) return 0;
+  if(!gv1->getNumMeshVertices() || !gv2->getNumMeshVertices()) return 0;
+  MVertex *v1 = gv1->getMeshVertex(0), *v2 = gv2->getMeshVertex(0);
+
+  int edge[][4] = {{0, 0, imax - 1, 0},
+                   {imax - 1, 0, imax - 1, jmax - 1},
+                   {imax - 1, jmax - 1, 0, jmax - 1},
+                   {0, jmax - 1, 0, 0}};
+  std::vector<cgsize_t> pointRange;
+  bool found = false;
+  for(int i = 0; i < 4; i++) {
+    if((v[edge[i][0]][edge[i][1]] == v1 && v[edge[i][2]][edge[i][3]] == v2) ||
+       (v[edge[i][0]][edge[i][1]] == v2 && v[edge[i][2]][edge[i][3]] == v1)) {
+      pointRange = {edge[i][0] + 1, edge[i][1] + 1,
+                    edge[i][2] + 1, edge[i][3] + 1};
+      found = true;
+    }
+  }
+
+  if(found) {
+    int cgIndexBoco = 0;
+    if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                     getZoneName(ge).c_str(), BCWallViscous, PointRange,
+                     2, &pointRange[0], &cgIndexBoco)) {
+      return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    }
+  }
+  else{
+    Msg::Warning("Could not identify boundary condition on curve %d in "
+                 "surface %d",
+                 ge->tag(), gf->tag());
+  }
+  return 1;
+}
 
 static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
                               std::vector<GFace *> &faces,
@@ -23,7 +240,7 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
     // write zone
     int cgIndexZone = 0;
     cgsize_t cgZoneSize[6] = {imax, jmax, imax - 1, jmax - 1, 0, 0};
-    std::string zoneName = cgnsString("Surface_" + std::to_string(gf->tag()));
+    std::string zoneName = cgnsString(getZoneName(gf));
     if(cg_zone_write(cgIndexFile, cgIndexBase, zoneName.c_str(), cgZoneSize,
                      Structured, &cgIndexZone) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
@@ -68,6 +285,17 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
     if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
                       "CoordinateZ", &data[0], &cgIndexCoord) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
+
+    for(auto ge: gf->edges()) {
+      // write interface data
+      for(auto gf2: ge->faces()) {
+        if(gf2 != gf)
+          writeInterface(cgIndexFile, cgIndexBase, cgIndexZone, gf, gf2);
+      }
+      // write boundary conditions
+      if(!ge->physicals.empty())
+        writeBC(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge);
+    }
   }
   return 1;
 }
