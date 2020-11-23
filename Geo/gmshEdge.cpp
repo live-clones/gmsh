@@ -125,7 +125,7 @@ bool gmshEdge::haveParametrization()
 
 std::string gmshEdge::getAdditionalInfoString(bool multline)
 {
-  std::string info = GEdge::getAdditionalInfoString();
+  std::string info = GEdge::getAdditionalInfoString(multline);
 
   if(List_Nbr(_c->Control_Points) > 2) {
     std::ostringstream sstream;

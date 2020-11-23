@@ -439,6 +439,20 @@ std::string GFace::getAdditionalInfoString(bool multline)
       sstream << " ";
   }
 
+  if(r1 || r2) {
+    sstream << "On boundary of volumes: ";
+    if(r1) {
+      sstream << r1->tag();
+      if(r2) sstream << ", ";
+    }
+    if(r2)
+      sstream << r2->tag();
+    if(multline)
+      sstream << "\n";
+    else
+      sstream << " ";
+  }
+
   if(embedded_edges.size()) {
     sstream << "Embedded curves: ";
     for(std::vector<GEdge *>::iterator it = embedded_edges.begin();

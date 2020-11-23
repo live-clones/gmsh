@@ -58,12 +58,26 @@ std::string GVertex::getAdditionalInfoString(bool multline)
   std::ostringstream sstream;
   sstream.precision(12);
   sstream << "Position (" << x() << ", " << y() << ", " << z() << ")";
-  double lc = prescribedMeshSizeAtVertex();
-  if(lc < MAX_LC) {
+  if(multline)
+    sstream << "\n";
+  else
+    sstream << " ";
+
+  if(l_edges.size()) {
+    sstream << "On boundary of curves: ";
+    for(std::vector<GEdge *>::iterator it = l_edges.begin();
+        it != l_edges.end(); ++it) {
+      if(it != l_edges.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
     if(multline)
       sstream << "\n";
     else
       sstream << " ";
+  }
+
+  double lc = prescribedMeshSizeAtVertex();
+  if(lc < MAX_LC) {
     sstream << "Mesh attributes: size " << lc;
   }
   return sstream.str();

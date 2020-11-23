@@ -327,6 +327,19 @@ std::string GEdge::getAdditionalInfoString(bool multline)
       sstream << " ";
   }
 
+  if(_faces.size()) {
+    sstream << "On boundary of surfaces: ";
+    for(std::vector<GFace *>::iterator it = _faces.begin();
+        it != _faces.end(); ++it) {
+      if(it != _faces.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline)
+      sstream << "\n";
+    else
+      sstream << " ";
+  }
+
   if(meshAttributes.method == MESH_TRANSFINITE ||
      (meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh) ||
      meshAttributes.reverseMesh ||
