@@ -4746,6 +4746,12 @@ gmsh::model::mesh::computeCohomology(const std::vector<int> &domainTags,
                                         dims);
 }
 
+//GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &in,
+//                                             const std::vector<std::size_t> &out)
+
+//GMSH_API void gmsh::model::mesh::tetrahedralize(const std::vector<double> &in,
+//                                                const std::vector<std::size_t> &out)
+
 // gmsh::model::mesh::field
 
 GMSH_API int gmsh::model::mesh::field::add(const std::string &fieldType,

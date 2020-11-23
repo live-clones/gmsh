@@ -244,13 +244,13 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
                                format, type);
       buffer->fill(CTX::instance()->batch);
       buffers.push_back(buffer);
-      int fact = g->gl[i]->getDrawContext()->isHighResolution() ? 2 : 1;
-      ww = std::max(ww, fact * (g->gl[i]->x() - xmin) + g->gl[i]->pixel_w());
-      hh = std::max(hh, fact * (g->gl[i]->y() - ymin) + g->gl[i]->pixel_h());
+      double fact = g->gl[i]->getDrawContext()->highResolutionPixelFactor();
+      ww = std::max(ww, (int)(fact * (g->gl[i]->x() - xmin)) + g->gl[i]->pixel_w());
+      hh = std::max(hh, (int)(fact * (g->gl[i]->y() - ymin)) + g->gl[i]->pixel_h());
     }
     buffer = new PixelBuffer(ww, hh, format, type);
     for(std::size_t i = 0; i < g->gl.size(); i++){
-      int fact = g->gl[i]->getDrawContext()->isHighResolution() ? 2 : 1;
+      double fact = g->gl[i]->getDrawContext()->highResolutionPixelFactor();
       buffer->copyPixels(fact * (g->gl[i]->x() - xmin),
                          hh - g->gl[i]->pixel_h() - fact * (g->gl[i]->y() - ymin),
                          buffers[i]);

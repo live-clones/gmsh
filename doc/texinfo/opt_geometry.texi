@@ -201,6 +201,11 @@ Try to unify faces and edges (remove internal seams) which lie on the same geome
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCUseGenericClosestPoint
+Use generic algrithm to compute point projections in the OpenCASCADE kernel (less robust, but significally faster in some configurations)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OffsetX
 Model display offset along X-axis (in model coordinates)@*
 Default value: @code{0}@*
