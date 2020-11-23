@@ -176,6 +176,8 @@ static int writeInterface(int cgIndexFile, int cgIndexBase, int cgIndexZone,
   // allows to generate structured meshes for surfaces with more than 4 bounding
   // curves)
   if(!found) {
+    // TODO
+    /*
     for(int l2 = 0; l2 < 4; l2++) {
       // begin/end node of potential donnor edge
       MVertex *v1 = v2[e2[l2][0]][e2[l2][1]], *v2[e2[l2][2]][e2[l2][3]];
@@ -186,6 +188,7 @@ static int writeInterface(int cgIndexFile, int cgIndexBase, int cgIndexZone,
         //for(k = 0; e[i]
       }
     }
+    */
   }
 
 

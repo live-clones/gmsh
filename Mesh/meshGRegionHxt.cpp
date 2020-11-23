@@ -534,7 +534,6 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
 void delaunayMeshIn3DHxt(std::vector<MVertex *> &points, std::vector<MTetrahedron *> &tets)
 {
   Msg::Error("Gmsh should be compiled with Hxt to enable this option");
-  return -1;
 }
 
 #endif
