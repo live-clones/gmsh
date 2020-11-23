@@ -724,6 +724,47 @@ gmsh::model::getDerivative(const int dim, const int tag,
 }
 
 GMSH_API void
+gmsh::model::getSecondDerivative(const int dim, const int tag,
+                                 const std::vector<double> &parametricCoord,
+                                 std::vector<double> &deriv)
+{
+  if(!_checkInit()) return;
+  deriv.clear();
+  GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
+  if(!entity) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    return;
+  }
+  if(dim == 1) {
+    GEdge *ge = static_cast<GEdge *>(entity);
+    for(std::size_t i = 0; i < parametricCoord.size(); i++) {
+      SVector3 d = ge->secondDer(parametricCoord[i]);
+      deriv.push_back(d.x());
+      deriv.push_back(d.y());
+      deriv.push_back(d.z());
+    }
+  }
+  else if(dim == 2) {
+    if(parametricCoord.size() % 2) return;
+    GFace *gf = static_cast<GFace *>(entity);
+    for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
+      SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
+      SVector3 dudu, dvdv, dudv;
+      gf->secondDer(param, dudu, dvdv, dudv);
+      deriv.push_back(dudu.x());
+      deriv.push_back(dudu.y());
+      deriv.push_back(dudu.z());
+      deriv.push_back(dvdv.x());
+      deriv.push_back(dvdv.y());
+      deriv.push_back(dvdv.z());
+      deriv.push_back(dudv.x());
+      deriv.push_back(dudv.y());
+      deriv.push_back(dudv.z());
+    }
+  }
+}
+
+GMSH_API void
 gmsh::model::getCurvature(const int dim, const int tag,
                           const std::vector<double> &parametricCoord,
                           std::vector<double> &curvatures)

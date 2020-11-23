@@ -566,6 +566,20 @@ GMSH_API void gmshModelGetDerivative(const int dim, const int tag, double * para
   }
 }
 
+GMSH_API void gmshModelGetSecondDerivative(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double ** derivatives, size_t * derivatives_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    std::vector<double> api_derivatives_;
+    gmsh::model::getSecondDerivative(dim, tag, api_parametricCoord_, api_derivatives_);
+    vector2ptr(api_derivatives_, derivatives, derivatives_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelGetCurvature(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double ** curvatures, size_t * curvatures_n, int * ierr)
 {
   if(ierr) *ierr = 0;

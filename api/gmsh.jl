@@ -762,8 +762,8 @@ the curve) or 2 (with `parametricCoord` containing pairs of u, v parametric
 coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). For `dim` equal
 to 1 return the x, y, z components of the derivative with respect to u [d1ux,
 d1uy, d1uz, d2ux, ...]; for `dim` equal to 2 return the x, y, z components of
-the derivate with respect to u and v: [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux,
-...].
+the derivative with respect to u and v: [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz,
+d2ux, ...].
 
 Return `derivatives`.
 """
@@ -772,6 +772,34 @@ function getDerivative(dim, tag, parametricCoord)
     api_derivatives_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGetDerivative, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_derivatives_, api_derivatives_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    derivatives = unsafe_wrap(Array, api_derivatives_[], api_derivatives_n_[], own=true)
+    return derivatives
+end
+
+"""
+    gmsh.model.getSecondDerivative(dim, tag, parametricCoord)
+
+Evaluate the second derivative of the parametrization of the entity of dimension
+`dim` and tag `tag` at the parametric coordinates `parametricCoord`. Only valid
+for `dim` equal to 1 (with `parametricCoord` containing parametric coordinates
+on the curve) or 2 (with `parametricCoord` containing pairs of u, v parametric
+coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). For `dim` equal
+to 1 return the x, y, z components of the second derivative with respect to u
+[d1uux, d1uuy, d1uuz, d2uux, ...]; for `dim` equal to 2 return the x, y, z
+components of the second derivative with respect to u and v, and the mixed
+derivative with respect to u and v: [d1uux, d1uuy, d1uuz, d1vvx, d1vvy, d1vvz,
+d1uvx, d1uvy, d1uvz, d2uux, ...].
+
+Return `derivatives`.
+"""
+function getSecondDerivative(dim, tag, parametricCoord)
+    api_derivatives_ = Ref{Ptr{Cdouble}}()
+    api_derivatives_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetSecondDerivative, gmsh.lib), Cvoid,
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_derivatives_, api_derivatives_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
