@@ -15,6 +15,7 @@
 #include "Context.h"
 #include "MVertex.h"
 #include "GRegion.h"
+#include "discreteRegion.h"
 #include "GFace.h"
 #include "MTetrahedron.h"
 #include "MTriangle.h"
@@ -29,6 +30,7 @@
 extern "C" {
 #include "hxt_tools.h"
 #include "hxt_tetMesh.h"
+#include "hxt_tetDelaunay.h"
 }
 
 static HXTStatus messageCallback(HXTMessage *msg)
@@ -467,11 +469,71 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
   return 1;
 }
 
+static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
+                                      std::vector<MTetrahedron *> &tets)
+{
+  HXTMesh *mesh;
+  HXT_CHECK(hxtMeshCreate(&mesh));
+
+  size_t nvert = points.size();
+  HXT_CHECK(hxtAlignedMalloc(&mesh->vertices.coord, nvert * 4 * sizeof(double)));
+  for (size_t i = 0; i < nvert; i++) {
+    mesh->vertices.coord[4*i+0] = points[i]->x();
+    mesh->vertices.coord[4*i+1] = points[i]->y();
+    mesh->vertices.coord[4*i+2] = points[i]->z();
+  }
+  mesh->vertices.num = nvert;
+  mesh->vertices.size = nvert;
+
+  HXTDelaunayOptions delOptions = {
+    NULL, // bbox
+    NULL, // nodalSizes
+    0, // numVertcesInMesh
+    0, // insertionFirst
+    0, // partitionability
+    1, // perfectDelaunay
+    (Msg::GetVerbosity() > 5) ? 2 : 1, // verbosity
+    0, // reproducible
+    0 // delaunayThreads (0 = omp_get_max_threads)
+  };
+  HXT_CHECK(hxtDelaunay(mesh, &delOptions));
+
+  for(size_t i = 0; i < mesh->tetrahedra.num; i++) {
+    uint32_t *i0 = &mesh->tetrahedra.node[4 * i + 0];
+    tets.push_back(new MTetrahedron(points[i0[0]], points[i0[1]],
+                                    points[i0[2]], points[i0[3]]));
+  }
+
+  // debug
+#if 0
+  GModel *m = GModel::current();
+  discreteRegion *r = new discreteRegion(m, m->getMaxElementaryNumber(3) + 1);
+  r->mesh_vertices.insert(r->mesh_vertices.end(), points.begin(), points.end());
+  r->tetrahedra.insert(r->tetrahedra.end(), tets.begin(), tets.end());
+  m->add(r);
+#endif
+
+  HXT_CHECK(hxtMeshDelete(&mesh));
+  return HXT_STATUS_OK;
+}
+
+void delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
+                         std::vector<MTetrahedron *> &tets)
+{
+  _delaunayMeshIn3DHxt(points, tets);
+}
+
 #else
 
 int meshGRegionHxt(std::vector<GRegion *> &regions)
 {
-  Msg::Error("Gmsh should be compiled with Hxt3D to enable this option");
+  Msg::Error("Gmsh should be compiled with Hxt to enable this option");
+  return -1;
+}
+
+void delaunayMeshIn3DHxt(std::vector<MVertex *> &points, std::vector<MTetrahedron *> &tets)
+{
+  Msg::Error("Gmsh should be compiled with Hxt to enable this option");
   return -1;
 }
 
