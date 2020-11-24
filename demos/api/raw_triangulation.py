@@ -14,8 +14,8 @@ tris = gmsh.model.mesh.triangulate(points)
 
 if visu:
     surf = gmsh.model.addDiscreteEntity(2)
-    p3 = np.hstack((np.reshape(points, (-1,2)), np.zeros((N,1)))).flatten()
-    gmsh.model.mesh.addNodes(2, surf, range(1, N+1), p3)
+    xyz = np.hstack((np.reshape(points, (-1,2)), np.zeros((N,1)))).flatten()
+    gmsh.model.mesh.addNodes(2, surf, range(1, N+1), xyz)
     gmsh.model.mesh.addElementsByType(surf, 2, [], tris)
     gmsh.fltk.run()
 

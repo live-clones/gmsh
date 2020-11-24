@@ -4438,7 +4438,7 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
   if(nr > 0)
     Msg::Debug("transfinite automatic: transfinite set on %li volumes", nr);
 #else
-  Msg::Error("setTransfiniteAutomatic requires the MESH module");
+  Msg::Error("setTransfiniteAutomatic requires the mesh module");
 #endif
 }
 
@@ -4825,7 +4825,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     Msg::Error("Number of 2D coordinates should be even");
     return;
   }
-
+#if defined(HAVE_MESH)
   SBoundingBox3d bbox;
   for(std::size_t i = 0; i < coord.size(); i += 2)
     bbox += SPoint3(coord[i], coord[i + 1], 0.);
@@ -4852,6 +4852,9 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     delete verts[i];
   for(std::size_t i = 0; i < tris.size(); i++)
     delete tris[i];
+#else
+  Msg::Error("triangulate requires the mesh module");
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
@@ -4862,6 +4865,7 @@ GMSH_API void gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord
     Msg::Error("Number of coordinates should be a multiple of 3");
     return;
   }
+#if defined(HAVE_MESH)
   std::vector<MVertex*> verts(coord.size() / 3);
   std::size_t j = 0;
   for(std::size_t i = 0; i < coord.size(); i += 3) {
@@ -4884,6 +4888,9 @@ GMSH_API void gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord
     delete verts[i];
   for(std::size_t i = 0; i < tets.size(); i++)
     delete tets[i];
+#else
+  Msg::Error("tetrahedralize requires the mesh module");
+#endif
 }
 
 // gmsh::model::mesh::field
