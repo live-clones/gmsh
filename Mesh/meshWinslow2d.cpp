@@ -824,7 +824,8 @@ public:
   }
 
 
-  double smooth (GFace *gf, GEntity::GeomType GT, double radius, SPoint3 &c, SurfaceProjector* sp, size_t& cache){
+  double smooth (GFace *gf, GEntity::GeomType GT, double radius, SPoint3 &c, SurfaceProjector* sp, size_t& cache, 
+      bool spProjectOnCAD = false){
     if (stencil.empty())return 0;
     SPoint3 p;    
     //    printf("coucou1\n");
@@ -863,7 +864,7 @@ public:
     else {
       GPoint gp;
       if (sp) {
-        gp = sp->closestPoint(p.data(), cache, true);
+        gp = sp->closestPoint(p.data(), cache, true, true);
       } else {
         gp = CLOSESTPOINT(gf,p,uv, GT);
       }
@@ -1134,9 +1135,10 @@ void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads,
   double dx0;
   std::vector<size_t> cache_tris(stencils.size(),(size_t)-1);
   for (int i=0;i<nIter;i++){
+    bool spProjectOnCAD = (sp && (95 * i > 100 * nIter));
     double dx = 0;
     for (size_t j=0;j<stencils.size();j++){
-      double xx = stencils[j].smooth(gf,GT,radius,c,sp,cache_tris[j]);
+      double xx = stencils[j].smooth(gf,GT,radius,c,sp,cache_tris[j], spProjectOnCAD);
       dx += xx ;
     }
     if (i == 0)dx0 = dx;
@@ -1194,9 +1196,9 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove, SurfaceProject
   double dx0;
   for (int i=0;i<nIter;i++){
     double dx = 0;
-    
+    bool spProjectOnCAD = (sp && (95 * i > 100 * nIter));
     for (size_t j=0;j<stencils.size();j++){
-      double xx = stencils[j].smooth(gf,GT,radius,c,sp,cache_tris[j]);
+      double xx = stencils[j].smooth(gf,GT,radius,c,sp,cache_tris[j], spProjectOnCAD);
       dx += xx ;
       //      printf("%lu %12.5E\n",j, xx);
     }

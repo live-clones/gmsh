@@ -28,6 +28,7 @@
 #include "Field.h"
 #include "geolog.h"
 #include "meshWinslow2d.h"
+#include "meshQuadGeometry.h"
 #include "gmsh.h"
 #include <queue>
 #include <unordered_map>
@@ -528,7 +529,7 @@ namespace QuadPatternMatching {
       GPoint proj;
       if (sp != NULL) {
         size_t cache = (size_t) -1;
-        proj = sp->closestPoint(vNew->point(), cache, true);
+        proj = sp->closestPoint(vNew->point(), cache, true, false);
       } else {
         proj = gf->closestPoint(vNew->point(),uv);
       }
@@ -1556,12 +1557,15 @@ int remeshPatchWithQuadPattern(
 
   /* Basic smoothing of the geometry */
   if (sp != NULL) {
-    std::vector<MQuadrangle*> newQuads(newElements.size());
-    for (size_t i = 0; i < newElements.size(); ++i) 
-      newQuads[i] = dynamic_cast<MQuadrangle*>(newElements[i]);
-    size_t iter = std::min((size_t)newVertices.size(),(size_t)100);
-    if (iter < 20) iter = 20;
-    meshWinslow2d(gf, newQuads, newVertices, iter, NULL, false, sp);
+    // std::vector<MQuadrangle*> newQuads(newElements.size());
+    // for (size_t i = 0; i < newElements.size(); ++i) 
+    //   newQuads[i] = dynamic_cast<MQuadrangle*>(newElements[i]);
+    // size_t iter = std::min((size_t)newVertices.size(),(size_t)100);
+    // if (iter < 20) iter = 20;
+    // meshWinslow2d(gf, newQuads, newVertices, iter, NULL, false, sp);
+
+    double qmin;
+    optimizeQuadCavity(sp, newElements, newVertices, qmin);
   } else {
     discreteFace* df = dynamic_cast<discreteFace*>(gf);
     if (df || gfaceContainsSeamCurves(gf)) {

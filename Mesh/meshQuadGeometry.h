@@ -9,10 +9,16 @@
 #include <vector>
 
 class GFace;
+class MVertex;
+class MElement;
+class SPoint3;
+class SurfaceProjector;
 
-/*******************************/
-/* Hand-made pattern remeshing */
-/*******************************/
+int optimizeQuadCavity(
+    SurfaceProjector* sp,
+    const std::vector<MElement*>& elements,
+    std::vector<MVertex*>& freeVertices,
+    double& qualityMin);
 
 int optimizeQuadGeometry(GFace* gf);
 

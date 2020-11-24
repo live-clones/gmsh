@@ -352,6 +352,7 @@ namespace QSQ {
     }
   }
 
+
   bool verticesStrictlyInsideCavity(const std::vector<MElement*>& quads,
       const std::vector<MVertex*>& bnd, std::vector<MVertex*>& inside) {
     std::vector<MVertex*> vert;
@@ -1750,6 +1751,9 @@ namespace QSQ {
     return meshable;
   }
 
+  const int GROW_MAXIMAL = 1;
+  const int GROW_MINIMAL = 2;
+
   struct Gardener {
     /* Gardener is used to manage the growth of cavities
      * Can be re-used as long as the GFace is not changed */
@@ -2130,12 +2134,15 @@ namespace QSQ {
       return true;
     }
 
-    bool growMaximal(const std::vector<size_t>& patternsToCheck, 
+    bool grow(
+        int growthType,
+        const std::vector<size_t>& patternsToCheck, 
         const std::vector<std::pair<size_t,size_t> >& patternSizeLimits = {}) 
     {
       if (current == NULL) return false;
+      if (growthType != GROW_MINIMAL && growthType != GROW_MAXIMAL) return false;
       FCavity& cav = *current;
-      if (DBG_VERBOSE) Msg::Debug("growMaximal: start with %li quads, %li half-edges on bdr ...", cav.quads.size(), cav.hes.size());
+      if (DBG_VERBOSE) Msg::Debug("grow: start with %li quads, %li half-edges on bdr ...", cav.quads.size(), cav.hes.size());
       bool running = true;
       size_t nb = 0;
       FlipInfo info;
@@ -2144,13 +2151,13 @@ namespace QSQ {
       while (running) {
         iter += 1;
         if (iter > 1e6) {
-          Msg::Error("growMaximal: iter=%li, infinite loop ?", iter);
+          Msg::Error("grow: iter=%li, infinite loop ?", iter);
           break;
         }
         running = false;
         bool okc = getFlipHalfEdgeCandidates(candidates);
         if (!okc) {
-          if (DBG_VERBOSE) Msg::Debug("growMaximal: failed to get flip half edge candidates");
+          if (DBG_VERBOSE) Msg::Debug("grow: failed to get flip half edge candidates");
           break;
         }
         for (size_t k = 0; k < candidates.size(); ++k) {
@@ -2165,7 +2172,7 @@ namespace QSQ {
             markNewQuad(info.nq);
             bool okf = convexify();
             if (!okf) {
-              if (DBG_VERBOSE) Msg::Debug("growMaximal: failed to convexify, stop growth");
+              if (DBG_VERBOSE) Msg::Debug("grow: failed to convexify, stop growth");
               running = false;
               break;
             }
@@ -2174,7 +2181,7 @@ namespace QSQ {
         if (running) {
           bool convex = isConvex();
           if (!convex) {
-            if (DBG_VERBOSE) Msg::Debug("growMaximal: cavity not convex, stop growth");
+            if (DBG_VERBOSE) Msg::Debug("grow: cavity not convex, stop growth");
             running = false;
             // geolog_fcavity(cav, "!convex");
             break;
@@ -2208,14 +2215,17 @@ namespace QSQ {
                 }
 
                 double irreg = DBL_MAX;
-                if (DBG_VERBOSE) Msg::Debug("growMaximal: check if cavity is remeshable");
+                if (DBG_VERBOSE) Msg::Debug("grow: check if cavity is remeshable");
                 bool remeshable = cavityIsRemeshable(cav, irreg, patternsToCheckRefined);
                 if (remeshable && irreg <= lastIrregularity && irreg < currentCavityIrregularity) {
                   /* Do not choose a pattern if strictly worse irregularity */
-                  Msg::Debug("growMaximal: set remeshable cavity (%li quads, irregularity=%f, #irreg=%li)", cav.quads.size(), irreg, nbi_oc);
+                  Msg::Debug("grow: set remeshable cavity (%li quads, irregularity=%f, #irreg=%li)", cav.quads.size(), irreg, nbi_oc);
                   lastCav = cav;
                   lastNbIrregular = nbi;
                   lastIrregularity = irreg;
+                  if (growthType == GROW_MINIMAL) {
+                    break;
+                  }
                 }
               }
             }
@@ -2227,17 +2237,17 @@ namespace QSQ {
         if (M.faces.size() == cav.quads.size() && lastNbIrregular == (size_t) cavityTargetNbOfSides) {
           /* cavity is full face, which is triangle or quad or pentagon with the right number
            * of irregular vertices at the corners */
-          Msg::Debug("growMaximal: cavity is full face, exit");
+          Msg::Debug("grow: cavity is full face, exit");
           return false;
         }
         // geolog_fcavity(cav, "maxBeforeLast");
         cav = lastCav;
-        Msg::Debug("growMaximal: restore previous valid cavity");
+        Msg::Debug("grow: restore previous valid cavity");
       } else {
         return false;
       }
 
-      Msg::Debug("growMaximal: done, %li quads, %li half-edges on cavity bdr", cav.quads.size(), cav.hes.size());
+      Msg::Debug("grow: done, %li quads, %li half-edges on cavity bdr", cav.quads.size(), cav.hes.size());
       return true;
     }
 
@@ -3393,6 +3403,9 @@ namespace QSQ {
     MeshHalfEdges M;
     vector<size_t> singularities;
     vector<size_t> irregularNodes;
+    vector<SPoint3> repulsion;
+
+    constexpr bool DISTRIBUTE_DISTO = true;
 
     size_t count = 0;
     bool inProgress = true;
@@ -3412,26 +3425,43 @@ namespace QSQ {
       /* Look for the best singularity around which to grow cavity ... */
       singularities.clear();
       irregularNodes.clear();
-      for (size_t v = 0; v < M.vertices.size(); ++v) {
-        if (M.vertices[v].isSingularity) {
-          singularities.push_back(v);
-        } else {
-          bool onBdr;
-          int val = M.vertexFaceValence(v, onBdr);
-          if (!onBdr && val != 4) irregularNodes.push_back(v);
-        }
-      }
-      vector<double> priority(singularities.size(),0.);
-      for (size_t i = 0; i < irregularNodes.size(); ++i) {
-        size_t iv = irregularNodes[i];
-        SVector3 ip = M.vertices[iv].p;
-        for (size_t j = 0; j < singularities.size(); ++j) {
-          SVector3 sp = M.vertices[singularities[j]].p;
-          priority[j] += 1./(ip-sp).norm();
-        }
-      }
       std::vector<std::pair<double,size_t> > prio_sing(singularities.size());
-      for (size_t i = 0; i < singularities.size(); ++i) prio_sing[i] = {priority[i],singularities[i]};
+      if (DISTRIBUTE_DISTO) {
+        /* we prioritize the ones which are far from the previously
+         * remeshed cavities to "distribute" the disortion */
+        for (size_t v = 0; v < M.vertices.size(); ++v) {
+          if (M.vertices[v].isSingularity) {
+            SPoint3 pt = M.vertices[v].ptr->point();
+            double prio = 0.;
+            for (const SPoint3& r: repulsion) {
+              prio += pt.distance(r);
+            }
+            prio_sing.push_back({prio,v});
+          }
+        }
+      } else {
+        vector<double> priority;
+        for (size_t v = 0; v < M.vertices.size(); ++v) {
+          if (M.vertices[v].isSingularity) {
+            singularities.push_back(v);
+          } else {
+            bool onBdr;
+            int val = M.vertexFaceValence(v, onBdr);
+            if (!onBdr && val != 4) irregularNodes.push_back(v);
+          }
+        }
+        for (size_t i = 0; i < irregularNodes.size(); ++i) {
+          size_t iv = irregularNodes[i];
+          SVector3 ip = M.vertices[iv].p;
+          for (size_t j = 0; j < singularities.size(); ++j) {
+            SVector3 sp = M.vertices[singularities[j]].p;
+            priority[j] += 1./(ip-sp).norm();
+          }
+        }
+        for (size_t i = 0; i < singularities.size(); ++i) 
+          prio_sing[i] = {priority[i],singularities[i]};
+      }
+
       std::sort(prio_sing.begin(),prio_sing.end());
       std::reverse(prio_sing.begin(),prio_sing.end());
 
@@ -3452,7 +3482,7 @@ namespace QSQ {
         /* Build a cavity around singularity i */
         G.setCavity(fcav);
 
-        bool okg = G.growMaximal(patternsToCheck);
+        bool okg = G.grow(GROW_MINIMAL,patternsToCheck);
         if (!okg) continue;
 
         if (SHOW_CAVITIES) {
@@ -3478,6 +3508,7 @@ namespace QSQ {
           }
           for (MVertex* v2: newSingularities) {
             singularVertices.push_back(v2);
+            repulsion.push_back(v2->point());
           }
           inProgress = true;
           count += 1;
@@ -4102,7 +4133,9 @@ namespace QSQ {
     return true;
   }
 
-  int remeshQuadrilateralPatches(GFace* gf, std::vector<MVertex*>& singularVertices,
+  int remeshQuadrilateralPatches(
+      int growthType,
+      GFace* gf, std::vector<MVertex*>& singularVertices,
       const std::vector<size_t>& patternsToCheck, SurfaceProjector* sp = NULL) {
     Msg::Debug("- Face %i: remeshing quadrilateral cavities  ...", gf->tag());
 
@@ -4208,7 +4241,7 @@ namespace QSQ {
           G.setCavity(fcav);
           G.cavityTargetNbOfSides = 4;
 
-          bool okg = G.growMaximal(patternsToCheck, patternSizeLimits);
+          bool okg = G.grow(growthType, patternsToCheck, patternSizeLimits);
           if (!okg) continue;
 
           std::string cavity_name = "cav_s"+std::to_string(quads.size());
@@ -4434,6 +4467,42 @@ namespace QSQ {
   inline int closestPositiveOdd(double x) {
     int r = 2*int(std::floor(x/2.))+1;
     return r >= 3 ? r : 3;
+  }
+
+  bool extractFaceQuadChords(GModel* gm, 
+      const std::map<GFace*, GFaceInfo>& faceInfo,
+      std::vector<std::vector<GFace*> >& chordFaces) {
+    chordFaces.clear();
+    std::vector<GFace*> faces = model_faces(gm);
+    std::set<GFace *> qfaces;
+    for (GFace* gf: faces) {
+      auto it = faceInfo.find(gf);
+      if (it == faceInfo.end()) continue;
+      const GFaceInfo& info = it->second;
+      if (info.chi == 1 && gf->edges().size() == 4 && info.bdrValVertices[1].size() == 4) {
+        qfaces.insert(gf);
+      }
+    }
+    if (qfaces.size() == 0) return true;
+    std::vector<std::set<GEdge *> > chords;
+    build_chords(qfaces, chords);
+
+    for(std::set<GEdge *> &chord : chords) {
+      std::vector<GFace*> cfs;
+      for (GFace* gf: qfaces) {
+        for (GEdge* ge: gf->edges()) {
+          bool inside = (chord.find(ge) != chord.end());
+          if (inside) {
+            cfs.push_back(gf);
+            break;
+          }
+        }
+      }
+      sort_unique(cfs);
+      chordFaces.push_back(cfs);
+    }
+
+    return true;
   }
 
   bool curveQuantizationSimpleChords(GModel* gm, const std::map<GFace*, GFaceInfo>& faceInfo, bool forceEvenNbEdges = false) {
@@ -4798,21 +4867,42 @@ int computeScaledCrossField(GModel* gm,
   /* Compute the cross field on each face
    * Not in parallel because the solver in computeCrossFieldWithHeatEquation may already be parallel (e.g. MUMPS) */
   std::unordered_map<MEdge,double,MEdgeHash,MEdgeEqual> edgeTheta;
-  for (GFace* gf: faces) {
-    int nbDiffusionLevels = 4;
-    /* Check if convex topological disk */
-    const GFaceInfo& info = faceInfo.at(gf);
-    if (info.chi == 1 && info.bdrValVertices[1].size() >= 2 
-        && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
-      nbDiffusionLevels = 2; /* simple face, no need for acurate computation */
+  {
+    std::unordered_set<GFace*> done;
+    std::vector<std::vector<GFace*> > chordFaces;
+    extractFaceQuadChords(gm, faceInfo, chordFaces);
+    for (vector<GFace*>& cfs : chordFaces) if (cfs.size() >= 2) {
+      int nbDiffusionLevels = 2;
+      Msg::Info("- Compute cross field on %li regrouped quadrilateral CAD faces (%i diffusion levels) ...",
+          cfs.size(), nbDiffusionLevels);
+      int status = computeCrossFieldWithHeatEquation(cfs, edgeTheta, nbDiffusionLevels, thresholdNormConvergence,
+          nbBoundaryExtensionLayer, verbosity);
+      if (status != 0) {
+        Msg::Error("failed to compute cross field");
+      } else {
+        for (GFace* gf: cfs) done.insert(gf);
+      }
     }
 
-    Msg::Info("- Face %i: compute cross field (%li triangles, %i diffusion levels) ...",
-        gf->tag(), gf->triangles.size(), nbDiffusionLevels);
-    int status = computeCrossFieldWithHeatEquation({gf}, edgeTheta, nbDiffusionLevels, thresholdNormConvergence,
-        nbBoundaryExtensionLayer, verbosity);
-    if (status != 0) {
-      Msg::Error("failed to compute cross field on face %i",gf->tag());
+    for (GFace* gf: faces) {
+      auto it = done.find(gf);
+      if (it != done.end()) continue;
+      int nbDiffusionLevels = 4;
+
+      /* Check if convex topological disk */
+      const GFaceInfo& info = faceInfo.at(gf);
+      if (info.chi == 1 && info.bdrValVertices[1].size() >= 2 
+          && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
+        nbDiffusionLevels = 2; /* simple face, no need for acurate computation */
+      }
+
+      Msg::Info("- Face %i: compute cross field (%li triangles, %i diffusion levels) ...",
+          gf->tag(), gf->triangles.size(), nbDiffusionLevels);
+      int status = computeCrossFieldWithHeatEquation({gf}, edgeTheta, nbDiffusionLevels, thresholdNormConvergence,
+          nbBoundaryExtensionLayer, verbosity);
+      if (status != 0) {
+        Msg::Error("failed to compute cross field on face %i",gf->tag());
+      }
     }
   }
 
@@ -5232,16 +5322,21 @@ int improveQuadMeshOfFace(GFace* gf, vector<MVertex*>& singularVertices, Surface
 
     { /* 1st pass: check regular quad patch remeshing only */
       const vector<size_t> patternsToCheck = {PATTERN_QUAD_REGULAR};
-      remeshQuadrilateralPatches(gf, singularVertices, patternsToCheck, sp);
+      remeshQuadrilateralPatches(GROW_MAXIMAL, gf, singularVertices, patternsToCheck, sp);
     }
     {
       const vector<size_t> patternsToCheck = {PATTERN_TRIANGLE,PATTERN_PENTAGON};
       remeshCavitiesAroundSingularities(gf, singularVertices, patternsToCheck, sp);
     }
     {
-      const vector<size_t> patternsToCheck = {PATTERN_QUAD_REGULAR, PATTERN_QUAD_DIAG35, PATTERN_QUAD_ALIGNED35, PATTERN_QUAD_CHORD_UTURN};
-      remeshQuadrilateralPatches(gf, singularVertices, patternsToCheck, sp);
+      vector<size_t> patternsToCheck = {PATTERN_QUAD_REGULAR};
+      remeshQuadrilateralPatches(GROW_MAXIMAL, gf, singularVertices, patternsToCheck, sp);
+
+      /* Size transition patterns */
+      patternsToCheck = {PATTERN_QUAD_REGULAR, PATTERN_QUAD_DIAG35, PATTERN_QUAD_ALIGNED35, PATTERN_QUAD_CHORD_UTURN};
+      remeshQuadrilateralPatches(GROW_MINIMAL, gf, singularVertices, patternsToCheck, sp);
     }
+
     // TODO: move 35 pairs inside patch ?
 
     size_t n2 = gf->quadrangles.size();
@@ -5417,7 +5512,7 @@ int improveQuadMeshTopology(GModel* gm, const std::vector<std::array<double,5> >
         vector<MVertex*> singularVertices;
         singularVerticesFromFloatingSingularities(gf, singularities, singularVertices, nSingVal3, nSingVal5);
         verifyCompatibilityCrossFieldEuler(gf, faceInfo.at(gf).intSumVal3mVal5, nSingVal3, nSingVal5);
-        int st = improveQuadMeshOfFace(gf,singularVertices);
+        int st = improveQuadMeshOfFace(gf,singularVertices,faceInfo.at(gf).sp);
         if (st != 0) {
           Msg::Error("failed to improve quad mesh of face with tag %i", gf->tag());
           continue;
@@ -5630,12 +5725,20 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   }
 
   constexpr bool useSurfaceProjection = true;
+  constexpr bool useMesquite = true;
   for (GFace* gf: faces) {
     size_t iters = 100;
     Msg::Debug("- Face %i: winslow smoothing (%li quads, %li iters) ...", gf->tag(), gf->quadrangles.size(), iters);
     double t1 = Cpu();
     if (useSurfaceProjection) {
-      meshWinslow2d(gf, iters, NULL, false, projectors[gf].get());
+      if (useMesquite) {
+        double qmin;
+        std::vector<MElement*> newElements(gf->quadrangles.size());
+        for (size_t i = 0; i < gf->quadrangles.size(); ++i) newElements[i] = gf->quadrangles[i];
+        optimizeQuadCavity(projectors[gf].get(), newElements, gf->mesh_vertices, qmin);
+      } else {
+        meshWinslow2d(gf, iters, NULL, false, projectors[gf].get());
+      }
     } else {
       meshWinslow2d(gf, iters, NULL, false);
     }

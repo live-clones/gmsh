@@ -20,10 +20,11 @@ class SurfaceProjector {
 
     bool initialize(GFace* gf);
 
-    GPoint closestPoint(const double query[3], size_t& cache, bool evalOnCAD = false) const;
+    GPoint closestPoint(const double query[3], size_t& cache, bool evalOnCAD = false, bool projectOnCAD = false) const;
 
-  protected:
+  public:
     GFace* gf;
+  protected:
     std::vector<std::array<std::array<double,3>,3 > >  triangles;
     std::vector<std::array<std::array<double,2>,3 > >  uvs;
 

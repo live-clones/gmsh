@@ -418,7 +418,7 @@ bool SurfaceProjector::initialize(GFace* gf_) {
   return true;
 }
 
-GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, bool evalOnCAD) const {
+GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, bool evalOnCAD, bool projectOnCAD) const {
   if (tree == NULL) {
     Msg::Error("closestPoint in SurfaceProjector: no kdtree");
     GPoint fail(DBL_MAX,DBL_MAX,DBL_MAX,NULL);
@@ -444,7 +444,16 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
         double u = lambda[0] * uvs[cache][0][0] + lambda[1] * uvs[cache][1][0] + lambda[2] * uvs[cache][2][0];
         double v = lambda[0] * uvs[cache][0][1] + lambda[1] * uvs[cache][1][1] + lambda[2] * uvs[cache][2][1];
         GPoint proj(cproj[0],cproj[1],cproj[2],gf,u,v);
-        if (evalOnCAD) {
+        if (projectOnCAD) {
+          /* Use the discrete projection + uv interpolation
+           * as initial guess for CAD closest point query */
+          double initialGuess[2] = {proj.u(),proj.v()};
+          SPoint3 query(proj.x(),proj.y(),proj.z());
+          GPoint cadProj = gf->closestPoint(query,initialGuess);
+          if (cadProj.succeeded()) {
+            proj = cadProj;
+          }
+        } else if (evalOnCAD) {
           proj = gf->point(u,v);
         }
         return proj;
@@ -534,7 +543,16 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
 
     if (d2min_in != DBL_MAX) {
       cache = elem;
-      if (uvs.size() > 0 && evalOnCAD) {
+      if (uvs.size() > 0 && projectOnCAD) {
+        /* Use the discrete projection + uv interpolation
+         * as initial guess for CAD closest point query */
+        double initialGuess[2] = {proj.u(),proj.v()};
+        SPoint3 query(proj.x(),proj.y(),proj.z());
+        GPoint cadProj = gf->closestPoint(query,initialGuess);
+        if (cadProj.succeeded()) {
+          proj = cadProj;
+        }
+      } else if (uvs.size() > 0 && evalOnCAD) {
         proj = gf->point(proj.u(),proj.v());
       }
       return proj;
@@ -543,7 +561,16 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
 
   if (d2min_in != DBL_MAX || d2min_out != DBL_MAX) {
     cache = elem;
-    if (uvs.size() > 0 && evalOnCAD) {
+    if (uvs.size() > 0 && projectOnCAD) {
+      /* Use the discrete projection + uv interpolation
+       * as initial guess for CAD closest point query */
+      double initialGuess[2] = {proj.u(),proj.v()};
+      SPoint3 query(proj.x(),proj.y(),proj.z());
+      GPoint cadProj = gf->closestPoint(query,initialGuess);
+      if (cadProj.succeeded()) {
+        proj = cadProj;
+      }
+    } else if (uvs.size() > 0 && evalOnCAD) {
       proj = gf->point(proj.u(),proj.v());
     }
     return proj;
