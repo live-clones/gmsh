@@ -1598,7 +1598,7 @@ are automatically assigned to the elements.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L907,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L787,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2116,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1763,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L98,x2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L29,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L64,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L64,faces.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/import_perf.cpp#L56,import_perf.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L94,x2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L27,x4.py}, @url{@value{GITLAB-PREFIX}/demos/api/import_perf.py#L57,import_perf.py}, @url{@value{GITLAB-PREFIX}/demos/api/raw_tetrahedralization.py#L20,raw_tetrahedralization.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain.py#L58,terrain.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L98,x2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L29,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L64,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L64,faces.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/import_perf.cpp#L56,import_perf.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L94,x2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L27,x4.py}, @url{@value{GITLAB-PREFIX}/demos/api/import_perf.py#L57,import_perf.py}, @url{@value{GITLAB-PREFIX}/demos/api/raw_tetrahedralization.py#L20,raw_tetrahedralization.py}, @url{@value{GITLAB-PREFIX}/demos/api/raw_triangulation.py#L19,raw_triangulation.py}, ...)
 @end table
 
 @item gmsh/model/mesh/getIntegrationPoints
@@ -2524,7 +2524,7 @@ function, the Theta function and cross directions. Return the tags of the views.
 @item gmsh/model/mesh/triangulate
 Triangulate the points given in the @code{coord} vector as pairs of u, v
 coordinates, and return the node tags (with numbering starting at 1) of the
-resulting triangles in @code{tri@code{.
+resulting triangles in @code{tri}.
 
 @table @asis
 @item Input:
@@ -2535,12 +2535,14 @@ resulting triangles in @code{tri@code{.
 -
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1466,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1291,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3217,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2732,Julia}
+@item Examples:
+Python (@url{@value{GITLAB-PREFIX}/demos/api/raw_triangulation.py#L13,raw_triangulation.py})
 @end table
 
 @item gmsh/model/mesh/tetrahedralize
 Tetrahedralize the points given in the @code{coord} vector as triplets of x, y,
 z coordinates, and return the node tags (with numbering starting at 1) of the
-resulting tetrahedra in @code{tetra@code{.
+resulting tetrahedra in @code{tetra}.
 
 @table @asis
 @item Input:

@@ -1287,14 +1287,14 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
 
 /* Triangulate the points given in the `coord' vector as pairs of u, v
  * coordinates, and return the node tags (with numbering starting at 1) of the
- * resulting triangles in `tri`. */
+ * resulting triangles in `tri'. */
 GMSH_API void gmshModelMeshTriangulate(double * coord, size_t coord_n,
                                        size_t ** tri, size_t * tri_n,
                                        int * ierr);
 
 /* Tetrahedralize the points given in the `coord' vector as triplets of x, y,
  * z coordinates, and return the node tags (with numbering starting at 1) of
- * the resulting tetrahedra in `tetra`. */
+ * the resulting tetrahedra in `tetra'. */
 GMSH_API void gmshModelMeshTetrahedralize(double * coord, size_t coord_n,
                                           size_t ** tetra, size_t * tetra_n,
                                           int * ierr);

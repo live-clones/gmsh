@@ -1462,7 +1462,7 @@ namespace gmsh { // Top-level functions
       //
       // Triangulate the points given in the `coord' vector as pairs of u, v
       // coordinates, and return the node tags (with numbering starting at 1) of
-      // the resulting triangles in `tri`.
+      // the resulting triangles in `tri'.
       GMSH_API void triangulate(const std::vector<double> & coord,
                                 std::vector<std::size_t> & tri);
 
@@ -1470,7 +1470,7 @@ namespace gmsh { // Top-level functions
       //
       // Tetrahedralize the points given in the `coord' vector as triplets of x, y,
       // z coordinates, and return the node tags (with numbering starting at 1) of
-      // the resulting tetrahedra in `tetra`.
+      // the resulting tetrahedra in `tetra'.
       GMSH_API void tetrahedralize(const std::vector<double> & coord,
                                    std::vector<std::size_t> & tetra);
 
