@@ -185,7 +185,9 @@ static int writeInterface(int cgIndexFile, int cgIndexBase, int cgIndexZone,
       // for each edge of the patch...
       for(int l = 0; l < 4; l++) {
         // ...loop over all nodes and see if we find v1 and v2
-        //for(k = 0; e[i]
+        for(int j = 0; j < jmax; j++) {
+          if(v[0][j] == v1)
+        for(k = 0; e[i]
       }
     }
     */
