@@ -1867,6 +1867,34 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
   }
 }
 
+GMSH_API void gmshModelMeshTriangulate(double * coord, size_t coord_n, size_t ** tri, size_t * tri_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<std::size_t> api_tri_;
+    gmsh::model::mesh::triangulate(api_coord_, api_tri_);
+    vector2ptr(api_tri_, tri, tri_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshTetrahedralize(double * coord, size_t coord_n, size_t ** tetra, size_t * tetra_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<std::size_t> api_tetra_;
+    gmsh::model::mesh::tetrahedralize(api_coord_, api_tetra_);
+    vector2ptr(api_tetra_, tetra, tetra_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

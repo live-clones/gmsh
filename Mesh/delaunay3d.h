@@ -13,6 +13,7 @@ class MTetrahedron;
 // corners of an enclosing box)
 void delaunayTriangulation(const int numThreads, const int nptsatonce,
                            std::vector<MVertex *> &S,
-                           std::vector<MTetrahedron *> &T);
+                           std::vector<MTetrahedron *> &T,
+                           bool removeBox);
 
 #endif

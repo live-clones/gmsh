@@ -1455,8 +1455,24 @@ namespace gmsh { // Top-level functions
       //
       // Compute a cross field for the current mesh. The function creates 3 views:
       // the H function, the Theta function and cross directions. Return the tags
-      // of the views
+      // of the views.
       GMSH_API void computeCrossField(std::vector<int> & viewTags);
+
+      // gmsh::model::mesh::triangulate
+      //
+      // Triangulate the points given in the `coord' vector as pairs of u, v
+      // coordinates, and return the node tags (with numbering starting at 1) of
+      // the resulting triangles in `tri`.
+      GMSH_API void triangulate(const std::vector<double> & coord,
+                                std::vector<std::size_t> & tri);
+
+      // gmsh::model::mesh::tetrahedralize
+      //
+      // Tetrahedralize the points given in the `coord' vector as triplets of x, y,
+      // z coordinates, and return the node tags (with numbering starting at 1) of
+      // the resulting tetrahedra in `tetra`.
+      GMSH_API void tetrahedralize(const std::vector<double> & coord,
+                                   std::vector<std::size_t> & tetra);
 
       namespace field { // Mesh size field functions
 

@@ -464,8 +464,14 @@ mesh.add('computeHomology', doc, None, ivectorint('domainTags', 'std::vector<int
 doc = '''Compute a basis representation for cohomology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative cohomology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute cohomology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation cochains are stored as physical groups in the mesh.'''
 mesh.add('computeCohomology', doc, None, ivectorint('domainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('subdomainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('dims', 'std::vector<int>()', "[]", "[]"))
 
-doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views'''
+doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views.'''
 mesh.add('computeCrossField', doc, None, ovectorint('viewTags'))
+
+doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri`.'''
+mesh.add('triangulate', doc, None, ivectordouble('coord'), ovectorsize('tri'))
+
+doc = '''Tetrahedralize the points given in the `coord' vector as triplets of x, y, z coordinates, and return the node tags (with numbering starting at 1) of the resulting tetrahedra in `tetra`.'''
+mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
 
 ################################################################################
 

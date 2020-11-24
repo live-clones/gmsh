@@ -2202,7 +2202,7 @@ namespace gmsh { // Top-level functions
 
       // Compute a cross field for the current mesh. The function creates 3 views:
       // the H function, the Theta function and cross directions. Return the tags
-      // of the views
+      // of the views.
       inline void computeCrossField(std::vector<int> & viewTags)
       {
         int ierr = 0;
@@ -2210,6 +2210,36 @@ namespace gmsh { // Top-level functions
         gmshModelMeshComputeCrossField(&api_viewTags_, &api_viewTags_n_, &ierr);
         if(ierr) throwLastError();
         viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
+      }
+
+      // Triangulate the points given in the `coord' vector as pairs of u, v
+      // coordinates, and return the node tags (with numbering starting at 1) of
+      // the resulting triangles in `tri`.
+      inline void triangulate(const std::vector<double> & coord,
+                              std::vector<std::size_t> & tri)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        size_t *api_tri_; size_t api_tri_n_;
+        gmshModelMeshTriangulate(api_coord_, api_coord_n_, &api_tri_, &api_tri_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_coord_);
+        tri.assign(api_tri_, api_tri_ + api_tri_n_); gmshFree(api_tri_);
+      }
+
+      // Tetrahedralize the points given in the `coord' vector as triplets of x, y,
+      // z coordinates, and return the node tags (with numbering starting at 1) of
+      // the resulting tetrahedra in `tetra`.
+      inline void tetrahedralize(const std::vector<double> & coord,
+                                 std::vector<std::size_t> & tetra)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        size_t *api_tetra_; size_t api_tetra_n_;
+        gmshModelMeshTetrahedralize(api_coord_, api_coord_n_, &api_tetra_, &api_tetra_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_coord_);
+        tetra.assign(api_tetra_, api_tetra_ + api_tetra_n_); gmshFree(api_tetra_);
       }
 
       namespace field { // Mesh size field functions

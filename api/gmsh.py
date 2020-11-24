@@ -3200,7 +3200,7 @@ class model:
 
             Compute a cross field for the current mesh. The function creates 3 views:
             the H function, the Theta function and cross directions. Return the tags of
-            the views
+            the views.
 
             Return `viewTags'.
             """
@@ -3212,6 +3212,50 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_viewTags_, api_viewTags_n_.value)
+
+        @staticmethod
+        def triangulate(coord):
+            """
+            gmsh.model.mesh.triangulate(coord)
+
+            Triangulate the points given in the `coord' vector as pairs of u, v
+            coordinates, and return the node tags (with numbering starting at 1) of the
+            resulting triangles in `tri`.
+
+            Return `tri'.
+            """
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_tri_, api_tri_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshTriangulate(
+                api_coord_, api_coord_n_,
+                byref(api_tri_), byref(api_tri_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorsize(api_tri_, api_tri_n_.value)
+
+        @staticmethod
+        def tetrahedralize(coord):
+            """
+            gmsh.model.mesh.tetrahedralize(coord)
+
+            Tetrahedralize the points given in the `coord' vector as triplets of x, y,
+            z coordinates, and return the node tags (with numbering starting at 1) of
+            the resulting tetrahedra in `tetra`.
+
+            Return `tetra'.
+            """
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_tetra_, api_tetra_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshTetrahedralize(
+                api_coord_, api_coord_n_,
+                byref(api_tetra_), byref(api_tetra_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorsize(api_tetra_, api_tetra_n_.value)
 
 
         class field:

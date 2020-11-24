@@ -1281,9 +1281,23 @@ GMSH_API void gmshModelMeshComputeCohomology(int * domainTags, size_t domainTags
 
 /* Compute a cross field for the current mesh. The function creates 3 views:
  * the H function, the Theta function and cross directions. Return the tags of
- * the views */
+ * the views. */
 GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
                                              int * ierr);
+
+/* Triangulate the points given in the `coord' vector as pairs of u, v
+ * coordinates, and return the node tags (with numbering starting at 1) of the
+ * resulting triangles in `tri`. */
+GMSH_API void gmshModelMeshTriangulate(double * coord, size_t coord_n,
+                                       size_t ** tri, size_t * tri_n,
+                                       int * ierr);
+
+/* Tetrahedralize the points given in the `coord' vector as triplets of x, y,
+ * z coordinates, and return the node tags (with numbering starting at 1) of
+ * the resulting tetrahedra in `tetra`. */
+GMSH_API void gmshModelMeshTetrahedralize(double * coord, size_t coord_n,
+                                          size_t ** tetra, size_t * tetra_n,
+                                          int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return

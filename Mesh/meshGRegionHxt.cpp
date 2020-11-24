@@ -469,18 +469,19 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
   return 1;
 }
 
-static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
+static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
                                       std::vector<MTetrahedron *> &tets)
 {
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
 
-  size_t nvert = points.size();
+  size_t nvert = verts.size();
   HXT_CHECK(hxtAlignedMalloc(&mesh->vertices.coord, nvert * 4 * sizeof(double)));
   for (size_t i = 0; i < nvert; i++) {
-    mesh->vertices.coord[4*i+0] = points[i]->x();
-    mesh->vertices.coord[4*i+1] = points[i]->y();
-    mesh->vertices.coord[4*i+2] = points[i]->z();
+    mesh->vertices.coord[4 * i + 0] = verts[i]->x();
+    mesh->vertices.coord[4 * i + 1] = verts[i]->y();
+    mesh->vertices.coord[4 * i + 2] = verts[i]->z();
+    mesh->vertices.coord[4 * i + 3] = 0.;
   }
   mesh->vertices.num = nvert;
   mesh->vertices.size = nvert;
@@ -492,35 +493,45 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
     0, // insertionFirst
     0, // partitionability
     1, // perfectDelaunay
-    (Msg::GetVerbosity() > 5) ? 2 : 1, // verbosity
+    0, // verbosity
     0, // reproducible
     0 // delaunayThreads (0 = omp_get_max_threads)
   };
-  HXT_CHECK(hxtDelaunay(mesh, &delOptions));
+
+  //HXT_CHECK(hxtDelaunay(mesh, &delOptions));
+  HXTNodeInfo* nodeInfo;
+  HXT_CHECK(hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo) * mesh->vertices.num));
+  for(uint32_t i = 0; i < mesh->vertices.num; i++) {
+    nodeInfo[i].node = i;
+    nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
+  }
+  HXT_CHECK(hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, mesh->vertices.num));
+  HXT_CHECK(hxtAlignedFree(&nodeInfo));
 
   for(size_t i = 0; i < mesh->tetrahedra.num; i++) {
-    uint32_t *i0 = &mesh->tetrahedra.node[4 * i + 0];
-    tets.push_back(new MTetrahedron(points[i0[0]], points[i0[1]],
-                                    points[i0[2]], points[i0[3]]));
+    if(mesh->tetrahedra.node[i*4 + 3] != UINT32_MAX){
+      uint32_t myColor = mesh->tetrahedra.color ? mesh->tetrahedra.color[i] : 0;
+      if (myColor != HXT_COLOR_OUT) {
+        uint32_t *n = &mesh->tetrahedra.node[4 * i];
+        tets.push_back(new MTetrahedron(verts[n[0]], verts[n[1]],
+                                        verts[n[2]], verts[n[3]]));
+      }
+    }
   }
-
-  // debug
-#if 0
-  GModel *m = GModel::current();
-  discreteRegion *r = new discreteRegion(m, m->getMaxElementaryNumber(3) + 1);
-  r->mesh_vertices.insert(r->mesh_vertices.end(), points.begin(), points.end());
-  r->tetrahedra.insert(r->tetrahedra.end(), tets.begin(), tets.end());
-  m->add(r);
-#endif
 
   HXT_CHECK(hxtMeshDelete(&mesh));
   return HXT_STATUS_OK;
 }
 
-void delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
+void delaunayMeshIn3DHxt(std::vector<MVertex *> &v,
                          std::vector<MTetrahedron *> &tets)
 {
-  _delaunayMeshIn3DHxt(points, tets);
+  Msg::Info("Tetrahedrizing %d nodes...", v.size());
+  double t1 = Cpu(), w1 = TimeOfDay();
+  _delaunayMeshIn3DHxt(v, tets);
+  double t2 = Cpu(), w2 = TimeOfDay();
+  Msg::Info("Done tetrahedrizing %d nodes (Wall %gs, CPU %gs)",
+            v.size(), w2 - w1, t2 - t1);
 }
 
 #else
@@ -531,7 +542,7 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
   return -1;
 }
 
-void delaunayMeshIn3DHxt(std::vector<MVertex *> &points, std::vector<MTetrahedron *> &tets)
+void delaunayMeshIn3DHxt(std::vector<MVertex *> &v, std::vector<MTetrahedron *> &tets)
 {
   Msg::Error("Gmsh should be compiled with Hxt to enable this option");
 }

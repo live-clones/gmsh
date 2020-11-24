@@ -1272,7 +1272,8 @@ static void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
 void delaunayTriangulation(const int numThreads, const int nptsatonce,
                            std::vector<MVertex *> &S,
-                           std::vector<MTetrahedron *> &T)
+                           std::vector<MTetrahedron *> &T,
+                           bool removeBox)
 {
   std::vector<MVertex *> _temp;
   std::vector<Vert *> _vertices;
@@ -1310,10 +1311,15 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
   for(int i = 0; i < 8; i++) {
     Vert *v = box[i];
-    v->setNum(N + i + 1);
-    MVertex *mv = new MVertex(v->x(), v->y(), v->z(), NULL, N + (i + 1));
-    _temp[v->getNum()] = mv;
-    S.push_back(mv);
+    if(removeBox) {
+      v->setNum(0);
+    }
+    else {
+      v->setNum(N + i + 1);
+      MVertex *mv = new MVertex(v->x(), v->y(), v->z(), NULL, N + (i + 1));
+      _temp[v->getNum()] = mv;
+      S.push_back(mv);
+    }
   }
 
   for(int myThread = 0; myThread < numThreads; myThread++) {
@@ -1329,7 +1335,7 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
           MTetrahedron *tr = new MTetrahedron(v1, v2, v3, v4);
           T.push_back(tr);
         }
-        else {
+        else if(!removeBox) {
           Msg::Error("Error in triangulation");
         }
       }

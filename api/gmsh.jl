@@ -2704,7 +2704,7 @@ end
     gmsh.model.mesh.computeCrossField()
 
 Compute a cross field for the current mesh. The function creates 3 views: the H
-function, the Theta function and cross directions. Return the tags of the views
+function, the Theta function and cross directions. Return the tags of the views.
 
 Return `viewTags`.
 """
@@ -2718,6 +2718,48 @@ function computeCrossField()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
     return viewTags
+end
+
+"""
+    gmsh.model.mesh.triangulate(coord)
+
+Triangulate the points given in the `coord` vector as pairs of u, v coordinates,
+and return the node tags (with numbering starting at 1) of the resulting
+triangles in `tri`.
+
+Return `tri`.
+"""
+function triangulate(coord)
+    api_tri_ = Ref{Ptr{Csize_t}}()
+    api_tri_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshTriangulate, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cdouble}, coord), length(coord), api_tri_, api_tri_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tri = unsafe_wrap(Array, api_tri_[], api_tri_n_[], own=true)
+    return tri
+end
+
+"""
+    gmsh.model.mesh.tetrahedralize(coord)
+
+Tetrahedralize the points given in the `coord` vector as triplets of x, y, z
+coordinates, and return the node tags (with numbering starting at 1) of the
+resulting tetrahedra in `tetra`.
+
+Return `tetra`.
+"""
+function tetrahedralize(coord)
+    api_tetra_ = Ref{Ptr{Csize_t}}()
+    api_tetra_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshTetrahedralize, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cdouble}, coord), length(coord), api_tetra_, api_tetra_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tetra = unsafe_wrap(Array, api_tetra_[], api_tetra_n_[], own=true)
+    return tetra
 end
 
 """
