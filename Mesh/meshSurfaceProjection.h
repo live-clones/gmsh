@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <array>
+#include <string>
 #include "GPoint.h"
 
 class GFace;
@@ -21,6 +22,8 @@ class SurfaceProjector {
     bool initialize(GFace* gf);
 
     GPoint closestPoint(const double query[3], size_t& cache, bool evalOnCAD = false, bool projectOnCAD = false) const;
+
+    void show(const std::string& viewName);
 
   public:
     GFace* gf;

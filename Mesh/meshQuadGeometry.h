@@ -14,11 +14,22 @@ class MElement;
 class SPoint3;
 class SurfaceProjector;
 
+int quadQualityStats(const std::vector<MElement*>& elements, double& qualityMin, double& qualityAvg);
+
+
+enum MesquiteSmoother {
+  MesquiteShapeImprovement,
+  MesquitePaverMinEdgeLengthWrapper
+};
+
 int optimizeQuadCavity(
+    MesquiteSmoother smoother,
     SurfaceProjector* sp,
     const std::vector<MElement*>& elements,
     std::vector<MVertex*>& freeVertices,
-    double& qualityMin);
+    double& qualityMin,
+    double& qualityAvg);
+
 
 int optimizeQuadGeometry(GFace* gf);
 
