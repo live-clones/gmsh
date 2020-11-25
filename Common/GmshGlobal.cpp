@@ -29,7 +29,7 @@ typedef unsigned long intptr_t;
 #include "fastScaledCrossField.h"
 #include "meshGFaceHxt.h"
 #include "conformalMapping.h"
-
+#include "meshQuadAlignIrregularVertices.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -369,8 +369,8 @@ int GmshBatch()
 	std::vector<GFace *> temp;
 	temp.insert(temp.begin(), GModel::current()->firstFace(), GModel::current()->lastFace());
 	addSingularitiesAtAcuteCorners(temp,45,singularities);
-	
-	
+
+
 	{ // transfer to pack algo
 	  std::string _ugly  = GModel::current()->getName()+"_singularities.txt";
 	  std::string _ugly2 = GModel::current()->getName()+"_singularities.pos";
@@ -391,7 +391,7 @@ int GmshBatch()
       PView* crossField = PView::getViewByTag(viewTag);
       std::string posout = GModel::current()->getName() + "_scaled_crossfield.pos";
       crossField->getData()->writePOS(posout);
-      
+
     }
     else if(CTX::instance()->batch == 68){
       // global surface remeshing
@@ -407,6 +407,10 @@ int GmshBatch()
       CTX::instance()->batch =0;
       // still a bug in allocation somewhere
       //      exit(result);
+    }
+    else if(CTX::instance()->batch == 70) {
+        // align irregular vertices
+        alignQuadMesh(GModel::current());
     }
 #endif
   }
