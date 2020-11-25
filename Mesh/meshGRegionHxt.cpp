@@ -47,7 +47,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t* volume,
   double lcGlob = CTX::instance()->lc;
   int useInterpolatedSize = CTX::instance()->mesh.lcExtendFromBoundary;
 
-  HXT_INFO("Gmsh callback %suse interpolated size", useInterpolatedSize ?
+  HXT_INFO("Mesh size callback %suse interpolated size", useInterpolatedSize ?
            "" : "does not ");
 
   for(size_t i = 0; i < numPts; i++) {

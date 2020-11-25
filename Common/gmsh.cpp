@@ -4349,9 +4349,9 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
   Msg::Debug("setTransfiniteAutomatic() with cornerAngle=%.3f, recombine=%i",
              cornerAngle, int(recombine));
 
-  /* Collect all quad 4-sided faces (from given faces and volumes) */
+  // Collect all quad 4-sided faces (from given faces and volumes)
   std::set<GFace *> faces;
-  if(dimTags.size() == 0) { /* Empty dimTag => all faces */
+  if(dimTags.size() == 0) { // Empty dimTag => all faces
     std::vector<GEntity *> entities;
     GModel::current()->getEntities(entities, 2);
     for(std::size_t i = 0; i < entities.size(); i++) {
@@ -4384,18 +4384,17 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
     }
   }
 
-  /* Build the chords, compute the averaged number of points on each chord,
-   * assign the transfinite attributes */
+  // Build the chords, compute the averaged number of points on each chord,
+  // assign the transfinite attributes
   bool okf = MeshSetTransfiniteFacesAutomatic(faces, cornerAngle, recombine);
   if(!okf) {
     Msg::Error("failed to automatically set transfinite faces");
     return;
   }
 
-  /* Collect the 6-sided volumes with Euler characteristic equal to 2 (ie ball)
-   */
+  // Collect the 6-sided volumes with Euler characteristic equal to 2 (ie ball)
   std::set<GRegion *> regions;
-  if(dimTags.size() == 0) { /* Empty dimTag => all faces */
+  if(dimTags.size() == 0) { // Empty dimTag => all faces
     std::vector<GEntity *> entities;
     GModel::current()->getEntities(entities, 3);
     for(std::size_t i = 0; i < entities.size(); i++) {
@@ -4830,7 +4829,6 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
   for(std::size_t i = 0; i < coord.size(); i += 2)
     bbox += SPoint3(coord[i], coord[i + 1], 0.);
   double lc = 10. * norm(SVector3(bbox.max(), bbox.min()));
-
   std::vector<MVertex *> verts(coord.size() / 2);
   std::size_t j = 0;
   for(std::size_t i = 0; i < coord.size(); i += 2) {

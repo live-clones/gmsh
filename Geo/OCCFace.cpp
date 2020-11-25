@@ -78,6 +78,12 @@ void OCCFace::_setup()
       else if(edge.Orientation() == TopAbs_INTERNAL) {
         Msg::Debug("Adding embedded curve %d in surface %d", e->tag(), tag());
         embedded_edges.push_back(e);
+        /*
+        if(e->getBeginVertex())
+          embedded_vertices.insert(e->getBeginVertex());
+        if(e->getEndVertex())
+          embedded_vertices.insert(e->getEndVertex());
+        */
       }
       else {
         Msg::Debug("Curve %d (%d --> %d) ori %d", e->tag(),
