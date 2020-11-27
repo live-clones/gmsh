@@ -6170,6 +6170,7 @@ GMSH_API int gmsh::view::add(const std::string &name, const int tag)
   return view->getTag();
 #else
   Msg::Error("Views require the post-processing module");
+  return -1;
 #endif
 }
 
@@ -6203,6 +6204,7 @@ GMSH_API int gmsh::view::getIndex(const int tag)
   return view->getIndex();
 #else
   Msg::Error("Views require the post-processing module");
+  return -1;
 #endif
 }
 
@@ -6806,6 +6808,7 @@ GMSH_API int gmsh::view::addAlias(const int refTag, const bool copyOptions,
   return view->getTag();
 #else
   Msg::Error("Views require the post-processing module");
+  return -1;
 #endif
 }
 
