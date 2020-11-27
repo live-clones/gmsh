@@ -60,8 +60,6 @@
 #include <GProp_GProps.hxx>
 #include <GeomFill_BezierCurves.hxx>
 #include <GeomFill_BSplineCurves.hxx>
-#include <GeomPlate_BuildPlateSurface.hxx>
-#include <GeomPlate_PointConstraint.hxx>
 #include <GeomAPI_Interpolate.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_BSplineSurface.hxx>
@@ -69,10 +67,9 @@
 #include <Geom_BezierSurface.hxx>
 #include <Geom_Circle.hxx>
 #include <Geom_Ellipse.hxx>
-#include <GeomPlate_Surface.hxx>
+#include <Geom_Plane.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
-#include <GeomPlate_MakeApprox.hxx>
 #include <GeomProjLib.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
