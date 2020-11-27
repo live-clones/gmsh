@@ -2209,8 +2209,12 @@ namespace gmsh { // Top-level functions
       // vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `weights', `knotsU',
       // `knotsV', `multiplicitiesU' or `multiplicitiesV' are not provided, default
       // parameters are computed automatically. If `tag' is positive, set the tag
-      // explicitly; otherwise a new tag is selected automatically. Return the tag
-      // of the b-spline surface.
+      // explicitly; otherwise a new tag is selected automatically. If `wireTags'
+      // is provided, trim the b-spline patch using the provided wires: the first
+      // wire defines the external contour, the others define holes. If `wire3D' is
+      // set, consider wire curves as 3D curves and project them on the b-spline
+      // surface; otherwise consider the wire curves as defined in the parametric
+      // space of the surface. Return the tag of the b-spline surface.
       GMSH_API int addBSplineSurface(const std::vector<int> & pointTags,
                                      const int numPointsU,
                                      const int tag = -1,
@@ -2220,18 +2224,26 @@ namespace gmsh { // Top-level functions
                                      const std::vector<double> & knotsU = std::vector<double>(),
                                      const std::vector<double> & knotsV = std::vector<double>(),
                                      const std::vector<int> & multiplicitiesU = std::vector<int>(),
-                                     const std::vector<int> & multiplicitiesV = std::vector<int>());
+                                     const std::vector<int> & multiplicitiesV = std::vector<int>(),
+                                     const std::vector<int> & wireTags = std::vector<int>(),
+                                     const bool wire3D = false);
 
       // gmsh::model::occ::addBezierSurface
       //
       // Add a Bezier surface in the OpenCASCADE CAD representation, with
       // `pointTags' control points given as a single vector [Pu1v1, ...
       // Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set the tag
-      // explicitly; otherwise a new tag is selected automatically. Return the tag
-      // of the b-spline surface.
+      // explicitly; otherwise a new tag is selected automatically. If `wireTags'
+      // is provided, trim the Bezier patch using the provided wires: the first
+      // wire defines the external contour, the others define holes. If `wire3D' is
+      // set, consider wire curves as 3D curves and project them on the Bezier
+      // surface; otherwise consider the wire curves as defined in the parametric
+      // space of the surface. Return the tag of the Bezier surface.
       GMSH_API int addBezierSurface(const std::vector<int> & pointTags,
                                     const int numPointsU,
-                                    const int tag = -1);
+                                    const int tag = -1,
+                                    const std::vector<int> & wireTags = std::vector<int>(),
+                                    const bool wire3D = false);
 
       // gmsh::model::occ::addSurfaceLoop
       //

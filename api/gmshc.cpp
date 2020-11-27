@@ -2782,7 +2782,7 @@ GMSH_API int gmshModelOccAddBezierFilling(const int wireTag, const int tag, cons
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n, const int numPointsU, const int tag, const int degreeU, const int degreeV, double * weights, size_t weights_n, double * knotsU, size_t knotsU_n, double * knotsV, size_t knotsV_n, int * multiplicitiesU, size_t multiplicitiesU_n, int * multiplicitiesV, size_t multiplicitiesV_n, int * ierr)
+GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n, const int numPointsU, const int tag, const int degreeU, const int degreeV, double * weights, size_t weights_n, double * knotsU, size_t knotsU_n, double * knotsV, size_t knotsV_n, int * multiplicitiesU, size_t multiplicitiesU_n, int * multiplicitiesV, size_t multiplicitiesV_n, int * wireTags, size_t wireTags_n, const int wire3D, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
@@ -2793,7 +2793,8 @@ GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n, 
     std::vector<double> api_knotsV_(knotsV, knotsV + knotsV_n);
     std::vector<int> api_multiplicitiesU_(multiplicitiesU, multiplicitiesU + multiplicitiesU_n);
     std::vector<int> api_multiplicitiesV_(multiplicitiesV, multiplicitiesV + multiplicitiesV_n);
-    result_api_ = gmsh::model::occ::addBSplineSurface(api_pointTags_, numPointsU, tag, degreeU, degreeV, api_weights_, api_knotsU_, api_knotsV_, api_multiplicitiesU_, api_multiplicitiesV_);
+    std::vector<int> api_wireTags_(wireTags, wireTags + wireTags_n);
+    result_api_ = gmsh::model::occ::addBSplineSurface(api_pointTags_, numPointsU, tag, degreeU, degreeV, api_weights_, api_knotsU_, api_knotsV_, api_multiplicitiesU_, api_multiplicitiesV_, api_wireTags_, wire3D);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2801,13 +2802,14 @@ GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n, 
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n, const int numPointsU, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n, const int numPointsU, const int tag, int * wireTags, size_t wireTags_n, const int wire3D, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
-    result_api_ = gmsh::model::occ::addBezierSurface(api_pointTags_, numPointsU, tag);
+    std::vector<int> api_wireTags_(wireTags, wireTags + wireTags_n);
+    result_api_ = gmsh::model::occ::addBezierSurface(api_pointTags_, numPointsU, tag, api_wireTags_, wire3D);
   }
   catch(...){
     if(ierr) *ierr = 1;

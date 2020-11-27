@@ -4031,41 +4031,50 @@ function addBezierFilling(wireTag, tag = -1, type = "")
 end
 
 """
-    gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = Cdouble[], knotsU = Cdouble[], knotsV = Cdouble[], multiplicitiesU = Cint[], multiplicitiesV = Cint[])
+    gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = Cdouble[], knotsU = Cdouble[], knotsV = Cdouble[], multiplicitiesU = Cint[], multiplicitiesV = Cint[], wireTags = Cint[], wire3D = false)
 
 Add a b-spline surface of degree `degreeU` x `degreeV` in the OpenCASCADE CAD
 representation, with `pointTags` control points given as a single vector [Pu1v1,
 ... Pu`numPointsU`v1, Pu1v2, ...]. If `weights`, `knotsU`, `knotsV`,
 `multiplicitiesU` or `multiplicitiesV` are not provided, default parameters are
 computed automatically. If `tag` is positive, set the tag explicitly; otherwise
-a new tag is selected automatically. Return the tag of the b-spline surface.
+a new tag is selected automatically. If `wireTags` is provided, trim the
+b-spline patch using the provided wires: the first wire defines the external
+contour, the others define holes. If `wire3D` is set, consider wire curves as 3D
+curves and project them on the b-spline surface; otherwise consider the wire
+curves as defined in the parametric space of the surface. Return the tag of the
+b-spline surface.
 
 Return an integer value.
 """
-function addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = Cdouble[], knotsU = Cdouble[], knotsV = Cdouble[], multiplicitiesU = Cint[], multiplicitiesV = Cint[])
+function addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = Cdouble[], knotsU = Cdouble[], knotsV = Cdouble[], multiplicitiesU = Cint[], multiplicitiesV = Cint[], wireTags = Cint[], wire3D = false)
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddBSplineSurface, gmsh.lib), Cint,
-          (Ptr{Cint}, Csize_t, Cint, Cint, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          convert(Vector{Cint}, pointTags), length(pointTags), numPointsU, tag, degreeU, degreeV, convert(Vector{Cdouble}, weights), length(weights), convert(Vector{Cdouble}, knotsU), length(knotsU), convert(Vector{Cdouble}, knotsV), length(knotsV), convert(Vector{Cint}, multiplicitiesU), length(multiplicitiesU), convert(Vector{Cint}, multiplicitiesV), length(multiplicitiesV), ierr)
+          (Ptr{Cint}, Csize_t, Cint, Cint, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, pointTags), length(pointTags), numPointsU, tag, degreeU, degreeV, convert(Vector{Cdouble}, weights), length(weights), convert(Vector{Cdouble}, knotsU), length(knotsU), convert(Vector{Cdouble}, knotsV), length(knotsV), convert(Vector{Cint}, multiplicitiesU), length(multiplicitiesU), convert(Vector{Cint}, multiplicitiesV), length(multiplicitiesV), convert(Vector{Cint}, wireTags), length(wireTags), wire3D, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
 
 """
-    gmsh.model.occ.addBezierSurface(pointTags, numPointsU, tag = -1)
+    gmsh.model.occ.addBezierSurface(pointTags, numPointsU, tag = -1, wireTags = Cint[], wire3D = false)
 
 Add a Bezier surface in the OpenCASCADE CAD representation, with `pointTags`
 control points given as a single vector [Pu1v1, ... Pu`numPointsU`v1, Pu1v2,
 ...]. If `tag` is positive, set the tag explicitly; otherwise a new tag is
-selected automatically. Return the tag of the b-spline surface.
+selected automatically. If `wireTags` is provided, trim the Bezier patch using
+the provided wires: the first wire defines the external contour, the others
+define holes. If `wire3D` is set, consider wire curves as 3D curves and project
+them on the Bezier surface; otherwise consider the wire curves as defined in the
+parametric space of the surface. Return the tag of the Bezier surface.
 
 Return an integer value.
 """
-function addBezierSurface(pointTags, numPointsU, tag = -1)
+function addBezierSurface(pointTags, numPointsU, tag = -1, wireTags = Cint[], wire3D = false)
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddBezierSurface, gmsh.lib), Cint,
-          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, pointTags), length(pointTags), numPointsU, tag, ierr)
+          (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, pointTags), length(pointTags), numPointsU, tag, convert(Vector{Cint}, wireTags), length(wireTags), wire3D, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end

@@ -1611,104 +1611,6 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
   return true;
 }
 
-bool OCC_Internals::addPlateSurface(int &tag, int wireTag,
-                                    const std::vector<int> &pointTags,
-                                    const std::vector<int> &surfaceTags,
-                                    const std::vector<int> &surfaceContinuity)
-{
-  bool snap = false;
-
-  if(tag >= 0 && _tagFace.IsBound(tag)) {
-    Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
-    return false;
-  }
-
-  TopoDS_Face result;
-  try {
-    GeomPlate_BuildPlateSurface BPSurf(2, 150, 10);
-
-    if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
-      return false;
-    }
-    else {
-      TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
-      TopExp_Explorer exp0;
-      for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
-        TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
-        Handle(BRepAdaptor_HCurve) C = new BRepAdaptor_HCurve();
-        C->ChangeCurve().Initialize(edge);
-        Handle(BRepFill_CurveConstraint) Cont =
-          new BRepFill_CurveConstraint(C, 0, 10, .01);
-        BPSurf.Add(Cont);
-      }
-    }
-
-    for(std::size_t i = 0; i < pointTags.size(); i++) {
-      if(!_tagVertex.IsBound(pointTags[i])) {
-        Msg::Error("Unknown OpenCASCADE point with tag %d", pointTags[i]);
-        return false;
-      }
-      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(pointTags[i]));
-      Handle(GeomPlate_PointConstraint) PCont =
-        new GeomPlate_PointConstraint(BRep_Tool::Pnt(vertex), 0, .1);
-      BPSurf.Add(PCont);
-    }
-    BPSurf.Perform();
-
-    Standard_Integer MaxSeg = 9;
-    Standard_Integer MaxDegree = 8;
-    Standard_Integer CritOrder = 0;
-    Standard_Real dmax, Tol;
-    Handle(GeomPlate_Surface) PSurf = BPSurf.Surface();
-    dmax = Max(0.0001, 10 * BPSurf.G0Error());
-    Tol = 0.0001;
-    GeomPlate_MakeApprox Mapp(PSurf, Tol, MaxSeg, MaxDegree, dmax, CritOrder);
-    Handle(Geom_Surface) Surf(Mapp.Surface());
-
-    // create a face corresponding to the approximated Plate
-    if(snap) {
-      BRepBuilderAPI_MakeWire makeWire;
-      {
-        TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
-        TopExp_Explorer exp0;
-        for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
-          TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
-          Standard_Real first, last;
-          Handle(Geom_Curve) ccc2 = BRep_Tool::Curve(edge, first, last);
-          Handle(Geom_Curve) c2 = GeomProjLib::Project(ccc2, Surf);
-          TopoDS_Edge aEdgepj = BRepBuilderAPI_MakeEdge(
-            c2, c2->FirstParameter(), c2->LastParameter());
-          makeWire.Add(aEdgepj);
-        }
-      }
-      makeWire.Build();
-      result = BRepBuilderAPI_MakeFace(Surf, makeWire.Wire());
-    }
-    else {
-      Standard_Real Umin, Umax, Vmin, Vmax;
-      PSurf->Bounds(Umin, Umax, Vmin, Vmax);
-      double DU = 0. * (Umax - Umin);
-      double DV = 0. * (Vmax - Vmin);
-      result = BRepBuilderAPI_MakeFace(Surf, Umin - DU, Umax + DU, Vmin - DV,
-                                       Vmax + DV, 1.e-6);
-    }
-
-    ShapeFix_Face fix(result);
-    fix.SetPrecision(CTX::instance()->geom.tolerance);
-    fix.Perform();
-    fix.FixOrientation(); // and I don't understand why this is necessary
-    result = fix.Face();
-  } catch(Standard_Failure &err) {
-    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
-    return false;
-  }
-
-  if(tag < 0) tag = getMaxTag(2) + 1;
-  bind(result, tag, true);
-  return true;
-}
-
 bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
                                       const std::vector<int> &pointTags,
                                       const std::vector<int> &surfaceTags,
@@ -1920,6 +1822,95 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
   return true;
 }
 
+static bool makeTrimmedSurface(Handle(Geom_Surface) &surf,
+                               std::vector<TopoDS_Wire> &wires, bool wire3D,
+                               TopoDS_Face &result)
+{
+  if(wires.empty()) { // natural bounds
+    result = BRepBuilderAPI_MakeFace(surf, CTX::instance()->geom.tolerance);
+#if 0
+    // Activate this to use input points as corners if they are on the corners
+    // of the patch. (Since the natural "Replace(old_vertex, new_vertex)" on the
+    // face does not work, we do it on each edge. Sigh...)  Since when buiding
+    // multi-patch models a fragment or sewing will eventually be necessary to
+    // glue the patches, it's not that useful  let's leave this commented out.
+    ShapeBuild_ReShape rebuild;
+    TopExp_Explorer exp0;
+    for(exp0.Init(result, TopAbs_EDGE); exp0.More(); exp0.Next()) {
+      TopoDS_Edge e = TopoDS::Edge(exp0.Current());
+      TopoDS_Vertex v1 = TopExp::FirstVertex(e);
+      TopoDS_Vertex v2 = TopExp::LastVertex(e);
+      double s0, s1;
+      Handle(Geom_Curve) curve = BRep_Tool::Curve(e, s0, s1);
+      if(curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve)){
+        Handle(Geom_BSplineCurve) bs = Handle(Geom_BSplineCurve)::DownCast(curve);
+        for(std::size_t i = 0; i < corners.size(); i++) {
+          if(bs->StartPoint().IsEqual(BRep_Tool::Pnt(corners[i]),
+                                      CTX::instance()->geom.tolerance)) {
+            v1 = corners[i];
+          }
+          if(bs->EndPoint().IsEqual(BRep_Tool::Pnt(corners[i]),
+                                    CTX::instance()->geom.tolerance)) {
+            v2 = corners[i];
+          }
+        }
+      }
+      BRepBuilderAPI_MakeEdge newe(curve, v1, v2);
+      rebuild.Replace(e, newe);
+    }
+    result = TopoDS::Face(rebuild.Apply(result));
+    ShapeFix_Face fix(result); // not sure why, but this is necessary
+    fix.SetPrecision(CTX::instance()->geom.tolerance);
+    fix.Perform();
+    fix.FixOrientation();
+    result = fix.Face();
+#endif
+  }
+  else { // trimmed patch, using provided wires
+    std::vector<TopoDS_Wire> wiresProj;
+    for(std::size_t i = 0; i < wires.size(); i++) {
+      BRepBuilderAPI_MakeWire w;
+      TopExp_Explorer exp0;
+      for(exp0.Init(wires[i], TopAbs_EDGE); exp0.More(); exp0.Next()) {
+        TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+        if(wire3D) {
+          // use the 3D curves in the wire and project them onto the patch
+          Standard_Real first, last;
+          Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
+          Handle(Geom_Curve) cProj = GeomProjLib::Project(c, surf);
+          TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge
+            (cProj, cProj->FirstParameter(), cProj->LastParameter());
+          w.Add(edgeProj);
+        }
+        else {
+          // assume the 3D curves are actually 2D curves in the parametric
+          // space of the patch: to retrieve the 2D curves, project the 3D
+          // curves on the z=0 plane
+          TopLoc_Location loc;
+          double first, last;
+          Handle(Geom_Plane) p = new Geom_Plane(0, 0, 1, 0);
+          Handle(Geom2d_Curve) c2d = BRep_Tool::CurveOnPlane
+            (edge, p, loc, first, last);
+          TopoDS_Edge edgeSurf = BRepBuilderAPI_MakeEdge
+            (c2d, surf, c2d->FirstParameter(), c2d->LastParameter());
+          w.Add(edgeSurf);
+        }
+      }
+      w.Build();
+      wiresProj.push_back(w.Wire());
+    }
+    BRepBuilderAPI_MakeFace f(surf, wiresProj[0]);
+    for(int i = 1; i < wiresProj.size(); i++)
+      f.Add(wiresProj[i]);
+    result = f.Face();
+    // recover 3D curves for pcurves
+    ShapeFix_Face fix(result);
+    fix.Perform();
+    result = fix.Face();
+  }
+  return true;
+}
+
 bool OCC_Internals::addBSplineSurface(int &tag,
                                       const std::vector<int> &pointTags,
                                       const int numPointsU,
@@ -1928,7 +1919,9 @@ bool OCC_Internals::addBSplineSurface(int &tag,
                                       const std::vector<double> &knotsU,
                                       const std::vector<double> &knotsV,
                                       const std::vector<int> &multiplicitiesU,
-                                      const std::vector<int> &multiplicitiesV)
+                                      const std::vector<int> &multiplicitiesV,
+                                      const std::vector<int> &wireTags,
+                                      bool wire3D)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
@@ -2031,6 +2024,17 @@ bool OCC_Internals::addBSplineSurface(int &tag,
     return false;
   }
 
+  std::vector<TopoDS_Wire> wires;
+  for(std::size_t i = 0; i < wireTags.size(); i++) {
+    int wireTag = std::abs(wireTags[i]);
+    if(!_tagWire.IsBound(wireTag)) {
+      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      return false;
+    }
+    TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
+    wires.push_back(wire);
+  }
+
   TopoDS_Face result;
   try{
     std::vector<TopoDS_Vertex> corners;
@@ -2066,48 +2070,9 @@ bool OCC_Internals::addBSplineSurface(int &tag,
     for(std::size_t i = 1; i <= mU.size(); i++) mmU.SetValue(i, mU[i - 1]);
     TColStd_Array1OfInteger mmV(1, mV.size());
     for(std::size_t i = 1; i <= mV.size(); i++) mmV.SetValue(i, mV[i - 1]);
-    Handle(Geom_BSplineSurface) surf =
-      new Geom_BSplineSurface(pp, ww, kkU, kkV, mmU, mmV, dU, dV,
-                              periodicU, periodicV);
-    result = BRepBuilderAPI_MakeFace(surf, CTX::instance()->geom.tolerance);
-
-#if 0
-    // Activate this to use input points as corners if they are on the corners
-    // of the patch. (Since the natural "Replace(old_vertex, new_vertex)" on the
-    // face does not work, we do it on each edge. Sigh...)  Since when buiding
-    // multi-patch models a fragment or sewing will eventually be necessary to
-    // glue the patches, let's leave this commented out.
-    ShapeBuild_ReShape rebuild;
-    TopExp_Explorer exp0;
-    for(exp0.Init(result, TopAbs_EDGE); exp0.More(); exp0.Next()) {
-      TopoDS_Edge e = TopoDS::Edge(exp0.Current());
-      TopoDS_Vertex v1 = TopExp::FirstVertex(e);
-      TopoDS_Vertex v2 = TopExp::LastVertex(e);
-      double s0, s1;
-      Handle(Geom_Curve) curve = BRep_Tool::Curve(e, s0, s1);
-      if(curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve)){
-        Handle(Geom_BSplineCurve) bs = Handle(Geom_BSplineCurve)::DownCast(curve);
-        for(std::size_t i = 0; i < corners.size(); i++) {
-          if(bs->StartPoint().IsEqual(BRep_Tool::Pnt(corners[i]),
-                                      CTX::instance()->geom.tolerance)) {
-            v1 = corners[i];
-          }
-          if(bs->EndPoint().IsEqual(BRep_Tool::Pnt(corners[i]),
-                                    CTX::instance()->geom.tolerance)) {
-            v2 = corners[i];
-          }
-        }
-      }
-      BRepBuilderAPI_MakeEdge newe(curve, v1, v2);
-      rebuild.Replace(e, newe);
-    }
-    result = TopoDS::Face(rebuild.Apply(result));
-    ShapeFix_Face fix(result); // not sure why, but this is necessary
-    fix.SetPrecision(CTX::instance()->geom.tolerance);
-    fix.Perform();
-    fix.FixOrientation();
-    result = fix.Face();
-#endif
+    Handle(Geom_BSplineSurface) surf = new Geom_BSplineSurface
+      (pp, ww, kkU, kkV, mmU, mmV, dU, dV, periodicU, periodicV);
+    makeTrimmedSurface(surf, wires, wire3D, result);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -2120,7 +2085,9 @@ bool OCC_Internals::addBSplineSurface(int &tag,
 
 bool OCC_Internals::addBezierSurface(int &tag,
                                      const std::vector<int> &pointTags,
-                                     const int numPointsU)
+                                     const int numPointsU,
+                                     const std::vector<int> &wireTags,
+                                     bool wire3D)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
@@ -2138,6 +2105,17 @@ bool OCC_Internals::addBezierSurface(int &tag,
     return false;
   }
 
+  std::vector<TopoDS_Wire> wires;
+  for(std::size_t i = 0; i < wireTags.size(); i++) {
+    int wireTag = std::abs(wireTags[i]);
+    if(!_tagWire.IsBound(wireTag)) {
+      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      return false;
+    }
+    TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
+    wires.push_back(wire);
+  }
+
   TopoDS_Face result;
   try{
     TColgp_Array2OfPnt pp(1, numPointsU, 1, numPointsV);
@@ -2152,9 +2130,8 @@ bool OCC_Internals::addBezierSurface(int &tag,
         pp.SetValue(i, j, BRep_Tool::Pnt(vertex));
       }
     }
-    Handle(Geom_BezierSurface) surf =
-      new Geom_BezierSurface(pp);
-    result = BRepBuilderAPI_MakeFace(surf, CTX::instance()->geom.tolerance);
+    Handle(Geom_BezierSurface) surf = new Geom_BezierSurface(pp);
+    makeTrimmedSurface(surf, wires, wire3D, result);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;

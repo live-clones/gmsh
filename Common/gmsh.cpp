@@ -5678,24 +5678,27 @@ GMSH_API int gmsh::model::occ::addBSplineSurface(
   const int degreeU, const int degreeV, const std::vector<double> &weights,
   const std::vector<double> &knotsU, const std::vector<double> &knotsV,
   const std::vector<int> &multiplicitiesU,
-  const std::vector<int> &multiplicitiesV)
+  const std::vector<int> &multiplicitiesV,
+  const std::vector<int> &wireTags, const bool wire3D)
 {
   if(!_checkInit()) return -1;
   int outTag = tag;
   GModel::current()->getOCCInternals()->addBSplineSurface(
     outTag, pointTags, numPointsU, degreeU, degreeV, weights, knotsU, knotsV,
-    multiplicitiesU, multiplicitiesV);
+    multiplicitiesU, multiplicitiesV, wireTags, wire3D);
   return outTag;
 }
 
 GMSH_API int
 gmsh::model::occ::addBezierSurface(const std::vector<int> &pointTags,
-                                   const int numPointsU, const int tag)
+                                   const int numPointsU, const int tag,
+                                   const std::vector<int> &wireTags,
+                                   const bool wire3D)
 {
   if(!_checkInit()) return -1;
   int outTag = tag;
-  GModel::current()->getOCCInternals()->addBezierSurface(outTag, pointTags,
-                                                         numPointsU);
+  GModel::current()->getOCCInternals()->addBezierSurface(
+    outTag, pointTags, numPointsU, wireTags, wire3D);
   return outTag;
 }
 

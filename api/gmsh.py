@@ -4741,17 +4741,21 @@ class model:
             return api_result_
 
         @staticmethod
-        def addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[]):
+        def addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[], wireTags=[], wire3D=False):
             """
-            gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[])
+            gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[], wireTags=[], wire3D=False)
 
             Add a b-spline surface of degree `degreeU' x `degreeV' in the OpenCASCADE
             CAD representation, with `pointTags' control points given as a single
             vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `weights', `knotsU',
             `knotsV', `multiplicitiesU' or `multiplicitiesV' are not provided, default
             parameters are computed automatically. If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. Return the tag
-            of the b-spline surface.
+            explicitly; otherwise a new tag is selected automatically. If `wireTags' is
+            provided, trim the b-spline patch using the provided wires: the first wire
+            defines the external contour, the others define holes. If `wire3D' is set,
+            consider wire curves as 3D curves and project them on the b-spline surface;
+            otherwise consider the wire curves as defined in the parametric space of
+            the surface. Return the tag of the b-spline surface.
 
             Return an integer value.
             """
@@ -4761,6 +4765,7 @@ class model:
             api_knotsV_, api_knotsV_n_ = _ivectordouble(knotsV)
             api_multiplicitiesU_, api_multiplicitiesU_n_ = _ivectorint(multiplicitiesU)
             api_multiplicitiesV_, api_multiplicitiesV_n_ = _ivectorint(multiplicitiesV)
+            api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddBSplineSurface(
                 api_pointTags_, api_pointTags_n_,
@@ -4773,30 +4778,39 @@ class model:
                 api_knotsV_, api_knotsV_n_,
                 api_multiplicitiesU_, api_multiplicitiesU_n_,
                 api_multiplicitiesV_, api_multiplicitiesV_n_,
+                api_wireTags_, api_wireTags_n_,
+                c_int(bool(wire3D)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
 
         @staticmethod
-        def addBezierSurface(pointTags, numPointsU, tag=-1):
+        def addBezierSurface(pointTags, numPointsU, tag=-1, wireTags=[], wire3D=False):
             """
-            gmsh.model.occ.addBezierSurface(pointTags, numPointsU, tag=-1)
+            gmsh.model.occ.addBezierSurface(pointTags, numPointsU, tag=-1, wireTags=[], wire3D=False)
 
             Add a Bezier surface in the OpenCASCADE CAD representation, with
             `pointTags' control points given as a single vector [Pu1v1, ...
             Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set the tag
-            explicitly; otherwise a new tag is selected automatically. Return the tag
-            of the b-spline surface.
+            explicitly; otherwise a new tag is selected automatically. If `wireTags' is
+            provided, trim the Bezier patch using the provided wires: the first wire
+            defines the external contour, the others define holes. If `wire3D' is set,
+            consider wire curves as 3D curves and project them on the Bezier surface;
+            otherwise consider the wire curves as defined in the parametric space of
+            the surface. Return the tag of the Bezier surface.
 
             Return an integer value.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
+            api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddBezierSurface(
                 api_pointTags_, api_pointTags_n_,
                 c_int(numPointsU),
                 c_int(tag),
+                api_wireTags_, api_wireTags_n_,
+                c_int(bool(wire3D)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

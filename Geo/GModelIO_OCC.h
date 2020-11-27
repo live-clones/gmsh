@@ -221,11 +221,6 @@ public:
                     double dy, double roundedRadius = 0.);
   bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
-  bool addPlateSurface(
-    int &tag, int wireTag,
-    const std::vector<int> &pointTags = std::vector<int>(),
-    const std::vector<int> &surfaceTags = std::vector<int>(),
-    const std::vector<int> &surfaceContinuity = std::vector<int>());
   bool addSurfaceFilling(
     int &tag, int wireTag,
     const std::vector<int> &pointTags = std::vector<int>(),
@@ -243,9 +238,13 @@ public:
                          const std::vector<double> &knotsU,
                          const std::vector<double> &knotsV,
                          const std::vector<int> &multiplicitiesU,
-                         const std::vector<int> &multiplicitiesV);
+                         const std::vector<int> &multiplicitiesV,
+                         const std::vector<int> &wireTags = std::vector<int>(),
+                         bool wire3D = true);
   bool addBezierSurface(int &tag, const std::vector<int> &pointTags,
-                        const int numPointsU);
+                        const int numPointsU,
+                        const std::vector<int> &wireTags = std::vector<int>(),
+                        bool wire3D = true);
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);

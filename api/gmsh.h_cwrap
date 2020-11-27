@@ -3303,8 +3303,12 @@ namespace gmsh { // Top-level functions
       // vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `weights', `knotsU',
       // `knotsV', `multiplicitiesU' or `multiplicitiesV' are not provided, default
       // parameters are computed automatically. If `tag' is positive, set the tag
-      // explicitly; otherwise a new tag is selected automatically. Return the tag
-      // of the b-spline surface.
+      // explicitly; otherwise a new tag is selected automatically. If `wireTags'
+      // is provided, trim the b-spline patch using the provided wires: the first
+      // wire defines the external contour, the others define holes. If `wire3D' is
+      // set, consider wire curves as 3D curves and project them on the b-spline
+      // surface; otherwise consider the wire curves as defined in the parametric
+      // space of the surface. Return the tag of the b-spline surface.
       inline int addBSplineSurface(const std::vector<int> & pointTags,
                                    const int numPointsU,
                                    const int tag = -1,
@@ -3314,7 +3318,9 @@ namespace gmsh { // Top-level functions
                                    const std::vector<double> & knotsU = std::vector<double>(),
                                    const std::vector<double> & knotsV = std::vector<double>(),
                                    const std::vector<int> & multiplicitiesU = std::vector<int>(),
-                                   const std::vector<int> & multiplicitiesV = std::vector<int>())
+                                   const std::vector<int> & multiplicitiesV = std::vector<int>(),
+                                   const std::vector<int> & wireTags = std::vector<int>(),
+                                   const bool wire3D = false)
       {
         int ierr = 0;
         int *api_pointTags_; size_t api_pointTags_n_; vector2ptr(pointTags, &api_pointTags_, &api_pointTags_n_);
@@ -3323,7 +3329,8 @@ namespace gmsh { // Top-level functions
         double *api_knotsV_; size_t api_knotsV_n_; vector2ptr(knotsV, &api_knotsV_, &api_knotsV_n_);
         int *api_multiplicitiesU_; size_t api_multiplicitiesU_n_; vector2ptr(multiplicitiesU, &api_multiplicitiesU_, &api_multiplicitiesU_n_);
         int *api_multiplicitiesV_; size_t api_multiplicitiesV_n_; vector2ptr(multiplicitiesV, &api_multiplicitiesV_, &api_multiplicitiesV_n_);
-        int result_api_ = gmshModelOccAddBSplineSurface(api_pointTags_, api_pointTags_n_, numPointsU, tag, degreeU, degreeV, api_weights_, api_weights_n_, api_knotsU_, api_knotsU_n_, api_knotsV_, api_knotsV_n_, api_multiplicitiesU_, api_multiplicitiesU_n_, api_multiplicitiesV_, api_multiplicitiesV_n_, &ierr);
+        int *api_wireTags_; size_t api_wireTags_n_; vector2ptr(wireTags, &api_wireTags_, &api_wireTags_n_);
+        int result_api_ = gmshModelOccAddBSplineSurface(api_pointTags_, api_pointTags_n_, numPointsU, tag, degreeU, degreeV, api_weights_, api_weights_n_, api_knotsU_, api_knotsU_n_, api_knotsV_, api_knotsV_n_, api_multiplicitiesU_, api_multiplicitiesU_n_, api_multiplicitiesV_, api_multiplicitiesV_n_, api_wireTags_, api_wireTags_n_, (int)wire3D, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_pointTags_);
         gmshFree(api_weights_);
@@ -3331,23 +3338,32 @@ namespace gmsh { // Top-level functions
         gmshFree(api_knotsV_);
         gmshFree(api_multiplicitiesU_);
         gmshFree(api_multiplicitiesV_);
+        gmshFree(api_wireTags_);
         return result_api_;
       }
 
       // Add a Bezier surface in the OpenCASCADE CAD representation, with
       // `pointTags' control points given as a single vector [Pu1v1, ...
       // Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set the tag
-      // explicitly; otherwise a new tag is selected automatically. Return the tag
-      // of the b-spline surface.
+      // explicitly; otherwise a new tag is selected automatically. If `wireTags'
+      // is provided, trim the Bezier patch using the provided wires: the first
+      // wire defines the external contour, the others define holes. If `wire3D' is
+      // set, consider wire curves as 3D curves and project them on the Bezier
+      // surface; otherwise consider the wire curves as defined in the parametric
+      // space of the surface. Return the tag of the Bezier surface.
       inline int addBezierSurface(const std::vector<int> & pointTags,
                                   const int numPointsU,
-                                  const int tag = -1)
+                                  const int tag = -1,
+                                  const std::vector<int> & wireTags = std::vector<int>(),
+                                  const bool wire3D = false)
       {
         int ierr = 0;
         int *api_pointTags_; size_t api_pointTags_n_; vector2ptr(pointTags, &api_pointTags_, &api_pointTags_n_);
-        int result_api_ = gmshModelOccAddBezierSurface(api_pointTags_, api_pointTags_n_, numPointsU, tag, &ierr);
+        int *api_wireTags_; size_t api_wireTags_n_; vector2ptr(wireTags, &api_wireTags_, &api_wireTags_n_);
+        int result_api_ = gmshModelOccAddBezierSurface(api_pointTags_, api_pointTags_n_, numPointsU, tag, api_wireTags_, api_wireTags_n_, (int)wire3D, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_pointTags_);
+        gmshFree(api_wireTags_);
         return result_api_;
       }
 

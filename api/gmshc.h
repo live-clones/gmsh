@@ -1944,8 +1944,12 @@ GMSH_API int gmshModelOccAddBezierFilling(const int wireTag,
  * vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `weights', `knotsU',
  * `knotsV', `multiplicitiesU' or `multiplicitiesV' are not provided, default
  * parameters are computed automatically. If `tag' is positive, set the tag
- * explicitly; otherwise a new tag is selected automatically. Return the tag
- * of the b-spline surface. */
+ * explicitly; otherwise a new tag is selected automatically. If `wireTags' is
+ * provided, trim the b-spline patch using the provided wires: the first wire
+ * defines the external contour, the others define holes. If `wire3D' is set,
+ * consider wire curves as 3D curves and project them on the b-spline surface;
+ * otherwise consider the wire curves as defined in the parametric space of
+ * the surface. Return the tag of the b-spline surface. */
 GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n,
                                            const int numPointsU,
                                            const int tag,
@@ -1956,16 +1960,24 @@ GMSH_API int gmshModelOccAddBSplineSurface(int * pointTags, size_t pointTags_n,
                                            double * knotsV, size_t knotsV_n,
                                            int * multiplicitiesU, size_t multiplicitiesU_n,
                                            int * multiplicitiesV, size_t multiplicitiesV_n,
+                                           int * wireTags, size_t wireTags_n,
+                                           const int wire3D,
                                            int * ierr);
 
 /* Add a Bezier surface in the OpenCASCADE CAD representation, with
  * `pointTags' control points given as a single vector [Pu1v1, ...
  * Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set the tag
- * explicitly; otherwise a new tag is selected automatically. Return the tag
- * of the b-spline surface. */
+ * explicitly; otherwise a new tag is selected automatically. If `wireTags' is
+ * provided, trim the Bezier patch using the provided wires: the first wire
+ * defines the external contour, the others define holes. If `wire3D' is set,
+ * consider wire curves as 3D curves and project them on the Bezier surface;
+ * otherwise consider the wire curves as defined in the parametric space of
+ * the surface. Return the tag of the Bezier surface. */
 GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n,
                                           const int numPointsU,
                                           const int tag,
+                                          int * wireTags, size_t wireTags_n,
+                                          const int wire3D,
                                           int * ierr);
 
 /* Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,
