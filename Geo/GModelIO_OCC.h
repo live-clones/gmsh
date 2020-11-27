@@ -261,6 +261,10 @@ public:
   bool addTorus(int &tag, double x, double y, double z, double r1, double r2,
                 double angle);
 
+  // trim
+  bool trimSurface(int &tag, int surfaceTag, const std::vector<int> &wireTags,
+                   bool wire3D);
+
   // thrusections and thick solids (can create multiple entities)
   bool addThruSections(int tag, const std::vector<int> &wireTags,
                        bool makeSolid, bool makeRuled,
@@ -605,6 +609,12 @@ public:
                 double angle)
   {
     return _error("add torus");
+  }
+  bool trimSurface(int &tag, int surfaceTag,
+                   const std::vector<int> &wireTags,
+                   bool wire3D)
+  {
+    return _error("trim surface");
   }
   bool addThruSections(int tag, const std::vector<int> &wireTags,
                        bool makeSolid, bool makeRuled,

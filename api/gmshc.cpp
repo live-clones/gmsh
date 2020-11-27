@@ -2817,6 +2817,20 @@ GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n, c
   return result_api_;
 }
 
+GMSH_API int gmshModelOccTrimSurface(const int surfaceTag, int * wireTags, size_t wireTags_n, const int wire3D, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_wireTags_(wireTags, wireTags + wireTags_n);
+    result_api_ = gmsh::model::occ::trimSurface(surfaceTag, api_wireTags_, wire3D, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
 GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n, const int tag, const int sewing, int * ierr)
 {
   int result_api_ = 0;

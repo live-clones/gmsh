@@ -4080,6 +4080,27 @@ function addBezierSurface(pointTags, numPointsU, tag = -1, wireTags = Cint[], wi
 end
 
 """
+    gmsh.model.occ.trimSurface(surfaceTag, wireTags = Cint[], wire3D = false, tag = -1)
+
+Trim the surface `surfaceTag` with the wires `wireTags`, replacing any existing
+trimming curves. The first wire defines the external contour, the others define
+holes. If `wire3D` is set, consider wire curves as 3D curves and project them on
+the surface; otherwise consider the wire curves as defined in the parametric
+space of the surface. If `tag` is positive, set the tag explicitly; otherwise a
+new tag is selected automatically. Return the tag of the trimmed surface.
+
+Return an integer value.
+"""
+function trimSurface(surfaceTag, wireTags = Cint[], wire3D = false, tag = -1)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelOccTrimSurface, gmsh.lib), Cint,
+          (Cint, Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
+          surfaceTag, convert(Vector{Cint}, wireTags), length(wireTags), wire3D, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+
+"""
     gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
 
 Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,

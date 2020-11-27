@@ -1875,8 +1875,7 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) &surf,
           Standard_Real first, last;
           Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
           Handle(Geom_Curve) cProj = GeomProjLib::Project(c, surf);
-          TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge
-            (cProj, cProj->FirstParameter(), cProj->LastParameter());
+          TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge(cProj);
           w.Add(edgeProj);
         }
         else {
@@ -1888,13 +1887,12 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) &surf,
           Handle(Geom_Plane) p = new Geom_Plane(0, 0, 1, 0);
           Handle(Geom2d_Curve) c2d = BRep_Tool::CurveOnPlane
             (edge, p, loc, first, last);
-          TopoDS_Edge edgeSurf = BRepBuilderAPI_MakeEdge
-            (c2d, surf, c2d->FirstParameter(), c2d->LastParameter());
+          TopoDS_Edge edgeSurf = BRepBuilderAPI_MakeEdge(c2d, surf);
           w.Add(edgeSurf);
         }
       }
-      w.Build();
-      wiresProj.push_back(w.Wire());
+      TopoDS_Wire wire = w.Wire();
+      wiresProj.push_back(wire);
     }
     BRepBuilderAPI_MakeFace f(surf, wiresProj[0]);
     for(std::size_t i = 1; i < wiresProj.size(); i++)
@@ -2128,6 +2126,46 @@ bool OCC_Internals::addBezierSurface(int &tag,
       }
     }
     Handle(Geom_BezierSurface) surf = new Geom_BezierSurface(pp);
+    makeTrimmedSurface(surf, wires, wire3D, result);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+
+  if(tag < 0) tag = getMaxTag(2) + 1;
+  bind(result, tag, true);
+  return true;
+}
+
+bool OCC_Internals::trimSurface(int &tag, int surfaceTag,
+                                const std::vector<int> &wireTags,
+                                bool wire3D)
+{
+  if(tag >= 0 && _tagFace.IsBound(tag)) {
+    Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
+    return false;
+  }
+
+  if(!_tagFace.IsBound(surfaceTag)) {
+    Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTag);
+    return false;
+  }
+  TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTag));
+
+  std::vector<TopoDS_Wire> wires;
+  for(std::size_t i = 0; i < wireTags.size(); i++) {
+    int wireTag = std::abs(wireTags[i]);
+    if(!_tagWire.IsBound(wireTag)) {
+      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      return false;
+    }
+    TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
+    wires.push_back(wire);
+  }
+
+  TopoDS_Face result;
+  try{
+    Handle(Geom_Surface) surf = BRep_Tool::Surface(face);
     makeTrimmedSurface(surf, wires, wire3D, result);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());

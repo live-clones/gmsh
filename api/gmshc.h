@@ -1980,6 +1980,19 @@ GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n,
                                           const int wire3D,
                                           int * ierr);
 
+/* Trim the surface `surfaceTag' with the wires `wireTags', replacing any
+ * existing trimming curves. The first wire defines the external contour, the
+ * others define holes. If `wire3D' is set, consider wire curves as 3D curves
+ * and project them on the surface; otherwise consider the wire curves as
+ * defined in the parametric space of the surface. If `tag' is positive, set
+ * the tag explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the trimmed surface. */
+GMSH_API int gmshModelOccTrimSurface(const int surfaceTag,
+                                     int * wireTags, size_t wireTags_n,
+                                     const int wire3D,
+                                     const int tag,
+                                     int * ierr);
+
 /* Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,
  * formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly;
  * otherwise a new tag is selected automatically. Return the tag of the

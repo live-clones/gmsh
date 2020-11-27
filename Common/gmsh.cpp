@@ -5703,6 +5703,19 @@ gmsh::model::occ::addBezierSurface(const std::vector<int> &pointTags,
 }
 
 GMSH_API int
+gmsh::model::occ::trimSurface(const int surfaceTag,
+                              const std::vector<int> &wireTags,
+                              const bool wire3D,
+                              const int tag)
+{
+  if(!_checkInit()) return -1;
+  int outTag = tag;
+  GModel::current()->getOCCInternals()->trimSurface(
+    outTag, surfaceTag, wireTags, wire3D);
+  return outTag;
+}
+
+GMSH_API int
 gmsh::model::occ::addSurfaceLoop(const std::vector<int> &surfaceTags,
                                  const int tag, const bool sewing)
 {

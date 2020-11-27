@@ -4817,6 +4817,33 @@ class model:
             return api_result_
 
         @staticmethod
+        def trimSurface(surfaceTag, wireTags=[], wire3D=False, tag=-1):
+            """
+            gmsh.model.occ.trimSurface(surfaceTag, wireTags=[], wire3D=False, tag=-1)
+
+            Trim the surface `surfaceTag' with the wires `wireTags', replacing any
+            existing trimming curves. The first wire defines the external contour, the
+            others define holes. If `wire3D' is set, consider wire curves as 3D curves
+            and project them on the surface; otherwise consider the wire curves as
+            defined in the parametric space of the surface. If `tag' is positive, set
+            the tag explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the trimmed surface.
+
+            Return an integer value.
+            """
+            api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
+            ierr = c_int()
+            api_result_ = lib.gmshModelOccTrimSurface(
+                c_int(surfaceTag),
+                api_wireTags_, api_wireTags_n_,
+                c_int(bool(wire3D)),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+
+        @staticmethod
         def addSurfaceLoop(surfaceTags, tag=-1, sewing=False):
             """
             gmsh.model.occ.addSurfaceLoop(surfaceTags, tag=-1, sewing=False)
