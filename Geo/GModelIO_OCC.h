@@ -553,12 +553,16 @@ public:
                          const std::vector<double> &knotsU,
                          const std::vector<double> &knotsV,
                          const std::vector<int> &multiplicitiesU,
-                         const std::vector<int> &multiplicitiesV)
+                         const std::vector<int> &multiplicitiesV,
+                         const std::vector<int> &wireTags = std::vector<int>(),
+                         bool wire3D = true)
   {
     return _error("add BSpline surface");
   }
   bool addBezierSurface(int &tag, const std::vector<int> &pointTags,
-                        const int numPointsU)
+                        const int numPointsU,
+                        const std::vector<int> &wireTags = std::vector<int>(),
+                        bool wire3D = true)
   {
     return _error("add Bezier surface");
   }
