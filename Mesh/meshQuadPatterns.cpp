@@ -21,6 +21,12 @@
 #include "Options.h"
 #include "fastScaledCrossField.h"
 
+#if defined(HAVE_EIGEN)
+#include<Eigen/IterativeLinearSolvers>
+#include<Eigen/SparseCholesky>
+#include<Eigen/SparseLU>
+#endif
+
 #include "meshRefine.h"
 #include "Generator.h"
 #include "PView.h"
@@ -34,10 +40,12 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "qmt_utils.hpp" // For debug printing
+#include "robin_hood.h"
 #include "row_echelon_integer.hpp"
 #include "meshQuadData.hpp"
 #include "meshSurfaceProjection.h"
 #include "StringUtils.h"
+
 
 
 #if defined(_OPENMP)
@@ -127,10 +135,10 @@ namespace QuadPatternMatching {
   std::vector< std::vector<Quadrangulation> > B_disk_quadrangulations;
   /* Hash mapping from boundary valence loop (BVL) to disk_quadrangulations
    * Useful for fast queries */
-  std::vector< std::unordered_map< std::vector<id>, std::vector<id>, vidHash > > B_BVL_ids;
+  std::vector< robin_hood::unordered_map< std::vector<id>, std::vector<id>, vidHash > > B_BVL_ids;
 
   /* Keep track of pattern usage, just for statistics */
-  std::unordered_map<id2,id,id2Hash> usage_count;
+  robin_hood::unordered_map<id2,id,id2Hash> usage_count;
 
   template<class T> 
     void sort_unique(std::vector<T>& vec) {
@@ -205,7 +213,7 @@ namespace QuadPatternMatching {
       ncorners = 0;
       edges.reserve(2*quadVertices.size());
       quads.reserve(quadVertices.size());
-      std::unordered_map<id2,id,id2Hash> vpair2e;
+      robin_hood::unordered_map<id2,id,id2Hash> vpair2e;
       n = 0;
       for (size_t f = 0; f < quadVertices.size(); ++f) {
         id4 quad;
@@ -384,7 +392,7 @@ namespace QuadPatternMatching {
       return sum_sqrt(x);
     }
 
-    double get_positive_solution_DFS(std::vector<int>& x, int& count, int count_limit, const std::vector<double>& x_ideal) {
+    double get_positive_solution_DFS(std::vector<int>& x, int& count, int count_limit, const std::vector<double>& x_ideal, int& ncalls) {
       if (x.size() == 0) {
         x.resize(n-1,0);
         /* Check if a unknown is uncontrained. Happen with purely internal chords */
@@ -405,6 +413,11 @@ namespace QuadPatternMatching {
         }
       }
 
+      ncalls += 1;
+      if (ncalls > 1e7) {
+        Msg::Debug("get_positive_solution_DFS: infinite loop ? %i calls in recursion", ncalls);
+        return 0.;
+      }
       if (all_strictly_positive(x)) count += 1;
       if (count > count_limit) return 0.;
 
@@ -448,7 +461,7 @@ namespace QuadPatternMatching {
             if (candidate < 1) return 0.;
             vector<int> x2 = x;
             x2[j] = candidate;
-            double sub_score = get_positive_solution_DFS(x2, count, count_limit, x_ideal);
+            double sub_score = get_positive_solution_DFS(x2, count, count_limit, x_ideal, ncalls);
             if (sub_score > 0.) { /* Found a solution ! Return this one */
               x = x2;
               return sub_score;
@@ -489,7 +502,7 @@ namespace QuadPatternMatching {
               int candidate = prio_candidate[l].second;
               x2 = x;
               x2[j] = candidate;
-              double sub_score = get_positive_solution_DFS(x2, count, count_limit, x_ideal);
+              double sub_score = get_positive_solution_DFS(x2, count, count_limit, x_ideal, ncalls);
               if (sub_score > 0.) { /* Found a solution ! Return this one */
                 x = x2;
                 return sub_score;
@@ -686,7 +699,7 @@ namespace QuadPatternMatching {
       return false;
     }
 
-    std::unordered_map<id2, std::vector<MVertex*>, id2Hash> vpair2vertices;
+    robin_hood::unordered_map<id2, std::vector<MVertex*>, id2Hash> vpair2vertices;
     std::vector<MVertex*> v2mv(P.n,NULL);
     std::vector<MVertex*> vert;
 
@@ -988,7 +1001,7 @@ namespace QuadPatternMatching {
       std::rotate(bndr.begin(),bndr.begin()+(size_t) std::abs(rotation),bndr.end());
     }
 
-    std::unordered_map<id,MVertex*> pv2mv;
+    robin_hood::unordered_map<id,MVertex*> pv2mv;
     for (size_t f = 0; f < quads.size(); ++f) {
       std::array<MVertex*,4> vert;
       for (size_t lv = 0; lv < 4; ++lv) {
@@ -1021,12 +1034,12 @@ namespace QuadPatternMatching {
   }
 
   bool laplacianSmoothing(
-    const std::vector<MVertex*>& newVertices,
-    const std::vector<MElement*>& newElements,
-    size_t iter = 10) {
+      const std::vector<MVertex*>& newVertices,
+      const std::vector<MElement*>& newElements,
+      size_t iter = 10) {
     Msg::Debug("laplacian smoothing with %li new vertices and %li new quads, %li iterations (no projection) ... ", newVertices.size(), newElements.size(), iter);
 
-    std::unordered_map<MVertex*,size_t> old2new;
+    robin_hood::unordered_map<MVertex*,size_t> old2new;
     size_t vcount = 0;
     for (MVertex* v: newVertices) {
       old2new[v] = vcount;
@@ -1088,7 +1101,7 @@ namespace QuadPatternMatching {
 
   MVertex* centerOfElements(const std::vector<MElement*>& elements) {
     std::map<std::array<MVertex*,2>,size_t> vPairCount;
-    std::unordered_map<MVertex*,std::unordered_set<MVertex*> > v2v;
+    robin_hood::unordered_map<MVertex*,robin_hood::unordered_set<MVertex*> > v2v;
     for (MElement* f: elements) {
       size_t N = f->getNumEdges();
       for (size_t le = 0; le < N; ++le) {
@@ -1105,7 +1118,7 @@ namespace QuadPatternMatching {
     }
 
     /* Init from boundary */
-    std::unordered_map<MVertex*,double> dist;
+    robin_hood::unordered_map<MVertex*,double> dist;
     std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q; 
     for (const auto& kv: vPairCount) if (kv.second == 1) {
       dist[kv.first[0]] = 0.;
@@ -1176,7 +1189,7 @@ namespace QuadPatternMatching {
       if (oldv) center = oldv->point();
     }
 
-    std::unordered_map<MVertex*,size_t> old2new;
+    robin_hood::unordered_map<MVertex*,size_t> old2new;
     size_t vcount = 0;
     for (MVertex* v: newVertices) {
       old2new[v] = vcount;
@@ -1251,86 +1264,310 @@ namespace QuadPatternMatching {
     return true;
   }
 
+
+  inline double distance2(const SPoint2& a, const SPoint2& b) {
+    const double dx = a.x()-b.x();
+    const double dy = a.y()-b.y();
+    return dx*dx+dy*dy;
+  }
+
+  inline double distance2(const SPoint3& a, const SPoint3& b) {
+    const double dx = a.x()-b.x();
+    const double dy = a.y()-b.y();
+    const double dz = a.z()-b.z();
+    return dx*dx+dy*dy+dz*dz;
+  }
+
+  bool solveLaplaceLinearSystem(
+      size_t nInterior,
+      const vector<vector<size_t> >& v2v, vector<SPoint2>& uvs) {
+    Msg::Debug("solve laplace linear system ...");
+
+#if defined(HAVE_EIGEN)
+    size_t N = uvs.size();
+    Eigen::VectorXd x_u(N), x_v(N), b_u(N), b_v(N);
+    Eigen::SparseMatrix<double> A(N,N);
+    b_u.fill(0.);
+    b_v.fill(0.);
+    double PENALTY = 1.e8;
+
+    std::vector<Eigen::Triplet<double> > triplets;
+    for (size_t v = 0; v < uvs.size(); ++v) {
+      if (v < nInterior) {
+        triplets.push_back({v,v,1.});
+        if (v2v[v].size() == 0) continue;
+        double sum = double(v2v[v].size());
+        for (size_t v2: v2v[v]) {
+          triplets.push_back({v,v2,-1./sum});
+        }
+      } else { /* fixed value */
+        triplets.push_back({v,v,PENALTY});
+        b_u[v] = PENALTY * uvs[v][0];
+        b_v[v] = PENALTY * uvs[v][1];
+      }
+    }
+    A.setFromTriplets(triplets.begin(),triplets.end());
+
+    bool solveOk = true;
+    { /* Try SparseLU */
+      Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
+      solver.analyzePattern(A);
+      solver.factorize(A);
+      x_u = solver.solve(b_u);
+      if (solver.info() != Eigen::ComputationInfo::Success) {
+        Msg::Warning("failed to solve linear system with SparseLU (%li variables)", N);
+        solveOk = false;
+      }
+      x_v = solver.solve(b_v);
+      if (solver.info() != Eigen::ComputationInfo::Success) {
+        Msg::Warning("failed to solve linear system with SparseLU (%li variables)", N);
+        solveOk = false;
+      }
+    }
+    if (!solveOk) { /* Try least square */
+      solveOk = true;
+      Eigen::LeastSquaresConjugateGradient<Eigen::SparseMatrix<double> > solver;
+      solver.compute(A);
+      x_u = solver.solve(b_u);
+      if (solver.info() != Eigen::ComputationInfo::Success) {
+        Msg::Warning("failed to solve linear system with least-square (%li variables)", N);
+        solveOk = false;
+      }
+      x_v = solver.solve(b_v);
+      if (solver.info() != Eigen::ComputationInfo::Success) {
+        Msg::Warning("failed to solve linear system with least-square (%li variables)", N);
+        solveOk = false;
+      }
+    }
+
+    for (size_t v = 0; v < nInterior; ++v) {
+      uvs[v][0] = x_u[v];
+      uvs[v][1] = x_v[v];
+    }
+    if (!solveOk) {
+      Msg::Error("failed to solve linear system to solve uv");
+      return false;
+    }
+
+#else 
+    Msg::Error("solveLaplaceLinearSystem requires the EIGEN module");
+    return -1;
+#endif
+    return true;
+  }
+
+  bool solveLaplaceLinearSystemWith3DMetric(
+      size_t nInterior,
+      const vector<vector<size_t> >& v2v, 
+      const std::vector<MVertex*>& vertices,
+      vector<SPoint2>& uvs) {
+    Msg::Debug("solve laplace linear system ...");
+
+#if defined(HAVE_EIGEN)
+    size_t N = uvs.size();
+    Eigen::VectorXd x_u(N), x_v(N), b_u(N), b_v(N);
+    Eigen::SparseMatrix<double> A(N,N);
+    b_u.fill(0.);
+    b_v.fill(0.);
+    double PENALTY = 1.e8;
+
+    const double eps = std::pow(1.e-16,2);
+    std::vector<Eigen::Triplet<double> > triplets;
+    for (size_t v = 0; v < uvs.size(); ++v) {
+      if (v < nInterior) {
+        if (v2v[v].size() == 0) continue;
+        double sum = 0.;
+        for (size_t v2: v2v[v]) {
+          //double duv2 = distance2(uvs[v],uvs[v2]);
+          double d2 = distance2(vertices[v]->point(),vertices[v2]->point());
+          // double w = (d2 > eps) ? 1./std::sqrt(d2) : 1.;
+          double w = (d2 > eps) ? 1./d2 : 1.;
+          // double w = (d2 > eps) ? std::sqrt(duv2)/std::sqrt(d2) : 1.;
+          // double w = (d2 > eps) ? 1./std::sqrt(d2) : 1.;
+          // double w = (d2 > eps) ? -std::sqrt(d2) : 1.;
+          triplets.push_back({v,v2,-w});
+          sum += w;
+        }
+        triplets.push_back({v,v,sum});
+      } else { /* fixed value */
+        triplets.push_back({v,v,PENALTY});
+        b_u[v] = PENALTY * uvs[v][0];
+        b_v[v] = PENALTY * uvs[v][1];
+      }
+    }
+    A.setFromTriplets(triplets.begin(),triplets.end());
+
+    bool solveOk = true;
+    { /* Try SparseLU */
+      Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
+      solver.analyzePattern(A);
+      solver.factorize(A);
+      x_u = solver.solve(b_u);
+      if (solver.info() != Eigen::ComputationInfo::Success) {
+        Msg::Warning("failed to solve linear system with SparseLU (%li variables)", N);
+        solveOk = false;
+      }
+      x_v = solver.solve(b_v);
+      if (solver.info() != Eigen::ComputationInfo::Success) {
+        Msg::Warning("failed to solve linear system with SparseLU (%li variables)", N);
+        solveOk = false;
+      }
+    }
+    if (!solveOk) { /* Try least square */
+      solveOk = true;
+      Eigen::LeastSquaresConjugateGradient<Eigen::SparseMatrix<double> > solver;
+      solver.compute(A);
+      x_u = solver.solve(b_u);
+      if (solver.info() != Eigen::ComputationInfo::Success) {
+        Msg::Warning("failed to solve linear system with least-square (%li variables)", N);
+        solveOk = false;
+      }
+      x_v = solver.solve(b_v);
+      if (solver.info() != Eigen::ComputationInfo::Success) {
+        Msg::Warning("failed to solve linear system with least-square (%li variables)", N);
+        solveOk = false;
+      }
+    }
+
+    for (size_t v = 0; v < nInterior; ++v) {
+      uvs[v][0] = x_u[v];
+      uvs[v][1] = x_v[v];
+    }
+    if (!solveOk) {
+      Msg::Error("failed to solve linear system to solve uv");
+      return false;
+    }
+
+#else 
+    Msg::Error("solveLaplaceLinearSystem requires the EIGEN module");
+    return -1;
+#endif
+    return true;
+  }
+
+
+  std::vector<MVertex*> boundaryFromSides(const std::vector<std::vector<MVertex*> >& sides) {
+    std::vector<MVertex*> bnd;
+    for (auto& side: sides) for (MVertex* v: side) {
+      if (bnd.size() == 0 || (v != bnd.back() && v != bnd.front())) {
+        bnd.push_back(v);
+      }
+    }
+    return bnd;
+  }
+
   bool laplacianSmoothingInParametricDomain(
       GFace* gf,
+      const std::vector<MVertex*>& bndOrdered,
       const std::vector<MVertex*>& newVertices,
-      const std::vector<MElement*>& newElements,
-      size_t iter = 10) {
-    Msg::Debug("laplacian smoothing in param. domain, with %li new vertices and %li new quads,%li iterations ... ", newVertices.size(), newElements.size(), iter);
+      const std::vector<MElement*>& newElements)
+  {
+    Msg::Debug("laplacian smoothing in param. domain, with %li new vertices and %li new quads... ", newVertices.size(), newElements.size());
 
-    std::unordered_map<MVertex*,size_t> old2new;
+    /* Build the old2new mapping */
+    robin_hood::unordered_map<MVertex*,size_t> old2new;
     size_t vcount = 0;
     for (MVertex* v: newVertices) {
       old2new[v] = vcount;
       vcount += 1;
     }
     size_t nInterior = vcount;
+    if (nInterior == 0) return true; /* nothing to smooth */
     vector<vector<size_t> > v2v(nInterior);
     for (MElement* f: newElements) {
       for (size_t le = 0; le < 4; ++le) {
-        MVertex* v1 = f->getVertex(le);
-        MVertex* v2 = f->getVertex((le+1)%4);
-        size_t nv1 = NO_ID;
-        auto it1 = old2new.find(v1);
-        if (it1 == old2new.end()) {
-          old2new[v1] = vcount;
-          nv1 = vcount;
-          vcount += 1;
-        } else {
-          nv1 = it1->second;
+        MVertex* vs[2] = {
+          f->getVertex(le),
+          f->getVertex((le+1)%4)
+        };
+        size_t nvs[2];
+        for (size_t lv = 0; lv < 2; ++lv) {
+          MVertex* v = vs[lv];
+          size_t nv = NO_ID;
+          auto it = old2new.find(v);
+          if (it == old2new.end()) {
+            old2new[v] = vcount;
+            nv = vcount;
+            vcount += 1;
+          } else {
+            nv = it->second;
+          }
+          nvs[lv] = nv;
         }
-        size_t nv2 = NO_ID;
-        auto it2 = old2new.find(v2);
-        if (it2 == old2new.end()) {
-          old2new[v2] = vcount;
-          nv2 = vcount;
-          vcount += 1;
-        } else {
-          nv2 = it2->second;
+        if (nvs[0] < nInterior) v2v[old2new[vs[0]]].push_back(old2new[vs[1]]);
+        if (nvs[1] < nInterior) v2v[old2new[vs[1]]].push_back(old2new[vs[0]]);
+      }
+      constexpr bool addDiags = true;
+      if (addDiags) {
+        for (size_t d = 0; d < 2; ++d) {
+          MVertex* vs[2] = {
+            f->getVertex(d),
+            f->getVertex((d+2)%4)
+          };
+          size_t nvs[2] = {old2new[vs[0]],old2new[vs[1]]};
+          if (nvs[0] < nInterior) v2v[old2new[vs[0]]].push_back(old2new[vs[1]]);
+          if (nvs[1] < nInterior) v2v[old2new[vs[1]]].push_back(old2new[vs[0]]);
         }
-        if (nv1 < nInterior) v2v[old2new[v1]].push_back(old2new[v2]);
-        if (nv2 < nInterior) v2v[old2new[v2]].push_back(old2new[v1]);
       }
     }
+
+    /* Get a continuous (without jumps) uv parametrization on
+     * the cavity boundary */
+
+    /* If periodic parametrization, get periods */
+    double Ts[2] = {0.,0.};
+    if (gf->periodic(0)) Ts[0] = gf->period(0);
+    if (gf->periodic(1)) Ts[1] = gf->period(1);
 
     vector<SPoint2> uvs(vcount,SPoint2(DBL_MAX,DBL_MAX));
-    for (auto& kv: old2new)  {
-      MVertex* v = kv.first;
-      size_t idx = kv.second;
-      bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
-      if (onGf) {
-        double uv0,uv1;
-        v->getParameter(0,uv0);
-        v->getParameter(1,uv1);
-        uvs[idx] = SPoint2(uv0,uv1);
-      } else {
-        GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
-        if (ge != NULL) {
-          double t;
-          v->getParameter(0,t);
-          SPoint2 uv = ge->reparamOnFace(gf, t, -1);
-          uvs[idx] = uv;
-        } else {
-          GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
-          SPoint2 uv = gv->reparamOnFace(gf,0);
-          uvs[idx] = uv;
-        }
+    SPoint2 prev(DBL_MAX,DBL_MAX);
+    double gapMax[2] = {0.,0.};
+    double dxmax = 0.;
+    for (MVertex* v: bndOrdered) {
+      auto it = old2new.find(v);
+      if (it == old2new.end()) {
+        Msg::Error("laplacianSmoothingInParametricDomain: boundary vertex not found in old2new");
+        return false;
       }
+      size_t idx = it->second;
+      if (uvs[idx].x() != DBL_MAX) continue;
+      SPoint2 uv;
+      setVertexGFaceUV(gf, v, uv.data());
+      if (prev.x() != DBL_MAX) {
+        for (size_t d = 0; d < 2; ++d) if (Ts[d] != 0.) {
+          double diff = std::abs(uv.data()[d] - prev.data()[d]);
+          if (diff > 0.5 * Ts[d]) { /* Probably got a period jump ! */
+            double diffP = std::abs(uv.data()[d] + Ts[d] - prev.data()[d]);
+            double diffN = std::abs(uv.data()[d] - Ts[d] - prev.data()[d]);
+            if (diffP < diff) {
+              uv.data()[d] += Ts[d];
+            } else if (diffN < diff) {
+              uv.data()[d] -= Ts[d];
+            }
+          }
+          gapMax[d] = std::max(gapMax[d],std::abs(uv.data()[d] - prev.data()[d]));
+        }
+        dxmax = std::max(dxmax,distance2(uv,prev));
+      }
+      prev = uv;
+      uvs[idx] = uv;
+    }
+    if (Ts[0] > 0 && gapMax[0] > 0.5 * Ts[0]) {
+      Msg::Debug("- uv laplacian smoothing because gap on boundary: %f (period %f)", gapMax[0], Ts[0]);
+    }
+    if (Ts[1] > 0 && gapMax[1] > 0.5 * Ts[1]) {
+      Msg::Debug("- uv laplacian smoothing because gap on boundary: %f (period %f)", gapMax[1], Ts[1]);
+    }
+    for (size_t v = 0; v < nInterior; ++v) {
+      sort_unique(v2v[v]);
+      uvs[v] = SPoint2(0.,0.);
     }
 
-
-    for (size_t i = 0; i < iter; ++i) {
-      for (size_t v = 0; v < nInterior; ++v) {
-        SPoint2 avg(0.,0.);
-        double sum = 0.;
-        for (size_t v2: v2v[v]) {
-          avg += uvs[v2];
-          sum += 1.;
-        }
-        if (sum == 0) continue;
-        uvs[v] = SPoint2(avg.x()/sum,avg.y()/sum);
-      }
+    bool ok = solveLaplaceLinearSystem(nInterior, v2v, uvs);
+    if (!ok) {
+      return false;
     }
+
     for (MVertex* v: newVertices) {
       size_t idx = old2new[v];
       SPoint2 uv = uvs[idx];
@@ -1339,11 +1576,164 @@ namespace QuadPatternMatching {
       GPoint p = gf->point(uv);
       if (p.succeeded()) {
         v->setXYZ(p.x(),p.y(),p.z());
+      } else {
+        Msg::Debug("CAD evaluation failed on face %i at uv=(%f,%f)",gf->tag(),uv[0],uv[1]);
+        return false;
+      }
+    }
+
+    return true;
+
+    /* testing stuff */
+
+    {
+      double minSICN = DBL_MAX;
+      double avgSICN = 0.;
+      quadQualityStats(newElements, minSICN, avgSICN);
+      DBG("arithmetic", minSICN, avgSICN);
+    }
+
+    size_t iter3D = 0;
+    if (iter3D > 0) {
+      vector<MVertex*> vertices(old2new.size(),NULL);
+      for (auto& kv: old2new) {
+        vertices[kv.second] = kv.first;
+      }
+      for (size_t i = 0; i < iter3D; ++i) {
+        bool ok = solveLaplaceLinearSystemWith3DMetric(nInterior, v2v, vertices, uvs);
+        if (!ok) {
+          return false;
+        }
+
+        for (MVertex* v: newVertices) {
+          size_t idx = old2new[v];
+          SPoint2 uv = uvs[idx];
+          v->setParameter(0,uv[0]);
+          v->setParameter(1,uv[1]);
+          GPoint p = gf->point(uv);
+          if (p.succeeded()) {
+            v->setXYZ(p.x(),p.y(),p.z());
+          } else {
+            Msg::Debug("CAD evaluation failed on face %i at uv=(%f,%f)",gf->tag(),uv[0],uv[1]);
+            return false;
+          }
+        }
+
+        {
+          double minSICN = DBL_MAX;
+          double avgSICN = 0.;
+          quadQualityStats(newElements, minSICN, avgSICN);
+          DBG("iter", iter3D, minSICN, avgSICN);
+        }
+
       }
     }
 
     return true;
   }
+
+  bool optimizeCavityGeometry(
+      GFace* gf,
+      const std::vector<MElement*> & oldElements,
+      const std::vector<MVertex*>& bndOrdered,
+      const std::vector<MElement*> & newElements,
+      const std::vector<MVertex*> & newVertices,
+      SurfaceProjector* sp = NULL,
+      double qualityMin = 0.1,
+      double qualityFactor = 0.5,
+      bool tryUntangle = false,
+      bool tryShapeImprovement = false) {
+
+    /* Reference quality to improve */
+    double minSICN_before = DBL_MAX;
+    double avgSICN_before = 0.;
+    double minSICN_after = -1.;
+    double avgSICN_after = -1.;
+    if (oldElements.size() > 0) {
+      quadQualityStats(oldElements, minSICN_before, avgSICN_before);
+    } else {
+      minSICN_before = 0.;
+    }
+    quadQualityStats(newElements, minSICN_after, avgSICN_after);
+
+    /* Initial smoothing */
+    bool ok = false;
+    if (newVertices.size() > 0) {
+      if (parametrizationAvailable(gf)) {
+        /* Smooth in uv parameters */
+        ok = laplacianSmoothingInParametricDomain(gf, bndOrdered, newVertices, newElements);
+      } else {
+        /* Use oldElements as a geometric support */
+        size_t iter = std::min((size_t)newVertices.size(),(size_t)100);
+        if (iter < 20) iter = 20;
+        ok = laplacianSmoothingWithProjection(gf, oldElements, newVertices, newElements, iter);
+      }
+      if (ok) {
+        quadQualityStats(newElements, minSICN_after, avgSICN_after);
+        Msg::Debug("- uv laplacian smoothing of (%li quads, %li free vertices): SICN min: %f -> %f, avg: %f -> %f", 
+            newElements.size(), newVertices.size(), minSICN_before, minSICN_after, avgSICN_before, avgSICN_after);
+      } else {
+        Msg::Debug("- uv laplacian smoothing of (%li quads, %li free vertices): failed", 
+            newElements.size(), newVertices.size());
+      }
+    }
+
+    if (!tryUntangle && !tryShapeImprovement){
+      bool keep = true;
+      if (oldElements.size() > 0) {
+        if (minSICN_after < qualityMin && minSICN_after < minSICN_before) keep = false;
+        if (minSICN_after < qualityFactor * minSICN_before) keep = false;
+      }
+      return keep;
+    }
+
+    /* Untangling */
+    if (tryUntangle && minSICN_after < 0. && newVertices.size() > 0 && sp) {
+      MesquiteOptions opt;
+      opt.smoother = MesquiteUntangler;
+      opt.cpu_time_limit_sec = 5;
+      if (newVertices.size() < 10) opt.cpu_time_limit_sec = 0.5 * double(newVertices.size());
+      int status = optimizeQuadCavity(opt, sp, newElements, newVertices,
+          minSICN_after, avgSICN_after);
+      double minSICNb = minSICN_after;
+      double avgSICNb = avgSICN_after;
+      if (status == 0) {
+        Msg::Debug("- untangling (Mesquite) of (%li quads, %li free vertices): SICN min: %f -> %f, avg: %f -> %f", 
+            newElements.size(), newVertices.size(), minSICNb, minSICN_after, avgSICNb, avgSICN_after);
+        tryShapeImprovement = false; /* shape improvement done just after untangling in optimizeQuadCavity */
+      } else {
+        Msg::Debug("- untangling (Mesquite) of (%li quads, %li free vertices): failed", 
+            newElements.size(), newVertices.size());
+      }
+    }
+
+    /* Optimization */
+    if (tryShapeImprovement && newVertices.size() > 0 && minSICN_after > 0.) {
+      MesquiteOptions opt;
+      opt.smoother = MesquiteShapeImprovement;
+      int status = optimizeQuadCavity(opt, sp, newElements, newVertices,
+          minSICN_after, avgSICN_after);
+      double minSICNb = minSICN_after;
+      double avgSICNb = avgSICN_after;
+      if (status == 0) {
+        Msg::Debug("- shape improvement (Mesquite) of (%li quads, %li free vertices): SICN min: %f -> %f, avg: %f -> %f", 
+            newElements.size(), newVertices.size(), minSICNb, minSICN_after, avgSICNb, avgSICN_after);
+      } else {
+        Msg::Debug("- shape improvement (Mesquite) of (%li quads, %li free vertices): failed", 
+            newElements.size(), newVertices.size());
+      }
+    }
+
+    bool keep = true;
+    if (oldElements.size() > 0) {
+      if (minSICN_after < qualityMin && minSICN_after < minSICN_before) keep = false;
+      if (minSICN_after < qualityFactor * minSICN_before) keep = false;
+    }
+    Msg::Debug("- mesh optim of (%li quads, %li free vertices): keep=%i, SICN min: %f -> %f, avg: %f -> %f", 
+        newElements.size(), newVertices.size(), int(keep), minSICN_before, minSICN_after, avgSICN_before, avgSICN_after);
+    return keep;
+  }
+
 
   double checkPatternMatching(const QuadMeshPattern& P, const std::vector<size_t>& sideSizes, vector<int>& slt) {
     slt.clear();
@@ -1396,7 +1786,8 @@ namespace QuadPatternMatching {
     slt.clear();
     int count = 0;
     int count_limit = 100; /* limit on the number of solution tried in the DFS */
-    score = mat.get_positive_solution_DFS(slt, count, count_limit, ideal_repartition);
+    int ncalls = 0;
+    score = mat.get_positive_solution_DFS(slt, count, count_limit, ideal_repartition, ncalls);
 
     return score;
   }
@@ -1450,422 +1841,497 @@ namespace QuadPatternMatching {
   }
 
 
-bool load_patterns() {
-  if (patterns.size() != 0) return false;
-  {
-    Msg::Info("loading %li quad patterns", quad_meshes.size());
-    patterns.resize(quad_meshes.size());
-    for (size_t i = 0; i < quad_meshes.size(); ++i) {
-      bool ok = patterns[i].load(quad_meshes[i].first, quad_meshes[i].second);
-      if (!ok) {
-        Msg::Error("mesh quad patterns, failed to init pattern no %i", i);
-      }
-    }
-  }
-  return true;
-}
-
-std::vector<size_t> getAllLoadedPatterns() {
-  std::vector<size_t> pIds;
-  for (size_t i = 0; i < patterns.size(); ++i) {
-    pIds.push_back(patterns[i].patternId);
-  }
-  return pIds;
-}
-
-bool load_disk_quadrangulations() {
-  if (B_disk_quadrangulations.size() != 0) return false;
-  {
-    Msg::Info("loading disk quadrangulations ...");
-    B_disk_quadrangulations.reserve(20);
-    B_BVL_ids.reserve(20);
-    std::string data(disk_quadrangulations);
-    vector<std::string> lines = SplitString(data,'\n');
-    Quadrangulation qdrl;
-    vector<std::string> numbers;
-    vector<id> bdrValLoop;
-    for (size_t i = 0; i < lines.size(); ++i) {
-      numbers = SplitString(lines[i],' ');
-      if (numbers.size() < 7) continue;
-      size_t B = std::stoi(numbers[0]);
-      size_t I = std::stoi(numbers[1]);
-      size_t Q = std::stoi(numbers[2]);
-      if (numbers.size() != 3 + 4 * Q) {
-        Msg::Warning("load_disk_quadrangulations | wrong sizes: B=%li, I=%li, Q=%li and numbers.size = %li",
-            B, I, Q, numbers.size());
-        continue;
-      }
-      qdrl.resize(Q);
-      for (size_t j = 0; j < Q; ++j) {
-        for (size_t lv = 0; lv < 4; ++lv) {
-          qdrl[j][lv] = std::stoi(numbers[3 + 4 * j + lv]);
+  bool load_patterns() {
+    if (patterns.size() != 0) return false;
+    {
+      Msg::Info("loading %li quad patterns", quad_meshes.size());
+      patterns.resize(quad_meshes.size());
+      for (size_t i = 0; i < quad_meshes.size(); ++i) {
+        bool ok = patterns[i].load(quad_meshes[i].first, quad_meshes[i].second);
+        if (!ok) {
+          Msg::Error("mesh quad patterns, failed to init pattern no %i", i);
         }
       }
-
-      if (B >= B_disk_quadrangulations.size()) {
-        B_disk_quadrangulations.resize(B+1);
-        B_disk_quadrangulations[B].reserve(1000);
-        B_BVL_ids.resize(B+1);
-      }
-
-      id qId = B_disk_quadrangulations[B].size();
-      B_disk_quadrangulations[B].push_back(qdrl);
-
-      /* Assumes:
-       * - first B vertices are on the boundary 
-       * - canonical valence ordering according to boundary valence loop 
-       *   (should be compatible with the generator) */
-      bdrValLoop.clear();
-      bdrValLoop.resize(B,0);
-      for (size_t j = 0; j < Q; ++j) for (size_t lv = 0; lv < 4; ++lv){
-        id v = qdrl[j][lv];
-        if (v < B) bdrValLoop[v] += 1;
-      }
-      B_BVL_ids[B][bdrValLoop].push_back(qId);
     }
-    Msg::Info("%li disk quadrangulations loaded", lines.size());
-  }
-  return true;
-}
-
-
-
-
-bool patchIsRemeshableWithQuadPattern(
-    const std::vector<size_t>& patternsToCheck,
-    size_t Ncorners,
-    const std::vector<size_t>& sideSizes, 
-    std::pair<size_t,int>& patternNoAndRot,
-    double& irregularityMeasure
-    ) {
-  irregularityMeasure = DBL_MAX;
-  if (patterns.size() == 0) {
-    Msg::Error("patterns not loaded, please call load_patterns() before");
-    return false;
-  }
-  // DBG("---");
-  // DBG("isRemeshable ?", Ncorners, sideSizes);
-
-  vector<bool> check(patterns.size(),false);
-  for (size_t pId: patternsToCheck) check[pId] = true;
-
-  double irreg_min = DBL_MAX;
-  for (size_t i = 0; i < patterns.size(); ++i) if (check[i]) {
-    const QuadMeshPattern& P = patterns[i];
-    // DBG(" ", i, P.ncorners, P.sides.size());;
-    if (Ncorners != P.ncorners) continue;
-    if (sideSizes.size() != P.sides.size()) continue;
-
-    int rot = 0;
-    double score = checkPatternMatchingWithRotations(P, sideSizes, rot);
-    if (score > 0.) {
-      double irreg = patternIrregularity(P);
-      if (irreg < irreg_min) {
-        patternNoAndRot.first = i;
-        patternNoAndRot.second = rot;
-        irreg_min = irreg;
-      }
-    }
-    // DBG("-",i,score);
-  }
-  // DBG("isRemeshable?", best, patternNoAndRot);
-  
-  irregularityMeasure = irreg_min;
-  return (irreg_min != DBL_MAX);
-}
-
-bool gfaceContainsSeamCurves(GFace* gf) {
-  for (GEdge* ge: gf->edges()) if (ge->isSeam(gf)) {
     return true;
   }
-  return false;
-}
 
-bool reorientQuadAccordingToCavityBoundary(
-    const std::vector<std::vector<MVertex*> >& sides, /* vertices on the boundary, not changed */
-    std::vector<MElement*>& newElements               /* new quads inside the cavity */
-    ) {
-  std::unordered_set<id2,id2Hash> oedges;
-  for (auto& side : sides) if (side.size() >= 2) {
-    oedges.insert({(id)side[0]->getNum(),(id)side[1]->getNum()});
-  }
-  bool found = false;
-  bool orientation_ok = true;
-  for (MElement* f: newElements) {
-    for (size_t le = 0; le < 4; ++le) {
-      id v1 = (id) f->getVertex(le)->getNum();
-      id v2 = (id) f->getVertex((le+1)%4)->getNum();
-      id2 vPair = {v1,v2};
-      auto it = oedges.find(vPair);
-      if (it != oedges.end()) {
-        found = true;
-        orientation_ok = true;
-        break;
-      }
-      id2 vPairInv = {v2,v1};
-      auto it2 = oedges.find(vPairInv);
-      if (it2 != oedges.end()) {
-        found = true;
-        orientation_ok = false;
-        break;
-      }
+  std::vector<size_t> getAllLoadedPatterns() {
+    std::vector<size_t> pIds;
+    for (size_t i = 0; i < patterns.size(); ++i) {
+      pIds.push_back(patterns[i].patternId);
     }
-    if (found) break;
+    return pIds;
   }
-  if (!found) {
-    Msg::Error("common edge not found ! cannot check orientation");
+
+  bool load_disk_quadrangulations() {
+    if (B_disk_quadrangulations.size() != 0) return false;
+    {
+      Msg::Info("loading disk quadrangulations ...");
+      B_disk_quadrangulations.reserve(20);
+      B_BVL_ids.reserve(20);
+      std::string data(disk_quadrangulations);
+      vector<std::string> lines = SplitString(data,'\n');
+      Quadrangulation qdrl;
+      vector<std::string> numbers;
+      vector<id> bdrValLoop;
+      for (size_t i = 0; i < lines.size(); ++i) {
+        numbers = SplitString(lines[i],' ');
+        if (numbers.size() < 7) continue;
+        size_t B = std::stoi(numbers[0]);
+        size_t I = std::stoi(numbers[1]);
+        size_t Q = std::stoi(numbers[2]);
+        if (numbers.size() != 3 + 4 * Q) {
+          Msg::Warning("load_disk_quadrangulations | wrong sizes: B=%li, I=%li, Q=%li and numbers.size = %li",
+              B, I, Q, numbers.size());
+          continue;
+        }
+        qdrl.resize(Q);
+        for (size_t j = 0; j < Q; ++j) {
+          for (size_t lv = 0; lv < 4; ++lv) {
+            qdrl[j][lv] = std::stoi(numbers[3 + 4 * j + lv]);
+          }
+        }
+
+        if (B >= B_disk_quadrangulations.size()) {
+          B_disk_quadrangulations.resize(B+1);
+          B_disk_quadrangulations[B].reserve(1000);
+          B_BVL_ids.resize(B+1);
+        }
+
+        id qId = B_disk_quadrangulations[B].size();
+        B_disk_quadrangulations[B].push_back(qdrl);
+
+        /* Assumes:
+         * - first B vertices are on the boundary 
+         * - canonical valence ordering according to boundary valence loop 
+         *   (should be compatible with the generator) */
+        bdrValLoop.clear();
+        bdrValLoop.resize(B,0);
+        for (size_t j = 0; j < Q; ++j) for (size_t lv = 0; lv < 4; ++lv){
+          id v = qdrl[j][lv];
+          if (v < B) bdrValLoop[v] += 1;
+        }
+        B_BVL_ids[B][bdrValLoop].push_back(qId);
+      }
+      Msg::Info("%li disk quadrangulations loaded", lines.size());
+    }
+    return true;
   }
-  if (!orientation_ok) { /* Invert quads ! */
+
+
+
+
+  bool patchIsRemeshableWithQuadPattern(
+      const std::vector<size_t>& patternsToCheck,
+      size_t Ncorners,
+      const std::vector<size_t>& sideSizes, 
+      std::pair<size_t,int>& patternNoAndRot,
+      double& irregularityMeasure
+      ) {
+    irregularityMeasure = DBL_MAX;
+    if (patterns.size() == 0) {
+      Msg::Error("patterns not loaded, please call load_patterns() before");
+      return false;
+    }
+    // DBG("---");
+    // DBG("isRemeshable ?", Ncorners, sideSizes);
+
+    vector<bool> check(patterns.size(),false);
+    for (size_t pId: patternsToCheck) check[pId] = true;
+
+    double irreg_min = DBL_MAX;
+    for (size_t i = 0; i < patterns.size(); ++i) if (check[i]) {
+      const QuadMeshPattern& P = patterns[i];
+      // DBG(" ", i, P.ncorners, P.sides.size());;
+      if (Ncorners != P.ncorners) continue;
+      if (sideSizes.size() != P.sides.size()) continue;
+
+      int rot = 0;
+      double score = checkPatternMatchingWithRotations(P, sideSizes, rot);
+      if (score > 0.) {
+        double irreg = patternIrregularity(P);
+        if (irreg < irreg_min) {
+          patternNoAndRot.first = i;
+          patternNoAndRot.second = rot;
+          irreg_min = irreg;
+        }
+      }
+      // DBG("-",i,score);
+    }
+    // DBG("isRemeshable?", best, patternNoAndRot);
+
+    irregularityMeasure = irreg_min;
+    return (irreg_min != DBL_MAX);
+  }
+
+  bool gfaceContainsSeamCurves(GFace* gf) {
+    for (GEdge* ge: gf->edges()) if (ge->isSeam(gf)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool reorientQuadAccordingToCavityBoundary(
+      const std::vector<std::vector<MVertex*> >& sides, /* vertices on the boundary, not changed */
+      std::vector<MElement*>& newElements               /* new quads inside the cavity */
+      ) {
+    robin_hood::unordered_set<id2,id2Hash> oedges;
+    for (auto& side : sides) if (side.size() >= 2) {
+      oedges.insert({(id)side[0]->getNum(),(id)side[1]->getNum()});
+    }
+    bool found = false;
+    bool orientation_ok = true;
     for (MElement* f: newElements) {
-      MVertex* v1 = f->getVertex(1);
-      MVertex* v3 = f->getVertex(3);
-      f->setVertex(1,v3);
-      f->setVertex(3,v1);
+      for (size_t le = 0; le < 4; ++le) {
+        id v1 = (id) f->getVertex(le)->getNum();
+        id v2 = (id) f->getVertex((le+1)%4)->getNum();
+        id2 vPair = {v1,v2};
+        auto it = oedges.find(vPair);
+        if (it != oedges.end()) {
+          found = true;
+          orientation_ok = true;
+          break;
+        }
+        id2 vPairInv = {v2,v1};
+        auto it2 = oedges.find(vPairInv);
+        if (it2 != oedges.end()) {
+          found = true;
+          orientation_ok = false;
+          break;
+        }
+      }
+      if (found) break;
     }
-  }
-  return true;
-}
-
-void clearStuff(std::vector<MVertex*>& newVertices,
-    std::vector<MElement*>& newElements) {
-  for (MVertex*& v: newVertices) if (v != NULL) {
-    delete v;
-    v = NULL;
-  }
-  newVertices.clear();
-  for (MElement*& e: newElements) if (e != NULL) {
-    delete e;
-    e = NULL;
-  }
-  newElements.clear();
-}
-
-int remeshPatchWithQuadPattern(
-    GFace* gf, 
-    const std::vector<std::vector<MVertex*> >& sides, /* vertices on the boundary, not changed */
-    const std::pair<size_t,int>& patternNoAndRot,     /* pattern to use, from patchIsRemeshableWithQuadPattern */
-    std::vector<MElement*> & oldElements,             /* elements to replace */
-    std::vector<MVertex*>& newVertices,               /* new vertices inside the cavity */
-    std::vector<bool>& vertexIsIrregular,             /* for each new vertex, true if irregular */
-    std::vector<MElement*>& newElements,              /* new quads inside the cavity */
-    SurfaceProjector* sp                              /* a quick way to project on GFace triangulation */
-    ) {
-
-  size_t N = sides.size();
-  const QuadMeshPattern& P = patterns[patternNoAndRot.first];
-  int rot = patternNoAndRot.second;
-  if (P.sides.size() != N) {
-    Msg::Error("sides not matching, shoud not happen (pattern has %li sides, but %li sides in input) ...", P.sides.size(), N);
-    return -1;
-  }
-
-  std::vector<std::vector<MVertex*> > sidesr = sides;
-  if (rot > 0) {
-    std::rotate(sidesr.begin(),sidesr.begin()+(size_t)rot,sidesr.end());
-  } else if (rot < 0) {
-    std::reverse(sidesr.begin(),sidesr.end());
-    std::rotate(sidesr.begin(),sidesr.begin()+(size_t) std::abs(rot),sidesr.end());
-    for (size_t i = 0; i <sidesr.size(); ++i) {
-      std::reverse(sidesr[i].begin(),sidesr[i].end());
+    if (!found) {
+      Msg::Error("common edge not found ! cannot check orientation");
     }
-  }
-
-  vector<size_t> ssr(sidesr.size());
-  for (size_t i = 0; i < sidesr.size(); ++i) ssr[i] = sidesr[i].size();
-  vector<int> slt;
-  double match = checkPatternMatching(P, ssr, slt);
-  if (match <= 0.) {
-    Msg::Error("given pattern not marching sides, weird... N=%li", N);
-    DBG(patternNoAndRot);
-    DBG(match);
-    DBG(ssr);
-    return -1;
-  }
-
-  /* Add the new vertices and quads in the GFace */
-  MVertex* oldCenter = centerOfElements(oldElements);
-  bool oka = addQuadsAccordingToPattern(P, slt, gf, sidesr, newVertices, vertexIsIrregular, newElements, oldCenter, sp);
-  if (!oka) {
-    Msg::Error("failed to add quads according to pattern, weird");
-    clearStuff(newVertices,newElements);
-    return -1;
-  }
-
-  bool oko = reorientQuadAccordingToCavityBoundary(sides, newElements);
-  if (!oko) {
-    Msg::Error("failed to orient quads according to input boundary, weird");
-    clearStuff(newVertices,newElements);
-    return -1;
-  }
-
-
-  /* Check quality before / after */
-  double minSICN_before = DBL_MAX;
-  double avgSICN_before = 0.;
-  if (oldElements.size() > 0)
-    quadQualityStats(oldElements, minSICN_before, avgSICN_before);
-
-  /* Basic smoothing of the geometry */
-  double minSICN_after, avgSICN_after;
-  if (sp != NULL) {
-    std::vector<MQuadrangle*> newQuads(newElements.size());
-    for (size_t i = 0; i < newElements.size(); ++i) 
-      newQuads[i] = dynamic_cast<MQuadrangle*>(newElements[i]);
-    size_t iter = std::min((size_t)newVertices.size(),(size_t)100);
-    if (iter < 20) iter = 20;
-    meshWinslow2d(gf, newQuads, newVertices, iter, NULL, false, sp);
-    quadQualityStats(newElements, minSICN_after, avgSICN_after);
-
-    if (minSICN_after < 0.1
-        || minSICN_after < 0.75*minSICN_before) {
-      optimizeQuadCavity(MesquitePaverMinEdgeLengthWrapper, sp, newElements, newVertices, minSICN_after,avgSICN_after);
+    if (!orientation_ok) { /* Invert quads ! */
+      for (MElement* f: newElements) {
+        MVertex* v1 = f->getVertex(1);
+        MVertex* v3 = f->getVertex(3);
+        f->setVertex(1,v3);
+        f->setVertex(3,v1);
+      }
     }
-  } else {
-    discreteFace* df = dynamic_cast<discreteFace*>(gf);
-    if (df || gfaceContainsSeamCurves(gf)) {
-      /* Use oldElements as a geometric support */
-      size_t iter = std::min((size_t)newVertices.size(),(size_t)100);
-      if (iter < 20) iter = 20;
-      laplacianSmoothingWithProjection(gf, oldElements, newVertices, newElements, iter);
-    } else {
-      size_t iter = std::min((size_t)newVertices.size(),(size_t)1000);
-      if (iter < 30) iter = 30;
-      laplacianSmoothingInParametricDomain(gf, newVertices, newElements, iter);
-    }
-    quadQualityStats(newElements, minSICN_after, avgSICN_after);
+    return true;
   }
 
-  /* Rules on quality to keep/reject remeshing */
-  bool keep = true;
-  if (oldElements.size() > 0) {
-    if (minSICN_after < 0.1 && minSICN_after < minSICN_before) keep = false;
-    if (minSICN_after < 0.75 * minSICN_before) keep = false;
-    if (!keep) {
-      Msg::Info("cavity remeshing: cancel because quality decreased (min: %f -> %f, avg: %f -> %f)",
-          minSICN_before,minSICN_after,avgSICN_before,avgSICN_after);
-      clearStuff(newVertices,newElements);
-      return -1;
-    }
-  }
+  template <class ITERATOR> 
+    bool buildBoundary (ITERATOR beg, ITERATOR end, vector<MVertex*>& bnd){
+      std::vector<MEdge> eds,veds;
 
-  /* Add new vertices and elements to GFace */
-  for (MVertex* v: newVertices) gf->addMeshVertex(v);
-  for (MElement* e: newElements) gf->addQuadrangle(dynamic_cast<MQuadrangle*>(e));
+      for (ITERATOR ite = beg; ite != end;++ite){
+        for (size_t j=0;j<(size_t)(*ite)->getNumEdges();j++){
+          eds.push_back((*ite)->getEdge(j));
+        }
+      }
+      MEdgeLessThan melt;
+      std::sort(eds.begin(),eds.end(), melt);
+      for(size_t i=0;i<eds.size();i++){
+        if (i != eds.size()-1 && eds[i] == eds[i+1])i++;
+        else veds.push_back(eds[i]);
+      }
 
-  /* Remove old vertices and elements */
-  std::vector<MVertex*> inside;
-  {
-    vector<MVertex*> bnd;
-    for (auto& side: sides) for (MVertex* v: side) {
-      bnd.push_back(v);
+      std::vector<std::vector<MVertex *> > vsorted;
+      bool oks = SortEdgeConsecutive(veds, vsorted);
+      if (!oks) {
+        // DBG("issue with", veds.size());
+        // for (auto edge: veds) {
+        //   DBG(edge.getMinVertex()->getNum(),edge.getMaxVertex()->getNum());
+        // }
+        // DBG("-----");
+        return false;
+      }
+      if (vsorted.empty()){
+        return false;
+      }
+      else if (vsorted.size() > 1){
+        printf("ARGHTTT %lu\n",vsorted.size());
+        return false;
+      }
+
+      /* Reverse vertices if necessary, to keep coherent with elements orientation */
+      {
+        MEdge e = veds[0];
+        MVertex* v1 = e.getVertex(0);
+        MVertex* v2 = e.getVertex(1);
+        auto it = std::find(vsorted[0].begin(),vsorted[0].end(),v1);
+        if (it == vsorted[0].end()) {
+          Msg::Error("buildBoundary(): vertex not found in sorted vertices, weird");
+          return false;
+        }
+        size_t i = it - vsorted[0].begin();
+        size_t i_next = (i+1)%vsorted[0].size();
+        size_t i_prev = (i-1+vsorted[0].size())%vsorted[0].size();
+        if (vsorted[0][i_next] == v2) { 
+          // good ordering
+        } else if (vsorted[0][i_prev] == v2) { // apply reverse
+          std::reverse(vsorted[0].begin(),vsorted[0].end());
+        } else {
+          Msg::Error("buildBoundary(): second vertex not found in adjacent sorted vertices, weird");
+          return false;
+        }
+      }
+      bnd = vsorted[0];
+      return true;
     }
-    sort_unique(bnd);
+
+  bool verticesStrictlyInside(const std::vector<MElement*>& quads,
+      const std::vector<MVertex*>& bnd, std::vector<MVertex*>& inside) {
     std::vector<MVertex*> vert;
-    vert.reserve(4*oldElements.size());
-    for (MElement* f: oldElements) for (size_t lv = 0; lv < f->getNumVertices(); ++lv) {
+    vert.reserve(4*quads.size());
+    for (MElement* f: quads) for (size_t lv = 0; lv < 4; ++lv) {
       MVertex* v = f->getVertex(lv);
       vert.push_back(v);
     }
     sort_unique(vert);
     inside = difference(vert,bnd);
+    return true;
   }
-  for (MElement* elt: oldElements) {
-    gf->removeElement(elt->getType(),elt);
-    delete elt;
+
+  int clearStuff(std::vector<MVertex*>& newVertices,
+      std::vector<MElement*>& newElements) {
+    for (MVertex*& v: newVertices) if (v != NULL) {
+      delete v;
+      v = NULL;
+    }
+    newVertices.clear();
+    for (MElement*& e: newElements) if (e != NULL) {
+      delete e;
+      e = NULL;
+    }
+    newElements.clear();
+    return -1;
   }
-  for (MVertex* v: inside) {
-    GEntity* entity = v->onWhat();
-    if (entity != NULL) {
-      auto it = std::find(entity->mesh_vertices.begin(),entity->mesh_vertices.end(),v);
-      if (it != entity->mesh_vertices.end()) {
-        entity->mesh_vertices.erase(it);
-      } else {
-        Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not found in its GEntity, weird");
+
+  int remeshPatchWithQuadPattern(
+      GFace* gf, 
+      const std::vector<std::vector<MVertex*> >& sides, /* vertices on the boundary, not changed */
+      const std::pair<size_t,int>& patternNoAndRot,     /* pattern to use, from patchIsRemeshableWithQuadPattern */
+      std::vector<MElement*> & oldElements,             /* elements to replace */
+      std::vector<MVertex*>& newVertices,               /* new vertices inside the cavity */
+      std::vector<bool>& vertexIsIrregular,             /* for each new vertex, true if irregular */
+      std::vector<MElement*>& newElements,              /* new quads inside the cavity */
+      SurfaceProjector* sp,                             /* a quick way to project on GFace triangulation */
+      double qualityMin,                                /* only remesh if resulting quality > qualityMin */
+      double qualityFactor                              /* only remesh if quality > qualityDegradeFactor * qualityBefore */
+      ) {
+
+    size_t N = sides.size();
+    const QuadMeshPattern& P = patterns[patternNoAndRot.first];
+    int rot = patternNoAndRot.second;
+    if (P.sides.size() != N) {
+      Msg::Error("sides not matching, shoud not happen (pattern has %li sides, but %li sides in input) ...", P.sides.size(), N);
+      return -1;
+    }
+
+    std::vector<std::vector<MVertex*> > sidesr = sides;
+    if (rot > 0) {
+      std::rotate(sidesr.begin(),sidesr.begin()+(size_t)rot,sidesr.end());
+    } else if (rot < 0) {
+      std::reverse(sidesr.begin(),sidesr.end());
+      std::rotate(sidesr.begin(),sidesr.begin()+(size_t) std::abs(rot),sidesr.end());
+      for (size_t i = 0; i <sidesr.size(); ++i) {
+        std::reverse(sidesr[i].begin(),sidesr[i].end());
       }
+    }
+
+    vector<size_t> ssr(sidesr.size());
+    for (size_t i = 0; i < sidesr.size(); ++i) ssr[i] = sidesr[i].size();
+    vector<int> slt;
+    double match = checkPatternMatching(P, ssr, slt);
+    if (match <= 0.) {
+      Msg::Error("given pattern not marching sides, weird... N=%li", N);
+      DBG(patternNoAndRot);
+      DBG(match);
+      DBG(ssr);
+      return -1;
+    }
+
+    /* Add the new vertices and quads in the GFace */
+    MVertex* oldCenter = centerOfElements(oldElements);
+    bool oka = addQuadsAccordingToPattern(P, slt, gf, sidesr, newVertices, vertexIsIrregular, newElements, oldCenter, sp);
+    if (!oka) {
+      Msg::Error("failed to add quads according to pattern, weird");
+      clearStuff(newVertices,newElements);
+      return -1;
+    }
+
+    bool oko = reorientQuadAccordingToCavityBoundary(sides, newElements);
+    if (!oko) {
+      Msg::Error("failed to orient quads according to input boundary, weird");
+      clearStuff(newVertices,newElements);
+      return -1;
+    }
+
+    /* Check quality before / after */
+    vector<MVertex*> bnd = boundaryFromSides(sides);
+    bool tryUntangle = false;
+    bool tryShapeImprovement = false;
+    bool okGeom = optimizeCavityGeometry(gf,oldElements, bnd, newElements, newVertices, sp,
+        qualityMin, qualityFactor, tryUntangle, tryShapeImprovement);
+    if (!okGeom) {
+      Msg::Debug("cavity remeshing: cancel because of element quality");
+      clearStuff(newVertices,newElements);
+      return -1;
+    }
+
+    /* Add new vertices and elements to GFace */
+    for (MVertex* v: newVertices) gf->addMeshVertex(v);
+    for (MElement* e: newElements) gf->addQuadrangle(dynamic_cast<MQuadrangle*>(e));
+
+    /* Remove old vertices and elements */
+    std::vector<MVertex*> inside;
+    {
+      vector<MVertex*> bnd;
+      for (auto& side: sides) for (MVertex* v: side) {
+        bnd.push_back(v);
+      }
+      sort_unique(bnd);
+      std::vector<MVertex*> vert;
+      vert.reserve(4*oldElements.size());
+      for (MElement* f: oldElements) for (size_t lv = 0; lv < f->getNumVertices(); ++lv) {
+        MVertex* v = f->getVertex(lv);
+        vert.push_back(v);
+      }
+      sort_unique(vert);
+      inside = difference(vert,bnd);
+    }
+    for (MElement* elt: oldElements) {
+      gf->removeElement(elt->getType(),elt);
+      delete elt;
+    }
+    for (MVertex* v: inside) {
+      GEntity* entity = v->onWhat();
+      if (entity != NULL) {
+        auto it = std::find(entity->mesh_vertices.begin(),entity->mesh_vertices.end(),v);
+        if (it != entity->mesh_vertices.end()) {
+          entity->mesh_vertices.erase(it);
+        } else {
+          Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not found in its GEntity, weird");
+        }
+      } else {
+        Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not in a GEntity ? weird");
+      }
+      delete v;
+    }
+
+    return 0; /* ok ! */
+  }
+
+  void printPatternUsage() {
+    Msg::Info("disk quadrangulation remeshing stats: %li distinct patterns used", usage_count.size());
+  }
+
+  int remeshFewQuads(GFace* gf, 
+      const std::vector<MVertex*>& bnd,
+      const std::vector<MElement*> & oldElements,              /* old quads inside the cavity */
+      const std::vector<int>& bndIdealValence,
+      const std::vector<std::pair<int,int> >& bndAllowedValenceRange,
+      std::vector<MVertex*> & newVertices,               /* new vertices inside the cavity */
+      std::vector<bool> & vertexIsIrregular,             /* for each new vertex, true if irregular */
+      std::vector<MElement*> & newElements,              /* new quads inside the cavity */
+      SurfaceProjector* sp,
+      double qualityMin,                                 /* only remesh if resulting quality > qualityMin */
+      double qualityFactor,                              /* only remesh if quality > qualityDegradeFactor * qualityBefore */
+      const std::vector<MElement*>& neighborsForGeometry
+      ) {
+
+    if (B_disk_quadrangulations.size() == 0) {
+      Msg::Error("disk quadrangulations not loaded, please call load_disk_quadrangulations() before");
+      return false;
+    }
+
+    const vector<vector<id4> >* small_patterns = NULL;
+    if (bnd.size() < B_disk_quadrangulations.size() && B_disk_quadrangulations[bnd.size()].size() > 0) {
+      small_patterns = &(B_disk_quadrangulations[bnd.size()]);
     } else {
-      Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not in a GEntity ? weird");
+      Msg::Error("no pattern for input size (%li bnd vertices)", bnd.size());
+      return 1;
     }
-    delete v;
-  }
 
-  return 0; /* ok ! */
-}
+    const vector<vector<id4> >& qmeshes = *small_patterns;
 
-void printPatternUsage() {
-  Msg::Info("disk quadrangulation remeshing stats: %li distinct patterns used", usage_count.size());
-}
+    vector<int> valence;
 
-int remeshFewQuads(GFace* gf, 
-    const std::vector<MVertex*>& bnd,
-    const std::vector<int>& bndIdealValence,
-    const std::vector<std::pair<int,int> >& bndAllowedValenceRange,
-    std::vector<MVertex*> & newVertices,               /* new vertices inside the cavity */
-    std::vector<bool> & vertexIsIrregular,             /* for each new vertex, true if irregular */
-    std::vector<MElement*> & newElements               /* new quads inside the cavity */
-    ) {
+    std::vector<std::pair<double,std::pair<size_t,int> > > irregularity_pattern_rotation;
+    for (size_t i = 0; i < qmeshes.size(); ++i) {
+      const vector<id4>& quads = qmeshes[i];
+      computeQuadMeshValences(quads, valence);
+      double irregularity = DBL_MAX;
+      int rotation = 0;
+      bool found = computeBestMatchingConfiguration(quads, valence, bndIdealValence, bndAllowedValenceRange, rotation, irregularity);
+      if (found) {
+        // DBG("  ", i, rotation, irregularity);
+        irregularity_pattern_rotation.push_back({irregularity,{i,rotation}});
+      }
+    }
+    if (irregularity_pattern_rotation.size() == 0) {
+      Msg::Debug("remeshFewQuads: no pattern matching input allowed valence range");
+      // DBG("  ", bnd.size());
+      // DBG("  ", bndIdealValence);
+      // DBG("  ", bndAllowedValenceRange);
+      return 1; /* no pattern matching allowed valence range */
+    }
 
-  if (B_disk_quadrangulations.size() == 0) {
-    Msg::Error("disk quadrangulations not loaded, please call load_disk_quadrangulations() before");
-    return false;
-  }
+    /* Apply best pattern */
+    std::sort(irregularity_pattern_rotation.begin(),irregularity_pattern_rotation.end());
+    size_t no = irregularity_pattern_rotation[0].second.first;
+    int rotation = irregularity_pattern_rotation[0].second.second;
 
-  const vector<vector<id4> >* small_patterns = NULL;
-  if (bnd.size() < B_disk_quadrangulations.size() && B_disk_quadrangulations[bnd.size()].size() > 0) {
-    small_patterns = &(B_disk_quadrangulations[bnd.size()]);
-  } else {
-    Msg::Error("no pattern for input size (%li bnd vertices)", bnd.size());
-    return 1;
-  }
-
-  const vector<vector<id4> >& qmeshes = *small_patterns;
-
-  vector<int> valence;
-
-  std::vector<std::pair<double,std::pair<size_t,int> > > irregularity_pattern_rotation;
-  for (size_t i = 0; i < qmeshes.size(); ++i) {
-    const vector<id4>& quads = qmeshes[i];
+    const vector<id4>& quads = qmeshes[no];
     computeQuadMeshValences(quads, valence);
-    double irregularity = DBL_MAX;
-    int rotation = 0;
-    bool found = computeBestMatchingConfiguration(quads, valence, bndIdealValence, bndAllowedValenceRange, rotation, irregularity);
-    if (found) {
-      // DBG("  ", i, rotation, irregularity);
-      irregularity_pattern_rotation.push_back({irregularity,{i,rotation}});
+    bool ok = applyPatternToRemeshFewQuads(gf, bnd, bndIdealValence, bndAllowedValenceRange, rotation,
+        quads, valence, newVertices, vertexIsIrregular, newElements);
+    if (!ok) {
+      Msg::Debug("failed to remesh small cavity (%li bnd vertices) with %li quads", bnd.size(), newElements.size());
+      return -1;
     }
-  }
-  if (irregularity_pattern_rotation.size() == 0) {
-    Msg::Debug("remeshFewQuads: no pattern matching input allowed valence range");
-    // DBG("  ", bnd.size());
-    // DBG("  ", bndIdealValence);
-    // DBG("  ", bndAllowedValenceRange);
-    return 1; /* no pattern matching allowed valence range */
-  }
 
-  /* Apply best pattern */
-  std::sort(irregularity_pattern_rotation.begin(),irregularity_pattern_rotation.end());
-  size_t no = irregularity_pattern_rotation[0].second.first;
-  int rotation = irregularity_pattern_rotation[0].second.second;
+    /* Check geometry */
+    bool tryUntangle = true;
+    bool tryShapeImprovement = true;
+    bool okGeom = optimizeCavityGeometry(gf, oldElements, bnd, newElements, newVertices, sp,
+        qualityMin, qualityFactor, tryUntangle, tryShapeImprovement);
+    if (!okGeom) {
+      Msg::Debug("small cavity remeshing: initially invalid because of element quality");
 
-  const vector<id4>& quads = qmeshes[no];
-  computeQuadMeshValences(quads, valence);
-  bool ok = applyPatternToRemeshFewQuads(gf, bnd, bndIdealValence, bndAllowedValenceRange, rotation,
-      quads, valence, newVertices, vertexIsIrregular, newElements);
-  if (ok) {
-    Msg::Debug("successfully remesh small cavity (%li bnd vertices) with %li quads", bnd.size(), newElements.size());
-    laplacianSmoothing(newVertices, newElements,10);
-    id2 B_i = {(id)bnd.size(),(id)no};
-    usage_count[B_i] += 1;
+      if (neighborsForGeometry.size() > 0) {
+        Msg::Debug("small cavity remeshing: try untangling on extended cavity (+%li quads)", neighborsForGeometry.size());
+        /* Try with enlarging the untangling/smoothing cavity */
+        std::vector<MElement*> newElements2 = newElements;
+        for (MElement* e: neighborsForGeometry) newElements2.push_back(e);
+        std::vector<MVertex*> bnd2;
+        bool okb = buildBoundary(newElements2.begin(),newElements2.end(),bnd2);
+        if (!okb) return clearStuff(newVertices,newElements);
+        std::vector<MVertex*> inside;
+        bool oki = verticesStrictlyInside(newElements2, bnd2, inside);
+        if (!oki) return clearStuff(newVertices,newElements);
+        /* Save current position */
+        robin_hood::unordered_map<MVertex*,SPoint3> posBefore;
+        for (MVertex* v: bnd) posBefore[v] = v->point();
+        /* Optimize geometry */
+        okGeom = optimizeCavityGeometry(gf, oldElements, bnd2, newElements2, inside, sp,
+            qualityMin, qualityFactor, tryUntangle, tryShapeImprovement);
+        if (okGeom) {
+          Msg::Debug("small cavity remeshing: good !");
+        } else {
+          /* Restore position */
+          for (MVertex* v: bnd) {
+            SPoint3 pos = posBefore[v];
+            v->setXYZ(pos.x(),pos.y(),pos.z());
+          }
+          Msg::Debug("small cavity remeshing: still invalid");
+        }
+      }
+
+      if (!okGeom) return clearStuff(newVertices,newElements);
+    }
+
+    Msg::Debug("successfully remeshed small cavity (%li -> %li quads)", oldElements.size(), newElements.size());
+    Msg::Debug("----");
     return 0;
-  } else {
-    Msg::Error("failed to remesh small cavity (%li bnd vertices) with %li quads", bnd.size(), newElements.size());
   }
-
-  Msg::Info("failed to remesh small cavity (%li bnd vertices)", bnd.size());
-  DBG(bnd);
-  DBG(bndIdealValence);
-  DBG(bndAllowedValenceRange);
-
-  return 1;
-}
 
 }

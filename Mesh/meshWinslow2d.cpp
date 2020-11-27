@@ -864,7 +864,7 @@ public:
     else {
       GPoint gp;
       if (sp) {
-        gp = sp->closestPoint(p.data(), cache, true, true);
+        gp = sp->closestPoint(p.data(), cache, true, false);
       } else {
         gp = CLOSESTPOINT(gf,p,uv, GT);
       }

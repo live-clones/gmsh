@@ -553,7 +553,7 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
 
   /* kdtree search (closest vertex) then loop on adjacent elements */
   static_kd_tree_t* ttree = (static_kd_tree_t*) tree;
-  size_t N_search = 3;
+  size_t N_search = 5;
   std::vector<size_t> ids(N_search);
   std::vector<double> dists(N_search);
   size_t Nf = ttree->knnSearch(query.data(), N_search, &ids[0], &dists[0]);
@@ -565,7 +565,7 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
     return fail;
   }
 
-  size_t N_TRIANGLE_MAX = 30;
+  size_t N_TRIANGLE_MAX = 50;
   std::queue<size_t> Q;
   std::unordered_set<size_t> visited;
   for (size_t v: ids) {

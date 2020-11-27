@@ -386,7 +386,6 @@ class MeshDomainSurfaceProjector : public MeshDomain
       double n[3];
       quad_normal(M.coords.data(), M.quads[4*f+0], M.quads[4*f+1], M.quads[4*f+2], M.quads[4*f+3], n);
       coordinate.set(n);
-      Msg::Debug("MeshDomainSurfaceProjector: ask for element normal ...");
     }
 
     void vertex_normal_at( const Mesh::VertexHandle* handles,
@@ -489,9 +488,15 @@ int optimizeQuadGeometry(GFace* gf) {
       smoother.set_untangle_metric(Mesquite::UntangleWrapper::UntangleMetric::BETA);
       smoother.set_vertex_movement_limit_factor(1.e-3);
       // smoother.enable_culling(true);
+      if (Msg::GetVerbosity() < 99) {
+        smoother.quality_assessor().disable_printing_results();
+      }
       smoother.run_instructions(&mesh_and_domain, err); 
     } else {
       Mesquite::ShapeImprovementWrapper smoother;
+      if (Msg::GetVerbosity() < 99) {
+        smoother.quality_assessor().disable_printing_results();
+      }
       smoother.run_instructions(&mesh_and_domain, err); 
     }
 
@@ -520,17 +525,34 @@ void computeQualitySICN(const std::vector<MElement*>& elements, std::vector<doub
   if (elements.size() > 0) avgSICN /= double(elements.size());
 }
 
+void computeQualitySICN(const std::vector<MQuadrangle*>& elements, std::vector<double>& quality,
+    double& minSICN, double& avgSICN) {
+  minSICN = DBL_MAX;
+  avgSICN = 0.;
+  quality.resize(elements.size());
+  for (size_t i = 0; i < elements.size(); ++i)  {
+    quality[i] = elements[i]->minSICNShapeMeasure();
+    minSICN = std::min(minSICN,quality[i]);
+    avgSICN += quality[i];
+  }
+  if (elements.size() > 0) avgSICN /= double(elements.size());
+}
 int quadQualityStats(const std::vector<MElement*>& elements, double& qualityMin, double& qualityAvg) {
+  vector<double> quality(elements.size());
+  computeQualitySICN(elements, quality, qualityMin, qualityAvg);
+  return 0;
+}
+int quadQualityStats(const std::vector<MQuadrangle*>& elements, double& qualityMin, double& qualityAvg) {
   vector<double> quality(elements.size());
   computeQualitySICN(elements, quality, qualityMin, qualityAvg);
   return 0;
 }
 
 int optimizeQuadCavity(
-    MesquiteSmoother smoother,
+    const MesquiteOptions& opt,
     SurfaceProjector* sp,
     const std::vector<MElement*>& elements,
-    std::vector<MVertex*>& freeVertices,
+    const std::vector<MVertex*>& freeVertices,
     double& qualityMin,
     double& qualityAvg) {
   if (elements.size() == 0 || freeVertices.size() == 0) return 0;
@@ -562,6 +584,10 @@ int optimizeQuadCavity(
       smoother.set_untangle_metric(Mesquite::UntangleWrapper::UntangleMetric::BETA);
       smoother.set_vertex_movement_limit_factor(1.e-3);
       // smoother.enable_culling(true);
+      if (Msg::GetVerbosity() < 999) {
+        smoother.quality_assessor().disable_printing_results();
+      }
+      if (opt.cpu_time_limit_sec != 0.) smoother.set_cpu_time_limit(opt.cpu_time_limit_sec);
       smoother.run_instructions(&mesh_and_domain, err); 
       for (size_t i = 0; i < freeVertices.size(); ++i) {
         M.origin[i]->x() = M.coords[3*i+0];
@@ -570,16 +596,21 @@ int optimizeQuadCavity(
       }
       double minSICNb = minSICN;
       quadQualityStats(elements, minSICN, avgSICN);
-      Msg::Info("- Untangling of (%li quads, %li free vertices) with Mesquite: SICN %f -> %f", elements.size(), freeVertices.size(), minSICNb, minSICN);
+      Msg::Debug("- Untangling of (%li quads, %li free vertices) with Mesquite: SICN %f -> %f", elements.size(), freeVertices.size(), minSICNb, minSICN);
     }
 
     if (minSICN > 0.) {
-      if (smoother == MesquiteShapeImprovement) {
+      if (opt.smoother == MesquiteShapeImprovement) {
         Mesquite::ShapeImprovementWrapper smoother;
+        smoother.quality_assessor().disable_printing_results();
+        if (Msg::GetVerbosity() < 999) smoother.quality_assessor().disable_printing_results();
         smoother.run_instructions(&mesh_and_domain, err); 
-      } else if (smoother == MesquitePaverMinEdgeLengthWrapper) {
+      } else if (opt.smoother == MesquitePaverMinEdgeLengthWrapper) {
         double relative_vtx_movement = 1.e-2;
         Mesquite::PaverMinEdgeLengthWrapper smoother(relative_vtx_movement);
+        if (Msg::GetVerbosity() < 999) {
+          smoother.quality_assessor().disable_printing_results();
+        }
         smoother.run_instructions(&mesh_and_domain, err); 
       }
 
@@ -590,7 +621,7 @@ int optimizeQuadCavity(
       }
       double minSICNb = minSICN;
       quadQualityStats(elements, minSICN, avgSICN);
-      Msg::Info("- Optimization of (%li quads, %li free vertices) with Mesquite: SICN %f -> %f", elements.size(), freeVertices.size(), minSICNb, minSICN);
+      Msg::Debug("- Optimization of (%li quads, %li free vertices) with Mesquite: SICN %f -> %f", elements.size(), freeVertices.size(), minSICNb, minSICN);
     }
   } catch (...) {
     Msg::Error("- failed to optimize with Mesquite (%li quads)", elements.size());
@@ -602,10 +633,27 @@ int optimizeQuadCavity(
   return 0;
 }
 
+int optimizeQuadMeshWithSubPatches(
+    GFace* gf,
+    SurfaceProjector* sp,
+    double& qualityMin,
+    double& qualityAvg) {
+
+  vector<MElement*> elements(gf->quadrangles.size());
+  for (size_t i = 0; i < gf->quadrangles.size(); ++i) {
+    elements[i] = dynamic_cast<MQuadrangle*>(gf->quadrangles[i]);
+  }
+  vector<MVertex*> freeVertices = gf->mesh_vertices;
+
+
+
+  return 0;
+}
+
 #else
 
 int optimizeQuadCavity(
-    MesquiteSmoother smoother,
+    const MesquiteOptions& opt,
     SurfaceProjector* sp,
     const std::vector<MElement*>& elements,
     const std::vector<MVertex*>& freeVertices,
@@ -617,6 +665,16 @@ int optimizeQuadCavity(
 }
 
 int optimizeQuadGeometry(GFace* gf) {
+  Msg::Error("Mesquite module required to optimize quad geometry. Recompile with ENABLE_MESQUITE=YES");
+  return -1;
+}
+
+int optimizeQuadMeshWithSubPatches(
+    GFace* gf,
+    SurfaceProjector* sp,
+    double& qualityMin,
+    double& qualityAvg
+    ){
   Msg::Error("Mesquite module required to optimize quad geometry. Recompile with ENABLE_MESQUITE=YES");
   return -1;
 }
