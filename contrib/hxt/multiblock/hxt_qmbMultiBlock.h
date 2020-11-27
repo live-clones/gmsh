@@ -181,7 +181,8 @@ class BlockParametrization
 
   std::array<double,3> getPhysCoordFromParamCoord(std::array<double,3> paramCoord, uint64_t globNumTriHint=(uint64_t)(-1));
   std::array<double,3> getParamCoordFromPhysCoord(std::array<double,3> physCoord, uint64_t globNumTriHint=(uint64_t)(-1));
-  uint64_t getBelongingTriangleFromParamCoord(std::array<double,3> paramCoord){};
+  void getStraigthLine(std::array<double,3> physCoord1, std::array<double,3> physCoord2, std::vector<std::array<double,3>> &physCoordLine, std::vector<uint64_t> &physTriLine, uint64_t nPoints=100);
+  uint64_t getBelongingTriangleFromParamCoord(std::array<double,3> paramCoord);
   uint64_t getBelongingTriangleFromPhysCoord(std::array<double,3> physCoord){};
   int isPointInTri(std::vector<std::array<double,3>> tri, std::array<double, 3> point, double *baryCoord1, double *baryCoord2);
   
