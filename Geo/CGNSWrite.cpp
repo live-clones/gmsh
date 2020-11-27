@@ -17,6 +17,7 @@
 #include "partitionFace.h"
 #include "partitionEdge.h"
 #include "partitionVertex.h"
+#include "nodalBasis.h"
 #include "BasisFactory.h"
 #include "affineTransformation.h"
 #include "CGNSWrite.h"
