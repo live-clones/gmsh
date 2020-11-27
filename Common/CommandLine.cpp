@@ -406,6 +406,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
   // it was later set to 1 in the option file)
   int terminal = CTX::instance()->terminal;
   CTX::instance()->terminal = 99;
+  CTX::instance()->mesh.quadqsUseDiscreteGeometry = 0;
 
 #if defined(HAVE_PARSER)
   if(readConfigFiles) {
@@ -530,6 +531,10 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
         }
+      }
+      else if(argv[i] == "-alignIrregularVertices") {
+          CTX::instance()->batch = 70;
+          i++;
       }
       else if(argv[i] == "-quadlayout") {
         CTX::instance()->batch = 69;

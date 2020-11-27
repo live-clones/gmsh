@@ -7313,11 +7313,26 @@ int computePerTriangleScaledCrossField(
     vv = PView::getViewByName("theta");
     if (vv) {
       cf_tag = vv->getTag();
-    }
+    }    
 
-    
+    std::string _ugly  = gm->getName()+"_singularities.txt";
+    std::string _ugly2 = gm->getName()+"_singularities.pos";
+    FILE *f__ = fopen (_ugly.c_str(), "w");
+    FILE *f2__ = fopen (_ugly2.c_str(), "w");
+    fprintf(f__,"%lu\n",temp.size());
+    fprintf(f2__,"View \"singularities\"{\n");
+    for (std::map<MVertex *, int>::iterator it = temp.begin(); it != temp.end();++it){
+      MVertex *v = it->first;
+      int index = it->second;
+      fprintf(f__,"%d %22.15E %22.15E %22.15E %d %d\n",index,v->x(),v->y(),v->z(),2,1);
+      fprintf(f2__,"SP(%22.15E, %22.15E, %22.15E){ %d};\n",v->x(),v->y(),v->z(),index);
+    }
+    fclose(f__);
+    fprintf(f2__,"};\n");
+    fclose(f2__);
   }
   else {
+    return -1;
     /* Cross field */
     bool okcf = QMT::compute_cross_field_with_heat(gm->getName(),cf_tag,cross_field_iter,NULL,cross_field_bc_expansion);
     if (!okcf) {

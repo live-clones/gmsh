@@ -29,13 +29,13 @@ private:
   bool _tooSmall;
   closestPointFinder *_cp;
   // prescribed mesh size (_lc) at parametric points (_u_lc) (sorted by _u_lc)
-  std::vector<double> _u_lc, _lc;
 
 protected:
   GVertex *_v0, *_v1;
   std::vector<GFace *> _faces;
 
 public:
+  std::vector<double> _u_lc, _lc;
   // same or opposite direction to the master
   int masterOrientation;
 

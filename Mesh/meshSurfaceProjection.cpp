@@ -458,7 +458,7 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
 
   /* kdtree search (closest vertex) then loop on adjacent elements */
   static_kd_tree_t* ttree = (static_kd_tree_t*) tree;
-  size_t N_search = 1;
+  size_t N_search = 3;
   std::vector<size_t> ids(N_search);
   std::vector<double> dists(N_search);
   size_t Nf = ttree->knnSearch(query.data(), N_search, &ids[0], &dists[0]);
@@ -470,13 +470,14 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
     return fail;
   }
 
-  size_t N_TRIANGLE_MAX = 10;
+  size_t N_TRIANGLE_MAX = 30;
   std::queue<size_t> Q;
   std::unordered_set<size_t> visited;
   for (size_t v: ids) {
     Q.push(v);
   }
-  double d2min = DBL_MAX;
+  double d2min_in  = DBL_MAX;
+  double d2min_out = DBL_MAX;
   size_t elem = NO_ID;
   GPoint proj;
   while (Q.size() > 0) {
@@ -499,24 +500,24 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
       /* strict inequality because lambda is clamped [0.,1.] in project_point_triangle_l2 */
       double u = lambda[0] * uvs[f][0][0] + lambda[1] * uvs[f][1][0] + lambda[2] * uvs[f][2][0];
       double v = lambda[0] * uvs[f][0][1] + lambda[1] * uvs[f][1][1] + lambda[2] * uvs[f][2][1];
-      if (lambda[0] > 0. && lambda[1] > 0. && lambda[2] > 0.
-          && lambda[0] < 1. && lambda[1] < 1. && lambda[2] < 1.) {
-        cache = f;
+      bool inside = (lambda[0] > 0. && lambda[1] > 0. && lambda[2] > 0. 
+          && lambda[0] < 1. && lambda[1] < 1. && lambda[2] < 1.);
+      if (inside && d2 < d2min_in) {
         if (uvs.size() > 0) {
           proj = GPoint(cproj[0],cproj[1],cproj[2],gf,u,v);
-          return proj;
         } else {
           proj = GPoint(cproj[0],cproj[1],cproj[2],gf);
-          return proj;
         }
-      } else if (d2 < d2min) {
+        d2min_in = d2;
         elem = f;
-        d2min = d2;
+      } else if (!inside && d2min_in == DBL_MAX && d2 < d2min_out) {
         if (uvs.size() > 0) {
           proj = GPoint(cproj[0],cproj[1],cproj[2],gf,u,v);
         } else {
           proj = GPoint(cproj[0],cproj[1],cproj[2],gf);
         }
+        d2min_out = d2;
+        elem = f;
       }
 
       done.insert(f);
@@ -528,10 +529,19 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
         Q.push(idx);
       }
     }
+    
     visited.insert(v);
+
+    if (d2min_in != DBL_MAX) {
+      cache = elem;
+      if (uvs.size() > 0 && evalOnCAD) {
+        proj = gf->point(proj.u(),proj.v());
+      }
+      return proj;
+    }
   }
 
-  if (d2min != DBL_MAX) {
+  if (d2min_in != DBL_MAX || d2min_out != DBL_MAX) {
     cache = elem;
     if (uvs.size() > 0 && evalOnCAD) {
       proj = gf->point(proj.u(),proj.v());
