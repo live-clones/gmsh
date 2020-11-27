@@ -296,9 +296,11 @@ HXTStatus MultiBlock::splitTriMeshOnMBDecomp(){
   for(uint64_t t=0; t<mesh->triangles.num; t++)
     for(size_t k=0;k<3;k++)
       hVal[mesh->triangles.node[3*t+k]]=exp(-m_scalingFactorCrosses[3*t+k]);
+  
   meshQuadLayout(hVal);
   std::cout<<"Storing quad mesh"<<std::endl;
   createQuadMesh();
+  
   std::cout<<"----Meshing  FINISHED!----"<<std::endl;
    
   return HXT_STATUS_OK;
@@ -1813,11 +1815,24 @@ HXTStatus MultiBlock::buildQuadLayout(){
   // for(uint64_t mt=0; mt<tJunctionPatchesIDs.size(); mt++)
   //   std::cout<<"T-junc patch ID: "<<tJunctionPatchesIDs[mt]<<std::endl;
 
-  
+
   dbgPosEdgData("dbgEdgData.pos"); 
   createMbTriPatchs();
   dbgPosPatchData("dbgBlockPatch.pos");
   computePatchsParametrization();
+  // //DBG CRITICAL
+  // int indQuadTest=0;
+  // std::vector<std::array<double,3>> physCoordLine;
+  // std::vector<uint64_t> physTriLine;
+  // m_mbQuadParametrization[indQuadTest].getStraigthLine(m_extraordVertices[m_mbQuads[indQuadTest][0]], m_extraordVertices[m_mbQuads[indQuadTest][2]], physCoordLine, physTriLine, 1000);
+  // m_mbEdges.push_back(physCoordLine);
+  // m_mbEdgesTri.push_back(physTriLine);
+  // std::cout << "n points in new line: " << physCoordLine.size() << std::endl;
+  // std::cout << "n tri in new line: " << physTriLine.size() << std::endl;
+  // dbgPosEdgData("dbgEdgData2.pos");
+  // m_mbEdges.erase(m_mbEdges.end()-1);
+  // m_mbEdgesTri.erase(m_mbEdgesTri.end()-1);
+  // //
   std::vector<std::array<double, 3>> pointsOnEdg;
   std::vector<uint64_t> trianglesOnEdg;
   std::cout<<"grabingEdgData "<<std::endl;
@@ -3417,6 +3432,33 @@ std::array<double,3> BlockParametrization::getPhysCoordFromParamCoord(std::array
   return physicalCoord;
 }
 
+uint64_t BlockParametrization::getBelongingTriangleFromParamCoord(std::array<double,3> paramCoord){
+  int isPointBelongingToTri=0;
+  double alpha=0.0;
+  double beta=0.0;
+  uint64_t globalTriNum=(uint64_t)(-1);
+  for(size_t k=0;k<m_triangles.size();k++){
+    uint64_t globTriNum=m_triangles[k];
+    uint32_t* nodes = m_mesh->triangles.node+3*globTriNum;
+    std::vector<std::array<double,3>> tri;
+    tri.reserve(3);
+    for(size_t k=0;k<3;k++){
+      uint32_t nodeLocK=m_nodesGlobalToParam[nodes[k]];
+      std::array<double,3> coordK=m_nodesParamCoord[nodeLocK];
+      tri.push_back(coordK);
+    }
+    isPointBelongingToTri=isPointInTri(tri, paramCoord, &alpha, &beta);
+    if(isPointBelongingToTri){
+      globalTriNum=globTriNum;
+      break;
+    }
+  }
+  if(globalTriNum==(uint64_t)(-1)){
+    std::cout << "problem finding triangle from parametric coordinates" << std::endl;
+  }
+  return globalTriNum;
+}
+
 std::array<double,3> BlockParametrization::getParamCoordFromPhysCoord(std::array<double,3> physCoord, uint64_t globNumTriHint){
   double *coords=m_mesh->vertices.coord;
   std::array<double,3> paramCoord={{0.,0.,0.}};
@@ -3464,6 +3506,26 @@ std::array<double,3> BlockParametrization::getParamCoordFromPhysCoord(std::array
     exit(0);
   }
   return paramCoord;
+}
+
+void BlockParametrization::getStraigthLine(std::array<double,3> physCoord1, std::array<double,3> physCoord2, std::vector<std::array<double,3>> &physCoordLine, std::vector<uint64_t> &physTriLine, uint64_t nPoints){
+  physCoordLine.clear();
+  physTriLine.clear();
+  std::array<double,3> paramCoordPoint1 = getParamCoordFromPhysCoord(physCoord1);
+  std::array<double,3> paramCoordPoint2 = getParamCoordFromPhysCoord(physCoord2);
+  double AB[3]={paramCoordPoint2[0]-paramCoordPoint1[0],
+		paramCoordPoint2[1]-paramCoordPoint1[1],
+		paramCoordPoint2[2]-paramCoordPoint1[2]};
+  for(uint64_t k=0;k<nPoints+1;k++){
+    std::array<double,3> pointParam = {{paramCoordPoint1[0]+((1.*k)/(1.*nPoints))*AB[0],
+					paramCoordPoint1[1]+((1.*k)/(1.*nPoints))*AB[1],
+					paramCoordPoint1[2]+((1.*k)/(1.*nPoints))*AB[2]}};
+    std::array<double,3> pointPhys = getPhysCoordFromParamCoord(pointParam);
+    uint64_t globalTriNum = getBelongingTriangleFromParamCoord(pointParam);
+    physCoordLine.push_back(pointPhys);
+    physTriLine.push_back(globalTriNum);
+  }
+  return;
 }
 
 HXTStatus BlockParametrization::dbgPosParam(const char *fileName){
@@ -3735,6 +3797,7 @@ HXTStatus MultiBlock::parametrizeBlock(uint64_t idBlock, BlockParametrization &b
       dirGaussU[k]*=scalingLoc;
       dirGaussV[k]*=scalingLoc;
     }
+    
     //DBG
     blockParam.liftU.push_back(dirGaussU);
     blockParam.scaling.push_back(scalingLoc);
@@ -3756,6 +3819,7 @@ HXTStatus MultiBlock::parametrizeBlock(uint64_t idBlock, BlockParametrization &b
     //   }
     HXT_CHECK(hxtLinearSystemAddToRhs(sys,rhsU,iT,localRhsU));
     HXT_CHECK(hxtLinearSystemAddToRhs(sys,rhsV,iT,localRhsV));
+    //
   }
   //BC
   int iv=0;
