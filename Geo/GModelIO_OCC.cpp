@@ -1875,19 +1875,21 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) &surf,
           Standard_Real first, last;
           Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
           Handle(Geom_Curve) cProj = GeomProjLib::Project(c, surf);
-          TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge(cProj);
+          TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge
+            (cProj, cProj->FirstParameter(), cProj->LastParameter());
           w.Add(edgeProj);
         }
         else {
-          // assume the 3D curves are actually 2D curves in the parametric
-          // space of the patch: to retrieve the 2D curves, project the 3D
-          // curves on the z=0 plane
+          // assume the 3D curves are actually 2D curves in the parametric space
+          // of the patch: to retrieve the 2D curves, project the 3D curves on
+          // the z=0 plane
           TopLoc_Location loc;
-          double first, last;
+          Standard_Real first, last;
           Handle(Geom_Plane) p = new Geom_Plane(0, 0, 1, 0);
           Handle(Geom2d_Curve) c2d = BRep_Tool::CurveOnPlane
             (edge, p, loc, first, last);
-          TopoDS_Edge edgeSurf = BRepBuilderAPI_MakeEdge(c2d, surf);
+          TopoDS_Edge edgeSurf = BRepBuilderAPI_MakeEdge
+            (c2d, surf, first, last);
           w.Add(edgeSurf);
         }
       }
