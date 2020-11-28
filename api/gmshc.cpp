@@ -2817,13 +2817,13 @@ GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n, c
   return result_api_;
 }
 
-GMSH_API int gmshModelOccTrimSurface(const int surfaceTag, int * wireTags, size_t wireTags_n, const int wire3D, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddTrimmedSurface(const int surfaceTag, int * wireTags, size_t wireTags_n, const int wire3D, const int tag, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_wireTags_(wireTags, wireTags + wireTags_n);
-    result_api_ = gmsh::model::occ::trimSurface(surfaceTag, api_wireTags_, wire3D, tag);
+    result_api_ = gmsh::model::occ::addTrimmedSurface(surfaceTag, api_wireTags_, wire3D, tag);
   }
   catch(...){
     if(ierr) *ierr = 1;

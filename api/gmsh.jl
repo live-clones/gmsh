@@ -4080,7 +4080,7 @@ function addBezierSurface(pointTags, numPointsU, tag = -1, wireTags = Cint[], wi
 end
 
 """
-    gmsh.model.occ.trimSurface(surfaceTag, wireTags = Cint[], wire3D = false, tag = -1)
+    gmsh.model.occ.addTrimmedSurface(surfaceTag, wireTags = Cint[], wire3D = false, tag = -1)
 
 Trim the surface `surfaceTag` with the wires `wireTags`, replacing any existing
 trimming curves. The first wire defines the external contour, the others define
@@ -4091,9 +4091,9 @@ new tag is selected automatically. Return the tag of the trimmed surface.
 
 Return an integer value.
 """
-function trimSurface(surfaceTag, wireTags = Cint[], wire3D = false, tag = -1)
+function addTrimmedSurface(surfaceTag, wireTags = Cint[], wire3D = false, tag = -1)
     ierr = Ref{Cint}()
-    api_result_ = ccall((:gmshModelOccTrimSurface, gmsh.lib), Cint,
+    api_result_ = ccall((:gmshModelOccAddTrimmedSurface, gmsh.lib), Cint,
           (Cint, Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
           surfaceTag, convert(Vector{Cint}, wireTags), length(wireTags), wire3D, tag, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())

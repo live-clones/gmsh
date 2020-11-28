@@ -3,21 +3,29 @@ import sys
 
 gmsh.initialize(sys.argv)
 
-gmsh.model.occ.addSphere(0,0,0, 1)
+v0 = gmsh.model.occ.addSphere(0,0,0, 2)
 
-c=gmsh.model.occ.addCircle(0.5,0.5,0, 0.4)
-w=gmsh.model.occ.addWire([c])
+# create wires in the parametric plane of the spherical surface [0,2*pi]x[0,pi]
+c1 = gmsh.model.occ.addCircle(0.5,0.5,0, 0.4)
+w1 = gmsh.model.occ.addWire([c1])
 
-c2=gmsh.model.occ.addCircle(0.5,0.5,0, 0.2)
-w2=gmsh.model.occ.addWire([c2])
+c2 = gmsh.model.occ.addCircle(0.5,0.5,0, 0.2)
+w2 = gmsh.model.occ.addWire([c2])
 
-s=gmsh.model.occ.addRectangle(1.5,0.5,0, 0.5,0.5)
+s3 = gmsh.model.occ.addRectangle(1,0.5,0, 5,0.5)
 gmsh.model.occ.synchronize()
-b=gmsh.model.getBoundary([(2,s)])
-w3=gmsh.model.occ.addWire([p[1] for p in b])
+b3 = gmsh.model.getBoundary([(2, s3)])
+w3 = gmsh.model.occ.addWire([p[1] for p in b3])
 
-gmsh.model.occ.trimSurface(1, [w,w2])
-gmsh.model.occ.trimSurface(1, [w3])
+# get spherical surface
+s0 = gmsh.model.getBoundary([(3, v0)])[0][1]
+
+# create 2 trimmed surfaces from the spherical surface, using the wires
+gmsh.model.occ.addTrimmedSurface(s0, [w1, w2])
+gmsh.model.occ.addTrimmedSurface(s0, [w3])
+
+# remove the sphere
+gmsh.model.occ.remove([(3, v0)], recursive=True)
 
 gmsh.model.occ.synchronize()
 

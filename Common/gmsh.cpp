@@ -5703,14 +5703,14 @@ gmsh::model::occ::addBezierSurface(const std::vector<int> &pointTags,
 }
 
 GMSH_API int
-gmsh::model::occ::trimSurface(const int surfaceTag,
-                              const std::vector<int> &wireTags,
-                              const bool wire3D,
-                              const int tag)
+gmsh::model::occ::addTrimmedSurface(const int surfaceTag,
+                                    const std::vector<int> &wireTags,
+                                    const bool wire3D,
+                                    const int tag)
 {
   if(!_checkInit()) return -1;
   int outTag = tag;
-  GModel::current()->getOCCInternals()->trimSurface(
+  GModel::current()->getOCCInternals()->addTrimmedSurface(
     outTag, surfaceTag, wireTags, wire3D);
   return outTag;
 }

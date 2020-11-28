@@ -245,6 +245,8 @@ public:
                         const int numPointsU,
                         const std::vector<int> &wireTags = std::vector<int>(),
                         bool wire3D = true);
+  bool addTrimmedSurface(int &tag, int surfaceTag, const std::vector<int> &wireTags,
+                         bool wire3D);
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
@@ -260,10 +262,6 @@ public:
                 double dz, double ltx);
   bool addTorus(int &tag, double x, double y, double z, double r1, double r2,
                 double angle);
-
-  // trim
-  bool trimSurface(int &tag, int surfaceTag, const std::vector<int> &wireTags,
-                   bool wire3D);
 
   // thrusections and thick solids (can create multiple entities)
   bool addThruSections(int tag, const std::vector<int> &wireTags,
@@ -570,6 +568,12 @@ public:
   {
     return _error("add Bezier surface");
   }
+  bool addTrimmedSurface(int &tag, int surfaceTag,
+                         const std::vector<int> &wireTags,
+                         bool wire3D)
+  {
+    return _error("add trimmed surface");
+  }
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing)
   {
@@ -609,12 +613,6 @@ public:
                 double angle)
   {
     return _error("add torus");
-  }
-  bool trimSurface(int &tag, int surfaceTag,
-                   const std::vector<int> &wireTags,
-                   bool wire3D)
-  {
-    return _error("trim surface");
   }
   bool addThruSections(int tag, const std::vector<int> &wireTags,
                        bool makeSolid, bool makeRuled,

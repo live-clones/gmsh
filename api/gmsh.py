@@ -4817,9 +4817,9 @@ class model:
             return api_result_
 
         @staticmethod
-        def trimSurface(surfaceTag, wireTags=[], wire3D=False, tag=-1):
+        def addTrimmedSurface(surfaceTag, wireTags=[], wire3D=False, tag=-1):
             """
-            gmsh.model.occ.trimSurface(surfaceTag, wireTags=[], wire3D=False, tag=-1)
+            gmsh.model.occ.addTrimmedSurface(surfaceTag, wireTags=[], wire3D=False, tag=-1)
 
             Trim the surface `surfaceTag' with the wires `wireTags', replacing any
             existing trimming curves. The first wire defines the external contour, the
@@ -4833,7 +4833,7 @@ class model:
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
-            api_result_ = lib.gmshModelOccTrimSurface(
+            api_result_ = lib.gmshModelOccAddTrimmedSurface(
                 c_int(surfaceTag),
                 api_wireTags_, api_wireTags_n_,
                 c_int(bool(wire3D)),

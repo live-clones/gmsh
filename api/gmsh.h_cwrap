@@ -3374,14 +3374,14 @@ namespace gmsh { // Top-level functions
       // defined in the parametric space of the surface. If `tag' is positive, set
       // the tag explicitly; otherwise a new tag is selected automatically. Return
       // the tag of the trimmed surface.
-      inline int trimSurface(const int surfaceTag,
-                             const std::vector<int> & wireTags = std::vector<int>(),
-                             const bool wire3D = false,
-                             const int tag = -1)
+      inline int addTrimmedSurface(const int surfaceTag,
+                                   const std::vector<int> & wireTags = std::vector<int>(),
+                                   const bool wire3D = false,
+                                   const int tag = -1)
       {
         int ierr = 0;
         int *api_wireTags_; size_t api_wireTags_n_; vector2ptr(wireTags, &api_wireTags_, &api_wireTags_n_);
-        int result_api_ = gmshModelOccTrimSurface(surfaceTag, api_wireTags_, api_wireTags_n_, (int)wire3D, tag, &ierr);
+        int result_api_ = gmshModelOccAddTrimmedSurface(surfaceTag, api_wireTags_, api_wireTags_n_, (int)wire3D, tag, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_wireTags_);
         return result_api_;

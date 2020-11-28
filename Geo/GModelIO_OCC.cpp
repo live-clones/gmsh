@@ -2139,9 +2139,9 @@ bool OCC_Internals::addBezierSurface(int &tag,
   return true;
 }
 
-bool OCC_Internals::trimSurface(int &tag, int surfaceTag,
-                                const std::vector<int> &wireTags,
-                                bool wire3D)
+bool OCC_Internals::addTrimmedSurface(int &tag, int surfaceTag,
+                                      const std::vector<int> &wireTags,
+                                      bool wire3D)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface with tag %d already exists", tag);

@@ -2245,7 +2245,7 @@ namespace gmsh { // Top-level functions
                                     const std::vector<int> & wireTags = std::vector<int>(),
                                     const bool wire3D = false);
 
-      // gmsh::model::occ::trimSurface
+      // gmsh::model::occ::addTrimmedSurface
       //
       // Trim the surface `surfaceTag' with the wires `wireTags', replacing any
       // existing trimming curves. The first wire defines the external contour, the
@@ -2254,10 +2254,10 @@ namespace gmsh { // Top-level functions
       // defined in the parametric space of the surface. If `tag' is positive, set
       // the tag explicitly; otherwise a new tag is selected automatically. Return
       // the tag of the trimmed surface.
-      GMSH_API int trimSurface(const int surfaceTag,
-                               const std::vector<int> & wireTags = std::vector<int>(),
-                               const bool wire3D = false,
-                               const int tag = -1);
+      GMSH_API int addTrimmedSurface(const int surfaceTag,
+                                     const std::vector<int> & wireTags = std::vector<int>(),
+                                     const bool wire3D = false,
+                                     const int tag = -1);
 
       // gmsh::model::occ::addSurfaceLoop
       //

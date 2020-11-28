@@ -690,7 +690,7 @@ doc = '''Add a Bezier surface in the OpenCASCADE CAD representation, with `point
 occ.add('addBezierSurface', doc, oint, ivectorint('pointTags'), iint('numPointsU'), iint('tag', '-1'), ivectorint('wireTags', 'std::vector<int>()', "[]", "[]"), ibool('wire3D', 'false', 'False'))
 
 doc = '''Trim the surface `surfaceTag' with the wires `wireTags', replacing any existing trimming curves. The first wire defines the external contour, the others define holes. If `wire3D' is set, consider wire curves as 3D curves and project them on the surface; otherwise consider the wire curves as defined in the parametric space of the surface. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the trimmed surface.'''
-occ.add('trimSurface', doc, oint, iint('surfaceTag'), ivectorint('wireTags', 'std::vector<int>()', "[]", "[]"), ibool('wire3D', 'false', 'False'), iint('tag', '-1'))
+occ.add('addTrimmedSurface', doc, oint, iint('surfaceTag'), ivectorint('wireTags', 'std::vector<int>()', "[]", "[]"), ibool('wire3D', 'false', 'False'), iint('tag', '-1'))
 
 doc = '''Add a surface loop (a closed shell) in the OpenCASCADE CAD representation, formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface loop. Setting `sewing' allows to build a shell made of surfaces that share geometrically identical (but topologically different) curves.'''
 occ.add('addSurfaceLoop', doc, oint, ivectorint('surfaceTags'), iint('tag', '-1'), ibool('sewing', 'false', 'False'))

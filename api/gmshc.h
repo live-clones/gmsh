@@ -1987,11 +1987,11 @@ GMSH_API int gmshModelOccAddBezierSurface(int * pointTags, size_t pointTags_n,
  * defined in the parametric space of the surface. If `tag' is positive, set
  * the tag explicitly; otherwise a new tag is selected automatically. Return
  * the tag of the trimmed surface. */
-GMSH_API int gmshModelOccTrimSurface(const int surfaceTag,
-                                     int * wireTags, size_t wireTags_n,
-                                     const int wire3D,
-                                     const int tag,
-                                     int * ierr);
+GMSH_API int gmshModelOccAddTrimmedSurface(const int surfaceTag,
+                                           int * wireTags, size_t wireTags_n,
+                                           const int wire3D,
+                                           const int tag,
+                                           int * ierr);
 
 /* Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,
  * formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly;

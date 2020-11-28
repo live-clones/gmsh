@@ -3520,7 +3520,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2034,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1783,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4388,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3759,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L25,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L23,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_trimmed.py#L30,bspline_bezier_trimmed.py}, @url{@value{GITLAB-PREFIX}/demos/api/closest_point.py#L7,closest_point.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L25,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L23,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_trimmed.py#L30,bspline_bezier_trimmed.py}, @url{@value{GITLAB-PREFIX}/demos/api/closest_point.py#L7,closest_point.py}, @url{@value{GITLAB-PREFIX}/demos/api/trimmed.py#L9,trimmed.py})
 @end table
 
 @item gmsh/model/occ/addEllipseArc
@@ -3639,7 +3639,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2115,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1858,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4547,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3881,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L74,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L65,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_trimmed.py#L31,bspline_bezier_trimmed.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_filling.py#L36,bspline_filling.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L74,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L65,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_trimmed.py#L31,bspline_bezier_trimmed.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_filling.py#L36,bspline_filling.py}, @url{@value{GITLAB-PREFIX}/demos/api/trimmed.py#L10,trimmed.py})
 @end table
 
 @item gmsh/model/occ/addCurveLoop
@@ -3832,7 +3832,7 @@ integer value
 Python (@url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_patches.py#L52,bspline_bezier_patches.py})
 @end table
 
-@item gmsh/model/occ/trimSurface
+@item gmsh/model/occ/addTrimmedSurface
 Trim the surface @code{surfaceTag} with the wires @code{wireTags}, replacing any
 existing trimming curves. The first wire defines the external contour, the
 others define holes. If @code{wire3D} is set, consider wire curves as 3D curves
@@ -3850,6 +3850,8 @@ trimmed surface.
 integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2257,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1990,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4820,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4094,Julia}
+@item Examples:
+Python (@url{@value{GITLAB-PREFIX}/demos/api/trimmed.py#L24,trimmed.py})
 @end table
 
 @item gmsh/model/occ/addSurfaceLoop
@@ -4364,7 +4366,7 @@ dimension 0.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2635,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2340,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5566,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4737,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L85,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L91,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L76,t19.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L73,t20.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L85,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L91,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L76,t19.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L73,t20.py}, @url{@value{GITLAB-PREFIX}/demos/api/trimmed.py#L28,trimmed.py})
 @end table
 
 @item gmsh/model/occ/removeAllDuplicates
