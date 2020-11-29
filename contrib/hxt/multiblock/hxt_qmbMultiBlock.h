@@ -75,6 +75,7 @@ class MultiBlock
   std::vector<std::vector<uint64_t>> m_discrQuads;
   HXTMesh *m_quadMesh;
   // std::vector<std::vector<uint64_t>> m_discrHfuncEdges;
+  std::vector<std::vector<uint64_t>> m_vert2Block;
 
 
   bool m_mbDecompExists;
@@ -142,9 +143,16 @@ class MultiBlock
   HXTStatus collectTJunctionIndices();
   HXTStatus getTriangularPatchesIDs(std::vector<int> *triPatchesIDs);
   double getDistanceBetweeenTwoExtrVert(int sepIDNoLimCyc, int extrVertID, int tJuncVertID1);
-  int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID); 
-  HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs);
- 
+  int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID);
+  void getmbEdgIDFrom2ExtrVert(int node1, int node2, int *edgID);
+  void getmbEdgIDFrom2ExtrPoints(std::array<double,3> point1, std::array<double,3> point2 , int *edgID);
+  HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs, std::vector<int> *locTjunEdgInd, std::vector<int> *locTjuncInd);
+  HXTStatus mergeEdges(uint64_t edgID1, uint64_t edgID2, uint64_t connectingVertInd, std::vector<std::array<double,3>> *newEdgPoints, std::vector<uint64_t> *newEdgTri);
+  HXTStatus modifyTBlockNgbrs(int tBlockID, int locIndTjuncVert, int locTjunEdgInd, std::vector<uint64_t> *vecBlocksDelete, std::vector<uint64_t> *vecEdgesDelete);
+  HXTStatus correctInvalidBlocks();
+  HXTStatus mergeBlocks(uint64_t blockID1, uint64_t blockID2, uint64_t edgToDelete, int currentNode,std::vector<uint64_t> *delBlocks, std::vector<uint64_t> *delEdges);
+  HXTStatus getVert2Block();
+   
   
   double normDiffVect(std::array<double,3> *coordP1, std::array<double,3> *coordP2);
   double computeDiscreteLineLength(std::vector<std::array<double,3>> *pCoordLine);
