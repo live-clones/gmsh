@@ -1137,7 +1137,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderIterMax", opt_mesh_ho_iter_max, 100,
     "Maximum number of iterations in high-order optimization pass"},
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
-    "Number of layers around a problematic element to consider for high-order optimization"},
+    "Number of layers around a problematic element to consider for high-order "
+    "optimization, or number of element layers to consider in the boundary "
+    "layer mesh for high-order fast curving"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
     "Optimize high-order meshes? (0: none, 1: optimization, 2: elastic+optimization, "
     "3: elastic, 4: fast curving)" },
