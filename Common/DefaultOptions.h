@@ -1131,12 +1131,15 @@ StringXNumber MeshOptions_Number[] = {
     "38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)" },
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
+
   { F|O, "HighOrderDistCAD", opt_mesh_ho_dist_cad, 0,
     "Try to optimize distance to CAD in high-order optimizer?"},
   { F|O, "HighOrderIterMax", opt_mesh_ho_iter_max, 100,
     "Maximum number of iterations in high-order optimization pass"},
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
-    "Number of layers around a problematic element to consider for high-order optimization"},
+    "Number of layers around a problematic element to consider for high-order "
+    "optimization, or number of element layers to consider in the boundary "
+    "layer mesh for high-order fast curving"},
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
     "Optimize high-order meshes? (0: none, 1: optimization, 2: elastic+optimization, "
     "3: elastic, 4: fast curving)" },
@@ -1157,6 +1160,21 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum threshold for high-order element optimization"},
   { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,
     "Maximum threshold for high-order element optimization"},
+  { F|O, "HighOrderFastCurvingNewAlgo", opt_mesh_ho_fast_new_algo, 0,
+    "Curve boundary layer with new \"fast curving\" algorithm (experimental)"},
+  { F|O, "HighOrderCurveOuterBL", opt_mesh_ho_curve_outer_BL, 0,
+    "Curve also the outer surface of the boundary layer in the fast curving "
+    "algorithm (0 = do not curve, 1 = curve according to boundary, 2 = curve "
+    "without breaking outer elements)"},
+  { F|O, "HighOrderMaxRho", opt_mesh_ho_max_rho, 0.3,
+    "Maximum min/max ratio of edge/face size for the detection of BL element "
+    "columns in the fast curving algorithm"},
+  { F|O, "HighOrderMaxAngle", opt_mesh_ho_max_angle, 3.1415927*10./180.,
+    "Maximum angle between layers of BL elements for the detection of columns "
+    "in the fast curving algorithm"},
+  { F|O, "HighOrderMaxInnerAngle", opt_mesh_ho_max_in_angle, 3.1415927*30./180.,
+    "Maximum angle between edges/faces within layers of BL triangles/tets "
+    "for the detection of columns in the fast curving algorithm"},
 
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },

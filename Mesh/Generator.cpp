@@ -1043,8 +1043,13 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 #if defined(HAVE_OPTHOM)
     FastCurvingParameters p;
     p.dim = m->getMeshDim();
-    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
     p.thickness = false;
+    p.curveOuterBL =
+      (FastCurvingParameters::OUTERBLCURVE)CTX::instance()->mesh.hoCurveOuterBL;
+    p.maxNumLayers = CTX::instance()->mesh.hoNLayers;
+    p.maxRho = CTX::instance()->mesh.hoMaxRho;
+    p.maxAngle = CTX::instance()->mesh.hoMaxAngle;
+    p.maxAngleInner = CTX::instance()->mesh.hoMaxInnerAngle;
     HighOrderMeshFastCurving(m, p, true);
 #else
     Msg::Error("High-order mesh optimization requires the OPTHOM module");

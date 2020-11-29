@@ -6150,6 +6150,37 @@ double opt_mesh_ho_poisson(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoPoissonRatio;
 }
 
+double opt_mesh_ho_fast_new_algo(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.hoNewFastCurvingAlgo = !(val == 0.);
+  return CTX::instance()->mesh.hoNewFastCurvingAlgo ? 1. : 0.;
+}
+
+double opt_mesh_ho_curve_outer_BL(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoCurveOuterBL = (int)val;
+  return CTX::instance()->mesh.hoCurveOuterBL;
+}
+
+double opt_mesh_ho_max_rho(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoMaxRho = val;
+  return CTX::instance()->mesh.hoMaxRho;
+}
+
+double opt_mesh_ho_max_angle(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoMaxAngle = val;
+  return CTX::instance()->mesh.hoMaxAngle;
+}
+
+double opt_mesh_ho_max_in_angle(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoMaxInnerAngle = val;
+  return CTX::instance()->mesh.hoMaxInnerAngle;
+}
+
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

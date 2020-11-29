@@ -162,7 +162,7 @@ Default value: @code{100}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderNumLayers
-Number of layers around a problematic element to consider for high-order optimization@*
+Number of layers around a problematic element to consider for high-order optimization, or number of element layers to consider in the boundary layer mesh for high-order fast curving@*
 Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -204,6 +204,31 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.HighOrderThresholdMax
 Maximum threshold for high-order element optimization@*
 Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderFastCurvingNewAlgo
+Use the new algorithm for fast curving of boundary layer meshes (experimental)?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderCurveOuterBL
+Curve also the outer surface of the boundary layer in the fast curving algorithm (0 = do not curve, 1 = curve according to boundary, 2 = curve without breaking outer elements)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderMaxRho
+Maximum min/max ratio of edge/face size for the detection of boundary layer element columns in the fast curving algorithm@*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderMaxAngle
+Maximum angle between layers of boundary layer elements for the detection of columns in the fast curving algorithm@*
+Default value: @code{10*Pi/180}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderMaxInnerAngle
+Maximum angle between edges/faces within layers of BL triangles/tets for the detection of columns in the fast curving algorithm@*
+Default value: @code{30*Pi/180}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelSampling
