@@ -756,7 +756,7 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
     int cgIndexZone = 0;
     cgsize_t cgZoneSize[9] = {imax, jmax, kmax, imax - 1, jmax - 1, kmax - 1,
                               0, 0, 0};
-    std::string zoneName = cgnsString("Volume_" + std::to_string(gr->tag()));
+    std::string zoneName = cgnsString(geZoneName(gr));
     if(cg_zone_write(cgIndexFile, cgIndexBase, zoneName.c_str(), cgZoneSize,
                      Structured, &cgIndexZone) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
