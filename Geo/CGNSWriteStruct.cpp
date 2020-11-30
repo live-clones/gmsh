@@ -125,76 +125,38 @@ static void computeTransform(const std::vector<cgsize_t> &pointRange,
   else if(y2 == -1) transform[1] = -2;
 }
 
-static int writeInterface(int cgIndexFile, int cgIndexBase, int cgIndexZone,
-                          GFace *gf, GFace *gf2)
+static bool findRange(GFace *gf, GEdge *ge,
+                      int &ibeg, int &jbeg, int &iend, int &jend)
 {
+  GVertex *gv1 = ge->getBeginVertex(), *gv2 = ge->getEndVertex();
+  if(!gv1 || !gv1->getNumMeshVertices() || !gv2 || !gv2->getNumMeshVertices())
+    return false;
+  MVertex *v1 = gv1->getMeshVertex(0), *v2 = gv2->getMeshVertex(0);
   std::vector<std::vector<MVertex *> > &v = gf->transfinite_vertices;
-  cgsize_t imax = v.size(), jmax = v[0].size();
-  std::vector<std::vector<MVertex *> > &v2 = gf2->transfinite_vertices;
-  cgsize_t imax2 = v2.size(), jmax2 = v2[0].size();
+  int imax = v.size(), jmax = v[0].size();
+  ibeg = iend = jbeg = jend = -1;
+  for(int i = 0; i < imax; i++) {
+    for(int j = 0; j < jmax; j++) {
+      if(i == 0 || j == 0 || i == imax - 1 || j == jmax - 1) {
+        if(v[i][j] == v1) { ibeg = i + 1; jbeg = j + 1; }
+        if(v[i][j] == v2) { iend = i + 1; jend = j + 1; }
+      }
+    }
+  }
+  if(ibeg > 0 && iend > 0 && jbeg > 0 && jend > 0) return true;
+  return false;
+}
 
-  // 4 "logical" edges for each patch
-  int e[][4] = {{0, 0, imax - 1, 0},
-                {imax - 1, 0, imax - 1, jmax - 1},
-                {imax - 1, jmax - 1, 0, jmax - 1},
-                {0, jmax - 1, 0, 0}};
-  int e2[][4] = {{0, 0, imax2 - 1, 0},
-                 {imax2 - 1, 0, imax2 - 1, jmax2 - 1},
-                 {imax2 - 1, jmax2 - 1, 0, jmax2 - 1},
-                 {0, jmax2 - 1, 0, 0}};
-
+static int writeInterface(int cgIndexFile, int cgIndexBase, int cgIndexZone,
+                          GFace *gf, GEdge *ge, GFace *gf2)
+{
   std::vector<cgsize_t> pointRange, pointDonorRange;
-  bool found = false;
-
-  // first, perform a fast search by just trying to match the 4 "logical"
-  // bounding edges of the 2 patches
-  for(int l = 0; l < 4; l++) {
-    for(int l2 = 0; l2 < 4; l2++) {
-      if(v[e[l][0]][e[l][1]] == v2[e2[l2][0]][e2[l2][1]] &&
-         v[e[l][2]][e[l][3]] == v2[e2[l2][2]][e2[l2][3]]) {
-        pointRange = {e[l][0] + 1, e[l][1] + 1,
-                      e[l][2] + 1, e[l][3] + 1};
-        pointDonorRange = {e2[l2][0] + 1, e2[l2][1] + 1,
-                           e2[l2][2] + 1, e2[l2][3] + 1};
-        found = true;
-        break;
-      }
-      else if(v[e[l][0]][e[l][1]] == v2[e2[l2][2]][e2[l2][3]] &&
-              v[e[l][2]][e[l][3]] == v2[e2[l2][0]][e2[l2][1]]) {
-        pointRange = {e[l][0] + 1, e[l][1] + 1,
-                      e[l][2] + 1, e[l][3] + 1};
-        pointDonorRange = {e2[l2][2] + 1, e2[l2][3] + 1,
-                           e2[l2][0] + 1, e2[l2][1] + 1};
-        found = true;
-        break;
-      }
-    }
-    if(found) break;
-  }
-
-  // if not found, search for partial matches (this can happen in 2D, as Gmsh
-  // allows to generate structured meshes for surfaces with more than 4 bounding
-  // curves)
-  if(!found) {
-    // TODO
-    /*
-    for(int l2 = 0; l2 < 4; l2++) {
-      // begin/end node of potential donnor edge
-      MVertex *v1 = v2[e2[l2][0]][e2[l2][1]], *v2[e2[l2][2]][e2[l2][3]];
-      int found1 = -1, found2 = -1;
-      // for each edge of the patch...
-      for(int l = 0; l < 4; l++) {
-        // ...loop over all nodes and see if we find v1 and v2
-        for(int j = 0; j < jmax; j++) {
-          if(v[0][j] == v1)
-        for(k = 0; e[i]
-      }
-    }
-    */
-  }
-
-
-  if(found) {
+  int ibeg, iend, jbeg, jend;
+  if(findRange(gf, ge, ibeg, jbeg, iend, jend))
+    pointRange = {ibeg, jbeg, iend, jend};
+  if(findRange(gf2, ge, ibeg, jbeg, iend, jend))
+    pointDonorRange = {ibeg, jbeg, iend, jend};
+  if(pointRange.size() && pointDonorRange.size()) {
     int transform[2];
     computeTransform(pointRange, pointDonorRange, transform);
     int cgIndexConn;
@@ -206,8 +168,8 @@ static int writeInterface(int cgIndexFile, int cgIndexBase, int cgIndexZone,
     }
   }
   else {
-    Msg::Warning("Could not identify interface between surfaces %d and %d",
-                 gf->tag(), gf2->tag());
+    Msg::Warning("Could not identify interface between surfaces %d and %d, "
+                 "on curve %d", gf->tag(), gf2->tag(), ge->tag());
   }
   return 1;
 }
@@ -215,38 +177,9 @@ static int writeInterface(int cgIndexFile, int cgIndexBase, int cgIndexZone,
 static int writeBC(int cgIndexFile, int cgIndexBase, int cgIndexZone,
                    GFace *gf, GEdge *ge)
 {
-  std::vector<std::vector<MVertex *> > &v = gf->transfinite_vertices;
-  cgsize_t imax = v.size(), jmax = v[0].size();
-
-  GVertex *gv1 = ge->getBeginVertex(), *gv2 = ge->getEndVertex();
-  if(!gv1 || !gv2) return 0;
-  if(!gv1->getNumMeshVertices() || !gv2->getNumMeshVertices()) return 0;
-  MVertex *v1 = gv1->getMeshVertex(0), *v2 = gv2->getMeshVertex(0);
-
-  int e[][4] = {{0, 0, imax - 1, 0},
-                {imax - 1, 0, imax - 1, jmax - 1},
-                {imax - 1, jmax - 1, 0, jmax - 1},
-                {0, jmax - 1, 0, 0}};
-  std::vector<cgsize_t> pointRange;
-  bool found = false;
-
-  // first, perform a fast search by just trying to match the 4 "logical"
-  // bounding edges
-  for(int l = 0; l < 4; l++) {
-    if((v[e[l][0]][e[l][1]] == v1 && v[e[l][2]][e[l][3]] == v2) ||
-       (v[e[l][0]][e[l][1]] == v2 && v[e[l][2]][e[l][3]] == v1)) {
-      pointRange = {e[l][0] + 1, e[l][1] + 1,
-                    e[l][2] + 1, e[l][3] + 1};
-      found = true;
-    }
-  }
-
-  // if not found, search for partial match
-  if(!found) {
-    // TODO
-  }
-
-  if(found) {
+  int ibeg, iend, jbeg, jend;
+  if(findRange(gf, ge, ibeg, jbeg, iend, jend)) {
+    std::vector<cgsize_t> pointRange = {ibeg, jbeg, iend, jend};
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
                      getZoneName(ge).c_str(), BCWallViscous, PointRange,
@@ -322,7 +255,7 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
       // write interface data
       for(auto gf2: ge->faces()) {
         if(gf2 != gf)
-          writeInterface(cgIndexFile, cgIndexBase, cgIndexZone, gf, gf2);
+          writeInterface(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge, gf2);
       }
       // write boundary conditions
       if(!ge->physicals.empty())
