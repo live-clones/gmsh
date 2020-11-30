@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
-// Contributed by Larry Price
+// Contributed by Larry Price and Michael Ermakov
 
 #include <time.h>
 #include <algorithm>
@@ -13,13 +13,20 @@
 #include "GModel.h"
 #include "OS.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MTetrahedron.h"
+#include "MHexahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 
 namespace {
   // static const unsigned GAMBIT_TYPE_EDGE = 1;
   // static const unsigned GAMBIT_TYPE_QUAD = 2;
   // static const unsigned GAMBIT_TYPE_TRI  = 3;
+  static const unsigned GAMBIT_TYPE_HEX = 4;
+  static const unsigned GAMBIT_TYPE_PRI = 5;
   static const unsigned GAMBIT_TYPE_TET = 6;
+  static const unsigned GAMBIT_TYPE_PYR = 7;
 
   // This struct allows us to take advantage of C++11 unordered_map while
   // maintaining backwards compatibility with C++03
@@ -86,7 +93,10 @@ namespace {
     boundaryCodeMap(rawData, rawData + (sizeof rawData / sizeof rawData[0]));
 
   // Gambit numbers its faces slightly differently
-  static const unsigned GAMBIT_FACE_MAP[4] = {1, 2, 4, 3};
+  static const unsigned GAMBIT_FACE_TET_MAP[4] = {1, 2, 4, 3};
+  static const unsigned GAMBIT_FACE_PYR_MAP[5] = {5, 2, 4, 3, 1};
+  static const unsigned GAMBIT_FACE_PRI_MAP[5] = {4, 5, 1, 3, 2};
+  static const unsigned GAMBIT_FACE_HEX_MAP[6] = {5, 1, 4, 2, 3, 6};
 
   unsigned const gambitBoundaryCode(std::string name)
   {
@@ -96,79 +106,14 @@ namespace {
     return code == boundaryCodeMap.end() ? 0 : code->second;
   }
 
-  typedef std::pair<unsigned, unsigned> TetFacePair;
-  typedef hashMap<unsigned, std::vector<TetFacePair> >::_ IDTetFaceMap;
+  typedef std::pair<unsigned, unsigned> FacePair;
+  typedef hashMap<unsigned, std::vector<FacePair> >::_ IDFaceMap;
 
-  bool const sortBCs(TetFacePair const &lhs, TetFacePair const &rhs)
+  bool const sortBCs(FacePair const &lhs, FacePair const &rhs)
   {
     return lhs.first < rhs.first;
   }
 
-  IDTetFaceMap const gatherBC(GModel *gm)
-  {
-    // create association map for vertices and faces
-    hashMap<unsigned, std::vector<unsigned> >::_ vertmap;
-    for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-      for(std::size_t i = 0; i < (*it)->triangles.size(); ++i) {
-        MTriangle *tri = (*it)->triangles[i];
-        for(std::size_t j = 0; j < tri->getNumVertices(); ++j) {
-          vertmap[tri->getVertex(j)->getNum()].push_back(tri->getNum());
-        }
-      }
-    }
-
-    // because we use a set_intersection later on, the vectors of vertmap should be sorted
-    for (auto &it: vertmap) {
-      std::sort(it.second.begin(), it.second.end());
-    }
-
-    // determine which faces belong to which tetrahedra by comparing vertices
-    IDTetFaceMap tetfacemap;
-    for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
-      for(std::size_t i = 0; i < (*it)->tetrahedra.size(); ++i) {
-        MTetrahedron *tet = (*it)->tetrahedra[i];
-        for(int faceNum = 0; faceNum < tet->getNumFaces(); ++faceNum) {
-          std::vector<MVertex *> verts;
-          tet->getFaceVertices(faceNum, verts);
-
-          std::vector<unsigned> current = vertmap[verts[0]->getNum()];
-          for(std::size_t j = 1; j < verts.size() && current.size() != 0; ++j) {
-            std::vector<unsigned> common_data;
-            set_intersection(current.begin(), current.end(),
-                             vertmap[verts[j]->getNum()].begin(),
-                             vertmap[verts[j]->getNum()].end(),
-                             std::back_inserter(common_data));
-            current = common_data;
-          }
-          if(current.size() == 1) {
-            tetfacemap[current[0]].push_back(
-              TetFacePair(tet->getNum(), GAMBIT_FACE_MAP[faceNum]));
-          }
-        }
-      }
-    }
-
-    // populate boundary conditions for tetrahedra given triangle physicals
-    IDTetFaceMap boundaryConditions;
-    for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-      if((*it)->physicals.size()) {
-        for(std::size_t i = 0; i < (*it)->physicals.size(); ++i) {
-          unsigned phys = (*it)->physicals[i];
-          for(std::size_t j = 0; j < (*it)->triangles.size(); ++j) {
-            MTriangle *tri = (*it)->triangles[j];
-            IDTetFaceMap::iterator tets = tetfacemap.find(tri->getNum());
-            if(tets != tetfacemap.end()) {
-              for(std::size_t tet = 0; tet < tets->second.size(); ++tet) {
-                boundaryConditions[phys].push_back(tets->second[tet]);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return boundaryConditions;
-  }
 } // namespace
 
 // for a specification of the GAMBIT neutral format:
@@ -184,16 +129,24 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
 
   // gather tetrahedra and id normalization information
   unsigned numTetrahedra = 0;
+  unsigned numHexahedra = 0;
+  unsigned numPrisms = 0;
+  unsigned numPyramids = 0;
+
   unsigned lowestId = std::numeric_limits<int>::max();
   hashMap<unsigned, std::vector<unsigned> >::_ elementGroups;
+
   for(riter it = firstRegion(); it != lastRegion(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
       numTetrahedra += (*it)->tetrahedra.size();
+      numHexahedra += (*it)->hexahedra.size();
+      numPrisms += (*it)->prisms.size();
+      numPyramids += (*it)->pyramids.size();
 
       for(std::size_t phys = 0; phys < (*it)->physicals.size(); ++phys) {
-        for(std::size_t i = 0; i < (*it)->tetrahedra.size(); ++i) {
-          MTetrahedron *tet = (*it)->tetrahedra[i];
-          unsigned n = (unsigned)tet->getNum();
+        for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i) {
+          MElement *elem = (*it)->getMeshElement(i);
+          unsigned n = (unsigned)elem->getNum();
           elementGroups[(*it)->physicals[phys]].push_back(n);
           if(n < lowestId) lowestId = n - 1;
         }
@@ -201,7 +154,128 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
     }
   }
 
-  IDTetFaceMap boundaryConditions = gatherBC(this);
+  if(lowestId == std::numeric_limits<int>::max()) {
+    Msg::Warning("No 3d-physicals");
+    return 1;
+  }
+
+  unsigned numElements = numTetrahedra + numHexahedra + numPrisms + numPyramids;
+
+  unsigned nVertex = indexMeshVertices(saveAll, 0, false);
+  std::vector<unsigned char> vertex_phys(nVertex);
+  // create association map for vertices and faces
+  hashMap<unsigned, std::vector<unsigned> >::_ vertmap;
+  for(GModel::fiter it = firstFace(); it != lastFace(); ++it) {
+    for(auto &tri : (*it)->triangles) {
+      for(std::size_t j = 0; j < tri->getNumVertices(); ++j) {
+        unsigned numVertex = tri->getVertex(j)->getNum();
+        vertmap[numVertex].push_back(tri->getNum());
+        vertex_phys[numVertex] = 1;
+      }
+    }
+
+    for(auto &quad : (*it)->quadrangles) {
+      for(std::size_t j = 0; j < quad->getNumVertices(); ++j) {
+        unsigned numVertex = quad->getVertex(j)->getNum();
+        vertmap[numVertex].push_back(quad->getNum());
+        vertex_phys[numVertex] = 1;
+      }
+    }
+  }
+
+  // because we use a set_intersection later on, the vectors of vertmap should
+  // be sorted
+  for(auto &it : vertmap) { std::sort(it.second.begin(), it.second.end()); }
+
+  std::vector<unsigned char> elem_phys(numElements);
+  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+    if(saveAll || (*it)->physicals.size()) {
+      for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i) {
+        unsigned num = (*it)->getMeshElement(i)->getNum();
+        unsigned sum = 0;
+        for(unsigned j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
+            ++j) {
+          unsigned vertex = (*it)->getMeshElement(i)->getVertex(j)->getNum();
+
+          if(vertex_phys[vertex]) { sum++; }
+        }
+
+        if(sum >= 3) { elem_phys[num - lowestId - 1] = 1; }
+      }
+    }
+  }
+
+  // determine which faces belong to which element by comparing vertices
+  IDFaceMap facemap;
+  for(GModel::riter it = firstRegion(); it != lastRegion(); ++it) {
+    for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i) {
+      MElement *element = (*it)->getMeshElement(i);
+      unsigned num = element->getNum();
+      if(elem_phys[num - lowestId - 1]) {
+        unsigned numFaces = element->getNumFaces();
+
+        for(unsigned faceNum = 0; faceNum < numFaces; ++faceNum) {
+          std::vector<MVertex *> verts;
+          element->getFaceVertices(faceNum, verts);
+
+          std::vector<unsigned> current = vertmap[verts[0]->getNum()];
+          for(std::size_t j = 1; j < verts.size() && current.size() != 0; ++j) {
+            std::vector<unsigned> common_data;
+            set_intersection(current.begin(), current.end(),
+                             vertmap[verts[j]->getNum()].begin(),
+                             vertmap[verts[j]->getNum()].end(),
+                             std::back_inserter(common_data));
+            current = common_data;
+          }
+
+          if(current.size() == 1) {
+            unsigned type = element->getType();
+            unsigned face = 0;
+            switch(type) {
+            case TYPE_TET: face = GAMBIT_FACE_TET_MAP[faceNum]; break;
+            case TYPE_HEX: face = GAMBIT_FACE_HEX_MAP[faceNum]; break;
+            case TYPE_PRI: face = GAMBIT_FACE_PRI_MAP[faceNum]; break;
+            case TYPE_PYR: face = GAMBIT_FACE_PYR_MAP[faceNum]; break;
+            default: break;
+            }
+            facemap[current[0]].push_back(FacePair(num, face));
+          }
+        }
+      }
+    }
+  }
+
+  //  return 1;
+
+  // populate boundary conditions for tetrahedra given triangle physicals
+  IDFaceMap boundaryConditions;
+  for(GModel::fiter it = firstFace(); it != lastFace(); ++it) {
+    if((*it)->physicals.size()) {
+      for(std::size_t i = 0; i < (*it)->physicals.size(); ++i) {
+        unsigned phys = (*it)->physicals[i];
+
+        for(std::size_t j = 0; j < (*it)->triangles.size(); ++j) {
+          MTriangle *tri = (*it)->triangles[j];
+          IDFaceMap::iterator tets = facemap.find(tri->getNum());
+          if(tets != facemap.end()) {
+            for(std::size_t tet = 0; tet < tets->second.size(); ++tet) {
+              boundaryConditions[phys].push_back(tets->second[tet]);
+            }
+          }
+        }
+
+        for(std::size_t j = 0; j < (*it)->quadrangles.size(); ++j) {
+          MQuadrangle *quad = (*it)->quadrangles[j];
+          IDFaceMap::iterator tets = facemap.find(quad->getNum());
+          if(tets != facemap.end()) {
+            for(std::size_t tet = 0; tet < tets->second.size(); ++tet) {
+              boundaryConditions[phys].push_back(tets->second[tet]);
+            }
+          }
+        }
+      }
+    }
+  }
 
   // Metadata
   fprintf(fp, "        CONTROL INFO 2.0.0\n");
@@ -214,9 +288,11 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   fprintf(fp, "%s", ctime(&rawtime));
 
   fprintf(fp, "     NUMNP     NELEM     NGRPS    NBSETS     NDFCD     NDFVL\n");
-  fprintf(fp, " %9ld %9d %9lu %9lu %9d %9d\n", indexMeshVertices(saveAll, 0, false),
-          numTetrahedra, elementGroups.size(), boundaryConditions.size(),
-          getDim(), getDim());
+
+  fprintf(fp, " %9ld %9d %9lu %9lu %9d %9d\n",
+          indexMeshVertices(saveAll, 0, false), numElements,
+          elementGroups.size(), boundaryConditions.size(), getDim(), getDim());
+
   fprintf(fp, "ENDOFSECTION\n");
 
   // Nodes
@@ -235,9 +311,21 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   for(riter it = firstRegion(); it != lastRegion(); ++it) {
     std::size_t numPhys = (*it)->physicals.size();
     if(saveAll || numPhys) {
-      for(std::size_t i = 0; i < (*it)->tetrahedra.size(); ++i) {
-        (*it)->tetrahedra[i]->writeNEU(fp, GAMBIT_TYPE_TET, lowestId,
-                                       numPhys ? (*it)->physicals[0] : 0);
+      for(auto cell : (*it)->tetrahedra) {
+        cell->writeNEU(fp, GAMBIT_TYPE_TET, lowestId,
+                       numPhys ? (*it)->physicals[0] : 0);
+      }
+      for(auto cell : (*it)->hexahedra) {
+        cell->writeNEU(fp, GAMBIT_TYPE_HEX, lowestId,
+                       numPhys ? (*it)->physicals[0] : 0);
+      }
+      for(auto cell : (*it)->prisms) {
+        cell->writeNEU(fp, GAMBIT_TYPE_PRI, lowestId,
+                       numPhys ? (*it)->physicals[0] : 0);
+      }
+      for(auto cell : (*it)->pyramids) {
+        cell->writeNEU(fp, GAMBIT_TYPE_PYR, lowestId,
+                       numPhys ? (*it)->physicals[0] : 0);
       }
     }
   }
@@ -249,15 +337,22 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
         elementGroups.begin();
       it != elementGroups.end(); ++it) {
     fprintf(fp, "       ELEMENT GROUP 2.0.0\n");
-    fprintf(fp, "GROUP: %10d ELEMENTS: %10lu MATERIAL: 0 NFLAGS: %10d\n",
+    fprintf(fp,
+            "GROUP: %10d ELEMENTS: %10lu MATERIAL:          0 NFLAGS: %10d\n",
             it->first, it->second.size(), 1);
-    fprintf(fp, "Material group %d\n", it->first);
+
+    std::string volumeName = getPhysicalName(3, it->first);
+    if(volumeName.empty()) {
+      char tmp[256];
+      sprintf(tmp, "Material group %d", it->first);
+      volumeName = tmp;
+    }
+    fprintf(fp, "%32s\n", volumeName.c_str());
+
     fprintf(fp, "       0");
 
     for(unsigned i = 0; i < it->second.size(); ++i) {
-      if(i % 10 == 0) {
-        fprintf(fp, "\n");
-      }
+      if(i % 10 == 0) { fprintf(fp, "\n"); }
       fprintf(fp, "%8d", it->second[i] - lowestId);
     }
     fprintf(fp, "\n");
@@ -265,24 +360,40 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   }
 
   // Boundary Conditions
-  for(IDTetFaceMap::iterator it = boundaryConditions.begin();
-      it != boundaryConditions.end(); ++it) {
-    fprintf(fp, "       BOUNDARY CONDITIONS 2.0.0\n");
 
-    std::string regionName = getPhysicalName(2, it->first);
-    if(regionName.empty()) {
-      char tmp[256];
-      sprintf(tmp, "PhysicalSurface%d", it->first);
-      regionName = tmp;
-    }
+  unsigned nphys = getMaxPhysicalNumber(2);
+  for(unsigned iphys = 1; iphys <= nphys; ++iphys) {
+    for(IDFaceMap::iterator it = boundaryConditions.begin();
+        it != boundaryConditions.end(); ++it) {
+      if(it->first == iphys) {
+        fprintf(fp, "       BOUNDARY CONDITIONS 2.0.0\n");
+        std::string regionName = getPhysicalName(2, it->first);
+        if(regionName.empty()) {
+          char tmp[256];
+          sprintf(tmp, "PhysicalSurface%d", it->first);
+          regionName = tmp;
+        }
 
-    fprintf(fp, "%32s%8d%8lu%8d%8d\n", regionName.c_str(), 1, it->second.size(),
-            0, gambitBoundaryCode(regionName));
-    std::sort(it->second.begin(), it->second.end(), sortBCs);
-    for(std::vector<TetFacePair>::iterator tfp = it->second.begin();
-        tfp != it->second.end(); ++tfp) {
-      fprintf(fp, "%10d %5d %5d\n", tfp->first - lowestId, GAMBIT_TYPE_TET,
-              tfp->second);
+        fprintf(fp, "%32s%8d%8lu%8d%8d\n", regionName.c_str(), 1,
+                it->second.size(), 0, gambitBoundaryCode(regionName));
+        std::sort(it->second.begin(), it->second.end(), sortBCs);
+        for(std::vector<FacePair>::iterator tfp = it->second.begin();
+            tfp != it->second.end(); ++tfp) {
+          MElement *element = getMeshElementByTag(tfp->first);
+          unsigned type = element->getType();
+          unsigned gambit_type = 0;
+          switch(type) {
+          case TYPE_TET: gambit_type = GAMBIT_TYPE_TET; break;
+          case TYPE_PYR: gambit_type = GAMBIT_TYPE_PYR; break;
+          case TYPE_PRI: gambit_type = GAMBIT_TYPE_PRI; break;
+          case TYPE_HEX: gambit_type = GAMBIT_TYPE_HEX; break;
+          default: break;
+          }
+
+          fprintf(fp, "%10d %5d %5d\n", tfp->first - lowestId, gambit_type,
+                  tfp->second);
+        }
+      }
     }
 
     fprintf(fp, "ENDOFSECTION\n");
