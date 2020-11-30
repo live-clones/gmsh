@@ -11,16 +11,31 @@
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 
-// The structured CGNS writer follows ICEM-like conventions (significantly
-// different from those used in our unstructured CGNS writer):
+// The structured CGNS writer follows ICEM-like conventions, which are
+// significantly different from those used in the unstructured CGNS writer:
+//
 // - structured 3D (resp. 2D) meshes contain one zone per volume (resp.
-//   surface); no zones are created for lower dimensional entities
-// - interfaces between zones are 1-to-1, with point ranges (not point
-//   lists)
-// - physical groups for the highest dimensional entities are directly
-//   encoded at the begning of the zone name (no families are created)
-// - boundary conditions are created for physical groups of lower
-//   dimensions
+//   surface) and no zones are created for lower dimensional entities; the
+//   unstructured writer creates a single zone per mesh partition (i.e. a single
+//   zone for non-partitioned meshes)
+//
+// - all structured volumes (3D) or surfaces (2D) are saved; if physical groups
+//   are defined, the unstructured writer only saves entities belonging to
+//   physical groups, unless Mesh.SaveAll is set
+//
+// - interfaces between structured zones are 1-to-1, with point ranges; the
+//   unstructured writer creates interfaces (between partitions) defined by
+//   point lists
+//
+// - elementary entity tags are encoded in the zone name; the unstructured
+//   writer writes elementary entity information as boundary conditions and
+//   family names
+//
+// - physical groups for the highest dimensional entities are directly encoded
+//   at the begining of the zone name; the unstructured writer saves physical
+//   names in families
+//
+// - boundary conditions are created for physical groups of lower dimensions
 
 #if defined(HAVE_LIBCGNS)
 
@@ -54,9 +69,9 @@ static std::string getInterfaceName(GEntity *ge1, GEntity *ge2)
   return sstream.str();
 }
 
-static void computeTransform(const std::vector<cgsize_t> &pointRange,
-                             const std::vector<cgsize_t> &pointDonorRange,
-                             int transform[2])
+static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
+                               const std::vector<cgsize_t> &pointDonorRange,
+                               int transform[2])
 {
   // This routine was written with the financial aid of of Indian Institute of
   // Technology Hyderabad - BRNS sponsored project in 2018, under the guidance
@@ -125,8 +140,8 @@ static void computeTransform(const std::vector<cgsize_t> &pointRange,
   else if(y2 == -1) transform[1] = -2;
 }
 
-static bool findRange(GFace *gf, GEdge *ge,
-                      int &ibeg, int &jbeg, int &iend, int &jend)
+static bool findRange2D(GFace *gf, GEdge *ge,
+                        int &ibeg, int &jbeg, int &iend, int &jend)
 {
   GVertex *gv1 = ge->getBeginVertex(), *gv2 = ge->getEndVertex();
   if(!gv1 || !gv1->getNumMeshVertices() || !gv2 || !gv2->getNumMeshVertices())
@@ -139,7 +154,7 @@ static bool findRange(GFace *gf, GEdge *ge,
     for(int j = 0; j < jmax; j++) {
       if(i == 0 || j == 0 || i == imax - 1 || j == jmax - 1) {
         if(v[i][j] == v1) { ibeg = i + 1; jbeg = j + 1; }
-        if(v[i][j] == v2) { iend = i + 1; jend = j + 1; }
+        else if(v[i][j] == v2) { iend = i + 1; jend = j + 1; }
       }
     }
   }
@@ -147,18 +162,18 @@ static bool findRange(GFace *gf, GEdge *ge,
   return false;
 }
 
-static int writeInterface(int cgIndexFile, int cgIndexBase, int cgIndexZone,
-                          GFace *gf, GEdge *ge, GFace *gf2)
+static int writeInterface2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
+                            GFace *gf, GEdge *ge, GFace *gf2)
 {
   std::vector<cgsize_t> pointRange, pointDonorRange;
   int ibeg, iend, jbeg, jend;
-  if(findRange(gf, ge, ibeg, jbeg, iend, jend))
+  if(findRange2D(gf, ge, ibeg, jbeg, iend, jend))
     pointRange = {ibeg, jbeg, iend, jend};
-  if(findRange(gf2, ge, ibeg, jbeg, iend, jend))
+  if(findRange2D(gf2, ge, ibeg, jbeg, iend, jend))
     pointDonorRange = {ibeg, jbeg, iend, jend};
   if(pointRange.size() && pointDonorRange.size()) {
     int transform[2];
-    computeTransform(pointRange, pointDonorRange, transform);
+    computeTransform2D(pointRange, pointDonorRange, transform);
     int cgIndexConn;
     if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone,
                      getInterfaceName(gf, gf2).c_str(),
@@ -174,11 +189,11 @@ static int writeInterface(int cgIndexFile, int cgIndexBase, int cgIndexZone,
   return 1;
 }
 
-static int writeBC(int cgIndexFile, int cgIndexBase, int cgIndexZone,
-                   GFace *gf, GEdge *ge)
+static int writeBC2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
+                     GFace *gf, GEdge *ge)
 {
   int ibeg, iend, jbeg, jend;
-  if(findRange(gf, ge, ibeg, jbeg, iend, jend)) {
+  if(findRange2D(gf, ge, ibeg, jbeg, iend, jend)) {
     std::vector<cgsize_t> pointRange = {ibeg, jbeg, iend, jend};
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
@@ -255,12 +270,475 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
       // write interface data
       for(auto gf2: ge->faces()) {
         if(gf2 != gf)
-          writeInterface(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge, gf2);
+          writeInterface2D(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge, gf2);
       }
       // write boundary conditions
       if(!ge->physicals.empty())
-        writeBC(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge);
+        writeBC2D(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge);
     }
+  }
+  return 1;
+}
+
+static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
+                               const std::vector<cgsize_t> &pointDonorRange,
+                               int transform[3])
+{
+  // This routine was written with the financial aid of of Indian Institute of
+  // Technology Hyderabad - BRNS sponsored project in 2018, under the guidance
+  // of Prof. Vinayak Eswaran <eswar@iith.ac.in>
+
+  if(pointRange.size() != 6 || pointDonorRange.size() != 6) {
+    Msg::Error("Invalid point ranges to compute tranform - using default");
+    transform[0] = 1;
+    transform[1] = 2;
+    transform[2] = 3;
+    return;
+  }
+
+  int a1 = pointDonorRange[3] - pointDonorRange[0];
+  int a2 = pointDonorRange[4] - pointDonorRange[1];
+  int a3 = pointDonorRange[5] - pointDonorRange[2];
+  int b1 = pointRange[3] - pointRange[0];
+  int b2 = pointRange[4] - pointRange[1];
+  int b3 = pointRange[5] - pointRange[2];
+
+  // In the interface Face, if one index is varying, other should remain
+  // constant and hence one of a1, a2, b1, b2 should be zero (for 2D) (Index2 -
+  // Begin2) = T.(Index1 - Begin1) (Index1 - Begin1) = Transpose[T].(Index2 -
+  // Begin2)
+
+  int x1 = 0, y1 = 0, z1 = 0, x2 = 0, y2 = 0, z2 = 0, x3 = 0, y3 = 0, z3 = 0;
+  if((b1 == a1) && (b1 != 0)) { x1 = 1; }
+  if((b1 == -a1) && (b1 != 0)) { x1 = -1; }
+  if((b1 == a2) && (b1 != 0)) { x2 = 1; }
+  if((b1 == -a2) && (b1 != 0)) { x2 = -1; }
+  if((b1 == a3) && (b1 != 0)) { x3 = 1; }
+  if((b1 == -a3) && (b1 != 0)) { x3 = -1; }
+
+  if((b2 == a1) && (b2 != 0)) { y1 = 1; }
+  if((b2 == -a1) && (b2 != 0)) { y1 = -1; }
+  if((b2 == a2) && (b2 != 0)) { y2 = 1; }
+  if((b2 == -a2) && (b2 != 0)) { y2 = -1; }
+  if((b2 == a3) && (b2 != 0)) { y3 = 1; }
+  if((b2 == -a3) && (b2 != 0)) { y3 = -1; }
+
+  if((b3 == a1) && (b3 != 0)) { z1 = 1; }
+  if((b3 == -a1) && (b3 != 0)) { z1 = -1; }
+  if((b3 == a2) && (b3 != 0)) { z2 = 1; }
+  if((b3 == -a2) && (b3 != 0)) { z2 = -1; }
+  if((b3 == a3) && (b3 != 0)) { z3 = 1; }
+  if((b3 == -a3) && (b3 != 0)) { z3 = -1; }
+
+  if((b1 == a2) && (b1 == a3) && (a1 == 0)) {
+    if(b2 == b1) {
+      x2 = 0;
+      x3 = 1;
+      y2 = 1;
+      y3 = 0;
+    }
+    if(b3 == b1) {
+      x2 = 1;
+      x3 = 0;
+      z2 = 0;
+      z3 = 1;
+    }
+  }
+  if((b1 == a3) && (b1 == a1) && (a2 == 0)) {
+    if(b2 == b1) {
+      x1 = 1;
+      x3 = 0;
+      y1 = 0;
+      y3 = 1;
+    }
+    if(b3 == b1) {
+      x1 = 1;
+      x3 = 0;
+      z1 = 0;
+      z3 = 1;
+    }
+  }
+  if((b1 == a1) && (b1 == a2) && (a3 == 0)) {
+    if(b2 == b1) {
+      x1 = 1;
+      x2 = 0;
+      y1 = 0;
+      y2 = 1;
+    }
+    if(b3 == b1) {
+      x1 = 1;
+      x2 = 0;
+      z1 = 0;
+      z2 = 1;
+    }
+  }
+  if((b1 == -a2) && (b1 == -a3) && (a1 == 0)) {
+    if(b2 == b1) {
+      x2 = 0;
+      x3 = -1;
+      y2 = -1;
+      y3 = 0;
+    }
+    if(b3 == b1) {
+      x2 = -1;
+      x3 = 0;
+      z2 = 0;
+      z3 = -1;
+    }
+  }
+  if((b1 == -a3) && (b1 == -a1) && (a2 == 0)) {
+    if(b2 == b1) {
+      x1 = -1;
+      x3 = 0;
+      y1 = 0;
+      y3 = -1;
+    }
+    if(b3 == b1) {
+      x1 = -1;
+      x3 = 0;
+      z1 = 0;
+      z3 = -1;
+    }
+  }
+  if((b1 == -a1) && (b1 == -a2) && (a3 == 0)) {
+    if(b2 == b1) {
+      x1 = -1;
+      x2 = 0;
+      y1 = 0;
+      y2 = -1;
+    }
+    if(b3 == b1) {
+      x1 = -1;
+      x2 = 0;
+      z1 = 0;
+      z2 = -1;
+    }
+  }
+
+  if((b2 == a2) && (b2 == a3) && (a1 == 0)) {
+    if(b1 == b2) {
+      x2 = 1;
+      x3 = 0;
+      y2 = 0;
+      y3 = 1;
+    }
+    if(b3 == b2) {
+      y2 = 1;
+      y3 = 0;
+      z2 = 0;
+      z3 = 1;
+    }
+  }
+  if((b2 == a3) && (b2 == a1) && (a2 == 0)) {
+    if(b1 == b2) {
+      x1 = 1;
+      x3 = 0;
+      y1 = 0;
+      y3 = 1;
+    }
+    if(b3 == b2) {
+      y1 = 1;
+      y3 = 0;
+      z1 = 0;
+      z3 = 1;
+    }
+  }
+  if((b2 == a1) && (b2 == a2) && (a3 == 0)) {
+    if(b1 == b2) {
+      x1 = 1;
+      x2 = 0;
+      y1 = 0;
+      y2 = 1;
+    }
+    if(b3 == b2) {
+      y1 = 1;
+      y2 = 0;
+      z1 = 0;
+      z2 = 1;
+    }
+  }
+  if((b2 == -a2) && (b2 == -a3) && (a1 == 0)) {
+    if(b1 == b2) {
+      x2 = -1;
+      x3 = 0;
+      y2 = 0;
+      y3 = -1;
+    }
+    if(b3 == b2) {
+      y2 = -1;
+      y3 = 0;
+      z2 = 0;
+      z3 = -1;
+    }
+  }
+  if((b2 == -a3) && (b2 == -a1) && (a2 == 0)) {
+    if(b1 == b2) {
+      x1 = -1;
+      x3 = 0;
+      y1 = 0;
+      y3 = -1;
+    }
+    if(b3 == b2) {
+      y1 = -1;
+      y3 = 0;
+      z1 = 0;
+      z3 = -1;
+    }
+  }
+  if((b2 == -a1) && (b2 == -a2) && (a3 == 0)) {
+    if(b1 == b2) {
+      x1 = -1;
+      x2 = 0;
+      y1 = 0;
+      y2 = -1;
+    }
+    if(b3 == b2) {
+      y1 = -1;
+      y2 = 0;
+      z1 = 0;
+      z2 = -1;
+    }
+  }
+
+  if((b3 == a2) && (b3 == a3) && (a1 == 0)) {
+    if(b1 == b3) {
+      x2 = 1;
+      x3 = 0;
+      z2 = 0;
+      z3 = 1;
+    }
+    if(b2 == b3) {
+      y2 = 1;
+      y3 = 0;
+      z2 = 0;
+      z3 = 1;
+    }
+  }
+  if((b3 == a3) && (b3 == a1) && (a2 == 0)) {
+    if(b1 == b3) {
+      x1 = 1;
+      x3 = 0;
+      z1 = 0;
+      z3 = 1;
+    }
+    if(b2 == b3) {
+      y1 = 1;
+      y3 = 0;
+      z1 = 0;
+      z3 = 1;
+    }
+  }
+  if((b3 == a1) && (b3 == a2) && (a3 == 0)) {
+    if(b1 == b3) {
+      x1 = 1;
+      x2 = 0;
+      z1 = 0;
+      z2 = 1;
+    }
+    if(b2 == b3) {
+      y1 = 1;
+      y2 = 0;
+      z1 = 0;
+      z2 = 1;
+    }
+  }
+
+  if((b1 == 0) && (a1 == 0)) {
+    x1 = 1;
+    if(((pointRange[0] == 1) && (pointDonorRange[0] == 1)) ||
+       ((pointRange[0] != 1) && (pointDonorRange[0] != 1)))
+      x1 = -1;
+  }
+  if((b1 == 0) && (a2 == 0)) {
+    x2 = 1;
+    if(((pointRange[0] == 1) && (pointDonorRange[1] == 1)) ||
+       ((pointRange[0] != 1) && (pointDonorRange[1] != 1)))
+      x2 = -1;
+  }
+  if((b1 == 0) && (a3 == 0)) {
+    x3 = 1;
+    if(((pointRange[0] == 1) && (pointDonorRange[2] == 1)) ||
+       ((pointRange[0] != 1) && (pointDonorRange[2] != 1)))
+      x3 = -1;
+  }
+  if((b2 == 0) && (a1 == 0)) {
+    y1 = 1;
+    if(((pointRange[1] == 1) && (pointDonorRange[0] == 1)) ||
+       ((pointRange[1] != 1) && (pointDonorRange[0] != 1)))
+      y1 = -1;
+  }
+  if((b2 == 0) && (a2 == 0)) {
+    y2 = 1;
+    if(((pointRange[1] == 1) && (pointDonorRange[1] == 1)) ||
+       ((pointRange[1] != 1) && (pointDonorRange[1] != 1)))
+      y2 = -1;
+  }
+  if((b2 == 0) && (a3 == 0)) {
+    y3 = 1;
+    if(((pointRange[1] == 1) && (pointDonorRange[2] == 1)) ||
+       ((pointRange[1] != 1) && (pointDonorRange[2] != 1)))
+      y3 = -1;
+  }
+  if((b3 == 0) && (a1 == 0)) {
+    z1 = 1;
+    if(((pointRange[2] == 1) && (pointDonorRange[0] == 1)) ||
+       ((pointRange[2] != 1) && (pointDonorRange[0] != 1)))
+      z1 = -1;
+  }
+  if((b3 == 0) && (a2 == 0)) {
+    z2 = 1;
+    if(((pointRange[2] == 1) && (pointDonorRange[1] == 1)) ||
+       ((pointRange[2] != 1) && (pointDonorRange[1] != 1)))
+      z2 = -1;
+  }
+  if((b3 == 0) && (a3 == 0)) {
+    z3 = 1;
+    if(((pointRange[2] == 1) && (pointDonorRange[2] == 1)) ||
+       ((pointRange[2] != 1) && (pointDonorRange[2] != 1)))
+      z3 = -1;
+  }
+
+  int det_A = x1 * y2 * z3 + x2 * y3 * z1 + x3 * y1 * z2 -
+    x1 * y3 * z2 - x2 * y1 * z3 - x3 * y2 * z1;
+
+  if(!((det_A == 1) || (det_A == -1))) {
+    Msg::Warning("Could not find transformation matrix (determinant = %i "
+                 "!= +/-1) - using default", det_A);
+    transform[0] = 1;
+    transform[1] = 2;
+    transform[1] = 3;
+    return;
+  }
+
+  if((x1 == 1) && (x2 == 0) && (x3 == 0)) {
+    transform[0] = 1;
+  }
+  if((x1 == -1) && (x2 == 0) && (x3 == 0)) {
+    transform[0] = -1;
+  }
+  if((x1 == 0) && (x2 == 1) && (x3 == 0)) {
+    transform[0] = 2;
+  }
+  if((x1 == 0) && (x2 == -1) && (x3 == 0)) {
+    transform[0] = -2;
+  }
+  if((x1 == 0) && (x2 == 0) && (x3 == 1)) {
+    transform[0] = 3;
+  }
+  if((x1 == 0) && (x2 == 0) && (x3 == -1)) {
+    transform[0] = -3;
+  }
+
+  if((y1 == 1) && (y2 == 0) && (y3 == 0)) {
+    transform[1] = 1;
+  }
+  if((y1 == -1) && (y2 == 0) && (y3 == 0)) {
+    transform[1] = -1;
+  }
+  if((y1 == 0) && (y2 == 1) && (y3 == 0)) {
+    transform[1] = 2;
+  }
+  if((y1 == 0) && (y2 == -1) && (y3 == 0)) {
+    transform[1] = -2;
+  }
+  if((y1 == 0) && (y2 == 0) && (y3 == 1)) {
+    transform[1] = 3;
+  }
+  if((y1 == 0) && (y2 == 0) && (y3 == -1)) {
+    transform[1] = -3;
+  }
+
+  if((z1 == 1) && (z2 == 0) && (z3 == 0)) {
+    transform[2] = 1;
+  }
+  if((z1 == -1) && (z2 == 0) && (z3 == 0)) {
+    transform[2] = -1;
+  }
+  if((z1 == 0) && (z2 == 1) && (z3 == 0)) {
+    transform[2] = 2;
+  }
+  if((z1 == 0) && (z2 == -1) && (z3 == 0)) {
+    transform[2] = -2;
+  }
+  if((z1 == 0) && (z2 == 0) && (z3 == 1)) {
+    transform[2] = 3;
+  }
+  if((z1 == 0) && (z2 == 0) && (z3 == -1)) {
+    transform[2] = -3;
+  }
+}
+
+static bool findRange3D(GRegion *gr, GFace *gf,
+                        int &ibeg, int &jbeg, int &kbeg,
+                        int &iend, int &jend, int &kend)
+{
+  if(gf->transfinite_vertices.empty() || gf->transfinite_vertices[0].empty())
+    return false;
+  MVertex *v1 = gf->transfinite_vertices.front().front();
+  MVertex *v2 = gf->transfinite_vertices.back().back();
+
+  std::vector<std::vector<std::vector<MVertex *> > > &v = gr->transfinite_vertices;
+  int imax = v.size(), jmax = v[0].size(), kmax = v[0][0].size();
+  ibeg = iend = jbeg = jend = kbeg = kend = -1;
+  for(int i = 0; i < imax; i++) {
+    for(int j = 0; j < jmax; j++) {
+      for(int k = 0; k < kmax; k++) {
+        if(i == 0 || j == 0 || k == 0 ||
+           i == imax - 1 || j == jmax - 1 || k == kmax - 1) {
+          if(v[i][j][k] == v1) { ibeg = i + 1; jbeg = j + 1; kbeg = k + 1; }
+          else if(v[i][j][k] == v2) { iend = i + 1; jend = j + 1; kend = k + 1; }
+        }
+      }
+    }
+  }
+  if(ibeg > 0 && iend > 0 && jbeg > 0 && jend > 0 && kbeg > 0 && kend > 0)
+    return true;
+  return false;
+}
+
+static int writeInterface3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
+                            GRegion *gr, GFace *gf, GRegion *gr2)
+{
+  std::vector<cgsize_t> pointRange, pointDonorRange;
+  int ibeg, iend, jbeg, jend, kbeg, kend;
+  if(findRange3D(gr, gf, ibeg, jbeg, kbeg, iend, jend, kend))
+    pointRange = {ibeg, jbeg, kbeg, iend, jend, kend};
+  if(findRange3D(gr2, gf, ibeg, jbeg, kbeg, iend, jend, kend))
+    pointDonorRange = {ibeg, jbeg, kbeg, iend, jend, kend};
+  if(pointRange.size() && pointDonorRange.size()) {
+    int transform[3];
+    computeTransform3D(pointRange, pointDonorRange, transform);
+    int cgIndexConn;
+    if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                     getInterfaceName(gr, gr2).c_str(),
+                     getZoneName(gr2).c_str(), &pointRange[0],
+                     &pointDonorRange[0], transform, &cgIndexConn)) {
+      return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    }
+  }
+  else {
+    Msg::Warning("Could not identify interface between volumes %d and %d, "
+                 "on surface %d", gr->tag(), gr2->tag(), gf->tag());
+  }
+  return 1;
+}
+
+static int writeBC3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
+                     GRegion *gr, GFace *gf)
+{
+  int ibeg, iend, jbeg, jend, kbeg, kend;
+  if(findRange3D(gr, gf, ibeg, jbeg, kbeg, iend, jend, kend)) {
+    std::vector<cgsize_t> pointRange = {ibeg, jbeg, kbeg, iend, jend, kend};
+    int cgIndexBoco = 0;
+    if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                     getZoneName(gf).c_str(), BCWallViscous, PointRange,
+                     3, &pointRange[0], &cgIndexBoco)) {
+      return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    }
+  }
+  else{
+    Msg::Warning("Could not identify boundary condition on surface %d in "
+                 "volume %d", gf->tag(), gr->tag());
   }
   return 1;
 }
@@ -329,6 +807,18 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
     if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
                       "CoordinateZ", &data[0], &cgIndexCoord) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
+
+    for(auto gf: gr->faces()) {
+      // write interface data
+      for(auto gr2: gf->regions()) {
+        if(gr2 != gr)
+          writeInterface3D(cgIndexFile, cgIndexBase, cgIndexZone, gr, gf, gr2);
+      }
+      // write boundary conditions
+      if(!gf->physicals.empty())
+        writeBC3D(cgIndexFile, cgIndexBase, cgIndexZone, gr, gf);
+    }
+
   }
   return 1;
 }
