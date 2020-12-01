@@ -606,7 +606,7 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
                  "!= +/-1) - using default", det_A);
     transform[0] = 1;
     transform[1] = 2;
-    transform[1] = 3;
+    transform[2] = 3;
     return;
   }
 
@@ -732,7 +732,7 @@ static int writeBC3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
                      getZoneName(gf).c_str(), BCWallViscous, PointRange,
-                     3, &pointRange[0], &cgIndexBoco)) {
+                     2, &pointRange[0], &cgIndexBoco)) {
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
   }
