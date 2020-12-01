@@ -213,6 +213,7 @@ void GEdge::resetMeshAttributes()
   meshAttributes.meshSizeFactor = 1.;
   meshAttributes.minimumMeshSegments = 1;
   meshAttributes.reverseMesh = false;
+  meshAttributes.prescribedNumberOfEdges = 0;
 }
 
 void GEdge::addFace(GFace *f)

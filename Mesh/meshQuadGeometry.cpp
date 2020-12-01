@@ -20,12 +20,15 @@
 #include "Options.h"
 #include "fastScaledCrossField.h"
 #include "meshSurfaceProjection.h"
+#include "meshWinslow2d.h"
 
 #include "gmsh.h"
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
 #include "qmt_utils.hpp" // For debug printing
+#include "robin_hood.h"
+#include "meshQuadUtils.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -38,6 +41,7 @@
 
 using std::vector;
 using std::array;
+using namespace QuadUtils;
 
 #if defined(HAVE_MESQUITE)
   struct QuadMeshData {
@@ -633,11 +637,108 @@ int optimizeQuadCavity(
   return 0;
 }
 
+bool growCavity(
+    const robin_hood::unordered_map<MVertex *, std::vector<MElement *> >& adj,
+    vector<MElement*>& elements,
+    int n = 1)  {
+
+  vector<MElement*> bdr = elements;
+  vector<MElement*> newElements;
+  for (size_t iter = 0; iter < (size_t) n; ++iter) {
+    newElements.clear();
+    for (MElement* e: bdr) {
+      for (size_t j=0;j<e->getNumVertices();j++){
+        MVertex* v = e->getVertex(j);
+        auto it = adj.find(v);
+        if (it == adj.end()) {
+          Msg::Error("growCavity: vertex %li not found in adj", v->getNum());
+          continue;
+        }
+        for (MElement* e2: it->second) {
+          newElements.push_back(e2);
+        }
+      }
+    }
+    sort_unique(newElements);
+    bdr = newElements;
+    append(elements,newElements);
+    sort_unique(elements);
+  }
+
+  return true;
+}
+
+bool simpleWinslowSmoothing(
+    GFace* gf,
+    SurfaceProjector* sp,
+    std::vector<MElement*>& elements,
+    int iter,
+    double qMin) {
+
+  vector<MVertex*> bnd;
+  bool okb = buildBoundary(elements, bnd);
+  if (!okb) {
+    Msg::Error("optimizeQuadMeshWithSubPatches: failed to build boundary (%li quads)", elements.size());
+    return false;
+  }
+
+  std::vector<MVertex*> freeVertices;
+  bool oki = verticesStrictlyInside(elements, bnd, freeVertices);
+  if (!oki) {
+    Msg::Error("optimizeQuadMeshWithSubPatches: failed to get vertices inside");
+    return -1;
+  }
+
+  /* Save in case of deterioration */
+  std::vector<SPoint3> before(freeVertices.size());
+  for (size_t v = 0; v < freeVertices.size(); ++v) {
+    before[v] = freeVertices[v]->point();
+  }
+
+  std::vector<MQuadrangle*> quads(elements.size());
+  for (size_t i = 0; i < elements.size(); ++i) {
+    quads[i] = dynamic_cast<MQuadrangle*>(elements[i]);
+  }
+
+  double minSICNb = DBL_MAX;
+  double avgSICNb = 0.;
+  quadQualityStats(elements, minSICNb, avgSICNb);
+
+  meshWinslow2d(gf, quads, freeVertices, iter, NULL, false, sp);
+
+  double minSICNa = DBL_MAX;
+  double avgSICNa = 0.;
+  quadQualityStats(elements, minSICNa, avgSICNa);
+
+  bool keep = true;
+  if (minSICNa < minSICNb && avgSICNa < avgSICNb) keep = false;
+  if (minSICNa < 0.3 && minSICNa < minSICNb) keep = false;
+  if (minSICNa < 0.75 * minSICNb) keep = false;
+
+  if (keep) {
+    Msg::Debug("- cavity with %li quads: small smoothing, SICN min: %f -> %f, avg: %f -> %f",
+        elements.size(),minSICNb,minSICNa,avgSICNb,avgSICNa);
+  } else {
+    Msg::Debug("- cavity with %li quads: worst quality after smoothing, roll back (SICN min: %f -> %f, avg: %f -> %f)",
+        elements.size(),minSICNb,minSICNa,avgSICNb,avgSICNa);
+    for (size_t v = 0; v < freeVertices.size(); ++v) {
+      freeVertices[v]->setXYZ(before[v].x(),before[v].y(),before[v].z());
+    }
+  }
+
+  return true;
+}
+
 int optimizeQuadMeshWithSubPatches(
     GFace* gf,
     SurfaceProjector* sp,
     double& qualityMin,
     double& qualityAvg) {
+  if (gf->quadrangles.size() == 0) return 0;
+
+  double minSICNb = DBL_MAX;
+  double avgSICNb = 0.;
+  quadQualityStats(gf->quadrangles, minSICNb, avgSICNb);
 
   vector<MElement*> elements(gf->quadrangles.size());
   for (size_t i = 0; i < gf->quadrangles.size(); ++i) {
@@ -645,7 +746,68 @@ int optimizeQuadMeshWithSubPatches(
   }
   vector<MVertex*> freeVertices = gf->mesh_vertices;
 
+  /* Vertex to elements map */
+  robin_hood::unordered_map<MVertex *, std::vector<MElement *> > adj;
+  for (MElement* e: elements) {
+    for (size_t i=0;i<e->getNumVertices();i++){
+      MVertex* v = e->getVertex(i);
+      adj[v].push_back(e);
+    }
+  }
 
+  double qMin = DBL_MAX;
+  double qAvg = 0.;
+  robin_hood::unordered_flat_map<MElement*,double> quality;
+  for (MElement* e: elements) {
+    double q = e->minSICNShapeMeasure();
+    quality[e] = q;
+    qMin = std::min(qMin,q);
+    qAvg += q;
+  }
+  qAvg /= double(elements.size());
+
+  /* Local optimization loop */
+  bool running = true;
+  size_t iter = 0;
+  size_t iterMax = 5;
+  vector<std::pair<double,MElement*> > quality_elt;
+  while (running && iter < iterMax) {
+    running = false;
+    iter += 1;
+    quality_elt.clear();
+    for (auto& kv: quality) if (kv.second < qAvg) {
+      quality_elt.push_back({kv.second,kv.first});
+    }
+    std::sort(quality_elt.begin(),quality_elt.end());
+
+    double q025 = quality_elt[quality_elt.size()/4].first;
+
+    vector<MElement*> quads;
+    for (auto& kv: quality_elt) {
+      MElement* e = kv.second;
+      if (quality[e] > q025) continue;
+      quads = {e};
+      growCavity(adj, quads, 3);
+
+      double qMin = kv.first;
+      bool okw = simpleWinslowSmoothing(gf, sp, quads, 10, qMin);
+      if (!okw) {
+        continue;
+      }
+      for (MElement* q: elements) {
+        quality[q] = q->minSICNShapeMeasure();
+      }
+      running = true;
+    }
+
+  }
+
+  double minSICNa = DBL_MAX;
+  double avgSICNa = 0.;
+  quadQualityStats(gf->quadrangles, minSICNa, avgSICNa);
+
+  Msg::Info("- Face %i: local smoothing, SICN min: %f -> %f, avg: %f -> %f",
+      gf->tag(),minSICNb,minSICNa,avgSICNb,avgSICNa);
 
   return 0;
 }

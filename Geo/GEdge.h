@@ -247,6 +247,8 @@ public:
     ExtrudeParams *extrude;
     // reverse mesh orientation
     bool reverseMesh;
+    // target number of edges
+    int prescribedNumberOfEdges;
   } meshAttributes;
 
   struct {

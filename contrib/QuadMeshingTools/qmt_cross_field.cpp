@@ -11,6 +11,7 @@
 #include "qmt_types.hpp"
 #include "qmt_utils.hpp"
 #include "qmt_linalg_solver.h"
+#include "geolog.h"
 
 #include <cfloat>
 #include <map>
@@ -519,6 +520,22 @@ namespace QMT {
       info("overwrite view with tag {}",viewTag);
     }
     gmsh::view::addListData(viewTag, "VP", data_VP.size()/6, data_VP);
+
+    constexpr bool SHOW_SCALING = true;
+    if (SHOW_SCALING) {
+      vector<vec3> pts(3);
+      vector<double> values(3);
+      F(f,M.triangles.size()) {
+        pts[0] = M.points[M.triangles[f][0]];
+        pts[1] = M.points[M.triangles[f][1]];
+        pts[2] = M.points[M.triangles[f][2]];
+        values[0] = exp(-H[M.triangles[f][0]]/exp(-Hmin));
+        values[1] = exp(-H[M.triangles[f][1]]/exp(-Hmin));
+        values[2] = exp(-H[M.triangles[f][2]]/exp(-Hmin));
+        GeoLog::add(pts,values,"_scaling");
+      }
+      GeoLog::flush();
+    }
 
     return true;
   }

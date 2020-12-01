@@ -556,6 +556,7 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     length = Integration(ge, t_begin, t_end, F_One(), Points,
                          CTX::instance()->mesh.lcIntegrationPrecision *
                            CTX::instance()->lc);
+
   ge->setLength(length);
   Points.clear();
 
@@ -627,6 +628,12 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     }
   }
 
+  // use precribed number of edges
+  if (ge->meshAttributes.method != MESH_TRANSFINITE 
+      && ge->meshAttributes.prescribedNumberOfEdges > 0) {
+    N = ge->meshAttributes.prescribedNumberOfEdges + 1;
+  }
+
   return N;
 }
 
@@ -687,6 +694,7 @@ void meshGEdge::operator()(GEdge *ge)
   double a;
   int filterMinimumN;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
+  // printf("- Curve %i: N=%i, Points.size()=%li, a=%f\n", ge->tag(), N, Points.size(), a);
 
   // printFandPrimitive(ge->tag(),Points);
 

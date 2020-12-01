@@ -45,7 +45,7 @@
 #include "meshQuadData.hpp"
 #include "meshSurfaceProjection.h"
 #include "StringUtils.h"
-
+#include "meshQuadUtils.h"
 
 
 #if defined(_OPENMP)
@@ -54,6 +54,7 @@
 
 using std::vector;
 using std::array;
+using namespace QuadUtils;
 
 namespace QuadPatternMatching {
 
@@ -139,23 +140,6 @@ namespace QuadPatternMatching {
 
   /* Keep track of pattern usage, just for statistics */
   robin_hood::unordered_map<id2,id,id2Hash> usage_count;
-
-  template<class T> 
-    void sort_unique(std::vector<T>& vec) {
-      std::sort( vec.begin(), vec.end() );
-      vec.erase( std::unique( vec.begin(), vec.end() ), vec.end() );
-    }
-
-  template<class T> 
-    std::vector<T> difference(const std::vector<T>& v1, const std::vector<T>& v2) {
-      std::vector<T> s1 = v1;
-      std::vector<T> s2 = v2;
-      sort_unique(s1);
-      sort_unique(s2);
-      std::vector<T> s3;
-      set_difference(s1.begin(),s1.end(),s2.begin(),s2.end(), std::inserter(s3,s3.begin()));
-      return s3;
-    }
 
   bool build_quad_chord(const vector<id4>& quadEdges, const vector<vector<id> >& e2f, id eStart, std::vector<id>& chordEdges) {
     chordEdges.size();
@@ -1456,6 +1440,51 @@ namespace QuadPatternMatching {
     return bnd;
   }
 
+  bool getContinuousUVOnLoop(
+      GFace* gf,
+      const std::vector<MVertex*>& bndOrdered,
+      std::vector<SPoint2>& bndUvs) {
+    /* If periodic parametrization, get periods */
+    double Ts[2] = {0.,0.};
+    if (gf->periodic(0)) Ts[0] = gf->period(0);
+    if (gf->periodic(1)) Ts[1] = gf->period(1);
+
+    bndUvs.resize(bndOrdered.size());
+    SPoint2 prev(DBL_MAX,DBL_MAX);
+    double gapMax[2] = {0.,0.};
+    for (size_t i = 0; i < bndOrdered.size(); ++i) {
+      MVertex* v = bndOrdered[i];
+      SPoint2 uv;
+      setVertexGFaceUV(gf, v, uv.data());
+      if (prev.x() != DBL_MAX) {
+        for (size_t d = 0; d < 2; ++d) if (Ts[d] != 0.) {
+          double diff = std::abs(uv.data()[d] - prev.data()[d]);
+          if (diff > 0.5 * Ts[d]) { /* Probably got a period jump ! */
+            double diffP = std::abs(uv.data()[d] + Ts[d] - prev.data()[d]);
+            double diffN = std::abs(uv.data()[d] - Ts[d] - prev.data()[d]);
+            if (diffP < diff) {
+              uv.data()[d] += Ts[d];
+            } else if (diffN < diff) {
+              uv.data()[d] -= Ts[d];
+            }
+          }
+          gapMax[d] = std::max(gapMax[d],std::abs(uv.data()[d] - prev.data()[d]));
+        }
+      }
+      prev = uv;
+      bndUvs[i] = uv;
+    }
+    if (Ts[0] > 0 && gapMax[0] > 0.5 * Ts[0]) {
+      Msg::Debug("- uv laplacian smoothing because gap on boundary: %f (period %f)", gapMax[0], Ts[0]);
+      return false;
+    }
+    if (Ts[1] > 0 && gapMax[1] > 0.5 * Ts[1]) {
+      Msg::Debug("- uv laplacian smoothing because gap on boundary: %f (period %f)", gapMax[1], Ts[1]);
+      return false;
+    }
+    return true;
+  }
+
   bool laplacianSmoothingInParametricDomain(
       GFace* gf,
       const std::vector<MVertex*>& bndOrdered,
@@ -1497,7 +1526,7 @@ namespace QuadPatternMatching {
         if (nvs[0] < nInterior) v2v[old2new[vs[0]]].push_back(old2new[vs[1]]);
         if (nvs[1] < nInterior) v2v[old2new[vs[1]]].push_back(old2new[vs[0]]);
       }
-      constexpr bool addDiags = true;
+      constexpr bool addDiags = false;
       if (addDiags) {
         for (size_t d = 0; d < 2; ++d) {
           MVertex* vs[2] = {
@@ -1513,17 +1542,16 @@ namespace QuadPatternMatching {
 
     /* Get a continuous (without jumps) uv parametrization on
      * the cavity boundary */
-
-    /* If periodic parametrization, get periods */
-    double Ts[2] = {0.,0.};
-    if (gf->periodic(0)) Ts[0] = gf->period(0);
-    if (gf->periodic(1)) Ts[1] = gf->period(1);
+    vector<SPoint2> bndUvs;
+    bool okl = getContinuousUVOnLoop(gf, bndOrdered, bndUvs);
+    if (!okl) {
+      Msg::Debug("failed to get continuous UV on boundary loop");
+      return false;
+    }
 
     vector<SPoint2> uvs(vcount,SPoint2(DBL_MAX,DBL_MAX));
-    SPoint2 prev(DBL_MAX,DBL_MAX);
-    double gapMax[2] = {0.,0.};
-    double dxmax = 0.;
-    for (MVertex* v: bndOrdered) {
+    for (size_t i = 0; i < bndOrdered.size(); ++i){
+      MVertex* v = bndOrdered[i];
       auto it = old2new.find(v);
       if (it == old2new.end()) {
         Msg::Error("laplacianSmoothingInParametricDomain: boundary vertex not found in old2new");
@@ -1531,38 +1559,14 @@ namespace QuadPatternMatching {
       }
       size_t idx = it->second;
       if (uvs[idx].x() != DBL_MAX) continue;
-      SPoint2 uv;
-      setVertexGFaceUV(gf, v, uv.data());
-      if (prev.x() != DBL_MAX) {
-        for (size_t d = 0; d < 2; ++d) if (Ts[d] != 0.) {
-          double diff = std::abs(uv.data()[d] - prev.data()[d]);
-          if (diff > 0.5 * Ts[d]) { /* Probably got a period jump ! */
-            double diffP = std::abs(uv.data()[d] + Ts[d] - prev.data()[d]);
-            double diffN = std::abs(uv.data()[d] - Ts[d] - prev.data()[d]);
-            if (diffP < diff) {
-              uv.data()[d] += Ts[d];
-            } else if (diffN < diff) {
-              uv.data()[d] -= Ts[d];
-            }
-          }
-          gapMax[d] = std::max(gapMax[d],std::abs(uv.data()[d] - prev.data()[d]));
-        }
-        dxmax = std::max(dxmax,distance2(uv,prev));
-      }
-      prev = uv;
-      uvs[idx] = uv;
-    }
-    if (Ts[0] > 0 && gapMax[0] > 0.5 * Ts[0]) {
-      Msg::Debug("- uv laplacian smoothing because gap on boundary: %f (period %f)", gapMax[0], Ts[0]);
-    }
-    if (Ts[1] > 0 && gapMax[1] > 0.5 * Ts[1]) {
-      Msg::Debug("- uv laplacian smoothing because gap on boundary: %f (period %f)", gapMax[1], Ts[1]);
+      uvs[idx] = bndUvs[i];
     }
     for (size_t v = 0; v < nInterior; ++v) {
       sort_unique(v2v[v]);
       uvs[v] = SPoint2(0.,0.);
     }
 
+    /* Laplacian smoothing via linear system */
     bool ok = solveLaplaceLinearSystem(nInterior, v2v, uvs);
     if (!ok) {
       return false;
@@ -1681,7 +1685,7 @@ namespace QuadPatternMatching {
     if (!tryUntangle && !tryShapeImprovement){
       bool keep = true;
       if (oldElements.size() > 0) {
-        if (minSICN_after < qualityMin && minSICN_after < minSICN_before) keep = false;
+        if (minSICN_after < qualityMin) keep = false;
         if (minSICN_after < qualityFactor * minSICN_before) keep = false;
       }
       return keep;
@@ -1726,7 +1730,7 @@ namespace QuadPatternMatching {
 
     bool keep = true;
     if (oldElements.size() > 0) {
-      if (minSICN_after < qualityMin && minSICN_after < minSICN_before) keep = false;
+      if (minSICN_after < qualityMin) keep = false;
       if (minSICN_after < qualityFactor * minSICN_before) keep = false;
     }
     Msg::Debug("- mesh optim of (%li quads, %li free vertices): keep=%i, SICN min: %f -> %f, avg: %f -> %f", 
@@ -1791,6 +1795,54 @@ namespace QuadPatternMatching {
 
     return score;
   }
+
+  // WIP: the quantization should takes the geometry into account !
+  // double checkPatternMatchingWithGeometry(
+  //     const QuadMeshPattern& P, 
+  //     GFace* gf,
+  //     SurfaceProjector* sp,
+  //     const std::vector<std::vector<MVertex*> >& sides) {
+
+  //   std::vector<MVertex*> corners;
+  //   for (auto& side: sides) corners.push_back(side[0]);
+
+  //   size_t cc = 0;
+  //   robin_hood::unordered_node_map<size_t,MVertex*> pVertexToCorner;
+  //   for (size_t i = 0; i < P.n; ++i) if (P.vOnBdr[i] && P.v2e[i].size() == 2) {
+  //     if (cc >= corners.size()) {
+  //       DBG("BAD !", cc, corners.size());
+  //       return -1;
+  //     }
+  //     pVertexToCorner[i] = corners[cc];
+  //     cc += 1;
+  //   }
+  //   if (cc != corners.size()) {
+  //     DBG("BAD matching !", cc, corners.size());
+  //     return -1;
+  //   }
+
+
+  //   /* Create a quad mesh to smooth */
+
+  //   vector<MElement*> pQuads;
+  //   vector<MElement*> pVerices;
+
+  //   /* Place the convex corners */
+  //   for (size_t i = 0; i < P.n; ++i) {
+  //     MVertex* v = NULL;
+  //     if (P.vOnBdr[i] && P.v2e[i].size() == 2) {
+  //       MVertex* cv = pVertexToCorner[i];
+  //       double uv[2];
+  //       setVertexGFaceUV(gf,cv,uv);
+  //       v = new MFaceVertex(cv->x(),cv->y(),cv->z(),gf,uv[0],uv[1]);
+  //     } else {
+  //       v = new MFaceVertex(0.,0.,0.,gf,0.,0.);
+  //     }
+  //   }
+
+
+  //   return 0.;
+  // }
 
   double checkPatternMatchingWithRotations(const QuadMeshPattern& P, const std::vector<size_t>& sideSizes, int& rotation) {
     size_t N = sideSizes.size();
@@ -2016,66 +2068,6 @@ namespace QuadPatternMatching {
     }
     return true;
   }
-
-  template <class ITERATOR> 
-    bool buildBoundary (ITERATOR beg, ITERATOR end, vector<MVertex*>& bnd){
-      std::vector<MEdge> eds,veds;
-
-      for (ITERATOR ite = beg; ite != end;++ite){
-        for (size_t j=0;j<(size_t)(*ite)->getNumEdges();j++){
-          eds.push_back((*ite)->getEdge(j));
-        }
-      }
-      MEdgeLessThan melt;
-      std::sort(eds.begin(),eds.end(), melt);
-      for(size_t i=0;i<eds.size();i++){
-        if (i != eds.size()-1 && eds[i] == eds[i+1])i++;
-        else veds.push_back(eds[i]);
-      }
-
-      std::vector<std::vector<MVertex *> > vsorted;
-      bool oks = SortEdgeConsecutive(veds, vsorted);
-      if (!oks) {
-        // DBG("issue with", veds.size());
-        // for (auto edge: veds) {
-        //   DBG(edge.getMinVertex()->getNum(),edge.getMaxVertex()->getNum());
-        // }
-        // DBG("-----");
-        return false;
-      }
-      if (vsorted.empty()){
-        return false;
-      }
-      else if (vsorted.size() > 1){
-        printf("ARGHTTT %lu\n",vsorted.size());
-        return false;
-      }
-
-      /* Reverse vertices if necessary, to keep coherent with elements orientation */
-      {
-        MEdge e = veds[0];
-        MVertex* v1 = e.getVertex(0);
-        MVertex* v2 = e.getVertex(1);
-        auto it = std::find(vsorted[0].begin(),vsorted[0].end(),v1);
-        if (it == vsorted[0].end()) {
-          Msg::Error("buildBoundary(): vertex not found in sorted vertices, weird");
-          return false;
-        }
-        size_t i = it - vsorted[0].begin();
-        size_t i_next = (i+1)%vsorted[0].size();
-        size_t i_prev = (i-1+vsorted[0].size())%vsorted[0].size();
-        if (vsorted[0][i_next] == v2) { 
-          // good ordering
-        } else if (vsorted[0][i_prev] == v2) { // apply reverse
-          std::reverse(vsorted[0].begin(),vsorted[0].end());
-        } else {
-          Msg::Error("buildBoundary(): second vertex not found in adjacent sorted vertices, weird");
-          return false;
-        }
-      }
-      bnd = vsorted[0];
-      return true;
-    }
 
   bool verticesStrictlyInside(const std::vector<MElement*>& quads,
       const std::vector<MVertex*>& bnd, std::vector<MVertex*>& inside) {
@@ -2303,7 +2295,7 @@ namespace QuadPatternMatching {
         std::vector<MElement*> newElements2 = newElements;
         for (MElement* e: neighborsForGeometry) newElements2.push_back(e);
         std::vector<MVertex*> bnd2;
-        bool okb = buildBoundary(newElements2.begin(),newElements2.end(),bnd2);
+        bool okb = buildBoundary(newElements2,bnd2);
         if (!okb) return clearStuff(newVertices,newElements);
         std::vector<MVertex*> inside;
         bool oki = verticesStrictlyInside(newElements2, bnd2, inside);
