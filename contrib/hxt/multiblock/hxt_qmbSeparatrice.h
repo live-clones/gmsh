@@ -24,6 +24,7 @@ class Separatrice
   int addAngle(double angle);
   int addPoint(std::array<double,3> point);
   int addIntersectingSepID(int ID);
+  int clearIntersections();
   std::vector<int>* getPIntersection();
   int setIsBoundarySep();
   bool isBoundary();
