@@ -32,6 +32,15 @@ static void normalize(double *d)
   d[1]/=n;
   d[2]/=n;
 }
+
+static void normalize(std::array<double,3> &d)
+{
+  double n = sqrt(d[0]*d[0]+d[1]*d[1]+d[2]*d[2]);
+  d[0]/=n;
+  d[1]/=n;
+  d[2]/=n;
+}
+
 static inline double myDot(double *a, double *b)
 {
   double d = 0.;
@@ -40,7 +49,24 @@ static inline double myDot(double *a, double *b)
   return d;
 }
 
+static inline double myDot(const std::array<double,3> &a, const std::array<double,3> &b)
+{
+  double d = 0.;
+  for (int i=0; i<3; i++)
+    d += a[i]*b[i];
+  return d;
+}
+
 static inline HXTStatus crossprod(double *a, double *b, double *n)
+{
+  n[0] = a[1]*b[2]-a[2]*b[1];
+  n[1] = a[2]*b[0]-a[0]*b[2];
+  n[2] = a[0]*b[1]-a[1]*b[0];
+
+  return HXT_STATUS_OK;
+}
+
+static inline HXTStatus crossprod(const std::array<double,3> &a, const std::array<double,3> &b, std::array<double,3> &n)
 {
   n[0] = a[1]*b[2]-a[2]*b[1];
   n[1] = a[2]*b[0]-a[0]*b[2];
@@ -114,7 +140,7 @@ QuadGenerator::QuadGenerator(HXTMesh *mesh, int nbTurns, double critNorm, int fl
   //clean mesh here
   m_triMesh=mesh;
   // m_sizeSeeding=1000;//
-  m_sizeSeeding=50;//Carefull ! this value is linked to epsilon in trialpoint. they have to be coherent
+  m_sizeSeeding=1000;//Carefull ! this value is linked to epsilon in trialpoint. they have to be coherent
   m_mBlock=NULL;
 }
 
@@ -2399,6 +2425,7 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
   int index=0;
   std::vector<int> singThreeTags;
   std::vector<int> singFiveTags;
+  std::vector<int> singSixTags;
   //int num;
   int lineTag=-1, pointTag=-1, singTag=-1, cornerTag=-1, loopTag=-1;
   
@@ -2421,10 +2448,54 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
       std::cout<<"Singularity "<<i<<", index: "<<index<<std::endl;
       if(index==3 || index==4) //doubled because of the vertex closeness
 	singThreeTags.push_back(singTag);
-      if(index==5 || index==6) //doubled because of the vertex closeness
+      if(index==5) //doubled because of the vertex closeness
 	singFiveTags.push_back(singTag);
+      if(index==6) //doubled because of the vertex closeness
+	singSixTags.push_back(singTag);
+      //Comment to remove disks around singularities
+      //Disk around singularity
+      for(int j=0; j<N; j++){
+	x=(*coord)[0]+radius*cos((1.0*j)/(1.0*N)*2.0*M_PI);
+	y=(*coord)[1]+radius*sin((1.0*j)/(1.0*N)*2.0*M_PI);
+	z=(*coord)[2];
+	// pointTag=gmsh::model::occ::addPoint(x,y,z, radius, -1);
+	pointTag=gmsh::model::geo::addPoint(x,y,z, radius, -1);
+	pointsTags.push_back(pointTag);
+	curvePointsTags.push_back(pointTag);	
+	// lineTag=gmsh::model::occ::addLine(singTag, pointTag, -1);
+	lineTag=gmsh::model::geo::addLine(singTag, pointTag, -1);
+	linesTags.push_back(lineTag);
+	allLinesTags.push_back(lineTag);
+      }
+      std::vector<int> curveLinesTags;
+      for(uint64_t j=1; j<curvePointsTags.size(); j++){
+	// lineTag=gmsh::model::occ::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
+	lineTag=gmsh::model::geo::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
+	linesTags.push_back(lineTag);
+	allLinesTags.push_back(lineTag);
+	curveLinesTags.push_back(lineTag);
+	allCurveLinesTags.push_back(lineTag);
+	lineTag++;
+      }
+      // lineTag=gmsh::model::occ::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
+      lineTag=gmsh::model::geo::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
+      linesTags.push_back(lineTag);
+      allLinesTags.push_back(lineTag);
+      curveLinesTags.push_back(lineTag);
+      allCurveLinesTags.push_back(lineTag);
+      //add Disk
+      // loopTag=gmsh::model::occ::addCurveLoop(curveLinesTags,-1);
+      loopTag=gmsh::model::geo::addCurveLoop(curveLinesTags,-1);
+      // loopTag=gmsh::model::occ::addBSpline(curveLinesTags,-1);
+      //
+      //Surface embeding
+      // gmsh::model::occ::synchronize();
       gmsh::model::geo::synchronize();
       gmsh::model::mesh::embed(0, pointsTags, 2, (int) colors[sTri]); //points
+      //Comment to remove disks around singularities
+      gmsh::model::mesh::embed(1, linesTags, 2, (int) colors[sTri]); //lines
+      gmsh::model::mesh::embed(1, curveLinesTags, 2, (int) colors[sTri]); //curve
+      //
     }
   }
   std::cout<<"Singularities written!"<<std::endl;
@@ -2447,8 +2518,10 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
 	std::cout<<"Corner - existing: "<<i<<", index: "<<index<<std::endl;
 	if(index==2 || index==3) //doubled because of the vertex closeness
 	  singThreeTags.push_back(cornerTag);
-	if(index==4 || index==5) //doubled because of the vertex closeness
+	if(index==4) //doubled because of the vertex closeness
 	  singFiveTags.push_back(cornerTag);
+	if(index==5) //doubled because of the vertex closeness
+	  singSixTags.push_back(cornerTag);
       }
       else{
 	// cornerTag=gmsh::model::occ::addPoint((*coord)[0],(*coord)[1],(*coord)[2], 2*radius, -1);
@@ -2461,8 +2534,10 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
 	std::cout<<"Corner: "<<i<<", index: "<<index<<std::endl;
 	if(index==2 || index==3) //doubled because of the vertex closeness
 	  singThreeTags.push_back(cornerTag);
-	if(index==4 || index==5) //doubled because of the vertex closeness
+	if(index==4) //doubled because of the vertex closeness
 	  singFiveTags.push_back(cornerTag);
+	if(index==5) //doubled because of the vertex closeness
+	  singSixTags.push_back(cornerTag);
 	cornerTag++;
       }
     }
@@ -2480,6 +2555,15 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
   // gmsh::model::mesh::setSize(dimTagThree,radius);
   physicalGroup=gmsh::model::addPhysicalGroup(0, singFiveTags, -1);
   gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_FIVE");
+  physicalGroup=gmsh::model::addPhysicalGroup(0, singSixTags, -1);
+  gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_SIX");
+  //Comment to remove disks around singularities
+  //adding tag on lines and line loops
+  physicalGroup=gmsh::model::addPhysicalGroup(1, allLinesTags, -1);
+  gmsh::model::setPhysicalName(1, physicalGroup, "NOT_BC_CF");
+  physicalGroup=gmsh::model::addPhysicalGroup(1, allCurveLinesTags, -1);
+  gmsh::model::setPhysicalName(0, physicalGroup, "NOT_BC_CF");
+  //
   // gmsh::vectorpair dimTagFive;
   // for(size_t i=0;i<singFiveTags.size();i++){
   //   std::pair<int,int> dimTagS(0,singFiveTags[i]);
@@ -2602,7 +2686,7 @@ HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH, 
     std::cout<<"--Write cut limit cycles--"<<std::endl;
     hxtWriteLimitCycleCandidates(&limitCycleIDs, "qmbCutLimitCycles.pos");
     std::cout<<"--Solve limit cycles tangential crossings--"<<std::endl;
-    solveTangentialCrossings(&limitCycleIDs);
+    solveTangentialCrossingsLimitCycles(&limitCycleIDs);
   }
   std::cout<<"Total sep num: "<<m_vectSep.size()<<std::endl;
   std::cout<<"----COMPUTE SEPARATRICES FINISHED!----"<<std::endl;
@@ -2698,7 +2782,7 @@ HXTStatus QuadGenerator::computeSeparatrices(double *directionsCR)
     std::cout<<"--Write cut limit cycles--"<<std::endl;
     hxtWriteLimitCycleCandidates(&limitCycleIDs, "qmbCutLimitCycles.pos");
     std::cout<<"--Solve limit cycles tangential crossings--"<<std::endl;
-    solveTangentialCrossings(&limitCycleIDs);
+    solveTangentialCrossingsLimitCycles(&limitCycleIDs);
   }
   std::cout<<"----COMPUTE SEPARATRICES FINISHED!----"<<std::endl;
   hxtWriteSavedSeparatrices("qmbCompleteSeparatrices.pos");
@@ -4103,11 +4187,20 @@ int QuadGenerator::groupingSep()
  
   HXT_CHECK(hxtFree(&flag));
   HXT_CHECK(hxtFree(&elements));
-  
+
+  //DBG CRITICAL
+  for(auto sg: m_vectGroups){
+    std::cout << "group: " << sg.getID() << std::endl;
+    for(auto sep: *(sg.getPSeparatrices())){
+      std::cout << sep->getID() << " / ";
+    }
+    std::cout << std::endl;
+  }
   return 1;
 }
 
 void QuadGenerator::buildTotalPatches(){
+  m_totalElemPatches.clear();
   m_totalElemPatches.reserve(1000);
   for(uint64_t i=0; i<m_vectSing.size(); i++){
     Singularity *s=&(m_vectSing[i]);
@@ -4215,7 +4308,7 @@ int QuadGenerator::globalIntersection()
       Separatrice *sep1=(*vectSep)[j];
       int ID1=sep1->getID();
       for(uint64_t k=0; k<m_vectGroups.size(); k++){
-	if(i!=k){
+	// if(i!=k){ //We actually need intersection from separatrices in the same group. (appearing quite frequently for high order singularities //DBG ALEX cleaning
 	  SepGroup *sgK=&(m_vectGroups[k]);
 	  std::vector<Separatrice*>* vectSepK=sgK->getPSeparatrices();
 	  for(uint64_t l=0; l<vectSepK->size(); l++){
@@ -4224,7 +4317,7 @@ int QuadGenerator::globalIntersection()
 	      sep1->addIntersectingSepID(ID2);
 	    }
 	  }
-	}
+	// }
       }
       std::vector<int> *intersection=sep1->getPIntersection();
       uint64_t size=intersection->size();    
@@ -4237,6 +4330,15 @@ int QuadGenerator::globalIntersection()
       for(uint64_t s=0; s<size; s++)
       	(*intersection)[s]=static_cast<int>(intersectionSepID1[s]);
       HXT_CHECK(hxtFree(&intersectionSepID1));
+    }
+  }
+  //DBG CRITICAL
+  for(auto sg: m_vectGroups){
+    for(auto sep: *(sg.getPSeparatrices())){
+      std::cout << "sep: " << sep->getID() << ", intersecting" << std::endl;
+      for(auto intID: *(sep->getPIntersection()))
+	std::cout << intID << " / ";
+      std::cout << std::endl;	  
     }
   }
   return 1;
@@ -4284,7 +4386,7 @@ int QuadGenerator::comparison(){
     if(flaggedSep[ID]==0)
       sep->Disable(); 
   }
-    
+
   HXT_CHECK(hxtFree(&flaggedSep));
   return 1;
 }
@@ -4480,7 +4582,7 @@ int QuadGenerator::cutLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs)
 }
 
 // glue, make new Sep and discard other two sep
-int QuadGenerator::solveTangentialCrossings(std::vector<uint64_t> *limitCycleIDs){
+int QuadGenerator::solveTangentialCrossingsLimitCycles(std::vector<uint64_t> *limitCycleIDs){
   if((*limitCycleIDs).size()>1){
     for(uint64_t i=0; i<limitCycleIDs->size(); i++){
       Separatrice *sep1=&(m_vectSep[(*limitCycleIDs)[i]]);
@@ -4526,6 +4628,93 @@ int QuadGenerator::solveTangentialCrossings(std::vector<uint64_t> *limitCycleIDs
 	    m_vectSep.push_back(newSep);
 	    sep1->Disable();
 	    sep2->Disable();
+	  }
+	}
+      }
+    }
+  }
+  return 1;
+}
+
+int QuadGenerator::solveTangentialCrossings(){
+  for(size_t i=0;i<m_flaggedTri.size();i++){
+    std::vector<std::array<int, 2>> flagTriInter=m_flaggedTri[i];
+    if(flagTriInter.size()>1){
+      for(uint64_t j=0; j<flagTriInter.size()-1; j++){
+	int sepID1=flagTriInter[j][0];
+	int position1=flagTriInter[j][1];
+	for(uint64_t k=j+1; k<flagTriInter.size(); k++){
+	  int sepID2=flagTriInter[k][0];
+	  Separatrice *sep1=&(m_vectSep[sepID1]);
+	  Separatrice *sep2=&(m_vectSep[sepID2]);
+	  std::vector<std::array<double,3>> *points1 = sep1->getPCoord();
+	  std::vector<std::array<double,3>> *points2 = sep2->getPCoord();
+	  int position2=flagTriInter[k][1];
+	  int isInPatch=checkIfInPatch2(i);
+	  int isInIgnoredPatch=m_vectSep[sepID1].isInIgnoredPatch(i)||m_vectSep[sepID2].isInIgnoredPatch(i);
+	  bool isBoundarySep=(m_vectSep[sepID1].isBoundary() || m_vectSep[sepID2].isBoundary());
+	  if(sepID1!=sepID2){
+	    if(!isInPatch || isBoundarySep || isInIgnoredPatch){
+	      std::array<double,3> p1=(*points1)[position1-1];
+	      std::array<double,3> p2=(*points1)[position1];
+	      std::array<double,3> p3=(*points2)[position2-1];
+	      std::array<double,3> p4=(*points2)[position2];
+	      double p1d[3]={0.0};double p2d[3]={0.0};double p3d[3]={0.0};double p4d[3]={0.0};
+	      for(int k=0; k<3; k++){
+		p1d[k]=p1[k]; p2d[k]=p2[k]; p3d[k]=p3[k]; p4d[k]=p4[k];
+	      }
+	      //DBG tangential crossing detection
+	      std::array<double,3> P1P2={{p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]}};
+	      std::array<double,3> P3P4={{p4[0]-p3[0],p4[1]-p3[1],p4[2]-p3[2]}};
+	      normalize(P1P2);normalize(P3P4);
+	      std::array<double,3> n={{0.0,0.0,0.0}};
+	      crossprod(P1P2,P3P4,n);
+	      int isTangent=0;	      
+	      if(sqrt(myDot(n,n))< sqrt(2)/2){
+		isTangent=1;
+	      }
+	      //
+	      int nodeExist=0;
+	      double newPoint[3]={0.0};
+	      intersectionNodeForGraph(i, p1d, p2d, p3d, p4d, newPoint, &nodeExist);
+	      if(nodeExist==1 && isTangent==1){//if there is a tangential crossing
+		//creating a new sep which is a merging of the 2 previous.
+		//disabling 2 previous sep
+		//rebuilding structure for intersection, redoing groups, calling solving tangential crossing again.
+		std::vector<uint64_t> edges1 = sep1->getEdges();
+		std::vector<uint64_t> *triangles1 = sep1->getPTriangles();
+		std::vector<double> enteringAngles1 = sep1->getAngles();
+		std::vector<uint64_t> edges2 = sep2->getEdges();
+		std::vector<uint64_t> *triangles2 = sep2->getPTriangles();
+		std::vector<double> enteringAngles2 = sep2->getAngles();
+		int ID=m_vectSep.size();
+		std::vector<std::array<double,3>> nodesCoord;
+		std::vector<uint64_t> triangles;
+		std::vector<uint64_t> edges;
+		std::vector<double> enteringAngles;
+		for(uint64_t k=0; k<position1; k++){ 
+		  nodesCoord.push_back((*points1)[k]);
+		  triangles.push_back((*triangles1)[k]);
+		  edges.push_back(edges1[k]);
+		  enteringAngles.push_back(enteringAngles1[k]);
+		}
+		for(uint64_t k=(*points2).size()-2; k>0; k--){
+		  nodesCoord.push_back((*points2)[k]);
+		  triangles.push_back((*triangles2)[k+1]); //we are traversing: tri and then node -> here is viceversa because of the direction!
+		  edges.push_back(edges2[k]);
+		  enteringAngles.push_back(enteringAngles2[k]);
+		}
+		nodesCoord.push_back((*points2)[0]);
+		triangles.push_back((*triangles2)[0+1]);
+		Separatrice newSep = Separatrice(ID, nodesCoord, triangles, edges, enteringAngles);
+		m_vectSep.push_back(newSep);
+		sep1->Disable();
+		sep2->Disable();
+		//rebuilding intersection groups etc
+		//calling solveTangentialCrossing
+		return 1;
+	      }
+	    }
 	  }
 	}
       }

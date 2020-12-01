@@ -145,7 +145,8 @@ class QuadGenerator
   int addInUnsignedintVectIfNotPresent(std::vector<uint64_t> *vect, uint64_t value);
   int detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs);
   int cutLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs);
-  int solveTangentialCrossings(std::vector<uint64_t> *limitCycleIDs);
+  int solveTangentialCrossingsLimitCycles(std::vector<uint64_t> *limitCycleIDs);
+  int solveTangentialCrossings();
 
 
 
