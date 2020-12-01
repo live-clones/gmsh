@@ -756,6 +756,33 @@ class model:
         return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
     @staticmethod
+    def getAdjacencies(dim, tag):
+        """
+        gmsh.model.getAdjacencies(dim, tag)
+
+        Get the upward and downward adjacencies of the model entity of dimension
+        `dim' and tag `tag'. The `upward' vector returns the adjacent entities of
+        dimension `dim' + 1; the `downward' vector returns the adjacent entities of
+        dimension `dim' - 1.
+
+        Return `upward', `downward'.
+        """
+        api_upward_, api_upward_n_ = POINTER(c_int)(), c_size_t()
+        api_downward_, api_downward_n_ = POINTER(c_int)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetAdjacencies(
+            c_int(dim),
+            c_int(tag),
+            byref(api_upward_), byref(api_upward_n_),
+            byref(api_downward_), byref(api_downward_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            _ovectorint(api_upward_, api_upward_n_.value),
+            _ovectorint(api_downward_, api_downward_n_.value))
+
+    @staticmethod
     def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
         """
         gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1)

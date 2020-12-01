@@ -557,6 +557,31 @@ function getBoundary(dimTags, combined = true, oriented = true, recursive = fals
 end
 
 """
+    gmsh.model.getAdjacencies(dim, tag)
+
+Get the upward and downward adjacencies of the model entity of dimension `dim`
+and tag `tag`. The `upward` vector returns the adjacent entities of dimension
+`dim` + 1; the `downward` vector returns the adjacent entities of dimension
+`dim` - 1.
+
+Return `upward`, `downward`.
+"""
+function getAdjacencies(dim, tag)
+    api_upward_ = Ref{Ptr{Cint}}()
+    api_upward_n_ = Ref{Csize_t}()
+    api_downward_ = Ref{Ptr{Cint}}()
+    api_downward_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetAdjacencies, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_upward_, api_upward_n_, api_downward_, api_downward_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    upward = unsafe_wrap(Array, api_upward_[], api_upward_n_[], own=true)
+    downward = unsafe_wrap(Array, api_downward_[], api_downward_n_[], own=true)
+    return upward, downward
+end
+
+"""
     gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
 
 Get the model entities in the bounding box defined by the two points (`xmin`,

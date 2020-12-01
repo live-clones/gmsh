@@ -101,13 +101,17 @@ int main(int argc, char **argv)
     std::cout << " - Mesh has " << nodeTags.size() << " nodes and " << numElem
               << " elements\n";
 
-    // * Entities on its boundary:
-    std::vector<std::pair<int, int> > boundary;
-    gmsh::model::getBoundary({{dim, tag}}, boundary);
-    if(boundary.size()) {
-      std::cout << " - Boundary entities: ";
-      for(auto b : boundary)
-        std::cout << "(" << b.first << "," << b.second << ") ";
+    // * Upward and downward adjacencies:
+    std::vector<int> up, down;
+    gmsh::model::getAdjacencies(dim, tag, up, down);
+    if(up.size()) {
+      std::cout << " - Upward adjacencies: ";
+      for(auto e : up) std::cout << e << " ";
+      std::cout << "\n";
+    }
+    if(down.size()) {
+      std::cout << " - Downward adjacencies: ";
+      for(auto e : down) std::cout << e << " ";
       std::cout << "\n";
     }
 
