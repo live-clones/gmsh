@@ -4266,7 +4266,8 @@ HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
   }
   std::cout<<" "<<std::endl;
   std::cout<<"--Get and store partition per edge--"<<std::endl;
-  computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);
+  computeAdequatePartitionPerEdge(0.1, hVal);
+  // computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);
   // computeAdequatePartitionPerEdge(m_minEdgLength/(2.0), hVal);
   // computeAdequatePartitionPerEdge(3*m_minEdgLength, hVal);
   // computeAdequatePartitionPerEdge(m_sizeQuadMesh, hVal);

@@ -2668,6 +2668,8 @@ HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH, 
   globalIntersection();
   std::cout << "--Comparision--" << std::endl;
   comparison();
+  std::cout << "--Solving tangential crossings if any--" << std::endl;
+  solveTangentialCrossings();
   std::cout<<"--Detecting limit cycles--"<<std::endl;
   std::vector<uint64_t> limitCycleIDs;
   detectLimitCycleCandidates(&limitCycleIDs);
@@ -2788,7 +2790,6 @@ HXTStatus QuadGenerator::computeSeparatrices(double *directionsCR)
   hxtWriteSavedSeparatrices("qmbCompleteSeparatrices.pos");
   hxtWriteEverything("qmbEverything.pos");
 
-  
   return HXT_STATUS_OK;
 }
 
@@ -4082,16 +4083,25 @@ HXTStatus QuadGenerator::hxtWriteSeparatricesPos(const char *fileName){
 HXTStatus QuadGenerator::buildIntersectionTriValues(){
   std::vector<std::array<int, 2>> init;
   init.reserve(10); //changable
+  m_flaggedTri.clear();
   m_flaggedTri.assign(m_triMesh->triangles.num, init);
 
   std::array<int, 2> val;
   for(uint64_t i=0; i<m_vectSep.size(); i++){
+    std::cout << "sep: " << m_vectSep[i].getID() << std::endl;
     Separatrice *sep=&m_vectSep[i];
+    std::cout << "flag1" << std::endl;
     std::vector<uint64_t> *triangles=sep->getPTriangles();
-    for(uint64_t j=1; j<triangles->size()-1; j++){
-      val[0]=(int)i; //sepID
-      val[1]=j;      //position
-      m_flaggedTri[(*triangles)[j]].push_back(val); 
+    std::cout << "flag2" << std::endl;
+    if(sep->isSaved()){
+      std::cout << "flag3" << std::endl;
+      for(uint64_t j=1; j<triangles->size()-1; j++){
+	val[0]=(int)i; //sepID
+	val[1]=j;      //position
+	std::cout << "triangle id: " << (*triangles)[j] << std::endl;
+	m_flaggedTri[(*triangles)[j]].push_back(val); 
+      }
+      std::cout << "flag4" << std::endl;
     }
   }
 
@@ -4140,29 +4150,35 @@ int QuadGenerator::groupingSep()
       uint64_t patchID=(uint64_t)-1;
       findPatchID(triangle1, &patchID);
       num1=patchID;
-      if(triangle2==(uint64_t)-1){
-	num2=(uint64_t)-1;
-      }
-      else{
+      // if(triangle2==(uint64_t)-1){ //DBG TEST. trying to not group sep reaching boundary (there should be no duplicates for those)
+      // 	num2=(uint64_t)-1;
+      // }
+      // else{
+      // 	findPatchID(triangle2, &patchID);
+      // 	num2=patchID;
+      // }
+      if(triangle2!=(uint64_t)-1){
 	findPatchID(triangle2, &patchID);
 	num2=patchID;
+	uint64_t sepExtr[2]={num1, num2};
+	qsort(sepExtr, 2, sizeof(uint64_t), comparator);
+	elements[2*i+0]=sepExtr[0];
+	elements[2*i+1]=sepExtr[1];
       }
-      uint64_t sepExtr[2]={num1, num2};
-      qsort(sepExtr, 2, sizeof(uint64_t), comparator);
-      elements[2*i+0]=sepExtr[0];
-      elements[2*i+1]=sepExtr[1];
     }
   }
  
   int *flag;
   HXT_CHECK(hxtMalloc(&flag, (m_vectSep.size())*sizeof(int)));
   for(uint64_t i=0; i<m_vectSep.size(); i++){
-    if(m_vectSep[i].isSaved())
+    if(m_vectSep[i].isSaved() && (*(m_vectSep[i].getPTriangles()))[m_vectSep[i].getPTriangles()->size()-1]!=(uint64_t)(-1)){//DBG TEST. same as above
       flag[i]=0;
+    }
     else
       flag[i]=1;
   }
-  
+
+  m_vectGroups.clear();
   int groupID=0;
   for(uint64_t i=0; i<(m_vectSep.size()-1); i++){
     if(flag[i]==0){
@@ -4307,6 +4323,7 @@ int QuadGenerator::globalIntersection()
     for(uint64_t j=0; j<vectSep->size(); j++){
       Separatrice *sep1=(*vectSep)[j];
       int ID1=sep1->getID();
+      sep1->clearIntersections();
       for(uint64_t k=0; k<m_vectGroups.size(); k++){
 	// if(i!=k){ //We actually need intersection from separatrices in the same group. (appearing quite frequently for high order singularities //DBG ALEX cleaning
 	  SepGroup *sgK=&(m_vectGroups[k]);
@@ -4677,7 +4694,9 @@ int QuadGenerator::solveTangentialCrossings(){
 	      int nodeExist=0;
 	      double newPoint[3]={0.0};
 	      intersectionNodeForGraph(i, p1d, p2d, p3d, p4d, newPoint, &nodeExist);
-	      if(nodeExist==1 && isTangent==1){//if there is a tangential crossing
+	      if(nodeExist==1 && isTangent==1 && !sep1->isBoundary() && !sep2->isBoundary()){//if there is a tangential crossing (tangential crossings on boundary are excluded)
+		std::cout << "++++tangential crossing detected++++" << std::endl;
+		std::cout << "++++sep " << sep1->getID() << " and sep " << sep2->getID() << " ++++" << std::endl;
 		//creating a new sep which is a merging of the 2 previous.
 		//disabling 2 previous sep
 		//rebuilding structure for intersection, redoing groups, calling solving tangential crossing again.
@@ -4698,7 +4717,7 @@ int QuadGenerator::solveTangentialCrossings(){
 		  edges.push_back(edges1[k]);
 		  enteringAngles.push_back(enteringAngles1[k]);
 		}
-		for(uint64_t k=(*points2).size()-2; k>0; k--){
+		for(uint64_t k=position2-1; k>0; k--){
 		  nodesCoord.push_back((*points2)[k]);
 		  triangles.push_back((*triangles2)[k+1]); //we are traversing: tri and then node -> here is viceversa because of the direction!
 		  edges.push_back(edges2[k]);
@@ -4711,6 +4730,17 @@ int QuadGenerator::solveTangentialCrossings(){
 		sep1->Disable();
 		sep2->Disable();
 		//rebuilding intersection groups etc
+		std::cout << "rebuilding intersection related data" << std::endl;
+		buildIntersectionTriValues();
+		std::cout << "tri ok" << std::endl;
+		groupingSep();
+		std::cout << "grouping ok" << std::endl;
+		globalIntersection();
+		std::cout << "globalintersection ok" << std::endl;
+		comparison();
+		std::cout << "comparison ok" << std::endl;
+		std::cout << "rebuilt" << std::endl;
+		solveTangentialCrossings();
 		//calling solveTangentialCrossing
 		return 1;
 	      }
