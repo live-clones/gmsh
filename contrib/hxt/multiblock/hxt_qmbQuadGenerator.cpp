@@ -4150,28 +4150,34 @@ int QuadGenerator::groupingSep()
       uint64_t patchID=(uint64_t)-1;
       findPatchID(triangle1, &patchID);
       num1=patchID;
-      // if(triangle2==(uint64_t)-1){ //DBG TEST. trying to not group sep reaching boundary (there should be no duplicates for those)
-      // 	num2=(uint64_t)-1;
-      // }
-      // else{
+      //
+      if(triangle2==(uint64_t)-1){
+      	num2=(uint64_t)-1;
+      }
+      else{
+      	findPatchID(triangle2, &patchID);
+      	num2=patchID;
+      }
+      uint64_t sepExtr[2]={num1, num2};
+      qsort(sepExtr, 2, sizeof(uint64_t), comparator);
+      elements[2*i+0]=sepExtr[0];
+      elements[2*i+1]=sepExtr[1];
+      //
+      // if(triangle2!=(uint64_t)-1){ //DBG TEST. trying to not group sep reaching boundary (there should be no duplicates for those)
       // 	findPatchID(triangle2, &patchID);
       // 	num2=patchID;
+      // 	uint64_t sepExtr[2]={num1, num2};
+      // 	qsort(sepExtr, 2, sizeof(uint64_t), comparator);
+      // 	elements[2*i+0]=sepExtr[0];
+      // 	elements[2*i+1]=sepExtr[1];
       // }
-      if(triangle2!=(uint64_t)-1){
-	findPatchID(triangle2, &patchID);
-	num2=patchID;
-	uint64_t sepExtr[2]={num1, num2};
-	qsort(sepExtr, 2, sizeof(uint64_t), comparator);
-	elements[2*i+0]=sepExtr[0];
-	elements[2*i+1]=sepExtr[1];
-      }
     }
   }
  
   int *flag;
   HXT_CHECK(hxtMalloc(&flag, (m_vectSep.size())*sizeof(int)));
   for(uint64_t i=0; i<m_vectSep.size(); i++){
-    if(m_vectSep[i].isSaved() && (*(m_vectSep[i].getPTriangles()))[m_vectSep[i].getPTriangles()->size()-1]!=(uint64_t)(-1)){//DBG TEST. same as above
+    if(m_vectSep[i].isSaved()){
       flag[i]=0;
     }
     else
@@ -4188,7 +4194,8 @@ int QuadGenerator::groupingSep()
       flag[i]=1;
       for(uint64_t j=i+1; j<m_vectSep.size(); j++){
 	if(flag[j]==0){
-	  if(elements[2*i]==elements[2*j] && elements[2*i+1]==elements[2*j+1]){
+	  // if(elements[2*i]==elements[2*j] && elements[2*i+1]==elements[2*j+1]){
+	  if(elements[2*i]==elements[2*j] && elements[2*i+1]==elements[2*j+1] && elements[2*i]!=(uint64_t)(-1)){ //DBG TEST. trying to not group sep reaching boundary (there should be no duplicates for those)
 	    vectSep.push_back(&(m_vectSep[j]));
 	    flag[j]=1;
 	  }
@@ -4330,8 +4337,10 @@ int QuadGenerator::globalIntersection()
 	  std::vector<Separatrice*>* vectSepK=sgK->getPSeparatrices();
 	  for(uint64_t l=0; l<vectSepK->size(); l++){
 	    int ID2=(vectSepK->at(l))->getID();
-	    if(localIntersection(ID1, ID2)){
-	      sep1->addIntersectingSepID(ID2);
+	    if(ID1!=ID2){ //DBG TEST same reason than above
+	      if(localIntersection(ID1, ID2)){
+		sep1->addIntersectingSepID(ID2);
+	      }
 	    }
 	  }
 	// }
@@ -4429,7 +4438,6 @@ int QuadGenerator::addInUnsignedintVectIfNotPresent(std::vector<uint64_t> *vect,
 
 //Criterias: 1. intersecting same sep more than once; 2. ending on bdry under sharp angle
 int QuadGenerator::detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs){
-
   //1. intersecting same sep more than once
   double point1[3], point2[3], point3[3], point4[3], newPoint[3];
   for(int i=0; i<3; i++){
@@ -4752,6 +4760,11 @@ int QuadGenerator::solveTangentialCrossings(){
   }
   return 1;
 }
+
+// int QuadGenerator::detectAndSolveLoopEdges(){
+
+//   return 1;
+// }
 
 HXTStatus QuadGenerator::hxtWriteLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs, const char *fileName){
   int num=0;
