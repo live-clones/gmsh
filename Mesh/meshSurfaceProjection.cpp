@@ -16,6 +16,10 @@
 #include <unordered_set>
 #include <queue>
 
+/* for visualization */
+#include "gmsh.h"
+#include "geolog.h"
+
 namespace SurfaceProjectorUtils {
   using vec2 = std::array<double,2>;
   using vec3 = std::array<double,3>;
@@ -351,6 +355,11 @@ bool SurfaceProjector::initialize(GFace* gf_) {
   }
   idx2t.resize(vCount);
 
+  /* If periodic parametrization, get periods */
+  double Ts[2] = {0.,0.};
+  if (gf->periodic(0)) Ts[0] = gf->period(0);
+  if (gf->periodic(1)) Ts[1] = gf->period(1);
+
   triangles.reserve(gf->triangles.size());
   triangles_idx.reserve(gf->triangles.size());
   if (df) uvs.reserve(gf->triangles.size());
@@ -358,6 +367,7 @@ bool SurfaceProjector::initialize(GFace* gf_) {
     std::array<vec3,3> tri_pts;
     std::array<vec2,3> tri_uvs;
     std::array<size_t,3> tri_idx;
+    bool check_periodicity = false;
     for (size_t lv = 0; lv < f->getNumVertices(); ++lv) {
       MVertex* v = f->getVertex(lv);
       tri_pts[lv] = {v->x(),v->y(),v->z()};
@@ -374,10 +384,36 @@ bool SurfaceProjector::initialize(GFace* gf_) {
             v->getParameter(0,t);
             SPoint2 uv = ge->reparamOnFace(gf, t, -1);
             tri_uvs[lv] = {uv.x(),uv.y()};
+            if (ge->isSeam(gf)) { /* multiple uv param are possible, see later*/
+              check_periodicity = true;
+            } 
           } else {
+            check_periodicity = true;
             GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
-            SPoint2 uv = gv->reparamOnFace(gf,0);
-            tri_uvs[lv] = {uv.x(),uv.y()};
+            if (gv != NULL) {
+              SPoint2 uv = gv->reparamOnFace(gf,0);
+              tri_uvs[lv] = {uv.x(),uv.y()};
+            } else {
+              Msg::Error("vertex not on GEntity ?");
+            }
+          }
+        }
+
+        /* Check periodicity jumps */
+        if (check_periodicity && lv > 0) {
+          for (size_t d = 0; d < 2; ++d) {
+            if (Ts[d] != 0.) {
+              double diff = std::abs(tri_uvs[lv][d] - tri_uvs[lv-1][d]);
+              if (diff > 0.5 * Ts[d]) { /* Probably got a period jump ! */
+                double diffP = std::abs(tri_uvs[lv][d] + Ts[d] - tri_uvs[lv-1][d]);
+                double diffN = std::abs(tri_uvs[lv][d] - Ts[d] - tri_uvs[lv-1][d]);
+                if (diffP < diff) {
+                  tri_uvs[lv][d] += Ts[d];
+                } else if (diffN < diff) {
+                  tri_uvs[lv][d] -= Ts[d];
+                }
+              }
+            }
           }
         }
       }
@@ -394,6 +430,56 @@ bool SurfaceProjector::initialize(GFace* gf_) {
         idx2t[it->second].push_back(triangles.size());
       }
     }
+
+    // if (false && paramAvailable && check_periodicity) {
+    //   bool shift = true;
+    //   GEdge* ge = NULL;
+    //   for (size_t lv = 0; lv < 3; ++lv) {
+    //     if (gep[lv] != NULL && ge == NULL) {
+    //       ge = gep[lv];
+    //     }
+    //     if (gep[lv] != NULL && ge != NULL && gep[lv] != ge) {
+    //       shift = false;
+    //     }
+    //   }
+    //   if (ge == NULL || shift) {
+    //     tri_uvs[1] = tri_uvs[0];
+    //     tri_uvs[2] = tri_uvs[0];
+    //   } else {
+    //     for (size_t d = 0; d < 2; ++d) {
+    //       if (gf->periodic(d)) {
+    //         /* Check if +-T is closer */
+    //         double T = gf->period(d);
+    //         double d01 = std::abs(tri_uvs[0][d]-tri_uvs[1][d]);
+    //         double d12 = std::abs(tri_uvs[1][d]-tri_uvs[2][d]);
+    //         double d02 = std::abs(tri_uvs[0][d]-tri_uvs[2][d]);
+    //         if        (d01 <= d12 && d01 <= d02) {
+    //           double mid = 0.5  * (tri_uvs[0][d]+tri_uvs[1][d]);
+    //           if (std::abs((tri_uvs[2][d]-T)-mid) < std::abs(tri_uvs[2][d]-mid)) {
+    //             tri_uvs[2][d] -= T;
+    //           } else if (std::abs((tri_uvs[2][d]+T)-mid) < std::abs(tri_uvs[2][d]-mid)) {
+    //             tri_uvs[2][d] += T;
+    //           }
+    //         } else if (d12 <= d01 && d12 <= d02) {
+    //           double mid = 0.5  * (tri_uvs[1][d]+tri_uvs[2][d]);
+    //           if (std::abs((tri_uvs[0][d]-T)-mid) < std::abs(tri_uvs[0][d]-mid)) {
+    //             tri_uvs[0][d] -= T;
+    //           } else if (std::abs((tri_uvs[0][d]+T)-mid) < std::abs(tri_uvs[0][d]-mid)) {
+    //             tri_uvs[0][d] += T;
+    //           }
+    //         } else if (d02 <= d01 && d02 <= d12) {
+    //           double mid = 0.5  * (tri_uvs[0][d]+tri_uvs[2][d]);
+    //           if (std::abs((tri_uvs[1][d]-T)-mid) < std::abs(tri_uvs[1][d]-mid)) {
+    //             tri_uvs[1][d] -= T;
+    //           } else if (std::abs((tri_uvs[1][d]+T)-mid) < std::abs(tri_uvs[1][d]-mid)) {
+    //             tri_uvs[1][d] += T;
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+
     triangles.push_back(tri_pts);
     triangles_idx.push_back(tri_idx);
     if (paramAvailable) uvs.push_back(tri_uvs);
@@ -418,7 +504,7 @@ bool SurfaceProjector::initialize(GFace* gf_) {
   return true;
 }
 
-GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, bool evalOnCAD) const {
+GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, bool evalOnCAD, bool projectOnCAD) const {
   if (tree == NULL) {
     Msg::Error("closestPoint in SurfaceProjector: no kdtree");
     GPoint fail(DBL_MAX,DBL_MAX,DBL_MAX,NULL);
@@ -444,7 +530,16 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
         double u = lambda[0] * uvs[cache][0][0] + lambda[1] * uvs[cache][1][0] + lambda[2] * uvs[cache][2][0];
         double v = lambda[0] * uvs[cache][0][1] + lambda[1] * uvs[cache][1][1] + lambda[2] * uvs[cache][2][1];
         GPoint proj(cproj[0],cproj[1],cproj[2],gf,u,v);
-        if (evalOnCAD) {
+        if (projectOnCAD) {
+          /* Use the discrete projection + uv interpolation
+           * as initial guess for CAD closest point query */
+          double initialGuess[2] = {proj.u(),proj.v()};
+          SPoint3 query(proj.x(),proj.y(),proj.z());
+          GPoint cadProj = gf->closestPoint(query,initialGuess);
+          if (cadProj.succeeded()) {
+            proj = cadProj;
+          }
+        } else if (evalOnCAD) {
           proj = gf->point(u,v);
         }
         return proj;
@@ -458,7 +553,7 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
 
   /* kdtree search (closest vertex) then loop on adjacent elements */
   static_kd_tree_t* ttree = (static_kd_tree_t*) tree;
-  size_t N_search = 3;
+  size_t N_search = 5;
   std::vector<size_t> ids(N_search);
   std::vector<double> dists(N_search);
   size_t Nf = ttree->knnSearch(query.data(), N_search, &ids[0], &dists[0]);
@@ -470,7 +565,7 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
     return fail;
   }
 
-  size_t N_TRIANGLE_MAX = 30;
+  size_t N_TRIANGLE_MAX = 50;
   std::queue<size_t> Q;
   std::unordered_set<size_t> visited;
   for (size_t v: ids) {
@@ -534,7 +629,16 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
 
     if (d2min_in != DBL_MAX) {
       cache = elem;
-      if (uvs.size() > 0 && evalOnCAD) {
+      if (uvs.size() > 0 && projectOnCAD) {
+        /* Use the discrete projection + uv interpolation
+         * as initial guess for CAD closest point query */
+        double initialGuess[2] = {proj.u(),proj.v()};
+        SPoint3 query(proj.x(),proj.y(),proj.z());
+        GPoint cadProj = gf->closestPoint(query,initialGuess);
+        if (cadProj.succeeded()) {
+          proj = cadProj;
+        }
+      } else if (uvs.size() > 0 && evalOnCAD) {
         proj = gf->point(proj.u(),proj.v());
       }
       return proj;
@@ -543,7 +647,16 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
 
   if (d2min_in != DBL_MAX || d2min_out != DBL_MAX) {
     cache = elem;
-    if (uvs.size() > 0 && evalOnCAD) {
+    if (uvs.size() > 0 && projectOnCAD) {
+      /* Use the discrete projection + uv interpolation
+       * as initial guess for CAD closest point query */
+      double initialGuess[2] = {proj.u(),proj.v()};
+      SPoint3 query(proj.x(),proj.y(),proj.z());
+      GPoint cadProj = gf->closestPoint(query,initialGuess);
+      if (cadProj.succeeded()) {
+        proj = cadProj;
+      }
+    } else if (uvs.size() > 0 && evalOnCAD) {
       proj = gf->point(proj.u(),proj.v());
     }
     return proj;
@@ -555,4 +668,20 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
   GPoint fail(DBL_MAX,DBL_MAX,DBL_MAX,NULL);
   fail.setNoSuccess();
   return fail;
+}
+
+void SurfaceProjector::show(const std::string& viewName) {
+  gmsh::initialize();
+  for (size_t i = 0; i < triangles.size(); ++i) {
+    std::vector<std::array<double,3> > pts = {
+      triangles[i][0],
+      triangles[i][1],
+      triangles[i][2]
+    };
+    std::vector<double> values_u = { uvs[i][0][0], uvs[i][1][0], uvs[i][2][0]};
+    std::vector<double> values_v = { uvs[i][0][1], uvs[i][1][1], uvs[i][2][1]};
+    GeoLog::add(pts,values_u,viewName+"_u");
+    GeoLog::add(pts,values_v,viewName+"_v");
+  }
+  GeoLog::flush();
 }

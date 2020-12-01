@@ -56,7 +56,9 @@ int remeshPatchWithQuadPattern(GFace* gf,
     std::vector<MVertex*> & newVertices,               /* new vertices inside the cavity */
     std::vector<bool> & vertexIsIrregular,             /* for each new vertex, true if irregular */
     std::vector<MElement*> & newElements,              /* new quads inside the cavity */
-    SurfaceProjector* sp = NULL                        /* a quick way to project on GFace triangulation */
+    SurfaceProjector* sp = NULL,                       /* a quick way to project on GFace triangulation */
+    double qualityMin = 0.,                            /* only remesh if resulting quality > qualityMin */
+    double qualityFactor = 0.                          /* only remesh if quality > qualityDegradeFactor * qualityBefore */
     );
 
 
@@ -82,11 +84,16 @@ bool load_disk_quadrangulations();
  * */
 int remeshFewQuads(GFace* gf, 
     const std::vector<MVertex*>& bnd,
+    const std::vector<MElement*> & oldElements,              /* old quads inside the cavity */
     const std::vector<int>& bndIdealValence,
     const std::vector<std::pair<int,int> >& bndAllowedValenceRange,
     std::vector<MVertex*> & newVertices,               /* new vertices inside the cavity */
     std::vector<bool> & vertexIsIrregular,             /* for each new vertex, true if irregular */
-    std::vector<MElement*> & newElements               /* new quads inside the cavity */
+    std::vector<MElement*> & newElements,              /* new quads inside the cavity */
+    SurfaceProjector* sp = NULL,                       /* a quick way to project on GFace triangulation */
+    double qualityMin = 0.,                            /* only remesh if resulting quality > qualityMin */
+    double qualityFactor = 0.,                         /* only remesh if quality > qualityDegradeFactor * qualityBefore */
+    const std::vector<MElement*>& neighborsForGeometry = {}
     );
 
 void printPatternUsage();

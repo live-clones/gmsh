@@ -91,7 +91,11 @@ void PaverMinEdgeLengthWrapper::run_wrapper( MeshDomainAssoc* mesh_and_domain,
     // create solver
   TrustRegion solver( &of );
   TerminationCriterion tc, ptc;
-  tc.add_absolute_vertex_movement( maxVtxMovement );
+  if (maxRelVtxMovement != 0.) {
+    tc.add_relative_vertex_movement( maxRelVtxMovement );
+  } else {
+    tc.add_absolute_vertex_movement( maxVtxMovement );
+  }
   tc.add_iteration_limit( iterationLimit );
   ptc.add_iteration_limit( pmesh ? parallelIterations : 1 );
   solver.set_inner_termination_criterion( &tc );
