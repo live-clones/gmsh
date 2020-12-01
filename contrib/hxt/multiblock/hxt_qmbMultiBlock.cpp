@@ -5027,31 +5027,43 @@ HXTStatus MultiBlock::modifyTBlockNgbrs_TjuncOnLeft(int tBlockID, int locIndTjun
 
   //1. modify block M (block on the left of the t-junc blockK)
   uint64_t blockK=tBlockID;
+  std::cout<<"block K: "<<blockK<<std::endl;
   int k = locIndTjuncVert;
   int edgK = locTjunEdgInd;
+  std::cout<<"k= "<<k<<std::endl;
+  std::cout<<"edgK= "<<edgK<<std::endl;
+  size_t nVertK=m_mbQuads[blockK].size();
+  std::cout<<"nVertK: "<<nVertK<<std::endl;
   uint64_t blockM =(uint64_t)-1;
   if(m_mbEdg2Block[edgK][0] == blockK){
     blockM= m_mbEdg2Block[edgK][1];
   }else{
     blockM= m_mbEdg2Block[edgK][0];
   }
+  std::cout<<"block M: "<<blockM<<std::endl;
+  size_t nVertM=m_mbQuads[blockM].size(); 
+  std::cout<<"nVertM: "<<nVertM<<std::endl;
   int m=-1;
   int edgM=-1;
   for(uint64_t i=0; i<m_mbQuads[blockM].size(); i++){
     if(m_mbQuads[blockM][i] == m_mbQuads[blockK][k])
       m=i;
   }
+  std::cout<<"m= "<<m<<std::endl;
   for(uint64_t i=0; i<m_mbBlock2Edg[blockM].size(); i++){
     if(m_mbBlock2Edg[blockM][i] == m_mbBlock2Edg[blockK][edgK])
       edgM=i;
   }
-  size_t nVertM=m_mbQuads[blockM].size();
-  size_t nVertK=m_mbQuads[blockK].size();
+  std::cout<<"edgM= "<<edgM<<std::endl;
   std::vector<int> newBlockVerticesM;
   for(size_t i=0; i<nVertM-1; i++)
     newBlockVerticesM.push_back(m_mbQuads[blockM][(m+1)%nVertM]);
   newBlockVerticesM.push_back(m_mbQuads[blockK][(k+nVertK-1)%nVertK]);
   m_mbQuads.push_back(newBlockVerticesM);
+  std::cout<<"newVertices M: ";
+  for(uint64_t i=0; i<newBlockVerticesM.size(); i++)
+    std::cout<<newBlockVerticesM[i]<<", ";
+  std::cout<<" "<<std::endl;
   //edges and triangles
   std::vector<uint64_t> newTri1M;
   std::vector<std::array<double,3>> newEdg1M;
@@ -5085,10 +5097,14 @@ HXTStatus MultiBlock::modifyTBlockNgbrs_TjuncOnLeft(int tBlockID, int locIndTjun
   std::vector<int> newBlockVerticesL;
   newBlockVerticesL.push_back(m_mbQuads[blockL][l]);
   newBlockVerticesL.push_back(m_mbQuads[blockK][(k+1)%nVertK]);
-  for(size_t i=0; i<nVertL-2; i++){//not picking last node
+  for(size_t i=0; i<nVertL-2; i++){
     newBlockVerticesL.push_back(m_mbQuads[blockL][(l+2+i)%nVertL]);
   }
-  m_mbQuads.push_back(newBlockVerticesL);  
+  m_mbQuads.push_back(newBlockVerticesL);
+  std::cout<<"newVertices L: ";
+  for(uint64_t i=0; i<newBlockVerticesL.size(); i++)
+    std::cout<<newBlockVerticesL[i]<<", ";
+  std::cout<<" "<<std::endl;
   uint64_t edgL=(uint64_t)-1;
   for(uint64_t s=0; s<m_mbBlock2Edg[blockL].size(); s++){
     if(m_mbBlock2Edg[blockL][s] == m_mbBlock2Edg[blockK][(edgK+nVertK-2)%nVertK])
@@ -5123,6 +5139,10 @@ HXTStatus MultiBlock::modifyTBlockNgbrs_TjuncOnLeft(int tBlockID, int locIndTjun
     newBlockVerticesT.push_back(m_mbQuads[blockT][(t+1+i)%nVertT]);
   }
   m_mbQuads.push_back(newBlockVerticesT);
+  std::cout<<"newVertices T: ";
+  for(uint64_t i=0; i<newBlockVerticesT.size(); i++)
+    std::cout<<newBlockVerticesT[i]<<", ";
+  std::cout<<" "<<std::endl;
  
   //store things for deleting
   vecBlocksDelete->push_back(blockK);
@@ -5173,6 +5193,7 @@ HXTStatus MultiBlock::correctInvalidBlocks(){
     //check if blockK is q quad. If it is, do the stuff, else fuck it
     std::cout<<"-----> Solving T-junction: "<<i<<std::endl;
     std::cout<<"patch id: "<<tJunctionPatchesIDs[i]<<std::endl;
+    std::cout<<"T junc node: "<<m_extraordVertTjunc[i]<<std::endl; 
     //collect current edges and blocks to be merged
     int locInd=-1;
     uint64_t globEdgNum = m_mbBlock2Edg[tJunctionPatchesIDs[i]][locTjunEdgInd[i]]; //limit cycle sep edg  on which is T junc
@@ -5188,9 +5209,11 @@ HXTStatus MultiBlock::correctInvalidBlocks(){
     if(locTjuncInd[i] ==  locTjunEdgInd[i]+1)
       tJunc_onRight = true;
     if(tJunc_onRight){
+      std::cout<<"T junc on the right"<<std::endl;
       modifyTBlockNgbrs_TjuncOnRight(tJunctionPatchesIDs[i], locTjuncInd[i], locTjunEdgInd[i], &blocksDel, &edgesDel);
     }
     else{
+      std::cout<<"T junc on the left"<<std::endl;
       modifyTBlockNgbrs_TjuncOnLeft(tJunctionPatchesIDs[i], locTjuncInd[i], locTjunEdgInd[i], &blocksDel, &edgesDel);
     }
       
