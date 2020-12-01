@@ -3997,7 +3997,6 @@ int MultiBlock::isPointInTri(uint64_t tri, std::array<double, 3> point, double *
   double alpha = myDot(AMxAC, nABC)/myDot(nABC, nABC);
   double beta = myDot(AMxAB, nABC)/myDot(ACxAB, nABC);
   double numError =1e-10;
-  std::cout << "alpha: " << alpha << " / beta: " << beta << std::endl;
   if((alpha>-numError) && (beta>-numError) && (alpha<1.0+numError) && beta<(1-alpha+numError)){
     pointIsInTri=1;
     *distance1 = alpha;
@@ -4100,7 +4099,6 @@ double MultiBlock::computeDiscreteLineLengthModified(std::vector<std::array<doub
 HXTStatus MultiBlock::lineDiscretization(std::vector<std::array<double,3>> *line, std::vector<double> hVal, uint64_t partition, std::vector<std::array<double,3>> *newLine){
   double edgLength=computeDiscreteLineLengthModified(line, hVal);
   double elemLength=edgLength/(1.0*partition);
-  std::cout<<"edgLength: "<<edgLength<<std::endl;
   int currentIndice=1;
   (*newLine)[0]=(*line)[0];
   int nAddPoints=1;
@@ -4156,7 +4154,6 @@ HXTStatus MultiBlock::lineDiscretization(std::vector<std::array<double,3>> *line
 HXTStatus MultiBlock::lineDiscretizationUniform(std::vector<std::array<double,3>> *line, uint64_t partition, std::vector<std::array<double,3>> *newLine){
   double edgLength=computeDiscreteLineLength(line);
   double elemLength=edgLength/(1.0*partition);
-  std::cout<<"edgLength: "<<edgLength<<std::endl;
   int currentIndice=1;
   (*newLine)[0]=(*line)[0];
   int nAddPoints=1;
@@ -4564,7 +4561,6 @@ HXTStatus MultiBlock::discretizeQuads(){
   fprintf(f,"View \"Transfinite quads\"{\n");
   
   for(uint64_t i=0;i<m_mbQuads.size();i++){
-    std::cout << "n edg block; " << m_mbQuads[i].size() << std::endl;
     if(m_mbQuads[i].size()==4){
       // std::cout << "discretize quad " << i << std::endl;
       bool hasParametrization=false;
