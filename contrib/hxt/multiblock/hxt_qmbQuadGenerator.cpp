@@ -2178,7 +2178,7 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
   gmsh::initialize();
   // HXT_INFO("gmsh: merge the file %s", myGeoFile);
   // gmsh::merge(myGeoFile);
-  HXT_INFO("gmsh: open the file %s", myGeoFile);
+  HXT_INFO("gmsh: open the file %s", myGeoFile.c_str());
   gmsh::open(myGeoFile);
   // gmsh::model::occ::synchronize();
   gmsh::model::geo::synchronize();
@@ -2358,7 +2358,7 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
   gmsh::initialize();
   // HXT_INFO("gmsh: merge the file %s", myGeoFile);
   // gmsh::merge(myGeoFile);
-  HXT_INFO("gmsh: open the file %s", myGeoFile);
+  HXT_INFO("gmsh: open the file %s", myGeoFile.c_str());
   gmsh::open(myGeoFile);
   // gmsh::model::occ::synchronize();
   gmsh::model::geo::synchronize();

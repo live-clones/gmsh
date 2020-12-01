@@ -211,12 +211,14 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
   if(ge && CTX::instance()->mesh.lcFromPoints && ge->dim() < 2)
     l1 = LC_MVertex_PNTS(ge, U, V);
 
-  // lc from curvature
+    
+    // lc from curvature
   double l2 = MAX_LC;
   if(ge && CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
     l2 = LC_MVertex_CURV(ge, U, V);
 
-  // lc from fields
+
+    // lc from fields
   double l3 = MAX_LC;
   if(ge){
     FieldManager *fields = ge->model()->getFields();
@@ -229,9 +231,11 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
   // global lc from entity
   double l4 = ge ? ge->getMeshSize() : MAX_LC;
 
+  
   double l5 = (ge && ge->dim() == 1) ?
     ((GEdge*)ge)->prescribedMeshSizeAtParam(U) : MAX_LC;
 
+  
   // lc from callback
   double l6 = MAX_LC;
   if(CTX::instance()->mesh.lcCallback) {
@@ -263,6 +267,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y,
   // constrain by lcMin and lcMax
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
+
 
   if(lc <= 0.) {
     Msg::Error("Wrong mesh element size lc = %g (lcmin = %g, lcmax = %g)", lc,

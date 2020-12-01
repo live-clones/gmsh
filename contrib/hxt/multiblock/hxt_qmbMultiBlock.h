@@ -139,7 +139,7 @@ class MultiBlock
   int isPointSingularityOrCornerVec(std::array<double,3> *point);
   int getQuadEdgesData();
   int getBlock2Edge();
-  int getEdge2Block();
+  int getEdge2Block(); 
   HXTStatus collectTJunctionIndices();
   HXTStatus getTriangularPatchesIDs(std::vector<int> *triPatchesIDs);
   double getDistanceBetweeenTwoExtrVert(int sepIDNoLimCyc, int extrVertID, int tJuncVertID1);
@@ -148,7 +148,9 @@ class MultiBlock
   void getmbEdgIDFrom2ExtrPoints(std::array<double,3> point1, std::array<double,3> point2 , int *edgID);
   HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs, std::vector<int> *locTjunEdgInd, std::vector<int> *locTjuncInd);
   HXTStatus mergeEdges(uint64_t edgID1, uint64_t edgID2, uint64_t connectingVertInd, std::vector<std::array<double,3>> *newEdgPoints, std::vector<uint64_t> *newEdgTri);
-  HXTStatus modifyTBlockNgbrs(int tBlockID, int locIndTjuncVert, int locTjunEdgInd, std::vector<uint64_t> *vecBlocksDelete, std::vector<uint64_t> *vecEdgesDelete);
+  HXTStatus modifyTBlockNgbrs_TjuncOnRight(int tBlockID, int locIndTjuncVert, int locTjunEdgInd, std::vector<uint64_t> *vecBlocksDelete, std::vector<uint64_t> *vecEdgesDelete);
+  HXTStatus modifyTBlockNgbrs_TjuncOnLeft(int tBlockID, int locIndTjuncVert, int locTjunEdgInd, std::vector<uint64_t> *vecBlocksDelete, std::vector<uint64_t> *vecEdgesDelete);
+  HXTStatus recomputeMinEdgLength();
   HXTStatus correctInvalidBlocks();
   HXTStatus mergeBlocks(uint64_t blockID1, uint64_t blockID2, uint64_t edgToDelete, int currentNode,std::vector<uint64_t> *delBlocks, std::vector<uint64_t> *delEdges);
   HXTStatus getVert2Block();
@@ -189,7 +191,8 @@ class BlockParametrization
 
   std::array<double,3> getPhysCoordFromParamCoord(std::array<double,3> paramCoord, uint64_t globNumTriHint=(uint64_t)(-1));
   std::array<double,3> getParamCoordFromPhysCoord(std::array<double,3> physCoord, uint64_t globNumTriHint=(uint64_t)(-1));
-  uint64_t getBelongingTriangleFromParamCoord(std::array<double,3> paramCoord){};
+  void getStraigthLine(std::array<double,3> physCoord1, std::array<double,3> physCoord2, std::vector<std::array<double,3>> &physCoordLine, std::vector<uint64_t> &physTriLine, uint64_t nPoints=100);
+  uint64_t getBelongingTriangleFromParamCoord(std::array<double,3> paramCoord);
   uint64_t getBelongingTriangleFromPhysCoord(std::array<double,3> physCoord){};
   int isPointInTri(std::vector<std::array<double,3>> tri, std::array<double, 3> point, double *baryCoord1, double *baryCoord2);
   

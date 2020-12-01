@@ -1492,7 +1492,8 @@ public:
       double values[3];
       if(!_octree->searchVectorWithTol(x, y, z, values, 0, 0, .05)){
         if(!_octree->searchVectorWithTol(x, y, z, values, 0, 0, .1)){
-          Msg::Debug("No vector element found containing point (%g,%g,%g)", x, y, z);
+          // Disable this Debug output because too verbose
+          // Msg::Debug("No vector element found containing point (%g,%g,%g)", x, y, z);
         }
         else {
           v = SVector3(values[0],values[1],values[2]);

@@ -61,6 +61,7 @@ typedef unsigned long intptr_t;
 #include "OS.h"
 #include "onelabUtils.h"
 #include "gmshCrossFields.h"
+#include "meshQuadAlignIrregularVertices.h"
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
@@ -2187,6 +2188,11 @@ static void mesh_recombine_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->recombineMesh();
   drawContext::global()->draw();
+}
+
+static void mesh_align_cb(Fl_Widget *w, void *data) {
+    alignQuadMesh(GModel::current());
+    drawContext::global()->draw();
 }
 
 #if defined(HAVE_NETGEN)
@@ -4359,6 +4365,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_recombine_cb} ,
   {"0Modules/Mesh/Reclassify 2D",
    (Fl_Callback *)mesh_classify_cb} ,
+   {"0Modules/Mesh/Align Irregular Vertices",
+     (Fl_Callback *)mesh_align_cb} ,
   {"0Modules/Mesh/Experimental/Compute structured quad mesh",
    (Fl_Callback *)mesh_cross_compute_cb} ,
 #if defined(HAVE_METIS)

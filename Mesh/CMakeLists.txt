@@ -40,6 +40,7 @@ set(SRC
   meshQuadPatterns.cpp
   meshQuadGeometry.cpp
   meshSurfaceProjection.cpp
+  meshQuadAlignIrregularVertices.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

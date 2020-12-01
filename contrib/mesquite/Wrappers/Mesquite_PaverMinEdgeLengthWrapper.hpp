@@ -44,6 +44,7 @@ class MESQUITE_EXPORT PaverMinEdgeLengthWrapper : public Wrapper
     int iterationLimit;
     int parallelIterations;
     double maxVtxMovement;
+    double maxRelVtxMovement;
 
     void run_wrapper( MeshDomainAssoc* mesh_and_domain,
                       ParallelMesh* pmesh,
@@ -60,12 +61,15 @@ class MESQUITE_EXPORT PaverMinEdgeLengthWrapper : public Wrapper
      *\param max_iterations       Termination optimizaiton after this many solver 
      *                            steps.
      */
-    PaverMinEdgeLengthWrapper( double max_vertex_movement,
-                               int max_iterations = 50,
-                               int parallel_iterations = 10 )
-                        : iterationLimit( max_iterations ),
-                          parallelIterations( parallel_iterations ),
-                          maxVtxMovement( max_vertex_movement )
+    PaverMinEdgeLengthWrapper( 
+        double max_relative_vertex_movement = 1.e-2,
+        double max_vertex_movement = 1.e-3,
+        int max_iterations = 50,
+        int parallel_iterations = 10 )
+      : iterationLimit( max_iterations ),
+      parallelIterations( parallel_iterations ),
+      maxVtxMovement( max_vertex_movement ),
+      maxRelVtxMovement( max_relative_vertex_movement )
       {}
 
 };
