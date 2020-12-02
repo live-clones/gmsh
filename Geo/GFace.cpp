@@ -1630,7 +1630,7 @@ static void meshCompound(GFace *gf, bool verbose)
     double U, V;
     // search triangle in original mesh used to compute the parametrization
     int position = df->trianglePosition(u, v, U, V);
-    if(position != -1) {
+    if(position >= 0 && position < triangles_tag.size()) {
       triangles_tag[position]->mesh_vertices.push_back(df->mesh_vertices[i]);
       df->mesh_vertices[i]->setEntity(triangles_tag[position]);
     }
