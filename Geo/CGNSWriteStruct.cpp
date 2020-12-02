@@ -73,10 +73,6 @@ static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
                                const std::vector<cgsize_t> &pointDonorRange,
                                int transform[2])
 {
-  // This routine was written with the financial aid of of Indian Institute of
-  // Technology Hyderabad - BRNS sponsored project in 2018, under the guidance
-  // of Prof. Vinayak Eswaran <eswar@iith.ac.in>
-
   if(pointRange.size() != 4 || pointDonorRange.size() != 4) {
     Msg::Error("Invalid point ranges to compute tranform - using default");
     transform[0] = 1;
@@ -84,60 +80,18 @@ static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
     return;
   }
 
-  int a1 = pointDonorRange[2] - pointDonorRange[0];
-  int a2 = pointDonorRange[3] - pointDonorRange[1];
-  int b1 = pointRange[2] - pointRange[0];
-  int b2 = pointRange[3] - pointRange[1];
-
-  // In the interface face, if one index is varying, the other should remain
-  // constant and hence one of a1, a2, b1, b2 should be zero (in 2D): (Index2 -
-  // Begin2) = T.(Index1 - Begin1); (Index1 - Begin1) = Transpose[T].(Index2 -
-  // Begin2)
-  int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-  if(b2 == 0) {
-    x1 = a1 / b1;
-    y1 = a2 / b1;
-    if(x1 == 0) {
-      y2 = 0;
-      if(y1 < 0) x2 = 1;
-      else x2 = -1;
-    }
-    else if(y1 == 0) {
-      x2 = 0;
-      if(x1 > 0) y2 = 1;
-      else y2 = -1;
+  int r[2], d[2];
+  for(int i = 0; i < 2; i++) {
+    r[i] = pointRange[i + 2] - pointRange[i];
+    d[i] = pointDonorRange[i + 2] - pointDonorRange[i];
+  }
+  for(int i = 0; i < 2; i++) {
+    for(int j = 0; j < 2; j++) {
+      if(std::abs(r[i]) == std::abs(d[j])) {
+        transform[i] = (j + 1) * (r[i] * d[j] < 0 ? -1 : 1);
+      }
     }
   }
-  else if(b1 == 0) {
-    x2 = a1 / b2;
-    y2 = a2 / b2;
-    if(x2 == 0) {
-      y1 = 0;
-      if(y2 > 0) x1 = 1;
-      else x1 = -1;
-    }
-    else if(y2 == 0) {
-      x1 = 0;
-      if(x2 < 0) y1 = 1;
-      else y1 = -1;
-    }
-  }
-  else {
-    Msg::Warning("Could not find transform matrix for zone - using default");
-    transform[0] = 1;
-    transform[1] = 2;
-    return;
-  }
-
-  if(x1 == 1) transform[0] = 1;
-  else if(x1 == -1) transform[0] = -1;
-  if(x2 == 1) transform[1] = 1;
-  else if(x2 == -1) transform[1] = -1;
-
-  if(y1 == 1) transform[0] = 2;
-  else if(y1 == -1) transform[0] = -2;
-  if(y2 == 1) transform[1] = 2;
-  else if(y2 == -1) transform[1] = -2;
 }
 
 static bool findRange2D(GFace *gf, GEdge *ge,
