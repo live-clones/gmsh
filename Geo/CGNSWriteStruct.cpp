@@ -39,7 +39,20 @@
 
 #if defined(HAVE_LIBCGNS)
 
-static std::string dimName(int dim)
+static bool isTransfinite(GFace *gf)
+{
+  return gf->transfinite_vertices.size() &&
+    gf->transfinite_vertices[0].size();
+}
+
+static bool isTransfinite(GRegion *gr)
+{
+  return gr->transfinite_vertices.size() &&
+    gr->transfinite_vertices[0].size() &&
+    gr->transfinite_vertices[0][0].size();
+}
+
+static std::string getDimName(int dim)
 {
   if(dim == 3) return "Volume";
   else if(dim == 2) return "Surface";
@@ -53,19 +66,19 @@ static std::string getZoneName(GEntity *ge)
   for(auto t: ge->physicals) {
     std::string n = ge->model()->getPhysicalName(ge->dim(), t);
     if(n.empty())
-      sstream << "Physical" << dimName(ge->dim()) << t << "_";
+      sstream << "Physical" << getDimName(ge->dim()) << t << "_";
     else
       sstream << n << "_";
   }
-  sstream << dimName(ge->dim()) << ge->tag();
+  sstream << getDimName(ge->dim()) << ge->tag();
   return sstream.str();
 }
 
 static std::string getInterfaceName(GEntity *ge1, GEntity *ge2)
 {
   std::ostringstream sstream;
-  sstream << "Interface_" << dimName(ge1->dim()) << ge1->tag()
-          << "_" << dimName(ge2->dim()) << ge2->tag();
+  sstream << "Interface_" << getDimName(ge1->dim()) << ge1->tag()
+          << "_" << getDimName(ge2->dim()) << ge2->tag();
   return sstream.str();
 }
 
@@ -223,7 +236,7 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
     for(auto ge: gf->edges()) {
       // write interface data
       for(auto gf2: ge->faces()) {
-        if(gf2 != gf)
+        if(gf2 != gf && isTransfinite(gf2))
           writeInterface2D(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge, gf2);
       }
       // write boundary conditions
@@ -406,7 +419,7 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
     for(auto gf: gr->faces()) {
       // write interface data
       for(auto gr2: gf->regions()) {
-        if(gr2 != gr)
+        if(gr2 != gr && isTransfinite(gr2))
           writeInterface3D(cgIndexFile, cgIndexBase, cgIndexZone, gr, gf, gr2);
       }
       // write boundary conditions
@@ -425,8 +438,7 @@ int writeZonesStruct(GModel *model, double scalingFactor, int cgIndexFile,
 
   std::vector<GFace *> faces;
   for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
-    if((*it)->transfinite_vertices.size() &&
-       (*it)->transfinite_vertices[0].size()) {
+    if(isTransfinite(*it)) {
       meshDim = 2;
       faces.push_back(*it);
     }
@@ -435,9 +447,7 @@ int writeZonesStruct(GModel *model, double scalingFactor, int cgIndexFile,
   std::vector<GRegion *> regions;
   for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
       ++it) {
-    if((*it)->transfinite_vertices.size() &&
-       (*it)->transfinite_vertices[0].size() &&
-       (*it)->transfinite_vertices[0][0].size()) {
+    if(isTransfinite(*it)) {
       meshDim = 3;
       regions.push_back(*it);
     }
