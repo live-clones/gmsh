@@ -74,7 +74,7 @@ static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
                                int transform[2])
 {
   if(pointRange.size() != 4 || pointDonorRange.size() != 4) {
-    Msg::Error("Invalid point ranges to compute tranform - using default");
+    Msg::Error("Invalid point ranges to compute transform - using default");
     transform[0] = 1;
     transform[1] = 2;
     return;
@@ -87,7 +87,7 @@ static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
   }
   for(int i = 0; i < 2; i++) {
     for(int j = 0; j < 2; j++) {
-      if(std::abs(r[i]) == std::abs(d[j])) {
+      if(std::abs(r[i]) == std::abs(d[j])) { // == 0 on the interface
         transform[i] = (j + 1) * (r[i] * d[j] < 0 ? -1 : 1);
       }
     }
@@ -239,15 +239,16 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
                                int transform[3])
 {
   if(pointRange.size() != 6 || pointDonorRange.size() != 6) {
-    Msg::Error("Invalid point ranges to compute tranform - using default");
+    Msg::Error("Invalid point ranges to compute transform - using default");
     transform[0] = 1;
     transform[1] = 2;
     transform[2] = 3;
     return;
   }
-  // FIXME this can lead to swaps if we have the same number of nodes in 2
-  // directions - we should go back to the actual nodes of the 2 volumes to
-  // determine the relative (i,j,k) orientations
+  // This will choose one of the 2 possible orientations if we have the same
+  // number of nodes on all the sides of the interface; not sure if this is an
+  // issue, as the transfinite points ordering is not linked with the geometry
+  // anyway?
   int r[3], d[3];
   for(int i = 0; i < 3; i++) {
     r[i] = pointRange[i + 3] - pointRange[i];
@@ -255,7 +256,7 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
   }
   for(int i = 0; i < 3; i++) {
     for(int j = 0; j < 3; j++) {
-      if(std::abs(r[i]) == std::abs(d[j])) {
+      if(std::abs(r[i]) == std::abs(d[j])) { // == 0 on the interface
         transform[i] = (j + 1) * (r[i] * d[j] < 0 ? -1 : 1);
       }
     }
