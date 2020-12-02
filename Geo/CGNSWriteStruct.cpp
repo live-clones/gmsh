@@ -99,11 +99,14 @@ static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
     d[i] = pointDonorRange[i + 2] - pointDonorRange[i];
   }
   for(int i = 0; i < 2; i++) {
+    transform[i] = 0;
     for(int j = 0; j < 2; j++) {
       if(std::abs(r[i]) == std::abs(d[j])) { // == 0 on the interface
         transform[i] = (j + 1) * (r[i] * d[j] < 0 ? -1 : 1);
       }
     }
+    if(!transform[i])
+      Msg::Warning("Could not identify transform[%d]", i);
   }
 }
 
@@ -268,11 +271,14 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
     d[i] = pointDonorRange[i + 3] - pointDonorRange[i];
   }
   for(int i = 0; i < 3; i++) {
+    transform[i] = 0;
     for(int j = 0; j < 3; j++) {
       if(std::abs(r[i]) == std::abs(d[j])) { // == 0 on the interface
         transform[i] = (j + 1) * (r[i] * d[j] < 0 ? -1 : 1);
       }
     }
+    if(!transform[i])
+      Msg::Warning("Could not identify transform[%d]", i);
   }
 }
 
