@@ -54,32 +54,39 @@ static bool isTransfinite(GRegion *gr)
 
 static std::string getDimName(int dim)
 {
-  if(dim == 3) return "Volume";
-  else if(dim == 2) return "Surface";
-  else if(dim == 1) return "Curve";
-  else return "Point";
-}
-
-static std::string getZoneName(GEntity *ge)
-{
-  std::ostringstream sstream;
-  for(auto t: ge->physicals) {
-    std::string n = ge->model()->getPhysicalName(ge->dim(), t);
-    if(n.empty())
-      sstream << "Physical" << getDimName(ge->dim()) << t << "_";
-    else
-      sstream << n << "_";
+  switch(dim) {
+  case 0: return "P"; break;
+  case 1: return "C"; break;
+  case 2: return "S"; break;
+  case 3: return "V"; break;
   }
-  sstream << getDimName(ge->dim()) << ge->tag();
-  return sstream.str();
+  return "";
 }
 
-static std::string getInterfaceName(GEntity *ge1, GEntity *ge2)
+static std::string getZoneName(GEntity *ge, bool withPhysical = true)
 {
   std::ostringstream sstream;
-  sstream << "Interface_" << getDimName(ge1->dim()) << ge1->tag()
-          << "_" << getDimName(ge2->dim()) << ge2->tag();
-  return sstream.str();
+  if(withPhysical) {
+    for(auto t: ge->physicals) {
+      std::string n = ge->model()->getPhysicalName(ge->dim(), t);
+      if(n.empty())
+        sstream << "P" << getDimName(ge->dim()) << t << " ";
+      else
+        sstream << n << " ";
+    }
+  }
+
+  sstream << getDimName(ge->dim()) << ge->tag();
+  return sstream.str().substr(0, 32);
+}
+
+static std::string getInterfaceName(GEntity *ge, GEntity *ge1, GEntity *ge2)
+{
+  std::ostringstream sstream;
+  sstream << getZoneName(ge, false)
+          << " (" << getZoneName(ge1, false)
+          << " & " << getZoneName(ge2, false) << ")";
+  return sstream.str().substr(0, 32);
 }
 
 static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
@@ -146,9 +153,9 @@ static int writeInterface2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
     computeTransform2D(pointRange, pointDonorRange, transform);
     int cgIndexConn;
     if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                     getInterfaceName(gf, gf2).c_str(),
+                     getInterfaceName(ge, gf, gf2).c_str(),
                      getZoneName(gf2).c_str(), &pointRange[0],
-                     &pointDonorRange[0], transform, &cgIndexConn)) {
+                     &pointDonorRange[0], transform, &cgIndexConn) != CG_OK) {
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
   }
@@ -167,10 +174,16 @@ static int writeBC2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
     std::vector<cgsize_t> pointRange = {ibeg, jbeg, iend, jend};
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                     getZoneName(ge).c_str(), BCWallViscous, PointRange,
-                     2, &pointRange[0], &cgIndexBoco)) {
+                     getZoneName(ge).c_str(), BCTypeNull, PointRange,
+                     2, &pointRange[0], &cgIndexBoco) != CG_OK) {
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
+    // this is redundant, but ICEM does it...
+    if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
+               "ZoneBC_t", 1, "BC_t", cgIndexBoco, "end") != CG_OK)
+      return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    if(cg_famname_write(getZoneName(ge).c_str()) != CG_OK)
+      return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
   else{
     Msg::Warning("Could not identify boundary condition on curve %d in "
@@ -324,9 +337,9 @@ static int writeInterface3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
     computeTransform3D(pointRange, pointDonorRange, transform);
     int cgIndexConn;
     if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                     getInterfaceName(gr, gr2).c_str(),
+                     getInterfaceName(gf, gr, gr2).c_str(),
                      getZoneName(gr2).c_str(), &pointRange[0],
-                     &pointDonorRange[0], transform, &cgIndexConn)) {
+                     &pointDonorRange[0], transform, &cgIndexConn) != CG_OK) {
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
   }
@@ -345,10 +358,16 @@ static int writeBC3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
     std::vector<cgsize_t> pointRange = {ibeg, jbeg, kbeg, iend, jend, kend};
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                     getZoneName(gf).c_str(), BCWallViscous, PointRange,
-                     2, &pointRange[0], &cgIndexBoco)) {
+                     getZoneName(gf).c_str(), BCTypeNull, PointRange,
+                     2, &pointRange[0], &cgIndexBoco) != CG_OK) {
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
+    // this is redundant, but ICEM does it...
+    if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
+               "ZoneBC_t", 1, "BC_t", cgIndexBoco, "end") != CG_OK)
+      return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    if(cg_famname_write(getZoneName(gf).c_str()) != CG_OK)
+      return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
   else{
     Msg::Warning("Could not identify boundary condition on surface %d in "
