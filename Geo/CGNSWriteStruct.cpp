@@ -35,7 +35,8 @@
 //   at the begining of the zone name; the unstructured writer saves physical
 //   names in families
 //
-// - boundary conditions are created for physical groups of lower dimensions
+// - boundary conditions are created for physical groups of lower dimensions and
+//   also saved as families
 
 #if defined(HAVE_LIBCGNS)
 
