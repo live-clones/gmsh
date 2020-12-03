@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include <sstream>
+#include <iomanip>
 #include "GModel.h"
 #include "Context.h"
 #include "CGNSCommon.h"
