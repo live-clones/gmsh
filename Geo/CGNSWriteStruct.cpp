@@ -64,20 +64,37 @@ static std::string getDimName(int dim)
   return "";
 }
 
-static std::string getZoneName(GEntity *ge, bool withPhysical = true)
+static std::string getZoneName(GEntity *ge, bool withPhysical = true,
+                               bool withElementary = true)
 {
   std::ostringstream sstream;
-  if(withPhysical) {
-    for(auto t: ge->physicals) {
-      std::string n = ge->model()->getPhysicalName(ge->dim(), t);
-      if(n.empty())
-        sstream << "P" << getDimName(ge->dim()) << t << " ";
-      else
-        sstream << n << " ";
-    }
-  }
+  bool padding =
+    (ge->dim() == 0 && ge->model()->getNumVertices() < 10000) ||
+    (ge->dim() == 1 && ge->model()->getNumEdges() < 10000) ||
+    (ge->dim() == 2 && ge->model()->getNumFaces() < 10000) ||
+    (ge->dim() == 3 && ge->model()->getNumRegions() < 10000);
 
-  sstream << getDimName(ge->dim()) << ge->tag();
+  if(withPhysical) {
+    for(std::size_t i = 0; i < ge->physicals.size(); i++) {
+      if(i) sstream << " ";
+      int t = std::abs(ge->physicals[i]);
+      std::string n = ge->model()->getPhysicalName(ge->dim(), t);
+      if(n.empty()) {
+        sstream << "P" << getDimName(ge->dim());
+        if(padding) sstream << std::setfill('0') << std::setw(5);
+        sstream << t;
+      }
+      else {
+        sstream << n;
+      }
+    }
+    if(withElementary) sstream << " ";
+  }
+  if(withElementary) {
+    sstream << getDimName(ge->dim());
+    if(padding) sstream << std::setfill('0') << std::setw(5);
+    sstream << ge->tag();
+  }
   return sstream.str().substr(0, 32);
 }
 
@@ -183,7 +200,7 @@ static int writeBC2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
     if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
                "ZoneBC_t", 1, "BC_t", cgIndexBoco, "end") != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
-    if(cg_famname_write(getZoneName(ge).c_str()) != CG_OK)
+    if(cg_famname_write(getZoneName(ge, true, false).c_str()) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
   else{
@@ -367,7 +384,7 @@ static int writeBC3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
     if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
                "ZoneBC_t", 1, "BC_t", cgIndexBoco, "end") != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
-    if(cg_famname_write(getZoneName(gf).c_str()) != CG_OK)
+    if(cg_famname_write(getZoneName(gf, true, false).c_str()) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
   else{
