@@ -69,11 +69,6 @@ static std::string getZoneName(GEntity *ge, bool withPhysical = true,
                                bool withElementary = true)
 {
   std::ostringstream sstream;
-  bool padding =
-    (ge->dim() == 0 && ge->model()->getNumVertices() < 10000) ||
-    (ge->dim() == 1 && ge->model()->getNumEdges() < 10000) ||
-    (ge->dim() == 2 && ge->model()->getNumFaces() < 10000) ||
-    (ge->dim() == 3 && ge->model()->getNumRegions() < 10000);
 
   if(withPhysical) {
     for(std::size_t i = 0; i < ge->physicals.size(); i++) {
@@ -81,9 +76,7 @@ static std::string getZoneName(GEntity *ge, bool withPhysical = true,
       int t = std::abs(ge->physicals[i]);
       std::string n = ge->model()->getPhysicalName(ge->dim(), t);
       if(n.empty()) {
-        sstream << "P" << getDimName(ge->dim());
-        if(padding) sstream << std::setfill('0') << std::setw(5);
-        sstream << t;
+        sstream << "P" << getDimName(ge->dim()) << t;
       }
       else {
         sstream << n;
@@ -93,7 +86,12 @@ static std::string getZoneName(GEntity *ge, bool withPhysical = true,
   }
   if(withElementary) {
     sstream << getDimName(ge->dim());
-    if(padding) sstream << std::setfill('0') << std::setw(5);
+    // 5 digits with 0 padding
+    if((ge->dim() == 0 && ge->model()->getNumVertices() < 10000) ||
+       (ge->dim() == 1 && ge->model()->getNumEdges() < 10000) ||
+       (ge->dim() == 2 && ge->model()->getNumFaces() < 10000) ||
+       (ge->dim() == 3 && ge->model()->getNumRegions() < 10000))
+      sstream << std::setfill('0') << std::setw(5);
     sstream << ge->tag();
   }
   return sstream.str().substr(0, 32);
