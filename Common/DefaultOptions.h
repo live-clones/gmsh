@@ -1288,6 +1288,9 @@ StringXNumber MeshOptions_Number[] = {
     "Write partitioned meshes in MSH2 format using old style (i.e. by not "
     "referencing new partitioned entities, except on partition boundaries), "
     "for backward compatibility" },
+  { F|O, "PartitionConvertMsh2" , opt_mesh_partition_convert_msh2 , 1 ,
+    "When reading partitioned meshes in MSH2 format, create new partition "
+    "entities"},
 
   { F|O, "ReparamMaxTriangles" , opt_mesh_reparam_max_triangles , 250000 ,
     "Maximum number of triangles in a single parametrization patch" },

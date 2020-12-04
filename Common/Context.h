@@ -66,7 +66,7 @@ struct contextMeshOptions {
   int partitionSaveTopologyFile, partitionTriWeight, partitionQuaWeight;
   int partitionTetWeight, partitionHexWeight, partitionLinWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
-  int partitionOldStyleMsh2;
+  int partitionOldStyleMsh2, partitionConvertMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
   int metisObjective, metisMinConn;
   double metisMaxLoadImbalance;

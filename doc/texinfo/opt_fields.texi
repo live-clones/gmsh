@@ -146,6 +146,14 @@ Options:@*
 Threshold angle for creating a mesh fan in the boundary layer@*
 type: float@*
 default value: @code{10000000000}
+@item Beta
+Beta coefficient of the Beta Law@*
+type: float@*
+default value: @code{1.01}
+@item BetaLaw
+Use Beta Law instead of geometric progression @*
+type: integer@*
+default value: @code{0}
 @item CurvesList
 Tags of curves in the geometric model for which a boundary layer is needed@*
 type: list@*
@@ -166,6 +174,10 @@ default value: @code{@{@}}
 Intersect metrics of all surfaces@*
 type: integer@*
 default value: @code{0}
+@item NbLayers
+Number of Layers in theBeta Law@*
+type: integer@*
+default value: @code{10}
 @item PointsList
 Tags of points in the geometric model for which a boundary layer ends@*
 type: list@*
