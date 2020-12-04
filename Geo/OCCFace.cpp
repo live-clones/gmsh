@@ -260,7 +260,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   double pp[2] = {initialGuess[0], initialGuess[1]};
   proj.LowerDistanceParameters(pp[0], pp[1]);
 
-  if((pp[0] < _umin || _umax < pp[0]) || (pp[1] < _vmin || _vmax < pp[1])) {
+  if((pp[0] < umin || umax < pp[0]) || (pp[1] < vmin || vmax < pp[1])) {
     Msg::Warning("Point projection is out of face bounds");
     GPoint gp(0, 0);
     gp.setNoSuccess();
