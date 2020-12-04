@@ -113,7 +113,7 @@ int GModel::_readMSH2(const std::string &name)
   std::map<int, MVertex *> vertexMap;
   std::vector<MVertex *> vertexVector;
   int minVertex = 0;
-  int oldNumPartitions = getNumPartitions();
+  std::size_t oldNumPartitions = getNumPartitions();
 
   while(1) {
     while(str[0] != '$') {

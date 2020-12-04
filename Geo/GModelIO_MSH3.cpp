@@ -200,7 +200,7 @@ int GModel::_readMSH3(const std::string &name)
   bool binary = false, swap = false, postpro = false;
   int minVertex = 0;
   std::map<int, std::vector<MElement *> > elements[11];
-  int oldNumPartitions = getNumPartitions();
+  std::size_t oldNumPartitions = getNumPartitions();
 
   while(1) {
     while(str[0] != '$') {
