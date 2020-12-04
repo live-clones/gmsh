@@ -51,6 +51,7 @@ class FieldOption {
 private:
   std::string _help;
   bool _deprecated;
+
 protected:
   bool *status;
   inline void modified()
@@ -184,7 +185,7 @@ private:
   std::list<int> _pointTags, _curveTags;
   std::list<int> _pointTagsSaved, _curveTagsSaved, _fanPointTags;
   std::list<int> _excludedSurfaceTags;
-  std::list<int> _fanSizes; 
+  std::list<int> _fanSizes;
   SPoint3 _closestPoint;
   void operator()(DistanceField *cc, double dist, double x, double y, double z,
                   SMetric3 &metr, GEntity *ge);
@@ -217,17 +218,18 @@ public:
     return std::find(_fanPointTags.begin(), _fanPointTags.end(), iV) !=
            _fanPointTags.end();
   }
-  int fanSize (int iV){
-    if (_fanPointTags.size() !=  _fanSizes.size())
+  int fanSize(int iV)
+  {
+    if(_fanPointTags.size() != _fanSizes.size())
       return CTX::instance()->mesh.boundaryLayerFanPoints;
     std::list<int>::iterator it1 = _fanPointTags.begin();
     std::list<int>::iterator it2 = _fanSizes.begin();
-    for (; it1 != _fanPointTags.end();++it1,++it2){
-      if (*it1 == iV)return *it2;
+    for(; it1 != _fanPointTags.end(); ++it1, ++it2) {
+      if(*it1 == iV) return *it2;
     }
     return 0;
   }
-  
+
   bool isEndNode(int iV) const
   {
     return std::find(_pointTags.begin(), _pointTags.end(), iV) !=
@@ -277,8 +279,8 @@ class FieldOptionDouble : public FieldOption {
 public:
   double &val;
   FieldOptionType getType() { return FIELD_OPTION_DOUBLE; }
-  FieldOptionDouble(double &_val, const std::string &help,
-                    bool *status = 0, bool deprecated = false)
+  FieldOptionDouble(double &_val, const std::string &help, bool *status = 0,
+                    bool deprecated = false)
     : FieldOption(help, status, deprecated), val(_val)
   {
   }
@@ -380,8 +382,8 @@ public:
 class FieldOptionPath : public FieldOptionString {
 public:
   virtual FieldOptionType getType() { return FIELD_OPTION_PATH; }
-  FieldOptionPath(std::string &val, const std::string &help,
-                  bool *status = 0, bool deprecated = false)
+  FieldOptionPath(std::string &val, const std::string &help, bool *status = 0,
+                  bool deprecated = false)
     : FieldOptionString(val, help, status, deprecated)
   {
   }
