@@ -571,6 +571,34 @@ bool buildAdditionalPoints2D(GFace *gf)
         if(endOfTheBL && dot(n, dirEndOfBL) > .99) {
           // printf( "coucou c'est moi\n");
         }
+	// ADD BETA LAW HERE !!!
+	else if (blf->betaLaw){
+          MVertex *first = *it;
+          double hWall;
+          getLocalInfoAtNode(first, blf, hWall);
+          std::vector<MVertex *> _column;
+          SPoint2 par =
+            gf->parFromPoint(SPoint3(first->x(), first->y(), first->z()));
+	  std::vector<double> t(blf->nb_divisions);
+
+	  double zlog  = log((1+blf->beta)/(blf->beta-1));
+	  for (size_t i=0 ; i<blf->nb_divisions; i++){
+	    const double eta = (double)(i+1)/blf->nb_divisions;
+	    const double power = exp(zlog*(1.-eta));
+	    const double ratio = (1.-power)/(1.+power);
+	    t[i] = 1.0 + blf->beta*ratio;
+	  }
+	  for (size_t i=0 ; i<blf->nb_divisions; i++){
+	    double L = hWall * t[i]/t[0];
+            SPoint2 pnew(par.x() + L * n.x(), par.y() + L * n.y());
+            GPoint pp = gf->point(pnew);
+            MFaceVertex *_current =
+              new MFaceVertex(pp.x(), pp.y(), pp.z(), gf, pnew.x(), pnew.y());
+            _current->bl_data = new MVertexBoundaryLayerData;
+            _column.push_back(_current);
+	  }
+          _columns->addColumn(n, *it, _column /*,_metrics*/);	  
+	}
         else {
           MVertex *first = *it;
           double hWall;

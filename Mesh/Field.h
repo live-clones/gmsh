@@ -191,8 +191,8 @@ private:
 
 public:
   double hWallN, ratio, hFar, thickness;
-  double currentDistance, tgtAnisoRatio;
-  int iRecombine, iIntersect;
+  double currentDistance, tgtAnisoRatio, beta;
+  int iRecombine, iIntersect, betaLaw, nb_divisions;
   DistanceField *currentClosest;
   virtual bool isotropic() const { return false; }
   virtual const char *getName();

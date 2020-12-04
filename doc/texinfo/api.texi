@@ -2263,7 +2263,7 @@ The embedded entities should not be part of the boundary of the entity
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1319,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1162,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2908,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2456,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t15.cpp#L51,t15.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t15.py#L47,t15.py}, @url{@value{GITLAB-PREFIX}/demos/api/field_dist_surface.py#L20,field_dist_surface.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t15.cpp#L51,t15.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t15.py#L47,t15.py})
 @end table
 
 @item gmsh/model/mesh/removeEmbedded
@@ -2609,7 +2609,7 @@ Set the numerical option @code{option} to value @code{value} for field
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1495,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1314,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3301,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2811,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L49,t10.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L270,adapt_mesh.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L46,t10.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L113,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/copy_mesh.py#L46,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/field_dist_surface.py#L25,field_dist_surface.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L49,t10.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L270,adapt_mesh.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L46,t10.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L113,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/copy_mesh.py#L46,copy_mesh.py})
 @end table
 
 @item gmsh/model/mesh/field/setString
@@ -2642,7 +2642,7 @@ Set the numerical list option @code{option} to value @code{value} for field
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1509,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1326,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3333,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2839,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L47,t10.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L44,t10.py}, @url{@value{GITLAB-PREFIX}/demos/api/field_dist_surface.py#L24,field_dist_surface.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L47,t10.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L44,t10.py})
 @end table
 
 @item gmsh/model/mesh/field/setAsBackgroundMesh
@@ -3483,7 +3483,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2012,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1763,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4343,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3721,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/demos/api/crack.py#L13,crack.py}, @url{@value{GITLAB-PREFIX}/demos/api/field_dist_surface.py#L8,field_dist_surface.py})
+Python (@url{@value{GITLAB-PREFIX}/demos/api/crack.py#L13,crack.py})
 @end table
 
 @item gmsh/model/occ/addCircleArc
@@ -3660,7 +3660,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2127,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1869,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4571,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3902,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L26,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L24,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/field_dist_surface.py#L12,field_dist_surface.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L26,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L24,t19.py})
 @end table
 
 @item gmsh/model/occ/addRectangle
@@ -3718,8 +3718,6 @@ Return the tag of the surface.
 integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2165,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1904,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4647,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3961,Julia}
-@item Examples:
-Python (@url{@value{GITLAB-PREFIX}/demos/api/field_dist_surface.py#L13,field_dist_surface.py})
 @end table
 
 @item gmsh/model/occ/addSurfaceFilling

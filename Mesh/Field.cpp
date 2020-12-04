@@ -2720,6 +2720,9 @@ std::string BoundaryLayerField::getDescription()
 
 BoundaryLayerField::BoundaryLayerField()
 {
+  betaLaw = 0;
+  nb_divisions = 10;
+  beta = 1.01;
   hWallN = .1;
   hFar = 1;
   ratio = 1.1;
@@ -2758,6 +2761,12 @@ BoundaryLayerField::BoundaryLayerField()
   options["AnisoMax"] = new FieldOptionDouble(
     tgtAnisoRatio, "Threshold angle for creating a mesh fan in the boundary "
     "layer");
+  options["BetaLaw"] = new FieldOptionInt(
+    betaLaw, "Use Beta Law instead of geometric progression ");
+  options["Beta"] = new FieldOptionDouble(
+    beta, "Beta coefficient of the Beta Law");
+  options["NbLayers"] = new FieldOptionInt(
+    nb_divisions, "Number of Layers in theBeta Law");
   options["ExcludedSurfacesList"] = new FieldOptionList(
     _excludedSurfaceTags, "Tags of surfaces in the geometric model where the "
     "boundary layer should not be contructed", &updateNeeded);
