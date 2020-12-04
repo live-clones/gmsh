@@ -3736,13 +3736,7 @@ Return the tag of the surface.
 @item Return:
 integer value
 @item Language-specific definition:
-<<<<<<< HEAD
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2165,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1904,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4647,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3961,Julia}
-=======
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2176,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1914,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4674,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3986,Julia}
-@item Examples:
-Python (@url{@value{GITLAB-PREFIX}/demos/api/field_dist_surface.py#L13,field_dist_surface.py})
->>>>>>> b5ebdf27de5995e2a09a340030cc16829242d084
 @end table
 
 @item gmsh/model/occ/addSurfaceFilling
