@@ -469,6 +469,42 @@ GMSH_API void gmsh::model::getBoundary(const vectorpair &dimTags,
   }
 }
 
+GMSH_API void gmsh::model::getAdjacencies(const int dim, const int tag,
+                                          std::vector<int> &upward,
+                                          std::vector<int> &downward)
+{
+  if(!_checkInit()) return;
+  upward.clear();
+  downward.clear();
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    return;
+  }
+  switch(dim) {
+  case 0:
+    for(auto &e: static_cast<GVertex*>(ge)->edges())
+      upward.push_back(e->tag());
+    break;
+  case 1:
+    for(auto &e: static_cast<GEdge*>(ge)->faces())
+      upward.push_back(e->tag());
+    for(auto &e: static_cast<GEdge*>(ge)->vertices())
+      downward.push_back(e->tag());
+    break;
+  case 2:
+    for(auto &e: static_cast<GFace*>(ge)->regions())
+      upward.push_back(e->tag());
+    for(auto &e: static_cast<GFace*>(ge)->edges())
+      downward.push_back(e->tag());
+    break;
+  case 3:
+    for(auto &e: static_cast<GRegion*>(ge)->faces())
+      downward.push_back(e->tag());
+    break;
+  }
+}
+
 GMSH_API void gmsh::model::getEntitiesInBoundingBox(
   const double xmin, const double ymin, const double zmin, const double xmax,
   const double ymax, const double zmax, vectorpair &dimTags, const int dim)

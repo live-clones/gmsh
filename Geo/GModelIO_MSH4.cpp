@@ -2836,22 +2836,44 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // entities
   writeMSH4Entities(this, fp, false, binary, scalingFactor, version);
 
+  // check if the mesh is partitioned... and if we actually have elements in the
   // partitioned entities
-  if(getNumPartitions() > 0) {
-    writeMSH4Entities(this, fp, true, binary, scalingFactor, version);
+  bool partitioned = getNumPartitions() > 0;
+  if(partitioned) {
+    std::vector<GEntity *> entities;
+    getEntities(entities);
+    std::size_t partEnt = 0;
+    for(auto &ge: entities) {
+      if(ge->geomType() == GEntity::PartitionPoint ||
+         ge->geomType() == GEntity::PartitionCurve ||
+         ge->geomType() == GEntity::PartitionSurface ||
+         ge->geomType() == GEntity::PartitionVolume ||
+         ge->geomType() == GEntity::GhostCurve ||
+         ge->geomType() == GEntity::GhostSurface ||
+         ge->geomType() == GEntity::GhostVolume)
+        partEnt++;
+    }
+    if(!partEnt) {
+      // this can happen when e.g. loading an old MSH2 files with partition tags
+      // stored in elements
+      Msg::Warning("No partition entities found, saving mesh as unpartitioned");
+      partitioned = false;
+    }
   }
 
+  // partitioned entities
+  if(partitioned)
+    writeMSH4Entities(this, fp, true, binary, scalingFactor, version);
+
   // nodes
-  writeMSH4Nodes(this, fp, getNumPartitions() == 0 ? false : true, binary,
-                 saveParametric ? 1 : 0, scalingFactor, saveAll, version);
+  writeMSH4Nodes(this, fp, partitioned, binary, saveParametric ? 1 : 0,
+                 scalingFactor, saveAll, version);
 
   // elements
-  writeMSH4Elements(this, fp, getNumPartitions() == 0 ? false : true, binary,
-                    saveAll, version);
+  writeMSH4Elements(this, fp, partitioned, binary, saveAll, version);
 
   // periodic
-  writeMSH4PeriodicNodes(this, fp, getNumPartitions() == 0 ? false : true,
-                         binary, version);
+  writeMSH4PeriodicNodes(this, fp, partitioned, binary, version);
 
   // ghostCells
   writeMSH4GhostCells(this, fp, binary);

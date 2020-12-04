@@ -17,8 +17,10 @@
 
 int cgnsError(const char *file, const int line, const int fileIndex)
 {
-  Msg::Error("%s:%i: Error from CGNS library -- %s", file, line,
-             cg_get_error());
+  if(Msg::GetVerbosity() < 99)
+    Msg::Error("CGNS error %s", cg_get_error());
+  else
+    Msg::Error("CGNS error %s (%s:%i)", cg_get_error(), file, line);
   if(fileIndex != -1) {
     if(cg_close(fileIndex)) { Msg::Error("Unable to close CGNS file"); }
   }
