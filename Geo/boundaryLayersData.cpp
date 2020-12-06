@@ -589,6 +589,7 @@ bool buildAdditionalPoints2D(GFace *gf)
             _current->bl_data = new MVertexBoundaryLayerData;
             _column.push_back(_current);
             int ith = _column.size();
+	    // ADD BETA LAW HERE !!!
             L += hWall * pow(blf->ratio, ith);
           }
           _columns->addColumn(n, *it, _column /*,_metrics*/);
