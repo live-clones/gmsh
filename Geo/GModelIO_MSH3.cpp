@@ -200,6 +200,7 @@ int GModel::_readMSH3(const std::string &name)
   bool binary = false, swap = false, postpro = false;
   int minVertex = 0;
   std::map<int, std::vector<MElement *> > elements[11];
+  std::size_t oldNumPartitions = getNumPartitions();
 
   while(1) {
     while(str[0] != '$') {
@@ -555,6 +556,11 @@ int GModel::_readMSH3(const std::string &name)
     _storeParentsInSubElements(elements[i]);
 
   fclose(fp);
+
+  // create new partition entities if the mesh is partitioned
+  if(CTX::instance()->mesh.partitionConvertMsh2 &&
+     getNumPartitions() > oldNumPartitions)
+    convertOldPartitioningToNewOne();
 
   return postpro ? 2 : 1;
 }

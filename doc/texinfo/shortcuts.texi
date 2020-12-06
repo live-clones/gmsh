@@ -99,6 +99,8 @@ Show manipulator window
 Show option window
 @item Shift+Ctrl+o
 Merge file(s)
+@item Shift+Ctrl+r
+Open next-to-last opened file
 @item Shift+Ctrl+u
 Show plugin window
 @item Shift+Ctrl+v

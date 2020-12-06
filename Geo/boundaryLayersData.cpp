@@ -155,7 +155,8 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2, int side)
 
 static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
                               BoundaryLayerColumns *_columns,
-                              std::vector<SVector3> &_dirs, bool fan, int fanSize)
+                              std::vector<SVector3> &_dirs, bool fan,
+                              int fanSize)
 {
   std::vector<SVector3> N1, N2;
   for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
@@ -171,13 +172,13 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
       if(!fan) {
         SVector3 x = N1[SIDE] * 1.01 + N2[SIDE];
         x.normalize();
-	// BUG FIX #1054 : the size should be divided by cos (theta /2)
-	// where cos theta is dot (N1[SIDE],N2[SIDE])
-	double theta = acos (fabs(dot (N1[SIDE],N2[SIDE])));
-	double fact = 1./cos (theta/2);
-	//	printf("%12.5E\n",theta,fact);
-	x *= fabs(fact);
-	// END BUG FIX #1054 ...
+        // BUG FIX #1054 : the size should be divided by cos (theta /2)
+        // where cos theta is dot (N1[SIDE],N2[SIDE])
+        double theta = acos(fabs(dot(N1[SIDE], N2[SIDE])));
+        double fact = 1. / cos(theta / 2);
+        //	printf("%12.5E\n",theta,fact);
+        x *= fabs(fact);
+        // END BUG FIX #1054 ...
         _dirs.push_back(x);
       }
       else if(fan) {
@@ -205,7 +206,8 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
         }
         double frac = fabs(AMAX - AMIN) / M_PI;
         int n =
-          (int)(frac * fanSize /*CTX::instance()->mesh.boundaryLayerFanPoints*/ + 0.5);
+          (int)(frac * fanSize /*CTX::instance()->mesh.boundaryLayerFanPoints*/
+                + 0.5);
         int fanSize = fan ? n : 0;
         _columns->addFan(_myVert, ee[0], ee[1], true);
         for(int i = -1; i <= fanSize; i++) {
@@ -245,8 +247,7 @@ static void treat3Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
     N3.push_back(itm->second);
 
   SVector3 x1, x2;
-  if(N1.size() == 2) {
-  }
+  if(N1.size() == 2) {}
   else if(N2.size() == 2) {
     std::vector<SVector3> temp = N1;
     N1.clear();
@@ -377,7 +378,7 @@ static void addColumnAtTheEndOfTheBL(GEdge *ge, GVertex *gv,
       invert.push_back(ge->mesh_vertices[ge->mesh_vertices.size() - i - 1]);
     GVertex *g0 = ge->getBeginVertex();
     GVertex *g1 = ge->getEndVertex();
-    if(g0 && g1){
+    if(g0 && g1) {
       MVertex *v0 = g0->mesh_vertices[0];
       MVertex *v1 = g1->mesh_vertices[0];
       SVector3 t(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
@@ -393,9 +394,7 @@ static void addColumnAtTheEndOfTheBL(GEdge *ge, GVertex *gv,
 void getLocalInfoAtNode(MVertex *v, BoundaryLayerField *blf, double &hWall)
 {
   hWall = blf->hWallN;
-  if(v->onWhat()->dim() == 0) {
-    hWall = blf->hWall(v->onWhat()->tag());
-  }
+  if(v->onWhat()->dim() == 0) { hWall = blf->hWall(v->onWhat()->tag()); }
   else if(v->onWhat()->dim() == 1) {
     GEdge *ge = (GEdge *)v->onWhat();
     Range<double> bounds = ge->parBounds(0);
@@ -403,14 +402,14 @@ void getLocalInfoAtNode(MVertex *v, BoundaryLayerField *blf, double &hWall)
     double t_end = bounds.high();
     double t;
     v->getParameter(0, t);
-    if(ge->getBeginVertex() && ge->getEndVertex()){
+    if(ge->getBeginVertex() && ge->getEndVertex()) {
       double hWall_beg = blf->hWall(ge->getBeginVertex()->tag());
       double hWall_end = blf->hWall(ge->getEndVertex()->tag());
       double x = (t - t_begin) / (t_end - t_begin);
       double hWallLin = hWall_beg + x * (hWall_end - hWall_beg);
       double hWall_mid = std::min(hWall_beg, hWall_end);
       double hWallQuad = hWall_beg * (1 - x) * (1 - x) +
-        hWall_mid * 2 * x * (1 - x) + hWall_end * x * x;
+                         hWall_mid * 2 * x * (1 - x) + hWall_end * x * x;
       // we prefer a quadratic growing:
       hWall = 0 * hWallLin + 1 * hWallQuad;
     }
@@ -460,9 +459,8 @@ bool buildAdditionalPoints2D(GFace *gf)
 
       bool fan =
         (*it)->onWhat()->dim() == 0 && blf->isFanNode((*it)->onWhat()->tag());
-      int  fanSize = fan ? blf->fanSize((*it)->onWhat()->tag()) : 0;
-            
-      
+      int fanSize = fan ? blf->fanSize((*it)->onWhat()->tag()) : 0;
+
       for(std::multimap<MVertex *, MVertex *>::iterator itm =
             _columns->_non_manifold_edges.lower_bound(*it);
           itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
@@ -509,9 +507,7 @@ bool buildAdditionalPoints2D(GFace *gf)
             // %d\n",(*it)->onWhat()->dim(),Ts[0]->onWhat()->dim());
             GEdge *ge = dynamic_cast<GEdge *>(Ts[0]->onWhat());
             GVertex *gv = dynamic_cast<GVertex *>((*it)->onWhat());
-            if(ge && gv) {
-              addColumnAtTheEndOfTheBL(ge, gv, _columns, blf);
-            }
+            if(ge && gv) { addColumnAtTheEndOfTheBL(ge, gv, _columns, blf); }
           }
           else {
             Msg::Error(
@@ -538,8 +534,7 @@ bool buildAdditionalPoints2D(GFace *gf)
             AMAX = temp;
           }
           double frac = fabs(AMAX - AMIN) / M_PI;
-          int n =
-            (int)(frac * fanSize + 0.5);
+          int n = (int)(frac * fanSize + 0.5);
           int fanSize2 = fan ? n : 0;
           if(fan) _columns->addFan(*it, e1, e1, true);
           for(int i = -1; i <= fanSize2; i++) {
@@ -570,6 +565,34 @@ bool buildAdditionalPoints2D(GFace *gf)
         */
         if(endOfTheBL && dot(n, dirEndOfBL) > .99) {
           // printf( "coucou c'est moi\n");
+        }
+        // ADD BETA LAW HERE !!!
+        else if(blf->betaLaw) {
+          MVertex *first = *it;
+          double hWall;
+          getLocalInfoAtNode(first, blf, hWall);
+          std::vector<MVertex *> _column;
+          SPoint2 par =
+            gf->parFromPoint(SPoint3(first->x(), first->y(), first->z()));
+          std::vector<double> t(blf->nb_divisions);
+
+          double zlog = log((1 + blf->beta) / (blf->beta - 1));
+          for(int i = 0; i < blf->nb_divisions; i++) {
+            const double eta = (double)(i + 1) / blf->nb_divisions;
+            const double power = exp(zlog * (1. - eta));
+            const double ratio = (1. - power) / (1. + power);
+            t[i] = 1.0 + blf->beta * ratio;
+          }
+          for(int i = 0; i < blf->nb_divisions; i++) {
+            double L = hWall * t[i] / t[0];
+            SPoint2 pnew(par.x() + L * n.x(), par.y() + L * n.y());
+            GPoint pp = gf->point(pnew);
+            MFaceVertex *_current =
+              new MFaceVertex(pp.x(), pp.y(), pp.z(), gf, pnew.x(), pnew.y());
+            _current->bl_data = new MVertexBoundaryLayerData;
+            _column.push_back(_current);
+          }
+          _columns->addColumn(n, *it, _column /*,_metrics*/);
         }
         else {
           MVertex *first = *it;

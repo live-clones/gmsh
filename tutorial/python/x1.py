@@ -88,10 +88,12 @@ for e in entities:
     print(" - Mesh has " + str(len(nodeTags)) + " nodes and " + str(numElem) +
           " elements")
 
-    # * Entities on its boundary:
-    boundary = gmsh.model.getBoundary([e])
-    if len(boundary):
-        print(" - Boundary entities: " + str(boundary))
+    # * Upward and downward adjacencies:
+    up, down = gmsh.model.getAdjacencies(e[0], e[1])
+    if len(up):
+        print(" - Upward adjacencies: " + str(up))
+    if len(down):
+        print(" - Downward adjacencies: " + str(down))
 
     # * Does the entity belong to physical groups?
     physicalTags = gmsh.model.getPhysicalGroupsForEntity(dim, tag)

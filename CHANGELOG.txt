@@ -1,7 +1,7 @@
 4.8.0 (Work-in-progress): new API functions for creating trimmed BSpline/Bezier
 patches, perform raw triangulations and tetrehedralizations; improved
 performance of high-order meshing of OCC models; improved handling of high
-resolution displays; small bug fixes.
+resolution displays; new structured CGNS exporter; small bug fixes.
 
 * Incompatible API changes: new optional argument to occ/addBSplineSurface,
   occ/addBezierSurface and view/probe

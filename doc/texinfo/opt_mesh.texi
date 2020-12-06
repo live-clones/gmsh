@@ -207,7 +207,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderFastCurvingNewAlgo
-Use the new algorithm for fast curving of boundary layer meshes (experimental)?@*
+Curve boundary layer with new "fast curving" algorithm (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -217,18 +217,18 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderMaxRho
-Maximum min/max ratio of edge/face size for the detection of boundary layer element columns in the fast curving algorithm@*
+Maximum min/max ratio of edge/face size for the detection of BL element columns in the fast curving algorithm@*
 Default value: @code{0.3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderMaxAngle
-Maximum angle between layers of boundary layer elements for the detection of columns in the fast curving algorithm@*
-Default value: @code{10*Pi/180}@*
+Maximum angle between layers of BL elements for the detection of columns in the fast curving algorithm@*
+Default value: @code{0.174533}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderMaxInnerAngle
 Maximum angle between edges/faces within layers of BL triangles/tets for the detection of columns in the fast curving algorithm@*
-Default value: @code{30*Pi/180}@*
+Default value: @code{0.523599}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelSampling
@@ -478,6 +478,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionOldStyleMsh2
 Write partitioned meshes in MSH2 format using old style (i.e. by not referencing new partitioned entities, except on partition boundaries), for backward compatibility@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionConvertMsh2
+When reading partitioned meshes in MSH2 format, create new partition entities@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -278,6 +278,7 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp("Shift+" + cc + "m", "Show manipulator window"));
   s.push_back(mp("Shift+" + cc + "n", "Show option window"));
   s.push_back(mp("Shift+" + cc + "o", "Merge file(s)"));
+  s.push_back(mp("Shift+" + cc + "r", "Open next-to-last opened file"));
   s.push_back(mp("Shift+" + cc + "u", "Show plugin window"));
   s.push_back(mp("Shift+" + cc + "v", "Show visibility window"));
   s.push_back(mp("Alt+a", "Loop through axes modes"));

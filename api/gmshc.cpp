@@ -423,6 +423,21 @@ GMSH_API void gmshModelGetBoundary(int * dimTags, size_t dimTags_n, int ** outDi
   }
 }
 
+GMSH_API void gmshModelGetAdjacencies(const int dim, const int tag, int ** upward, size_t * upward_n, int ** downward, size_t * downward_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_upward_;
+    std::vector<int> api_downward_;
+    gmsh::model::getAdjacencies(dim, tag, api_upward_, api_downward_);
+    vector2ptr(api_upward_, upward, upward_n);
+    vector2ptr(api_downward_, downward, downward_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin, const double ymin, const double zmin, const double xmax, const double ymax, const double zmax, int ** tags, size_t * tags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;

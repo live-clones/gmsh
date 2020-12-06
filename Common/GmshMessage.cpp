@@ -1653,7 +1653,11 @@ int Msg::GetThreadNum(){ return omp_get_thread_num(); }
 #else
 
 int Msg::GetNumThreads(){ return 1; }
-void Msg::SetNumThreads(int num){ }
+void Msg::SetNumThreads(int num)
+{
+  if(num > 1)
+    Msg::Warning("Setting number of threads to %d requires OpenMP", num);
+}
 int Msg::GetMaxThreads(){ return 1; }
 int Msg::GetThreadNum(){ return 0; }
 

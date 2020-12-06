@@ -326,7 +326,7 @@ static void copyMesh(GEdge *from, GEdge *to, int direction)
       // Mesh.HighOrderPeriodic=2, which will do that
       newu = to->parFromPoint(p);
       gp = to->point(newu);
-      //gp = to->closestPoint(p, newu);
+      // gp = to->closestPoint(p, newu);
     }
     MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), to, newu);
     to->mesh_vertices.push_back(vv);
@@ -455,14 +455,33 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
   double L = hWall;
   double LEdge = distance(ge->getBeginVertex()->mesh_vertices[0],
                           ge->getEndVertex()->mesh_vertices[0]);
-  while(1) {
-    if(L > blf->thickness || L > LEdge * .4) { break; }
 
-    SPoint3 p(gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
-    v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p), 0,
-                                blf->hFar));
-    int ith = v.size();
-    L += hWall * std::pow(blf->ratio, ith);
+  if(blf->betaLaw) {
+    std::vector<double> t(blf->nb_divisions);
+    double zlog = log((1 + blf->beta) / (blf->beta - 1));
+    for(int i = 0; i < blf->nb_divisions; i++) {
+      const double eta = (double)(i + 1) / blf->nb_divisions;
+      const double power = exp(zlog * (1. - eta));
+      const double ratio = (1. - power) / (1. + power);
+      t[i] = 1.0 + blf->beta * ratio;
+    }
+    for(int i = 0; i < blf->nb_divisions; i++) {
+      double L = hWall * t[i] / t[0];
+      SPoint3 p(gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
+      v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p),
+                                  0, blf->hFar));
+    }
+  }
+  else {
+    while(1) {
+      if(L > blf->thickness || L > LEdge * .4) { break; }
+
+      SPoint3 p(gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
+      v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p),
+                                  0, blf->hFar));
+      int ith = v.size();
+      L += hWall * std::pow(blf->ratio, ith);
+    }
   }
 }
 

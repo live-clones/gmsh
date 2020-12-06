@@ -560,30 +560,22 @@ public:
       new FieldOptionDouble(_v2o, "Element size at point 2, outer radius");
 
     // deprecated names
-    options["R1_inner"] =
-      new FieldOptionDouble(_r1i, "Inner radius of Frustum at endpoint 1",
-                            0, true);
-    options["R1_outer"] =
-      new FieldOptionDouble(_r1o, "Outer radius of Frustum at endpoint 1",
-                            0, true);
-    options["R2_inner"] =
-      new FieldOptionDouble(_r2i, "Inner radius of Frustum at endpoint 2",
-                            0, true);
-    options["R2_outer"] =
-      new FieldOptionDouble(_r2o, "Outer radius of Frustum at endpoint 2",
-                            0, true);
-    options["V1_inner"] =
-      new FieldOptionDouble(_v1i, "Element size at point 1, inner radius",
-                            0, true);
-    options["V1_outer"] =
-      new FieldOptionDouble(_v1o, "Element size at point 1, outer radius",
-                            0, true);
-    options["V2_inner"] =
-      new FieldOptionDouble(_v2i, "Element size at point 2, inner radius",
-                            0, true);
-    options["V2_outer"] =
-      new FieldOptionDouble(_v2o, "Element size at point 2, outer radius",
-                            0, true);
+    options["R1_inner"] = new FieldOptionDouble(
+      _r1i, "Inner radius of Frustum at endpoint 1", 0, true);
+    options["R1_outer"] = new FieldOptionDouble(
+      _r1o, "Outer radius of Frustum at endpoint 1", 0, true);
+    options["R2_inner"] = new FieldOptionDouble(
+      _r2i, "Inner radius of Frustum at endpoint 2", 0, true);
+    options["R2_outer"] = new FieldOptionDouble(
+      _r2o, "Outer radius of Frustum at endpoint 2", 0, true);
+    options["V1_inner"] = new FieldOptionDouble(
+      _v1i, "Element size at point 1, inner radius", 0, true);
+    options["V1_outer"] = new FieldOptionDouble(
+      _v1o, "Element size at point 1, outer radius", 0, true);
+    options["V2_inner"] = new FieldOptionDouble(
+      _v2i, "Element size at point 2, inner radius", 0, true);
+    options["V2_outer"] = new FieldOptionDouble(
+      _v2o, "Element size at point 2, outer radius", 0, true);
   }
   const char *getName() { return "Frustum"; }
   using Field::operator();
@@ -650,8 +642,9 @@ public:
     options["SizeMax"] =
       new FieldOptionDouble(_lcMax, "Element size outside DistMax");
     options["Sigmoid"] = new FieldOptionBool(
-      _sigmoid, "True to interpolate between SizeMin and LcMax using a sigmoid, "
-                "false to interpolate linearly");
+      _sigmoid,
+      "True to interpolate between SizeMin and LcMax using a sigmoid, "
+      "false to interpolate linearly");
     options["StopAtDistMax"] = new FieldOptionBool(
       _stopAtDistMax, "True to not impose element size outside DistMax (i.e., "
                       "F = a very big value if Field[InField] > DistMax)");
@@ -705,12 +698,14 @@ public:
 
     options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Kind"] = new FieldOptionInt(
-      _kind, "Component of the gradient to evaluate: 0 for X, 1 for Y, 2 for Z, "
+      _kind,
+      "Component of the gradient to evaluate: 0 for X, 1 for Y, 2 for Z, "
       "3 for the norm");
     options["Delta"] = new FieldOptionDouble(_delta, "Finite difference step");
 
     // deprecated names
-    options["IField"] = new FieldOptionInt(_inField, "Input field tag", 0, true);
+    options["IField"] =
+      new FieldOptionInt(_inField, "Input field tag", 0, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
@@ -765,8 +760,8 @@ public:
       new FieldOptionDouble(_delta, "Step of the finite differences");
 
     // deprecated names
-    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
-                                           0, true);
+    options["IField"] =
+      new FieldOptionInt(_inField, "Input field tag", 0, true);
   }
   void grad_norm(Field &f, double x, double y, double z, double *g)
   {
@@ -820,8 +815,8 @@ public:
       new FieldOptionDouble(_delta, "Step used for the finite differences");
 
     // deprecated names
-    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
-                                           0, true);
+    options["IField"] =
+      new FieldOptionInt(_inField, "Input field tag", 0, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
@@ -874,8 +869,8 @@ public:
     options["Delta"] = new FieldOptionDouble(_delta, "Finite difference step");
 
     // deprecated names
-    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
-                                           0, true);
+    options["IField"] =
+      new FieldOptionInt(_inField, "Input field tag", 0, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
@@ -913,8 +908,8 @@ public:
       new FieldOptionDouble(_delta, "Distance used to compute the mean value");
 
     // deprecated names
-    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
-                                           0, true);
+    options["IField"] =
+      new FieldOptionInt(_inField, "Input field tag", 0, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = 0)
@@ -1464,8 +1459,8 @@ public:
       _f[2], "Z component of parametric function", &updateNeeded);
 
     // deprecated names
-    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
-                                           0, true);
+    options["IField"] =
+      new FieldOptionInt(_inField, "Input field tag", 0, true);
   }
   std::string getDescription()
   {
@@ -1839,16 +1834,16 @@ public:
     options["VolumesList"] = new FieldOptionList(_volumeTags, "Volume tags");
 
     // deprecated names
-    options["IField"] = new FieldOptionInt(_inField, "Input field tag",
-                                           0, true);
-    options["VerticesList"] = new FieldOptionList(_pointTags, "Point tags",
-                                                  0, true);
-    options["EdgesList"] = new FieldOptionList(_curveTags, "Curve tags",
-                                               0, true);
-    options["FacesList"] = new FieldOptionList(_surfaceTags, "Surface tags",
-                                                  0, true);
-    options["RegionsList"] = new FieldOptionList(_volumeTags, "Volume tags",
-                                                 0, true);
+    options["IField"] =
+      new FieldOptionInt(_inField, "Input field tag", 0, true);
+    options["VerticesList"] =
+      new FieldOptionList(_pointTags, "Point tags", 0, true);
+    options["EdgesList"] =
+      new FieldOptionList(_curveTags, "Curve tags", 0, true);
+    options["FacesList"] =
+      new FieldOptionList(_surfaceTags, "Surface tags", 0, true);
+    options["RegionsList"] =
+      new FieldOptionList(_volumeTags, "Volume tags", 0, true);
   }
   std::string getDescription()
   {
@@ -1918,22 +1913,22 @@ public:
       &updateNeeded);
     options["DistMin"] = new FieldOptionDouble(
       _dMin, "Minimum distance, below this distance from the curves, "
-      "prescribe the minimum mesh sizes");
+             "prescribe the minimum mesh sizes");
     options["DistMax"] = new FieldOptionDouble(
       _dMax, "Maxmium distance, above this distance from the curves, prescribe "
-      "the maximum mesh sizes");
+             "the maximum mesh sizes");
     options["SizeMinTangent"] = new FieldOptionDouble(
       _lMinTangent, "Minimum mesh size in the direction tangeant to the "
-      "closest curve");
+                    "closest curve");
     options["SizeMaxTangent"] = new FieldOptionDouble(
       _lMaxTangent, "Maximum mesh size in the direction tangeant to the "
-      "closest curve");
+                    "closest curve");
     options["SizeMinNormal"] = new FieldOptionDouble(
       _lMinNormal, "Minimum mesh size in the direction normal to the "
-      "closest curve");
+                   "closest curve");
     options["SizeMaxNormal"] = new FieldOptionDouble(
       _lMaxNormal, "Maximum mesh size in the direction normal to the "
-      "closest curve");
+                   "closest curve");
 
     // deprecated names
     options["EdgesList"] = new FieldOptionList(
@@ -1942,23 +1937,35 @@ public:
       _numPointsPerCurve, "Number of points used to discretized each curve",
       &updateNeeded, true);
     options["dMin"] = new FieldOptionDouble(
-      _dMin, "Minimum distance, below this distance from the curves, "
-      "prescribe the minimum mesh sizes", 0, true);
+      _dMin,
+      "Minimum distance, below this distance from the curves, "
+      "prescribe the minimum mesh sizes",
+      0, true);
     options["dMax"] = new FieldOptionDouble(
-      _dMax, "Maxmium distance, above this distance from the curves, prescribe "
-      "the maximum mesh sizes", 0, true);
+      _dMax,
+      "Maxmium distance, above this distance from the curves, prescribe "
+      "the maximum mesh sizes",
+      0, true);
     options["lMinTangent"] = new FieldOptionDouble(
-      _lMinTangent, "Minimum mesh size in the direction tangeant to the "
-      "closest curve", 0, true);
+      _lMinTangent,
+      "Minimum mesh size in the direction tangeant to the "
+      "closest curve",
+      0, true);
     options["lMaxTangent"] = new FieldOptionDouble(
-      _lMaxTangent, "Maximum mesh size in the direction tangeant to the "
-      "closest curve", 0, true);
-    options["lMinNormal"] = new FieldOptionDouble(
-      _lMinNormal, "Minimum mesh size in the direction normal to the "
-      "closest curve", 0, true);
-    options["lMaxNormal"] = new FieldOptionDouble(
-      _lMaxNormal, "Maximum mesh size in the direction normal to the "
-      "closest curve", 0, true);
+      _lMaxTangent,
+      "Maximum mesh size in the direction tangeant to the "
+      "closest curve",
+      0, true);
+    options["lMinNormal"] =
+      new FieldOptionDouble(_lMinNormal,
+                            "Minimum mesh size in the direction normal to the "
+                            "closest curve",
+                            0, true);
+    options["lMaxNormal"] =
+      new FieldOptionDouble(_lMaxNormal,
+                            "Maximum mesh size in the direction normal to the "
+                            "closest curve",
+                            0, true);
 
     // make sure all internal GEO CAD data has been synced with GModel
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -1975,8 +1982,10 @@ public:
   std::string getDescription()
   {
     return "Compute the distance to the given curves and specify the mesh size "
-           "independently in the direction normal and parallel to the nearest curve. "
-           "(Each curve is replaced by NumPointsPerCurve equidistant points, to "
+           "independently in the direction normal and parallel to the nearest "
+           "curve. "
+           "(Each curve is replaced by NumPointsPerCurve equidistant points, "
+           "to "
            "which the distance is actually computed.)";
   }
   void update()
@@ -2092,10 +2101,11 @@ public:
       _curveTags, "Tags of curves in the geometric model", &updateNeeded);
     options["SurfacesList"] = new FieldOptionList(
       _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded);
-    options["NumPointsPerCurve"] = new FieldOptionInt(
-      _numPointsPerCurve, "Number of points used to discretize each curve "
-      "(and surface, relative to their bounding box size)",
-      &updateNeeded);
+    options["NumPointsPerCurve"] =
+      new FieldOptionInt(_numPointsPerCurve,
+                         "Number of points used to discretize each curve "
+                         "(and surface, relative to their bounding box size)",
+                         &updateNeeded);
     options["FieldX"] = new FieldOptionInt(
       _xFieldId, "Tag of the field to use as x coordinate", &updateNeeded);
     options["FieldY"] = new FieldOptionInt(
@@ -2109,10 +2119,13 @@ public:
     options["EdgesList"] = new FieldOptionList(
       _curveTags, "Tags of curves in the geometric model", &updateNeeded, true);
     options["FacesList"] = new FieldOptionList(
-      _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded, true);
-    options["NNodesByEdge"] = new FieldOptionInt(
-      _numPointsPerCurve, "Number of points used to discretize each curve "
-      "(and surface, relative to their bounding box size)", &updateNeeded, true);
+      _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded,
+      true);
+    options["NNodesByEdge"] =
+      new FieldOptionInt(_numPointsPerCurve,
+                         "Number of points used to discretize each curve "
+                         "(and surface, relative to their bounding box size)",
+                         &updateNeeded, true);
   }
   ~AttractorField()
   {
@@ -2370,110 +2383,110 @@ private:
           }
         }
 #endif
-      }
-      if(split) {
-        _isleaf = false;
-        Cell *sub = new Cell[8];
-        double l2 = l / 2;
-        sub[0].init(x0, y0, z0, l2, field, level - 1);
-        sub[1].init(x0, y0, z0 + l2, l2, field, level - 1);
-        sub[2].init(x0, y0 + l2, z0, l2, field, level - 1);
-        sub[3].init(x0, y0 + l2, z0 + l2, l2, field, level - 1);
-        sub[4].init(x0 + l2, y0, z0, l2, field, level - 1);
-        sub[5].init(x0 + l2, y0, z0 + l2, l2, field, level - 1);
-        sub[6].init(x0 + l2, y0 + l2, z0, l2, field, level - 1);
-        sub[7].init(x0 + l2, y0 + l2, z0 + l2, l2, field, level - 1);
-        _data = (void *)sub;
-      }
-      else {
-        _isleaf = true;
-        _data = (void *)new double;
-        *(double *)_data = vc;
-      }
     }
-    ~Cell()
-    {
-      if(_isleaf) { delete(double *)_data; }
-      else {
-        Cell *sub = (Cell *)_data;
-        delete[] sub;
-      }
+    if(split) {
+      _isleaf = false;
+      Cell *sub = new Cell[8];
+      double l2 = l / 2;
+      sub[0].init(x0, y0, z0, l2, field, level - 1);
+      sub[1].init(x0, y0, z0 + l2, l2, field, level - 1);
+      sub[2].init(x0, y0 + l2, z0, l2, field, level - 1);
+      sub[3].init(x0, y0 + l2, z0 + l2, l2, field, level - 1);
+      sub[4].init(x0 + l2, y0, z0, l2, field, level - 1);
+      sub[5].init(x0 + l2, y0, z0 + l2, l2, field, level - 1);
+      sub[6].init(x0 + l2, y0 + l2, z0, l2, field, level - 1);
+      sub[7].init(x0 + l2, y0 + l2, z0 + l2, l2, field, level - 1);
+      _data = (void *)sub;
     }
-    void print(double x0, double y0, double z0, double l, FILE *f)
-    {
-      if(_isleaf) {
-        fprintf(f, "SP(%g, %g, %g) {%g};\n", x0 + l / 2, y0 + l / 2, z0 + l / 2,
-                *(double *)_data);
-      }
-      else {
-        Cell *sub = (Cell *)_data;
-        double l2 = l / 2;
-        sub[0].print(x0, y0, z0, l2, f);
-        sub[1].print(x0, y0, z0 + l2, l2, f);
-        sub[2].print(x0, y0 + l2, z0, l2, f);
-        sub[3].print(x0, y0 + l2, z0 + l2, l2, f);
-        sub[4].print(x0 + l2, y0, z0, l2, f);
-        sub[5].print(x0 + l2, y0, z0 + l2, l2, f);
-        sub[6].print(x0 + l2, y0 + l2, z0, l2, f);
-        sub[7].print(x0 + l2, y0 + l2, z0 + l2, l2, f);
-      }
+    else {
+      _isleaf = true;
+      _data = (void *)new double;
+      *(double *)_data = vc;
     }
-  };
-  Cell *_root;
-  int _inFieldId;
-  Field *_inField;
-  SBoundingBox3d bounds;
-  double _l0;
-
-public:
-  OctreeField()
+  } ~Cell()
   {
-    _root = NULL;
-
-    options["InField"] = new FieldOptionInt
-      (_inFieldId, "Id of the field to represent on the octree", &updateNeeded);
-  }
-  ~OctreeField()
-  {
-    if(_root) delete _root;
-  }
-  const char *getName() { return "Octree"; }
-  std::string getDescription()
-  {
-    return "Pre compute another field on an octree to speed-up evalution";
-  }
-  void update()
-  {
-    if(updateNeeded) {
-      updateNeeded = false;
-      if(_root) {
-        delete _root;
-        _root = NULL;
-      }
-    }
-    if(!_root) {
-      _inField = _inFieldId >= 0 ?
-        (GModel::current()->getFields()->get(_inFieldId)) :
-        NULL;
-      if(!_inField) return;
-      GModel::current()->getFields()->get(_inFieldId)->update();
-      bounds = GModel::current()->bounds();
-      _root = new Cell;
-      SVector3 d = bounds.max() - bounds.min();
-      _l0 = std::max(std::max(d.x(), d.y()), d.z());
-      _root->init(bounds.min().x(), bounds.min().y(), bounds.min().z(), _l0,
-                  *_inField, 4);
+    if(_isleaf) { delete(double *)_data; }
+    else {
+      Cell *sub = (Cell *)_data;
+      delete[] sub;
     }
   }
-  using Field::operator();
-  virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
+  void print(double x0, double y0, double z0, double l, FILE *f)
   {
-    SPoint3 xmin = bounds.min();
-    SVector3 d = bounds.max() - xmin;
-    return _root->evaluate((X - xmin.x()) / _l0, (Y - xmin.y()) / _l0,
-                           (Z - xmin.z()) / _l0);
+    if(_isleaf) {
+      fprintf(f, "SP(%g, %g, %g) {%g};\n", x0 + l / 2, y0 + l / 2, z0 + l / 2,
+              *(double *)_data);
+    }
+    else {
+      Cell *sub = (Cell *)_data;
+      double l2 = l / 2;
+      sub[0].print(x0, y0, z0, l2, f);
+      sub[1].print(x0, y0, z0 + l2, l2, f);
+      sub[2].print(x0, y0 + l2, z0, l2, f);
+      sub[3].print(x0, y0 + l2, z0 + l2, l2, f);
+      sub[4].print(x0 + l2, y0, z0, l2, f);
+      sub[5].print(x0 + l2, y0, z0 + l2, l2, f);
+      sub[6].print(x0 + l2, y0 + l2, z0, l2, f);
+      sub[7].print(x0 + l2, y0 + l2, z0 + l2, l2, f);
+    }
   }
 };
+Cell *_root;
+int _inFieldId;
+Field *_inField;
+SBoundingBox3d bounds;
+double _l0;
+
+public:
+OctreeField()
+{
+  _root = NULL;
+
+  options["InField"] = new FieldOptionInt(
+    _inFieldId, "Id of the field to represent on the octree", &updateNeeded);
+}
+~OctreeField()
+{
+  if(_root) delete _root;
+}
+const char *getName() { return "Octree"; }
+std::string getDescription()
+{
+  return "Pre compute another field on an octree to speed-up evalution";
+}
+void update()
+{
+  if(updateNeeded) {
+    updateNeeded = false;
+    if(_root) {
+      delete _root;
+      _root = NULL;
+    }
+  }
+  if(!_root) {
+    _inField = _inFieldId >= 0 ?
+                 (GModel::current()->getFields()->get(_inFieldId)) :
+                 NULL;
+    if(!_inField) return;
+    GModel::current()->getFields()->get(_inFieldId)->update();
+    bounds = GModel::current()->bounds();
+    _root = new Cell;
+    SVector3 d = bounds.max() - bounds.min();
+    _l0 = std::max(std::max(d.x(), d.y()), d.z());
+    _root->init(bounds.min().x(), bounds.min().y(), bounds.min().z(), _l0,
+                *_inField, 4);
+  }
+}
+using Field::operator();
+virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
+{
+  SPoint3 xmin = bounds.min();
+  SVector3 d = bounds.max() - xmin;
+  return _root->evaluate((X - xmin.x()) / _l0, (Y - xmin.y()) / _l0,
+                         (Z - xmin.z()) / _l0);
+}
+}
+;
 
 struct PointCloud {
   std::vector<SPoint3> pts;
@@ -2556,11 +2569,12 @@ public:
     options["CurvesList"] = new FieldOptionList(
       _curveTags, "Tags of curves in the geometric model", &updateNeeded);
     options["SurfacesList"] = new FieldOptionList(
-      _surfaceTags, "Tags of surfaces in the geometric model",
-      &updateNeeded);
-    options["NumPointsPerCurve"] = new FieldOptionInt(
-      _numPointsPerCurve, "Number of points used to discretized each curve "
-      "(and surface, relative to their bounding box size)", &updateNeeded);
+      _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded);
+    options["NumPointsPerCurve"] =
+      new FieldOptionInt(_numPointsPerCurve,
+                         "Number of points used to discretized each curve "
+                         "(and surface, relative to their bounding box size)",
+                         &updateNeeded);
     options["FieldX"] = new FieldOptionInt(
       _xFieldId, "Id of the field to use as x coordinate", &updateNeeded);
     options["FieldY"] = new FieldOptionInt(
@@ -2573,12 +2587,14 @@ public:
       _pointTags, "Tags of points in the geometric model", &updateNeeded, true);
     options["EdgesList"] = new FieldOptionList(
       _curveTags, "Tags of curves in the geometric model", &updateNeeded, true);
-    options["NNodesByEdge"] = new FieldOptionInt(
-      _numPointsPerCurve, "Number of points used to discretized each curve "
-      "(and surface, relative to their bounding box size)", &updateNeeded, true);
+    options["NNodesByEdge"] =
+      new FieldOptionInt(_numPointsPerCurve,
+                         "Number of points used to discretized each curve "
+                         "(and surface, relative to their bounding box size)",
+                         &updateNeeded, true);
     options["FacesList"] = new FieldOptionList(
-      _surfaceTags, "Tags of surfaces in the geometric model",
-      &updateNeeded, true);
+      _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded,
+      true);
   }
   DistanceField(int dim, int tag, int nbe)
     : _numPointsPerCurve(nbe), _index(NULL), _pc2kd(_P), _outIndex(0),
@@ -2720,6 +2736,9 @@ std::string BoundaryLayerField::getDescription()
 
 BoundaryLayerField::BoundaryLayerField()
 {
+  betaLaw = 0;
+  nb_divisions = 10;
+  beta = 1.01;
   hWallN = .1;
   hFar = 1;
   ratio = 1.1;
@@ -2729,64 +2748,92 @@ BoundaryLayerField::BoundaryLayerField()
   iIntersect = 0;
 
   options["CurvesList"] = new FieldOptionList(
-    _curveTags, "Tags of curves in the geometric model for which a boundary "
-    "layer is needed", &updateNeeded);
-  options["FanPointsList"] = new FieldOptionList(
-    _fanPointTags, "Tags of points in the geometric model for which a fan "
-    "is created", &updateNeeded);
+    _curveTags,
+    "Tags of curves in the geometric model for which a boundary "
+    "layer is needed",
+    &updateNeeded);
+  options["FanPointsList"] =
+    new FieldOptionList(_fanPointTags,
+                        "Tags of points in the geometric model for which a fan "
+                        "is created",
+                        &updateNeeded);
   options["FanPointsSizesList"] = new FieldOptionList(
-    _fanSizes, "Number of elements in the fan for each fan node. "
-    "If not present default value mesh.boundaryLayerFanPoints", &updateNeeded);
+    _fanSizes,
+    "Number of elements in the fan for each fan node. "
+    "If not present default value mesh.boundaryLayerFanPoints",
+    &updateNeeded);
   options["PointsList"] = new FieldOptionList(
-    _pointTags, "Tags of points in the geometric model for which a boundary "
-    "layer ends", &updateNeeded);
-  options["Size"] = new FieldOptionDouble(
-    hWallN, "Mesh size normal to the curve");
+    _pointTags,
+    "Tags of points in the geometric model for which a boundary "
+    "layer ends",
+    &updateNeeded);
+  options["Size"] =
+    new FieldOptionDouble(hWallN, "Mesh size normal to the curve");
   options["SizesList"] = new FieldOptionListDouble(
     _hWallNNodes, "Mesh size normal to the curve, per point (overwrites "
-    "Size when defined)");
-  options["Ratio"] = new FieldOptionDouble(
-    ratio, "Size ratio between two successive layers");
-  options["SizeFar"] = new FieldOptionDouble(
-    hFar, "Element size far from the curves");
-  options["Thickness"] = new FieldOptionDouble(
-    thickness, "Maximal thickness of the boundary layer");
+                  "Size when defined)");
+  options["Ratio"] =
+    new FieldOptionDouble(ratio, "Size ratio between two successive layers");
+  options["SizeFar"] =
+    new FieldOptionDouble(hFar, "Element size far from the curves");
+  options["Thickness"] =
+    new FieldOptionDouble(thickness, "Maximal thickness of the boundary layer");
   options["Quads"] = new FieldOptionInt(
     iRecombine, "Generate recombined elements in the boundary layer");
   options["IntersectMetrics"] =
     new FieldOptionInt(iIntersect, "Intersect metrics of all surfaces");
   options["AnisoMax"] = new FieldOptionDouble(
     tgtAnisoRatio, "Threshold angle for creating a mesh fan in the boundary "
-    "layer");
-  options["ExcludedSurfacesList"] = new FieldOptionList(
-    _excludedSurfaceTags, "Tags of surfaces in the geometric model where the "
-    "boundary layer should not be contructed", &updateNeeded);
+                   "layer");
+  options["BetaLaw"] = new FieldOptionInt(
+    betaLaw, "Use Beta Law instead of geometric progression ");
+  options["Beta"] =
+    new FieldOptionDouble(beta, "Beta coefficient of the Beta Law");
+  options["NbLayers"] =
+    new FieldOptionInt(nb_divisions, "Number of Layers in theBeta Law");
+  options["ExcludedSurfacesList"] =
+    new FieldOptionList(_excludedSurfaceTags,
+                        "Tags of surfaces in the geometric model where the "
+                        "boundary layer should not be contructed",
+                        &updateNeeded);
 
   // deprecated names
   options["EdgesList"] = new FieldOptionList(
-    _curveTags, "Tags of curves in the geometric model for which a boundary "
-    "layer is needed", &updateNeeded, true);
-  options["FanNodesList"] = new FieldOptionList(
-    _fanPointTags, "Tags of points in the geometric model for which a fan "
-    "is created", &updateNeeded, true);
+    _curveTags,
+    "Tags of curves in the geometric model for which a boundary "
+    "layer is needed",
+    &updateNeeded, true);
+  options["FanNodesList"] =
+    new FieldOptionList(_fanPointTags,
+                        "Tags of points in the geometric model for which a fan "
+                        "is created",
+                        &updateNeeded, true);
   options["NodesList"] = new FieldOptionList(
-    _pointTags, "Tags of points in the geometric model for which a boundary "
-    "layer ends", &updateNeeded, true);
+    _pointTags,
+    "Tags of points in the geometric model for which a boundary "
+    "layer ends",
+    &updateNeeded, true);
   options["hwall_n"] = new FieldOptionDouble(
-    hWallN, "Mesh size normal to the curvem per point (overwrites "
-    "Size when defined)", 0, true);
+    hWallN,
+    "Mesh size normal to the curvem per point (overwrites "
+    "Size when defined)",
+    0, true);
   options["hwall_n_nodes"] = new FieldOptionListDouble(
-    _hWallNNodes, "Mesh size normal to the curve, per point (overwrites "
-    "Size when defined)", 0, true);
+    _hWallNNodes,
+    "Mesh size normal to the curve, per point (overwrites "
+    "Size when defined)",
+    0, true);
   options["ratio"] = new FieldOptionDouble(
     ratio, "Size ratio between two successive layers", 0, true);
-  options["hfar"] = new FieldOptionDouble(
-    hFar, "Element size far from the wall", 0, true);
+  options["hfar"] =
+    new FieldOptionDouble(hFar, "Element size far from the wall", 0, true);
   options["thickness"] = new FieldOptionDouble(
     thickness, "Maximal thickness of the boundary layer", 0, true);
-  options["ExcludedFaceList"] = new FieldOptionList(
-    _excludedSurfaceTags, "Tags of surfaces in the geometric model where the "
-    "boundary layer should not be constructed", &updateNeeded, true);
+  options["ExcludedFaceList"] =
+    new FieldOptionList(_excludedSurfaceTags,
+                        "Tags of surfaces in the geometric model where the "
+                        "boundary layer should not be constructed",
+                        &updateNeeded, true);
 }
 
 void BoundaryLayerField::removeAttractors()

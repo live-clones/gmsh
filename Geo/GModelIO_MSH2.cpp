@@ -113,6 +113,7 @@ int GModel::_readMSH2(const std::string &name)
   std::map<int, MVertex *> vertexMap;
   std::vector<MVertex *> vertexVector;
   int minVertex = 0;
+  std::size_t oldNumPartitions = getNumPartitions();
 
   while(1) {
     while(str[0] != '$') {
@@ -679,6 +680,12 @@ int GModel::_readMSH2(const std::string &name)
   // the MSH2 reader. Until then, we also disable it by default.
   if(!CTX::instance()->mesh.ignorePeriodicityMsh2) {
     alignPeriodicBoundaries();
+  }
+
+  // create new partition entities if the mesh is partitioned
+  if(CTX::instance()->mesh.partitionConvertMsh2 &&
+     getNumPartitions() > oldNumPartitions) {
+    convertOldPartitioningToNewOne();
   }
 
   return postpro ? 2 : 1;

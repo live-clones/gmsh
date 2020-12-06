@@ -441,6 +441,24 @@ namespace gmsh { // Top-level functions
       outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
     }
 
+    // Get the upward and downward adjacencies of the model entity of dimension
+    // `dim' and tag `tag'. The `upward' vector returns the adjacent entities of
+    // dimension `dim' + 1; the `downward' vector returns the adjacent entities of
+    // dimension `dim' - 1.
+    inline void getAdjacencies(const int dim,
+                               const int tag,
+                               std::vector<int> & upward,
+                               std::vector<int> & downward)
+    {
+      int ierr = 0;
+      int *api_upward_; size_t api_upward_n_;
+      int *api_downward_; size_t api_downward_n_;
+      gmshModelGetAdjacencies(dim, tag, &api_upward_, &api_upward_n_, &api_downward_, &api_downward_n_, &ierr);
+      if(ierr) throwLastError();
+      upward.assign(api_upward_, api_upward_ + api_upward_n_); gmshFree(api_upward_);
+      downward.assign(api_downward_, api_downward_ + api_downward_n_); gmshFree(api_downward_);
+    }
+
     // Get the model entities in the bounding box defined by the two points
     // (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
     // return only the entities of the specified dimension (e.g. points if `dim' ==

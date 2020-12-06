@@ -2635,10 +2635,12 @@ int ConvertOldPartitioningToNewOne(GModel *model)
   model->getEntities(entities);
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-      MElement *e = entities[i]->getMeshElement(i);
-      elmToPartition.push_back(
-        std::pair<MElement *, idx_t>(e, e->getPartition()));
-      partitions.insert(e->getPartition());
+      MElement *e = entities[i]->getMeshElement(j);
+      idx_t part = e->getPartition();
+      if(part < 0) part = -part;
+      if(!part) part = 1;
+      elmToPartition.push_back(std::pair<MElement *, idx_t>(e, part));
+      partitions.insert(part);
     }
   }
 
