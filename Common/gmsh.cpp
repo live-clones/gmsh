@@ -4296,9 +4296,8 @@ gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
       ge->meshAttributes.method = MESH_TRANSFINITE;
       ge->meshAttributes.nbPointsTransfinite = numNodes;
       ge->meshAttributes.typeTransfinite =
-        (meshType == "Progression" || meshType == "Power") ?
-          1 :
-          (meshType == "Bump") ? 2 : 1;
+        (meshType == "Progression" || meshType == "Power") ? 1 :
+        (meshType == "Bump") ? 2 : (meshType == "Beta") ? 3 : 1;
       ge->meshAttributes.coeffTransfinite = std::abs(coef);
       // in .geo file we use a negative tag to do this trick; it's a bad idea
       if(coef < 0) ge->meshAttributes.typeTransfinite *= -1;
@@ -5423,9 +5422,8 @@ gmsh::model::geo::mesh::setTransfiniteCurve(const int tag, const int nPoints,
                                             const double coef)
 {
   if(!_checkInit()) return;
-  int type = (meshType == "Progression" || meshType == "Power") ?
-               1 :
-               (meshType == "Bump") ? 2 : 1;
+  int type = (meshType == "Progression" || meshType == "Power") ? 1 :
+             (meshType == "Bump") ? 2 : (meshType == "Beta") ? 3 : 1;
   double c = std::abs(coef);
   // in .geo file we use a negative tag to do this trick; it's a bad idea
   if(coef < 0) type = -type;

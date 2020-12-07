@@ -1071,8 +1071,8 @@ GMSH_API void gmshModelMeshRemoveSizeCallback(int * ierr);
 
 /* Set a transfinite meshing constraint on the curve `tag', with `numNodes'
  * nodes distributed according to `meshType' and `coef'. Currently supported
- * types are "Progression" (geometrical progression with power `coef') and
- * "Bump" (refinement toward both extremities of the curve). */
+ * types are "Progression" (geometrical progression with power `coef'), "Bump"
+ * (refinement toward both extremities of the curve) and "Beta" (beta law). */
 GMSH_API void gmshModelMeshSetTransfiniteCurve(const int tag,
                                                const int numNodes,
                                                const char * meshType,

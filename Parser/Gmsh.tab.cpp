@@ -11972,7 +11972,7 @@ yyreduce:
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       int type = (int)(yyvsp[(6) - (7)].v)[0];
-      double coef = (yyvsp[(6) - (7)].v)[1];
+      double coef = fabs((yyvsp[(6) - (7)].v)[1]);
       int npoints = ((int)(yyvsp[(5) - (7)].d) < 2) ? 2 : (int)(yyvsp[(5) - (7)].d);
       if(!(yyvsp[(3) - (7)].l)){
         GModel::current()->getGEOInternals()->setTransfiniteLine
