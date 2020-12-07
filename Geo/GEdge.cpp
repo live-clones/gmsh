@@ -353,6 +353,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
                 << gmsh_sign(type) * meshAttributes.coeffTransfinite;
       else if(std::abs(type) == 2)
         sstream << ", bump " << meshAttributes.coeffTransfinite;
+      else if(std::abs(type) == 3)
+        sstream << ", beta " << meshAttributes.coeffTransfinite;
     }
     if(meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)
       sstream << " extruded";
@@ -400,8 +402,10 @@ void GEdge::writeGEO(FILE *fp)
     if(meshAttributes.typeTransfinite) {
       if(std::abs(meshAttributes.typeTransfinite) == 1)
         fprintf(fp, " Using Progression ");
-      else
+      else if(std::abs(meshAttributes.typeTransfinite) == 2)
         fprintf(fp, " Using Bump ");
+      else
+        fprintf(fp, " Using Beta ");
       fprintf(fp, "%g", meshAttributes.coeffTransfinite);
     }
     fprintf(fp, ";\n");

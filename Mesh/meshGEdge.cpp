@@ -137,6 +137,13 @@ struct F_Lc_aniso {
   }
 };
 
+
+static double dfbeta (double t, double beta){
+  double ratio = (1+beta)/(beta-1);
+  double zlog  = log(ratio);
+  return beta*zlog / (1+cosh(zlog*(1-t)));
+}
+
 struct F_Transfinite {
   double operator()(GEdge *ge, double t_)
   {
@@ -163,8 +170,11 @@ struct F_Transfinite {
 
     double val;
 
-    if(coef <= 0.0 || coef == 1.0) {
+    if(std::abs(type) != 3 && (coef <= 0.0 || coef == 1.0)) {
       // coef < 0 should never happen
+      val = d * coef / ge->length();
+    }
+    else if(std::abs(type) != 3 && (coef <= 1.0 && coef >= -1.0)) {
       val = d * coef / ge->length();
     }
     else {
@@ -194,6 +204,21 @@ struct F_Transfinite {
         double b = -a * length * length / (4. * (coef - 1.));
         val = d / (-a * std::pow(t * length - (length)*0.5, 2) + b);
         break;
+      }
+      case 3: // Beta
+      {
+	if (coef < 0){
+	  val = dfbeta (1.-t, -coef);
+	}
+	else
+	  val = dfbeta (t, coef);	  
+	break;
+      }
+      case 4: // standard boundary layer progression
+      {
+	val=d/(length*t);
+	// TO DO
+	break;
       }
       default:
         Msg::Warning("Unknown case in Transfinite Line mesh");

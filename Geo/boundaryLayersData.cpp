@@ -577,12 +577,15 @@ bool buildAdditionalPoints2D(GFace *gf)
           std::vector<double> t(blf->nb_divisions);
 
           double zlog = log((1 + blf->beta) / (blf->beta - 1));
+	  printf("T = ");
           for(int i = 0; i < blf->nb_divisions; i++) {
             const double eta = (double)(i + 1) / blf->nb_divisions;
             const double power = exp(zlog * (1. - eta));
             const double ratio = (1. - power) / (1. + power);
             t[i] = 1.0 + blf->beta * ratio;
+	    printf("%12.5E ",t[i]);
           }
+	  printf("\n");
           for(int i = 0; i < blf->nb_divisions; i++) {
             double L = hWall * t[i] / t[0];
             SPoint2 pnew(par.x() + L * n.x(), par.y() + L * n.y());

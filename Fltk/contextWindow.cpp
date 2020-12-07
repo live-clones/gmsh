@@ -1361,7 +1361,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
       input[2]->value("1");
       for(int i = 1; i < 3; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       static Fl_Menu_Item menu_trsf_mesh[] = {
-        {"Progression", 0, 0, 0}, {"Bump", 0, 0, 0}, {0}};
+        {"Progression", 0, 0, 0}, {"Bump", 0, 0, 0}, {"Beta", 0, 0, 0}, {0}};
       choice[0] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Type");
       choice[0]->menu(menu_trsf_mesh);
       choice[0]->align(FL_ALIGN_RIGHT);
