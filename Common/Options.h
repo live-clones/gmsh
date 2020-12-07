@@ -513,6 +513,7 @@ double opt_mesh_partition_create_physicals(OPT_ARGS_NUM);
 double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM);
 double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM);
 double opt_mesh_partition_convert_msh2(OPT_ARGS_NUM);
+double opt_mesh_create_topology_msh2(OPT_ARGS_NUM);
 double opt_mesh_binary(OPT_ARGS_NUM);
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM);
 double opt_mesh_cross_field_closest_point(OPT_ARGS_NUM);

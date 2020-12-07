@@ -5741,6 +5741,12 @@ double opt_mesh_partition_convert_msh2(OPT_ARGS_NUM)
   return CTX::instance()->mesh.partitionConvertMsh2;
 }
 
+double opt_mesh_create_topology_msh2(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.createTopologyMsh2 = val;
+  return CTX::instance()->mesh.createTopologyMsh2;
+}
+
 double opt_mesh_binary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.binary = (int)val;

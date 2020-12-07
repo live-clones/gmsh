@@ -1106,6 +1106,8 @@ StringXNumber MeshOptions_Number[] = {
     "Mesh size factor applied to compound parts" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
+  { F|O, "CreateTopologyMsh2" , opt_mesh_create_topology_msh2, 0. ,
+    "Attempt to (re)create the model topology when reading MSH2 files" },
 
   { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 0. ,
     "Draw only the skin of 3D meshes?" },
@@ -1409,7 +1411,7 @@ StringXNumber MeshOptions_Number[] = {
     "Type of the element tag saved in mesh formats that don't support saving "
     "physical or partition ids (1: elementary, 2: physical, 3: partition)" },
   { F|O, "SaveTopology" , opt_mesh_save_topology, 0. ,
-    "Save model topology in MSH2 output files (this is always saved in MSH3)" },
+    "Save model topology in MSH2 output files (this is always saved in MSH3 and above)" },
   { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
     "Save parametric coordinates of nodes" },
   { F|O, "SaveGroupsOfElements" , opt_mesh_save_groups_of_elements , 1. ,

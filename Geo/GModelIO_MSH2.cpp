@@ -676,10 +676,15 @@ int GModel::_readMSH2(const std::string &name)
 
   fclose(fp);
 
-  // This post-processing step for periodic boundaries should be removed from
+  // this post-processing step for periodic boundaries should be removed from
   // the MSH2 reader. Until then, we also disable it by default.
   if(!CTX::instance()->mesh.ignorePeriodicityMsh2) {
     alignPeriodicBoundaries();
+  }
+
+  // attempt to (re)create the model topology
+  if(CTX::instance()->mesh.createTopologyMsh2) {
+    createTopologyFromMesh();
   }
 
   // create new partition entities if the mesh is partitioned
