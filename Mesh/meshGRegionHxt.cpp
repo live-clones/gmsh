@@ -66,9 +66,9 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t* volume,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus getAllSurfacesOfAllRegions(std::vector<GRegion *> &regions,
-                                            HXTMesh *m,
-                                            std::vector<GFace *> &allSurfaces)
+static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions,
+                                HXTMesh *m,
+                                std::vector<GFace *> &allSurfaces)
 {
   std::set<GFace *, GEntityPtrLessThan> allSurfacesSet;
   if(m) {
@@ -108,9 +108,10 @@ static HXTStatus getAllSurfacesOfAllRegions(std::vector<GRegion *> &regions,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus getAllCurvesOfAllSurfaces(std::vector<GFace *> &surfaces,
-                                           HXTMesh *m,
-                                           std::vector<GEdge *> &allCurves)
+static HXTStatus getAllCurves(std::vector<GRegion *> &regions,
+                              std::vector<GFace *> &surfaces,
+                              HXTMesh *m,
+                              std::vector<GEdge *> &allCurves)
 {
   if(m) {
     m->brep.numSurfaces = surfaces.size();
@@ -120,6 +121,7 @@ static HXTStatus getAllCurvesOfAllSurfaces(std::vector<GFace *> &surfaces,
   uint32_t to_alloc = 0;
 
   std::set<GEdge *, GEntityPtrLessThan> allCurvesSet;
+
   for(std::size_t i = 0; i < surfaces.size(); i++) {
     std::vector<GEdge *> const &f = surfaces[i]->edges();
     std::vector<GEdge *> const &f_e = surfaces[i]->embeddedEdges();
@@ -129,6 +131,10 @@ static HXTStatus getAllCurvesOfAllSurfaces(std::vector<GFace *> &surfaces,
     }
     allCurvesSet.insert(f.begin(), f.end());
     allCurvesSet.insert(f_e.begin(), f_e.end());
+  }
+  for(std::size_t i = 0; i < regions.size(); i++) {
+    std::vector<GEdge *> const &r_e = regions[i]->embeddedEdges();
+    allCurvesSet.insert(r_e.begin(), r_e.end());
   }
   allCurves.insert(allCurves.begin(), allCurvesSet.begin(), allCurvesSet.end());
 
@@ -146,6 +152,7 @@ static HXTStatus getAllCurvesOfAllSurfaces(std::vector<GFace *> &surfaces,
     for(size_t j = 0; j < f_e.size(); j++)
       m->brep.curvesPerSurface[counter++] = f_e[j]->tag();
   }
+
   return HXT_STATUS_OK;
 }
 
@@ -156,8 +163,8 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   Msg::Debug("Start Hxt2Gmsh");
   std::vector<GFace *> allSurfaces;
   std::vector<GEdge *> allCurves;
-  HXT_CHECK(getAllSurfacesOfAllRegions(regions, NULL, allSurfaces));
-  HXT_CHECK(getAllCurvesOfAllSurfaces(allSurfaces, NULL, allCurves));
+  HXT_CHECK(getAllSurfaces(regions, NULL, allSurfaces));
+  HXT_CHECK(getAllCurves(regions, allSurfaces, NULL, allCurves));
   std::map<uint32_t, GEdge *> i2e;
   std::map<uint32_t, GFace *> i2f;
   for(size_t i = 0; i < allSurfaces.size(); i++)
@@ -308,8 +315,8 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   std::vector<GVertex *> points;
   std::map<MVertex *, double> vlc;
 
-  HXT_CHECK(getAllSurfacesOfAllRegions(regions, m, surfaces));
-  HXT_CHECK(getAllCurvesOfAllSurfaces(surfaces, m, curves));
+  HXT_CHECK(getAllSurfaces(regions, m, surfaces));
+  HXT_CHECK(getAllCurves(regions, surfaces, m, curves));
 
   uint64_t index = 0, ntri = 0, nedg = 0, npts = 0;
 
