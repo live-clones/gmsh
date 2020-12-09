@@ -298,11 +298,15 @@ GeoFormatItem :
             (dim, std::max(GModel::current()->getOCCInternals()->getMaxTag(dim),
                            GModel::current()->getGEOInternals()->getMaxTag(dim)));
       }
-      else if(GModel::current()->getOCCInternals()){
-        for(int dim = -2; dim <= 3; dim++)
-          GModel::current()->getGEOInternals()->setMaxTag
-            (dim, std::max(GModel::current()->getGEOInternals()->getMaxTag(dim),
-                           GModel::current()->getOCCInternals()->getMaxTag(dim)));
+      else {
+        if(gmsh_yyfactory != "Built-in" && gmsh_yyfactory != "Gmsh")
+          yymsg(1, "Unknown factory \"%s\" - using \"Built-in\" instead", $3);
+        if(GModel::current()->getOCCInternals()){
+          for(int dim = -2; dim <= 3; dim++)
+            GModel::current()->getGEOInternals()->setMaxTag
+              (dim, std::max(GModel::current()->getGEOInternals()->getMaxTag(dim),
+                             GModel::current()->getOCCInternals()->getMaxTag(dim)));
+        }
       }
       Free($3);
     }
@@ -6082,7 +6086,7 @@ FExpr_Multi :
       int N = (int)$13;
       std::vector<double> y(N);
       if(!catenary(x0, x1, y0, y1, ys, N, &y[0]))
-        Msg::Warning("Catenary did not converge, using linear interpolation");
+        yymsg(1, "Catenary did not converge, using linear interpolation");
       $$ = List_Create(N,10,sizeof(double));
       for(int i = 0; i < N; i++) List_Add($$, &y[i]);
     }
@@ -6960,7 +6964,7 @@ void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List
 
 void yyerror(const char *s)
 {
-  Msg::Error("'%s', line %d : %s (%s)", gmsh_yyname.c_str(), gmsh_yylineno - 1,
+  Msg::Error("'%s', line %d: %s (%s)", gmsh_yyname.c_str(), gmsh_yylineno - 1,
              s, gmsh_yytext);
   gmsh_yyerrorstate++;
 }
@@ -6975,14 +6979,14 @@ void yymsg(int level, const char *fmt, ...)
   va_end(args);
 
   if(level == 0){
-    Msg::Error("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
+    Msg::Error("'%s', line %d: %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
     gmsh_yyerrorstate++;
   }
   else if(level == 1){
-    Msg::Warning("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
+    Msg::Warning("'%s', line %d: %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
   }
   else{
-    Msg::Info("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
+    Msg::Info("'%s', line %d: %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
   }
 }
 
