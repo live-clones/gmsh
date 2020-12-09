@@ -3370,7 +3370,8 @@ be given in several formats: in human-readable ``parsed'' format (these
 are just part of a standard input script, but are usually put in
 separate files with a @file{.pos} extension), in native MSH files (ASCII
 or binary files with @file{.msh} extensions: see @ref{File formats}), or
-in standard third-party formats.
+in standard third-party formats. Datasets can also be directly imported
+using the Gmsh API, in the @code{gmsh/view} module (@pxref{Gmsh API}).
 
 Once loaded into Gmsh, scalar fields can be displayed as iso-curves,
 iso-surfaces or color maps, whereas vector fields can be represented
