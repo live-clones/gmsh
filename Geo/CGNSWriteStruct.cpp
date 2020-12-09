@@ -36,8 +36,8 @@
 //   at the begining of the zone name; the unstructured writer saves physical
 //   names in families
 //
-// - boundary conditions are created for physical groups of lower dimensions and
-//   also saved as families
+// - boundary conditions are created for all zone boundaries, and if physical
+//   groups are defined on boundaries they are also saved as families
 
 #if defined(HAVE_LIBCGNS)
 
@@ -195,12 +195,14 @@ static int writeBC2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
                      2, &pointRange[0], &cgIndexBoco) != CG_OK) {
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
-    // this is redundant, but ICEM does it...
-    if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
-               "ZoneBC_t", 1, "BC_t", cgIndexBoco, "end") != CG_OK)
-      return cgnsError(__FILE__, __LINE__, cgIndexFile);
-    if(cg_famname_write(getZoneName(ge, true, false).c_str()) != CG_OK)
-      return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    // if the curve is part of a physical group, also write a family
+    if(ge->physicals.size()) {
+      if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
+                 "ZoneBC_t", 1, "BC_t", cgIndexBoco, "end") != CG_OK)
+        return cgnsError(__FILE__, __LINE__, cgIndexFile);
+      if(cg_famname_write(getZoneName(ge, true, false).c_str()) != CG_OK)
+        return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    }
   }
   else{
     Msg::Warning("Could not identify boundary condition on curve %d in "
@@ -272,9 +274,9 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
         if(gf2 != gf && isTransfinite(gf2))
           writeInterface2D(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge, gf2);
       }
-      // write boundary conditions
-      if(!ge->physicals.empty())
-        writeBC2D(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge);
+      // write boundary condition for each curve (even those that don't belong
+      // to a physical group, to match ICEM)
+      writeBC2D(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge);
     }
   }
   return 1;
@@ -379,12 +381,14 @@ static int writeBC3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
                      2, &pointRange[0], &cgIndexBoco) != CG_OK) {
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
-    // this is redundant, but ICEM does it...
-    if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
-               "ZoneBC_t", 1, "BC_t", cgIndexBoco, "end") != CG_OK)
-      return cgnsError(__FILE__, __LINE__, cgIndexFile);
-    if(cg_famname_write(getZoneName(gf, true, false).c_str()) != CG_OK)
-      return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    // if the surface is part of a physical group, also write a family
+    if(gf->physicals.size()) {
+      if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
+                 "ZoneBC_t", 1, "BC_t", cgIndexBoco, "end") != CG_OK)
+        return cgnsError(__FILE__, __LINE__, cgIndexFile);
+      if(cg_famname_write(getZoneName(gf, true, false).c_str()) != CG_OK)
+        return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    }
   }
   else{
     Msg::Warning("Could not identify boundary condition on surface %d in "
@@ -464,9 +468,9 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
         if(gr2 != gr && isTransfinite(gr2))
           writeInterface3D(cgIndexFile, cgIndexBase, cgIndexZone, gr, gf, gr2);
       }
-      // write boundary conditions
-      if(!gf->physicals.empty())
-        writeBC3D(cgIndexFile, cgIndexBase, cgIndexZone, gr, gf);
+      // write boundary condition for each surface (even those that don't belong
+      // to a physical group, to match ICEM)
+      writeBC3D(cgIndexFile, cgIndexBase, cgIndexZone, gr, gf);
     }
 
   }
