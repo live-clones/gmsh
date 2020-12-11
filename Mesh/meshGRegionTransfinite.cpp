@@ -291,7 +291,7 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
       for(auto* fedge : gf->edges()) {
         const auto found_it = std::find(begin(redges), end(redges), fedge);
         if (found_it != end(redges)) {
-            redges.erase(found_it);
+          redges.erase(found_it);
         }
       }
       findTransfiniteCorners(gf, corners);
