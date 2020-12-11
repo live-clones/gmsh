@@ -782,12 +782,9 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
   }
   else {
     // the cavity is NOT star shaped
-    ittet = cavity.begin();
-    ittete = cavity.end();
-    while(ittet != ittete) {
-      (*ittet)->setDeleted(false);
-      ++ittet;
-    }
+    std::for_each(begin(cavity), end(cavity), [](MTri3 * triangle) {
+        triangle->setDeleted(false);
+    });
     // _printTris("cavity.pos", cavity.begin(), cavity.end(), Us, Vs, false);
     // _printTris("new_cavity.pos", new_cavity.begin(), new_cavity.end(), Us, Vs, false);
     // _printTris("newTris.pos", &newTris[0], newTris+shell.size(), Us, Vs, false);
