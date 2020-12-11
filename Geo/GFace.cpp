@@ -33,9 +33,6 @@
 #include <optimization.h>
 #endif
 
-// TODO C++11 remove macro
-#define SQU(a) ((a) * (a))
-
 GFace::GFace(GModel *model, int tag)
   : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0),
     compoundSurface(0)
@@ -1043,7 +1040,7 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   vmin = rv.low();
   vmax = rv.high();
 
-  const double tol = Precision * (SQU(umax - umin) + SQU(vmax - vmin));
+  const double tol = Precision * (std::pow(umax - umin, 2) + std::pow(vmax - vmin, 2));
   for(int i = 0; i < NumInitGuess; i++) {
     initu[i] = umin + initu[i] * (umax - umin);
     initv[i] = vmin + initv[i] * (vmax - vmin);
@@ -1057,7 +1054,7 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
       iter = 1;
 
       GPoint P = point(U, V);
-      err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
+      err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) + std::pow(Z - P.z(), 2));
       if(err2 < 1.e-8 * CTX::instance()->lc) return;
 
       while(err > tol && iter < MaxIter) {
@@ -1084,8 +1081,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
            (Vnew > vmax + tol || Vnew < vmin - tol))
           break;
 
-        err = SQU(Unew - U) + SQU(Vnew - V);
-        err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
+        err = std::pow(Unew - U, 2) + std::pow(Vnew - V, 2);
+        err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) + std::pow(Z - P.z(), 2));
 
         iter++;
         U = Unew;
