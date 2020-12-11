@@ -454,16 +454,13 @@ std::vector<GEdge *> const &GRegion::edges() const
   // TODO C++11 clean this up
   static std::vector<GEdge *> e;
   e.clear();
-  std::vector<GFace *>::const_iterator it = l_faces.begin();
-  while(it != l_faces.end()) {
-    std::vector<GEdge *> const &e2 = (*it)->edges();
-    std::vector<GEdge *>::const_iterator it2 = e2.begin();
-    while(it2 != e2.end()) {
-      GEdge *const edge = *it2;
-      if(std::find(e.begin(), e.end(), edge) == e.end()) e.push_back(edge);
-      ++it2;
+
+  for(auto* const face : l_faces) {
+    for (auto* const edge : face->edges()) {
+      if(std::find(e.begin(), e.end(), edge) == e.end()) {
+        e.push_back(edge);
+      }
     }
-    ++it;
   }
   return e;
 }
