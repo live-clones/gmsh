@@ -278,9 +278,9 @@ SBoundingBox3d GFace::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != PartitionSurface) {
-    // TODO C++11 std::accumulate
-    std::vector<GEdge *>::const_iterator it = l_edges.begin();
-    for(; it != l_edges.end(); it++) res += (*it)->bounds(fast);
+    for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
+      res += (*it)->bounds(fast);
+    }
   }
   else {
     for(std::size_t i = 0; i < getNumMeshElements(); i++)
