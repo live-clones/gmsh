@@ -21,12 +21,12 @@
 #include "DivideAndConquer.h"
 #endif
 
-double SOrientedBoundingRectangle::area() { return size[0] * size[1]; }
-
 SOrientedBoundingRectangle::SOrientedBoundingRectangle()
-  : center(2, 0.0), size(2, 0.0), axisX(2, 0.0), axisY(2, 0.0)
+  : center({0.0, 0.0}), size({0.0, 0.0}), axisX({0.0, 0.0}), axisY({0.0, 0.0})
 {
 }
+
+double SOrientedBoundingRectangle::area() { return size[0] * size[1]; }
 
 void SOrientedBoundingBox::fillp()
 {
