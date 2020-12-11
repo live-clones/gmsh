@@ -451,7 +451,6 @@ void GRegion::writeGEO(FILE *fp)
 
 std::vector<GEdge *> const &GRegion::edges() const
 {
-  // TODO C++11 clean this up
   static std::vector<GEdge *> e;
   e.clear();
 
