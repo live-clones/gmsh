@@ -276,18 +276,15 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
     }
     else if(faces.size() == 5) {
       // we need to start with a triangular face
-      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-          it++) {
-        if((*it)->edges().size() == 3 ||
-           (*it)->meshAttributes.corners.size() == 3) {
-          gf = *it;
-          break;
-        }
+      auto found_it = std::find(begin(faces), end(faces), [](GFace * face) {
+          return face->edges().size() == 3 || face->meshAttributes.corners.size() == 3;
+      });
+      if (found_it != end(faces)) {
+          gf = *found_it;
       }
     }
     if(gf) {
       std::vector<GEdge *> redges = gr->edges();
-
       for(auto* fedge : gf->edges()) {
         const auto found_it = std::find(begin(redges), end(redges), fedge);
         if (found_it != end(redges)) {
