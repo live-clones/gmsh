@@ -633,11 +633,8 @@ static bool invMapUV(MTriangle *t, double *p, bidimMeshData &data,
   b[1] = p[1] - v0;
   sys2x2(mat, b, uv);
 
-  if(uv[0] >= -tol && uv[1] >= -tol && uv[0] <= 1. + tol && uv[1] <= 1. + tol &&
-     1. - uv[0] - uv[1] > -tol) {
-    return true;
-  }
-  return false;
+  return uv[0] >= -tol && uv[1] >= -tol && uv[0] <= 1. + tol && uv[1] <= 1. + tol &&
+     1. - uv[0] - uv[1] > -tol;
 }
 
 inline double getSurfUV(MTriangle *t, bidimMeshData &data)
@@ -655,8 +652,8 @@ inline double getSurfUV(MTriangle *t, bidimMeshData &data)
 
   const double vv1[2] = {u2 - u1, v2 - v1};
   const double vv2[2] = {u3 - u1, v3 - v1};
-  double s = vv1[0] * vv2[1] - vv1[1] * vv2[0];
-  return s * 0.5;
+
+  return 0.5 * (vv1[0] * vv2[1] - vv1[1] * vv2[0]);
 }
 
 static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
