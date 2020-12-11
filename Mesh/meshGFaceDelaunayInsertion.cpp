@@ -693,7 +693,6 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
 
   bool onePointIsTooClose = false;
 
-
   while(it != shell.end()) {
     MVertex *v0, *v1;
     if(it->ori > 0) {
@@ -708,7 +707,7 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
     int index0 = data.getIndex(t->getVertex(0));
     int index1 = data.getIndex(t->getVertex(1));
     int index2 = data.getIndex(t->getVertex(2));
-    const double ONE_THIRD = 1. / 3.;
+    constexpr double ONE_THIRD = 1. / 3.;
     double lc = ONE_THIRD * (data.vSizes[index0] +
                              data.vSizes[index1] +
                              data.vSizes[index2]);
