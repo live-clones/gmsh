@@ -107,7 +107,7 @@ void GFace::delFreeEdge(GEdge *edge)
 
 int GFace::delEdge(GEdge *edge)
 {
-  const auto found = std::find_if(begin(l_edges), end(l_edges), edge);
+  const auto found = std::find(begin(l_edges), end(l_edges), edge);
 
   if(found != end(l_edges)) {
     l_edges.erase(found);
@@ -119,7 +119,7 @@ int GFace::delEdge(GEdge *edge)
     return 0;
   }
 
-  if(l_dirs.size() < pos) {
+  if(l_dirs.size() < static_cast<std::size_t>(pos)) {
     l_dirs.erase(std::prev(l_dirs.end()));
     return 0;
   }
