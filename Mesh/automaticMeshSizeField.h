@@ -8,6 +8,7 @@
 #include "MLine.h"
 #include "Field.h"
 #include "Context.h"
+#include "STensor3.h"
 
 #include "rtree.h"
 
@@ -67,6 +68,12 @@ typedef struct size_data{
   double ds[3]; // Size gradient
 #endif
   double h;     // Isotropic cell size
+  SMetric3 M;   // Anisotropic size
+
+  // Données pour l'interpolation des directions de courbure
+  bool hasIntersection;
+  SVector3 t1, t2, n;
+
 } size_data_t;
 
 // A node to search in the tree
@@ -75,8 +82,16 @@ typedef struct size_point{
   double y;
   double z;
   double size;
+  SMetric3 m;
   bool isFound;
 } size_point_t;
+
+typedef struct interpolation_data{
+  double center[3];
+  SVector3 t1;
+  SVector3 t2;
+  double denom;
+} interpolation_data_t;
 
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
 HXTStatus forestOptionsCreate(ForestOptions **forestOptions);
@@ -177,6 +192,7 @@ class automaticMeshSizeField : public Field {
 
   void update();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = 0);
+  virtual void operator()(double x, double y, double z, SMetric3 &m, GEntity *ge = 0);
 };
 
 #endif

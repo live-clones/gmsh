@@ -120,35 +120,6 @@ static p4est_connectivity_t * p8est_connectivity_new_square(HXTForestOptions *fo
               NULL, &num_ctt, NULL, NULL);
 }
 
-// static p4est_connectivity_t * p4est_connectivity_new_square(HXTForestOptions *forestOptions){
-//   const p4est_topidx_t num_vertices = 4;
-//   const p4est_topidx_t num_trees = 1;
-//   const p4est_topidx_t num_ctt = 0;
-
-//   double centreX = (forestOptions->bbox[0]+forestOptions->bbox[3]) / 2.0;
-//   double centreY = (forestOptions->bbox[1]+forestOptions->bbox[4]) / 2.0;
-//   double cX      = (forestOptions->bbox[3]-forestOptions->bbox[0]) / 2.0;
-//   double cY      = (forestOptions->bbox[4]-forestOptions->bbox[1]) / 2.0;
-
-//   double scalingFactor = 1.5; // The quadtree is this times bigger than the model's bounding box
-//   double c = scalingFactor * fmax(cX,cY);
-
-//   const double vertices[4 * 3] = {
-//     centreX-c, centreY-c, 0,
-//     centreX+c, centreY-c, 0,
-//     centreX-c, centreY+c, 0,
-//     centreX+c, centreY+c, 0,
-//   };
-//   const p4est_topidx_t tree_to_vertex[1 * 4] = {0, 1, 2, 3};
-//   const p4est_topidx_t tree_to_tree[1 * 4] = {0, 0, 0, 0};
-//   const int8_t         tree_to_face[1 * 4] = {0, 1, 2, 3};
-
-//   return p4est_connectivity_new_copy (num_vertices, num_trees, 0,
-//                                       vertices, tree_to_vertex,
-//                                       tree_to_tree, tree_to_face,
-//                                       NULL, &num_ctt, NULL, NULL);
-// }
-
 /* Dummy callback to return the bulk size. */
 static inline double bulkSize(double x, double y, double z, double hBulk){
   return hBulk;
@@ -190,21 +161,8 @@ static inline void initializeCell(p4est_t* p4est, p4est_topidx_t which_tree, p4e
   data->size = forestOptions->sizeFunction(center[0], center[1], center[2], forestOptions->hbulk);
   // Set size gradient to zero
   for(int i = 0; i < P4EST_DIM; ++i) data->ds[i] = 0.0;
-  // Set half lengths used for finite differences
+  // Set cell dimension (edge length)
   getCellSize(p4est, which_tree, q, &(data->h));
-
-  data->h_xL = data->h / 2.0; // Left
-  data->h_xR = data->h / 2.0; // Right
-  data->h_yD = data->h / 2.0; // Down
-  data->h_yU = data->h / 2.0; // Up
-  data->h_zB = data->h / 2.0; // Bottom
-  data->h_zT = data->h / 2.0; // Top
-
-  data->isBoundary = false;
-
-  // data->c[0] = center[0];
-  // data->c[1] = center[1];
-  // data->c[2] = center[2];
 }
 
 /* Creates (allocates) the forestOptions structure. */
@@ -388,7 +346,7 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
         double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
         double nElemPerCell = 2;
 
-        if(h > hc/nElemPerCell && h >= forestOptions->hmin){
+        if(h > hc/nElemPerCell && h >= forestOptions->hmin_octree){
           return 1;
         } else{
           return 0;
@@ -425,7 +383,7 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
       } else{
         double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
         int nElemPerCell = 1;
-         if(h > hc/nElemPerCell && h >= forestOptions->hmin){
+         if(h > hc/nElemPerCell && h >= forestOptions->hmin_octree){
           return 1;
         } else{
           return 0;
@@ -569,219 +527,14 @@ HXTStatus hxtForestRefineOneLevel(HXTForest *forest){
   return HXT_STATUS_OK;
 }
 
-static void addL2ErrorGradient(p4est_iter_volume_info_t * info, void *user_data){
-  p4est_t            *p4est = info->p4est;
-  p4est_quadrant_t   *q = info->quad;
-  p4est_topidx_t      which_tree = info->treeid;
-  size_data_t        *data = (size_data_t *) q->p.user_data;
-
-  if(!data->isBoundary){
-    double* e = (double*) user_data;
-
-    double center[3], grad[3];
-    getCellCenter(p4est, which_tree, q, center);
-    myGrad(center[0], center[1], center[2], grad);
-
-    // printf("mygrad = %f, %f, %f\n", grad[0], grad[1], grad[2]);
-
-    *e += pow(data->h,3) * ( pow(data->ds[0]-grad[0],2) + pow(data->ds[1]-grad[1],2) + pow(data->ds[2]-grad[2],2) );
-
-    // printf("h = %f\n", data->h);
-    // printf("ds[0] = %f\n", data->ds[0]);
-    // printf("pour le moment, erreur = %f\n", *e);
-  }
-}
-
-static void addLInfErrorGradient(p4est_iter_volume_info_t * info, void *user_data){
-  p4est_t            *p4est = info->p4est;
-  p4est_quadrant_t   *q = info->quad;
-  p4est_topidx_t      which_tree = info->treeid;
-  size_data_t        *data = (size_data_t *) q->p.user_data;
-
-  if(!data->isBoundary){
-    double* e = (double*) user_data;
-
-    double center[3], grad[3];
-    getCellCenter(p4est, which_tree, q, center);
-    myGrad(center[0], center[1], center[2], grad);
-
-    *e = fmax(*e, fmax( fabs(data->ds[0]-grad[0]), fmax( fabs(data->ds[1]-grad[1]), fabs(data->ds[2]-grad[2]) )));
-
-    // printf("h = %f\n", data->h);
-    // printf("ds[0] = %f\n", data->ds[0]);
-    // printf("pour le moment, erreur = %f\n", *e);
-  }
-}
-
-static void getminsize(p4est_iter_volume_info_t * info, void *user_data){
-  p4est_quadrant_t   *q = info->quad;
-  size_data_t        *data = (size_data_t *) q->p.user_data;
-  double* minsize = (double*) user_data;
-  *minsize = fmin(*minsize, data->h);
-}
-
-static void getmaxsize(p4est_iter_volume_info_t * info, void *user_data){
-  p4est_quadrant_t   *q = info->quad;
-  size_data_t        *data = (size_data_t *) q->p.user_data;
-  double* maxsize = (double*) user_data;
-  *maxsize = fmax(*maxsize, data->h);
-}
-
-HXTStatus hxtL2NormGradient(HXTForest *forest, double *error){
-  double e = 0;
-  p4est_iterate(forest->p4est, NULL, (void*) &e, addL2ErrorGradient, NULL, NULL, NULL);
-  e = sqrt(e);
-  *error = e;
-  printf("Erreur L2 = %10.12e\n", e);
-}
-
-HXTStatus hxtLInfNormGradient(HXTForest *forest, double *error){
-  double e = 0;
-  p4est_iterate(forest->p4est, NULL, (void*) &e, addLInfErrorGradient, NULL, NULL, NULL);
-  *error = e;
-  printf("Erreur LInf = %10.12e\n", e);
-}
-
-HXTStatus hxtGetSmallestCellSize(HXTForest *forest, double *minsize){
-  double minSize = 1e22;
-  p4est_iterate(forest->p4est, NULL, (void*) &minSize, getminsize, NULL, NULL, NULL);
-  *minsize = minSize;
-  printf("Minimum cell size = %10.12e\n", *minsize);
-}
-
-HXTStatus hxtGetLargestCellSize(HXTForest *forest, double *maxsize){
-  double maxSize = 0;
-  p4est_iterate(forest->p4est, NULL, (void*) &maxSize, getmaxsize, NULL, NULL, NULL);
-  *maxsize = maxSize;
-  printf("Maximum cell size = %10.12e\n", *maxsize);
-}
-
 /* ========================================================================================================
    SIZE GRADIENT COMPUTATION & SMOOTHING
    ======================================================================================================== */
 static inline void resetCell(p4est_iter_volume_info_t * info, void *user_data){
     size_data_t *data = (size_data_t *) info->quad->p.user_data;
-    // Reset gradient to zero.
+    // Reset gradient.
     for(int i = 0; i < P4EST_DIM; ++i) data->ds[i] = 0.0;
-    // Reset half lengths
-    data->h_xL = data->h / 2.0;
-    data->h_xR = data->h / 2.0;
-    data->h_yU = data->h / 2.0;
-    data->h_yD = data->h / 2.0;
-    data->h_zB = data->h / 2.0;
-    data->h_zT = data->h / 2.0;
 }
-
-// static inline void setHalfLengths(p4est_iter_face_info_t * info, void *user_data){
-//   p4est_iter_face_side_t *side[2];
-//   sc_array_t             *sides = &(info->sides);
-//   size_data_t            *ghost_data = (size_data_t *) user_data;
-//   size_data_t            *data;
-//   size_data_t            *data_opp;
-//   p4est_quadrant_t       *quad;
-//   p4est_quadrant_t       *quadOpp;
-//   int                     which_face;
-//   int                     which_face_opp;
-//   // Index of current face on the opposite cell (0 if current is 1 and vice versa).
-//   int                     iOpp; 
-
-//   side[0] = p4est_iter_fside_array_index_int (sides, 0);
-//   side[1] = p4est_iter_fside_array_index_int (sides, 1);
-
-//   if(sides->elem_count == 2){ // Not on a boundary of the octree (the face has two neighbours)
-
-//     for(int i = 0; i < 2; i++) {
-
-//       iOpp = 1 - i; // Index in array side[] of the opposite face
-//       which_face_opp = side[iOpp]->face;     /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
-
-//       // Current cells are hanging
-//       // There are 2^(dim-1) (P4EST_HALF) subfaces
-//       if (side[i]->is_hanging){
-//         quad = side[i]->is.hanging.quad[0]; // Both hanging cells have the same size, so we take quad[0] to compute the lengths (either is fine)
-//         data = (size_data_t *) quad->p.user_data;
-//         // Current cells are hanging (split), so we assume that the opposite cell
-//         // is full. Otherwise we would just be on a full-full new face.
-//         data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-//         // We add the current cell half lengths as contribution to the opposite cell
-//         switch(which_face_opp){
-//           case 0 : data_opp->h_xL += data->h / 2.0 ; break;
-//           case 1 : data_opp->h_xR += data->h / 2.0 ; break;
-//           case 2 : data_opp->h_yD += data->h / 2.0 ; break;
-//           case 3 : data_opp->h_yU += data->h / 2.0 ; break;
-//         #ifdef P4_TO_P8
-//           case 4 : data_opp->h_zB += data->h / 2.0 ; break;
-//           case 5 : data_opp->h_zT += data->h / 2.0 ; break;
-//         #endif
-//           default :
-//             std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
-//             // return HXT_STATUS_RANGE_ERROR;
-//         }
-//       }
-//       // Current cell is full
-//       else{
-//         quad = side[i]->is.full.quad;
-//         data = (size_data_t *) quad->p.user_data;
-//         // We add the current cell half lengths as contribution to the opposite cell(s)
-
-//         if(side[iOpp]->is_hanging){
-//           // Current is full - Opposite are hanging
-//           for(int j = 0; j < P4EST_HALF; ++j){
-//             data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
-//             switch(which_face_opp){
-//               case 0 : data_opp->h_xL += data->h / 2.0 ; break;
-//               case 1 : data_opp->h_xR += data->h / 2.0 ; break;
-//               case 2 : data_opp->h_yD += data->h / 2.0 ; break;
-//               case 3 : data_opp->h_yU += data->h / 2.0 ; break;
-//             #ifdef P4_TO_P8
-//               case 4 : data_opp->h_zB += data->h / 2.0 ; break;
-//               case 5 : data_opp->h_zT += data->h / 2.0 ; break;
-//             #endif
-//               default :
-//                 std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
-//                 // return HXT_STATUS_RANGE_ERROR;
-//             }
-//           }
-//         } 
-//         else{
-//           // Current is full - Opposite is Full
-//           data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-//           switch(which_face_opp){
-//             case 0 : data_opp->h_xL += data->h / 2.0 ; break;
-//             case 1 : data_opp->h_xR += data->h / 2.0 ; break;
-//             case 2 : data_opp->h_yD += data->h / 2.0 ; break;
-//             case 3 : data_opp->h_yU += data->h / 2.0 ; break;
-//           #ifdef P4_TO_P8
-//             case 4 : data_opp->h_zB += data->h / 2.0 ; break;
-//             case 5 : data_opp->h_zT += data->h / 2.0 ; break;
-//           #endif
-//             default :
-//               std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
-//               // return HXT_STATUS_RANGE_ERROR;
-//           }  
-//         }
-//       }
-//     } // for side[i]
-//   }
-//   else{ // On the boundaries
-//     data = (size_data_t *) side[0]->is.full.quad->p.user_data;
-//     data->isBoundary = true;
-//     which_face = side[0]->face;
-//     switch(which_face){
-//       case 0 : data->h_xL += data->h / 2.0; break;
-//       case 1 : data->h_xR += data->h / 2.0; break;
-//       case 2 : data->h_yD += data->h / 2.0; break;
-//       case 3 : data->h_yU += data->h / 2.0; break;
-//     #ifdef P4_TO_P8
-//       case 4 : data->h_zB += data->h / 2.0; break;
-//       case 5 : data->h_zT += data->h / 2.0; break;
-//     #endif
-//       default :
-//         std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
-//         // return HXT_STATUS_RANGE_ERROR;
-//     }
-//   }
-// }
 
 static void computeGradientCenter(p4est_iter_face_info_t * info, void *user_data){
     p4est_iter_face_side_t *side[2];
@@ -811,7 +564,6 @@ static void computeGradientCenter(p4est_iter_face_info_t * info, void *user_data
           for(int j = 0; j < P4EST_HALF; j++){
             data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
             s_avg += data->size;
-            // s[j]   = data->size; 
           }
           s_sum = s_avg;
           s_avg /= P4EST_HALF;
@@ -819,14 +571,12 @@ static void computeGradientCenter(p4est_iter_face_info_t * info, void *user_data
           data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
 
           switch(which_face_opp){
-            case 0 : data_opp->ds[0] -= 0.5 * (s_avg - data_opp->size)/(data_opp->h_xL + data->h_xR); break;
-            case 1 : data_opp->ds[0] += 0.5 * (s_avg - data_opp->size)/(data_opp->h_xR + data->h_xL); break;
-            case 2 : data_opp->ds[1] -= 0.5 * (s_avg - data_opp->size)/(data_opp->h_yD + data->h_yU); break;
-            case 3 : data_opp->ds[1] += 0.5 * (s_avg - data_opp->size)/(data_opp->h_yU + data->h_yD); break;
-            case 4 : data_opp->ds[2] -= 0.5 * (s_avg - data_opp->size)/(data_opp->h_zB + data->h_zT); break;
-            case 5 : data_opp->ds[2] += 0.5 * (s_avg - data_opp->size)/(data_opp->h_zT + data->h_zB); break;
-            default :
-              std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+            case 0 : data_opp->ds[0] -= 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+            case 1 : data_opp->ds[0] += 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+            case 2 : data_opp->ds[1] -= 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+            case 3 : data_opp->ds[1] += 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+            case 4 : data_opp->ds[2] -= 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+            case 5 : data_opp->ds[2] += 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
           }
         }
         // Current cell is full
@@ -844,19 +594,13 @@ static void computeGradientCenter(p4est_iter_face_info_t * info, void *user_data
 
             for(int j = 0; j < P4EST_HALF; ++j){
               data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
-
-              double grad_opp[3];
-              myGrad(data_opp->c[0], data_opp->c[1], data_opp->c[2], grad_opp);
-
               switch(which_face_opp){
-                case 0 : data_opp->ds[0] -= 0.5 * (data->size - data_opp->size)/(data_opp->h_xL + data->h_xR); break;
-                case 1 : data_opp->ds[0] += 0.5 * (data->size - data_opp->size)/(data_opp->h_xR + data->h_xL); break;
-                case 2 : data_opp->ds[1] -= 0.5 * (data->size - data_opp->size)/(data_opp->h_yD + data->h_yU); break;
-                case 3 : data_opp->ds[1] += 0.5 * (data->size - data_opp->size)/(data_opp->h_yU + data->h_yD); break;
-                case 4 : data_opp->ds[2] -= 0.5 * (data->size - data_opp->size)/(data_opp->h_zB + data->h_zT); break;
-                case 5 : data_opp->ds[2] += 0.5 * (data->size - data_opp->size)/(data_opp->h_zT + data->h_zB); break;
-                default :
-                  std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                case 0 : data_opp->ds[0] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+                case 1 : data_opp->ds[0] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+                case 2 : data_opp->ds[1] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+                case 3 : data_opp->ds[1] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+                case 4 : data_opp->ds[2] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+                case 5 : data_opp->ds[2] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
               }
             }
           }
@@ -864,102 +608,18 @@ static void computeGradientCenter(p4est_iter_face_info_t * info, void *user_data
             // Current full - Opposite full
             data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
             switch(which_face_opp){
-              case 0 : data_opp->ds[0] -= 0.5 * (data->size - data_opp->size)/(data_opp->h_xL + data->h_xR); break;
-              case 1 : data_opp->ds[0] += 0.5 * (data->size - data_opp->size)/(data_opp->h_xR + data->h_xL); break;
-              case 2 : data_opp->ds[1] -= 0.5 * (data->size - data_opp->size)/(data_opp->h_yD + data->h_yU); break;
-              case 3 : data_opp->ds[1] += 0.5 * (data->size - data_opp->size)/(data_opp->h_yU + data->h_yD); break;
-              case 4 : data_opp->ds[2] -= 0.5 * (data->size - data_opp->size)/(data_opp->h_zB + data->h_zT); break;
-              case 5 : data_opp->ds[2] += 0.5 * (data->size - data_opp->size)/(data_opp->h_zT + data->h_zB); break;
-              default :
-                std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+              case 0 : data_opp->ds[0] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+              case 1 : data_opp->ds[0] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+              case 2 : data_opp->ds[1] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+              case 3 : data_opp->ds[1] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+              case 4 : data_opp->ds[2] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
+              case 5 : data_opp->ds[2] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
             }
           }
         }
       }
     }
-    else{ // On the boundaries
-        data = (size_data_t *) side[0]->is.full.quad->p.user_data;
-        data->isBoundary = true;
-        which_face = side[0]->face;
-
-        // s_sum = 4.0*data->size;
-        // h = (double) P4EST_QUADRANT_LEN (side[0]->is.full.quad->level) / (double) P4EST_ROOT_LEN /2;
-
-        // switch(which_face){
-        //   case 0 : data->ds[0] -= 0.125 * (s_sum - 4.0*data_opp->size)/(data_opp->h_xL + data->h_xR); break;
-        //   case 1 : data->ds[0] += 0.125 * (s_sum - 4.0*data_opp->size)/(data_opp->h_xR + data->h_xL); break;
-        //   case 2 : data->ds[1] -= 0.125 * (s_sum - 4.0*data_opp->size)/(data_opp->h_yD + data->h_yU); break;
-        //   case 3 : data->ds[1] += 0.125 * (s_sum - 4.0*data_opp->size)/(data_opp->h_yU + data->h_yD); break;
-        // #ifdef P4_TO_P8
-        //   case 4 : data->ds[2] -= 0.125 * (s_sum - 4.0*data_opp->size)/(data_opp->h_zB + data->h_zT); break;
-        //   case 5 : data->ds[2] += 0.125 * (s_sum - 4.0*data_opp->size)/(data_opp->h_zT + data->h_zB); break;
-        // #endif
-        //   default :
-        //       std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
-        // }
-
-        // // Differences finies aux faces (decentrees) si le quadrant est a la frontiere
-        // switch(which_face){
-        //   case 0 : data->ds[0] += ; break; //-= data->size; break;
-        //   case 1 : data->ds[0] = NAN; break; //+= data->size; break;
-        //   case 2 : data->ds[1] = NAN; break; //-= data->size; break;
-        //   case 3 : data->ds[1] = NAN; break; //+= data->size; break;
-        // #ifdef P4_TO_P8
-        //   case 4 : data->ds[2] = NAN; break; //-= data->size; break;
-        //   case 5 : data->ds[2] = NAN; break; //+= data->size; break;
-        // #endif
-        //     default :
-        //         std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
-        // }
-    }
-}
-
-// static void correction(p4est_iter_face_info_t * info, void *user_data){
-//   p4est_iter_face_side_t *side[2];
-//   sc_array_t             *sides = &(info->sides);
-//   size_data_t            *data;
-//   size_data_t            *data_opp;
-//   double                  s_avg, s[4], s_sum;
-//   int                     which_face;
-//   int                     which_face_opp;
-//   // Index of current face on the opposite cell (0 if current is 1 and vice versa).
-//   int                     iOpp; 
-
-//   side[0] = p4est_iter_fside_array_index_int (sides, 0);
-//   side[1] = p4est_iter_fside_array_index_int (sides, 1);
-
-//   if(sides->elem_count == 2){
-//     for(int i = 0; i < 2; i++){
-//       iOpp = 1 - i;
-//       which_face_opp = side[iOpp]->face; /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
-//       // Current cells are hanging
-//       if (side[i]->is_hanging){
-//         data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-//         double gradOpp[3], grad[3];
-//         myGrad(data_opp->c[0], data_opp->c[1], data_opp->c[2], gradOpp);
-//         // for(int jj = 0; jj < 3; ++jj){
-//         //   data_opp->ds[jj] = gradOpp[jj];
-//         // }
-//         for(int jj = 0; jj < P4EST_HALF; ++jj){
-//           data = (size_data_t *) side[i]->is.hanging.quad[jj]->p.user_data;
-//           myGrad(data->c[0], data->c[1], data->c[2], grad);
-//           for(int kk = 0; kk < 3; ++kk){
-//             data->ds[kk] = grad[kk];
-//           }
-//         }
-//       }      
-//     }
-//   }
-// }
-
-static inline void printGradient(p4est_iter_volume_info_t * info, void *user_data){
-    size_data_t *data = (size_data_t *) info->quad->p.user_data;
-    printf("grad = (%f \t %f \t %f) isBoundary = %d\n", data->ds[0], data->ds[1], data->ds[2], data->isBoundary);
-}
-
-static inline void printLengths(p4est_iter_volume_info_t * info, void *user_data){
-    size_data_t *data = (size_data_t *) info->quad->p.user_data;
-    printf("lengths = (%f \t %f \t, %f \t %f \t, %f \t %f \t) isBoundary = %d\n", data->h_xL, data->h_xR, data->h_yU, data->h_yD, data->h_zT, data->h_zB, data->isBoundary);
+    // Nothing to do on the boundaries
 }
 
 HXTStatus hxtForestComputeGradient(HXTForest *forest){
@@ -987,181 +647,126 @@ HXTStatus hxtForestGetMaxGradient(HXTForest *forest, double *gradMax){
 }
 
 void smoothSize(p4est_iter_face_info_t * info, void *user_data){
-    p4est_iter_face_side_t *side[2];
-    sc_array_t        *sides = &(info->sides);
-    size_data_t       *ghost_data = (size_data_t *) user_data;
-    size_data_t       *data;
-    size_data_t       *data_opp1;
-    size_data_t       *data_opp2;
-    p4est_quadrant_t  *quad;
-    double             s_avg;
-    int                which_dir;
-    int                which_face;
-    int                which_face_opp;
-    int                iOpp;
+  p4est_iter_face_side_t *side[2];
+  sc_array_t        *sides = &(info->sides);
+  size_data_t       *ghost_data = (size_data_t *) user_data;
+  size_data_t       *data;
+  size_data_t       *data_opp1;
+  size_data_t       *data_opp2;
+  p4est_quadrant_t  *quad;
+  double             s_avg;
+  int                which_dir;
+  int                which_face;
+  int                which_face_opp;
+  int                iOpp;
 
-    HXTForestOptions  *forestOptions = (HXTForestOptions*) user_data;
-    double             alpha = forestOptions->gradation - 1.0;
-    double             tol = 1e-3;
+  HXTForestOptions  *forestOptions = (HXTForestOptions*) user_data;
+  double             alpha = forestOptions->gradation - 1.0;
+  double             tol = 1e-3;
 
-    side[0] = p4est_iter_fside_array_index_int (sides, 0);
-    side[1] = p4est_iter_fside_array_index_int (sides, 1);
+  side[0] = p4est_iter_fside_array_index_int (sides, 0);
+  side[1] = p4est_iter_fside_array_index_int (sides, 1);
 
-    if(sides->elem_count==2){
+  if(sides->elem_count==2){
 
-      for(int i = 0; i < 2; ++i){
+    for(int i = 0; i < 2; ++i){
 
-        iOpp = 1 - i;
-        which_dir = side[i]->face / 2; // Direction x (0), y (1) ou z(2)
-        which_face_opp = side[iOpp]->face;
+      iOpp = 1 - i;
+      which_dir = side[i]->face / 2; // Direction x (0), y (1) ou z(2)
+      which_face_opp = side[iOpp]->face;
 
-        if(side[i]->is_hanging){
+      if(side[i]->is_hanging){
 
-          // Current hanging - Opposes full
-          data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+        // Current hanging - Opposes full
+        data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
 
-          for(int j = 0; j < P4EST_HALF; ++j){
+        for(int j = 0; j < P4EST_HALF; ++j){
 
-            data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
-
-            if(fabs(data->ds[which_dir]) > alpha + tol){
-
-              // printf("Gradient trop grand (hanging - full)\n");
-
-              if(data->size > data_opp1->size){
-                  // data->size = fmin(data->size, data_opp1->size + (alpha-1) * data_opp1->hMin);
-                switch(which_face_opp){
-                  case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xL + data->h_xR)); break;
-                  case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xR + data->h_xL)); break;
-                  case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yD + data->h_yU)); break;
-                  case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yU + data->h_yD)); break;
-                  case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zB + data->h_zT)); break;
-                  case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zT + data->h_zB)); break;
-                }
-              }else{
-                  // data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * data->hMin);
-                switch(which_face_opp){
-                  case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xL + data->h_xR)); break;
-                  case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xR + data->h_xL)); break;
-                  case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yD + data->h_yU)); break;
-                  case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yU + data->h_yD)); break;
-                  case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zB + data->h_zT)); break;
-                  case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zT + data->h_zB)); break;
-                }
-              }
-            } // if ds > alpha-1
-          } // for j hanging
-        } // if hanging
-        else{
-
-          data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+          data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
 
           if(fabs(data->ds[which_dir]) > alpha + tol){
-            if(side[iOpp]->is_hanging){
-              // printf("Gradient trop grand (full - hanging)\n");
 
-                // Current full - Oppose hanging
-              for(int j = 0; j < P4EST_HALF; ++j){
-                data_opp1 = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
-                // size_data_opp2 = (size_data_t *) side[iOpp]->is.hanging.quad[1]->p.user_data;
+            if(data->size > data_opp1->size){
+              switch(which_face_opp){
+                case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+              }
+            }else{
+              switch(which_face_opp){
+                case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+              }
+            }
+          } // if ds > alpha-1
+        } // for j hanging
+      } // if hanging
+      else{
 
-                // if(data->size > fmin(data_opp1->size, size_data_opp2->size) ){
-                if(data->size > data_opp1->size){
-                    // data->size = fmin(data->size, data_opp1->size + (alpha-1) * data_opp1->hMin);
-                    // data->size = fmin(data->size, size_data_opp2->size + (alpha-1) * size_data_opp2->hMin);
-                  switch(which_face_opp){
-                    case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xL + data->h_xR)); break;
-                    case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xR + data->h_xL)); break;
-                    case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yD + data->h_yU)); break;
-                    case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yU + data->h_yD)); break;
-                    case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zB + data->h_zT)); break;
-                    case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zT + data->h_zB)); break;
-                  }
+        data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+
+        if(fabs(data->ds[which_dir]) > alpha + tol){
+          if(side[iOpp]->is_hanging){
+              // Current full - Oppose hanging
+            for(int j = 0; j < P4EST_HALF; ++j){
+              data_opp1 = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
+              if(data->size > data_opp1->size){
+                switch(which_face_opp){
+                  case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                  case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                  case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                  case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                  case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                  case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
                 }
-                else{
-                    // data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * data->hMin);
-                    // size_data_opp2->size = fmin(size_data_opp2->size, data->size + (alpha-1) * data->hMin);
-                  switch(which_face_opp){
-                    case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xL + data->h_xR)); break;
-                    case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xR + data->h_xL)); break;
-                    case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yD + data->h_yU)); break;
-                    case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yU + data->h_yD)); break;
-                    case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zB + data->h_zT)); break;
-                    case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zT + data->h_zB)); break;
-                  }
+              }
+              else{
+                switch(which_face_opp){
+                  case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                  case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                  case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                  case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                  case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                  case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
                 }
               }
             }
+          }
+          else{
+            // Current full - Oppose full
+            data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+            if(data->size > data_opp1->size){
+              switch(which_face_opp){
+                case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+              }
+            }
             else{
-              // printf("Gradient trop grand (full - full) : grad[%d] = %f\n", which_dir, data->ds[which_dir]);
-
-                // Current full - Oppose full
-                data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-                double myS = data->size;
-
-                if(data->size > data_opp1->size){
-                    // data->size = fmin(data->size, data_opp1->size + (alpha-1) * data_opp1->hMin);
-                  switch(which_face_opp){
-                    case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xL + data->h_xR)); 
-                    // printf("Courante est lissée x : taille initiale = %f, taille lissée = %f\n", myS, data->size); 
-                    break;
-                    case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_xR + data->h_xL));
-                    // printf("Courante est lissée x : taille initiale = %f, taille lissée = %f\n", myS, data->size); 
-                    break;
-                    case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yD + data->h_yU));
-                    // printf("Courante est lissée y : taille initiale = %f, taille lissée = %f\n", myS, data->size); 
-                    break;
-                    case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_yU + data->h_yD));
-                    // printf("Courante est lissée y : taille initiale = %f, taille lissée = %f\n", myS, data->size); 
-                    break;
-                    case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zB + data->h_zT));
-                    // printf("Courante est lissée z : taille initiale = %f, taille lissée = %f\n", myS, data->size); 
-                    break;
-                    case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h_zT + data->h_zB));
-                    // printf("Courante est lissée z : taille initiale = %f, taille lissée = %f\n", myS, data->size); 
-                    break;
-                  }
-                }
-                else{
-                    // data_opp1->size = fmin(data_opp1->size, data->size + (alpha-1) * data->hMin);
-                  double myS = data_opp1->size;
-                  switch(which_face_opp){
-                    case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xL + data->h_xR));
-                    // printf("Opposee  est lissée x : taille initiale = %f, taille lissée = %f\n", myS, data_opp1->size); 
-                    break;
-                    case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_xR + data->h_xL));
-                    // printf("Opposee  est lissée x : taille initiale = %f, taille lissée = %f\n", myS, data_opp1->size); 
-                    break;
-                    case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yD + data->h_yU));
-                    // printf("Opposee  est lissée y : taille initiale = %f, taille lissée = %f\n", myS, data_opp1->size); 
-                    break;
-                    case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_yU + data->h_yD));
-                    // printf("Opposee  est lissée y : taille initiale = %f, taille lissée = %f\n", myS, data_opp1->size); 
-                    break;
-                    case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zB + data->h_zT));
-                    // printf("Opposee  est lissée z : taille initiale = %f, taille lissée = %f\n", myS, data_opp1->size); 
-                    break;
-                    case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h_zT + data->h_zB));
-                    // printf("Opposee  est lissée z : taille initiale = %f, taille lissée = %f\n", myS, data_opp1->size); 
-                    break;
-                  }
-                }
-            }  
-          } // if gradient trop grand
-        } // else
-      }
+              switch(which_face_opp){
+                case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+                case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
+              }
+            }
+          }  
+        } // if gradient trop grand
+      } // else
     }
-    else{
-        // size_data = (size_data_t *) side[0]->is.full.quad->p.user_data;
-
-        // which_dir = side[0]->face / 2;
-
-        // if(fabs(data->ds[which_dir]) > alpha-1){
-        //     data->ds[which_dir] = fmin(data->ds[which_dir], alpha-1);
-        //     data->ds[which_dir] = nan("");
-
-        // }
-    }
+  }
 }
 
 HXTStatus hxtForestSetMaxGradient(HXTForest *forest){
@@ -1773,14 +1378,21 @@ HXTStatus medialAxis(HXTForest* forest){
 
   std::set<MEdge,MEdgeLessThan> axis;
   int elemDrawn = 0;
+ 
+  // FILE* file = fopen("medialAxis.pos", "w");
+  // if(file==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
+  // FILE* file_vp = fopen("medialAxis_poleVectors.pos", "w");
+  // if(file_vp==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
+  // FILE* file_t = fopen("medialAxis_tets.pos", "w");
+  // if(file_t==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
 
-  FILE* file = fopen("medialAxis.pos", "w");
-  if(file==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-
-  bool draw = true;
-  if(draw){
-    fprintf(file, "View \"medialAxis\" {\n");
-  }
+  // bool draw = true;
+  // if(draw){
+  //   fprintf(file, "View \"medialAxis\" {\n");
+  //   fprintf(file_vp, "View \"medialAxis_poleVectors\" {\n");
+  //   fprintf(file_t, "View \"medialAxis_tets\" {\n");
+  // }
+  // draw = true;
 
   int indFace;
 
@@ -1802,6 +1414,11 @@ HXTStatus medialAxis(HXTForest* forest){
     double D = -(vp[0]*p[0] + vp[1]*p[1] + vp[2]*p[2]);
     SPoint3 p1(0., 0., -D/vp[2]); // 2 points sur le plan qui passe par p et de normale vp
     SPoint3 p2(0., -D/vp[1], 0.);
+
+    // if(i == 130300){
+    //   fprintf(file_vp, "SP(%f,%f,%f){%d};\n", pole[0], pole[1], pole[2], 1);
+    //   fprintf(file_vp, "SL(%f,%f,%f,%f,%f,%f){%d,%d};\n", p[0], p[1], p[2], p[0]+vp[0], p[1]+vp[1], p[2]+vp[2], 1, 1);
+    // }
 
     std::vector<MFace> up; // umbrella
     // Boucle sur les voronoi edges (paires de centres)
@@ -1826,6 +1443,18 @@ HXTStatus medialAxis(HXTForest* forest){
       }
     }
 
+    // if(i == 130300){
+    //   for(size_t j = 0; j < tetIncidents[i].size(); ++j){
+    //     uint64_t tetj = tetIncidents[i][j];
+    //     fprintf(file_t, "SS(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n",
+    //             allTets[tetj]->getVertex(0)->x(), allTets[tetj]->getVertex(0)->y(), allTets[tetj]->getVertex(0)->z(),
+    //             allTets[tetj]->getVertex(1)->x(), allTets[tetj]->getVertex(1)->y(), allTets[tetj]->getVertex(1)->z(),
+    //             allTets[tetj]->getVertex(2)->x(), allTets[tetj]->getVertex(2)->y(), allTets[tetj]->getVertex(2)->z(),
+    //             allTets[tetj]->getVertex(3)->x(), allTets[tetj]->getVertex(3)->y(), allTets[tetj]->getVertex(3)->z(),
+    //             1.0, 1.0, 1.0, 1.0);
+    //   }
+    // }
+
     double theta = M_PI/8., rho = 8., maxAngle, minRatio, localAngle, alpha0, alpha1;
     std::vector<MEdge> checkedEdges;
     bool checked;
@@ -1842,6 +1471,64 @@ HXTStatus medialAxis(HXTForest* forest){
 
       if(checked){ continue; }
       else{ checkedEdges.push_back(e); }
+
+      // if(i == 130300){
+      // if(i % 25 == 0){
+        // Draw umbrella triangles
+        // for(size_t jj = 0; jj < up.size(); ++jj){
+        //   fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f};\n",
+        //         up[jj].getVertex(0)->x(), up[jj].getVertex(0)->y(), up[jj].getVertex(0)->z(),
+        //         up[jj].getVertex(1)->x(), up[jj].getVertex(1)->y(), up[jj].getVertex(1)->z(),
+        //         up[jj].getVertex(2)->x(), up[jj].getVertex(2)->y(), up[jj].getVertex(2)->z(),
+        //         1,1,1);
+        // }
+        // // Turning around the edge to draw the facet
+        // std::vector<SPoint3> centers;
+        // for(size_t jj = 0; jj < tetIncidents[i].size(); ++jj){
+        //   uint64_t tetj = tetIncidents[i][jj];
+        //   for(size_t b = 0; b < 6; ++b){
+        //     if(allTets[tetj]->getEdge(b) == e) centers.push_back(allTets[tetj]->circumcenter());
+        //   }
+        // }
+        // if(centers.size() > 2){
+        //   // Center of the face
+        //   SPoint3 c(0.,0.,0.);
+        //   for(size_t a = 0; a < centers.size(); ++a){
+        //     c += centers[a];
+        //   }
+        //   c /= centers.size();
+        //   SVector3 v0(c,centers[0]);
+        //   SVector3 v1(c,centers[1]);
+        //   SVector3 v2(c,centers[2]);
+        //   SVector3 normal = crossprod(SVector3(c,centers[1]),SVector3(c,centers[2]));
+        //   normal.normalize();
+        //   // setFarthestAsFirst(centers, c);
+        //   // if(angle(v0,v1) > 0){ 
+        //   //   normal = crossprod(SVector3(c,centers[0]),SVector3(c,centers[2]));
+        //   //   if(angle(v0,v2) > 0){
+        //   //     normal = crossprod(SVector3(c,centers[1]),SVector3(c,centers[2]));
+        //   //   }
+        //   // }
+        //   // Sort clockwise around center
+        //   sort(centers.begin(), centers.end(), [c,normal](SPoint3 a, SPoint3 b) { return sortClockwise(a,b,c,normal); });
+        //   // Draw
+        //   for(size_t aa = 0; aa < centers.size(); aa++){
+        //     for(size_t a = 1; a < centers.size()-1; a++){
+        //       fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f};\n",
+        //         centers[aa][0],  centers[aa][1],  centers[aa][2],
+        //         centers[a][0],  centers[a][1],  centers[a][2],
+        //         centers[a+1][0],centers[a+1][1],centers[a+1][2],
+        //         e.length(), e.length(), e.length());
+        //     }
+        //   }
+        //   // fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%d,%d,%d};\n",
+        //   //     centers[0][0],centers[0][1],centers[0][2],
+        //   //     centers[centers.size()-1][0],centers[centers.size()-1][1],centers[centers.size()-1][2],
+        //   //     centers[1][0],centers[1][1],centers[1][2],
+        //   //     0,(int) centers.size()-1, 1);
+        //   ++elemDrawn;
+        // }
+      // }
 
       maxAngle = 0.0;
       minRatio = DBL_MAX;
@@ -1861,6 +1548,7 @@ HXTStatus medialAxis(HXTForest* forest){
         }
 
         if(maxAngle < M_PI/2. - theta || minRatio > rho){
+        // if(maxAngle < M_PI/2. - theta){
 
           double *n0 = forest->forestOptions->nodeNormals + 3*v0;
           double *n1 = forest->forestOptions->nodeNormals + 3*v1;
@@ -1878,42 +1566,44 @@ HXTStatus medialAxis(HXTForest* forest){
                 sizeAtVertices[ v0 ] = fmin(h, sizeAtVertices[ v0 ]);
                 sizeAtVertices[ v1 ] = fmin(h, sizeAtVertices[ v1 ]);
 
-              if(draw){
-                // Turning around the edge to draw the facet
-                std::vector<SPoint3> centers;
-                for(size_t jj = 0; jj < tetIncidents[i].size(); ++jj){
-                  uint64_t tetj = tetIncidents[i][jj];
-                  for(size_t b = 0; b < 6; ++b){
-                    if(allTets[tetj]->getEdge(b) == e) centers.push_back(allTets[tetj]->circumcenter());
-                  }
-                }
-                if(centers.size() > 2){
-                  // Center of the face
-                  SPoint3 c(0.,0.,0.);
-                  for(size_t a = 0; a < centers.size(); ++a){
-                    c += centers[a];
-                  }
-                  c /= centers.size();
-                  SVector3 normal = crossprod(SVector3(c,centers[0]),SVector3(c,centers[1]));
-                  normal.normalize();
-                  // Sort clockwise around center
-                  sort(centers.begin(), centers.end(), [c,normal](SPoint3 a, SPoint3 b) { return sortClockwise(a,b,c,normal); });
-                  // Draw
-                  for(size_t a = 1; a < centers.size()-1; ++a){
-                    fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%d,%d,%d};\n",
-                      centers[0][0],centers[0][1],centers[0][2],
-                      centers[a][0],centers[a][1],centers[a][2],
-                      centers[a+1][0],centers[a+1][1],centers[a+1][2],
-                      0,(int) a, (int) a+1);
-                  }
-                  fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%d,%d,%d};\n",
-                      centers[0][0],centers[0][1],centers[0][2],
-                      centers[centers.size()-1][0],centers[centers.size()-1][1],centers[centers.size()-1][2],
-                      centers[1][0],centers[1][1],centers[1][2],
-                      0,(int) centers.size()-1, 1);
-                  ++elemDrawn;
-                } 
-              }
+              // if(draw){
+              //   // Turning around the edge to draw the facet
+              //   std::vector<SPoint3> centers;
+              //   for(size_t jj = 0; jj < tetIncidents[i].size(); ++jj){
+              //     uint64_t tetj = tetIncidents[i][jj];
+              //     for(size_t b = 0; b < 6; ++b){
+              //       if(allTets[tetj]->getEdge(b) == e) centers.push_back(allTets[tetj]->circumcenter());
+              //     }
+              //   }
+              //   if(centers.size() > 2){
+              //     // Center of the face
+              //     SPoint3 c(0.,0.,0.);
+              //     for(size_t a = 0; a < centers.size(); ++a){
+              //       c += centers[a];
+              //     }
+              //     c /= centers.size();
+              //     SVector3 normal = crossprod(SVector3(c,centers[0]),SVector3(c,centers[1]));
+              //     normal.normalize();
+              //     // Sort clockwise around center
+              //     sort(centers.begin(), centers.end(), [c,normal](SPoint3 a, SPoint3 b) { return sortClockwise(a,b,c,normal); });
+              //     // Draw
+              //     for(size_t a = 1; a < centers.size()-1; ++a){
+              //       fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%d,%d,%d};\n",
+              //         centers[0][0],centers[0][1],centers[0][2],
+              //         centers[a][0],centers[a][1],centers[a][2],
+              //         centers[a+1][0],centers[a+1][1],centers[a+1][2],
+              //         1,1,1);
+              //         // 0,(int) a, (int) a+1);
+              //     }
+              //     fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%d,%d,%d};\n",
+              //         centers[0][0],centers[0][1],centers[0][2],
+              //         centers[centers.size()-1][0],centers[centers.size()-1][1],centers[centers.size()-1][2],
+              //         centers[1][0],centers[1][1],centers[1][2],
+              //         1,1,1);
+              //         // 0,(int) centers.size()-1, 1);
+              //     ++elemDrawn;
+              //   } 
+              // }
             // } // if edge was inserted
           } // if edges does not have a too large angle with normals to its extremities
         } // if edge passes conditions
@@ -1921,10 +1611,15 @@ HXTStatus medialAxis(HXTForest* forest){
     } // for incident edges
   } // for vertices.num
 
-  if(draw){
-    fprintf(file, "};");
-    fclose(file);
-  }
+  // draw = true;
+  // if(draw){
+  //   fprintf(file, "};");
+  //   fclose(file);
+  //   fprintf(file_vp, "};");
+  //   fclose(file_vp);
+  //   fprintf(file_t, "};");
+  //   fclose(file_t);
+  // }
 
   // printf("%d faces drawn in the medial axis\n", elemDrawn);
   // printf("%d edges in the medial axis\n", axis.size());

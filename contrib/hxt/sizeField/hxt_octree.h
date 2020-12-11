@@ -25,6 +25,7 @@ typedef struct HXTForestOptions{
   int           dim;
   double 				hmax;
   double 				hmin;
+  double        hmin_octree;
   double 				hbulk;
   double 				gradation;
   int           nRefine;
@@ -40,7 +41,6 @@ typedef struct HXTForestOptions{
   std::vector<std::function<double(double)>> *curvFunctions;
   std::vector<std::function<double(double)>> *xFunctions;
   std::vector<std::function<double(double)>> *yFunctions;
-  GModel *gmodel;
 } HXTForestOptions;
 
 // The structure containing the size field information
@@ -57,16 +57,8 @@ typedef struct size_data{
 #ifdef HAVE_P4EST
   double ds[P4EST_DIM]; // Size gradient
 #endif
-  double h; // The cell size
-  // TODO : remplacer les double par un teableu de booleen qui indique si le voisin est full ou hanging
-  // Comme ça il faudra juste ajouter h/2
-  double h_xL, h_xR; // Half cell length for finite differences
-  double h_yD, h_yU;
-  double h_zB, h_zT;
-  int isBoundary;
-
-  // Coordinates of center : TO REMOVE
-  double c[3];
+  double h;    // The isotropic cell size
+  // double M[3]; // The anisotropic cell size (metric tensor)
 } size_data_t;
 
 // A node to search in the tree
@@ -102,14 +94,6 @@ HXTStatus hxtComputeGradientOnce(HXTForest *forest);
 
 HXTStatus hxtOctreeElementEstimation(HXTForest *forest, double *elemEstimate);
 HXTStatus hxtForestSearchOne(HXTForest *forest, double x, double y, double z, double *size, int linear);
-
-// Pour calculer la convergence des derivees
-HXTStatus hxtForestRefineToBulk(HXTForest *forest);
-HXTStatus hxtForestRefineOneLevel(HXTForest *forest);
-HXTStatus hxtL2NormGradient(HXTForest *forest, double *error);
-HXTStatus hxtLInfNormGradient(HXTForest *forest, double *error);
-HXTStatus hxtGetSmallestCellSize(HXTForest *forest, double *minsize);
-HXTStatus hxtGetLargestCellSize(HXTForest *forest, double *maxsize);
 
 HXTStatus medialAxis(HXTForest *forest);
 
