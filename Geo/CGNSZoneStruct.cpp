@@ -141,7 +141,8 @@ namespace {
       break;
     default:
       Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
-                 "linear", order);
+                 "linear",
+                 order);
       mshEltType = MSH_HEX_8;
       if(!isShiftInit[0]) {
         initHexShift(1, shiftP1);
@@ -228,7 +229,8 @@ namespace {
       break;
     default:
       Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
-                 "linear", order);
+                 "linear",
+                 order);
       mshEltType = MSH_LIN_2;
       if(!isShiftInit[0]) {
         initLinShift(1, shiftP1);
@@ -311,7 +313,8 @@ namespace {
       break;
     default:
       Msg::Error("Cannot coarsen structured zone to order %i, falling back to "
-                 "linear", order);
+                 "linear",
+                 order);
       mshEltType = MSH_QUA_4;
       if(!isShiftInit[0]) {
         initQuadShift(1, shiftP1);
@@ -351,8 +354,8 @@ template <int DIM>
 CGNSZoneStruct<DIM>::CGNSZoneStruct(
   int fileIndex, int baseIndex, int zoneIndex, int meshDim, cgsize_t startNode,
   const Family2EltNodeTransfo &allEltNodeTransfo, int &err)
-  : CGNSZone(fileIndex, baseIndex, zoneIndex, Structured, meshDim, startNode,
-             allEltNodeTransfo, err)
+  : CGNSZone(fileIndex, baseIndex, zoneIndex, CGNS_ENUMV(Structured), meshDim,
+             startNode, allEltNodeTransfo, err)
 {
   // Check consistency
   bool ok = true;

@@ -17,8 +17,9 @@
 
 namespace {
 
-  MElement *createElement(ElementType_t sectEltType, std::size_t vertShift,
-                          int entity, const std::vector<MVertex *> &allVert,
+  MElement *createElement(CGNS_ENUMT(ElementType_t) sectEltType,
+                          std::size_t vertShift, int entity,
+                          const std::vector<MVertex *> &allVert,
                           std::map<int, std::vector<MElement *> > *allElt,
                           const std::vector<cgsize_t> &sectData,
                           const ZoneEltNodeTransfo *eltNodeTransfo,
@@ -26,9 +27,9 @@ namespace {
                           std::size_t &iSectData)
   {
     // get element type
-    ElementType_t eltType;
-    if(sectEltType == MIXED) {
-      eltType = static_cast<ElementType_t>(sectData[iSectData]);
+    CGNS_ENUMT(ElementType_t) eltType;
+    if(sectEltType == CGNS_ENUMV(MIXED)) {
+      eltType = static_cast<CGNS_ENUMT(ElementType_t)>(sectData[iSectData]);
       iSectData++;
     }
     else
@@ -82,8 +83,8 @@ namespace {
 CGNSZoneUnstruct::CGNSZoneUnstruct(
   int fileIndex, int baseIndex, int zoneIndex, int meshDim, cgsize_t startNode,
   const Family2EltNodeTransfo &allEltNodeTransfo, int &err)
-  : CGNSZone(fileIndex, baseIndex, zoneIndex, Unstructured, meshDim, startNode,
-             allEltNodeTransfo, err)
+  : CGNSZone(fileIndex, baseIndex, zoneIndex, CGNS_ENUMV(Unstructured), meshDim,
+             startNode, allEltNodeTransfo, err)
 {
   if(err == 0) return;
 
@@ -104,7 +105,7 @@ int CGNSZoneUnstruct::readSection(
 
   // read section information
   char sectName[CGNS_MAX_STR_LEN];
-  ElementType_t sectEltType;
+  CGNS_ENUMT(ElementType_t) sectEltType;
   cgsize_t startElt, endElt;
   int nbBnd, parentFlag;
   cgnsErr =
@@ -114,7 +115,7 @@ int CGNSZoneUnstruct::readSection(
 
     // check for compatibility with MIXED element sections
 #if CGNS_VERSION < 4000
-  if(sectEltType == MIXED) {
+  if(sectEltType == CGNS_ENUMV(MIXED)) {
     Msg::Error("Reading MIXED element sections requires CGNS library version"
                "4 or superior");
     return 0;
@@ -129,7 +130,7 @@ int CGNSZoneUnstruct::readSection(
 
   // read connectivity data
   std::vector<cgsize_t> sectData(dataSize), offsetData(endElt - startElt + 2);
-  if(sectEltType == MIXED) {
+  if(sectEltType == CGNS_ENUMV(MIXED)) {
 #if CGNS_VERSION >= 4000
     cgnsErr = cg_poly_elements_read(fileIndex(), baseIndex(), index(), iSect,
                                     sectData.data(), offsetData.data(), 0);

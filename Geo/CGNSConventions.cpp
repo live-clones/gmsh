@@ -465,71 +465,72 @@ namespace {
   // ------------- Conversion of element types between CGNS and Gmsh
   // -------------
 
-  std::vector<ElementType_t> msh2CgnsEltTypeInit()
+  std::vector<CGNS_ENUMT(ElementType_t)> msh2CgnsEltTypeInit()
   {
-    std::vector<ElementType_t> cgnsType(MSH_MAX_NUM + 1, ElementTypeNull);
+    std::vector<CGNS_ENUMT(ElementType_t)> cgnsType(
+      MSH_MAX_NUM + 1, CGNS_ENUMV(ElementTypeNull));
 
     // All orders
-    cgnsType[MSH_PNT] = NODE;
+    cgnsType[MSH_PNT] = CGNS_ENUMV(NODE);
 
     // Linear elements
-    cgnsType[MSH_LIN_2] = BAR_2;
-    cgnsType[MSH_TRI_3] = TRI_3;
-    cgnsType[MSH_QUA_4] = QUAD_4;
-    cgnsType[MSH_TET_4] = TETRA_4;
-    cgnsType[MSH_PYR_5] = PYRA_5;
-    cgnsType[MSH_PRI_6] = PENTA_6;
-    cgnsType[MSH_HEX_8] = HEXA_8;
+    cgnsType[MSH_LIN_2] = CGNS_ENUMV(BAR_2);
+    cgnsType[MSH_TRI_3] = CGNS_ENUMV(TRI_3);
+    cgnsType[MSH_QUA_4] = CGNS_ENUMV(QUAD_4);
+    cgnsType[MSH_TET_4] = CGNS_ENUMV(TETRA_4);
+    cgnsType[MSH_PYR_5] = CGNS_ENUMV(PYRA_5);
+    cgnsType[MSH_PRI_6] = CGNS_ENUMV(PENTA_6);
+    cgnsType[MSH_HEX_8] = CGNS_ENUMV(HEXA_8);
 
     // Quadratic elements
-    cgnsType[MSH_LIN_3] = BAR_3;
-    cgnsType[MSH_TRI_6] = TRI_6;
-    cgnsType[MSH_QUA_8] = QUAD_8;
-    cgnsType[MSH_QUA_9] = QUAD_9;
-    cgnsType[MSH_TET_10] = TETRA_10;
-    cgnsType[MSH_PYR_13] = PYRA_13;
-    cgnsType[MSH_PYR_14] = PYRA_14;
-    cgnsType[MSH_PRI_15] = PENTA_15;
-    cgnsType[MSH_PRI_18] = PENTA_18;
-    cgnsType[MSH_HEX_20] = HEXA_20;
-    cgnsType[MSH_HEX_27] = HEXA_27;
+    cgnsType[MSH_LIN_3] = CGNS_ENUMV(BAR_3);
+    cgnsType[MSH_TRI_6] = CGNS_ENUMV(TRI_6);
+    cgnsType[MSH_QUA_8] = CGNS_ENUMV(QUAD_8);
+    cgnsType[MSH_QUA_9] = CGNS_ENUMV(QUAD_9);
+    cgnsType[MSH_TET_10] = CGNS_ENUMV(TETRA_10);
+    cgnsType[MSH_PYR_13] = CGNS_ENUMV(PYRA_13);
+    cgnsType[MSH_PYR_14] = CGNS_ENUMV(PYRA_14);
+    cgnsType[MSH_PRI_15] = CGNS_ENUMV(PENTA_15);
+    cgnsType[MSH_PRI_18] = CGNS_ENUMV(PENTA_18);
+    cgnsType[MSH_HEX_20] = CGNS_ENUMV(HEXA_20);
+    cgnsType[MSH_HEX_27] = CGNS_ENUMV(HEXA_27);
 
     // Cubic elements
-    cgnsType[MSH_LIN_4] = BAR_4;
-    cgnsType[MSH_TRI_9] = TRI_9;
-    cgnsType[MSH_TRI_10] = TRI_10;
-    cgnsType[MSH_QUA_12] = QUAD_12;
-    cgnsType[MSH_QUA_16] = QUAD_16;
-    cgnsType[MSH_TET_16] = TETRA_16;
-    cgnsType[MSH_TET_20] = TETRA_20;
-    cgnsType[MSH_PYR_21] = PYRA_21;
-    cgnsType[MSH_PYR_29] = PYRA_29;
-    cgnsType[MSH_PYR_30] = PYRA_30;
-    cgnsType[MSH_PRI_24] = PENTA_24;
-    //  cgnsType[MSH_PRI_38] = PENTA_38;
-    cgnsType[MSH_PRI_40] = PENTA_40;
-    cgnsType[MSH_HEX_32] = HEXA_32;
-    cgnsType[MSH_HEX_56] = HEXA_56;
-    cgnsType[MSH_HEX_64] = HEXA_64;
+    cgnsType[MSH_LIN_4] = CGNS_ENUMV(BAR_4);
+    cgnsType[MSH_TRI_9] = CGNS_ENUMV(TRI_9);
+    cgnsType[MSH_TRI_10] = CGNS_ENUMV(TRI_10);
+    cgnsType[MSH_QUA_12] = CGNS_ENUMV(QUAD_12);
+    cgnsType[MSH_QUA_16] = CGNS_ENUMV(QUAD_16);
+    cgnsType[MSH_TET_16] = CGNS_ENUMV(TETRA_16);
+    cgnsType[MSH_TET_20] = CGNS_ENUMV(TETRA_20);
+    cgnsType[MSH_PYR_21] = CGNS_ENUMV(PYRA_21);
+    cgnsType[MSH_PYR_29] = CGNS_ENUMV(PYRA_29);
+    cgnsType[MSH_PYR_30] = CGNS_ENUMV(PYRA_30);
+    cgnsType[MSH_PRI_24] = CGNS_ENUMV(PENTA_24);
+    //  cgnsType[MSH_PRI_38] = CGNS_ENUMV(PENTA_38);
+    cgnsType[MSH_PRI_40] = CGNS_ENUMV(PENTA_40);
+    cgnsType[MSH_HEX_32] = CGNS_ENUMV(HEXA_32);
+    cgnsType[MSH_HEX_56] = CGNS_ENUMV(HEXA_56);
+    cgnsType[MSH_HEX_64] = CGNS_ENUMV(HEXA_64);
 
     // Quartic elements
-    cgnsType[MSH_LIN_5] = BAR_5;
-    cgnsType[MSH_TRI_12] = TRI_12;
-    cgnsType[MSH_TRI_15] = TRI_15;
-    cgnsType[MSH_QUA_16] = QUAD_16;
-    cgnsType[MSH_QUA_25] = QUAD_25;
-    cgnsType[MSH_TET_22] = TETRA_22;
-    cgnsType[MSH_TET_34] = TETRA_34;
-    cgnsType[MSH_TET_35] = TETRA_35;
-    cgnsType[MSH_PYR_29] = PYRA_29;
-    //  cgnsType[MSH_PYR_50] = PYRA_50;
-    cgnsType[MSH_PYR_55] = PYRA_55;
-    cgnsType[MSH_PRI_33] = PENTA_33;
-    //  cgnsType[MSH_PRI_66] = PENTA_66;
-    cgnsType[MSH_PRI_75] = PENTA_75;
-    cgnsType[MSH_HEX_44] = HEXA_44;
-    //  cgnsType[MSH_HEX_98] = HEXA_98;
-    cgnsType[MSH_HEX_125] = HEXA_125;
+    cgnsType[MSH_LIN_5] = CGNS_ENUMV(BAR_5);
+    cgnsType[MSH_TRI_12] = CGNS_ENUMV(TRI_12);
+    cgnsType[MSH_TRI_15] = CGNS_ENUMV(TRI_15);
+    cgnsType[MSH_QUA_16] = CGNS_ENUMV(QUAD_16);
+    cgnsType[MSH_QUA_25] = CGNS_ENUMV(QUAD_25);
+    cgnsType[MSH_TET_22] = CGNS_ENUMV(TETRA_22);
+    cgnsType[MSH_TET_34] = CGNS_ENUMV(TETRA_34);
+    cgnsType[MSH_TET_35] = CGNS_ENUMV(TETRA_35);
+    cgnsType[MSH_PYR_29] = CGNS_ENUMV(PYRA_29);
+    //  cgnsType[MSH_PYR_50] = CGNS_ENUMV(PYRA_50);
+    cgnsType[MSH_PYR_55] = CGNS_ENUMV(PYRA_55);
+    cgnsType[MSH_PRI_33] = CGNS_ENUMV(PENTA_33);
+    //  cgnsType[MSH_PRI_66] = CGNS_ENUMV(PENTA_66);
+    cgnsType[MSH_PRI_75] = CGNS_ENUMV(PENTA_75);
+    cgnsType[MSH_HEX_44] = CGNS_ENUMV(HEXA_44);
+    //  cgnsType[MSH_HEX_98] = CGNS_ENUMV(HEXA_98);
+    cgnsType[MSH_HEX_125] = CGNS_ENUMV(HEXA_125);
 
     return cgnsType;
   }
@@ -539,66 +540,66 @@ namespace {
     std::vector<int> mshType(NofValidElementTypes, 0);
 
     // All orders
-    mshType[NODE] = MSH_PNT;
+    mshType[CGNS_ENUMV(NODE)] = MSH_PNT;
 
     // Linear elements
-    mshType[BAR_2] = MSH_LIN_2;
-    mshType[TRI_3] = MSH_TRI_3;
-    mshType[QUAD_4] = MSH_QUA_4;
-    mshType[TETRA_4] = MSH_TET_4;
-    mshType[PYRA_5] = MSH_PYR_5;
-    mshType[PENTA_6] = MSH_PRI_6;
-    mshType[HEXA_8] = MSH_HEX_8;
+    mshType[CGNS_ENUMV(BAR_2)] = MSH_LIN_2;
+    mshType[CGNS_ENUMV(TRI_3)] = MSH_TRI_3;
+    mshType[CGNS_ENUMV(QUAD_4)] = MSH_QUA_4;
+    mshType[CGNS_ENUMV(TETRA_4)] = MSH_TET_4;
+    mshType[CGNS_ENUMV(PYRA_5)] = MSH_PYR_5;
+    mshType[CGNS_ENUMV(PENTA_6)] = MSH_PRI_6;
+    mshType[CGNS_ENUMV(HEXA_8)] = MSH_HEX_8;
 
     // Quadratic elements
-    mshType[BAR_3] = MSH_LIN_3;
-    mshType[TRI_6] = MSH_TRI_6;
-    mshType[QUAD_8] = MSH_QUA_8;
-    mshType[QUAD_9] = MSH_QUA_9;
-    mshType[TETRA_10] = MSH_TET_10;
-    mshType[PYRA_13] = MSH_PYR_13;
-    mshType[PYRA_14] = MSH_PYR_14;
-    mshType[PENTA_15] = MSH_PRI_15;
-    mshType[PENTA_18] = MSH_PRI_18;
-    mshType[HEXA_20] = MSH_HEX_20;
-    mshType[HEXA_27] = MSH_HEX_27;
+    mshType[CGNS_ENUMV(BAR_3)] = MSH_LIN_3;
+    mshType[CGNS_ENUMV(TRI_6)] = MSH_TRI_6;
+    mshType[CGNS_ENUMV(QUAD_8)] = MSH_QUA_8;
+    mshType[CGNS_ENUMV(QUAD_9)] = MSH_QUA_9;
+    mshType[CGNS_ENUMV(TETRA_10)] = MSH_TET_10;
+    mshType[CGNS_ENUMV(PYRA_13)] = MSH_PYR_13;
+    mshType[CGNS_ENUMV(PYRA_14)] = MSH_PYR_14;
+    mshType[CGNS_ENUMV(PENTA_15)] = MSH_PRI_15;
+    mshType[CGNS_ENUMV(PENTA_18)] = MSH_PRI_18;
+    mshType[CGNS_ENUMV(HEXA_20)] = MSH_HEX_20;
+    mshType[CGNS_ENUMV(HEXA_27)] = MSH_HEX_27;
 
     // Cubic elements
-    mshType[BAR_4] = MSH_LIN_4;
-    mshType[TRI_9] = MSH_TRI_9;
-    mshType[TRI_10] = MSH_TRI_10;
-    mshType[QUAD_12] = MSH_QUA_12;
-    mshType[QUAD_16] = MSH_QUA_16;
-    mshType[TETRA_16] = MSH_TET_16;
-    mshType[TETRA_20] = MSH_TET_20;
-    mshType[PYRA_21] = MSH_PYR_21;
-    mshType[PYRA_29] = MSH_PYR_29;
-    mshType[PYRA_30] = MSH_PYR_30;
-    mshType[PENTA_24] = MSH_PRI_24;
-    //  mshType[PENTA_38] = MSH_PRI_38;
-    mshType[PENTA_40] = MSH_PRI_40;
-    mshType[HEXA_32] = MSH_HEX_32;
-    mshType[HEXA_56] = MSH_HEX_56;
-    mshType[HEXA_64] = MSH_HEX_64;
+    mshType[CGNS_ENUMV(BAR_4)] = MSH_LIN_4;
+    mshType[CGNS_ENUMV(TRI_9)] = MSH_TRI_9;
+    mshType[CGNS_ENUMV(TRI_10)] = MSH_TRI_10;
+    mshType[CGNS_ENUMV(QUAD_12)] = MSH_QUA_12;
+    mshType[CGNS_ENUMV(QUAD_16)] = MSH_QUA_16;
+    mshType[CGNS_ENUMV(TETRA_16)] = MSH_TET_16;
+    mshType[CGNS_ENUMV(TETRA_20)] = MSH_TET_20;
+    mshType[CGNS_ENUMV(PYRA_21)] = MSH_PYR_21;
+    mshType[CGNS_ENUMV(PYRA_29)] = MSH_PYR_29;
+    mshType[CGNS_ENUMV(PYRA_30)] = MSH_PYR_30;
+    mshType[CGNS_ENUMV(PENTA_24)] = MSH_PRI_24;
+    //  mshType[CGNS_ENUMV(PENTA_38)] = MSH_PRI_38;
+    mshType[CGNS_ENUMV(PENTA_40)] = MSH_PRI_40;
+    mshType[CGNS_ENUMV(HEXA_32)] = MSH_HEX_32;
+    mshType[CGNS_ENUMV(HEXA_56)] = MSH_HEX_56;
+    mshType[CGNS_ENUMV(HEXA_64)] = MSH_HEX_64;
 
     // Quartic elements
-    mshType[BAR_5] = MSH_LIN_5;
-    mshType[TRI_12] = MSH_TRI_12;
-    mshType[TRI_15] = MSH_TRI_15;
-    mshType[QUAD_16] = MSH_QUA_16;
-    mshType[QUAD_25] = MSH_QUA_25;
-    mshType[TETRA_22] = MSH_TET_22;
-    mshType[TETRA_34] = MSH_TET_34;
-    mshType[TETRA_35] = MSH_TET_35;
-    mshType[PYRA_29] = MSH_PYR_29;
-    //  mshType[PYRA_50] = MSH_PYR_50;
-    mshType[PYRA_55] = MSH_PYR_55;
-    mshType[PENTA_33] = MSH_PRI_33;
-    //  mshType[PENTA_66] = MSH_PRI_66;
-    mshType[PENTA_75] = MSH_PRI_75;
-    mshType[HEXA_44] = MSH_HEX_44;
-    //  mshType[HEXA_98] = MSH_HEX_98;
-    mshType[HEXA_125] = MSH_HEX_125;
+    mshType[CGNS_ENUMV(BAR_5)] = MSH_LIN_5;
+    mshType[CGNS_ENUMV(TRI_12)] = MSH_TRI_12;
+    mshType[CGNS_ENUMV(TRI_15)] = MSH_TRI_15;
+    mshType[CGNS_ENUMV(QUAD_16)] = MSH_QUA_16;
+    mshType[CGNS_ENUMV(QUAD_25)] = MSH_QUA_25;
+    mshType[CGNS_ENUMV(TETRA_22)] = MSH_TET_22;
+    mshType[CGNS_ENUMV(TETRA_34)] = MSH_TET_34;
+    mshType[CGNS_ENUMV(TETRA_35)] = MSH_TET_35;
+    mshType[CGNS_ENUMV(PYRA_29)] = MSH_PYR_29;
+    //  mshType[CGNS_ENUMV(PYRA_50)] = MSH_PYR_50;
+    mshType[CGNS_ENUMV(PYRA_55)] = MSH_PYR_55;
+    mshType[CGNS_ENUMV(PENTA_33)] = MSH_PRI_33;
+    //  mshType[CGNS_ENUMV(PENTA_66)] = MSH_PRI_66;
+    mshType[CGNS_ENUMV(PENTA_75)] = MSH_PRI_75;
+    mshType[CGNS_ENUMV(HEXA_44)] = MSH_HEX_44;
+    //  mshType[CGNS_ENUMV(HEXA_98)] = MSH_HEX_98;
+    mshType[CGNS_ENUMV(HEXA_125)] = MSH_HEX_125;
 
     return mshType;
   }
@@ -606,16 +607,18 @@ namespace {
 } // namespace
 
 // msh to CGNS element type
-ElementType_t msh2CgnsEltType(int mshTag)
+CGNS_ENUMT(ElementType_t) msh2CgnsEltType(int mshTag)
 {
-  static std::vector<ElementType_t> cgnsType = msh2CgnsEltTypeInit();
+  static std::vector<CGNS_ENUMT(ElementType_t)> cgnsType =
+    msh2CgnsEltTypeInit();
 
-  if(mshTag >= static_cast<int>(cgnsType.size())) return ElementTypeNull;
+  if(mshTag >= static_cast<int>(cgnsType.size()))
+    return CGNS_ENUMV(ElementTypeNull);
   return cgnsType[mshTag];
 }
 
 // CGNS to msh element type
-int cgns2MshEltType(ElementType_t cgnsType)
+int cgns2MshEltType(CGNS_ENUMT(ElementType_t) cgnsType)
 {
   static std::vector<int> mshType = cgns2MshEltTypeInit();
 

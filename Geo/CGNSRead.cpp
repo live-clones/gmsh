@@ -35,7 +35,7 @@ namespace {
 
     // read element interpolation tranformation info
     char interpName[CGNS_MAX_STR_LEN];
-    ElementType_t cgnsType;
+    CGNS_ENUMT(ElementType_t) cgnsType;
     cgnsErr = cg_element_interpolation_read(fileIndex, baseIndex, familyIndex,
                                             interpIndex, interpName, &cgnsType);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
@@ -110,11 +110,11 @@ int readScale(int fileIndex, int baseIndex, double &scale)
 
   scale = 1.;
 
-  MassUnits_t mass;
-  LengthUnits_t length;
-  TimeUnits_t time;
-  TemperatureUnits_t temperature;
-  AngleUnits_t angle;
+  CGNS_ENUMT(MassUnits_t) mass;
+  CGNS_ENUMT(LengthUnits_t) length;
+  CGNS_ENUMT(TimeUnits_t) time;
+  CGNS_ENUMT(TemperatureUnits_t) temperature;
+  CGNS_ENUMT(AngleUnits_t) angle;
   cgnsErr = cg_goto(fileIndex, baseIndex, "end");
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
   cgnsErr = cg_units_read(&mass, &length, &time, &temperature, &angle);
@@ -126,23 +126,23 @@ int readScale(int fileIndex, int baseIndex, double &scale)
     return cgnsError(__FILE__, __LINE__, fileIndex);
 
   switch(length) {
-  case Centimeter:
+  case CGNS_ENUMT(Centimeter):
     Msg::Info("Length unit in CGNS file is cm, rescaling");
     scale = 0.01;
     break;
-  case Millimeter:
+  case CGNS_ENUMT(Millimeter):
     Msg::Info("Length unit in CGNS file is mm, rescaling");
     scale = 0.001;
     break;
-  case Foot:
+  case CGNS_ENUMT(Foot):
     Msg::Info("Length unit in CGNS file is feet, rescaling");
     scale = 0.3048;
     break;
-  case Inch:
+  case CGNS_ENUMT(Inch):
     Msg::Info("Length unit in CGNS file is inch, rescaling");
     scale = 0.0254;
     break;
-  case Meter:
+  case CGNS_ENUMT(Meter):
     Msg::Info("Length unit in CGNS file is meter, not rescaling");
     break;
   case CG_Null:
@@ -211,13 +211,13 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
   cgsize_t startNode = 0;
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     // read zone type
-    ZoneType_t zoneType;
+    CGNS_ENUMT(ZoneType_t) zoneType;
     cgnsErr = cg_zone_type(fileIndex, baseIndex, iZone, &zoneType);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
     // create zone
     int err = 1;
-    if(zoneType == Structured) {
+    if(zoneType == CGNS_ENUMV(Structured)) {
       if(meshDim == 2) {
         allZones[iZone] =
           new CGNSZoneStruct<2>(fileIndex, baseIndex, iZone, meshDim, startNode,
@@ -229,7 +229,7 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
                                 allEltNodeTransfo, err);
       }
     }
-    else if(zoneType == Unstructured) {
+    else if(zoneType == CGNS_ENUMV(Unstructured)) {
       allZones[iZone] =
         new CGNSZoneUnstruct(fileIndex, baseIndex, iZone, meshDim, startNode,
                              allEltNodeTransfo, err);
