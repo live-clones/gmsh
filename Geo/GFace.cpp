@@ -107,26 +107,26 @@ void GFace::delFreeEdge(GEdge *edge)
 
 int GFace::delEdge(GEdge *edge)
 {
-  // BUG If the iterator is equal to end() then the erase will be ill-formed
-  // TODO C++11 fix this UB
-  std::vector<GEdge *>::iterator it;
-  int pos = 0;
-  for(it = l_edges.begin(); it != l_edges.end(); ++it) {
-    if(*it == edge) break;
-    pos++;
-  }
-  l_edges.erase(it);
+  const auto found = std::find_if(begin(l_edges), end(l_edges), edge);
 
-  std::vector<int>::iterator itOri;
-  int posOri = 0, orientation = 0;
-  for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri) {
-    if(posOri == pos) {
-      orientation = *itOri;
-      break;
-    }
-    posOri++;
+  if(found != end(l_edges)) {
+    l_edges.erase(found);
   }
-  l_dirs.erase(itOri);
+
+  const auto pos = std::distance(begin(l_edges), found);
+
+  if(l_dirs.empty()) {
+    return 0;
+  }
+
+  if(l_dirs.size() < pos) {
+    l_dirs.erase(std::prev(l_dirs.end()));
+    return 0;
+  }
+
+  const auto orientation = l_dirs.at(pos);
+
+  l_dirs.erase(std::next(begin(l_dirs), pos));
 
   return orientation;
 }
