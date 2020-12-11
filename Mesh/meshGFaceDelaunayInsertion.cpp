@@ -669,8 +669,6 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
 
   double EPS = verifyStarShapeness ? 1.e-12 : 1.e12;
 
-  std::vector<edgeXface> conn;
-
   // check that volume is conserved
   double newVolume = 0.0;
   double newMinQuality = 2.0;
@@ -759,6 +757,8 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
 
     ++it;
   }
+
+  std::vector<edgeXface> conn;
 
   // for adding a point we require that the area remains the same after addition
   // of the point, and that the point is not too close to an edge
