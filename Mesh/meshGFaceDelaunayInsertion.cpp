@@ -7,6 +7,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include <numeric>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "OS.h"
@@ -675,18 +676,15 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
 
   // check that volume is conserved
   double newVolume = 0.0;
-  double oldVolume = 0.0;
   double newMinQuality = 2.0;
-  double oldMinQuality = 2.0;
 
-  // TODO C++11 std::accumulate with lambda
-  std::list<MTri3 *>::iterator ittet = cavity.begin();
-  std::list<MTri3 *>::iterator ittete = cavity.end();
-  while(ittet != ittete) {
-    oldVolume += std::abs(getSurfUV((*ittet)->tri(), data));
-    oldMinQuality = std::min(oldMinQuality, (*ittet)->tri()->gammaShapeMeasure());
-    ++ittet;
-  }
+  double oldVolume = std::accumulate(begin(cavity),
+                                     end(cavity),
+                                     0.0,
+                                     [&](double volume,
+                                         MTri3 * const triangle) {
+      return volume + std::abs(getSurfUV(triangle->tri(), data));
+  });
 
   MTri3 **newTris = new MTri3 *[shell.size()];
 
