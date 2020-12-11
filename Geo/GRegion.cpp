@@ -278,27 +278,28 @@ void GRegion::setColor(unsigned int val, bool recursive)
 
 int GRegion::delFace(GFace *face)
 {
-  // TODO C++11 fix the UB if deleting at it == .end()
-  std::vector<GFace *>::iterator it;
-  int pos = 0;
-  for(it = l_faces.begin(); it != l_faces.end(); ++it) {
-    if(*it == face) break;
-    pos++;
-  }
-  l_faces.erase(it);
+    const auto found = std::find(begin(l_faces), end(l_faces), face);
 
-  std::vector<int>::iterator itOri;
-  int posOri = 0, orientation = 0;
-  for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri) {
-    if(posOri == pos) {
-      orientation = *itOri;
-      break;
+    if(found != end(l_faces)) {
+      l_faces.erase(found);
     }
-    posOri++;
-  }
-  l_dirs.erase(itOri);
 
-  return orientation;
+    const auto pos = std::distance(begin(l_faces), found);
+
+    if(l_dirs.empty()) {
+      return 0;
+    }
+
+    if(l_dirs.size() < static_cast<std::size_t>(pos)) {
+      l_dirs.erase(std::prev(l_dirs.end()));
+      return 0;
+    }
+
+    const auto orientation = l_dirs.at(pos);
+
+    l_dirs.erase(std::next(begin(l_dirs), pos));
+
+    return orientation;
 }
 
 void GRegion::setBoundFaces(const std::set<int> &tagFaces)
