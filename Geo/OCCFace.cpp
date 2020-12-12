@@ -242,10 +242,10 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   // little tolerance to converge on the borders of the surface
   const double du = _umax - _umin;
   const double dv = _vmax - _vmin;
-  double umin = _umin - std::max(fabs(du) / 100.0, 1e-12);
-  double vmin = _vmin - std::max(fabs(dv) / 100.0, 1e-12);
-  double umax = _umax + std::max(fabs(du) / 100.0, 1e-12);
-  double vmax = _vmax + std::max(fabs(dv) / 100.0, 1e-12);
+  double umin = _umin - std::max(fabs(du) * 1e-8, 1e-12);
+  double vmin = _vmin - std::max(fabs(dv) * 1e-8, 1e-12);
+  double umax = _umax + std::max(fabs(du) * 1e-8, 1e-12);
+  double vmax = _vmax + std::max(fabs(dv) * 1e-8, 1e-12);
 
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
@@ -282,10 +282,10 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
   // little tolerance to converge on the borders of the surface
   const double du = _umax - _umin;
   const double dv = _vmax - _vmin;
-  double umin = _umin - std::max(fabs(du) / 100.0, 1e-12);
-  double vmin = _vmin - std::max(fabs(dv) / 100.0, 1e-12);
-  double umax = _umax + std::max(fabs(du) / 100.0, 1e-12);
-  double vmax = _vmax + std::max(fabs(dv) / 100.0, 1e-12);
+  double umin = _umin - std::max(fabs(du) * 1e-8, 1e-12);
+  double vmin = _vmin - std::max(fabs(dv) * 1e-8, 1e-12);
+  double umax = _umax + std::max(fabs(du) * 1e-8, 1e-12);
+  double vmax = _vmax + std::max(fabs(dv) * 1e-8, 1e-12);
 
   GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
   if(!proj.NbPoints()) {
