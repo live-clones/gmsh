@@ -1954,22 +1954,22 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           parentEntityTag = pr->getParentEntity()->tag();
         }
         fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-        std::vector<int> partitions(pr->getPartitions().begin(),
-                                    pr->getPartitions().end()); // FIXME
-        fprintf(fp, "%lu ", partitions.size());
-        for(std::size_t i = 0; i < partitions.size(); i++)
-          fprintf(fp, "%d ", partitions[i]);
+
+        fprintf(fp, "%lu ", pr->getPartitions().size());
+
+        for(auto const partition : pr->getPartitions()) {
+            fprintf(fp, "%d ", partition);
+        }
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 3,
                            version);
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", faces.size());
-      // TODO C++11 std::transform or similiar
-      std::vector<int> tags;
-      tags.reserve(faces.size());
-      for(std::vector<GFace *>::const_iterator itf = faces.begin();
-          itf != faces.end(); itf++)
-        tags.push_back((*itf)->tag());
+
+      std::vector<int> tags(faces.size());
+      std::transform(begin(faces), end(faces), begin(tags), [](const GFace *const face){
+         return face->tag();
+      });
 
       std::vector<int> signs(ori.begin(), ori.end());
 
@@ -1977,7 +1977,10 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         for(std::size_t i = 0; i < tags.size(); i++)
           tags[i] *= (signs[i] > 0 ? 1 : -1);
       }
-      for(std::size_t i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
+
+      for (auto const tag : tags) {
+        fprintf(fp, "%d ", tag);
+      }
       fprintf(fp, "\n");
     }
   }

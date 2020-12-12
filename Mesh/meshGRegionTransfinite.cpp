@@ -276,22 +276,21 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
     }
     else if(faces.size() == 5) {
       // we need to start with a triangular face
-      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-          it++) {
-        if((*it)->edges().size() == 3 ||
-           (*it)->meshAttributes.corners.size() == 3) {
-          gf = *it;
-          break;
-        }
+      auto found_it = std::find_if(begin(faces), end(faces), [](GFace * face) {
+        return face->edges().size() == 3 || face->meshAttributes.corners.size() == 3;
+      });
+      if (found_it != end(faces)) {
+        gf = *found_it;
       }
     }
     if(gf) {
-      std::vector<GEdge *> fedges = gf->edges();
       std::vector<GEdge *> redges = gr->edges();
-      // TODO C++11 Fix the UB if *it doesn't exist in this container
-      for(std::vector<GEdge *>::const_iterator it = fedges.begin();
-          it != fedges.end(); it++)
-        redges.erase(std::find(redges.begin(), redges.end(), *it));
+      for(auto* fedge : gf->edges()) {
+        const auto found_it = std::find(begin(redges), end(redges), fedge);
+        if (found_it != end(redges)) {
+          redges.erase(found_it);
+        }
+      }
       findTransfiniteCorners(gf, corners);
       std::size_t N = corners.size();
       for(std::size_t i = 0; i < N; i++) {

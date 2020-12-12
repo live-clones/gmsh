@@ -305,7 +305,6 @@ static void _relocateVertexGolden(MVertex *ver,
   double x = 0.0, y = 0.0, z = 0.0;
   int N = 0;
   for(std::size_t i = 0; i < lt.size(); i++) {
-    // TODO C++11 use std::accumulate instead
     double XCG = 0.0, YCG = 0.0, ZCG = 0.0;
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
       XCG += lt[i]->getVertex(j)->x();

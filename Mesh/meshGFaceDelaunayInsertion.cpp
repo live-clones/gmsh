@@ -7,6 +7,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include <numeric>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "OS.h"
@@ -632,11 +633,8 @@ static bool invMapUV(MTriangle *t, double *p, bidimMeshData &data,
   b[1] = p[1] - v0;
   sys2x2(mat, b, uv);
 
-  if(uv[0] >= -tol && uv[1] >= -tol && uv[0] <= 1. + tol && uv[1] <= 1. + tol &&
-     1. - uv[0] - uv[1] > -tol) {
-    return true;
-  }
-  return false;
+  return uv[0] >= -tol && uv[1] >= -tol && uv[0] <= 1. + tol && uv[1] <= 1. + tol &&
+     1. - uv[0] - uv[1] > -tol;
 }
 
 inline double getSurfUV(MTriangle *t, bidimMeshData &data)
@@ -654,8 +652,8 @@ inline double getSurfUV(MTriangle *t, bidimMeshData &data)
 
   const double vv1[2] = {u2 - u1, v2 - v1};
   const double vv2[2] = {u3 - u1, v3 - v1};
-  double s = vv1[0] * vv2[1] - vv1[1] * vv2[0];
-  return s * 0.5;
+
+  return 0.5 * (vv1[0] * vv2[1] - vv1[1] * vv2[0]);
 }
 
 static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity,
@@ -671,22 +669,17 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
 
   double EPS = verifyStarShapeness ? 1.e-12 : 1.e12;
 
-  std::vector<edgeXface> conn;
-
   // check that volume is conserved
   double newVolume = 0.0;
-  double oldVolume = 0.0;
   double newMinQuality = 2.0;
-  double oldMinQuality = 2.0;
 
-  // TODO C++11 std::accumulate with lambda
-  std::list<MTri3 *>::iterator ittet = cavity.begin();
-  std::list<MTri3 *>::iterator ittete = cavity.end();
-  while(ittet != ittete) {
-    oldVolume += std::abs(getSurfUV((*ittet)->tri(), data));
-    oldMinQuality = std::min(oldMinQuality, (*ittet)->tri()->gammaShapeMeasure());
-    ++ittet;
-  }
+  double oldVolume = std::accumulate(begin(cavity),
+                                     end(cavity),
+                                     0.0,
+                                     [&](double volume,
+                                         MTri3 * const triangle) {
+      return volume + std::abs(getSurfUV(triangle->tri(), data));
+  });
 
   MTri3 **newTris = new MTri3 *[shell.size()];
 
@@ -697,7 +690,6 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
   std::list<edgeXface>::iterator it = shell.begin();
 
   bool onePointIsTooClose = false;
-
 
   while(it != shell.end()) {
     MVertex *v0, *v1;
@@ -713,7 +705,7 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
     int index0 = data.getIndex(t->getVertex(0));
     int index1 = data.getIndex(t->getVertex(1));
     int index2 = data.getIndex(t->getVertex(2));
-    const double ONE_THIRD = 1. / 3.;
+    constexpr double ONE_THIRD = 1. / 3.;
     double lc = ONE_THIRD * (data.vSizes[index0] +
                              data.vSizes[index1] +
                              data.vSizes[index2]);
@@ -766,6 +758,8 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
     ++it;
   }
 
+  std::vector<edgeXface> conn;
+
   // for adding a point we require that the area remains the same after addition
   // of the point, and that the point is not too close to an edge
   if(std::abs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose){
@@ -787,12 +781,9 @@ static int insertVertexB(std::list<edgeXface> &shell, std::list<MTri3 *> &cavity
   }
   else {
     // the cavity is NOT star shaped
-    ittet = cavity.begin();
-    ittete = cavity.end();
-    while(ittet != ittete) {
-      (*ittet)->setDeleted(false);
-      ++ittet;
-    }
+    std::for_each(begin(cavity), end(cavity), [](MTri3 * triangle) {
+        triangle->setDeleted(false);
+    });
     // _printTris("cavity.pos", cavity.begin(), cavity.end(), Us, Vs, false);
     // _printTris("new_cavity.pos", new_cavity.begin(), new_cavity.end(), Us, Vs, false);
     // _printTris("newTris.pos", &newTris[0], newTris+shell.size(), Us, Vs, false);

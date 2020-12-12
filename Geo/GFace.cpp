@@ -33,9 +33,6 @@
 #include <optimization.h>
 #endif
 
-// TODO C++11 remove macro
-#define SQU(a) ((a) * (a))
-
 GFace::GFace(GModel *model, int tag)
   : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0), compoundSurface(0)
 {
@@ -106,26 +103,26 @@ void GFace::delFreeEdge(GEdge *edge)
 
 int GFace::delEdge(GEdge *edge)
 {
-  // BUG If the iterator is equal to end() then the erase will be ill-formed
-  // TODO C++11 fix this UB
-  std::vector<GEdge *>::iterator it;
-  int pos = 0;
-  for(it = l_edges.begin(); it != l_edges.end(); ++it) {
-    if(*it == edge) break;
-    pos++;
-  }
-  l_edges.erase(it);
+  const auto found = std::find(begin(l_edges), end(l_edges), edge);
 
-  std::vector<int>::iterator itOri;
-  int posOri = 0, orientation = 0;
-  for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri) {
-    if(posOri == pos) {
-      orientation = *itOri;
-      break;
-    }
-    posOri++;
+  if(found != end(l_edges)) {
+    l_edges.erase(found);
   }
-  l_dirs.erase(itOri);
+
+  const auto pos = std::distance(begin(l_edges), found);
+
+  if(l_dirs.empty()) {
+    return 0;
+  }
+
+  if(l_dirs.size() < static_cast<std::size_t>(pos)) {
+    l_dirs.erase(std::prev(l_dirs.end()));
+    return 0;
+  }
+
+  const auto orientation = l_dirs.at(pos);
+
+  l_dirs.erase(std::next(begin(l_dirs), pos));
 
   return orientation;
 }
@@ -276,9 +273,9 @@ SBoundingBox3d GFace::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != PartitionSurface) {
-    // TODO C++11 std::accumulate
-    std::vector<GEdge *>::const_iterator it = l_edges.begin();
-    for(; it != l_edges.end(); it++) res += (*it)->bounds(fast);
+    for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
+      res += (*it)->bounds(fast);
+    }
   }
   else {
     for(std::size_t i = 0; i < getNumMeshElements(); i++)
@@ -1058,7 +1055,7 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   vmin = rv.low();
   vmax = rv.high();
 
-  const double tol = Precision * (SQU(umax - umin) + SQU(vmax - vmin));
+  const double tol = Precision * (std::pow(umax - umin, 2) + std::pow(vmax - vmin, 2));
   for(int i = 0; i < NumInitGuess; i++) {
     initu[i] = umin + initu[i] * (umax - umin);
     initv[i] = vmin + initv[i] * (vmax - vmin);
@@ -1072,7 +1069,7 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
       iter = 1;
 
       GPoint P = point(U, V);
-      err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
+      err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) + std::pow(Z - P.z(), 2));
       if(err2 < 1.e-8 * CTX::instance()->lc) return;
 
       while(err > tol && iter < MaxIter) {
@@ -1099,8 +1096,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
            (Vnew > vmax + tol || Vnew < vmin - tol))
           break;
 
-        err = SQU(Unew - U) + SQU(Vnew - V);
-        err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
+        err = std::pow(Unew - U, 2) + std::pow(Vnew - V, 2);
+        err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) + std::pow(Z - P.z(), 2));
 
         iter++;
         U = Unew;
