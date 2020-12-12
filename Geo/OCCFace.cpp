@@ -280,12 +280,22 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
 
   // little tolerance to converge on the borders of the surface
-  const double du = _umax - _umin;
-  const double dv = _vmax - _vmin;
-  double umin = _umin - std::max(fabs(du) * 1e-8, 1e-12);
-  double vmin = _vmin - std::max(fabs(dv) * 1e-8, 1e-12);
-  double umax = _umax + std::max(fabs(du) * 1e-8, 1e-12);
-  double vmax = _vmax + std::max(fabs(dv) * 1e-8, 1e-12);
+  double umin = _umin;
+  double vmin = _vmin;
+  double umax = _umax;
+  double vmax = _vmax;
+  if (!_periodic[0]) {
+    const double du = _umax - _umin;
+    const double utol = std::max(fabs(du) * 1e-8, 1e-12);
+    umin -=  utol;
+    umax +=  utol;
+  }
+  if (!_periodic[1]) {
+    const double dv = _vmax - _vmin;
+    const double vtol = std::max(fabs(dv) * 1e-8, 1e-12);
+    vmin -=  vtol;
+    vmax +=  vtol;
+  }
 
   GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
   if(!proj.NbPoints()) {
