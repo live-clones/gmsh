@@ -1291,6 +1291,17 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
           return false;
         }
         result = e.Edge();
+        // copy mesh size from start control point to new topo vertex; this way
+        // we'll behave more like the built-in kernel (although the built-in
+        // kernel keeps track of all the control points)
+        double lc = _attributes->getMeshSize(0, start);
+        if(lc > 0 && lc < MAX_LC) {
+          TopExp_Explorer exp0;
+          for(exp0.Init(result, TopAbs_VERTEX); exp0.More(); exp0.Next()) {
+            TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+            _attributes->insert(new OCCAttributes(0, vertex, lc));
+          }
+        }
       }
     }
   } catch(Standard_Failure &err) {
