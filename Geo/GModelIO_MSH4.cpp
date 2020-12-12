@@ -356,8 +356,8 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       std::vector<int> partitions;
       double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
       if(!readMSH4EntityInfo(fp, binary, str, strl, swap, version, partition,
-                             dim, tag, parentDim, parentTag, partitions, minX, minY,
-                             minZ, maxX, maxY, maxZ)) {
+                             dim, tag, parentDim, parentTag, partitions, minX,
+                             minY, minZ, maxX, maxY, maxZ)) {
         delete[] str;
         return false;
       }
@@ -1197,18 +1197,12 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 
   std::size_t nParamE, nParamF;
 
-  if(binary){
-    if(fread(&nParamE, sizeof(std::size_t), 1, fp) != 1) {
-      return false;
-    }
-    if(fread(&nParamF, sizeof(std::size_t), 1, fp) != 1) {
-      return false;
-    }
+  if(binary) {
+    if(fread(&nParamE, sizeof(std::size_t), 1, fp) != 1) { return false; }
+    if(fread(&nParamF, sizeof(std::size_t), 1, fp) != 1) { return false; }
   }
-  else{
-    if(fscanf(fp, "%lu %lu", &nParamE, &nParamF) != 2) {
-      return false;
-    }
+  else {
+    if(fscanf(fp, "%lu %lu", &nParamE, &nParamF) != 2) { return false; }
   }
 
   // only report surface parametrizations
@@ -1217,15 +1211,11 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 
   for(std::size_t edge = 0; edge < nParamE; edge++) {
     int tag;
-    if(binary){
-      if(fread(&tag, sizeof(int), 1, fp) != 1) {
-        return false;
-      }
+    if(binary) {
+      if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
     }
-    else{
-      if(fscanf(fp, "%d", &tag) != 1) {
-        return false;
-      }
+    else {
+      if(fscanf(fp, "%d", &tag) != 1) { return false; }
     }
     GEdge *ge = model->getEdgeByTag(tag);
     if(ge) {
@@ -1238,15 +1228,11 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 
   for(std::size_t face = 0; face < nParamF; face++) {
     int tag;
-    if(binary){
-      if(fread(&tag, sizeof(int), 1, fp) != 1) {
-        return false;
-      }
+    if(binary) {
+      if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
     }
-    else{
-      if(fscanf(fp, "%d", &tag) != 1) {
-        return false;
-      }
+    else {
+      if(fscanf(fp, "%d", &tag) != 1) { return false; }
     }
     GFace *gf = model->getFaceByTag(tag);
     if(gf) {
@@ -1627,7 +1613,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         tags.resize(2 * ghostSize);
         int index = 0;
-        for(std::set<GEntity *, GEntityPtrFullLessThan>::iterator it = ghost.begin();
+        for(std::set<GEntity *, GEntityPtrFullLessThan>::iterator it =
+              ghost.begin();
             it != ghost.end(); ++it) {
           if((*it)->geomType() == GEntity::GhostCurve) {
             tags[index] = (*it)->tag();
@@ -1816,7 +1803,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         tags.resize(2 * ghostSize);
         int index = 0;
-        for(std::set<GEntity *, GEntityPtrFullLessThan>::iterator it = ghost.begin();
+        for(std::set<GEntity *, GEntityPtrFullLessThan>::iterator it =
+              ghost.begin();
             it != ghost.end(); ++it) {
           if((*it)->geomType() == GEntity::GhostCurve) {
             tags[index] = (*it)->tag();
@@ -1958,7 +1946,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         fprintf(fp, "%lu ", pr->getPartitions().size());
 
         for(auto const partition : pr->getPartitions()) {
-            fprintf(fp, "%d ", partition);
+          fprintf(fp, "%d ", partition);
         }
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 3,
@@ -1967,9 +1955,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       fprintf(fp, "%lu ", faces.size());
 
       std::vector<int> tags(faces.size());
-      std::transform(begin(faces), end(faces), begin(tags), [](const GFace *const face){
-         return face->tag();
-      });
+      std::transform(begin(faces), end(faces), begin(tags),
+                     [](const GFace *const face) { return face->tag(); });
 
       std::vector<int> signs(ori.begin(), ori.end());
 
@@ -1978,9 +1965,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           tags[i] *= (signs[i] > 0 ? 1 : -1);
       }
 
-      for (auto const tag : tags) {
-        fprintf(fp, "%d ", tag);
-      }
+      for(auto const tag : tags) { fprintf(fp, "%d ", tag); }
       fprintf(fp, "\n");
     }
   }
@@ -2594,7 +2579,6 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
     GEntity *g_master = g_slave->getMeshMaster();
 
     if(g_slave != g_master) {
-
       std::map<MVertex *, MVertex *> corrVert = g_slave->correspondingVertices;
       if(CTX::instance()->mesh.hoSavePeriodic)
         corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
@@ -2758,11 +2742,11 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
 
   fprintf(fp, "$Parametrizations\n");
 
-  if(binary){
+  if(binary) {
     fwrite(&nParamE, sizeof(std::size_t), 1, fp);
     fwrite(&nParamF, sizeof(std::size_t), 1, fp);
   }
-  else{
+  else {
     fprintf(fp, "%lu %lu\n", nParamE, nParamF);
   }
 
@@ -2770,8 +2754,10 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
     if(de && de->haveParametrization()) {
       int t = de->tag();
-      if(binary) fwrite(&t, sizeof(int), 1, fp);
-      else fprintf(fp, "%d\n", t);
+      if(binary)
+        fwrite(&t, sizeof(int), 1, fp);
+      else
+        fprintf(fp, "%d\n", t);
       de->writeParametrization(fp, binary);
     }
   }
@@ -2779,8 +2765,10 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
     if(df && df->haveParametrization()) {
       int t = df->tag();
-      if(binary) fwrite(&t, sizeof(int), 1, fp);
-      else fprintf(fp, "%d\n", t);
+      if(binary)
+        fwrite(&t, sizeof(int), 1, fp);
+      else
+        fprintf(fp, "%d\n", t);
       df->writeParametrization(fp, binary);
     }
   }
@@ -2846,7 +2834,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
     std::vector<GEntity *> entities;
     getEntities(entities);
     std::size_t partEnt = 0;
-    for(auto &ge: entities) {
+    for(auto &ge : entities) {
       if(ge->geomType() == GEntity::PartitionPoint ||
          ge->geomType() == GEntity::PartitionCurve ||
          ge->geomType() == GEntity::PartitionSurface ||

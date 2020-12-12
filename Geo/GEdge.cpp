@@ -324,8 +324,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
 
   if(_faces.size()) {
     sstream << "On boundary of surfaces: ";
-    for(std::vector<GFace *>::iterator it = _faces.begin();
-        it != _faces.end(); ++it) {
+    for(std::vector<GFace *>::iterator it = _faces.begin(); it != _faces.end();
+        ++it) {
       if(it != _faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }

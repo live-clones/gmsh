@@ -105,15 +105,11 @@ int GFace::delEdge(GEdge *edge)
 {
   const auto found = std::find(begin(l_edges), end(l_edges), edge);
 
-  if(found != end(l_edges)) {
-    l_edges.erase(found);
-  }
+  if(found != end(l_edges)) { l_edges.erase(found); }
 
   const auto pos = std::distance(begin(l_edges), found);
 
-  if(l_dirs.empty()) {
-    return 0;
-  }
+  if(l_dirs.empty()) { return 0; }
 
   if(l_dirs.size() < static_cast<std::size_t>(pos)) {
     l_dirs.erase(std::prev(l_dirs.end()));
@@ -442,8 +438,7 @@ std::string GFace::getAdditionalInfoString(bool multline)
       sstream << r1->tag();
       if(r2) sstream << ", ";
     }
-    if(r2)
-      sstream << r2->tag();
+    if(r2) sstream << r2->tag();
     if(multline)
       sstream << "\n";
     else
@@ -1055,7 +1050,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   vmin = rv.low();
   vmax = rv.high();
 
-  const double tol = Precision * (std::pow(umax - umin, 2) + std::pow(vmax - vmin, 2));
+  const double tol =
+    Precision * (std::pow(umax - umin, 2) + std::pow(vmax - vmin, 2));
   for(int i = 0; i < NumInitGuess; i++) {
     initu[i] = umin + initu[i] * (umax - umin);
     initv[i] = vmin + initv[i] * (vmax - vmin);
@@ -1069,7 +1065,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
       iter = 1;
 
       GPoint P = point(U, V);
-      err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) + std::pow(Z - P.z(), 2));
+      err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) +
+                       std::pow(Z - P.z(), 2));
       if(err2 < 1.e-8 * CTX::instance()->lc) return;
 
       while(err > tol && iter < MaxIter) {
@@ -1097,7 +1094,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
           break;
 
         err = std::pow(Unew - U, 2) + std::pow(Vnew - V, 2);
-        err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) + std::pow(Z - P.z(), 2));
+        err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) +
+                         std::pow(Z - P.z(), 2));
 
         iter++;
         U = Unew;

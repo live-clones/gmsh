@@ -276,20 +276,17 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
     }
     else if(faces.size() == 5) {
       // we need to start with a triangular face
-      auto found_it = std::find_if(begin(faces), end(faces), [](GFace * face) {
-        return face->edges().size() == 3 || face->meshAttributes.corners.size() == 3;
+      auto found_it = std::find_if(begin(faces), end(faces), [](GFace *face) {
+        return face->edges().size() == 3 ||
+               face->meshAttributes.corners.size() == 3;
       });
-      if (found_it != end(faces)) {
-        gf = *found_it;
-      }
+      if(found_it != end(faces)) { gf = *found_it; }
     }
     if(gf) {
       std::vector<GEdge *> redges = gr->edges();
-      for(auto* fedge : gf->edges()) {
+      for(auto *fedge : gf->edges()) {
         const auto found_it = std::find(begin(redges), end(redges), fedge);
-        if (found_it != end(redges)) {
-          redges.erase(found_it);
-        }
+        if(found_it != end(redges)) { redges.erase(found_it); }
       }
       findTransfiniteCorners(gf, corners);
       std::size_t N = corners.size();
@@ -327,10 +324,11 @@ int MeshTransfiniteVolume(GRegion *gr)
   // depends on it
   const std::vector<GEdge *> &edges = gr->edges();
   for(std::vector<GEdge *>::const_iterator it = edges.begin();
-      it != edges.end(); it++){
-    if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()){
+      it != edges.end(); it++) {
+    if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
       Msg::Error("Transfinite algorithm cannot be applied with curve %d which "
-                 "has no begin or end point", (*it)->tag());
+                 "has no begin or end point",
+                 (*it)->tag());
       return 0;
     }
   }
@@ -354,8 +352,9 @@ int MeshTransfiniteVolume(GRegion *gr)
     }
     else if(orientedFaces[f.index()].getSurface()) {
       Msg::Error("Surfaces %d and %d mapped to the same index in transfinite "
-                 "volume %d", orientedFaces[f.index()].getSurface()->tag(),
-                 (*it)->tag(), gr->tag());
+                 "volume %d",
+                 orientedFaces[f.index()].getSurface()->tag(), (*it)->tag(),
+                 gr->tag());
       return 0;
     }
     orientedFaces[f.index()] = f;
@@ -406,9 +405,7 @@ int MeshTransfiniteVolume(GRegion *gr)
   tab.resize(N_i);
   for(int i = 0; i < N_i; i++) {
     tab[i].resize(N_j);
-    for(int j = 0; j < N_j; j++) {
-      tab[i][j].resize(N_k);
-    }
+    for(int j = 0; j < N_j; j++) { tab[i][j].resize(N_k); }
   }
 
   for(int i = 0; i < N_i; i++) {

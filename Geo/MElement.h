@@ -522,10 +522,7 @@ struct MElementPtrEqual {
 };
 
 struct MElementPtrHash {
-  size_t operator()(const MElement *e) const
-  {
-    return e->getNum();
-  }
+  size_t operator()(const MElement *e) const { return e->getNum(); }
 };
 
 #endif

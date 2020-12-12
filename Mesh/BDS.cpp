@@ -706,15 +706,13 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid, bool check_area_param)
            op[1]->iD, mid->iD);
   if(check_area_param) {
     double area0 = fabs(surface_triangle_param(p2, p1, op[0])) +
-      fabs(surface_triangle_param(p2, p1, op[1]));
+                   fabs(surface_triangle_param(p2, p1, op[1]));
     double area1 = fabs(surface_triangle_param(mid, p1, op[1])) +
-      fabs(surface_triangle_param(mid, op[1], p2)) +
-      fabs(surface_triangle_param(mid, p2, op[0])) +
-      fabs(surface_triangle_param(mid, op[0], p1));
+                   fabs(surface_triangle_param(mid, op[1], p2)) +
+                   fabs(surface_triangle_param(mid, p2, op[0])) +
+                   fabs(surface_triangle_param(mid, op[0], p1));
     // heuristic - abort if area changed too much
-    if(area1 > 1.1 * area0 || area1 < 0.9 * area0){
-      return false;
-    }
+    if(area1 > 1.1 * area0 || area1 < 0.9 * area0) { return false; }
   }
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2)
@@ -1056,9 +1054,9 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
 
 int BDS_Edge::numTriangles() const
 {
-  return std::count_if(begin(_faces), end(_faces), [](const BDS_Face* const face) {
-    return face->numEdges() == 3;
-  });
+  return std::count_if(
+    begin(_faces), end(_faces),
+    [](const BDS_Face *const face) { return face->numEdges() == 3; });
 }
 
 /*

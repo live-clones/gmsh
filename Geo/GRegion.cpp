@@ -38,8 +38,7 @@ GRegion::~GRegion()
 
 void GRegion::deleteMesh()
 {
-  for(std::size_t i = 0; i < mesh_vertices.size(); i++)
-    delete mesh_vertices[i];
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   transfinite_vertices.clear();
   for(std::size_t i = 0; i < tetrahedra.size(); i++) delete tetrahedra[i];
@@ -214,15 +213,14 @@ SOrientedBoundingBox GRegion::getOBB()
             vertices.push_back(mv->point());
           }
           // Don't forget to add the first and last vertices...
-          if((*ed)->getBeginVertex()){
+          if((*ed)->getBeginVertex()) {
             SPoint3 pt1((*ed)->getBeginVertex()->x(),
                         (*ed)->getBeginVertex()->y(),
                         (*ed)->getBeginVertex()->z());
             vertices.push_back(pt1);
           }
-          if((*ed)->getEndVertex()){
-            SPoint3 pt2((*ed)->getEndVertex()->x(),
-                        (*ed)->getEndVertex()->y(),
+          if((*ed)->getEndVertex()) {
+            SPoint3 pt2((*ed)->getEndVertex()->x(), (*ed)->getEndVertex()->y(),
                         (*ed)->getEndVertex()->z());
             vertices.push_back(pt2);
           }
@@ -278,28 +276,24 @@ void GRegion::setColor(unsigned int val, bool recursive)
 
 int GRegion::delFace(GFace *face)
 {
-    const auto found = std::find(begin(l_faces), end(l_faces), face);
+  const auto found = std::find(begin(l_faces), end(l_faces), face);
 
-    if(found != end(l_faces)) {
-      l_faces.erase(found);
-    }
+  if(found != end(l_faces)) { l_faces.erase(found); }
 
-    const auto pos = std::distance(begin(l_faces), found);
+  const auto pos = std::distance(begin(l_faces), found);
 
-    if(l_dirs.empty()) {
-      return 0;
-    }
+  if(l_dirs.empty()) { return 0; }
 
-    if(l_dirs.size() < static_cast<std::size_t>(pos)) {
-      l_dirs.erase(std::prev(l_dirs.end()));
-      return 0;
-    }
+  if(l_dirs.size() < static_cast<std::size_t>(pos)) {
+    l_dirs.erase(std::prev(l_dirs.end()));
+    return 0;
+  }
 
-    const auto orientation = l_dirs.at(pos);
+  const auto orientation = l_dirs.at(pos);
 
-    l_dirs.erase(std::next(begin(l_dirs), pos));
+  l_dirs.erase(std::next(begin(l_dirs), pos));
 
-    return orientation;
+  return orientation;
 }
 
 void GRegion::setBoundFaces(const std::set<int> &tagFaces)
@@ -455,11 +449,9 @@ std::vector<GEdge *> const &GRegion::edges() const
   static std::vector<GEdge *> e;
   e.clear();
 
-  for(auto* const face : l_faces) {
-    for (auto* const edge : face->edges()) {
-      if(std::find(e.begin(), e.end(), edge) == e.end()) {
-        e.push_back(edge);
-      }
+  for(auto *const face : l_faces) {
+    for(auto *const edge : face->edges()) {
+      if(std::find(e.begin(), e.end(), edge) == e.end()) { e.push_back(edge); }
     }
   }
   return e;
@@ -570,9 +562,9 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
   for(std::vector<GFace *>::const_iterator it = embedded_faces.begin();
       it != embedded_faces.end(); it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
-    std::vector<GEdge*> ed = (*it)->edges();
-    for(std::vector<GEdge *>::const_iterator it2 = ed.begin();
-        it2 != ed.end(); it2++) {
+    std::vector<GEdge *> ed = (*it)->edges();
+    for(std::vector<GEdge *>::const_iterator it2 = ed.begin(); it2 != ed.end();
+        it2++) {
       tmp.insert((*it2)->mesh_vertices.begin(), (*it2)->mesh_vertices.end());
       if((*it2)->getBeginVertex())
         tmp.insert((*it2)->getBeginVertex()->mesh_vertices.begin(),
@@ -662,7 +654,8 @@ void GRegion::removeElement(int type, MElement *e)
   }
 }
 
-bool GRegion::reorder(const int elementType, const std::vector<std::size_t> &ordering)
+bool GRegion::reorder(const int elementType,
+                      const std::vector<std::size_t> &ordering)
 {
   if(tetrahedra.size() != 0) {
     if(tetrahedra.front()->getTypeForMSH() == elementType) {
@@ -937,13 +930,13 @@ bool GRegion::isFullyDiscrete()
   std::vector<GFace *> f = faces();
   for(std::size_t i = 0; i < f.size(); i++) {
     if(f[i]->geomType() != GEntity::DiscreteSurface) return false;
-    discreteFace *df = dynamic_cast<discreteFace*>(f[i]);
+    discreteFace *df = dynamic_cast<discreteFace *>(f[i]);
     if(df && df->haveParametrization()) return false;
   }
   std::vector<GEdge *> e = edges();
   for(std::size_t i = 0; i < e.size(); i++) {
     if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
-    discreteEdge *de = dynamic_cast<discreteEdge*>(e[i]);
+    discreteEdge *de = dynamic_cast<discreteEdge *>(e[i]);
     if(de && de->haveParametrization()) return false;
   }
   return true;
