@@ -27,6 +27,7 @@ private:
   double _radius;
   SPoint3 _center;
   void _setup();
+  bool _project(const double p[3], double uv[2], double xyz[3]) const;
 
 public:
   OCCFace(GModel *m, TopoDS_Face s, int num);

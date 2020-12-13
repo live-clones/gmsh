@@ -230,6 +230,42 @@ GPoint OCCFace::point(double par1, double par2) const
   return GPoint(val.X(), val.Y(), val.Z(), this, pp);
 }
 
+bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
+{
+  // little tolerance to converge on the borders of the surface
+  double umin = _umin;
+  double vmin = _vmin;
+  double umax = _umax;
+  double vmax = _vmax;
+  if(!_periodic[0]) {
+    const double du = _umax - _umin;
+    const double utol = std::max(fabs(du) * 1e-8, 1e-12);
+    umin -=  utol;
+    umax +=  utol;
+  }
+  if(!_periodic[1]) {
+    const double dv = _vmax - _vmin;
+    const double vtol = std::max(fabs(dv) * 1e-8, 1e-12);
+    vmin -=  vtol;
+    vmax +=  vtol;
+  }
+  gp_Pnt pnt(p[0], p[1], p[2]);
+  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
+  if(!proj.NbPoints()) {
+    Msg::Warning("Projection of point (%g, %g, %g) on surface %d failed",
+                 p[0], p[1], p[2], tag());
+    return false;
+  }
+  proj.LowerDistanceParameters(uv[0], uv[1]);
+  if(xyz) {
+    pnt = proj.NearestPoint();
+    xyz[0] = pnt.X();
+    xyz[1] = pnt.Y();
+    xyz[2] = pnt.Z();
+  }
+  return true;
+}
+
 GPoint OCCFace::closestPoint(const SPoint3 &qp,
                              const double initialGuess[2]) const
 {
@@ -238,37 +274,15 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   if(CTX::instance()->geom.occUseGenericClosestPoint)
     return GFace::closestPoint(qp, initialGuess);
 #endif
-
-  // little tolerance to converge on the borders of the surface
-  const double du = _umax - _umin;
-  const double dv = _vmax - _vmin;
-  double umin = _umin - std::max(fabs(du) * 1e-8, 1e-12);
-  double vmin = _vmin - std::max(fabs(dv) * 1e-8, 1e-12);
-  double umax = _umax + std::max(fabs(du) * 1e-8, 1e-12);
-  double vmax = _vmax + std::max(fabs(dv) * 1e-8, 1e-12);
-
-  gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
-
-  if(!proj.NbPoints()) {
-    Msg::Debug("OCC projection of point on surface failed");
+  double uv[2], xyz[3];
+  if(_project(qp.data(), uv, xyz)) {
+    return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
+  }
+  else {
     GPoint gp(0, 0);
     gp.setNoSuccess();
     return gp;
   }
-
-  double pp[2] = {initialGuess[0], initialGuess[1]};
-  proj.LowerDistanceParameters(pp[0], pp[1]);
-
-  if((pp[0] < umin || umax < pp[0]) || (pp[1] < vmin || vmax < pp[1])) {
-    Msg::Warning("Point projection is out of face bounds");
-    GPoint gp(0, 0);
-    gp.setNoSuccess();
-    return gp;
-  }
-
-  pnt = proj.NearestPoint();
-  return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, pp);
 }
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
@@ -276,35 +290,13 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
   // less robust but can be much faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
     return GFace::parFromPoint(qp);
-
-  gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-
-  // little tolerance to converge on the borders of the surface
-  double umin = _umin;
-  double vmin = _vmin;
-  double umax = _umax;
-  double vmax = _vmax;
-  if (!_periodic[0]) {
-    const double du = _umax - _umin;
-    const double utol = std::max(fabs(du) * 1e-8, 1e-12);
-    umin -=  utol;
-    umax +=  utol;
+  double uv[2];
+  if(_project(qp.data(), uv, nullptr)) {
+    return SPoint2(uv[0], uv[1]);
   }
-  if (!_periodic[1]) {
-    const double dv = _vmax - _vmin;
-    const double vtol = std::max(fabs(dv) * 1e-8, 1e-12);
-    vmin -=  vtol;
-    vmax +=  vtol;
-  }
-
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
-  if(!proj.NbPoints()) {
-    Msg::Error("OCC projection of point on surface failed");
+  else {
     return GFace::parFromPoint(qp);
   }
-  double U, V;
-  proj.LowerDistanceParameters(U, V);
-  return SPoint2(U, V);
 }
 
 GEntity::GeomType OCCFace::geomType() const
