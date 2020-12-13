@@ -172,6 +172,11 @@ namespace QMT_Utils {
       return s3;
     }
 
+  template<class T> 
+    void append(std::vector<T>& v1, const std::vector<T>& v2) {
+      v1.insert(v1.end(),v2.begin(),v2.end());
+    }
+
   template <typename T>
     bool inVector(const T& value, const std::vector<T> &vec) {
       if (vec.size() == 0) return false;
