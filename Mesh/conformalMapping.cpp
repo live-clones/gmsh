@@ -923,6 +923,48 @@ void MyMesh::_tryFixSing(std::set<MTriangle*, MElementPtrLessThan> patchTri){
   return;
 }
 
+bool MyMesh::_checkIfPatchPlanar(size_t kP,SVector3 &dirXplan,SVector3 &dirYplan){
+  MVertexPtrEqual isVertTheSame;
+  bool isPlanar=true;
+  std::set<MTriangle*, MElementPtrLessThan> tri = trianglesPatchs[kP];
+  MTriangle *tRef = *(tri.begin());
+  SVector3 pRef(tRef->getVertex(0)->x(),
+		tRef->getVertex(0)->y(),
+		tRef->getVertex(0)->z());
+  SVector3 v10(tRef->getVertex(1)->x() - tRef->getVertex(0)->x(),
+	       tRef->getVertex(1)->y() - tRef->getVertex(0)->y(),
+	       tRef->getVertex(1)->z() - tRef->getVertex(0)->z());
+  v10.normalize();
+  SVector3 v20(tRef->getVertex(2)->x() - tRef->getVertex(0)->x(),
+	       tRef->getVertex(2)->y() - tRef->getVertex(0)->y(),
+	       tRef->getVertex(2)->z() - tRef->getVertex(0)->z());
+  v20.normalize();
+  SVector3 tNormal = crossprod(v10, v20);
+  tNormal.normalize();
+  SVector3 t = crossprod(tNormal, v10);
+  t.normalize();
+  for(MTriangle *t: tri){
+    for(size_t i=0;i<3;i++){
+      SVector3 pCur(t->getVertex(i)->x(),
+		    t->getVertex(i)->y(),
+		    t->getVertex(i)->z());
+      SVector3 diffVect = pCur-pRef;
+      if(!(isVertTheSame(t->getVertex(i),tRef->getVertex(0)))){
+	diffVect.normalize();
+	if(fabs(dot(tNormal,diffVect))>1e-10){
+	  isPlanar=false;
+	  return isPlanar;
+	}
+      }
+    }
+  }
+  for(size_t i=0;i<3;i++){
+    dirXplan[i]=v10[i];
+    dirYplan[i]=t[i];
+  }
+  return isPlanar;
+}
+
 void MyMesh::computeManifoldBasis(){
   if(trianglesPatchs.size()==0)
     createPatchs();
@@ -932,138 +974,163 @@ void MyMesh::computeManifoldBasis(){
     //   std::cout << "patch " << kP << ", canBecomputed: " << canTrianglePatchBeComputed[kP] << std::endl;
     // }
     if(canTrianglePatchBeComputed[kP]){
-      std::set<MTriangle*, MElementPtrLessThan> tri = trianglesPatchs[kP];
-      //grabbing edges we are interested in
-      std::map<const MEdge *, size_t> idEdge;
-      size_t id=0;
-      for(MTriangle *t: tri){
-	for(int k=0;k<3;k++){
-	  const MEdge *eK = triangleToEdges[t][k];
-	  if(idEdge.find(eK)==idEdge.end()){
-	    idEdge[eK]=id;
-	    id++;
+      SVector3 dirXplan(0.0);
+      SVector3 dirYplan(0.0);
+      bool isPlanar=_checkIfPatchPlanar(kP,dirXplan,dirYplan);
+      if(isPlanar){
+	std::cout << "Patch " << kP << " is planar, generating manifold basis." << std::endl;
+	std::set<MTriangle*, MElementPtrLessThan> tri = trianglesPatchs[kP];
+	std::set<const MEdge *> usedEdges;
+	for(MTriangle *t: tri){
+	  for(int k=0;k<3;k++){
+	    const MEdge *eK = triangleToEdges[t][k];
+	    usedEdges.insert(eK);
 	  }
 	}
-      } 
-      //fill _currentMesh->manifoldBasis
+	for(const MEdge *e: usedEdges){
+	  SVector3 v(e->getVertex(1)->x() - e->getVertex(0)->x(),
+		     e->getVertex(1)->y() - e->getVertex(0)->y(),
+		     e->getVertex(1)->z() - e->getVertex(0)->z());
+	  v.normalize();
+	  double cos=dot(dirXplan,v);
+	  double sin=dot(dirYplan,v);
+	  theta[e]=-atan2(sin,cos);
+	}
+      }
+      else{
+	std::set<MTriangle*, MElementPtrLessThan> tri = trianglesPatchs[kP];
+	//grabbing edges we are interested in
+	std::map<const MEdge *, size_t> idEdge;
+	size_t id=0;
+	for(MTriangle *t: tri){
+	  for(int k=0;k<3;k++){
+	    const MEdge *eK = triangleToEdges[t][k];
+	    if(idEdge.find(eK)==idEdge.end()){
+	      idEdge[eK]=id;
+	      id++;
+	    }
+	  }
+	} 
+	//fill _currentMesh->manifoldBasis
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_PETSC)
-      linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
-      // printf("petsc solver\n");
+	linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+	// printf("petsc solver\n");
 #elif defined(HAVE_MUMPS)
-      linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
-      // printf("mmups solver\n");
+	linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
+	// printf("mmups solver\n");
 #else
-      linearSystemFull<double> *_lsys = new linearSystemFull<double>;
-      // printf("default solver\n");
+	linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+	// printf("default solver\n");
 #endif
 #endif
-      dofManager<double> *dof = new dofManager<double>(_lsys);
-      std::set<const MEdge*> dbgEdgeBC;
-      dbgEdgeBC.insert(triangleToEdges[*(tri.begin())][0]);
-      // ConformalMapping::_viewEdges(dbgEdgeBC,"edgeBC");
-      Dof E0(idEdge[*(dbgEdgeBC.begin())], Dof::createTypeWithTwoInts(0, 1));
-      Dof E02(idEdge[*(dbgEdgeBC.begin())], Dof::createTypeWithTwoInts(1, 1));
-      dof->fixDof(E0,1.0);dof->fixDof(E02,0.0);
+	dofManager<double> *dof = new dofManager<double>(_lsys);
+	std::set<const MEdge*> dbgEdgeBC;
+	dbgEdgeBC.insert(triangleToEdges[*(tri.begin())][0]);
+	// ConformalMapping::_viewEdges(dbgEdgeBC,"edgeBC");
+	Dof E0(idEdge[*(dbgEdgeBC.begin())], Dof::createTypeWithTwoInts(0, 1));
+	Dof E02(idEdge[*(dbgEdgeBC.begin())], Dof::createTypeWithTwoInts(1, 1));
+	dof->fixDof(E0,1.0);dof->fixDof(E02,0.0);
     
-      size_t nEdgesId=0;
-      for(const auto &kv: idEdge){
-	//numberdof here
-	Dof EdgeDof(kv.second, Dof::createTypeWithTwoInts(0, 1));
-	Dof EdgeDof2(kv.second, Dof::createTypeWithTwoInts(1, 1));
-	dof->numberDof(EdgeDof);dof->numberDof(EdgeDof2);
-	nEdgesId++;
-      }    
-      Msg::Info("Manifold base system, 2*%i unknowns...",idEdge.size());
-      for(MTriangle *t: tri){
-	double V = t->getVolume();
-	SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
-		     t->getVertex(1)->y() - t->getVertex(0)->y(),
-		     t->getVertex(1)->z() - t->getVertex(0)->z());
-	SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
-		     t->getVertex(2)->y() - t->getVertex(0)->y(),
-		     t->getVertex(2)->z() - t->getVertex(0)->z());
-	SVector3 tNormal = crossprod(v10, v20);
-	tNormal.normalize();
-	double g1[3], g2[3], g3[3];
-	double a[3];
-	a[0] = 1;
-	a[1] = 0;
-	a[2] = 0;
-	t->interpolateGrad(a, 0, 0, 0, g1);
-	a[0] = 0;
-	a[1] = 1;
-	a[2] = 0;
-	t->interpolateGrad(a, 0, 0, 0, g2);
-	a[0] = 0;
-	a[1] = 0;
-	a[2] = 1;
-	t->interpolateGrad(a, 0, 0, 0, g3);
-	SVector3 G[3];
-	G[0] = SVector3(g1[0] + g2[0] - g3[0], g1[1] + g2[1] - g3[1],
-			g1[2] + g2[2] - g3[2]);
-	G[1] = SVector3(g2[0] + g3[0] - g1[0], g2[1] + g3[1] - g1[1],
-			g2[2] + g3[2] - g1[2]);
-	G[2] = SVector3(g1[0] + g3[0] - g2[0], g1[1] + g3[1] - g2[1],
-			g1[2] + g3[2] - g2[2]);
+	size_t nEdgesId=0;
+	for(const auto &kv: idEdge){
+	  //numberdof here
+	  Dof EdgeDof(kv.second, Dof::createTypeWithTwoInts(0, 1));
+	  Dof EdgeDof2(kv.second, Dof::createTypeWithTwoInts(1, 1));
+	  dof->numberDof(EdgeDof);dof->numberDof(EdgeDof2);
+	  nEdgesId++;
+	}    
+	Msg::Info("Manifold base system, 2*%i unknowns...",idEdge.size());
+	for(MTriangle *t: tri){
+	  double V = t->getVolume();
+	  SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
+		       t->getVertex(1)->y() - t->getVertex(0)->y(),
+		       t->getVertex(1)->z() - t->getVertex(0)->z());
+	  SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
+		       t->getVertex(2)->y() - t->getVertex(0)->y(),
+		       t->getVertex(2)->z() - t->getVertex(0)->z());
+	  SVector3 tNormal = crossprod(v10, v20);
+	  tNormal.normalize();
+	  double g1[3], g2[3], g3[3];
+	  double a[3];
+	  a[0] = 1;
+	  a[1] = 0;
+	  a[2] = 0;
+	  t->interpolateGrad(a, 0, 0, 0, g1);
+	  a[0] = 0;
+	  a[1] = 1;
+	  a[2] = 0;
+	  t->interpolateGrad(a, 0, 0, 0, g2);
+	  a[0] = 0;
+	  a[1] = 0;
+	  a[2] = 1;
+	  t->interpolateGrad(a, 0, 0, 0, g3);
+	  SVector3 G[3];
+	  G[0] = SVector3(g1[0] + g2[0] - g3[0], g1[1] + g2[1] - g3[1],
+			  g1[2] + g2[2] - g3[2]);
+	  G[1] = SVector3(g2[0] + g3[0] - g1[0], g2[1] + g3[1] - g1[1],
+			  g2[2] + g3[2] - g1[2]);
+	  G[2] = SVector3(g1[0] + g3[0] - g2[0], g1[1] + g3[1] - g2[1],
+			  g1[2] + g3[2] - g2[2]);
       
-	fullMatrix<double> Kelem(6, 6);
-	for(size_t k=0;k<3;k++)
-	  for(size_t l=0;l<3;l++){
-	    Kelem(k,l)+=dot(G[k],G[l])*V;
-	    Kelem(k+3,l+3)+=dot(G[k],G[l])*V;
+	  fullMatrix<double> Kelem(6, 6);
+	  for(size_t k=0;k<3;k++)
+	    for(size_t l=0;l<3;l++){
+	      Kelem(k,l)+=dot(G[k],G[l])*V;
+	      Kelem(k+3,l+3)+=dot(G[k],G[l])*V;
+	    }
+	  double alphaEdge[3]={0.0};
+	  MEdge edgeRef = t->getEdge(0);
+	  size_t localId=0;
+	  for(size_t k=0;k<3;k++){
+	    alphaEdge[localId]=-_getAngleBetweenEdges(*(triangleToEdges[t][k]),edgeRef,tNormal);
+	    localId++;
 	  }
-	double alphaEdge[3]={0.0};
-	MEdge edgeRef = t->getEdge(0);
-	size_t localId=0;
-	for(size_t k=0;k<3;k++){
-	  alphaEdge[localId]=-_getAngleBetweenEdges(*(triangleToEdges[t][k]),edgeRef,tNormal);
-	  localId++;
-	}
-	fullMatrix<double> localEdgeRot(6, 6);
-	localEdgeRot(0,0)=localEdgeRot(3,3)=cos(alphaEdge[0]);
-	localEdgeRot(1,1)=localEdgeRot(4,4)=cos(alphaEdge[1]);
-	localEdgeRot(2,2)=localEdgeRot(5,5)=cos(alphaEdge[2]);
-	localEdgeRot(0,3)=sin(alphaEdge[0]);localEdgeRot(1,4)=sin(alphaEdge[1]);localEdgeRot(2,5)=sin(alphaEdge[2]);
-	localEdgeRot(3,0)=-sin(alphaEdge[0]);localEdgeRot(4,1)=-sin(alphaEdge[1]);localEdgeRot(5,2)=-sin(alphaEdge[2]);
-	fullMatrix<double> KR(6, 6);
-	fullMatrix<double> RtKR(6, 6);
-	Kelem.mult(localEdgeRot,KR);
-	localEdgeRot.transposeInPlace();
-	localEdgeRot.mult(KR,RtKR);
+	  fullMatrix<double> localEdgeRot(6, 6);
+	  localEdgeRot(0,0)=localEdgeRot(3,3)=cos(alphaEdge[0]);
+	  localEdgeRot(1,1)=localEdgeRot(4,4)=cos(alphaEdge[1]);
+	  localEdgeRot(2,2)=localEdgeRot(5,5)=cos(alphaEdge[2]);
+	  localEdgeRot(0,3)=sin(alphaEdge[0]);localEdgeRot(1,4)=sin(alphaEdge[1]);localEdgeRot(2,5)=sin(alphaEdge[2]);
+	  localEdgeRot(3,0)=-sin(alphaEdge[0]);localEdgeRot(4,1)=-sin(alphaEdge[1]);localEdgeRot(5,2)=-sin(alphaEdge[2]);
+	  fullMatrix<double> KR(6, 6);
+	  fullMatrix<double> RtKR(6, 6);
+	  Kelem.mult(localEdgeRot,KR);
+	  localEdgeRot.transposeInPlace();
+	  localEdgeRot.mult(KR,RtKR);
 
-	for(size_t kE=0; kE<3; kE++){
-	  for(size_t lE=0; lE<3; lE++){
-	    for(size_t iF=0; iF<2; iF++){
-	      for(size_t jF=0; jF<2; jF++){
-		Dof Ek(idEdge[triangleToEdges[t][kE]], Dof::createTypeWithTwoInts(iF, 1));
-		Dof El(idEdge[triangleToEdges[t][lE]], Dof::createTypeWithTwoInts(jF, 1));
-		dof->assemble(Ek, El, RtKR(iF*3+kE,jF*3+lE));
+	  for(size_t kE=0; kE<3; kE++){
+	    for(size_t lE=0; lE<3; lE++){
+	      for(size_t iF=0; iF<2; iF++){
+		for(size_t jF=0; jF<2; jF++){
+		  Dof Ek(idEdge[triangleToEdges[t][kE]], Dof::createTypeWithTwoInts(iF, 1));
+		  Dof El(idEdge[triangleToEdges[t][lE]], Dof::createTypeWithTwoInts(jF, 1));
+		  dof->assemble(Ek, El, RtKR(iF*3+kE,jF*3+lE));
+		}
 	      }
 	    }
 	  }
 	}
-      }
-      std::cout << "solving manifold base system for 2*" << idEdge.size() << " unknowns..." << std::endl;
-      _lsys->systemSolve();
-      for(const auto &kv: idEdge){
-	double valueCos=0.0;
-	double valueSin=0.0;
-	Dof c(kv.second, Dof::createTypeWithTwoInts(0, 1));
-	Dof s(kv.second, Dof::createTypeWithTwoInts(1, 1));
-	dof->getDofValue(c, valueCos);
-	dof->getDofValue(s, valueSin);
-	SVector3 vect(valueCos,valueSin,0);
-	if(vect.norm()<1e-12){
-	  Msg::Warning("it seems manifold basis computation failed, keep going anyway.");
-	  theta[kv.first]=atan2(vect[1],vect[0]);
+	std::cout << "solving manifold base system for 2*" << idEdge.size() << " unknowns..." << std::endl;
+	_lsys->systemSolve();
+	for(const auto &kv: idEdge){
+	  double valueCos=0.0;
+	  double valueSin=0.0;
+	  Dof c(kv.second, Dof::createTypeWithTwoInts(0, 1));
+	  Dof s(kv.second, Dof::createTypeWithTwoInts(1, 1));
+	  dof->getDofValue(c, valueCos);
+	  dof->getDofValue(s, valueSin);
+	  SVector3 vect(valueCos,valueSin,0);
+	  if(vect.norm()<1e-12){
+	    Msg::Warning("it seems manifold basis computation failed, keep going anyway.");
+	    theta[kv.first]=atan2(vect[1],vect[0]);
+	  }
+	  else{
+	    theta[kv.first]=atan2(vect[1],vect[0]);
+	  }
 	}
-	else{
-	  theta[kv.first]=atan2(vect[1],vect[0]);
-	}
+	delete _lsys;
+	delete dof;
       }
-      delete _lsys;
-      delete dof;
     }
     // }
   }
@@ -1266,7 +1333,7 @@ void MyMesh::computeManifoldBasis(){
 //   for(const MEdge &e: edges){
 //     crossField[&e]=Cross2D(this,&e,theta[&e]);
 //   }
-//   ConformalMapping::_viewScalarEdges(theta,"theta"); //DBG
+  // ConformalMapping::_viewScalarEdges(theta,"theta"); //DBG
 //   return;
 // }
 
@@ -1292,6 +1359,7 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   Msg::Info("Creating cut graph");
   std::cout << "Creating cut graph" << std::endl;
   _createCutGraph();
+  // _viewEdgesDBG(_currentMesh->cutGraphDiscreteEdges,"cutgraphTrimmed");
   // _viewScalarVertex(_distanceToFeatureAndSing,"distances"); //DBG
   // Msg::Info("Cutting mesh on cut graph");
   Msg::Info("Cut mesh on cut graph");
@@ -1311,7 +1379,7 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   _computeCrossesFromH();//
   // std::cout << "print crosses" << std::endl;
   // _viewCrosses(_currentMesh->crossField,"crossfield");
-  //parametrization
+  // parametrization
   // std::cout << "compute parametrization" << std::endl;
   // _computeParametrization();
 
@@ -2027,7 +2095,7 @@ void ConformalMapping::_computeCrossesFromH(){
     _currentMesh->crossField[&e]=Cross2D(_currentMesh,&e,_currentMesh->manifoldBasis[&e].theta+theta[&e]);
   }
   std::cout << "end create thetaCF and crosses fields" << std::endl;
-  // _viewScalarEdges(theta, "thetaCF");//DBG
+  // _viewThetaDBG(theta, "CM::thetaCF");//DBG
   return;
 }
 
@@ -2312,7 +2380,7 @@ void ConformalMapping::_computeParametrization(){
   if(_currentMesh->trianglesPatchs.size()==0)
     _currentMesh->createPatchs();
   for(size_t kP=0;kP<_currentMesh->trianglesPatchs.size();kP++){
-    if(kP==12||kP==10){//DBG
+    // if(kP==12||kP==10){//DBG
       std::set<MTriangle*, MElementPtrLessThan> tri = _currentMesh->trianglesPatchs[kP];
       SVector3 dirRefU=_currentMesh->crossField[_currentMesh->triangleToEdges[(*(tri.begin()))][0]].getDirection(0);
       SVector3 dirRefV=_currentMesh->crossField[_currentMesh->triangleToEdges[(*(tri.begin()))][0]].getDirection(1);
@@ -2324,12 +2392,12 @@ void ConformalMapping::_computeParametrization(){
       _transfoPot(tri,_currentMesh->potU,_currentMesh->potV);
       std::map<MVertex *, double, MVertexPtrLessThan> cutPot;
       _testPotCut(tri,_currentMesh->potU,_currentMesh->potV,cutPot);
-      if(kP==12||kP==10){
+      // if(kP==12||kP==10){
 	_viewScalarTriangles(_currentMesh->potU, tri, "potU");
 	_viewScalarTriangles(_currentMesh->potV, tri, "potV");
-	_viewScalarTriangles(cutPot, tri, "potCut");
-      }
-    }
+	// _viewScalarTriangles(cutPot, tri, "potCut");
+      // }
+    // }
   }
   // _viewScalarTriangles(_currentMesh->potU, _currentMesh->triangles, "potU");
   // _viewScalarTriangles(_currentMesh->potV, _currentMesh->triangles, "potV");//DBG
@@ -2372,6 +2440,7 @@ void ConformalMapping::_computeDistancesToBndAndSing(){
 void ConformalMapping::_createCutGraph(){
   _computeDistancesToBndAndSing();
   _currentMesh->cutGraphDiscreteEdges = _createEdgeTree();
+  // _viewEdgesDBG(_currentMesh->cutGraphDiscreteEdges,"cutgraphNotTrimmed");  
   _trimEdgeTree(_currentMesh->cutGraphDiscreteEdges);
   for(const MEdge &e: _currentMesh->edges){
     _currentMesh->isCutGraphEdge[&e]=false;
@@ -2911,6 +2980,54 @@ void ConformalMapping::_viewScalarEdges(std::map<const MEdge *, double> &scalar,
 #endif
 }
 
+void ConformalMapping::_viewThetaDBG(std::map<const MEdge *, double> &scalar, const std::string& viewName){ //for DBG only
+#if defined(HAVE_POST)
+  std::map<const MVertex *, double> smoothedTheta;
+  std::map<const MVertex *, int> multVertex;
+  for(MTriangle *t: _currentMesh->triangles){
+    const MEdge *e0 = _currentMesh->triangleToEdges[t][0];
+    const MEdge *e1 = _currentMesh->triangleToEdges[t][1];
+    const MEdge *e2 = _currentMesh->triangleToEdges[t][2];
+    double val0=scalar[e0]-scalar[e1]+scalar[e2];
+    double val1=scalar[e1]-scalar[e2]+scalar[e0];
+    double val2=scalar[e2]-scalar[e0]+scalar[e1];
+    smoothedTheta[t->getVertex(0)]+=val0;
+    smoothedTheta[t->getVertex(1)]+=val1;
+    smoothedTheta[t->getVertex(2)]+=val2;
+    multVertex[t->getVertex(0)]++;
+    multVertex[t->getVertex(1)]++;
+    multVertex[t->getVertex(2)]++;
+  }
+  for(auto &kv: smoothedTheta){
+    kv.second=kv.second/multVertex[kv.first];
+  }
+  std::vector<double> datalist;
+  for(MTriangle *t: _currentMesh->triangles){
+    datalist.push_back(t->getVertex(0)->x());
+    datalist.push_back(t->getVertex(1)->x());
+    datalist.push_back(t->getVertex(2)->x());
+    datalist.push_back(t->getVertex(0)->y());
+    datalist.push_back(t->getVertex(1)->y());
+    datalist.push_back(t->getVertex(2)->y());
+    datalist.push_back(t->getVertex(0)->z());
+    datalist.push_back(t->getVertex(1)->z());
+    datalist.push_back(t->getVertex(2)->z());
+    datalist.push_back(smoothedTheta[t->getVertex(0)]);
+    datalist.push_back(smoothedTheta[t->getVertex(1)]);
+    datalist.push_back(smoothedTheta[t->getVertex(2)]);
+  }
+  if(!datalist.empty()){
+    gmsh::initialize();
+    Msg::Debug("create view '%s'",viewName.c_str());
+    int dataListViewTag = gmsh::view::add(viewName);
+    gmsh::view::addListData(dataListViewTag, "ST", _currentMesh->triangles.size(), datalist);
+  }
+#else 
+  Msg::Error("Cannot create view without POST module");
+  return;
+#endif
+}
+
 void ConformalMapping::_viewCrossEdgTri(std::map<MTriangle *, std::vector<std::vector<SVector3>>> &crossEdgTri, const std::string& viewName){ //for DBG only
 #if defined(HAVE_POST)
 
@@ -2926,6 +3043,13 @@ void ConformalMapping::_viewCrossEdgTri(std::map<MTriangle *, std::vector<std::v
 	datalist.push_back(kv.second[k][l][0]);
 	datalist.push_back(kv.second[k][l][1]);
 	datalist.push_back(kv.second[k][l][2]);
+	nData++;
+	datalist.push_back(b.x());
+	datalist.push_back(b.y());
+	datalist.push_back(b.z());
+	datalist.push_back(-kv.second[k][l][0]);
+	datalist.push_back(-kv.second[k][l][1]);
+	datalist.push_back(-kv.second[k][l][2]);
 	nData++;
       }
     }
@@ -3037,7 +3161,7 @@ void ConformalMapping::_viewEdges(std::set<const MEdge*> &edges, const std::stri
     datalist.push_back(e->getVertex(1)->y());
     datalist.push_back(e->getVertex(0)->z());
     datalist.push_back(e->getVertex(1)->z());
-    datalist.push_back(0.0);//DBG
+    datalist.push_back(1.0);//DBG
     datalist.push_back(1.0);
   }
   gmsh::initialize();
@@ -3045,6 +3169,35 @@ void ConformalMapping::_viewEdges(std::set<const MEdge*> &edges, const std::stri
   int dataListViewTag = gmsh::view::add(viewName);
   // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
   gmsh::view::addListData(dataListViewTag, "SL", edges.size(), datalist);
+#else 
+  Msg::Error("Cannot create view without POST module");
+  return;
+#endif
+}
+
+void ConformalMapping::_viewEdgesDBG(std::set<const MEdge*> &edges, const std::string& viewName){ //for DBG only
+#if defined(HAVE_POST)
+
+  std::vector<double> datalist;
+  int nData=0;
+  for(const MEdge *e: edges){
+    if(!_currentMesh->isFeatureEdge[e]){
+      datalist.push_back(e->getVertex(0)->x());
+      datalist.push_back(e->getVertex(1)->x());
+      datalist.push_back(e->getVertex(0)->y());
+      datalist.push_back(e->getVertex(1)->y());
+      datalist.push_back(e->getVertex(0)->z());
+      datalist.push_back(e->getVertex(1)->z());
+      datalist.push_back(1.0);//DBG
+      datalist.push_back(1.0);
+      nData++;
+    }
+  }
+  gmsh::initialize();
+  Msg::Debug("create view '%s'",viewName.c_str());
+  int dataListViewTag = gmsh::view::add(viewName);
+  // gmsh::view::addListData(dataListViewTag, "SL", datalist.size()/(3+3+2), datalist);
+  gmsh::view::addListData(dataListViewTag, "SL", nData, datalist);
 #else 
   Msg::Error("Cannot create view without POST module");
   return;

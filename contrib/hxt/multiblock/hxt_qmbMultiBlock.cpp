@@ -1617,12 +1617,13 @@ HXTStatus MultiBlock::buildQuadLayout(){
   // killDuplicatesSepTjunction();
   hxtWriteGraphNodes(newNodes, "qmbGraphNodes1.pos");
   hxtWriteGraphNodes(m_extraordVertices, "qmbGraphNodes2.pos");
-  // std::cout << "sepgraphnodes: " << std::endl;
-  // for(size_t k=0;k<m_sepGraphNodes.size();k++){
-  //   for(size_t l=0;l<m_sepGraphNodes[k].size();l++)
-  //     std::cout << m_sepGraphNodes[k][l] << " ";
-  //   std::cout << std::endl;
-  // }
+  std::cout << "sepgraphnodes: " << std::endl;
+  for(size_t k=0;k<m_sepGraphNodes.size();k++){
+    std::cout << "sep clean ID: " << k << std::endl;
+    for(size_t l=0;l<m_sepGraphNodes[k].size();l++)
+      std::cout << m_sepGraphNodes[k][l] << " ";
+    std::cout << std::endl;
+  }
   
 
   std::cout << "--BUILD QUADS--" << std::endl;
@@ -1994,6 +1995,7 @@ int MultiBlock::getGraphElements(std::vector<std::array<double,3>> *nodesCoord, 
       std::vector<uint64_t> *elements=sep1->getPTriangles();
       std::vector<std::array<double,3>> *points=sep1->getPCoord();
       (*nodesCoord).push_back((*points)[0]);
+      size_t indiceBeginningNodesSep=(*nodesCoord).size()-1;
       std::array<double,3> dir={{0.0,0.0,0.0}};
       std::array<double,3> p1=(*points)[0];
       std::array<double,3> p2=(*points)[1];
@@ -2021,13 +2023,17 @@ int MultiBlock::getGraphElements(std::vector<std::array<double,3>> *nodesCoord, 
 	    std::cout << "Pb size intersection points triangles" << std::endl;
 	    exit(0);
 	  }
-	  if(isIntersecting){ 
+	  if(isIntersecting){
+	    
 	    for(uint64_t l=0; l<intersectionPoints.size(); l++){
-	      (*nodesCoord).push_back(intersectionPoints[l]);
-	      (*directions).push_back(directionsNew[l]);
-	      (*triangles).push_back(newTriangles[l]);
-	      (*distance).push_back(length[l]);
-	      num++;
+	      double norm=0.0;
+	      if(!isPointDuplicateVec(&(*nodesCoord)[indiceBeginningNodesSep], &(intersectionPoints[l]), &norm)){//DBG has to be checked for separatrices traced from random point of the boundary, toward inside the domain
+		(*nodesCoord).push_back(intersectionPoints[l]);
+		(*directions).push_back(directionsNew[l]);
+		(*triangles).push_back(newTriangles[l]);
+		(*distance).push_back(length[l]);
+		num++;
+	      }
 	    }
 	  }
 	}
@@ -2458,6 +2464,8 @@ int MultiBlock::nodesConnectivity(int *connectedNodes, uint64_t *connectedTri, d
       for(uint64_t m=0; m<sizeElementsPerSep; m++){ //(-1?!)
 	int node2=(*nodes)[m];
 	if(node1==node2){
+	  // std::cout << "extr vert: " << node1 << std::endl;
+	  // std::cout << "on cleanSep: " << k << std::endl;
 	  if(checkIfLoop(k)){
 	    if(m==0){
 	      connectedNodes[num1]=(*nodes)[m+1];
@@ -2505,7 +2513,18 @@ int MultiBlock::nodesConnectivity(int *connectedNodes, uint64_t *connectedTri, d
 	      }
 	      num1++;
 	      num2++;
-	    }else if(m!=(sizeElementsPerSep-1)){
+	    }// else if(m==(sizeElementsPerSep-1) && checkIfLoop(k)==2){
+	    //   int end=sizeElementsPerSep-1;
+	    //   connectedNodes[num1]=(*nodes)[end-1];
+	    //   connectedTri[num1]=(*tri)[end-1];
+	    //   std::array<double,3> d2=(*dir)[end];
+	    //   for(int s=0; s<3; s++){
+	    // 	connectedDir[3*num1+s]=d2[s];
+	    //   }
+	    //   num1++;
+	    //   num2++;
+	    // }
+	    else if(m!=(sizeElementsPerSep-1)){
 	      connectedNodes[num1]=(*nodes)[m-1];
 	      connectedTri[num1]=(*tri)[m-1];
 	      std::array<double,3> d=(*dir)[m];
@@ -4266,7 +4285,7 @@ HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
   }
   std::cout<<" "<<std::endl;
   std::cout<<"--Get and store partition per edge--"<<std::endl;
-  computeAdequatePartitionPerEdge(0.1, hVal);
+  computeAdequatePartitionPerEdge(0.02, hVal);
   // computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);
   // computeAdequatePartitionPerEdge(m_minEdgLength/(2.0), hVal);
   // computeAdequatePartitionPerEdge(3*m_minEdgLength, hVal);

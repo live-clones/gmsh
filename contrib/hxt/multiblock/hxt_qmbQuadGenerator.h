@@ -127,7 +127,9 @@ class QuadGenerator
   HXTStatus linkSepToSing(Separatrice *sep, uint64_t triNum, uint64_t edgNum, std::array<double,3> singPoint, bool *discard);
   int closestPointAngle(uint64_t triNum, uint64_t edgNum, double *coordP, double enteringAngle, double *closestAngle);
   int closestDirection(uint64_t triNum, uint64_t  edgNum,  double *angleDirection,  double *direction);
+  int closestDirectionAlone(uint64_t triNum, uint64_t  edgNum,  double *angleDirection,  double *direction);
   int trialPoint(uint64_t triNum, uint64_t edgNum, double *coordP, double *direction, double *pointCoord,  uint64_t *newEdgNum, double *angle);
+  int trialPointAlone(uint64_t triNum, uint64_t edgNum, double *coordP, double *direction, double *pointCoord,  uint64_t *newEdgNum, double *angle);
   int correction(double *pointCoord, uint64_t triNum, uint64_t edgNum, double enteringAngle, double *direction);
   int candidatePoint(double *coordP, uint64_t triNum, uint64_t edgNum, double *alpha1, double *point, uint64_t *newTriNum, uint64_t *newEdgNum, double *alpha3);
   HXTStatus propagateKowalski(int sepID);
@@ -147,14 +149,11 @@ class QuadGenerator
   int cutLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs);
   int solveTangentialCrossingsLimitCycles(std::vector<uint64_t> *limitCycleIDs);
   int solveTangentialCrossings();
+  int detectAndSolveLoopEdges();
+  double normDiffVect(std::array<double,3> *coordP1, std::array<double,3> *coordP2);
+  double computeDiscreteLineLength(std::vector<std::array<double,3>> *pCoordLine);
+  HXTStatus getPointAndTriOnDiscreteLine(std::vector<std::array<double,3>> *line, const std::vector<uint64_t> *tri, double curvilinearParam, std::array<double,3> &pointP, uint64_t &triP, uint32_t &edgP);
 
-
-
-
-
-  
-    
- 
 };
 
 
