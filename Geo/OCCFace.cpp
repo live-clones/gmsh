@@ -74,7 +74,7 @@ void OCCFace::_setup()
       GEdge *e = 0;
       if(model()->getOCCInternals())
         e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
-      if(!e) { Msg::Error("Unknown curve in face %d", tag()); }
+      if(!e) { Msg::Error("Unknown curve in surface %d", tag()); }
       else if(edge.Orientation() == TopAbs_INTERNAL) {
         Msg::Debug("Adding embedded curve %d in surface %d", e->tag(), tag());
         embedded_edges.push_back(e);
@@ -257,6 +257,10 @@ bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
     return false;
   }
   proj.LowerDistanceParameters(uv[0], uv[1]);
+
+  if(uv[0] < umin || uv[0] > umax || uv[1] < vmin || uv[1] > vmax)
+    Msg::Warning("Point projection is out of surface parameter bounds");
+
   if(xyz) {
     pnt = proj.NearestPoint();
     xyz[0] = pnt.X();
@@ -275,14 +279,10 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
     return GFace::closestPoint(qp, initialGuess);
 #endif
   double uv[2], xyz[3];
-  if(_project(qp.data(), uv, xyz)) {
+  if(_project(qp.data(), uv, xyz))
     return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
-  }
-  else {
-    GPoint gp(0, 0);
-    gp.setNoSuccess();
-    return gp;
-  }
+  else
+    return GFace::closestPoint(qp, initialGuess);
 }
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
@@ -291,12 +291,10 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
   if(CTX::instance()->geom.occUseGenericClosestPoint)
     return GFace::parFromPoint(qp);
   double uv[2];
-  if(_project(qp.data(), uv, nullptr)) {
+  if(_project(qp.data(), uv, nullptr))
     return SPoint2(uv[0], uv[1]);
-  }
-  else {
+  else
     return GFace::parFromPoint(qp);
-  }
 }
 
 GEntity::GeomType OCCFace::geomType() const
