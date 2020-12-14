@@ -6,6 +6,10 @@
 #define GMSH_LINKED
 #if defined(GMSH_LINKED)
   #include "gmsh.h"
+  #include "MVertex.h"
+  #include "MElement.h"
+  #include "MTriangle.h"
+  #include "MQuadrangle.h"
 #endif
 
 
@@ -112,6 +116,34 @@ namespace GeoLog {
     if (pts.size() == 0) return false;
     vec3 center = geolog_points_center(pts);
     return add(center, text, view);
+  }
+
+  bool add(const std::vector<MElement*>& elements, const std::string& view) {
+#if defined(GMSH_LINKED)
+    View& V = get_global_view(view);
+    size_t e0 = V.objs.size();
+    V.objs.resize(V.objs.size()+elements.size());
+    for (size_t i = 0; i < elements.size(); ++i) {
+      MElement* elt = elements[i];
+      size_t nv = elt->getNumVertices();
+      V.objs[e0+i].isVector = false;
+      V.objs[e0+i].isCell = false;
+      if (elt->getDim() == 3) {
+        V.objs[e0+i].isCell = true;
+      }
+      V.objs[e0+i].pts.resize(nv);
+      V.objs[e0+i].values.resize(nv,0.);
+      for (size_t lv = 0; lv < nv; ++lv) {
+        MVertex* v = elt->getVertex(lv);
+        V.objs[e0+i].pts[lv][0] = v->x();
+        V.objs[e0+i].pts[lv][1] = v->y();
+        V.objs[e0+i].pts[lv][2] = v->z();
+      }
+    }
+
+    return true;
+#endif
+    return false;
   }
 
   std::string gobj_type(const GObj& obj) {

@@ -15,22 +15,18 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
+#include "meshQuadUtils.h"
 
 /* for visualization */
 #include "gmsh.h"
 #include "geolog.h"
 
+using namespace GeometryVec3;
+
 namespace SurfaceProjectorUtils {
   using vec2 = std::array<double,2>;
-  using vec3 = std::array<double,3>;
   const size_t NO_ID = (size_t) -1;
 
-  inline double dot      (const vec3& a, const vec3& b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
-  inline double length2  (const vec3& a) { return dot(a,a); }
-  inline vec3 operator-(const vec3& a, const vec3& b) { return {a[0]-b[0], a[1]-b[1], a[2]-b[2]}; }
-  inline vec3 operator+(const vec3& a, const vec3& b) { return {a[0]+b[0], a[1]+b[1], a[2]+b[2]}; }
-  inline vec3 operator*(const double& a, const vec3& b) { return {a*b[0], a*b[1], a*b[2]}; }
-  inline vec3 operator*(const vec3& a, const double& b) { return {a[0]*b, a[1]*b, a[2]*b}; }
 
   inline double project_point_segment_l2(const vec3& query, const vec3& a, const vec3& b, vec3& proj, double& lambda) {
     double l2 = length2(a-b);
@@ -259,6 +255,25 @@ namespace SurfaceProjectorUtils {
 
 using namespace SurfaceProjectorUtils;
 
+double projectPointOnTriangle(
+    const SVector3& query,
+    const SVector3& p1,
+    const SVector3& p2,
+    const SVector3& p3,
+    SVector3& proj,
+    double lambda[3]) {
+  const vec3 vp1 = {p1.x(),p1.y(),p1.z()};
+  const vec3 vp2 = {p2.x(),p2.y(),p2.z()};
+  const vec3 vp3 = {p3.x(),p3.y(),p3.z()};
+  const vec3 vquery = {query.x(),query.y(),query.z()};
+  vec3 vproj;
+  double d2 = project_point_triangle_l2(vquery,vp1,vp2,vp3,vproj,lambda);
+  proj.data()[0] = vproj[0];
+  proj.data()[1] = vproj[1];
+  proj.data()[2] = vproj[2];
+  return d2;
+}
+
 namespace NanoflannWrapper {
   using namespace nanoflann;
 
@@ -301,7 +316,7 @@ namespace NanoflannWrapper {
 using namespace NanoflannWrapper;
 
 SurfaceProjector::SurfaceProjector(GFace* gf_):gf(NULL),tree(NULL),pc(NULL),pca(NULL) {
-  bool ok = initialize(gf_);
+  bool ok = initialize(gf_, gf->triangles);
   if (!ok) {
     Msg::Error("failed to initialize SurfaceProjector");
   }
@@ -322,7 +337,7 @@ SurfaceProjector::~SurfaceProjector() {
   }
 }
 
-bool SurfaceProjector::initialize(GFace* gf_) {
+bool SurfaceProjector::initialize(GFace* gf_, const std::vector<MTriangle*>& gfTriangles) {
   gf = gf_;
   if (tree != NULL) {
     delete (static_kd_tree_t*) tree;
@@ -336,7 +351,7 @@ bool SurfaceProjector::initialize(GFace* gf_) {
     delete (PointCloudAdaptor<PointCloud>*) pca;
     pca = NULL;
   }
-  if (gf->triangles.size() == 0)  {
+  if (gfTriangles.size() == 0)  {
     Msg::Error("SurfaceProjector cannot be initialized for face %i: no triangles", gf->tag());
     return false;
   }
@@ -360,10 +375,10 @@ bool SurfaceProjector::initialize(GFace* gf_) {
   if (gf->periodic(0)) Ts[0] = gf->period(0);
   if (gf->periodic(1)) Ts[1] = gf->period(1);
 
-  triangles.reserve(gf->triangles.size());
-  triangles_idx.reserve(gf->triangles.size());
-  if (df) uvs.reserve(gf->triangles.size());
-  for (MTriangle* f: gf->triangles) {
+  triangles.reserve(gfTriangles.size());
+  triangles_idx.reserve(gfTriangles.size());
+  if (df) uvs.reserve(gfTriangles.size());
+  for (MTriangle* f: gfTriangles) {
     std::array<vec3,3> tri_pts;
     std::array<vec2,3> tri_uvs;
     std::array<size_t,3> tri_idx;
@@ -431,55 +446,6 @@ bool SurfaceProjector::initialize(GFace* gf_) {
       }
     }
 
-    // if (false && paramAvailable && check_periodicity) {
-    //   bool shift = true;
-    //   GEdge* ge = NULL;
-    //   for (size_t lv = 0; lv < 3; ++lv) {
-    //     if (gep[lv] != NULL && ge == NULL) {
-    //       ge = gep[lv];
-    //     }
-    //     if (gep[lv] != NULL && ge != NULL && gep[lv] != ge) {
-    //       shift = false;
-    //     }
-    //   }
-    //   if (ge == NULL || shift) {
-    //     tri_uvs[1] = tri_uvs[0];
-    //     tri_uvs[2] = tri_uvs[0];
-    //   } else {
-    //     for (size_t d = 0; d < 2; ++d) {
-    //       if (gf->periodic(d)) {
-    //         /* Check if +-T is closer */
-    //         double T = gf->period(d);
-    //         double d01 = std::abs(tri_uvs[0][d]-tri_uvs[1][d]);
-    //         double d12 = std::abs(tri_uvs[1][d]-tri_uvs[2][d]);
-    //         double d02 = std::abs(tri_uvs[0][d]-tri_uvs[2][d]);
-    //         if        (d01 <= d12 && d01 <= d02) {
-    //           double mid = 0.5  * (tri_uvs[0][d]+tri_uvs[1][d]);
-    //           if (std::abs((tri_uvs[2][d]-T)-mid) < std::abs(tri_uvs[2][d]-mid)) {
-    //             tri_uvs[2][d] -= T;
-    //           } else if (std::abs((tri_uvs[2][d]+T)-mid) < std::abs(tri_uvs[2][d]-mid)) {
-    //             tri_uvs[2][d] += T;
-    //           }
-    //         } else if (d12 <= d01 && d12 <= d02) {
-    //           double mid = 0.5  * (tri_uvs[1][d]+tri_uvs[2][d]);
-    //           if (std::abs((tri_uvs[0][d]-T)-mid) < std::abs(tri_uvs[0][d]-mid)) {
-    //             tri_uvs[0][d] -= T;
-    //           } else if (std::abs((tri_uvs[0][d]+T)-mid) < std::abs(tri_uvs[0][d]-mid)) {
-    //             tri_uvs[0][d] += T;
-    //           }
-    //         } else if (d02 <= d01 && d02 <= d12) {
-    //           double mid = 0.5  * (tri_uvs[0][d]+tri_uvs[2][d]);
-    //           if (std::abs((tri_uvs[1][d]-T)-mid) < std::abs(tri_uvs[1][d]-mid)) {
-    //             tri_uvs[1][d] -= T;
-    //           } else if (std::abs((tri_uvs[1][d]+T)-mid) < std::abs(tri_uvs[1][d]-mid)) {
-    //             tri_uvs[1][d] += T;
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
-
     triangles.push_back(tri_pts);
     triangles_idx.push_back(tri_idx);
     if (paramAvailable) uvs.push_back(tri_uvs);
@@ -511,6 +477,8 @@ GPoint SurfaceProjector::closestPoint(const double query_ptr[3], size_t& cache, 
     fail.setNoSuccess();
     return fail;
   }
+
+  cache = (size_t) -1; /* Disable cache, not working well */
 
   vec3 query = {query_ptr[0],query_ptr[1],query_ptr[2]};
   std::unordered_set<size_t> done;
