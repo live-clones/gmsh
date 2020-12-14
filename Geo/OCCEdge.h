@@ -28,6 +28,7 @@ private:
   Handle(Geom_Curve) _curve;
   mutable Handle(Geom2d_Curve) _curve2d;
   mutable GFace *_trimmed;
+  bool _project(const double p[3], double &u, double xyz[3]) const;
 
 public:
   OCCEdge(GModel *model, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2);
@@ -42,6 +43,7 @@ public:
   virtual double curvature(double par) const;
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
+  virtual double parFromPoint(const SPoint3 &P) const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
   virtual void *getNativePtr() const { return (void *)&_c; }
   virtual int minimumMeshSegments() const;

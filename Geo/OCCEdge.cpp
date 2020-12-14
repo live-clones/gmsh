@@ -171,30 +171,58 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
   }
 }
 
-GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
+bool OCCEdge::_project(const double p[3], double &u, double xyz[3]) const
 {
   if(_curve.IsNull()) {
-    Msg::Error("OCC curve is null in closestPoint");
-    return GPoint(0, 0);
+    Msg::Error("OpenCASCADE curve is null in projection");
+    return false;
   }
 
-  gp_Pnt pnt(qp.x(), qp.y(), qp.z());
+  gp_Pnt pnt(p[0], p[1], p[2]);
   GeomAPI_ProjectPointOnCurve proj(pnt, _curve, _s0, _s1);
 
   if(!proj.NbPoints()) {
-    Msg::Error("OCC ProjectPointOnCurve failed");
-    return GPoint(0, 0);
+    Msg::Warning("Projection of point (%g, %g, %g) on curve %d failed",
+                 p[0], p[1], p[2], tag());
+    return false;
   }
 
-  param = proj.LowerDistanceParameter();
+  u = proj.LowerDistanceParameter();
 
-  if(param < _s0 || param > _s1) {
-    Msg::Error("Point projection is out of edge bounds");
-    return GPoint(0, 0);
+  if(u < _s0 || u > _s1)
+    Msg::Warning("Point projection is out of curve parameter bounds");
+
+  if(xyz) {
+    pnt = proj.NearestPoint();
+    xyz[0] = pnt.X();
+    xyz[1] = pnt.Y();
+    xyz[2] = pnt.Z();
   }
+  return true;
+}
 
-  pnt = proj.NearestPoint();
-  return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, param);
+GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
+{
+  // less robust but can be faster
+  if(CTX::instance()->geom.occUseGenericClosestPoint)
+    return GEdge::closestPoint(qp, param);
+  double u, xyz[3];
+  if(_project(qp.data(), u, xyz))
+    return GPoint(xyz[0], xyz[1], xyz[2], this, u);
+  else
+    return GEdge::closestPoint(qp, param);
+}
+
+double OCCEdge::parFromPoint(const SPoint3 &qp) const
+{
+  // less robust but can be faster
+  if(CTX::instance()->geom.occUseGenericClosestPoint)
+    return GEdge::parFromPoint(qp);
+  double u;
+  if(_project(qp.data(), u, nullptr))
+    return u;
+  else
+    return GEdge::parFromPoint(qp);
 }
 
 bool OCCEdge::isSeam(const GFace *face) const
@@ -222,7 +250,7 @@ GPoint OCCEdge::point(double par) const
                   getBeginVertex()->z());
   }
   else {
-    Msg::Warning("OCC curve %d is neither a 3D curve not a trimmed curve",
+    Msg::Warning("OpenCASCADE curve %d is neither a 3D curve nor a trimmed curve",
                  tag());
     return GPoint(0, 0, 0);
   }
