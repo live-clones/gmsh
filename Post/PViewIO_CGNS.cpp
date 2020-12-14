@@ -33,15 +33,15 @@ namespace {
       for(int iZoneSol = 1; iZoneSol <= nbZoneSol; iZoneSol++) {
         // get FlowSolution info
         char rawSolName[CGNS_MAX_STR_LEN];
-        GridLocation_t location;
+        CGNS_ENUMT(GridLocation_t) location;
         cgnsErr = cg_sol_info(fileIndex, baseIndex, iZone, iZoneSol, rawSolName,
                               &location);
         if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
         const std::string solName(rawSolName);
         PViewDataGModel::DataType type;
-        if(location == CellCenter)
+        if(location == CGNS_ENUMV(CellCenter))
           type = PViewDataGModel::ElementData;
-        else if(location == Vertex) {
+        else if(location == CGNS_ENUMV(Vertex)) {
           if(nbZone > 1) {
             Msg::Warning(
               "Multi-zone node-based solutions not supported in CGNS "
@@ -71,7 +71,7 @@ namespace {
 
         // get names of fields
         for(int iField = 1; iField <= nbField; iField++) {
-          DataType_t dataType;
+          CGNS_ENUMT(DataType_t) dataType;
           char rawFieldName[CGNS_MAX_STR_LEN];
           cgnsErr = cg_field_info(fileIndex, baseIndex, iZone, iZoneSol, iField,
                                   &dataType, rawFieldName);

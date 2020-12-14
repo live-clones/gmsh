@@ -2289,8 +2289,8 @@ end
 
 Set a transfinite meshing constraint on the curve `tag`, with `numNodes` nodes
 distributed according to `meshType` and `coef`. Currently supported types are
-"Progression" (geometrical progression with power `coef`) and "Bump" (refinement
-toward both extremities of the curve).
+"Progression" (geometrical progression with power `coef`), "Bump" (refinement
+toward both extremities of the curve) and "Beta" (beta law).
 """
 function setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
     ierr = Ref{Cint}()

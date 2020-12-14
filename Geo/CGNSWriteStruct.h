@@ -12,8 +12,8 @@
 
 class GModel;
 
-int writeZonesStruct(GModel *model, double scalingFactor,
-                     int cgIndexFile, int cgIndexBase);
+int writeZonesStruct(GModel *model, double scalingFactor, int cgIndexFile,
+                     int cgIndexBase);
 
 #endif
 

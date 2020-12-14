@@ -149,9 +149,6 @@ static double dfbeta (double t, double beta){
   double ratio = (1+beta)/(beta-1);
   double zlog  = log(ratio);
   return 2*beta/((1+beta-t)*(-1+beta+t)*zlog);
-  //  
-  //  return t + 2 * beta * log (1+beta-t)/zlog
-  //    + (-1+beta+t)* log((-1+beta+t)/(1+beta-t))/zlog;  
 }
 
 struct F_Transfinite {
@@ -167,6 +164,7 @@ struct F_Transfinite {
     double d = norm(der);
     double coef = ge->meshAttributes.coeffTransfinite;
     int type = ge->meshAttributes.typeTransfinite;
+    int atype = std::abs(type);
     int nbpt = ge->meshAttributes.nbPointsTransfinite;
 
     if(CTX::instance()->mesh.flexibleTransfinite &&
@@ -180,54 +178,52 @@ struct F_Transfinite {
 
     double val;
 
-    if(std::abs(type) != 3 && (coef <= 0.0 || coef == 1.0)) {
+    if(coef <= 0.0 || coef == 1.0 || (atype == 3 && coef < 1.)) {
       // coef < 0 should never happen
       val = d * coef / ge->length();
     }
-    else if(std::abs(type) != 3 && (coef <= 1.0 && coef >= -1.0)) {
-      val = d * coef / ge->length();
-    }
     else {
-      switch(std::abs(type)) {
-      case 1: // Geometric progression ar^i; Sum of n terms = length = a
-              // (r^n-1)/(r-1)
+      switch(atype) {
+      case 1:
       {
+        // geometric progression ar^i; Sum of n terms = length = a (r^n-1)/(r-1)
         double r = (gmsh_sign(type) >= 0) ? coef : 1. / coef;
         double a = length * (r - 1.) / (std::pow(r, nbpt - 1.) - 1.);
         int i = (int)(std::log(t * length / a * (r - 1.) + 1.) / std::log(r));
         val = d / (a * std::pow(r, (double)i));
       } break;
 
-      case 2: // Bump
+      case 2:
       {
+        // "bump"
         double a;
         if(coef > 1.0) {
           a = -4. * std::sqrt(coef - 1.) *
-              std::atan2(1.0, std::sqrt(coef - 1.)) / ((double)nbpt * length);
+            std::atan2(1.0, std::sqrt(coef - 1.)) / ((double)nbpt * length);
         }
         else {
           a = 2. * std::sqrt(1. - coef) *
-              std::log(std::abs((1. + 1. / std::sqrt(1. - coef)) /
-                                (1. - 1. / std::sqrt(1. - coef)))) /
-              ((double)nbpt * length);
+            std::log(std::abs((1. + 1. / std::sqrt(1. - coef)) /
+                              (1. - 1. / std::sqrt(1. - coef)))) /
+            ((double)nbpt * length);
         }
         double b = -a * length * length / (4. * (coef - 1.));
         val = d / (-a * std::pow(t * length - (length)*0.5, 2) + b);
         break;
       }
-      case 3: // Beta
+      case 3:
       {
-	if (coef < 0){
-	  val = dfbeta (1.-t, -coef);
-	}
+        // "beta" law
+	if(type < 0)
+	  val = dfbeta(1. - t, coef);
 	else
-	  val = dfbeta (t, coef);	  
+	  val = dfbeta(t, coef);
 	break;
       }
-      case 4: // standard boundary layer progression
+      case 4:
       {
-	val=d/(length*t);
-	// TO DO
+        // standard boundary layer progression: TODO
+	val = d / (length * t);
 	break;
       }
       default:

@@ -1557,10 +1557,9 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
     fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
     fprintf(fp, "  outer loop\n");
     for(int j = 0; j < 3; j++)
-      fprintf(fp, "    vertex %.16g %.16g %.16g\n",
-              getVertex(j)->x() * scalingFactor,
-              getVertex(j)->y() * scalingFactor,
-              getVertex(j)->z() * scalingFactor);
+      fprintf(
+        fp, "    vertex %.16g %.16g %.16g\n", getVertex(j)->x() * scalingFactor,
+        getVertex(j)->y() * scalingFactor, getVertex(j)->z() * scalingFactor);
     fprintf(fp, "  endloop\n");
     fprintf(fp, "endfacet\n");
     if(getNumVertices() == 4) {

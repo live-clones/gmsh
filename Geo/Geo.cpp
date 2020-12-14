@@ -2652,6 +2652,11 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
     return 0;
   }
 
+  if(pc->beg == pc->end && type != BOUNDARY_LAYER) {
+    Msg::Warning("Extrusion of periodic curves is not supported with the "
+                 "built-in kernel");
+  }
+
   Msg::Debug("Extrude Curve %d", ic);
 
   chapeau = DuplicateCurve(pc);

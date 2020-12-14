@@ -1,7 +1,8 @@
 4.8.0 (Work-in-progress): new API functions for creating trimmed BSpline/Bezier
 patches, perform raw triangulations and tetrehedralizations; improved
 performance of high-order meshing of OCC models; improved handling of high
-resolution displays; new structured CGNS exporter; small bug fixes.
+resolution displays; new structured CGNS exporter; added support for embedded
+curves in HXT; small bug fixes.
 
 * Incompatible API changes: new optional argument to occ/addBSplineSurface,
   occ/addBezierSurface and view/probe
@@ -30,10 +31,10 @@ fixes.
 4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
 (without node insertion), and to only mesh non-meshed entities; added ability to
 only remesh parts of discrete models; added support for mesh size fields and
-embedded entities in HXT; improved reparametrization and partitioning code; new
-OCC API functions to reduce the number of synchronizations for complex models;
-new OCC spline surface interfaces; new functions and options to control the
-first tag of entities, nodes and elements; fixed duplicated entities in STEP
+embedded points and surfaces in HXT; improved reparametrization and partitioning
+code; new OCC API functions to reduce the number of synchronizations for complex
+models; new OCC spline surface interfaces; new functions and options to control
+the first tag of entities, nodes and elements; fixed duplicated entities in STEP
 output; improved mesh subdivision and high-order pipeline; MED output now
 preserves node and element tags; small bug fixes.
 

@@ -15,7 +15,7 @@ bnd = gmsh.model.getBoundary([(dim, tag)], combined=False)
 for c in bnd:
     print(c)
     bounds = gmsh.model.getParametrizationBounds(c[0], abs(c[1]))
-    t = [bounds[0] + i * (bounds[1] - bounds[0]) / N for i in range(N)]
+    t = [bounds[0][0] + i * (bounds[1][0] - bounds[0][0]) / N for i in range(N)]
     uv = gmsh.model.reparametrizeOnSurface(1, abs(c[1]), t, tag)
     xyz = gmsh.model.getValue(dim,tag,uv)
     for i in range(0, len(xyz), 3):

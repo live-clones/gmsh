@@ -15,28 +15,25 @@
 
 static void setMeshSizeFromCurvePoints(GEdge &edge, const Curve &curve)
 {
-  if (!CTX::instance()->mesh.lcFromParametricPoints)
-    return;
+  if(!CTX::instance()->mesh.lcFromParametricPoints) return;
   switch(curve.Typ) {
-    case MSH_SEGM_LINE:
-    case MSH_SEGM_SPLN:
-    case MSH_SEGM_BSPLN:
-    case MSH_SEGM_NURBS:
-    case MSH_SEGM_BEZIER:
-      {
-        int n =  List_Nbr(curve.Control_Points);
-        std::vector<double> lc(n), u_lc(n);
-        for (int i = 0; i < n; ++i) {
-          Vertex *v;
-          List_Read(curve.Control_Points,i,&v);
-          u_lc[i] = i*1./(n-1);
-          lc[i] = v->lc;
-        }
-        edge.setMeshSizeParametric(u_lc,lc);
-        break;
-      }
-    default:
-      break;
+  case MSH_SEGM_LINE:
+  case MSH_SEGM_SPLN:
+  case MSH_SEGM_BSPLN:
+  case MSH_SEGM_NURBS:
+  case MSH_SEGM_BEZIER: {
+    int n = List_Nbr(curve.Control_Points);
+    std::vector<double> lc(n), u_lc(n);
+    for(int i = 0; i < n; ++i) {
+      Vertex *v;
+      List_Read(curve.Control_Points, i, &v);
+      u_lc[i] = i * 1. / (n - 1);
+      lc[i] = v->lc;
+    }
+    edge.setMeshSizeParametric(u_lc, lc);
+    break;
+  }
+  default: break;
   }
 }
 
@@ -149,9 +146,7 @@ std::string gmshEdge::getAdditionalInfoString(bool multline)
 int gmshEdge::minimumMeshSegments() const
 {
   int np;
-  if(geomType() == Line) {
-    np = GEdge::minimumMeshSegments();
-  }
+  if(geomType() == Line) { np = GEdge::minimumMeshSegments(); }
   else if(geomType() == Circle || geomType() == Ellipse) {
     double a = fabs(_c->Circle.t1 - _c->Circle.t2);
     double n = CTX::instance()->mesh.minCircPoints;
@@ -227,9 +222,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       List_Read(_c->Control_Points, i, &v[1]);
       List_Read(_c->Control_Points, i + 1, &v[2]);
       if(!i) {
-        if(_c->beg == _c->end) {
-          List_Read(_c->Control_Points, N - 2, &v[0]);
-        }
+        if(_c->beg == _c->end) { List_Read(_c->Control_Points, N - 2, &v[0]); }
         else {
           v[0] = &temp1;
           v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
@@ -239,9 +232,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
         List_Read(_c->Control_Points, i - 1, &v[0]);
       }
       if(i == N - 2) {
-        if(_c->beg == _c->end) {
-          List_Read(_c->Control_Points, 1, &v[3]);
-        }
+        if(_c->beg == _c->end) { List_Read(_c->Control_Points, 1, &v[3]); }
         else {
           v[3] = &temp2;
           v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
@@ -252,7 +243,9 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       }
       return InterpolateCubicSpline(v, t, _c->mat, t1, t2, _c->geometry, 0);
     }
-    default: Msg::Error("Unknown curve type in reparamOnFace"); return SPoint2();
+    default:
+      Msg::Error("Unknown curve type in reparamOnFace");
+      return SPoint2();
     }
   }
 
@@ -468,9 +461,7 @@ void gmshEdge::discretize(double tol, std::vector<SPoint3> &pts,
       double t1 = (iCurve) / (double)(NbCurves);
       double t2 = (iCurve + 1) / (double)(NbCurves);
       SPoint3 pt[4];
-      for(int i = 0; i < 4; i++) {
-        pt[i] = curveGetPoint(_c, iCurve * 3 + i);
-      }
+      for(int i = 0; i < 4; i++) { pt[i] = curveGetPoint(_c, iCurve * 3 + i); }
       std::vector<double> lts;
       std::vector<SPoint3> lpts;
       decasteljau(tol, pt[0], pt[1], pt[2], pt[3], lpts, lts);

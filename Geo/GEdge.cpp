@@ -51,8 +51,7 @@ GEdge::~GEdge()
 
 void GEdge::deleteMesh()
 {
-  for(std::size_t i = 0; i < mesh_vertices.size(); i++)
-    delete mesh_vertices[i];
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   for(std::size_t i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
@@ -69,8 +68,9 @@ void GEdge::setMeshMaster(GEdge *ge, int ori)
   GEntity::setMeshMaster(ge);
   masterOrientation = ori > 0 ? 1 : -1;
 
-  if(!getBeginVertex() || !ge->getBeginVertex() ||
-     !getEndVertex() || !ge->getEndVertex()) return;
+  if(!getBeginVertex() || !ge->getBeginVertex() || !getEndVertex() ||
+     !ge->getEndVertex())
+    return;
 
   if(ori < 0) {
     vertexCounterparts[getBeginVertex()] = ge->getEndVertex();
@@ -88,8 +88,9 @@ void GEdge::setMeshMaster(GEdge *ge, int ori)
 
 void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
 {
-  if(!getBeginVertex() || !ge->getBeginVertex() ||
-     !getEndVertex() || !ge->getEndVertex()) return;
+  if(!getBeginVertex() || !ge->getBeginVertex() || !getEndVertex() ||
+     !ge->getEndVertex())
+    return;
 
   SPoint3 oriXYZ0 = ge->getBeginVertex()->xyz();
   SPoint3 oriXYZ1 = ge->getEndVertex()->xyz();
@@ -164,17 +165,11 @@ std::size_t GEdge::getNumMeshElementsByType(const int familyType) const
   return 0;
 }
 
-struct owns_parent {
-  // TODO C++11 use lambda instead
-  template <class T> bool operator()(T const *const line) const
-  {
-    return line->ownsParent();
-  }
-};
-
 std::size_t GEdge::getNumMeshParentElements()
 {
-  return std::count_if(lines.begin(), lines.end(), owns_parent());
+  return std::count_if(lines.begin(), lines.end(), [](const MLine *const line) {
+    return line->ownsParent();
+  });
 }
 
 void GEdge::getNumMeshElements(unsigned *const c) const
@@ -261,12 +256,12 @@ SOrientedBoundingBox GEdge::getOBB()
         vertices.push_back(mv->point());
       }
       // Don't forget to add the first and last vertices...
-      if(getBeginVertex()){
+      if(getBeginVertex()) {
         SPoint3 pt1(getBeginVertex()->x(), getBeginVertex()->y(),
                     getBeginVertex()->z());
         vertices.push_back(pt1);
       }
-      if(getEndVertex()){
+      if(getEndVertex()) {
         SPoint3 pt2(getEndVertex()->x(), getEndVertex()->y(),
                     getEndVertex()->z());
         vertices.push_back(pt2);
@@ -329,8 +324,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
 
   if(_faces.size()) {
     sstream << "On boundary of surfaces: ";
-    for(std::vector<GFace *>::iterator it = _faces.begin();
-        it != _faces.end(); ++it) {
+    for(std::vector<GFace *>::iterator it = _faces.begin(); it != _faces.end();
+        ++it) {
       if(it != _faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
@@ -626,8 +621,10 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z, double &u,
 
   u = errorVsParameter.begin()->second;
   if(first) {
-    Msg::Warning("Could not converge parametrisation of (%g,%g,%g) on curve %d, "
-                 "taking parameter with lowest error", X, Y, Z, tag());
+    Msg::Warning(
+      "Could not converge parametrisation of (%g,%g,%g) on curve %d, "
+      "taking parameter with lowest error",
+      X, Y, Z, tag());
   }
 
   return false;
@@ -725,7 +722,8 @@ void GEdge::removeElement(int type, MElement *e)
       std::find(lines.begin(), lines.end(), reinterpret_cast<MLine *>(e));
     if(it != lines.end()) lines.erase(it);
   } break;
-  default: Msg::Error("Trying to remove unsupported element in curve %d", tag());
+  default:
+    Msg::Error("Trying to remove unsupported element in curve %d", tag());
   }
 }
 
@@ -733,11 +731,11 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,
                        std::vector<double> &ts)
 {
   std::vector<sortedPoint> upts;
-  if(getBeginVertex()){
+  if(getBeginVertex()) {
     sortedPoint pnt1 = {getBeginVertex()->xyz(), 0., 1};
     upts.push_back(pnt1);
   }
-  if(getEndVertex()){
+  if(getEndVertex()) {
     sortedPoint pnt2 = {getEndVertex()->xyz(), 1., -1};
     upts.push_back(pnt2);
   }
@@ -790,7 +788,7 @@ static bool recreateConsecutiveElements(GEdge *ge)
   ge->mesh_vertices.clear();
   for(std::size_t i = 0; i < ge->lines.size() - 1; ++i) {
     MVertex *v11 = ge->lines[i]->getVertex(1);
-    if(v11->onWhat() == ge || !v11->onWhat()){
+    if(v11->onWhat() == ge || !v11->onWhat()) {
       v11->setEntity(ge);
       ge->mesh_vertices.push_back(v11);
     }
@@ -817,8 +815,7 @@ static void meshCompound(GEdge *ge)
   // create the geometry
   de->createGeometry();
   // delete the MLines just created above
-  for(std::size_t i = 0; i < de->lines.size(); i++)
-    delete de->lines[i];
+  for(std::size_t i = 0; i < de->lines.size(); i++) delete de->lines[i];
   de->lines.clear();
   de->mesh_vertices.clear();
   de->mesh(false);
@@ -856,7 +853,8 @@ void GEdge::mesh(bool verbose)
 #endif
 }
 
-bool GEdge::reorder(const int elementType, const std::vector<std::size_t> &ordering)
+bool GEdge::reorder(const int elementType,
+                    const std::vector<std::size_t> &ordering)
 {
   if(lines.size() != 0) {
     if(lines.front()->getTypeForMSH() != elementType) { return false; }
@@ -890,38 +888,37 @@ std::vector<GVertex *> GEdge::vertices() const
 
 double GEdge::prescribedMeshSizeAtParam(double u)
 {
-  if (_lc.empty()) {
-    return MAX_LC;
-  }
-  const std::vector<double>::iterator &it = std::lower_bound(_u_lc.begin(),_u_lc.end(),u);
-  size_t i1 = std::min<size_t>(it-_u_lc.begin(),_u_lc.size()-1);
-  size_t i0 = std::max<size_t>(1,i1)-1;
+  if(_lc.empty()) { return MAX_LC; }
+  const std::vector<double>::iterator &it =
+    std::lower_bound(_u_lc.begin(), _u_lc.end(), u);
+  size_t i1 = std::min<size_t>(it - _u_lc.begin(), _u_lc.size() - 1);
+  size_t i0 = std::max<size_t>(1, i1) - 1;
   double u0 = _u_lc[i0], u1 = _u_lc[i1];
   double l0 = _lc[i0], l1 = _lc[i1];
-  if (i1 == i0 || u0 == u1)
-    return l0;
-  double alpha = (u-u0)/(u1-u0);
-  return l0*(1-alpha) + l1*(alpha);
+  if(i1 == i0 || u0 == u1) return l0;
+  double alpha = (u - u0) / (u1 - u0);
+  return l0 * (1 - alpha) + l1 * (alpha);
 }
 
 struct vindexsort {
   const std::vector<double> &v;
-  vindexsort(const std::vector<double> &vp) :v(vp){};
-  bool operator()(size_t i0, size_t i1) {return v[i0]<v[i1];}
+  vindexsort(const std::vector<double> &vp) : v(vp){};
+  bool operator()(size_t i0, size_t i1) { return v[i0] < v[i1]; }
 };
 
-void GEdge::setMeshSizeParametric(const std::vector<double> u, const std::vector<double> lc)
+void GEdge::setMeshSizeParametric(const std::vector<double> u,
+                                  const std::vector<double> lc)
 {
-  if (u.size() != lc.size()) {
-    Msg::Error("setMeshSizeParametric : number of coordinates and number of mesh size do not match.");
+  if(u.size() != lc.size()) {
+    Msg::Error("setMeshSizeParametric : number of coordinates and number of "
+               "mesh size do not match.");
   }
   std::vector<size_t> index(u.size());
-  for (size_t i = 0; i < u.size(); ++i)
-    index[i] = i;
-  std::sort(index.begin(),index.end(),vindexsort(u));
+  for(size_t i = 0; i < u.size(); ++i) index[i] = i;
+  std::sort(index.begin(), index.end(), vindexsort(u));
   _u_lc.resize(u.size());
   _lc.resize(lc.size());
-  for (size_t i = 0; i < u.size(); ++i){
+  for(size_t i = 0; i < u.size(); ++i) {
     _u_lc[i] = u[index[i]];
     _lc[i] = lc[index[i]];
   }

@@ -19,8 +19,7 @@ GVertex::~GVertex() { GVertex::deleteMesh(); }
 
 void GVertex::deleteMesh()
 {
-  for(std::size_t i = 0; i < mesh_vertices.size(); i++)
-    delete mesh_vertices[i];
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   for(std::size_t i = 0; i < points.size(); i++) delete points[i];
   points.clear();
@@ -77,9 +76,7 @@ std::string GVertex::getAdditionalInfoString(bool multline)
   }
 
   double lc = prescribedMeshSizeAtVertex();
-  if(lc < MAX_LC) {
-    sstream << "Mesh attributes: size " << lc;
-  }
+  if(lc < MAX_LC) { sstream << "Mesh attributes: size " << lc; }
   return sstream.str();
 }
 
@@ -123,12 +120,10 @@ MElement *GVertex::getMeshElementByType(const int familyType,
 
 bool GVertex::isOnSeam(const GFace *gf) const
 {
-  // TODO C++11 std::find_if
-  std::vector<GEdge *>::const_iterator eIter = l_edges.begin();
-  for(; eIter != l_edges.end(); eIter++) {
-    if((*eIter)->isSeam(gf)) return true;
-  }
-  return false;
+  auto const location =
+    std::find_if(begin(l_edges), end(l_edges),
+                 [&](GEdge *const edge) { return edge->isSeam(gf); });
+  return location != end(l_edges);
 }
 
 // faces that bound this entity or that this entity bounds.
@@ -192,7 +187,8 @@ void GVertex::removeElement(int type, MElement *e)
   }
 }
 
-bool GVertex::reorder(const int elementType, const std::vector<std::size_t> &ordering)
+bool GVertex::reorder(const int elementType,
+                      const std::vector<std::size_t> &ordering)
 {
   if(points.size() != 0) {
     if(points.front()->getTypeForMSH() == elementType) {
