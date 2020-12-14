@@ -13,4 +13,18 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm);
 /* visualization */
 int showQuadMeshBaseComplex(GModel* gm);
 
+
+class GFace;
+class MVertex;
+#include <unordered_map>
+#include <vector>
+
+namespace QSQ {
+bool adaptSizeMapToSmallFeatures(
+    const std::vector<GFace*>& faces, 
+    std::unordered_map<MVertex*,double>& sizemap,
+    double smallestMultiplier = 0.1,
+    double gradientMax = 1.2);
+}
+
 #endif

@@ -15,6 +15,7 @@
 #include "meshWinslow2d.h"
 #include "Field.h"
 #include "meshGFaceOptimize.h"
+#include "meshQuadQuasiStructured.h"
 #include "qmt_utils.hpp"
 
 
@@ -270,6 +271,14 @@ int computeCrossFieldAndScalingForHxt(
       Msg::Error("Failed to compute quad mesh size map");
       return -1;
     }
+  }
+
+  /* Adapt size map to CAD */
+  double smallestMultiplier = 0.05;
+  double gradientMax = 1.15;
+  bool oka = QSQ::adaptSizeMapToSmallFeatures(faces, scaling, smallestMultiplier, gradientMax);
+  if (!oka) {
+    Msg::Error("failed to adapt size map to smallest features");
   }
 
   /* Extract values at triangle corners */

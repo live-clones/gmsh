@@ -589,8 +589,8 @@ namespace QSQ {
   bool adaptSizeMapToSmallFeatures(
       const std::vector<GFace*>& faces, 
       std::unordered_map<MVertex*,double>& sizemap,
-      double smallestMultiplier = 0.1,
-      double gradientMax = 1.2) { /* to avoid very small size map */
+      double smallestMultiplier,
+      double gradientMax) { /* to avoid very small size map */
 
     // TODO:
     // - take into account prescribed sizes
