@@ -138,10 +138,20 @@ struct F_Lc_aniso {
 };
 
 
+//static double dfbeta2 (double t, double beta){
+//  double ratio = (1+beta)/(beta-1);
+//  double zlog  = log(ratio);
+//  return 1.-acosh(beta*zlog/t - 1.0)/zlog;
+//  return beta*zlog / (1+cosh(zlog*(1-t)));
+//}
+
 static double dfbeta (double t, double beta){
   double ratio = (1+beta)/(beta-1);
   double zlog  = log(ratio);
-  return beta*zlog / (1+cosh(zlog*(1-t)));
+  return 2*beta/((1+beta-t)*(-1+beta+t)*zlog);
+  //  
+  //  return t + 2 * beta * log (1+beta-t)/zlog
+  //    + (-1+beta+t)* log((-1+beta+t)/(1+beta-t))/zlog;  
 }
 
 struct F_Transfinite {
@@ -732,7 +742,7 @@ void meshGEdge::operator()(GEdge *ge)
   int filterMinimumN;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
 
-  // printFandPrimitive(ge->tag(),Points);
+  //  printFandPrimitive(ge->tag(),Points);
 
   // if the curve is periodic and if the begin vertex is identical to
   // the end vertex and if this vertex has only one model curve
