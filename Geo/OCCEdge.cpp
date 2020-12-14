@@ -178,8 +178,18 @@ bool OCCEdge::_project(const double p[3], double &u, double xyz[3]) const
     return false;
   }
 
+  // little tolerance to converge on the boundary points
+  double umin = _s0;
+  double umax = _s1;
+  if(!periodic(0)) {
+    const double du = umax - umin;
+    const double utol = std::max(fabs(du) * 1e-8, 1e-12);
+    umin -=  utol;
+    umax +=  utol;
+  }
+
   gp_Pnt pnt(p[0], p[1], p[2]);
-  GeomAPI_ProjectPointOnCurve proj(pnt, _curve, _s0, _s1);
+  GeomAPI_ProjectPointOnCurve proj(pnt, _curve, umin, umax);
 
   if(!proj.NbPoints()) {
     Msg::Warning("Projection of point (%g, %g, %g) on curve %d failed",
@@ -189,7 +199,7 @@ bool OCCEdge::_project(const double p[3], double &u, double xyz[3]) const
 
   u = proj.LowerDistanceParameter();
 
-  if(u < _s0 || u > _s1)
+  if(u < umin || u > umax)
     Msg::Warning("Point projection is out of curve parameter bounds");
 
   if(xyz) {
