@@ -19,8 +19,6 @@
 
 #if defined(HAVE_OCC)
 
-#include <Adaptor3d_Curve.hxx>
-#include <Adaptor3d_Surface.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
@@ -1916,8 +1914,8 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
           Handle(Geom_Curve) ProjOnPlane = GeomProjLib::ProjectOnPlane
             (new Geom_TrimmedCurve(c, first, last, Standard_True, Standard_False),
              p, p->Position().Direction(), Standard_True);
-          Handle(Adaptor3d_Surface) HS = new GeomAdaptor_Surface(p);
-          Handle(Adaptor3d_Curve) HC = new GeomAdaptor_Curve(ProjOnPlane);
+          const Handle(GeomAdaptor_Surface) HS = new GeomAdaptor_Surface(p);
+          const Handle(GeomAdaptor_Curve) HC = new GeomAdaptor_Curve(ProjOnPlane);
           ProjLib_ProjectedCurve Proj(HS, HC);
           Handle(Geom2d_Curve) c2d = Geom2dAdaptor::MakeCurve(Proj);
           if(c2d->DynamicType() == STANDARD_TYPE(Geom2d_TrimmedCurve)) {
