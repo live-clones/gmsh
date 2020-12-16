@@ -1078,6 +1078,8 @@ void elementaryContextWindow::updatePoint(double pt[3], int which)
 
 void elementaryContextWindow::show(int pane)
 {
+  FlGui::instance()->lastContextWindow = 0;
+
   if(pane < 0 || pane > 11) return;
 
   for(int i = 0; i < 12; i++) {
@@ -1292,6 +1294,8 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
 
 void transformContextWindow::show(int pane, bool extrude, bool selection)
 {
+  FlGui::instance()->lastContextWindow = 1;
+
   for(int i = 0; i < 7; i++) {
     group[i]->hide();
     group[i]->deactivate();
@@ -1392,6 +1396,8 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
 
 void meshContextWindow::show(int pane)
 {
+  FlGui::instance()->lastContextWindow = 2;
+
   for(int i = 0; i < 3; i++) {
     group[i]->hide();
     group[i]->deactivate();

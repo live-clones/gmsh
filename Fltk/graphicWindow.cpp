@@ -30,7 +30,7 @@ typedef unsigned long intptr_t;
 #include "gamepadWindow.h"
 #include "statisticsWindow.h"
 #include "contextWindow.h"
-#include "physicalGroupWindow.h"
+#include "physicalContextWindow.h"
 #include "visibilityWindow.h"
 #include "highOrderToolsWindow.h"
 #include "clippingWindow.h"
@@ -1511,13 +1511,13 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
                 tags.push_back(dimTags[i].second);
             }
             scriptRemovePhysicalGroup(GModel::current()->getFileName(), what, tags,
-                                      FlGui::instance()->physicalGroup->input[0]->value(),
-                                      FlGui::instance()->physicalGroup->butt[0]->value() ? 0 :
-                                      FlGui::instance()->physicalGroup->value[0]->value(),
-                                      FlGui::instance()->physicalGroup->append,
-                                      FlGui::instance()->physicalGroup->mode);
+                                      FlGui::instance()->physicalContext->input[0]->value(),
+                                      FlGui::instance()->physicalContext->butt[0]->value() ? 0 :
+                                      FlGui::instance()->physicalContext->value[0]->value(),
+                                      FlGui::instance()->physicalContext->append,
+                                      FlGui::instance()->physicalContext->mode);
           }
-          FlGui::instance()->physicalGroup->show(action == 7 ? false : true);
+          FlGui::instance()->physicalContext->show(what, action == 7 ? false : true);
           // ask clients to update the tree using the new physical definition
           onelab_cb(0, (void*)"check");
           break;
@@ -1903,23 +1903,19 @@ static void geometry_elementary_coherence_cb(Fl_Widget *w, void *data)
 static void geometry_physical_add_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string str((const char*)data);
-  if(str == "Point")
-    FlGui::instance()->callForSolverPlugin(0);
-  else if(str == "Curve")
-    FlGui::instance()->callForSolverPlugin(1);
-  FlGui::instance()->physicalGroup->show(false);
-  action_point_line_surface_volume(7, str);
-  FlGui::instance()->physicalGroup->hide();
+  std::string what((const char*)data);
+  FlGui::instance()->physicalContext->show(what, false);
+  action_point_line_surface_volume(7, what);
+  FlGui::instance()->physicalContext->hide();
 }
 
 static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string str((const char*)data);
-  FlGui::instance()->physicalGroup->show(true);
-  action_point_line_surface_volume(11, str);
-  FlGui::instance()->physicalGroup->hide();
+  std::string what((const char*)data);
+  FlGui::instance()->physicalContext->show(what, true);
+  action_point_line_surface_volume(11, what);
+  FlGui::instance()->physicalContext->hide();
 }
 
 void mesh_save_cb(Fl_Widget *w, void *data)

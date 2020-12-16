@@ -20,7 +20,7 @@ set(SRC
     clippingWindow.cpp
     manipWindow.cpp
     contextWindow.cpp
-    physicalGroupWindow.cpp
+    physicalContextWindow.cpp
     helpWindow.cpp
     fileDialogs.cpp
     extraDialogs.cpp
