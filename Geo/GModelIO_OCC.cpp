@@ -19,8 +19,6 @@
 
 #if defined(HAVE_OCC)
 
-#include <Adaptor3d_Curve.hxx>
-#include <Adaptor3d_Surface.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
@@ -63,8 +61,6 @@
 #include <Geom2d_Curve.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
 #include <GeomAPI_Interpolate.hxx>
-#include <GeomAdaptor_Curve.hxx>
-#include <GeomAdaptor_Surface.hxx>
 #include <GeomFill_BSplineCurves.hxx>
 #include <GeomFill_BezierCurves.hxx>
 #include <GeomProjLib.hxx>
@@ -121,6 +117,11 @@
 #include <BRepMesh_IncrementalMesh.hxx>
 #else
 #include <BRepMesh_FastDiscret.hxx>
+#endif
+
+#if OCC_VERSION_HEX < 0x070300
+#include <Adaptor3d_HCurve.hxx>
+#include <Adaptor3d_HSurface.hxx>
 #endif
 
 #if defined(HAVE_OCC_CAF)
@@ -1913,18 +1914,12 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
           // of the patch: to retrieve the 2D curves, project the 3D curves on
           // the z=0 plane
           Handle(Geom_Plane) p = new Geom_Plane(0, 0, 1, 0);
-          Handle(Geom_Curve) ProjOnPlane = GeomProjLib::ProjectOnPlane
-            (new Geom_TrimmedCurve(c, first, last, Standard_True, Standard_False),
-             p, p->Position().Direction(), Standard_True);
-          const Handle(Adaptor3d_Surface) HS = new GeomAdaptor_Surface(p);
-          const Handle(Adaptor3d_Curve) HC = new GeomAdaptor_Curve(ProjOnPlane);
-          ProjLib_ProjectedCurve Proj(HS, HC);
-          Handle(Geom2d_Curve) c2d = Geom2dAdaptor::MakeCurve(Proj);
-          if(c2d->DynamicType() == STANDARD_TYPE(Geom2d_TrimmedCurve)) {
-            Handle(Geom2d_TrimmedCurve) TC = Handle(Geom2d_TrimmedCurve)::DownCast(c2d);
-            c2d = TC->BasisCurve();
-          }
-          TopoDS_Edge edgeSurf = BRepBuilderAPI_MakeEdge(c2d, surf, first, last);
+          TopLoc_Location loc;
+          Handle(Geom2d_Curve) c2d =
+            BRep_Tool::CurveOnSurface(edge, p, loc, first, last);
+          // BRep_Tool::CurveOnPlane(edge, p, loc, first, last); // OCCT >= 7.2
+          TopoDS_Edge edgeSurf =
+            BRepBuilderAPI_MakeEdge(c2d, surf, first, last);
           w.Add(edgeSurf);
         }
       }
