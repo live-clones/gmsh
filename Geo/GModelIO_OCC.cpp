@@ -19,13 +19,15 @@
 
 #if defined(HAVE_OCC)
 
-#include <Bnd_Box.hxx>
+#include <Adaptor3d_Curve.hxx>
+#include <Adaptor3d_Surface.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeShell.hxx>
@@ -33,11 +35,10 @@
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
-#include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepFill_CurveConstraint.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
-#include <BRepFill_CurveConstraint.hxx>
 #include <BRepGProp.hxx>
 #include <BRepLib.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
@@ -55,16 +56,18 @@
 #include <BRepPrimAPI_MakeWedge.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
+#include <Bnd_Box.hxx>
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
+#include <Geom2dAdaptor.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
-#include <Geom2dAdaptor.hxx>
+#include <GeomAPI_Interpolate.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <GeomAdaptor_Surface.hxx>
-#include <GeomFill_BezierCurves.hxx>
 #include <GeomFill_BSplineCurves.hxx>
-#include <GeomAPI_Interpolate.hxx>
+#include <GeomFill_BezierCurves.hxx>
+#include <GeomProjLib.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include <Geom_BezierCurve.hxx>
@@ -74,13 +77,12 @@
 #include <Geom_Plane.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
-#include <GeomProjLib.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
 #include <Interface_Static.hxx>
 #include <Poly_PolygonOnTriangulation.hxx>
-#include <Poly_Triangulation.hxx>
 #include <Poly_Triangle.hxx>
+#include <Poly_Triangulation.hxx>
 #include <ProjLib_ProjectedCurve.hxx>
 #include <STEPControl_Reader.hxx>
 #include <STEPControl_Writer.hxx>
@@ -90,13 +92,13 @@
 #include <ShapeFix_Wireframe.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <Standard_Version.hxx>
+#include <TColStd_Array1OfInteger.hxx>
+#include <TColStd_Array1OfReal.hxx>
+#include <TColStd_Array2OfReal.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
 #include <TColgp_Array2OfPnt.hxx>
 #include <TColgp_HArray1OfPnt.hxx>
-#include <TColStd_Array1OfInteger.hxx>
-#include <TColStd_Array1OfReal.hxx>
-#include <TColStd_Array2OfReal.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfIntegerShape.hxx>
@@ -1914,8 +1916,8 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
           Handle(Geom_Curve) ProjOnPlane = GeomProjLib::ProjectOnPlane
             (new Geom_TrimmedCurve(c, first, last, Standard_True, Standard_False),
              p, p->Position().Direction(), Standard_True);
-          Handle(GeomAdaptor_Surface) HS = new GeomAdaptor_Surface(p);
-          Handle(GeomAdaptor_Curve) HC = new GeomAdaptor_Curve(ProjOnPlane);
+          Handle(Adaptor3d_Surface) HS = new GeomAdaptor_Surface(p);
+          Handle(Adaptor3d_Curve) HC = new GeomAdaptor_Curve(ProjOnPlane);
           ProjLib_ProjectedCurve Proj(HS, HC);
           Handle(Geom2d_Curve) c2d = Geom2dAdaptor::MakeCurve(Proj);
           if(c2d->DynamicType() == STANDARD_TYPE(Geom2d_TrimmedCurve)) {
