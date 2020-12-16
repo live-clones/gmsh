@@ -169,8 +169,16 @@ void physicalContextWindow::show(const std::string &what, bool remove)
 {
   FlGui::instance()->lastContextWindow = 3;
 
+  // update window title
+  int dim = (what == "Volume") ? 3 : (what == "Surface") ? 2 :
+    (what == "Curve") ? 1 : (what == "Point") ? 0 : -1;
+  if(dim < 0) {
+    Msg::Error("Unknown physical context '%s'", what.c_str());
+    return;
+  }
   win->copy_label(std::string("Physical " + what + " Context").c_str());
 
+  // create menu with existing physical names for the given dimension
   static std::vector<Fl_Menu_Item> menu;
   static std::vector<char *> names;
   for(std::size_t i = 0; i < menu.size(); i++) menu[i].text = "";
@@ -179,10 +187,12 @@ void physicalContextWindow::show(const std::string &what, bool remove)
   menu.clear();
   for(GModel::piter it = GModel::current()->firstPhysicalName();
       it != GModel::current()->lastPhysicalName(); it++) {
-    char *str = strdup(it->second.c_str());
-    Fl_Menu_Item item = {str, 0, 0, 0, 0};
-    names.push_back(str);
-    menu.push_back(item);
+    if(it->first.first == dim) {
+      char *str = strdup(it->second.c_str());
+      Fl_Menu_Item item = {str, 0, 0, 0, 0};
+      names.push_back(str);
+      menu.push_back(item);
+    }
   }
   Fl_Menu_Item item = {0};
   menu.push_back(item);
