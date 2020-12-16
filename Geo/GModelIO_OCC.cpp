@@ -57,6 +57,9 @@
 #include <BRep_Tool.hxx>
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
+#include <Geom2d_Curve.hxx>
+#include <Geom2d_TrimmedCurve.hxx>
+#include <Geom2dAdaptor.hxx>
 #include <GeomFill_BezierCurves.hxx>
 #include <GeomFill_BSplineCurves.hxx>
 #include <GeomAPI_Interpolate.hxx>
@@ -76,6 +79,7 @@
 #include <Poly_PolygonOnTriangulation.hxx>
 #include <Poly_Triangulation.hxx>
 #include <Poly_Triangle.hxx>
+#include <ProjLib_ProjectedCurve.hxx>
 #include <STEPControl_Reader.hxx>
 #include <STEPControl_Writer.hxx>
 #include <ShapeBuild_ReShape.hxx>
@@ -1889,11 +1893,13 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
       TopExp_Explorer exp0;
       for(exp0.Init(wires[i], TopAbs_EDGE); exp0.More(); exp0.Next()) {
         TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+        Standard_Real first, last;
+        Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
         if(wire3D) {
           // use the 3D curves in the wire and project them onto the patch
-          Standard_Real first, last;
-          Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
-          Handle(Geom_Curve) cProj = GeomProjLib::Project(c, surf);
+          Handle(Geom_Curve) cProj = GeomProjLib::Project
+            (new Geom_TrimmedCurve(c, first, last, Standard_True, Standard_False),
+             surf);
           TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge(
             cProj, cProj->FirstParameter(), cProj->LastParameter());
           w.Add(edgeProj);
@@ -1902,13 +1908,19 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
           // assume the 3D curves are actually 2D curves in the parametric space
           // of the patch: to retrieve the 2D curves, project the 3D curves on
           // the z=0 plane
-          TopLoc_Location loc;
-          Standard_Real first, last;
           Handle(Geom_Plane) p = new Geom_Plane(0, 0, 1, 0);
-          Handle(Geom2d_Curve) c2d =
-            BRep_Tool::CurveOnPlane(edge, p, loc, first, last);
-          TopoDS_Edge edgeSurf =
-            BRepBuilderAPI_MakeEdge(c2d, surf, first, last);
+          Handle(Geom_Curve) ProjOnPlane = GeomProjLib::ProjectOnPlane
+            (new Geom_TrimmedCurve(c, first, last, Standard_True, Standard_False),
+             p, p->Position().Direction(), Standard_True);
+          Handle(GeomAdaptor_Surface) HS = new GeomAdaptor_Surface(p);
+          Handle(GeomAdaptor_Curve) HC = new GeomAdaptor_Curve(ProjOnPlane);
+          ProjLib_ProjectedCurve Proj(HS, HC);
+          Handle(Geom2d_Curve) c2d = Geom2dAdaptor::MakeCurve(Proj);
+          if(c2d->DynamicType() == STANDARD_TYPE(Geom2d_TrimmedCurve)) {
+            Handle(Geom2d_TrimmedCurve) TC = Handle(Geom2d_TrimmedCurve)::DownCast(c2d);
+            c2d = TC->BasisCurve();
+          }
+          TopoDS_Edge edgeSurf = BRepBuilderAPI_MakeEdge(c2d, surf, first, last);
           w.Add(edgeSurf);
         }
       }
