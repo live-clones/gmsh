@@ -57,9 +57,7 @@
 #include <Bnd_Box.hxx>
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
-#include <Geom2dAdaptor.hxx>
 #include <Geom2d_Curve.hxx>
-#include <Geom2d_TrimmedCurve.hxx>
 #include <GeomAPI_Interpolate.hxx>
 #include <GeomFill_BSplineCurves.hxx>
 #include <GeomFill_BezierCurves.hxx>
@@ -117,11 +115,6 @@
 #include <BRepMesh_IncrementalMesh.hxx>
 #else
 #include <BRepMesh_FastDiscret.hxx>
-#endif
-
-#if OCC_VERSION_HEX < 0x070300
-#include <Adaptor3d_HCurve.hxx>
-#include <Adaptor3d_HSurface.hxx>
 #endif
 
 #if defined(HAVE_OCC_CAF)
