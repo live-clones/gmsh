@@ -7,6 +7,7 @@
 #define DRAW_CONTEXT_FLTK_H
 
 #include "GmshConfig.h"
+#include <algorithm>
 #if !defined(HAVE_NO_STDINT_H)
 #include <stdint.h>
 #elif defined(HAVE_NO_INTPTR_T)
