@@ -1050,7 +1050,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     p.maxRho = CTX::instance()->mesh.hoMaxRho;
     p.maxAngle = CTX::instance()->mesh.hoMaxAngle;
     p.maxAngleInner = CTX::instance()->mesh.hoMaxInnerAngle;
-    HighOrderMeshFastCurving(m, p, true);
+    HighOrderMeshFastCurving(m, p, false);
 #else
     Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
