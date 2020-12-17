@@ -20,14 +20,9 @@
 
 static void physical_add_cb(Fl_Widget *w, void *data)
 {
-  std::string what;
-  if(!data)
-    what = "";
-  else
-    what = (const char *)data;
+  std::string what = data ? (const char *)data : "";
 
   physicalContextWindow *pc = FlGui::instance()->physicalContext;
-
   std::string name = pc->input[0]->value();
   int tag = pc->value[0]->value();
   std::string existingName = "";
@@ -54,15 +49,13 @@ static void physical_add_cb(Fl_Widget *w, void *data)
     pc->value[0]->textcolor(c);
     if(what != "Name" && !strlen(pc->input[0]->value()))
       pc->input[0]->value(existingName.c_str());
-    if(what != "Tag")
-      pc->value[0]->value(existingTag);
+    if(what != "Tag") pc->value[0]->value(existingTag);
     pc->append = true;
   }
   else {
     pc->input[0]->textcolor(FL_FOREGROUND_COLOR);
     pc->value[0]->textcolor(FL_FOREGROUND_COLOR);
-    if(what != "Tag")
-      pc->value[0]->value(NEWPHYSICAL());
+    if(what != "Tag") pc->value[0]->value(NEWPHYSICAL());
     pc->append = false;
   }
 
@@ -94,28 +87,6 @@ static void physical_remove_cb(Fl_Widget *w, void *data)
   }
 }
 
-void physicalContextWindow::updateOnelabWidgets()
-{
-  for(auto &w : onelabWidgets) Fl::delete_widget(w);
-  onelabWidgets.clear();
-  static std::vector<char *> toFree;
-  for(std::size_t i = 0; i < toFree.size(); i++) free(toFree[i]);
-  toFree.clear();
-
-  std::vector<onelab::number> pn;
-  //onelab::server::instance()->get(pn);
-  int h = _height;
-  for(auto &p : pn) {
-    Fl_Widget *w = addParameterWidget
-      (p, WB, h, _width / 2, BH, 1., p.getName(), false,
-       FL_FOREGROUND_COLOR, FL_BACKGROUND_COLOR, toFree);
-    h += BH;
-    onelabWidgets.push_back(w);
-    win->add(w);
-  }
-  win->resize(win->x(), win->y(), win->w(), h);
-}
-
 physicalContextWindow::physicalContextWindow(int deltaFontSize)
   : dim(-1), selectedTag(0), mode("Add"), selectedName(""), append(false)
 {
@@ -133,8 +104,8 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
     tab = new Fl_Tabs(WB, WB, _width - 2 * WB, 4 * BH + 3 * WB);
     // 0: Add
     {
-      group[0] = new Fl_Group(WB, WB + BH, _width - 2 * WB,
-                              3 * BH + 3 * WB, "Add");
+      group[0] =
+        new Fl_Group(WB, WB + BH, _width - 2 * WB, 3 * BH + 3 * WB, "Add");
 
       box[0] = new Fl_Box(2 * WB, 2 * WB + 1 * BH, _width, BH);
       box[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
@@ -146,8 +117,8 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
       input[0]->callback(physical_add_cb, (void *)"Name");
       input[0]->when(FL_WHEN_CHANGED);
 
-      value[0] =
-        new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, (int)(0.6 * _width), BH, "Tag");
+      value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH,
+                                    (int)(0.6 * _width), BH, "Tag");
       value[0]->value(0);
       value[0]->deactivate();
       value[0]->align(FL_ALIGN_RIGHT);
@@ -163,14 +134,14 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
     }
     // 1: Remove
     {
-      group[1] = new Fl_Group(WB, WB + BH, _width - 2 * WB,
-                              3 * BH + 3 * WB, "Remove");
+      group[1] =
+        new Fl_Group(WB, WB + BH, _width - 2 * WB, 3 * BH + 3 * WB, "Remove");
 
       box[1] = new Fl_Box(2 * WB, 2 * WB + 1 * BH, _width, BH);
       box[1]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
-      choice[0] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH,
-                                (int)(0.6 * _width), BH);
+      choice[0] =
+        new Fl_Choice(2 * WB, 2 * WB + 2 * BH, (int)(0.6 * _width), BH);
       choice[0]->align(FL_ALIGN_RIGHT);
       choice[0]->callback(physical_remove_cb);
 
@@ -191,8 +162,10 @@ void physicalContextWindow::show(const std::string &what, bool remove)
   FlGui::instance()->lastContextWindow = 3;
 
   // update window title and labels
-  dim = (what == "Volume") ? 3 : (what == "Surface") ? 2 :
-    (what == "Curve") ? 1 : (what == "Point") ? 0 : -1;
+  dim = (what == "Volume") ? 3 :
+                             (what == "Surface") ?
+                             2 :
+                             (what == "Curve") ? 1 : (what == "Point") ? 0 : -1;
   if(dim < 0) {
     Msg::Error("Unknown physical context '%s'", what.c_str());
     return;
@@ -200,10 +173,11 @@ void physicalContextWindow::show(const std::string &what, bool remove)
   win->copy_label(std::string("Physical " + what + " Context").c_str());
   std::string ent(what + "(s)");
   std::transform(ent.begin(), ent.end(), ent.begin(), ::tolower);
-  box[0]->copy_label
-    (std::string("Create or choose group, and select " + ent + " to add").c_str());
-  box[1]->copy_label
-    (std::string("Choose group and select " + ent + " to remove").c_str());
+  box[0]->copy_label(
+    std::string("Create or choose group, and select " + ent + " to add")
+      .c_str());
+  box[1]->copy_label(
+    std::string("Choose group and select " + ent + " to remove").c_str());
 
   // get all physical group tags and names (this is relatively expensive - so we
   // shouldn't do it in the callback)
@@ -272,4 +246,26 @@ void physicalContextWindow::show(const std::string &what, bool remove)
   updateOnelabWidgets();
 
   if(!win->shown()) win->show();
+}
+
+void physicalContextWindow::updateOnelabWidgets()
+{
+  for(auto &w : onelabWidgets) Fl::delete_widget(w);
+  onelabWidgets.clear();
+  static std::vector<char *> toFree;
+  for(std::size_t i = 0; i < toFree.size(); i++) free(toFree[i]);
+  toFree.clear();
+
+  std::vector<onelab::number> pn;
+  // onelab::server::instance()->get(pn);
+  int h = _height;
+  for(auto &p : pn) {
+    Fl_Widget *w =
+      addParameterWidget(p, WB, h, _width / 2, BH, 1., p.getName(), false,
+                         FL_FOREGROUND_COLOR, FL_BACKGROUND_COLOR, toFree);
+    h += BH;
+    onelabWidgets.push_back(w);
+    win->add(w);
+  }
+  win->resize(win->x(), win->y(), win->w(), h);
 }
