@@ -1510,12 +1510,11 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
                  (dimTags[i].first == 3 && what == "Volume"))
                 tags.push_back(dimTags[i].second);
             }
-            scriptRemovePhysicalGroup(GModel::current()->getFileName(), what, tags,
-                                      FlGui::instance()->physicalContext->input[0]->value(),
-                                      FlGui::instance()->physicalContext->butt[0]->value() ? 0 :
-                                      FlGui::instance()->physicalContext->value[0]->value(),
-                                      FlGui::instance()->physicalContext->append,
-                                      FlGui::instance()->physicalContext->mode);
+            scriptAddRemovePhysicalGroup(GModel::current()->getFileName(), what, tags,
+                                         FlGui::instance()->physicalContext->selectedName,
+                                         FlGui::instance()->physicalContext->selectedTag,
+                                         FlGui::instance()->physicalContext->append,
+                                         FlGui::instance()->physicalContext->mode);
           }
           FlGui::instance()->physicalContext->show(what, action == 7 ? false : true);
           // ask clients to update the tree using the new physical definition
