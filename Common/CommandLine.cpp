@@ -128,6 +128,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "(Mesh.MeshSizeMin)"));
   s.push_back(mp("-clmax value", "Set maximum mesh element size "
                  "(Mesh.MeshSizeMax)"));
+  s.push_back(mp("-clextend value", "Extend mesh element sizes from boundaries "
+                 "(Mesh.MeshSizeExtendFromBoundary)"));
   s.push_back(mp("-clcurv value", "Compute mesh element size from curvature, with "
                  "given minimum number of elements per 2*pi radians "
                  "(Mesh.MeshSizeFromCurvature and "
@@ -1008,6 +1010,15 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
             if(exitOnError) Msg::Exit(1);
           }
         }
+        else {
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
+      else if(argv[i] == "-clextend") {
+        i++;
+        if(i < argv.size())
+          opt_mesh_lc_extend_from_boundary(0, GMSH_SET, atof(argv[i++].c_str()));
         else {
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
