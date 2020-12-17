@@ -76,6 +76,8 @@ Set mesh element size factor (Mesh.MeshSizeFactor)
 Set minimum mesh element size (Mesh.MeshSizeMin)
 @item -clmax value
 Set maximum mesh element size (Mesh.MeshSizeMax)
+@item -clextend value
+Extend mesh element sizes from boundaries (Mesh.MeshSizeExtendFromBoundary)
 @item -clcurv value
 Compute mesh element size from curvature, with given minimum number of elements per 2*pi radians (Mesh.MeshSizeFromCurvature and Mesh.MinimumElementsPerTwoPi)
 @item -aniso_max value
