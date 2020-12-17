@@ -39,7 +39,7 @@ public:
   ~physicalContextWindow() { Fl::delete_widget(win); }
   void show(const std::string &what, bool remove);
   void hide() { win->hide(); }
-  void updateOnelabWidgets();
+  void updateOnelabWidgets(bool deleteWidgets);
 };
 
 #endif

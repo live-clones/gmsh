@@ -18,6 +18,9 @@
 #include "onelab.h"
 #include "onelabGroup.h"
 
+// callbacks for the widgets in the "Add" and "Remove" tabs, which select a
+// physical group based on its name and/or tag
+
 static void physical_add_cb(Fl_Widget *w, void *data)
 {
   std::string what = data ? (const char *)data : "";
@@ -162,25 +165,22 @@ void physicalContextWindow::show(const std::string &what, bool remove)
   FlGui::instance()->lastContextWindow = 3;
 
   // update window title and labels
-  dim = (what == "Volume") ? 3 :
-                             (what == "Surface") ?
-                             2 :
-                             (what == "Curve") ? 1 : (what == "Point") ? 0 : -1;
-  if(dim < 0) {
+  if(what == "Volume") dim = 3;
+  else if(what == "Surface") dim = 2;
+  else if(what == "Curve") dim = 1;
+  else if(what == "Point") dim = 0;
+  else {
     Msg::Error("Unknown physical context '%s'", what.c_str());
     return;
   }
   win->copy_label(std::string("Physical " + what + " Context").c_str());
-  std::string ent(what + "(s)");
-  std::transform(ent.begin(), ent.end(), ent.begin(), ::tolower);
-  box[0]->copy_label(
-    std::string("Create or choose group, and select " + ent + " to add")
-      .c_str());
-  box[1]->copy_label(
-    std::string("Choose group and select " + ent + " to remove").c_str());
+  std::string s(" and select " + what + "(s) to ");
+  std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+  box[0]->copy_label(std::string("Create or choose group," + s + "add").c_str());
+  box[1]->copy_label(std::string("Choose group" + s + "remove").c_str());
 
   // get all physical group tags and names (this is relatively expensive - so we
-  // shouldn't do it in the callback)
+  // shouldn't do it in the callbacks)
   std::map<int, std::vector<GEntity *> > groups;
   GModel::current()->getPhysicalGroups(dim, groups);
   physicalTags.clear();
@@ -191,7 +191,7 @@ void physicalContextWindow::show(const std::string &what, bool remove)
     if(name.size()) physicalNames[name] = p.first;
   }
 
-  // create menu with existing physical names for the given dimension
+  // create menus with existing physicals
   std::vector<Fl_Menu_Item> menuAdd, menuRemove;
   static std::vector<char *> toFree;
   for(std::size_t i = 0; i < toFree.size(); i++) free(toFree[i]);
@@ -221,11 +221,11 @@ void physicalContextWindow::show(const std::string &what, bool remove)
     choice[0]->copy(&menuRemove[0]);
   }
 
+  // activate the relevant tabs and widgets
   for(int i = 0; i < 2; i++) {
     group[i]->hide();
     group[i]->deactivate();
   }
-
   if(remove) {
     mode = "Remove";
     group[1]->show();
@@ -243,29 +243,55 @@ void physicalContextWindow::show(const std::string &what, bool remove)
     physical_add_cb(0, (void *)"Name");
   }
 
-  updateOnelabWidgets();
+  // create the ONELAB widgets (if any)
+  updateOnelabWidgets(true);
 
   if(!win->shown()) win->show();
 }
 
-void physicalContextWindow::updateOnelabWidgets()
+void physicalContextWindow::updateOnelabWidgets(bool deleteWidgets)
 {
-  for(auto &w : onelabWidgets) Fl::delete_widget(w);
-  onelabWidgets.clear();
+  // delete widgets if requested (as this is called every time the main ONELAB
+  // tree is rebuilt)
   static std::vector<char *> toFree;
-  for(std::size_t i = 0; i < toFree.size(); i++) free(toFree[i]);
-  toFree.clear();
+  for(auto &w : onelabWidgets) w->hide();
+  if(deleteWidgets) {
+    for(auto &w : onelabWidgets) Fl::delete_widget(w);
+    onelabWidgets.clear();
+    for(std::size_t i = 0; i < toFree.size(); i++) free(toFree[i]);
+    toFree.clear();
+  }
 
+  // TODO: get all ONELAB parameters matching some "template" name or attribute,
+  // for the given dimension
   std::vector<onelab::number> pn;
-  // onelab::server::instance()->get(pn);
+  onelab::server::instance()->get(pn);
+  std::vector<onelab::string> ps;
+  onelab::server::instance()->get(ps);
+
+  // TODO: check if the parameters exist for the currently selected physical
+  // group: if they do, show the current values; if not, create and add the
+  // parameter in the ONELAB server
+
+  // TODO: we should use a widget container that allows to sort them according
+  // to their name (path)
+
   int h = _height;
   for(auto &p : pn) {
     Fl_Widget *w =
       addParameterWidget(p, WB, h, _width / 2, BH, 1., p.getName(), false,
                          FL_FOREGROUND_COLOR, FL_BACKGROUND_COLOR, toFree);
+    w->copy_label(p.getShortName().c_str());
+    std::string help = p.getHelp();
+    if(help.empty()) help = p.getLabel();
+    if(help.empty()) help = p.getShortName();
+    w->copy_tooltip(help.c_str());
+
     h += BH;
     onelabWidgets.push_back(w);
     win->add(w);
   }
+  if(pn.size()) h += WB;
+
   win->resize(win->x(), win->y(), win->w(), h);
 }

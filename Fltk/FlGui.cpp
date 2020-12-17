@@ -1484,7 +1484,10 @@ void FlGui::saveMessages(const char *fileName)
 
 void FlGui::rebuildTree(bool deleteWidgets)
 {
-  if(onelab) onelab->rebuildTree(deleteWidgets);
+  if(onelab)
+    onelab->rebuildTree(deleteWidgets);
+  if(physicalContext)
+    physicalContext->updateOnelabWidgets(deleteWidgets);
 }
 
 void FlGui::openModule(const std::string &name)
