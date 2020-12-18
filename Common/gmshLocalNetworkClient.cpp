@@ -94,7 +94,7 @@ public:
             }
           }
           // wait at most waitint seconds and respond to FLTK events
-          FlGui::instance()->wait(waitint);
+          FlGui::wait(waitint);
         }
 #endif
         // return to caller (we will be back here soon again)
