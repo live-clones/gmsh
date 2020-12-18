@@ -808,6 +808,8 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
                                 std::vector<SPoint2> &points,
                                 std::vector<PView *> &views)
 {
+  if(!FlGui::available()) return 'q';
+
   // force keyboard focus in GL window
   take_focus();
   _selection = type;
@@ -820,12 +822,14 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
   invertSelection = 0;
 
   while(1) {
+    if(!FlGui::available()) return 'q';
     vertices.clear();
     edges.clear();
     faces.clear();
     regions.clear();
     elements.clear();
-    FlGui::instance()->wait();
+    FlGui::wait();
+    if(!FlGui::available()) return 'q';
     if(changeSelection) {
       Msg::Debug("Changing selection mode to %d", changeSelection);
       _selection = changeSelection;

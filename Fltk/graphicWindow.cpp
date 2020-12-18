@@ -580,6 +580,7 @@ void file_quit_cb(Fl_Widget *w, void *data)
       wins.push_back(win);
     for (std::size_t i = 0; i < wins.size(); i++)
       wins[i]->hide();
+
     // process remaining events
     FlGui::check();
     // ... and destroy the GUI
@@ -711,6 +712,8 @@ static void add_new_point_based_entity(const std::string &what, int pane)
   FlGui::instance()->elementaryContext->show(pane);
 
   while(1) {
+    if(!FlGui::available()) return;
+
     for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
       for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
         FlGui::instance()->graph[i]->gl[j]->addPointMode = 1;
@@ -854,6 +857,8 @@ static void add_new_multiline(const std::string &type)
 
   std::vector<int> p;
   while(1) {
+    if(!FlGui::available()) return;
+
     if(p.empty())
       Msg::StatusGl("Select control points\n"
                     "[Press 'e' to end selection or 'q' to abort]");
@@ -906,6 +911,8 @@ static void add_new_line()
 
   std::vector<int> p;
   while(1) {
+    if(!FlGui::available()) return;
+
     if(p.empty())
       Msg::StatusGl("Select start point\n"
                     "[Press 'q' to abort]");
@@ -954,6 +961,8 @@ static void add_new_circle_arc()
 
   std::vector<int> p;
   while(1) {
+    if(!FlGui::available()) return;
+
     if(p.empty())
       Msg::StatusGl("Select start point\n"
                     "[Press 'q' to abort]");
@@ -1006,6 +1015,8 @@ static void add_new_ellipse_arc()
 
   std::vector<int> p;
   while(1) {
+    if(!FlGui::available()) return;
+
     if(p.empty())
       Msg::StatusGl("Select start point\n"
                     "[Press 'q' to abort]");
@@ -1099,10 +1110,14 @@ static void add_new_surface_volume(int mode)
   drawContext::global()->draw();
 
   while(1) {
+    if(!FlGui::available()) return;
+
     List_Reset(List1);
     List_Reset(List2);
 
     while(1) {
+      if(!FlGui::available()) return;
+
       if(type == ENT_CURVE){
         if(!List_Nbr(List1))
           Msg::StatusGl("Select surface boundary\n"
@@ -1158,6 +1173,8 @@ static void add_new_surface_volume(int mode)
           List_Reset(List1);
           List_Add(List2, &num);
           while(1) {
+            if(!FlGui::available()) return;
+
             if(!List_Nbr(List1))
               Msg::StatusGl("Select hole boundaries (if none, press 'e')\n"
                             "[Press 'e' to end selection or 'q' to abort]");
@@ -1318,6 +1335,8 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
 
   std::vector<std::pair<int, int> > dimTags, dimTagsSaved;
   while(1) {
+    if(!FlGui::available()) return;
+
     std::string str;
     int type;
     if(what == "Point"){
@@ -1657,6 +1676,8 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
   std::vector<std::pair<int, int> > object, tool;
 
   while(1) {
+    if(!FlGui::available()) return;
+
     if(object.empty())
       Msg::StatusGl("Select object\n"
                     "[Press 'e' to end selection or 'q' to abort]");
@@ -1773,6 +1794,8 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
   std::vector<int> regions, edges;
 
   while(1) {
+    if(!FlGui::available()) return;
+
     if(regions.empty())
       Msg::StatusGl("Select volume\n"
                     "[Press 'e' to end selection or 'q' to abort]");
@@ -1857,6 +1880,8 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
                 "[Press 'q' to abort]");
   GEdge* edge_to_split = 0;
   while(1){
+    if(!FlGui::available()) return;
+
     char ib = FlGui::instance()->selectEntity(ENT_CURVE);
     if(ib == 'q')
       break;
@@ -1874,6 +1899,8 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
   while(1){
+    if(!FlGui::available()) return;
+
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(ib == 'q')
       break;
@@ -1981,6 +2008,8 @@ static void mesh_modify_parts(Fl_Widget *w, void *data, const std::string &actio
   std::vector<GEntity*> ent;
 
   while(1) {
+    if(!FlGui::available()) return;
+
     CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
 
@@ -2101,6 +2130,8 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 
   while(1) {
+    if(!FlGui::available()) return;
+
     Msg::StatusGl("Select element\n[Press 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(ib == 'l') {
@@ -2248,6 +2279,8 @@ static void mesh_define_transfinite(int dim)
   std::vector<int> p;
   char ib;
   while(1) {
+    if(!FlGui::available()) return;
+
     switch (dim) {
     case 1:
       if(p.empty())
@@ -2325,6 +2358,8 @@ static void mesh_define_transfinite(int dim)
           p.push_back(FlGui::instance()->selectedRegions[0]->tag());
         }
         while(1) {
+          if(!FlGui::available()) return;
+
           if(p.size() == 1)
             Msg::StatusGl("Select (ordered) boundary points\n"
                           "[Press 'e' to end selection or 'q' to abort]");
@@ -2433,6 +2468,8 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
     return;
   }
   while(1) {
+    if(!FlGui::available()) return;
+
     if(entities.empty())
       Msg::StatusGl("Select %s\n"
                     "[Press 'e' to end selection or 'q' to abort]", str);
@@ -3282,6 +3319,8 @@ static void status_play_cb(Fl_Widget *w, void *data)
   stop_anim = 0;
   anim_time = TimeOfDay();
   while(1) {
+    if(!FlGui::available()) return;
+
     if(stop_anim)
       break;
     if(TimeOfDay() - anim_time > CTX::instance()->post.animDelay) {
