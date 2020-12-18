@@ -72,9 +72,9 @@ static void physical_add_cb(Fl_Widget *w, void *data)
   pc->input[0]->redraw();
   pc->value[0]->redraw();
 
+  pc->selectedName = pc->input[0]->value();
   if(pc->value[0]->value() != pc->selectedTag) {
     pc->selectedTag = pc->value[0]->value();
-    pc->selectedName = pc->input[0]->value();
     if(pc->selectedTag) pc->updateOnelabWidgets(false);
   }
 }
@@ -90,9 +90,9 @@ static void physical_remove_cb(Fl_Widget *w, void *data)
     name = (tmp.size() > 1) ? tmp[1] : "";
   }
 
+  pc->selectedName = name;
   if(tag != pc->selectedTag) {
     pc->selectedTag = tag;
-    pc->selectedName = name;
     if(pc->selectedTag) pc->updateOnelabWidgets(false);
   }
 }
