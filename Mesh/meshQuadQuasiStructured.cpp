@@ -1478,7 +1478,7 @@ namespace QSQ {
       Msg::Error("valence is too high (%i) compared to buffer size %li, memory corrupted, abort", val, BSIZE);
       GeoLog::add(M.vertices[v].p, double(val), "val"+std::to_string(val));
       GeoLog::flush();
-      gmsh::fltk::run();
+      // gmsh::fltk::run();
       abort();
     }
     int count = 0;
@@ -3059,8 +3059,7 @@ namespace QSQ {
       }
     }
 
-
-    constexpr bool allowTemporaryDuet = true;
+    constexpr bool allowTemporaryDuet = false; /* lead to topological bug, need debugging */
 
     /* Set vertices around corner to doNotDegrade */
     for (GVertex* gv: gf->vertices()) if (gv->mesh_vertices.size() > 0) {
@@ -3290,7 +3289,7 @@ namespace QSQ {
         if (status == 0) {
           /* Check if pattern is better (except if duet)*/
           bool duet = (vs == SURFACE && bnd.size() == 4 && quads.size() == 2 && newElements.size() != 2);
-          if (!duet) {
+          if (true || !duet) {
             double energy_before = irregularityEnergyOfCavity(gf, bnd, bndIdealValence, bndAllowedValenceRange, inside, quads);
             double energy_after = irregularityEnergyOfCavity(gf, bnd, bndIdealValence, bndAllowedValenceRange, newVertices, newElements);
             if (energy_after >= energy_before) { /* cancel remeshing */
@@ -4780,10 +4779,10 @@ namespace QSQ {
             }
           }
           if (ns.size() != 4) continue;
-          DBG(gf->tag(),ns);
           sort_unique(ns);
           if (ns.size() != 1 && ns.size() != 2) {
             Msg::Error("- Face %i: imcompatible constraints", gf->tag());
+            DBG(gf->tag(),ns);
             continue;
           }
           gf->meshAttributes.method = MESH_TRANSFINITE;
@@ -5142,9 +5141,9 @@ namespace QSQ {
       std::string key = keys[i];
       double val = stats.at(key);
       if (std::trunc(val) == val) {
-        out << key << ": " << int(val);
+        out << "\"" << key << "\"" << ": " << int(val);
       } else {
-        out << key << ": " << val ;
+        out << "\"" << key << "\"" << ": " << val;
       }
       if ((int)i < (int)keys.size()-1) {
         out << ",\n";
@@ -5611,7 +5610,7 @@ int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFa
   return 0;
 }
 
-int midpointSubdivisionToFullQuad(GModel* gm) {
+int midpointSubdivisionToFullQuad(GModel* gm, bool tryProjection = false) {
   Msg::Info("Midpoint subdivision (quad-tri to full quad) ...");
 
   /* Linear subdivision, no projection */
@@ -5688,6 +5687,7 @@ int midpointSubdivisionToFullQuad(GModel* gm) {
       }
     }
   }
+  unordered_map<MVertex*,unordered_set<MQuadrangle*> > new2quads;
   /* Update quads */
   for (size_t i = 0; i < faces.size(); ++i) {
     for (MQuadrangle* q: faces[i]->quadrangles) {
@@ -5699,6 +5699,7 @@ int midpointSubdivisionToFullQuad(GModel* gm) {
         auto it = old2new.find(v);
         if (it != old2new.end()) {
           q->setVertex(lv,it->second);
+          if (tryProjection) new2quads[it->second].insert(q);
         }
       }
     }
@@ -5783,6 +5784,7 @@ int midpointSubdivisionToFullQuad(GModel* gm) {
         auto it = old2new.find(v);
         if (it != old2new.end()) {
           q->setVertex(lv,it->second);
+          if (tryProjection) new2quads[it->second].insert(q);
         }
       }
     }
@@ -5792,9 +5794,195 @@ int midpointSubdivisionToFullQuad(GModel* gm) {
   }
   old2new.clear();
 
+  if (tryProjection) { /* Try projection on CAD */
+    size_t n_ok = 0;
+    size_t n_fail = 0;
+    for (auto& kv: new2quads) {
+      MVertex* v = kv.first;
+      SPoint3 backup = v->point();
+
+      /* CAD projection */
+      GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
+      GFace* gf = dynamic_cast<GFace*>(v->onWhat());
+      if (ge != NULL) {
+        double t = 0;
+        v->getParameter(0,t);
+        GPoint gp = ge->closestPoint(v->point(),t);
+        if (gp.succeeded()) {
+          v->setXYZ(gp.x(),gp.y(),gp.z());
+          v->setParameter(0,gp.u());
+        } else {
+          n_fail += 1;
+          continue;
+        }
+      } else if (gf != NULL) {
+        double uv[2] = {0.,0.};
+        v->getParameter(0,uv[0]);
+        v->getParameter(1,uv[1]);
+        GPoint gp = gf->closestPoint(v->point(),uv);
+        if (gp.succeeded()) {
+          v->setXYZ(gp.x(),gp.y(),gp.z());
+          v->setParameter(0,gp.u());
+          v->setParameter(1,gp.v());
+        } else {
+          n_fail += 1;
+          continue;
+        }
+      } else {
+        n_fail += 1;
+        continue;
+      }
+
+      /* Check quality of adjacent quads */
+      bool valid = true;
+      for (MQuadrangle* q: kv.second) {
+        double sicn = q->minSICNShapeMeasure();
+        if (sicn < 0.) {
+          valid = false;
+          break;
+        }
+      }
+      if (!valid) {
+        v->setXYZ(backup.x(),backup.y(),backup.z());
+        n_fail += 1;
+        continue;
+      }
+      n_ok += 1;
+    }
+    Msg::Info("- added %li vertices, %li successfully projected on CAD without inverting quads, %li rejected proj.", 
+        old2new.size(), n_ok, n_fail);
+  }
+
 
   return 0;
 }
+
+int generateQuadDominantMesh(GFace* gf, GFaceInfo& info, bool useDiscrete = false) {
+  if(gf == NULL || (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility())) return 0;
+  if (gf->meshStatistics.status == GFace::DONE && gf->quadrangles.size() > 0) {
+    return 0;
+  }
+
+  gf->meshStatistics.status = GFace::PENDING;
+
+  Msg::Debug("- Face %i: quad-dominant meshing ... (chi = %i, corners: %li convex, %li concave, %li highly concave -> #val3 - #val5 = %i)",
+      gf->tag(), info.chi, info.bdrValVertices[1].size(), info.bdrValVertices[3].size(), info.bdrValVertices[4].size(), info.intSumVal3mVal5);
+
+  /* Transfinite meshing */
+  if (gf->meshAttributes.method == MESH_TRANSFINITE) {
+    if(MeshTransfiniteSurface(gf)) {
+      double qmin, qavg;
+      quadQualityStats(gf->quadrangles,qmin,qavg);
+      if (qmin > 0.1) {
+        gf->meshStatistics.status = GFace::DONE;
+        Msg::Info("-- Face %i: meshed with transfinite (%li quads, SICN min: %f)", 
+            gf->tag(), gf->quadrangles.size(), qmin);
+        return 0;
+      } else {
+        Msg::Warning("-- Face %i: transfinite leads to poor quality (%li quads, SICN min: %f), switch to unstructured", 
+            gf->tag(), gf->quadrangles.size(), qmin);
+        gf->deleteMesh();
+        gf->meshStatistics.status = GFace::PENDING;
+      }
+    } else {
+      Msg::Warning("-- Face %i: transfinite failed, switch to unstructured", gf->tag());
+      gf->deleteMesh();
+      gf->meshStatistics.status = GFace::PENDING;
+    }
+  }
+
+  /* Algo PACK, frontal quad-dominant meshing in parameter domain */
+  if (!useDiscrete) {
+    gf->setMeshingAlgo(ALGO_2D_PACK_PRLGRMS);
+    gf->mesh(true);
+    Msg::Debug("-- Face %i: %li quads and %li triangles built with ALGO_2D_PACK_PRLGRMS", 
+        gf->tag(), gf->quadrangles.size(), gf->triangles.size());
+    gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
+    if (gf->meshStatistics.status == GFace::PENDING) {
+      Msg::Debug("-- Face %i: failure with ALGO_2D_PACK_PRLGRMS", 
+          gf->tag(), gf->quadrangles.size(), gf->triangles.size());
+      return -1;
+    }
+    if (gf->meshStatistics.status == GFace::DONE) {
+      /* Check quality */
+      double minSICNq = DBL_MAX;
+      double avgSICNq = 0.;
+      quadQualityStats(gf->quadrangles, minSICNq, avgSICNq);
+      if (gf->quadrangles.size() == 0) minSICNq = -1.;
+
+      /* Check valence */
+      int vMax = 0;
+      {
+        unordered_map<MVertex *, int > valence;
+        for (MQuadrangle* q: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv) {
+          valence[q->getVertex(lv)] += 1;
+        }
+        for (MTriangle* t: gf->triangles) for (size_t lv = 0; lv < 3; ++lv) {
+          valence[t->getVertex(lv)] += 1;
+        }
+        for (auto& kv: valence) vMax = std::max(vMax,kv.second);
+      }
+
+      if (minSICNq > 0 && vMax < 10) {
+        gf->meshStatistics.status = GFace::DONE;
+        Msg::Info("-- Face %i: meshed with algo PACK (%li quads, SICN min: %f, valence max: %i)", 
+            gf->tag(), gf->quadrangles.size(), minSICNq, vMax);
+        return 0;
+      } else {
+        Msg::Warning("-- Face %i: algo PACK produced bad quad mesh (%li quads, SICN min: %f, valence max: %i)", 
+            gf->tag(), gf->quadrangles.size(), minSICNq, vMax);
+        gf->deleteMesh();
+        gf->meshStatistics.status = GFace::PENDING;
+      }
+    }
+  }
+
+  /* HXT frontal mesher on triangulation */
+  if (gf->quadrangles.size() > 0) gf->deleteMesh();
+  if (gf->triangles.size() == 0) {
+    gf->setMeshingAlgo(ALGO_2D_FRONTAL);
+    gf->mesh(false);
+    gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
+    if (gf->meshStatistics.status != GFace::DONE) {
+      Msg::Warning("-- Face %i: failed to build triangulation", gf->tag());
+      return -1;
+    }
+    meshGFaceHxt(gf);
+    if (gf->meshStatistics.status == GFace::DONE) {
+      /* Check quality */
+      double minSICNq = DBL_MAX;
+      double avgSICNq = 0.;
+      quadQualityStats(gf->quadrangles, minSICNq, avgSICNq);
+      if (gf->quadrangles.size() == 0) minSICNq = -1.;
+      if (minSICNq <= 0.) {
+        Msg::Warning("-- Face %i: %li quads and %li triangles built with meshGFaceHxt, quad SICN min: %f", 
+            gf->tag(), gf->quadrangles.size(), gf->triangles.size(), minSICNq);
+        gf->deleteMesh();
+        gf->meshStatistics.status = GFace::PENDING;
+      } else {
+        Msg::Info("-- Face %i: %li quads and %li triangles built with meshGFaceHxt, quad SICN min: %f", 
+            gf->tag(), gf->quadrangles.size(), gf->triangles.size(), minSICNq);
+        return 0;
+      }
+    }
+  }
+
+  /* Last resort: use a triangulation */
+  if (gf->meshStatistics.status == GFace::PENDING) {
+    gf->setMeshingAlgo(ALGO_2D_AUTO);
+    gf->mesh(false);
+    gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
+    if (gf->meshStatistics.status == GFace::DONE) {
+      Msg::Warning("-- Face %i: fall back to triangulation (%li triangles)", gf->tag(), gf->triangles.size());
+    } else {
+      Msg::Warning("-- Face %i: failed to build triangulation", gf->tag());
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
 
 int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo) 
 {
@@ -5825,85 +6013,104 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
   while (nPending > 0) {
     nPending = 0;
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
+    #if defined(_OPENMP)
+    #pragma omp parallel for schedule(dynamic)
+    #endif
     for (size_t i = 0; i < faces.size(); ++i) {
       GFace* gf = faces[i];
-      if (gf == NULL) continue;
-      if (gf->meshStatistics.status == GFace::PENDING) {
-        if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
-        GFaceInfo& info = faceInfo[gf];
-        Msg::Debug("- Face %i: chi = %i, corners: %li convex, %li concave, %li highly concave -> #val3 - #val5 = %i",
-            gf->tag(), info.chi, info.bdrValVertices[1].size(), info.bdrValVertices[3].size(), info.bdrValVertices[4].size(), info.intSumVal3mVal5);
+      int status = generateQuadDominantMesh(gf, faceInfo[gf]);
+      if (status != 0) {
+        Msg::Error("- Face %i: failed to generate quad dominant mesh", gf->tag());
+      }
 
-        /* Apply a unstructured quadrilateral mesher */
-        if (useDiscrete) {
-          /* Unstructured full quad meshing with hxt */
-          meshGFaceHxt(gf);
-          Msg::Debug("-- Face %i: %li quads and %li triangles built with meshGFaceHxt", 
-              gf->tag(), gf->quadrangles.size(), gf->triangles.size());
-        } else {
-          /* Check if transfinite instructions */
-          if (gf->meshAttributes.method == MESH_TRANSFINITE) {
-            if(MeshTransfiniteSurface(gf)) {
-              double qmin, qavg;
-              quadQualityStats(gf->quadrangles,qmin,qavg);
-              if (qmin > 0.1) {
-                gf->meshStatistics.status = GFace::DONE;
-                Msg::Info("- Face %i: meshed with transfinite (SICN min: %f)", gf->tag(), qmin);
-                continue;
-              } else {
-                Msg::Warning("- Face %i: transfinite leads to poor quality (SICN min: %f), switch to unstructured", gf->tag(), qmin);
-                gf->quadrangles.clear();
-              }
-            } else {
-              DBG("transfinite failed", nIter, gf->tag());
-            }
-          }
-
-          /* Frontal CAD */
-          gf->setMeshingAlgo(ALGO_2D_PACK_PRLGRMS);
-          gf->mesh(true);
-          Msg::Debug("-- Face %i: %li quads and %li triangles built with ALGO_2D_PACK_PRLGRMS", 
-              gf->tag(), gf->quadrangles.size(), gf->triangles.size());
-          gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
-          {
-            double minSICNa = DBL_MAX;
-            double avgSICNa = 0.;
-            quadQualityStats(gf->quadrangles, minSICNa, avgSICNa);
-            if (minSICNa <= 0)  {
-              DBG("!!!!!!!!!!!!!!!");
-              DBG("--- after pack", gf->tag(), minSICNa, avgSICNa);
-              DBG("!!!!!!!!!!!!!!!");
-            }
-          }
-        }
-        if (gf->meshStatistics.status == GFace::DONE) {
-          if (!applyMidpointSubdiv && gf->triangles.size() > 0) {
-            Msg::Error("- Face %i: %li triangles (%li quads) in mesh but no subdivision, should not happen", gf->tag(),
-                gf->triangles.size(),gf->quadrangles.size());
-          }
-        }
-
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-        {
+      #if defined(_OPENMP)
+      #pragma omp critical
+      #endif
+      {
+        if (gf->meshStatistics.status == GFace::PENDING) {
           nPending += 1;
         }
       }
     }
-
     if(nIter++ > (size_t) CTX::instance()->mesh.maxRetries) break;
   }
 
+    //  if (gf == NULL) continue;
+    //  if (gf->meshStatistics.status == GFace::PENDING) {
+    //    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    //    GFaceInfo& info = faceInfo[gf];
+    //    Msg::Debug("- Face %i: chi = %i, corners: %li convex, %li concave, %li highly concave -> #val3 - #val5 = %i",
+    //        gf->tag(), info.chi, info.bdrValVertices[1].size(), info.bdrValVertices[3].size(), info.bdrValVertices[4].size(), info.intSumVal3mVal5);
+
+    //    /* Apply a unstructured quadrilateral mesher */
+    //    if (useDiscrete) {
+    //      /* Unstructured full quad meshing with hxt */
+    //      meshGFaceHxt(gf);
+    //      Msg::Debug("-- Face %i: %li quads and %li triangles built with meshGFaceHxt", 
+    //          gf->tag(), gf->quadrangles.size(), gf->triangles.size());
+    //    } else {
+    //      /* Check if transfinite instructions */
+    //      if (gf->meshAttributes.method == MESH_TRANSFINITE) {
+    //        if(MeshTransfiniteSurface(gf)) {
+    //          double qmin, qavg;
+    //          quadQualityStats(gf->quadrangles,qmin,qavg);
+    //          if (qmin > 0.1) {
+    //            gf->meshStatistics.status = GFace::DONE;
+    //            Msg::Info("- Face %i: meshed with transfinite (SICN min: %f)", gf->tag(), qmin);
+    //            continue;
+    //          } else {
+    //            Msg::Warning("- Face %i: transfinite leads to poor quality (SICN min: %f), switch to unstructured", gf->tag(), qmin);
+    //            gf->quadrangles.clear();
+    //          }
+    //        } else {
+    //          DBG("transfinite failed", nIter, gf->tag());
+    //        }
+    //      }
+
+    //      /* Frontal CAD */
+    //      gf->setMeshingAlgo(ALGO_2D_PACK_PRLGRMS);
+    //      gf->mesh(true);
+    //      Msg::Debug("-- Face %i: %li quads and %li triangles built with ALGO_2D_PACK_PRLGRMS", 
+    //          gf->tag(), gf->quadrangles.size(), gf->triangles.size());
+    //      gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
+    //      {
+    //        double minSICNa = DBL_MAX;
+    //        double avgSICNa = 0.;
+    //        quadQualityStats(gf->quadrangles, minSICNa, avgSICNa);
+    //        if (minSICNa <= 0)  {
+    //          Msg::Error("- Face %li: algo PACK produced negative elements (SICN min = %f) in quad-tri mesh", gf->tag(), minSICNa);
+    //        }
+    //      }
+    //    }
+    //    if (gf->meshStatistics.status == GFace::DONE) {
+    //      if (!applyMidpointSubdiv && gf->triangles.size() > 0) {
+    //        Msg::Error("- Face %i: %li triangles (%li quads) in mesh but no subdivision, should not happen", gf->tag(),
+    //            gf->triangles.size(),gf->quadrangles.size());
+    //      }
+    //    }
+
+    //    #if defined(_OPENMP)
+    //    #pragma omp critical
+    //    #endif
+    //    {
+    //      nPending += 1;
+    //    }
+    //  }
+    //}
+
+    //if(nIter++ > (size_t) CTX::instance()->mesh.maxRetries) break;
+  // }
+
   /* set to pending to enable future topological improvement */
+  size_t nquad = 0;
+  size_t ntri = 0;
   for (GFace* gf: faces) {
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if (gf->meshStatistics.status == GFace::DONE && gf->meshAttributes.method != MESH_TRANSFINITE) {
       gf->meshStatistics.status = GFace::PENDING; 
     }
+    nquad += gf->quadrangles.size();
+    ntri += gf->triangles.size();
   }
 
   CTX::instance()->lock = 1;
@@ -5913,7 +6120,9 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
   if (EXPORT_MESHES) gm->writeMSH("qqs_quadtri.msh",2.2,false,true);
 
   if (applyMidpointSubdiv) {
-    int st = midpointSubdivisionToFullQuad(gm);
+    Msg::Info("global stats: %li quadrangles, %li triangles", nquad, ntri);
+    bool projectCAD = (nquad < 50000);
+    int st = midpointSubdivisionToFullQuad(gm, projectCAD);
     if (st != 0) {
       Msg::Error("midpoint subdivision failed");
       return -1;
@@ -5922,15 +6131,11 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
     if (EXPORT_MESHES) showMesh(faces, "qqs_subdiv");
   }
   for (GFace* gf: faces) {
-    {
-      double minSICNa = DBL_MAX;
-      double avgSICNa = 0.;
-      quadQualityStats(gf->quadrangles, minSICNa, avgSICNa);
-      if (minSICNa <= 0)  {
-        DBG("!!!!!!!!!!!!!!!");
-        DBG("--- after subdivision", gf->tag(), minSICNa, avgSICNa);
-        DBG("!!!!!!!!!!!!!!!");
-      }
+    double minSICNa = DBL_MAX;
+    double avgSICNa = 0.;
+    quadQualityStats(gf->quadrangles, minSICNa, avgSICNa);
+    if (minSICNa <= 0)  {
+      Msg::Error("- Face %li: negative quads (SICN min = %f) in unstructured mesh", gf->tag(), minSICNa);
     }
   }
 
@@ -6282,7 +6487,7 @@ int optimizeQuadMeshGeometry(GModel* gm,
   for (size_t ii = 0; ii < faces.size(); ++ii) {
     GFace* gf = faces[ii];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
-    if (gf->triangles.size() > 0) continue;
+    if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
 
     vector<MElement*> elements(gf->quadrangles.size());
     for (size_t i = 0; i < gf->quadrangles.size(); ++i) {
@@ -6359,6 +6564,16 @@ int optimizeQuadMeshGeometry(GModel* gm,
         optimizeQuadMeshWithSubPatches(gf, faceInfo.at(gf).sp, qmin, qavg);
       }
     }
+
+
+    { /* Final check */
+      double minSICNa = DBL_MAX;
+      double avgSICNa = 0.;
+      quadQualityStats(gf->quadrangles, minSICNa, avgSICNa);
+      if (minSICNa <= 0.) {
+        Msg::Error("- Face %li: inverted elements, SICN min = %f, SICN avg = %f", gf->tag(), minSICNa, avgSICNa);
+      }
+    }
   }
 
   return 0;
@@ -6405,6 +6620,7 @@ bool modelMeshIfFullQuad(GModel* gm) {
 
 int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, QuadqsInfo& qqs)
 {
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   if (!modelMeshIfFullQuad(gm)) {
     Msg::Error("Mesh is not full quad, cannot transform into quasi-structured");
@@ -6494,6 +6710,8 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
     Msg::Warning("failed to optimize quad mesh geometry, continue");
   }
 
+  double t2 = Cpu(), w2 = TimeOfDay();
+
   if (EXPORT_MESHES) gm->writeMSH("qqs_final.msh",2.2,false,true);
   Msg::Debug("... quasi-structured quadrilateral meshing done.");
 
@@ -6504,6 +6722,14 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
     for (auto& kv: statsFinal) {
       qqs.stats[kv.first] = kv.second;
     }
+    int nt = 1;
+    #pragma omp parallel
+    {
+      nt = omp_get_num_threads();
+    }
+    qqs.stats["omp_num_threads"] = double(nt);
+    qqs.stats["time_cpu"] = t2-t1;
+    qqs.stats["time_wall"] = w2-w1;
   }
   writeStatistics(qqs.stats, "statistics.json");
 
@@ -6516,6 +6742,8 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   if (CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT) {
     return 1;
   }
+
+  double t1 = Cpu(), w1 = TimeOfDay();
 
   QuadqsInfo qqs;
   CadStatistics(gm, qqs.stats);
@@ -6634,6 +6862,16 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     return s4;
   }
 
+  double t2 = Cpu(), w2 = TimeOfDay();
+  int nt = 1;
+  #pragma omp parallel
+  {
+    nt = omp_get_num_threads();
+  }
+  qqs.stats["unstructured_omp_num_threads"] = double(nt);
+  qqs.stats["unstructured_time_cpu"] = t2-t1;
+  qqs.stats["unstructured_time_wall"] = w2-w1;
+  
   // Msg::Error("early stop");
   // return 0;
 

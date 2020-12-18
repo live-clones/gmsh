@@ -888,6 +888,7 @@ int meshGFaceHxt(GFace *gf) {
   HXTStatus stgp = hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh);
   if (stgp != HXT_STATUS_OK) {
     Msg::Error("hxtGmshPointGenMain: wrong output status");
+    gf->meshStatistics.status = GFace::PENDING;
     HXT_CHECK(hxtMeshDelete(&fmesh));
     HXT_CHECK(hxtMeshDelete(&mesh));
     return -1;
