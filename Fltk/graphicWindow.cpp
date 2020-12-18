@@ -834,6 +834,7 @@ static void add_new_point_based_entity(const std::string &what, int pane)
       drawContext::global()->draw();
     }
     if(ib == 'q'){
+      if(!FlGui::available()) return;
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
           FlGui::instance()->graph[i]->gl[j]->addPointMode = 0;
@@ -895,6 +896,7 @@ static void add_new_multiline(const std::string &type)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -938,6 +940,7 @@ static void add_new_line()
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -991,6 +994,7 @@ static void add_new_circle_arc()
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -1048,6 +1052,7 @@ static void add_new_ellipse_arc()
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -1185,6 +1190,7 @@ static void add_new_surface_volume(int mode)
             ib = FlGui::instance()->selectEntity(type);
             if(ib == 'q') {
               GModel::current()->setSelection(0);
+              if(!FlGui::available()) return;
               drawContext::global()->draw();
               goto stopall;
             }
@@ -1602,6 +1608,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -1614,56 +1621,56 @@ static void geometry_elementary_translate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(0);
   action_point_line_surface_volume(0);
-  FlGui::instance()->transformContext->hide();
+  if(FlGui::available()) FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_rotate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(1);
   action_point_line_surface_volume(1);
-  FlGui::instance()->transformContext->hide();
+  if(FlGui::available()) FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_scale_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(2);
   action_point_line_surface_volume(2);
-  FlGui::instance()->transformContext->hide();
+  if(FlGui::available()) FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_symmetry_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(3);
   action_point_line_surface_volume(3);
-  FlGui::instance()->transformContext->hide();
+  if(FlGui::available()) FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_extrude_translate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(0, true);
   action_point_line_surface_volume(4);
-  FlGui::instance()->transformContext->hide();
+  if(FlGui::available()) FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(1, true);
   action_point_line_surface_volume(5);
-  FlGui::instance()->transformContext->hide();
+  if(FlGui::available()) FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_pipe_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(-1, true);
   action_point_line_surface_volume(12);
-  FlGui::instance()->transformContext->hide();
+  if(FlGui::available()) FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_delete_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(6);
   action_point_line_surface_volume(6);
-  FlGui::instance()->transformContext->hide();
+  if(FlGui::available()) FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
@@ -1774,6 +1781,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       break;
     }
   }
@@ -1862,6 +1870,7 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       break;
     }
   }
@@ -1883,9 +1892,11 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
     if(!FlGui::available()) return;
 
     char ib = FlGui::instance()->selectEntity(ENT_CURVE);
-    if(ib == 'q')
+    if(ib == 'q') {
+      if(!FlGui::available()) return;
       break;
-    if(!FlGui::instance()->selectedEdges.empty()){
+    }
+    if(!FlGui::instance()->selectedEdges.empty()) {
       edge_to_split = FlGui::instance()->selectedEdges[0];
       edge_to_split->setSelection(1);
       break;
@@ -1902,8 +1913,10 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
     if(!FlGui::available()) return;
 
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
-    if(ib == 'q')
+    if(ib == 'q') {
+      if(!FlGui::available()) return;
       break;
+    }
     if(ib == 'e' && edge_to_split){
       scriptSplitCurve(edge_to_split->tag(), List1, GModel::current()->getFileName());
       break;
@@ -1932,7 +1945,7 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
   std::string what((const char*)data);
   FlGui::instance()->physicalContext->show(what, false);
   action_point_line_surface_volume(7, what);
-  FlGui::instance()->physicalContext->hide();
+  if(FlGui::available()) FlGui::instance()->physicalContext->hide();
 }
 
 static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
@@ -1941,7 +1954,7 @@ static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
   std::string what((const char*)data);
   FlGui::instance()->physicalContext->show(what, true);
   action_point_line_surface_volume(11, what);
-  FlGui::instance()->physicalContext->hide();
+  if(FlGui::available()) FlGui::instance()->physicalContext->hide();
 }
 
 void mesh_save_cb(Fl_Widget *w, void *data)
@@ -2103,6 +2116,7 @@ static void mesh_modify_parts(Fl_Widget *w, void *data, const std::string &actio
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       break;
     }
   }
@@ -2154,6 +2168,7 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       break;
     }
   }
@@ -2329,6 +2344,7 @@ static void mesh_define_transfinite(int dim)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -2411,6 +2427,7 @@ static void mesh_define_transfinite(int dim)
           }
           if(ib == 'q') {
             GModel::current()->setSelection(0);
+            if(!FlGui::available()) return;
             drawContext::global()->draw();
             goto stopall;
           }
@@ -2552,6 +2569,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
+      if(!FlGui::available()) return;
       break;
     }
   }
