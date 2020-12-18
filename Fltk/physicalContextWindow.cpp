@@ -72,26 +72,33 @@ static void physical_add_cb(Fl_Widget *w, void *data)
   pc->input[0]->redraw();
   pc->value[0]->redraw();
 
-  pc->selectedTag = pc->value[0]->value();
-  pc->selectedName = pc->input[0]->value();
+  if(pc->value[0]->value() != pc->selectedTag) {
+    pc->selectedTag = pc->value[0]->value();
+    pc->selectedName = pc->input[0]->value();
+    if(pc->selectedTag) pc->updateOnelabWidgets(false);
+  }
 }
 
 static void physical_remove_cb(Fl_Widget *w, void *data)
 {
   physicalContextWindow *pc = FlGui::instance()->physicalContext;
+  int tag = 0;
+  std::string name = "";
   if(pc->choice[0]->text()) {
     std::vector<std::string> tmp = SplitString(pc->choice[0]->text(), ':');
-    pc->selectedTag = (tmp.size() > 0) ? atoi(tmp[0].c_str()) : 0;
-    pc->selectedName = (tmp.size() > 1) ? tmp[1] : "";
+    tag = (tmp.size() > 0) ? atoi(tmp[0].c_str()) : 0;
+    name = (tmp.size() > 1) ? tmp[1] : "";
   }
-  else {
-    pc->selectedTag = 0;
-    pc->selectedName = "";
+
+  if(tag != pc->selectedTag) {
+    pc->selectedTag = tag;
+    pc->selectedName = name;
+    if(pc->selectedTag) pc->updateOnelabWidgets(false);
   }
 }
 
 physicalContextWindow::physicalContextWindow(int deltaFontSize)
-  : dim(-1), selectedTag(0), mode("Add"), selectedName(""), append(false)
+  : selectedTag(0), type(""), mode("Add"), selectedName(""), append(false)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -165,18 +172,25 @@ void physicalContextWindow::show(const std::string &what, bool remove)
   FlGui::instance()->lastContextWindow = 3;
 
   // update window title and labels
-  if(what == "Volume") dim = 3;
-  else if(what == "Surface") dim = 2;
-  else if(what == "Curve") dim = 1;
-  else if(what == "Point") dim = 0;
+  type = what;
+  int dim;
+  if(type == "Volume")
+    dim = 3;
+  else if(type == "Surface")
+    dim = 2;
+  else if(type == "Curve")
+    dim = 1;
+  else if(type == "Point")
+    dim = 0;
   else {
-    Msg::Error("Unknown physical context '%s'", what.c_str());
+    Msg::Error("Unknown physical context '%s'", type.c_str());
     return;
   }
-  win->copy_label(std::string("Physical " + what + " Context").c_str());
-  std::string s(" and select " + what + "(s) to ");
+  win->copy_label(std::string("Physical " + type + " Context").c_str());
+  std::string s(" and select " + type + "(s) to ");
   std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-  box[0]->copy_label(std::string("Create or choose group," + s + "add").c_str());
+  box[0]->copy_label(
+    std::string("Create or choose group," + s + "add").c_str());
   box[1]->copy_label(std::string("Choose group" + s + "remove").c_str());
 
   // get all physical group tags and names (this is relatively expensive - so we
@@ -249,49 +263,87 @@ void physicalContextWindow::show(const std::string &what, bool remove)
   if(!win->shown()) win->show();
 }
 
+template <typename T>
+void physicalContextWindow::_addOnelabWidget(
+  T &p, const std::string &pattern,
+  std::set<Fl_Widget *, widgetPtrLessThan> &widgets)
+{
+  if(p.getName().find(pattern) != std::string::npos) {
+    // does the parameter exist for the selected physical group?
+    std::string name = ReplaceSubString
+      ("Template", std::to_string(selectedTag), p.getName());
+    std::vector<T> pn;
+    onelab::server::instance()->get(pn, name);
+    T n;
+    if(pn.empty()) {
+      n = p;
+      n.setName(name);
+      onelab::server::instance()->set(n);
+    }
+    else
+      n = pn[0];
+    Fl_Widget *w =
+      addParameterWidget(n, WB, 1, _width / 2, BH, 1., n.getName(), false,
+                         FL_FOREGROUND_COLOR, FL_BACKGROUND_COLOR, _toFree);
+    w->copy_label(n.getShortName().c_str());
+    std::string help = n.getHelp();
+    if(help.empty()) help = n.getLabel();
+    if(help.empty()) help = n.getShortName();
+    w->copy_tooltip(help.c_str());
+    widgets.insert(w);
+    _onelabWidgets.push_back(w);
+  }
+}
+
 void physicalContextWindow::updateOnelabWidgets(bool deleteWidgets)
 {
+  if(type.empty()) return;
+
   // delete widgets if requested (as this is called every time the main ONELAB
   // tree is rebuilt)
-  static std::vector<char *> toFree;
-  for(auto &w : onelabWidgets) w->hide();
+  for(auto &w : _onelabWidgets) w->hide();
   if(deleteWidgets) {
-    for(auto &w : onelabWidgets) Fl::delete_widget(w);
-    onelabWidgets.clear();
-    for(std::size_t i = 0; i < toFree.size(); i++) free(toFree[i]);
-    toFree.clear();
+    for(auto &w : _onelabWidgets) Fl::delete_widget(w);
+    _onelabWidgets.clear();
+    for(std::size_t i = 0; i < _toFree.size(); i++) free(_toFree[i]);
+    _toFree.clear();
   }
 
-  // TODO: get all ONELAB parameters matching some "template" name or attribute,
-  // for the given dimension
-  std::vector<onelab::number> pn;
+  // get all ONELAB parameters
+  std::vector<onelab::number> pn, fpn;
   onelab::server::instance()->get(pn);
-  std::vector<onelab::string> ps;
+  std::vector<onelab::string> ps, fps;
   onelab::server::instance()->get(ps);
 
-  // TODO: check if the parameters exist for the currently selected physical
-  // group: if they do, show the current values; if not, create and add the
-  // parameter in the ONELAB server
-
-  // TODO: we should use a widget container that allows to sort them according
-  // to their name (path)
+  // for parameters with names containing "Physical Context/`type` Template/",
+  // check if the corresponding parameter "Physical Context/`type`
+  // `selectedTag`/" exists; if not, create it and add it to the server; then
+  // create the widget
+  std::string pattern = "Physical Context/" + type + " Template/";
+  std::set<Fl_Widget *, widgetPtrLessThan> widgets;
+  for(auto &p : pn) _addOnelabWidget(p, pattern, widgets);
+  for(auto &p : ps) _addOnelabWidget(p, pattern, widgets);
 
   int h = _height;
-  for(auto &p : pn) {
-    Fl_Widget *w =
-      addParameterWidget(p, WB, h, _width / 2, BH, 1., p.getName(), false,
-                         FL_FOREGROUND_COLOR, FL_BACKGROUND_COLOR, toFree);
-    w->copy_label(p.getShortName().c_str());
-    std::string help = p.getHelp();
-    if(help.empty()) help = p.getLabel();
-    if(help.empty()) help = p.getShortName();
-    w->copy_tooltip(help.c_str());
-
+  if(widgets.size()) {
+    Fl_Box *b = new Fl_Box(WB, h, _width, BH);
+    std::string info = "Parameters for Physical " + type + " " +
+      std::to_string(selectedTag);
+    b->copy_label(info.c_str());
+    b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+    _onelabWidgets.push_back(b);
+    win->add(b);
     h += BH;
-    onelabWidgets.push_back(w);
-    win->add(w);
+    for(auto &w : widgets) {
+      w->position(WB, h);
+      h += BH;
+      win->add(w);
+    }
+    h += WB;
   }
-  if(pn.size()) h += WB;
+
+  // we should add a "Check" button if Solver.AutoCheck is not set (as in the
+  // main ONELAB tree)
 
   win->resize(win->x(), win->y(), win->w(), h);
 }

@@ -8,6 +8,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Input_Choice.H>
@@ -15,9 +16,22 @@
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Choice.H>
 
+struct widgetPtrLessThan {
+  bool operator()(const Fl_Widget *w1, const Fl_Widget *w2) const
+  {
+    return strcmp(w1->label(), w2->label()) < 0;
+  }
+};
+
 class physicalContextWindow {
 private:
   int _width, _height;
+  std::vector<char *> _toFree;
+  std::vector<Fl_Widget *> _onelabWidgets;
+  template <class T>
+  void _addOnelabWidget(T &p, const std::string &pattern,
+                        std::set<Fl_Widget *, widgetPtrLessThan> &widgets);
+
 public:
   Fl_Window *win;
   Fl_Tabs *tab;
@@ -27,12 +41,11 @@ public:
   Fl_Check_Button *butt[1];
   Fl_Value_Input *value[1];
   Fl_Choice *choice[1];
-  int dim, selectedTag;
-  std::string mode, selectedName;
+  int selectedTag;
+  std::string type, mode, selectedName;
   bool append;
   std::map<int, std::string> physicalTags;
   std::map<std::string, int> physicalNames;
-  std::vector<Fl_Widget *> onelabWidgets;
 
 public:
   physicalContextWindow(int deltaFontSize = 0);
