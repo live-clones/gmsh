@@ -76,7 +76,7 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  _width = 30 * FL_NORMAL_SIZE;
+  _width = 26 * FL_NORMAL_SIZE;
   _height = 2 * WB + 1 * BH;
 
   win = new paletteWindow(_width, _height,
