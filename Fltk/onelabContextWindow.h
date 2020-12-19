@@ -3,17 +3,14 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef PHYSICAL_CONTEXT_WINDOW_H
-#define PHYSICAL_CONTEXT_WINDOW_H
+#ifndef ONELAB_CONTEXT_WINDOW_H
+#define ONELAB_CONTEXT_WINDOW_H
 
+#include <vector>
 #include <string>
-#include <map>
 #include <set>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
-#include <FL/Fl_Input_Choice.H>
-#include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Choice.H>
 
 struct widgetPtrLessThan {
@@ -23,7 +20,7 @@ struct widgetPtrLessThan {
   }
 };
 
-class physicalContextWindow {
+class onelabContextWindow {
 private:
   int _width, _height;
   std::vector<char *> _toFree;
@@ -31,28 +28,21 @@ private:
   template <class T>
   void _addOnelabWidget(T &p, const std::string &pattern,
                         std::set<Fl_Widget *, widgetPtrLessThan> &widgets);
+  Fl_Choice *_choice;
+  int _dim, _tag;
+  std::string _name;
+  std::vector<std::pair<int, std::string> > _physicals;
 
 public:
   Fl_Window *win;
-  Fl_Tabs *tab;
-  Fl_Group *group[3];
-  Fl_Box *box[3];
-  Fl_Input_Choice *input[1];
-  Fl_Check_Button *butt[1];
-  Fl_Value_Input *value[1];
-  Fl_Choice *choice[1];
-  int selectedTag;
-  std::string type, mode, selectedName;
-  bool append;
-  std::map<int, std::string> physicalTags;
-  std::map<std::string, int> physicalNames;
 
 public:
-  physicalContextWindow(int deltaFontSize = 0);
-  ~physicalContextWindow() { Fl::delete_widget(win); }
-  void show(const std::string &what, bool remove);
+  onelabContextWindow(int deltaFontSize = 0);
+  ~onelabContextWindow() { Fl::delete_widget(win); }
+  void show(int dim, int tag);
   void hide() { win->hide(); }
-  void updateOnelabWidgets(bool deleteWidgets);
+  void rebuild(bool deleteWidgets);
 };
+
 
 #endif

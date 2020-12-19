@@ -25,7 +25,7 @@
 #include "clippingWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
-#include "physicalContextWindow.h"
+#include "onelabContextWindow.h"
 #include "onelabGroup.h"
 #include "helpWindow.h"
 #include "colorbarWindow.h"
@@ -596,6 +596,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   transformContext = new transformContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
   physicalContext = new physicalContextWindow(CTX::instance()->deltaFontSize);
+  onelabContext = new onelabContextWindow(CTX::instance()->deltaFontSize);
   help = new helpWindow();
 
   // draw
@@ -625,6 +626,7 @@ FlGui::~FlGui()
   delete elementaryContext;
   delete transformContext;
   delete physicalContext;
+  delete onelabContext;
   delete meshContext;
   delete help;
   delete fullscreen;
@@ -1108,6 +1110,7 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
   for(std::size_t i = 0; i < graph.size(); i++) graph[i]->checkAnimButtons();
   if(numberOfViewsHasChanged) {
     if(onelab) onelab->rebuildTree(deleteWidgets);
+    if(onelabContext) onelabContext->rebuild(deleteWidgets);
     options->resetBrowser();
     options->resetExternalViewList();
     fields->loadFieldViewList();
@@ -1336,7 +1339,11 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->clipPosition[1] = clipping->win->y();
   CTX::instance()->manipPosition[0] = manip->win->x();
   CTX::instance()->manipPosition[1] = manip->win->y();
-  if(lastContextWindow == 3) {
+  if(lastContextWindow == 4) {
+    CTX::instance()->ctxPosition[0] = onelabContext->win->x();
+    CTX::instance()->ctxPosition[1] = onelabContext->win->y();
+  }
+  else if(lastContextWindow == 3) {
     CTX::instance()->ctxPosition[0] = physicalContext->win->x();
     CTX::instance()->ctxPosition[1] = physicalContext->win->y();
   }
@@ -1455,6 +1462,8 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->transformContext->win->show();
     if(FlGui::instance()->physicalContext->win->shown())
       FlGui::instance()->physicalContext->win->show();
+    if(FlGui::instance()->onelabContext->win->shown())
+      FlGui::instance()->onelabContext->win->show();
     if(FlGui::instance()->meshContext->win->shown())
       FlGui::instance()->meshContext->win->show();
     if(FlGui::instance()->visibility->win->shown())
@@ -1486,8 +1495,8 @@ void FlGui::rebuildTree(bool deleteWidgets)
 {
   if(onelab)
     onelab->rebuildTree(deleteWidgets);
-  if(physicalContext)
-    physicalContext->updateOnelabWidgets(deleteWidgets);
+  if(onelabContext)
+    onelabContext->rebuild(deleteWidgets);
 }
 
 void FlGui::openModule(const std::string &name)

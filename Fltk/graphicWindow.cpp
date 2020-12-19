@@ -30,7 +30,6 @@ typedef unsigned long intptr_t;
 #include "gamepadWindow.h"
 #include "statisticsWindow.h"
 #include "contextWindow.h"
-#include "physicalContextWindow.h"
 #include "visibilityWindow.h"
 #include "highOrderToolsWindow.h"
 #include "clippingWindow.h"

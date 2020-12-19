@@ -35,8 +35,9 @@ class elementaryContextWindow;
 class transformContextWindow;
 class meshContextWindow;
 class physicalContextWindow;
-class helpWindow;
+class onelabContextWindow;
 class onelabGroup;
+class helpWindow;
 class Fl_Widget;
 
 class GVertex;
@@ -78,6 +79,7 @@ public:
   transformContextWindow *transformContext;
   meshContextWindow *meshContext;
   physicalContextWindow *physicalContext;
+  onelabContextWindow *onelabContext;
   int lastContextWindow;
   helpWindow *help;
   onelabGroup *onelab;
