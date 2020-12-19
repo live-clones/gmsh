@@ -140,16 +140,21 @@ StringXString GeneralOptions_String[] = {
 } ;
 
 StringXString GeometryOptions_String[] = {
-  { F|O, "DoubleClickedPointCommand" , opt_geometry_double_clicked_point_command, "" ,
-    "Command parsed when double-clicking on a point" },
-  { F|O, "DoubleClickedCurveCommand" , opt_geometry_double_clicked_curve_command, "" ,
-    "Command parsed when double-clicking on a line" },
-  { F|O|D, "DoubleClickedLineCommand" , opt_geometry_double_clicked_curve_command, "" ,
-    "Command parsed when double-clicking on a line" },
-  { F|O, "DoubleClickedSurfaceCommand" , opt_geometry_double_clicked_surface_command, "" ,
-    "Command parsed when double-clicking on a surface" },
-  { F|O, "DoubleClickedVolumeCommand" , opt_geometry_double_clicked_volume_command, "" ,
-    "Command parsed when double-clicking on a volume" },
+  { F|O, "DoubleClickedPointCommand" , opt_geometry_double_clicked_point_command,
+    "ONELAB" , "Command parsed when double-clicking on a point, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O, "DoubleClickedCurveCommand" , opt_geometry_double_clicked_curve_command,
+    "ONELAB" , "Command parsed when double-clicking on a curve, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O|D, "DoubleClickedLineCommand" , opt_geometry_double_clicked_curve_command,
+    "ONELAB" , "Command parsed when double-clicking on a curve, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O, "DoubleClickedSurfaceCommand" , opt_geometry_double_clicked_surface_command,
+    "ONELAB" , "Command parsed when double-clicking on a surface, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O, "DoubleClickedVolumeCommand" , opt_geometry_double_clicked_volume_command,
+    "ONELAB" , "Command parsed when double-clicking on a volume, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
 
   { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "

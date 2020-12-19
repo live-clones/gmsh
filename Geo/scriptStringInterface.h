@@ -52,11 +52,11 @@ void scriptAddSurface(const std::string &type, List_T *list,
 void scriptAddSurfaceLoop(List_T *list, const std::string &fileName,
                           int *numvol);
 void scriptAddVolume(List_T *list, const std::string &fileName);
-void scriptRemovePhysicalGroup(const std::string &fileName,
-                               const std::string &what,
-                               const std::vector<int> &l,
-                               const std::string &name, int forceTag,
-                               bool append, const std::string &mode);
+void scriptAddRemovePhysicalGroup(const std::string &fileName,
+                                  const std::string &what,
+                                  const std::vector<int> &l,
+                                  const std::string &name, int forceTag,
+                                  bool append, const std::string &mode);
 void scriptSetCompound(const std::string &fileName, const std::string &type,
                        const std::vector<int> &l);
 void scriptAddCircle(const std::string &fileName, const std::string &x,

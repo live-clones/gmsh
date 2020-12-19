@@ -611,11 +611,11 @@ void scriptAddVolume(List_T *list, const std::string &fileName)
   }
 }
 
-void scriptRemovePhysicalGroup(const std::string &fileName,
-                               const std::string &what,
-                               const std::vector<int> &l,
-                               const std::string &name, int forceTag,
-                               bool append, const std::string &mode)
+void scriptAddRemovePhysicalGroup(const std::string &fileName,
+                                  const std::string &what,
+                                  const std::vector<int> &l,
+                                  const std::string &name, int forceTag,
+                                  bool append, const std::string &mode)
 {
   for(auto &lang: CTX::instance()->scriptLang) {
     std::ostringstream sstream;
