@@ -34,8 +34,7 @@ parameters = """
     "name":"ONELAB Context/Curve Template/0Boundary condition",
     "values":[0],
     "choices":[0, 1],
-    "valueLabels":{"Temperature [℃]":0, "Flux [W/m²]":1},
-    "visible": false
+    "valueLabels":{"Temperature [℃]":0, "Flux [W/m²]":1}
   },
   {
     "type":"number",
@@ -43,56 +42,61 @@ parameters = """
     "values":[20],
     "min":0,
     "max":100,
-    "step":0.1,
-    "visible": false
+    "step":0.1
   },
   {
     "type":"number",
     "name":"ONELAB Context/Surface Template/0Material choice",
     "values":[1],
     "choices":[0, 1, 2],
-    "valueLabels":{"User-defined":0, "Steel":1, "Concrete":2},
-    "visible": false
+    "valueLabels":{"User-defined":0, "Steel":1, "Concrete":2}
   },
   {
     "type":"string",
     "name":"ONELAB/Button",
-    "values":["Run", "dump safir file"],
+    "values":["Run", "run"],
     "visible":false
   }
 ]"""
 
 gmsh.onelab.set(parameters)
 
-if '-nopopup' not in sys.argv:
-    gmsh.fltk.initialize()
+def runSolver():
+    print('parameters =', gmsh.onelab.get())
+    print('running the solver with the given parameters...')
 
 def eventLoop():
-    # check if GUI has been closed
-    if gmsh.fltk.isAvailable() == 0:
-        return 0
+    # terminate the event loop if the GUI was closed
+    if gmsh.fltk.isAvailable() == 0: return 0
     # wait for an event
     gmsh.fltk.wait()
+    # check if an action is requested
     action = gmsh.onelab.getString("ONELAB/Action")
     if len(action) < 1:
+        # no action requested
         pass
     elif action[0] == "check":
+        # database was changed: update/define new parameters depending on new
+        # state
         gmsh.onelab.setString("ONELAB/Action", [""])
-        # could update/define new parameters depending on new state
-        print(gmsh.onelab.get())
+        print('parameters = ', gmsh.onelab.get())
         # gmsh.fltk.update()
-    elif action[0] == "dump safir file":
-        # use clicked on "Run"
-        gmsh.onelab.setString("ONELAB/Action", [""])
-        print('dump file and run safir')
     elif action[0] == "reset":
         # user clicked on "Reset database"
         gmsh.onelab.setString("ONELAB/Action", [""])
         gmsh.onelab.set(parameters)
         gmsh.fltk.update()
+    elif action[0] == "run":
+        # user clicked on "Run"
+        gmsh.onelab.setString("ONELAB/Action", [""])
+        runSolver()
     return 1
 
-while eventLoop():
-    pass
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.initialize()
+    while eventLoop():
+        pass
+else:
+    runSolver()
 
 gmsh.finalize()

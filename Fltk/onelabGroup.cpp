@@ -1302,7 +1302,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   for(std::size_t i = 0; i < numbers.size(); i++) {
     if(numbers[i].getAttribute("Closed") == "1")
       closed.insert(numbers[i].getPath());
-    if(!numbers[i].getVisible() &&
+    if((!numbers[i].getVisible() ||
+        numbers[i].getName().find("ONELAB Context/") != std::string::npos) &&
        !CTX::instance()->solver.showInvisibleParameters)
       continue;
     _addParameter(numbers[i]);
@@ -1313,7 +1314,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   for(std::size_t i = 0; i < strings.size(); i++) {
     if(strings[i].getAttribute("Closed") == "1")
       closed.insert(strings[i].getPath());
-    if(!strings[i].getVisible() &&
+    if((!strings[i].getVisible() ||
+        strings[i].getName().find("ONELAB Context/") != std::string::npos) &&
        !CTX::instance()->solver.showInvisibleParameters)
       continue;
     _addParameter(strings[i]);
