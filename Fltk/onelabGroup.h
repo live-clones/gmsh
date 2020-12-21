@@ -75,6 +75,7 @@ public:
   void stop(bool val) { _stop = val; }
 };
 
+bool getParameterColor(const std::string &str, Fl_Color &c);
 Fl_Widget *addParameterWidget(onelab::number &p,
                               int xx, int yy, int ww, int hh,
                               double labelRatio, const std::string &ppath,

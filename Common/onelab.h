@@ -33,6 +33,7 @@
 #include <algorithm>
 #include <sstream>
 #include <mutex>
+#include <regex>
 
 #include "GmshSocket.h"
 
@@ -494,6 +495,12 @@ namespace onelab {
       if(_values.empty()) return 0.;
       return _values[0];
     }
+    std::string getValueAsString() const
+    {
+      std::ostringstream sstream;
+      sstream << getValue();
+      return sstream.str();
+    }
     const std::vector<double> &getValues() const { return _values; }
     int getNumValues() const { return (int)_values.size(); }
     double getMin() const { return _min; }
@@ -721,6 +728,10 @@ namespace onelab {
       static std::string n("");
       if(_values.empty()) return n;
       return _values[0];
+    }
+    std::string getValueAsString() const
+    {
+      return getValue();
     }
     const std::vector<std::string> &getValues() const { return _values; }
     int getNumValues() const { return (int)_values.size(); }
@@ -1014,6 +1025,29 @@ namespace onelab {
     int getNumParameters()
     {
       return (int)(_numbers.size() + _strings.size());
+    }
+    void getParameterNames(std::vector<std::string> &names,
+                           const std::string &search = "") const
+    {
+      names.clear();
+      if(search.empty()) {
+        for(auto &p : _numbers) names.push_back(p->getName());
+        for(auto &p : _strings) names.push_back(p->getName());
+      }
+      else{
+        try{
+          for(auto &p : _numbers) {
+            if(std::regex_search(p->getName(), std::regex(search)))
+              names.push_back(p->getName());
+          }
+          for(auto &p : _strings) {
+            if(std::regex_search(p->getName(), std::regex(search)))
+              names.push_back(p->getName());
+          }
+        }
+        catch(...) {
+        }
+      }
     }
     // check if at least one parameter depends on the given client
     bool hasClient(const std::string &client) const
@@ -1359,6 +1393,11 @@ namespace onelab {
     int getNumParameters()
     {
       return _parameterSpace.getNumParameters();
+    }
+    void getParameterNames(std::vector<std::string> &names,
+                           const std::string &search = "") const
+    {
+      _parameterSpace.getParameterNames(names, search);
     }
     std::vector<std::string> toChar(const std::string &client = "")
     {

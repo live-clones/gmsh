@@ -13,13 +13,6 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Choice.H>
 
-struct widgetPtrLessThan {
-  bool operator()(const Fl_Widget *w1, const Fl_Widget *w2) const
-  {
-    return strcmp(w1->label(), w2->label()) < 0;
-  }
-};
-
 class onelabContextWindow {
 private:
   int _width, _height;
@@ -27,7 +20,7 @@ private:
   std::vector<Fl_Widget *> _onelabWidgets;
   template <class T>
   void _addOnelabWidget(T &p, const std::string &pattern,
-                        std::set<Fl_Widget *, widgetPtrLessThan> &widgets);
+                        std::set<std::pair<std::string, Fl_Widget *>> &widgets);
   Fl_Choice *_choice;
   int _dim, _tag;
   std::string _name;

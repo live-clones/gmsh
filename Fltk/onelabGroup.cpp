@@ -552,7 +552,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   rebuildSolverList();
 }
 
-static bool getFlColor(const std::string &str, Fl_Color &c)
+bool getParameterColor(const std::string &str, Fl_Color &c)
 {
   if(str == "1") {
     c = FL_YELLOW;
@@ -588,7 +588,7 @@ template <class T> void onelabGroup::_addParameter(T &p)
 {
   bool highlight = false;
   Fl_Color c;
-  if(getFlColor(p.getAttribute("Highlight"), c)) highlight = true;
+  if(getParameterColor(p.getAttribute("Highlight"), c)) highlight = true;
   Fl_Tree_Item *n = _tree->add(p.getName().c_str());
   if(!n) {
     Msg::Debug("Could not add item '%s' in tree", p.getName().c_str());
@@ -714,12 +714,14 @@ void onelabGroup::openCloseViewButton(int num)
 
 static bool serverAction(const std::string &action)
 {
-  if(action == "ResetDatabase") { // reset the onelab db
+  if(action == "ResetDatabase") {
+    // reset the onelab db
     onelabUtils::resetDb(false);
     FlGui::instance()->rebuildTree(false);
     return true;
   }
-  else if(action == "Reset") { // reset db + models except current one
+  else if(action == "Reset") {
+    // reset the onelab db + views + models (except the current model)
     onelabUtils::resetDb(false);
     for(int i = PView::list.size() - 1; i >= 0; i--) delete PView::list[i];
     for(int i = GModel::list.size() - 1; i >= 0; i--)
@@ -727,7 +729,8 @@ static bool serverAction(const std::string &action)
     FlGui::instance()->rebuildTree(false);
     return true;
   }
-  else if(!action.compare(0, 5, "Reset")) { // reset some variables
+  else if(!action.compare(0, 5, "Reset")) {
+    // reset some variables
     std::vector<std::string> what =
       onelab::parameter::split(action.substr(5), ',');
     for(std::size_t i = 0; i < what.size(); i++) {
@@ -741,11 +744,61 @@ static bool serverAction(const std::string &action)
   return false;
 }
 
+static bool serverActionMatch(const std::string &action,
+                              const std::string &match)
+{
+  std::vector<std::string> names;
+  onelab::server::instance()->getParameterNames(names, match);
+
+  for(auto &n : names) {
+    Msg::Debug("Performing action '%s' on variable '%s'",
+               action.c_str(), n.c_str());
+    if(action == "Reset") {
+      onelab::server::instance()->clear(n);
+    }
+    else {
+      std::vector<onelab::string> ps;
+      onelab::server::instance()->get(ps, n);
+      if(ps.size()) {
+        if(action == "Hide")
+          ps[0].setVisible(false);
+        else if(action == "Show")
+          ps[0].setVisible(true);
+      }
+      std::vector<onelab::number> pn;
+      onelab::server::instance()->get(pn, n);
+      if(pn.size()) {
+        if(action == "Hide")
+          pn[0].setVisible(false);
+        else if(action == "Show")
+          pn[0].setVisible(true);
+        onelab::server::instance()->set(pn[0]);
+      }
+    }
+  }
+
+  // don't rebuild the tree here: we should leave it to the normal event loop to
+  // perform a "check" if necessary, after all modifications have been performed
+  return !names.empty();
+}
+
 template <class T> static void performServerAction(T &n)
 {
+  // global unconditional actions, triggering a tree rebuild
   std::string opt = n.getAttribute("ServerAction");
-  if(opt.empty()) return;
-  serverAction(opt);
+  if(opt.size()) serverAction(opt);
+
+  // actions using a regexp, not triggering a tree rebuild (it should happen
+  // after all parameters have been changed on the server-side)
+  std::vector<std::string> actions = {"Reset", "Hide", "Show"};
+  for(auto &a : actions) {
+    // global
+    opt = n.getAttribute("ServerAction" + a);
+    if(opt.size()) serverActionMatch(a, opt);
+    // only if for a given value
+    opt = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
+    if(opt.size()) serverActionMatch(a, opt);
+  }
 }
 
 template <class T> static void setGmshOption(T &n)

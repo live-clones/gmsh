@@ -34,11 +34,11 @@ parameters = """
     "name":"ONELAB Context/Curve Template/0Boundary condition",
     "values":[0],
     "choices":[0, 1],
-    "valueLabels":{"Temperature [℃]":0, "Flux [W/m²]":1}
+    "valueLabels":{"Temperature [℃]":0, "Flux [Wm⁻²]":1}
   },
   {
     "type":"number",
-    "name":"ONELAB Context/Curve Template/0Value",
+    "name":"ONELAB Context/Curve Template/1Value",
     "values":[20],
     "min":0,
     "max":100,
@@ -46,10 +46,30 @@ parameters = """
   },
   {
     "type":"number",
-    "name":"ONELAB Context/Surface Template/0Material choice",
+    "name":"ONELAB Context/Surface Template/0Material",
     "values":[1],
     "choices":[0, 1, 2],
-    "valueLabels":{"User-defined":0, "Steel":1, "Concrete":2}
+    "valueLabels":{"User-defined":0, "Steel":1, "Concrete":2},
+    "attributes":{"ServerActionHide":"ONELAB Context/Surface Template/1.*",
+                  "ServerActionShow 0":"ONELAB Context/Surface Template/1.*"}
+  },
+  {
+    "type":"number",
+    "name":"ONELAB Context/Surface Template/10Conductivity [Wm⁻¹K⁻¹]",
+    "values":[205],
+    "min":0.1,
+    "max":500,
+    "step":0.1,
+    "visible":false
+  },
+  {
+    "type":"number",
+    "name":"ONELAB Context/Surface Template/11Diffusivity [mm²s⁻¹]",
+    "values":[97],
+    "min":10,
+    "max":1200,
+    "step":0.1,
+    "visible":false
   },
   {
     "type":"string",
@@ -79,8 +99,8 @@ def eventLoop():
         # database was changed: update/define new parameters depending on new
         # state
         gmsh.onelab.setString("ONELAB/Action", [""])
-        print('parameters = ', gmsh.onelab.get())
-        # gmsh.fltk.update()
+        # print('parameters = ', gmsh.onelab.get())
+        gmsh.fltk.update()
     elif action[0] == "reset":
         # user clicked on "Reset database"
         gmsh.onelab.setString("ONELAB/Action", [""])

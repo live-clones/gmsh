@@ -5,14 +5,10 @@
 
 #include <stdlib.h>
 #include <FL/Fl_Box.H>
-#include <FL/Fl_Tabs.H>
-#include <FL/Fl_Return_Button.H>
 #include "GModel.h"
 #include "Context.h"
 #include "StringUtils.h"
-#include "Geo.h"
 #include "FlGui.h"
-#include "drawContext.h"
 #include "paletteWindow.h"
 #include "onelab.h"
 #include "onelabGroup.h"
@@ -32,37 +28,48 @@ static std::string getDimName(int dim)
 template <typename T>
 void onelabContextWindow::_addOnelabWidget(
   T &p, const std::string &pattern,
-  std::set<Fl_Widget *, widgetPtrLessThan> &widgets)
+  std::set<std::pair<std::string, Fl_Widget *>> &widgets)
 {
-  if(p.getName().find(pattern) != std::string::npos) {
-    // does the parameter exist?
-    std::string in = getDimName(_dim) + " Template";
-    std::string out;
-    if(_choice->value() == 0)  // elementary
-      out = getDimName(_dim) + " " + std::to_string(_tag);
-    else // physical
-      out = "Physical " + getDimName(_dim) + " " +
-        std::to_string(_physicals[_choice->value() - 1].first);
-    std::string name = ReplaceSubString(in, out, p.getName());
-    std::vector<T> pn;
-    onelab::server::instance()->get(pn, name);
-    T n;
-    if(pn.empty()) {
-      n = p;
-      n.setName(name);
-      onelab::server::instance()->set(n);
+  if(p.getName().find(pattern) == std::string::npos)
+    return;
+  // does the parameter exist?
+  std::string in = getDimName(_dim) + " Template";
+  std::string out;
+  if(_choice->value() == 0)  // elementary
+    out = getDimName(_dim) + " " + std::to_string(_tag);
+  else // physical
+    out = "Physical " + getDimName(_dim) + " " +
+      std::to_string(_physicals[_choice->value() - 1].first);
+  std::string name = ReplaceSubString(in, out, p.getName());
+  std::vector<T> pn;
+  onelab::server::instance()->get(pn, name);
+  T n;
+  if(pn.empty()) {
+    n = p;
+    n.setName(name);
+    auto attr = n.getAttributes();
+    for(auto &a : attr) {
+      ReplaceSubStringInPlace(in, out, a.second);
     }
-    else
-      n = pn[0];
+    n.setAttributes(attr);
+    onelab::server::instance()->set(n);
+  }
+  else
+    n = pn[0];
+
+  if(n.getVisible()) {
+    bool highlight = false;
+    Fl_Color c;
+    if(getParameterColor(n.getAttribute("Highlight"), c)) highlight = true;
     Fl_Widget *w =
-      addParameterWidget(n, WB, 1, _width / 2, BH, 1., n.getName(), false,
-                         FL_FOREGROUND_COLOR, FL_BACKGROUND_COLOR, _toFree);
+      addParameterWidget(n, WB, 1, _width / 2, BH, 1., n.getName(), highlight,
+                         c, win->color(), _toFree);
     w->copy_label(n.getShortName().c_str());
     std::string help = n.getHelp();
     if(help.empty()) help = n.getLabel();
     if(help.empty()) help = n.getShortName();
     w->copy_tooltip(help.c_str());
-    widgets.insert(w);
+    widgets.insert(std::make_pair(n.getName(), w));
     _onelabWidgets.push_back(w);
   }
 }
@@ -167,7 +174,7 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   // if the corresponding parameter exists; if not, create it and add it to the
   // server; then create the widget
   std::string pat = "ONELAB Context/" + getDimName(_dim) + " Template/";
-  std::set<Fl_Widget *, widgetPtrLessThan> widgets;
+  std::set<std::pair<std::string, Fl_Widget *>> widgets;
   for(auto &p : pn) _addOnelabWidget(p, pat, widgets);
   for(auto &p : ps) _addOnelabWidget(p, pat, widgets);
 
@@ -181,15 +188,16 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   }
   else {
     for(auto &w : widgets) {
-      w->position(WB, h);
-      win->add(w);
+      w.second->position(WB, h);
+      win->add(w.second);
       h += BH;
     }
   }
   h += WB;
 
+  win->resize(win->x(), win->y(), win->w(), h);
+  win->clear_visible_focus();
+
   // we should add a "Check" button if Solver.AutoCheck is not set (as in the
   // main ONELAB tree)
-
-  win->resize(win->x(), win->y(), win->w(), h);
 }
