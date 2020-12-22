@@ -1984,7 +1984,7 @@ int GModel::convertOldPartitioningToNewOne()
   int ier = ConvertOldPartitioningToNewOne(this);
   return ier;
 #else
-  Msg::Error("Mesh module not compiled");
+  Msg::Error("Mesh or Metis module not compiled");
   return 1;
 #endif
 }
