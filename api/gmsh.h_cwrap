@@ -4718,7 +4718,7 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
-    // Set a status message in the current window. If `graphics` is set, display
+    // Set a status message in the current window. If `graphics' is set, display
     // the message inside the graphic window instead of the status bar.
     inline void setStatusMessage(const std::string & message,
                                  const bool graphics = false)

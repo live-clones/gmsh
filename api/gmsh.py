@@ -6699,7 +6699,7 @@ class fltk:
         """
         gmsh.fltk.setStatusMessage(message, graphics=False)
 
-        Set a status message in the current window. If `graphics` is set, display
+        Set a status message in the current window. If `graphics' is set, display
         the message inside the graphic window instead of the status bar.
         """
         ierr = c_int()

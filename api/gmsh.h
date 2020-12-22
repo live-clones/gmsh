@@ -3156,7 +3156,7 @@ namespace gmsh { // Top-level functions
 
     // gmsh::fltk::setStatusMessage
     //
-    // Set a status message in the current window. If `graphics` is set, display
+    // Set a status message in the current window. If `graphics' is set, display
     // the message inside the graphic window instead of the status bar.
     GMSH_API void setStatusMessage(const std::string & message,
                                    const bool graphics = false);

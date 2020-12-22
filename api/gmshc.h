@@ -2779,7 +2779,7 @@ GMSH_API void gmshFltkSplitCurrentWindow(const char * how,
 GMSH_API void gmshFltkSetCurrentWindow(const int windowIndex,
                                        int * ierr);
 
-/* Set a status message in the current window. If `graphics` is set, display
+/* Set a status message in the current window. If `graphics' is set, display
  * the message inside the graphic window instead of the status bar. */
 GMSH_API void gmshFltkSetStatusMessage(const char * message,
                                        const int graphics,
