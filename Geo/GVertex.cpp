@@ -77,7 +77,12 @@ std::string GVertex::getAdditionalInfoString(bool multline)
 
   double lc = prescribedMeshSizeAtVertex();
   if(lc < MAX_LC) { sstream << "Mesh attributes: size " << lc; }
-  return sstream.str();
+
+  std::string str = sstream.str();
+  if(str.size() && (str[str.size() - 1] == '\n' || str[str.size() - 1] == ' '))
+    str.resize(str.size() - 1);
+
+  return str;
 }
 
 void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)

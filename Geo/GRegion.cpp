@@ -392,6 +392,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
     if(meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)
       sstream << " extruded";
   }
+
   std::string str = sstream.str();
   if(str.size() && (str[str.size() - 1] == '\n' || str[str.size() - 1] == ' '))
     str.resize(str.size() - 1);

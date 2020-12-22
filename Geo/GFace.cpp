@@ -485,6 +485,7 @@ std::string GFace::getAdditionalInfoString(bool multline)
     if(getMeshMaster() && getMeshMaster() != this)
       sstream << " periodic copy of surface " << getMeshMaster()->tag();
   }
+
   std::string str = sstream.str();
   if(str.size() && (str[str.size() - 1] == '\n' || str[str.size() - 1] == ' '))
     str.resize(str.size() - 1);
