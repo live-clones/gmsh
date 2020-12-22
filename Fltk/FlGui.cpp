@@ -1254,14 +1254,13 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
   }
   else {
     openglWindow *gl = getCurrentOpenglWindow();
-    int n = msg.size();
-    int i = 0;
-    while(i < n)
-      if(msg[i++] == '\n') break;
-    gl->screenMessage[0] = msg;
-    if(i) gl->screenMessage[0].resize(i - 1);
-    if(i < n)
-      gl->screenMessage[1] = msg.substr(i);
+    std::vector<std::string> m = SplitString(msg, '\n');
+    if(m.size() > 0)
+      gl->screenMessage[0] = m[0];
+    else
+      gl->screenMessage[0].clear();
+    if(m.size() > 1)
+      gl->screenMessage[1] = m[1];
     else
       gl->screenMessage[1].clear();
     drawContext::global()->draw();
