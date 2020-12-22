@@ -4718,6 +4718,25 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // Set a status message in the current window. If `graphics` is set, display
+    // the message inside the graphic window instead of the status bar.
+    inline void setStatusMessage(const std::string & message,
+                                 const bool graphics = false)
+    {
+      int ierr = 0;
+      gmshFltkSetStatusMessage(message.c_str(), (int)graphics, &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // Show context window for the entity of dimension `dim' and tag `tag'.
+    inline void showContextWindow(const int dim,
+                                  const int tag)
+    {
+      int ierr = 0;
+      gmshFltkShowContextWindow(dim, tag, &ierr);
+      if(ierr) throwLastError();
+    }
+
   } // namespace fltk
 
   namespace onelab { // ONELAB server functions

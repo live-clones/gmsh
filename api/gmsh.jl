@@ -5760,6 +5760,35 @@ function setCurrentWindow(windowIndex = 0)
     return nothing
 end
 
+"""
+    gmsh.fltk.setStatusMessage(message, graphics = false)
+
+Set a status message in the current window. If `graphics` is set, display the
+message inside the graphic window instead of the status bar.
+"""
+function setStatusMessage(message, graphics = false)
+    ierr = Ref{Cint}()
+    ccall((:gmshFltkSetStatusMessage, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Cint, Ptr{Cint}),
+          message, graphics, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.fltk.showContextWindow(dim, tag)
+
+Show context window for the entity of dimension `dim` and tag `tag`.
+"""
+function showContextWindow(dim, tag)
+    ierr = Ref{Cint}()
+    ccall((:gmshFltkShowContextWindow, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}),
+          dim, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
 end # end of module fltk
 
 """

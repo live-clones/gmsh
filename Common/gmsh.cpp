@@ -85,6 +85,7 @@
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
 #include "openglWindow.h"
+#include "onelabContextWindow.h"
 #endif
 
 #if defined(HAVE_ONELAB)
@@ -7284,6 +7285,25 @@ GMSH_API void gmsh::fltk::setCurrentWindow(const int windowIndex)
 #if defined(HAVE_FLTK)
   _createFltk();
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
+#endif
+}
+
+GMSH_API void gmsh::fltk::setStatusMessage(const std::string &message,
+                                           const bool graphics)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->setStatus(message, graphics);
+#endif
+}
+
+GMSH_API void gmsh::fltk::showContextWindow(const int dim, const int tag)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->onelabContext->show(dim, tag);
 #endif
 }
 

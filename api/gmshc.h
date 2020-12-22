@@ -2779,6 +2779,17 @@ GMSH_API void gmshFltkSplitCurrentWindow(const char * how,
 GMSH_API void gmshFltkSetCurrentWindow(const int windowIndex,
                                        int * ierr);
 
+/* Set a status message in the current window. If `graphics` is set, display
+ * the message inside the graphic window instead of the status bar. */
+GMSH_API void gmshFltkSetStatusMessage(const char * message,
+                                       const int graphics,
+                                       int * ierr);
+
+/* Show context window for the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshFltkShowContextWindow(const int dim,
+                                        const int tag,
+                                        int * ierr);
+
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */
 GMSH_API void gmshOnelabSet(const char * data,
                             const char * format,

@@ -3154,6 +3154,19 @@ namespace gmsh { // Top-level functions
     // appended at the end of the list.
     GMSH_API void setCurrentWindow(const int windowIndex = 0);
 
+    // gmsh::fltk::setStatusMessage
+    //
+    // Set a status message in the current window. If `graphics` is set, display
+    // the message inside the graphic window instead of the status bar.
+    GMSH_API void setStatusMessage(const std::string & message,
+                                   const bool graphics = false);
+
+    // gmsh::fltk::showContextWindow
+    //
+    // Show context window for the entity of dimension `dim' and tag `tag'.
+    GMSH_API void showContextWindow(const int dim,
+                                    const int tag);
+
   } // namespace fltk
 
   namespace onelab { // ONELAB server functions

@@ -27,6 +27,7 @@ typedef unsigned long intptr_t;
 #include "contextWindow.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
+#include "onelabContextWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -353,6 +354,8 @@ public:
     // this is superfluous in elementary mode, but we don't care
     for(int i = 0; i < getNumEntities(); i++) setVisibility(i, 0);
   }
+  // get the dim of the nth entity in the list
+  int getDim(int n) { return _entities[n]->getDim(); }
   // get the tag of the nth entity in the list
   int getTag(int n) { return _entities[n]->getTag(); }
   // get the browser line for the nth entity in the list
@@ -1180,6 +1183,27 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void browser_cb(Fl_Widget *w, void *data)
+{
+  if(Fl::event_clicks()) {
+    int n = FlGui::instance()->visibility->browser->value() - 1;
+    if(n >= 0 && n < VisibilityList::instance()->getNumEntities()) {
+      int dim = VisibilityList::instance()->getDim(n);
+      int tag = VisibilityList::instance()->getTag(n);
+      if(FlGui::instance()->visibility->browser_type->value() == 1) {
+        FlGui::instance()->onelabContext->show(dim, tag);
+      }
+      else if(FlGui::instance()->visibility->browser_type->value() == 2) {
+        std::map<int, std::vector<GEntity *> > groups;
+        GModel::current()->getPhysicalGroups(dim, groups);
+        auto it = groups.find(tag);
+        if(it != groups.end() && it->second.size())
+          FlGui::instance()->onelabContext->show(dim, it->second[0]->tag());
+      }
+    }
+  }
+}
+
 visibilityWindow::visibilityWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -1257,6 +1281,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       browser->type(FL_MULTI_BROWSER);
       browser->textsize(FL_NORMAL_SIZE - 1);
       browser->column_widths(cols);
+      browser->callback(browser_cb);
 
       gg->end();
       Fl_Group::current()->resizable(gg);

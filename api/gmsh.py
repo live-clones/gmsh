@@ -6694,6 +6694,37 @@ class fltk:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
 
+    @staticmethod
+    def setStatusMessage(message, graphics=False):
+        """
+        gmsh.fltk.setStatusMessage(message, graphics=False)
+
+        Set a status message in the current window. If `graphics` is set, display
+        the message inside the graphic window instead of the status bar.
+        """
+        ierr = c_int()
+        lib.gmshFltkSetStatusMessage(
+            c_char_p(message.encode()),
+            c_int(bool(graphics)),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
+    @staticmethod
+    def showContextWindow(dim, tag):
+        """
+        gmsh.fltk.showContextWindow(dim, tag)
+
+        Show context window for the entity of dimension `dim' and tag `tag'.
+        """
+        ierr = c_int()
+        lib.gmshFltkShowContextWindow(
+            c_int(dim),
+            c_int(tag),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
 
 class onelab:
     """

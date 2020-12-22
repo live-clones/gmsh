@@ -945,6 +945,12 @@ fltk.add('splitCurrentWindow', doc, None, istring('how', '"v"'), idouble('ratio'
 doc = '''Set the current window by speficying its index (starting at 0) in the list of all windows. When new windows are created by splits, new windows are appended at the end of the list.'''
 fltk.add('setCurrentWindow', doc, None, iint('windowIndex', '0'))
 
+doc = '''Set a status message in the current window. If `graphics` is set, display the message inside the graphic window instead of the status bar.'''
+fltk.add('setStatusMessage', doc, None, istring('message'), ibool('graphics', 'false', 'False'))
+
+doc = '''Show context window for the entity of dimension `dim' and tag `tag'.'''
+fltk.add('showContextWindow', doc, None, iint('dim'), iint('tag'))
+
 ################################################################################
 
 onelab = gmsh.add_module('onelab', 'ONELAB server functions')

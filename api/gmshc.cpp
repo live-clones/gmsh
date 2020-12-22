@@ -3924,6 +3924,28 @@ GMSH_API void gmshFltkSetCurrentWindow(const int windowIndex, int * ierr)
   }
 }
 
+GMSH_API void gmshFltkSetStatusMessage(const char * message, const int graphics, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::setStatusMessage(message, graphics);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshFltkShowContextWindow(const int dim, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::showContextWindow(dim, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshOnelabSet(const char * data, const char * format, int * ierr)
 {
   if(ierr) *ierr = 0;

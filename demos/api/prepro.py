@@ -76,6 +76,38 @@ parameters = """
     "name":"ONELAB/Button",
     "values":["Run", "run"],
     "visible":false
+  },
+  {
+    "type":"number",
+    "name":"My solver/1Some flag",
+    "values":[0],
+    "choices":[0, 1]
+  },
+  {
+    "type":"number",
+    "name":"My solver/2Some parameter",
+    "values":[1.234],
+    "min":0,
+    "max":10,
+    "step":0.1
+  },
+  {
+    "type":"number",
+    "name":"My solver/3Some choice",
+    "values":[0],
+    "choices":[0, 1],
+    "valueLabels":{"Choice 1": 0, "Choice 2": 1}
+  },
+  {
+    "type":"string",
+    "name":"My solver/3Some input",
+    "values":[""]
+  },
+  {
+    "type":"string",
+    "name":"My solver/5Some action",
+    "values":["select entity"],
+    "attributes":{"Macro":"Action"}
   }
 ]"""
 
@@ -110,6 +142,15 @@ def eventLoop():
         # user clicked on "Run"
         gmsh.onelab.setString("ONELAB/Action", [""])
         runSolver()
+    elif action[0] == "select entity":
+        # user clicked on "My solver/Select an entity"
+        gmsh.onelab.setString("ONELAB/Action", [""])
+        gmsh.fltk.setStatusMessage("Please select an entity (or press 'q' to quit)",
+                                   True)
+        r, ent = gmsh.fltk.selectEntities()
+        if r and len(ent):
+            gmsh.fltk.showContextWindow(ent[0][0], ent[0][1])
+        gmsh.fltk.setStatusMessage('', True)
     return 1
 
 if '-nopopup' not in sys.argv:
