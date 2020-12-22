@@ -529,7 +529,7 @@ void Msg::Error(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_firstError.empty()) _firstError = str;
   _lastError = str;
@@ -586,7 +586,7 @@ void Msg::Warning(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Warning: %s\n", str);
   if(_callback) (*_callback)("Warning", str);
@@ -625,7 +625,7 @@ void Msg::Info(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_infoCpu || _infoMem){
     std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
@@ -670,7 +670,7 @@ void Msg::Direct(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Direct: %s\n", str);
   if(_callback) (*_callback)("Direct", str);
@@ -722,7 +722,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_infoCpu || _infoMem){
     std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
@@ -763,7 +763,7 @@ void Msg::StatusGl(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(FlGui::available())
     FlGui::instance()->setStatus(str, true);
@@ -788,7 +788,7 @@ void Msg::Debug(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Debug: %s\n", str);
   if(_callback) (*_callback)("Debug", str);
@@ -839,7 +839,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
-    int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+    int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
     sprintf(str2, "Info    : [%3d%%] %s", _progressMeterCurrent, str);
 
