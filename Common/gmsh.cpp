@@ -7220,7 +7220,7 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
       std::pair<int, int>(2, FlGui::instance()->selectedFaces[i]->tag()));
   for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
     dimTags.push_back(
-      std::pair<int, int>(1, FlGui::instance()->selectedRegions[i]->tag()));
+      std::pair<int, int>(3, FlGui::instance()->selectedRegions[i]->tag()));
   return selectionCode(ret);
 #else
   return 0;
