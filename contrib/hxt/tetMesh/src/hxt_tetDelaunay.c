@@ -714,6 +714,9 @@ static HXTStatus isStarShaped(TetLocal* local, HXTMesh* mesh, const uint32_t vta
         return HXT_STATUS_INTERNAL;
       }
     }
+    else {
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "ghost vertex in constrained cavity");
+    }
   }
   return HXT_STATUS_OK;
 }
@@ -738,7 +741,7 @@ static HXTStatus undeleteTetrahedron(TetLocal* local, HXTMesh* mesh, uint64_t te
   int nbndFace = 0;
 
   // we should update the boundary (that's the difficult part...)
-  // first remove all the boundary faces that come from the tetrahedron we just remove to the cavity
+  // first remove all the boundary faces that come from the tetrahedron we just removed from the cavity
   for (uint64_t i=local->ball.num; nbndFace<4 && i>0; i--) {
     if(mesh->tetrahedra.neigh[local->ball.array[i-1].neigh]/4==tetToUndelete) {
       bndFaces[nbndFace++] = local->ball.array[i-1].neigh;
@@ -797,10 +800,23 @@ static HXTStatus undeleteTetrahedron(TetLocal* local, HXTMesh* mesh, uint64_t te
 static HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t vta) {
   // we will remove the tetrahedra adjacent to the face that does not see the point, progressively, until the cavity is star shaped...
   uint64_t blindFace = 0;
+
+  uint64_t count = 0;
+
+  // TODO: optimize this part of the algorithm.
+  // 1: only the faces that were not yet tested for star-shapedness need to be tested
+  // 2: only mark the tet as not deleted, and push it on a stack.
+  //  => finding the tet. in local->deleted.array should be done with an optimized algo
+  // 3: the face and flags should not be pushed directly if it is going to be removed... recursive strategy ??
+  // 4 ??: maybe use the SPR in some cases
   while(isStarShaped(local, mesh, vta, &blindFace)==HXT_STATUS_INTERNAL)
   {
     HXT_CHECK( undeleteTetrahedron(local, mesh, mesh->tetrahedra.neigh[local->ball.array[blindFace].neigh]/4) );
+    count++;
   }
+
+  if(count)
+    printf("nbr of tet to undelete = %lu, nbr of deleted tet = %lu\n", count, local->deleted.num);
   return HXT_STATUS_OK;
 }
 
@@ -1742,6 +1758,8 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
           ******************************************************/
           for (uint32_t i=0; i<localN; i++)
           {
+            if( i%1000==0)
+              printf("%f %%\n", 100.0*i/localN);
             uint32_t passIndex = (localStart+i)%passLength;
             uint32_t vta = nodeInfo[passStart + passIndex].node;
             if(nodeInfo[passStart + passIndex].status==HXT_STATUS_TRYAGAIN){
