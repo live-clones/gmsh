@@ -154,9 +154,15 @@ void onelabContextWindow::show(int dim, int tag)
 
 void onelabContextWindow::rebuild(bool deleteWidgets)
 {
+  // hide old widgets and record if one had the focus
+  std::string focus;
+  for(auto &w : _onelabWidgets) {
+    if(w == Fl::focus()) focus = w->label();
+    w->hide();
+  }
+
   // delete widgets if requested (as this is called every time the main ONELAB
   // tree is rebuilt)
-  for(auto &w : _onelabWidgets) w->hide();
   if(deleteWidgets) {
     for(auto &w : _onelabWidgets) Fl::delete_widget(w);
     _onelabWidgets.clear();
@@ -177,9 +183,7 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   std::set<std::pair<std::string, Fl_Widget *>> widgets;
   for(auto &p : pn) _addOnelabWidget(p, pat, widgets);
   for(auto &p : ps) _addOnelabWidget(p, pat, widgets);
-
   int h = _height;
-
   if(widgets.empty()) {
     Fl_Box *b = new Fl_Box(WB, h, _width - 2 * WB, BH, "No parameters");
     _onelabWidgets.push_back(b);
@@ -195,8 +199,13 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   }
   h += WB;
 
+  // resize the window and restore the focus
   win->resize(win->x(), win->y(), win->w(), h);
-  win->clear_visible_focus();
+  for(auto w: _onelabWidgets) {
+    if(focus == std::string(w->label())) {
+      w->take_focus();
+    }
+  }
 
   // we should add a "Check" button if Solver.AutoCheck is not set (as in the
   // main ONELAB tree)
