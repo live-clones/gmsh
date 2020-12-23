@@ -1207,6 +1207,7 @@ static void browser_cb(Fl_Widget *w, void *data)
 static void tree_cb(Fl_Widget *w, void *data)
 {
   Fl_Tree *tree = (Fl_Tree *)w;
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION < 5))
   if(tree->callback_reason() == FL_TREE_REASON_RESELECTED) {
     // double click
     Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
@@ -1223,6 +1224,7 @@ static void tree_cb(Fl_Widget *w, void *data)
     if(ge)
       FlGui::instance()->onelabContext->show(ge->dim(), ge->tag());
   }
+#endif
 }
 
 visibilityWindow::visibilityWindow(int deltaFontSize)
@@ -1350,7 +1352,9 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     tree->labelsize(FL_NORMAL_SIZE - 1);
     tree->selectmode(FL_TREE_SELECT_MULTI);
     tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
+#if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION < 5))
     tree->item_reselect_mode(FL_TREE_SELECTABLE_ALWAYS); // for double-clicks
+#endif
     tree->callback(tree_cb);
     tree->hide();
 
