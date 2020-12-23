@@ -391,7 +391,8 @@ int openglWindow::handle(int event)
       std::vector<MElement *> elements;
       std::vector<SPoint2> points;
       std::vector<PView *> views;
-      _select(ENT_ALL, false, false, true, Fl::event_x(), Fl::event_y(), 5, 5,
+      _select(ENT_ALL, false, CTX::instance()->mouseHoverMeshes,
+              true, Fl::event_x(), Fl::event_y(), 5, 5,
               vertices, edges, faces, regions, elements, points, views);
       if(vertices.size() &&
          CTX::instance()->geom.doubleClickedPointCommand.size()) {
