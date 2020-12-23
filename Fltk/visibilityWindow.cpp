@@ -1208,7 +1208,7 @@ static void tree_cb(Fl_Widget *w, void *data)
 {
   Fl_Tree *tree = (Fl_Tree *)w;
 #if !((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION < 5))
-  if(tree->callback_reason() == FL_TREE_REASON_RESELECTED) {
+  if(tree->callback_reason() == FL_TREE_REASON_RESELECTED && Fl::event_clicks()) {
     // double click
     Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
     GEntity *ge = 0;
