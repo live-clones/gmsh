@@ -61,6 +61,11 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
   default: break;
   }
 
+  {
+    std::string name = model()->getElementaryName(dim(), tag());
+    if(name.size()) sstream << ": " << name;
+  }
+
   if(additional) {
     std::string info = getAdditionalInfoString(multiline);
     if(info.size()) {
@@ -69,17 +74,6 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
       else
         sstream << " ";
       sstream << info;
-    }
-  }
-
-  {
-    std::string name = model()->getElementaryName(dim(), tag());
-    if(name.size()) {
-      if(multiline)
-        sstream << "\n";
-      else
-        sstream << ", ";
-      sstream << name;
     }
   }
 
@@ -98,13 +92,7 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
       }
       sstream << " " << physicals[i];
       std::string name = model()->getPhysicalName(dim(), physicals[i]);
-      if(name.size()) {
-        if(multiline)
-          sstream << "\n";
-        else
-          sstream << ", ";
-        sstream << name;
-      }
+      if(name.size()) sstream << ": " << name;
     }
   }
 
