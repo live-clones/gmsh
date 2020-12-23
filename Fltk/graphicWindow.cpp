@@ -38,6 +38,7 @@ typedef unsigned long intptr_t;
 #include "pluginWindow.h"
 #include "helpWindow.h"
 #include "openglWindow.h"
+#include "onelabContextWindow.h"
 #include "onelabGroup.h"
 #include "messageBrowser.h"
 #include "gmshLocalNetworkClient.h"
@@ -722,6 +723,7 @@ static void add_new_point_based_entity(const std::string &what, int pane)
                   "[Press 'Shift' to hold position, 'e' to add %s or 'q' to abort]",
                   name.c_str());
     char ib = FlGui::instance()->selectEntity(ENT_NONE);
+    if(!FlGui::available()) return;
     if(ib == 'e'){
       switch(pane){
       case 1:
@@ -833,7 +835,6 @@ static void add_new_point_based_entity(const std::string &what, int pane)
       drawContext::global()->draw();
     }
     if(ib == 'q'){
-      if(!FlGui::available()) return;
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
           FlGui::instance()->graph[i]->gl[j]->addPointMode = 0;
@@ -867,6 +868,7 @@ static void add_new_multiline(const std::string &type)
                     "[Press 'e' to end selection, 'u' to undo last selection "
                     "or 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
+    if(!FlGui::available()) return;
     if(ib == 'l') {
       for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
         FlGui::instance()->selectedVertices[i]->setSelection(1);
@@ -895,7 +897,6 @@ static void add_new_multiline(const std::string &type)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -921,6 +922,7 @@ static void add_new_line()
       Msg::StatusGl("Select end point\n"
                     "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
+    if(!FlGui::available()) return;
     if(ib == 'l') {
       FlGui::instance()->selectedVertices[0]->setSelection(1);
       drawContext::global()->draw();
@@ -939,7 +941,6 @@ static void add_new_line()
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -975,6 +976,7 @@ static void add_new_circle_arc()
       Msg::StatusGl("Select end point\n"
                     "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
+    if(!FlGui::available()) return;
     if(ib == 'l') {
       FlGui::instance()->selectedVertices[0]->setSelection(1);
       drawContext::global()->draw();
@@ -993,7 +995,6 @@ static void add_new_circle_arc()
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -1033,6 +1034,7 @@ static void add_new_ellipse_arc()
       Msg::StatusGl("Select end point\n"
                     "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
+    if(!FlGui::available()) return;
     if(ib == 'l') {
       FlGui::instance()->selectedVertices[0]->setSelection(1);
       drawContext::global()->draw();
@@ -1051,7 +1053,6 @@ static void add_new_ellipse_arc()
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -1140,6 +1141,7 @@ static void add_new_surface_volume(int mode)
       }
 
       char ib = FlGui::instance()->selectEntity(type);
+      if(!FlGui::available()) return;
       if(ib == 'q') {
         GModel::current()->setSelection(0);
         drawContext::global()->draw();
@@ -1187,9 +1189,9 @@ static void add_new_surface_volume(int mode)
                             "[Press 'e' to end selection, 'u' to undo last selection "
                             "or 'q' to abort]");
             ib = FlGui::instance()->selectEntity(type);
+            if(!FlGui::available()) return;
             if(ib == 'q') {
               GModel::current()->setSelection(0);
-              if(!FlGui::available()) return;
               drawContext::global()->draw();
               goto stopall;
             }
@@ -1379,6 +1381,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
                     "or 'q' to abort]", str.c_str());
 
     char ib = FlGui::instance()->selectEntity(type);
+    if(!FlGui::available()) return;
     if(ib == 'l') {
       for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
         FlGui::instance()->selectedVertices[i]->setSelection(1);
@@ -1527,22 +1530,44 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
         case 11:
           {
             std::vector<int> tags;
+            int dim = 0;
             for(std::size_t i = 0; i < dimTags.size(); i++){
               if((dimTags[i].first == 0 && what == "Point") ||
                  (dimTags[i].first == 1 && what == "Curve") ||
                  (dimTags[i].first == 2 && what == "Surface") ||
-                 (dimTags[i].first == 3 && what == "Volume"))
+                 (dimTags[i].first == 3 && what == "Volume")) {
+                dim = dimTags[i].first;
                 tags.push_back(dimTags[i].second);
+              }
             }
             scriptAddRemovePhysicalGroup(GModel::current()->getFileName(), what, tags,
                                          FlGui::instance()->physicalContext->selectedName,
                                          FlGui::instance()->physicalContext->selectedTag,
                                          FlGui::instance()->physicalContext->append,
                                          FlGui::instance()->physicalContext->mode);
+            if(!FlGui::available()) return;
+
+            // ask clients to update using the new physical definition
+            onelab_cb(0, (void*)"check");
+
+            // if onelab context parameters are defined for the physical group,
+            // show the parameter definition window and abort the physical group
+            // creation loop (otherwise events cannot be processed by outside
+            // code through the api, as we are stuck in the physical creation
+            // mode's while(1))
+            std::vector<std::string> param;
+            onelab::server::instance()->getParameterNames
+              (param, "ONELAB Context/" + what + " Template");
+            if(tags.size() && param.size() && action == 7) {
+              FlGui::instance()->getCurrentOpenglWindow()->quitSelection = 1;
+              FlGui::instance()->getCurrentOpenglWindow()->selectionMode = false;
+              FlGui::instance()->onelabContext->show(dim, tags[0]);
+              ib = 'q';
+            }
+            else {
+              FlGui::instance()->physicalContext->show(what, action == 7 ? false : true);
+            }
           }
-          FlGui::instance()->physicalContext->show(what, action == 7 ? false : true);
-          // ask clients to update the tree using the new physical definition
-          onelab_cb(0, (void*)"check");
           break;
         case 8:
           {
@@ -1553,7 +1578,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
             }
             if(tags.size())
               scriptSetMeshSize(GModel::current()->getFileName(), tags,
-                                            FlGui::instance()->meshContext->input[0]->value());
+                                FlGui::instance()->meshContext->input[0]->value());
           }
           break;
         case 9:
@@ -1607,7 +1632,6 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -1620,56 +1644,64 @@ static void geometry_elementary_translate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(0);
   action_point_line_surface_volume(0);
-  if(FlGui::available()) FlGui::instance()->transformContext->hide();
+  if(!FlGui::available()) return;
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_rotate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(1);
   action_point_line_surface_volume(1);
-  if(FlGui::available()) FlGui::instance()->transformContext->hide();
+  if(!FlGui::available()) return;
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_scale_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(2);
   action_point_line_surface_volume(2);
-  if(FlGui::available()) FlGui::instance()->transformContext->hide();
+  if(!FlGui::available()) return;
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_symmetry_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(3);
   action_point_line_surface_volume(3);
-  if(FlGui::available()) FlGui::instance()->transformContext->hide();
+  if(!FlGui::available()) return;
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_extrude_translate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(0, true);
   action_point_line_surface_volume(4);
-  if(FlGui::available()) FlGui::instance()->transformContext->hide();
+  if(!FlGui::available()) return;
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(1, true);
   action_point_line_surface_volume(5);
-  if(FlGui::available()) FlGui::instance()->transformContext->hide();
+  if(!FlGui::available()) return;
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_pipe_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(-1, true);
   action_point_line_surface_volume(12);
-  if(FlGui::available()) FlGui::instance()->transformContext->hide();
+  if(!FlGui::available()) return;
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_delete_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(6);
   action_point_line_surface_volume(6);
-  if(FlGui::available()) FlGui::instance()->transformContext->hide();
+  if(!FlGui::available()) return;
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
@@ -1708,6 +1740,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     }
 
     char ib = FlGui::instance()->selectEntity(type);
+    if(!FlGui::available()) return;
     if(ib == 'l') {
       for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
@@ -1780,7 +1813,6 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       break;
     }
   }
@@ -1819,6 +1851,7 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
                     "'q' to abort]");
 
     char ib = FlGui::instance()->selectEntity(selectRegions ? ENT_VOLUME : ENT_CURVE);
+    if(!FlGui::available()) return;
     if(ib == 'l') {
       for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
@@ -1869,7 +1902,6 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       break;
     }
   }
@@ -1891,8 +1923,8 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
     if(!FlGui::available()) return;
 
     char ib = FlGui::instance()->selectEntity(ENT_CURVE);
+    if(!FlGui::available()) return;
     if(ib == 'q') {
-      if(!FlGui::available()) return;
       break;
     }
     if(!FlGui::instance()->selectedEdges.empty()) {
@@ -1912,8 +1944,8 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
     if(!FlGui::available()) return;
 
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
+    if(!FlGui::available()) return;
     if(ib == 'q') {
-      if(!FlGui::available()) return;
       break;
     }
     if(ib == 'e' && edge_to_split){
@@ -1944,7 +1976,8 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
   std::string what((const char*)data);
   FlGui::instance()->physicalContext->show(what, false);
   action_point_line_surface_volume(7, what);
-  if(FlGui::available()) FlGui::instance()->physicalContext->hide();
+  if(!FlGui::available()) return;
+  FlGui::instance()->physicalContext->hide();
 }
 
 static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
@@ -2034,6 +2067,7 @@ static void mesh_modify_parts(Fl_Widget *w, void *data, const std::string &actio
                     "[Press 'e' to end selection or 'q' to abort]", str);
 
     char ib = FlGui::instance()->selectEntity(what);
+    if(!FlGui::available()) return;
     if(ib == 'l') {
       if(CTX::instance()->pickElements){
         for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++){
@@ -2115,7 +2149,6 @@ static void mesh_modify_parts(Fl_Widget *w, void *data, const std::string &actio
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       break;
     }
   }
@@ -2147,6 +2180,7 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
 
     Msg::StatusGl("Select element\n[Press 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_ALL);
+    if(!FlGui::available()) return;
     if(ib == 'l') {
       if(FlGui::instance()->selectedElements.size()){
         MElement *ele = FlGui::instance()->selectedElements[0];
@@ -2167,7 +2201,6 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       break;
     }
   }
@@ -2305,14 +2338,17 @@ static void mesh_define_transfinite(int dim)
                       "[Press 'e' to end selection, 'u' to undo last selection "
                       "or 'q' to abort]");
       ib = FlGui::instance()->selectEntity(ENT_CURVE);
+      if(!FlGui::available()) return;
       break;
     case 2:
       Msg::StatusGl("Select surface\n[Press 'q' to abort]");
       ib = FlGui::instance()->selectEntity(ENT_SURFACE);
+      if(!FlGui::available()) return;
       break;
     case 3:
       Msg::StatusGl("Select volume\n[Press 'q' to abort]");
       ib = FlGui::instance()->selectEntity(ENT_VOLUME);
+      if(!FlGui::available()) return;
       break;
     default:
       ib = 'l';
@@ -2343,7 +2379,6 @@ static void mesh_define_transfinite(int dim)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       drawContext::global()->draw();
       break;
     }
@@ -2383,6 +2418,7 @@ static void mesh_define_transfinite(int dim)
                           "[Press 'e' to end selection, 'u' to undo last selection "
                           "or 'q' to abort]");
           ib = FlGui::instance()->selectEntity(ENT_POINT);
+          if(!FlGui::available()) return;
           if(ib == 'l') {
             for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
               FlGui::instance()->selectedVertices[i]->setSelection(1);
@@ -2426,7 +2462,6 @@ static void mesh_define_transfinite(int dim)
           }
           if(ib == 'q') {
             GModel::current()->setSelection(0);
-            if(!FlGui::available()) return;
             drawContext::global()->draw();
             goto stopall;
           }
@@ -2506,6 +2541,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
       }
     }
     char ib = FlGui::instance()->selectEntity(t);
+    if(!FlGui::available()) return;
     if(ib == 'l') {
       if(selectEntities && what == "Point"){
         for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
@@ -2568,7 +2604,6 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'q') {
       GModel::current()->setSelection(0);
-      if(!FlGui::available()) return;
       break;
     }
   }
