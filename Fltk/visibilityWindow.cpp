@@ -1204,6 +1204,27 @@ static void browser_cb(Fl_Widget *w, void *data)
   }
 }
 
+static void tree_cb(Fl_Widget *w, void *data)
+{
+  Fl_Tree *tree = (Fl_Tree *)w;
+  if(tree->callback_reason() == FL_TREE_REASON_RESELECTED) {
+    // double click
+    Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
+    GEntity *ge = 0;
+    if(item) {
+      if(item->user_data()) {
+        ge = (GEntity*)item->user_data();
+      }
+      else if(item->children() && item->child(0) &&
+              item->child(0)->user_data()) {
+        ge = (GEntity*)item->child(0)->user_data();
+      }
+    }
+    if(ge)
+      FlGui::instance()->onelabContext->show(ge->dim(), ge->tag());
+  }
+}
+
 visibilityWindow::visibilityWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -1329,6 +1350,8 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     tree->labelsize(FL_NORMAL_SIZE - 1);
     tree->selectmode(FL_TREE_SELECT_MULTI);
     tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
+    tree->item_reselect_mode(FL_TREE_SELECTABLE_ALWAYS); // for double-clicks
+    tree->callback(tree_cb);
     tree->hide();
 
     tree_create =
