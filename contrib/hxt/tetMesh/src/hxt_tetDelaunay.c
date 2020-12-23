@@ -23,7 +23,6 @@
 
 /* compile-time parameters */
 // #define HXT_DELAUNAY_LOW_MEMORY /* doesn't use any buffer (a lot slower, except if you are at the limit of filling the RAM) */
-// #define HXT_WALK_OPTI
 
 #define SMALLEST_PASS 2048
 
@@ -536,74 +535,6 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
   double* const vtaCoord = vertices[vta].coord;
   unsigned enteringFace=4;
   uint64_t rel = partition->lengthDist;
-
-#ifdef HXT_WALK_OPTI
-  double minDist = DBL_MAX;
-
-  {
-    const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + 4*nextTet;
-    double* curCoord[4] = {
-      vertices[curNode[0]].coord,
-      vertices[curNode[1]].coord,
-      vertices[curNode[2]].coord,
-      vertices[curNode[3]].coord
-    };
-
-#ifdef __GNUC__
-    #pragma GCC ivdep
-#else
-    #pragma ivdep
-#endif
-    for (int i=0; i<4; i++) {
-      double dx = vtaCoord[0] - curCoord[i][0];
-      double dy = vtaCoord[1] - curCoord[i][1];
-      double dz = vtaCoord[2] - curCoord[i][2];
-      double dist = dx*dx+dy*dy+dz*dz;
-      if(dist<minDist)
-        minDist = dist;
-    }
-  }
-
-  while(1) {
-    unsigned index = 4;
-
-    const uint64_t* __restrict__ curNeigh = mesh->tetrahedra.neigh + 4*nextTet;
-
-#ifndef NDEBUG
-    const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + 4*nextTet;
-    if(curNode[3]==HXT_GHOST_VERTEX){
-      return HXT_ERROR_MSG(HXT_STATUS_FAILED, "walked outside of the domain");
-    }
-#endif
-
-    for (unsigned i=0; i<4; i++) {
-      if(i==enteringFace)
-        continue;
-
-      uint32_t node = mesh->tetrahedra.node[curNeigh[i]];
-
-      if(node==HXT_GHOST_VERTEX)
-        continue;
-      
-      const double* __restrict__ const coord = vertices[node].coord;
-
-      double dx = vtaCoord[0] - coord[0];
-      double dy = vtaCoord[1] - coord[1];
-      double dz = vtaCoord[2] - coord[2];
-      double dist = dx*dx+dy*dy+dz*dz;
-      if(dist < minDist && !vertexOutOfPartition(vertices, node, rel, partition->startDist)){
-        minDist = dist;
-        index = i;
-      }
-    }
-
-    if(index==4)
-      break;
-
-    enteringFace = curNeigh[index]&3;
-    nextTet = curNeigh[index]/4;
-  }
-#endif // ifdef HXT_WALK_OPTI
 
   uint32_t seed = 1;
   enteringFace = 4;
