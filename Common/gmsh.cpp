@@ -7209,6 +7209,7 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
   case 3: ret = FlGui::instance()->selectEntity(ENT_VOLUME); break;
   default: ret = FlGui::instance()->selectEntity(ENT_ALL); break;
   }
+  if(!FlGui::available()) return 0; // GUI closed during selection
   for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++)
     dimTags.push_back(
       std::pair<int, int>(0, FlGui::instance()->selectedVertices[i]->tag()));
@@ -7238,6 +7239,7 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   CTX::instance()->mesh.changed = ENT_ALL;
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
   CTX::instance()->pickElements = old;
+  if(!FlGui::available()) return 0; // GUI closed during selection
   for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++)
     elementTags.push_back(FlGui::instance()->selectedElements[i]->getNum());
   return selectionCode(ret);
@@ -7253,6 +7255,7 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
 #if defined(HAVE_FLTK)
   _createFltk();
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
+  if(!FlGui::available()) return 0; // GUI closed during selection
   for(std::size_t i = 0; i < FlGui::instance()->selectedViews.size(); i++)
     viewTags.push_back(FlGui::instance()->selectedViews[i]->getTag());
   return selectionCode(ret);
