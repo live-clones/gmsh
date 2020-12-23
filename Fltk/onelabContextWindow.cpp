@@ -144,8 +144,8 @@ void onelabContextWindow::show(int dim, int tag)
   menu.push_back(item);
   _choice->copy(&menu[0]);
 
-  if(menu.size() > 2)
-    _choice->value(1); // first physical if there are physicals
+  if(menu.size() > 1)
+    _choice->value(menu.size() - 2); // last physical
 
   rebuild(true);
 
