@@ -3,29 +3,48 @@ import math
 import sys
 
 # This example shows how to implement a simple interactive pre-processor for a
-# finite element solver, i.e. by interactively specifying boundary conditions
-# and material properties on parts of the model
+# finite element solver; in particular, it shows how boundary conditions,
+# material properties, etc., can be specified on parts of the model.
 
 gmsh.initialize(sys.argv)
 if len(sys.argv) > 1:
     gmsh.open(sys.argv[1])
 
-# For Gmsh to know which types of boundary conditions/materials are available,
-# we define "template" ONELAB variables, whose names contains the following
-# substrings:
+# For Gmsh to know which types of boundary conditions, materials, etc., are
+# available, one should define "template" ONELAB parameters with names
+# containing the following substrings:
 #
-# - 'ONELAB Context/Point Template/'
-# - 'ONELAB Context/Curve Template/'
-# - 'ONELAB Context/Surface Template/'
-# - 'ONELAB Context/Volume Template/'
+# - "ONELAB Context/Point Template/"
+# - "ONELAB Context/Curve Template/"
+# - "ONELAB Context/Surface Template/"
+# - "ONELAB Context/Volume Template/"
 #
-# Double- (or right-) clicking on an entity in the GUI will pop-up a window
-# where instances of these variables for the given entity can be edited. For
-# example, if the 'ONELAB Context/Curve Template/0Boundary condition' exists,
-# double-clicking on curve 123 in the model will create 'ONELAB Context/Curve
-# 123/0Boundary condition' (or 'ONELAB Context/Physical Curve 1000/0Boundary
-# condition' depending on the choice in the window, if Curve 123 belongs to the
-# Physical Curve 1000)
+# Double- (or right-) clicking on an entity in the GUI will then pop-up a
+# context window where instances of these variables for the given entity can be
+# edited. For example, if the "ONELAB Context/Curve Template/0Boundary
+# condition" exists, double-clicking on curve 123 in the model will create
+# "ONELAB Context/Curve 123/0Boundary condition" (or "ONELAB Context/Physical
+# Curve 1000/0Boundary condition" depending on the choice in the context window,
+# if curve 123 belongs to the physical curve 1000). The context window is also
+# shown automatically when a new physical group is created in the GUI.
+#
+# Every time the ONELAB database is changed, the "ONELAB/Action" parameter is
+# set to "check", which gives the Python code the opportunity to react in the
+# event loop. This could e.g. be used to define new variables depending on the
+# choices just made, or to show/hide existing variables. To make things simpler,
+# the special "ServerActionHide" or "ServerActionShow" parameter attributes can
+# also be specified when creating parameters, which allows to set the visibility
+# of dependent parameters without explicitly processing the "check" action.
+#
+# Other actions can be defined as well:
+#
+# * The "ONELAB/Button" parameter governs the behavior of the main "Run" button
+#   in the GUI; here the "run" action could trigger running the finite element
+#   solver with the defined parameters
+#
+# * Parameters with the "Macro" attribute set to "Action" will trigger an action
+#   named after their value; here to create a "select entity" action where the
+#   user is asked to interactively select an entity in the model.
 #
 parameters = """
 [
@@ -114,8 +133,8 @@ parameters = """
 gmsh.onelab.set(parameters)
 
 def runSolver():
-    print('parameters =', gmsh.onelab.get())
-    print('running the solver with the given parameters...')
+    print("parameters =", gmsh.onelab.get())
+    print("running the solver with the given parameters...")
 
 def eventLoop():
     # terminate the event loop if the GUI was closed
@@ -131,7 +150,7 @@ def eventLoop():
         # database was changed: update/define new parameters depending on new
         # state
         gmsh.onelab.setString("ONELAB/Action", [""])
-        # print('parameters = ', gmsh.onelab.get())
+        # print("parameters = ", gmsh.onelab.get())
         gmsh.fltk.update()
     elif action[0] == "reset":
         # user clicked on "Reset database"
@@ -151,10 +170,10 @@ def eventLoop():
         if gmsh.fltk.isAvailable() == 0: return 0
         if r and len(ent):
             gmsh.fltk.showContextWindow(ent[0][0], ent[0][1])
-        gmsh.fltk.setStatusMessage('', True)
+        gmsh.fltk.setStatusMessage("", True)
     return 1
 
-if '-nopopup' not in sys.argv:
+if "-nopopup" not in sys.argv:
     gmsh.fltk.initialize()
     while eventLoop():
         pass

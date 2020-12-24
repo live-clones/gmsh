@@ -1553,8 +1553,8 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
             // if onelab context parameters are defined for the physical group,
             // show the parameter definition window and abort the physical group
             // creation loop (otherwise events cannot be processed by outside
-            // code through the api, as we are stuck in the physical creation
-            // mode's while(1))
+            // codes through the api, as we are stuck in the while(1) for the
+            // physical creation mode)
             std::vector<std::string> param;
             onelab::server::instance()->getParameterNames
               (param, "ONELAB Context/" + what + " Template");
