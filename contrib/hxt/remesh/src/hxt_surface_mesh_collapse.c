@@ -752,10 +752,17 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
   HXT_INFO_COND(opt->verbosity>=1,"Total Number of NOT Collapsed Points   %d", countPointsToDelete-countPointsCollapsed);
   HXT_INFO_COND(opt->verbosity>=1,"Number of NOT Collapsed Points lines   %d", countPointsToDelete-countPointsCollapsed);
 
+  if (countPointsToDelete-countPointsCollapsed != 0 && opt->quadSurfaces == 1){
+    HXT_INFO_COND(opt->verbosity>=0,"!!!");
+    HXT_INFO_COND(opt->verbosity>=0,"ATTENTION: %d points were not collapsed",countPointsToDelete-countPointsCollapsed);
+    HXT_INFO_COND(opt->verbosity>=0,"!!!");
+  }
 
   /*if (countPointsToDelete-countPointsCollapsed != 0 && opt->quadSurfaces == 1){*/
-    /*return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Some points were not collapsed - converting to quads cannot work");*/
+    /*return HXT_ERROR_MSG(HXT_STATUS_ERROR,*/
+                        /*"%d points were not collapsed - converting to quads cannot work",countPointsToDelete-countPointsCollapsed);*/
   /*}*/
+
 
 
 

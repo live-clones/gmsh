@@ -503,14 +503,13 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   if (opt->quadSurfaces == 1){
 
     if(opt->verbosity>=2){
-      HXT_CHECK(hxtMeshWriteGmsh(nmesh, "finalmeshNOSMOOTH.msh"));
       FILE *test;
       hxtPosInit("binIndices.pos","edges",&test);
       for (uint32_t i=0; i<nmesh->vertices.num; i++){
         hxtPosAddPoint(test,&nmesh->vertices.coord[4*i],bin[p2p[i]]);
         //hxtPosAddText(test,&nmesh->vertices.coord[4*i],"%d",bin[p2p[i]]);
-
       }
+
       hxtPosFinish(test);
     }
 
@@ -563,6 +562,10 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     hxtPosInit("bin3D.pos","bin",&out);
     for (uint32_t i=0; i<nmesh->vertices.num; i++){
       hxtPosAddPoint(out,&nmesh->vertices.coord[4*i],bin[i]);
+    }
+    hxtPosNewView(test,"labels");
+    for (uint32_t i=0; i<nmesh->vertices.num; i++){
+      hxtPosAddText(test,&nmesh->vertices.coord[4*i],"%d",bin[i]);
     }
     hxtPosFinish(out);
   }
