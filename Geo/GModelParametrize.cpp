@@ -841,8 +841,7 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
         std::map<MEdge, twoT, MEdgeLessThan>::iterator it = conn.find(e);
         if(it->second.t2) {
           MTriangle *tt = it->second.other(x);
-          if(!tt) return false; // FIXME
-          if(touch.find(tt) == touch.end()) _s.push(tt);
+          if(tt && touch.find(tt) == touch.end()) _s.push(tt);
         }
       }
     }
