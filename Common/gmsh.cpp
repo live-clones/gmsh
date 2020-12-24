@@ -7365,6 +7365,17 @@ GMSH_API void gmsh::onelab::get(std::string &data, const std::string &name,
 #endif
 }
 
+GMSH_API void gmsh::onelab::getNames(std::vector<std::string> &names,
+                                     const std::string &search)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_ONELAB)
+  ::onelab::server::instance()->getParameterNames(names, search);
+#else
+  Msg::Error("ONELAB not available");
+#endif
+}
+
 GMSH_API void gmsh::onelab::setNumber(const std::string &name,
                                       const std::vector<double> &value)
 {

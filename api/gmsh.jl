@@ -5834,6 +5834,27 @@ function get(name = "", format = "json")
 end
 
 """
+    gmsh.onelab.getNames(search = "")
+
+Get the names of the parameters in the ONELAB database matching the `search`
+regular expression. If `search` is empty, return all the names.
+
+Return `names`.
+"""
+function getNames(search = "")
+    api_names_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_names_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshOnelabGetNames, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cchar}, Ptr{Cint}),
+          api_names_, api_names_n_, search, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own=true)
+    names = [unsafe_string(tmp_api_names_[i]) for i in 1:length(tmp_api_names_) ]
+    return names
+end
+
+"""
     gmsh.onelab.setNumber(name, value)
 
 Set the value of the number parameter `name` in the ONELAB database. Create the

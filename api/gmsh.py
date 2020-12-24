@@ -6768,6 +6768,26 @@ class onelab:
         return _ostring(api_data_)
 
     @staticmethod
+    def getNames(search=""):
+        """
+        gmsh.onelab.getNames(search="")
+
+        Get the names of the parameters in the ONELAB database matching the
+        `search' regular expression. If `search' is empty, return all the names.
+
+        Return `names'.
+        """
+        api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        ierr = c_int()
+        lib.gmshOnelabGetNames(
+            byref(api_names_), byref(api_names_n_),
+            c_char_p(search.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorstring(api_names_, api_names_n_.value)
+
+    @staticmethod
     def setNumber(name, value):
         """
         gmsh.onelab.setNumber(name, value)

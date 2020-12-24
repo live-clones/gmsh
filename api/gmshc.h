@@ -2802,6 +2802,12 @@ GMSH_API void gmshOnelabGet(char ** data,
                             const char * format,
                             int * ierr);
 
+/* Get the names of the parameters in the ONELAB database matching the
+ * `search' regular expression. If `search' is empty, return all the names. */
+GMSH_API void gmshOnelabGetNames(char *** names, size_t * names_n,
+                                 const char * search,
+                                 int * ierr);
+
 /* Set the value of the number parameter `name' in the ONELAB database. Create
  * the parameter if it does not exist; update the value if the parameter
  * exists. */

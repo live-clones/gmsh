@@ -3185,6 +3185,13 @@ namespace gmsh { // Top-level functions
                       const std::string & name = "",
                       const std::string & format = "json");
 
+    // gmsh::onelab::getNames
+    //
+    // Get the names of the parameters in the ONELAB database matching the `search'
+    // regular expression. If `search' is empty, return all the names.
+    GMSH_API void getNames(std::vector<std::string> & names,
+                           const std::string & search = "");
+
     // gmsh::onelab::setNumber
     //
     // Set the value of the number parameter `name' in the ONELAB database. Create

@@ -3970,6 +3970,19 @@ GMSH_API void gmshOnelabGet(char ** data, const char * name, const char * format
   }
 }
 
+GMSH_API void gmshOnelabGetNames(char *** names, size_t * names_n, const char * search, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_names_;
+    gmsh::onelab::getNames(api_names_, search);
+    vectorstring2charptrptr(api_names_, names, names_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshOnelabSetNumber(const char * name, double * value, size_t value_n, int * ierr)
 {
   if(ierr) *ierr = 0;
