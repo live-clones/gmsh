@@ -3778,8 +3778,8 @@ class model:
             `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
             entries in `numElements' give the number of elements in each layer. If
             `height' is not empty, it provides the (cumulative) height of the different
-            layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are
-            extruded along their normal.
+            layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+            layers.
 
             Return `outDimTags'.
             """
@@ -3814,7 +3814,8 @@ class model:
             `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
             entries in `numElements' give the number of elements in each layer. If
             `height' is not empty, it provides the (cumulative) height of the different
-            layers, normalized to 1.
+            layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+            layers.
 
             Return `outDimTags'.
             """
@@ -3853,7 +3854,8 @@ class model:
             smaller than Pi. Return extruded entities in `outDimTags'. If `numElements'
             is not empty, also extrude the mesh: the entries in `numElements' give the
             number of elements in each layer. If `height' is not empty, it provides the
-            (cumulative) height of the different layers, normalized to 1.
+            (cumulative) height of the different layers, normalized to 1. If
+            `recombine' is set, recombine the mesh in the layers.
 
             Return `outDimTags'.
             """
@@ -3878,6 +3880,41 @@ class model:
                 api_numElements_, api_numElements_n_,
                 api_heights_, api_heights_n_,
                 c_int(bool(recombine)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+
+        @staticmethod
+        def extrudeBoundaryLayer(dimTags, numElements=[1], heights=[], recombine=False, second=False, viewIndex=-1):
+            """
+            gmsh.model.geo.extrudeBoundaryLayer(dimTags, numElements=[1], heights=[], recombine=False, second=False, viewIndex=-1)
+
+            Extrude the entities `dimTags' in the built-in CAD representation along the
+            normals of the mesh, creating discrete boundary layer entities. Return
+            extruded entities in `outDimTags'. The entries in `numElements' give the
+            number of elements in each layer. If `height' is not empty, it provides the
+            height of the different layers. If `recombine' is set, recombine the mesh
+            in the layers. A second boundary layer can be created from the same
+            entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
+            view to either specify the normals (if the view cnotains a vector field) or
+            scale the normals (if the view is scalar).
+
+            Return `outDimTags'.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_numElements_, api_numElements_n_ = _ivectorint(numElements)
+            api_heights_, api_heights_n_ = _ivectordouble(heights)
+            ierr = c_int()
+            lib.gmshModelGeoExtrudeBoundaryLayer(
+                api_dimTags_, api_dimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                api_numElements_, api_numElements_n_,
+                api_heights_, api_heights_n_,
+                c_int(bool(recombine)),
+                c_int(bool(second)),
+                c_int(viewIndex),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -5159,7 +5196,8 @@ class model:
             `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
             entries in `numElements' give the number of elements in each layer. If
             `height' is not empty, it provides the (cumulative) height of the different
-            layers, normalized to 1.
+            layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+            layers.
 
             Return `outDimTags'.
             """
@@ -5194,7 +5232,8 @@ class model:
             mesh: the entries in `numElements' give the number of elements in each
             layer. If `height' is not empty, it provides the (cumulative) height of the
             different layers, normalized to 1. When the mesh is extruded the angle
-            should be strictly smaller than 2*Pi.
+            should be strictly smaller than 2*Pi. If `recombine' is set, recombine the
+            mesh in the layers.
 
             Return `outDimTags'.
             """

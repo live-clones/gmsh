@@ -3216,8 +3216,7 @@ translation along (`dx`, `dy`, `dz`). Return extruded entities in `outDimTags`.
 If `numElements` is not empty, also extrude the mesh: the entries in
 `numElements` give the number of elements in each layer. If `height` is not
 empty, it provides the (cumulative) height of the different layers, normalized
-to 1. If `dx` == `dy` == `dz` == 0, the entities are extruded along their
-normal.
+to 1. If `recombine` is set, recombine the mesh in the layers.
 
 Return `outDimTags`.
 """
@@ -3245,7 +3244,8 @@ rotation of `angle` radians around the axis of revolution defined by the point
 strictly smaller than Pi. Return extruded entities in `outDimTags`. If
 `numElements` is not empty, also extrude the mesh: the entries in `numElements`
 give the number of elements in each layer. If `height` is not empty, it provides
-the (cumulative) height of the different layers, normalized to 1.
+the (cumulative) height of the different layers, normalized to 1. If `recombine`
+is set, recombine the mesh in the layers.
 
 Return `outDimTags`.
 """
@@ -3274,7 +3274,8 @@ direction (`ax`, `ay`, `az`). The angle should be strictly smaller than Pi.
 Return extruded entities in `outDimTags`. If `numElements` is not empty, also
 extrude the mesh: the entries in `numElements` give the number of elements in
 each layer. If `height` is not empty, it provides the (cumulative) height of the
-different layers, normalized to 1.
+different layers, normalized to 1. If `recombine` is set, recombine the mesh in
+the layers.
 
 Return `outDimTags`.
 """
@@ -3287,6 +3288,36 @@ function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Ci
     ccall((:gmshModelGeoTwist, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+
+"""
+    gmsh.model.geo.extrudeBoundaryLayer(dimTags, numElements = [1], heights = Cdouble[], recombine = false, second = false, viewIndex = -1)
+
+Extrude the entities `dimTags` in the built-in CAD representation along the
+normals of the mesh, creating discrete boundary layer entities. Return extruded
+entities in `outDimTags`. The entries in `numElements` give the number of
+elements in each layer. If `height` is not empty, it provides the height of the
+different layers. If `recombine` is set, recombine the mesh in the layers. A
+second boundary layer can be created from the same entities if `second` is set.
+If `viewIndex` is >= 0, use the corresponding view to either specify the normals
+(if the view cnotains a vector field) or scale the normals (if the view is
+scalar).
+
+Return `outDimTags`.
+"""
+function extrudeBoundaryLayer(dimTags, numElements = [1], heights = Cdouble[], recombine = false, second = false, viewIndex = -1)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoExtrudeBoundaryLayer, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Cint, Cint, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, second, viewIndex, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -4347,7 +4378,7 @@ translation along (`dx`, `dy`, `dz`). Return extruded entities in `outDimTags`.
 If `numElements` is not empty, also extrude the mesh: the entries in
 `numElements` give the number of elements in each layer. If `height` is not
 empty, it provides the (cumulative) height of the different layers, normalized
-to 1.
+to 1. If `recombine` is set, recombine the mesh in the layers.
 
 Return `outDimTags`.
 """
@@ -4376,7 +4407,7 @@ in `outDimTags`. If `numElements` is not empty, also extrude the mesh: the
 entries in `numElements` give the number of elements in each layer. If `height`
 is not empty, it provides the (cumulative) height of the different layers,
 normalized to 1. When the mesh is extruded the angle should be strictly smaller
-than 2*Pi.
+than 2*Pi. If `recombine` is set, recombine the mesh in the layers.
 
 Return `outDimTags`.
 """

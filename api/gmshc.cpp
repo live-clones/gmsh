@@ -2256,6 +2256,26 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n, const double x,
   }
 }
 
+GMSH_API void gmshModelGeoExtrudeBoundaryLayer(int * dimTags, size_t dimTags_n, int ** outDimTags, size_t * outDimTags_n, int * numElements, size_t numElements_n, double * heights, size_t heights_n, const int recombine, const int second, const int viewIndex, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<int> api_numElements_(numElements, numElements + numElements_n);
+    std::vector<double> api_heights_(heights, heights + heights_n);
+    gmsh::model::geo::extrudeBoundaryLayer(api_dimTags_, api_outDimTags_, api_numElements_, api_heights_, recombine, second, viewIndex);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelGeoTranslate(int * dimTags, size_t dimTags_n, const double dx, const double dy, const double dz, int * ierr)
 {
   if(ierr) *ierr = 0;

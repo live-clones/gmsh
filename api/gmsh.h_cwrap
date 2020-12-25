@@ -2596,8 +2596,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the
-      // entities are extruded along their normal.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       inline void extrude(const gmsh::vectorpair & dimTags,
                           const double dx,
                           const double dy,
@@ -2627,7 +2627,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       inline void revolve(const gmsh::vectorpair & dimTags,
                           const double x,
                           const double y,
@@ -2662,7 +2663,7 @@ namespace gmsh { // Top-level functions
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
       // not empty, it provides the (cumulative) height of the different layers,
-      // normalized to 1.
+      // normalized to 1. If `recombine' is set, recombine the mesh in the layers.
       inline void twist(const gmsh::vectorpair & dimTags,
                         const double x,
                         const double y,
@@ -2685,6 +2686,36 @@ namespace gmsh { // Top-level functions
         int *api_numElements_; size_t api_numElements_n_; vector2ptr(numElements, &api_numElements_, &api_numElements_n_);
         double *api_heights_; size_t api_heights_n_; vector2ptr(heights, &api_heights_, &api_heights_n_);
         gmshModelGeoTwist(api_dimTags_, api_dimTags_n_, x, y, z, dx, dy, dz, ax, ay, az, angle, &api_outDimTags_, &api_outDimTags_n_, api_numElements_, api_numElements_n_, api_heights_, api_heights_n_, (int)recombine, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+        gmshFree(api_numElements_);
+        gmshFree(api_heights_);
+      }
+
+      // Extrude the entities `dimTags' in the built-in CAD representation along
+      // the normals of the mesh, creating discrete boundary layer entities. Return
+      // extruded entities in `outDimTags'. The entries in `numElements' give the
+      // number of elements in each layer. If `height' is not empty, it provides
+      // the height of the different layers. If `recombine' is set, recombine the
+      // mesh in the layers. A second boundary layer can be created from the same
+      // entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
+      // view to either specify the normals (if the view cnotains a vector field)
+      // or scale the normals (if the view is scalar).
+      inline void extrudeBoundaryLayer(const gmsh::vectorpair & dimTags,
+                                       gmsh::vectorpair & outDimTags,
+                                       const std::vector<int> & numElements = std::vector<int>(1, 1),
+                                       const std::vector<double> & heights = std::vector<double>(),
+                                       const bool recombine = false,
+                                       const bool second = false,
+                                       const int viewIndex = -1)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        int *api_numElements_; size_t api_numElements_n_; vector2ptr(numElements, &api_numElements_, &api_numElements_n_);
+        double *api_heights_; size_t api_heights_n_; vector2ptr(heights, &api_heights_, &api_heights_n_);
+        gmshModelGeoExtrudeBoundaryLayer(api_dimTags_, api_dimTags_n_, &api_outDimTags_, &api_outDimTags_n_, api_numElements_, api_numElements_n_, api_heights_, api_heights_n_, (int)recombine, (int)second, viewIndex, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
@@ -3614,7 +3645,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       inline void extrude(const gmsh::vectorpair & dimTags,
                           const double dx,
                           const double dy,
@@ -3644,7 +3676,8 @@ namespace gmsh { // Top-level functions
       // extrude the mesh: the entries in `numElements' give the number of elements
       // in each layer. If `height' is not empty, it provides the (cumulative)
       // height of the different layers, normalized to 1. When the mesh is extruded
-      // the angle should be strictly smaller than 2*Pi.
+      // the angle should be strictly smaller than 2*Pi. If `recombine' is set,
+      // recombine the mesh in the layers.
       inline void revolve(const gmsh::vectorpair & dimTags,
                           const double x,
                           const double y,

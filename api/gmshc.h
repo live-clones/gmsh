@@ -1506,8 +1506,8 @@ GMSH_API int gmshModelGeoAddVolume(int * shellTags, size_t shellTags_n,
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
  * entries in `numElements' give the number of elements in each layer. If
  * `height' is not empty, it provides the (cumulative) height of the different
- * layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are
- * extruded along their normal. */
+ * layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+ * layers. */
 GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -1525,7 +1525,8 @@ GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
  * entries in `numElements' give the number of elements in each layer. If
  * `height' is not empty, it provides the (cumulative) height of the different
- * layers, normalized to 1. */
+ * layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+ * layers. */
 GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -1547,7 +1548,8 @@ GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
  * smaller than Pi. Return extruded entities in `outDimTags'. If `numElements'
  * is not empty, also extrude the mesh: the entries in `numElements' give the
  * number of elements in each layer. If `height' is not empty, it provides the
- * (cumulative) height of the different layers, normalized to 1. */
+ * (cumulative) height of the different layers, normalized to 1. If
+ * `recombine' is set, recombine the mesh in the layers. */
 GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const double x,
                                 const double y,
@@ -1564,6 +1566,24 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 double * heights, size_t heights_n,
                                 const int recombine,
                                 int * ierr);
+
+/* Extrude the entities `dimTags' in the built-in CAD representation along the
+ * normals of the mesh, creating discrete boundary layer entities. Return
+ * extruded entities in `outDimTags'. The entries in `numElements' give the
+ * number of elements in each layer. If `height' is not empty, it provides the
+ * height of the different layers. If `recombine' is set, recombine the mesh
+ * in the layers. A second boundary layer can be created from the same
+ * entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
+ * view to either specify the normals (if the view cnotains a vector field) or
+ * scale the normals (if the view is scalar). */
+GMSH_API void gmshModelGeoExtrudeBoundaryLayer(int * dimTags, size_t dimTags_n,
+                                               int ** outDimTags, size_t * outDimTags_n,
+                                               int * numElements, size_t numElements_n,
+                                               double * heights, size_t heights_n,
+                                               const int recombine,
+                                               const int second,
+                                               const int viewIndex,
+                                               int * ierr);
 
 /* Translate the entities `dimTags' in the built-in CAD representation along
  * (`dx', `dy', `dz'). */
@@ -2151,7 +2171,8 @@ GMSH_API void gmshModelOccAddThickSolid(const int volumeTag,
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
  * entries in `numElements' give the number of elements in each layer. If
  * `height' is not empty, it provides the (cumulative) height of the different
- * layers, normalized to 1. */
+ * layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+ * layers. */
 GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -2169,7 +2190,8 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
  * mesh: the entries in `numElements' give the number of elements in each
  * layer. If `height' is not empty, it provides the (cumulative) height of the
  * different layers, normalized to 1. When the mesh is extruded the angle
- * should be strictly smaller than 2*Pi. */
+ * should be strictly smaller than 2*Pi. If `recombine' is set, recombine the
+ * mesh in the layers. */
 GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,

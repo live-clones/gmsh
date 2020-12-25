@@ -5263,15 +5263,9 @@ GMSH_API void gmsh::model::geo::extrude(const vectorpair &dimTags,
 {
   if(!_checkInit()) return;
   outDimTags.clear();
-  if(dx || dy || dz) {
-    GModel::current()->getGEOInternals()->extrude(
-      dimTags, dx, dy, dz, outDimTags,
-      _getExtrudeParams(numElements, heights, recombine));
-  }
-  else {
-    GModel::current()->getGEOInternals()->boundaryLayer(
-      dimTags, outDimTags, _getExtrudeParams(numElements, heights, recombine));
-  }
+  GModel::current()->getGEOInternals()->extrude(
+    dimTags, dx, dy, dz, outDimTags,
+    _getExtrudeParams(numElements, heights, recombine));
 }
 
 GMSH_API void gmsh::model::geo::revolve(
@@ -5299,6 +5293,26 @@ GMSH_API void gmsh::model::geo::twist(
   GModel::current()->getGEOInternals()->twist(
     dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags,
     _getExtrudeParams(numElements, heights, recombine));
+}
+
+GMSH_API void gmsh::model::geo::extrudeBoundaryLayer(const vectorpair &dimTags,
+                                                     vectorpair &outDimTags,
+                                                     const std::vector<int> &numElements,
+                                                     const std::vector<double> &heights,
+                                                     const bool recombine,
+                                                     const bool second,
+                                                     const int viewIndex)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+  ExtrudeParams *e = _getExtrudeParams(numElements, heights, recombine);
+  if(!e) {
+    Msg::Error("Element layers are required for boundary layer extrusion");
+    return;
+  }
+  e->mesh.BoundaryLayerIndex = second ? 1 : 0;
+  e->mesh.ViewIndex = viewIndex;
+  GModel::current()->getGEOInternals()->boundaryLayer(dimTags, outDimTags, e);
 }
 
 GMSH_API void gmsh::model::geo::translate(const vectorpair &dimTags,

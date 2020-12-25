@@ -1717,8 +1717,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the
-      // entities are extruded along their normal.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       GMSH_API void extrude(const gmsh::vectorpair & dimTags,
                             const double dx,
                             const double dy,
@@ -1737,7 +1737,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       GMSH_API void revolve(const gmsh::vectorpair & dimTags,
                             const double x,
                             const double y,
@@ -1761,7 +1762,7 @@ namespace gmsh { // Top-level functions
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
       // not empty, it provides the (cumulative) height of the different layers,
-      // normalized to 1.
+      // normalized to 1. If `recombine' is set, recombine the mesh in the layers.
       GMSH_API void twist(const gmsh::vectorpair & dimTags,
                           const double x,
                           const double y,
@@ -1777,6 +1778,25 @@ namespace gmsh { // Top-level functions
                           const std::vector<int> & numElements = std::vector<int>(),
                           const std::vector<double> & heights = std::vector<double>(),
                           const bool recombine = false);
+
+      // gmsh::model::geo::extrudeBoundaryLayer
+      //
+      // Extrude the entities `dimTags' in the built-in CAD representation along
+      // the normals of the mesh, creating discrete boundary layer entities. Return
+      // extruded entities in `outDimTags'. The entries in `numElements' give the
+      // number of elements in each layer. If `height' is not empty, it provides
+      // the height of the different layers. If `recombine' is set, recombine the
+      // mesh in the layers. A second boundary layer can be created from the same
+      // entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
+      // view to either specify the normals (if the view cnotains a vector field)
+      // or scale the normals (if the view is scalar).
+      GMSH_API void extrudeBoundaryLayer(const gmsh::vectorpair & dimTags,
+                                         gmsh::vectorpair & outDimTags,
+                                         const std::vector<int> & numElements = std::vector<int>(1, 1),
+                                         const std::vector<double> & heights = std::vector<double>(),
+                                         const bool recombine = false,
+                                         const bool second = false,
+                                         const int viewIndex = -1);
 
       // gmsh::model::geo::translate
       //
@@ -2431,7 +2451,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       GMSH_API void extrude(const gmsh::vectorpair & dimTags,
                             const double dx,
                             const double dy,
@@ -2450,7 +2471,8 @@ namespace gmsh { // Top-level functions
       // extrude the mesh: the entries in `numElements' give the number of elements
       // in each layer. If `height' is not empty, it provides the (cumulative)
       // height of the different layers, normalized to 1. When the mesh is extruded
-      // the angle should be strictly smaller than 2*Pi.
+      // the angle should be strictly smaller than 2*Pi. If `recombine' is set,
+      // recombine the mesh in the layers.
       GMSH_API void revolve(const gmsh::vectorpair & dimTags,
                             const double x,
                             const double y,
