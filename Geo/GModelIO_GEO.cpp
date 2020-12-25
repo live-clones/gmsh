@@ -1690,6 +1690,7 @@ int GModel::exportDiscreteGEOInternals()
           Msg::Error("Could not find GEO curve %d", (*ite)->tag());
         }
       }
+      EndSurface(s);
       Tree_Add(_geo_internals->Surfaces, &s);
     }
   }
