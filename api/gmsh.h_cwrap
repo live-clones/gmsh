@@ -2134,14 +2134,16 @@ namespace gmsh { // Top-level functions
       // boundary if the surface is open. If `forReparametrization' is set, create
       // edges and surfaces that can be reparametrized using a single map. If
       // `curveAngle' is less than Pi, also force curves to be split according to
-      // `curveAngle'.
+      // `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
+      // entities and export the discrete entities in the built-in CAD kernel.
       inline void classifySurfaces(const double angle,
                                    const bool boundary = true,
                                    const bool forReparametrization = false,
-                                   const double curveAngle = M_PI)
+                                   const double curveAngle = M_PI,
+                                   const bool exportDiscrete = true)
       {
         int ierr = 0;
-        gmshModelMeshClassifySurfaces(angle, (int)boundary, (int)forReparametrization, curveAngle, &ierr);
+        gmshModelMeshClassifySurfaces(angle, (int)boundary, (int)forReparametrization, curveAngle, (int)exportDiscrete, &ierr);
         if(ierr) throwLastError();
       }
 

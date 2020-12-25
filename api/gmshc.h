@@ -1238,11 +1238,13 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality,
  * boundary if the surface is open. If `forReparametrization' is set, create
  * edges and surfaces that can be reparametrized using a single map. If
  * `curveAngle' is less than Pi, also force curves to be split according to
- * `curveAngle'. */
+ * `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
+ * entities and export the discrete entities in the built-in CAD kernel. */
 GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const int boundary,
                                             const int forReparametrization,
                                             const double curveAngle,
+                                            const int exportDiscrete,
                                             int * ierr);
 
 /* Create a geometry for the discrete entities `dimTags' (represented solely

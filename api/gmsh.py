@@ -3107,9 +3107,9 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi):
+        def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True):
             """
-            gmsh.model.mesh.classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi)
+            gmsh.model.mesh.classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True)
 
             Classify ("color") the surface mesh based on the angle threshold `angle'
             (in radians), and create new discrete surfaces, curves and points
@@ -3117,7 +3117,8 @@ class model:
             boundary if the surface is open. If `forReparametrization' is set, create
             edges and surfaces that can be reparametrized using a single map. If
             `curveAngle' is less than Pi, also force curves to be split according to
-            `curveAngle'.
+            `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
+            entities and export the discrete entities in the built-in CAD kernel.
             """
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
@@ -3125,6 +3126,7 @@ class model:
                 c_int(bool(boundary)),
                 c_int(bool(forReparametrization)),
                 c_double(curveAngle),
+                c_int(bool(exportDiscrete)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

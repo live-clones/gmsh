@@ -5,8 +5,8 @@ tetrehedralizations; improved performance of high-order meshing of OCC models;
 improved handling of high resolution displays; new structured CGNS exporter; new
 transfinite Beta law; added support for embedded curves in HXT; small bug fixes.
 
-* Incompatible API changes: new optional argument to occ/addBSplineSurface,
-  occ/addBezierSurface and view/probe
+* Incompatible API changes: new optional argument to mesh/classifySurfaces,
+  occ/addBSplineSurface, occ/addBezierSurface and view/probe
 
 4.7.1 (November 16, 2020): small bug fixes and improvements.
 

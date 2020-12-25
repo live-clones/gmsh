@@ -4803,11 +4803,16 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
 GMSH_API void
 gmsh::model::mesh::classifySurfaces(const double angle, const bool boundary,
                                     const bool forReparametrization,
-                                    const double curveAngle)
+                                    const double curveAngle,
+                                    const bool exportDiscrete)
 {
   if(!_checkInit()) return;
   GModel::current()->classifySurfaces(angle, boundary, forReparametrization,
                                       curveAngle);
+  if(exportDiscrete) {
+    // Warning: this clears GEO_Internals!
+    GModel::current()->exportDiscreteGEOInternals();
+  }
 }
 
 GMSH_API void gmsh::model::mesh::createGeometry(const vectorpair &dimTags)

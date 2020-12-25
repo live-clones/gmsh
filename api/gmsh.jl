@@ -2627,20 +2627,22 @@ function splitQuadrangles(quality = 1., tag = -1)
 end
 
 """
-    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi)
+    gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
 radians), and create new discrete surfaces, curves and points accordingly. If
 `boundary` is set, also create discrete curves on the boundary if the surface is
 open. If `forReparametrization` is set, create edges and surfaces that can be
 reparametrized using a single map. If `curveAngle` is less than Pi, also force
-curves to be split according to `curveAngle`.
+curves to be split according to `curveAngle`. If `exportDiscrete` is set, clear
+any built-in CAD kernel entities and export the discrete entities in the built-
+in CAD kernel.
 """
-function classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi)
+function classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshClassifySurfaces, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Cint, Cdouble, Ptr{Cint}),
-          angle, boundary, forReparametrization, curveAngle, ierr)
+          (Cdouble, Cint, Cint, Cdouble, Cint, Ptr{Cint}),
+          angle, boundary, forReparametrization, curveAngle, exportDiscrete, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
