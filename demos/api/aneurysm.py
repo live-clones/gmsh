@@ -4,7 +4,7 @@ import math
 
 gmsh.initialize(sys.argv)
 
-# merge STL, create surface patche that are reparametrizable (so we can remesh
+# merge STL, create surface patches that are reparametrizable (so we can remesh
 # them) and compute the parametrizations
 gmsh.merge('aneurysm_data.stl')
 gmsh.model.mesh.classifySurfaces(math.pi, True, True)

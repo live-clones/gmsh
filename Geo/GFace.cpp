@@ -915,6 +915,10 @@ double GFace::curvatureMax(const SPoint2 &param) const
 {
   if(geomType() == Plane) return 0.;
 
+  // TODO: should handle this better, e.g. by creating actual discreteFace
+  // instead of gmshFace
+  if(geomType() == BoundaryLayerSurface) return 0.;
+
   double eigVal[2], eigVec[8];
   getMetricEigenVectors(param, eigVal, eigVec);
 
@@ -993,40 +997,40 @@ void GFace::getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
 
   // inverse of first form
   double inv_form1[2][2];
-  double inv_det_form1 =
-    1. / (form1[0][0] * form1[1][1] - form1[1][0] * form1[0][1]);
-  inv_form1[0][0] = inv_det_form1 * form1[1][1];
-  inv_form1[1][1] = inv_det_form1 * form1[0][0];
-  inv_form1[1][0] = inv_form1[0][1] = -1 * inv_det_form1 * form1[0][1];
+  double denom = (form1[0][0] * form1[1][1] - form1[1][0] * form1[0][1]);
+  if(denom) {
+    double inv_det_form1 = 1. / denom;
+    inv_form1[0][0] = inv_det_form1 * form1[1][1];
+    inv_form1[1][1] = inv_det_form1 * form1[0][0];
+    inv_form1[1][0] = inv_form1[0][1] = -1 * inv_det_form1 * form1[0][1];
 
-  // N = (inverse of form1) X (form2)
-  fullMatrix<double> N(2, 2);
-  N(0, 0) = inv_form1[0][0] * form2[0][0] + inv_form1[0][1] * form2[1][0];
-  N(0, 1) = inv_form1[0][0] * form2[0][1] + inv_form1[0][1] * form2[1][1];
-  N(1, 0) = inv_form1[1][0] * form2[0][0] + inv_form1[1][1] * form2[1][0];
-  N(1, 1) = inv_form1[1][0] * form2[0][1] + inv_form1[1][1] * form2[1][1];
+    // N = (inverse of form1) X (form2)
+    fullMatrix<double> N(2, 2);
+    N(0, 0) = inv_form1[0][0] * form2[0][0] + inv_form1[0][1] * form2[1][0];
+    N(0, 1) = inv_form1[0][0] * form2[0][1] + inv_form1[0][1] * form2[1][1];
+    N(1, 0) = inv_form1[1][0] * form2[0][0] + inv_form1[1][1] * form2[1][0];
+    N(1, 1) = inv_form1[1][0] * form2[0][1] + inv_form1[1][1] * form2[1][1];
 
-  // eigen values and vectors of N
-  fullMatrix<double> vl(2, 2), vr(2, 2);
-  fullVector<double> dr(2), di(2);
-  if(N.eig(dr, di, vl, vr, true)) {
-    eigVal[0] = fabs(dr(0));
-    eigVal[1] = fabs(dr(1));
-    eigVec[0] = vr(0, 0);
-    eigVec[2] = vr(1, 0);
-    eigVec[1] = vr(0, 1);
-    eigVec[3] = vr(1, 1);
+    // eigen values and vectors of N
+    fullMatrix<double> vl(2, 2), vr(2, 2);
+    fullVector<double> dr(2), di(2);
+    if(N.eig(dr, di, vl, vr, true)) {
+      eigVal[0] = fabs(dr(0));
+      eigVal[1] = fabs(dr(1));
+      eigVec[0] = vr(0, 0);
+      eigVec[2] = vr(1, 0);
+      eigVec[1] = vr(0, 1);
+      eigVec[3] = vr(1, 1);
+      if(fabs(di(0)) > 1.e-12 || fabs(di(1)) > 1.e-12) {
+        Msg::Warning("Imaginary eigenvalues in metric");
+      }
+      return;
+    }
   }
-  else {
-    Msg::Error("Problem in eigen vectors computation");
-    Msg::Error(" N = [ %f %f ]", N(0, 0), N(0, 1));
-    Msg::Error("     [ %f %f ]", N(1, 0), N(1, 1));
-    for(int i = 0; i < 2; i++) eigVal[i] = 0.;
-    for(int i = 0; i < 4; i++) eigVec[i] = 0.;
-  }
-  if(fabs(di(0)) > 1.e-12 || fabs(di(1)) > 1.e-12) {
-    Msg::Error("Found imaginary eigenvalues");
-  }
+
+  Msg::Warning("Could not compute metric eigenvectors");
+  for(int i = 0; i < 2; i++) eigVal[i] = 0.;
+  for(int i = 0; i < 4; i++) eigVec[i] = 0.;
 }
 
 void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
