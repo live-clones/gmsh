@@ -72,8 +72,10 @@ public:
                          int numPoints);
   bool addCompoundBSpline(int &tag, const std::vector<int> &curveTags,
                           int numPoints);
-  bool addLineLoop(int &tag, const std::vector<int> &curveTags,
-                   bool reorient = false);
+  bool addCurveLoop(int &tag, const std::vector<int> &curveTags,
+                    bool reorient = false);
+  bool addCurveLoops(const std::vector<int> &curveTags,
+                     std::vector<int> &curveLoopTags);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
   bool addDiscreteSurface(int &tag);
   bool addSurfaceFilling(int &tag, const std::vector<int> &wireTags,

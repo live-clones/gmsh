@@ -2140,6 +2140,20 @@ GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n, const
   return result_api_;
 }
 
+GMSH_API void gmshModelGeoAddCurveLoops(int * curveTags, size_t curveTags_n, int ** tags, size_t * tags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    std::vector<int> api_tags_;
+    gmsh::model::geo::addCurveLoops(api_curveTags_, api_tags_);
+    vector2ptr(api_tags_, tags, tags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelGeoAddPlaneSurface(int * wireTags, size_t wireTags_n, const int tag, int * ierr)
 {
   int result_api_ = 0;

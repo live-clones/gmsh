@@ -1466,6 +1466,12 @@ GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n,
                                       const int reorient,
                                       int * ierr);
 
+/* Add curve loops in the built-in CAD representation based on the curves
+ * `curveTags'. Return the `tags' of found curve loops, if any. */
+GMSH_API void gmshModelGeoAddCurveLoops(int * curveTags, size_t curveTags_n,
+                                        int ** tags, size_t * tags_n,
+                                        int * ierr);
+
 /* Add a plane surface in the built-in CAD representation, defined by one or
  * more curve loops `wireTags'. The first curve loop defines the exterior
  * contour; additional curve loop define holes. If `tag' is positive, set the
@@ -1574,7 +1580,7 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
  * height of the different layers. If `recombine' is set, recombine the mesh
  * in the layers. A second boundary layer can be created from the same
  * entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
- * view to either specify the normals (if the view cnotains a vector field) or
+ * view to either specify the normals (if the view contains a vector field) or
  * scale the normals (if the view is scalar). */
 GMSH_API void gmshModelGeoExtrudeBoundaryLayer(int * dimTags, size_t dimTags_n,
                                                int ** outDimTags, size_t * outDimTags_n,

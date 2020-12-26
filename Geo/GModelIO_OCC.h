@@ -216,7 +216,7 @@ public:
                   const std::vector<double> &knots = std::vector<double>(),
                   const std::vector<int> &multiplicities = std::vector<int>());
   bool addWire(int &tag, const std::vector<int> &curveTags, bool checkClosed);
-  bool addLineLoop(int &tag, const std::vector<int> &curveTags);
+  bool addCurveLoop(int &tag, const std::vector<int> &curveTags);
   bool addRectangle(int &tag, double x, double y, double z, double dx,
                     double dy, double roundedRadius = 0.);
   bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry);
@@ -512,7 +512,7 @@ public:
   {
     return _error("add wire");
   }
-  bool addLineLoop(int &tag, const std::vector<int> &curveTags)
+  bool addCurveLoop(int &tag, const std::vector<int> &curveTags)
   {
     return _error("add line loop");
   }

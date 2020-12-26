@@ -3678,6 +3678,27 @@ class model:
             return api_result_
 
         @staticmethod
+        def addCurveLoops(curveTags):
+            """
+            gmsh.model.geo.addCurveLoops(curveTags)
+
+            Add curve loops in the built-in CAD representation based on the curves
+            `curveTags'. Return the `tags' of found curve loops, if any.
+
+            Return `tags'.
+            """
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
+            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelGeoAddCurveLoops(
+                api_curveTags_, api_curveTags_n_,
+                byref(api_tags_), byref(api_tags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorint(api_tags_, api_tags_n_.value)
+
+        @staticmethod
         def addPlaneSurface(wireTags, tag=-1):
             """
             gmsh.model.geo.addPlaneSurface(wireTags, tag=-1)
@@ -3897,7 +3918,7 @@ class model:
             height of the different layers. If `recombine' is set, recombine the mesh
             in the layers. A second boundary layer can be created from the same
             entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
-            view to either specify the normals (if the view cnotains a vector field) or
+            view to either specify the normals (if the view contains a vector field) or
             scale the normals (if the view is scalar).
 
             Return `outDimTags'.

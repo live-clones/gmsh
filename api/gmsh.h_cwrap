@@ -2527,6 +2527,20 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
+      // Add curve loops in the built-in CAD representation based on the curves
+      // `curveTags'. Return the `tags' of found curve loops, if any.
+      inline void addCurveLoops(const std::vector<int> & curveTags,
+                                std::vector<int> & tags)
+      {
+        int ierr = 0;
+        int *api_curveTags_; size_t api_curveTags_n_; vector2ptr(curveTags, &api_curveTags_, &api_curveTags_n_);
+        int *api_tags_; size_t api_tags_n_;
+        gmshModelGeoAddCurveLoops(api_curveTags_, api_curveTags_n_, &api_tags_, &api_tags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_curveTags_);
+        tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+      }
+
       // Add a plane surface in the built-in CAD representation, defined by one or
       // more curve loops `wireTags'. The first curve loop defines the exterior
       // contour; additional curve loop define holes. If `tag' is positive, set the
@@ -2700,7 +2714,7 @@ namespace gmsh { // Top-level functions
       // the height of the different layers. If `recombine' is set, recombine the
       // mesh in the layers. A second boundary layer can be created from the same
       // entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
-      // view to either specify the normals (if the view cnotains a vector field)
+      // view to either specify the normals (if the view contains a vector field)
       // or scale the normals (if the view is scalar).
       inline void extrudeBoundaryLayer(const gmsh::vectorpair & dimTags,
                                        gmsh::vectorpair & outDimTags,

@@ -68,12 +68,14 @@ bool MEdge::isInside(MVertex *v) const
 bool SortEdgeConsecutive(const std::vector<MEdge> &e,
                          std::vector<std::vector<MVertex *> > &vs)
 {
+  vs.clear();
   if(e.empty()) return true;
   std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan> c;
 
   for(size_t i = 0; i < e.size(); i++) {
     MVertex *v0 = e[i].getVertex(0);
     MVertex *v1 = e[i].getVertex(1);
+
     std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan>
       ::iterator it0 = c.find(v0), it1 = c.find(v1);
     if(it0 == c.end())

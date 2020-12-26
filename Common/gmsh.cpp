@@ -5186,9 +5186,16 @@ GMSH_API int gmsh::model::geo::addCurveLoop(const std::vector<int> &curveTags,
 {
   if(!_checkInit()) return -1;
   int outTag = tag;
-  GModel::current()->getGEOInternals()->addLineLoop(outTag, curveTags,
-                                                    reorient);
+  GModel::current()->getGEOInternals()->addCurveLoop(outTag, curveTags,
+                                                     reorient);
   return outTag;
+}
+
+GMSH_API void gmsh::model::geo::addCurveLoops(const std::vector<int> &curveTags,
+                                              std::vector<int> &tags)
+{
+  if(!_checkInit()) return;
+  GModel::current()->getGEOInternals()->addCurveLoops(curveTags, tags);
 }
 
 GMSH_API int gmsh::model::geo::addPlaneSurface(const std::vector<int> &wireTags,
@@ -5654,7 +5661,7 @@ GMSH_API int gmsh::model::occ::addCurveLoop(const std::vector<int> &curveTags,
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->addLineLoop(outTag, curveTags);
+  GModel::current()->getOCCInternals()->addCurveLoop(outTag, curveTags);
   return outTag;
 }
 

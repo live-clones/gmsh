@@ -1670,6 +1670,13 @@ namespace gmsh { // Top-level functions
                                 const int tag = -1,
                                 const bool reorient = false);
 
+      // gmsh::model::geo::addCurveLoops
+      //
+      // Add curve loops in the built-in CAD representation based on the curves
+      // `curveTags'. Return the `tags' of found curve loops, if any.
+      GMSH_API void addCurveLoops(const std::vector<int> & curveTags,
+                                  std::vector<int> & tags);
+
       // gmsh::model::geo::addPlaneSurface
       //
       // Add a plane surface in the built-in CAD representation, defined by one or
@@ -1788,7 +1795,7 @@ namespace gmsh { // Top-level functions
       // the height of the different layers. If `recombine' is set, recombine the
       // mesh in the layers. A second boundary layer can be created from the same
       // entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
-      // view to either specify the normals (if the view cnotains a vector field)
+      // view to either specify the normals (if the view contains a vector field)
       // or scale the normals (if the view is scalar).
       GMSH_API void extrudeBoundaryLayer(const gmsh::vectorpair & dimTags,
                                          gmsh::vectorpair & outDimTags,

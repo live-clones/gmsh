@@ -1410,7 +1410,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
   return true;
 }
 
-bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
+bool OCC_Internals::addCurveLoop(int &tag, const std::vector<int> &curveTags)
 {
   std::vector<int> tags(curveTags);
   // all curve tags are > 0 for OCC : to improve compatibility between GEO and

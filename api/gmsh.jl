@@ -3131,6 +3131,26 @@ function addCurveLoop(curveTags, tag = -1, reorient = false)
 end
 
 """
+    gmsh.model.geo.addCurveLoops(curveTags)
+
+Add curve loops in the built-in CAD representation based on the curves
+`curveTags`. Return the `tags` of found curve loops, if any.
+
+Return `tags`.
+"""
+function addCurveLoops(curveTags)
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGeoAddCurveLoops, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cint}, curveTags), length(curveTags), api_tags_, api_tags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    return tags
+end
+
+"""
     gmsh.model.geo.addPlaneSurface(wireTags, tag = -1)
 
 Add a plane surface in the built-in CAD representation, defined by one or more
@@ -3304,7 +3324,7 @@ elements in each layer. If `height` is not empty, it provides the height of the
 different layers. If `recombine` is set, recombine the mesh in the layers. A
 second boundary layer can be created from the same entities if `second` is set.
 If `viewIndex` is >= 0, use the corresponding view to either specify the normals
-(if the view cnotains a vector field) or scale the normals (if the view is
+(if the view contains a vector field) or scale the normals (if the view is
 scalar).
 
 Return `outDimTags`.
