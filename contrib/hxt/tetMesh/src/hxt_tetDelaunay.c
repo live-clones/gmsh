@@ -22,7 +22,6 @@
 */
 
 /* compile-time parameters */
-// #define HXT_DELAUNAY_LOW_MEMORY /* doesn't use any buffer (a lot slower, except if you are at the limit of filling the RAM) */
 
 #define SMALLEST_PASS 2048
 
@@ -45,9 +44,7 @@ typedef struct {
 
 
 typedef struct {
-#ifndef HXT_DELAUNAY_LOW_MEMORY
   uint64_t hxtDeclareAligned Map[1024];
-#endif
 
   struct {
     cavityBnd_t* array;
@@ -645,9 +642,6 @@ static HXTStatus isStarShaped(TetLocal* local, HXTMesh* mesh, const uint32_t vta
         return HXT_STATUS_INTERNAL;
       }
     }
-    else {
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "ghost vertex in constrained cavity");
-    }
   }
   return HXT_STATUS_OK;
 }
@@ -992,10 +986,9 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
 }
 
 
-/**************************************************************
- * compute adjacencies with a matrix O(1) insertion and search
- **************************************************************/
-#ifndef HXT_DELAUNAY_LOW_MEMORY
+/**********************************************************************
+ * compute adjacencies with a matrix O(1) insertion and search => O(n)
+ **********************************************************************/
 static inline HXTStatus computeAdjacenciesFast(HXTMesh* mesh, TetLocal* local, unsigned char* __restrict__ verticesID, const unsigned char blength){
   cavityBnd_t* __restrict__ bnd = local->ball.array;
 
@@ -1062,63 +1055,57 @@ HXT_ASSERT(((size_t) verticesID)%SIMD_ALIGN==0);
 
   return HXT_STATUS_OK;
 }
-#endif
 
 
 /**************************************************************
- * compute adjacencies with a stack O(n) insertion and search
+ * compute adjacencies by sorting => O(n log n)
  **************************************************************/
-static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, const uint64_t start, const uint64_t blength){
+static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, const uint64_t start, const uint64_t blength)
+{
+  HXTGroup2* edges;
 
-  uint64_t tlength = 0;
-  const uint64_t middle = blength*3/2; // 3N
+  HXT_CHECK( askForBall(local, 2 * blength) );
+  edges = (HXTGroup2*) local->ball.array; // recycle array
 
-  // N+2 point on the surface of the cavity
-  // 2N triangle on the surface of the cavity, x3 (4*0.5+1) data = 6N+9 uint64_t
-  // => enough place for the 3N edge x2 data = 6N uint64_t
-  uint64_t* Tmp = (uint64_t*) local->ball.array;
-  const unsigned index[4] = {2,3,1,2};
+  const uint8_t index[4] = {2,3,1,2};
+
+  const uint32_t n = mesh->vertices.num + 1;
+  uint64_t maxKey = 0;
 
   for (uint64_t i=0; i<blength; i++)
   {
     uint64_t curTet = local->deleted.array[start+ i];
     const uint32_t* __restrict__ Node = mesh->tetrahedra.node + 4*curTet;
-
-    // pointer to the position of Node[0] in the Tmp array
     for (unsigned j=0; j<3; j++)
     {
-      // define the edge by the minimum vertex and the other
-      uint64_t key = ((uint64_t) Node[index[j]]<<32) + Node[index[j+1]];
+      uint32_t n0 = Node[index[j]] + 1;
+      uint32_t n1 = Node[index[j+1]] + 1;
 
-      // linear searching/pushing into Tmp
-      uint64_t k;
-      for (k=0; k<tlength; k++) // this is the only nested loop... the one that cost it all
-      {
-        if(Tmp[k]==key)
-          break;
-      }
+      if(n0 < n1)
+        edges[3*i + j].v[0] = ((uint64_t) n0 * n) + n1;
+      else
+        edges[3*i + j].v[0] = ((uint64_t) n1 * n) + n0;
 
-      uint64_t curFace = 4*curTet+j+1;
+      if(edges[3*i + j].v[0] > maxKey)
+        maxKey = edges[3*i + j].v[0];
 
-      // we did not found it
-      if(k==tlength){
-        Tmp[tlength] = (key>>32) + (key<<32);
-        Tmp[middle + tlength] = curFace;
-        tlength++;
-      }
-      else{// we found the neighbour !
-        uint64_t pairValue = Tmp[middle+k];
-        mesh->tetrahedra.neigh[curFace] = pairValue;
-        mesh->tetrahedra.neigh[pairValue] = curFace;
-        tlength--;
-        if(k<tlength){// put the last entry in the one we just discovered
-          Tmp[k] = Tmp[tlength];
-          Tmp[middle+k] = Tmp[middle + tlength];
-        }
-      }
+      edges[3*i + j].v[1] = 4*curTet+j+1;
     }
   }
-  HXT_ASSERT_MSG(tlength==0, "Failed to compute adjacencies (s)"); // verify that all neighbor were found
+
+  HXT_CHECK( group2_sort_v0(edges, 3*blength, maxKey) );
+
+  for(int i=0; i<3*blength; i+=2) {
+#ifndef NDEBUG
+    if(edges[i].v[0] != edges[i+1].v[0])
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "Failed to compute adjacencies (b)");
+#endif
+    uint64_t f0 = edges[i].v[1];
+    uint64_t f1 = edges[i+1].v[1];
+
+    mesh->tetrahedra.neigh[f0] = f1;
+    mesh->tetrahedra.neigh[f1] = f0;
+  }
   return HXT_STATUS_OK;
 }
 
@@ -1165,7 +1152,6 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
     // we recycle neigh to contain newTet (used in computeAdjacencies)
     local->ball.array[i].neigh = 4*newTet;
   }
-#ifndef HXT_DELAUNAY_LOW_MEMORY
   if(blength<=58){ // N+2<=31 => N<=29 => 2N<=58
   #ifndef NDEBUG
     HXT_CHECK( computeAdjacenciesFast(mesh, local, verticesID, blength) );
@@ -1173,14 +1159,8 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
     computeAdjacenciesFast(mesh, local, verticesID, blength);
   #endif
   }
-  else
-#endif
-  {
-  #ifndef NDEBUG
+  else {
     HXT_CHECK(computeAdjacenciesSlow(mesh, local, start, blength) );
-  #else
-    computeAdjacenciesSlow(mesh, local, start, blength);
-  #endif
   }
 
 
@@ -1405,11 +1385,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
 
 
   unsigned char*  verticesID;
-#ifdef HXT_DELAUNAY_LOW_MEMORY
-  verticesID = NULL; // we do not need it
-#else
   HXT_CHECK( hxtAlignedMalloc(&verticesID, mesh->vertices.num*sizeof(unsigned char)) );
-#endif
 
   TetLocal* Locals;
   HXT_CHECK( hxtMalloc(&Locals, maxPartitions*sizeof(TetLocal)) );
@@ -1689,8 +1665,8 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
           ******************************************************/
           for (uint32_t i=0; i<localN; i++)
           {
-            if( i%1000==0)
-              printf("%f %%\n", 100.0*i/localN);
+            // if( i%1000==0)
+            //   printf("%f %%\n", 100.0*i/localN);
             uint32_t passIndex = (localStart+i)%passLength;
             uint32_t vta = nodeInfo[passStart + passIndex].node;
             if(nodeInfo[passStart + passIndex].status==HXT_STATUS_TRYAGAIN){
