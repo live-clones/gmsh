@@ -2,7 +2,7 @@ import gmsh
 
 gmsh.initialize()
 
-N = 2500
+const N = 2500
 
 tic = gmsh.logger.getWallTime()
 # x, y, z coordinates of all the nodes
