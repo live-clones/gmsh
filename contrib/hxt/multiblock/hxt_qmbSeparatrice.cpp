@@ -109,6 +109,12 @@ int Separatrice::addIntersectingSepID(int ID)
   return 1;
 }
 
+int Separatrice::clearIntersections()
+{
+  m_intersection.clear();
+  return 1;
+}
+
 std::vector<int>* Separatrice::getPIntersection()
 {
   return &(m_intersection);

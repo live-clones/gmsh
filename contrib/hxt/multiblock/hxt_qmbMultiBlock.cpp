@@ -3067,7 +3067,7 @@ void MultiBlock::getmbEdgIDFrom2ExtrVert(int node1, int node2, int *edgID){
     int isDuplicate2End = isPointDuplicateVec(&m_extraordVertices[node2], &m_mbEdges[i][m_mbEdges[i].size()-1], &norm);
     
     if((isDuplicate1Start && isDuplicate2End) || (isDuplicate1End && isDuplicate2Start))
-      *edgID=i;
+      *edgID=(int)i;
   }
   
   return;
@@ -3105,16 +3105,22 @@ HXTStatus MultiBlock::getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatches
   int edgID[1];
   if(m_extraordVertTjunc.size()>0){
     for(uint64_t i=0; i<m_extraordVertTjunc.size(); i++){
+      std::cout << "vert: " << i << " / " << m_extraordVertTjunc.size()-1 << std::endl;
       for(uint64_t j=0; j<m_vectSep.size(); j++){
+	std::cout << "sep: " << j << std::endl;
 	double min=std::numeric_limits<double>::max();
 	double distance=-1.0;
 	Separatrice *sep=&(m_vectSep[j]);
+	std::cout << "flag1 " << std::endl;
 	if(sep->isSaved() && !(sep->getIsLimitCycle())){ //separatrice which is not a limit cycle
+	  std::cout << "flag2 " << std::endl;
 	  int sepID=sep->getID();
 	  int ind=-1;
 	  getCleanedSepIndFromSepID(sepID, &ind);
+	  std::cout << "flag3 " << std::endl;
 	  for(uint64_t k=0; k<m_sepGraphNodes[ind].size(); k++){
 	    if(m_extraordVertTjunc[i]==m_sepGraphNodes[ind][k]){
+	      std::cout << "flag4 " << std::endl;
 	      //previous node
 	      isExtrVertOnBdry(m_sepGraphNodes[ind][k-1], &isBdry);
 	      isExtrVertTjunction(m_sepGraphNodes[ind][k-1], &isTjunction);
@@ -3162,26 +3168,33 @@ HXTStatus MultiBlock::getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatches
 	    }
 	  }
 	}
+	std::cout << "flag5 " << std::endl;
 	if(sep->isSaved() && (sep->getIsLimitCycle())){ //separtrice which is a limit cycle
+	  std::cout << "flag6 " << std::endl;
 	  int sepID=sep->getID();
 	  int ind=-1;
 	  getCleanedSepIndFromSepID(sepID, &ind);
 	  if(m_extraordVertTjunc[i] == m_sepGraphNodes[ind][m_sepGraphNodes[ind].size()-1]){
 	    // nodeID2 = m_sepGraphNodes[ind][m_sepGraphNodes[ind].size()-2]; //DUPLICATES! to fix
 	    nodeID2 = m_sepGraphNodes[ind][0];
+	    // std::cout<<"-------> Node2: "<<m_sepGraphNodes[ind][0]<<std::endl;
+	    // std::cout<<"------>t junc: "<< m_extraordVertTjunc[i]<<std::endl;
 	  }
 	}
+	std::cout << "flag7 " << std::endl;
       }
       //finding a right block
-      // std::cout<<"Indices: "<<nodeID1<<"; "<<nodeID2<<"; "<<m_extraordVertTjunc[i]<<std::endl;
+      std::cout<<"Indices: "<<nodeID1<<"; "<<nodeID2<<"; "<<m_extraordVertTjunc[i]<<std::endl;
       int blockID=-1;
       getBlockIDFromVertInd(nodeID1, nodeID2, m_extraordVertTjunc[i], &blockID);
-      // std::cout<<"block id: "<<blockID<<std::endl;
+      std::cout<<"block id: "<<blockID<<std::endl;
       tJunctionPatchesIDs->push_back(blockID);
-      
+      //std::cout<<"---------> Nodes: "<<nodeID2<<" and "<< m_extraordVertTjunc[i]<<std::endl;
       int edgID[1];
       getmbEdgIDFrom2ExtrVert(nodeID2, m_extraordVertTjunc[i], edgID);
-      std::cout<<"edg: "<<edgID[0]<<std::endl;
+      // std::cout<<"Here"<<std::endl;
+      // std::cout<<"edg: "<<edgID[0]<<std::endl;
+      // std::cout<<"---------> Nodes: "<<nodeID2<<" and "<< m_extraordVertTjunc[i]<<std::endl;
       int locEdgInd=-1;
       for(uint64_t s=0; s<m_mbBlock2Edg[blockID].size(); s++){
       	if(edgID[0] == m_mbBlock2Edg[blockID][s])
@@ -3189,7 +3202,6 @@ HXTStatus MultiBlock::getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatches
       }
       std::cout<<"locEdgInd: "<<locEdgInd<<std::endl;
       locTjunEdgInd->push_back(locEdgInd);
-      std::cout<<"flag1"<<std::endl;
       int locTInd=-1;
       for(uint64_t s=0; s<m_mbQuads[blockID].size(); s++){
 	if(m_mbQuads[blockID][s] == m_extraordVertTjunc[i])
@@ -3198,9 +3210,7 @@ HXTStatus MultiBlock::getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatches
       std::cout<<"t loc ind: "<<locTInd<<std::endl;
       locTjuncInd->push_back(locTInd);
     }
-    std::cout<<"flag2"<<std::endl;
   }
-  std::cout<<"flag3"<<std::endl;
   
   return  HXT_STATUS_OK;
 }
@@ -3516,6 +3526,7 @@ std::array<double,3> BlockParametrization::getPhysCoordFromParamCoord(std::array
     }
   }
   if(!isPointBelongingToTri){
+    std::cout << "param coord: " << paramCoord[0] << " / " << paramCoord[1] << " / " << paramCoord[2] << std::endl;
     std::cout << "Unable to find point in parametric space" << std::endl;
     exit(0);
   }
@@ -3592,6 +3603,7 @@ std::array<double,3> BlockParametrization::getParamCoordFromPhysCoord(std::array
     }
   }
   if(!isPointBelongingToTri){
+    std::cout << "physical coord: " << physCoord[0] << " / " << physCoord[1] << " / " << physCoord[2] << std::endl;
     std::cout << "Unable to find point in parametric space" << std::endl;
     exit(0);
   }
@@ -4356,6 +4368,7 @@ HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
   }
   std::cout<<" "<<std::endl;
   std::cout<<"--Get and store partition per edge--"<<std::endl;
+
   //computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);
   computeAdequatePartitionPerEdge(m_minEdgLength/(1.0), hVal);
   // computeAdequatePartitionPerEdge(0.02, hVal);
@@ -4952,7 +4965,7 @@ HXTStatus MultiBlock::modifyTBlockNgbrs_TjuncOnRight(int tBlockID, int locIndTju
   std::vector<uint64_t> newTri2M;
   std::vector<std::array<double,3>> newEdg2M;
   std::cout<<"Merge via param edg2M"<<std::endl;
-  m_mbQuadParametrization[blockK].getStraigthLine(m_extraordVertices[m_mbQuads[blockK][(k+3)%nVertK]], m_extraordVertices[m_mbQuads[blockK][(k+1)%nVertK]], newEdg2M, newTri2M, 1000);
+  m_mbQuadParametrization[blockK].getStraigthLine(m_extraordVertices[m_mbQuads[blockK][(k+3)%nVertK]], m_extraordVertices[m_mbQuads[blockK][(k+1)%nVertK]], newEdg2M, newTri2M, 10000);
   m_mbEdges.push_back(newEdg2M);  m_mbEdgesTri.push_back(newTri2M);  
 
 
@@ -5034,13 +5047,21 @@ HXTStatus MultiBlock::modifyTBlockNgbrs_TjuncOnLeft(int tBlockID, int locIndTjun
   std::cout<<"edgK= "<<edgK<<std::endl;
   size_t nVertK=m_mbQuads[blockK].size();
   std::cout<<"nVertK: "<<nVertK<<std::endl;
+  uint64_t currentEdg = m_mbBlock2Edg[blockK][edgK];
   uint64_t blockM =(uint64_t)-1;
-  if(m_mbEdg2Block[edgK][0] == blockK){
-    blockM= m_mbEdg2Block[edgK][1];
+  if(m_mbEdg2Block[currentEdg][0] == blockK){
+    blockM= m_mbEdg2Block[currentEdg][1];
   }else{
-    blockM= m_mbEdg2Block[edgK][0];
+    blockM= m_mbEdg2Block[currentEdg][0];
   }
+  std::cout<<"possible blocks: "<<m_mbEdg2Block[currentEdg][1]<<" and "<<m_mbEdg2Block[currentEdg][0]<<std::endl;
+  std::cout<<"Edg number: "<<currentEdg<<" , nodes: "<<m_mbQuads[blockK][k]<<" and "<<m_mbQuads[blockK][(k+nVertK-1)%nVertK]<<std::endl;
   std::cout<<"block M: "<<blockM<<std::endl;
+  // std::cout<<"oldVertices M: ";
+  // for(uint64_t i=0; i<m_mbQuads[blockM].size(); i++)
+  //   std::cout<<m_mbQuads[blockM][i]<<", ";
+  // std::cout<<" "<<std::endl;
+ 
   size_t nVertM=m_mbQuads[blockM].size(); 
   std::cout<<"nVertM: "<<nVertM<<std::endl;
   int m=-1;
@@ -5057,7 +5078,7 @@ HXTStatus MultiBlock::modifyTBlockNgbrs_TjuncOnLeft(int tBlockID, int locIndTjun
   std::cout<<"edgM= "<<edgM<<std::endl;
   std::vector<int> newBlockVerticesM;
   for(size_t i=0; i<nVertM-1; i++)
-    newBlockVerticesM.push_back(m_mbQuads[blockM][(m+1)%nVertM]);
+    newBlockVerticesM.push_back(m_mbQuads[blockM][(m+1+i)%nVertM]);
   newBlockVerticesM.push_back(m_mbQuads[blockK][(k+nVertK-1)%nVertK]);
   m_mbQuads.push_back(newBlockVerticesM);
   std::cout<<"newVertices M: ";
@@ -5074,7 +5095,18 @@ HXTStatus MultiBlock::modifyTBlockNgbrs_TjuncOnLeft(int tBlockID, int locIndTjun
   std::vector<uint64_t> newTri2M;
   std::vector<std::array<double,3>> newEdg2M;
   std::cout<<"Merge via param edg2M"<<std::endl;
-  m_mbQuadParametrization[blockK].getStraigthLine(m_extraordVertices[m_mbQuads[blockK][(k+1)%nVertK]], m_extraordVertices[m_mbQuads[blockK][(k+nVertK-1)%nVertK]], newEdg2M, newTri2M, 1000);
+  std::cout << "indice node 1: " << m_mbQuads[blockK][((k+1)%nVertK)] << " / local ind: " << (k+1)%nVertK << " expected value: " << m_mbQuads[blockK][0] << std::endl;
+  std::cout << "indice node 2: " << m_mbQuads[blockK][(k+nVertK-1)%nVertK] << " / local ind: " << (k+nVertK-1)%nVertK << " expected value: " << m_mbQuads[blockK][2] << std::endl;
+  std::cout<<"Vertices of block K: "<<std::endl;
+  for(uint64_t i=0; i<m_mbQuads[blockK].size(); i++)
+    std::cout<<m_mbQuads[blockK][i]<<", ";
+  std::cout<<" "<<std::endl;
+  // std::cout<<"block K: "<<blockK<<std::endl;
+  // std::cout<<"blockK vertices: ";
+  // for(uint64_t i=0; i<m_mbQuads[blockK].size(); i++)
+  //   std::cout<<m_mbQuads[blockK][i]<<", ";
+  // std::cout<<" "<<std::endl;
+  m_mbQuadParametrization[blockK].getStraigthLine(m_extraordVertices[m_mbQuads[blockK][(k+1)%nVertK]], m_extraordVertices[m_mbQuads[blockK][(k+nVertK-1)%nVertK]], newEdg2M, newTri2M, 10000);
   m_mbEdges.push_back(newEdg2M);  m_mbEdgesTri.push_back(newTri2M); 
 
   
@@ -5126,7 +5158,7 @@ HXTStatus MultiBlock::modifyTBlockNgbrs_TjuncOnLeft(int tBlockID, int locIndTjun
       blockT=m_vert2Block[m_mbQuads[blockK][k]][i];
   }
   size_t nVertT=m_mbQuads[blockT].size();
-  std::cout<<"Block T= "<<blockT<<std::endl;
+  std::cout<<"Block T= "<<blockT<<" ,num vertices: "<<nVertT<< std::endl;
   int t=-1;
   for(uint64_t i=0; i<m_mbQuads[blockT].size(); i++){
     if(m_mbQuads[blockT][i] == m_mbQuads[blockK][k])
