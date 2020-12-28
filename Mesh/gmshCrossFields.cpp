@@ -2298,6 +2298,16 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
       }
     }
   }
+
+  constexpr bool SHOW_SINGULARITIES = true;
+  if (SHOW_SINGULARITIES) {
+    for (MVertex* v: singularities) {
+      SVector3 p = v->point();
+      GeoLog::add({p},0.,"singularities");
+    }
+    GeoLog::flush();
+  }
+
   std::set<MVertex *, MVertexPtrLessThan> _all = boundaries;
   _all.insert(singularities.begin(), singularities.end());
 

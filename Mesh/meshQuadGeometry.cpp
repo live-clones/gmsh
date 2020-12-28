@@ -20,12 +20,16 @@
 #include "Options.h"
 #include "fastScaledCrossField.h"
 #include "meshSurfaceProjection.h"
+#include "meshWinslow2d.h"
 
 #include "gmsh.h"
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
 #include "qmt_utils.hpp" // For debug printing
+#include "robin_hood.h"
+#include "meshQuadUtils.h"
+#include "geolog.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -38,6 +42,702 @@
 
 using std::vector;
 using std::array;
+using namespace QuadUtils;
+using namespace GeometryVec3;
+
+template <size_t N>
+bool kernelLaplacian(const std::array<vec3,N>& points, vec3& newPos) {
+  if (N == 0) return false;
+  newPos = {0.,0.,0.};
+  for (size_t i = 0; i < N; ++i) {
+    newPos = newPos + points[i];
+  }
+  newPos = 1./double(N) * newPos;
+  return true;
+}
+
+template <size_t N>
+bool kernelAngleBased(const vec3& center, const std::array<vec3,N>& points, vec3& newPos) {
+  /* template version to avoid memory allocation */
+  std::array<vec3,N> rotated;
+  std::array<double,N> angles;
+  double sum_angle = 0.;
+  for (size_t i = 0; i < N; ++i) {
+    const vec3& prev = points[(N+i-1)%N];
+    const vec3& cur = points[i];
+    const vec3& next = points[(i+1)%N];
+    vec3 oldDir = (center - cur);
+    double len = length(oldDir);
+    if (len == 0.) return false;
+    vec3 d1 = prev-cur;
+    if (length2(d1) == 0.) return false;
+    vec3 d2 = next-cur;
+    if (length2(d2) == 0.) return false;
+    normalize_accurate(d1);
+    normalize_accurate(d2);
+    vec3 newDir = d1+d2;
+    if (length2(newDir) == 0.) return false;
+    normalize_accurate(newDir);
+    if (dot(newDir,oldDir) < 0.) {
+      newDir = -1. * newDir;
+    }
+    rotated[i] = cur + len * newDir;
+    normalize_accurate(oldDir);
+    double agl = angleVectorsAlreadyNormalized(newDir,oldDir);
+    angles[i] = agl;
+    sum_angle += agl;
+  }
+  if (sum_angle == 0.) return false;
+  newPos.data()[0] = 0.;
+  newPos.data()[1] = 0.;
+  newPos.data()[2] = 0.;
+  for (size_t i = 0; i < N; ++i) {
+    double w = angles[i] / sum_angle;
+    // double w = 1./double(N);
+    newPos = newPos + w * rotated[i];
+  }
+  return true;
+}
+
+bool kernelLaplacian(const std::vector<vec3>& points, vec3& newPos) {
+  const size_t N = points.size();
+  if (N == 0) return false;
+  newPos = {0.,0.,0.};
+  for (size_t i = 0; i < N; ++i) {
+    newPos = newPos + points[i];
+  }
+  newPos = 1./double(N) * newPos;
+  return true;
+}
+
+bool kernelAngleBased(const vec3& center, const std::vector<vec3>& points, vec3& newPos) {
+  const size_t N = points.size();
+  std::vector<vec3> rotated(N);
+  std::vector<double> angles(N);
+  double sum_angle = 0.;
+  for (size_t i = 0; i < N; ++i) {
+    const vec3& prev = points[(N+i-1)%N];
+    const vec3& cur = points[i];
+    const vec3& next = points[(i+1)%N];
+    vec3 oldDir = (center - cur);
+    double len = length(oldDir);
+    if (len == 0.) return false;
+    vec3 d1 = prev-cur;
+    if (length2(d1) == 0.) return false;
+    vec3 d2 = next-cur;
+    if (length2(d2) == 0.) return false;
+    normalize_accurate(d1);
+    normalize_accurate(d2);
+    vec3 newDir = d1+d2;
+    if (length2(newDir) == 0.) return false;
+    normalize_accurate(newDir);
+    if (dot(newDir,oldDir) < 0.) {
+      newDir = -1. * newDir;
+    }
+    rotated[i] = cur + len * newDir;
+    normalize_accurate(oldDir);
+    double agl = angleVectorsAlreadyNormalized(newDir,oldDir);
+    angles[i] = agl;
+    sum_angle += agl;
+  }
+  if (sum_angle == 0.) return false;
+  newPos.data()[0] = 0.;
+  newPos.data()[1] = 0.;
+  newPos.data()[2] = 0.;
+  for (size_t i = 0; i < N; ++i) {
+    double w = angles[i] / sum_angle;
+    // double w = 1./double(N);
+    newPos = newPos + w * rotated[i];
+  }
+  return true;
+}
+
+inline bool kernelWinslowSpecialStencil(const vec3 ptsStencil[8], vec3& newPos) {
+  /* Stencil:
+   *   6---1---4
+   *   |   |   |
+   *   2--- ---0
+   *   |   |   |
+   *   7---3---5
+   */
+  /* warning: 2D stencil but 3D coordinates */
+  const double hx = 1.;
+  const double hy = 1.;
+
+  /* 1. Compute the winslow coefficients (alpha_i, beta_i in the Karman paper) */
+  /*    a. Compute first order derivatives of the position */
+  vec3 r_i[2];
+  r_i[0] = 1./hx * (ptsStencil[0] - ptsStencil[2]);
+  r_i[1] = 1./hy * (ptsStencil[1] - ptsStencil[3]);
+  /*    b. Compute the alpha_i coefficients */
+  const double alpha_0 = dot(r_i[1],r_i[1]);
+  const double alpha_1 = dot(r_i[0],r_i[0]);
+  /*    c. Compute the beta coefficient */
+  const double beta =  dot(r_i[0],r_i[1]);
+
+  /* cross derivative */
+  const vec3 u_xy = 1./(4.*hx*hy) * (ptsStencil[4]+ptsStencil[7]-ptsStencil[6]-ptsStencil[5]);
+
+  /* 2. Compute the "winslow new position" */
+  const double denom = 2. * alpha_0 / (hx*hx) + 2. * alpha_1 / (hy*hy);
+  if (std::abs(denom) < 1.e-18) return false;
+  newPos = 1. / denom * (
+      alpha_0/(hx*hx) * (ptsStencil[0] + ptsStencil[2])
+      + alpha_1/(hy*hy) * (ptsStencil[1] + ptsStencil[3])
+      - 2. * beta * u_xy
+      );
+  return true;
+}
+
+inline bool kernelWinslow(const std::array<vec3,8>& stencil, vec3& newPos) {
+  /* Continuous ordering in input stencil */
+  const std::array<uint32_t,8> o2n = {0, 2, 4, 6, 1, 7, 3, 5};
+  const std::array<vec3,8> winStencil = {
+    stencil[o2n[0]], stencil[o2n[1]], stencil[o2n[2]], stencil[o2n[3]],
+    stencil[o2n[4]], stencil[o2n[5]], stencil[o2n[6]], stencil[o2n[7]]};
+  return kernelWinslowSpecialStencil(winStencil.data(), newPos);
+}
+
+double projectOnPlane(
+    const vec3& query,
+    const vec3& p1,
+    const vec3& p2,
+    const vec3& p3,
+    vec3& proj) {
+  const vec3 d1 = p2-p1;
+  const vec3 d2 = p3-p1;
+  vec3 n = cross(d1,d2);
+  if (length2(n) == 0.) return DBL_MAX;
+  normalize_accurate(n);
+  double t = dot(query-p1,n);
+  proj = query - t * n;
+  return length2(proj-query);
+}
+
+template <size_t N>
+  bool projectOnStencilTrianglePlanes(
+      const vec3& center, 
+      const std::array<vec3,N>& points, 
+      const vec3& query,
+      vec3& proj
+      ) {
+    double d2min = DBL_MAX;
+    for (size_t i = 0; i < N; ++i) {
+      const vec3& p2 = points[i];
+      const vec3& p3 = points[(i+1)%N];
+      vec3 cand;
+      double d2 = projectOnPlane(query,center,p2,p3,cand);
+      if (d2 < d2min) {
+        d2min = d2;
+        proj = cand;
+      }
+    }
+    return true;
+  }
+
+bool projectOnStencilTrianglePlanes(
+    const vec3& center, 
+    const std::vector<vec3>& points, 
+    const vec3& query,
+    vec3& proj
+    ) {
+  const size_t N = points.size();
+  double d2min = DBL_MAX;
+  for (size_t i = 0; i < N; ++i) {
+    const vec3& p2 = points[i];
+    const vec3& p3 = points[(i+1)%N];
+    vec3 cand;
+    double d2 = projectOnPlane(query,center,p2,p3,cand);
+    if (d2 < d2min) {
+      d2min = d2;
+      proj = cand;
+    }
+  }
+  return true;
+}
+
+
+bool buildCondensedStructure(
+    const std::vector<MElement*>& elements,
+    const std::vector<MVertex*>& freeVertices,
+    robin_hood::unordered_map<MVertex*,uint32_t>& old2new,
+    std::vector<MVertex*>& new2old,
+    std::vector<std::array<uint32_t,4> >& quads,
+    std::vector<std::vector<uint32_t> >& v2q,
+    std::vector<std::vector<uint32_t> >& oneRings,
+    std::vector<std::array<double,3> >& points
+    ) {
+  new2old.reserve(2*freeVertices.size());
+  v2q.reserve(2*freeVertices.size());
+  points.reserve(2*freeVertices.size());
+
+  size_t vcount = 0;
+  for (MVertex* v: freeVertices) {
+    old2new[v] = vcount;
+    vec3 pt = SVector3(v->point());
+    points.push_back(pt);
+    new2old.push_back(v);
+    vcount += 1;
+  }
+
+  v2q.resize(vcount);
+  quads.resize(elements.size());
+  for (size_t f = 0; f < elements.size(); ++f) {
+    MElement* q = elements[f];
+    if (q->getNumVertices() != 4) {
+      Msg::Error("buildCondensedStructure: element is not a quad");
+      return false;
+    }
+    for (size_t lv = 0; lv < 4; ++lv) {
+      MVertex* v = q->getVertex(lv);
+      auto it = old2new.find(v);
+      size_t nv;
+      if (it == old2new.end()) {
+        old2new[v] = vcount;
+        new2old.push_back(v);
+        nv = vcount;
+        vcount += 1;
+        vec3 pt = SVector3(v->point());
+        points.push_back(pt);
+        if (nv >= v2q.size()) {
+          v2q.resize(nv+1);
+        }
+      } else {
+        nv = it->second;
+      }
+      quads[f][lv] = nv;
+      v2q[nv].push_back(f);
+    }
+  }
+  points.shrink_to_fit();
+  quads.shrink_to_fit();
+  new2old.shrink_to_fit();
+  v2q.shrink_to_fit();
+
+  /* Build the one rings for the free vertices */
+  oneRings.resize(freeVertices.size());
+  vector<MElement*> adjQuads;
+  for (size_t v = 0; v < freeVertices.size(); ++v) {
+    adjQuads.resize(v2q[v].size());
+    for (size_t lq = 0; lq < v2q[v].size(); ++lq) {
+      adjQuads[lq] = elements[v2q[v][lq]];
+    }
+    std::vector<MVertex*> bnd;
+    bool okb = buildBoundary(adjQuads, bnd);
+    if (!okb) {
+      Msg::Error("buildCondensedStructure: failed to build boundary for stencil");
+      return false;
+    }
+    if (bnd.back() == bnd.front()) bnd.pop_back();
+
+    /* Be sure the first vertex on the boundary is edge-connected to v */
+    /* Start of the stencil */
+    MVertex* vp = freeVertices[v];
+    MVertex* v0 = NULL;
+    for (MElement* e: adjQuads) {
+      size_t N = e->getNumVertices();
+      for (size_t j = 0; j < N; ++j) {
+        MVertex* a = e->getVertex(j);
+        MVertex* b = e->getVertex((j+1)%N);
+        if (a == vp) {
+          v0 = b;
+          break;
+        } else if (b == vp) {
+          v0 = a;
+          break;
+        }
+      }
+      if (v0 != NULL) break;
+    }
+    if (v0 == NULL) {
+      Msg::Error("buildCondensedStructure: failed to found v0");
+      return false;
+    }
+    for (size_t j = 0; j < bnd.size(); ++j) {
+      if (bnd[j] == v0 && j > 0) {
+        std::rotate(bnd.begin(),bnd.begin()+j,bnd.end());
+      }
+    }
+    if (bnd.front() != v0) {
+      Msg::Error("buildCondensedStructure: wrong start");
+      return false;
+    }
+    if (bnd.size() < 6 || bnd.size() % 2 != 0) {
+      Msg::Error("buildCondensedStructure: wrong boundary, size %li", bnd.size());
+      return false;
+    }
+
+    oneRings[v].resize(bnd.size());
+    for (size_t j = 0; j < bnd.size(); ++j) {
+      auto it = old2new.find(bnd[j]);
+      if (it != old2new.end()) {
+        oneRings[v][j] = it->second;
+      } else {
+        Msg::Error("buildCondensedStructure: vertex not found in old2new");
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+template <size_t N>
+bool extractGeometricStencil(
+    const std::vector<uint32_t>& oneRing,
+    const std::vector<vec3>& points,
+    std::array<vec3,N>& stencil
+    ) {
+  if (oneRing.size() == N) {
+    for (size_t i = 0; i < N; ++i) {
+      stencil[i] = points[oneRing[i]];
+    }
+    return true;
+  } else if (oneRing.size() == 2*N) {
+    /* Extract one over two */
+    for (size_t i = 0; i < N; ++i) {
+      stencil[i] = points[oneRing[2*i]];
+    }
+    return true;
+  } 
+  return false;
+}
+
+bool extractGeometricStencil(
+    const std::vector<uint32_t>& oneRing,
+    const std::vector<vec3 >& points,
+    std::vector<vec3 >& stencil
+    ) {
+  const size_t N = stencil.size();
+  if (oneRing.size() == N) {
+    for (size_t i = 0; i < N; ++i) {
+      stencil[i] = points[oneRing[i]];
+    }
+    return true;
+  } else if (oneRing.size() == 2*N) {
+    /* Extract one over two */
+    for (size_t i = 0; i < N; ++i) {
+      stencil[i] = points[oneRing[2*i]];
+    }
+    return true;
+  } 
+  return false;
+}
+
+template <size_t N>
+bool kernelSmoothingFloatingPoint(
+    const LocalSmoothingKernel& kernel,
+    const vec3 center,
+    const std::array<vec3,N>& stencil,
+    vec3& newPos) 
+{
+  if (N == 8 && kernel == WinslowAtRegular) {
+    Msg::Error("winslow must be called directly... (template stuff)");
+    return false;
+  } else if (kernel == Laplacian) {
+    bool okk = kernelLaplacian(stencil, newPos);
+    if (!okk) return false;
+  } else {
+    bool okk = kernelAngleBased(center, stencil, newPos);
+    if (!okk) return false;
+  }
+  return true;
+}
+
+bool kernelSmoothingFloatingPoint(
+    const LocalSmoothingKernel& kernel,
+    const vec3 center,
+    const std::vector<vec3>& stencil,
+    vec3& newPos) 
+{
+  if (kernel == Laplacian) {
+    bool okk = kernelLaplacian(stencil, newPos);
+    if (!okk) return false;
+  } else {
+    bool okk = kernelAngleBased(center, stencil, newPos);
+    if (!okk) return false;
+  }
+  return true;
+}
+
+template <size_t N>
+bool checkGeometryIsNotInverted(
+    const vec3 center,
+    const std::array<vec3,N>& stencil,
+    vec3& newPos) 
+{
+  for (size_t i = 0; i < N; ++i) {
+    const vec3& p2 = stencil[i];
+    const vec3& p3 = stencil[(i+1)%N];
+    const vec3 N_before = cross(p2-center,p3-center);
+    const vec3 N_after = cross(p2-newPos,p3-newPos);
+    if (dot(N_before,N_after) < 0.) return false;
+  }
+  return true;
+}
+
+bool checkGeometryIsNotInverted(
+    const vec3 center,
+    const std::vector<vec3>& stencil,
+    vec3& newPos) 
+{
+  const size_t N = stencil.size();
+  for (size_t i = 0; i < N; ++i) {
+    const vec3& p2 = stencil[i];
+    const vec3& p3 = stencil[(i+1)%N];
+    const vec3 N_before = cross(p2-center,p3-center);
+    const vec3 N_after = cross(p2-newPos,p3-newPos);
+    if (dot(N_before,N_after) < 0.) return false;
+  }
+  return true;
+}
+
+const int KS_ERROR = 0;
+const int KS_OK = 1;
+const int KS_REJECTED_PROJECTION = 2;
+const int KS_REJECTED_QUALITY = 3;
+
+int kernelSmoothing(
+    LocalSmoothingKernel kernel,
+    uint32_t v,
+    const std::vector<std::vector<uint32_t> >& oneRing,
+    std::vector<std::array<double,3> >& points,
+    /* Projection on surface */
+    bool projOnPlanes,
+    const SurfaceProjector* sp,
+    /* Verify no element geometric inversion */
+    bool smartVariant)
+{
+  constexpr bool spProjectOnCAD = false;
+  size_t cache = (size_t) -1;
+
+  /* Compute new position */
+  const size_t N = oneRing[v].size();
+  const vec3 center = points[v];
+  vec3 newPos;
+
+  /* Code is redundant, but it is used to encapsulate
+   * template calls to remove heap allocations for
+   * valence 3, 4, 5 */
+  if (N == 8 && kernel == WinslowAtRegular) { /* Full one ring */
+      std::array<vec3,8> stencil;
+      bool oke = extractGeometricStencil(oneRing[v],points,stencil);
+      if (!oke) return KS_ERROR;
+      bool oks = kernelWinslow(stencil, newPos);
+      if (!oks) return KS_ERROR;
+      std::array<vec3,4> stencil2; /* edge-adjacent stencil */
+      bool oke2 = extractGeometricStencil(oneRing[v],points,stencil2);
+      if (!oke2) return KS_ERROR;
+      if (projOnPlanes) {
+        vec3 proj;
+        bool okp = projectOnStencilTrianglePlanes(center, stencil2, newPos, proj);
+        if (!okp) return KS_REJECTED_PROJECTION;
+        newPos = proj;
+      } else if (sp != NULL) {
+        GPoint gp = sp->closestPoint(newPos.data(), cache, true, spProjectOnCAD);
+        if (gp.succeeded()) {
+          newPos = {gp.x(),gp.y(),gp.z()};
+        } else {
+          return KS_REJECTED_PROJECTION;
+        }
+      }
+      if (smartVariant) {
+        bool okg = checkGeometryIsNotInverted(center, stencil2, newPos);
+        if (!okg) return KS_REJECTED_QUALITY;
+      }
+  } else { /* Only edge-adjacent one ring */
+    if (kernel == WinslowAtRegular) kernel = AngleBased;
+
+    if (N == 8) { /* regular */
+      std::array<vec3,4> stencil;
+      bool oke = extractGeometricStencil(oneRing[v],points,stencil);
+      if (!oke) return KS_ERROR;
+      bool oks = kernelSmoothingFloatingPoint(kernel, center, stencil, newPos);
+      if (!oks) return KS_ERROR;
+      if (projOnPlanes) {
+        vec3 proj;
+        bool okp = projectOnStencilTrianglePlanes(center, stencil, newPos, proj);
+        if (!okp) return KS_REJECTED_PROJECTION;
+        newPos = proj;
+      } else if (sp != NULL) {
+        GPoint gp = sp->closestPoint(newPos.data(), cache, true, spProjectOnCAD);
+        if (gp.succeeded()) {
+          newPos = {gp.x(),gp.y(),gp.z()};
+        } else {
+          return KS_REJECTED_PROJECTION;
+        }
+      }
+      if (smartVariant) {
+        bool okg = checkGeometryIsNotInverted(center, stencil, newPos);
+        if (!okg) return KS_REJECTED_QUALITY;
+      }
+    } else if (N == 6) { /* valence 3 */
+      std::array<vec3,3> stencil;
+      bool oke = extractGeometricStencil(oneRing[v],points,stencil);
+      if (!oke) return KS_ERROR;
+
+      bool oks = kernelSmoothingFloatingPoint(kernel, center, stencil, newPos);
+      if (!oks) return KS_ERROR;
+      if (projOnPlanes) {
+        vec3 proj;
+        bool okp = projectOnStencilTrianglePlanes(center, stencil, newPos, proj);
+        if (!okp) return KS_REJECTED_PROJECTION;
+        newPos = proj;
+      } else if (sp != NULL) {
+        GPoint gp = sp->closestPoint(newPos.data(), cache, true, spProjectOnCAD);
+        if (gp.succeeded()) {
+          newPos = {gp.x(),gp.y(),gp.z()};
+        } else {
+          return KS_REJECTED_PROJECTION;
+        }
+      }
+      if (smartVariant) {
+        bool okg = checkGeometryIsNotInverted(center, stencil, newPos);
+        if (!okg) return KS_REJECTED_QUALITY;
+      }
+    } else if (N == 10) { /* valence 5 */
+      std::array<vec3,5> stencil;
+      bool oke = extractGeometricStencil(oneRing[v],points,stencil);
+      if (!oke) return KS_ERROR;
+      bool oks = kernelSmoothingFloatingPoint(kernel, center, stencil, newPos);
+      if (!oks) return KS_ERROR;
+      if (projOnPlanes) {
+        vec3 proj;
+        bool okp = projectOnStencilTrianglePlanes(center, stencil, newPos, proj);
+        if (!okp) return KS_REJECTED_PROJECTION;
+        newPos = proj;
+      } else if (sp != NULL) {
+        GPoint gp = sp->closestPoint(newPos.data(), cache, true, spProjectOnCAD);
+        if (gp.succeeded()) {
+          newPos = {gp.x(),gp.y(),gp.z()};
+        } else {
+          return KS_REJECTED_PROJECTION;
+        }
+      }
+      if (smartVariant) {
+        bool okg = checkGeometryIsNotInverted(center, stencil, newPos);
+        if (!okg) return KS_REJECTED_QUALITY;
+      }
+    } else if (N > 10 && N%2 == 0) {
+      std::vector<vec3> stencil(N/2);
+      bool oke = extractGeometricStencil(oneRing[v],points,stencil);
+      if (!oke) return KS_ERROR;
+      bool oks = kernelSmoothingFloatingPoint(kernel, center, stencil, newPos);
+      if (!oks) return KS_ERROR;
+      if (projOnPlanes) {
+        vec3 proj;
+        bool okp = projectOnStencilTrianglePlanes(center, stencil, newPos, proj);
+        if (!okp) return KS_REJECTED_PROJECTION;
+        newPos = proj;
+      } else if (sp != NULL) {
+        GPoint gp = sp->closestPoint(newPos.data(), cache, true, spProjectOnCAD);
+        if (gp.succeeded()) {
+          newPos = {gp.x(),gp.y(),gp.z()};
+        } else {
+          return KS_REJECTED_PROJECTION;
+        }
+      }
+      if (smartVariant) {
+        bool okg = checkGeometryIsNotInverted(center, stencil, newPos);
+        if (!okg) return KS_REJECTED_QUALITY;
+      }
+    } else {
+      return KS_ERROR;
+    }
+  }
+  points[v] = newPos;
+  return KS_OK;
+}
+
+// TODO a mixed smoother Winslow + angle-based
+//      with smart option to do not degrade locally
+bool smoothElementsWithLocalKernel(
+    LocalSmoothingKernel kernel,
+    GFace* gf,
+    SurfaceProjector* sp,
+    const std::vector<MElement*>& elements,
+    const std::vector<MVertex*>& freeVertices,
+    bool smartVariant, /* check quality of elements after each move, slow */
+    size_t iterMaxOuterLoop,
+    double global_dx_reduction, /* stop smoothing it the while deplacement is less than global_dx_reduction * dx0 */
+    double local_dx_reduction /* lock a node if it moved less than local_dx_reduction * dx0(v) */
+    ) {
+  GEntity::GeomType GT = gf->geomType();
+  bool projOnStencil = true;
+  if (GT == GEntity::Plane) {
+    sp = NULL;
+    projOnStencil = false;
+  }
+
+  /* Condensed version (no pointers, less indirection, more cache efficient) */
+  robin_hood::unordered_map<MVertex*,uint32_t> old2new;
+  std::vector<MVertex*> new2old;
+  std::vector<std::array<uint32_t,4> > quads;
+  std::vector<std::vector<uint32_t> > v2q;
+  std::vector<std::vector<uint32_t> > oneRings;
+  std::vector<std::array<double,3> > points;
+  bool okc = buildCondensedStructure(elements,freeVertices,old2new,new2old,
+      quads,v2q,oneRings,points);
+  if (!okc) {
+    Msg::Error("smoothElementsWithLocalKernel: failed to build condensed representation");
+    return false;
+  }
+
+  /* Local sizes */
+  vector<double> localAvgSize(freeVertices.size(),0.);
+  for (size_t i = 0; i < freeVertices.size(); ++i) if (oneRings[i].size() > 0) {
+    for (size_t j = 0; j < oneRings[i].size(); ++j) {
+      localAvgSize[i] += length(points[i]-points[oneRings[i][j]]);
+    }
+    localAvgSize[i] /= double(oneRings[i].size());
+  }
+
+  /* Optimization loop */
+  vector<bool> running(freeVertices.size(),true);
+  double sum_dx0 = 0.;
+  double max_dx0 = 0.;
+  size_t iter = 0;
+  for (iter = 0; iter < iterMaxOuterLoop; ++iter) {
+    /* Stencil projection is projection on the adj triangle
+     * planes, fast but not very accurate */
+    bool useStencilProjection = (projOnStencil && (iter < iterMaxOuterLoop-1));
+
+    double sum_dx = 0.;
+    double max_dx = 0.;
+    size_t count = 0;
+    for (size_t i = 0; i < freeVertices.size(); ++i) if (running[i]) {
+      vec3 center = points[i];
+      int status = kernelSmoothing(kernel, i, oneRings, points, useStencilProjection, 
+          sp, smartVariant);
+      if (status == KS_OK) {
+        double dx = length(center-points[i]);
+        max_dx = std::max(max_dx,dx);
+        sum_dx += dx;
+        /* Lock the vertex */
+        if (dx < local_dx_reduction*localAvgSize[i]) {
+          running[i] = false;
+        } else {
+          count += 1;
+        }
+      } else {
+        running[i] = false;
+      }
+    }
+    if (iter == 0) {
+      sum_dx0 = sum_dx;
+      max_dx0 = max_dx;
+    } else {
+      if (sum_dx < global_dx_reduction*sum_dx0) break;
+      if (count == 0) break; /* all locked */
+    }
+  }
+  for (size_t i = 0; i < freeVertices.size(); ++i) {
+    // TODO: project on CAD ?
+    new2old[i]->setXYZ(points[i][0],points[i][1],points[i][2]);
+  }
+
+  return true;
+}
 
 #if defined(HAVE_MESQUITE)
   struct QuadMeshData {
@@ -342,7 +1042,7 @@ class MeshDomainSurfaceProjector : public MeshDomain
 {
   public:
 
-    MeshDomainSurfaceProjector(SurfaceProjector * sp_, const QuadMeshData& M_): sp(sp_), M(M_) {
+    MeshDomainSurfaceProjector(SurfaceProjector * sp_, const QuadMeshData& M_, bool useRealCAD_ = false): sp(sp_), M(M_), useRealCAD(useRealCAD_) {
       projectionCache = new std::unordered_map<Mesh::VertexHandle,size_t>;
     }
 
@@ -353,7 +1053,7 @@ class MeshDomainSurfaceProjector : public MeshDomain
     void snap_to( Mesh::VertexHandle entity_handle, Vector3D& coordinat ) const {
       size_t cache = (*projectionCache)[entity_handle];
       SPoint3 query(coordinat.x(),coordinat.y(),coordinat.z());
-      GPoint proj = sp->closestPoint(query.data(),cache,true,true);
+      GPoint proj = sp->closestPoint(query.data(),cache,true,useRealCAD);
       if (proj.succeeded()) {
         coordinat.set(proj.x(),proj.y(),proj.z());
         (*projectionCache)[entity_handle] = cache;
@@ -366,7 +1066,7 @@ class MeshDomainSurfaceProjector : public MeshDomain
         Vector3D& coordinate ) const {
       size_t cache = (*projectionCache)[entity_handle];
       SPoint3 query(coordinate.x(),coordinate.y(),coordinate.z());
-      GPoint proj = sp->closestPoint(query.data(),cache,true,false);
+      GPoint proj = sp->closestPoint(query.data(),cache,true,useRealCAD);
       if (proj.succeeded()) {
         SPoint2 uv(proj.u(),proj.v());
         SVector3 n = sp->gf->normal(uv);
@@ -405,7 +1105,7 @@ class MeshDomainSurfaceProjector : public MeshDomain
         MsqError& err ) const {
       size_t cache = (*projectionCache)[handle];
       SPoint3 query(position.x(),position.y(),position.z());
-      GPoint proj = sp->closestPoint(query.data(),cache,true,true);
+      GPoint proj = sp->closestPoint(query.data(),cache,true,useRealCAD);
       if (proj.succeeded()) {
         closest.set(proj.x(),proj.y(),proj.z());
         SPoint2 uv(proj.u(),proj.v());
@@ -450,6 +1150,7 @@ class MeshDomainSurfaceProjector : public MeshDomain
     SurfaceProjector* sp;
     const QuadMeshData& M;
     std::unordered_map<Mesh::VertexHandle,size_t>* projectionCache;
+    bool useRealCAD;
 };
 
 
@@ -569,7 +1270,7 @@ int optimizeQuadCavity(
         M.coords.size()/3,M.coords.data(),M.fixed.data(),
         M.quads.size()/4,Mesquite::QUADRILATERAL,M.quads.data());
 
-    MeshDomainSurfaceProjector domain(sp, M);
+    MeshDomainSurfaceProjector domain(sp, M, opt.use_real_CAD);
 
     bool full_compatibility_check = false;
     bool proceed = true;
@@ -633,11 +1334,147 @@ int optimizeQuadCavity(
   return 0;
 }
 
+bool growCavity(
+    const robin_hood::unordered_map<MVertex *, std::vector<MElement *> >& adj,
+    vector<MElement*>& elements,
+    int n = 1)  {
+
+  vector<MElement*> bdr = elements;
+  vector<MElement*> newElements;
+  for (size_t iter = 0; iter < (size_t) n; ++iter) {
+    newElements.clear();
+    for (MElement* e: bdr) {
+      for (size_t j=0;j<e->getNumVertices();j++){
+        MVertex* v = e->getVertex(j);
+        auto it = adj.find(v);
+        if (it == adj.end()) {
+          Msg::Error("growCavity: vertex %li not found in adj", v->getNum());
+          continue;
+        }
+        for (MElement* e2: it->second) {
+          newElements.push_back(e2);
+        }
+      }
+    }
+    sort_unique(newElements);
+    bdr = newElements;
+    append(elements,newElements);
+    sort_unique(elements);
+  }
+
+  return true;
+}
+
+enum LocalSmoother {
+  LS_MesquiteUntangler,
+  LS_MesquiteShapeImprovement,
+  LS_MesquitePaverMinEdgeLengthWrapper,
+  LS_Winslow,
+  LS_Laplacian,
+  LS_SmartLaplacian,
+};
+
+bool tryLocalSmoothing(
+    LocalSmoother smoother,
+    GFace* gf,
+    SurfaceProjector* sp,
+    std::vector<MElement*>& elements,
+    int iterMax,
+    /* Conditions to keep the smoothing */
+    double minimumQuality = 0.,
+    double factorOnQualityMin = 1.,
+    double factorOnQualityAvg = 1.,
+    bool useRealCAD = false,
+    double mesquiteTimeBudget = 1.)
+{
+  vector<MVertex*> bnd;
+  bool okb = buildBoundary(elements, bnd);
+  if (!okb) {
+    Msg::Error("tryLocalSmoothing: failed to build boundary (%li quads)", elements.size());
+    return false;
+  }
+
+  std::vector<MVertex*> freeVertices;
+  bool oki = verticesStrictlyInside(elements, bnd, freeVertices);
+  if (!oki) {
+    Msg::Error("tryLocalSmoothing: failed to get vertices inside");
+    return -1;
+  }
+
+  /* Save in case of deterioration */
+  std::vector<SPoint3> before(freeVertices.size());
+  for (size_t v = 0; v < freeVertices.size(); ++v) {
+    before[v] = freeVertices[v]->point();
+  }
+
+  std::vector<MQuadrangle*> quads(elements.size());
+  for (size_t i = 0; i < elements.size(); ++i) {
+    quads[i] = dynamic_cast<MQuadrangle*>(elements[i]);
+    if (quads[i] == NULL) {
+      Msg::Error("tryLocalSmoothing: element is not a quad");
+      return false;
+    }
+  }
+
+  double minSICNb = DBL_MAX;
+  double avgSICNb = 0.;
+  quadQualityStats(elements, minSICNb, avgSICNb);
+
+  bool keep = true;
+
+  if (smoother == LS_Winslow) {
+    meshWinslow2d(gf, quads, freeVertices, iterMax, NULL, false, sp);
+  } else if (smoother == LS_MesquiteUntangler 
+      || smoother == LS_MesquiteShapeImprovement 
+      || smoother == LS_MesquitePaverMinEdgeLengthWrapper) {
+    MesquiteOptions opt;
+    opt.smoother = MesquiteUntangler;
+    if (smoother == LS_MesquiteShapeImprovement) opt.smoother = MesquiteShapeImprovement;
+    if (smoother == LS_MesquitePaverMinEdgeLengthWrapper) opt.smoother = MesquitePaverMinEdgeLengthWrapper;
+    opt.outer_iteration_limit = iterMax;
+    opt.cpu_time_limit_sec = mesquiteTimeBudget;
+    opt.use_real_CAD = useRealCAD;
+    double qmin, qavg;
+    int ok = optimizeQuadCavity(opt, sp, elements, freeVertices, qmin, qavg);
+    if (ok != 0) keep = false;
+  } else {
+    Msg::Warning("local smoother not supported yet");
+    return false;
+  }
+
+  double minSICNa = DBL_MAX;
+  double avgSICNa = 0.;
+  quadQualityStats(elements, minSICNa, avgSICNa);
+
+  Msg::Debug("- local smoothing, cavity with %li quads: SICN min: %f -> %f, avg: %f -> %f",
+      elements.size(),minSICNb,minSICNa,avgSICNb,avgSICNa);
+
+  if (minSICNa < factorOnQualityMin * minSICNb) keep = false;
+  if (avgSICNa < factorOnQualityAvg * avgSICNa) keep = false;
+  if (minSICNa < minimumQuality && minSICNa < minSICNb) keep = false;
+
+  if (!keep) {
+    Msg::Debug("-- smoothing rejected, roll back (stats were SICN min: %f -> %f, avg: %f -> %f)",
+        elements.size(),minSICNb,minSICNa,avgSICNb,avgSICNa);
+    for (size_t v = 0; v < freeVertices.size(); ++v) {
+      freeVertices[v]->setXYZ(before[v].x(),before[v].y(),before[v].z());
+    }
+    return false;
+  }
+
+  return true;
+}
+
 int optimizeQuadMeshWithSubPatches(
     GFace* gf,
     SurfaceProjector* sp,
     double& qualityMin,
     double& qualityAvg) {
+  if (gf->quadrangles.size() == 0) return 0;
+
+  double minSICNb = DBL_MAX;
+  double avgSICNb = 0.;
+  quadQualityStats(gf->quadrangles, minSICNb, avgSICNb);
 
   vector<MElement*> elements(gf->quadrangles.size());
   for (size_t i = 0; i < gf->quadrangles.size(); ++i) {
@@ -645,7 +1482,91 @@ int optimizeQuadMeshWithSubPatches(
   }
   vector<MVertex*> freeVertices = gf->mesh_vertices;
 
+  /* Vertex to elements map */
+  robin_hood::unordered_map<MVertex *, std::vector<MElement *> > adj;
+  for (MElement* e: elements) {
+    for (size_t i=0;i<e->getNumVertices();i++){
+      MVertex* v = e->getVertex(i);
+      adj[v].push_back(e);
+    }
+  }
 
+  double qMin = DBL_MAX;
+  double qAvg = 0.;
+  robin_hood::unordered_flat_map<MElement*,double> quality;
+  for (MElement* e: elements) {
+    double q = e->minSICNShapeMeasure();
+    quality[e] = q;
+    qMin = std::min(qMin,q);
+    qAvg += q;
+  }
+  qAvg /= double(elements.size());
+
+  /* Local optimization loop */
+  bool running = true;
+  size_t iter = 0;
+  size_t iterMax = 5;
+  vector<std::pair<double,MElement*> > quality_elt;
+  while (running && iter < iterMax) {
+    running = false;
+    iter += 1;
+    quality_elt.clear();
+    for (auto& kv: quality) if (kv.second < qAvg) {
+      quality_elt.push_back({kv.second,kv.first});
+    }
+    std::sort(quality_elt.begin(),quality_elt.end());
+
+    double q025 = quality_elt[quality_elt.size()/4].first;
+
+    vector<MElement*> quads;
+    for (auto& kv: quality_elt) {
+      MElement* e = kv.second;
+      double qual = quality[e];
+      if (qual > q025) continue;
+      quads = {e};
+      growCavity(adj, quads, 3);
+
+      double factorOnQualityMin = 0.999;
+      double factorOnQualityAvg = 0.75;
+      double qMin = factorOnQualityMin*kv.first;
+      LocalSmoother smoother;
+      if (qual <= 0.) {
+        smoother = LS_MesquiteUntangler;
+        qMin = 0.;
+      } else if (qual <= 0.2) {
+        smoother = LS_MesquiteShapeImprovement;
+      } else {
+        smoother = LS_Winslow;
+        factorOnQualityAvg = 1.;
+      }
+      int iterMaxLocal = 10;
+      bool useRealCAD = (qual <= 0.);
+      double timeBudget = (qual <= 0.) ? 5. : 1.;
+      bool okw = tryLocalSmoothing(smoother, gf, sp, quads, iterMaxLocal, 
+          qMin,
+          factorOnQualityMin, factorOnQualityAvg, useRealCAD, timeBudget);
+      if (okw) {
+        for (MElement* q: elements) {
+          quality[q] = q->minSICNShapeMeasure();
+        }
+      }
+
+      running = true;
+    }
+  }
+
+
+  double minSICNa = DBL_MAX;
+  double avgSICNa = 0.;
+  quadQualityStats(gf->quadrangles, minSICNa, avgSICNa);
+
+  if (minSICNa < 0.) {
+    Msg::Error("- Face %i: local smoothing, SICN min: %f -> %f, avg: %f -> %f",
+        gf->tag(),minSICNb,minSICNa,avgSICNb,avgSICNa);
+  } else {
+    Msg::Info("- Face %i: local smoothing, SICN min: %f -> %f, avg: %f -> %f",
+        gf->tag(),minSICNb,minSICNa,avgSICNb,avgSICNa);
+  }
 
   return 0;
 }
