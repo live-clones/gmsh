@@ -5,18 +5,17 @@ gmsh.initialize()
 const N = 2500
 
 tic = gmsh.logger.getWallTime()
-# x, y, z coordinates of all the nodes
-coords = Array{Float64,1}(undef, (N + 1) * (N + 1) * 3)
-# tags of corresponding nodes
-nodes = Array{UInt,1}(undef, (N + 1) * (N + 1))
-# connectivities (node tags) of triangle elements
-tris = Array{UInt,1}(undef, N * N * 2 * 3)
 
-function get_node_tag(i, j)
-    return (N + 1) * i + j + 1
-end
-
-function create_mesh(N, nodes, coords, tris)
+function create_mesh(N)
+    # x, y, z coordinates of all the nodes
+    coords = Array{Float64,1}(undef, (N + 1) * (N + 1) * 3)
+    # tags of corresponding nodes
+    nodes = Array{UInt,1}(undef, (N + 1) * (N + 1))
+    # connectivities (node tags) of triangle elements
+    tris = Array{UInt,1}(undef, N * N * 2 * 3)
+    function get_node_tag(i, j)
+        return (N + 1) * i + j + 1
+    end
     k = 0
     l = 0
     for i in 0:N
@@ -37,8 +36,9 @@ function create_mesh(N, nodes, coords, tris)
             end
         end
     end
+    return nodes, coords, tris
 end
-create_mesh(N, nodes, coords, tris)
+nodes, coords, tris = create_mesh(N)
 
 toc = gmsh.logger.getWallTime()
 println("==> created nodes and connectivities in ", toc - tic, " seconds")
