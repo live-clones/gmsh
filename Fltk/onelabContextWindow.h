@@ -27,7 +27,7 @@ private:
   int _dim, _tag;
   GEntity *_entity;
   std::string _name;
-  std::vector<std::pair<int, std::string> > _physicals;
+  std::vector<std::pair<int, std::string> > _physicalGroups;
   std::vector<std::vector<GEntity *> > _physicalGroupEntities;
 
 public:
@@ -39,6 +39,7 @@ public:
   void show(int dim, int tag);
   void hide() { win->hide(); }
   void rebuild(bool deleteWidgets);
+  void highlightSelection();
 };
 
 

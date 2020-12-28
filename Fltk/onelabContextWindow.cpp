@@ -40,7 +40,7 @@ void onelabContextWindow::_addOnelabWidget(
     out = getDimName(_dim) + " " + std::to_string(_tag);
   else // physical
     out = "Physical " + getDimName(_dim) + " " +
-      std::to_string(_physicals[_choice->value() - 1].first);
+      std::to_string(_physicalGroups[_choice->value() - 1].first);
   std::string name = ReplaceSubString(in, out, p.getName());
   std::vector<T> pn;
   onelab::server::instance()->get(pn, name);
@@ -78,6 +78,7 @@ void onelabContextWindow::_addOnelabWidget(
 static void choice_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->onelabContext->rebuild(false);
+  FlGui::instance()->onelabContext->highlightSelection();
 }
 
 class contextWindow : public paletteWindow {
@@ -124,13 +125,13 @@ void onelabContextWindow::show(int dim, int tag)
   _tag = tag;
   _name = GModel::current()->getElementaryName(dim, tag);
   _entity = GModel::current()->getEntityByTag(dim, tag);
-  _physicals.clear();
+  _physicalGroups.clear();
   _physicalGroupEntities.clear();
   if(_entity) {
     std::map<int, std::vector<GEntity *> > groups;
     GModel::current()->getPhysicalGroups(_dim, groups);
     for(auto &p : _entity->physicals) {
-      _physicals.push_back
+      _physicalGroups.push_back
         (std::make_pair(p, GModel::current()->getPhysicalName(dim, p)));
       _physicalGroupEntities.push_back(groups[p]);
     }
@@ -151,7 +152,7 @@ void onelabContextWindow::show(int dim, int tag)
     toFree.push_back(str);
     menu.push_back(item);
   }
-  for(auto &p : _physicals) {
+  for(auto &p : _physicalGroups) {
     std::string label = "Physical " + getDimName(_dim) + " " +
       std::to_string(p.first);
     if(p.second.size()) label += ": " + p.second;
@@ -168,6 +169,7 @@ void onelabContextWindow::show(int dim, int tag)
     _choice->value(menu.size() - 2); // last physical
 
   rebuild(true);
+  highlightSelection();
 
   if(!win->shown()) win->show();
 }
@@ -227,20 +229,22 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
     }
   }
 
-  // highlight selected entities
+  // we should add a "Check" button if Solver.AutoCheck is not set (as in the
+  // main ONELAB tree)
+}
+
+void onelabContextWindow::highlightSelection()
+{
   GModel::current()->setSelection(0);
   if(_choice->value() == 0) {  // elementary
     if(_entity)
       _entity->setSelection(1);
   }
   else { // physical
-    if(_choice->value() - 1 < _physicalGroupEntities.size()) {
+    if(_choice->value() - 1 < (int)_physicalGroupEntities.size()) {
       for(auto e : _physicalGroupEntities[_choice->value() - 1])
         e->setSelection(1);
     }
   }
   drawContext::global()->draw();
-
-  // we should add a "Check" button if Solver.AutoCheck is not set (as in the
-  // main ONELAB tree)
 }
