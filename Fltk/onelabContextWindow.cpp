@@ -13,6 +13,7 @@
 #include "onelab.h"
 #include "onelabGroup.h"
 #include "onelabContextWindow.h"
+#include "drawContext.h"
 
 static std::string getDimName(int dim)
 {
@@ -79,6 +80,20 @@ static void choice_cb(Fl_Widget *w, void *data)
   FlGui::instance()->onelabContext->rebuild(false);
 }
 
+class contextWindow : public paletteWindow {
+public:
+  contextWindow(int w, int h, bool nonModal, const char *l = 0)
+    : paletteWindow(w, h, nonModal, l) { }
+  virtual int handle(int event)
+  {
+    if(event == FL_HIDE) {
+      GModel::current()->setSelection(0);
+      drawContext::global()->draw();
+    }
+    return paletteWindow::handle(event);
+  }
+};
+
 onelabContextWindow::onelabContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -86,7 +101,7 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   _width = 26 * FL_NORMAL_SIZE;
   _height = 2 * WB + 1 * BH;
 
-  win = new paletteWindow(_width, _height,
+  win = new contextWindow(_width, _height,
                           CTX::instance()->nonModalWindows ? true : false,
                           "Parameters");
   win->box(GMSH_WINDOW_BOX);
@@ -108,12 +123,17 @@ void onelabContextWindow::show(int dim, int tag)
   _dim = dim;
   _tag = tag;
   _name = GModel::current()->getElementaryName(dim, tag);
+  _entity = GModel::current()->getEntityByTag(dim, tag);
   _physicals.clear();
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-  if(ge) {
-    for(auto &p : ge->physicals)
+  _physicalGroupEntities.clear();
+  if(_entity) {
+    std::map<int, std::vector<GEntity *> > groups;
+    GModel::current()->getPhysicalGroups(_dim, groups);
+    for(auto &p : _entity->physicals) {
       _physicals.push_back
         (std::make_pair(p, GModel::current()->getPhysicalName(dim, p)));
+      _physicalGroupEntities.push_back(groups[p]);
+    }
   }
 
   // create menu with possible entities (elementary and all associated
@@ -206,6 +226,20 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
       w->take_focus();
     }
   }
+
+  // highlight selected entities
+  GModel::current()->setSelection(0);
+  if(_choice->value() == 0) {  // elementary
+    if(_entity)
+      _entity->setSelection(1);
+  }
+  else { // physical
+    if(_choice->value() - 1 < _physicalGroupEntities.size()) {
+      for(auto e : _physicalGroupEntities[_choice->value() - 1])
+        e->setSelection(1);
+    }
+  }
+  drawContext::global()->draw();
 
   // we should add a "Check" button if Solver.AutoCheck is not set (as in the
   // main ONELAB tree)

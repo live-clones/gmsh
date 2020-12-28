@@ -13,6 +13,8 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Choice.H>
 
+class GEntity;
+
 class onelabContextWindow {
 private:
   int _width, _height;
@@ -23,8 +25,10 @@ private:
                         std::set<std::pair<std::string, Fl_Widget *>> &widgets);
   Fl_Choice *_choice;
   int _dim, _tag;
+  GEntity *_entity;
   std::string _name;
   std::vector<std::pair<int, std::string> > _physicals;
+  std::vector<std::vector<GEntity *> > _physicalGroupEntities;
 
 public:
   Fl_Window *win;
