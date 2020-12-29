@@ -574,6 +574,8 @@ void file_quit_cb(Fl_Widget *w, void *data)
     Msg::Exit(0);
   }
   else {
+    FlGui::instance()->onelabContext->disableRedraw();
+
     // hide all windows (in case they are not tracked by FlGui)...
     std::vector<Fl_Window*> wins;
     for (Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))

@@ -12,8 +12,20 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Choice.H>
+#include "paletteWindow.h"
 
 class GEntity;
+
+class contextWindow : public paletteWindow {
+private:
+  bool _redraw;
+public:
+  contextWindow(int w, int h, bool nonModal, const char *l = 0)
+    : paletteWindow(w, h, nonModal, l), _redraw(false) { }
+  virtual int handle(int event);
+  void enableRedraw() { _redraw = true; }
+  void disableRedraw() { _redraw = false; }
+};
 
 class onelabContextWindow {
 private:
@@ -31,16 +43,16 @@ private:
   std::vector<std::vector<GEntity *> > _physicalGroupEntities;
 
 public:
-  Fl_Window *win;
+  contextWindow *win;
 
 public:
   onelabContextWindow(int deltaFontSize = 0);
-  ~onelabContextWindow() { Fl::delete_widget(win); }
+  ~onelabContextWindow();
   void show(int dim, int tag);
-  void hide() { win->hide(); }
+  void hide();
   void rebuild(bool deleteWidgets);
   void highlightSelection();
+  void disableRedraw();
 };
-
 
 #endif

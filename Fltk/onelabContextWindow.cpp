@@ -15,6 +15,15 @@
 #include "onelabContextWindow.h"
 #include "drawContext.h"
 
+int contextWindow::handle(int event)
+{
+  if(event == FL_HIDE) {
+    GModel::current()->setSelection(0);
+    if(_redraw) drawContext::global()->draw();
+  }
+  return paletteWindow::handle(event);
+}
+
 static std::string getDimName(int dim)
 {
   switch(dim) {
@@ -81,20 +90,6 @@ static void choice_cb(Fl_Widget *w, void *data)
   FlGui::instance()->onelabContext->highlightSelection();
 }
 
-class contextWindow : public paletteWindow {
-public:
-  contextWindow(int w, int h, bool nonModal, const char *l = 0)
-    : paletteWindow(w, h, nonModal, l) { }
-  virtual int handle(int event)
-  {
-    if(event == FL_HIDE) {
-      GModel::current()->setSelection(0);
-      drawContext::global()->draw();
-    }
-    return paletteWindow::handle(event);
-  }
-};
-
 onelabContextWindow::onelabContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -115,6 +110,11 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
+}
+
+onelabContextWindow::~onelabContextWindow()
+{
+  Fl::delete_widget(win);
 }
 
 void onelabContextWindow::show(int dim, int tag)
@@ -172,6 +172,12 @@ void onelabContextWindow::show(int dim, int tag)
   highlightSelection();
 
   if(!win->shown()) win->show();
+  win->enableRedraw();
+}
+
+void onelabContextWindow::hide()
+{
+  win->hide();
 }
 
 void onelabContextWindow::rebuild(bool deleteWidgets)
@@ -251,4 +257,9 @@ void onelabContextWindow::highlightSelection()
     }
   }
   drawContext::global()->draw();
+}
+
+void onelabContextWindow::disableRedraw()
+{
+  win->disableRedraw();
 }
