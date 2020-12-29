@@ -435,6 +435,13 @@ int discreteFace::createGeometry()
   stl_triangles.clear();
   if(triangles.empty()) return 0;
 
+  double minq = 1.;
+  for(auto t : triangles)
+    minq = std::min(minq, t->gammaShapeMeasure());
+  if(minq < 1e-3)
+    Msg::Warning("Poor input mesh quality (min gamma = %g) for computing "
+                 "parametrization", minq);
+
   std::vector<MVertex *> nodes;
   computeParametrization(triangles, nodes,
                          stl_vertices_uv, stl_vertices_xyz, stl_triangles);

@@ -723,8 +723,8 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
   return true;
 }
 
-int isTriangulationParametrizable(const std::vector<MTriangle *> &t, int Nmax,
-                                  double ar, std::ostringstream &why)
+static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
+                                         int Nmax, std::ostringstream &why)
 {
   if(Nmax > 1 && (int)t.size() > Nmax) {
     int np = t.size() / (Nmax - 1) + 1;
@@ -888,7 +888,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
       partitions.pop();
       std::ostringstream why;
       int np = isTriangulationParametrizable((*it)->triangles,
-                                             max_elems_per_cut, 5.0, why);
+                                             max_elems_per_cut, why);
       if(np > 1) {
         Msg::Info(" - Level %d partition with %d triangles split in %d "
                   "parts because %s",
