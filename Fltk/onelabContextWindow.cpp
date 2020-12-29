@@ -238,12 +238,12 @@ void onelabContextWindow::highlightSelection()
   GModel::current()->setSelection(0);
   if(_choice->value() == 0) {  // elementary
     if(_entity)
-      _entity->setSelection(1);
+      _entity->setSelection(2);
   }
   else { // physical
     if(_choice->value() - 1 < (int)_physicalGroupEntities.size()) {
       for(auto e : _physicalGroupEntities[_choice->value() - 1])
-        e->setSelection(1);
+        e->setSelection(2);
     }
   }
   drawContext::global()->draw();
