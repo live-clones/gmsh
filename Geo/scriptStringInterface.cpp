@@ -27,8 +27,9 @@ static void scriptAddCommand(const std::string &text,
                              const std::string &fileNameOrEmpty,
                              const std::string &lang)
 {
-  if(lang != "geo" && !text.empty()) {
-    printf("%s: %s\n", lang.c_str(), text.c_str());
+  if(lang != "geo") {
+    if(!text.empty())
+      printf("%s: %s\n", lang.c_str(), text.c_str());
     return;
   }
 

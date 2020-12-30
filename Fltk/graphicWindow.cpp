@@ -2885,6 +2885,10 @@ void quick_access_cb(Fl_Widget *w, void *data)
     general_options_ok_cb(0, (void *)"rotation_center");
     general_options_rotation_center_select_cb(0, 0);
   }
+  else if(what == "hover_meshes"){
+    opt_general_mouse_hover_meshes(0, GMSH_SET|GMSH_GUI,
+                                   !opt_general_mouse_hover_meshes(0, GMSH_GET, 0));
+  }
   else if(what == "split_hor"){
     file_window_cb(0, (void*)"split_h");
   }
@@ -3172,6 +3176,8 @@ void status_options_cb(Fl_Widget *w, void *data)
          { 0 },
       { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
+      { "Mouse hover over meshes", 0, quick_access_cb, (void*)"hover_meshes",
+        FL_MENU_TOGGLE },
       { "Projection mode", 0, 0, 0, FL_SUBMENU },
          { "Orthographic", FL_ALT + 'o', quick_access_cb, (void*)"orthographic"},
          { "Perspective", 0, quick_access_cb, (void*)"perspective"},
@@ -3233,23 +3239,37 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { 0 }
     };
-    const int gen = 7, geo = 13, msh = 20, pos = 31, end = 53;
-    if(opt_general_axes(0, GMSH_GET, 0)) menu[gen + 0].set(); else menu[gen + 0].clear();
+    const int gen = 7, geo = 14, msh = 21, pos = 32, end = 54;
+    if(opt_general_axes(0, GMSH_GET, 0)) menu[gen + 0].set();
+    else menu[gen + 0].clear();
+    if(opt_general_mouse_hover_meshes(0, GMSH_GET, 0)) menu[gen + 1].set();
+    else menu[gen + 1].clear();
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
-        menu[gen + 0].set();
-    if(opt_geometry_points(0, GMSH_GET, 0)) menu[geo + 1].set(); else menu[geo + 1].clear();
-    if(opt_geometry_curves(0, GMSH_GET, 0)) menu[geo + 2].set(); else menu[geo + 2].clear();
-    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[geo + 3].set(); else menu[geo + 3].clear();
-    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[geo + 4].set(); else menu[geo + 4].clear();
-    if(opt_mesh_points(0, GMSH_GET, 0)) menu[msh + 1].set(); else menu[msh + 1].clear();
-    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[msh + 2].set(); else menu[msh + 2].clear();
-    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[msh + 3].set(); else menu[msh + 3].clear();
-    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[msh + 4].set(); else menu[msh + 4].clear();
-    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[msh + 5].set(); else menu[msh + 5].clear();
-    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[msh + 6].set(); else menu[msh + 6].clear();
+        menu[gen + 7].set();
+    if(opt_geometry_points(0, GMSH_GET, 0)) menu[geo + 1].set();
+    else menu[geo + 1].clear();
+    if(opt_geometry_curves(0, GMSH_GET, 0)) menu[geo + 2].set();
+    else menu[geo + 2].clear();
+    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[geo + 3].set();
+    else menu[geo + 3].clear();
+    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[geo + 4].set();
+    else menu[geo + 4].clear();
+    if(opt_mesh_points(0, GMSH_GET, 0)) menu[msh + 1].set();
+    else menu[msh + 1].clear();
+    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[msh + 2].set();
+    else menu[msh + 2].clear();
+    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[msh + 3].set();
+    else menu[msh + 3].clear();
+    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[msh + 4].set();
+    else menu[msh + 4].clear();
+    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[msh + 5].set();
+    else menu[msh + 5].clear();
+    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[msh + 6].set();
+    else menu[msh + 6].clear();
     if(PView::list.empty()){
-      // if there are no post-processing view, hide all entries below the mesh options...
+      // if there are no post-processing view, hide all entries below the mesh
+      // options...
       menu[pos - 1].flags = 0;
       for(int i = pos; i <= end; i++) menu[i].hide();
     }
@@ -3259,7 +3279,8 @@ void status_options_cb(Fl_Widget *w, void *data)
       for(int i = pos; i <= end; i++) menu[i].show();
       menu[pos].clear();
       for(std::size_t i = 0; i < PView::list.size(); i++){
-        if(opt_view_visible(i, GMSH_GET, 0) && opt_view_show_element(i, GMSH_GET, 0)){
+        if(opt_view_visible(i, GMSH_GET, 0) &&
+           opt_view_show_element(i, GMSH_GET, 0)) {
           menu[pos].set();
           break;
         }
