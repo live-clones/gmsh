@@ -677,31 +677,7 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
 
 void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
 {
-  std::string fileName = GModel::current()->getFileName();
-  if(StatFile(fileName)) return;
-  // FIXME: make this work with compressed files
-  std::ifstream t;
-  t.open(fileName.c_str(), std::ifstream::in);
-  std::stringstream buffer;
-  buffer << t.rdbuf();
-  std::string s(buffer.str());
-  int found = (int)s.rfind("//+");
-  if(found != (int)std::string::npos){
-    s.erase(found);
-  }
-  else{
-    Msg::Warning("Could not find last command in script `%s'", fileName.c_str());
-    return;
-  }
-  FILE *fp = Fopen(fileName.c_str(), "w");
-  if(fp){
-    fprintf(fp, "%s", s.c_str());
-    fclose(fp);
-  }
-  else{
-    Msg::Error("Could not open file `%s'", fileName.c_str());
-  }
-  OpenProject(fileName);
+  scriptRemoveLastCommand(GModel::current()->getFileName());
   drawContext::global()->draw();
 }
 
