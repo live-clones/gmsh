@@ -156,8 +156,8 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
         SPoint2 pt;
         SPoint3 ptx;
         t->pnt(1. / 3., 1. / 3., 0., ptx);
-        bool reparamOK = true;
-        if(!linear){
+        bool reparamOK = gf->haveParametrization();
+        if(reparamOK && !linear){
           for(int k = 0; k < 6; k++) {
             SPoint2 temp;
             reparamOK &= reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
