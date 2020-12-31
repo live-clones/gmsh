@@ -90,8 +90,8 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
       case 2: sstream << "Surface"; break;
       case 3: sstream << "Volume"; break;
       }
-      sstream << " " << physicals[i];
-      std::string name = model()->getPhysicalName(dim(), physicals[i]);
+      sstream << " " << std::abs(physicals[i]);
+      std::string name = model()->getPhysicalName(dim(), std::abs(physicals[i]));
       if(name.size()) sstream << ": " << name;
     }
   }

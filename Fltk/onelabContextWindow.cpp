@@ -131,9 +131,10 @@ void onelabContextWindow::show(int dim, int tag)
     std::map<int, std::vector<GEntity *> > groups;
     GModel::current()->getPhysicalGroups(_dim, groups);
     for(auto &p : _entity->physicals) {
+      int n = std::abs(p); // can be < 0 to switch orientation
       _physicalGroups.push_back
-        (std::make_pair(p, GModel::current()->getPhysicalName(dim, p)));
-      _physicalGroupEntities.push_back(groups[p]);
+        (std::make_pair(n, GModel::current()->getPhysicalName(dim, n)));
+      _physicalGroupEntities.push_back(groups[n]);
     }
   }
 
