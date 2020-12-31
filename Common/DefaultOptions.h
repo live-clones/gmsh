@@ -835,7 +835,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "VectorType" , opt_general_vector_type , 4 ,
     "Default vector display type (for normals, etc.)" },
   { F|O, "Verbosity" , opt_general_verbosity , 5. ,
-    "Level of information printed during processing (0: no information)" },
+    "Level of information printed on the terminal and the message console "
+    "(0: silent except for fatal errors, 1: +errors, 2: +warnings, 3: +direct, "
+    "4: +information, 5: +status, 99: +debug)" },
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the visibility "
     "window" },

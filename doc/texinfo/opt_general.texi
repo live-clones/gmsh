@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 4.8.0-git-0123be831; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20201225; Build host: MacBook-Pro-Christophe.local; Build options: 64Bit ALGLIB ANN Bamg Blas[petsc] Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen Fltk GMP Gmm Hxt Jpeg Kbipack Lapack[petsc] MathEx Med Mesh Metis Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom PETSc Parasolid ParasolidSTEP Parser Plugins Png Post QuadTri Solver TetGen/BR TouchBar Voro++ Zlib; FLTK version: 1.4.0; PETSc version: 3.14.2 (complex arithmtic); OCC version: 7.6.0; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 4.8.0-git-cbc7cdcc0; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20201227; Build host: MacBook-Pro-Christophe.local; Build options: 64Bit ALGLIB ANN Bamg Blas[petsc] Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen Fltk GMP Gmm Hxt Jpeg Kbipack Lapack[petsc] MathEx Med Mesh Metis Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom PETSc Parasolid ParasolidSTEP Parser Plugins Png Post QuadTri Solver TetGen/BR TouchBar Voro++ Zlib; FLTK version: 1.4.0; PETSc version: 3.14.2 (complex arithmtic); OCC version: 7.6.0; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -168,7 +168,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.8.0-git-0123be831"}@*
+Default value: @code{"4.8.0-git-cbc7cdcc0"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -1192,7 +1192,7 @@ Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Verbosity
-Level of information printed during processing (0: no information)@*
+Level of information printed on the terminal and the message console (0: silent except for fatal errors, 1: +errors, 2: +warnings, 3: +direct, 4: +information, 5: +status, 99: +debug)@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
