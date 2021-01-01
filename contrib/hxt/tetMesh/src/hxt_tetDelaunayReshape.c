@@ -1,4 +1,7 @@
 #include "hxt_tetDelaunayReshape.h"
+#include "hxt_mesh.h"
+#include "hxt_message.h"
+#include "hxt_sort.h"
 #include "hxt_tetFlag.h"
 #include "predicates.h"
 #include <stdint.h>
@@ -232,16 +235,54 @@ HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uint32_t v
 
 
 
+// make a super simple hash table to get a index in the deleted array (the value) from the index of a tet (the key)
+// the hash table is of a size similar to the number of tet in the cavity.
+typedef struct {
+  HXTGroup2* pairs; // key, value pairs
+  uint64_t mask;
+} HXTHashTable;
 
+HXTStatus hashTableInit(HXTHashTable* map, uint64_t numTet) {
+  unsigned h =  u64_log2(numTet) + 1;
+#ifdef DEBUG
+  if(h > 63)
+    return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+#endif
 
+  uint64_t size = UINT64_C(1) << h;
+  map->mask = size - 1;
+  HXT_CHECK( hxtMalloc(&map->pairs, sizeof(HXTGroup2) * size) );
 
+  for(uint64_t i=0; i<size; i++) {
+    map->pairs[i].v[0] = HXT_NO_ADJACENT; // no tet in here
+  }
 
+  return HXT_STATUS_OK;
+}
 
+// this super simple hash table does not accept repeating the same element !
+void hashTablePut(HXTHashTable* map, uint64_t key, uint64_t value) {
+  uint64_t hash = key & map->mask;
+  while(map->pairs[hash].v[0] != HXT_NO_ADJACENT) {
+    hash = (hash + 1) & map->mask;
+  }
+  map->pairs[hash].v[0] = key;
+  map->pairs[hash].v[1] = value;
+}
 
+// this super simple hash talbe does not accept key that were not inserted !
+uint64_t hashTableGet(HXTHashTable* map, uint64_t key) {
+  uint64_t hash = key & map->mask;
+  while(map->pairs[hash].v[0] != key) {
+    hash = (hash + 1) & map->mask;
+  }
+  return map->pairs[hash].v[1];
+}
 
-
-
-#define BND_FACE_FLAG (UINT64_C(1)<<63)
+HXTStatus hashTableDestroy(HXTHashTable* map) {
+  HXT_CHECK( hxtFree(&map->pairs) );
+  return HXT_STATUS_OK;
+}
 
 // remove the tetrahedra adjacent to the face that does not see the point, progressively, until the cavity is star shaped...
 HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t vta, uint64_t prevNumDeleted)
@@ -253,37 +294,44 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
   // if the facet is not a facet of the cavity. To differentiate both, BND_FACE_FLAG is set for indices of the ball.
   uint64_t numTet = local->deleted.num - prevNumDeleted;
   uint64_t* tets = &local->deleted.array[prevNumDeleted];
+
+
+  HXTHashTable map;
+  HXT_CHECK( hashTableInit(&map, numTet) );
+
+  for(uint64_t i=0; i<numTet; i++) {
+    hashTablePut(&map, tets[i], i);
+  }
+
+
   uint64_t* faces;
   HXT_CHECK( hxtMalloc(&faces, sizeof(uint64_t) * 4 * numTet) );
 
-  for(uint64_t i=0; i<4*numTet; i++) {
-    faces[i] = 0;
-  }
-
-  // A priori, the order in which the delete tet appear and the order in which the faces appear should match (see @diggingACavity)
-  uint64_t tetToFind = mesh->tetrahedra.neigh[local->ball.array[0].neigh];
+  // just copy the adjacency into faces
   uint64_t curFace = 0;
-  uint64_t curTet = 0;
-  while(curTet<numTet) {
-    if(tets[curTet] == tetToFind / 4) {
-      uint64_t index = 4 * curTet + tetToFind % 4;
-      local->ball.array[curFace].neigh = index;
-      faces[index] = curFace;
-      curFace++;
+  for(uint64_t i=0; i<numTet; i++) {
+    uint64_t curTet = tets[i];
+    for(uint64_t j=0; j<4; j++) {
 
-      if(curFace >= local->ball.num)
-        break;
-
-      tetToFind = mesh->tetrahedra.neigh[local->ball.array[curFace].neigh];
-    }
-    else {
-      curTet++;
+      uint64_t neigh = mesh->tetrahedra.neigh[4 * curTet + j];
+      if(neigh != HXT_NO_ADJACENT && getDeletedFlag(mesh, neigh / 4)) {
+        faces[4 * i + j] = 4 * hashTableGet(&map, neigh / 4) + neigh % 4;
+      }
+      else { // it should be the next one in the ball, (we didn't change the order since @diggingACavity)
+        HXT_ASSERT(local->ball.array[curFace].neigh==neigh);
+        faces[4 * i + j] = curFace;
+        curFace++;
+      }
     }
   }
 
-  if(curFace < local->ball.num) {
+  HXT_CHECK( hashTableDestroy(&map) );
+
+#ifndef NDEBUG
+  if(curFace != local->ball.num) {
     return HXT_ERROR_MSG(HXT_STATUS_ERROR, "DEBUG: Faces did not appear in the same order as deleted tet");
   }
+#endif
 
   // double *vtaCoord = &mesh->vertices.coord[4 * vta];
 
@@ -335,10 +383,10 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
   //   count++;
   // }
 
-  // if(count)
-  //   printf("nbr of tet to undelete = %lu, nbr of deleted tet = %lu\n", count, local->deleted.num);
+  // // if(count)
+  // //   printf("nbr of tet to undelete = %lu, nbr of deleted tet = %lu\n", count, local->deleted.num);
 
-  // // STEP 3: compute all the flags at once ! ??
+  // // // STEP 3: compute all the flags at once ! ??
 
 
   // STEP 4: put back the right neighbor value inside the ball struct
