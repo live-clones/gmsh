@@ -287,118 +287,118 @@ HXTStatus hashTableDestroy(HXTHashTable* map) {
 // remove the tetrahedra adjacent to the face that does not see the point, progressively, until the cavity is star shaped...
 HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t vta, uint64_t prevNumDeleted)
 {
-  uint64_t count = 0;
+//   uint64_t count = 0;
 
-  // STEP 1: for each ball faces, we need the index of the tet in the deleted array, instead of the index of the tet in the mesh
-  // for each deleted tet, we need the index of the 4 faces in the ball, or the index of the neighbor in the deleted array
-  // if the facet is not a facet of the cavity. To differentiate both, BND_FACE_FLAG is set for indices of the ball.
-  uint64_t numTet = local->deleted.num - prevNumDeleted;
-  uint64_t* tets = &local->deleted.array[prevNumDeleted];
-
-
-  HXTHashTable map;
-  HXT_CHECK( hashTableInit(&map, numTet) );
-
-  for(uint64_t i=0; i<numTet; i++) {
-    hashTablePut(&map, tets[i], i);
-  }
+//   // STEP 1: for each ball faces, we need the index of the tet in the deleted array, instead of the index of the tet in the mesh
+//   // for each deleted tet, we need the index of the 4 faces in the ball, or the index of the neighbor in the deleted array
+//   // if the facet is not a facet of the cavity. To differentiate both, BND_FACE_FLAG is set for indices of the ball.
+//   uint64_t numTet = local->deleted.num - prevNumDeleted;
+//   uint64_t* tets = &local->deleted.array[prevNumDeleted];
 
 
-  uint64_t* faces;
-  HXT_CHECK( hxtMalloc(&faces, sizeof(uint64_t) * 4 * numTet) );
+//   HXTHashTable map;
+//   HXT_CHECK( hashTableInit(&map, numTet) );
 
-  // just copy the adjacency into faces
-  uint64_t curFace = 0;
-  for(uint64_t i=0; i<numTet; i++) {
-    uint64_t curTet = tets[i];
-    for(uint64_t j=0; j<4; j++) {
-
-      uint64_t neigh = mesh->tetrahedra.neigh[4 * curTet + j];
-      if(neigh != HXT_NO_ADJACENT && getDeletedFlag(mesh, neigh / 4)) {
-        faces[4 * i + j] = 4 * hashTableGet(&map, neigh / 4) + neigh % 4;
-      }
-      else { // it should be the next one in the ball, (we didn't change the order since @diggingACavity)
-        HXT_ASSERT(local->ball.array[curFace].neigh==neigh);
-        faces[4 * i + j] = curFace;
-        curFace++;
-      }
-    }
-  }
-
-  HXT_CHECK( hashTableDestroy(&map) );
-
-#ifndef NDEBUG
-  if(curFace != local->ball.num) {
-    return HXT_ERROR_MSG(HXT_STATUS_ERROR, "DEBUG: Faces did not appear in the same order as deleted tet");
-  }
-#endif
-
-  // double *vtaCoord = &mesh->vertices.coord[4 * vta];
-
-  // // STEP 2: for each face that does not see vta, delete the associated tet, and update the boundary of the cavity
-  // for (uint64_t curFace=0; curFace<local->ball.num; curFace++) {
-  //   if(local->ball.array[curFace].node[2]==HXT_GHOST_VERTEX){
-  //     continue;
-  //   }
-
-  //   double* b = &mesh->vertices.coord[4 * local->ball.array[curFace].node[0]];
-  //   double* c = &mesh->vertices.coord[4 * local->ball.array[curFace].node[1]];
-  //   double* d = &mesh->vertices.coord[4 * local->ball.array[curFace].node[2]];
-  //   if(orient3d(vtaCoord, b, c, d)<0.0){
-  //     continue;
-  //   }
-
-  //   // 2.1 update the facets so that no facet points to the current tet... does not work with our structure. SHITTT !!
-  //   // => we are forced to use an O(n^2) algo if we do not want to use a super large table
-
-  //   // 2.2: undelete the tetrahedron
-  //   uint64_t index = local->ball.array[curFace].neigh;
-  //   uint64_t tetToUndelete = local->deleted.array[index / 4];
-  //   unsigned facet = index % 4;
-  //   unsetDeletedFlag(mesh, tetToUndelete);
+//   for(uint64_t i=0; i<numTet; i++) {
+//     hashTablePut(&map, tets[i], i);
+//   }
 
 
+//   uint64_t* faces;
+//   HXT_CHECK( hxtMalloc(&faces, sizeof(uint64_t) * 4 * numTet) );
 
-  //   // second part: remove the faces of the tet that were on the boundary
-  //   // do not forget to update curFace to point just before the next face to process
-  //   uint64_t bndFaces[4] = {HXT_NO_ADJACENT, HXT_NO_ADJACENT, HXT_NO_ADJACENT, HXT_NO_ADJACENT};
-  //   int nbndFace = 0;
+//   // just copy the adjacency into faces
+//   uint64_t curFace = 0;
+//   for(uint64_t i=0; i<numTet; i++) {
+//     uint64_t curTet = tets[i];
+//     for(uint64_t j=0; j<4; j++) {
 
-  //   // the way that the boundary faces are contructed,
-  //   // TODO: use a bidirectional structure to be able to find the faces of deleted tet.
+//       uint64_t neigh = mesh->tetrahedra.neigh[4 * curTet + j];
+//       if(neigh != HXT_NO_ADJACENT && getDeletedFlag(mesh, neigh / 4)) {
+//         faces[4 * i + j] = 4 * hashTableGet(&map, neigh / 4) + neigh % 4;
+//       }
+//       else { // it should be the next one in the ball, (we didn't change the order since @diggingACavity)
+//         HXT_ASSERT(local->ball.array[curFace].neigh==neigh);
+//         faces[4 * i + j] = curFace;
+//         curFace++;
+//       }
+//     }
+//   }
 
-  //   // face to delete: curface
+//   HXT_CHECK( hashTableDestroy(&map) );
 
-  //   for (uint64_t i=local->ball.num; nbndFace<4 && i>0; i--) {
-  //     if(mesh->tetrahedra.neigh[local->ball.array[i-1].neigh]/4==tetToUndelete) {
-  //       bndFaces[nbndFace++] = local->ball.array[i-1].neigh;
-  //       local->ball.num--;
-  //       local->ball.array[i-1] = local->ball.array[local->ball.num];
-  //     }
-  //   }
+// #ifndef NDEBUG
+//   if(curFace != local->ball.num) {
+//     return HXT_ERROR_MSG(HXT_STATUS_ERROR, "DEBUG: Faces did not appear in the same order as deleted tet");
+//   }
+// #endif
+
+//   // double *vtaCoord = &mesh->vertices.coord[4 * vta];
+
+//   // // STEP 2: for each face that does not see vta, delete the associated tet, and update the boundary of the cavity
+//   // for (uint64_t curFace=0; curFace<local->ball.num; curFace++) {
+//   //   if(local->ball.array[curFace].node[2]==HXT_GHOST_VERTEX){
+//   //     continue;
+//   //   }
+
+//   //   double* b = &mesh->vertices.coord[4 * local->ball.array[curFace].node[0]];
+//   //   double* c = &mesh->vertices.coord[4 * local->ball.array[curFace].node[1]];
+//   //   double* d = &mesh->vertices.coord[4 * local->ball.array[curFace].node[2]];
+//   //   if(orient3d(vtaCoord, b, c, d)<0.0){
+//   //     continue;
+//   //   }
+
+//   //   // 2.1 update the facets so that no facet points to the current tet... does not work with our structure. SHITTT !!
+//   //   // => we are forced to use an O(n^2) algo if we do not want to use a super large table
+
+//   //   // 2.2: undelete the tetrahedron
+//   //   uint64_t index = local->ball.array[curFace].neigh;
+//   //   uint64_t tetToUndelete = local->deleted.array[index / 4];
+//   //   unsigned facet = index % 4;
+//   //   unsetDeletedFlag(mesh, tetToUndelete);
 
 
-  //   // third part: add new facets to the boundary
 
-  //   count++;
-  // }
+//   //   // second part: remove the faces of the tet that were on the boundary
+//   //   // do not forget to update curFace to point just before the next face to process
+//   //   uint64_t bndFaces[4] = {HXT_NO_ADJACENT, HXT_NO_ADJACENT, HXT_NO_ADJACENT, HXT_NO_ADJACENT};
+//   //   int nbndFace = 0;
 
-  // // if(count)
-  // //   printf("nbr of tet to undelete = %lu, nbr of deleted tet = %lu\n", count, local->deleted.num);
+//   //   // the way that the boundary faces are contructed,
+//   //   // TODO: use a bidirectional structure to be able to find the faces of deleted tet.
 
-  // // // STEP 3: compute all the flags at once ! ??
+//   //   // face to delete: curface
+
+//   //   for (uint64_t i=local->ball.num; nbndFace<4 && i>0; i--) {
+//   //     if(mesh->tetrahedra.neigh[local->ball.array[i-1].neigh]/4==tetToUndelete) {
+//   //       bndFaces[nbndFace++] = local->ball.array[i-1].neigh;
+//   //       local->ball.num--;
+//   //       local->ball.array[i-1] = local->ball.array[local->ball.num];
+//   //     }
+//   //   }
 
 
-  // STEP 4: put back the right neighbor value inside the ball struct
-  for(uint64_t i=0; i<local->ball.num; i++) {
-    uint64_t index = local->ball.array[i].neigh;
-    uint64_t interiorTet = tets[index / 4];
-    unsigned facet = index % 4;
-    local->ball.array[i].neigh = mesh->tetrahedra.neigh[4 * interiorTet + facet];
-  }
+//   //   // third part: add new facets to the boundary
+
+//   //   count++;
+//   // }
+
+//   // // if(count)
+//   // //   printf("nbr of tet to undelete = %lu, nbr of deleted tet = %lu\n", count, local->deleted.num);
+
+//   // // // STEP 3: compute all the flags at once ! ??
 
 
-  HXT_CHECK( hxtFree(&faces) );
+//   // STEP 4: put back the right neighbor value inside the ball struct
+//   for(uint64_t i=0; i<local->ball.num; i++) {
+//     uint64_t index = local->ball.array[i].neigh;
+//     uint64_t interiorTet = tets[index / 4];
+//     unsigned facet = index % 4;
+//     local->ball.array[i].neigh = mesh->tetrahedra.neigh[4 * interiorTet + facet];
+//   }
+
+
+//   HXT_CHECK( hxtFree(&faces) );
 
 
   uint64_t blindFace = 0;

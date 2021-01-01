@@ -206,7 +206,7 @@ unsigned computePasses(uint32_t passes[12],
  * initialisation of the TetLocal structure
  ******************************************/
 static inline HXTStatus localInit(TetLocal* local){
-  local->ball.size = 1020;
+  local->ball.size = 1024;
   local->ball.num = 0;
   HXT_CHECK( hxtAlignedMalloc(&local->ball.array, sizeof(cavityBnd_t)*local->ball.size));
 
@@ -770,54 +770,130 @@ HXT_ASSERT(((size_t) verticesID)%SIMD_ALIGN==0);
 /**************************************************************
  * compute adjacencies by sorting => O(n log n)
  **************************************************************/
+
+static inline uint64_t hash64(uint64_t x) {
+    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
+    return x ^ (x >> 31);
+}
+
+// key must be unique, and it cannot be 0
+static inline uint64_t hashTableSearch(HXTGroup2* pairs, uint64_t mask, uint64_t key, uint64_t neigh) {
+  uint64_t hash = hash64(key) & mask;
+  while(pairs[hash].v[0] != key && pairs[hash].v[0] != 0) {
+    hash = (hash + 1) & mask;
+  }
+  if(pairs[hash].v[0] == key) {
+    return pairs[hash].v[1];
+  }
+
+  pairs[hash].v[0] = key;
+  pairs[hash].v[1] = neigh;
+  return HXT_NO_ADJACENT;
+}
+
+
 static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, const uint64_t start, const uint64_t blength)
 {
-  HXTGroup2* edges;
+  uint64_t size = UINT64_C(1) << u64_log2(5*blength);// 3*blength/2 entries => we want a hash table of at least 3*blength for a good load factor
+  uint64_t mask = size - 1;
 
-  HXT_CHECK( askForBall(local, 2 * blength) );
-  edges = (HXTGroup2*) local->ball.array; // recycle array
+  // recycle memory
+  if(sizeof(cavityBnd_t) * local->ball.size < sizeof(HXTGroup2) * size) {
+    uint64_t capacity = (sizeof(HXTGroup2) * size + sizeof(cavityBnd_t) - 1) / sizeof(cavityBnd_t);
+    capacity = MAX(2 * local->ball.size, capacity);
+    HXT_CHECK( hxtAlignedFree(&local->ball.array) );
+    HXT_CHECK( hxtAlignedMalloc(&local->ball.array, sizeof(cavityBnd_t) * capacity) );
+    local->ball.size = capacity;
+  }
+  HXTGroup2* pairs = (HXTGroup2*) local->ball.array;
+  memset(pairs, 0, size * sizeof(HXTGroup2));
 
   const uint8_t index[4] = {2,3,1,2};
 
-  const uint32_t n = mesh->vertices.num + 1;
-  uint64_t maxKey = 0;
+#ifdef DEBUG
+  int found = 0;
+#endif
 
   for (uint64_t i=0; i<blength; i++)
   {
-    uint64_t curTet = local->deleted.array[start+ i];
+    uint64_t curTet = local->deleted.array[start + i];
     const uint32_t* __restrict__ Node = mesh->tetrahedra.node + 4*curTet;
     for (unsigned j=0; j<3; j++)
     {
-      uint32_t n0 = Node[index[j]] + 1;
-      uint32_t n1 = Node[index[j+1]] + 1;
+      uint32_t n0 = Node[index[j]];
+      uint32_t n1 = Node[index[j+1]];
+      uint64_t key = (uint64_t) (n0 ^ n1) << 32 | MAX(n0, n1);
 
-      if(n0 < n1)
-        edges[3*i + j].v[0] = ((uint64_t) n0 * n) + n1;
-      else
-        edges[3*i + j].v[0] = ((uint64_t) n1 * n) + n0;
-
-      if(edges[3*i + j].v[0] > maxKey)
-        maxKey = edges[3*i + j].v[0];
-
-      edges[3*i + j].v[1] = 4*curTet+j+1;
+      uint64_t neigh = hashTableSearch(pairs, mask, key, 4 * curTet + j + 1);
+      if(neigh != HXT_NO_ADJACENT) {
+#ifdef DEBUG
+        found++;
+#endif
+        mesh->tetrahedra.neigh[4 * curTet + j + 1] = neigh;
+        mesh->tetrahedra.neigh[neigh] = 4 * curTet + j + 1;
+      }
     }
   }
 
-  HXT_CHECK( group2_sort_v0(edges, 3*blength, maxKey) );
-
-  for(int i=0; i<3*blength; i+=2) {
-#ifndef NDEBUG
-    if(edges[i].v[0] != edges[i+1].v[0])
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "Failed to compute adjacencies (b)");
+#ifdef DEBUG
+  if(2 * found != 3 * blength)
+    return HXT_ERROR_MSG(HXT_STATUS_ERROR, "Failed to compute adjacencies (b)");
 #endif
-    uint64_t f0 = edges[i].v[1];
-    uint64_t f1 = edges[i+1].v[1];
 
-    mesh->tetrahedra.neigh[f0] = f1;
-    mesh->tetrahedra.neigh[f1] = f0;
-  }
   return HXT_STATUS_OK;
 }
+
+
+
+// static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, const uint64_t start, const uint64_t blength)
+// {
+//   HXTGroup2* edges;
+
+//   HXT_CHECK( askForBall(local, 2 * blength) );
+//   edges = (HXTGroup2*) local->ball.array; // recycle array
+
+//   const uint8_t index[4] = {2,3,1,2};
+
+//   const uint32_t n = mesh->vertices.num + 1;
+//   uint64_t maxKey = 0;
+
+//   for (uint64_t i=0; i<blength; i++)
+//   {
+//     uint64_t curTet = local->deleted.array[start+ i];
+//     const uint32_t* __restrict__ Node = mesh->tetrahedra.node + 4*curTet;
+//     for (unsigned j=0; j<3; j++)
+//     {
+//       uint32_t n0 = Node[index[j]] + 1;
+//       uint32_t n1 = Node[index[j+1]] + 1;
+
+//       if(n0 < n1)
+//         edges[3*i + j].v[0] = ((uint64_t) n0 * n) + n1;
+//       else
+//         edges[3*i + j].v[0] = ((uint64_t) n1 * n) + n0;
+
+//       if(edges[3*i + j].v[0] > maxKey)
+//         maxKey = edges[3*i + j].v[0];
+
+//       edges[3*i + j].v[1] = 4*curTet+j+1;
+//     }
+//   }
+
+//   HXT_CHECK( group2_sort_v0(edges, 3*blength, maxKey) );
+
+//   for(int i=0; i<3*blength; i+=2) {
+// #ifndef NDEBUG
+//     if(edges[i].v[0] != edges[i+1].v[0])
+//       return HXT_ERROR_MSG(HXT_STATUS_ERROR, "Failed to compute adjacencies (b)");
+// #endif
+//     uint64_t f0 = edges[i].v[1];
+//     uint64_t f1 = edges[i+1].v[1];
+
+//     mesh->tetrahedra.neigh[f0] = f1;
+//     mesh->tetrahedra.neigh[f1] = f0;
+//   }
+//   return HXT_STATUS_OK;
+// }
 
 
 /****************************************
