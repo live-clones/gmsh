@@ -750,27 +750,27 @@ static bool serverActionMatch(const std::string &action,
   std::vector<std::string> names;
   onelab::server::instance()->getParameterNames(names, match);
 
-  for(auto &n : names) {
+  for(auto &var : names) {
     Msg::Debug("Performing action '%s' on variable '%s'",
-               action.c_str(), n.c_str());
-    if(action == "Reset") {
-      onelab::server::instance()->clear(n);
+               action.c_str(), var.c_str());
+    if(action == "ResetMatch") {
+      onelab::server::instance()->clear(var);
     }
     else {
       std::vector<onelab::string> ps;
-      onelab::server::instance()->get(ps, n);
+      onelab::server::instance()->get(ps, var);
       if(ps.size()) {
-        if(action == "Hide")
+        if(action == "HideMatch")
           ps[0].setVisible(false);
-        else if(action == "Show")
+        else if(action == "ShowMatch")
           ps[0].setVisible(true);
       }
       std::vector<onelab::number> pn;
-      onelab::server::instance()->get(pn, n);
+      onelab::server::instance()->get(pn, var);
       if(pn.size()) {
-        if(action == "Hide")
+        if(action == "HideMatch")
           pn[0].setVisible(false);
-        else if(action == "Show")
+        else if(action == "ShowMatch")
           pn[0].setVisible(true);
         onelab::server::instance()->set(pn[0]);
       }
@@ -782,20 +782,90 @@ static bool serverActionMatch(const std::string &action,
   return !names.empty();
 }
 
+static bool serverActionList(const std::string &path,
+                             const std::string &action,
+                             const std::string &data)
+{
+  std::vector<std::string> what = onelab::parameter::split(data, ',');
+
+  if(action == "Set" && (what.size() < 2 || what.size() % 2)) {
+    Msg::Warning("Bad data for ServerActionSet");
+    return false;
+  }
+
+  for(std::size_t i = 0; i < what.size(); i++) {
+    std::string var = onelab::parameter::trim(what[i]);
+    // replace starting '%' with path of variable with the attributes
+    if(var.size() && var[0] == '%') {
+      var.erase(0, 1);
+      var = path + "/" + var;
+    }
+    Msg::Debug("Performing action '%s' on variable '%s'",
+               action.c_str(), var.c_str());
+    if(action == "Reset") {
+      onelab::server::instance()->clear(var);
+    }
+    else {
+      std::string val;
+      if(action == "Set") {
+        val = onelab::parameter::trim(what[i + 1]);
+        i++;
+      }
+      std::vector<onelab::string> ps;
+      onelab::server::instance()->get(ps, var);
+      if(ps.size()) {
+        if(action == "Set")
+          ps[0].setValue(val);
+        else if(action == "Show")
+          ps[0].setVisible(true);
+        else if(action == "Hide")
+          ps[0].setVisible(false);
+        onelab::server::instance()->set(ps[0]);
+      }
+      std::vector<onelab::number> pn;
+      onelab::server::instance()->get(pn, var);
+      if(pn.size()) {
+        if(action == "Set")
+          pn[0].setValue(atof(val.c_str()));
+        else if(action == "Show")
+          pn[0].setVisible(true);
+        else if(action == "Hide")
+          pn[0].setVisible(false);
+        onelab::server::instance()->set(pn[0]);
+      }
+    }
+  }
+
+  return true;
+}
+
 template <class T> static void performServerAction(T &n)
 {
   // global unconditional actions, triggering a tree rebuild
   std::string opt = n.getAttribute("ServerAction");
   if(opt.size()) serverAction(opt);
 
-  // actions using a regexp, not triggering a tree rebuild (it should happen
-  // after all parameters have been changed on the server-side)
-  std::vector<std::string> actions = {"Reset", "Hide", "Show"};
+  // actions not triggering a tree rebuild (it should happen after all
+  // parameters have been changed on the server-side):
+
+  // * actions using one variable or a list of variables
+  std::vector<std::string> actions = {"Reset", "Hide", "Show", "Set"};
+  for(auto &a : actions) {
+    // global
+    opt = n.getAttribute("ServerAction" + a);
+    if(opt.size()) serverActionList(n.getPath(), a, opt);
+    // only for a given value
+    opt = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
+    if(opt.size()) serverActionList(n.getPath(), a, opt);
+  }
+
+  // * actions using a regexp
+  actions = {"ResetMatch", "HideMatch", "ShowMatch"};
   for(auto &a : actions) {
     // global
     opt = n.getAttribute("ServerAction" + a);
     if(opt.size()) serverActionMatch(a, opt);
-    // only if for a given value
+    // only for a given value
     opt = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
     if(opt.size()) serverActionMatch(a, opt);
   }

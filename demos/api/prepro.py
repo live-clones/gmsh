@@ -32,9 +32,10 @@ if len(sys.argv) > 1:
 # set to "check", which gives the Python code the opportunity to react in the
 # event loop. This could e.g. be used to define new variables depending on the
 # choices just made, or to show/hide existing variables. To make things simpler,
-# the special "ServerActionHide" or "ServerActionShow" parameter attributes can
-# also be specified when creating parameters, which allows to set the visibility
-# of dependent parameters without explicitly processing the "check" action.
+# several special attributes can be specified ("ServerActionSet",
+# "ServerActionShow", "ServerActionShowMatch", "ServerActionHide", ...) when
+# creating parameters, which allows to set the visibility or the value of
+# dependent parameters without explicitly processing the "check" action.
 #
 # Other actions can be defined as well:
 #
@@ -69,12 +70,18 @@ parameters = """
     "values":[1],
     "choices":[0, 1, 2],
     "valueLabels":{"User-defined":0, "Steel":1, "Concrete":2},
-    "attributes":{"ServerActionHide":"ONELAB Context/Surface Template/1.*",
-                  "ServerActionShow 0":"ONELAB Context/Surface Template/1.*"}
+    "attributes":
+      {
+        "ServerActionHideMatch":"ONELAB Context/Surface Template/1.*",
+        "ServerActionShowMatch 0":"ONELAB Context/Surface Template/1.*",
+        "ServerActionSet 1":"%10Cond, 205, %11Diff, 97",
+        "ServerActionSet 2":"%10Cond, 37, %11Diff, 12"
+      }
   },
   {
     "type":"number",
-    "name":"ONELAB Context/Surface Template/10Conductivity [Wm⁻¹K⁻¹]",
+    "name":"ONELAB Context/Surface Template/10Cond",
+    "label":"Conductivity [Wm⁻¹K⁻¹]",
     "values":[205],
     "min":0.1,
     "max":500,
@@ -83,7 +90,8 @@ parameters = """
   },
   {
     "type":"number",
-    "name":"ONELAB Context/Surface Template/11Diffusivity [mm²s⁻¹]",
+    "name":"ONELAB Context/Surface Template/11Diff",
+    "label":"Diffusivity [mm²s⁻¹]",
     "values":[97],
     "min":10,
     "max":1200,
