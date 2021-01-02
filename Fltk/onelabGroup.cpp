@@ -764,6 +764,10 @@ static bool serverActionMatch(const std::string &action,
           ps[0].setVisible(false);
         else if(action == "ShowMatch")
           ps[0].setVisible(true);
+        else if(action == "ReadOnlyMatch")
+          ps[0].setReadOnly(true);
+        else if(action == "ReadWriteMatch")
+          ps[0].setReadOnly(false);
       }
       std::vector<onelab::number> pn;
       onelab::server::instance()->get(pn, var);
@@ -772,6 +776,10 @@ static bool serverActionMatch(const std::string &action,
           pn[0].setVisible(false);
         else if(action == "ShowMatch")
           pn[0].setVisible(true);
+        else if(action == "ReadOnlyMatch")
+          pn[0].setReadOnly(true);
+        else if(action == "ReadWriteMatch")
+          pn[0].setReadOnly(false);
         onelab::server::instance()->set(pn[0]);
       }
     }
@@ -820,6 +828,10 @@ static bool serverActionList(const std::string &path,
           ps[0].setVisible(true);
         else if(action == "Hide")
           ps[0].setVisible(false);
+        else if(action == "ReadOnly")
+          ps[0].setReadOnly(true);
+        else if(action == "ReadWrite")
+          ps[0].setReadOnly(false);
         onelab::server::instance()->set(ps[0]);
       }
       std::vector<onelab::number> pn;
@@ -831,6 +843,10 @@ static bool serverActionList(const std::string &path,
           pn[0].setVisible(true);
         else if(action == "Hide")
           pn[0].setVisible(false);
+        else if(action == "ReadOnly")
+          pn[0].setReadOnly(true);
+        else if(action == "ReadWrite")
+          pn[0].setReadOnly(false);
         onelab::server::instance()->set(pn[0]);
       }
     }
@@ -841,33 +857,37 @@ static bool serverActionList(const std::string &path,
 
 template <class T> static void performServerAction(T &n)
 {
+  if(n.getAttributes().empty()) return;
+
   // global unconditional actions, triggering a tree rebuild
-  std::string opt = n.getAttribute("ServerAction");
-  if(opt.size()) serverAction(opt);
+  std::string action = n.getAttribute("ServerAction");
+  if(action.size()) serverAction(action);
 
   // actions not triggering a tree rebuild (it should happen after all
   // parameters have been changed on the server-side):
 
   // * actions using one variable or a list of variables
-  std::vector<std::string> actions = {"Reset", "Hide", "Show", "Set"};
-  for(auto &a : actions) {
+  std::vector<std::string> list =
+    {"Reset", "Hide", "Show", "Set", "ReadOnly", "ReadWrite"};
+  for(auto &a : list) {
     // global
-    opt = n.getAttribute("ServerAction" + a);
-    if(opt.size()) serverActionList(n.getPath(), a, opt);
+    std::string data = n.getAttribute("ServerAction" + a);
+    if(data.size()) serverActionList(n.getPath(), a, data);
     // only for a given value
-    opt = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
-    if(opt.size()) serverActionList(n.getPath(), a, opt);
+    data = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
+    if(data.size()) serverActionList(n.getPath(), a, data);
   }
 
-  // * actions using a regexp
-  actions = {"ResetMatch", "HideMatch", "ShowMatch"};
-  for(auto &a : actions) {
+  // * actions using a regex
+  std::vector<std::string> regex =
+    {"ResetMatch", "HideMatch", "ShowMatch", "ReadOnlyMatch", "ReadWriteMatch"};
+  for(auto &a : regex) {
     // global
-    opt = n.getAttribute("ServerAction" + a);
-    if(opt.size()) serverActionMatch(a, opt);
+    std::string data = n.getAttribute("ServerAction" + a);
+    if(data.size()) serverActionMatch(a, data);
     // only for a given value
-    opt = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
-    if(opt.size()) serverActionMatch(a, opt);
+    data = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
+    if(data.size()) serverActionMatch(a, data);
   }
 }
 
