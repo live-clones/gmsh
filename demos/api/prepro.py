@@ -40,13 +40,17 @@ if len(sys.argv) > 1:
 # Other actions can be defined as well:
 #
 # * The "ONELAB/Button" parameter governs the behavior of the main "Run" button
-#   in the GUI; here the "run" action could trigger running the finite element
-#   solver with the defined parameters
+#   in the GUI; in this example the "run" action could trigger running the
+#   finite element solver with the defined parameters
 #
 # * Parameters with the "Macro" attribute set to "Action" will trigger an action
-#   named after their value; here to create a "select entity" action where the
-#   user is asked to interactively select an entity in the model.
+#   named after their value; in this example we use a macro to create a "select
+#   entity" action where the user is asked to interactively select an entity in
+#   the model.
 #
+# See https://gitlab.onelab.info/doc/tutorials/-/wikis/ONELAB-JSON-interface for
+# more information about the ONELAB JSON database interface.
+
 parameters = """
 [
   {
