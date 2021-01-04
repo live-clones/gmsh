@@ -1,4 +1,4 @@
-// Hxt - Copyright (C) 
+// Hxt - Copyright (C)
 // 2016 - 2020 UCLouvain
 //
 // See the LICENSE.txt file for license information.
@@ -338,7 +338,7 @@ static inline int tet_tri_intersection(SPRCavity* SPR,
   int e0e0, e1e0, e2e0, e3e0, e4e0, e5e0;
   int e0e1, e1e1, e2e1, e3e1, e4e1, e5e1;
   int e0e2, e1e2, e2e2, e3e2, e4e2, e5e2;
-  
+
   e0e0 = get_orient3d(SPR, tet[0], tet[1], tri[0], tri[1]);
   e1e0 = get_orient3d(SPR, tet[0], tet[2], tri[0], tri[1]);
   e2e0 = get_orient3d(SPR, tet[0], tet[3], tri[0], tri[1]);
@@ -446,7 +446,7 @@ static SPRNOINLINE int tet_edge_intersection(SPRCavity* SPR,
     l1_to_tet = 3;
   }
 
-  if(l0_to_tet!=-1 && l1_to_tet!=-1) // the line is there: no interseection 
+  if(l0_to_tet!=-1 && l1_to_tet!=-1) // the line is there: no interseection
     return 0;
 
   int f0v0 = get_orient3d(SPR, edge[0], tet[1], tet[2], tet[3]);
@@ -768,7 +768,7 @@ static void remove_face(SPRCavity* SPR, uint16_t triangleID)
     add_face_map(SPR, last->node[0], last->node[1], last->node[2], triangleID);
     *del = *last;
   }
-  
+
   SPR->bndTriangles.num--;
 }
 
@@ -898,7 +898,7 @@ static HXTStatus hxtSPR_advanced(SPRCavity* SPR) {
   // this variable could be avoided, as step is
   // SPR->steps.array[SPR->steps.num] all along
   SPRStep* step = &SPR->steps.array[SPR->steps.num];
-  
+
   while(1) {
     if(SPR->num_search_nodes >= SPR->max_search_nodes){
       return HXT_STATUS_INTERNAL;
@@ -1052,7 +1052,7 @@ static HXTStatus hxtSPR_advanced(SPRCavity* SPR) {
           remove_face(SPR, index);
         }
       }
-    
+
       if(step->quality <= SPR->tetrahedra.quality) {
         step->numCandidates = 0;
       }
@@ -1080,7 +1080,7 @@ HXTStatus hxtSPR(SPRCavity* SPR)
  */
 static void hxtSPR_rewind(SPRCavity* SPR) {
   SPRStep* step = &SPR->steps.array[SPR->steps.num];
-  
+
   while(1) {
     if(step->numCandidates>=0){
       add_face(SPR,
@@ -1214,7 +1214,7 @@ static inline HXTStatus SPROpti_init(SPRGrowingCavity* growingCav,
   for(int i=0; i<4; i++) {
     uint32_t node = mesh->tetrahedra.node[4*badTet + i];
     double* coord = vertices[node].coord;
-    
+
     SPR->points.array[i] = (SPRPoint) {
       .coord = {coord[0], coord[1], coord[2]},
       .userID = node,
@@ -1406,7 +1406,7 @@ static inline HXTStatus attach_best_point(SPRGrowingCavity* growingCav,
     .is_interior = 0,
     .is_optional = 0,
   };
-  
+
   uint64_t* adjacencies = growingCav->meshAdjacencies;
 
   /* we delete tetrahedra that contain the added point. */
@@ -1459,7 +1459,7 @@ static inline HXTStatus attach_best_point(SPRGrowingCavity* growingCav,
     // and we add the tet to the SPR structure :-)
     uint8_t* triV = SPR->bndTriangles.array[i].node;
     uint8_t* tetV = SPR->tetrahedra.array[SPR->tetrahedra.num++].node;
-    
+
     tetV[facet] = oppositeV;
     for(int j=0; j<3; j++) {
       if(SPR->points.array[triV[j]].userID == mesh->tetrahedra.node[4*meshTet + getNode0FromFacet(facet)]) {
@@ -1743,7 +1743,7 @@ static inline HXTStatus rebuildMesh(SPRGrowingCavity* growingCav,
                                  SPR->CITriangles.array[i].node[0],
                                  SPR->CITriangles.array[i].node[2],
                                  SPR->CITriangles.array[i].node[1]);
-      
+
 #ifndef NDEBUG
     if(adj0==UINT16_MAX || adj1==UINT16_MAX)
       return HXT_ERROR_MSG(HXT_STATUS_ERROR, "constrained triangle not found in the tetrahedralization");
@@ -1928,12 +1928,12 @@ HXTStatus hxtSPR_opti(ThreadLocal* local,
     }
   } while(1);
 
-  HXT_CHECK( rebuildMesh(&growingCav,
-                         local,
+
 #ifdef DEBUG
-                         prevNumDeleted,
+    HXT_CHECK(rebuildMesh(&growingCav, local, prevNumDeleted, badTet));
+#else
+    HXT_CHECK(rebuildMesh(&growingCav, local, badTet));
 #endif
-                         badTet) );
 
   return HXT_STATUS_OK;
 }
