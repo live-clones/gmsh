@@ -839,7 +839,9 @@ bool GRegion::setOutwardOrientationMeshConstraint()
     GFace *gf = (*it);
     gf->buildSTLTriangulation();
     if(gf->stl_triangles.size() < 3) {
-      Msg::Error("No valid STL triangulation found for surface %d", gf->tag());
+      Msg::Warning("No valid STL triangulation found for surface %d - skipping "
+                   "outward orientation constraint for volume %d", gf->tag(),
+                   tag());
       return false;
     }
     int nb_intersect = 0;
@@ -873,8 +875,6 @@ bool GRegion::setOutwardOrientationMeshConstraint()
         GFace *gf_b = (*it_b);
         gf_b->buildSTLTriangulation();
         if(gf_b->stl_triangles.size() < 3) {
-          Msg::Error("No valid STL triangulation found for surface %d",
-                     gf_b->tag());
           return false;
         }
         for(std::size_t i_b = 0; i_b < gf_b->stl_triangles.size(); i_b += 3) {
@@ -904,8 +904,8 @@ bool GRegion::setOutwardOrientationMeshConstraint()
         }
         ++it_b;
       }
-      Msg::Info("Region %d Face %d, %d intersect", tag(), gf->tag(),
-                nb_intersect);
+      Msg::Debug("Region %d Face %d, %d intersect", tag(), gf->tag(),
+                 nb_intersect);
       if(nb_intersect >= 0)
         break; // negative value means intersection is not "robust"
     }
