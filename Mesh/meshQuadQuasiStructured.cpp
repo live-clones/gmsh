@@ -70,7 +70,7 @@ namespace QSQ {
   using vec3 = std::array<double,3>;
 
   template<class T>
-    std::ostream& operator<<(std::ostream& os, const std::vector<T>& values) { 
+    std::ostream& operator<<(std::ostream& os, const std::vector<T>& values) {
       os << "[";
       for (size_t i = 0; i < values.size(); ++i) {
         os << values[i];
@@ -82,13 +82,13 @@ namespace QSQ {
       return os;
     }
 
-  template<class T> 
+  template<class T>
     void sort_unique(std::vector<T>& vec) {
       std::sort( vec.begin(), vec.end() );
       vec.erase( std::unique( vec.begin(), vec.end() ), vec.end() );
     }
 
-  template<class T> 
+  template<class T>
     void remove_element_if_inside(const T& value, std::vector<T>& vec) {
       auto it = std::find(vec.begin(),vec.end(),value);
       if (it != vec.end()) {
@@ -96,16 +96,16 @@ namespace QSQ {
       }
     }
 
-  template<class T1, class T2> 
+  template<class T1, class T2>
   T2 sort_unique_with_perm(
-        const std::vector<T1>& in, 
+        const std::vector<T1>& in,
         std::vector<T1>& uniques,
         std::vector<T2>& old2new) {
 
       std::vector<T2> ids(in.size());
       for(T2 k = 0; k != in.size(); ++k) ids[k]=k;
 
-      std::sort(ids.begin(), ids.end(), 
+      std::sort(ids.begin(), ids.end(),
           [&in](const T2& a, const T2&b){ return (in[a] < in[b]); }
           );
 
@@ -114,7 +114,7 @@ namespace QSQ {
       for(T2 k = 0; k != in.size(); ++k) uniques[k]=in[k];
 
       std::sort(uniques.begin(), uniques.end());
-      uniques.erase( std::unique(uniques.begin(), uniques.end()), 
+      uniques.erase( std::unique(uniques.begin(), uniques.end()),
           uniques.end());
       T2 ic = 0; // indice current
       T2 ir = 0; // indice representant
@@ -131,12 +131,12 @@ namespace QSQ {
       return (T2) uniques.size();
   }
 
-  template<class T> 
+  template<class T>
     void append(std::vector<T>& v1, const std::vector<T>& v2) {
       v1.insert(v1.end(),v2.begin(),v2.end());
     }
 
-  template<class T> 
+  template<class T>
     std::vector<T> intersection(const std::vector<T>& v1, const std::vector<T>& v2) {
       std::vector<T> s1 = v1;
       std::vector<T> s2 = v2;
@@ -147,7 +147,7 @@ namespace QSQ {
       return s3;
     }
 
-  template<class T> 
+  template<class T>
     std::vector<T> difference(const std::vector<T>& v1, const std::vector<T>& v2) {
       std::vector<T> s1 = v1;
       std::vector<T> s2 = v2;
@@ -198,7 +198,7 @@ namespace QSQ {
   }
 
 
-  template <class ITERATOR> 
+  template <class ITERATOR>
     bool buildBoundary (ITERATOR beg, ITERATOR end, vector<MVertex*>& bnd){
       std::vector<MEdge> eds,veds;
 
@@ -245,7 +245,7 @@ namespace QSQ {
         size_t i = it - vsorted[0].begin();
         size_t i_next = (i+1)%vsorted[0].size();
         size_t i_prev = (i-1+vsorted[0].size())%vsorted[0].size();
-        if (vsorted[0][i_next] == v2) { 
+        if (vsorted[0][i_next] == v2) {
           // good ordering
         } else if (vsorted[0][i_prev] == v2) { // apply reverse
           std::reverse(vsorted[0].begin(),vsorted[0].end());
@@ -527,7 +527,7 @@ namespace QSQ {
         }
       }
     }
-      
+
     return true;
   }
 
@@ -561,7 +561,7 @@ namespace QSQ {
     return false;
   }
 
-  bool buildVertexToVertex(const std::vector<GFace*>& faces, 
+  bool buildVertexToVertex(const std::vector<GFace*>& faces,
       robin_hood::unordered_map<MVertex*,robin_hood::unordered_set<MVertex*> >& v2v) {
     for (GFace* gf: faces) {
       for (MElement* f: gf->triangles) {
@@ -587,7 +587,7 @@ namespace QSQ {
   }
 
   bool adaptSizeMapToSmallFeatures(
-      const std::vector<GFace*>& faces, 
+      const std::vector<GFace*>& faces,
       std::unordered_map<MVertex*,double>& sizemap,
       double smallestMultiplier,
       double gradientMax) { /* to avoid very small size map */
@@ -622,7 +622,7 @@ namespace QSQ {
     robin_hood::unordered_map<MVertex*,robin_hood::unordered_set<MVertex*> > v2v;
     buildVertexToVertex(faces, v2v);
 
-    std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q; 
+    std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q;
     for (const auto& kv: values) {
       Q.push({kv.second,kv.first});
     }
@@ -793,7 +793,7 @@ namespace QSQ {
 
         /* discrete topological relations between irregular vertices:
          *  sum3m5 = n_val3 - n_val5 = 4 \chi + m_val3 - m_val1  + 2 m_val4 */
-        intSumVal3mVal5 = 4*chi + int(bdrValVertices[3].size()) 
+        intSumVal3mVal5 = 4*chi + int(bdrValVertices[3].size())
           - int(bdrValVertices[1].size()) + 2 * int(bdrValVertices[4].size());
 
         if (createSurfaceProjector) {
@@ -822,10 +822,10 @@ namespace QSQ {
   //   info.cornerIsNonManifold.clear();
   //   for (auto& a: info.bdrValVertices) a.clear();
   //   info.intSumVal3mVal5 = 0;
-  //   
+  //
   //   if (gf->triangles.size() == 0) {
   //     if (gf->quadrangles.size() != 0) {
-  //       Msg::Error("fillGFaceInfo: there are %li quads in face %li, cannot compute angles from triangles", 
+  //       Msg::Error("fillGFaceInfo: there are %li quads in face %li, cannot compute angles from triangles",
   //           gf->quadrangles.size(),gf->tag());
   //       return false;
   //     }
@@ -896,7 +896,7 @@ namespace QSQ {
 
   //   /* discrete topological relations between irregular vertices:
   //    *  sum3m5 = n_val3 - n_val5 = 4 \chi + m_val3 - m_val1  + 2 m_val4 */
-  //   info.intSumVal3mVal5 = 4*info.chi + int(info.bdrValVertices[3].size()) 
+  //   info.intSumVal3mVal5 = 4*info.chi + int(info.bdrValVertices[3].size())
   //     - int(info.bdrValVertices[1].size()) + 2 * int(info.bdrValVertices[4].size());
 
   //   return true;
@@ -938,11 +938,11 @@ namespace QSQ {
 
     inline size_t next(size_t he) const {
       if (he == NO_ID) return NO_ID;
-      return hedges[he].next; 
+      return hedges[he].next;
     }
     inline size_t opposite(size_t he) const {
       if (he == NO_ID) return NO_ID;
-      return hedges[he].opposite; 
+      return hedges[he].opposite;
     }
     inline size_t prev(size_t he) const {
       if (he == NO_ID) return NO_ID;
@@ -1098,7 +1098,7 @@ namespace QSQ {
     }
 
 
-    int faceAdjacentFaces(size_t f, std::vector<size_t>& afaces) const { 
+    int faceAdjacentFaces(size_t f, std::vector<size_t>& afaces) const {
       afaces.clear();
       size_t he = faces[f].he;
       do {
@@ -1160,7 +1160,7 @@ namespace QSQ {
 
   inline si2 sorted(size_t v1, size_t v2) { if (v1 < v2) { return {v1,v2}; } else { return {v2,v1}; } }
 
-  bool buildAdjacencies(const vector<MQuadrangle*>& quadrangles, 
+  bool buildAdjacencies(const vector<MQuadrangle*>& quadrangles,
       vector<array<size_t,4> >& adjacent) {
 
     adjacent.resize(quadrangles.size());
@@ -1360,7 +1360,7 @@ namespace QSQ {
     return 0;
   }
 
-  bool boundaryHalfEdgesFromQuads(const MeshHalfEdges& M, const robin_hood::unordered_set<size_t>& quads, 
+  bool boundaryHalfEdgesFromQuads(const MeshHalfEdges& M, const robin_hood::unordered_set<size_t>& quads,
       std::vector<size_t>& boundary) {
     robin_hood::unordered_set<size_t> hes;
     for (size_t f: quads) {
@@ -1429,8 +1429,8 @@ namespace QSQ {
     // }
   }
 
-  bool orderedHalfEdgesFromStack(const MeshHalfEdges& M, 
-      const std::vector<size_t>& hes_stack, 
+  bool orderedHalfEdgesFromStack(const MeshHalfEdges& M,
+      const std::vector<size_t>& hes_stack,
       std::vector<size_t>& orderedHes) {
     orderedHes.clear();
     if (hes_stack.size() < 3) {
@@ -1598,9 +1598,9 @@ namespace QSQ {
 
     int growByFlip(size_t i, /* i is index of half edge in hes */
         FlipInfo& info, bool rejectNewSings = true,
-        std::vector<int>* valenceInCavity = NULL) 
+        std::vector<int>* valenceInCavity = NULL)
     {
-      
+
       if (DBG_VERBOSE) {DBG("growByFlip ...", i, hes.size());}
       if (i >= hes.size()) {
         if (DBG_VERBOSE) {DBG("can't flip because", i, hes.size());}
@@ -1666,7 +1666,7 @@ namespace QSQ {
           return FLIP_INVALID_INPUT;
         }
         hes.erase(it1);
-        if (DBG_VERBOSE) {DBG("flip -2v", i, info.nq); } 
+        if (DBG_VERBOSE) {DBG("flip -2v", i, info.nq); }
       } else if ( q1in && !q2in &&  q3in) { /* minus two vertices on the bdr */
         size_t nv1 = M.vertex(he0_op,0);
         size_t nv2 = M.vertex(he0_op,1);
@@ -1704,7 +1704,7 @@ namespace QSQ {
           return FLIP_INVALID_INPUT;
         }
         hes.erase(it3);
-        if (DBG_VERBOSE) {DBG("flip -2v", i, info.nq); } 
+        if (DBG_VERBOSE) {DBG("flip -2v", i, info.nq); }
       } else if (!q1in &&  q2in &&  q3in) { /* minus two vertices on the bdr */
         size_t nv1 = M.vertex(he3,0);
         size_t nv2 = M.vertex(he3,1);
@@ -1741,7 +1741,7 @@ namespace QSQ {
           return FLIP_INVALID_INPUT;
         }
         hes.erase(it3);
-        if (DBG_VERBOSE) {DBG("flip -2v", i, info.nq); } 
+        if (DBG_VERBOSE) {DBG("flip -2v", i, info.nq); }
       } else if (q1in && q2in && q3in){
         size_t nv0 = M.hedges[he0].vertex;
         size_t nv1 = M.hedges[he1].vertex;
@@ -1807,7 +1807,7 @@ namespace QSQ {
           info.nq = NO_ID;
           return FLIP_REJECTED;
         }
-        if (DBG_VERBOSE) {DBG("flip closing hole (may be too slow ?)", i, info.nq); } 
+        if (DBG_VERBOSE) {DBG("flip closing hole (may be too slow ?)", i, info.nq); }
       } else if ( q1in && !q2in && !q3in) { /* same number of vertices on the bdr */
         /* Check we are not creating a non-manifold edge boundary */
         const size_t nv = M.hedges[he2].vertex;
@@ -1843,7 +1843,7 @@ namespace QSQ {
         size_t i_prev = (i + hes.size() - 1)%hes.size();
         hes[i_prev] = he2;
         hes[i] = he3;
-        if (DBG_VERBOSE) {DBG("flip <>1v (1)", i, info.nq, nv); } 
+        if (DBG_VERBOSE) {DBG("flip <>1v (1)", i, info.nq, nv); }
       } else if (!q1in && !q2in &&  q3in) { /* same number of vertices on the bdr */
         /* Check we are not creating a non-manifold edge boundary */
         const size_t nv = M.hedges[he1].vertex;
@@ -1915,7 +1915,7 @@ namespace QSQ {
         hes[i] = he1;
         hes.insert(hes.begin()+i+1,{he2,he3});
         if (DBG_VERBOSE) {DBG("flip +2v", i, info.nq);}
-      
+
         } else {
         if (DBG_VERBOSE) {DBG("flip config not supported", i, info.nq, he0, he1, he2, he3, q1in, q2in, q3in);}
         info.nq = NO_ID;
@@ -2404,8 +2404,8 @@ namespace QSQ {
 
     bool grow(
         int growthType,
-        const std::vector<size_t>& patternsToCheck, 
-        const std::vector<std::pair<size_t,size_t> >& patternSizeLimits = {}) 
+        const std::vector<size_t>& patternsToCheck,
+        const std::vector<std::pair<size_t,size_t> >& patternSizeLimits = {})
     {
       if (current == NULL) return false;
       if (growthType != GROW_MINIMAL && growthType != GROW_MAXIMAL) return false;
@@ -2650,7 +2650,7 @@ namespace QSQ {
         if (it2 != it->second.end()) it->second.erase(it2);
       }
     }
-    MQuadrangle *q = dynamic_cast<MQuadrangle*>(e);	      
+    MQuadrangle *q = dynamic_cast<MQuadrangle*>(e);
     if (!q)Msg::Error ("A non quad is present in the list of quad of face %lu",gf->tag());
     auto it = std::find(gf->quadrangles.begin(),gf->quadrangles.end(), q);
     if (it != gf->quadrangles.end()) {
@@ -2740,7 +2740,7 @@ namespace QSQ {
           if (v1 == NULL || v2 == NULL) {
             Msg::Error("  edge vertices not found in GFace");
             continue;
-          } 
+          }
           SVector3 p1 = v1->point();
           SVector3 p2 = v2->point();
           vector<vec3> pts = {p1,p2};
@@ -2838,7 +2838,7 @@ namespace QSQ {
     return energy;
   }
 
-  double irregularityEnergyOnRing(GFace* gf, MVertex* v, 
+  double irregularityEnergyOnRing(GFace* gf, MVertex* v,
       const robin_hood::unordered_map<MVertex *, std::vector<MElement *> >& adj,
       const robin_hood::unordered_map<MVertex *, double>& vAngle
       ) {
@@ -2915,8 +2915,8 @@ namespace QSQ {
             MVertex* v2_prev = f->getVertex((lv+4-1)%4);
             MVertex* v2_op = f->getVertex((lv+2)%4);
             MVertex* v2_next = f->getVertex((lv+1)%4);
-            if (adj.at(v2_prev).size() > 3 
-                && adj.at(v2_op).size() == 3 
+            if (adj.at(v2_prev).size() > 3
+                && adj.at(v2_op).size() == 3
                 && adj.at(v2_next).size() > 3) {
               if (vertexOnBoundary(gf,v2_prev) || vertexOnBoundary(gf, v2_op) || vertexOnBoundary(gf, v2_next)) continue;
               /* Found a diamond ! */
@@ -2935,7 +2935,7 @@ namespace QSQ {
     if (quads.size() == 1 && ((vs == CORNER && ideal >= 2) || (vs == CURVE && ideal >= 2))) {
       growCavityAroundQuad = true;
     }
-    
+
     if (growCavityAroundQuad) {
       growAroundQuads(adj, quads);
     }
@@ -3019,7 +3019,7 @@ namespace QSQ {
       }
     }
     if (old2new.size() > 0) {
-      for (MElement* f: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv){ 
+      for (MElement* f: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv){
         MVertex* v = f->getVertex(lv);
         auto it = old2new.find(v);
         if (it != old2new.end()) {
@@ -3055,7 +3055,7 @@ namespace QSQ {
           SVector3 pCurr = v->point();
           double agl = angleVectors(pNext-pCurr,pPrev-pCurr);
           vAngle[v] += agl;
-        } 
+        }
       }
     }
 
@@ -3103,7 +3103,7 @@ namespace QSQ {
         Msg::Debug("- remove defects on interior ...");
       }
 
-      std::priority_queue<std::pair<double,MVertex*>, std::vector<std::pair<double,MVertex*> > > Q; 
+      std::priority_queue<std::pair<double,MVertex*>, std::vector<std::pair<double,MVertex*> > > Q;
 
       /* Initialize the priority queue */
       initPriorityQueueWithDefects(pass, gf, adj, vAngle, Q);
@@ -3118,7 +3118,7 @@ namespace QSQ {
 
         { /* Check if vertex still exists, may have been removed */
           auto it = adj.find(v);
-          if (it == adj.end()) continue; 
+          if (it == adj.end()) continue;
         }
 
         int ideal = -1;
@@ -3182,7 +3182,7 @@ namespace QSQ {
           if (exterior.size() == 0) { /* boundary vertex "inside" the cavity, probably the one to remesh */
             bndAllowedValenceRange[i] = {bival,bival};
           } else if (bvs == CORNER) {
-            bndAllowedValenceRange[i] = {1,1}; 
+            bndAllowedValenceRange[i] = {1,1};
           } else if (bvs == CURVE) {
             if (vs == CORNER) { /* When fixing corners, can degrade curves */
               bndAllowedValenceRange[i] = {1,2};
@@ -3198,15 +3198,15 @@ namespace QSQ {
                   bndAllowedValenceRange[i] = {2,6};
                 }
               } else if (exterior.size() == 2) { /* allow 6, 7 */
-                bndAllowedValenceRange[i] = {1,5}; 
+                bndAllowedValenceRange[i] = {1,5};
               } else if (exterior.size() == 3) { /* allow 6, 7 */
                 bndAllowedValenceRange[i] = {1,4};
               } else if (exterior.size() == 4) {  /* allow 6, 7 */
-                bndAllowedValenceRange[i] = {1,3}; 
+                bndAllowedValenceRange[i] = {1,3};
               } else if (exterior.size() == 5) { /* allow 6, 7 */
-                bndAllowedValenceRange[i] = {1,2}; 
+                bndAllowedValenceRange[i] = {1,2};
               } else if (exterior.size() >= 6) { /* allow 7+, should minimize */
-                bndAllowedValenceRange[i] = {1,1}; 
+                bndAllowedValenceRange[i] = {1,1};
               }
               bool improveOnly = (doNotDegrade.find(bv) != doNotDegrade.end());
               if (improveOnly) {
@@ -3240,18 +3240,18 @@ namespace QSQ {
             } else {
               if (exterior.size() == 1) { /* warning: may generate quad duets, should check after */
                 if (allowTemporaryDuet) {
-                  bndAllowedValenceRange[i] = {1,4}; 
+                  bndAllowedValenceRange[i] = {1,4};
                 } else {
-                  bndAllowedValenceRange[i] = {2,4}; 
+                  bndAllowedValenceRange[i] = {2,4};
                 }
               } else if (exterior.size() == 2) { /* avoid 6+ */
-                bndAllowedValenceRange[i] = {1,3}; 
+                bndAllowedValenceRange[i] = {1,3};
               } else if (exterior.size() == 3) { /* avoid 6+ */
-                bndAllowedValenceRange[i] = {1,2}; 
+                bndAllowedValenceRange[i] = {1,2};
               } else if (exterior.size() == 4) { /* avoid 6+ */
-                bndAllowedValenceRange[i] = {1,1}; 
+                bndAllowedValenceRange[i] = {1,1};
               } else if (exterior.size() >= 5) { /* bad, will generate 6+ ... */
-                bndAllowedValenceRange[i] = {1,1}; 
+                bndAllowedValenceRange[i] = {1,1};
               }
             }
           } else {
@@ -3284,7 +3284,7 @@ namespace QSQ {
         std::vector<MElement*> newElements;
         double qmin = 0.05;
         double qfactor = 0.1;
-        int status = remeshFewQuads(gf, bnd, quads, bndIdealValence, bndAllowedValenceRange, 
+        int status = remeshFewQuads(gf, bnd, quads, bndIdealValence, bndAllowedValenceRange,
             newVertices, vertexIsIrregular, newElements, sp, qmin, qfactor, neighbors);
         if (status == 0) {
           /* Check if pattern is better (except if duet)*/
@@ -3367,7 +3367,7 @@ namespace QSQ {
     }
 
     if (count[CORNER] + count[CURVE] + count[SURFACE] > 0) {
-      Msg::Info("- Face %i: remeshed %li corner defects, %li curve defects, %li interior defects (%li -> %li quads)", 
+      Msg::Info("- Face %i: remeshed %li corner defects, %li curve defects, %li interior defects (%li -> %li quads)",
           gf->tag(), count[CORNER], count[CURVE], count[SURFACE], nq_in, gf->quadrangles.size());
     } else {
       return true;
@@ -3469,8 +3469,8 @@ namespace QSQ {
       std::vector<bool> vertexIsIrregular;
       double qualityMin = 0.1;
       double qualityDegradeFactor = 0.66;
-      int status = remeshPatchWithQuadPattern(gf, sides, patternNoAndRot, 
-          quads, newVertices, vertexIsIrregular, newElements, 
+      int status = remeshPatchWithQuadPattern(gf, sides, patternNoAndRot,
+          quads, newVertices, vertexIsIrregular, newElements,
           sp, qualityMin, qualityDegradeFactor);
       if (status != 0) {
         Msg::Debug("- Face %li, failed to remesh with selected quad pattern", gf->tag());
@@ -3489,7 +3489,7 @@ namespace QSQ {
           newSingularities.push_back(ivert[0]);
         }
       }
-    } 
+    }
 
     if (newElements.size() > 0) {
       if (newElements.size() < 10000000) { // TODO: a fast smoothing... somehow
@@ -3538,9 +3538,9 @@ namespace QSQ {
     return sig;
   }
 
-  int remeshCavitiesAroundSingularities(GFace* gf, std::vector<MVertex*>& singularVertices, 
+  int remeshCavitiesAroundSingularities(GFace* gf, std::vector<MVertex*>& singularVertices,
       const std::vector<size_t>& patternsToCheck, SurfaceProjector* sp = NULL,
-      double cpuTimeLimit = 0.) 
+      double cpuTimeLimit = 0.)
   {
     Msg::Debug("- Face %i: remeshCavitiesAroundSingularities ...", gf->tag());
     double t1 = Cpu();
@@ -3566,7 +3566,7 @@ namespace QSQ {
         break;
       }
 
-      /* singularNodes is the list of singularities (irregular vertices to keep) in the 
+      /* singularNodes is the list of singularities (irregular vertices to keep) in the
        * GFace structure, the values are the vertex 'num' */
       int st = createMeshHalfEdges(gf->quadrangles, M, singularVertices);
       if (st != 0) {
@@ -3612,7 +3612,7 @@ namespace QSQ {
             priority[j] += 1./(ip-sp).norm();
           }
         }
-        for (size_t i = 0; i < singularities.size(); ++i) 
+        for (size_t i = 0; i < singularities.size(); ++i)
           prio_sing[i] = {priority[i],singularities[i]};
       }
 
@@ -3710,7 +3710,7 @@ namespace QSQ {
      |    |    |    |    |
      +----+----+----+----+
   */
-  bool getStartOf35Path(MeshHalfEdges& M, size_t he, 
+  bool getStartOf35Path(MeshHalfEdges& M, size_t he,
       GFace*& gf, MQuadrangle*& qLeft, MQuadrangle*& qRight, MQuadrangle*& q35,
       std::vector<MVertex*>& vert) {
     vert.clear();
@@ -3725,7 +3725,7 @@ namespace QSQ {
     vert[6] = M.vertexPtr(M.prev(her),0);
     vert[7] = M.vertexPtr(M.prev(her),1);
     vert[8] = M.vertexPtr(M.next(M.opposite(M.prev(hel))),1);
-    bool ok = (vert[1] != NULL && vert[2] != NULL && vert[3] != NULL 
+    bool ok = (vert[1] != NULL && vert[2] != NULL && vert[3] != NULL
         && vert[4] != NULL && vert[5] != NULL && vert[6] != NULL && vert[7] != NULL);
     if (!ok) return false;
     gf = dynamic_cast<GFace*>(vert[1]->onWhat());
@@ -3737,7 +3737,7 @@ namespace QSQ {
     return true;
   }
 
-  bool getLeftRightAlong35Path(MeshHalfEdges& M, size_t he, 
+  bool getLeftRightAlong35Path(MeshHalfEdges& M, size_t he,
       GFace*& gf, MQuadrangle*& qLeft, MQuadrangle*& qRight,
       std::vector<MVertex*>& vert) {
     vert.clear();
@@ -3749,7 +3749,7 @@ namespace QSQ {
     size_t he_op = M.opposite(he);
     vert[5] = M.vertexPtr(M.next(he_op),1);
     vert[6] = M.vertexPtr(M.prev(he_op),0);
-    bool ok = (vert[1] != NULL && vert[2] != NULL && vert[3] != NULL 
+    bool ok = (vert[1] != NULL && vert[2] != NULL && vert[3] != NULL
         && vert[4] != NULL && vert[5] != NULL && vert[6] != NULL);
     if (!ok) return false;
     qLeft = dynamic_cast<MQuadrangle*>(M.facePtr(he));
@@ -4003,7 +4003,7 @@ namespace QSQ {
     robin_hood::unordered_set<MVertex*> vIs3Of35Pair;
     robin_hood::unordered_set<MVertex*> vIs5Of35Pair;
 
-    /* singularNodes is the list of singularities (irregular vertices to keep) in the 
+    /* singularNodes is the list of singularities (irregular vertices to keep) in the
      * GFace structure, the values are the vertex 'num' */
     int st = createMeshHalfEdges(quadrangles, M, singularVertices);
     if (st != 0) {
@@ -4066,7 +4066,7 @@ namespace QSQ {
         }
       }
       /* remove irregular nodes of 3-5 from list */
-      irregularNodes = difference(irregularNodes, vertIn35); 
+      irregularNodes = difference(irregularNodes, vertIn35);
     }
 
     vector<size_t> fvert;
@@ -4137,7 +4137,7 @@ namespace QSQ {
 
     MeshHalfEdges M;
 
-    /* singularNodes is the list of singularities (irregular vertices to keep) in the 
+    /* singularNodes is the list of singularities (irregular vertices to keep) in the
      * GFace structure, the values are the vertex 'num' */
 
     vector<MVertex*> singularVertices;
@@ -4297,7 +4297,7 @@ namespace QSQ {
           break;
         }
 
-        /* singularNodes is the list of singularities (irregular vertices to keep) in the 
+        /* singularNodes is the list of singularities (irregular vertices to keep) in the
          * GFace structure */
         int st = createMeshHalfEdges(gf->quadrangles, M, singularVertices);
         if (st != 0) {
@@ -4376,7 +4376,7 @@ namespace QSQ {
           }
 
           // Msg::Debug("------");
-          // Msg::Debug("starting cavity (%li quads) (quadrilateral patch), i=%li, prio=%f", 
+          // Msg::Debug("starting cavity (%li quads) (quadrilateral patch), i=%li, prio=%f",
           //     quads.size(), i, prio_quads[i].first);
 
           /* Build a cavity around singularity i */
@@ -4470,7 +4470,7 @@ namespace QSQ {
     bool disk = (corners.size() == 0 && info.bdrValVertices[2].size() > 0);
     // TODO check geometric convexity of the disk ... should not apply on
     //      faces with lot of convex and concave curves
-    
+
     // if (!disk) return 1; // DEBUGING TODO REMOVE
 
     /* Sort CAD edges in sides */
@@ -4622,8 +4622,8 @@ namespace QSQ {
       std::vector<MElement*> newElements;
       double qualityMin = 0.3;
       double qualityDegradeFactor = 0.75;
-      int status = remeshPatchWithQuadPattern(gf, sideVertices, patternNoAndRot, oldElements, 
-          newVertices, vertexIsIrregular, newElements, 
+      int status = remeshPatchWithQuadPattern(gf, sideVertices, patternNoAndRot, oldElements,
+          newVertices, vertexIsIrregular, newElements,
           info.sp, qualityMin, qualityDegradeFactor);
       if (status == 0) {
         // Msg::Debug("- Face %li: winslow smoothing ...", gf->tag());
@@ -4634,7 +4634,7 @@ namespace QSQ {
         Msg::Debug("Face %i, failed to remesh with selected quad pattern, weird", gf->tag());
         return -1;
       }
-    } 
+    }
     Msg::Debug("- Face %i: no matching quad pattern", gf->tag());
     return -1;
   }
@@ -4644,7 +4644,7 @@ namespace QSQ {
     return r >= 3 ? r : 3;
   }
 
-  bool extractFaceQuadChords(GModel* gm, 
+  bool extractFaceQuadChords(GModel* gm,
       const std::map<GFace*, GFaceInfo>& faceInfo,
       std::vector<std::vector<GFace*> >& chordFaces) {
     chordFaces.clear();
@@ -4682,7 +4682,7 @@ namespace QSQ {
 
   bool curveQuantizationSimpleChords(GModel* gm, const std::map<GFace*, GFaceInfo>& faceInfo, bool forceEvenNbEdges = false) {
     // TODO: check difference #points along chords, split if necessary
-    
+
     /* Chord constraints on quad faces with 4 GEdges (T-junctions not supported here) */
     std::set<GFace *> qfaces;
     for (GFace* gf: model_faces(gm)) {
@@ -4910,7 +4910,7 @@ namespace QSQ {
         gv2ge[v2].insert(ge);
         auto it = geNbPoints.find(ge);
         if (it == geNbPoints.end()) {
-          geNbPoints[ge] = meshGEdgeTargetNumberOfPoints(ge); 
+          geNbPoints[ge] = meshGEdgeTargetNumberOfPoints(ge);
         }
       }
     }
@@ -4928,7 +4928,7 @@ namespace QSQ {
           isConcaveInGf = (it1->second.bdrValVertices[3].find(gv) != it1->second.bdrValVertices[3].end());
           if (!isConcaveInGf) continue;
         }
-        /* Get raw approximatation of size map 
+        /* Get raw approximatation of size map
          * TODO: better way without using GEdge target nb of points ? */
         double avgSize = 0.;
         {
@@ -5203,7 +5203,7 @@ int showQuadMeshBaseComplex(GModel* gm) {
   return 0;
 }
 
-int setQuadCoherentCurveTransfiniteConstraints(const std::vector<GFace*>& faces, const std::map<GFace*,GFaceInfo>& faceInfo) 
+int setQuadCoherentCurveTransfiniteConstraints(const std::vector<GFace*>& faces, const std::map<GFace*,GFaceInfo>& faceInfo)
 {
   Msg::Debug("mesh %li faces with quad integer constraint solver ...", faces.size());
 
@@ -5264,7 +5264,7 @@ size_t numberOfTriangles(GModel* gm) {
 }
 
 void create_view_with_sizemap(
-    const std::vector<MTriangle*>& triangles, 
+    const std::vector<MTriangle*>& triangles,
     const std::unordered_map<MVertex*,double>& scaling,
     const std::string& name) {
   std::vector<std::array<double,3> > pts(3);
@@ -5282,7 +5282,7 @@ void create_view_with_sizemap(
   GeoLog::flush();
 }
 
-int createCrossFieldAndSizeMap(GModel* gm, 
+int createCrossFieldAndSizeMap(GModel* gm,
     const std::map<GFace*, GFaceInfo>& faceInfo,
     std::vector<std::array<double,5> >& singularities,
     double scalingOnTriangulation = 1.) {
@@ -5337,7 +5337,7 @@ int createCrossFieldAndSizeMap(GModel* gm,
         Msg::Warning("faceInfo not found for face %i, weird", gf->tag());
       } else {
         const GFaceInfo& info = it2->second;
-        if (info.chi == 1 && info.bdrValVertices[1].size() >= 2 
+        if (info.chi == 1 && info.bdrValVertices[1].size() >= 2
             && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
           nbDiffusionLevels = 2; /* simple face, no need for acurate computation */
         }
@@ -5375,7 +5375,7 @@ int createCrossFieldAndSizeMap(GModel* gm,
     }
   }
 
-  Msg::Info("Compute quad mesh size map from conformal factor and %li target quads ...", 
+  Msg::Info("Compute quad mesh size map from conformal factor and %li target quads ...",
       targetNumberOfQuads);
   std::vector<std::vector<GFace*> > components;
   getConnectedSurfaceComponents(faces, components);
@@ -5447,7 +5447,7 @@ int computeQuadCurveMeshConstraints(GModel* gm,
 }
 
 int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, bool forceEvenNbEdges = false, bool alignWithGVertices = true) {
-  /* Disable clscale because we have a sizemap 
+  /* Disable clscale because we have a sizemap
    * that contains the scaling */
   double clscale = CTX::instance()->mesh.lcFactor;
   int lcFromPoints = CTX::instance()->mesh.lcFromPoints;
@@ -5491,9 +5491,9 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
     ge->_lc.clear();
     ge->mesh(false);
     ge->_lc = temp;
-    if (ge->meshAttributes.prescribedNumberOfEdges > 0 
+    if (ge->meshAttributes.prescribedNumberOfEdges > 0
         && ge->lines.size() != (size_t) ge->meshAttributes.prescribedNumberOfEdges) {
-      Msg::Warning("- Curve %i: %li edges but %i prescribed", 
+      Msg::Warning("- Curve %i: %li edges but %i prescribed",
           ge->tag(), ge->lines.size(), ge->meshAttributes.prescribedNumberOfEdges);
       abort();
     }
@@ -5592,7 +5592,7 @@ int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFa
     if (gf->meshStatistics.status == GFace::DONE) continue;
     GFaceInfo& info = faceInfo[gf];
     /* Check if convex topological disk */
-    if (info.chi == 1 && info.bdrValVertices[1].size() >= 0 
+    if (info.chi == 1 && info.bdrValVertices[1].size() >= 0
         && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
 
 
@@ -5849,7 +5849,7 @@ int midpointSubdivisionToFullQuad(GModel* gm, bool tryProjection = false) {
       }
       n_ok += 1;
     }
-    Msg::Info("- added %li vertices, %li successfully projected on CAD without inverting quads, %li rejected proj.", 
+    Msg::Info("- added %li vertices, %li successfully projected on CAD without inverting quads, %li rejected proj.",
         old2new.size(), n_ok, n_fail);
   }
 
@@ -5875,11 +5875,11 @@ int generateQuadDominantMesh(GFace* gf, GFaceInfo& info, bool useDiscrete = fals
       quadQualityStats(gf->quadrangles,qmin,qavg);
       if (qmin > 0.1) {
         gf->meshStatistics.status = GFace::DONE;
-        Msg::Info("-- Face %i: meshed with transfinite (%li quads, SICN min: %f)", 
+        Msg::Info("-- Face %i: meshed with transfinite (%li quads, SICN min: %f)",
             gf->tag(), gf->quadrangles.size(), qmin);
         return 0;
       } else {
-        Msg::Warning("-- Face %i: transfinite leads to poor quality (%li quads, SICN min: %f), switch to unstructured", 
+        Msg::Warning("-- Face %i: transfinite leads to poor quality (%li quads, SICN min: %f), switch to unstructured",
             gf->tag(), gf->quadrangles.size(), qmin);
         gf->deleteMesh();
         gf->meshStatistics.status = GFace::PENDING;
@@ -5895,11 +5895,11 @@ int generateQuadDominantMesh(GFace* gf, GFaceInfo& info, bool useDiscrete = fals
   if (!useDiscrete) {
     gf->setMeshingAlgo(ALGO_2D_PACK_PRLGRMS);
     gf->mesh(true);
-    Msg::Debug("-- Face %i: %li quads and %li triangles built with ALGO_2D_PACK_PRLGRMS", 
+    Msg::Debug("-- Face %i: %li quads and %li triangles built with ALGO_2D_PACK_PRLGRMS",
         gf->tag(), gf->quadrangles.size(), gf->triangles.size());
     gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
     if (gf->meshStatistics.status == GFace::PENDING) {
-      Msg::Debug("-- Face %i: failure with ALGO_2D_PACK_PRLGRMS", 
+      Msg::Debug("-- Face %i: failure with ALGO_2D_PACK_PRLGRMS",
           gf->tag(), gf->quadrangles.size(), gf->triangles.size());
       return -1;
     }
@@ -5925,11 +5925,11 @@ int generateQuadDominantMesh(GFace* gf, GFaceInfo& info, bool useDiscrete = fals
 
       if (minSICNq > 0 && vMax < 10) {
         gf->meshStatistics.status = GFace::DONE;
-        Msg::Info("-- Face %i: meshed with algo PACK (%li quads, SICN min: %f, valence max: %i)", 
+        Msg::Info("-- Face %i: meshed with algo PACK (%li quads, SICN min: %f, valence max: %i)",
             gf->tag(), gf->quadrangles.size(), minSICNq, vMax);
         return 0;
       } else {
-        Msg::Warning("-- Face %i: algo PACK produced bad quad mesh (%li quads, SICN min: %f, valence max: %i)", 
+        Msg::Warning("-- Face %i: algo PACK produced bad quad mesh (%li quads, SICN min: %f, valence max: %i)",
             gf->tag(), gf->quadrangles.size(), minSICNq, vMax);
         gf->deleteMesh();
         gf->meshStatistics.status = GFace::PENDING;
@@ -5955,12 +5955,12 @@ int generateQuadDominantMesh(GFace* gf, GFaceInfo& info, bool useDiscrete = fals
       quadQualityStats(gf->quadrangles, minSICNq, avgSICNq);
       if (gf->quadrangles.size() == 0) minSICNq = -1.;
       if (minSICNq <= 0.) {
-        Msg::Warning("-- Face %i: %li quads and %li triangles built with meshGFaceHxt, quad SICN min: %f", 
+        Msg::Warning("-- Face %i: %li quads and %li triangles built with meshGFaceHxt, quad SICN min: %f",
             gf->tag(), gf->quadrangles.size(), gf->triangles.size(), minSICNq);
         gf->deleteMesh();
         gf->meshStatistics.status = GFace::PENDING;
       } else {
-        Msg::Info("-- Face %i: %li quads and %li triangles built with meshGFaceHxt, quad SICN min: %f", 
+        Msg::Info("-- Face %i: %li quads and %li triangles built with meshGFaceHxt, quad SICN min: %f",
             gf->tag(), gf->quadrangles.size(), gf->triangles.size(), minSICNq);
         return 0;
       }
@@ -5984,14 +5984,14 @@ int generateQuadDominantMesh(GFace* gf, GFaceInfo& info, bool useDiscrete = fals
 }
 
 
-int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo) 
+int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo)
 {
   /* Note: we are also meshing the faces with are simple and match patterns.
-   *       The issue is that we don't know in advance if the geometry 
+   *       The issue is that we don't know in advance if the geometry
    *       associated to the pattern will be valid, and we need the
    *       unstructured mesh as fallback if it is invalid */
 
-  /* Disable clscale because we have a sizemap 
+  /* Disable clscale because we have a sizemap
    * that contains the scaling */
   double clscale = CTX::instance()->mesh.lcFactor;
   CTX::instance()->mesh.lcFactor = 1.;
@@ -6046,7 +6046,7 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
     //    if (useDiscrete) {
     //      /* Unstructured full quad meshing with hxt */
     //      meshGFaceHxt(gf);
-    //      Msg::Debug("-- Face %i: %li quads and %li triangles built with meshGFaceHxt", 
+    //      Msg::Debug("-- Face %i: %li quads and %li triangles built with meshGFaceHxt",
     //          gf->tag(), gf->quadrangles.size(), gf->triangles.size());
     //    } else {
     //      /* Check if transfinite instructions */
@@ -6070,7 +6070,7 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
     //      /* Frontal CAD */
     //      gf->setMeshingAlgo(ALGO_2D_PACK_PRLGRMS);
     //      gf->mesh(true);
-    //      Msg::Debug("-- Face %i: %li quads and %li triangles built with ALGO_2D_PACK_PRLGRMS", 
+    //      Msg::Debug("-- Face %i: %li quads and %li triangles built with ALGO_2D_PACK_PRLGRMS",
     //          gf->tag(), gf->quadrangles.size(), gf->triangles.size());
     //      gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
     //      {
@@ -6107,7 +6107,7 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
   for (GFace* gf: faces) {
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if (gf->meshStatistics.status == GFace::DONE && gf->meshAttributes.method != MESH_TRANSFINITE) {
-      gf->meshStatistics.status = GFace::PENDING; 
+      gf->meshStatistics.status = GFace::PENDING;
     }
     nquad += gf->quadrangles.size();
     ntri += gf->triangles.size();
@@ -6271,10 +6271,10 @@ int verifyCompatibilityCrossFieldEuler(const GFace* gf, int sum3m5, size_t nSing
    * and cross field singularities */
   int cfSum3m5 = int(nSingVal3) - int(nSingVal5);
   if (cfSum3m5 == sum3m5) {
-    Msg::Debug("- Face %i | face topology and cross field are compatible, n_val3 - n_val5 = %i - %i = %i", 
+    Msg::Debug("- Face %i | face topology and cross field are compatible, n_val3 - n_val5 = %i - %i = %i",
         gf->tag(), nSingVal3, nSingVal5, cfSum3m5);
   } else {
-    Msg::Warning("- Face %i | face topology and cross field are NOT compatible, crossfield n_val5 - n_val3 = %i - %i = %i but geometry: %i", 
+    Msg::Warning("- Face %i | face topology and cross field are NOT compatible, crossfield n_val5 - n_val3 = %i - %i = %i but geometry: %i",
         gf->tag(), nSingVal3, nSingVal5, cfSum3m5, sum3m5);
     return -1;
   }
@@ -6472,7 +6472,7 @@ int improveQuadMeshTopology(GModel* gm,
   return 0;
 }
 
-int optimizeQuadMeshGeometry(GModel* gm, 
+int optimizeQuadMeshGeometry(GModel* gm,
     std::map<GFace*, GFaceInfo>& faceInfo) {
 
   bool optimGeom = true;
@@ -6637,7 +6637,7 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
   vector<GFace*> faces = model_faces(gm);
   for (GFace* gf: faces) if (gf->meshAttributes.algorithm != MESH_TRANSFINITE) {
     gf->meshStatistics.status = GFace::PENDING;
-  } 
+  }
 
   /* Pattern required by following steps */
   {
@@ -6647,7 +6647,7 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
     Msg::Debug("done.");
   }
 
-  /* Fill GFaceInfo info if necessary 
+  /* Fill GFaceInfo info if necessary
    * (quads subdided into tris to compute geom info) */
   const bool createSurfaceProjector = true;
   for (GFace* gf: faces) if (gf->quadrangles.size() > 0) {
@@ -6723,10 +6723,12 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
       qqs.stats[kv.first] = kv.second;
     }
     int nt = 1;
+    #if defined(_OPENMP)
     #pragma omp parallel
     {
       nt = omp_get_num_threads();
     }
+    #endif
     qqs.stats["omp_num_threads"] = double(nt);
     qqs.stats["time_cpu"] = t2-t1;
     qqs.stats["time_wall"] = w2-w1;
@@ -6772,7 +6774,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     }
   }
 
-  /* Use the triangulation to compute CAD face information 
+  /* Use the triangulation to compute CAD face information
    * (nb corners of each valence, euler characteristic, etc) */
   std::map<GFace*, GFaceInfo> faceInfo;
   const bool createSurfaceProjector = true;
@@ -6784,11 +6786,11 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
     }
   }
 
-  /* Compute a cross field on the triangulation, 
+  /* Compute a cross field on the triangulation,
    * or use a existing background if avalaible */
   std::vector<std::array<double,5> > singularities;
   FieldManager *fields = gm->getFields();
-  bool crossFieldFromBackgroundField = (fields->getBackgroundField() > 0 
+  bool crossFieldFromBackgroundField = (fields->getBackgroundField() > 0
       && fields->get(fields->getBackgroundField())->numComponents() == 3);
   if (crossFieldFromBackgroundField) {
     Msg::Info("[Step 2] Using existing background field");
@@ -6833,7 +6835,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   }
 
   // if (!useDiscreteGeometry(gm)) {
-  // TODO: if useDiscreteGeometry, implement discrete curve resampling 
+  // TODO: if useDiscreteGeometry, implement discrete curve resampling
   if (CADgeometryIsAvailable(gm)) {
     Msg::Info("[Step 3] Generate curve 1D meshes ...");
     bool forceEvenNbEdges = (CTX::instance()->mesh.quadqsUseDiscreteGeometry == 1);
@@ -6864,14 +6866,16 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
 
   double t2 = Cpu(), w2 = TimeOfDay();
   int nt = 1;
+  #if defined(_OPENMP)
   #pragma omp parallel
   {
     nt = omp_get_num_threads();
   }
+  #endif
   qqs.stats["unstructured_omp_num_threads"] = double(nt);
   qqs.stats["unstructured_time_cpu"] = t2-t1;
   qqs.stats["unstructured_time_wall"] = w2-w1;
-  
+
   // Msg::Error("early stop");
   // return 0;
 
