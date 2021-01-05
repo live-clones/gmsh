@@ -1,6 +1,12 @@
 #ifndef ROBUST_PREDICATES_H
 #define ROBUST_PREDICATES_H
 
+#ifdef _MSC_VER
+#ifndef __restrict__
+#define __restrict__ __restrict
+#endif
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

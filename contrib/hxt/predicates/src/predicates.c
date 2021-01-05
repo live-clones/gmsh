@@ -113,6 +113,12 @@
 /*                                                                           */
 /*****************************************************************************/
 
+#ifdef _MSC_VER
+#ifndef __restrict__
+#define __restrict__ __restrict
+#endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
