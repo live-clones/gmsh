@@ -1389,11 +1389,15 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
     BRepBuilderAPI_MakeWire w;
     TopoDS_Wire wire;
     for(std::size_t i = 0; i < curveTags.size(); i++) {
-      if(!_tagEdge.IsBound(curveTags[i])) {
-        Msg::Error("Unknown OpenCASCADE curve with tag %d", curveTags[i]);
+      // all curve tags are > 0 for OCC : but to improve compatibility between
+      // GEO and OCC factories, we allow negative tags - and simply ignore the
+      // sign here
+      int t = std::abs(curveTags[i]);
+      if(!_tagEdge.IsBound(t)) {
+        Msg::Error("Unknown OpenCASCADE curve with tag %d", t);
         return false;
       }
-      TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(curveTags[i]));
+      TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(t));
       w.Add(edge);
     }
     wire = w.Wire();
@@ -1412,11 +1416,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
 
 bool OCC_Internals::addCurveLoop(int &tag, const std::vector<int> &curveTags)
 {
-  std::vector<int> tags(curveTags);
-  // all curve tags are > 0 for OCC : to improve compatibility between GEO and
-  // OCC factories, allow negative tags - and simply ignore the sign here
-  for(std::size_t i = 0; i < tags.size(); i++) tags[i] = std::abs(tags[i]);
-  return addWire(tag, tags, true);
+  return addWire(tag, curveTags, true);
 }
 
 static bool makeRectangle(TopoDS_Face &result, double x, double y, double z,
