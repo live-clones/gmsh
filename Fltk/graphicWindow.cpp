@@ -1539,8 +1539,9 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
             if(tags.size() && param.size() && action == 7) {
               FlGui::instance()->getCurrentOpenglWindow()->quitSelection = 1;
               FlGui::instance()->getCurrentOpenglWindow()->selectionMode = false;
+              GModel::current()->setSelection(0);
               FlGui::instance()->onelabContext->show(dim, tags[0]);
-              ib = 'q';
+              ib = 'z';
             }
             else {
               FlGui::instance()->physicalContext->show(what, action == 7 ? false : true);
@@ -1603,6 +1604,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
         }
         dimTags.clear();
         FlGui::instance()->resetVisibility();
+        if(ib == 'z') break; // done: onelab context now shown
         GModel::current()->setSelection(0);
         if(action <= 6 || action >= 12) SetBoundingBox();
         drawContext::global()->draw();
