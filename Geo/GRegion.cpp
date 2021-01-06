@@ -904,7 +904,7 @@ bool GRegion::setOutwardOrientationMeshConstraint()
         }
         ++it_b;
       }
-      Msg::Debug("Region %d Face %d, %d intersect", tag(), gf->tag(),
+      Msg::Debug("Volume %d, surface %d: %d intersections", tag(), gf->tag(),
                  nb_intersect);
       if(nb_intersect >= 0)
         break; // negative value means intersection is not "robust"
