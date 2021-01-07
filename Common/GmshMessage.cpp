@@ -120,23 +120,6 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
   }
 }
 
-#if defined(HAVE_FLTK)
-static void FlGuiRateLimitedCheck()
-{
-  static double lastRefresh = 0.;
-  if(CTX::instance()->guiRefreshRate > 0) {
-    double start = TimeOfDay();
-    if(start - lastRefresh > 1. / CTX::instance()->guiRefreshRate) {
-      lastRefresh = start;
-      FlGui::check();
-    }
-  }
-  else {
-    FlGui::check();
-  }
-}
-#endif
-
 void Msg::Init(int argc, char **argv)
 {
   _startTime = TimeOfDay();
@@ -640,7 +623,7 @@ void Msg::Info(const char *fmt, ...)
   if(FlGui::available()){
     std::string tmp = std::string("Info    : ") + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGuiRateLimitedCheck();
+    FlGui::check();
   }
 #endif
 
@@ -681,7 +664,7 @@ void Msg::Direct(const char *fmt, ...)
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
       + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGuiRateLimitedCheck();
+    FlGui::check();
   }
 #endif
 
@@ -740,7 +723,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
     if(log){
       std::string tmp = std::string("Info    : ") + str;
       FlGui::instance()->addMessage(tmp.c_str());
-      FlGuiRateLimitedCheck();
+      FlGui::check();
     }
   }
 #endif
@@ -848,7 +831,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(FlGui::available() && GetVerbosity() > 4){
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
-      FlGuiRateLimitedCheck();
+      FlGui::check();
     }
 #endif
     if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
