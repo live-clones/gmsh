@@ -70,11 +70,11 @@ void FlGui::check(bool force)
     double start = TimeOfDay();
     if(start - lastRefresh > 1. / CTX::instance()->guiRefreshRate) {
       lastRefresh = start;
-      FlGui::check();
+      Fl::check();
     }
   }
   else {
-    FlGui::check();
+    Fl::check();
   }
 }
 
