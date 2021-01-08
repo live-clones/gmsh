@@ -2655,6 +2655,8 @@ HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH, 
     std::cout<<"Sep: "<<i<<std::endl;
     propagateKowalskiH((int)i);
   }
+  std::cout << "--Detect and repropagate separatrices caught in sing or corner and shouldn't be--" << std::endl;
+  detectDefectSepAndRepropagate();
   std::cout << "--Remove data from bouncing sep--" << std::endl;
   removeBouncingSepData();
   std::cout << "--Write separatrices--" << std::endl;
@@ -2666,13 +2668,13 @@ HXTStatus QuadGenerator::computeSeparatricesOnExistingSing(double *directionsH, 
   groupingSep();
   std::cout << "--Global intersection--" << std::endl;
   globalIntersection();
+  std::cout << "--Solving loop edges if any--" << std::endl;
+  detectAndSolveLoopEdges();
   std::cout << "--Comparision--" << std::endl;
   comparison();
   std::cout << "--Solving tangential crossings if any--" << std::endl;
   solveTangentialCrossings();
   hxtWriteSavedSeparatrices("qmbSeparatricesIntermediary.pos");
-  std::cout << "--Solving loop edges if any--" << std::endl;
-  detectAndSolveLoopEdges();
   std::cout<<"--Detecting limit cycles--"<<std::endl;
   std::vector<uint64_t> limitCycleIDs;
   detectLimitCycleCandidates(&limitCycleIDs);
@@ -4183,7 +4185,7 @@ int QuadGenerator::groupingSep()
 
   m_vectGroups.clear();
   int groupID=0;
-  for(uint64_t i=0; i<(m_vectSep.size()-1); i++){
+  for(uint64_t i=0; i<(m_vectSep.size()); i++){
     if(flag[i]==0){
       int ID=groupID;
       std::vector<Separatrice*> vectSep;
@@ -4758,6 +4760,56 @@ int QuadGenerator::solveTangentialCrossings(){
   return 1;
 }
 
+int QuadGenerator::detectDefectSepAndRepropagate(){
+  std::vector<uint64_t> sepExtr;
+  sepExtr.reserve(2);
+  sepExtr.push_back(0);sepExtr.push_back(0);
+  std::vector<std::vector<uint64_t>> listSepExtr(m_vectSep.size(),sepExtr);
+  for(size_t k=0;k<m_vectSep.size();k++){
+    Separatrice *sep=&(m_vectSep[k]);
+    if(sep->isSaved()){
+      uint64_t triangle1, triangle2;
+      std::vector<uint64_t> *triangles=sep->getPTriangles();
+      triangle1=(*triangles)[1];
+      triangle2=(*triangles)[triangles->size()-1];      
+      uint64_t patchID1=(uint64_t)-1;
+      uint64_t patchID2=(uint64_t)-1;
+      findPatchID(triangle1, &patchID1);
+      if(triangle2==(uint64_t)-1){
+      	patchID2=(uint64_t)-1;
+      }
+      else{
+      	findPatchID(triangle2, &patchID2);
+      }
+      sepExtr[0]=patchID1;
+      sepExtr[1]=patchID2;
+      listSepExtr[k]=sepExtr;
+    }
+  }
+  for(size_t k=0;k<m_vectSep.size();k++){
+    Separatrice *sep=&(m_vectSep[k]);
+    if(sep->isSaved()){
+      if(listSepExtr[k][1]!=(uint64_t)(-1) && !sep->isBoundary()){
+	bool toPropagate=true;
+	for(size_t j=0;j<m_vectSep.size();j++){
+	  Separatrice *sepJ=&(m_vectSep[j]);
+	  if(sepJ->isSaved()){
+	    if(j!=k && listSepExtr[k][1]==listSepExtr[j][0] && listSepExtr[k][0]==listSepExtr[j][1]){
+	      toPropagate=false;
+	    }
+	  }
+	}
+	if(toPropagate){
+	  std::cout << "repropagating sep " << k << std::endl;
+	  addLastPatchInIgnoredPatchs((int)k);
+	  propagateKowalskiH((int)k);
+	}	
+      }
+    }
+  }
+  return 1;
+}
+
 int QuadGenerator::detectAndSolveLoopEdges(){
   for(size_t k=0;k<m_vectSep.size();k++){
     Separatrice *sep=&(m_vectSep[k]);
@@ -5024,6 +5076,106 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	    uint32_t edgInit=(uint32_t)(-1);
 	    std::cout << "getPointInit" << std::endl;
 	    getPointAndTriOnDiscreteLine(&pointCoordSep, &triSep, 0.66, pointInit, triInit, edgInit);
+	    std::vector<std::array<double,3>> nodesCoord;
+	    nodesCoord.push_back(pointInit);
+	    std::vector<uint64_t> triangles;
+	    triangles.push_back(triInit);
+	    std::vector<uint64_t> edges;
+	    edges.push_back(edgInit);
+	    double initAngle=-M_PI/2.;
+	    std::vector<double> enteringAngles;
+	    std::cout << "triInit: " << triInit << " / edgInit: " << edgInit << std::endl;
+	    std::cout << "edg2tri: " << m_triEdges->edg2tri[2*edgInit+0] << " / " << m_triEdges->edg2tri[2*edgInit+1] << std::endl;
+	    double direction[3]={0.0};
+	    double coordInit[3]={pointInit[0],pointInit[1],pointInit[2]};
+	    double coordNext[3]={pointInit[0],pointInit[1],pointInit[2]};
+	    std::cout << "closest direction" << std::endl;
+	    closestDirectionAlone(triInit, (uint64_t)edgInit, &initAngle, direction);
+	    uint64_t newEdgNum=(uint64_t)(-1);
+	    double newAngle=0.0;
+	    std::cout << "trialpoint" << std::endl;
+	    trialPointAlone(triInit, (uint64_t)edgInit, coordInit , direction, coordNext, &newEdgNum, &newAngle);
+	    std::array<double,3> pointNext={{coordNext[0],coordNext[1],coordNext[2]}};
+	    nodesCoord.push_back(pointNext);
+	    triangles.push_back(triInit);
+	    edges.push_back(newEdgNum);
+	    enteringAngles.push_back(newAngle);
+	    int ID=m_vectSep.size();
+	    Separatrice sep(ID, nodesCoord, triangles, edges, enteringAngles);
+	    m_vectSep.push_back(sep);
+	    std::cout << "propagate kowalsky" << std::endl;
+	    propagateKowalskiH(ID);
+	  }
+	  //rebuilding intersection groups etc
+	  std::cout << "rebuilding intersection related data" << std::endl;
+	  buildIntersectionTriValues();
+	  std::cout << "tri ok" << std::endl;
+	  groupingSep();
+	  std::cout << "grouping ok" << std::endl;
+	  globalIntersection();
+	  std::cout << "globalintersection ok" << std::endl;
+	  comparison();
+	  std::cout << "comparison ok" << std::endl;
+	  std::cout << "rebuilt" << std::endl;
+	  // detectAndSolveLoopEdges();
+	  return 1;
+	}
+	if(floatingSep && nIntersections==2){
+	  //find the middle of the first shifted line (for beggining to be intersection point) and trace a new Sep // CRITICAL
+	  std::vector<std::array<double,3>>* pointCoordSepNotShifted = sep->getPCoord();
+	  std::vector<uint64_t>* triSepNotShifted = sep->getPTriangles();
+	  //Shifting poitns and tri to start near the intersection
+	  std::vector<int>* listInter = sep->getPIntersection();
+	  if(listInter->size()!=2){
+	    std::cout << "wrong intersections number in detectAndCorrectLoopEdges" << std::endl;
+	  }
+	  size_t positionShifting=0;
+	  std::cout << "flag1" << std::endl;
+	  for(size_t i=0;i<triSepNotShifted->size();i++){
+	    if(m_flaggedTri[triSepNotShifted->at(i)].size()>1){
+	      for(size_t j=0;j<m_flaggedTri[triSepNotShifted->at(i)].size();j++){
+		for(size_t l=0;l<listInter->size();l++){
+		  if(listInter->at(l)==m_flaggedTri[triSepNotShifted->at(i)][j][0]){
+		    size_t indLocSepFlaggedTri=0;
+		    for(size_t m=0;m<m_flaggedTri[triSepNotShifted->at(i)].size();m++){
+		      if(sep->getID()==m_flaggedTri[triSepNotShifted->at(i)][m][0]){
+			indLocSepFlaggedTri=m;
+		      }
+		    }
+		    positionShifting=m_flaggedTri[triSepNotShifted->at(i)][indLocSepFlaggedTri][1];
+		  }
+		}
+	      }
+	    }
+	  }
+	  std::cout << "flag2, positionShifting: " << positionShifting << " / sizeSep: " << pointCoordSepNotShifted->size() << std::endl;
+	  std::vector<std::array<double,3>> pointCoordSep;
+	  pointCoordSep.reserve(pointCoordSepNotShifted->size());
+	  std::vector<uint64_t> triSep;
+	  triSep.reserve(triSepNotShifted->size());
+	  pointCoordSep.push_back(pointCoordSepNotShifted->at(positionShifting));
+	  triSep.push_back(triSepNotShifted->at(0));
+	  std::cout << "flag3" << std::endl;
+	  for(size_t j=positionShifting+1;j<pointCoordSepNotShifted->size();j++){
+	    pointCoordSep.push_back(pointCoordSepNotShifted->at(j));
+	    triSep.push_back(triSepNotShifted->at(j));
+	  }
+	  std::cout << "flag3.5" << std::endl;
+	  for(size_t j=1;j<positionShifting;j++){
+	    pointCoordSep.push_back(pointCoordSepNotShifted->at(j));
+	    triSep.push_back(triSepNotShifted->at(j));
+	  }
+	  std::cout << "flag4" << std::endl;
+	  std::cout << "adding 2 new sep to cut edg loop" << std::endl;
+	  //find the middle and trace a new sep
+	  {
+	    // std::vector<std::array<double,3>>* pointCoordSep = sep->getPCoord();
+	    // std::vector<uint64_t>* triSep = sep->getPTriangles();
+	    std::array<double,3> pointInit={{0.0,0.0,0.0}};
+	    uint64_t triInit=(uint64_t)(-1);
+	    uint32_t edgInit=(uint32_t)(-1);
+	    std::cout << "getPointInit" << std::endl;
+	    getPointAndTriOnDiscreteLine(&pointCoordSep, &triSep, 0.25, pointInit, triInit, edgInit);
 	    std::vector<std::array<double,3>> nodesCoord;
 	    nodesCoord.push_back(pointInit);
 	    std::vector<uint64_t> triangles;

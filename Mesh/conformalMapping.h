@@ -139,12 +139,18 @@ class ConformalMapping{
   std::set<const MEdge *> _createEdgeTree();
   void _trimEdgeTree(std::set<const MEdge *> &edgeTree);
   void _computeH();
+  void _computeHTest();
+  void _computeHTest2();
+  void _computeHTest3();
   void _restoreInitialMesh();
   void _transferCrossesCutToInit();
+  void _transferCrossesFeatToInit();
   void _computeHfromCrosses();
+  void _computeHfromCrossesTest();
   void _cutMeshOnCutGraph();
   void _createManifoldBasis(){_currentMesh->computeManifoldBasis();}
   void _computeCrossesFromH();
+  void _computeCrossesFromHtest();
   std::map<const MEdge*, SVector3> _getLifting(MyMesh *mesh, const std::set<MTriangle*, MElementPtrLessThan> &triangles, MTriangle* triangleInit, const SVector3 &dirRef);
   void _solvePotOnPatch(const std::set<MTriangle*, MElementPtrLessThan> &tri, const SVector3 &dirRef, std::map<MVertex *, double, MVertexPtrLessThan> &pot);
   void _computeParametrization();

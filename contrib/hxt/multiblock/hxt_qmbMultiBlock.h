@@ -167,6 +167,7 @@ class MultiBlock
   int getParallelEdg(int blockNum, uint64_t edg1, uint64_t *edg2);
   int getAllSheets();
   int computeAdequatePartitionPerEdge(double sizeofElement, std::vector<double> hVal);
+  int computeAdequatePartitionPerEdgeV2(double sizeofElement, std::vector<double> hVal);
   void getExtrVertIDmbEdg(uint64_t extrID[2],int edgID);
   HXTStatus discretizeEdges(std::vector<double> hVal);
   HXTStatus discretizeQuads();

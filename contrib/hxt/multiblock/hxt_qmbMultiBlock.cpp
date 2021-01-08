@@ -1877,6 +1877,7 @@ HXTStatus MultiBlock::buildQuadLayout(){
 }
 
 void MultiBlock::buildTotalPatches(){
+  m_totalElemPatches.clear();
   m_totalElemPatches.reserve(1000);
   for(uint64_t i=0; i<m_vectSing.size(); i++){
     Singularity *s=&(m_vectSing[i]);
@@ -1929,13 +1930,13 @@ int MultiBlock::localIntersection2(int sepID1, int sepID2, std::vector<std::arra
     uint64_t triangle1=(*elements1)[i];
     int isInPatch=isInTotalPatch(triangle1);
     // int isInPatch=checkIfInPatch2(triangle1);
-    // int isInIgnoredPatch1=m_vectSep[sepID1].isInIgnoredPatch(triangle1);
+    int isInIgnoredPatch1=m_vectSep[sepID1].isInIgnoredPatch(triangle1);
     for(uint64_t j=1; j<jEnd; j++){
       // bool isBoundarySep = (sep1->isBoundary() || sep2->isBoundary());
       uint64_t triangle2=(*elements2)[j];
-      // int isInIgnoredPatch2=m_vectSep[sepID2].isInIgnoredPatch(triangle2);
+      int isInIgnoredPatch2=m_vectSep[sepID2].isInIgnoredPatch(triangle2);
       // if((triangle1==triangle2) && (!isInPatch || isBoundarySep || isInIgnoredPatch1 || isInIgnoredPatch2)){
-      if((triangle1==triangle2) && !isInPatch){
+      if((triangle1==triangle2) && (!isInPatch || isInIgnoredPatch1 || isInIgnoredPatch2)){
       // if(triangle1==triangle2){
 	std::array<double,3> p1=(*sepPoints1)[i-1];
 	std::array<double,3> p2=(*sepPoints1)[i];
@@ -4285,8 +4286,8 @@ HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
   }
   std::cout<<" "<<std::endl;
   std::cout<<"--Get and store partition per edge--"<<std::endl;
-  computeAdequatePartitionPerEdge(0.02, hVal);
-  // computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);
+  computeAdequatePartitionPerEdge(m_minEdgLength/2., hVal);
+  // computeAdequatePartitionPerEdgeV2(m_minEdgLength-1e-10, hVal);
   // computeAdequatePartitionPerEdge(m_minEdgLength/(2.0), hVal);
   // computeAdequatePartitionPerEdge(3*m_minEdgLength, hVal);
   // computeAdequatePartitionPerEdge(m_sizeQuadMesh, hVal);
@@ -4437,6 +4438,122 @@ int MultiBlock::computeAdequatePartitionPerEdge(double sizeofElement, std::vecto
   	partitions[j]+=1;
       else{
   	if((sizeofElement-length/(1.0*partitions[j]+1))<(length/(1.0*partitions[j])-sizeofElement))
+  	  partitions[j]+=1;
+      }
+    }
+    minPartition=partitions[0];
+    for(uint64_t k=1; k<m_Sheets[i].size(); k++){
+      if(minPartition>partitions[k])
+  	minPartition=partitions[k];
+    }
+    partitionPerSheet[i]=minPartition;
+    HXT_CHECK(hxtFree(&partitions));
+  }
+   
+  //get and store partition per edge
+  for(uint64_t i=0; i<m_mbEdges.size(); i++){
+    currentEdg=i;
+    uint64_t sheetNumber=0;
+    for(uint64_t j=0; j<m_Sheets.size(); j++){
+      sheetEdges=m_Sheets[j];
+      for(uint64_t k=0; k<sheetEdges.size(); k++){
+	if(sheetEdges[k]==currentEdg){
+	  sheetNumber=j;
+	}
+      }
+    }
+    m_partitionPerEdge.push_back(partitionPerSheet[sheetNumber]);
+  }
+
+   
+  HXT_CHECK(hxtFree(&partitionPerSheet));    
+  return 1;
+}
+
+int MultiBlock::computeAdequatePartitionPerEdgeV2(double sizeofElement, std::vector<double> hVal){
+  //Get smallest edge to get reference element length in parametric space
+  double minLength=std::numeric_limits<double>::max();
+  uint64_t refEdg=(uint64_t)(-1);
+  int partitionRef=0;
+  for(uint64_t i=0; i<m_Sheets.size(); i++){
+    std::vector<uint64_t> sheetEdges=m_Sheets[i];
+    for(uint64_t j=0; j<m_Sheets[i].size(); j++){
+      uint64_t edgNum=sheetEdges[j];
+      std::vector<std::array<double,3>> pCoordLine=m_mbEdges[edgNum];
+      double length=computeDiscreteLineLength(&pCoordLine);
+      int partitions=(int)(length/sizeofElement);
+      if(partitions==0)
+  	partitions=0;
+      else{
+  	if((sizeofElement-length/(1.0*partitions+1))<(length/(1.0*partitions)-sizeofElement))
+  	  partitions+=1;
+      }      
+      if(length<minLength && partitions!=0){
+	minLength=length;
+	refEdg=edgNum;
+	partitionRef=partitions;
+      }
+    }
+  }
+  std::vector<double> hValLineRef;
+  hValLineRef.reserve(m_mbEdges[refEdg].size());
+  for(size_t k=0;k<m_mbEdges[refEdg].size();k++){
+    double alpha=0.0;
+    double beta=0.0;
+    int isPointInTriBool=isPointInTri(m_mbEdgesTri[refEdg][k], m_mbEdges[refEdg][k], &alpha, &beta);
+    if(!isPointInTriBool){
+      std::cout << "pb m_mbEdgesTri" << std::endl;
+      std::cout << "tri: " << m_mbEdgesTri[refEdg][k] << std::endl;
+      exit(0);
+    }
+    uint32_t *nodesTri=m_Edges->edg2mesh->triangles.node + 3*m_mbEdgesTri[refEdg][k];
+    // double hNode=hVal[k];
+    double hNode=(1-alpha-beta)*hVal[nodesTri[0]] + alpha*hVal[nodesTri[1]] + beta*hVal[nodesTri[2]];
+    hValLineRef.push_back(hNode);
+  }
+  std::vector<std::array<double,3>> pCoordLineRef=m_mbEdges[refEdg];
+  double lengthParamRef=computeDiscreteLineLengthModified(&pCoordLineRef, hValLineRef);
+  double sizeOfElementParam=lengthParamRef/(double)(partitionRef);
+  //Get appropriate number of partition per sheet
+  int *partitionPerSheet;
+  HXT_CHECK(hxtMalloc(&partitionPerSheet, (m_Sheets.size())*sizeof(int)));
+  double length=-1.;
+  int  minPartition;
+  uint64_t edgNum, currentEdg;
+  std::vector<std::array<double,3>> pCoordLine;
+  std::vector<uint64_t> sheetEdges;
+  //  getting partition per sheet
+  for(uint64_t i=0; i<m_Sheets.size(); i++){
+    sheetEdges=m_Sheets[i];
+    int *partitions;
+    HXT_CHECK(hxtMalloc(&partitions, (sheetEdges.size())*sizeof(int)));
+    for(uint64_t j=0; j<m_Sheets[i].size(); j++){
+      edgNum=sheetEdges[j];
+      pCoordLine=m_mbEdges[edgNum];
+      std::vector<double> hValLine;
+      hValLine.reserve(m_mbEdges[edgNum].size());
+      for(size_t k=0;k<m_mbEdges[edgNum].size();k++){
+	double alpha=0.0;
+	double beta=0.0;
+	int isPointInTriBool=isPointInTri(m_mbEdgesTri[edgNum][k], m_mbEdges[edgNum][k], &alpha, &beta);
+	if(!isPointInTriBool){
+	  std::cout << "pb m_mbEdgesTri" << std::endl;
+	  std::cout << "tri: " << m_mbEdgesTri[edgNum][k] << std::endl;
+	  exit(0);
+	}
+	uint32_t *nodesTri=m_Edges->edg2mesh->triangles.node + 3*m_mbEdgesTri[edgNum][k];
+	// double hNode=hVal[k];
+	double hNode=(1-alpha-beta)*hVal[nodesTri[0]] + alpha*hVal[nodesTri[1]] + beta*hVal[nodesTri[2]];
+	hValLine.push_back(hNode);
+      }
+      length=computeDiscreteLineLengthModified(&pCoordLine, hVal);
+      // length=computeDiscreteLineLength(&pCoordLine);
+      //check min size
+      partitions[j]=(int)(length/sizeOfElementParam);
+      if(partitions[j]==0)
+  	partitions[j]+=1;
+      else{
+  	if((sizeOfElementParam-length/(1.0*partitions[j]+1))<(length/(1.0*partitions[j])-sizeOfElementParam))
   	  partitions[j]+=1;
       }
     }
