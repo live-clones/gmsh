@@ -152,6 +152,8 @@ list(APPEND HXT_INC_DIRS
 set(SRC
     hxt_collapse_edge.c
     hxt_collapse_edge.h
+    hxt_collapse_edge_V2.c
+    hxt_collapse_edge_V2.h
     hxt_eigenvectors.cpp
     hxt_eigenvectors.h
     hxt_gmsh_point_gen_main.c
