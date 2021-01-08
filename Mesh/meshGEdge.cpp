@@ -379,6 +379,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 {
   if(ge->mesh_vertices.empty()) return;
   if(ge->meshAttributes.method == MESH_TRANSFINITE) return;
+  if(ge->meshAttributes.prescribedNumberOfEdges > 0) return;
 
   bool forceOdd = false;
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||

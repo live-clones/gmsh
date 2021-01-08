@@ -286,6 +286,7 @@ int distributeQuadsBasedOnArea(
   componentNumberOfQuads.resize(components.size(),0.);
   for (size_t i = 0; i < components.size(); ++i) {
     componentNumberOfQuads[i] = size_t(double(totalNumberOfQuads) * areas[i] / area_total);
+    if (componentNumberOfQuads[i] == 0) componentNumberOfQuads[i] = 1;
   }
   return 0;
 }

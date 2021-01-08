@@ -4,7 +4,10 @@
 #include <array>
 #include <string>
 
+class MElement;
+
 namespace GeoLog {
+
 
   using vec3 = std::array<double,3>;
 
@@ -36,6 +39,9 @@ namespace GeoLog {
   /* - text value (text at center if multiple points) */
   bool add(vec3 p, const std::string& text, const std::string& view);
   bool add(const std::vector<vec3>& pts, const std::string& text, const std::string& view);
+
+  /* - interface for gmsh types */
+  bool add(const std::vector<MElement*>& elements, const std::string& view);
 
   View& get_global_view(const std::string& name);
 

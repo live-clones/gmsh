@@ -15,6 +15,7 @@
 #include "meshWinslow2d.h"
 #include "Field.h"
 #include "meshGFaceOptimize.h"
+#include "meshQuadQuasiStructured.h"
 #include "qmt_utils.hpp"
 
 
@@ -270,6 +271,14 @@ int computeCrossFieldAndScalingForHxt(
       Msg::Error("Failed to compute quad mesh size map");
       return -1;
     }
+  }
+
+  /* Adapt size map to CAD */
+  double smallestMultiplier = 0.05;
+  double gradientMax = 1.15;
+  bool oka = QSQ::adaptSizeMapToSmallFeatures(faces, scaling, smallestMultiplier, gradientMax);
+  if (!oka) {
+    Msg::Error("failed to adapt size map to smallest features");
   }
 
   /* Extract values at triangle corners */
@@ -731,15 +740,19 @@ int meshGFaceHxt(GModel *gm)
   c2v.clear();
   //  HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
   
+  // NOT USED ANYMORE
+  if(0){
 
-  GModel *gm2 = new GModel(gm->getName());
-  
-  gm2->readMSH("finalmesh.msh");	  	  
-  
-  printf("WINSLOW START\n");
-  meshWinslow2d (gm2);
-  printf("WINSLOW ENDS\n");
-  gm2->writeMSH("finalmesh_smoothed.msh", 4.0, false, true);	  	  
+    GModel *gm2 = new GModel(gm->getName());
+    
+    gm2->readMSH("finalmesh.msh");	  	  
+    
+    printf("WINSLOW START\n");
+    meshWinslow2d (gm2);
+    printf("WINSLOW ENDS\n");
+    gm2->writeMSH("finalmesh_smoothed.msh", 4.0, false, true);	  	  
+  }
+
   HXT_CHECK(hxtMeshDelete(&fmesh));
  
  
@@ -879,6 +892,7 @@ int meshGFaceHxt(GFace *gf) {
   HXTStatus stgp = hxtGmshPointGenMain(mesh,&opt,data.data(),fmesh);
   if (stgp != HXT_STATUS_OK) {
     Msg::Error("hxtGmshPointGenMain: wrong output status");
+    gf->meshStatistics.status = GFace::PENDING;
     HXT_CHECK(hxtMeshDelete(&fmesh));
     HXT_CHECK(hxtMeshDelete(&mesh));
     return -1;

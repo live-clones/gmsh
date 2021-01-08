@@ -2291,6 +2291,8 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
   // Queue-like loop to generate points
   //********************************************************
   
+  clock_t time4 = clock();
+ 
   uint32_t numGenPoints = 0;
   numGenPoints += numLinePoints;
 
@@ -2480,9 +2482,10 @@ HXTStatus hxtGeneratePointsColoredSurface(HXTPointGenOptions *opt,
 
   *numGeneratedPoints = numGenPoints;
 
-  clock_t time5 = clock();
-  double time_generate = (double)(time5 - time1) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>0,"    Color %d Time generate points   %f", color, time_generate);
+
+    clock_t time5 = clock();
+    double time_generate = (double)(time5 - time4) / CLOCKS_PER_SEC;
+    HXT_INFO_COND(opt->verbosity>=2,"    Color %d Time generate points   %f", color, time_generate);
  
 
 

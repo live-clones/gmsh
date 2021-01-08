@@ -12,14 +12,15 @@
 #include "GPoint.h"
 
 class GFace;
+class MTriangle;
 
 class SurfaceProjector {
   public:
     SurfaceProjector(): gf(NULL),tree(NULL),pc(NULL),pca(NULL) {}
-    SurfaceProjector(GFace* gf);
+    SurfaceProjector(GFace* gf); /* triangles read from GFace */
     ~SurfaceProjector();
 
-    bool initialize(GFace* gf);
+    bool initialize(GFace* gf, const std::vector<MTriangle*>& triangles);
 
     GPoint closestPoint(const double query[3], size_t& cache, bool evalOnCAD = false, bool projectOnCAD = false) const;
 
@@ -38,5 +39,16 @@ class SurfaceProjector {
     void* pc;
     void* pca;
 };
+
+
+class SVector3;
+
+double projectPointOnTriangle(
+    const SVector3& query,
+    const SVector3& p1,
+    const SVector3& p2,
+    const SVector3& p3,
+    SVector3& proj,
+    double lambda[3]);
 
 #endif

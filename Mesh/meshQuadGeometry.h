@@ -29,6 +29,7 @@ struct MesquiteOptions {
   MesquiteSmoother smoother;
   double cpu_time_limit_sec = 0.;
   int outer_iteration_limit = 0;
+  int use_real_CAD = 0;
 };
 
 int optimizeQuadCavity(
@@ -47,5 +48,24 @@ int optimizeQuadMeshWithSubPatches(
 
 
 int optimizeQuadGeometry(GFace* gf);
+
+
+enum LocalSmoothingKernel {
+  Laplacian,
+  WinslowAtRegular,
+  AngleBased
+};
+
+bool smoothElementsWithLocalKernel(
+    LocalSmoothingKernel kernel,
+    GFace* gf,
+    SurfaceProjector* sp,
+    const std::vector<MElement*>& elements,
+    const std::vector<MVertex*>& freeVertices,
+    bool smartVariant = false, /* check quality of elements after each move, slow */
+    size_t iterMaxOuterLoop = 0,
+    double global_dx_reduction = 1.e-3, /* stop smoothing it the while deplacement is less than global_dx_reduction * dx0 */
+    double local_dx_reduction = 1.e-5 /* lock a node if it moved less than local_dx_reduction * local_size */
+    );
 
 #endif

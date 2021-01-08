@@ -19,6 +19,7 @@
 #include "meshGFaceOptimize.h"
 #include "Field.h"
 #include "geolog.h"
+#include "qmt_utils.hpp"
 
 int BLOB = 1;
 
@@ -1203,7 +1204,10 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove, SurfaceProject
       //      printf("%lu %12.5E\n",j, xx);
     }
     if (i == 0)dx0 = dx;
-    if (dx < .002*dx0) break;
+    if (dx < .002*dx0 || i == nIter-1) {
+      DBG(i,nIter,dx,dx0);
+      break;
+    }
     //    printf("%12.5E %12.5E\n",dx,dx0);
   }  
 }
