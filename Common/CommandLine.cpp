@@ -194,13 +194,15 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-bg file", "Load background (image or PDF) file "
                  "(General.BackgroundImageFileName)"));
   s.push_back(mp("-v int", "Set verbosity level (General.Verbosity)"));
-  s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts "
-                 "(General.NoPopup)"));
   s.push_back(mp("-string \"string\"", "Parse command string at startup"));
   s.push_back(mp("-setnumber name value", "Set constant or option number "
                  "name=value"));
   s.push_back(mp("-setstring name value", "Set constant or option string "
                  "name=value"));
+  s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts "
+                 "(General.NoPopup)"));
+  s.push_back(mp("-noenv", "Don't modify the environment at startup"));
+  s.push_back(mp("-nolocale", "Don't modify the locale at startup"));
   s.push_back(mp("-option file", "Parse option file at startup"));
   s.push_back(mp("-convert files", "Convert files into latest binary formats, "
                  "then exit"));

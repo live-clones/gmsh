@@ -22,7 +22,7 @@ Default value: @code{30}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.AngleToleranceFacetOverlap
-Consider connected facets as overlapping when the dihedral angle between the facets is smaller than the user's defined tolerance@*
+Consider connected facets as overlapping when the dihedral angle between the facets is smaller than the user's defined tolerance (in degrees)@*
 Default value: @code{0.1}@*
 Saved in: @code{General.OptionsFileName}
 

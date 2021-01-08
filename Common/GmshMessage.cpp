@@ -153,24 +153,34 @@ void Msg::Init(int argc, char **argv)
   _launchDate = ctime(&now);
   _launchDate.resize(_launchDate.size() - 1);
 
+  bool _env = true, _locale = true;
   _commandLineArgs.resize(argc);
-  for(int i = 0; i < argc; i++)
+  for(int i = 0; i < argc; i++) {
     _commandLineArgs[i] = argv[i];
+    if(_commandLineArgs[i] == "-noenv")
+      _env = false;
+    else if(_commandLineArgs[i] == "-nolocale")
+      _locale = false;
+  }
 
   CTX::instance()->exeFileName = GetExecutableFileName();
   if(CTX::instance()->exeFileName.empty() && _commandLineArgs.size())
     CTX::instance()->exeFileName = _commandLineArgs[0];
 
-  // add the directory where the binary is installed to the path where Python
-  // looks for modules, and to the path for executables (this allows us to find
-  // the onelab.py module or subclients automatically)
-  addGmshPathToEnvironmentVar("PYTHONPATH");
-  addGmshPathToEnvironmentVar("PATH");
+  if(_env) {
+    // add the directory where the binary is installed to the path where Python
+    // looks for modules, and to the path for executables (this allows us to
+    // find the onelab.py module or subclients automatically)
+    addGmshPathToEnvironmentVar("PYTHONPATH");
+    addGmshPathToEnvironmentVar("PATH");
+  }
 
-  // make sure to use the "C" locale; in particular this ensures that we will
-  // use a dot for for the decimal separator when writing ASCII mesh files
-  std::setlocale(LC_ALL, "C.UTF-8");
-  std::setlocale(LC_NUMERIC, "C");
+  if(_locale) {
+    // make sure to use the "C" locale; in particular this ensures that we will
+    // use a dot for for the decimal separator when writing ASCII mesh files
+    std::setlocale(LC_ALL, "C.UTF-8");
+    std::setlocale(LC_NUMERIC, "C");
+  }
 
   InitializeOnelab("Gmsh");
 }
