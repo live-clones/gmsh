@@ -1212,7 +1212,7 @@ static void browser_cb(Fl_Widget *w, void *data)
 
 static void tree_cb(Fl_Widget *w, void *data)
 {
-#if FLTK_ABI_VERSION >= 10301
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
   Fl_Tree *tree = (Fl_Tree *)w;
   if(tree->callback_reason() == FL_TREE_REASON_RESELECTED && Fl::event_clicks()) {
     // double click
@@ -1358,7 +1358,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     tree->labelsize(FL_NORMAL_SIZE - 1);
     tree->selectmode(FL_TREE_SELECT_MULTI);
     tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
-#if FLTK_ABI_VERSION >= 10301
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
     tree->item_reselect_mode(FL_TREE_SELECTABLE_ALWAYS); // for double-clicks
 #endif
     tree->callback(tree_cb);
