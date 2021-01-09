@@ -237,8 +237,14 @@ public:
     bool operator()(const Vis *v1, const Vis *v2) const
     {
       switch(instance()->getSortMode()) {
-      case 1: return v1->getDim() < v2->getDim() ? true : false;
-      case -1: return v1->getDim() > v2->getDim() ? true : false;
+      case 1:
+        if(v1->getDim() < v2->getDim()) return true;
+        else if(v1->getDim() > v2->getDim()) return false;
+        else return v1->getTag() < v2->getTag();
+      case -1:
+        if(v1->getDim() > v2->getDim()) return true;
+        else if(v1->getDim() < v2->getDim()) return false;
+        else return v1->getTag() < v2->getTag();
       case 2: return v1->getTag() < v2->getTag() ? true : false;
       case -2: return v1->getTag() > v2->getTag() ? true : false;
       case 3:
