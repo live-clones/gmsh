@@ -1289,7 +1289,7 @@ bool GFace::buildRepresentationCross(bool force)
   if(cross[0].size()) {
     if(force) {
       cross[0].clear();
-      cross[0].clear();
+      cross[1].clear();
     }
     else
       return true;
@@ -1297,7 +1297,10 @@ bool GFace::buildRepresentationCross(bool force)
 
   if(geomType() == DiscreteSurface) {
     // TODO if the surface has been reparametrized
-    if(cross[0].empty()) cross[0].push_back(std::vector<SPoint3>());
+    if(cross[0].empty()) {
+      cross[0].push_back(std::vector<SPoint3>());
+      cross[0][0].push_back(bounds().center());
+    }
     return false;
   }
 
@@ -1368,10 +1371,12 @@ bool GFace::buildRepresentationCross(bool force)
     }
   }
 
-  // if we couldn't determine a cross, add a dummy one so that we won't try
-  // again unless we force the recomputation
+  // if we couldn't determine a cross, add a single point (center of the
+  // bounding box) so that we won't try again unless we force the recomputation,
+  // but we will still have a point to draw e.g. the label
   if(cross[0].empty()) {
     cross[0].push_back(std::vector<SPoint3>());
+    cross[0][0].push_back(bounds().center());
     return false;
   }
   return true;
