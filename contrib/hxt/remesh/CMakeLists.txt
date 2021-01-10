@@ -22,6 +22,8 @@ option(HXT_REMESH_OBJECT_ONLY "Do not create hxt_remesh library" OFF)
 set(HXT_REMESH_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_collapse_edge.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_collapse_edge.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_collapse_edge_V2.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_collapse_edge_V2.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_eigenvectors.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_eigenvectors.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_gmsh_point_gen_main.c"
