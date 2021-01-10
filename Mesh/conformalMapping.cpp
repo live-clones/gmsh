@@ -987,8 +987,8 @@ void MyMesh::computeManifoldBasis(){
 	    usedEdges.insert(eK);
 	  }
 	}
-	dirXplan[0]=1.;dirXplan[1]=0.;dirXplan[2]=0.;
-	dirYplan[0]=0.;dirYplan[1]=1.;dirYplan[2]=0.;
+	// dirXplan[0]=1.;dirXplan[1]=0.;dirXplan[2]=0.;
+	// dirYplan[0]=0.;dirYplan[1]=1.;dirYplan[2]=0.;
 	for(const MEdge *e: usedEdges){
 	  SVector3 v(e->getVertex(1)->x() - e->getVertex(0)->x(),
 		     e->getVertex(1)->y() - e->getVertex(0)->y(),
@@ -1356,7 +1356,7 @@ ConformalMapping::ConformalMapping(GModel *gm): _currentMesh(NULL), _gm(gm), _in
   Msg::Info("Compute H");
   std::cout << "Compute H" << std::endl;
   _computeH();
-  // _viewScalarTriangles(_currentMesh->H, _currentMesh->triangles, "H");
+  // _viewScalarTriangles(_currentMesh->H, _currentMesh->triangles, "CM::H::DBG");
   //create cutgraph and cut mesh along it
   Msg::Info("Creating cut graph");
   std::cout << "Creating cut graph" << std::endl;

@@ -31,6 +31,11 @@ HXTStatus hxtPointGenWriteDirections(HXTMesh *mesh,
                                      const double *directions,
                                      const char *filename);
 
+HXTStatus hxtPointGenWriteDirectionsOpposite(HXTMesh *mesh, 
+                                     const double *directions,
+                                     const char *filename);
+
+
 HXTStatus hxtPointGenWriteDirectionsEdges(HXTEdges *edges, 
                                           const double *directions,
                                           const char *filename);

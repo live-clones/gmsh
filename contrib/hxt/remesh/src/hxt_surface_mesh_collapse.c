@@ -7,6 +7,7 @@
 #include "hxt_point_gen_realloc.h"
 
 #include "hxt_collapse_edge.h"
+#include "hxt_collapse_edge_V2.h"
 #include "hxt_swap_edge.h"
 #include "hxt_point_gen_numerics.h"
 
@@ -382,6 +383,66 @@ HXTStatus hxtSurfaceMeshCollapseSwap(const HXTMesh *mesh,
 }
 
 
+//**************************************************************************************************
+//**************************************************************************************************
+//
+// FUNCTION 
+//
+//**************************************************************************************************
+//**************************************************************************************************
+HXTStatus hxtSurfaceMeshCollapseForced(HXTPointGenOptions *opt,
+                                       HXTMesh *tmesh,
+                                       HXTEdges *tedges,
+                                       HXTPointGenParent *tparent,
+                                       uint32_t *flagE,
+                                       uint32_t *lines2edges,
+                                       uint64_t *edges2lines,
+                                       uint64_t *lines2triangles,
+                                       uint64_t maxNumTriToLine,
+                                       uint64_t *vertices2lines,
+                                       uint64_t maxNumLinesToVertex,
+                                       uint32_t *flagV)
+{
+
+
+  uint32_t count=0;
+
+  for (uint32_t i=0; i<tmesh->vertices.num; i++){
+    if (tparent[i].type != 1) continue;
+    if (flagV[i] == UINT32_MAX){
+
+    
+      uint32_t cv = i;
+      // Check if vertex is to be removed
+      if (flagV[cv] != UINT32_MAX) continue;
+    
+      // Check if vertex is on the boundary 
+      if (tparent[cv].type != 1) continue;
+      
+      int collapsed = 0;
+      HXT_CHECK(hxtRemoveBoundaryVertex_V2(tmesh,
+                                        tedges,
+                                        tparent,
+                                        flagE,
+                                        lines2edges,
+                                        edges2lines,
+                                        lines2triangles,
+                                        maxNumTriToLine,
+                                        vertices2lines,
+                                        maxNumLinesToVertex,
+                                        cv,
+                                        &collapsed));
+    
+      if (collapsed == 1){
+        flagV[cv] = 1;
+        count++;
+      }
+    }
+  }
+
+
+  return HXT_STATUS_OK;
+}
 
 
 //**************************************************************************************************
@@ -719,6 +780,11 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
 
   if (opt->verbosity>=2) HXT_CHECK(hxtMeshWriteGmsh(tmesh, "FINALMESH7finalswaps.msh"));
 
+
+  //*************************************************
+  // Counting not collapsed points
+  // Plus output of them 
+  //*************************************************
   // TODO debug or delete
   uint32_t countNOTcollapsedTotal =0;
   uint32_t countNOTcollapsedLines =0;
@@ -753,9 +819,31 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
   HXT_INFO_COND(opt->verbosity>=1,"Number of NOT Collapsed Points lines   %d", countPointsToDelete-countPointsCollapsed);
 
   if (countPointsToDelete-countPointsCollapsed != 0 && opt->quadSurfaces == 1){
-    HXT_INFO_COND(opt->verbosity>=0,"!!!");
-    HXT_INFO_COND(opt->verbosity>=0,"ATTENTION: %d points were not collapsed",countPointsToDelete-countPointsCollapsed);
-    HXT_INFO_COND(opt->verbosity>=0,"!!!");
+
+    HXT_INFO_COND(opt->verbosity>=1,"Collapsing remaining points for bipartite quad");
+
+    HXT_CHECK(hxtSurfaceMeshCollapseForced(opt,
+                                           tmesh,
+                                           tedges,
+                                           tparent,
+                                           flagE,
+                                           lines2edges,
+                                           edges2lines,
+                                           lines2triangles,
+                                           maxNumTriToLine,
+                                           vertices2lines,
+                                           maxNumLinesToVertex,
+                                           flagV));
+
+    uint32_t countNOTcollapsedTotal =0;
+    uint32_t countNOTcollapsedLines =0;
+    for (uint32_t i=0; i<tmesh->vertices.num; i++){
+      if (tparent[i].type == 4) continue;
+      if (flagV[i] == UINT32_MAX) countNOTcollapsedTotal++;
+      if (tparent[i].type != 2 && flagV[i] == UINT32_MAX) countNOTcollapsedLines++;
+    }
+    if (countNOTcollapsedTotal!=0)
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR,"NON COLLAPSED POINTS STILL EXIST");
   }
 
   /*if (countPointsToDelete-countPointsCollapsed != 0 && opt->quadSurfaces == 1){*/

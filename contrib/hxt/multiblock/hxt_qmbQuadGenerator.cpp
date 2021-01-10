@@ -2377,6 +2377,8 @@ HXTStatus QuadGenerator::fillGeoFile(std::string myGeoFile){
 }
 
 HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
+  bool addDiskSing=true;
+  // bool addDiskSing=false;
   HXTEdges* edges=m_triEdges;
   HXTMesh* mesh=edges->edg2mesh;
   uint16_t *colors= mesh->triangles.color;
@@ -2453,48 +2455,52 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
       if(index==6) //doubled because of the vertex closeness
 	singSixTags.push_back(singTag);
       //Comment to remove disks around singularities
-      //Disk around singularity
-      for(int j=0; j<N; j++){
-	x=(*coord)[0]+radius*cos((1.0*j)/(1.0*N)*2.0*M_PI);
-	y=(*coord)[1]+radius*sin((1.0*j)/(1.0*N)*2.0*M_PI);
-	z=(*coord)[2];
-	// pointTag=gmsh::model::occ::addPoint(x,y,z, radius, -1);
-	pointTag=gmsh::model::geo::addPoint(x,y,z, radius, -1);
-	pointsTags.push_back(pointTag);
-	curvePointsTags.push_back(pointTag);	
-	// lineTag=gmsh::model::occ::addLine(singTag, pointTag, -1);
-	lineTag=gmsh::model::geo::addLine(singTag, pointTag, -1);
-	linesTags.push_back(lineTag);
-	allLinesTags.push_back(lineTag);
-      }
       std::vector<int> curveLinesTags;
-      for(uint64_t j=1; j<curvePointsTags.size(); j++){
-	// lineTag=gmsh::model::occ::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
-	lineTag=gmsh::model::geo::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
+      if(addDiskSing){
+	//Disk around singularity
+	for(int j=0; j<N; j++){
+	  x=(*coord)[0]+radius*cos((1.0*j)/(1.0*N)*2.0*M_PI);
+	  y=(*coord)[1]+radius*sin((1.0*j)/(1.0*N)*2.0*M_PI);
+	  z=(*coord)[2];
+	  // pointTag=gmsh::model::occ::addPoint(x,y,z, radius, -1);
+	  pointTag=gmsh::model::geo::addPoint(x,y,z, radius, -1);
+	  pointsTags.push_back(pointTag);
+	  curvePointsTags.push_back(pointTag);	
+	  // lineTag=gmsh::model::occ::addLine(singTag, pointTag, -1);
+	  lineTag=gmsh::model::geo::addLine(singTag, pointTag, -1);
+	  linesTags.push_back(lineTag);
+	  allLinesTags.push_back(lineTag);
+	}
+	for(uint64_t j=1; j<curvePointsTags.size(); j++){
+	  // lineTag=gmsh::model::occ::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
+	  lineTag=gmsh::model::geo::addLine(curvePointsTags[j-1],curvePointsTags[j],-1);
+	  linesTags.push_back(lineTag);
+	  allLinesTags.push_back(lineTag);
+	  curveLinesTags.push_back(lineTag);
+	  allCurveLinesTags.push_back(lineTag);
+	  lineTag++;
+	}
+	// lineTag=gmsh::model::occ::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
+	lineTag=gmsh::model::geo::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
 	linesTags.push_back(lineTag);
 	allLinesTags.push_back(lineTag);
 	curveLinesTags.push_back(lineTag);
 	allCurveLinesTags.push_back(lineTag);
-	lineTag++;
+	//add Disk
+	// loopTag=gmsh::model::occ::addCurveLoop(curveLinesTags,-1);
+	loopTag=gmsh::model::geo::addCurveLoop(curveLinesTags,-1);
+	// loopTag=gmsh::model::occ::addBSpline(curveLinesTags,-1);
+	//
       }
-      // lineTag=gmsh::model::occ::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
-      lineTag=gmsh::model::geo::addLine(curvePointsTags[curvePointsTags.size()-1],curvePointsTags[0],-1);
-      linesTags.push_back(lineTag);
-      allLinesTags.push_back(lineTag);
-      curveLinesTags.push_back(lineTag);
-      allCurveLinesTags.push_back(lineTag);
-      //add Disk
-      // loopTag=gmsh::model::occ::addCurveLoop(curveLinesTags,-1);
-      loopTag=gmsh::model::geo::addCurveLoop(curveLinesTags,-1);
-      // loopTag=gmsh::model::occ::addBSpline(curveLinesTags,-1);
-      //
       //Surface embeding
       // gmsh::model::occ::synchronize();
       gmsh::model::geo::synchronize();
       gmsh::model::mesh::embed(0, pointsTags, 2, (int) colors[sTri]); //points
       //Comment to remove disks around singularities
-      gmsh::model::mesh::embed(1, linesTags, 2, (int) colors[sTri]); //lines
-      gmsh::model::mesh::embed(1, curveLinesTags, 2, (int) colors[sTri]); //curve
+      if(addDiskSing){
+	gmsh::model::mesh::embed(1, linesTags, 2, (int) colors[sTri]); //lines
+	gmsh::model::mesh::embed(1, curveLinesTags, 2, (int) colors[sTri]); //curve
+      }
       //
     }
   }
@@ -2558,11 +2564,13 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
   physicalGroup=gmsh::model::addPhysicalGroup(0, singSixTags, -1);
   gmsh::model::setPhysicalName(0, physicalGroup, "SINGULARITY_OF_INDEX_SIX");
   //Comment to remove disks around singularities
-  //adding tag on lines and line loops
-  physicalGroup=gmsh::model::addPhysicalGroup(1, allLinesTags, -1);
-  gmsh::model::setPhysicalName(1, physicalGroup, "NOT_BC_CF");
-  physicalGroup=gmsh::model::addPhysicalGroup(1, allCurveLinesTags, -1);
-  gmsh::model::setPhysicalName(0, physicalGroup, "NOT_BC_CF");
+  if(addDiskSing){
+    //adding tag on lines and line loops
+    physicalGroup=gmsh::model::addPhysicalGroup(1, allLinesTags, -1);
+    gmsh::model::setPhysicalName(1, physicalGroup, "NOT_BC_CF");
+    physicalGroup=gmsh::model::addPhysicalGroup(1, allCurveLinesTags, -1);
+    gmsh::model::setPhysicalName(0, physicalGroup, "NOT_BC_CF");
+  }
   //
   // gmsh::vectorpair dimTagFive;
   // for(size_t i=0;i<singFiveTags.size();i++){
@@ -4526,6 +4534,7 @@ int QuadGenerator::detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleI
     }
   }
 
+ 
 
   //2. ending on bdry under sharp angle
   double alpha=0.0, limitAngle = 45.0;

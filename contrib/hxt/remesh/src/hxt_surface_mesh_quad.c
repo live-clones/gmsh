@@ -2000,6 +2000,8 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
   if(opt->verbosity>=1){
     FILE *q;
     hxtPosInit("quadQuality.pos","scaledJacobian",&q);
+    FILE *out = fopen("quadHistogram.txt","w");
+
     for (uint64_t i=0; i<mesh->quads.num; i++){
       double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
       double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
@@ -2007,7 +2009,9 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
       double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
       double qual = hxtPointGenQuadScaledJacobian(p0,p1,p2,p3);
       hxtPosAddQuad(q,p0,p1,p2,p3,qual);
+      fprintf(out,"%f\n",qual);
     }
+    fclose(out);
     hxtPosFinish(q);
   }
 
@@ -2038,10 +2042,11 @@ HXTStatus hxtPointGenQuadConvert(HXTPointGenOptions *opt,
     double avg = total/(float)mesh->quads.num;
 
 
-    HXT_INFO_COND(opt->verbosity>=1,"%d quads with negative quality", countInvalid);
-    HXT_INFO_COND(countInvalid>0,"%d quads with negative quality", countInvalid);
+    HXT_INFO_COND(opt->verbosity>=1,"    %d quads with negative quality", countInvalid);
+    HXT_INFO_COND(opt->verbosity>=1,"");
     if(opt->quadSurfaces) 
       HXT_INFO_COND(opt->verbosity>=0, "PointGen | Quad quality min/avg/max: %f, %f, %f", min,avg,max);
+    HXT_INFO_COND(opt->verbosity>=1,"");
   }
 
 
