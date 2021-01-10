@@ -4535,6 +4535,7 @@ int QuadGenerator::detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleI
     }
   }
 
+ 
 
   //2. ending on bdry under sharp angle
   double alpha=0.0, limitAngle = 45.0;

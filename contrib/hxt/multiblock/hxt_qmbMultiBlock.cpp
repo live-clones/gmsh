@@ -4369,9 +4369,9 @@ HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
   std::cout<<" "<<std::endl;
   std::cout<<"--Get and store partition per edge--"<<std::endl;
 
-  //computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);
-  computeAdequatePartitionPerEdge(m_minEdgLength/(1.0), hVal);
-  // computeAdequatePartitionPerEdge(0.02, hVal);
+  // computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);
+  //computeAdequatePartitionPerEdge(m_minEdgLength/(1.0), hVal);
+  computeAdequatePartitionPerEdge(0.05, hVal);
   //computeAdequatePartitionPerEdge(3*m_minEdgLength, hVal);
   // computeAdequatePartitionPerEdge(m_sizeQuadMesh, hVal);
   for(uint64_t i=0;i<m_extraordVertices.size();i++){
@@ -4786,6 +4786,18 @@ HXTStatus MultiBlock::createQuadMesh(){
       m_quadMesh->quads.node[4*i+t] = (m_discrQuads[i])[t];
   hxtMeshWriteGmsh(m_quadMesh, "qmbFinal.msh");
   
+  //-------------getting mesh quality
+
+  std::vector<double> quadsQuality;
+  double averageQuality;
+  double worstQuality;
+  double procentageHighQualityElements;
+  getMeshQuality(&quadsQuality, &averageQuality, &worstQuality, &procentageHighQualityElements);
+  std::cout<<"Worst quality: "<<worstQuality<<std::endl;
+  std::cout<<"Average quality: "<<averageQuality<<std::endl;
+  std::cout<<"Procentage elements with quality greater than 0.9: "<<procentageHighQualityElements<<std::endl;
+  hxtWriteQuadQualityScalarPos(quadsQuality, "qmbFinalQuality.pos");
+  
   return HXT_STATUS_OK;
 }
 
@@ -4793,6 +4805,125 @@ HXTMesh* MultiBlock::getQuadMesh(){
   return m_quadMesh;
 }
 
+double MultiBlock::getSingleQuadQuality(int iQuad){
+  HXTMesh *quadMesh=m_quadMesh;
+  double *vert = quadMesh->vertices.coord;
+  uint32_t* nodes = quadMesh->quads.node;
+  double vQuad[4*3] = {vert[4*nodes[4*iQuad+0]+0],vert[4*nodes[4*iQuad+0]+1],vert[4*nodes[4*iQuad+0]+2],
+		       vert[4*nodes[4*iQuad+1]+0],vert[4*nodes[4*iQuad+1]+1],vert[4*nodes[4*iQuad+1]+2],
+		       vert[4*nodes[4*iQuad+2]+0],vert[4*nodes[4*iQuad+2]+1], vert[4*nodes[4*iQuad+2]+2],
+		       vert[4*nodes[4*iQuad+3]+0],vert[4*nodes[4*iQuad+3]+1], vert[4*nodes[4*iQuad+3]+2]};
+  double e1[3]={vQuad[3]-vQuad[0], vQuad[4]-vQuad[1], vQuad[5]-vQuad[2]};
+  double e2[3]={vQuad[6]-vQuad[3], vQuad[7]-vQuad[4], vQuad[8]-vQuad[5]};
+  double e3[3]={vQuad[9]-vQuad[6], vQuad[10]-vQuad[7],vQuad[11]-vQuad[8]};
+  double e4[3]={vQuad[0]-vQuad[9], vQuad[1]-vQuad[10], vQuad[2]-vQuad[11]};
+  double me1[3]={0,0,0}, me2[3]={0,0,0},  me3[3]={0,0,0},  me4[3]={0,0,0};
+  for(int i=0; i<3; i++){
+    me1[i]=-e1[i];
+    me2[i]=-e2[i];
+    me3[i]=-e3[i];
+    me4[i]=-e4[i];
+  }
+  
+  normalize(e1); normalize(e2); normalize(e3); normalize(e4); normalize(me1); normalize(me2); normalize(me3); normalize(me4);
+  double n1[3]={0,0,0};
+  myNormalizedCrossprod(e1, me4, n1);
+  double n2[3]={0,0,0};
+  myNormalizedCrossprod(e2, me1, n2);
+  double n3[3]={0,0,0};
+  myNormalizedCrossprod(e3, me2, n3);
+  double n4[3]={0,0,0};
+  myNormalizedCrossprod(e4, me3, n4);
+
+  double d1[3]={0,0,0};
+  myNormalizedCrossprod(n1, e1, d1);
+  double d2[3]={0,0,0};
+  myNormalizedCrossprod(n2, e2, d2);
+  double d3[3]={0,0,0};
+  myNormalizedCrossprod(n3, e3, d3);
+  double d4[3]={0,0,0};
+  myNormalizedCrossprod(n4, e4, d4);
+ 
+  double alpha[4]={0,0,0,0};
+  computeAlpha(e1, d1, me4, &alpha[0]);
+  computeAlpha(e2, d2, me1, &alpha[1]);
+  computeAlpha(e3, d3, me2, &alpha[2]);
+  computeAlpha(e4, d4, me3, &alpha[3]);
+ 
+   double estim=-1.0;
+   double cp=0;
+   for(int i=0; i<4; i++){
+    cp=(fabs(M_PI/2.0-alpha[i]));
+    if(estim<cp)
+      estim=cp;
+   }
+
+  return estim;
+}
+
+int MultiBlock::getMeshQuality(std::vector<double> *quadsQuality, double *averageQuality, double *worstQuality, double *procentageHighQualityElements){
+  HXTMesh *quadMesh=m_quadMesh;
+  uint64_t nQuads=quadMesh->quads.num;
+  for(uint64_t i=0; i<nQuads; i++){
+    (*quadsQuality).push_back(0.0);
+  }
+  for(uint64_t i=0; i<nQuads; i++){
+    double crit1=getSingleQuadQuality((int)i);
+    double critFinal=-1.0;
+    critFinal=1-(2.0/M_PI)*crit1;
+    double max=critFinal;
+    if(max<0){
+      (*quadsQuality)[i]=0.0;
+    }else{
+      (*quadsQuality)[i]=critFinal;
+    }
+  }
+  double eta_averg=0.0;
+  double eta_worst=(*quadsQuality)[0];
+  int num=0;
+  for(uint64_t i=0; i<nQuads; i++){
+    eta_averg+=(*quadsQuality)[i];
+    if(eta_worst>(*quadsQuality)[i])
+      eta_worst=(*quadsQuality)[i];
+    if((*quadsQuality)[i]>=0.9)
+      num++;
+  }
+  *averageQuality=((eta_averg)/(double)nQuads)*100.0;
+  *worstQuality=(eta_worst)*100.0;
+  *procentageHighQualityElements=(num/(double)nQuads)*100.0;
+  std::cout<<"Num high quality elements: "<<num<<std::endl;
+  std::cout<<"Num quads: "<<nQuads<<std::endl;
+  
+  return 1;
+}
+
+HXTStatus MultiBlock::hxtWriteQuadQualityScalarPos(std::vector<double> quadsQuality,const char *fileName){
+  HXTMesh* mesh=m_quadMesh;
+  FILE* myfile = fopen(fileName,"w");
+  fprintf(myfile,"View \"Quads quality\"{\n");
+  for(uint64_t i=0; i<mesh->quads.num; i++){
+    fprintf(myfile,"SQ(");
+    uint32_t vquad[4] = {mesh->quads.node[4*i+0],mesh->quads.node[4*i+1],mesh->quads.node[4*i+2],mesh->quads.node[4*i+3]};
+    double Ue[4];
+    for(uint32_t j=0; j<4; j++){
+      fprintf(myfile,"%f,%f,%f",mesh->vertices.coord[4*vquad[j]+0],mesh->vertices.coord[4*vquad[j]+1],mesh->vertices.coord[4*vquad[j]+2]);
+      if(j<3)
+        fprintf(myfile,",");
+      Ue[j] = quadsQuality[i];
+    }
+    fprintf(myfile,")");
+    fprintf(myfile,"{");
+    for(uint32_t j=0; j<4; j++){      
+      fprintf(myfile,"%f",Ue[j]);
+      if(j<3)
+        fprintf(myfile,",");  
+    }
+    fprintf(myfile,"};\n");    
+  }
+  fprintf(myfile,"};");
+  fclose(myfile);
+  return HXT_STATUS_OK;
+}
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------

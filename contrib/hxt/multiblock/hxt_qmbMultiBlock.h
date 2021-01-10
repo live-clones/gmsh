@@ -180,6 +180,9 @@ class MultiBlock
   void getExtrVertIDmbEdg(uint64_t extrID[2],int edgID);
   HXTStatus discretizeEdges(std::vector<double> hVal);
   HXTStatus discretizeQuads();
+  double getSingleQuadQuality(int iQuad);
+  int getMeshQuality(std::vector<double> *quadsQuality, double *averageQuality, double *worstQuality, double *procentageHighQualityElements);
+  HXTStatus hxtWriteQuadQualityScalarPos(std::vector<double> quadsQuality,const char *fileName);
 
 };
 
