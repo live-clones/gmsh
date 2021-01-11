@@ -2407,7 +2407,7 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
     cornerGeoTags.push_back(-1);
   for(uint64_t i=0; i<m_vectCorner.size(); i++){
     Corner *c=&m_vectCorner[i];
-    if(!c->isFictive()){
+    // if(!c->isFictive()){
       std::array<double,3> *cPoint= c->getPCoord();
       for(uint64_t j=0; j<allCoord.size(); j++){
 	if(fabs((*cPoint)[0]-allCoord[j][0])<1e-10 && fabs((*cPoint)[1]-allCoord[j][1])<1e-10 && fabs((*cPoint)[2]-allCoord[j][2])<1e-10){
@@ -2415,7 +2415,7 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
 	  break;
 	}
       }
-    }
+    // }
   }
   double hmax=0.1, radius;
   optimizeSizeofRadius(&radius);
@@ -2509,7 +2509,7 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
   //Corners
   for(uint64_t i=0; i<m_vectCorner.size(); i++){
     Corner *c=&m_vectCorner[i];
-    if(!c->isFictive()){
+    // if(!c->isFictive()){
       std::array<double,3> *coord= c->getPCoord();
       std::vector<uint64_t> *cPatch=c->getPPatch();
       // uint64_t cTri=(*cPatch)[0]; //for surface color
@@ -2546,7 +2546,7 @@ HXTStatus QuadGenerator::fillGeoFileDBG(std::string myGeoFile){
 	  singSixTags.push_back(cornerTag);
 	cornerTag++;
       }
-    }
+    // }
   }
   std::cout<<"Corners written!"<<std::endl;
   std::cout << "radius : " << radius << std::endl;
