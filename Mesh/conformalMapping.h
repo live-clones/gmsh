@@ -106,6 +106,7 @@ class MyMesh{
     _computeGeodesicCurv();	
     _computeGaussCurv();
   }
+  bool _checkIfPatchPlanar(size_t kP,SVector3 &dirXplan,SVector3 &dirYplan);
   void computeManifoldBasis();
   bool _isEulerEqualSumSing(const std::set<MVertex *, MVertexPtrLessThan> &vertices, const std::map<MVertex *, int, MVertexPtrLessThan> &singIndices);
   void _tryFixSing(std::set<MTriangle*, MElementPtrLessThan> patchTri);
@@ -138,12 +139,18 @@ class ConformalMapping{
   std::set<const MEdge *> _createEdgeTree();
   void _trimEdgeTree(std::set<const MEdge *> &edgeTree);
   void _computeH();
+  void _computeHTest();
+  void _computeHTest2();
+  void _computeHTest3();
   void _restoreInitialMesh();
   void _transferCrossesCutToInit();
+  void _transferCrossesFeatToInit();
   void _computeHfromCrosses();
+  void _computeHfromCrossesTest();
   void _cutMeshOnCutGraph();
   void _createManifoldBasis(){_currentMesh->computeManifoldBasis();}
   void _computeCrossesFromH();
+  void _computeCrossesFromHtest();
   std::map<const MEdge*, SVector3> _getLifting(MyMesh *mesh, const std::set<MTriangle*, MElementPtrLessThan> &triangles, MTriangle* triangleInit, const SVector3 &dirRef);
   void _solvePotOnPatch(const std::set<MTriangle*, MElementPtrLessThan> &tri, const SVector3 &dirRef, std::map<MVertex *, double, MVertexPtrLessThan> &pot);
   void _computeParametrization();
@@ -162,7 +169,9 @@ class ConformalMapping{
   static void _viewScalarVertex(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, const std::string& viewName="defaultName");
   static void _viewScalarTriangles(std::map<MVertex *, double, MVertexPtrLessThan> &scalar, std::set<MTriangle *, MElementPtrLessThan> &triangles, const std::string& viewName="defaultName");
   static void _viewEdges(std::set<const MEdge*> &edges, const std::string& viewName="defaultName");
+  void _viewEdgesDBG(std::set<const MEdge*> &edges, const std::string& viewName="defaultName");
   static void _viewScalarEdges(std::map<const MEdge *, double> &scalar, const std::string& viewName="defaultName");
+  void _viewThetaDBG(std::map<const MEdge *, double> &scalar, const std::string& viewName="defaultName");
   static void _viewCrossEdgTri(std::map<MTriangle *, std::vector<std::vector<SVector3>>> &crossEdgTri, const std::string& viewName="defaultName");
   
   static void computeScaledCrossesFromSingularities(GModel *gm,std::map<MTriangle *, std::vector<std::vector<SVector3>>> &crossEdgTri, std::map<MVertex *, double, MVertexPtrLessThan> &H){

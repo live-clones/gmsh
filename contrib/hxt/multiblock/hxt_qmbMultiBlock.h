@@ -168,6 +168,7 @@ class MultiBlock
   HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum, double *alpha, double *beta);
   HXTStatus getCrossesLifting(const std::vector<uint64_t> &tri, const std::vector<uint64_t> &glob2LocTri, std::vector<std::array<double,3>> &lift, uint64_t triInit, std::array<double,3> dirRef);
   HXTStatus parametrizeBlock(uint64_t idBlock, BlockParametrization &blockParam);
+  HXTStatus parametrizeBlock(std::vector<uint64_t> vectIdBlock, BlockParametrization &blockParam);
   HXTStatus computePatchsParametrization();
   HXTStatus dbgPosEdgData(const char *fileName);
   HXTStatus dbgPosFlagSetTri(const std::set<uint64_t> &tri, const char *fileName);
@@ -177,6 +178,7 @@ class MultiBlock
   int getParallelEdg(int blockNum, uint64_t edg1, uint64_t *edg2);
   int getAllSheets();
   int computeAdequatePartitionPerEdge(double sizeofElement, std::vector<double> hVal);
+  int computeAdequatePartitionPerEdgeV2(double sizeofElement, std::vector<double> hVal);
   void getExtrVertIDmbEdg(uint64_t extrID[2],int edgID);
   HXTStatus discretizeEdges(std::vector<double> hVal);
   HXTStatus discretizeQuads();
