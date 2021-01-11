@@ -4096,20 +4096,20 @@ HXTStatus QuadGenerator::buildIntersectionTriValues(){
 
   std::array<int, 2> val;
   for(uint64_t i=0; i<m_vectSep.size(); i++){
-    std::cout << "sep: " << m_vectSep[i].getID() << std::endl;
+    // std::cout << "sep: " << m_vectSep[i].getID() << std::endl;
     Separatrice *sep=&m_vectSep[i];
-    std::cout << "flag1" << std::endl;
+    // std::cout << "flag1" << std::endl;
     std::vector<uint64_t> *triangles=sep->getPTriangles();
-    std::cout << "flag2" << std::endl;
+    // std::cout << "flag2" << std::endl;
     if(sep->isSaved()){
-      std::cout << "flag3" << std::endl;
+      // std::cout << "flag3" << std::endl;
       for(uint64_t j=1; j<triangles->size()-1; j++){
 	val[0]=(int)i; //sepID
 	val[1]=j;      //position
-	std::cout << "triangle id: " << (*triangles)[j] << std::endl;
+	// std::cout << "triangle id: " << (*triangles)[j] << std::endl;
 	m_flaggedTri[(*triangles)[j]].push_back(val); 
       }
-      std::cout << "flag4" << std::endl;
+      // std::cout << "flag4" << std::endl;
     }
   }
 
@@ -4221,9 +4221,9 @@ int QuadGenerator::groupingSep()
 
   //DBG CRITICAL
   for(auto sg: m_vectGroups){
-    std::cout << "group: " << sg.getID() << std::endl;
+     std::cout << "group: " << sg.getID() << std::endl;
     for(auto sep: *(sg.getPSeparatrices())){
-      std::cout << sep->getID() << " / ";
+       std::cout << sep->getID() << " / ";
     }
     std::cout << std::endl;
   }
@@ -4444,7 +4444,27 @@ int QuadGenerator::addInUnsignedintVectIfNotPresent(std::vector<uint64_t> *vect,
   return flag;
 }
 
+int QuadGenerator::isSepEndingOrthogonallyOntheBoundary(int sepID){
+  int flag=0;
+  double alpha=0.0, limitAngle = 45.0;
+  Separatrice *sep=&m_vectSep[sepID];
+  if(sep->isSaved() && !(sep->isBoundary())){
+    std::vector<uint64_t> *triangles=sep->getPTriangles();
+    if((*triangles)[triangles->size()-1] == (uint64_t)-1){ //ending on boundary
+      std::vector<double> angles = sep->getAngles();
+      alpha = angles[angles.size()-1];
+      if((alpha*180./M_PI) < limitAngle   ||   (alpha*180.0/M_PI) > 180.0-limitAngle){
+	flag=0;
+      }else{
+	flag=1;
+      }
+    }
+  }
+
+  return flag;
+}
 //Criterias: 1. intersecting same sep more than once; 2. ending on bdry under sharp angle
+//Updated Criterias: intersecting same sep more than once and not ending orthogonaly on the boundary; 2. ending on bdry under sharp angle
 int QuadGenerator::detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs){
   //1. intersecting same sep more than once
   double point1[3], point2[3], point3[3], point4[3], newPoint[3];
@@ -4555,9 +4575,11 @@ int QuadGenerator::detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleI
     }
   }
   
-  for(uint64_t i=0; i<flag.size(); i++)
-    if(flag[i]==1)
+  for(uint64_t i=0; i<flag.size(); i++){
+    int sepIsOrthogonalOnBoundary=isSepEndingOrthogonallyOntheBoundary(candidates[i]);
+    if(flag[i]==1 && !sepIsOrthogonalOnBoundary)
       limitCycleIDs->push_back(candidates[i]);
+  }
   
   return 1;
 }

@@ -143,6 +143,7 @@ class QuadGenerator
   int comparison();
   int checkIfInPatch2(uint64_t triNum);
   int addInUnsignedintVectIfNotPresent(std::vector<uint64_t> *vect, uint64_t value);
+  int isSepEndingOrthogonallyOntheBoundary(int sepID);
   int detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs);
   int cutLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs);
   int solveTangentialCrossingsLimitCycles(std::vector<uint64_t> *limitCycleIDs);
