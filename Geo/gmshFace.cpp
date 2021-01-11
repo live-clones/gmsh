@@ -114,15 +114,6 @@ double gmshFace::getMetricEigenvalue(const SPoint2 &pt)
   return _s->geometry->getMetricEigenvalue(pt);
 }
 
-void gmshFace::setModelEdges(std::list<GEdge *> &ed)
-{
-  for(std::list<GEdge *>::iterator it = ed.begin(); it != ed.end(); ++it) {
-    l_edges.push_back(*it);
-    (*it)->addFace(this);
-    l_dirs.push_back(1);
-  }
-}
-
 void gmshFace::resetMeshAttributes()
 {
   meshAttributes.recombine = _s->Recombine;
@@ -178,7 +169,7 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
       for(int i = 0; i < List_Nbr(_s->Generatrices); i++) {
         Curve *c;
         List_Read(_s->Generatrices, i, &c);
-        int N = (c->Typ == MSH_SEGM_LINE) ? 1 : NP;
+        int N = (c->Typ == MSH_SEGM_LINE && List_Nbr(c->Control_Points) == 2) ? 1 : NP;
         for(int j = 0; j < N; j++) {
           double u1 = (double)j / (double)N;
           double u2 = (double)(j + 1) / (double)N;

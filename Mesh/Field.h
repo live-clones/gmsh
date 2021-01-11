@@ -11,6 +11,7 @@
 #include <vector>
 #include <list>
 #include "GmshConfig.h"
+#include "Context.h"
 #include "STensor3.h"
 #include <fstream>
 #include <string>
@@ -49,6 +50,7 @@ public:
 class FieldOption {
 private:
   std::string _help;
+  bool _deprecated;
 
 protected:
   bool *status;
@@ -58,8 +60,8 @@ protected:
   }
 
 public:
-  FieldOption(const std::string &help, bool *_status)
-    : _help(help), status(_status)
+  FieldOption(const std::string &help, bool *_status, bool deprecated)
+    : _help(help), _deprecated(deprecated), status(_status)
   {
   }
   virtual ~FieldOption() {}
@@ -95,11 +97,12 @@ public:
   virtual void listdouble(std::list<double> value) {}
   virtual std::string string() const { return ""; }
   virtual void string(const std::string value) {}
+  bool isDeprecated() { return _deprecated; }
 };
 
 class Field {
 public:
-  Field() : update_needed(false) {}
+  Field() : updateNeeded(false) {}
   virtual ~Field();
   virtual void update() {}
   int id;
@@ -113,7 +116,7 @@ public:
                           GEntity *ge = 0)
   {
   }
-  bool update_needed;
+  bool updateNeeded;
   virtual const char *getName() = 0;
 #if defined(HAVE_POST)
   void putOnView(PView *view, int comp = -1);
@@ -131,11 +134,11 @@ public:
 
 class FieldManager : public std::map<int, Field *> {
 private:
-  int _background_field;
-  std::vector<int> _boundaryLayer_fields;
+  int _backgroundField;
+  std::vector<int> _boundaryLayerFields;
 
 public:
-  std::map<std::string, FieldFactory *> map_type_name;
+  std::map<std::string, FieldFactory *> mapTypeName;
   void initialize();
   void reset();
   Field *get(int id);
@@ -149,25 +152,25 @@ public:
   void setBackgroundMesh(int iView);
   // set and get background field
   void setBackgroundField(Field *BGF);
-  inline void setBackgroundFieldId(int id) { _background_field = id; };
+  inline void setBackgroundFieldId(int id) { _backgroundField = id; };
   inline void addBoundaryLayerFieldId(int id)
   {
-    for(std::size_t i = 0; i < _boundaryLayer_fields.size(); ++i) {
-      if(_boundaryLayer_fields[i] == id) return;
+    for(std::size_t i = 0; i < _boundaryLayerFields.size(); ++i) {
+      if(_boundaryLayerFields[i] == id) return;
     }
-    _boundaryLayer_fields.push_back(id);
+    _boundaryLayerFields.push_back(id);
   }
   inline void addBoundaryLayerFieldId(std::vector<int> &tags)
   {
     for(std::size_t i = 0; i < tags.size(); ++i)
       addBoundaryLayerFieldId(tags[i]);
   }
-  inline int getBackgroundField() { return _background_field; }
+  inline int getBackgroundField() { return _backgroundField; }
   inline int getNumBoundaryLayerFields()
   {
-    return (int)_boundaryLayer_fields.size();
+    return (int)_boundaryLayerFields.size();
   }
-  inline int getBoundaryLayerField(int i) { return _boundaryLayer_fields[i]; }
+  inline int getBoundaryLayerField(int i) { return _boundaryLayerFields[i]; }
 };
 
 // Boundary Layer Field (used both for anisotropic meshing and BL
@@ -177,20 +180,21 @@ class DistanceField;
 
 class BoundaryLayerField : public Field {
 private:
-  std::list<DistanceField *> _att_fields;
-  std::list<double> hwall_n_nodes;
-  std::list<int> nodes_id, edges_id;
-  std::list<int> edges_id_saved, nodes_id_saved, fan_nodes_id;
-  std::list<int> excluded_faces_id;
+  std::list<DistanceField *> _attFields;
+  std::list<double> _hWallNNodes;
+  std::list<int> _pointTags, _curveTags;
+  std::list<int> _pointTagsSaved, _curveTagsSaved, _fanPointTags;
+  std::list<int> _excludedSurfaceTags;
+  std::list<int> _fanSizes;
+  SPoint3 _closestPoint;
   void operator()(DistanceField *cc, double dist, double x, double y, double z,
                   SMetric3 &metr, GEntity *ge);
 
 public:
-  double hwall_n, ratio, hfar, thickness;
-  double current_distance, tgt_aniso_ratio;
-  SPoint3 _closest_point;
-  int iRecombine, iIntersect;
-  DistanceField *current_closest;
+  double hWallN, ratio, hFar, thickness;
+  double currentDistance, tgtAnisoRatio, beta;
+  int iRecombine, iIntersect, betaLaw, nb_divisions;
+  DistanceField *currentClosest;
   virtual bool isotropic() const { return false; }
   virtual const char *getName();
   virtual std::string getDescription();
@@ -201,34 +205,47 @@ public:
                           GEntity *ge = 0);
   bool isEdgeBL(int iE) const
   {
-    return std::find(edges_id.begin(), edges_id.end(), iE) != edges_id.end();
+    return std::find(_curveTags.begin(), _curveTags.end(), iE) !=
+           _curveTags.end();
   }
   bool isEdgeBLSaved(int iE) const
   {
-    return std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
-           edges_id_saved.end();
+    return std::find(_curveTagsSaved.begin(), _curveTagsSaved.end(), iE) !=
+           _curveTagsSaved.end();
   }
   bool isFanNode(int iV) const
   {
-    return std::find(fan_nodes_id.begin(), fan_nodes_id.end(), iV) !=
-           fan_nodes_id.end();
+    return std::find(_fanPointTags.begin(), _fanPointTags.end(), iV) !=
+           _fanPointTags.end();
   }
+  int fanSize(int iV)
+  {
+    if(_fanPointTags.size() != _fanSizes.size())
+      return CTX::instance()->mesh.boundaryLayerFanPoints;
+    std::list<int>::iterator it1 = _fanPointTags.begin();
+    std::list<int>::iterator it2 = _fanSizes.begin();
+    for(; it1 != _fanPointTags.end(); ++it1, ++it2) {
+      if(*it1 == iV) return *it2;
+    }
+    return 0;
+  }
+
   bool isEndNode(int iV) const
   {
-    return std::find(nodes_id.begin(), nodes_id.end(), iV) != nodes_id.end();
+    return std::find(_pointTags.begin(), _pointTags.end(), iV) !=
+           _pointTags.end();
   }
-  double hwall(int iV)
+  double hWall(int iV)
   {
-    for(std::list<double>::iterator it = hwall_n_nodes.begin();
-        it != hwall_n_nodes.end(); ++it) {
+    for(std::list<double>::iterator it = _hWallNNodes.begin();
+        it != _hWallNNodes.end(); ++it) {
       int i = (int)*it;
       ++it;
       double h = *it;
       if(i == iV) return h;
     }
-    return hwall_n;
+    return hWallN;
   }
-
   void computeFor1dMesh(double x, double y, double z, SMetric3 &metr);
   void setupFor1d(int iE);
   bool setupFor2d(int iF);
@@ -239,9 +256,9 @@ class FieldOptionString : public FieldOption {
 public:
   std::string &val;
   virtual FieldOptionType getType() { return FIELD_OPTION_STRING; }
-  FieldOptionString(std::string &_val, const std::string &_help,
-                    bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionString(std::string &_val, const std::string &help,
+                    bool *status = 0, bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   void string(const std::string value)
@@ -262,8 +279,9 @@ class FieldOptionDouble : public FieldOption {
 public:
   double &val;
   FieldOptionType getType() { return FIELD_OPTION_DOUBLE; }
-  FieldOptionDouble(double &_val, const std::string &_help, bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionDouble(double &_val, const std::string &help, bool *status = 0,
+                    bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   double numericalValue() const { return val; }
@@ -285,8 +303,9 @@ class FieldOptionInt : public FieldOption {
 public:
   int &val;
   FieldOptionType getType() { return FIELD_OPTION_INT; }
-  FieldOptionInt(int &_val, const std::string &_help, bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionInt(int &_val, const std::string &help, bool *status = 0,
+                 bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   double numericalValue() const { return val; }
@@ -307,9 +326,9 @@ class FieldOptionList : public FieldOption {
 public:
   std::list<int> &val;
   FieldOptionType getType() { return FIELD_OPTION_LIST; }
-  FieldOptionList(std::list<int> &_val, const std::string &_help,
-                  bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionList(std::list<int> &_val, const std::string &help,
+                  bool *status = 0, bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   void list(std::list<int> value)
@@ -335,9 +354,9 @@ class FieldOptionListDouble : public FieldOption {
 public:
   std::list<double> &val;
   FieldOptionType getType() { return FIELD_OPTION_LIST_DOUBLE; }
-  FieldOptionListDouble(std::list<double> &_val, const std::string &_help,
-                        bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionListDouble(std::list<double> &_val, const std::string &help,
+                        bool *status = 0, bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   void listdouble(std::list<double> value)
@@ -363,9 +382,9 @@ public:
 class FieldOptionPath : public FieldOptionString {
 public:
   virtual FieldOptionType getType() { return FIELD_OPTION_PATH; }
-  FieldOptionPath(std::string &_val, const std::string &_help,
-                  bool *_status = 0)
-    : FieldOptionString(_val, _help, _status)
+  FieldOptionPath(std::string &val, const std::string &help, bool *status = 0,
+                  bool deprecated = false)
+    : FieldOptionString(val, help, status, deprecated)
   {
   }
 };
@@ -374,8 +393,9 @@ class FieldOptionBool : public FieldOption {
 public:
   bool &val;
   FieldOptionType getType() { return FIELD_OPTION_BOOL; }
-  FieldOptionBool(bool &_val, const std::string &_help, bool *_status = 0)
-    : FieldOption(_help, _status), val(_val)
+  FieldOptionBool(bool &_val, const std::string &help, bool *status = 0,
+                  bool deprecated = false)
+    : FieldOption(help, status, deprecated), val(_val)
   {
   }
   double numericalValue() const { return val; }
@@ -421,7 +441,8 @@ public:
   // this callback is called with a void* previously given to the GenericField !
   typedef bool (*ptrfunction)(double, double, double, void *, double &);
   // this callback also takes the GEntity object into account
-  typedef bool (*ptrfunctionextended)(double, double, double, void*, void*, double&);
+  typedef bool (*ptrfunctionextended)(double, double, double, void *, void *,
+                                      double &);
 
   GenericField();
   ~GenericField();
@@ -434,8 +455,11 @@ public:
   void setCallbackWithData(ptrfunctionextended fct, void *data);
 
 private:
-  std::vector<std::pair<ptrfunction, void*> > cbs_with_data; // the callbacks with the data to be sent to them
-  std::vector<std::pair<ptrfunctionextended, void*> > cbs_extended_with_data; // the extended callbacks with the data to be sent to them
+  std::vector<std::pair<ptrfunction, void *> >
+    cbs_with_data; // the callbacks with the data to be sent to them
+  std::vector<std::pair<ptrfunctionextended, void *> >
+    cbs_extended_with_data; // the extended callbacks with the data to be sent
+                            // to them
 };
 
 #endif

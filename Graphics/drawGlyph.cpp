@@ -39,10 +39,8 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
     double height = drawContext::global()->getStringHeight();
     // width and height must here be computed in true pixel coordinates, because
     // viewport2world uses the actual, pixel-sized (not FLTK-sized) viewport
-    if(isHighResolution()) {
-      width *= 2;
-      height *= 2;
-    }
+    width *= highResolutionPixelFactor();
+    height *= highResolutionPixelFactor();
     // alignment for TeX is handled directly by gl2ps
     if(!CTX::instance()->printing ||
        CTX::instance()->print.fileFormat != FORMAT_TEX) {
@@ -247,7 +245,7 @@ void drawContext::drawImage(const std::string &name, double x, double y,
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-    double fact = isHighResolution() ? 2. : 1.;
+    double fact = highResolutionPixelFactor();
     glOrtho((double)viewport[0], (double)viewport[2] * fact,
             (double)viewport[1], (double)viewport[3] * fact, -1, 1);
     x = pos[0];

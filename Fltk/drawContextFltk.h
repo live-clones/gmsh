@@ -123,21 +123,23 @@ public:
       return CTX::instance()->fontSize;
     }
     else {
-      int w = Fl::w();
-      if(w <= 1024)
+      int h = Fl::h(); // main (first) screen
+      if(h < 800)
         return 11;
-      else if(w <= 1440)
+      else if(h < 1000)
         return 12;
-      else if(w <= 1680)
+      else if(h < 1200)
         return 13;
-      else if(w <= 1920)
+      else if(h < 1400)
         return 14;
-      return (w - 1920) / 160 + 15;
-      /*
+      else if(h < 1600)
+        return 15;
+      else if(h < 1800)
+        return 16;
       float dpih, dpiv;
-      Fl::screen_dpi(dpih, dpiv);
-      return (int)(dpih / 8.);
-      */
+      Fl::screen_dpi(dpih, dpiv); // main (first) screen
+      int s = std::max(16, (int)(dpih / 10.));
+      return s;
     }
   }
   void setFont(int fontid, int fontsize) { gl_font(fontid, fontsize); }

@@ -8,6 +8,7 @@
 #include "Numeric.h"
 #include "GmshMessage.h"
 #include "OctreePost.h"
+#include "fullMatrix.h"
 
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
@@ -34,8 +35,8 @@ bool PViewData::finalize(bool computeMinMax,
 void PViewData::initAdaptiveData(int step, int level, double tol)
 {
   if(!_adaptive) {
-    Msg::Info("Initializing adaptive data %p interp size=%d", this,
-              _interpolation.size());
+    Msg::Debug("Initializing adaptive data %p interp size=%d", this,
+               _interpolation.size());
     _adaptive = new adaptiveData(this);
     _adaptive->changeResolution(step, level, tol);
   }
@@ -44,8 +45,8 @@ void PViewData::initAdaptiveData(int step, int level, double tol)
 void PViewData::initAdaptiveDataLight(int step, int level, double tol)
 {
   if(!_adaptive) {
-    Msg::Info("Initializing adaptive data %p interp size=%d", this,
-              _interpolation.size());
+    Msg::Debug("Initializing adaptive data %p interp size=%d", this,
+               _interpolation.size());
     // _outData in adaptive.h is only used for visualization of adapted views in
     // the GMSH GUI.  In some cases (export of adapted views under pvtu format,
     // use of GMSH as external lib), this object is not needed so avoid its
@@ -250,57 +251,57 @@ bool PViewData::combineSpace(nameData &nd)
 
 bool PViewData::searchScalar(double x, double y, double z, double *values,
                              int step, double *size, int qn, double *qx,
-                             double *qy, double *qz, bool grad)
+                             double *qy, double *qz, bool grad, int dim)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchScalar(x, y, z, values, step, size, qn, qx, qy, qz,
-                               grad);
+                               grad, dim);
 }
 
 bool PViewData::searchScalarWithTol(double x, double y, double z,
                                     double *values, int step, double *size,
                                     double tol, int qn, double *qx, double *qy,
-                                    double *qz, bool grad)
+                                    double *qz, bool grad, int dim)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchScalarWithTol(x, y, z, values, step, size, tol, qn, qx,
-                                      qy, qz, grad);
+                                      qy, qz, grad, dim);
 }
 
 bool PViewData::searchVector(double x, double y, double z, double *values,
                              int step, double *size, int qn, double *qx,
-                             double *qy, double *qz, bool grad)
+                             double *qy, double *qz, bool grad, int dim)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchVector(x, y, z, values, step, size, qn, qx, qy, qz,
-                               grad);
+                               grad, dim);
 }
 
 bool PViewData::searchVectorWithTol(double x, double y, double z,
                                     double *values, int step, double *size,
                                     double tol, int qn, double *qx, double *qy,
-                                    double *qz, bool grad)
+                                    double *qz, bool grad, int dim)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchVectorWithTol(x, y, z, values, step, size, tol, qn, qx,
-                                      qy, qz, grad);
+                                      qy, qz, grad, dim);
 }
 
 bool PViewData::searchTensor(double x, double y, double z, double *values,
                              int step, double *size, int qn, double *qx,
-                             double *qy, double *qz, bool grad)
+                             double *qy, double *qz, bool grad, int dim)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchTensor(x, y, z, values, step, size, qn, qx, qy, qz,
-                               grad);
+                               grad, dim);
 }
 
 bool PViewData::searchTensorWithTol(double x, double y, double z,
                                     double *values, int step, double *size,
                                     double tol, int qn, double *qx, double *qy,
-                                    double *qz, bool grad)
+                                    double *qz, bool grad, int dim)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchTensorWithTol(x, y, z, values, step, size, tol, qn, qx,
-                                      qy, qz, grad);
+                                      qy, qz, grad, dim);
 }

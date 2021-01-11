@@ -6,12 +6,12 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <set>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
 {
   gmsh::initialize();
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t11");
 
@@ -91,7 +91,9 @@ int main(int argc, char **argv)
   // gmsh::option::setNumber("Mesh.SubdivisionAlgorithm", 1);
   // gmsh::model::mesh::refine();
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

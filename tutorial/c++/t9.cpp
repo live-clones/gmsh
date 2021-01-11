@@ -15,12 +15,12 @@
 // namespace, or from the graphical interface (right click on the view button,
 // then `Plugins').
 
+#include <set>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
 {
   gmsh::initialize();
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t9");
 
@@ -74,8 +74,9 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("View[1].IntervalsType", 2);
   gmsh::option::setNumber("View[2].IntervalsType", 2);
 
-  // show the GUI at the end
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

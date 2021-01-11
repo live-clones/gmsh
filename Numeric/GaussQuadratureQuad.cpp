@@ -3,6 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <vector>
+#include "GmshMessage.h"
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
@@ -20,7 +22,6 @@ const double xq4[4] = {0.577350269189626, -0.577350269189626, 0.577350269189626,
 const double yq4[4] = {0.577350269189626, 0.577350269189626, -0.577350269189626,
                        -0.577350269189626};
 const double pq4[4] = {1., 1., 1., 1.};
-
 IntPt GQQ4[4] = {
   {{xq4[0], yq4[0], 0}, pq4[0]},
   {{xq4[1], yq4[1], 0}, pq4[1]},
@@ -28,28 +29,15 @@ IntPt GQQ4[4] = {
   {{xq4[3], yq4[3], 0}, pq4[3]},
 };
 
-// WARNING: It seems that there is a problem with the values with 7 integration
-// points ! Geuzaine (16/06/2016)
-
-const double pq7[7] = {1.142857142857, 0.595238095238, 0.595238095238,
-                       0.416666666666, 0.416666666666, 0.416666666666,
-                       0.416666666666};
-const double xq7[7] = {0.0,
-                       -0.683130051064,
-                       0.683130051064,
-                       0.890654421782,
-                       -0.890654421782,
-                       0.374256642286,
-                       -0.374256642286};
-const double yq7[7] = {
-  0.0,
-  -0.683130051064,
-  0.683130051064,
-  -0.374256642286,
-  0.374256642286,
-  -0.890654421782,
-  0.890654421782,
-};
+const double xq7[7] = {0., 0., 0.,
+                       0.7745966692414834, 0.7745966692414834,-0.7745966692414834,
+                       -0.7745966692414834};
+const double yq7[7] = {0., 0.9660917830792959, -0.9660917830792959,
+                       0.7745966692414834, -0.7745966692414834, 0.7745966692414834,
+                       -0.7745966692414834};
+const double pq7[7] = {1.1428571428571428, 0.31746031746031744,0.31746031746031744,
+                       0.5555555555555556, 0.5555555555555556, 0.5555555555555556,
+                       0.5555555555555556};
 IntPt GQQ7[7] = {{{xq7[0], yq7[0], 0}, pq7[0]}, {{xq7[1], yq7[1], 0}, pq7[1]},
                  {{xq7[2], yq7[2], 0}, pq7[2]}, {{xq7[3], yq7[3], 0}, pq7[3]},
                  {{xq7[4], yq7[4], 0}, pq7[4]}, {{xq7[5], yq7[5], 0}, pq7[5]},
@@ -93,47 +81,37 @@ IntPt GQQ16[16] = {
   {{xq16[12], yq16[12], 0}, pq16[12]}, {{xq16[13], yq16[13], 0}, pq16[13]},
   {{xq16[14], yq16[14], 0}, pq16[14]}, {{xq16[15], yq16[15], 0}, pq16[15]}};
 
-IntPt *getGQQPts(int order);
-int getNGQQPts(int order);
-
-IntPt *GQQ[27] = {GQQ1, GQQ1, GQQ3, GQQ4, GQQ7, GQQ9, GQQ16, 0, 0,
-                  0,    0,    0,    0,    0,    0,    0,     0, 0,
-                  0,    0,    0,    0,    0,    0,    0,     0, 0};
-int GQQnPt[7] = {1, 1, 3, 4, 7, 9, 16};
+static IntPt *GQQ[3] = {GQQ1, GQQ3, GQQ7};
+static int GQQnPt[3] = {1, 3, 7};
+static std::vector<IntPt*> GQQGL(40, nullptr);
 
 IntPt *getGQQPts(int order)
 {
-  if(order < 2) return GQQ[order];
-  if(order == 2) return GQQ[3];
-  if(order == 3) return GQQ[3];
+  if(order <= 2) return GQQ[order];
   int n = (order + 1) / (float)2 + 0.5;
-  int index = n - 2 + 7;
-  if(index >= (int)(sizeof(GQQ) / sizeof(IntPt *))) {
-    Msg::Error("Increase size of GQQ in gauss quadrature quad");
-    index = 0;
-  }
-  if(!GQQ[index]) {
+  if(static_cast<int>(GQQGL.size()) < order + 1)
+    GQQGL.resize(order + 1, nullptr);
+  if(!GQQGL[order]) {
     double *pt, *wt;
     gmshGaussLegendre1D(n, &pt, &wt);
-    GQQ[index] = new IntPt[n * n];
+    IntPt *intpt = new IntPt[n * n];
     int k = 0;
     for(int i = 0; i < n; i++) {
       for(int j = 0; j < n; j++) {
-        GQQ[index][k].pt[0] = pt[i];
-        GQQ[index][k].pt[1] = pt[j];
-        GQQ[index][k].pt[2] = 0.0;
-        GQQ[index][k++].weight = wt[i] * wt[j];
+        intpt[k].pt[0] = pt[i];
+        intpt[k].pt[1] = pt[j];
+        intpt[k].pt[2] = 0.0;
+        intpt[k++].weight = wt[i] * wt[j];
       }
     }
+    GQQGL[order] = intpt;
   }
-  return GQQ[index];
+  return GQQGL[order];
 }
 
 int getNGQQPts(int order)
 {
-  if(order == 3) return 4;
-  if(order == 2) return 4;
-  if(order < 2) return GQQnPt[order];
+  if(order <= 2) return GQQnPt[order];
   int n = (order + 1) / (float)2 + 0.5;
   return n * n;
 }

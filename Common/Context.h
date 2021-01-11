@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <functional>
 
 #define NUM_SOLVERS 10
 
@@ -33,8 +34,11 @@ struct contextMeshOptions {
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircPoints, minCurvPoints, minElementsPerTwoPi;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
-  int hoDistCAD;
+  int hoDistCAD, hoSavePeriodic;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
+  bool hoNewFastCurvingAlgo;
+  int hoCurveOuterBL;
+  double hoMaxRho, hoMaxAngle, hoMaxInnerAngle;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
@@ -44,6 +48,7 @@ struct contextMeshOptions {
   unsigned int randomSeed;
   int nLayersPerGap;
   double gradation;
+  std::function<double(int, int, double, double, double)> lcCallback;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
@@ -54,17 +59,16 @@ struct contextMeshOptions {
   double stlLinearDeflection, stlAngularDeflection;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
-  int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder,
-      cgnsConstructTopology, cgnsExportCPEX0045;
-  int preserveNumberingMsh2;
+  int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder;
+  int cgnsConstructTopology, cgnsExportCPEX0045, cgnsExportStructured;
+  int preserveNumberingMsh2, createTopologyMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
-  int partitionCreatePhysicals, partitionSplitMeshFiles,
-    partitionSaveTopologyFile;
-  int partitionTriWeight, partitionQuaWeight, partitionTetWeight,
-    partitionHexWeight, partitionLinWeight;
+  int partitionCreatePhysicals, partitionSplitMeshFiles;
+  int partitionSaveTopologyFile, partitionTriWeight, partitionQuaWeight;
+  int partitionTetWeight, partitionHexWeight, partitionLinWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
-  int partitionOldStyleMsh2;
+  int partitionOldStyleMsh2, partitionConvertMsh2;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
   int metisObjective, metisMinConn;
   double metisMaxLoadImbalance;
@@ -88,7 +92,7 @@ struct contextGeometryOptions {
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occUnionUnify;
-  int occThruSectionsDegree;
+  int occThruSectionsDegree, occUseGenericClosestPoint;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
@@ -117,8 +121,9 @@ private:
 public:
   CTX();
   ~CTX();
+  void init();
   static CTX *instance();
- public:
+
   // for debug purposes only, i.e. JF and CG personal use
   int debugSurface;
   // files on the command line and various file names
@@ -134,6 +139,8 @@ public:
   std::vector<std::string> recentFiles;
   // create mesh statistics report (0: do nothing, 1: create, 2: append)
   int createAppendMeshStatReport;
+  // behavior on error
+  int abortOnError;
   // should we launch a solver at startup?
   int launchSolverAtStartup;
   // save session/option file on exit?
@@ -144,8 +151,8 @@ public:
   std::string display;
   // FLTK theme
   std::string guiTheme;
-  // FLTK color scheme
-  int guiColorScheme;
+  // FLTK color scheme and max refresh rate
+  int guiColorScheme, guiRefreshRate;
   // print messages on to the terminal?
   int terminal;
   // number of graphical windows/tiles
@@ -154,6 +161,8 @@ public:
   std::string editor;
   // pattern of files to watch out for
   std::string watchFilePattern;
+  // script generator languages ("geo", "py", ...)
+  std::vector<std::string> scriptLang;
   // show tootips in the GUI?
   int tooltips;
   // enable input field scrolling (moving the mouse to change numbers)

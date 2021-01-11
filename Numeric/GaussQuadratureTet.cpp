@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <vector>
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
@@ -89,7 +90,6 @@ IntPt GQTet6[29] = {
   {{j29, h29, j29}, d29},    {{j29, i29, j29}, d29}};
 
 IntPt *GQTet[7] = {GQTet1, GQTet1, GQTet2, GQTet3, GQTet4, GQTet5, GQTet6};
-IntPt *GQTetDegen[17] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int GQTetnPt[7] = {1, 1, 4, 5, 16, 17, 29};
 
 // -----------------------------------------------------------------------------
@@ -3333,43 +3333,34 @@ IntPt tetP21Solin[1001] = {
 
 // 420 negative weights, 0 points outside of the tetrahedron
 
-IntPt *GQTetSolin[22] = {
+static IntPt *GQTetSolin[22] = {
   tetP1Solin,  tetP1Solin,  tetP2Solin,  tetP3Solin,  tetP4Solin,  tetP5Solin,
   tetP6Solin,  tetP7Solin,  tetP8Solin,  tetP9Solin,  tetP11Solin, tetP11Solin,
   tetP13Solin, tetP13Solin, tetP15Solin, tetP15Solin, tetP17Solin, tetP17Solin,
   tetP19Solin, tetP19Solin, tetP21Solin, tetP21Solin};
-
-int GQTetnPtSolin[22] = {1,   1,   4,   5,   11,   14,  24,  31,
-                         43,  53,  126, 126, 210,  210, 330, 330,
-                         495, 495, 715, 715, 1001, 1001};
-
-IntPt *getGQTetPts(int order);
-int getNGQTetPts(int order);
+static int GQTetnPtSolin[22] = {1,   1,   4,   5,   11,   14,  24,  31,
+                                43,  53,  126, 126, 210,  210, 330, 330,
+                                495, 495, 715, 715, 1001, 1001};
+static std::vector<IntPt*> GQTetGL(40, nullptr);
 
 IntPt *getGQTetPts(int order)
 {
-  // if(order < 7)
-  //     return GQTet[order];
-
   if(order < 22) return GQTetSolin[order];
-
   int n = (order + 4) / 2;
-  int index = n - 5;
-  if(!GQTetDegen[index]) {
+  if(static_cast<int>(GQTetGL.size()) < order + 1)
+    GQTetGL.resize(order + 1, nullptr);
+  if(!GQTetGL[order]) {
     int npts = n * n * n;
-    GQTetDegen[index] = new IntPt[npts];
-    GaussLegendreTet(n, n, n, GQTetDegen[index]);
+    IntPt *intpt = new IntPt[npts];
+    GaussLegendreTet(n, n, n, intpt);
+    GQTetGL[order] = intpt;
   }
-  return GQTetDegen[index];
+  return GQTetGL[order];
 }
 
 int getNGQTetPts(int order)
 {
-  //   if(order < 7)
-  //     return GQTetnPt[order];
-
   if(order < 22) return GQTetnPtSolin[order];
-
   int n = (order + 4) / 2;
   return n * n * n;
 }

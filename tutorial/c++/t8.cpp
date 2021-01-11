@@ -6,6 +6,7 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <set>
 #include <gmsh.h>
 
 // In addition to creating geometries and meshes, the C++ API can also be used
@@ -14,7 +15,6 @@
 int main(int argc, char **argv)
 {
   gmsh::initialize();
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t8");
 
@@ -71,8 +71,9 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("General.Axes", 0);
   gmsh::option::setNumber("General.SmallAxes", 0);
 
-  // Show the GUI
-  gmsh::fltk::initialize();
+  // Show the GUI:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::initialize();
 
   // We also set some options for each post-processing view:
   gmsh::option::setNumber("View[0].IntervalsType", 2);
@@ -161,7 +162,8 @@ int main(int argc, char **argv)
     }
   }
 
-  gmsh::fltk::run();
+  if(!args.count("-nopopup")) gmsh::fltk::run();
+
   gmsh::finalize();
 
   return 0;

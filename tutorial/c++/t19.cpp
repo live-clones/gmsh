@@ -9,6 +9,7 @@
 // The OpenCASCADE geometry kernel supports several useful features for solid
 // modelling.
 
+#include <set>
 #include <cmath>
 #include <cstdlib>
 #include <gmsh.h>
@@ -16,7 +17,6 @@
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t19");
 
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > e;
   gmsh::model::getBoundary(f, e, false);
   std::vector<int> c;
-  for(std::size_t i = 0; i < e.size(); i++) c.push_back(abs(e[i].second));
+  for(auto i: e) c.push_back(abs(i.second));
   gmsh::model::occ::fillet({out[0].second}, c, {0.1}, out);
   gmsh::model::occ::synchronize();
 
@@ -88,19 +88,23 @@ int main(int argc, char **argv)
   gmsh::model::occ::synchronize();
 
   // We can activate the calculation of mesh element sizes based on curvature:
-  gmsh::option::setNumber("Mesh.CharacteristicLengthFromCurvature", 1);
+  gmsh::option::setNumber("Mesh.MeshSizeFromCurvature", 1);
 
   // And we set the minimum number of elements per 2*Pi radians:
   gmsh::option::setNumber("Mesh.MinimumElementsPerTwoPi", 20);
 
   // We can constraint the min and max element sizes to stay within reasonnable
   // values (see `t10.cpp' for more details):
-  gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 0.001);
-  gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.3);
+  gmsh::option::setNumber("Mesh.MeshSizeMin", 0.001);
+  gmsh::option::setNumber("Mesh.MeshSizeMax", 0.3);
 
   gmsh::model::mesh::generate(3);
   gmsh::write("t19.msh");
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
+
+  gmsh::finalize();
   return 0;
 }

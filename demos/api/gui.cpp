@@ -12,8 +12,8 @@ int main(int argc, char **argv)
   // Copied from boolean.cpp...
   gmsh::model::add("boolean");
   gmsh::option::setNumber("Mesh.Algorithm", 6);
-  gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 0.4);
-  gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.4);
+  gmsh::option::setNumber("Mesh.MeshSizeMin", 0.4);
+  gmsh::option::setNumber("Mesh.MeshSizeMax", 0.4);
   double R = 1.4, Rs = R * .7, Rt = R * 1.25;
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;

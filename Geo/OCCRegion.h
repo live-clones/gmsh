@@ -23,8 +23,8 @@ public:
   virtual ~OCCRegion();
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual GeomType geomType() const;
-  ModelType getNativeType() const { return OpenCascadeModel; }
-  void *getNativePtr() const { return (void *)&_s; }
+  virtual ModelType getNativeType() const { return OpenCascadeModel; }
+  virtual void *getNativePtr() const { return (void *)&_s; }
   void writeBREP(const char *filename);
 };
 

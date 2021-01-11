@@ -2,7 +2,6 @@ import gmsh
 import sys
 
 gmsh.initialize(sys.argv)
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("test")
 

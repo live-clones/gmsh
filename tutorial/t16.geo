@@ -68,15 +68,15 @@ lcar3 = .055;
 eps = 1e-3;
 
 // Assign a mesh size to all the points of all the volumes:
-Characteristic Length{ PointsOf{ Volume{:}; } } = lcar1;
+MeshSize{ PointsOf{ Volume{:}; } } = lcar1;
 
 // Override this constraint on the points of the five spheres:
-Characteristic Length{ PointsOf{ Volume{3 + 1 : 3 + 5}; } } = lcar3;
+MeshSize{ PointsOf{ Volume{3 + 1 : 3 + 5}; } } = lcar3;
 
 // Select the corner point by searching for it geometrically:
 p() = Point In BoundingBox{0.5-eps, 0.5-eps, 0.5-eps,
                            0.5+eps, 0.5+eps, 0.5+eps};
-Characteristic Length{ p() } = lcar2;
+MeshSize{ p() } = lcar2;
 
 // Additional examples created with the OpenCASCADE geometry kernel are
 // available in `t18.geo', `t19.geo' and `t20.geo', as well as in the

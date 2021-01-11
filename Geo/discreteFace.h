@@ -60,9 +60,6 @@ public:
   int createGeometry();
   virtual bool haveParametrization() { return !_param.empty(); }
   virtual void mesh(bool verbose);
-  void setBoundEdges(const std::vector<int> &tagEdges);
-  void setBoundEdges(const std::vector<int> &tagEdges,
-                     const std::vector<int> &signEdges);
   int trianglePosition(double par1, double par2, double &u, double &v) const;
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
                                 const SVector3 &p, const double &R,

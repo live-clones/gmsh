@@ -57,6 +57,7 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
   switch(getNativeType()) {
   case OpenCascadeModel: sstream << " (OCC)"; break;
   case AcisModel: sstream << " (ACIS)"; break;
+  case ParasolidModel: sstream << " (Parasolid)"; break;
   default: break;
   }
 

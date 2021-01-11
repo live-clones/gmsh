@@ -24,6 +24,7 @@ extern "C" {
   #include "hxt_tools.h"
   #include "hxt_mesh.h"
   #include "hxt_bbox.h"
+  #include "hxt_curvature.h"
 }
 #endif
 
@@ -84,6 +85,7 @@ typedef struct size_point{
   double size;
   SMetric3 m;
   bool isFound;
+  int parcourus;
 } size_point_t;
 
 typedef struct interpolation_data{
@@ -150,33 +152,33 @@ class automaticMeshSizeField : public Field {
     _gaps             = gaps;
 
     options["p4estFileToLoad"] = new FieldOptionString(_forestFile,
-                 "p4est file containing the size field",&update_needed);    
+                 "p4est file containing the size field",&updateNeeded);    
 
     options["nPointsPerCircle"] = new FieldOptionInt(_nPointsPerCircle,
-						     "Number of points per circle (adapt to curvature of surfaces)",&update_needed);
+						     "Number of points per circle (adapt to curvature of surfaces)",&updateNeeded);
 
     options["nPointsPerGap"] = new FieldOptionInt(_nPointsPerGap,
-						  "Number of layers of elements in thin layers",&update_needed);
+						  "Number of layers of elements in thin layers",&updateNeeded);
 
     options["hMin"] = new FieldOptionDouble(_hmin,
-               "Minimum size", &update_needed);
+               "Minimum size", &updateNeeded);
 
     options["hMax"] = new FieldOptionDouble(_hmax,
-               "Maximum size", &update_needed);
+               "Maximum size", &updateNeeded);
     
     options["hBulk"] = new FieldOptionDouble(_hbulk,
-					     "Default size where it is not prescribed", &update_needed);
+					     "Default size where it is not prescribed", &updateNeeded);
 
     options["gradation"] = new FieldOptionDouble(_gradation,
-						   "Maximum growth ratio for the edges lengths",&update_needed);
+						   "Maximum growth ratio for the edges lengths",&updateNeeded);
 
     options["smoothing"] = new FieldOptionBool(_smoothing,
-              "Enable size smoothing (should always be true)",&update_needed);
+              "Enable size smoothing (should always be true)",&updateNeeded);
 
     options["features"] = new FieldOptionBool(_gaps,
-              "Enable computation of local feature size (thin channels)",&update_needed);
+              "Enable computation of local feature size (thin channels)",&updateNeeded);
 
-    update_needed = true;
+    updateNeeded = true;
 
     if (fFile != "") update();
   }

@@ -240,42 +240,37 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
         MVertexToGVertexMap::iterator gIter = mVertexToGVertex.find(mv);
         if(gIter != mVertexToGVertex.end())
           gEdgeToGVertices[ge].insert(gIter->second);
-        else
-          mVertexToGEdges[mv].insert(ge);
+        else {
+          MVertexToGEdgesMap::iterator it = mVertexToGEdges.find(mv);
+          if(it != mVertexToGEdges.end() && it->second.find(ge) != it->second.end()) {
+            // in bulk
+            mVertexToGEdges.erase(it);
+          }
+          else{
+            mVertexToGEdges[mv].insert(ge);
+          }
+        }
       }
     }
   }
 
-  // now ensure a GVertex for each non-trivial bundle of GEdge
-
-  GEdgesToGVertexMap gEdgesToGVertex;
+  // now create any missing GVertex
 
   for(MVertexToGEdgesMap::iterator mvIter = mVertexToGEdges.begin();
       mvIter != mVertexToGEdges.end(); ++mvIter) {
     MVertex *mv = mvIter->first;
     std::set<GEdge *> &gEdges = mvIter->second;
-
-    if(gEdges.size() > 1) {
-      if(gEdgesToGVertex.find(gEdges) == gEdgesToGVertex.end()) {
-        num++;
-
-        discreteVertex *dv = new discreteVertex(
-          gm, gm->getMaxElementaryNumber(0) + 1, mv->x(), mv->y(), mv->z());
-        gm->add(dv);
-
-        mVertexToGVertex[mv] = dv;
-
-        MPoint *mp = new MPoint(mv);
-        dv->points.push_back(mp);
-
-        gEdgesToGVertex[gEdges] = dv;
-
-        for(std::set<GEdge *>::iterator gEIter = gEdges.begin();
-            gEIter != gEdges.end(); ++gEIter) {
-          GEdge *ge = *gEIter;
-          gEdgeToGVertices[ge].insert(dv);
-        }
-      }
+    num++;
+    discreteVertex *dv = new discreteVertex
+      (gm, gm->getMaxElementaryNumber(0) + 1, mv->x(), mv->y(), mv->z());
+    gm->add(dv);
+    mVertexToGVertex[mv] = dv;
+    MPoint *mp = new MPoint(mv);
+    dv->points.push_back(mp);
+    for(std::set<GEdge *>::iterator gEIter = gEdges.begin();
+        gEIter != gEdges.end(); ++gEIter) {
+      GEdge *ge = *gEIter;
+      gEdgeToGVertices[ge].insert(dv);
     }
   }
 
@@ -402,8 +397,16 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
           TEdgeToGEdgeMap::iterator eIter = tEdgeToGEdge.find(te);
           if(eIter != tEdgeToGEdge.end())
             gFaceToGEdges[gf].insert(eIter->second);
-          else
-            tEdgeToGFaces[te].insert(gf);
+          else {
+            TEdgeToGFacesMap::iterator it = tEdgeToGFaces.find(te);
+            if(it != tEdgeToGFaces.end() && it->second.find(gf) != it->second.end()) {
+              // in bulk
+              tEdgeToGFaces.erase(it);
+            }
+            else{
+              tEdgeToGFaces[te].insert(gf);
+            }
+          }
         }
       }
     }
@@ -412,26 +415,21 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
   // create a GEdge for each face boundary, ie. for which edges have been
   // visited once
 
-  // create a GEdge for each bundle of GFaces
-
   GFacesToGEdgeMap gFacesToGEdge;
   TEdgeToGFacesMap::iterator it;
 
   for(it = tEdgeToGFaces.begin(); it != tEdgeToGFaces.end(); ++it) {
     std::set<GFace *> &gfaces = it->second;
-    if(gfaces.size() > 1) {
-      GFacesToGEdgeMap::iterator gfIter = gFacesToGEdge.find(gfaces);
-
-      if(gfIter == gFacesToGEdge.end()) {
-        discreteEdge *de =
-          new discreteEdge(gm, gm->getMaxElementaryNumber(1) + 1, NULL, NULL);
-        num++;
-        gm->add(de);
-        std::set<GFace *>::iterator gfIter = gfaces.begin();
-        for(; gfIter != gfaces.end(); ++gfIter)
-          gFaceToGEdges[*gfIter].insert(de);
-        gFacesToGEdge[gfaces] = de;
-      }
+    GFacesToGEdgeMap::iterator gfIter = gFacesToGEdge.find(gfaces);
+    if(gfIter == gFacesToGEdge.end()) {
+      discreteEdge *de =
+        new discreteEdge(gm, gm->getMaxElementaryNumber(1) + 1, NULL, NULL);
+      num++;
+      gm->add(de);
+      std::set<GFace *>::iterator gfIter = gfaces.begin();
+      for(; gfIter != gfaces.end(); ++gfIter)
+        gFaceToGEdges[*gfIter].insert(de);
+      gFacesToGEdge[gfaces] = de;
     }
   }
 
@@ -602,20 +600,13 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
   for(; it != tFaceToGRegionPair.end(); ++it) {
     GRegion *r1 = it->second.first;
     GRegion *r2 = it->second.second;
-
-    if(!r1) {
-      const std::set<int> &vtx = it->first.getVertices();
-      std::ostringstream faceVtcs;
-      std::set<int>::const_iterator vIt = vtx.begin();
-      for(; vIt != vtx.end(); ++vIt) faceVtcs << " " << *vIt;
-      Msg::Error("Could not find pair of regions for face %s",
-                 faceVtcs.str().c_str());
-    }
-
-    else if(r1 != r2) {
-      std::pair<GRegion *, GRegion *> gRegionPair(std::min(r1, r2),
-                                                  std::max(r1, r2));
-
+    if(r1 != r2) {
+      std::pair<GRegion *, GRegion *> gRegionPair;
+      if(r1 && r2)
+        gRegionPair = std::pair<GRegion*, GRegion*>(std::min(r1, r2),
+                                                    std::max(r1, r2));
+      else // r1 null
+        gRegionPair = std::pair<GRegion*, GRegion*>(r1, r2);
       GRegionPairToGFaceMap::iterator iter =
         gRegionPairToGFace.find(gRegionPair);
       if(iter == gRegionPairToGFace.end()) {
@@ -623,8 +614,8 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
           new discreteFace(gm, gm->getMaxElementaryNumber(2) + 1);
         num++;
         gm->add(df);
-        gRegionToGFaces[r1].insert(df);
-        gRegionToGFaces[r2].insert(df);
+        if(r1) gRegionToGFaces[r1].insert(df);
+        if(r2) gRegionToGFaces[r2].insert(df);
         gRegionPairToGFace[gRegionPair] = df;
       }
     }
@@ -696,19 +687,7 @@ void GModel::createTopologyFromMesh()
   if(dim >= 2) createTopologyFromMesh2D(this, numE);
   if(dim >= 1) createTopologyFromMesh1D(this, numV);
 
-  _associateEntityWithMeshVertices(true); // force
-
-  std::vector<GEntity *> entities;
-  getEntities(entities);
-  std::set<MVertex *> vs;
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    vs.insert(entities[i]->mesh_vertices.begin(),
-              entities[i]->mesh_vertices.end());
-    entities[i]->mesh_vertices.clear();
-  }
-  std::vector<MVertex *> cc;
-  cc.insert(cc.begin(), vs.begin(), vs.end());
-  _storeVerticesInEntities(cc);
+  pruneMeshVertexAssociations();
 
   CTX::instance()->mesh.changed = ENT_ALL;
 

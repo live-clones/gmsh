@@ -19,7 +19,7 @@ Include "t1.geo";
 
 // We change the mesh size to generate coarser mesh
 lc = lc * 4;
-Characteristic Length {1:4} = lc;
+MeshSize {1:4} = lc;
 
 // We define a new point
 Point(5) = {0.02, 0.02, 0, lc};
@@ -62,9 +62,14 @@ ll = newll;
 Curve Loop(ll) = {l+1:l+4};
 s = news;
 Plane Surface(s) = {ll};
-Surface{s} In Volume{1};
+Surface{s} In Volume {1};
 
 // Note that with the OpenCASCADE kernel (see `t16.geo'), when the
 // `BooleanFragments' command is applied to entities of different dimensions,
 // the lower dimensional entities will be autmatically embedded in the higher
 // dimensional entities if necessary.
+
+Physical Point("Embedded point") = {p};
+Physical Curve("Embdded curve") = {l};
+Physical Surface("Embedded surface") = {s};
+Physical Volume("Volume") = {1};

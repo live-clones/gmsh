@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   // try automatic assignement of tag
   int line4 = gmshModelGeoAddLine(4, 1, -1, &ierr);
   int ll[] = {1, 2, 3, line4};
-  gmshModelGeoAddCurveLoop(ll, 4, 1, &ierr);
+  gmshModelGeoAddCurveLoop(ll, 4, 1, 0, &ierr);
   int s[]= { 1 };
   gmshModelGeoAddPlaneSurface(s, 1, 6, &ierr);
   gmshModelGeoSynchronize(&ierr);

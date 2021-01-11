@@ -877,7 +877,7 @@ static Tet *walk(Tet *t, Vert *v, int maxx, double &totSearch, int thread)
       investigatedTets.insert(t);
     }
     else if(tets.empty()) {
-      Msg::Error("Jump-and-Walk Failed (No neighbor)");
+      Msg::Error("Jump-and-walk failed (no neighbor)");
       return 0;
     }
     else {
@@ -885,7 +885,7 @@ static Tet *walk(Tet *t, Vert *v, int maxx, double &totSearch, int thread)
       tets.pop();
     }
   }
-  Msg::Error("Jump-and-Walk Failed (No neighbor)");
+  Msg::Error("Jump-and-walk failed (no neighbor)");
   return 0;
 }
 
@@ -1140,7 +1140,7 @@ void delaunayTrgl(const std::size_t numThreads,
               else if(neigh->getFace(3) == bndK[i].f)
                 neigh->T[3] = t;
               else {
-                Msg::Error("Datatrsucture Broken in Triangulation");
+                Msg::Error("Datastructure broken in triangulation");
                 break;
               }
             }
@@ -1272,7 +1272,8 @@ static void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
 void delaunayTriangulation(const int numThreads, const int nptsatonce,
                            std::vector<MVertex *> &S,
-                           std::vector<MTetrahedron *> &T)
+                           std::vector<MTetrahedron *> &T,
+                           bool removeBox)
 {
   std::vector<MVertex *> _temp;
   std::vector<Vert *> _vertices;
@@ -1310,10 +1311,15 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
   for(int i = 0; i < 8; i++) {
     Vert *v = box[i];
-    v->setNum(N + i + 1);
-    MVertex *mv = new MVertex(v->x(), v->y(), v->z(), NULL, N + (i + 1));
-    _temp[v->getNum()] = mv;
-    S.push_back(mv);
+    if(removeBox) {
+      v->setNum(0);
+    }
+    else {
+      v->setNum(N + i + 1);
+      MVertex *mv = new MVertex(v->x(), v->y(), v->z(), NULL, N + (i + 1));
+      _temp[v->getNum()] = mv;
+      S.push_back(mv);
+    }
   }
 
   for(int myThread = 0; myThread < numThreads; myThread++) {
@@ -1329,7 +1335,7 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
           MTetrahedron *tr = new MTetrahedron(v1, v2, v3, v4);
           T.push_back(tr);
         }
-        else {
+        else if(!removeBox) {
           Msg::Error("Error in triangulation");
         }
       }

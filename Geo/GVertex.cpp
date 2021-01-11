@@ -58,12 +58,26 @@ std::string GVertex::getAdditionalInfoString(bool multline)
   std::ostringstream sstream;
   sstream.precision(12);
   sstream << "Position (" << x() << ", " << y() << ", " << z() << ")";
-  double lc = prescribedMeshSizeAtVertex();
-  if(lc < MAX_LC) {
+  if(multline)
+    sstream << "\n";
+  else
+    sstream << " ";
+
+  if(l_edges.size()) {
+    sstream << "On boundary of curves: ";
+    for(std::vector<GEdge *>::iterator it = l_edges.begin();
+        it != l_edges.end(); ++it) {
+      if(it != l_edges.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
     if(multline)
       sstream << "\n";
     else
       sstream << " ";
+  }
+
+  double lc = prescribedMeshSizeAtVertex();
+  if(lc < MAX_LC) {
     sstream << "Mesh attributes: size " << lc;
   }
   return sstream.str();
@@ -193,12 +207,7 @@ bool GVertex::reorder(const int elementType, const std::vector<std::size_t> &ord
       for(std::size_t i = 0; i < ordering.size(); i++) {
         newPointsOrder[i] = points[ordering[i]];
       }
-#if __cplusplus >= 201103L
       points = std::move(newPointsOrder);
-#else
-      points = newPointsOrder;
-#endif
-
       return true;
     }
   }

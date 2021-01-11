@@ -24,8 +24,8 @@ public:
   virtual double z() const;
   virtual void setPosition(GPoint &p);
   virtual GeomType geomType() const;
-  ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return _v; }
+  virtual ModelType getNativeType() const { return GmshModel; }
+  virtual void *getNativePtr() const { return _v; }
   virtual void setPrescribedMeshSizeAtVertex(double l);
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");

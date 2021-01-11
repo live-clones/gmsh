@@ -6,13 +6,13 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <set>
 #include <cmath>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t3");
 
@@ -28,6 +28,7 @@ int main(int argc, char **argv)
   gmsh::model::geo::addLine(4, 1, 4);
   gmsh::model::geo::addCurveLoop({4, 1, -2, 3}, 1);
   gmsh::model::geo::addPlaneSurface({1}, 1);
+  gmsh::model::geo::synchronize();
   gmsh::model::addPhysicalGroup(1, {1, 2, 4}, 5);
   int ps = gmsh::model::addPhysicalGroup(2, {1});
   gmsh::model::setPhysicalName(2, ps, "My surface");
@@ -93,8 +94,8 @@ int main(int argc, char **argv)
   gmsh::option::setColor("Geometry.Surfaces", r, g, b, a);
 
   // Launch the GUI to see the effects of the color changes:
-
-  // gmsh::fltk::run();
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   // When the GUI is launched, you can use the `Help->Current Options and
   // Workspace' menu to see the current values of all options. To save the

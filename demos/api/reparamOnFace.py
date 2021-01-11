@@ -2,7 +2,6 @@ import gmsh
 import sys
 
 gmsh.initialize()
-gmsh.option.setNumber('General.Terminal', 1)
 gmsh.model.occ.addSphere(0,0,0,1, 10)
 gmsh.model.occ.addBox(0.5,0,0,1.3,2,4, 11)
 gmsh.model.occ.fragment([(3,10)], [(3,11)])

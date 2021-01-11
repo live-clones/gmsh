@@ -286,5 +286,22 @@ void PViewData::getListPointers(int N[24], std::vector<double> *V[24])
 
 void PViewData::sendToServer(const std::string &name)
 {
-  Msg::Error("sendToServer not available for this view data type");
+  // Vectorize
+  std::vector<std::vector<double> > vec;
+  bool ok = toVector(vec);
+
+  // Success ?
+  if(!ok)
+    Msg::Error("sendToServer: cannot vectorize PView");
+
+  // Only one step ?
+  if(vec.size() != 1)
+    Msg::Error("sendToServer: cannot send a PView with more than one step");
+
+  // Only one data ?
+  if(vec[0].size() != 1)
+    Msg::Error("sendToServer: cannot send a PView with more than one data");
+
+  // Send data
+  Msg::SetOnelabNumber(name, vec[0][0]);
 }

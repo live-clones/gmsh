@@ -6,6 +6,7 @@
 // Contributor(s):
 //   Thomas Toulorge
 
+#include <sstream>
 #include <string>
 #include <map>
 #include <utility>
@@ -16,6 +17,7 @@
 #include "partitionFace.h"
 #include "partitionEdge.h"
 #include "partitionVertex.h"
+#include "nodalBasis.h"
 #include "BasisFactory.h"
 #include "affineTransformation.h"
 #include "CGNSWrite.h"
@@ -249,7 +251,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
   std::string modelName = cgnsString(model->getName(), 32 - partSuffix.size());
   zoneName[partition] = modelName + partSuffix;
   cgnsErr = cg_zone_write(cgIndexFile, cgIndexBase, zoneName[partition].c_str(),
-                          cgZoneSize, Unstructured, &cgIndexZone);
+                          cgZoneSize, CGNS_ENUMV(Unstructured), &cgIndexZone);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write ordinal (zone number) and family name for CPEX0045
@@ -271,14 +273,17 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
 
   // write list of coordinates
   int cgIndexCoord = 0;
-  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                           "CoordinateX", &xcoord[0], &cgIndexCoord);
+  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                           CGNS_ENUMV(RealDouble), "CoordinateX", &xcoord[0],
+                           &cgIndexCoord);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
-  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                           "CoordinateY", &ycoord[0], &cgIndexCoord);
+  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                           CGNS_ENUMV(RealDouble), "CoordinateY", &ycoord[0],
+                           &cgIndexCoord);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
-  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                           "CoordinateZ", &zcoord[0], &cgIndexCoord);
+  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                           CGNS_ENUMV(RealDouble), "CoordinateZ", &zcoord[0],
+                           &cgIndexCoord);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write an element section for each entity, per element type
@@ -310,8 +315,8 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
       eleEnd += numEle;
       MElement *me = ge->getMeshElementByType(eleTypes[eleType], 0);
       int mshType = me->getTypeForMSH();
-      ElementType_t cgType = msh2CgnsEltType(mshType);
-      if(cgType == ElementTypeNull) {
+      CGNS_ENUMT(ElementType_t) cgType = msh2CgnsEltType(mshType);
+      if(cgType == CGNS_ENUMV(ElementTypeNull)) {
         Msg::Error("Unhandled element type in CGNS ouput (%d)", mshType);
         break;
       }
@@ -345,15 +350,16 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
     // write elementary entity as BC and geometrical entity as BC family name
     eleEntRange[1] = eleEnd;
     int iZoneBC;
-    cgnsErr =
-      cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone, entityName.c_str(),
-                    FamilySpecified, PointRange, 2, eleEntRange, &iZoneBC);
+    cgnsErr = cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                            entityName.c_str(), CGNS_ENUMV(FamilySpecified),
+                            CGNS_ENUMV(PointRange), 2, eleEntRange, &iZoneBC);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     // GridLocation not clear: can "Vertex" be understood as "point" elements?
-    // const GridLocation_t loc = (entDim == 2) ? FaceCenter :
-    //                            (entDim == 1) ? EdgeCenter :
-    //                            (entDim == 0) ? Vertex : CellCenter;
-    const GridLocation_t loc = CellCenter;
+    // const CGNS_ENUMT(GridLocation_t) loc =
+    //    (entDim == 2) ? CGNS_ENUMV(FaceCenter) :
+    //    (entDim == 1) ? CGNS_ENUMV(EdgeCenter) :
+    //    (entDim == 0) ? CGNS_ENUMV(Vertex) : CGNS_ENUMV(CellCenter);
+    const CGNS_ENUMT(GridLocation_t) loc = CGNS_ENUMV(CellCenter);
     cgnsErr = cg_boco_gridlocation_write(cgIndexFile, cgIndexBase, cgIndexZone,
                                          iZoneBC, loc);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
@@ -439,10 +445,11 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     const std::string interfaceName = cgnsString(ossInt.str());
     int connIdx;
     cgnsErr = cg_conn_write(
-      cgIndexFile, cgIndexBase, slaveZone, interfaceName.c_str(), Vertex,
-      Abutting1to1, PointList, nodes1.size(), nodes1.data(),
-      masterZoneName.c_str(), Unstructured, PointListDonor, DataTypeNull,
-      nodes2.size(), nodes2.data(), &connIdx);
+      cgIndexFile, cgIndexBase, slaveZone, interfaceName.c_str(),
+      CGNS_ENUMV(Vertex), CGNS_ENUMV(Abutting1to1), CGNS_ENUMV(PointList),
+      nodes1.size(), nodes1.data(), masterZoneName.c_str(),
+      CGNS_ENUMV(Unstructured), CGNS_ENUMV(PointListDonor),
+      CGNS_ENUMV(DataTypeNull), nodes2.size(), nodes2.data(), &connIdx);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     // get parameters from transformation (CGNS transfo = inverse Gmsh transfo)
     float rotCenter[3], rotAngle[3], trans[3];
@@ -567,10 +574,11 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
     const std::string interfaceName = cgnsString(ossInt.str());
     int dum;
     cgnsErr = cg_conn_write(
-      cgIndexFile, cgIndexBase, part1, interfaceName.c_str(), Vertex,
-      Abutting1to1, PointList, nc.first.size(), nc.first.data(),
-      masterZoneName.c_str(), Unstructured, PointListDonor, DataTypeNull,
-      nc.second.size(), nc.second.data(), &dum);
+      cgIndexFile, cgIndexBase, part1, interfaceName.c_str(),
+      CGNS_ENUMV(Vertex), CGNS_ENUMV(Abutting1to1), CGNS_ENUMV(PointList),
+      nc.first.size(), nc.first.data(), masterZoneName.c_str(),
+      CGNS_ENUMV(Unstructured), CGNS_ENUMV(PointListDonor),
+      CGNS_ENUMV(DataTypeNull), nc.second.size(), nc.second.data(), &dum);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
 
@@ -605,7 +613,7 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
     msh2CgnsReferenceElement(mshType, mshPts, u, v, w);
 
     // write nodal set
-    ElementType_t cgnsType = msh2CgnsEltType(mshType);
+    CGNS_ENUMT(ElementType_t) cgnsType = msh2CgnsEltType(mshType);
     std::ostringstream ossInterp;
     ossInterp << "Element_" << cgnsType;
     std::string interpName = ossInterp.str();

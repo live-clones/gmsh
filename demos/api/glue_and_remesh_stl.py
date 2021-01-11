@@ -4,7 +4,6 @@ import os
 import sys
 
 gmsh.initialize()
-gmsh.option.setNumber('General.Terminal', 1)
 
 # load two STL surfaces
 path = os.path.dirname(os.path.abspath(__file__))
@@ -44,8 +43,8 @@ gmsh.model.geo.synchronize()
 
 # mesh
 gmsh.option.setNumber("Mesh.Algorithm", 6)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.4)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.4)
+gmsh.option.setNumber("Mesh.MeshSizeMin", 0.4)
+gmsh.option.setNumber("Mesh.MeshSizeMax", 0.4)
 gmsh.model.mesh.generate(3)
 
 if '-nopopup' not in sys.argv:

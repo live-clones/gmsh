@@ -243,8 +243,7 @@ SBoundingBox3d GEdge::bounds(bool fast)
     }
   }
   else {
-    std::size_t ipp = std::max(getNumMeshElements() / 20, std::size_t(1));
-    for(std::size_t i = 0; i < getNumMeshElements(); i += ipp)
+    for(std::size_t i = 0; i < getNumMeshElements(); i++)
       for(std::size_t j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         bbox += getMeshElement(i)->getVertex(j)->point();
   }
@@ -319,6 +318,22 @@ std::string GEdge::getAdditionalInfoString(bool multline)
 
   if(_v0 && _v1) {
     sstream << "Boundary points: " << _v0->tag() << ", " << _v1->tag();
+    GPoint p0 = _v0->point();
+    GPoint p1 = _v1->point();
+    sstream << " (distance = " << p0.distance(p1) << ")";
+    if(multline)
+      sstream << "\n";
+    else
+      sstream << " ";
+  }
+
+  if(_faces.size()) {
+    sstream << "On boundary of surfaces: ";
+    for(std::vector<GFace *>::iterator it = _faces.begin();
+        it != _faces.end(); ++it) {
+      if(it != _faces.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
     if(multline)
       sstream << "\n";
     else
@@ -338,6 +353,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
                 << gmsh_sign(type) * meshAttributes.coeffTransfinite;
       else if(std::abs(type) == 2)
         sstream << ", bump " << meshAttributes.coeffTransfinite;
+      else if(std::abs(type) == 3)
+        sstream << ", beta " << meshAttributes.coeffTransfinite;
     }
     if(meshAttributes.extrude && meshAttributes.extrude->mesh.ExtrudeMesh)
       sstream << " extruded";
@@ -385,8 +402,10 @@ void GEdge::writeGEO(FILE *fp)
     if(meshAttributes.typeTransfinite) {
       if(std::abs(meshAttributes.typeTransfinite) == 1)
         fprintf(fp, " Using Progression ");
-      else
+      else if(std::abs(meshAttributes.typeTransfinite) == 2)
         fprintf(fp, " Using Bump ");
+      else
+        fprintf(fp, " Using Beta ");
       fprintf(fp, "%g", meshAttributes.coeffTransfinite);
     }
     fprintf(fp, ";\n");
@@ -854,12 +873,7 @@ bool GEdge::reorder(const int elementType, const std::vector<std::size_t> &order
       newLinesOrder[i] = lines[ordering[i]];
     }
 
-#if __cplusplus >= 201103L
     lines = std::move(newLinesOrder);
-#else
-    lines = newLinesOrder;
-#endif
-
     return true;
   }
 

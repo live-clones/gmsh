@@ -9,12 +9,12 @@
 #ifndef CGNS_ZONE_H
 #define CGNS_ZONE_H
 
-#include "fullMatrix.h"
-#include "CGNSCommon.h"
-#include "CGNSRead.h"
 #include <string>
 #include <vector>
 #include <map>
+#include "GmshConfig.h"
+#include "CGNSCommon.h"
+#include "CGNSRead.h"
 
 #if defined(HAVE_LIBCGNS)
 
@@ -24,14 +24,14 @@ class MElement;
 class CGNSZone {
 public:
   CGNSZone() {}
-  CGNSZone(int fileIndex, int baseIndex, int zoneIndex, ZoneType_t type,
-           int meshDim, cgsize_t startNode,
+  CGNSZone(int fileIndex, int baseIndex, int zoneIndex,
+           CGNS_ENUMT(ZoneType_t) type, int meshDim, cgsize_t startNode,
            const Family2EltNodeTransfo &allEltNodeTransfo, int &err);
   virtual ~CGNSZone() {}
 
   int index() const { return zoneIndex_; }
   std::string name() const { return name_; }
-  ZoneType_t type() const { return type_; }
+  CGNS_ENUMT(ZoneType_t) type() const { return type_; }
   cgsize_t startNode() const { return startNode_; }
   cgsize_t nbNode() const { return nbNode_; }
   cgsize_t nbElt() const { return nbElt_; }
@@ -107,7 +107,7 @@ protected:
   int fileIndex_, baseIndex_, meshDim_, zoneIndex_;
   std::string name_;
   cgsize_t size_[9];
-  ZoneType_t type_;
+  CGNS_ENUMT(ZoneType_t) type_;
   cgsize_t startNode_, nbNode_, nbElt_;
 
   // BC information

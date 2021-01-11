@@ -2,12 +2,13 @@
 //
 //  Gmsh C++ tutorial 5
 //
-//  Characteristic lengths, holes in volumes
+//  Mesh sizes, holes in volumes
 //
 // -----------------------------------------------------------------------------
 
-#include <gmsh.h>
+#include <set>
 #include <cstdio>
+#include <gmsh.h>
 
 void cheeseHole(double x, double y, double z, double r, double lc,
                 std::vector<int> &shells, std::vector<int> &volumes)
@@ -75,17 +76,16 @@ void cheeseHole(double x, double y, double z, double r, double lc,
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
-  gmsh::option::setNumber("General.Terminal", 1);
 
   double lcar1 = .1;
   double lcar2 = .0005;
   double lcar3 = .055;
 
   // If we wanted to change these mesh sizes globally (without changing the
-  // above definitions), we could give a global scaling factor for all
-  // characteristic lengths with e.g.
+  // above definitions), we could give a global scaling factor for all mesh
+  // sizes with e.g.
   //
-  // gmsh::option::setNumber("Mesh.CharacteristicLengthFactor", 0.1);
+  // gmsh::option::setNumber("Mesh.MeshSizeFactor", 0.1);
   //
   // Since we pass `argc' and `argv' to `gmsh::initialize()', we can also give
   // the option on the command line with the `-clscale' switch. For example,
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     x += 0.166;
     z += 0.166;
     cheeseHole(x, y, z, r, lcar3, shells, volumes);
-    gmsh::model::addPhysicalGroup(3, {volumes.back()}, t);
+    gmsh::model::geo::addPhysicalGroup(3, {volumes.back()}, t);
     std::printf("Hole %d (center = {%g,%g,%g}, radius = %g) has number %d!\n",
                 t, x, y, z, r, volumes.back());
   }
@@ -185,15 +185,15 @@ int main(int argc, char **argv)
   // other than the first one define holes:
   int ve = gmsh::model::geo::addVolume(shells);
 
-  // Note that using solid modelling with the OpenCASCADE geometry kernel, the
-  // same geometry could be built quite differently: see `t16.cpp'.
+  gmsh::model::geo::synchronize();
+
+  // Note that using solid modelling with the OpenCASCADE CAD kernel, the same
+  // geometry could be built quite differently: see `t16.cpp'.
 
   // We finally define a physical volume for the elements discretizing the cube,
   // without the holes (for which physical groups were already defined in the
   // `cheeseHole()' function):
   gmsh::model::addPhysicalGroup(3, {ve}, 10);
-
-  gmsh::model::geo::synchronize();
 
   // We could make only part of the model visible to only mesh this subset:
   // std::vector<std::pair<int, int> > ent;
@@ -223,7 +223,9 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(3);
   gmsh::write("t5.msh");
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
 

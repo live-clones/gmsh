@@ -15,12 +15,10 @@ import sys
 
 gmsh.initialize(sys.argv)
 
-gmsh.option.setNumber("General.Terminal", 1)
-
 # Create an example geometry
 gmsh.model.add("t14")
 
-m = 0.5  # mesh characteristic length
+m = 0.5  # mesh size
 h = 2  # geometry height in the z-direction
 
 gmsh.model.geo.addPoint(0, 0, 0, m, 1)
@@ -58,20 +56,22 @@ gmsh.model.geo.addCurveLoop([6, 7, 8, 1, 2, 3, 4, 5], 13)
 gmsh.model.geo.addCurveLoop([11, 12, 9, 10], 14)
 gmsh.model.geo.addPlaneSurface([13, 14], 15)
 
-ext_tags = gmsh.model.geo.extrude([(2, 15)], 0, 0, h)
+e = gmsh.model.geo.extrude([(2, 15)], 0, 0, h)
+
+gmsh.model.geo.synchronize()
 
 # Create physical groups, which are used to define the domain of the
 # (co)homology computation and the subdomain of the relative (co)homology
 # computation.
 
 # Whole domain
-domain_tag = 1
+domain_tag = e[1][1]
 domain_physical_tag = 1001
 gmsh.model.addPhysicalGroup(dim=3, tags=[domain_tag], tag=domain_physical_tag)
 gmsh.model.setPhysicalName(dim=3, tag=domain_physical_tag, name="Whole domain")
 
 # Four "terminals" of the model
-terminal_tags = [36, 44, 52, 60]
+terminal_tags = [e[3][1], e[5][1], e[7][1], e[9][1]]
 terminals_physical_tag = 2001
 gmsh.model.addPhysicalGroup(dim=2,
                             tags=terminal_tags,
@@ -96,7 +96,7 @@ gmsh.model.addPhysicalGroup(dim=2,
                             tag=boundary_physical_tag)
 gmsh.model.setPhysicalName(dim=2, tag=boundary_physical_tag, name="Boundary")
 
-# Complement of the domain surface respect to the four terminals
+# Complement of the domain surface with respect to the four terminals
 complement_physical_tag = 2003
 gmsh.model.addPhysicalGroup(dim=2,
                             tags=complement_tags,
@@ -104,8 +104,6 @@ gmsh.model.addPhysicalGroup(dim=2,
 gmsh.model.setPhysicalName(dim=2,
                            tag=complement_physical_tag,
                            name="Complement")
-
-gmsh.model.geo.synchronize()
 
 # Find bases for relative homology spaces of the domain modulo the four
 # terminals.
@@ -140,4 +138,9 @@ gmsh.model.mesh.generate(3)
 # modeling. SIAM Journal on Scientific Computing 35(5), pp. 1195-1214, 2013.
 
 gmsh.write("t14.msh")
+
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
 gmsh.finalize()

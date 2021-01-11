@@ -14,9 +14,24 @@
 #include <FL/Fl.H>
 #endif
 
-CTX::CTX() : debugSurface(-1), gamepad(0)
+CTX::CTX()
+{
+  // Warning: this does not initialize all the variables; for all the options
+  // that have default values that job is left to InitOptions() - which calls
+  // init()
+  init();
+}
+
+CTX::~CTX()
+{
+  if(gamepad) delete gamepad;
+}
+
+void CTX::init()
 {
   // initialize everything that has no default value in DefaultOptions.h
+  debugSurface = -1;
+
   short int word = 0x0001;
   char *byte = (char*)&word;
   bigEndian = (byte[0] ? 0 : 1);
@@ -98,11 +113,7 @@ CTX::CTX() : debugSurface(-1), gamepad(0)
   mesh.minCircPoints = mesh.order = 0;
   mesh.secondOrderLinear = mesh.secondOrderIncomplete = 0;
   mesh.lightLines = 2;
-}
-
-CTX::~CTX()
-{
-  if(gamepad) delete gamepad;
+  mesh.lcCallback = NULL;
 }
 
 CTX *CTX::_instance = NULL;

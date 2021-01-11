@@ -76,38 +76,8 @@ Use the CPEX0045 convention when exporting a high-order mesh to CGNS@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.CharacteristicLengthExtendFromBoundary
-Extend computation of mesh element sizes from the boundaries into the interior (for 3D Delaunay, use 1: longest or 2: shortest surface edge length)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.CharacteristicLengthFactor
-Factor applied to all mesh element sizes@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.CharacteristicLengthMin
-Minimum mesh element size@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.CharacteristicLengthMax
-Maximum mesh element size@*
-Default value: @code{1e+22}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.CharacteristicLengthFromCurvature
-Automatically compute mesh element sizes from curvature@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.CharacteristicLengthFromPoints
-Compute mesh element sizes from values given at geometry points@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.CharacteristicLengthFromParametricPoints
-Compute mesh element sizes from values given at geometry points defining parametric curves@*
+@item Mesh.CgnsExportStructured
+Export transfinite meshes as structured CGNS grids@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -126,7 +96,7 @@ How are surface mesh elements classified on compounds? (0: on the new discrete s
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.CompoundCharacteristicLengthFactor
+@item Mesh.CompoundMeshSizeFactor
 Mesh size factor applied to compound parts@*
 Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
@@ -135,6 +105,11 @@ Saved in: @code{General.OptionsFileName}
 CPU time (in seconds) for the generation of the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
+
+@item Mesh.CreateTopologyMsh2
+Attempt to (re)create the model topology when reading MSH2 files@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
 
 @item Mesh.DrawSkinOnly
 Draw only the skin of 3D meshes?@*
@@ -167,7 +142,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.FlexibleTransfinite
-Allow transfinite constraints to be modified for Blossom or by global mesh size factor@*
+Allow transfinite constraints to be modified for recombination (e.g. Blossom) or by global mesh size factor@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -181,13 +156,18 @@ Display mesh hexahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderDistCAD
+Try to optimize distance to CAD in high-order optimizer?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.HighOrderIterMax
 Maximum number of iterations in high-order optimization pass@*
 Default value: @code{100}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderNumLayers
-Number of layers around a problematic element to consider for high-order optimization@*
+Number of layers around a problematic element to consider for high-order optimization, or number of element layers to consider in the boundary layer mesh for high-order fast curving@*
 Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -211,13 +191,13 @@ Poisson ratio of the material used in the elastic smoother for high-order meshes
 Default value: @code{0.33}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderPrimSurfMesh
-Try to fix flipped surface mesh elements in high-order optimizer?@*
+@item Mesh.HighOrderSavePeriodic
+Save high-order nodes in periodic section of MSH files?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderDistCAD
-Try to optimize distance to CAD in high-order optimizer?@*
+@item Mesh.HighOrderPrimSurfMesh
+Try to fix flipped surface mesh elements in high-order optimizer?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -229,6 +209,31 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.HighOrderThresholdMax
 Maximum threshold for high-order element optimization@*
 Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderFastCurvingNewAlgo
+Curve boundary layer with new "fast curving" algorithm (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderCurveOuterBL
+Curve also the outer surface of the boundary layer in the fast curving algorithm (0 = do not curve, 1 = curve according to boundary, 2 = curve without breaking outer elements)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderMaxRho
+Maximum min/max ratio of edge/face size for the detection of BL element columns in the fast curving algorithm@*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderMaxAngle
+Maximum angle between layers of BL elements for the detection of columns in the fast curving algorithm@*
+Default value: @code{0.174533}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderMaxInnerAngle
+Maximum angle between edges/faces within layers of BL triangles/tets for the detection of columns in the fast curving algorithm@*
+Default value: @code{0.523599}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelSampling
@@ -308,6 +313,41 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshOnlyEmpty
 Mesh only entities that have no existing mesh@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeExtendFromBoundary
+Extend computation of mesh element sizes from the boundaries into the interior (for 3D Delaunay, use 1: longest or 2: shortest surface edge length)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFactor
+Factor applied to all mesh element sizes@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeMin
+Minimum mesh element size@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeMax
+Maximum mesh element size@*
+Default value: @code{1e+22}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFromCurvature
+Automatically compute mesh element sizes from curvature@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFromPoints
+Compute mesh element sizes from values given at geometry points@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFromParametricPoints
+Compute mesh element sizes from values given at geometry points defining parametric curves@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -443,6 +483,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionOldStyleMsh2
 Write partitioned meshes in MSH2 format using old style (i.e. by not referencing new partitioned entities, except on partition boundaries), for backward compatibility@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionConvertMsh2
+When reading partitioned meshes in MSH2 format, create new partition entities@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -672,7 +717,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveTopology
-Save model topology in MSH2 output files (this is always saved in MSH3)@*
+Save model topology in MSH2 output files (this is always saved in MSH3 and above)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

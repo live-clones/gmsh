@@ -26,7 +26,6 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid s, int num)
   : GRegion(m, num), _s(s)
 {
   _setup();
-  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(_s, num);
 
   // if(tag() == 1) writeBREP("v1.brep");
 }

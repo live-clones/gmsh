@@ -35,9 +35,9 @@ namespace {
 
     // read solution interpolation tranformation info
     char interpName[CGNS_MAX_STR_LEN];
-    ElementType_t cgnsType;
+    CGNS_ENUMT(ElementType_t) cgnsType;
     int order, orderTime;
-    InterpolationType_t interpType;
+    CGNS_ENUMT(InterpolationType_t) interpType;
     cgnsErr = cg_solution_interpolation_read(fileIndex, baseIndex, familyIndex,
                                              interpIndex, interpName, &cgnsType,
                                              &order, &orderTime, &interpType);
@@ -315,7 +315,7 @@ namespace {
 
   int getEntInPtSet(int fileIndex, int baseIndex, int zoneIndex,
                     int zoneSolIndex, bool isStructured, int dim,
-                    PointSetType_t ptSetType, cgsize_t ptSetSize,
+                    CGNS_ENUMT(PointSetType_t) ptSetType, cgsize_t ptSetSize,
                     const cgsize_t *zoneEntSize, cgsize_t *solReadRange,
                     std::vector<cgsize_t> &solEntSet)
   {
@@ -329,7 +329,7 @@ namespace {
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
     // get number of values and entities to read in solution
-    if(ptSetType == PointRange) {
+    if(ptSetType == CGNS_ENUMV(PointRange)) {
       if(isStructured) {
         for(int i = 0; i < dim; i++) {
           solReadRange[i] = 1;
@@ -360,7 +360,7 @@ namespace {
         UnstructuredIndexing::entFromRange(ptSet.data(), solEntSet);
       }
     }
-    else if(ptSetType == PointList) {
+    else if(ptSetType == CGNS_ENUMV(PointList)) {
       solReadRange[0] = 1;
       solReadRange[1] = ptSet.size();
       if(isStructured) {
@@ -405,7 +405,7 @@ namespace {
 
     // check FlowSolution name
     char rawSolName[CGNS_MAX_STR_LEN];
-    GridLocation_t location;
+    CGNS_ENUMT(GridLocation_t) location;
     cgnsErr = cg_sol_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
                           rawSolName, &location);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
@@ -413,12 +413,12 @@ namespace {
 
     // get zone dimension and type
     int dim;
-    ZoneType_t zoneType;
+    CGNS_ENUMT(ZoneType_t) zoneType;
     cgnsErr = cg_cell_dim(fileIndex, baseIndex, &dim);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
     cgnsErr = cg_zone_type(fileIndex, baseIndex, zoneIndex, &zoneType);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-    const bool isStructured = (zoneType == Structured);
+    const bool isStructured = (zoneType == CGNS_ENUMV(Structured));
 
     // get total number of vertices and elements in zone
     char zoneName[CGNS_MAX_STR_LEN];
@@ -442,7 +442,7 @@ namespace {
     // read point range if it exists, otherwise use all entities
     // (vertices/elements) in zone
     std::vector<cgsize_t> solEntSet;
-    PointSetType_t ptSetType;
+    CGNS_ENUMT(PointSetType_t) ptSetType;
     cgsize_t ptSetSize;
     cgsize_t solReadRange[6];
     cgnsErr = cg_sol_ptset_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
@@ -494,7 +494,7 @@ namespace {
     // get field data
     for(int iField = 1; iField <= nbField; iField++) {
       // field name
-      DataType_t cgnsDataType;
+      CGNS_ENUMT(DataType_t) cgnsDataType;
       char rawFieldName[CGNS_MAX_STR_LEN];
       cgnsErr = cg_field_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
                               iField, &cgnsDataType, rawFieldName);
@@ -503,9 +503,10 @@ namespace {
 
       // read field data
       std::vector<double> data(dataSize);
-      cgnsErr = cg_field_read(
-        fileIndex, baseIndex, zoneIndex, zoneSolIndex, rawFieldName, RealDouble,
-        solReadRangeMin, solReadRangeMax, static_cast<void *>(data.data()));
+      cgnsErr =
+        cg_field_read(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
+                      rawFieldName, CGNS_ENUMV(RealDouble), solReadRangeMin,
+                      solReadRangeMax, static_cast<void *>(data.data()));
       if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
       // scan through data to populate step (possibly converting from custom

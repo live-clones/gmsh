@@ -7,6 +7,7 @@
 // features and/or system calls
 
 // these are available on all OSes
+#include <chrono>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -396,15 +397,9 @@ double TotalRam()
 
 double TimeOfDay()
 {
-#if defined(WIN32) && !defined(__CYGWIN__)
-  struct _timeb localTime;
-  _ftime(&localTime);
-  return localTime.time + 1.e-3 * localTime.millitm;
-#else
-  struct timeval t;
-  gettimeofday(&t, NULL);
-  return t.tv_sec + 1.e-6 * t.tv_usec;
-#endif
+  //auto t = std::chrono::system_clock::now();
+  auto t = std::chrono::steady_clock::now(); // guaranteed monotonic
+  return std::chrono::duration<double>(t.time_since_epoch()).count();
 }
 
 long GetMemoryUsage()

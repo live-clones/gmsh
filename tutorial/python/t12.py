@@ -7,6 +7,7 @@
 # ------------------------------------------------------------------------------
 
 import gmsh
+import sys
 
 # "Compound" meshing constraints allow to generate meshes across surface
 # boundaries, which can be useful e.g. for imported CAD models (e.g. STEP) with
@@ -32,13 +33,12 @@ import gmsh
 
 # The mesh of the individual entities performed in Step 1. should usually be
 # finer than the desired final mesh; this can be controlled with the
-# `Mesh.CompoundCharacteristicLengthFactor' option.
+# `Mesh.CompoundMeshSizeFactor' option.
 
 # The optional reclassification on the underlying elementary entities in Step
 # 5. is governed by the `Mesh.CompoundClassify' option.
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 lc = 0.1
 
@@ -88,6 +88,8 @@ gmsh.model.mesh.setCompound(2, [1, 5, 10])
 gmsh.model.mesh.generate(2)
 gmsh.write('t12.msh')
 
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

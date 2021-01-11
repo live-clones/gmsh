@@ -48,11 +48,12 @@ private:
   static double _startTime;
   // counters
   static int _warningCount, _errorCount, _atLeastOneErrorInRun;
-  static std::string _firstWarning, _firstError;
+  static std::string _firstWarning, _firstError, _lastError;
   // callback
   static GmshMessage *_callback;
   // command-line and startup time
-  static std::string _commandLine, _launchDate;
+  static std::vector<std::string> _commandLineArgs;
+  static std::string _launchDate;
   // command-line-specified numbers and strings
   static std::map<std::string, std::vector<double> > _commandLineNumbers;
   static std::map<std::string, std::string> _commandLineStrings;
@@ -87,7 +88,8 @@ public:
   static void SetLogFile(const std::string &name);
   static int GetVerbosity();
   static std::string GetLaunchDate();
-  static std::string GetCommandLineArgs();
+  static std::string GetCommandLineFull();
+  static std::vector<std::string> &GetCommandLineArgs();
   static std::map<std::string, std::vector<double> > &GetCommandLineNumbers();
   static std::map<std::string, std::string> &GetCommandLineStrings();
   static std::string PrintResources(bool printDate, bool printWallTime,
@@ -117,6 +119,7 @@ public:
   static int GetErrorCount();
   static std::string GetFirstWarning();
   static std::string GetFirstError();
+  static std::string GetLastError();
   static double GetValue(const char *text, double defaultval);
   static std::string GetString(const char *text, const std::string &defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero,

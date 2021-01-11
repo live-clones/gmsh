@@ -6,21 +6,21 @@
 //
 // -----------------------------------------------------------------------------
 
-// As seen in `t7.cpp', characteristic lengths can be specified very accurately
-// by providing a background mesh, i.e., a post-processing view that contains
-// the target mesh sizes.
+// As seen in `t7.cpp', mesh sizes can be specified very accurately by providing
+// a background mesh, i.e., a post-processing view that contains the target mesh
+// sizes.
 
 // Here, the background mesh is represented as a metric tensor field defined on
 // a square. One should use bamg as 2d mesh generator to enable anisotropic
 // meshes in 2D.
 
+#include <set>
+#include <cmath>
 #include <gmsh.h>
-#include <math.h>
 
 int main(int argc, char **argv)
 {
   gmsh::initialize();
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t17");
 
@@ -49,6 +49,10 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(2);
 
   gmsh::write("t17.msh");
+
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

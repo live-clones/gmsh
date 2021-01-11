@@ -4,7 +4,6 @@ import os
 import sys
 
 gmsh.initialize(sys.argv)
-gmsh.option.setNumber('General.Terminal', 1)
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -81,8 +80,8 @@ if transfinite:
         gmsh.model.mesh.setSmoothing(s[0], s[1], 100)
     gmsh.model.mesh.setTransfiniteVolume(v1)
 else:
-    gmsh.option.setNumber('Mesh.CharacteristicLengthMin', 100)
-    gmsh.option.setNumber('Mesh.CharacteristicLengthMax', 100)
+    gmsh.option.setNumber('Mesh.MeshSizeMin', 100)
+    gmsh.option.setNumber('Mesh.MeshSizeMax', 100)
 
 if '-nopopup' not in sys.argv:
     gmsh.fltk.run()

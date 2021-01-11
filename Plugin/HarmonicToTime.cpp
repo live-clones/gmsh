@@ -34,7 +34,7 @@ std::string GMSH_HarmonicToTimePlugin::getHelp() const
          "over 'NumPeriods' periods at frequency 'Frequency' [Hz].\n"
          "The '+' sign is used if `TimeSign'>0, the '-' sign otherwise.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
-         "Plugin(HarmonicToTime) creates one new view.";
+         "Plugin(HarmonicToTime) creates one new list-based view.";
 }
 
 int GMSH_HarmonicToTimePlugin::getNbOptions() const
@@ -63,10 +63,6 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
 
   if(data1->hasMultipleMeshes()) {
     Msg::Error("HarmonicToTime plugin cannot be applied to multi-mesh views");
-    return v1;
-  }
-  if(frequency == 0) {
-    Msg::Error("HarmonicToTime plugin: null frequency is forbidden");
     return v1;
   }
 
@@ -106,7 +102,8 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
       for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
       for(int k = 0; k < nSteps; k++) {
-        double p = 2. * M_PI * nPeriods * k / nSteps;
+        // if frequency == 0 is requested, simply use real part
+        double p = frequency ? 2. * M_PI * nPeriods * k / nSteps : 0.;
         for(int nod = 0; nod < numNodes; nod++) {
           for(int comp = 0; comp < numComp; comp++) {
             double val = vr[numComp * nod + comp] * cos(p) +
@@ -119,7 +116,7 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
   }
 
   for(int k = 0; k < nSteps; k++) {
-    double t = 2. * M_PI * nPeriods * k / frequency / (double)nSteps;
+    double t = frequency ? (2. * M_PI * nPeriods * k / frequency / (double)nSteps) : 0.;
     data2->Time.push_back(t);
   }
   data2->setName(data1->getName() + "_HarmonicToTime");

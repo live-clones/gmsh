@@ -44,10 +44,7 @@ typedef unsigned long intptr_t;
 extern StringXColor GeneralOptions_Color[];
 extern StringXColor GeometryOptions_Color[];
 extern StringXColor MeshOptions_Color[];
-extern StringXColor SolverOptions_Color[];
-extern StringXColor PostProcessingOptions_Color[];
 extern StringXColor ViewOptions_Color[];
-extern StringXColor PrintOptions_Color[];
 
 static Fl_Menu_Item menu_point_display[] = {
   {"Color dot", 0, 0, 0},
@@ -1952,15 +1949,20 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 6 * BH, IW + 20,
                                    height - 5 * WB - 6 * BH);
-      std::size_t i = 0;
-      while(GeneralOptions_Color[i].str) {
+      std::size_t i = 0, j = 0;
+      while(GeneralOptions_Color[j].str) {
+        if(GeneralOptions_Color[j].level & GMSH_DEPRECATED) {
+          j++;
+          continue;
+        }
         general.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (6 + i) * BH, IW,
-                                         BH, GeneralOptions_Color[i].str);
+                                         BH, GeneralOptions_Color[j].str);
         general.color[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE |
                                 FL_ALIGN_CLIP);
         general.color[i]->callback(color_cb,
-                                   (void *)GeneralOptions_Color[i].function);
+                                   (void *)GeneralOptions_Color[j].function);
         i++;
+        j++;
         if(i >= general.color.size()){
           Msg::Error("General color widget vector should be resized");
           break;
@@ -2146,7 +2148,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH,
                                         BW / 2 - WB, BH, "Curves");
-      geo.butt[1]->tooltip("Geometry.Lines (Alt+l)");
+      geo.butt[1]->tooltip("Geometry.Curves (Alt+l)");
       geo.butt[1]->type(FL_TOGGLE_BUTTON);
       geo.butt[1]->callback(geometry_options_ok_cb);
 
@@ -2170,7 +2172,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.butt[5] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH,
                                         BW / 2 - WB, BH, "Curve labels");
-      geo.butt[5]->tooltip("Geometry.LineNumbers");
+      geo.butt[5]->tooltip("Geometry.CurveNumbers");
       geo.butt[5]->type(FL_TOGGLE_BUTTON);
       geo.butt[5]->callback(geometry_options_ok_cb);
 
@@ -2318,14 +2320,14 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.choice[1] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Curve display");
-      geo.choice[1]->tooltip("Geometry.LineType");
+      geo.choice[1]->tooltip("Geometry.CurveType");
       geo.choice[1]->menu(menu_line_display);
       geo.choice[1]->align(FL_ALIGN_RIGHT);
       geo.choice[1]->callback(geometry_options_ok_cb);
 
       geo.value[4] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Curve width");
-      geo.value[4]->tooltip("Geometry.LineWidth");
+      geo.value[4]->tooltip("Geometry.CurveWidth");
       geo.value[4]->minimum(0.1);
       geo.value[4]->maximum(50);
       if(CTX::instance()->inputScrolling) geo.value[4]->step(0.1);
@@ -2334,7 +2336,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH,
                                         "Selected curve width");
-      geo.value[6]->tooltip("Geometry.LineSelectWidth");
+      geo.value[6]->tooltip("Geometry.CurveSelectWidth");
       geo.value[6]->minimum(0.1);
       geo.value[6]->maximum(50);
       if(CTX::instance()->inputScrolling) geo.value[6]->step(0.1);
@@ -2384,13 +2386,18 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 2 * WB + 4 * BH, IW + 20,
                                    height - 4 * WB - 4 * BH);
-      std::size_t i = 0;
-      while(GeometryOptions_Color[i].str) {
+      std::size_t i = 0, j = 0;
+      while(GeometryOptions_Color[j].str) {
+        if(GeometryOptions_Color[j].level & GMSH_DEPRECATED) {
+          j++;
+          continue;
+        }
         geo.color[i] = new Fl_Button(L + 2 * WB, 2 * WB + (4 + i) * BH, IW, BH,
-                                     GeometryOptions_Color[i].str);
+                                     GeometryOptions_Color[j].str);
         geo.color[i]->callback(color_cb,
-                               (void *)GeometryOptions_Color[i].function);
+                               (void *)GeometryOptions_Color[j].function);
         i++;
+        j++;
         if(i >= geo.color.size()){
           Msg::Error("Geometry color widget vector should be resized");
           break;
@@ -2492,7 +2499,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.value[2] = new inputValueFloat(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
                                           "Element size factor");
-      mesh.value[2]->tooltip("Mesh.CharacteristicLengthFactor");
+      mesh.value[2]->tooltip("Mesh.MeshSizeFactor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
       if(CTX::instance()->inputScrolling) mesh.value[2]->step(0.01);
@@ -2501,13 +2508,13 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.value[25] =
         new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH);
-      mesh.value[25]->tooltip("Mesh.CharacteristicLengthMin");
+      mesh.value[25]->tooltip("Mesh.MeshSizeMin");
       mesh.value[25]->align(FL_ALIGN_RIGHT);
       mesh.value[25]->callback(mesh_options_ok_cb);
 
       mesh.value[26] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 8 * BH,
                                           IW / 2, BH, "Min/Max element size");
-      mesh.value[26]->tooltip("Mesh.CharacteristicLengthMax");
+      mesh.value[26]->tooltip("Mesh.MeshSizeMax");
       mesh.value[26]->align(FL_ALIGN_RIGHT);
       mesh.value[26]->callback(mesh_options_ok_cb);
 
@@ -2538,20 +2545,20 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[5] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH,
                             "Compute element sizes using point values");
-      mesh.butt[5]->tooltip("Mesh.CharacteristicLengthFromPoints");
+      mesh.butt[5]->tooltip("Mesh.MeshSizeFromPoints");
       mesh.butt[5]->type(FL_TOGGLE_BUTTON);
       mesh.butt[5]->callback(mesh_options_ok_cb,(void*)"mesh_lc_from_points");
 
       mesh.butt[26] =
         new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
                             "Compute element sizes using parametric point values");
-      mesh.butt[26]->tooltip("Mesh.CharacteristicLengthFromParametricPoints");
+      mesh.butt[26]->tooltip("Mesh.MeshSizeFromParametricPoints");
       mesh.butt[26]->type(FL_TOGGLE_BUTTON);
       mesh.butt[26]->callback(mesh_options_ok_cb);
 
       mesh.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
         "Compute element sizes from curvature");
-      mesh.butt[1]->tooltip("Mesh.CharacteristicLengthFromCurvature");
+      mesh.butt[1]->tooltip("Mesh.MeshSizeFromCurvature");
       mesh.butt[1]->type(FL_TOGGLE_BUTTON);
       mesh.butt[1]->callback(mesh_options_ok_cb, (void *)"mesh_curvature");
 
@@ -2567,7 +2574,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
                                           "Extend element sizes from boundary");
-      mesh.butt[16]->tooltip("Mesh.CharacteristicLengthExtendFromBoundary");
+      mesh.butt[16]->tooltip("Mesh.MeshSizeExtendFromBoundary");
       mesh.butt[16]->type(FL_TOGGLE_BUTTON);
       mesh.butt[16]->callback(mesh_options_ok_cb);
 
@@ -2889,13 +2896,18 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
                                    height - 5 * WB - 7 * BH);
-      std::size_t i = 0;
-      while(MeshOptions_Color[i].str) {
+      std::size_t i = 0, j = 0;
+      while(MeshOptions_Color[j].str) {
+        if(MeshOptions_Color[j].level & GMSH_DEPRECATED) {
+          j++;
+          continue;
+        }
         mesh.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW, BH,
-                                      MeshOptions_Color[i].str);
+                                      MeshOptions_Color[j].str);
         mesh.color[i]->callback(color_cb,
-                                (void *)MeshOptions_Color[i].function);
+                                (void *)MeshOptions_Color[j].function);
         i++;
+        j++;
         if(i >= mesh.color.size()){
           Msg::Error("Mesh color widget vector should be resized");
           break;
@@ -3725,6 +3737,7 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       view.choice[3] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
+      view.choice[3]->tooltip("View.GlyphLocation");
       view.choice[3]->menu(menu_glyph_loc);
       view.choice[3]->align(FL_ALIGN_RIGHT);
       view.choice[3]->callback(view_options_ok_cb);
@@ -3737,7 +3750,7 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       view.choice[15] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
                                       2 * WB + 10 * BH, (int)(0.85 * IW), BH);
-      view.choice[15]->tooltip("View.GlyphLocation");
+      view.choice[15]->tooltip("View.CenterGlyphs");
       view.choice[15]->menu(menu_glyph_center);
       view.choice[15]->callback(view_options_ok_cb);
 
@@ -3807,13 +3820,18 @@ optionWindow::optionWindow(int deltaFontSize)
 
       Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20,
                                    height - 5 * WB - 7 * BH);
-      std::size_t i = 0;
-      while(ViewOptions_Color[i].str) {
+      std::size_t i = 0, j = 0;
+      while(ViewOptions_Color[j].str) {
+        if(ViewOptions_Color[j].level & GMSH_DEPRECATED) {
+          j++;
+          continue;
+        }
         view.color[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW, BH,
-                                      ViewOptions_Color[i].str);
+                                      ViewOptions_Color[j].str);
         view.color[i]->callback(view_color_cb,
-                                (void *)ViewOptions_Color[i].function);
+                                (void *)ViewOptions_Color[j].function);
         i++;
+        j++;
         if(i >= view.color.size()){
           Msg::Error("View color widget vector should be resized");
           break;

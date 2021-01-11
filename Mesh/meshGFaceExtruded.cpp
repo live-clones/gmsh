@@ -40,7 +40,7 @@ createQuaTri(std::vector<MVertex *> &v, GFace *to,
   else if(v[0] == v[2] || v[2] == v[3])
     addTriangle(v[0], v[1], v[3], to);
   else if(v[0] == v[3] || v[1] == v[2])
-    Msg::Error("Uncoherent extruded quadrangle in surface %d", to->tag());
+    Msg::Error("Incoherent extruded quadrangle in surface %d", to->tag());
   else {
     // Trevor Strickler added the tri_quad_flag stuff here.
     if((ep->mesh.Recombine && tri_quad_flag != 2) || tri_quad_flag == 1) {
@@ -137,10 +137,7 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
   bool quadToTri_valid =
     IsValidQuadToTriLateral(to, &tri_quad_flag, &detectQuadToTriLateral);
   if(detectQuadToTriLateral && !quadToTri_valid)
-    Msg::Error(
-      "In MeshGFaceExtrudedSurface::extrudeMesh(), Mesh of QuadToTri Lateral "
-      "surface %d likely has errors.",
-      to->tag());
+    Msg::Error("Mesh of QuadToTri lateral surface %d likely has errors", to->tag());
 #endif
 
   // create elements (note that it would be faster to access the *interior*
@@ -221,9 +218,7 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
   bool is_toroidal = quadToTri_valid >= 2 ? true : false;
   bool is_noaddverts = quadToTri_valid == 3 ? true : false;
   if(detectQuadToTriTop && !quadToTri_valid && !is_toroidal) {
-    Msg::Error("In MeshGFaceExtrudedSurface::copyMesh(), Mesh of QuadToTri top "
-               "surface %d likely has errors.",
-               to->tag());
+    Msg::Error("Mesh of QuadToTri top surface %d likely has errors", to->tag());
   }
 
   // if this is toroidal No New Vertices QuadToTri, then replace the root
@@ -266,9 +261,7 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
   // toroidal extrusion, mesh the top surface accordingly
   if(detectQuadToTriTop && !is_toroidal) {
     if(!MeshQuadToTriTopSurface(from, to, pos))
-      Msg::Error("In MeshExtrudedSurface()::copyMesh(), mesh of QuadToTri top "
-                 "surface %d failed.",
-                 to->tag());
+      Msg::Error("Mesh of QuadToTri top surface %d failed", to->tag());
     return;
   }
 #endif

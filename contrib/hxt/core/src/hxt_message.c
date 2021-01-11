@@ -55,9 +55,9 @@ const char*  hxtGetStatusString(HXTStatus status){
       break;
     default:
       if(status<=HXT_STATUS_INTERNAL)
-        return "internal error was not catched. This should not happen";
+        return "internal error was not caught. This should not happen";
       else if(status<0)
-        return "unknow error";
+        return "unknown error";
       else
         return "positive return value (no error)";
       break;
@@ -69,6 +69,7 @@ const char*  hxtGetStatusString(HXTStatus status){
 HXTStatus defaultMessageCallback(HXTMessage* msg){
   if (msg->level == HXT_MSGLEVEL_INFO)
     fprintf(stdout,"Info : %s\n", msg->string);
+#ifndef NDEBUG
   else if (msg->level == HXT_MSGLEVEL_ERROR)
     fprintf(stderr,"= X = Error : %s   \n in %s -> %s:%s\n", msg->string, msg->func, msg->file, msg->line);
   else if (msg->level == HXT_MSGLEVEL_TRACE)
@@ -77,6 +78,12 @@ HXTStatus defaultMessageCallback(HXTMessage* msg){
     fprintf(stderr,"/!\\ Warning : %s\n", msg->string);
   else if (msg->level == HXT_MSGLEVEL_DEBUG)
     fprintf(stderr,"Debug : %s   \t(in %s -> %s:%s)\n", msg->string, msg->func, msg->file, msg->line);
+#else
+  else if (msg->level == HXT_MSGLEVEL_ERROR)
+    fprintf(stderr,"= X = Error : %s   \n", msg->string);
+  else if (msg->level == HXT_MSGLEVEL_WARNING)
+    fprintf(stderr,"/!\\ Warning : %s\n", msg->string);
+#endif
   return HXT_STATUS_OK;
 }
 
@@ -152,7 +159,7 @@ HXTStatus  hxtMessageError       ( HXTStatus status, const char* func, const cha
   return status;
 }
 
-
+#ifndef NDEBUG
 HXTStatus  hxtMessageTraceError( HXTStatus status, const char* func, const char* file, const char* line, const char *fmt, ...){
   if(status==HXT_STATUS_OK)
     return HXT_STATUS_OK;
@@ -162,3 +169,4 @@ HXTStatus  hxtMessageTraceError( HXTStatus status, const char* func, const char*
   va_end(args);
   return status;
 }
+#endif

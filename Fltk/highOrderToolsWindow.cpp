@@ -109,7 +109,7 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
     o->choice[0]->deactivate();
     o->choice[3]->deactivate();
     o->value[1]->deactivate();
-    o->value[2]->deactivate();
+    o->value[2]->activate();
     o->value[3]->deactivate();
     o->value[4]->deactivate();
     o->value[5]->deactivate();
@@ -124,7 +124,7 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
     o->choice[0]->deactivate();
     o->choice[3]->deactivate();
     o->value[1]->deactivate();
-    o->value[2]->deactivate();
+    o->value[2]->activate();
     o->value[3]->deactivate();
     o->value[4]->deactivate();
     o->value[5]->deactivate();
@@ -194,9 +194,14 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   case 2: { // Fast curving
     FastCurvingParameters p;
     p.onlyVisible = onlyVisible;
-    p.dim = dim;
-    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
     p.thickness = false;
+    p.dim = dim;
+    p.curveOuterBL =
+      (FastCurvingParameters::OUTERBLCURVE)CTX::instance()->mesh.hoCurveOuterBL;
+    p.maxNumLayers = (int)o->value[2]->value();
+    p.maxRho = CTX::instance()->mesh.hoMaxRho;
+    p.maxAngle = CTX::instance()->mesh.hoMaxAngle;
+    p.maxAngleInner = CTX::instance()->mesh.hoMaxInnerAngle;
     HighOrderMeshFastCurving(GModel::current(), p);
     break;
   }
@@ -204,6 +209,12 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     FastCurvingParameters p;
     p.onlyVisible = onlyVisible;
     p.thickness = true;
+    p.curveOuterBL =
+      (FastCurvingParameters::OUTERBLCURVE)CTX::instance()->mesh.hoCurveOuterBL;
+    p.maxNumLayers = (int)o->value[2]->value();
+    p.maxRho = CTX::instance()->mesh.hoMaxRho;
+    p.maxAngle = CTX::instance()->mesh.hoMaxAngle;
+    p.maxAngleInner = CTX::instance()->mesh.hoMaxInnerAngle;
     if(dim == 3) {
       p.dim = 2;
       HighOrderMeshFastCurving(GModel::current(), p);
@@ -221,6 +232,39 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
+}
+
+static void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
+                                    bool &CAD)
+{
+  meshOrder = -1;
+  CAD = true;
+  complete = true;
+  // The following code does not allow to determine accurately if elements are
+  // complete or not. To be more precise, we should try to find a hexahedron if
+  // order = 2+, a prism or a pyramid if order = 3+ or a tet if order = 4+ and
+  // so on...  But it is more likely that we want complete elements so always
+  // setting true to 'complete' variable is acceptable.
+  for(GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
+    if((*itr)->getNumMeshElements()) {
+      meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder();
+      //complete = (meshOrder <= 2) ? true :
+      //  (*itr)->getMeshElement(0)->getNumVolumeVertices() ? true : false;
+      if((*itr)->isFullyDiscrete()) CAD = false;
+      break;
+    }
+  }
+  for(GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
+    if((*itf)->getNumMeshElements()) {
+      if(meshOrder == -1) {
+        meshOrder = (*itf)->getMeshElement(0)->getPolynomialOrder();
+        // complete = (meshOrder <= 2) ? 1 :
+        //   (*itf)->getMeshElement(0)->getNumFaceVertices();
+        if((*itf)->isFullyDiscrete()) CAD = false;
+        break;
+      }
+    }
+  }
 }
 
 highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
@@ -347,7 +391,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   y += BH;
   value[2] = new Fl_Value_Input(x, y, IW, BH, "Number of layers");
   value[2]->minimum(1);
-  value[2]->maximum(20);
+  value[2]->maximum(250);
   if(CTX::instance()->inputScrolling) value[2]->step(1);
   value[2]->align(FL_ALIGN_RIGHT);
   value[2]->value(CTX::instance()->mesh.hoNLayers);

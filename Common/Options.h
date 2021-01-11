@@ -18,6 +18,7 @@
 #define GMSH_SESSIONRC (1 << 0)
 #define GMSH_OPTIONSRC (1 << 1)
 #define GMSH_FULLRC (1 << 2)
+#define GMSH_DEPRECATED (1 << 3)
 
 // action is a combination of GMSH_SET, GMSH_GET, GMSH_GUI
 
@@ -55,6 +56,7 @@ std::string opt_general_recent_file6(OPT_ARGS_STR);
 std::string opt_general_recent_file7(OPT_ARGS_STR);
 std::string opt_general_recent_file8(OPT_ARGS_STR);
 std::string opt_general_recent_file9(OPT_ARGS_STR);
+std::string opt_general_scripting_languages(OPT_ARGS_STR);
 std::string opt_general_editor(OPT_ARGS_STR);
 std::string opt_general_watch_file_pattern(OPT_ARGS_STR);
 std::string opt_general_gui_theme(OPT_ARGS_STR);
@@ -143,11 +145,13 @@ std::string opt_print_parameter_command(OPT_ARGS_STR);
 
 // NUMBERS
 
+double opt_general_abort_on_error(OPT_ARGS_NUM);
 double opt_general_initial_context(OPT_ARGS_NUM);
 double opt_general_show_options_on_startup(OPT_ARGS_NUM);
 double opt_general_show_messages_on_startup(OPT_ARGS_NUM);
 double opt_general_fontsize(OPT_ARGS_NUM);
 double opt_general_gui_color_scheme(OPT_ARGS_NUM);
+double opt_general_gui_refresh_rate(OPT_ARGS_NUM);
 double opt_general_graphics_fontsize(OPT_ARGS_NUM);
 double opt_general_graphics_fontsize_title(OPT_ARGS_NUM);
 double opt_general_graphics_position0(OPT_ARGS_NUM);
@@ -196,7 +200,6 @@ double opt_general_manip_position1(OPT_ARGS_NUM);
 double opt_general_hot_position0(OPT_ARGS_NUM);
 double opt_general_hot_position1(OPT_ARGS_NUM);
 double opt_general_high_resolution_graphics(OPT_ARGS_NUM);
-double opt_general_high_resolution_point_size_factor(OPT_ARGS_NUM);
 double opt_general_session_save(OPT_ARGS_NUM);
 double opt_general_options_save(OPT_ARGS_NUM);
 double opt_general_rotation0(OPT_ARGS_NUM);
@@ -407,6 +410,7 @@ double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM);
 double opt_geometry_occ_scaling(OPT_ARGS_NUM);
 double opt_geometry_occ_import_labels(OPT_ARGS_NUM);
 double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM);
+double opt_geometry_occ_use_generic_closest_point(OPT_ARGS_NUM);
 double opt_geometry_old_circle(OPT_ARGS_NUM);
 double opt_geometry_old_newreg(OPT_ARGS_NUM);
 double opt_geometry_old_ruled_surface(OPT_ARGS_NUM);
@@ -508,6 +512,8 @@ double opt_mesh_partition_create_topology(OPT_ARGS_NUM);
 double opt_mesh_partition_create_physicals(OPT_ARGS_NUM);
 double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM);
 double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM);
+double opt_mesh_partition_convert_msh2(OPT_ARGS_NUM);
+double opt_mesh_create_topology_msh2(OPT_ARGS_NUM);
 double opt_mesh_binary(OPT_ARGS_NUM);
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM);
 double opt_mesh_cross_field_closest_point(OPT_ARGS_NUM);
@@ -539,6 +545,7 @@ double opt_mesh_min_curv_points(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
 double opt_mesh_ho_optimize(OPT_ARGS_NUM);
 double opt_mesh_ho_periodic(OPT_ARGS_NUM);
+double opt_mesh_ho_save_periodic(OPT_ARGS_NUM);
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM);
 double opt_mesh_ho_threshold_min(OPT_ARGS_NUM);
 double opt_mesh_ho_threshold_max(OPT_ARGS_NUM);
@@ -547,6 +554,11 @@ double opt_mesh_ho_prim_surf_mesh(OPT_ARGS_NUM);
 double opt_mesh_ho_dist_cad(OPT_ARGS_NUM);
 double opt_mesh_ho_iter_max(OPT_ARGS_NUM);
 double opt_mesh_ho_pass_max(OPT_ARGS_NUM);
+double opt_mesh_ho_fast_new_algo(OPT_ARGS_NUM);
+double opt_mesh_ho_curve_outer_BL(OPT_ARGS_NUM);
+double opt_mesh_ho_max_rho(OPT_ARGS_NUM);
+double opt_mesh_ho_max_angle(OPT_ARGS_NUM);
+double opt_mesh_ho_max_in_angle(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM);
@@ -554,6 +566,7 @@ double opt_mesh_cgns_import_ignore_bc(OPT_ARGS_NUM);
 double opt_mesh_cgns_import_ignore_solution(OPT_ARGS_NUM);
 double opt_mesh_cgns_construct_topology(OPT_ARGS_NUM);
 double opt_mesh_cgns_export_cpex0045(OPT_ARGS_NUM);
+double opt_mesh_cgns_export_structured(OPT_ARGS_NUM);
 double opt_mesh_dual(OPT_ARGS_NUM);
 double opt_mesh_voronoi(OPT_ARGS_NUM);
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM);

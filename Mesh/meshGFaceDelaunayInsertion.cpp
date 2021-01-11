@@ -23,6 +23,7 @@
 #include "discreteFace.h"
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
+#include "fullMatrix.h"
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertion.h"

@@ -1,285 +1,217 @@
+#include <hxt_octree.h>
+
+#include <math.h>
 #include <iostream>
-#include <queue>
-#include <vector>
-#include <unordered_set>
 
-#include "SPoint3.h"
-#include "SVector3.h"
-#include "MTetrahedron.h"
-#include "MTriangle.h"
-#include "Numeric.h"
-#include "robustPredicates.h"
+#define MAX_DIFF 0.05 // La difference de taille max absolue sur un quadrant pour raffiner
+#define D2S_TOL 0.05
+#define ALPHA 1.40123
+#define BULK_SIZE 7.77;
 
-#include "hxt_octree.h"
-#include "hxt_boundary_recovery.h"
-#include "hxt_tools.h"
+p4est_connectivity_t *p8est_connectivity_new_cube (double c);
 
-#ifdef HAVE_P4EST
-  #include <p4est_to_p8est.h>
-  #include <p8est_iterate.h>
-  #include <p8est_extended.h>
-  #include <p8est_search.h>
-#endif
-
-#define P4EST_QMAXLEVEL 20
-#define P8EST_QMAXLEVEL 20
-
-#ifdef HAVE_P4EST
-
-static inline void norme2(double v[3], double* norme2){
-  *norme2 = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+static inline double hxtNorm2V3(double v[3]){
+  return sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+}
+  
+static double hxtOctreeBulkSize(double x, double y, double z){
+  return BULK_SIZE;
 }
 
-inline double myFun(double x, double y, double z){
-  return 3.0*x*x*x + x*y*y + 5*z*z*y;
-  // return sin(2*M_PI*x*y*z/200);
-}
-
-inline void myGrad(double x, double y, double z, double grad[3]){
-  grad[0] = 9.*x*x + y*y;
-  grad[1] = 2.*y*x + 5.*z*z;
-  grad[2] = 10.*z*y;
-  // grad[0] = 2*M_PI*y*z*cos(2*M_PI*x*y*z/200)/200;
-  // grad[1] = 2*M_PI*x*z*cos(2*M_PI*x*y*z/200)/200;
-  // grad[2] = 2*M_PI*y*x*cos(2*M_PI*x*y*z/200)/200;
-}
-
-/* Create a p4est connectivity structure for the given bounding box. */
-static p4est_connectivity_t * p8est_connectivity_new_cube(HXTForestOptions *forestOptions){
-  const p4est_topidx_t num_vertices = 8;
-  const p4est_topidx_t num_trees = 1;
-  const p4est_topidx_t num_ett = 0;
-  const p4est_topidx_t num_ctt = 0;
-
-  double centreX = (forestOptions->bbox[0]+forestOptions->bbox[3]) / 2.0;
-  double centreY = (forestOptions->bbox[1]+forestOptions->bbox[4]) / 2.0;
-  double centreZ = (forestOptions->bbox[2]+forestOptions->bbox[5]) / 2.0;
-  double cX      = (forestOptions->bbox[3]-forestOptions->bbox[0]) / 2.0;
-  double cY      = (forestOptions->bbox[4]-forestOptions->bbox[1]) / 2.0;
-  double cZ      = (forestOptions->bbox[5]-forestOptions->bbox[2]) / 2.0;
-
-  double scalingFactor = 1.5; // The octree is this times bigger than the surface mesh's bounding box
-  double c = scalingFactor * fmax(fmax(cX,cY),cZ);
-
-  // TODO : Compute any bounding box, not necessarily aligned with the axes
-  const double vertices[8 * 3] = {
-    centreX-c, centreY-c, centreZ-c,
-    centreX+c, centreY-c, centreZ-c,
-    centreX-c, centreY+c, centreZ-c,
-    centreX+c, centreY+c, centreZ-c,
-    centreX-c, centreY-c, centreZ+c,
-    centreX+c, centreY-c, centreZ+c,
-    centreX-c, centreY+c, centreZ+c,
-    centreX+c, centreY+c, centreZ+c,
-  };
-  const p4est_topidx_t tree_to_vertex[1 * 8] = {0, 1, 2, 3, 4, 5, 6, 7};
-  const p4est_topidx_t tree_to_tree[1 * 6] = {0, 0, 0, 0, 0, 0};
-  const int8_t         tree_to_face[1 * 6] = {0, 1, 2, 3, 4, 5};
-
-  return p4est_connectivity_new_copy (num_vertices, num_trees, 0, 0,
-              vertices, tree_to_vertex,
-              tree_to_tree, tree_to_face,
-              NULL, &num_ett, NULL, NULL,
-              NULL, &num_ctt, NULL, NULL);
-}
-
-static p4est_connectivity_t * p8est_connectivity_new_square(HXTForestOptions *forestOptions){
-  printf("Making a square !\n");
-  const p4est_topidx_t num_vertices = 8;
-  const p4est_topidx_t num_trees = 1;
-  const p4est_topidx_t num_ett = 0;
-  const p4est_topidx_t num_ctt = 0;
-
-  double centreX = (forestOptions->bbox[0]+forestOptions->bbox[3]) / 2.0;
-  double centreY = (forestOptions->bbox[1]+forestOptions->bbox[4]) / 2.0;
-  double cX      = (forestOptions->bbox[3]-forestOptions->bbox[0]) / 2.0;
-  double cY      = (forestOptions->bbox[4]-forestOptions->bbox[1]) / 2.0;
-
-  double scalingFactor = 1.5; // The octree is this times bigger than the surface mesh's bounding box
-  double c = scalingFactor * fmax(cX,cY);
-
-  // TODO : Compute any bounding box, not necessarily aligned with the axes
-  const double vertices[8 * 3] = {
-    centreX-c, centreY-c, 0.0,
-    centreX+c, centreY-c, 0.0,
-    centreX-c, centreY+c, 0.0,
-    centreX+c, centreY+c, 0.0,
-    centreX-c, centreY-c, 0.0,
-    centreX+c, centreY-c, 0.0,
-    centreX-c, centreY+c, 0.0,
-    centreX+c, centreY+c, 0.0,
-  };
-  const p4est_topidx_t tree_to_vertex[1 * 8] = {0, 1, 2, 3, 4, 5, 6, 7};
-  const p4est_topidx_t tree_to_tree[1 * 6] = {0, 0, 0, 0, 0, 0};
-  const int8_t         tree_to_face[1 * 6] = {0, 1, 2, 3, 4, 5};
-
-  return p4est_connectivity_new_copy (num_vertices, num_trees, 0, 0,
-              vertices, tree_to_vertex,
-              tree_to_tree, tree_to_face,
-              NULL, &num_ett, NULL, NULL,
-              NULL, &num_ctt, NULL, NULL);
-}
-
-/* Dummy callback to return the bulk size. */
-static inline double bulkSize(double x, double y, double z, double hBulk){
-  return hBulk;
-}
-
-/* Fills xyz[] with the coordinates of the center of the given tree cell. */
-static inline void getCellCenter(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q, double xyz[3]){
+static HXTStatus hxtOctreeGetCenter(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q, double xyz[3])
+{
   p4est_qcoord_t      half_length = P4EST_QUADRANT_LEN (q->level) / 2;
-  p4est_qcoord_to_vertex (p4est->connectivity, which_tree, q->x + half_length, q->y + half_length, q->z + half_length, xyz);
+  p4est_qcoord_to_vertex (p4est->connectivity, which_tree,
+                          q->x + half_length, q->y + half_length,
+  #ifdef P4_TO_P8
+                          q->z + half_length,
+  #endif
+                          xyz);
+
+  return HXT_STATUS_OK;
 }
 
-/* Fills min[] & max[] with the coordinates of the cell viewed as a bounding box. */
-static inline void getCellBBox(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q, double min[3], double max[3]){
+static HXTStatus hxtOctreeGetBboxOctant(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q, double min[3], double max[3])
+{
   p4est_qcoord_t      length = P4EST_QUADRANT_LEN (q->level);
-  p4est_qcoord_to_vertex (p4est->connectivity, which_tree, q->x, q->y, q->z, min);
-  p4est_qcoord_to_vertex (p4est->connectivity, which_tree, q->x + length, q->y + length, q->z + length, max);
+  p4est_qcoord_to_vertex (p4est->connectivity, which_tree,
+                          q->x, q->y,
+  #ifdef P4_TO_P8
+                          q->z,
+  #endif
+                          min);
+
+  p4est_qcoord_to_vertex (p4est->connectivity, which_tree,
+                          q->x + length, q->y + length,
+  #ifdef P4_TO_P8
+                          q->z + length,
+  #endif
+                          max);
+
+  return HXT_STATUS_OK;
 }
 
-/* Fills h with the dimension of the given cell (length of a cell edge). */
-static void getCellSize(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q, double *h)
+static HXTStatus hxtOctreeGetOctantSize(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q, double *h)
 {
   double min[3], max[3];
   p4est_qcoord_t      length = P4EST_QUADRANT_LEN (q->level);
-  p4est_qcoord_to_vertex (p4est->connectivity, which_tree, q->x, q->y, q->z, min);
-  p4est_qcoord_to_vertex (p4est->connectivity, which_tree, q->x + length, q->y + length, q->z + length, max);
-  // All cell edges are supposed to be the same length h (-:
+  p4est_qcoord_to_vertex (p4est->connectivity, which_tree,
+                          q->x, q->y,
+  #ifdef P4_TO_P8
+                          q->z,
+  #endif
+                          min);
+
+  p4est_qcoord_to_vertex (p4est->connectivity, which_tree,
+                          q->x + length, q->y + length,
+  #ifdef P4_TO_P8
+                          q->z + length,
+  #endif
+                          max);
+  
   *h = fmax(max[0] - min[0],fmax(max[1] - min[1],max[2] - min[2]));
+
+  return HXT_STATUS_OK;
 }
 
-/* Callback used by p4est to initialize the user_data on each tree cell. */
-static inline void initializeCell(p4est_t* p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
-  HXTForestOptions  *forestOptions = (HXTForestOptions *) p4est->user_pointer;
-  size_data_t       *data = (size_data_t *) q->p.user_data;
+static void hxtOctreeSetInitialSize(p4est_t* p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
 
-  double center[3]; 
-  getCellCenter(p4est, which_tree, q, center);
+    // size_fun_t  *fun  = (size_fun_t *) p4est->user_pointer;
+    size_data_t *data = (size_data_t *) q->p.user_data;
 
-  // Set cell size 
-  data->size = forestOptions->sizeFunction(center[0], center[1], center[2], forestOptions->hbulk);
-  // Set size gradient to zero
-  for(int i = 0; i < P4EST_DIM; ++i) data->ds[i] = 0.0;
-  // Set cell dimension (edge length)
-  getCellSize(p4est, which_tree, q, &(data->h));
+    double center[3];
+
+    hxtOctreeGetCenter(p4est, which_tree, q, center);
+
+    // HXTForestOptions *forestOptions = (HXTForestOptions *) p4est->user_pointer;
+    // double (*size_fun)(double, double, double) = (double (*)(double, double, double)) forestOptions->sizeFunction;
+    // std::cout<<"Dans initialsize 1 : "<<p4est->user_pointer<<std::endl;
+    double (*size_fun)(double, double, double) = (double (*)(double, double, double)) p4est->user_pointer;
+    // std::cout<<"Dans initialsize 2 : "<<&size_fun<<std::endl;
+    // std::cout<<size_fun(0,0,0)<<std::endl;
+
+    data->size = size_fun(center[0], center[1], center[2]);
+
+    for(int i = 0; i < P4EST_DIM; ++i){
+        data->ds[i] = 0.0;
+    }
+
+    data->d2s = 0;
+
+    // Initialisation des tailles à partir des donnees du demi-quadrant;
+    // double h = (double) P4EST_QUADRANT_LEN (q->level) / (double) P4EST_ROOT_LEN /2;
+    hxtOctreeGetOctantSize(p4est, which_tree, q, &(data->h));
+    // data->h /= 2.0;
+
+    data->h_xL = data->h/2;
+    data->h_xR = data->h/2;
+    data->h_yD = data->h/2;
+    data->h_yU = data->h/2;
+
+    data->h_xavg = 0;
+    data->h_yavg = 0;
+
+#ifdef P4_TO_P8
+    data->h_zB = data->h/2;
+    data->h_zT = data->h/2;
+    data->h_zavg = 0;
+#endif
+
+    data->refineFlag = 0;
 }
 
-/* Creates (allocates) the forestOptions structure. */
 HXTStatus hxtForestOptionsCreate(HXTForestOptions **forestOptions){
-  HXT_CHECK( hxtAlignedMalloc (forestOptions, sizeof(HXTForestOptions)) );
+
+  HXT_CHECK( hxtMalloc (forestOptions, sizeof(HXTForestOptions)) );
     if(*forestOptions == NULL) return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+
   return HXT_STATUS_OK;
 }
 
-/* Destroys forestOptions. */
 HXTStatus hxtForestOptionsDelete(HXTForestOptions **forestOptions){
+
   HXT_CHECK(hxtFree(forestOptions));
-  return HXT_STATUS_OK;
-}
-
-HXTStatus loadGlobalData(HXTForestOptions *forestOptions, const char *filename){
-
-  FILE* f = fopen(filename,"r");
-  char buf[BUFSIZ]={""};
-  if(fgets(buf,BUFSIZ,f) == NULL){
-    return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-  }
-  sscanf(buf, "%lf %lf", &forestOptions->hmin, &forestOptions->hmax);
-  fclose(f);
-  Msg::Info("Loaded global data from %s",filename);
-  Msg::Info("Min size = %f", forestOptions->hmin);
-  Msg::Info("Max size = %f", forestOptions->hmax);
-  return HXT_STATUS_OK;
-}
-
-/* Creates a (sequential) forest structure by loading a p4est file. */
-HXTStatus hxtForestLoad(HXTForest **forest, const char* forestFile, const char *dataFile, HXTForestOptions *forestOptions){
-  if(forestFile == NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-  HXT_CHECK( hxtMalloc(forest, sizeof(HXTForest)) );
-  if(*forest == NULL) return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
-
-  // std::string globalDataFile = std::string(forestOptions->forestFile) + ".data";
-  // HXT_CHECK(loadGlobalData(forestOptions, globalDataFile.c_str()));
-  HXT_CHECK(loadGlobalData(forestOptions, dataFile));
-
-  p4est_connectivity_t *connect;
-  sc_MPI_Comm mpicomm = sc_MPI_COMM_WORLD;
-  int load_data = true;
-  int autopartition = true;
-  int broadcasthead = true;
-
-  (*forest)->p4est = p4est_load_ext(forestFile, mpicomm, sizeof(size_data_t), load_data, autopartition, broadcasthead, (void*) forestOptions, &connect);
-
-  // p4est_search((*forest)->p4est, loadMinSize, NULL, NULL);
-
-  HXTForestOptions *fO = (HXTForestOptions*) (*forest)->p4est->user_pointer;
-
-  assert(fO != NULL);
 
   return HXT_STATUS_OK;
 }
 
-static bool rtreeCallback(uint64_t id, void *ctx) {
-  std::vector<uint64_t>* vec = reinterpret_cast< std::vector<uint64_t>* >(ctx);
-  vec->push_back(id);
-  return true;
-}
-
-/* Creates a (sequential) forest structure from the forestOptions information. 
-   The forest is not refined; it consists of the root octant.                   */
+// HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char* filename, void *user_pointer){
+// HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char* filename, double *bbox, RTree<int,double,3> *triRTree, double *nodalCurvature, void *user_pointer){
 HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char* filename, HXTForestOptions *forestOptions){
 
-  HXT_CHECK( hxtMalloc (forest, sizeof(HXTForest)) );
-  if(*forest == NULL) return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+    HXT_CHECK( hxtMalloc (forest, sizeof(HXTForest)) );
+    if(*forest == NULL) return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
 
-  int mpiret, balance;
-  sc_MPI_Comm mpicomm;
-  p4est_connectivity_t *connect;
+    int mpiret;
+    int balance;
+    sc_MPI_Comm mpicomm;
+    p4est_connectivity_t *connect;
 
-  /* Initialize MPI; see sc_mpi.h.
-   * If configure --enable-mpi is given these are true MPI calls.
-   * Else these are dummy functions that simulate a single-processor run. */
-  mpiret = sc_MPI_Init (&argc, &argv);
-  SC_CHECK_MPI(mpiret);
-  mpicomm = sc_MPI_COMM_WORLD;
+    /* Initialize MPI; see sc_mpi.h.
+     * If configure --enable-mpi is given these are true MPI calls.
+     * Else these are dummy functions that simulate a single-processor run. */
+    mpiret = sc_MPI_Init (&argc, &argv);
+    SC_CHECK_MPI(mpiret);
+    mpicomm = sc_MPI_COMM_WORLD;
 
-  /* These functions are optional.  If called they store the MPI rank as a
-   * static variable so subsequent global p4est log messages are only issued
-   * from processor zero.  Here we turn off most of the logging; see sc.h. */
-  // sc_init(mpicomm, 1, 1, NULL, SC_LP_ESSENTIAL);
-  // p4est_init(NULL, SC_LP_PRODUCTION);
+    /* These functions are optional.  If called they store the MPI rank as a
+     * static variable so subsequent global p4est log messages are only issued
+     * from processor zero.  Here we turn off most of the logging; see sc.h. */
+    sc_init(mpicomm, 1, 1, NULL, SC_LP_ESSENTIAL);
+    p4est_init(NULL, SC_LP_PRODUCTION);
 
-  /* Create a connectivity from the bounding box */
-  if(forestOptions->dim == 3){ connect = p8est_connectivity_new_cube(forestOptions); }
-  if(forestOptions->dim == 2){ connect = p8est_connectivity_new_square(forestOptions); }
+    /* Create a forest from the inp file with name filename  */
+    // connect = p4est_connectivity_read_inp(filename);
+    // connect = p4est_connectivity_load(filename, NULL);
+    #ifdef P4_TO_P8
+    //    std::cout<<"3D connectivity"<<std::endl;
+    // connect = p8est_connectivity_new_cube(forestOptions->bbox[0],forestOptions->bbox[1],forestOptions->bbox[2],
+                                          // forestOptions->bbox[3],forestOptions->bbox[4],forestOptions->bbox[5]);
+    double coordMin = fmin(fmin(forestOptions->bbox[0],forestOptions->bbox[1]),forestOptions->bbox[2]);
+    double coordMax = fmax(fmax(forestOptions->bbox[3],forestOptions->bbox[4]),forestOptions->bbox[5]);
 
-  if(connect == NULL)return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
+    connect = p8est_connectivity_new_cube(coordMax);
+    #else
+    //    std::cout<<"2D connectivity"<<std::endl;
+    // Sera éliminé plus tard pour ne plus devoir écrire un fichier inp.
+    connect = p4est_connectivity_read_inp(filename);
+    #endif
 
-// #ifdef P4EST_WITH_METIS
-//   //  Use metis (if p4est is compiled with the flag '--with-metis') to
-//   //  * reorder the connectivity for better parititioning of the forest
-//   //  * across processors. 
-//   p4est_connectivity_reorder(mpicomm, 0, conn, P4EST_CONNECT_FACE);
-// #endif /* P4EST_WITH_METIS */
+    if(connect == NULL)return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
 
-  // Assign bulkSize callback if no sizeFunction is specified.
-  if(forestOptions->sizeFunction == NULL) forestOptions->sizeFunction = &bulkSize;
+    #ifdef P4EST_WITH_METIS
+    //  Use metis (if p4est is compiled with the flag '--with-metis') to
+    //  * reorder the connectivity for better parititioning of the forest
+    //  * across processors. 
+    p4est_connectivity_reorder(mpicomm, 0, conn, P4EST_CONNECT_FACE);
+    #endif /* P4EST_WITH_METIS */
 
-  (*forest)->p4est = p4est_new(mpicomm, connect, sizeof(size_data_t), initializeCell, (void*) forestOptions);
-  (*forest)->forestOptions = forestOptions;
+    /* Create a forest that is not refined; it consists of the root octant. */
+    // std::cout<<"Dans forestCreate 1 : "<<reinterpret_cast<double (*)(double, double, double)>(*(forestOptions->sizeFunction))<<std::endl;
+    // std::cout<<"Dans forestCreate 1 : "<<(void *) forestOptions->sizeFunction<<std::endl;
+    // std::cout<<forestOptions->sizeFunction(0,0,0)<<std::endl;
 
-  return HXT_STATUS_OK;
+    if(forestOptions->sizeFunction == NULL) forestOptions->sizeFunction = &hxtOctreeBulkSize;
+
+    // std::cout<<"Dans forestCreate 2 : "<<&(forestOptions->sizeFunction)<<std::endl;
+    // std::cout<<forestOptions->sizeFunction(0,0,0)<<std::endl;
+
+    (*forest)->p4est = p4est_new(mpicomm, connect, sizeof(size_data_t), hxtOctreeSetInitialSize, (void *)forestOptions->sizeFunction);
+    (*forest)->forestOptions = forestOptions;
+
+    // std::cout<<"Après la creation : "<<&(forestOptions->sizeFunction)<<std::endl;
+    // std::cout<<forestOptions->sizeFunction(0,0,0)<<std::endl;
+
+    return HXT_STATUS_OK;
 }
 
-/* Deletes the forest structure. */
 HXTStatus hxtForestDelete(HXTForest **forest){
     /* Destroy the p4est structure. */
     p4est_connectivity_destroy((*forest)->p4est->connectivity);
     p4est_destroy((*forest)->p4est);
     /* Verify that allocations internal to p4est and sc do not leak memory.
      * This should be called if sc_init () has been called earlier. */
-    // sc_finalize();
+    sc_finalize();
     /* This is standard MPI programs.  Without --enable-mpi, this is a dummy. */
     int mpiret = sc_MPI_Finalize();
     SC_CHECK_MPI(mpiret);
@@ -289,262 +221,276 @@ HXTStatus hxtForestDelete(HXTForest **forest){
     return HXT_STATUS_OK;
 }
 
-/* ========================================================================================================
-   FOREST REFINEMENT
-   ======================================================================================================== */
-
-/* Callback used by hxtOctreeRefineToBulkSize; returns 1 if the cells need refinement, 0 otherwise. */
-static inline int refineToBulkSizeCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
-  HXTForestOptions *forestOptions = (HXTForestOptions *) p4est->user_pointer;
-  size_data_t *data = (size_data_t *) q->p.user_data;
-  return data->h > forestOptions->hbulk;
+static int hxtOctreeRefineToLevelCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
+  return true;
 }
 
-/* Used by curvatureRefine; returns 1 if the cell should be
-   refined according to the surface mesh curvature, 0 otherwise. */
-static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
-  size_data_t        *data = (size_data_t *) q->p.user_data;
-  HXTForestOptions   *forestOptions = (HXTForestOptions *) p4est->user_pointer;
-
-  double h;
-  getCellSize(p4est, which_tree, q, &h);
-  double center[3]; 
-  getCellCenter(p4est, which_tree, q, center);
-
-  if(forestOptions->dim == 3){
-    double min[3], max[3];
-    getCellBBox(p4est, which_tree, q, min, max);
-
-    std::vector<uint64_t> candidates;  
-    forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
-
-    if(!candidates.empty()){
-      double kmax = -1.e22;
-      double kmin =  1.e22;
-      for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
-        for(int i = 0; i < 3; ++i){
-          int node = forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
-
-          double *v1 = forestOptions->nodalCurvature + 6*node;
-          double *v2 = forestOptions->nodalCurvature + 6*node + 3;
-
-          double k1, k2;
-          norme2(v1, &k1);
-          norme2(v2, &k2);
-
-          kmax = fmax(kmax,fmax(k1,k2));
-          kmin = fmin(kmin,fmin(k1,k2));
-        }
-      }
-
-      // No curvature : should be OK because of refineToBulk ?
-      if(fabs(kmax) < 1e-3){
-          return 0;
-      } else{
-        // There is curvature : the cell size should accurately represent the surface
-        // Cell is refined according to the chosen density of nodes
-        double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
-        double nElemPerCell = 2;
-
-        if(h > hc/nElemPerCell && h >= forestOptions->hmin_octree){
-          return 1;
-        } else{
-          return 0;
-        }
-      }
-    } else{ // candidates.empty()
-      // If the cell has no intersection with any triangle of the surface mesh, it is not refined.
-      return 0;
-    }
-  } else{
-    // 2D
-    double kmax = -1.e22;
-    double x, y;
-    bool inbox;
-
-    // Calculer kmax sur toutes les courbes
-    int n = 10;
-    double par[n];
-    for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n; 
-
-    for(uint16_t i = 0; i < (*forestOptions->curvFunctions).size(); ++i){
-      for(uint16_t j = 0; j < n; ++j){
-        x = (*forestOptions->xFunctions)[i](par[j]);
-        y = (*forestOptions->yFunctions)[i](par[j]);
-        inbox  = (x <= center[0] + h/2.) && (x >= center[0] - h/2.);
-        inbox &= (y <= center[1] + h/2.) && (y >= center[1] - h/2.);
-        if(inbox) kmax = fmax(kmax, fabs((*forestOptions->curvFunctions)[i](par[j])));
-      }
-    }
-    
-    if(kmax > 0){
-      if(kmax < 1e-3){
-        return 0;
-      } else{
-        double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
-        int nElemPerCell = 1;
-         if(h > hc/nElemPerCell && h >= forestOptions->hmin_octree){
-          return 1;
-        } else{
-          return 0;
-        }
-      }
-    } else{
-      return 0;
-    }
-   
-  }
-}
-
-static int coarsenCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *children[]){
-  HXTForestOptions *forestOptions = (HXTForestOptions *) p4est->user_pointer;
-
-  for(int n = 0; n < P4EST_CHILDREN; ++n){
-    size_data_t *data = (size_data_t *) children[n]->p.user_data;
-    
-    double min[3], max[3];
-    getCellBBox(p4est, which_tree, children[n], min, max);
-
-    std::vector<uint64_t> candidates;  
-    forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
-
-    // Cells are not merged if any one of them touches the surface mesh.
-    if(!candidates.empty()) return 0;
-    // Cells are not merged if the resulting cell size is > than hbulk.
-    if(2.0*data->h > forestOptions->hbulk) return 0;
-  }
-
-  return 1;
-}
-
-static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *user_data){
-  p4est_t            *p4est = info->p4est;
-  p4est_quadrant_t   *q = info->quad;
-  p4est_topidx_t      which_tree = info->treeid;
-  size_data_t        *data = (size_data_t *) q->p.user_data;
-  HXTForestOptions   *forestOptions = (HXTForestOptions *) user_data;
-
-  double h;
-  getCellSize(p4est, which_tree, q, &h);
-  double center[3]; 
-  getCellCenter(p4est, which_tree, q, center);
-
-  if(forestOptions->dim == 3){
-    double min[3], max[3];
-    getCellBBox(p4est, which_tree, q, min, max);
-
-    std::vector<uint64_t> candidates;  
-    forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
-
-    if(!candidates.empty()){
-      double kmax = -1.0e22;
-      for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
-        for(int i = 0; i < 3; ++i){
-          int node = forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
-
-          double *v1 = forestOptions->nodalCurvature + 6*node;
-          double *v2 = forestOptions->nodalCurvature + 6*node + 3;
-
-          double k1, k2;
-          norme2(v1, &k1);
-          norme2(v2, &k2);
-
-          kmax = fmax(kmax,fmax(k1,k2));
-        }
-      }
-      data->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, 2*M_PI/(forestOptions->nodePerTwoPi * kmax)));
-      // data->size = kmax;
-    }
-    else{
-      data->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, data->size));
-    }
-  } else{
-    // 2D
-    double kmax = -1.e22;
-    double x, y;
-    bool inbox;
-
-    // Calculer kmax sur toutes les courbes
-    int n = 10;
-    double par[n];
-    for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n; 
-
-    for(uint16_t i = 0; i < (*forestOptions->curvFunctions).size(); ++i){
-      for(uint16_t j = 0; j < n; ++j){
-        x = (*forestOptions->xFunctions)[i](par[j]);
-        y = (*forestOptions->yFunctions)[i](par[j]);
-        inbox  = (x <= center[0] + h/2.) && (x >= center[0] - h/2.);
-        inbox &= (y <= center[1] + h/2.) && (y >= center[1] - h/2.);
-        if(inbox) kmax = fmax(kmax, fabs((*forestOptions->curvFunctions)[i](par[j])));
-      }
-    }
-    
-    if(kmax > 0){
-      double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
-      data->size = fmin(data->size, hc);
-    }
-  }
-  // double center[3];
-  // getCellCenter(p4est, which_tree, q, center);
-  // // data->size = 10.0 + 0.432105*(center[0]*center[0]+center[1]*center[1]+center[2]*center[2]);
-  // data->size = myFun(center[0], center[1], center[2]);
-  // data->size = forestOptions->hbulk/10.;
-}
-
-static inline int refineOnce(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
-  return 1;
-}
-
-HXTStatus hxtForestRefine(HXTForest *forest){
-  /* Refine recursively the tree until all cells' size is at most hbulk. */
-  p4est_refine_ext(forest->p4est, 1, P4EST_QMAXLEVEL, refineToBulkSizeCallback, initializeCell, NULL);
-  // Refine recursively with respect to the curvature
-  p4est_refine_ext(forest->p4est, 1, P4EST_QMAXLEVEL, curvatureRefineCallback, initializeCell, NULL);
-  // Coarsen
-  // p4est_coarsen_ext(forest->p4est, 1, 0, coarsenCallback, initializeCell, NULL);
-  // Balance the octree to get 2:1 ratio between adjacent cells
-  p4est_balance_ext(forest->p4est, P4EST_CONNECT_FACE, initializeCell, NULL);
-  // Assign size on the new cells
-  p4est_iterate(forest->p4est, NULL, forest->forestOptions, assignSizeAfterRefinement, NULL, NULL, NULL);
-
+HXTStatus hxtOctreeRefineToLevel(HXTForest *forest, int lvl){
+  for(int i = 0; i < lvl; ++i)
+    p4est_refine(forest->p4est, 0, hxtOctreeRefineToLevelCallback, hxtOctreeSetInitialSize);
+  
   return HXT_STATUS_OK;
 }
 
-HXTStatus hxtForestRefineToBulk(HXTForest *forest){
-  /* Refine recursively the tree until all cells' size is at most hbulk. */
-  p4est_refine_ext(forest->p4est, 1, P4EST_QMAXLEVEL, refineToBulkSizeCallback, initializeCell, NULL);
-  // Balance the octree to get 2:1 ratio between adjacent cells
-  p4est_balance_ext(forest->p4est, P4EST_CONNECT_FACE, initializeCell, NULL);
-  // Assign size on the new cells
-  // p4est_iterate(forest->p4est, NULL, forest->forestOptions, assignSizeAfterRefinement, NULL, NULL, NULL);
-
-  return HXT_STATUS_OK;
+HXTStatus hxtOctreeBalance(HXTForest *forest){
+    p4est_balance(forest->p4est, P4EST_CONNECT_FACE, hxtOctreeSetInitialSize);
+    return HXT_STATUS_OK;
 }
 
-HXTStatus hxtForestRefineOneLevel(HXTForest *forest){
-  p4est_refine_ext(forest->p4est, 0, P4EST_QMAXLEVEL, refineOnce, initializeCell, NULL);
-  p4est_iterate(forest->p4est, NULL, forest->forestOptions, assignSizeAfterRefinement, NULL, NULL, NULL);
-  return HXT_STATUS_OK;
+static int hxtOctreeRefineSizeCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
+
+    double center[3];
+    hxtOctreeGetCenter(p4est, which_tree, q, center);
+
+    
+    
+
+    double (*size_fun)(double, double, double) = (double (*)(double, double, double)) p4est->user_pointer;
+
+    size_data_t *data = (size_data_t *) q->p.user_data;
+
+    // double h = (double) P4EST_QUADRANT_LEN (q->level) / (double) P4EST_ROOT_LEN / 2;
+    double h = data->h;
+
+    double diff_max = 0, size_center = data->size, size_loc;
+
+    #define NSAMPLE 4
+
+    #ifdef P4_TO_P8
+        for(int i = 0; i < NSAMPLE; ++i){
+            for(int j = 0; j < NSAMPLE; ++j){
+                for(int k = 0; k < NSAMPLE; ++k){
+                    size_loc = size_fun(center[0] + (NSAMPLE*(i-1)+1) * h/2/NSAMPLE, center[1] + (NSAMPLE*(j-1)+1) * h/2/NSAMPLE, center[2] + (NSAMPLE*(k-1)+1) * h/2/NSAMPLE);
+                    diff_max = fmax(diff_max, fabs(size_center - size_loc));
+                }
+            }
+        }
+    #else
+        for(int i = 0; i < NSAMPLE; ++i){
+            for(int j = 0; j < NSAMPLE; ++j){
+                size_loc = size_fun(center[0] + (NSAMPLE*(i-1)+1) * h/2/NSAMPLE, center[1] + (NSAMPLE*(j-1)+1) * h/2/NSAMPLE, 0.0);
+                diff_max = fmax(diff_max, fabs(size_center - size_loc));
+            }
+        }
+    #endif
+
+    return diff_max > MAX_DIFF;
 }
 
-/* ========================================================================================================
-   SIZE GRADIENT COMPUTATION & SMOOTHING
-   ======================================================================================================== */
-static inline void resetCell(p4est_iter_volume_info_t * info, void *user_data){
-    size_data_t *data = (size_data_t *) info->quad->p.user_data;
-    // Reset gradient.
-    for(int i = 0; i < P4EST_DIM; ++i) data->ds[i] = 0.0;
+static int hxtOctreeCoarsenSizeCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *children[]){
+    
+    double diff_max = 0;
+
+    for(int n = 0; n < P4EST_CHILDREN; ++n){
+
+        double center[3];
+        hxtOctreeGetCenter(p4est, which_tree, children[n], center);
+
+        double (*size_fun)(double, double, double) = (double (*)(double, double, double)) p4est->user_pointer;
+
+        size_data_t *data = (size_data_t *) children[n]->p.user_data;
+
+        // double h = (double) P4EST_QUADRANT_LEN (children[n]->level) / (double) P4EST_ROOT_LEN / 2;
+        double h = data->h;
+
+        double size_center = data->size, size_loc;
+
+        #ifdef P4_TO_P8
+            for(int i = 0; i < NSAMPLE; ++i){
+                for(int j = 0; j < NSAMPLE; ++j){
+                    for(int k = 0; k < NSAMPLE; ++k){
+                        size_loc = size_fun(center[0] + (NSAMPLE*(i-1)+1) * h/2/NSAMPLE, center[1] + (NSAMPLE*(j-1)+1) * h/2/NSAMPLE, center[2] + (NSAMPLE*(k-1)+1) * h/2/NSAMPLE);
+                        diff_max = fmax(diff_max, fabs(size_center - size_loc));
+                    }
+                }
+            }
+        #else
+            for(int i = 0; i < NSAMPLE; ++i){
+                for(int j = 0; j < NSAMPLE; ++j){
+                    size_loc = size_fun(center[0] + (NSAMPLE*(i-1)+1) * h/2/NSAMPLE, center[1] + (NSAMPLE*(j-1)+1) * h/2/NSAMPLE, 0.0);
+                    diff_max = fmax(diff_max, fabs(size_center - size_loc));
+                }
+            }
+        #endif
+
+    }
+
+    return diff_max < MAX_DIFF;
 }
 
-static void computeGradientCenter(p4est_iter_face_info_t * info, void *user_data){
+HXTStatus hxtOctreeRefineSizeVariation(HXTForest *forest, int recursive){
+    p4est_refine(forest->p4est, recursive, hxtOctreeRefineSizeCallback, hxtOctreeSetInitialSize);
+    return HXT_STATUS_OK;
+}
+
+HXTStatus hxtOctreeCoarsenSizeVariation(HXTForest *forest, int recursive){
+    p4est_coarsen(forest->p4est, recursive, hxtOctreeCoarsenSizeCallback, hxtOctreeSetInitialSize);
+    return HXT_STATUS_OK;
+}
+
+HXTStatus hxtOctreeInitialRefine(HXTForest *forest, int nRefine){
+    for(int i = 0; i < nRefine; ++i){
+        HXT_CHECK(hxtOctreeRefineSizeVariation(forest, 0));
+        HXT_CHECK(hxtOctreeCoarsenSizeVariation(forest, 0));
+        HXT_CHECK(hxtOctreeBalance(forest));
+    }
+    return HXT_STATUS_OK;
+}
+
+static int hxtRefineLaplacianCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
+    size_data_t *data = (size_data_t *) q->p.user_data;
+    return (data->d2s * data->h * data->h > D2S_TOL);
+}
+
+// HXTStatus hxtOctreeRefineLaplacian(HXTForest *forest){
+    // Ne peut pas être raffiné récursivement : il faut calculer le laplacien après chaque raffinement
+    // p4est_refine(forest->p4est, 0, hxtRefineLaplacianCallback, hxtOctreeSetInitialSize);
+    // return HXT_STATUS_OK;
+// }
+
+static int hxtCoarsenLaplacianCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *children[]){
+
+    double err_max = 0.0;
+
+    for(int n = 0; n < P4EST_CHILDREN; ++n){
+        size_data_t *data = (size_data_t *) children[n]->p.user_data;
+        err_max = fmax(err_max, fabs(data->d2s * data->h * data->h));
+    }
+    return err_max < D2S_TOL;
+}
+
+HXTStatus hxtOctreeCoarsenLaplacian(p4est_t *p4est, int recursive){
+    p4est_coarsen(p4est, recursive, hxtCoarsenLaplacianCallback, hxtOctreeSetInitialSize);
+    return HXT_STATUS_OK;
+}
+
+// static void hxtOctreeComputeGradientFaces(p4est_iter_face_info_t * info, void *user_data){
+    
+//     p4est_iter_face_side_t *side[2];
+//     sc_array_t             *sides = &(info->sides);
+//     size_data_t            *ghost_data = (size_data_t *) user_data;
+//     size_data_t            *size_data;
+//     p4est_quadrant_t       *quad;
+//     double                  s_avg[2];
+//     double                  h[2];
+//     double                  ds_est, ds_old;
+//     int                     which_dir;
+
+//     P4EST_ASSERT(sides->elem_count == 2);
+
+//     side[0] = p4est_iter_fside_array_index_int (sides, 0);
+//     side[1] = p4est_iter_fside_array_index_int (sides, 1);
+
+//     which_dir = side[0]->face / 2;        /* 0 == x, 1 == y, 2 == z */
+
+//     if(sides->elem_count == 2){
+//         // std::cout<<"Intérieur"<<std::endl;
+//         for(int i = 0; i < 2; i++) {
+//             s_avg[i] = 0;
+//             if (side[i]->is_hanging) {
+//                 /* there are 2^(d-1) (P4EST_HALF) subfaces */
+//                 for(int j = 0; j < P4EST_HALF; j++) {
+//                     quad = side[i]->is.hanging.quad[j];
+//                     h[i] = (double) P4EST_QUADRANT_LEN (quad->level) / (double) P4EST_ROOT_LEN /2;
+//                     if (side[i]->is.hanging.is_ghost[j]) {
+//                         size_data = &ghost_data[side[i]->is.hanging.quadid[j]];
+//                     }
+//                     else {
+//                         size_data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+//                     }
+//                     s_avg[i] += size_data->size;
+//                 }
+
+//                 s_avg[i] /= P4EST_HALF;
+//             }
+//             else {
+//                 quad = side[i]->is.full.quad;
+//                 h[i] = (double) P4EST_QUADRANT_LEN (quad->level) / (double) P4EST_ROOT_LEN /2;
+//                 if(side[i]->is.full.is_ghost) {
+//                     size_data = &ghost_data[side[i]->is.full.quadid];
+//                 }
+//                 else{
+//                     size_data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+//                 }
+            
+//                 s_avg[i] = size_data->size;
+//             }
+//         }
+
+//         ds_est = (s_avg[1] - s_avg[0]) / ((h[0] + h[1]) / 2.);
+  
+//         for (int i = 0; i < 2; i++) {
+//             if (side[i]->is_hanging) {
+//                  there are 2^(d-1) (P4EST_HALF) subfaces 
+//                 for (int j = 0; j < P4EST_HALF; j++) {
+//                     quad = side[i]->is.hanging.quad[j];
+//                     if (!side[i]->is.hanging.is_ghost[j]) {
+//                         size_data = (size_data_t *) quad->p.user_data;
+//                         // ds_old = size_data->ds[which_dir];
+//                         // if (ds_old == ds_old) {
+//                         // /* there has already been an update */
+//                         //     if (ds_est * ds_old >= 0.) {
+//                         //         if (fabs (ds_est) < fabs (ds_old)) {
+//                         //             size_data->ds[which_dir] = ds_est;
+//                         //         }
+//                         //     }
+//                         //     else {
+//                         //         size_data->ds[which_dir] = 0.;
+//                         //     }
+//                         // }
+//                         // else {
+//                             size_data->ds[which_dir] = ds_est;
+//                         // }
+//                     }
+//                 }
+//             }
+//             else {
+//                 quad = side[i]->is.full.quad;
+//                 if (!side[i]->is.full.is_ghost) {
+//                     size_data = (size_data_t *) quad->p.user_data;
+//                     // ds_old = size_data->ds[which_dir];
+//                     // if (ds_old == ds_old) {
+//                     //     /* there has already been an update */
+//                     //     if (ds_est * ds_old >= 0.) {
+//                     //         if (fabs (ds_est) < fabs (ds_old)) {
+//                     //             size_data->ds[which_dir] = ds_est;
+//                     //         }
+//                     //     }
+//                     //     else {
+//                     //         size_data->ds[which_dir] = 0.;
+//                     //     }
+//                     // }
+//                     // else {
+//                         size_data->ds[which_dir] = ds_est;
+//                     // }
+//                 }
+//             }
+//         }
+
+//         // }
+//     }
+//     else{
+//         // std::cout<<"Frontière ?"<<std::endl;
+//         // std::cout<<side[1]->is.full.is_ghost<<std::endl;
+//         // std::cout<<side[1]->is.full.quadid<<std::endl;
+//         // std::cout<<(int) side[0]->face<<std::endl;
+//         // std::cout<<(int) side[1]->face<<std::endl;
+//     }
+// }
+
+static void hxtOctreeComputeGradientCenter(p4est_iter_face_info_t * info, void *user_data){
+
     p4est_iter_face_side_t *side[2];
     sc_array_t             *sides = &(info->sides);
-    size_data_t            *data;
-    size_data_t            *data_opp;
-    double                  s_avg, s[4], s_sum;
+    // size_data_t            *ghost_data = (size_data_t *) user_data;
+    size_data_t            *size_data;
+    size_data_t            *size_data_opp;
+    double                  s_avg;
+    double                  h;
     int                     which_face;
     int                     which_face_opp;
-    // Index of current face on the opposite cell (0 if current is 1 and vice versa).
+
+    // Indice de l'autre côté de la face (0 si 1 et 1 si 0)
     int                     iOpp; 
 
     side[0] = p4est_iter_fside_array_index_int (sides, 0);
@@ -552,272 +498,1155 @@ static void computeGradientCenter(p4est_iter_face_info_t * info, void *user_data
 
     if(sides->elem_count == 2){
 
-      for(int i = 0; i < 2; i++){
-        iOpp = 1 - i;
-        which_face_opp = side[iOpp]->face; /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
+        for(int i = 0; i < 2; i++) {
+            // Indice dans side[] de la face opposée
+            iOpp = 1 - i;
 
-        // s_avg is the average size on the P4EST_HALF opposite cells
-        s_avg = s_sum = 0;
+            which_face_opp = side[iOpp]->face;     /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
 
-        // Current cells are hanging
-        if (side[i]->is_hanging){
-          for(int j = 0; j < P4EST_HALF; j++){
-            data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
-            s_avg += data->size;
-          }
-          s_sum = s_avg;
-          s_avg /= P4EST_HALF;
+            s_avg = 0;
+            if (side[i]->is_hanging) {
+                /* there are 2^(d-1) (P4EST_HALF) subfaces */
+                for(int j = 0; j < P4EST_HALF; j++) {
 
-          data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+                    size_data     = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+                    size_data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+                
+                    s_avg += size_data->size;
+                }
 
-          switch(which_face_opp){
-            case 0 : data_opp->ds[0] -= 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-            case 1 : data_opp->ds[0] += 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-            case 2 : data_opp->ds[1] -= 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-            case 3 : data_opp->ds[1] += 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-            case 4 : data_opp->ds[2] -= 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-            case 5 : data_opp->ds[2] += 0.5 * (s_avg - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-          }
+                // Calcul de la valeur moyenne sur les P4EST_HALF quadrants courants
+                s_avg /= P4EST_HALF;
+
+                switch(which_face_opp){
+                    case 0 :    size_data_opp->ds[0] -= s_avg; break;
+                    case 1 :    size_data_opp->ds[0] += s_avg; break;
+                    case 2 :    size_data_opp->ds[1] -= s_avg; break;
+                    case 3 :    size_data_opp->ds[1] += s_avg; break;
+                #ifdef P4_TO_P8
+                    case 4 :    size_data_opp->ds[2] -= s_avg; break;
+                    case 5 :    size_data_opp->ds[2] += s_avg; break;
+                #endif
+                    default :
+                        std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                }
+            }
+            else {
+
+                size_data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+                s_avg = size_data->size;
+
+                if(side[iOpp]->is_hanging){
+                    // Full - Oppose hanging
+                    for(int j = 0; j < P4EST_HALF; ++j){
+                        size_data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
+
+                        switch(which_face_opp){
+                            case 0 :    size_data_opp->ds[0] -= s_avg; break;
+                            case 1 :    size_data_opp->ds[0] += s_avg; break;
+                            case 2 :    size_data_opp->ds[1] -= s_avg; break;
+                            case 3 :    size_data_opp->ds[1] += s_avg; break;
+                        #ifdef P4_TO_P8
+                            case 4 :    size_data_opp->ds[2] -= s_avg; break;
+                            case 5 :    size_data_opp->ds[2] += s_avg; break;
+                        #endif
+                            default :
+                                std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                        }
+                    }
+                    
+                }
+                else{
+                    // Full - Oppose full
+                    size_data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+
+                    switch(which_face_opp){
+                        case 0 :    size_data_opp->ds[0] -= s_avg;  break;
+                        case 1 :    size_data_opp->ds[0] += s_avg;  break;
+                        case 2 :    size_data_opp->ds[1] -= s_avg;  break;
+                        case 3 :    size_data_opp->ds[1] += s_avg;  break;
+                    #ifdef P4_TO_P8
+                        case 4 :    size_data_opp->ds[2] -= s_avg; break;
+                        case 5 :    size_data_opp->ds[2] += s_avg; break;
+                    #endif
+                        default :
+                            std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                    }
+                }
+                  
+            }
         }
-        // Current cell is full
-        else{
-          data = (size_data_t *) side[i]->is.full.quad->p.user_data;
-          if(side[iOpp]->is_hanging){
-
-            // Current full - Opposite hanging
-            double s_avg_opp = 0;
-            for(int j = 0; j < P4EST_HALF; ++j){
-              data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
-              s_avg_opp += data_opp->size;
-            }
-            s_avg_opp /= P4EST_HALF;
-
-            for(int j = 0; j < P4EST_HALF; ++j){
-              data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
-              switch(which_face_opp){
-                case 0 : data_opp->ds[0] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-                case 1 : data_opp->ds[0] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-                case 2 : data_opp->ds[1] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-                case 3 : data_opp->ds[1] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-                case 4 : data_opp->ds[2] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-                case 5 : data_opp->ds[2] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-              }
-            }
-          }
-          else{
-            // Current full - Opposite full
-            data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-            switch(which_face_opp){
-              case 0 : data_opp->ds[0] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-              case 1 : data_opp->ds[0] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-              case 2 : data_opp->ds[1] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-              case 3 : data_opp->ds[1] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-              case 4 : data_opp->ds[2] -= 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-              case 5 : data_opp->ds[2] += 0.5 * (data->size - data_opp->size)/(data_opp->h/2. + data->h/2.); break;
-            }
-          }
-        }
-      }
     }
-    // Nothing to do on the boundaries
+    else{
+        size_data = (size_data_t *) side[0]->is.full.quad->p.user_data;
+
+        which_face = side[0]->face;
+
+        // double center[3];
+
+        // get_center(info->p4est, side[0]->treeid, side[0]->is.full.quad, center);
+
+        // h = (double) P4EST_QUADRANT_LEN (side[0]->is.full.quad->level) / (double) P4EST_ROOT_LEN /2;
+
+        // double s_out;
+
+        // switch(which_face){
+        //     case 0 :
+        //         s_out = myFunction(center[0] - h, center[1], center[2]);
+        //         size_data->ds[0] -= s_out;
+        //         break;
+        //     case 1 :
+        //         s_out = myFunction(center[0] + h, center[1], center[2]);
+        //         size_data->ds[0] += s_out;
+        //         break;
+        //     case 2 : 
+        //         s_out = myFunction(center[0], center[1] - h, center[2]);
+        //         size_data->ds[1] -= s_out;
+        //         break;
+        //     case 3 : 
+        //         s_out = myFunction(center[0], center[1] + h, center[2]);
+        //         size_data->ds[1] += s_out;
+        //         break;
+        //     default :
+        //         std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+        //         exit(-1);
+        // }
+
+        // Differences finies aux faces (decentrees) si le quadrant est a la frontiere
+        switch(which_face){
+            case 0 :    size_data->ds[0] -= size_data->size; break;
+            case 1 :    size_data->ds[0] += size_data->size; break;
+            case 2 :    size_data->ds[1] -= size_data->size; break;
+            case 3 :    size_data->ds[1] += size_data->size; break;
+        #ifdef P4_TO_P8
+            case 4 :    size_data->ds[2] -= size_data->size; break;
+            case 5 :    size_data->ds[2] += size_data->size; break;
+        #endif
+            default :
+                std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+        }
+    }
 }
 
-HXTStatus hxtForestComputeGradient(HXTForest *forest){
-  // Iterate on each cell to reset size gradient and half lengths.
-  p4est_iterate(forest->p4est, NULL, NULL, resetCell, NULL, NULL, NULL);
-  // Compute gradient at cell center using finite differences
-  p4est_iterate(forest->p4est, NULL, NULL, NULL, computeGradientCenter, NULL, NULL);
 
-  return HXT_STATUS_OK;
+static void hxtOctreeComputeGradientCenterBoundary(p4est_iter_face_info_t * info, void *user_data){
+
+    p4est_iter_face_side_t *side[2];
+    sc_array_t             *sides = &(info->sides);
+    size_data_t            *size_data;
+    int                     which_dir;
+
+    side[0] = p4est_iter_fside_array_index_int (sides, 0);
+    side[1] = p4est_iter_fside_array_index_int (sides, 1);
+
+    if(sides->elem_count == 1){
+        size_data = (size_data_t *) side[0]->is.full.quad->p.user_data;
+        which_dir = side[0]->face / 2;
+        size_data->ds[which_dir] *= 2.0; // Sera divise par hMin dans laplacian_volume !
+    }
 }
 
-static inline void getMaxGradient(p4est_iter_volume_info_t * info, void *user_data)
+static void hxtOctreeComputeSizeMin(p4est_iter_face_info_t * info, void *user_data){
+
+    p4est_iter_face_side_t *side[2];
+    sc_array_t             *sides = &(info->sides);
+    size_data_t            *ghost_data = (size_data_t *) user_data;
+    size_data_t            *size_data;
+    size_data_t            *size_data_opp;
+    p4est_quadrant_t       *quad;
+    p4est_quadrant_t       *quadOpp;
+    double                  h;
+    int                     which_face;
+    int                     which_face_opp;
+
+    // Indice de l'autre côté de la face (0 si 1 et 1 si 0)
+    int                     iOpp; 
+
+    side[0] = p4est_iter_fside_array_index_int (sides, 0);
+    side[1] = p4est_iter_fside_array_index_int (sides, 1);
+
+    if(sides->elem_count == 2){
+
+        for(int i = 0; i < 2; i++) {
+
+            // Indice dans side[] de la face opposée
+            iOpp = 1 - i;
+
+            which_face_opp = side[iOpp]->face;     /* 0,1 == x, 2,3 == y, 4,5 == z */
+
+            if (side[i]->is_hanging) {
+
+                // Taille identique pour les deux quadrants hanging
+                quad = side[i]->is.hanging.quad[0];
+                // h = (double) P4EST_QUADRANT_LEN (quad->level) / (double) P4EST_ROOT_LEN /2;
+                // hxtOctreeGetOctantSize(info->p4est, quad->p.which_tree, quad, &h);
+                // h /= 2.0;
+                size_data = (size_data_t *) quad->p.user_data;
+                h = size_data->h;
+                // Le quadrant oppose ne peut pas etre hanging, sinon j'imagine que 
+                // la face est divisee en deux. Comme on est hanging, l'oppose est
+                // presumement full.
+                size_data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+
+                // Contribution pour la taille dans le quadrant oppose
+                switch(which_face_opp){
+                    case 0 :    size_data_opp->h_xL += h/2 ; break;
+                    case 1 :    size_data_opp->h_xR += h/2 ; break;
+                    case 2 :    size_data_opp->h_yD += h/2 ; break;
+                    case 3 :    size_data_opp->h_yU += h/2 ; break;
+                #ifdef P4_TO_P8
+                    case 4 :    size_data_opp->h_zB += h/2 ; break;
+                    case 5 :    size_data_opp->h_zT += h/2 ; break;
+                #endif
+                    default :
+                        std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                        exit(-1); // Brutal
+                }
+            }
+            else {
+                // Taille du quadrant courant
+                quad = side[i]->is.full.quad;
+                // h = (double) P4EST_QUADRANT_LEN (quad->level) / (double) P4EST_ROOT_LEN /2;
+                // hxtOctreeGetOctantSize(info->p4est, quad->p.which_tree, quad, &h);
+                // h /= 2.0;
+                size_data = (size_data_t *) quad->p.user_data;
+                h = size_data->h;
+
+                // Contribution pour la taille dans le quadrant oppose
+                if(side[iOpp]->is_hanging){
+                    // Full - Oppose Hanging
+                    for(int j = 0; j < P4EST_HALF; ++j){
+                        size_data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
+
+                        switch(which_face_opp){
+                            case 0 :    size_data_opp->h_xL += h/2 ; break;
+                            case 1 :    size_data_opp->h_xR += h/2 ; break;
+                            case 2 :    size_data_opp->h_yD += h/2 ; break;
+                            case 3 :    size_data_opp->h_yU += h/2 ; break;
+                        #ifdef P4_TO_P8
+                            case 4 :    size_data_opp->h_zB += h/2 ; break;
+                            case 5 :    size_data_opp->h_zT += h/2 ; break;
+                        #endif
+                            default :
+                                std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                                exit(-1); // Brutal
+                        }
+                    }
+                }
+                else{
+                    // Full - Oppose Full
+                    size_data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+
+                    switch(which_face_opp){
+                        case 0 :    size_data_opp->h_xL += h/2 ; break;
+                        case 1 :    size_data_opp->h_xR += h/2 ; break;
+                        case 2 :    size_data_opp->h_yD += h/2 ; break;
+                        case 3 :    size_data_opp->h_yU += h/2 ; break;
+                    #ifdef P4_TO_P8
+                        case 4 :    size_data_opp->h_zB += h/2 ; break;
+                        case 5 :    size_data_opp->h_zT += h/2 ; break;
+                    #endif
+                        default :
+                            std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                            exit(-1); // Brutal
+                    }  
+                }  
+
+            }
+        }
+    }
+    else{
+        // Frontière
+        size_data = (size_data_t *) side[0]->is.full.quad->p.user_data;
+
+        which_face = side[0]->face;
+
+        // h = (double) P4EST_QUADRANT_LEN (side[0]->is.full.quad->level) / (double) P4EST_ROOT_LEN /2;
+        // hxtOctreeGetOctantSize(info->p4est, quad->p.which_tree, quad, &h);
+        // h /= 2.0;
+        h = size_data->h;
+
+        switch(which_face){
+            case 0 :    size_data->h_xL += h/2; break;
+            case 1 :    size_data->h_xR += h/2; break;
+            case 2 :    size_data->h_yD += h/2; break;
+            case 3 :    size_data->h_yU += h/2; break;
+        #ifdef P4_TO_P8
+            case 4 :    size_data->h_zB += h/2 ; break;
+            case 5 :    size_data->h_zT += h/2 ; break;
+        #endif
+            default :
+                std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                exit(-1); // Brutal
+        }
+    }
+}
+
+static void hxtOctreeLaplacianFacesContribution(p4est_iter_face_info_t * info, void *user_data){
+
+    p4est_iter_face_side_t *side[2];
+    sc_array_t             *sides = &(info->sides);
+    size_data_t            *ghost_data = (size_data_t *) user_data;
+    size_data_t            *size_data;
+    size_data_t            *size_data_opp1;
+    size_data_t            *size_data_opp2;
+    p4est_quadrant_t       *quad;
+    double                  s_avg;
+    int                     which_dir;
+    int                     which_face;
+    int                     which_face_opp;
+
+    double (*size_fun)(double, double, double) = (double (*)(double, double, double)) info->p4est->user_pointer;
+
+    // Indice de l'autre côté de la face (0 si 1 et 1 si 0)
+    int                     iOpp; 
+
+    side[0] = p4est_iter_fside_array_index_int (sides, 0);
+    side[1] = p4est_iter_fside_array_index_int (sides, 1);
+
+    if(sides->elem_count == 2){
+
+        for(int i = 0; i < 2; i++) {
+
+            // Indice dans side[] de la face opposée
+            iOpp = 1 - i;
+
+            which_face_opp = side[iOpp]->face;     /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
+            // which_dir = which_face_opp /2;         /* 0 == x, 1 == y, 2 == z */
+
+            s_avg = 0;
+            if (side[i]->is_hanging) {
+
+                /* there are 2^(d-1) (P4EST_HALF) subfaces */
+                for(int j = 0; j < P4EST_HALF; j++) {
+
+                    size_data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+                    s_avg += size_data->size;
+                }
+
+                // Calcul de la valeur moyenne sur les P4EST_HALF quadrants courants
+                s_avg /= P4EST_HALF;
+
+                size_data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+                // Switch sur which_dir : les faces selon x ont le meme denominateur,
+                // idem pour les faces selon y
+                switch(which_face_opp){
+                    case 0 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_xavg; break;
+                    case 1 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_xavg; break;
+                    case 2 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_yavg; break;
+                    case 3 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_yavg; break;
+                #ifdef P4_TO_P8
+                    case 4 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_zavg; break;
+                    case 5 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_zavg; break;
+                #endif
+                    default :
+                        std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                        exit(-1); // Brutal
+                }
+            }
+            else {
+
+                size_data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+                s_avg = size_data->size;
+
+                // Switch sur which_dir : les faces selon x ont les memes signe et denominateur,
+                // idem pour les faces selon y
+                if(side[iOpp]->is_hanging){
+                    // Full - Oppose hanging
+                    for(int j = 0; j < P4EST_HALF; ++j){
+                        size_data_opp1 = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
+
+                        switch(which_face_opp){
+                            case 0 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_xavg; break;
+                            case 1 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_xavg; break;
+                            case 2 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_yavg; break;
+                            case 3 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_yavg; break;
+                        #ifdef P4_TO_P8
+                            case 4 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_zavg; break;
+                            case 5 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_zavg; break;
+                        #endif
+                            default :
+                                std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                                exit(-1); // Brutal
+                        }
+                    }
+                }
+                else{
+                    // Full - Oppose full
+                    size_data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+
+                    switch(which_face_opp){
+                        case 0 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_xavg; break;
+                        case 1 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_xavg; break;
+                        case 2 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_yavg; break;
+                        case 3 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_yavg; break;
+                    #ifdef P4_TO_P8
+                        case 4 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_zavg; break;
+                        case 5 :    size_data_opp1->d2s += s_avg / size_data_opp1->h_zavg; break;
+                    #endif
+                        default :
+                            std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                            exit(-1); // Brutal
+                    }
+                }   
+            }
+        }
+    }
+    else{
+        // Frontière
+        size_data = (size_data_t *) side[0]->is.full.quad->p.user_data;
+
+        which_face = side[0]->face;
+
+        // double h = (double) P4EST_QUADRANT_LEN (side[0]->is.full.quad->level) / (double) P4EST_ROOT_LEN /2;
+        double h = size_data->h;
+
+        double center[3];
+
+        hxtOctreeGetCenter(info->p4est, side[0]->treeid, side[0]->is.full.quad, center);
+
+        double s_out;
+
+        switch(which_face){
+            case 0 :
+                s_out = size_fun(center[0] - h, center[1], center[2]);
+                size_data->d2s += s_out / size_data->h_xavg;
+                // size_data->d2s += size_data->size / size_data->h_xavg;
+                break;
+            case 1 :
+                s_out = size_fun(center[0] + h, center[1], center[2]);
+                // size_data->d2s += SIZE_FOND / size_data->h_xavg;
+                size_data->d2s += s_out / size_data->h_xavg;
+                // size_data->d2s += size_data->size / size_data->h_xavg;
+                break;
+            case 2 : 
+                s_out = size_fun(center[0], center[1] - h, center[2]);
+                size_data->d2s += s_out / size_data->h_yavg;
+                // size_data->d2s += size_data->size / size_data->h_yavg;
+                break;
+            case 3 : 
+                s_out = size_fun(center[0], center[1] + h, center[2]);
+                // size_data->d2s += SIZE_FOND / size_data->h_yavg;
+                size_data->d2s += s_out / size_data->h_yavg;
+                // size_data->d2s += size_data->size / size_data->h_yavg;
+                break;
+        #ifdef P4_TO_P8
+            case 4 : 
+                s_out = size_fun(center[0], center[1], center[2] - h);
+                size_data->d2s += s_out / size_data->h_zavg;
+                // size_data->d2s += size_data->size / size_data->h_yavg;
+                break;
+            case 5 : 
+                s_out = size_fun(center[0], center[1], center[2] + h);
+                // size_data->d2s += SIZE_FOND / size_data->h_yavg;
+                size_data->d2s += s_out / size_data->h_zavg;
+                // size_data->d2s += size_data->size / size_data->h_yavg;
+                break;
+        #endif 
+        }
+    }
+}
+
+static void hxtOctreeSizeAvg(p4est_iter_volume_info_t * info, void *user_data){
+
+    size_data_t *data = (size_data_t *) info->quad->p.user_data;
+ 
+    // data->h_xavg = ( pow(data->h_xL, 2) + pow(data->h_xR, 2) ) /2.0;
+    // data->h_yavg = ( pow(data->h_yU, 2) + pow(data->h_yD, 2) ) /2.0;
+
+    data->hMin = fmin(fmin(fmin(data->h_xL, data->h_xR),data->h_yU),data->h_yD);
+
+#ifdef P4_TO_P8
+    data->hMin = fmin(data->hMin, fmin(data->h_zB, data->h_zT));
+#endif
+
+    data->h_xavg = pow(data->hMin,2);
+    data->h_yavg = pow(data->hMin,2);
+#ifdef P4_TO_P8
+    data->h_zavg = pow(data->hMin,2);
+#endif
+
+    // data->h_xavg = ( data->h_xL * data->h_xL + data->h_xR * data->h_xR ) /2.0;
+    // data->h_yavg = ( data->h_yU * data->h_yU + data->h_yD * data->h_yD ) /2.0;
+}
+
+static void hxtOctreeComputeLaplacianQuadrant(p4est_iter_volume_info_t * info, void *user_data){
+
+    size_data_t *data = (size_data_t *) info->quad->p.user_data;
+
+    if(data->h_xavg == 0 || data->h_yavg == 0){ std::cout<<"ERREUR"<<std::endl; exit(-1); }
+
+    // double h = (double) P4EST_QUADRANT_LEN (info->quad->level) / (double) P4EST_ROOT_LEN /2;
+
+    // data->ds[0] /= (data->h_xL + data->h_xR);
+    // data->ds[1] /= (data->h_yU + data->h_yD);
+
+    data->hMin = fmin(fmin(fmin(data->h_xL, data->h_xR),data->h_yU),data->h_yD);
+
+#ifdef P4_TO_P8
+    data->hMin = fmin(data->hMin, fmin(data->h_zB, data->h_zT));
+#endif
+
+    // data->ds[0] /= 2.0 * fmin(data->h_xL,data->h_xR);
+    // data->ds[1] /= 2.0 * fmin(data->h_yU,data->h_yD);
+
+    for(int i = 0; i < P4EST_DIM; ++i){
+        data->ds[i] /= 2.0 * data->hMin;
+    }
+    
+    // data->d2s -= 2.0 * data->size / data->h_xavg;
+    // data->d2s -= 2.0 * data->size / data->h_yavg;
+#ifdef P4_TO_P8
+    data->d2s -= 6.0 * data->size / pow(data->hMin,2);
+#else
+    data->d2s -= 4.0 * data->size / pow(data->hMin,2);
+#endif
+
+    // data->d2s -= data->ds[0] * (data->h_xR - data->h_xL) / data->h_xavg;
+    // data->d2s -= data->ds[1] * (data->h_yU - data->h_yD) / data->h_yavg;
+
+}
+
+static void hxtOctreeResetLaplacian(p4est_iter_volume_info_t * info, void *user_data){
+
+    size_data_t *size_data = (size_data_t *) info->quad->p.user_data;
+    // double h = (double) P4EST_QUADRANT_LEN (info->quad->level) / (double) P4EST_ROOT_LEN / 2;
+
+    size_data->d2s = 0.0;
+
+    for(int i = 0; i < P4EST_DIM; ++i){
+        size_data->ds[i] = 0.0;
+    }
+    
+    size_data->h_xL = size_data->h/2;
+    size_data->h_xR = size_data->h/2;
+    size_data->h_yU = size_data->h/2;
+    size_data->h_yD = size_data->h/2;
+#ifdef P4_TO_P8
+    size_data->h_zB = size_data->h/2;
+    size_data->h_zT = size_data->h/2;
+#endif
+    
+    size_data->h_xavg = 0.0;
+    size_data->h_yavg = 0.0;
+
+    size_data->hMin = 0.0;
+}
+
+HXTStatus hxtOctreeComputeLaplacian(HXTForest *forest){
+
+    // Remet à 0 les derivees, h et laplacien sur chaque quadrant
+    p4est_iterate(forest->p4est, NULL, NULL, hxtOctreeResetLaplacian, NULL,
+            #ifdef P4_TO_P8
+                        NULL,
+            #endif
+                        NULL);
+
+    // Calcule les tailles
+    p4est_iterate(forest->p4est, NULL, NULL, NULL, hxtOctreeComputeSizeMin,
+        #ifdef P4_TO_P8
+                    NULL,
+        #endif
+                    NULL);
+
+    p4est_iterate(forest->p4est, NULL, NULL, hxtOctreeSizeAvg, NULL,
+        #ifdef P4_TO_P8
+                    NULL,
+        #endif
+                    NULL);
+
+    // Calcule le gradient au centre de chaque quadrant
+    p4est_iterate(forest->p4est, NULL, NULL, NULL, hxtOctreeComputeGradientCenter,
+        #ifdef P4_TO_P8
+                    NULL,
+        #endif
+                    NULL);
+
+    // Finalise le calcul gradient sur les quadrants aux bords
+    p4est_iterate(forest->p4est, NULL, NULL, NULL, hxtOctreeComputeGradientCenterBoundary,
+        #ifdef P4_TO_P8
+                    NULL,
+        #endif
+                    NULL);
+
+    // Ajoute les contributions des cellules voisines
+    p4est_iterate(forest->p4est, NULL, NULL, NULL, hxtOctreeLaplacianFacesContribution, 
+        #ifdef P4_TO_P8
+                    NULL,
+        #endif
+                    NULL);
+
+    // Ajoute les contributions sur chaque quadrant
+    p4est_iterate(forest->p4est, NULL, NULL, hxtOctreeComputeLaplacianQuadrant, NULL,
+        #ifdef P4_TO_P8
+                    NULL,
+        #endif
+                    NULL);
+
+    return HXT_STATUS_OK;
+}
+
+void min_size (p4est_iter_volume_info_t * info, void *user_data)
 {
-  p4est_quadrant_t *q = info->quad;
-  size_data_t      *data = (size_data_t *) q->p.user_data;
-  double           *gradMax = static_cast<double*>(user_data);
-  gradMax[0] = SC_MAX (fabs(data->ds[0]), gradMax[0]);
-  gradMax[1] = SC_MAX (fabs(data->ds[1]), gradMax[1]);
-  gradMax[2] = SC_MAX (fabs(data->ds[2]), gradMax[2]);
+  p4est_quadrant_t   *q = info->quad;
+  size_data_t        *data = (size_data_t *) q->p.user_data;
+  double              size_min = *((double *) user_data);
+
+  size_min = SC_MIN (data->size, size_min);
+
+  *((double *) user_data) = size_min;
 }
 
-HXTStatus hxtForestGetMaxGradient(HXTForest *forest, double *gradMax){
-  p4est_iterate (forest->p4est, NULL, (void *) gradMax, getMaxGradient, NULL, NULL, NULL);
+void max_dsdx (p4est_iter_volume_info_t * info, void *user_data)
+{
+  p4est_quadrant_t   *q = info->quad;
+  size_data_t        *data = (size_data_t *) q->p.user_data;
+  double              umax = *((double *) user_data);
+
+  umax = SC_MAX (data->ds[0], umax);
+
+  *((double *) user_data) = umax;
+}
+
+void max_dsdy (p4est_iter_volume_info_t * info, void *user_data)
+{
+  p4est_quadrant_t   *q = info->quad;
+  size_data_t        *data = (size_data_t *) q->p.user_data;
+  double              umax = *((double *) user_data);
+
+  umax = SC_MAX (data->ds[1], umax);
+
+  *((double *) user_data) = umax;
+}
+
+// #ifdef P4_TO_P8
+void max_dsdz (p4est_iter_volume_info_t * info, void *user_data)
+{
+  p4est_quadrant_t   *q = info->quad;
+  size_data_t        *data = (size_data_t *) q->p.user_data;
+  double              umax = *((double *) user_data);
+
+  umax = SC_MAX (data->ds[2], umax);
+
+  *((double *) user_data) = umax;
+}
+// #endif
+
+HXTStatus hxtOctreeComputeMinimumSize(HXTForest *forest, double *size_min){
+  p4est_iterate (forest->p4est, NULL, (void *) size_min, min_size, NULL,
+            #ifdef P4_TO_P8
+                       NULL,
+            #endif
+                       NULL);
   return HXT_STATUS_OK;
 }
 
-void smoothSize(p4est_iter_face_info_t * info, void *user_data){
-  p4est_iter_face_side_t *side[2];
-  sc_array_t        *sides = &(info->sides);
-  size_data_t       *ghost_data = (size_data_t *) user_data;
-  size_data_t       *data;
-  size_data_t       *data_opp1;
-  size_data_t       *data_opp2;
-  p4est_quadrant_t  *quad;
-  double             s_avg;
-  int                which_dir;
-  int                which_face;
-  int                which_face_opp;
-  int                iOpp;
+HXTStatus hxtOctreeComputeMaxGradientX(HXTForest *forest, double *dsdx_max){
+	p4est_iterate (forest->p4est, NULL, (void *) dsdx_max, max_dsdx, NULL,
+            #ifdef P4_TO_P8
+                       NULL,
+            #endif
+                       NULL);
+	return HXT_STATUS_OK;
+}
 
-  HXTForestOptions  *forestOptions = (HXTForestOptions*) user_data;
-  double             alpha = forestOptions->gradation - 1.0;
-  double             tol = 1e-3;
+HXTStatus hxtOctreeComputeMaxGradientY(HXTForest *forest, double *dsdy_max){
+	p4est_iterate (forest->p4est, NULL, (void *) dsdy_max, max_dsdy, NULL,
+            #ifdef P4_TO_P8
+                       NULL,
+            #endif
+                       NULL);
+	return HXT_STATUS_OK;
+}
 
-  side[0] = p4est_iter_fside_array_index_int (sides, 0);
-  side[1] = p4est_iter_fside_array_index_int (sides, 1);
+HXTStatus hxtOctreeComputeMaxGradientZ(HXTForest *forest, double *dsdz_max){
+	p4est_iterate (forest->p4est, NULL, (void *) dsdz_max, max_dsdz, NULL,
+            #ifdef P4_TO_P8
+                       NULL,
+            #endif
+                       NULL);
+	return HXT_STATUS_OK;
+}
 
-  if(sides->elem_count==2){
+void set_max_gradient_faces(p4est_iter_face_info_t * info, void *user_data){
+    p4est_iter_face_side_t *side[2];
+    sc_array_t             *sides = &(info->sides);
+    size_data_t            *ghost_data = (size_data_t *) user_data;
+    size_data_t            *size_data;
+    size_data_t            *size_data_opp1;
+    size_data_t            *size_data_opp2;
+    p4est_quadrant_t       *quad;
+    double                  s_avg;
+    int                     which_dir;
+    int                     which_face;
+    int                     which_face_opp;
+    int                     iOpp;
 
-    for(int i = 0; i < 2; ++i){
+    side[0] = p4est_iter_fside_array_index_int (sides, 0);
+    side[1] = p4est_iter_fside_array_index_int (sides, 1);
 
-      iOpp = 1 - i;
-      which_dir = side[i]->face / 2; // Direction x (0), y (1) ou z(2)
-      which_face_opp = side[iOpp]->face;
+    if(sides->elem_count==2){
 
-      if(side[i]->is_hanging){
+        for(int i = 0; i < 2; ++i){
 
-        // Current hanging - Opposes full
-        data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+            iOpp = 1 - i;
+            which_dir = side[i]->face / 2; // Direction x (0), y (1) ou z(2)
+            which_face_opp = side[iOpp]->face;
 
-        for(int j = 0; j < P4EST_HALF; ++j){
+            if(side[i]->is_hanging){
 
-          data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+                size_data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
 
-          if(fabs(data->ds[which_dir]) > alpha + tol){
+                for(int j = 0; j < P4EST_HALF; ++j){
 
-            if(data->size > data_opp1->size){
-              switch(which_face_opp){
-                case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-              }
-            }else{
-              switch(which_face_opp){
-                case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-              }
-            }
-          } // if ds > alpha-1
-        } // for j hanging
-      } // if hanging
-      else{
+                    size_data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
 
-        data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+                    if(fabs(size_data->ds[which_dir]) > ALPHA-1){
+                        // std::cout<<"Coucou  "<<size_data->ds[which_dir]<<std::endl;
+                        // if(size_data->ds[which_dir] > 0){
 
-        if(fabs(data->ds[which_dir]) > alpha + tol){
-          if(side[iOpp]->is_hanging){
-              // Current full - Oppose hanging
-            for(int j = 0; j < P4EST_HALF; ++j){
-              data_opp1 = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
-              if(data->size > data_opp1->size){
-                switch(which_face_opp){
-                  case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                  case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                  case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                  case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                  case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                  case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                }
-              }
-              else{
-                switch(which_face_opp){
-                  case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                  case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                  case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                  case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                  case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                  case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                }
-              }
-            }
-          }
-          else{
-            // Current full - Oppose full
-            data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-            if(data->size > data_opp1->size){
-              switch(which_face_opp){
-                case 0 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 1 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 2 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 3 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 4 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 5 : data->size = fmin(data->size, data_opp1->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-              }
+                            if(size_data->size > size_data_opp1->size){
+                                size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                            }else{
+                                size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                            }
+
+                            // switch(which_face_opp){
+                            //     case 0 : 
+                            //         if(size_data->size > size_data_opp1->size){
+                            //             size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                            //         }else{
+                            //             size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                            //         } break;
+
+                            //     case 1 :
+                            //         if(size_data->size > size_data_opp1->size){
+                            //             size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                            //         }else{
+                            //             size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                            //         } break;
+
+                            //     case 2 : 
+                            //         if(size_data->size > size_data_opp1->size){
+                            //             size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                            //         }else{
+                            //             size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                            //         } break;
+
+                            //     case 3 : 
+                            //         if(size_data->size > size_data_opp1->size){
+                            //             size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                            //         }else{
+                            //             size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                            //         } break;
+
+                            //     default : 
+                            //         std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                            //         exit(-1);
+                            // }
+                        // }
+                        // else{
+                        //     switch(which_face_opp){
+                        //         case 0 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                        //             if(size_data->size > size_data_opp1->size){
+                        //                 size_data->size = fmin(size_data->size, size_data_opp1->size - (ALPHA-1) * size_data_opp1->hMin);
+                        //             }else{
+                        //                 size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                        //             } break;
+                        //         case 1 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin); break;
+                        //         case 2 : size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin); break;
+                        //         case 3 : size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin); break;
+                        //         default : 
+                        //             std::cout<<"Valeur inattendue : "<<which_face_opp<<std::endl;
+                        //             exit(-1);
+                        //     }
+                        // }
+                    } // if
+
+                } // for j
             }
             else{
-              switch(which_face_opp){
-                case 0 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 1 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 2 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 3 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 4 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-                case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
-              }
-            }
-          }  
-        } // if gradient trop grand
-      } // else
+
+                size_data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+
+                if(fabs(size_data->ds[which_dir]) > ALPHA-1){
+                    if(side[iOpp]->is_hanging){
+                        // Full - Oppose hanging
+                        for(int j = 0; j < P4EST_HALF; ++j){
+                            size_data_opp1 = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
+                            // size_data_opp2 = (size_data_t *) side[iOpp]->is.hanging.quad[1]->p.user_data;
+
+                            // if(size_data->size > fmin(size_data_opp1->size, size_data_opp2->size) ){
+                            if(size_data->size > size_data_opp1->size){
+                                size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                                // size_data->size = fmin(size_data->size, size_data_opp2->size + (ALPHA-1) * size_data_opp2->hMin);
+                            }
+                            else{
+                                size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                                // size_data_opp2->size = fmin(size_data_opp2->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                            }
+                        }
+                    }
+                    else{
+                        // Full - Oppose full
+                        size_data_opp1 = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+
+                        if(size_data->size > size_data_opp1->size){
+                            size_data->size = fmin(size_data->size, size_data_opp1->size + (ALPHA-1) * size_data_opp1->hMin);
+                        }
+                        else{
+                            size_data_opp1->size = fmin(size_data_opp1->size, size_data->size + (ALPHA-1) * size_data->hMin);
+                        }
+
+                    }
+                    
+                } // if gradient trop grand
+
+            } // else
+
+        }
     }
-  }
+    else{
+        // size_data = (size_data_t *) side[0]->is.full.quad->p.user_data;
+
+        // which_dir = side[0]->face / 2;
+
+        // if(fabs(size_data->ds[which_dir]) > ALPHA-1){
+        //     size_data->ds[which_dir] = fmin(size_data->ds[which_dir], ALPHA-1);
+        //     size_data->ds[which_dir] = nan("");
+
+        // }
+    }
 }
 
-HXTStatus hxtForestSetMaxGradient(HXTForest *forest){
-  p4est_iterate (forest->p4est, NULL, (void*) forest->forestOptions, NULL, smoothSize, NULL, NULL);
-  return HXT_STATUS_OK;
+HXTStatus hxtOctreeSetMaxGradient(HXTForest *forest){
+	p4est_iterate (forest->p4est, NULL, NULL, NULL, set_max_gradient_faces,
+            #ifdef P4_TO_P8
+                       NULL,
+            #endif
+                       NULL);
+	return HXT_STATUS_OK;
 }
 
-HXTStatus hxtForestSizeSmoothing(HXTForest *forest){
-  double gradMax[3], tol = 1e-3, gradLinf = 1e22;
-  int iter = 0;
-  int nmax = 100;
-  // while(iter++ < forest->forestOptions->nRefine && gradLinf > tol + forest->forestOptions->gradation - 1.0){
-  while(iter++ < nmax && gradLinf > tol + forest->forestOptions->gradation - 1.0){
-    // Compute gradient
-    // for(int i = 0; i < 3; ++i) gradMax[i] = -1e22;
-    // HXT_CHECK( hxtForestComputeGradient(forest) );
-    // HXT_CHECK( hxtForestGetMaxGradient(forest, gradMax) );
-    // Smooth large sizes to limit gradient to foresOptions->gradMax
-    // HXT_CHECK( hxtForestSetMaxGradient(forest) );
-    // Gradient needs to be recomputed after size is smoothed
-    HXT_CHECK( hxtForestComputeGradient(forest) );
-    // Smooth large sizes to limit gradient to foresOptions->gradMax
-    HXT_CHECK( hxtForestSetMaxGradient(forest) );
-    // Stopping criterion
-    for(int i = 0; i < 3; ++i) gradMax[i] = -1e22;
-    HXT_CHECK( hxtForestGetMaxGradient(forest, gradMax) );
-    gradLinf = fmax( fabs(gradMax[0]), fmax( fabs(gradMax[1]), fabs(gradMax[2])) );
-  }
-  Msg::Info("Max gradient after smoothing : (%f - %f - %f)", fabs(gradMax[0]), fabs(gradMax[1]), fabs(gradMax[2]));
-  return HXT_STATUS_OK;
+static void fill_size_vec(p4est_iter_volume_info_t * info, void *user_data){
+    sc_array_t         *size_vec = (sc_array_t *) user_data;      /* we passed the array of values to fill as the user_data in the call to p4est_iterate */
+    p4est_t            *p4est = info->p4est;
+    p4est_quadrant_t   *q = info->quad;
+    p4est_topidx_t      which_tree = info->treeid;
+    p4est_locidx_t      local_id = info->quadid;  /* this is the index of q *within its tree's numbering*.  We want to convert it its index for all the quadrants on this process, which we do below */
+    p4est_tree_t       *tree;
+    size_data_t        *data = (size_data_t *) q->p.user_data;
+    p4est_locidx_t      arrayoffset;
+    double              this_size;
+    double             *this_size_ptr;
+
+    tree = p4est_tree_array_index(p4est->trees, which_tree);
+    local_id += tree->quadrants_offset;   /* now the id is relative to the MPI process */
+    arrayoffset = local_id;      /* Chaque quadrant a une donne pour l'offset*/
+
+    // On copie la valeur de la taille sur la cellule dans size_vec, en tenant compte de l'offset
+    this_size = data->size;
+    this_size_ptr = (double *) sc_array_index(size_vec, arrayoffset);
+    this_size_ptr[0] = this_size;
 }
 
-HXTStatus hxtComputeGradientOnce(HXTForest *forest){
-  double gradMax[3];
-  for(int i = 0; i < 3; ++i) gradMax[i] = -1e22;
-  // Compute gradient
-  HXT_CHECK( hxtForestComputeGradient(forest) );
-  HXT_CHECK( hxtForestGetMaxGradient(forest, gradMax) );
-  Msg::Info("Max gradient after smoothing : (%f - %f - %f)", gradMax[0], gradMax[1], gradMax[2]);
-  return HXT_STATUS_OK;
+static void fill_dsdx_vec(p4est_iter_volume_info_t * info, void *user_data){
+    sc_array_t         *dsdx_vec = (sc_array_t *) user_data;      /* we passed the array of values to fill as the user_data in the call to p4est_iterate */
+    p4est_t            *p4est = info->p4est;
+    p4est_quadrant_t   *q = info->quad;
+    p4est_topidx_t      which_tree = info->treeid;
+    p4est_locidx_t      local_id = info->quadid;  /* this is the index of q *within its tree's numbering*.  We want to convert it its index for all the quadrants on this process, which we do below */
+    p4est_tree_t       *tree;
+    size_data_t        *data = (size_data_t *) q->p.user_data;
+    p4est_locidx_t      arrayoffset;
+    double             *this_dsdx_ptr;
+
+    tree = p4est_tree_array_index(p4est->trees, which_tree);
+    local_id += tree->quadrants_offset;   /* now the id is relative to the MPI process */
+    arrayoffset = local_id;      /* Chaque quadrant deux valeurs pour la derivee (offset dans le vecteur)*/
+
+    this_dsdx_ptr = (double *) sc_array_index(dsdx_vec, arrayoffset);
+    this_dsdx_ptr[0] = data->ds[0];
+    // std::cout<<data->ds[0]<<"  -  "<<data->ds[1]<<std::endl;
 }
 
-/* ========================================================================================================
-   SEARCH AND REPLACE
-   ======================================================================================================== */
+static void fill_dsdy_vec(p4est_iter_volume_info_t * info, void *user_data){
+    sc_array_t         *dsdy_vec = (sc_array_t *) user_data;      /* we passed the array of values to fill as the user_data in the call to p4est_iterate */
+    p4est_t            *p4est = info->p4est;
+    p4est_quadrant_t   *q = info->quad;
+    p4est_topidx_t      which_tree = info->treeid;
+    p4est_locidx_t      local_id = info->quadid;  /* this is the index of q *within its tree's numbering*.  We want to convert it its index for all the quadrants on this process, which we do below */
+    p4est_tree_t       *tree;
+    size_data_t        *data = (size_data_t *) q->p.user_data;
+    p4est_locidx_t      arrayoffset;
+    double             *this_dsdy_ptr;
 
-inline static bool isPoint(double x, double y, double z, size_point_t *p, double tol){
-  return (fabs(p->x - x) < tol && fabs(p->y - y) < tol && fabs(p->z - z) < tol);
+    tree = p4est_tree_array_index(p4est->trees, which_tree);
+    local_id += tree->quadrants_offset;   /* now the id is relative to the MPI process */
+    arrayoffset = local_id;      /* Chaque quadrant deux valeurs pour la derivee (offset dans le vecteur)*/
+
+    this_dsdy_ptr = (double *) sc_array_index(dsdy_vec, arrayoffset);
+    this_dsdy_ptr[0] = data->ds[1];
 }
 
-static int searchAndAssignConstant(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
+#ifdef P4_TO_P8
+static void fill_dsdz_vec(p4est_iter_volume_info_t * info, void *user_data){
+    sc_array_t         *dsdz_vec = (sc_array_t *) user_data;      /* we passed the array of values to fill as the user_data in the call to p4est_iterate */
+    p4est_t            *p4est = info->p4est;
+    p4est_quadrant_t   *q = info->quad;
+    p4est_topidx_t      which_tree = info->treeid;
+    p4est_locidx_t      local_id = info->quadid;  /* this is the index of q *within its tree's numbering*.  We want to convert it its index for all the quadrants on this process, which we do below */
+    p4est_tree_t       *tree;
+    size_data_t        *data = (size_data_t *) q->p.user_data;
+    p4est_locidx_t      arrayoffset;
+    double             *this_dsdz_ptr;
+
+    tree = p4est_tree_array_index(p4est->trees, which_tree);
+    local_id += tree->quadrants_offset;   /* now the id is relative to the MPI process */
+    arrayoffset = local_id;      /* Chaque quadrant deux valeurs pour la derivee (offset dans le vecteur)*/
+
+    this_dsdz_ptr = (double *) sc_array_index(dsdz_vec, arrayoffset);
+    this_dsdz_ptr[0] = data->ds[2];
+}
+#endif
+
+static void fill_d2s_vec(p4est_iter_volume_info_t * info, void *user_data){
+    sc_array_t         *d2s_vec = (sc_array_t *) user_data;      /* we passed the array of values to fill as the user_data in the call to p4est_iterate */
+    p4est_t            *p4est = info->p4est;
+    p4est_quadrant_t   *q = info->quad;
+    p4est_topidx_t      which_tree = info->treeid;
+    p4est_locidx_t      local_id = info->quadid;  /* this is the index of q *within its tree's numbering*.  We want to convert it its index for all the quadrants on this process, which we do below */
+    p4est_tree_t       *tree;
+    size_data_t        *data = (size_data_t *) q->p.user_data;
+    p4est_locidx_t      arrayoffset;
+    double             *this_d2s_ptr;
+
+    tree = p4est_tree_array_index(p4est->trees, which_tree);
+    local_id += tree->quadrants_offset;   /* now the id is relative to the MPI process */
+    arrayoffset = local_id;      /* Chaque quadrant deux valeurs pour la derivee (offset dans le vecteur)*/
+
+    this_d2s_ptr = (double *) sc_array_index(d2s_vec, arrayoffset);
+    this_d2s_ptr[0] = data->d2s;
+    // std::cout<<data->d2s<<std::endl;
+}
+
+static void fill_h_vec(p4est_iter_volume_info_t * info, void *user_data){
+    sc_array_t         *h_vec = (sc_array_t *) user_data;      /* we passed the array of values to fill as the user_data in the call to p4est_iterate */
+    p4est_t            *p4est = info->p4est;
+    p4est_quadrant_t   *q = info->quad;
+    p4est_topidx_t      which_tree = info->treeid;
+    p4est_locidx_t      local_id = info->quadid;  /* this is the index of q *within its tree's numbering*.  We want to convert it its index for all the quadrants on this process, which we do below */
+    p4est_tree_t       *tree;
+    size_data_t        *data = (size_data_t *) q->p.user_data;
+    p4est_locidx_t      arrayoffset;
+    double             *this_h_ptr;
+
+    tree = p4est_tree_array_index(p4est->trees, which_tree);
+    local_id += tree->quadrants_offset;   /* now the id is relative to the MPI process */
+    arrayoffset = local_id;      /* Chaque quadrant deux valeurs pour la derivee (offset dans le vecteur)*/
+
+    this_h_ptr = (double *) sc_array_index(h_vec, arrayoffset);
+    this_h_ptr[0] = data->hMin;
+    // std::cout<<data->d2s<<std::endl;
+}
+
+static void write_4est_to_vtk(p4est_t *p4est, const char *filename){
+    p4est_vtk_write_file(p4est, NULL, filename);
+}
+
+static void write_size_to_vtk(p4est_t *p4est, const char *filename){
+
+    p4est_locidx_t numquads = p4est->local_num_quadrants;
+
+    /* Chaque quadrant a une place a allouer dans size_vec (info par cellule) */
+    sc_array_t *size_vec = sc_array_new_size (sizeof (double), numquads);
+
+    p4est_iterate (p4est, NULL,   /* we don't need any ghost quadrants for this loop */
+                 (void *) size_vec,     /* user_data : pass in size_vec so that we can fill it */
+                 fill_size_vec,    /* callback function that interpolates from the cell center to the cell corners, defined above */
+                 NULL,          /* there is no callback for the faces between quadrants */
+        #ifdef P4_TO_P8
+                 NULL,          /* there is no callback for the edges between quadrants */
+        #endif
+                 NULL);         /* there is no callback for the corners between quadrants */
+
+    /* create VTK output context and set its parameters */
+    p4est_vtk_context_t *context = p4est_vtk_context_new(p4est, filename);
+    p4est_vtk_context_set_scale (context, 1.0);  /* quadrant at almost full scale */
+
+    /* begin writing the output files */
+    context = p4est_vtk_write_header (context);
+    SC_CHECK_ABORT (context != NULL, P4EST_STRING "_vtk: Error writing vtk header");
+
+    /* do not write the tree id's of each quadrant
+     * (there is only one tree in this example) */
+    context = p4est_vtk_write_cell_dataf(context, 0, 1,  /* do write the refinement level of each quadrant */
+                                        1,      /* do write the mpi process id of each quadrant */
+                                        0,      /* do not wrap the mpi rank (if this were > 0, the modulus of the rank relative to this number would be written instead of the rank) */
+                                        1,      /* there is no custom cell scalar data. */
+                                        0,      /* there is no custom cell vector data. */
+                                        "Size",
+                                        size_vec,
+                                        context);       /* mark the end of the variable cell data. */
+    SC_CHECK_ABORT (context != NULL, P4EST_STRING "_vtk: Error writing cell data");
+
+    const int retval = p4est_vtk_write_footer (context);
+    SC_CHECK_ABORT (!retval, P4EST_STRING "_vtk: Error writing footer");
+
+    sc_array_destroy (size_vec);
+}
+
+void write_ds_to_vtk(p4est_t *p4est, const char *filename){
+
+    p4est_locidx_t numquads = p4est->local_num_quadrants;
+
+    /* Chaque quadrant a une place a allouer dans size_vec (info par cellule) */
+    sc_array_t *s_vec = sc_array_new_size (sizeof (double), numquads);
+    sc_array_t *dsdx_vec = sc_array_new_size (sizeof (double), numquads);
+    sc_array_t *dsdy_vec = sc_array_new_size (sizeof (double), numquads);
+#ifdef P4_TO_P8
+    sc_array_t *dsdz_vec = sc_array_new_size (sizeof (double), numquads);
+#endif
+    sc_array_t *d2s_vec = sc_array_new_size (sizeof (double), numquads);
+    sc_array_t *h_vec = sc_array_new_size (sizeof (double), numquads);
+
+    p4est_iterate (p4est, NULL,   /* we don't need any ghost quadrants for this loop */
+                 (void *) s_vec,     /* user_data : pass in size_vec so that we can fill it */
+                 fill_size_vec,    /* callback function that interpolates from the cell center to the cell corners, defined above */
+                 NULL,          /* there is no callback for the faces between quadrants */
+        #ifdef P4_TO_P8
+                 NULL,          /* there is no callback for the edges between quadrants */
+        #endif
+                 NULL);         /* there is no callback for the corners between quadrants */
+
+    p4est_iterate (p4est, NULL,   /* we don't need any ghost quadrants for this loop */
+                 (void *) dsdx_vec,     /* user_data : pass in size_vec so that we can fill it */
+                 fill_dsdx_vec,    /* callback function that interpolates from the cell center to the cell corners, defined above */
+                 NULL,          /* there is no callback for the faces between quadrants */
+        #ifdef P4_TO_P8
+                 NULL,          /* there is no callback for the edges between quadrants */
+        #endif
+                 NULL);         /* there is no callback for the corners between quadrants */
+
+    p4est_iterate (p4est, NULL,   /* we don't need any ghost quadrants for this loop */
+                 (void *) dsdy_vec,     /* user_data : pass in size_vec so that we can fill it */
+                 fill_dsdy_vec,    /* callback function that interpolates from the cell center to the cell corners, defined above */
+                 NULL,          /* there is no callback for the faces between quadrants */
+        #ifdef P4_TO_P8
+                 NULL,          /* there is no callback for the edges between quadrants */
+        #endif
+                 NULL);         /* there is no callback for the corners between quadrants */
+
+#ifdef P4_TO_P8
+    p4est_iterate (p4est, NULL,   /* we don't need any ghost quadrants for this loop */
+                 (void *) dsdz_vec,     /* user_data : pass in size_vec so that we can fill it */
+                 fill_dsdz_vec,    /* callback function that interpolates from the cell center to the cell corners, defined above */
+                 NULL,          /* there is no callback for the faces between quadrants */
+                 NULL,          /* there is no callback for the edges between quadrants */
+                 NULL);         /* there is no callback for the corners between quadrants */
+#endif
+
+    p4est_iterate (p4est, NULL,   /* we don't need any ghost quadrants for this loop */
+                 (void *) d2s_vec,     /* user_data : pass in size_vec so that we can fill it */
+                 fill_d2s_vec,    /* callback function that interpolates from the cell center to the cell corners, defined above */
+                 NULL,          /* there is no callback for the faces between quadrants */
+        #ifdef P4_TO_P8
+                 NULL,          /* there is no callback for the edges between quadrants */
+        #endif
+                 NULL);         /* there is no callback for the corners between quadrants */
+
+    p4est_iterate (p4est, NULL,   /* we don't need any ghost quadrants for this loop */
+                 (void *) h_vec,     /* user_data : pass in size_vec so that we can fill it */
+                 fill_h_vec,    /* callback function that interpolates from the cell center to the cell corners, defined above */
+                 NULL,          /* there is no callback for the faces between quadrants */
+        #ifdef P4_TO_P8
+                 NULL,          /* there is no callback for the edges between quadrants */
+        #endif
+                 NULL);         /* there is no callback for the corners between quadrants */
+
+    /* create VTK output context and set its parameters */
+    p4est_vtk_context_t *context = p4est_vtk_context_new(p4est, filename);
+    p4est_vtk_context_set_scale (context, 1.0);  /* quadrant at almost full scale */
+
+    /* begin writing the output files */
+    context = p4est_vtk_write_header (context);
+    SC_CHECK_ABORT (context != NULL, P4EST_STRING "_vtk: Error writing vtk header");
+
+#ifdef P4_TO_P8
+    int nScalarFields = 6;
+#else
+    int nScalarFields = 5;
+#endif
+
+    /* do not write the tree id's of each quadrant
+     * (there is only one tree in this example) */
+    context = p4est_vtk_write_cell_dataf(context, 0, 1,  /* do write the refinement level of each quadrant */
+                                        1,      /* do write the mpi process id of each quadrant */
+                                        0,      /* do not wrap the mpi rank (if this were > 0, the modulus of the rank relative to this number would be written instead of the rank) */
+                                        nScalarFields,      /* there is no custom cell scalar data. */
+                                        0,
+                                        "Size",
+                                        s_vec,
+                                        "dsdx",
+                                        dsdx_vec,
+                                        "dsdy",
+                                        dsdy_vec,
+                                    #ifdef P4_TO_P8
+                                        "dsdz",
+                                        dsdz_vec,
+                                    #endif
+                                        "d2s",
+                                        d2s_vec,
+                                        "hMin",
+                                        h_vec,
+                                        context);       /* mark the end of the variable cell data. */
+    SC_CHECK_ABORT (context != NULL, P4EST_STRING "_vtk: Error writing cell data");
+
+    const int retval = p4est_vtk_write_footer (context);
+    SC_CHECK_ABORT (!retval, P4EST_STRING "_vtk: Error writing footer");
+
+    sc_array_destroy(s_vec);
+    sc_array_destroy(dsdx_vec);
+    sc_array_destroy(dsdy_vec);
+#ifdef P4_TO_P8
+    sc_array_destroy(dsdz_vec);
+#endif
+    sc_array_destroy(d2s_vec);
+    sc_array_destroy(h_vec);
+}
+
+int finalizeP4est(p4est_t *p4est, p4est_connectivity_t *connect)
+{
+    int mpiret;
+    /* Destroy the p4est and the connectivity structure. */
+    p4est_destroy(p4est);
+    p4est_connectivity_destroy(connect);
+
+    /* Verify that allocations internal to p4est and sc do not leak memory.
+     * This should be called if sc_init () has been called earlier. */
+    sc_finalize();
+
+    /* This is standard MPI programs.  Without --enable-mpi, this is a dummy. */
+    mpiret = sc_MPI_Finalize();
+    SC_CHECK_MPI(mpiret);
+    return mpiret;
+}
+
+
+double myFun(double x, double y, double z, void *user_data){
+    return  *(double*) user_data;
+}
+
+int search_quadrant_fn(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
+
+    // double *point_to_find = (double *) point;
+    std::cout<<"search_quadrant_fn"<<std::endl;
+
+    return 1;
+
+}
+
+static int hxtOctreeSearchCallback(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
 
     bool in_box;
     int is_match;
@@ -826,102 +1655,44 @@ static int searchAndAssignConstant(p4est_t * p4est, p4est_topidx_t which_tree, p
     size_data_t  *data = (size_data_t *) q->p.user_data;
     size_point_t *p    = (size_point_t *) point;
 
-    HXTForestOptions *forestOptions = (HXTForestOptions *) p4est->user_pointer;
-
     // We have to recompute the cell dimension h for the root (non leaves) octants 
     // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
     double h;
-    if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
+    if(!is_leaf) hxtOctreeGetOctantSize(p4est, which_tree, q, &h);
     else h = data->h;
-
-    double center[3];
-    getCellCenter(p4est, which_tree, q, center);
-
-    // double epsilon = 1e-8;
-    // in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
-    // in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
-    // in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
-
-    in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
-    in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
-    in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
-
-    // A point can be on the exact boundary of two cells, hence we take the min.
-    if(in_box && is_leaf){
-      p->size = fmin(p->size, data->size);
-      p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
-      assert(p->size >= 0);
-      p->isFound = true;
-    }
-
-    return in_box;
-}
-
-static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
-
-    bool in_box;
-    int is_match;
-    int is_leaf = local_num >= 0;
     
-    size_data_t  *data = (size_data_t *) q->p.user_data;
-    size_point_t *p    = (size_point_t *) point;
-
-    HXTForestOptions *forestOptions = (HXTForestOptions *) p4est->user_pointer;
-
-    // We have to recompute the cell dimension h for the root (non leaves) octants 
-    // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
-    double h;
-    if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
-    else h = data->h;
 
     double center[3];
-    getCellCenter(p4est, which_tree, q, center);
+    hxtOctreeGetCenter(p4est, which_tree, q, center);
 
-    // double epsilon = 1e-12;
-    // in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
-    // in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
-    // in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
+    double epsilon = 1e-12;
+    in_box  = (p->x < center[0] + h/2 + epsilon) && (p->x > center[0] - h/2 - epsilon);
+    in_box &= (p->y < center[1] + h/2 + epsilon) && (p->y > center[1] - h/2 - epsilon);
+#ifdef P4_TO_P8
+    in_box &= (p->z < center[2] + h/2 + epsilon) && (p->z > center[2] - h/2 - epsilon);
+#endif
 
-    in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
-    in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
-    in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
-
-    // A point can be on the exact boundary of two cells, hence we take the min.
     if(in_box && is_leaf){
-      // Approximation lineaire a partir du gradient au centre
-      p->size = fmin(p->size, data->size + data->ds[0]*(p->x - center[0]) + data->ds[1]*(p->y - center[1]) + data->ds[2]*(p->z - center[2]) );
-      p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
-      // double gradmax = fmax( data->ds[0], fmax( data->ds[1], data->ds[2]));
-      // assert(gradmax <= (data->size - forestOptions->hmin) / h * 2.0/3.0);
-
-      // p->size = data->size + data->ds[0]*(p->x - center[0]) + data->ds[1]*(p->y - center[1]) + data->ds[2]*(p->z - center[2]);
-
-      assert(p->size >= 0);
-      p->isFound = true;
+        p->size = data->size;
     }
 
     return in_box;
 }
 
 /* Search for a single point in the tree structure and returns its size.
-   See searchAndAssign for the detailed comments. */
-HXTStatus hxtForestSearchOne(HXTForest *forest, double x, double y, double z, double *size, int linear){
+   See hxtOctreeSearch for the detailed comments. */
+HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, double *size){
+  
   sc_array_t *points = sc_array_new_size(sizeof(size_point_t), 1);
 
   size_point_t *p = (size_point_t *) sc_array_index(points, 0);
   p->x = x;
   p->y = y;
   p->z = z;
-  p->size = 1.0e22;
-  p->isFound = false;
-  
-  if(linear){
-    p4est_search(forest->p4est, NULL, searchAndAssignLinear, points);
-  }else{
-    p4est_search(forest->p4est, NULL, searchAndAssignConstant, points);
-  }
+  p->size = -1.0;
 
-  if(!p->isFound) Msg::Info("Point (%f,%f,%f) n'a pas été trouvé dans l'octree 8-|", x,y,z);
+  p4est_search(forest->p4est, NULL, hxtOctreeSearchCallback, points);
+
   *size = p->size;
 
   sc_array_destroy(points);
@@ -929,9 +1700,10 @@ HXTStatus hxtForestSearchOne(HXTForest *forest, double x, double y, double z, do
   return HXT_STATUS_OK;
 }
 
-static int replaceSize(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
+static int hxtOctreeReplaceCallback(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
 
     bool in_box;
+    int is_match;
     int is_leaf = local_num >= 0;
     
     size_data_t  *data = (size_data_t *) q->p.user_data;
@@ -940,24 +1712,28 @@ static int replaceSize(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadran
     // We have to recompute the cell dimension h for the root (non leaves) octants 
     // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
     double h;
-    if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
+    if(!is_leaf) hxtOctreeGetOctantSize(p4est, which_tree, q, &h);
     else h = data->h;
+    
 
     double center[3];
-    getCellCenter(p4est, which_tree, q, center);
+    hxtOctreeGetCenter(p4est, which_tree, q, center);
 
-    in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
-    in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
-    in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
+    double epsilon = 1e-12;
+    in_box  = (p->x < center[0] + h/2 + epsilon) && (p->x > center[0] - h/2 - epsilon);
+    in_box &= (p->y < center[1] + h/2 + epsilon) && (p->y > center[1] - h/2 - epsilon);
+#ifdef P4_TO_P8
+    in_box &= (p->z < center[2] + h/2 + epsilon) && (p->z > center[2] - h/2 - epsilon);
+#endif
 
     if(in_box && is_leaf){
-        data->size = fmin(data->size, p->size);
+        data->size = p->size;
     }
 
     return in_box;
 }
 
-HXTStatus hxtForestSearch(HXTForest *forest, std::vector<double> *x, std::vector<double> *y, std::vector<double> *z, std::vector<double> *size){
+HXTStatus hxtOctreeSearch(HXTForest *forest, std::vector<double> *x, std::vector<double> *y, std::vector<double> *z, std::vector<double> *size){
   
   // Array of size_point_t to search in the tree
   sc_array_t *points = sc_array_new_size(sizeof(size_point_t), (*x).size());
@@ -972,7 +1748,7 @@ HXTStatus hxtForestSearch(HXTForest *forest, std::vector<double> *x, std::vector
   }
   
   // Search on all cells
-  p4est_search(forest->p4est, NULL, searchAndAssignLinear, points);
+  p4est_search(forest->p4est, NULL, hxtOctreeSearchCallback, points);
 
   // Get the sizes
   for(int i = 0; i < (*x).size(); ++i){ 
@@ -986,9 +1762,178 @@ HXTStatus hxtForestSearch(HXTForest *forest, std::vector<double> *x, std::vector
   return HXT_STATUS_OK;
 }
 
-/* ========================================================================================================
-   CLOSE SURFACES DETECTION
-   ======================================================================================================== */
+static bool rtreeCallback(int id, void *ctx) {
+  std::vector<int>* vec = reinterpret_cast< std::vector<int>* >(ctx);
+  vec->push_back(id);
+  return true;
+}
+
+static void hxtOctreeRTreeCallback(p4est_iter_volume_info_t * info, void *user_data){
+
+  p4est_t            *p4est = info->p4est;
+  p4est_quadrant_t   *q = info->quad;
+  p4est_topidx_t      which_tree = info->treeid;
+  size_data_t        *data = (size_data_t *) q->p.user_data;
+  HXTForestOptions   *forestOptions = (HXTForestOptions *) user_data;
+
+  // double h;
+  // hxtOctreeGetOctantSize(p4est, which_tree, q, &h);
+
+  double min[3], max[3];
+  hxtOctreeGetBboxOctant(p4est, which_tree, q, min, max);
+
+  std::vector<int> candidates;  
+  forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
+
+  if(!candidates.empty()){
+    double kappa = 0.0;
+    for(auto &val : candidates){
+      // std::cout<<val<<std::endl;
+      for(int i = 0; i < 3; ++i){
+          int node = forestOptions->mesh->triangles.node[(size_t) 3*val+i];
+
+          double *v1 = forestOptions->nodalCurvature + 6*node;
+          double *v2 = forestOptions->nodalCurvature + 6*node + 3;
+
+          double k1 = hxtNorm2V3(v1);
+          double k2 = hxtNorm2V3(v2);
+
+          kappa = fmax(kappa,fmax(k1,k2));
+        }
+    }
+
+    // std::cout<<kappa<<std::endl;
+    double size = 2*M_PI/(forestOptions->nodePerTwoPi * kappa);
+    // std::cout<<size<<std::endl;
+    // std::cout<<data->size<<std::endl;
+    // std::cout<<size<<std::endl;
+    if(data->size > size){
+      data->size = size;
+      data->refineFlag = 1;
+    }
+  }
+}
+
+HXTStatus hxtOctreeLaplacianRefine(HXTForest *forest, int nRefine){
+
+  p4est_gloidx_t numQuadrants = forest->p4est->global_num_quadrants;
+
+  uint32_t i = 0;
+  do{
+    // Compute d2s on each cell
+    HXT_CHECK(hxtOctreeComputeLaplacian(forest));
+    // Refine the octree once with respect to the value of d2s on each quadrant/octant
+    p4est_refine(forest->p4est, 0, hxtRefineLaplacianCallback, hxtOctreeSetInitialSize);
+    // HXT_CHECK(hxtOctreeRefineLaplacian(forest));
+    // Balance the octree to get 2:1 ratio between adjacent cells
+    HXT_CHECK(hxtOctreeBalance(forest));
+
+    ++i;
+    std::cout<<"Number of quadrants : "<<forest->p4est->global_num_quadrants<<std::endl;
+
+    // If the number of quadrants is the same after refinement, we stop
+    if(forest->p4est->global_num_quadrants == numQuadrants){
+        numQuadrants = forest->p4est->global_num_quadrants;
+        std::cout<<"Laplace refinement converged"<<std::endl;
+        break;
+    }
+    else{
+        numQuadrants = forest->p4est->global_num_quadrants;
+    }        
+  }while(i < nRefine);
+
+  if(i == nRefine){ std::cout<<"Laplace refinement stopped after "<<i<<" iterations"<<std::endl; }
+  
+  p4est_iterate(forest->p4est, NULL, forest->forestOptions, hxtOctreeRTreeCallback, NULL,
+      #ifdef P4_TO_P8
+                  NULL,
+      #endif
+                  NULL);
+
+  return HXT_STATUS_OK;
+}
+
+static int hxtCurvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
+  // std::cout<<((size_data_t *) q->p.user_data)->refineFlag<<std::endl;
+  return ((size_data_t *) q->p.user_data)->refineFlag;
+}
+
+
+// static void hxtOctreeResetRefineFlag(p4est_iter_volume_info_t * info, void *user_data){
+//   size_data_t *data = (size_data_t *) info->quad->p.user_data;
+//   data->refineFlag = 0;
+// }
+
+HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax){
+
+  p4est_gloidx_t numQuadrants;
+
+  int i = 0;
+  do{
+    numQuadrants = forest->p4est->global_num_quadrants;
+
+    // Check if size is smaller than the size prescribed by curvature
+    p4est_iterate(forest->p4est, NULL, forest->forestOptions, hxtOctreeRTreeCallback, NULL,
+      #ifdef P4_TO_P8
+                  NULL,
+      #endif
+                  NULL);
+
+    // Refine with respect to the curvature
+    p4est_refine(forest->p4est, 0, hxtCurvatureRefineCallback, hxtOctreeSetInitialSize);
+
+    // Balance the octree to get 2:1 ratio between adjacent cells
+    p4est_balance(forest->p4est, P4EST_CONNECT_FACE, hxtOctreeSetInitialSize);
+
+    // Recompute size on newly created cells ?
+    p4est_iterate(forest->p4est, NULL, forest->forestOptions, hxtOctreeRTreeCallback, NULL,
+      #ifdef P4_TO_P8
+                  NULL,
+      #endif
+                  NULL);
+
+    // Print octree in VTK
+    //    std::string fileVTK = "/Users/arthur/Documents/Code/Mesh_octree/results_octree/dummy_3D_rtree_curvature_refine" + std::to_string(i);
+    //    write_ds_to_vtk(forest->p4est, fileVTK.c_str()); 
+
+    ++i;
+
+    std::cout<<"Number of quadrants : "<<forest->p4est->global_num_quadrants<<std::endl;
+    
+  }while(i < nMax && numQuadrants < forest->p4est->global_num_quadrants);
+
+  std::cout<<"Number of quadrants : "<<forest->p4est->global_num_quadrants<<std::endl;
+  if(i == nMax){ std::cout<<"Curvature refinement stopped after "<<i<<" iterations"<<std::endl; }
+
+  return HXT_STATUS_OK;
+}
+
+static double det3x3(const double mat[3][3])
+{
+  return (mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
+      mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
+      mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]));
+}
+
+static HXTStatus inv3x3(const double mat[3][3], double inv[3][3], double *det)
+{
+  *det = det3x3(mat);
+  if(det) {
+    double ud = 1. / *det;
+    inv[0][0] = (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) * ud;
+    inv[1][0] = -(mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) * ud;
+    inv[2][0] = (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]) * ud;
+    inv[0][1] = -(mat[0][1] * mat[2][2] - mat[0][2] * mat[2][1]) * ud;
+    inv[1][1] = (mat[0][0] * mat[2][2] - mat[0][2] * mat[2][0]) * ud;
+    inv[2][1] = -(mat[0][0] * mat[2][1] - mat[0][1] * mat[2][0]) * ud;
+    inv[0][2] = (mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1]) * ud;
+    inv[1][2] = -(mat[0][0] * mat[1][2] - mat[0][2] * mat[1][0]) * ud;
+    inv[2][2] = (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]) * ud;
+  } else {
+    return HXT_STATUS_ERROR;
+  }
+  return HXT_STATUS_OK;
+}
 
 /*
  distance to triangle
@@ -1016,7 +1961,10 @@ HXTStatus hxtForestSearch(HXTForest *forest, std::vector<double> *x, std::vector
 
  t = (p-p1)*(p2-p1)/||p2-p1||^2
 */
-void signedDistancePointTriangle2(const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p3, const SPoint3 &p, double &d, SPoint3 &closePt){
+void signedDistancePointTriangle2(const SPoint3 &p1, const SPoint3 &p2,
+                                const SPoint3 &p3, const SPoint3 &p, double &d,
+                                SPoint3 &closePt)
+{
  SVector3 t1 = p2 - p1;
  SVector3 t2 = p3 - p1;
  SVector3 t3 = p3 - p2;
@@ -1029,7 +1977,8 @@ void signedDistancePointTriangle2(const SPoint3 &p1, const SPoint3 &p2, const SP
                      {t1.y(), t2.y(), -n.y()},
                      {t1.z(), t2.z(), -n.z()}};
  double inv[3][3];
- double det = inv3x3(mat, inv);
+ double det;
+ inv3x3(mat, inv, &det);
  if(det == 0.0) return;
 
  double u, v;
@@ -1077,7 +2026,8 @@ void signedDistancePointTriangle2(const SPoint3 &p1, const SPoint3 &p2, const SP
  }
 }
 
-HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, const SPoint3 &p, double &d, uint64_t &closestTri){
+HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<int> *candidates, const SPoint3 &p, double &d){
+
   SPoint3 p1 = SPoint3();
   SPoint3 p2 = SPoint3();
   SPoint3 p3 = SPoint3();
@@ -1087,7 +2037,7 @@ HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<uint64_t> *candi
 
   double x,y,z;
 
-  for(std::vector<uint64_t>::iterator tri = candidates->begin(); tri != candidates->end(); ++tri){
+  for(std::vector<int>::iterator tri = candidates->begin(); tri != candidates->end(); ++tri){
     // Coordonnees des points du triangle
     int node1 = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)  ];
     int node2 = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+1];
@@ -1106,10 +2056,21 @@ HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<uint64_t> *candi
     z = forest->forestOptions->mesh->vertices.coord[(size_t) 4*node3+2];
     p3.setPosition(x,y,z);
 
+    // double x1,y1,z1;
+    // p1.getPosition(&x1, &y1, &z1);
+    // printf("%f - %f - %f \n", x1, y1, z1);
+    // p2.getPosition(&x1, &y1, &z1);
+    // printf("%f - %f - %f \n", x1, y1, z1);
+    // p3.getPosition(&x1, &y1, &z1);
+    // printf("%f - %f - %f \n", x1, y1, z1);
+    // p.getPosition(&x1, &y1, &z1);
+    // printf("%f - %f - %f \n", x1, y1, z1);
+ 
     double d_tmp;
     signedDistancePointTriangle2(p1, p2, p3, p, d_tmp, closePt);
-    if(d_tmp <= d) closestTri = *tri;
     d = fmin(d, fabs(d_tmp));
+    printf("d = %f \n", d);
+
   }
 
   return HXT_STATUS_OK;
@@ -1120,809 +2081,197 @@ HXTStatus hxtDistanceToTriangles(HXTForest *forest, std::vector<uint64_t> *candi
 // qui sont proches de node par rapport a la topologie de la triangulation (!= distance euclidienne)
 // In : - candidates, le vecteur des triangles qui intersectent la boite de cote h autour de node
 //      - node, le noeud courant dans SurfacesProches
-void eliminateTriangles(HXTForest *forest, std::vector<uint64_t> *candidates, int node){
+void hxtBFSTriangles(HXTForest *forest, std::vector<int> *candidates, int node){
 
-  double *n = forest->forestOptions->nodeNormals + 3*node;
-  // printf("Normale au noeud : (%f, %f, %f)\n", n[0], n[1], n[2]);
-  // Determiner toutes les couleurs du noeud
-  int currentColor;
-  std::vector<int> nodeColors, allColors;
-  for(std::vector<uint64_t>::iterator tri = candidates->begin(); tri != candidates->end(); ++tri){
-    currentColor = forest->forestOptions->mesh->triangles.colors[(size_t)(*tri)];
-    if(std::find(allColors.begin(), allColors.end(), currentColor) == allColors.end())
-      allColors.push_back(currentColor);
-    for(int i = 0; i < 3; ++i){
-      if(forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i] == node){
-        if(std::find(nodeColors.begin(), nodeColors.end(), currentColor) == nodeColors.end()){
-          nodeColors.push_back(currentColor);
-        }
-      }
-    }
-  }
-  // printf("Nombre de couleurs pour le noeud %d : %d\n", node, nodeColors.size());
-  std::vector<uint64_t> savedCandidates;
-  // Contient les noeuds (il faut partir de node)
+  // Contient des noeuds (il faut partir de node)
   std::queue<int> q; 
+  // Partir de node (ajouter dans la file)
   q.push(node);
   while(!q.empty()){
+    // std::cout<<q.front()<<std::endl;
     // Prendre tous les triangles de candidates qui contiennent node, puis les retirer de candidates. 
     // Prendre tous les noeuds de ces triangles et les ajouter dans la file
-    for(std::vector<uint64_t>::iterator tri = candidates->begin(); tri != candidates->end(); ){
-      // std::cout << "Couleur = " << forest->forestOptions->mesh->triangles.colors[(size_t) (*tri)] << std::endl;
-      currentColor = forest->forestOptions->mesh->triangles.colors[(size_t)(*tri)];
-
+    for(std::vector<int>::iterator tri = candidates->begin(); tri != candidates->end(); ){
       bool flag = false;
       for(int i = 0; i < 3; ++i){
         int local_node = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
         if(local_node == q.front()) flag = true;
       }
-
-      // Si q.front() est dans le triangle courant, on ajoute les deux autres sommets et on retire le triangle de la liste
+      // Si q.front() est dans le triangle courant, on ajoute les deux autres sommets et on le retire de la liste
       if(flag){
         for(int i = 0; i < 3; ++i){
           int local_node = forest->forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
           if(local_node != q.front()) q.push(local_node);
         }
-
-        if(std::count(nodeColors.begin(), nodeColors.end(), currentColor) == 0){
-          savedCandidates.push_back(*tri);
-        }
-        
         tri = candidates->erase(tri);
-
-      } else{
+      }
+      else{
         ++tri;
       }
     }
     q.pop();
   }
 
-  if(allColors.size() > 2){
-    for(std::vector<uint64_t>::iterator it = savedCandidates.begin(); it < savedCandidates.end(); ++it){
-      candidates->push_back(*it);
-    }
-  }
-
-  for(std::vector<uint64_t>::iterator it = candidates->begin(); it < candidates->end(); ){
-    double *v0 = &forest->forestOptions->nodeNormals[3*forest->forestOptions->mesh->triangles.node[3*(*it)+0]];
-    double *v1 = &forest->forestOptions->nodeNormals[3*forest->forestOptions->mesh->triangles.node[3*(*it)+1]];
-    double *v2 = &forest->forestOptions->nodeNormals[3*forest->forestOptions->mesh->triangles.node[3*(*it)+2]];
-
-    double cos0 = v0[0]*n[0] + v0[1]*n[1] + v0[2]*n[2]; // Les normales sont censees etre unitaires
-    double cos1 = v1[0]*n[0] + v1[1]*n[1] + v1[2]*n[2]; // Les normales sont censees etre unitaires
-    double cos2 = v2[0]*n[0] + v2[1]*n[1] + v2[2]*n[2]; // Les normales sont censees etre unitaires
-
-    double cosMin = 0.8; // Plus grand que sqrt(2)/2 pour les coins à 45° ?
-    // Le cos entre les normales devrait être proche de 1
-    int areNormalsNotAligned = (fabs(cos0) < cosMin) + (fabs(cos1) < cosMin) + (fabs(cos2) < cosMin);
-    // Le cos devrait être négatif
-    int areNormalsNotInRightDirection = (cos0 > 0) + (cos1 > 0) + (cos2 > 0);
-
-    if(areNormalsNotAligned >= 1 || areNormalsNotInRightDirection >= 1){
-      it = candidates->erase(it);
-    } else{
-      ++it;
-    }
-  }
+  //  std::cout<<"Elements restants"<<std::endl;
+  //  for(auto &val : *candidates)
+  //    std::cout<<val<<std::endl;
 }
 
-// To quickly sort 4 integers
-static int sort4(int *d){
-#define SWAP(x,y) if (d[y] < d[x]) { int tmp = d[x]; d[x] = d[y]; d[y] = tmp; }
-  SWAP(0, 1);
-  SWAP(2, 3);
-  SWAP(0, 2);
-  SWAP(1, 3);
-  SWAP(1, 2);
-#undef SWAP
-}
+HXTStatus hxtOctreeSurfacesProches(HXTForest *forest){
 
-static int commonFaceTetSlow(MTetrahedron *t1, MTetrahedron *t2){
-  int t10 = t1->getVertex(0)->getNum();
-  int t11 = t1->getVertex(1)->getNum();
-  int t12 = t1->getVertex(2)->getNum();
-  int t13 = t1->getVertex(3)->getNum();
-  int t20 = t2->getVertex(0)->getNum();
-  int t21 = t2->getVertex(1)->getNum();
-  int t22 = t2->getVertex(2)->getNum();
-  int t23 = t2->getVertex(3)->getNum();
-  std::vector<int> v1 = { t10, t11, t12, t13 }; 
-  std::vector<int> v2 = { t20, t21, t22, t23 };
-  std::sort(v1.begin(), v1.end()); 
-  std::sort(v2.begin(), v2.end()); 
-  std::vector<int> v(v1.size() + v2.size()); 
-  std::vector<int>::iterator it, st; 
-  it = std::set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), v.begin());
-  v.resize(it-v.begin());
-  return v.size();
-}
-
-static int commonFaceTetFast(MTetrahedron *t1, MTetrahedron *t2){
-  int t10 = t1->getVertex(0)->getNum();
-  int t11 = t1->getVertex(1)->getNum();
-  int t12 = t1->getVertex(2)->getNum();
-  int t13 = t1->getVertex(3)->getNum();
-  int t20 = t2->getVertex(0)->getNum();
-  int t21 = t2->getVertex(1)->getNum();
-  int t22 = t2->getVertex(2)->getNum();
-  int t23 = t2->getVertex(3)->getNum();
-
-  bool b0 = (t10 == t20) || (t10 == t21) || (t10 == t22) || (t10 == t23);
-  bool b1 = (t11 == t20) || (t11 == t21) || (t11 == t22) || (t11 == t23);
-  bool b2 = (t12 == t20) || (t12 == t21) || (t12 == t22) || (t12 == t23);
-  bool b3 = (t13 == t20) || (t13 == t21) || (t13 == t22) || (t13 == t23);
-
-  if(b0+b1+b2+b3 < 3){
-    return -1;
-  } else{
-    int v1[4]    = {t10, t11, t12, t13};
-    int v1cpy[4] = {t10, t11, t12, t13};
-    int v2[4]    = {t20, t21, t22, t23};
-    // int isSwapped1[5] = {0, 0, 0, 0, 0};
-    // int isSwapped2[5] = {0, 0, 0, 0, 0};
-    sort4(v1);
-    sort4(v2);
-    t10 = v1[0]; t11 = v1[1]; t12 = v1[2]; t13 = v1[3];
-    t20 = v2[0]; t21 = v2[1]; t22 = v2[2]; t23 = v2[3];
-
-    bool b00 = (t11==t21) && (t12==t22) && (t13==t23);
-    bool b01 = (t11==t20) && (t12==t22) && (t13==t23);
-    bool b02 = (t11==t20) && (t12==t21) && (t13==t23);
-    bool b03 = (t11==t20) && (t12==t21) && (t13==t22);
-
-    bool b10 = (t10==t21) && (t12==t22) && (t13==t23);
-    bool b11 = (t10==t20) && (t12==t22) && (t13==t23);
-    bool b12 = (t10==t20) && (t12==t21) && (t13==t23);
-    bool b13 = (t10==t20) && (t12==t21) && (t13==t22);
-
-    bool b20 = (t10==t21) && (t11==t22) && (t12==t23);
-    bool b21 = (t10==t20) && (t11==t22) && (t12==t23);
-    bool b22 = (t10==t20) && (t11==t21) && (t12==t23);
-    bool b23 = (t10==t20) && (t11==t21) && (t12==t22);
-
-    bool b30 = (t10==t21) && (t11==t22) && (t13==t23);
-    bool b31 = (t10==t20) && (t11==t22) && (t13==t23);
-    bool b32 = (t10==t20) && (t11==t21) && (t13==t23);
-    bool b33 = (t10==t20) && (t11==t21) && (t13==t22);
-
-    int missing = -1; // The vertex that is missing from the common face
-    if      (b00 || b01 || b02 || b03) missing = 0; //return 3;
-    else if (b10 || b11 || b12 || b13) missing = 1; //return 2;
-    else if (b20 || b21 || b22 || b23) missing = 3; //return 0;
-    else if (b30 || b31 || b32 || b33) missing = 2; //return 1;
-
-    if(missing >= 0){
-      if      (v1cpy[0] == v1[missing]) return 3;
-      else if (v1cpy[1] == v1[missing]) return 2;
-      else if (v1cpy[2] == v1[missing]) return 1;
-      else if (v1cpy[3] == v1[missing]) return 0;
-    }
-  }
-}
-
-static inline int commonFace(MTetrahedron *t1, MTetrahedron *t2){
-  int indCommonFaceInt1 = -1;
-  for(int i = 0; i < 4; ++i){
-    for(int j = 0; j < 4; ++j){
-      if(t1->getFace(i) == t2->getFace(j)){ indCommonFaceInt1 = i; goto skip; }
-    }
-  }
-  skip: ;
-  return indCommonFaceInt1;
-}
-
-// static int commonFace(std::vector<MFace> tetFaces, uint64_t t1, uint64_t t2){
-//   int indCommonFaceInt1 = -1;
-//   for(int i = 0; i < 4; ++i){
-//     for(int j = 0; j < 4; ++j){
-//       if(tetFaces[4*t1+i] == tetFaces[4*t2+j]){ indCommonFaceInt1 = i; goto skip; }
-//     }
-//   }
-//   skip: ;
-//   return indCommonFaceInt1;
-// }
-
-static bool sortClockwise(SPoint3 a, SPoint3 b, SPoint3 center, SVector3 normal){
-  // If dot(n, cross(A-C, B-C)) is positive, B is counterclockwise from A; if it's negative, B is clockwise from A.
-  SVector3 tmp = crossprod(SVector3(center,a),SVector3(center,b));
-  return dot(normal, tmp) <= 0;
-}
-
-HXTStatus medialAxis(HXTForest* forest){
-
-  HXTMesh *mesh     = forest->forestOptions->mesh;
-  int nLayersPerGap = forest->forestOptions->nodePerGap;
-  double hmin       = forest->forestOptions->hmin;
-  double hmax       = forest->forestOptions->hmax;
-
-  std::vector<MVertex*> allVertices;
-  std::vector<double> sizeAtVertices(mesh->vertices.num, DBL_MAX);
-  for(size_t i = 0; i < mesh->vertices.num; ++i){
-    allVertices.push_back(new MVertex(mesh->vertices.coord[4*i+0],
-                                      mesh->vertices.coord[4*i+1],
-                                      mesh->vertices.coord[4*i+2]));
-  }
-
-  int firstVertex = allVertices[0]->getNum();
-
-  // All tets
-  uint64_t count = 0;
-  std::vector<MTetrahedron*> allTets;
-  std::vector<std::vector<uint64_t>> tetIncidents;
-  std::vector<std::vector<MEdge>> edgIncidents;
-  for(uint32_t i = 0; i < mesh->vertices.num; ++i){
-    std::vector<uint64_t> vTet;
-    tetIncidents.push_back(vTet);
-    std::vector<MEdge> vEdg;
-    edgIncidents.push_back(vEdg);
-  }
-
-  for(size_t i = 0; i < mesh->tetrahedra.num; ++i){
-    if(mesh->tetrahedra.node[4*i+3] != HXT_GHOST_VERTEX){
-      allTets.push_back(new MTetrahedron(allVertices[ mesh->tetrahedra.node[4*i+0] ],
-                                         allVertices[ mesh->tetrahedra.node[4*i+1] ],
-                                         allVertices[ mesh->tetrahedra.node[4*i+2] ],
-                                         allVertices[ mesh->tetrahedra.node[4*i+3] ]) );
-
-      for(size_t j = 0; j < 4; ++j){
-        tetIncidents[ mesh->tetrahedra.node[4*i+j] ].push_back(count);
-      }
-      for(size_t j = 0; j < 6; ++j){
-        MEdge e = allTets[count]->getEdge(j);
-        edgIncidents[ allTets[count]->getEdge(j).getVertex(0)->getNum() - firstVertex ].push_back(e);
-        edgIncidents[ allTets[count]->getEdge(j).getVertex(1)->getNum() - firstVertex ].push_back(e);
-      }
-      ++count;
-    }
-  }
-
-  std::set<MEdge,MEdgeLessThan> axis;
-  int elemDrawn = 0;
- 
-  // FILE* file = fopen("medialAxis.pos", "w");
-  // if(file==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-  // FILE* file_vp = fopen("medialAxis_poleVectors.pos", "w");
-  // if(file_vp==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-  // FILE* file_t = fopen("medialAxis_tets.pos", "w");
-  // if(file_t==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-
-  // bool draw = true;
-  // if(draw){
-  //   fprintf(file, "View \"medialAxis\" {\n");
-  //   fprintf(file_vp, "View \"medialAxis_poleVectors\" {\n");
-  //   fprintf(file_t, "View \"medialAxis_tets\" {\n");
-  // }
-  // draw = true;
-
-  int indFace;
-
-  for(size_t i = 0; i < mesh->vertices.num; ++i){
-    // Pôle de p : circumcenter le plus loin parmi les tets incidents à p
-    SPoint3 pole(0.,0.,0.),
-             tmp(0.,0.,0.),
-               p(mesh->vertices.coord[4*i+0], mesh->vertices.coord[4*i+1], mesh->vertices.coord[4*i+2]);
-    double d = 0.;
-
-    for(size_t j = 0; j < tetIncidents[i].size(); ++j){
-      tmp = allTets[ tetIncidents[i][j] ]->circumcenter();
-      if(p.distance(tmp) > d) pole = tmp;
-      d = fmax(d, p.distance(tmp));
-    }
-
-    // Pole vector
-    SPoint3 vp = pole - p;
-    double D = -(vp[0]*p[0] + vp[1]*p[1] + vp[2]*p[2]);
-    SPoint3 p1(0., 0., -D/vp[2]); // 2 points sur le plan qui passe par p et de normale vp
-    SPoint3 p2(0., -D/vp[1], 0.);
-
-    // if(i == 130300){
-    //   fprintf(file_vp, "SP(%f,%f,%f){%d};\n", pole[0], pole[1], pole[2], 1);
-    //   fprintf(file_vp, "SL(%f,%f,%f,%f,%f,%f){%d,%d};\n", p[0], p[1], p[2], p[0]+vp[0], p[1]+vp[1], p[2]+vp[2], 1, 1);
-    // }
-
-    std::vector<MFace> up; // umbrella
-    // Boucle sur les voronoi edges (paires de centres)
-    double orientj, orientk;
-    for(size_t j = 0; j < tetIncidents[i].size(); ++j){
-      uint64_t tetj = tetIncidents[i][j];
-      SPoint3 cj = allTets[tetj]->circumcenter();  
-      for(size_t k = j; k < tetIncidents[i].size(); ++k){
-        uint64_t tetk = tetIncidents[i][k];
-        if( tetj != tetk ){
-          indFace = commonFaceTetFast(allTets[tetj], allTets[tetk]);
-          if(indFace >= 0){
-            SPoint3 ck = allTets[tetk]->circumcenter();
-            orientj = robustPredicates::orient3d((double*) p, (double*) p1, (double*) p2, (double*) cj);
-            orientk = robustPredicates::orient3d((double*) p, (double*) p1, (double*) p2, (double*) ck);
-            if(orientj*orientk < 0){
-              up.push_back(allTets[tetj]->getFace(indFace));
-              // break; ?
-            }
-          } 
-        }
-      }
-    }
-
-    // if(i == 130300){
-    //   for(size_t j = 0; j < tetIncidents[i].size(); ++j){
-    //     uint64_t tetj = tetIncidents[i][j];
-    //     fprintf(file_t, "SS(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n",
-    //             allTets[tetj]->getVertex(0)->x(), allTets[tetj]->getVertex(0)->y(), allTets[tetj]->getVertex(0)->z(),
-    //             allTets[tetj]->getVertex(1)->x(), allTets[tetj]->getVertex(1)->y(), allTets[tetj]->getVertex(1)->z(),
-    //             allTets[tetj]->getVertex(2)->x(), allTets[tetj]->getVertex(2)->y(), allTets[tetj]->getVertex(2)->z(),
-    //             allTets[tetj]->getVertex(3)->x(), allTets[tetj]->getVertex(3)->y(), allTets[tetj]->getVertex(3)->z(),
-    //             1.0, 1.0, 1.0, 1.0);
-    //   }
-    // }
-
-    double theta = M_PI/8., rho = 8., maxAngle, minRatio, localAngle, alpha0, alpha1;
-    std::vector<MEdge> checkedEdges;
-    bool checked;
-    for(size_t j = 0; j < edgIncidents[i].size(); ++j){ // boucler sur les aretes incidentes à p
-
-      MEdge e = edgIncidents[i][j];
-      checked = false;
-      for(size_t k = 0; k < checkedEdges.size(); ++k){
-        if(e == checkedEdges[k]){
-          checked = true;
-          break;
-        }
-      }
-
-      if(checked){ continue; }
-      else{ checkedEdges.push_back(e); }
-
-      // if(i == 130300){
-      // if(i % 25 == 0){
-        // Draw umbrella triangles
-        // for(size_t jj = 0; jj < up.size(); ++jj){
-        //   fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f};\n",
-        //         up[jj].getVertex(0)->x(), up[jj].getVertex(0)->y(), up[jj].getVertex(0)->z(),
-        //         up[jj].getVertex(1)->x(), up[jj].getVertex(1)->y(), up[jj].getVertex(1)->z(),
-        //         up[jj].getVertex(2)->x(), up[jj].getVertex(2)->y(), up[jj].getVertex(2)->z(),
-        //         1,1,1);
-        // }
-        // // Turning around the edge to draw the facet
-        // std::vector<SPoint3> centers;
-        // for(size_t jj = 0; jj < tetIncidents[i].size(); ++jj){
-        //   uint64_t tetj = tetIncidents[i][jj];
-        //   for(size_t b = 0; b < 6; ++b){
-        //     if(allTets[tetj]->getEdge(b) == e) centers.push_back(allTets[tetj]->circumcenter());
-        //   }
-        // }
-        // if(centers.size() > 2){
-        //   // Center of the face
-        //   SPoint3 c(0.,0.,0.);
-        //   for(size_t a = 0; a < centers.size(); ++a){
-        //     c += centers[a];
-        //   }
-        //   c /= centers.size();
-        //   SVector3 v0(c,centers[0]);
-        //   SVector3 v1(c,centers[1]);
-        //   SVector3 v2(c,centers[2]);
-        //   SVector3 normal = crossprod(SVector3(c,centers[1]),SVector3(c,centers[2]));
-        //   normal.normalize();
-        //   // setFarthestAsFirst(centers, c);
-        //   // if(angle(v0,v1) > 0){ 
-        //   //   normal = crossprod(SVector3(c,centers[0]),SVector3(c,centers[2]));
-        //   //   if(angle(v0,v2) > 0){
-        //   //     normal = crossprod(SVector3(c,centers[1]),SVector3(c,centers[2]));
-        //   //   }
-        //   // }
-        //   // Sort clockwise around center
-        //   sort(centers.begin(), centers.end(), [c,normal](SPoint3 a, SPoint3 b) { return sortClockwise(a,b,c,normal); });
-        //   // Draw
-        //   for(size_t aa = 0; aa < centers.size(); aa++){
-        //     for(size_t a = 1; a < centers.size()-1; a++){
-        //       fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f};\n",
-        //         centers[aa][0],  centers[aa][1],  centers[aa][2],
-        //         centers[a][0],  centers[a][1],  centers[a][2],
-        //         centers[a+1][0],centers[a+1][1],centers[a+1][2],
-        //         e.length(), e.length(), e.length());
-        //     }
-        //   }
-        //   // fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%d,%d,%d};\n",
-        //   //     centers[0][0],centers[0][1],centers[0][2],
-        //   //     centers[centers.size()-1][0],centers[centers.size()-1][1],centers[centers.size()-1][2],
-        //   //     centers[1][0],centers[1][1],centers[1][2],
-        //   //     0,(int) centers.size()-1, 1);
-        //   ++elemDrawn;
-        // }
-      // }
-
-      maxAngle = 0.0;
-      minRatio = DBL_MAX;
-
-      uint32_t v0 = e.getVertex(0)->getNum() - firstVertex;
-      uint32_t v1 = e.getVertex(1)->getNum() - firstVertex;
-      if(v0 == i || v1 == i){
-        for(size_t l = 0; l < up.size(); ++l){
-          // Angle condition
-          localAngle = angle( e.tangent(), up[l].normal() );
-          localAngle = fmin(localAngle, fabs(M_PI - localAngle));
-          maxAngle = fmax(maxAngle, localAngle);
-
-          // Ratio condition
-          MTriangle tri(up[l].getVertex(0),up[l].getVertex(1),up[l].getVertex(2));
-          minRatio = fmin(minRatio, e.length() / tri.getOuterRadius());
-        }
-
-        if(maxAngle < M_PI/2. - theta || minRatio > rho){
-        // if(maxAngle < M_PI/2. - theta){
-
-          double *n0 = forest->forestOptions->nodeNormals + 3*v0;
-          double *n1 = forest->forestOptions->nodeNormals + 3*v1;
-          alpha0 = angle(SVector3(n0), e.tangent());
-          alpha1 = angle(SVector3(n1), e.tangent());
-
-          if( fmin(alpha0, fabs(M_PI-alpha0)) < M_PI/8. && fmin(alpha1, fabs(M_PI-alpha1)) < M_PI/8.){
-            // Ajouter le dual de l'arête (en fait juste l'arête) et modifier la taille des deux extrémités
-            std::pair<std::set<MEdge, MEdgeLessThan>::iterator,bool> ret = axis.insert(e);
-
-            // if(ret.second){
-                double h = e.length()/nLayersPerGap;
-                h = fmax(h, hmin);
-                h = fmin(h, hmax);
-                sizeAtVertices[ v0 ] = fmin(h, sizeAtVertices[ v0 ]);
-                sizeAtVertices[ v1 ] = fmin(h, sizeAtVertices[ v1 ]);
-
-              // if(draw){
-              //   // Turning around the edge to draw the facet
-              //   std::vector<SPoint3> centers;
-              //   for(size_t jj = 0; jj < tetIncidents[i].size(); ++jj){
-              //     uint64_t tetj = tetIncidents[i][jj];
-              //     for(size_t b = 0; b < 6; ++b){
-              //       if(allTets[tetj]->getEdge(b) == e) centers.push_back(allTets[tetj]->circumcenter());
-              //     }
-              //   }
-              //   if(centers.size() > 2){
-              //     // Center of the face
-              //     SPoint3 c(0.,0.,0.);
-              //     for(size_t a = 0; a < centers.size(); ++a){
-              //       c += centers[a];
-              //     }
-              //     c /= centers.size();
-              //     SVector3 normal = crossprod(SVector3(c,centers[0]),SVector3(c,centers[1]));
-              //     normal.normalize();
-              //     // Sort clockwise around center
-              //     sort(centers.begin(), centers.end(), [c,normal](SPoint3 a, SPoint3 b) { return sortClockwise(a,b,c,normal); });
-              //     // Draw
-              //     for(size_t a = 1; a < centers.size()-1; ++a){
-              //       fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%d,%d,%d};\n",
-              //         centers[0][0],centers[0][1],centers[0][2],
-              //         centers[a][0],centers[a][1],centers[a][2],
-              //         centers[a+1][0],centers[a+1][1],centers[a+1][2],
-              //         1,1,1);
-              //         // 0,(int) a, (int) a+1);
-              //     }
-              //     fprintf(file, "ST(%f,%f,%f, %f,%f,%f, %f,%f,%f){%d,%d,%d};\n",
-              //         centers[0][0],centers[0][1],centers[0][2],
-              //         centers[centers.size()-1][0],centers[centers.size()-1][1],centers[centers.size()-1][2],
-              //         centers[1][0],centers[1][1],centers[1][2],
-              //         1,1,1);
-              //         // 0,(int) centers.size()-1, 1);
-              //     ++elemDrawn;
-              //   } 
-              // }
-            // } // if edge was inserted
-          } // if edges does not have a too large angle with normals to its extremities
-        } // if edge passes conditions
-      } // if i is an edge vertex
-    } // for incident edges
-  } // for vertices.num
-
-  // draw = true;
-  // if(draw){
-  //   fprintf(file, "};");
-  //   fclose(file);
-  //   fprintf(file_vp, "};");
-  //   fclose(file_vp);
-  //   fprintf(file_t, "};");
-  //   fclose(file_t);
-  // }
-
-  // printf("%d faces drawn in the medial axis\n", elemDrawn);
-  // printf("%d edges in the medial axis\n", axis.size());
-
-  sc_array_t *points = sc_array_new_size(sizeof(size_point_t), mesh->vertices.num);
-  size_point_t *p_tmp;
-  for(size_t i = 0; i < mesh->vertices.num; ++i){
-    p_tmp = (size_point_t *) sc_array_index(points, i);
-    p_tmp->x = mesh->vertices.coord[(size_t) 4*i+0];
-    p_tmp->y = mesh->vertices.coord[(size_t) 4*i+1];
-    p_tmp->z = mesh->vertices.coord[(size_t) 4*i+2];
-    p_tmp->size = sizeAtVertices[i];
-  }
-  p4est_search(forest->p4est, NULL, replaceSize, points);
-
-}
-
-HXTStatus hxtForestCloseSurfaces(HXTForest *forest){
   // Pour chaque noeud : recuperer sa taille dans l'octree et prendre les triangles dans la boule de rayon h
+  // for(int i = 0; i < forest->forestOptions->mesh->vertices.num; ++i){
   SPoint3 p = SPoint3();
-  sc_array_t *points = sc_array_new_size(sizeof(size_point_t), 1);
+  sc_array_t *points = sc_array_new_size(sizeof(size_point_t), forest->forestOptions->mesh->vertices.num);
   size_point_t *p_tmp;
 
-  // La taille du noeud courant
-  double size, x, y, z; 
-  double min[3], max[3];
+  for(int i = 0; i < forest->forestOptions->mesh->vertices.num; ++i){
+    p_tmp = (size_point_t *) sc_array_index(points, i);
 
-  bool debug = true;
-  FILE* file = fopen("pointsConnectesAvecAngles.pos", "w");
-    if(file==NULL)
-      return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-  if(debug){
-    fprintf(file, "View \"pointsConnectesAvecAngles\" {\n");
-  }
+    // La taille du noeud courant
+    double size; 
+    // Coordonnees
+    double x = forest->forestOptions->mesh->vertices.coord[(size_t) 4*i  ];
+    double y = forest->forestOptions->mesh->vertices.coord[(size_t) 4*i+1];
+    double z = forest->forestOptions->mesh->vertices.coord[(size_t) 4*i+2];
+    HXT_CHECK(hxtOctreeSearchOne(forest, x, y, z, &size));
+    // printf("%f - %f - %f \n", x , y, z);
 
-  for(uint64_t i = 0; i < forest->forestOptions->mesh->vertices.num; ++i){
-    p_tmp = (size_point_t *) sc_array_index(points, 0);
+    p_tmp->x = x;
+    p_tmp->y = y;
+    p_tmp->z = z;
 
-    p_tmp->x = x = forest->forestOptions->mesh->vertices.coord[(size_t) 4*i  ];
-    p_tmp->y = y = forest->forestOptions->mesh->vertices.coord[(size_t) 4*i+1];
-    p_tmp->z = z = forest->forestOptions->mesh->vertices.coord[(size_t) 4*i+2];
+    //    printf("Point %d - taille initiale = %f \n", i+1, size);
 
-    HXT_CHECK(hxtForestSearchOne(forest, x, y, z, &size, false));
-
-    // Boite autour du point de taille h
+    // Boite autour du point de taille h  -> PAS UNE BOULE ?
+    double min[3], max[3];
     min[0] = x - size; max[0] = x + size;
     min[1] = y - size; max[1] = y + size;
     min[2] = z - size; max[2] = z + size;
-    std::vector<uint64_t> candidates;  
+    std::vector<int> candidates;  
     forest->forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
 
-    if(!candidates.empty()){
+    // printf("=========  Test\n");
+    // for(std::vector<int>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri)
+    //   std::cout<<*tri<<std::endl;
+    
+    // std::sort(candidates.begin(),candidates.end());
+    // std::unique(candidates.begin(),candidates.end());
+    // printf("=========  Unique\n");
+    // for(std::vector<int>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri)
+    //   std::cout<<(*tri)+1<<std::endl;
+    // printf("=========  BFS\n");
 
-      eliminateTriangles(forest, &candidates, i);
+    hxtBFSTriangles(forest, &candidates, i);
 
-      if(!candidates.empty()){
-        uint64_t closestTri;
-        p.setPosition(x,y,z);
-        hxtDistanceToTriangles(forest, &candidates, p, size, closestTri);
-
-        // if(size >= forest->forestOptions->nodePerGap*forest->forestOptions->hmin){
-          double cosAngle, cos0, cos1, cos2;
-          double cosValue = 0.8;
-          if(debug){
-            // Drawing gap lengths
-            double x_avg, y_avg, z_avg;
-            x_avg = y_avg = z_avg = 0.0;
-            for(int ii = 0; ii < 3; ++ii){
-              uint64_t node = forest->forestOptions->mesh->triangles.node[(size_t) 3*closestTri+ii];
-              x_avg += 1.0/3.0 * forest->forestOptions->mesh->vertices.coord[(size_t) 4*node];
-              y_avg += 1.0/3.0 * forest->forestOptions->mesh->vertices.coord[(size_t) 4*node+1];
-              z_avg += 1.0/3.0 * forest->forestOptions->mesh->vertices.coord[(size_t) 4*node+2];
-            }
-            // Comparer avec la normale au noeud courant
-            double *n = forest->forestOptions->nodeNormals + 3*i;
-            cosAngle = (x_avg-x)*n[0] + (y_avg-y)*n[1] + (z_avg-z)*n[2];
-            cosAngle /= sqrt((x_avg-x)*(x_avg-x) + (y_avg-y)*(y_avg-y) + (z_avg-z)*(z_avg-z));
-
-            // Comparer avec les normales au triangle le plus près
-            double *v0 = &forest->forestOptions->nodeNormals[3*forest->forestOptions->mesh->triangles.node[3*closestTri+0]];
-            double *v1 = &forest->forestOptions->nodeNormals[3*forest->forestOptions->mesh->triangles.node[3*closestTri+1]];
-            double *v2 = &forest->forestOptions->nodeNormals[3*forest->forestOptions->mesh->triangles.node[3*closestTri+2]];
-            cos0 = v0[0]*(x_avg-x) + v0[1]*(y_avg-y) + v0[2]*(z_avg-z); // Les normales sont censees etre unitaires
-            cos1 = v1[0]*(x_avg-x) + v1[1]*(y_avg-y) + v1[2]*(z_avg-z); // Les normales sont censees etre unitaires
-            cos2 = v2[0]*(x_avg-x) + v2[1]*(y_avg-y) + v2[2]*(z_avg-z); // Les normales sont censees etre unitaires
-            cos0 /= sqrt((x_avg-x)*(x_avg-x) + (y_avg-y)*(y_avg-y) + (z_avg-z)*(z_avg-z));
-            cos1 /= sqrt((x_avg-x)*(x_avg-x) + (y_avg-y)*(y_avg-y) + (z_avg-z)*(z_avg-z));
-            cos2 /= sqrt((x_avg-x)*(x_avg-x) + (y_avg-y)*(y_avg-y) + (z_avg-z)*(z_avg-z));
-
-            // if(fabs(cosAngle) >= 0.9 && size >= forest->forestOptions->hmin){
-            if(fabs(cosAngle) >= cosValue && fabs(cos0) >= cosValue && fabs(cos1) >= cosValue && fabs(cos2) >= cosValue){
-              fprintf(file, "SL(%f,%f,%f,%f,%f,%f){%f,%f};\n", x, y, z, x_avg, y_avg, z_avg, size, size);
-              // fprintf(file, "SL(%f,%f,%f,%f,%f,%f){%f,%f};\n", x, y, z, x_avg, y_avg, z_avg, cosAngle, cosAngle);
-            }
-          }
-
-          // if(fabs(cosAngle) >= 0.7 && size >= forest->forestOptions->hmin){
-          if(fabs(cosAngle) >= cosValue && fabs(cos0) >= cosValue && fabs(cos1) >= cosValue && fabs(cos2) >= cosValue){
-            size /= forest->forestOptions->nodePerGap;
-            size = fmax(size, forest->forestOptions->hmin);
-            p_tmp->size = size;
-
-            // On cherche dans l'octree et on remplace dans les quadrants associes aux noeuds
-            p4est_search(forest->p4est, NULL, replaceSize, points);
-          }
-        // }
-      }
+    if(candidates.size()){
+      p.setPosition(x,y,z);
+      hxtDistanceToTriangles(forest, &candidates, p, size);
+      size /= forest->forestOptions->nodePerGap;
+      printf("Taille corrigée au noeud %d = %f \n", i+1, size);
     }
+
+    p_tmp->size = size;
   }
 
-  if(debug){
-    fprintf(file, "};");
-    fclose(file);
-  }
+  // On cherche dans l'octree et on remplace dans les quadrants associes aux noeuds
+  p4est_search(forest->p4est, NULL, hxtOctreeReplaceCallback, points);
 
+  // Clean up
   sc_array_destroy(points);
 
   return HXT_STATUS_OK;
+
 }
 
-/* ========================================================================================================
-   ESTIMATE NUMBER OF TETRAHEDRA IN THE VOLUME MESH
-   ======================================================================================================== */
-
-void elementEstimateCallback(p4est_iter_volume_info_t * info, void *user_data){
+void elementEstimateCallback(p4est_iter_volume_info_t * info, void *user_data)
+{
   p4est_quadrant_t   *q = info->quad;
   size_data_t        *data = (size_data_t *) q->p.user_data;
 
-  p4est_t            *p4est = info->p4est;
-  p4est_topidx_t      which_tree = info->treeid;
+// #ifndef P4_TO_P8
+  // *((double *) user_data) += (data->h * data->h)           / pow(data->size, 2);
+// #else
+  *((double *) user_data) += (data->h * data->h * data->h) / pow(data->size, 3);
+  // printf("size = %f et total = %f\n",data->size, *((double *) user_data));
+// #endif
 
-  double center[3];
-  getCellCenter(p4est, which_tree, q, center);
-
-  double octantVolume = data->h * data->h * data->h;
-  double tetVolume = data->size * data->size * data->size * sqrt(2) / 12.0;
-
-  *((double *) user_data) += octantVolume/tetVolume;
 }
 
 HXTStatus hxtOctreeElementEstimation(HXTForest *forest, double *elemEstimate){
-  p4est_iterate (forest->p4est, NULL, (void *) elemEstimate, elementEstimateCallback, NULL, NULL, NULL);
+
+  p4est_iterate (forest->p4est, NULL, (void *) elemEstimate, elementEstimateCallback, NULL,
+            #ifdef P4_TO_P8
+                       NULL,
+            #endif
+                       NULL);
+
   return HXT_STATUS_OK;
 }
 
-/* ========================================================================================================
-   EXPORT
-   ======================================================================================================== */
+// Deprecated
+HXTStatus hxtForestWriteBBoxMesh(HXTBbox *bbox, const char* filename){
+  FILE* file = fopen(filename,"w");
+  if(file==NULL)
+    return HXT_ERROR_MSG(HXT_STATUS_FILE_CANNOT_BE_OPENED,
+      "Cannot open mesh file \"%s\"",(filename==NULL)?"(null)":filename);
 
-HXTStatus saveGlobalData(HXTForest *forest, const char *filename){
+  /* Writing a simple ABAQUS (.inp) file with a single element*/
+  fprintf(file,"*Heading\n %s\n",filename);
 
-  FILE* f = fopen(filename, "w");
-  if(f==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-  fprintf(f, "%f %f\n", forest->forestOptions->hmin, forest->forestOptions->hmax);
-  fclose(f);
-  Msg::Info("Saved global size field data to %s", filename);
-  return HXT_STATUS_OK;
-}
-
-void exportToTetraCallback(p4est_iter_volume_info_t * info, void *user_data){
-  p4est_quadrant_t   *q = info->quad;
-  size_data_t        *data = (size_data_t *) q->p.user_data;
-
-  p4est_t            *p4est = info->p4est;
-  p4est_topidx_t      which_tree = info->treeid;
-
-  HXTForestOptions   *forestOptions = (HXTForestOptions *) p4est->user_pointer;
-
-  FILE* f = (FILE*) user_data;
-
-  double center[3], x[8], y[8], z[8];
-  getCellCenter(p4est, which_tree, q, center);
-
-  double h = data->h, s = data->size, epsilon = 1e-12;
-  x[0] = x[1] = x[4] = x[5] = center[0]-h - epsilon;
-  x[2] = x[3] = x[6] = x[7] = center[0]+h + epsilon;
-  y[0] = y[3] = y[4] = y[7] = center[1]-h - epsilon;
-  y[1] = y[2] = y[5] = y[6] = center[1]+h + epsilon;
-  z[0] = z[1] = z[2] = z[3] = center[2]-h - epsilon;
-  z[4] = z[5] = z[6] = z[7] = center[2]+h + epsilon;
+  for(int i = 0; i < 3; ++i){
+    bbox->min[i] *= 1.3;
+    bbox->max[i] *= 1.3;
+  }
   
-  fprintf(f, "SS(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n", 
-                 x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[4], y[4], z[4], s, s, s, s);
-  fprintf(f, "SS(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n", 
-                 x[0], y[0], z[0], x[2], y[2], z[2], x[3], y[3], z[3], x[4], y[4], z[4], s, s, s, s);
-  fprintf(f, "SS(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n", 
-                 x[1], y[1], z[1], x[2], y[2], z[2], x[4], y[4], z[4], x[5], y[5], z[5], s, s, s, s);
-  fprintf(f, "SS(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n", 
-                 x[2], y[2], z[2], x[3], y[3], z[3], x[4], y[4], z[4], x[6], y[6], z[6], s, s, s, s);
-  fprintf(f, "SS(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n", 
-                 x[2], y[2], z[2], x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], s, s, s, s);
-  fprintf(f, "SS(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n", 
-                 x[3], y[3], z[3], x[4], y[4], z[4], x[6], y[6], z[6], x[7], y[7], z[7], s, s, s, s);
-}
+  /* print the nodes */
+  fprintf(file,"*NODE\n");
+  fprintf(file,"%u, %f, %f, %f\n",1, bbox->min[0], bbox->min[1], bbox->min[2]);
+  fprintf(file,"%u, %f, %f, %f\n",2, bbox->max[0], bbox->min[1], bbox->min[2]);
+  fprintf(file,"%u, %f, %f, %f\n",3, bbox->max[0], bbox->max[1], bbox->min[2]);
+  fprintf(file,"%u, %f, %f, %f\n",4, bbox->min[0], bbox->max[1], bbox->min[2]);
+  fprintf(file,"%u, %f, %f, %f\n",5, bbox->min[0], bbox->min[1], bbox->max[2]);
+  fprintf(file,"%u, %f, %f, %f\n",6, bbox->max[0], bbox->min[1], bbox->max[2]);
+  fprintf(file,"%u, %f, %f, %f\n",7, bbox->max[0], bbox->max[1], bbox->max[2]);
+  fprintf(file,"%u, %f, %f, %f\n",8, bbox->min[0], bbox->max[1], bbox->max[2]);
 
-void exportToHexCallback(p4est_iter_volume_info_t * info, void *user_data){
-  p4est_quadrant_t   *q = info->quad;
-  size_data_t        *data = (size_data_t *) q->p.user_data;
+  fprintf(file,"******* E L E M E N T S *************\n");
+  fprintf(file,"*ELEMENT, type=C3D8, ELSET=Volume8\n");
+  fprintf(file,"1, 1, 2, 3, 4, 5, 6, 7, 8\n");
 
-  p4est_t            *p4est = info->p4est;
-  p4est_topidx_t      which_tree = info->treeid;
-
-  HXTForestOptions   *forestOptions = (HXTForestOptions *) p4est->user_pointer;
-
-  FILE* f = (FILE*) user_data;
-
-  double center[3], x[8], y[8], z[8];
-  getCellCenter(p4est, which_tree, q, center);
-
-  double h = data->h/2.0, s = data->size, epsilon = 1e-12;
-  x[0] = x[3] = x[4] = x[7] = center[0]-h - epsilon;
-  x[1] = x[2] = x[5] = x[6] = center[0]+h + epsilon;
-  y[0] = y[1] = y[4] = y[5] = center[1]-h - epsilon;
-  y[2] = y[3] = y[6] = y[7] = center[1]+h + epsilon;
-  z[0] = z[1] = z[2] = z[3] = center[2]-h - epsilon;
-  z[4] = z[5] = z[6] = z[7] = center[2]+h + epsilon;
-  
-  // fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f,%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n", 
-  fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f,%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%d, %d, %d, %d, %d, %d, %d, %d};\n", 
-    x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3], 
-    x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7], 
-    q->level, q->level, q->level, q->level, q->level, q->level, q->level, q->level);
-    // s, s, s, s, s, s, s, s);
-}
-
-void exportToQuadCallback(p4est_iter_volume_info_t * info, void *user_data){
-  p4est_quadrant_t   *q = info->quad;
-  size_data_t        *data = (size_data_t *) q->p.user_data;
-
-  p4est_t            *p4est = info->p4est;
-  p4est_topidx_t      which_tree = info->treeid;
-
-  HXTForestOptions   *forestOptions = (HXTForestOptions *) p4est->user_pointer;
-
-  FILE* f = (FILE*) user_data;
-
-  double center[3], x[8], y[8], z[8];
-  getCellCenter(p4est, which_tree, q, center);
-
-  double h = data->h/2.0, s = data->size, epsilon = 1e-12;
-  x[0] = x[3] = center[0]-h - epsilon;
-  x[1] = x[2] = center[0]+h + epsilon;
-  y[0] = y[1] = center[1]-h - epsilon;
-  y[2] = y[3] = center[1]+h + epsilon;
-  z[0] = z[1] = 0.0;
-  z[2] = z[3] = 0.0;
-  
-  fprintf(f, "SQ(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n", 
-    x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3],
-    s, s, s, s);
-}
-
-HXTStatus hxtForestExport(HXTForest *forest, const char *forestFile){
-  // std::string fFile = std::string(forest->forestOptions->forestFile) + ".pos";
-  // FILE* f = fopen(fFile.c_str(), "w");
-  FILE* f = fopen(forestFile, "w");
-  if(f==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-
-  fprintf(f, "View \"sizeField\" {\n");
-  p4est_iterate(forest->p4est, NULL, (void*) f, exportToHexCallback, NULL, NULL, NULL);
-  fprintf(f, "};");
-  fclose(f);
+  fclose(file);
   return HXT_STATUS_OK;
 }
 
-HXTStatus hxtForestExport2D(HXTForest *forest, const char *forestFile){
-  // std::string fFile = std::string(forest->forestOptions->forestFile) + ".pos";
-  // FILE* f = fopen(fFile.c_str(), "w");
-  FILE* f = fopen(forestFile, "w");
-  if(f==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-
-  fprintf(f, "View \"sizeField\" {\n");
-  p4est_iterate(forest->p4est, NULL, (void*) f, exportToQuadCallback, NULL, NULL, NULL);
-  fprintf(f, "};");
-  fclose(f);
-  return HXT_STATUS_OK;
+p4est_connectivity_t *
+p8est_connectivity_new_cube (double c)
+{
+  const p4est_topidx_t num_vertices = 8;
+  const p4est_topidx_t num_trees = 1;
+  const p4est_topidx_t num_ett = 0;
+  const p4est_topidx_t num_ctt = 0;
+  const double        vertices[8 * 3] = {
+    -c, -c, -c,
+    c, -c, -c,
+    -c, c, -c,
+    c, c, -c,
+    -c, -c, c,
+    c, -c, c,
+    -c, c, c,
+    c, c, c,
+  };
+  const p4est_topidx_t tree_to_vertex[1 * 8] = {
+    0, 1, 2, 3, 4, 5, 6, 7,
+  };
+  const p4est_topidx_t tree_to_tree[1 * 6] = {
+    0, 0, 0, 0, 0, 0,
+  };
+  const int8_t        tree_to_face[1 * 6] = {
+    0, 1, 2, 3, 4, 5,
+  };
+  return p4est_connectivity_new_copy (num_vertices, num_trees, 0, 0,
+				      vertices, tree_to_vertex,
+				      tree_to_tree, tree_to_face,
+				      NULL, &num_ett, NULL, NULL,
+				      NULL, &num_ctt, NULL, NULL);
 }
-
-HXTStatus hxtForestSave(HXTForest *forest, const char *forestFile, const char *dataFile){
-  // int memUsage = p4est_memory_used(forest->p4est);
-  // Msg::Info("Memory used by the forest : %d bytes", memUsage);
-  // p4est_iterate(forest->p4est, NULL, NULL, saveMinSize, NULL,
-  //           #ifdef P4_TO_P8
-  //                       NULL,
-  //           #endif
-  //                       NULL);
-
-  // p4est_search(forest->p4est, saveMinSize, NULL, NULL);
-  // std::string globalDataFile = std::string(forest->forestOptions->forestFile) + ".data";
-  // HXT_CHECK( saveGlobalData(forest, globalDataFile.c_str()) );
-  HXT_CHECK( saveGlobalData(forest, dataFile) );
-  p4est_save_ext(forestFile, forest->p4est, true, false);
-  return HXT_STATUS_OK;
-}
-
-#else // HAVE_P4EST
-HXTStatus hxtForestSearchOne(HXTForest *forest, double x, double y, double z, double *size, int linear) {
-
-  *size = 1.e22;
-  static int count = 0;
-  if (count ++ < 20)
-    return HXT_ERROR_MSG(HXT_STATUS_ERROR,"HXT needs P4EST to compute automatic size fields");
-  return HXT_STATUS_ERROR;
-}
-
-#endif // HAVE_P4EST

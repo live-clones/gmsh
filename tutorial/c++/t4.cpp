@@ -6,7 +6,8 @@
 //
 // -----------------------------------------------------------------------------
 
-#include <math.h>
+#include <set>
+#include <cmath>
 #include <gmsh.h>
 
 double hypoth(double a, double b) { return sqrt(a * a + b * b); }
@@ -14,7 +15,6 @@ double hypoth(double a, double b) { return sqrt(a * a + b * b); }
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t4");
 
@@ -167,7 +167,8 @@ int main(int argc, char **argv)
   gmsh::write("t4.msh");
 
   // Launch the GUI to see the results:
-  // gmsh::fltk::run();
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

@@ -6,10 +6,11 @@
 #ifndef FUNCSPACEDATA_H
 #define FUNCSPACEDATA_H
 
+#include <cstddef>
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "ElementType.h"
-#include <cstddef>
+
 class MElement;
 
 class FuncSpaceData {

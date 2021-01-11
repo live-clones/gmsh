@@ -64,12 +64,9 @@ public:
 
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-    double ps = CTX::instance()->geom.pointSize;
-    double sps = CTX::instance()->geom.selectedPointSize;
-    if(_ctx->isHighResolution()) {
-      ps *= CTX::instance()->highResolutionPointSizeFactor;
-      sps *= CTX::instance()->highResolutionPointSizeFactor;
-    }
+    double fact = _ctx->highResolutionPixelFactor();
+    double ps = CTX::instance()->geom.pointSize * fact;
+    double sps = CTX::instance()->geom.selectedPointSize * fact;
 
     if(v->getSelection()) {
       glPointSize((float)sps);

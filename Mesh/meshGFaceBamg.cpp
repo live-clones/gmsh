@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <map>
 #include <iostream>
 #include "meshGFaceBamg.h"
 #include "GmshMessage.h"
@@ -13,12 +14,12 @@
 #include "MLine.h"
 #include "GmshConfig.h"
 #include "Context.h"
-#include <map>
 #include "BackgroundMeshTools.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "Options.h"
 #include "meshGFace.h"
 #include "MElementOctree.h"
+#include "fullMatrix.h"
 
 #if defined(HAVE_BAMG)
 
@@ -179,10 +180,10 @@ void meshGFaceBamg(GFace *gf)
 
     try {
       refinedBamgMesh = Bamg(bamgMesh, args, mm11, mm12, mm22, false);
-      Msg::Info("bamg succeeded %d vertices %d triangles", refinedBamgMesh->nv,
+      Msg::Info("BAMG succeeded %d vertices %d triangles", refinedBamgMesh->nv,
                 refinedBamgMesh->nt);
     } catch(...) {
-      Msg::Error("bamg failed");
+      Msg::Error("BAMG failed");
       return;
     }
     delete[] mm11;
@@ -247,8 +248,7 @@ void meshGFaceBamg(GFace *gf)
 
 void meshGFaceBamg(GFace *gf)
 {
-  Msg::Error("This version of Gmsh is not compiled with Bidimensional "
-             "Anisotropic Mesh Generator (BAMG) support");
+  Msg::Error("This version of Gmsh is not compiled with BAMG support");
 }
 
 #endif

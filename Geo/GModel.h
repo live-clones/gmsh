@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -20,15 +21,8 @@
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
 
-// TODO C++11 remove this nasty stuff
-#if __cplusplus >= 201103L
-#include <unordered_map>
 #define hashmapMFace std::unordered_map<MFace, int, MFaceHash, MFaceEqual>
 #define hashmapMEdge std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual>
-#else
-#define hashmapMFace std::map<MFace, int, MFaceLessThan>
-#define hashmapMEdge std::map<MEdge, int, MEdgeLessThan>
-#endif
 
 template <class scalar> class simpleFunction;
 
@@ -163,7 +157,7 @@ protected:
 
   // loop over all vertices connected to elements and associate
   // geometrical entity
-  void _associateEntityWithMeshVertices(bool force = false);
+  void _associateEntityWithMeshVertices();
 
   // store the vertices in the geometrical entity they are associated
   // with, and delete those that are not associated with any entity
@@ -438,7 +432,10 @@ public:
     _physicalNames = names;
   }
 
-  // remove physical groups in the model
+  // add a physical group (made of elementary entities "tags")
+  void addPhysicalGroup(int dim, int tag, const std::vector<int> &tags);
+
+  // remove physical groups
   void removePhysicalGroups();
   void removePhysicalGroup(int dim, int num);
 
@@ -540,6 +537,10 @@ public:
   // _vertexMapCache if not.
   void rebuildMeshVertexCache(bool onlyIfNecessary = false);
 
+  // recompute _elementVectorCache if there is a dense element numbering or
+  // _elementMapCache if not.
+  void rebuildMeshElementCache(bool onlyIfNecessary = false);
+
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
 
@@ -575,8 +576,8 @@ public:
   }
 
   // delete or reverse all invisble mesh elements
-  void removeInvisibleElements();
-  void reverseInvisibleElements();
+  std::size_t removeInvisibleElements();
+  std::size_t reverseInvisibleElements();
 
   // the list of partitions
   std::size_t getNumPartitions() const { return _numPartitions; }
@@ -605,10 +606,10 @@ public:
   // remove duplicate mesh vertices
   int removeDuplicateMeshVertices(double tolerance);
 
-  // create a topology from the mesh if necessary, move the mesh of discrete
-  // entities to a geometry container, compute a parametrization for the
-  // discrete entities
-  void createGeometryOfDiscreteEntities();
+  // create a geometry (i.e. a parametrization for curves and surfaces) for the
+  // given discrete entities (or all of them if dimTags is empty)
+  void createGeometryOfDiscreteEntities(const std::vector<std::pair<int, int> >
+                                        &dimTags = std::vector<std::pair<int, int> >());
 
   // make discrete entities simply connected
   void makeDiscreteRegionsSimplyConnected();
@@ -715,7 +716,10 @@ public:
   int readACISSAT(const std::string &name);
 
   // Parasolid Model
-  int readParasolid(const std::string &name);
+  int readParasolidXMT(const std::string &name);
+  int writeParasolidXMT(const std::string &name);
+  int readParasolidSTEP(const std::string &name);
+  int writeParasolidSTEP(const std::string &name);
 
   // Gmsh mesh file format
   int readMSH(const std::string &name);
@@ -791,7 +795,7 @@ public:
                std::vector<std::vector<MVertex *> > &vertPerZone,
                std::vector<std::vector<MElement *> > &eltPerZone);
   int writeCGNS(const std::string &name, bool saveAll = false,
-                double scalingFactor = 1.0);
+                double scalingFactor = 1.0, bool structured = false);
 
   // Med "Modele d'Echange de Donnees" file format (the static routine
   // is allowed to load multiple models/meshes)

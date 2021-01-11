@@ -9,8 +9,6 @@ int main(int argc, char **argv)
 
   gmsh::initialize();
 
-  gmsh::option::setNumber("General.Terminal", 1);
-
   // create a simple geometry and mesh it
   gmsh::model::add("test");
   gmsh::model::occ::addRectangle(0, 0, 0, 1, 1);

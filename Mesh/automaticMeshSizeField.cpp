@@ -96,8 +96,8 @@ static HXTStatus getAllFacesOfAllRegions(std::vector<GRegion *> &regions, HXTMes
       m->brep.surfacesPerVolume[counter++] = f_e[j]->tag();
   }
 
-   printf("volume 0 has %d faces\n",m->brep.numSurfacesPerVolume[0]);
-   for (int i=0;i<m->brep.numSurfacesPerVolume[0];i++)printf("%d",m->brep.surfacesPerVolume[i]); printf("\n");
+   // printf("volume 0 has %d faces\n",m->brep.numSurfacesPerVolume[0]);
+   // for (int i=0;i<m->brep.numSurfacesPerVolume[0];i++)printf("%d",m->brep.surfacesPerVolume[i]); printf("\n");
 
   return HXT_STATUS_OK;
 }
@@ -140,9 +140,110 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m, 
   return HXT_STATUS_OK;
 }
 
-HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v);
+HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
+                   std::map<MVertex *, uint32_t> &v2c,
+                   std::vector<MVertex *> &c2v);
 
-HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v);
+HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m,
+       std::map<MVertex *, uint32_t> &v2c,
+       std::vector<MVertex *> &c2v)
+{
+  std::vector<GEdge *> edges;
+  HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
+  std::set<MVertex *> all;
+
+  uint64_t ntri = 0;
+  uint64_t nedg = 0;
+
+  for(size_t j = 0; j < edges.size(); j++) {
+    GEdge *ge = edges[j];
+    nedg += ge->lines.size();
+    for(size_t i = 0; i < ge->lines.size(); i++) {
+      all.insert(ge->lines[i]->getVertex(0));
+      all.insert(ge->lines[i]->getVertex(1));
+    }
+  }
+
+  for(size_t j = 0; j < faces.size(); j++) {
+    GFace *gf = faces[j];
+    ntri += gf->triangles.size();
+    for(size_t i = 0; i < gf->triangles.size(); i++) {
+      all.insert(gf->triangles[i]->getVertex(0));
+      all.insert(gf->triangles[i]->getVertex(1));
+      all.insert(gf->triangles[i]->getVertex(2));
+    }
+  }
+
+  m->vertices.num = m->vertices.size = all.size();
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
+
+  size_t count = 0;
+  c2v.resize(all.size());
+  // for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
+  //   m->vertices.coord[4 * count + 0] = (*it)->x();
+  //   m->vertices.coord[4 * count + 1] = (*it)->y();
+  //   m->vertices.coord[4 * count + 2] = (*it)->z();
+  //   m->vertices.coord[4 * count + 3] = 0.0;
+  //   v2c[*it] = count;
+  //   c2v[count++] = *it;
+  // }
+  for(MVertex *v : all) {
+    m->vertices.coord[4 * count + 0] = v->x();
+    m->vertices.coord[4 * count + 1] = v->y();
+    m->vertices.coord[4 * count + 2] = v->z();
+    m->vertices.coord[4 * count + 3] = 0;
+    // if(CTX::instance()->mesh.lcFromPoints) { // size on embedded points in volume
+    //   auto it = vlc.find(v);
+    //   if(it != vlc.end())
+    //     m->vertices.coord[4 * count + 3] = it->second;
+    // }
+    v2c[v] = count;
+    c2v[count++] = v;
+  }
+  all.clear();
+
+  m->lines.num = m->lines.size = nedg;
+  uint64_t index = 0;
+
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
+  HXT_CHECK(
+    hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint32_t)));
+
+  for(size_t j = 0; j < edges.size(); j++) {
+    GEdge *ge = edges[j];
+    for(size_t i = 0; i < ge->lines.size(); i++) {
+      m->lines.node[2 * index + 0] = v2c[ge->lines[i]->getVertex(0)];
+      m->lines.node[2 * index + 1] = v2c[ge->lines[i]->getVertex(1)];
+      m->lines.color[index] = ge->tag();
+      index++;
+    }
+  }
+
+  m->triangles.num = m->triangles.size = ntri;
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
+                             (m->triangles.num) * 3 * sizeof(uint32_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.color,
+                             (m->triangles.num) * sizeof(uint32_t)));
+
+  index = 0;
+  for(size_t j = 0; j < faces.size(); j++) {
+    GFace *gf = faces[j];
+    for(size_t i = 0; i < gf->triangles.size(); i++) {
+      m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
+      m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
+      m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
+      m->triangles.color[index] = gf->tag();
+      index++;
+    }
+  }
+  return HXT_STATUS_OK;
+}
+
+// HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v);
+
+// HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v);
 
 HXTStatus Gmsh2HxtLocal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v){
   std::vector<GEdge *> edges;
@@ -155,10 +256,10 @@ HXTStatus Gmsh2HxtLocal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVerte
   for(size_t j = 0; j < edges.size(); j++) {
     GEdge *ge = edges[j];
     nedg += ge->lines.size();
-    // for(size_t i = 0; i < ge->lines.size(); i++) {
-    //   all.insert(ge->lines[i]->getVertex(0));
-    //   all.insert(ge->lines[i]->getVertex(1));
-    // }
+    for(size_t i = 0; i < ge->lines.size(); i++) {
+      // all.insert(ge->lines[i]->getVertex(0));
+      // all.insert(ge->lines[i]->getVertex(1));
+    }
   }
 
   for(size_t j = 0; j < faces.size(); j++) {
@@ -195,14 +296,14 @@ HXTStatus Gmsh2HxtLocal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVerte
   HXT_CHECK(
     hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t)));
   HXT_CHECK(
-    hxtAlignedMalloc(&m->lines.colors, (m->lines.num) * sizeof(uint16_t)));
+    hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint32_t)));
 
   for(size_t j = 0; j < edges.size(); j++) {
     GEdge *ge = edges[j];
     for(size_t i = 0; i < ge->lines.size(); i++) {
       m->lines.node[2 * index + 0] = v2c[ge->lines[i]->getVertex(0)];
       m->lines.node[2 * index + 1] = v2c[ge->lines[i]->getVertex(1)];
-      m->lines.colors[index] = ge->tag();
+      m->lines.color[index] = ge->tag();
       index++;
     }
   }
@@ -210,8 +311,8 @@ HXTStatus Gmsh2HxtLocal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVerte
   m->triangles.num = m->triangles.size = ntri;
   HXT_CHECK(hxtAlignedMalloc(&m->triangles.node,
                              (m->triangles.num) * 3 * sizeof(uint32_t)));
-  HXT_CHECK(hxtAlignedMalloc(&m->triangles.colors,
-                             (m->triangles.num) * sizeof(uint16_t)));
+  HXT_CHECK(hxtAlignedMalloc(&m->triangles.color,
+                             (m->triangles.num) * sizeof(uint32_t)));
 
   index = 0;
   for(size_t j = 0; j < faces.size(); j++) {
@@ -220,7 +321,7 @@ HXTStatus Gmsh2HxtLocal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVerte
       m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
       m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
       m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
-      m->triangles.colors[index] = gf->tag();
+      m->triangles.color[index] = gf->tag();
       index++;
     }
   }
@@ -303,7 +404,7 @@ static p4est_connectivity_t * p8est_connectivity_new_cube(ForestOptions *forestO
   double cY      = (forestOptions->bbox[4]-forestOptions->bbox[1]) / 2.0;
   double cZ      = (forestOptions->bbox[5]-forestOptions->bbox[2]) / 2.0;
 
-  double scalingFactor = 1.5; // The octree is this times bigger than the surface mesh's bounding box
+  double scalingFactor = 1.3; // The octree is this times bigger than the surface mesh's bounding box
   double c = scalingFactor * fmax(fmax(cX,cY),cZ);
 
   // TODO : Compute any bounding box, not necessarily aligned with the axes
@@ -1156,13 +1257,13 @@ static int searchAndAssignConstant(p4est_t * p4est, p4est_topidx_t which_tree, p
   else h = data->h;
   getCellCenter(p4est, which_tree, q, center);
 
-  double epsilon = 1e-13;
-  in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
-  in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
-  in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
-  // in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
-  // in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
-  // in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
+  // double epsilon = 1e-13;
+  // in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
+  // in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
+  // in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
+  in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
+  in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
+  in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
 
   // A point can be on the exact boundary of two cells, hence we take the min.
   if(in_box && is_leaf){
@@ -1178,7 +1279,7 @@ static int searchAndAssignConstantAniso(p4est_t * p4est, p4est_topidx_t which_tr
   bool in_box, is_leaf = local_num >= 0;
   size_data_t   *data = (size_data_t *) q->p.user_data;
   size_point_t  *p    = (size_point_t *) point;
-  ForestOptions *forestOptions = (ForestOptions *) p4est->user_pointer;
+  // ForestOptions *forestOptions = (ForestOptions *) p4est->user_pointer;
   // We have to recompute the cell dimension h for the root (non leaves) octants 
   // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
   double h, center[3];
@@ -1219,15 +1320,23 @@ static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4e
   getCellSize(p4est, which_tree, q, &h);
   getCellCenter(p4est, which_tree, q, center);
 
-  double epsilon = 1e-13;
-  in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
-  in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
-  in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
+  double epsilon = 1e-10;
+  // in_box  = (p->x < center[0] + h/2. + epsilon) && (p->x > center[0] - h/2. - epsilon);
+  // in_box &= (p->y < center[1] + h/2. + epsilon) && (p->y > center[1] - h/2. - epsilon);
+  // in_box &= (p->z < center[2] + h/2. + epsilon) && (p->z > center[2] - h/2. - epsilon);
 
-  // // This misses some points...
+  // This misses some points...
   // in_box  = (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.);
   // in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
   // in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
+
+  SPoint3 C(center), P(p->x,p->y,p->z);
+  SVector3 dir(C,P);
+  SVector3 dx(1.,0.,0.);
+  SVector3 dy(0.,1.,0.);
+  SVector3 dz(0.,0.,1.);
+
+  in_box = fabs(dot(dir,dx)) <= (h/2. + epsilon) && fabs(dot(dir,dy)) <= (h/2. + epsilon) && fabs(dot(dir,dz)) <= (h/2. + epsilon);
 
   // A point can be on the exact boundary of two cells, hence we take the min.
   if(in_box && is_leaf){
@@ -1236,7 +1345,10 @@ static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4e
     p->isFound = true;
   }
 
-  // if(is_leaf && !p->isFound && fabs(p->y) < 1e-10){
+  p->parcourus++;
+
+  // if(is_leaf && !p->isFound && fabs(p->x) < 1e-4){
+  // if(in_box && !p->isFound && fabs(p->x) < 1e-4){
   //   printf("Point (%4.16e,%4.16e,%4.16e)\n", p->x, p->y, p->z);
   //   printf("h = %4.16e, center = (%4.16e, %4.16e, %4.16e)\n", h, center[0], center[1], center[2]);
   //   printf("%4.16e <= x <= %4.16e (%d)\n", center[0]-h/2., center[0]+h/2., (p->x <= center[0] + h/2.) && (p->x >= center[0] - h/2.) );
@@ -1278,6 +1390,7 @@ HXTStatus forestSearchOne(Forest *forest, double x, double y, double z, double *
   p->z = z;
   p->size = 1.0e22;
   p->isFound = false;
+  p->parcourus = 0;
   
   if(linear){
     p4est_search(forest->p4est, NULL, searchAndAssignLinear, points);
@@ -1285,7 +1398,10 @@ HXTStatus forestSearchOne(Forest *forest, double x, double y, double z, double *
     p4est_search(forest->p4est, NULL, searchAndAssignConstant, points);
   }
 
-  if(!p->isFound) Msg::Info("Point (%f,%f,%f) n'a pas été trouvé dans l'octree 8-|", x,y,z);
+  if(!p->isFound){
+    Msg::Info("(%+.4f,%+.4f,%+.4f) was not found in the meshsize field 8-|", x,y,z);
+    Msg::Info("Octants parcourus : %d\n", p->parcourus);
+  }
   *size = p->size;
 
   sc_array_destroy(points);
@@ -1952,13 +2068,13 @@ automaticMeshSizeField::~automaticMeshSizeField(){
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
 HXTStatus automaticMeshSizeField::updateHXT(){
 
-  if(!update_needed)
+  if(!updateNeeded)
     return HXT_STATUS_OK;
   
   if (forestOptions) HXT_CHECK(forestOptionsDelete(&forestOptions));
   if (forest)        HXT_CHECK(forestDelete(&forest));  
 
-  update_needed = false;
+  updateNeeded = false;
 
   if(!_forestFile.empty()){
     // Load .p4est file if given a valid file name
@@ -2019,11 +2135,35 @@ HXTStatus automaticMeshSizeField::updateHXT(){
         }
       }
 
+      if(regions.empty()){
+        Msg::Error("Erreur : Pas de volume dans le modèle.");
+      }
+
       // Create global HXT mesh structure
       HXT_CHECK(hxtMeshCreate(&mesh));
       std::map<MVertex *, uint32_t> v2c;
       std::vector<MVertex *> c2v;  
       Gmsh2Hxt(faces, mesh, v2c, c2v);
+      // Gmsh2Hxt(regions, mesh, v2c, c2v);
+        
+      // if(!regions.empty()){
+      //   Msg::Info("Volume found.");
+      //   HXT_CHECK( getAllFacesOfAllRegions(regions, NULL, faces) );
+      // } else{
+      //   Msg::Info("No volume in the model : looping over faces instead.");
+      //   regions[0] = new GRegion(GModel::current(),-1);
+      //   for(std::set<GFace*, GEntityPtrLessThan>::iterator it = GModel::current()->firstFace(); it != GModel::current()->lastFace(); ++it){
+      //     faces.push_back(*it);
+      //     regions[0]->addEmbeddedFace(*it);
+      //   }
+      // }
+
+      // // Create global HXT mesh structure
+      // HXT_CHECK(hxtMeshCreate(&mesh));
+      // std::map<MVertex *, uint32_t> v2c;
+      // std::vector<MVertex *> c2v; 
+      // // Gmsh2Hxt(faces, mesh, v2c, c2v);
+      // Gmsh2Hxt(regions, mesh, v2c, c2v);
 
       if(mesh->vertices.num == 0){
         Msg::Error("Surface mesh is empty");
@@ -2208,9 +2348,9 @@ HXTStatus automaticMeshSizeField::updateHXT(){
       // Delaunay
       HXTDelaunayOptions delaunayOptions = {NULL, NULL, 0, 0, 0, 2, 1, 0};
       HXT_CHECK(hxtEmptyMesh(mesh, &delaunayOptions));
-      for(size_t i = 0; i < mesh->tetrahedra.num; ++i){
-        mesh->tetrahedra.colors[i] = 0;
-      }
+      // for(size_t i = 0; i < mesh->tetrahedra.num; ++i){
+      //   mesh->tetrahedra.color[i] = 0;
+      // }
 
       HXT_CHECK(hxtCurvatureNormals(mesh, &nodeNormals, 0));
 

@@ -69,7 +69,7 @@ static void testIfBoundaryIsRecovered(GRegion *gr)
     Msg::Info("All edges and faces are present in the initial mesh");
   }
   else {
-    Msg::Error("All edges and faces are NOT present in the initial mesh");
+    Msg::Error("All edges and faces are not present in the initial mesh");
   }
 }
 
@@ -666,7 +666,7 @@ void non_recursive_classify(MTet4 *t, std::list<MTet4 *> &theRegion,
     t = _stackounette.top();
     _stackounette.pop();
     if(!t) {
-      Msg::Error("A tetrahedron is not connected to a boundary face");
+      Msg::Warning("A tetrahedron is not connected to a boundary face");
       touchesOutsideBox = true;
     }
     else if(!t->onWhat()) {
@@ -946,7 +946,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
   }
 
-  double sliverLimit = 0.01;
+  double sliverLimit = 0.001;
   int nbESwap = 0, nbReloc = 0;
   double worstA = 0.0;
 
@@ -1327,8 +1327,9 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
                    theRegion.size(), faces_bound.size(), _w2 - _w1, _t2 - _t1);
         GRegion *myGRegion =
           getRegionFromBoundingFaces(gr->model(), faces_bound);
-        if(myGRegion) { // a geometrical region associated to the list of faces
-                        // has been found
+        if(myGRegion && myGRegion->tetrahedra.empty()) {
+          // a geometrical region (with no mesh) associated to the list of faces
+          // has been found
           Msg::Info("Found volume %d", myGRegion->tag());
           for(std::list<MTet4 *>::iterator it2 = theRegion.begin();
               it2 != theRegion.end(); ++it2) {
@@ -1395,7 +1396,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
   while(1) {
     if(maxIter > 0 && ITER >= maxIter) break;
     if(allTets.empty()) {
-      Msg::Error("No tetrahedra in region %d", gr->tag());
+      Msg::Warning("No tetrahedra in region %d", gr->tag());
       break;
     }
 
@@ -1568,11 +1569,12 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
 // do a 3D delaunay mesh assuming a set of vertices
 
 void delaunayMeshIn3D(std::vector<MVertex *> &v,
-                      std::vector<MTetrahedron *> &result)
+                      std::vector<MTetrahedron *> &result,
+                      bool removeBox)
 {
   Msg::Info("Tetrahedrizing %d nodes...", v.size());
   double t1 = Cpu(), w1 = TimeOfDay();
-  delaunayTriangulation(1, 1, v, result);
+  delaunayTriangulation(1, 1, v, result, removeBox);
   double t2 = Cpu(), w2 = TimeOfDay();
   Msg::Info("Done tetrahedrizing %d nodes (Wall %gs, CPU %gs)",
             v.size(), w2 - w1, t2 - t1);

@@ -232,9 +232,11 @@ MPI_Rank                return tMPI_Rank;
 MPI_Size                return tMPI_Size;
 Macro                   return tMacro;
 Mass                    return tMass;
+MatrixOfInertia         return tMatrixOfInertia;
 Max                     return tMax;
 Memory                  return tMemory;
 MeshAlgorithm           return tMeshAlgorithm;
+MeshSize                return tMeshSize;
 MeshSizeFromBoundary    return tMeshSizeFromBoundary;
 Min                     return tMin;
 Modulo                  return tModulo;
@@ -337,6 +339,7 @@ Translate               return tTranslate;
 
 UndefineConstant        return tUndefineConstant;
 Unique                  return tUnique;
+UnsplitWindow           return tUnsplitWindow;
 UpperCase               return tUpperCase;
 Using                   return tUsing;
 
@@ -470,7 +473,7 @@ void skip(const char *skip, const char *until)
 
     l = l_max;
 
-    for(i  =1; i < l; i++) {
+    for(i = 1; i < l; i++) {
       chars[i] = yyinput();
       if(feof(yyin)) {
 	l = i;

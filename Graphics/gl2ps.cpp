@@ -2,35 +2,33 @@
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2020 C. Geuzaine
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of either:
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of either:
  *
- * a) the GNU Library General Public License as published by the Free
- * Software Foundation, either version 2 of the License, or (at your
- * option) any later version; or
+ * a) the GNU Library General Public License as published by the Free Software
+ * Foundation, either version 2 of the License, or (at your option) any later
+ * version; or
  *
- * b) the GL2PS License as published by Christophe Geuzaine, either
- * version 2 of the License, or (at your option) any later version.
+ * b) the GL2PS License as published by Christophe Geuzaine, either version 2 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
- * the GNU Library General Public License or the GL2PS License for
- * more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See either the GNU Library General Public License
+ * or the GL2PS License for more details.
  *
- * You should have received a copy of the GNU Library General Public
- * License along with this library in the file named "COPYING.LGPL";
- * if not, write to the Free Software Foundation, Inc., 51 Franklin
- * Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * You should have received a copy of the GNU Library General Public License
+ * along with this library in the file named "COPYING.LGPL"; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301, USA.
  *
- * You should have received a copy of the GL2PS License with this
- * library in the file named "COPYING.GL2PS"; if not, I will be glad
- * to provide one.
+ * You should have received a copy of the GL2PS License with this library in the
+ * file named "COPYING.GL2PS"; if not, I will be glad to provide one.
  *
- * For the latest info about gl2ps and a full list of contributors,
- * see http://www.geuz.org/gl2ps/.
+ * For the latest info about gl2ps and a full list of contributors, see
+ * http://www.geuz.org/gl2ps/.
  *
- * Please report all bugs and problems to <gl2ps@geuz.org>.
+ * Please report all issues on https://gitlab.onelab.info/gl2ps/gl2ps/issues.
  */
 
 #include "gl2ps.h"
@@ -4458,17 +4456,33 @@ static int gl2psPrintPDFShaderStreamDataRGB(GL2PSvertex *vertex,
   int offs = 0;
   unsigned long imap;
   double dmax = ~1UL;
+  GLfloat tmp;
 
   /* FIXME: temp bux fix for 64 bit archs: */
   if(sizeof(unsigned long) == 8) dmax = dmax - 2048.;
 
-  imap = (unsigned long)((vertex->rgba[0]) * dmax);
+  tmp = vertex->rgba[0];
+  if(tmp > 1)
+    tmp = 1.0F;
+  else if(tmp < 0)
+    tmp = 0.0F;
+  imap = (unsigned long)(tmp * dmax);
   offs += (*action)(imap, 1);
 
-  imap = (unsigned long)((vertex->rgba[1]) * dmax);
+  tmp = vertex->rgba[1];
+  if(tmp > 1)
+    tmp = 1.0F;
+  else if(tmp < 0)
+    tmp = 0.0F;
+  imap = (unsigned long)(tmp * dmax);
   offs += (*action)(imap, 1);
 
-  imap = (unsigned long)((vertex->rgba[2]) * dmax);
+  tmp = vertex->rgba[2];
+  if(tmp > 1)
+    tmp = 1.0F;
+  else if(tmp < 0)
+    tmp = 0.0F;
+  imap = (unsigned long)(tmp * dmax);
   offs += (*action)(imap, 1);
 
   return offs;
@@ -4483,6 +4497,7 @@ static int gl2psPrintPDFShaderStreamDataAlpha(GL2PSvertex *vertex,
   int offs = 0;
   unsigned long imap;
   double dmax = ~1UL;
+  GLfloat tmp;
 
   /* FIXME: temp bux fix for 64 bit archs: */
   if(sizeof(unsigned long) == 8) dmax = dmax - 2048.;
@@ -4492,7 +4507,12 @@ static int gl2psPrintPDFShaderStreamDataAlpha(GL2PSvertex *vertex,
 
   sigbyte /= 8;
 
-  imap = (unsigned long)((vertex->rgba[3]) * dmax);
+  tmp = vertex->rgba[3];
+  if(tmp > 1)
+    tmp = 1.0F;
+  else if(tmp < 0)
+    tmp = 0.0F;
+  imap = (unsigned long)(tmp * dmax);
 
   offs += (*action)(imap, sigbyte);
 

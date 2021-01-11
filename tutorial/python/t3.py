@@ -8,9 +8,9 @@
 
 import gmsh
 import math
+import sys
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t3")
 
@@ -26,6 +26,7 @@ gmsh.model.geo.addLine(3, 4, 3)
 gmsh.model.geo.addLine(4, 1, 4)
 gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 gmsh.model.geo.addPlaneSurface([1], 1)
+gmsh.model.geo.synchronize()
 gmsh.model.addPhysicalGroup(1, [1, 2, 4], 5)
 ps = gmsh.model.addPhysicalGroup(2, [1])
 gmsh.model.setPhysicalName(2, ps, "My surface")
@@ -89,8 +90,8 @@ r, g, b, a = gmsh.option.getColor("Geometry.Points")
 gmsh.option.setColor("Geometry.Surfaces", r, g, b, a)
 
 # Launch the GUI to see the effects of the color changes:
-
-# gmsh.fltk.run();
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 # When the GUI is launched, you can use the `Help->Current Options and
 # Workspace' menu to see the current values of all options. To save the options

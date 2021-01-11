@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#include "hxt_mesh.h"
+#include "hxt_tetNodalSize.h"
 #include "hxt_vertices.h"
 #include "hxt_bbox.h"
 
@@ -34,8 +34,8 @@ typedef struct {
                                *  - if bbox==NULL, the bbox is recomputed internally;
                                *  - if bbox!=NULL, bbox must contain all vertices */
 
-  double* nodalSizes;         /**<
-                               *  - if nodalSize==NULL, doesn't restrict nodalSize;
+  HXTNodalSizes* nodalSizes;  /**<
+                               *  - if nodalSizes==NULL, doesn't restrict nodalSize;
                                *  - if nodalSize!=NULL, nodalSize contains the minimum
                                *  mesh size at each vertex.\n
                                *  If the insertion of a vertex create an edge smaller than
@@ -48,6 +48,10 @@ typedef struct {
   uint32_t insertionFirst;    /**< all vertices with an index below insertionFirst are not (re-)inserted and not reordered */
   double partitionability;    /**< a number between 0 and 1 telling if this mesh is good for making partitions.
                                    Generally, put 0 for an empty mesh, 1-(1/2)^n for a mesh refined n time */
+
+  int perfectDelaunay;        /**< set to 1 if the current mesh is perfectly Delaunay (no edge or facet constraints applied)
+                               *   and if you don't want any edge or facet constraints to be applied.
+                               *   This speeds up the empty mesh. */
 
   int verbosity;              /**<
                                *  - if verbosity<=0: don't print information.

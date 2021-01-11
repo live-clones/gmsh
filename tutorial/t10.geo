@@ -26,25 +26,26 @@ Curve Loop(5) = {1,2,3,4}; Plane Surface(6) = {5};
 // points 5 and on curve 2. This field returns the distance to point 5 and to
 // (100 equidistant points on) curve 2.
 Field[1] = Distance;
-Field[1].NodesList = {5};
-Field[1].NNodesByEdge = 100;
-Field[1].EdgesList = {2};
+Field[1].PointsList = {5};
+Field[1].CurvesList = {2};
+Field[1].NumPointsPerCurve = 100;
+
 
 // We then define a `Threshold' field, which uses the return value of the
 // `Distance' field 1 in order to define a simple change in element size
 // depending on the computed distances
 //
-// LcMax -                         /------------------
-//                               /
+// SizeMax -                     /------------------
+//                              /
 //                             /
-//                           /
-// LcMin -o----------------/
-//        |                |       |
-//      Point           DistMin DistMax
+//                            /
+// SizeMin -o----------------/
+//          |                |    |
+//        Point         DistMin  DistMax
 Field[2] = Threshold;
-Field[2].IField = 1;
-Field[2].LcMin = lc / 30;
-Field[2].LcMax = lc;
+Field[2].InField = 1;
+Field[2].SizeMin = lc / 30;
+Field[2].SizeMax = lc;
 Field[2].DistMin = 0.15;
 Field[2].DistMax = 0.5;
 
@@ -56,7 +57,7 @@ Field[3].F = "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101";
 // We could also combine MathEval with values coming from other fields. For
 // example, let's define a `Distance' field around point 1
 Field[4] = Distance;
-Field[4].NodesList = {1};
+Field[4].PointsList = {1};
 
 // We can then create a `MathEval' field with a function that depends on the
 // return value of the `Distance' field 4, i.e., depending on the distance to
@@ -76,9 +77,10 @@ Field[6].YMax = 0.6;
 
 // Many other types of fields are available: see the reference manual for a
 // complete list. You can also create fields directly in the graphical user
-// interface by selecting `Define->Fields' in the `Mesh' module.
+// interface by selecting `Define->Size fields' in the `Mesh' module.
 
-// Finally, let's use the minimum of all the fields as the background mesh field
+// Finally, let's use the minimum of all the fields as the background mesh size
+// field
 Field[7] = Min;
 Field[7].FieldsList = {2, 3, 5, 6};
 Background Field = 7;
@@ -86,26 +88,24 @@ Background Field = 7;
 // To determine the size of mesh elements, Gmsh locally computes the minimum of
 //
 // 1) the size of the model bounding box;
-// 2) if `Mesh.CharacteristicLengthFromPoints' is set, the mesh size specified
-//    at geometrical points;
-// 3) if `Mesh.CharacteristicLengthFromCurvature' is set, the mesh size based on
-//    the curvature and `Mesh.MinimumElementsPerTwoPi';
-// 4) the background mesh field;
+// 2) if `Mesh.MeshSizeFromPoints' is set, the mesh size specified at
+//    geometrical points;
+// 3) if `Mesh.MeshSizeFromCurvature' is set, the mesh size based on the
+//    curvature and `Mesh.MinimumElementsPerTwoPi';
+// 4) the background mesh size field;
 // 5) any per-entity mesh size constraint.
 //
-// This value is then constrained in the interval
-// [`Mesh.CharacteristicLengthMin', `Mesh.CharacteristicLengthMax'] and
-// multiplied by `Mesh.CharacteristicLengthFactor'.  In addition, boundary mesh
-// sizes (on curves or surfaces) are interpolated inside the enclosed entity
-// (surface or volume, respectively) if the option
-// `Mesh.CharacteristicLengthExtendFromBoundary' is set (which is the case by
-// default).
+// This value is then constrained in the interval [`Mesh.MeshSizeMin',
+// `Mesh.MeshSizeMax'] and multiplied by `Mesh.MeshSizeFactor'.  In addition,
+// boundary mesh sizes (on curves or surfaces) are interpolated inside the
+// enclosed entity (surface or volume, respectively) if the option
+// `Mesh.MeshSizeExtendFromBoundary' is set (which is the case by default).
 //
-// When the element size is fully specified by a background mesh (as it is in
-// this example), it is thus often desirable to set
+// When the element size is fully specified by a background mesh size field (as
+// it is in this example), it is thus often desirable to set
 
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
-Mesh.CharacteristicLengthFromPoints = 0;
-Mesh.CharacteristicLengthFromCurvature = 0;
+Mesh.MeshSizeExtendFromBoundary = 0;
+Mesh.MeshSizeFromPoints = 0;
+Mesh.MeshSizeFromCurvature = 0;
 
 // This will prevent over-refinement due to small mesh sizes on the boundary.

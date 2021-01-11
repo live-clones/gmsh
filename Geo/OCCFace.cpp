@@ -45,7 +45,6 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
   : GFace(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
 {
   _setup();
-  if(model()->getOCCInternals()) model()->getOCCInternals()->bind(_s, num);
 
   if(CTX::instance()->debugSurface > 0 &&
      tag() == CTX::instance()->debugSurface)
@@ -54,9 +53,8 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
 
 OCCFace::~OCCFace()
 {
-  if(model()->getOCCInternals() && !model()->isBeingDestroyed()) {
+  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
     model()->getOCCInternals()->unbind(_s, tag()); // potentially slow
-  }
 }
 
 void OCCFace::_setup()
@@ -80,6 +78,12 @@ void OCCFace::_setup()
       else if(edge.Orientation() == TopAbs_INTERNAL) {
         Msg::Debug("Adding embedded curve %d in surface %d", e->tag(), tag());
         embedded_edges.push_back(e);
+        /*
+        if(e->getBeginVertex())
+          embedded_vertices.insert(e->getBeginVertex());
+        if(e->getEndVertex())
+          embedded_vertices.insert(e->getEndVertex());
+        */
       }
       else {
         Msg::Debug("Curve %d (%d --> %d) ori %d", e->tag(),
@@ -128,13 +132,7 @@ void OCCFace::_setup()
   ShapeAnalysis::GetFaceUVBounds(_s, _umin, _umax, _vmin, _vmax);
   Msg::Debug("OCC surface %d with %d parameter bounds (%g,%g)(%g,%g)", tag(),
              l_edges.size(), _umin, _umax, _vmin, _vmax);
-  // we do that for the projections to converge on the borders of the surface
-  const double du = _umax - _umin;
-  const double dv = _vmax - _vmin;
-  _umin -= std::max(fabs(du) / 100.0, 1e-12);
-  _vmin -= std::max(fabs(dv) / 100.0, 1e-12);
-  _umax += std::max(fabs(du) / 100.0, 1e-12);
-  _vmax += std::max(fabs(dv) / 100.0, 1e-12);
+
   _occface = BRep_Tool::Surface(_s);
 
   if(OCCFace::geomType() == GEntity::Sphere) {
@@ -185,11 +183,8 @@ SBoundingBox3d OCCFace::bounds(bool fast)
 
 Range<double> OCCFace::parBounds(int i) const
 {
-  double umin2, umax2, vmin2, vmax2;
-
-  ShapeAnalysis::GetFaceUVBounds(_s, umin2, umax2, vmin2, vmax2);
-  if(i == 0) return Range<double>(umin2, umax2);
-  return Range<double>(vmin2, vmax2);
+  if(i == 0) return Range<double>(_umin, _umax);
+  return Range<double>(_vmin, _vmax);
 }
 
 SVector3 OCCFace::normal(const SPoint2 &param) const
@@ -231,44 +226,29 @@ void OCCFace::secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
 GPoint OCCFace::point(double par1, double par2) const
 {
   double pp[2] = {par1, par2};
-
-#if 1
   gp_Pnt val = _occface->Value(par1, par2);
   return GPoint(val.X(), val.Y(), val.Z(), this, pp);
-#else // this is horribly slow!
-  double umin2, umax2, vmin2, vmax2;
-
-  ShapeAnalysis::GetFaceUVBounds(_s, umin2, umax2, vmin2, vmax2);
-
-  double du = umax2 - umin2;
-  double dv = vmax2 - vmin2;
-
-  if(par1 > (umax2 + .1 * du) || par1 < (umin2 - .1 * du) ||
-     par2 > (vmax2 + .1 * dv) || par2 < (vmin2 - .1 * dv)) {
-    GPoint p(0, 0, 0, this, pp);
-    p.setNoSuccess();
-    return p;
-  }
-
-  try {
-    gp_Pnt val;
-    val = _occface->Value(par1, par2);
-    return GPoint(val.X(), val.Y(), val.Z(), this, pp);
-  } catch(Standard_OutOfRange) {
-    GPoint p(0, 0, 0, this, pp);
-    p.setNoSuccess();
-    return p;
-  }
-#endif
 }
 
 GPoint OCCFace::closestPoint(const SPoint3 &qp,
                              const double initialGuess[2]) const
 {
+#if defined(HAVE_ALGLIB)
+  // less robust but can be much faster
+  if(CTX::instance()->geom.occUseGenericClosestPoint)
+    return GFace::closestPoint(qp, initialGuess);
+#endif
+
+  // little tolerance to converge on the borders of the surface
+  const double du = _umax - _umin;
+  const double dv = _vmax - _vmin;
+  double umin = _umin - std::max(fabs(du) / 100.0, 1e-12);
+  double vmin = _vmin - std::max(fabs(dv) / 100.0, 1e-12);
+  double umax = _umax + std::max(fabs(du) / 100.0, 1e-12);
+  double vmax = _vmax + std::max(fabs(dv) / 100.0, 1e-12);
+
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  double a, b, c, d;
-  ShapeAnalysis::GetFaceUVBounds(_s, a, b, c, d);
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, a, b, c, d);
+  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
 
   if(!proj.NbPoints()) {
     Msg::Debug("OCC projection of point on surface failed");
@@ -280,7 +260,7 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   double pp[2] = {initialGuess[0], initialGuess[1]};
   proj.LowerDistanceParameters(pp[0], pp[1]);
 
-  if((pp[0] < _umin || _umax < pp[0]) || (pp[1] < _vmin || _vmax < pp[1])) {
+  if((pp[0] < umin || umax < pp[0]) || (pp[1] < vmin || vmax < pp[1])) {
     Msg::Warning("Point projection is out of face bounds");
     GPoint gp(0, 0);
     gp.setNoSuccess();
@@ -293,8 +273,21 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
 {
+  // less robust but can be much faster
+  if(CTX::instance()->geom.occUseGenericClosestPoint)
+    return GFace::parFromPoint(qp);
+
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, _umin, _umax, _vmin, _vmax);
+
+  // little tolerance to converge on the borders of the surface
+  const double du = _umax - _umin;
+  const double dv = _vmax - _vmin;
+  double umin = _umin - std::max(fabs(du) / 100.0, 1e-12);
+  double vmin = _vmin - std::max(fabs(dv) / 100.0, 1e-12);
+  double umax = _umax + std::max(fabs(du) / 100.0, 1e-12);
+  double vmax = _vmax + std::max(fabs(dv) / 100.0, 1e-12);
+
+  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
   if(!proj.NbPoints()) {
     Msg::Error("OCC projection of point on surface failed");
     return GFace::parFromPoint(qp);

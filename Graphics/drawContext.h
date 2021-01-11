@@ -147,7 +147,9 @@ public:
 public:
   drawContext(openglWindow *window = 0, drawTransform *transform = 0);
   ~drawContext();
-  bool isHighResolution();
+  // factor between the (true) size in pixels and the size reported by OSes
+  // (e.g. 2 on an Apple "retina" display)
+  double highResolutionPixelFactor();
   void copyViewAttributes(drawContext *other)
   {
     camera = other->camera;

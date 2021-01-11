@@ -187,8 +187,6 @@ namespace {
                                 std::map<int, std::vector<MElement *> > *allElt,
                                 const std::vector<bool> &interfaceNode)
   {
-    Msg::Error("Creation of boundary elements for 2D structured blocks not "
-               "implemented");
     // node shift from (i, j, k) depending on order
     static bool isShiftInit[4] = {false, false, false, false};
     static int shiftP1[2], shiftP2[3], shiftP3[4], shiftP4[5];
@@ -356,8 +354,8 @@ template <int DIM>
 CGNSZoneStruct<DIM>::CGNSZoneStruct(
   int fileIndex, int baseIndex, int zoneIndex, int meshDim, cgsize_t startNode,
   const Family2EltNodeTransfo &allEltNodeTransfo, int &err)
-  : CGNSZone(fileIndex, baseIndex, zoneIndex, Structured, meshDim, startNode,
-             allEltNodeTransfo, err)
+  : CGNSZone(fileIndex, baseIndex, zoneIndex, CGNS_ENUMV(Structured), meshDim,
+             startNode, allEltNodeTransfo, err)
 {
   // Check consistency
   bool ok = true;

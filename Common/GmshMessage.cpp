@@ -13,6 +13,7 @@
 #include <unistd.h>
 #endif
 
+#include <clocale>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -69,8 +70,9 @@ int Msg::_errorCount = 0;
 int Msg::_atLeastOneErrorInRun = 0;
 std::string Msg::_firstWarning;
 std::string Msg::_firstError;
+std::string Msg::_lastError;
 GmshMessage *Msg::_callback = 0;
-std::string Msg::_commandLine;
+std::vector<std::string> Msg::_commandLineArgs;
 std::string Msg::_launchDate;
 std::map<std::string, std::vector<double> > Msg::_commandLineNumbers;
 std::map<std::string, std::string> Msg::_commandLineStrings;
@@ -118,6 +120,23 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
   }
 }
 
+#if defined(HAVE_FLTK)
+static void FlGuiRateLimitedCheck()
+{
+  static double lastRefresh = 0.;
+  if(CTX::instance()->guiRefreshRate > 0) {
+    double start = TimeOfDay();
+    if(start - lastRefresh > 1. / CTX::instance()->guiRefreshRate) {
+      lastRefresh = start;
+      FlGui::check();
+    }
+  }
+  else {
+    FlGui::check();
+  }
+}
+#endif
+
 void Msg::Init(int argc, char **argv)
 {
   _startTime = TimeOfDay();
@@ -138,6 +157,7 @@ void Msg::Init(int argc, char **argv)
     if(val != "-info" && val != "-help" && val != "-version" && val != "-v")
       sargv[sargc++] = argv[i];
   }
+  sargv[sargc] = NULL;
   PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)
@@ -149,21 +169,25 @@ void Msg::Init(int argc, char **argv)
   time(&now);
   _launchDate = ctime(&now);
   _launchDate.resize(_launchDate.size() - 1);
-  _commandLine.clear();
-  for(int i = 0; i < argc; i++){
-    if(i) _commandLine += " ";
-    _commandLine += argv[i];
-  }
+
+  _commandLineArgs.resize(argc);
+  for(int i = 0; i < argc; i++)
+    _commandLineArgs[i] = argv[i];
 
   CTX::instance()->exeFileName = GetExecutableFileName();
-  if(CTX::instance()->exeFileName.empty() && argc && argv)
-    CTX::instance()->exeFileName = argv[0];
+  if(CTX::instance()->exeFileName.empty() && _commandLineArgs.size())
+    CTX::instance()->exeFileName = _commandLineArgs[0];
 
   // add the directory where the binary is installed to the path where Python
   // looks for modules, and to the path for executables (this allows us to find
   // the onelab.py module or subclients automatically)
   addGmshPathToEnvironmentVar("PYTHONPATH");
   addGmshPathToEnvironmentVar("PATH");
+
+  // make sure to use the "C" locale; in particular this ensures that we will
+  // use a dot for for the decimal separator when writing ASCII mesh files
+  std::setlocale(LC_ALL, "C.UTF-8");
+  std::setlocale(LC_NUMERIC, "C");
 
   InitializeOnelab("Gmsh");
 }
@@ -226,9 +250,19 @@ std::string Msg::GetLaunchDate()
   return _launchDate;
 }
 
-std::string Msg::GetCommandLineArgs()
+std::vector<std::string> &Msg::GetCommandLineArgs()
 {
-  return _commandLine;
+  return _commandLineArgs;
+}
+
+std::string Msg::GetCommandLineFull()
+{
+  std::string tmp;
+  for(std::size_t i = 0; i < _commandLineArgs.size(); i++){
+    if(i) tmp += " ";
+    tmp += _commandLineArgs[i];
+  }
+  return tmp;
 }
 
 std::map<std::string, std::vector<double> > &Msg::GetCommandLineNumbers()
@@ -263,8 +297,8 @@ void Msg::StopProgressMeter()
   _progressMeterTotal = 0;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::check();
     FlGui::instance()->setProgress("", 0, 0, 1);
+    FlGui::check();
   }
 #endif
 }
@@ -299,6 +333,11 @@ std::string Msg::GetFirstWarning()
 std::string Msg::GetFirstError()
 {
   return _firstError;
+}
+
+std::string Msg::GetLastError()
+{
+  return _lastError;
 }
 
 void Msg::SetExecutableName(const std::string &name)
@@ -485,8 +524,6 @@ void Msg::Error(const char *fmt, ...)
   _errorCount++;
   _atLeastOneErrorInRun = 1;
 
-  if(GetVerbosity() < 1) return;
-
   char str[5000];
   va_list args;
   va_start(args, fmt);
@@ -494,32 +531,47 @@ void Msg::Error(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
-  if(_logFile) fprintf(_logFile, "Error: %s\n", str);
-  if(_callback) (*_callback)("Error", str);
-  if(_client) _client->Error(str);
+  if(_firstError.empty()) _firstError = str;
+  _lastError = str;
 
+  if(GetVerbosity() >= 1) {
+    if(_logFile) fprintf(_logFile, "Error: %s\n", str);
+    if(_callback) (*_callback)("Error", str);
+    if(_client) _client->Error(str);
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    FlGui::check();
-    std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
-      + "Error   : " + str;
-    FlGui::instance()->addMessage(tmp.c_str());
-    if(_firstError.empty()) _firstError = str;
-    FlGui::instance()->setLastStatus
-      (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
-  }
-#endif
-
-  if(CTX::instance()->terminal){
-    const char *c0 = "", *c1 = "";
-    if(!streamIsFile(stderr) && streamIsVT100(stderr)){
-      c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
+    if(FlGui::available()){
+      std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
+        + "Error   : " + str;
+      FlGui::instance()->addMessage(tmp.c_str());
+      FlGui::instance()->setLastStatus
+        (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
+      FlGui::check();
     }
-    if(_commSize > 1)
-      fprintf(stderr, "%sError   : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
-    else
-      fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
-    fflush(stderr);
+#endif
+    if(CTX::instance()->terminal){
+      const char *c0 = "", *c1 = "";
+      if(!streamIsFile(stderr) && streamIsVT100(stderr)){
+        c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
+      }
+      if(_commSize > 1)
+        fprintf(stderr, "%sError   : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
+      else
+        fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
+      fflush(stderr);
+    }
+  }
+
+  if(CTX::instance()->abortOnError == 2) {
+#if defined(HAVE_FLTK)
+    if(FlGui::available()) return; // don't throw if GUI is running
+#endif
+    throw _lastError;
+  }
+  else if(CTX::instance()->abortOnError == 3) {
+    throw _lastError;
+  }
+  else if(CTX::instance()->abortOnError == 4) {
+    Exit(1);
   }
 }
 
@@ -542,12 +594,12 @@ void Msg::Warning(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.")
       + "Warning : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstWarning.empty()) _firstWarning = str;
     FlGui::instance()->setLastStatus();
+    FlGui::check();
   }
 #endif
 
@@ -586,9 +638,9 @@ void Msg::Info(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::check();
     std::string tmp = std::string("Info    : ") + str;
     FlGui::instance()->addMessage(tmp.c_str());
+    FlGuiRateLimitedCheck();
   }
 #endif
 
@@ -626,10 +678,10 @@ void Msg::Direct(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
       + str;
     FlGui::instance()->addMessage(tmp.c_str());
+    FlGuiRateLimitedCheck();
   }
 #endif
 
@@ -683,12 +735,12 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(log) FlGui::check();
     if(!log || GetVerbosity() > 4)
       FlGui::instance()->setStatus(str);
     if(log){
       std::string tmp = std::string("Info    : ") + str;
       FlGui::instance()->addMessage(tmp.c_str());
+      FlGuiRateLimitedCheck();
     }
   }
 #endif
@@ -795,8 +847,8 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
     if(FlGui::available() && GetVerbosity() > 4){
-      FlGui::check();
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
+      FlGuiRateLimitedCheck();
     }
 #endif
     if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
@@ -834,7 +886,7 @@ void Msg::PrintTimers()
 void Msg::ResetErrorCounter()
 {
   _warningCount = 0; _errorCount = 0;
-  _firstWarning.clear(); _firstError.clear();
+  _firstWarning.clear(); _firstError.clear(); _lastError.clear();
 #if defined(HAVE_FLTK)
   if(FlGui::available()) FlGui::instance()->setLastStatus();
 #endif
@@ -1145,6 +1197,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     if(name != "Gmsh"){ // load db from file:
       FILE *fp = Fopen(name.c_str(), "rb");
       if(fp){
+        Msg::Info("Reading ONELAB database '%s'", name.c_str());
         _onelabClient->fromFile(fp);
         fclose(fp);
       }
@@ -1600,7 +1653,11 @@ int Msg::GetThreadNum(){ return omp_get_thread_num(); }
 #else
 
 int Msg::GetNumThreads(){ return 1; }
-void Msg::SetNumThreads(int num){ }
+void Msg::SetNumThreads(int num)
+{
+  if(num > 1)
+    Msg::Warning("Setting number of threads to %d requires OpenMP", num);
+}
 int Msg::GetMaxThreads(){ return 1; }
 int Msg::GetThreadNum(){ return 0; }
 

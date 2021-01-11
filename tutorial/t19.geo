@@ -58,12 +58,12 @@ Delete{ Surface{1000}; }
 Geometry.NumSubEdges = 1000;
 
 // We can activate the calculation of mesh element sizes based on curvature:
-Mesh.CharacteristicLengthFromCurvature = 1;
+Mesh.MeshSizeFromCurvature = 1;
 
 // And we set the minimum number of elements per 2*Pi radians:
 Mesh.MinimumElementsPerTwoPi = 20;
 
 // We can constraint the min and max element sizes to stay within reasonnable
 // values (see `t10.geo' for more details):
-Mesh.CharacteristicLengthMin = 0.001;
-Mesh.CharacteristicLengthMax = 0.3;
+Mesh.MeshSizeMin = 0.001;
+Mesh.MeshSizeMax = 0.3;

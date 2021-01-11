@@ -1,8 +1,8 @@
 SetFactory("OpenCASCADE");
 
 Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 0.1;
-Mesh.CharacteristicLengthMax = 0.1;
+Mesh.MeshSizeMin = 0.1;
+Mesh.MeshSizeMax = 0.1;
 
 Point(1) = {0,0,0};
 Point(2) = {1,0,0};

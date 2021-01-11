@@ -1,100 +1,105 @@
 #ifndef HXT_OCTREE_H
 #define HXT_OCTREE_H
 
-#include <functional>
+// STD INCLUDES
+#include <queue>
+#include <vector>
 
-// GMSH INCLUDES
+// GMSH INCLUDES ...
+
+#include "GmshConfig.h"
+#include "SPoint3.h"
+#include "SVector3.h"
 #include "rtree.h"
-#include "GModel.h"
 
 // P4EST INCLUDES
-#ifdef HAVE_P4EST
+
 #include <p4est_to_p8est.h>
+#include <p8est_bits.h>
+#include <p8est_ghost.h>
+#include <p8est_nodes.h>
+#include <p8est_vtk.h>
+#include <p8est_iterate.h>
 #include <p8est_extended.h>
-#endif
+#include <p8est_search.h>
 
 // HXT INCLUDES
+
 extern "C" {
-  #include "hxt_tools.h"
-  #include "hxt_mesh.h"
-  #include "hxt_bbox.h"
+#include "hxt_message.h"
+#include "hxt_mesh.h"
+#include "hxt_bbox.h"
 }
 
-// Information needed to create and compute an HXTForest
 typedef struct HXTForestOptions{
-  int           dim;
-  double 				hmax;
-  double 				hmin;
-  double        hmin_octree;
-  double 				hbulk;
-  double 				gradation;
-  int           nRefine;
-  int           nodePerTwoPi;
-  int           nodePerGap;
-  double       *bbox;
-  double      (*sizeFunction)(double, double, double, double);
-  // const char   *forestFile;
-  RTree<uint64_t,double,3>  *triRTree;
-  HXTMesh                   *mesh;
-  double                    *nodalCurvature;
-  double                    *nodeNormals;
-  std::vector<std::function<double(double)>> *curvFunctions;
-  std::vector<std::function<double(double)>> *xFunctions;
-  std::vector<std::function<double(double)>> *yFunctions;
+  int                   nodePerTwoPi;
+  int                   nodePerGap;
+  double               *bbox;
+  double               *nodalCurvature;
+  double              (*sizeFunction)(double, double, double) ;
+  RTree<int,double,3>  *triRTree;
+  HXTMesh              *mesh;
 } HXTForestOptions;
 
-// The structure containing the size field information
 typedef struct HXTForest{
 #ifdef HAVE_P4EST
-  p4est_t *p4est;
+  p4est_t          *p4est;
 #endif 
-  HXTForestOptions *forestOptions;
+  HXTForestOptions  *forestOptions;
 } HXTForest;
 
-// Data available on each tree cell
+// Donnees disponibles sur chaque quadrant
 typedef struct size_data{
   double size;
-#ifdef HAVE_P4EST
-  double ds[P4EST_DIM]; // Size gradient
-#endif
-  double h;    // The isotropic cell size
-  // double M[3]; // The anisotropic cell size (metric tensor)
+  double ds[P4EST_DIM];
+  double d2s; // Laplacien
+
+  double h;
+  // Les tailles pour les differences finies
+  double h_xL, h_xR;
+  double h_yD, h_yU;
+  
+  double h_xavg;
+  double h_yavg;
+  
+  double h_zB, h_zT;
+  double h_zavg;
+
+  double hMin;
+  
+  // Pour raffiner sur la courbure : pas possible de donner un user_pointer
+  //  à p4est_refine ?
+  int refineFlag; 
+  
 } size_data_t;
 
-// A node to search in the tree
+// Un point pour la recherche dans l'arbre
 typedef struct size_point{
   double x;
   double y;
   double z;
   double size;
-  bool isFound;
 } size_point_t;
 
-// Additional user-defined size function : currently not used
 typedef struct size_fun{
-  double (*myFun)(double, double, double, double);
+  double (*myFun)(double, double, double);
 } size_fun_t;
 
 // API ---------------------------------------------------------------------------------------------
+
+HXTStatus hxtOctreeRefineToLevel(HXTForest *forest, int lvl);
+HXTStatus hxtOctreeComputeLaplacian(HXTForest *forest);
+HXTStatus hxtOctreeLaplacianRefine(HXTForest *forest, int nRefine);
+HXTStatus hxtOctreeSetMaxGradient(HXTForest *forest);
+HXTStatus hxtOctreeSmoothGradient(HXTForest *forest, int nMax);
 HXTStatus hxtForestOptionsCreate(HXTForestOptions **forestOptions);
 HXTStatus hxtForestOptionsDelete(HXTForestOptions **forestOptions);
-
 HXTStatus hxtForestCreate(int argc, char **argv, HXTForest **forest, const char* filename, HXTForestOptions *forestOptions);
 HXTStatus hxtForestDelete(HXTForest **forest);
-
-HXTStatus hxtForestSave(HXTForest *forest, const char* forestFile, const char *dataFile);
-HXTStatus hxtForestExport(HXTForest *forest, const char *forestFile);
-HXTStatus hxtForestExport2D(HXTForest *forest, const char *forestFile);
-HXTStatus hxtForestLoad(HXTForest **forest, const char* forestFile, const char *dataFile, HXTForestOptions *forestOptions);
-
-HXTStatus hxtForestRefine(HXTForest *forest);
-HXTStatus hxtForestSizeSmoothing(HXTForest *forest);
-HXTStatus hxtForestCloseSurfaces(HXTForest *forest);
-HXTStatus hxtComputeGradientOnce(HXTForest *forest);
-
+HXTStatus hxtOctreeRTreeIntersection(HXTForest *forest);
+HXTStatus hxtOctreeCurvatureRefine(HXTForest *forest, int nMax);
+HXTStatus hxtOctreeSearchOne(HXTForest *forest, double x, double y, double z, double *size);
+HXTStatus hxtOctreeSurfacesProches(HXTForest *forest);
 HXTStatus hxtOctreeElementEstimation(HXTForest *forest, double *elemEstimate);
-HXTStatus hxtForestSearchOne(HXTForest *forest, double x, double y, double z, double *size, int linear);
-
-HXTStatus medialAxis(HXTForest *forest);
 
 #endif

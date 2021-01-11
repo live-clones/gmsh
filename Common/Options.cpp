@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits>
 #include "GmshConfig.h"
 #include "GmshVersion.h"
 #include "GmshDefines.h"
@@ -124,7 +125,7 @@ static void PrintStringOptions(int num, int level, int diff, int help,
 {
   int i = 0;
   while(s[i].str) {
-    if(s[i].level & level) {
+    if((s[i].level & level) && !(s[i].level & GMSH_DEPRECATED)) {
       if(!diff || s[i].function(num, GMSH_GET, "") != s[i].def) {
         char tmp[1024];
         sprintf(tmp, "%s%s = \"%s\";%s%s", prefix, s[i].str,
@@ -163,16 +164,18 @@ static void PrintStringOptionsDoc(StringXString s[], const char *prefix,
 {
   int i = 0;
   while(s[i].str) {
-    fprintf(file, "@item %s%s\n", prefix, s[i].str);
-    fprintf(file, "%s@*\n", s[i].help);
+    if(!(s[i].level & GMSH_DEPRECATED)) {
+      fprintf(file, "@item %s%s\n", prefix, s[i].str);
+      fprintf(file, "%s@*\n", s[i].help);
 
-    // sanitize the string for texinfo
-    std::string val = s[i].function(0, GMSH_GET, "");
-    for(std::size_t j = 1; j < val.size(); j++) {
-      if(val[j] == '\n' && val[j - 1] == '\n') val[j - 1] = '.';
+      // sanitize the string for texinfo
+      std::string val = s[i].function(0, GMSH_GET, "");
+      for(std::size_t j = 1; j < val.size(); j++) {
+        if(val[j] == '\n' && val[j - 1] == '\n') val[j - 1] = '.';
+      }
+      fprintf(file, "Default value: @code{\"%s\"}@*\n", val.c_str());
+      fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
     }
-    fprintf(file, "Default value: @code{\"%s\"}@*\n", val.c_str());
-    fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
     i++;
   }
 }
@@ -246,7 +249,7 @@ static void PrintNumberOptions(int num, int level, int diff, int help,
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
-    if(s[i].level & level) {
+    if((s[i].level & level) && !(s[i].level & GMSH_DEPRECATED)) {
       if(!diff || (s[i].function(num, GMSH_GET, 0) != s[i].def)) {
         sprintf(tmp, "%s%s = %.16g;%s%s", prefix, s[i].str,
                 s[i].function(num, GMSH_GET, 0), help ? " // " : "",
@@ -268,11 +271,13 @@ static void PrintNumberOptionsDoc(StringXNumber s[], const char *prefix,
 {
   int i = 0;
   while(s[i].str) {
-    fprintf(file, "@item %s%s\n", prefix, s[i].str);
-    fprintf(file, "%s@*\n", s[i].help);
-    fprintf(file, "Default value: @code{%g}@*\n",
-            s[i].function(0, GMSH_GET, 0));
-    fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
+    if(!(s[i].level & GMSH_DEPRECATED)) {
+      fprintf(file, "@item %s%s\n", prefix, s[i].str);
+      fprintf(file, "%s@*\n", s[i].help);
+      fprintf(file, "Default value: @code{%g}@*\n",
+              s[i].function(0, GMSH_GET, 0));
+      fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
+    }
     i++;
   }
 }
@@ -406,7 +411,7 @@ static void PrintColorOptions(int num, int level, int diff, int help,
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
-    if(s[i].level & level) {
+    if((s[i].level & level) && !(s[i].level & GMSH_DEPRECATED)) {
       unsigned int def;
       switch(CTX::instance()->colorScheme) {
       case 1:
@@ -449,13 +454,15 @@ static void PrintColorOptionsDoc(StringXColor s[], const char *prefix,
 {
   int i = 0;
   while(s[i].str) {
-    fprintf(file, "@item %sColor.%s\n", prefix, s[i].str);
-    fprintf(file, "%s@*\n", s[i].help);
-    fprintf(file, "Default value: @code{@{%d,%d,%d@}}@*\n",
-            CTX::instance()->unpackRed(s[i].function(0, GMSH_GET, 0)),
-            CTX::instance()->unpackGreen(s[i].function(0, GMSH_GET, 0)),
-            CTX::instance()->unpackBlue(s[i].function(0, GMSH_GET, 0)));
-    fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
+    if(!(s[i].level & GMSH_DEPRECATED)) {
+      fprintf(file, "@item %sColor.%s\n", prefix, s[i].str);
+      fprintf(file, "%s@*\n", s[i].help);
+      fprintf(file, "Default value: @code{@{%d,%d,%d@}}@*\n",
+              CTX::instance()->unpackRed(s[i].function(0, GMSH_GET, 0)),
+              CTX::instance()->unpackGreen(s[i].function(0, GMSH_GET, 0)),
+              CTX::instance()->unpackBlue(s[i].function(0, GMSH_GET, 0)));
+      fprintf(file, "Saved in: @code{%s}\n\n", GetOptionSaveLevel(s[i].level));
+    }
     i++;
   }
 }
@@ -464,6 +471,8 @@ static void PrintColorOptionsDoc(StringXColor s[], const char *prefix,
 
 void InitOptions(int num)
 {
+  CTX::instance()->init();
+
   // Default string options
   SetDefaultStringOptions(num, GeneralOptions_String);
   SetDefaultStringOptions(num, GeometryOptions_String);
@@ -940,8 +949,7 @@ void PrintOptionsDoc()
     fprintf(file, "%s@ftable @code\n", warn);
     FieldManager &fields = *GModel::current()->getFields();
     for(std::map<std::string, FieldFactory *>::iterator it =
-          fields.map_type_name.begin();
-        it != fields.map_type_name.end(); it++) {
+          fields.mapTypeName.begin(); it != fields.mapTypeName.end(); it++) {
       fprintf(file, "@item %s\n", it->first.c_str());
       Field *f = (*it->second)();
       std::string field_description = f->getDescription();
@@ -951,8 +959,8 @@ void PrintOptionsDoc()
         fprintf(file, "Options:@*\n");
         fprintf(file, "@table @code\n");
         for(std::map<std::string, FieldOption *>::iterator it2 =
-              f->options.begin();
-            it2 != f->options.end(); it2++) {
+              f->options.begin(); it2 != f->options.end(); it2++) {
+          if(it2->second->isDeprecated()) continue;
           fprintf(file, "@item %s\n", it2->first.c_str());
           std::string val;
           it2->second->getTextRepresentation(val);
@@ -1287,6 +1295,18 @@ std::string opt_general_recent_file9(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->recentFiles[9] = val;
   return CTX::instance()->recentFiles[9];
+}
+
+std::string opt_general_scripting_languages(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->scriptLang = SplitString(val, ',', true);
+  std::string out = "";
+  for(std::size_t i = 0; i < CTX::instance()->scriptLang.size(); i++) {
+    if(i) out += ", ";
+    out += CTX::instance()->scriptLang[i];
+  }
+  return out;
 }
 
 std::string opt_general_editor(OPT_ARGS_STR)
@@ -2127,6 +2147,12 @@ std::string opt_print_parameter_command(OPT_ARGS_STR)
 
 // Numeric option routines
 
+double opt_general_abort_on_error(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->abortOnError = (int)val;
+  return CTX::instance()->abortOnError;
+}
+
 double opt_general_initial_context(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->initialContext = (int)val;
@@ -2164,6 +2190,12 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->guiColorScheme;
+}
+
+double opt_general_gui_refresh_rate(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->guiRefreshRate = val;
+  return CTX::instance()->guiRefreshRate;
 }
 
 double opt_general_graphics_fontsize(OPT_ARGS_NUM)
@@ -2571,9 +2603,7 @@ double opt_general_rotation0(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpRotation[0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->r[0] = val;
     return gl->getDrawContext()->r[0];
   }
@@ -2586,9 +2616,7 @@ double opt_general_rotation1(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpRotation[1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->r[1] = val;
     return gl->getDrawContext()->r[1];
   }
@@ -2601,9 +2629,7 @@ double opt_general_rotation2(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpRotation[2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->r[2] = val;
     return gl->getDrawContext()->r[2];
   }
@@ -2649,9 +2675,7 @@ double opt_general_quaternion0(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->quaternion[0] = val;
     if(action & GMSH_GUI) FlGui::instance()->manip->update();
     return gl->getDrawContext()->quaternion[0];
@@ -2665,9 +2689,7 @@ double opt_general_quaternion1(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->quaternion[1] = val;
     if(action & GMSH_GUI) FlGui::instance()->manip->update();
     return gl->getDrawContext()->quaternion[1];
@@ -2681,9 +2703,7 @@ double opt_general_quaternion2(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->quaternion[2] = val;
     if(action & GMSH_GUI) FlGui::instance()->manip->update();
     return gl->getDrawContext()->quaternion[2];
@@ -2697,9 +2717,7 @@ double opt_general_quaternion3(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpQuaternion[3] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->quaternion[3] = val;
     if(action & GMSH_GUI) FlGui::instance()->manip->update();
     return gl->getDrawContext()->quaternion[3];
@@ -2713,9 +2731,7 @@ double opt_general_translation0(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->t[0] = val;
     if(action & GMSH_GUI) FlGui::instance()->manip->update();
     return gl->getDrawContext()->t[0];
@@ -2729,9 +2745,7 @@ double opt_general_translation1(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->t[1] = val;
     if(action & GMSH_GUI) FlGui::instance()->manip->update();
     return gl->getDrawContext()->t[1];
@@ -2745,9 +2759,7 @@ double opt_general_translation2(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpTranslation[2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->t[2] = val;
     if(action & GMSH_GUI) FlGui::instance()->manip->update();
     return gl->getDrawContext()->t[2];
@@ -2761,9 +2773,7 @@ double opt_general_scale0(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpScale[0] = val ? val : 1.0;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->s[0] = val ? val : 1.0;
     if(action & GMSH_GUI) FlGui::instance()->manip->update();
     return gl->getDrawContext()->s[0];
@@ -2777,9 +2787,7 @@ double opt_general_scale1(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpScale[1] = val ? val : 1.0;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->s[1] = val ? val : 1.0;
     if(action & GMSH_GUI) FlGui::instance()->manip->update();
     return gl->getDrawContext()->s[1];
@@ -2793,9 +2801,7 @@ double opt_general_scale2(OPT_ARGS_NUM)
   if(action & GMSH_SET) CTX::instance()->tmpScale[2] = val ? val : 1.0;
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                         FlGui::instance()->fullscreen :
-                         FlGui::instance()->graph[0]->gl[0];
+    openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
     if(action & GMSH_SET) gl->getDrawContext()->s[2] = val ? val : 1.0;
     if(action & GMSH_GUI) FlGui::instance()->manip->update();
     return gl->getDrawContext()->s[2];
@@ -2842,12 +2848,6 @@ double opt_general_point_size(OPT_ARGS_NUM)
       CTX::instance()->pointSize);
 #endif
   return CTX::instance()->pointSize;
-}
-
-double opt_general_high_resolution_point_size_factor(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->highResolutionPointSizeFactor = val;
-  return CTX::instance()->highResolutionPointSizeFactor;
 }
 
 double opt_general_line_width(OPT_ARGS_NUM)
@@ -4155,9 +4155,7 @@ double opt_geometry_transform(OPT_ARGS_NUM)
       FlGui::instance()->options->geo.choice[3]->value(
         CTX::instance()->geom.useTransform);
     if(action & GMSH_SET) {
-      openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                           FlGui::instance()->fullscreen :
-                           FlGui::instance()->graph[0]->gl[0];
+      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
       if(CTX::instance()->geom.useTransform == 1) {
         drawTransform *tr = new drawTransformScaled(
           CTX::instance()->geom.transform, CTX::instance()->geom.offset);
@@ -4184,9 +4182,7 @@ static double _opt_geometry_transform(OPT_ARGS_NUM, int ii, int jj, int nn)
       FlGui::instance()->options->geo.value[nn]->value(
         CTX::instance()->geom.transform[ii][jj]);
     if(action & GMSH_SET) {
-      openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                           FlGui::instance()->fullscreen :
-                           FlGui::instance()->graph[0]->gl[0];
+      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
       drawTransform *tr = gl->getDrawContext()->getTransform();
       if(tr)
         tr->setMatrix(CTX::instance()->geom.transform,
@@ -4251,9 +4247,7 @@ static double _opt_geometry_offset(OPT_ARGS_NUM, int ii, int nn)
       FlGui::instance()->options->geo.value[nn]->value(
         CTX::instance()->geom.offset[ii]);
     if(action & GMSH_SET) {
-      openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
-                           FlGui::instance()->fullscreen :
-                           FlGui::instance()->graph[0]->gl[0];
+      openglWindow *gl = FlGui::instance()->getCurrentOpenglWindow();
       drawTransform *tr = gl->getDrawContext()->getTransform();
       if(tr)
         tr->setMatrix(CTX::instance()->geom.transform,
@@ -4677,6 +4671,12 @@ double opt_geometry_occ_import_labels(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occImportLabels = (int)val;
   return CTX::instance()->geom.occImportLabels;
+}
+
+double opt_geometry_occ_use_generic_closest_point(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occUseGenericClosestPoint = (int)val;
+  return CTX::instance()->geom.occUseGenericClosestPoint;
 }
 
 double opt_geometry_old_circle(OPT_ARGS_NUM)
@@ -5735,6 +5735,18 @@ double opt_mesh_partition_old_style_msh2(OPT_ARGS_NUM)
   return CTX::instance()->mesh.partitionOldStyleMsh2;
 }
 
+double opt_mesh_partition_convert_msh2(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.partitionConvertMsh2 = val;
+  return CTX::instance()->mesh.partitionConvertMsh2;
+}
+
+double opt_mesh_create_topology_msh2(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.createTopologyMsh2 = val;
+  return CTX::instance()->mesh.createTopologyMsh2;
+}
+
 double opt_mesh_binary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.binary = (int)val;
@@ -6089,6 +6101,12 @@ double opt_mesh_ho_periodic(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoPeriodic;
 }
 
+double opt_mesh_ho_save_periodic(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoSavePeriodic = (int)val;
+  return CTX::instance()->mesh.hoSavePeriodic;
+}
+
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.hoNLayers = (int)val;
@@ -6142,6 +6160,37 @@ double opt_mesh_ho_poisson(OPT_ARGS_NUM)
     CTX::instance()->mesh.hoPoissonRatio = ratio;
   }
   return CTX::instance()->mesh.hoPoissonRatio;
+}
+
+double opt_mesh_ho_fast_new_algo(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.hoNewFastCurvingAlgo = !(val == 0.);
+  return CTX::instance()->mesh.hoNewFastCurvingAlgo ? 1. : 0.;
+}
+
+double opt_mesh_ho_curve_outer_BL(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoCurveOuterBL = (int)val;
+  return CTX::instance()->mesh.hoCurveOuterBL;
+}
+
+double opt_mesh_ho_max_rho(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoMaxRho = val;
+  return CTX::instance()->mesh.hoMaxRho;
+}
+
+double opt_mesh_ho_max_angle(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoMaxAngle = val;
+  return CTX::instance()->mesh.hoMaxAngle;
+}
+
+double opt_mesh_ho_max_in_angle(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoMaxInnerAngle = val;
+  return CTX::instance()->mesh.hoMaxInnerAngle;
 }
 
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)
@@ -6210,6 +6259,14 @@ double opt_mesh_cgns_export_cpex0045(OPT_ARGS_NUM)
     CTX::instance()->mesh.cgnsExportCPEX0045 = (int)val;
   }
   return CTX::instance()->mesh.cgnsExportCPEX0045;
+}
+
+double opt_mesh_cgns_export_structured(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.cgnsExportStructured = (int)val;
+  }
+  return CTX::instance()->mesh.cgnsExportStructured;
 }
 
 double opt_mesh_dual(OPT_ARGS_NUM)
@@ -8703,8 +8760,8 @@ double opt_view_colormap_number(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     int n = (int)val;
-    if(n < 0) n = 23;
-    if(n > 23) n = 0;
+    if(n < 0) n = 24;
+    if(n > 24) n = 0;
     opt->colorTable.ipar[COLORTABLE_NUMBER] = n;
     ColorTable_Recompute(&opt->colorTable);
     if(view) view->setChanged(true);

@@ -34,17 +34,20 @@ with open(os.path.join(dirname, '..', 'CMakeLists.txt'), 'rt') as f:
     start = contents.find('GMSH_MINOR_VERSION') + 18
     end = contents.find(')', start)
     version_minor = int(contents[start:end])
+    start = contents.find('GMSH_PATCH_VERSION') + 18
+    end = contents.find(')', start)
+    version_patch = int(contents[start:end])
 
-api = API(version_major, version_minor)
+api = API(version_major, version_minor, version_patch)
 
 ################################################################################
 
 gmsh = api.add_module('gmsh', 'top-level functions')
 
-doc = '''Initialize Gmsh. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options).'''
-gmsh.add('initialize', doc, None, argcargv(), ibool('readConfigFiles', 'true', 'True', 'true'))
+doc = '''Initialize Gmsh API. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options). Initializing the API sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2.'''
+gmsh.add('initialize', doc, None, iargcargv(), ibool('readConfigFiles', 'true', 'True', 'true'))
 
-doc = '''Finalize Gmsh. This must be called when you are done using the Gmsh API.'''
+doc = '''Finalize the Gmsh API. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize', doc, None)
 
 doc = '''Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents: opening a file with model data will create a new model.'''
@@ -121,14 +124,23 @@ model.add('getPhysicalGroupsForEntity', doc, None, iint('dim'), iint('tag'), ove
 doc = '''Add a physical group of dimension `dim', grouping the model entities with tags `tags'. Return the tag of the physical group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0.'''
 model.add('addPhysicalGroup', doc, oint, iint('dim'), ivectorint('tags'), iint('tag', '-1'))
 
+doc = '''Remove the physical groups `dimTags' from the current model. If `dimTags' is empty, remove all groups.'''
+model.add('removePhysicalGroups', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
 doc = '''Set the name of the physical group of dimension `dim' and tag `tag'.'''
 model.add('setPhysicalName', doc, None, iint('dim'), iint('tag'), istring('name'))
+
+doc = '''Remove the physical name `name' from the current model.'''
+model.add('removePhysicalName', doc, None, istring('name'))
 
 doc = '''Get the name of the physical group of dimension `dim' and tag `tag'.'''
 model.add('getPhysicalName', doc, None, iint('dim'), iint('tag'), ostring('name'))
 
 doc = '''Get the boundary of the model entities `dimTags'. Return in `outDimTags' the boundary of the individual entities (if `combined' is false) or the boundary of the combined geometrical shape formed by all input entities (if `combined' is true). Return tags multiplied by the sign of the boundary entity if `oriented' is true. Apply the boundary operator recursively down to dimension 0 (i.e. to points) if `recursive' is true.'''
 model.add('getBoundary', doc, None, ivectorpair('dimTags'), ovectorpair('outDimTags'), ibool('combined', 'true', 'True'), ibool('oriented', 'true', 'True'), ibool('recursive', 'false', 'False'))
+
+doc = '''Get the upward and downward adjacencies of the model entity of dimension `dim' and tag `tag'. The `upward' vector returns the adjacent entities of dimension `dim' + 1; the `downward' vector returns the adjacent entities of dimension `dim' - 1.'''
+model.add('getAdjacencies', doc, None, iint('dim'), iint('tag'), ovectorint('upward'), ovectorint('downward'))
 
 doc = '''Get the model entities in the bounding box defined by the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
 model.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'), idouble('zmin'), idouble('xmax'), idouble('ymax'), idouble('zmax'), ovectorpair('tags'), iint('dim', '-1'))
@@ -148,12 +160,6 @@ model.add('removeEntities', doc, None, ivectorpair('dimTags'), ibool('recursive'
 doc = '''Remove the entity name `name' from the current model.'''
 model.add('removeEntityName', doc, None, istring('name'))
 
-doc = '''Remove the physical groups `dimTags' of the current model. If `dimTags' is empty, remove all groups.'''
-model.add('removePhysicalGroups', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
-
-doc = '''Remove the physical name `name' from the current model.'''
-model.add('removePhysicalName', doc, None, istring('name'))
-
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
 model.add('getType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
 
@@ -166,8 +172,11 @@ model.add('getPartitions', doc, None, iint('dim'), iint('tag'), ovectorint('part
 doc = '''Evaluate the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 0 (with empty `parametricCoord'), 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z coordinates in `coord', concatenated: [p1x, p1y, p1z, p2x, ...].'''
 model.add('getValue', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ovectordouble('coord'))
 
-doc = '''Evaluate the derivative of the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). For `dim' equal to 1 return the x, y, z components of the derivative with respect to u [d1ux, d1uy, d1uz, d2ux, ...]; for `dim' equal to 2 return the x, y, z components of the derivate with respect to u and v: [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux, ...].'''
+doc = '''Evaluate the derivative of the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). For `dim' equal to 1 return the x, y, z components of the derivative with respect to u [d1ux, d1uy, d1uz, d2ux, ...]; for `dim' equal to 2 return the x, y, z components of the derivative with respect to u and v: [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux, ...].'''
 model.add('getDerivative', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ovectordouble('derivatives'))
+
+doc = '''Evaluate the second derivative of the parametrization of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). For `dim' equal to 1 return the x, y, z components of the second derivative with respect to u [d1uux, d1uuy, d1uuz, d2uux, ...]; for `dim' equal to 2 return the x, y, z components of the second derivative with respect to u and v, and the mixed derivative with respect to u and v: [d1uux, d1uuy, d1uuz, d1vvx, d1vvy, d1vvz, d1uvx, d1uvy, d1uvz, d2uux, ...].'''
+model.add('getSecondDerivative', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ovectordouble('derivatives'))
 
 doc = '''Evaluate the (maximum) curvature of the entity of dimension `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim' equal to 1 (with `parametricCoord' containing parametric coordinates on the curve) or 2 (with `parametricCoord' containing pairs of u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).'''
 model.add('getCurvature', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ovectordouble('curvatures'))
@@ -187,6 +196,9 @@ model.add('getParametrizationBounds', doc, None, iint('dim'), iint('tag'), ovect
 doc = '''Check if the parametric coordinates provided in `parametricCoord' correspond to points inside the entitiy of dimension `dim' and tag `tag', and return the number of points inside. This feature is only available for a subset of curves and surfaces, depending on the underyling geometrical representation.'''
 model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('parametricCoord'))
 
+doc = '''Get the points `closestCoord' on the entity of dimension `dim' and tag `tag' to the points `coord', by orthogonal projection. `coord' and `closestCoord' are given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
+model.add('getClosestPoint', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ovectordouble('closestCoord'), ovectordouble('parametricCoord'))
+
 doc = '''Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1, reparametrize all the points corresponding to the parametric coordinates `parametricCoord'. Multiple matches in case of periodic surfaces can be selected with `which'. This feature is only available for a subset of entities, depending on the underyling geometrical representation.'''
 model.add('reparametrizeOnSurface', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), iint('surfaceTag'), ovectordouble('surfaceParametricCoord'), iint('which', '0'))
 
@@ -195,6 +207,9 @@ model.add('setVisibility', doc, None, ivectorpair('dimTags'), iint('value'), ibo
 
 doc = '''Get the visibility of the model entity of dimension `dim' and tag `tag'.'''
 model.add('getVisibility', doc, None, iint('dim'), iint('tag'), oint('value'))
+
+doc = '''Set the global visibility of the model per window to `value', where `windowIndex' identifies the window in the window list.'''
+model.add('setVisibilityPerWindow', doc, None, iint('value'), iint('windowIndex', '0'))
 
 doc = '''Set the color of the model entities `dimTags' to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255. Apply the color setting recursively if `recursive' is true.'''
 model.add('setColor', doc, None, ivectorpair('dimTags'), iint('r'), iint('g'), iint('b'), iint('a', '255'), ibool('recursive', 'false', 'False'))
@@ -254,6 +269,9 @@ mesh.add('setNode', doc, None, isize('nodeTag'), ivectordouble('coord'), ivector
 doc = '''Rebuild the node cache.'''
 mesh.add('rebuildNodeCache', doc, None, ibool('onlyIfNecessary', 'true', 'True'))
 
+doc = '''Rebuild the element cache.'''
+mesh.add('rebuildElementCache', doc, None, ibool('onlyIfNecessary', 'true', 'True'))
+
 doc = '''Get the nodes from all the elements belonging to the physical group of dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].'''
 mesh.add('getNodesForPhysicalGroup', doc, None, iint('dim'), iint('tag'), ovectorsize('nodeTags'), ovectordouble('coord'))
 
@@ -284,7 +302,7 @@ mesh.add('getLocalCoordinatesInElement', doc, None, isize('elementTag'), idouble
 doc = '''Get the types of elements in the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
 mesh.add('getElementTypes', doc, None, ovectorint('elementTypes'), iint('dim', '-1'), iint('tag', '-1'))
 
-doc = '''Return an element type given its family name `familyName' ("point", "line", "triangle", "quadrangle", "tetrahedron", "pyramid", "prism", "hexahedron") and polynomial order `order'. If `serendip' is true, return the corresponding serendip element type (element without interior nodes).'''
+doc = '''Return an element type given its family name `familyName' ("Point", "Line", "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism", "Hexahedron") and polynomial order `order'. If `serendip' is true, return the corresponding serendip element type (element without interior nodes).'''
 mesh.add('getElementType', doc, oint, istring('familyName'), iint('order'), ibool('serendip', 'false', 'False'))
 
 doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes'), local coordinates of the nodes in the reference element (`localNodeCoord' vector, of length `dim' times `numNodes') and number of primary (first order) nodes (`numPrimaryNodes').'''
@@ -311,11 +329,17 @@ mesh.add('getJacobians', doc, None, iint('elementType'), ivectordouble('localCoo
 doc = '''Preallocate data before calling `getJacobians' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateJacobians', doc, ['onlycc++'], None, iint('elementType'), iint('numEvaluationPoints'), ibool('allocateJacobians'), ibool('allocateDeterminants'), ibool('allocateCoord'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('coord'), iint('tag', '-1'))
 
+doc = '''Get the Jacobian for a single element `elementTag', at the G evaluation points `localCoord' given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians' contains the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains the determinant of the Jacobian matrix at each evaluation point. `coord' contains the x, y, z coordinates of the evaluation points. This function relies on an internal cache (a vector in case of dense element numbering, a map otherwise); for large meshes accessing Jacobians in bulk is often preferable.'''
+mesh.add('getJacobian', doc, None, isize('elementTag'), ivectordouble('localCoord'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('coord'))
+
 doc = '''Get the basis functions of the element of type `elementType' at the evaluation points `localCoord' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element; or "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions). `numComponents' returns the number C of components of a basis function. `basisFunctions' returns the value of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis functions that depend on the orientation of the elements, all values for the first orientation are returned first, followed by values for the second, etc. `numOrientations' returns the overall number of orientations. If `wantedOrientations' is not empty, only return the values for the desired orientation indices.'''
 mesh.add('getBasisFunctions', doc, None, iint('elementType'), ivectordouble('localCoord'), istring('functionSpaceType'), oint('numComponents'), ovectordouble('basisFunctions'), oint('numOrientations'), ivectorint('wantedOrientations', 'std::vector<int>()', "[]", "[]"))
 
 doc = '''Get the orientation index of the elements of type `elementType' in the entity of tag `tag'. The arguments have the same meaning as in `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for each element the orientation index in the values returned by `getBasisFunctions'. For Lagrange basis functions the call is superfluous as it will return a vector of zeros.'''
 mesh.add('getBasisFunctionsOrientationForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorint('basisFunctionsOrientation'), iint('tag','-1'), isize('task', '0'), isize('numTasks', '1'))
+
+doc = '''Get the orientation of a single element `elementTag'.'''
+mesh.add('getBasisFunctionsOrientationForElement', doc, None, isize('elementTag'), istring('functionSpaceType'), oint('basisFunctionsOrientation'))
 
 doc = '''Get the number of possible orientations for elements of type `elementType' and function space named `functionSpaceType'.'''
 mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('functionSpaceType'))
@@ -331,6 +355,9 @@ mesh.add('getLocalMultipliersForHcurl0',doc,None,iint('elementType'),ovectorint(
 
 doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
+
+doc = '''Get the keys for a single element `elementTag'.'''
+mesh.add('getKeysForElement', doc, None, isize('elementTag'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), ibool('returnCoord', 'true', 'True'))
 
 doc = '''Get the number of keys by elements of type `elementType' for function space named `functionSpaceType'.'''
 mesh.add('getNumberOfKeysForElements', doc, oint, iint('elementType'), istring('functionSpaceType'))
@@ -359,7 +386,13 @@ mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 doc = '''Set mesh size constraints at the given parametric points `parametricCoord' on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 1 (lines) are handled.'''
 mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
 
-doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
+doc = '''Set a global mesh size callback. The callback should take 5 arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at coordinates (`x', `y', `z').'''
+mesh.add('setSizeCallback', doc, None, isizefun('callback'))
+
+doc = '''Remove the global mesh size callback.'''
+mesh.add('removeSizeCallback', doc, None)
+
+doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef'), "Bump" (refinement toward both extremities of the curve) and "Beta" (beta law).'''
 mesh.add('setTransfiniteCurve', doc, None, iint('tag'), iint('numNodes'), istring('meshType', '"Progression"'), idouble('coef', '1.'))
 
 doc = '''Set a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
@@ -367,6 +400,9 @@ mesh.add('setTransfiniteSurface', doc, None, iint('tag'), istring('arrangement',
 
 doc = '''Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.'''
 mesh.add('setTransfiniteVolume', doc, None, iint('tag'), ivectorint('cornerTags', 'std::vector<int>()', "[]", "[]"))
+
+doc = '''Set transfinite meshing constraints on the model entities in `dimTag'. Transfinite meshing constraints are added to the curves of the quadrangular surfaces and to the faces of 6-sided volumes. Quadragular faces with a corner angle superior to `cornerAngle' (in radians) are ignored. The number of points is automatically determined from the sizing constraints. If `dimTag' is empty, the constraints are applied to all entities in the model. If `recombine' is true, the recombine flag is automatically set on the transfinite surfaces.  '''
+mesh.add('setTransfiniteAutomatic', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"), idouble('cornerAngle', '2.35', '2.35', '2.35'), ibool('recombine', 'true', 'True'))
 
 doc = '''Set a recombination meshing constraint on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
 mesh.add('setRecombine', doc, None, iint('dim'), iint('tag'))
@@ -419,8 +455,8 @@ mesh.add('splitQuadrangles', doc, None, idouble('quality', '1.'), iint('tag', '-
 doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create edges and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'.'''
 mesh.add('classifySurfaces', doc, None, idouble('angle'), ibool('boundary', 'true', 'True'), ibool('forReparametrization', 'false', 'False'), idouble('curveAngle', 'M_PI', 'pi', 'pi'))
 
-doc = '''Create a parametrization for discrete curves and surfaces (i.e. curves and surfaces represented solely by a mesh, without an underlying CAD description), assuming that each can be parametrized with a single map.'''
-mesh.add('createGeometry', doc, None)
+doc = '''Create a geometry for the discrete entities `dimTags' (represented solely by a mesh, without an underlying CAD description), i.e. create a parametrization for discrete curves and surfaces, assuming that each can be parametrized with a single map. If `dimTags' is empty, create a geometry for all the discrete entities.'''
+mesh.add('createGeometry', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
 doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model). If `makeSimplyConnected' is set, enforce simply connected discrete surfaces and volumes. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
 mesh.add('createTopology', doc, None, ibool('makeSimplyConnected', 'true', 'True'), ibool('exportDiscrete', 'true', 'True'))
@@ -431,8 +467,14 @@ mesh.add('computeHomology', doc, None, ivectorint('domainTags', 'std::vector<int
 doc = '''Compute a basis representation for cohomology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative cohomology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute cohomology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation cochains are stored as physical groups in the mesh.'''
 mesh.add('computeCohomology', doc, None, ivectorint('domainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('subdomainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('dims', 'std::vector<int>()', "[]", "[]"))
 
-doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views'''
+doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views.'''
 mesh.add('computeCrossField', doc, None, ovectorint('viewTags'))
+
+doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'.'''
+mesh.add('triangulate', doc, None, ivectordouble('coord'), ovectorsize('tri'))
+
+doc = '''Tetrahedralize the points given in the `coord' vector as triplets of x, y, z coordinates, and return the node tags (with numbering starting at 1) of the resulting tetrahedra in `tetra'.'''
+mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
 
 ################################################################################
 
@@ -466,78 +508,81 @@ geo = model.add_module('geo', 'built-in CAD kernel functions')
 doc = '''Add a geometrical point in the built-in CAD representation, at coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the geo module.)'''
 geo.add('addPoint', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('meshSize', '0.'), iint('tag', '-1'))
 
-doc = '''Add a straight line segment between the two points with tags `startTag' and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the line.'''
+doc = '''Add a straight line segment in the built-in CAD representation, between the two points with tags `startTag' and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the line.'''
 geo.add('addLine', doc, oint, iint('startTag'), iint('endTag'), iint('tag', '-1'))
 
-doc = '''Add a circle arc (strictly smaller than Pi) between the two points with tags `startTag' and `endTag', with center `centertag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane of the circle arc. Return the tag of the circle arc.'''
+doc = '''Add a circle arc (strictly smaller than Pi) in the built-in CAD representation, between the two points with tags `startTag' and `endTag', and with center `centerTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane of the circle arc. Return the tag of the circle arc.'''
 geo.add('addCircleArc', doc, oint, iint('startTag'), iint('centerTag'), iint('endTag'), iint('tag', '-1'), idouble('nx', '0.'), idouble('ny', '0.'), idouble('nz', '0.'))
 
-doc = '''Add an ellipse arc (strictly smaller than Pi) between the two points `startTag' and `endTag', with center `centerTag' and major axis point `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane of the circle arc. Return the tag of the ellipse arc.'''
+doc = '''Add an ellipse arc (strictly smaller than Pi) in the built-in CAD representation, between the two points `startTag' and `endTag', and with center `centerTag' and major axis point `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane of the circle arc. Return the tag of the ellipse arc.'''
 geo.add('addEllipseArc', doc, oint, iint('startTag'), iint('centerTag'), iint('majorTag'), iint('endTag'), iint('tag', '-1'), idouble('nx', '0.'), idouble('ny', '0.'), idouble('nz', '0.'))
 
-doc = '''Add a spline (Catmull-Rom) curve going through the points `pointTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Create a periodic curve if the first and last points are the same. Return the tag of the spline curve.'''
+doc = '''Add a spline (Catmull-Rom) curve in the built-in CAD representation, going through the points `pointTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Create a periodic curve if the first and last points are the same. Return the tag of the spline curve.'''
 geo.add('addSpline', doc, oint, ivectorint('pointTags'), iint('tag', '-1'))
 
-doc = '''Add a cubic b-spline curve with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Return the tag of the b-spline curve.'''
+doc = '''Add a cubic b-spline curve in the built-in CAD representation, with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Return the tag of the b-spline curve.'''
 geo.add('addBSpline', doc, oint, ivectorint('pointTags'), iint('tag', '-1'))
 
-doc = '''Add a Bezier curve with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.  Return the tag of the Bezier curve.'''
+doc = '''Add a Bezier curve in the built-in CAD representation, with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.  Return the tag of the Bezier curve.'''
 geo.add('addBezier', doc, oint, ivectorint('pointTags'), iint('tag', '-1'))
 
-doc = '''Add a spline (Catmull-Rom) going through points sampling the curves in `curveTags'. The density of sampling points on each curve is governed by `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the spline.'''
+doc = '''Add a polyline curve in the built-in CAD representation, going through the points `pointTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Create a periodic curve if the first and last points are the same. Return the tag of the polyline curve.'''
+geo.add('addPolyline', doc, oint, ivectorint('pointTags'), iint('tag', '-1'))
+
+doc = '''Add a spline (Catmull-Rom) curve in the built-in CAD representation, going through points sampling the curves in `curveTags'. The density of sampling points on each curve is governed by `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the spline.'''
 geo.add('addCompoundSpline', doc, oint, ivectorint('curveTags'), iint('numIntervals', '5'), iint('tag', '-1'))
 
-doc = '''Add a b-spline with control points sampling the curves in `curveTags'. The density of sampling points on each curve is governed by `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the b-spline.'''
+doc = '''Add a b-spline curve in the built-in CAD representation, with control points sampling the curves in `curveTags'. The density of sampling points on each curve is governed by `numIntervals'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the b-spline.'''
 geo.add('addCompoundBSpline', doc, oint, ivectorint('curveTags'), iint('numIntervals', '20'), iint('tag', '-1'))
 
-doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of model enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
-geo.add('addCurveLoop', doc, oint, ivectorint('curveTags'), iint('tag', '-1'))
+doc = '''Add a curve loop (a closed wire) in the built-in CAD representation, formed by the curves `curveTags'. `curveTags' should contain (signed) tags of model entities of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `reorient' is set, automatically reorient the curves if necessary. Return the tag of the curve loop.'''
+geo.add('addCurveLoop', doc, oint, ivectorint('curveTags'), iint('tag', '-1'), ibool('reorient', 'false', 'False'))
 
-doc = '''Add a plane surface defined by one or more curve loops `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
+doc = '''Add a plane surface in the built-in CAD representation, defined by one or more curve loops `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 geo.add('addPlaneSurface', doc, oint, ivectorint('wireTags'), iint('tag', '-1'))
 
-doc = '''Add a surface filling the curve loops in `wireTags'. Currently only a single curve loop is supported; this curve loop should be composed by 3 or 4 curves only. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
+doc = '''Add a surface in the built-in CAD representation, filling the curve loops in `wireTags' using transfinite interpolation. Currently only a single curve loop is supported; this curve loop should be composed by 3 or 4 curves only. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 geo.add('addSurfaceFilling', doc, oint, ivectorint('wireTags'), iint('tag', '-1'), iint('sphereCenterTag', '-1'))
 
-doc = '''Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the shell.'''
+doc = '''Add a surface loop (a closed shell) formed by `surfaceTags' in the built-in CAD representation.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the shell.'''
 geo.add('addSurfaceLoop', doc, oint, ivectorint('surfaceTags'), iint('tag', '-1'))
 
-doc = '''Add a volume (a region) defined by one or more shells `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the volume.'''
+doc = '''Add a volume (a region) in the built-in CAD representation, defined by one or more shells `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the volume.'''
 geo.add('addVolume', doc, oint, ivectorint('shellTags'), iint('tag', '-1'))
 
-doc = '''Extrude the model entities `dimTags' by translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are extruded along their normal.'''
+doc = '''Extrude the entities `dimTags' in the built-in CAD representation, using a translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are extruded along their normal.'''
 geo.add('extrude', doc, None, ivectorpair('dimTags'), idouble('dx'), idouble('dy'), idouble('dz'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
-doc = '''Extrude the model entities `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi. Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the entities `dimTags' in the built-in CAD representation, using a rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi. Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
 geo.add('revolve', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('ax'), idouble('ay'), idouble('az'), idouble('angle'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
-doc = '''Extrude the model entities `dimTags' by a combined translation and rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi. Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the entities `dimTags' in the built-in CAD representation, using a combined translation and rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi. Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
 geo.add('twist', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('dx'), idouble('dy'), idouble('dz'), idouble('ax'), idouble('ay'), idouble('az'), idouble('angle'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
-doc = '''Translate the model entities `dimTags' along (`dx', `dy', `dz').'''
+doc = '''Translate the entities `dimTags' in the built-in CAD representation along (`dx', `dy', `dz').'''
 geo.add('translate', doc, None, ivectorpair('dimTags'), idouble('dx'), idouble('dy'), idouble('dz'))
 
-doc = '''Rotate the model entities `dimTags' of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
+doc = '''Rotate the entities `dimTags' in the built-in CAD representation by `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
 geo.add('rotate', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('ax'), idouble('ay'), idouble('az'), idouble('angle'))
 
-doc = '''Scale the model entities `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
+doc = '''Scale the entities `dimTag' in the built-in CAD representation by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
 geo.add('dilate', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('a'), idouble('b'), idouble('c'))
 
-doc = '''Mirror the model entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
+doc = '''Mirror the entities `dimTag' in the built-in CAD representation, with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
 geo.add('mirror', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
 doc += ''' (This is a synonym for `mirror', which will be deprecated in a future release.)'''
 geo.add('symmetrize', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
 
-doc = '''Copy the entities `dimTags'; the new entities are returned in `outDimTags'.'''
+doc = '''Copy the entities `dimTags' in the built-in CAD representation; the new entities are returned in `outDimTags'.'''
 geo.add('copy', doc, None, ivectorpair('dimTags'), ovectorpair('outDimTags'))
 
-doc = '''Remove the entities `dimTags'. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
+doc = '''Remove the entities `dimTags' in the built-in CAD representation. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 geo.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false', 'False'))
 
-doc = '''Remove all duplicate entities (different entities at the same geometrical location).'''
+doc = '''Remove all duplicate entities in the built-in CAD representation (different entities at the same geometrical location).'''
 geo.add('removeAllDuplicates', doc, None)
 
-doc = '''Split the model curve of tag `tag' on the control points `pointTags'. Return the tags `curveTags' of the newly created curves.'''
+doc = '''Split the curve of tag `tag' in the built-in CAD representation, on the control points `pointTags'. Return the tags `curveTags' of the newly created curves.'''
 geo.add('splitCurve', doc, None, iint('tag'), ivectorint('pointTags'), ovectorint('curveTags'))
 
 doc = '''Get the maximum tag of entities of dimension `dim' in the built-in CAD representation.'''
@@ -546,38 +591,44 @@ geo.add('getMaxTag', doc, oint, iint('dim'))
 doc = '''Set the maximum tag `maxTag' for entities of dimension `dim' in the built-in CAD representation.'''
 geo.add('setMaxTag', doc, None, iint('dim'), iint('maxTag'))
 
-doc = '''Synchronize the built-in CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
+doc = '''Add a physical group of dimension `dim', grouping the entities with tags `tags' in the built-in CAD representation. Return the tag of the physical group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0.'''
+geo.add('addPhysicalGroup', doc, oint, iint('dim'), ivectorint('tags'), iint('tag', '-1'))
+
+doc = '''Remove the physical groups `dimTags' from the built-in CAD representation. If `dimTags' is empty, remove all groups.'''
+geo.add('removePhysicalGroups', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
+doc = '''Synchronize the built-in CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized. Without synchronization the entities in the built-in CAD representation are not available to any function outside of the built-in CAD kernel functions.'''
 geo.add('synchronize', doc, None)
 
 ################################################################################
 
 mesh = geo.add_module('mesh', 'built-in CAD kernel meshing constraints')
 
-doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
+doc = '''Set a mesh size constraint on the entities `dimTags' in the built-in CAD kernel representation. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
-doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
+doc = '''Set a transfinite meshing constraint on the curve `tag' in the built-in CAD kernel representation, with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
 mesh.add('setTransfiniteCurve', doc, None, iint('tag'), iint('nPoints'), istring('meshType', '"Progression"'), idouble('coef', '1.'))
 
-doc = '''Set a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
+doc = '''Set a transfinite meshing constraint on the surface `tag' in the built-in CAD kernel representation. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
 mesh.add('setTransfiniteSurface', doc, None, iint('tag'), istring('arrangement', '"Left"'), ivectorint('cornerTags', 'std::vector<int>()', "[]", "[]"))
 
-doc = '''Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.'''
+doc = '''Set a transfinite meshing constraint on the surface `tag' in the built-in CAD kernel representation. `cornerTags' can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.'''
 mesh.add('setTransfiniteVolume', doc, None, iint('tag'), ivectorint('cornerTags', 'std::vector<int>()', "[]", "[]"))
 
-doc = '''Set a recombination meshing constraint on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
+doc = '''Set a recombination meshing constraint on the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
 mesh.add('setRecombine', doc, None, iint('dim'), iint('tag'), idouble('angle', '45.'))
 
-doc = '''Set a smoothing meshing constraint on the model entity of dimension `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.'''
+doc = '''Set a smoothing meshing constraint on the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. `val' iterations of a Laplace smoother are applied.'''
 mesh.add('setSmoothing', doc, None, iint('dim'), iint('tag'), iint('val'))
 
-doc = '''Set a reverse meshing constraint on the model entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometry). If `val' is false, the mesh is left as-is.'''
+doc = '''Set a reverse meshing constraint on the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometry). If `val' is false, the mesh is left as-is.'''
 mesh.add('setReverse', doc, None, iint('dim'), iint('tag'), ibool('val', 'true', 'True'))
 
-doc = '''Set the meshing algorithm on the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
+doc = '''Set the meshing algorithm on the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. Currently only supported for `dim' == 2.'''
 mesh.add('setAlgorithm', doc, None, iint('dim'), iint('tag'), iint('val'))
 
-doc = '''Force the mesh size to be extended from the boundary, or not, for the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
+doc = '''Force the mesh size to be extended from the boundary, or not, for the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. Currently only supported for `dim' == 2.'''
 mesh.add('setSizeFromBoundary', doc, None, iint('dim'), iint('tag'), iint('val'))
 
 ################################################################################
@@ -587,85 +638,100 @@ occ = model.add_module('occ', 'OpenCASCADE CAD kernel functions')
 doc = '''Add a geometrical point in the OpenCASCADE CAD representation, at coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the occ module.)'''
 occ.add('addPoint', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('meshSize', '0.'), iint('tag', '-1'))
 
-doc = '''Add a straight line segment between the two points with tags `startTag' and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the line.'''
+doc = '''Add a straight line segment in the OpenCASCADE CAD representation, between the two points with tags `startTag' and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the line.'''
 occ.add('addLine', doc, oint, iint('startTag'), iint('endTag'), iint('tag', '-1'))
 
-doc = '''Add a circle arc between the two points with tags `startTag' and `endTag', with center `centerTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the circle arc.'''
+doc = '''Add a circle arc in the OpenCASCADE CAD representation, between the two points with tags `startTag' and `endTag', with center `centerTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the circle arc.'''
 occ.add('addCircleArc', doc, oint, iint('startTag'), iint('centerTag'), iint('endTag'), iint('tag', '-1'))
 
-doc = '''Add a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `angle1' and `angle2' are specified, create a circle arc between the two angles. Return the tag of the circle.'''
+doc = '''Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE CAD representation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `angle1' and `angle2' are specified, create a circle arc between the two angles. Return the tag of the circle.'''
 occ.add('addCircle', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('r'), iint('tag', '-1'), idouble('angle1', '0.'), idouble('angle2', '2*M_PI', '2*pi', '2*pi'))
 
-doc = '''Add an ellipse arc between the two points `startTag' and `endTag', with center `centerTag' and major axis point `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs with the major radius smaller than the minor radius.'''
+doc = '''Add an ellipse arc in the OpenCASCADE CAD representation, between the two points `startTag' and `endTag', and with center `centerTag' and major axis point `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the ellipse arc. Note that OpenCASCADE does not allow creating ellipse arcs with the major radius smaller than the minor radius.'''
 occ.add('addEllipseArc', doc, oint, iint('startTag'), iint('centerTag'), iint('majorTag'), iint('endTag'), iint('tag', '-1'))
 
-doc = '''Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the x- and y-axes respectively. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `angle1' and `angle2' are specified, create an ellipse arc between the two angles. Return the tag of the ellipse. Note that OpenCASCADE does not allow creating ellipses with the major radius (along the x-axis) smaller than or equal to the minor radius (along the y-axis): rotate the shape or use `addCircle' in such cases.'''
+doc = '''Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the x- and y-axes, respectively, in the OpenCASCADE CAD representation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `angle1' and `angle2' are specified, create an ellipse arc between the two angles. Return the tag of the ellipse. Note that OpenCASCADE does not allow creating ellipses with the major radius (along the x-axis) smaller than or equal to the minor radius (along the y-axis): rotate the shape or use `addCircle' in such cases.'''
 occ.add('addEllipse', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('r1'), idouble('r2'), iint('tag', '-1'), idouble('angle1', '0.'), idouble('angle2', '2*M_PI', '2*pi', '2*pi'))
 
-doc = '''Add a spline (C2 b-spline) curve going through the points `pointTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Create a periodic curve if the first and last points are the same. Return the tag of the spline curve.'''
+doc = '''Add a spline (C2 b-spline) curve in the OpenCASCADE CAD representation, going through the points `pointTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Create a periodic curve if the first and last points are the same. Return the tag of the spline curve.'''
 occ.add('addSpline', doc, oint, ivectorint('pointTags'), iint('tag', '-1'))
 
-doc = '''Add a b-spline curve of degree `degree' with `pointTags' control points. If `weights', `knots' or `multiplicities' are not provided, default parameters are computed automatically. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Create a periodic curve if the first and last points are the same. Return the tag of the b-spline curve.'''
+doc = '''Add a b-spline curve of degree `degree' in the OpenCASCADE CAD representation, with `pointTags' control points. If `weights', `knots' or `multiplicities' are not provided, default parameters are computed automatically. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Create a periodic curve if the first and last points are the same. Return the tag of the b-spline curve.'''
 occ.add('addBSpline', doc, oint, ivectorint('pointTags'), iint('tag', '-1'), iint('degree', '3'), ivectordouble('weights', 'std::vector<double>()', "[]", "[]"), ivectordouble('knots', 'std::vector<double>()', "[]", "[]"), ivectorint('multiplicities', 'std::vector<int>()', "[]", "[]"))
 
-doc = '''Add a Bezier curve with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the Bezier curve.'''
+doc = '''Add a Bezier curve in the OpenCASCADE CAD representation, with `pointTags' control points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the Bezier curve.'''
 occ.add('addBezier', doc, oint, ivectorint('pointTags'), iint('tag', '-1'))
 
-doc = '''Add a wire (open or closed) formed by the curves `curveTags'. Note that an OpenCASCADE wire can be made of curves that share geometrically identical (but topologically different) points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the wire.'''
+doc = '''Add a wire (open or closed) in the OpenCASCADE CAD representation, formed by the curves `curveTags'. Note that an OpenCASCADE wire can be made of curves that share geometrically identical (but topologically different) points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the wire.'''
 occ.add('addWire', doc, oint, ivectorint('curveTags'), iint('tag', '-1'), ibool('checkClosed', 'false', 'False'))
 
-doc = '''Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain tags of curves forming a closed loop. Note that an OpenCASCADE curve loop can be made of curves that share geometrically identical (but topologically different) points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
+doc = '''Add a curve loop (a closed wire) in the OpenCASCADE CAD representation, formed by the curves `curveTags'. `curveTags' should contain tags of curves forming a closed loop. Note that an OpenCASCADE curve loop can be made of curves that share geometrically identical (but topologically different) points. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the curve loop.'''
 occ.add('addCurveLoop', doc, oint, ivectorint('curveTags'), iint('tag', '-1'))
 
-doc = '''Add a rectangle with lower left corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Round the corners if `roundedRadius' is nonzero. Return the tag of the rectangle.'''
+doc = '''Add a rectangle in the OpenCASCADE CAD representation, with lower left corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Round the corners if `roundedRadius' is nonzero. Return the tag of the rectangle.'''
 occ.add('addRectangle', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('dx'), idouble('dy'), iint('tag', '-1'), idouble('roundedRadius', '0.'))
 
-doc = '''Add a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis and `ry' along the y-axis. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the disk.'''
+doc = '''Add a disk in the OpenCASCADE CAD representation, with center (`xc', `yc', `zc') and radius `rx' along the x-axis and `ry' along the y-axis. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the disk.'''
 occ.add('addDisk', doc, oint, idouble('xc'), idouble('yc'), idouble('zc'), idouble('rx'), idouble('ry'), iint('tag', '-1'))
 
-doc = '''Add a plane surface defined by one or more curve loops (or closed wires) `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
+doc = '''Add a plane surface in the OpenCASCADE CAD representation, defined by one or more curve loops (or closed wires) `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 occ.add('addPlaneSurface', doc, oint, ivectorint('wireTags'), iint('tag', '-1'))
 
-doc = '''Add a surface filling the curve loops in `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface. If `pointTags' are provided, force the surface to pass through the given points.'''
+doc = '''Add a surface in the OpenCASCADE CAD representation, filling the curve loop `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface. If `pointTags' are provided, force the surface to pass through the given points.'''
 occ.add('addSurfaceFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), ivectorint('pointTags', 'std::vector<int>()', "[]", "[]"))
 
-doc = '''Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface loop. Setting `sewing' allows to build a shell made of surfaces that share geometrically identical (but topologically different) curves.'''
+doc = '''Add a BSpline surface in the OpenCASCADE CAD representation, filling the curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline curves. The optional `type' argument specifies the type of filling: "Stretch" creates the flattest patch, "Curved" (the default) creates the most rounded patch, and "Coons" creates a rounded patch with less depth than "Curved". If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
+occ.add('addBSplineFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), istring('type', '""'))
+
+doc = '''Add a Bezier surface in the OpenCASCADE CAD representation, filling the curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 Bezier curves. The optional `type' argument specifies the type of filling: "Stretch" creates the flattest patch, "Curved" (the default) creates the most rounded patch, and "Coons" creates a rounded patch with less depth than "Curved". If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
+occ.add('addBezierFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), istring('type', '""'))
+
+doc = '''Add a b-spline surface of degree `degreeU' x `degreeV' in the OpenCASCADE CAD representation, with `pointTags' control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `weights', `knotsU', `knotsV', `multiplicitiesU' or `multiplicitiesV' are not provided, default parameters are computed automatically. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `wireTags' is provided, trim the b-spline patch using the provided wires: the first wire defines the external contour, the others define holes. If `wire3D' is set, consider wire curves as 3D curves and project them on the b-spline surface; otherwise consider the wire curves as defined in the parametric space of the surface. Return the tag of the b-spline surface.'''
+occ.add('addBSplineSurface', doc, oint, ivectorint('pointTags'), iint('numPointsU'), iint('tag', '-1'), iint('degreeU', '3'), iint('degreeV', '3'), ivectordouble('weights', 'std::vector<double>()', "[]", "[]"), ivectordouble('knotsU', 'std::vector<double>()', "[]", "[]"), ivectordouble('knotsV', 'std::vector<double>()', "[]", "[]"), ivectorint('multiplicitiesU', 'std::vector<int>()', "[]", "[]"), ivectorint('multiplicitiesV', 'std::vector<int>()', "[]", "[]"), ivectorint('wireTags', 'std::vector<int>()', "[]", "[]"), ibool('wire3D', 'false', 'False'))
+
+doc = '''Add a Bezier surface in the OpenCASCADE CAD representation, with `pointTags' control points given as a single vector [Pu1v1, ... Pu`numPointsU'v1, Pu1v2, ...]. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `wireTags' is provided, trim the Bezier patch using the provided wires: the first wire defines the external contour, the others define holes. If `wire3D' is set, consider wire curves as 3D curves and project them on the Bezier surface; otherwise consider the wire curves as defined in the parametric space of the surface. Return the tag of the Bezier surface.'''
+occ.add('addBezierSurface', doc, oint, ivectorint('pointTags'), iint('numPointsU'), iint('tag', '-1'), ivectorint('wireTags', 'std::vector<int>()', "[]", "[]"), ibool('wire3D', 'false', 'False'))
+
+doc = '''Trim the surface `surfaceTag' with the wires `wireTags', replacing any existing trimming curves. The first wire defines the external contour, the others define holes. If `wire3D' is set, consider wire curves as 3D curves and project them on the surface; otherwise consider the wire curves as defined in the parametric space of the surface. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the trimmed surface.'''
+occ.add('addTrimmedSurface', doc, oint, iint('surfaceTag'), ivectorint('wireTags', 'std::vector<int>()', "[]", "[]"), ibool('wire3D', 'false', 'False'), iint('tag', '-1'))
+
+doc = '''Add a surface loop (a closed shell) in the OpenCASCADE CAD representation, formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface loop. Setting `sewing' allows to build a shell made of surfaces that share geometrically identical (but topologically different) curves.'''
 occ.add('addSurfaceLoop', doc, oint, ivectorint('surfaceTags'), iint('tag', '-1'), ibool('sewing', 'false', 'False'))
 
-doc = '''Add a volume (a region) defined by one or more surface loops `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the volume.'''
+doc = '''Add a volume (a region) in the OpenCASCADE CAD representation, defined by one or more surface loops `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the volume.'''
 occ.add('addVolume', doc, oint, ivectorint('shellTags'), iint('tag', '-1'))
 
-doc = '''Add a sphere of center (`xc', `yc', `zc') and radius `r'. The optional `angle1' and `angle2' arguments define the polar angle opening (from -Pi/2 to Pi/2). The optional `angle3' argument defines the azimuthal opening (from 0 to 2*Pi). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the sphere.'''
+doc = '''Add a sphere of center (`xc', `yc', `zc') and radius `r' in the OpenCASCADE CAD representation. The optional `angle1' and `angle2' arguments define the polar angle opening (from -Pi/2 to Pi/2). The optional `angle3' argument defines the azimuthal opening (from 0 to 2*Pi). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the sphere.'''
 occ.add('addSphere', doc, oint, idouble('xc'), idouble('yc'), idouble('zc'), idouble('radius'), iint('tag', '-1'), idouble('angle1', '-M_PI/2', '-pi/2', '-pi/2'), idouble('angle2', 'M_PI/2', 'pi/2', 'pi/2'), idouble('angle3', '2*M_PI', '2*pi', '2*pi'))
 
-doc = '''Add a parallelepipedic box defined by a point (`x', `y', `z') and the extents along the x-, y- and z-axes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the box.'''
+doc = '''Add a parallelepipedic box in the OpenCASCADE CAD representation, defined by a point (`x', `y', `z') and the extents along the x-, y- and z-axes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the box.'''
 occ.add('addBox', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('dx'), idouble('dy'), idouble('dz'), iint('tag', '-1'))
 
-doc = '''Add a cylinder, defined by the center (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy', `dz') of the vector defining its axis and its radius `r'. The optional `angle' argument defines the angular opening (from 0 to 2*Pi). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the cylinder.'''
+doc = '''Add a cylinder in the OpenCASCADE CAD representation, defined by the center (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy', `dz') of the vector defining its axis and its radius `r'. The optional `angle' argument defines the angular opening (from 0 to 2*Pi). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the cylinder.'''
 occ.add('addCylinder', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('dx'), idouble('dy'), idouble('dz'), idouble('r'), iint('tag', '-1'), idouble('angle', '2*M_PI', '2*pi', '2*pi'))
 
-doc = '''Add a cone, defined by the center (`x', `y', `z') of its first circular face, the 3 components of the vector (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces (these radii can be zero). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. `angle' defines the optional angular opening (from 0 to 2*Pi). Return the tag of the cone.'''
+doc = '''Add a cone in the OpenCASCADE CAD representation, defined by the center (`x', `y', `z') of its first circular face, the 3 components of the vector (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces (these radii can be zero). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. `angle' defines the optional angular opening (from 0 to 2*Pi). Return the tag of the cone.'''
 occ.add('addCone', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('dx'), idouble('dy'), idouble('dz'), idouble('r1'), idouble('r2'), iint('tag', '-1'), idouble('angle', '2*M_PI', '2*pi', '2*pi'))
 
-doc = '''Add a right angular wedge, defined by the right-angle point (`x', `y', `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The optional argument `ltx' defines the top extent along the x-axis. Return the tag of the wedge.'''
+doc = '''Add a right angular wedge in the OpenCASCADE CAD representation, defined by the right-angle point (`x', `y', `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The optional argument `ltx' defines the top extent along the x-axis. Return the tag of the wedge.'''
 occ.add('addWedge', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('dx'), idouble('dy'), idouble('dz'), iint('tag', '-1'), idouble('ltx', '0.'))
 
-doc = '''Add a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The optional argument `angle' defines the angular opening (from 0 to 2*Pi). Return the tag of the wedge.'''
+doc = '''Add a torus in the OpenCASCADE CAD representation, defined by its center (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The optional argument `angle' defines the angular opening (from 0 to 2*Pi). Return the tag of the wedge.'''
 occ.add('addTorus', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('r1'), idouble('r2'), iint('tag', '-1'), idouble('angle', '2*M_PI', '2*pi', '2*pi'))
 
-doc = '''Add a volume (if the optional argument `makeSolid' is set) or surfaces defined through the open or closed wires `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The new entities are returned in `outDimTags'. If the optional argument `makeRuled' is set, the surfaces created on the boundary are forced to be ruled surfaces. If `maxDegree' is positive, set the maximal degree of resulting surface.'''
+doc = '''Add a volume (if the optional argument `makeSolid' is set) or surfaces in the OpenCASCADE CAD representation, defined through the open or closed wires `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. The new entities are returned in `outDimTags'. If the optional argument `makeRuled' is set, the surfaces created on the boundary are forced to be ruled surfaces. If `maxDegree' is positive, set the maximal degree of resulting surface.'''
 occ.add('addThruSections', doc, None, ivectorint('wireTags'), ovectorpair('outDimTags'), iint('tag', '-1'), ibool('makeSolid', 'true', 'True'), ibool('makeRuled', 'false', 'False'), iint('maxDegree', '-1'))
 
-doc = '''Add a hollowed volume built from an initial volume `volumeTag' and a set of faces from this volume `excludeSurfaceTags', which are to be removed. The remaining faces of the volume become the walls of the hollowed solid, with thickness `offset'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.'''
+doc = '''Add a hollowed volume in the OpenCASCADE CAD representation, built from an initial volume `volumeTag' and a set of faces from this volume `excludeSurfaceTags', which are to be removed. The remaining faces of the volume become the walls of the hollowed solid, with thickness `offset'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.'''
 occ.add('addThickSolid', doc, None, iint('volumeTag'), ivectorint('excludeSurfaceTags'), idouble('offset'), ovectorpair('outDimTags'), iint('tag', '-1'))
 
-doc = '''Extrude the model entities `dimTags' by translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using a translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
 occ.add('extrude', doc, None, ivectorpair('dimTags'), idouble('dx'), idouble('dy'), idouble('dz'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
-doc = '''Extrude the model entities `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. When the mesh is extruded the angle should be strictly smaller than 2*Pi.'''
+doc = '''Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using a rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. When the mesh is extruded the angle should be strictly smaller than 2*Pi.'''
 occ.add('revolve', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('ax'), idouble('ay'), idouble('az'), idouble('angle'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
-doc = '''Add a pipe by extruding the entities `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'.'''
+doc = '''Add a pipe in the OpenCASCADE CAD representation, by extruding the entities `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'.'''
 occ.add('addPipe', doc, None, ivectorpair('dimTags'), iint('wireTag'), ovectorpair('outDimTags'))
 
 doc = '''Fillet the volumes `volumeTags' on the curves `curveTags' with radii `radii'. The `radii' vector can either contain a single radius, as many radii as `curveTags', or twice as many as `curveTags' (in which case different radii are provided for the begin and end points of the curves). Return the filleted entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
@@ -674,48 +740,48 @@ occ.add('fillet', doc, None, ivectorint('volumeTags'), ivectorint('curveTags'), 
 doc = '''Chamfer the volumes `volumeTags' on the curves `curveTags' with distances `distances' measured on surfaces `surfaceTags'. The `distances' vector can either contain a single distance, as many distances as `curveTags' and `surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which case the first in each pair is measured on the corresponding surface in `surfaceTags', the other on the other adjacent surface). Return the chamfered entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
 occ.add('chamfer', doc, None, ivectorint('volumeTags'), ivectorint('curveTags'), ivectorint('surfaceTags'), ivectordouble('distances'), ovectorpair('outDimTags'), ibool('removeVolume', 'true', 'True'))
 
-doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fuse', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
-doc = '''Compute the boolean intersection (the common parts) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean intersection (the common parts) of the entities `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('intersect', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
-doc = '''Compute the boolean difference between the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean difference between the entities `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('cut', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
-doc = '''Compute the boolean fragments (general fuse) of the entities `objectDimTags' and `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean fragments (general fuse) of the entities `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fragment', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
-doc = '''Translate the model entities `dimTags' along (`dx', `dy', `dz').'''
+doc = '''Translate the entities `dimTags' in the OpenCASCADE CAD representation along (`dx', `dy', `dz').'''
 occ.add('translate', doc, None, ivectorpair('dimTags'), idouble('dx'), idouble('dy'), idouble('dz'))
 
-doc = '''Rotate the model entities `dimTags' of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
+doc = '''Rotate the entities `dimTags' in the OpenCASCADE CAD representation by `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
 occ.add('rotate', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('ax'), idouble('ay'), idouble('az'), idouble('angle'))
 
-doc = '''Scale the model entities `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
+doc = '''Scale the entities `dimTags' in the OpenCASCADE CAD representation by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
 occ.add('dilate', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('a'), idouble('b'), idouble('c'))
 
-doc = '''Apply a symmetry transformation to the model entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
+doc = '''Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
 occ.add('mirror', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
 doc += ''' (This is a synonym for `mirror', which will be deprecated in a future release.)'''
 occ.add('symmetrize', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
 
-doc = '''Apply a general affine transformation matrix `a' (16 entries of a 4x4 matrix, by row; only the 12 first can be provided for convenience) to the model entities `dimTag'.'''
+doc = '''Apply a general affine transformation matrix `a' (16 entries of a 4x4 matrix, by row; only the 12 first can be provided for convenience) to the entities `dimTags' in the OpenCASCADE CAD representation.'''
 occ.add('affineTransform', doc, None, ivectorpair('dimTags'), ivectordouble('a'))
 
-doc = '''Copy the entities `dimTags'; the new entities are returned in `outDimTags'.'''
+doc = '''Copy the entities `dimTags' in the OpenCASCADE CAD representation; the new entities are returned in `outDimTags'.'''
 occ.add('copy', doc, None, ivectorpair('dimTags'), ovectorpair('outDimTags'))
 
-doc = '''Remove the entities `dimTags'. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
+doc = '''Remove the entities `dimTags' in the OpenCASCADE CAD representation. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 occ.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false', 'False'))
 
-doc = '''Remove all duplicate entities (different entities at the same geometrical location) after intersecting (using boolean fragments) all highest dimensional entities.'''
+doc = '''Remove all duplicate entities in the OpenCASCADE CAD representation (different entities at the same geometrical location) after intersecting (using boolean fragments) all highest dimensional entities.'''
 occ.add('removeAllDuplicates', doc, None)
 
-doc = '''Apply various healing procedures to the entities `dimTags' (or to all the entities in the model if `dimTags' is empty). Return the healed entities in `outDimTags'. Available healing options are listed in the Gmsh reference manual.'''
+doc = '''Apply various healing procedures to the entities `dimTags' (or to all the entities in the model if `dimTags' is empty) in the OpenCASCADE CAD representation. Return the healed entities in `outDimTags'. Available healing options are listed in the Gmsh reference manual.'''
 occ.add('healShapes', doc, None, ovectorpair('outDimTags'), ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"), idouble('tolerance', '1e-8'), ibool('fixDegenerated', 'true', 'True'), ibool('fixSmallEdges', 'true', 'True'), ibool('fixSmallFaces', 'true', 'True'), ibool('sewFaces', 'true', 'True'), ibool('makeSolids', 'true', 'True'))
 
-doc = '''Import BREP, STEP or IGES shapes from the file `fileName'. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
+doc = '''Import BREP, STEP or IGES shapes from the file `fileName' in the OpenCASCADE CAD representation. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
 occ.add('importShapes', doc, None, istring('fileName'), ovectorpair('outDimTags'), ibool('highestDimOnly', 'true', 'True'), istring('format', '""'))
 
 doc = '''Imports an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. For C and C++ only. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
@@ -745,14 +811,14 @@ occ.add('getMaxTag', doc, oint, iint('dim'))
 doc = '''Set the maximum tag `maxTag' for entities of dimension `dim' in the OpenCASCADE CAD representation.'''
 occ.add('setMaxTag', doc, None, iint('dim'), iint('maxTag'))
 
-doc = '''Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
+doc = '''Synchronize the OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized. Without synchronization the entities in the OpenCASCADE CAD representation are not available to any function outside of the OpenCASCADE CAD kernel functions.'''
 occ.add('synchronize', doc, None)
 
 ################################################################################
 
 mesh = occ.add_module('mesh', 'OpenCASCADE CAD kernel meshing constraints')
 
-doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
+doc = '''Set a mesh size constraint on the entities `dimTags' in the OpenCASCADE CAD representation. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
 ################################################################################
@@ -774,23 +840,29 @@ view.add('getTags', doc, None, ovectorint('tags'))
 doc = '''Add model-based post-processing data to the view with tag `tag'. `modelName' identifies the model the data is attached to. `dataType' specifies the type of data, currently either "NodeData", "ElementData" or "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a sequence. `tags' gives the tags of the nodes or elements in the mesh to which the data is associated. `data' is a vector of the same length as `tags': each entry is the vector of double precision numbers representing the data associated with the corresponding tag. The optional `time' argument associate a time value with the data. `numComponents' gives the number of data components (1 for scalar data, 3 for vector data, etc.) per entity; if negative, it is automatically inferred (when possible) from the input data. `partition' allows to specify data in several sub-sets.'''
 view.add('addModelData', doc, None, iint('tag'), iint('step'), istring('modelName'), istring('dataType'), ivectorsize('tags'), ivectorvectordouble('data'), idouble('time', '0.'), iint('numComponents', '-1'), iint('partition', '0'))
 
-doc = '''Add homogeneous model-based post-processing data to the view with tag `tag'. The arguments have the same meaning as in `addModelData', except that `data' is supposed to be homogeneous and is thus flattened in a single vector. This is always possible e.g. for "NodeData" and "ElementData", but only if data is associated to elements of the same type for "ElementNodeData".'''
+doc = '''Add homogeneous model-based post-processing data to the view with tag `tag'. The arguments have the same meaning as in `addModelData', except that `data' is supposed to be homogeneous and is thus flattened in a single vector. For data types that can lead to different data sizes per tag (like "ElementNodeData"), the data should be padded.'''
 view.add('addHomogeneousModelData', doc, None, iint('tag'), iint('step'), istring('modelName'), istring('dataType'), ivectorsize('tags'), ivectordouble('data'), idouble('time', '0.'), iint('numComponents', '-1'), iint('partition', '0'))
 
 doc = '''Get model-based post-processing data from the view with tag `tag' at step `step'. Return the `data' associated to the nodes or the elements with tags `tags', as well as the `dataType' and the number of components `numComponents'.'''
 view.add_special('getModelData', doc, ['rawc'], None, iint('tag'), iint('step'), ostring('dataType'), ovectorsize('tags'), ovectorvectordouble('data'), odouble('time'), oint('numComponents'))
 
-doc = '''Add list-based post-processing data to the view with tag `tag'. `dataType' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
+doc = '''Get homogeneous model-based post-processing data from the view with tag `tag' at step `step'. The arguments have the same meaning as in `getModelData', except that `data' is returned flattened in a single vector, with the appropriate padding if necessary.'''
+view.add('getHomogeneousModelData', doc, None, iint('tag'), iint('step'), ostring('dataType'), ovectorsize('tags'), ovectordouble('data'), odouble('time'), oint('numComponents'))
+
+doc = '''Add list-based post-processing data to the view with tag `tag'. List-based datasets are independent from any model and any mesh. `dataType' identifies the data by concatenating the field type ("S" for scalar, "V" for vector, "T" for tensor) and the element type ("P" for point, "L" for line, "T" for triangle, "S" for tetrahedron, "I" for prism, "H" for hexaHedron, "Y" for pyramid). For example `dataType' should be "ST" for a scalar field on triangles. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements, concatenated, with node coordinates followed by values per node, repeated for each step: [e1x1, ..., e1xn, e1y1, ..., e1yn, e1z1, ..., e1zn, e1v1..., e1vN, e2x1, ...].'''
 view.add('addListData', doc, None, iint('tag'), istring('dataType'), iint('numEle'), ivectordouble('data'))
 
 doc = '''Get list-based post-processing data from the view with tag `tag'. Return the types `dataTypes', the number of elements `numElements' for each data type and the `data' for each data type.'''
 view.add('getListData', doc, None, iint('tag'), ovectorstring('dataType'), ovectorint('numElements'), ovectorvectordouble('data'))
 
-doc = '''Add a string to a list-based post-processing view with tag `tag'. If `coord' contains 3 coordinates the string is positioned in the 3D model space ("3D string"); if it contains 2 coordinates it is positioned in the 2D graphics viewport ("2D string"). `data' contains one or more (for multistep views) strings. `style' contains pairs of styling parameters, concatenated.'''
+doc = '''Add a string to a list-based post-processing view with tag `tag'. If `coord' contains 3 coordinates the string is positioned in the 3D model space ("3D string"); if it contains 2 coordinates it is positioned in the 2D graphics viewport ("2D string"). `data' contains one or more (for multistep views) strings. `style' contains key-value pairs of styling parameters, concatenated. Available keys are "Font" (possible values: "Times-Roman", "Times-Bold", "Times-Italic", "Times-BoldItalic", "Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-BoldOblique", "Courier", "Courier-Bold", "Courier-Oblique", "Courier-BoldOblique", "Symbol", "ZapfDingbats", "Screen"), "FontSize" and "Align" (possible values: "Left" or "BottomLeft", "Center" or "BottomCenter", "Right" or "BottomRight", "TopLeft", "TopCenter", "TopRight", "CenterLeft", "CenterCenter", "CenterRight").'''
 view.add('addListDataString', doc, None, iint('tag'), ivectordouble('coord'), ivectorstring('data'), ivectorstring('style', 'std::vector<std::string>()', "[]", "[]"))
 
 doc = '''Get list-based post-processing data strings (2D strings if `dim' = 2, 3D strings if `dim' = 3) from the view with tag `tag'. Return the coordinates in `coord', the strings in `data' and the styles in `style'.'''
 view.add('getListDataStrings', doc, None, iint('tag'), iint('dim'), ovectordouble('coord'), ovectorstring('data'), ovectorstring('style'))
+
+doc = '''Set interpolation matrices for the element family `type' ("Line", "Triangle", "Quadrangle", "Tetrahedron", "Hexahedron", "Prism", "Pyramid") in the view `tag'. The approximation of the values over an element is written as a linear combination of `d' basis functions f_i(u, v, w) = sum_(j = 0, ..., `d' - 1) `coef'[i][j] u^`exp'[j][0] v^`exp'[j][1] w^`exp'[j][2], i = 0, ..., `d'-1, with u, v, w the coordinates in the reference element. The `coef' matrix (of size `d' x `d') and the `exp' matrix (of size `d' x 3) are stored as vectors, by row. If `dGeo' is positive, use `coefGeo' and `expGeo' to define the interpolation of the x, y, z coordinates of the element in terms of the u, v, w coordinates, in exactly the same way. If `d' < 0, remove the interpolation matrices.'''
+view.add('setInterpolationMatrices', doc, None, iint('tag'), istring('type'), iint('d'), ivectordouble('coef'), ivectordouble('exp'), iint('dGeo', '0'), ivectordouble('coefGeo', 'std::vector<double>()', "[]", "[]"), ivectordouble('expGeo', 'std::vector<double>()', "[]", "[]"))
 
 doc = '''Add a post-processing view as an `alias' of the reference view with tag `refTag'. If `copyOptions' is set, copy the options of the reference view. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''
 view.add('addAlias', doc, oint, iint('refTag'), ibool('copyOptions', 'false', 'False'), iint('tag', '-1'))
@@ -801,11 +873,14 @@ view.add('copyOptions', doc, None, iint('refTag'), iint('tag'))
 doc = '''Combine elements (if `what' == "elements") or steps (if `what' == "steps") of all views (`how' == "all"), all visible views (`how' == "visible") or all views having the same name (`how' == "name"). Remove original views if `remove' is set.'''
 view.add('combine', doc, None, istring('what'), istring('how'), ibool('remove', 'true', 'True'), ibool('copyOptions', 'true', 'True'))
 
-doc = '''Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only the value at step `step' is `step' is positive. Return only values with `numComp' if `numComp' is positive. Return the gradient of the `value' if `gradient' is set. Probes with a geometrical tolerance (in the reference unit cube) of `tolerance' if `tolerance' is not zero. Return the result from the element described by its coordinates if `xElementCoord', `yElementCoord' and `zElementCoord' are provided.'''
-view.add('probe', doc, None, iint('tag'), idouble('x'), idouble('y'), idouble('z'), ovectordouble('value'), iint('step', '-1'), iint('numComp', '-1'), ibool('gradient', 'false', 'False'), idouble('tolerance', '0.'), ivectordouble('xElemCoord', 'std::vector<double>()', "[]", "[]"), ivectordouble('yElemCoord', 'std::vector<double>()', "[]", "[]"), ivectordouble('zElemCoord', 'std::vector<double>()', "[]", "[]"))
+doc = '''Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only the value at step `step' is `step' is positive. Return only values with `numComp' if `numComp' is positive. Return the gradient of the `value' if `gradient' is set. Probes with a geometrical tolerance (in the reference unit cube) of `tolerance' if `tolerance' is not zero. Return the result from the element described by its coordinates if `xElementCoord', `yElementCoord' and `zElementCoord' are provided. If `dim' is >= 0, return only elements of the specified dimension.'''
+view.add('probe', doc, None, iint('tag'), idouble('x'), idouble('y'), idouble('z'), ovectordouble('value'), iint('step', '-1'), iint('numComp', '-1'), ibool('gradient', 'false', 'False'), idouble('tolerance', '0.'), ivectordouble('xElemCoord', 'std::vector<double>()', "[]", "[]"), ivectordouble('yElemCoord', 'std::vector<double>()', "[]", "[]"), ivectordouble('zElemCoord', 'std::vector<double>()', "[]", "[]"), iint('dim', '-1'))
 
 doc = '''Write the view to a file `fileName'. The export format is determined by the file extension. Append to the file if `append' is set.'''
 view.add('write', doc, None, iint('tag'), istring('fileName'), ibool('append', 'false', 'False'))
+
+doc = '''Set the global visibility of the view `tag' per window to `value', where `windowIndex' identifies the window in the window list.'''
+view.add('setVisibilityPerWindow', doc, None, iint('tag'), iint('value'), iint('windowIndex', '0'))
 
 ################################################################################
 
@@ -864,6 +939,12 @@ fltk.add('selectElements', doc, oint, ovectorsize('elementTags'))
 doc = '''Select views in the user interface.'''
 fltk.add('selectViews', doc, oint, ovectorint('viewTags'))
 
+doc = '''Split the current window horizontally (if `how' = "h") or vertically (if `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.'''
+fltk.add('splitCurrentWindow', doc, None, istring('how', '"v"'), idouble('ratio', '0.5'))
+
+doc = '''Set the current window by speficying its index (starting at 0) in the list of all windows. When new windows are created by splits, new windows are appended at the end of the list.'''
+fltk.add('setCurrentWindow', doc, None, iint('windowIndex', '0'))
+
 ################################################################################
 
 onelab = gmsh.add_module('onelab', 'ONELAB server functions')
@@ -913,6 +994,9 @@ logger.add('getWallTime', doc, odouble)
 
 doc = '''Return CPU time.'''
 logger.add('getCpuTime', doc, odouble)
+
+doc = '''Return last error message, if any.'''
+logger.add('getLastError', doc, None, ostring('error'))
 
 ################################################################################
 

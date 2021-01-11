@@ -6,12 +6,12 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <set>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
 {
   gmsh::initialize();
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t2");
 
@@ -99,6 +99,11 @@ int main(int argc, char **argv)
   gmsh::model::geo::synchronize();
   gmsh::model::mesh::generate(2);
   gmsh::write("t6.msh");
+
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
+
   gmsh::finalize();
   return 0;
 }

@@ -6,19 +6,18 @@
 //
 // -----------------------------------------------------------------------------
 
-// The OpenCASCADE geometry kernel allows to import STEP files and to modify
-// them. In this tutorial we will load a STEP geometry and partition it into
-// slices.
+// The OpenCASCADE CAD kernel allows to import STEP files and to modify them. In
+// this tutorial we will load a STEP geometry and partition it into slices.
 
+#include <set>
 #include <cmath>
 #include <cstdlib>
-#include <gmsh.h>
 #include <algorithm>
+#include <gmsh.h>
 
 int main(int argc, char **argv)
 {
   gmsh::initialize(argc, argv);
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t20");
 
@@ -41,14 +40,9 @@ int main(int argc, char **argv)
   // meters (instead of the default, which is millimeters).
 
   // Get the bounding box of the volume:
-  gmsh::model::occ::synchronize();
   double xmin, ymin, zmin, xmax, ymax, zmax;
-  gmsh::model::getBoundingBox(v[0].first, v[0].second, xmin, ymin, zmin, xmax,
-                              ymax, zmax);
-
-  // Note that the synchronization step can be avoided in Gmsh >= 4.6 by using
-  // `gmsh::model::occ::getBoundingBox()' instead of
-  // `gmsh::model::getBoundingBox()'.
+  gmsh::model::occ::getBoundingBox(v[0].first, v[0].second, xmin, ymin, zmin,
+                                   xmax, ymax, zmax);
 
   // We want to slice the model into N slices, and either keep the volume slices
   // or just the surfaces obtained by the cutting:
@@ -93,12 +87,8 @@ int main(int argc, char **argv)
   // Now remove all the surfaces (and their bounding entities) that are not on
   // the boundary of a volume, i.e. the parts of the cutting planes that "stick
   // out" of the volume:
-  gmsh::model::occ::synchronize();
-  gmsh::model::getEntities(tmp, 2);
+  gmsh::model::occ::getEntities(tmp, 2);
   gmsh::model::occ::remove(tmp, true);
-
-  // The previous synchronization step can be avoided in Gmsh >= 4.6 by using
-  // `gmsh::model::occ::getEntities()' instead of `gmsh::model::getEntities()'.
 
   gmsh::model::occ::synchronize();
 
@@ -135,13 +125,14 @@ int main(int argc, char **argv)
   }
 
   // Finally, let's specify a global mesh size and mesh the partitioned model:
-  gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 3);
-  gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 3);
+  gmsh::option::setNumber("Mesh.MeshSizeMin", 3);
+  gmsh::option::setNumber("Mesh.MeshSizeMax", 3);
   gmsh::model::mesh::generate(3);
   gmsh::write("t20.msh");
 
-  // Show the result:
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

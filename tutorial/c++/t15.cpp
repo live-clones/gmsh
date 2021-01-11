@@ -14,12 +14,12 @@
 // Embedding constraints allow to force a mesh to be conformal to other lower
 // dimensional entities.
 
+#include <set>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
 {
   gmsh::initialize();
-  gmsh::option::setNumber("General.Terminal", 1);
 
   gmsh::model::add("t15");
 
@@ -98,6 +98,10 @@ int main(int argc, char **argv)
   gmsh::model::mesh::generate(3);
 
   gmsh::write("t15.msh");
+
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

@@ -1,7 +1,7 @@
-/********************************************************************* 
+/*********************************************************************
  *
  *  Gmsh tutorial 5
- * 
+ *
  *  Characteristic lengths, arrays of variables, functions, loops
  *
  *********************************************************************/
@@ -15,7 +15,7 @@ lcar3 = .055;
 // If we wanted to change these mesh sizes globally (without changing
 // the above definitions), we could give a global scaling factor for
 // all characteristic lengths on the command line with the `-clscale'
-// option (or with `Mesh.CharacteristicLengthFactor' in an option
+// option (or with `Mesh.MeshSizeFactor' in an option
 // file). For example, with:
 //
 // > gmsh t5.geo -clscale 1
@@ -33,7 +33,7 @@ lcar3 = .055;
 // truncated cube:
 
 Point(1) = {0.5,0.5,0.5,lcar2}; Point(2) = {0.5,0.5,0,lcar1};
-Point(3) = {0,0.5,0.5,lcar1};   Point(4) = {0,0,0.5,lcar1}; 
+Point(3) = {0,0.5,0.5,lcar1};   Point(4) = {0,0,0.5,lcar1};
 Point(5) = {0.5,0,0.5,lcar1};   Point(6) = {0.5,0,0,lcar1};
 Point(7) = {0,0.5,0,lcar1};     Point(8) = {0,1,0,lcar1};
 Point(9) = {1,1,0,lcar1};       Point(10) = {0,0,1,lcar1};
@@ -61,7 +61,7 @@ Line Loop(38) = {-14,-13,-12,19};    Plane Surface(39) = {38};
 // Instead of using included files, we now use a user-defined function
 // in order to carve some holes in the cube:
 
-Function CheeseHole 
+Function CheeseHole
 
   // In the following commands we use the reserved variable name
   // `newp', which automatically selects a new point number. This
@@ -108,11 +108,11 @@ Function CheeseHole
   // for later reference (we will need these to define the final
   // volume):
 
-  theloops[t] = newreg ; 
+  theloops[t] = newreg ;
 
   Surface Loop(theloops[t]) = {l8+1,l5+1,l1+1,l2+1,l3+1,l7+1,l6+1,l4+1};
 
-  thehole = newreg ; 
+  thehole = newreg ;
   Volume(thehole) = theloops[t] ;
 
 Return
@@ -123,8 +123,8 @@ x = 0 ; y = 0.75 ; z = 0 ; r = 0.09 ;
 
 For t In {1:5}
 
-  x += 0.166 ; 
-  z += 0.166 ; 
+  x += 0.166 ;
+  z += 0.166 ;
 
   // We call the `CheeseHole' function:
 
@@ -133,7 +133,7 @@ For t In {1:5}
   // We define a physical volume for each hole:
 
   Physical Volume (t) = thehole ;
- 
+
   // We also print some variables on the terminal (note that, since
   // all variables are treated internally as floating point numbers,
   // the format string should only contain valid floating point format

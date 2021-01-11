@@ -70,14 +70,16 @@ drawContext::drawContext(openglWindow *window, drawTransform *transform)
 
 drawContext::~drawContext() { invalidateQuadricsAndDisplayLists(); }
 
-bool drawContext::isHighResolution()
+double drawContext::highResolutionPixelFactor()
 {
-// this must be dynamic: the high resolution can change when a window is moved
-// across displays
+  // this must be dynamic: the high resolution can change when a window is moved
+  // across displays
 #if defined(HAVE_FLTK)
-  if(_openglWindow) return _openglWindow->pixel_w() > _openglWindow->w();
+  if(_openglWindow && _openglWindow->w()) {
+    return (double)_openglWindow->pixel_w() / (double)_openglWindow->w();
+  }
 #endif
-  return false;
+  return 1.0;
 }
 
 drawContextGlobal *drawContext::global()
@@ -824,10 +826,10 @@ void drawContext::initPosition(bool saveMatrices)
 // cursor position
 void drawContext::unproject(double winx, double winy, double p[3], double d[3])
 {
-  if(isHighResolution()) {
-    winx *= 2; // true pixels
-    winy *= 2;
-  }
+  // get true pixels
+  double fact = highResolutionPixelFactor();
+  winx *= fact;
+  winy *= fact;
 
   GLint vp[4];
   glGetIntegerv(GL_VIEWPORT, vp);

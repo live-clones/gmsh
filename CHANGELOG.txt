@@ -1,16 +1,48 @@
-4.6.0 (Work-in-progress): new options to only generate initial 2D or 3D meshes
-(without node insertion), and to only mesh non-meshed entities; added support
-for mesh size fields in HXT; improve reparametrization and partitioning code;
-new OCC API functions to reduce the number of synchronizations for complex
-models; MED output now preserves node and element tags; new functions and
-options to control the first tag of entities, nodes and elements; fixed
-duplicated entities in STEP output; small bug fixes.
+4.8.0 (Work-in-progress): new API functions for creating trimmed BSpline/Bezier
+patches, perform raw triangulations and tetrehedralizations; improved
+performance of high-order meshing of OCC models; improved handling of high
+resolution displays; new structured CGNS exporter; added support for embedded
+curves in HXT; small bug fixes.
+
+* Incompatible API changes: new optional argument to occ/addBSplineSurface,
+  occ/addBezierSurface and view/probe
+
+4.7.1 (November 16, 2020): small bug fixes and improvements.
+
+4.7.0 (November 5, 2020): API errors now throw exceptions with the last error
+message (instead of an integer error code); API functions now print messages on
+the terminal by default, and throw exceptions on all errors unless in
+interactive mode; new API functions to retrieve "homogeneous" model-based data
+(for improved Python performance), to set interpolation matrices for high-order
+datasets, to assign "automatic" transfinite meshing constraints and to pass
+native (C++, C, Python or Julia) mesh size callback; added option to save
+high-order periodic nodes info; added support for scripted window splitting;
+improved VTK reader; new MatrixOfInertia command; added support for Unicode
+command line arguments on Windows; uniformized commands, options and field
+option names to match the documented terminology (CharacteristicLength ->
+MeshSize, geometry Line -> Curve, ...; old names are still accepted, but
+deprecated); improved handling of complex periodic cases; removed bundled Mmg3D
+and added support for stock Mmg 5; Gmsh now requires C++11 and CMake 3.1, and
+uses Eigen by default instead of Blas/Lapack for dense linear algebra; small bug
+fixes.
+
+* Incompatible API changes: new optional argument to geo/addCurveLoop
+
+4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
+(without node insertion), and to only mesh non-meshed entities; added ability to
+only remesh parts of discrete models; added support for mesh size fields and
+embedded points and surfaces in HXT; improved reparametrization and partitioning
+code; new OCC API functions to reduce the number of synchronizations for complex
+models; new OCC spline surface interfaces; new functions and options to control
+the first tag of entities, nodes and elements; fixed duplicated entities in STEP
+output; improved mesh subdivision and high-order pipeline; MED output now
+preserves node and element tags; small bug fixes.
 
 * Incompatible API changes: new optional arguments to mesh/clear,
-  mesh/createTopology, occ/addThruSections, mesh/getPeriodicNodes; new arguments
-  to mesh/getBasisFunctions; removed mesh/preallocateBasisFunctions,
-  mesh/precomputeBasisFunctions and mesh/getBasisFunctionsForElements; renamed
-  occ/setMeshSize as occ/mesh/setSize
+  mesh/createTopology, mesh/createGeometry, occ/addThruSections,
+  mesh/getPeriodicNodes; new arguments to mesh/getBasisFunctions; removed
+  mesh/preallocateBasisFunctions, mesh/precomputeBasisFunctions and
+  mesh/getBasisFunctionsForElements; renamed occ/setMeshSize as occ/mesh/setSize
 
 4.5.6 (March 30, 2020): better calculation of OCC bounding boxes using STL; API
 tutorials; small bug fixes.
@@ -308,7 +340,7 @@ FLTK 1.3); new tensor field visualization modes (eigenvectors, ellipsoid, etc.);
 added support for interpolation schemes in .msh file; added support for MED3
 format; rescale viewport around visible entities (shift+1:1 in GUI); unified
 post-processing field export; new experimental stereo+camera visualization mode;
-added experimental BAMG & MMG3D support for anisotropic mesh generation; new OCC
+added experimental BAMG & Mmg3D support for anisotropic mesh generation; new OCC
 cut & merge algorithm imported from Salome; new ability to connect extruded
 meshes to tetrahedral grids using pyramids; new homology solver; Abaqus (INP)
 mesh export; new Python and Java wrappers; bug fixes and small improvements all

@@ -50,11 +50,14 @@
 #include "boundaryLayersData.h"
 #include "BoundaryLayerCurver.h"
 #include "FuncSpaceData.h"
+#include "nodalBasis.h"
 
 namespace {
 
-  typedef std::map<MEdge, std::vector<MElement *>, MEdgeLessThan> MEdgeVecMEltMap;
-  typedef std::map<MFace, std::vector<MElement *>, MFaceLessThan> MFaceVecMEltMap;
+  typedef std::map<MEdge, std::vector<MElement *>, MEdgeLessThan>
+    MEdgeVecMEltMap;
+  typedef std::map<MFace, std::vector<MElement *>, MFaceLessThan>
+    MFaceVecMEltMap;
 
   // Compute edge -> element connectivity (for 2D elements)
   void calcEdge2Elements(GEntity *entity, MEdgeVecMEltMap &ed2el)
@@ -100,12 +103,12 @@ namespace {
 
   inline void insertIfCurved(MElement *el, std::list<MElement *> &bndEl)
   {
-    static const double curvedTol =
-      1.e-3; // Tolerance to consider element as curved
+    // Tolerance to consider element as curved
+    static const double curvedTol = 1.e-3;
 
-    const double normalDispCurved =
-      curvedTol * el->getInnerRadius(); // Threshold in normal displacement to
-                                        // consider element as curved
+    // Threshold in normal displacement to consider element as curved
+    const double normalDispCurved = curvedTol * el->getInnerRadius();
+
     const int dim = el->getDim();
 
     // Compute unit normal to straight edge/face
@@ -453,17 +456,17 @@ namespace {
     MVertex *maxVert[3] = {elMaxFace.getVertex(0), elMaxFace.getVertex(1),
                            elMaxFace.getVertex(2)};
     std::vector<MVertex *> topVert(3, static_cast<MVertex *>(0));
-    for(int iBaseV = 0; iBaseV < 3;
-        iBaseV++) // Two vertices of elTopFace are those of elMaxFace coinciding
-                  // with elBaseFace
+    // Two vertices of elTopFace are those of elMaxFace coinciding with
+    // elBaseFace
+    for(int iBaseV = 0; iBaseV < 3; iBaseV++)
       for(int iMaxV = 0; iMaxV < 3; iMaxV++)
         if(elBaseFace.getVertex(iBaseV) == maxVert[iMaxV]) {
           topVert[iBaseV] = maxVert[iMaxV];
           maxVert[iMaxV] = 0;
         }
+    // Set last vertex of elTopFace as remaining vertex in elMaxFace
     MVertex *thirdMaxVert = (maxVert[0] != 0) ?
-                              maxVert[0] : // Set last vertex of elTopFace as
-                                           // remaining vertex in elMaxFace
+                              maxVert[0] :
                               (maxVert[1] != 0) ? maxVert[1] : maxVert[2];
     if(topVert[0] == 0)
       topVert[0] = thirdMaxVert;
@@ -610,8 +613,7 @@ namespace {
       getColumnPrismHex(TYPE_HEX, face2el, p, elBaseFace, blob, aboveElt);
     else
       return false; // Not a BL
-    if(blob.size() == 0)
-      return false; // Could not find column (may not be a BL)
+    if(blob.size() == 0) return false; // Could not find column (may not be BL)
 
     // Create top face of column with last face vertices
     topPrimVert.resize(nbBaseFaceVert);
@@ -755,9 +757,9 @@ namespace {
     for(int iV = 0; iV < nbVert; iV++) {
       MVertex *vert = bndElt->getVertex(iV);
       double tCAD;
-      if(vert->onWhat() == geomEnt) // If HO vertex, ...
-        vert->getParameter(
-          0, tCAD); // ... get stored param. coord. (can be only line).
+      // If HO vertex, get stored param. coord. (can be only line).
+      if(vert->onWhat() == geomEnt)
+        vert->getParameter(0, tCAD);
       else { // Otherwise, get param. coord. from CAD.
         if(ge->getBeginVertex() &&
            (ge->getBeginVertex()->mesh_vertices[0] == vert))
@@ -842,8 +844,8 @@ namespace {
       distSq0 = distSq;
     }
 
-    if(!converged || (u < uMin + TOL) ||
-       (u > uMax - TOL)) { // Set to mid-point if not converged
+    // Set to mid-point if not converged
+    if(!converged || (u < uMin + TOL) || (u > uMax - TOL)) {
       u = uMin + 0.5 * du;
       vert->setParameter(0, u);
       GPoint gp = ge->point(u);
@@ -1013,11 +1015,9 @@ namespace {
       // Bisection on displacement to avoid breaking the element above if
       // required
       if((p.curveOuterBL == FastCurvingParameters::OUTER_CURVECONSERVATIVE) &&
-         (qualDeformMax <
-          MINQUAL)) { // Max deformation makes element above invalid
-        for(int iter = 0; iter < MAXITER;
-            iter++) { // Bisection to find max. deformation that makes element
-                      // above valid
+         (qualDeformMax < MINQUAL)) { // Max deform. makes elt. above invalid
+        // Bisection to find max. deformation that makes element above valid
+        for(int iter = 0; iter < MAXITER; iter++) {
           const double deformMid = 0.5 * (deformMin + deformMax);
           const double qualDeformMid =
             curveAndMeasureAboveEl(metaElt, lastElt, aboveElt, deformMid);
@@ -1080,11 +1080,11 @@ namespace {
       foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert, blob,
                              aboveElt);
     }
-    if(!foundCol || blob.empty())
-      return; // Skip bnd. el. if top vertices not found
-    DbgOutputCol dbgOutCol;
-    dbgOutCol.addBlob(blob);
-    //  dbgOutCol.write("col_KO", bndElt->getNum());
+    // Skip bnd. el. if top vertices not found
+    if(!foundCol || blob.empty()) return;
+    // DbgOutputCol dbgOutCol;
+    // dbgOutCol.addBlob(blob);
+    // dbgOutCol.write("col_KO", bndElt->getNum());
     if(aboveElt == 0)
       std::cout << "DBGTT: aboveElt = 0 for bnd. elt. " << bndElt->getNum()
                 << std::endl;
@@ -1361,9 +1361,8 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       GEntity *&bndEnt = bndEnts[iBndEnt];
       if(p.onlyVisible && !bndEnt->getVisibility())
         continue; // Skip if "only visible" required and entity is invisible
-      if(!blBndEnts
-            .empty() && // Skip if there is BL info but not on this boundary
-         (blBndEnts.find(bndEnt) == blBndEnts.end()))
+      // Skip if there is BL info but not on this boundary
+      if(!blBndEnts.empty() && (blBndEnts.find(bndEnt) == blBndEnts.end()))
         continue;
       const GEntity::GeomType bndType = bndEnt->geomType();
       if((bndType == GEntity::Line) || (bndType == GEntity::Plane))

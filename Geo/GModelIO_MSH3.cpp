@@ -8,6 +8,7 @@
 #include <ctime>
 #include "GModel.h"
 #include "OS.h"
+#include "Context.h"
 #include "GmshMessage.h"
 #include "MElement.h"
 #include "MPoint.h"
@@ -199,6 +200,7 @@ int GModel::_readMSH3(const std::string &name)
   bool binary = false, swap = false, postpro = false;
   int minVertex = 0;
   std::map<int, std::vector<MElement *> > elements[11];
+  std::size_t oldNumPartitions = getNumPartitions();
 
   while(1) {
     while(str[0] != '$') {
@@ -555,6 +557,11 @@ int GModel::_readMSH3(const std::string &name)
 
   fclose(fp);
 
+  // create new partition entities if the mesh is partitioned
+  if(CTX::instance()->mesh.partitionConvertMsh2 &&
+     getNumPartitions() > oldNumPartitions)
+    convertOldPartitioningToNewOne();
+
   return postpro ? 2 : 1;
 }
 
@@ -703,10 +710,14 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
         fprintf(fp, "\n");
       }
 
-      fprintf(fp, "%d\n", (int)g_slave->correspondingVertices.size());
-      for(std::map<MVertex *, MVertex *>::iterator it =
-            g_slave->correspondingVertices.begin();
-          it != g_slave->correspondingVertices.end(); it++) {
+      std::map<MVertex *, MVertex *> corrVert = g_slave->correspondingVertices;
+      if(CTX::instance()->mesh.hoSavePeriodic)
+        corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
+                        g_slave->correspondingHighOrderVertices.end());
+
+      fprintf(fp, "%d\n", (int)corrVert.size());
+      for(std::map<MVertex *, MVertex *>::iterator it = corrVert.begin();
+          it != corrVert.end(); it++) {
         MVertex *v1 = it->first;
         MVertex *v2 = it->second;
         if(renumber)

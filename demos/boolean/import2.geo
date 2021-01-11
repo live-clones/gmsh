@@ -1,7 +1,7 @@
 SetFactory("OpenCASCADE");
 
-Mesh.CharacteristicLengthMin = 3e-3;
-Mesh.CharacteristicLengthMax = 3e-3;
+Mesh.MeshSizeMin = 3e-3;
+Mesh.MeshSizeMax = 3e-3;
 Geometry.OCCTargetUnit = "M";
 
 DefineConstant[

@@ -12,9 +12,9 @@
 import gmsh
 import math
 import os
+import sys
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t19")
 
@@ -79,17 +79,21 @@ gmsh.option.setNumber("Geometry.NumSubEdges", 1000)
 gmsh.model.occ.synchronize()
 
 # We can activate the calculation of mesh element sizes based on curvature:
-gmsh.option.setNumber("Mesh.CharacteristicLengthFromCurvature", 1)
+gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 1)
 
 # And we set the minimum number of elements per 2*Pi radians:
 gmsh.option.setNumber("Mesh.MinimumElementsPerTwoPi", 20)
 
 # We can constraint the min and max element sizes to stay within reasonnable
 # values (see `t10.py' for more details):
-gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.001)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.3)
+gmsh.option.setNumber("Mesh.MeshSizeMin", 0.001)
+gmsh.option.setNumber("Mesh.MeshSizeMax", 0.3)
 
 gmsh.model.mesh.generate(3)
 gmsh.write("t19.msh")
 
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
+gmsh.finalize()

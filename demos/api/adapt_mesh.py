@@ -70,7 +70,6 @@ if len(argv) > 2: N = int(sys.argv[2])
 if len(argv) > 3: dumpfiles = int(sys.argv[3])
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # create a geometrical gmsh.model
 gmsh.model.add("square")

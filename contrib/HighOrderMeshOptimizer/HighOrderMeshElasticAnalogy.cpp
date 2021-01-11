@@ -53,13 +53,9 @@
 
 void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
 {
-  bool CAD, complete;
-  int meshOrder;
-
   double t1 = Cpu();
   Msg::StatusBar(true, "Applying elastic analogy to high-order mesh...");
 
-  getMeshInfoForHighOrder(m, meshOrder, complete, CAD);
   highOrderTools hot(m);
   // now we smooth mesh the internal vertices of the faces
   // we do that model face by model face
@@ -72,10 +68,10 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
       std::vector<MElement *> v;
       v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
       v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      if(CAD)
-        hot.applySmoothingTo(v, (*it));
-      else
+      if((*it)->isFullyDiscrete())
         hot.applySmoothingTo(v, 1.e32, false);
+      else
+        hot.applySmoothingTo(v, (*it));
     }
   }
   checkHighOrderTriangles("Final surface mesh", m, bad, worst);

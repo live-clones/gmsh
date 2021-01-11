@@ -303,7 +303,7 @@ typedef std::pair<int, std::pair<int, int> > TupleReorientation;
  * 3+2E   2+2E
  *   |      `\          Interior vertex numbers
  *  ...       ...         for edge 0 <= i <= 2: 3+i*E to 2+(i+1)*E
- *   |          `\        in volume           : 3+3*E to N-1
+ *   |          `\        in face             : 3+3*E to N-1
  * 2+3E           3+E
  *   |  3+3E to N-1 `\
  *   |                `\

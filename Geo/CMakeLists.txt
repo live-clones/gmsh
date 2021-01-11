@@ -29,8 +29,8 @@ set(SRC
     GModelIO_CELUM.cpp GModelIO_NEU.cpp GModelIO_ACTRAN.cpp GModelIO_SU2.cpp
     GModelIO_SAMCEF.cpp GModelIO_MATLAB.cpp GModelIO_POS.cpp GModelIO_X3D.cpp
   ExtrudeParams.cpp
-  Geo.cpp
-  GeoStringInterface.cpp GeoInterpolation.cpp
+  Geo.cpp GeoInterpolation.cpp
+  scriptStringInterface.cpp
   gmshLevelset.cpp
   findLinks.cpp
   SOrientedBoundingBox.cpp
@@ -47,8 +47,7 @@ set(SRC
   CGNSConventions.cpp
   CGNSZone.cpp
     CGNSZoneStruct.cpp CGNSZoneUnstruct.cpp
-  CGNSRead.cpp
-  CGNSWrite.cpp
+  CGNSRead.cpp CGNSWrite.cpp CGNSWriteStruct.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

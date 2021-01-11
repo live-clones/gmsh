@@ -6,6 +6,7 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <set>
 #include <iostream>
 #include <gmsh.h>
 
@@ -25,7 +26,7 @@
 int main(int argc, char **argv)
 {
   gmsh::initialize();
-  gmsh::option::setNumber("General.Terminal", 1);
+
   gmsh::model::add("x2");
 
   // We will create the terrain surface mesh from N x N input data points:
@@ -141,33 +142,43 @@ int main(int argc, char **argv)
   int v1 = gmsh::model::geo::addVolume({sl1});
   gmsh::model::geo::synchronize();
 
-  // Set this to True to build a fully hex mesh:
+  // Set this to true to build a fully hex mesh:
   bool transfinite = false;
+  bool transfiniteAuto = false;
 
   if(transfinite) {
     int NN = 30;
     std::vector<std::pair<int, int> > tmp;
     gmsh::model::getEntities(tmp, 1);
-    for(std::size_t i = 0; i < tmp.size(); i++) {
-      gmsh::model::mesh::setTransfiniteCurve(tmp[i].second, NN);
+    for(auto c: tmp) {
+      gmsh::model::mesh::setTransfiniteCurve(c.second, NN);
     }
     gmsh::model::getEntities(tmp, 2);
-    for(std::size_t i = 0; i < tmp.size(); i++) {
-      gmsh::model::mesh::setTransfiniteSurface(tmp[i].second);
-      gmsh::model::mesh::setRecombine(tmp[i].first, tmp[i].second);
-      gmsh::model::mesh::setSmoothing(tmp[i].first, tmp[i].second, 100);
+    for(auto s: tmp) {
+      gmsh::model::mesh::setTransfiniteSurface(s.second);
+      gmsh::model::mesh::setRecombine(s.first, s.second);
+      gmsh::model::mesh::setSmoothing(s.first, s.second, 100);
     }
     gmsh::model::mesh::setTransfiniteVolume(v1);
   }
+  else if(transfiniteAuto) {
+    gmsh::option::setNumber("Mesh.MeshSizeMin", 0.5);
+    gmsh::option::setNumber("Mesh.MeshSizeMax", 0.5);
+    // setTransfiniteAutomatic() uses the sizing constraints to set the number
+    // of points
+    gmsh::model::mesh::setTransfiniteAutomatic();
+  }
   else {
-    gmsh::option::setNumber("Mesh.CharacteristicLengthMin", 0.05);
-    gmsh::option::setNumber("Mesh.CharacteristicLengthMax", 0.05);
+    gmsh::option::setNumber("Mesh.MeshSizeMin", 0.05);
+    gmsh::option::setNumber("Mesh.MeshSizeMax", 0.05);
   }
 
   gmsh::model::mesh::generate(3);
   gmsh::write("x2.msh");
 
-  // gmsh::fltk::run();
+  // Launch the GUI to see the results:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

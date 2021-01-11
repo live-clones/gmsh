@@ -6,23 +6,22 @@
 #
 # ------------------------------------------------------------------------------
 
-# The OpenCASCADE geometry kernel allows to import STEP files and to modify
-# them. In this tutorial we will load a STEP geometry and partition it into
-# slices.
+# The OpenCASCADE CAD kernel allows to import STEP files and to modify them. In
+# this tutorial we will load a STEP geometry and partition it into slices.
 
 import gmsh
 import math
 import os
+import sys
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 gmsh.model.add("t20")
 
 # Load a STEP file (using `importShapes' instead of `merge' allows to directly
 # retrieve the tags of the highest dimensional imported entities):
 path = os.path.dirname(os.path.abspath(__file__))
-v = gmsh.model.occ.importShapes(os.path.join(path, '..', 't20_data.step'))
+v = gmsh.model.occ.importShapes(os.path.join(path, os.pardir, 't20_data.step'))
 
 # If we had specified
 #
@@ -32,12 +31,8 @@ v = gmsh.model.occ.importShapes(os.path.join(path, '..', 't20_data.step'))
 # meters (instead of the default, which is millimeters).
 
 # Get the bounding box of the volume:
-gmsh.model.occ.synchronize()
-xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.getBoundingBox(
+xmin, ymin, zmin, xmax, ymax, zmax = gmsh.model.occ.getBoundingBox(
     v[0][0], v[0][1])
-
-# Note that the synchronization step can be avoided in Gmsh >= 4.6 by using
-# `gmsh.model.occ.getBoundingBox()' instead of `gmsh.model.getBoundingBox()'.
 
 # We want to slice the model into N slices, and either keep the volume slices
 # or just the surfaces obtained by the cutting:
@@ -75,11 +70,7 @@ gmsh.model.occ.fragment(v, s)
 # Now remove all the surfaces (and their bounding entities) that are not on the
 # boundary of a volume, i.e. the parts of the cutting planes that "stick out" of
 # the volume:
-gmsh.model.occ.synchronize()
-gmsh.model.occ.remove(gmsh.model.getEntities(2), True)
-
-# The previous synchronization step can be avoided in Gmsh >= 4.6 by using
-# `gmsh.model.occ.getEntities()' instead of `gmsh.model.getEntities()'.
+gmsh.model.occ.remove(gmsh.model.occ.getEntities(2), True)
 
 gmsh.model.occ.synchronize()
 
@@ -106,12 +97,13 @@ if surf:
     gmsh.model.removeEntities(gmsh.model.getEntities(0))
 
 # Finally, let's specify a global mesh size and mesh the partitioned model:
-gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 3)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 3)
+gmsh.option.setNumber("Mesh.MeshSizeMin", 3)
+gmsh.option.setNumber("Mesh.MeshSizeMax", 3)
 gmsh.model.mesh.generate(3)
 gmsh.write("t20.msh")
 
-# Show the result:
-# gmsh.fltk.run()
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

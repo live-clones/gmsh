@@ -1,8 +1,8 @@
 SetFactory("OpenCASCADE");
 
 //Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 0.1;
-Mesh.CharacteristicLengthMax = 0.1;
+Mesh.MeshSizeMin = 0.1;
+Mesh.MeshSizeMax = 0.1;
 
 DefineConstant[
   x = {0, Min -5, Max 5, Step 0.1, Name "Bloc 1/0x"}

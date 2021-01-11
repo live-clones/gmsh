@@ -15,9 +15,9 @@
 # dimensional entities.
 
 import gmsh
+import sys
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # Copied from t1.py...
 lc = 1e-2
@@ -94,5 +94,9 @@ gmsh.model.mesh.embed(2, [s], 3, 1)
 gmsh.model.mesh.generate(3)
 
 gmsh.write("t15.msh")
+
+# Launch the GUI to see the results:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

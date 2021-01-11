@@ -21,7 +21,6 @@ if len(sys.argv) < 2:
     exit
 
 gmsh.initialize()
-gmsh.option.setNumber("General.Terminal", 1)
 
 # You can run this tutorial on any file that Gmsh can read, e.g. a mesh file in
 # the MSH format: `python t1.py file.msh'
@@ -47,6 +46,10 @@ print('Model ' + gmsh.model.getCurrent() + ' (' +
 entities = gmsh.model.getEntities()
 
 for e in entities:
+    # Dimension and tag of the entity:
+    dim = e[0]
+    tag = e[1]
+
     # Mesh data is made of `elements' (points, lines, triangles, ...), defined
     # by an ordered list of their `nodes'. Elements and nodes are identified by
     # `tags' as well (strictly positive identification numbers), and are stored
@@ -62,15 +65,14 @@ for e in entities:
     # tetrahedra, hexahedra, etc. and all the nodes not classified on its
     # boundary or on its embedded entities.
 
-    # Dimension and tag of the entity:
-    dim = e[0]
-    tag = e[1]
-
     # Get the mesh nodes for the entity (dim, tag):
     nodeTags, nodeCoords, nodeParams = gmsh.model.mesh.getNodes(dim, tag)
 
     # Get the mesh elements for the entity (dim, tag):
     elemTypes, elemTags, elemNodeTags = gmsh.model.mesh.getElements(dim, tag)
+
+    # Elements can also be obtained by type, by using `getElementTypes()'
+    # followed by `getElementsByType()'.
 
     # Let's print a summary of the information available on the entity and its
     # mesh.
@@ -86,10 +88,12 @@ for e in entities:
     print(" - Mesh has " + str(len(nodeTags)) + " nodes and " + str(numElem) +
           " elements")
 
-    # * Entities on its boundary:
-    boundary = gmsh.model.getBoundary([e])
-    if len(boundary):
-        print(" - Boundary entities: " + str(boundary))
+    # * Upward and downward adjacencies:
+    up, down = gmsh.model.getAdjacencies(e[0], e[1])
+    if len(up):
+        print(" - Upward adjacencies: " + str(up))
+    if len(down):
+        print(" - Downward adjacencies: " + str(down))
 
     # * Does the entity belong to physical groups?
     physicalTags = gmsh.model.getPhysicalGroupsForEntity(dim, tag)

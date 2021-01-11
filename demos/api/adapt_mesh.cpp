@@ -222,7 +222,6 @@ int main(int argc, char **argv)
   if(argc > 3) dumpfiles = atoi(argv[3]);
 
   gmsh::initialize();
-  gmsh::option::setNumber("General.Terminal", 1);
 
   // create a geometrical model
   gmsh::model::add("square");
