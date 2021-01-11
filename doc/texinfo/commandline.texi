@@ -76,6 +76,8 @@ Set mesh element size factor (Mesh.MeshSizeFactor)
 Set minimum mesh element size (Mesh.MeshSizeMin)
 @item -clmax value
 Set maximum mesh element size (Mesh.MeshSizeMax)
+@item -clextend value
+Extend mesh element sizes from boundaries (Mesh.MeshSizeExtendFromBoundary)
 @item -clcurv value
 Compute mesh element size from curvature, with given minimum number of elements per 2*pi radians (Mesh.MeshSizeFromCurvature and Mesh.MinimumElementsPerTwoPi)
 @item -aniso_max value
@@ -156,14 +158,18 @@ Pattern of files to merge as they become available (General.WatchFilePattern)
 Load background (image or PDF) file (General.BackgroundImageFileName)
 @item -v int
 Set verbosity level (General.Verbosity)
-@item -nopopup
-Don't popup dialog windows in scripts (General.NoPopup)
 @item -string "string"
 Parse command string at startup
 @item -setnumber name value
 Set constant or option number name=value
 @item -setstring name value
 Set constant or option string name=value
+@item -nopopup
+Don't popup dialog windows in scripts (General.NoPopup)
+@item -noenv
+Don't modify the environment at startup
+@item -nolocale
+Don't modify the locale at startup
 @item -option file
 Parse option file at startup
 @item -convert files

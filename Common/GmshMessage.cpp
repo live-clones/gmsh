@@ -120,23 +120,6 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
   }
 }
 
-#if defined(HAVE_FLTK)
-static void FlGuiRateLimitedCheck()
-{
-  static double lastRefresh = 0.;
-  if(CTX::instance()->guiRefreshRate > 0) {
-    double start = TimeOfDay();
-    if(start - lastRefresh > 1. / CTX::instance()->guiRefreshRate) {
-      lastRefresh = start;
-      FlGui::check();
-    }
-  }
-  else {
-    FlGui::check();
-  }
-}
-#endif
-
 void Msg::Init(int argc, char **argv)
 {
   _startTime = TimeOfDay();
@@ -170,24 +153,34 @@ void Msg::Init(int argc, char **argv)
   _launchDate = ctime(&now);
   _launchDate.resize(_launchDate.size() - 1);
 
+  bool _env = true, _locale = true;
   _commandLineArgs.resize(argc);
-  for(int i = 0; i < argc; i++)
+  for(int i = 0; i < argc; i++) {
     _commandLineArgs[i] = argv[i];
+    if(_commandLineArgs[i] == "-noenv")
+      _env = false;
+    else if(_commandLineArgs[i] == "-nolocale")
+      _locale = false;
+  }
 
   CTX::instance()->exeFileName = GetExecutableFileName();
   if(CTX::instance()->exeFileName.empty() && _commandLineArgs.size())
     CTX::instance()->exeFileName = _commandLineArgs[0];
 
-  // add the directory where the binary is installed to the path where Python
-  // looks for modules, and to the path for executables (this allows us to find
-  // the onelab.py module or subclients automatically)
-  addGmshPathToEnvironmentVar("PYTHONPATH");
-  addGmshPathToEnvironmentVar("PATH");
+  if(_env) {
+    // add the directory where the binary is installed to the path where Python
+    // looks for modules, and to the path for executables (this allows us to
+    // find the onelab.py module or subclients automatically)
+    addGmshPathToEnvironmentVar("PYTHONPATH");
+    addGmshPathToEnvironmentVar("PATH");
+  }
 
-  // make sure to use the "C" locale; in particular this ensures that we will
-  // use a dot for for the decimal separator when writing ASCII mesh files
-  std::setlocale(LC_ALL, "C.UTF-8");
-  std::setlocale(LC_NUMERIC, "C");
+  if(_locale) {
+    // make sure to use the "C" locale; in particular this ensures that we will
+    // use a dot for for the decimal separator when writing ASCII mesh files
+    std::setlocale(LC_ALL, "C.UTF-8");
+    std::setlocale(LC_NUMERIC, "C");
+  }
 
   InitializeOnelab("Gmsh");
 }
@@ -529,7 +522,7 @@ void Msg::Error(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_firstError.empty()) _firstError = str;
   _lastError = str;
@@ -586,7 +579,7 @@ void Msg::Warning(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Warning: %s\n", str);
   if(_callback) (*_callback)("Warning", str);
@@ -625,7 +618,7 @@ void Msg::Info(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_infoCpu || _infoMem){
     std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
@@ -640,7 +633,7 @@ void Msg::Info(const char *fmt, ...)
   if(FlGui::available()){
     std::string tmp = std::string("Info    : ") + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGuiRateLimitedCheck();
+    FlGui::check();
   }
 #endif
 
@@ -670,7 +663,7 @@ void Msg::Direct(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Direct: %s\n", str);
   if(_callback) (*_callback)("Direct", str);
@@ -681,7 +674,7 @@ void Msg::Direct(const char *fmt, ...)
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
       + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGuiRateLimitedCheck();
+    FlGui::check();
   }
 #endif
 
@@ -722,7 +715,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_infoCpu || _infoMem){
     std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
@@ -740,7 +733,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
     if(log){
       std::string tmp = std::string("Info    : ") + str;
       FlGui::instance()->addMessage(tmp.c_str());
-      FlGuiRateLimitedCheck();
+      FlGui::check();
     }
   }
 #endif
@@ -763,7 +756,7 @@ void Msg::StatusGl(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(FlGui::available())
     FlGui::instance()->setStatus(str, true);
@@ -788,7 +781,7 @@ void Msg::Debug(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Debug: %s\n", str);
   if(_callback) (*_callback)("Debug", str);
@@ -839,7 +832,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
-    int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+    int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
     sprintf(str2, "Info    : [%3d%%] %s", _progressMeterCurrent, str);
 
@@ -848,7 +841,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(FlGui::available() && GetVerbosity() > 4){
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
-      FlGuiRateLimitedCheck();
+      FlGui::check();
     }
 #endif
     if(_logFile) fprintf(_logFile, "Progress: %s\n", str);

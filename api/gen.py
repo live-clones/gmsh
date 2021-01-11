@@ -452,8 +452,8 @@ mesh.add('removeDuplicateNodes', doc, None)
 doc = '''Split (into two triangles) all quadrangles in surface `tag' whose quality is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.'''
 mesh.add('splitQuadrangles', doc, None, idouble('quality', '1.'), iint('tag', '-1'))
 
-doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create edges and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'.'''
-mesh.add('classifySurfaces', doc, None, idouble('angle'), ibool('boundary', 'true', 'True'), ibool('forReparametrization', 'false', 'False'), idouble('curveAngle', 'M_PI', 'pi', 'pi'))
+doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create edges and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
+mesh.add('classifySurfaces', doc, None, idouble('angle'), ibool('boundary', 'true', 'True'), ibool('forReparametrization', 'false', 'False'), idouble('curveAngle', 'M_PI', 'pi', 'pi'), ibool('exportDiscrete', 'true', 'True'))
 
 doc = '''Create a geometry for the discrete entities `dimTags' (represented solely by a mesh, without an underlying CAD description), i.e. create a parametrization for discrete curves and surfaces, assuming that each can be parametrized with a single map. If `dimTags' is empty, create a geometry for all the discrete entities.'''
 mesh.add('createGeometry', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
@@ -538,6 +538,9 @@ geo.add('addCompoundBSpline', doc, oint, ivectorint('curveTags'), iint('numInter
 doc = '''Add a curve loop (a closed wire) in the built-in CAD representation, formed by the curves `curveTags'. `curveTags' should contain (signed) tags of model entities of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `reorient' is set, automatically reorient the curves if necessary. Return the tag of the curve loop.'''
 geo.add('addCurveLoop', doc, oint, ivectorint('curveTags'), iint('tag', '-1'), ibool('reorient', 'false', 'False'))
 
+doc = '''Add curve loops in the built-in CAD representation based on the curves `curveTags'. Return the `tags' of found curve loops, if any.'''
+geo.add('addCurveLoops', doc, None, ivectorint('curveTags'), ovectorint('tags'))
+
 doc = '''Add a plane surface in the built-in CAD representation, defined by one or more curve loops `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 geo.add('addPlaneSurface', doc, oint, ivectorint('wireTags'), iint('tag', '-1'))
 
@@ -550,14 +553,17 @@ geo.add('addSurfaceLoop', doc, oint, ivectorint('surfaceTags'), iint('tag', '-1'
 doc = '''Add a volume (a region) in the built-in CAD representation, defined by one or more shells `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the volume.'''
 geo.add('addVolume', doc, oint, ivectorint('shellTags'), iint('tag', '-1'))
 
-doc = '''Extrude the entities `dimTags' in the built-in CAD representation, using a translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are extruded along their normal.'''
+doc = '''Extrude the entities `dimTags' in the built-in CAD representation, using a translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. If `recombine' is set, recombine the mesh in the layers.'''
 geo.add('extrude', doc, None, ivectorpair('dimTags'), idouble('dx'), idouble('dy'), idouble('dz'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
-doc = '''Extrude the entities `dimTags' in the built-in CAD representation, using a rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi. Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the entities `dimTags' in the built-in CAD representation, using a rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi. Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. If `recombine' is set, recombine the mesh in the layers.'''
 geo.add('revolve', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('ax'), idouble('ay'), idouble('az'), idouble('angle'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
-doc = '''Extrude the entities `dimTags' in the built-in CAD representation, using a combined translation and rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi. Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the entities `dimTags' in the built-in CAD representation, using a combined translation and rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi. Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. If `recombine' is set, recombine the mesh in the layers.'''
 geo.add('twist', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('dx'), idouble('dy'), idouble('dz'), idouble('ax'), idouble('ay'), idouble('az'), idouble('angle'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
+
+doc = '''Extrude the entities `dimTags' in the built-in CAD representation along the normals of the mesh, creating discrete boundary layer entities. Return extruded entities in `outDimTags'. The entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the height of the different layers. If `recombine' is set, recombine the mesh in the layers. A second boundary layer can be created from the same entities if `second' is set. If `viewIndex' is >= 0, use the corresponding view to either specify the normals (if the view contains a vector field) or scale the normals (if the view is scalar).'''
+geo.add('extrudeBoundaryLayer', doc, None, ivectorpair('dimTags'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>(1, 1)', "[1]", "[1]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'), ibool('second', 'false', 'False'), iint('viewIndex', '-1'))
 
 doc = '''Translate the entities `dimTags' in the built-in CAD representation along (`dx', `dy', `dz').'''
 geo.add('translate', doc, None, ivectorpair('dimTags'), idouble('dx'), idouble('dy'), idouble('dz'))
@@ -725,10 +731,10 @@ occ.add('addThruSections', doc, None, ivectorint('wireTags'), ovectorpair('outDi
 doc = '''Add a hollowed volume in the OpenCASCADE CAD representation, built from an initial volume `volumeTag' and a set of faces from this volume `excludeSurfaceTags', which are to be removed. The remaining faces of the volume become the walls of the hollowed solid, with thickness `offset'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.'''
 occ.add('addThickSolid', doc, None, iint('volumeTag'), ivectorint('excludeSurfaceTags'), idouble('offset'), ovectorpair('outDimTags'), iint('tag', '-1'))
 
-doc = '''Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using a translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1.'''
+doc = '''Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using a translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. If `recombine' is set, recombine the mesh in the layers.'''
 occ.add('extrude', doc, None, ivectorpair('dimTags'), idouble('dx'), idouble('dy'), idouble('dz'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
-doc = '''Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using a rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. When the mesh is extruded the angle should be strictly smaller than 2*Pi.'''
+doc = '''Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using a rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. When the mesh is extruded the angle should be strictly smaller than 2*Pi. If `recombine' is set, recombine the mesh in the layers.'''
 occ.add('revolve', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('ax'), idouble('ay'), idouble('az'), idouble('angle'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
 doc = '''Add a pipe in the OpenCASCADE CAD representation, by extruding the entities `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'.'''
@@ -945,6 +951,12 @@ fltk.add('splitCurrentWindow', doc, None, istring('how', '"v"'), idouble('ratio'
 doc = '''Set the current window by speficying its index (starting at 0) in the list of all windows. When new windows are created by splits, new windows are appended at the end of the list.'''
 fltk.add('setCurrentWindow', doc, None, iint('windowIndex', '0'))
 
+doc = '''Set a status message in the current window. If `graphics' is set, display the message inside the graphic window instead of the status bar.'''
+fltk.add('setStatusMessage', doc, None, istring('message'), ibool('graphics', 'false', 'False'))
+
+doc = '''Show context window for the entity of dimension `dim' and tag `tag'.'''
+fltk.add('showContextWindow', doc, None, iint('dim'), iint('tag'))
+
 ################################################################################
 
 onelab = gmsh.add_module('onelab', 'ONELAB server functions')
@@ -954,6 +966,9 @@ onelab.add('set', doc, None, istring('data'), istring('format', '"json"'))
 
 doc = '''Get all the parameters (or a single one if `name' is specified) from the ONELAB database, encoded in `format'.'''
 onelab.add('get', doc, None, ostring('data'), istring('name', '""'), istring('format', '"json"'))
+
+doc = '''Get the names of the parameters in the ONELAB database matching the `search' regular expression. If `search' is empty, return all the names.'''
+onelab.add('getNames', doc, None, ovectorstring('names'), istring('search', '""'))
 
 doc = '''Set the value of the number parameter `name' in the ONELAB database. Create the parameter if it does not exist; update the value if the parameter exists.'''
 onelab.add('setNumber', doc, None, istring('name'), ivectordouble('value'))

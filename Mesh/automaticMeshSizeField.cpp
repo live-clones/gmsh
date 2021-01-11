@@ -357,7 +357,7 @@ HXTStatus Gmsh2HxtGlobal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVert
 
   c2v.resize(cumsum);
   all.clear();
-  
+
   cumsum = 0;
   size_t count_c2v2 = 0;
   for(size_t j = 0; j < faces.size(); ++j){
@@ -498,10 +498,10 @@ static inline void initializeCell(p4est_t* p4est, p4est_topidx_t which_tree, p4e
   ForestOptions  *forestOptions = (ForestOptions *) p4est->user_pointer;
   size_data_t       *data = (size_data_t *) q->p.user_data;
 
-  double center[3]; 
+  double center[3];
   getCellCenter(p4est, which_tree, q, center);
 
-  // Set cell size 
+  // Set cell size
   data->size = forestOptions->sizeFunction(center[0], center[1], center[2], forestOptions->hbulk);
   // data->M = SMetric3(1. / (forestOptions->hbulk * forestOptions->hbulk));
   data->M = SMetric3(1. / (0.4*0.4));
@@ -564,7 +564,7 @@ HXTStatus forestLoad(Forest **forest, const char* forestFile, const char *dataFi
   return HXT_STATUS_OK;
 }
 
-/* Creates a (sequential) forest structure from the forestOptions information. 
+/* Creates a (sequential) forest structure from the forestOptions information.
    The forest is not refined; it consists of the root octant.                   */
 HXTStatus forestCreate(int argc, char **argv, Forest **forest, const char* filename, ForestOptions *forestOptions){
 
@@ -597,7 +597,7 @@ HXTStatus forestCreate(int argc, char **argv, Forest **forest, const char* filen
   // #ifdef P4EST_WITH_METIS
   //   //  Use metis (if p4est is compiled with the flag '--with-metis') to
   //   //  * reorder the connectivity for better parititioning of the forest
-  //   //  * across processors. 
+  //   //  * across processors.
   //   p4est_connectivity_reorder(mpicomm, 0, conn, P4EST_CONNECT_FACE);
   // #endif /* P4EST_WITH_METIS */
 
@@ -644,19 +644,19 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
   ForestOptions   *forestOptions = (ForestOptions *) p4est->user_pointer;
   double h;
   getCellSize(p4est, which_tree, q, &h);
-  double center[3]; 
+  double center[3];
   getCellCenter(p4est, which_tree, q, center);
 
   if(forestOptions->dim == 3){
     double min[3], max[3];
     getCellBBox(p4est, which_tree, q, min, max);
 
-    std::vector<uint64_t> candidates;  
+    std::vector<uint64_t> candidates;
     forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
 
     if(!candidates.empty()){
       double kmax = -1.e22; // To get min curvature size
-      double kmin =  1.e22; 
+      double kmin =  1.e22;
       double hf = DBL_MAX;  // To get min feature size
       for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
         for(int i = 0; i < 3; ++i){
@@ -676,7 +676,7 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
         }
       }
 
-      // There is curvature and/or feature size : the cell size should 
+      // There is curvature and/or feature size : the cell size should
       // accurately represent the surface and the feature size, so as not
       // propagate small feature size far from the feature.
       // Cell is refined according to the chosen density of nodes.
@@ -701,7 +701,7 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
     // // Calculer kmax sur toutes les courbes
     // int n = 10;
     // double par[n];
-    // for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n; 
+    // for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n;
 
     // for(uint16_t i = 0; i < (*forestOptions->curvFunctions).size(); ++i){
     //   for(uint16_t j = 0; j < n; ++j){
@@ -712,7 +712,7 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
     //     if(inbox) kmax = fmax(kmax, fabs((*forestOptions->curvFunctions)[i](par[j])));
     //   }
     // }
-    
+
     // if(kmax > 0){
     //   if(kmax < 1e-3){
     //     return 0;
@@ -727,7 +727,7 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
     //   }
     // } else{
       return 0;
-    // }  
+    // }
   }
 }
 
@@ -736,11 +736,11 @@ static int coarsenCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quad
 
   for(int n = 0; n < P4EST_CHILDREN; ++n){
     size_data_t *data = (size_data_t *) children[n]->p.user_data;
-    
+
     double min[3], max[3];
     getCellBBox(p4est, which_tree, children[n], min, max);
 
-    std::vector<uint64_t> candidates;  
+    std::vector<uint64_t> candidates;
     forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
 
     // Cells are not merged if any one of them touches the surface mesh.
@@ -761,14 +761,14 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
 
   double h;
   getCellSize(p4est, which_tree, q, &h);
-  double center[3]; 
+  double center[3];
   getCellCenter(p4est, which_tree, q, center);
 
   if(forestOptions->dim == 3){
     double min[3], max[3];
     getCellBBox(p4est, which_tree, q, min, max);
 
-    std::vector<uint64_t> candidates;  
+    std::vector<uint64_t> candidates;
     forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
 
     if(!candidates.empty()){
@@ -801,7 +801,7 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
     // // Calculer kmax sur toutes les courbes
     // int n = 10;
     // double par[n];
-    // for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n; 
+    // for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n;
 
     // for(uint16_t i = 0; i < (*forestOptions->curvFunctions).size(); ++i){
     //   for(uint16_t j = 0; j < n; ++j){
@@ -812,7 +812,7 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
     //     if(inbox) kmax = fmax(kmax, fabs((*forestOptions->curvFunctions)[i](par[j])));
     //   }
     // }
-    
+
     // if(kmax > 0){
     //   double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
     //   data->size = fmin(data->size, hc);
@@ -829,7 +829,7 @@ static void assignSizeAfterRefinementAniso(p4est_iter_volume_info_t * info, void
 
   double h;
   getCellSize(p4est, which_tree, q, &h);
-  double center[3]; 
+  double center[3];
   getCellCenter(p4est, which_tree, q, center);
 
   // SVector3 t1(1.0,0.0,0.0);
@@ -844,7 +844,7 @@ static void assignSizeAfterRefinementAniso(p4est_iter_volume_info_t * info, void
     double min[3], max[3];
     getCellBBox(p4est, which_tree, q, min, max);
 
-    std::vector<uint64_t> candidates;  
+    std::vector<uint64_t> candidates;
     forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
 
     SVector3 t1, t2, n;
@@ -909,7 +909,7 @@ static void assignSizeAfterRefinementAniso(p4est_iter_volume_info_t * info, void
     // // Calculer kmax sur toutes les courbes
     // int n = 10;
     // double par[n];
-    // for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n; 
+    // for(uint16_t i = 0; i < n; ++i) par[i] = i*2.*M_PI/n;
 
     // for(uint16_t i = 0; i < (*forestOptions->curvFunctions).size(); ++i){
     //   for(uint16_t j = 0; j < n; ++j){
@@ -920,7 +920,7 @@ static void assignSizeAfterRefinementAniso(p4est_iter_volume_info_t * info, void
     //     if(inbox) kmax = fmax(kmax, fabs((*forestOptions->curvFunctions)[i](par[j])));
     //   }
     // }
-    
+
     // if(kmax > 0){
     //   double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
     //   data->size = fmin(data->size, hc);
@@ -977,7 +977,7 @@ static void computeGradientCenter(p4est_iter_face_info_t * info, void *user_data
     double                  s_avg, s_sum;
     int                     which_face_opp;
     // Index of current face on the opposite cell (0 if current is 1 and vice versa).
-    int                     iOpp; 
+    int                     iOpp;
 
     side[0] = p4est_iter_fside_array_index_int (sides, 0);
     side[1] = p4est_iter_fside_array_index_int (sides, 1);
@@ -1204,7 +1204,7 @@ static void limitSize(p4est_iter_face_info_t * info, void *user_data){
                 case 5 : data_opp1->size = fmin(data_opp1->size, data->size + (alpha) * (data_opp1->h/2. + data->h/2.)); break;
               }
             }
-          }  
+          }
         } // if gradient trop grand
       } // else
     }
@@ -1250,7 +1250,7 @@ static int searchAndAssignConstant(p4est_t * p4est, p4est_topidx_t which_tree, p
   size_data_t   *data = (size_data_t *) q->p.user_data;
   size_point_t  *p    = (size_point_t *) point;
   ForestOptions *forestOptions = (ForestOptions *) p4est->user_pointer;
-  // We have to recompute the cell dimension h for the root (non leaves) octants 
+  // We have to recompute the cell dimension h for the root (non leaves) octants
   // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
   double h, center[3];
   if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
@@ -1280,7 +1280,7 @@ static int searchAndAssignConstantAniso(p4est_t * p4est, p4est_topidx_t which_tr
   size_data_t   *data = (size_data_t *) q->p.user_data;
   size_point_t  *p    = (size_point_t *) point;
   // ForestOptions *forestOptions = (ForestOptions *) p4est->user_pointer;
-  // We have to recompute the cell dimension h for the root (non leaves) octants 
+  // We have to recompute the cell dimension h for the root (non leaves) octants
   // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
   double h, center[3];
   if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
@@ -1312,7 +1312,7 @@ static int searchAndAssignLinear(p4est_t * p4est, p4est_topidx_t which_tree, p4e
   size_data_t   *data = (size_data_t *) q->p.user_data;
   size_point_t  *p    = (size_point_t *) point;
   ForestOptions *forestOptions = (ForestOptions *) p4est->user_pointer;
-  // We have to recompute the cell dimension h for the root (non leaves) octants 
+  // We have to recompute the cell dimension h for the root (non leaves) octants
   // because it seems to be undefined. Otherwise it's contained in q->p.user_data.
   double h, center[3];
   // if(!is_leaf) getCellSize(p4est, which_tree, q, &h);
@@ -1391,7 +1391,7 @@ HXTStatus forestSearchOne(Forest *forest, double x, double y, double z, double *
   p->size = 1.0e22;
   p->isFound = false;
   p->parcourus = 0;
-  
+
   if(linear){
     p4est_search(forest->p4est, NULL, searchAndAssignLinear, points);
   } else{
@@ -1444,12 +1444,12 @@ HXTStatus hxtForestSearch(Forest *forest, std::vector<double> *x, std::vector<do
     p->z = (*z)[i];
     p->size = -1.0;
   }
-  
+
   // Search on all cells
   p4est_search(forest->p4est, NULL, searchAndAssignLinear, points);
 
   // Get the sizes
-  for(size_t i = 0; i < (*x).size(); ++i){ 
+  for(size_t i = 0; i < (*x).size(); ++i){
     p = (size_point_t *) sc_array_index(points, i);
     (*size)[i] = p->size;
   }
@@ -1598,7 +1598,7 @@ HXTStatus featureSize(Forest* forest){
 
   std::set<MEdge,MEdgeLessThan> axis;
   int elemDrawn = 0;
- 
+
   FILE* file = fopen("medialAxis_toDraw.pos", "w");
   if(file==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
   FILE* file2 = fopen("keptEdges.pos", "w");
@@ -1636,7 +1636,7 @@ HXTStatus featureSize(Forest* forest){
     double orientj, orientk;
     for(size_t j = 0; j < tetIncidents[i].size(); ++j){
       uint64_t tetj = tetIncidents[i][j];
-      SPoint3 cj = allTets[tetj]->circumcenter();  
+      SPoint3 cj = allTets[tetj]->circumcenter();
       for(size_t k = j; k < tetIncidents[i].size(); ++k){
         uint64_t tetk = tetIncidents[i][k];
         if( tetj != tetk ){
@@ -1649,7 +1649,7 @@ HXTStatus featureSize(Forest* forest){
               up.push_back(allTets[tetj]->getFace(indFace));
               // break; ?
             }
-          } 
+          }
         }
       }
     }
@@ -1744,7 +1744,7 @@ HXTStatus featureSize(Forest* forest){
                       centers[1][0],centers[1][1],centers[1][2],
                       1,1,1);
                   ++elemDrawn;
-                } 
+                }
               }
             } // if edge was inserted
           } // if edges does not have a too large angle with normals to its extremities
@@ -1814,7 +1814,7 @@ static void markIntersectingCells(p4est_iter_volume_info_t * info, void *user_da
   if(forestOptions->dim == 3){
     double min[3], max[3];
     getCellBBox(info->p4est, info->treeid, info->quad, min, max);
-    std::vector<uint64_t> candidates;  
+    std::vector<uint64_t> candidates;
     forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
     if(!candidates.empty()){
       data->hasIntersection = true;
@@ -1857,7 +1857,7 @@ static void addDistanceContribution(p4est_iter_volume_info_t * info, void *user_
       xc = (*cellCenters)[i].center[0];
       yc = (*cellCenters)[i].center[1];
       zc = (*cellCenters)[i].center[2];
-      dist = sqrt( (center[0]-xc)*(center[0]-xc) + (center[1]-yc)*(center[1]-yc) +  (center[2]-zc)*(center[2]-zc) ); 
+      dist = sqrt( (center[0]-xc)*(center[0]-xc) + (center[1]-yc)*(center[1]-yc) +  (center[2]-zc)*(center[2]-zc) );
       (*cellCenters)[i].denom += 1. / dist;
       (*cellCenters)[i].t1 += data->t1 * (1. / dist);
       (*cellCenters)[i].t2 += data->t2 * (1. / dist);
@@ -1972,14 +1972,14 @@ static void exportToHexCallback(p4est_iter_volume_info_t * info, void *user_data
   z[0] = z[1] = z[2] = z[3] = center[2]-h - epsilon;
   z[4] = z[5] = z[6] = z[7] = center[2]+h + epsilon;
 
-  fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f,%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n", 
-    x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3], 
-    x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7], 
+  fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f,%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n",
+    x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3],
+    x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7],
     s, s, s, s, s, s, s, s);
-  // fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f,%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%d, %d, %d, %d, %d, %d, %d, %d};\n", 
-  //   x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3], 
-  //   x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7], 
-  //   data->hasIntersection, data->hasIntersection, data->hasIntersection, data->hasIntersection, 
+  // fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f,%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%d, %d, %d, %d, %d, %d, %d, %d};\n",
+  //   x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3],
+  //   x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7],
+  //   data->hasIntersection, data->hasIntersection, data->hasIntersection, data->hasIntersection,
   //   data->hasIntersection, data->hasIntersection, data->hasIntersection, data->hasIntersection);
 }
 
@@ -2002,8 +2002,8 @@ static void exportToQuadCallback(p4est_iter_volume_info_t * info, void *user_dat
   y[2] = y[3] = center[1]+h + epsilon;
   z[0] = z[1] = 0.0;
   z[2] = z[3] = 0.0;
-  
-  fprintf(f, "SQ(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n", 
+
+  fprintf(f, "SQ(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f};\n",
     x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3],
     s, s, s, s);
 }
@@ -2032,7 +2032,7 @@ HXTStatus forestSave(Forest *forest, const char *forestFile, const char *dataFil
    End functions from hxt_octree
    ====================================================================================== */
 
-double automaticMeshSizeField::operator()(double X, double Y, double Z, GEntity *ge) {  
+double automaticMeshSizeField::operator()(double X, double Y, double Z, GEntity *ge) {
   double val = 1.e17;
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   HXTStatus s = forestSearchOne(forest, X, Y, Z, &val, true);
@@ -2046,7 +2046,7 @@ double automaticMeshSizeField::operator()(double X, double Y, double Z, GEntity 
   return val;
 }
 
-void automaticMeshSizeField::operator()(double X, double Y, double Z, SMetric3 &m, GEntity *ge){  
+void automaticMeshSizeField::operator()(double X, double Y, double Z, SMetric3 &m, GEntity *ge){
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   HXTStatus s = forestSearchOneAniso(forest, X, Y, Z, m, false);
   if(fabs(m.determinant()) < 1e-13)
@@ -2070,9 +2070,9 @@ HXTStatus automaticMeshSizeField::updateHXT(){
 
   if(!updateNeeded)
     return HXT_STATUS_OK;
-  
+
   if (forestOptions) HXT_CHECK(forestOptionsDelete(&forestOptions));
-  if (forest)        HXT_CHECK(forestDelete(&forest));  
+  if (forest)        HXT_CHECK(forestDelete(&forest));
 
   updateNeeded = false;
 
@@ -2080,8 +2080,8 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     // Load .p4est file if given a valid file name
     Msg::Info("Loading size field from %s", _forestFile.c_str());
     HXT_CHECK(forestOptionsCreate(&forestOptions));
-    size_t lastindex = _forestFile.find_last_of("."); 
-    std::string root = _forestFile.substr(0, lastindex); 
+    size_t lastindex = _forestFile.find_last_of(".");
+    std::string root = _forestFile.substr(0, lastindex);
     std::string forestFile = root + ".p4est";
     std::string dataFile   = root + ".data";
     HXT_CHECK( forestLoad(&forest, forestFile.c_str(), dataFile.c_str(), forestOptions) );
@@ -2090,13 +2090,13 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     int dim = GModel::current()->getDim();
 
     HXT_CHECK(forestOptionsCreate(&forestOptions));
-  
+
     Msg::Info("Gradation = %f\n", _gradation);
     Msg::Info("Node density = %d\n", _nPointsPerCircle);
     if(dim == 3){
       if(_nPointsPerGap > 0){
         Msg::Info("Layers per gap = %d\n", _nPointsPerGap); }
-      else{ 
+      else{
         Msg::Info("Layers per gap = %d : not detecting features.\n", _nPointsPerGap);}
     }
 
@@ -2116,7 +2116,7 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     GModel* gm = GModel::current();
 
     size_t numVertices = gm->getNumMeshVertices();
-    HXT_CHECK(hxtMalloc(&nodalCurvature,6*numVertices*sizeof(double))); 
+    HXT_CHECK(hxtMalloc(&nodalCurvature,6*numVertices*sizeof(double)));
     for(size_t i = 0; i < 6*numVertices; ++i){ nodalCurvature[i] = NAN; }
 
     if(dim == 3){
@@ -2142,10 +2142,10 @@ HXTStatus automaticMeshSizeField::updateHXT(){
       // Create global HXT mesh structure
       HXT_CHECK(hxtMeshCreate(&mesh));
       std::map<MVertex *, uint32_t> v2c;
-      std::vector<MVertex *> c2v;  
+      std::vector<MVertex *> c2v;
       Gmsh2Hxt(faces, mesh, v2c, c2v);
       // Gmsh2Hxt(regions, mesh, v2c, c2v);
-        
+
       // if(!regions.empty()){
       //   Msg::Info("Volume found.");
       //   HXT_CHECK( getAllFacesOfAllRegions(regions, NULL, faces) );
@@ -2161,7 +2161,7 @@ HXTStatus automaticMeshSizeField::updateHXT(){
       // // Create global HXT mesh structure
       // HXT_CHECK(hxtMeshCreate(&mesh));
       // std::map<MVertex *, uint32_t> v2c;
-      // std::vector<MVertex *> c2v; 
+      // std::vector<MVertex *> c2v;
       // // Gmsh2Hxt(faces, mesh, v2c, c2v);
       // Gmsh2Hxt(regions, mesh, v2c, c2v);
 
@@ -2171,7 +2171,7 @@ HXTStatus automaticMeshSizeField::updateHXT(){
         Msg::Exit(1);
       }
 
-      // HXT_CHECK(hxtMalloc(&nodalCurvature,6*mesh->vertices.num*sizeof(double))); 
+      // HXT_CHECK(hxtMalloc(&nodalCurvature,6*mesh->vertices.num*sizeof(double)));
       // for(uint64_t i = 0; i < 6*mesh->vertices.num; ++i){ nodalCurvature[i] = NAN; printf("%d\n",i);}
 
       // Create HXT mesh structure for each GFace
@@ -2182,13 +2182,13 @@ HXTStatus automaticMeshSizeField::updateHXT(){
         std::vector<GFace*> oneFace;
         oneFace.push_back(faces[i]);
         std::map<MVertex *, uint32_t> v2cLoc;
-        std::vector<MVertex *> c2vLoc;  
+        std::vector<MVertex *> c2vLoc;
         Gmsh2HxtLocal(oneFace, meshFace, v2cLoc, c2vLoc);
         faceMeshes.push_back(meshFace);
       }
 
       std::map<MVertex *, uint32_t> v2c2;
-      std::vector<MVertex *> c2v2;  
+      std::vector<MVertex *> c2v2;
       Gmsh2HxtGlobal(faces, NULL, v2c2, c2v2);
 
       size_t nVertices = 0;
@@ -2265,7 +2265,7 @@ HXTStatus automaticMeshSizeField::updateHXT(){
               norme2(v1, &norme);
               if(norme > 100){
                 // printf("%u vertices on face %lu \n", meshFace->vertices.num, j);
-                printf(" v1 = %f \t %f \t %f - norme = %f\n", 
+                printf(" v1 = %f \t %f \t %f - norme = %f\n",
                   nodalCurvatureFace[6*i],
                   nodalCurvatureFace[6*i+1],
                   nodalCurvatureFace[6*i+2],
@@ -2281,7 +2281,7 @@ HXTStatus automaticMeshSizeField::updateHXT(){
               norme2(v2, &norme);
               if(norme > 100){
                 // printf("%u vertices on face %lu \n", meshFace->vertices.num, j);
-                printf(" v2 = %f \t %f \t %f - norme = %f\n\n", 
+                printf(" v2 = %f \t %f \t %f - norme = %f\n\n",
                   nodalCurvatureFace[6*i+3],
                   nodalCurvatureFace[6*i+4],
                   nodalCurvatureFace[6*i+5],
@@ -2317,14 +2317,14 @@ HXTStatus automaticMeshSizeField::updateHXT(){
               nodalCurvature[6 * nodeGlobal + 2] = curv[i].first[2];
               nodalCurvature[6 * nodeGlobal + 3] = curv[i].second[0];
               nodalCurvature[6 * nodeGlobal + 4] = curv[i].second[1];
-              nodalCurvature[6 * nodeGlobal + 5] = curv[i].second[2]; 
+              nodalCurvature[6 * nodeGlobal + 5] = curv[i].second[2];
             } else{
               nodalCurvature[6 * nodeGlobal + 0] = nodalCurvatureFace[6 * i + 0];
               nodalCurvature[6 * nodeGlobal + 1] = nodalCurvatureFace[6 * i + 1];
               nodalCurvature[6 * nodeGlobal + 2] = nodalCurvatureFace[6 * i + 2];
               nodalCurvature[6 * nodeGlobal + 3] = nodalCurvatureFace[6 * i + 3];
               nodalCurvature[6 * nodeGlobal + 4] = nodalCurvatureFace[6 * i + 4];
-              nodalCurvature[6 * nodeGlobal + 5] = nodalCurvatureFace[6 * i + 5]; 
+              nodalCurvature[6 * nodeGlobal + 5] = nodalCurvatureFace[6 * i + 5];
             }
           }
 
@@ -2403,9 +2403,9 @@ HXTStatus automaticMeshSizeField::updateHXT(){
           y[2] = y[3] = y[6] = y[7] = boundsMax[1];
           z[0] = z[1] = z[2] = z[3] = boundsMin[2];
           z[4] = z[5] = z[6] = z[7] = boundsMax[2];
-          fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n", 
-            x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3], 
-            x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7], 
+          fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n",
+            x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3],
+            x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7],
             s, s, s, s, s, s, s, s);
         }
         // Adding the root rectangle (the bbox)
@@ -2415,9 +2415,9 @@ HXTStatus automaticMeshSizeField::updateHXT(){
         y[2] = y[3] = y[6] = y[7] = bbox_mesh.max[1];
         z[0] = z[1] = z[2] = z[3] = bbox_mesh.min[2];
         z[4] = z[5] = z[6] = z[7] = bbox_mesh.max[2];
-        fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n", 
-            x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3], 
-            x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7], 
+        fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n",
+            x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3],
+            x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7],
             s, s, s, s, s, s, s, s);
         fprintf(f, "};");
         fclose(f);
@@ -2468,9 +2468,9 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     std::vector<double> sizeAtVertices(mesh->vertices.num, DBL_MAX);
 
     forestOptions->dim = dim;
-    forestOptions->hmax = _hmax;  
+    forestOptions->hmax = _hmax;
     forestOptions->hmin = _hmin;
-    forestOptions->hbulk = _hbulk;  
+    forestOptions->hbulk = _hbulk;
     forestOptions->gradation = _gradation;
     forestOptions->nodePerTwoPi = _nPointsPerCircle;
     forestOptions->nodePerGap = _nPointsPerGap;
@@ -2507,7 +2507,7 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     else{
       HXT_CHECK(forestRefine(forest));
       if(_smoothing){
-        Msg::Info("Smoothing size gradient..."); 
+        Msg::Info("Smoothing size gradient...");
         HXT_CHECK( forestSizeSmoothing(forest));
       }
     }

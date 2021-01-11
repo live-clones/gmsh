@@ -445,15 +445,6 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     1, // int stat;
     1, // int refine;
     CTX::instance()->mesh.optimize, // int optimize;
-// <<<<<<< HEAD
-//     CTX::instance()->mesh.optimizeThreshold, // double qualityMin;
-//     0, // double (*qualityFun)
-//     0, // void* qualityData;
-//     meshSizeCallBack,//&hxtMeshSizeGmshCallBack, // double (*meshSizeFun)
-//     regions[0], // void* meshSizeData;
-//     recoveryCallback, // HXTStatus (*recoveryFun)
-//     0 // void* recoveryData;
-// =======
     { // quality
       0, // double (*callback)(.., userData)
       0, // void* userData;
@@ -469,7 +460,6 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
       CTX::instance()->mesh.lcMax,
       CTX::instance()->mesh.lcFactor * regions[0]->getMeshSizeFactor()
     }
-// >>>>>>> origin/master
   };
 
   HXT_CHECK(hxtTetMesh(mesh, &options));

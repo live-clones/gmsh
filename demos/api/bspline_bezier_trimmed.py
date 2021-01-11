@@ -33,7 +33,7 @@ w=gmsh.model.occ.addWire([c])
 c2=gmsh.model.occ.addCircle(0.5,0.5,0, 0.2)
 w2=gmsh.model.occ.addWire([c2])
 
-# with is3d=True, project the 3D curves on the patch; with is3d=False, use the
+# with use3d=True, project the 3D curves on the patch; with use3d=False, use the
 # x,y coordinates of the curves as the parametric coordinates of the patch
 use3d = True
 use3d = False

@@ -33,9 +33,6 @@
 #include <optimization.h>
 #endif
 
-// TODO C++11 remove macro
-#define SQU(a) ((a) * (a))
-
 GFace::GFace(GModel *model, int tag)
   : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0), compoundSurface(0)
 {
@@ -106,26 +103,22 @@ void GFace::delFreeEdge(GEdge *edge)
 
 int GFace::delEdge(GEdge *edge)
 {
-  // BUG If the iterator is equal to end() then the erase will be ill-formed
-  // TODO C++11 fix this UB
-  std::vector<GEdge *>::iterator it;
-  int pos = 0;
-  for(it = l_edges.begin(); it != l_edges.end(); ++it) {
-    if(*it == edge) break;
-    pos++;
-  }
-  l_edges.erase(it);
+  const auto found = std::find(begin(l_edges), end(l_edges), edge);
 
-  std::vector<int>::iterator itOri;
-  int posOri = 0, orientation = 0;
-  for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri) {
-    if(posOri == pos) {
-      orientation = *itOri;
-      break;
-    }
-    posOri++;
+  if(found != end(l_edges)) { l_edges.erase(found); }
+
+  const auto pos = std::distance(begin(l_edges), found);
+
+  if(l_dirs.empty()) { return 0; }
+
+  if(l_dirs.size() < static_cast<std::size_t>(pos)) {
+    l_dirs.erase(std::prev(l_dirs.end()));
+    return 0;
   }
-  l_dirs.erase(itOri);
+
+  const auto orientation = l_dirs.at(pos);
+
+  l_dirs.erase(std::next(begin(l_dirs), pos));
 
   return orientation;
 }
@@ -276,9 +269,9 @@ SBoundingBox3d GFace::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != PartitionSurface) {
-    // TODO C++11 std::accumulate
-    std::vector<GEdge *>::const_iterator it = l_edges.begin();
-    for(; it != l_edges.end(); it++) res += (*it)->bounds(fast);
+    for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
+      res += (*it)->bounds(fast);
+    }
   }
   else {
     for(std::size_t i = 0; i < getNumMeshElements(); i++)
@@ -445,8 +438,7 @@ std::string GFace::getAdditionalInfoString(bool multline)
       sstream << r1->tag();
       if(r2) sstream << ", ";
     }
-    if(r2)
-      sstream << r2->tag();
+    if(r2) sstream << r2->tag();
     if(multline)
       sstream << "\n";
     else
@@ -493,6 +485,7 @@ std::string GFace::getAdditionalInfoString(bool multline)
     if(getMeshMaster() && getMeshMaster() != this)
       sstream << " periodic copy of surface " << getMeshMaster()->tag();
   }
+
   std::string str = sstream.str();
   if(str.size() && (str[str.size() - 1] == '\n' || str[str.size() - 1] == ' '))
     str.resize(str.size() - 1);
@@ -922,6 +915,10 @@ double GFace::curvatureMax(const SPoint2 &param) const
 {
   if(geomType() == Plane) return 0.;
 
+  // TODO: should handle this better, e.g. by creating actual discreteFace
+  // instead of gmshFace
+  if(geomType() == BoundaryLayerSurface) return 0.;
+
   double eigVal[2], eigVec[8];
   getMetricEigenVectors(param, eigVal, eigVec);
 
@@ -1000,40 +997,40 @@ void GFace::getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
 
   // inverse of first form
   double inv_form1[2][2];
-  double inv_det_form1 =
-    1. / (form1[0][0] * form1[1][1] - form1[1][0] * form1[0][1]);
-  inv_form1[0][0] = inv_det_form1 * form1[1][1];
-  inv_form1[1][1] = inv_det_form1 * form1[0][0];
-  inv_form1[1][0] = inv_form1[0][1] = -1 * inv_det_form1 * form1[0][1];
+  double denom = (form1[0][0] * form1[1][1] - form1[1][0] * form1[0][1]);
+  if(denom) {
+    double inv_det_form1 = 1. / denom;
+    inv_form1[0][0] = inv_det_form1 * form1[1][1];
+    inv_form1[1][1] = inv_det_form1 * form1[0][0];
+    inv_form1[1][0] = inv_form1[0][1] = -1 * inv_det_form1 * form1[0][1];
 
-  // N = (inverse of form1) X (form2)
-  fullMatrix<double> N(2, 2);
-  N(0, 0) = inv_form1[0][0] * form2[0][0] + inv_form1[0][1] * form2[1][0];
-  N(0, 1) = inv_form1[0][0] * form2[0][1] + inv_form1[0][1] * form2[1][1];
-  N(1, 0) = inv_form1[1][0] * form2[0][0] + inv_form1[1][1] * form2[1][0];
-  N(1, 1) = inv_form1[1][0] * form2[0][1] + inv_form1[1][1] * form2[1][1];
+    // N = (inverse of form1) X (form2)
+    fullMatrix<double> N(2, 2);
+    N(0, 0) = inv_form1[0][0] * form2[0][0] + inv_form1[0][1] * form2[1][0];
+    N(0, 1) = inv_form1[0][0] * form2[0][1] + inv_form1[0][1] * form2[1][1];
+    N(1, 0) = inv_form1[1][0] * form2[0][0] + inv_form1[1][1] * form2[1][0];
+    N(1, 1) = inv_form1[1][0] * form2[0][1] + inv_form1[1][1] * form2[1][1];
 
-  // eigen values and vectors of N
-  fullMatrix<double> vl(2, 2), vr(2, 2);
-  fullVector<double> dr(2), di(2);
-  if(N.eig(dr, di, vl, vr, true)) {
-    eigVal[0] = fabs(dr(0));
-    eigVal[1] = fabs(dr(1));
-    eigVec[0] = vr(0, 0);
-    eigVec[2] = vr(1, 0);
-    eigVec[1] = vr(0, 1);
-    eigVec[3] = vr(1, 1);
+    // eigen values and vectors of N
+    fullMatrix<double> vl(2, 2), vr(2, 2);
+    fullVector<double> dr(2), di(2);
+    if(N.eig(dr, di, vl, vr, true)) {
+      eigVal[0] = fabs(dr(0));
+      eigVal[1] = fabs(dr(1));
+      eigVec[0] = vr(0, 0);
+      eigVec[2] = vr(1, 0);
+      eigVec[1] = vr(0, 1);
+      eigVec[3] = vr(1, 1);
+      if(fabs(di(0)) > 1.e-12 || fabs(di(1)) > 1.e-12) {
+        Msg::Warning("Imaginary eigenvalues in metric");
+      }
+      return;
+    }
   }
-  else {
-    Msg::Error("Problem in eigen vectors computation");
-    Msg::Error(" N = [ %f %f ]", N(0, 0), N(0, 1));
-    Msg::Error("     [ %f %f ]", N(1, 0), N(1, 1));
-    for(int i = 0; i < 2; i++) eigVal[i] = 0.;
-    for(int i = 0; i < 4; i++) eigVec[i] = 0.;
-  }
-  if(fabs(di(0)) > 1.e-12 || fabs(di(1)) > 1.e-12) {
-    Msg::Error("Found imaginary eigenvalues");
-  }
+
+  Msg::Warning("Could not compute metric eigenvectors");
+  for(int i = 0; i < 2; i++) eigVal[i] = 0.;
+  for(int i = 0; i < 4; i++) eigVec[i] = 0.;
 }
 
 void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
@@ -1058,7 +1055,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   vmin = rv.low();
   vmax = rv.high();
 
-  const double tol = Precision * (SQU(umax - umin) + SQU(vmax - vmin));
+  const double tol =
+    Precision * (std::pow(umax - umin, 2) + std::pow(vmax - vmin, 2));
   for(int i = 0; i < NumInitGuess; i++) {
     initu[i] = umin + initu[i] * (umax - umin);
     initv[i] = vmin + initv[i] * (vmax - vmin);
@@ -1072,7 +1070,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
       iter = 1;
 
       GPoint P = point(U, V);
-      err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
+      err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) +
+                       std::pow(Z - P.z(), 2));
       if(err2 < 1.e-8 * CTX::instance()->lc) return;
 
       while(err > tol && iter < MaxIter) {
@@ -1099,8 +1098,9 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
            (Vnew > vmax + tol || Vnew < vmin - tol))
           break;
 
-        err = SQU(Unew - U) + SQU(Vnew - V);
-        err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
+        err = std::pow(Unew - U, 2) + std::pow(Vnew - V, 2);
+        err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) +
+                         std::pow(Z - P.z(), 2));
 
         iter++;
         U = Unew;
@@ -1289,7 +1289,7 @@ bool GFace::buildRepresentationCross(bool force)
   if(cross[0].size()) {
     if(force) {
       cross[0].clear();
-      cross[0].clear();
+      cross[1].clear();
     }
     else
       return true;
@@ -1297,7 +1297,10 @@ bool GFace::buildRepresentationCross(bool force)
 
   if(geomType() == DiscreteSurface) {
     // TODO if the surface has been reparametrized
-    if(cross[0].empty()) cross[0].push_back(std::vector<SPoint3>());
+    if(cross[0].empty()) {
+      cross[0].push_back(std::vector<SPoint3>());
+      cross[0][0].push_back(bounds().center());
+    }
     return false;
   }
 
@@ -1368,10 +1371,12 @@ bool GFace::buildRepresentationCross(bool force)
     }
   }
 
-  // if we couldn't determine a cross, add a dummy one so that we won't try
-  // again unless we force the recomputation
+  // if we couldn't determine a cross, add a single point (center of the
+  // bounding box) so that we won't try again unless we force the recomputation,
+  // but we will still have a point to draw e.g. the label
   if(cross[0].empty()) {
     cross[0].push_back(std::vector<SPoint3>());
+    cross[0][0].push_back(bounds().center());
     return false;
   }
   return true;

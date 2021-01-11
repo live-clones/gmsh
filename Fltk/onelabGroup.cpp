@@ -552,7 +552,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   rebuildSolverList();
 }
 
-static bool getFlColor(const std::string &str, Fl_Color &c)
+bool getParameterColor(const std::string &str, Fl_Color &c)
 {
   if(str == "1") {
     c = FL_YELLOW;
@@ -588,7 +588,7 @@ template <class T> void onelabGroup::_addParameter(T &p)
 {
   bool highlight = false;
   Fl_Color c;
-  if(getFlColor(p.getAttribute("Highlight"), c)) highlight = true;
+  if(getParameterColor(p.getAttribute("Highlight"), c)) highlight = true;
   Fl_Tree_Item *n = _tree->add(p.getName().c_str());
   if(!n) {
     Msg::Debug("Could not add item '%s' in tree", p.getName().c_str());
@@ -599,8 +599,9 @@ template <class T> void onelabGroup::_addParameter(T &p)
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
   int hh = n->labelsize() + 4;
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
-  Fl_Widget *widget =
-    _addParameterWidget(p, ww * _widgetLabelRatio, hh, n, highlight, c);
+  Fl_Widget *widget = addParameterWidget
+    (p, 1, 1, ww * _widgetLabelRatio, hh, _widgetLabelRatio,
+     getPath(n), highlight, c, _tree->color(), _treeStrings);
   grp->end();
   if(!_enableTreeWidgetResize) grp->resizable(0);
   _treeWidgets.push_back(grp);
@@ -713,12 +714,14 @@ void onelabGroup::openCloseViewButton(int num)
 
 static bool serverAction(const std::string &action)
 {
-  if(action == "ResetDatabase") { // reset the onelab db
+  if(action == "ResetDatabase") {
+    // reset the onelab db
     onelabUtils::resetDb(false);
     FlGui::instance()->rebuildTree(false);
     return true;
   }
-  else if(action == "Reset") { // reset db + models except current one
+  else if(action == "Reset") {
+    // reset the onelab db + views + models (except the current model)
     onelabUtils::resetDb(false);
     for(int i = PView::list.size() - 1; i >= 0; i--) delete PView::list[i];
     for(int i = GModel::list.size() - 1; i >= 0; i--)
@@ -726,7 +729,8 @@ static bool serverAction(const std::string &action)
     FlGui::instance()->rebuildTree(false);
     return true;
   }
-  else if(!action.compare(0, 5, "Reset")) { // reset some variables
+  else if(!action.compare(0, 5, "Reset")) {
+    // reset some variables
     std::vector<std::string> what =
       onelab::parameter::split(action.substr(5), ',');
     for(std::size_t i = 0; i < what.size(); i++) {
@@ -740,11 +744,151 @@ static bool serverAction(const std::string &action)
   return false;
 }
 
+static bool serverActionMatch(const std::string &action,
+                              const std::string &match)
+{
+  std::vector<std::string> names;
+  onelab::server::instance()->getParameterNames(names, match);
+
+  for(auto &var : names) {
+    Msg::Debug("Performing action '%s' on variable '%s'",
+               action.c_str(), var.c_str());
+    if(action == "ResetMatch") {
+      onelab::server::instance()->clear(var);
+    }
+    else {
+      std::vector<onelab::string> ps;
+      onelab::server::instance()->get(ps, var);
+      if(ps.size()) {
+        if(action == "HideMatch")
+          ps[0].setVisible(false);
+        else if(action == "ShowMatch")
+          ps[0].setVisible(true);
+        else if(action == "ReadOnlyMatch")
+          ps[0].setReadOnly(true);
+        else if(action == "ReadWriteMatch")
+          ps[0].setReadOnly(false);
+      }
+      std::vector<onelab::number> pn;
+      onelab::server::instance()->get(pn, var);
+      if(pn.size()) {
+        if(action == "HideMatch")
+          pn[0].setVisible(false);
+        else if(action == "ShowMatch")
+          pn[0].setVisible(true);
+        else if(action == "ReadOnlyMatch")
+          pn[0].setReadOnly(true);
+        else if(action == "ReadWriteMatch")
+          pn[0].setReadOnly(false);
+        onelab::server::instance()->set(pn[0]);
+      }
+    }
+  }
+
+  // don't rebuild the tree here: we should leave it to the normal event loop to
+  // perform a "check" if necessary, after all modifications have been performed
+  return !names.empty();
+}
+
+static bool serverActionList(const std::string &path,
+                             const std::string &action,
+                             const std::string &data)
+{
+  std::vector<std::string> what = onelab::parameter::split(data, ',');
+
+  if(action == "Set" && (what.size() < 2 || what.size() % 2)) {
+    Msg::Warning("Bad data for ServerActionSet");
+    return false;
+  }
+
+  for(std::size_t i = 0; i < what.size(); i++) {
+    std::string var = onelab::parameter::trim(what[i]);
+    // replace starting '%' with path of variable with the attributes
+    if(var.size() && var[0] == '%') {
+      var.erase(0, 1);
+      var = path + "/" + var;
+    }
+    Msg::Debug("Performing action '%s' on variable '%s'",
+               action.c_str(), var.c_str());
+    if(action == "Reset") {
+      onelab::server::instance()->clear(var);
+    }
+    else {
+      std::string val;
+      if(action == "Set") {
+        val = onelab::parameter::trim(what[i + 1]);
+        i++;
+      }
+      std::vector<onelab::string> ps;
+      onelab::server::instance()->get(ps, var);
+      if(ps.size()) {
+        if(action == "Set")
+          ps[0].setValue(val);
+        else if(action == "Show")
+          ps[0].setVisible(true);
+        else if(action == "Hide")
+          ps[0].setVisible(false);
+        else if(action == "ReadOnly")
+          ps[0].setReadOnly(true);
+        else if(action == "ReadWrite")
+          ps[0].setReadOnly(false);
+        onelab::server::instance()->set(ps[0]);
+      }
+      std::vector<onelab::number> pn;
+      onelab::server::instance()->get(pn, var);
+      if(pn.size()) {
+        if(action == "Set")
+          pn[0].setValue(atof(val.c_str()));
+        else if(action == "Show")
+          pn[0].setVisible(true);
+        else if(action == "Hide")
+          pn[0].setVisible(false);
+        else if(action == "ReadOnly")
+          pn[0].setReadOnly(true);
+        else if(action == "ReadWrite")
+          pn[0].setReadOnly(false);
+        onelab::server::instance()->set(pn[0]);
+      }
+    }
+  }
+
+  return true;
+}
+
 template <class T> static void performServerAction(T &n)
 {
-  std::string opt = n.getAttribute("ServerAction");
-  if(opt.empty()) return;
-  serverAction(opt);
+  if(n.getAttributes().empty()) return;
+
+  // global unconditional actions, triggering a tree rebuild
+  std::string action = n.getAttribute("ServerAction");
+  if(action.size()) serverAction(action);
+
+  // actions not triggering a tree rebuild (it should happen after all
+  // parameters have been changed on the server-side):
+
+  // * actions using one variable or a list of variables
+  std::vector<std::string> list =
+    {"Reset", "Hide", "Show", "Set", "ReadOnly", "ReadWrite"};
+  for(auto &a : list) {
+    // global
+    std::string data = n.getAttribute("ServerAction" + a);
+    if(data.size()) serverActionList(n.getPath(), a, data);
+    // only for a given value
+    data = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
+    if(data.size()) serverActionList(n.getPath(), a, data);
+  }
+
+  // * actions using a regex
+  std::vector<std::string> regex =
+    {"ResetMatch", "HideMatch", "ShowMatch", "ReadOnlyMatch", "ReadWriteMatch"};
+  for(auto &a : regex) {
+    // global
+    std::string data = n.getAttribute("ServerAction" + a);
+    if(data.size()) serverActionMatch(a, data);
+    // only for a given value
+    data = n.getAttribute("ServerAction" + a + " " + n.getValueAsString());
+    if(data.size()) serverActionMatch(a, data);
+  }
 }
 
 template <class T> static void setGmshOption(T &n)
@@ -835,23 +979,26 @@ static void onelab_number_output_range_cb(Fl_Widget *w, void *data)
   }
 }
 
-Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
-                                            Fl_Tree_Item *n, bool highlight,
-                                            Fl_Color c)
+Fl_Widget *addParameterWidget(onelab::number &p,
+                              int xx, int yy, int ww, int hh,
+                              double labelRatio,
+                              const std::string &ppath,
+                              bool highlight, Fl_Color c, Fl_Color bgc,
+                              std::vector<char *> &stringsToFree)
 {
-  char *path = strdup(getPath(n).c_str());
-  _treeStrings.push_back(path);
+  char *path = strdup(ppath.c_str());
+  stringsToFree.push_back(path);
 
   // enumeration (display choices as value labels, not numbers)
   if(p.getChoices().size() &&
      p.getChoices().size() == p.getValueLabels().size()) {
-    Fl_Choice *but = new Fl_Choice(1, 1, ww, hh);
+    Fl_Choice *but = new Fl_Choice(xx, yy, ww, hh);
     std::vector<Fl_Menu_Item> menu;
     std::vector<double> choices = p.getChoices();
     std::map<double, std::string> labels(p.getValueLabels());
     for(std::size_t i = 0; i < choices.size(); i++) {
       char *str = strdup(labels[choices[i]].c_str());
-      _treeStrings.push_back(str);
+      stringsToFree.push_back(str);
       Fl_Menu_Item menuItem = {str, 0, 0, 0, 0};
       if(highlight) menuItem.labelcolor(c);
       menu.push_back(menuItem);
@@ -874,11 +1021,11 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
   // check box (boolean choice)
   if(p.getChoices().size() == 2 && p.getChoices()[0] == 0 &&
      p.getChoices()[1] == 1) {
-    n->labelsize(FL_NORMAL_SIZE + 2);
+    //n->labelsize(FL_NORMAL_SIZE + 2);
     Fl_Check_Button *but =
-      new Fl_Check_Button(1, 1, ww / _widgetLabelRatio, hh);
+      new Fl_Check_Button(xx, yy, ww / labelRatio, hh);
     but->box(FL_FLAT_BOX);
-    but->color(_tree->color());
+    but->color(bgc);
     but->value(p.getValue());
     but->callback(onelab_number_check_button_cb, (void *)path);
     but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -892,7 +1039,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
 
   // non-editable value
   if(p.getReadOnly()) {
-    outputRange *but = new outputRange(1, 1, ww, hh);
+    outputRange *but = new outputRange(xx, yy, ww, hh);
     but->callback(onelab_number_output_range_cb, (void *)path);
     but->numberFormat(p.getAttribute("NumberFormat"));
     but->value(p.getValue());
@@ -903,7 +1050,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
   }
 
   // general number input
-  inputRange *but = new inputRange(1, 1, ww, hh, onelab::parameter::maxNumber(),
+  inputRange *but = new inputRange(xx, yy, ww, hh, onelab::parameter::maxNumber(),
                                    p.getAttribute("ReadOnlyRange") == "1");
   but->numberFormat(p.getAttribute("NumberFormat"));
   but->value(p.getValue());
@@ -1079,22 +1226,25 @@ static void multiple_selection_menu_none_cb(Fl_Widget *w, void *data)
   but->do_callback();
 }
 
-Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
-                                            Fl_Tree_Item *n, bool highlight,
-                                            Fl_Color c)
+Fl_Widget *addParameterWidget(onelab::string &p,
+                              int xx, int yy, int ww, int hh,
+                              double labelRatio,
+                              const std::string &ppath,
+                              bool highlight, Fl_Color c, Fl_Color bgc,
+                              std::vector<char *> &stringsToFree)
 {
-  char *path = strdup(getPath(n).c_str());
-  _treeStrings.push_back(path);
+  char *path = strdup(ppath.c_str());
+  stringsToFree.push_back(path);
 
   // macro button
   if(p.getAttribute("Macro") == "Gmsh" ||
      p.getAttribute("Macro") == "GmshMergeFile" ||
      p.getAttribute("Macro") == "GmshParseString" ||
      p.getAttribute("Macro") == "Action") {
-    Fl_Button *but = new Fl_Button(1, 1, ww / _widgetLabelRatio, hh);
+    Fl_Button *but = new Fl_Button(xx, yy, ww / labelRatio, hh);
     but->box(FL_FLAT_BOX);
-    but->color(_tree->color());
-    but->selection_color(_tree->color());
+    but->color(bgc);
+    but->selection_color(bgc);
     but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     but->callback(onelab_string_button_cb, (void *)path);
     if(highlight) {
@@ -1106,7 +1256,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
 
   // non-editable value
   if(p.getReadOnly() && p.getKind() != "file") {
-    Fl_Output *but = new Fl_Output(1, 1, ww, hh);
+    Fl_Output *but = new Fl_Output(xx, yy, ww, hh);
     but->value(p.getValue().c_str());
     but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     if(highlight) {
@@ -1118,7 +1268,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
 
   // simple string (no menu)
   if(p.getChoices().empty() && p.getKind() != "file") {
-    Fl_Input *but = new Fl_Input(1, 1, ww, hh);
+    Fl_Input *but = new Fl_Input(xx, yy, ww, hh);
     but->value(p.getValue().c_str());
     but->callback(onelab_string_input_cb, (void *)path);
     but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
@@ -1131,14 +1281,14 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   }
 
   // general string input
-  Fl_Input_Choice *but = new Fl_Input_Choice(1, 1, ww, hh);
+  Fl_Input_Choice *but = new Fl_Input_Choice(xx, yy, ww, hh);
   std::string multipleSelection = p.getAttribute("MultipleSelection");
   if(multipleSelection.size())
     but->menubutton()->callback(multiple_selection_menu_cb, but);
   std::vector<Fl_Menu_Item> menu;
   for(std::size_t j = 0; j < p.getChoices().size(); j++) {
     char *str = strdup(p.getChoices()[j].c_str());
-    _treeStrings.push_back(str);
+    stringsToFree.push_back(str);
     bool divider = ((p.getKind() == "file" || multipleSelection.size()) &&
                     j == p.getChoices().size() - 1);
     int choice = multipleSelection.size() ? FL_MENU_TOGGLE : 0;
@@ -1156,15 +1306,15 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   if(p.getKind() == "file") {
     if(!p.getReadOnly()) {
       Fl_Menu_Item it = {"Choose File...", 0,
-                         onelab_input_choice_file_chooser_cb, (void *)n};
+                         onelab_input_choice_file_chooser_cb};
       menu.push_back(it);
     }
     Fl_Menu_Item it2 = {"Edit Selected File...", 0,
-                        onelab_input_choice_file_edit_cb, (void *)n};
+                        onelab_input_choice_file_edit_cb};
     menu.push_back(it2);
     if(GuessFileFormatFromFileName(p.getValue()) >= 0) {
       Fl_Menu_Item it3 = {"Merge Selected File...", 0,
-                          onelab_input_choice_file_merge_cb, (void *)n};
+                          onelab_input_choice_file_merge_cb};
       menu.push_back(it3);
     }
   }
@@ -1295,7 +1445,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   for(std::size_t i = 0; i < numbers.size(); i++) {
     if(numbers[i].getAttribute("Closed") == "1")
       closed.insert(numbers[i].getPath());
-    if(!numbers[i].getVisible() &&
+    if((!numbers[i].getVisible() ||
+        numbers[i].getName().find("ONELAB Context/") != std::string::npos) &&
        !CTX::instance()->solver.showInvisibleParameters)
       continue;
     _addParameter(numbers[i]);
@@ -1306,7 +1457,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   for(std::size_t i = 0; i < strings.size(); i++) {
     if(strings[i].getAttribute("Closed") == "1")
       closed.insert(strings[i].getPath());
-    if(!strings[i].getVisible() &&
+    if((!strings[i].getVisible() ||
+        strings[i].getName().find("ONELAB Context/") != std::string::npos) &&
        !CTX::instance()->solver.showInvisibleParameters)
       continue;
     _addParameter(strings[i]);

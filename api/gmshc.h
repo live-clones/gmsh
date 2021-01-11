@@ -1238,11 +1238,13 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality,
  * boundary if the surface is open. If `forReparametrization' is set, create
  * edges and surfaces that can be reparametrized using a single map. If
  * `curveAngle' is less than Pi, also force curves to be split according to
- * `curveAngle'. */
+ * `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
+ * entities and export the discrete entities in the built-in CAD kernel. */
 GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const int boundary,
                                             const int forReparametrization,
                                             const double curveAngle,
+                                            const int exportDiscrete,
                                             int * ierr);
 
 /* Create a geometry for the discrete entities `dimTags' (represented solely
@@ -1464,6 +1466,12 @@ GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n,
                                       const int reorient,
                                       int * ierr);
 
+/* Add curve loops in the built-in CAD representation based on the curves
+ * `curveTags'. Return the `tags' of found curve loops, if any. */
+GMSH_API void gmshModelGeoAddCurveLoops(int * curveTags, size_t curveTags_n,
+                                        int ** tags, size_t * tags_n,
+                                        int * ierr);
+
 /* Add a plane surface in the built-in CAD representation, defined by one or
  * more curve loops `wireTags'. The first curve loop defines the exterior
  * contour; additional curve loop define holes. If `tag' is positive, set the
@@ -1504,8 +1512,8 @@ GMSH_API int gmshModelGeoAddVolume(int * shellTags, size_t shellTags_n,
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
  * entries in `numElements' give the number of elements in each layer. If
  * `height' is not empty, it provides the (cumulative) height of the different
- * layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are
- * extruded along their normal. */
+ * layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+ * layers. */
 GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -1523,7 +1531,8 @@ GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
  * entries in `numElements' give the number of elements in each layer. If
  * `height' is not empty, it provides the (cumulative) height of the different
- * layers, normalized to 1. */
+ * layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+ * layers. */
 GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -1545,7 +1554,8 @@ GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
  * smaller than Pi. Return extruded entities in `outDimTags'. If `numElements'
  * is not empty, also extrude the mesh: the entries in `numElements' give the
  * number of elements in each layer. If `height' is not empty, it provides the
- * (cumulative) height of the different layers, normalized to 1. */
+ * (cumulative) height of the different layers, normalized to 1. If
+ * `recombine' is set, recombine the mesh in the layers. */
 GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const double x,
                                 const double y,
@@ -1562,6 +1572,24 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 double * heights, size_t heights_n,
                                 const int recombine,
                                 int * ierr);
+
+/* Extrude the entities `dimTags' in the built-in CAD representation along the
+ * normals of the mesh, creating discrete boundary layer entities. Return
+ * extruded entities in `outDimTags'. The entries in `numElements' give the
+ * number of elements in each layer. If `height' is not empty, it provides the
+ * height of the different layers. If `recombine' is set, recombine the mesh
+ * in the layers. A second boundary layer can be created from the same
+ * entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
+ * view to either specify the normals (if the view contains a vector field) or
+ * scale the normals (if the view is scalar). */
+GMSH_API void gmshModelGeoExtrudeBoundaryLayer(int * dimTags, size_t dimTags_n,
+                                               int ** outDimTags, size_t * outDimTags_n,
+                                               int * numElements, size_t numElements_n,
+                                               double * heights, size_t heights_n,
+                                               const int recombine,
+                                               const int second,
+                                               const int viewIndex,
+                                               int * ierr);
 
 /* Translate the entities `dimTags' in the built-in CAD representation along
  * (`dx', `dy', `dz'). */
@@ -2149,7 +2177,8 @@ GMSH_API void gmshModelOccAddThickSolid(const int volumeTag,
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
  * entries in `numElements' give the number of elements in each layer. If
  * `height' is not empty, it provides the (cumulative) height of the different
- * layers, normalized to 1. */
+ * layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+ * layers. */
 GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -2167,7 +2196,8 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
  * mesh: the entries in `numElements' give the number of elements in each
  * layer. If `height' is not empty, it provides the (cumulative) height of the
  * different layers, normalized to 1. When the mesh is extruded the angle
- * should be strictly smaller than 2*Pi. */
+ * should be strictly smaller than 2*Pi. If `recombine' is set, recombine the
+ * mesh in the layers. */
 GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -2779,6 +2809,17 @@ GMSH_API void gmshFltkSplitCurrentWindow(const char * how,
 GMSH_API void gmshFltkSetCurrentWindow(const int windowIndex,
                                        int * ierr);
 
+/* Set a status message in the current window. If `graphics' is set, display
+ * the message inside the graphic window instead of the status bar. */
+GMSH_API void gmshFltkSetStatusMessage(const char * message,
+                                       const int graphics,
+                                       int * ierr);
+
+/* Show context window for the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshFltkShowContextWindow(const int dim,
+                                        const int tag,
+                                        int * ierr);
+
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */
 GMSH_API void gmshOnelabSet(const char * data,
                             const char * format,
@@ -2790,6 +2831,12 @@ GMSH_API void gmshOnelabGet(char ** data,
                             const char * name,
                             const char * format,
                             int * ierr);
+
+/* Get the names of the parameters in the ONELAB database matching the
+ * `search' regular expression. If `search' is empty, return all the names. */
+GMSH_API void gmshOnelabGetNames(char *** names, size_t * names_n,
+                                 const char * search,
+                                 int * ierr);
 
 /* Set the value of the number parameter `name' in the ONELAB database. Create
  * the parameter if it does not exist; update the value if the parameter

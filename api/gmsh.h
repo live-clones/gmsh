@@ -1409,11 +1409,13 @@ namespace gmsh { // Top-level functions
       // boundary if the surface is open. If `forReparametrization' is set, create
       // edges and surfaces that can be reparametrized using a single map. If
       // `curveAngle' is less than Pi, also force curves to be split according to
-      // `curveAngle'.
+      // `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
+      // entities and export the discrete entities in the built-in CAD kernel.
       GMSH_API void classifySurfaces(const double angle,
                                      const bool boundary = true,
                                      const bool forReparametrization = false,
-                                     const double curveAngle = M_PI);
+                                     const double curveAngle = M_PI,
+                                     const bool exportDiscrete = true);
 
       // gmsh::model::mesh::createGeometry
       //
@@ -1668,6 +1670,13 @@ namespace gmsh { // Top-level functions
                                 const int tag = -1,
                                 const bool reorient = false);
 
+      // gmsh::model::geo::addCurveLoops
+      //
+      // Add curve loops in the built-in CAD representation based on the curves
+      // `curveTags'. Return the `tags' of found curve loops, if any.
+      GMSH_API void addCurveLoops(const std::vector<int> & curveTags,
+                                  std::vector<int> & tags);
+
       // gmsh::model::geo::addPlaneSurface
       //
       // Add a plane surface in the built-in CAD representation, defined by one or
@@ -1715,8 +1724,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the
-      // entities are extruded along their normal.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       GMSH_API void extrude(const gmsh::vectorpair & dimTags,
                             const double dx,
                             const double dy,
@@ -1735,7 +1744,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       GMSH_API void revolve(const gmsh::vectorpair & dimTags,
                             const double x,
                             const double y,
@@ -1759,7 +1769,7 @@ namespace gmsh { // Top-level functions
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
       // not empty, it provides the (cumulative) height of the different layers,
-      // normalized to 1.
+      // normalized to 1. If `recombine' is set, recombine the mesh in the layers.
       GMSH_API void twist(const gmsh::vectorpair & dimTags,
                           const double x,
                           const double y,
@@ -1775,6 +1785,25 @@ namespace gmsh { // Top-level functions
                           const std::vector<int> & numElements = std::vector<int>(),
                           const std::vector<double> & heights = std::vector<double>(),
                           const bool recombine = false);
+
+      // gmsh::model::geo::extrudeBoundaryLayer
+      //
+      // Extrude the entities `dimTags' in the built-in CAD representation along
+      // the normals of the mesh, creating discrete boundary layer entities. Return
+      // extruded entities in `outDimTags'. The entries in `numElements' give the
+      // number of elements in each layer. If `height' is not empty, it provides
+      // the height of the different layers. If `recombine' is set, recombine the
+      // mesh in the layers. A second boundary layer can be created from the same
+      // entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
+      // view to either specify the normals (if the view contains a vector field)
+      // or scale the normals (if the view is scalar).
+      GMSH_API void extrudeBoundaryLayer(const gmsh::vectorpair & dimTags,
+                                         gmsh::vectorpair & outDimTags,
+                                         const std::vector<int> & numElements = std::vector<int>(1, 1),
+                                         const std::vector<double> & heights = std::vector<double>(),
+                                         const bool recombine = false,
+                                         const bool second = false,
+                                         const int viewIndex = -1);
 
       // gmsh::model::geo::translate
       //
@@ -2429,7 +2458,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       GMSH_API void extrude(const gmsh::vectorpair & dimTags,
                             const double dx,
                             const double dy,
@@ -2448,7 +2478,8 @@ namespace gmsh { // Top-level functions
       // extrude the mesh: the entries in `numElements' give the number of elements
       // in each layer. If `height' is not empty, it provides the (cumulative)
       // height of the different layers, normalized to 1. When the mesh is extruded
-      // the angle should be strictly smaller than 2*Pi.
+      // the angle should be strictly smaller than 2*Pi. If `recombine' is set,
+      // recombine the mesh in the layers.
       GMSH_API void revolve(const gmsh::vectorpair & dimTags,
                             const double x,
                             const double y,
@@ -3154,6 +3185,19 @@ namespace gmsh { // Top-level functions
     // appended at the end of the list.
     GMSH_API void setCurrentWindow(const int windowIndex = 0);
 
+    // gmsh::fltk::setStatusMessage
+    //
+    // Set a status message in the current window. If `graphics' is set, display
+    // the message inside the graphic window instead of the status bar.
+    GMSH_API void setStatusMessage(const std::string & message,
+                                   const bool graphics = false);
+
+    // gmsh::fltk::showContextWindow
+    //
+    // Show context window for the entity of dimension `dim' and tag `tag'.
+    GMSH_API void showContextWindow(const int dim,
+                                    const int tag);
+
   } // namespace fltk
 
   namespace onelab { // ONELAB server functions
@@ -3171,6 +3215,13 @@ namespace gmsh { // Top-level functions
     GMSH_API void get(std::string & data,
                       const std::string & name = "",
                       const std::string & format = "json");
+
+    // gmsh::onelab::getNames
+    //
+    // Get the names of the parameters in the ONELAB database matching the `search'
+    // regular expression. If `search' is empty, return all the names.
+    GMSH_API void getNames(std::vector<std::string> & names,
+                           const std::string & search = "");
 
     // gmsh::onelab::setNumber
     //

@@ -34,9 +34,10 @@ class manipWindow;
 class elementaryContextWindow;
 class transformContextWindow;
 class meshContextWindow;
-class physicalGroupWindow;
-class helpWindow;
+class physicalContextWindow;
+class onelabContextWindow;
 class onelabGroup;
+class helpWindow;
 class Fl_Widget;
 
 class GVertex;
@@ -77,7 +78,9 @@ public:
   elementaryContextWindow *elementaryContext;
   transformContextWindow *transformContext;
   meshContextWindow *meshContext;
-  physicalGroupWindow *physicalGroup;
+  physicalContextWindow *physicalContext;
+  onelabContextWindow *onelabContext;
+  int lastContextWindow;
   helpWindow *help;
   onelabGroup *onelab;
   openglWindow *fullscreen;
@@ -147,8 +150,6 @@ public:
   void setLastStatus(int col = -1);
   // display status message and update progress bar
   void setProgress(const std::string &msg, double val, double min, double max);
-  // create the window for physical context dependant definitions
-  void callForSolverPlugin(int dim);
   // add line in message console
   void addMessage(const char *msg);
   // save messages to file

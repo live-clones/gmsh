@@ -1803,11 +1803,11 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag,
   }
 }
 
-GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, const double curveAngle, int * ierr)
+GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, const double curveAngle, const int exportDiscrete, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization, curveAngle);
+    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization, curveAngle, exportDiscrete);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2140,6 +2140,20 @@ GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n, const
   return result_api_;
 }
 
+GMSH_API void gmshModelGeoAddCurveLoops(int * curveTags, size_t curveTags_n, int ** tags, size_t * tags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    std::vector<int> api_tags_;
+    gmsh::model::geo::addCurveLoops(api_curveTags_, api_tags_);
+    vector2ptr(api_tags_, tags, tags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelGeoAddPlaneSurface(int * wireTags, size_t wireTags_n, const int tag, int * ierr)
 {
   int result_api_ = 0;
@@ -2249,6 +2263,26 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n, const double x,
     std::vector<int> api_numElements_(numElements, numElements + numElements_n);
     std::vector<double> api_heights_(heights, heights + heights_n);
     gmsh::model::geo::twist(api_dimTags_, x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_numElements_, api_heights_, recombine);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelGeoExtrudeBoundaryLayer(int * dimTags, size_t dimTags_n, int ** outDimTags, size_t * outDimTags_n, int * numElements, size_t numElements_n, double * heights, size_t heights_n, const int recombine, const int second, const int viewIndex, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<int> api_numElements_(numElements, numElements + numElements_n);
+    std::vector<double> api_heights_(heights, heights + heights_n);
+    gmsh::model::geo::extrudeBoundaryLayer(api_dimTags_, api_outDimTags_, api_numElements_, api_heights_, recombine, second, viewIndex);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(...){
@@ -3924,6 +3958,28 @@ GMSH_API void gmshFltkSetCurrentWindow(const int windowIndex, int * ierr)
   }
 }
 
+GMSH_API void gmshFltkSetStatusMessage(const char * message, const int graphics, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::setStatusMessage(message, graphics);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshFltkShowContextWindow(const int dim, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::showContextWindow(dim, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshOnelabSet(const char * data, const char * format, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -3942,6 +3998,19 @@ GMSH_API void gmshOnelabGet(char ** data, const char * name, const char * format
     std::string api_data_;
     gmsh::onelab::get(api_data_, name, format);
     *data = strdup(api_data_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshOnelabGetNames(char *** names, size_t * names_n, const char * search, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_names_;
+    gmsh::onelab::getNames(api_names_, search);
+    vectorstring2charptrptr(api_names_, names, names_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

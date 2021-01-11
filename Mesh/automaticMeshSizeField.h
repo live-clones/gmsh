@@ -58,7 +58,7 @@ typedef struct ForestOptions{
 typedef struct Forest{
 #ifdef HAVE_P4EST
   p4est_t *p4est;
-#endif 
+#endif
   ForestOptions *forestOptions;
 } Forest;
 
@@ -136,7 +136,7 @@ class automaticMeshSizeField : public Field {
                          double hmax = -1.0,
                          double hbulk = -1.0,
                          int smoothing = true,
-                         int gaps = true)  
+                         int gaps = true)
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   :  forest(NULL), forestOptions(NULL)
 #endif
@@ -145,14 +145,14 @@ class automaticMeshSizeField : public Field {
     _nPointsPerCircle = minElementsPerTwoPi ? minElementsPerTwoPi : 20;
     _nPointsPerGap    = nLayersPerGap ? nLayersPerGap : 0;
     _hmin             = hmin;
-    _hmax             = hmax;   
+    _hmax             = hmax;
     _hbulk            = hbulk;
     _gradation        = (int) gradation ? gradation : 1.1;
     _smoothing        = smoothing;
     _gaps             = gaps;
 
     options["p4estFileToLoad"] = new FieldOptionString(_forestFile,
-                 "p4est file containing the size field",&updateNeeded);    
+                 "p4est file containing the size field",&updateNeeded);
 
     options["nPointsPerCircle"] = new FieldOptionInt(_nPointsPerCircle,
 						     "Number of points per circle (adapt to curvature of surfaces)",&updateNeeded);
@@ -165,7 +165,7 @@ class automaticMeshSizeField : public Field {
 
     options["hMax"] = new FieldOptionDouble(_hmax,
                "Maximum size", &updateNeeded);
-    
+
     options["hBulk"] = new FieldOptionDouble(_hbulk,
 					     "Default size where it is not prescribed", &updateNeeded);
 

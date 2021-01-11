@@ -20,7 +20,8 @@ set(SRC
     clippingWindow.cpp
     manipWindow.cpp
     contextWindow.cpp
-    physicalGroupWindow.cpp
+    onelabContextWindow.cpp
+    onelabGroup.cpp
     helpWindow.cpp
     fileDialogs.cpp
     extraDialogs.cpp
@@ -29,7 +30,6 @@ set(SRC
     inputValue.cpp
     viewButton.cpp solverButton.cpp
     Navigator.cpp
-    onelabGroup.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

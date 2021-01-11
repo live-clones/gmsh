@@ -94,10 +94,13 @@ std::vector<GEdge *> ensureSimplyConnectedEdge(GEdge *ge)
     _parts.push_back(_part);
   }
 
-  if(_parts.size() <= 1) return _all;
-
-  Msg::Info("Curve %d is not simply connected: splitting it in %d parts",
-            ge->tag(), _parts.size());
+  if(_parts.empty()) {
+    Msg::Warning("No connected part found in Curve %d", ge->tag());
+  }
+  else if(_parts.size() > 1) {
+    Msg::Info("Curve %d is not simply connected: splitting it in %d parts",
+              ge->tag(), _parts.size());
+  }
 
   for(size_t i = 0; i < _parts.size(); i++) {
     if(i == 0)

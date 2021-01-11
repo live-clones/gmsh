@@ -128,6 +128,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "(Mesh.MeshSizeMin)"));
   s.push_back(mp("-clmax value", "Set maximum mesh element size "
                  "(Mesh.MeshSizeMax)"));
+  s.push_back(mp("-clextend value", "Extend mesh element sizes from boundaries "
+                 "(Mesh.MeshSizeExtendFromBoundary)"));
   s.push_back(mp("-clcurv value", "Compute mesh element size from curvature, with "
                  "given minimum number of elements per 2*pi radians "
                  "(Mesh.MeshSizeFromCurvature and "
@@ -193,13 +195,15 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-bg file", "Load background (image or PDF) file "
                  "(General.BackgroundImageFileName)"));
   s.push_back(mp("-v int", "Set verbosity level (General.Verbosity)"));
-  s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts "
-                 "(General.NoPopup)"));
   s.push_back(mp("-string \"string\"", "Parse command string at startup"));
   s.push_back(mp("-setnumber name value", "Set constant or option number "
                  "name=value"));
   s.push_back(mp("-setstring name value", "Set constant or option string "
                  "name=value"));
+  s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts "
+                 "(General.NoPopup)"));
+  s.push_back(mp("-noenv", "Don't modify the environment at startup"));
+  s.push_back(mp("-nolocale", "Don't modify the locale at startup"));
   s.push_back(mp("-option file", "Parse option file at startup"));
   s.push_back(mp("-convert files", "Convert files into latest binary formats, "
                  "then exit"));
@@ -1042,6 +1046,15 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
             if(exitOnError) Msg::Exit(1);
           }
         }
+        else {
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
+      else if(argv[i] == "-clextend") {
+        i++;
+        if(i < argv.size())
+          opt_mesh_lc_extend_from_boundary(0, GMSH_SET, atof(argv[i++].c_str()));
         else {
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);

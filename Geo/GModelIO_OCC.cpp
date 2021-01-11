@@ -19,14 +19,13 @@
 
 #if defined(HAVE_OCC)
 
-#include <Bnd_Box.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Section.hxx>
-#include <BRepAdaptor_HCurve.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeShell.hxx>
@@ -34,11 +33,10 @@
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
-#include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepFill_CurveConstraint.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
-#include <BRepFill_CurveConstraint.hxx>
 #include <BRepGProp.hxx>
 #include <BRepLib.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
@@ -56,11 +54,14 @@
 #include <BRepPrimAPI_MakeWedge.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
+#include <Bnd_Box.hxx>
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
-#include <GeomFill_BezierCurves.hxx>
-#include <GeomFill_BSplineCurves.hxx>
+#include <Geom2d_Curve.hxx>
 #include <GeomAPI_Interpolate.hxx>
+#include <GeomFill_BSplineCurves.hxx>
+#include <GeomFill_BezierCurves.hxx>
+#include <GeomProjLib.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include <Geom_BezierCurve.hxx>
@@ -70,13 +71,13 @@
 #include <Geom_Plane.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
-#include <GeomProjLib.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
 #include <Interface_Static.hxx>
 #include <Poly_PolygonOnTriangulation.hxx>
-#include <Poly_Triangulation.hxx>
 #include <Poly_Triangle.hxx>
+#include <Poly_Triangulation.hxx>
+#include <ProjLib_ProjectedCurve.hxx>
 #include <STEPControl_Reader.hxx>
 #include <STEPControl_Writer.hxx>
 #include <ShapeBuild_ReShape.hxx>
@@ -85,13 +86,13 @@
 #include <ShapeFix_Wireframe.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <Standard_Version.hxx>
+#include <TColStd_Array1OfInteger.hxx>
+#include <TColStd_Array1OfReal.hxx>
+#include <TColStd_Array2OfReal.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
 #include <TColgp_Array2OfPnt.hxx>
 #include <TColgp_HArray1OfPnt.hxx>
-#include <TColStd_Array1OfInteger.hxx>
-#include <TColStd_Array1OfReal.hxx>
-#include <TColStd_Array2OfReal.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfIntegerShape.hxx>
@@ -101,6 +102,7 @@
 #include <gce_MakeCirc.hxx>
 #include <gce_MakeElips.hxx>
 #include <gce_MakePln.hxx>
+#include <numeric>
 #include <utility>
 
 #include "OCCAttributes.h"
@@ -1192,7 +1194,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       if(knots.size() != multiplicities.size()) {
         Msg::Error(
           "Number of BSpline knots (%d) and multiplicities (%d) should be "
-          "equal", knots.size(), multiplicities.size());
+          "equal",
+          knots.size(), multiplicities.size());
         return false;
       }
       if(knots.size() < 2) {
@@ -1232,10 +1235,12 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
             multiplicities.front(), multiplicities.back());
           return false;
         }
-        // TODO C++11 std::accumulate
-        std::size_t sum = 0;
-        for(std::size_t i = 0; i < multiplicities.size() - 1; i++)
-          sum += multiplicities[i];
+        const auto sum = std::accumulate(
+          begin(multiplicities), std::prev(std::end(multiplicities)),
+          std::size_t(0),
+          [](std::size_t const partial_sum, int const multiplicity) {
+            return partial_sum + multiplicity;
+          });
         if(pointTags.size() - 1 != sum) {
           Msg::Error("Number of control points - 1 for periodic BSpline should "
                      "be equal to the sum of multiplicities for all knots "
@@ -1244,9 +1249,11 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         }
       }
       else {
-        std::size_t sum = 0;
-        for(std::size_t i = 0; i < multiplicities.size(); i++)
-          sum += multiplicities[i];
+        const auto sum = std::accumulate(
+          begin(multiplicities), std::end(multiplicities), std::size_t(0),
+          [](std::size_t const partial_sum, int const multiplicity) {
+            return partial_sum + multiplicity;
+          });
         if(pointTags.size() != sum - degree - 1) {
           Msg::Error("Number of control points for non-periodic BSpline should "
                      "be equal to the sum of multiplicities - degree - 1");
@@ -1285,6 +1292,17 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
           return false;
         }
         result = e.Edge();
+        // copy mesh size from start control point to new topo vertex; this way
+        // we'll behave more like the built-in kernel (although the built-in
+        // kernel keeps track of all the control points)
+        double lc = _attributes->getMeshSize(0, start);
+        if(lc > 0 && lc < MAX_LC) {
+          TopExp_Explorer exp0;
+          for(exp0.Init(result, TopAbs_VERTEX); exp0.More(); exp0.Next()) {
+            TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+            _attributes->insert(new OCCAttributes(0, vertex, lc));
+          }
+        }
       }
     }
   } catch(Standard_Failure &err) {
@@ -1371,11 +1389,15 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
     BRepBuilderAPI_MakeWire w;
     TopoDS_Wire wire;
     for(std::size_t i = 0; i < curveTags.size(); i++) {
-      if(!_tagEdge.IsBound(curveTags[i])) {
-        Msg::Error("Unknown OpenCASCADE curve with tag %d", curveTags[i]);
+      // all curve tags are > 0 for OCC : but to improve compatibility between
+      // GEO and OCC factories, we allow negative tags - and simply ignore the
+      // sign here
+      int t = std::abs(curveTags[i]);
+      if(!_tagEdge.IsBound(t)) {
+        Msg::Error("Unknown OpenCASCADE curve with tag %d", t);
         return false;
       }
-      TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(curveTags[i]));
+      TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(t));
       w.Add(edge);
     }
     wire = w.Wire();
@@ -1392,13 +1414,9 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
   return true;
 }
 
-bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
+bool OCC_Internals::addCurveLoop(int &tag, const std::vector<int> &curveTags)
 {
-  std::vector<int> tags(curveTags);
-  // all curve tags are > 0 for OCC : to improve compatibility between GEO and
-  // OCC factories, allow negative tags - and simply ignore the sign here
-  for(std::size_t i = 0; i < tags.size(); i++) tags[i] = std::abs(tags[i]);
-  return addWire(tag, tags, true);
+  return addWire(tag, curveTags, true);
 }
 
 static bool makeRectangle(TopoDS_Face &result, double x, double y, double z,
@@ -1705,10 +1723,10 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
       TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
       double s0, s1;
       Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, s0, s1);
-      if(curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve)){
+      if(curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve)) {
         bsplines.push_back(Handle(Geom_BSplineCurve)::DownCast(curve));
       }
-      else{
+      else {
         Msg::Error("Bounding curve for BSpline filling should be a BSpline");
       }
     }
@@ -1730,8 +1748,9 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
     else if(bsplines.size() == 2) {
       f.Init(bsplines[0], bsplines[1], t);
     }
-    else{
-      Msg::Error("BSpline filling requires between 2 and 4 boundary BSpline curves");
+    else {
+      Msg::Error(
+        "BSpline filling requires between 2 and 4 boundary BSpline curves");
       return false;
     }
     const Handle(Geom_BSplineSurface) &surf = f.Surface();
@@ -1752,7 +1771,7 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
 }
 
 bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
-                                      const std::string &type)
+                                     const std::string &type)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
@@ -1773,11 +1792,12 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
       TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
       double s0, s1;
       Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, s0, s1);
-      if(curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve)){
+      if(curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve)) {
         beziers.push_back(Handle(Geom_BezierCurve)::DownCast(curve));
       }
-      else{
-        Msg::Error("Bounding curve for Bezier filling should be a Bezier curve");
+      else {
+        Msg::Error(
+          "Bounding curve for Bezier filling should be a Bezier curve");
       }
     }
 
@@ -1798,8 +1818,9 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
     else if(beziers.size() == 2) {
       f.Init(beziers[0], beziers[1], t);
     }
-    else{
-      Msg::Error("Bezier filling requires between 2 and 4 boundary Bezier curves");
+    else {
+      Msg::Error(
+        "Bezier filling requires between 2 and 4 boundary Bezier curves");
       return false;
     }
     const Handle(Geom_BezierSurface) &surf = f.Surface();
@@ -1819,7 +1840,7 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
   return true;
 }
 
-static bool makeTrimmedSurface(Handle(Geom_Surface) &surf,
+static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
                                std::vector<TopoDS_Wire> &wires, bool wire3D,
                                TopoDS_Face &result)
 {
@@ -1870,26 +1891,28 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) &surf,
       TopExp_Explorer exp0;
       for(exp0.Init(wires[i], TopAbs_EDGE); exp0.More(); exp0.Next()) {
         TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+        Standard_Real first, last;
+        Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
         if(wire3D) {
           // use the 3D curves in the wire and project them onto the patch
-          Standard_Real first, last;
-          Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
-          Handle(Geom_Curve) cProj = GeomProjLib::Project(c, surf);
-          TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge
-            (cProj, cProj->FirstParameter(), cProj->LastParameter());
+          Handle(Geom_Curve) cProj = GeomProjLib::Project
+            (new Geom_TrimmedCurve(c, first, last, Standard_True, Standard_False),
+             surf);
+          TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge(
+            cProj, cProj->FirstParameter(), cProj->LastParameter());
           w.Add(edgeProj);
         }
         else {
           // assume the 3D curves are actually 2D curves in the parametric space
           // of the patch: to retrieve the 2D curves, project the 3D curves on
           // the z=0 plane
-          TopLoc_Location loc;
-          Standard_Real first, last;
           Handle(Geom_Plane) p = new Geom_Plane(0, 0, 1, 0);
-          Handle(Geom2d_Curve) c2d = BRep_Tool::CurveOnPlane
-            (edge, p, loc, first, last);
-          TopoDS_Edge edgeSurf = BRepBuilderAPI_MakeEdge
-            (c2d, surf, first, last);
+          TopLoc_Location loc;
+          Handle(Geom2d_Curve) c2d =
+            BRep_Tool::CurveOnSurface(edge, p, loc, first, last);
+          // BRep_Tool::CurveOnPlane(edge, p, loc, first, last); // OCCT >= 7.2
+          TopoDS_Edge edgeSurf =
+            BRepBuilderAPI_MakeEdge(c2d, surf, first, last);
           w.Add(edgeSurf);
         }
       }
@@ -1897,8 +1920,7 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) &surf,
       wiresProj.push_back(wire);
     }
     BRepBuilderAPI_MakeFace f(surf, wiresProj[0]);
-    for(std::size_t i = 1; i < wiresProj.size(); i++)
-      f.Add(wiresProj[i]);
+    for(std::size_t i = 1; i < wiresProj.size(); i++) f.Add(wiresProj[i]);
     result = f.Face();
     // recover 3D curves for pcurves
     ShapeFix_Face fix(result);
@@ -1908,17 +1930,13 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) &surf,
   return true;
 }
 
-bool OCC_Internals::addBSplineSurface(int &tag,
-                                      const std::vector<int> &pointTags,
-                                      const int numPointsU,
-                                      const int degreeU, const int degreeV,
-                                      const std::vector<double> &weights,
-                                      const std::vector<double> &knotsU,
-                                      const std::vector<double> &knotsV,
-                                      const std::vector<int> &multiplicitiesU,
-                                      const std::vector<int> &multiplicitiesV,
-                                      const std::vector<int> &wireTags,
-                                      bool wire3D)
+bool OCC_Internals::addBSplineSurface(
+  int &tag, const std::vector<int> &pointTags, const int numPointsU,
+  const int degreeU, const int degreeV, const std::vector<double> &weights,
+  const std::vector<double> &knotsU, const std::vector<double> &knotsV,
+  const std::vector<int> &multiplicitiesU,
+  const std::vector<int> &multiplicitiesV, const std::vector<int> &wireTags,
+  bool wire3D)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
@@ -1971,7 +1989,8 @@ bool OCC_Internals::addBSplineSurface(int &tag,
       int numKnotsU = sumOfAllMultU - 2 * dU;
       if(numKnotsU < 2) {
         Msg::Error("Not enough control points along U for building BSpline of "
-                   "degree %d x %d", dU, dV);
+                   "degree %d x %d",
+                   dU, dV);
         return false;
       }
       kU.resize(numKnotsU);
@@ -1999,7 +2018,8 @@ bool OCC_Internals::addBSplineSurface(int &tag,
       int numKnotsV = sumOfAllMultV - 2 * dV;
       if(numKnotsV < 2) {
         Msg::Error("Not enough control points along V for building BSpline of "
-                   "degree %d x %d", dU, dV);
+                   "degree %d x %d",
+                   dU, dV);
         return false;
       }
       kV.resize(numKnotsV);
@@ -2033,7 +2053,7 @@ bool OCC_Internals::addBSplineSurface(int &tag,
   }
 
   TopoDS_Face result;
-  try{
+  try {
     std::vector<TopoDS_Vertex> corners;
     int npU = (periodicU ? numPointsU - 1 : numPointsU);
     int npV = (periodicV ? numPointsV - 1 : numPointsV);
@@ -2046,8 +2066,8 @@ bool OCC_Internals::addBSplineSurface(int &tag,
           return false;
         }
         TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(pointTags[k]));
-        if((i == 1 && j == 1) || (i == 1 && j == npV) ||
-           (i == npU && j == 1) || (i == npU && j == npV))
+        if((i == 1 && j == 1) || (i == 1 && j == npV) || (i == npU && j == 1) ||
+           (i == npU && j == npV))
           corners.push_back(vertex);
         pp.SetValue(i, j, BRep_Tool::Pnt(vertex));
       }
@@ -2067,8 +2087,8 @@ bool OCC_Internals::addBSplineSurface(int &tag,
     for(std::size_t i = 1; i <= mU.size(); i++) mmU.SetValue(i, mU[i - 1]);
     TColStd_Array1OfInteger mmV(1, mV.size());
     for(std::size_t i = 1; i <= mV.size(); i++) mmV.SetValue(i, mV[i - 1]);
-    Handle(Geom_BSplineSurface) surf = new Geom_BSplineSurface
-      (pp, ww, kkU, kkV, mmU, mmV, dU, dV, periodicU, periodicV);
+    Handle(Geom_BSplineSurface) surf = new Geom_BSplineSurface(
+      pp, ww, kkU, kkV, mmU, mmV, dU, dV, periodicU, periodicV);
     makeTrimmedSurface(surf, wires, wire3D, result);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -2114,7 +2134,7 @@ bool OCC_Internals::addBezierSurface(int &tag,
   }
 
   TopoDS_Face result;
-  try{
+  try {
     TColgp_Array2OfPnt pp(1, numPointsU, 1, numPointsV);
     for(int i = 1; i <= numPointsU; i++) {
       for(int j = 1; j <= numPointsV; j++) {
@@ -2166,7 +2186,7 @@ bool OCC_Internals::addTrimmedSurface(int &tag, int surfaceTag,
   }
 
   TopoDS_Face result;
-  try{
+  try {
     Handle(Geom_Surface) surf = BRep_Tool::Surface(face);
     makeTrimmedSurface(surf, wires, wire3D, result);
   } catch(Standard_Failure &err) {
@@ -4011,8 +4031,7 @@ bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
   return true;
 }
 
-bool OCC_Internals::exportShapes(GModel *model,
-                                 const std::string &fileName,
+bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
                                  const std::string &format)
 {
   // put all top-level OCC shapes from a GModel in a single compound (we use the
@@ -4021,7 +4040,8 @@ bool OCC_Internals::exportShapes(GModel *model,
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); it++) {
+  for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
+      it++) {
     GRegion *gr = *it;
     if(gr->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Solid *)gr->getNativePtr());
@@ -4036,7 +4056,8 @@ bool OCC_Internals::exportShapes(GModel *model,
     if(!ge->numFaces() && ge->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Edge *)ge->getNativePtr());
   }
-  for(GModel::viter it = model->firstVertex(); it != model->lastVertex(); it++) {
+  for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
+      it++) {
     GVertex *gv = *it;
     if(!gv->numEdges() && gv->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Vertex *)gv->getNativePtr());

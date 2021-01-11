@@ -27,6 +27,7 @@ typedef unsigned long intptr_t;
 #include "contextWindow.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
+#include "onelabContextWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -236,8 +237,14 @@ public:
     bool operator()(const Vis *v1, const Vis *v2) const
     {
       switch(instance()->getSortMode()) {
-      case 1: return v1->getDim() < v2->getDim() ? true : false;
-      case -1: return v1->getDim() > v2->getDim() ? true : false;
+      case 1:
+        if(v1->getDim() < v2->getDim()) return true;
+        else if(v1->getDim() > v2->getDim()) return false;
+        else return v1->getTag() < v2->getTag();
+      case -1:
+        if(v1->getDim() > v2->getDim()) return true;
+        else if(v1->getDim() < v2->getDim()) return false;
+        else return v1->getTag() < v2->getTag();
       case 2: return v1->getTag() < v2->getTag() ? true : false;
       case -2: return v1->getTag() > v2->getTag() ? true : false;
       case 3:
@@ -353,6 +360,8 @@ public:
     // this is superfluous in elementary mode, but we don't care
     for(int i = 0; i < getNumEntities(); i++) setVisibility(i, 0);
   }
+  // get the dim of the nth entity in the list
+  int getDim(int n) { return _entities[n]->getDim(); }
   // get the tag of the nth entity in the list
   int getTag(int n) { return _entities[n]->getTag(); }
   // get the browser line for the nth entity in the list
@@ -1180,6 +1189,50 @@ static void visibility_per_window_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void browser_cb(Fl_Widget *w, void *data)
+{
+  if(Fl::event_clicks()) {
+    int n = FlGui::instance()->visibility->browser->value() - 1;
+    if(n >= 0 && n < VisibilityList::instance()->getNumEntities()) {
+      int dim = VisibilityList::instance()->getDim(n);
+      int tag = VisibilityList::instance()->getTag(n);
+      if(FlGui::instance()->visibility->browser_type->value() == 1) {
+        FlGui::instance()->onelabContext->show(dim, tag);
+      }
+      else if(FlGui::instance()->visibility->browser_type->value() == 2) {
+        std::map<int, std::vector<GEntity *> > groups;
+        GModel::current()->getPhysicalGroups(dim, groups);
+        auto it = groups.find(tag);
+        if(it != groups.end() && it->second.size())
+          FlGui::instance()->onelabContext->show(dim, it->second[0]->tag());
+      }
+    }
+  }
+}
+
+static void tree_cb(Fl_Widget *w, void *data)
+{
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
+  Fl_Tree *tree = (Fl_Tree *)w;
+  if(tree->callback_reason() == FL_TREE_REASON_RESELECTED && Fl::event_clicks()) {
+    // double click
+    Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
+    GEntity *ge = 0;
+    if(item) {
+      if(item->user_data()) {
+        ge = (GEntity*)item->user_data();
+      }
+      else if(item->children() && item->child(0) &&
+              item->child(0)->user_data()) {
+        ge = (GEntity*)item->child(0)->user_data();
+      }
+    }
+    if(ge)
+      FlGui::instance()->onelabContext->show(ge->dim(), ge->tag());
+  }
+#endif
+}
+
 visibilityWindow::visibilityWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -1257,6 +1310,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       browser->type(FL_MULTI_BROWSER);
       browser->textsize(FL_NORMAL_SIZE - 1);
       browser->column_widths(cols);
+      browser->callback(browser_cb);
 
       gg->end();
       Fl_Group::current()->resizable(gg);
@@ -1304,6 +1358,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     tree->labelsize(FL_NORMAL_SIZE - 1);
     tree->selectmode(FL_TREE_SELECT_MULTI);
     tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
+    tree->item_reselect_mode(FL_TREE_SELECTABLE_ALWAYS); // for double-clicks
+#endif
+    tree->callback(tree_cb);
     tree->hide();
 
     tree_create =

@@ -71,7 +71,7 @@ int main(int argc, char **argv)
   gmshModelGeoAddLine(1, 2, 1, &ierr);
   gmshModelGeoAddLine(3, 2, 2, &ierr);
   gmshModelGeoAddLine(3, p4, 3, &ierr);
-  gmshModelGeoAddLine(4, 1, p4, &ierr);
+  gmshModelGeoAddLine(p4, 1, 4, &ierr);
 
   /* The third elementary entity is the surface. In order to define a simple
      rectangular surface from the four curves defined above, a curve loop has

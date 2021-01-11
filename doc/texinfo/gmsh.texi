@@ -5663,17 +5663,18 @@ is to save some of these options in a per-user ``session resource'' file
 (cf. ``Saved in: @code{General.SessionFileName}'' in the lists below)
 every time Gmsh is shut down. This permits for example to automatically
 remember the size and location of the windows or which fonts to use. A
-second set of options can be saved (automatically or manually with
-the `File->Save Options->As Default' menu) in a per-user ``option'' file
+second set of options can be saved (automatically or manually with the
+`File->Save Options As Default' menu) in a per-user ``option'' file
 (cf. ``Saved in: @code{General.OptionsFileName}'' in the lists below),
 automatically loaded by Gmsh every time it starts up. Finally, other
 options are only saved to disk manually, either by explicitly saving an
 option file with `File->Export', or when saving per-model options with
-`File->Save Options->For Current File' (cf. ``Saved in: @code{-}'' in
-the lists below).
+`File->Save Model Options' (cf. ``Saved in: @code{-}'' in the lists
+below).
 
-To reset all options to their default values, use the `Restore default
-options' button in `Tools->Options->General->Advanced', or erase the
+To reset all options to their default values, use `Help->Restore All
+Options to Default Settings' or the `Restore all options to default
+settings' button in `Tools->Options->General->Advanced', or erase the
 @code{General.SessionFileName} and @code{General.OptionsFileName} files
 by hand.
 

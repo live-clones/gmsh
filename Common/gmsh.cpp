@@ -85,16 +85,12 @@
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
 #include "openglWindow.h"
+#include "onelabContextWindow.h"
 #endif
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
 #include "onelabUtils.h"
-#endif
-
-#if defined(HAVE_HXT) && defined(HAVE_P4EST)
-#include "hxt_tools.h"
-#include "automaticMeshSizeField.h"
 #endif
 
 // automatically generated C++ and C headers (in gmsh/api)
@@ -4807,11 +4803,16 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
 GMSH_API void
 gmsh::model::mesh::classifySurfaces(const double angle, const bool boundary,
                                     const bool forReparametrization,
-                                    const double curveAngle)
+                                    const double curveAngle,
+                                    const bool exportDiscrete)
 {
   if(!_checkInit()) return;
   GModel::current()->classifySurfaces(angle, boundary, forReparametrization,
                                       curveAngle);
+  if(exportDiscrete) {
+    // Warning: this clears GEO_Internals!
+    GModel::current()->exportDiscreteGEOInternals();
+  }
 }
 
 GMSH_API void gmsh::model::mesh::createGeometry(const vectorpair &dimTags)
@@ -5185,9 +5186,16 @@ GMSH_API int gmsh::model::geo::addCurveLoop(const std::vector<int> &curveTags,
 {
   if(!_checkInit()) return -1;
   int outTag = tag;
-  GModel::current()->getGEOInternals()->addLineLoop(outTag, curveTags,
-                                                    reorient);
+  GModel::current()->getGEOInternals()->addCurveLoop(outTag, curveTags,
+                                                     reorient);
   return outTag;
+}
+
+GMSH_API void gmsh::model::geo::addCurveLoops(const std::vector<int> &curveTags,
+                                              std::vector<int> &tags)
+{
+  if(!_checkInit()) return;
+  GModel::current()->getGEOInternals()->addCurveLoops(curveTags, tags);
 }
 
 GMSH_API int gmsh::model::geo::addPlaneSurface(const std::vector<int> &wireTags,
@@ -5262,15 +5270,9 @@ GMSH_API void gmsh::model::geo::extrude(const vectorpair &dimTags,
 {
   if(!_checkInit()) return;
   outDimTags.clear();
-  if(dx || dy || dz) {
-    GModel::current()->getGEOInternals()->extrude(
-      dimTags, dx, dy, dz, outDimTags,
-      _getExtrudeParams(numElements, heights, recombine));
-  }
-  else {
-    GModel::current()->getGEOInternals()->boundaryLayer(
-      dimTags, outDimTags, _getExtrudeParams(numElements, heights, recombine));
-  }
+  GModel::current()->getGEOInternals()->extrude(
+    dimTags, dx, dy, dz, outDimTags,
+    _getExtrudeParams(numElements, heights, recombine));
 }
 
 GMSH_API void gmsh::model::geo::revolve(
@@ -5298,6 +5300,26 @@ GMSH_API void gmsh::model::geo::twist(
   GModel::current()->getGEOInternals()->twist(
     dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags,
     _getExtrudeParams(numElements, heights, recombine));
+}
+
+GMSH_API void gmsh::model::geo::extrudeBoundaryLayer(const vectorpair &dimTags,
+                                                     vectorpair &outDimTags,
+                                                     const std::vector<int> &numElements,
+                                                     const std::vector<double> &heights,
+                                                     const bool recombine,
+                                                     const bool second,
+                                                     const int viewIndex)
+{
+  if(!_checkInit()) return;
+  outDimTags.clear();
+  ExtrudeParams *e = _getExtrudeParams(numElements, heights, recombine);
+  if(!e) {
+    Msg::Error("Element layers are required for boundary layer extrusion");
+    return;
+  }
+  e->mesh.BoundaryLayerIndex = second ? 1 : 0;
+  e->mesh.ViewIndex = viewIndex;
+  GModel::current()->getGEOInternals()->boundaryLayer(dimTags, outDimTags, e);
 }
 
 GMSH_API void gmsh::model::geo::translate(const vectorpair &dimTags,
@@ -5639,7 +5661,7 @@ GMSH_API int gmsh::model::occ::addCurveLoop(const std::vector<int> &curveTags,
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->addLineLoop(outTag, curveTags);
+  GModel::current()->getOCCInternals()->addCurveLoop(outTag, curveTags);
   return outTag;
 }
 
@@ -7213,6 +7235,7 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
   case 3: ret = FlGui::instance()->selectEntity(ENT_VOLUME); break;
   default: ret = FlGui::instance()->selectEntity(ENT_ALL); break;
   }
+  if(!FlGui::available()) return 0; // GUI closed during selection
   for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++)
     dimTags.push_back(
       std::pair<int, int>(0, FlGui::instance()->selectedVertices[i]->tag()));
@@ -7224,7 +7247,7 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
       std::pair<int, int>(2, FlGui::instance()->selectedFaces[i]->tag()));
   for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
     dimTags.push_back(
-      std::pair<int, int>(1, FlGui::instance()->selectedRegions[i]->tag()));
+      std::pair<int, int>(3, FlGui::instance()->selectedRegions[i]->tag()));
   return selectionCode(ret);
 #else
   return 0;
@@ -7242,6 +7265,7 @@ GMSH_API int gmsh::fltk::selectElements(std::vector<std::size_t> &elementTags)
   CTX::instance()->mesh.changed = ENT_ALL;
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
   CTX::instance()->pickElements = old;
+  if(!FlGui::available()) return 0; // GUI closed during selection
   for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++)
     elementTags.push_back(FlGui::instance()->selectedElements[i]->getNum());
   return selectionCode(ret);
@@ -7257,6 +7281,7 @@ GMSH_API int gmsh::fltk::selectViews(std::vector<int> &viewTags)
 #if defined(HAVE_FLTK)
   _createFltk();
   char ret = FlGui::instance()->selectEntity(ENT_ALL);
+  if(!FlGui::available()) return 0; // GUI closed during selection
   for(std::size_t i = 0; i < FlGui::instance()->selectedViews.size(); i++)
     viewTags.push_back(FlGui::instance()->selectedViews[i]->getTag());
   return selectionCode(ret);
@@ -7289,6 +7314,25 @@ GMSH_API void gmsh::fltk::setCurrentWindow(const int windowIndex)
 #if defined(HAVE_FLTK)
   _createFltk();
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
+#endif
+}
+
+GMSH_API void gmsh::fltk::setStatusMessage(const std::string &message,
+                                           const bool graphics)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->setStatus(message, graphics);
+#endif
+}
+
+GMSH_API void gmsh::fltk::showContextWindow(const int dim, const int tag)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->onelabContext->show(dim, tag);
 #endif
 }
 
@@ -7342,6 +7386,17 @@ GMSH_API void gmsh::onelab::get(std::string &data, const std::string &name,
       }
     }
   }
+#else
+  Msg::Error("ONELAB not available");
+#endif
+}
+
+GMSH_API void gmsh::onelab::getNames(std::vector<std::string> &names,
+                                     const std::string &search)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_ONELAB)
+  ::onelab::server::instance()->getParameterNames(names, search);
 #else
   Msg::Error("ONELAB not available");
 #endif

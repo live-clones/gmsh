@@ -4058,8 +4058,10 @@ void tetgenmesh::report_overlapping_facets(face *f1, face *f2, REAL dihedang)
     if (dihedang > 0) {
       printf("The dihedral angle between them is %g degree.\n",
              dihedang / PI * 180.0);
-      printf("Hint:  You may use -p/# to decrease the dihedral angle");
-      printf("  tolerance %g (degree).\n", b->facet_overlap_ang_tol);
+      //printf("Hint:  You may use -p/# to decrease the dihedral angle");
+      //printf("  tolerance %g (degree).\n", b->facet_overlap_ang_tol);
+      printf("Hint: You may use Mesh.AngleToleranceFacetOverlap to decrease the dihedral angle tolerance %g (degree)",
+             b->facet_overlap_ang_tol);
     }
   } else {
     if (shellmark(*f1) != shellmark(*f2)) {

@@ -347,6 +347,10 @@ bool GEO_Internals::_addCompoundSpline(int &tag, const std::vector<int> &curveTa
   List_T *tmp = List_Create((numIntervals + 1) * curveTags.size(), 2, sizeof(int));
   for(std::size_t i = 0; i < curveTags.size(); i++) {
     Curve *c = FindCurve(curveTags[i]);
+    if(!c) {
+      Msg::Error("Unknown GEO curve with tag %d", curveTags[i]);
+      return false;
+    }
     if(i == 0 && c->beg) List_Add(tmp, &c->beg->Num);
     for(int j = 1; j < numIntervals; j++) {
       double u = (double)j / (double)(numIntervals);
@@ -384,8 +388,8 @@ bool GEO_Internals::addCompoundBSpline(int &tag, const std::vector<int> &curveTa
   return _addCompoundSpline(tag, curveTags, numIntervals, true);
 }
 
-bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags,
-                                bool reorient)
+bool GEO_Internals::addCurveLoop(int &tag, const std::vector<int> &curveTags,
+                                 bool reorient)
 {
   if(tag >= 0 && FindEdgeLoop(tag)) {
     Msg::Error("GEO line loop with tag %d already exists", tag);
@@ -403,6 +407,180 @@ bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags,
   List_Delete(tmp);
   _changed = true;
   return ok;
+}
+
+struct VertexPtrLessThan {
+  bool operator()(const Vertex *v1, const Vertex *v2) const
+  {
+    return v1->Num < v2->Num;
+  }
+};
+
+static bool SortCurvesConsecutive(const std::vector<Curve*> &e,
+                                  std::vector<std::vector<Vertex *> > &vs)
+{
+  vs.clear();
+  if(e.empty()) return true;
+  std::map<Vertex *, std::pair<Vertex *, Vertex *>, VertexPtrLessThan> c;
+
+  for(size_t i = 0; i < e.size(); i++) {
+    Vertex *v0 = e[i]->beg;
+    Vertex *v1 = e[i]->end;
+
+    if(!v0 || !v1) {
+      Msg::Warning("Skipping GEO curve %d without begin or end point in curve "
+                   "loop detection", e[i]->Num);
+      continue;
+    }
+
+    if(v0 == v1){ // periodic curve
+      std::vector<Vertex *> v = {v0, v1};
+      vs.push_back(v);
+      continue;
+    }
+
+    std::map<Vertex *, std::pair<Vertex *, Vertex *>, VertexPtrLessThan>
+      ::iterator it0 = c.find(v0), it1 = c.find(v1);
+    if(it0 == c.end())
+      c[v0] = std::make_pair(v1, (Vertex *)NULL);
+    else {
+      if(it0->second.second == NULL) { it0->second.second = v1; }
+      else {
+        Msg::Debug("A list of curves has points that are adjacent to 3 curves");
+        return false;
+      }
+    }
+    if(it1 == c.end())
+      c[v1] = std::make_pair(v0, (Vertex *)NULL);
+    else {
+      if(it1->second.second == NULL) { it1->second.second = v0; }
+      else {
+        Msg::Debug("Wrong topology for a list of curves");
+        Msg::Debug("Point %d is adjacent to more than 2 points %d %d",
+                   v1->Num, it1->second.first->Num,
+                   it1->second.second->Num);
+        return false;
+      }
+    }
+  }
+
+  while(!c.empty()) {
+    std::vector<Vertex *> v;
+    Vertex *start = NULL;
+    {
+      std::map<Vertex *, std::pair<Vertex *, Vertex *>, VertexPtrLessThan>
+        ::iterator it = c.begin();
+      start = it->first;
+      for(; it != c.end(); ++it) {
+        if(it->second.second == NULL) {
+          start = it->first;
+          break;
+        }
+      }
+    }
+
+    std::map<Vertex *, std::pair<Vertex *, Vertex *>, VertexPtrLessThan >
+      ::iterator its = c.find(start);
+
+    Vertex *prev =
+      (its->second.second == start) ? its->second.first : its->second.second;
+    Vertex *current = start;
+
+    do {
+      if(c.size() == 0) {
+        Msg::Warning("Wrong topology in a curve loop");
+        return false;
+      }
+      v.push_back(current);
+      std::map<Vertex *, std::pair<Vertex *, Vertex *>, VertexPtrLessThan>
+        ::iterator it = c.find(current);
+      if(it == c.end() || it->first == NULL) {
+        Msg::Error("Impossible to find point %d", current->Num);
+        return false;
+      }
+      Vertex *v1 = it->second.first;
+      Vertex *v2 = it->second.second;
+      c.erase(it);
+      Vertex *temp = current;
+      if(v1 == prev)
+        current = v2;
+      else if(v2 == prev)
+        current = v1;
+      else {
+        break;
+      }
+      prev = temp;
+      if(current == start) { v.push_back(current); }
+    } while(current != start && current != NULL);
+    if(v.size() > 2 && v[v.size() - 2] == v[v.size() - 1]) {
+      v.erase(v.begin() + v.size() - 1);
+    }
+    vs.push_back(v);
+  }
+  return true;
+}
+
+bool GEO_Internals::addCurveLoops(const std::vector<int> &curveTags,
+                                  std::vector<int> &curveLoopTags)
+{
+  curveLoopTags.clear();
+  std::vector<Curve *> curves;
+  std::multimap<std::pair<Vertex *, Vertex *>, Curve *> pairs;
+  for(auto j : curveTags) {
+    Curve *c = FindCurve(j);
+    if(!c) {
+      Msg::Error("Unknown GEO curve %d", j);
+      return false;
+    }
+    if(!c->beg || !c->end) {
+      Msg::Error("Cannot create curve loops using curve %d without begin or "
+                 "end point", c->Num);
+      return false;
+    }
+    pairs.insert(std::make_pair(std::make_pair(c->beg, c->end), c));
+    curves.push_back(c);
+  }
+  std::vector<std::vector<Vertex *> > vs;
+  if(!SortCurvesConsecutive(curves, vs)) {
+    Msg::Error("Could not sort curves while creating curve loops");
+    return false;
+  }
+
+  for(std::size_t i = 0; i < vs.size(); i++) {
+    if(vs[i].size() < 2 || vs[i][0] != vs[i][vs[i].size() - 1]) {
+      Msg::Warning("Skipping invalid loop with %lu points", vs[i].size());
+      continue;
+    }
+    else {
+      List_T *tmp = List_Create(2, 2, sizeof(int));
+      for(std::size_t j = 0; j < vs[i].size() - 1; j++) {
+        std::pair<Vertex *, Vertex *> p(vs[i][j], vs[i][j + 1]);
+        int num = 0;
+        auto it = pairs.find(p);
+        if(it != pairs.end()) {
+          num = it->second->Num;
+          pairs.erase(it);
+        }
+        else {
+          std::pair<Vertex *, Vertex *> p2(vs[i][j + 1], vs[i][j]);
+          it = pairs.find(p2);
+          if(it != pairs.end()) {
+            num = -it->second->Num;
+            pairs.erase(it);
+          }
+        }
+        if(num)
+          List_Add(tmp, &num);
+      }
+      int tag = getMaxTag(-1) + 1;
+      EdgeLoop *l = CreateEdgeLoop(tag, tmp);
+      Tree_Add(EdgeLoops, &l);
+      curveLoopTags.push_back(tag);
+      List_Delete(tmp);
+    }
+  }
+  _changed = true;
+  return curveLoopTags.empty() ? false : true;
 }
 
 bool GEO_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
@@ -734,7 +912,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
     if(dim == 0) {
       Vertex *v = FindPoint(tag);
       if(!v) {
-        Msg::Error("Unknown GEO point with tag %d", tag);
+        Msg::Error("Unknown GEO point %d", tag);
         ok = false;
       }
       else {
@@ -745,7 +923,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
     else if(dim == 1) {
       Curve *c = FindCurve(tag);
       if(!c) {
-        Msg::Error("Unknown GEO curve with tag %d", tag);
+        Msg::Error("Unknown GEO curve %d", tag);
         ok = false;
       }
       else {
@@ -756,7 +934,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
     else if(dim == 2) {
       Surface *s = FindSurface(tag);
       if(!s) {
-        Msg::Error("Unknown GEO surface with tag %d", tag);
+        Msg::Error("Unknown GEO surface %d", tag);
         ok = false;
       }
       else {
@@ -767,7 +945,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
     else if(dim == 3) {
       Volume *v = FindVolume(tag);
       if(!v) {
-        Msg::Error("Unknown GEO volume with tag %d", tag);
+        Msg::Error("Unknown GEO volume %d", tag);
         ok = false;
       }
       else {
@@ -894,7 +1072,7 @@ bool GEO_Internals::mergeVertices(const std::vector<int> &tags)
   if(tags.size() < 2) return true;
   Vertex *target = FindPoint(tags[0]);
   if(!target) {
-    Msg::Error("Could not find GEO point with tag %d", tags[0]);
+    Msg::Error("Unknown GEO point %d", tags[0]);
     return false;
   }
 
@@ -902,7 +1080,7 @@ bool GEO_Internals::mergeVertices(const std::vector<int> &tags)
   for(std::size_t i = 1; i < tags.size(); i++) {
     Vertex *source = FindPoint(tags[i]);
     if(!source) {
-      Msg::Error("Could not find GEO point with tag %d", tags[i]);
+      Msg::Error("Unknown GEO point %d", tags[i]);
       return false;
     }
     source->Typ = target->Typ;
@@ -996,7 +1174,7 @@ void GEO_Internals::setTransfiniteSurface(int tag, int arrangement,
           if(v)
             List_Add(s->TrsfPoints, &v);
           else
-            Msg::Error("Unknown GEO point with tag %d", cornerTags[j]);
+            Msg::Error("Unknown GEO point %d", cornerTags[j]);
         }
       }
       else {
@@ -1032,7 +1210,7 @@ void GEO_Internals::setTransfiniteVolume(int tag,
           if(vert)
             List_Add(v->TrsfPoints, &vert);
           else
-            Msg::Error("Unknown GEO point with tag %d", cornerTags[i]);
+            Msg::Error("Unknown GEO point %d", cornerTags[i]);
         }
       }
     }
@@ -1649,7 +1827,7 @@ int GModel::exportDiscreteGEOInternals()
           c->beg = v;
         }
         else {
-          Msg::Error("Could not find GEO point %d", gvb->tag());
+          Msg::Error("Unknown GEO point %d", gvb->tag());
         }
       }
       else {
@@ -1663,7 +1841,7 @@ int GModel::exportDiscreteGEOInternals()
           c->end = v;
         }
         else {
-          Msg::Error("Could not find GEO point %d", gve->tag());
+          Msg::Error("Unknown GEO point %d", gve->tag());
         }
       }
       else {
@@ -1687,9 +1865,10 @@ int GModel::exportDiscreteGEOInternals()
           List_Add(s->Generatrices, &c);
         }
         else {
-          Msg::Error("Could not find GEO curve %d", (*ite)->tag());
+          Msg::Error("Unknown GEO curve %d", (*ite)->tag());
         }
       }
+      EndSurface(s);
       Tree_Add(_geo_internals->Surfaces, &s);
     }
   }
@@ -1706,7 +1885,7 @@ int GModel::exportDiscreteGEOInternals()
           List_Add(v->Surfaces, &s);
         }
         else {
-          Msg::Error("Could not find GEO surface %d", (*itf)->tag());
+          Msg::Error("Unknown GEO surface %d", (*itf)->tag());
         }
       }
       Tree_Add(_geo_internals->Volumes, &v);

@@ -140,16 +140,21 @@ StringXString GeneralOptions_String[] = {
 } ;
 
 StringXString GeometryOptions_String[] = {
-  { F|O, "DoubleClickedPointCommand" , opt_geometry_double_clicked_point_command, "" ,
-    "Command parsed when double-clicking on a point" },
-  { F|O, "DoubleClickedCurveCommand" , opt_geometry_double_clicked_curve_command, "" ,
-    "Command parsed when double-clicking on a line" },
-  { F|O|D, "DoubleClickedLineCommand" , opt_geometry_double_clicked_curve_command, "" ,
-    "Command parsed when double-clicking on a line" },
-  { F|O, "DoubleClickedSurfaceCommand" , opt_geometry_double_clicked_surface_command, "" ,
-    "Command parsed when double-clicking on a surface" },
-  { F|O, "DoubleClickedVolumeCommand" , opt_geometry_double_clicked_volume_command, "" ,
-    "Command parsed when double-clicking on a volume" },
+  { F|O, "DoubleClickedPointCommand" , opt_geometry_double_clicked_point_command,
+    "ONELAB" , "Command parsed when double-clicking on a point, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O, "DoubleClickedCurveCommand" , opt_geometry_double_clicked_curve_command,
+    "ONELAB" , "Command parsed when double-clicking on a curve, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O|D, "DoubleClickedLineCommand" , opt_geometry_double_clicked_curve_command,
+    "ONELAB" , "Command parsed when double-clicking on a curve, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O, "DoubleClickedSurfaceCommand" , opt_geometry_double_clicked_surface_command,
+    "ONELAB" , "Command parsed when double-clicking on a surface, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O, "DoubleClickedVolumeCommand" , opt_geometry_double_clicked_volume_command,
+    "ONELAB" , "Command parsed when double-clicking on a volume, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
 
   { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "
@@ -830,7 +835,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "VectorType" , opt_general_vector_type , 4 ,
     "Default vector display type (for normals, etc.)" },
   { F|O, "Verbosity" , opt_general_verbosity , 5. ,
-    "Level of information printed during processing (0: no information)" },
+    "Level of information printed on the terminal and the message console "
+    "(0: silent except for fatal errors, 1: +errors, 2: +warnings, 3: +direct, "
+    "4: +information, 5: +status, 99: +debug)" },
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the visibility "
     "window" },
@@ -1047,7 +1054,7 @@ StringXNumber MeshOptions_Number[] = {
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
     "Consider connected facets as overlapping when the dihedral angle between the facets is "
-    "smaller than the user's defined tolerance" },
+    "smaller than the user's defined tolerance (in degrees)" },
   { F|O, "AnisoMax" , opt_mesh_aniso_max, 1.e33,
     "Maximum anisotropy of the mesh" },
   { F|O, "AllowSwapAngle" , opt_mesh_allow_swap_edge_angle , 10.0 ,

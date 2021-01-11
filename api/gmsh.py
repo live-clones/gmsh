@@ -3107,9 +3107,9 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi):
+        def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True):
             """
-            gmsh.model.mesh.classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi)
+            gmsh.model.mesh.classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True)
 
             Classify ("color") the surface mesh based on the angle threshold `angle'
             (in radians), and create new discrete surfaces, curves and points
@@ -3117,7 +3117,8 @@ class model:
             boundary if the surface is open. If `forReparametrization' is set, create
             edges and surfaces that can be reparametrized using a single map. If
             `curveAngle' is less than Pi, also force curves to be split according to
-            `curveAngle'.
+            `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
+            entities and export the discrete entities in the built-in CAD kernel.
             """
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
@@ -3125,6 +3126,7 @@ class model:
                 c_int(bool(boundary)),
                 c_int(bool(forReparametrization)),
                 c_double(curveAngle),
+                c_int(bool(exportDiscrete)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -3676,6 +3678,27 @@ class model:
             return api_result_
 
         @staticmethod
+        def addCurveLoops(curveTags):
+            """
+            gmsh.model.geo.addCurveLoops(curveTags)
+
+            Add curve loops in the built-in CAD representation based on the curves
+            `curveTags'. Return the `tags' of found curve loops, if any.
+
+            Return `tags'.
+            """
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
+            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelGeoAddCurveLoops(
+                api_curveTags_, api_curveTags_n_,
+                byref(api_tags_), byref(api_tags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorint(api_tags_, api_tags_n_.value)
+
+        @staticmethod
         def addPlaneSurface(wireTags, tag=-1):
             """
             gmsh.model.geo.addPlaneSurface(wireTags, tag=-1)
@@ -3776,8 +3799,8 @@ class model:
             `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
             entries in `numElements' give the number of elements in each layer. If
             `height' is not empty, it provides the (cumulative) height of the different
-            layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are
-            extruded along their normal.
+            layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+            layers.
 
             Return `outDimTags'.
             """
@@ -3812,7 +3835,8 @@ class model:
             `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
             entries in `numElements' give the number of elements in each layer. If
             `height' is not empty, it provides the (cumulative) height of the different
-            layers, normalized to 1.
+            layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+            layers.
 
             Return `outDimTags'.
             """
@@ -3851,7 +3875,8 @@ class model:
             smaller than Pi. Return extruded entities in `outDimTags'. If `numElements'
             is not empty, also extrude the mesh: the entries in `numElements' give the
             number of elements in each layer. If `height' is not empty, it provides the
-            (cumulative) height of the different layers, normalized to 1.
+            (cumulative) height of the different layers, normalized to 1. If
+            `recombine' is set, recombine the mesh in the layers.
 
             Return `outDimTags'.
             """
@@ -3876,6 +3901,41 @@ class model:
                 api_numElements_, api_numElements_n_,
                 api_heights_, api_heights_n_,
                 c_int(bool(recombine)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+
+        @staticmethod
+        def extrudeBoundaryLayer(dimTags, numElements=[1], heights=[], recombine=False, second=False, viewIndex=-1):
+            """
+            gmsh.model.geo.extrudeBoundaryLayer(dimTags, numElements=[1], heights=[], recombine=False, second=False, viewIndex=-1)
+
+            Extrude the entities `dimTags' in the built-in CAD representation along the
+            normals of the mesh, creating discrete boundary layer entities. Return
+            extruded entities in `outDimTags'. The entries in `numElements' give the
+            number of elements in each layer. If `height' is not empty, it provides the
+            height of the different layers. If `recombine' is set, recombine the mesh
+            in the layers. A second boundary layer can be created from the same
+            entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
+            view to either specify the normals (if the view contains a vector field) or
+            scale the normals (if the view is scalar).
+
+            Return `outDimTags'.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_numElements_, api_numElements_n_ = _ivectorint(numElements)
+            api_heights_, api_heights_n_ = _ivectordouble(heights)
+            ierr = c_int()
+            lib.gmshModelGeoExtrudeBoundaryLayer(
+                api_dimTags_, api_dimTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                api_numElements_, api_numElements_n_,
+                api_heights_, api_heights_n_,
+                c_int(bool(recombine)),
+                c_int(bool(second)),
+                c_int(viewIndex),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -5157,7 +5217,8 @@ class model:
             `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
             entries in `numElements' give the number of elements in each layer. If
             `height' is not empty, it provides the (cumulative) height of the different
-            layers, normalized to 1.
+            layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+            layers.
 
             Return `outDimTags'.
             """
@@ -5192,7 +5253,8 @@ class model:
             mesh: the entries in `numElements' give the number of elements in each
             layer. If `height' is not empty, it provides the (cumulative) height of the
             different layers, normalized to 1. When the mesh is extruded the angle
-            should be strictly smaller than 2*Pi.
+            should be strictly smaller than 2*Pi. If `recombine' is set, recombine the
+            mesh in the layers.
 
             Return `outDimTags'.
             """
@@ -6694,6 +6756,37 @@ class fltk:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
 
+    @staticmethod
+    def setStatusMessage(message, graphics=False):
+        """
+        gmsh.fltk.setStatusMessage(message, graphics=False)
+
+        Set a status message in the current window. If `graphics' is set, display
+        the message inside the graphic window instead of the status bar.
+        """
+        ierr = c_int()
+        lib.gmshFltkSetStatusMessage(
+            c_char_p(message.encode()),
+            c_int(bool(graphics)),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
+    @staticmethod
+    def showContextWindow(dim, tag):
+        """
+        gmsh.fltk.showContextWindow(dim, tag)
+
+        Show context window for the entity of dimension `dim' and tag `tag'.
+        """
+        ierr = c_int()
+        lib.gmshFltkShowContextWindow(
+            c_int(dim),
+            c_int(tag),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
 
 class onelab:
     """
@@ -6735,6 +6828,26 @@ class onelab:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ostring(api_data_)
+
+    @staticmethod
+    def getNames(search=""):
+        """
+        gmsh.onelab.getNames(search="")
+
+        Get the names of the parameters in the ONELAB database matching the
+        `search' regular expression. If `search' is empty, return all the names.
+
+        Return `names'.
+        """
+        api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        ierr = c_int()
+        lib.gmshOnelabGetNames(
+            byref(api_names_), byref(api_names_n_),
+            c_char_p(search.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorstring(api_names_, api_names_n_.value)
 
     @staticmethod
     def setNumber(name, value):

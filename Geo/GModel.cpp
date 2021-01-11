@@ -1984,7 +1984,7 @@ int GModel::convertOldPartitioningToNewOne()
   int ier = ConvertOldPartitioningToNewOne(this);
   return ier;
 #else
-  Msg::Error("Mesh module not compiled");
+  Msg::Error("Mesh or Metis module not compiled");
   return 1;
 #endif
 }
@@ -3286,17 +3286,6 @@ void GModel::computeHomology()
 
 #else
   Msg::Error("Homology computation requires KBIPACK");
-#endif
-}
-
-void GModel::computeSizeField(){
-#if defined(HAVE_HXT) && defined(HAVE_P4EST)
-  FieldManager *fields = getFields();
-  int myId = fields->newId();
-  fields->newField(myId, std::string("AutomaticMeshSizeField") );
-  fields->get(myId)->update();
-#else
-  Msg::Error("Size field computation requires both HXT and P4EST");
 #endif
 }
 

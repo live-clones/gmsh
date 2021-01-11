@@ -46,8 +46,6 @@ struct contextMeshOptions {
   int renumber, compoundClassify, reparamMaxTriangles;
   double compoundLcFactor;
   unsigned int randomSeed;
-  int nLayersPerGap;
-  double gradation;
   std::function<double(int, int, double, double, double)> lcCallback;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;

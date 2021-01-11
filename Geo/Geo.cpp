@@ -1139,6 +1139,12 @@ Curve *CreateReversedCurve(Curve *c)
   newc->degre = c->degre;
   newc->ubeg = 1. - c->uend;
   newc->uend = 1. - c->ubeg;
+
+  if(c->Extrude) {
+    newc->Extrude = new ExtrudeParams;
+    newc->Extrude->geo = c->Extrude->geo;
+  }
+
   EndCurve(newc);
 
   Curve **pc;
@@ -1591,6 +1597,12 @@ static int CompareTwoCurves(const void *a, const void *b)
   Curve *c2 = *(Curve **)b;
   int comp;
 
+  // if two curves are discrete, assume that they are different if their tags
+  // are different
+  if(c1->Typ == MSH_SEGM_DISCRETE && c2->Typ == MSH_SEGM_DISCRETE) {
+    return c1->Num - c2->Num;
+  }
+
   if(c1->Typ != c2->Typ) {
     if((c1->Typ == MSH_SEGM_CIRC && c2->Typ == MSH_SEGM_CIRC_INV) ||
        (c1->Typ == MSH_SEGM_CIRC_INV && c2->Typ == MSH_SEGM_CIRC) ||
@@ -1622,6 +1634,17 @@ static int CompareTwoCurves(const void *a, const void *b)
       if(comp) return comp;
     }
   }
+
+  // compare boundary layer curves using their source extrusion entity, which is
+  // assumed to be unique; this allows to have 2 distinct boundary layer curves
+  // with the same beg/end points
+  if(c1->Typ == MSH_SEGM_BND_LAYER && c1->Extrude &&
+     c2->Typ == MSH_SEGM_BND_LAYER && c2->Extrude) {
+    int comp = std::abs(c1->Extrude->geo.Source) -
+      std::abs(c2->Extrude->geo.Source);
+    if(comp) return comp;
+  }
+
   return 0;
 }
 
@@ -1629,6 +1652,12 @@ static int CompareTwoSurfaces(const void *a, const void *b)
 {
   Surface *s1 = *(Surface **)a;
   Surface *s2 = *(Surface **)b;
+
+  // if two surface are discrete, assume that they are different if their tags
+  // are different
+  if(s1->Typ == MSH_SURF_DISCRETE && s2->Typ == MSH_SURF_DISCRETE) {
+    return s1->Num - s2->Num;
+  }
 
   // checking types is the "right thing" to do (see e.g. CompareTwoCurves)
   // but it would break backward compatibility (see e.g. tutorial/t2.geo),
@@ -2691,7 +2720,13 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
       if(e) v->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
     }
     revpc = FindCurve(-chapeau->Num);
-    if(revpc) revpc->Typ = MSH_SEGM_BND_LAYER;
+    if(revpc) {
+      revpc->Typ = MSH_SEGM_BND_LAYER;
+      if(chapeau->Extrude) {
+        revpc->Extrude = new ExtrudeParams;
+        revpc->Extrude->geo = chapeau->Extrude->geo;
+      }
+    }
     break;
   case ROTATE:
     T[0] = -X0;
@@ -2841,18 +2876,21 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
   for(i = 0; i < List_Nbr(chapeau->Generatrices); i++) {
     List_Read(ps->Generatrices, i, &c2);
     List_Read(chapeau->Generatrices, i, &c);
-    if(c->Num < 0) {
-      int nn = -c->Num;
-      if(!(c = FindCurve(nn))) {
-        Msg::Error("Unknown GEO curve with tag %d", nn);
-        return ps->Num;
-      }
-    }
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-    // don't take the abs(): the sign of c2->Num is important (used
-    // when copying the mesh in the extrusion routine)
+    // don't take the abs(): the sign of c2->Num is important (used when copying
+    // the mesh in the extrusion routine)
     c->Extrude->geo.Source = c2->Num;
+    if(e) c->Extrude->mesh = e->mesh;
+
+    Curve *revc = FindCurve(-c->Num);
+    if(!revc) {
+      Msg::Error("Unknown GEO curve with tag %d", -c->Num);
+      return ps->Num;
+    }
+    revc->Extrude = new ExtrudeParams(COPIED_ENTITY);
+    revc->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
+    revc->Extrude->geo.Source = c2->Num;
     if(e) c->Extrude->mesh = e->mesh;
   }
 

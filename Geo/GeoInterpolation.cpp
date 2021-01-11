@@ -1058,14 +1058,13 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
   case MSH_SURF_REGL:
   case MSH_SURF_TRIC: return InterpolateRuledSurface(s, u, v);
   case MSH_SURF_PLAN:
-    Msg::Error(
-      "Should never interpolate plane surface in InterpolateSurface()");
+    Msg::Error("Should not interpolate plane surface here");
     return Vertex(0., 0., 0.);
   case MSH_SURF_BND_LAYER:
-    Msg::Error("Cannot interpolate boundary layer surface");
+    Msg::Debug("Cannot interpolate boundary layer surface");
     return Vertex(0., 0., 0.);
   case MSH_SURF_DISCRETE:
-    Msg::Error("Cannot interpolate discrete surface");
+    Msg::Debug("Cannot interpolate discrete surface");
     return Vertex(0., 0., 0.);
   default:
     Msg::Error("Unknown surface type in interpolation");

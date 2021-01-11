@@ -8848,10 +8848,10 @@ yyreduce:
       std::vector<int> tags; ListOfDouble2Vector((yyvsp[(7) - (8)].l), tags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        r = GModel::current()->getOCCInternals()->addLineLoop(num, tags);
+        r = GModel::current()->getOCCInternals()->addCurveLoop(num, tags);
       }
       else{
-        r = GModel::current()->getGEOInternals()->addLineLoop(num, tags);
+        r = GModel::current()->getGEOInternals()->addCurveLoop(num, tags);
       }
       if(!r) yymsg(0, "Could not add line loop");
       List_Delete((yyvsp[(7) - (8)].l));
