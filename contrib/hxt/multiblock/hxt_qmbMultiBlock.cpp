@@ -2212,7 +2212,9 @@ int MultiBlock::graphReordering(std::vector<std::array<double,3>> nodesCoord,std
 	  kStart=1; //to discard first and last point - disturbing connectivity
 	  kEnd=static_cast<int>(length-1);
 	}
-	if(isPointSingularity(pointCandidate)){
+	// if(isPointSingularity(pointCandidate)){//DBG it seems we have to check if it's a corner too
+	std::array<double,3> vecPointCandidate = {pointCandidate[0],pointCandidate[1],pointCandidate[2]};//DBG
+	if(isPointSingularityOrCornerVec(&vecPointCandidate)){ //DBG
 	  if(length==1){
 	    sep1->setLoopType(0); //sep containing just 1 triangle and starting from sing
 	    kStart=0;
@@ -4647,7 +4649,7 @@ HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
 
   // computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);
   //computeAdequatePartitionPerEdge(m_minEdgLength/(1.0), hVal);
-  computeAdequatePartitionPerEdge(0.2, hVal);
+  computeAdequatePartitionPerEdge(0.02, hVal);
   //computeAdequatePartitionPerEdge(3*m_minEdgLength, hVal);
   // computeAdequatePartitionPerEdge(m_sizeQuadMesh, hVal);
   for(uint64_t i=0;i<m_extraordVertices.size();i++){

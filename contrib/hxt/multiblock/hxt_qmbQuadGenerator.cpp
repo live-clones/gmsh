@@ -1063,10 +1063,10 @@ HXTStatus QuadGenerator::hxtWriteCorners(const char *fileName){
   for(uint32_t i=0; i<m_vectCorner.size(); i++){
     int color=i;
     Corner *c=&m_vectCorner[i];
-    if(!(c->isFictive())){
+    // if(!(c->isFictive())){
       std::array<double,3> coord=c->getCoord();
       fprintf(f,"SP(%g,%g,%g){%i};\n", coord[0], coord[1], coord[2], color);
-    }
+    // }
   }
   fprintf(f,"};");
   fclose(f);
@@ -1524,7 +1524,7 @@ HXTStatus QuadGenerator::initiationFromCorner(){
   std::cout<<"Total num corners: "<<m_vectCorner.size()<<std::endl;
   for(uint64_t i=0; i<m_vectCorner.size(); i++){
     Corner *c=&m_vectCorner[i];
-    if(!(c->isFictive())){
+    // if(!(c->isFictive())){
       std::vector<uint64_t> cornerEdg=c->getEdges();
       std::vector<uint64_t> cornerTri=c->getTriangles();
       uint64_t cornerNode=c->getGlobalVertex();
@@ -1591,7 +1591,7 @@ HXTStatus QuadGenerator::initiationFromCorner(){
 	  HXT_CHECK(hxtFree(&triangleNumbers1));
 	}
       }
-    }
+    // }
   }
   return HXT_STATUS_OK;
 }
@@ -3022,6 +3022,7 @@ HXTStatus QuadGenerator::constructHSingularity(int ID, std::array<double, 3> sin
   double norm=-1.;
   std::vector<uint64_t> patch;
   double vert0[3], vert1[3], vert2[3], singularity[3];
+  std::set<uint64_t> setSingEdg;
   for(int i=0; i<3; i++){
     vert0[i]=0.; vert1[i]=0.; vert2[i]=0.;
     singularity[i]=singCoord[i];
@@ -3036,18 +3037,30 @@ HXTStatus QuadGenerator::constructHSingularity(int ID, std::array<double, 3> sin
     if(isPointDuplicate(vert0,singularity, &norm)){
       patch.push_back(i);
       (*singEdges).push_back((uint64_t)tri2edg[3*i+1]);
+      setSingEdg.insert((uint64_t)tri2edg[3*i+0]);
+      setSingEdg.insert((uint64_t)tri2edg[3*i+2]);
     }
     if(isPointDuplicate(vert1,singularity, &norm)){
       patch.push_back(i);
       (*singEdges).push_back((uint64_t)tri2edg[3*i+2]);
+      setSingEdg.insert((uint64_t)tri2edg[3*i+1]);
+      setSingEdg.insert((uint64_t)tri2edg[3*i+0]);
     }
     if(isPointDuplicate(vert2,singularity, &norm)){
       patch.push_back(i);
       (*singEdges).push_back((uint64_t)tri2edg[3*i+0]);
+      setSingEdg.insert((uint64_t)tri2edg[3*i+2]);
+      setSingEdg.insert((uint64_t)tri2edg[3*i+1]);
     }
   }
-
-  Singularity s(ID, (*singEdges)[0], singCoord, patch);
+  uint64_t bndSingEdg=*(setSingEdg.begin());
+  for(uint64_t edgSingI: setSingEdg){
+    if(edg->edg2tri[2*edgSingI+1]==(uint64_t)(-1))
+      bndSingEdg=edgSingI;
+  }
+  
+  // Singularity s(ID, (*singEdges)[0], singCoord, patch);
+  Singularity s(ID, bndSingEdg, singCoord, patch);
   m_vectSing.push_back(s);
   
   return HXT_STATUS_OK;
