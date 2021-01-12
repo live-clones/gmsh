@@ -4899,6 +4899,7 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	}
 	std::cout<< "nIntersections: " << nIntersections << std::endl;
 	if(!floatingSep && nIntersections==1){
+
 	  //find the position of the first intersection
 	  std::vector<std::array<double,3>>* pointCoordSepNotShifted = sep->getPCoord();
 	  std::vector<uint64_t>* triSepNotShifted = sep->getPTriangles();

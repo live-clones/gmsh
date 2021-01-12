@@ -1901,67 +1901,6 @@ HXTStatus MultiBlock::buildQuadLayout(){
 
 }
 
-// void MultiBlock::findPatchBarycenter(const std::set<uint64_t> &setTri){
-//   HXTEdges *edges=m_Edges;
-//   HXTMesh *mesh=edges->edg2mesh;
-//   std::vector<uint32_t> multVert(0,mesh->vertices.num);
-//   std::vector<uint32_t> multEdges(0,edges->numEdges);
-//   uint32_t nLocVertices=0;
-//   for(uint64_t t: setTri){
-//     for(size_t k=0;k<3;k++)
-//       multVert[mesh->triangles.node[3*t+k]]++;
-//     for(size_t k=0;k<3;k++)
-//       multEdges[edges->tri2edg[3*t+k]]++;
-//   }
-//   std::vector<bool> isBndVertex(false,mesh->vertices.num);
-//   for(size_t k=0;k<edges->numEdges;k++){
-//     if(multEdges[k]==1){
-//       isBndVertex[edges->node[2*k+0]]=true;
-//       isBndVertex[edges->node[2*k+1]]=true;
-//     }
-    
-//   }
-//   for(size_t k=0;k<mesh->vertices.num;k++){
-//     if(multVert[k]>0){
-//       nLocVertices++;
-//     }
-//   }
-//   std::vector<uint32_t> loc2GlobVert(0,nLocVertices);
-//   std::vector<uint32_t> glob2LocVert((uint32_t)(-1),mesh->vertices.num);
-//   size_t locId=0;
-//   for(size_t k=0;k<mesh->vertices.num;k++){
-//     if(multVert[k]>0){
-//       loc2GlobVert[locId]=k;
-//       glob2LocVert[k]=locId;
-//       locId++;
-//     }
-//   }
-//   typedef std::pair<double, uint32_t> weightedVertex;
-//   std::map<uint32_t, std::set<weightedVertex>> weightedConnectivity;
-//   std::map<uint32_t, double> distanceToPatchBnd;
-//   for(uint64_t iE=0;iE<edges->numEdges;iE++){
-//     if(multEdges[iE]>0){
-//       const double *v0 = mesh->vertices.coord + 4*edges->node[2*iE+0];
-//       const double *v1 = mesh->vertices.coord + 4*edges->node[2*iE+1];
-//       double edgeK[3]={v1[0]-v0[0],v1[1]-v0[1],v1[2]-v0[2]};
-//       double length=0.0;
-//       hxtNorm2V3(edgeK, &length);
-//       weightedConnectivity[edges->node[2*iE+0]].insert(weightedVertex(length,edges->node[2*iE+1]));
-//       weightedConnectivity[edges->node[2*iE+1]].insert(weightedVertex(length,edges->node[2*iE+0]));
-//       distanceToPatchBnd[edges->node[2*iE+0]]=std::numeric_limits<double>::max();
-//       distanceToPatchBnd[edges->node[2*iE+1]]=std::numeric_limits<double>::max();
-//     }
-//   }
-//   std::priority_queue<weightedVertex,std::vector<weightedVertex>, std::greater<weightedVertex>> priorityQueue;
-//   for(size_t k=0;k<mesh->vertices.num;k++){
-//     if(isBndVertex[k]){
-//       distanceToPatchBnd[k]=0.0;
-//       priorityQueue.push(weightedVertex(0.0,k));
-//     }
-//   }
-//   //While
-// }
-
 void MultiBlock::buildTotalPatches(){
   m_totalElemPatches.clear();
   m_totalElemPatches.reserve(1000);
@@ -4709,9 +4648,8 @@ HXTStatus MultiBlock::meshQuadLayout(std::vector<double> hVal){
   std::cout<<"--Get and store partition per edge--"<<std::endl;
 
   // computeAdequatePartitionPerEdge(m_minEdgLength/(5.0), hVal);
-  // computeAdequatePartitionPerEdge(m_minEdgLength/(1.0), hVal);
+  //computeAdequatePartitionPerEdge(m_minEdgLength/(1.0), hVal);
   computeAdequatePartitionPerEdge(0.02, hVal);
-  // computeAdequatePartitionPerEdge(1000, hVal);
   //computeAdequatePartitionPerEdge(3*m_minEdgLength, hVal);
   // computeAdequatePartitionPerEdge(m_sizeQuadMesh, hVal);
   for(uint64_t i=0;i<m_extraordVertices.size();i++){
