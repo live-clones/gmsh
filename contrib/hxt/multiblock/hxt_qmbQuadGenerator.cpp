@@ -5134,7 +5134,7 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	  }
 	  size_t positionShifting=0;
 	  std::cout << "flag1" << std::endl;
-	  for(size_t i=0;i<triSepNotShifted->size();i++){
+	  for(size_t i=1;i<triSepNotShifted->size();i++){
 	    if(m_flaggedTri[triSepNotShifted->at(i)].size()>1){
 	      for(size_t j=0;j<m_flaggedTri[triSepNotShifted->at(i)].size();j++){
 		for(size_t l=0;l<listInter->size();l++){
@@ -5272,7 +5272,7 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	  }
 	  size_t positionShifting=0;
 	  std::cout << "flag1" << std::endl;
-	  for(size_t i=0;i<triSepNotShifted->size();i++){
+	  for(size_t i=1;i<triSepNotShifted->size();i++){
 	    if(m_flaggedTri[triSepNotShifted->at(i)].size()>1){
 	      for(size_t j=0;j<m_flaggedTri[triSepNotShifted->at(i)].size();j++){
 		for(size_t l=0;l<listInter->size();l++){
