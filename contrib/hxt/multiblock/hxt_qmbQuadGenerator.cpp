@@ -4623,7 +4623,7 @@ int QuadGenerator::cutLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs)
 	std::vector<std::array<int, 2>> values=m_flaggedTri[(*triangles)[j]];
 	for(uint64_t t=0; t<values.size(); t++){
 	  Separatrice *sep2=&(m_vectSep[values[t][0]]);
-	  if(sep2->isSaved()){
+	  if(sep2->isSaved() && sep->getID()!=sep2->getID()){
 	    std::vector<std::array<double,3>> *points2= sep2->getPCoord();
 	    position=values[t][1];
 	    std::array<double,3> p1=(*points1)[j-1];
