@@ -116,6 +116,7 @@ class MultiBlock
 			 std::vector<int> *allMeshLinesColors);
 
   //new
+  void findPatchBarycenter(const std::set<uint64_t> &setTri);
   void buildTotalPatches();
   bool isInTotalPatch(uint64_t tri);
   int localIntersection2(int sepID1, int sepID2, std::vector<std::array<double,3>> *intersectionPoints,std::vector<uint64_t> *newTriangles, std::vector<std::array<double,3>> *directions, std::vector<double> *length);

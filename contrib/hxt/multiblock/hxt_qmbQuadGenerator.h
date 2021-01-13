@@ -151,6 +151,7 @@ class QuadGenerator
   int solveTangentialCrossingsLimitCycles(std::vector<uint64_t> *limitCycleIDs);
   int solveTangentialCrossings();
   int detectDefectSepAndRepropagate();
+  int detectAndSolveOnlyOneLoopEdges();
   int detectAndSolveLoopEdges();
   double normDiffVect(std::array<double,3> *coordP1, std::array<double,3> *coordP2);
   double computeDiscreteLineLength(std::vector<std::array<double,3>> *pCoordLine);
