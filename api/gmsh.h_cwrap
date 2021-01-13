@@ -2006,8 +2006,12 @@ namespace gmsh { // Top-level functions
       // Embed the model entities of dimension `dim' and tags `tags' in the
       // (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and
       // must be strictly smaller than `inDim', which must be either 2 or 3. The
-      // embedded entities should not be part of the boundary of the entity
-      // `inTag', whose mesh will conform to the mesh of the embedded entities.
+      // embedded entities should not intersect each other or be part of the
+      // boundary of the entity `inTag', whose mesh will conform to the mesh of the
+      // embedded entities. With the OpenCASCADE kernel, if the `fragment'
+      // operation is applied to entities of different dimensions, the lower
+      // dimensional entities will be automatically embedded in the higher
+      // dimensional entities if they are not on their boundary.
       inline void embed(const int dim,
                         const std::vector<int> & tags,
                         const int inDim,
@@ -2031,6 +2035,19 @@ namespace gmsh { // Top-level functions
         gmshModelMeshRemoveEmbedded(api_dimTags_, api_dimTags_n_, dim, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
+      }
+
+      // Get the entities (if any) embedded in the model entity of dimension `dim'
+      // and tag `tag'.
+      inline void getEmbedded(const int dim,
+                              const int tag,
+                              gmsh::vectorpair & dimTags)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_;
+        gmshModelMeshGetEmbedded(dim, tag, &api_dimTags_, &api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
       }
 
       // Reorder the elements of type `elementType' classified on the entity of tag
@@ -3870,12 +3887,15 @@ namespace gmsh { // Top-level functions
         outDimTagsMap.resize(api_outDimTagsMap_nn_); for(size_t i = 0; i < api_outDimTagsMap_nn_; ++i){ outDimTagsMap[i].resize(api_outDimTagsMap_n_[i] / 2); for(size_t j = 0; j < api_outDimTagsMap_n_[i] / 2; ++j){ outDimTagsMap[i][j].first = api_outDimTagsMap_[i][j * 2 + 0]; outDimTagsMap[i][j].second = api_outDimTagsMap_[i][j * 2 + 1]; } gmshFree(api_outDimTagsMap_[i]); } gmshFree(api_outDimTagsMap_); gmshFree(api_outDimTagsMap_n_);
       }
 
-      // Compute the boolean fragments (general fuse) of the entities
-      // `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
-      // Return the resulting entities in `outDimTags'. If `tag' is positive, try
-      // to set the tag explicitly (only valid if the boolean operation results in
-      // a single entity). Remove the object if `removeObject' is set. Remove the
-      // tool if `removeTool' is set.
+      // Compute the boolean fragments (general fuse) resulting from the
+      // intersection of the entities `objectDimTags' and `toolDimTags' in the
+      // OpenCASCADE CAD representation, making all iterfaces conformal. When
+      // applied to entities of different dimensions, the lower dimensional
+      // entities will be automatically embedded in the higher dimensional entities
+      // if they are not on their boundary. Return the resulting entities in
+      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
+      // valid if the boolean operation results in a single entity). Remove the
+      // object if `removeObject' is set. Remove the tool if `removeTool' is set.
       inline void fragment(const gmsh::vectorpair & objectDimTags,
                            const gmsh::vectorpair & toolDimTags,
                            gmsh::vectorpair & outDimTags,

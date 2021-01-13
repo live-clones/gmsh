@@ -4675,6 +4675,37 @@ GMSH_API void gmsh::model::mesh::removeEmbedded(const vectorpair &dimTags,
   }
 }
 
+GMSH_API void gmsh::model::mesh::getEmbedded(const int dim, const int tag,
+                                             vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  dimTags.clear();
+  if(dim == 2) {
+    GFace *gf = GModel::current()->getFaceByTag(tag);
+    if(!gf) {
+      Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
+      return;
+    }
+    for(auto v : gf->embeddedVertices())
+      dimTags.push_back(std::pair<int, int>(v->dim(), v->tag()));
+    for(auto e : gf->embeddedEdges())
+      dimTags.push_back(std::pair<int, int>(e->dim(), e->tag()));
+  }
+  else if(dim == 3) {
+    GRegion *gr = GModel::current()->getRegionByTag(tag);
+    if(!gr) {
+      Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
+      return;
+    }
+    for(auto v : gr->embeddedVertices())
+      dimTags.push_back(std::pair<int, int>(v->dim(), v->tag()));
+    for(auto e : gr->embeddedEdges())
+      dimTags.push_back(std::pair<int, int>(e->dim(), e->tag()));
+    for(auto f : gr->embeddedFaces())
+      dimTags.push_back(std::pair<int, int>(f->dim(), f->tag()));
+  }
+}
+
 GMSH_API void
 gmsh::model::mesh::reorderElements(const int elementType, const int tag,
                                    const std::vector<std::size_t> &ordering)

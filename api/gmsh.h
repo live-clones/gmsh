@@ -1326,8 +1326,12 @@ namespace gmsh { // Top-level functions
       // Embed the model entities of dimension `dim' and tags `tags' in the
       // (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and
       // must be strictly smaller than `inDim', which must be either 2 or 3. The
-      // embedded entities should not be part of the boundary of the entity
-      // `inTag', whose mesh will conform to the mesh of the embedded entities.
+      // embedded entities should not intersect each other or be part of the
+      // boundary of the entity `inTag', whose mesh will conform to the mesh of the
+      // embedded entities. With the OpenCASCADE kernel, if the `fragment'
+      // operation is applied to entities of different dimensions, the lower
+      // dimensional entities will be automatically embedded in the higher
+      // dimensional entities if they are not on their boundary.
       GMSH_API void embed(const int dim,
                           const std::vector<int> & tags,
                           const int inDim,
@@ -1340,6 +1344,14 @@ namespace gmsh { // Top-level functions
       // points if `dim' == 0).
       GMSH_API void removeEmbedded(const gmsh::vectorpair & dimTags,
                                    const int dim = -1);
+
+      // gmsh::model::mesh::getEmbedded
+      //
+      // Get the entities (if any) embedded in the model entity of dimension `dim'
+      // and tag `tag'.
+      GMSH_API void getEmbedded(const int dim,
+                                const int tag,
+                                gmsh::vectorpair & dimTags);
 
       // gmsh::model::mesh::reorderElements
       //
@@ -2583,12 +2595,15 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::fragment
       //
-      // Compute the boolean fragments (general fuse) of the entities
-      // `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
-      // Return the resulting entities in `outDimTags'. If `tag' is positive, try
-      // to set the tag explicitly (only valid if the boolean operation results in
-      // a single entity). Remove the object if `removeObject' is set. Remove the
-      // tool if `removeTool' is set.
+      // Compute the boolean fragments (general fuse) resulting from the
+      // intersection of the entities `objectDimTags' and `toolDimTags' in the
+      // OpenCASCADE CAD representation, making all iterfaces conformal. When
+      // applied to entities of different dimensions, the lower dimensional
+      // entities will be automatically embedded in the higher dimensional entities
+      // if they are not on their boundary. Return the resulting entities in
+      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
+      // valid if the boolean operation results in a single entity). Remove the
+      // object if `removeObject' is set. Remove the tool if `removeTool' is set.
       GMSH_API void fragment(const gmsh::vectorpair & objectDimTags,
                              const gmsh::vectorpair & toolDimTags,
                              gmsh::vectorpair & outDimTags,

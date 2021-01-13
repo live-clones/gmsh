@@ -425,11 +425,14 @@ mesh.add('setCompound', doc, None, iint('dim'), ivectorint('tags'))
 doc = '''Set meshing constraints on the bounding surfaces of the volume of tag `tag' so that all surfaces are oriented with outward pointing normals. Currently only available with the OpenCASCADE kernel, as it relies on the STL triangulation.'''
 mesh.add('setOutwardOrientation', doc, None, iint('tag'))
 
-doc = '''Embed the model entities of dimension `dim' and tags `tags' in the (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must be strictly smaller than `inDim', which must be either 2 or 3. The embedded entities should not be part of the boundary of the entity `inTag', whose mesh will conform to the mesh of the embedded entities.'''
+doc = '''Embed the model entities of dimension `dim' and tags `tags' in the (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must be strictly smaller than `inDim', which must be either 2 or 3. The embedded entities should not intersect each other or be part of the boundary of the entity `inTag', whose mesh will conform to the mesh of the embedded entities. With the OpenCASCADE kernel, if the `fragment' operation is applied to entities of different dimensions, the lower dimensional entities will be automatically embedded in the higher dimensional entities if they are not on their boundary.'''
 mesh.add('embed', doc, None, iint('dim'), ivectorint('tags'), iint('inDim'), iint('inTag'))
 
 doc = '''Remove embedded entities from the model entities `dimTags'. if `dim' is >= 0, only remove embedded entities of the given dimension (e.g. embedded points if `dim' == 0).'''
 mesh.add('removeEmbedded', doc, None, ivectorpair('dimTags'), iint('dim', '-1'))
+
+doc = '''Get the entities (if any) embedded in the model entity of dimension `dim' and tag `tag'.'''
+mesh.add('getEmbedded', doc, None, iint('dim'), iint('tag'), ovectorpair('dimTags'))
 
 doc = '''Reorder the elements of type `elementType' classified on the entity of tag `tag' according to `ordering'.'''
 mesh.add('reorderElements', doc, None, iint('elementType'), iint('tag'), ivectorsize('ordering'))
@@ -755,7 +758,7 @@ occ.add('intersect', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolD
 doc = '''Compute the boolean difference between the entities `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('cut', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
-doc = '''Compute the boolean fragments (general fuse) of the entities `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean fragments (general fuse) resulting from the intersection of the entities `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation, making all iterfaces conformal. When applied to entities of different dimensions, the lower dimensional entities will be automatically embedded in the higher dimensional entities if they are not on their boundary. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fragment', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
 doc = '''Translate the entities `dimTags' in the OpenCASCADE CAD representation along (`dx', `dy', `dz').'''
