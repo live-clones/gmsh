@@ -13,5 +13,9 @@
 bool CurvatureRusinkiewicz(
   const std::vector<int> &triangles, const std::vector<SPoint3> &nodes,
   std::vector<std::pair<SVector3, SVector3> > &nodalCurvatures);
+bool CurvatureRusinkiewicz(
+  const std::vector<int> &triangles, const std::vector<SPoint3> &nodes,
+  std::vector<std::pair<SVector3, SVector3> > &nodalCurvatures,
+  std::vector<double> &nodeNormals);
 
 #endif

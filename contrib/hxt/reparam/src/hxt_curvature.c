@@ -178,49 +178,6 @@ void saveNodalField (HXTMesh *mesh, double *v, int ncomp, const char *fn){
   fclose (f);
 }
 
-HXTStatus hxtCurvatureNormals (HXTMesh *mesh, double **nodeNormals, int debug)
-{
-  // printf("IN CURVATURE\n");
-  uint64_t nTriangles  = mesh->triangles.num;
-  //  uint64_t nEdgesBdry = mesh->lines.num;
-  uint64_t nVertices   = mesh->vertices.num;
-  
-  uint64_t *node2tri;
-  HXT_CHECK(hxtMalloc(&node2tri,3*2*nTriangles*sizeof(uint64_t))); 
-  HXT_CHECK(hxtMalloc(nodeNormals,3*nVertices*sizeof(double)));
-
-  for(uint64_t i = 0; i<3*nVertices; i++) (*nodeNormals)[i] = 0.0;  
-  uint64_t counter = 0;
-
-  double n[3],surf;
-  
-  for (uint64_t i = 0; i<nTriangles; i++){
-    node2tri[counter++] = mesh->triangles.node[3*i+0];// first node of triangle i
-    node2tri[counter++] = i;// index of current triangle
-    node2tri[counter++] = mesh->triangles.node[3*i+1];
-    node2tri[counter++] = i;
-    node2tri[counter++] = mesh->triangles.node[3*i+2];
-    node2tri[counter++] = i;
-    unitNormal2Triangle ( mesh->vertices.coord + 4*mesh->triangles.node[3*i+0],
-                          mesh->vertices.coord + 4*mesh->triangles.node[3*i+1],
-                          mesh->vertices.coord + 4*mesh->triangles.node[3*i+2], n, &surf);
-    double *n0 = &(*nodeNormals)[3*mesh->triangles.node[3*i+0]];
-    double *n1 = &(*nodeNormals)[3*mesh->triangles.node[3*i+1]];
-    double *n2 = &(*nodeNormals)[3*mesh->triangles.node[3*i+2]];
-    for (uint64_t i1 = 0; i1 < 3; i1++) {
-      n0[i1]+=n[i1];
-      n1[i1]+=n[i1];
-      n2[i1]+=n[i1];
-    }
-  }
-  for (uint64_t i = 0; i<nVertices; i++)normalize(&(*nodeNormals)[3*i]); 
-  printf("Saving normals\n");
-  if (debug) saveNodalField (mesh, *nodeNormals, 3, "normals.pos");
-
-  HXT_CHECK(hxtFree(&node2tri));
-}
-
-
 HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, double **crossField, HXTEdges* edges, int debug)
 {
   // clock_t T1 = clock();

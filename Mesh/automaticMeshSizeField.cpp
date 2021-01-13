@@ -7,8 +7,8 @@
 #include "MTetrahedron.h"
 #include "SBoundingBox3d.h"
 #include "GmshMessage.h"
-#include "Numeric.h"
 #include "curvature.h"
+#include "Numeric.h"
 #include "robustPredicates.h"
 
 #include <queue>
@@ -18,7 +18,6 @@
 extern "C" {
 #include "hxt_tools.h"
 #include "hxt_edge.h"
-#include "hxt_curvature.h"
 #include "hxt_bbox.h"
 #include "hxt_tetMesh.h"
 #include "hxt_tetUtils.h"
@@ -2106,7 +2105,7 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     RTree<uint64_t, double, 3> triRTree;
     HXTMesh *mesh;
     double *nodalCurvature;
-    double *nodeNormals;
+    // double *nodeNormals;
     // std::vector<std::function<double(double)>> curvFunctions;
     // std::vector<std::function<double(double)>> xFunctions;
     // std::vector<std::function<double(double)>> yFunctions;
@@ -2117,6 +2116,7 @@ HXTStatus automaticMeshSizeField::updateHXT(){
 
     size_t numVertices = gm->getNumMeshVertices();
     HXT_CHECK(hxtMalloc(&nodalCurvature,6*numVertices*sizeof(double)));
+    std::vector<double> nodeNormals;
     for(size_t i = 0; i < 6*numVertices; ++i){ nodalCurvature[i] = NAN; }
 
     if(dim == 3){
@@ -2195,12 +2195,9 @@ HXTStatus automaticMeshSizeField::updateHXT(){
 
       assert(faces.size() == faceMeshes.size());
 
-      bool usenewcurvature = true;
-      // Compute curvature on the faces
-      // for(size_t j = 0; j < faces.size(); j++) {
+      // Compute curvature of the faces
       int counter = 0;
       for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-        // HXTMesh *meshFace = faceMeshes[j];
         HXTMesh *meshFace = faceMeshes[counter++];
 
         if(meshFace==NULL){
@@ -2244,60 +2241,16 @@ HXTStatus automaticMeshSizeField::updateHXT(){
         if(gf->triangles.empty()){
           Msg::Info("Skipping curvature computation on face %d with 0 element", counter-1);
         } else{
-          double   *curvatureCrossfieldFace;
-          double   *nodalCurvatureFace;
-          HXTEdges *edgesFace;
-          HXT_CHECK(hxtEdgesCreate(meshFace,&edgesFace));
-          if(usenewcurvature){
-            CurvatureRusinkiewicz(tris, nodes, curv);
-          } else{
-            HXT_CHECK(hxtCurvatureRusinkiewicz(meshFace,&nodalCurvatureFace,&curvatureCrossfieldFace,edgesFace,debug));
-          }
 
-          debug = false;
-          if(debug){
+          // Compute curvature of the face
+          CurvatureRusinkiewicz(tris, nodes, curv);
 
-            for(uint64_t i = 0; i < meshFace->vertices.num; ++i){
-              double norme, v1[3];
-              v1[0] = nodalCurvatureFace[6*i];
-              v1[1] = nodalCurvatureFace[6*i+1];
-              v1[2] = nodalCurvatureFace[6*i+2];
-              norme2(v1, &norme);
-              if(norme > 100){
-                // printf("%u vertices on face %lu \n", meshFace->vertices.num, j);
-                printf(" v1 = %f \t %f \t %f - norme = %f\n",
-                  nodalCurvatureFace[6*i],
-                  nodalCurvatureFace[6*i+1],
-                  nodalCurvatureFace[6*i+2],
-                  norme);
-                nodalCurvatureFace[6*i]   = 100.0;
-                nodalCurvatureFace[6*i+1] = 0.0;
-                nodalCurvatureFace[6*i+2] = 0.0;
-              }
-              double v2[3];
-              v2[0] = nodalCurvatureFace[6*i+3];
-              v2[1] = nodalCurvatureFace[6*i+4];
-              v2[2] = nodalCurvatureFace[6*i+5];
-              norme2(v2, &norme);
-              if(norme > 100){
-                // printf("%u vertices on face %lu \n", meshFace->vertices.num, j);
-                printf(" v2 = %f \t %f \t %f - norme = %f\n\n",
-                  nodalCurvatureFace[6*i+3],
-                  nodalCurvatureFace[6*i+4],
-                  nodalCurvatureFace[6*i+5],
-                  norme);
-                nodalCurvatureFace[6*i+3] = 100.0;
-                nodalCurvatureFace[6*i+4] = 0.0;
-                nodalCurvatureFace[6*i+5] = 0.0;
-              }
-            }
-          }
-
-          debug = true;
-          // Assemble curvature vectors on the face in global nodalCurvature structure
+          // Assemble curvature vectors of the face in global nodalCurvature structure
           for (uint64_t i = 0; i<meshFace->vertices.num; ++i){
             uint64_t nodeGlobal = v2c[ c2v2[nVertices+i] ];
-            if(debug){
+
+            debug = true;
+            if(debug){ // Check the vertex of the face and the global vertex are the same
               double x1,y1,z1,x2,y2,z2;
               x1 = meshFace->vertices.coord[(size_t) 4*i+0];
               y1 = meshFace->vertices.coord[(size_t) 4*i+1];
@@ -2311,51 +2264,47 @@ HXTStatus automaticMeshSizeField::updateHXT(){
               assert(isPoint(x1,y1,z1,x2,y2,z2,1e-15));
             }
 
-            if(usenewcurvature){
-              nodalCurvature[6 * nodeGlobal + 0] = curv[i].first[0];
-              nodalCurvature[6 * nodeGlobal + 1] = curv[i].first[1];
-              nodalCurvature[6 * nodeGlobal + 2] = curv[i].first[2];
-              nodalCurvature[6 * nodeGlobal + 3] = curv[i].second[0];
-              nodalCurvature[6 * nodeGlobal + 4] = curv[i].second[1];
-              nodalCurvature[6 * nodeGlobal + 5] = curv[i].second[2];
-            } else{
-              nodalCurvature[6 * nodeGlobal + 0] = nodalCurvatureFace[6 * i + 0];
-              nodalCurvature[6 * nodeGlobal + 1] = nodalCurvatureFace[6 * i + 1];
-              nodalCurvature[6 * nodeGlobal + 2] = nodalCurvatureFace[6 * i + 2];
-              nodalCurvature[6 * nodeGlobal + 3] = nodalCurvatureFace[6 * i + 3];
-              nodalCurvature[6 * nodeGlobal + 4] = nodalCurvatureFace[6 * i + 4];
-              nodalCurvature[6 * nodeGlobal + 5] = nodalCurvatureFace[6 * i + 5];
-            }
+            nodalCurvature[6 * nodeGlobal + 0] = curv[i].first[0];
+            nodalCurvature[6 * nodeGlobal + 1] = curv[i].first[1];
+            nodalCurvature[6 * nodeGlobal + 2] = curv[i].first[2];
+            nodalCurvature[6 * nodeGlobal + 3] = curv[i].second[0];
+            nodalCurvature[6 * nodeGlobal + 4] = curv[i].second[1];
+            nodalCurvature[6 * nodeGlobal + 5] = curv[i].second[2];
           }
 
           nVertices += meshFace->vertices.num;
-
-          // HXT_CHECK(hxtEdgesDelete(&edgesFace)       );
-          if(!usenewcurvature){
-            HXT_CHECK(hxtFree(&curvatureCrossfieldFace));
-            HXT_CHECK(hxtFree(&nodalCurvatureFace)     );
-          }
         }
       } // for faces.size()
 
       debug = true;
-      if(usenewcurvature){
-        if(debug) writeNodalCurvature(nodalCurvature, mesh->vertices.num, "nodalCurvature2.txt");
-      }else{
-        if(debug) writeNodalCurvature(nodalCurvature, mesh->vertices.num, "nodalCurvature.txt");
-      }
+      if(debug) writeNodalCurvature(nodalCurvature, mesh->vertices.num, "nodalCurvature.txt");
 
-      // Delaunay
+      // Compute Delaunay tetrahedrization of the (empty) surface mesh
       HXTDelaunayOptions delaunayOptions = {NULL, NULL, 0, 0, 0, 2, 1, 0};
       HXT_CHECK(hxtEmptyMesh(mesh, &delaunayOptions));
-      // for(size_t i = 0; i < mesh->tetrahedra.num; ++i){
-      //   mesh->tetrahedra.color[i] = 0;
-      // }
 
-      HXT_CHECK(hxtCurvatureNormals(mesh, &nodeNormals, 0));
+      // Compute normal vectors
+      std::vector<int> tris(3*mesh->triangles.num, 0);
+      for(std::size_t i = 0; i < mesh->triangles.num; ++i){
+        tris[3*i+0] = mesh->triangles.node[3*i+0];
+        tris[3*i+1] = mesh->triangles.node[3*i+1];
+        tris[3*i+2] = mesh->triangles.node[3*i+2];
+      }
+
+      std::vector<SPoint3> nodes(mesh->vertices.num);
+      for(size_t i = 0; i < mesh->vertices.num; ++i){
+        nodes[i] = SPoint3(mesh->vertices.coord[(size_t) 4*i+0],
+                           mesh->vertices.coord[(size_t) 4*i+1],
+                           mesh->vertices.coord[(size_t) 4*i+2]);
+      }
+
+      std::vector<std::pair<SVector3, SVector3> > curv;
+      nodeNormals.reserve(3*mesh->vertices.num);
+
+      // Same function but returns the normals
+      CurvatureRusinkiewicz(tris, nodes, curv, nodeNormals);
 
       // Add bboxes of the surface mesh to rtree
-      // RTree<uint64_t, double, 3> triRTree;
       HXTBbox bbox_triangle;
       for(uint64_t i = 0; i < mesh->triangles.num; ++i){
         hxtBboxInit(&bbox_triangle);
@@ -2435,8 +2384,6 @@ HXTStatus automaticMeshSizeField::updateHXT(){
       }
 
       mesh = NULL;
-      // nodalCurvature = NULL;
-      nodeNormals = NULL;
 
       // for(std::set<GEdge*, GEntityPtrLessThan>::iterator it = GModel::current()->firstEdge(); it != GModel::current()->lastEdge(); ++it){
       //   GEdge *e = *it;
@@ -2477,7 +2424,7 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     forestOptions->bbox = bbox_vertices;
     forestOptions->sizeFunction = NULL;
     forestOptions->nodalCurvature = nodalCurvature;
-    forestOptions->nodeNormals = nodeNormals;
+    forestOptions->nodeNormals = &nodeNormals[0];
     forestOptions->featureSizeAtVertices = &sizeAtVertices;
     forestOptions->triRTree = (dim == 3) ? &triRTree : NULL;
     forestOptions->mesh = mesh;
@@ -2529,7 +2476,7 @@ HXTStatus automaticMeshSizeField::updateHXT(){
 
     if(dim == 3){
       if(nodalCurvature) HXT_CHECK(hxtFree(&nodalCurvature));
-      if(nodeNormals)    HXT_CHECK(hxtFree(&nodeNormals));
+      // if(nodeNormals)    HXT_CHECK(hxtFree(&nodeNormals));
       HXT_CHECK(hxtMeshDelete(&mesh));
     }
   }

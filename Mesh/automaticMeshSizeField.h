@@ -9,6 +9,7 @@
 #include "Field.h"
 #include "Context.h"
 #include "STensor3.h"
+#include "curvature.h"
 
 #include "rtree.h"
 
@@ -24,7 +25,6 @@ extern "C" {
   #include "hxt_tools.h"
   #include "hxt_mesh.h"
   #include "hxt_bbox.h"
-  #include "hxt_curvature.h"
 }
 #endif
 
