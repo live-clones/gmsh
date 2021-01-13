@@ -1716,6 +1716,19 @@ GMSH_API void gmshModelMeshRemoveEmbedded(int * dimTags, size_t dimTags_n, const
   }
 }
 
+GMSH_API void gmshModelMeshGetEmbedded(const int dim, const int tag, int ** dimTags, size_t * dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_;
+    gmsh::model::mesh::getEmbedded(dim, tag, api_dimTags_);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshReorderElements(const int elementType, const int tag, size_t * ordering, size_t ordering_n, int * ierr)
 {
   if(ierr) *ierr = 0;

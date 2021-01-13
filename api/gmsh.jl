@@ -2475,8 +2475,11 @@ end
 Embed the model entities of dimension `dim` and tags `tags` in the (`inDim`,
 `inTag`) model entity. The dimension `dim` can 0, 1 or 2 and must be strictly
 smaller than `inDim`, which must be either 2 or 3. The embedded entities should
-not be part of the boundary of the entity `inTag`, whose mesh will conform to
-the mesh of the embedded entities.
+not intersect each other or be part of the boundary of the entity `inTag`, whose
+mesh will conform to the mesh of the embedded entities. With the OpenCASCADE
+kernel, if the `fragment` operation is applied to entities of different
+dimensions, the lower dimensional entities will be automatically embedded in the
+higher dimensional entities if they are not on their boundary.
 """
 function embed(dim, tags, inDim, inTag)
     ierr = Ref{Cint}()
@@ -2503,6 +2506,27 @@ function removeEmbedded(dimTags, dim = -1)
           api_dimTags_, api_dimTags_n_, dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
+end
+
+"""
+    gmsh.model.mesh.getEmbedded(dim, tag)
+
+Get the entities (if any) embedded in the model entity of dimension `dim` and
+tag `tag`.
+
+Return `dimTags`.
+"""
+function getEmbedded(dim, tag)
+    api_dimTags_ = Ref{Ptr{Cint}}()
+    api_dimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetEmbedded, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own=true)
+    dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
+    return dimTags
 end
 
 """
@@ -4640,11 +4664,15 @@ end
 """
     gmsh.model.occ.fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
-Compute the boolean fragments (general fuse) of the entities `objectDimTags` and
-`toolDimTags` in the OpenCASCADE CAD representation. Return the resulting
-entities in `outDimTags`. If `tag` is positive, try to set the tag explicitly
-(only valid if the boolean operation results in a single entity). Remove the
-object if `removeObject` is set. Remove the tool if `removeTool` is set.
+Compute the boolean fragments (general fuse) resulting from the intersection of
+the entities `objectDimTags` and `toolDimTags` in the OpenCASCADE CAD
+representation, making all iterfaces conformal. When applied to entities of
+different dimensions, the lower dimensional entities will be automatically
+embedded in the higher dimensional entities if they are not on their boundary.
+Return the resulting entities in `outDimTags`. If `tag` is positive, try to set
+the tag explicitly (only valid if the boolean operation results in a single
+entity). Remove the object if `removeObject` is set. Remove the tool if
+`removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
 """

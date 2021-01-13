@@ -1167,8 +1167,12 @@ GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag,
 /* Embed the model entities of dimension `dim' and tags `tags' in the
  * (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must
  * be strictly smaller than `inDim', which must be either 2 or 3. The embedded
- * entities should not be part of the boundary of the entity `inTag', whose
- * mesh will conform to the mesh of the embedded entities. */
+ * entities should not intersect each other or be part of the boundary of the
+ * entity `inTag', whose mesh will conform to the mesh of the embedded
+ * entities. With the OpenCASCADE kernel, if the `fragment' operation is
+ * applied to entities of different dimensions, the lower dimensional entities
+ * will be automatically embedded in the higher dimensional entities if they
+ * are not on their boundary. */
 GMSH_API void gmshModelMeshEmbed(const int dim,
                                  int * tags, size_t tags_n,
                                  const int inDim,
@@ -1181,6 +1185,13 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
 GMSH_API void gmshModelMeshRemoveEmbedded(int * dimTags, size_t dimTags_n,
                                           const int dim,
                                           int * ierr);
+
+/* Get the entities (if any) embedded in the model entity of dimension `dim'
+ * and tag `tag'. */
+GMSH_API void gmshModelMeshGetEmbedded(const int dim,
+                                       const int tag,
+                                       int ** dimTags, size_t * dimTags_n,
+                                       int * ierr);
 
 /* Reorder the elements of type `elementType' classified on the entity of tag
  * `tag' according to `ordering'. */
@@ -2293,12 +2304,15 @@ GMSH_API void gmshModelOccCut(int * objectDimTags, size_t objectDimTags_n,
                               const int removeTool,
                               int * ierr);
 
-/* Compute the boolean fragments (general fuse) of the entities
- * `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
- * Return the resulting entities in `outDimTags'. If `tag' is positive, try to
- * set the tag explicitly (only valid if the boolean operation results in a
- * single entity). Remove the object if `removeObject' is set. Remove the tool
- * if `removeTool' is set. */
+/* Compute the boolean fragments (general fuse) resulting from the
+ * intersection of the entities `objectDimTags' and `toolDimTags' in the
+ * OpenCASCADE CAD representation, making all iterfaces conformal. When
+ * applied to entities of different dimensions, the lower dimensional entities
+ * will be automatically embedded in the higher dimensional entities if they
+ * are not on their boundary. Return the resulting entities in `outDimTags'.
+ * If `tag' is positive, try to set the tag explicitly (only valid if the
+ * boolean operation results in a single entity). Remove the object if
+ * `removeObject' is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccFragment(int * objectDimTags, size_t objectDimTags_n,
                                    int * toolDimTags, size_t toolDimTags_n,
                                    int ** outDimTags, size_t * outDimTags_n,

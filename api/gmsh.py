@@ -2939,8 +2939,12 @@ class model:
             Embed the model entities of dimension `dim' and tags `tags' in the
             (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must
             be strictly smaller than `inDim', which must be either 2 or 3. The embedded
-            entities should not be part of the boundary of the entity `inTag', whose
-            mesh will conform to the mesh of the embedded entities.
+            entities should not intersect each other or be part of the boundary of the
+            entity `inTag', whose mesh will conform to the mesh of the embedded
+            entities. With the OpenCASCADE kernel, if the `fragment' operation is
+            applied to entities of different dimensions, the lower dimensional entities
+            will be automatically embedded in the higher dimensional entities if they
+            are not on their boundary.
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             ierr = c_int()
@@ -2970,6 +2974,27 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+
+        @staticmethod
+        def getEmbedded(dim, tag):
+            """
+            gmsh.model.mesh.getEmbedded(dim, tag)
+
+            Get the entities (if any) embedded in the model entity of dimension `dim'
+            and tag `tag'.
+
+            Return `dimTags'.
+            """
+            api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetEmbedded(
+                c_int(dim),
+                c_int(tag),
+                byref(api_dimTags_), byref(api_dimTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
         @staticmethod
         def reorderElements(elementType, tag, ordering):
@@ -5474,12 +5499,15 @@ class model:
             """
             gmsh.model.occ.fragment(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
-            Compute the boolean fragments (general fuse) of the entities
-            `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
-            Return the resulting entities in `outDimTags'. If `tag' is positive, try to
-            set the tag explicitly (only valid if the boolean operation results in a
-            single entity). Remove the object if `removeObject' is set. Remove the tool
-            if `removeTool' is set.
+            Compute the boolean fragments (general fuse) resulting from the
+            intersection of the entities `objectDimTags' and `toolDimTags' in the
+            OpenCASCADE CAD representation, making all iterfaces conformal. When
+            applied to entities of different dimensions, the lower dimensional entities
+            will be automatically embedded in the higher dimensional entities if they
+            are not on their boundary. Return the resulting entities in `outDimTags'.
+            If `tag' is positive, try to set the tag explicitly (only valid if the
+            boolean operation results in a single entity). Remove the object if
+            `removeObject' is set. Remove the tool if `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
             """

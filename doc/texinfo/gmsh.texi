@@ -2375,7 +2375,10 @@ Computes the union of the object and the tool.
 Subtract the tool from the object.
 @item BooleanFragments @{ @var{boolean-list} @} @{ @var{boolean-list} @}
 Computes all the fragments resulting from the intersection of the
-entities in the object and in the tool, and makes all interfaces unique.
+entities in the object and in the tool, making all interfaces conformal.
+When applied to entities of different dimensions, the lower dimensional
+entities will be automatically embedded in the higher dimensional
+entities if they are not on their boundary.
 @end ftable
 
 with
