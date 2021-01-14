@@ -7,6 +7,7 @@
 #define MESH_QUAD_GEOMETRY
 
 #include <vector>
+#include <cfloat>
 
 class GFace;
 class MVertex;
@@ -44,7 +45,8 @@ int optimizeQuadMeshWithSubPatches(
     GFace* gf,
     SurfaceProjector* sp,
     double& qualityMin,
-    double& qualityAvg);
+    double& qualityAvg, 
+    double timeout = DBL_MAX);
 
 
 int optimizeQuadGeometry(GFace* gf);
@@ -66,6 +68,17 @@ bool smoothElementsWithLocalKernel(
     size_t iterMaxOuterLoop = 0,
     double global_dx_reduction = 1.e-3, /* stop smoothing it the while deplacement is less than global_dx_reduction * dx0 */
     double local_dx_reduction = 1.e-5 /* lock a node if it moved less than local_dx_reduction * local_size */
+    );
+
+bool smoothElementsWithDMO(
+    GFace* gf,
+    const std::vector<MElement*>& elements,
+    const std::vector<MVertex*>& freeVertices,
+    size_t iterMaxOuterLoop = 0,
+    double global_dx_reduction = 1.e-3, /* stop smoothing it the while deplacement is less than global_dx_reduction * dx0 */
+    double local_dx_reduction = 1.e-5,/* lock a node if it moved less than local_dx_reduction * local_size */
+    size_t dmo_grid_width = 8,
+    size_t dmo_grid_depth = 3
     );
 
 #endif

@@ -42,7 +42,7 @@ namespace QuadUtils {
       return false;
     }
     else if (vsorted.size() > 1){
-      printf("ARGHTTT %lu\n",vsorted.size());
+      Msg::Error("buildBoundary(): %li loops instead of one\n",vsorted.size());
       return false;
     }
 

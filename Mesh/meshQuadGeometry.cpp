@@ -23,6 +23,7 @@
 #include "meshWinslow2d.h"
 
 #include "gmsh.h"
+#include "OS.h"
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
@@ -44,6 +45,422 @@ using std::vector;
 using std::array;
 using namespace QuadUtils;
 using namespace GeometryVec3;
+
+
+bool buildCondensedStructure(
+    const std::vector<MElement*>& elements,
+    const std::vector<MVertex*>& freeVertices,
+    robin_hood::unordered_map<MVertex*,uint32_t>& old2new,
+    std::vector<MVertex*>& new2old,
+    std::vector<std::array<uint32_t,4> >& quads,
+    std::vector<std::vector<uint32_t> >& v2q,
+    std::vector<std::vector<uint32_t> >& oneRings,
+    std::vector<std::array<double,3> >& points
+    ) {
+  new2old.reserve(2*freeVertices.size());
+  v2q.reserve(2*freeVertices.size());
+  points.reserve(2*freeVertices.size());
+
+  size_t vcount = 0;
+  for (MVertex* v: freeVertices) {
+    old2new[v] = vcount;
+    vec3 pt = SVector3(v->point());
+    points.push_back(pt);
+    new2old.push_back(v);
+    vcount += 1;
+  }
+
+  v2q.resize(vcount);
+  quads.resize(elements.size());
+  for (size_t f = 0; f < elements.size(); ++f) {
+    MElement* q = elements[f];
+    if (q->getNumVertices() != 4) {
+      Msg::Error("buildCondensedStructure: element is not a quad");
+      return false;
+    }
+    for (size_t lv = 0; lv < 4; ++lv) {
+      MVertex* v = q->getVertex(lv);
+      auto it = old2new.find(v);
+      size_t nv;
+      if (it == old2new.end()) {
+        old2new[v] = vcount;
+        new2old.push_back(v);
+        nv = vcount;
+        vcount += 1;
+        vec3 pt = SVector3(v->point());
+        points.push_back(pt);
+        if (nv >= v2q.size()) {
+          v2q.resize(nv+1);
+        }
+      } else {
+        nv = it->second;
+      }
+      quads[f][lv] = nv;
+      v2q[nv].push_back(f);
+    }
+  }
+  points.shrink_to_fit();
+  quads.shrink_to_fit();
+  new2old.shrink_to_fit();
+  v2q.shrink_to_fit();
+
+  /* Build the one rings for the free vertices */
+  oneRings.resize(freeVertices.size());
+  vector<MElement*> adjQuads;
+  for (size_t v = 0; v < freeVertices.size(); ++v) {
+    adjQuads.resize(v2q[v].size());
+    for (size_t lq = 0; lq < v2q[v].size(); ++lq) {
+      adjQuads[lq] = elements[v2q[v][lq]];
+    }
+    std::vector<MVertex*> bnd;
+    bool okb = buildBoundary(adjQuads, bnd);
+    if (!okb) {
+      Msg::Error("buildCondensedStructure: failed to build boundary for stencil");
+      return false;
+    }
+    if (bnd.back() == bnd.front()) bnd.pop_back();
+
+    /* Be sure the first vertex on the boundary is edge-connected to v */
+    /* Start of the stencil */
+    MVertex* vp = freeVertices[v];
+    MVertex* v0 = NULL;
+    for (MElement* e: adjQuads) {
+      size_t N = e->getNumVertices();
+      for (size_t j = 0; j < N; ++j) {
+        MVertex* a = e->getVertex(j);
+        MVertex* b = e->getVertex((j+1)%N);
+        if (a == vp) {
+          v0 = b;
+          break;
+        } else if (b == vp) {
+          v0 = a;
+          break;
+        }
+      }
+      if (v0 != NULL) break;
+    }
+    if (v0 == NULL) {
+      Msg::Error("buildCondensedStructure: failed to found v0");
+      return false;
+    }
+    for (size_t j = 0; j < bnd.size(); ++j) {
+      if (bnd[j] == v0 && j > 0) {
+        std::rotate(bnd.begin(),bnd.begin()+j,bnd.end());
+      }
+    }
+    if (bnd.front() != v0) {
+      Msg::Error("buildCondensedStructure: wrong start");
+      return false;
+    }
+    if (bnd.size() < 6 || bnd.size() % 2 != 0) {
+      Msg::Error("buildCondensedStructure: wrong boundary, size %li", bnd.size());
+      return false;
+    }
+
+    oneRings[v].resize(bnd.size());
+    for (size_t j = 0; j < bnd.size(); ++j) {
+      auto it = old2new.find(bnd[j]);
+      if (it != old2new.end()) {
+        oneRings[v][j] = it->second;
+      } else {
+        Msg::Error("buildCondensedStructure: vertex not found in old2new");
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/* ----------- DMO mesh optimization -----------*/
+
+namespace DMO {
+  using vec2 = std::array<double,2>;
+  using vec4 = std::array<double,4>;
+  using vec5 = std::array<double,5>;
+
+  struct OneRing {
+    vec5* p_uv = NULL;
+    uint32_t n = 0;
+    vec2 jump = {0.,0.};
+  };
+
+  inline vec2 uv_adjust_jump(vec2 uv, const vec2& uv_ref, const vec2& jump) {
+    for (uint32_t d = 0; d < 2; ++d) if (jump[d] != 0.) {
+      const double diff = uv[d] - uv_ref[d];
+      const double diffP = std::abs(uv[d] + jump[d] - uv_ref[d]);
+      const double diffN = std::abs(uv[d] - jump[d] - uv_ref[d]);
+      if (diffP < diff) {
+        uv[d] += jump[d];
+      } else if (diffN < diff) {
+        uv[d] -= jump[d];
+      }
+    }
+    return uv;
+  }
+
+  inline vec4 getGrid(const vec5& v, const OneRing& ring, size_t n, double w) {
+    bool periodic = (ring.jump[0] != 0. || ring.jump[1] != 0.);
+    const vec2 uv_0 = {v[3],v[4]};
+    double u_range[2] = {DBL_MAX,-DBL_MAX};
+    double v_range[2] = {DBL_MAX,-DBL_MAX};
+    for (uint32_t i = 0; i < ring.n; ++i) {
+      vec2 uv_i = {ring.p_uv[i][3],ring.p_uv[i][4]};
+      if (periodic) uv_i = uv_adjust_jump(uv_i, uv_0, ring.jump);
+      u_range[0] = std::min(u_range[0],uv_i[0]);
+      u_range[1] = std::max(u_range[1],uv_i[0]);
+      v_range[0] = std::min(v_range[0],uv_i[1]);
+      v_range[1] = std::max(v_range[1],uv_i[1]);
+    }
+    const double du = u_range[1] - u_range[0];
+    const double dv = v_range[1] - v_range[0];
+    const vec4 grid = {
+      uv_0[0] - w * du, /* grid_u_min */
+      uv_0[1] - w * dv, /* grid_v_min */
+      uv_0[0] + w * du, /* grid_u_max */
+      uv_0[1] + w * dv  /* grid_v_max */
+    };
+    return grid;
+  }
+
+  /* p0, p1, p2, p3: the four (ordered and oriented) corners
+   * N: reference normal (normalized) */
+  inline double quad_scaled_jacobian(const vec3& p0, const vec3& p1, const vec3& p2, const vec3& p3, const vec3& N) {
+    // GeoLog::add({p0,p1,p2,p3},std::vector<double>{0.,1.,2.,3.},"quad");
+    /* Based on Sandia Verdict document */
+    constexpr double EPS = 1.e-16;
+    const vec3 L0 = p1 - p0;
+    const vec3 L1 = p2 - p1;
+    const vec3 L2 = p3 - p2;
+    const vec3 L3 = p0 - p3;
+    const double len0 = length(L0);
+    const double len1 = length(L1);
+    const double len2 = length(L2);
+    const double len3 = length(L3);
+    if (len0 < EPS || len1 < EPS || len2 < EPS || len3 < EPS) return 0.;
+    const vec3 N0 = cross(L3,L0);
+    const vec3 N1 = cross(L0,L1);
+    const vec3 N2 = cross(L1,L2);
+    const vec3 N3 = cross(L2,L3);
+
+    constexpr bool USE_EXTERIOR_NORMAL = true;
+    if (USE_EXTERIOR_NORMAL) {
+      const double a0 = dot(N,N0);
+      const double a1 = dot(N,N1);
+      const double a2 = dot(N,N2);
+      const double a3 = dot(N,N3);
+      double sjac = std::min(a0/(len0*len3),a1/(len0*len1));
+      sjac = std::min(sjac,a2/(len1*len2));
+      sjac = std::min(sjac,a3/(len2*len3));
+      return sjac;
+
+    } else {
+      const vec3 X1 = (p1-p0) + (p2 - p3);
+      const vec3 X2 = (p2-p1) + (p3 - p0);
+      vec3 Nc = cross(X1,X2);
+      if (length(Nc) < EPS) {
+        return 0.;
+      }
+      normalize_accurate(Nc);
+      const double a0 = dot(Nc,N0);
+      const double a1 = dot(Nc,N1);
+      const double a2 = dot(Nc,N2);
+      const double a3 = dot(Nc,N3);
+      double sjac = std::min(a0/(len0*len3),a1/(len0*len1));
+      sjac = std::min(sjac,a2/(len1*len2));
+      sjac = std::min(sjac,a3/(len2*len3));
+      return sjac;
+    }
+  }
+
+  /* p0, p1, p2, p3: the four (ordered and oriented) corners
+   * N: reference normal (normalized) */
+  inline double quad_shape(const vec3& p0, const vec3& p1, const vec3& p2, const vec3& p3, const vec3& N) {
+    /* Based on Sandia Verdict document */
+    constexpr double EPS = 1.e-16;
+    constexpr double EPS2 = EPS*EPS;
+    const vec3 L0 = p1 - p0;
+    const vec3 L1 = p2 - p1;
+    const vec3 L2 = p3 - p2;
+    const vec3 L3 = p0 - p3;
+    const double len0_sq = length2(L0);
+    const double len1_sq = length2(L1);
+    const double len2_sq = length2(L2);
+    const double len3_sq = length2(L3);
+    if (len0_sq < EPS2 || len1_sq < EPS2 || len2_sq < EPS2 || len3_sq < EPS2) return 0.;
+    const vec3 N0 = cross(L3,L0);
+    const vec3 N1 = cross(L0,L1);
+    const vec3 N2 = cross(L1,L2);
+    const vec3 N3 = cross(L2,L3);
+    const double a0 = dot(N,N0); /* bad if non planar quad ? */
+    const double a1 = dot(N,N1);
+    const double a2 = dot(N,N2);
+    const double a3 = dot(N,N3);
+    const double q0 = a0/(len3_sq+len0_sq);
+    const double q1 = a1/(len0_sq+len1_sq);
+    const double q2 = a2/(len1_sq+len2_sq);
+    const double q3 = a3/(len2_sq+len3_sq);
+    return 2.*std::min(std::min(q0,q1),std::min(q2,q3));
+  }
+
+  inline double quad_shape_fast(const double* p[4], const double* N) {
+    /* Not faster than the above version..., even slower */
+    constexpr double EPS = 1.e-16;
+    constexpr double EPS2 = EPS*EPS;
+    double L[4][3];
+    double norm2[4];
+    for (size_t i = 0; i < 4; ++i) {
+      const size_t in = (i != 3) ? i+1 : 0;
+      L[i][0] = p[in][0]-p[i][0];
+      L[i][1] = p[in][1]-p[i][1];
+      L[i][2] = p[in][2]-p[i][2];
+      norm2[i] = L[i][0]*L[i][0] + L[i][1]*L[i][1] + L[i][2]*L[i][2];
+      if (norm2[i] < EPS2) return 0.; /* collapsed edge */
+    }
+    double qmin;
+    for (size_t i = 0; i < 4; ++i) {
+      const size_t ip = (i != 0) ? i-1 : 3;
+      // const size_t in = (i != 3) ? i+1 : 0;
+      const double dp0 = L[ip][0];
+      const double dp1 = L[ip][1];
+      const double dp2 = L[ip][2];
+      const double sqp = norm2[ip];
+      const double dn0 = L[i][0];
+      const double dn1 = L[i][1];
+      const double dn2 = L[i][2];
+      const double sqn = norm2[i];
+      const double cp0 = dp1*dn2-dp2*dn1;
+      const double cp1 = dp2*dn0-dp0*dn2;
+      const double cp2 = dp0*dn1-dp1*dn0;
+      /* Verdict version: dot product between normal and corner normal */
+      const double num = cp0*N[0]+cp1*N[1]+cp2*N[2];
+      /* Shape quality measure is: shape = 2*sign*cpnorm/(sqp+sqn)
+       * but we reformulate a bit to minimize the number of division */
+      const double denom = sqp+sqn;
+      if (i == 0) {
+        qmin = num/denom;
+      } else if (num < denom * qmin) {
+        qmin = num/denom;
+      }
+    }
+    return 2.*qmin;
+  }
+
+  inline double computeQualityQuadOneRing(const vec5& v, const OneRing& ring, const vec3& normal,
+      double breakIfBelowThreshold = -DBL_MAX) {
+    constexpr bool USE_FAST_VERSION = false;
+    if (ring.n % 2 != 0) return -DBL_MAX;
+    double qmin = DBL_MAX;
+    const vec3 p = {v[0],v[1],v[2]};
+    for (uint32_t i = 0; i < ring.n / 2; ++i) {
+      if (USE_FAST_VERSION) {
+        const size_t i2 = (2*i+2)%ring.n;
+        const double* pts[4] = {
+          ring.p_uv[2*i+0].data(),
+          ring.p_uv[2*i+1].data(),
+          ring.p_uv[i2].data(),
+          p.data()
+        };
+        const double q = quad_shape_fast(pts,normal.data());
+        qmin = std::min(q,qmin);
+        if (qmin < breakIfBelowThreshold) return qmin;
+      } else {
+        const vec3 p0 = { ring.p_uv[2*i+0][0], ring.p_uv[2*i+0][1], ring.p_uv[2*i+0][2] };
+        const vec3 p1 = { ring.p_uv[2*i+1][0], ring.p_uv[2*i+1][1], ring.p_uv[2*i+1][2] };
+        const size_t i2 = (2*i+2)%ring.n;
+        const vec3 p2 = { ring.p_uv[i2][0], ring.p_uv[i2][1], ring.p_uv[i2][2] };
+        const double q = quad_shape(p0,p1,p2,p,normal);
+        qmin = std::min(q,qmin);
+        if (qmin < breakIfBelowThreshold) return qmin;
+      }
+    }
+    return qmin;
+  }
+
+  vec5 dmoOptimizeVertexPosition(GFace* gf, vec5 v, const OneRing& ring, size_t n, size_t nIter) {
+    vec3 normal = gf->normal(SPoint2(v[3],v[4]));
+    if (length2(normal) == 0.) {
+      Msg::Error("normal length is 0 !");
+      return v;
+    }
+    normalize_accurate(normal);
+
+    double w = 0.5;
+    double qmax = computeQualityQuadOneRing(v, ring, normal);
+    vec5 vmax = v;
+    // DBG("----");
+    // DBG(v,qmax,normal);
+    // for (size_t j = 0; j < ring.n; ++j) {
+    //   DBG(" ", j, ring.p_uv[j]);
+    // }
+
+
+    /* warning: not in C++ standard but we don't want template or alloc */
+    for (size_t iter = 0; iter < nIter; ++iter) {
+      vec4 grid = getGrid(v, ring, n, w);
+      // DBG(iter,w,grid);
+      SPoint2 uv;
+      for (size_t i = 0; i < n; ++i) {
+        uv.data()[0] = double(i)/double(n-1)*grid[0] + double(n-1-i)/double(n-1)*grid[2];
+        for (size_t j = 0; j < n; ++j) {
+          uv.data()[1] = double(j)/double(n-1)*grid[1] + double(n-1-j)/double(n-1)*grid[3];
+          GPoint newPos = gf->point(uv);
+          const vec5 v2 = {newPos.x(),newPos.y(),newPos.z(),uv.data()[0],uv.data()[1]};
+          double q2 = computeQualityQuadOneRing(v2, ring, normal, qmax);
+          // DBG("-", v2, q2);
+          if (q2 > qmax) {
+            // DBG("--> better", iter, nIter, qmax, "->", q2);
+            vmax = v2;
+            qmax = q2;
+          }
+        }
+      }
+      w = w * 2./double(n-1);
+    }
+    // GeoLog::flush();
+    // gmsh::fltk::run();
+    // abort();
+
+    return vmax;
+  }
+
+  bool setVertexGFaceUV(GFace* gf, MVertex* v, double uv[2]) {
+    bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
+    if (onGf) {
+      v->getParameter(0,uv[0]);
+      v->getParameter(1,uv[1]);
+      return true;
+    } else {
+      GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
+      if (ge != NULL) {
+        double t;
+        v->getParameter(0,t);
+        SPoint2 uvp = ge->reparamOnFace(gf, t, -1);
+        uv[0] = uvp.x();
+        uv[1] = uvp.y();
+        return true;
+      } else {
+        GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
+        if (gv != NULL) {
+          SPoint2 uvp = gv->reparamOnFace(gf,0);
+          uv[0] = uvp.x();
+          uv[1] = uvp.y();
+          return true;
+        }
+      }
+    }
+    uv[0] = 0.;
+    uv[1] = 0.;
+    return false;
+  }
+
+
+}
+
+
+
+/* ---------------------------------------------*/
+
 
 template <size_t N>
 bool kernelLaplacian(const std::array<vec3,N>& points, vec3& newPos) {
@@ -256,131 +673,6 @@ bool projectOnStencilTrianglePlanes(
   return true;
 }
 
-
-bool buildCondensedStructure(
-    const std::vector<MElement*>& elements,
-    const std::vector<MVertex*>& freeVertices,
-    robin_hood::unordered_map<MVertex*,uint32_t>& old2new,
-    std::vector<MVertex*>& new2old,
-    std::vector<std::array<uint32_t,4> >& quads,
-    std::vector<std::vector<uint32_t> >& v2q,
-    std::vector<std::vector<uint32_t> >& oneRings,
-    std::vector<std::array<double,3> >& points
-    ) {
-  new2old.reserve(2*freeVertices.size());
-  v2q.reserve(2*freeVertices.size());
-  points.reserve(2*freeVertices.size());
-
-  size_t vcount = 0;
-  for (MVertex* v: freeVertices) {
-    old2new[v] = vcount;
-    vec3 pt = SVector3(v->point());
-    points.push_back(pt);
-    new2old.push_back(v);
-    vcount += 1;
-  }
-
-  v2q.resize(vcount);
-  quads.resize(elements.size());
-  for (size_t f = 0; f < elements.size(); ++f) {
-    MElement* q = elements[f];
-    if (q->getNumVertices() != 4) {
-      Msg::Error("buildCondensedStructure: element is not a quad");
-      return false;
-    }
-    for (size_t lv = 0; lv < 4; ++lv) {
-      MVertex* v = q->getVertex(lv);
-      auto it = old2new.find(v);
-      size_t nv;
-      if (it == old2new.end()) {
-        old2new[v] = vcount;
-        new2old.push_back(v);
-        nv = vcount;
-        vcount += 1;
-        vec3 pt = SVector3(v->point());
-        points.push_back(pt);
-        if (nv >= v2q.size()) {
-          v2q.resize(nv+1);
-        }
-      } else {
-        nv = it->second;
-      }
-      quads[f][lv] = nv;
-      v2q[nv].push_back(f);
-    }
-  }
-  points.shrink_to_fit();
-  quads.shrink_to_fit();
-  new2old.shrink_to_fit();
-  v2q.shrink_to_fit();
-
-  /* Build the one rings for the free vertices */
-  oneRings.resize(freeVertices.size());
-  vector<MElement*> adjQuads;
-  for (size_t v = 0; v < freeVertices.size(); ++v) {
-    adjQuads.resize(v2q[v].size());
-    for (size_t lq = 0; lq < v2q[v].size(); ++lq) {
-      adjQuads[lq] = elements[v2q[v][lq]];
-    }
-    std::vector<MVertex*> bnd;
-    bool okb = buildBoundary(adjQuads, bnd);
-    if (!okb) {
-      Msg::Error("buildCondensedStructure: failed to build boundary for stencil");
-      return false;
-    }
-    if (bnd.back() == bnd.front()) bnd.pop_back();
-
-    /* Be sure the first vertex on the boundary is edge-connected to v */
-    /* Start of the stencil */
-    MVertex* vp = freeVertices[v];
-    MVertex* v0 = NULL;
-    for (MElement* e: adjQuads) {
-      size_t N = e->getNumVertices();
-      for (size_t j = 0; j < N; ++j) {
-        MVertex* a = e->getVertex(j);
-        MVertex* b = e->getVertex((j+1)%N);
-        if (a == vp) {
-          v0 = b;
-          break;
-        } else if (b == vp) {
-          v0 = a;
-          break;
-        }
-      }
-      if (v0 != NULL) break;
-    }
-    if (v0 == NULL) {
-      Msg::Error("buildCondensedStructure: failed to found v0");
-      return false;
-    }
-    for (size_t j = 0; j < bnd.size(); ++j) {
-      if (bnd[j] == v0 && j > 0) {
-        std::rotate(bnd.begin(),bnd.begin()+j,bnd.end());
-      }
-    }
-    if (bnd.front() != v0) {
-      Msg::Error("buildCondensedStructure: wrong start");
-      return false;
-    }
-    if (bnd.size() < 6 || bnd.size() % 2 != 0) {
-      Msg::Error("buildCondensedStructure: wrong boundary, size %li", bnd.size());
-      return false;
-    }
-
-    oneRings[v].resize(bnd.size());
-    for (size_t j = 0; j < bnd.size(); ++j) {
-      auto it = old2new.find(bnd[j]);
-      if (it != old2new.end()) {
-        oneRings[v][j] = it->second;
-      } else {
-        Msg::Error("buildCondensedStructure: vertex not found in old2new");
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
 
 template <size_t N>
 bool extractGeometricStencil(
@@ -1243,9 +1535,24 @@ int quadQualityStats(const std::vector<MElement*>& elements, double& qualityMin,
   computeQualitySICN(elements, quality, qualityMin, qualityAvg);
   return 0;
 }
+
 int quadQualityStats(const std::vector<MQuadrangle*>& elements, double& qualityMin, double& qualityAvg) {
   vector<double> quality(elements.size());
   computeQualitySICN(elements, quality, qualityMin, qualityAvg);
+  return 0;
+}
+
+int quadQualityStatsScaledJacobian(const std::vector<MElement*>& elements, double& qualityMin, double& qualityAvg) {
+  vector<double> quality(elements.size());
+  qualityMin = DBL_MAX;
+  qualityAvg = 0.;
+  for (size_t i = 0; i < elements.size(); ++i) {
+    double qua = elements[i]->minScaledJacobian();
+    quality[i] = qua;
+    qualityMin = std::min(qualityMin,quality[i]);
+    qualityAvg += quality[i];
+  }
+  if (elements.size() > 0) qualityAvg /= double(elements.size());
   return 0;
 }
 
@@ -1469,8 +1776,10 @@ int optimizeQuadMeshWithSubPatches(
     GFace* gf,
     SurfaceProjector* sp,
     double& qualityMin,
-    double& qualityAvg) {
+    double& qualityAvg,
+    double timeout) {
   if (gf->quadrangles.size() == 0) return 0;
+  double t1 = Cpu();
 
   double minSICNb = DBL_MAX;
   double avgSICNb = 0.;
@@ -1551,21 +1860,29 @@ int optimizeQuadMeshWithSubPatches(
         }
       }
 
+
+      double etime = Cpu() - t1;
+      if (etime > timeout) {
+        Msg::Debug("- stop local quad optim because of timeout");
+        running = false;
+        break;
+      }
+
       running = true;
     }
   }
-
+  double etime = Cpu() - t1;
 
   double minSICNa = DBL_MAX;
   double avgSICNa = 0.;
   quadQualityStats(gf->quadrangles, minSICNa, avgSICNa);
 
   if (minSICNa < 0.) {
-    Msg::Error("- Face %i: local smoothing, SICN min: %f -> %f, avg: %f -> %f",
-        gf->tag(),minSICNb,minSICNa,avgSICNb,avgSICNa);
+    Msg::Error("- Face %i: local smoothing (%.3f sec), SICN min: %f -> %f, avg: %f -> %f",
+        gf->tag(),etime,minSICNb,minSICNa,avgSICNb,avgSICNa);
   } else {
-    Msg::Info("- Face %i: local smoothing, SICN min: %f -> %f, avg: %f -> %f",
-        gf->tag(),minSICNb,minSICNa,avgSICNb,avgSICNa);
+    Msg::Info("- Face %i: local smoothing (%.3f sec), SICN min: %f -> %f, avg: %f -> %f",
+        gf->tag(),etime,minSICNb,minSICNa,avgSICNb,avgSICNa);
   }
 
   return 0;
@@ -1594,10 +1911,116 @@ int optimizeQuadMeshWithSubPatches(
     GFace* gf,
     SurfaceProjector* sp,
     double& qualityMin,
-    double& qualityAvg
+    double& qualityAvg,
+    double timeval
     ){
   Msg::Error("Mesquite module required to optimize quad geometry. Recompile with ENABLE_MESQUITE=YES");
   return -1;
 }
 
 #endif
+
+using namespace DMO;
+
+bool smoothElementsWithDMO(
+    GFace* gf,
+    const std::vector<MElement*>& elements,
+    const std::vector<MVertex*>& freeVertices,
+    size_t iterMaxOuterLoop,
+    double global_dx_reduction,
+    double local_dx_reduction,
+    size_t dmo_grid_width,
+    size_t dmo_grid_depth
+    ) {
+
+  std::vector<vec5> point_uv;
+  std::vector<size_t> one_ring_first;
+  std::vector<uint32_t> one_ring_values;
+  std::vector<MVertex*> new2old;
+  {
+    /* Condensed version (no pointers, less indirection, more cache efficient) */
+    robin_hood::unordered_map<MVertex*,uint32_t> old2new;
+    std::vector<std::array<uint32_t,4> > quads;
+    std::vector<std::vector<uint32_t> > v2q;
+    std::vector<std::vector<uint32_t> > oneRings;
+    std::vector<std::array<double,3> > points;
+    bool okc = buildCondensedStructure(elements,freeVertices,old2new,new2old,
+        quads,v2q,oneRings,points);
+    if (!okc) {
+      Msg::Error("smoothElementsWithLocalKernel: failed to build condensed representation");
+      return false;
+    }
+
+    /* Get associated uv in GFace */
+    std::vector<std::array<double,3> > uvs(old2new.size());
+    for (size_t i = 0; i < new2old.size(); ++i) {
+      setVertexGFaceUV(gf, new2old[i], uvs[i].data());
+    }
+
+    /* Compact 3D + uv */
+    point_uv.resize(points.size());
+    for (size_t i = 0; i < points.size(); ++i) {
+      point_uv[i][0] = points[i][0];
+      point_uv[i][1] = points[i][1];
+      point_uv[i][2] = points[i][2];
+      point_uv[i][3] = uvs[i][0];
+      point_uv[i][4] = uvs[i][1];
+    }
+
+    /* One ring adjacencies in contiguous memory */
+    compress(oneRings, one_ring_first, one_ring_values);
+  }
+
+  OneRing ring;
+  std::vector<vec5> ringGeometric(10);
+  if (gf->periodic(0)) ring.jump[0] = gf->period(0);
+  if (gf->periodic(1)) ring.jump[1] = gf->period(1);
+  ring.p_uv = ringGeometric.data();
+  const size_t nFree = freeVertices.size();
+  for (size_t iter = 0; iter < iterMaxOuterLoop; ++iter) {
+
+    /* Loop over interior vertices */
+    for (size_t v = 0; v < nFree; ++v) {
+
+      /* Fill the OneRing geometric information */
+      ring.n = one_ring_first[v+1]-one_ring_first[v];
+      if (ring.n >= ringGeometric.size()) {
+        ringGeometric.resize(ring.n);
+        ring.p_uv = ringGeometric.data();
+      }
+      for (size_t lv = 0; lv < ring.n; ++lv) {
+        ring.p_uv[lv] = point_uv[one_ring_values[one_ring_first[v]+lv]];
+      }
+
+      /* Optimize vertex position with DMO (adaptive grid sampling) */
+      vec5 pos = point_uv[v];
+      vec5 newPos = dmoOptimizeVertexPosition(gf, pos, ring, dmo_grid_width, dmo_grid_depth);
+      point_uv[v] = newPos;
+      // double dx = length(vec3{newPos[0]-pos[0],newPos[1]-pos[1],newPos[2]-pos[2]});
+    }
+
+    if (false) {
+      /* Update the GFace vertex positions */
+      for (size_t i = 0; i < freeVertices.size(); ++i) {
+        new2old[i]->setXYZ(point_uv[i][0],point_uv[i][1],point_uv[i][2]);
+      }
+      double minSICN = DBL_MAX;
+      double avgSICN = 0.;
+      quadQualityStats(gf->quadrangles, minSICN, avgSICN);
+      DBG("...", iter, minSICN, avgSICN);
+      double minJ = DBL_MAX;
+      double avgJ = 0.;
+      quadQualityStatsScaledJacobian(elements, minJ, avgJ);
+      DBG("...", iter, minJ, avgJ);
+    }
+  }
+
+  /* Update the GFace vertex positions */
+  for (size_t i = 0; i < freeVertices.size(); ++i) {
+    new2old[i]->setXYZ(point_uv[i][0],point_uv[i][1],point_uv[i][2]);
+  }
+
+
+  return true;
+}
+

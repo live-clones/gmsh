@@ -695,7 +695,7 @@ void meshGEdge::operator()(GEdge *ge)
   double a;
   int filterMinimumN;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
-  // printf("- Curve %i: N=%i, Points.size()=%li, a=%f\n", ge->tag(), N, Points.size(), a);
+  // Msg::Debug("- Curve %i: N=%i, Points.size()=%li, a=%f\n", ge->tag(), N, Points.size(), a);
 
   // printFandPrimitive(ge->tag(),Points);
 
@@ -769,7 +769,9 @@ void meshGEdge::operator()(GEdge *ge)
     mesh_vertices = vv;
   }
 
-  if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
+  if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG
+      && CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT
+      && CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS)
     if(_addBegin.empty() && _addEnd.empty())
       filterPoints(ge, filterMinimumN - 2);
 

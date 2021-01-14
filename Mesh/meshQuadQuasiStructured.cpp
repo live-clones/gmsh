@@ -34,6 +34,7 @@
 #include "geolog.h"
 #include "meshWinslow2d.h"
 #include "meshGEdge.h"
+#include "meshGFaceOptimize.h"
 #include "GModelIO_OCC.h"
 #include "gmsh.h"
 #include <queue>
@@ -228,7 +229,7 @@ namespace QSQ {
         return false;
       }
       else if (vsorted.size() > 1){
-        printf("ARGHTTT %lu\n",vsorted.size());
+        Msg::Error("buildBoundary(): %li loops instead of one\n",vsorted.size());
         return false;
       }
 
@@ -661,13 +662,64 @@ namespace QSQ {
     return true;
   }
 
-  struct QuadqsInfo {
+  bool adaptSizeMapToTriangulation(
+      const std::vector<GFace*>& faces, 
+      std::unordered_map<MVertex*,double>& sizemap,
+      double factor = 1.) 
+  {
+    robin_hood::unordered_map<MVertex*,robin_hood::unordered_set<MVertex*> > v2v;
+    buildVertexToVertex(faces, v2v);
+
+    for (auto& kv: sizemap) {
+      MVertex* v = kv.first;
+      double& size = kv.second;
+
+      double dmin = DBL_MAX;
+      auto it = v2v.find(v);
+      if (it != v2v.end()) {
+        for (MVertex* v2: it->second) {
+          double d = 2. * factor * (v2->distance(v)); /* factor 2 because of midpoint subdiv */
+          dmin = std::min(d,dmin);
+        }
+      }
+      if (dmin < size) {
+        size = dmin;
+      }
+    }
+
+    return true;
+  }
+
+  struct QuadqsContext {
     bool importBackgroundField = false;
     bool optimizeTopology = true;
     bool optimizeGeometry = true;
     unordered_map<std::string,double> stats;
-    double timeMaxTopoPerGFace = 100.;
+    double timeoutQuadqsPerGFace = DBL_MAX;
+    double timeoutQuadqsPerGFaceCavity = DBL_MAX;
+    double timeoutGeomOptimPerGFace = DBL_MAX;
   };
+
+  struct QuadqsGFaceContext {
+    /* Data (all timings in seconds) */
+    double timeoutQuadqsPerGFace = DBL_MAX;
+    double timeoutQuadqsPerGFaceCavity = DBL_MAX;
+    double timeoutGeomOptimPerGFace = DBL_MAX;
+    double t0 = 0.;
+
+    /* Functions */
+    QuadqsGFaceContext(const QuadqsContext& qqs) {
+      timeoutQuadqsPerGFace = qqs.timeoutQuadqsPerGFace;
+      timeoutQuadqsPerGFaceCavity = qqs.timeoutQuadqsPerGFaceCavity;
+      timeoutGeomOptimPerGFace = qqs.timeoutGeomOptimPerGFace;
+      t0 = Cpu();
+    }
+
+    double elapsedCpuTime() const {
+      return Cpu() - t0;
+    }
+  };
+
 
   class GFaceInfo {
     public:
@@ -2041,9 +2093,12 @@ namespace QSQ {
     FCavity lastCav;
     size_t lastNbIrregular;
     double lastIrregularity;
+    /* time budget to grow a cavity */
+    double timeout;
+    double tStart;
 
     /* Methods */
-    Gardener(MeshHalfEdges& M_) : M(M_), current(NULL), lastCav(M), lastIrregularity(DBL_MAX) {
+    Gardener(MeshHalfEdges& M_) : M(M_), current(NULL), lastCav(M), lastIrregularity(DBL_MAX), timeout(DBL_MAX), tStart(0) {
       /* Initialize data from MeshHalfEdges */
       valence.resize(M.vertices.size(),0);
       valenceInCavity.resize(M.vertices.size());
@@ -2110,6 +2165,7 @@ namespace QSQ {
       } else {
         singsBdr.insert(v);
       }
+      tStart = Cpu(); /* time counter starts */
       return true;
     }
 
@@ -2417,12 +2473,17 @@ namespace QSQ {
       std::vector<size_t> candidates;
       size_t iter = 0;
       while (running) {
+        running = false;
         iter += 1;
         if (iter > 1e6) {
           Msg::Error("grow: iter=%li, infinite loop ?", iter);
           break;
         }
-        running = false;
+        if (timeout > 0. && Cpu() - tStart > timeout) {
+          Msg::Debug("grow: cavity growth reached timeout");
+          break;
+        }
+
         bool okc = getFlipHalfEdgeCandidates(candidates);
         if (!okc) {
           if (DBG_VERBOSE) Msg::Debug("grow: failed to get flip half edge candidates");
@@ -2999,7 +3060,10 @@ namespace QSQ {
     robin_hood::unordered_map<MVertex*,MVertex*> old2new;
     for (GEdge* ge: gf->edges()) {
       if (ge->isSeam(gf) && ge->faces().size() == 1 && ge->faces()[0] == gf) {
+        /* GEdge interior vertices */
         for (MVertex* ov: ge->mesh_vertices) {
+          auto it = old2new.find(ov);
+          if (it != old2new.end()) continue; /* already changed */
           SPoint3 p = ov->point();
           double t;
           ov->getParameter(0,t);
@@ -3016,6 +3080,23 @@ namespace QSQ {
           delete ge->lines[i];
         }
         ge->lines.clear();
+
+        /* GEdge boundary vertices */
+        for (GVertex* gv: ge->vertices()) if (gv->mesh_vertices.size() == 1) {
+          if (gv->edges().size() != 1 || gv->edges()[0] != ge) continue;
+          MVertex* ov = gv->mesh_vertices[0];
+          auto it = old2new.find(ov);
+          if (it != old2new.end()) continue; /* already changed */
+          SPoint3 p = ov->point();
+          SPoint2 uv = gv->reparamOnFace(gf,0);
+          MVertex *nv = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
+          nv->setParameter(0,uv[0]);
+          nv->setParameter(1,uv[1]);
+          gf->mesh_vertices.push_back(nv);
+          old2new[ov] = nv;
+          delete ov;
+          gv->mesh_vertices.clear();
+        }
       }
     }
     if (old2new.size() > 0) {
@@ -3539,11 +3620,10 @@ namespace QSQ {
   }
 
   int remeshCavitiesAroundSingularities(GFace* gf, std::vector<MVertex*>& singularVertices, 
-      const std::vector<size_t>& patternsToCheck, SurfaceProjector* sp = NULL,
-      double cpuTimeLimit = 0.) 
+      const std::vector<size_t>& patternsToCheck, SurfaceProjector* sp,
+      QuadqsGFaceContext& ctx) 
   {
     Msg::Debug("- Face %i: remeshCavitiesAroundSingularities ...", gf->tag());
-    double t1 = Cpu();
 
     using std::priority_queue;
     using std::pair;
@@ -3561,8 +3641,8 @@ namespace QSQ {
     while (inProgress) {
       inProgress = false;
 
-      if (cpuTimeLimit > 0. && Cpu() - t1 > cpuTimeLimit) {
-        Msg::Warning("  remeshing sing. cavities reached time limit (%fs)", cpuTimeLimit);
+      if (ctx.elapsedCpuTime() > ctx.timeoutQuadqsPerGFace) {
+        Msg::Debug("--- remeshing quad cavity loop reached time limit (%fs)", ctx.timeoutQuadqsPerGFace);
         break;
       }
 
@@ -3575,6 +3655,7 @@ namespace QSQ {
       }
 
       Gardener G(M);
+      G.timeout = ctx.timeoutQuadqsPerGFaceCavity;
 
       /* Look for the best singularity around which to grow cavity ... */
       singularities.clear();
@@ -4259,10 +4340,9 @@ namespace QSQ {
   int remeshQuadrilateralPatches(
       int growthType,
       GFace* gf, std::vector<MVertex*>& singularVertices,
-      const std::vector<size_t>& patternsToCheck, SurfaceProjector* sp = NULL,
-      double cpuTimeLimit = 0.) {
+      const std::vector<size_t>& patternsToCheck, SurfaceProjector* sp,
+      QuadqsGFaceContext& ctx) {
     Msg::Debug("- Face %i: remeshing quadrilateral cavities  ...", gf->tag());
-    double t1 = Cpu();
 
     /* Remeshing parameters */
     // const std::vector<std::pair<size_t,size_t> > patternSizeLimits;
@@ -4289,11 +4369,12 @@ namespace QSQ {
       robin_hood::unordered_set<void*> tried;
       robin_hood::unordered_set<CavityInputSig,CIHash> cavityTried;
       bool inProgress = true;
+      bool stop = false;
       while (inProgress) {
         inProgress = false;
-
-        if (cpuTimeLimit > 0. && Cpu() - t1 > cpuTimeLimit) {
-          Msg::Warning("  remeshing quad cavities reached time limit (%fs)", cpuTimeLimit);
+        if (ctx.elapsedCpuTime() > ctx.timeoutQuadqsPerGFace) {
+          Msg::Debug("--- remeshing quad cavity loop reached time limit (%fs)", ctx.timeoutQuadqsPerGFace);
+          stop = true;
           break;
         }
 
@@ -4432,17 +4513,47 @@ namespace QSQ {
           }
         }
       }
+      if (stop) break;
     }
 
     if (count > 0) {
-      if (gf->quadrangles.size() < 1000000) {
-	//        Msg::Debug("-- Winslow smoothing of the face (%li quads) ...", gf->quadrangles.size());
-	//        if (NITERWINSLOW)meshWinslow2d(gf, NITERWINSLOW);
-      }
       Msg::Info("- Face %i: remeshed %li quadrilateral cavities  ...", gf->tag(), count);
     }
 
     return 0;
+  }
+
+
+  double computeMinGFaceSICN(GFace* gf, bool breakIfNegative = false) {
+    double qmin = DBL_MAX;
+    for (MElement* e: gf->triangles) {
+      double q = e->minSICNShapeMeasure();
+      qmin = std::min(q,qmin);
+      if (breakIfNegative && qmin < 0) return qmin;
+    }
+    for (MElement* e: gf->quadrangles) {
+      double q = e->minSICNShapeMeasure();
+      qmin = std::min(q,qmin);
+      if (breakIfNegative && qmin < 0) return qmin;
+    }
+    return qmin;
+  }
+
+  /* Verify the min element SICN quality is not decreased
+   * by changing the orientation */
+  void safeMeshGFaceFixOrientation(GFace* gf) {
+    double minSICNb = computeMinGFaceSICN(gf,false);
+    orientMeshGFace orient;
+    orient(gf);
+    double minSICNa = computeMinGFaceSICN(gf,false);
+
+    if (minSICNa <= 0 && minSICNa < minSICNb) { 
+      /* SICN quality decreased, inverse again to 
+       * retrieve initial orientation */
+      Msg::Warning("- Face %i: orientMeshGFace decreased SICN min (%.3f -> %.3f), cancel it", gf->tag(), minSICNb, minSICNa);
+      for(std::size_t iEl = 0; iEl < gf->getNumMeshElements(); iEl++)
+        gf->getMeshElement(iEl)->reverse();
+    }
   }
 
   int meshSimpleFaceWithPattern(GFace* gf, const GFaceInfo& info,
@@ -4454,8 +4565,7 @@ namespace QSQ {
     if (!quadqsPatternsOnSimpleFaces) return -1;
 
     /* Ensure compatible orientation with CAD */
-    orientMeshGFace orient;
-    orient(gf);
+    safeMeshGFaceFixOrientation(gf);
 
     vector<GEdge *> const &edges = gf->edges();
 
@@ -5337,10 +5447,10 @@ int createCrossFieldAndSizeMap(GModel* gm,
         Msg::Warning("faceInfo not found for face %i, weird", gf->tag());
       } else {
         const GFaceInfo& info = it2->second;
-        if (info.chi == 1 && info.bdrValVertices[1].size() >= 2 
-            && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
-          nbDiffusionLevels = 2; /* simple face, no need for acurate computation */
-        }
+        // if (info.chi == 1 && info.bdrValVertices[1].size() >= 2 
+        //     && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
+        //   nbDiffusionLevels = 2; /* simple face, no need for acurate computation */
+        // }
       }
 
       Msg::Info("- Face %i: compute cross field (%li triangles, %i diffusion levels) ...",
@@ -5401,11 +5511,28 @@ int createCrossFieldAndSizeMap(GModel* gm,
   }
   Msg::Info("Detected %li cross field singularities", singularities.size());
 
-  double smallestMultiplier = 0.05;
-  double gradientMax = 1.15;
-  bool oka = adaptSizeMapToSmallFeatures(faces, scaling, smallestMultiplier, gradientMax);
-  if (!oka) {
-    Msg::Error("failed to adapt size map to smallest features");
+  /* Size map adapted to small CAD features */
+  bool adaptToCAD = true;
+  QMT_Utils::read_from_env("quadqsAdaptToCad", adaptToCAD);
+  double adaptToTrgl = 0.;
+  QMT_Utils::read_from_env("quadqsAdaptToTrgl", adaptToTrgl);
+  if (adaptToTrgl != 0.) {
+    Msg::Warning("=== quadqsAdaptToTrgl option enabled ===");
+    Msg::Info("Use the triangulation edge size as minimal size map");
+    bool oka = adaptSizeMapToTriangulation(faces, scaling, adaptToTrgl);
+    if (!oka) {
+      Msg::Error("failed to adapt size map to triangulation");
+    }
+  } else if (adaptToCAD) {
+    double smallestMultiplier = 0.05;
+    double gradientMax = 1.15;
+    Msg::Info("Adapt size map to small CAD features");
+    bool oka = adaptSizeMapToSmallFeatures(faces, scaling, smallestMultiplier, gradientMax);
+    if (!oka) {
+      Msg::Error("failed to adapt size map to smallest features");
+    }
+  } else {
+    Msg::Warning("Size map adaptation to CAD disabled");
   }
 
   if (SHOW_SIZEMAP) create_view_with_sizemap(triangles, scaling, "dbg_sizemap");
@@ -5495,7 +5622,6 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
         && ge->lines.size() != (size_t) ge->meshAttributes.prescribedNumberOfEdges) {
       Msg::Warning("- Curve %i: %li edges but %i prescribed", 
           ge->tag(), ge->lines.size(), ge->meshAttributes.prescribedNumberOfEdges);
-      abort();
     }
 
   }
@@ -5574,7 +5700,6 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
     CTX::instance()->mesh.recombineAll = meshRecombineAllOld;
   }
 
-
   return 0;
 }
 
@@ -5590,6 +5715,9 @@ int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFa
     GFace* gf = faces[ii];
     if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if (gf->meshStatistics.status == GFace::DONE) continue;
+    if (CTX::instance()->debugSurface > 0 &&
+        gf->tag() != CTX::instance()->debugSurface) continue;
+    
     GFaceInfo& info = faceInfo[gf];
     /* Check if convex topological disk */
     if (info.chi == 1 && info.bdrValVertices[1].size() >= 0 
@@ -5857,6 +5985,39 @@ int midpointSubdivisionToFullQuad(GModel* gm, bool tryProjection = false) {
   return 0;
 }
 
+int orientMeshGFaceByCheckingAllElements(GFace* gf) {
+  if (!gf->haveParametrization()) return 0;
+  Msg::Warning("orientMeshGFaceByCheckingAllElements not working ?");
+
+  /* the existing orientMeshGFace checks only one element,
+   * which may return the wrong result with low quality elements */
+  /* we check the normal at one vertex of each element */
+  size_t nOk = 0;
+  size_t nInv = 0;
+  for(std::size_t iEl = 0; iEl < gf->getNumMeshElements(); iEl++) {
+    MElement *e = gf->getMeshElement(iEl);
+    SVector3 ne = e->getFace(0).normal();
+    MVertex* v = e->getVertex(0);
+    SPoint2 param;
+    if(v->onWhat() == gf && v->getParameter(0, param[0]) &&
+       v->getParameter(1, param[1])) {
+      SVector3 nf = gf->normal(param);
+      if (dot(nf,ne) < 0.) {
+        nInv += 1;
+      } else {
+        nOk += 1;
+      }
+    }
+  }
+
+  if (nInv > nOk) { /* Invert all elements */
+    for(std::size_t iEl = 0; iEl < gf->getNumMeshElements(); iEl++)
+      gf->getMeshElement(iEl)->reverse();
+  }
+
+  return 0;
+}
+
 int generateQuadDominantMesh(GFace* gf, GFaceInfo& info, bool useDiscrete = false) {
   if(gf == NULL || (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility())) return 0;
   if (gf->meshStatistics.status == GFace::DONE && gf->quadrangles.size() > 0) {
@@ -5931,6 +6092,10 @@ int generateQuadDominantMesh(GFace* gf, GFaceInfo& info, bool useDiscrete = fals
       } else {
         Msg::Warning("-- Face %i: algo PACK produced bad quad mesh (%li quads, SICN min: %f, valence max: %i)", 
             gf->tag(), gf->quadrangles.size(), minSICNq, vMax);
+
+        // Msg::Error("accept only for debugging !");
+        // return 0;  /* TESTING */
+
         gf->deleteMesh();
         gf->meshStatistics.status = GFace::PENDING;
       }
@@ -5938,31 +6103,34 @@ int generateQuadDominantMesh(GFace* gf, GFaceInfo& info, bool useDiscrete = fals
   }
 
   /* HXT frontal mesher on triangulation */
-  if (gf->quadrangles.size() > 0) gf->deleteMesh();
-  if (gf->triangles.size() == 0) {
-    gf->setMeshingAlgo(ALGO_2D_FRONTAL);
-    gf->mesh(false);
-    gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
-    if (gf->meshStatistics.status != GFace::DONE) {
-      Msg::Warning("-- Face %i: failed to build triangulation", gf->tag());
-      return -1;
-    }
-    meshGFaceHxt(gf);
-    if (gf->meshStatistics.status == GFace::DONE) {
-      /* Check quality */
-      double minSICNq = DBL_MAX;
-      double avgSICNq = 0.;
-      quadQualityStats(gf->quadrangles, minSICNq, avgSICNq);
-      if (gf->quadrangles.size() == 0) minSICNq = -1.;
-      if (minSICNq <= 0.) {
-        Msg::Warning("-- Face %i: %li quads and %li triangles built with meshGFaceHxt, quad SICN min: %f", 
-            gf->tag(), gf->quadrangles.size(), gf->triangles.size(), minSICNq);
-        gf->deleteMesh();
-        gf->meshStatistics.status = GFace::PENDING;
-      } else {
-        Msg::Info("-- Face %i: %li quads and %li triangles built with meshGFaceHxt, quad SICN min: %f", 
-            gf->tag(), gf->quadrangles.size(), gf->triangles.size(), minSICNq);
-        return 0;
+  bool useHxt = false;
+  if (useHxt) {
+    if (gf->quadrangles.size() > 0) gf->deleteMesh();
+    if (gf->triangles.size() == 0) {
+      gf->setMeshingAlgo(ALGO_2D_FRONTAL);
+      gf->mesh(false);
+      gf->setMeshingAlgo(ALGO_2D_QUAD_QUASI_STRUCT);
+      if (gf->meshStatistics.status != GFace::DONE) {
+        Msg::Warning("-- Face %i: failed to build triangulation", gf->tag());
+        return -1;
+      }
+      meshGFaceHxt(gf);
+      if (gf->meshStatistics.status == GFace::DONE) {
+        /* Check quality */
+        double minSICNq = DBL_MAX;
+        double avgSICNq = 0.;
+        quadQualityStats(gf->quadrangles, minSICNq, avgSICNq);
+        if (gf->quadrangles.size() == 0) minSICNq = -1.;
+        if (minSICNq <= 0.) {
+          Msg::Warning("-- Face %i: %li quads and %li triangles built with meshGFaceHxt, quad SICN min: %f", 
+              gf->tag(), gf->quadrangles.size(), gf->triangles.size(), minSICNq);
+          gf->deleteMesh();
+          gf->meshStatistics.status = GFace::PENDING;
+        } else {
+          Msg::Info("-- Face %i: %li quads and %li triangles built with meshGFaceHxt, quad SICN min: %f", 
+              gf->tag(), gf->quadrangles.size(), gf->triangles.size(), minSICNq);
+          return 0;
+        }
       }
     }
   }
@@ -5978,6 +6146,10 @@ int generateQuadDominantMesh(GFace* gf, GFaceInfo& info, bool useDiscrete = fals
       Msg::Warning("-- Face %i: failed to build triangulation", gf->tag());
       return -1;
     }
+
+    /* Recombine triangles in quads */
+    recombineIntoQuads(gf, false, 0, false, .1);
+    removeTwoQuadsNodes(gf);
   }
 
   return 0;
@@ -6117,7 +6289,7 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
   CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
 
   if (EXPORT_MESHES) showMesh(faces, "qqs_quadtri");
-  if (EXPORT_MESHES) gm->writeMSH("qqs_quadtri.msh",2.2,false,true);
+  if (EXPORT_MESHES) gm->writeMSH("qqs_quadtri.msh",4.1,false,true, true);
 
   if (applyMidpointSubdiv) {
     Msg::Info("global stats: %li quadrangles, %li triangles", nquad, ntri);
@@ -6127,15 +6299,23 @@ int generateUnstructuredQuadMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& face
       Msg::Error("midpoint subdivision failed");
       return -1;
     }
-    if (EXPORT_MESHES) gm->writeMSH("qqs_subdiv.msh",2.2,false,true);
+    if (EXPORT_MESHES) gm->writeMSH("qqs_subdiv.msh", 4.1, false, true, true);
     if (EXPORT_MESHES) showMesh(faces, "qqs_subdiv");
   }
   for (GFace* gf: faces) {
+    safeMeshGFaceFixOrientation(gf);
     double minSICNa = DBL_MAX;
     double avgSICNa = 0.;
     quadQualityStats(gf->quadrangles, minSICNa, avgSICNa);
     if (minSICNa <= 0)  {
       Msg::Error("- Face %li: negative quads (SICN min = %f) in unstructured mesh", gf->tag(), minSICNa);
+    }
+
+    bool validTopology = slowVerifyMeshIsValid(gf);
+    if (!validTopology) {
+      Msg::Error("- Face %li: quad mesh has invalid topology, ignore it", gf->tag());
+      gf->deleteMesh();
+      gf->meshStatistics.status = GFace::FAILED;
     }
   }
 
@@ -6224,45 +6404,68 @@ int move35pairsToSingularities(MeshHalfEdges& M) {
   return 0;
 }
 
+
 int improveQuadMeshOfFace(GFace* gf, vector<MVertex*>& singularVertices, SurfaceProjector* sp,
-    QuadqsInfo& qqs) {
-  double t1 = Cpu();
+    QuadqsContext& qqs) {
+  QuadqsGFaceContext ctx(qqs);
+
   bool running = true;
-  double timeLimit = 0.;
-  if (qqs.timeMaxTopoPerGFace > 0.) timeLimit = 0.1*qqs.timeMaxTopoPerGFace;
   while (running) {
     running = false;
     size_t n1 = gf->quadrangles.size();
 
     { /* 1st pass: check regular quad patch remeshing only */
       const vector<size_t> patternsToCheck = {PATTERN_QUAD_REGULAR};
-      remeshQuadrilateralPatches(GROW_MAXIMAL, gf, singularVertices, patternsToCheck, sp, timeLimit);
-    }
-    {
-      const vector<size_t> patternsToCheck = {PATTERN_TRIANGLE,PATTERN_PENTAGON};
-      remeshCavitiesAroundSingularities(gf, singularVertices, patternsToCheck, sp, timeLimit);
-    }
-    {
-      vector<size_t> patternsToCheck = {PATTERN_QUAD_REGULAR};
-      remeshQuadrilateralPatches(GROW_MAXIMAL, gf, singularVertices, patternsToCheck, sp, timeLimit);
+      remeshQuadrilateralPatches(GROW_MAXIMAL, gf, singularVertices, patternsToCheck, sp, ctx);
 
-      /* Size transition patterns */
-      patternsToCheck = {PATTERN_QUAD_REGULAR, PATTERN_QUAD_DIAG35, PATTERN_QUAD_ALIGNED35, PATTERN_QUAD_CHORD_UTURN};
+      if (ctx.elapsedCpuTime() > qqs.timeoutQuadqsPerGFace) {
+        Msg::Warning("- Face %i: topological improvement reached time limit (%fs > %fs)",
+            gf->tag(), ctx.elapsedCpuTime() , ctx.timeoutQuadqsPerGFace);
+        break;
+      }
+    }
+
+    { /* 2d pass: remesh around singularities */
+      const vector<size_t> patternsToCheck = {PATTERN_TRIANGLE,PATTERN_PENTAGON};
+      remeshCavitiesAroundSingularities(gf, singularVertices, patternsToCheck, sp, ctx);
+
+
+      if (ctx.elapsedCpuTime() > qqs.timeoutQuadqsPerGFace) {
+        Msg::Warning("- Face %i: topological improvement reached time limit (%fs > %fs)",
+            gf->tag(), ctx.elapsedCpuTime() , ctx.timeoutQuadqsPerGFace);
+        break;
+      }
+    }
+
+    { /* 3d pass: check regular quad patches again (if unlocked by singularity remeshing) */
+      vector<size_t> patternsToCheck = {PATTERN_QUAD_REGULAR};
+      remeshQuadrilateralPatches(GROW_MAXIMAL, gf, singularVertices, patternsToCheck, sp, ctx);
+
+      if (ctx.elapsedCpuTime() > qqs.timeoutQuadqsPerGFace) {
+        Msg::Warning("- Face %i: topological improvement reached time limit (%fs > %fs)",
+            gf->tag(), ctx.elapsedCpuTime() , ctx.timeoutQuadqsPerGFace);
+        break;
+      }
+    }
+
+    { /* 4d pass: size transition patterns */
+      vector<size_t> patternsToCheck = {PATTERN_QUAD_REGULAR, PATTERN_QUAD_DIAG35, PATTERN_QUAD_ALIGNED35, PATTERN_QUAD_CHORD_UTURN};
       // patternsToCheck = {PATTERN_QUAD_REGULAR, PATTERN_QUAD_DIAG35, PATTERN_QUAD_ALIGNED35};
-      remeshQuadrilateralPatches(GROW_MINIMAL, gf, singularVertices, patternsToCheck, sp, timeLimit);
+      remeshQuadrilateralPatches(GROW_MINIMAL, gf, singularVertices, patternsToCheck, sp, ctx);
+
+      if (ctx.elapsedCpuTime() > qqs.timeoutQuadqsPerGFace) {
+        Msg::Warning("- Face %i: topological improvement reached time limit (%fs > %fs)",
+            gf->tag(), ctx.elapsedCpuTime() , ctx.timeoutQuadqsPerGFace);
+        break;
+      }
     }
 
     // TODO: move 35 pairs inside patch ?
 
     size_t n2 = gf->quadrangles.size();
     if (n1 != n2) running = true;
-    double etime = Cpu() - t1;
-    if (etime > qqs.timeMaxTopoPerGFace) {
-      Msg::Warning("- Face %i: topological improvement reached time limit (%fs > %fs)",
-          gf->tag(), etime, qqs.timeMaxTopoPerGFace);
-      break;
-    }
   }
+
   return 0;
 }
 
@@ -6375,21 +6578,9 @@ int singularVerticesFromFloatingSingularities(
 
 int improveQuadMeshTopology(GModel* gm,
     std::map<GFace*, GFaceInfo>& faceInfo,
-    QuadqsInfo& qqs) {
+    QuadqsContext& qqs) {
 
   vector<GFace*> faces = model_faces(gm);
-
-  /* Ensure orientation of quads is compatible with CAD */
-  for (size_t i = 0; i < faces.size(); ++i) {
-    GFace* gf = faces[i];
-    if (gf == NULL) continue;
-    if (gf->meshStatistics.status == GFace::PENDING) {
-      if (gf->triangles.size() > 0) continue;
-      if (gf->quadrangles.size() == 0) continue;
-      orientMeshGFace orient;
-      orient(gf);
-    }
-  }
 
   /* Improve local defects (valence 6+, valence 3+ on curves, etc)
    * by checking all possible local remeshing in big list of
@@ -6404,6 +6595,10 @@ int improveQuadMeshTopology(GModel* gm,
     for (size_t i = 0; i < faces.size(); ++i) {
       GFace* gf = faces[i];
       if (gf == NULL) continue;
+      if (CTX::instance()->debugSurface > 0 &&
+          gf->tag() != CTX::instance()->debugSurface) continue;
+
+
       transferSeamGEdgesVerticesToGFace(gf);
 
       if (gf->meshStatistics.status == GFace::PENDING) {
@@ -6417,10 +6612,12 @@ int improveQuadMeshTopology(GModel* gm,
         GFaceInfo& info = it->second;
         Msg::Info("- Face %i: chi = %i, corners: %li convex, %li concave, %li highly concave -> #val3 - #val5 = %i",
             gf->tag(), info.chi, info.bdrValVertices[1].size(), info.bdrValVertices[3].size(), info.bdrValVertices[4].size(), info.intSumVal3mVal5);
+
+
         remeshSmallDefects(gf, info.sp);
       }
     }
-    if (EXPORT_MESHES) gm->writeMSH("qqs_wo_defects.msh",2.2,false,true);
+    if (EXPORT_MESHES) gm->writeMSH("qqs_wo_defects.msh", 4.1, false, true, true);
     if (EXPORT_MESHES) showMesh(faces, "qqs_wo_defects");
     printPatternUsage();
   }
@@ -6442,6 +6639,10 @@ int improveQuadMeshTopology(GModel* gm,
       if (gf->meshStatistics.status == GFace::PENDING) {
         if (gf->triangles.size() > 0) continue;
         if (gf->quadrangles.size() == 0) continue;
+        if (CTX::instance()->debugSurface > 0 &&
+            gf->tag() != CTX::instance()->debugSurface) continue;
+
+
         auto it = faceInfo.find(gf);
         if (it == faceInfo.end()) {
           Msg::Error("- Face %i: info not found, weird", gf->tag());
@@ -6460,7 +6661,7 @@ int improveQuadMeshTopology(GModel* gm,
       }
       //      if (NITERWINSLOW)meshWinslow2d(gf,NITERWINSLOW);
     }
-    if (EXPORT_MESHES) gm->writeMSH("qqs_after_cavities.msh",2.2,false,true);
+    if (EXPORT_MESHES) gm->writeMSH("qqs_after_cavities.msh",4.1,false,true,true);
     if (EXPORT_MESHES) showMesh(faces, "qqs_after_cavities");
   }
 
@@ -6472,8 +6673,100 @@ int improveQuadMeshTopology(GModel* gm,
   return 0;
 }
 
+void benchmarkOptimizeGeometry(GModel* gm, 
+    std::map<GFace*, GFaceInfo>& faceInfo,
+    QuadqsContext& qqs) {
+
+  std::vector<GFace*> faces = model_faces(gm);
+  for (size_t ii = 0; ii < faces.size(); ++ii) {
+    GFace* gf = faces[ii];
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+    if (CTX::instance()->debugSurface > 0 &&
+        gf->tag() != CTX::instance()->debugSurface) continue;
+
+    QuadqsGFaceContext ctx(qqs);
+
+    vector<MElement*> elements(gf->quadrangles.size());
+    for (size_t i = 0; i < gf->quadrangles.size(); ++i) {
+      elements[i] = dynamic_cast<MQuadrangle*>(gf->quadrangles[i]);
+    }
+
+    /* Randomize */
+    // for (size_t v = 0; v < gf->mesh_vertices.size(); ++v) {
+    //   double fMin = -1.e-2;
+    //   double fMax = 1.e-2;
+    //   double f;
+    //   f = (double)rand() / RAND_MAX;
+    //   f = fMin + f * (fMax - fMin);
+    //   gf->mesh_vertices[v]->x() += f;
+    //   f = (double)rand() / RAND_MAX;
+    //   f = fMin + f * (fMax - fMin);
+    //   gf->mesh_vertices[v]->y() += f;
+    // }
+
+    std::vector<SPoint3> before(gf->mesh_vertices.size());
+    for (size_t v = 0; v < gf->mesh_vertices.size(); ++v) {
+      before[v] = gf->mesh_vertices[v]->point();
+    }
+
+    Msg::Info("====================================");
+    Msg::Info("- Face %i: %i interior vertices, %i quads", gf->tag(), gf->mesh_vertices.size(), gf->quadrangles.size());
+    double minSICNb = DBL_MAX;
+    double avgSICNb = 0.;
+    quadQualityStats(gf->quadrangles, minSICNb, avgSICNb);
+    Msg::Info("- init: minSICN=%.3f, avgSICN=%.3f", gf->tag(), minSICNb, avgSICNb);
+
+    // for (std::string method: {"laplacian","winslow","angle-based", "mixed", "local", "dmo"}) {
+    for (std::string method: {"dmo"}) {
+      /* Restore */
+      for (size_t v = 0; v < gf->mesh_vertices.size(); ++v) {
+        gf->mesh_vertices[v]->setXYZ(before[v].x(),before[v].y(),before[v].z());
+      }
+
+      double t1 = Cpu();
+      size_t niter = 200;
+      bool smart = false;
+      double dxglobal = 0.;
+      double dxlocal = 0.;
+      if (method == "laplacian") {
+        smoothElementsWithLocalKernel(LocalSmoothingKernel::Laplacian, gf, faceInfo.at(gf).sp, elements,
+            gf->mesh_vertices, smart, niter, dxglobal, dxlocal);
+      } else if (method == "angle-based") {
+        smoothElementsWithLocalKernel(LocalSmoothingKernel::AngleBased, gf, faceInfo.at(gf).sp, elements,
+            gf->mesh_vertices, smart, niter, dxglobal, dxlocal);
+      } else if (method == "mixed") {
+        smoothElementsWithLocalKernel(LocalSmoothingKernel::WinslowAtRegular, gf, faceInfo.at(gf).sp, elements,
+            gf->mesh_vertices, smart, niter, dxglobal, dxlocal);
+      } else if (method == "winslow") {
+        meshWinslow2d(gf, gf->quadrangles, gf->mesh_vertices, niter);
+      } else if (method == "local") {
+        double qmin;
+        double qavg;
+        optimizeQuadMeshWithSubPatches(gf, faceInfo.at(gf).sp, qmin, qavg);
+      } else if (method == "dmo") {
+        safeMeshGFaceFixOrientation(gf);
+        // TODO: DMO bugged with periodic surfaces ?
+        //       SICN not negative when should be ?
+        size_t dmo_grid_depth = 4;
+        size_t dmo_grid_width = 8;
+        smoothElementsWithDMO(gf, elements,
+            gf->mesh_vertices, niter, dxglobal, dxlocal, dmo_grid_width, dmo_grid_depth);
+      }
+
+      double etime = Cpu() - t1;
+      double minSICNa = DBL_MAX;
+      double avgSICNa = 0.;
+      quadQualityStats(gf->quadrangles, minSICNa, avgSICNa);
+      Msg::Info("- %s: elapsed time=%.3fs, minSICN=%.3f, avgSICN=%.3f", method.c_str(), etime, minSICNa, avgSICNa);
+
+    }
+  }
+}
+
 int optimizeQuadMeshGeometry(GModel* gm, 
-    std::map<GFace*, GFaceInfo>& faceInfo) {
+    std::map<GFace*, GFaceInfo>& faceInfo,
+    QuadqsContext& qqs) {
 
   bool optimGeom = true;
   QMT_Utils::read_from_env("quadqsOptimGeom",optimGeom);
@@ -6488,6 +6781,10 @@ int optimizeQuadMeshGeometry(GModel* gm,
     GFace* gf = faces[ii];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+    if (CTX::instance()->debugSurface > 0 &&
+        gf->tag() != CTX::instance()->debugSurface) continue;
+
+    QuadqsGFaceContext ctx(qqs);
 
     vector<MElement*> elements(gf->quadrangles.size());
     for (size_t i = 0; i < gf->quadrangles.size(); ++i) {
@@ -6510,6 +6807,11 @@ int optimizeQuadMeshGeometry(GModel* gm,
     while (running && count < 3) {
       running = false;
       count += 1;
+
+      if (ctx.elapsedCpuTime() > ctx.timeoutGeomOptimPerGFace) {
+        Msg::Debug("- Face %i: reached time out for geometry optim", gf->tag());
+        break;
+      }
 
       /* Save in case of deterioration */
       for (size_t v = 0; v < gf->mesh_vertices.size(); ++v) {
@@ -6535,8 +6837,8 @@ int optimizeQuadMeshGeometry(GModel* gm,
       if (minSICNa < 0.75 * minSICNb) keep = false;
 
       if (keep) {
-        Msg::Info("- Face %i: global smoothing (Mix Winslow/Angle, explicit, %li iter max), SICN min: %f -> %f, avg: %f -> %f",
-            gf->tag(),niter,minSICNb,minSICNa,avgSICNb,avgSICNa);
+        Msg::Info("- Face %i: global smoothing (Mix Winslow/Angle, explicit, %li iter max, %.3f sec), SICN min: %f -> %f, avg: %f -> %f",
+            gf->tag(),niter,etime,minSICNb,minSICNa,avgSICNb,avgSICNa);
         if (minSICNa >= minSICNb && 0.99*avgSICNa > avgSICNb && etime < 1) {
           niter *= 1.5;
           running = true;
@@ -6618,7 +6920,7 @@ bool modelMeshIfFullQuad(GModel* gm) {
   return hasQuads && !hasTris;
 }
 
-int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, QuadqsInfo& qqs)
+int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, QuadqsContext& qqs)
 {
   double t1 = Cpu(), w1 = TimeOfDay();
 
@@ -6628,6 +6930,12 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
   }
 
   Msg::Info("Unstructured quad mesh to quasi-structured ...");
+  qqs.timeoutQuadqsPerGFace = 100.; /* time budget to do cavity remeshing in a GFace */
+  qqs.timeoutQuadqsPerGFaceCavity = 10.; /* time budget to grow a cavity */
+  qqs.timeoutGeomOptimPerGFace = 100.;
+  Msg::Info("- set a 100s max time budget for each face");
+  Msg::Info("- set a 10s max time budget for the growth of each cavity");
+  Msg::Info("- set a 100s max time budget for the final geometry smoothing");
 
   if (qqs.stats.size() == 0) {
     CadStatistics(gm, qqs.stats);
@@ -6682,7 +6990,7 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
       Msg::Warning("failed to generate pattern-based quad meshes, abort");
       return s5;
     }
-    if (EXPORT_MESHES) gm->writeMSH("qqs_simpleCADfaces.msh",2.2,false,true);
+    if (EXPORT_MESHES) gm->writeMSH("qqs_simpleCADfaces.msh",4.1,false,true,true);
     if (EXPORT_MESHES) showMesh(faces, "qqs_simpleCADfaces");
   }
 
@@ -6704,15 +7012,21 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
     Msg::Warning("failed to improve quad mesh topology, continue");
   }
 
+  Msg::Error("Benchmarking geometry smoothing ...");
+  benchmarkOptimizeGeometry(gm, faceInfo, qqs);
+  Msg::Error("stop");
+  // gmsh::fltk::run();
+  return 0;
+
   Msg::Info("[Step 7] Optimize geometry of quad mesh ...");
-  int s7 = optimizeQuadMeshGeometry(gm, faceInfo);
+  int s7 = optimizeQuadMeshGeometry(gm, faceInfo, qqs);
   if (s7 != 0) {
     Msg::Warning("failed to optimize quad mesh geometry, continue");
   }
 
   double t2 = Cpu(), w2 = TimeOfDay();
 
-  if (EXPORT_MESHES) gm->writeMSH("qqs_final.msh",2.2,false,true);
+  if (EXPORT_MESHES) gm->writeMSH("qqs_final.msh",4.1,false,true,true);
   Msg::Debug("... quasi-structured quadrilateral meshing done.");
 
   {
@@ -6745,11 +7059,12 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
 
   double t1 = Cpu(), w1 = TimeOfDay();
 
-  QuadqsInfo qqs;
+  QuadqsContext qqs;
   CadStatistics(gm, qqs.stats);
   printStatistics(qqs.stats, "CAD statistics:");
 
   if (modelMeshIfFullQuad(gm)) {
+    // TODO: compute a cross field ?
     std::map<GFace*, GFaceInfo> faceInfo;
     return quadMeshToQuasiStructured(gm, faceInfo, qqs);
   }
@@ -6837,6 +7152,7 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   if (CADgeometryIsAvailable(gm)) {
     Msg::Info("[Step 3] Generate curve 1D meshes ...");
     bool forceEvenNbEdges = (CTX::instance()->mesh.quadqsUseDiscreteGeometry == 1);
+    // forceEvenNbEdges = true;
     bool alignWithGVertices = false;
     int s3 = generateCurve1DMeshes(gm, faceInfo, forceEvenNbEdges, alignWithGVertices);
     if (s3 != 0) {
