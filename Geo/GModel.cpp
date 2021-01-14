@@ -390,10 +390,11 @@ void GModel::remove(GRegion *r)
 void GModel::remove(GFace *f)
 {
   fiter it = std::find(firstFace(), lastFace(), f);
-  if(it != faces.end()){
+  if(it != faces.end()) {
     faces.erase(it);
     std::vector<GEdge *> const &e = f->edges();
-    for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end(); it++)
+    for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
+        it++)
       (*it)->delFace(f);
   }
 }
@@ -543,10 +544,8 @@ void GModel::getEntities(std::vector<GEntity *> &entities, int dim) const
   case 0:
     entities.insert(entities.end(), vertices.begin(), vertices.end());
     break;
-  case 1:
-    entities.insert(entities.end(), edges.begin(), edges.end()); break;
-  case 2:
-    entities.insert(entities.end(), faces.begin(), faces.end()); break;
+  case 1: entities.insert(entities.end(), edges.begin(), edges.end()); break;
+  case 2: entities.insert(entities.end(), faces.begin(), faces.end()); break;
   case 3:
     entities.insert(entities.end(), regions.begin(), regions.end());
     break;
@@ -782,8 +781,10 @@ void GModel::addPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
     if(ge)
       ge->physicals.push_back((t > 0) ? tag : -tag);
     else
-      Msg::Warning("Unknown entity of dimension %d and tag %d in physical group "
-                   "%d", dim, t, tag);
+      Msg::Warning(
+        "Unknown entity of dimension %d and tag %d in physical group "
+        "%d",
+        dim, t, tag);
   }
 }
 
@@ -1405,8 +1406,7 @@ int GModel::getMeshStatus(bool countDiscrete)
        (!onlyVisible || (onlyVisible && gf->getVisibility())))
       meshDone2D = false;
   }
-  if(numEle2D && toMesh2D && meshDone2D)
-    return 2;
+  if(numEle2D && toMesh2D && meshDone2D) return 2;
 
   std::size_t numEle1D = 0;
   bool toMesh1D = false, meshDone1D = true;
@@ -1422,8 +1422,7 @@ int GModel::getMeshStatus(bool countDiscrete)
        (!onlyVisible || (onlyVisible && ge->getVisibility())))
       meshDone1D = false;
   }
-  if(numEle1D && toMesh1D && meshDone1D)
-    return 1;
+  if(numEle1D && toMesh1D && meshDone1D) return 1;
 
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;
@@ -1693,7 +1692,8 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
 
 void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
 {
-  if(!onlyIfNecessary || (_elementVectorCache.empty() && _elementMapCache.empty())) {
+  if(!onlyIfNecessary ||
+     (_elementVectorCache.empty() && _elementMapCache.empty())) {
     Msg::Debug("Rebuilding mesh element cache");
     _elementVectorCache.clear();
     _elementMapCache.clear();
@@ -1833,7 +1833,6 @@ std::size_t GModel::removeInvisibleElements()
   Msg::Info("Removed %lu elements", n);
   return n;
 }
-
 
 template <class T>
 static std::size_t reverseInvisible(std::vector<T *> &elements, bool all)
@@ -2112,8 +2111,8 @@ static void _associateEntityWithElementVertices(GEntity *ge,
   }
 }
 
-void GModel::createGeometryOfDiscreteEntities
-  (const std::vector<std::pair<int, int> > &dimTags)
+void GModel::createGeometryOfDiscreteEntities(
+  const std::vector<std::pair<int, int> > &dimTags)
 {
   std::vector<discreteEdge *> e;
   std::vector<discreteFace *> f;
@@ -2139,18 +2138,25 @@ void GModel::createGeometryOfDiscreteEntities
       int tag = dimTags[i].second;
       if(dim == 1) {
         discreteEdge *de = dynamic_cast<discreteEdge *>(getEdgeByTag(tag));
-        if(de) e.push_back(de);
-        else Msg::Error("No discrete curve with tag %d", tag);
+        if(de)
+          e.push_back(de);
+        else
+          Msg::Error("No discrete curve with tag %d", tag);
       }
       else if(dim == 2) {
         discreteFace *df = dynamic_cast<discreteFace *>(getFaceByTag(tag));
-        if(df) f.push_back(df);
-        else Msg::Error("No discrete surface with tag %d", tag);
+        if(df)
+          f.push_back(df);
+        else
+          Msg::Error("No discrete surface with tag %d", tag);
       }
       else if(dim == 3) {
-        discreteRegion *dr = dynamic_cast<discreteRegion *>(getRegionByTag(tag));
-        if(dr) r.push_back(dr);
-        else Msg::Error("No discrete volume with tag %d", tag);
+        discreteRegion *dr =
+          dynamic_cast<discreteRegion *>(getRegionByTag(tag));
+        if(dr)
+          r.push_back(dr);
+        else
+          Msg::Error("No discrete volume with tag %d", tag);
       }
     }
   }
@@ -2160,11 +2166,14 @@ void GModel::createGeometryOfDiscreteEntities
     double t1 = Cpu(), w1 = TimeOfDay();
     for(std::size_t i = 0; i < e.size(); i++) {
       if(e[i]->createGeometry())
-        Msg::Error("Could not create geometry of discrete curve %d", e[i]->tag());
+        Msg::Error("Could not create geometry of discrete curve %d",
+                   e[i]->tag());
     }
     double t2 = Cpu(), w2 = TimeOfDay();
-    Msg::StatusBar(true, "Done creating geometry of discrete curves "
-                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+    Msg::StatusBar(true,
+                   "Done creating geometry of discrete curves "
+                   "(Wall %gs, CPU %gs)",
+                   w2 - w1, t2 - t1);
   }
 
   if(f.size()) {
@@ -2174,13 +2183,16 @@ void GModel::createGeometryOfDiscreteEntities
     for(std::size_t i = 0; i < f.size(); i++) {
       Msg::ProgressMeter(i, true, "Creating geometry");
       if(f[i]->createGeometry())
-        Msg::Error("Could not create geometry of discrete surface %d", f[i]->tag());
+        Msg::Error("Could not create geometry of discrete surface %d",
+                   f[i]->tag());
     }
     Msg::StopProgressMeter();
     double t2 = Cpu();
     double w2 = TimeOfDay();
-    Msg::StatusBar(true, "Done creating geometry of discrete surfaces "
-                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+    Msg::StatusBar(true,
+                   "Done creating geometry of discrete surfaces "
+                   "(Wall %gs, CPU %gs)",
+                   w2 - w1, t2 - t1);
   }
 
   if(r.size()) {
@@ -2188,11 +2200,14 @@ void GModel::createGeometryOfDiscreteEntities
     double t1 = Cpu(), w1 = TimeOfDay();
     for(std::size_t i = 0; i < r.size(); i++) {
       if(r[i]->createGeometry())
-        Msg::Error("Could not create geometry of discrete volume %d", r[i]->tag());
+        Msg::Error("Could not create geometry of discrete volume %d",
+                   r[i]->tag());
     }
     double t2 = Cpu(), w2 = TimeOfDay();
-    Msg::StatusBar(true, "Done creating geometry of discrete volumes "
-                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+    Msg::StatusBar(true,
+                   "Done creating geometry of discrete volumes "
+                   "(Wall %gs, CPU %gs)",
+                   w2 - w1, t2 - t1);
   }
 }
 
@@ -2388,7 +2403,7 @@ void GModel::checkMeshCoherence(double tolerance)
     Msg::Info("Checking for isolated nodes...");
     std::vector<GEntity *> entities2;
     getEntities(entities2, getMeshDim());
-    std::set<MVertex*, MVertexPtrLessThan> allv;
+    std::set<MVertex *, MVertexPtrLessThan> allv;
     for(std::size_t i = 0; i < entities2.size(); i++) {
       for(std::size_t j = 0; j < entities2[i]->getNumMeshElements(); j++) {
         MElement *e = entities2[i]->getMeshElement(j);
@@ -2400,7 +2415,7 @@ void GModel::checkMeshCoherence(double tolerance)
     int diff = (int)(getNumMeshVertices() - allv.size());
     if(diff) {
       Msg::Warning("%d node%s not connected to any %dD elements", diff,
-                   (diff > 1) ? "s": "", getMeshDim());
+                   (diff > 1) ? "s" : "", getMeshDim());
     }
   }
 
@@ -3289,23 +3304,23 @@ void GModel::computeHomology()
 #endif
 }
 
-void GModel::computeSizeField(){
+void GModel::computeSizeField()
+{
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   FieldManager *fields = getFields();
   int myId = fields->newId();
-  fields->newField(myId, std::string("AutomaticMeshSizeField") );
+  fields->newField(myId, std::string("AutomaticMeshSizeField"));
   fields->get(myId)->update();
 #else
   Msg::Error("Size field computation requires both HXT and P4EST");
 #endif
 }
 
-
 #if !defined(HAVE_ACIS)
 
-void GModel::createACISInternals() { }
+void GModel::createACISInternals() {}
 
-void GModel::deleteACISInternals() { }
+void GModel::deleteACISInternals() {}
 
 int GModel::readACISSAT(const std::string &fn)
 {
@@ -3318,9 +3333,9 @@ int GModel::readACISSAT(const std::string &fn)
 
 #if !defined(HAVE_PARASOLID)
 
-void GModel::createParasolidInternals() { }
+void GModel::createParasolidInternals() {}
 
-void GModel::deleteParasolidInternals() { }
+void GModel::deleteParasolidInternals() {}
 
 int GModel::readParasolidXMT(const std::string &fn)
 {

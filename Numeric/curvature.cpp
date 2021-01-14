@@ -211,7 +211,8 @@ bool CurvatureRusinkiewicz(
   }
   for(std::size_t i = 0; i < nVertices; i++) normalize(&nodeNormals[3 * i]);
 
-  qsort(&node2tri[0], 3 * nTriangles, 2 * sizeof(std::size_t), node2trianglescmp);
+  qsort(&node2tri[0], 3 * nTriangles, 2 * sizeof(std::size_t),
+        node2trianglescmp);
 
   // compute the second fundamental tensor on each triangle using least squares
 
@@ -287,41 +288,44 @@ bool CurvatureRusinkiewicz(
   double A = 0., B = 0., D = 0.;
   uint64_t iTriangle;
   uint64_t ind = 0;
-  for(uint64_t iVert = 0; iVert < nVertices; ++iVert){
+  for(uint64_t iVert = 0; iVert < nVertices; ++iVert) {
     count = 0;
     A = 0.0;
     B = 0.0;
     D = 0.0;
-    while(node2tri[2*ind+0] == iVert){
-      iTriangle = node2tri[2*ind+1];
-      computeLocalFrame (&nodeNormals[3*iVert], uP, vP);
+    while(node2tri[2 * ind + 0] == iVert) {
+      iTriangle = node2tri[2 * ind + 1];
+      computeLocalFrame(&nodeNormals[3 * iVert], uP, vP);
       // computing each curvature around a vertex
       unitNormal2Triangle(nodes[triangles[3 * iTriangle + 0]].data(),
                           nodes[triangles[3 * iTriangle + 1]].data(),
                           nodes[triangles[3 * iTriangle + 2]].data(), n, &surf);
-      double uF[3],vF[3];
+      double uF[3], vF[3];
       makevector(nodes[triangles[3 * iTriangle + 0]].data(),
                  nodes[triangles[3 * iTriangle + 1]].data(), uF);
       normalize(uF);
-      crossprod(n,uF,vF);    
-      double *c = &CURV[4*iTriangle];       
-      double UP[3] = {dotprod (uP,uF),dotprod (uP,vF),0};
+      crossprod(n, uF, vF);
+      double *c = &CURV[4 * iTriangle];
+      double UP[3] = {dotprod(uP, uF), dotprod(uP, vF), 0};
       normalize(UP);
-      double VP[3] = {dotprod (vP,uF),dotprod (vP,vF),0};
+      double VP[3] = {dotprod(vP, uF), dotprod(vP, vF), 0};
       normalize(VP);
-      A += (UP[0]*UP[0]*c[0] + 2*UP[0]*UP[1]*c[1] + UP[1]*UP[1]*c[3]) ;
-      D += (VP[0]*VP[0]*c[0] + 2*VP[0]*VP[1]*c[1] + VP[1]*VP[1]*c[3]) ;
-      B += (VP[0]*UP[0]*c[0] + (VP[1]*UP[0]+VP[0]*UP[1])*c[1] + VP[1]*UP[1]*c[3]) ;
+      A += (UP[0] * UP[0] * c[0] + 2 * UP[0] * UP[1] * c[1] +
+            UP[1] * UP[1] * c[3]);
+      D += (VP[0] * VP[0] * c[0] + 2 * VP[0] * VP[1] * c[1] +
+            VP[1] * VP[1] * c[3]);
+      B += (VP[0] * UP[0] * c[0] + (VP[1] * UP[0] + VP[0] * UP[1]) * c[1] +
+            VP[1] * UP[1] * c[3]);
       ++count;
       ++ind;
-      if(ind >= 3*nTriangles) break;
+      if(ind >= 3 * nTriangles) break;
     }
 
-    A /= (double) count;
-    B /= (double) count;
-    D /= (double) count;
+    A /= (double)count;
+    B /= (double)count;
+    D /= (double)count;
     double lambda1, lambda2, v1x, v1y, v2x, v2y;
-    solveEig(A, B, B, D, & lambda1, & v1x, &v1y, & lambda2, & v2x, & v2y );
+    solveEig(A, B, B, D, &lambda1, &v1x, &v1y, &lambda2, &v2x, &v2y);
     SVector3 cMax(fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]),
                   fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]),
                   fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]));
@@ -377,7 +381,8 @@ bool CurvatureRusinkiewicz(
   }
   for(std::size_t i = 0; i < nVertices; i++) normalize(&nodeNormals[3 * i]);
 
-  qsort(&node2tri[0], 3 * nTriangles, 2 * sizeof(std::size_t), node2trianglescmp);
+  qsort(&node2tri[0], 3 * nTriangles, 2 * sizeof(std::size_t),
+        node2trianglescmp);
 
   // compute the second fundamental tensor on each triangle using least squares
 
@@ -453,41 +458,44 @@ bool CurvatureRusinkiewicz(
   double A = 0., B = 0., D = 0.;
   uint64_t iTriangle;
   uint64_t ind = 0;
-  for(uint64_t iVert = 0; iVert < nVertices; ++iVert){
+  for(uint64_t iVert = 0; iVert < nVertices; ++iVert) {
     count = 0;
     A = 0.0;
     B = 0.0;
     D = 0.0;
-    while(node2tri[2*ind+0] == iVert){
-      iTriangle = node2tri[2*ind+1];
-      computeLocalFrame (&nodeNormals[3*iVert], uP, vP);
+    while(node2tri[2 * ind + 0] == iVert) {
+      iTriangle = node2tri[2 * ind + 1];
+      computeLocalFrame(&nodeNormals[3 * iVert], uP, vP);
       // computing each curvature around a vertex
       unitNormal2Triangle(nodes[triangles[3 * iTriangle + 0]].data(),
                           nodes[triangles[3 * iTriangle + 1]].data(),
                           nodes[triangles[3 * iTriangle + 2]].data(), n, &surf);
-      double uF[3],vF[3];
+      double uF[3], vF[3];
       makevector(nodes[triangles[3 * iTriangle + 0]].data(),
                  nodes[triangles[3 * iTriangle + 1]].data(), uF);
       normalize(uF);
-      crossprod(n,uF,vF);    
-      double *c = &CURV[4*iTriangle];       
-      double UP[3] = {dotprod (uP,uF),dotprod (uP,vF),0};
+      crossprod(n, uF, vF);
+      double *c = &CURV[4 * iTriangle];
+      double UP[3] = {dotprod(uP, uF), dotprod(uP, vF), 0};
       normalize(UP);
-      double VP[3] = {dotprod (vP,uF),dotprod (vP,vF),0};
+      double VP[3] = {dotprod(vP, uF), dotprod(vP, vF), 0};
       normalize(VP);
-      A += (UP[0]*UP[0]*c[0] + 2*UP[0]*UP[1]*c[1] + UP[1]*UP[1]*c[3]) ;
-      D += (VP[0]*VP[0]*c[0] + 2*VP[0]*VP[1]*c[1] + VP[1]*VP[1]*c[3]) ;
-      B += (VP[0]*UP[0]*c[0] + (VP[1]*UP[0]+VP[0]*UP[1])*c[1] + VP[1]*UP[1]*c[3]) ;
+      A += (UP[0] * UP[0] * c[0] + 2 * UP[0] * UP[1] * c[1] +
+            UP[1] * UP[1] * c[3]);
+      D += (VP[0] * VP[0] * c[0] + 2 * VP[0] * VP[1] * c[1] +
+            VP[1] * VP[1] * c[3]);
+      B += (VP[0] * UP[0] * c[0] + (VP[1] * UP[0] + VP[0] * UP[1]) * c[1] +
+            VP[1] * UP[1] * c[3]);
       ++count;
       ++ind;
-      if(ind >= 3*nTriangles) break;
+      if(ind >= 3 * nTriangles) break;
     }
 
-    A /= (double) count;
-    B /= (double) count;
-    D /= (double) count;
+    A /= (double)count;
+    B /= (double)count;
+    D /= (double)count;
     double lambda1, lambda2, v1x, v1y, v2x, v2y;
-    solveEig(A, B, B, D, & lambda1, & v1x, &v1y, & lambda2, & v2x, & v2y );
+    solveEig(A, B, B, D, &lambda1, &v1x, &v1y, &lambda2, &v2x, &v2y);
     SVector3 cMax(fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]),
                   fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]),
                   fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]));
