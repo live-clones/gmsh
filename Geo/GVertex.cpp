@@ -42,8 +42,7 @@ void GVertex::addEdge(GEdge *e)
 
 void GVertex::delEdge(GEdge *const e)
 {
-  std::vector<GEdge *>::iterator it =
-    std::find(l_edges.begin(), l_edges.end(), e);
+  auto it = std::find(l_edges.begin(), l_edges.end(), e);
   if(it != l_edges.end()) l_edges.erase(it);
 }
 
@@ -64,8 +63,7 @@ std::string GVertex::getAdditionalInfoString(bool multline)
 
   if(l_edges.size()) {
     sstream << "On boundary of curves: ";
-    for(std::vector<GEdge *>::iterator it = l_edges.begin();
-        it != l_edges.end(); ++it) {
+    for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
       if(it != l_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
@@ -136,8 +134,7 @@ std::vector<GFace *> GVertex::faces() const
 {
   std::vector<GFace *> faces;
 
-  for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
-      it != l_edges.end(); ++it) {
+  for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
     std::vector<GFace *> const &temp = (*it)->faces();
     faces.insert(faces.end(), temp.begin(), temp.end());
   }
@@ -151,9 +148,8 @@ std::vector<GFace *> GVertex::faces() const
 std::list<GRegion *> GVertex::regions() const
 {
   std::vector<GFace *> const _faces = faces();
-  std::vector<GFace *>::const_iterator it = _faces.begin();
   std::set<GRegion *> _r;
-  for(; it != _faces.end(); ++it) {
+  for(auto it = _faces.begin(); it != _faces.end(); ++it) {
     std::list<GRegion *> temp = (*it)->regions();
     _r.insert(temp.begin(), temp.end());
   }
@@ -184,7 +180,7 @@ void GVertex::removeElement(int type, MElement *e)
 {
   switch(type) {
   case TYPE_PNT: {
-    std::vector<MPoint *>::iterator it =
+    auto it =
       std::find(points.begin(), points.end(), reinterpret_cast<MPoint *>(e));
     if(it != points.end()) points.erase(it);
   } break;
@@ -199,8 +195,7 @@ bool GVertex::reorder(const int elementType,
     if(points.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != points.size()) return false;
 
-      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
-          it != ordering.end(); ++it) {
+      for(auto it = ordering.begin(); it != ordering.end(); ++it) {
         if(*it >= points.size()) return false;
       }
 
