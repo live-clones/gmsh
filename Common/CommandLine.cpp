@@ -888,6 +888,39 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
+      else if(argv[i] == "-size_field") {
+        i++;
+        if(i < argv.size()){
+          CTX::instance()->mesh.nLayersPerGap = atoi(argv[i].c_str());
+          CTX::instance()->batch = 9;
+        }
+        else{
+          Msg::Error("Missing number of layers per gap");
+          if(exitOnError) Msg::Exit(1);
+        }
+        i++;
+        if(i < argv.size()){
+          CTX::instance()->mesh.minElementsPerTwoPi = atoi(argv[i].c_str());
+          if(CTX::instance()->mesh.minElementsPerTwoPi <= 0.)
+            CTX::instance()->mesh.lcFromCurvature = 0;
+        }
+        else{
+          Msg::Error("Missing number of elements density");
+          if(exitOnError) Msg::Exit(1);
+        }
+        i++;
+        if(i < argv.size()){
+          CTX::instance()->mesh.gradation = atof(argv[i].c_str());
+          if(CTX::instance()->mesh.gradation <= 1.){
+            CTX::instance()->mesh.gradation = 1.05;
+            Msg::Info("Gradation must be > 1 : set to 1.05");
+          }
+        }
+        else{
+          Msg::Error("Missing gradation");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
       else if(argv[i] == "-windows") {
         i++;
         if(i < argv.size())
