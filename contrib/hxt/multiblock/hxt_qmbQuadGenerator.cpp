@@ -4989,7 +4989,7 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	  comparison();
 	  std::cout << "comparison ok" << std::endl;
 	  std::cout << "rebuilt" << std::endl;
-	  // detectAndSolveLoopEdges();
+	  //detectAndSolveLoopEdges();
 	}
 	if(floatingSep && nIntersections==0){
 	  //take random point and trace a new sep
@@ -5120,7 +5120,7 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	  comparison();
 	  std::cout << "comparison ok" << std::endl;
 	  std::cout << "rebuilt" << std::endl;
-	  // detectAndSolveLoopEdges();
+	  //detectAndSolveLoopEdges();
 	  return 1;
 	}
 	if(floatingSep && nIntersections==1){
@@ -5258,7 +5258,7 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	  comparison();
 	  std::cout << "comparison ok" << std::endl;
 	  std::cout << "rebuilt" << std::endl;
-	  // detectAndSolveLoopEdges();
+	  //detectAndSolveLoopEdges();
 	  return 1;
 	}
 	if(floatingSep && nIntersections==2){
@@ -5358,7 +5358,7 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	  comparison();
 	  std::cout << "comparison ok" << std::endl;
 	  std::cout << "rebuilt" << std::endl;
-	  // detectAndSolveLoopEdges();
+	  //detectAndSolveLoopEdges();
 	  return 1;
 	}
       }
