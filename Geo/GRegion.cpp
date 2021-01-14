@@ -28,11 +28,8 @@ GRegion::GRegion(GModel *model, int tag) : GEntity(model, tag)
 
 GRegion::~GRegion()
 {
-  std::vector<GFace *>::iterator it = l_faces.begin();
-  while(it != l_faces.end()) {
+  for(auto it = l_faces.begin(); it != l_faces.end(); ++it)
     (*it)->delRegion(this);
-    ++it;
-  }
   GRegion::deleteMesh();
 }
 
@@ -180,8 +177,8 @@ SBoundingBox3d GRegion::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteVolume && geomType() != PartitionVolume) {
-    std::vector<GFace *>::const_iterator it = l_faces.begin();
-    for(; it != l_faces.end(); it++) res += (*it)->bounds(fast);
+    for(auto it = l_faces.begin(); it != l_faces.end(); it++)
+      res += (*it)->bounds(fast);
   }
   else {
     for(std::size_t i = 0; i < getNumMeshElements(); i++)
@@ -196,8 +193,7 @@ SOrientedBoundingBox GRegion::getOBB()
   if(!_obb) {
     std::vector<SPoint3> vertices;
     std::vector<GFace *> b_faces = faces();
-    for(std::vector<GFace *>::iterator b_face = b_faces.begin();
-        b_face != b_faces.end(); b_face++) {
+    for(auto b_face = b_faces.begin(); b_face != b_faces.end(); b_face++) {
       if((*b_face)->getNumMeshVertices() > 0) {
         int N = (*b_face)->getNumMeshVertices();
         for(int i = 0; i < N; i++) {
@@ -205,8 +201,7 @@ SOrientedBoundingBox GRegion::getOBB()
           vertices.push_back(mv->point());
         }
         std::vector<GEdge *> eds = (*b_face)->edges();
-        for(std::vector<GEdge *>::iterator ed = eds.begin(); ed != eds.end();
-            ed++) {
+        for(auto ed = eds.begin(); ed != eds.end(); ed++) {
           int N2 = (*ed)->getNumMeshVertices();
           for(int i = 0; i < N2; i++) {
             MVertex *mv = (*ed)->getMeshVertex(i);
@@ -232,8 +227,7 @@ SOrientedBoundingBox GRegion::getOBB()
       else {
         int N = 10;
         std::vector<GEdge *> b_edges = (*b_face)->edges();
-        for(std::vector<GEdge *>::iterator b_edge = b_edges.begin();
-            b_edge != b_edges.end(); b_edge++) {
+        for(auto b_edge = b_edges.begin(); b_edge != b_edges.end(); b_edge++) {
           Range<double> tr = (*b_edge)->parBounds(0);
           for(int j = 0; j < N; j++) {
             double t =
@@ -254,11 +248,10 @@ void GRegion::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive) {
-    std::vector<GFace *>::iterator it = l_faces.begin();
-    while(it != l_faces.end()) {
-      (*it)->setVisibility(val, recursive);
-      ++it;
-    }
+    for(auto f : l_faces) f->setVisibility(val, recursive);
+    for(auto f : embedded_faces) f->setVisibility(val, recursive);
+    for(auto e : embedded_edges) e->setVisibility(val, recursive);
+    for(auto v : embedded_vertices) v->setVisibility(val);
   }
 }
 
@@ -266,11 +259,10 @@ void GRegion::setColor(unsigned int val, bool recursive)
 {
   GEntity::setColor(val);
   if(recursive) {
-    std::vector<GFace *>::iterator it = l_faces.begin();
-    while(it != l_faces.end()) {
-      (*it)->setColor(val, recursive);
-      ++it;
-    }
+    for(auto f : l_faces) f->setColor(val, recursive);
+    for(auto f : embedded_faces) f->setColor(val, recursive);
+    for(auto e : embedded_edges) e->setColor(val, recursive);
+    for(auto v : embedded_vertices) v->setColor(val);
   }
 }
 
@@ -298,8 +290,7 @@ int GRegion::delFace(GFace *face)
 
 void GRegion::setBoundFaces(const std::set<int> &tagFaces)
 {
-  for(std::set<int>::const_iterator it = tagFaces.begin(); it != tagFaces.end();
-      ++it) {
+  for(auto it = tagFaces.begin(); it != tagFaces.end(); ++it) {
     GFace *face = model()->getFaceByTag(*it);
     if(face) {
       l_faces.push_back(face);
@@ -338,8 +329,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   std::ostringstream sstream;
   if(l_faces.size()) {
     sstream << "Boundary surfaces: ";
-    for(std::vector<GFace *>::iterator it = l_faces.begin();
-        it != l_faces.end(); ++it) {
+    for(auto it = l_faces.begin(); it != l_faces.end(); ++it) {
       if(it != l_faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
@@ -350,8 +340,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   }
   if(embedded_faces.size()) {
     sstream << "Embedded surfaces: ";
-    for(std::vector<GFace *>::iterator it = embedded_faces.begin();
-        it != embedded_faces.end(); ++it) {
+    for(auto it = embedded_faces.begin(); it != embedded_faces.end(); ++it) {
       if(it != embedded_faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
@@ -362,8 +351,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   }
   if(embedded_edges.size()) {
     sstream << "Embedded curves: ";
-    for(std::vector<GEdge *>::iterator it = embedded_edges.begin();
-        it != embedded_edges.end(); ++it) {
+    for(auto it = embedded_edges.begin(); it != embedded_edges.end(); ++it) {
       if(it != embedded_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
@@ -374,8 +362,8 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   }
   if(embedded_vertices.size()) {
     sstream << "Embedded points: ";
-    for(std::vector<GVertex *>::iterator it = embedded_vertices.begin();
-        it != embedded_vertices.end(); ++it) {
+    for(auto it = embedded_vertices.begin(); it != embedded_vertices.end();
+        ++it) {
       if(it != embedded_vertices.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
@@ -405,8 +393,7 @@ void GRegion::writeGEO(FILE *fp)
 
   if(l_faces.size()) {
     fprintf(fp, "Surface Loop(%d) = ", tag());
-    for(std::vector<GFace *>::iterator it = l_faces.begin();
-        it != l_faces.end(); it++) {
+    for(auto it = l_faces.begin(); it != l_faces.end(); it++) {
       if(it != l_faces.begin())
         fprintf(fp, ", %d", (*it)->tag());
       else
@@ -416,16 +403,13 @@ void GRegion::writeGEO(FILE *fp)
     fprintf(fp, "Volume(%d) = {%d};\n", tag(), tag());
   }
 
-  for(std::vector<GFace *>::iterator it = embedded_faces.begin();
-      it != embedded_faces.end(); it++)
+  for(auto it = embedded_faces.begin(); it != embedded_faces.end(); it++)
     fprintf(fp, "Surface {%d} In Volume {%d};\n", (*it)->tag(), tag());
 
-  for(std::vector<GEdge *>::iterator it = embedded_edges.begin();
-      it != embedded_edges.end(); it++)
+  for(auto it = embedded_edges.begin(); it != embedded_edges.end(); it++)
     fprintf(fp, "Line {%d} In Volume {%d};\n", (*it)->tag(), tag());
 
-  for(std::vector<GVertex *>::iterator it = embedded_vertices.begin();
-      it != embedded_vertices.end(); it++)
+  for(auto it = embedded_vertices.begin(); it != embedded_vertices.end(); it++)
     fprintf(fp, "Point {%d} In Volume {%d};\n", (*it)->tag(), tag());
 
   if(meshAttributes.method == MESH_TRANSFINITE) {
@@ -473,8 +457,8 @@ bool GRegion::edgeConnected(GRegion *r) const
 double GRegion::computeSolidProperties(std::vector<double> cg,
                                        std::vector<double> inertia)
 {
-  std::vector<GFace *>::iterator it = l_faces.begin();
-  std::vector<int>::iterator itdir = l_dirs.begin();
+  auto it = l_faces.begin();
+  auto itdir = l_dirs.begin();
   double volumex = 0;
   double volumey = 0;
   double volumez = 0;
@@ -560,8 +544,7 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
 std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
 {
   std::set<MVertex *> tmp;
-  for(std::vector<GFace *>::const_iterator it = embedded_faces.begin();
-      it != embedded_faces.end(); it++) {
+  for(auto it = embedded_faces.begin(); it != embedded_faces.end(); it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
     std::vector<GEdge *> ed = (*it)->edges();
     for(std::vector<GEdge *>::const_iterator it2 = ed.begin(); it2 != ed.end();
@@ -575,8 +558,7 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
                    (*it2)->getEndVertex()->mesh_vertices.end());
     }
   }
-  for(std::vector<GEdge *>::const_iterator it = embedded_edges.begin();
-      it != embedded_edges.end(); it++) {
+  for(auto it = embedded_edges.begin(); it != embedded_edges.end(); it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
     if((*it)->getBeginVertex())
       tmp.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
@@ -585,8 +567,8 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
       tmp.insert((*it)->getEndVertex()->mesh_vertices.begin(),
                  (*it)->getEndVertex()->mesh_vertices.end());
   }
-  for(std::vector<GVertex *>::const_iterator it = embedded_vertices.begin();
-      it != embedded_vertices.end(); it++) {
+  for(auto it = embedded_vertices.begin(); it != embedded_vertices.end();
+      it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
   }
   return std::vector<MVertex *>(tmp.begin(), tmp.end());
@@ -595,8 +577,7 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
 std::vector<GVertex *> GRegion::vertices() const
 {
   std::set<GVertex *> v;
-  for(std::vector<GFace *>::const_iterator it = l_faces.begin();
-      it != l_faces.end(); ++it) {
+  for(auto it = l_faces.begin(); it != l_faces.end(); ++it) {
     GFace const *const gf = *it;
     std::vector<GVertex *> const &vs = gf->vertices();
     v.insert(vs.begin(), vs.end());
@@ -621,34 +602,33 @@ void GRegion::removeElement(int type, MElement *e)
 {
   switch(type) {
   case TYPE_TET: {
-    std::vector<MTetrahedron *>::iterator it =
-      std::find(tetrahedra.begin(), tetrahedra.end(),
-                reinterpret_cast<MTetrahedron *>(e));
+    auto it = std::find(tetrahedra.begin(), tetrahedra.end(),
+                        reinterpret_cast<MTetrahedron *>(e));
     if(it != tetrahedra.end()) tetrahedra.erase(it);
   } break;
   case TYPE_HEX: {
-    std::vector<MHexahedron *>::iterator it = std::find(
-      hexahedra.begin(), hexahedra.end(), reinterpret_cast<MHexahedron *>(e));
+    auto it = std::find(hexahedra.begin(), hexahedra.end(),
+                        reinterpret_cast<MHexahedron *>(e));
     if(it != hexahedra.end()) hexahedra.erase(it);
   } break;
   case TYPE_PRI: {
-    std::vector<MPrism *>::iterator it =
+    auto it =
       std::find(prisms.begin(), prisms.end(), reinterpret_cast<MPrism *>(e));
     if(it != prisms.end()) prisms.erase(it);
   } break;
   case TYPE_PYR: {
-    std::vector<MPyramid *>::iterator it = std::find(
-      pyramids.begin(), pyramids.end(), reinterpret_cast<MPyramid *>(e));
+    auto it = std::find(pyramids.begin(), pyramids.end(),
+                        reinterpret_cast<MPyramid *>(e));
     if(it != pyramids.end()) pyramids.erase(it);
   } break;
   case TYPE_TRIH: {
-    std::vector<MTrihedron *>::iterator it = std::find(
-      trihedra.begin(), trihedra.end(), reinterpret_cast<MTrihedron *>(e));
+    auto it = std::find(trihedra.begin(), trihedra.end(),
+                        reinterpret_cast<MTrihedron *>(e));
     if(it != trihedra.end()) trihedra.erase(it);
   } break;
   case TYPE_POLYH: {
-    std::vector<MPolyhedron *>::iterator it = std::find(
-      polyhedra.begin(), polyhedra.end(), reinterpret_cast<MPolyhedron *>(e));
+    auto it = std::find(polyhedra.begin(), polyhedra.end(),
+                        reinterpret_cast<MPolyhedron *>(e));
     if(it != polyhedra.end()) polyhedra.erase(it);
   } break;
   default: Msg::Error("Trying to remove unsupported element in region");
@@ -662,8 +642,7 @@ bool GRegion::reorder(const int elementType,
     if(tetrahedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != tetrahedra.size()) return false;
 
-      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
-          it != ordering.end(); ++it) {
+      for(auto it = ordering.begin(); it != ordering.end(); ++it) {
         if(*it >= tetrahedra.size()) return false;
       }
 
@@ -680,8 +659,7 @@ bool GRegion::reorder(const int elementType,
     if(hexahedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != hexahedra.size()) return false;
 
-      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
-          it != ordering.end(); ++it) {
+      for(auto it = ordering.begin(); it != ordering.end(); ++it) {
         if(*it >= hexahedra.size()) return false;
       }
 
@@ -698,8 +676,7 @@ bool GRegion::reorder(const int elementType,
     if(prisms.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != prisms.size()) return false;
 
-      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
-          it != ordering.end(); ++it) {
+      for(auto it = ordering.begin(); it != ordering.end(); ++it) {
         if(*it >= prisms.size()) return false;
       }
 
@@ -716,8 +693,7 @@ bool GRegion::reorder(const int elementType,
     if(pyramids.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != pyramids.size()) return false;
 
-      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
-          it != ordering.end(); ++it) {
+      for(auto it = ordering.begin(); it != ordering.end(); ++it) {
         if(*it >= pyramids.size()) return false;
       }
 
@@ -734,8 +710,7 @@ bool GRegion::reorder(const int elementType,
     if(polyhedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != polyhedra.size()) return false;
 
-      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
-          it != ordering.end(); ++it) {
+      for(auto it = ordering.begin(); it != ordering.end(); ++it) {
         if(*it >= polyhedra.size()) return false;
       }
 
@@ -752,8 +727,7 @@ bool GRegion::reorder(const int elementType,
     if(trihedra.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != trihedra.size()) return false;
 
-      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
-          it != ordering.end(); ++it) {
+      for(auto it = ordering.begin(); it != ordering.end(); ++it) {
         if(*it >= trihedra.size()) return false;
       }
 
@@ -834,14 +808,14 @@ bool GRegion::setOutwardOrientationMeshConstraint()
   setRand(rrr);
 
   std::vector<GFace *> f = faces();
-  std::vector<GFace *>::iterator it = f.begin();
+  auto it = f.begin();
   while(it != f.end()) {
     GFace *gf = (*it);
     gf->buildSTLTriangulation();
     if(gf->stl_triangles.size() < 3) {
       Msg::Warning("No valid STL triangulation found for surface %d - skipping "
-                   "outward orientation constraint for volume %d", gf->tag(),
-                   tag());
+                   "outward orientation constraint for volume %d",
+                   gf->tag(), tag());
       return false;
     }
     int nb_intersect = 0;
@@ -870,13 +844,11 @@ bool GRegion::setOutwardOrientationMeshConstraint()
       N[1] += rrr[2] * v1[1] + rrr[3] * v2[1];
       N[2] += rrr[4] * v1[2] + rrr[5] * v2[2];
       norme(N);
-      std::vector<GFace *>::iterator it_b = f.begin();
+      auto it_b = f.begin();
       while(it_b != f.end()) {
         GFace *gf_b = (*it_b);
         gf_b->buildSTLTriangulation();
-        if(gf_b->stl_triangles.size() < 3) {
-          return false;
-        }
+        if(gf_b->stl_triangles.size() < 3) { return false; }
         for(std::size_t i_b = 0; i_b < gf_b->stl_triangles.size(); i_b += 3) {
           SPoint3 p1 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b]];
           SPoint3 p2 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b + 1]];
@@ -931,13 +903,13 @@ bool GRegion::isFullyDiscrete()
   std::vector<GFace *> f = faces();
   for(std::size_t i = 0; i < f.size(); i++) {
     if(f[i]->geomType() != GEntity::DiscreteSurface) return false;
-    discreteFace *df = dynamic_cast<discreteFace *>(f[i]);
+    auto *df = dynamic_cast<discreteFace *>(f[i]);
     if(df && df->haveParametrization()) return false;
   }
   std::vector<GEdge *> e = edges();
   for(std::size_t i = 0; i < e.size(); i++) {
     if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
-    discreteEdge *de = dynamic_cast<discreteEdge *>(e[i]);
+    auto *de = dynamic_cast<discreteEdge *>(e[i]);
     if(de && de->haveParametrization()) return false;
   }
   return true;

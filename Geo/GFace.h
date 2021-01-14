@@ -91,10 +91,6 @@ public:
   void addEmbeddedVertex(GVertex *v) { embedded_vertices.insert(v); }
   void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }
 
-  // delete the edge from the face (the edge is supposed to be a free
-  // edge in the face, not part of any edge loops--use with caution!)
-  void delFreeEdge(GEdge *e);
-
   // edge orientations
   virtual std::vector<int> const &orientations() const { return l_dirs; }
 
