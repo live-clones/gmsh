@@ -134,8 +134,6 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "given minimum number of elements per 2*pi radians "
                  "(Mesh.MeshSizeFromCurvature and "
                  "Mesh.MinimumElementsPerTwoPi)"));
-  s.push_back(mp("-clauto layers density gradation", "Compute automatic size field "
-                 "from surface curvature"));
   s.push_back(mp("-aniso_max value", "Set maximum anisotropy for bamg "
                  "(Mesh.AnisoMax)"));
   s.push_back(mp("-smooth_ratio value", "Set smoothing ration between mesh sizes "
@@ -890,7 +888,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
-      else if(argv[i] == "-clauto") {
+      else if(argv[i] == "-size_field") {
         i++;
         if(i < argv.size()){
           CTX::instance()->mesh.nLayersPerGap = atoi(argv[i].c_str());
