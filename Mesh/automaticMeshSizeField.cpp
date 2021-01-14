@@ -1,3 +1,10 @@
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributed by Arthur Bawin
+
 #include "automaticMeshSizeField.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -819,6 +826,7 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
   }
 }
 
+#if 0 // TODO remove once this is used
 static void assignSizeAfterRefinementAniso(p4est_iter_volume_info_t * info, void *user_data){
   p4est_t            *p4est = info->p4est;
   p4est_quadrant_t   *q = info->quad;
@@ -926,6 +934,7 @@ static void assignSizeAfterRefinementAniso(p4est_iter_volume_info_t * info, void
     // }
   }
 }
+#endif // TODO remove once this is used
 
 HXTStatus forestRefine(Forest *forest){
   /* Refine recursively the tree until all cells' size is at most hbulk. */
@@ -1239,10 +1248,6 @@ HXTStatus forestSizeSmoothing(Forest *forest){
 /* ========================================================================================================
    SEARCH AND REPLACE
    ======================================================================================================== */
-
-inline static bool isPoint(double x, double y, double z, size_point_t *p, double tol){
-  return (fabs(p->x - x) < tol && fabs(p->y - y) < tol && fabs(p->z - z) < tol);
-}
 
 static int searchAndAssignConstant(p4est_t * p4est, p4est_topidx_t which_tree, p4est_quadrant_t * q, p4est_locidx_t local_num, void *point){
   bool in_box, is_leaf = local_num >= 0;

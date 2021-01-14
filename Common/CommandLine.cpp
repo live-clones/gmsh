@@ -134,6 +134,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "given minimum number of elements per 2*pi radians "
                  "(Mesh.MeshSizeFromCurvature and "
                  "Mesh.MinimumElementsPerTwoPi)"));
+  s.push_back(mp("-clauto layers density gradation", "Compute automatic size field "
+                 "from surface curvature"));
   s.push_back(mp("-aniso_max value", "Set maximum anisotropy for bamg "
                  "(Mesh.AnisoMax)"));
   s.push_back(mp("-smooth_ratio value", "Set smoothing ration between mesh sizes "
@@ -146,7 +148,6 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-rand value", "Set random perturbation factor "
                  "(Mesh.RandomFactor)"));
   s.push_back(mp("-bgm file", "Load background mesh from file"));
-  s.push_back(mp("-size_field value", "Compute size field from surface curvature"));
   s.push_back(mp("-check", "Perform various consistency checks on mesh"));
   s.push_back(mp("-ignore_periocity", "Ignore periodic boundaries "
                  "(Mesh.IgnorePeriodicity)"));
@@ -889,7 +890,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
-      else if(argv[i] == "-size_field") {
+      else if(argv[i] == "-clauto") {
         i++;
         if(i < argv.size()){
           CTX::instance()->mesh.nLayersPerGap = atoi(argv[i].c_str());
