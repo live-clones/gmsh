@@ -4471,22 +4471,26 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heig
 end
 
 """
-    gmsh.model.occ.addPipe(dimTags, wireTag)
+    gmsh.model.occ.addPipe(dimTags, wireTag, trihedron = "")
 
 Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
-`dimTags` along the wire `wireTag`. Return the pipe in `outDimTags`.
+`dimTags` along the wire `wireTag`. The type of sweep can be specified with
+`trihedron` (possible values: "DiscreteTrihedron", "CorrectedFrenet", "Fixed",
+"Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
+"GuideACWithContact", "GuidePlanWithContact"). If `trihedron` is not provided,
+"DiscreteTrihedron" is assumed. Return the pipe in `outDimTags`.
 
 Return `outDimTags`.
 """
-function addPipe(dimTags, wireTag)
+function addPipe(dimTags, wireTag, trihedron = "")
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccAddPipe, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_dimTags_, api_dimTags_n_, wireTag, api_outDimTags_, api_outDimTags_n_, ierr)
+          (Ptr{Cint}, Csize_t, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cchar}, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, wireTag, api_outDimTags_, api_outDimTags_n_, trihedron, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]

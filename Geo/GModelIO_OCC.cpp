@@ -2880,7 +2880,7 @@ bool OCC_Internals::_extrudePerDim(
   int mode, int inDim, const std::vector<int> &inTags, double x, double y,
   double z, double dx, double dy, double dz, double ax, double ay, double az,
   double angle, int wireTag, std::vector<std::pair<int, int> > &outDimTags,
-  ExtrudeParams *e)
+  ExtrudeParams *e, const std::string &trihedron)
 {
   // build a single compound shape, so that we won't duplicate internal
   // boundaries
@@ -2934,15 +2934,32 @@ bool OCC_Internals::_extrudePerDim(
         return false;
       }
       TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
-      BRepOffsetAPI_MakePipe p(wire, c, GeomFill_IsDiscreteTrihedron);
-      // Available choices:
-      //   GeomFill_IsCorrectedFrenet, GeomFill_IsFixed, GeomFill_IsFrenet,
-      //   GeomFill_IsConstantNormal, GeomFill_IsDarboux, GeomFill_IsGuideAC,
-      //   GeomFill_IsGuidePlan, GeomFill_IsGuideACWithContact,
-      //   GeomFill_IsGuidePlanWithContact, GeomFill_IsDiscreteTrihedron
       // DiscreteTrihedron seems the most robust; CorrectedFrenet e.g. fails on
-      // very simple cases with straight extrusions. We might want to make this
-      // an option.
+      // very simple cases with straight extrusions.
+      GeomFill_Trihedron mode = GeomFill_IsDiscreteTrihedron;
+      if(trihedron == "" || trihedron == "DiscreteTrihedron")
+        mode = GeomFill_IsDiscreteTrihedron;
+      else if(trihedron == "CorrectedFrenet")
+        mode = GeomFill_IsCorrectedFrenet;
+      else if(trihedron == "Fixed")
+        mode = GeomFill_IsFixed;
+      else if(trihedron == "Frenet")
+        mode = GeomFill_IsFrenet;
+      else if(trihedron == "ConstantNormal")
+        mode = GeomFill_IsConstantNormal;
+      else if(trihedron == "Darboux")
+        mode = GeomFill_IsDarboux;
+      else if(trihedron == "GuideAC")
+        mode = GeomFill_IsGuideAC;
+      else if(trihedron == "GuidePlan")
+        mode = GeomFill_IsGuidePlan;
+      else if(trihedron == "GuideACWithContact")
+        mode = GeomFill_IsGuideACWithContact;
+      else if(trihedron == "GuidePlanWithContact")
+        mode = GeomFill_IsGuidePlanWithContact;
+      else
+        Msg::Warning("Unknown trihedron mode for pipe: using 'DiscreteTrihedron'");
+      BRepOffsetAPI_MakePipe p(wire, c, mode);
       p.Build();
       if(!p.IsDone()) {
         Msg::Error("Could not create pipe");
@@ -2997,7 +3014,7 @@ bool OCC_Internals::_extrude(int mode,
                              double dz, double ax, double ay, double az,
                              double angle, int wireTag,
                              std::vector<std::pair<int, int> > &outDimTags,
-                             ExtrudeParams *e)
+                             ExtrudeParams *e, const std::string &trihedron)
 {
   std::vector<int> inTags[4];
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
@@ -3012,7 +3029,7 @@ bool OCC_Internals::_extrude(int mode,
     if(!inTags[dim].empty()) {
       std::vector<std::pair<int, int> > out;
       if(_extrudePerDim(mode, dim, inTags[dim], x, y, z, dx, dy, dz, ax, ay, az,
-                        angle, wireTag, out, e)) {
+                        angle, wireTag, out, e, trihedron)) {
         outDimTags.insert(outDimTags.end(), out.begin(), out.end());
       }
     }
@@ -3041,10 +3058,11 @@ bool OCC_Internals::revolve(const std::vector<std::pair<int, int> > &inDimTags,
 
 bool OCC_Internals::addPipe(const std::vector<std::pair<int, int> > &inDimTags,
                             int wireTag,
-                            std::vector<std::pair<int, int> > &outDimTags)
+                            std::vector<std::pair<int, int> > &outDimTags,
+                            const std::string &trihedron)
 {
   return _extrude(2, inDimTags, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., wireTag,
-                  outDimTags);
+                  outDimTags, nullptr, trihedron);
 }
 
 bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,

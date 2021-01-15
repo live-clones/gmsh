@@ -3736,16 +3736,21 @@ namespace gmsh { // Top-level functions
       }
 
       // Add a pipe in the OpenCASCADE CAD representation, by extruding the
-      // entities `dimTags' along the wire `wireTag'. Return the pipe in
-      // `outDimTags'.
+      // entities `dimTags' along the wire `wireTag'. The type of sweep can be
+      // specified with `trihedron' (possible values: "DiscreteTrihedron",
+      // "CorrectedFrenet", "Fixed", "Frenet", "ConstantNormal", "Darboux",
+      // "GuideAC", "GuidePlan", "GuideACWithContact", "GuidePlanWithContact"). If
+      // `trihedron' is not provided, "DiscreteTrihedron" is assumed. Return the
+      // pipe in `outDimTags'.
       inline void addPipe(const gmsh::vectorpair & dimTags,
                           const int wireTag,
-                          gmsh::vectorpair & outDimTags)
+                          gmsh::vectorpair & outDimTags,
+                          const std::string & trihedron = "")
       {
         int ierr = 0;
         int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
         int *api_outDimTags_; size_t api_outDimTags_n_;
-        gmshModelOccAddPipe(api_dimTags_, api_dimTags_n_, wireTag, &api_outDimTags_, &api_outDimTags_n_, &ierr);
+        gmshModelOccAddPipe(api_dimTags_, api_dimTags_n_, wireTag, &api_outDimTags_, &api_outDimTags_n_, trihedron.c_str(), &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);

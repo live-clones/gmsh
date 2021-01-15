@@ -2182,8 +2182,11 @@ combined).
 
 @item Sphere ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a sphere, defined by the 3 coordinates of its center and a
-radius. Additional expressions define 3 angle limits. @code{Sphere} is
-only available with the OpenCASCADE kernel.
+radius. Additional expressions define 3 angle limits. The first two
+optional arguments define the polar angle opening (from -Pi/2 to
+Pi/2). The optional `angle3' argument defines the azimuthal opening
+(from 0 to 2*Pi). @code{Sphere} is only available with the OpenCASCADE
+kernel.
 
 @item Box ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a box, defined by the 3 coordinates of a point and the 3

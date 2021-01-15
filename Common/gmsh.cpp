@@ -5962,12 +5962,14 @@ GMSH_API void gmsh::model::occ::revolve(
 
 GMSH_API void gmsh::model::occ::addPipe(const vectorpair &dimTags,
                                         const int wireTag,
-                                        vectorpair &outDimTags)
+                                        vectorpair &outDimTags,
+                                        const std::string &trihedron)
 {
   if(!_checkInit()) return;
   _createOcc();
   outDimTags.clear();
-  GModel::current()->getOCCInternals()->addPipe(dimTags, wireTag, outDimTags);
+  GModel::current()->getOCCInternals()->addPipe(dimTags, wireTag, outDimTags,
+                                                trihedron);
 }
 
 GMSH_API void gmsh::model::occ::fillet(const std::vector<int> &volumeTags,

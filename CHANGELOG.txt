@@ -10,7 +10,7 @@ partitioned entities; fixed order of Gauss quadrature for quads and hexas; small
 bug fixes and improvements.
 
 * Incompatible API changes: new optional argument to mesh/classifySurfaces,
-  occ/addBSplineSurface, occ/addBezierSurface and view/probe
+  occ/addBSplineSurface, occ/addBezierSurface, occ/addPipe and view/probe
 
 4.7.1 (November 16, 2020): small bug fixes and improvements.
 

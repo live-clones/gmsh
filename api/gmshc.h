@@ -2224,10 +2224,15 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   int * ierr);
 
 /* Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
- * `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'. */
+ * `dimTags' along the wire `wireTag'. The type of sweep can be specified with
+ * `trihedron' (possible values: "DiscreteTrihedron", "CorrectedFrenet",
+ * "Fixed", "Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
+ * "GuideACWithContact", "GuidePlanWithContact"). If `trihedron' is not
+ * provided, "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'. */
 GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,
                                   const int wireTag,
                                   int ** outDimTags, size_t * outDimTags_n,
+                                  const char * trihedron,
                                   int * ierr);
 
 /* Fillet the volumes `volumeTags' on the curves `curveTags' with radii

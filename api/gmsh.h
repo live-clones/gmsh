@@ -2508,11 +2508,16 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::addPipe
       //
       // Add a pipe in the OpenCASCADE CAD representation, by extruding the
-      // entities `dimTags' along the wire `wireTag'. Return the pipe in
-      // `outDimTags'.
+      // entities `dimTags' along the wire `wireTag'. The type of sweep can be
+      // specified with `trihedron' (possible values: "DiscreteTrihedron",
+      // "CorrectedFrenet", "Fixed", "Frenet", "ConstantNormal", "Darboux",
+      // "GuideAC", "GuidePlan", "GuideACWithContact", "GuidePlanWithContact"). If
+      // `trihedron' is not provided, "DiscreteTrihedron" is assumed. Return the
+      // pipe in `outDimTags'.
       GMSH_API void addPipe(const gmsh::vectorpair & dimTags,
                             const int wireTag,
-                            gmsh::vectorpair & outDimTags);
+                            gmsh::vectorpair & outDimTags,
+                            const std::string & trihedron = "");
 
       // gmsh::model::occ::fillet
       //

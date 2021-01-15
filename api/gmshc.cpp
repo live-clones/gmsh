@@ -3067,7 +3067,7 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n, const double 
   }
 }
 
-GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n, const int wireTag, int ** outDimTags, size_t * outDimTags_n, int * ierr)
+GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n, const int wireTag, int ** outDimTags, size_t * outDimTags_n, const char * trihedron, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -3077,7 +3077,7 @@ GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n, const int wir
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::vectorpair api_outDimTags_;
-    gmsh::model::occ::addPipe(api_dimTags_, wireTag, api_outDimTags_);
+    gmsh::model::occ::addPipe(api_dimTags_, wireTag, api_outDimTags_, trihedron);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(...){

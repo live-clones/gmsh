@@ -5307,12 +5307,16 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def addPipe(dimTags, wireTag):
+        def addPipe(dimTags, wireTag, trihedron=""):
             """
-            gmsh.model.occ.addPipe(dimTags, wireTag)
+            gmsh.model.occ.addPipe(dimTags, wireTag, trihedron="")
 
             Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
-            `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'.
+            `dimTags' along the wire `wireTag'. The type of sweep can be specified with
+            `trihedron' (possible values: "DiscreteTrihedron", "CorrectedFrenet",
+            "Fixed", "Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
+            "GuideACWithContact", "GuidePlanWithContact"). If `trihedron' is not
+            provided, "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'.
 
             Return `outDimTags'.
             """
@@ -5323,6 +5327,7 @@ class model:
                 api_dimTags_, api_dimTags_n_,
                 c_int(wireTag),
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_char_p(trihedron.encode()),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
