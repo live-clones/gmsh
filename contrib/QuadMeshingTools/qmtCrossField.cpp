@@ -37,6 +37,7 @@
 /* TODO list:
  * - Cross field smoother with a single Laplacian solve
  * - Cross field smoother with a single factorization
+ * - MUMPS support
  */
 
 namespace QMT {

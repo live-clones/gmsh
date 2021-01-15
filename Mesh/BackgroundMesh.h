@@ -8,7 +8,9 @@
 
 #include <cmath>
 #include <vector>
+#include <unordered_map>
 #include <list>
+#include <memory>
 #include "simpleFunction.h"
 #include "BackgroundMeshTools.h"
 
@@ -17,6 +19,8 @@
 class ANNkd_tree;
 #endif
 
+class GEntity;
+class GModel;
 class MElementOctree;
 class GFace;
 class GEdge;
@@ -115,5 +119,67 @@ public:
     return _triangles.end();
   }
 };
+
+
+/**
+ * @brief Store a mesh associated to a GEntity (e.g. triangles of a GFace)
+ *        The vertices and elements are owned by the
+ *        structure and are different from the ones in the GModel
+ *        The EntityBackgroundMesh destructor delete the vertices
+ *        and the elements.
+ *        The elements contain vertices which are stored and owned by other
+ *        EntityBackgroundMesh. 
+ *        This construction mimics the gmsh bottom-up structure.
+ */
+class EntityBackgroundMesh {
+  public:
+    GEntity* ge = NULL;
+    std::vector<MVertex*> vertices;
+    std::vector<MElement*> elements;
+
+  public:
+    EntityBackgroundMesh(const std::vector<MVertex*>& v, const std::vector<MElement*>& e)
+      :vertices(v),elements(e) {}
+    EntityBackgroundMesh(EntityBackgroundMesh const&) = delete;
+    EntityBackgroundMesh& operator=(EntityBackgroundMesh const&) = delete;
+    ~EntityBackgroundMesh(); /* delete vertices and elements */
+};
+
+/**
+ * @brief Store a collection of GEntity background meshes.
+ *        Deal with the mesh import (see importEntityMeshes())
+ */
+class GlobalBackgroundMesh {
+  public:
+    const std::string& name;
+    std::unordered_map<GEntity*,EntityBackgroundMesh> entityMesh;
+
+  public:
+    GlobalBackgroundMesh(const std::string& _name):name(_name){}
+    GlobalBackgroundMesh(GlobalBackgroundMesh const&) = delete;
+    GlobalBackgroundMesh& operator=(GlobalBackgroundMesh const&) = delete;
+
+    /**
+     * @brief Fill the entityMesh map by copying the meshes in the GModel.
+     *        New MVertex and MElement instances are created, the background 
+     *        meshes are totally independant from the ones in the GModel after
+     *        this function call.
+     *
+     * @param gm the GModel containing the GEntity whose meshes are imported
+     * @param overwriteExisting Delete existing background meshes before importing new ones
+     * @param splitIntoSimplices Split quads into triangles. Volume element split not supported yet.
+     *
+     * @warning Only import GVertex, GEdge, GFace for the moment, not GRegion
+     *
+     * @return 0 if successful import
+     */
+    int importEntityMeshes(GModel* gm, bool overwriteExisting = true, bool splitIntoSimplices = true);
+};
+
+/* Global storage for access deep in meshing algorithms without passing reference everywhere.
+ * Use getBackgroundMesh(name) instead of direcly accessing the global variable. */
+
+extern std::vector<std::unique_ptr<GlobalBackgroundMesh> > global_bmeshes;
+GlobalBackgroundMesh& getBackgroundMesh(const std::string& name);
 
 #endif
