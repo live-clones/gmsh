@@ -289,7 +289,7 @@ int GModel::writePLY2(const std::string &name)
 
   int numVertices = indexMeshVertices(true);
   int numTriangles = 0;
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     numTriangles += (*it)->triangles.size();
   }
 
@@ -302,7 +302,7 @@ int GModel::writePLY2(const std::string &name)
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writePLY2(fp);
 
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
       (*it)->triangles[i]->writePLY2(fp);
   }

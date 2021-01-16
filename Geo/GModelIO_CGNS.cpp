@@ -54,26 +54,26 @@ int GModel::readCGNS(const std::string &name,
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
   // create all zones by reading basic info
-  std::vector<CGNSZone *> allZones(nbZone+1);
+  std::vector<CGNSZone *> allZones(nbZone + 1);
   std::map<std::string, int> name2Zone;
   bool postpro;
   createZones(fileIndex, baseIndex, meshDim, allEltNodeTransfo, allZones,
               name2Zone, postpro);
 
   // data structures for element and vertices
-  std::vector<MVertex *> allVert;                     // all vertices
+  std::vector<MVertex *> allVert; // all vertices
   std::map<int, std::vector<MElement *> > allElt[10]; // all elements by type
 
-   // vertex and element (global) tags per zone for postpro
-  vertPerZone.resize(nbZone+1);
-  eltPerZone.resize(nbZone+1);
+  // vertex and element (global) tags per zone for postpro
+  vertPerZone.resize(nbZone + 1);
+  eltPerZone.resize(nbZone + 1);
 
   // read mesh in zones
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     CGNSZone *zone = allZones[iZone];
-    int err = zone->readMesh(dim, scale, allZones, allVert, allElt,
-                             vertPerZone[iZone], eltPerZone[iZone],
-                             allGeomName);
+    int err =
+      zone->readMesh(dim, scale, allZones, allVert, allElt, vertPerZone[iZone],
+                     eltPerZone[iZone], allGeomName);
     if((!postpro) || (CTX::instance()->mesh.cgnsImportIgnoreSolution != 0)) {
       vertPerZone[iZone].clear();
       eltPerZone[iZone].clear();
@@ -123,7 +123,6 @@ int GModel::readCGNS(const std::string &name,
   return postpro ? 2 : 1;
 }
 
-
 int GModel::writeCGNS(const std::string &name, bool saveAll,
                       double scalingFactor, bool structured)
 {
@@ -136,11 +135,13 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   // write the base node
   int meshDim = getMeshDim(), dim = 3, cgIndexBase = 0;
   size_t posStartName = name.find_last_of("/\\");
-  if (posStartName == std::string::npos) posStartName = 0;
-  else posStartName++;
+  if(posStartName == std::string::npos)
+    posStartName = 0;
+  else
+    posStartName++;
   std::string baseName = cgnsString(name.substr(posStartName));
-  cgnsErr = cg_base_write(cgIndexFile, baseName.c_str(), meshDim, dim,
-                          &cgIndexBase);
+  cgnsErr =
+    cg_base_write(cgIndexFile, baseName.c_str(), meshDim, dim, &cgIndexBase);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write information about who generated the mesh
@@ -150,8 +151,8 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // try to write as structured grid (if it fails, write as unstructured)
-  if(structured && writeZonesStruct(this, scalingFactor, cgIndexFile,
-                                    cgIndexBase)) {
+  if(structured &&
+     writeZonesStruct(this, scalingFactor, cgIndexFile, cgIndexBase)) {
     cgnsErr = cg_close(cgIndexFile);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__);
     return 1;
@@ -170,9 +171,9 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   getEntities(allEntities);
   getEntitiesToSave(allEntities, saveAll, entities);
   getPeriodicEntities(allEntities, entitiesPer);
-  if (numPart > 0) {
+  if(numPart > 0) {
     getPartitionInterfaceEntities(allEntities, saveAll, entitiesInterf);
-    if (entitiesInterf.size() == 0) {
+    if(entitiesInterf.size() == 0) {
       Msg::Warning("Partitioned entities not detected");
     }
   }
@@ -186,40 +187,40 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   // write partitions and periodic/partition connectivities
   std::set<int> eleMshTypes;
   std::map<GEntity *, std::string> geomEntities;
-  if (numPart == 0) {                                   // mesh not partitioned
+  if(numPart == 0) { // mesh not partitioned
     int err = writeZone(this, saveAll, scalingFactor, meshDim, numNodes, 0,
                         entities, cgIndexFile, cgIndexBase, zoneName,
                         interfVert2Local, eleMshTypes, geomEntities);
     if(err == 0) return 0;
-    if (entitiesPer.size() > 0) {
+    if(entitiesPer.size() > 0) {
       err = writePeriodic(entitiesPer, cgIndexFile, cgIndexBase, zoneName,
                           interfVert2Local);
       if(err == 0) return 0;
     }
   }
-  else {                                                // partitioned mesh
+  else { // partitioned mesh
     std::vector<std::vector<GEntity *> > entitiesPart;
     entitiesPart.resize(numPart + 1);
     getEntitiesInPartitions(entities, entitiesPart);
     for(std::size_t iPart = 1; iPart <= numPart; iPart++) {
       printProgress("Writing partition", iPart, numPart);
-      int err = writeZone(this, saveAll, scalingFactor, meshDim, numNodes,
-                          iPart, entitiesPart[iPart], cgIndexFile, cgIndexBase,
-                          zoneName, interfVert2Local, eleMshTypes,
-                          geomEntities);
+      int err =
+        writeZone(this, saveAll, scalingFactor, meshDim, numNodes, iPart,
+                  entitiesPart[iPart], cgIndexFile, cgIndexBase, zoneName,
+                  interfVert2Local, eleMshTypes, geomEntities);
       if(err == 0) return 0;
-    }             // loop on partitions
-    if (entitiesPer.size() > 0) {
+    } // loop on partitions
+    if(entitiesPer.size() > 0) {
       int err = writePeriodic(entitiesPer, cgIndexFile, cgIndexBase, zoneName,
                               interfVert2Local);
       if(err == 0) return 0;
     }
-    if (entitiesInterf.size() > 0) {
+    if(entitiesInterf.size() > 0) {
       int err = writeInterfaces(entitiesInterf, cgIndexFile, cgIndexBase,
                                 zoneName, interfVert2Local);
       if(err == 0) return 0;
     }
-  }   // numPart == 0
+  } // numPart == 0
 
   // write geometric entities in families
   if(geomEntities.size() > 0) {
@@ -238,9 +239,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   return 1;
 }
 
-
 #else
-
 
 int GModel::readCGNS(const std::string &name,
                      std::vector<std::vector<MVertex *> > &vertPerZone,
@@ -250,13 +249,11 @@ int GModel::readCGNS(const std::string &name,
   return 0;
 }
 
-
 int GModel::writeCGNS(const std::string &name, bool saveAll,
                       double scalingFactor, bool structured)
 {
   Msg::Error("This version of Gmsh was compiled without CGNS support");
   return 0;
 }
-
 
 #endif

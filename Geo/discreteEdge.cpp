@@ -41,7 +41,7 @@ discreteEdge::discreteEdge(GModel *model) : GEdge(model, 0)
 }
 
 bool discreteEdge::_getLocalParameter(const double &t, int &iLine,
-                                     double &tLoc) const
+                                      double &tLoc) const
 {
   for(iLine = 0; iLine < (int)_discretization.size() - 1; iLine++) {
     double tmin = _pars[iLine];
@@ -156,13 +156,13 @@ int discreteEdge::createGeometry()
 
   bool sorted = true;
 
-  std::vector<MVertex*> vertices;
+  std::vector<MVertex *> vertices;
   vertices.push_back(lines[0]->getVertex(0));
   for(std::size_t i = 0; i < lines.size(); i++) {
-    if(lines[i]->getVertex(0) == vertices.back()){
+    if(lines[i]->getVertex(0) == vertices.back()) {
       vertices.push_back(lines[i]->getVertex(1));
     }
-    else{
+    else {
       sorted = false;
       break;
     }
@@ -172,15 +172,12 @@ int discreteEdge::createGeometry()
     Msg::Debug("Sorting nodes in discrete curve %d", tag());
     std::vector<MEdge> allEdges;
     for(std::size_t i = 0; i < lines.size(); i++) {
-      allEdges.push_back(MEdge(lines[i]->getVertex(0),
-                               lines[i]->getVertex(1)));
+      allEdges.push_back(MEdge(lines[i]->getVertex(0), lines[i]->getVertex(1)));
     }
     std::vector<std::vector<MVertex *> > vs;
     SortEdgeConsecutive(allEdges, vs);
-    if(vs.size() == 1) {
-      vertices = vs[0];
-    }
-    else{
+    if(vs.size() == 1) { vertices = vs[0]; }
+    else {
       Msg::Error("Discrete curve %d has wrong topology", tag());
       return 1;
     }
@@ -189,16 +186,12 @@ int discreteEdge::createGeometry()
   GVertex *g0 = dynamic_cast<GVertex *>(vertices.front()->onWhat());
   GVertex *g1 = dynamic_cast<GVertex *>(vertices.back()->onWhat());
 
-  if(g0) {
-    setBeginVertex(g0);
-  }
+  if(g0) { setBeginVertex(g0); }
   else if(g1 && g1->xyz().distance(vertices.front()->point()) < 1e-14) {
     setBeginVertex(g1);
   }
 
-  if(g1) {
-    setEndVertex(g1);
-  }
+  if(g1) { setEndVertex(g1); }
   else if(g0 && g0->xyz().distance(vertices.back()->point()) < 1e-14) {
     setEndVertex(g0);
   }
@@ -209,8 +202,8 @@ int discreteEdge::createGeometry()
   }
 
   for(std::size_t i = 0; i < vertices.size(); i++) {
-    _discretization.push_back
-      (SPoint3(vertices[i]->x(), vertices[i]->y(), vertices[i]->z()));
+    _discretization.push_back(
+      SPoint3(vertices[i]->x(), vertices[i]->y(), vertices[i]->z()));
     _pars.push_back((double)i);
   }
 
@@ -229,14 +222,14 @@ void discreteEdge::mesh(bool verbose)
 bool discreteEdge::writeParametrization(FILE *fp, bool binary)
 {
   std::size_t N = _discretization.size();
-  if(N != _pars.size()){
+  if(N != _pars.size()) {
     Msg::Error("Wrong number of parameters in STL mesh of curve %d", tag());
     return false;
   }
-  if(binary){
+  if(binary) {
     fwrite(&N, sizeof(std::size_t), 1, fp);
     std::vector<double> d(4 * N);
-    for(std::size_t i = 0; i < N; i++){
+    for(std::size_t i = 0; i < N; i++) {
       d[4 * i + 0] = _discretization[i].x();
       d[4 * i + 1] = _discretization[i].y();
       d[4 * i + 2] = _discretization[i].z();
@@ -244,7 +237,7 @@ bool discreteEdge::writeParametrization(FILE *fp, bool binary)
     }
     fwrite(&d[0], sizeof(double), 4 * N, fp);
   }
-  else{
+  else {
     fprintf(fp, "%lu\n", N);
     for(std::size_t i = 0; i < N; i++) {
       fprintf(fp, "%.16g %.16g %.16g %.16g\n", _discretization[i].x(),
@@ -257,23 +250,25 @@ bool discreteEdge::writeParametrization(FILE *fp, bool binary)
 bool discreteEdge::readParametrization(FILE *fp, bool binary)
 {
   std::size_t N;
-  if(binary){
+  if(binary) {
     if(fread(&N, sizeof(std::size_t), 1, fp) != 1) { return false; }
   }
-  else{
-    if(fscanf(fp, "%lu", &N) != 1){ return false; }
+  else {
+    if(fscanf(fp, "%lu", &N) != 1) { return false; }
   }
   _pars.resize(N);
   _discretization.resize(N);
 
   std::vector<double> d(4 * N);
-  if(binary){
-    if(fread(&d[0], sizeof(double), 4 * N, fp) != 4 * N){ return false; }
+  if(binary) {
+    if(fread(&d[0], sizeof(double), 4 * N, fp) != 4 * N) { return false; }
   }
-  else{
+  else {
     for(std::size_t i = 0; i < N; i++) {
       if(fscanf(fp, "%lf %lf %lf %lf\n", &d[4 * i + 0], &d[4 * i + 1],
-                &d[4 * i + 2], &d[4 * i + 3]) != 4) { return false; }
+                &d[4 * i + 2], &d[4 * i + 3]) != 4) {
+        return false;
+      }
     }
   }
 

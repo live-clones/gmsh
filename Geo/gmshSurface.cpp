@@ -50,7 +50,7 @@ gmshSurface *gmshSphere::NewSphere(int iSphere, double x, double y, double z,
 
 gmshSurface *gmshSurface::getSurface(int iSurface)
 {
-  std::map<int, gmshSurface *>::iterator it = allGmshSurfaces.find(iSurface);
+  auto it = allGmshSurfaces.find(iSurface);
   if(it == allGmshSurfaces.end()) {
     Msg::Error("gmshSurface %d does not exist", iSurface);
     return 0;

@@ -216,26 +216,26 @@ public:
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
   virtual int getVertexSolin(int numEdge, int numVertex)
   {
-    static const int eSolin[9][2] =  {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 4},
-                                      {2, 5}, {3, 4}, {3, 5}, {4, 5}};
+    static const int eSolin[9][2] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 4},
+                                     {2, 5}, {3, 4}, {3, 5}, {4, 5}};
     return getVertex(eSolin[numEdge][numVertex])->getNum();
   }
   virtual MFace getFaceSolin(int numFace)
   {
-    static const int fSolin[5][4] = {{0, 1, 3, 4}, {0, 2, 3, 5}, {1, 2, 4, 5},
-                                     {0, 1, 2, -1}, {3, 4, 5, -1}};
-    if(numFace > 2){
-      return MFace(_v[fSolin[numFace][0]],_v[fSolin[numFace][1]],
+    static const int fSolin[5][4] = {
+      {0, 1, 3, 4}, {0, 2, 3, 5}, {1, 2, 4, 5}, {0, 1, 2, -1}, {3, 4, 5, -1}};
+    if(numFace > 2) {
+      return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
                    _v[fSolin[numFace][2]]);
     }
-    else{
+    else {
       return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
                    _v[fSolin[numFace][2]], _v[fSolin[numFace][3]]);
     }
   }
   virtual MVertex *getVertexVTK(int num)
   {
-    static const int map[6] = {0,2,1,3,5,4};
+    static const int map[6] = {0, 2, 1, 3, 5, 4};
     return getVertex(map[num]);
   }
 };
@@ -314,19 +314,19 @@ public:
   }
   virtual MVertex *getVertexBDF(int num)
   {
-    static const int map[15] = {0, 1, 2,  3, 4, 5,  6, 9, 7,
-                                8, 10, 11,  12, 14, 13};
+    static const int map[15] = {0, 1, 2,  3,  4,  5,  6, 9,
+                                7, 8, 10, 11, 12, 14, 13};
     return getVertex(map[num]);
   }
   virtual MVertex *getVertexINP(int num)
   {
-    static const int map[15] = {0, 1, 2,  3, 4, 5,  6, 9, 7,
-                                12, 14, 13, 8, 10, 11};
+    static const int map[15] = {0, 1,  2,  3,  4, 5,  6, 9,
+                                7, 12, 14, 13, 8, 10, 11};
     return getVertex(map[num]);
   }
   virtual MVertex *getVertexVTK(int num)
   {
-    static const int map[15] = {0, 1, 2, 3, 4, 5, 6, 9,
+    static const int map[15] = {0, 1,  2,  3,  4, 5,  6, 9,
                                 7, 12, 14, 13, 8, 10, 11};
     return getVertex(map[num]);
   }
@@ -521,8 +521,8 @@ public:
   virtual int getTypeForVTK() const { return 32; }
   virtual MVertex *getVertexVTK(int num)
   {
-    static const int map[18] = {0, 1, 2, 3, 4, 5, 6, 9, 7,
-                                12, 14, 13, 8, 10, 11, 15,17,16};
+    static const int map[18] = {0,  1,  2,  3, 4,  5,  6,  9,  7,
+                                12, 14, 13, 8, 10, 11, 15, 17, 16};
     return getVertex(map[num]);
   }
 };

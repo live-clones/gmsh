@@ -39,8 +39,7 @@ CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex,
   cgnsErr = cg_famname_read(famName);
   if(cgnsErr != CG_NODE_NOT_FOUND) {
     if(cgnsErr == CG_OK) {
-      Family2EltNodeTransfo::const_iterator it =
-        allEltNodeTransfo.find(std::string(famName));
+      auto it = allEltNodeTransfo.find(std::string(famName));
       if(it != allEltNodeTransfo.end()) eltNodeTransfo_ = &(it->second);
     }
     else

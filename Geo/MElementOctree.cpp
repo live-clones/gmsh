@@ -152,7 +152,7 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
   std::vector<void *> v;
   std::vector<MElement *> e;
   Octree_SearchAll(P, _octree, &v);
-  for(std::vector<void *>::iterator it = v.begin(); it != v.end(); ++it) {
+  for(auto it = v.begin(); it != v.end(); ++it) {
     MElement *el = (MElement *)*it;
     if(dim == -1 || el->getDim() == dim) e.push_back(el);
   }
@@ -168,9 +168,7 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *el = entities[i]->getMeshElement(j);
           if(dim == -1 || el->getDim() == dim) {
-            if(MElementInEle(el, P)) {
-              e.push_back(el);
-            }
+            if(MElementInEle(el, P)) { e.push_back(el); }
           }
         }
       }
@@ -190,9 +188,7 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
       for(std::size_t i = 0; i < _elems.size(); i++) {
         MElement *el = _elems[i];
         if(dim == -1 || el->getDim() == dim) {
-          if(MElementInEle(el, P)) {
-            e.push_back(el);
-          }
+          if(MElementInEle(el, P)) { e.push_back(el); }
         }
       }
       if(!e.empty()) {
@@ -215,11 +211,9 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
   std::vector<void *> l;
   if(e && e->getDim() != dim) {
     Octree_SearchAll(P, _octree, &l);
-    for(std::vector<void *>::iterator it = l.begin(); it != l.end(); it++) {
+    for(auto it = l.begin(); it != l.end(); it++) {
       MElement *el = (MElement *)*it;
-      if(el->getDim() == dim) {
-        return el;
-      }
+      if(el->getDim() == dim) { return el; }
     }
   }
   if(!strict && _gm) {

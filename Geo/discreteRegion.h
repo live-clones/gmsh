@@ -13,6 +13,7 @@
 class discreteRegion : public GRegion {
 private:
   bool _geometry;
+
 public:
   discreteRegion(GModel *model, int num);
   discreteRegion(GModel *model);

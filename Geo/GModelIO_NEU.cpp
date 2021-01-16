@@ -101,8 +101,7 @@ namespace {
   unsigned const gambitBoundaryCode(std::string name)
   {
     std::transform(name.begin(), name.end(), name.begin(), ::toupper);
-    hashMap<std::string, unsigned>::_::const_iterator code =
-      boundaryCodeMap.find(name);
+    auto code = boundaryCodeMap.find(name);
     return code == boundaryCodeMap.end() ? 0 : code->second;
   }
 
@@ -136,7 +135,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   unsigned lowestId = std::numeric_limits<int>::max();
   hashMap<unsigned, std::vector<unsigned> >::_ elementGroups;
 
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
       numTetrahedra += (*it)->tetrahedra.size();
       numHexahedra += (*it)->hexahedra.size();
@@ -165,7 +164,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   std::vector<unsigned char> vertex_phys(nVertex);
   // create association map for vertices and faces
   hashMap<unsigned, std::vector<unsigned> >::_ vertmap;
-  for(GModel::fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     for(auto &tri : (*it)->triangles) {
       for(std::size_t j = 0; j < tri->getNumVertices(); ++j) {
         unsigned numVertex = tri->getVertex(j)->getNum();
@@ -188,7 +187,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   for(auto &it : vertmap) { std::sort(it.second.begin(), it.second.end()); }
 
   std::vector<unsigned char> elem_phys(numElements);
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
       for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i) {
         unsigned num = (*it)->getMeshElement(i)->getNum();
@@ -207,7 +206,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
 
   // determine which faces belong to which element by comparing vertices
   IDFaceMap facemap;
-  for(GModel::riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i) {
       MElement *element = (*it)->getMeshElement(i);
       unsigned num = element->getNum();
@@ -249,14 +248,14 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
 
   // populate boundary conditions for tetrahedra given triangle physicals
   IDFaceMap boundaryConditions;
-  for(GModel::fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     if((*it)->physicals.size()) {
       for(std::size_t i = 0; i < (*it)->physicals.size(); ++i) {
         unsigned phys = (*it)->physicals[i];
 
         for(std::size_t j = 0; j < (*it)->triangles.size(); ++j) {
           MTriangle *tri = (*it)->triangles[j];
-          IDFaceMap::iterator tets = facemap.find(tri->getNum());
+          auto tets = facemap.find(tri->getNum());
           if(tets != facemap.end()) {
             for(std::size_t tet = 0; tet < tets->second.size(); ++tet) {
               boundaryConditions[phys].push_back(tets->second[tet]);
@@ -266,7 +265,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
 
         for(std::size_t j = 0; j < (*it)->quadrangles.size(); ++j) {
           MQuadrangle *quad = (*it)->quadrangles[j];
-          IDFaceMap::iterator tets = facemap.find(quad->getNum());
+          auto tets = facemap.find(quad->getNum());
           if(tets != facemap.end()) {
             for(std::size_t tet = 0; tet < tets->second.size(); ++tet) {
               boundaryConditions[phys].push_back(tets->second[tet]);
@@ -308,7 +307,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
 
   // Elements
   fprintf(fp, "      ELEMENTS/CELLS 2.0.0\n");
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     std::size_t numPhys = (*it)->physicals.size();
     if(saveAll || numPhys) {
       for(auto cell : (*it)->tetrahedra) {
@@ -363,8 +362,8 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
 
   unsigned nphys = getMaxPhysicalNumber(2);
   for(unsigned iphys = 1; iphys <= nphys; ++iphys) {
-    for(IDFaceMap::iterator it = boundaryConditions.begin();
-        it != boundaryConditions.end(); ++it) {
+    for(auto it = boundaryConditions.begin(); it != boundaryConditions.end();
+        ++it) {
       if(it->first == iphys) {
         fprintf(fp, "       BOUNDARY CONDITIONS 2.0.0\n");
         std::string regionName = getPhysicalName(2, it->first);
@@ -377,8 +376,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
         fprintf(fp, "%32s%8d%8lu%8d%8d\n", regionName.c_str(), 1,
                 it->second.size(), 0, gambitBoundaryCode(regionName));
         std::sort(it->second.begin(), it->second.end(), sortBCs);
-        for(std::vector<FacePair>::iterator tfp = it->second.begin();
-            tfp != it->second.end(); ++tfp) {
+        for(auto tfp = it->second.begin(); tfp != it->second.end(); ++tfp) {
           MElement *element = getMeshElementByTag(tfp->first);
           unsigned type = element->getType();
           unsigned gambit_type = 0;

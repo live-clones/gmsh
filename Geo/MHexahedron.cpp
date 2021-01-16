@@ -464,12 +464,8 @@ void MHexahedronN::reverse()
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 8);
 
   // reverse
-  for(int i = 0; i < 8; ++i) {
-    _v[i] = oldv[indices[i]];
-  }
-  for(std::size_t i = 0; i < _vs.size(); ++i) {
-    _vs[i] = oldv[indices[8 + i]];
-  }
+  for(int i = 0; i < 8; ++i) { _v[i] = oldv[indices[i]]; }
+  for(std::size_t i = 0; i < _vs.size(); ++i) { _vs[i] = oldv[indices[8 + i]]; }
 }
 
 // void _getIndicesHighOrderFace(int order, int numFace, int sign, int rot,

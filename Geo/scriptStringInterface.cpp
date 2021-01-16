@@ -28,8 +28,7 @@ static void scriptAddCommand(const std::string &text,
                              const std::string &lang)
 {
   if(lang != "geo") {
-    if(!text.empty())
-      printf("%s: %s\n", lang.c_str(), text.c_str());
+    if(!text.empty()) printf("%s: %s\n", lang.c_str(), text.c_str());
     return;
   }
 
@@ -146,19 +145,18 @@ void scriptRemoveLastCommand(const std::string &fileName)
   buffer << t.rdbuf();
   std::string s(buffer.str());
   int found = (int)s.rfind("//+");
-  if(found != (int)std::string::npos){
-    s.erase(found);
-  }
-  else{
-    Msg::Warning("Could not find last command in script `%s'", fileName.c_str());
+  if(found != (int)std::string::npos) { s.erase(found); }
+  else {
+    Msg::Warning("Could not find last command in script `%s'",
+                 fileName.c_str());
     return;
   }
   FILE *fp = Fopen(fileName.c_str(), "w");
-  if(fp){
+  if(fp) {
     fprintf(fp, "%s", s.c_str());
     fclose(fp);
   }
-  else{
+  else {
     Msg::Error("Could not open file `%s'", fileName.c_str());
   }
   OpenProject(fileName);
@@ -488,9 +486,7 @@ void scriptDeleteField(int field_id, const std::string &fileName)
 {
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    if(lang == "geo") {
-      sstream << "Delete Field [" << field_id << "];";
-    }
+    if(lang == "geo") { sstream << "Delete Field [" << field_id << "];"; }
     else {
       // TODO
     }
@@ -502,9 +498,7 @@ void scriptSetBackgroundField(int field_id, const std::string &fileName)
 {
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
-    if(lang == "geo") {
-      sstream << "Background Field = " << field_id << ";";
-    }
+    if(lang == "geo") { sstream << "Background Field = " << field_id << ";"; }
     else {
       // TODO
     }

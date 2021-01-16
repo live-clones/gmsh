@@ -172,7 +172,10 @@ public:
   ~CombinedCell() {}
 
   int getDim() const { return _cells.begin()->first->getDim(); }
-  void getCells(std::map<Cell *, int, CellPtrLessThan> &cells) { cells = _cells; }
+  void getCells(std::map<Cell *, int, CellPtrLessThan> &cells)
+  {
+    cells = _cells;
+  }
   int getNumCells() const { return _cells.size(); }
   bool hasVertex(int vertex) const;
 

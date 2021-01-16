@@ -15,6 +15,7 @@ class Vertex;
 class discreteVertex : public GVertex {
 private:
   Vertex *_v;
+
 public:
   discreteVertex(GModel *m, int num, double x = 0., double y = 0.,
                  double z = 0.);

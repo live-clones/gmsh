@@ -15,8 +15,7 @@ private:
   GEntity *_parentEntity;
 
 public:
-  partitionVertex(GModel *model, int num,
-                  const std::vector<int> &partitions)
+  partitionVertex(GModel *model, int num, const std::vector<int> &partitions)
     : discreteVertex(model, num), _partitions(partitions), _parentEntity(NULL)
   {
   }
@@ -24,8 +23,7 @@ public:
     : discreteVertex(model, num), _partitions(), _parentEntity(NULL)
   {
   }
-  partitionVertex(GModel *model,
-                  const std::vector<int> &partitions)
+  partitionVertex(GModel *model, const std::vector<int> &partitions)
     : discreteVertex(model), _partitions(partitions), _parentEntity(NULL)
   {
   }
@@ -37,10 +35,7 @@ public:
   {
     _partitions = partitions;
   }
-  virtual const std::vector<int> &getPartitions() const
-  {
-    return _partitions;
-  }
+  virtual const std::vector<int> &getPartitions() const { return _partitions; }
   virtual int getPartition(std::size_t index) const
   {
     return _partitions[index];

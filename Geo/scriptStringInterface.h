@@ -13,8 +13,7 @@
 void scriptRemoveLastCommand(const std::string &fileName);
 
 void scriptSetFactory(const std::string &factory, const std::string &fileName);
-void scriptSetMeshSize(const std::string &fileName,
-                       const std::vector<int> &l,
+void scriptSetMeshSize(const std::string &fileName, const std::vector<int> &l,
                        const std::string &lc);
 void scriptRecombineSurface(const std::string &fileName,
                             const std::vector<int> &l);

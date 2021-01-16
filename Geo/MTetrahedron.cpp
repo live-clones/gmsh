@@ -382,10 +382,6 @@ void MTetrahedronN::reverse()
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 4);
 
   // reverse
-  for(int i = 0; i < 4; ++i) {
-    _v[i] = oldv[indices[i]];
-  }
-  for(std::size_t i = 0; i < _vs.size(); ++i) {
-    _vs[i] = oldv[indices[4 + i]];
-  }
+  for(int i = 0; i < 4; ++i) { _v[i] = oldv[indices[i]]; }
+  for(std::size_t i = 0; i < _vs.size(); ++i) { _vs[i] = oldv[indices[4 + i]]; }
 }

@@ -29,7 +29,8 @@ public:
   std::size_t getNumVertices() const { return _v.size(); }
   MVertex *getVertex(std::size_t i) const { return _v[i]; }
   MVertex *getSortedVertex(std::size_t i) const
-  { return _v[std::size_t(_si[i])];
+  {
+    return _v[std::size_t(_si[i])];
   }
   MEdge getEdge(std::size_t i) const
   {

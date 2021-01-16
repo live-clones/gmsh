@@ -202,8 +202,8 @@ public:
   // (deform: with local deformations to make chain smoother and to have
   // smaller support, deformed chain is homologous to the old one,
   // only works for chains of the primary chain complex)
-  void getBasisChain(std::map<Cell *, int, CellPtrLessThan> &chain, int num, int dim,
-                     int basis, bool deform = false);
+  void getBasisChain(std::map<Cell *, int, CellPtrLessThan> &chain, int num,
+                     int dim, int basis, bool deform = false);
   // get rank of a basis
   int getBasisSize(int dim, int basis);
   // homology torsion coefficient for dim-dimensional chain num

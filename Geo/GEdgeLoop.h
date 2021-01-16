@@ -42,7 +42,7 @@ public:
   int count(GEdge *) const;
   int count() const { return (int)loop.size(); }
   void print() const;
-  void getEdges(std::vector<GEdge*> &edges) const;
+  void getEdges(std::vector<GEdge *> &edges) const;
   void getSigns(std::vector<int> &signs) const;
 };
 

@@ -39,7 +39,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     return 0;
   }
 
-  //SPoint3 p0(1.9e6, 4e6, 0);
+  // SPoint3 p0(1.9e6, 4e6, 0);
 
   bool binary = strncmp(buffer, "solid", 5) && strncmp(buffer, "SOLID", 5);
 
@@ -75,7 +75,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double x, y, z;
         if(sscanf(buffer, "%s %lf %lf %lf", s1, &x, &y, &z) != 4) break;
         SPoint3 p(x, y, z);
-        //p -= p0;
+        // p -= p0;
         points.back().push_back(p);
         bbox += p;
       }
@@ -126,7 +126,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
             if(swap) SwapBytes((char *)xyz, sizeof(float), 12);
             for(int j = 0; j < 3; j++) {
               SPoint3 p(xyz[3 + 3 * j], xyz[3 + 3 * j + 1], xyz[3 + 3 * j + 2]);
-              //p -= p0;
+              // p -= p0;
               points.back().push_back(p);
               bbox += p;
             }
@@ -138,11 +138,11 @@ int GModel::readSTL(const std::string &name, double tolerance)
   }
 
   // cleanup names
-  if(names.size() != points.size()){
+  if(names.size() != points.size()) {
     Msg::Debug("Invalid number of names in STL file - should never happen");
     names.resize(points.size());
   }
-  for(std::size_t i = 0; i < names.size(); i++){
+  for(std::size_t i = 0; i < names.size(); i++) {
     names[i].erase(remove_if(names[i].begin(), names[i].end(), invalidChar),
                    names[i].end());
   }
@@ -192,14 +192,15 @@ int GModel::readSTL(const std::string &name, double tolerance)
         v[k] = pos.find(x, y, z);
         if(!v[k])
           Msg::Error("Could not find node at position (%.16g, %.16g, %.16g) "
-                     "with tol=%.16g", x, y, z, eps);
+                     "with tol=%.16g",
+                     x, y, z, eps);
       }
       if(!v[0] || !v[1] || !v[2]) {
         // error
       }
       else if(v[0] == v[1] || v[0] == v[2] || v[1] == v[2]) {
-        Msg::Debug("Skipping degenerated triangle %lu %lu %lu",
-                   v[0]->getNum(), v[1]->getNum(), v[2]->getNum());
+        Msg::Debug("Skipping degenerated triangle %lu %lu %lu", v[0]->getNum(),
+                   v[1]->getNum(), v[2]->getNum());
         nbDegen++;
       }
       else if(CTX::instance()->mesh.stlRemoveDuplicateTriangles) {
@@ -212,14 +213,14 @@ int GModel::readSTL(const std::string &name, double tolerance)
           nbDuplic++;
         }
       }
-      else{
+      else {
         faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
       }
     }
   }
   if(nbDuplic || nbDegen)
-    Msg::Warning("%d duplicate/%d degenerate triangles in STL file",
-                 nbDuplic, nbDegen);
+    Msg::Warning("%d duplicate/%d degenerate triangles in STL file", nbDuplic,
+                 nbDegen);
 
   _associateEntityWithMeshVertices();
 
@@ -229,25 +230,23 @@ int GModel::readSTL(const std::string &name, double tolerance)
   return 1;
 }
 
-static void writeSTLfaces(FILE *fp, std::vector<GFace*> &faces, bool binary,
+static void writeSTLfaces(FILE *fp, std::vector<GFace *> &faces, bool binary,
                           double scalingFactor, const std::string &name)
 {
   bool useGeoSTL = false;
   unsigned int nfacets = 0;
-  for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it) {
+  for(auto it = faces.begin(); it != faces.end(); ++it) {
     nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
   }
   if(!nfacets) { // use CAD STL if there is no mesh
     useGeoSTL = true;
-    for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it) {
+    for(auto it = faces.begin(); it != faces.end(); ++it) {
       (*it)->buildSTLTriangulation();
       nfacets += (*it)->stl_triangles.size() / 3;
     }
   }
 
-  if(!binary) {
-    fprintf(fp, "solid %s\n", name.c_str());
-  }
+  if(!binary) { fprintf(fp, "solid %s\n", name.c_str()); }
   else {
     char header[80];
     strncpy(header, name.c_str(), 79);
@@ -256,7 +255,7 @@ static void writeSTLfaces(FILE *fp, std::vector<GFace*> &faces, bool binary,
     fwrite(&nfacets, sizeof(unsigned int), 1, fp);
   }
 
-  for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it) {
+  for(auto it = faces.begin(); it != faces.end(); ++it) {
     if(useGeoSTL && (*it)->stl_vertices_uv.size()) {
       for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i += 3) {
         SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
@@ -317,12 +316,12 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
 
   if(noPhysicalGroups()) saveAll = true;
 
-  if(oneSolidPerSurface == 1){ // one solid per surface
-    for(fiter it = firstFace(); it != lastFace(); ++it) {
+  if(oneSolidPerSurface == 1) { // one solid per surface
+    for(auto it = firstFace(); it != lastFace(); ++it) {
       if(saveAll || (*it)->physicals.size()) {
-        std::vector<GFace*> faces(1, *it);
+        std::vector<GFace *> faces(1, *it);
         std::string name = getElementaryName(2, (*it)->tag());
-        if(name.empty()){
+        if(name.empty()) {
           std::ostringstream s;
           s << "Gmsh Surface " << (*it)->tag();
           name = s.str();
@@ -331,17 +330,16 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
       }
     }
   }
-  else if(oneSolidPerSurface == 2){ // one solid per physical surface
+  else if(oneSolidPerSurface == 2) { // one solid per physical surface
     std::map<int, std::vector<GEntity *> > phys;
     getPhysicalGroups(2, phys);
-    for(std::map<int, std::vector<GEntity *> >::iterator it = phys.begin();
-        it != phys.end(); it++){
-      std::vector<GFace*> faces;
-      for(std::size_t i = 0; i < it->second.size(); i++){
-        faces.push_back(static_cast<GFace*>(it->second[i]));
+    for(auto it = phys.begin(); it != phys.end(); it++) {
+      std::vector<GFace *> faces;
+      for(std::size_t i = 0; i < it->second.size(); i++) {
+        faces.push_back(static_cast<GFace *>(it->second[i]));
       }
       std::string name = getPhysicalName(2, it->first);
-      if(name.empty()){
+      if(name.empty()) {
         std::ostringstream s;
         s << "Gmsh Physical Surface " << it->first;
         name = s.str();
@@ -349,12 +347,10 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
       writeSTLfaces(fp, faces, binary, scalingFactor, name);
     }
   }
-  else{ // one solid
-    std::vector<GFace*> faces;
-    for(fiter it = firstFace(); it != lastFace(); ++it) {
-      if(saveAll || (*it)->physicals.size()) {
-        faces.push_back(*it);
-      }
+  else { // one solid
+    std::vector<GFace *> faces;
+    for(auto it = firstFace(); it != lastFace(); ++it) {
+      if(saveAll || (*it)->physicals.size()) { faces.push_back(*it); }
     }
     std::string name = "Created by Gmsh";
     writeSTLfaces(fp, faces, binary, scalingFactor, name);

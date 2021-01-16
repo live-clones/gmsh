@@ -57,15 +57,11 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
     T[0] = t * t * t;
   }
 
-  for(i = 0; i < 4; i++) {
-    vec[i] = 0.0;
-  }
+  for(i = 0; i < 4; i++) { vec[i] = 0.0; }
 
   // X
   for(i = 0; i < 4; i++) {
-    for(j = 0; j < 4; j++) {
-      vec[i] += mat[i][j] * v[j]->Pos.X;
-    }
+    for(j = 0; j < 4; j++) { vec[i] += mat[i][j] * v[j]->Pos.X; }
   }
 
   for(j = 0; j < 4; j++) {
@@ -75,9 +71,7 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 
   // Y
   for(i = 0; i < 4; i++) {
-    for(j = 0; j < 4; j++) {
-      vec[i] += mat[i][j] * v[j]->Pos.Y;
-    }
+    for(j = 0; j < 4; j++) { vec[i] += mat[i][j] * v[j]->Pos.Y; }
   }
 
   for(j = 0; j < 4; j++) {
@@ -87,9 +81,7 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 
   // Z
   for(i = 0; i < 4; i++) {
-    for(j = 0; j < 4; j++) {
-      vec[i] += mat[i][j] * v[j]->Pos.Z;
-    }
+    for(j = 0; j < 4; j++) { vec[i] += mat[i][j] * v[j]->Pos.Z; }
   }
   for(j = 0; j < 4; j++) {
     V.Pos.Z += T[j] * vec[j];
@@ -141,14 +133,10 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
   SPoint2 coord[4], p;
 
   for(i = 0; i < 4; i++) {
-    for(j = 0; j < 4; j++) {
-      coord[i] += v[j]->pntOnGeometry * mat[i][j];
-    }
+    for(j = 0; j < 4; j++) { coord[i] += v[j]->pntOnGeometry * mat[i][j]; }
   }
 
-  for(j = 0; j < 4; j++) {
-    p += coord[j] * T[j];
-  }
+  for(j = 0; j < 4; j++) { p += coord[j] * T[j]; }
   return p;
 }
 
@@ -232,7 +220,7 @@ static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
 static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
 {
 #if 1 // bypass regression in Gmsh 4 for bsplines on geometry (see #685)
-  if(Curve->geometry){
+  if(Curve->geometry) {
     bool periodic = (Curve->end == Curve->beg);
     int NbControlPoints = List_Nbr(Curve->Control_Points);
     int NbCurves = NbControlPoints + (periodic ? -1 : 1);
@@ -328,7 +316,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
       k = std::min(iCurve + i, NbControlPoints - 1);
     }
 
-    if(k >= 0 && k < NbControlPoints){
+    if(k >= 0 && k < NbControlPoints) {
       List_Read(Curve->Control_Points, k, &v[i]);
     }
     else {
@@ -374,7 +362,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     }
   }
 
-#if 0  // bypass regression in Gmsh 4 for bsplines on geometry (see #685)
+#if 0 // bypass regression in Gmsh 4 for bsplines on geometry (see #685)
   if(Curve->geometry) {
     SPoint2 pp =
       InterpolateCubicSpline(v, t, *matrix, t1, t2, Curve->geometry, derivee);
@@ -532,7 +520,7 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       Msg::Error("Line with less than 2 control points");
       V.Pos.X = V.Pos.Y = V.Pos.Z = 0;
     }
-    else{
+    else {
       int i = static_cast<int>(static_cast<double>(N - 1) * u);
       // clamp
       if(i >= N - 1) i = N - 2;
@@ -626,9 +614,7 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
       List_Read(c->Control_Points, i, &v[1]);
       List_Read(c->Control_Points, i + 1, &v[2]);
       if(!i) {
-        if(c->beg == c->end) {
-          List_Read(c->Control_Points, N - 2, &v[0]);
-        }
+        if(c->beg == c->end) { List_Read(c->Control_Points, N - 2, &v[0]); }
         else {
           v[0] = &temp1;
           v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
@@ -641,9 +627,7 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
         List_Read(c->Control_Points, i - 1, &v[0]);
       }
       if(i == N - 2) {
-        if(c->beg == c->end) {
-          List_Read(c->Control_Points, 1, &v[3]);
-        }
+        if(c->beg == c->end) { List_Read(c->Control_Points, 1, &v[3]); }
         else {
           v[3] = &temp2;
           v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
@@ -679,9 +663,7 @@ Vertex InterpolateCurve(Curve *c, double u, int const derivee)
     Msg::Debug("Cannot interpolate discrete curve");
     break;
 
-  default:
-    Msg::Error("Unknown curve type %d in interpolation", c->Typ);
-    break;
+  default: Msg::Error("Unknown curve type %d in interpolation", c->Typ); break;
   }
   V.u = u;
   return V;
@@ -833,7 +815,8 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
   for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++) {
     List_Read(s->Generatrices, i, &C[i]);
     if(C[i]->Typ == MSH_SEGM_BND_LAYER || C[i]->Typ == MSH_SEGM_DISCRETE) {
-      Msg::Error("Cannot interpolate ruled surface with discrete bounding curves");
+      Msg::Error(
+        "Cannot interpolate ruled surface with discrete bounding curves");
       return Vertex(0., 0., 0.);
     }
     if(!C[i]->beg || !C[i]->end) {
@@ -859,9 +842,7 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
         isSphere = false;
       }
       else if(isSphere) {
-        if(!i) {
-          List_Read(C[i]->Control_Points, 1, &O);
-        }
+        if(!i) { List_Read(C[i]->Control_Points, 1, &O); }
         else {
           Vertex *tmp;
           List_Read(C[i]->Control_Points, 1, &tmp);
@@ -928,9 +909,7 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
       T = TransfiniteTriB(V[0], VB[0], V[1], VB[1], V[2], VB[2], *S[0], *S[1],
                           *S[2], u, v);
     }
-    if(isSphere) {
-      TransfiniteSph(*S[0], *O, &T);
-    }
+    if(isSphere) { TransfiniteSph(*S[0], *O, &T); }
   }
 
   return T;

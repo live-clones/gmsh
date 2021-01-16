@@ -33,32 +33,24 @@ public:
     }
   }
   virtual GeomType geomType() const { return GhostCurve; }
-  virtual void setPartition(const int partition)
-  {
-    _partition = partition;
-  }
+  virtual void setPartition(const int partition) { _partition = partition; }
   virtual int getPartition() const { return _partition; }
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
-  virtual std::map<MElement *, int> &getGhostCells()
-  {
-    return _ghostCells;
-  }
+  virtual std::map<MElement *, int> &getGhostCells() { return _ghostCells; }
 
   void addLine(MLine *l, int onWhichPartition)
   {
     GEdge::addLine(l);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(l, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(l, onWhichPartition));
     model()->addGhostCells(l, _partition);
   }
   void addElement(int type, MElement *e, int onWhichPartition)
   {
     GEdge::addElement(type, e);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(e, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(e, onWhichPartition));
     model()->addGhostCells(e, _partition);
   }
 

@@ -170,17 +170,16 @@ void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
   // Periodic entities
   for(std::size_t i = 0; i < entitiesPer.size(); i++) {
     VertVertMap &vv = entitiesPer[i]->correspondingVertices;
-    for(VertVertMap::iterator itV = vv.begin(); itV != vv.end(); itV++) {
+    for(auto itV = vv.begin(); itV != vv.end(); itV++) {
       interfVert2Local[itV->first] = std::vector<LocalData>();
       interfVert2Local[itV->second] = std::vector<LocalData>();
     }
   }
 
   // Partition interface boundaries
-  typedef std::set<MVertex *>::iterator NodeSetIter;
   std::set<MVertex *> nodeSet;
   getNodesInEntities<false>(entitiesInterf, true, nodeSet);
-  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+  for(auto itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     interfVert2Local[*itN] = std::vector<LocalData>();
   }
 }
@@ -194,7 +193,6 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
               Vertex2LocalData &interfVert2Local, std::set<int> &eleMshTypes,
               std::map<GEntity *, std::string> &geomEntities)
 {
-  typedef std::set<MVertex *>::iterator NodeSetIter;
 #ifdef HAVE_LIBCGNS_CPEX0045
   const bool useCPEX0045 = CTX::instance()->mesh.cgnsExportCPEX0045;
 #else
@@ -210,20 +208,20 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
   // store local data correspondence for periodic/interface nodes
   std::vector<LocalData> global2Local(numNodesTotal + 1);
   cgsize_t numNodes = 0;
-  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+  for(auto itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     const long gInd = (*itN)->getIndex();
     if(gInd < 0) continue;
     numNodes++;
     LocalData &ld = global2Local[gInd];
     ld.partition = partition;
     ld.index = numNodes;
-    Vertex2LocalData::iterator itPN = interfVert2Local.find(*itN);
+    auto itPN = interfVert2Local.find(*itN);
     if(itPN != interfVert2Local.end()) itPN->second.push_back(ld);
   }
 
   // create lists of coordinates
   std::vector<double> xcoord(numNodes), ycoord(numNodes), zcoord(numNodes);
-  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+  for(auto itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     const long gInd = (*itN)->getIndex();
     if(gInd < 0) continue;
     const int ln = global2Local[gInd].index;
@@ -393,7 +391,7 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     GEntity *slaveEnt = entitiesPer[iEnt];
     GEntity *masterEnt = slaveEnt->getMeshMaster();
     VertVertMap &vv = slaveEnt->correspondingVertices;
-    for(VertVertMap::iterator itV = vv.begin(); itV != vv.end(); itV++) {
+    for(auto itV = vv.begin(); itV != vv.end(); itV++) {
       const std::vector<LocalData> &allSlaveData = interfVert2Local[itV->first];
       const std::vector<LocalData> &allMasterData =
         interfVert2Local[itV->second];
@@ -421,9 +419,8 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
   }
 
   // write periodic interfaces
-  typedef PeriodicConnection::iterator PerConnectIter;
   int cgnsErr;
-  for(PerConnectIter it = connect.begin(); it != connect.end(); ++it) {
+  for(auto it = connect.begin(); it != connect.end(); ++it) {
     printProgress("Writing periodic interface",
                   std::distance(connect.begin(), it) + 1, connect.size());
     const PeriodicInterface &perInt = it->first;
@@ -533,7 +530,6 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
   typedef std::map<PartitionInterface, NodeCorrespondence> PartitionConnection;
 
   // get nodes in partition interface entities
-  typedef std::set<MVertex *>::iterator NodeSetIter;
   std::set<MVertex *> nodeSet;
   getNodesInEntities<false>(entitiesInterf, true, nodeSet);
 
@@ -541,7 +537,7 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
   Msg::Info("Constructing connectivities for %i partition interface entities",
             entitiesInterf.size());
   PartitionConnection connect;
-  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+  for(auto itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     const std::vector<LocalData> &allLocalData = interfVert2Local[*itN];
     for(std::size_t iLD1 = 0; iLD1 < allLocalData.size(); iLD1++) {
       const LocalData &localData1 = allLocalData[iLD1];
@@ -558,10 +554,9 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
   }
 
   // write partition interfaces
-  typedef PartitionConnection::iterator PartConnectIter;
   int cgnsErr;
   std::size_t iPartConnect = 0;
-  for(PartConnectIter it = connect.begin(); it != connect.end(); ++it) {
+  for(auto it = connect.begin(); it != connect.end(); ++it) {
     iPartConnect++;
     printProgress("Writing partition interface", iPartConnect, connect.size());
     const std::pair<unsigned int, unsigned int> &partInt = it->first;
@@ -599,8 +594,7 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write node sets for each element type
-  typedef std::set<int>::iterator IntSetIter;
-  for(IntSetIter it = eleMshTypes.begin(); it != eleMshTypes.end(); ++it) {
+  for(auto it = eleMshTypes.begin(); it != eleMshTypes.end(); ++it) {
     // get node set
     const int mshType = *it;
     const nodalBasis *basis = BasisFactory::getNodalBasis(mshType);
@@ -640,8 +634,7 @@ int writeGeomEntities(std::map<GEntity *, std::string> &geomEntities,
 {
   int cgnsErr;
 
-  typedef std::map<GEntity *, std::string>::iterator GeomEntIter;
-  for(GeomEntIter it = geomEntities.begin(); it != geomEntities.end(); ++it) {
+  for(auto it = geomEntities.begin(); it != geomEntities.end(); ++it) {
     // get geometric entity
     GEntity *ge = it->first;
     std::string &geomName = it->second;

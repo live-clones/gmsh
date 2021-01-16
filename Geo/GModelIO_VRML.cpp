@@ -18,13 +18,10 @@ static int skipUntil(FILE *fp, const char *key)
   strcat(key_bracket, "[");
   while(fscanf(fp, "%s", str)) {
     if(!strcmp(str, key)) {
-      while(!feof(fp) && fgetc(fp) != '[') {
-      }
+      while(!feof(fp) && fgetc(fp) != '[') {}
       return 1;
     }
-    if(!strcmp(str, key_bracket)) {
-      return 1;
-    }
+    if(!strcmp(str, key_bracket)) { return 1; }
   }
   return 0;
 }
@@ -66,9 +63,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
     format = " %d";
 
   while(fscanf(fp, format, &i) == 1) {
-    if(i != -1) {
-      idx.push_back(i);
-    }
+    if(i != -1) { idx.push_back(i); }
     else {
       std::vector<MVertex *> vertices;
       for(std::size_t j = 0; j < idx.size(); j++) {
@@ -211,20 +206,20 @@ int GModel::writeVRML(const std::string &name, bool saveAll,
   fprintf(fp, "Coordinate3 {\n");
   fprintf(fp, "  point [\n");
 
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
+  for(auto it = firstVertex(); it != lastVertex(); ++it)
     for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++)
       (*it)->mesh_vertices[i]->writeVRML(fp, scalingFactor);
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+  for(auto it = firstEdge(); it != lastEdge(); ++it)
     for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++)
       (*it)->mesh_vertices[i]->writeVRML(fp, scalingFactor);
-  for(fiter it = firstFace(); it != lastFace(); ++it)
+  for(auto it = firstFace(); it != lastFace(); ++it)
     for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++)
       (*it)->mesh_vertices[i]->writeVRML(fp, scalingFactor);
 
   fprintf(fp, "  ]\n");
   fprintf(fp, "}\n");
 
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+  for(auto it = firstEdge(); it != lastEdge(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
       fprintf(fp, "DEF Curve%d IndexedLineSet {\n", (*it)->tag());
       fprintf(fp, "  coordIndex [\n");
@@ -235,7 +230,7 @@ int GModel::writeVRML(const std::string &name, bool saveAll,
     }
   }
 
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
       fprintf(fp, "DEF Surface%d IndexedFaceSet {\n", (*it)->tag());
       fprintf(fp, "  coordIndex [\n");

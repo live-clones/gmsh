@@ -132,14 +132,14 @@ int GModel::writeP3D(const std::string &name, bool saveAll,
   if(noPhysicalGroups()) saveAll = true;
 
   std::vector<GFace *> faces;
-  for(fiter it = firstFace(); it != lastFace(); ++it)
+  for(auto it = firstFace(); it != lastFace(); ++it)
     if((*it)->transfinite_vertices.size() &&
        (*it)->transfinite_vertices[0].size() &&
        ((*it)->physicals.size() || saveAll))
       faces.push_back(*it);
 
   std::vector<GRegion *> regions;
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
     if((*it)->transfinite_vertices.size() &&
        (*it)->transfinite_vertices[0].size() &&
        (*it)->transfinite_vertices[0][0].size() &&

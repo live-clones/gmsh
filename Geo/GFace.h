@@ -319,23 +319,14 @@ public:
   } meshAttributes;
 
   int getMeshingAlgo() const;
-  void setMeshingAlgo(int val)
-  {
-    meshAttributes.algorithm = val;
-  }
-  void unsetMeshingAlgo()
-  {
-    meshAttributes.algorithm = 0;
-  }
+  void setMeshingAlgo(int val) { meshAttributes.algorithm = val; }
+  void unsetMeshingAlgo() { meshAttributes.algorithm = 0; }
   int getMeshSizeFromBoundary() const;
   void setMeshSizeFromBoundary(int val)
   {
     meshAttributes.meshSizeFromBoundary = val;
   }
-  virtual double getMeshSize() const
-  {
-    return meshAttributes.meshSize;
-  }
+  virtual double getMeshSize() const { return meshAttributes.meshSize; }
   virtual double getMeshSizeFactor() const
   {
     return meshAttributes.meshSizeFactor;

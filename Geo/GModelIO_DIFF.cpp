@@ -186,8 +186,7 @@ int GModel::readDIFF(const std::string &name)
         Msg::Warning("Skipping duplicate node %d", num);
       else
         vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
-      if(numVertices > 100000)
-        Msg::ProgressMeter(i + 1, true, "Reading nodes");
+      if(numVertices > 100000) Msg::ProgressMeter(i + 1, true, "Reading nodes");
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices &&
@@ -382,7 +381,6 @@ int GModel::readDIFF(const std::string &name)
         Msg::ProgressMeter(i + 1, true, "Reading elements");
     }
     Msg::StopProgressMeter();
-
   }
 
   // store the elements in their associated elementary entity. If the
@@ -432,10 +430,9 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   // faces, and the vertices would end up categorized on either one.)
   std::vector<std::list<int> > vertexTags(numVertices);
   std::list<int> boundaryIndicators;
-  for(riter it = firstRegion(); it != lastRegion(); it++) {
+  for(auto it = firstRegion(); it != lastRegion(); it++) {
     std::vector<GFace *> faces = (*it)->faces();
-    for(std::vector<GFace *>::iterator itf = faces.begin(); itf != faces.end();
-        itf++) {
+    for(auto itf = faces.begin(); itf != faces.end(); itf++) {
       GFace *gf = *itf;
       boundaryIndicators.push_back(gf->tag());
       for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
@@ -492,8 +489,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, " Only one subdomain               : dpFALSE\n");
   fprintf(fp, " Lattice data                     ? 0\n\n\n\n");
   fprintf(fp, " %d Boundary indicators:  ", (int)boundaryIndicators.size());
-  for(std::list<int>::iterator it = boundaryIndicators.begin();
-      it != boundaryIndicators.end(); it++)
+  for(auto it = boundaryIndicators.begin(); it != boundaryIndicators.end();
+      it++)
     fprintf(fp, " %d", *it);
 
   fprintf(fp, "\n\n\n");
@@ -512,7 +509,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
       if(v->getIndex() > 0) {
         v->writeDIFF(fp, binary, scalingFactor);
         fprintf(fp, " [%d] ", (int)vertexTags[v->getIndex() - 1].size());
-        for(std::list<int>::iterator it = vertexTags[v->getIndex() - 1].begin();
+        for(auto it = vertexTags[v->getIndex() - 1].begin();
             it != vertexTags[v->getIndex() - 1].end(); it++)
           fprintf(fp, " %d ", *it);
         fprintf(fp, "\n");

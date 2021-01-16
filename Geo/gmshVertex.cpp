@@ -12,8 +12,7 @@
 #include "MVertex.h"
 #include "MPoint.h"
 
-gmshVertex::gmshVertex(GModel *m, Vertex *v)
-  : GVertex(m, v->Num, v->lc), _v(v)
+gmshVertex::gmshVertex(GModel *m, Vertex *v) : GVertex(m, v->Num, v->lc), _v(v)
 {
   gmshVertex::resetMeshAttributes();
 }

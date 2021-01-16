@@ -36,7 +36,7 @@ bool gLevelsetLessThan::operator()(const gLevelset *l1,
 gLevelset *gLevelset::find(int tag)
 {
   gLevelset l(tag);
-  std::set<gLevelset *, gLevelsetLessThan>::iterator it = all_.find(&l);
+  auto it = all_.find(&l);
   if(it == all_.end()) return 0;
   return *it;
 }
@@ -145,8 +145,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
 {
   std::vector<SPoint3> nodes;
   std::vector<int> indices;
-  for(cartesianBox<double>::valIter it = box.nodalValuesBegin();
-      it != box.nodalValuesEnd(); ++it) {
+  for(auto it = box.nodalValuesBegin(); it != box.nodalValuesEnd(); ++it) {
     nodes.push_back(box.getNodeCoordinates(it->first));
     indices.push_back(it->first);
   }
@@ -154,7 +153,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
   // box.getLevel());
   std::vector<double> dist, localdist;
   std::vector<SPoint3> dummy;
-  for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++) {
+  for(auto fit = gm->firstFace(); fit != gm->lastFace(); fit++) {
     if((*fit)->geomType() == GEntity::DiscreteSurface) {
       for(std::size_t k = 0; k < (*fit)->getNumMeshElements(); k++) {
         std::vector<double> iDistances;
@@ -240,12 +239,9 @@ inline double evalRadialFnDer(int p, int index, double dx, double dy, double dz,
   case 0: // GA
     switch(p) {
     case 0: return exp(-ep * ep * r2);
-    case 1:
-      return -2 * ep * ep * dx * exp(-ep * ep * r2); // _x
-    case 2:
-      return -2 * ep * ep * dy * exp(-ep * ep * r2); // _y
-    case 3:
-      return -2 * ep * ep * dz * exp(-ep * ep * r2); // _z
+    case 1: return -2 * ep * ep * dx * exp(-ep * ep * r2); // _x
+    case 2: return -2 * ep * ep * dy * exp(-ep * ep * r2); // _y
+    case 3: return -2 * ep * ep * dz * exp(-ep * ep * r2); // _z
     }
   case 1: // MQ
     switch(p) {
@@ -573,7 +569,7 @@ double gLevelsetPoints::operator()(double x, double y, double z) const
     Msg::Info("Levelset Points : call computeLS() before calling operator()\n");
 
   SPoint3 sp(x, y, z);
-  std::map<SPoint3, double>::const_iterator it = mapP.find(sp);
+  auto it = mapP.find(sp);
   if(it != mapP.end()) return it->second;
   printf("Levelset Points : Point not found\n");
   return 0;
@@ -625,9 +621,7 @@ void gLevelsetQuadric::Ax(const double x[3], double res[3], double fact)
 {
   for(int i = 0; i < 3; i++) {
     res[i] = 0.;
-    for(int j = 0; j < 3; j++) {
-      res[i] += A[i][j] * x[j] * fact;
-    }
+    for(int j = 0; j < 3; j++) { res[i] += A[i][j] * x[j] * fact; }
   }
 }
 
@@ -773,11 +767,11 @@ double gLevelsetShamrock::operator()(double x, double y, double z) const
   dx = x - iso_x[0];
   dy = y - iso_y[0];
   double distance = sqrt(dx * dx + dy * dy);
-  std::vector<double>::const_iterator itx = iso_x.begin();
-  std::vector<double>::const_iterator itxen = iso_x.end();
-  std::vector<double>::const_iterator ity = iso_y.begin();
-  std::vector<double>::const_iterator itminx = iso_x.begin();
-  std::vector<double>::const_iterator itminy = iso_y.begin();
+  auto itx = iso_x.begin();
+  auto itxen = iso_x.end();
+  auto ity = iso_y.begin();
+  auto itminx = iso_x.begin();
+  auto itminy = iso_y.begin();
   itx++;
   ity++;
   for(; itx != itxen; itx++, ity++) {
@@ -954,8 +948,7 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, const std::string &physical,
 {
   std::map<int, std::vector<GEntity *> > groups[4];
   gm->getPhysicalGroups(groups);
-  for(GModel::piter it = gm->firstPhysicalName(); it != gm->lastPhysicalName();
-      ++it) {
+  for(auto it = gm->firstPhysicalName(); it != gm->lastPhysicalName(); ++it) {
     if(it->second == physical) {
       _entities = groups[it->first.first][it->first.second];
     }
@@ -980,7 +973,7 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, const std::string &physical,
   }
   ANNpointArray nodes;
   nodes = annAllocPts(_all.size(), 3);
-  std::set<MVertex *>::iterator itp = _all.begin();
+  auto itp = _all.begin();
   int ind = 0;
   while(itp != _all.end()) {
     MVertex *pt = *itp;
@@ -1016,9 +1009,7 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
   for(int i = 0; i < _nbClose; i++) {
     int iVertex = index[i];
     MVertex *v = _vertices[iVertex];
-    for(std::multimap<MVertex *, MElement *>::const_iterator itm =
-          _v2e.lower_bound(v);
-        itm != _v2e.upper_bound(v); ++itm) {
+    for(auto itm = _v2e.lower_bound(v); itm != _v2e.upper_bound(v); ++itm) {
       elements.insert(itm->second);
       dimE = itm->second->getDim();
     }
@@ -1026,8 +1017,7 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
   double minDistance = 1.e22;
   SPoint3 closestPoint;
   std::vector<MElement *> closestElements;
-  for(std::set<MElement *>::iterator it = elements.begin();
-      it != elements.end(); ++it) {
+  for(auto it = elements.begin(); it != elements.end(); ++it) {
     double distance = 0.;
     MVertex *v1 = (*it)->getVertex(0);
     MVertex *v2 = (*it)->getVertex(1);

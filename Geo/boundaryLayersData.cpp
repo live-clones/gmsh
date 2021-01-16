@@ -159,12 +159,10 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
                               int fanSize)
 {
   std::vector<SVector3> N1, N2;
-  for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
-        _columns->_normals.lower_bound(e1);
+  for(auto itm = _columns->_normals.lower_bound(e1);
       itm != _columns->_normals.upper_bound(e1); ++itm)
     N1.push_back(itm->second);
-  for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
-        _columns->_normals.lower_bound(e2);
+  for(auto itm = _columns->_normals.lower_bound(e2);
       itm != _columns->_normals.upper_bound(e2); ++itm)
     N2.push_back(itm->second);
   if(N1.size() == N2.size()) {
@@ -233,16 +231,13 @@ static void treat3Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
                               std::vector<SVector3> &_dirs)
 {
   std::vector<SVector3> N1, N2, N3;
-  for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
-        _columns->_normals.lower_bound(e1);
+  for(auto itm = _columns->_normals.lower_bound(e1);
       itm != _columns->_normals.upper_bound(e1); ++itm)
     N1.push_back(itm->second);
-  for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
-        _columns->_normals.lower_bound(e2);
+  for(auto itm = _columns->_normals.lower_bound(e2);
       itm != _columns->_normals.upper_bound(e2); ++itm)
     N2.push_back(itm->second);
-  for(std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm =
-        _columns->_normals.lower_bound(e3);
+  for(auto itm = _columns->_normals.lower_bound(e3);
       itm != _columns->_normals.upper_bound(e3); ++itm)
     N3.push_back(itm->second);
 
@@ -308,7 +303,7 @@ static void getEdgesData(GFace *gf, BoundaryLayerField *blf,
   edges.insert(edges.begin(), embedded_edges.begin(), embedded_edges.end());
 
   // iterate on model edges
-  std::vector<GEdge *>::iterator ite = edges.begin();
+  auto ite = edges.begin();
   while(ite != edges.end()) {
     // check if this edge generates a boundary layer
     if(isEdgeOfFaceBL(gf, *ite, blf)) {
@@ -446,8 +441,7 @@ bool buildAdditionalPoints2D(GFace *gf)
     getNormals(gf, blf, _columns, allEdges);
 
     // for all boundry points
-    for(std::set<MVertex *>::iterator it = _vertices.begin();
-        it != _vertices.end(); ++it) {
+    for(auto it = _vertices.begin(); it != _vertices.end(); ++it) {
       bool endOfTheBL = false;
       SVector3 dirEndOfBL;
       std::vector<MVertex *> columnEndOfBL;
@@ -461,8 +455,7 @@ bool buildAdditionalPoints2D(GFace *gf)
         (*it)->onWhat()->dim() == 0 && blf->isFanNode((*it)->onWhat()->tag());
       int fanSize = fan ? blf->fanSize((*it)->onWhat()->tag()) : 0;
 
-      for(std::multimap<MVertex *, MVertex *>::iterator itm =
-            _columns->_non_manifold_edges.lower_bound(*it);
+      for(auto itm = _columns->_non_manifold_edges.lower_bound(*it);
           itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
         _connections.push_back(itm->second);
 
@@ -495,8 +488,7 @@ bool buildAdditionalPoints2D(GFace *gf)
 
         if(N1.size() == 1) {
           std::vector<MVertex *> Ts;
-          for(std::multimap<MVertex *, MVertex *>::iterator itm =
-                tangents.lower_bound(*it);
+          for(auto itm = tangents.lower_bound(*it);
               itm != tangents.upper_bound(*it); ++itm)
             Ts.push_back(itm->second);
           // end of the BL --> let's add a column that correspond to the
@@ -577,15 +569,15 @@ bool buildAdditionalPoints2D(GFace *gf)
           std::vector<double> t(blf->nb_divisions);
 
           double zlog = log((1 + blf->beta) / (blf->beta - 1));
-	  printf("T = ");
+          printf("T = ");
           for(int i = 0; i < blf->nb_divisions; i++) {
             const double eta = (double)(i + 1) / blf->nb_divisions;
             const double power = exp(zlog * (1. - eta));
             const double ratio = (1. - power) / (1. + power);
             t[i] = 1.0 + blf->beta * ratio;
-	    printf("%12.5E ",t[i]);
+            printf("%12.5E ", t[i]);
           }
-	  printf("\n");
+          printf("\n");
           for(int i = 0; i < blf->nb_divisions; i++) {
             double L = hWall * t[i] / t[0];
             SPoint2 pnew(par.x() + L * n.x(), par.y() + L * n.y());
@@ -615,7 +607,7 @@ bool buildAdditionalPoints2D(GFace *gf)
             _current->bl_data = new MVertexBoundaryLayerData;
             _column.push_back(_current);
             int ith = _column.size();
-	    // ADD BETA LAW HERE !!!
+            // ADD BETA LAW HERE !!!
             L += hWall * pow(blf->ratio, ith);
           }
           _columns->addColumn(n, *it, _column /*,_metrics*/);

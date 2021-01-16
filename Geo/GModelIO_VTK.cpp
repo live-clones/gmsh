@@ -314,44 +314,63 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
         // first order elements
         case 3: elements[1][iCurve].push_back(new MLine(cells[i])); break;
         case 5: elements[2][iSurface].push_back(new MTriangle(cells[i])); break;
-        case 9: elements[3][iSurface].push_back(new MQuadrangle(cells[i])); break;
-        case 10: elements[4][iVolume].push_back(new MTetrahedron(cells[i])); break;
-        case 12: elements[5][iVolume].push_back(new MHexahedron(cells[i])); break;
+        case 9:
+          elements[3][iSurface].push_back(new MQuadrangle(cells[i]));
+          break;
+        case 10:
+          elements[4][iVolume].push_back(new MTetrahedron(cells[i]));
+          break;
+        case 12:
+          elements[5][iVolume].push_back(new MHexahedron(cells[i]));
+          break;
         case 13: elements[6][iVolume].push_back(new MPrism(cells[i])); break;
         case 14: elements[7][iVolume].push_back(new MPyramid(cells[i])); break;
         // second order elements
         case 21: elements[1][iCurve].push_back(new MLine3(cells[i])); break;
-        case 22: elements[2][iSurface].push_back(new MTriangle6(cells[i])); break;
-        case 23: elements[3][iSurface].push_back(new MQuadrangle8(cells[i])); break;
-        case 28: elements[3][iSurface].push_back(new MQuadrangle9(cells[i])); break;
-        case 24: elements[4][iVolume].push_back(new MTetrahedron10(
-           cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
-           cells[i][5], cells[i][6], cells[i][7], cells[i][9], cells[i][8]));
+        case 22:
+          elements[2][iSurface].push_back(new MTriangle6(cells[i]));
           break;
-        case 25: elements[5][iVolume].push_back(new MHexahedron20(
-           cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
-           cells[i][5], cells[i][6], cells[i][7], cells[i][8], cells[i][11],
-           cells[i][13], cells[i][9], cells[i][16], cells[i][18], cells[i][19],
-           cells[i][17], cells[i][10], cells[i][12], cells[i][14], cells[i][15]));
+        case 23:
+          elements[3][iSurface].push_back(new MQuadrangle8(cells[i]));
           break;
-        case 29: elements[5][iVolume].push_back(new MHexahedron27(
-           cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
-           cells[i][5], cells[i][6], cells[i][7], cells[i][8], cells[i][11],
-           cells[i][13], cells[i][9], cells[i][16], cells[i][18], cells[i][19],
-           cells[i][17], cells[i][10], cells[i][12], cells[i][14], cells[i][15],
-           cells[i][22], cells[i][23], cells[i][21], cells[i][24], cells[i][20],
-           cells[i][25], cells[i][26]));
+        case 28:
+          elements[3][iSurface].push_back(new MQuadrangle9(cells[i]));
           break;
-        case 26: elements[6][iVolume].push_back(new MPrism15(
-           cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
-           cells[i][5], cells[i][6], cells[i][9], cells[i][7], cells[i][12],
-           cells[i][14], cells[i][13], cells[i][8], cells[i][10], cells[i][11]));
+        case 24:
+          elements[4][iVolume].push_back(new MTetrahedron10(
+            cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
+            cells[i][5], cells[i][6], cells[i][7], cells[i][9], cells[i][8]));
           break;
-        case 32: elements[6][iVolume].push_back(new MPrism18(
-           cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
-           cells[i][5], cells[i][6], cells[i][9], cells[i][7], cells[i][12],
-           cells[i][14], cells[i][13], cells[i][8], cells[i][10], cells[i][11],
-           cells[i][15], cells[i][17], cells[i][16]));
+        case 25:
+          elements[5][iVolume].push_back(new MHexahedron20(
+            cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
+            cells[i][5], cells[i][6], cells[i][7], cells[i][8], cells[i][11],
+            cells[i][13], cells[i][9], cells[i][16], cells[i][18], cells[i][19],
+            cells[i][17], cells[i][10], cells[i][12], cells[i][14],
+            cells[i][15]));
+          break;
+        case 29:
+          elements[5][iVolume].push_back(new MHexahedron27(
+            cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
+            cells[i][5], cells[i][6], cells[i][7], cells[i][8], cells[i][11],
+            cells[i][13], cells[i][9], cells[i][16], cells[i][18], cells[i][19],
+            cells[i][17], cells[i][10], cells[i][12], cells[i][14],
+            cells[i][15], cells[i][22], cells[i][23], cells[i][21],
+            cells[i][24], cells[i][20], cells[i][25], cells[i][26]));
+          break;
+        case 26:
+          elements[6][iVolume].push_back(
+            new MPrism15(cells[i][0], cells[i][1], cells[i][2], cells[i][3],
+                         cells[i][4], cells[i][5], cells[i][6], cells[i][9],
+                         cells[i][7], cells[i][12], cells[i][14], cells[i][13],
+                         cells[i][8], cells[i][10], cells[i][11]));
+          break;
+        case 32:
+          elements[6][iVolume].push_back(new MPrism18(
+            cells[i][0], cells[i][1], cells[i][2], cells[i][3], cells[i][4],
+            cells[i][5], cells[i][6], cells[i][9], cells[i][7], cells[i][12],
+            cells[i][14], cells[i][13], cells[i][8], cells[i][10], cells[i][11],
+            cells[i][15], cells[i][17], cells[i][16]));
           break;
         default: Msg::Error("Unknown type of cell %d", type); break;
         }
@@ -364,7 +383,9 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
         case 1: elements[0][iPoint++].push_back(new MPoint(cells[i])); break;
         case 2: elements[1][iCurve].push_back(new MLine(cells[i])); break;
         case 3: elements[2][iSurface].push_back(new MTriangle(cells[i])); break;
-        case 4: elements[3][iSurface].push_back(new MQuadrangle(cells[i])); break;
+        case 4:
+          elements[3][iSurface].push_back(new MQuadrangle(cells[i]));
+          break;
         default:
           Msg::Error("Unknown type of mesh element with %d nodes", nbNodes);
           break;

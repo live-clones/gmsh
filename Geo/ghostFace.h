@@ -37,46 +37,36 @@ public:
     }
   }
   virtual GeomType geomType() const { return GhostSurface; }
-  virtual void setPartition(const int partition)
-  {
-    _partition = partition;
-  }
+  virtual void setPartition(const int partition) { _partition = partition; }
   virtual int getPartition() const { return _partition; }
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
-  virtual std::map<MElement *, int> &getGhostCells()
-  {
-    return _ghostCells;
-  }
+  virtual std::map<MElement *, int> &getGhostCells() { return _ghostCells; }
 
   virtual void addTriangle(MTriangle *t, int onWhichPartition)
   {
     GFace::addTriangle(t);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(t, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(t, onWhichPartition));
     model()->addGhostCells(t, _partition);
   }
   virtual void addQuadrangle(MQuadrangle *q, int onWhichPartition)
   {
     GFace::addQuadrangle(q);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(q, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(q, onWhichPartition));
     model()->addGhostCells(q, _partition);
   }
   virtual void addPolygon(MPolygon *p, int onWhichPartition)
   {
     GFace::addPolygon(p);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(p, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(p, onWhichPartition));
     model()->addGhostCells(p, _partition);
   }
   virtual void addElement(int type, MElement *e, int onWhichPartition)
   {
     GFace::addElement(type, e);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(e, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(e, onWhichPartition));
     model()->addGhostCells(e, _partition);
   }
 

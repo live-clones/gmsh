@@ -95,9 +95,7 @@ public:
   inline const BoundaryLayerFan *getFan(MVertex *v) const
   {
     std::map<MVertex *, BoundaryLayerFan>::const_iterator it = _fans.find(v);
-    if(it != _fans.end()) {
-      return &it->second;
-    }
+    if(it != _fans.end()) { return &it->second; }
     return 0;
   }
   inline const BoundaryLayerData &getColumn(MVertex *v, MEdge e) const

@@ -41,9 +41,7 @@ static double atofBDF(char *str)
   int len = strlen(str);
   // classic numbers with E or D exponent notation
   for(int i = 0; i < len; i++) {
-    if(str[i] == 'E' || str[i] == 'e') {
-      return atof(str);
-    }
+    if(str[i] == 'E' || str[i] == 'e') { return atof(str); }
     else if(str[i] == 'D' || str[i] == 'd') {
       str[i] = 'E';
       return atof(str);
@@ -111,8 +109,7 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize, int *num,
     if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
     copyChar(tmp[4], &buffer2[8], 16);
     break;
-  default:
-    return 0;
+  default: return 0;
   }
 
   *num = atoi(tmp[0]);
@@ -199,7 +196,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
   int numCheck = (numVertices > 0) ? numVertices : fields.size() - 2;
 
   for(int i = 0; i < numCheck; i++) {
-    std::map<int, MVertex *>::iterator it = vertexMap.find(n[i]);
+    auto it = vertexMap.find(n[i]);
     if(it == vertexMap.end()) {
       Msg::Error("Wrong node index %d", n[i]);
       return 0;

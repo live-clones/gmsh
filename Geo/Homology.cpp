@@ -25,8 +25,7 @@ Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
     int dim = _model->getDim();
     std::vector<GEntity *> entities;
     _model->getEntities(entities);
-    for(std::vector<GEntity *>::iterator it = entities.begin();
-        it != entities.end(); it++) {
+    for(auto it = entities.begin(); it != entities.end(); it++) {
       if((*it)->dim() == dim) _domainEntities.push_back(*it);
     }
   }
@@ -195,11 +194,14 @@ void Homology::findHomologyBasis(std::vector<int> dim)
             _cellComplex->getSize(1), _cellComplex->getSize(0));
 
   Msg::StatusBar(true, "Computing homology space bases...");
-  t1 = Cpu(); w1 = TimeOfDay();
+  t1 = Cpu();
+  w1 = TimeOfDay();
   ChainComplex chainComplex = ChainComplex(_cellComplex);
   chainComplex.computeHomology();
-  t2 = Cpu(); w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done computing homology space bases (Wall %gs, CPU %gs)",
+  t2 = Cpu();
+  w2 = TimeOfDay();
+  Msg::StatusBar(true,
+                 "Done computing homology space bases (Wall %gs, CPU %gs)",
                  w2 - w1, t2 - t1);
 
   _deleteChains(dim);
@@ -284,11 +286,14 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
             _cellComplex->getSize(1), _cellComplex->getSize(0));
 
   Msg::StatusBar(true, "Computing cohomology space bases ...");
-  t1 = Cpu(); w1 = TimeOfDay();
+  t1 = Cpu();
+  w1 = TimeOfDay();
   ChainComplex chainComplex = ChainComplex(_cellComplex);
   chainComplex.computeHomology(true);
-  t2 = Cpu(); w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done computing cohomology space bases (Wall %gs, CPU %gs)",
+  t2 = Cpu();
+  w2 = TimeOfDay();
+  Msg::StatusBar(true,
+                 "Done computing cohomology space bases (Wall %gs, CPU %gs)",
                  w2 - w1, t2 - t1);
 
   _deleteCochains(dim);
@@ -538,22 +543,25 @@ void Homology::findBettiNumbers()
     double t2 = Cpu(), w2 = TimeOfDay();
     double size2 = _cellComplex->getSize(-1);
 
-    Msg::StatusBar(true, "Done reducing cell complex (Wall %gs, CPU %gs, %g %%)",
+    Msg::StatusBar(true,
+                   "Done reducing cell complex (Wall %gs, CPU %gs, %g %%)",
                    w2 - w1, t2 - t1, (1. - size2 / size1) * 100.);
     Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
               _cellComplex->getSize(3), _cellComplex->getSize(2),
               _cellComplex->getSize(1), _cellComplex->getSize(0));
 
     Msg::StatusBar(true, "Computing betti numbers...");
-    t1 = Cpu(); w1 = TimeOfDay();
+    t1 = Cpu();
+    w1 = TimeOfDay();
     ChainComplex chainComplex = ChainComplex(_cellComplex);
     chainComplex.computeHomology();
 
     for(int i = 0; i < 4; i++) _betti[i] = chainComplex.getBasisSize(i, 3);
 
-    t2 = Cpu(); w2 = TimeOfDay();
-    Msg::StatusBar(true, "Betti numbers computed (Wall %gs, CPU %gs)",
-                   w2 - w1, t2 - t1);
+    t2 = Cpu();
+    w2 = TimeOfDay();
+    Msg::StatusBar(true, "Betti numbers computed (Wall %gs, CPU %gs)", w2 - w1,
+                   t2 - t1);
   }
 
   std::string domain = _getDomainString(_domain, _subdomain);
@@ -588,7 +596,7 @@ void Homology::_createChain(std::map<Cell *, int, CellPtrLessThan> &preChain,
   Chain<int> *chain = new Chain<int>();
   chain->setName(name);
 
-  for(citer cit = preChain.begin(); cit != preChain.end(); cit++) {
+  for(auto cit = preChain.begin(); cit != preChain.end(); cit++) {
     Cell *cell = cit->first;
     int coeff = cit->second;
     if(coeff == 0) continue;
@@ -613,9 +621,7 @@ std::string Homology::_getDomainString(const std::vector<int> &domain,
     for(std::size_t i = 0; i < domain.size(); i++) {
       std::string temp = convertInt(domain.at(i));
       domainString += temp;
-      if(domain.size() - 1 > i) {
-        domainString += ",";
-      }
+      if(domain.size() - 1 > i) { domainString += ","; }
     }
   }
   domainString += "}";
@@ -625,9 +631,7 @@ std::string Homology::_getDomainString(const std::vector<int> &domain,
     for(std::size_t i = 0; i < subdomain.size(); i++) {
       std::string temp = convertInt(subdomain.at(i));
       domainString += temp;
-      if(subdomain.size() - 1 > i) {
-        domainString += ",";
-      }
+      if(subdomain.size() - 1 > i) { domainString += ","; }
     }
     domainString += "}";
   }
@@ -648,12 +652,12 @@ void Homology::storeCells(CellComplex *cellComplex, int dim)
   std::vector<MElement *> elements;
   MElementFactory factory;
 
-  for(CellComplex::citer cit = cellComplex->firstCell(dim);
-      cit != cellComplex->lastCell(dim); cit++) {
+  for(auto cit = cellComplex->firstCell(dim); cit != cellComplex->lastCell(dim);
+      cit++) {
     Cell *cell = *cit;
     std::map<Cell *, int, CellPtrLessThan> cells;
     cell->getCells(cells);
-    for(Cell::citer it = cells.begin(); it != cells.end(); it++) {
+    for(auto it = cells.begin(); it != cells.end(); it++) {
       Cell *subCell = it->first;
       std::vector<MVertex *> v;
       subCell->getMeshVertices(v);

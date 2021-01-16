@@ -151,10 +151,7 @@ public:
     double meshSize;
   } meshAttributes;
 
-  virtual double getMeshSize() const
-  {
-    return meshAttributes.meshSize;
-  }
+  virtual double getMeshSize() const { return meshAttributes.meshSize; }
 
   // a array for accessing the transfinite vertices using a triplet of
   // indices
@@ -179,7 +176,8 @@ public:
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns() { return &_columns; }
 
-  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
+  virtual bool reorder(const int elementType,
+                       const std::vector<std::size_t> &ordering);
 
   // set the reverseMesh constraint in the bounding surfaces so that the
   // boundary mesh has outward pointing normals, based on the STL triangulation

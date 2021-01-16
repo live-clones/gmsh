@@ -498,8 +498,7 @@ bool Cell::hasVertex(int vertex) const
 
 bool CombinedCell::hasVertex(int vertex) const
 {
-  for(std::map<Cell *, int, CellPtrLessThan>::const_iterator cit = _cells.begin();
-      cit != _cells.end(); cit++) {
+  for(auto cit = _cells.begin(); cit != _cells.end(); cit++) {
     if(cit->first->hasVertex(vertex)) return true;
   }
   return false;
@@ -518,10 +517,10 @@ void Cell::printCell()
 
 void Cell::saveCellBoundary()
 {
-  for(biter it = firstCoboundary(); it != lastCoboundary(); it++) {
+  for(auto it = firstCoboundary(); it != lastCoboundary(); it++) {
     it->second.init();
   }
-  for(biter it = firstBoundary(); it != lastBoundary(); it++) {
+  for(auto it = firstBoundary(); it != lastBoundary(); it++) {
     it->second.init();
   }
 }
@@ -529,13 +528,13 @@ void Cell::saveCellBoundary()
 void Cell::restoreCellBoundary()
 {
   std::vector<Cell *> toRemove;
-  for(biter it = firstCoboundary(true); it != lastCoboundary(); it++) {
+  for(auto it = firstCoboundary(true); it != lastCoboundary(); it++) {
     it->second.reset();
     if(it->second.get() == 0) toRemove.push_back(it->first);
   }
   for(std::size_t i = 0; i < toRemove.size(); i++) _cbd.erase(toRemove[i]);
   toRemove.clear();
-  for(biter it = firstBoundary(true); it != lastBoundary(); it++) {
+  for(auto it = firstBoundary(true); it != lastBoundary(); it++) {
     it->second.reset();
     if(it->second.get() == 0) toRemove.push_back(it->first);
   }
@@ -544,15 +543,13 @@ void Cell::restoreCellBoundary()
 
 void Cell::addBoundaryCell(int orientation, Cell *cell, bool other)
 {
-  biter it = _bd.find(cell);
+  auto it = _bd.find(cell);
   if(it != _bd.end()) {
     int newOrientation = it->second.get() + orientation;
     it->second.set(newOrientation);
     if(newOrientation == 0) {
       it->first->removeCoboundaryCell(this, false);
-      if(it->second.geto() == 0) {
-        _bd.erase(it);
-      }
+      if(it->second.geto() == 0) { _bd.erase(it); }
       return;
     }
   }
@@ -563,15 +560,13 @@ void Cell::addBoundaryCell(int orientation, Cell *cell, bool other)
 
 void Cell::addCoboundaryCell(int orientation, Cell *cell, bool other)
 {
-  biter it = _cbd.find(cell);
+  auto it = _cbd.find(cell);
   if(it != _cbd.end()) {
     int newOrientation = it->second.get() + orientation;
     it->second.set(newOrientation);
     if(newOrientation == 0) {
       it->first->removeBoundaryCell(this, false);
-      if(it->second.geto() == 0) {
-        _cbd.erase(it);
-      }
+      if(it->second.geto() == 0) { _cbd.erase(it); }
       return;
     }
   }
@@ -582,7 +577,7 @@ void Cell::addCoboundaryCell(int orientation, Cell *cell, bool other)
 
 void Cell::removeBoundaryCell(Cell *cell, bool other)
 {
-  biter it = _bd.find(cell);
+  auto it = _bd.find(cell);
   if(it != _bd.end()) {
     it->second.set(0);
     if(other) it->first->removeCoboundaryCell(this, false);
@@ -592,7 +587,7 @@ void Cell::removeBoundaryCell(Cell *cell, bool other)
 
 void Cell::removeCoboundaryCell(Cell *cell, bool other)
 {
-  biter it = _cbd.find(cell);
+  auto it = _cbd.find(cell);
   if(it != _cbd.end()) {
     it->second.set(0);
     if(other) it->first->removeBoundaryCell(this, false);
@@ -603,12 +598,12 @@ void Cell::removeCoboundaryCell(Cell *cell, bool other)
 bool Cell::hasBoundary(Cell *cell, bool orig)
 {
   if(!orig) {
-    biter it = _bd.find(cell);
+    auto it = _bd.find(cell);
     if(it != _bd.end() && it->second.get() != 0) return true;
     return false;
   }
   else {
-    biter it = _bd.find(cell);
+    auto it = _bd.find(cell);
     if(it != _bd.end() && it->second.geto() != 0) return true;
     return false;
   }
@@ -617,12 +612,12 @@ bool Cell::hasBoundary(Cell *cell, bool orig)
 bool Cell::hasCoboundary(Cell *cell, bool orig)
 {
   if(!orig) {
-    biter it = _cbd.find(cell);
+    auto it = _cbd.find(cell);
     if(it != _cbd.end() && it->second.get() != 0) return true;
     return false;
   }
   else {
-    biter it = _cbd.find(cell);
+    auto it = _cbd.find(cell);
     if(it != _cbd.end() && it->second.geto() != 0) return true;
     return false;
   }
@@ -630,7 +625,7 @@ bool Cell::hasCoboundary(Cell *cell, bool orig)
 
 Cell::biter Cell::firstBoundary(bool orig)
 {
-  biter it = _bd.begin();
+  auto it = _bd.begin();
   if(!orig)
     while(it->second.get() == 0 && it != _bd.end()) it++;
   else
@@ -642,7 +637,7 @@ Cell::biter Cell::lastBoundary() { return _bd.end(); }
 
 Cell::biter Cell::firstCoboundary(bool orig)
 {
-  biter it = _cbd.begin();
+  auto it = _cbd.begin();
   if(!orig)
     while(it->second.get() == 0 && it != _cbd.end()) it++;
   else
@@ -655,7 +650,7 @@ Cell::biter Cell::lastCoboundary() { return _cbd.end(); }
 int Cell::getBoundarySize(bool orig)
 {
   int size = 0;
-  for(biter bit = _bd.begin(); bit != _bd.end(); bit++) {
+  for(auto bit = _bd.begin(); bit != _bd.end(); bit++) {
     if(!orig && bit->second.get() != 0)
       size++;
     else if(orig && bit->second.geto() != 0)
@@ -667,7 +662,7 @@ int Cell::getBoundarySize(bool orig)
 int Cell::getCoboundarySize(bool orig)
 {
   int size = 0;
-  for(biter bit = _cbd.begin(); bit != _cbd.end(); bit++) {
+  for(auto bit = _cbd.begin(); bit != _cbd.end(); bit++) {
     if(!orig && bit->second.get() != 0)
       size++;
     else if(orig && bit->second.geto() != 0)
@@ -680,18 +675,18 @@ void Cell::getBoundary(std::map<Cell *, short int, CellPtrLessThan> &boundary,
                        bool orig)
 {
   boundary.clear();
-  for(biter it = firstBoundary(); it != lastBoundary(); it++) {
+  for(auto it = firstBoundary(); it != lastBoundary(); it++) {
     Cell *cell = it->first;
     if(!orig && it->second.get() != 0) boundary[cell] = it->second.get();
     if(orig && it->second.geto() != 0) boundary[cell] = it->second.geto();
   }
 }
 
-void Cell::getCoboundary(std::map<Cell *, short int, CellPtrLessThan> &coboundary,
-                         bool orig)
+void Cell::getCoboundary(
+  std::map<Cell *, short int, CellPtrLessThan> &coboundary, bool orig)
 {
   coboundary.clear();
-  for(biter it = firstCoboundary(); it != lastCoboundary(); it++) {
+  for(auto it = firstCoboundary(); it != lastCoboundary(); it++) {
     Cell *cell = it->first;
     if(!orig && it->second.get() != 0) coboundary[cell] = it->second.get();
     if(orig && it->second.geto() != 0) coboundary[cell] = it->second.geto();
@@ -700,7 +695,7 @@ void Cell::getCoboundary(std::map<Cell *, short int, CellPtrLessThan> &coboundar
 
 void Cell::printBoundary()
 {
-  for(biter it = firstBoundary(); it != lastBoundary(); it++) {
+  for(auto it = firstBoundary(); it != lastBoundary(); it++) {
     printf("Boundary cell orientation: %d ", it->second.get());
     Cell *cell2 = it->first;
     cell2->printCell();
@@ -712,7 +707,7 @@ void Cell::printBoundary()
 
 void Cell::printCoboundary()
 {
-  for(biter it = firstCoboundary(); it != lastCoboundary(); it++) {
+  for(auto it = firstCoboundary(); it != lastCoboundary(); it++) {
     printf("Coboundary cell orientation: %d, ", it->second.get());
     Cell *cell2 = it->first;
     cell2->printCell();
@@ -740,41 +735,39 @@ CombinedCell::CombinedCell(Cell *c1, Cell *c2, bool orMatch, bool co)
   c1->getCells(_cells);
   std::map<Cell *, int, CellPtrLessThan> c2Cells;
   c2->getCells(c2Cells);
-  for(citer cit = c2Cells.begin(); cit != c2Cells.end(); cit++) {
+  for(auto cit = c2Cells.begin(); cit != c2Cells.end(); cit++) {
     if(!orMatch) (*cit).second = -1 * (*cit).second;
     _cells.insert(*cit);
   }
 
   // boundary cells
-  for(biter it = c1->firstBoundary(); it != c1->lastBoundary(); it++) {
+  for(auto it = c1->firstBoundary(); it != c1->lastBoundary(); it++) {
     Cell *cell = it->first;
     int ori = it->second.get();
     if(ori == 0) continue;
     cell->removeCoboundaryCell(c1, false);
     this->addBoundaryCell(ori, cell, true);
   }
-  for(biter it = c2->firstBoundary(); it != c2->lastBoundary(); it++) {
+  for(auto it = c2->firstBoundary(); it != c2->lastBoundary(); it++) {
     Cell *cell = it->first;
     if(!orMatch) it->second.set(-1 * it->second.get());
     int ori = it->second.get();
     if(ori == 0) continue;
     cell->removeCoboundaryCell(c2, false);
-    if(co && !c1->hasBoundary(cell)) {
-      this->addBoundaryCell(ori, cell, true);
-    }
+    if(co && !c1->hasBoundary(cell)) { this->addBoundaryCell(ori, cell, true); }
     else if(!co)
       this->addBoundaryCell(ori, cell, true);
   }
 
   // coboundary cells
-  for(biter it = c1->firstCoboundary(); it != c1->lastCoboundary(); it++) {
+  for(auto it = c1->firstCoboundary(); it != c1->lastCoboundary(); it++) {
     Cell *cell = it->first;
     int ori = it->second.get();
     if(ori == 0) continue;
     cell->removeBoundaryCell(c1, false);
     this->addCoboundaryCell(ori, cell, true);
   }
-  for(biter it = c2->firstCoboundary(); it != c2->lastCoboundary(); it++) {
+  for(auto it = c2->firstCoboundary(); it != c2->lastCoboundary(); it++) {
     Cell *cell = it->first;
     if(!orMatch) it->second.set(-1 * it->second.get());
     int ori = it->second.get();

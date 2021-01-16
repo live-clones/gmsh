@@ -47,7 +47,7 @@ double max_surf_curvature(const GVertex *gv, double x, double y, double z,
                           const GEdge *_myGEdge)
 {
   std::vector<GFace *> faces = _myGEdge->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
   double curv = 1.e-22;
   while(it != faces.end()) {
     SPoint2 par = gv->reparamOnFace((*it), 1);
@@ -60,7 +60,7 @@ double max_surf_curvature(const GVertex *gv, double x, double y, double z,
 
 SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
 {
-  std::vector<GEdge *>::const_iterator it = l_edges.begin();
+  auto it = l_edges.begin();
   while(it != l_edges.end()) {
     std::vector<GEdge *> const &l = gf->edges();
     if(std::find(l.begin(), l.end(), *it) != l.end()) {

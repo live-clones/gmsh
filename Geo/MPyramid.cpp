@@ -430,12 +430,8 @@ void MPyramidN::reverse()
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 5);
 
   // reverse
-  for(int i = 0; i < 5; ++i) {
-    _v[i] = oldv[indices[i]];
-  }
-  for(std::size_t i = 0; i < _vs.size(); ++i) {
-    _vs[i] = oldv[indices[5 + i]];
-  }
+  for(int i = 0; i < 5; ++i) { _v[i] = oldv[indices[i]]; }
+  for(std::size_t i = 0; i < _vs.size(); ++i) { _vs[i] = oldv[indices[5 + i]]; }
 }
 
 void MPyramidN::_addHOEdgePoints(int num, std::vector<MVertex *> &v,

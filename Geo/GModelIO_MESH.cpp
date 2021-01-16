@@ -265,18 +265,16 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
 
   int numEdges = 0, numTriangles = 0, numQuadrangles = 0;
   int numTetrahedra = 0, numHexahedra = 0;
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-    if(saveAll || (*it)->physicals.size()) {
-      numEdges += (*it)->lines.size();
-    }
+  for(auto it = firstEdge(); it != lastEdge(); ++it) {
+    if(saveAll || (*it)->physicals.size()) { numEdges += (*it)->lines.size(); }
   }
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
       numTriangles += (*it)->triangles.size();
       numQuadrangles += (*it)->quadrangles.size();
     }
   }
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
       numTetrahedra += (*it)->tetrahedra.size();
       numHexahedra += (*it)->hexahedra.size();
@@ -289,7 +287,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     else
       fprintf(fp, " Edges\n");
     fprintf(fp, " %d\n", numEdges);
-    for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+    for(auto it = firstEdge(); it != lastEdge(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
         for(std::size_t i = 0; i < (*it)->lines.size(); i++)
@@ -304,7 +302,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     else
       fprintf(fp, " Triangles\n");
     fprintf(fp, " %d\n", numTriangles);
-    for(fiter it = firstFace(); it != lastFace(); ++it) {
+    for(auto it = firstFace(); it != lastFace(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
         for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
@@ -316,7 +314,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
   if(numQuadrangles) {
     fprintf(fp, " Quadrilaterals\n");
     fprintf(fp, " %d\n", numQuadrangles);
-    for(fiter it = firstFace(); it != lastFace(); ++it) {
+    for(auto it = firstFace(); it != lastFace(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
         for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++)
@@ -331,7 +329,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     else
       fprintf(fp, " Tetrahedra\n");
     fprintf(fp, " %d\n", numTetrahedra);
-    for(riter it = firstRegion(); it != lastRegion(); ++it) {
+    for(auto it = firstRegion(); it != lastRegion(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
         for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++)
@@ -343,7 +341,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
   if(numHexahedra) {
     fprintf(fp, " Hexahedra\n");
     fprintf(fp, " %d\n", numHexahedra);
-    for(riter it = firstRegion(); it != lastRegion(); ++it) {
+    for(auto it = firstRegion(); it != lastRegion(); ++it) {
       int numPhys = (*it)->physicals.size();
       if(saveAll || numPhys) {
         for(std::size_t i = 0; i < (*it)->hexahedra.size(); i++)

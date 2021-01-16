@@ -608,8 +608,9 @@ public:
 
   // create a geometry (i.e. a parametrization for curves and surfaces) for the
   // given discrete entities (or all of them if dimTags is empty)
-  void createGeometryOfDiscreteEntities(const std::vector<std::pair<int, int> >
-                                        &dimTags = std::vector<std::pair<int, int> >());
+  void createGeometryOfDiscreteEntities(
+    const std::vector<std::pair<int, int> > &dimTags =
+      std::vector<std::pair<int, int> >());
 
   // make discrete entities simply connected
   void makeDiscreteRegionsSimplyConnected();

@@ -7,9 +7,7 @@
 
 std::vector<MVertex *> *MVertexBoundaryLayerData::getChildren(int i)
 {
-  if(i < (int)this->children.size() && i >= 0) {
-    return &(children[i]);
-  }
+  if(i < (int)this->children.size() && i >= 0) { return &(children[i]); }
   else {
     return 0;
   }

@@ -226,15 +226,11 @@ public:
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>());
-  bool addBSplineFilling(int &tag, int wireTag,
-                         const std::string &type = "");
-  bool addBezierFilling(int &tag, int wireTag,
-                        const std::string &type = "");
-  bool addBSplineSurface(int &tag,
-                         const std::vector<int> &pointTags,
-                         const int numPointsU,
-                         const int degreeU, const int degreeV,
-                         const std::vector<double> &weights,
+  bool addBSplineFilling(int &tag, int wireTag, const std::string &type = "");
+  bool addBezierFilling(int &tag, int wireTag, const std::string &type = "");
+  bool addBSplineSurface(int &tag, const std::vector<int> &pointTags,
+                         const int numPointsU, const int degreeU,
+                         const int degreeV, const std::vector<double> &weights,
                          const std::vector<double> &knotsU,
                          const std::vector<double> &knotsV,
                          const std::vector<int> &multiplicitiesU,
@@ -245,8 +241,8 @@ public:
                         const int numPointsU,
                         const std::vector<int> &wireTags = std::vector<int>(),
                         bool wire3D = true);
-  bool addTrimmedSurface(int &tag, int surfaceTag, const std::vector<int> &wireTags,
-                         bool wire3D);
+  bool addTrimmedSurface(int &tag, int surfaceTag,
+                         const std::vector<int> &wireTags, bool wire3D);
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
@@ -538,21 +534,17 @@ public:
   {
     return _error("add surface filling");
   }
-  bool addBSplineFilling(int &tag, int wireTag,
-                         const std::string &type = "")
+  bool addBSplineFilling(int &tag, int wireTag, const std::string &type = "")
   {
     return _error("add BSpline filling");
   }
-  bool addBezierFilling(int &tag, int wireTag,
-                        const std::string &type = "")
+  bool addBezierFilling(int &tag, int wireTag, const std::string &type = "")
   {
     return _error("add Bezier filling");
   }
-  bool addBSplineSurface(int &tag,
-                         const std::vector<int> &pointTags,
-                         const int numPointsU,
-                         const int degreeU, const int degreeV,
-                         const std::vector<double> &weights,
+  bool addBSplineSurface(int &tag, const std::vector<int> &pointTags,
+                         const int numPointsU, const int degreeU,
+                         const int degreeV, const std::vector<double> &weights,
                          const std::vector<double> &knotsU,
                          const std::vector<double> &knotsV,
                          const std::vector<int> &multiplicitiesU,
@@ -570,8 +562,7 @@ public:
     return _error("add Bezier surface");
   }
   bool addTrimmedSurface(int &tag, int surfaceTag,
-                         const std::vector<int> &wireTags,
-                         bool wire3D)
+                         const std::vector<int> &wireTags, bool wire3D)
   {
     return _error("add trimmed surface");
   }

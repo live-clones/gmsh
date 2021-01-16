@@ -24,14 +24,9 @@ discreteVertex::discreteVertex(GModel *m) : GVertex(m, 0)
   // of the corresponding entity in GEO internals
 }
 
-discreteVertex::~discreteVertex()
-{
-}
+discreteVertex::~discreteVertex() {}
 
-GPoint discreteVertex::point() const
-{
-  return GPoint(x(), y(), z(), this);
-}
+GPoint discreteVertex::point() const { return GPoint(x(), y(), z(), this); }
 
 void discreteVertex::setPosition(GPoint &p)
 {

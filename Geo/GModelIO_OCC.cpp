@@ -1895,9 +1895,10 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
         Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
         if(wire3D) {
           // use the 3D curves in the wire and project them onto the patch
-          Handle(Geom_Curve) cProj = GeomProjLib::Project
-            (new Geom_TrimmedCurve(c, first, last, Standard_True, Standard_False),
-             surf);
+          Handle(Geom_Curve) cProj = GeomProjLib::Project(
+            new Geom_TrimmedCurve(c, first, last, Standard_True,
+                                  Standard_False),
+            surf);
           TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge(
             cProj, cProj->FirstParameter(), cProj->LastParameter());
           w.Add(edgeProj);
@@ -2958,7 +2959,8 @@ bool OCC_Internals::_extrudePerDim(
       else if(trihedron == "GuidePlanWithContact")
         mode = GeomFill_IsGuidePlanWithContact;
       else
-        Msg::Warning("Unknown trihedron mode for pipe: using 'DiscreteTrihedron'");
+        Msg::Warning(
+          "Unknown trihedron mode for pipe: using 'DiscreteTrihedron'");
       BRepOffsetAPI_MakePipe p(wire, c, mode);
       p.Build();
       if(!p.IsDone()) {
@@ -3848,14 +3850,12 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
     int dim =
-      (shape.ShapeType() == TopAbs_VERTEX) ?
-        0 :
-        (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
-        1 :
-        (shape.ShapeType() == TopAbs_FACE ||
-         shape.ShapeType() == TopAbs_SHELL) ?
-        2 :
-        3;
+      (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
+      (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
+                                             1 :
+      (shape.ShapeType() == TopAbs_FACE || shape.ShapeType() == TopAbs_SHELL) ?
+                                             2 :
+                                             3;
 
     Handle(TCollection_HAsciiString) matName;
     Handle(TCollection_HAsciiString) matDescription;
@@ -4058,24 +4058,22 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-      it++) {
+  for(auto it = model->firstRegion(); it != model->lastRegion(); it++) {
     GRegion *gr = *it;
     if(gr->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Solid *)gr->getNativePtr());
   }
-  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); it++) {
+  for(auto it = model->firstFace(); it != model->lastFace(); it++) {
     GFace *gf = *it;
     if(!gf->numRegions() && gf->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Face *)gf->getNativePtr());
   }
-  for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); it++) {
+  for(auto it = model->firstEdge(); it != model->lastEdge(); it++) {
     GEdge *ge = *it;
     if(!ge->numFaces() && ge->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Edge *)ge->getNativePtr());
   }
-  for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
-      it++) {
+  for(auto it = model->firstVertex(); it != model->lastVertex(); it++) {
     GVertex *gv = *it;
     if(!gv->numEdges() && gv->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Vertex *)gv->getNativePtr());

@@ -295,10 +295,7 @@ public:
   virtual void alignElementsWithMaster() {}
 
   // get the bounding box
-  virtual SBoundingBox3d bounds(bool fast = false)
-  {
-    return SBoundingBox3d();
-  }
+  virtual SBoundingBox3d bounds(bool fast = false) { return SBoundingBox3d(); }
 
   //  get the oriented bounding box
   virtual SOrientedBoundingBox getOBB() { return SOrientedBoundingBox(); }
@@ -404,7 +401,8 @@ public:
   std::map<MVertex *, MVertex *> correspondingHighOrderVertices;
 
   // reorder the mesh elements of the given type, according to ordering
-  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering)
+  virtual bool reorder(const int elementType,
+                       const std::vector<std::size_t> &ordering)
   {
     return false;
   }
@@ -422,8 +420,7 @@ struct GEntityPtrLessThan {
 struct GEntityPtrFullLessThan {
   bool operator()(const GEntity *ent1, const GEntity *ent2) const
   {
-    if(ent1->dim() != ent2->dim())
-      return ent1->dim() < ent2->dim();
+    if(ent1->dim() != ent2->dim()) return ent1->dim() < ent2->dim();
     return ent1->tag() < ent2->tag();
   }
 };

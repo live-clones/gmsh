@@ -481,10 +481,8 @@ MElement *CGNSZoneStruct<DIM>::makeBndElement(
   std::vector<MVertex *> &allVert,
   std::map<int, std::vector<MElement *> > *allElt)
 {
-  typedef std::map<cgsize_t, int>::const_iterator Elt2GeomIter;
-
   cgsize_t iElt = ijk2Ind<DIM>(ijk, nbNodeIJK());
-  const Elt2GeomIter it = elt2Geom().find(iElt);
+  const auto it = elt2Geom().find(iElt);
   const int entity = (it == elt2Geom().end()) ? defaultEntity : it->second;
 
   return createBndElement<DIM>(ijk, nbNodeIJK(), dir, order, entity,

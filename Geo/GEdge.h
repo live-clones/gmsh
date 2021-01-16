@@ -163,14 +163,12 @@ public:
   double length(const double &u0, const double &u1, const int nbQuadPoints = 4);
 
   // get the prescribed mesh size on the edge
-  double prescribedMeshSizeAtVertex() const
-  {
-    return meshAttributes.meshSize;
-  }
+  double prescribedMeshSizeAtVertex() const { return meshAttributes.meshSize; }
 
   double prescribedMeshSizeAtParam(double u);
 
-  void setMeshSizeParametric(const std::vector<double> u, const std::vector<double> lc);
+  void setMeshSizeParametric(const std::vector<double> u,
+                             const std::vector<double> lc);
 
   // true if start == end and no more than 2 segments
   void setTooSmall(bool const b) { _tooSmall = b; }
@@ -262,7 +260,8 @@ public:
   SPoint3 closestPointWithTol(SPoint3 &p, double tolerance);
   virtual void mesh(bool verbose);
 
-  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
+  virtual bool reorder(const int elementType,
+                       const std::vector<std::size_t> &ordering);
 };
 
 #endif

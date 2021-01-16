@@ -39,7 +39,7 @@ static int ComparePosition(const void *a, const void *b)
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
 
-  if(!q || !w){
+  if(!q || !w) {
     Msg::Error("Cannot compare position of null points");
     return 99;
   }
@@ -295,9 +295,7 @@ bool EndCurve(Curve *c)
     double n[3];
     prodve(dir12, dir32, n);
     bool isValid = true;
-    if(norm3(n) < 1.e-15) {
-      isValid = false;
-    }
+    if(norm3(n) < 1.e-15) { isValid = false; }
     else {
       norme(n);
       if((fabs(n[0]) < 1.e-5 && fabs(n[1]) < 1.e-5 && fabs(n[2]) < 1.e-5)) {
@@ -550,8 +548,7 @@ Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste, List_T *Knots,
         ok = false;
       }
     }
-    if(!EndCurve(pC))
-      ok = false;
+    if(!EndCurve(pC)) ok = false;
   }
 
   return pC;
@@ -675,9 +672,7 @@ static Vertex *FindPoint(int inum, Tree_T *t)
   Vertex C, *pc;
   pc = &C;
   pc->Num = inum;
-  if(Tree_Query(t, &pc)) {
-    return pc;
-  }
+  if(Tree_Query(t, &pc)) { return pc; }
   return NULL;
 }
 
@@ -691,9 +686,7 @@ static Curve *FindCurve(int inum, Tree_T *t)
   Curve C, *pc;
   pc = &C;
   pc->Num = inum;
-  if(Tree_Query(t, &pc)) {
-    return pc;
-  }
+  if(Tree_Query(t, &pc)) { return pc; }
   return NULL;
 }
 
@@ -707,9 +700,7 @@ static Surface *FindSurface(int inum, Tree_T *t)
   Surface S, *ps;
   ps = &S;
   ps->Num = inum;
-  if(Tree_Query(t, &ps)) {
-    return ps;
-  }
+  if(Tree_Query(t, &ps)) { return ps; }
   return NULL;
 }
 
@@ -959,8 +950,7 @@ void DeleteCurve(int ip, bool recursive)
     }
     if(c->beg) vv.insert(c->beg->Num);
     if(c->end) vv.insert(c->end->Num);
-    for(std::set<int>::iterator it = vv.begin(); it != vv.end(); it++)
-      DeletePoint(*it);
+    for(auto it = vv.begin(); it != vv.end(); it++) DeletePoint(*it);
   }
 }
 
@@ -1002,12 +992,11 @@ void DeleteSurface(int is, bool recursive)
       if(c->beg) vv.insert(c->beg->Num);
       if(c->end) vv.insert(c->end->Num);
     }
-    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++) {
+    for(auto it = cc.begin(); it != cc.end(); it++) {
       DeleteCurve(*it);
       DeleteCurve(-*it);
     }
-    for(std::set<int>::iterator it = vv.begin(); it != vv.end(); it++)
-      DeletePoint(*it);
+    for(auto it = vv.begin(); it != vv.end(); it++) DeletePoint(*it);
   }
 }
 
@@ -1041,14 +1030,12 @@ void DeleteVolume(int iv, bool recursive)
         if(c->end) vv.insert(c->end->Num);
       }
     }
-    for(std::set<int>::iterator it = ss.begin(); it != ss.end(); it++)
-      DeleteSurface(*it);
-    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++) {
+    for(auto it = ss.begin(); it != ss.end(); it++) DeleteSurface(*it);
+    for(auto it = cc.begin(); it != cc.end(); it++) {
       DeleteCurve(*it);
       DeleteCurve(-*it);
     }
-    for(std::set<int>::iterator it = vv.begin(); it != vv.end(); it++)
-      DeletePoint(*it);
+    for(auto it = vv.begin(); it != vv.end(); it++) DeletePoint(*it);
   }
 }
 
@@ -1198,9 +1185,7 @@ int RecognizeSurfaceLoop(List_T *liste, int *loop)
 void SetTranslationMatrix(double matrix[4][4], double T[3])
 {
   for(int i = 0; i < 4; i++) {
-    for(int j = 0; j < 4; j++) {
-      matrix[i][j] = (i == j) ? 1.0 : 0.0;
-    }
+    for(int j = 0; j < 4; j++) { matrix[i][j] = (i == j) ? 1.0 : 0.0; }
   }
   for(int i = 0; i < 3; i++) matrix[i][3] = T[i];
 }
@@ -1229,8 +1214,8 @@ void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,
   matrix[3][3] = 1.0;
 }
 
-void SetDilatationMatrix(double matrix[4][4], double T[3], double A,
-                         double B, double C)
+void SetDilatationMatrix(double matrix[4][4], double T[3], double A, double B,
+                         double C)
 {
   matrix[0][0] = A;
   matrix[0][1] = 0.0;
@@ -1332,9 +1317,7 @@ static void vecmat4x4(double mat[4][4], double vec[4], double res[4])
 {
   for(int i = 0; i < 4; i++) {
     res[i] = 0.0;
-    for(int j = 0; j < 4; j++) {
-      res[i] += mat[i][j] * vec[j];
-    }
+    for(int j = 0; j < 4; j++) { res[i] += mat[i][j] * vec[j]; }
   }
 }
 
@@ -1640,8 +1623,8 @@ static int CompareTwoCurves(const void *a, const void *b)
   // with the same beg/end points
   if(c1->Typ == MSH_SEGM_BND_LAYER && c1->Extrude &&
      c2->Typ == MSH_SEGM_BND_LAYER && c2->Extrude) {
-    int comp = std::abs(c1->Extrude->geo.Source) -
-      std::abs(c2->Extrude->geo.Source);
+    int comp =
+      std::abs(c1->Extrude->geo.Source) - std::abs(c2->Extrude->geo.Source);
     if(comp) return comp;
   }
 
@@ -1796,9 +1779,7 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
     Tree_Add(GModel::current()->getGEOInternals()->DelPoints, &V);
     delete unused[i];
   }
-  for(std::size_t i = 0; i < used.size(); i++) {
-    delete used[i];
-  }
+  for(std::size_t i = 0; i < used.size(); i++) { delete used[i]; }
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
   Msg::Info("Done new Coherence (removed %d additional points)", start - end);
 }
@@ -1835,7 +1816,7 @@ static void ReplaceDuplicatePoints(std::map<int, int> *v_report = 0)
       Tree_Suppress(GModel::current()->getGEOInternals()->Points, &v);
       Tree_Insert(points2delete, &v);
       if(v_report) { // keep track of changes
-        std::map<int, int>::iterator m_it = v_report->find(v->Num);
+        auto m_it = v_report->find(v->Num);
         if(m_it != v_report->end()) {
           Vertex **v_rep = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, &v);
           if(v_rep) m_it->second = (*v_rep)->Num;
@@ -2022,7 +2003,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> *c_report = 0)
         Tree_Insert(curves2delete, &c2);
 
         if(c_report) { // keep track of changes
-          std::map<int, int>::iterator m_it = c_report->find(c->Num);
+          auto m_it = c_report->find(c->Num);
           if(m_it != c_report->end()) {
             Curve **c_rep = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c);
             if(c_rep) m_it->second = (*c_rep)->Num;
@@ -2198,7 +2179,7 @@ static void RemoveDegenerateVolumes()
     for(int j = 0; j < N; j++) {
       Surface *s;
       List_Read(v->Surfaces, j, &s);
-      std::set<int>::iterator it = unique.find(-s->Num);
+      auto it = unique.find(-s->Num);
       if(it == unique.end())
         unique.insert(s->Num);
       else
@@ -2241,7 +2222,7 @@ static void RemoveDegenerateSurfaces()
     for(int j = 0; j < N; j++) {
       Curve *c;
       List_Read(s->Generatrices, j, &c);
-      std::set<int>::iterator it = unique.find(-c->Num);
+      auto it = unique.find(-c->Num);
       if(it == unique.end())
         unique.insert(c->Num);
       else
@@ -2325,7 +2306,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
         Tree_Insert(surfaces2delete, &s);
 
         if(s_report) { // keep track of changes
-          std::map<int, int>::iterator m_it = (*s_report).find(s->Num);
+          auto m_it = (*s_report).find(s->Num);
           if(m_it != s_report->end()) {
             Surface **s_rep =
               (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s);
@@ -2520,7 +2501,8 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
     if(!ComparePosition(&pv, &chapeau)) return pv->Num;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1., ok);
+    c =
+      CreateCurve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1., ok);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2533,8 +2515,8 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
   case BOUNDARY_LAYER:
     chapeau->Typ = MSH_POINT_BND_LAYER;
     if(e) chapeau->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
-    c =
-      CreateCurve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, NULL, NULL, -1, -1, 0., 1., ok);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, NULL, NULL, -1, -1, 0.,
+                    1., ok);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2564,7 +2546,8 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
     if(!ComparePosition(&pv, &chapeau)) return pv->Num;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_CIRC, 1, NULL, NULL, -1, -1, 0., 1., ok);
+    c =
+      CreateCurve(NEWLINE(), MSH_SEGM_CIRC, 1, NULL, NULL, -1, -1, 0., 1., ok);
     c->Control_Points = List_Create(3, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2591,7 +2574,8 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
   case TRANSLATE_ROTATE:
     d = CTX::instance()->geom.extrudeSplinePoints;
     d = d ? d : 1;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_SPLN, 1, NULL, NULL, -1, -1, 0., 1., ok);
+    c =
+      CreateCurve(NEWLINE(), MSH_SEGM_SPLN, 1, NULL, NULL, -1, -1, 0., 1., ok);
     c->Control_Points = List_Create(
       CTX::instance()->geom.extrudeSplinePoints + 1, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
@@ -2648,7 +2632,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     report[0][chap_num] = chap_num;
     report[1][body_num] = body_num;
     ReplaceAllDuplicates(report);
-    std::map<int, int>::iterator m_it = report[0].find(chap_num);
+    auto m_it = report[0].find(chap_num);
     if(m_it != report[0].end())
       chap_num = report[0][chap_num];
     else
@@ -2672,9 +2656,7 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
   revpc = FindCurve(-ic);
   *ps = NULL;
 
-  if(!pc || !revpc) {
-    return 0;
-  }
+  if(!pc || !revpc) { return 0; }
 
   if(!pc->beg || !pc->end) {
     Msg::Error("Cannot extrude curve with no begin/end points");
@@ -2782,9 +2764,7 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
   ExtrudePoint(type, pc->end->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha,
                &CurveEnd, &ReverseEnd, 0, e);
 
-  if(!CurveBeg && !CurveEnd) {
-    return pc->Num;
-  }
+  if(!CurveBeg && !CurveEnd) { return pc->Num; }
 
   // FIXME: if we extrude by rotation a (non-straight) curve defined by 2 end
   // points, with a rotation axis going through the end points, the resulting
@@ -2838,7 +2818,7 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
     report[1][chap_num] = chap_num;
     report[2][body_num] = body_num;
     ReplaceAllDuplicates(report);
-    std::map<int, int>::iterator m_it = report[1].find(chap_num);
+    auto m_it = report[1].find(chap_num);
     if(m_it != report[1].end())
       chap_num = report[1][chap_num];
     else
@@ -3031,7 +3011,7 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
     std::vector<std::map<int, int> > report(3);
     report[2][chap_num] = chap_num;
     ReplaceAllDuplicates(report);
-    std::map<int, int>::iterator m_it = (report[2]).find(chap_num);
+    auto m_it = (report[2]).find(chap_num);
     if(m_it != report[2].end())
       chap_num = report[2][chap_num];
     else
@@ -3544,9 +3524,7 @@ bool SetSurfaceGeneratrices(Surface *s, List_T *loops)
       for(std::size_t j = 0; j < fromModel.size(); j++) {
         ic = fromModel[j];
         GEdge *ge = GModel::current()->getEdgeByTag(abs(ic));
-        if(ge) {
-          List_Add(s->GeneratricesByTag, &ic);
-        }
+        if(ge) { List_Add(s->GeneratricesByTag, &ic); }
         else {
           Msg::Error("Unknown curve %d", ic);
           return false;
@@ -3586,9 +3564,7 @@ bool SetVolumeSurfaces(Volume *v, List_T *loops)
         }
         else {
           GFace *gf = GModel::current()->getFaceByTag(abs(is));
-          if(gf) {
-            List_Add(v->SurfacesByTag, &is);
-          }
+          if(gf) { List_Add(v->SurfacesByTag, &is); }
           else {
             Msg::Error("Unknown surface %d in GEO volume %d", is, v->Num);
             return false;

@@ -39,7 +39,7 @@ CellComplex::CellComplex(GModel *model, std::vector<MElement *> &domainElements,
   for(int dim = 0; dim < 4; dim++) {
     if(getSize(dim) != 0) _dim = dim;
     if(_saveorig) _ocells[dim] = _cells[dim];
-    for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
+    for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
       Cell *cell = *cit;
       cell->setNum(++num);
       cell->increaseGlobalNum();
@@ -123,7 +123,7 @@ bool CellComplex::_insertCells(std::vector<MElement *> &elements, int domain)
         Msg::Info(" - Creating subdomain %d-cells", dim);
     }
 
-    for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
+    for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
       Cell *cell = *cit;
       for(int i = 0; i < cell->getNumBdElements(); i++) {
         std::pair<Cell *, bool> maybeCell = Cell::createCell(cell, i);
@@ -173,7 +173,7 @@ bool CellComplex::_removeCells(std::vector<MElement *> &elements, int domain)
     }
     Cell *cell = new Cell(element, domain);
     int dim = cell->getDim();
-    citer cit = _cells[dim].find(cell);
+    auto cit = _cells[dim].find(cell);
     if(cit != lastCell(dim)) {
       removeCell(*cit);
       removed[dim].insert(cell);
@@ -183,12 +183,12 @@ bool CellComplex::_removeCells(std::vector<MElement *> &elements, int domain)
   }
 
   for(int dim = 3; dim > 0; dim--) {
-    for(citer cit = removed[dim].begin(); cit != removed[dim].end(); cit++) {
+    for(auto cit = removed[dim].begin(); cit != removed[dim].end(); cit++) {
       Cell *cell = *cit;
       for(int i = 0; i < cell->getNumBdElements(); i++) {
         Cell *newCell = new Cell(cell, i);
 
-        citer cit2 = _cells[dim - 1].find(newCell);
+        auto cit2 = _cells[dim - 1].find(newCell);
         if(cit2 != lastCell(dim - 1)) {
           removeCell(*cit2);
           removed[dim - 1].insert(newCell);
@@ -199,7 +199,7 @@ bool CellComplex::_removeCells(std::vector<MElement *> &elements, int domain)
     }
   }
   for(int dim = 3; dim >= 0; dim--) {
-    for(citer cit = removed[dim].begin(); cit != removed[dim].end(); cit++) {
+    for(auto cit = removed[dim].begin(); cit != removed[dim].end(); cit++) {
       delete *cit;
     }
   }
@@ -216,7 +216,7 @@ bool CellComplex::_immunizeCells(std::vector<MElement *> &elements)
     MElement *element = elements.at(i);
     Cell *cell = new Cell(element, 0);
     int dim = cell->getDim();
-    citer cit = _cells[dim].find(cell);
+    auto cit = _cells[dim].find(cell);
     if(cit != lastCell(dim)) (*cit)->setImmune(true);
     delete cell;
   }
@@ -226,7 +226,7 @@ bool CellComplex::_immunizeCells(std::vector<MElement *> &elements)
 CellComplex::~CellComplex()
 {
   for(int i = 0; i < 4; i++) {
-    for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++) {
+    for(auto cit = _cells[i].begin(); cit != _cells[i].end(); cit++) {
       Cell *cell = *cit;
       delete cell;
       _deleteCount++;
@@ -260,14 +260,12 @@ void CellComplex::removeCell(Cell *cell, bool other, bool del)
   std::map<Cell *, short int, CellPtrLessThan> boundary;
   cell->getBoundary(boundary);
 
-  for(std::map<Cell *, short int, CellPtrLessThan>::iterator it = coboundary.begin();
-      it != coboundary.end(); it++) {
+  for(auto it = coboundary.begin(); it != coboundary.end(); it++) {
     Cell *cbdCell = (*it).first;
     cbdCell->removeBoundaryCell(cell, other);
   }
 
-  for(std::map<Cell *, short int, CellPtrLessThan>::iterator it = boundary.begin();
-      it != boundary.end(); it++) {
+  for(auto it = boundary.begin(); it != boundary.end(); it++) {
     Cell *bdCell = (*it).first;
     bdCell->removeCoboundaryCell(cell, other);
   }
@@ -286,14 +284,13 @@ void CellComplex::removeCell(Cell *cell, bool other, bool del)
     _removedcells.push_back(cell);
 }
 
-void CellComplex::enqueueCells(std::map<Cell *, short int, CellPtrLessThan> &cells,
-                               std::queue<Cell *> &Q,
-                               std::set<Cell *, CellPtrLessThan> &Qset)
+void CellComplex::enqueueCells(
+  std::map<Cell *, short int, CellPtrLessThan> &cells, std::queue<Cell *> &Q,
+  std::set<Cell *, CellPtrLessThan> &Qset)
 {
-  for(std::map<Cell *, short int, CellPtrLessThan>::iterator cit = cells.begin();
-      cit != cells.end(); cit++) {
+  for(auto cit = cells.begin(); cit != cells.end(); cit++) {
     Cell *cell = (*cit).first;
-    citer it = Qset.find(cell);
+    auto it = Qset.find(cell);
     if(it == Qset.end()) {
       Qset.insert(cell);
       Q.push(cell);
@@ -355,7 +352,7 @@ int CellComplex::reduction(int dim, int omit, std::vector<Cell *> &omittedCells)
   bool reduced = true;
   while(reduced) {
     reduced = false;
-    citer cit = firstCell(dim - 1);
+    auto cit = firstCell(dim - 1);
     while(cit != lastCell(dim - 1)) {
       Cell *cell = *cit;
       if(cell->getCoboundarySize() == 1 &&
@@ -397,7 +394,7 @@ int CellComplex::coreduction(int dim, int omit,
   bool reduced = true;
   while(reduced) {
     reduced = false;
-    citer cit = firstCell(dim);
+    auto cit = firstCell(dim);
     while(cit != lastCell(dim)) {
       Cell *cell = *cit;
       if(cell->getBoundarySize() == 1 &&
@@ -511,7 +508,7 @@ int CellComplex::reduceComplex(int combine, bool omit, bool homseq)
     std::vector<Cell *> newCells;
 
     while(getSize(getDim()) != 0) {
-      citer cit = firstCell(getDim());
+      auto cit = firstCell(getDim());
       Cell *cell = *cit;
 
       newCells.push_back(_omitCell(cell, false));
@@ -557,7 +554,7 @@ void CellComplex::removeSubdomain()
 {
   std::vector<Cell *> toRemove;
   for(int i = 0; i < 4; i++) {
-    for(citer cit = firstCell(i); cit != lastCell(i); ++cit) {
+    for(auto cit = firstCell(i); cit != lastCell(i); ++cit) {
       Cell *cell = *cit;
       if(cell->inSubdomain()) toRemove.push_back(cell);
     }
@@ -570,7 +567,7 @@ void CellComplex::removeCells(int dim)
 {
   if(dim < 0 || dim > 3) return;
   std::vector<Cell *> toRemove;
-  for(citer cit = firstCell(dim); cit != lastCell(dim); ++cit) {
+  for(auto cit = firstCell(dim); cit != lastCell(dim); ++cit) {
     toRemove.push_back(*cit);
   }
   for(std::size_t i = 0; i < toRemove.size(); i++) removeCell(toRemove[i]);
@@ -587,7 +584,7 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
   if(relative()) removeSubdomain();
   std::vector<Cell *> empty;
   for(int dim = 0; dim < 4; dim++) {
-    citer cit = firstCell(dim);
+    auto cit = firstCell(dim);
     while(cit != lastCell(dim)) {
       Cell *cell = *cit;
       int count = +coreduction(cell, -1, empty);
@@ -601,7 +598,7 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
   if(omit) {
     std::vector<Cell *> newCells;
     while(getSize(0) != 0) {
-      citer cit = firstCell(0);
+      auto cit = firstCell(0);
       Cell *cell = *cit;
 
       if(heuristic == -1 && _smallestCell.second != 0. &&
@@ -678,7 +675,7 @@ int CellComplex::combine(int dim)
   std::map<Cell *, short int, CellPtrLessThan> bd_c;
   int count = 0;
 
-  for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
+  for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience) {
       t1 = Cpu();
@@ -695,7 +692,7 @@ int CellComplex::combine(int dim)
       Q.pop();
 
       if(s->getCoboundarySize() == 2 && !s->getImmune()) {
-        Cell::biter it = s->firstCoboundary();
+        auto it = s->firstCoboundary();
         int or1 = it->second.get();
         Cell *c1 = it->first;
         it++;
@@ -756,7 +753,7 @@ int CellComplex::cocombine(int dim)
   std::map<Cell *, short int, CellPtrLessThan> cbd_c;
   int count = 0;
 
-  for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
+  for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
     double t2 = Cpu();
     if(t2 - t1 > CellComplex::_patience) {
       t1 = Cpu();
@@ -773,7 +770,7 @@ int CellComplex::cocombine(int dim)
       Cell *s = Q.front();
       Q.pop();
       if(s->getBoundarySize() == 2) {
-        Cell::biter it = s->firstBoundary();
+        auto it = s->firstBoundary();
         int or1 = it->second.get();
         Cell *c1 = it->first;
         it++;
@@ -824,16 +821,14 @@ bool CellComplex::coherent()
 {
   bool coherent = true;
   for(int i = 0; i < 4; i++) {
-    for(citer cit = firstCell(i); cit != lastCell(i); cit++) {
+    for(auto cit = firstCell(i); cit != lastCell(i); cit++) {
       Cell *cell = *cit;
       std::map<Cell *, short int, CellPtrLessThan> boundary;
       cell->getBoundary(boundary);
-      for(std::map<Cell *, short int, CellPtrLessThan>::iterator it =
-            boundary.begin();
-          it != boundary.end(); it++) {
+      for(auto it = boundary.begin(); it != boundary.end(); it++) {
         Cell *bdCell = (*it).first;
         int ori = (*it).second;
-        citer cit = _cells[bdCell->getDim()].find(bdCell);
+        auto cit = _cells[bdCell->getDim()].find(bdCell);
         if(cit == lastCell(bdCell->getDim())) {
           Msg::Debug("Boundary cell not in cell complex! Boundary removed");
           cell->removeBoundaryCell(bdCell, false);
@@ -847,12 +842,10 @@ bool CellComplex::coherent()
       }
       std::map<Cell *, short int, CellPtrLessThan> coboundary;
       cell->getCoboundary(coboundary);
-      for(std::map<Cell *, short int, CellPtrLessThan>::iterator it =
-            coboundary.begin();
-          it != coboundary.end(); it++) {
+      for(auto it = coboundary.begin(); it != coboundary.end(); it++) {
         Cell *cbdCell = (*it).first;
         int ori = (*it).second;
-        citer cit = _cells[cbdCell->getDim()].find(cbdCell);
+        auto cit = _cells[cbdCell->getDim()].find(cbdCell);
         if(cit == lastCell(cbdCell->getDim())) {
           Msg::Debug("Coboundary cell not in cell complex! Coboundary removed");
           cell->removeCoboundaryCell(cbdCell, false);
@@ -886,7 +879,7 @@ void CellComplex::getCells(std::set<Cell *, CellPtrLessThan> &cells, int dim,
                            int domain)
 {
   cells.clear();
-  for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
+  for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
     Cell *cell = *cit;
     if((domain == 0 && !cell->inSubdomain()) || domain == 1 ||
        (domain == 2 && cell->inSubdomain())) {
@@ -921,7 +914,7 @@ Cell *CellComplex::getACell(int dim, int domain)
     return NULL;
   }
 
-  for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
+  for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
     Cell *cell = *cit;
     if((domain == 1) || (domain == 0 && !cell->inSubdomain()) ||
        (domain == 2 && cell->inSubdomain()))
@@ -944,7 +937,7 @@ bool CellComplex::restoreComplex()
     _removedcells.clear();
 
     for(int i = 0; i < 4; i++) {
-      for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++) {
+      for(auto cit = _cells[i].begin(); cit != _cells[i].end(); cit++) {
         Cell *cell = *cit;
         if(cell->isCombined()) {
           delete cell;
@@ -953,7 +946,7 @@ bool CellComplex::restoreComplex()
       }
 
       _cells[i] = _ocells[i];
-      for(citer cit = firstCell(i); cit != lastCell(i); cit++) {
+      for(auto cit = firstCell(i); cit != lastCell(i); cit++) {
         Cell *cell = *cit;
         cell->restoreCellBoundary();
         if(relative()) {
@@ -980,7 +973,7 @@ bool CellComplex::restoreComplex()
 void CellComplex::printComplex(int dim)
 {
   if(getSize(dim) == 0) Msg::Info("Cell complex dimension %d is empty", dim);
-  for(citer cit = firstCell(dim); cit != lastCell(dim); cit++) {
+  for(auto cit = firstCell(dim); cit != lastCell(dim); cit++) {
     Cell *cell = *cit;
     cell->printCell();
     cell->printBoundary();

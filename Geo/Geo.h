@@ -250,8 +250,8 @@ bool SetVolumeSurfaces(Volume *v, List_T *loops);
 void SetTranslationMatrix(double matrix[4][4], double T[3]);
 void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,
                        double D);
-void SetDilatationMatrix(double matrix[4][4], double T[3], double A,
-                         double B, double C);
+void SetDilatationMatrix(double matrix[4][4], double T[3], double A, double B,
+                         double C);
 void SetRotationMatrix(double matrix[4][4], double Axe[3], double alpha);
 
 int NEWPOINT();

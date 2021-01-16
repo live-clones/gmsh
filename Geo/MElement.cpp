@@ -353,11 +353,10 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
     jmax = 0.;
     return;
   }
-  double scale = (dim == 1.) ?
-                   invMeanEdLength :
-                   (dim == 2.) ?
-                   invMeanEdLength * invMeanEdLength :
-                   invMeanEdLength * invMeanEdLength * invMeanEdLength;
+  double scale =
+    (dim == 1.) ? invMeanEdLength :
+    (dim == 2.) ? invMeanEdLength * invMeanEdLength :
+                  invMeanEdLength * invMeanEdLength * invMeanEdLength;
   if(ge && (ge->dim() == 2) && ge->haveParametrization()) {
     // If parametrized surface entity provided...
     SVector3 geoNorm(0., 0., 0.);
@@ -1739,9 +1738,9 @@ void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
     else
       fprintf(fp, " %ld", getVertex(i)->getIndex());
   fprintf(fp, " %d\n",
-          (elementTagType == 3) ?
-            _partition :
-            (elementTagType == 2) ? abs(physical) : elementary);
+          (elementTagType == 3) ? _partition :
+          (elementTagType == 2) ? abs(physical) :
+                                  elementary);
 
   if(physical < 0) reverse();
 }
@@ -1766,9 +1765,9 @@ void MElement::writeIR3(FILE *fp, int elementTagType, int num, int elementary,
 
   int numVert = getNumVertices();
   fprintf(fp, "%d %d %d", num,
-          (elementTagType == 3) ?
-            _partition :
-            (elementTagType == 2) ? abs(physical) : elementary,
+          (elementTagType == 3) ? _partition :
+          (elementTagType == 2) ? abs(physical) :
+                                  elementary,
           numVert);
   for(int i = 0; i < numVert; i++)
     fprintf(fp, " %ld", getVertex(i)->getIndex());
@@ -1789,9 +1788,9 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType,
 
   if(physical < 0) reverse();
 
-  int tag = (elementTagType == 3) ?
-              _partition :
-              (elementTagType == 2) ? abs(physical) : elementary;
+  int tag = (elementTagType == 3) ? _partition :
+            (elementTagType == 2) ? abs(physical) :
+                                    elementary;
 
   if(format == 0) { // free field format
     fprintf(fp, "%s,%lu,%d", str, _num, tag);
@@ -2397,7 +2396,7 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
 
   MElement *parent = 0;
   if(eParent && !getDomain(0) && !getDomain(1)) {
-    std::map<MElement *, MElement *>::iterator it = newParents.find(eParent);
+    auto it = newParents.find(eParent);
     MElement *newParent;
     if(it == newParents.end()) {
       newParent = eParent->copy(vertexMap, newParents, newDomains);
@@ -2415,7 +2414,7 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
   for(int i = 0; i < 2; i++) {
     MElement *dom = getDomain(i);
     if(!dom) continue;
-    std::map<MElement *, MElement *>::iterator it = newDomains.find(dom);
+    auto it = newDomains.find(dom);
     MElement *newDom;
     if(it == newDomains.end()) {
       newDom = dom->copy(vertexMap, newParents, newDomains);

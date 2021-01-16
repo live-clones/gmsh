@@ -401,9 +401,7 @@ double MQuadrangle::getInnerRadius()
   double R = 1.e22;
   for(int j = 0; j < 4; j++) {
     r[j] = computeInnerRadiusForQuad(xn, yn, j);
-    if(r[j] < R) {
-      R = r[j];
-    }
+    if(r[j] < R) { R = r[j]; }
   }
   return R;
 #else
@@ -448,7 +446,7 @@ void MQuadrangleN::reverse()
   _v[3] = tmp;
 
   int npts = _order - 1, base = 0;
-  std::vector<MVertex *>::iterator begin = _vs.begin() + base;
+  auto begin = _vs.begin() + base;
 
   while(npts > 0) {
     std::reverse(begin, begin + 4 * npts);
@@ -565,12 +563,8 @@ void MQuadrangleN::reorient(int rot, bool swap)
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 4);
 
   // reorient
-  for(int i = 0; i < 4; ++i) {
-    _v[i] = oldv[indices[i]];
-  }
-  for(std::size_t i = 0; i < _vs.size(); ++i) {
-    _vs[i] = oldv[indices[4 + i]];
-  }
+  for(int i = 0; i < 4; ++i) { _v[i] = oldv[indices[i]]; }
+  for(std::size_t i = 0; i < _vs.size(); ++i) { _vs[i] = oldv[indices[4 + i]]; }
 }
 
 MFaceN MQuadrangle::getHighOrderFace(int num, int sign, int rot)

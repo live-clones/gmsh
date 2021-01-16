@@ -149,7 +149,7 @@ public:
   }
   virtual bool setParameter(int i, double par)
   {
-    if (i != 0  ) return false;
+    if(i != 0) return false;
     _u = par;
     return true;
   }
@@ -221,10 +221,7 @@ struct MVertexPtrEqual {
 };
 
 struct MVertexPtrHash {
-  size_t operator()(const MVertex *v) const
-  {
-    return v->getNum();
-  }
+  size_t operator()(const MVertex *v) const { return v->getNum(); }
 };
 
 bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,

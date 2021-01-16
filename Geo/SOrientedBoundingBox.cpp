@@ -168,8 +168,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
   vmaxs.setAll(-DBL_MAX);
 
   size_t idx = 0;
-  for(std::set<SPoint3>::iterator uIter = unique.begin(); uIter != unique.end();
-      ++uIter) {
+  for(auto uIter = unique.begin(); uIter != unique.end(); ++uIter) {
     const SPoint3 &pp = *uIter;
     for(int d = 0; d < 3; d++) {
       data(d, idx) = pp[d];
@@ -277,8 +276,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
     SPoint2 *p = new SPoint2(projected(smallest_comp == 0 ? 1 : 0, i),
                              projected(smallest_comp == 2 ? 1 : 2, i));
     bool keep = true;
-    for(std::vector<SPoint2 *>::iterator point = points.begin();
-        point != points.end(); point++) {
+    for(auto point = points.begin(); point != points.end(); point++) {
       if(std::abs((*p)[0] - (**point)[0]) < 10e-10 &&
          std::abs((*p)[1] - (**point)[1]) < 10e-10) {
         keep = false;
@@ -323,8 +321,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
 
     for(int j = 0; j < 3; j++) {
       bool okay = true;
-      for(std::vector<Segment>::iterator seg = convex_hull.begin();
-          seg != convex_hull.end(); seg++) {
+      for(auto seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
         if(((*seg).from == segs[j].from && (*seg).from == segs[j].to)
            // FIXME:
            // || ((*seg).from == segs[j].to && (*seg).from == segs[j].from)
@@ -356,8 +353,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
   fullVector<double> segment(2);
   fullMatrix<double> rotation(2, 2);
 
-  for(std::vector<Segment>::iterator seg = convex_hull.begin();
-      seg != convex_hull.end(); seg++) {
+  for(auto seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
     // segment(0) = record.points[(*seg).from].where.h -
     // record.points[(*seg).to].where.h;  segment(1) =
     // record.points[(*seg).from].where.v - record.points[(*seg).to].where.v;

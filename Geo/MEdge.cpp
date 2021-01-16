@@ -76,8 +76,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
     MVertex *v0 = e[i].getVertex(0);
     MVertex *v1 = e[i].getVertex(1);
 
-    std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan>
-      ::iterator it0 = c.find(v0), it1 = c.find(v1);
+    auto it0 = c.find(v0), it1 = c.find(v1);
     if(it0 == c.end())
       c[v0] = std::make_pair(v1, (MVertex *)NULL);
     else {
@@ -105,8 +104,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
     std::vector<MVertex *> v;
     MVertex *start = NULL;
     {
-      std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan>
-        ::iterator it = c.begin();
+      auto it = c.begin();
       start = it->first;
       for(; it != c.end(); ++it) {
         if(it->second.second == NULL) {
@@ -116,8 +114,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       }
     }
 
-    std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan >
-      ::iterator its = c.find(start);
+    auto its = c.find(start);
 
     MVertex *prev =
       (its->second.second == start) ? its->second.first : its->second.second;
@@ -129,8 +126,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
         return false;
       }
       v.push_back(current);
-      std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan>
-        ::iterator it = c.find(current);
+      auto it = c.find(current);
       if(it == c.end() || it->first == NULL) {
         Msg::Error("Impossible to find %d", current->getNum());
         return false;

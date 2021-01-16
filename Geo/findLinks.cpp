@@ -44,9 +44,7 @@ static void recurFindLinkedEdges(int ed, List_T *edges, Tree_T *points,
     Msg::Error("Unknown curve %d", ed);
     return;
   }
-  if(!ge->getBeginVertex() || !ge->getEndVertex()){
-    return;
-  }
+  if(!ge->getBeginVertex() || !ge->getEndVertex()) { return; }
 
   int ip[2];
   ip[0] = ge->getBeginVertex()->tag();
@@ -78,7 +76,7 @@ static void recurFindLinkedEdges(int ed, List_T *edges, Tree_T *points,
 static int createEdgeLinks(Tree_T *links)
 {
   GModel *m = GModel::current();
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++) {
+  for(auto it = m->firstEdge(); it != m->lastEdge(); it++) {
     GEdge *ge = *it;
     if(!ge->getBeginVertex() || !ge->getEndVertex()) {
       Msg::Error("Cannot link curve %d with no begin or end point", ge->tag());
@@ -93,9 +91,7 @@ static int createEdgeLinks(Tree_T *links)
       for(int k = 0; k < 2; k++) {
         lnk li, *pli;
         li.n = ip[k];
-        if((pli = (lnk *)Tree_PQuery(links, &li))) {
-          List_Add(pli->l, &na);
-        }
+        if((pli = (lnk *)Tree_PQuery(links, &li))) { List_Add(pli->l, &na); }
         else {
           li.l = List_Create(20, 1, sizeof(nxa));
           List_Add(li.l, &na);
@@ -236,8 +232,7 @@ static void recurFindLinkedFaces(int fac, List_T *faces, Tree_T *edges,
   }
 
   std::vector<GEdge *> const &l = gf->edges();
-  for(std::vector<GEdge *>::const_iterator it = l.begin(); it != l.end();
-      it++) {
+  for(auto it = l.begin(); it != l.end(); it++) {
     GEdge *ge = *it;
     if(ge->degenerate(0)) continue;
     lnk lk;
@@ -265,21 +260,18 @@ static void recurFindLinkedFaces(int fac, List_T *faces, Tree_T *edges,
 static void createFaceLinks(Tree_T *links)
 {
   GModel *m = GModel::current();
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++) {
+  for(auto it = m->firstFace(); it != m->lastFace(); it++) {
     GFace *gf = *it;
     if(gf->tag() > 0) {
       nxa na;
       na.a = gf->tag();
       std::vector<GEdge *> const &l = gf->edges();
-      for(std::vector<GEdge *>::const_iterator ite = l.begin(); ite != l.end();
-          ite++) {
+      for(auto ite = l.begin(); ite != l.end(); ite++) {
         GEdge *ge = *ite;
         if(ge->degenerate(0)) continue;
         lnk li, *pli;
         li.n = std::abs(ge->tag());
-        if((pli = (lnk *)Tree_PQuery(links, &li))) {
-          List_Add(pli->l, &na);
-        }
+        if((pli = (lnk *)Tree_PQuery(links, &li))) { List_Add(pli->l, &na); }
         else {
           li.l = List_Create(20, 1, sizeof(nxa));
           List_Add(li.l, &na);
@@ -309,8 +301,7 @@ int allFacesLinked(int fac, List_T *faces)
       return 0;
     }
     std::vector<GEdge *> const &l = gf->edges();
-    for(std::vector<GEdge *>::const_iterator it = l.begin(); it != l.end();
-        it++) {
+    for(auto it = l.begin(); it != l.end(); it++) {
       GEdge *ge = *it;
       if(ge->degenerate(0)) continue;
       int ic = std::abs(ge->tag());

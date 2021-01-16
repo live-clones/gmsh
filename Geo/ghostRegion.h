@@ -41,67 +41,54 @@ public:
     }
   }
   virtual GeomType geomType() const { return GhostVolume; }
-  virtual void setPartition(const int partition)
-  {
-    _partition = partition;
-  }
+  virtual void setPartition(const int partition) { _partition = partition; }
   virtual int getPartition() const { return _partition; }
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
-  virtual std::map<MElement *, int> &getGhostCells()
-  {
-    return _ghostCells;
-  }
+  virtual std::map<MElement *, int> &getGhostCells() { return _ghostCells; }
 
   void addTetrahedron(MTetrahedron *t, int onWhichPartition)
   {
     GRegion::addTetrahedron(t);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(t, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(t, onWhichPartition));
     model()->addGhostCells(t, _partition);
   }
   void addHexahedron(MHexahedron *h, int onWhichPartition)
   {
     GRegion::addHexahedron(h);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(h, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(h, onWhichPartition));
     model()->addGhostCells(h, _partition);
   }
   void addPrism(MPrism *p, int onWhichPartition)
   {
     GRegion::addPrism(p);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(p, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(p, onWhichPartition));
     model()->addGhostCells(p, _partition);
   }
   void addPyramid(MPyramid *p, int onWhichPartition)
   {
     GRegion::addPyramid(p);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(p, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(p, onWhichPartition));
     model()->addGhostCells(p, _partition);
   }
   void addPolyhedron(MPolyhedron *p, int onWhichPartition)
   {
     GRegion::addPolyhedron(p);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(p, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(p, onWhichPartition));
     model()->addGhostCells(p, _partition);
   }
   void addTrihedron(MTrihedron *t, int onWhichPartition)
   {
     GRegion::addTrihedron(t);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(t, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(t, onWhichPartition));
     model()->addGhostCells(t, _partition);
   }
   void addElement(int type, MElement *e, int onWhichPartition)
   {
     GRegion::addElement(type, e);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(e, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(e, onWhichPartition));
     model()->addGhostCells(e, _partition);
   }
 

@@ -130,9 +130,7 @@ public:
   double *data() { return P.data(); }
   void axpy(const double a, const SVector3 &y)
   {
-    for(int i = 0; i < 3; i++) {
-      P[i] += (a * y[i]);
-    }
+    for(int i = 0; i < 3; i++) { P[i] += (a * y[i]); }
   }
 };
 

@@ -116,10 +116,7 @@ inline bool operator!=(const MEdge &e1, const MEdge &e2)
 }
 
 struct MEdgeEqual {
-  bool operator()(const MEdge &e1, const MEdge &e2) const
-  {
-    return (e1 == e2);
-  }
+  bool operator()(const MEdge &e1, const MEdge &e2) const { return (e1 == e2); }
 };
 
 struct MEdgeLessThan {

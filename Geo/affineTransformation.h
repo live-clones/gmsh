@@ -10,10 +10,10 @@
 
 // compute (extended) affine transformation matrix from rotation/translation:
 // x' = t + (I-R)*x_c + R*x
-// where t is the translation vector, I is the identity matrix, and R is the 
+// where t is the translation vector, I is the identity matrix, and R is the
 // matrix for an active intrinsic yaw-pitch-roll rotation (i.e. intrinsic
 // z-y'-x'' rotation or extrinsinc x-y-z rotation) with counter-clockwise angles
-template<class FLOAT>
+template <class FLOAT>
 bool computeAffineTransformation(const FLOAT *rc, // rotation center
                                  const FLOAT *ra, // rotation angle
                                  const FLOAT *tr, // translation
@@ -21,13 +21,13 @@ bool computeAffineTransformation(const FLOAT *rc, // rotation center
 
 // compute rotation/translation from (extended) affine transformation matrix:
 // x' = t + (I-R)*x_c + R*x
-// where t is the translation vector, I is the identity matrix, and R is the 
+// where t is the translation vector, I is the identity matrix, and R is the
 // matrix for an active intrinsic yaw-pitch-roll rotation (i.e. intrinsic
 // z-y'-x'' rotation or extrinsinc x-y-z rotation) with counter-clockwise angles
-template<class FLOAT>
+template <class FLOAT>
 bool getAffineTransformationParameters(const std::vector<double> &tfo, // trnsf.
-                                       FLOAT *rc,  // rotation center
-                                       FLOAT *ra,  // rotation angle
+                                       FLOAT *rc, // rotation center
+                                       FLOAT *ra, // rotation angle
                                        FLOAT *tr); // translation
 
 // invert affine transformation

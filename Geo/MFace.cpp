@@ -109,9 +109,7 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
   else { // quadrilateral face
     int c = 0;
     for(int i = 0; i < 4; i++) {
-      if(_v[int(_si[0])]->getNum() == unsigned(_v[i]->getNum())) {
-        c = i;
-      }
+      if(_v[int(_si[0])]->getNum() == unsigned(_v[i]->getNum())) { c = i; }
     }
     int indexopposedVertex = 0;
     switch(c) {

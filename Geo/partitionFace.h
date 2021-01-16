@@ -15,8 +15,7 @@ private:
   GEntity *_parentEntity;
 
 public:
-  partitionFace(GModel *model, int num,
-                const std::vector<int> &partitions)
+  partitionFace(GModel *model, int num, const std::vector<int> &partitions)
     : discreteFace(model, num), _partitions(partitions), _parentEntity(NULL)
   {
   }
@@ -24,8 +23,7 @@ public:
     : discreteFace(model, num), _partitions(), _parentEntity(NULL)
   {
   }
-  partitionFace(GModel *model,
-                const std::vector<int> &partitions)
+  partitionFace(GModel *model, const std::vector<int> &partitions)
     : discreteFace(model), _partitions(partitions), _parentEntity(NULL)
   {
   }
@@ -38,10 +36,7 @@ public:
   {
     _partitions = partitions;
   }
-  virtual const std::vector<int> &getPartitions() const
-  {
-    return _partitions;
-  }
+  virtual const std::vector<int> &getPartitions() const { return _partitions; }
   virtual int getPartition(std::size_t index) const
   {
     return _partitions[index];

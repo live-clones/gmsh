@@ -14,6 +14,7 @@ private:
   std::vector<double> _pars;
   std::vector<SPoint3> _discretization;
   bool _getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
+
 public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   discreteEdge(GModel *model, int num);
