@@ -1,0 +1,6 @@
+---
+Checks:          'clang-diagnostic-*,clang-analyzer-*,modernize-use-auto,modernize-use-nullptr'
+CheckOptions:
+  - key:             modernize-use-auto.MinTypeNameLength
+    value:           40
+...
