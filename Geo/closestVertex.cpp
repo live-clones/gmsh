@@ -61,7 +61,7 @@ MVertex *closestVertexFinder ::operator()(const SPoint3 &p)
   kdtree->annkSearch(xyz, 1, index, dist);
   return vertex[index[0]];
 #else
-  return NULL;
+  return nullptr;
 #endif
 }
 
@@ -84,6 +84,6 @@ MVertex *closestVertexFinder ::operator()(const SPoint3 &p,
   kdtree->annkSearch(xyz, 1, index, dist);
   return vertex[index[0]];
 #else
-  return NULL;
+  return nullptr;
 #endif
 }

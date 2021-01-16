@@ -35,7 +35,7 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "DimensionOfElements", nullptr, -1}
 #if defined(HAVE_VISUDEV)
   ,
-  {GMSH_FULLRC, "Element to draw quality", NULL, 0}
+  {GMSH_FULLRC, "Element to draw quality", nullptr, 0}
 #endif
 };
 

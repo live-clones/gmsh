@@ -75,11 +75,11 @@ public:
         out = &it->second[index]; return 0;
       }
       else {
-        out = NULL; return 2; // Error: Index out of range
+        out = nullptr; return 2; // Error: Index out of range
       }
     }
     else {
-      out = NULL; return 1; // Error: Unknown member of Struct
+      out = nullptr; return 1; // Error: Unknown member of Struct
     }
   }
 
@@ -110,7 +110,7 @@ public:
       out_vector = &it->second; return 0;
     }
     else {
-      out_vector = NULL; return 1; // Error: Unknown member of Struct
+      out_vector = nullptr; return 1; // Error: Unknown member of Struct
     }
   }
 
@@ -122,7 +122,7 @@ public:
       out_vector = &it->second; return 0;
     }
     else {
-      out_vector = NULL; return 1; // Error: Unknown member of Struct
+      out_vector = nullptr; return 1; // Error: Unknown member of Struct
     }
   }
 
@@ -184,14 +184,14 @@ public:
   {
     typename std::map<K, T>::iterator it;
     if ( (it = _map.find(key)) != _map.end() ) return &it->second;
-    else return NULL;
+    else return nullptr;
   }
 
   const T * Find(K key) const
   {
     typename std::map<K, T>::const_iterator it;
     if ( (it = _map.find(key)) != _map.end() ) return &it->second;
-    else return NULL;
+    else return nullptr;
   }
 
   inline T & operator[] (K key) { return _map[key]; }
@@ -288,7 +288,7 @@ public:
              double & out) const
   {
     const Structs * structs_P = this->Find(key_namespace);
-    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
+    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : nullptr;
     if (structs_P && struct_P) {
       out = (double)struct_P->getTag();
     }
@@ -302,7 +302,7 @@ public:
                 std::string & key_member, double & out, int index = 0) const {
 
     const Structs * structs_P = this->Find(key_namespace);
-    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
+    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : nullptr;
     if (structs_P && struct_P) {
       switch (struct_P->getMember(key_member, out, index)) {
       case 0: break;
@@ -321,16 +321,16 @@ public:
   {
 
     const Structs * structs_P = this->Find(key_namespace);
-    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
+    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : nullptr;
     if (structs_P && struct_P) {
       switch (struct_P->getMember(key_member, out, index)) {
       case 0: break;
-      case 1: out = NULL; return 2; // 2: Error: Unknown member of Struct
-      case 2: out = NULL; return 3; // 3: // Error: Index out of range
+      case 1: out = nullptr; return 2; // 2: Error: Unknown member of Struct
+      case 2: out = nullptr; return 3; // 3: // Error: Index out of range
       }
     }
     else  {
-      out = NULL; return 1; // 1: Error: Unknown Struct
+      out = nullptr; return 1; // 1: Error: Unknown Struct
     }
     return 0; // 0: no error
   }
@@ -339,7 +339,7 @@ public:
                     std::string & key_member, int & out) const {
 
     const Structs * structs_P = this->Find(key_namespace);
-    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
+    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : nullptr;
     if (structs_P && struct_P) {
       switch (struct_P->getMember_Dim(key_member, out)) {
       case 0: break;
@@ -356,15 +356,15 @@ public:
                        std::string & key_member, const std::vector<double> * & out_vector) const {
 
     const Structs * structs_P = this->Find(key_namespace);
-    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
+    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : nullptr;
     if (structs_P && struct_P) {
       switch (struct_P->getMember_Vector(key_member, out_vector)) {
       case 0: break;
-      case 1: out_vector = NULL; return 2; // 2: Error: Unknown member of Struct
+      case 1: out_vector = nullptr; return 2; // 2: Error: Unknown member of Struct
       }
     }
     else  {
-      out_vector = NULL; return 1; // 1: Error: Unknown Struct
+      out_vector = nullptr; return 1; // 1: Error: Unknown Struct
     }
     return 0; // 0: no error
   }
@@ -373,15 +373,15 @@ public:
                        std::string & key_member, const std::vector<std::string> * & out_vector) const {
 
     const Structs * structs_P = this->Find(key_namespace);
-    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
+    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : nullptr;
     if (structs_P && struct_P) {
       switch (struct_P->getMember_Vector(key_member, out_vector)) {
       case 0: break;
-      case 1: out_vector = NULL; return 2; // 2: Error: Unknown member of Struct
+      case 1: out_vector = nullptr; return 2; // 2: Error: Unknown member of Struct
       }
     }
     else  {
-      out_vector = NULL; return 1; // 1: Error: Unknown Struct
+      out_vector = nullptr; return 1; // 1: Error: Unknown Struct
     }
     return 0; // 0: no error
   }
@@ -390,7 +390,7 @@ public:
                               int tag, const std::string * & key_struct) const
   {
     const Structs * structs_P = this->Find(key_namespace);
-    if (structs_P != NULL)
+    if (structs_P != nullptr)
       return structs_P->get_key_struct_from_tag(tag, key_struct);
     else return 1; // 1: Error: Unknown NameSpace
   }
@@ -398,7 +398,7 @@ public:
   int getMember_ValMax(std::string & key_namespace, std::string & key_name)
   {
     const Structs * structs_P = this->Find(key_namespace);
-    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
+    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : nullptr;
     return (structs_P && struct_P)? struct_P->getMember_ValMax() : -1;
   }
 

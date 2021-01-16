@@ -316,7 +316,7 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
   printf("point %lf %lf %lf has been found in bucket %lf %lf %fl -> %lf %lf %lf  %p\n",
          _pt[0],_pt[1],_pt[2], ptrBucket->minPt[0],ptrBucket->minPt[1],ptrBucket->minPt[2],
          ptrBucket->maxPt[0],ptrBucket->maxPt[1],ptrBucket->maxPt[2], ptr1);
-  if (ptr1 == NULL) {
+  if (ptr1 == nullptr) {
     printf("empty element list for centroid list!?\n, possible!");
   }
 #endif
@@ -408,7 +408,7 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt,
          _pt[0],_pt[1],_pt[2], ptrBucket->minPt[0],ptrBucket->minPt[1],ptrBucket->minPt[2],
          ptrBucket->maxPt[0],ptrBucket->maxPt[1],ptrBucket->maxPt[2], ptr1);
 
-  if (ptr1 == NULL) {
+  if (ptr1 == nullptr) {
     printf("empty element list for centroid list!?\n, possible!");
   }
 #endif

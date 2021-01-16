@@ -50,7 +50,7 @@ int linearSystemPETSc<fullMatrix<double> >::_getBlockSizeFromParameters() const
   if(_parameters.find("blockSize") == _parameters.end())
     Msg::Error("'blockSize' parameters must be set for linearSystemPETScBlock");
   int blockSize =
-    strtol(_parameters.find("blockSize")->second.c_str(), NULL, 10);
+    strtol(_parameters.find("blockSize")->second.c_str(), nullptr, 10);
   return blockSize;
 }
 

@@ -140,7 +140,7 @@ void Msg::Init(int argc, char **argv)
     if(val != "-info" && val != "-help" && val != "-version" && val != "-v")
       sargv[sargc++] = argv[i];
   }
-  sargv[sargc] = NULL;
+  sargv[sargc] = nullptr;
   PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)

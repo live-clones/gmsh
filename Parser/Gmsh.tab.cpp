@@ -723,10 +723,10 @@ int treat_Struct_FullName_dot_tSTRING_Float_getDim
   (char* c1, char* c2, char* c3);
 char* treat_Struct_FullName_String
   (char* c1, char* c2, int type_var = 1, int index = 0,
-   char* val_default = NULL, int type_treat = 0);
+   char* val_default = nullptr, int type_treat = 0);
 char* treat_Struct_FullName_dot_tSTRING_String
   (char* c1, char* c2, char* c3, int index = 0,
-   char* val_default = NULL, int type_treat = 0);
+   char* val_default = nullptr, int type_treat = 0);
 List_T * treat_Struct_FullName_dot_tSTRING_ListOfString
   (char* c1, char* c2, char* c3);
 
@@ -10204,7 +10204,7 @@ yyreduce:
           double d;
           List_Read((yyvsp[(7) - (8)].l), 0, &d);
           gLevelset *pl = gLevelset::find((int)d);
-          gLevelset *ls = NULL;
+          gLevelset *ls = nullptr;
           if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
           else ls = new gLevelsetReverse(pl, t);
           if(ls) gLevelset::add(ls);
@@ -11175,7 +11175,7 @@ yyreduce:
       if(!FunctionManager::Instance()->createFunction
          (std::string((yyvsp[(2) - (2)].c)), gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Redefinition of function %s", (yyvsp[(2) - (2)].c));
-      skip(NULL, "Return");
+      skip(nullptr, "Return");
       Free((yyvsp[(2) - (2)].c));
     ;}
     break;
@@ -11186,7 +11186,7 @@ yyreduce:
       if(!FunctionManager::Instance()->createFunction
          (std::string((yyvsp[(2) - (2)].c)), gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Redefinition of function %s", (yyvsp[(2) - (2)].c));
-      skip(NULL, "Return");
+      skip(nullptr, "Return");
       Free((yyvsp[(2) - (2)].c));
     ;}
     break;
@@ -13130,14 +13130,14 @@ yyreduce:
   case 467:
 #line 5381 "Gmsh.y"
     {
-      (yyval.d) = treat_Struct_FullName_Float(NULL, (yyvsp[(1) - (4)].c), 2, (int)(yyvsp[(3) - (4)].d));
+      (yyval.d) = treat_Struct_FullName_Float(nullptr, (yyvsp[(1) - (4)].c), 2, (int)(yyvsp[(3) - (4)].d));
     ;}
     break;
 
   case 468:
 #line 5386 "Gmsh.y"
     {
-      (yyval.d) = treat_Struct_FullName_Float(NULL, (yyvsp[(1) - (4)].c), 2, (int)(yyvsp[(3) - (4)].d));
+      (yyval.d) = treat_Struct_FullName_Float(nullptr, (yyvsp[(1) - (4)].c), 2, (int)(yyvsp[(3) - (4)].d));
     ;}
     break;
 
@@ -13305,7 +13305,7 @@ yyreduce:
   case 483:
 #line 5510 "Gmsh.y"
     {
-      (yyval.d) = treat_Struct_FullName_dot_tSTRING_Float(NULL, (yyvsp[(1) - (3)].c), (yyvsp[(3) - (3)].c));
+      (yyval.d) = treat_Struct_FullName_dot_tSTRING_Float(nullptr, (yyvsp[(1) - (3)].c), (yyvsp[(3) - (3)].c));
     ;}
     break;
 
@@ -13319,7 +13319,7 @@ yyreduce:
   case 485:
 #line 5518 "Gmsh.y"
     {
-      (yyval.d) = treat_Struct_FullName_dot_tSTRING_Float(NULL, (yyvsp[(1) - (6)].c), (yyvsp[(3) - (6)].c), (int)(yyvsp[(5) - (6)].d));
+      (yyval.d) = treat_Struct_FullName_dot_tSTRING_Float(nullptr, (yyvsp[(1) - (6)].c), (yyvsp[(3) - (6)].c), (int)(yyvsp[(5) - (6)].d));
     ;}
     break;
 
@@ -13333,7 +13333,7 @@ yyreduce:
   case 487:
 #line 5526 "Gmsh.y"
     {
-      (yyval.d) = treat_Struct_FullName_dot_tSTRING_Float(NULL, (yyvsp[(1) - (6)].c), (yyvsp[(3) - (6)].c), (int)(yyvsp[(5) - (6)].d));
+      (yyval.d) = treat_Struct_FullName_dot_tSTRING_Float(nullptr, (yyvsp[(1) - (6)].c), (yyvsp[(3) - (6)].c), (int)(yyvsp[(5) - (6)].d));
     ;}
     break;
 
@@ -13467,7 +13467,7 @@ yyreduce:
 
   case 500:
 #line 5628 "Gmsh.y"
-    { (yyval.c) = NULL; ;}
+    { (yyval.c) = nullptr; ;}
     break;
 
   case 501:
@@ -13503,7 +13503,7 @@ yyreduce:
 
   case 504:
 #line 5658 "Gmsh.y"
-    { (yyval.c2).char1 = NULL; (yyval.c2).char2 = (yyvsp[(1) - (1)].c); ;}
+    { (yyval.c2).char1 = nullptr; (yyval.c2).char2 = (yyvsp[(1) - (1)].c); ;}
     break;
 
   case 505:
@@ -13948,7 +13948,7 @@ yyreduce:
   case 550:
 #line 5988 "Gmsh.y"
     {
-      (yyval.l) = treat_Struct_FullName_dot_tSTRING_ListOfFloat(NULL, (yyvsp[(1) - (5)].c), (yyvsp[(3) - (5)].c));
+      (yyval.l) = treat_Struct_FullName_dot_tSTRING_ListOfFloat(nullptr, (yyvsp[(1) - (5)].c), (yyvsp[(3) - (5)].c));
     ;}
     break;
 
@@ -14239,7 +14239,7 @@ yyreduce:
 #line 6224 "Gmsh.y"
     {
       // No need to extend to Struct_FullName (a Tag is not a String)
-      (yyval.c) = treat_Struct_FullName_String(NULL, (yyvsp[(1) - (1)].c));
+      (yyval.c) = treat_Struct_FullName_String(nullptr, (yyvsp[(1) - (1)].c));
     ;}
     break;
 
@@ -14280,7 +14280,7 @@ yyreduce:
   case 579:
 #line 6257 "Gmsh.y"
     {
-      (yyval.c) = treat_Struct_FullName_dot_tSTRING_String(NULL, (yyvsp[(1) - (3)].c), (yyvsp[(3) - (3)].c));
+      (yyval.c) = treat_Struct_FullName_dot_tSTRING_String(nullptr, (yyvsp[(1) - (3)].c), (yyvsp[(3) - (3)].c));
     ;}
     break;
 
@@ -14294,7 +14294,7 @@ yyreduce:
   case 581:
 #line 6265 "Gmsh.y"
     {
-      (yyval.c) = treat_Struct_FullName_dot_tSTRING_String(NULL, (yyvsp[(1) - (6)].c), (yyvsp[(3) - (6)].c), (int)(yyvsp[(5) - (6)].d));
+      (yyval.c) = treat_Struct_FullName_dot_tSTRING_String(nullptr, (yyvsp[(1) - (6)].c), (yyvsp[(3) - (6)].c), (int)(yyvsp[(5) - (6)].d));
     ;}
     break;
 
@@ -14429,7 +14429,7 @@ yyreduce:
   case 596:
 #line 6359 "Gmsh.y"
     {
-      (yyval.c) = treat_Struct_FullName_String(NULL, (yyvsp[(3) - (5)].c2).char2, 1, 0, (yyvsp[(4) - (5)].c), 2);
+      (yyval.c) = treat_Struct_FullName_String(nullptr, (yyvsp[(3) - (5)].c2).char2, 1, 0, (yyvsp[(4) - (5)].c), 2);
     ;}
     break;
 
@@ -14696,7 +14696,7 @@ yyreduce:
 #line 6559 "Gmsh.y"
     {
       std::string out;
-      const std::string * key_struct = NULL;
+      const std::string * key_struct = nullptr;
       switch (gmsh_yynamespaces.get_key_struct_from_tag(struct_namespace,
                                                         (int)(yyvsp[(3) - (4)].d), key_struct)) {
       case 0:
@@ -14798,7 +14798,7 @@ yyreduce:
   case 630:
 #line 6645 "Gmsh.y"
     {
-      (yyval.l) = treat_Struct_FullName_dot_tSTRING_ListOfString(NULL, (yyvsp[(1) - (5)].c), (yyvsp[(3) - (5)].c));
+      (yyval.l) = treat_Struct_FullName_dot_tSTRING_ListOfString(nullptr, (yyvsp[(1) - (5)].c), (yyvsp[(3) - (5)].c));
     ;}
     break;
 
@@ -15805,7 +15805,7 @@ double treat_Struct_FullName_dot_tSTRING_Float
     break;
   case 2:
     if (type_treat != 0) {
-      const std::string * out_dummy = NULL;
+      const std::string * out_dummy = nullptr;
       out = (gmsh_yynamespaces.getMember
              (struct_namespace, struct_name, key_member, out_dummy))?
         val_default : 1.;
@@ -15830,7 +15830,7 @@ double treat_Struct_FullName_dot_tSTRING_Float
 List_T * treat_Struct_FullName_dot_tSTRING_ListOfFloat
 (char* c1, char* c2, char* c3)
 {
-  List_T * out, * val_default = NULL;
+  List_T * out, * val_default = nullptr;
   const std::vector<double> * out_vector; double val_;
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
@@ -15884,7 +15884,7 @@ char * treat_Struct_FullName_String
 (char* c1, char* c2, int type_var, int index, char * val_default, int type_treat)
 {
   std::string string_default(val_default? val_default : std::string(""));
-  const std::string * out = NULL;
+  const std::string * out = nullptr;
   std::string out_tmp;
   if(!c1 && gmsh_yystringsymbols.count(c2)){
     // Get (0) or GetForced (2)
@@ -15912,7 +15912,7 @@ char* treat_Struct_FullName_dot_tSTRING_String
 (char* c1, char* c2, char* c3, int index, char * val_default, int type_treat)
 {
   std::string string_default(val_default? val_default : std::string(""));
-  const std::string * out = NULL;
+  const std::string * out = nullptr;
   std::string out_tmp; // PD: we should avoid that -> StringOption() to be changed
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
@@ -15947,7 +15947,7 @@ char* treat_Struct_FullName_dot_tSTRING_String
 List_T * treat_Struct_FullName_dot_tSTRING_ListOfString
 (char* c1, char* c2, char* c3)
 {
-  List_T * out, * val_default = NULL;
+  List_T * out, * val_default = nullptr;
   const std::vector<std::string> * out_vector; char * val_;
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);

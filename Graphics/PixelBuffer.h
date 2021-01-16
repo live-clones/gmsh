@@ -110,7 +110,7 @@ public:
           "Offscreen rendering only implemented for GL_RGB/GL_UNSIGNED_BYTE");
         return;
       }
-      OSMesaContext ctx = OSMesaCreateContextExt(OSMESA_RGB, 16, 0, 0, NULL);
+      OSMesaContext ctx = OSMesaCreateContextExt(OSMESA_RGB, 16, 0, 0, nullptr);
       if(!ctx) {
         Msg::Error("OSMesaCreateContext failed");
         return;

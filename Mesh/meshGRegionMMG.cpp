@@ -81,7 +81,7 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
   // mesh
   for(int k = 1; k <= nt; k++) {
     int v1mmg, v2mmg, v3mmg;
-    if(MMG3D_Get_triangle(mmg, &v1mmg, &v2mmg, &v3mmg, &ref, NULL) != 1)
+    if(MMG3D_Get_triangle(mmg, &v1mmg, &v2mmg, &v3mmg, &ref, nullptr) != 1)
       Msg::Error("Mmg3d: unable to get triangle %d", k);
 
     MVertex *v1 = kToMVertex[v1mmg];

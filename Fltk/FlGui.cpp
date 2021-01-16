@@ -1211,7 +1211,7 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
   // generate handle
   HANDLE handle =
     (HANDLE)::GlobalAlloc(GHND, sizeof(BITMAPINFOHEADER) + nBytes);
-  if(handle != NULL) {
+  if(handle != nullptr) {
     // lock handle
     char *pData = (char *)::GlobalLock((HGLOBAL)handle);
     // copy header and data
@@ -1220,7 +1220,7 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
     // unlock
     ::GlobalUnlock((HGLOBAL)handle);
     // push DIB in clipboard
-    OpenClipboard(NULL);
+    OpenClipboard(nullptr);
     EmptyClipboard();
     SetClipboardData(CF_DIB, handle);
     CloseClipboard();

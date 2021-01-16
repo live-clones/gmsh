@@ -79,7 +79,7 @@ std::vector<GEdge *> ensureSimplyConnectedEdge(GEdge *ge)
       if(!_part.size() || _part[_part.size() - 1] != l) { _part.push_back(l); }
       for(int j = 0; j < 2; j++) {
         auto it = _conn.find(l->getVertex(j));
-        if(it->second.first == l && it->second.second != NULL &&
+        if(it->second.first == l && it->second.second != nullptr &&
            _lines.find(it->second.second) != _lines.end()) {
           _stack.push(it->second.second);
         }
@@ -145,7 +145,7 @@ void ensureManifoldFace(GFace *gf)
           _pairs[ed] = std::make_pair(e, (MElement *)nullptr);
         }
         else {
-          if(it->second.second == NULL) { it->second.second = e; }
+          if(it->second.second == nullptr) { it->second.second = e; }
           else {
             _nonManifold.insert(ed);
             _pairs.erase(it);
@@ -170,7 +170,7 @@ void ensureManifoldFace(GFace *gf)
         MEdge ed = e->getEdge(j);
         if(_nonManifold.find(ed) == _nonManifold.end()) {
           auto it = _pairs.find(ed);
-          if(it->second.second != NULL) {
+          if(it->second.second != nullptr) {
             MElement *other =
               it->second.second == e ? it->second.first : it->second.second;
             if(_f.find(other) == _f.end()) _stack.push(other);

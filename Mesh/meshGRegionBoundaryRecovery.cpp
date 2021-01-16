@@ -436,7 +436,7 @@ namespace tetgenBR {
               }
               decode(tptr, checktet);
             } while(checktet.tet != nullptr);
-          } // if(checktet.tet != NULL)
+          } // if(checktet.tet != nullptr)
         } // for(tetloop.ver = 0; ...
       } // i
 
@@ -471,7 +471,7 @@ namespace tetgenBR {
               }
               if(face2.tet != nullptr) {
                 // Found an adjacent hull tet.
-                assert(face2.tet[face2.ver & 3] == NULL);
+                assert(face2.tet[face2.ver & 3] == nullptr);
                 esym(hulltet, face1);
                 bond(face1, face2);
               }
@@ -629,7 +629,7 @@ namespace tetgenBR {
             /*	  point *ppt;
             subsegs->traversalinit();
             segloop.sh = shellfacetraverse(subsegs);
-            while (segloop.sh != NULL){
+            while (segloop.sh != nullptr){
               ppt = (point *) &(segloop.sh[3]);
               if(((ppt[0] == p[0]) && (ppt[1] == p[1])) ||
               ((ppt[0] == p[1]) && (ppt[1] == p[0]))){
@@ -770,7 +770,7 @@ namespace tetgenBR {
             // Check if this Steiner point locates on boundary.
             if(pointtype(pointloop) == FREESEGVERTEX) {
               sdecode(point2sh(pointloop), parentseg);
-              assert(parentseg.sh != NULL);
+              assert(parentseg.sh != nullptr);
               l_edges.insert(shellmark(parentseg));
               // Get the GEdge containing this vertex.
               GEdge *ge = nullptr;
@@ -838,7 +838,7 @@ namespace tetgenBR {
             }
             else if(pointtype(pointloop) == FREEFACETVERTEX) {
               sdecode(point2sh(pointloop), parentsh);
-              assert(parentsh.sh != NULL);
+              assert(parentsh.sh != nullptr);
               l_faces.insert(shellmark(parentsh));
               // Get the GFace containing this vertex.
               GFace *gf = nullptr;
@@ -948,7 +948,7 @@ namespace tetgenBR {
           });
 
           GFace *gf = face_location == end(f_list) ? nullptr : *face_location;
-          assert(gf != NULL);
+          assert(gf != nullptr);
 
           // Delete the old triangles.
           Msg::Info(" - Steiner points exist on surface %d", gf->tag());

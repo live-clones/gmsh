@@ -447,7 +447,7 @@ int GModel::_readMSH2(const std::string &name)
               own = true;
               parentsOwned.insert(p);
             }
-            assert(p != NULL);
+            assert(p != nullptr);
           }
 
           // search domains
@@ -554,7 +554,7 @@ int GModel::_readMSH2(const std::string &name)
                 own = true;
                 parentsOwned.insert(p);
               }
-              assert(p != NULL);
+              assert(p != nullptr);
             }
             MElement *e = createElementMSH2(this, num, type, physical,
                                             elementary, partition, vertices,

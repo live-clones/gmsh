@@ -454,7 +454,7 @@ static bool SortCurvesConsecutive(const std::vector<Curve *> &e,
     if(it0 == c.end())
       c[v0] = std::make_pair(v1, (Vertex *)nullptr);
     else {
-      if(it0->second.second == NULL) { it0->second.second = v1; }
+      if(it0->second.second == nullptr) { it0->second.second = v1; }
       else {
         Msg::Debug("A list of curves has points that are adjacent to 3 curves");
         return false;
@@ -463,7 +463,7 @@ static bool SortCurvesConsecutive(const std::vector<Curve *> &e,
     if(it1 == c.end())
       c[v1] = std::make_pair(v0, (Vertex *)nullptr);
     else {
-      if(it1->second.second == NULL) { it1->second.second = v0; }
+      if(it1->second.second == nullptr) { it1->second.second = v0; }
       else {
         Msg::Debug("Wrong topology for a list of curves");
         Msg::Debug("Point %d is adjacent to more than 2 points %d %d", v1->Num,
@@ -480,7 +480,7 @@ static bool SortCurvesConsecutive(const std::vector<Curve *> &e,
       auto it = c.begin();
       start = it->first;
       for(; it != c.end(); ++it) {
-        if(it->second.second == NULL) {
+        if(it->second.second == nullptr) {
           start = it->first;
           break;
         }

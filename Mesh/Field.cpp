@@ -1206,15 +1206,15 @@ private:
 public:
   Popen2()
   {
-    _hIn = NULL;
-    _hOut = NULL;
+    _hIn = nullptr;
+    _hOut = nullptr;
   }
   void stop()
   {
     if(_hIn) {
       CloseHandle(_hIn);
       CloseHandle(_hOut);
-      _hIn = _hOut = NULL;
+      _hIn = _hOut = nullptr;
     }
   }
   bool started() const { return _hIn; }
@@ -1226,7 +1226,7 @@ public:
     SECURITY_ATTRIBUTES saAttr;
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
     saAttr.bInheritHandle = TRUE;
-    saAttr.lpSecurityDescriptor = NULL;
+    saAttr.lpSecurityDescriptor = nullptr;
     if(!CreatePipe(&_hIn, &hChildStd_OUT_Wr, &saAttr, 0))
       Msg::Error("StdoutRd CreatePipe");
     if(!CreatePipe(&hChildStd_IN_Rd, &_hOut, &saAttr, 0))
@@ -1244,11 +1244,11 @@ public:
     siStartInfo.hStdOutput = hChildStd_OUT_Wr;
     siStartInfo.hStdInput = hChildStd_IN_Rd;
     siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
-    bSuccess = CreateProcess(NULL, (char *)command, NULL, NULL, TRUE, 0, NULL,
-                             NULL, &siStartInfo, &piProcInfo);
+    bSuccess = CreateProcess(nullptr, (char *)command, nullptr, nullptr, TRUE,
+                             0, nullptr, nullptr, &siStartInfo, &piProcInfo);
     if(!bSuccess) {
       Msg::Error("Child process creation failed %i", GetLastError());
-      _hIn = _hOut = NULL;
+      _hIn = _hOut = nullptr;
       return false;
     }
     CloseHandle(piProcInfo.hProcess);
@@ -1259,14 +1259,14 @@ public:
   {
     if(!_hIn) return false;
     DWORD nSuccess = 0;
-    ReadFile(_hIn, data, size, &nSuccess, NULL);
+    ReadFile(_hIn, data, size, &nSuccess, nullptr);
     return nSuccess == size;
   }
   bool write(void *data, size_t size)
   {
     if(!_hOut) return false;
     DWORD nSuccess = 0;
-    WriteFile(_hOut, data, size, &nSuccess, NULL);
+    WriteFile(_hOut, data, size, &nSuccess, nullptr);
     return nSuccess == size;
   }
   ~Popen2() { stop(); }
@@ -1302,7 +1302,7 @@ public:
       dup2(p_stdin[0], 0);
       close(p_stdout[0]);
       dup2(p_stdout[1], 1);
-      execl("/bin/sh", "sh", "-c", command, NULL);
+      execl("/bin/sh", "sh", "-c", command, nullptr);
       perror("execl");
       exit(0);
     }

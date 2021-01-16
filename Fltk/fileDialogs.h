@@ -16,7 +16,7 @@ typedef enum {
 } FILE_CHOOSER_TYPE;
 
 int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *pat,
-                const char *fname = NULL);
+                const char *fname = nullptr);
 std::string fileChooserGetName(int num);
 int fileChooserGetFilter();
 void fileChooserGetPosition(int *x, int *y);

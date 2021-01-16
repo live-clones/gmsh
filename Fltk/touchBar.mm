@@ -110,7 +110,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   else if([identifier isEqualToString:touchBarItemGeoMenu]) {
     NSPopoverTouchBarItem *popoverTouchBarItem =
       [[NSPopoverTouchBarItem alloc] initWithIdentifier:touchBarItemGeoMenu];
-    
+
     popoverTouchBarItem.customizationLabel = @"Geometry";
     popoverTouchBarItem.showsCloseButton = YES;
     popoverTouchBarItem.collapsedRepresentationLabel = @"Geometry";
@@ -136,13 +136,13 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
                     trackingMode:NSSegmentSwitchTrackingSelectAny
                           target:self
                           action:@selector(buttonGeo:)];
-    
+
     segmentedControl.segmentStyle = NSSegmentStyleSeparated;
-    
+
     NSCustomTouchBarItem *touchBarItem =
       [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemGeoButtons];
     touchBarItem.view = segmentedControl;
-    
+
     _geoButtons = segmentedControl;
     [self updateGeo];
 
@@ -154,14 +154,14 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
                     trackingMode:NSSegmentSwitchTrackingSelectOne
                           target:self
                           action:@selector(buttonGeoNormalTangent:)];
-    
+
     [segmentedControl setWidth:30 forSegment:0];
     [segmentedControl setWidth:30 forSegment:1];
-                          
+
     NSCustomTouchBarItem *touchBarItem =
       [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemGeoButtonNormalTangent];
     touchBarItem.view = segmentedControl;
-    
+
     segmentedControl.selectedSegment = 0; //Normal
     _geoButtonsNormalTangent = segmentedControl;
 
@@ -170,14 +170,14 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   else if([identifier isEqualToString:touchBarItemGeoSliderNormalTangent]) {
     NSSliderTouchBarItem *slider = [[NSSliderTouchBarItem alloc]
             initWithIdentifier:touchBarItemGeoSliderNormalTangent];
-    
+
     slider.target = self;
     slider.action = @selector(sliderGeoNormalTangent:);
     slider.label = @"Normal";
     slider.slider.minValue = 0;
     slider.slider.maxValue = 500;
     slider.slider.doubleValue = 0;
-    
+
     _geoSliderNormalTangent = slider;
     [self updateGeoSliderNormalTangent];
 
@@ -199,7 +199,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   else if([identifier isEqualToString:touchBarItemMeshMenu]) {
     NSPopoverTouchBarItem *popoverTouchBarItem =
       [[NSPopoverTouchBarItem alloc] initWithIdentifier:touchBarItemMeshMenu];
-    
+
     popoverTouchBarItem.customizationLabel = @"Mesh";
     popoverTouchBarItem.showsCloseButton = YES;
     popoverTouchBarItem.collapsedRepresentationLabel = @"Mesh";
@@ -225,7 +225,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
                     trackingMode:NSSegmentSwitchTrackingSelectAny
                           target:self
                           action:@selector(buttonMesh:)];
-                          
+
     segmentedControl.segmentStyle = NSSegmentStyleSeparated;
 
     NSCustomTouchBarItem *touchBarItem =
@@ -243,14 +243,14 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
                     trackingMode:NSSegmentSwitchTrackingSelectOne
                           target:self
                           action:@selector(buttonMeshNormalTangent:)];
-                          
+
     [segmentedControl setWidth:30 forSegment:0];
     [segmentedControl setWidth:30 forSegment:1];
-                          
+
     NSCustomTouchBarItem *touchBarItem =
       [[NSCustomTouchBarItem alloc] initWithIdentifier:touchBarItemMeshButtonNormalTangent];
     touchBarItem.view = segmentedControl;
-    
+
     segmentedControl.selectedSegment = 0; //Normal
     _meshButtonsNormalTangent = segmentedControl;
 
@@ -259,14 +259,14 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   else if([identifier isEqualToString:touchBarItemMeshSliderNormalTangent]) {
     NSSliderTouchBarItem *slider = [[NSSliderTouchBarItem alloc]
             initWithIdentifier:touchBarItemMeshSliderNormalTangent];
-    
+
     slider.target = self;
     slider.action = @selector(sliderMeshNormalTangent:);
     slider.label = @"Normal";
     slider.slider.minValue = 0;
     slider.slider.maxValue = 500;
     slider.slider.doubleValue = 0;
-    
+
     _meshSliderNormalTangent = slider;
     [self updateMeshSliderNormalTangent];
 
@@ -288,7 +288,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   else if([identifier isEqualToString:touchBarItemViewMenu]) {
     NSPopoverTouchBarItem *popoverTouchBarItem =
       [[NSPopoverTouchBarItem alloc] initWithIdentifier:touchBarItemViewMenu];
-    
+
     popoverTouchBarItem.customizationLabel = @"View";
     popoverTouchBarItem.showsCloseButton = YES;
     popoverTouchBarItem.collapsedRepresentationLabel = @"View";
@@ -327,7 +327,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   else if([identifier isEqualToString:touchBarItemViewSlider]) {
     NSSliderTouchBarItem *slider = [[NSSliderTouchBarItem alloc]
             initWithIdentifier:touchBarItemViewSlider];
-    
+
     slider.target = self;
     slider.action = @selector(sliderView:);
     slider.slider.minValue = 1;
@@ -338,7 +338,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 
     return slider;
   }
-  
+
   return nil;
 }
 
@@ -688,7 +688,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 }
 @end
 
-TouchBarDelegate *touchBarDelegate = NULL;
+TouchBarDelegate *touchBarDelegate = nullptr;
 void showTouchBar()
 {
   if(!touchBarDelegate) {

@@ -26,7 +26,7 @@
  * file named "COPYING.GL2PS"; if not, I will be glad to provide one.
  *
  * For the latest info about gl2ps and a full list of contributors, see
- * http://www.geuz.org/gl2ps/.
+ * https://geuz.org/gl2ps/.
  *
  * Please report all issues on https://gitlab.onelab.info/gl2ps/gl2ps/issues.
  */
@@ -246,7 +246,7 @@ typedef struct {
 /* The gl2ps context. gl2ps is not thread safe (we should create a
    local GL2PScontext during gl2psBeginPage) */
 
-static GL2PScontext *gl2ps = nullptr;
+static GL2PScontext *gl2ps = NULL;
 
 /* Need to forward-declare this one */
 
@@ -280,11 +280,11 @@ static void *gl2psMalloc(size_t size)
 {
   void *ptr;
 
-  if(!size) return nullptr;
+  if(!size) return NULL;
   ptr = malloc(size);
   if(!ptr){
     gl2psMsg(GL2PS_ERROR, "Couldn't allocate requested memory");
-    return nullptr;
+    return NULL;
   }
   return ptr;
 }
@@ -292,12 +292,12 @@ static void *gl2psMalloc(size_t size)
 static void *gl2psRealloc(void *ptr, size_t size)
 {
   void *orig = ptr;
-  if(!size) return nullptr;
+  if(!size) return NULL;
   ptr = realloc(orig, size);
   if(!ptr){
     gl2psMsg(GL2PS_ERROR, "Couldn't reallocate requested memory");
     free(orig);
-    return nullptr;
+    return NULL;
   }
   return ptr;
 }
@@ -325,9 +325,9 @@ static int gl2psWriteBigEndian(unsigned long data, int bytes)
 static void gl2psSetupCompress(void)
 {
   gl2ps->compress = (GL2PScompress*)gl2psMalloc(sizeof(GL2PScompress));
-  gl2ps->compress->src = nullptr;
-  gl2ps->compress->start = nullptr;
-  gl2ps->compress->dest = nullptr;
+  gl2ps->compress->src = NULL;
+  gl2ps->compress->start = NULL;
+  gl2ps->compress->dest = NULL;
   gl2ps->compress->srcLen = 0;
   gl2ps->compress->destLen = 0;
 }
@@ -338,9 +338,9 @@ static void gl2psFreeCompress(void)
     return;
   gl2psFree(gl2ps->compress->start);
   gl2psFree(gl2ps->compress->dest);
-  gl2ps->compress->src = nullptr;
-  gl2ps->compress->start = nullptr;
-  gl2ps->compress->dest = nullptr;
+  gl2ps->compress->src = NULL;
+  gl2ps->compress->start = NULL;
+  gl2ps->compress->dest = NULL;
   gl2ps->compress->srcLen = 0;
   gl2ps->compress->destLen = 0;
 }
@@ -364,7 +364,7 @@ static int gl2psAllocCompress(unsigned int srcsize)
 static void *gl2psReallocCompress(unsigned int srcsize)
 {
   if(!gl2ps->compress || !srcsize)
-    return nullptr;
+    return NULL;
 
   if(srcsize < gl2ps->compress->srcLen)
     return gl2ps->compress->start;
@@ -506,7 +506,7 @@ static void gl2psPrintGzipFooter(void)
     }
     gl2psFreeCompress();
     gl2psFree(gl2ps->compress);
-    gl2ps->compress = nullptr;
+    gl2ps->compress = NULL;
   }
 #endif
 }
@@ -544,7 +544,7 @@ static GL2PSlist *gl2psListCreate(GLint n, GLint incr, GLint size)
   list->incr = incr;
   list->size = size;
   list->n = 0;
-  list->array = nullptr;
+  list->array = NULL;
   gl2psListRealloc(list, n);
   return list;
 }
@@ -584,11 +584,11 @@ static void *gl2psListPointer(GL2PSlist *list, GLint idx)
 {
   if(!list){
     gl2psMsg(GL2PS_ERROR, "Cannot point into unallocated list");
-    return nullptr;
+    return NULL;
   }
   if((idx < 0) || (idx >= list->n)){
     gl2psMsg(GL2PS_ERROR, "Wrong list index in gl2psListPointer");
-    return nullptr;
+    return NULL;
   }
   return &list->array[idx * list->size];
 }
@@ -821,11 +821,11 @@ static void gl2psConvertPixmapToPNG(GL2PSimage *pixmap, GL2PSlist *png)
   GLfloat dr, dg, db;
   int row, col;
 
-  if(!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr)))
+  if(!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL)))
     return;
 
   if(!(info_ptr = png_create_info_struct(png_ptr))){
-    png_destroy_write_struct(&png_ptr, nullptr);
+    png_destroy_write_struct(&png_ptr, NULL);
     return;
   }
 
@@ -1072,7 +1072,7 @@ static GL2PSprimitive *gl2psCopyPrimitive(GL2PSprimitive *p)
 
   if(!p){
     gl2psMsg(GL2PS_ERROR, "Trying to copy an empty primitive");
-    return nullptr;
+    return NULL;
   }
 
   prim = (GL2PSprimitive*)gl2psMalloc(sizeof(GL2PSprimitive));
@@ -1530,7 +1530,7 @@ static GLint gl2psFindRoot(GL2PSlist *primitives, GL2PSprimitive **root)
 static void gl2psFreeImagemap(GL2PSimagemap *list)
 {
   GL2PSimagemap *next;
-  while(list != nullptr){
+  while(list != NULL){
     next = list->next;
     gl2psFree(list->image->pixels);
     gl2psFree(list->image);
@@ -1580,7 +1580,7 @@ static void gl2psFreeBspTree(GL2PSbsptree **tree)
     }
     if((*tree)->front) gl2psFreeBspTree(&(*tree)->front);
     gl2psFree(*tree);
-    *tree = nullptr;
+    *tree = NULL;
   }
 }
 
@@ -1598,12 +1598,12 @@ static GLboolean gl2psLess(GLfloat f1, GLfloat f2)
 
 static void gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives)
 {
-  GL2PSprimitive *prim, *frontprim = nullptr, *backprim = nullptr;
+  GL2PSprimitive *prim, *frontprim = NULL, *backprim = NULL;
   GL2PSlist *frontlist, *backlist;
   GLint i, idx;
 
-  tree->front = nullptr;
-  tree->back = nullptr;
+  tree->front = NULL;
+  tree->back = NULL;
   tree->primitives = gl2psListCreate(1, 2, sizeof(GL2PSprimitive*));
   idx = gl2psFindRoot(primitives, &prim);
   gl2psGetPlane(prim, tree->plane);
@@ -1810,7 +1810,7 @@ static void gl2psFreeBspImageTree(GL2PSbsptree2d **tree)
     if((*tree)->back)  gl2psFreeBspImageTree(&(*tree)->back);
     if((*tree)->front) gl2psFreeBspImageTree(&(*tree)->front);
     gl2psFree(*tree);
-    *tree = nullptr;
+    *tree = NULL;
   }
 }
 
@@ -1830,9 +1830,9 @@ static void gl2psAddPlanesInBspTreeImage(GL2PSprimitive *prim,
   GLint ret = 0;
   GLint i;
   GLint offset = 0;
-  GL2PSbsptree2d *head = nullptr, *cur = nullptr;
+  GL2PSbsptree2d *head = NULL, *cur = NULL;
 
-  if((*tree == nullptr) && (prim->numverts > 2)){
+  if((*tree == NULL) && (prim->numverts > 2)){
     /* don't cull if transparent
     for(i = 0; i < prim->numverts - 1; i++)
       if(prim->verts[i].rgba[3] < 1.0F) return;
@@ -1854,8 +1854,8 @@ static void gl2psAddPlanesInBspTreeImage(GL2PSprimitive *prim,
         break;
       }
     }
-    head->back = nullptr;
-    head->front = nullptr;
+    head->back = NULL;
+    head->front = NULL;
     for(i = 2+offset; i < prim->numverts; i++){
       ret = gl2psCheckPoint(prim->verts[i].xyz, head->plane);
       if(ret != GL2PS_POINT_COINCIDENT) break;
@@ -1864,29 +1864,29 @@ static void gl2psAddPlanesInBspTreeImage(GL2PSprimitive *prim,
     case GL2PS_POINT_INFRONT :
       cur = head;
       for(i = 1+offset; i < prim->numverts-1; i++){
-        if(cur->front == nullptr){
+        if(cur->front == NULL){
           cur->front = (GL2PSbsptree2d*)gl2psMalloc(sizeof(GL2PSbsptree2d));
         }
         if(gl2psGetPlaneFromPoints(prim->verts[i].xyz,
                                    prim->verts[i+1].xyz,
                                    cur->front->plane)){
           cur = cur->front;
-          cur->front = nullptr;
-          cur->back = nullptr;
+          cur->front = NULL;
+          cur->back = NULL;
         }
       }
-      if(cur->front == nullptr){
+      if(cur->front == NULL){
         cur->front = (GL2PSbsptree2d*)gl2psMalloc(sizeof(GL2PSbsptree2d));
       }
       if(gl2psGetPlaneFromPoints(prim->verts[i].xyz,
                                  prim->verts[offset].xyz,
                                  cur->front->plane)){
-        cur->front->front = nullptr;
-        cur->front->back = nullptr;
+        cur->front->front = NULL;
+        cur->front->back = NULL;
       }
       else{
         gl2psFree(cur->front);
-        cur->front = nullptr;
+        cur->front = NULL;
       }
       break;
     case GL2PS_POINT_BACK :
@@ -1895,29 +1895,29 @@ static void gl2psAddPlanesInBspTreeImage(GL2PSprimitive *prim,
       }
       cur = head;
       for(i = 1+offset; i < prim->numverts-1; i++){
-        if(cur->front == nullptr){
+        if(cur->front == NULL){
           cur->front = (GL2PSbsptree2d*)gl2psMalloc(sizeof(GL2PSbsptree2d));
         }
         if(gl2psGetPlaneFromPoints(prim->verts[i+1].xyz,
                                    prim->verts[i].xyz,
                                    cur->front->plane)){
           cur = cur->front;
-          cur->front = nullptr;
-          cur->back = nullptr;
+          cur->front = NULL;
+          cur->back = NULL;
         }
       }
-      if(cur->front == nullptr){
+      if(cur->front == NULL){
         cur->front = (GL2PSbsptree2d*)gl2psMalloc(sizeof(GL2PSbsptree2d));
       }
       if(gl2psGetPlaneFromPoints(prim->verts[offset].xyz,
                                  prim->verts[i].xyz,
                                  cur->front->plane)){
-        cur->front->front = nullptr;
-        cur->front->back = nullptr;
+        cur->front->front = NULL;
+        cur->front->back = NULL;
       }
       else{
         gl2psFree(cur->front);
-        cur->front = nullptr;
+        cur->front = NULL;
       }
       break;
     default:
@@ -1994,7 +1994,7 @@ static void gl2psSplitPrimitive2D(GL2PSprimitive *prim,
   GLint cur = -1, prev = -1, i, v1 = 0, v2 = 0, flag = 1, prev0 = -1;
 
   /* list of vertices that will go in front and back primitive */
-  GL2PSvertex *front_list = nullptr, *back_list = nullptr;
+  GL2PSvertex *front_list = NULL, *back_list = NULL;
 
   /* number of vertices in front and back list */
   GLshort front_count = 0, back_count = 0;
@@ -2066,7 +2066,7 @@ static void gl2psSplitPrimitive2D(GL2PSprimitive *prim,
 static GLint gl2psAddInBspImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree)
 {
   GLint ret = 0;
-  GL2PSprimitive *frontprim = nullptr, *backprim = nullptr;
+  GL2PSprimitive *frontprim = NULL, *backprim = NULL;
 
   /* FIXME: until we consider the actual extent of text strings and
      pixmaps, never cull them. Otherwise the whole string/pixmap gets
@@ -2077,7 +2077,7 @@ static GLint gl2psAddInBspImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree)
     return 1;
   }
 
-  if(*tree == nullptr){
+  if(*tree == NULL){
     if((prim->type != GL2PS_IMAGEMAP) && (GL_FALSE == gl2ps->zerosurfacearea)){
       gl2psAddPlanesInBspTreeImage(gl2ps->primitivetoadd, tree);
     }
@@ -2087,12 +2087,12 @@ static GLint gl2psAddInBspImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree)
     switch(gl2psCheckPrimitive(prim, (*tree)->plane)){
     case GL2PS_IN_BACK_OF: return gl2psAddInBspImageTree(prim, &(*tree)->back);
     case GL2PS_IN_FRONT_OF:
-      if((*tree)->front != nullptr) return gl2psAddInBspImageTree(prim, &(*tree)->front);
+      if((*tree)->front != NULL) return gl2psAddInBspImageTree(prim, &(*tree)->front);
       else                       return 0;
     case GL2PS_SPANNING:
       gl2psSplitPrimitive2D(prim, (*tree)->plane, &frontprim, &backprim);
       ret = gl2psAddInBspImageTree(backprim, &(*tree)->back);
-      if((*tree)->front != nullptr){
+      if((*tree)->front != NULL){
         if(gl2psAddInBspImageTree(frontprim, &(*tree)->front)){
           ret = 1;
         }
@@ -2103,13 +2103,13 @@ static GLint gl2psAddInBspImageTree(GL2PSprimitive *prim, GL2PSbsptree2d **tree)
       gl2psFree(backprim);
       return ret;
     case GL2PS_COINCIDENT:
-      if((*tree)->back != nullptr){
+      if((*tree)->back != NULL){
         gl2ps->zerosurfacearea = GL_TRUE;
         ret = gl2psAddInBspImageTree(prim, &(*tree)->back);
         gl2ps->zerosurfacearea = GL_FALSE;
         if(ret) return ret;
       }
-      if((*tree)->front != nullptr){
+      if((*tree)->front != NULL){
         gl2ps->zerosurfacearea = GL_TRUE;
         ret = gl2psAddInBspImageTree(prim, &(*tree)->front);
         gl2ps->zerosurfacearea = GL_FALSE;
@@ -2448,9 +2448,9 @@ static void gl2psParseFeedbackBuffer(GLint used)
         node->image->format = 0;
         node->image->zoom_x = 1.0F;
         node->image->zoom_y = 1.0F;
-        node->next = nullptr;
+        node->next = NULL;
 
-        if(gl2ps->imagemap_head == nullptr)
+        if(gl2ps->imagemap_head == NULL)
           gl2ps->imagemap_head = node;
         else
           gl2ps->imagemap_tail->next = node;
@@ -2858,6 +2858,7 @@ static void gl2psPrintPostScriptHeader(void)
               "/STRR{ gsave FCT moveto rotate SW neg SH neg rmoveto show grestore } BD\n");
 
   gl2psPrintf("/P  { newpath 0.0 360.0 arc closepath fill } BD\n"
+              "/R  { newpath moveto lineto lineto lineto closepath fill } BD\n"
               "/LS { newpath moveto } BD\n"
               "/L  { lineto } BD\n"
               "/LE { lineto stroke } BD\n"
@@ -3098,8 +3099,22 @@ static void gl2psPrintPostScriptPrimitive(void *data)
   switch(prim->type){
   case GL2PS_POINT :
     gl2psPrintPostScriptColor(prim->verts[0].rgba);
-    gl2psPrintf("%g %g %g P\n",
-                prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5 * prim->width);
+    if(gl2ps->options & GL2PS_SQUARE_POINTS) {
+      gl2psPrintf("%g %g %g %g %g %g %g %g R\n",
+                  prim->verts[0].xyz[0] - 0.5*prim->width,
+                  prim->verts[0].xyz[1] - 0.5*prim->width,
+                  prim->verts[0].xyz[0] - 0.5*prim->width,
+                  prim->verts[0].xyz[1] + 0.5*prim->width,
+                  prim->verts[0].xyz[0] + 0.5*prim->width,
+                  prim->verts[0].xyz[1] + 0.5*prim->width,
+                  prim->verts[0].xyz[0] + 0.5*prim->width,
+                  prim->verts[0].xyz[1] - 0.5*prim->width);
+    }
+    else {
+      gl2psPrintf("%g %g %g P\n",
+                  prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+                  0.5 * prim->width);
+    }
     break;
   case GL2PS_LINE :
     if(!gl2psSamePosition(gl2ps->lastvertex.xyz, prim->verts[0].xyz) ||
@@ -3652,7 +3667,7 @@ static void gl2psPDFgroupObjectInit(GL2PSpdfgroup *gro)
   if(!gro)
     return;
 
-  gro->ptrlist = nullptr;
+  gro->ptrlist = NULL;
   gro->fontno = gro->gsno = gro->imno = gro->maskshno = gro->shno
     = gro->trgroupno = gro->fontobjno = gro->imobjno = gro->shobjno
     = gro->maskshobjno = gro->gsobjno = gro->trgroupobjno = -1;
@@ -3663,7 +3678,7 @@ static void gl2psPDFgroupObjectInit(GL2PSpdfgroup *gro)
 static void gl2psPDFgroupListInit(void)
 {
   int i;
-  GL2PSprimitive *p = nullptr;
+  GL2PSprimitive *p = NULL;
   GL2PSpdfgroup gro;
   int lasttype = GL2PS_NO_TYPE;
   GL2PSrgba lastrgba = {-1.0F, -1.0F, -1.0F, -1.0F};
@@ -3770,7 +3785,7 @@ static void gl2psPDFgroupListInit(void)
 static void gl2psSortOutTrianglePDFgroup(GL2PSpdfgroup *gro)
 {
   GL2PStriangle t;
-  GL2PSprimitive *prim = nullptr;
+  GL2PSprimitive *prim = NULL;
 
   if(!gro)
     return;
@@ -3824,7 +3839,7 @@ static void gl2psSortOutTrianglePDFgroup(GL2PSpdfgroup *gro)
 static void gl2psPDFgroupListWriteMainStream(void)
 {
   int i, j, lastel, count;
-  GL2PSprimitive *prim = nullptr, *prev = nullptr;
+  GL2PSprimitive *prim = NULL, *prev = NULL;
   GL2PSpdfgroup *gro;
   GL2PStriangle t;
 
@@ -3849,10 +3864,15 @@ static void gl2psPDFgroupListWriteMainStream(void)
       gl2ps->streamlength += gl2psPrintPDFStrokeColor(prim->verts[0].rgba);
       for(j = 0; j <= lastel; ++j){
         prim = *(GL2PSprimitive**)gl2psListPointer(gro->ptrlist, j);
-        gl2ps->streamlength +=
-          gl2psPrintf("%f %f m %f %f l\n",
-                      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-                      prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+        if(gl2ps->options & GL2PS_SQUARE_POINTS)
+          gl2ps->streamlength +=
+            gl2psPrintf("%f %f 1 1 re\n", prim->verts[0].xyz[0],
+                        prim->verts[0].xyz[1]);
+        else
+          gl2ps->streamlength +=
+            gl2psPrintf("%f %f m %f %f l\n", prim->verts[0].xyz[0],
+                        prim->verts[0].xyz[1], prim->verts[0].xyz[0],
+                        prim->verts[0].xyz[1]);
       }
       gl2ps->streamlength += gl2psPrintf("S\n");
       gl2ps->streamlength += gl2psPrintf("0 J\n");
@@ -4075,7 +4095,7 @@ static int gl2psPDFgroupListWriteShaderResources(void)
 static int gl2psPDFgroupListWriteXObjectResources(void)
 {
   int i;
-  GL2PSprimitive *p = nullptr;
+  GL2PSprimitive *p = NULL;
   GL2PSpdfgroup *gro;
   int offs = 0;
 
@@ -4131,7 +4151,7 @@ static int gl2psPDFgroupListWriteFontResources(void)
 static void gl2psPDFgroupListDelete(void)
 {
   int i;
-  GL2PSpdfgroup *gro = nullptr;
+  GL2PSpdfgroup *gro = NULL;
 
   if(!gl2ps->pdfgrouplist)
     return;
@@ -4142,7 +4162,7 @@ static void gl2psPDFgroupListDelete(void)
   }
 
   gl2psListDelete(gl2ps->pdfgrouplist);
-  gl2ps->pdfgrouplist = nullptr;
+  gl2ps->pdfgrouplist = NULL;
 }
 
 /* Print 1st PDF object - file info */
@@ -4870,7 +4890,7 @@ static int gl2psPrintPDFText(int obj, GL2PSstring *s, int fontnumber)
 static int gl2psPDFgroupListWriteObjects(int entryoffs)
 {
   int i,j;
-  GL2PSprimitive *p = nullptr;
+  GL2PSprimitive *p = NULL;
   GL2PSpdfgroup *gro;
   int offs = entryoffs;
   GL2PStriangle *triangles;
@@ -5001,7 +5021,7 @@ static void gl2psPrintPDFFooter(void)
   if(gl2ps->options & GL2PS_COMPRESS){
     gl2psFreeCompress();
     gl2psFree(gl2ps->compress);
-    gl2ps->compress = nullptr;
+    gl2ps->compress = NULL;
   }
 #endif
 }
@@ -5321,10 +5341,19 @@ static void gl2psPrintSVGPrimitive(void *data)
   switch(prim->type){
   case GL2PS_POINT :
     gl2psSVGGetColorString(rgba[0], col);
-    gl2psPrintf("<circle fill=\"%s\" ", col);
-    if(rgba[0][3] < 1.0F) gl2psPrintf("fill-opacity=\"%g\" ", rgba[0][3]);
-    gl2psPrintf("cx=\"%g\" cy=\"%g\" r=\"%g\"/>\n",
-                xyz[0][0], xyz[0][1], 0.5 * prim->width);
+    if(gl2ps->options & GL2PS_SQUARE_POINTS){
+      gl2psPrintf("<rect fill=\"%s\" ", col);
+      if (rgba[0][3] < 1.0F) gl2psPrintf("fill-opacity=\"%g\" ", rgba[0][3]);
+      gl2psPrintf("x=\"%g\" y=\"%g\" width=\"%g\" height=\"%g\"/>\n",
+                  xyz[0][0] - 0.5*prim->width, xyz[0][1] - 0.5*prim->width,
+                  prim->width, prim->width);
+    }
+    else {
+      gl2psPrintf("<circle fill=\"%s\" ", col);
+      if (rgba[0][3] < 1.0F) gl2psPrintf("fill-opacity=\"%g\" ", rgba[0][3]);
+      gl2psPrintf("cx=\"%g\" cy=\"%g\" r=\"%g\"/>\n",
+                  xyz[0][0], xyz[0][1], 0.5 * prim->width);
+    }
     break;
   case GL2PS_LINE :
     if(!gl2psSamePosition(gl2ps->lastvertex.xyz, prim->verts[0].xyz) ||
@@ -5645,12 +5674,16 @@ static void gl2psPrintPGFPrimitive(void *data)
   case GL2PS_POINT :
     /* Points in openGL are rectangular */
     gl2psPrintPGFColor(prim->verts[0].rgba);
-    fprintf(gl2ps->stream,
-            "\\pgfpathrectangle{\\pgfpoint{%fpt}{%fpt}}"
-            "{\\pgfpoint{%fpt}{%fpt}}\n\\pgfusepath{fill}\n",
-            prim->verts[0].xyz[0]-0.5*prim->width,
-            prim->verts[0].xyz[1]-0.5*prim->width,
-            prim->width,prim->width);
+    if(gl2ps->options & GL2PS_SQUARE_POINTS)
+      fprintf(gl2ps->stream, "\\pgfpathrectangle{\\pgfpoint{%fpt}{%fpt}}"
+              "{\\pgfpoint{%fpt}{%fpt}}\n\\pgfusepath{fill}\n",
+              prim->verts[0].xyz[0]-0.5*prim->width,
+              prim->verts[0].xyz[1]-0.5*prim->width,
+              prim->width, prim->width);
+    else
+      fprintf(gl2ps->stream, "\\pgfpathcircle{\\pgfpoint{%fpt}{%fpt}}"
+              "{%fpt}\n\\pgfusepath{fill}\n",
+              prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5*prim->width);
     break;
   case GL2PS_LINE :
     gl2psPrintPGFColor(prim->verts[0].rgba);
@@ -6011,7 +6044,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   /* Validate options */
   if (gl2psCheckOptions(options, colormode) == GL_FALSE) {
     gl2psFree(gl2ps);
-    gl2ps = nullptr;
+    gl2ps = NULL;
     return GL2PS_ERROR;
   }
 
@@ -6021,7 +6054,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   else {
     gl2psMsg(GL2PS_ERROR, "Unknown output format: %d", format);
     gl2psFree(gl2ps);
-    gl2ps = nullptr;
+    gl2ps = NULL;
     return GL2PS_ERROR;
   }
 
@@ -6034,7 +6067,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   default :
     gl2psMsg(GL2PS_ERROR, "Unknown sorting algorithm: %d", sort);
     gl2psFree(gl2ps);
-    gl2ps = nullptr;
+    gl2ps = NULL;
     return GL2PS_ERROR;
   }
 
@@ -6044,7 +6077,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   else{
     gl2psMsg(GL2PS_ERROR, "Bad file pointer");
     gl2psFree(gl2ps);
-    gl2ps = nullptr;
+    gl2ps = NULL;
     return GL2PS_ERROR;
   }
 
@@ -6052,9 +6085,9 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   gl2ps->forcerasterpos = GL_FALSE;
   gl2ps->maxbestroot = 10;
   gl2ps->options = options;
-  gl2ps->compress = nullptr;
-  gl2ps->imagemap_head = nullptr;
-  gl2ps->imagemap_tail = nullptr;
+  gl2ps->compress = NULL;
+  gl2ps->imagemap_head = NULL;
+  gl2ps->imagemap_tail = NULL;
 
   if(gl2ps->options & GL2PS_USE_CURRENT_VIEWPORT){
     glGetIntegerv(GL_VIEWPORT, gl2ps->viewport);
@@ -6070,7 +6103,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
              gl2ps->viewport[0], gl2ps->viewport[1],
              gl2ps->viewport[2], gl2ps->viewport[3]);
     gl2psFree(gl2ps);
-    gl2ps = nullptr;
+    gl2ps = NULL;
     return GL2PS_ERROR;
   }
 
@@ -6091,12 +6124,12 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   gl2ps->lastlinejoin = 0;
   gl2ps->lastpattern = 0;
   gl2ps->lastfactor = 0;
-  gl2ps->imagetree = nullptr;
-  gl2ps->primitivetoadd = nullptr;
+  gl2ps->imagetree = NULL;
+  gl2ps->primitivetoadd = NULL;
   gl2ps->zerosurfacearea = GL_FALSE;
-  gl2ps->pdfprimlist = nullptr;
-  gl2ps->pdfgrouplist = nullptr;
-  gl2ps->xreflist = nullptr;
+  gl2ps->pdfprimlist = NULL;
+  gl2ps->pdfgrouplist = NULL;
+  gl2ps->xreflist = NULL;
 
   /* get default blending mode from current OpenGL state (enabled by
      default for SVG) */
@@ -6112,7 +6145,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
 
   if(gl2ps->colormode == GL_RGBA){
     gl2ps->colorsize = 0;
-    gl2ps->colormap = nullptr;
+    gl2ps->colormap = NULL;
     if ((gl2ps->options & GL2PS_NO_OPENGL_CONTEXT) == GL2PS_NONE) {
       glGetFloatv(GL_COLOR_CLEAR_VALUE, gl2ps->bgcolor);
     }
@@ -6121,7 +6154,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
     if(!colorsize || !colormap){
       gl2psMsg(GL2PS_ERROR, "Missing colormap for GL_COLOR_INDEX rendering");
       gl2psFree(gl2ps);
-      gl2ps = nullptr;
+      gl2ps = NULL;
       return GL2PS_ERROR;
     }
     gl2ps->colorsize = colorsize;
@@ -6136,7 +6169,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
   else{
     gl2psMsg(GL2PS_ERROR, "Unknown color mode in gl2psBeginPage");
     gl2psFree(gl2ps);
-    gl2ps = nullptr;
+    gl2ps = NULL;
     return GL2PS_ERROR;
   }
 
@@ -6176,7 +6209,7 @@ GL2PSDLL_API GLint gl2psBeginPage(const char *title, const char *producer,
     glRenderMode(GL_FEEDBACK);
   }
   else {
-    gl2ps->feedback = nullptr;
+    gl2ps->feedback = NULL;
     gl2ps->buffersize = 0;
   }
 
@@ -6207,7 +6240,7 @@ GL2PSDLL_API GLint gl2psEndPage(void)
   gl2psFree(gl2ps->filename);
   gl2psFree(gl2ps->feedback);
   gl2psFree(gl2ps);
-  gl2ps = nullptr;
+  gl2ps = NULL;
 
   return res;
 }
@@ -6251,7 +6284,7 @@ GL2PSDLL_API GLint gl2psSorting(GLint mode)
   default :
     gl2psMsg(GL2PS_ERROR, "Unknown sorting algorithm: %d", mode);
     gl2psFree(gl2ps);
-    gl2ps = nullptr;
+    gl2ps = NULL;
     res = GL2PS_ERROR;
   }
 
@@ -6282,18 +6315,18 @@ GL2PSDLL_API GLint gl2psTextOptColorBL(const char *str, const char *fontname,
 GL2PSDLL_API GLint gl2psTextOpt(const char *str, const char *fontname,
                                 GLshort fontsize, GLint alignment, GLfloat angle)
 {
-  return gl2psAddText(GL2PS_TEXT, str, fontname, fontsize, alignment, angle, nullptr, GL_FALSE, 0, 0);
+  return gl2psAddText(GL2PS_TEXT, str, fontname, fontsize, alignment, angle, NULL, GL_FALSE, 0, 0);
 }
 
 GL2PSDLL_API GLint gl2psText(const char *str, const char *fontname, GLshort fontsize)
 {
   return gl2psAddText(GL2PS_TEXT, str, fontname, fontsize, GL2PS_TEXT_BL, 0.0F,
-                      nullptr, GL_FALSE, 0, 0);
+                      NULL, GL_FALSE, 0, 0);
 }
 
 GL2PSDLL_API GLint gl2psSpecial(GLint format, const char *str)
 {
-  return gl2psAddText(GL2PS_SPECIAL, str, "", 0, format, 0.0F, nullptr, GL_FALSE, 0, 0);
+  return gl2psAddText(GL2PS_SPECIAL, str, "", 0, format, 0.0F, NULL, GL_FALSE, 0, 0);
 }
 
 GL2PSDLL_API GLint gl2psSpecialColor(GLint format, const char *str, GL2PSrgba rgba)

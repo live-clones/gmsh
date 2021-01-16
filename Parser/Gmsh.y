@@ -152,10 +152,10 @@ int treat_Struct_FullName_dot_tSTRING_Float_getDim
   (char* c1, char* c2, char* c3);
 char* treat_Struct_FullName_String
   (char* c1, char* c2, int type_var = 1, int index = 0,
-   char* val_default = NULL, int type_treat = 0);
+   char* val_default = nullptr, int type_treat = 0);
 char* treat_Struct_FullName_dot_tSTRING_String
   (char* c1, char* c2, char* c3, int index = 0,
-   char* val_default = NULL, int type_treat = 0);
+   char* val_default = nullptr, int type_treat = 0);
 List_T * treat_Struct_FullName_dot_tSTRING_ListOfString
   (char* c1, char* c2, char* c3);
 
@@ -3065,7 +3065,7 @@ LevelSet :
           double d;
           List_Read($7, 0, &d);
           gLevelset *pl = gLevelset::find((int)d);
-          gLevelset *ls = NULL;
+          gLevelset *ls = nullptr;
           if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
           else ls = new gLevelsetReverse(pl, t);
           if(ls) gLevelset::add(ls);
@@ -3906,7 +3906,7 @@ Loop :
       if(!FunctionManager::Instance()->createFunction
          (std::string($2), gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Redefinition of function %s", $2);
-      skip(NULL, "Return");
+      skip(nullptr, "Return");
       Free($2);
     }
   | tMacro StringExpr
@@ -3914,7 +3914,7 @@ Loop :
       if(!FunctionManager::Instance()->createFunction
          (std::string($2), gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Redefinition of function %s", $2);
-      skip(NULL, "Return");
+      skip(nullptr, "Return");
       Free($2);
     }
   | tReturn
@@ -5379,12 +5379,12 @@ FExpr_Single :
   | String__Index '[' FExpr ']'
     //  | Struct_FullName '[' FExpr ']'
     {
-      $$ = treat_Struct_FullName_Float(NULL, $1, 2, (int)$3);
+      $$ = treat_Struct_FullName_Float(nullptr, $1, 2, (int)$3);
     }
   | String__Index '(' FExpr ')'
     //  | Struct_FullName '(' FExpr ')'
     {
-      $$ = treat_Struct_FullName_Float(NULL, $1, 2, (int)$3);
+      $$ = treat_Struct_FullName_Float(nullptr, $1, 2, (int)$3);
     }
   | tExists '(' Struct_FullName ')'
     {
@@ -5508,7 +5508,7 @@ FExpr_Single :
   // Option Strings
   | String__Index '.' tSTRING_Reserved
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3);
+      $$ = treat_Struct_FullName_dot_tSTRING_Float(nullptr, $1, $3);
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Reserved
     {
@@ -5516,7 +5516,7 @@ FExpr_Single :
     }
   | String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
+      $$ = treat_Struct_FullName_dot_tSTRING_Float(nullptr, $1, $3, (int)$5);
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
@@ -5524,7 +5524,7 @@ FExpr_Single :
     }
   | String__Index '.' tSTRING_Reserved '[' FExpr ']'
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
+      $$ = treat_Struct_FullName_dot_tSTRING_Float(nullptr, $1, $3, (int)$5);
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Reserved '[' FExpr ']'
     {
@@ -5625,7 +5625,7 @@ GetForced_Default :
 
 GetForcedStr_Default :
     // none
-    { $$ = NULL; }
+    { $$ = nullptr; }
   | ',' StringExprVar
     { $$ = $2;}
 ;
@@ -5655,7 +5655,7 @@ DefineStruct :
 
 Struct_FullName :
     String__Index
-    { $$.char1 = NULL; $$.char2 = $1; }
+    { $$.char1 = nullptr; $$.char2 = $1; }
   | String__Index tSCOPE String__Index
     { $$.char1 = $1; $$.char2 = $3; }
 ;
@@ -5986,7 +5986,7 @@ FExpr_Multi :
     }
   | String__Index '.' tSTRING_Reserved LP RP
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat(NULL, $1, $3);
+      $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat(nullptr, $1, $3);
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Reserved LP RP
     {
@@ -6223,7 +6223,7 @@ StringExprVar :
   | String__Index
     {
       // No need to extend to Struct_FullName (a Tag is not a String)
-      $$ = treat_Struct_FullName_String(NULL, $1);
+      $$ = treat_Struct_FullName_String(nullptr, $1);
     }
   | String__Index '[' FExpr ']'
     {
@@ -6255,7 +6255,7 @@ StringExprVar :
     }
   | String__Index '.' tSTRING_Reserved
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3);
+      $$ = treat_Struct_FullName_dot_tSTRING_String(nullptr, $1, $3);
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Reserved
     {
@@ -6263,7 +6263,7 @@ StringExprVar :
     }
   | String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3, (int)$5);
+      $$ = treat_Struct_FullName_dot_tSTRING_String(nullptr, $1, $3, (int)$5);
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Reserved '(' FExpr ')'
     {
@@ -6357,7 +6357,7 @@ StringExpr :
     //+++ No need to extend to Struct_FullName (a Tag is not a String), but...
   | tGetForcedStr '(' Struct_FullName GetForcedStr_Default ')'
     {
-      $$ = treat_Struct_FullName_String(NULL, $3.char2, 1, 0, $4, 2);
+      $$ = treat_Struct_FullName_String(nullptr, $3.char2, 1, 0, $4, 2);
     }
   | tGetForcedStr '(' Struct_FullName '.' tSTRING_Reserved GetForcedStr_Default ')'
     {
@@ -6558,7 +6558,7 @@ StringExpr :
   | tNameStruct LP NameStruct_Arg RP
     {
       std::string out;
-      const std::string * key_struct = NULL;
+      const std::string * key_struct = nullptr;
       switch (gmsh_yynamespaces.get_key_struct_from_tag(struct_namespace,
                                                         (int)$3, key_struct)) {
       case 0:
@@ -6643,7 +6643,7 @@ MultiStringExprVar :
     }
   | String__Index '.' tSTRING_Reserved '(' ')'
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_ListOfString(NULL, $1, $3);
+      $$ = treat_Struct_FullName_dot_tSTRING_ListOfString(nullptr, $1, $3);
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Reserved '(' ')'
     {
@@ -7419,7 +7419,7 @@ double treat_Struct_FullName_dot_tSTRING_Float
     break;
   case 2:
     if (type_treat != 0) {
-      const std::string * out_dummy = NULL;
+      const std::string * out_dummy = nullptr;
       out = (gmsh_yynamespaces.getMember
              (struct_namespace, struct_name, key_member, out_dummy))?
         val_default : 1.;
@@ -7444,7 +7444,7 @@ double treat_Struct_FullName_dot_tSTRING_Float
 List_T * treat_Struct_FullName_dot_tSTRING_ListOfFloat
 (char* c1, char* c2, char* c3)
 {
-  List_T * out, * val_default = NULL;
+  List_T * out, * val_default = nullptr;
   const std::vector<double> * out_vector; double val_;
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
@@ -7498,7 +7498,7 @@ char * treat_Struct_FullName_String
 (char* c1, char* c2, int type_var, int index, char * val_default, int type_treat)
 {
   std::string string_default(val_default? val_default : std::string(""));
-  const std::string * out = NULL;
+  const std::string * out = nullptr;
   std::string out_tmp;
   if(!c1 && gmsh_yystringsymbols.count(c2)){
     // Get (0) or GetForced (2)
@@ -7526,7 +7526,7 @@ char* treat_Struct_FullName_dot_tSTRING_String
 (char* c1, char* c2, char* c3, int index, char * val_default, int type_treat)
 {
   std::string string_default(val_default? val_default : std::string(""));
-  const std::string * out = NULL;
+  const std::string * out = nullptr;
   std::string out_tmp; // PD: we should avoid that -> StringOption() to be changed
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
@@ -7561,7 +7561,7 @@ char* treat_Struct_FullName_dot_tSTRING_String
 List_T * treat_Struct_FullName_dot_tSTRING_ListOfString
 (char* c1, char* c2, char* c3)
 {
-  List_T * out, * val_default = NULL;
+  List_T * out, * val_default = nullptr;
   const std::vector<std::string> * out_vector; char * val_;
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
