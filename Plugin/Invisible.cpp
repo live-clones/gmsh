@@ -12,10 +12,10 @@ StringXNumber InvisibleOptions_Number[] = {
 };
 
 extern "C" {
-  GMSH_Plugin *GMSH_RegisterInvisiblePlugin()
-  {
-    return new GMSH_InvisiblePlugin();
-  }
+GMSH_Plugin *GMSH_RegisterInvisiblePlugin()
+{
+  return new GMSH_InvisiblePlugin();
+}
 }
 
 std::string GMSH_InvisiblePlugin::getHelp() const

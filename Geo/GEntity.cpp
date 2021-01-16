@@ -18,7 +18,8 @@
 
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _meshMaster(this), _visible(1), _selection(0),
-    _allElementsVisible(1), _obb(nullptr), va_lines(nullptr), va_triangles(nullptr)
+    _allElementsVisible(1), _obb(nullptr), va_lines(nullptr),
+    va_triangles(nullptr)
 {
   _color = CTX::instance()->packColor(0, 0, 255, 0);
 }

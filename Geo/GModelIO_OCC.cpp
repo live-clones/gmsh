@@ -2911,8 +2911,8 @@ bool OCC_Internals::_extrudePerDim(
       }
       result = p.Shape();
       const BRepSweep_Prism &prism(p.Prism());
-      _setExtrudedAttributes(c, (BRepSweep_Prism *)&prism, nullptr, e, 0., 0., 0., dx,
-                             dy, dz, 0., 0., 0., 0.);
+      _setExtrudedAttributes(c, (BRepSweep_Prism *)&prism, nullptr, e, 0., 0.,
+                             0., dx, dy, dz, 0., 0., 0., 0.);
       dim = getReturnedShapes(c, (BRepSweep_Prism *)&prism, top, body, lateral);
     }
     else if(mode == 1) { // revolve
@@ -2925,8 +2925,8 @@ bool OCC_Internals::_extrudePerDim(
       }
       result = r.Shape();
       const BRepSweep_Revol &revol(r.Revol());
-      _setExtrudedAttributes(c, nullptr, (BRepSweep_Revol *)&revol, e, x, y, z, 0.,
-                             0., 0., ax, ay, az, angle);
+      _setExtrudedAttributes(c, nullptr, (BRepSweep_Revol *)&revol, e, x, y, z,
+                             0., 0., 0., ax, ay, az, angle);
       dim = getReturnedShapes(c, (BRepSweep_Revol *)&revol, top, body, lateral);
     }
     else if(mode == 2) { // pipe

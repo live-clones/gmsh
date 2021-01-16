@@ -52,8 +52,7 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   std::set<MVertex *, MVertexPtrLessThan> allBoundingVertices;
   getAllBoundingVertices(gr, allBoundingVertices);
 
-  auto itv =
-    allBoundingVertices.begin();
+  auto itv = allBoundingVertices.begin();
   int I = 1;
   while(itv != allBoundingVertices.end()) {
     double tmp[3];
@@ -167,9 +166,7 @@ static int intersectLineTriangle(double X[3], double Y[3], double Z[3],
   b[1] = P[1] - Y[0];
   b[2] = P[2] - Z[0];
 
-  if(!sys3x3_with_tol(mat, b, res, &det)) {
-    return 0;
-  }
+  if(!sys3x3_with_tol(mat, b, res, &det)) { return 0; }
   //  printf("coucou %g %g %g\n",res[0],res[1],res[2]);
   if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec && res[1] >= eps_prec &&
      res[1] <= 1.0 - eps_prec && 1 - res[0] - res[1] >= eps_prec &&
@@ -271,9 +268,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
         break; // negative value means intersection is not "robust"
     }
 
-    if(nb_intersect < 0) {
-      setRand(rrr);
-    }
+    if(nb_intersect < 0) { setRand(rrr); }
     else {
       if(nb_intersect % 2 == 1) {
         // odd nb of intersections: the normal points inside the region
@@ -308,7 +303,8 @@ void meshGRegionNetgen(GRegion *gr)
   std::vector<GFace *> faces = gr->faces();
   for(auto it = faces.begin(); it != faces.end(); it++) {
     if((*it)->quadrangles.size()) {
-      Msg::Error("Cannot use frontal 3D algorithm with quadrangles on boundary");
+      Msg::Error(
+        "Cannot use frontal 3D algorithm with quadrangles on boundary");
       return;
     }
   }
@@ -338,7 +334,7 @@ void optimizeMeshGRegionNetgen::operator()(GRegion *gr, bool always)
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
 
-  if(gr->prisms.size() || gr->hexahedra.size() || gr->pyramids.size()){
+  if(gr->prisms.size() || gr->hexahedra.size() || gr->pyramids.size()) {
     Msg::Info("Skipping Netgen optimizer for hybrid mesh");
     return;
   }

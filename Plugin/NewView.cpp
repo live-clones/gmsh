@@ -15,12 +15,10 @@ StringXNumber NewViewOptions_Number[] = {
   {GMSH_FULLRC, "NumComp", nullptr, 1.},
   {GMSH_FULLRC, "Value", nullptr, 0.},
   {GMSH_FULLRC, "ViewTag", nullptr, -1.},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1.}
-};
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1.}};
 
 StringXString NewViewOptions_String[] = {
-  {GMSH_FULLRC, "Type", nullptr, "NodeData"}
-};
+  {GMSH_FULLRC, "Type", nullptr, "NodeData"}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterNewViewPlugin() { return new GMSH_NewViewPlugin(); }
@@ -79,18 +77,16 @@ PView *GMSH_NewViewPlugin::execute(PView *v)
   }
 
   std::map<int, std::vector<double> > d;
-  if(type == "NodeData")
-    nodeData(numComp, value, d);
-  if(type == "ElementData")
-    elementData(numComp, value, d, phys);
+  if(type == "NodeData") nodeData(numComp, value, d);
+  if(type == "ElementData") elementData(numComp, value, d, phys);
 
   PView *vn = new PView("New view", type, GModel::current(), d, tag);
   return vn;
 }
 
-void GMSH_NewViewPlugin::nodeData(int numComp,
-                                  double value,
-                                  std::map<int, std::vector<double> > &d){
+void GMSH_NewViewPlugin::nodeData(int numComp, double value,
+                                  std::map<int, std::vector<double> > &d)
+{
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities);
   for(std::size_t i = 0; i < entities.size(); i++) {
@@ -101,14 +97,12 @@ void GMSH_NewViewPlugin::nodeData(int numComp,
   }
 }
 
-void GMSH_NewViewPlugin::elementData(int numComp,
-                                     double value,
+void GMSH_NewViewPlugin::elementData(int numComp, double value,
                                      std::map<int, std::vector<double> > &d,
-                                     int phys){
+                                     int phys)
+{
   std::vector<GEntity *> entities;
-  if(phys == -1) {
-    GModel::current()->getEntities(entities, -1);
-  }
+  if(phys == -1) { GModel::current()->getEntities(entities, -1); }
   else {
     std::map<int, std::vector<GEntity *> > groups;
     GModel::current()->getPhysicalGroups(-1, groups);

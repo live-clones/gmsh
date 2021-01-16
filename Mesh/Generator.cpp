@@ -102,13 +102,12 @@ public:
       char name[256];
       sprintf(name, "missingEdgesOnRegion%d.pos", gr->tag());
       Msg::Warning("Region %d : %d mesh edges that should be embedded are "
-                 "missing in the final mesh",
-                 gr->tag(), (int)edges.size());
+                   "missing in the final mesh",
+                   gr->tag(), (int)edges.size());
       Msg::Info("Saving the missing edges in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
-      for(auto it = edges.begin();
-          it != edges.end(); ++it) {
+      for(auto it = edges.begin(); it != edges.end(); ++it) {
         MVertex *v1 = it->first.getVertex(0);
         MVertex *v2 = it->first.getVertex(1);
         fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", v1->x(), v1->y(), v1->z(),
@@ -122,13 +121,12 @@ public:
       char name[256];
       sprintf(name, "missingFacesOnRegion%d.pos", gr->tag());
       Msg::Warning("Volume %d : %d mesh faces that should be embedded are "
-                 "missing in the final mesh",
-                 gr->tag(), (int)faces.size());
+                   "missing in the final mesh",
+                   gr->tag(), (int)faces.size());
       Msg::Info("Saving the missing faces in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
-      for(auto it = faces.begin();
-          it != faces.end(); ++it) {
+      for(auto it = faces.begin(); it != faces.end(); ++it) {
         MVertex *v1 = it->first.getVertex(0);
         MVertex *v2 = it->first.getVertex(1);
         MVertex *v3 = it->first.getVertex(2);
@@ -512,8 +510,7 @@ static void Mesh2D(GModel *m)
   // surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)) {
     std::set<GFace *, GEntityPtrLessThan> f;
-    for(auto it = m->firstFace(); it != m->lastFace(); ++it)
-      f.insert(*it);
+    for(auto it = m->firstFace(); it != m->lastFace(); ++it) f.insert(*it);
 
     int nIter = 0, nTot = m->getNumFaces();
 
@@ -583,8 +580,7 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
       _stack.pop();
       oneDomain.insert(r);
       std::vector<GFace *> faces = r->faces();
-      for(auto it = faces.begin(); it != faces.end();
-          ++it) {
+      for(auto it = faces.begin(); it != faces.end(); ++it) {
         GFace *gf = *it;
         GRegion *other =
           (gf->getRegion(0) == r) ? gf->getRegion(1) : gf->getRegion(0);
@@ -650,8 +646,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
   // bnd2 contains non conforming faces
 
   std::set<MFace, MFaceLessThan> bnd2;
-  for(auto itf = bnd.begin();
-      itf != bnd.end(); ++itf) {
+  for(auto itf = bnd.begin(); itf != bnd.end(); ++itf) {
     GFace *gfound = findInFaceSearchStructure(*itf, search);
     if(!gfound) { bnd2.insert(*itf); }
   }
@@ -660,8 +655,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
   Msg::Info("%d hanging faces", bnd2.size());
 
   std::set<MFace, MFaceLessThan> ncf;
-  for(auto itf = bnd2.begin();
-      itf != bnd2.end(); ++itf) {
+  for(auto itf = bnd2.begin(); itf != bnd2.end(); ++itf) {
     const MFace &f = *itf;
     if(f.getNumVertices() == 4) { // quad face
       auto it1 =
@@ -794,8 +788,7 @@ static void TestConformity(GModel *gm)
     }
     printf("vol(%d) = %12.5E\n", gr->tag(), vol);
 
-    for(auto itf = bnd.begin();
-        itf != bnd.end(); ++itf) {
+    for(auto itf = bnd.begin(); itf != bnd.end(); ++itf) {
       GFace *gfound = findInFaceSearchStructure(*itf, search);
       if(!gfound) { count++; }
     }
@@ -956,8 +949,7 @@ static void Mesh3D(GModel *m)
   bool emptyRegionFound = false;
   for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
     GRegion *gr = *it;
-    if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility())
-      continue;
+    if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) continue;
     if(CTX::instance()->mesh.meshOnlyEmpty && gr->getNumMeshElements())
       continue;
     if(gr->getNumMeshElements() == 0) {
@@ -1079,8 +1071,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
                   EmbeddedCompatibilityTest());
 
   double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done optimizing mesh (Wall %gs, CPU %gs)",
-                 w2 - w1, t2 - t1);
+  Msg::StatusBar(true, "Done optimizing mesh (Wall %gs, CPU %gs)", w2 - w1,
+                 t2 - t1);
 }
 
 void AdaptMesh(GModel *m)
@@ -1094,8 +1086,8 @@ void AdaptMesh(GModel *m)
     std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
 
   double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done adaptating 3D mesh (Wall %gs, CPU %gs)",
-                 w2 - w1, t2 - t1);
+  Msg::StatusBar(true, "Done adaptating 3D mesh (Wall %gs, CPU %gs)", w2 - w1,
+                 t2 - t1);
 }
 
 void RecombineMesh(GModel *m)
@@ -1114,8 +1106,8 @@ void RecombineMesh(GModel *m)
   }
 
   double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done recombining 2D mesh (Wall %gs, CPU %gs)",
-                 w2 - w1, t2 - t1);
+  Msg::StatusBar(true, "Done recombining 2D mesh (Wall %gs, CPU %gs)", w2 - w1,
+                 t2 - t1);
 }
 
 static SPoint3 transform(MVertex *vsource, const std::vector<double> &tfo)
@@ -1133,8 +1125,7 @@ static void relocateSlaveVertices(GFace *slave,
                                   std::map<MVertex *, MVertex *> &vertS2M,
                                   bool useClosestPoint)
 {
-  for(auto vit = vertS2M.begin();
-      vit != vertS2M.end(); ++vit) {
+  for(auto vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
     MFaceVertex *v = dynamic_cast<MFaceVertex *>(vit->first);
     if(v && v->onWhat() == slave) {
       SPoint3 p = transform(vit->second, slave->affineTransform);
@@ -1161,8 +1152,7 @@ static void relocateSlaveVertices(GEdge *slave,
                                   std::map<MVertex *, MVertex *> &vertS2M,
                                   bool useClosestPoint)
 {
-  for(auto vit = vertS2M.begin();
-      vit != vertS2M.end(); ++vit) {
+  for(auto vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
     MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(vit->first);
     if(v && v->onWhat() == slave) {
       SPoint3 p = transform(vit->second, slave->affineTransform);
@@ -1194,8 +1184,7 @@ static void relocateSlaveVertices(std::vector<GEntity *> &entities,
     }
   }
 
-  for(auto it = master2slave.begin();
-      it != master2slave.end(); ++it) {
+  for(auto it = master2slave.begin(); it != master2slave.end(); ++it) {
     if(it->first->dim() == 2) {
       GFace *master = dynamic_cast<GFace *>(it->first);
       GFace *slave = dynamic_cast<GFace *>(it->second);
@@ -1275,8 +1264,7 @@ void FixPeriodicMesh(GModel *m)
             vtcs[iVtx] = tIter->second;
         }
 
-        auto srcIter =
-          srcEdges.find(MEdge(vtcs[0], vtcs[1]));
+        auto srcIter = srcEdges.find(MEdge(vtcs[0], vtcs[1]));
         if(srcIter == srcEdges.end()) {
           Msg::Error("Can't find periodic counterpart of mesh edge %d-%d "
                      "on curve %d, connected to mesh edge %d-%d on curve %d",
@@ -1357,8 +1345,7 @@ void FixPeriodicMesh(GModel *m)
         }
 
         MFace tgtFace(vtcs);
-        auto srcIter =
-          srcFaces.find(tgtFace);
+        auto srcIter = srcFaces.find(tgtFace);
         if(srcIter == srcFaces.end()) {
           std::ostringstream faceDef;
           for(int iVtx = 0; iVtx < nbVtcs; iVtx++)

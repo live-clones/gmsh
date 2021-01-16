@@ -132,8 +132,9 @@ int CGNSZoneUnstruct::readSection(
   std::vector<cgsize_t> sectData(dataSize), offsetData(endElt - startElt + 2);
   if(sectEltType == CGNS_ENUMV(MIXED)) {
 #if CGNS_VERSION >= 4000
-    cgnsErr = cg_poly_elements_read(fileIndex(), baseIndex(), index(), iSect,
-                                    sectData.data(), offsetData.data(), nullptr);
+    cgnsErr =
+      cg_poly_elements_read(fileIndex(), baseIndex(), index(), iSect,
+                            sectData.data(), offsetData.data(), nullptr);
 #endif
   }
   else {

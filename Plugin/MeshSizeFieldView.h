@@ -9,7 +9,7 @@
 #include "Plugin.h"
 
 extern "C" {
-  GMSH_Plugin *GMSH_RegisterMeshSizeFieldViewPlugin();
+GMSH_Plugin *GMSH_RegisterMeshSizeFieldViewPlugin();
 }
 
 class GMSH_MeshSizeFieldViewPlugin : public GMSH_PostPlugin {

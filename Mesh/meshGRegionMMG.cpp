@@ -58,8 +58,8 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
   // Store the tets from the Mmg structures into the Gmsh structures
   for(int k = 1; k <= ne; k++) {
     int v1mmg, v2mmg, v3mmg, v4mmg;
-    if(MMG3D_Get_tetrahedron(mmg, &v1mmg, &v2mmg, &v3mmg, &v4mmg, &ref, nullptr) !=
-       1)
+    if(MMG3D_Get_tetrahedron(mmg, &v1mmg, &v2mmg, &v3mmg, &v4mmg, &ref,
+                             nullptr) != 1)
       Msg::Error("Mmg3d: unable to get tetrahedron %d", k);
 
     MVertex *v1 = kToMVertex[v1mmg];
@@ -135,8 +135,7 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
       double L = t->maxEdge();
       for(int k = 0; k < 3; k++) {
         MVertex *v = t->getVertex(k);
-        auto itv =
-          LCS.find(v);
+        auto itv = LCS.find(v);
         if(itv != LCS.end()) {
           itv->second.first += L;
           itv->second.second++;
@@ -150,8 +149,7 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
 
   int k = 1;
   std::map<int, int> gmsh2mmg_num;
-  for(auto it = allVertices.begin();
-      it != allVertices.end(); ++it) {
+  for(auto it = allVertices.begin(); it != allVertices.end(); ++it) {
     if(MMG3D_Set_vertex(mmg, (*it)->x(), (*it)->y(), (*it)->z(),
                         (*it)->getNum(), k) != 1)
       Msg::Error("Mmg3d: unable to set vertex %d", k);
@@ -227,8 +225,7 @@ static void updateSizes(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
       double L = t->maxEdge();
       for(int k = 0; k < 3; k++) {
         MVertex *v = t->getVertex(k);
-        auto itv =
-          LCS.find(v);
+        auto itv = LCS.find(v);
         if(itv != LCS.end()) {
           itv->second.first += L;
           itv->second.second++;
@@ -254,8 +251,7 @@ static void updateSizes(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
     auto it = mmg2gmsh.find(k);
 
     if(it != mmg2gmsh.end() && CTX::instance()->mesh.lcExtendFromBoundary) {
-      auto itv =
-        LCS.find(it->second);
+      auto itv = LCS.find(it->second);
       if(itv != LCS.end()) {
         double LL = itv->second.first / itv->second.second;
         SMetric3 l4(1. / (LL * LL));

@@ -484,7 +484,9 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
       }
     }
     else {
-      if(fscanf(fp, "%lu %lu", &numBlock, &totalNumNodes) != 2) { return nullptr; }
+      if(fscanf(fp, "%lu %lu", &numBlock, &totalNumNodes) != 2) {
+        return nullptr;
+      }
     }
   }
 
@@ -734,7 +736,9 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       }
     }
     else {
-      if(fscanf(fp, "%lu %lu", &numBlock, &totalNumElements) != 2) { return nullptr; }
+      if(fscanf(fp, "%lu %lu", &numBlock, &totalNumElements) != 2) {
+        return nullptr;
+      }
     }
   }
 
@@ -825,8 +829,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         }
 
         MElementFactory elementFactory;
-        MElement *element = elementFactory.create(elmType, vertices, data[j], 0,
-                                                  false, 0, nullptr, nullptr, nullptr);
+        MElement *element = elementFactory.create(
+          elmType, vertices, data[j], 0, false, 0, nullptr, nullptr, nullptr);
         if(!element) {
           Msg::Error("Could not create element %lu of type %d", data[j],
                      elmType);
@@ -888,8 +892,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         }
 
         MElementFactory elementFactory;
-        MElement *element = elementFactory.create(elmType, vertices, elmTag, 0,
-                                                  false, 0, nullptr, nullptr, nullptr);
+        MElement *element = elementFactory.create(
+          elmType, vertices, elmTag, 0, false, 0, nullptr, nullptr, nullptr);
         if(!element) {
           Msg::Error("Could not create element %lu of type %d", elmTag,
                      elmType);

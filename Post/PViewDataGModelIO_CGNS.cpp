@@ -428,8 +428,9 @@ namespace {
 
     // type and total number of entities (either vertices or elements) in zone
     const bool nodeOrEltData = (dataType == PViewDataGModel::NodeData);
-    const cgsize_t *zoneEntSize =
-      nodeOrEltData ? zoneSize : isStructured ? zoneSize + dim : zoneSize + 1;
+    const cgsize_t *zoneEntSize = nodeOrEltData ? zoneSize :
+                                  isStructured  ? zoneSize + dim :
+                                                  zoneSize + 1;
 
     // get solution order
     int order = 1;

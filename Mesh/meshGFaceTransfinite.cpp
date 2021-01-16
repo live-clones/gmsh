@@ -57,8 +57,7 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners)
     // try reaaally hard for 3-sided faces
     if(corners.size() == 3) {
       GEdge *first = nullptr, *last = nullptr;
-      for(auto it = fedges.begin();
-          it != fedges.end(); it++) {
+      for(auto it = fedges.begin(); it != fedges.end(); it++) {
         if(((*it)->getBeginVertex()->mesh_vertices[0] == corners[0] &&
             (*it)->getEndVertex()->mesh_vertices[0] == corners[1]) ||
            ((*it)->getBeginVertex()->mesh_vertices[0] == corners[1] &&
@@ -159,8 +158,7 @@ int MeshTransfiniteSurface(GFace *gf)
   // make sure that all bounding edges have begin/end points: everything in here
   // depends on it
   const std::vector<GEdge *> &edges = gf->edges();
-  for(auto it = edges.begin();
-      it != edges.end(); it++) {
+  for(auto it = edges.begin(); it != edges.end(); it++) {
     if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
       Msg::Error("Transfinite algorithm cannot be applied with curve %d which "
                  "has no begin or end point",

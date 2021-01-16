@@ -682,7 +682,8 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
 
   if(version > 2.2)
     Msg::Warning("Mesh-based export of list-based datasets not available with "
-                 "MSH %g: using MSH 2.2", version);
+                 "MSH %g: using MSH 2.2",
+                 version);
 
   fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
 
@@ -709,8 +710,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     fprintf(fp, "$InterpolationScheme\n");
     fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
     fprintf(fp, "%d\n", (int)_interpolation.size());
-    for(auto it = _interpolation.begin();
-        it != _interpolation.end(); it++) {
+    for(auto it = _interpolation.begin(); it != _interpolation.end(); it++) {
       if(it->second.size() >= 2) {
         fprintf(fp, "%d\n2\n", it->first);
         for(int mat = 0; mat < 2; mat++) {

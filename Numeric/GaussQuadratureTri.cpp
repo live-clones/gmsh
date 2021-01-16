@@ -884,7 +884,7 @@ static IntPt *GQTSolin[21] = {
   triP18Solin, triP19Solin, triP20Solin};
 static int GQTnPtSolin[21] = {1,  1,  3,  4,  6,  7,  12, 13, 16, 19, 25,
                               27, 33, 37, 42, 48, 52, 61, 70, 73, 79};
-static std::vector<IntPt*> GQTGL(40, nullptr);
+static std::vector<IntPt *> GQTGL(40, nullptr);
 
 IntPt *getGQTPts(int order)
 {

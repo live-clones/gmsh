@@ -83,8 +83,7 @@ public:
                           bool mixed);
   inline SVector3 getSSL(MVertex *v) const
   {
-    auto it =
-      _straightSidedLocation.find(v);
+    auto it = _straightSidedLocation.find(v);
     if(it != _straightSidedLocation.end())
       return it->second;
     else

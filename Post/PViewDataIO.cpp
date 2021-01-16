@@ -291,8 +291,7 @@ void PViewData::sendToServer(const std::string &name)
   bool ok = toVector(vec);
 
   // Success ?
-  if(!ok)
-    Msg::Error("sendToServer: cannot vectorize PView");
+  if(!ok) Msg::Error("sendToServer: cannot vectorize PView");
 
   // Only one step ?
   if(vec.size() != 1)

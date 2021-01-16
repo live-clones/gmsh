@@ -179,9 +179,7 @@ public:
       dfdu[2] += val[j] * s[2];
       j += stride;
     }
-    if(invjac) {
-      matvec(invjac, dfdu, f);
-    }
+    if(invjac) { matvec(invjac, dfdu, f); }
     else {
       double jac[3][3], inv[3][3];
       getJacobian(u, v, w, jac);

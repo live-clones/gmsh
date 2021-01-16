@@ -14,8 +14,7 @@
 StringXNumber MeshSizeFieldViewOptions_Number[] = {
   {GMSH_FULLRC, "MeshSizeField", nullptr, 0.},
   {GMSH_FULLRC, "View", nullptr, -1.},
-  {GMSH_FULLRC, "Component", nullptr, 0.}
-};
+  {GMSH_FULLRC, "Component", nullptr, 0.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterMeshSizeFieldViewPlugin()
@@ -26,9 +25,10 @@ GMSH_Plugin *GMSH_RegisterMeshSizeFieldViewPlugin()
 
 std::string GMSH_MeshSizeFieldViewPlugin::getHelp() const
 {
-  return "Plugin(MeshSizeFieldView) evaluates the mesh size field `MeshSizeField' "
-    "on specified `Component` (0 for scalar) of the post-processing view "
-    "`View'.";
+  return "Plugin(MeshSizeFieldView) evaluates the mesh size field "
+         "`MeshSizeField' "
+         "on specified `Component` (0 for scalar) of the post-processing view "
+         "`View'.";
 }
 
 int GMSH_MeshSizeFieldViewPlugin::getNbOptions() const

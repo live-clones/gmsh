@@ -807,7 +807,8 @@ static void CopyCurve(Curve *c, Curve *cc)
 Curve *DuplicateCurve(Curve *c)
 {
   bool ok = true;
-  Curve *pc = CreateCurve(NEWLINE(), 0, 1, nullptr, nullptr, -1, -1, 0., 1., ok);
+  Curve *pc =
+    CreateCurve(NEWLINE(), 0, 1, nullptr, nullptr, -1, -1, 0., 1., ok);
   CopyCurve(c, pc);
   Tree_Insert(GModel::current()->getGEOInternals()->Curves, &pc);
   for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
@@ -1086,7 +1087,8 @@ void DeletePhysicalVolume(int num)
 Curve *CreateReversedCurve(Curve *c)
 {
   bool ok = true;
-  Curve *newc = CreateCurve(-c->Num, c->Typ, 1, nullptr, nullptr, -1, -1, 0., 1., ok);
+  Curve *newc =
+    CreateCurve(-c->Num, c->Typ, 1, nullptr, nullptr, -1, -1, 0., 1., ok);
 
   if(List_Nbr(c->Control_Points)) {
     newc->Control_Points =
@@ -2501,8 +2503,8 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
     if(!ComparePosition(&pv, &chapeau)) return pv->Num;
-    c =
-      CreateCurve(NEWLINE(), MSH_SEGM_LINE, 1, nullptr, nullptr, -1, -1, 0., 1., ok);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_LINE, 1, nullptr, nullptr, -1, -1, 0.,
+                    1., ok);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2515,8 +2517,8 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
   case BOUNDARY_LAYER:
     chapeau->Typ = MSH_POINT_BND_LAYER;
     if(e) chapeau->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, nullptr, nullptr, -1, -1, 0.,
-                    1., ok);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, nullptr, nullptr, -1, -1,
+                    0., 1., ok);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2546,8 +2548,8 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
     if(!ComparePosition(&pv, &chapeau)) return pv->Num;
-    c =
-      CreateCurve(NEWLINE(), MSH_SEGM_CIRC, 1, nullptr, nullptr, -1, -1, 0., 1., ok);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_CIRC, 1, nullptr, nullptr, -1, -1, 0.,
+                    1., ok);
     c->Control_Points = List_Create(3, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2574,8 +2576,8 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
   case TRANSLATE_ROTATE:
     d = CTX::instance()->geom.extrudeSplinePoints;
     d = d ? d : 1;
-    c =
-      CreateCurve(NEWLINE(), MSH_SEGM_SPLN, 1, nullptr, nullptr, -1, -1, 0., 1., ok);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_SPLN, 1, nullptr, nullptr, -1, -1, 0.,
+                    1., ok);
     c->Control_Points = List_Create(
       CTX::instance()->geom.extrudeSplinePoints + 1, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;

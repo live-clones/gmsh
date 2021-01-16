@@ -320,7 +320,9 @@ int GModel::_readMSH3(const std::string &name)
           }
           if(swap) SwapBytes((char *)&entity, sizeof(int), 1);
         }
-        if(!entity) { vertex = new MVertex(xyz[0], xyz[1], xyz[2], nullptr, num); }
+        if(!entity) {
+          vertex = new MVertex(xyz[0], xyz[1], xyz[2], nullptr, num);
+        }
         else {
           if(!binary) {
             if(fscanf(fp, "%d", &dim) != 1) {

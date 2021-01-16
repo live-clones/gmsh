@@ -193,12 +193,12 @@ PView *GMSH_ModifyComponentsPlugin::execute(PView *view)
           std::vector<double> w(std::max(9, numComp2), 0.);
           if(octree) {
             int qn = forceInterpolation ? numNodes : 0;
-            if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2, nullptr,
-                                     qn, &x[0], &y[0], &z[0]))
-              if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], step2, nullptr,
-                                       qn, &x[0], &y[0], &z[0]))
-                octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2, nullptr,
-                                     qn, &x[0], &y[0], &z[0]);
+            if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2,
+                                     nullptr, qn, &x[0], &y[0], &z[0]))
+              if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], step2,
+                                       nullptr, qn, &x[0], &y[0], &z[0]))
+                octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2,
+                                     nullptr, qn, &x[0], &y[0], &z[0]);
           }
           else {
             for(int comp = 0; comp < numComp2; comp++)

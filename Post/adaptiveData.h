@@ -390,17 +390,13 @@ public:
   {
     sizev = obj.sizev;
     v = new double[sizev];
-    for(int i = 0; i < sizev; i++) {
-      v[i] = obj.v[i];
-    }
+    for(int i = 0; i < sizev; i++) { v[i] = obj.v[i]; }
   }
   PValues(int size)
   {
     sizev = size;
     v = new double[sizev];
-    for(int i = 0; i < sizev; i++) {
-      v[i] = 0.0;
-    }
+    for(int i = 0; i < sizev; i++) { v[i] = 0.0; }
   }
   PValues(double vx)
   {
@@ -439,9 +435,7 @@ public:
     if(sizev != obj.sizev)
       Msg::Error("In PValues overlodaing operator: size mistmatch %d %d",
                  sizev);
-    for(int i = 0; i < sizev; i++) {
-      v[i] = obj.v[i];
-    }
+    for(int i = 0; i < sizev; i++) { v[i] = obj.v[i]; }
   }
 };
 

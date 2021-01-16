@@ -105,7 +105,8 @@ std::vector<GEdge *> ensureSimplyConnectedEdge(GEdge *ge)
       ge->lines = _parts[i];
     else {
       discreteEdge *newE = new discreteEdge(
-        ge->model(), ge->model()->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
+        ge->model(), ge->model()->getMaxElementaryNumber(1) + 1, nullptr,
+        nullptr);
       ge->model()->add(newE);
       newE->lines = _parts[i];
       _all.push_back(newE);
@@ -420,8 +421,8 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
     std::set<GFace *> &gfaces = it->second;
     auto gfIter = gFacesToGEdge.find(gfaces);
     if(gfIter == gFacesToGEdge.end()) {
-      discreteEdge *de =
-        new discreteEdge(gm, gm->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
+      discreteEdge *de = new discreteEdge(gm, gm->getMaxElementaryNumber(1) + 1,
+                                          nullptr, nullptr);
       num++;
       gm->add(de);
       auto gfIter = gfaces.begin();

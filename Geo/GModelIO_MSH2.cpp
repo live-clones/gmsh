@@ -71,8 +71,8 @@ createElementMSH2(GModel *m, int num, int typeMSH, int physical, int reg,
                   unsigned int part, std::vector<MVertex *> &v,
                   std::map<int, std::vector<MElement *> > elements[10],
                   std::map<int, std::map<int, std::string> > physicals[4],
-                  bool owner = false, MElement *parent = nullptr, MElement *d1 = nullptr,
-                  MElement *d2 = nullptr)
+                  bool owner = false, MElement *parent = nullptr,
+                  MElement *d1 = nullptr, MElement *d2 = nullptr)
 {
   if(CTX::instance()->mesh.switchElementTags) {
     int tmp = reg;

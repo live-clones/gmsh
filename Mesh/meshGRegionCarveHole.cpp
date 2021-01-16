@@ -129,8 +129,7 @@ void carveHole(GRegion *gr, int num, double distance,
   addFaces(gr->pyramids, faces);
 
   std::set<MVertex *> verts;
-  for(auto it = faces.begin();
-      it != faces.end(); it++) {
+  for(auto it = faces.begin(); it != faces.end(); it++) {
     for(std::size_t i = 0; i < it->getNumVertices(); i++) {
       it->getVertex(i)->setEntity(gf);
       verts.insert(it->getVertex(i));

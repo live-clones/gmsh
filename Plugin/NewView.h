@@ -8,9 +8,8 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterNewViewPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterNewViewPlugin();
 }
 
 class GMSH_NewViewPlugin : public GMSH_PostPlugin {
@@ -29,13 +28,10 @@ public:
   PView *execute(PView *);
 
 private:
-  void nodeData(int numComp,
-                double value,
+  void nodeData(int numComp, double value,
                 std::map<int, std::vector<double> > &d);
-  void elementData(int numComp,
-                   double value,
-                   std::map<int, std::vector<double> > &d,
-                   int phys);
+  void elementData(int numComp, double value,
+                   std::map<int, std::vector<double> > &d, int phys);
 };
 
 #endif

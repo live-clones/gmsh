@@ -240,8 +240,7 @@ bool PView::writeX3D(const std::string &fileName)
   fprintf(fp, "  </head>\n");
   // Viewport
   SBoundingBox3d bb(0., 0., 0., 0., 0., 0.);
-  for(auto pvit = PView::list.begin();
-      pvit < PView::list.end(); pvit++) {
+  for(auto pvit = PView::list.begin(); pvit < PView::list.end(); pvit++) {
     PViewData *data = (*pvit)->getData(true);
     PViewOptions *opt = (*pvit)->getOptions();
     if(!data->getDirty() && opt->visible) {

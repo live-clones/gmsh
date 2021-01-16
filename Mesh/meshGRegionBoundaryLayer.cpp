@@ -246,7 +246,8 @@ public:
           for(int k = 0; k < 2; k++) {
             MVertex *v = edges[i]->lines[j]->getVertex(k);
             auto it = _vertices.find(v);
-            if(it == _vertices.end()) Msg::Error("Unknow node in boundary layer");
+            if(it == _vertices.end())
+              Msg::Error("Unknow node in boundary layer");
             it->add_line(edges[i]->lines[j], edges[i]);
           }
         }
@@ -260,8 +261,7 @@ public:
     for(size_t i = 0; i < bls.size(); i++) {
       for(size_t j = 0; j < bls[i]->triangles.size(); j++) {
         MTriangle *t = bls[i]->triangles[j];
-        auto it =
-          t_normals.find(t->getFace(0));
+        auto it = t_normals.find(t->getFace(0));
         SVector3 n;
         if(it == t_normals.end())
           Msg::Error("Unknown face in boundary layer");
@@ -270,7 +270,8 @@ public:
         for(int k = 0; k < 3; k++) {
           MVertex *v = t->getVertex(k);
           auto it = _vertices.find(v);
-          if(it == _vertices.end()) Msg::Error("Unknown node in boundary layer");
+          if(it == _vertices.end())
+            Msg::Error("Unknown node in boundary layer");
           it->add_triangle(t, n, bls[i]);
         }
       }
@@ -307,27 +308,21 @@ public:
           MVertex *v2 = it->_triangles[k]->getVertex(2);
           GFace *gf = it->_gfaces[k];
           if((v0 == l0 && v1 == l1) || (v0 == l1 && v1 == l0)) {
-            if(gf == f0) {
-              N[0] = it->_normals[k];
-            }
+            if(gf == f0) { N[0] = it->_normals[k]; }
             if(gf == f1) {
               N[1] = it->_normals[k];
               op1 = v2;
             }
           }
           if((v0 == l0 && v2 == l1) || (v0 == l1 && v2 == l0)) {
-            if(gf == f0) {
-              N[0] = it->_normals[k];
-            }
+            if(gf == f0) { N[0] = it->_normals[k]; }
             if(gf == f1) {
               N[1] = it->_normals[k];
               op1 = v1;
             }
           }
           if((v1 == l0 && v2 == l1) || (v1 == l1 && v2 == l0)) {
-            if(gf == f0) {
-              N[0] = it->_normals[k];
-            }
+            if(gf == f0) { N[0] = it->_normals[k]; }
             if(gf == f1) {
               N[1] = it->_normals[k];
               op1 = v0;
@@ -335,7 +330,7 @@ public:
           }
         }
         double alpha = angle(N[0], N[1]);
-        if(op1){
+        if(op1) {
           SVector3 dir(0.5 * (l0->x() + l1->x()) - op1->x(),
                        0.5 * (l0->y() + l1->y()) - op1->y(),
                        0.5 * (l0->z() + l1->z()) - op1->z());
@@ -365,8 +360,7 @@ public:
   void classify_corners()
   {
     auto it = _vertices.begin();
-    for(; it != _vertices.end(); ++it) {
-    }
+    for(; it != _vertices.end(); ++it) {}
   }
 
   void add_fan(const blyr_mvertex &v)
@@ -430,8 +424,7 @@ public:
     mean_plane plane;
     computeMeanPlaneSimple(aaa, plane);
 
-    auto
-      it = v._v_per_ridge.begin();
+    auto it = v._v_per_ridge.begin();
 
     std::vector<MLine *> plane_lines;
     std::map<MVertex *, MVertex *> plane_vertices;
@@ -528,8 +521,7 @@ public:
     }
 
     std::map<int, MVertex *> plane_vertices_inv;
-    for(auto it = plane_vertices.begin();
-        it != plane_vertices.end(); ++it)
+    for(auto it = plane_vertices.begin(); it != plane_vertices.end(); ++it)
       plane_vertices_inv[it->second->getNum()] = it->first;
     //    printf("%d vertices there\n",plane_vertices_inv.size());
     //    printf("%d triangles\n",mesh.size());
@@ -729,8 +721,8 @@ public:
           if(!gf)
             Msg::Error("Topological error in 3D boundary layer generation");
           GPoint gp = gf->closestPoint(p, initialGuess);
-          printf("adding a point %g %g %g in face %d\n",
-                 n.x(), n.y(), n.z(), gf->tag());
+          printf("adding a point %g %g %g in face %d\n", n.x(), n.y(), n.z(),
+                 gf->tag());
           MVertex *vf =
             new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
           gf->mesh_vertices.push_back(vf);
@@ -742,14 +734,11 @@ public:
             blv._normals.push_back(it->_normals[j]);
             if(it->_gfaces[j] == gf) {
               for(int k = 0; k < 3; k++) {
-                if(t->getVertex(k) == it->_v) {
-                  t->setVertex(k, vf);
-                }
+                if(t->getVertex(k) == it->_v) { t->setVertex(k, vf); }
               }
             }
           }
-          auto ite =
-            _vertices.find(blyr_mvertex(_externals_v[0]));
+          auto ite = _vertices.find(blyr_mvertex(_externals_v[0]));
           if(ite != _vertices.end()) {
             blv._v_per_face.push_back(ite->_v_per_face[0]);
             blv._n_per_vertex.push_back(n);
@@ -772,8 +761,7 @@ public:
               std::pair<GFace *, GFace *> pa =
                 std::make_pair(_internals[k]->_f[0], _internals[k]->_f[1]);
               it->_v_per_ridge[pa] = fan;
-              auto iti =
-                _vertices.find(blyr_mvertex(_internals_v[k]));
+              auto iti = _vertices.find(blyr_mvertex(_internals_v[k]));
               MVertex *o = iti->_v_per_face[0];
               gf->quadrangles.push_back(
                 new MQuadrangle(it->_v, iti->_v, o, vf));
@@ -880,7 +868,8 @@ public:
         }
         else {
           Msg::Error("Corner with %d internal ridges and %d external ridges "
-                     "should be coded", nINTERNAL, nEXTERNAL);
+                     "should be coded",
+                     nINTERNAL, nEXTERNAL);
           printf("EXTERNALS :");
           for(size_t i = 0; i < _externals.size(); i++)
             printf("%d ", _externals[i]->_ge->tag());
@@ -1069,7 +1058,7 @@ public:
                   //%p\n",v->getNum(),iGe,jGe,gei->tag(),gej->tag(),gf->tag(),vplus[iGe]._v,vplus[jGe]._v);
                   //		  printf("-------------------------------------- >
                   //%d -- %d %d -- %d %d\n",gf->tag(), gei->tag(),
-                  //gej->tag(),iGe,jGe);
+                  // gej->tag(),iGe,jGe);
                   vf = vplus[iGe]._v;
                 }
                 if(!vf || vf->onWhat() != _gr) {
@@ -1214,8 +1203,7 @@ public:
           std::vector<MVertex *> fan0;
           std::vector<MVertex *> fan1;
 
-          auto it =
-            it0->_v_per_ridge.find(pa_pos);
+          auto it = it0->_v_per_ridge.find(pa_pos);
           if(it != it0->_v_per_ridge.end())
             fan0 = it->second;
           else {
@@ -1262,7 +1250,7 @@ public:
         MTriangle *t = v._triangles_at_corner[j];
         /// TEMPORARY --> SHOULD BE A TET BUT I PREFER THAT FOR NOW FOR VIZU
         //	printf("%p %p %p\n",
-        //t->getVertex(0),t->getVertex(1),t->getVertex(2));
+        // t->getVertex(0),t->getVertex(1),t->getVertex(2));
         _gr->prisms.push_back(new MPrism(v._v, v._v, v._v, t->getVertex(0),
                                          t->getVertex(1), t->getVertex(2)));
       }
@@ -1286,9 +1274,7 @@ bool createBoundaryLayerOneLayer(GRegion *gr, std::vector<GFace *> &bls)
   //  gr->mesh_vertices[i];
   gr->mesh_vertices.clear();
 
-  if(basic) {
-    mgr.extrude_vertices_basic();
-  }
+  if(basic) { mgr.extrude_vertices_basic(); }
   else {
     Msg::Info("Classifying ridges (INTERNAL / EXTERNAL / FLAT)");
     mgr.classify_ridges();

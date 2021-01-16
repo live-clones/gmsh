@@ -169,9 +169,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
-  if(timeStep < 0) {
-    timeStep = -data1->getNumTimeSteps();
-  }
+  if(timeStep < 0) { timeStep = -data1->getNumTimeSteps(); }
   else if(timeStep > data1->getNumTimeSteps() - 1) {
     Msg::Error("Invalid time step (%d) in View[%d]: using all steps instead",
                timeStep, v1->getIndex());
@@ -218,12 +216,12 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
           if(otherData) {
             if(octree) {
               int qn = forceInterpolation ? numNodes : 0;
-              if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2, nullptr,
-                                       qn, &x[0], &y[0], &z[0]))
+              if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2,
+                                       nullptr, qn, &x[0], &y[0], &z[0]))
                 if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], step2,
                                          nullptr, qn, &x[0], &y[0], &z[0]))
-                  octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2, nullptr,
-                                       qn, &x[0], &y[0], &z[0]);
+                  octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2,
+                                       nullptr, qn, &x[0], &y[0], &z[0]);
             }
             else
               for(int comp = 0; comp < otherNumComp; comp++)

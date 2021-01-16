@@ -401,9 +401,7 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView *v)
   std::vector<std::vector<double> > farField2i(_nbPhi + 1);
   std::vector<std::vector<double> > farField3i(_nbPhi + 1);
   std::vector<std::vector<double> > farFieldVec(3);
-  for(int comp = 0; comp < 3; comp++) {
-    farFieldVec[comp].resize(2, 0.);
-  }
+  for(int comp = 0; comp < 3; comp++) { farFieldVec[comp].resize(2, 0.); }
 
   for(int i = 0; i <= _nbPhi; i++) {
     phi[i].resize(_nbThe + 1);

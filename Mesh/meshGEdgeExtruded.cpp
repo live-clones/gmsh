@@ -13,12 +13,11 @@ static void createElements(GEdge *ge)
 {
   // create elements
   for(std::size_t i = 0; i < ge->mesh_vertices.size() + 1; i++) {
-    MVertex *v0 = (i == 0) ?
-      ge->getBeginVertex()->mesh_vertices[0] :
-      ge->mesh_vertices[i - 1];
+    MVertex *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] :
+                             ge->mesh_vertices[i - 1];
     MVertex *v1 = (i == ge->mesh_vertices.size()) ?
-      ge->getEndVertex()->mesh_vertices[0] :
-      ge->mesh_vertices[i];
+                    ge->getEndVertex()->mesh_vertices[0] :
+                    ge->mesh_vertices[i];
     MLine *newElem = new MLine(v0, v1);
     ge->lines.push_back(newElem);
   }
@@ -76,7 +75,7 @@ int MeshExtrudedCurve(GEdge *ge)
 
   if(!ep || !ep->mesh.ExtrudeMesh) return 0;
 
-  if(!ge->getBeginVertex() || !ge->getEndVertex()){
+  if(!ge->getBeginVertex() || !ge->getEndVertex()) {
     Msg::Error("Cannot extrude curve %d with no begin or end point", ge->tag());
     return 0;
   }

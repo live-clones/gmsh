@@ -16,7 +16,8 @@ Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
                    int combine, bool omit, bool smoothen, int heuristic)
   : _model(model), _domain(physicalDomain), _subdomain(physicalSubdomain),
     _imdomain(physicalImdomain), _saveOrig(saveOrig), _combine(combine),
-    _omit(omit), _smoothen(smoothen), _heuristic(heuristic), _cellComplex(nullptr)
+    _omit(omit), _smoothen(smoothen), _heuristic(heuristic),
+    _cellComplex(nullptr)
 {
   _fileName = "";
 

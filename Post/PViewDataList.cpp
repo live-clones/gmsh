@@ -71,14 +71,12 @@ void PViewDataList::addStep(std::vector<double> &y)
   std::vector<double> tmp;
   int stride = SP.size() / NbSP;
   for(int i = 0; i < NbSP; i++) {
-    for(int j = 0; j < stride; j++)
-      tmp.push_back(SP[i * stride + j]);
+    for(int j = 0; j < stride; j++) tmp.push_back(SP[i * stride + j]);
     tmp.push_back(y[i]);
   }
   SP = tmp;
   finalize();
 }
-
 
 bool PViewDataList::finalize(bool computeMinMax,
                              const std::string &interpolationScheme)
@@ -717,9 +715,8 @@ bool PViewDataList::combineSpace(nameData &nd)
     }
 
     // copy interpolation matrices
-    for(auto it =
-          l->_interpolation.begin();
-        it != l->_interpolation.end(); it++)
+    for(auto it = l->_interpolation.begin(); it != l->_interpolation.end();
+        it++)
       if(_interpolation[it->first].empty())
         for(std::size_t i = 0; i < it->second.size(); i++)
           _interpolation[it->first].push_back(
@@ -856,8 +853,7 @@ bool PViewDataList::combineTime(nameData &nd)
   }
   NbT2 = data[0]->NbT2;
   NbT3 = data[0]->NbT3;
-  for(auto it =
-        data[0]->_interpolation.begin();
+  for(auto it = data[0]->_interpolation.begin();
       it != data[0]->_interpolation.end(); it++)
     if(_interpolation[it->first].empty())
       for(std::size_t i = 0; i < it->second.size(); i++)

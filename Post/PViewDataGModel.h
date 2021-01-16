@@ -263,8 +263,8 @@ public:
 
   // Add homogeneous data "on the fly", without a map
   bool addData(GModel *model, const std::vector<std::size_t> &tags,
-               const std::vector<double> &data, int step,
-               double time, int partition, int numComp);
+               const std::vector<double> &data, int step, double time,
+               int partition, int numComp);
 
   // Allow to destroy the data
   void destroyData();

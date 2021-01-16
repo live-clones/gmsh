@@ -166,7 +166,8 @@ public:
   double _distance;
   SPoint3 _closestPoint;
   MTriangle *_t3d, *_t2d;
-  dfWrapper(const SPoint3 &p) : _p(p), _distance(1.e22), _t3d(nullptr), _t2d(nullptr)
+  dfWrapper(const SPoint3 &p)
+    : _p(p), _distance(1.e22), _t3d(nullptr), _t2d(nullptr)
   {
   }
 };

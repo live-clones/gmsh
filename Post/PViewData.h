@@ -90,12 +90,10 @@ public:
 
   // get/set min/max for given step (global over all steps if step=-1)
   virtual double getMin(int step = -1, bool onlyVisible = false,
-                        int tensorRep = 0,
-                        int forceNumComponents = 0,
+                        int tensorRep = 0, int forceNumComponents = 0,
                         int componentMap[9] = nullptr) = 0;
   virtual double getMax(int step = -1, bool onlyVisible = false,
-                        int tensorRep = 0,
-                        int forceNumComponents = 0,
+                        int tensorRep = 0, int forceNumComponents = 0,
                         int componentMap[9] = nullptr) = 0;
   virtual void setMin(double min) = 0;
   virtual void setMax(double max) = 0;
@@ -299,31 +297,31 @@ public:
   // to a different value than -1.
   bool searchScalar(double x, double y, double z, double *values, int step = -1,
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
-                    double *qy = nullptr, double *qz = nullptr, bool grad = false,
-                    int dim = -1);
+                    double *qy = nullptr, double *qz = nullptr,
+                    bool grad = false, int dim = -1);
   bool searchScalarWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = nullptr, double tol = 1.e-2,
-                           int qn = 0, double *qx = nullptr, double *qy = nullptr,
-                           double *qz = nullptr, bool grad = false,
-                           int dim = -1);
+                           int step = -1, double *size = nullptr,
+                           double tol = 1.e-2, int qn = 0, double *qx = nullptr,
+                           double *qy = nullptr, double *qz = nullptr,
+                           bool grad = false, int dim = -1);
   bool searchVector(double x, double y, double z, double *values, int step = -1,
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
-                    double *qy = nullptr, double *qz = nullptr, bool grad = false,
-                    int dim = -1);
+                    double *qy = nullptr, double *qz = nullptr,
+                    bool grad = false, int dim = -1);
   bool searchVectorWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = nullptr, double tol = 1.e-2,
-                           int qn = 0, double *qx = nullptr, double *qy = nullptr,
-                           double *qz = nullptr, bool grad = false,
-                           int dim = -1);
+                           int step = -1, double *size = nullptr,
+                           double tol = 1.e-2, int qn = 0, double *qx = nullptr,
+                           double *qy = nullptr, double *qz = nullptr,
+                           bool grad = false, int dim = -1);
   bool searchTensor(double x, double y, double z, double *values, int step = -1,
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
-                    double *qy = nullptr, double *qz = nullptr, bool grad = false,
-                    int dim = -1);
+                    double *qy = nullptr, double *qz = nullptr,
+                    bool grad = false, int dim = -1);
   bool searchTensorWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = nullptr, double tol = 1.e-2,
-                           int qn = 0, double *qx = nullptr, double *qy = nullptr,
-                           double *qz = nullptr, bool grad = false,
-                           int dim = -1);
+                           int step = -1, double *size = nullptr,
+                           double tol = 1.e-2, int qn = 0, double *qx = nullptr,
+                           double *qy = nullptr, double *qz = nullptr,
+                           bool grad = false, int dim = -1);
 
   // I/O routines
   virtual bool writeSTL(const std::string &fileName);

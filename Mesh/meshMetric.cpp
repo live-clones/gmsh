@@ -244,8 +244,7 @@ std::vector<MVertex *> getLSBlob(std::size_t minNbPt, v2t_cont::iterator it,
     for(auto itBV = bvv.begin(); itBV != bvv.end();
         itBV++) { // For each boundary vertex...
       std::vector<MElement *> &adjBV = adj[*itBV];
-      for(auto itBVEl = adjBV.begin();
-          itBVEl != adjBV.end(); itBVEl++) {
+      for(auto itBVEl = adjBV.begin(); itBVEl != adjBV.end(); itBVEl++) {
         for(std::size_t iV = 0; iV < (*itBVEl)->getNumVertices();
             iV++) { // ... look for adjacent vertices...
           MVertex *v = (*itBVEl)->getVertex(iV);
@@ -725,9 +724,7 @@ void meshMetric::scaleMetric(int nbElementsTarget, nodalMetricTensor &nmt)
   }
   double scale = pow((double)nbElementsTarget / N, 2.0 / _dim);
   for(auto it = nmt.begin(); it != nmt.end(); ++it) {
-    if(_dim == 3) {
-      it->second *= scale;
-    }
+    if(_dim == 3) { it->second *= scale; }
     else {
       it->second(0, 0) *= scale;
       it->second(1, 0) *= scale;
@@ -817,8 +814,7 @@ double meshMetric::operator()(double x, double y, double z, GEntity *ge)
   else {
     Msg::Warning("point %g %g %g not found, looking for nearest node", x, y, z);
     double minDist = 1.e100;
-    for(auto it = _nodalSizes.begin(); it != _nodalSizes.end();
-        it++) {
+    for(auto it = _nodalSizes.begin(); it != _nodalSizes.end(); it++) {
       const double dist = xyz.distance(it->first->point());
       if(dist <= minDist) {
         minDist = dist;
@@ -832,9 +828,7 @@ double meshMetric::operator()(double x, double y, double z, GEntity *ge)
 void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
                             GEntity *ge)
 {
-  if(needMetricUpdate) {
-    updateMetrics();
-  }
+  if(needMetricUpdate) { updateMetrics(); }
   if(!setOfMetrics.size()) {
     Msg::Error("No metric defined");
     return;
@@ -929,8 +923,7 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
       Msg::Warning("point %g %g %g not found, looking for nearest node", x, y,
                    z);
       double minDist = 1.e100;
-      for(auto it = _nodalMetrics.begin();
-          it != _nodalMetrics.end(); it++) {
+      for(auto it = _nodalMetrics.begin(); it != _nodalMetrics.end(); it++) {
         const double dist = xyz.distance(it->first->point());
         if(dist <= minDist) {
           minDist = dist;

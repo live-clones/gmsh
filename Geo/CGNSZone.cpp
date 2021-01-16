@@ -350,8 +350,8 @@ int CGNSZone::readBoundaryConditionRange(int iZoneBC,
   int cgnsErr;
 
   std::vector<cgsize_t> bcData(indexDataSize(2));
-  cgnsErr =
-    cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC, bcData.data(), nullptr);
+  cgnsErr = cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC,
+                         bcData.data(), nullptr);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get list of elements from range data
@@ -367,8 +367,8 @@ int CGNSZone::readBoundaryConditionList(int iZoneBC, cgsize_t nbVal,
 
   // read data
   std::vector<cgsize_t> bcData(indexDataSize(nbVal));
-  cgnsErr =
-    cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC, bcData.data(), nullptr);
+  cgnsErr = cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC,
+                         bcData.data(), nullptr);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get list of elements from list data

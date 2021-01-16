@@ -91,9 +91,7 @@ namespace {
   void drawBezierControlPolygon(const std::vector<MVertex *> &vertices,
                                 GEdge *gedge = nullptr)
   {
-    if(!gedge) {
-      gedge = *GModel::current()->firstEdge();
-    }
+    if(!gedge) { gedge = *GModel::current()->firstEdge(); }
 
     const int nVert = (int)vertices.size();
     fullMatrix<double> xyz(nVert, 3);
@@ -249,9 +247,7 @@ namespace BoundaryLayerCurver {
         t = _gedge->firstDer(paramGeoEdge);
         t.normalize();
       }
-      if(!_gedge || t.norm() == 0) {
-        t = _edgeOnBoundary->tangent(paramEdge);
-      }
+      if(!_gedge || t.norm() == 0) { t = _edgeOnBoundary->tangent(paramEdge); }
 
       if(_gface) {
         SPoint2 paramGFace;
@@ -585,9 +581,7 @@ namespace BoundaryLayerCurver {
         for(int i = 0; i < nbDofh; ++i) {
           double sf[100];
           fs->f(refNodesh(i, 0), refNodesh(i, 1), refNodesh(i, 2), sf);
-          for(int j = 0; j < nbDof; ++j) {
-            Mh(i, j) = sf[j];
-          }
+          for(int j = 0; j < nbDof; ++j) { Mh(i, j) = sf[j]; }
         }
         //      Mh.print("Mh");
 
@@ -607,9 +601,7 @@ namespace BoundaryLayerCurver {
           double *val = new double[nbDofh];
           for(int i = 0; i < nbDofh; ++i) {
             LegendrePolynomials::fc(order + 1, refNodesh(i, 0), val);
-            for(int j = 0; j < nbDofh; ++j) {
-              vandermonde(i, j) = val[j];
-            }
+            for(int j = 0; j < nbDofh; ++j) { vandermonde(i, j) = val[j]; }
           }
           delete val;
 
@@ -626,9 +618,7 @@ namespace BoundaryLayerCurver {
           double *val = new double[nbDof];
           for(int i = 0; i < nbDof; ++i) {
             LegendrePolynomials::fc(order, refNodes(i, 0), val);
-            for(int j = 0; j < nbDof; ++j) {
-              Me(i, j) = val[j];
-            }
+            for(int j = 0; j < nbDof; ++j) { Me(i, j) = val[j]; }
           }
           delete val;
         }
@@ -1011,9 +1001,7 @@ namespace BoundaryLayerCurver {
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), 0, 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1049,9 +1037,7 @@ namespace BoundaryLayerCurver {
             M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
-        for(int i = 0; i < nConstraint; ++i) {
-          M2(szSpace + i, nGP + i) = 1;
-        }
+        for(int i = 0; i < nConstraint; ++i) { M2(szSpace + i, nGP + i) = 1; }
       }
 
       fullMatrix<double> M1(szSpace + nConstraint, szSpace + nConstraint, true);
@@ -1073,9 +1059,7 @@ namespace BoundaryLayerCurver {
       {
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), refNodes(i, 1), 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1111,9 +1095,7 @@ namespace BoundaryLayerCurver {
             M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
-        for(int i = 0; i < nConstraint; ++i) {
-          M2(szSpace + i, nGP + i) = 1;
-        }
+        for(int i = 0; i < nConstraint; ++i) { M2(szSpace + i, nGP + i) = 1; }
       }
 
       fullMatrix<double> M1(szSpace + nConstraint, szSpace + nConstraint, true);
@@ -1135,9 +1117,7 @@ namespace BoundaryLayerCurver {
       {
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), refNodes(i, 1), 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1222,18 +1202,14 @@ namespace BoundaryLayerCurver {
         }
 
         for(int l = k - numVertexPerLayer; l < k; ++l) {
-          if(stack[l] == vbot) {
-            stack[l + numVertexPerLayer] = vtop;
-          }
+          if(stack[l] == vbot) { stack[l + numVertexPerLayer] = vtop; }
         }
       }
 
       // If there remains NULL values, it is because the vertex is the same
       // on bottom face and top face.
       for(int l = k; l < k + numVertexPerLayer; ++l) {
-        if(stack[l] == nullptr) {
-          stack[l] = stack[l - numVertexPerLayer];
-        }
+        if(stack[l] == nullptr) { stack[l] = stack[l - numVertexPerLayer]; }
       }
 
       k += numVertexPerLayer;

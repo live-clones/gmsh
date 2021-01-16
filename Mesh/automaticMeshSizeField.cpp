@@ -447,9 +447,10 @@ p8est_connectivity_new_cube(ForestOptions *forestOptions)
   const p4est_topidx_t tree_to_tree[1 * 6] = {0, 0, 0, 0, 0, 0};
   const int8_t tree_to_face[1 * 6] = {0, 1, 2, 3, 4, 5};
 
-  return p4est_connectivity_new_copy(
-    num_vertices, num_trees, 0, 0, vertices, tree_to_vertex, tree_to_tree,
-    tree_to_face, nullptr, &num_ett, nullptr, nullptr, nullptr, &num_ctt, nullptr, nullptr);
+  return p4est_connectivity_new_copy(num_vertices, num_trees, 0, 0, vertices,
+                                     tree_to_vertex, tree_to_tree, tree_to_face,
+                                     nullptr, &num_ett, nullptr, nullptr,
+                                     nullptr, &num_ctt, nullptr, nullptr);
 }
 
 static p4est_connectivity_t *
@@ -480,9 +481,10 @@ p8est_connectivity_new_square(ForestOptions *forestOptions)
   const p4est_topidx_t tree_to_tree[1 * 6] = {0, 0, 0, 0, 0, 0};
   const int8_t tree_to_face[1 * 6] = {0, 1, 2, 3, 4, 5};
 
-  return p4est_connectivity_new_copy(
-    num_vertices, num_trees, 0, 0, vertices, tree_to_vertex, tree_to_tree,
-    tree_to_face, nullptr, &num_ett, nullptr, nullptr, nullptr, &num_ctt, nullptr, nullptr);
+  return p4est_connectivity_new_copy(num_vertices, num_trees, 0, 0, vertices,
+                                     tree_to_vertex, tree_to_tree, tree_to_face,
+                                     nullptr, &num_ett, nullptr, nullptr,
+                                     nullptr, &num_ctt, nullptr, nullptr);
 }
 static inline double bulkSize(double x, double y, double z, double hBulk)
 {
@@ -715,8 +717,7 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree,
       double kmax = -1.e22; // To get min curvature size
       double kmin = 1.e22;
       double hf = DBL_MAX; // To get min feature size
-      for(auto tri = candidates.begin();
-          tri != candidates.end(); ++tri) {
+      for(auto tri = candidates.begin(); tri != candidates.end(); ++tri) {
         for(int i = 0; i < 3; ++i) {
           int node =
             forestOptions->mesh->triangles.node[(size_t)3 * (*tri) + i];
@@ -842,8 +843,7 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t *info,
     if(!candidates.empty()) {
       double kmax = -1.0e22;
       double hf = DBL_MAX;
-      for(auto tri = candidates.begin();
-          tri != candidates.end(); ++tri) {
+      for(auto tri = candidates.begin(); tri != candidates.end(); ++tri) {
         for(int i = 0; i < 3; ++i) {
           int node =
             forestOptions->mesh->triangles.node[(size_t)3 * (*tri) + i];
@@ -1015,7 +1015,8 @@ HXTStatus forestRefine(Forest *forest)
   p4est_refine_ext(forest->p4est, 1, P4EST_QMAXLEVEL, curvatureRefineCallback,
                    initializeCell, nullptr);
   // Coarsen
-  p4est_coarsen_ext(forest->p4est, 1, 0, coarsenCallback, initializeCell, nullptr);
+  p4est_coarsen_ext(forest->p4est, 1, 0, coarsenCallback, initializeCell,
+                    nullptr);
   // Balance the octree to get 2:1 ratio between adjacent cells
   p4est_balance_ext(forest->p4est, P4EST_CONNECT_FACE, initializeCell, nullptr);
   // Assign size on the new cells
@@ -1201,10 +1202,11 @@ static void computeGradientCenter(p4est_iter_face_info_t *info, void *user_data)
 HXTStatus forestComputeGradient(Forest *forest)
 {
   // Iterate on each cell to reset size gradient and half lengths.
-  p4est_iterate(forest->p4est, nullptr, nullptr, resetCell, nullptr, nullptr, nullptr);
-  // Compute gradient at cell center using finite differences
-  p4est_iterate(forest->p4est, nullptr, nullptr, nullptr, computeGradientCenter, nullptr,
+  p4est_iterate(forest->p4est, nullptr, nullptr, resetCell, nullptr, nullptr,
                 nullptr);
+  // Compute gradient at cell center using finite differences
+  p4est_iterate(forest->p4est, nullptr, nullptr, nullptr, computeGradientCenter,
+                nullptr, nullptr);
 
   return HXT_STATUS_OK;
 }
@@ -1230,16 +1232,16 @@ static inline void getMinSize(p4est_iter_volume_info_t *info, void *user_data)
 
 HXTStatus forestGetMaxGradient(Forest *forest, double *gradMax)
 {
-  p4est_iterate(forest->p4est, nullptr, (void *)gradMax, getMaxGradient, nullptr,
-                nullptr, nullptr);
+  p4est_iterate(forest->p4est, nullptr, (void *)gradMax, getMaxGradient,
+                nullptr, nullptr, nullptr);
   return HXT_STATUS_OK;
 }
 
 HXTStatus forestGetMinSize(Forest *forest, double *minsize)
 {
   double minSize = 1e22;
-  p4est_iterate(forest->p4est, nullptr, (void *)&minSize, getMinSize, nullptr, nullptr,
-                nullptr);
+  p4est_iterate(forest->p4est, nullptr, (void *)&minSize, getMinSize, nullptr,
+                nullptr, nullptr);
   *minsize = minSize;
   return HXT_STATUS_OK;
 }
@@ -2321,17 +2323,17 @@ static void drawDirections(p4est_iter_volume_info_t *info, void *user_data)
 HXTStatus forestInterpolateDirections(Forest *forest)
 {
   intersections = 0;
-  p4est_iterate(forest->p4est, nullptr, nullptr, markIntersectingCells, nullptr, nullptr,
-                nullptr);
+  p4est_iterate(forest->p4est, nullptr, nullptr, markIntersectingCells, nullptr,
+                nullptr, nullptr);
 
   std::vector<interpolation_data_t> cellCenters;
   cellCounter = 0;
-  p4est_iterate(forest->p4est, nullptr, &cellCenters, pushInterpolationData, nullptr,
-                nullptr, nullptr);
+  p4est_iterate(forest->p4est, nullptr, &cellCenters, pushInterpolationData,
+                nullptr, nullptr, nullptr);
   p4est_iterate(forest->p4est, nullptr, &cellCenters, addDistanceContribution,
                 nullptr, nullptr, nullptr);
-  p4est_iterate(forest->p4est, nullptr, &cellCenters, assignDirections, nullptr, nullptr,
-                nullptr);
+  p4est_iterate(forest->p4est, nullptr, &cellCenters, assignDirections, nullptr,
+                nullptr, nullptr);
 
   forest->forestOptions->file3 = fopen("directions.pos", "w");
   if(forest->forestOptions->file3 == nullptr)
@@ -2339,7 +2341,8 @@ HXTStatus forestInterpolateDirections(Forest *forest)
 
   fprintf(forest->forestOptions->file3, "View \"directions\" {\n");
 
-  p4est_iterate(forest->p4est, nullptr, nullptr, drawDirections, nullptr, nullptr, nullptr);
+  p4est_iterate(forest->p4est, nullptr, nullptr, drawDirections, nullptr,
+                nullptr, nullptr);
 
   fprintf(forest->forestOptions->file3, "};");
   fclose(forest->forestOptions->file3);
@@ -2430,12 +2433,12 @@ HXTStatus forestExport(Forest *forest, const char *forestFile)
 
   fprintf(f, "View \"sizeField\" {\n");
   if(forest->forestOptions->dim == 3) {
-    p4est_iterate(forest->p4est, nullptr, (void *)f, exportToHexCallback, nullptr,
-                  nullptr, nullptr);
+    p4est_iterate(forest->p4est, nullptr, (void *)f, exportToHexCallback,
+                  nullptr, nullptr, nullptr);
   }
   else if(forest->forestOptions->dim == 2) {
-    p4est_iterate(forest->p4est, nullptr, (void *)f, exportToQuadCallback, nullptr,
-                  nullptr, nullptr);
+    p4est_iterate(forest->p4est, nullptr, (void *)f, exportToQuadCallback,
+                  nullptr, nullptr, nullptr);
   }
   fprintf(f, "};");
   fclose(f);
@@ -2559,8 +2562,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
       // Get all faces of the model
       std::vector<GFace *> faces;
       std::vector<GRegion *> regions;
-      for(auto it =
-            GModel::current()->firstRegion();
+      for(auto it = GModel::current()->firstRegion();
           it != GModel::current()->lastRegion(); ++it) {
         regions.push_back(*it);
       }
@@ -2569,8 +2571,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
       }
       else {
         Msg::Info("No volume in the model : looping over faces instead.");
-        for(auto it =
-              GModel::current()->firstFace();
+        for(auto it = GModel::current()->firstFace();
             it != GModel::current()->lastFace(); ++it) {
           faces.push_back(*it);
         }

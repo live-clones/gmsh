@@ -44,15 +44,15 @@ StringXNumber *GMSH_TetrahedralizePlugin::getOption(int iopt)
 #if defined(HAVE_MESH)
 
 namespace {
-class PointData : public MVertex {
-public:
-  std::vector<double> val;
-  PointData(double x, double y, double z, int numVal) : MVertex(x, y, z)
-  {
-    val.resize(numVal);
-  }
-};
-}
+  class PointData : public MVertex {
+  public:
+    std::vector<double> val;
+    PointData(double x, double y, double z, int numVal) : MVertex(x, y, z)
+    {
+      val.resize(numVal);
+    }
+  };
+} // namespace
 
 PView *GMSH_TetrahedralizePlugin::execute(PView *v)
 {
@@ -101,9 +101,9 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   for(std::size_t i = 0; i < tets.size(); i++) {
     bool ok = true;
     PointData *p[4];
-    for(int j = 0; j < 4; j++){
-      p[j] = dynamic_cast<PointData*>(tets[i]->getVertex(j));
-      if(!p[j]){ // tet connected to enclosing box
+    for(int j = 0; j < 4; j++) {
+      p[j] = dynamic_cast<PointData *>(tets[i]->getVertex(j));
+      if(!p[j]) { // tet connected to enclosing box
         ok = false;
         break;
       }

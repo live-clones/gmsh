@@ -465,9 +465,9 @@ namespace {
           maxVert[iMaxV] = nullptr;
         }
     // Set last vertex of elTopFace as remaining vertex in elMaxFace
-    MVertex *thirdMaxVert = (maxVert[0] != nullptr) ?
-                              maxVert[0] :
-                              (maxVert[1] != nullptr) ? maxVert[1] : maxVert[2];
+    MVertex *thirdMaxVert = (maxVert[0] != nullptr) ? maxVert[0] :
+                            (maxVert[1] != nullptr) ? maxVert[1] :
+                                                      maxVert[2];
     if(topVert[0] == nullptr)
       topVert[0] = thirdMaxVert;
     else if(topVert[1] == nullptr)
@@ -690,8 +690,7 @@ namespace {
       fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
       fprintf(fp, "$Nodes\n");
       fprintf(fp, "%d\n", vert_.size());
-      for(auto itV = vert_.begin(); itV != vert_.end();
-          ++itV) {
+      for(auto itV = vert_.begin(); itV != vert_.end(); ++itV) {
         SPoint3 p = (*itV)->point();
         fprintf(fp, "%i %g %g %g\n", (*itV)->getNum(), p.x(), p.y(), p.z());
       }
@@ -1216,8 +1215,8 @@ namespace {
     // Loop over boundary elements to curve them by columns
     DbgOutputMeta dbgOut;
     std::set<MVertex *> movedVert;
-    for(auto itBE = bndEl.begin();
-        itBE != bndEl.end(); itBE++) // Loop over bnd. elements
+    for(auto itBE = bndEl.begin(); itBE != bndEl.end();
+        itBE++) // Loop over bnd. elements
       curveMeshFromBndElt(ed2el, face2el, ent, bndEnt, *itBE, movedVert, p,
                           dbgOut);
     //  dbgOut.write("meta-elements", bndEnt->tag());

@@ -163,7 +163,8 @@ bool GEO_Internals::addLine(int &tag, const std::vector<int> &pointTags)
     List_Add(tmp, &t);
   }
   bool ok = true;
-  Curve *c = CreateCurve(tag, MSH_SEGM_LINE, 1, tmp, nullptr, -1, -1, 0., 1., ok);
+  Curve *c =
+    CreateCurve(tag, MSH_SEGM_LINE, 1, tmp, nullptr, -1, -1, 0., 1., ok);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
@@ -184,7 +185,8 @@ bool GEO_Internals::addCircleArc(int &tag, int startTag, int centerTag,
   List_Add(tmp, &centerTag);
   List_Add(tmp, &endTag);
   bool ok = true;
-  Curve *c = CreateCurve(tag, MSH_SEGM_CIRC, 2, tmp, nullptr, -1, -1, 0., 1., ok);
+  Curve *c =
+    CreateCurve(tag, MSH_SEGM_CIRC, 2, tmp, nullptr, -1, -1, 0., 1., ok);
   if(nx || ny || nz) {
     c->Circle.n[0] = nx;
     c->Circle.n[1] = ny;
@@ -219,7 +221,8 @@ bool GEO_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
   List_Add(tmp, &majorTag);
   List_Add(tmp, &endTag);
   bool ok = true;
-  Curve *c = CreateCurve(tag, MSH_SEGM_ELLI, 2, tmp, nullptr, -1, -1, 0., 1., ok);
+  Curve *c =
+    CreateCurve(tag, MSH_SEGM_ELLI, 2, tmp, nullptr, -1, -1, 0., 1., ok);
   if(nx || ny || nz) {
     c->Circle.n[0] = nx;
     c->Circle.n[1] = ny;
@@ -256,7 +259,8 @@ bool GEO_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
     List_Add(tmp, &t);
   }
   bool ok = true;
-  Curve *c = CreateCurve(tag, MSH_SEGM_SPLN, 3, tmp, nullptr, -1, -1, 0., 1., ok);
+  Curve *c =
+    CreateCurve(tag, MSH_SEGM_SPLN, 3, tmp, nullptr, -1, -1, 0., 1., ok);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
@@ -1812,8 +1816,8 @@ int GModel::exportDiscreteGEOInternals()
   for(auto it = firstEdge(); it != lastEdge(); it++) {
     if((*it)->geomType() == GEntity::DiscreteCurve) {
       bool ok = true;
-      Curve *c = CreateCurve((*it)->tag(), MSH_SEGM_DISCRETE, 1, nullptr, nullptr, -1,
-                             -1, 0., 1., ok);
+      Curve *c = CreateCurve((*it)->tag(), MSH_SEGM_DISCRETE, 1, nullptr,
+                             nullptr, -1, -1, 0., 1., ok);
       c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
       GVertex *gvb = (*it)->getBeginVertex();
       if(gvb) {

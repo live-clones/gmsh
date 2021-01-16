@@ -295,8 +295,7 @@ bool isElementVisible(PViewOptions *opt, int dim, int numNodes, double **xyz)
   bool hidden = false;
   for(int clip = 0; clip < 6; clip++) {
     if(opt->clip & (1 << clip)) {
-      if(dim < 3 && CTX::instance()->clipOnlyVolume) {
-      }
+      if(dim < 3 && CTX::instance()->clipOnlyVolume) {}
       else {
         double d = intersectClipPlane(clip, numNodes, xyz);
         if(dim == 3 && CTX::instance()->clipOnlyDrawIntersectingVolume && d) {
@@ -318,7 +317,8 @@ static void addOutlinePoint(PView *p, double **xyz, unsigned int color,
 {
   if(pre) return;
   SVector3 n = getPointNormal(p, 1.);
-  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &color, nullptr, true);
+  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &color, nullptr,
+                    true);
 }
 
 static void addScalarPoint(PView *p, double **xyz, double **val, bool pre,
@@ -527,7 +527,8 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
             }
             col[i] = opt->getColor(v3[i], vmin, vmax);
           }
-          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique, skin);
+          if(!pre)
+            p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique, skin);
         }
       }
     }
@@ -556,7 +557,8 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
                 p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
             }
           }
-          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique, skin);
+          if(!pre)
+            p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique, skin);
         }
       }
       if(vmin == vmax) break;
@@ -673,8 +675,7 @@ static void addScalarPolygon(PView *p, double **xyz, double **val, bool pre,
     }
 
     opt->boundary--;
-    for(auto ite = edges.begin();
-        ite != edges.end(); ite++) {
+    for(auto ite = edges.begin(); ite != edges.end(); ite++) {
       int i = (int)(*ite).second / 100;
       int j = (*ite).second % 100;
       if(j < 3)
@@ -750,7 +751,8 @@ static void addScalarTetrahedron(PView *p, double **xyz, double **val, bool pre,
                 p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
             }
           }
-          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, nullptr, false, false);
+          if(!pre)
+            p->va_triangles->add(x3, y3, z3, n, col, nullptr, false, false);
         }
       }
       if(vmin == vmax) break;
@@ -895,8 +897,7 @@ static void addOutlinePolyhedron(PView *p, double **xyz, unsigned int color,
         triFaces.erase(ite);
     }
   }
-  for(auto ite = triFaces.begin();
-      ite != triFaces.end(); ite++) {
+  for(auto ite = triFaces.begin(); ite != triFaces.end(); ite++) {
     int i = (int)(*ite).second / 100;
     int j = (*ite).second % 100;
     if(j < 4)
@@ -911,9 +912,7 @@ static void addScalarPolyhedron(PView *p, double **xyz, double **val, bool pre,
 {
   PViewOptions *opt = p->getOptions();
 
-  if(opt->boundary > 0) {
-    return;
-  }
+  if(opt->boundary > 0) { return; }
 
   for(int i = 0; i < numNodes / 4; i++)
     addScalarTetrahedron(p, xyz, val, pre, 4 * i, 4 * i + 1, 4 * i + 2,
@@ -1050,7 +1049,8 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
           dxyz[j][0] = xyz[i][j];
           dxyz[j][1] = val[i][j];
         }
-        p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr, false);
+        p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr,
+                           false);
       }
     }
   }
@@ -1087,7 +1087,8 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
         dxyz[i][0] = pc[i];
         dxyz[i][1] = d[i];
       }
-      p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr, false);
+      p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr,
+                         false);
     }
   }
   for(int i = 0; i < numNodes; i++) delete[] val2[i];
@@ -1202,16 +1203,15 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
         tensor.eig(S, imS, V, rightV, false);
         for(int k = 0; k < 3; k++) {
           vval[k][0] = xyz[i][k];
-          for(int j = 0; j < 3; j++) {
-            vval[k][j + 1] = V(k, j) * S(j);
-          }
+          for(int j = 0; j < 3; j++) { vval[k][j + 1] = V(k, j) * S(j); }
         }
         double lmax = std::max(S(0), std::max(S(1), S(2)));
         unsigned int color = opt->getColor(
           lmax, opt->tmpMin, opt->tmpMax, false,
           (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
         unsigned int col[4] = {color, color, color, color};
-        p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr, false);
+        p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr,
+                            false);
       }
     }
     else if(opt->glyphLocation == PViewOptions::COG) {
@@ -1237,7 +1237,8 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
         lmax, opt->tmpMin, opt->tmpMax, false,
         (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
       unsigned int col[4] = {color, color, color, color};
-      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr, false);
+      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr,
+                          false);
     }
   }
   else {

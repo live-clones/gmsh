@@ -7,7 +7,8 @@
 #include "Numeric.h"
 #include "GmshDefines.h"
 
-StringXNumber EigenvaluesOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1.}};
+StringXNumber EigenvaluesOptions_Number[] = {
+  {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterEigenvaluesPlugin()

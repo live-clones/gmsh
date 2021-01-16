@@ -775,8 +775,7 @@ bool PViewDataGModel::combineTime(nameData &nd)
   }
 
   // copy interpolation matrices
-  for(auto it =
-        data[0]->_interpolation.begin();
+  for(auto it = data[0]->_interpolation.begin();
       it != data[0]->_interpolation.end(); it++)
     if(_interpolation[it->first].empty())
       for(std::size_t i = 0; i < it->second.size(); i++)

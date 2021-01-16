@@ -19,9 +19,7 @@
 #endif
 
 StringXNumber TriangulateOptions_Number[] = {
-  {GMSH_FULLRC, "Algorithm", nullptr, 1.},
-  {GMSH_FULLRC, "View", nullptr, -1.}
-};
+  {GMSH_FULLRC, "Algorithm", nullptr, 1.}, {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterTriangulatePlugin()
@@ -54,18 +52,18 @@ StringXNumber *GMSH_TriangulatePlugin::getOption(int iopt)
 #if defined(HAVE_MESH)
 
 namespace {
-class PointData : public MVertex {
-public:
-  std::vector<double> v;
-  PointData(double x, double y, double z, int numVal) : MVertex(x, y, z)
-  {
-    v.resize(3 + numVal);
-    v[0] = x;
-    v[1] = y;
-    v[2] = z;
-  }
-};
-}
+  class PointData : public MVertex {
+  public:
+    std::vector<double> v;
+    PointData(double x, double y, double z, int numVal) : MVertex(x, y, z)
+    {
+      v.resize(3 + numVal);
+      v[0] = x;
+      v[1] = y;
+      v[2] = z;
+    }
+  };
+} // namespace
 
 PView *GMSH_TriangulatePlugin::execute(PView *v)
 {

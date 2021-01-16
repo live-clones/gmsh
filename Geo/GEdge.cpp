@@ -34,8 +34,8 @@ GEdge::GEdge(GModel *model, int tag, GVertex *v0, GVertex *v1)
 }
 
 GEdge::GEdge(GModel *model, int tag)
-  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(nullptr), _v0(nullptr), _v1(nullptr),
-    masterOrientation(0), compoundCurve(nullptr)
+  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(nullptr),
+    _v0(nullptr), _v1(nullptr), masterOrientation(0), compoundCurve(nullptr)
 {
   meshStatistics.status = GEdge::PENDING;
   GEdge::resetMeshAttributes();

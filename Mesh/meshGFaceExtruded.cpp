@@ -105,8 +105,8 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
               if(from->geomType() != GEntity::DiscreteCurve &&
                  to->geomType() != GEntity::DiscreteSurface &&
                  to->geomType() != GEntity::BoundaryLayerSurface) {
-                // This can be inefficient, and sometimes useless. We could add an
-                // option to disable it.
+                // This can be inefficient, and sometimes useless. We could add
+                // an option to disable it.
                 SPoint3 xyz(x, y, z);
                 SPoint2 uv = to->parFromPoint(xyz);
                 newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
@@ -137,7 +137,8 @@ extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
   bool quadToTri_valid =
     IsValidQuadToTriLateral(to, &tri_quad_flag, &detectQuadToTriLateral);
   if(detectQuadToTriLateral && !quadToTri_valid)
-    Msg::Error("Mesh of QuadToTri lateral surface %d likely has errors", to->tag());
+    Msg::Error("Mesh of QuadToTri lateral surface %d likely has errors",
+               to->tag());
 #endif
 
   // create elements (note that it would be faster to access the *interior*
@@ -247,8 +248,8 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
       MVertex *tmp = pos.find(x, y, z);
       if(!tmp) {
         Msg::Error(
-          "Could not find extruded node (%.16g, %.16g, %.16g) in surface %d",
-          x, y, z, to->tag());
+          "Could not find extruded node (%.16g, %.16g, %.16g) in surface %d", x,
+          y, z, to->tag());
         return;
       }
       verts.push_back(tmp);
@@ -277,8 +278,8 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
       MVertex *tmp = pos.find(x, y, z);
       if(!tmp) {
         Msg::Error(
-          "Could not find extruded node (%.16g, %.16g, %.16g) in surface %d",
-          x, y, z, to->tag());
+          "Could not find extruded node (%.16g, %.16g, %.16g) in surface %d", x,
+          y, z, to->tag());
         return;
       }
       verts.push_back(tmp);
@@ -300,15 +301,13 @@ int MeshExtrudedSurface(
   MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);
   pos.insert(gf->mesh_vertices);
   std::vector<GEdge *> const &edges = gf->edges();
-  for(auto it = edges.begin();
-      it != edges.end(); it++) {
+  for(auto it = edges.begin(); it != edges.end(); it++) {
     pos.insert((*it)->mesh_vertices);
     if((*it)->getBeginVertex())
       pos.insert((*it)->getBeginVertex()->mesh_vertices);
-    if((*it)->getEndVertex())
-      pos.insert((*it)->getEndVertex()->mesh_vertices);
+    if((*it)->getEndVertex()) pos.insert((*it)->getEndVertex()->mesh_vertices);
   }
-  std::vector<MVertex*> embedded = gf->getEmbeddedMeshVertices();
+  std::vector<MVertex *> embedded = gf->getEmbeddedMeshVertices();
   pos.insert(embedded);
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {

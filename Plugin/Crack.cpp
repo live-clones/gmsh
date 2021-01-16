@@ -62,7 +62,8 @@ public:
   std::vector<MVertex *> data;
 };
 
-struct MEdgeDataLessThan : public std::binary_function<EdgeData, EdgeData, bool> {
+struct MEdgeDataLessThan
+  : public std::binary_function<EdgeData, EdgeData, bool> {
   bool operator()(const EdgeData &e1, const EdgeData &e2) const
   {
     if(e1.edge.getMinVertex() < e2.edge.getMinVertex()) return true;
@@ -123,7 +124,8 @@ PView *GMSH_CrackPlugin::execute(PView *view)
         MVertex *v = crackElements[i]->getVertex(j);
         crackVertices.insert(v);
       }
-      for(std::size_t j = 0; j < crackElements[i]->getNumPrimaryVertices(); j++) {
+      for(std::size_t j = 0; j < crackElements[i]->getNumPrimaryVertices();
+          j++) {
         MVertex *v = crackElements[i]->getVertex(j);
         if(bndVertices.find(v) == bndVertices.end())
           bndVertices.insert(v);
@@ -149,8 +151,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
           bnd.erase(ed);
       }
     }
-    for(auto it = bnd.begin();
-        it != bnd.end(); it++)
+    for(auto it = bnd.begin(); it != bnd.end(); it++)
       bndVertices.insert(it->data.begin(), it->data.end());
   }
 
@@ -163,7 +164,8 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       MElement *e = openEntities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
-        if(bndVerticesFromOpenBoundary.find(v) == bndVerticesFromOpenBoundary.end())
+        if(bndVerticesFromOpenBoundary.find(v) ==
+           bndVerticesFromOpenBoundary.end())
           bndVerticesFromOpenBoundary.insert(v);
         else
           bndVerticesFromOpenBoundary.erase(v);
@@ -182,13 +184,13 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       MElement *e = openEntities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
-        if(bndVerticesFromOpenBoundary.find(v) == bndVerticesFromOpenBoundary.end())
+        if(bndVerticesFromOpenBoundary.find(v) ==
+           bndVerticesFromOpenBoundary.end())
           bndVertices.erase(v);
       }
     }
   }
-  for(auto it = bndVertices.begin();
-      it != bndVertices.end(); it++)
+  for(auto it = bndVertices.begin(); it != bndVertices.end(); it++)
     crackVertices.erase(*it);
 
   // compute elements on one side of the crack
@@ -218,9 +220,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
             n = crossprod(normal1d, ce->getEdge(0).tangent());
           else
             n = ce->getFace(0).normal();
-          if(dot(n, dv) < 0) {
-            oneside.insert(e);
-          }
+          if(dot(n, dv) < 0) { oneside.insert(e); }
         }
       }
     }
@@ -258,7 +258,8 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   GEdge *crackEdge = nullptr;
   GFace *crackFace = nullptr;
   if(dim == 1) {
-    crackEdge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
+    crackEdge =
+      new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
     m->add(crackEdge);
   }
   else {
@@ -271,8 +272,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
 
   // duplicate internal crack nodes
   std::map<MVertex *, MVertex *> vxv;
-  for(auto it = crackVertices.begin();
-      it != crackVertices.end(); it++) {
+  for(auto it = crackVertices.begin(); it != crackVertices.end(); it++) {
     MVertex *v = *it;
     MVertex *newv = new MVertex(v->x(), v->y(), v->z(), crackEntity);
     crackEntity->mesh_vertices.push_back(newv);
@@ -298,8 +298,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
 
   // replace vertices in elements on one side of the crack
-  for(auto it = oneside.begin(); it != oneside.end();
-      it++) {
+  for(auto it = oneside.begin(); it != oneside.end(); it++) {
     MElement *e = *it;
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
       if(vxv.count(e->getVertex(i))) e->setVertex(i, vxv[e->getVertex(i)]);

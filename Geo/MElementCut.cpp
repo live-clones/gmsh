@@ -1532,7 +1532,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
       if(primS > 1)
         verticesLs(k, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
 
-      MVertex *vn = new MVertex(vi->x(), vi->y(), vi->z(), nullptr, vi->getNum());
+      MVertex *vn =
+        new MVertex(vi->x(), vi->y(), vi->z(), nullptr, vi->getNum());
       vertexMap[vi->getNum()] = vn;
     }
   }

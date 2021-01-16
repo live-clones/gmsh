@@ -121,16 +121,14 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
           (*fit)->triangles[i]->barycenter());
 
     // add boundary vertices in map to get cells "closer" to the boundary
-    for(auto it = v2t.begin();
-        it != v2t.end(); it++) {
+    for(auto it = v2t.begin(); it != v2t.end(); it++) {
       MVertex *v = it->first;
       if(v->onWhat() && v->onWhat()->dim() < 2)
         it->second.push_back(
           SPoint3(it->first->x(), it->first->y(), it->first->z()));
     }
 
-    for(auto it = v2t.begin();
-        it != v2t.end(); it++) {
+    for(auto it = v2t.begin(); it != v2t.end(); it++) {
       if(it->second.size() > 2) {
         // get barycenter of cell boundary points and order them
         SPoint3 bc;

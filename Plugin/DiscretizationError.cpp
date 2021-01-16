@@ -69,8 +69,7 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
      * 5  6  7  8
      * 1  2  3  4
      */
-    for(auto itQuad =
-          (*itFace)->quadrangles.begin();
+    for(auto itQuad = (*itFace)->quadrangles.begin();
         itQuad != (*itFace)->quadrangles.end(); ++itQuad) {
       for(j = 0; j < nEdgeNodes; j++) { // u
         for(i = 0; i < nEdgeNodes; i++) { // v

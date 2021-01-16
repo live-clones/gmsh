@@ -39,24 +39,22 @@ static HXTStatus messageCallback(HXTMessage *msg)
   return HXT_STATUS_OK;
 }
 
-static HXTStatus nodalSizesCallBack(double *pts, uint32_t* volume,
+static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
                                     size_t numPts, void *userData)
 {
-  std::vector<GRegion *>* allGR = (std::vector<GRegion *>*) userData;
+  std::vector<GRegion *> *allGR = (std::vector<GRegion *> *)userData;
 
   double lcGlob = CTX::instance()->lc;
   int useInterpolatedSize = CTX::instance()->mesh.lcExtendFromBoundary;
 
-  HXT_INFO("Mesh size callback %suse interpolated size", useInterpolatedSize ?
-           "" : "does not ");
+  HXT_INFO("Mesh size callback %suse interpolated size",
+           useInterpolatedSize ? "" : "does not ");
 
   for(size_t i = 0; i < numPts; i++) {
     GRegion *gr = (*allGR)[volume[i]];
-    double lc = std::min(lcGlob,
-                         BGM_MeshSizeWithoutScaling(gr, 0, 0,
-                                                    pts[4 * i + 0],
-                                                    pts[4 * i + 1],
-                                                    pts[4 * i + 2]));
+    double lc = std::min(
+      lcGlob, BGM_MeshSizeWithoutScaling(gr, 0, 0, pts[4 * i + 0],
+                                         pts[4 * i + 1], pts[4 * i + 2]));
     if(useInterpolatedSize && pts[4 * i + 3] > 0.0)
       pts[4 * i + 3] = std::min(pts[4 * i + 3], lc);
     else
@@ -66,8 +64,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t* volume,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions,
-                                HXTMesh *m,
+static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions, HXTMesh *m,
                                 std::vector<GFace *> &allSurfaces)
 {
   std::set<GFace *, GEntityPtrLessThan> allSurfacesSet;
@@ -109,8 +106,7 @@ static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions,
 }
 
 static HXTStatus getAllCurves(std::vector<GRegion *> &regions,
-                              std::vector<GFace *> &surfaces,
-                              HXTMesh *m,
+                              std::vector<GFace *> &surfaces, HXTMesh *m,
                               std::vector<GEdge *> &allCurves)
 {
   if(m) {
@@ -365,10 +361,10 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
     m->vertices.coord[4 * count + 1] = v->y();
     m->vertices.coord[4 * count + 2] = v->z();
     m->vertices.coord[4 * count + 3] = 0;
-    if(CTX::instance()->mesh.lcFromPoints) { // size on embedded points in volume
+    if(CTX::instance()
+         ->mesh.lcFromPoints) { // size on embedded points in volume
       auto it = vlc.find(v);
-      if(it != vlc.end())
-        m->vertices.coord[4 * count + 3] = it->second;
+      if(it != vlc.end()) m->vertices.coord[4 * count + 3] = it->second;
     }
     v2c[v] = count;
     c2v[count++] = v;
@@ -445,22 +441,21 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     1, // int stat;
     1, // int refine;
     CTX::instance()->mesh.optimize, // int optimize;
-    { // quality
+    {
+      // quality
       nullptr, // double (*callback)(.., userData)
       nullptr, // void* userData;
       CTX::instance()->mesh.optimizeThreshold // double qualityMin;
     },
-    { // nodalSize
+    {// nodalSize
 
-      // FIXME: put NULL when the callback is not needed (when we use the
-      // interpolated point size anyway)
-      nodalSizesCallBack, // HXTStatus (*callback)(double*, size_t, void* userData)
-      &regions, // void* meshSizeData;
-      CTX::instance()->mesh.lcMin,
-      CTX::instance()->mesh.lcMax,
-      CTX::instance()->mesh.lcFactor * regions[0]->getMeshSizeFactor()
-    }
-  };
+     // FIXME: put NULL when the callback is not needed (when we use the
+     // interpolated point size anyway)
+     nodalSizesCallBack, // HXTStatus (*callback)(double*, size_t, void*
+                         // userData)
+     &regions, // void* meshSizeData;
+     CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax,
+     CTX::instance()->mesh.lcFactor * regions[0]->getMeshSizeFactor()}};
 
   HXT_CHECK(hxtTetMesh(mesh, &options));
 
@@ -483,8 +478,9 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
   HXT_CHECK(hxtMeshCreate(&mesh));
 
   size_t nvert = verts.size();
-  HXT_CHECK(hxtAlignedMalloc(&mesh->vertices.coord, nvert * 4 * sizeof(double)));
-  for (size_t i = 0; i < nvert; i++) {
+  HXT_CHECK(
+    hxtAlignedMalloc(&mesh->vertices.coord, nvert * 4 * sizeof(double)));
+  for(size_t i = 0; i < nvert; i++) {
     mesh->vertices.coord[4 * i + 0] = verts[i]->x();
     mesh->vertices.coord[4 * i + 1] = verts[i]->y();
     mesh->vertices.coord[4 * i + 2] = verts[i]->z();
@@ -505,23 +501,25 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
     0 // delaunayThreads (0 = omp_get_max_threads)
   };
 
-  //HXT_CHECK(hxtDelaunay(mesh, &delOptions));
-  HXTNodeInfo* nodeInfo;
-  HXT_CHECK(hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo) * mesh->vertices.num));
+  // HXT_CHECK(hxtDelaunay(mesh, &delOptions));
+  HXTNodeInfo *nodeInfo;
+  HXT_CHECK(
+    hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo) * mesh->vertices.num));
   for(uint32_t i = 0; i < mesh->vertices.num; i++) {
     nodeInfo[i].node = i;
     nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
   }
-  HXT_CHECK(hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, mesh->vertices.num));
+  HXT_CHECK(
+    hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, mesh->vertices.num));
   HXT_CHECK(hxtAlignedFree(&nodeInfo));
 
   for(size_t i = 0; i < mesh->tetrahedra.num; i++) {
-    if(mesh->tetrahedra.node[i*4 + 3] != UINT32_MAX){
+    if(mesh->tetrahedra.node[i * 4 + 3] != UINT32_MAX) {
       uint32_t myColor = mesh->tetrahedra.color ? mesh->tetrahedra.color[i] : 0;
-      if (myColor != HXT_COLOR_OUT) {
+      if(myColor != HXT_COLOR_OUT) {
         uint32_t *n = &mesh->tetrahedra.node[4 * i];
-        tets.push_back(new MTetrahedron(verts[n[0]], verts[n[1]],
-                                        verts[n[2]], verts[n[3]]));
+        tets.push_back(
+          new MTetrahedron(verts[n[0]], verts[n[1]], verts[n[2]], verts[n[3]]));
       }
     }
   }
@@ -537,8 +535,8 @@ void delaunayMeshIn3DHxt(std::vector<MVertex *> &v,
   double t1 = Cpu(), w1 = TimeOfDay();
   _delaunayMeshIn3DHxt(v, tets);
   double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::Info("Done tetrahedrizing %d nodes (Wall %gs, CPU %gs)",
-            v.size(), w2 - w1, t2 - t1);
+  Msg::Info("Done tetrahedrizing %d nodes (Wall %gs, CPU %gs)", v.size(),
+            w2 - w1, t2 - t1);
 }
 
 #else
@@ -549,7 +547,8 @@ int meshGRegionHxt(std::vector<GRegion *> &regions)
   return -1;
 }
 
-void delaunayMeshIn3DHxt(std::vector<MVertex *> &v, std::vector<MTetrahedron *> &tets)
+void delaunayMeshIn3DHxt(std::vector<MVertex *> &v,
+                         std::vector<MTetrahedron *> &tets)
 {
   Msg::Error("Gmsh should be compiled with Hxt to enable this option");
 }

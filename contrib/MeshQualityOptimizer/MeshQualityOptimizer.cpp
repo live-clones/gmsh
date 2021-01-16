@@ -91,8 +91,7 @@ double QualPatchDefParameters::elBadness(MElement *el, GEntity *gEnt) const
     else if(gEnt->dim() == 3)
       blc = static_cast<GRegion *>(gEnt)->getColumns();
     if(blc) {
-      auto itBLEl =
-        blc->_toFirst.find(el);
+      auto itBLEl = blc->_toFirst.find(el);
       if(itBLEl != blc->_toFirst.end()) return 1.;
     }
   }
@@ -127,8 +126,7 @@ int QualPatchDefParameters::inPatch(const SPoint3 &badBary, double limDist,
     else if(gEnt->dim() == 3)
       blc = static_cast<GRegion *>(gEnt)->getColumns();
     if(blc) {
-      auto itBLEl =
-        blc->_toFirst.find(el);
+      auto itBLEl = blc->_toFirst.find(el);
       if(itBLEl != blc->_toFirst.end()) return -1;
     }
   }

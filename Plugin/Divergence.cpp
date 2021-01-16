@@ -7,7 +7,8 @@
 #include "shapeFunctions.h"
 #include "GmshDefines.h"
 
-StringXNumber DivergenceOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1.}};
+StringXNumber DivergenceOptions_Number[] = {
+  {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterDivergencePlugin()

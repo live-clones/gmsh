@@ -21,9 +21,7 @@ void PViewFactory::setEntry(int id, const fullMatrix<double> &val)
   vv.resize(val.size1() * val.size2());
   int k = 0;
   for(int i = 0; i < val.size1(); i++) {
-    for(int j = 0; j < val.size2(); j++) {
-      vv[k++] = val(i, j);
-    }
+    for(int j = 0; j < val.size2(); j++) { vv[k++] = val(i, j); }
   }
 }
 

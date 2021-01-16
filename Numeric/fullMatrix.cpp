@@ -440,8 +440,7 @@ template <> double fullVector<double>::norm() const
   return sqrt(n);
 }
 
-template <>
-std::complex<double> fullVector<std::complex<double> >::norm() const
+template <> std::complex<double> fullVector<std::complex<double> >::norm() const
 {
   double n = 0.;
   for(int i = 0; i < _r; ++i)

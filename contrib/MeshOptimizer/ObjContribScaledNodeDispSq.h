@@ -75,8 +75,8 @@ void ObjContribScaledNodeDispSq<FuncType>::initialize(Patch *mesh)
 }
 
 template <class FuncType>
-bool ObjContribScaledNodeDispSq<FuncType>::addContrib(double &Obj,
-                                                      std::vector<double> &gradObj)
+bool ObjContribScaledNodeDispSq<FuncType>::addContrib(
+  double &Obj, std::vector<double> &gradObj)
 {
   _min = BIGVAL;
   _max = -BIGVAL;

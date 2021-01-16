@@ -40,7 +40,7 @@ std::vector<backgroundMesh *> backgroundMesh::_current =
 void backgroundMesh::set(GFace *gf)
 {
   int t = Msg::GetThreadNum();
-  if(t >= MAX_THREADS){
+  if(t >= MAX_THREADS) {
     Msg::Error("Maximum number of threads (%d) exceeded in background mesh",
                MAX_THREADS);
     return;
@@ -74,7 +74,8 @@ backgroundMesh *backgroundMesh::current()
 
 backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
 #if defined(HAVE_ANN)
-  : _octree(nullptr), uv_kdtree(nullptr), nodes(nullptr), angle_nodes(nullptr), angle_kdtree(nullptr)
+  : _octree(nullptr), uv_kdtree(nullptr), nodes(nullptr), angle_nodes(nullptr),
+    angle_kdtree(nullptr)
 #endif
 {
   if(cfd) {
@@ -133,9 +134,7 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
   _octree = new MElementOctree(_triangles);
 
   // compute the mesh sizes at nodes
-  if(CTX::instance()->mesh.lcFromPoints) {
-    propagate1dMesh(_gf);
-  }
+  if(CTX::instance()->mesh.lcFromPoints) { propagate1dMesh(_gf); }
   else {
     auto itv2 = _2Dto3D.begin();
     for(; itv2 != _2Dto3D.end(); ++itv2) {
@@ -218,9 +217,7 @@ static void propagateValuesOnFace(GFace *_gf,
   }
 
   // Solve
-  if(myAssembler.sizeOfR()) {
-    _lsys->systemSolve();
-  }
+  if(myAssembler.sizeOfR()) { _lsys->systemSolve(); }
 
   // save solution
   for(auto it = vs.begin(); it != vs.end(); ++it) {
@@ -563,7 +560,7 @@ bool backgroundMesh::inDomain(double u, double v, double w) const
 
 double backgroundMesh::operator()(double u, double v, double w) const
 {
-  if(!_octree){
+  if(!_octree) {
     Msg::Error("No octree in background mesh");
     return 0.;
   }
@@ -575,7 +572,8 @@ double backgroundMesh::operator()(double u, double v, double w) const
     if(uv_kdtree->nPoints() < 2) return -1000.;
     double pt[3] = {u, v, 0.0};
 #if defined(_OPENMP)
-#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp                                                                    \
+  critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
@@ -591,12 +589,9 @@ double backgroundMesh::operator()(double u, double v, double w) const
     }
   }
   e->xyz2uvw(uv, uv2);
-  auto itv1 =
-    _sizes.find(e->getVertex(0));
-  auto itv2 =
-    _sizes.find(e->getVertex(1));
-  auto itv3 =
-    _sizes.find(e->getVertex(2));
+  auto itv1 = _sizes.find(e->getVertex(0));
+  auto itv2 = _sizes.find(e->getVertex(1));
+  auto itv3 = _sizes.find(e->getVertex(2));
   return itv1->second * (1 - uv2[0] - uv2[1]) + itv2->second * uv2[0] +
          itv3->second * uv2[1];
 }
@@ -611,7 +606,8 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     if(angle_kdtree->nPoints() >= NBANN) {
       double pt[3] = {u, v, 0.0};
 #if defined(_OPENMP)
-#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp                                                                    \
+  critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
       angle_kdtree->annkSearch(pt, NBANN, index, dist);
       double SINE = 0.0, COSINE = 0.0;
@@ -644,7 +640,8 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     if(uv_kdtree->nPoints() < 2) return -1000.0;
     double pt[3] = {u, v, 0.0};
 #if defined(_OPENMP)
-#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp                                                                    \
+  critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
@@ -660,12 +657,9 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     }
   }
   e->xyz2uvw(uv, uv2);
-  auto itv1 =
-    _angles.find(e->getVertex(0));
-  auto itv2 =
-    _angles.find(e->getVertex(1));
-  auto itv3 =
-    _angles.find(e->getVertex(2));
+  auto itv1 = _angles.find(e->getVertex(0));
+  auto itv2 = _angles.find(e->getVertex(1));
+  auto itv3 = _angles.find(e->getVertex(2));
 
   double cos4 = cos(4 * itv1->second) * (1 - uv2[0] - uv2[1]) +
                 cos(4 * itv2->second) * uv2[0] + cos(4 * itv3->second) * uv2[1];

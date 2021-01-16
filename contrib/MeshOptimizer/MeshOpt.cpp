@@ -143,9 +143,10 @@ void MeshOpt::printProgress(const std::vector<double> &x, double Obj)
     mvprintList(22, 5, _iterHistory, 1);
   }
   if((_verbose > 2) && (_iter % _intervDisplay == 0 || _nCurses))
-    Msg::Info(("Iteration %3d " + _objFunc->minMaxStr() +
-               " (obj %5E, rel decr %5E)").c_str(),
-              _iter, Obj, Obj / _initObj);
+    Msg::Info(
+      ("Iteration %3d " + _objFunc->minMaxStr() + " (obj %5E, rel decr %5E)")
+        .c_str(),
+      _iter, Obj, Obj / _initObj);
 }
 
 void MeshOpt::calcScale(std::vector<double> &scale)
@@ -282,12 +283,13 @@ void MeshOpt::runOptim(std::vector<double> &x,
     sstream << "Optimization finalized after " << iterationscount
             << " iterations (" << nfev << " function evaluations)";
     switch(int(terminationtype)) {
-    case 1: sstream <<
-        ", because relative function improvement is no more than EpsF"; break;
+    case 1:
+      sstream << ", because relative function improvement is no more than EpsF";
+      break;
     case 2: sstream << ", because relative step is no more than EpsX"; break;
     case 4: sstream << ", because gradient norm is no more than EpsG"; break;
     case 5: sstream << ", because the maximum number of steps was taken"; break;
-    default: sstream << ", with code "<< int(terminationtype); break;
+    default: sstream << ", with code " << int(terminationtype); break;
     }
     Msg::Info("%s", sstream.str().c_str());
   }

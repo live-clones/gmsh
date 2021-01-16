@@ -63,8 +63,8 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
       if(dim == 2)
         fprintf(f, "%ld %22.15E %22.15E\n", v->getIndex(), v->x(), v->y());
       else if(dim == 3)
-        fprintf(f, "%ld %22.15E %22.15E %22.5E\n", v->getIndex(), v->x(), v->y(),
-                v->z());
+        fprintf(f, "%ld %22.15E %22.15E %22.5E\n", v->getIndex(), v->x(),
+                v->y(), v->z());
     }
 
   if(dim == 2) {
@@ -207,9 +207,7 @@ static bool testElInDist(const SPoint3 &p, double limDist, MElement *el)
       const SPoint3 B = faceVert[1]->point();
       const SPoint3 C = faceVert[2]->point();
       if(faceVert.size() == 3) {
-        if(testTriSphereIntersect(A, B, C, p, limDistSq)){
-          return true;
-        }
+        if(testTriSphereIntersect(A, B, C, p, limDistSq)) { return true; }
         else {
           const SPoint3 D = faceVert[3]->point();
           if(testTriSphereIntersect(A, B, C, p, limDistSq) ||

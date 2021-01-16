@@ -413,7 +413,8 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber)
   std::vector<int> coeffVector;
 
   if(dim < 0 || dim > 4) return coeffVector;
-  if(_hbasis[dim] == nullptr || (int)gmp_matrix_cols(_hbasis[dim]) < chainNumber)
+  if(_hbasis[dim] == nullptr ||
+     (int)gmp_matrix_cols(_hbasis[dim]) < chainNumber)
     return coeffVector;
 
   int rows = gmp_matrix_rows(_hbasis[dim]);
@@ -456,7 +457,9 @@ void ChainComplex::getBasisChain(std::map<Cell *, int, CellPtrLessThan> &chain,
 
   chain.clear();
   if(dim < 0 || dim > 3) return;
-  if(basisMatrix == nullptr || (int)gmp_matrix_cols(basisMatrix) < num) { return; }
+  if(basisMatrix == nullptr || (int)gmp_matrix_cols(basisMatrix) < num) {
+    return;
+  }
 
   int elemi;
   long int elemli;
@@ -512,7 +515,8 @@ int ChainComplex::getBasisSize(int dim, int basis)
 int ChainComplex::getTorsion(int dim, int num)
 {
   if(dim < 0 || dim > 4) return 0;
-  if(_hbasis[dim] == nullptr || (int)gmp_matrix_cols(_hbasis[dim]) < num) return 0;
+  if(_hbasis[dim] == nullptr || (int)gmp_matrix_cols(_hbasis[dim]) < num)
+    return 0;
   if(_torsion[dim].empty() || (int)_torsion[dim].size() < num)
     return 1;
   else

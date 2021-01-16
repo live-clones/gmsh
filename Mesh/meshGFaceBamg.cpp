@@ -72,8 +72,7 @@ void meshGFaceBamg(GFace *gf)
 {
   std::vector<GEdge *> const &edges = gf->edges();
   std::set<MVertex *> bcVertex;
-  for(auto it = edges.begin();
-      it != edges.end(); it++) {
+  for(auto it = edges.begin(); it != edges.end(); it++) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       bcVertex.insert((*it)->lines[i]->getVertex(0));
       bcVertex.insert((*it)->lines[i]->getVertex(1));
@@ -139,15 +138,15 @@ void meshGFaceBamg(GFace *gf)
     bamgTriangles[i].init(bamgVertices, nodes, gf->tag());
   }
 
-  const auto numEdges = std::accumulate(begin(edges), end(edges), std::size_t(0), [](std::size_t const partial_sum, const GEdge *const edge)
-    {
-        return partial_sum + edge->lines.size();
-    });
+  const auto numEdges =
+    std::accumulate(begin(edges), end(edges), std::size_t(0),
+                    [](std::size_t const partial_sum, const GEdge *const edge) {
+                      return partial_sum + edge->lines.size();
+                    });
 
   Seg *bamgBoundary = new Seg[numEdges];
   int count = 0;
-  for(auto it = edges.begin();
-      it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); ++i) {
       int nodes[2] = {(int)(*it)->lines[i]->getVertex(0)->getIndex(),
                       (int)(*it)->lines[i]->getVertex(1)->getIndex()};
@@ -235,12 +234,9 @@ void meshGFaceBamg(GFace *gf)
   // delete pointers
   if(refinedBamgMesh) delete refinedBamgMesh;
   if(_octree) delete _octree;
-  for(auto it = myParamElems.begin();
-      it != myParamElems.end(); it++)
+  for(auto it = myParamElems.begin(); it != myParamElems.end(); it++)
     delete *it;
-  for(auto it = newVert.begin();
-      it != newVert.end(); it++)
-    delete *it;
+  for(auto it = newVert.begin(); it != newVert.end(); it++) delete *it;
 }
 
 #else

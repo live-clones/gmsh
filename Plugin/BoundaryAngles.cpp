@@ -43,10 +43,13 @@ std::string GMSH_BoundaryAnglesPlugin::getHelp() const
          "modulo 2*Pi, are stored in a new post-processing view, one for each "
          "surface. The plugin currently only works for planar surfaces."
          "Available options:"
-         "- Visible (1=True, 0 = False, Default = 1): Visibility of the Views in the GUI "
+         "- Visible (1=True, 0 = False, Default = 1): Visibility of the Views "
+         "in the GUI "
          "- Save (1=True, 0 = False, Default = 0): Save the Views on disk ?"
-         "- Remove (1=True, 0 = False, Default = 0): Remove the View from the memory after execution?"
-         "- Filename (Default = 'Angles_Surface'): Root name for the Views (in case of save / Visibility)"
+         "- Remove (1=True, 0 = False, Default = 0): Remove the View from the "
+         "memory after execution?"
+         "- Filename (Default = 'Angles_Surface'): Root name for the Views (in "
+         "case of save / Visibility)"
          "- Dir (Default = ''): Output directory (possibly nested)";
 }
 
@@ -95,8 +98,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
       MElement *e = gf->getMeshElement(i);
       for(int j = 0; j < e->getNumEdges(); j++) {
         std::pair<MEdge, MElement *> ed(e->getEdge(j), e);
-        auto it =
-          boundaryEdges.find(ed);
+        auto it = boundaryEdges.find(ed);
         if(it == boundaryEdges.end()) { boundaryEdges.insert(ed); }
         else {
           boundaryEdges.erase(it);
@@ -109,9 +111,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
     PViewDataList *data = getDataList(view);
     std::vector<MEdge> edges;
     SVector3 normal(0, 0, 1.);
-    for(auto it =
-          boundaryEdges.begin();
-        it != boundaryEdges.end(); ++it) {
+    for(auto it = boundaryEdges.begin(); it != boundaryEdges.end(); ++it) {
       edges.push_back(it->first);
       if(it == boundaryEdges.begin()) normal = it->second->getFace(0).normal();
     }
@@ -124,8 +124,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
         // order; reverse if necessary
         {
           // First edge (and element) of the boundary
-          auto it2 =
-            boundaryEdges.begin();
+          auto it2 = boundaryEdges.begin();
           // Loop on every sorted and consecutive nodes
           for(int j = 0; j < static_cast<int>(nodes[0].size()) - 1; j++) {
             // Find the vertex that is the starting point of the edge it2->first
@@ -153,44 +152,40 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
           data->SP.push_back(p2.y());
           data->SP.push_back(p2.z());
           // Choose the angle inside the polygon
-          if(a>0)
-            a = -(2*M_PI-a);
+          if(a > 0) a = -(2 * M_PI - a);
           data->SP.push_back(a);
           data->NbSP++;
         }
       }
     }
-    //Filename and path
-    std::string currentDir = SplitFileName(GetAbsolutePath(GModel::current()->getFileName()))[0];
+    // Filename and path
+    std::string currentDir =
+      SplitFileName(GetAbsolutePath(GModel::current()->getFileName()))[0];
     // Cleaning filename (if needed)
     std::string rootname = SplitFileName(opt_filename)[1];
-    // Output directory
-    // Add trailing (back)slash if needed
-    #if defined(WIN32)
-      char slash = '\\';
-    #else
-      char slash = '/';
-    #endif
-    if(opt_dir[opt_dir.length()-1] != slash)
-      opt_dir.push_back(slash);
+// Output directory
+// Add trailing (back)slash if needed
+#if defined(WIN32)
+    char slash = '\\';
+#else
+    char slash = '/';
+#endif
+    if(opt_dir[opt_dir.length() - 1] != slash) opt_dir.push_back(slash);
     std::string outputdir = currentDir + opt_dir;
     CreatePath(outputdir);
-    //viewname and filename (=outputdir/viewname.pos)
+    // viewname and filename (=outputdir/viewname.pos)
     char viewname[500];
     char filename[500];
     sprintf(viewname, "%s_%d", rootname.c_str(), gf->tag());
-    sprintf(filename, "%s%s_%d.pos", outputdir.c_str(),  rootname.c_str(), gf->tag());
+    sprintf(filename, "%s%s_%d.pos", outputdir.c_str(), rootname.c_str(),
+            gf->tag());
     data->Time.push_back(0.);
     data->setName(viewname);
     data->setFileName(filename);
     data->finalize();
-    if(!viewVisible)
-      view->getOptions()->visible = 0;
-    if(saveOnDisk)
-      view->write(filename, 0, false);
-    if(removeView)
-      delete view;
-    
+    if(!viewVisible) view->getOptions()->visible = 0;
+    if(saveOnDisk) view->write(filename, 0, false);
+    if(removeView) delete view;
   }
 
   return nullptr;

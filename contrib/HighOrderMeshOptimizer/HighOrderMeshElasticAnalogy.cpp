@@ -92,16 +92,15 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
   checkHighOrderTetrahedron("Final volume mesh", m, bad, worst);
 
   double t2 = Cpu();
-  Msg::StatusBar(true, "Done applying elastic analogy to high-order mesh (%g s)",
-                 t2 - t1);
+  Msg::StatusBar(
+    true, "Done applying elastic analogy to high-order mesh (%g s)", t2 - t1);
 }
 
 void highOrderTools::_moveToStraightSidedLocation(MElement *e) const
 {
   for(int i = 0; i < e->getNumVertices(); i++) {
     MVertex *v = e->getVertex(i);
-    auto it =
-      _straightSidedLocation.find(v);
+    auto it = _straightSidedLocation.find(v);
     if(it != _straightSidedLocation.end()) {
       v->x() = it->second.x();
       v->y() = it->second.y();
@@ -225,8 +224,7 @@ void highOrderTools::ensureMinimumDistorsion(double threshold)
     }
   }
   else if(_dim == 3) {
-    for(auto rit = _gm->firstRegion(); rit != _gm->lastRegion();
-        ++rit) {
+    for(auto rit = _gm->firstRegion(); rit != _gm->lastRegion(); ++rit) {
       v.insert(v.begin(), (*rit)->hexahedra.begin(), (*rit)->hexahedra.end());
       v.insert(v.begin(), (*rit)->tetrahedra.begin(), (*rit)->tetrahedra.end());
       v.insert(v.begin(), (*rit)->prisms.begin(), (*rit)->prisms.end());
@@ -298,10 +296,9 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
 
   if(!v.size()) return;
 
-  Msg::Info(
-    "Smoothing surface %d (%d elements considered in elastic analogy, "
-    "worst mapping %12.5E, %3d bad elements)",
-    gf->tag(), v.size(), minD, numBad);
+  Msg::Info("Smoothing surface %d (%d elements considered in elastic analogy, "
+            "worst mapping %12.5E, %3d bad elements)",
+            gf->tag(), v.size(), minD, numBad);
 
   addOneLayer(all, v, layer);
   std::set<MVertex *, MVertexPtrLessThan>::iterator it;
@@ -371,10 +368,9 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
   delete lsys;
 }
 
-double highOrderTools::_smoothMetric(std::vector<MElement *> &v, GFace *gf,
-                                     dofManager<double> &myAssembler,
-                                     std::set<MVertex *, MVertexPtrLessThan> &verticesToMove,
-                                     elasticityTerm &El)
+double highOrderTools::_smoothMetric(
+  std::vector<MElement *> &v, GFace *gf, dofManager<double> &myAssembler,
+  std::set<MVertex *, MVertexPtrLessThan> &verticesToMove, elasticityTerm &El)
 {
   std::set<MVertex *, MVertexPtrLessThan>::iterator it;
   double dx = 0.0;
@@ -575,10 +571,10 @@ void highOrderTools::_computeStraightSidedPositions()
     for(std::size_t i = 0; i < (*it)->prisms.size(); i++) {
       _dim = 3;
       MPrism *p = (*it)->prisms[i];
-      MPrism p_1(
-        (*it)->prisms[i]->getVertex(0), (*it)->prisms[i]->getVertex(1),
-        (*it)->prisms[i]->getVertex(2), (*it)->prisms[i]->getVertex(3),
-        (*it)->prisms[i]->getVertex(4), (*it)->prisms[i]->getVertex(5));
+      MPrism p_1((*it)->prisms[i]->getVertex(0), (*it)->prisms[i]->getVertex(1),
+                 (*it)->prisms[i]->getVertex(2), (*it)->prisms[i]->getVertex(3),
+                 (*it)->prisms[i]->getVertex(4),
+                 (*it)->prisms[i]->getVertex(5));
       const nodalBasis *fs = p->getFunctionSpace();
       for(int j = 0; j < p->getNumVertices(); j++) {
         if(p->getVertex(j)->onWhat() == *it) {
@@ -642,8 +638,7 @@ double highOrderTools::_applyIncrementalDisplacement(
     }
   }
 
-  for(auto it = _vertices.begin();
-      it != _vertices.end(); ++it) {
+  for(auto it = _vertices.begin(); it != _vertices.end(); ++it) {
     MVertex *vert = *it;
     auto itt = _targetLocation.find(vert);
     // impose displacement @ boundary
@@ -684,12 +679,11 @@ double highOrderTools::_applyIncrementalDisplacement(
   }
 
   // Move vertices @ maximum
-  //FILE *fd = Fopen("d.msh", "w");
-  //fprintf(fd, "$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n"
+  // FILE *fd = Fopen("d.msh", "w");
+  // fprintf(fd, "$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n"
   //            "\"tr(sigma)\"\n1\n0.0\n3\n1\n3\n%d\n",
   //            (int)_vertices.size());
-  for(auto it = _vertices.begin();
-      it != _vertices.end(); ++it) {
+  for(auto it = _vertices.begin(); it != _vertices.end(); ++it) {
     double ax, ay, az;
     myAssembler.getDofValue(*it, 0, _tag, ax);
     myAssembler.getDofValue(*it, 1, _tag, ay);
@@ -697,10 +691,10 @@ double highOrderTools::_applyIncrementalDisplacement(
     (*it)->x() += max_incr * ax;
     (*it)->y() += max_incr * ay;
     (*it)->z() += max_incr * az;
-    //fprintf(fd, "%d %g %g %g\n", (*it)->getIndex(), ax, ay, az);
+    // fprintf(fd, "%d %g %g %g\n", (*it)->getIndex(), ax, ay, az);
   }
-  //fprintf(fd, "$EndNodeData\n");
-  //fclose(fd);
+  // fprintf(fd, "$EndNodeData\n");
+  // fclose(fd);
 
   // Check now if elements are ok
 
@@ -713,8 +707,7 @@ double highOrderTools::_applyIncrementalDisplacement(
     getDistordedElements(v, 0.5, disto, minD);
     if(minD < thres) {
       percentage -= 10.;
-      for(auto it = _vertices.begin();
-          it != _vertices.end(); ++it) {
+      for(auto it = _vertices.begin(); it != _vertices.end(); ++it) {
         double ax, ay, az;
         myAssembler.getDofValue(*it, 0, _tag, ax);
         myAssembler.getDofValue(*it, 1, _tag, ay);
@@ -765,8 +758,8 @@ double highOrderTools::applySmoothingTo(std::vector<MElement *> &all,
   // _gm->writeMSH("straightSided.msh");
 
   char sm[] = "sm.msh";
-  double percentage_of_what_is_left = _applyIncrementalDisplacement
-    (1., all, mixed, -100000000, sm, all);
+  double percentage_of_what_is_left =
+    _applyIncrementalDisplacement(1., all, mixed, -100000000, sm, all);
 
   // ensureMinimumDistorsion (all, threshold);
 
@@ -788,8 +781,8 @@ double highOrderTools::applySmoothingTo(std::vector<MElement *> &all,
   }
 
   getDistordedElements(all, 0.3, disto, minD);
-  Msg::Info(" - Iter %d: %d elements / %d distorted, min Disto = %g",
-            ITER, all.size(), disto.size(), minD);
+  Msg::Info(" - Iter %d: %d elements / %d distorted, min Disto = %g", ITER,
+            all.size(), disto.size(), minD);
   return percentage;
 }
 

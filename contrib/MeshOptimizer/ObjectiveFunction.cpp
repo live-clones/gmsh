@@ -30,8 +30,7 @@
 
 void ObjectiveFunction::initialize(Patch *mesh)
 {
-  for(auto it = begin(); it != end(); it++)
-    (*it)->initialize(mesh);
+  for(auto it = begin(); it != end(); it++) (*it)->initialize(mesh);
 }
 
 std::string ObjectiveFunction::contribNames()
@@ -79,27 +78,23 @@ std::vector<std::string> ObjectiveFunction::names()
 
 void ObjectiveFunction::updateMinMax()
 {
-  for(auto it = begin(); it != end(); it++)
-    (*it)->updateMinMax();
+  for(auto it = begin(); it != end(); it++) (*it)->updateMinMax();
 }
 
 void ObjectiveFunction::updateParameters()
 {
-  for(auto it = begin(); it != end(); it++)
-    (*it)->updateParameters();
+  for(auto it = begin(); it != end(); it++) (*it)->updateParameters();
 }
 
 void ObjectiveFunction::updateResults()
 {
-  for(auto it = begin(); it != end(); it++)
-    (*it)->updateResults();
+  for(auto it = begin(); it != end(); it++) (*it)->updateResults();
 }
 
 bool ObjectiveFunction::stagnated()
 {
   bool stagnated = true;
-  for(auto it = begin(); it != end(); it++)
-    stagnated &= (*it)->stagnated();
+  for(auto it = begin(); it != end(); it++) stagnated &= (*it)->stagnated();
   return stagnated;
 }
 

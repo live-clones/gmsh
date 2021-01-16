@@ -378,12 +378,10 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
         if(Intersect_Edges_2d(e->p1->u, e->p1->v, e->p2->u, e->p2->v, p1->u,
                               p1->v, p2->u, p2->v, x)) {
           // intersect
-          if(e2r &&
-             e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, nullptr)) != e2r->end()) {
-            auto itr1 =
-              e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, nullptr));
-            auto itr2 =
-              e2r->find(EdgeToRecover(num1, num2, nullptr));
+          if(e2r && e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, nullptr)) !=
+                      e2r->end()) {
+            auto itr1 = e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, nullptr));
+            auto itr2 = e2r->find(EdgeToRecover(num1, num2, nullptr));
             Msg::Debug("edge %d %d on model edge %d cannot be recovered because"
                        " it intersects %d %d on model edge %d",
                        num1, num2, itr2->ge->tag(), e->p1->iD, e->p2->iD,
@@ -655,8 +653,7 @@ void BDS_Mesh::cleanup()
     triangles.erase(last, triangles.end());
   }
   {
-    auto last =
-      std::partition(edges.begin(), edges.end(), is_not_deleted());
+    auto last = std::partition(edges.begin(), edges.end(), is_not_deleted());
     auto it = last;
     while(it != edges.end()) {
       delete *it;

@@ -140,9 +140,7 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
 
       // positions
       const double *x[3];
-      for(int i = 0; i < 3; ++i) {
-        x[i] = lifted_mesh.vertex(fverts[i]);
-      }
+      for(int i = 0; i < 3; ++i) { x[i] = lifted_mesh.vertex(fverts[i]); }
 
       // ratio
       double ratio = 1;
@@ -246,9 +244,7 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
   Revoropt::CVT::DirectMinimizer<Revoropt::ROMesh<3, 6> > cvt;
   cvt.set_sites(lifted_sites.data(), nsites);
   cvt.set_mesh(&lifted_mesh);
-  if(twfactor > 0) {
-    cvt.set_triangle_weights(triangle_weights.data());
-  }
+  if(twfactor > 0) { cvt.set_triangle_weights(triangle_weights.data()); }
 
   // setup the callback
   SolverCallback callback;

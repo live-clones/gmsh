@@ -88,8 +88,7 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
         vertices.insert(v);
       }
     }
-    for(auto it = vertices.begin();
-        it != vertices.end(); ++it) {
+    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
       MVertex *v = *it;
       GVertex *gv = nullptr;
       if(v->onWhat() && v->onWhat()->dim() == 0) {
@@ -113,8 +112,7 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
         edges.insert(e);
       }
     }
-    for(auto it = edges.begin();
-        it != edges.end(); ++it) {
+    for(auto it = edges.begin(); it != edges.end(); ++it) {
       const MEdge &e = *it;
       GEdge *ge = nullptr;
       MVertex *v0 = e.getVertex(0), *v1 = e.getVertex(1);
@@ -129,7 +127,8 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
           ge = (GEdge *)v1->onWhat();
       }
       if(!ge) {
-        ge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
+        ge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr,
+                              nullptr);
         v0->setEntity(ge);
         v1->setEntity(ge);
         m->add(ge);

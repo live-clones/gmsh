@@ -70,9 +70,7 @@ void voroMetal3D::execute(double h)
   GModel::riter it;
   for(it = model->firstRegion(); it != model->lastRegion(); it++) {
     gr = *it;
-    if(gr->getNumMeshElements() > 0) {
-      execute(gr, h);
-    }
+    if(gr->getNumMeshElements() > 0) { execute(gr, h); }
   }
 }
 
@@ -243,9 +241,7 @@ void voroMetal3D::execute(std::vector<SPoint3> &vertices,
     areas.clear();
     pointers[i]->face_areas(areas);
     for(j = 0; j < areas.size(); j++) {
-      if(areas[j] < min_area) {
-        min_area = areas[j];
-      }
+      if(areas[j] < min_area) { min_area = areas[j]; }
     }
   }
 
@@ -311,9 +307,7 @@ void voroMetal3D::execute(std::vector<SPoint3> &vertices,
         }
 
         last = obj.line_loops[face_number].size() - 1;
-        if(last == 0) {
-          obj.orientations[face_number].push_back(0);
-        }
+        if(last == 0) { obj.orientations[face_number].push_back(0); }
         else if(obj.lines[obj.line_loops[face_number][last - 1]].second ==
                 obj.lines[val].first) {
           obj.orientations[face_number][last - 1] = 0;
@@ -526,9 +520,7 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax,
 
   for(it = model->firstFace(); it != model->lastFace(); it++) {
     gf = *it;
-    if(gf->numRegions() == 1) {
-      faces.push_back(gf);
-    }
+    if(gf->numRegions() == 1) { faces.push_back(gf); }
   }
 
   centers.clear();
@@ -917,9 +909,7 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax,
       }
     }
 
-    if(indices1.size() != indices2.size()) {
-      printf("Error\n\n");
-    }
+    if(indices1.size() != indices2.size()) { printf("Error\n\n"); }
     file3 << "Periodic Surface {" << gf1->tag() << " }={ " << gf2->tag()
           << " } Translate { " << -dx.x() << "," << -dx.y() << "," << -dx.z()
           << "};\n";
@@ -1017,9 +1007,7 @@ void voroMetal3D::correspondance(double delta_x, double delta_y, double delta_z,
 bool voroMetal3D::equal(double x, double y, double e)
 {
   bool flag;
-  if(x > y - e && x < y + e) {
-    flag = 1;
-  }
+  if(x > y - e && x < y + e) { flag = 1; }
   else {
     flag = 0;
   }
@@ -1131,9 +1119,7 @@ static void computeBestSeeds(const char *filename)
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
                  (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) {
-            distMinTmp = distTmp;
-          }
+          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
         }
         if(distMinTmp > distMinGlobal) {
           distMinGlobal = distMinTmp;
@@ -1172,9 +1158,7 @@ static void computeBestSeeds(const char *filename)
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
                  (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) {
-            distMinTmp = distTmp;
-          }
+          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
         }
         if(distMinTmp > distMinGlobal) {
           distMinGlobal = distMinTmp;
@@ -1213,9 +1197,7 @@ static void computeBestSeeds(const char *filename)
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
                  (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) {
-            distMinTmp = distTmp;
-          }
+          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
         }
         if(distMinTmp > distMinGlobal) {
           distMinGlobal = distMinTmp;
@@ -1254,9 +1236,7 @@ static void computeBestSeeds(const char *filename)
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
                  (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) {
-            distMinTmp = distTmp;
-          }
+          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
         }
         if(distMinTmp > distMinGlobal) {
           distMinGlobal = distMinTmp;
@@ -1295,9 +1275,7 @@ static void computeBestSeeds(const char *filename)
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
                  (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) {
-            distMinTmp = distTmp;
-          }
+          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
         }
         if(distMinTmp > distMinGlobal) {
           distMinGlobal = distMinTmp;
@@ -1336,9 +1314,7 @@ static void computeBestSeeds(const char *filename)
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
                  (vTmp1->z() - vTmp2->z()) * (vTmp1->z() - vTmp2->z()));
-          if(distTmp < distMinTmp) {
-            distMinTmp = distTmp;
-          }
+          if(distTmp < distMinTmp) { distMinTmp = distTmp; }
         }
         if(distMinTmp > distMinGlobal) {
           distMinGlobal = distMinTmp;
@@ -1351,25 +1327,19 @@ static void computeBestSeeds(const char *filename)
       std::cout << "distance minimale de " << distMinGlobal << std::endl;
       listDistances[Count] = distMinGlobal;
       if(xORyORz == 1) {
-        if(posORneg == 1) {
-          properties[4 * jMinGlobal] += 0.01;
-        }
+        if(posORneg == 1) { properties[4 * jMinGlobal] += 0.01; }
         else if(posORneg == 2) {
           properties[4 * jMinGlobal] -= 0.01;
         }
       }
       else if(xORyORz == 2) {
-        if(posORneg == 1) {
-          properties[4 * jMinGlobal + 1] += 0.01;
-        }
+        if(posORneg == 1) { properties[4 * jMinGlobal + 1] += 0.01; }
         else if(posORneg == 2) {
           properties[4 * jMinGlobal + 1] -= 0.01;
         }
       }
       else if(xORyORz == 3) {
-        if(posORneg == 1) {
-          properties[4 * jMinGlobal + 2] += 0.01;
-        }
+        if(posORneg == 1) { properties[4 * jMinGlobal + 2] += 0.01; }
         else if(posORneg == 2) {
           properties[4 * jMinGlobal + 2] -= 0.01;
         }

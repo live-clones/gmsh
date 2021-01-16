@@ -171,26 +171,27 @@ bool buildMeshGenerationDataStructures(
     }
   }
 
-  for(auto it = vSizesMap.begin();
-      it != vSizesMap.end(); ++it) {
+  for(auto it = vSizesMap.begin(); it != vSizesMap.end(); ++it) {
     SPoint2 param;
     reparamMeshVertexOnFace(it->first, gf, param);
     // Add size of background mesh to embedded vertices. For the other nodes,
     // use the size in vSizesMap
     const double lcBGM = (embeddedVertices.count(it->first) > 0) ?
-      BGM_MeshSize(gf, param[0], param[1], it->first->x(), it->first->y(),
-                   it->first->z()) : it->second;
-    data.addVertex (it->first, param[0], param[1], it->second, lcBGM);
+                           BGM_MeshSize(gf, param[0], param[1], it->first->x(),
+                                        it->first->y(), it->first->z()) :
+                           it->second;
+    data.addVertex(it->first, param[0], param[1], it->second, lcBGM);
   }
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     double lc = 0.3333333333 *
                 (data.vSizes[data.getIndex(gf->triangles[i]->getVertex(0))] +
                  data.vSizes[data.getIndex(gf->triangles[i]->getVertex(1))] +
                  data.vSizes[data.getIndex(gf->triangles[i]->getVertex(2))]);
-    double lcBGM = 0.3333333333 *
-                   (data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(0))] +
-                    data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(1))] +
-                    data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(2))]);
+    double lcBGM =
+      0.3333333333 *
+      (data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(0))] +
+       data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(1))] +
+       data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(2))]);
 
     double LL = Extend1dMeshIn2dSurfaces(gf) ? std::min(lc, lcBGM) : lcBGM;
     AllTris.insert(new MTri3(gf->triangles[i], LL, nullptr, &data, gf));
@@ -210,11 +211,8 @@ void computeEquivalences(GFace *gf, bidimMeshData &data)
       MVertex *v[3];
       for(int j = 0; j < 3; j++) {
         v[j] = t->getVertex(j);
-        auto it =
-          data.equivalence->find(v[j]);
-        if(it != data.equivalence->end()) {
-          v[j] = it->second;
-        }
+        auto it = data.equivalence->find(v[j]);
+        if(it != data.equivalence->end()) { v[j] = it->second; }
       }
       if(v[0] != v[1] && v[0] != v[2] && v[2] != v[1])
         newT.push_back(new MTriangle(v[0], v[1], v[2]));
@@ -270,8 +268,7 @@ bool computeEquivalentTriangles(GFace *gf,
 
   if(WTF.size()) {
     Msg::Info("%d triangles are equivalent", WTF.size());
-    for(std::size_t i = 0; i < WTF.size(); i++) {
-    }
+    for(std::size_t i = 0; i < WTF.size(); i++) {}
     return true;
   }
   return false;
@@ -406,9 +403,8 @@ void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
   std::sort(edges_detected.begin(), edges_detected.end());
 }
 
-static void parametricCoordinates(MElement *t, GFace *gf,
-                                  double u[4], double v[4],
-                                  MVertex *close = nullptr)
+static void parametricCoordinates(MElement *t, GFace *gf, double u[4],
+                                  double v[4], MVertex *close = nullptr)
 {
   for(std::size_t j = 0; j < t->getNumVertices(); j++) {
     MVertex *ver = t->getVertex(j);
@@ -425,7 +421,7 @@ static void parametricCoordinates(MElement *t, GFace *gf,
 double surfaceFaceUV(MElement *t, GFace *gf, bool maximal = true)
 {
   const int N = t->getNumVertices();
-  if(N > 4){
+  if(N > 4) {
     Msg::Warning("surfaceFaceUV only for first order elements");
     return 0;
   }
@@ -461,8 +457,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
     if(it->second.size() == 2 && v->onWhat() == gf) {
       MElement *q1 = it->second[0];
       MElement *q2 = it->second[1];
-      if(q1->getNumVertices() == 4 &&
-         q2->getNumVertices() == 4 &&
+      if(q1->getNumVertices() == 4 && q2->getNumVertices() == 4 &&
          touched.find(q1) == touched.end() &&
          touched.find(q2) == touched.end()) {
         int comm = 0;
@@ -477,8 +472,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
         MVertex *v3 = q1->getVertex((comm + 3) % 4);
         MVertex *v4 = nullptr;
         for(int i = 0; i < 4; i++) {
-          if(q2->getVertex(i) != v1 &&
-             q2->getVertex(i) != v3 &&
+          if(q2->getVertex(i) != v1 && q2->getVertex(i) != v3 &&
              q2->getVertex(i) != v) {
             v4 = q2->getVertex(i);
             break;
@@ -589,9 +583,7 @@ static bool _tryToCollapseThatVertex2(GFace *gf, std::vector<MElement *> &e1,
     for(std::size_t j = 0; j < e.size(); ++j) {
       if(e[j] != q) {
         for(int k = 0; k < 4; k++) {
-          if(e[j]->getVertex(k) == v2) {
-            e[j]->setVertex(k, v1);
-          }
+          if(e[j]->getVertex(k) == v2) { e[j]->setVertex(k, v1); }
         }
       }
     }
@@ -666,9 +658,7 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
     for(std::size_t j = 0; j < e.size(); ++j) {
       if(e[j] != q) {
         for(int k = 0; k < 4; k++) {
-          if(e[j]->getVertex(k) == v2) {
-            e[j]->setVertex(k, v1);
-          }
+          if(e[j]->getVertex(k) == v2) { e[j]->setVertex(k, v1); }
         }
       }
     }
@@ -720,16 +710,14 @@ static bool has_none_of(std::set<MVertex *> const &touched, MVertex *const v1,
 {
   return touched.find(v1) == touched.end() &&
          touched.find(v2) == touched.end() &&
-         touched.find(v3) == touched.end() &&
-         touched.find(v4) == touched.end();
+         touched.find(v3) == touched.end() && touched.find(v4) == touched.end();
 }
 
 static bool are_all_on_surface(MVertex *const v1, MVertex *const v2,
-                               MVertex *const v3, MVertex *const v4,
-                               GFace *gf)
+                               MVertex *const v3, MVertex *const v4, GFace *gf)
 {
-  return v1->onWhat() == gf && v2->onWhat() == gf &&
-         v3->onWhat() == gf && v4->onWhat() == gf;
+  return v1->onWhat() == gf && v2->onWhat() == gf && v3->onWhat() == gf &&
+         v4->onWhat() == gf;
 }
 
 template <class InputIterator>
@@ -781,8 +769,10 @@ static int _removeDiamonds(GFace *const gf)
 
         diamonds.push_back(q);
       }
-      else if(are_all_on_surface(v1, v2, v3, v4, gf) && are_size_three(it2, it4) &&
-              _tryToCollapseThatVertex(gf, it2->second, it4->second, q, v2, v4)) {
+      else if(are_all_on_surface(v1, v2, v3, v4, gf) &&
+              are_size_three(it2, it4) &&
+              _tryToCollapseThatVertex(gf, it2->second, it4->second, q, v2,
+                                       v4)) {
         touched.insert(v1);
         touched.insert(v2);
         touched.insert(v3);
@@ -875,9 +865,7 @@ static void _relocate(GFace *gf, MVertex *ver,
   double metric[3];
   SPoint2 after(0, 0);
   double COUNT = 0.0;
-  for(auto it =
-        pts.begin();
-      it != pts.end(); ++it) {
+  for(auto it = pts.begin(); it != pts.end(); ++it) {
     SPoint2 adj = it->second;
     SVector3 d(adj.x() - before.x(), adj.y() - before.y(), 0.0);
     d.normalize();
@@ -915,9 +903,7 @@ void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
   vs.clear();
   BoundaryLayerColumns *_columns = gf->getColumns();
   if(!_columns) return;
-  for(auto it =
-        _columns->_data.begin();
-      it != _columns->_data.end(); it++) {
+  for(auto it = _columns->_data.begin(); it != _columns->_data.end(); it++) {
     BoundaryLayerData &data = it->second;
     for(size_t i = 0; i < data._column.size(); i++) vs.insert(data._column[i]);
   }
@@ -926,9 +912,11 @@ void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
 void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 {
   if((gf->triangles.size() > 0 && gf->triangles[0]->getPolynomialOrder() > 1) ||
-     (gf->quadrangles.size() > 0 && gf->quadrangles[0]->getPolynomialOrder() > 1)){
-    Msg::Error("Surface mesh smoothing only valid for first order mesh (use the high-"
-               "order optimization tools for high-order meshes)");
+     (gf->quadrangles.size() > 0 &&
+      gf->quadrangles[0]->getPolynomialOrder() > 1)) {
+    Msg::Error(
+      "Surface mesh smoothing only valid for first order mesh (use the high-"
+      "order optimization tools for high-order meshes)");
     return;
   }
 
@@ -985,9 +973,10 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
                                (*ite)->mesh_vertices.begin(),
                                (*ite)->mesh_vertices.end());
           if((*ite)->getBeginVertex())
-            emb_edgeverts.insert(emb_edgeverts.end(),
-                                 (*ite)->getBeginVertex()->mesh_vertices.begin(),
-                                 (*ite)->getBeginVertex()->mesh_vertices.end());
+            emb_edgeverts.insert(
+              emb_edgeverts.end(),
+              (*ite)->getBeginVertex()->mesh_vertices.begin(),
+              (*ite)->getBeginVertex()->mesh_vertices.end());
           if((*ite)->getEndVertex())
             emb_edgeverts.insert(emb_edgeverts.end(),
                                  (*ite)->getEndVertex()->mesh_vertices.begin(),
@@ -1023,8 +1012,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
     else if(!it->second.second && it->second.first->getNumVertices() == 3) {
       for(int i = 0; i < 2; i++) {
         MVertex *const v = it->first.getVertex(i);
-        auto itv =
-          makeGraphPeriodic.find(v);
+        auto itv = makeGraphPeriodic.find(v);
         if(itv == makeGraphPeriodic.end()) {
           makeGraphPeriodic[v] =
             std::make_pair(it->second.first, static_cast<MElement *>(nullptr));
@@ -1047,11 +1035,12 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
     int ncount = gf->triangles.size();
     if(ncount % 2 != 0) {
       Msg::Warning("Cannot apply Blossom: odd number of triangles (%d) in "
-                   "surface %d", ncount, gf->tag());
+                   "surface %d",
+                   ncount, gf->tag());
     }
     else {
-      int ecount = cubicGraph ? (pairs.size() + makeGraphPeriodic.size()) :
-        pairs.size();
+      int ecount =
+        cubicGraph ? (pairs.size() + makeGraphPeriodic.size()) : pairs.size();
       Msg::Info("Blossom: %d internal %d closed", (int)pairs.size(),
                 (int)makeGraphPeriodic.size());
       Msg::Debug("Perfect Match Starts %d edges %d nodes", ecount, ncount);
@@ -1084,8 +1073,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       }
 
       if(cubicGraph) {
-        auto itv =
-          makeGraphPeriodic.begin();
+        auto itv = makeGraphPeriodic.begin();
         std::size_t CC = pairs.size();
         for(; itv != makeGraphPeriodic.end(); ++itv) {
           elist[2 * CC] = t2n[itv->second.first];
@@ -1097,9 +1085,10 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       double matzeit = 0.0;
       char MATCHFILE[256];
       sprintf(MATCHFILE, ".face.match");
-      if(perfect_match(ncount, nullptr, ecount, &elist, &elen, nullptr, MATCHFILE, 0,
-                       0, 0, 0, &matzeit)) {
-        Msg::Error("Perfect Match failed in quadrangulation, try something else");
+      if(perfect_match(ncount, nullptr, ecount, &elist, &elen, nullptr,
+                       MATCHFILE, 0, 0, 0, 0, &matzeit)) {
+        Msg::Error(
+          "Perfect Match failed in quadrangulation, try something else");
         free(elist);
         pairs.clear();
       }
@@ -1111,7 +1100,8 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
           // FIXME !
           if(an == 100000 /*|| an == 1000*/) {
             // toProcess.push_back(std::make_pair(n2t[i1],n2t[i2]));
-            // Msg::Warning("Extra edge found in blossom algorithm, optimization"
+            // Msg::Warning("Extra edge found in blossom algorithm,
+            // optimization"
             //              "will be required");
           }
           else {
@@ -1175,9 +1165,9 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
             break;
           }
         }
-        gf->quadrangles.push_back
-          (new MQuadrangle(itp->n1, orientation < 0 ? itp->n3 : itp->n4, itp->n2,
-                           orientation < 0 ? itp->n4 : itp->n3));
+        gf->quadrangles.push_back(
+          new MQuadrangle(itp->n1, orientation < 0 ? itp->n3 : itp->n4, itp->n2,
+                          orientation < 0 ? itp->n4 : itp->n3));
       }
     }
     ++itp;
@@ -1209,10 +1199,11 @@ static double printStats(GFace *gf, const char *message)
     Qav += Q;
     Qmin = std::min(Q, Qmin);
   }
-  Msg::Info("%s: %d quads, %d triangles, %d invalid quads, %d quads with Q < 0.1, "
-            "avg Q = %g, min Q = %g", message, gf->quadrangles.size(),
-            gf->triangles.size(), nbInv, nbBad, Qav / gf->quadrangles.size(),
-            Qmin);
+  Msg::Info(
+    "%s: %d quads, %d triangles, %d invalid quads, %d quads with Q < 0.1, "
+    "avg Q = %g, min Q = %g",
+    message, gf->quadrangles.size(), gf->triangles.size(), nbInv, nbBad,
+    Qav / gf->quadrangles.size(), Qmin);
   return Qmin;
 }
 
@@ -1223,11 +1214,11 @@ static double printStats(GFace *gf, const char *message)
 // remove nodes, this will produce an invalide model mesh (and crash).
 static bool _isModelOkForTopologicalOpti(GModel *m)
 {
-  for(auto it = m->firstFace(); it != m->lastFace(); it++){
+  for(auto it = m->firstFace(); it != m->lastFace(); it++) {
     GFace *gf = *it;
-    for(std::size_t j = 0; j < gf->getNumMeshElements(); j++){
+    for(std::size_t j = 0; j < gf->getNumMeshElements(); j++) {
       MElement *e = gf->getMeshElement(j);
-      for(std::size_t k = 0; k < e->getNumVertices(); k++){
+      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         GEntity *ge = e->getVertex(k)->onWhat();
         if(!ge) return false;
         if(ge->dim() == 2 && ge != gf) return false;
@@ -1245,25 +1236,23 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   bool haveParam = (gf->geomType() != GEntity::DiscreteSurface);
   bool debug = (Msg::GetVerbosity() == 99);
 
-  if(debug)
-    gf->model()->writeMSH("recombine_0before.msh");
+  if(debug) gf->model()->writeMSH("recombine_0before.msh");
 
   _recombineIntoQuads(gf, blossom);
 
-  if(debug)
-    gf->model()->writeMSH("recombine_1raw.msh");
+  if(debug) gf->model()->writeMSH("recombine_1raw.msh");
 
-  if(haveParam && nodeRepositioning){
+  if(haveParam && nodeRepositioning) {
     RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
-    if(debug)
-      gf->model()->writeMSH("recombine_2smoothed.msh");
+    if(debug) gf->model()->writeMSH("recombine_2smoothed.msh");
   }
 
   if(topologicalOptiPasses > 0) {
-    if(!_isModelOkForTopologicalOpti(gf->model())){
-      Msg::Info("Skipping topological optimization - mesh topology is not complete");
+    if(!_isModelOkForTopologicalOpti(gf->model())) {
+      Msg::Info(
+        "Skipping topological optimization - mesh topology is not complete");
     }
-    else{
+    else {
       int iter = 0, nbTwoQuadNodes = 1, nbDiamonds = 1;
       while(nbTwoQuadNodes || nbDiamonds) {
         Msg::Debug("Topological optimization of quad mesh: pass %d", iter);
@@ -1275,16 +1264,14 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
         iter++;
         if(iter > topologicalOptiPasses) break;
       }
-      if(debug)
-        gf->model()->writeMSH("recombine_3topo.msh");
+      if(debug) gf->model()->writeMSH("recombine_3topo.msh");
     }
   }
 
   // re-split bad quads into triangles
   quadsToTriangles(gf, minqual);
 
-  if(debug)
-    gf->model()->writeMSH("recombine_4quality.msh");
+  if(debug) gf->model()->writeMSH("recombine_4quality.msh");
 
   if(haveParam && nodeRepositioning)
     RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
@@ -1296,8 +1283,7 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
           blossom ? "Blossom" : "Simple", w2 - w1, t2 - t1);
   printStats(gf, name);
 
-  if(debug)
-    gf->model()->writeMSH("recombine_5final.msh");
+  if(debug) gf->model()->writeMSH("recombine_5final.msh");
 }
 
 void quadsToTriangles(GFace *gf, double minqual)
@@ -1315,8 +1301,10 @@ void quadsToTriangles(GFace *gf, double minqual)
         new MTriangle(q->getVertex(1), q->getVertex(2), q->getVertex(3));
       MTriangle *t22 =
         new MTriangle(q->getVertex(3), q->getVertex(0), q->getVertex(1));
-      double qual1 = std::min(t11->gammaShapeMeasure(), t12->gammaShapeMeasure());
-      double qual2 = std::min(t21->gammaShapeMeasure(), t22->gammaShapeMeasure());
+      double qual1 =
+        std::min(t11->gammaShapeMeasure(), t12->gammaShapeMeasure());
+      double qual2 =
+        std::min(t21->gammaShapeMeasure(), t22->gammaShapeMeasure());
       double ori2 = dot(t21->getFace(0).normal(), t22->getFace(0).normal());
       // choose (t11, t12) if it leads to the best quality OR if choosing (t21,
       // t22) would revert the orientation (which can happen if q is not convex)

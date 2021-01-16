@@ -295,9 +295,7 @@ void PView::combine(bool time, int how, bool remove, bool copyOptions)
         if(!d2) allModelBased = false;
       }
       PViewData *data = nullptr;
-      if(allListBased) {
-        data = new PViewDataList();
-      }
+      if(allListBased) { data = new PViewDataList(); }
       else if(allModelBased) {
         PViewDataGModel *d2 = dynamic_cast<PViewDataGModel *>(nds[i].data[0]);
         data = new PViewDataGModel(d2->getType());
@@ -327,8 +325,7 @@ void PView::combine(bool time, int how, bool remove, bool copyOptions)
     }
   }
   if(remove)
-    for(auto it = rm.begin(); it != rm.end(); it++)
-      delete *it;
+    for(auto it = rm.begin(); it != rm.end(); it++) delete *it;
 }
 
 class PViewLessThanName {

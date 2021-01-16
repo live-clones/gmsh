@@ -183,8 +183,7 @@ MetaEl::metaInfoType::metaInfoType(int type, int order)
 
 const MetaEl::metaInfoType &MetaEl::getMetaInfo(int elType, int order)
 {
-  auto itMInfo =
-    _metaInfo.find(elType);
+  auto itMInfo = _metaInfo.find(elType);
   if(itMInfo == _metaInfo.end()) {
     const metaInfoType mInfo(elType, order);
     itMInfo =

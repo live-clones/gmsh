@@ -150,8 +150,7 @@ namespace {
       todoPB[iB] = false;
       group.insert(iB);
       const std::set<int> &connect = groupConnect[iB];
-      for(auto itBC = connect.begin();
-          itBC != connect.end(); ++itBC)
+      for(auto itBC = connect.begin(); itBC != connect.end(); ++itBC)
         addPatchChaintoGroup(group, groupConnect, todoPB, *itBC);
     }
   }
@@ -178,8 +177,7 @@ namespace {
   MElement *getFaceInBndElements(const MFace &f,
                                  std::vector<GFace *> const &gFaces)
   {
-    for(auto itGF = gFaces.begin();
-        itGF != gFaces.end(); itGF++) {
+    for(auto itGF = gFaces.begin(); itGF != gFaces.end(); itGF++) {
       if(f.getNumVertices() == 3) {
         std::vector<MTriangle *> &tris = (*itGF)->triangles;
         for(int iEl = 0; iEl < tris.size(); iEl++)
@@ -197,8 +195,7 @@ namespace {
   MElement *getEdgeInBndElements(const MEdge &e,
                                  std::vector<GEdge *> const &gEdges)
   {
-    for(auto itGE = gEdges.begin();
-        itGE != gEdges.end(); itGE++) {
+    for(auto itGE = gEdges.begin(); itGE != gEdges.end(); itGE++) {
       std::vector<MLine *> &lines = (*itGE)->lines;
       for(int iEl = 0; iEl < lines.size(); iEl++)
         if(lines[iEl]->getEdge(0) == e) return lines[iEl];
@@ -215,8 +212,7 @@ namespace {
 
       // Fill boundary element -> GEntity connectivity
       GFaceList gFaces = entity->faces();
-      for(auto itGF = gFaces.begin(); itGF != gFaces.end();
-          itGF++) {
+      for(auto itGF = gFaces.begin(); itGF != gFaces.end(); itGF++) {
         std::vector<MTriangle *> &tris = (*itGF)->triangles;
         for(int i = 0; i < tris.size(); i++)
           bndEl2Ent.insert(std::pair<MElement *, GEntity *>(tris[i], *itGF));
@@ -244,8 +240,7 @@ namespace {
 
       // Fill boundary element -> GEntity connectivity
       GEdgeList gEdges = entity->edges();
-      for(auto itGE = gEdges.begin(); itGE != gEdges.end();
-          itGE++) {
+      for(auto itGE = gEdges.begin(); itGE != gEdges.end(); itGE++) {
         std::vector<MLine *> &lines = (*itGE)->lines;
         for(int i = 0; i < lines.size(); i++)
           bndEl2Ent.insert(std::pair<MElement *, GEntity *>(lines[i], *itGE));
@@ -287,8 +282,7 @@ namespace {
     Msg::Info("Constructing %i primary patches", badElements.size());
     std::vector<elSet> primPatches;
     primPatches.reserve(badElements.size());
-    for(auto it = badElements.begin(); it != badElements.end();
-        ++it) {
+    for(auto it = badElements.begin(); it != badElements.end(); ++it) {
       const double limDist = par.patchDef->maxDistance(*it);
       primPatches.push_back(
         getSurroundingPatch(*it, par.patchDef, limDist, par.patchDef->maxLayers,
@@ -305,8 +299,7 @@ namespace {
         std::set<int> &patchInd = tags[*itEl];
         if(!patchInd.empty() && (badElements.find(*itEl) != badElements.end() ||
                                  !par.patchDef->weakMerge)) {
-          for(auto itBS = patchInd.begin();
-              itBS != patchInd.end(); ++itBS)
+          for(auto itBS = patchInd.begin(); itBS != patchInd.end(); ++itBS)
             patchConnect[*itBS].insert(iB);
           patchConnect[iB].insert(patchInd.begin(), patchInd.end());
         }
@@ -328,11 +321,9 @@ namespace {
     // Merge primary patches according to groups
     Msg::Info("Merging primary patches into %i patches...", groups.size());
     std::list<elSet> patches;
-    for(auto itG = groups.begin();
-        itG != groups.end(); ++itG) {
+    for(auto itG = groups.begin(); itG != groups.end(); ++itG) {
       patches.push_back(elSet());
-      for(auto itB = itG->begin(); itB != itG->end();
-          ++itB) {
+      for(auto itB = itG->begin(); itB != itG->end(); ++itB) {
         elSet primPatch = primPatches[*itB];
         patches.back().insert(primPatch.begin(), primPatch.end());
       }
@@ -341,8 +332,7 @@ namespace {
     // Store and compute patch boundaries
     Msg::Info("Computing boundaries for %i patches...", patches.size());
     std::vector<elSetVertSetPair> result;
-    for(auto itB = patches.begin(); itB != patches.end();
-        ++itB)
+    for(auto itB = patches.begin(); itB != patches.end(); ++itB)
       result.push_back(
         elSetVertSetPair(*itB, getAllBndVertices(*itB, vertex2elements)));
 

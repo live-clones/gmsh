@@ -110,8 +110,7 @@ void GMSH_SpanningTreePlugin::run(void)
   // Get all elements in physicals for each dimension
   vector<ElementSet> element(3);
   for(int i = 0; i < 3; i++)
-    for(auto j = physical[i].begin(); j != physical[i].end();
-        j++)
+    for(auto j = physical[i].begin(); j != physical[i].end(); j++)
       getAllMElement(*model, *j, dim[i], element[i]);
 
   // Check if we have something
@@ -321,7 +320,7 @@ string GMSH_SpanningTreePlugin::DSU::toString(void)
   // Show (node, parent) [using Gmsh's 1-base index]
   stringstream str;
   for(size_t i = 0; i < parent.size(); i++)
-    str << "(" << i+1 << ", " << parent[i]+1 << ")" << endl;
+    str << "(" << i + 1 << ", " << parent[i] + 1 << ")" << endl;
 
   return str.str();
 }

@@ -64,16 +64,19 @@ std::string GMSH_AnalyseMeshQualityPlugin::getHelp() const
          "the IGE quality measure (Inverse Gradient Error) and/or the ICN "
          "quality measure (Condition Number). Statistics are printed and, "
          "if requested, a model-based post-processing view is created for each "
-         "quality measure. The plugin can optionally hide elements by comparing "
+         "quality measure. The plugin can optionally hide elements by "
+         "comparing "
          "the measure to a prescribed threshold.\n"
          "\n"
-         "J is faster to compute but gives information only on element validity "
+         "J is faster to compute but gives information only on element "
+         "validity "
          "while the other measures also give information on element quality. "
          "The IGE measure is related to the error on the gradient of the "
          "finite element solution. It is the scaled Jacobian for quads and "
          "hexes and a new measure for triangles and tetrahedra. "
          "The ICN measure is related to the condition number of the stiffness "
-         "matrix. (See the article \"Efficient computation of the minimum of shape "
+         "matrix. (See the article \"Efficient computation of the minimum of "
+         "shape "
          "quality measures on curvilinear finite elements\" for details.)\n"
          "\n"
          "Parameters:\n"
@@ -93,7 +96,8 @@ std::string GMSH_AnalyseMeshQualityPlugin::getHelp() const
          "- `CreateView': create a model-based view of min(J)/max(J), "
          "min(IGE) and/or min(ICN)?\n"
          "\n"
-         "- `Recompute': force recomputation (set to 1 if the mesh has changed).\n"
+         "- `Recompute': force recomputation (set to 1 if the mesh has "
+         "changed).\n"
          "\n"
          "- `DimensionOfElements': analyse elements of the given dimension if "
          "equal to 1, 2 or 3; analyse 2D and 3D elements if equal to 4; "
@@ -138,24 +142,30 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
         double time = Cpu(), w = TimeOfDay();
         Msg::StatusBar(true, "Computing Jacobian for %dD elements...", dim);
         _computeMinMaxJandValidity(dim);
-        Msg::StatusBar(true, "Done computing Jacobian for %dD elements (Wall %gs, "
-                       "CPU %gs)", dim, TimeOfDay() - w, Cpu() - time);
+        Msg::StatusBar(true,
+                       "Done computing Jacobian for %dD elements (Wall %gs, "
+                       "CPU %gs)",
+                       dim, TimeOfDay() - w, Cpu() - time);
         printStatJ = true;
       }
       if(computeIGE && !_computedIGE[dim - 1]) {
         double time = Cpu(), w = TimeOfDay();
         Msg::StatusBar(true, "Computing IGE for %dD elements...", dim);
         _computeMinIGE(dim);
-        Msg::StatusBar(true, "Done computing IGE for %dD elements (Wall %gs, "
-                       "CPU %gs)", dim, TimeOfDay() - w, Cpu() - time);
+        Msg::StatusBar(true,
+                       "Done computing IGE for %dD elements (Wall %gs, "
+                       "CPU %gs)",
+                       dim, TimeOfDay() - w, Cpu() - time);
         printStatS = true;
       }
       if(computeICN && !_computedICN[dim - 1]) {
         double time = Cpu(), w = TimeOfDay();
         Msg::StatusBar(true, "Computing ICN for %dD elements...", dim);
         _computeMinICN(dim);
-        Msg::StatusBar(true, "Done computing ICN for %dD elements (Wall %gs, "
-                       "CPU %gs)", dim, TimeOfDay() - w, Cpu() - time);
+        Msg::StatusBar(true,
+                       "Done computing ICN for %dD elements (Wall %gs, "
+                       "CPU %gs)",
+                       dim, TimeOfDay() - w, Cpu() - time);
         printStatI = true;
       }
     }
@@ -309,8 +319,8 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
     if(normals) delete normals;
   }
   if(cntInverted) {
-    Msg::Warning("%d element%s completely inverted", (cntInverted > 1) ?
-                 "s are" : " is");
+    Msg::Warning("%d element%s completely inverted",
+                 (cntInverted > 1) ? "s are" : " is");
   }
   _computedJac[dim - 1] = true;
   bezierCoeff::releasePools();
@@ -325,9 +335,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinIGE(int dim)
   for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if(el->getDim() != dim) continue;
-    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) {
-      _data[i].setMinS(0);
-    }
+    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) { _data[i].setMinS(0); }
     else {
       _data[i].setMinS(jacobianBasedQuality::minIGEMeasure(el, true));
     }
@@ -346,9 +354,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinICN(int dim)
   for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if(el->getDim() != dim) continue;
-    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) {
-      _data[i].setMinI(0);
-    }
+    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) { _data[i].setMinI(0); }
     else {
       _data[i].setMinI(jacobianBasedQuality::minICNMeasure(el, true));
     }

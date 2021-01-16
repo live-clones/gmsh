@@ -7,14 +7,13 @@
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
-static std::vector<IntPt*> GQL(40, nullptr);
+static std::vector<IntPt *> GQL(40, nullptr);
 
 IntPt *getGQLPts(int order)
 {
   // Number of Gauss Point: (order + 1) / 2 *ROUNDED UP*
   int n = (order + 1) / (double)2 + 0.5;
-  if(static_cast<int>(GQL.size()) < order + 1)
-    GQL.resize(order + 1, nullptr);
+  if(static_cast<int>(GQL.size()) < order + 1) GQL.resize(order + 1, nullptr);
   if(!GQL[order]) {
     double *pt, *wt;
     gmshGaussLegendre1D(n, &pt, &wt);

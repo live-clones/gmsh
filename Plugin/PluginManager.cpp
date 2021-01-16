@@ -90,15 +90,13 @@ PluginManager *PluginManager::_instance = nullptr;
 
 PluginManager::~PluginManager()
 {
-  for(auto it = allPlugins.begin();
-      it != allPlugins.end(); ++it)
+  for(auto it = allPlugins.begin(); it != allPlugins.end(); ++it)
     delete it->second;
 }
 
 GMSH_Plugin *PluginManager::find(const std::string &pluginName)
 {
-  auto it =
-    allPlugins.find(pluginName);
+  auto it = allPlugins.find(pluginName);
   if(it == allPlugins.end()) return nullptr;
   return it->second;
 }

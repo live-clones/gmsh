@@ -44,40 +44,40 @@ static void addLine(PViewDataList *data, const SVector3 &p0, const SVector3 &p1,
   data->SL.push_back(v1);
 }
 
-  /*
-  static void addQua(PViewDataList *data, const SVector3 &p0, const SVector3
-  &p1, const SVector3 &p2, const SVector3 &p3, double v)
-  {
-    data->NbSQ ++;
-    data->SQ.push_back(p0.x()); data->SQ.push_back(p1.x());
-  data->SQ.push_back(p2.x()); data->SQ.push_back(p3.x());
-    data->SQ.push_back(p0.y()); data->SQ.push_back(p1.y());
-  data->SQ.push_back(p2.y()); data->SQ.push_back(p3.y());
-    data->SQ.push_back(p0.z()); data->SQ.push_back(p1.z());
-  data->SQ.push_back(p2.z()); data->SQ.push_back(p3.z()); data->SQ.push_back(v);
-  data->SQ.push_back(v); data->SQ.push_back(v); data->SQ.push_back(v);
-  }
+/*
+static void addQua(PViewDataList *data, const SVector3 &p0, const SVector3
+&p1, const SVector3 &p2, const SVector3 &p3, double v)
+{
+  data->NbSQ ++;
+  data->SQ.push_back(p0.x()); data->SQ.push_back(p1.x());
+data->SQ.push_back(p2.x()); data->SQ.push_back(p3.x());
+  data->SQ.push_back(p0.y()); data->SQ.push_back(p1.y());
+data->SQ.push_back(p2.y()); data->SQ.push_back(p3.y());
+  data->SQ.push_back(p0.z()); data->SQ.push_back(p1.z());
+data->SQ.push_back(p2.z()); data->SQ.push_back(p3.z()); data->SQ.push_back(v);
+data->SQ.push_back(v); data->SQ.push_back(v); data->SQ.push_back(v);
+}
 
-  static void addPoint(PViewDataList *data, const SVector3 &p0, double v0)
-  {
-    data->NbSP ++;
-    data->SP.push_back(p0.x());
-    data->SP.push_back(p0.y());
-    data->SP.push_back(p0.z());
-    data->SP.push_back(v0);
-  }
+static void addPoint(PViewDataList *data, const SVector3 &p0, double v0)
+{
+  data->NbSP ++;
+  data->SP.push_back(p0.x());
+  data->SP.push_back(p0.y());
+  data->SP.push_back(p0.z());
+  data->SP.push_back(v0);
+}
 
-  static void addVP(PViewDataList *data, const SVector3 p0, SVector3 v)
-  {
-    data->NbVP ++;
-    data->VP.push_back(p0.x());
-    data->VP.push_back(p0.y());
-    data->VP.push_back(p0.z());
-    data->VP.push_back(v.x());
-    data->VP.push_back(v.y());
-    data->VP.push_back(v.z());
-  }
-  */
+static void addVP(PViewDataList *data, const SVector3 p0, SVector3 v)
+{
+  data->NbVP ++;
+  data->VP.push_back(p0.x());
+  data->VP.push_back(p0.y());
+  data->VP.push_back(p0.z());
+  data->VP.push_back(v.x());
+  data->VP.push_back(v.y());
+  data->VP.push_back(v.z());
+}
+*/
 
 #include <limits>
 static void drawElementDist(PViewDataList *data, GEdge *edge,
@@ -103,34 +103,34 @@ static void drawElementDist(PViewDataList *data, GEdge *edge,
   }
 }
 
-  /*
-  static void drawElement(PViewDataList *data, GEdge *edge,
-                          const std::vector<MVertex *>&vertices, const
-  nodalBasis &basis)
-  {
-    std::vector<double> gradient;
-    std::vector<double> param(vertices.size());
-    std::vector<bool> onEdge(vertices.size());
-    std::vector<SPoint3> xyz(vertices.size());
-    for (size_t i = 0; i < vertices.size(); ++i) {
-      MVertex *v = vertices[i];
-      reparamMeshVertexOnEdge(v, edge, param[i]);
-      onEdge[i] = v->onWhat() == edge;
-      xyz[i] = v->point();
-    }
-    computeBndDistAndGradient(edge, param, vertices, basis, xyz, onEdge,
-  gradient,1.e-6); for (size_t i = 0; i < vertices.size(); ++i) { double t0;
-      reparamMeshVertexOnEdge(vertices[i], edge, t0);
-      SPoint3 p = vertices[i]->point();
-      GPoint gpt =  edge->point(t0 + 1e-8);
-      SPoint3 pt(gpt.x(), gpt.y(), gpt.z());
-      SVector3 t = (pt - p);
-      t.normalize();
-      //addPoint(data, p, 0);
-      addVP(data, p, t * (-gradient[i]));
-    }
+/*
+static void drawElement(PViewDataList *data, GEdge *edge,
+                        const std::vector<MVertex *>&vertices, const
+nodalBasis &basis)
+{
+  std::vector<double> gradient;
+  std::vector<double> param(vertices.size());
+  std::vector<bool> onEdge(vertices.size());
+  std::vector<SPoint3> xyz(vertices.size());
+  for (size_t i = 0; i < vertices.size(); ++i) {
+    MVertex *v = vertices[i];
+    reparamMeshVertexOnEdge(v, edge, param[i]);
+    onEdge[i] = v->onWhat() == edge;
+    xyz[i] = v->point();
   }
-  */
+  computeBndDistAndGradient(edge, param, vertices, basis, xyz, onEdge,
+gradient,1.e-6); for (size_t i = 0; i < vertices.size(); ++i) { double t0;
+    reparamMeshVertexOnEdge(vertices[i], edge, t0);
+    SPoint3 p = vertices[i]->point();
+    GPoint gpt =  edge->point(t0 + 1e-8);
+    SPoint3 pt(gpt.x(), gpt.y(), gpt.z());
+    SVector3 t = (pt - p);
+    t.normalize();
+    //addPoint(data, p, 0);
+    addVP(data, p, t * (-gradient[i]));
+  }
+}
+*/
 
 #endif
 

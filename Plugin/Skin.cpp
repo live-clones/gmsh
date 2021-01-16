@@ -224,16 +224,14 @@ static void getBoundaryFromMesh(GModel *m, int visible)
     discreteEdge *e =
       new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
     m->add(e);
-    for(auto it = bndEdges.begin();
-        it != bndEdges.end(); it++) {
+    for(auto it = bndEdges.begin(); it != bndEdges.end(); it++) {
       e->lines.push_back(new MLine(it->getVertex(0), it->getVertex(1)));
     }
   }
   else if(dim == 3) {
     discreteFace *f = new discreteFace(m, m->getMaxElementaryNumber(2) + 1);
     m->add(f);
-    for(auto it = bndFaces.begin();
-        it != bndFaces.end(); it++) {
+    for(auto it = bndFaces.begin(); it != bndFaces.end(); it++) {
       if(it->getNumVertices() == 3)
         f->triangles.push_back(
           new MTriangle(it->getVertex(0), it->getVertex(1), it->getVertex(2)));
@@ -320,9 +318,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
     }
   }
 
-  for(auto it = skin.begin();
-      it != skin.end(); it++)
-    it->addInView(data2);
+  for(auto it = skin.begin(); it != skin.end(); it++) it->addInView(data2);
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
     if(data1->hasTimeStep(i)) data2->Time.push_back(data1->getTime(i));

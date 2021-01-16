@@ -21,14 +21,13 @@ StringXNumber ShowNeighborElementsOptions_Number[] = {
   {GMSH_FULLRC, "Element2", nullptr, 0},
   {GMSH_FULLRC, "Element3", nullptr, 0},
   {GMSH_FULLRC, "Element4", nullptr, 0},
-  {GMSH_FULLRC, "Element5", nullptr, 0}
-};
+  {GMSH_FULLRC, "Element5", nullptr, 0}};
 
 extern "C" {
-  GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin()
-  {
-    return new GMSH_ShowNeighborElementsPlugin();
-  }
+GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin()
+{
+  return new GMSH_ShowNeighborElementsPlugin();
+}
 }
 
 int GMSH_ShowNeighborElementsPlugin::getNbOptions() const

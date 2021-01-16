@@ -250,9 +250,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
       getPoint(i, j, XINIT);
       getPoint(i, j, X);
 
-      if(data2) {
-        o2->searchScalar(X[0], X[1], X[2], val2, -1);
-      }
+      if(data2) { o2->searchScalar(X[0], X[1], X[2], val2, -1); }
       else {
         data3->NbVP++;
         data3->VP.push_back(X[0]);

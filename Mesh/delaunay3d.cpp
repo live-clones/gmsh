@@ -147,13 +147,13 @@ struct Face {
     V[0] = v[0] = v1;
     V[1] = v[1] = v2;
     V[2] = v[2] = v3;
-#define cswap(a, b)                             \
-  do {                                          \
-    if(a > b) {                                 \
-      Vert *tmp = a;                            \
-      a = b;                                    \
-      b = tmp;                                  \
-    }                                           \
+#define cswap(a, b)                                                            \
+  do {                                                                         \
+    if(a > b) {                                                                \
+      Vert *tmp = a;                                                           \
+      a = b;                                                                   \
+      b = tmp;                                                                 \
+    }                                                                          \
   } while(0)
     cswap(v[0], v[1]);
     cswap(v[1], v[2]);
@@ -210,9 +210,7 @@ struct Tet {
     V[3] = v3;
     for(int i = 0; i < 4; i++)
       if(V[i]) V[i]->setT(this);
-    if(val > 0) {
-      return 1;
-    }
+    if(val > 0) { return 1; }
     else if(val < 0) {
       V[0] = v1;
       V[1] = v0;
@@ -288,9 +286,7 @@ public:
   }
   ~aBunchOfStuff()
   {
-    for(std::size_t i = 0; i < _all.size(); i++) {
-      delete[] _all[i];
-    }
+    for(std::size_t i = 0; i < _all.size(); i++) { delete[] _all[i]; }
   }
   T *newStuff()
   {
@@ -313,25 +309,18 @@ public:
     if((int)_perThread.size() <= thread) return 0;
     return _perThread[thread]->size();
   }
-  Tet *operator()(int thread, int j) const
-  {
-    return (*_perThread[thread])(j);
-  }
+  Tet *operator()(int thread, int j) const { return (*_perThread[thread])(j); }
   tetContainer(int nbThreads, int preallocSizePerThread)
   {
     _perThread.resize(nbThreads);
-    for(std::size_t i = 0; i < _perThread.size(); i++){
+    for(std::size_t i = 0; i < _perThread.size(); i++) {
       _perThread[i] = new aBunchOfStuff<Tet>(preallocSizePerThread);
     }
   }
-  Tet *newTet(int thread)
-  {
-    return _perThread[thread]->newStuff();
-  }
+  Tet *newTet(int thread) { return _perThread[thread]->newStuff(); }
   ~tetContainer()
   {
-    for(std::size_t i = 0; i < _perThread.size(); i++)
-      delete _perThread[i];
+    for(std::size_t i = 0; i < _perThread.size(); i++) delete _perThread[i];
   }
 };
 
@@ -402,9 +391,7 @@ void HilbertSortB::ComputeGrayCode(int n)
   mask = (n == 2) ? 3 : 7;
 
   // Generate the Gray code sequence.
-  for(i = 0; i < N; i++) {
-    gc[i] = i ^ (i >> 1);
-  }
+  for(i = 0; i < N; i++) { gc[i] = i ^ (i >> 1); }
 
   for(e = 0; e < N; e++) {
     for(d = 0; d < n; d++) {
@@ -429,9 +416,7 @@ void HilbertSortB::ComputeGrayCode(int n)
   for(i = 1; i < N; i++) {
     v = ~i; // Count the 0s.
     v = (v ^ (v - 1)) >> 1; // Set v's trailing 0s to 1s and zero rest
-    for(c = 0; v; c++) {
-      v >>= 1;
-    }
+    for(c = 0; v; c++) { v >>= 1; }
     tsb1mod3[i] = c % n;
   }
 }
@@ -451,9 +436,7 @@ int HilbertSortB::Split(Vert **vertices, int arraysize, int GrayCode0,
   axis = (GrayCode0 ^ GrayCode1) >> 1;
 
   // Calulate the split position along the axis.
-  if(axis == 0) {
-    split = 0.5 * (BoundingBoxXmin + BoundingBoxXmax);
-  }
+  if(axis == 0) { split = 0.5 * (BoundingBoxXmin + BoundingBoxXmax); }
   else if(axis == 1) {
     split = 0.5 * (BoundingBoxYmin + BoundingBoxYmax);
   }
@@ -563,9 +546,7 @@ void HilbertSortB::Sort(Vert **vertices, int arraysize, int e, int d,
   // Recursively sort the points in sub-boxes.
   for(w = 0; w < 8; w++) {
     if((p[w + 1] - p[w]) > Limit) {
-      if(w == 0) {
-        e_w = 0;
-      }
+      if(w == 0) { e_w = 0; }
       else {
         k = 2 * ((w - 1) / 2);
         e_w = k ^ (k >> 1);
@@ -573,9 +554,7 @@ void HilbertSortB::Sort(Vert **vertices, int arraysize, int e, int d,
       k = e_w;
       e_w = ((k << (d + 1)) & mask) | ((k >> (n - d - 1)) & mask);
       ei = e ^ e_w;
-      if(w == 0) {
-        d_w = 0;
-      }
+      if(w == 0) { d_w = 0; }
       else {
         d_w = ((w % 2) == 0) ? tsb1mod3[w - 1] : tsb1mod3[w];
       }
@@ -620,9 +599,7 @@ static void computeAdjacencies(Tet *t, int iFace, connContainer &faceToTet)
 {
   conn c(t->getFace(iFace), iFace, t);
   auto it = std::find(faceToTet.begin(), faceToTet.end(), c);
-  if(it == faceToTet.end()) {
-    faceToTet.push_back(c);
-  }
+  if(it == faceToTet.end()) { faceToTet.push_back(c); }
   else {
     t->T[iFace] = it->t;
     it->t->T[it->i] = t;
@@ -654,9 +631,7 @@ static void starShapeness(Vert *v, connContainer &bndK,
     const double val = robustPredicates::orient3d(
       (double *)bndK[i].f.V[0], (double *)bndK[i].f.V[1],
       (double *)bndK[i].f.V[2], (double *)v);
-    if(val <= 0.0) {
-      _negatives.push_back(i);
-    }
+    if(val <= 0.0) { _negatives.push_back(i); }
   }
 }
 
@@ -668,9 +643,7 @@ static Tet *tetContainsV(Vert *v, cavityContainer &cavity)
       Face f = cavity[i]->getFace(j);
       const double val = robustPredicates::orient3d(
         (double *)f.V[0], (double *)f.V[1], (double *)f.V[2], (double *)v);
-      if(val >= 0) {
-        count++;
-      }
+      if(val >= 0) { count++; }
     }
     if(count == 4) return cavity[i];
   }
@@ -685,11 +658,8 @@ static void buildDelaunayBall(cavityContainer &cavity, connContainer &faceToTet)
     for(std::size_t iFace = 0; iFace < 4; iFace++) {
       Tet *neigh = t->T[iFace];
       conn c(t->getFace(iFace), iFace, neigh);
-      auto it =
-        std::find(faceToTet.begin(), faceToTet.end(), c);
-      if(it == faceToTet.end()) {
-        faceToTet.push_back(c);
-      }
+      auto it = std::find(faceToTet.begin(), faceToTet.end(), c);
+      if(it == faceToTet.end()) { faceToTet.push_back(c); }
       else {
         faceToTet.erase(it);
       }
@@ -730,9 +700,7 @@ static Tet *tetInsideCavityWithFAce(Face &f, cavityContainer &cavity)
   for(std::size_t i = 0; i < cavity.size(); i++) {
     Tet *t = cavity[i];
     for(std::size_t iFace = 0; iFace < 4; iFace++) {
-      if(t->getFace(iFace) == f) {
-        return t;
-      }
+      if(t->getFace(iFace) == f) { return t; }
     }
   }
   return nullptr;
@@ -765,11 +733,8 @@ static bool fixDelaunayCavity(Vert *v, cavityContainer &cavity,
       conn &c = bndK[_negatives[i]];
       Tet *toRemove = tetInsideCavityWithFAce(c.f, cavity);
       if(toRemove) {
-        auto it =
-          std::find(cavity.begin(), cavity.end(), toRemove);
-        if(it != cavity.end()) {
-          cavity.erase(it);
-        }
+        auto it = std::find(cavity.begin(), cavity.end(), toRemove);
+        if(it != cavity.end()) { cavity.erase(it); }
         else {
           Msg::Error("Datastructure Broken in %s line %5d", __FILE__, __LINE__);
           break;
@@ -828,11 +793,10 @@ static void delaunayCavity2(Tet *tet, Tet *prevTet, Vert *v,
       }
     }
 
-    if(stack.empty()) {
-      finished = true;
-    }
+    if(stack.empty()) { finished = true; }
     else {
-      const std::pair<std::pair<Tet *, Tet *>, std::pair<int, int> > &next = stack.top();
+      const std::pair<std::pair<Tet *, Tet *>, std::pair<int, int> > &next =
+        stack.top();
       prev = next.first.first;
       t = next.first.second;
       iNeighStart = next.second.first;
@@ -920,7 +884,8 @@ static void print(const char *name, int thread, tetContainer &T, Vert *v)
     Tet *tt = T(thread, i);
     if(tt->V[0]) {
       // double val = robustPredicates::orient3d
-      //   ((double*)tt->V[0],(double*)tt->V[1],(double*)tt->V[2],(double*)tt->V[3]);
+      //
+((double*)tt->V[0],(double*)tt->V[1],(double*)tt->V[2],(double*)tt->V[3]);
       if(!v) {
         fprintf(f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
                 tt->V[0]->x(), tt->V[0]->y(), tt->V[0]->z(), tt->V[1]->x(),
@@ -998,9 +963,9 @@ static Tet *randomTet(int thread, tetContainer &allocator)
 
 //#define VERBOSE
 
-void delaunayTrgl(const std::size_t numThreads,
-                  const std::size_t NPTS_AT_ONCE, std::size_t Npts,
-                  std::vector<Vert *> assignTo[], tetContainer &allocator)
+void delaunayTrgl(const std::size_t numThreads, const std::size_t NPTS_AT_ONCE,
+                  std::size_t Npts, std::vector<Vert *> assignTo[],
+                  tetContainer &allocator)
 {
 #if defined(VERBOSE)
   double totSearchGlob = 0;
@@ -1042,9 +1007,10 @@ void delaunayTrgl(const std::size_t numThreads,
 
     invalidCavities[myThread] = 0;
     for(std::size_t K = 0; K < NPTS_AT_ONCE; K++) {
-      for(std::size_t iP = 0; iP < assignTo[K + myThread * NPTS_AT_ONCE].size(); iP++) {
-	if(numThreads != 1)
-	  assignTo[K + myThread * NPTS_AT_ONCE][iP]->_thread = myThread;
+      for(std::size_t iP = 0; iP < assignTo[K + myThread * NPTS_AT_ONCE].size();
+          iP++) {
+        if(numThreads != 1)
+          assignTo[K + myThread * NPTS_AT_ONCE][iP]->_thread = myThread;
       }
     }
 
@@ -1056,7 +1022,6 @@ void delaunayTrgl(const std::size_t numThreads,
 
     // Main loop
     for(std::size_t iPGlob = 0; iPGlob < maxLocSizeK; iPGlob++) {
-
 #if defined(_OPENMP)
 #pragma omp barrier
 #endif
@@ -1064,8 +1029,9 @@ void delaunayTrgl(const std::size_t numThreads,
 
       // FIND SEEDS
       for(std::size_t K = 0; K < NPTS_AT_ONCE; K++) {
-	vToAdd[K] = (iPGlob < assignTo[K + myThread * NPTS_AT_ONCE].size()) ?
-	  assignTo[K + myThread * NPTS_AT_ONCE][iPGlob] : nullptr;
+        vToAdd[K] = (iPGlob < assignTo[K + myThread * NPTS_AT_ONCE].size()) ?
+                      assignTo[K + myThread * NPTS_AT_ONCE][iPGlob] :
+                      nullptr;
 
         if(vToAdd[K]) {
           // In 3D, insertion of a point may lead to deletion of tets !!
@@ -1173,7 +1139,6 @@ void delaunayTrgl(const std::size_t numThreads,
       for(std::size_t i = 0; i < bnd[K].size(); i++)
         if(bnd[K][i].t) bnd[K][i].t->unset(myThread, K);
     }
-
   }
 
   if(invalidCavities[0]) Msg::Error("%d invalid cavities", invalidCavities[0]);
@@ -1202,14 +1167,22 @@ static void initialCube(std::vector<Vert *> &v, Vert *box[8],
     bbox += SPoint3(pv->x(), pv->y(), pv->z());
   }
   bbox *= 1.3;
-  box[0] = new Vert(bbox.min().x(), bbox.min().y(), bbox.min().z(), bbox.diag());
-  box[1] = new Vert(bbox.max().x(), bbox.min().y(), bbox.min().z(), bbox.diag());
-  box[2] = new Vert(bbox.max().x(), bbox.max().y(), bbox.min().z(), bbox.diag());
-  box[3] = new Vert(bbox.min().x(), bbox.max().y(), bbox.min().z(), bbox.diag());
-  box[4] = new Vert(bbox.min().x(), bbox.min().y(), bbox.max().z(), bbox.diag());
-  box[5] = new Vert(bbox.max().x(), bbox.min().y(), bbox.max().z(), bbox.diag());
-  box[6] = new Vert(bbox.max().x(), bbox.max().y(), bbox.max().z(), bbox.diag());
-  box[7] = new Vert(bbox.min().x(), bbox.max().y(), bbox.max().z(), bbox.diag());
+  box[0] =
+    new Vert(bbox.min().x(), bbox.min().y(), bbox.min().z(), bbox.diag());
+  box[1] =
+    new Vert(bbox.max().x(), bbox.min().y(), bbox.min().z(), bbox.diag());
+  box[2] =
+    new Vert(bbox.max().x(), bbox.max().y(), bbox.min().z(), bbox.diag());
+  box[3] =
+    new Vert(bbox.min().x(), bbox.max().y(), bbox.min().z(), bbox.diag());
+  box[4] =
+    new Vert(bbox.min().x(), bbox.min().y(), bbox.max().z(), bbox.diag());
+  box[5] =
+    new Vert(bbox.max().x(), bbox.min().y(), bbox.max().z(), bbox.diag());
+  box[6] =
+    new Vert(bbox.max().x(), bbox.max().y(), bbox.max().z(), bbox.diag());
+  box[7] =
+    new Vert(bbox.min().x(), bbox.max().y(), bbox.max().z(), bbox.diag());
 
   Tet *t0 = allocator.newTet(0);
   t0->setVertices(box[7], box[2], box[3], box[1]);
@@ -1243,9 +1216,7 @@ static void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
   std::vector<int> indices;
   SortHilbert(S, indices);
-  if(!allocator.size(0)) {
-    initialCube(S, box, allocator);
-  }
+  if(!allocator.size(0)) { initialCube(S, box, allocator); }
 
   int nbBlocks = nptsatonce * numThreads;
 
@@ -1259,8 +1230,8 @@ static void delaunayTriangulation(const int numThreads, const int nptsatonce,
     int localCounter = 0;
     for(int jPt = start; jPt < end; jPt++) {
       if(localCounter++ >= sizePerBlock && currentBlock != nbBlocks - 1) {
-	localCounter = 0;
-	currentBlock++;
+        localCounter = 0;
+        currentBlock++;
       }
       assignTo[currentBlock].push_back(S[jPt]);
     }
@@ -1272,8 +1243,7 @@ static void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
 void delaunayTriangulation(const int numThreads, const int nptsatonce,
                            std::vector<MVertex *> &S,
-                           std::vector<MTetrahedron *> &T,
-                           bool removeBox)
+                           std::vector<MTetrahedron *> &T, bool removeBox)
 {
   std::vector<MVertex *> _temp;
   std::vector<Vert *> _vertices;
@@ -1292,9 +1262,12 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
   for(std::size_t i = 0; i < N; i++) {
     MVertex *mv = S[i];
-    double dx = d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
-    double dy = d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
-    double dz = d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
+    double dx =
+      d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
+    double dy =
+      d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
+    double dz =
+      d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
     mv->x() += dx;
     mv->y() += dy;
     mv->z() += dz;
@@ -1311,9 +1284,7 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
 
   for(int i = 0; i < 8; i++) {
     Vert *v = box[i];
-    if(removeBox) {
-      v->setNum(0);
-    }
+    if(removeBox) { v->setNum(0); }
     else {
       v->setNum(N + i + 1);
       MVertex *mv = new MVertex(v->x(), v->y(), v->z(), nullptr, N + (i + 1));

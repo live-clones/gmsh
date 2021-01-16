@@ -768,17 +768,18 @@ void ColorTable_Recompute(GmshColorTable *ct)
       double ii = (double)(s - bias) * 128.;
       if(ii < 0) ii = 0;
       if(ii > 128) ii = 128;
-      double rr = ii <= 46 ? 0. :
-                             ii >= 111 ? -0.03125 * (ii - 111) + 1. :
-                                         ii >= 78 ? 1. : 0.03125 * (ii - 46);
-      double gg = ii <= 14 || ii >= 111 ?
-                    0. :
-                    ii >= 79 ? -0.03125 * (ii - 111) :
-                               ii <= 46 ? 0.03125 * (ii - 14) : 1.;
-      double bb = ii >= 79 ?
-                    0. :
-                    ii >= 47 ? -0.03125 * (ii - 79) :
-                               ii <= 14 ? 0.03125 * (ii - 14) + 1. : 1.;
+      double rr = ii <= 46  ? 0. :
+                  ii >= 111 ? -0.03125 * (ii - 111) + 1. :
+                  ii >= 78  ? 1. :
+                              0.03125 * (ii - 46);
+      double gg = ii <= 14 || ii >= 111 ? 0. :
+                  ii >= 79              ? -0.03125 * (ii - 111) :
+                  ii <= 46              ? 0.03125 * (ii - 14) :
+                                          1.;
+      double bb = ii >= 79 ? 0. :
+                  ii >= 47 ? -0.03125 * (ii - 79) :
+                  ii <= 14 ? 0.03125 * (ii - 14) + 1. :
+                             1.;
       r = (int)(rr * 255.);
       g = (int)(gg * 255.);
       b = (int)(bb * 255.);
@@ -908,9 +909,7 @@ void ColorTable_Recompute(GmshColorTable *ct)
       b = (int)(255. * sqrt((2. * gray(s - bias) + hot_b(s - bias)) / 3.));
       break;
     case 9: // grayscale
-      if(s - bias <= 0.) {
-        r = g = b = 0;
-      }
+      if(s - bias <= 0.) { r = g = b = 0; }
       else if(s - bias <= 1.) {
         r = g = b = (int)(255 * (1. - curvature) * (s - bias));
       }
@@ -924,14 +923,17 @@ void ColorTable_Recompute(GmshColorTable *ct)
       if(ii < 0) ii = 0;
       if(ii > 1) ii = 1;
       double rr = ii >= .75 ? 2 * (0.75 - ii) + 1. :
-                              ii >= .5 ? 1. : ii >= .25 ? 4. * (ii - 0.25) : 0.;
+                  ii >= .5  ? 1. :
+                  ii >= .25 ? 4. * (ii - 0.25) :
+                              0.;
       double gg = ii <= .25 ? 1.33333 * ii :
-                              ii <= .5 ? 0.33333 + 2.66667 * (ii - 0.25) :
-                                         ii <= .75 ? 1 - 2.66667 * (ii - 0.5) :
-                                                     1.33333 * (1. - ii);
-      double bb = ii <= 0.25 ?
-                    2 * ii + 0.5 :
-                    ii <= 0.5 ? 1. : ii <= 0.75 ? 4 * (0.75 - ii) : 0.;
+                  ii <= .5  ? 0.33333 + 2.66667 * (ii - 0.25) :
+                  ii <= .75 ? 1 - 2.66667 * (ii - 0.5) :
+                              1.33333 * (1. - ii);
+      double bb = ii <= 0.25 ? 2 * ii + 0.5 :
+                  ii <= 0.5  ? 1. :
+                  ii <= 0.75 ? 4 * (0.75 - ii) :
+                               0.;
       r = (int)(rr * 255.);
       g = (int)(gg * 255.);
       b = (int)(bb * 255.);
@@ -1121,9 +1123,7 @@ int ColorTable_IsAlpha(GmshColorTable *ct)
 
 void HSV_to_RGB(double H, double S, double V, double *R, double *G, double *B)
 {
-  if(S < 5.0e-6) {
-    *R = *G = *B = V;
-  }
+  if(S < 5.0e-6) { *R = *G = *B = V; }
   else {
     int i = (int)H;
     double f = H - (float)i;

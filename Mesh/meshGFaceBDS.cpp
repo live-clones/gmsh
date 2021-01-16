@@ -35,10 +35,8 @@ static void getDegeneratedVertices(
   while(it != m.edges.end()) {
     BDS_Edge *e = *it;
     if(!e->deleted && e->numfaces() == 1) {
-      auto itp1 =
-        recoverMap->find(e->p1);
-      auto itp2 =
-        recoverMap->find(e->p2);
+      auto itp1 = recoverMap->find(e->p1);
+      auto itp2 = recoverMap->find(e->p2);
       if(itp1 != recoverMap->end() && itp2 != recoverMap->end() &&
          itp1->second == itp2->second) {
         degenerated.insert(itp1->second);
@@ -88,7 +86,7 @@ static double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
 static double NewGetLc(BDS_Point *point, GFace *gf)
 {
   return Extend1dMeshIn2dSurfaces(gf) ? std::min(point->lc(), point->lcBGM()) :
-    point->lcBGM();
+                                        point->lcBGM();
 }
 
 static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f)
@@ -410,12 +408,10 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
   double t1 = Cpu();
   std::vector<std::pair<double, BDS_Edge *> > edges;
 
-
   SPoint2 out(gf->parBounds(0).high() + 1.21982512,
               gf->parBounds(1).high() + 1.8635436432);
 
-  for(auto it = m.points.begin();
-      it != m.points.end(); ++it) {
+  for(auto it = m.points.begin(); it != m.points.end(); ++it) {
     BDS_Point *p = *it;
     if(!p->_periodicCounterpart && (p->g && p->g->classif_degree == 2)) {
       for(size_t i = 0; i < p->edges.size(); i++) {
@@ -555,10 +551,9 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
     BDS_Edge *e = edges[i].second;
     if(!e->deleted &&
        (neighboringModified(e->p1) || neighboringModified(e->p2))) {
-
       double lone1 = 0.;
       bool collapseP1Allowed = false;
-      if (e->p1->iD > MAXNP){
+      if(e->p1->iD > MAXNP) {
         lone1 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p1);
         collapseP1Allowed =
           std::abs(lone1 - 1.0) < std::abs(edges[i].first - 1.0);
@@ -584,8 +579,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
       else if(collapseP2Allowed && !collapseP1Allowed)
         p = e->p2;
 
-      if(p && m.collapse_edge_parametric(e, p))
-        nb_collaps++;
+      if(p && m.collapse_edge_parametric(e, p)) nb_collaps++;
     }
   }
   t += (Cpu() - t1);
@@ -644,10 +638,8 @@ computeNodalSizes(GFace *gf, BDS_Mesh &m,
       bool degenerated = false;
 
       if(recoverMap) {
-        auto itp1 =
-          recoverMap->find((*it)->p1);
-        auto itp2 =
-          recoverMap->find((*it)->p2);
+        auto itp1 = recoverMap->find((*it)->p1);
+        auto itp2 = recoverMap->find((*it)->p2);
         if(itp1 != recoverMap->end() && itp2 != recoverMap->end() &&
            itp1->second == itp2->second) {
           degenerated = true;
@@ -704,16 +696,14 @@ void modifyInitialMeshToRemoveDegeneracies(
   std::vector<BDS_Edge *> degenerated_edges;
   getDegeneratedVertices(m, recoverMap, degenerated, degenerated_edges);
 
-  for(auto it =
-        recoverMap->begin();
-      it != recoverMap->end(); ++it) {
-    auto it2 =
-      degenerated.find(it->second);
+  for(auto it = recoverMap->begin(); it != recoverMap->end(); ++it) {
+    auto it2 = degenerated.find(it->second);
     if(it2 != degenerated.end()) {
       for(size_t K = 0; K < degenerated_edges.size(); K++) {
         if(degenerated_edges[K]->p1 == it->first ||
            degenerated_edges[K]->p2 == it->first) {
-          if(std::abs(degenerated_edges[K]->p1->u - degenerated_edges[K]->p2->u) < 1e-12) {
+          if(std::abs(degenerated_edges[K]->p1->u -
+                      degenerated_edges[K]->p2->u) < 1e-12) {
             Msg::Debug(
               "Degenerated edge on u = cst axis: treated as well now!");
             it->first->degenerated = 2;
@@ -873,7 +863,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     while(it != m.edges.end()) {
       if(!(*it)->deleted) {
         double lone = 2 * (*it)->length() /
-          (NewGetLc((*it)->p1, gf) + NewGetLc((*it)->p2, gf));
+                      (NewGetLc((*it)->p1, gf) + NewGetLc((*it)->p2, gf));
         if(lone > maxE) LARGE++;
         if(lone < minE) SMALL++;
         TOTAL++;

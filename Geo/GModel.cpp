@@ -67,8 +67,8 @@ int GModel::_current = -1;
 GModel::GModel(const std::string &name)
   : _destroying(false), _name(name), _visible(1), _elementOctree(nullptr),
     _geo_internals(nullptr), _occ_internals(nullptr), _acis_internals(nullptr),
-    _parasolid_internals(nullptr), _fields(nullptr), _currentMeshEntity(nullptr),
-    _numPartitions(0), normals(nullptr)
+    _parasolid_internals(nullptr), _fields(nullptr),
+    _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr)
 {
   _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;

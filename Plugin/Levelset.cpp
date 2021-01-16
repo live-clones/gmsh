@@ -543,9 +543,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   }
 
   PViewData *vdata = getPossiblyAdaptiveData(v), *wdata;
-  if(_valueView < 0) {
-    wdata = vdata;
-  }
+  if(_valueView < 0) { wdata = vdata; }
   else if(_valueView > (int)PView::list.size() - 1) {
     Msg::Error("View[%d] does not exist: reverting to View[%d]", _valueView,
                v->getIndex());

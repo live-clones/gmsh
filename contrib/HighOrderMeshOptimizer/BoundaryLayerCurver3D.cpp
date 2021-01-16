@@ -163,38 +163,59 @@ namespace {
 
 namespace BoundaryLayerCurver {
   namespace InnerVertPlacementMatrices {
-    fullMatrix<double> *_triangle[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
-                                         nullptr, nullptr, nullptr, nullptr, nullptr};
-    fullMatrix<double> *_quadrangle[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
-                                           nullptr, nullptr, nullptr, nullptr, nullptr};
-    fullMatrix<double> *_linearTriangle0[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
-                                                nullptr, nullptr, nullptr, nullptr, nullptr};
-    fullMatrix<double> *_linearTriangle2[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
-                                                nullptr, nullptr, nullptr, nullptr, nullptr};
-    fullMatrix<double> *_linearQuadrangle[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
-                                                 nullptr, nullptr, nullptr, nullptr, nullptr};
-    fullMatrix<double> *_hexahedron[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
-                                           nullptr, nullptr, nullptr, nullptr, nullptr};
+    fullMatrix<double> *_triangle[10] = {nullptr, nullptr, nullptr, nullptr,
+                                         nullptr, nullptr, nullptr, nullptr,
+                                         nullptr, nullptr};
+    fullMatrix<double> *_quadrangle[10] = {nullptr, nullptr, nullptr, nullptr,
+                                           nullptr, nullptr, nullptr, nullptr,
+                                           nullptr, nullptr};
+    fullMatrix<double> *_linearTriangle0[10] = {
+      nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr};
+    fullMatrix<double> *_linearTriangle2[10] = {
+      nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr};
+    fullMatrix<double> *_linearQuadrangle[10] = {
+      nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr};
+    fullMatrix<double> *_hexahedron[10] = {nullptr, nullptr, nullptr, nullptr,
+                                           nullptr, nullptr, nullptr, nullptr,
+                                           nullptr, nullptr};
     fullMatrix<double> *_linearHexahedron[3][10] = {
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
-    fullMatrix<double> *_prism[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
-                                      nullptr, nullptr, nullptr, nullptr, nullptr};
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr}};
+    fullMatrix<double> *_prism[10] = {nullptr, nullptr, nullptr, nullptr,
+                                      nullptr, nullptr, nullptr, nullptr,
+                                      nullptr, nullptr};
     fullMatrix<double> *_linearPrism[4][10] = {
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
-    fullMatrix<double> *_tetrahedron[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
-                                            nullptr, nullptr, nullptr, nullptr, nullptr};
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr}};
+    fullMatrix<double> *_tetrahedron[10] = {nullptr, nullptr, nullptr, nullptr,
+                                            nullptr, nullptr, nullptr, nullptr,
+                                            nullptr, nullptr};
     fullMatrix<double> *_linearTet[6][10] = {
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
-      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+       nullptr, nullptr}};
 
     const fullMatrix<double> *triangle(int order, bool linear, int edge)
     {

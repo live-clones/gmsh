@@ -590,8 +590,7 @@ static void recurFindCavityAniso(GFace *gf, std::list<edgeXface> &shell,
     MTri3 *neigh = t->getNeigh(i);
     edgeXface exf(t, i);
     // take care of untouchable internal edges
-    auto it =
-      data.internalEdges.find(MEdge(exf._v(0), exf._v(1)));
+    auto it = data.internalEdges.find(MEdge(exf._v(0), exf._v(1)));
     if(!neigh || it != data.internalEdges.end())
       shell.push_back(exf);
     else if(!neigh->isDeleted()) {
@@ -721,8 +720,8 @@ static int insertVertexB(std::list<edgeXface> &shell,
                    data.vSizesBGM[index2]);
     double LL = std::min(lc, lcBGM);
 
-    MTri3 *t4 =
-      new MTri3(t, Extend1dMeshIn2dSurfaces(gf) ? LL : lcBGM, nullptr, &data, gf);
+    MTri3 *t4 = new MTri3(t, Extend1dMeshIn2dSurfaces(gf) ? LL : lcBGM, nullptr,
+                          &data, gf);
 
     if(oneNewTriangle) {
       force = true;
@@ -774,8 +773,7 @@ static int insertVertexB(std::list<edgeXface> &shell,
     // 30 % of the time is spent here!
     allTets.insert(newTris, newTris + shell.size());
     if(activeTets) {
-      for(auto i = new_cavity.begin();
-          i != new_cavity.end(); ++i) {
+      for(auto i = new_cavity.begin(); i != new_cavity.end(); ++i) {
         int active_edge;
         if(isActive(*i, LIMIT_, active_edge) && (*i)->getRadius() > LIMIT_) {
           if((*activeTets).find(*i) == (*activeTets).end())
@@ -891,10 +889,10 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
     if(ITER++ > (int)AllTris.size()) break;
   }
 
-  if(!force) return nullptr; // FIXME: removing this leads to horrible performance
+  if(!force)
+    return nullptr; // FIXME: removing this leads to horrible performance
 
-  for(auto itx = AllTris.begin();
-      itx != AllTris.end(); ++itx) {
+  for(auto itx = AllTris.begin(); itx != AllTris.end(); ++itx) {
     if(!(*itx)->isDeleted()) {
       inside = invMapUV((*itx)->tri(), pt, data, uv, 1.e-8);
       if(inside) { return *itx; }
@@ -904,14 +902,13 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
   return nullptr;
 }
 
-static bool insertAPoint(GFace *gf,
-                         std::set<MTri3 *, compareTri3Ptr>::iterator it,
-                         double center[2], double metric[3],
-                         bidimMeshData &data,
-                         std::set<MTri3 *, compareTri3Ptr> &AllTris,
-                         std::set<MTri3 *, compareTri3Ptr> *ActiveTris = nullptr,
-                         MTri3 *worst = nullptr, MTri3 **oneNewTriangle = nullptr,
-                         bool testStarShapeness = false)
+static bool
+insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
+             double center[2], double metric[3], bidimMeshData &data,
+             std::set<MTri3 *, compareTri3Ptr> &AllTris,
+             std::set<MTri3 *, compareTri3Ptr> *ActiveTris = nullptr,
+             MTri3 *worst = nullptr, MTri3 **oneNewTriangle = nullptr,
+             bool testStarShapeness = false)
 {
   if(worst) {
     it = AllTris.find(worst);
@@ -931,8 +928,7 @@ static bool insertAPoint(GFace *gf,
   // if the point is able to break the bad triangle "worst"
   if(inCircumCircleAniso(gf, worst->tri(), center, metric, data)) {
     recurFindCavityAniso(gf, shell, cavity, metric, center, worst, data);
-    for(auto itc = cavity.begin(); itc != cavity.end();
-        ++itc) {
+    for(auto itc = cavity.begin(); itc != cavity.end(); ++itc) {
       if(invMapUV((*itc)->tri(), center, data, uv, 1.e-8)) {
         ptin = *itc;
         break;
@@ -998,8 +994,7 @@ static bool insertAPoint(GFace *gf,
       worst->forceRadius(-1);
       AllTris.insert(worst);
       delete v;
-      for(auto itc = cavity.begin();
-          itc != cavity.end(); ++itc)
+      for(auto itc = cavity.begin(); itc != cavity.end(); ++itc)
         (*itc)->setDeleted(false);
       return false;
     }
@@ -1009,8 +1004,7 @@ static bool insertAPoint(GFace *gf,
     }
   }
   else {
-    for(auto itc = cavity.begin(); itc != cavity.end();
-        ++itc)
+    for(auto itc = cavity.begin(); itc != cavity.end(); ++itc)
       (*itc)->setDeleted(false);
     AllTris.erase(it);
     worst->forceRadius(0);
@@ -1536,8 +1530,7 @@ void bowyerWatsonFrontalLayers(
            _printTris (name, AllTris, Us,Vs,true);
          }
       */
-      auto WORST_ITER =
-        ActiveTris.begin();
+      auto WORST_ITER = ActiveTris.begin();
 
       MTri3 *worst = (*WORST_ITER);
       ActiveTris.erase(WORST_ITER);
@@ -1563,8 +1556,8 @@ void bowyerWatsonFrontalLayers(
         else
           optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint, metric);
 
-        insertAPoint(gf, AllTris.end(), newPoint, nullptr, DATA, AllTris, &ActiveTris,
-                     worst);
+        insertAPoint(gf, AllTris.end(), newPoint, nullptr, DATA, AllTris,
+                     &ActiveTris, worst);
         // else if (!worst->isDeleted() && worst->getRadius() > LIMIT_){
         //   ActiveTrisNotInFront.insert(worst);
         // }
@@ -1647,8 +1640,9 @@ void bowyerWatsonParallelograms(
       double metric[3];
       buildMetric(gf, newPoint, metric);
 
-      bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA,
-                                  AllTris, nullptr, oneNewTriangle, &oneNewTriangle);
+      bool success =
+        insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA, AllTris,
+                     nullptr, oneNewTriangle, &oneNewTriangle);
       if(!success) oneNewTriangle = nullptr;
       i++;
     }
@@ -1711,8 +1705,9 @@ void bowyerWatsonParallelogramsConstrained(
       double metric[3];
       buildMetric(gf, newPoint, metric);
 
-      bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA,
-                                  AllTris, nullptr, oneNewTriangle, &oneNewTriangle);
+      bool success =
+        insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA, AllTris,
+                     nullptr, oneNewTriangle, &oneNewTriangle);
       if(!success) oneNewTriangle = nullptr;
       i++;
     }

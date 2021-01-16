@@ -6,8 +6,9 @@
 #include "Lambda2.h"
 #include "Numeric.h"
 
-StringXNumber Lambda2Options_Number[] = {{GMSH_FULLRC, "Eigenvalue", nullptr, 2.},
-                                         {GMSH_FULLRC, "View", nullptr, -1.}};
+StringXNumber Lambda2Options_Number[] = {
+  {GMSH_FULLRC, "Eigenvalue", nullptr, 2.},
+  {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterLambda2Plugin() { return new GMSH_Lambda2Plugin(); }
@@ -109,9 +110,7 @@ static void eigen(std::vector<double> &inList, int inNb,
         double val[3][MAX_NOD];
         for(int k = 0; k < nbNod; k++) {
           double *v = &inList[i + 3 * nbNod + nbNod * nbComp * j + nbComp * k];
-          for(int l = 0; l < 3; l++) {
-            val[l][k] = v[l];
-          }
+          for(int l = 0; l < 3; l++) { val[l][k] = v[l]; }
         }
         // compute gradient of shape functions
         double GradPhi_x[MAX_NOD][3];

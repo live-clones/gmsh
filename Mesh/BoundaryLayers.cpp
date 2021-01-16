@@ -72,8 +72,7 @@ static void addExtrudeNormals(std::vector<T *> &elements, int invert,
         }
       }
     }
-    for(auto it = verts.begin(); it != verts.end();
-        it++) {
+    for(auto it = verts.begin(); it != verts.end(); it++) {
       MVertex *v = *it;
       double nn[3] = {0., 0., 0.};
 #if defined(HAVE_POST)
@@ -135,8 +134,7 @@ static void addExtrudeNormals(std::set<T *> &entities,
   bool normalize = true, special3dbox = false, extrudeField = false;
   std::vector<OctreePost *> octrees;
 
-  for(auto it = entities.begin();
-      it != entities.end(); it++) {
+  for(auto it = entities.begin(); it != entities.end(); it++) {
     T *ge = *it;
     infoset info = infos[ge->tag()];
     for(auto it2 = info.begin(); it2 != info.end(); it2++) {
@@ -338,9 +336,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
         // scaled...that section's normals will have scaleFactor = 1.0 (exactly
         // 1.0 to all sig figs) ...however, if that non-scaled section borders a
         // scaled section, the boundary normals will extrude scaled.
-        if(!ep->mesh.ScaleLast) {
-          edgeSkipScaleCalc[from->tag()] = true;
-        }
+        if(!ep->mesh.ScaleLast) { edgeSkipScaleCalc[from->tag()] = true; }
         else {
           edgeSkipScaleCalc[from->tag()] = false;
           ExtrudeParams::calcLayerScaleFactor[ep->mesh.BoundaryLayerIndex] =
@@ -373,9 +369,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
         // scaled...that section's normals will have scaleFactor = 1.0 (exactly
         // 1.0 to all sig figs) ...however, if that non-scaled section borders a
         // scaled section, the boundary normals will extrude scaled
-        if(!ep->mesh.ScaleLast) {
-          faceSkipScaleCalc[from->tag()] = true;
-        }
+        if(!ep->mesh.ScaleLast) { faceSkipScaleCalc[from->tag()] = true; }
         else {
           faceSkipScaleCalc[from->tag()] = false;
           ExtrudeParams::calcLayerScaleFactor[ep->mesh.BoundaryLayerIndex] =
@@ -383,8 +377,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
         }
         std::vector<GEdge *> const &e = from->edges();
         sourceEdges.insert(e.begin(), e.end());
-        for(auto ite = e.begin();
-            ite != e.end(); ite++) {
+        for(auto ite = e.begin(); ite != e.end(); ite++) {
           if(edgeSkipScaleCalc.find((*ite)->tag()) == edgeSkipScaleCalc.end())
             edgeSkipScaleCalc[(*ite)->tag()] = true; // a default
           if(ep->mesh.ScaleLast) edgeSkipScaleCalc[(*ite)->tag()] = false;
@@ -412,8 +405,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   // compute mesh dependencies in source faces (so we can e.g. create a boundary
   // layer on an extruded mesh)
   std::set<GFace *> sourceFacesDependencies;
-  for(auto it = sourceFaces.begin();
-      it != sourceFaces.end(); it++)
+  for(auto it = sourceFaces.begin(); it != sourceFaces.end(); it++)
     checkDepends(m, *it, sourceFacesDependencies);
   Msg::Info("%d dependencies in mesh of source faces",
             sourceFacesDependencies.size());
@@ -445,8 +437,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     if(!nPending) break;
     if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
-  for(auto it = sourceFaces.begin();
-      it != sourceFaces.end(); it++)
+  for(auto it = sourceFaces.begin(); it != sourceFaces.end(); it++)
     (*it)->mesh(true);
 
   // make sure the source surfaces for the boundary layers are oriented
@@ -480,7 +471,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
           vsrc = ge->getBeginVertex();
           vdest = ge->getEndVertex();
         }
-        if(vsrc && vdest){
+        if(vsrc && vdest) {
           GPoint p = vsrc->point();
           ep->Extrude(ep->mesh.NbLayer - 1,
                       ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], p.x(), p.y(),
@@ -494,8 +485,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   // remesh non-source edges (since they might have been modified by the change
   // in boundary layer points)
   std::for_each(otherFaces.begin(), otherFaces.end(), deMeshGFace());
-  for(auto it = otherEdges.begin();
-      it != otherEdges.end(); it++)
+  for(auto it = otherEdges.begin(); it != otherEdges.end(); it++)
     (*it)->mesh(true);
 
   // mesh the curves bounding the boundary layers by extrusion using the smooth
@@ -511,15 +501,13 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   }
 
   // recompute mean plane for plane surfaces just in case
-  for(auto it = otherFaces.begin();
-      it != otherFaces.end(); it++) {
+  for(auto it = otherFaces.begin(); it != otherFaces.end(); it++) {
     GFace *gf = *it;
     if(gf->geomType() == GEntity::Plane) gf->computeMeanPlane();
   }
 
   // mesh non-source surfaces
-  for(auto it = otherFaces.begin();
-      it != otherFaces.end(); it++)
+  for(auto it = otherFaces.begin(); it != otherFaces.end(); it++)
     (*it)->mesh(true);
 
   // mesh the surfaces bounding the boundary layers by extrusion using the

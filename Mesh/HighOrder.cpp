@@ -774,7 +774,8 @@ static void getFaceVertices(GFace *gf, MElement *ele,
     // (translation): this allows to speed up a common case (extruded OCC
     // models) by orders of magnitudes, where OCC closestPoint() is atrociously
     // slow
-    if(!getFaceVerticesOnExtrudedGeo(gf, *coefficients, boundaryVertices, vFace))
+    if(!getFaceVerticesOnExtrudedGeo(gf, *coefficients, boundaryVertices,
+                                     vFace))
       getFaceVerticesOnGeo(gf, *coefficients, boundaryVertices, vFace);
   }
   else { // ... otherwise, create from mesh interpolation

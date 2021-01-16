@@ -323,8 +323,7 @@ int MeshTransfiniteVolume(GRegion *gr)
   // make sure that all bounding edges have begin/end points: everything in here
   // depends on it
   const std::vector<GEdge *> &edges = gr->edges();
-  for(auto it = edges.begin();
-      it != edges.end(); it++) {
+  for(auto it = edges.begin(); it != edges.end(); it++) {
     if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
       Msg::Error("Transfinite algorithm cannot be applied with curve %d which "
                  "has no begin or end point",
@@ -342,8 +341,7 @@ int MeshTransfiniteVolume(GRegion *gr)
   }
 
   std::vector<GOrientedTransfiniteFace> orientedFaces(6);
-  for(auto it = faces.begin(); it != faces.end();
-      ++it) {
+  for(auto it = faces.begin(); it != faces.end(); ++it) {
     GOrientedTransfiniteFace f(*it, corners);
     if(f.index() < 0) {
       Msg::Error("Incompatible surface %d in transfinite volume %d",

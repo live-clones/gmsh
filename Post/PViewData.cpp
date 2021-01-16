@@ -12,15 +12,15 @@
 
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
-PViewData::PViewData() : _dirty(true), _fileIndex(0), _octree(nullptr), _adaptive(nullptr)
+PViewData::PViewData()
+  : _dirty(true), _fileIndex(0), _octree(nullptr), _adaptive(nullptr)
 {
 }
 
 PViewData::~PViewData()
 {
   if(_adaptive) delete _adaptive;
-  for(auto it = _interpolation.begin();
-      it != _interpolation.end(); it++)
+  for(auto it = _interpolation.begin(); it != _interpolation.end(); it++)
     for(std::size_t i = 0; i < it->second.size(); i++) delete it->second[i];
   if(_octree) delete _octree;
 }
@@ -196,26 +196,20 @@ void PViewData::deleteInterpolationMatrices(int type)
 
 void PViewData::removeInterpolationScheme(const std::string &name)
 {
-  auto it =
-    _interpolationSchemes.find(name);
+  auto it = _interpolationSchemes.find(name);
   if(it != _interpolationSchemes.end()) {
-    for(auto it2 = it->second.begin();
-        it2 != it->second.end(); it2++)
-      for(std::size_t i = 0; i < it2->second.size(); i++)
-        delete it2->second[i];
+    for(auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+      for(std::size_t i = 0; i < it2->second.size(); i++) delete it2->second[i];
     _interpolationSchemes.erase(it);
   }
 }
 
 void PViewData::removeAllInterpolationSchemes()
 {
-  auto it =
-    _interpolationSchemes.begin();
+  auto it = _interpolationSchemes.begin();
   for(; it != _interpolationSchemes.end(); it++)
-    for(auto it2 = it->second.begin();
-        it2 != it->second.end(); it2++)
-      for(std::size_t i = 0; i < it2->second.size(); i++)
-        delete it2->second[i];
+    for(auto it2 = it->second.begin(); it2 != it->second.end(); it2++)
+      for(std::size_t i = 0; i < it2->second.size(); i++) delete it2->second[i];
   _interpolationSchemes.clear();
   std::map<std::string, interpolationMatrices>().swap(_interpolationSchemes);
 }

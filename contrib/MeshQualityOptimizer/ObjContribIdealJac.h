@@ -53,8 +53,8 @@ protected:
 
 template <class FuncType>
 ObjContribIdealJac<FuncType>::ObjContribIdealJac(double weight)
-  : ObjContrib("IdealJac", FuncType::getNamePrefix() + "IdealJac"), _mesh(nullptr),
-    _weight(weight)
+  : ObjContrib("IdealJac", FuncType::getNamePrefix() + "IdealJac"),
+    _mesh(nullptr), _weight(weight)
 {
 }
 

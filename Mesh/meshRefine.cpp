@@ -157,7 +157,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
         SPoint3 ptx;
         t->pnt(1. / 3., 1. / 3., 0., ptx);
         bool reparamOK = gf->haveParametrization();
-        if(reparamOK && !linear){
+        if(reparamOK && !linear) {
           for(int k = 0; k < 6; k++) {
             SPoint2 temp;
             reparamOK &= reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
@@ -281,9 +281,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
         for(int j = 0; j < t->getNumFaces(); j++) {
           MFace face = t->getFace(j);
           auto fIter = faceVertices.find(face);
-          if(fIter != faceVertices.end()) {
-            newv.push_back(fIter->second[0]);
-          }
+          if(fIter != faceVertices.end()) { newv.push_back(fIter->second[0]); }
           else {
             SPoint3 pc = face.barycenter();
             newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
@@ -325,9 +323,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
         for(int j = 0; j < 2; j++) {
           MFace face = p->getFace(j);
           auto fIter = faceVertices.find(face);
-          if(fIter != faceVertices.end()) {
-            newv.push_back(fIter->second[0]);
-          }
+          if(fIter != faceVertices.end()) { newv.push_back(fIter->second[0]); }
           else {
             SPoint3 pc = face.barycenter();
             newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
@@ -500,8 +496,7 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
 
   // Subdivide the second order elements to create the refined linear
   // mesh
-  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it)
-    Subdivide(*it);
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) Subdivide(*it);
   for(auto it = m->firstFace(); it != m->lastFace(); ++it)
     Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices, linear);
   for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
@@ -511,8 +506,8 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
   m->setAllVolumesPositive();
 
   double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done refining mesh (Wall %gs, CPU %gs)",
-                 w2 - w1, t2 - t1);
+  Msg::StatusBar(true, "Done refining mesh (Wall %gs, CPU %gs)", w2 - w1,
+                 t2 - t1);
 }
 
 void BarycentricRefineMesh(GModel *m)
@@ -706,9 +701,7 @@ static int schneiders_connect(int i, int j)
                 69, 67, 73,  71,  73, 96, 97, 3,  100, 101, 29, 103, 100,
                 4,  5,  100, 103, 86, 86, 30, 35, 0,   94};
 
-  if(i == 0) {
-    return n0[j];
-  }
+  if(i == 0) { return n0[j]; }
   else if(i == 1) {
     return n1[j];
   }

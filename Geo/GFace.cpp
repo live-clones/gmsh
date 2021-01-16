@@ -34,7 +34,8 @@
 #endif
 
 GFace::GFace(GModel *model, int tag)
-  : GEntity(model, tag), r1(nullptr), r2(nullptr), va_geom_triangles(nullptr), compoundSurface(nullptr)
+  : GEntity(model, tag), r1(nullptr), r2(nullptr), va_geom_triangles(nullptr),
+    compoundSurface(nullptr)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;

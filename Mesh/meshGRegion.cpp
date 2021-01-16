@@ -49,32 +49,31 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
 
   Msg::Info("Generating pyramids for hybrid mesh...");
   int npyram = 0;
-  for(auto it = gm->firstRegion(); it != gm->lastRegion(); it++){
+  for(auto it = gm->firstRegion(); it != gm->lastRegion(); it++) {
     GRegion *gr = *it;
     if(gr->meshAttributes.method == MESH_TRANSFINITE) continue;
     if(gr->isFullyDiscrete()) continue;
     ExtrudeParams *ep = gr->meshAttributes.extrude;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) continue;
 
-    std::vector<GFace*> faces = gr->faces();
-    for(std::size_t i = 0; i < faces.size(); i++){
+    std::vector<GFace *> faces = gr->faces();
+    for(std::size_t i = 0; i < faces.size(); i++) {
       GFace *gf = faces[i];
-      for(std::size_t j = 0; j < gf->quadrangles.size(); j++){
-        auto it2 =
-          _quad.find(gf->quadrangles[j]->getFace(0));
-        if(it2 != _quad.end()){
+      for(std::size_t j = 0; j < gf->quadrangles.size(); j++) {
+        auto it2 = _quad.find(gf->quadrangles[j]->getFace(0));
+        if(it2 != _quad.end()) {
           npyram++;
-          gr->pyramids.push_back
-            (new MPyramid(it2->first.getVertex(0), it2->first.getVertex(1),
-                          it2->first.getVertex(2), it2->first.getVertex(3),
-                          it2->second));
+          gr->pyramids.push_back(new MPyramid(
+            it2->first.getVertex(0), it2->first.getVertex(1),
+            it2->first.getVertex(2), it2->first.getVertex(3), it2->second));
           gr->mesh_vertices.push_back(it2->second);
-          if(it2->second->onWhat()->dim() == 3){
-            Msg::Error("Pyramid top vertex already classified on volume %d (!= %d) - "
-                       "non-manifold quad boundaries not supported yet",
-                       it2->second->onWhat()->tag(), gr->tag());
+          if(it2->second->onWhat()->dim() == 3) {
+            Msg::Error(
+              "Pyramid top vertex already classified on volume %d (!= %d) - "
+              "non-manifold quad boundaries not supported yet",
+              it2->second->onWhat()->tag(), gr->tag());
           }
-          else{
+          else {
             it2->second->setEntity(gr);
           }
         }
@@ -90,9 +89,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   if(regions.empty()) return;
 
   if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
-    if(meshGRegionHxt(regions) != 0){
-      Msg::Error("HXT 3D mesh failed");
-    }
+    if(meshGRegionHxt(regions) != 0) { Msg::Error("HXT 3D mesh failed"); }
     return;
   }
 
@@ -114,10 +111,9 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
   // replace faces with compounds if elements from compound surface meshes are
   // not reclassified on the original surfaces
-  if(CTX::instance()->mesh.compoundClassify == 0){
+  if(CTX::instance()->mesh.compoundClassify == 0) {
     std::set<GFace *, GEntityPtrLessThan> comp;
-    for(auto it = allFacesSet.begin();
-        it != allFacesSet.end(); it++){
+    for(auto it = allFacesSet.begin(); it != allFacesSet.end(); it++) {
       GFace *gf = *it;
       if(!gf->compoundSurface)
         comp.insert(gf);
@@ -162,7 +158,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   }
 
   // restore set of faces and embedded edges/vertices
-  if(CTX::instance()->mesh.compoundClassify == 0){
+  if(CTX::instance()->mesh.compoundClassify == 0) {
     std::set<GFace *, GEntityPtrLessThan> comp;
     for(std::size_t i = 0; i < faces.size(); i++) {
       GFace *gf = faces[i];
@@ -174,7 +170,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     std::vector<GFace *> lcomp(comp.begin(), comp.end());
     gr->set(lcomp);
   }
-  else{
+  else {
     gr->set(faces);
   }
   gr->embeddedEdges() = oldEmbEdges;
@@ -189,22 +185,21 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     }
   }
   else if(CTX::instance()->mesh.algo3d != ALGO_3D_INITIAL_ONLY) {
-    insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D,
-                           1., true, &sqr);
+    insertVerticesInRegion(gr, CTX::instance()->mesh.maxIterDelaunay3D, 1.,
+                           true, &sqr);
 
-    if(sqr.buildPyramids(gr->model())){
+    if(sqr.buildPyramids(gr->model())) {
       Msg::Info("Optimizing pyramids for hybrid mesh...");
       gr->model()->setAllVolumesPositive();
       RelocateVerticesOfPyramids(regions, 3);
-      //RelocateVertices(regions, 3);
+      // RelocateVertices(regions, 3);
       Msg::Info("Done optimizing pyramids for hybrid mesh");
     }
 
     // test:
-    // bool createBoundaryLayerOneLayer(GRegion *gr, std::vector<GFace *> & bls);
-    // createBoundaryLayerOneLayer(gr, allFaces);
+    // bool createBoundaryLayerOneLayer(GRegion *gr, std::vector<GFace *> &
+    // bls); createBoundaryLayerOneLayer(gr, allFaces);
   }
-
 }
 
 void deMeshGRegion::operator()(GRegion *gr)
@@ -271,8 +266,7 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search,
   while(fit != faces_to_consider.end()) {
     for(std::size_t i = 0; i < (*fit)->getNumMeshElements(); i++) {
       MFace ff = (*fit)->getMeshElement(i)->getFace(0);
-      if(!onlyTriangles || ff.getNumVertices() == 3)
-        search[ff] = *fit;
+      if(!onlyTriangles || ff.getNumVertices() == 3) search[ff] = *fit;
     }
     ++fit;
   }
@@ -318,8 +312,7 @@ GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2,
 {
   MVertex *p = std::min(p1, p2);
 
-  for(auto it = search.lower_bound(p);
-      it != search.upper_bound(p); ++it) {
+  for(auto it = search.lower_bound(p); it != search.upper_bound(p); ++it) {
     MLine *l = it->second.first;
     GEdge *ge = it->second.second;
     if((l->getVertex(0) == p1 || l->getVertex(0) == p2) &&

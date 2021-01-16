@@ -428,9 +428,7 @@ int DocRecord::DListDelete(DListPeek *dlist, PointNumero oldPoint)
     if(p->point_num == oldPoint) {
       Succ(Pred(p)) = Succ(p);
       Pred(Succ(p)) = Pred(p);
-      if(p == *dlist) {
-        *dlist = Succ(p);
-      }
+      if(p == *dlist) { *dlist = Succ(p); }
       delete p;
       return 1;
     }
@@ -610,9 +608,7 @@ void DocRecord::makePosView(const std::string &fileName, GFace *gf)
     fprintf(f, "View \"scalar\" {\n");
     for(PointNumero iPoint = 0; iPoint < numPoints; iPoint++) {
       DListPeek p = points[iPoint].adjacent;
-      if(!p) {
-        continue;
-      }
+      if(!p) { continue; }
       std::vector<PointNumero> adjacentPoints;
       do {
         adjacentPoints.push_back(p->point_num);
@@ -830,8 +826,8 @@ void DocRecord::RemoveAllDList()
 }
 
 DocRecord::DocRecord(int n)
-  : _hullSize(0), _hull(nullptr), _adjacencies(nullptr), numPoints(n), points(nullptr),
-    numTriangles(0), triangles(nullptr)
+  : _hullSize(0), _hull(nullptr), _adjacencies(nullptr), numPoints(n),
+    points(nullptr), numTriangles(0), triangles(nullptr)
 {
   if(numPoints) points = new PointRecord[numPoints + 3000];
 }
@@ -860,9 +856,7 @@ void DocRecord::MakeMeshWithPoints()
   if(numPoints < 3) return;
   BuildDelaunay();
 
-  if(AdjacentNullptrExists()) {
-    ConvertDListToTriangles();
-  }
+  if(AdjacentNullptrExists()) { ConvertDListToTriangles(); }
   else {
     Msg::Error("Adjacent nullptrs found");
   }
@@ -940,8 +934,7 @@ std::set<int> DocRecord::tagInterior(double x, double y)
       std::pair<void *, void *> ab =
         std::make_pair(std::min(p[j]->data, p[(j + 1) % 3]->data),
                        std::max(p[j]->data, p[(j + 1) % 3]->data));
-      auto it =
-        edgesToTriangles.find(ab);
+      auto it = edgesToTriangles.find(ab);
       if(it == edgesToTriangles.end()) {
         edgesToTriangles[ab] = std::make_pair(i, -1);
       }
@@ -980,9 +973,7 @@ void DocRecord::concave(double x, double y, GFace *gf)
     }
   }
 
-  for(int i = 0; i < numPoints; i++) {
-    points[i].vicinity.clear();
-  }
+  for(int i = 0; i < numPoints; i++) { points[i].vicinity.clear(); }
 
   try {
     MakeMeshWithPoints();
@@ -1032,9 +1023,7 @@ void DocRecord::add(int index1, int index2)
 
 void DocRecord::initialize()
 {
-  for(int i = 0; i < numPoints; i++) {
-    points[i].flag = 0;
-  }
+  for(int i = 0; i < numPoints; i++) { points[i].flag = 0; }
 }
 
 bool DocRecord::remove_point(int index)
@@ -1051,9 +1040,7 @@ void DocRecord::remove_all()
 {
   int numPoints2 = 0;
   for(int i = 0; i < numPoints; i++) {
-    if(points[i].flag == 0) {
-      numPoints2++;
-    }
+    if(points[i].flag == 0) { numPoints2++; }
   }
   PointRecord *points2 = new PointRecord[numPoints2];
   int index = 0;
@@ -1101,8 +1088,7 @@ bool DocRecord::delaunay_conformity(GFace *gf)
 {
   std::vector<GEdge *> const &list = gf->edges();
 
-  for(auto it = list.begin(); it != list.end();
-      it++) {
+  for(auto it = list.begin(); it != list.end(); it++) {
     GEdge *edge = *it;
     for(std::size_t i = 0; i < edge->getNumMeshElements(); i++) {
       MElement *element = edge->getMeshElement(i);

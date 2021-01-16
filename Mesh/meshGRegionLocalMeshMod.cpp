@@ -49,9 +49,7 @@ void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
         }
         if(!found) {
           for(std::size_t k = 0; k < cavity.size(); k++) {
-            if(cavity[k] == neigh) {
-              found = true;
-            }
+            if(cavity[k] == neigh) { found = true; }
           }
         }
         if(!found) outside.push_back(neigh);
@@ -832,11 +830,9 @@ int LaplaceSmoothing(GRegion *gr)
   int N = 0;
   for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
     MVertex *v = gr->mesh_vertices[i];
-    auto it =
-      vertexToElement.lower_bound(v);
+    auto it = vertexToElement.lower_bound(v);
     auto it_low = it;
-    auto it_up =
-      vertexToElement.upper_bound(v);
+    auto it_up = vertexToElement.upper_bound(v);
     double minQual = 1.e22;
     double volTot = 0.0;
     double xold = v->x(), yold = v->y(), zold = v->z();
