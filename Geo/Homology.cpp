@@ -16,7 +16,7 @@ Homology::Homology(GModel *model, const std::vector<int> &physicalDomain,
                    int combine, bool omit, bool smoothen, int heuristic)
   : _model(model), _domain(physicalDomain), _subdomain(physicalSubdomain),
     _imdomain(physicalImdomain), _saveOrig(saveOrig), _combine(combine),
-    _omit(omit), _smoothen(smoothen), _heuristic(heuristic), _cellComplex(NULL)
+    _omit(omit), _smoothen(smoothen), _heuristic(heuristic), _cellComplex(nullptr)
 {
   _fileName = "";
 
@@ -107,7 +107,7 @@ void Homology::_createCellComplex()
   _getElements(_nonsubdomainEntities, nonsubdomainElements);
   _getElements(_immuneEntities, immuneElements);
 
-  if(_cellComplex != NULL) delete _cellComplex;
+  if(_cellComplex != nullptr) delete _cellComplex;
   _cellComplex = new CellComplex(_model, domainElements, subdomainElements,
                                  nondomainElements, nonsubdomainElements,
                                  immuneElements, _saveOrig);
@@ -151,7 +151,7 @@ void Homology::_deleteCochains(std::vector<int> dim)
 
 Homology::~Homology()
 {
-  if(_cellComplex != NULL) delete _cellComplex;
+  if(_cellComplex != nullptr) delete _cellComplex;
   _deleteChains();
   _deleteCochains();
 }
@@ -168,7 +168,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
     return;
   }
 
-  if(_cellComplex == NULL) _createCellComplex();
+  if(_cellComplex == nullptr) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
 
   Msg::StatusBar(true, "Reducing cell complex...");
@@ -257,7 +257,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
     return;
   }
 
-  if(_cellComplex == NULL) _createCellComplex();
+  if(_cellComplex == nullptr) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
 
   Msg::StatusBar(true, "Reducing cell complex...");
@@ -531,7 +531,7 @@ void Homology::getCohomologyBasis(int dim, std::vector<Chain<int> > &coh)
 void Homology::findBettiNumbers()
 {
   if(!isBettiComputed()) {
-    if(_cellComplex == NULL) _createCellComplex();
+    if(_cellComplex == nullptr) _createCellComplex();
     if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
 
     Msg::StatusBar(true, "Reducing cell complex...");
@@ -586,7 +586,7 @@ int Homology::betti(int dim)
 
 int Homology::eulerCharacteristic()
 {
-  if(_cellComplex == NULL) _createCellComplex();
+  if(_cellComplex == nullptr) _createCellComplex();
   return _cellComplex->eulerCharacteristic();
 }
 

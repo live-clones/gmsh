@@ -65,10 +65,10 @@ std::vector<GModel *> GModel::list;
 int GModel::_current = -1;
 
 GModel::GModel(const std::string &name)
-  : _destroying(false), _name(name), _visible(1), _elementOctree(0),
-    _geo_internals(0), _occ_internals(0), _acis_internals(0),
-    _parasolid_internals(0), _fields(0), _currentMeshEntity(0),
-    _numPartitions(0), normals(0)
+  : _destroying(false), _name(name), _visible(1), _elementOctree(nullptr),
+    _geo_internals(nullptr), _occ_internals(nullptr), _acis_internals(nullptr),
+    _parasolid_internals(nullptr), _fields(nullptr), _currentMeshEntity(nullptr),
+    _numPartitions(0), normals(nullptr)
 {
   _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
@@ -156,7 +156,7 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
     if(list[i]->getName() == name &&
        (fileName.empty() || !list[i]->hasFileName(fileName)))
       return list[i];
-  return 0;
+  return nullptr;
 }
 
 void GModel::destroy(bool keepName)
@@ -173,7 +173,7 @@ void GModel::destroy(bool keepName)
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
   _checkPointedMaxVertexNum = _maxVertexNum;
   _checkPointedMaxElementNum = _maxElementNum;
-  _currentMeshEntity = 0;
+  _currentMeshEntity = nullptr;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
 
@@ -198,7 +198,7 @@ void GModel::destroy(bool keepName)
   resetOCCInternals();
 
   if(normals) delete normals;
-  normals = 0;
+  normals = nullptr;
 
 #if defined(HAVE_MESH)
   _fields->reset();
@@ -221,7 +221,7 @@ void GModel::destroyMeshCaches()
   _elementIndexCache.clear();
   std::map<int, int>().swap(_elementIndexCache);
   delete _elementOctree;
-  _elementOctree = 0;
+  _elementOctree = nullptr;
 }
 
 void GModel::deleteMesh()
@@ -231,7 +231,7 @@ void GModel::deleteMesh()
   for(auto it = firstEdge(); it != lastEdge(); ++it) (*it)->deleteMesh();
   for(auto it = firstVertex(); it != lastVertex(); ++it) (*it)->deleteMesh();
   destroyMeshCaches();
-  _currentMeshEntity = 0;
+  _currentMeshEntity = nullptr;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
 }
@@ -282,7 +282,7 @@ void GModel::deleteMesh(const std::vector<GEntity *> &entities)
     }
   }
   destroyMeshCaches();
-  _currentMeshEntity = 0;
+  _currentMeshEntity = nullptr;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
 }
@@ -311,7 +311,7 @@ GRegion *GModel::getRegionByTag(int n) const
   if(it != regions.end())
     return *it;
   else
-    return 0;
+    return nullptr;
 }
 
 GFace *GModel::getFaceByTag(int n) const
@@ -321,7 +321,7 @@ GFace *GModel::getFaceByTag(int n) const
   if(it != faces.end())
     return *it;
   else
-    return 0;
+    return nullptr;
 }
 
 GEdge *GModel::getEdgeByTag(int n) const
@@ -331,7 +331,7 @@ GEdge *GModel::getEdgeByTag(int n) const
   if(it != edges.end())
     return *it;
   else
-    return 0;
+    return nullptr;
 }
 
 GVertex *GModel::getVertexByTag(int n) const
@@ -341,7 +341,7 @@ GVertex *GModel::getVertexByTag(int n) const
   if(it != vertices.end())
     return *it;
   else
-    return 0;
+    return nullptr;
 }
 
 GEntity *GModel::getEntityByTag(int dim, int n) const
@@ -352,7 +352,7 @@ GEntity *GModel::getEntityByTag(int dim, int n) const
   case 2: return getFaceByTag(n);
   case 3: return getRegionByTag(n);
   }
-  return 0;
+  return nullptr;
 }
 
 std::vector<int> GModel::getTagsForPhysicalName(int dim,
@@ -1236,14 +1236,14 @@ int GModel::adaptMesh(std::vector<int> technique,
             laplaceSmoothing(*fit, CTX::instance()->mesh.nbSmoothing);
           }
           if(_elementOctree) delete _elementOctree;
-          _elementOctree = 0;
+          _elementOctree = nullptr;
         }
       }
       else if(getDim() == 3) {
         for(auto rit = firstRegion(); rit != lastRegion(); ++rit) {
           refineMeshMMG(*rit);
           if(_elementOctree) delete _elementOctree;
-          _elementOctree = 0;
+          _elementOctree = nullptr;
         }
       }
 
@@ -1650,7 +1650,7 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
     getEntities(entities);
     if(dense) {
       // numbering starts at 1
-      _vertexVectorCache.resize(_maxVertexNum + 1, (MVertex *)0);
+      _vertexVectorCache.resize(_maxVertexNum + 1, (MVertex *)nullptr);
       for(std::size_t i = 0; i < entities.size(); i++)
         for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
           _vertexVectorCache[entities[i]->mesh_vertices[j]->getNum()] =
@@ -1686,7 +1686,7 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
     getEntities(entities);
     if(dense) {
       // numbering starts at 1
-      _elementVectorCache.resize(_maxElementNum + 1, (MElement *)0);
+      _elementVectorCache.resize(_maxElementNum + 1, (MElement *)nullptr);
       for(std::size_t i = 0; i < entities.size(); i++)
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
@@ -2015,7 +2015,7 @@ void GModel::_storeElementsInEntities(
     case TYPE_LIN: {
       GEdge *e = getEdgeByTag(it->first);
       if(!e) {
-        e = new discreteEdge(this, it->first, 0, 0);
+        e = new discreteEdge(this, it->first, nullptr, nullptr);
         add(e);
       }
       _addElements(e->lines, it->second);
@@ -2237,7 +2237,7 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex *> &vertices)
         ge->mesh_vertices.push_back(v);
       else {
         delete v; // we delete all unused vertices
-        vertices[i] = 0;
+        vertices[i] = nullptr;
       }
     }
   }
@@ -2253,7 +2253,7 @@ void GModel::pruneMeshVertexAssociations()
       MElement *e = entities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
-        v->setEntity(0);
+        v->setEntity(nullptr);
         vertSet.insert(v);
       }
     }
@@ -2289,7 +2289,7 @@ void GModel::_storePhysicalTagsInEntities(
 {
   std::map<int, std::map<int, std::string> >::const_iterator it = map.begin();
   for(; it != map.end(); ++it) {
-    GEntity *ge = 0;
+    GEntity *ge = nullptr;
     switch(dim) {
     case 0: ge = getVertexByTag(it->first); break;
     case 1: ge = getEdgeByTag(it->first); break;
@@ -2513,7 +2513,7 @@ void GModel::alignPeriodicBoundaries()
     GEdge *tgt = *it;
     GEdge *src = dynamic_cast<GEdge *>(tgt->getMeshMaster());
 
-    if(src != NULL && src != tgt) {
+    if(src != nullptr && src != tgt) {
       // compose a search list on master edge
 
       std::map<MEdge, MLine *, MEdgeLessThan> srcLines;
@@ -2589,7 +2589,7 @@ void GModel::alignPeriodicBoundaries()
   for(auto it = firstFace(); it != lastFace(); ++it) {
     GFace *tgt = *it;
     GFace *src = dynamic_cast<GFace *>(tgt->getMeshMaster());
-    if(src != NULL && src != tgt) {
+    if(src != nullptr && src != tgt) {
       std::map<MFace, MElement *, MFaceLessThan> srcElmts;
 
       for(std::size_t i = 0; i < src->getNumMeshElements(); ++i) {

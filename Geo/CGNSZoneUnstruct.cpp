@@ -41,8 +41,8 @@ namespace {
 
     // element high-order node transformation if specified (CPEX0045), otherwise
     // use the classic CGNS order
-    const std::vector<int> *nodeTransfo = 0;
-    if((mshEltType != MSH_PNT) && (eltNodeTransfo != 0) &&
+    const std::vector<int> *nodeTransfo = nullptr;
+    if((mshEltType != MSH_PNT) && (eltNodeTransfo != nullptr) &&
        (eltNodeTransfo->size() > 0)) {
       nodeTransfo = &((*eltNodeTransfo)[mshEltType]);
     }
@@ -133,12 +133,12 @@ int CGNSZoneUnstruct::readSection(
   if(sectEltType == CGNS_ENUMV(MIXED)) {
 #if CGNS_VERSION >= 4000
     cgnsErr = cg_poly_elements_read(fileIndex(), baseIndex(), index(), iSect,
-                                    sectData.data(), offsetData.data(), 0);
+                                    sectData.data(), offsetData.data(), nullptr);
 #endif
   }
   else {
     cgnsErr = cg_elements_read(fileIndex(), baseIndex(), index(), iSect,
-                               sectData.data(), 0);
+                               sectData.data(), nullptr);
   }
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
@@ -168,7 +168,7 @@ int CGNSZoneUnstruct::readElements(
   // data structures for node coordinate transformation (CPEX0045)
   // std::vector<bool> nodeUpdated;
   std::vector<SPoint3> rawNode;
-  if(eltNodeTransfo() != 0) {
+  if(eltNodeTransfo() != nullptr) {
     // nodeUpdated = std::vector<bool>(nbNode(), false);
     rawNode.resize(nbNode());
     for(int iN = 0; iN < nbNode(); iN++) {

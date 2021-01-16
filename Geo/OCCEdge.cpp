@@ -37,7 +37,7 @@
 #include <BOPTools_AlgoTools.hxx>
 
 OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
-  : GEdge(m, num, v1, v2), _c(c), _trimmed(0)
+  : GEdge(m, num, v1, v2), _c(c), _trimmed(nullptr)
 {
   // force orientation of internal/external edges: otherwise reverse will not
   // produce the expected result
@@ -100,7 +100,7 @@ void OCCEdge::setTrimmed(OCCFace *f)
     _trimmed = f;
     const TopoDS_Face *s = (TopoDS_Face *)_trimmed->getNativePtr();
     _curve2d = BRep_Tool::CurveOnSurface(_c, *s, _s0, _s1);
-    if(_curve2d.IsNull()) _trimmed = 0;
+    if(_curve2d.IsNull()) _trimmed = nullptr;
   }
 }
 

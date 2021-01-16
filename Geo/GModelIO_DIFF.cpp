@@ -54,7 +54,7 @@ int GModel::readDIFF(const std::string &name)
   std::vector<MVertex *> vertexVector;
 
   {
-    while(strstr(str, "Number of space dim. =") == NULL) {
+    while(strstr(str, "Number of space dim. =") == nullptr) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
 
@@ -70,7 +70,7 @@ int GModel::readDIFF(const std::string &name)
       fclose(fp);
       return 0;
     }
-    while(strstr(str, "Number of elements   =") == NULL) {
+    while(strstr(str, "Number of elements   =") == nullptr) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
     if(sscanf(str, "%*s %*s %*s %*s %d", &numElements) != 1) {
@@ -84,7 +84,7 @@ int GModel::readDIFF(const std::string &name)
       fclose(fp);
       return 0;
     }
-    while(strstr(str, "Number of nodes      =") == NULL) {
+    while(strstr(str, "Number of nodes      =") == nullptr) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
     if(sscanf(str, "%*s %*s %*s %*s %d", &numVertices) != 1) {
@@ -98,7 +98,7 @@ int GModel::readDIFF(const std::string &name)
       fclose(fp);
       return 0;
     }
-    while(strstr(str, "Max number of nodes in an element:") == NULL) {
+    while(strstr(str, "Max number of nodes in an element:") == nullptr) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
     if(sscanf(str, "%*s %*s %*s %*s %*s %*s %*s %d", &numVerticesPerElement) !=
@@ -131,8 +131,8 @@ int GModel::readDIFF(const std::string &name)
       fclose(fp);
       return 0;
     }
-    while(strstr(str, "Boundary indicators:") == NULL &&
-          strstr(str, "boundary indicators:") == NULL) {
+    while(strstr(str, "Boundary indicators:") == nullptr &&
+          strstr(str, "boundary indicators:") == nullptr) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
     if(sscanf(str, "%d %*s %*s", &nbi) != 1) {
@@ -185,7 +185,7 @@ int GModel::readDIFF(const std::string &name)
       if(vertexMap.count(num))
         Msg::Warning("Skipping duplicate node %d", num);
       else
-        vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
+        vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], nullptr, num);
       if(numVertices > 100000) Msg::ProgressMeter(i + 1, true, "Reading nodes");
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
@@ -195,9 +195,9 @@ int GModel::readDIFF(const std::string &name)
         Msg::Info("Vertex numbering is dense");
         vertexVector.resize(vertexMap.size() + 1);
         if(minVertex == 1)
-          vertexVector[0] = 0;
+          vertexVector[0] = nullptr;
         else
-          vertexVector[numVertices] = 0;
+          vertexVector[numVertices] = nullptr;
         std::map<int, MVertex *>::const_iterator it = vertexMap.begin();
         for(; it != vertexMap.end(); ++it) vertexVector[it->first] = it->second;
         vertexMap.clear();

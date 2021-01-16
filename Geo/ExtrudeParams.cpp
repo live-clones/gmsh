@@ -7,7 +7,7 @@
 #include "Geo.h"
 #include "ExtrudeParams.h"
 
-smooth_data *ExtrudeParams::normals[2] = {0, 0};
+smooth_data *ExtrudeParams::normals[2] = {nullptr, nullptr};
 std::vector<SPoint3> ExtrudeParams::normalsCoherence;
 
 // Scale last layer size locally If one section of the boundary layer index = 0

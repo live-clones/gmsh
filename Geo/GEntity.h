@@ -196,7 +196,7 @@ public:
   virtual int dim() const { return -1; }
 
   // returns the parent entity for partitioned entities
-  virtual GEntity *getParentEntity() { return 0; }
+  virtual GEntity *getParentEntity() { return nullptr; }
 
   // regions that bound this entity or that this entity bounds.
   virtual std::list<GRegion *> regions() const
@@ -265,7 +265,7 @@ public:
   virtual ModelType getNativeType() const { return UnknownModel; }
 
   // get the native pointer of the particular representation
-  virtual void *getNativePtr() const { return 0; }
+  virtual void *getNativePtr() const { return nullptr; }
 
   // get the native id (int) of the particular representation
   virtual int getNativeInt() const { return 0; }
@@ -351,15 +351,18 @@ public:
   virtual void getNumMeshElements(unsigned *const c) const {}
 
   // get the start of the array of a type of element
-  virtual MElement *const *getStartElementType(int type) const { return 0; }
+  virtual MElement *const *getStartElementType(int type) const
+  {
+    return nullptr;
+  }
 
   // get the element at the given index
-  virtual MElement *getMeshElement(std::size_t index) const { return 0; }
+  virtual MElement *getMeshElement(std::size_t index) const { return nullptr; }
   // get the element at the given index for a given familyType
   virtual MElement *getMeshElementByType(const int familyType,
                                          const std::size_t index) const
   {
-    return 0;
+    return nullptr;
   }
 
   // get/set all mesh element visibility flag

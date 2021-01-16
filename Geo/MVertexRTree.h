@@ -36,14 +36,14 @@ public:
     delete _rtree;
   }
   MVertex *insert(MVertex *v, bool warnIfExists = false,
-                  std::set<MVertex *, MVertexPtrLessThan> *duplicates = 0)
+                  std::set<MVertex *, MVertexPtrLessThan> *duplicates = nullptr)
   {
     MVertex *out;
     double _min[3] = {v->x() - _tol, v->y() - _tol, v->z() - _tol};
     double _max[3] = {v->x() + _tol, v->y() + _tol, v->z() + _tol};
     if(!_rtree->Search(_min, _max, rtree_callback, &out)) {
       _rtree->Insert(_min, _max, v);
-      return 0;
+      return nullptr;
     }
     else {
       if(duplicates) {
@@ -60,7 +60,7 @@ public:
     }
   }
   int insert(std::vector<MVertex *> &v, bool warnIfExists = false,
-             std::set<MVertex *, MVertexPtrLessThan> *duplicates = 0)
+             std::set<MVertex *, MVertexPtrLessThan> *duplicates = nullptr)
   {
     int num = 0;
     for(std::size_t i = 0; i < v.size(); i++)
@@ -73,7 +73,7 @@ public:
     double _min[3] = {x - _tol, y - _tol, z - _tol};
     double _max[3] = {x + _tol, y + _tol, z + _tol};
     if(_rtree->Search(_min, _max, rtree_callback, &out)) return out;
-    return 0;
+    return nullptr;
   }
   std::size_t size() { return _rtree->Count(); }
 };

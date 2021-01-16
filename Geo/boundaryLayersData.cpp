@@ -425,7 +425,7 @@ bool buildAdditionalPoints2D(GFace *gf)
   for(int i = 0; i < nBL; ++i) {
     // GET THE FIELD THAT DEFINES THE DISTANCE FUNCTION
     Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-    if(bl_field == NULL) continue;
+    if(bl_field == nullptr) continue;
     BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
 
     if(!blf->setupFor2d(gf->tag())) continue;

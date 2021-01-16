@@ -77,7 +77,7 @@ int GModel::readACTRAN(const std::string &name)
           sscanf(buffer, "%d %lf %lf %lf", &num, &x, &y, &z);
         else
           sscanf(buffer, "%d %lf %lf", &num, &x, &y);
-        _vertexMapCache[num] = new MVertex(x, y, z, 0, num);
+        _vertexMapCache[num] = new MVertex(x, y, z, nullptr, num);
       }
     }
     else if(!strcmp(str, "BEGIN") && !strcmp(str2, "ELEMENT")) {

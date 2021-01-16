@@ -60,7 +60,7 @@ std::vector<GEdge *> ensureSimplyConnectedEdge(GEdge *ge)
       auto it = _conn.find(ge->lines[i]->getVertex(j));
       if(it == _conn.end())
         _conn[ge->lines[i]->getVertex(j)] =
-          std::make_pair(ge->lines[i], (MLine *)NULL);
+          std::make_pair(ge->lines[i], (MLine *)nullptr);
       else
         it->second.second = ge->lines[i];
     }
@@ -105,7 +105,7 @@ std::vector<GEdge *> ensureSimplyConnectedEdge(GEdge *ge)
       ge->lines = _parts[i];
     else {
       discreteEdge *newE = new discreteEdge(
-        ge->model(), ge->model()->getMaxElementaryNumber(1) + 1, NULL, NULL);
+        ge->model(), ge->model()->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
       ge->model()->add(newE);
       newE->lines = _parts[i];
       _all.push_back(newE);
@@ -141,7 +141,7 @@ void ensureManifoldFace(GFace *gf)
       if(_nonManifold.find(ed) == _nonManifold.end()) {
         auto it = _pairs.find(ed);
         if(it == _pairs.end()) {
-          _pairs[ed] = std::make_pair(e, (MElement *)NULL);
+          _pairs[ed] = std::make_pair(e, (MElement *)nullptr);
         }
         else {
           if(it->second.second == NULL) { it->second.second = e; }
@@ -421,7 +421,7 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
     auto gfIter = gFacesToGEdge.find(gfaces);
     if(gfIter == gFacesToGEdge.end()) {
       discreteEdge *de =
-        new discreteEdge(gm, gm->getMaxElementaryNumber(1) + 1, NULL, NULL);
+        new discreteEdge(gm, gm->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
       num++;
       gm->add(de);
       auto gfIter = gfaces.begin();
@@ -579,7 +579,7 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
         else {
           auto frIter = tFaceToGRegionPair.find(f);
           if(frIter == tFaceToGRegionPair.end()) {
-            tFaceToGRegionPair[f] = std::make_pair((GRegion *)NULL, *it);
+            tFaceToGRegionPair[f] = std::make_pair((GRegion *)nullptr, *it);
           }
           else
             frIter->second.first = gr;

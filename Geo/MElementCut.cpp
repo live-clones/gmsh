@@ -979,12 +979,12 @@ static void elementCutMesh(
         isCut = (isCut || iC);
       }
     }
-    MPolyhedron *p1 = NULL, *p2 = NULL;
+    MPolyhedron *p1 = nullptr, *p2 = nullptr;
     if(isCut) {
       std::vector<MTetrahedron *> poly[2];
 
       for(std::size_t i = nbTe; i < tetras.size(); i++) {
-        MVertex *mv[4] = {NULL, NULL, NULL, NULL};
+        MVertex *mv[4] = {nullptr, nullptr, nullptr, nullptr};
         for(int j = 0; j < 4; j++) {
           int numV = getElementVertexNum(tetras[i]->pt(j), e);
           if(numV == -1) {
@@ -999,7 +999,7 @@ static void elementCutMesh(
             auto it = vertexMap.find(numV);
             if(it == vertexMap.end()) {
               mv[j] = new MVertex(tetras[i]->x(j), tetras[i]->y(j),
-                                  tetras[i]->z(j), 0, numV);
+                                  tetras[i]->z(j), nullptr, numV);
               vertexMap[numV] = mv[j];
             }
             else
@@ -1053,7 +1053,7 @@ static void elementCutMesh(
       borders[1].erase(itr.first, itr.second);
       for(std::size_t i = 0; i < bords.size(); i++) borders[1].insert(bords[i]);
       if(eParent) {
-        copy->setParent(NULL, false);
+        copy->setParent(nullptr, false);
         delete copy;
       }
     }
@@ -1080,7 +1080,7 @@ static void elementCutMesh(
     }
 
     for(std::size_t i = nbTr; i < triangles.size(); i++) {
-      MVertex *mv[3] = {NULL, NULL, NULL};
+      MVertex *mv[3] = {nullptr, nullptr, nullptr};
       for(int j = 0; j < 3; j++) {
         int numV = getElementVertexNum(triangles[i]->pt(j), e);
         if(numV == -1) {
@@ -1095,7 +1095,7 @@ static void elementCutMesh(
           auto it = vertexMap.find(numV);
           if(it == vertexMap.end()) {
             mv[j] = new MVertex(triangles[i]->x(j), triangles[i]->y(j),
-                                triangles[i]->z(j), 0, numV);
+                                triangles[i]->z(j), nullptr, numV);
             vertexMap[numV] = mv[j];
           }
           else
@@ -1179,12 +1179,12 @@ static void elementCutMesh(
       }
     }
 
-    MPolygon *p1 = NULL, *p2 = NULL;
+    MPolygon *p1 = nullptr, *p2 = nullptr;
     if(isCut) {
       std::vector<MTriangle *> poly[2];
 
       for(std::size_t i = nbTr; i < triangles.size(); i++) {
-        MVertex *mv[3] = {NULL, NULL, NULL};
+        MVertex *mv[3] = {nullptr, nullptr, nullptr};
         for(int j = 0; j < 3; j++) {
           int numV = getElementVertexNum(triangles[i]->pt(j), e);
           if(numV == -1) {
@@ -1199,7 +1199,7 @@ static void elementCutMesh(
             auto it = vertexMap.find(numV);
             if(it == vertexMap.end()) {
               mv[j] = new MVertex(triangles[i]->x(j), triangles[i]->y(j),
-                                  triangles[i]->z(j), 0, numV);
+                                  triangles[i]->z(j), nullptr, numV);
               vertexMap[numV] = mv[j];
             }
             else
@@ -1214,7 +1214,7 @@ static void elementCutMesh(
       }
       // if quads
       for(std::size_t i = nbQ; i < quads.size(); i++) {
-        MVertex *mv[4] = {NULL, NULL, NULL, NULL};
+        MVertex *mv[4] = {nullptr, nullptr, nullptr, nullptr};
         for(int j = 0; j < 4; j++) {
           int numV = getElementVertexNum(quads[i]->pt(j), e);
           if(numV == -1) {
@@ -1229,7 +1229,7 @@ static void elementCutMesh(
             auto it = vertexMap.find(numV);
             if(it == vertexMap.end()) {
               mv[j] = new MVertex(quads[i]->x(j), quads[i]->y(j),
-                                  quads[i]->z(j), 0, numV);
+                                  quads[i]->z(j), nullptr, numV);
               vertexMap[numV] = mv[j];
             }
             else
@@ -1304,7 +1304,7 @@ static void elementCutMesh(
       borders[0].erase(itr.first, itr.second);
       for(std::size_t i = 0; i < bords.size(); i++) borders[0].insert(bords[i]);
       if(eParent) {
-        copy->setParent(NULL, false);
+        copy->setParent(nullptr, false);
         delete copy;
       }
     }
@@ -1331,7 +1331,7 @@ static void elementCutMesh(
     }
 
     for(std::size_t i = nbL; i < lines.size(); i++) {
-      MVertex *mv[2] = {NULL, NULL};
+      MVertex *mv[2] = {nullptr, nullptr};
       for(int j = 0; j < 2; j++) {
         int numV = getElementVertexNum(lines[i]->pt(j), e);
         if(numV == -1) {
@@ -1346,7 +1346,7 @@ static void elementCutMesh(
           auto it = vertexMap.find(numV);
           if(it == vertexMap.end()) {
             mv[j] = new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j),
-                                0, numV);
+                                nullptr, numV);
             vertexMap[numV] = mv[j];
           }
           else
@@ -1396,7 +1396,7 @@ static void elementCutMesh(
     if(isCut) {
       bool own = (eParent && !e->ownsParent()) ? false : true;
       for(std::size_t i = nbL; i < lines.size(); i++) {
-        MVertex *mv[2] = {NULL, NULL};
+        MVertex *mv[2] = {nullptr, nullptr};
         for(int j = 0; j < 2; j++) {
           int numV = getElementVertexNum(lines[i]->pt(j), e);
           if(numV == -1) {
@@ -1411,7 +1411,7 @@ static void elementCutMesh(
             auto it = vertexMap.find(numV);
             if(it == vertexMap.end()) {
               mv[j] = new MVertex(lines[i]->x(j), lines[i]->y(j),
-                                  lines[i]->z(j), 0, numV);
+                                  lines[i]->z(j), nullptr, numV);
               vertexMap[numV] = mv[j];
             }
             else
@@ -1439,7 +1439,7 @@ static void elementCutMesh(
               std::pair<MElement *, MElement *>(ml->getDomain(i), ml));
       }
       if(eParent) {
-        copy->setParent(NULL, false);
+        copy->setParent(nullptr, false);
         delete copy;
       }
     }
@@ -1532,7 +1532,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
       if(primS > 1)
         verticesLs(k, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
 
-      MVertex *vn = new MVertex(vi->x(), vi->y(), vi->z(), 0, vi->getNum());
+      MVertex *vn = new MVertex(vi->x(), vi->y(), vi->z(), nullptr, vi->getNum());
       vertexMap[vi->getNum()] = vn;
     }
   }

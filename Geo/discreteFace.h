@@ -26,7 +26,7 @@ private:
     std::vector<MTriangle> t3d;
     std::vector<SVector3> CURV;
     double umin, umax, vmin, vmax;
-    param() : oct(NULL), umin(-1), umax(1), vmin(-1), vmax(1) {}
+    param() : oct(nullptr), umin(-1), umax(1), vmin(-1), vmax(1) {}
     ~param();
     bool empty() const { return t2d.empty(); }
     void clear();
@@ -47,7 +47,7 @@ public:
   Range<double> parBounds(int i) const;
   bool containsParam(const SPoint2 &pt);
   GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance,
-                      SVector3 *normal = NULL) const;
+                      SVector3 *normal = nullptr) const;
   GPoint closestPoint(const SPoint3 &queryPoint,
                       const double initialGuess[2]) const;
   SVector3 normal(const SPoint2 &param) const;

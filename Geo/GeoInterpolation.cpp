@@ -805,7 +805,7 @@ static void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 
 static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
 {
-  Curve *C[4] = {0, 0, 0, 0};
+  Curve *C[4] = {nullptr, nullptr, nullptr, nullptr};
 
   if(!List_Nbr(s->Generatrices)) {
     Msg::Error("No curves on boundary of ruled surface");
@@ -826,7 +826,7 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     }
   }
 
-  Vertex *O = 0;
+  Vertex *O = nullptr;
   bool isSphere = true;
 
   // Ugly hack: "fix" transfinite interpolation if we have a sphere

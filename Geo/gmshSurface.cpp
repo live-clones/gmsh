@@ -53,7 +53,7 @@ gmshSurface *gmshSurface::getSurface(int iSurface)
   auto it = allGmshSurfaces.find(iSurface);
   if(it == allGmshSurfaces.end()) {
     Msg::Error("gmshSurface %d does not exist", iSurface);
-    return 0;
+    return nullptr;
   }
   return it->second;
 }
@@ -120,7 +120,7 @@ gmshParametricSurface::gmshParametricSurface(char *valX, char *valY, char *valZ)
   _f = new mathEvaluator(expressions, variables);
   if(expressions.empty()) {
     delete _f;
-    _f = 0;
+    _f = nullptr;
   }
 }
 

@@ -71,7 +71,7 @@ void OCCFace::_setup()
     std::vector<GEdge *> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()) {
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-      GEdge *e = 0;
+      GEdge *e = nullptr;
       if(model()->getOCCInternals())
         e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
       if(!e) { Msg::Error("Unknown curve in surface %d", tag()); }
@@ -113,7 +113,7 @@ void OCCFace::_setup()
   for(exp2.Init(_s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
       exp2.More(); exp2.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
-    GVertex *v = 0;
+    GVertex *v = nullptr;
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) { Msg::Error("Unknown point in surface %d", tag()); }

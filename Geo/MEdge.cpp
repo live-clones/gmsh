@@ -78,7 +78,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
 
     auto it0 = c.find(v0), it1 = c.find(v1);
     if(it0 == c.end())
-      c[v0] = std::make_pair(v1, (MVertex *)NULL);
+      c[v0] = std::make_pair(v1, (MVertex *)nullptr);
     else {
       if(it0->second.second == NULL) { it0->second.second = v1; }
       else {
@@ -87,7 +87,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       }
     }
     if(it1 == c.end())
-      c[v1] = std::make_pair(v0, (MVertex *)NULL);
+      c[v1] = std::make_pair(v0, (MVertex *)nullptr);
     else {
       if(it1->second.second == NULL) { it1->second.second = v0; }
       else {
@@ -102,7 +102,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
 
   while(!c.empty()) {
     std::vector<MVertex *> v;
-    MVertex *start = NULL;
+    MVertex *start = nullptr;
     {
       auto it = c.begin();
       start = it->first;
@@ -127,7 +127,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       }
       v.push_back(current);
       auto it = c.find(current);
-      if(it == c.end() || it->first == NULL) {
+      if(it == c.end() || it->first == nullptr) {
         Msg::Error("Impossible to find %d", current->getNum());
         return false;
       }
@@ -144,7 +144,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       }
       prev = temp;
       if(current == start) { v.push_back(current); }
-    } while(current != start && current != NULL);
+    } while(current != start && current != nullptr);
     if(v.size() > 2 && v[v.size() - 2] == v[v.size() - 1]) {
       v.erase(v.begin() + v.size() - 1);
     }

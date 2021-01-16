@@ -89,7 +89,7 @@ namespace {
     // names
     std::ostringstream ossEnt;
     ossEnt << entTypeStr;
-    if(geParent != 0) ossEnt << "_" << geParent->tag();
+    if(geParent != nullptr) ossEnt << "_" << geParent->tag();
     ossEnt << "_" << ge->tag();
     entityName = model->getElementaryName(ge->dim(), ge->tag());
     if(!entityName.empty()) ossEnt << "_" << entityName;
@@ -290,7 +290,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
     // get entities
     GEntity *ge = entities[i];
     GEntity *geGeom = ge->getParentEntity();
-    if(geGeom == 0) geGeom = ge;
+    if(geGeom == nullptr) geGeom = ge;
 
     // get or create the names for the entity
     std::string entityName, geomEntityName;
@@ -484,7 +484,7 @@ void getEntitiesInPartitions(const std::vector<GEntity *> &entities,
 {
   for(std::size_t j = 0; j < entities.size(); j++) {
     GEntity *ge = entities[j];
-    const std::vector<int> *parts = 0;
+    const std::vector<int> *parts = nullptr;
     switch(ge->geomType()) {
     case GEntity::PartitionVolume: {
       partitionRegion *pr = static_cast<partitionRegion *>(ge);
@@ -512,7 +512,7 @@ void getEntitiesInPartitions(const std::vector<GEntity *> &entities,
     } break;
     default: break;
     } // switch
-    if(parts != 0) {
+    if(parts != nullptr) {
       for(std::size_t iPart = 0; iPart < parts->size(); iPart++) {
         entitiesPart[(*parts)[iPart]].push_back(ge);
       }

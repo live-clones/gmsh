@@ -57,7 +57,7 @@ static void readMSHEntities(FILE *fp, GModel *gm)
     if(fscanf(fp, "%d %d", &tag, &n) != 2) return;
     GEdge *ge = gm->getEdgeByTag(tag);
     if(!ge) {
-      GVertex *v1 = 0, *v2 = 0;
+      GVertex *v1 = nullptr, *v2 = nullptr;
       for(int j = 0; j < n; j++) {
         int tagv;
         if(fscanf(fp, "%d", &tagv) != 1) {
@@ -131,7 +131,7 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm) // also used in MSH2
 
     if(fscanf(fp, "%d %d %d", &dim, &slave, &master) != 3) continue;
 
-    GEntity *s = 0, *m = 0;
+    GEntity *s = nullptr, *m = nullptr;
     switch(dim) {
     case 0:
       s = gm->getVertexByTag(slave);
@@ -295,7 +295,7 @@ int GModel::_readMSH3(const std::string &name)
       for(int i = 0; i < numVertices; i++) {
         int num, entity, dim;
         double xyz[3];
-        MVertex *vertex = 0;
+        MVertex *vertex = nullptr;
         if(!binary) {
           if(fscanf(fp, "%d %lf %lf %lf %d", &num, &xyz[0], &xyz[1], &xyz[2],
                     &entity) != 5) {
@@ -320,7 +320,7 @@ int GModel::_readMSH3(const std::string &name)
           }
           if(swap) SwapBytes((char *)&entity, sizeof(int), 1);
         }
-        if(!entity) { vertex = new MVertex(xyz[0], xyz[1], xyz[2], 0, num); }
+        if(!entity) { vertex = new MVertex(xyz[0], xyz[1], xyz[2], nullptr, num); }
         else {
           if(!binary) {
             if(fscanf(fp, "%d", &dim) != 1) {
@@ -420,9 +420,9 @@ int GModel::_readMSH3(const std::string &name)
         Msg::Debug("Vertex numbering is dense");
         _vertexVectorCache.resize(_vertexMapCache.size() + 1);
         if(minVertex == 1)
-          _vertexVectorCache[0] = 0;
+          _vertexVectorCache[0] = nullptr;
         else
-          _vertexVectorCache[numVertices] = 0;
+          _vertexVectorCache[numVertices] = nullptr;
         for(std::map<int, MVertex *>::const_iterator it =
               _vertexMapCache.begin();
             it != _vertexMapCache.end(); ++it)

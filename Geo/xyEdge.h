@@ -18,7 +18,7 @@ public:
   virtual SVector3 firstDer(double par) const { return SVector3(); }
   virtual SVector3 secondDer(double par) const { return SVector3(); }
   ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return NULL; }
+  void *getNativePtr() const { return nullptr; }
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const
   {
     return SPoint2();

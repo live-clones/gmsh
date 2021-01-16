@@ -68,7 +68,7 @@ public:
     if(_v[0] != v1 && _v[0] != v2) return _v[0];
     if(_v[1] != v1 && _v[1] != v2) return _v[1];
     if(_v[2] != v1 && _v[2] != v2) return _v[2];
-    return 0;
+    return nullptr;
   }
   virtual int getNumEdges() const { return 3; }
   virtual MEdge getEdge(int num) const

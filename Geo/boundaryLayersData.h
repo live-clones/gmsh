@@ -94,13 +94,13 @@ public:
   }
   inline const BoundaryLayerFan *getFan(MVertex *v) const
   {
-    std::map<MVertex *, BoundaryLayerFan>::const_iterator it = _fans.find(v);
+    auto it = _fans.find(v);
     if(it != _fans.end()) { return &it->second; }
-    return 0;
+    return nullptr;
   }
   inline const BoundaryLayerData &getColumn(MVertex *v, MEdge e) const
   {
-    std::map<MVertex *, BoundaryLayerFan>::const_iterator it = _fans.find(v);
+    auto it = _fans.find(v);
     int N = getNbColumns(v);
     if(N == 1) return getColumn(v, 0);
     MEdgeEqual aaa;
@@ -119,9 +119,7 @@ public:
   inline const BoundaryLayerData &getColumn(MVertex *v, int iColumn) const
   {
     int count = 0;
-    for(std::multimap<MVertex *, BoundaryLayerData>::const_iterator itm =
-          _data.lower_bound(v);
-        itm != _data.upper_bound(v); ++itm) {
+    for(auto itm = _data.lower_bound(v); itm != _data.upper_bound(v); ++itm) {
       if(count++ == iColumn) return itm->second;
     }
     static BoundaryLayerData error;

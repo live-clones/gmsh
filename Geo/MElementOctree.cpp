@@ -116,7 +116,7 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
 }
 
 MElementOctree::MElementOctree(const std::vector<MElement *> &v)
-  : _gm(0), _elems(v)
+  : _gm(nullptr), _elems(v)
 {
   SBoundingBox3d bb;
   for(std::size_t i = 0; i < v.size(); i++) {
@@ -258,5 +258,5 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
     MElement::setTolerance(initialTol);
     // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
-  return NULL;
+  return nullptr;
 }

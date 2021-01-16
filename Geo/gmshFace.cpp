@@ -78,7 +78,7 @@ void gmshFace::resetNativePtr(Surface *s)
   std::vector<GEdge *> l_wire;
   l_wire.reserve(eds.size());
 
-  GVertex *first = 0;
+  GVertex *first = nullptr;
   for(std::size_t i = 0; i < eds.size(); i++) {
     GEdge *e = eds[i];
     int num = nums[i];
@@ -89,7 +89,7 @@ void gmshFace::resetNativePtr(Surface *s)
     if(next == first) {
       edgeLoops.push_back(GEdgeLoop(l_wire));
       l_wire.clear();
-      first = 0;
+      first = nullptr;
     }
     l_edges.push_back(e);
     e->addFace(this);
@@ -283,7 +283,7 @@ GPoint gmshFace::closestPoint(const SPoint3 &qp,
   v.Pos.Z = qp.z();
   double u[2] = {initialGuess[0], initialGuess[1]};
   bool result = ProjectPointOnSurface(_s, v, u);
-  if(!result) return GPoint(-1.e22, -1.e22, -1.e22, 0, u);
+  if(!result) return GPoint(-1.e22, -1.e22, -1.e22, nullptr, u);
   return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
 

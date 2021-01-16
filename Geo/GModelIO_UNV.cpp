@@ -66,7 +66,7 @@ int GModel::readUNV(const std::string &name)
           for(std::size_t i = 0; i < strlen(buffer); i++)
             if(buffer[i] == 'D') buffer[i] = 'E';
           if(sscanf(buffer, "%lf %lf %lf", &x, &y, &z) != 3) break;
-          _vertexMapCache[num] = new MVertex(x, y, z, 0, num);
+          _vertexMapCache[num] = new MVertex(x, y, z, nullptr, num);
         }
       }
       else if(record == 2412) { // elements

@@ -45,7 +45,7 @@ void OCCRegion::_setup()
     Msg::Debug("OCC volume %d - new shell", tag());
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()) {
       TopoDS_Face face = TopoDS::Face(exp3.Current());
-      GFace *f = 0;
+      GFace *f = nullptr;
       if(model()->getOCCInternals())
         f = model()->getOCCInternals()->getFaceForOCCShape(model(), face);
       if(!f) { Msg::Error("Unknown surface in volume %d", tag()); }
@@ -62,7 +62,7 @@ void OCCRegion::_setup()
 
   for(exp3.Init(_s, TopAbs_EDGE, TopAbs_FACE); exp3.More(); exp3.Next()) {
     TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-    GEdge *e = 0;
+    GEdge *e = nullptr;
     if(model()->getOCCInternals())
       e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
     if(!e) { Msg::Error("Unknown curve in volume %d", tag()); }
@@ -76,7 +76,7 @@ void OCCRegion::_setup()
 
   for(exp3.Init(_s, TopAbs_VERTEX, TopAbs_FACE); exp3.More(); exp3.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp3.Current());
-    GVertex *v = 0;
+    GVertex *v = nullptr;
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) { Msg::Error("Unknown point in volume %d", tag()); }

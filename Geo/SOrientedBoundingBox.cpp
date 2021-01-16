@@ -292,7 +292,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
   // Find the convex hull from a delaunay triangulation of the points
   DocRecord record(points.size());
   record.numPoints = points.size();
-  srand((unsigned)time(0));
+  srand((unsigned)time(nullptr));
   for(std::size_t i = 0; i < points.size(); i++) {
     record.points[i].where.h =
       points[i]->x() + (10e-6) * sizes[smallest_comp == 0 ? 1 : 0] *
@@ -300,7 +300,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
     record.points[i].where.v =
       points[i]->y() + (10e-6) * sizes[smallest_comp == 2 ? 1 : 0] *
                          (-0.5 + ((double)rand()) / RAND_MAX);
-    record.points[i].adjacent = NULL;
+    record.points[i].adjacent = nullptr;
   }
 
   try {

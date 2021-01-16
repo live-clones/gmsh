@@ -21,7 +21,7 @@ private:
 
 public:
   ghostEdge(GModel *model, const int num, const int partition)
-    : discreteEdge(model, num, NULL, NULL), _partition(partition),
+    : discreteEdge(model, num, nullptr, nullptr), _partition(partition),
       _ghostCells(), _saveMesh(false), _haveMesh(false)
   {
   }

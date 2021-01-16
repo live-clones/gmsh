@@ -86,7 +86,7 @@ public:
   virtual int dim() const { return 1; }
 
   // returns the parent entity for partitioned entities
-  virtual GEntity *getParentEntity() { return 0; }
+  virtual GEntity *getParentEntity() { return nullptr; }
 
   // get the list of vertices
   virtual std::vector<GVertex *> vertices() const;
@@ -211,7 +211,7 @@ public:
 
   // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;
-  virtual Range<double> parBoundsOnFace(GFace *face = NULL) const
+  virtual Range<double> parBoundsOnFace(GFace *face = nullptr) const
   {
     return parBounds(0);
   }

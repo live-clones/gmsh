@@ -18,7 +18,7 @@
 
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _meshMaster(this), _visible(1), _selection(0),
-    _allElementsVisible(1), _obb(0), va_lines(0), va_triangles(0)
+    _allElementsVisible(1), _obb(nullptr), va_lines(nullptr), va_triangles(nullptr)
 {
   _color = CTX::instance()->packColor(0, 0, 255, 0);
 }
@@ -26,9 +26,9 @@ GEntity::GEntity(GModel *m, int t)
 void GEntity::deleteVertexArrays()
 {
   if(va_lines) delete va_lines;
-  va_lines = 0;
+  va_lines = nullptr;
   if(va_triangles) delete va_triangles;
-  va_triangles = 0;
+  va_triangles = nullptr;
 }
 
 char GEntity::getVisibility()

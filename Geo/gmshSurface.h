@@ -26,7 +26,7 @@ public:
   virtual ~gmshSurface() {}
   static void reset()
   {
-    std::map<int, gmshSurface *>::iterator it = allGmshSurfaces.begin();
+    auto it = allGmshSurfaces.begin();
     for(; it != allGmshSurfaces.end(); ++it) {
       if(!it->second->vertex_defined_on_surface) delete it->second;
     }

@@ -666,7 +666,7 @@ const nodalBasis *MElement::getFunctionSpace(int order, bool serendip) const
 {
   if(order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
   int type = ElementType::getType(getType(), order, serendip);
-  return type ? BasisFactory::getNodalBasis(type) : NULL;
+  return type ? BasisFactory::getNodalBasis(type) : nullptr;
 }
 
 const FuncSpaceData MElement::getFuncSpaceData(int order, bool serendip) const
@@ -679,7 +679,7 @@ const JacobianBasis *MElement::getJacobianFuncSpace(int orderElement) const
 {
   if(orderElement == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
   int tag = ElementType::getType(getType(), orderElement);
-  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+  return tag ? BasisFactory::getJacobianBasis(tag) : nullptr;
 }
 
 const FuncSpaceData MElement::getJacobianFuncSpaceData(int orderElement) const
@@ -2372,7 +2372,7 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
       if(vertexMap.count(numV))
         vmv.push_back(vertexMap[numV]);
       else {
-        MVertex *mv = new MVertex(v->x(), v->y(), v->z(), 0, numV);
+        MVertex *mv = new MVertex(v->x(), v->y(), v->z(), nullptr, numV);
         vmv.push_back(mv);
         vertexMap[numV] = mv;
       }
@@ -2386,7 +2386,7 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
         if(vertexMap.count(numV))
           vmv.push_back(vertexMap[numV]);
         else {
-          MVertex *mv = new MVertex(v->x(), v->y(), v->z(), 0, numV);
+          MVertex *mv = new MVertex(v->x(), v->y(), v->z(), nullptr, numV);
           vmv.push_back(mv);
           vertexMap[numV] = mv;
         }
@@ -2394,7 +2394,7 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
     }
   }
 
-  MElement *parent = 0;
+  MElement *parent = nullptr;
   if(eParent && !getDomain(0) && !getDomain(1)) {
     auto it = newParents.find(eParent);
     MElement *newParent;
@@ -2557,7 +2557,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
   case MSH_PYR_285: return new MPyramidN(v, 8, num, part);
   case MSH_PYR_385: return new MPyramidN(v, 9, num, part);
   case MSH_TRIH_4: return new MTrihedron(v, num, part);
-  default: return 0;
+  default: return nullptr;
   }
 }
 
@@ -2582,13 +2582,13 @@ MElement *MElementFactory::create(int num, int type,
       if(v) { vertices[i] = v; }
       else {
         Msg::Error("Unknown node %d in element %d", numVertex, num);
-        return 0;
+        return nullptr;
       }
     }
   }
   else {
     Msg::Error("Missing data in element %d", num);
-    return 0;
+    return nullptr;
   }
 
   unsigned int part = 0;

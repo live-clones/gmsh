@@ -80,7 +80,7 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
   }
 
   // should never end up here
-  return GEdgeSigned(0, 0);
+  return GEdgeSigned(0, nullptr);
 }
 
 int GEdgeLoop::count(GEdge *ge) const
@@ -112,14 +112,14 @@ void GEdgeLoop::getSigns(std::vector<int> &signs) const
 static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,
                         GEdge **degeneratedToInsert)
 {
-  GEdgeSigned *prevOne = 0;
-  GEdgeSigned ges(0, 0);
+  GEdgeSigned *prevOne = nullptr;
+  GEdgeSigned ges(0, nullptr);
 
   while(wire.size()) {
     if(prevOne && (*degeneratedToInsert) &&
        (*degeneratedToInsert)->getBeginVertex() == prevOne->getEndVertex()) {
       ges = GEdgeSigned(1, *degeneratedToInsert);
-      *degeneratedToInsert = 0;
+      *degeneratedToInsert = nullptr;
       // printf("second degenerated edge inserted\n");
     }
     else
@@ -141,7 +141,7 @@ GEdgeLoop::GEdgeLoop(const std::vector<GEdge *> &cwire)
   // gmsh
   std::list<GEdge *> wire;
   std::vector<GEdge *> degenerated;
-  GEdge *degeneratedToInsert = 0;
+  GEdge *degeneratedToInsert = nullptr;
   for(auto it = cwire.begin(); it != cwire.end(); ++it) {
     GEdge *ed = *it;
     if(ed->degenerate(0))

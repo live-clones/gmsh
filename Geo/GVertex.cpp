@@ -110,7 +110,7 @@ void GVertex::getNumMeshElements(unsigned *const c) const
 MElement *GVertex::getMeshElement(std::size_t index) const
 {
   if(index < points.size()) return points[index];
-  return 0;
+  return nullptr;
 }
 
 MElement *GVertex::getMeshElementByType(const int familyType,
@@ -118,7 +118,7 @@ MElement *GVertex::getMeshElementByType(const int familyType,
 {
   if(familyType == TYPE_PNT) return points[index];
 
-  return 0;
+  return nullptr;
 }
 
 bool GVertex::isOnSeam(const GFace *gf) const

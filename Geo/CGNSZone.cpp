@@ -22,7 +22,7 @@ CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex,
                    const Family2EltNodeTransfo &allEltNodeTransfo, int &err)
   : fileIndex_(fileIndex), baseIndex_(baseIndex), meshDim_(meshDim),
     zoneIndex_(zoneIndex), type_(type), startNode_(startNode),
-    eltNodeTransfo_(0), nbPerConnect_(0)
+    eltNodeTransfo_(nullptr), nbPerConnect_(0)
 {
   int cgnsErr;
 
@@ -351,7 +351,7 @@ int CGNSZone::readBoundaryConditionRange(int iZoneBC,
 
   std::vector<cgsize_t> bcData(indexDataSize(2));
   cgnsErr =
-    cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC, bcData.data(), 0);
+    cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC, bcData.data(), nullptr);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get list of elements from range data
@@ -368,7 +368,7 @@ int CGNSZone::readBoundaryConditionList(int iZoneBC, cgsize_t nbVal,
   // read data
   std::vector<cgsize_t> bcData(indexDataSize(nbVal));
   cgnsErr =
-    cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC, bcData.data(), 0);
+    cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC, bcData.data(), nullptr);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get list of elements from list data

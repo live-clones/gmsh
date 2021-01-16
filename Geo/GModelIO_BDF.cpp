@@ -228,7 +228,7 @@ int GModel::readBDF(const std::string &name)
         int num;
         double x, y, z;
         if(!readVertexBDF(fp, buffer, 4, &num, &x, &y, &z)) break;
-        vertexMap[num] = new MVertex(x, y, z, 0, num);
+        vertexMap[num] = new MVertex(x, y, z, nullptr, num);
       }
     }
   }

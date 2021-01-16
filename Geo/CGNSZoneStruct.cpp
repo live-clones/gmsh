@@ -251,7 +251,7 @@ namespace {
     }
 
     // do no add element if it is part of an internal interface between blocks
-    if(isInternalInterface) return 0;
+    if(isInternalInterface) return nullptr;
 
     // create element
     MElementFactory factory;
@@ -336,7 +336,7 @@ namespace {
     }
 
     // do no add element if it is part of an internal interface between blocks
-    if(isInternalInterface) return 0;
+    if(isInternalInterface) return nullptr;
 
     // create element
     MElementFactory factory;
@@ -430,11 +430,11 @@ int CGNSZoneStruct<DIM>::readElements(
       cgsize_t ijk[3] = {0, j * order, k * order};
       MElement *me;
       me = makeBndElement(ijk, dir, order, firstDefaultEnt, allVert, allElt);
-      if(me != 0) zoneElt.push_back(me);
+      if(me != nullptr) zoneElt.push_back(me);
       ijk[0] = nbNodeIJK(0) - 1;
       me =
         makeBndElement(ijk, dir, order, firstDefaultEnt + 1, allVert, allElt);
-      if(me != 0) zoneElt.push_back(me);
+      if(me != nullptr) zoneElt.push_back(me);
     }
   }
 
@@ -446,11 +446,11 @@ int CGNSZoneStruct<DIM>::readElements(
       MElement *me;
       me =
         makeBndElement(ijk, dir, order, firstDefaultEnt + 2, allVert, allElt);
-      if(me != 0) zoneElt.push_back(me);
+      if(me != nullptr) zoneElt.push_back(me);
       ijk[1] = nbNodeIJK(1) - 1;
       me =
         makeBndElement(ijk, dir, order, firstDefaultEnt + 3, allVert, allElt);
-      if(me != 0) zoneElt.push_back(me);
+      if(me != nullptr) zoneElt.push_back(me);
     }
   }
 
@@ -463,11 +463,11 @@ int CGNSZoneStruct<DIM>::readElements(
         MElement *me;
         me =
           makeBndElement(ijk, dir, order, firstDefaultEnt + 4, allVert, allElt);
-        if(me != 0) zoneElt.push_back(me);
+        if(me != nullptr) zoneElt.push_back(me);
         ijk[2] = nbNodeIJK(2) - 1;
         me =
           makeBndElement(ijk, dir, order, firstDefaultEnt + 5, allVert, allElt);
-        if(me != 0) zoneElt.push_back(me);
+        if(me != nullptr) zoneElt.push_back(me);
       }
     }
   }

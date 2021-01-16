@@ -135,7 +135,7 @@ private:
                 double x, double y, double z, double dx, double dy, double dz,
                 double ax, double ay, double az, double angle, int wireTag,
                 std::vector<std::pair<int, int> > &outDimTags,
-                ExtrudeParams *e = 0, const std::string &trihedron = "");
+                ExtrudeParams *e = nullptr, const std::string &trihedron = "");
 
   // apply fillet-like operations
   bool _fillet(int mode, const std::vector<int> &volumeTags,
@@ -272,11 +272,11 @@ public:
   bool extrude(const std::vector<std::pair<int, int> > &inDimTags, double dx,
                double dy, double dz,
                std::vector<std::pair<int, int> > &outDimTags,
-               ExtrudeParams *e = 0);
+               ExtrudeParams *e = nullptr);
   bool revolve(const std::vector<std::pair<int, int> > &inDimTags, double x,
                double y, double z, double ax, double ay, double az,
                double angle, std::vector<std::pair<int, int> > &outDimTags,
-               ExtrudeParams *e = 0);
+               ExtrudeParams *e = nullptr);
   bool addPipe(const std::vector<std::pair<int, int> > &inDimTags, int wireTag,
                std::vector<std::pair<int, int> > &outDimTags,
                const std::string &trihedron = "");

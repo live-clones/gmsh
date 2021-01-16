@@ -114,7 +114,7 @@ int GModel::readCGNS(const std::string &name,
                              geomName2Phys);
   // destroy all zones
   for(std::size_t iZone = 0; iZone < allZones.size(); iZone++) {
-    if(allZones[iZone] != 0) delete allZones[iZone];
+    if(allZones[iZone] != nullptr) delete allZones[iZone];
   }
 
   // reconstruct geometrical topology if required

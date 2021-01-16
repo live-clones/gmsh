@@ -71,8 +71,8 @@ createElementMSH2(GModel *m, int num, int typeMSH, int physical, int reg,
                   unsigned int part, std::vector<MVertex *> &v,
                   std::map<int, std::vector<MElement *> > elements[10],
                   std::map<int, std::map<int, std::string> > physicals[4],
-                  bool owner = false, MElement *parent = 0, MElement *d1 = 0,
-                  MElement *d2 = 0)
+                  bool owner = false, MElement *parent = nullptr, MElement *d1 = nullptr,
+                  MElement *d2 = nullptr)
 {
   if(CTX::instance()->mesh.switchElementTags) {
     int tmp = reg;
@@ -85,7 +85,7 @@ createElementMSH2(GModel *m, int num, int typeMSH, int physical, int reg,
 
   if(!e) {
     Msg::Error("Unknown type of element %d", typeMSH);
-    return NULL;
+    return nullptr;
   }
 
   int dim = e->getDim();
@@ -197,7 +197,7 @@ int GModel::_readMSH2(const std::string &name)
       for(int i = 0; i < numVertices; i++) {
         int num;
         double xyz[3], uv[2];
-        MVertex *newVertex = 0;
+        MVertex *newVertex = nullptr;
         if(!parametric) {
           if(!binary) {
             if(fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) !=
@@ -218,7 +218,7 @@ int GModel::_readMSH2(const std::string &name)
             }
             if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
           }
-          newVertex = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
+          newVertex = new MVertex(xyz[0], xyz[1], xyz[2], nullptr, num);
         }
         else {
           int iClasDim, iClasTag;
@@ -313,9 +313,9 @@ int GModel::_readMSH2(const std::string &name)
         Msg::Debug("Vertex numbering is dense");
         vertexVector.resize(vertexMap.size() + 1);
         if(minVertex == 1)
-          vertexVector[0] = 0;
+          vertexVector[0] = nullptr;
         else
-          vertexVector[numVertices] = 0;
+          vertexVector[numVertices] = nullptr;
         std::map<int, MVertex *>::const_iterator it = vertexMap.begin();
         for(; it != vertexMap.end(); ++it) vertexVector[it->first] = it->second;
         vertexMap.clear();
@@ -428,7 +428,7 @@ int GModel::_readMSH2(const std::string &name)
               return 0;
             }
           }
-          MElement *p = NULL;
+          MElement *p = nullptr;
           bool own = false;
 
           // search parent element
@@ -451,7 +451,7 @@ int GModel::_readMSH2(const std::string &name)
           }
 
           // search domains
-          MElement *doms[2] = {NULL, NULL};
+          MElement *doms[2] = {nullptr, nullptr};
           if(dom1) {
             auto ite = elems.find(dom1);
             if(ite == elems.end())
@@ -537,7 +537,7 @@ int GModel::_readMSH2(const std::string &name)
                 return 0;
               }
             }
-            MElement *p = NULL;
+            MElement *p = nullptr;
             bool own = false;
             if(parent) {
               auto ite = elems.find(parent);

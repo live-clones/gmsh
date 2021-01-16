@@ -45,7 +45,7 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
              std::vector<std::pair<GEdge *, std::vector<GFace *> > > &newEdges,
              size_t &MAX1)
 {
-  if(gfs.size() == 2 && gfs[0] == gfs[1]) return NULL;
+  if(gfs.size() == 2 && gfs[0] == gfs[1]) return nullptr;
   for(size_t i = 0; i < newEdges.size(); i++) {
     if(gfs.size() == newEdges[i].second.size()) {
       bool found = true;
@@ -59,7 +59,7 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
     }
   }
 
-  discreteEdge *ge = new discreteEdge(gm, (MAX1++) + 1, 0, 0);
+  discreteEdge *ge = new discreteEdge(gm, (MAX1++) + 1, nullptr, nullptr);
   newEdges.push_back(std::make_pair(ge, gfs));
   return ge;
 }
@@ -171,7 +171,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
   // reset classification of all mesh nodes
   for(auto it = touched.begin(); it != touched.end(); it++) {
     for(std::size_t j = 0; j < (*it)->getNumVertices(); j++)
-      (*it)->getVertex(j)->setEntity(0);
+      (*it)->getVertex(j)->setEntity(nullptr);
   }
 
   std::map<MTriangle *, GFace *> reverse;
@@ -414,7 +414,7 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
                     (*it)->quadrangles.end());
   }
 
-  discreteEdge *edge = new discreteEdge(gm, (MAX1++) + 1, 0, 0);
+  discreteEdge *edge = new discreteEdge(gm, (MAX1++) + 1, nullptr, nullptr);
   gm->add(edge);
 
   e2t_cont adj;
@@ -789,12 +789,12 @@ void makeMLinesUnique(std::vector<MLine *> &v)
 class twoT {
 public:
   MTriangle *t1, *t2;
-  twoT(MTriangle *t) : t1(t), t2(NULL) {}
+  twoT(MTriangle *t) : t1(t), t2(nullptr) {}
   MTriangle *other(MTriangle *t) const
   {
     if(t == t1) return t2;
     if(t == t2) return t1;
-    return NULL;
+    return nullptr;
   }
 };
 

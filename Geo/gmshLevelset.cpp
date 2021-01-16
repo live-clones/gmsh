@@ -37,7 +37,7 @@ gLevelset *gLevelset::find(int tag)
 {
   gLevelset l(tag);
   auto it = all_.find(&l);
-  if(it == all_.end()) return 0;
+  if(it == all_.end()) return nullptr;
   return *it;
 }
 
@@ -1114,7 +1114,7 @@ gLevelsetPostView::gLevelsetPostView(int index, int tag)
   }
   else {
     Msg::Error("Unknown View[%d] in PostView levelset", _viewIndex);
-    _octree = 0;
+    _octree = nullptr;
   }
 }
 

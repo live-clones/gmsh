@@ -392,7 +392,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
   for(int i = 0; i < numNodes; i++)
     verts[i] = new MVertex(coord[spaceDim * i],
                            (spaceDim > 1) ? coord[spaceDim * i + 1] : 0.,
-                           (spaceDim > 2) ? coord[spaceDim * i + 2] : 0., 0,
+                           (spaceDim > 2) ? coord[spaceDim * i + 2] : 0., nullptr,
                            nodeTags.empty() ? 0 : nodeTags[i]);
 
   std::vector<med_int> nodeFamily(numNodes, 0);
@@ -637,7 +637,7 @@ static void writeElementsMED(med_idt &fid, char *meshName,
 #if(MED_MAJOR_NUM >= 3)
   if(MEDmeshElementWr(fid, meshName, MED_NO_DT, MED_NO_IT, 0., MED_CELL, type,
                       MED_NODAL, MED_FULL_INTERLACE, (med_int)fam.size(),
-                      &conn[0], MED_FALSE, 0, MED_TRUE, &tags[0], MED_TRUE,
+                      &conn[0], MED_FALSE, nullptr, MED_TRUE, &tags[0], MED_TRUE,
                       &fam[0]) < 0)
 #else
   if(MEDelementsEcr(fid, meshName, (med_int)3, &conn[0], MED_FULL_INTERLACE, 0,
