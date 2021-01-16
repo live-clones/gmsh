@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -43,7 +43,7 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
     Fl_Value_Slider *sa, *sb, *sc;
     Fl_Button *apply, *cancel;
   };
-  static _editor *editor = 0;
+  static _editor *editor = nullptr;
 
   if(!editor) {
     editor = new _editor;
@@ -120,7 +120,7 @@ class historyBrowser : public Fl_Hold_Browser {
   };
 
 public:
-  historyBrowser(int x, int y, int w, int h, const char *l = 0)
+  historyBrowser(int x, int y, int w, int h, const char *l = nullptr)
     : Fl_Hold_Browser(x, y, w, h, l)
   {
   }
@@ -237,7 +237,7 @@ public:
   }
 };
 
-static historyChooser *_connectionChooser = 0;
+static historyChooser *_connectionChooser = nullptr;
 static void connection_select_cb(Fl_Widget *w, void *data)
 {
   int i = _connectionChooser->browser->value();
@@ -255,7 +255,7 @@ std::string connectionChooser()
   return _connectionChooser->run();
 }
 
-static historyChooser *_patternChooser = 0;
+static historyChooser *_patternChooser = nullptr;
 static void pattern_select_cb(Fl_Widget *w, void *data)
 {
   int i = _patternChooser->browser->value();
@@ -354,7 +354,7 @@ public:
   }
 };
 
-static cgnsImportDialog *_cgnsImport = 0;
+static cgnsImportDialog *_cgnsImport = nullptr;
 /*static void pattern_select_cb(Fl_Widget* w, void *data)
 {
   _cgnsImport->input_choice->value("1");

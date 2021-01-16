@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -140,9 +140,9 @@ public:
 
   // get metric at point(x,y,z)  (previously computes intersection of metrics if
   // not done yet)
-  virtual double operator()(double x, double y, double z, GEntity *ge = 0);
+  virtual double operator()(double x, double y, double z, GEntity *ge = nullptr);
   virtual void operator()(double x, double y, double z, SMetric3 &metr,
-                          GEntity *ge = 0);
+                          GEntity *ge = nullptr);
 
   // export pos files of fct, fct gradients (fct is the lattest fct passed to
   // meshMetric !!) and resulting metric (intersection of all computed metrics)

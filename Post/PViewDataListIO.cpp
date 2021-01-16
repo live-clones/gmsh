@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -543,7 +543,7 @@ public:
   int nbnod;
   int nod;
   double *data;
-  nodeData() : nbnod(0), nod(0), data(0) {}
+  nodeData() : nbnod(0), nod(0), data(nullptr) {}
   nodeData(int _nbnod, int _nod, double *_data)
     : nbnod(_nbnod), nod(_nod), data(_data)
   {
@@ -654,8 +654,8 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
 
   int numComponents = 9;
   for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = 0;
-    int *numEle = 0, numNodes, numComp;
+    std::vector<double> *list = nullptr;
+    int *numEle = nullptr, numNodes, numComp;
     _getRawData(i, &list, &numEle, &numComp, &numNodes);
     if(*numEle) numComponents = std::min(numComponents, numComp);
     createVertices(*list, *numEle, numNodes, vertices);
@@ -670,11 +670,11 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
   std::map<MVertex *, nodeData> vertexData;
 
   for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = 0;
-    int *numEle = 0, numComp, numNodes;
+    std::vector<double> *list = nullptr;
+    int *numEle = nullptr, numComp, numNodes;
     int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
     createElements(*list, *numEle, numNodes, pos, elements, typ,
-                   forceNodeData ? &vertexData : 0);
+                   forceNodeData ? &vertexData : nullptr);
   }
 
   int num = 0;
@@ -709,7 +709,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     fprintf(fp, "$InterpolationScheme\n");
     fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
     fprintf(fp, "%d\n", (int)_interpolation.size());
-    for(interpolationMatrices::iterator it = _interpolation.begin();
+    for(auto it = _interpolation.begin();
         it != _interpolation.end(); it++) {
       if(it->second.size() >= 2) {
         fprintf(fp, "%d\n2\n", it->first);
@@ -763,8 +763,8 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     else {
       int n = 0;
       for(int i = 0; i < 24; i++) {
-        std::vector<double> *list = 0;
-        int *numEle = 0, numComp, numNodes;
+        std::vector<double> *list = nullptr;
+        int *numEle = nullptr, numComp, numNodes;
         int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
         if(*numEle) {
           int mult = numNodes;
@@ -800,8 +800,8 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
 void PViewDataList::importLists(int N[24], std::vector<double> *V[24])
 {
   for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = 0;
-    int *nbe = 0, nbc, nbn;
+    std::vector<double> *list = nullptr;
+    int *nbe = nullptr, nbc, nbn;
     _getRawData(i, &list, &nbe, &nbc, &nbn);
     *nbe = N[i];
     *list = *V[i]; // deep copy
@@ -816,8 +816,8 @@ void PViewDataList::importList(int index, int n, const std::vector<double> &v,
     Msg::Error("Wrong list index to import");
     return;
   }
-  std::vector<double> *list = 0;
-  int *nbe = 0, nbc, nbn;
+  std::vector<double> *list = nullptr;
+  int *nbe = nullptr, nbc, nbn;
   _getRawData(index, &list, &nbe, &nbc, &nbn);
   *nbe = n;
   *list = v; // deep copy
@@ -827,8 +827,8 @@ void PViewDataList::importList(int index, int n, const std::vector<double> &v,
 void PViewDataList::getListPointers(int N[24], std::vector<double> *V[24])
 {
   for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = 0;
-    int *nbe = 0, nbc, nbn;
+    std::vector<double> *list = nullptr;
+    int *nbe = nullptr, nbc, nbn;
     _getRawData(i, &list, &nbe, &nbc, &nbn);
     N[i] = *nbe;
     V[i] = list; // copy pointer only

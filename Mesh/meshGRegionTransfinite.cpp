@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -149,7 +149,7 @@ private:
 
 public:
   GOrientedTransfiniteFace()
-    : _gf(0), _ll(0), _hh(0), _permutation(-1), _index(-1)
+    : _gf(nullptr), _ll(0), _hh(0), _permutation(-1), _index(-1)
   {
   }
   GOrientedTransfiniteFace(GFace *gf, std::vector<MVertex *> &corners)
@@ -247,7 +247,7 @@ public:
     case 6: index = (M * N - N * (m + 1) + n); break;
     case 7: index = (m + M * n); break;
     }
-    MVertex *v = 0;
+    MVertex *v = nullptr;
     if(index >= 0 && index < (int)_list.size()) v = _list[index];
     if(index < 0 || index >= (int)_list.size() || !v) {
       Msg::Error("Wrong index in transfinite mesh of surface %d: "
@@ -269,7 +269,7 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
   else {
     // try to find the corners automatically
     std::vector<GFace *> faces = gr->faces();
-    GFace *gf = 0;
+    GFace *gf = nullptr;
     if(faces.size() == 6) {
       // any face will do as a starting face
       gf = faces.front();
@@ -323,7 +323,7 @@ int MeshTransfiniteVolume(GRegion *gr)
   // make sure that all bounding edges have begin/end points: everything in here
   // depends on it
   const std::vector<GEdge *> &edges = gr->edges();
-  for(std::vector<GEdge *>::const_iterator it = edges.begin();
+  for(auto it = edges.begin();
       it != edges.end(); it++) {
     if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
       Msg::Error("Transfinite algorithm cannot be applied with curve %d which "
@@ -342,7 +342,7 @@ int MeshTransfiniteVolume(GRegion *gr)
   }
 
   std::vector<GOrientedTransfiniteFace> orientedFaces(6);
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+  for(auto it = faces.begin(); it != faces.end();
       ++it) {
     GOrientedTransfiniteFace f(*it, corners);
     if(f.index() < 0) {

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,9 +26,9 @@ void sparsityPattern::clear()
   if(_nByRow) free(_nByRow);
   if(_nAllocByRow) free(_nAllocByRow);
   if(_rowsj) free(_rowsj);
-  _nByRow = NULL;
-  _rowsj = NULL;
-  _nAllocByRow = NULL;
+  _nByRow = nullptr;
+  _rowsj = nullptr;
+  _nAllocByRow = nullptr;
   _nRows = 0;
   _nRowsAlloc = 0;
 }
@@ -45,7 +45,7 @@ void sparsityPattern::insertEntry(int i, int j)
     for(int k = _nRows; k <= i; k++) {
       _nByRow[k] = 0;
       _nAllocByRow[k] = 0;
-      _rowsj[k] = NULL;
+      _rowsj[k] = nullptr;
     }
     _nRows = i + 1;
   }
@@ -94,16 +94,16 @@ sparsityPattern::sparsityPattern()
 {
   _nRows = 0;
   _nRowsAlloc = 0;
-  _rowsj = NULL;
-  _nByRow = NULL;
-  _nAllocByRow = NULL;
+  _rowsj = nullptr;
+  _nByRow = nullptr;
+  _nAllocByRow = nullptr;
 }
 
 const int *sparsityPattern::getRow(int i, int &size) const
 {
   if(i >= _nRows) {
     size = 0;
-    return NULL;
+    return nullptr;
   }
   size = _nByRow[i];
   return _rowsj[i];

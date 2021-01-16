@@ -53,7 +53,7 @@ protected:
 
 template <class FuncType>
 ObjContribScaledJac<FuncType>::ObjContribScaledJac(double weight)
-  : ObjContrib("ScaledJac", FuncType::getNamePrefix() + "ScaledJac"), _mesh(0),
+  : ObjContrib("ScaledJac", FuncType::getNamePrefix() + "ScaledJac"), _mesh(nullptr),
     _weight(weight)
 {
 }

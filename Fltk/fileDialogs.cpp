@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -91,10 +91,10 @@ public:
   }
 };
 
-static flFileChooser *fc = 0;
+static flFileChooser *fc = nullptr;
 
 // native file chooser
-static Fl_Native_File_Chooser *nfc = 0;
+static Fl_Native_File_Chooser *nfc = nullptr;
 
 int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
                 const char *fname)
@@ -261,7 +261,7 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
     Fl_Value_Input *v[2];
     Fl_Button *ok, *cancel;
   };
-  static _genericBitmapFileDialog *dialog = NULL;
+  static _genericBitmapFileDialog *dialog = nullptr;
 
   if(!dialog) {
     dialog = new _genericBitmapFileDialog;
@@ -379,7 +379,7 @@ int pgfBitmapFileDialog(const char *name, const char *title, int format)
     Fl_Value_Input *v[2];
     Fl_Button *ok, *cancel;
   };
-  static _pgfBitmapFileDialog *dialog = NULL;
+  static _pgfBitmapFileDialog *dialog = nullptr;
 
   if(!dialog) {
     dialog = new _pgfBitmapFileDialog;
@@ -469,7 +469,7 @@ int latexFileDialog(const char *name)
     Fl_Value_Input *v;
     Fl_Button *ok, *cancel;
   };
-  static _latexFileDialog *dialog = NULL;
+  static _latexFileDialog *dialog = nullptr;
 
   if(!dialog) {
     dialog = new _latexFileDialog;
@@ -545,7 +545,7 @@ int mpegFileDialog(const char *name)
     Fl_Group *buttons;
     Fl_Button *ok, *preview, *cancel;
   };
-  static _mpegFileDialog *dialog = NULL;
+  static _mpegFileDialog *dialog = nullptr;
 
   if(!dialog) {
     dialog = new _mpegFileDialog;
@@ -720,7 +720,7 @@ int gifFileDialog(const char *name)
     Fl_Check_Button *b[7];
     Fl_Button *ok, *cancel;
   };
-  static _gifFileDialog *dialog = NULL;
+  static _gifFileDialog *dialog = nullptr;
 
   if(!dialog) {
     dialog = new _gifFileDialog;
@@ -841,13 +841,13 @@ int gl2psFileDialog(const char *name, const char *title, int format)
     Fl_Choice *c;
     Fl_Button *ok, *cancel;
   };
-  static _gl2psFileDialog *dialog = NULL;
+  static _gl2psFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item sortmenu[] = {{"Raster image", 0, 0, 0},
-                                    {"Vector simple sort", 0, 0, 0},
-                                    {"Vector accurate sort", 0, 0, 0},
-                                    {"Vector unsorted", 0, 0, 0},
-                                    {0}};
+  static Fl_Menu_Item sortmenu[] = {{"Raster image", 0, nullptr, nullptr},
+                                    {"Vector simple sort", 0, nullptr, nullptr},
+                                    {"Vector accurate sort", 0, nullptr, nullptr},
+                                    {"Vector unsorted", 0, nullptr, nullptr},
+                                    {nullptr}};
 
   if(!dialog) {
     dialog = new _gl2psFileDialog;
@@ -944,7 +944,7 @@ int optionsFileDialog(const char *name)
     Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
-  static _optionsFileDialog *dialog = NULL;
+  static _optionsFileDialog *dialog = nullptr;
 
   if(!dialog) {
     dialog = new _optionsFileDialog;
@@ -1001,7 +1001,7 @@ int geoFileDialog(const char *name)
     Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
-  static _geoFileDialog *dialog = NULL;
+  static _geoFileDialog *dialog = nullptr;
 
   if(!dialog) {
     dialog = new _geoFileDialog;
@@ -1059,7 +1059,7 @@ int meshStatFileDialog(const char *name)
     Fl_Check_Button *b[8];
     Fl_Button *ok, *cancel;
   };
-  static _meshStatFileDialog *dialog = NULL;
+  static _meshStatFileDialog *dialog = nullptr;
 
   int BBB = BB + 9; // labels too long
 
@@ -1163,12 +1163,12 @@ struct _mshFileDialog {
 
 int mshFileDialog(const char *name)
 {
-  static _mshFileDialog *dialog = NULL;
+  static _mshFileDialog *dialog = nullptr;
 
   static Fl_Menu_Item formatmenu[] = {
-    {"Version 1", 0, 0, 0},        {"Version 2 ASCII", 0, 0, 0},
-    {"Version 2 Binary", 0, 0, 0}, {"Version 4 ASCII", 0, 0, 0},
-    {"Version 4 Binary", 0, 0, 0}, {0}};
+    {"Version 1", 0, nullptr, nullptr},        {"Version 2 ASCII", 0, nullptr, nullptr},
+    {"Version 2 Binary", 0, nullptr, nullptr}, {"Version 4 ASCII", 0, nullptr, nullptr},
+    {"Version 4 Binary", 0, nullptr, nullptr}, {nullptr}};
 
   int BBB = BB + 9; // labels too long
 
@@ -1283,7 +1283,7 @@ int unvinpFileDialog(const char *name, const char *title, int format)
     Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
-  static _unvFileDialog *dialog = NULL;
+  static _unvFileDialog *dialog = nullptr;
 
   int BBB = BB + 9; // labels too long
 
@@ -1346,22 +1346,22 @@ int keyFileDialog(const char *name, const char *title, int format)
     Fl_Check_Button *b[2];
     Fl_Button *ok, *cancel;
   };
-  static _keyFileDialog *dialog = NULL;
+  static _keyFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item beammenu[] = {{"Physical groups", 0, 0, 0},
-                                    {"Save all", 0, 0, 0},
-                                    {"Ignore", 0, 0, 0},
-                                    {0}};
+  static Fl_Menu_Item beammenu[] = {{"Physical groups", 0, nullptr, nullptr},
+                                    {"Save all", 0, nullptr, nullptr},
+                                    {"Ignore", 0, nullptr, nullptr},
+                                    {nullptr}};
 
-  static Fl_Menu_Item shellmenu[] = {{"Physical groups", 0, 0, 0},
-                                     {"Save all", 0, 0, 0},
-                                     {"Ignore", 0, 0, 0},
-                                     {0}};
+  static Fl_Menu_Item shellmenu[] = {{"Physical groups", 0, nullptr, nullptr},
+                                     {"Save all", 0, nullptr, nullptr},
+                                     {"Ignore", 0, nullptr, nullptr},
+                                     {nullptr}};
 
-  static Fl_Menu_Item solidmenu[] = {{"Physical groups", 0, 0, 0},
-                                     {"Save all", 0, 0, 0},
-                                     {"Ignore", 0, 0, 0},
-                                     {0}};
+  static Fl_Menu_Item solidmenu[] = {{"Physical groups", 0, nullptr, nullptr},
+                                     {"Save all", 0, nullptr, nullptr},
+                                     {"Ignore", 0, nullptr, nullptr},
+                                     {nullptr}};
 
   int BBB = BB + 16; // labels too long
 
@@ -1445,17 +1445,17 @@ int bdfFileDialog(const char *name)
     Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
-  static _bdfFileDialog *dialog = NULL;
+  static _bdfFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item formatmenu[] = {{"Free field", 0, 0, 0},
-                                      {"Small field", 0, 0, 0},
-                                      {"Long field", 0, 0, 0},
-                                      {0}};
+  static Fl_Menu_Item formatmenu[] = {{"Free field", 0, nullptr, nullptr},
+                                      {"Small field", 0, nullptr, nullptr},
+                                      {"Long field", 0, nullptr, nullptr},
+                                      {nullptr}};
 
-  static Fl_Menu_Item tagmenu[] = {{"Elementary entity", 0, 0, 0},
-                                   {"Physical entity", 0, 0, 0},
-                                   {"Partition", 0, 0, 0},
-                                   {0}};
+  static Fl_Menu_Item tagmenu[] = {{"Elementary entity", 0, nullptr, nullptr},
+                                   {"Physical entity", 0, nullptr, nullptr},
+                                   {"Partition", 0, nullptr, nullptr},
+                                   {nullptr}};
 
   int BBB = BB + 16; // labels too long
 
@@ -1525,18 +1525,18 @@ int stlFileDialog(const char *name)
     Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
-  static _stlFileDialog *dialog = NULL;
+  static _stlFileDialog *dialog = nullptr;
 
   static Fl_Menu_Item formatmenu[] = {
-    {"ASCII", 0, 0, 0},
-    {"Binary", 0, 0, 0},
-    {0}
+    {"ASCII", 0, nullptr, nullptr},
+    {"Binary", 0, nullptr, nullptr},
+    {nullptr}
   };
   static Fl_Menu_Item solidmenu[] = {
-    {"Single", 0, 0, 0},
-    {"Per surface", 0, 0, 0},
-    {"Per physical surface", 0, 0, 0},
-    {0}
+    {"Single", 0, nullptr, nullptr},
+    {"Per surface", 0, nullptr, nullptr},
+    {"Per physical surface", 0, nullptr, nullptr},
+    {nullptr}
   };
 
   int BBB = BB + 9; // labels too long
@@ -1620,15 +1620,15 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
     Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
-  static _genericMeshFileDialog *dialog = NULL;
+  static _genericMeshFileDialog *dialog = nullptr;
 
   static Fl_Menu_Item formatmenu[] = {
-    {"ASCII", 0, 0, 0}, {"Binary", 0, 0, 0}, {0}};
+    {"ASCII", 0, nullptr, nullptr}, {"Binary", 0, nullptr, nullptr}, {nullptr}};
 
-  static Fl_Menu_Item tagmenu[] = {{"Elementary entity", 0, 0, 0},
-                                   {"Physical entity", 0, 0, 0},
-                                   {"Partition", 0, 0, 0},
-                                   {0}};
+  static Fl_Menu_Item tagmenu[] = {{"Elementary entity", 0, nullptr, nullptr},
+                                   {"Physical entity", 0, nullptr, nullptr},
+                                   {"Partition", 0, nullptr, nullptr},
+                                   {nullptr}};
 
   int BBB = BB + 16; // labels too long
 
@@ -1752,15 +1752,15 @@ int posFileDialog(const char *name)
     Fl_Choice *c[2];
     Fl_Button *ok, *cancel;
   };
-  static _posFileDialog *dialog = NULL;
+  static _posFileDialog *dialog = nullptr;
 
   static Fl_Menu_Item viewmenu[] = {
-    {"Current", 0, 0, 0}, {"Visible", 0, 0, 0}, {"All", 0, 0, 0}, {0}};
-  static Fl_Menu_Item formatmenu[] = {{"Parsed", 0, 0, 0},
-                                      {"Mesh-based", 0, 0, 0},
-                                      {"Legacy ASCII", 0, 0, 0},
-                                      {"Legacy Binary", 0, 0, 0},
-                                      {0}};
+    {"Current", 0, nullptr, nullptr}, {"Visible", 0, nullptr, nullptr}, {"All", 0, nullptr, nullptr}, {nullptr}};
+  static Fl_Menu_Item formatmenu[] = {{"Parsed", 0, nullptr, nullptr},
+                                      {"Mesh-based", 0, nullptr, nullptr},
+                                      {"Legacy ASCII", 0, nullptr, nullptr},
+                                      {"Legacy Binary", 0, nullptr, nullptr},
+                                      {nullptr}};
 
   int BBB = BB + 9; // labels too long
 
@@ -1877,12 +1877,12 @@ int pvtuAdaptFileDialog(const char *name)
     Fl_Value_Input *vi[3];
     Fl_Check_Button *defautName;
   };
-  static _pvtuAdaptFileDialog *dialog = NULL;
+  static _pvtuAdaptFileDialog *dialog = nullptr;
 
   static Fl_Menu_Item viewmenu[] = {
-    {"Current", 0, 0, 0}, {"Visible", 0, 0, 0}, {"All", 0, 0, 0}, {0}};
+    {"Current", 0, nullptr, nullptr}, {"Visible", 0, nullptr, nullptr}, {"All", 0, nullptr, nullptr}, {nullptr}};
   static Fl_Menu_Item formatmenu[] = {
-    {"Binary", 0, 0, 0}, {"ASCII", 0, 0, 0}, {0}};
+    {"Binary", 0, nullptr, nullptr}, {"ASCII", 0, nullptr, nullptr}, {nullptr}};
 
   int BBB = BB + 9; // labels too long
 
@@ -1988,10 +1988,10 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
     Fl_Check_Button *e[2];
     Fl_Button *ok, *cancel;
   };
-  static _viewFileDialog *dialog = NULL;
+  static _viewFileDialog *dialog = nullptr;
 
   static Fl_Menu_Item viewmenu[] = {
-    {"Current", 0, 0, 0}, {"Visible", 0, 0, 0}, {"All", 0, 0, 0}, {0}};
+    {"Current", 0, nullptr, nullptr}, {"Visible", 0, nullptr, nullptr}, {"All", 0, nullptr, nullptr}, {nullptr}};
 
   int BBB = BB + 9; // labels too long
 
@@ -2077,10 +2077,10 @@ int genericViewFileDialog(const char *name, const char *title, int format)
     Fl_Choice *c[1];
     Fl_Button *ok, *cancel;
   };
-  static _viewFileDialog *dialog = NULL;
+  static _viewFileDialog *dialog = nullptr;
 
   static Fl_Menu_Item viewmenu[] = {
-    {"Current", 0, 0, 0}, {"Visible", 0, 0, 0}, {"All", 0, 0, 0}, {0}};
+    {"Current", 0, nullptr, nullptr}, {"Visible", 0, nullptr, nullptr}, {"All", 0, nullptr, nullptr}, {nullptr}};
 
   int BBB = BB + 9; // labels too long
 

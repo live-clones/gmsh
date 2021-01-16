@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -548,7 +548,7 @@ bool Filler::inside_domain(MElementOctree *octree, double x, double y, double z)
 {
   MElement *element;
   element = (MElement *)octree->find(x, y, z, 3, true);
-  if(element != NULL)
+  if(element != nullptr)
     return 1;
   else
     return 0;
@@ -574,8 +574,8 @@ bool Filler::far_from_boundary(MElementOctree *octree, Node *node)
   e5 = (MElement *)octree->find(x, y, z + k2 * h, 3, true);
   e6 = (MElement *)octree->find(x, y, z - k2 * h, 3, true);
 
-  if(e1 != NULL && e2 != NULL && e3 != NULL && e4 != NULL && e5 != NULL &&
-     e6 != NULL)
+  if(e1 != nullptr && e2 != nullptr && e3 != nullptr && e4 != nullptr && e5 != nullptr &&
+     e6 != nullptr)
     return 1;
   else
     return 0;

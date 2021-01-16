@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,23 +12,23 @@
 #include "OS.h"
 
 StringXNumber NearToFarFieldOptions_Number[] = {
-  {GMSH_FULLRC, "Wavenumber", NULL, 1.},
-  {GMSH_FULLRC, "PhiStart", NULL, 0.},
-  {GMSH_FULLRC, "PhiEnd", NULL, 2. * M_PI},
-  {GMSH_FULLRC, "NumPointsPhi", NULL, 60},
-  {GMSH_FULLRC, "ThetaStart", NULL, 0.},
-  {GMSH_FULLRC, "ThetaEnd", NULL, M_PI},
-  {GMSH_FULLRC, "NumPointsTheta", NULL, 30},
-  {GMSH_FULLRC, "EView", NULL, 0},
-  {GMSH_FULLRC, "HView", NULL, 1},
-  {GMSH_FULLRC, "Normalize", NULL, 1},
-  {GMSH_FULLRC, "dB", NULL, 1},
-  {GMSH_FULLRC, "NegativeTime", NULL, 0.},
-  {GMSH_FULLRC, "RFar", NULL, 0},
+  {GMSH_FULLRC, "Wavenumber", nullptr, 1.},
+  {GMSH_FULLRC, "PhiStart", nullptr, 0.},
+  {GMSH_FULLRC, "PhiEnd", nullptr, 2. * M_PI},
+  {GMSH_FULLRC, "NumPointsPhi", nullptr, 60},
+  {GMSH_FULLRC, "ThetaStart", nullptr, 0.},
+  {GMSH_FULLRC, "ThetaEnd", nullptr, M_PI},
+  {GMSH_FULLRC, "NumPointsTheta", nullptr, 30},
+  {GMSH_FULLRC, "EView", nullptr, 0},
+  {GMSH_FULLRC, "HView", nullptr, 1},
+  {GMSH_FULLRC, "Normalize", nullptr, 1},
+  {GMSH_FULLRC, "dB", nullptr, 1},
+  {GMSH_FULLRC, "NegativeTime", nullptr, 0.},
+  {GMSH_FULLRC, "RFar", nullptr, 0},
 };
 
 StringXString NearToFarFieldOptions_String[] = {
-  {GMSH_FULLRC, "MatlabOutputFile", NULL, "farfield.m"},
+  {GMSH_FULLRC, "MatlabOutputFile", nullptr, "farfield.m"},
 };
 
 extern "C" {

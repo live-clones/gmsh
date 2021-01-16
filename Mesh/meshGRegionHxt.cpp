@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -163,8 +163,8 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   Msg::Debug("Start Hxt2Gmsh");
   std::vector<GFace *> allSurfaces;
   std::vector<GEdge *> allCurves;
-  HXT_CHECK(getAllSurfaces(regions, NULL, allSurfaces));
-  HXT_CHECK(getAllCurves(regions, allSurfaces, NULL, allCurves));
+  HXT_CHECK(getAllSurfaces(regions, nullptr, allSurfaces));
+  HXT_CHECK(getAllCurves(regions, allSurfaces, nullptr, allCurves));
   std::map<uint32_t, GEdge *> i2e;
   std::map<uint32_t, GFace *> i2f;
   for(size_t i = 0; i < allSurfaces.size(); i++)
@@ -173,7 +173,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     i2e[allCurves[i]->tag()] = allCurves[i];
 
   c2v.resize(m->vertices.num);
-  for(size_t i = c2v.size(); i < m->vertices.num; i++) { c2v[i] = NULL; }
+  for(size_t i = c2v.size(); i < m->vertices.num; i++) { c2v[i] = nullptr; }
 
   for(size_t j = 0; j < allCurves.size(); j++) {
     GEdge *ge = allCurves[j];
@@ -197,7 +197,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     uint32_t c = m->lines.color[i];
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
-    std::map<uint32_t, GEdge *>::iterator ge = i2e.find(c);
+    auto ge = i2e.find(c);
     if(ge == i2e.end()) {
       if(warning != c) {
         warning = c;
@@ -226,7 +226,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     MVertex *v0 = c2v[i0];
     MVertex *v1 = c2v[i1];
     MVertex *v2 = c2v[i2];
-    std::map<uint32_t, GFace *>::iterator gf = i2f.find(c);
+    auto gf = i2f.find(c);
     if(gf == i2f.end()) {
       if(warning != c) {
         warning = c;
@@ -446,8 +446,8 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     1, // int refine;
     CTX::instance()->mesh.optimize, // int optimize;
     { // quality
-      0, // double (*callback)(.., userData)
-      0, // void* userData;
+      nullptr, // double (*callback)(.., userData)
+      nullptr, // void* userData;
       CTX::instance()->mesh.optimizeThreshold // double qualityMin;
     },
     { // nodalSize
@@ -494,8 +494,8 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
   mesh->vertices.size = nvert;
 
   HXTDelaunayOptions delOptions = {
-    NULL, // bbox
-    NULL, // nodalSizes
+    nullptr, // bbox
+    nullptr, // nodalSizes
     0, // numVertcesInMesh
     0, // insertionFirst
     0, // partitionability

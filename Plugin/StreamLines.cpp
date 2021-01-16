@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,11 +26,11 @@ StringXNumber StreamLinesOptions_Number[] = {
   {GMSH_FULLRC, "Z2", GMSH_StreamLinesPlugin::callbackZ2, 0.},
   {GMSH_FULLRC, "NumPointsU", GMSH_StreamLinesPlugin::callbackU, 10},
   {GMSH_FULLRC, "NumPointsV", GMSH_StreamLinesPlugin::callbackV, 1},
-  {GMSH_FULLRC, "DT", NULL, .1},
-  {GMSH_FULLRC, "MaxIter", NULL, 100},
-  {GMSH_FULLRC, "TimeStep", NULL, 0},
-  {GMSH_FULLRC, "View", NULL, -1.},
-  {GMSH_FULLRC, "OtherView", NULL, -1.}};
+  {GMSH_FULLRC, "DT", nullptr, .1},
+  {GMSH_FULLRC, "MaxIter", nullptr, 100},
+  {GMSH_FULLRC, "TimeStep", nullptr, 0},
+  {GMSH_FULLRC, "View", nullptr, -1.},
+  {GMSH_FULLRC, "OtherView", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterStreamLinesPlugin()
@@ -221,8 +221,8 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
   if(!v1) return v;
   PViewData *data1 = getPossiblyAdaptiveData(v1);
 
-  PView *v2 = (otherView < 0) ? 0 : getView(otherView, v);
-  PViewData *data2 = v2 ? getPossiblyAdaptiveData(v2) : 0;
+  PView *v2 = (otherView < 0) ? nullptr : getView(otherView, v);
+  PViewData *data2 = v2 ? getPossiblyAdaptiveData(v2) : nullptr;
 
   // sanity checks
   if(timeStep > data1->getNumTimeSteps() - 1) {
@@ -231,8 +231,8 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
   }
 
   OctreePost o1(v1);
-  double *val2 = 0;
-  OctreePost *o2 = 0;
+  double *val2 = nullptr;
+  OctreePost *o2 = nullptr;
   if(data2) {
     val2 = new double[data2->getNumTimeSteps()];
     o2 = new OctreePost(v2);

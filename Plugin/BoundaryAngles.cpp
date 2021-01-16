@@ -18,15 +18,15 @@
 #include <vector>
 
 StringXNumber BoundaryAnglesOptions_Number[] = {
-  {GMSH_FULLRC, "View", NULL, -1.},
-  {GMSH_FULLRC, "Save", NULL, 0.},
-  {GMSH_FULLRC, "Visible", NULL, 0.},
-  {GMSH_FULLRC, "Remove", NULL, 0.},
+  {GMSH_FULLRC, "View", nullptr, -1.},
+  {GMSH_FULLRC, "Save", nullptr, 0.},
+  {GMSH_FULLRC, "Visible", nullptr, 0.},
+  {GMSH_FULLRC, "Remove", nullptr, 0.},
 };
 
 StringXString BoundaryAnglesOptions_String[] = {
-  {GMSH_FULLRC, "Filename", NULL, "Angles_Surface"},
-  {GMSH_FULLRC, "Dir", NULL, ""},
+  {GMSH_FULLRC, "Filename", nullptr, "Angles_Surface"},
+  {GMSH_FULLRC, "Dir", nullptr, ""},
 };
 
 extern "C" {
@@ -88,14 +88,14 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
   std::string opt_dir = BoundaryAnglesOptions_String[1].def;
   // get the mesh of the current model, and iterate on the surfaces
   GModel *m = GModel::current();
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *gf = *it;
     std::set<std::pair<MEdge, MElement *>, Less_EdgeEle> boundaryEdges;
     for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *e = gf->getMeshElement(i);
       for(int j = 0; j < e->getNumEdges(); j++) {
         std::pair<MEdge, MElement *> ed(e->getEdge(j), e);
-        std::set<std::pair<MEdge, MElement *>, Less_EdgeEle>::iterator it =
+        auto it =
           boundaryEdges.find(ed);
         if(it == boundaryEdges.end()) { boundaryEdges.insert(ed); }
         else {
@@ -109,7 +109,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
     PViewDataList *data = getDataList(view);
     std::vector<MEdge> edges;
     SVector3 normal(0, 0, 1.);
-    for(std::set<std::pair<MEdge, MElement *>, Less_EdgeEle>::iterator it =
+    for(auto it =
           boundaryEdges.begin();
         it != boundaryEdges.end(); ++it) {
       edges.push_back(it->first);
@@ -124,7 +124,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
         // order; reverse if necessary
         {
           // First edge (and element) of the boundary
-          std::set<std::pair<MEdge, MElement *>, Less_EdgeEle>::iterator it2 =
+          auto it2 =
             boundaryEdges.begin();
           // Loop on every sorted and consecutive nodes
           for(int j = 0; j < static_cast<int>(nodes[0].size()) - 1; j++) {
@@ -193,5 +193,5 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
     
   }
 
-  return 0;
+  return nullptr;
 }

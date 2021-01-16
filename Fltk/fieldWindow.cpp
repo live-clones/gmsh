@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -33,14 +33,14 @@
 void field_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->fields->win->show();
-  FlGui::instance()->fields->editField(NULL);
+  FlGui::instance()->fields->editField(nullptr);
 }
 
 static void field_delete_cb(Fl_Widget *w, void *data)
 {
   Field *f = (Field *)FlGui::instance()->fields->editor_group->user_data();
   scriptDeleteField(f->id, GModel::current()->getFileName());
-  FlGui::instance()->fields->editField(NULL);
+  FlGui::instance()->fields->editField(nullptr);
 }
 
 static void field_new_cb(Fl_Widget *w, void *data)
@@ -60,7 +60,7 @@ static void field_apply_cb(Fl_Widget *w, void *data)
 static void field_browser_cb(Fl_Widget *w, void *data)
 {
   int selected = FlGui::instance()->fields->browser->value();
-  if(!selected) { FlGui::instance()->fields->editField(NULL); }
+  if(!selected) { FlGui::instance()->fields->editField(nullptr); }
   Field *f = (Field *)FlGui::instance()->fields->browser->data(selected);
   FlGui::instance()->fields->editField(f);
 }
@@ -196,7 +196,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   FL_NORMAL_SIZE += deltaFontSize;
 
   loadFieldViewList();
-  editField(NULL);
+  editField(nullptr);
 }
 
 void fieldWindow::loadFieldViewList()
@@ -217,7 +217,7 @@ void fieldWindow::loadFieldList()
   Field *selected_field = (Field *)editor_group->user_data();
   browser->clear();
   int i_entry = 0;
-  for(FieldManager::iterator it = fields.begin(); it != fields.end(); it++) {
+  for(auto it = fields.begin(); it != fields.end(); it++) {
     i_entry++;
     Field *field = it->second;
     std::ostringstream sstream;
@@ -230,14 +230,14 @@ void fieldWindow::loadFieldList()
 
 void fieldWindow::saveFieldOptions()
 {
-  std::list<Fl_Widget *>::iterator input = options_widget.begin();
+  auto input = options_widget.begin();
   Field *f = (Field *)editor_group->user_data();
   std::ostringstream sstream;
   int i;
   char a;
   double d;
   sstream.precision(16);
-  for(std::map<std::string, FieldOption *>::iterator it = f->options.begin();
+  for(auto it = f->options.begin();
       it != f->options.end(); it++) {
     FieldOption *option = it->second;
     if(option->isDeprecated()) continue;
@@ -309,8 +309,8 @@ void fieldWindow::saveFieldOptions()
 void fieldWindow::loadFieldOptions()
 {
   Field *f = (Field *)editor_group->user_data();
-  std::list<Fl_Widget *>::iterator input = options_widget.begin();
-  for(std::map<std::string, FieldOption *>::iterator it = f->options.begin();
+  auto input = options_widget.begin();
+  for(auto it = f->options.begin();
       it != f->options.end(); it++) {
     FieldOption *option = it->second;
     if(option->isDeprecated()) continue;
@@ -374,7 +374,7 @@ void fieldWindow::editField(Field *f)
   editor_group->user_data(f);
   put_on_view_btn->deactivate();
   delete_btn->deactivate();
-  if(f == NULL) {
+  if(f == nullptr) {
     selected_id = -1;
     editor_group->hide();
     empty_message->show();
@@ -399,7 +399,7 @@ void fieldWindow::editField(Field *f)
   ConvertToHTML(help);
   if(!f->options.empty())
     help += std::string("<p><center><b>Options</b></center>");
-  for(std::map<std::string, FieldOption *>::iterator it = f->options.begin();
+  for(auto it = f->options.begin();
       it != f->options.end(); it++) {
     if(it->second->isDeprecated()) continue;
     Fl_Widget *input;
@@ -439,7 +439,7 @@ void fieldWindow::editField(Field *f)
   }
   if(!f->callbacks.empty())
     help += std::string("<p><center><b>Actions</b></center>");
-  for(std::map<std::string, FieldCallback *>::iterator it =
+  for(auto it =
         f->callbacks.begin();
       it != f->callbacks.end(); it++) {
     Fl_Widget *btn;

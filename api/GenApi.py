@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1259,7 +1259,7 @@ class API:
         version_patch,
         namespace="gmsh",
         code="Gmsh",
-        copyright="Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle",
+        copyright="Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle",
         issues="https://gitlab.onelab.info/gmsh/gmsh/issues."):
         self.version_major = version_major
         self.version_minor = version_minor

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1285,13 +1285,13 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-help" || argv[i] == "--help") {
         Msg::Direct(
           "Gmsh, a 3D mesh generator with pre- and post-processing facilities");
-        Msg::Direct("Copyright (C) 1997-2020 C. Geuzaine and J.-F. Remacle");
+        Msg::Direct("Copyright (C) 1997-2021 C. Geuzaine and J.-F. Remacle");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }
       else if(argv[i] == "-help_options") {
         std::vector<std::string> s;
-        PrintOptions(0, GMSH_FULLRC, 0, 1, 0, &s);
+        PrintOptions(0, GMSH_FULLRC, 0, 1, nullptr, &s);
         for(std::size_t i = 0; i < s.size(); i++)
           Msg::Direct("%s\n", s[i].c_str());
         Msg::Exit(0);

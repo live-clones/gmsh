@@ -63,7 +63,7 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
   double worst;
   checkHighOrderTriangles("Surface mesh", m, bad, worst);
   {
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
       if(onlyVisible && !(*it)->getVisibility()) continue;
       std::vector<MElement *> v;
       v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
@@ -78,7 +78,7 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
 
   checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
   {
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
       if(onlyVisible && !(*it)->getVisibility()) continue;
       std::vector<MElement *> v;
       v.insert(v.begin(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
@@ -100,7 +100,7 @@ void highOrderTools::_moveToStraightSidedLocation(MElement *e) const
 {
   for(int i = 0; i < e->getNumVertices(); i++) {
     MVertex *v = e->getVertex(i);
-    std::map<MVertex *, SVector3>::const_iterator it =
+    auto it =
       _straightSidedLocation.find(v);
     if(it != _straightSidedLocation.end()) {
       v->x() = it->second.x();
@@ -218,14 +218,14 @@ void highOrderTools::ensureMinimumDistorsion(double threshold)
 {
   std::vector<MElement *> v;
   if(_dim == 2) {
-    for(GModel::fiter fit = _gm->firstFace(); fit != _gm->lastFace(); ++fit) {
+    for(auto fit = _gm->firstFace(); fit != _gm->lastFace(); ++fit) {
       v.insert(v.begin(), (*fit)->triangles.begin(), (*fit)->triangles.end());
       v.insert(v.begin(), (*fit)->quadrangles.begin(),
                (*fit)->quadrangles.end());
     }
   }
   else if(_dim == 3) {
-    for(GModel::riter rit = _gm->firstRegion(); rit != _gm->lastRegion();
+    for(auto rit = _gm->firstRegion(); rit != _gm->lastRegion();
         ++rit) {
       v.insert(v.begin(), (*rit)->hexahedra.begin(), (*rit)->hexahedra.end());
       v.insert(v.begin(), (*rit)->tetrahedra.begin(), (*rit)->tetrahedra.end());
@@ -285,7 +285,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
   // compute the straight sided positions of high order nodes that are
   // on the edges of the face in the UV plane
   dofManager<double> myAssembler(lsys);
-  elasticityTerm El(0, 1.0, CTX::instance()->mesh.hoPoissonRatio, _tag);
+  elasticityTerm El(nullptr, 1.0, CTX::instance()->mesh.hoPoissonRatio, _tag);
   std::vector<MElement *> layer, v;
   double minD;
   getDistordedElements(all, CTX::instance()->mesh.hoThresholdMin, v, minD);
@@ -454,7 +454,7 @@ void highOrderTools::_computeStraightSidedPositions()
   // that are NOT always on curves and surfaces
 
   // points classified on model vertices shall not move !
-  for(GModel::viter it = _gm->firstVertex(); it != _gm->lastVertex(); ++it) {
+  for(auto it = _gm->firstVertex(); it != _gm->lastVertex(); ++it) {
     if((*it)->points.size()) {
       MPoint *p = (*it)->points[0];
       MVertex *v = p->getVertex(0);
@@ -465,7 +465,7 @@ void highOrderTools::_computeStraightSidedPositions()
 
   // compute stright sided positions of vertices that are classified on model
   // edges
-  for(GModel::eiter it = _gm->firstEdge(); it != _gm->lastEdge(); ++it) {
+  for(auto it = _gm->firstEdge(); it != _gm->lastEdge(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       MLine *l = (*it)->lines[i];
       int N = l->getNumVertices() - 2;
@@ -491,7 +491,7 @@ void highOrderTools::_computeStraightSidedPositions()
 
   // compute stright sided positions of vertices that are classified on model
   // faces
-  for(GModel::fiter it = _gm->firstFace(); it != _gm->lastFace(); ++it) {
+  for(auto it = _gm->firstFace(); it != _gm->lastFace(); ++it) {
     for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++) {
       MVertex *v = (*it)->mesh_vertices[i];
       _targetLocation[v] = SVector3(v->x(), v->y(), v->z());
@@ -527,7 +527,7 @@ void highOrderTools::_computeStraightSidedPositions()
     }
   }
 
-  for(GModel::riter it = _gm->firstRegion(); it != _gm->lastRegion(); ++it) {
+  for(auto it = _gm->firstRegion(); it != _gm->lastRegion(); ++it) {
     for(std::size_t i = 0; i < (*it)->mesh_vertices.size(); i++) {
       MVertex *v = (*it)->mesh_vertices[i];
       _targetLocation[v] = SVector3(v->x(), v->y(), v->z());
@@ -617,8 +617,8 @@ double highOrderTools::_applyIncrementalDisplacement(
   // assume that the mesh is OK, yet already curved
   Msg::Info("Generating elastic system...");
   dofManager<double> myAssembler(lsys);
-  elasticityMixedTerm El_mixed(0, 1.0, .333, _tag);
-  elasticityTerm El(0, 1.0, .333, _tag);
+  elasticityMixedTerm El_mixed(nullptr, 1.0, .333, _tag);
+  elasticityTerm El(nullptr, 1.0, .333, _tag);
 
   std::set<MVertex *, MVertexPtrLessThan> _vertices;
 
@@ -642,10 +642,10 @@ double highOrderTools::_applyIncrementalDisplacement(
     }
   }
 
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
+  for(auto it = _vertices.begin();
       it != _vertices.end(); ++it) {
     MVertex *vert = *it;
-    std::map<MVertex *, SVector3>::iterator itt = _targetLocation.find(vert);
+    auto itt = _targetLocation.find(vert);
     // impose displacement @ boundary
     if(itt != _targetLocation.end() && vert->onWhat()->dim() < _dim) {
       myAssembler.fixVertex(vert, 0, _tag, itt->second.x() - vert->x());
@@ -688,7 +688,7 @@ double highOrderTools::_applyIncrementalDisplacement(
   //fprintf(fd, "$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n"
   //            "\"tr(sigma)\"\n1\n0.0\n3\n1\n3\n%d\n",
   //            (int)_vertices.size());
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
+  for(auto it = _vertices.begin();
       it != _vertices.end(); ++it) {
     double ax, ay, az;
     myAssembler.getDofValue(*it, 0, _tag, ax);
@@ -713,7 +713,7 @@ double highOrderTools::_applyIncrementalDisplacement(
     getDistordedElements(v, 0.5, disto, minD);
     if(minD < thres) {
       percentage -= 10.;
-      for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = _vertices.begin();
+      for(auto it = _vertices.begin();
           it != _vertices.end(); ++it) {
         double ax, ay, az;
         myAssembler.getDofValue(*it, 0, _tag, ax);
@@ -800,7 +800,7 @@ void printJacobians(GModel *m, const char *nm)
 
   FILE *f = Fopen(nm, "w");
   fprintf(f, "View \"\"{\n");
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     for(std::size_t j = 0; j < (*it)->triangles.size(); j++) {
       MTriangle *t = (*it)->triangles[j];
       for(int i = 0; i < n; i++) {

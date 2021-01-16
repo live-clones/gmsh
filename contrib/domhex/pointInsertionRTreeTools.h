@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -45,7 +45,7 @@ public:
    */
   surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[4][NUMDIR],
                                   SPoint2 &_mp, SMetric3 &meshMetric,
-                                  surfacePointWithExclusionRegion *father = 0);
+                                  surfacePointWithExclusionRegion *father = nullptr);
 
   bool inExclusionZone(const SPoint2 &p);
   void minmax(double _min[2], double _max[2]) const;
@@ -107,9 +107,9 @@ private:
   bool ok;
 
 public:
-  Wrapper3D() : individual(0), parent(0), size(0), cf(0), vec(0), ok(true) {}
+  Wrapper3D() : individual(nullptr), parent(nullptr), size(nullptr), cf(nullptr), vec(nullptr), ok(true) {}
   Wrapper3D(MVertex *_i, MVertex *_p)
-    : individual(_i), parent(_p), size(0), cf(0), vec(0), ok(true)
+    : individual(_i), parent(_p), size(nullptr), cf(nullptr), vec(nullptr), ok(true)
   {
   }
   ~Wrapper3D() {}
@@ -141,7 +141,7 @@ extern void fill_min_max(double x, double y, double z, double h, double *min,
 // listOfPoints AND in RTree: larger memory footprint but less CPU time...
 class smoothness_vertex_pair {
 public:
-  smoothness_vertex_pair() : rank(0.), size(0.), v(0), dir(0), layer(0) {}
+  smoothness_vertex_pair() : rank(0.), size(0.), v(nullptr), dir(0), layer(0) {}
   ~smoothness_vertex_pair() {}
   STensor3 cf;
   SVector3 direction;

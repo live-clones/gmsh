@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -51,27 +51,27 @@
 
 Field::~Field()
 {
-  for(std::map<std::string, FieldOption *>::iterator it = options.begin();
+  for(auto it = options.begin();
       it != options.end(); ++it)
     delete it->second;
-  for(std::map<std::string, FieldCallback *>::iterator it = callbacks.begin();
+  for(auto it = callbacks.begin();
       it != callbacks.end(); ++it)
     delete it->second;
 }
 
 FieldOption *Field::getOption(const std::string &optionName)
 {
-  std::map<std::string, FieldOption *>::iterator it = options.find(optionName);
+  auto it = options.find(optionName);
   if(it == options.end()) {
     Msg::Error("Field option '%s' does not exist", optionName.c_str());
-    return NULL;
+    return nullptr;
   }
   return it->second;
 }
 
 void FieldManager::reset()
 {
-  for(std::map<int, Field *>::iterator it = begin(); it != end(); it++) {
+  for(auto it = begin(); it != end(); it++) {
     delete it->second;
   }
   clear();
@@ -79,8 +79,8 @@ void FieldManager::reset()
 
 Field *FieldManager::get(int id)
 {
-  iterator it = find(id);
-  if(it == end()) return NULL;
+  auto it = find(id);
+  if(it == end()) return nullptr;
   return it->second;
 }
 
@@ -88,14 +88,14 @@ Field *FieldManager::newField(int id, const std::string &type_name)
 {
   if(find(id) != end()) {
     Msg::Error("Field id %i is already defined", id);
-    return 0;
+    return nullptr;
   }
   if(mapTypeName.find(type_name) == mapTypeName.end()) {
     Msg::Error("Unknown field type \"%s\"", type_name.c_str());
-    return 0;
+    return nullptr;
   }
   Field *f = (*mapTypeName[type_name])();
-  if(!f) return 0;
+  if(!f) return nullptr;
   f->id = id;
   (*this)[id] = f;
   return f;
@@ -104,7 +104,7 @@ Field *FieldManager::newField(int id, const std::string &type_name)
 int FieldManager::newId()
 {
   int i = 0;
-  iterator it = begin();
+  auto it = begin();
   while(1) {
     i++;
     while(it != end() && it->first < i) it++;
@@ -123,7 +123,7 @@ int FieldManager::maxId()
 
 void FieldManager::deleteField(int id)
 {
-  iterator it = find(id);
+  auto it = find(id);
   if(it == end()) {
     Msg::Error("Cannot delete field id %i, it does not exist", id);
     return;
@@ -146,7 +146,7 @@ private:
 public:
   StructuredField()
   {
-    _data = 0;
+    _data = nullptr;
 
     options["FileName"] =
       new FieldOptionPath(_fileName, "Name of the input file", &updateNeeded);
@@ -187,7 +187,7 @@ public:
     if(_data) delete[] _data;
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     if(updateNeeded) {
       _errorStatus = false;
@@ -281,11 +281,11 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Tag of the field to evaluate", 0, true);
+      new FieldOptionInt(_inField, "Tag of the field to evaluate", nullptr, true);
   }
   const char *getName() { return "LonLat"; }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field || _inField == id) return MAX_LC;
@@ -375,7 +375,7 @@ public:
            std::pow((psbox[2] - zp), 2));
     return dist;
   }
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     // inside
     if(x >= _xMin && x <= _xMax && y >= _yMin && y <= _yMax && z >= _zMin &&
@@ -432,7 +432,7 @@ public:
   }
   const char *getName() { return "Cylinder"; }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     double dx = x - _xc;
     double dy = y - _yc;
@@ -486,7 +486,7 @@ public:
   }
   const char *getName() { return "Ball"; }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     double dx = x - _xc;
     double dy = y - _yc;
@@ -561,25 +561,25 @@ public:
 
     // deprecated names
     options["R1_inner"] = new FieldOptionDouble(
-      _r1i, "Inner radius of Frustum at endpoint 1", 0, true);
+      _r1i, "Inner radius of Frustum at endpoint 1", nullptr, true);
     options["R1_outer"] = new FieldOptionDouble(
-      _r1o, "Outer radius of Frustum at endpoint 1", 0, true);
+      _r1o, "Outer radius of Frustum at endpoint 1", nullptr, true);
     options["R2_inner"] = new FieldOptionDouble(
-      _r2i, "Inner radius of Frustum at endpoint 2", 0, true);
+      _r2i, "Inner radius of Frustum at endpoint 2", nullptr, true);
     options["R2_outer"] = new FieldOptionDouble(
-      _r2o, "Outer radius of Frustum at endpoint 2", 0, true);
+      _r2o, "Outer radius of Frustum at endpoint 2", nullptr, true);
     options["V1_inner"] = new FieldOptionDouble(
-      _v1i, "Element size at point 1, inner radius", 0, true);
+      _v1i, "Element size at point 1, inner radius", nullptr, true);
     options["V1_outer"] = new FieldOptionDouble(
-      _v1o, "Element size at point 1, outer radius", 0, true);
+      _v1o, "Element size at point 1, outer radius", nullptr, true);
     options["V2_inner"] = new FieldOptionDouble(
-      _v2i, "Element size at point 2, inner radius", 0, true);
+      _v2i, "Element size at point 2, inner radius", nullptr, true);
     options["V2_outer"] = new FieldOptionDouble(
-      _v2o, "Element size at point 2, outer radius", 0, true);
+      _v2o, "Element size at point 2, outer radius", nullptr, true);
   }
   const char *getName() { return "Frustum"; }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     double dx = x - _x1;
     double dy = y - _y1;
@@ -651,14 +651,14 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Tag of the field to evaluate", 0, true);
+      new FieldOptionInt(_inField, "Tag of the field to evaluate", nullptr, true);
     options["LcMin"] =
-      new FieldOptionDouble(_lcMin, "Element size inside DistMin", 0, true);
+      new FieldOptionDouble(_lcMin, "Element size inside DistMin", nullptr, true);
     options["LcMax"] =
-      new FieldOptionDouble(_lcMax, "Element size outside DistMax", 0, true);
+      new FieldOptionDouble(_lcMax, "Element size outside DistMax", nullptr, true);
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field || _inField == id) return MAX_LC;
@@ -705,10 +705,10 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", 0, true);
+      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field || _inField == id) return MAX_LC;
@@ -761,7 +761,7 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", 0, true);
+      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
   }
   void grad_norm(Field &f, double x, double y, double z, double *g)
   {
@@ -774,7 +774,7 @@ public:
     g[2] /= n;
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field || _inField == id) return MAX_LC;
@@ -816,10 +816,10 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", 0, true);
+      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field || _inField == id) return MAX_LC;
@@ -870,10 +870,10 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", 0, true);
+      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field || _inField == id) return MAX_LC;
@@ -909,10 +909,10 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", 0, true);
+      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field || _inField == id) return MAX_LC;
@@ -930,7 +930,7 @@ private:
   std::set<int> _fields;
 
 public:
-  MathEvalExpression() : _f(0) {}
+  MathEvalExpression() : _f(nullptr) {}
   ~MathEvalExpression()
   {
     if(_f) delete _f;
@@ -959,7 +959,7 @@ public:
     variables[1] = "y";
     variables[2] = "z";
     i = 3;
-    for(std::set<int>::iterator it = _fields.begin(); it != _fields.end();
+    for(auto it = _fields.begin(); it != _fields.end();
         it++) {
       std::ostringstream sstream;
       sstream << "F" << *it;
@@ -969,7 +969,7 @@ public:
     _f = new mathEvaluator(expressions, variables);
     if(expressions.empty()) {
       delete _f;
-      _f = 0;
+      _f = nullptr;
       return false;
     }
     return true;
@@ -982,7 +982,7 @@ public:
     values[1] = y;
     values[2] = z;
     int i = 3;
-    for(std::set<int>::iterator it = _fields.begin(); it != _fields.end();
+    for(auto it = _fields.begin(); it != _fields.end();
         it++) {
       Field *field = GModel::current()->getFields()->get(*it);
       values[i++] = field ? (*field)(x, y, z) : MAX_LC;
@@ -1002,7 +1002,7 @@ private:
 public:
   MathEvalExpressionAniso()
   {
-    for(int i = 0; i < 6; i++) _f[i] = 0;
+    for(int i = 0; i < 6; i++) _f[i] = nullptr;
   }
   ~MathEvalExpressionAniso()
   {
@@ -1034,7 +1034,7 @@ public:
     variables[1] = "y";
     variables[2] = "z";
     i = 3;
-    for(std::set<int>::iterator it = _fields[iFunction].begin();
+    for(auto it = _fields[iFunction].begin();
         it != _fields[iFunction].end(); it++) {
       std::ostringstream sstream;
       sstream << "F" << *it;
@@ -1044,7 +1044,7 @@ public:
     _f[iFunction] = new mathEvaluator(expressions, variables);
     if(expressions.empty()) {
       delete _f[iFunction];
-      _f[iFunction] = 0;
+      _f[iFunction] = nullptr;
       return false;
     }
     return true;
@@ -1061,7 +1061,7 @@ public:
         values[1] = y;
         values[2] = z;
         int i = 3;
-        for(std::set<int>::iterator it = _fields[iFunction].begin();
+        for(auto it = _fields[iFunction].begin();
             it != _fields[iFunction].end(); it++) {
           Field *field = GModel::current()->getFields()->get(*it);
           values[i++] = field ? (*field)(x, y, z) : MAX_LC;
@@ -1088,7 +1088,7 @@ public:
       _f, "Mathematical function to evaluate.", &updateNeeded);
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     double ret = 0;
 #if defined(_OPENMP)
@@ -1157,7 +1157,7 @@ public:
     options["m23"] = new FieldOptionString(
       _f[5], "Element 23 of the metric tensor", &updateNeeded, true);
   }
-  void operator()(double x, double y, double z, SMetric3 &metr, GEntity *ge = 0)
+  void operator()(double x, double y, double z, SMetric3 &metr, GEntity *ge = nullptr)
   {
 #if defined(_OPENMP)
 #pragma omp critical
@@ -1174,7 +1174,7 @@ public:
       _expr.evaluate(x, y, z, metr);
     }
   }
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     SMetric3 metr;
 #if defined(_OPENMP)
@@ -1353,7 +1353,7 @@ public:
   }
   ~ExternalProcessField() { closePipes(); }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     double xyz[3] = {x, y, z};
     double f;
@@ -1460,7 +1460,7 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", 0, true);
+      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
   }
   std::string getDescription()
   {
@@ -1470,7 +1470,7 @@ public:
            "and FZ expressions.";
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     if(updateNeeded) {
       for(int i = 0; i < 3; i++) {
@@ -1499,7 +1499,7 @@ private:
 public:
   PostViewField()
   {
-    _octree = 0;
+    _octree = nullptr;
     _viewIndex = 0;
     _viewTag = -1;
     _cropNegativeValues = true;
@@ -1524,12 +1524,12 @@ public:
   }
   PView *getView() const
   {
-    PView *v = 0;
+    PView *v = nullptr;
     if(_viewTag >= 0) v = PView::getViewByTag(_viewTag);
     if(!v) {
       if(_viewIndex < 0 || _viewIndex >= (int)PView::list.size()) {
         Msg::Error("View[%d] does not exist", _viewIndex);
-        return 0;
+        return nullptr;
       }
       v = PView::list[_viewIndex];
     }
@@ -1537,7 +1537,7 @@ public:
       Msg::Error(
         "Cannot use view based on current mesh for background mesh: you might"
         " want to use a list-based view (.pos file) instead");
-      return 0;
+      return nullptr;
     }
     return v;
   }
@@ -1547,7 +1547,7 @@ public:
     if(v && v->getData()->getNumTensors()) return false;
     return true;
   }
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     PView *v = getView();
     if(!v) return MAX_LC;
@@ -1559,12 +1559,12 @@ public:
     double l = 0.;
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
-    if(!_octree->searchScalarWithTol(x, y, z, &l, 0, 0, 0.05))
+    if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.05))
       Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
     if(l <= 0 && _cropNegativeValues) return MAX_LC;
     return l;
   }
-  void operator()(double x, double y, double z, SMetric3 &metr, GEntity *ge = 0)
+  void operator()(double x, double y, double z, SMetric3 &metr, GEntity *ge = nullptr)
   {
     PView *v = getView();
     if(!v) return;
@@ -1576,7 +1576,7 @@ public:
     double l[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
-    if(!_octree->searchTensorWithTol(x, y, z, l, 0, 0, 0.05))
+    if(!_octree->searchTensorWithTol(x, y, z, l, 0, nullptr, 0.05))
       Msg::Info("No tensor element found containing point (%g,%g,%g)", x, y, z);
     if(0 && _cropNegativeValues) {
       if(l[0] <= 0 && l[1] <= 0 && l[2] <= 0 && l[3] <= 0 && l[4] <= 0 &&
@@ -1624,10 +1624,10 @@ public:
     return "Take the intersection of a list of possibly anisotropic fields.";
   }
   virtual void operator()(double x, double y, double z, SMetric3 &metr,
-                          GEntity *ge = 0)
+                          GEntity *ge = nullptr)
   {
     SMetric3 v(1. / MAX_LC);
-    for(std::list<int>::iterator it = _fieldIds.begin(); it != _fieldIds.end();
+    for(auto it = _fieldIds.begin(); it != _fieldIds.end();
         it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
       SMetric3 ff;
@@ -1644,11 +1644,11 @@ public:
     }
     metr = v;
   }
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     SMetric3 metr(1. / MAX_LC);
     double v = MAX_LC;
-    for(std::list<int>::iterator it = _fieldIds.begin(); it != _fieldIds.end();
+    for(auto it = _fieldIds.begin(); it != _fieldIds.end();
         it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
       SMetric3 m;
@@ -1687,11 +1687,11 @@ public:
            "Alauzet.";
   }
   virtual void operator()(double x, double y, double z, SMetric3 &metr,
-                          GEntity *ge = 0)
+                          GEntity *ge = nullptr)
   {
     // check if _fieldIds contains 2 elements other error message
     SMetric3 v;
-    for(std::list<int>::iterator it = _fieldIds.begin(); it != _fieldIds.end();
+    for(auto it = _fieldIds.begin(); it != _fieldIds.end();
         it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
       SMetric3 ff;
@@ -1711,11 +1711,11 @@ public:
     }
     metr = v;
   }
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     // check if _fieldIds contains 2 elements other error message
     SMetric3 metr;
-    for(std::list<int>::iterator it = _fieldIds.begin(); it != _fieldIds.end();
+    for(auto it = _fieldIds.begin(); it != _fieldIds.end();
         it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
       SMetric3 m;
@@ -1754,10 +1754,10 @@ public:
     return "Take the minimum value of a list of fields.";
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     double v = MAX_LC;
-    for(std::list<int>::iterator it = _fieldIds.begin(); it != _fieldIds.end();
+    for(auto it = _fieldIds.begin(); it != _fieldIds.end();
         it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
       if(f && *it != id) {
@@ -1793,10 +1793,10 @@ public:
     return "Take the maximum value of a list of fields.";
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     double v = -MAX_LC;
-    for(std::list<int>::iterator it = _fieldIds.begin(); it != _fieldIds.end();
+    for(auto it = _fieldIds.begin(); it != _fieldIds.end();
         it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
       if(f && *it != id) {
@@ -1835,15 +1835,15 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", 0, true);
+      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
     options["VerticesList"] =
-      new FieldOptionList(_pointTags, "Point tags", 0, true);
+      new FieldOptionList(_pointTags, "Point tags", nullptr, true);
     options["EdgesList"] =
-      new FieldOptionList(_curveTags, "Curve tags", 0, true);
+      new FieldOptionList(_curveTags, "Curve tags", nullptr, true);
     options["FacesList"] =
-      new FieldOptionList(_surfaceTags, "Surface tags", 0, true);
+      new FieldOptionList(_surfaceTags, "Surface tags", nullptr, true);
     options["RegionsList"] =
-      new FieldOptionList(_volumeTags, "Volume tags", 0, true);
+      new FieldOptionList(_volumeTags, "Volume tags", nullptr, true);
   }
   std::string getDescription()
   {
@@ -1851,7 +1851,7 @@ public:
            "points, curves, surfaces or volumes.";
   }
   using Field::operator();
-  double operator()(double x, double y, double z, GEntity *ge = 0)
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     Field *f = (GModel::current()->getFields()->get(_inField));
     if(!f || _inField == id) return MAX_LC;
@@ -1893,7 +1893,7 @@ private:
   std::vector<SVector3> _tg;
 
 public:
-  AttractorAnisoCurveField() : _kdTree(0), _zeroNodes(0)
+  AttractorAnisoCurveField() : _kdTree(nullptr), _zeroNodes(nullptr)
   {
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
@@ -1940,32 +1940,32 @@ public:
       _dMin,
       "Minimum distance, below this distance from the curves, "
       "prescribe the minimum mesh sizes",
-      0, true);
+      nullptr, true);
     options["dMax"] = new FieldOptionDouble(
       _dMax,
       "Maxmium distance, above this distance from the curves, prescribe "
       "the maximum mesh sizes",
-      0, true);
+      nullptr, true);
     options["lMinTangent"] = new FieldOptionDouble(
       _lMinTangent,
       "Minimum mesh size in the direction tangeant to the "
       "closest curve",
-      0, true);
+      nullptr, true);
     options["lMaxTangent"] = new FieldOptionDouble(
       _lMaxTangent,
       "Maximum mesh size in the direction tangeant to the "
       "closest curve",
-      0, true);
+      nullptr, true);
     options["lMinNormal"] =
       new FieldOptionDouble(_lMinNormal,
                             "Minimum mesh size in the direction normal to the "
                             "closest curve",
-                            0, true);
+                            nullptr, true);
     options["lMaxNormal"] =
       new FieldOptionDouble(_lMaxNormal,
                             "Maximum mesh size in the direction normal to the "
                             "closest curve",
-                            0, true);
+                            nullptr, true);
 
     // make sure all internal GEO CAD data has been synced with GModel
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -1998,7 +1998,7 @@ public:
     if(totpoints) { _zeroNodes = annAllocPts(totpoints, 3); }
     _tg.resize(totpoints);
     int k = 0;
-    for(std::list<int>::iterator it = _curveTags.begin();
+    for(auto it = _curveTags.begin();
         it != _curveTags.end(); ++it) {
       GEdge *e = GModel::current()->getEdgeByTag(*it);
       if(e) {
@@ -2020,7 +2020,7 @@ public:
     _kdTree = new ANNkd_tree(_zeroNodes, totpoints, 3);
     updateNeeded = false;
   }
-  void operator()(double x, double y, double z, SMetric3 &metr, GEntity *ge = 0)
+  void operator()(double x, double y, double z, SMetric3 &metr, GEntity *ge = nullptr)
   {
     if(updateNeeded) update();
     double xyz[3] = {x, y, z};
@@ -2044,7 +2044,7 @@ public:
     SVector3 n1 = crossprod(t, n0);
     metr = SMetric3(1 / lTg / lTg, 1 / lN / lN, 1 / lN / lN, t, n0, n1);
   }
-  virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
+  virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
     if(updateNeeded) update();
     double xyz[3] = {X, Y, Z};
@@ -2072,7 +2072,7 @@ private:
 
 public:
   AttractorField(int dim, int tag, int nbe)
-    : _kdTree(0), _zeroNodes(0), _numPointsPerCurve(nbe)
+    : _kdTree(nullptr), _zeroNodes(nullptr), _numPointsPerCurve(nbe)
   {
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
@@ -2082,11 +2082,11 @@ public:
       _curveTags.push_back(tag);
     else if(dim == 2)
       _surfaceTags.push_back(tag);
-    _xField = _yField = _zField = NULL;
+    _xField = _yField = _zField = nullptr;
     _xFieldId = _yFieldId = _zFieldId = -1;
     updateNeeded = true;
   }
-  AttractorField() : _kdTree(0), _zeroNodes(0)
+  AttractorField() : _kdTree(nullptr), _zeroNodes(nullptr)
   {
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
@@ -2143,7 +2143,7 @@ public:
            "The Attractor field is deprecated: use the Distance field instead.";
   }
   void getCoord(double x, double y, double z, double &cx, double &cy,
-                double &cz, GEntity *ge = NULL)
+                double &cz, GEntity *ge = nullptr)
   {
     cx = _xField ? (*_xField)(x, y, z, ge) : x;
     cy = _yField ? (*_yField)(x, y, z, ge) : y;
@@ -2160,13 +2160,13 @@ public:
     if(updateNeeded) {
       _xField = _xFieldId >= 0 ?
                   (GModel::current()->getFields()->get(_xFieldId)) :
-                  NULL;
+                  nullptr;
       _yField = _yFieldId >= 0 ?
                   (GModel::current()->getFields()->get(_yFieldId)) :
-                  NULL;
+                  nullptr;
       _zField = _zFieldId >= 0 ?
                   (GModel::current()->getFields()->get(_zFieldId)) :
-                  NULL;
+                  nullptr;
       if(_zeroNodes) {
         annDeallocPts(_zeroNodes);
         delete _kdTree;
@@ -2175,7 +2175,7 @@ public:
       std::vector<SPoint2> uvpoints;
       std::vector<int> offset;
       offset.push_back(0);
-      for(std::list<int>::iterator it = _surfaceTags.begin();
+      for(auto it = _surfaceTags.begin();
           it != _surfaceTags.end(); ++it) {
         GFace *f = GModel::current()->getFaceByTag(*it);
         if(f) {
@@ -2202,7 +2202,7 @@ public:
       double x, y, z;
       std::vector<double> px, py, pz;
 
-      for(std::list<int>::iterator it = _pointTags.begin();
+      for(auto it = _pointTags.begin();
           it != _pointTags.end(); ++it) {
         GVertex *gv = GModel::current()->getVertexByTag(*it);
         if(gv) {
@@ -2214,7 +2214,7 @@ public:
         }
       }
 
-      for(std::list<int>::iterator it = _curveTags.begin();
+      for(auto it = _curveTags.begin();
           it != _curveTags.end(); ++it) {
         GEdge *e = GModel::current()->getEdgeByTag(*it);
         if(e) {
@@ -2247,7 +2247,7 @@ public:
       // This can lead to weird results as we generate attractors over the whole
       // parametric plane (we should really use a mesh, e.g. a refined STL.)
       int count = 0;
-      for(std::list<int>::iterator it = _surfaceTags.begin();
+      for(auto it = _surfaceTags.begin();
           it != _surfaceTags.end(); ++it) {
         GFace *f = GModel::current()->getFaceByTag(*it);
         if(f) {
@@ -2305,7 +2305,7 @@ public:
   }
 
   using Field::operator();
-  virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
+  virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
 #if defined(_OPENMP)
 #pragma omp critical
@@ -2438,7 +2438,7 @@ double _l0;
 public:
 OctreeField()
 {
-  _root = NULL;
+  _root = nullptr;
 
   options["InField"] = new FieldOptionInt(
     _inFieldId, "Id of the field to represent on the octree", &updateNeeded);
@@ -2458,13 +2458,13 @@ void update()
     updateNeeded = false;
     if(_root) {
       delete _root;
-      _root = NULL;
+      _root = nullptr;
     }
   }
   if(!_root) {
     _inField = _inFieldId >= 0 ?
                  (GModel::current()->getFields()->get(_inFieldId)) :
-                 NULL;
+                 nullptr;
     if(!_inField) return;
     GModel::current()->getFields()->get(_inFieldId)->update();
     bounds = GModel::current()->bounds();
@@ -2476,7 +2476,7 @@ void update()
   }
 }
 using Field::operator();
-virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
+virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
 {
   SPoint3 xmin = bounds.min();
   SVector3 d = bounds.max() - xmin;
@@ -2557,7 +2557,7 @@ class DistanceField : public Field {
   double _outDistSqr;
 
 public:
-  DistanceField() : _index(NULL), _pc2kd(_P), _outIndex(0), _outDistSqr(0)
+  DistanceField() : _index(nullptr), _pc2kd(_P), _outIndex(0), _outDistSqr(0)
   {
     _numPointsPerCurve = 20;
     _xFieldId = _yFieldId = _zFieldId = -1;
@@ -2595,7 +2595,7 @@ public:
       true);
   }
   DistanceField(int dim, int tag, int nbe)
-    : _numPointsPerCurve(nbe), _index(NULL), _pc2kd(_P), _outIndex(0),
+    : _numPointsPerCurve(nbe), _index(nullptr), _pc2kd(_P), _outIndex(0),
       _outDistSqr(0)
   {
     if(dim == 0)
@@ -2604,7 +2604,7 @@ public:
       _curveTags.push_back(tag);
     else if(dim == 3)
       _surfaceTags.push_back(tag);
-    _xField = _yField = _zField = NULL;
+    _xField = _yField = _zField = nullptr;
     _xFieldId = _yFieldId = _zFieldId = -1;
     updateNeeded = true;
   }
@@ -2632,18 +2632,18 @@ public:
     if(updateNeeded) {
       _xField = _xFieldId >= 0 ?
                   (GModel::current()->getFields()->get(_xFieldId)) :
-                  NULL;
+                  nullptr;
       _yField = _yFieldId >= 0 ?
                   (GModel::current()->getFields()->get(_yFieldId)) :
-                  NULL;
+                  nullptr;
       _zField = _zFieldId >= 0 ?
                   (GModel::current()->getFields()->get(_zFieldId)) :
-                  NULL;
+                  nullptr;
 
       _infos.clear();
       std::vector<SPoint3> &points = _P.pts;
       points.clear();
-      for(std::list<int>::iterator it = _surfaceTags.begin();
+      for(auto it = _surfaceTags.begin();
           it != _surfaceTags.end(); ++it) {
         GFace *f = GModel::current()->getFaceByTag(*it);
         if(f) {
@@ -2670,7 +2670,7 @@ public:
         }
       }
 
-      for(std::list<int>::iterator it = _pointTags.begin();
+      for(auto it = _pointTags.begin();
           it != _pointTags.end(); ++it) {
         GVertex *gv = GModel::current()->getVertexByTag(*it);
         if(gv) {
@@ -2679,7 +2679,7 @@ public:
         }
       }
 
-      for(std::list<int>::iterator it = _curveTags.begin();
+      for(auto it = _curveTags.begin();
           it != _curveTags.end(); ++it) {
         GEdge *e = GModel::current()->getEdgeByTag(*it);
         if(e) {
@@ -2713,7 +2713,7 @@ public:
     }
   }
   using Field::operator();
-  virtual double operator()(double X, double Y, double Z, GEntity *ge = 0)
+  virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
     if(!_index) return MAX_LC;
     double query_pt[3] = {X, Y, Z};
@@ -2815,18 +2815,18 @@ BoundaryLayerField::BoundaryLayerField()
     hWallN,
     "Mesh size normal to the curvem per point (overwrites "
     "Size when defined)",
-    0, true);
+    nullptr, true);
   options["hwall_n_nodes"] = new FieldOptionListDouble(
     _hWallNNodes,
     "Mesh size normal to the curve, per point (overwrites "
     "Size when defined)",
-    0, true);
+    nullptr, true);
   options["ratio"] = new FieldOptionDouble(
-    ratio, "Size ratio between two successive layers", 0, true);
+    ratio, "Size ratio between two successive layers", nullptr, true);
   options["hfar"] =
-    new FieldOptionDouble(hFar, "Element size far from the wall", 0, true);
+    new FieldOptionDouble(hFar, "Element size far from the wall", nullptr, true);
   options["thickness"] = new FieldOptionDouble(
-    thickness, "Maximal thickness of the boundary layer", 0, true);
+    thickness, "Maximal thickness of the boundary layer", nullptr, true);
   options["ExcludedFaceList"] =
     new FieldOptionList(_excludedSurfaceTags,
                         "Tags of surfaces in the geometric model where the "
@@ -2836,7 +2836,7 @@ BoundaryLayerField::BoundaryLayerField()
 
 void BoundaryLayerField::removeAttractors()
 {
-  for(std::list<DistanceField *>::iterator it = _attFields.begin();
+  for(auto it = _attFields.begin();
       it != _attFields.end(); ++it)
     delete *it;
   _attFields.clear();
@@ -2899,7 +2899,7 @@ bool BoundaryLayerField::setupFor2d(int iF)
   std::vector<GEdge *> const &embedded_edges = gf->embeddedEdges();
   ed.insert(ed.begin(), embedded_edges.begin(), embedded_edges.end());
 
-  for(std::vector<GEdge *>::iterator it = ed.begin(); it != ed.end(); ++it) {
+  for(auto it = ed.begin(); it != ed.end(); ++it) {
     bool isIn = false;
     int iE = (*it)->tag();
     bool found = std::find(_curveTagsSaved.begin(), _curveTagsSaved.end(),
@@ -2908,7 +2908,7 @@ bool BoundaryLayerField::setupFor2d(int iF)
     if(found) {
       std::vector<GFace *> fc = (*it)->faces();
       int numf = 0;
-      for(std::vector<GFace *>::iterator it = fc.begin(); it != fc.end();
+      for(auto it = fc.begin(); it != fc.end();
           it++) {
         if((*it)->meshAttributes.extrude &&
            (*it)->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY) {
@@ -2948,11 +2948,11 @@ bool BoundaryLayerField::setupFor2d(int iF)
 double BoundaryLayerField::operator()(double x, double y, double z, GEntity *ge)
 {
   if(updateNeeded) {
-    for(std::list<int>::iterator it = _pointTags.begin();
+    for(auto it = _pointTags.begin();
         it != _pointTags.end(); ++it) {
       _attFields.push_back(new DistanceField(0, *it, 100000));
     }
-    for(std::list<int>::iterator it = _curveTags.begin();
+    for(auto it = _curveTags.begin();
         it != _curveTags.end(); ++it) {
       _attFields.push_back(new DistanceField(1, *it, 300000));
     }
@@ -2961,7 +2961,7 @@ double BoundaryLayerField::operator()(double x, double y, double z, GEntity *ge)
 
   double dist = 1.e22;
   if(_attFields.empty()) return dist;
-  for(std::list<DistanceField *>::iterator it = _attFields.begin();
+  for(auto it = _attFields.begin();
       it != _attFields.end(); ++it) {
     double cdist = (*(*it))(x, y, z);
     if(cdist < dist) { dist = cdist; }
@@ -2983,7 +2983,7 @@ void BoundaryLayerField::computeFor1dMesh(double x, double y, double z,
 {
   double xpk = 0., ypk = 0., zpk = 0.;
   double distk = 1.e22;
-  for(std::list<int>::iterator it = _pointTags.begin(); it != _pointTags.end();
+  for(auto it = _pointTags.begin(); it != _pointTags.end();
       ++it) {
     GVertex *v = GModel::current()->getVertexByTag(*it);
     double xp = v->x();
@@ -3102,11 +3102,11 @@ void BoundaryLayerField::operator()(double x, double y, double z,
                                     SMetric3 &metr, GEntity *ge)
 {
   if(updateNeeded) {
-    for(std::list<int>::iterator it = _pointTags.begin();
+    for(auto it = _pointTags.begin();
         it != _pointTags.end(); ++it) {
       _attFields.push_back(new DistanceField(0, *it, 100000));
     }
-    for(std::list<int>::iterator it = _curveTags.begin();
+    for(auto it = _curveTags.begin();
         it != _curveTags.end(); ++it) {
       _attFields.push_back(new DistanceField(1, *it, 10000));
     }
@@ -3114,11 +3114,11 @@ void BoundaryLayerField::operator()(double x, double y, double z,
   }
 
   currentDistance = 1.e22;
-  currentClosest = 0;
+  currentClosest = nullptr;
   std::vector<SMetric3> hop;
   SMetric3 v(1. / (CTX::instance()->mesh.lcMax * CTX::instance()->mesh.lcMax));
   hop.push_back(v);
-  for(std::list<DistanceField *>::iterator it = _attFields.begin();
+  for(auto it = _attFields.begin();
       it != _attFields.end(); ++it) {
     double cdist = (*(*it))(x, y, z);
     SPoint3 CLOSEST = (*it)->getAttractorInfo().second;
@@ -3182,16 +3182,16 @@ FieldManager::FieldManager()
 
 void FieldManager::initialize()
 {
-  std::map<int, Field *>::iterator it = begin();
+  auto it = begin();
   for(; it != end(); ++it) it->second->update();
 }
 
 FieldManager::~FieldManager()
 {
-  for(std::map<std::string, FieldFactory *>::iterator it = mapTypeName.begin();
+  for(auto it = mapTypeName.begin();
       it != mapTypeName.end(); it++)
     delete it->second;
-  for(FieldManager::iterator it = begin(); it != end(); it++) delete it->second;
+  for(auto it = begin(); it != end(); it++) delete it->second;
 }
 
 void FieldManager::setBackgroundField(Field *BGF)
@@ -3267,10 +3267,10 @@ double GenericField::operator()(double x, double y, double z, GEntity *ge)
 {
   std::vector<double> sizes(cbs_with_data.size() +
                             cbs_extended_with_data.size());
-  std::vector<double>::iterator it = sizes.begin();
+  auto it = sizes.begin();
 
   // Go over all callback functions
-  for(std::vector<std::pair<ptrfunction, void *> >::iterator itcbs =
+  for(auto itcbs =
         cbs_with_data.begin();
       itcbs != cbs_with_data.end(); itcbs++, it++) {
     bool ok = (itcbs->first)(x, y, z, itcbs->second, (*it));
@@ -3278,7 +3278,7 @@ double GenericField::operator()(double x, double y, double z, GEntity *ge)
   }
 
   // Go over all extended callback functions
-  for(std::vector<std::pair<ptrfunctionextended, void *> >::iterator itcbs =
+  for(auto itcbs =
         cbs_extended_with_data.begin();
       itcbs != cbs_extended_with_data.end(); itcbs++, it++) {
     bool ok = (itcbs->first)(x, y, z, ge, itcbs->second, (*it));

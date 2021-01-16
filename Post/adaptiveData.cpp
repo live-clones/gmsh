@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -58,7 +58,7 @@ std::vector<PValues> globalVTKData::vtkGlobalValues;
 
 template <class T> static void cleanElement()
 {
-  for(typename std::list<T *>::iterator it = T::all.begin(); it != T::all.end();
+  for(auto it = T::all.begin(); it != T::all.end();
       ++it)
     delete *it;
   T::all.clear();
@@ -116,7 +116,7 @@ adaptiveVertex *adaptiveVertex::add(double x, double y, double z,
   p.x = x;
   p.y = y;
   p.z = z;
-  std::set<adaptiveVertex>::iterator it = allVertices.find(p);
+  auto it = allVertices.find(p);
   if(it == allVertices.end()) {
     allVertices.insert(p);
     it = allVertices.find(p);
@@ -1086,8 +1086,8 @@ void adaptivePyramid::recurError(adaptivePyramid *p, double AVG, double tol)
 
 template <class T>
 adaptiveElements<T>::adaptiveElements(std::vector<fullMatrix<double> *> &p)
-  : _coeffsVal(0), _eexpsVal(0), _interpolVal(0), _coeffsGeom(0), _eexpsGeom(0),
-    _interpolGeom(0)
+  : _coeffsVal(nullptr), _eexpsVal(nullptr), _interpolVal(nullptr), _coeffsGeom(nullptr), _eexpsGeom(nullptr),
+    _interpolGeom(nullptr)
 {
   if(p.size() >= 2) {
     _coeffsVal = p[0];
@@ -1122,13 +1122,13 @@ template <class T> void adaptiveElements<T>::init(int level)
   if(_interpolGeom) delete _interpolGeom;
   _interpolGeom = new fullMatrix<double>(T::allVertices.size(), numNodes);
 
-  fullVector<double> sfv(numVals), *tmpv = 0;
-  fullVector<double> sfg(numNodes), *tmpg = 0;
+  fullVector<double> sfv(numVals), *tmpv = nullptr;
+  fullVector<double> sfg(numNodes), *tmpg = nullptr;
   if(_eexpsVal) tmpv = new fullVector<double>(_eexpsVal->size1());
   if(_eexpsGeom) tmpg = new fullVector<double>(_eexpsGeom->size1());
 
   int i = 0;
-  for(std::set<adaptiveVertex>::iterator it = T::allVertices.begin();
+  for(auto it = T::allVertices.begin();
       it != T::allVertices.end(); ++it) {
     if(_coeffsVal && _eexpsVal)
       computeShapeFunctions(_coeffsVal, _eexpsVal, it->x, it->y, it->z, &sfv,
@@ -1174,13 +1174,13 @@ template <> void adaptiveElements<adaptivePyramid>::init(int level)
   _interpolGeom =
     new fullMatrix<double>(adaptivePyramid::allVertices.size(), numNodes);
 
-  fullVector<double> sfv(numVals), *tmpv = 0;
-  fullVector<double> sfg(numNodes), *tmpg = 0;
+  fullVector<double> sfv(numVals), *tmpv = nullptr;
+  fullVector<double> sfg(numNodes), *tmpg = nullptr;
   if(_eexpsVal) tmpv = new fullVector<double>(_eexpsVal->size1());
   if(_eexpsGeom) tmpg = new fullVector<double>(_eexpsGeom->size1());
 
   int i = 0;
-  for(std::set<adaptiveVertex>::iterator it =
+  for(auto it =
         adaptivePyramid::allVertices.begin();
       it != adaptivePyramid::allVertices.end(); ++it) {
     if(_coeffsVal && _eexpsVal)
@@ -1267,7 +1267,7 @@ bool adaptiveElements<T>::adapt(double tol, int numComp,
   }
   if(onlyComputeMinMax) return true;
 
-  fullMatrix<double> *resxyz = 0;
+  fullMatrix<double> *resxyz = nullptr;
   if(numComp == 3 || numComp == 9) {
     fullMatrix<double> valxyz(numVals, numComp);
     resxyz = new fullMatrix<double>(numVertices, numComp);
@@ -1301,7 +1301,7 @@ bool adaptiveElements<T>::adapt(double tol, int numComp,
 #endif
 
   int i = 0;
-  for(std::set<adaptiveVertex>::iterator it = T::allVertices.begin();
+  for(auto it = T::allVertices.begin();
       it != T::allVertices.end(); ++it) {
     // ok because we know this will not change the set ordering
     adaptiveVertex *p = (adaptiveVertex *)&(*it);
@@ -1327,7 +1327,7 @@ bool adaptiveElements<T>::adapt(double tol, int numComp,
 
   if(resxyz) delete resxyz;
 
-  for(typename std::list<T *>::iterator it = T::all.begin(); it != T::all.end();
+  for(auto it = T::all.begin(); it != T::all.end();
       it++)
     (*it)->visible = false;
 
@@ -1341,7 +1341,7 @@ bool adaptiveElements<T>::adapt(double tol, int numComp,
 
   coords.clear();
   values.clear();
-  for(typename std::list<T *>::iterator it = T::all.begin(); it != T::all.end();
+  for(auto it = T::all.begin(); it != T::all.end();
       it++) {
     if((*it)->visible) {
       adaptiveVertex **p = (*it)->p;
@@ -1372,8 +1372,8 @@ void adaptiveElements<T>::addInView(double tol, int step, PViewData *in,
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3 && numComp != 9) return;
 
-  int numEle = 0, *outNb = 0;
-  std::vector<double> *outList = 0;
+  int numEle = 0, *outNb = nullptr;
+  std::vector<double> *outList = nullptr;
   switch(T::numEdges) {
   case 0:
     numEle = in->getNumPoints();
@@ -1507,9 +1507,9 @@ void adaptiveElements<T>::addInView(double tol, int step, PViewData *in,
 }
 
 adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
-  : _step(-1), _level(-1), _tol(-1.), _inData(data), _points(0), _lines(0),
-    _triangles(0), _quadrangles(0), _tetrahedra(0), _hexahedra(0), _prisms(0),
-    _pyramids(0)
+  : _step(-1), _level(-1), _tol(-1.), _inData(data), _points(nullptr), _lines(nullptr),
+    _triangles(nullptr), _quadrangles(nullptr), _tetrahedra(nullptr), _hexahedra(nullptr), _prisms(nullptr),
+    _pyramids(nullptr)
 {
   if(outDataInit ==
      true) { // For visualization of the adapted view in GMSH GUI only
@@ -1517,7 +1517,7 @@ adaptiveData::adaptiveData(PViewData *data, bool outDataInit)
     _outData->setName(data->getName() + "_adapted");
   }
   else {
-    _outData = 0; // For external used
+    _outData = nullptr; // For external used
   }
   std::vector<fullMatrix<double> *> p;
   if(_inData->getNumPoints()) {
@@ -1672,7 +1672,7 @@ void VTKData::writeVTKElmData()
       // Node value
       counter = 0;
       darray = new double[vtkNumComp * vtkLocalValues.size()];
-      for(std::vector<PValues>::iterator it = vtkLocalValues.begin();
+      for(auto it = vtkLocalValues.begin();
           it != vtkLocalValues.end(); ++it) {
         for(int i = 0; i < vtkNumComp; i++) {
           darray[counter + i] = it->v[i];
@@ -1689,7 +1689,7 @@ void VTKData::writeVTKElmData()
       int sizeArray = (int)vtkLocalCoords.size();
       darray = new double[3 * sizeArray];
       counter = 0;
-      for(std::vector<PCoords>::iterator it = vtkLocalCoords.begin();
+      for(auto it = vtkLocalCoords.begin();
           it != vtkLocalCoords.end(); ++it) {
         for(int i = 0; i < 3; i++) {
           darray[counter + i] = (*it).c[i];
@@ -1706,7 +1706,7 @@ void VTKData::writeVTKElmData()
       // vtkConnectivity See
       // http://www.vtk.org/wp-content/uploads/2015/04/file-formats.pdf (page 4)
       int cellSizeData = 0;
-      for(std::vector<vectInt>::iterator it = vtkLocalConnectivity.begin();
+      for(auto it = vtkLocalConnectivity.begin();
           it != vtkLocalConnectivity.end(); ++it) {
         // Contrary to vtk format, no +1 required for the number of nodes in the
         // element
@@ -1718,9 +1718,9 @@ void VTKData::writeVTKElmData()
       int cellcounter = 0;
       i64array = new uint64_t[cellSizeData];
       uint64_t *cellOffset = new uint64_t[vtkLocalConnectivity.size()];
-      for(std::vector<vectInt>::iterator it = vtkLocalConnectivity.begin();
+      for(auto it = vtkLocalConnectivity.begin();
           it != vtkLocalConnectivity.end(); ++it) {
-        for(vectInt::iterator jt = it->begin(); jt != it->end(); ++jt) {
+        for(auto jt = it->begin(); jt != it->end(); ++jt) {
           i64array[counter] = *jt;
           counter++;
           vtkCountTotNodConnect++;
@@ -1739,7 +1739,7 @@ void VTKData::writeVTKElmData()
       // Cell type
       counter = 0;
       i8array = new uint8_t[vtkLocalConnectivity.size()];
-      for(std::vector<int>::iterator it = vtkLocalCellType.begin();
+      for(auto it = vtkLocalCellType.begin();
           it != vtkLocalCellType.end(); it++) {
         i8array[counter] = *it;
         counter++;
@@ -1751,7 +1751,7 @@ void VTKData::writeVTKElmData()
     else { // ascii
 
       // Node values
-      for(std::vector<PValues>::iterator it = vtkLocalValues.begin();
+      for(auto it = vtkLocalValues.begin();
           it != vtkLocalValues.end(); ++it) {
         for(int i = 0; i < vtkNumComp; i++) {
           fprintf(vtkFileNodVal, "%23.16e ", (*it).v[i]);
@@ -1760,7 +1760,7 @@ void VTKData::writeVTKElmData()
         }
       }
 
-      for(std::vector<PCoords>::iterator it = vtkLocalCoords.begin();
+      for(auto it = vtkLocalCoords.begin();
           it != vtkLocalCoords.end(); it++) {
         fprintf(vtkFileCoord, "%23.16e %23.16e %23.16e ", (*it).c[0],
                 (*it).c[1], (*it).c[2]);
@@ -1772,9 +1772,9 @@ void VTKData::writeVTKElmData()
       // Connectivity
       int *cellOffset = new int[vtkLocalConnectivity.size()];
       int cellcounter = 0;
-      for(std::vector<vectInt>::iterator it = vtkLocalConnectivity.begin();
+      for(auto it = vtkLocalConnectivity.begin();
           it != vtkLocalConnectivity.end(); ++it) {
-        for(vectInt::iterator jt = it->begin(); jt != it->end(); ++jt) {
+        for(auto jt = it->begin(); jt != it->end(); ++jt) {
           fprintf(vtkFileConnect, "%d ", *jt);
           vtkCountTotNodConnect++;
           if(vtkCountTotNodConnect % 6 == 0) fprintf(vtkFileConnect, "\n");
@@ -1792,7 +1792,7 @@ void VTKData::writeVTKElmData()
       delete[] cellOffset;
 
       // Cell type
-      for(std::vector<int>::iterator it = vtkLocalCellType.begin();
+      for(auto it = vtkLocalCellType.begin();
           it != vtkLocalCellType.end(); it++) {
         fprintf(vtkFileCellType, "%d ", *it);
         vtkCountCellType++;
@@ -1927,7 +1927,7 @@ void VTKData::finalizeVTKFile()
     if(vtkIsBinary == true) { // Binary or ascii
 
       vtkFile = fopen(filename.c_str(), "wb");
-      if(vtkFile == NULL) {
+      if(vtkFile == nullptr) {
         printf("Could not open file %s\n", filename.c_str());
         return;
       }
@@ -2077,7 +2077,7 @@ void VTKData::finalizeVTKFile()
     else { // ascii
 
       vtkFile = fopen(filename.c_str(), "w");
-      if(vtkFile == NULL) {
+      if(vtkFile == nullptr) {
         printf("Could not open file %s\n", filename.c_str());
         return;
       }
@@ -2310,7 +2310,7 @@ void adaptiveElements<T>::adaptForVTK(double tol, int numComp,
     maxVal = std::max(maxVal, res(i));
   }
 
-  fullMatrix<double> *resxyz = 0;
+  fullMatrix<double> *resxyz = nullptr;
   if(numComp == 3 || numComp == 9) {
     fullMatrix<double> valxyz(numVals, numComp);
     resxyz = new fullMatrix<double>(numVertices, numComp);
@@ -2344,7 +2344,7 @@ void adaptiveElements<T>::adaptForVTK(double tol, int numComp,
 #endif
 
   int i = 0;
-  for(std::set<adaptiveVertex>::iterator it = T::allVertices.begin();
+  for(auto it = T::allVertices.begin();
       it != T::allVertices.end(); ++it) {
     // ok because we know this will not change the set ordering
     adaptiveVertex *p = (adaptiveVertex *)&(*it);
@@ -2370,7 +2370,7 @@ void adaptiveElements<T>::adaptForVTK(double tol, int numComp,
 
   if(resxyz) delete resxyz;
 
-  for(typename std::list<T *>::iterator it = T::all.begin(); it != T::all.end();
+  for(auto it = T::all.begin(); it != T::all.end();
       it++)
     (*it)->visible = false;
 
@@ -2382,7 +2382,7 @@ void adaptiveElements<T>::adaptForVTK(double tol, int numComp,
 
   coords.clear();
   values.clear();
-  for(typename std::list<T *>::iterator it = T::all.begin(); it != T::all.end();
+  for(auto it = T::all.begin(); it != T::all.end();
       it++) {
     if((*it)->visible) {
       adaptiveVertex **p = (*it)->p;
@@ -2416,7 +2416,7 @@ void adaptiveElements<T>::buildMapping(nodMap<T> &myNodMap, double tol,
     myNodMap
       .cleanMapping(); // Required if tol > 0 (local error based adaptation)
 
-    for(typename std::list<T *>::iterator itleaf = T::all.begin();
+    for(auto itleaf = T::all.begin();
         itleaf != T::all.end(); itleaf++) {
       // Visit all the leaves of the refined canonical element
 
@@ -2430,7 +2430,7 @@ void adaptiveElements<T>::buildMapping(nodMap<T> &myNodMap, double tol,
           pquery.x = (*itleaf)->p[i]->x;
           pquery.y = (*itleaf)->p[i]->y;
           pquery.z = (*itleaf)->p[i]->z;
-          std::set<adaptiveVertex>::iterator it = T::allVertices.find(pquery);
+          auto it = T::allVertices.find(pquery);
           if(it == T::allVertices.end()) {
             Msg::Error("Could not find adaptive Vertex in "
                        "adaptiveElements<T>::buildMapping %f %f %f",
@@ -2456,7 +2456,7 @@ void adaptiveElements<T>::buildMapping(nodMap<T> &myNodMap, double tol,
     // Use an ordered set for efficiency
     // This set is also used in case of partiel refinement
     std::set<int> uniqueNod;
-    for(std::vector<int>::iterator it = myNodMap.mapping.begin();
+    for(auto it = myNodMap.mapping.begin();
         it != myNodMap.mapping.end(); it++) {
       uniqueNod.insert(*it);
     }
@@ -2468,7 +2468,7 @@ void adaptiveElements<T>::buildMapping(nodMap<T> &myNodMap, double tol,
     // temporary mapping, based on uniqueNod already generated above
     if(tol > 0.0) {
       std::set<int>::iterator jt;
-      for(std::vector<int>::iterator it = myNodMap.mapping.begin();
+      for(auto it = myNodMap.mapping.begin();
           it != myNodMap.mapping.end(); ++it) {
         jt = uniqueNod.find(*it);
         *it = std::distance(uniqueNod.begin(), jt);

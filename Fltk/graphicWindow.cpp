@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -77,12 +77,12 @@ static void file_new_cb(Fl_Widget *w, void *data)
     if(split[2] != ".geo"){
       if(fl_choice("File '%s' does not have the '.geo' extension.\n\n"
                    "Do you want to continue as-is?",
-                   "Continue as-is", "Use '.geo' extension", 0, name.c_str()))
+                   "Continue as-is", "Use '.geo' extension", nullptr, name.c_str()))
         name = split[0] + split[1] + ".geo";
     }
     if(!StatFile(name)){
       if(fl_choice("File '%s' already exists.\n\nDo you want to delete it?",
-                   "Cancel", "Delete", 0, name.c_str()))
+                   "Cancel", "Delete", nullptr, name.c_str()))
         UnlinkFile(name);
       else
         goto test;
@@ -93,7 +93,7 @@ static void file_new_cb(Fl_Widget *w, void *data)
       return;
     }
     int factory = fl_choice("Which geometry kernel do you want to use?",
-                            "Built-in", "OpenCASCADE", 0);
+                            "Built-in", "OpenCASCADE", nullptr);
     time_t now;
     time(&now);
     fprintf(fp, "// Gmsh project created on %s", ctime(&now));
@@ -168,9 +168,9 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
     if(n != (int)PView::list.size())
       FlGui::instance()->openModule("Post-processing");
     if(CTX::instance()->launchSolverAtStartup >= 0)
-      solver_cb(0, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
+      solver_cb(nullptr, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
     else if(onelabUtils::haveSolverToRun())
-      onelab_cb(0, (void*)"check");
+      onelab_cb(nullptr, (void*)"check");
     drawContext::global()->draw();
   }
 }
@@ -185,9 +185,9 @@ static void file_open_recent_cb(Fl_Widget *w, void *data)
   if(n != (int)PView::list.size())
     FlGui::instance()->openModule("Post-processing");
   if(CTX::instance()->launchSolverAtStartup >= 0)
-    solver_cb(0, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
+    solver_cb(nullptr, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
   else if(onelabUtils::haveSolverToRun())
-    onelab_cb(0, (void*)"check");
+    onelab_cb(nullptr, (void*)"check");
 }
 
 static void file_clear_cb(Fl_Widget *w, void *data)
@@ -198,7 +198,7 @@ static void file_clear_cb(Fl_Widget *w, void *data)
   }
   ClearProject();
   if(onelabUtils::haveSolverToRun())
-    onelab_cb(0, (void*)"reset"); // this will call OpenProject
+    onelab_cb(nullptr, (void*)"reset"); // this will call OpenProject
   else
     OpenProject(GModel::current()->getFileName());
   drawContext::global()->draw();
@@ -207,7 +207,7 @@ static void file_clear_cb(Fl_Widget *w, void *data)
 static void file_remote_cb(Fl_Widget *w, void *data)
 {
   onelab::localNetworkClient *c;
-  onelab::server::citer it = onelab::server::instance()->findClient("GmshRemote");
+  auto it = onelab::server::instance()->findClient("GmshRemote");
   if(it == onelab::server::instance()->lastClient()){
     c = new gmshLocalNetworkClient("GmshRemote", "");
     c->setSocketSwitch("-socket");
@@ -483,7 +483,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
 #endif
   };
   int nbformats = sizeof(formats) / sizeof(formats[0]);
-  static char *pat = 0;
+  static char *pat = nullptr;
   if(!pat) {
     pat = new char[nbformats * 256];
     strcpy(pat, formats[0].pat);
@@ -504,7 +504,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
-                      "Cancel", "Replace", 0, name.c_str()))
+                      "Cancel", "Replace", nullptr, name.c_str()))
           goto test;
     }
     int i = fileChooserGetFilter();
@@ -545,7 +545,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
-                      "Cancel", "Replace", 0, name.c_str()))
+                      "Cancel", "Replace", nullptr, name.c_str()))
           goto test;
     }
     rename(GModel::current()->getFileName().c_str(), name.c_str());
@@ -553,7 +553,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     GModel::current()->setName(SplitFileName(name)[1]);
     Msg::SetOnelabChanged(3);
     if(onelabUtils::haveSolverToRun())
-      onelab_cb(0, (void*)"check");
+      onelab_cb(nullptr, (void*)"check");
     drawContext::global()->draw();
   }
 }
@@ -561,10 +561,10 @@ static void file_rename_cb(Fl_Widget *w, void *data)
 static void file_delete_cb(Fl_Widget *w, void *data)
 {
   if(fl_choice("Do you really want to delete file '%s'?",
-               "Cancel", "Delete", 0, GModel::current()->getFileName().c_str())){
+               "Cancel", "Delete", nullptr, GModel::current()->getFileName().c_str())){
     UnlinkFile(GModel::current()->getFileName());
     Msg::Info("Deleted `%s'", GModel::current()->getFileName().c_str());
-    file_clear_cb(0, 0);
+    file_clear_cb(nullptr, nullptr);
   }
 }
 
@@ -601,7 +601,7 @@ void file_watch_cb(Fl_Widget *w, void *data)
   std::string directory = SplitFileName(pattern)[0];
   if(directory.empty()) directory = "./";
 
-  dirent **files = 0;
+  dirent **files = nullptr;
   int num = fl_filename_list(directory.c_str(), &files, fl_numericsort);
   if(num <= 0) return;
   std::vector<std::string> matches;
@@ -661,14 +661,14 @@ void onelab_reload_cb(Fl_Widget *w, void *data)
   std::string fileName = GModel::current()->getFileName();
   ClearProject();
   GModel::current()->setFileName(fileName);
-  onelab_cb(0, (void*)"reset"); // will call OpenProject
+  onelab_cb(nullptr, (void*)"reset"); // will call OpenProject
   drawContext::global()->draw();
 }
 
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
   if(onelabUtils::haveSolverToRun()){
-    onelab_cb(0, (void*)"check_always");
+    onelab_cb(nullptr, (void*)"check_always");
   }
   else
     OpenProject(GModel::current()->getFileName());
@@ -821,7 +821,7 @@ static void add_new_point_based_entity(const std::string &what, int pane)
   }
 
   FlGui::instance()->elementaryContext->hide();
-  drawContext::setDrawGeomTransientFunction(0);
+  drawContext::setDrawGeomTransientFunction(nullptr);
 
   // at the end, not during creation to avoid having things jumping around
   SetBoundingBox();
@@ -1526,7 +1526,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
             if(!FlGui::available()) return;
 
             // ask clients to update using the new physical definition
-            onelab_cb(0, (void*)"check");
+            onelab_cb(nullptr, (void*)"check");
 
             // if onelab context parameters are defined for the physical group,
             // show the parameter definition window and abort the physical group
@@ -1898,7 +1898,7 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
   Msg::StatusGl("Select curve to split\n"
                 "[Press 'q' to abort]");
-  GEdge* edge_to_split = 0;
+  GEdge* edge_to_split = nullptr;
   while(1){
     if(!FlGui::available()) return;
 
@@ -1981,7 +1981,7 @@ void mesh_save_cb(Fl_Widget *w, void *data)
   if(CTX::instance()->confirmOverwrite) {
     if(!StatFile(name))
       if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
-                    "Cancel", "Replace", 0, name.c_str()))
+                    "Cancel", "Replace", nullptr, name.c_str()))
         return;
   }
   CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
@@ -2601,51 +2601,51 @@ static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics since they
 // are already defined as global shortcuts)
 static Fl_Menu_Item bar_table[] = {
-  {"&File", 0, 0, 0, FL_SUBMENU},
-    {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
+  {"&File", 0, nullptr, nullptr, FL_SUBMENU},
+    {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, nullptr},
     {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_merge_cb, (void*)"open"},
-    {"Open Recent", 0, 0, 0, FL_SUBMENU},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", FL_CTRL+FL_SHIFT+'r', (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {0},
+    {"Open Recent", 0, nullptr, nullptr, FL_SUBMENU},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", FL_CTRL+FL_SHIFT+'r', (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {nullptr},
     {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
-    {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, 0, FL_MENU_DIVIDER},
-    {"&Clear",      0, (Fl_Callback *)file_clear_cb, 0},
-    {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
-    {"Delete",      0, (Fl_Callback *)file_delete_cb, 0, FL_MENU_DIVIDER},
-    {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
+    {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, nullptr, FL_MENU_DIVIDER},
+    {"&Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
+    {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, nullptr},
+    {"Delete",      0, (Fl_Callback *)file_delete_cb, nullptr, FL_MENU_DIVIDER},
+    {"Remote", 0, nullptr, nullptr, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
       {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
-      {0},
-    {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
+      {nullptr},
+    {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, nullptr},
     {"Save Model Options", FL_CTRL+'j', (Fl_Callback *)file_options_save_cb, (void*)"file"},
     {"Save Options As Default", FL_CTRL+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"&Export...",  FL_CTRL+'e', (Fl_Callback *)file_export_cb, 0, FL_MENU_DIVIDER},
-    {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
-    {0},
-  {"&Tools", 0, 0, 0, FL_SUBMENU},
-    {"&Options",         FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
+    {"&Export...",  FL_CTRL+'e', (Fl_Callback *)file_export_cb, nullptr, FL_MENU_DIVIDER},
+    {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, nullptr},
+    {nullptr},
+  {"&Tools", 0, nullptr, nullptr, FL_SUBMENU},
+    {"&Options",         FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, nullptr},
     {"Pl&ugins",         FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
-    {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
-    {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
+    {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, nullptr},
+    {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, nullptr},
+    {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
 #if defined(HAVE_3M)
     {"&3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
-    {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
-    {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)show_hide_message_cb, 0},
-    {0},
-  {"&Window", 0, 0, 0, FL_SUBMENU},
+    {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, nullptr},
+    {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)show_hide_message_cb, nullptr},
+    {nullptr},
+  {"&Window", 0, nullptr, nullptr, FL_SUBMENU},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
 #if defined(WIN32)
     {"Copy to Clipboard",  FL_CTRL+'c', (Fl_Callback *)file_window_cb, (void*)"copy", FL_MENU_DIVIDER},
@@ -2656,17 +2656,17 @@ static Fl_Menu_Item bar_table[] = {
     {"Minimize",           FL_CTRL+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
     {"Enter Full Screen",  FL_CTRL+'f', (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
-    {"Attach/Detach Menu", FL_CTRL+'d', (Fl_Callback *)attach_detach_menu_cb, 0, FL_MENU_DIVIDER},
+    {"Attach/Detach Menu", FL_CTRL+'d', (Fl_Callback *)attach_detach_menu_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
-    {0},
-  {"&Help", 0, 0, 0, FL_SUBMENU},
-    {"On&line Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"&Keyboard and Mouse Usage",  FL_CTRL+'h', (Fl_Callback *)help_basic_cb, 0, FL_MENU_DIVIDER},
+    {nullptr},
+  {"&Help", 0, nullptr, nullptr, FL_SUBMENU},
+    {"On&line Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
+    {"&Keyboard and Mouse Usage",  FL_CTRL+'h', (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
     {"&Current Options and Workspace", FL_CTRL+FL_SHIFT+'h', (Fl_Callback *)status_options_cb, (void*)"?", 0},
-    {"&Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, 0, FL_MENU_DIVIDER},
-    {"&About Gmsh",           0, (Fl_Callback *)help_about_cb, 0},
-    {0},
-  {0}
+    {"&Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr, FL_MENU_DIVIDER},
+    {"&About Gmsh",           0, (Fl_Callback *)help_about_cb, nullptr},
+    {nullptr},
+  {nullptr}
 };
 
 #if defined(__APPLE__)
@@ -2675,50 +2675,50 @@ static Fl_Menu_Item bar_table[] = {
 // would cause spurious menu items to appear on the menu window; removed
 // File->Quit)
 static Fl_Menu_Item sysbar_table[] = {
-  {"File", 0, 0, 0, FL_SUBMENU},
-    {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, 0},
+  {"File", 0, nullptr, nullptr, FL_SUBMENU},
+    {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, nullptr},
     {"Open...",    FL_META+'o', (Fl_Callback *)file_open_merge_cb, (void*)"open"},
-    {"Open Recent", 0, 0, 0, FL_SUBMENU},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", FL_META+FL_SHIFT+'r', (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
-      {0},
+    {"Open Recent", 0, nullptr, nullptr, FL_SUBMENU},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", FL_META+FL_SHIFT+'r', (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, nullptr},
+      {nullptr},
     {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
-    {"Watch Pattern...",   0, (Fl_Callback *)file_watch_cb, 0, FL_MENU_DIVIDER},
-    {"Clear",      0, (Fl_Callback *)file_clear_cb, 0},
-    {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},
-    {"Delete",     0, (Fl_Callback *)file_delete_cb, 0, FL_MENU_DIVIDER},
-    {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
+    {"Watch Pattern...",   0, (Fl_Callback *)file_watch_cb, nullptr, FL_MENU_DIVIDER},
+    {"Clear",      0, (Fl_Callback *)file_clear_cb, nullptr},
+    {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, nullptr},
+    {"Delete",     0, (Fl_Callback *)file_delete_cb, nullptr, FL_MENU_DIVIDER},
+    {"Remote", 0, nullptr, nullptr, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
       {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
-      {0},
-    {"Save Mesh",  FL_META+'s', (Fl_Callback *)mesh_save_cb, 0},
+      {nullptr},
+    {"Save Mesh",  FL_META+'s', (Fl_Callback *)mesh_save_cb, nullptr},
     {"Save Model Options", FL_META+'j', (Fl_Callback *)file_options_save_cb, (void*)"file"},
     {"Save Options As Default", FL_META+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"Export...",  FL_META+'e', (Fl_Callback *)file_export_cb, 0},
-    {0},
-  {"Tools", 0, 0, 0, FL_SUBMENU},
-    {"Options",         FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
+    {"Export...",  FL_META+'e', (Fl_Callback *)file_export_cb, nullptr},
+    {nullptr},
+  {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
+    {"Options",         FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, nullptr},
     {"Plugins",         FL_META+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
-    {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"Clipping",        FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
-    {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
+    {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, nullptr},
+    {"Clipping",        FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, nullptr},
+    {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, nullptr, FL_MENU_DIVIDER},
 #if defined(HAVE_3M)
     {"3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
-    {"Statistics",      FL_META+'i', (Fl_Callback *)statistics_cb, 0},
-    {"Message Console", FL_META+'l', (Fl_Callback *)show_hide_message_cb, 0},
-    {0},
-  {"Window", 0, 0, 0, FL_SUBMENU},
+    {"Statistics",      FL_META+'i', (Fl_Callback *)statistics_cb, nullptr},
+    {"Message Console", FL_META+'l', (Fl_Callback *)show_hide_message_cb, nullptr},
+    {nullptr},
+  {"Window", 0, nullptr, nullptr, FL_SUBMENU},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
     {"Split Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
     {"Split Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
@@ -2726,16 +2726,16 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Minimize",           FL_META+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom"},
     {"Enter Full Screen",  FL_META+'f', (Fl_Callback *)window_cb, (void*)"fullscreen", FL_MENU_DIVIDER},
-    {"Attach/Detach Menu", FL_META+'d', (Fl_Callback *)attach_detach_menu_cb, 0, FL_MENU_DIVIDER},
+    {"Attach/Detach Menu", FL_META+'d', (Fl_Callback *)attach_detach_menu_cb, nullptr, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
-    {0},
-  {"Help", 0, 0, 0, FL_SUBMENU},
-    {"Online Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"Keyboard and Mouse Usage", 0, (Fl_Callback *)help_basic_cb, 0, FL_MENU_DIVIDER},
+    {nullptr},
+  {"Help", 0, nullptr, nullptr, FL_SUBMENU},
+    {"Online Documentation", 0, (Fl_Callback *)help_online_cb, nullptr, FL_MENU_DIVIDER},
+    {"Keyboard and Mouse Usage", 0, (Fl_Callback *)help_basic_cb, nullptr, FL_MENU_DIVIDER},
     {"Current Options and Workspace", FL_META+FL_SHIFT+'h', (Fl_Callback *)status_options_cb, (void*)"?"},
-    {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, 0},
-    {0},
-  {0}
+    {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, nullptr},
+    {nullptr},
+  {nullptr}
 };
 
 #endif
@@ -2871,41 +2871,41 @@ void quick_access_cb(Fl_Widget *w, void *data)
   if(!data) return;
   std::string what((const char*)data);
   if(what == "general")
-    general_options_cb(0, 0);
+    general_options_cb(nullptr, nullptr);
   else if(what == "geometry")
-    geometry_options_cb(0, 0);
+    geometry_options_cb(nullptr, nullptr);
   else if(what == "mesh")
-    mesh_options_cb(0, 0);
+    mesh_options_cb(nullptr, nullptr);
   else if(what == "view")
-    view_options_cb(0, (void *)-1);
+    view_options_cb(nullptr, (void *)-1);
   else if(what == "reset_viewport"){
-    status_xyz1p_cb(0, (void *)"1:1");
-    status_xyz1p_cb(0, (void *)"z");
+    status_xyz1p_cb(nullptr, (void *)"1:1");
+    status_xyz1p_cb(nullptr, (void *)"z");
   }
   else if(what == "select_center"){
     opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
-    general_options_ok_cb(0, (void *)"rotation_center");
-    general_options_rotation_center_select_cb(0, 0);
+    general_options_ok_cb(nullptr, (void *)"rotation_center");
+    general_options_rotation_center_select_cb(nullptr, nullptr);
   }
   else if(what == "hover_meshes"){
     opt_general_mouse_hover_meshes(0, GMSH_SET|GMSH_GUI,
                                    !opt_general_mouse_hover_meshes(0, GMSH_GET, 0));
   }
   else if(what == "split_hor"){
-    file_window_cb(0, (void*)"split_h");
+    file_window_cb(nullptr, (void*)"split_h");
   }
   else if(what == "split_ver"){
-    file_window_cb(0, (void*)"split_v");
+    file_window_cb(nullptr, (void*)"split_v");
   }
   else if(what == "unsplit"){
-    file_window_cb(0, (void*)"split_u");
+    file_window_cb(nullptr, (void*)"split_u");
   }
   else if(what == "axes"){
     int old = opt_general_axes(0, GMSH_GET, 0);
     opt_general_axes(0, GMSH_SET|GMSH_GUI, old ? 0 : 3);
     if(!old){
       opt_general_axes_auto_position(0, GMSH_SET|GMSH_GUI, 0);
-      general_options_axes_fit_cb(0, 0);
+      general_options_axes_fit_cb(nullptr, nullptr);
     }
   }
   else if(what == "orthographic")
@@ -3150,16 +3150,16 @@ void status_options_cb(Fl_Widget *w, void *data)
       menu.push_back(menuItem);
       tofree.push_back(str);
     }
-    Fl_Menu_Item it = {0};
+    Fl_Menu_Item it = {nullptr};
     menu.push_back(it);
     Fl_Menu_Item *m = (Fl_Menu_Item*)(&menu[0])->popup(Fl::event_x(), Fl::event_y(),
-                                                       0, &menu[selected], 0);
-    if(m) m->do_callback(0);
+                                                       nullptr, &menu[selected], nullptr);
+    if(m) m->do_callback(nullptr);
     for(std::size_t i = 0; i < tofree.size(); i++) free(tofree[i]);
     drawContext::global()->draw();
   }
   else if(what == "?"){ // display options
-    help_options_cb(0, 0);
+    help_options_cb(nullptr, nullptr);
     FlGui::instance()->help->options->show();
   }
   else if(what == "p"){ // toggle projection mode
@@ -3171,22 +3171,22 @@ void status_options_cb(Fl_Widget *w, void *data)
     static Fl_Menu_Item menu[] = {
       { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport" },
       { "Select rotation center", 0, quick_access_cb, (void*)"select_center" },
-      { "Split window", 0, 0, 0, FL_SUBMENU | FL_MENU_DIVIDER },
+      { "Split window", 0, nullptr, nullptr, FL_SUBMENU | FL_MENU_DIVIDER },
          { "Horizontally", 0, quick_access_cb, (void*)"split_hor"},
          { "Vertically", 0, quick_access_cb, (void*)"split_ver"},
          { "Unsplit", 0, quick_access_cb, (void*)"unsplit"},
-         { 0 },
+         { nullptr },
       { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
       { "Mouse hover over meshes", 0, quick_access_cb, (void*)"hover_meshes",
         FL_MENU_TOGGLE },
-      { "Projection mode", 0, 0, 0, FL_SUBMENU },
+      { "Projection mode", 0, nullptr, nullptr, FL_SUBMENU },
          { "Orthographic", FL_ALT + 'o', quick_access_cb, (void*)"orthographic"},
          { "Perspective", 0, quick_access_cb, (void*)"perspective"},
-         { 0 },
+         { nullptr },
       { "All general options...", 0, quick_access_cb, (void*)"general",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
-      { "Geometry visibility", 0, 0, 0, FL_SUBMENU },
+      { "Geometry visibility", 0, nullptr, nullptr, FL_SUBMENU },
          { "Points", FL_ALT + 'p', quick_access_cb, (void*)"geometry_points",
            FL_MENU_TOGGLE },
          { "Curves", FL_ALT + 'l', quick_access_cb, (void*)"geometry_curves",
@@ -3195,10 +3195,10 @@ void status_options_cb(Fl_Widget *w, void *data)
            FL_MENU_TOGGLE },
          { "Volumes", FL_ALT + 'v', quick_access_cb, (void*)"geometry_volumes",
            FL_MENU_TOGGLE },
-         { 0 },
+         { nullptr },
       { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
-      { "Mesh visibility", 0, 0, 0, FL_SUBMENU },
+      { "Mesh visibility", 0, nullptr, nullptr, FL_SUBMENU },
          { "Nodes", FL_ALT + FL_SHIFT + 'p', quick_access_cb, (void*)"mesh_points",
            FL_MENU_TOGGLE },
          { "1D elements", FL_ALT + FL_SHIFT + 'l', quick_access_cb, (void*)"mesh_lines",
@@ -3211,7 +3211,7 @@ void status_options_cb(Fl_Widget *w, void *data)
            (void*)"mesh_volumes_edges", FL_MENU_TOGGLE },
          { "3D element faces", FL_ALT + FL_SHIFT + 'b', quick_access_cb,
            (void*)"mesh_volumes_faces", FL_MENU_TOGGLE },
-         { 0 },
+         { nullptr },
       { "Toggle mesh display", FL_ALT + 'm', quick_access_cb, (void*)"mesh_toggle" },
       { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
       { "All mesh options...", 0, quick_access_cb, (void*)"mesh",
@@ -3219,27 +3219,27 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "View element outlines ", FL_ALT + 'e', quick_access_cb,
         (void*)"view_element_outlines", FL_MENU_TOGGLE },
       { "View normal raise", 0, quick_access_cb, (void*)"view_normal_raise" },
-      { "View intervals", 0, 0, 0, FL_SUBMENU },
+      { "View intervals", 0, nullptr, nullptr, FL_SUBMENU },
          { "Iso-values", FL_ALT + 't', quick_access_cb, (void*)"view_iso"},
          { "Continuous map", 0, quick_access_cb, (void*)"view_continous"},
          { "Filled iso-values", 0, quick_access_cb, (void*)"view_filled"},
          { "Numeric values", 0, quick_access_cb, (void*)"view_numeric"},
-         { 0 },
-      { "View range", 0, 0, 0, FL_SUBMENU },
+         { nullptr },
+      { "View range", 0, nullptr, nullptr, FL_SUBMENU },
          { "Default", 0, quick_access_cb, (void*)"view_range_default"},
          { "Per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
-         { 0 },
-      { "View vector display", 0, 0, 0, FL_SUBMENU },
+         { nullptr },
+      { "View vector display", 0, nullptr, nullptr, FL_SUBMENU },
          { "Line", 0, quick_access_cb, (void*)"view_line"},
          { "3D arrow", 0, quick_access_cb, (void*)"view_3d_arrow"},
          { "Displacement", 0, quick_access_cb, (void*)"view_displacement"},
-         { 0 },
-      { "View glyph location", 0, 0, 0, FL_SUBMENU },
+         { nullptr },
+      { "View glyph location", 0, nullptr, nullptr, FL_SUBMENU },
          { "Barycenter", 0, quick_access_cb, (void*)"view_glyph_barycenter"},
          { "Node", 0, quick_access_cb, (void*)"view_glyph_node"},
-         { 0 },
+         { nullptr },
       { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
-      { 0 }
+      { nullptr }
     };
     const int gen = 7, geo = 14, msh = 21, pos = 32, end = 54;
     if(opt_general_axes(0, GMSH_GET, 0)) menu[gen + 0].set();
@@ -3290,10 +3290,10 @@ void status_options_cb(Fl_Widget *w, void *data)
     }
     // popup the menu
     static Fl_Menu_Item *picked = &menu[msh + 8]; // toggle mesh display - the default
-    picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), 0,
+    picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), nullptr,
                                         (picked && picked->visible()) ? picked :
-                                        &menu[msh + 8], 0);
-    if(picked && picked->callback()) picked->do_callback(0, picked->user_data());
+                                        &menu[msh + 8], nullptr);
+    if(picked && picked->callback()) picked->do_callback(nullptr, picked->user_data());
     drawContext::global()->draw();
   }
   else if(what == "S"){ // mouse selection
@@ -3322,7 +3322,7 @@ void status_play_manual(int time, int incr, bool redraw)
   busy = true;
 
   // if we watch some files this is a good time to check for new data
-  file_watch_cb(0, 0);
+  file_watch_cb(nullptr, nullptr);
 
   if(time) {
     for(std::size_t i = 0; i < PView::list.size(); i++){
@@ -3419,7 +3419,7 @@ static void status_stepforward_cb(Fl_Widget *w, void *data)
 static void remove_graphic_window_cb(Fl_Widget *w, void *data)
 {
   std::vector<graphicWindow*> graph2;
-  graphicWindow *deleteMe = 0;
+  graphicWindow *deleteMe = nullptr;
   for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++){
     if(FlGui::instance()->graph[i]->getWindow() == w)
       deleteMe = FlGui::instance()->graph[i];
@@ -3427,7 +3427,7 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
       graph2.push_back(FlGui::instance()->graph[i]);
   }
   if(deleteMe){
-    openglWindow::setLastHandled(0);
+    openglWindow::setLastHandled(nullptr);
     FlGui::instance()->graph = graph2;
     delete deleteMe;
   }
@@ -3505,14 +3505,14 @@ class dummyBox : public Fl_Box {
  private:
   int handle(int){ return 0; } // always!
  public:
-  dummyBox(int x, int y, int w, int h, const char *l=0) : Fl_Box(x, y, w, h, l) {}
+  dummyBox(int x, int y, int w, int h, const char *l=nullptr) : Fl_Box(x, y, w, h, l) {}
 };
 
 // The main graphic window has a special resize behaviour forcing the message
 // tile to always keep its height
 class mainWindowSpecialResize : public mainWindow {
  public:
-  mainWindowSpecialResize(int w, int h, bool nonModal, const char *l=0)
+  mainWindowSpecialResize(int w, int h, bool nonModal, const char *l=nullptr)
     : mainWindow(w, h, nonModal, l) {}
   virtual void resize(int X,int Y,int W,int H)
   {
@@ -3530,7 +3530,7 @@ class mainWindowSpecialResize : public mainWindow {
 
 class mainWindowProgress : public Fl_Progress{
 public:
-  mainWindowProgress(int x, int y, int w, int h, const char *l=0) :
+  mainWindowProgress(int x, int y, int w, int h, const char *l=nullptr) :
     Fl_Progress(x, y, w, h, l){}
   int handle(int event)
   {
@@ -3587,9 +3587,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
 #if defined(__APPLE__)
-  _sysbar = 0;
+  _sysbar = nullptr;
 #endif
-  _bar = 0;
+  _bar = nullptr;
   if(main){
 #if defined(__APPLE__)
     if(CTX::instance()->systemMenuBar){
@@ -3671,7 +3671,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _browser->clear_callback(message_menu_clear_cb, this);
   }
   else{
-    _browser = 0;
+    _browser = nullptr;
   }
 
   if(main && !detachedMenu){
@@ -3679,7 +3679,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _onelab->enableTreeWidgetResize(false);
   }
   else{
-    _onelab = 0;
+    _onelab = nullptr;
   }
 
   _tile->callback(tile_cb);
@@ -3791,13 +3791,13 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _menuwin->end();
   }
   else{
-    _menuwin = 0;
+    _menuwin = nullptr;
   }
 }
 
 graphicWindow::~graphicWindow()
 {
-  openglWindow::setLastHandled(0);
+  openglWindow::setLastHandled(nullptr);
   _tile->clear();
   _win->clear();
   Fl::delete_widget(_win);
@@ -3854,7 +3854,7 @@ void graphicWindow::attachMenu()
   _menuwin->remove(_onelab);
   _menuwin->hide();
   delete _menuwin;
-  _menuwin = 0;
+  _menuwin = nullptr;
   if(_browser->h() == 0) setMessageHeight(1);
   int w = _onelab->w();
   if(_browser->w() - w < 0) w = _browser->w() / 2;
@@ -3939,7 +3939,7 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     // after many tries I cannot figure out how to do this cleanly, so let's be
     // brutal :-)
     int mode = g->mode();
-    openglWindow::setLastHandled(0);
+    openglWindow::setLastHandled(nullptr);
     for(std::size_t i = 0; i < gl.size(); i++){
       _tile->remove(gl[i]);
       delete gl[i];
@@ -3990,7 +3990,7 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
 
 void graphicWindow::setStereo(bool st)
 {
-  openglWindow::setLastHandled(0);
+  openglWindow::setLastHandled(nullptr);
   for(std::size_t i = 0; i < gl.size(); i++){
     if (st) {
       gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO);

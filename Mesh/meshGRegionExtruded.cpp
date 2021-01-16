@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -164,7 +164,7 @@ static void extrudeMesh(GFace *from, GRegion *to, MVertexRTree &pos)
   // add all vertices on surface seams
   std::set<MVertex *> seam;
   std::vector<GEdge *> const &l_edges = from->edges();
-  for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
+  for(auto it = l_edges.begin();
       it != l_edges.end(); ++it) {
     if((*it)->isSeam(from)) {
       seam.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
@@ -240,13 +240,13 @@ static void insertAllVertices(GRegion *gr, MVertexRTree &pos)
   std::vector<MVertex*> embedded = gr->getEmbeddedMeshVertices();
   pos.insert(embedded);
   std::vector<GFace *> faces = gr->faces();
-  for(std::vector<GFace *>::iterator itf = faces.begin(); itf != faces.end();
+  for(auto itf = faces.begin(); itf != faces.end();
       itf++) {
     pos.insert((*itf)->mesh_vertices);
     std::vector<MVertex *> embedded = (*itf)->getEmbeddedMeshVertices();
     pos.insert(embedded);
     std::vector<GEdge *> const &edges = (*itf)->edges();
-    for(std::vector<GEdge *>::const_iterator ite = edges.begin(); ite != edges.end();
+    for(auto ite = edges.begin(); ite != edges.end();
         ite++) {
       pos.insert((*ite)->mesh_vertices);
       if((*ite)->getBeginVertex())
@@ -495,7 +495,7 @@ int SubdivideExtrudedMesh(GModel *m)
 #endif
 
   MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
+  for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
     ExtrudeParams *ep = (*it)->meshAttributes.extrude;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
        !ep->mesh.Recombine) {
@@ -586,7 +586,7 @@ int SubdivideExtrudedMesh(GModel *m)
   int nIter = 0;
   while(1) {
     int nPending = 0;
-    for(std::set<GFace *>::iterator it = faces.begin(); it != faces.end();
+    for(auto it = faces.begin(); it != faces.end();
         it++) {
       GFace *gf = *it;
       if(gf->meshStatistics.status == GFace::PENDING){

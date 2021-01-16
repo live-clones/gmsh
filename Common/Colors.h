@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -666,7 +666,7 @@ StringX4Int ColorString[] = {
   { "DarkMagenta"              ,  139,   0, 139, 255 } ,
   { "DarkRed"                  ,  139,   0,   0, 255 } ,
   { "LightGreen"               ,  144, 238, 144, 255 } ,
-  { 0                          ,  0  ,   0,   0, 255 }
+  { nullptr                    ,  0  ,   0,   0, 255 }
 } ;
 
 #endif

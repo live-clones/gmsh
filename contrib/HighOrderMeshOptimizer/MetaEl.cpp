@@ -183,7 +183,7 @@ MetaEl::metaInfoType::metaInfoType(int type, int order)
 
 const MetaEl::metaInfoType &MetaEl::getMetaInfo(int elType, int order)
 {
-  std::map<int, MetaEl::metaInfoType>::iterator itMInfo =
+  auto itMInfo =
     _metaInfo.find(elType);
   if(itMInfo == _metaInfo.end()) {
     const metaInfoType mInfo(elType, order);
@@ -232,7 +232,7 @@ void MetaEl::computeBaseNorm(const SVector3 &metaNorm,
 
 MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
                const std::vector<MVertex *> &topPrimVert)
-  : _mInfo(getMetaInfo(type, order)), _metaEl(0), _metaEl0(0)
+  : _mInfo(getMetaInfo(type, order)), _metaEl(nullptr), _metaEl0(nullptr)
 {
   // Get info on meta-element type
   if(_mInfo.nbVert == 0) return;

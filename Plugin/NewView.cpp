@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,14 +12,14 @@
 #include "MElement.h"
 
 StringXNumber NewViewOptions_Number[] = {
-  {GMSH_FULLRC, "NumComp", NULL, 1.},
-  {GMSH_FULLRC, "Value", NULL, 0.},
-  {GMSH_FULLRC, "ViewTag", NULL, -1.},
-  {GMSH_FULLRC, "PhysicalGroup", NULL, -1.}
+  {GMSH_FULLRC, "NumComp", nullptr, 1.},
+  {GMSH_FULLRC, "Value", nullptr, 0.},
+  {GMSH_FULLRC, "ViewTag", nullptr, -1.},
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1.}
 };
 
 StringXString NewViewOptions_String[] = {
-  {GMSH_FULLRC, "Type", NULL, "NodeData"}
+  {GMSH_FULLRC, "Type", nullptr, "NodeData"}
 };
 
 extern "C" {

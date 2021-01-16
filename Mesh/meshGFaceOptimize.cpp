@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -96,8 +96,8 @@ static void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
         double dy = vi->y() - vj->y();
         double dz = vi->z() - vj->z();
         double l = sqrt(dx * dx + dy * dy + dz * dz);
-        std::map<MVertex *, double>::iterator iti = vSizes.find(vi);
-        std::map<MVertex *, double>::iterator itj = vSizes.find(vj);
+        auto iti = vSizes.find(vi);
+        auto itj = vSizes.find(vj);
         if(iti->second < 0 || iti->second > l) iti->second = l;
         if(itj->second < 0 || itj->second > l) itj->second = l;
       }
@@ -113,7 +113,7 @@ bool buildMeshGenerationDataStructures(
   for(std::size_t i = 0; i < gf->triangles.size(); i++)
     setLcsInit(gf->triangles[i], vSizesMap);
 
-  std::map<MVertex *, double>::iterator itfind = vSizesMap.find(NULL);
+  auto itfind = vSizesMap.find(nullptr);
   if(itfind != vSizesMap.end()) {
     Msg::Error("Some NULL points exist in 2D mesh");
     return false;
@@ -126,7 +126,7 @@ bool buildMeshGenerationDataStructures(
   std::set<MVertex *> embeddedVertices;
   {
     std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
-    std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
+    auto itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       if((*itvx)->mesh_vertices.size()) {
         MVertex *v = *((*itvx)->mesh_vertices.begin());
@@ -171,7 +171,7 @@ bool buildMeshGenerationDataStructures(
     }
   }
 
-  for(std::map<MVertex *, double>::iterator it = vSizesMap.begin();
+  for(auto it = vSizesMap.begin();
       it != vSizesMap.end(); ++it) {
     SPoint2 param;
     reparamMeshVertexOnFace(it->first, gf, param);
@@ -193,7 +193,7 @@ bool buildMeshGenerationDataStructures(
                     data.vSizesBGM[data.getIndex(gf->triangles[i]->getVertex(2))]);
 
     double LL = Extend1dMeshIn2dSurfaces(gf) ? std::min(lc, lcBGM) : lcBGM;
-    AllTris.insert(new MTri3(gf->triangles[i], LL, 0, &data, gf));
+    AllTris.insert(new MTri3(gf->triangles[i], LL, nullptr, &data, gf));
   }
   gf->triangles.clear();
   connectTriangles(AllTris);
@@ -210,7 +210,7 @@ void computeEquivalences(GFace *gf, bidimMeshData &data)
       MVertex *v[3];
       for(int j = 0; j < 3; j++) {
         v[j] = t->getVertex(j);
-        std::map<MVertex *, MVertex *>::iterator it =
+        auto it =
           data.equivalence->find(v[j]);
         if(it != data.equivalence->end()) {
           v[j] = it->second;
@@ -232,7 +232,7 @@ struct equivalentTriangle {
   {
     for(int i = 0; i < 3; i++) {
       MVertex *v = t->getVertex(i);
-      std::map<MVertex *, MVertex *>::iterator it = equivalence->find(v);
+      auto it = equivalence->find(v);
       if(it == equivalence->end())
         _v[i] = v;
       else
@@ -259,7 +259,7 @@ bool computeEquivalentTriangles(GFace *gf,
   std::set<equivalentTriangle> eqTs;
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     equivalentTriangle et(gf->triangles[i], equivalence);
-    std::set<equivalentTriangle>::iterator iteq = eqTs.find(et);
+    auto iteq = eqTs.find(et);
     if(iteq == eqTs.end())
       eqTs.insert(et);
     else {
@@ -357,10 +357,10 @@ void buildEdgeToElement(std::vector<T *> &elements, e2t_cont &adj)
     T *t = elements[i];
     for(int j = 0; j < t->getNumEdges(); j++) {
       MEdge e = t->getEdge(j);
-      e2t_cont::iterator it = adj.find(e);
+      auto it = adj.find(e);
       if(it == adj.end()) {
         std::pair<MElement *, MElement *> one =
-          std::make_pair(t, (MElement *)0);
+          std::make_pair(t, (MElement *)nullptr);
         adj[e] = one;
       }
       else {
@@ -392,7 +392,7 @@ void buildEdgeToElements(std::vector<MElement *> &tris, e2t_cont &adj)
 void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
                           std::vector<edge_angle> &edges_lonly)
 {
-  e2t_cont::iterator it = adj.begin();
+  auto it = adj.begin();
   for(; it != adj.end(); ++it) {
     if(it->second.second)
       edges_detected.push_back(edge_angle(it->first.getVertex(0),
@@ -408,7 +408,7 @@ void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
 
 static void parametricCoordinates(MElement *t, GFace *gf,
                                   double u[4], double v[4],
-                                  MVertex *close = 0)
+                                  MVertex *close = nullptr)
 {
   for(std::size_t j = 0; j < t->getNumVertices(); j++) {
     MVertex *ver = t->getVertex(j);
@@ -453,7 +453,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
-  v2t_cont::iterator it = adj.begin();
+  auto it = adj.begin();
   std::set<MElement *> touched;
   std::set<MVertex *> vtouched;
   while(it != adj.end()) {
@@ -475,7 +475,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
         MVertex *v1 = q1->getVertex((comm + 1) % 4);
         MVertex *v2 = q1->getVertex((comm + 2) % 4);
         MVertex *v3 = q1->getVertex((comm + 3) % 4);
-        MVertex *v4 = 0;
+        MVertex *v4 = nullptr;
         for(int i = 0; i < 4; i++) {
           if(q2->getVertex(i) != v1 &&
              q2->getVertex(i) != v3 &&
@@ -765,10 +765,10 @@ static int _removeDiamonds(GFace *const gf)
     MVertex *const v4 = q->getVertex(3);
 
     if(has_none_of(touched, v1, v2, v3, v4)) {
-      v2t_cont::iterator it1 = adj.find(v1);
-      v2t_cont::iterator it2 = adj.find(v2);
-      v2t_cont::iterator it3 = adj.find(v3);
-      v2t_cont::iterator it4 = adj.find(v4);
+      auto it1 = adj.find(v1);
+      auto it2 = adj.find(v2);
+      auto it3 = adj.find(v3);
+      auto it4 = adj.find(v4);
 
       if(are_all_on_surface(v1, v2, v3, v4, gf) && are_size_three(it1, it3) &&
          _tryToCollapseThatVertex(gf, it1->second, it3->second, q, v1, v3)) {
@@ -875,7 +875,7 @@ static void _relocate(GFace *gf, MVertex *ver,
   double metric[3];
   SPoint2 after(0, 0);
   double COUNT = 0.0;
-  for(std::map<MVertex *, SPoint2, MVertexPtrLessThan>::iterator it =
+  for(auto it =
         pts.begin();
       it != pts.end(); ++it) {
     SPoint2 adj = it->second;
@@ -915,7 +915,7 @@ void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
   vs.clear();
   BoundaryLayerColumns *_columns = gf->getColumns();
   if(!_columns) return;
-  for(std::multimap<MVertex *, BoundaryLayerData>::iterator it =
+  for(auto it =
         _columns->_data.begin();
       it != _columns->_data.end(); it++) {
     BoundaryLayerData &data = it->second;
@@ -939,7 +939,7 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
   for(int i = 0; i < niter; i++) {
-    v2t_cont::iterator it = adj.begin();
+    auto it = adj.begin();
     while(it != adj.end()) {
       if(vs.find(it->first) == vs.end()) {
         _relocate(gf, it->first, it->second);
@@ -977,7 +977,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
 
   {
     std::vector<GEdge *> const &_edges = gf->edges();
-    std::vector<GEdge *>::const_iterator ite = _edges.begin();
+    auto ite = _edges.begin();
     while(ite != _edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
         if((*ite)->isSeam(gf)) {
@@ -1010,7 +1010,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
 
   std::map<MVertex *, std::pair<MElement *, MElement *> > makeGraphPeriodic;
 
-  for(e2t_cont::iterator it = adj.begin(); it != adj.end(); ++it) {
+  for(auto it = adj.begin(); it != adj.end(); ++it) {
     if(it->second.second && it->second.first->getNumVertices() == 3 &&
        it->second.second->getNumVertices() == 3 &&
        (!std::binary_search(emb_edgeverts.begin(), emb_edgeverts.end(),
@@ -1023,11 +1023,11 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
     else if(!it->second.second && it->second.first->getNumVertices() == 3) {
       for(int i = 0; i < 2; i++) {
         MVertex *const v = it->first.getVertex(i);
-        std::map<MVertex *, std::pair<MElement *, MElement *> >::iterator itv =
+        auto itv =
           makeGraphPeriodic.find(v);
         if(itv == makeGraphPeriodic.end()) {
           makeGraphPeriodic[v] =
-            std::make_pair(it->second.first, static_cast<MElement *>(NULL));
+            std::make_pair(it->second.first, static_cast<MElement *>(nullptr));
         }
         else {
           if(itv->second.first != it->second.first)
@@ -1084,7 +1084,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       }
 
       if(cubicGraph) {
-        std::map<MVertex *, std::pair<MElement *, MElement *> >::iterator itv =
+        auto itv =
           makeGraphPeriodic.begin();
         std::size_t CC = pairs.size();
         for(; itv != makeGraphPeriodic.end(); ++itv) {
@@ -1097,7 +1097,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       double matzeit = 0.0;
       char MATCHFILE[256];
       sprintf(MATCHFILE, ".face.match");
-      if(perfect_match(ncount, NULL, ecount, &elist, &elen, NULL, MATCHFILE, 0,
+      if(perfect_match(ncount, nullptr, ecount, &elist, &elen, nullptr, MATCHFILE, 0,
                        0, 0, 0, &matzeit)) {
         Msg::Error("Perfect Match failed in quadrangulation, try something else");
         free(elist);
@@ -1119,7 +1119,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
             MElement *t2 = n2t[i2];
             touched.insert(t1);
             touched.insert(t2);
-            MVertex *other = NULL;
+            MVertex *other = nullptr;
             for(int i = 0; i < 3; i++) {
               if(t1->getVertex(0) != t2->getVertex(i) &&
                  t1->getVertex(1) != t2->getVertex(i) &&
@@ -1156,7 +1156,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   }
 
   // simple greedy recombination
-  std::vector<RecombineTriangle>::iterator itp = pairs.begin();
+  auto itp = pairs.begin();
   while(itp != pairs.end()) {
     if(itp->angle < gf->meshAttributes.recombineAngle) {
       MElement *t1 = itp->t1;
@@ -1223,7 +1223,7 @@ static double printStats(GFace *gf, const char *message)
 // remove nodes, this will produce an invalide model mesh (and crash).
 static bool _isModelOkForTopologicalOpti(GModel *m)
 {
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
+  for(auto it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
     for(std::size_t j = 0; j < gf->getNumMeshElements(); j++){
       MElement *e = gf->getMeshElement(j);
@@ -1392,7 +1392,7 @@ void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
     int n = fields->getNumBoundaryLayerFields();
     for(int i = 0; i < n; ++i) {
       Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-      if(bl_field == NULL) continue;
+      if(bl_field == nullptr) continue;
       BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
       if(blf->iRecombine)
         ++numNoSplit;

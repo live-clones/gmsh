@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -56,7 +56,7 @@ elasticitySolver::elasticitySolver(GModel *model, int tag)
   pModel = model;
   _dim = pModel->getNumRegions() ? 3 : 2;
   _tag = tag;
-  pAssembler = NULL;
+  pAssembler = nullptr;
   if(_dim == 3) LagSpace = new VectorLagrangeFunctionSpace(_tag);
   if(_dim == 2)
     LagSpace = new VectorLagrangeFunctionSpace(
@@ -174,7 +174,7 @@ void elasticitySolver::readInputFile(const std::string &fn)
     }
     if(what[0] == '#') {
       char buffer[1024];
-      if(fgets(buffer, sizeof(buffer), f) == NULL)
+      if(fgets(buffer, sizeof(buffer), f) == nullptr)
         Msg::Error("Cannot read line.");
     }
     else if(!strcmp(what, "ElasticDomain")) {
@@ -593,7 +593,7 @@ void elasticitySolver::computeEffectiveStiffness(std::vector<double> stiff)
     double E = elasticFields[i]._e;
     double nu = elasticFields[i]._nu;
     SolverField<SVector3> Field(pAssembler, LagSpace);
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -650,7 +650,7 @@ void elasticitySolver::computeEffectiveStrain(std::vector<double> strain)
   double volTot = 0.;
   for(std::size_t i = 0; i < elasticFields.size(); ++i) {
     SolverField<SVector3> Field(pAssembler, LagSpace);
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -701,7 +701,7 @@ double elasticitySolver::computeDisplacementError(simpleFunction<double> *f0,
   std::map<MVertex *, MElement *> vCut;
   for(std::size_t i = 0; i < elasticFields.size(); ++i) {
     if(elasticFields[i]._e == 0.) continue;
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -718,7 +718,7 @@ double elasticitySolver::computeDisplacementError(simpleFunction<double> *f0,
     }
   }
   SolverField<SVector3> Field(pAssembler, LagSpace);
-  for(std::set<MVertex *>::iterator it = v.begin(); it != v.end(); ++it) {
+  for(auto it = v.begin(); it != v.end(); ++it) {
     SVector3 val;
     MPoint p(*it);
     Field.f(&p, 0, 0, 0, val);
@@ -728,7 +728,7 @@ double elasticitySolver::computeDisplacementError(simpleFunction<double> *f0,
     double diff = normSq(sol - val);
     err += diff;
   }
-  for(std::map<MVertex *, MElement *>::iterator it = vCut.begin();
+  for(auto it = vCut.begin();
       it != vCut.end(); ++it) {
     SVector3 val;
     double uvw[3];
@@ -751,7 +751,7 @@ double elasticitySolver::computeL2Norm(simpleFunction<double> *f0,
   double val = 0.0;
   SolverField<SVector3> solField(pAssembler, LagSpace);
   for(std::size_t i = 0; i < elasticFields.size(); ++i) {
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -798,7 +798,7 @@ PView *elasticitySolver::buildErrorView(const std::string postFileName,
 
   SolverField<SVector3> solField(pAssembler, LagSpace);
   for(std::size_t i = 0; i < elasticFields.size(); ++i) {
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -840,7 +840,7 @@ PView *elasticitySolver::buildDisplacementView(const std::string postFileName)
   std::map<MVertex *, MElement *> vCut;
   for(std::size_t i = 0; i < elasticFields.size(); ++i) {
     if(elasticFields[i]._e == 0.) continue;
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -858,7 +858,7 @@ PView *elasticitySolver::buildDisplacementView(const std::string postFileName)
   }
   std::map<int, std::vector<double> > data;
   SolverField<SVector3> Field(pAssembler, LagSpace);
-  for(std::set<MVertex *>::iterator it = v.begin(); it != v.end(); ++it) {
+  for(auto it = v.begin(); it != v.end(); ++it) {
     SVector3 val;
     MPoint p(*it);
     Field.f(&p, 0, 0, 0, val);
@@ -868,7 +868,7 @@ PView *elasticitySolver::buildDisplacementView(const std::string postFileName)
     vec[2] = val(2);
     data[(*it)->getNum()] = vec;
   }
-  for(std::map<MVertex *, MElement *>::iterator it = vCut.begin();
+  for(auto it = vCut.begin();
       it != vCut.end(); ++it) {
     SVector3 val;
     double uvw[3];
@@ -896,7 +896,7 @@ PView *elasticitySolver::buildStressesView(const std::string postFileName)
     double E = elasticFields[i]._e;
     double nu = elasticFields[i]._nu;
     SolverField<SVector3> Field(pAssembler, LagSpace);
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -986,7 +986,7 @@ PView *elasticitySolver::buildStrainView(const std::string postFileName)
   std::map<int, std::vector<double> > data;
   for(std::size_t i = 0; i < elasticFields.size(); ++i) {
     SolverField<SVector3> Field(pAssembler, LagSpace);
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -1040,7 +1040,7 @@ elasticitySolver::buildLagrangeMultiplierView(const std::string &postFileName,
   if(t == LagrangeMultiplierSpaces.size()) return new PView();
   std::set<MVertex *> v;
   for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); ++i) {
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           LagrangeMultiplierFields[i].g->begin();
         it != LagrangeMultiplierFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -1050,7 +1050,7 @@ elasticitySolver::buildLagrangeMultiplierView(const std::string &postFileName,
   }
   std::map<int, std::vector<double> > data;
   SolverField<double> Field(pAssembler, LagrangeMultiplierSpaces[t]);
-  for(std::set<MVertex *>::iterator it = v.begin(); it != v.end(); ++it) {
+  for(auto it = v.begin(); it != v.end(); ++it) {
     double val;
     MPoint p(*it);
     Field.f(&p, 0, 0, 0, val);
@@ -1074,7 +1074,7 @@ PView *elasticitySolver::buildElasticEnergyView(const std::string postFileName)
                                elasticFields[i]._nu);
     BilinearTermToScalarTerm Elastic_Energy_Term(Eterm);
     ScalarTermConstant<double> One(1.0);
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -1102,7 +1102,7 @@ PView *elasticitySolver::buildVolumeView(const std::string postFileName)
   GaussQuadrature Integ_Vol(GaussQuadrature::Val);
   for(std::size_t i = 0; i < elasticFields.size(); ++i) {
     ScalarTermConstant<double> One(1.0);
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -1118,7 +1118,7 @@ PView *elasticitySolver::buildVolumeView(const std::string postFileName)
   }
   for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); ++i) {
     ScalarTermConstant<double> One(1.0);
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           LagrangeMultiplierFields[i].g->begin();
         it != LagrangeMultiplierFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -1147,7 +1147,7 @@ PView *elasticitySolver::buildVonMisesView(const std::string postFileName)
     IsotropicElasticTerm Eterm(Field, elasticFields[i]._e,
                                elasticFields[i]._nu);
     BilinearTermToScalarTerm Elastic_Energy_Term(Eterm);
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           elasticFields[i].g->begin();
         it != elasticFields[i].g->end(); ++it) {
       MElement *e = *it;

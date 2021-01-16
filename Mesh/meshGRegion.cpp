@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -49,7 +49,7 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
 
   Msg::Info("Generating pyramids for hybrid mesh...");
   int npyram = 0;
-  for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); it++){
+  for(auto it = gm->firstRegion(); it != gm->lastRegion(); it++){
     GRegion *gr = *it;
     if(gr->meshAttributes.method == MESH_TRANSFINITE) continue;
     if(gr->isFullyDiscrete()) continue;
@@ -60,7 +60,7 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
     for(std::size_t i = 0; i < faces.size(); i++){
       GFace *gf = faces[i];
       for(std::size_t j = 0; j < gf->quadrangles.size(); j++){
-        std::map<MFace, MVertex *, MFaceLessThan>::iterator it2 =
+        auto it2 =
           _quad.find(gf->quadrangles[j]->getFace(0));
         if(it2 != _quad.end()){
           npyram++;
@@ -116,7 +116,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   // not reclassified on the original surfaces
   if(CTX::instance()->mesh.compoundClassify == 0){
     std::set<GFace *, GEntityPtrLessThan> comp;
-    for(std::set<GFace *, GEntityPtrLessThan>::iterator it = allFacesSet.begin();
+    for(auto it = allFacesSet.begin();
         it != allFacesSet.end(); it++){
       GFace *gf = *it;
       if(!gf->compoundSurface)
@@ -154,7 +154,7 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   bool success = meshGRegionBoundaryRecovery(gr, &sqr);
 
   // sort triangles in all model faces in order to be able to search in vectors
-  std::vector<GFace *>::iterator itf = allFaces.begin();
+  auto itf = allFaces.begin();
   while(itf != allFaces.end()) {
     std::sort((*itf)->triangles.begin(), (*itf)->triangles.end(),
               compareMTriangleLexicographic());
@@ -260,14 +260,14 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search,
   search.clear();
 
   std::set<GFace *> faces_to_consider;
-  GModel::riter rit = model->firstRegion();
+  auto rit = model->firstRegion();
   while(rit != model->lastRegion()) {
     std::vector<GFace *> _faces = (*rit)->faces();
     faces_to_consider.insert(_faces.begin(), _faces.end());
     rit++;
   }
 
-  std::set<GFace *>::iterator fit = faces_to_consider.begin();
+  auto fit = faces_to_consider.begin();
   while(fit != faces_to_consider.end()) {
     for(std::size_t i = 0; i < (*fit)->getNumMeshElements(); i++) {
       MFace ff = (*fit)->getMeshElement(i)->getFace(0);
@@ -283,7 +283,7 @@ bool buildEdgeSearchStructure(GModel *model, es_cont &search)
 {
   search.clear();
 
-  GModel::eiter eit = model->firstEdge();
+  auto eit = model->firstEdge();
   while(eit != model->lastEdge()) {
     for(std::size_t i = 0; i < (*eit)->lines.size(); i++) {
       MVertex *p1 = (*eit)->lines[i]->getVertex(0);
@@ -301,15 +301,15 @@ GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
                                  const fs_cont &search)
 {
   MFace ff(p1, p2, p3);
-  fs_cont::const_iterator it = search.find(ff);
-  if(it == search.end()) return 0;
+  auto it = search.find(ff);
+  if(it == search.end()) return nullptr;
   return it->second;
 }
 
 GFace *findInFaceSearchStructure(const MFace &ff, const fs_cont &search)
 {
-  fs_cont::const_iterator it = search.find(ff);
-  if(it == search.end()) return 0;
+  auto it = search.find(ff);
+  if(it == search.end()) return nullptr;
   return it->second;
 }
 
@@ -318,7 +318,7 @@ GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2,
 {
   MVertex *p = std::min(p1, p2);
 
-  for(es_cont::const_iterator it = search.lower_bound(p);
+  for(auto it = search.lower_bound(p);
       it != search.upper_bound(p); ++it) {
     MLine *l = it->second.first;
     GEdge *ge = it->second.second;
@@ -326,5 +326,5 @@ GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2,
        (l->getVertex(1) == p1 || l->getVertex(1) == p2))
       return ge;
   }
-  return 0;
+  return nullptr;
 }

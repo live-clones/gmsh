@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,7 +18,7 @@ struct faceXtet {
   MVertex *v[3], *unsorted[3];
   MTet4 *t1;
   int i1;
-  faceXtet(MTet4 *_t = 0, int iFac = 0) : t1(_t), i1(iFac)
+  faceXtet(MTet4 *_t = nullptr, int iFac = 0) : t1(_t), i1(iFac)
   {
     MVertex *v0 = t1->tet()->getVertex(faces[iFac][0]);
     MVertex *v1 = t1->tet()->getVertex(faces[iFac][1]);

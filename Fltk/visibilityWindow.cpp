@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -108,7 +108,7 @@ static void setVisibilityOnOtherModels(GEntity *ge, char val, bool recursive)
   for(std::size_t i = 0; i < GModel::list.size(); i++) {
     GModel *m2 = GModel::list[i];
     if(m2 != ge->model()) {
-      GEntity *ge2 = 0;
+      GEntity *ge2 = nullptr;
       switch(ge->dim()) {
       case 0: ge2 = m2->getVertexByTag(ge->tag()); break;
       case 1: ge2 = m2->getEdgeByTag(ge->tag()); break;
@@ -261,7 +261,7 @@ public:
   {
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
-    for(std::map<std::string, gmsh_yysymbol>::iterator it =
+    for(auto it =
           gmsh_yysymbols.begin();
         it != gmsh_yysymbols.end(); ++it)
       if(it->first.size())
@@ -372,7 +372,7 @@ public:
   int getSortMode() { return _sortMode; }
 };
 
-VisibilityList *VisibilityList::_instance = 0;
+VisibilityList *VisibilityList::_instance = nullptr;
 
 static void _rebuild_list_browser()
 {
@@ -469,7 +469,7 @@ static void visibility_sort_cb(Fl_Widget *w, void *data)
   }
   else { // set new sorting mode
     VisibilityList::instance()->setSortMode(val);
-    visibility_cb(NULL, (void *)"list_only");
+    visibility_cb(nullptr, (void *)"list_only");
   }
 }
 
@@ -486,14 +486,14 @@ class listBrowser : public Fl_Browser {
         return 1;
       }
       else if(Fl::test_shortcut(FL_Enter) || Fl::test_shortcut(FL_KP_Enter)) {
-        visibility_browser_apply_cb(NULL, NULL);
+        visibility_browser_apply_cb(nullptr, nullptr);
         if(l) Fl_Browser_::select(l);
         return 1;
       }
       else if(Fl::test_shortcut(FL_Up)) {
         if(l && (l = item_prev(l))) {
           select_only(l, 1);
-          visibility_browser_apply_cb(NULL, NULL);
+          visibility_browser_apply_cb(nullptr, nullptr);
           Fl_Browser_::select(l);
           return 1;
         }
@@ -501,7 +501,7 @@ class listBrowser : public Fl_Browser {
       else if(Fl::test_shortcut(FL_Down)) {
         if(l && (l = item_next(l))) {
           select_only(l, 1);
-          visibility_browser_apply_cb(NULL, NULL);
+          visibility_browser_apply_cb(nullptr, nullptr);
           Fl_Browser_::select(l);
           return 1;
         }
@@ -511,7 +511,7 @@ class listBrowser : public Fl_Browser {
   }
 
 public:
-  listBrowser(int x, int y, int w, int h, const char *c = 0)
+  listBrowser(int x, int y, int w, int h, const char *c = nullptr)
     : Fl_Browser(x, y, w, h, c)
   {
   }
@@ -560,7 +560,7 @@ static void _add_face(GFace *gf, Fl_Tree *tree, const std::string &path)
   n->user_data((void *)gf);
   n->close();
   std::vector<GEdge *> const &edges = gf->edges();
-  for(std::vector<GEdge *>::const_iterator it = edges.begin();
+  for(auto it = edges.begin();
       it != edges.end(); it++)
     _add_edge(*it, tree, face.str());
 }
@@ -578,7 +578,7 @@ static void _add_region(GRegion *gr, Fl_Tree *tree, const std::string &path)
   n->user_data((void *)gr);
   n->close();
   std::vector<GFace *> faces = gr->faces();
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+  for(auto it = faces.begin(); it != faces.end();
       it++)
     _add_face(*it, tree, region.str());
 }
@@ -666,13 +666,13 @@ static void _rebuild_tree_browser(bool force)
     std::string elementary = model.str() + "Elementary entities/";
     n = FlGui::instance()->visibility->tree->add(elementary.c_str());
     if(n) n->close();
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
       _add_region(*it, FlGui::instance()->visibility->tree, elementary);
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+    for(auto it = m->firstFace(); it != m->lastFace(); it++)
       _add_face(*it, FlGui::instance()->visibility->tree, elementary);
-    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
+    for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
       _add_edge(*it, FlGui::instance()->visibility->tree, elementary);
-    for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
+    for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
       _add_vertex(*it, FlGui::instance()->visibility->tree, elementary);
 
     std::string physical = model.str() + "Physical groups/";
@@ -683,7 +683,7 @@ static void _rebuild_tree_browser(bool force)
     m->getPhysicalGroups(groups);
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
-    for(std::map<std::string, gmsh_yysymbol>::iterator it =
+    for(auto it =
           gmsh_yysymbols.begin();
         it != gmsh_yysymbols.end(); ++it)
       if(it->first.size())
@@ -692,7 +692,7 @@ static void _rebuild_tree_browser(bool force)
             std::string("(") + it->first + ")";
 #endif
     for(int i = 3; i >= 0; i--)
-      for(std::map<int, std::vector<GEntity *> >::iterator it =
+      for(auto it =
             groups[i].begin();
           it != groups[i].end(); it++)
         _add_physical_group(i, it->first, it->second, oldLabels,
@@ -789,7 +789,7 @@ class treeBrowser : public Fl_Tree {
     case FL_SHORTCUT:
     case FL_KEYBOARD:
       if(Fl::test_shortcut(FL_Enter) || Fl::test_shortcut(FL_KP_Enter)) {
-        visibility_tree_apply_cb(NULL, NULL);
+        visibility_tree_apply_cb(nullptr, nullptr);
         return 1;
       }
     }
@@ -797,7 +797,7 @@ class treeBrowser : public Fl_Tree {
   }
 
 public:
-  treeBrowser(int x, int y, int w, int h, const char *c = 0)
+  treeBrowser(int x, int y, int w, int h, const char *c = nullptr)
     : Fl_Tree(x, y, w, h, c)
   {
   }
@@ -827,16 +827,16 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
   // get the whole visibility information in geo format
   std::vector<int> state[4][2];
   GModel *m = GModel::current();
-  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
+  for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
     (*it)->getVisibility() ? state[0][1].push_back((*it)->tag()) :
                              state[0][0].push_back((*it)->tag());
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
+  for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
     (*it)->getVisibility() ? state[1][1].push_back((*it)->tag()) :
                              state[1][0].push_back((*it)->tag());
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+  for(auto it = m->firstFace(); it != m->lastFace(); it++)
     (*it)->getVisibility() ? state[2][1].push_back((*it)->tag()) :
                              state[2][0].push_back((*it)->tag());
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
+  for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
     (*it)->getVisibility() ? state[3][1].push_back((*it)->tag()) :
                              state[3][0].push_back((*it)->tag());
   std::vector<std::pair<int, int> > entities;
@@ -895,41 +895,41 @@ static void _set_visibility_by_number(int what, int num, char val,
         }
         break;
       case 2: // point
-        for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
+        for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
           if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
         break;
       case 3: // line
-        for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
+        for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
           if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
         break;
       case 4: // surface
-        for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+        for(auto it = m->firstFace(); it != m->lastFace(); it++)
           if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
         break;
       case 5: // volume
-        for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
+        for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
           if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
         break;
       case 6: // physical point
-        for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
+        for(auto it = m->firstVertex(); it != m->lastVertex(); it++)
           for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
             if(all || std::abs((*it)->physicals[i]) == num)
               (*it)->setVisibility(val, recursive);
         break;
       case 7: // physical line
-        for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
+        for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
           for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
             if(all || std::abs((*it)->physicals[i]) == num)
               (*it)->setVisibility(val, recursive);
         break;
       case 8: // physical surface
-        for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+        for(auto it = m->firstFace(); it != m->lastFace(); it++)
           for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
             if(all || std::abs((*it)->physicals[i]) == num)
               (*it)->setVisibility(val, recursive);
         break;
       case 9: // physical volume
-        for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
+        for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
           for(std::size_t i = 0; i < (*it)->physicals.size(); i++)
             if(all || std::abs((*it)->physicals[i]) == num)
               (*it)->setVisibility(val, recursive);
@@ -1000,7 +1000,7 @@ static void _apply_visibility(char mode, bool physical,
     }
   }
   int pos = FlGui::instance()->visibility->browser->position();
-  visibility_cb(NULL, (void *)"redraw_only");
+  visibility_cb(nullptr, (void *)"redraw_only");
   FlGui::instance()->visibility->browser->position(pos);
 }
 
@@ -1032,7 +1032,7 @@ static void visibility_number_cb(Fl_Widget *w, void *data)
   _set_visibility_by_number(what, num, val, recursive, allmodels);
 
   int pos = FlGui::instance()->visibility->browser->position();
-  visibility_cb(NULL, (void *)"redraw_only");
+  visibility_cb(nullptr, (void *)"redraw_only");
   FlGui::instance()->visibility->browser->position(pos);
   drawContext::global()->draw();
 }
@@ -1217,7 +1217,7 @@ static void tree_cb(Fl_Widget *w, void *data)
   if(tree->callback_reason() == FL_TREE_REASON_RESELECTED && Fl::event_clicks()) {
     // double click
     Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
-    GEntity *ge = 0;
+    GEntity *ge = nullptr;
     if(item) {
       if(item->user_data()) {
         ge = (GEntity*)item->user_data();
@@ -1322,7 +1322,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
        (void *)"list_only"},
       {"Physical groups", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
       {"Mesh partitions", 0, (Fl_Callback *)visibility_cb, (void *)"list_only"},
-      {0}};
+      {nullptr}};
 
     double w1 = 1.7 * CC;
     double w3 = CC;
@@ -1381,7 +1381,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   {
     Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB,
                                height - 3 * WB - 2 * BH, "Numeric");
-    g->resizable(NULL);
+    g->resizable(nullptr);
 
     int yy = 2 * WB + BH;
     for(int i = 0; i < 10; i++) {
@@ -1451,7 +1451,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   {
     Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB,
                                height - 3 * WB - 2 * BH, "Interactive");
-    g->resizable(NULL);
+    g->resizable(nullptr);
 
     Fl_Button *bb[20];
     int ll = width / 2 - BH - WB - IW;
@@ -1555,7 +1555,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     int aw = (int)(3.5 * FL_NORMAL_SIZE);
 
     Fl_Group *g = new Fl_Group(WB, height - BH - WB, width - 2 * WB - CC, BH);
-    g->resizable(NULL);
+    g->resizable(nullptr);
 
     Fl_Box *b = new Fl_Box(WB, height - BH - WB, aw, BH, "Apply");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
@@ -1600,7 +1600,7 @@ void visibilityWindow::show(bool redrawOnly)
 
 void visibilityWindow::updatePerWindow(bool force)
 {
-  static openglWindow *gl = 0;
+  static openglWindow *gl = nullptr;
   if(!force && gl == FlGui::instance()->getCurrentOpenglWindow()) return;
 
   gl = FlGui::instance()->getCurrentOpenglWindow();

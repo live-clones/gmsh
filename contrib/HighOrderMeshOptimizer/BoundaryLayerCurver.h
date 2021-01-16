@@ -201,7 +201,7 @@ namespace BoundaryLayerCurver {
 
 // BL in planar surface (always prefer this one if possible)
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
-                          const GEdge *edge = NULL);
+                          const GEdge *edge = nullptr);
 
 // BL on CAD surface
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *,

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -39,7 +39,7 @@ public:
   // for internal use by PluginManager
   void *hlib;
 
-  GMSH_Plugin() : dialogBox(0), hlib(0) {}
+  GMSH_Plugin() : dialogBox(nullptr), hlib(nullptr) {}
   virtual ~GMSH_Plugin() {}
 
   // return plugin type, name and info
@@ -59,11 +59,11 @@ public:
 
   // gmsh-style numeric options
   virtual int getNbOptions() const { return 0; }
-  virtual StringXNumber *getOption(int iopt) { return 0; };
+  virtual StringXNumber *getOption(int iopt) { return nullptr; };
 
   // gmsh-style string options
   virtual int getNbOptionsStr() const { return 0; }
-  virtual StringXString *getOptionStr(int iopt) { return NULL; }
+  virtual StringXString *getOptionStr(int iopt) { return nullptr; }
 
   // serialize plugin options into a string
   std::string serialize();
@@ -87,7 +87,7 @@ public:
     return GMSH_Plugin::GMSH_POST_PLUGIN;
   }
   // run the plugin
-  virtual void run() { execute(0); }
+  virtual void run() { execute(nullptr); }
   // if the returned pointer is the same as the argument, then the
   // view is simply modified, else, a new view is added in the view
   // list

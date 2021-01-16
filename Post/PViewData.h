@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -92,11 +92,11 @@ public:
   virtual double getMin(int step = -1, bool onlyVisible = false,
                         int tensorRep = 0,
                         int forceNumComponents = 0,
-                        int componentMap[9] = 0) = 0;
+                        int componentMap[9] = nullptr) = 0;
   virtual double getMax(int step = -1, bool onlyVisible = false,
                         int tensorRep = 0,
                         int forceNumComponents = 0,
-                        int componentMap[9] = 0) = 0;
+                        int componentMap[9] = nullptr) = 0;
   virtual void setMin(double min) = 0;
   virtual void setMax(double max) = 0;
 
@@ -170,7 +170,7 @@ public:
   // eigenvalue (if tensorRep == 2) for tensors
   void getScalarValue(int step, int ent, int ele, int nod, double &val,
                       int tensorRep = 0, int forceNumComponents = 0,
-                      int componentMap[9] = 0);
+                      int componentMap[9] = nullptr);
 
   // return the number of edges of the ele-th element in the ent-th
   // entity
@@ -298,31 +298,31 @@ public:
   // time steps are present, they are all interpolated unless time step is set
   // to a different value than -1.
   bool searchScalar(double x, double y, double z, double *values, int step = -1,
-                    double *size = 0, int qn = 0, double *qx = 0,
-                    double *qy = 0, double *qz = 0, bool grad = false,
+                    double *size = nullptr, int qn = 0, double *qx = nullptr,
+                    double *qy = nullptr, double *qz = nullptr, bool grad = false,
                     int dim = -1);
   bool searchScalarWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = 0, double tol = 1.e-2,
-                           int qn = 0, double *qx = 0, double *qy = 0,
-                           double *qz = 0, bool grad = false,
+                           int step = -1, double *size = nullptr, double tol = 1.e-2,
+                           int qn = 0, double *qx = nullptr, double *qy = nullptr,
+                           double *qz = nullptr, bool grad = false,
                            int dim = -1);
   bool searchVector(double x, double y, double z, double *values, int step = -1,
-                    double *size = 0, int qn = 0, double *qx = 0,
-                    double *qy = 0, double *qz = 0, bool grad = false,
+                    double *size = nullptr, int qn = 0, double *qx = nullptr,
+                    double *qy = nullptr, double *qz = nullptr, bool grad = false,
                     int dim = -1);
   bool searchVectorWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = 0, double tol = 1.e-2,
-                           int qn = 0, double *qx = 0, double *qy = 0,
-                           double *qz = 0, bool grad = false,
+                           int step = -1, double *size = nullptr, double tol = 1.e-2,
+                           int qn = 0, double *qx = nullptr, double *qy = nullptr,
+                           double *qz = nullptr, bool grad = false,
                            int dim = -1);
   bool searchTensor(double x, double y, double z, double *values, int step = -1,
-                    double *size = 0, int qn = 0, double *qx = 0,
-                    double *qy = 0, double *qz = 0, bool grad = false,
+                    double *size = nullptr, int qn = 0, double *qx = nullptr,
+                    double *qy = nullptr, double *qz = nullptr, bool grad = false,
                     int dim = -1);
   bool searchTensorWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = 0, double tol = 1.e-2,
-                           int qn = 0, double *qx = 0, double *qy = 0,
-                           double *qz = 0, bool grad = false,
+                           int step = -1, double *size = nullptr, double tol = 1.e-2,
+                           int qn = 0, double *qx = nullptr, double *qy = nullptr,
+                           double *qz = nullptr, bool grad = false,
                            int dim = -1);
 
   // I/O routines

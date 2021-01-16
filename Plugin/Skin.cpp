@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,9 +15,9 @@
 #include "discreteFace.h"
 #include "discreteEdge.h"
 
-StringXNumber SkinOptions_Number[] = {{GMSH_FULLRC, "Visible", NULL, 1.},
-                                      {GMSH_FULLRC, "FromMesh", NULL, 0.},
-                                      {GMSH_FULLRC, "View", NULL, -1.}};
+StringXNumber SkinOptions_Number[] = {{GMSH_FULLRC, "Visible", nullptr, 1.},
+                                      {GMSH_FULLRC, "FromMesh", nullptr, 0.},
+                                      {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterSkinPlugin() { return new GMSH_SkinPlugin(); }
@@ -65,7 +65,7 @@ public:
   }
   void addInView(PViewDataList *data) const
   {
-    std::vector<double> *vec = 0;
+    std::vector<double> *vec = nullptr;
     switch(x.size()) {
     case 1:
       if(numComp == 1) {
@@ -222,9 +222,9 @@ static void getBoundaryFromMesh(GModel *m, int visible)
 
   if(dim == 2) {
     discreteEdge *e =
-      new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, 0, 0);
+      new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
     m->add(e);
-    for(std::set<MEdge, MEdgeLessThan>::iterator it = bndEdges.begin();
+    for(auto it = bndEdges.begin();
         it != bndEdges.end(); it++) {
       e->lines.push_back(new MLine(it->getVertex(0), it->getVertex(1)));
     }
@@ -232,7 +232,7 @@ static void getBoundaryFromMesh(GModel *m, int visible)
   else if(dim == 3) {
     discreteFace *f = new discreteFace(m, m->getMaxElementaryNumber(2) + 1);
     m->add(f);
-    for(std::set<MFace, MFaceLessThan>::iterator it = bndFaces.begin();
+    for(auto it = bndFaces.begin();
         it != bndFaces.end(); it++) {
       if(it->getNumVertices() == 3)
         f->triangles.push_back(
@@ -297,7 +297,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
           e.y.push_back(y);
           e.z.push_back(z);
         }
-        std::set<ElmData, ElmDataLessThan>::iterator it = skin.find(e);
+        auto it = skin.find(e);
         if(it == skin.end()) {
           for(int step = 0; step < data1->getNumTimeSteps(); step++) {
             if(data1->hasTimeStep(step)) {
@@ -320,7 +320,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
     }
   }
 
-  for(std::set<ElmData, ElmDataLessThan>::iterator it = skin.begin();
+  for(auto it = skin.begin();
       it != skin.end(); it++)
     it->addInView(data2);
 

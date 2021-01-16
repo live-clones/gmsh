@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -240,7 +240,7 @@ bool PView::writeX3D(const std::string &fileName)
   fprintf(fp, "  </head>\n");
   // Viewport
   SBoundingBox3d bb(0., 0., 0., 0., 0., 0.);
-  for(std::vector<PView *>::iterator pvit = PView::list.begin();
+  for(auto pvit = PView::list.begin();
       pvit < PView::list.end(); pvit++) {
     PViewData *data = (*pvit)->getData(true);
     PViewOptions *opt = (*pvit)->getOptions();

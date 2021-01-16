@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -215,8 +215,8 @@ namespace {
         monoMat = &(fs->monomials);
       }
       else {
-        coeffMat = 0;
-        monoMat = 0;
+        coeffMat = nullptr;
+        monoMat = nullptr;
       }
     }
   }
@@ -247,8 +247,8 @@ namespace {
       const int nbEltNode = ElementType::getNumVertices(mshType);
 
       // element node transformation if specified (CPEX0045)
-      const fullMatrix<double> *transfoMat = 0;
-      if((mshType != MSH_PNT) && (zoneSolTransfo != 0) &&
+      const fullMatrix<double> *transfoMat = nullptr;
+      if((mshType != MSH_PNT) && (zoneSolTransfo != nullptr) &&
          (zoneSolTransfo->size() > 0)) {
         transfoMat = &((*zoneSolTransfo)[mshType]);
       }
@@ -258,7 +258,7 @@ namespace {
       double *stepData = step->getData(eltNum, true, nbEltNode);
 
       // compute values at element nodes in step data
-      if(transfoMat == 0) {
+      if(transfoMat == nullptr) {
         // no basis specified: just reorder values from CGNS to Gmsh ordering
         const std::vector<int> &cgns2Msh = cgns2MshNodeIndex(mshType);
         for(int i = 0; i < nbEltNode; i++) stepData[cgns2Msh[i]] = eltData[i];
@@ -569,7 +569,7 @@ bool PViewDataGModel::readCGNS(
   // loop over zones
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     // read family name and retrieve solution node transformations (CPEX0045)
-    const ZoneSolutionTransfo *zoneSolTransfo = 0;
+    const ZoneSolutionTransfo *zoneSolTransfo = nullptr;
     cgnsErr = cg_goto(fileIndex, baseIndex, "Zone_t", iZone, "end");
     if(cgnsErr != CG_OK) err = cgnsError(__FILE__, __LINE__, fileIndex);
     char famName[CGNS_MAX_STR_LEN];

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,12 +15,12 @@
 #include "Context.h"
 
 StringXNumber CrackOptions_Number[] = {
-  {GMSH_FULLRC, "Dimension", NULL, 1.},
-  {GMSH_FULLRC, "PhysicalGroup", NULL, 1.},
-  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", NULL, 0.},
-  {GMSH_FULLRC, "NormalX", NULL, 0.},
-  {GMSH_FULLRC, "NormalY", NULL, 0.},
-  {GMSH_FULLRC, "NormalZ", NULL, 1.}};
+  {GMSH_FULLRC, "Dimension", nullptr, 1.},
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
+  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
+  {GMSH_FULLRC, "NormalX", nullptr, 0.},
+  {GMSH_FULLRC, "NormalY", nullptr, 0.},
+  {GMSH_FULLRC, "NormalZ", nullptr, 1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCrackPlugin() { return new GMSH_CrackPlugin(); }
@@ -149,7 +149,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
           bnd.erase(ed);
       }
     }
-    for(std::set<EdgeData, MEdgeDataLessThan>::iterator it = bnd.begin();
+    for(auto it = bnd.begin();
         it != bnd.end(); it++)
       bndVertices.insert(it->data.begin(), it->data.end());
   }
@@ -187,7 +187,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       }
     }
   }
-  for(std::set<MVertex *>::iterator it = bndVertices.begin();
+  for(auto it = bndVertices.begin();
       it != bndVertices.end(); it++)
     crackVertices.erase(*it);
 
@@ -204,7 +204,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
           // element touches the crack: find the closest crack element
           SPoint3 b = e->barycenter();
           double d = 1e200;
-          MElement *ce = 0;
+          MElement *ce = nullptr;
           for(std::size_t k = 0; k < crackElements.size(); k++) {
             double d2 = b.distance(crackElements[k]->barycenter());
             if(d2 < d) {
@@ -255,10 +255,10 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   // single new surface/curve, which is probably fine as in solvers we won't use
   // the internal seams.
 
-  GEdge *crackEdge = 0;
-  GFace *crackFace = 0;
+  GEdge *crackEdge = nullptr;
+  GFace *crackFace = nullptr;
   if(dim == 1) {
-    crackEdge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, 0, 0);
+    crackEdge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
     m->add(crackEdge);
   }
   else {
@@ -271,7 +271,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
 
   // duplicate internal crack nodes
   std::map<MVertex *, MVertex *> vxv;
-  for(std::set<MVertex *>::iterator it = crackVertices.begin();
+  for(auto it = crackVertices.begin();
       it != crackVertices.end(); it++) {
     MVertex *v = *it;
     MVertex *newv = new MVertex(v->x(), v->y(), v->z(), crackEntity);
@@ -298,7 +298,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
 
   // replace vertices in elements on one side of the crack
-  for(std::set<MElement *>::iterator it = oneside.begin(); it != oneside.end();
+  for(auto it = oneside.begin(); it != oneside.end();
       it++) {
     MElement *e = *it;
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {

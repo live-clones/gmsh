@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -34,7 +34,7 @@ static bool getval(const char *str, double &val)
   std::vector<double> valVar;
 
   // we should probably use the actual .geo parser instead...
-  for(std::map<std::string, gmsh_yysymbol>::iterator it =
+  for(auto it =
         gmsh_yysymbols.begin();
       it != gmsh_yysymbols.end(); it++) {
     if(it->second.value.size() == 1) {
@@ -379,7 +379,7 @@ static void elementary_add_sphere_cb(Fl_Widget *w, void *data)
                   FlGui::instance()->elementaryContext->input[38]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
-  drawContext::setDrawGeomTransientFunction(0);
+  drawContext::setDrawGeomTransientFunction(nullptr);
   SetBoundingBox();
   drawContext::global()->draw();
 }
@@ -1069,7 +1069,7 @@ void elementaryContextWindow::updatePoint(double pt[3], int which)
         for(int k = 0; k < 11; k++) {
           input[start[k] + i]->value(str);
           if(input[start[k] + i]->parent()->active()) {
-            input[start[k] + i]->do_callback(0, (void *)"no_redraw");
+            input[start[k] + i]->do_callback(nullptr, (void *)"no_redraw");
           }
         }
       }
@@ -1288,11 +1288,11 @@ void physicalContextWindow::show(const std::string &what, bool remove)
   {
     for(auto &p : physicalNames) {
       char *str = strdup(p.first.c_str());
-      Fl_Menu_Item item = {str, 0, 0, 0, 0};
+      Fl_Menu_Item item = {str, 0, nullptr, nullptr, 0};
       toFree.push_back(str);
       menuAdd.push_back(item);
     }
-    Fl_Menu_Item item = {0};
+    Fl_Menu_Item item = {nullptr};
     menuAdd.push_back(item);
     input[0]->menubutton()->copy(&menuAdd[0]);
   }
@@ -1301,11 +1301,11 @@ void physicalContextWindow::show(const std::string &what, bool remove)
       std::string label = std::to_string(p.first);
       if(p.second.size()) label += ": " + p.second;
       char *str = strdup(label.c_str());
-      Fl_Menu_Item item = {str, 0, 0, 0, 0};
+      Fl_Menu_Item item = {str, 0, nullptr, nullptr, 0};
       toFree.push_back(str);
       menuRemove.push_back(item);
     }
-    Fl_Menu_Item item = {0};
+    Fl_Menu_Item item = {nullptr};
     menuRemove.push_back(item);
     choice[0]->copy(&menuRemove[0]);
   }
@@ -1319,7 +1319,7 @@ void physicalContextWindow::show(const std::string &what, bool remove)
     mode = "Remove";
     group[1]->show();
     group[1]->activate();
-    physical_remove_cb(0, 0);
+    physical_remove_cb(nullptr, nullptr);
   }
   else {
     mode = "Add";
@@ -1329,15 +1329,15 @@ void physicalContextWindow::show(const std::string &what, bool remove)
       value[0]->deactivate();
     else
       value[0]->activate();
-    physical_add_cb(0, (void *)"Name");
+    physical_add_cb(nullptr, (void *)"Name");
   }
 
   if(!win->shown()) win->show();
 }
 
 static Fl_Menu_Item menu_selection_mode[] = {
-  {"All entities", 0, 0, 0}, {"Points", 0, 0, 0},  {"Curves", 0, 0, 0},
-  {"Surfaces", 0, 0, 0},     {"Volumes", 0, 0, 0}, {0}};
+  {"All entities", 0, nullptr, nullptr}, {"Points", 0, nullptr, nullptr},  {"Curves", 0, nullptr, nullptr},
+  {"Surfaces", 0, nullptr, nullptr},     {"Volumes", 0, nullptr, nullptr}, {nullptr}};
 
 static void selection_mode_cb(Fl_Widget *w, void *data)
 {
@@ -1569,7 +1569,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   static Fl_Menu menu_transfinite_dir[] = {
-    {"Left", 0, 0, 0}, {"Right", 0, 0, 0}, {"Alternated", 0, 0, 0}, {0}};
+    {"Left", 0, nullptr, nullptr}, {"Right", 0, nullptr, nullptr}, {"Alternated", 0, nullptr, nullptr}, {nullptr}};
 
   int width = 29 * FL_NORMAL_SIZE;
   int height = 4 * WB + 4 * BH;
@@ -1599,7 +1599,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
       input[2]->value("1");
       for(int i = 1; i < 3; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       static Fl_Menu_Item menu_trsf_mesh[] = {
-        {"Progression", 0, 0, 0}, {"Bump", 0, 0, 0}, {"Beta", 0, 0, 0}, {0}};
+        {"Progression", 0, nullptr, nullptr}, {"Bump", 0, nullptr, nullptr}, {"Beta", 0, nullptr, nullptr}, {nullptr}};
       choice[0] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Type");
       choice[0]->menu(menu_trsf_mesh);
       choice[0]->align(FL_ALIGN_RIGHT);

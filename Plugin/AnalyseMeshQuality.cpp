@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,14 +25,14 @@
 #endif
 
 StringXNumber CurvedMeshOptions_Number[] = {
-  {GMSH_FULLRC, "JacobianDeterminant", NULL, 0},
-  {GMSH_FULLRC, "IGEMeasure", NULL, 0},
-  {GMSH_FULLRC, "ICNMeasure", NULL, 0},
-  {GMSH_FULLRC, "HidingThreshold", NULL, 99},
-  {GMSH_FULLRC, "ThresholdGreater", NULL, 1},
-  {GMSH_FULLRC, "CreateView", NULL, 0},
-  {GMSH_FULLRC, "Recompute", NULL, 0},
-  {GMSH_FULLRC, "DimensionOfElements", NULL, -1}
+  {GMSH_FULLRC, "JacobianDeterminant", nullptr, 0},
+  {GMSH_FULLRC, "IGEMeasure", nullptr, 0},
+  {GMSH_FULLRC, "ICNMeasure", nullptr, 0},
+  {GMSH_FULLRC, "HidingThreshold", nullptr, 99},
+  {GMSH_FULLRC, "ThresholdGreater", nullptr, 1},
+  {GMSH_FULLRC, "CreateView", nullptr, 0},
+  {GMSH_FULLRC, "Recompute", nullptr, 0},
+  {GMSH_FULLRC, "DimensionOfElements", nullptr, -1}
 #if defined(HAVE_VISUDEV)
   ,
   {GMSH_FULLRC, "Element to draw quality", NULL, 0}
@@ -234,7 +234,7 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 #endif
   }
 
-  return NULL;
+  return nullptr;
 }
 
 void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
@@ -244,15 +244,15 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
   std::set<GEntity *, GEntityPtrFullLessThan> entities;
   switch(dim) {
   case 3:
-    for(GModel::riter it = _m->firstRegion(); it != _m->lastRegion(); it++)
+    for(auto it = _m->firstRegion(); it != _m->lastRegion(); it++)
       entities.insert(*it);
     break;
   case 2:
-    for(GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++)
+    for(auto it = _m->firstFace(); it != _m->lastFace(); it++)
       entities.insert(*it);
     break;
   case 1:
-    for(GModel::eiter it = _m->firstEdge(); it != _m->lastEdge(); it++)
+    for(auto it = _m->firstEdge(); it != _m->lastEdge(); it++)
       entities.insert(*it);
     break;
   default: return;
@@ -263,7 +263,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
   for(it = entities.begin(); it != entities.end(); ++it) {
     GEntity *entity = *it;
     unsigned num = entity->getNumMeshElements();
-    fullMatrix<double> *normals = NULL;
+    fullMatrix<double> *normals = nullptr;
     switch(dim) {
     case 3:
       Msg::StatusBar(true, "Volume %d: checking the Jacobian of %d elements",

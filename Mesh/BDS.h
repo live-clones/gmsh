@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -76,8 +76,8 @@ public:
   std::vector<BDS_Face *> getTriangles() const;
   BDS_Point(int id, double x = 0, double y = 0, double z = 0)
     : _lcBGM(1.e22), _lcPTS(1.e22), X(x), Y(y), Z(z), u(0), v(0),
-      config_modified(true), degenerated(0), _periodicCounterpart(NULL),
-      iD(id), g(0)
+      config_modified(true), degenerated(0), _periodicCounterpart(nullptr),
+      iD(id), g(nullptr)
   {
   }
 };
@@ -86,7 +86,7 @@ class BDS_Edge {
   std::vector<BDS_Face *> _faces;
 
 public:
-  BDS_Edge(BDS_Point *A, BDS_Point *B) : deleted(false), g(0)
+  BDS_Edge(BDS_Point *A, BDS_Point *B) : deleted(false), g(nullptr)
   {
     if(*A < *B) {
       p1 = A;
@@ -115,14 +115,14 @@ public:
     if(p2 == other->p1 || p2 == other->p2) return p2;
     Msg::Error("Edge %d %d has no common node with edge %d %d",
                p1->iD, p2->iD, other->p1->iD, other->p2->iD);
-    return 0;
+    return nullptr;
   }
   BDS_Point *othervertex(const BDS_Point *p) const
   {
     if(p1 == p) return p2;
     if(p2 == p) return p1;
     Msg::Error("Edge %d %d does not contain node %d", p1->iD, p2->iD, p->iD);
-    return 0;
+    return nullptr;
   }
   void addface(BDS_Face *f) { _faces.push_back(f); }
   bool operator < (const BDS_Edge &other) const
@@ -137,12 +137,12 @@ public:
     if(numfaces() != 2) {
       Msg::Error("%d face(s) attached to edge %d %d", numfaces(),
                  p1->iD, p2->iD);
-      return 0;
+      return nullptr;
     }
     if(f == _faces[0]) return _faces[1];
     if(f == _faces[1]) return _faces[0];
     Msg::Error("Edge %d %d does not belong to the face", p1->iD, p2->iD);
-    return 0;
+    return nullptr;
   }
   void del(BDS_Face *t)
   {
@@ -162,8 +162,8 @@ public:
 
 class BDS_Face {
 public:
-  BDS_Face(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C, BDS_Edge *D = 0)
-    : deleted(false), e1(A), e2(B), e3(C), e4(D), g(0)
+  BDS_Face(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C, BDS_Edge *D = nullptr)
+    : deleted(false), e1(A), e2(B), e3(C), e4(D), g(nullptr)
   {
     e1->addface(this);
     e2->addface(this);
@@ -175,27 +175,27 @@ public:
   {
     if(e4) {
       Msg::Error("Opposite edge to point %d cannot be found for quad", p->iD);
-      return 0;
+      return nullptr;
     }
     if(e1->p1 != p && e1->p2 != p) return e1;
     if(e2->p1 != p && e2->p2 != p) return e2;
     if(e3->p1 != p && e3->p2 != p) return e3;
     Msg::Error("Point %d does not belong to this triangle", p->iD);
-    return 0;
+    return nullptr;
   }
   BDS_Point *oppositeVertex(BDS_Edge *e)
   {
     if(e4) {
       Msg::Error("Opposite point to edge %d %d cannot be found for quad",
                  e->p1->iD, e->p2->iD);
-      return 0;
+      return nullptr;
     }
     if(e == e1) return e2->commonvertex(e3);
     if(e == e2) return e1->commonvertex(e3);
     if(e == e3) return e1->commonvertex(e2);
     Msg::Error("Edge %d %d does not belong to this triangle", e->p1->iD,
                e->p2->iD);
-    return 0;
+    return nullptr;
   }
   inline bool getNodes(BDS_Point *_n[4]) const
   {
@@ -203,7 +203,7 @@ public:
       _n[0] = e1->commonvertex(e3);
       _n[1] = e1->commonvertex(e2);
       _n[2] = e2->commonvertex(e3);
-      _n[3] = 0;
+      _n[3] = nullptr;
       if(_n[0] && _n[1] && _n[2]) return true;
     }
     else {
@@ -368,8 +368,8 @@ public:
   BDS_GeomEntity *get_geom(int p1, int p2);
   // 2D operators
   BDS_Edge *recover_edge(int p1, int p2, bool &_fatal,
-                         std::set<EdgeToRecover> *e2r = 0,
-                         std::set<EdgeToRecover> *not_recovered = 0);
+                         std::set<EdgeToRecover> *e2r = nullptr,
+                         std::set<EdgeToRecover> *not_recovered = nullptr);
   BDS_Edge *recover_edge_fast(BDS_Point *p1, BDS_Point *p2);
 
   /// Can invalidate the iterators for \p edge
@@ -385,7 +385,7 @@ public:
 
 void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);
 void outputScalarField(std::vector<BDS_Face *> &t, const char *fn, int param,
-                       GFace *gf = 0);
+                       GFace *gf = nullptr);
 void recur_tag(BDS_Face *t, BDS_GeomEntity *g);
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2, double x3,
                        double y3, double x4, double y4, double x[2]);

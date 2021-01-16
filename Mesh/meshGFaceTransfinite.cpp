@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -51,13 +51,13 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners)
     // try to find the corners automatically
     std::vector<GEdge *> fedges = gf->edges();
     GEdgeLoop el(fedges);
-    for(GEdgeLoop::iter it = el.begin(); it != el.end(); it++)
+    for(auto it = el.begin(); it != el.end(); it++)
       corners.push_back(it->getBeginVertex()->mesh_vertices[0]);
 
     // try reaaally hard for 3-sided faces
     if(corners.size() == 3) {
-      GEdge *first = 0, *last = 0;
-      for(std::vector<GEdge *>::iterator it = fedges.begin();
+      GEdge *first = nullptr, *last = nullptr;
+      for(auto it = fedges.begin();
           it != fedges.end(); it++) {
         if(((*it)->getBeginVertex()->mesh_vertices[0] == corners[0] &&
             (*it)->getEndVertex()->mesh_vertices[0] == corners[1]) ||
@@ -159,7 +159,7 @@ int MeshTransfiniteSurface(GFace *gf)
   // make sure that all bounding edges have begin/end points: everything in here
   // depends on it
   const std::vector<GEdge *> &edges = gf->edges();
-  for(std::vector<GEdge *>::const_iterator it = edges.begin();
+  for(auto it = edges.begin();
       it != edges.end(); it++) {
     if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
       Msg::Error("Transfinite algorithm cannot be applied with curve %d which "

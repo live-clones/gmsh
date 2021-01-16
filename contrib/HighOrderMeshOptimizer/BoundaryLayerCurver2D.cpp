@@ -75,7 +75,7 @@ namespace {
   {
     const int nVert = controlPoints.getNumCoeff();
 
-    MVertex *previous = NULL;
+    MVertex *previous = nullptr;
     for(int i = 0; i < nVert; ++i) {
       MVertex *v = new MVertex(controlPoints(i, 0), controlPoints(i, 1),
                                controlPoints(i, 2), gedge);
@@ -89,7 +89,7 @@ namespace {
   }
 
   void drawBezierControlPolygon(const std::vector<MVertex *> &vertices,
-                                GEdge *gedge = NULL)
+                                GEdge *gedge = nullptr)
   {
     if(!gedge) {
       gedge = *GModel::current()->firstEdge();
@@ -124,7 +124,7 @@ namespace {
   }
 
   void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,
-                   double unitDimension, GFace *gFace = NULL)
+                   double unitDimension, GFace *gFace = nullptr)
   {
     return;
     if(!gFace) gFace = *GModel::current()->firstFace();
@@ -353,7 +353,7 @@ namespace BoundaryLayerCurver {
                                 double coeffs[2][3], GEdge *gedge)
     {
       int N = 100;
-      MVertex *previous = NULL;
+      MVertex *previous = nullptr;
 
       for(int i = 0; i < N + 1; ++i) {
         const double u = (double)i / N * 2 - 1;
@@ -1190,7 +1190,7 @@ namespace BoundaryLayerCurver {
     const std::vector<MElement *> &stackElements = column.second;
     int numVertexPerLayer = 2;
     unsigned long numLayers = stackElements.size();
-    stack.assign(numVertexPerLayer * numLayers, NULL);
+    stack.assign(numVertexPerLayer * numLayers, nullptr);
 
     int k = 0;
     for(int i = 0; i < numVertexPerLayer; ++i) {
@@ -1231,7 +1231,7 @@ namespace BoundaryLayerCurver {
       // If there remains NULL values, it is because the vertex is the same
       // on bottom face and top face.
       for(int l = k; l < k + numVertexPerLayer; ++l) {
-        if(stack[l] == NULL) {
+        if(stack[l] == nullptr) {
           stack[l] = stack[l - numVertexPerLayer];
         }
       }
@@ -1504,7 +1504,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     //    symetric of concave if (bndEl2column[i].first->getNum() != 1156)
     //    continue; // Strange if (bndEl2column[i].first->getNum() != 1157)
     //    continue; // next to Strange
-    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], NULL, gedge, normal);
+    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], nullptr, gedge, normal);
   }
 }
 

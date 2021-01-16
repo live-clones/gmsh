@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -64,7 +64,7 @@ static void plugin_input_cb(Fl_Widget *w, void *data)
 static void plugin_browser_cb(Fl_Widget *w, void *data)
 {
   // get selected plugin
-  GMSH_Plugin *p = 0;
+  GMSH_Plugin *p = nullptr;
   for(int i = 1; i <= FlGui::instance()->plugins->browser->size(); i++) {
     if(FlGui::instance()->plugins->browser->selected(i)) {
       p = (GMSH_Plugin *)FlGui::instance()->plugins->browser->data(i);
@@ -191,8 +191,8 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
             }
           }
           else {
-            pp->execute(0);
-            add_scripting(pp, 0);
+            pp->execute(nullptr);
+            add_scripting(pp, nullptr);
           }
         } catch(GMSH_Plugin *err) {
           char tmp[256];
@@ -202,8 +202,8 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
       }
     }
     if(no_view_selected) {
-      pp->execute(0);
-      add_scripting(pp, 0);
+      pp->execute(nullptr);
+      add_scripting(pp, nullptr);
     }
   }
   else {
@@ -211,7 +211,7 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
   }
 
   FlGui::instance()->updateViews(true, true);
-  GMSH_Plugin::draw = 0;
+  GMSH_Plugin::draw = nullptr;
   drawContext::global()->draw();
 }
 
@@ -327,7 +327,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
   view_browser->callback(plugin_browser_cb);
   view_browser->box(GMSH_SIMPLE_RIGHT_BOX);
 
-  for(std::map<std::string, GMSH_Plugin *>::iterator it =
+  for(auto it =
         PluginManager::instance()->begin();
       it != PluginManager::instance()->end(); ++it) {
     GMSH_Plugin *p = it->second;
@@ -366,7 +366,7 @@ void pluginWindow::show(int viewIndex)
   if(viewIndex >= 0 && viewIndex < (int)PView::list.size()) {
     view_browser->deselect();
     view_browser->select(viewIndex + 1);
-    plugin_browser_cb(NULL, NULL);
+    plugin_browser_cb(nullptr, nullptr);
   }
   win->show();
 }
@@ -400,5 +400,5 @@ void pluginWindow::resetViewBrowser()
     view_browser->deactivate();
   }
 
-  plugin_browser_cb(NULL, NULL);
+  plugin_browser_cb(nullptr, nullptr);
 }

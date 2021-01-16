@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -280,7 +280,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
         std::vector<MVertex *> newv;
         for(int j = 0; j < t->getNumFaces(); j++) {
           MFace face = t->getFace(j);
-          faceContainer::iterator fIter = faceVertices.find(face);
+          auto fIter = faceVertices.find(face);
           if(fIter != faceVertices.end()) {
             newv.push_back(fIter->second[0]);
           }
@@ -324,7 +324,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
         std::vector<MVertex *> newv;
         for(int j = 0; j < 2; j++) {
           MFace face = p->getFace(j);
-          faceContainer::iterator fIter = faceVertices.find(face);
+          auto fIter = faceVertices.find(face);
           if(fIter != faceVertices.end()) {
             newv.push_back(fIter->second[0]);
           }
@@ -500,11 +500,11 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
 
   // Subdivide the second order elements to create the refined linear
   // mesh
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it)
     Subdivide(*it);
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
     Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices, linear);
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it, splitIntoHexas, faceVertices);
 
   // Check all 3D elements for negative volume and reverse if needed
@@ -524,7 +524,7 @@ void BarycentricRefineMesh(GModel *m)
 
   // Only update triangles in 2D, only update tets in 3D
   if(m->getNumRegions() == 0) {
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
       GFace *gf = *it;
       std::size_t numt = gf->triangles.size();
       if(!numt) continue;
@@ -547,7 +547,7 @@ void BarycentricRefineMesh(GModel *m)
     }
   }
   else {
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
       GRegion *gr = *it;
       std::size_t numt = gr->tetrahedra.size();
       if(!numt) continue;
@@ -736,7 +736,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
                        faceContainer &faceVertices,
                        std::vector<MHexahedron *> &dwarfs88)
 {
-  std::vector<MVertex *> v(105, (MVertex *)NULL);
+  std::vector<MVertex *> v(105, (MVertex *)nullptr);
 
   v[29] = element->getVertex(0);
   v[27] = element->getVertex(1);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -52,13 +52,13 @@ public:
     fl_rectf(0, 0, w, h);
     fl_color(255, 255, 255);
     int pos = 0;
-    for(std::vector<element>::iterator it = _elements.begin();
+    for(auto it = _elements.begin();
         it != _elements.end(); ++it) {
       fl_font(it->fontId, it->fontSize);
       fl_draw(it->text.c_str(), pos, it->height - fl_descent());
       pos += it->width;
     }
-    uchar *data = fl_read_image(NULL, 0, 0, w, h);
+    uchar *data = fl_read_image(nullptr, 0, 0, w, h);
     for(int i = 0; i < w * h; ++i) {
       data[i] = data[i * 3];
     }
@@ -100,7 +100,7 @@ public:
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     pos = 0;
-    for(std::vector<element>::iterator it = _elements.begin();
+    for(auto it = _elements.begin();
         it != _elements.end(); ++it) {
       glTranslatef(it->x, it->y, it->z);
       glColor4f(it->r, it->g, it->b, it->alpha);

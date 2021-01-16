@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -52,7 +52,7 @@ static double mylength(GEdge *ge, int i, double *u)
 }
 
 static void myresid(int N, GEdge *ge, double *u, fullVector<double> &r,
-                    double *weight = NULL)
+                    double *weight = nullptr)
 {
   double L[100];
   for(int i = 0; i < N - 1; i++) L[i] = mylength(ge, i, u);
@@ -207,7 +207,7 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
   return true;
 }
 
-static fullMatrix<double> *lob2lagP6 = NULL;
+static fullMatrix<double> *lob2lagP6 = nullptr;
 
 void createMatLob2LagP6()
 {
@@ -448,7 +448,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
     std::vector<MVertex *> veEdge;
 
-    edgeContainer::iterator eIter = edgeVertices.find(p);
+    auto eIter = edgeVertices.find(p);
 
     if(eIter != edgeVertices.end()) { // Vertices already exist
       std::vector<MVertex *> &eVtcs = eIter->second;
@@ -864,7 +864,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
   for(int i = 0; i < ele->getNumFaces(); i++) {
     MFace face = ele->getFace(i);
     std::vector<MVertex *> vFace;
-    faceContainer::iterator fIter = faceVertices.find(face);
+    auto fIter = faceVertices.find(face);
     if(fIter != faceVertices.end()) { // Vertices already exist
       std::vector<MVertex *> vtcs = fIter->second;
       int orientation;
@@ -1232,14 +1232,14 @@ void SetOrder1(GModel *m, bool onlyVisible, bool skipDiscrete)
   m->destroyMeshCaches();
 
   // replace all elements with first order elements
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
     setFirstOrder(*it, (*it)->lines, onlyVisible, skipDiscrete);
   }
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     setFirstOrder(*it, (*it)->triangles, onlyVisible, skipDiscrete);
     setFirstOrder(*it, (*it)->quadrangles, onlyVisible, skipDiscrete);
   }
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
     setFirstOrder(*it, (*it)->tetrahedra, onlyVisible, skipDiscrete);
     setFirstOrder(*it, (*it)->hexahedra, onlyVisible, skipDiscrete);
     setFirstOrder(*it, (*it)->prisms, onlyVisible, skipDiscrete);
@@ -1247,11 +1247,11 @@ void SetOrder1(GModel *m, bool onlyVisible, bool skipDiscrete)
   }
 
   // remove all high order vertices
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it)
     deleteHighOrderVertices(*it, onlyVisible, skipDiscrete);
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
     deleteHighOrderVertices(*it, onlyVisible, skipDiscrete);
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
     deleteHighOrderVertices(*it, onlyVisible, skipDiscrete);
 }
 
@@ -1263,7 +1263,7 @@ void checkHighOrderTriangles(const char *cc, GModel *m,
   double minGGlob = 1.0;
   double avg = 0.0;
   int count = 0, nbfair = 0;
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       double disto_ = t->distoShapeMeasure();
@@ -1311,7 +1311,7 @@ void checkHighOrderTetrahedron(const char *cc, GModel *m,
   minJGlob = 1.0;
   double avg = 0.0;
   int count = 0, nbfair = 0;
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
     for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++) {
       MTetrahedron *t = (*it)->tetrahedra[i];
       double disto_ = t->distoShapeMeasure();
@@ -1435,7 +1435,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   // TODO: we can leak nodes of discrete entities with existing high-order
   // nodes, if we ask a mesh with a different order
 
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
     Msg::Info("Meshing curve %d order %d", (*it)->tag(), order);
     Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
@@ -1445,7 +1445,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
       setHighOrderFromExistingMesh(*it, edgeVertices);
   }
 
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     Msg::Info("Meshing surface %d order %d", (*it)->tag(), order);
     Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
@@ -1453,16 +1453,16 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
       setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
     else
       setHighOrderFromExistingMesh(*it, edgeVertices, faceVertices);
-    if((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
+    if((*it)->getColumns() != nullptr) (*it)->getColumns()->clearElementData();
   }
 
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
     Msg::Info("Meshing volume %d order %d", (*it)->tag(), order);
     Msg::ProgressMeter(++counter, false, msg);
     if(onlyVisible && !(*it)->getVisibility()) continue;
     if(getOrder(*it) != order)
       setHighOrder(*it, edgeVertices, faceVertices, incomplete, nPts);
-    if((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
+    if((*it)->getColumns() != nullptr) (*it)->getColumns()->clearElementData();
   }
 
   // store nodes in entities

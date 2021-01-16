@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,14 +12,14 @@
 
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
-PViewData::PViewData() : _dirty(true), _fileIndex(0), _octree(0), _adaptive(0)
+PViewData::PViewData() : _dirty(true), _fileIndex(0), _octree(nullptr), _adaptive(nullptr)
 {
 }
 
 PViewData::~PViewData()
 {
   if(_adaptive) delete _adaptive;
-  for(interpolationMatrices::iterator it = _interpolation.begin();
+  for(auto it = _interpolation.begin();
       it != _interpolation.end(); it++)
     for(std::size_t i = 0; i < it->second.size(); i++) delete it->second[i];
   if(_octree) delete _octree;
@@ -77,7 +77,7 @@ void PViewData::saveAdaptedViewForVTK(const std::string &guifileName,
 void PViewData::destroyAdaptiveData()
 {
   if(_adaptive) delete _adaptive;
-  _adaptive = 0;
+  _adaptive = nullptr;
 }
 
 bool PViewData::empty()
@@ -134,19 +134,19 @@ void PViewData::setValue(int step, int ent, int ele, int nod, int comp,
 GModel *PViewData::getModel(int step)
 {
   Msg::Error("Cannot get model from this view");
-  return 0;
+  return nullptr;
 }
 
 GEntity *PViewData::getEntity(int step, int ent)
 {
   Msg::Error("Cannot get entity from this view");
-  return 0;
+  return nullptr;
 }
 
 MElement *PViewData::getElement(int step, int ent, int ele)
 {
   Msg::Error("Cannot get element from this view");
-  return 0;
+  return nullptr;
 }
 
 void PViewData::setInterpolationMatrices(int type,
@@ -196,10 +196,10 @@ void PViewData::deleteInterpolationMatrices(int type)
 
 void PViewData::removeInterpolationScheme(const std::string &name)
 {
-  std::map<std::string, interpolationMatrices>::iterator it =
+  auto it =
     _interpolationSchemes.find(name);
   if(it != _interpolationSchemes.end()) {
-    for(interpolationMatrices::iterator it2 = it->second.begin();
+    for(auto it2 = it->second.begin();
         it2 != it->second.end(); it2++)
       for(std::size_t i = 0; i < it2->second.size(); i++)
         delete it2->second[i];
@@ -209,10 +209,10 @@ void PViewData::removeInterpolationScheme(const std::string &name)
 
 void PViewData::removeAllInterpolationSchemes()
 {
-  std::map<std::string, interpolationMatrices>::iterator it =
+  auto it =
     _interpolationSchemes.begin();
   for(; it != _interpolationSchemes.end(); it++)
-    for(interpolationMatrices::iterator it2 = it->second.begin();
+    for(auto it2 = it->second.begin();
         it2 != it->second.end(); it2++)
       for(std::size_t i = 0; i < it2->second.size(); i++)
         delete it2->second[i];

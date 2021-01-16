@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -6,13 +6,13 @@
 #include "Remove.h"
 
 StringXNumber RemoveOptions_Number[] = {
-  {GMSH_FULLRC, "Text2D", NULL, 1.},     {GMSH_FULLRC, "Text3D", NULL, 1.},
-  {GMSH_FULLRC, "Points", NULL, 0.},     {GMSH_FULLRC, "Lines", NULL, 0.},
-  {GMSH_FULLRC, "Triangles", NULL, 0.},  {GMSH_FULLRC, "Quadrangles", NULL, 0.},
-  {GMSH_FULLRC, "Tetrahedra", NULL, 0.}, {GMSH_FULLRC, "Hexahedra", NULL, 0.},
-  {GMSH_FULLRC, "Prisms", NULL, 0.},     {GMSH_FULLRC, "Pyramids", NULL, 0.},
-  {GMSH_FULLRC, "Scalar", NULL, 1.},     {GMSH_FULLRC, "Vector", NULL, 1.},
-  {GMSH_FULLRC, "Tensor", NULL, 1.},     {GMSH_FULLRC, "View", NULL, -1.}};
+  {GMSH_FULLRC, "Text2D", nullptr, 1.},     {GMSH_FULLRC, "Text3D", nullptr, 1.},
+  {GMSH_FULLRC, "Points", nullptr, 0.},     {GMSH_FULLRC, "Lines", nullptr, 0.},
+  {GMSH_FULLRC, "Triangles", nullptr, 0.},  {GMSH_FULLRC, "Quadrangles", nullptr, 0.},
+  {GMSH_FULLRC, "Tetrahedra", nullptr, 0.}, {GMSH_FULLRC, "Hexahedra", nullptr, 0.},
+  {GMSH_FULLRC, "Prisms", nullptr, 0.},     {GMSH_FULLRC, "Pyramids", nullptr, 0.},
+  {GMSH_FULLRC, "Scalar", nullptr, 1.},     {GMSH_FULLRC, "Vector", nullptr, 1.},
+  {GMSH_FULLRC, "Tensor", nullptr, 1.},     {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterRemovePlugin() { return new GMSH_RemovePlugin(); }

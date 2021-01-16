@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -62,7 +62,7 @@ static inline bool intersection_segments_2(double *p1, double *p2, double *q1,
 
 template <class ITERATOR>
 void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
-                GFace *gf = NULL, std::set<GEntity *> *degenerated = NULL)
+                GFace *gf = nullptr, std::set<GEntity *> *degenerated = nullptr)
 {
   FILE *ff = Fopen(name, "w");
   if(!ff) {
@@ -395,7 +395,7 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData *data,
              GFace *gf)
   : deleted(false), base(t)
 {
-  neigh[0] = neigh[1] = neigh[2] = 0;
+  neigh[0] = neigh[1] = neigh[2] = nullptr;
   double center[3];
   double pa[3] = {base->getVertex(0)->x(), base->getVertex(0)->y(),
                   base->getVertex(0)->z()};
@@ -590,7 +590,7 @@ static void recurFindCavityAniso(GFace *gf, std::list<edgeXface> &shell,
     MTri3 *neigh = t->getNeigh(i);
     edgeXface exf(t, i);
     // take care of untouchable internal edges
-    std::set<MEdge, MEdgeLessThan>::iterator it =
+    auto it =
       data.internalEdges.find(MEdge(exf._v(0), exf._v(1)));
     if(!neigh || it != data.internalEdges.end())
       shell.push_back(exf);
@@ -695,7 +695,7 @@ static int insertVertexB(std::list<edgeXface> &shell,
 
   int k = 0;
 
-  std::list<edgeXface>::iterator it = shell.begin();
+  auto it = shell.begin();
 
   bool onePointIsTooClose = false;
 
@@ -722,7 +722,7 @@ static int insertVertexB(std::list<edgeXface> &shell,
     double LL = std::min(lc, lcBGM);
 
     MTri3 *t4 =
-      new MTri3(t, Extend1dMeshIn2dSurfaces(gf) ? LL : lcBGM, 0, &data, gf);
+      new MTri3(t, Extend1dMeshIn2dSurfaces(gf) ? LL : lcBGM, nullptr, &data, gf);
 
     if(oneNewTriangle) {
       force = true;
@@ -774,7 +774,7 @@ static int insertVertexB(std::list<edgeXface> &shell,
     // 30 % of the time is spent here!
     allTets.insert(newTris, newTris + shell.size());
     if(activeTets) {
-      for(std::vector<MTri3 *>::iterator i = new_cavity.begin();
+      for(auto i = new_cavity.begin();
           i != new_cavity.end(); ++i) {
         int active_edge;
         if(isActive(*i, LIMIT_, active_edge) && (*i)->getRadius() > LIMIT_) {
@@ -853,7 +853,7 @@ static MTri3 *search4Triangle(MTri3 *t, MVertex *v, int maxx, int &ITER)
     if(inside) return t;
     if(ITER++ > .5 * maxx) break;
   }
-  return 0;
+  return nullptr;
 }
 
 static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
@@ -891,9 +891,9 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
     if(ITER++ > (int)AllTris.size()) break;
   }
 
-  if(!force) return 0; // FIXME: removing this leads to horrible performance
+  if(!force) return nullptr; // FIXME: removing this leads to horrible performance
 
-  for(std::set<MTri3 *, compareTri3Ptr>::iterator itx = AllTris.begin();
+  for(auto itx = AllTris.begin();
       itx != AllTris.end(); ++itx) {
     if(!(*itx)->isDeleted()) {
       inside = invMapUV((*itx)->tri(), pt, data, uv, 1.e-8);
@@ -901,7 +901,7 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
     }
   }
   printf("argh %g %g!!!!\n", pt[0], pt[1]);
-  return 0;
+  return nullptr;
 }
 
 static bool insertAPoint(GFace *gf,
@@ -909,8 +909,8 @@ static bool insertAPoint(GFace *gf,
                          double center[2], double metric[3],
                          bidimMeshData &data,
                          std::set<MTri3 *, compareTri3Ptr> &AllTris,
-                         std::set<MTri3 *, compareTri3Ptr> *ActiveTris = 0,
-                         MTri3 *worst = 0, MTri3 **oneNewTriangle = 0,
+                         std::set<MTri3 *, compareTri3Ptr> *ActiveTris = nullptr,
+                         MTri3 *worst = nullptr, MTri3 **oneNewTriangle = nullptr,
                          bool testStarShapeness = false)
 {
   if(worst) {
@@ -923,7 +923,7 @@ static bool insertAPoint(GFace *gf,
   else
     worst = *it;
 
-  MTri3 *ptin = 0;
+  MTri3 *ptin = nullptr;
   std::list<edgeXface> shell;
   std::list<MTri3 *> cavity;
   double uv[2];
@@ -931,7 +931,7 @@ static bool insertAPoint(GFace *gf,
   // if the point is able to break the bad triangle "worst"
   if(inCircumCircleAniso(gf, worst->tri(), center, metric, data)) {
     recurFindCavityAniso(gf, shell, cavity, metric, center, worst, data);
-    for(std::list<MTri3 *>::iterator itc = cavity.begin(); itc != cavity.end();
+    for(auto itc = cavity.begin(); itc != cavity.end();
         ++itc) {
       if(invMapUV((*itc)->tri(), center, data, uv, 1.e-8)) {
         ptin = *itc;
@@ -998,7 +998,7 @@ static bool insertAPoint(GFace *gf,
       worst->forceRadius(-1);
       AllTris.insert(worst);
       delete v;
-      for(std::list<MTri3 *>::iterator itc = cavity.begin();
+      for(auto itc = cavity.begin();
           itc != cavity.end(); ++itc)
         (*itc)->setDeleted(false);
       return false;
@@ -1009,7 +1009,7 @@ static bool insertAPoint(GFace *gf,
     }
   }
   else {
-    for(std::list<MTri3 *>::iterator itc = cavity.begin(); itc != cavity.end();
+    for(auto itc = cavity.begin(); itc != cavity.end();
         ++itc)
       (*itc)->setDeleted(false);
     AllTris.erase(it);
@@ -1294,7 +1294,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
 
   int ITER = 0, active_edge;
   // compute active triangle
-  std::set<MTri3 *, compareTri3Ptr>::iterator it = AllTris.begin();
+  auto it = AllTris.begin();
   for(; it != AllTris.end(); ++it) {
     if(isActive(*it, LIMIT_, active_edge))
       ActiveTris.insert(*it);
@@ -1338,7 +1338,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
         if(!true_boundary ||
            pointInsideParametricDomain(*true_boundary, NP, FAR, nnnn))
           insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris,
-                       &ActiveTris, worst, NULL, testStarShapeness);
+                       &ActiveTris, worst, nullptr, testStarShapeness);
       }
     }
   }
@@ -1499,7 +1499,7 @@ void bowyerWatsonFrontalLayers(
 
   int ITER = 0, active_edge;
   // compute active triangle
-  std::set<MTri3 *, compareTri3Ptr>::iterator it = AllTris.begin();
+  auto it = AllTris.begin();
   std::set<MEdge, MEdgeLessThan> _front;
   for(; it != AllTris.end(); ++it) {
     if(isActive(*it, LIMIT_, active_edge)) {
@@ -1536,7 +1536,7 @@ void bowyerWatsonFrontalLayers(
            _printTris (name, AllTris, Us,Vs,true);
          }
       */
-      std::set<MTri3 *, compareTri3Ptr>::iterator WORST_ITER =
+      auto WORST_ITER =
         ActiveTris.begin();
 
       MTri3 *worst = (*WORST_ITER);
@@ -1563,7 +1563,7 @@ void bowyerWatsonFrontalLayers(
         else
           optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint, metric);
 
-        insertAPoint(gf, AllTris.end(), newPoint, 0, DATA, AllTris, &ActiveTris,
+        insertAPoint(gf, AllTris.end(), newPoint, nullptr, DATA, AllTris, &ActiveTris,
                      worst);
         // else if (!worst->isDeleted() && worst->getRadius() > LIMIT_){
         //   ActiveTrisNotInFront.insert(worst);
@@ -1631,7 +1631,7 @@ void bowyerWatsonParallelograms(
   // std::sort(packed.begin(), packed.end(), MVertexPtrLessThanLexicographic());
   SortHilbert(packed);
 
-  MTri3 *oneNewTriangle = 0;
+  MTri3 *oneNewTriangle = nullptr;
   for(std::size_t i = 0; i < packed.size();) {
     MTri3 *worst = *AllTris.begin();
     if(worst->isDeleted()) {
@@ -1648,13 +1648,13 @@ void bowyerWatsonParallelograms(
       buildMetric(gf, newPoint, metric);
 
       bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA,
-                                  AllTris, 0, oneNewTriangle, &oneNewTriangle);
-      if(!success) oneNewTriangle = 0;
+                                  AllTris, nullptr, oneNewTriangle, &oneNewTriangle);
+      if(!success) oneNewTriangle = nullptr;
       i++;
     }
 
     if(1.0 * AllTris.size() > 2.5 * DATA.vSizes.size()) {
-      std::set<MTri3 *, compareTri3Ptr>::iterator itd = AllTris.begin();
+      auto itd = AllTris.begin();
       while(itd != AllTris.end()) {
         if((*itd)->isDeleted()) {
           delete *itd;
@@ -1695,7 +1695,7 @@ void bowyerWatsonParallelogramsConstrained(
 
   std::sort(packed.begin(), packed.end(), MVertexPtrLessThanLexicographic());
 
-  MTri3 *oneNewTriangle = 0;
+  MTri3 *oneNewTriangle = nullptr;
   for(std::size_t i = 0; i < packed.size();) {
     MTri3 *worst = *AllTris.begin();
     if(worst->isDeleted()) {
@@ -1712,13 +1712,13 @@ void bowyerWatsonParallelogramsConstrained(
       buildMetric(gf, newPoint, metric);
 
       bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA,
-                                  AllTris, 0, oneNewTriangle, &oneNewTriangle);
-      if(!success) oneNewTriangle = 0;
+                                  AllTris, nullptr, oneNewTriangle, &oneNewTriangle);
+      if(!success) oneNewTriangle = nullptr;
       i++;
     }
 
     if(1.0 * AllTris.size() > 2.5 * DATA.vSizes.size()) {
-      std::set<MTri3 *, compareTri3Ptr>::iterator itd = AllTris.begin();
+      auto itd = AllTris.begin();
       while(itd != AllTris.end()) {
         if((*itd)->isDeleted()) {
           delete *itd;
@@ -1773,7 +1773,7 @@ static MTri3 *getTriToBreak(MVertex *v, std::vector<MTri3 *> &t, int &ITER)
   for(size_t i = 0; i < t.size(); i++) {
     if(!t[i]->isDeleted() && inCircumCircleXY(t[i]->tri(), v)) return t[i];
   }
-  return 0;
+  return nullptr;
 }
 
 static bool triOnBox(MTriangle *t, MVertex *box[4])
@@ -1849,7 +1849,7 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
 
     for(std::size_t k = 0; k < std::min(cavity.size(), shell.size()); k++) {
       cavity[k]->setDeleted(false);
-      for(std::size_t l = 0; l < 3; l++) { cavity[k]->setNeigh(l, 0); }
+      for(std::size_t l = 0; l < 3; l++) { cavity[k]->setNeigh(l, nullptr); }
     }
     connectTris(extended_cavity.begin(), extended_cavity.end(), conn);
   }

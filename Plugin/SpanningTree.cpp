@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,13 +15,13 @@
 using namespace std;
 
 StringXNumber SpanningTreeOptions_Number[] = {
-  {GMSH_FULLRC, "OutputPhysical", NULL, -1},
+  {GMSH_FULLRC, "OutputPhysical", nullptr, -1},
 };
 
 StringXString SpanningTreeOptions_String[] = {
-  {GMSH_FULLRC, "PhysicalVolumes", NULL, ""},
-  {GMSH_FULLRC, "PhysicalSurfaces", NULL, ""},
-  {GMSH_FULLRC, "PhysicalCurves", NULL, ""},
+  {GMSH_FULLRC, "PhysicalVolumes", nullptr, ""},
+  {GMSH_FULLRC, "PhysicalSurfaces", nullptr, ""},
+  {GMSH_FULLRC, "PhysicalCurves", nullptr, ""},
 };
 
 extern "C" {
@@ -110,7 +110,7 @@ void GMSH_SpanningTreePlugin::run(void)
   // Get all elements in physicals for each dimension
   vector<ElementSet> element(3);
   for(int i = 0; i < 3; i++)
-    for(list<int>::iterator j = physical[i].begin(); j != physical[i].end();
+    for(auto j = physical[i].begin(); j != physical[i].end();
         j++)
       getAllMElement(*model, *j, dim[i], element[i]);
 
@@ -148,8 +148,8 @@ void GMSH_SpanningTreePlugin::spanningTree(EdgeSet &edge, DSU &vertex,
   // Kruskal's algorithm, without edge sorting, since we don't weight them
 
   // Iterate on edges
-  EdgeSet::iterator end = edge.end();
-  EdgeSet::iterator it = edge.begin();
+  auto end = edge.end();
+  auto it = edge.begin();
 
   for(; it != end; it++) { // Loop on edges:
     if(vertex.find(it->first) != vertex.find(it->second)) { // if the current
@@ -204,8 +204,8 @@ void GMSH_SpanningTreePlugin::getAllMElement(GModel &model, int physical,
 
 void GMSH_SpanningTreePlugin::getAllMEdge(ElementSet &element, EdgeSet &edge)
 {
-  ElementSet::iterator end = element.end();
-  ElementSet::iterator it = element.begin();
+  auto end = element.end();
+  auto it = element.begin();
 
   for(; it != end; it++)
     for(int i = 0; i < (*it)->getNumEdges(); i++)
@@ -222,8 +222,8 @@ void GMSH_SpanningTreePlugin::addToModel(GModel &model, Tree &tree, int tag)
   std::vector<MElement *> line(tree.size());
 
   // Populate
-  Tree::iterator end = tree.end();
-  Tree::iterator it = tree.begin();
+  auto end = tree.end();
+  auto it = tree.begin();
 
   for(int i = 0; it != end; i++, it++)
     line[i] = new MLine(model.getMeshVertexByTag(it->first + 1),

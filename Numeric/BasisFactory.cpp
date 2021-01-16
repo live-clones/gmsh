@@ -27,7 +27,7 @@ const nodalBasis *BasisFactory::getNodalBasis(int tag)
   if(it != fs.end()) { return it->second; }
   // Get the parent type to see which kind of basis
   // we want to create
-  nodalBasis *F = NULL;
+  nodalBasis *F = nullptr;
   if(tag == MSH_TRI_MINI)
     F = new miniBasisTri();
   else if(tag == MSH_TET_MINI)
@@ -45,7 +45,7 @@ const nodalBasis *BasisFactory::getNodalBasis(int tag)
     case(TYPE_PYR): F = new pyramidalBasis(tag); break;
     default:
       Msg::Error("Unknown type of element %d (in BasisFactory)", tag);
-      return NULL;
+      return nullptr;
     }
   }
 
@@ -153,28 +153,28 @@ const bezierBasis *BasisFactory::getBezierBasis(int tag)
 
 void BasisFactory::clearAll()
 {
-  std::map<int, nodalBasis *>::iterator itF = fs.begin();
+  auto itF = fs.begin();
   while(itF != fs.end()) {
     delete itF->second;
     itF++;
   }
   fs.clear();
 
-  std::map<FuncSpaceData, JacobianBasis *>::iterator itJ = js.begin();
+  auto itJ = js.begin();
   while(itJ != js.end()) {
     delete itJ->second;
     itJ++;
   }
   js.clear();
 
-  std::map<FuncSpaceData, GradientBasis *>::iterator itG = gs.begin();
+  auto itG = gs.begin();
   while(itG != gs.end()) {
     delete itG->second;
     itG++;
   }
   gs.clear();
 
-  std::map<FuncSpaceData, bezierBasis *>::iterator itB = bs.begin();
+  auto itB = bs.begin();
   while(itB != bs.end()) {
     delete itB->second;
     itB++;

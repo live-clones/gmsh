@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -138,7 +138,7 @@ static void clip_invert_cb(Fl_Widget *w, void *data)
   for(int i = 0; i < 4; i++)
     FlGui::instance()->clipping->plane[i]->value(
       -FlGui::instance()->clipping->plane[i]->value());
-  clip_update_cb(NULL, NULL);
+  clip_update_cb(nullptr, nullptr);
 }
 
 static void clip_reset_cb(Fl_Widget *w, void *data)
@@ -176,13 +176,13 @@ clippingWindow::clippingWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  static Fl_Menu_Item plane_number[] = {{"Plane 0", 0, 0},
-                                        {"Plane 1", 0, 0},
-                                        {"Plane 2", 0, 0},
-                                        {"Plane 3", 0, 0},
-                                        {"Plane 4", 0, 0},
-                                        {"Plane 5", 0, 0},
-                                        {0}};
+  static Fl_Menu_Item plane_number[] = {{"Plane 0", 0, nullptr},
+                                        {"Plane 1", 0, nullptr},
+                                        {"Plane 2", 0, nullptr},
+                                        {"Plane 3", 0, nullptr},
+                                        {"Plane 4", 0, nullptr},
+                                        {"Plane 5", 0, nullptr},
+                                        {nullptr}};
 
   int width = 26 * FL_NORMAL_SIZE;
   int height = 10 * BH + 5 * WB;

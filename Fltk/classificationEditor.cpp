@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -88,12 +88,12 @@ static void select_elements_cb(Fl_Widget *w, void *data)
   if(!e->selected) {
     e->selected =
       new discreteEdge(GModel::current(),
-                       GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+                       GModel::current()->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
     GModel::current()->add(e->selected);
   }
 
   if(all) {
-    for(GModel::fiter it = GModel::current()->firstFace();
+    for(auto it = GModel::current()->firstFace();
         it != GModel::current()->lastFace(); ++it) {
       e->elements.insert(e->elements.end(), (*it)->triangles.begin(),
                          (*it)->triangles.end());
@@ -147,7 +147,7 @@ static void select_elements_cb(Fl_Widget *w, void *data)
   buildEdgeToElements(e->elements, adj);
   buildListOfEdgeAngle(adj, e->edges_detected, e->edges_lonly);
   ElementsSelectedMode(e);
-  update_edges_cb(0, data);
+  update_edges_cb(nullptr, data);
   Msg::StatusGl("");
 }
 
@@ -230,7 +230,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
   std::vector<MLine *> temp = e->selected->lines;
   e->selected->lines.clear();
   for(std::size_t i = 0; i < temp.size(); i++) {
-    std::vector<MLine *>::iterator it =
+    auto it =
       std::find(ele.begin(), ele.end(), temp[i]);
     if(it != ele.end())
       delete temp[i];
@@ -267,7 +267,7 @@ static void classify_cb(Fl_Widget *w, void *data)
   if(!e->selected) {
     e->selected =
       new discreteEdge(GModel::current(),
-                       GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+                       GModel::current()->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
     GModel::current()->add(e->selected);
   }
 
@@ -283,7 +283,7 @@ static void classify_cb(Fl_Widget *w, void *data)
     GModel::current()->remove(e->selected);
     e->selected->lines.clear();
     delete e->selected;
-    e->selected = 0;
+    e->selected = nullptr;
   }
 
   GModel::current()->pruneMeshVertexAssociations();
@@ -297,7 +297,7 @@ static void classify_cb(Fl_Widget *w, void *data)
   NoElementsSelectedMode(e);
 }
 
-classificationEditor::classificationEditor() : selected(0)
+classificationEditor::classificationEditor() : selected(nullptr)
 {
   opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
 
@@ -423,7 +423,7 @@ classificationEditor::classificationEditor() : selected(0)
 void mesh_classify_cb(Fl_Widget *w, void *data)
 {
   // create the (static) editor
-  static classificationEditor *editor = 0;
+  static classificationEditor *editor = nullptr;
   if(!editor) editor = new classificationEditor();
   editor->show();
 }

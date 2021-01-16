@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -72,7 +72,7 @@ void meshGFaceBamg(GFace *gf)
 {
   std::vector<GEdge *> const &edges = gf->edges();
   std::set<MVertex *> bcVertex;
-  for(std::vector<GEdge *>::const_iterator it = edges.begin();
+  for(auto it = edges.begin();
       it != edges.end(); it++) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       bcVertex.insert((*it)->lines[i]->getVertex(0));
@@ -90,7 +90,7 @@ void meshGFaceBamg(GFace *gf)
 
   Vertex2 *bamgVertices = new Vertex2[all.size()];
   int index = 0;
-  for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); ++it) {
+  for(auto it = all.begin(); it != all.end(); ++it) {
     if((*it)->onWhat()->dim() <= 1) {
       // for(std::set<MVertex*>::iterator it = bcVertex.begin();
       // it!=bcVertex.end(); ++it){
@@ -105,7 +105,7 @@ void meshGFaceBamg(GFace *gf)
   }
   // exit(1);
   int nbFixedVertices = index;
-  for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); ++it) {
+  for(auto it = all.begin(); it != all.end(); ++it) {
     // FIXME : SEAMS should have to be taken into account here !!!
     if((*it)->onWhat()->dim() >= 2) {
       SPoint2 p;
@@ -146,7 +146,7 @@ void meshGFaceBamg(GFace *gf)
 
   Seg *bamgBoundary = new Seg[numEdges];
   int count = 0;
-  for(std::vector<GEdge *>::const_iterator it = edges.begin();
+  for(auto it = edges.begin();
       it != edges.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); ++i) {
       int nodes[2] = {(int)(*it)->lines[i]->getVertex(0)->getIndex(),
@@ -160,9 +160,9 @@ void meshGFaceBamg(GFace *gf)
   Mesh2 *bamgMesh = new Mesh2(all.size(), gf->triangles.size(), numEdges,
                               bamgVertices, bamgTriangles, bamgBoundary);
 
-  MElementOctree *_octree = NULL;
+  MElementOctree *_octree = nullptr;
 
-  Mesh2 *refinedBamgMesh = 0;
+  Mesh2 *refinedBamgMesh = nullptr;
   int iterMax = 41;
   for(int k = 0; k < iterMax; k++) {
     int nbVert = bamgMesh->nv;
@@ -235,10 +235,10 @@ void meshGFaceBamg(GFace *gf)
   // delete pointers
   if(refinedBamgMesh) delete refinedBamgMesh;
   if(_octree) delete _octree;
-  for(std::vector<MElement *>::iterator it = myParamElems.begin();
+  for(auto it = myParamElems.begin();
       it != myParamElems.end(); it++)
     delete *it;
-  for(std::vector<MVertex *>::iterator it = newVert.begin();
+  for(auto it = newVert.begin();
       it != newVert.end(); it++)
     delete *it;
 }

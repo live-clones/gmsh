@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -28,7 +28,7 @@ static void getAllBoundingVertices(
   GRegion *gr, std::set<MVertex *, MVertexPtrLessThan> &allBoundingVertices)
 {
   std::vector<GFace *> faces = gr->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
 
   while(it != faces.end()) {
     GFace *gf = (*it);
@@ -52,7 +52,7 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   std::set<MVertex *, MVertexPtrLessThan> allBoundingVertices;
   getAllBoundingVertices(gr, allBoundingVertices);
 
-  std::set<MVertex *, MVertexPtrLessThan>::iterator itv =
+  auto itv =
     allBoundingVertices.begin();
   int I = 1;
   while(itv != allBoundingVertices.end()) {
@@ -77,7 +77,7 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
     }
   }
   std::vector<GFace *> faces = gr->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
   while(it != faces.end()) {
     GFace *gf = (*it);
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
@@ -199,7 +199,7 @@ static void setRand(double r[6])
 static void meshNormalsPointOutOfTheRegion(GRegion *gr)
 {
   std::vector<GFace *> faces = gr->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
 
   // perform intersection check in normalized coordinates
   SBoundingBox3d bbox = gr->bounds();
@@ -242,7 +242,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
       N[1] += rrr[2] * v1[1] + rrr[3] * v2[1];
       N[2] += rrr[4] * v1[2] + rrr[5] * v2[2];
       norme(N);
-      std::vector<GFace *>::iterator it_b = faces.begin();
+      auto it_b = faces.begin();
       while(it_b != faces.end()) {
         GFace *gf_b = (*it_b);
         for(std::size_t i_b = 0; i_b < gf_b->triangles.size(); i_b++) {
@@ -306,7 +306,7 @@ void meshGRegionNetgen(GRegion *gr)
 #else
   // sanity check for frontal algo
   std::vector<GFace *> faces = gr->faces();
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end(); it++) {
+  for(auto it = faces.begin(); it != faces.end(); it++) {
     if((*it)->quadrangles.size()) {
       Msg::Error("Cannot use frontal 3D algorithm with quadrangles on boundary");
       return;

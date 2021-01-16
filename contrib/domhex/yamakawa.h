@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -75,7 +75,7 @@ public:
     else {
       cout << "Hex: unknown vertex number " << i << endl;
       throw;
-      return NULL;
+      return nullptr;
     }
   }
   const std::vector<MVertex *> &vertices() const { return vertices_; }
@@ -104,7 +104,7 @@ public:
   bool contains(MVertex *v) const { return vertex_index(v) != -1; }
   unsigned long long get_hash()
   {
-    if(hash == 0. && vertices_[0] != NULL) { set_hash(); }
+    if(hash == 0. && vertices_[0] != nullptr) { set_hash(); }
     return hash;
   }
   bool operator<(const Hex &hex) const
@@ -121,7 +121,7 @@ private:
   unsigned long long hash;
 
 public:
-  Facet() : a(NULL), b(NULL), c(NULL), hash(0.)
+  Facet() : a(nullptr), b(nullptr), c(nullptr), hash(0.)
   {
     num[0] = -1;
     num[1] = -1;
@@ -176,7 +176,7 @@ private:
   void compute_hash() { hash = a->getNum() + b->getNum(); }
 
 public:
-  Diagonal() : a(NULL), b(NULL), hash(){};
+  Diagonal() : a(nullptr), b(nullptr), hash(){};
   Diagonal(MVertex *a2, MVertex *b2) : a(a2), b(b2) { compute_hash(); }
   ~Diagonal(){};
   MVertex *get_a() const { return a; }
@@ -206,14 +206,14 @@ private:
 
 public:
   Tuple()
-    : vertex1(NULL), vertex2(NULL), vertex3(NULL), element(NULL), gf(NULL),
+    : vertex1(nullptr), vertex2(nullptr), vertex3(nullptr), element(nullptr), gf(nullptr),
       hash(0)
   {
   }
 
   Tuple(MVertex *const a, MVertex *const b, MVertex *const c,
         MElement *const element2, GFace *const gf2)
-    : vertex1(NULL), vertex2(NULL), vertex3(NULL), element(element2), gf(gf2),
+    : vertex1(nullptr), vertex2(nullptr), vertex3(nullptr), element(element2), gf(gf2),
       hash(a->getNum() + b->getNum() + c->getNum())
   {
     MVertex *tmp[3] = {a, b, c};
@@ -224,7 +224,7 @@ public:
   }
 
   Tuple(MVertex *const a, MVertex *const b, MVertex *const c)
-    : vertex1(NULL), vertex2(NULL), vertex3(NULL), element(NULL), gf(NULL),
+    : vertex1(nullptr), vertex2(nullptr), vertex3(nullptr), element(nullptr), gf(nullptr),
       hash(a->getNum() + b->getNum() + c->getNum())
   {
     MVertex *tmp[3] = {a, b, c};
@@ -331,7 +331,7 @@ private:
         MVertex *b = tet->getVertex((j + 1) % 4);
         MVertex *c = tet->getVertex((j + 2) % 4);
         MVertex *d = tet->getVertex((j + 3) % 4);
-        std::map<MVertex *, std::set<MVertex *> >::iterator it =
+        auto it =
           vertex_to_vertices_.find(a);
         if(it != vertex_to_vertices_.end()) {
           it->second.insert(b);
@@ -357,7 +357,7 @@ private:
       MElement *tet = region->getMeshElement(i);
       for(unsigned int j = 0; j < 4; j++) {
         MVertex *getVertex = tet->getVertex(j);
-        std::map<MVertex *, std::set<MElement *> >::iterator it =
+        auto it =
           vertex_to_elements_.find(getVertex);
         if(it != vertex_to_elements_.end()) { it->second.insert(tet); }
         else {
@@ -383,7 +383,7 @@ public:
   typedef std::map<MVertex *, std::set<MVertex *> > Vertex2Vertices;
   typedef std::map<MVertex *, std::set<MElement *> > Vertex2Elements;
 
-  Recombinator() : current_region(NULL), hex_threshold_quality(0.6){};
+  Recombinator() : current_region(nullptr), hex_threshold_quality(0.6){};
   virtual ~Recombinator();
 
   virtual void execute();

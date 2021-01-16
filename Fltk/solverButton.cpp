@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,7 +32,7 @@ static void solver_rename_cb(Fl_Widget *w, void *data)
     std::string host = opt_solver_remote_login(num, GMSH_GET, "");
     // this will remove the old client if the new name is different
     FlGui::instance()->onelab->addSolver(n, exe, host, num);
-    onelab_cb(0, (void *)"reset");
+    onelab_cb(nullptr, (void *)"reset");
   }
 }
 
@@ -46,7 +46,7 @@ static void solver_change_exe_cb(Fl_Widget *w, void *data)
   int num = (intptr_t)data;
   std::string name = opt_solver_name(num, GMSH_GET, "");
   std::string exe = opt_solver_executable(num, GMSH_GET, "");
-  const char *old = exe.size() ? exe.c_str() : 0;
+  const char *old = exe.size() ? exe.c_str() : nullptr;
   std::string title = "Choose location of " + name + " executable";
   std::string pattern = "*";
 #if defined(WIN32)
@@ -56,11 +56,11 @@ static void solver_change_exe_cb(Fl_Widget *w, void *data)
     exe = fileChooserGetName(1);
     if(exe.size()) {
       // remove old client if it's already loaded
-      onelab::server::citer it = onelab::server::instance()->findClient(name);
+      auto it = onelab::server::instance()->findClient(name);
       if(it != onelab::server::instance()->lastClient()) delete *it;
       std::string host = opt_solver_remote_login(num, GMSH_GET, "");
       FlGui::instance()->onelab->addSolver(name, exe, host, num);
-      onelab_cb(0, (void *)"reset");
+      onelab_cb(nullptr, (void *)"reset");
     }
   }
 }
@@ -79,7 +79,7 @@ static void solver_remove_cb(Fl_Widget *w, void *data)
   opt_solver_executable(num, GMSH_SET, "");
   opt_solver_remote_login(num, GMSH_SET, "");
 
-  onelab::server::citer it = onelab::server::instance()->findClient(name);
+  auto it = onelab::server::instance()->findClient(name);
   if(it != onelab::server::instance()->lastClient()) {
     delete *it;
   }

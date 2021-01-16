@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -183,7 +183,7 @@ namespace {
 } // namespace
 
 bezierBasis::bezierBasis(FuncSpaceData data)
-  : _funcSpaceData(data), _raiser(NULL)
+  : _funcSpaceData(data), _raiser(nullptr)
 {
   if(_funcSpaceData.getType() == TYPE_PYR)
     _constructPyr();
@@ -601,8 +601,8 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
       "or A != B == C");
 }
 
-bezierCoeffMemoryPool *bezierCoeff::_pool0 = NULL;
-bezierCoeffMemoryPool *bezierCoeff::_pool1 = NULL;
+bezierCoeffMemoryPool *bezierCoeff::_pool0 = nullptr;
+bezierCoeffMemoryPool *bezierCoeff::_pool1 = nullptr;
 fullMatrix<double> bezierCoeff::_sub = fullMatrix<double>();
 
 bezierCoeff::bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
@@ -782,8 +782,8 @@ void bezierCoeff::releasePools()
 {
   delete _pool0;
   delete _pool1;
-  _pool0 = NULL;
-  _pool1 = NULL;
+  _pool0 = nullptr;
+  _pool1 = nullptr;
 }
 
 void bezierCoeff::updateDataPtr(long diff)
@@ -1433,7 +1433,7 @@ double *bezierCoeffMemoryPool::giveBlock(bezierCoeff *bez)
       _bezierCoeff.push_back(bez);
     else if(_bezierCoeff[idx]) {
       Msg::Error("this block is being used!?");
-      return NULL;
+      return nullptr;
     }
     else
       _bezierCoeff[idx] = bez;
@@ -1459,7 +1459,7 @@ double *bezierCoeffMemoryPool::giveBlock(bezierCoeff *bez)
   // NULL which should never happens.
   Msg::Error("Wrong state of bezierCoeffMemoryPool."
              "_bezierCoeff[i] not correct?");
-  return NULL;
+  return nullptr;
 }
 
 void bezierCoeffMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
@@ -1470,7 +1470,7 @@ void bezierCoeffMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
   //    Msg::Info("It's a good guess!");
   //  else
   //    Msg::Info("Did not work :'( ");
-  _bezierCoeff[idx] = NULL;
+  _bezierCoeff[idx] = nullptr;
   if(idx == _endOfSearch - 1) {
     do {
       --_endOfSearch;

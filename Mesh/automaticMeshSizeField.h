@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -146,7 +146,7 @@ public:
     double hmax = -1.0, double hbulk = -1.0, int smoothing = true,
     int gaps = true)
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
-    : forest(NULL), forestOptions(NULL)
+    : forest(nullptr), forestOptions(nullptr)
 #endif
   {
     _forestFile = fFile;
@@ -206,9 +206,9 @@ public:
   }
 
   void update();
-  virtual double operator()(double X, double Y, double Z, GEntity *ge = 0);
+  virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr);
   virtual void operator()(double x, double y, double z, SMetric3 &m,
-                          GEntity *ge = 0);
+                          GEntity *ge = nullptr);
 };
 
 #endif

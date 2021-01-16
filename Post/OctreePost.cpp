@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -258,11 +258,11 @@ OctreePost::OctreePost(PViewData *data) { _create(data); }
 
 void OctreePost::_create(PViewData *data)
 {
-  _sp = _vp = _tp = _sl = _vl = _tl = _st = _vt = _tt = 0;
-  _sq = _vq = _tq = _ss = _vs = _ts = _sh = _vh = _th = 0;
-  _si = _vi = _ti = _sy = _vy = _ty = 0;
-  _theViewDataList = 0;
-  _theViewDataGModel = 0;
+  _sp = _vp = _tp = _sl = _vl = _tl = _st = _vt = _tt = nullptr;
+  _sq = _vq = _tq = _ss = _vs = _ts = _sh = _vh = _th = nullptr;
+  _si = _vi = _ti = _sy = _vy = _ty = nullptr;
+  _theViewDataList = nullptr;
+  _theViewDataGModel = nullptr;
 
   _theViewDataGModel = dynamic_cast<PViewDataGModel *>(data);
 
@@ -422,7 +422,7 @@ static void *getElement(double P[3], Octree *octree, int nbNod, int qn,
   else {
     return Octree_Search(P, octree);
   }
-  return 0;
+  return nullptr;
 }
 
 static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
@@ -452,7 +452,7 @@ static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
     SPoint3 uvw;
     return m->getMeshElementByCoord(pt, uvw, dim);
   }
-  return 0;
+  return nullptr;
 }
 
 bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,

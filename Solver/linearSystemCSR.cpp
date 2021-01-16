@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -24,7 +24,7 @@
 static void *CSRMalloc(size_t size)
 {
   void *ptr;
-  if(!size) return (NULL);
+  if(!size) return (nullptr);
   ptr = malloc(size);
   return (ptr);
 }
@@ -35,7 +35,7 @@ static void CSRList_Realloc(CSRList_T *liste, int n)
 {
   char *temp;
   if(n <= 0) return;
-  if(liste->array == NULL) {
+  if(liste->array == nullptr) {
     liste->nmax = ((n - 1) / liste->incr + 1) * liste->incr;
     liste->array = (char *)CSRMalloc(liste->nmax * liste->size);
   }
@@ -69,7 +69,7 @@ static CSRList_T *CSRList_Create(int n, int incr, int size)
   liste->size = size;
   liste->n = 0;
   liste->isorder = 0;
-  liste->array = NULL;
+  liste->array = nullptr;
 
   CSRList_Realloc(liste, n);
   return (liste);
@@ -77,7 +77,7 @@ static CSRList_T *CSRList_Create(int n, int incr, int size)
 
 static void CSRList_Delete(CSRList_T *liste)
 {
-  if(liste != 0) {
+  if(liste != nullptr) {
     free(liste->array);
     free(liste);
   }
@@ -188,14 +188,14 @@ template <> void linearSystemCSR<double>::allocate(int nbRows)
   }
 
   if(nbRows == 0) {
-    _a = 0;
-    _ai = 0;
-    _ptr = 0;
-    _jptr = 0;
-    _b = 0;
-    _x = 0;
+    _a = nullptr;
+    _ai = nullptr;
+    _ptr = nullptr;
+    _jptr = nullptr;
+    _b = nullptr;
+    _x = nullptr;
     sorted = false;
-    something = 0;
+    something = nullptr;
     return;
   }
 
@@ -225,14 +225,14 @@ template <> void linearSystemCSR<std::complex<double> >::allocate(int nbRows)
   }
 
   if(nbRows == 0) {
-    _a = 0;
-    _ai = 0;
-    _ptr = 0;
-    _jptr = 0;
-    _b = 0;
-    _x = 0;
+    _a = nullptr;
+    _ai = nullptr;
+    _ptr = nullptr;
+    _jptr = nullptr;
+    _b = nullptr;
+    _x = nullptr;
     sorted = false;
-    something = 0;
+    something = nullptr;
     return;
   }
 

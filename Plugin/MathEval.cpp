@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,23 +12,23 @@
 #include <algorithm>
 
 StringXNumber MathEvalOptions_Number[] = {
-  {GMSH_FULLRC, "TimeStep", NULL, -1.},
-  {GMSH_FULLRC, "View", NULL, -1.},
-  {GMSH_FULLRC, "OtherTimeStep", NULL, -1.},
-  {GMSH_FULLRC, "OtherView", NULL, -1.},
-  {GMSH_FULLRC, "ForceInterpolation", NULL, 0.},
-  {GMSH_FULLRC, "PhysicalRegion", NULL, -1.}};
+  {GMSH_FULLRC, "TimeStep", nullptr, -1.},
+  {GMSH_FULLRC, "View", nullptr, -1.},
+  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1.},
+  {GMSH_FULLRC, "OtherView", nullptr, -1.},
+  {GMSH_FULLRC, "ForceInterpolation", nullptr, 0.},
+  {GMSH_FULLRC, "PhysicalRegion", nullptr, -1.}};
 
 StringXString MathEvalOptions_String[] = {
-  {GMSH_FULLRC, "Expression0", NULL, "Sqrt(v0^2+v1^2+v2^2)"},
-  {GMSH_FULLRC, "Expression1", NULL, ""},
-  {GMSH_FULLRC, "Expression2", NULL, ""},
-  {GMSH_FULLRC, "Expression3", NULL, ""},
-  {GMSH_FULLRC, "Expression4", NULL, ""},
-  {GMSH_FULLRC, "Expression5", NULL, ""},
-  {GMSH_FULLRC, "Expression6", NULL, ""},
-  {GMSH_FULLRC, "Expression7", NULL, ""},
-  {GMSH_FULLRC, "Expression8", NULL, ""}};
+  {GMSH_FULLRC, "Expression0", nullptr, "Sqrt(v0^2+v1^2+v2^2)"},
+  {GMSH_FULLRC, "Expression1", nullptr, ""},
+  {GMSH_FULLRC, "Expression2", nullptr, ""},
+  {GMSH_FULLRC, "Expression3", nullptr, ""},
+  {GMSH_FULLRC, "Expression4", nullptr, ""},
+  {GMSH_FULLRC, "Expression5", nullptr, ""},
+  {GMSH_FULLRC, "Expression6", nullptr, ""},
+  {GMSH_FULLRC, "Expression7", nullptr, ""},
+  {GMSH_FULLRC, "Expression8", nullptr, ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterMathEvalPlugin() { return new GMSH_MathEvalPlugin(); }
@@ -158,7 +158,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   if(expr.empty()) return view;
   std::vector<double> values(numVariables), res(numComp2);
 
-  OctreePost *octree = 0;
+  OctreePost *octree = nullptr;
   if(forceInterpolation ||
      (data1->getNumEntities() != otherData->getNumEntities()) ||
      (data1->getNumElements() != otherData->getNumElements())) {
@@ -186,7 +186,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
     if(physicalRegion > 0) {
       GEntity *ge = data1->getEntity(timeBeg, ent);
       if(ge) {
-        std::vector<int>::iterator it =
+        auto it =
           std::find(ge->physicals.begin(), ge->physicals.end(), physicalRegion);
         ok = (it != ge->physicals.end());
       }
@@ -218,11 +218,11 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
           if(otherData) {
             if(octree) {
               int qn = forceInterpolation ? numNodes : 0;
-              if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2, 0,
+              if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2, nullptr,
                                        qn, &x[0], &y[0], &z[0]))
                 if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], step2,
-                                         0, qn, &x[0], &y[0], &z[0]))
-                  octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2, 0,
+                                         nullptr, qn, &x[0], &y[0], &z[0]))
+                  octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2, nullptr,
                                        qn, &x[0], &y[0], &z[0]);
             }
             else

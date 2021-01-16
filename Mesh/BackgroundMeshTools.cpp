@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,7 +16,7 @@ static double max_surf_curvature(const GEdge *ge, double u)
 {
   double val = 0;
   std::vector<GFace *> faces = ge->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
   while(it != faces.end()) {
     SPoint2 par = ge->reparamOnFace((*it), u, 1);
     double cc = (*it)->curvatureMax(par);
@@ -30,7 +30,7 @@ static double max_edge_curvature(const GVertex *gv)
 {
   double val = 0;
   std::vector<GEdge *> const &l_edges = gv->edges();
-  for(std::vector<GEdge *>::const_iterator ite = l_edges.begin();
+  for(auto ite = l_edges.begin();
       ite != l_edges.end(); ++ite) {
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
@@ -87,7 +87,7 @@ static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u,
 {
   SMetric3 mesh_size(1.e-12);
   std::vector<GFace *> faces = ge->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
   // we choose the metric eigenvectors to be the ones
   // related to the edge ...
   SMetric3 curvMetric = max_edge_curvature_metric(ge, u);
@@ -348,7 +348,7 @@ SMetric3 max_edge_curvature_metric(const GVertex *gv)
 {
   SMetric3 val(1.e-12);
   std::vector<GEdge *> const &l_edges = gv->edges();
-  for(std::vector<GEdge *>::const_iterator ite = l_edges.begin();
+  for(auto ite = l_edges.begin();
       ite != l_edges.end(); ++ite) {
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);

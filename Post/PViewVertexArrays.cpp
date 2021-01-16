@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -318,7 +318,7 @@ static void addOutlinePoint(PView *p, double **xyz, unsigned int color,
 {
   if(pre) return;
   SVector3 n = getPointNormal(p, 1.);
-  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &color, 0, true);
+  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &color, nullptr, true);
 }
 
 static void addScalarPoint(PView *p, double **xyz, double **val, bool pre,
@@ -336,7 +336,7 @@ static void addScalarPoint(PView *p, double **xyz, double **val, bool pre,
       val[i0][0], vmin, vmax, false,
       (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
     SVector3 n = getPointNormal(p, val[i0][0]);
-    p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col, 0,
+    p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col, nullptr,
                       unique);
   }
 }
@@ -356,8 +356,8 @@ static void addOutlineLine(PView *p, double **xyz, unsigned int color, bool pre,
     col[i] = color;
   }
   SVector3 n[2];
-  getLineNormal(p, x, y, z, 0, n, true);
-  p->va_lines->add(x, y, z, n, col, 0, true);
+  getLineNormal(p, x, y, z, nullptr, n, true);
+  p->va_lines->add(x, y, z, n, col, nullptr, true);
 }
 
 static void addScalarLine(PView *p, double **xyz, double **val, bool pre,
@@ -390,7 +390,7 @@ static void addScalarLine(PView *p, double **xyz, double **val, bool pre,
        val[i1][0] <= vmax) {
       unsigned int col[2];
       for(int i = 0; i < 2; i++) col[i] = opt->getColor(v[i], vmin, vmax);
-      p->va_lines->add(x, y, z, n, col, 0, unique);
+      p->va_lines->add(x, y, z, n, col, nullptr, unique);
     }
     else {
       double x2[2], y2[2], z2[2], v2[2];
@@ -398,7 +398,7 @@ static void addScalarLine(PView *p, double **xyz, double **val, bool pre,
       if(nb == 2) {
         unsigned int col[2];
         for(int i = 0; i < 2; i++) col[i] = opt->getColor(v2[i], vmin, vmax);
-        p->va_lines->add(x2, y2, z2, n, col, 0, unique);
+        p->va_lines->add(x2, y2, z2, n, col, nullptr, unique);
       }
     }
   }
@@ -415,7 +415,7 @@ static void addScalarLine(PView *p, double **xyz, double **val, bool pre,
         unsigned int col[2] = {color, color};
         SVector3 n[2];
         getLineNormal(p, x2, y2, z2, v2, n, true);
-        p->va_lines->add(x2, y2, z2, n, col, 0, unique);
+        p->va_lines->add(x2, y2, z2, n, col, nullptr, unique);
       }
       if(vmin == vmax) break;
     }
@@ -430,7 +430,7 @@ static void addScalarLine(PView *p, double **xyz, double **val, bool pre,
       if(nb == 1) {
         unsigned int color = opt->getColor(k, opt->nbIso);
         SVector3 n = getPointNormal(p, iso);
-        p->va_points->add(x2, y2, z2, &n, &color, 0, unique);
+        p->va_points->add(x2, y2, z2, &n, &color, nullptr, unique);
       }
       if(vmin == vmax) break;
     }
@@ -460,8 +460,8 @@ static void addOutlineTriangle(PView *p, double **xyz, unsigned int color,
           p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
       }
     }
-    getLineNormal(p, x, y, z, 0, n, false);
-    if(!pre) p->va_lines->add(x, y, z, n, col, 0, true);
+    getLineNormal(p, x, y, z, nullptr, n, false);
+    if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
   }
 }
 
@@ -505,7 +505,7 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
         }
         col[i] = opt->getColor(v[i], vmin, vmax);
       }
-      if(!pre) p->va_triangles->add(x, y, z, n, col, 0, unique, skin);
+      if(!pre) p->va_triangles->add(x, y, z, n, col, nullptr, unique, skin);
     }
     else {
       double x2[10], y2[10], z2[10], v2[10];
@@ -527,7 +527,7 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
             }
             col[i] = opt->getColor(v3[i], vmin, vmax);
           }
-          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, unique, skin);
+          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique, skin);
         }
       }
     }
@@ -556,7 +556,7 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
                 p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
             }
           }
-          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, unique, skin);
+          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, nullptr, unique, skin);
         }
       }
       if(vmin == vmax) break;
@@ -583,7 +583,7 @@ static void addScalarTriangle(PView *p, double **xyz, double **val, bool pre,
         }
         double v[2] = {iso, iso};
         getLineNormal(p, x, y, z, v, n, false);
-        if(!pre) p->va_lines->add(x2, y2, z2, n, col, 0, unique);
+        if(!pre) p->va_lines->add(x2, y2, z2, n, col, nullptr, unique);
       }
       if(vmin == vmax) break;
     }
@@ -614,8 +614,8 @@ static void addOutlineQuadrangle(PView *p, double **xyz, unsigned int color,
           p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
       }
     }
-    getLineNormal(p, x, y, z, 0, n, false);
-    if(!pre) p->va_lines->add(x, y, z, n, col, 0, true);
+    getLineNormal(p, x, y, z, nullptr, n, false);
+    if(!pre) p->va_lines->add(x, y, z, n, col, nullptr, true);
   }
 }
 
@@ -673,7 +673,7 @@ static void addScalarPolygon(PView *p, double **xyz, double **val, bool pre,
     }
 
     opt->boundary--;
-    for(std::map<MEdge, int, MEdgeLessThan>::iterator ite = edges.begin();
+    for(auto ite = edges.begin();
         ite != edges.end(); ite++) {
       int i = (int)(*ite).second / 100;
       int j = (*ite).second % 100;
@@ -750,7 +750,7 @@ static void addScalarTetrahedron(PView *p, double **xyz, double **val, bool pre,
                 p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
             }
           }
-          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, false, false);
+          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, nullptr, false, false);
         }
       }
       if(vmin == vmax) break;
@@ -895,7 +895,7 @@ static void addOutlinePolyhedron(PView *p, double **xyz, unsigned int color,
         triFaces.erase(ite);
     }
   }
-  for(std::map<MFace, int, MFaceLessThan>::iterator ite = triFaces.begin();
+  for(auto ite = triFaces.begin();
       ite != triFaces.end(); ite++) {
     int i = (int)(*ite).second / 100;
     int j = (*ite).second % 100;
@@ -1020,7 +1020,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
         }
         SVector3 n[2];
         getLineNormal(p, dxyz[0], dxyz[1], dxyz[2], norm, n, true);
-        p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], n, col, 0, false);
+        p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], n, col, nullptr, false);
       }
     }
     for(int i = 0; i < numNodes; i++) delete[] val2[i];
@@ -1050,7 +1050,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
           dxyz[j][0] = xyz[i][j];
           dxyz[j][1] = val[i][j];
         }
-        p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], 0, col, 0, false);
+        p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr, false);
       }
     }
   }
@@ -1087,7 +1087,7 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
         dxyz[i][0] = pc[i];
         dxyz[i][1] = d[i];
       }
-      p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], 0, col, 0, false);
+      p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], nullptr, col, nullptr, false);
     }
   }
   for(int i = 0; i < numNodes; i++) delete[] val2[i];
@@ -1112,14 +1112,14 @@ static void addTriangle(PView *p, PViewOptions *opt, double *x0, double *x1,
     double YY[3] = {x0[1], x1[1], x2[1]};
     double ZZ[3] = {x0[2], x1[2], x2[2]};
     SVector3 NN[3] = {N, N, N};
-    p->va_triangles->add(XX, YY, ZZ, NN, col, 0, false);
+    p->va_triangles->add(XX, YY, ZZ, NN, col, nullptr, false);
   }
   else {
     double XX[3] = {x1[0], x0[0], x2[0]};
     double YY[3] = {x1[1], x0[1], x2[1]};
     double ZZ[3] = {x1[2], x0[2], x2[2]};
     SVector3 NN[3] = {-N, -N, -N};
-    p->va_triangles->add(XX, YY, ZZ, NN, col, 0, false);
+    p->va_triangles->add(XX, YY, ZZ, NN, col, nullptr, false);
   }
 }
 
@@ -1211,7 +1211,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
           lmax, opt->tmpMin, opt->tmpMax, false,
           (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
         unsigned int col[4] = {color, color, color, color};
-        p->va_ellipses->add(vval[0], vval[1], vval[2], 0, col, 0, false);
+        p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr, false);
       }
     }
     else if(opt->glyphLocation == PViewOptions::COG) {
@@ -1237,7 +1237,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
         lmax, opt->tmpMin, opt->tmpMax, false,
         (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
       unsigned int col[4] = {color, color, color, color};
-      p->va_ellipses->add(vval[0], vval[1], vval[2], 0, col, 0, false);
+      p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr, false);
     }
   }
   else {

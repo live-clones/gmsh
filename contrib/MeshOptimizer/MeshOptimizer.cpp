@@ -59,7 +59,7 @@ namespace {
                             const vertElVecMap &vertex2elements)
   {
     vertSet bnd;
-    for(elSetIter itE = elements.begin(); itE != elements.end(); ++itE) {
+    for(auto itE = elements.begin(); itE != elements.end(); ++itE) {
       for(int i = 0; i < (*itE)->getNumPrimaryVertices(); ++i) {
         const elVec &neighbours =
           vertex2elements.find((*itE)->getVertex(i))->second;
@@ -79,12 +79,12 @@ namespace {
   void getElementNeighbours(MElement *el, const vertElVecMap &v2e,
                             elElSetMap &e2e, elSet &neighbours)
   {
-    elElSetMap::iterator it = e2e.find(el);
+    auto it = e2e.find(el);
     if(it == e2e.end()) { // If not in e2e, compute and store
       neighbours.clear();
       for(int i = 0; i < el->getNumPrimaryVertices(); ++i) {
         const elVec &adjEl = v2e.find(el->getVertex(i))->second;
-        for(elVecConstIter itA = adjEl.begin(); itA != adjEl.end(); itA++)
+        for(auto itA = adjEl.begin(); itA != adjEl.end(); itA++)
           if(*itA != el) neighbours.insert(*itA);
       }
       e2e.insert(std::pair<MElement *, elSet>(el, neighbours));
@@ -107,20 +107,20 @@ namespace {
     lastLayer.insert(el);
     for(int d = 0; d < maxLayers; ++d) {
       currentLayer.clear();
-      for(elSetIter it = lastLayer.begin(); it != lastLayer.end();
+      for(auto it = lastLayer.begin(); it != lastLayer.end();
           ++it) { // Loop over elements in last layer
         elSet neighbours;
         getElementNeighbours(*it, vertex2elements, element2elements,
                              neighbours);
-        for(elSetIter itN = neighbours.begin(); itN != neighbours.end();
+        for(auto itN = neighbours.begin(); itN != neighbours.end();
             ++itN) { // Loop over neighbours
           if((lastLayer.find(*itN) ==
               lastLayer.end()) && // If neighbour already in last layer...
              (excluded.find(*itN) ==
               excluded.end())) { // ... or marked as excluded, skip
-            GEntity *gEnt = 0;
+            GEntity *gEnt = nullptr;
             if(!element2entity.empty()) {
-              elEntMap::const_iterator itEl2Ent = element2entity.find(el);
+              auto itEl2Ent = element2entity.find(el);
               if(itEl2Ent != element2entity.end()) gEnt = itEl2Ent->second;
             }
             const int elIn = patchDef->inPatch(
@@ -150,7 +150,7 @@ namespace {
       todoPB[iB] = false;
       group.insert(iB);
       const std::set<int> &connect = groupConnect[iB];
-      for(std::set<int>::const_iterator itBC = connect.begin();
+      for(auto itBC = connect.begin();
           itBC != connect.end(); ++itBC)
         addPatchChaintoGroup(group, groupConnect, todoPB, *itBC);
     }
@@ -178,7 +178,7 @@ namespace {
   MElement *getFaceInBndElements(const MFace &f,
                                  std::vector<GFace *> const &gFaces)
   {
-    for(std::vector<GFace *>::const_iterator itGF = gFaces.begin();
+    for(auto itGF = gFaces.begin();
         itGF != gFaces.end(); itGF++) {
       if(f.getNumVertices() == 3) {
         std::vector<MTriangle *> &tris = (*itGF)->triangles;
@@ -191,19 +191,19 @@ namespace {
           if(quads[iEl]->getFace(0) == f) return quads[iEl];
       }
     }
-    return 0;
+    return nullptr;
   }
 
   MElement *getEdgeInBndElements(const MEdge &e,
                                  std::vector<GEdge *> const &gEdges)
   {
-    for(std::vector<GEdge *>::const_iterator itGE = gEdges.begin();
+    for(auto itGE = gEdges.begin();
         itGE != gEdges.end(); itGE++) {
       std::vector<MLine *> &lines = (*itGE)->lines;
       for(int iEl = 0; iEl < lines.size(); iEl++)
         if(lines[iEl]->getEdge(0) == e) return lines[iEl];
     }
-    return 0;
+    return nullptr;
   }
 
   void calcBndInfo(GEntity *entity, elElMap &el2BndEl, elEntMap &bndEl2Ent)
@@ -215,7 +215,7 @@ namespace {
 
       // Fill boundary element -> GEntity connectivity
       GFaceList gFaces = entity->faces();
-      for(GFaceList::iterator itGF = gFaces.begin(); itGF != gFaces.end();
+      for(auto itGF = gFaces.begin(); itGF != gFaces.end();
           itGF++) {
         std::vector<MTriangle *> &tris = (*itGF)->triangles;
         for(int i = 0; i < tris.size(); i++)
@@ -235,7 +235,7 @@ namespace {
            3) // If more than 3 primary vert. on bnd., look for bnd. face(s)
           for(int iF = 0; iF < el->getNumFaces(); iF++) {
             MElement *bndEl = getFaceInBndElements(el->getFace(iF), gFaces);
-            if(bndEl != 0)
+            if(bndEl != nullptr)
               el2BndEl.insert(std::pair<MElement *, MElement *>(el, bndEl));
           }
       }
@@ -244,7 +244,7 @@ namespace {
 
       // Fill boundary element -> GEntity connectivity
       GEdgeList gEdges = entity->edges();
-      for(GEdgeList::iterator itGE = gEdges.begin(); itGE != gEdges.end();
+      for(auto itGE = gEdges.begin(); itGE != gEdges.end();
           itGE++) {
         std::vector<MLine *> &lines = (*itGE)->lines;
         for(int i = 0; i < lines.size(); i++)
@@ -261,7 +261,7 @@ namespace {
            2) // If more than 2 primary vert. on bnd., look for bnd. edge(s)
           for(int iE = 0; iE < el->getNumEdges(); iE++) {
             MElement *bndEl = getEdgeInBndElements(el->getEdge(iE), gEdges);
-            if(bndEl != 0)
+            if(bndEl != nullptr)
               el2BndEl.insert(std::pair<MElement *, MElement *>(el, bndEl));
           }
       }
@@ -287,7 +287,7 @@ namespace {
     Msg::Info("Constructing %i primary patches", badElements.size());
     std::vector<elSet> primPatches;
     primPatches.reserve(badElements.size());
-    for(elSet::const_iterator it = badElements.begin(); it != badElements.end();
+    for(auto it = badElements.begin(); it != badElements.end();
         ++it) {
       const double limDist = par.patchDef->maxDistance(*it);
       primPatches.push_back(
@@ -301,11 +301,11 @@ namespace {
     std::vector<std::set<int> > patchConnect(primPatches.size());
     for(int iB = 0; iB < primPatches.size(); ++iB) {
       elSet &patch = primPatches[iB];
-      for(elSetIter itEl = patch.begin(); itEl != patch.end(); ++itEl) {
+      for(auto itEl = patch.begin(); itEl != patch.end(); ++itEl) {
         std::set<int> &patchInd = tags[*itEl];
         if(!patchInd.empty() && (badElements.find(*itEl) != badElements.end() ||
                                  !par.patchDef->weakMerge)) {
-          for(std::set<int>::iterator itBS = patchInd.begin();
+          for(auto itBS = patchInd.begin();
               itBS != patchInd.end(); ++itBS)
             patchConnect[*itBS].insert(iB);
           patchConnect[iB].insert(patchInd.begin(), patchInd.end());
@@ -328,10 +328,10 @@ namespace {
     // Merge primary patches according to groups
     Msg::Info("Merging primary patches into %i patches...", groups.size());
     std::list<elSet> patches;
-    for(std::list<std::set<int> >::iterator itG = groups.begin();
+    for(auto itG = groups.begin();
         itG != groups.end(); ++itG) {
       patches.push_back(elSet());
-      for(std::set<int>::iterator itB = itG->begin(); itB != itG->end();
+      for(auto itB = itG->begin(); itB != itG->end();
           ++itB) {
         elSet primPatch = primPatches[*itB];
         patches.back().insert(primPatch.begin(), primPatch.end());
@@ -341,7 +341,7 @@ namespace {
     // Store and compute patch boundaries
     Msg::Info("Computing boundaries for %i patches...", patches.size());
     std::vector<elSetVertSetPair> result;
-    for(std::list<elSet>::iterator itB = patches.begin(); itB != patches.end();
+    for(auto itB = patches.begin(); itB != patches.end();
         ++itB)
       result.push_back(
         elSetVertSetPair(*itB, getAllBndVertices(*itB, vertex2elements)));
@@ -356,11 +356,11 @@ namespace {
                           const elSet &elts, elSet &bndElts,
                           MeshOptParameters &par)
   {
-    for(elSet::const_iterator itEl = elts.begin(); itEl != elts.end(); itEl++) {
-      elElMap::const_iterator itBndEl = el2BndEl.find(*itEl);
+    for(auto itEl = elts.begin(); itEl != elts.end(); itEl++) {
+      auto itBndEl = el2BndEl.find(*itEl);
       if(itBndEl != el2BndEl.end()) {
         MElement *bndEl = itBndEl->second;
-        elEntMap::const_iterator itEnt = bndEl2Ent.find(bndEl);
+        auto itEnt = bndEl2Ent.find(bndEl);
         if(par.patchDef->bndElBadness(bndEl, itEnt->second) < 0.)
           bndElts.insert(bndEl);
       }
@@ -553,12 +553,12 @@ namespace {
                             const MeshOptParameters &par)
   {
     double worst = 1.e300;
-    MElement *worstEl = 0;
+    MElement *worstEl = nullptr;
 
-    for(elSetIter it = badElts.begin(); it != badElts.end(); it++) {
-      GEntity *gEnt = 0;
+    for(auto it = badElts.begin(); it != badElts.end(); it++) {
+      GEntity *gEnt = nullptr;
       if(!element2entity.empty()) {
-        elEntMap::const_iterator itEl2Ent = element2entity.find(*it);
+        auto itEl2Ent = element2entity.find(*it);
         if(itEl2Ent != element2entity.end()) gEnt = itEl2Ent->second;
       }
       const double val = par.patchDef->elBadness(*it, gEnt);
@@ -770,7 +770,7 @@ void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par)
         if(par.patchDef->elBadness(el, entity) < 0.)
           badElts.insert(el);
         else if(par.useBoundaries) {
-          elElMap::iterator bndElIt = el2BndEl.find(el);
+          auto bndElIt = el2BndEl.find(el);
           if(bndElIt != el2BndEl.end()) {
             MElement *&bndEl = bndElIt->second;
             if(par.patchDef->bndElBadness(bndEl, bndEl2Ent[bndEl]) < 0.)
@@ -845,5 +845,5 @@ void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par)
     mvpause();
     mvterminate();
   }
-  if(par.logFileName.compare("") != 0 || par.nCurses) Msg::SetCallback(NULL);
+  if(par.logFileName.compare("") != 0 || par.nCurses) Msg::SetCallback(nullptr);
 }

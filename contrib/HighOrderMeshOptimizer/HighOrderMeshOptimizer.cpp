@@ -70,14 +70,14 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
   if(dim == 2) {
     int nt = 0;
     int order = 0;
-    for(GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
+    for(auto itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
       std::vector<MTriangle *> &tris = (*itf)->triangles;
       nt += tris.size();
       if(tris.size()) order = tris[0]->getPolynomialOrder();
     }
     fprintf(f, "%d %d\n", nt, (order + 1) * (order + 2) / 2);
     int count = 1;
-    for(GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
+    for(auto itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
       std::vector<MTriangle *> &tris = (*itf)->triangles;
       for(size_t i = 0; i < tris.size(); i++) {
         MTriangle *t = tris[i];
@@ -89,13 +89,13 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
       }
     }
     int ne = 0;
-    for(GModel::eiter ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite) {
+    for(auto ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite) {
       std::vector<MLine *> &l = (*ite)->lines;
       ne += l.size();
     }
     fprintf(f, "%d %d\n", ne, (order + 1));
     count = 1;
-    for(GModel::eiter ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite) {
+    for(auto ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite) {
       std::vector<MLine *> &l = (*ite)->lines;
       for(size_t i = 0; i < l.size(); i++) {
         MLine *t = l[i];
@@ -295,7 +295,7 @@ double HOPatchDefParameters::maxDistance(MElement *el) const
 int HOPatchDefParameters::inPatch(const SPoint3 &badBary, double limDist,
                                   MElement *el, GEntity *gEnt) const
 {
-  if(lockCurvedBLElts && (gEnt != 0)) {
+  if(lockCurvedBLElts && (gEnt != nullptr)) {
     const std::set<MElement *> &lockedElts = gEnt->curvedBLElements;
     if(lockedElts.find(el) != lockedElts.end()) return -1;
   }

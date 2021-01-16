@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,7 +21,7 @@ meshMetric::meshMetric(GModel *gm)
   std::map<MElement *, MElement *> newD;
 
   if(_dim == 2) {
-    for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); ++fit) {
+    for(auto fit = gm->firstFace(); fit != gm->lastFace(); ++fit) {
       for(std::size_t i = 0; i < (*fit)->getNumMeshElements(); i++) {
         MElement *e = (*fit)->getMeshElement(i);
         MElement *copy = e->copy(_vertexMap, newP, newD);
@@ -30,7 +30,7 @@ meshMetric::meshMetric(GModel *gm)
     }
   }
   else if(_dim == 3) {
-    for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+    for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
       for(std::size_t i = 0; i < (*rit)->getNumMeshElements(); i++) {
         MElement *e = (*rit)->getMeshElement(i);
         MElement *copy = e->copy(_vertexMap, newP, newD);
@@ -82,7 +82,7 @@ void meshMetric::updateMetrics()
     return;
   }
 
-  v2t_cont ::iterator it = _adj.begin();
+  auto it = _adj.begin();
   for(; it != _adj.end(); it++) {
     MVertex *ver = it->first;
     _nodalMetrics[ver] = setOfMetrics[0][ver];
@@ -120,8 +120,8 @@ void meshMetric::exportInfo(const char *fileendname)
   out_ls << "View \"ls\"{" << std::endl;
   out_hess << "View \"hessian\"{" << std::endl;
   out_hessmat << "View \"hessian_mat\"{" << std::endl;
-  std::vector<MElement *>::iterator itelem = _elements.begin();
-  std::vector<MElement *>::iterator itelemen = _elements.end();
+  auto itelem = _elements.begin();
+  auto itelemen = _elements.end();
   for(; itelem != itelemen; itelem++) {
     MElement *e = *itelem;
     if(e->getDim() == 2) {
@@ -214,7 +214,7 @@ meshMetric::~meshMetric()
 
 void meshMetric::computeValues()
 {
-  v2t_cont ::iterator it = _adj.begin();
+  auto it = _adj.begin();
   while(it != _adj.end()) {
     std::vector<MElement *> lt = it->second;
     MVertex *ver = it->first;
@@ -241,10 +241,10 @@ std::vector<MVertex *> getLSBlob(std::size_t minNbPt, v2t_cont::iterator it,
     bvv = vv; // Vector of vertices in blob and in boundary of blob
   do {
     std::set<MVertex *> nbvv; // Set of vertices in new boundary
-    for(std::vector<MVertex *>::iterator itBV = bvv.begin(); itBV != bvv.end();
+    for(auto itBV = bvv.begin(); itBV != bvv.end();
         itBV++) { // For each boundary vertex...
       std::vector<MElement *> &adjBV = adj[*itBV];
-      for(std::vector<MElement *>::iterator itBVEl = adjBV.begin();
+      for(auto itBVEl = adjBV.begin();
           itBVEl != adjBV.end(); itBVEl++) {
         for(std::size_t iV = 0; iV < (*itBVEl)->getNumVertices();
             iV++) { // ... look for adjacent vertices...
@@ -278,7 +278,7 @@ void meshMetric::computeHessian()
   std::size_t sysDim = (_dim == 2) ? 6 : 10;
   std::size_t minNbPtBlob = 3 * sysDim;
 
-  for(v2t_cont::iterator it = _adj.begin(); it != _adj.end(); it++) {
+  for(auto it = _adj.begin(); it != _adj.end(); it++) {
     MVertex *ver = it->first;
     std::vector<MVertex *> vv = getLSBlob(minNbPtBlob, it, _adj);
     fullMatrix<double> A(vv.size(), sysDim), ATA(sysDim, sysDim);
@@ -409,11 +409,11 @@ void meshMetric::computeMetricHessian(MVertex *ver, SMetric3 &hessian,
                                       double y, double z)
 {
   SVector3 gr;
-  if(ver != NULL) {
+  if(ver != nullptr) {
     gr = grads[ver];
     hessian = hessians[ver];
   }
-  else if(ver == NULL) {
+  else if(ver == nullptr) {
     _fct->gradient(x, y, z, gr(0), gr(1), gr(2));
     _fct->hessian(x, y, z, hessian(0, 0), hessian(0, 1), hessian(0, 2),
                   hessian(1, 0), hessian(1, 1), hessian(1, 2), hessian(2, 0),
@@ -724,7 +724,7 @@ void meshMetric::scaleMetric(int nbElementsTarget, nodalMetricTensor &nmt)
     }
   }
   double scale = pow((double)nbElementsTarget / N, 2.0 / _dim);
-  for(nodalMetricTensor::iterator it = nmt.begin(); it != nmt.end(); ++it) {
+  for(auto it = nmt.begin(); it != nmt.end(); ++it) {
     if(_dim == 3) {
       it->second *= scale;
     }
@@ -766,7 +766,7 @@ void meshMetric::computeMetric(int metricNumber)
   computeValues();
   computeHessian();
 
-  for(v2t_cont::iterator it = _adj.begin(); it != _adj.end(); it++) {
+  for(auto it = _adj.begin(); it != _adj.end(); it++) {
     MVertex *ver = it->first;
     SMetric3 hessian, metric;
     double size;
@@ -817,7 +817,7 @@ double meshMetric::operator()(double x, double y, double z, GEntity *ge)
   else {
     Msg::Warning("point %g %g %g not found, looking for nearest node", x, y, z);
     double minDist = 1.e100;
-    for(nodalField::iterator it = _nodalSizes.begin(); it != _nodalSizes.end();
+    for(auto it = _nodalSizes.begin(); it != _nodalSizes.end();
         it++) {
       const double dist = xyz.distance(it->first->point());
       if(dist <= minDist) {
@@ -853,22 +853,22 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
         double size;
         switch(_technique) {
         case(LEVELSET):
-          computeMetricLevelSet(NULL, hessian, metric, size, x, y, z);
+          computeMetricLevelSet(nullptr, hessian, metric, size, x, y, z);
           break;
         case(HESSIAN):
-          computeMetricHessian(NULL, hessian, metric, size, x, y, z);
+          computeMetricHessian(nullptr, hessian, metric, size, x, y, z);
           break;
         case(FREY):
-          computeMetricFrey(NULL, hessian, metric, size, x, y, z);
+          computeMetricFrey(nullptr, hessian, metric, size, x, y, z);
           break;
         case(EIGENDIRECTIONS):
-          computeMetricEigenDir(NULL, hessian, metric, size, x, y, z);
+          computeMetricEigenDir(nullptr, hessian, metric, size, x, y, z);
           break;
         case(EIGENDIRECTIONS_LINEARINTERP_H):
-          computeMetricEigenDir(NULL, hessian, metric, size, x, y, z);
+          computeMetricEigenDir(nullptr, hessian, metric, size, x, y, z);
           break;
         case(ISOTROPIC_LINEARINTERP_H):
-          computeMetricIsoLinInterp(NULL, hessian, metric, size, x, y, z);
+          computeMetricIsoLinInterp(nullptr, hessian, metric, size, x, y, z);
           break;
         }
         newSetOfMetrics[iMetric] = metric;
@@ -929,7 +929,7 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
       Msg::Warning("point %g %g %g not found, looking for nearest node", x, y,
                    z);
       double minDist = 1.e100;
-      for(nodalMetricTensor::iterator it = _nodalMetrics.begin();
+      for(auto it = _nodalMetrics.begin();
           it != _nodalMetrics.end(); it++) {
         const double dist = xyz.distance(it->first->point());
         if(dist <= minDist) {

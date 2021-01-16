@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,7 +26,7 @@ xyzv::xyzv(const xyzv &other)
     for(int i = 0; i < nbvals; i++) vals[i] = other.vals[i];
   }
   else
-    vals = 0;
+    vals = nullptr;
 }
 
 xyzv &xyzv::operator=(const xyzv &other)
@@ -79,7 +79,7 @@ void xyzv::scale_update(double scale_inp)
 void smooth_data::add(double x, double y, double z, int n, double *vals)
 {
   xyzv xyz(x, y, z);
-  std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyz);
+  auto it = c.find(xyz);
   if(it == c.end()) {
     xyz.update(n, vals);
     c.insert(xyz);
@@ -96,7 +96,7 @@ void smooth_data::add(double x, double y, double z, int n, double *vals)
 void smooth_data::add_scale(double x, double y, double z, double scale_val)
 {
   xyzv xyz(x, y, z);
-  std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyz);
+  auto it = c.find(xyz);
   if(it == c.end()) {
     xyz.scale_update(scale_val);
     c.insert(xyz);
@@ -111,7 +111,7 @@ void smooth_data::add_scale(double x, double y, double z, double scale_val)
 
 bool smooth_data::get(double x, double y, double z, int n, double *vals) const
 {
-  std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyzv(x, y, z));
+  auto it = c.find(xyzv(x, y, z));
   if(it == c.end()) return false;
   for(int k = 0; k < n; k++) vals[k] = it->vals[k];
   return true;
@@ -120,7 +120,7 @@ bool smooth_data::get(double x, double y, double z, int n, double *vals) const
 // added by Trevor Strickler
 bool smooth_data::get_scale(double x, double y, double z, double *scale_val) const
 {
-  std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyzv(x, y, z));
+  auto it = c.find(xyzv(x, y, z));
   if(it == c.end()) return false;
   (*scale_val) = it->scaleValue;
   return true;
@@ -128,7 +128,7 @@ bool smooth_data::get_scale(double x, double y, double z, double *scale_val) con
 
 void smooth_data::normalize()
 {
-  std::set<xyzv, lessthanxyzv>::iterator it = c.begin();
+  auto it = c.begin();
   while(it != c.end()) {
     if(it->nbvals == 3) norme(it->vals);
     it++;
@@ -140,7 +140,7 @@ bool smooth_data::exportview(const std::string &filename) const
   FILE *fp = Fopen(filename.c_str(), "w");
   if(!fp) return false;
   fprintf(fp, "View \"data\" {\n");
-  std::set<xyzv, lessthanxyzv>::const_iterator it = c.begin();
+  auto it = c.begin();
   while(it != c.end()) {
     switch(it->nbvals) {
     case 1:
@@ -216,7 +216,7 @@ void smooth_normals::add(double x, double y, double z, double nx, double ny,
                          double nz)
 {
   xyzn xyz((float)x, (float)y, (float)z);
-  std::set<xyzn, lessthanxyzn>::const_iterator it = c.find(xyz);
+  auto it = c.find(xyz);
   if(it == c.end()) {
     xyz.update(float2char((float)nx), float2char((float)ny),
                float2char((float)nz), tol);
@@ -234,7 +234,7 @@ void smooth_normals::add(double x, double y, double z, double nx, double ny,
 bool smooth_normals::get(double x, double y, double z, double &nx, double &ny,
                          double &nz) const
 {
-  std::set<xyzn, lessthanxyzn>::const_iterator it =
+  auto it =
     c.find(xyzn((float)x, (float)y, (float)z));
 
   if(it == c.end()) return false;

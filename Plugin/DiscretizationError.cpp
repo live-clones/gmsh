@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,7 +14,7 @@
 #include <MTriangle.h>
 
 StringXNumber DiscretizationErrorOptions_Number[] = {
-  {GMSH_FULLRC, "SuperSamplingNodes", NULL, 10.}};
+  {GMSH_FULLRC, "SuperSamplingNodes", nullptr, 10.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterDiscretizationErrorPlugin()
@@ -61,7 +61,7 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
 
-  for(GModel::fiter itFace = GModel::current()->firstFace();
+  for(auto itFace = GModel::current()->firstFace();
       itFace != GModel::current()->lastFace(); ++itFace) {
     // sample quadrangles
     /* 13 14 15 16
@@ -69,7 +69,7 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
      * 5  6  7  8
      * 1  2  3  4
      */
-    for(std::vector<MQuadrangle *>::iterator itQuad =
+    for(auto itQuad =
           (*itFace)->quadrangles.begin();
         itQuad != (*itFace)->quadrangles.end(); ++itQuad) {
       for(j = 0; j < nEdgeNodes; j++) { // u
@@ -106,7 +106,7 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
      * 3  5  8
      * 1  2  4  7
      */
-    for(std::vector<MTriangle *>::iterator itTri = (*itFace)->triangles.begin();
+    for(auto itTri = (*itFace)->triangles.begin();
         itTri != (*itFace)->triangles.end(); ++itTri) {
       counter = 0;
       for(i = 0; i < nEdgeNodes; i++) {

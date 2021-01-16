@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,11 +16,11 @@
 #include "VoroMetal.h"
 
 StringXNumber VoroMetalOptions_Number[] = {
-  {GMSH_FULLRC, "ComputeBestSeeds", NULL, 0.},
-  {GMSH_FULLRC, "ComputeMicrostructure", NULL, 1.}};
+  {GMSH_FULLRC, "ComputeBestSeeds", nullptr, 0.},
+  {GMSH_FULLRC, "ComputeMicrostructure", nullptr, 1.}};
 
 StringXString VoroMetalOptions_String[] = {
-  {GMSH_FULLRC, "SeedsFile", NULL, "seeds.txt"},
+  {GMSH_FULLRC, "SeedsFile", nullptr, "seeds.txt"},
 };
 
 extern "C" {
@@ -809,8 +809,8 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax,
     gf2 = pairs[i].second;
     std::vector<GVertex *> gv1 = gf1->vertices();
     std::vector<GVertex *> gv2 = gf2->vertices();
-    std::vector<GVertex *>::iterator it1 = gv1.begin();
-    std::vector<GVertex *>::iterator it2 = gv2.begin();
+    auto it1 = gv1.begin();
+    auto it2 = gv2.begin();
     SPoint3 cg1(0, 0, 0);
     SPoint3 cg2(0, 0, 0);
     for(; it1 != gv1.end(); it1++, it2++) {
@@ -1123,7 +1123,7 @@ static void computeBestSeeds(const char *filename)
         m->load("MicrostructurePolycrystal3D.geo");
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
-        for(GModel::eiter ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
+        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
           GEdge *eTmp = (*ite);
           GVertex *vTmp1 = eTmp->getBeginVertex();
           GVertex *vTmp2 = eTmp->getEndVertex();
@@ -1164,7 +1164,7 @@ static void computeBestSeeds(const char *filename)
         m->load("MicrostructurePolycrystal3D.geo");
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
-        for(GModel::eiter ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
+        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
           GEdge *eTmp = (*ite);
           GVertex *vTmp1 = eTmp->getBeginVertex();
           GVertex *vTmp2 = eTmp->getEndVertex();
@@ -1205,7 +1205,7 @@ static void computeBestSeeds(const char *filename)
         m->load("MicrostructurePolycrystal3D.geo");
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
-        for(GModel::eiter ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
+        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
           GEdge *eTmp = (*ite);
           GVertex *vTmp1 = eTmp->getBeginVertex();
           GVertex *vTmp2 = eTmp->getEndVertex();
@@ -1246,7 +1246,7 @@ static void computeBestSeeds(const char *filename)
         m->load("MicrostructurePolycrystal3D.geo");
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
-        for(GModel::eiter ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
+        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
           GEdge *eTmp = (*ite);
           GVertex *vTmp1 = eTmp->getBeginVertex();
           GVertex *vTmp2 = eTmp->getEndVertex();
@@ -1287,7 +1287,7 @@ static void computeBestSeeds(const char *filename)
         m->load("MicrostructurePolycrystal3D.geo");
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
-        for(GModel::eiter ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
+        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
           GEdge *eTmp = (*ite);
           GVertex *vTmp1 = eTmp->getBeginVertex();
           GVertex *vTmp2 = eTmp->getEndVertex();
@@ -1328,7 +1328,7 @@ static void computeBestSeeds(const char *filename)
         m->load("MicrostructurePolycrystal3D.geo");
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
-        for(GModel::eiter ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
+        for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
           GEdge *eTmp = (*ite);
           GVertex *vTmp1 = eTmp->getBeginVertex();
           GVertex *vTmp2 = eTmp->getEndVertex();

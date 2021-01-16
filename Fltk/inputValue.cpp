@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -11,7 +11,7 @@
 void inputValueFloat::new_input_cb(Fl_Widget *, void *v)
 {
   inputValueFloat &t = *(inputValueFloat *)v;
-  double nv = strtod(t.input.value(), 0);
+  double nv = strtod(t.input.value(), nullptr);
   if(nv != t.value() || t.when() & FL_WHEN_NOT_CHANGED) {
     t.set_value(nv);
     t.set_changed();

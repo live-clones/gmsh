@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -53,7 +53,7 @@ public:
   void addToMatrix(dofManager<dataVec> &dm, groupOfElements &L,
                    groupOfElements &C) const
   {
-    groupOfElements::elementContainer::const_iterator it = L.begin();
+    auto it = L.begin();
     for(; it != L.end(); ++it) {
       MElement *eL = *it;
       if(&C == &L || C.find(eL)) {
@@ -147,7 +147,7 @@ public:
     std::map<int, std::vector<GEntity *> > groups[4];
     GModel *m = _gm;
     m->getPhysicalGroups(groups);
-    std::map<int, std::vector<GEntity *> >::iterator it =
+    auto it =
       groups[dim].find(physical);
     if(it == groups[dim].end()) return;
     for(std::size_t i = 0; i < it->second.size(); ++i) {
@@ -165,7 +165,7 @@ public:
     std::map<int, std::vector<GEntity *> > groups[4];
     GModel *m = _gm;
     m->getPhysicalGroups(groups);
-    std::map<int, std::vector<GEntity *> >::iterator it =
+    auto it =
       groups[dim].find(physical);
     if(it == groups[dim].end()) return;
     for(std::size_t i = 0; i < it->second.size(); ++i) {
@@ -182,7 +182,7 @@ public:
 
   void addToRightHandSide(dofManager<dataVec> &dm, groupOfElements &C) const
   {
-    groupOfElements::elementContainer::const_iterator it = C.begin();
+    auto it = C.begin();
     for(; it != C.end(); ++it) {
       MElement *eL = *it;
       SElement se(eL);

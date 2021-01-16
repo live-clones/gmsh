@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -66,7 +66,7 @@ static void view_reload(int index)
       // delete old data and replace with new
       delete p->getData();
       p->setData(PView::list.back()->getData());
-      PView::list.back()->setData(0);
+      PView::list.back()->setData(nullptr);
       // delete new view
       delete PView::list.back();
       // in case the reloaded view has a different number of time steps
@@ -170,7 +170,7 @@ static void view_save_cb(Fl_Widget *w, void *data)
     if(confirmOverwrite) {
       if(!StatFile(name))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
-                      "Cancel", "Replace", 0, name.c_str()))
+                      "Cancel", "Replace", nullptr, name.c_str()))
           goto test;
     }
     int format = 0;
@@ -323,7 +323,7 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _popup->add("Remove Views/With Same Name", 0,
               (Fl_Callback *)view_remove_all_cb, (void *)(intptr_t)num, 0);
 
-  _popup->add("Sort By Name", 0, (Fl_Callback *)view_sort_cb, (void *)0, 0);
+  _popup->add("Sort By Name", 0, (Fl_Callback *)view_sort_cb, (void *)nullptr, 0);
   _popup->add("Set Visibility/All On", 0, (Fl_Callback *)view_all_visible_cb,
               (void *)-1, 0);
   _popup->add("Set Visibility/All Off", 0, (Fl_Callback *)view_all_visible_cb,

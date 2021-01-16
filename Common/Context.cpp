@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -79,7 +79,7 @@ void CTX::init()
   numWindows = numTiles = 1;
   deltaFontSize = 0;
   recentFiles.resize(10);
-  gamepad = 0;
+  gamepad = nullptr;
   mesh.switchElementTags = 0;
   terminal = 0;
 
@@ -113,10 +113,10 @@ void CTX::init()
   mesh.minCircPoints = mesh.order = 0;
   mesh.secondOrderLinear = mesh.secondOrderIncomplete = 0;
   mesh.lightLines = 2;
-  mesh.lcCallback = NULL;
+  mesh.lcCallback = nullptr;
 }
 
-CTX *CTX::_instance = NULL;
+CTX *CTX::_instance = nullptr;
 
 CTX *CTX::instance()
 {

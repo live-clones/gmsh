@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -281,7 +281,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex, int partitionToR
           if(numEnt > 0) {
             // either get existing viewData, or create new one
             PView *p = getViewByName(viewName, timeStep, partition);
-            PViewDataGModel *d = 0;
+            PViewDataGModel *d = nullptr;
             if(p) d = dynamic_cast<PViewDataGModel *>(p->getData());
             bool create = d ? false : true;
             if(create) d = new PViewDataGModel(type);
@@ -328,7 +328,7 @@ bool PView::readMED(const std::string &fileName, int fileIndex)
 
   for(std::size_t index = 0; index < fieldNames.size(); index++) {
     if(fileIndex < 0 || (int)index == fileIndex) {
-      PViewDataGModel *d = 0;
+      PViewDataGModel *d = nullptr;
       // we use the filename as a kind of "partition" indicator, allowing to
       // complete datasets provided in separate files (e.g. coming from DDM)
       PView *p = getViewByName(fieldNames[index], -1, -1, fileName);

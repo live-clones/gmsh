@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -42,7 +42,7 @@
 static const char *help_link(Fl_Widget *w, const char *uri)
 {
   fl_open_uri(uri);
-  return 0;
+  return nullptr;
 }
 
 struct opt_data {
@@ -81,8 +81,8 @@ double numberOrStringOptionChooser(const std::string &category, int index,
   Fl_Window *win = new paletteWindow(width, height, false, t.c_str());
   win->set_modal();
   win->hotspot(win);
-  inputValueFloat *number = 0;
-  Fl_Input *string = 0;
+  inputValueFloat *number = nullptr;
+  Fl_Input *string = nullptr;
   if(isNumber) {
     number = new inputValueFloat(WB, WB, width - 2 * WB, BH);
     number->value(valn);
@@ -106,7 +106,7 @@ double numberOrStringOptionChooser(const std::string &category, int index,
     new Fl_Return_Button(width - nn * BB - nn * WB, 2 * WB + BH, BB, BH, "OK");
   Fl_Button *def = new Fl_Button(width - (nn - 1) * BB - (nn - 1) * WB,
                                  2 * WB + BH, BB, BH, "Default");
-  Fl_Button *cancel = 0;
+  Fl_Button *cancel = nullptr;
   if(!isInteractive)
     cancel = new Fl_Button(width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
   win->end();
@@ -226,7 +226,7 @@ static void browser_cb(Fl_Widget *w, void *data)
           if(c1.size() && c2.size()) {
             editOption(type, c1, c2);
             int top = FlGui::instance()->help->browser->topline();
-            help_options_cb(0, 0);
+            help_options_cb(nullptr, nullptr);
             FlGui::instance()->help->browser->topline(top);
             FlGui::instance()->help->browser->select(i);
             drawContext::global()->draw();
@@ -262,7 +262,7 @@ void help_options_cb(Fl_Widget *w, void *data)
   std::string search = FlGui::instance()->help->search->value();
   std::transform(search.begin(), search.end(), search.begin(), ::tolower);
 
-  PrintOptions(0, GMSH_FULLRC, diff, help, 0, &s0);
+  PrintOptions(0, GMSH_FULLRC, diff, help, nullptr, &s0);
 #if defined(HAVE_PARSER)
   PrintParserSymbols(help, s0);
 #endif
@@ -271,7 +271,7 @@ void help_options_cb(Fl_Widget *w, void *data)
   FlGui::instance()->help->browser->clear();
   for(std::size_t i = 0; i < s0.size(); i++) {
     std::string::size_type sep = s0[i].rfind('\0');
-    void *d = 0;
+    void *d = nullptr;
     if(sep != std::string::npos) {
       std::string tmp = s0[i].substr(sep + 1);
       if(tmp == "number")
@@ -315,7 +315,7 @@ helpWindow::helpWindow()
     std::ostringstream sstream;
     sstream
       << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
-      << "<p>Copyright (C) 1997-2020"
+      << "<p>Copyright (C) 1997-2021"
       << "<br>Christophe Geuzaine and Jean-Francois Remacle"
       << "<p><a href=\"https://gmsh.info/CREDITS.txt\">Credits</a> "
       << "and <a href=\"https://gmsh.info/LICENSE.txt\">licensing "

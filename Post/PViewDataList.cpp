@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@ PViewDataList::PViewDataList(bool isAdapted)
     NbTY(0), NbSR(0), NbVR(0), NbTR(0), NbSD(0), NbVD(0), NbTD(0), NbT2(0),
     NbT3(0), _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1),
     _lastNumComponents(-1), _lastNumValues(-1), _lastNumEdges(-1),
-    _lastType(-1), _lastXYZ(0), _lastVal(0), _isAdapted(isAdapted)
+    _lastType(-1), _lastXYZ(nullptr), _lastVal(nullptr), _isAdapted(isAdapted)
 {
   for(int i = 0; i < 33; i++) _index[i] = 0;
   polyTotNumNodes[0] = 0.;
@@ -532,7 +532,7 @@ void PViewDataList::_getString(int dim, int i, int step, std::string &str,
 
   int index, nbchar;
   double *d1 = &td[i * nbd];
-  double *d2 = ((i + 1) * nbd < (int)td.size()) ? &td[(i + 1) * nbd] : 0;
+  double *d2 = ((i + 1) * nbd < (int)td.size()) ? &td[(i + 1) * nbd] : nullptr;
 
   if(dim == 2) {
     x = d1[0];
@@ -659,8 +659,8 @@ void PViewDataList::smooth()
   xyzv::eps = CTX::instance()->lc * 1.e-8;
   smooth_data data;
 
-  std::vector<double> *list = 0;
-  int *nbe = 0, nbc, nbn;
+  std::vector<double> *list = nullptr;
+  int *nbe = nullptr, nbc, nbn;
   for(int i = 0; i < 27; i++) {
     _getRawData(i, &list, &nbe, &nbc, &nbn);
     if(nbn > 1) generateConnectivities(*list, *nbe, NbTimeStep, nbn, nbc, data);
@@ -717,7 +717,7 @@ bool PViewDataList::combineSpace(nameData &nd)
     }
 
     // copy interpolation matrices
-    for(std::map<int, std::vector<fullMatrix<double> *> >::iterator it =
+    for(auto it =
           l->_interpolation.begin();
         it != l->_interpolation.end(); it++)
       if(_interpolation[it->first].empty())
@@ -845,8 +845,8 @@ bool PViewDataList::combineTime(nameData &nd)
     }
   }
 
-  int *nbe = 0, *nbe2 = 0, nbn, nbn2, nbc, nbc2;
-  std::vector<double> *list = 0, *list2 = 0;
+  int *nbe = nullptr, *nbe2 = nullptr, nbn, nbn2, nbc, nbc2;
+  std::vector<double> *list = nullptr, *list2 = nullptr;
 
   // use the first data set as the reference
   for(int i = 0; i < 27; i++) {
@@ -856,7 +856,7 @@ bool PViewDataList::combineTime(nameData &nd)
   }
   NbT2 = data[0]->NbT2;
   NbT3 = data[0]->NbT3;
-  for(std::map<int, std::vector<fullMatrix<double> *> >::iterator it =
+  for(auto it =
         data[0]->_interpolation.begin();
       it != data[0]->_interpolation.end(); it++)
     if(_interpolation[it->first].empty())
@@ -1412,5 +1412,5 @@ std::vector<double> *PViewDataList::incrementList(int numComp, int type,
     }
     break;
   }
-  return 0;
+  return nullptr;
 }

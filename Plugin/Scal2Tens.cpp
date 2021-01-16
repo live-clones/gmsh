@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,19 +8,19 @@
 #include "shapeFunctions.h"
 
 StringXNumber Scal2TensOptions_Number[] = {
-  {GMSH_FULLRC, "NumberOfComponents", NULL, 9},
-  {GMSH_FULLRC, "View0", NULL, -1},
-  {GMSH_FULLRC, "View1", NULL, -1},
-  {GMSH_FULLRC, "View2", NULL, -1},
-  {GMSH_FULLRC, "View3", NULL, -1},
-  {GMSH_FULLRC, "View4", NULL, -1},
-  {GMSH_FULLRC, "View5", NULL, -1},
-  {GMSH_FULLRC, "View6", NULL, -1},
-  {GMSH_FULLRC, "View7", NULL, -1},
-  {GMSH_FULLRC, "View8", NULL, -1}};
+  {GMSH_FULLRC, "NumberOfComponents", nullptr, 9},
+  {GMSH_FULLRC, "View0", nullptr, -1},
+  {GMSH_FULLRC, "View1", nullptr, -1},
+  {GMSH_FULLRC, "View2", nullptr, -1},
+  {GMSH_FULLRC, "View3", nullptr, -1},
+  {GMSH_FULLRC, "View4", nullptr, -1},
+  {GMSH_FULLRC, "View5", nullptr, -1},
+  {GMSH_FULLRC, "View6", nullptr, -1},
+  {GMSH_FULLRC, "View7", nullptr, -1},
+  {GMSH_FULLRC, "View8", nullptr, -1}};
 
 StringXString Scal2TensOptions_String[] = {
-  {GMSH_FULLRC, "NameNewView", NULL, "NewView"}};
+  {GMSH_FULLRC, "NameNewView", nullptr, "NewView"}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterScal2TensPlugin()
@@ -73,10 +73,10 @@ PView *GMSH_Scal2TensPlugin::execute(PView *v)
     iView[comp] = (int)Scal2TensOptions_Number[comp + 1].def;
 
   // Load data
-  PView *vRef = 0, *vComp[9];
+  PView *vRef = nullptr, *vComp[9];
   for(int comp = 0; comp < numComp; comp++) {
     if(iView[comp] < 0)
-      vComp[comp] = 0;
+      vComp[comp] = nullptr;
     else {
       vComp[comp] = getView(iView[comp], v);
       if(!vComp[comp]) {

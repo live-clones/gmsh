@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -86,34 +86,34 @@
 
 const char *GMSH_PluginEntry = "GMSH_RegisterPlugin";
 
-PluginManager *PluginManager::_instance = 0;
+PluginManager *PluginManager::_instance = nullptr;
 
 PluginManager::~PluginManager()
 {
-  for(std::map<std::string, GMSH_Plugin *>::iterator it = allPlugins.begin();
+  for(auto it = allPlugins.begin();
       it != allPlugins.end(); ++it)
     delete it->second;
 }
 
 GMSH_Plugin *PluginManager::find(const std::string &pluginName)
 {
-  std::map<std::string, GMSH_Plugin *>::iterator it =
+  auto it =
     allPlugins.find(pluginName);
-  if(it == allPlugins.end()) return 0;
+  if(it == allPlugins.end()) return nullptr;
   return it->second;
 }
 
 GMSH_SolverPlugin *PluginManager::findSolverPlugin()
 {
-  std::map<std::string, GMSH_Plugin *>::iterator it = allPlugins.begin();
-  std::map<std::string, GMSH_Plugin *>::iterator ite = allPlugins.end();
+  auto it = allPlugins.begin();
+  auto ite = allPlugins.end();
   for(; it != ite; ++it) {
     GMSH_Plugin *p = it->second;
     if(p->getType() == GMSH_Plugin::GMSH_SOLVER_PLUGIN) {
       return (GMSH_SolverPlugin *)(p);
     }
   }
-  return 0;
+  return nullptr;
 }
 
 void PluginManager::action(const std::string &pluginName,

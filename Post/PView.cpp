@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -30,8 +30,8 @@ void PView::_init(int tag)
   _changed = true;
   _aliasOf = -1;
   _eye = SPoint3(0., 0., 0.);
-  va_points = va_lines = va_triangles = va_vectors = va_ellipses = 0;
-  normals = 0;
+  va_points = va_lines = va_triangles = va_vectors = va_ellipses = nullptr;
+  normals = nullptr;
 
   for(std::size_t i = 0; i < list.size(); i++) {
     if(list[i]->getTag() == _tag) {
@@ -180,7 +180,7 @@ PView::~PView()
   if(normals) delete normals;
   if(_options) delete _options;
 
-  std::vector<PView *>::iterator it = std::find(list.begin(), list.end(), this);
+  auto it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
   for(std::size_t i = 0; i < list.size(); i++) list[i]->setIndex(i);
 
@@ -208,15 +208,15 @@ void PView::setGlobalTag(int tag) { _globalTag = tag; }
 void PView::deleteVertexArrays()
 {
   if(va_points) delete va_points;
-  va_points = 0;
+  va_points = nullptr;
   if(va_lines) delete va_lines;
-  va_lines = 0;
+  va_lines = nullptr;
   if(va_triangles) delete va_triangles;
-  va_triangles = 0;
+  va_triangles = nullptr;
   if(va_vectors) delete va_vectors;
-  va_vectors = 0;
+  va_vectors = nullptr;
   if(va_ellipses) delete va_ellipses;
-  va_ellipses = 0;
+  va_ellipses = nullptr;
 }
 
 void PView::setOptions(PViewOptions *val)
@@ -294,7 +294,7 @@ void PView::combine(bool time, int how, bool remove, bool copyOptions)
         PViewDataGModel *d2 = dynamic_cast<PViewDataGModel *>(nds[i].data[j]);
         if(!d2) allModelBased = false;
       }
-      PViewData *data = 0;
+      PViewData *data = nullptr;
       if(allListBased) {
         data = new PViewDataList();
       }
@@ -327,7 +327,7 @@ void PView::combine(bool time, int how, bool remove, bool copyOptions)
     }
   }
   if(remove)
-    for(std::set<PView *>::iterator it = rm.begin(); it != rm.end(); it++)
+    for(auto it = rm.begin(); it != rm.end(); it++)
       delete *it;
 }
 
@@ -357,7 +357,7 @@ PView *PView::getViewByName(const std::string &name, int timeStep,
        (fileName.empty() || !list[i]->getData()->hasFileName(fileName)))
       return list[i];
   }
-  return 0;
+  return nullptr;
 }
 
 PView *PView::getViewByFileName(const std::string &fileName, int timeStep,
@@ -371,7 +371,7 @@ PView *PView::getViewByFileName(const std::string &fileName, int timeStep,
          !list[i]->getData()->hasPartition(timeStep, partition))))
       return list[i];
   }
-  return 0;
+  return nullptr;
 }
 
 PView *PView::getViewByTag(int tag, int timeStep, int partition)
@@ -383,7 +383,7 @@ PView *PView::getViewByTag(int tag, int timeStep, int partition)
          !list[i]->getData()->hasPartition(timeStep, partition))))
       return list[i];
   }
-  return 0;
+  return nullptr;
 }
 
 double PView::getMemoryInMb()

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -91,10 +91,8 @@ namespace {
                 const std::string &fileName, int fileIndex, int baseIndex,
                 const std::map<SolFieldName, PViewDataGModel::DataType> &fields)
   {
-    typedef std::map<SolFieldName, PViewDataGModel::DataType>::const_iterator
-      FieldIter;
     int index = -1;
-    for(FieldIter it = fields.begin(); it != fields.end(); ++it) {
+    for(auto it = fields.begin(); it != fields.end(); ++it) {
       // field name and type
       const SolFieldName &solFieldName = it->first;
       const PViewDataGModel::DataType &fieldType = it->second;
@@ -107,7 +105,7 @@ namespace {
         fullFieldName, -1, -1); // DBGTT: to be checked for multi-file
       PViewDataGModel *d;
       bool create;
-      if(p != 0) {
+      if(p != nullptr) {
         d = dynamic_cast<PViewDataGModel *>(p->getData());
         create = false;
       }

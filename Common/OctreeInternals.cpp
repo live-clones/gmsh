@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -33,7 +33,7 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   (*globalPara) = new globalInfo;
   (*globalPara)->maxPrecision = 1;
   (*globalPara)->maxElements = _maxElem;
-  (*globalPara)->ptrToPrevElement = NULL;
+  (*globalPara)->ptrToPrevElement = nullptr;
 
   for(i = 0; i < 3; i++) {
     (*globalPara)->origin[i] = _orig[i];
@@ -54,9 +54,9 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   }
 
   (*buckets_head)->next = buckets;
-  (*buckets_head)->parent = NULL;
+  (*buckets_head)->parent = nullptr;
   (*buckets_head)->numElements = 0;
-  (*buckets_head)->lhead = NULL;
+  (*buckets_head)->lhead = nullptr;
   (*buckets_head)->precision = 0;
   for(i = 0; i < 3; i++) {
     (*buckets_head)->minPt[i] = _orig[i] - error[i];
@@ -65,8 +65,8 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
 
   for(i = 0; i < (*globalPara)->numBuckets; i++) {
     buckets[i].numElements = 0;
-    buckets[i].lhead = NULL;
-    buckets[i].next = NULL;
+    buckets[i].lhead = nullptr;
+    buckets[i].next = nullptr;
     buckets[i].parent = *buckets_head;
     buckets[i].precision = 1;
   }
@@ -165,11 +165,11 @@ int addElement2Bucket(octantBucket *_bucket, void *_element, double *_minBB,
       // printf("finish subdivede \n");
 
       ptr1 = _bucket->lhead;
-      while(ptr1 != NULL) {
+      while(ptr1 != nullptr) {
         ptrBucket = findElementBucket(_bucket, ptr1->centroid);
         ptr2 = ptr1;
         ptr1 = ptr1->next;
-        if(ptrBucket == NULL) {
+        if(ptrBucket == nullptr) {
           Msg::Error("Null bucket in octree");
           return 0;
         }
@@ -178,11 +178,11 @@ int addElement2Bucket(octantBucket *_bucket, void *_element, double *_minBB,
         (ptrBucket->numElements)++;
         if(ptrBucket->numElements > _globalPara->maxElements) {
           flag = 1;
-          _bucket->lhead = NULL;
+          _bucket->lhead = nullptr;
           _bucket = ptrBucket;
         }
       }
-      if(flag == 0) _bucket->lhead = NULL;
+      if(flag == 0) _bucket->lhead = nullptr;
     }
   }
   return 1;
@@ -194,7 +194,7 @@ int checkElementInBucket(octantBucket *_bucket, void *_element)
 // otherwise, return 0
 {
   ELink ptr;
-  for(ptr = _bucket->lhead; ptr != NULL; ptr = ptr->next) {
+  for(ptr = _bucket->lhead; ptr != nullptr; ptr = ptr->next) {
     // changed ****, compare the objected pointed by the void *.
     if(ptr->region == _element) return 1;
   }
@@ -210,10 +210,10 @@ octantBucket *findElementBucket(octantBucket *_buckets_head, double *_pt)
 {
   int i, j;
   int num = 8;
-  octantBucket *prevbucket = NULL;
+  octantBucket *prevbucket = nullptr;
   octantBucket *tmpbucket = _buckets_head->next;
 
-  while(tmpbucket != NULL) {
+  while(tmpbucket != nullptr) {
     for(i = 0; i < num; i++) {
       for(j = 0; j < 3; j++) {
         if(tmpbucket[i].minPt[j] > _pt[j] || tmpbucket[i].maxPt[j] < _pt[j])
@@ -227,7 +227,7 @@ octantBucket *findElementBucket(octantBucket *_buckets_head, double *_pt)
     } // for loop i
     if(i == num) {
       // Msg::Error("No bucket contains the given point!");
-      return NULL;
+      return nullptr;
     }
   } // for while loop
   return prevbucket;
@@ -254,8 +254,8 @@ int subdivideOctantBucket(octantBucket *_bucket, globalInfo *_globalPara)
     _globalPara->maxPrecision++;
   for(i = 0; i < numBuck; i++) {
     (_bucket->next[i]).numElements = 0;
-    (_bucket->next[i]).lhead = NULL;
-    (_bucket->next[i]).next = NULL;
+    (_bucket->next[i]).lhead = nullptr;
+    (_bucket->next[i]).next = nullptr;
     (_bucket->next[i]).parent = _bucket;
     (_bucket->next[i]).precision = _bucket->precision + 1;
   }
@@ -304,10 +304,10 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
   }
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
-  if(ptrBucket == NULL) {
+  if(ptrBucket == nullptr) {
     // this is not an error
     Msg::Debug("Could not find point in octree");
-    return NULL;
+    return nullptr;
   }
 
   ptr1 = ptrBucket->lhead;
@@ -321,7 +321,7 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
   }
 #endif
 
-  while(ptr1 != NULL) {
+  while(ptr1 != nullptr) {
     flag = xyzInElementBB(_pt, ptr1->region, BBElement);
     if(flag == 1) flag = xyzInElement(ptr1->region, _pt);
     if(flag == 1) {
@@ -343,7 +343,7 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
 
   // printf("This point is not found in all elements! It is not in the domain
   // \n");
-  return NULL;
+  return nullptr;
 }
 
 int xyzInElementBB(double *_xyz, void *_region, BBFunction _bbElement)
@@ -371,9 +371,9 @@ void insertOneBB(void *_region, double *_minPt, double *_maxPt,
   for(i = 0; i < 3; i++) {
     if(_bucket->minPt[i] > _maxPt[i] || _bucket->maxPt[i] < _minPt[i]) return;
   }
-  if(_bucket->next == NULL) {
+  if(_bucket->next == nullptr) {
     ptr = _bucket->lhead;
-    while(ptr != NULL) {
+    while(ptr != nullptr) {
       if(ptr->region == _region) return;
       ptr = ptr->next;
     }
@@ -398,9 +398,9 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt,
   std::vector<void *>::iterator iter;
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
-  if(ptrBucket == NULL) {
+  if(ptrBucket == nullptr) {
     Msg::Debug("Could not find point in octree");
-    return NULL;
+    return nullptr;
   }
 
 #if 0
@@ -415,7 +415,7 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt,
 
   flag1 = 0;
   ELink ptr1 = ptrBucket->lhead;
-  while(ptr1 != NULL) {
+  while(ptr1 != nullptr) {
     flag = xyzInElementBB(_pt, ptr1->region, BBElement);
     if(flag == 1) flag = xyzInElement(ptr1->region, _pt);
     if(flag == 1) {
@@ -439,5 +439,5 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt,
 
   // Msg::Warning("This point is not found in any element! It is not in the
   // domain");
-  return NULL;
+  return nullptr;
 }

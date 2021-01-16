@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -6,8 +6,8 @@
 #include "Lambda2.h"
 #include "Numeric.h"
 
-StringXNumber Lambda2Options_Number[] = {{GMSH_FULLRC, "Eigenvalue", NULL, 2.},
-                                         {GMSH_FULLRC, "View", NULL, -1.}};
+StringXNumber Lambda2Options_Number[] = {{GMSH_FULLRC, "Eigenvalue", nullptr, 2.},
+                                         {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterLambda2Plugin() { return new GMSH_Lambda2Plugin(); }

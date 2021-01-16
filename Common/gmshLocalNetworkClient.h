@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -30,7 +30,7 @@ public:
                          bool treatExecutableAsFullCommandLine = false)
     : onelab::localNetworkClient(name, executable, remoteLogin,
                                  treatExecutableAsFullCommandLine),
-      _father(0)
+      _father(nullptr)
   {
     addClient(this);
   }
@@ -47,7 +47,7 @@ public:
   gmshLocalNetworkClient *getClient(int i)
   {
     if(i >= 0 && i < getNumClients()) return _clients[i];
-    return 0;
+    return nullptr;
   }
   int getNumConnectedClients()
   {

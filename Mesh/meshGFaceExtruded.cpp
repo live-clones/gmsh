@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -300,7 +300,7 @@ int MeshExtrudedSurface(
   MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);
   pos.insert(gf->mesh_vertices);
   std::vector<GEdge *> const &edges = gf->edges();
-  for(std::vector<GEdge *>::const_iterator it = edges.begin();
+  for(auto it = edges.begin();
       it != edges.end(); it++) {
     pos.insert((*it)->mesh_vertices);
     if((*it)->getBeginVertex())

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -23,12 +23,12 @@
 template <class scalar> class simpleFunction;
 
 StringXNumber DistanceOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalPoint", NULL, 0.},
-  {GMSH_FULLRC, "PhysicalLine", NULL, 0.},
-  {GMSH_FULLRC, "PhysicalSurface", NULL, 0.},
-  {GMSH_FULLRC, "DistanceType", NULL, 0},
-  {GMSH_FULLRC, "MinScale", NULL, 0},
-  {GMSH_FULLRC, "MaxScale", NULL, 0}
+  {GMSH_FULLRC, "PhysicalPoint", nullptr, 0.},
+  {GMSH_FULLRC, "PhysicalLine", nullptr, 0.},
+  {GMSH_FULLRC, "PhysicalSurface", nullptr, 0.},
+  {GMSH_FULLRC, "DistanceType", nullptr, 0},
+  {GMSH_FULLRC, "MinScale", nullptr, 0},
+  {GMSH_FULLRC, "MaxScale", nullptr, 0}
 };
 
 extern "C" {
@@ -38,7 +38,7 @@ GMSH_Plugin *GMSH_RegisterDistancePlugin() { return new GMSH_DistancePlugin(); }
 GMSH_DistancePlugin::GMSH_DistancePlugin()
 {
   _maxDim = 0;
-  _data = NULL;
+  _data = nullptr;
 }
 
 std::string GMSH_DistancePlugin::getHelp() const
@@ -74,7 +74,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
 
   double minDist = 1.e22;
   double maxDist = 0.0;
-  for(std::map<MVertex *, double>::iterator itv = distanceMap.begin();
+  for(auto itv = distanceMap.begin();
       itv != distanceMap.end(); ++itv) {
     double dist = itv->second;
     if(dist > maxDist) maxDist = dist;
@@ -110,7 +110,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
         std::vector<double> dist;
         for(std::size_t j = 0; j < numNodes; j++) {
           MVertex *v = nods[j];
-          std::map<MVertex *, double>::iterator it = distanceMap.find(v);
+          auto it = distanceMap.find(v);
           dist.push_back(it->second);
         }
 
@@ -289,7 +289,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       double mu = type * L;
       simpleFunction<double> DIFF(mu * mu), ONE(1.0);
       distanceTerm distance(GModel::current(), 1, &DIFF, &ONE);
-      for(std::vector<MElement *>::iterator it = allElems.begin();
+      for(auto it = allElems.begin();
           it != allElems.end(); it++) {
         SElement se((*it));
         distance.addToMatrix(*dofView, &se);
@@ -297,7 +297,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       groupOfElements gr(allElems);
       distance.addToRightHandSide(*dofView, gr);
       lsys->systemSolve();
-      for(std::map<MVertex *, double>::iterator itv = distanceMap.begin();
+      for(auto itv = distanceMap.begin();
           itv != distanceMap.end(); ++itv) {
         MVertex *v = itv->first;
         double value;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,7 +9,7 @@
 #include <string>
 #include "GmshMessage.h"
 
-int GmshInitialize(int argc = 0, char **argv = 0, bool readConfigFiles = false,
+int GmshInitialize(int argc = 0, char **argv = nullptr, bool readConfigFiles = false,
                    bool exitOnCommandLineError = true);
 int GmshSetMessageHandler(GmshMessage *callback);
 GmshMessage *GmshGetMessageHandler();
@@ -47,7 +47,7 @@ int GmshMergePostProcessingFile(const std::string &fileName);
 int GmshWriteFile(const std::string &fileName);
 int GmshFinalize();
 int GmshBatch();
-int GmshFLTK(int argc = 0, char **argv = 0);
+int GmshFLTK(int argc = 0, char **argv = nullptr);
 
 // these two functions are the only functions exported in addition to the
 // functions of the official stable API, so that we can also build the main Gmsh

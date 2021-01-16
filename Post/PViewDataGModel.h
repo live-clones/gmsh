@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -191,9 +191,9 @@ public:
   int getFirstNonEmptyTimeStep(int start = 0);
   double getTime(int step);
   double getMin(int step = -1, bool onlyVisible = false, int tensorRep = 0,
-                int forceNumComponents = 0, int componentMap[9] = 0);
+                int forceNumComponents = 0, int componentMap[9] = nullptr);
   double getMax(int step = -1, bool onlyVisible = false, int tensorRep = 0,
-                int forceNumComponents = 0, int componentMap[9] = 0);
+                int forceNumComponents = 0, int componentMap[9] = nullptr);
   void setMin(double min) { _min = min; }
   void setMax(double max) { _max = max; }
   SBoundingBox3d getBoundingBox(int step = -1);
@@ -292,7 +292,7 @@ public:
   stepData<double> *getStepData(int step)
   {
     if(step >= 0 && step < (int)_steps.size()) return _steps[step];
-    return 0;
+    return nullptr;
   }
   void sendToServer(const std::string &name);
 };

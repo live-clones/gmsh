@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -65,8 +65,8 @@ public:
     if(e.empty() && f.empty()) return;
     std::map<MEdge, GEdge *, MEdgeLessThan> edges;
     std::map<MFace, GFace *, MFaceLessThan> faces;
-    std::vector<GEdge *>::const_iterator it = e.begin();
-    std::vector<GFace *>::const_iterator itf = f.begin();
+    auto it = e.begin();
+    auto itf = f.begin();
     for(; it != e.end(); ++it) {
       for(std::size_t i = 0; i < (*it)->lines.size(); ++i) {
         if(distance((*it)->lines[i]->getVertex(0),
@@ -107,7 +107,7 @@ public:
       Msg::Info("Saving the missing edges in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
-      for(std::map<MEdge, GEdge *, MEdgeLessThan>::iterator it = edges.begin();
+      for(auto it = edges.begin();
           it != edges.end(); ++it) {
         MVertex *v1 = it->first.getVertex(0);
         MVertex *v2 = it->first.getVertex(1);
@@ -127,7 +127,7 @@ public:
       Msg::Info("Saving the missing faces in file %s", name);
       FILE *f = fopen(name, "w");
       fprintf(f, "View \" \" {\n");
-      for(std::map<MFace, GFace *, MFaceLessThan>::iterator it = faces.begin();
+      for(auto it = faces.begin();
           it != faces.end(); ++it) {
         MVertex *v1 = it->first.getVertex(0);
         MVertex *v2 = it->first.getVertex(1);
@@ -189,26 +189,26 @@ void GetStatistics(double stat[50], double quality[3][100], bool visibleOnly)
   stat[45] = physicals[0].size() + physicals[1].size() + physicals[2].size() +
              physicals[3].size();
 
-  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it) {
+  for(auto it = m->firstVertex(); it != m->lastVertex(); ++it) {
     if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[5] += (*it)->points.size();
   }
 
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
     if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[6] += (*it)->lines.size();
   }
 
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[7] += (*it)->triangles.size();
     stat[8] += (*it)->quadrangles.size();
   }
 
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
     if(visibleOnly && !(*it)->getVisibility()) continue;
     stat[4] += (*it)->mesh_vertices.size();
     stat[9] += (*it)->tetrahedra.size();
@@ -231,7 +231,7 @@ void GetStatistics(double stat[50], double quality[3][100], bool visibleOnly)
 
     double N = stat[9] + stat[10] + stat[11] + stat[12] + stat[13];
     if(N) { // if we have 3D elements
-      for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+      for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
         if(visibleOnly && !(*it)->getVisibility()) continue;
         GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax, minSICN,
                           minSICNMin, minSICNMax, minSIGE, minSIGEMin,
@@ -249,7 +249,7 @@ void GetStatistics(double stat[50], double quality[3][100], bool visibleOnly)
     }
     else { // 2D elements
       N = stat[7] + stat[8];
-      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+      for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
         if(visibleOnly && !(*it)->getVisibility()) continue;
         GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
                           minSICN, minSICNMin, minSICNMax, minSIGE, minSIGEMin,
@@ -296,7 +296,7 @@ static bool TooManyElements(GModel *m, int dim)
   // try to detect obvious mistakes in characteristic lenghts (one of the most
   // common cause for erroneous bug reports on the mailing list)
   double sumAllLc = 0.;
-  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
+  for(auto it = m->firstVertex(); it != m->lastVertex(); ++it)
     sumAllLc +=
       (*it)->prescribedMeshSizeAtVertex() * CTX::instance()->mesh.lcFactor;
   sumAllLc /= (double)m->getNumVertices();
@@ -314,14 +314,14 @@ static void Mesh0D(GModel *m)
 {
   m->getFields()->initialize();
 
-  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it) {
+  for(auto it = m->firstVertex(); it != m->lastVertex(); ++it) {
     GVertex *gv = *it;
     if(gv->mesh_vertices.empty())
       gv->mesh_vertices.push_back(new MVertex(gv->x(), gv->y(), gv->z(), gv));
     if(gv->points.empty())
       gv->points.push_back(new MPoint(gv->mesh_vertices.back()));
   }
-  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it) {
+  for(auto it = m->firstVertex(); it != m->lastVertex(); ++it) {
     GVertex *gv = *it;
     if(gv->getMeshMaster() != gv) {
       if(gv->correspondingVertices.empty()) {
@@ -352,7 +352,7 @@ static void Mesh1D(GModel *m)
   // boundary layers are not yet thread-safe
   if(m->getFields()->getNumBoundaryLayerFields()) Msg::SetNumThreads(1);
 
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
     // Extruded meshes are not yet fully thread-safe (not sure why!)
     if((*it)->meshAttributes.extrude &&
        (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
@@ -360,7 +360,7 @@ static void Mesh1D(GModel *m)
   }
 
   std::vector<GEdge *> temp;
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
     (*it)->meshStatistics.status = GEdge::PENDING;
     temp.push_back(*it);
   }
@@ -409,7 +409,7 @@ static void Mesh1D(GModel *m)
 
 static void PrintMesh2dStatistics(GModel *m)
 {
-  FILE *statreport = 0;
+  FILE *statreport = nullptr;
   if(CTX::instance()->createAppendMeshStatReport == 1)
     statreport = Fopen(CTX::instance()->meshStatReportFileName.c_str(), "w");
   else if(CTX::instance()->createAppendMeshStatReport == 2)
@@ -438,7 +438,7 @@ static void PrintMesh2dStatistics(GModel *m)
     }
   }
 
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     if((*it)->geomType() != GEntity::DiscreteSurface) {
       worst = std::min((*it)->meshStatistics.worst_element_shape, worst);
       best = std::max((*it)->meshStatistics.best_element_shape, best);
@@ -490,7 +490,7 @@ static void Mesh2D(GModel *m)
   // boundary layers are not yet thread-safe
   if(m->getFields()->getNumBoundaryLayerFields()) Msg::SetNumThreads(1);
 
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     // Frontal-Delaunay for quads and co are not yet thread-safe
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
@@ -504,7 +504,7 @@ static void Mesh2D(GModel *m)
       Msg::SetNumThreads(1);
   }
 
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;
 
   // boundary layers are special: their generation (including vertices and curve
@@ -512,7 +512,7 @@ static void Mesh2D(GModel *m)
   // surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)) {
     std::set<GFace *, GEntityPtrLessThan> f;
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    for(auto it = m->firstFace(); it != m->lastFace(); ++it)
       f.insert(*it);
 
     int nIter = 0, nTot = m->getNumFaces();
@@ -583,12 +583,12 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
       _stack.pop();
       oneDomain.insert(r);
       std::vector<GFace *> faces = r->faces();
-      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
+      for(auto it = faces.begin(); it != faces.end();
           ++it) {
         GFace *gf = *it;
         GRegion *other =
           (gf->getRegion(0) == r) ? gf->getRegion(1) : gf->getRegion(0);
-        if(other != 0 && oneDomain.find(other) == oneDomain.end())
+        if(other != nullptr && oneDomain.find(other) == oneDomain.end())
           _stack.push(other);
       }
     }
@@ -629,7 +629,7 @@ void buildUniqueFaces(GRegion *gr, std::set<MFace, MFaceLessThan> &bnd)
     MElement *e = gr->getMeshElement(i);
     for(int j = 0; j < e->getNumFaces(); j++) {
       MFace f = e->getFace(j);
-      std::set<MFace, MFaceLessThan>::iterator it = bnd.find(f);
+      auto it = bnd.find(f);
       if(it == bnd.end())
         bnd.insert(f);
       else
@@ -643,14 +643,14 @@ bool MakeMeshConformal(GModel *gm, int howto)
   fs_cont search;
   buildFaceSearchStructure(gm, search);
   std::set<MFace, MFaceLessThan> bnd;
-  for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     GRegion *gr = *rit;
     buildUniqueFaces(gr, bnd);
   }
   // bnd2 contains non conforming faces
 
   std::set<MFace, MFaceLessThan> bnd2;
-  for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin();
+  for(auto itf = bnd.begin();
       itf != bnd.end(); ++itf) {
     GFace *gfound = findInFaceSearchStructure(*itf, search);
     if(!gfound) { bnd2.insert(*itf); }
@@ -660,13 +660,13 @@ bool MakeMeshConformal(GModel *gm, int howto)
   Msg::Info("%d hanging faces", bnd2.size());
 
   std::set<MFace, MFaceLessThan> ncf;
-  for(std::set<MFace, MFaceLessThan>::iterator itf = bnd2.begin();
+  for(auto itf = bnd2.begin();
       itf != bnd2.end(); ++itf) {
     const MFace &f = *itf;
     if(f.getNumVertices() == 4) { // quad face
-      std::set<MFace, MFaceLessThan>::iterator it1 =
+      auto it1 =
         bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(2)));
-      std::set<MFace, MFaceLessThan>::iterator it2 =
+      auto it2 =
         bnd2.find(MFace(f.getVertex(2), f.getVertex(3), f.getVertex(0)));
       if(it1 != bnd2.end() && it2 != bnd2.end()) {
         ncf.insert(MFace(f.getVertex(1), f.getVertex(2), f.getVertex(3),
@@ -688,7 +688,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
   }
   bnd2.clear();
 
-  for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     GRegion *gr = *rit;
     std::vector<MHexahedron *> remainingHexes;
     for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
@@ -696,7 +696,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
       std::vector<MFace> faces;
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, MFaceLessThan>::iterator it = ncf.find(f);
+        auto it = ncf.find(f);
         if(it == ncf.end()) { faces.push_back(f); }
         else {
           faces.push_back(
@@ -733,7 +733,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
       std::vector<MFace> faces;
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, MFaceLessThan>::iterator it = ncf.find(f);
+        auto it = ncf.find(f);
         if(it == ncf.end()) { faces.push_back(f); }
         else {
           faces.push_back(
@@ -776,7 +776,7 @@ static void TestConformity(GModel *gm)
   fs_cont search;
   buildFaceSearchStructure(gm, search);
   int count = 0;
-  for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     GRegion *gr = *rit;
     std::set<MFace, MFaceLessThan> bnd;
     double vol = 0.0;
@@ -785,7 +785,7 @@ static void TestConformity(GModel *gm)
       vol += fabs(e->getVolume());
       for(int j = 0; j < e->getNumFaces(); j++) {
         MFace f = e->getFace(j);
-        std::set<MFace, MFaceLessThan>::iterator it = bnd.find(f);
+        auto it = bnd.find(f);
         if(it == bnd.end())
           bnd.insert(f);
         else
@@ -794,7 +794,7 @@ static void TestConformity(GModel *gm)
     }
     printf("vol(%d) = %12.5E\n", gr->tag(), vol);
 
-    for(std::set<MFace, MFaceLessThan>::iterator itf = bnd.begin();
+    for(auto itf = bnd.begin();
         itf != bnd.end(); ++itf) {
       GFace *gfound = findInFaceSearchStructure(*itf, search);
       if(!gfound) { count++; }
@@ -822,7 +822,7 @@ static void Mesh3D(GModel *m)
      CTX::instance()->mesh.maxNumThreads3D <= Msg::GetMaxThreads())
     Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads3D);
 
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
     // Extruded meshes are not yet fully thread-safe (not sure why!)
     if((*it)->meshAttributes.extrude &&
        (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
@@ -858,7 +858,7 @@ static void Mesh3D(GModel *m)
       if(CTX::instance()->mesh.recombine3DAll ||
          gr->meshAttributes.recombine3D) {
         std::vector<GFace *> f = gr->faces();
-        for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it)
+        for(auto it = f.begin(); it != f.end(); ++it)
           quadsToTriangles(*it, 1000000);
       }
     }
@@ -954,7 +954,7 @@ static void Mesh3D(GModel *m)
   std::stringstream debugInfo;
   debugInfo << "No elements in volume ";
   bool emptyRegionFound = false;
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
     GRegion *gr = *it;
     if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility())
       continue;
@@ -1003,14 +1003,14 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
   double t1 = Cpu(), w1 = TimeOfDay();
 
   if(how == "" || how == "Gmsh" || how == "Optimize") {
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       optimizeMeshGRegion opt;
       opt(*it, force);
     }
     m->setAllVolumesPositive();
   }
   else if(how == "Netgen") {
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       optimizeMeshGRegionNetgen opt;
       opt(*it, force);
     }
@@ -1056,19 +1056,19 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 #endif
   }
   else if(how == "Laplace2D") {
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
       GFace *gf = *it;
       laplaceSmoothing(gf, niter);
     }
   }
   else if(how == "Relocate2D") {
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
       GFace *gf = *it;
       RelocateVertices(gf, niter);
     }
   }
   else if(how == "Relocate3D") {
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
       GRegion *gr = *it;
       RelocateVertices(gr, niter);
     }
@@ -1105,7 +1105,7 @@ void RecombineMesh(GModel *m)
   Msg::StatusBar(true, "Recombining 2D mesh...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *gf = *it;
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1 ||
                     CTX::instance()->mesh.algoRecombine == 3);
@@ -1133,7 +1133,7 @@ static void relocateSlaveVertices(GFace *slave,
                                   std::map<MVertex *, MVertex *> &vertS2M,
                                   bool useClosestPoint)
 {
-  for(std::map<MVertex *, MVertex *>::iterator vit = vertS2M.begin();
+  for(auto vit = vertS2M.begin();
       vit != vertS2M.end(); ++vit) {
     MFaceVertex *v = dynamic_cast<MFaceVertex *>(vit->first);
     if(v && v->onWhat() == slave) {
@@ -1161,7 +1161,7 @@ static void relocateSlaveVertices(GEdge *slave,
                                   std::map<MVertex *, MVertex *> &vertS2M,
                                   bool useClosestPoint)
 {
-  for(std::map<MVertex *, MVertex *>::iterator vit = vertS2M.begin();
+  for(auto vit = vertS2M.begin();
       vit != vertS2M.end(); ++vit) {
     MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(vit->first);
     if(v && v->onWhat() == slave) {
@@ -1194,7 +1194,7 @@ static void relocateSlaveVertices(std::vector<GEntity *> &entities,
     }
   }
 
-  for(std::multimap<GEntity *, GEntity *>::iterator it = master2slave.begin();
+  for(auto it = master2slave.begin();
       it != master2slave.end(); ++it) {
     if(it->first->dim() == 2) {
       GFace *master = dynamic_cast<GFace *>(it->first);
@@ -1227,7 +1227,7 @@ void FixPeriodicMesh(GModel *m)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
     GEdge *tgt = *it;
 
     // non complete periodic info (e.g. through extrusion)
@@ -1235,7 +1235,7 @@ void FixPeriodicMesh(GModel *m)
 
     GEdge *src = dynamic_cast<GEdge *>(tgt->getMeshMaster());
 
-    if(src != NULL && src != tgt) {
+    if(src != nullptr && src != tgt) {
       std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
       std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHighOrderVertices;
       p2p.clear();
@@ -1264,7 +1264,7 @@ void FixPeriodicMesh(GModel *m)
         }
         for(int iVtx = 0; iVtx < 2; iVtx++) {
           MVertex *vtx = tgtLine->getVertex(iVtx);
-          std::map<MVertex *, MVertex *>::iterator tIter = v2v.find(vtx);
+          auto tIter = v2v.find(vtx);
           if(tIter == v2v.end()) {
             Msg::Error("Cannot find periodic counterpart of node %d"
                        " of curve %d on curve %d",
@@ -1275,7 +1275,7 @@ void FixPeriodicMesh(GModel *m)
             vtcs[iVtx] = tIter->second;
         }
 
-        std::map<MEdge, MLine *, MEdgeLessThan>::iterator srcIter =
+        auto srcIter =
           srcEdges.find(MEdge(vtcs[0], vtcs[1]));
         if(srcIter == srcEdges.end()) {
           Msg::Error("Can't find periodic counterpart of mesh edge %d-%d "
@@ -1299,14 +1299,14 @@ void FixPeriodicMesh(GModel *m)
     relocateSlaveVertices(modelEdges, CTX::instance()->mesh.hoPeriodic > 1);
   }
 
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *tgt = *it;
 
     // non complete periodic info (e.g. through extrusion)
     if(tgt->vertexCounterparts.empty()) continue;
 
     GFace *src = dynamic_cast<GFace *>(tgt->getMeshMaster());
-    if(src != NULL && src != tgt) {
+    if(src != nullptr && src != tgt) {
       Msg::Info("Reconstructing periodicity for surface connection %d - %d",
                 tgt->tag(), src->tag());
 
@@ -1345,7 +1345,7 @@ void FixPeriodicMesh(GModel *m)
         for(int iVtx = 0; iVtx < nbVtcs; iVtx++) {
           MVertex *vtx = tgtElmt->getVertex(iVtx);
 
-          std::map<MVertex *, MVertex *>::iterator tIter = v2v.find(vtx);
+          auto tIter = v2v.find(vtx);
           if(tIter == v2v.end()) {
             Msg::Error("Cannot find periodic counterpart of node %d "
                        "of surface %d on surface %d",
@@ -1357,7 +1357,7 @@ void FixPeriodicMesh(GModel *m)
         }
 
         MFace tgtFace(vtcs);
-        std::map<MFace, MElement *, MFaceLessThan>::iterator srcIter =
+        auto srcIter =
           srcFaces.find(tgtFace);
         if(srcIter == srcFaces.end()) {
           std::ostringstream faceDef;

@@ -83,7 +83,7 @@ public:
                           bool mixed);
   inline SVector3 getSSL(MVertex *v) const
   {
-    std::map<MVertex *, SVector3>::const_iterator it =
+    auto it =
       _straightSidedLocation.find(v);
     if(it != _straightSidedLocation.end())
       return it->second;
@@ -92,7 +92,7 @@ public:
   }
   inline SVector3 getTL(MVertex *v) const
   {
-    std::map<MVertex *, SVector3>::const_iterator it = _targetLocation.find(v);
+    auto it = _targetLocation.find(v);
     if(it != _targetLocation.end())
       return it->second;
     else

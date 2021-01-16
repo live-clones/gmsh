@@ -1,6 +1,6 @@
 #!/bin/sh -
 
-files=`git grep -l '(C) 1997-2020 C. Geuzaine'`
+files=`git grep -l '(C) 1997-2021 C. Geuzaine'`
 
 for file in $files; do
   echo "modifying $file"

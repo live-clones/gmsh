@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,8 +19,8 @@
 #endif
 
 StringXNumber TriangulateOptions_Number[] = {
-  {GMSH_FULLRC, "Algorithm", NULL, 1.},
-  {GMSH_FULLRC, "View", NULL, -1.}
+  {GMSH_FULLRC, "Algorithm", nullptr, 1.},
+  {GMSH_FULLRC, "View", nullptr, -1.}
 };
 
 extern "C" {
@@ -142,7 +142,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
                   (double)RAND_MAX;
       doc.points[i].where.h = points[i]->x() + XX;
       doc.points[i].where.v = points[i]->y() + YY;
-      doc.points[i].adjacent = NULL;
+      doc.points[i].adjacent = nullptr;
       doc.points[i].data = (void *)points[i];
     }
 
@@ -170,7 +170,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
       p[1] = (PointData *)doc.points[doc.triangles[i].b].data;
       p[2] = (PointData *)doc.points[doc.triangles[i].c].data;
       int numComp = 0;
-      std::vector<double> *vec = 0;
+      std::vector<double> *vec = nullptr;
       if((int)p[0]->v.size() == 3 + 9 * numSteps &&
          (int)p[1]->v.size() == 3 + 9 * numSteps &&
          (int)p[2]->v.size() == 3 + 9 * numSteps) {
@@ -219,7 +219,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
       p[1] = (PointData *)tris[i]->getVertex(1);
       p[2] = (PointData *)tris[i]->getVertex(2);
       int numComp = 0;
-      std::vector<double> *vec = 0;
+      std::vector<double> *vec = nullptr;
       if((int)p[0]->v.size() == 3 + 9 * numSteps &&
          (int)p[1]->v.size() == 3 + 9 * numSteps &&
          (int)p[2]->v.size() == 3 + 9 * numSteps) {

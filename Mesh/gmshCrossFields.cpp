@@ -224,7 +224,7 @@ public:
     }
 
     for(size_t i = 0; i < _neighbors.size(); i++) {
-      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it =
+      auto it =
         C.find(_neighbors[i]);
       if(it == C.end())
         Msg::Error("impossible situation");
@@ -430,7 +430,7 @@ static void computeLifting(cross2d *first, int branch,
   // store in _atemp the branch of the neighbor
   std::set<MVertex *, MVertexPtrLessThan> cg;
   {
-    std::set<MEdge, MEdgeLessThan>::iterator it = cutG.begin();
+    auto it = cutG.begin();
     for(; it != cutG.end(); ++it) {
       cg.insert(it->getVertex(0));
       cg.insert(it->getVertex(1));
@@ -526,7 +526,7 @@ static void unDuplicateNodesInCutGraph(
     for(size_t j = 0; j < f[i]->triangles.size(); j++) {
       MTriangle *t = f[i]->triangles[j];
       for(size_t k = 0; k < 3; k++) {
-        std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator it =
+        auto it =
           new2old.find(t->getVertex(k));
         if(it != new2old.end()) t->setVertex(k, it->second);
       }
@@ -545,7 +545,7 @@ static void duplicateNodesInCutGraph(
   FILE *_f = fopen("nodes.pos", "w");
   fprintf(_f, "View \" nodes \"{\n");
 
-  v2t_cont::iterator it = adj.begin();
+  auto it = adj.begin();
   std::set<MElement *> touched;
   std::set<MVertex *, MVertexPtrLessThan> vtouched;
 
@@ -565,10 +565,10 @@ static void duplicateNodesInCutGraph(
         _s.pop();
         for(int i = 0; i < 3; i++) {
           MEdge e0 = t->getEdge(i);
-          std::map<MEdge, cross2d, MEdgeLessThan>::iterator it0 = C.find(e0);
+          auto it0 = C.find(e0);
           if(!it0->second.inCutGraph) {
             for(size_t j = 0; j < it0->second._t.size(); j++) {
-              std::vector<MElement *>::iterator ite =
+              auto ite =
                 std::find(els.begin(), els.end(), it0->second._t[j]);
               if(ite != els.end()) {
                 els.erase(ite);
@@ -641,7 +641,7 @@ computeUniqueVectorPerTriangle(GModel *gm, std::vector<GFace *> &f,
       int n = 0;
       for(int k = 0; k < 3; k++) {
         MEdge e = t->getEdge(k);
-        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
+        auto it = C.find(e);
         if(it != C.end()) {
           if(!it->second.inCutGraph) {
             n++;
@@ -893,11 +893,11 @@ LagrangeMultipliers2(dofManager<double> &myAssembler, int NUMDOF,
   for(size_t i = 0; i < groups.size(); i++) {
     size_t N = groups[i].size();
     MEdge ed = groups[i][0]->_e;
-    std::map<MEdge, MEdge, MEdgeLessThan>::iterator ite =
+    auto ite =
       duplicateEdges.find(ed);
     if(ite != duplicateEdges.end()) ed = ite->second;
     MVertex *v = ed.getVertex(0);
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it =
+    auto it =
       C.find(groups[i][0]->_e);
     SVector3 aaa = lift[it->second._t[0]];
 
@@ -943,7 +943,7 @@ struct cutGraphPassage {
 static void createDofs(dofManager<double> &myAssembler, int NUMDOF,
                        std::set<MVertex *, MVertexPtrLessThan> &vs)
 {
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
+  for(auto it = vs.begin();
       it != vs.end(); ++it)
     myAssembler.numberVertex(*it, 0, NUMDOF);
 }
@@ -1038,8 +1038,8 @@ static void computePotential(
 
 
   simpleFunction<double> ONE(1.0);
-  laplaceTerm l(NULL, 1, &ONE);
-  laplaceTerm l2(NULL, 2, &ONE);
+  laplaceTerm l(nullptr, 1, &ONE);
+  laplaceTerm l2(nullptr, 2, &ONE);
 
   for(size_t i = 0; i < f.size(); i++) {
     for(size_t j = 0; j < f[i]->triangles.size(); j++) {
@@ -1050,7 +1050,7 @@ static void computePotential(
       SVector3 a0 = lift[t];
       SVector3 a1 = lift2[t];
       double va, vb, vc;
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator itx =
+      auto itx =
         new2old.find(t->getVertex(0));
       dof.getDofValue(itx == new2old.end() ? t->getVertex(0) : itx->second, 0,
                       1, va);
@@ -1158,7 +1158,7 @@ static double distance(MTriangle *t,
   //  return drand48();
   SPoint3 p = t->barycenter();
   double dmin = 1.e22;
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = boundaries.begin();
+  for(auto it = boundaries.begin();
       it != boundaries.end(); ++it) {
     SPoint3 pp((*it)->x(), (*it)->y(), (*it)->z());
     double d = p.distance(pp);
@@ -1308,7 +1308,7 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   FILE *f_ = fopen("sing.pos", "w");
   fprintf(f_, "View \"S\"{\n");
   std::multimap<MVertex *, cross2d *, MVertexPtrLessThan> conn;
-  for(std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+  for(auto it = C.begin();
       it != C.end(); ++it) {
     std::pair<MVertex *, cross2d *> p =
       std::make_pair(it->first.getVertex(0), &it->second);
@@ -1316,9 +1316,9 @@ computeSingularities(std::map<MEdge, cross2d, MEdgeLessThan> &C,
     p = std::make_pair(it->first.getVertex(1), &it->second);
     conn.insert(p);
   }
-  MVertex *v = NULL;
+  MVertex *v = nullptr;
   std::vector<cross2d *> adj;
-  for(std::multimap<MVertex *, cross2d *, MVertexPtrLessThan>::iterator it =
+  for(auto it =
         conn.begin();
       it != conn.end(); ++it) {
     if(it->first == v) { adj.push_back(it->second); }
@@ -1357,7 +1357,7 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   std::vector<MEdge> cotree;
   std::set<std::pair<double, MTriangle *> > _distances;
   {
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+    auto it = C.begin();
     for(; it != C.end(); ++it) {
       if(it->second._t.size() == 1) {
         boundaries.insert(it->first.getVertex(0));
@@ -1381,7 +1381,7 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
 
     for(int i = 0; i < 3; i++) {
       MEdge e = t->getEdge(i);
-      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
+      auto it = C.find(e);
       for(size_t j = 0; j < it->second._t.size(); j++) {
         MTriangle *tt = it->second._t[j];
         if(touched.find(tt) == touched.end()) {
@@ -1396,12 +1396,12 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   }
 
   std::sort(tree.begin(), tree.end());
-  std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+  auto it = C.begin();
   std::map<MVertex *, std::vector<MEdge>, MVertexPtrLessThan> _graph;
   for(; it != C.end(); ++it) {
     if(!std::binary_search(tree.begin(), tree.end(), &it->second)) {
       for(int i = 0; i < 2; i++) {
-        std::map<MVertex *, std::vector<MEdge>, MVertexPtrLessThan>::iterator
+        auto
           it0 = _graph.find(it->first.getVertex(i));
         if(it0 == _graph.end()) {
           std::vector<MEdge> ee;
@@ -1433,7 +1433,7 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
 
   while(1) {
     bool somethingDone = false;
-    std::map<MVertex *, std::vector<MEdge> >::iterator it = _graph.begin();
+    auto it = _graph.begin();
     for(; it != _graph.end(); ++it) {
       if(it->second.size() == 1) {
         MVertex *v1 = it->second[0].getVertex(0);
@@ -1441,9 +1441,9 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
         if(boundaries.find(it->first) == boundaries.end() &&
            singularities.find(it->first) == singularities.end()) {
           somethingDone = true;
-          std::map<MVertex *, std::vector<MEdge>, MVertexPtrLessThan>::iterator
+          auto
             it2 = _graph.find(v1 == it->first ? v2 : v1);
-          std::vector<MEdge>::iterator position =
+          auto position =
             std::find(it2->second.begin(), it2->second.end(), it->second[0]);
           it2->second.erase(position);
           it->second.clear();
@@ -1458,7 +1458,7 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   FILE *fff = fopen("cotree.pos", "w");
   fprintf(fff, "View \"sides\"{\n");
   {
-    std::map<MVertex *, std::vector<MEdge> >::iterator it = _graph.begin();
+    auto it = _graph.begin();
     for(; it != _graph.end(); ++it) {
       for(size_t i = 0; i < it->second.size(); i++) {
         MEdge e = it->second[i];
@@ -1472,7 +1472,7 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
 
   // Add internal boundaries to the cut graph
   {
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+    auto it = C.begin();
     for(; it != C.end(); ++it) {
       if(it->second._t.size() > 1 && it->second.inInternalBoundary) {
         cutG.insert(it->second._e);
@@ -1481,7 +1481,7 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   }
 
   {
-    std::set<MEdge, MEdgeLessThan>::iterator it = cutG.begin();
+    auto it = cutG.begin();
     for(; it != cutG.end(); ++it) {
       MEdge e = *it;
       fprintf(fff, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", e.getVertex(0)->x(),
@@ -1508,7 +1508,7 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
 {
   std::set<MVertex *, MVertexPtrLessThan> cutgraph;
   std::set<MVertex *, MVertexPtrLessThan> boundaries;
-  for(std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+  for(auto it = C.begin();
       it != C.end(); ++it) {
     MVertex *v0 = it->first.getVertex(0);
     MVertex *v1 = it->first.getVertex(1);
@@ -1525,7 +1525,7 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
   std::set<cross2d *> _all;
 
   std::multimap<MVertex *, cross2d *> conn;
-  for(std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+  for(auto it = C.begin();
       it != C.end(); ++it) {
     std::pair<MVertex *, cross2d *> p =
       std::make_pair(it->first.getVertex(0), &it->second);
@@ -1534,12 +1534,12 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
     conn.insert(p);
   }
 
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = boundaries.begin();
+  for(auto it = boundaries.begin();
       it != boundaries.end(); ++it) {
     MVertex *v = *it;
     std::vector<cross2d *> bnd;
     int countCutGraph = 0;
-    for(std::multimap<MVertex *, cross2d *>::iterator it2 = conn.lower_bound(v);
+    for(auto it2 = conn.lower_bound(v);
         it2 != conn.upper_bound(v); ++it2) {
       if(it2->second->inBoundary) { bnd.push_back(it2->second); }
       if(it2->second->inCutGraph) { countCutGraph++; }
@@ -1565,10 +1565,10 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
 
   std::set<MVertex *, MVertexPtrLessThan> endPoints = singularities;
   {
-    for(std::multimap<MVertex *, cross2d *>::iterator it = conn.begin();
+    for(auto it = conn.begin();
         it != conn.end(); ++it) {
       int count = 0;
-      for(std::multimap<MVertex *, cross2d *>::iterator it2 =
+      for(auto it2 =
             conn.lower_bound(it->first);
           it2 != conn.upper_bound(it->first); ++it2) {
         if(it2->second->inCutGraph) { count++; }
@@ -1579,14 +1579,14 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
 
   for(int AA = 0; AA < 4; AA++) {
     if(cutGraph) {
-      for(std::set<MVertex *, MVertexPtrLessThan>::iterator it =
+      for(auto it =
             endPoints.begin();
           it != endPoints.end(); ++it) {
         MVertex *v = *it;
         std::vector<cross2d *> group;
         do {
-          MVertex *vnew = NULL;
-          for(std::multimap<MVertex *, cross2d *>::iterator it2 =
+          MVertex *vnew = nullptr;
+          for(auto it2 =
                 conn.lower_bound(v);
               it2 != conn.upper_bound(v); ++it2) {
             if((_all.find(it2->second) == _all.end()) &&
@@ -1607,7 +1607,7 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
               break;
             }
           }
-          if(vnew == NULL) break;
+          if(vnew == nullptr) break;
           v = vnew;
         } while((boundaries.find(v) == boundaries.end()) &&
                 (endPoints.find(v) == endPoints.end()));
@@ -1618,7 +1618,7 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
       }
     }
     else {
-      for(std::set<MVertex *, MVertexPtrLessThan>::iterator it =
+      for(auto it =
             boundaries.begin();
           it != boundaries.end(); ++it) {
         MVertex *v = *it;
@@ -1628,8 +1628,8 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
           //!= cutgraph.end() , 		  singularities.find(v) != singularities.end());
           std::vector<cross2d *> group;
           do {
-            MVertex *vnew = NULL;
-            for(std::multimap<MVertex *, cross2d *>::iterator it2 =
+            MVertex *vnew = nullptr;
+            for(auto it2 =
                   conn.lower_bound(v);
                 it2 != conn.upper_bound(v); ++it2) {
               if((_all.find(it2->second) == _all.end()) &&
@@ -1655,7 +1655,7 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
                 break;
               }
             }
-            if(vnew == NULL) break;
+            if(vnew == nullptr) break;
             v = vnew;
             //	    printf("NEXT POINT %lu %d
             //%lu\n",v->getNum(),singularities.find(v) == singularities.end(),
@@ -1680,7 +1680,7 @@ fastImplementationExtrinsic(std::map<MEdge, cross2d, MEdgeLessThan> &C,
 {
   double *data = new double[C.size() * 6];
   size_t *graph = new size_t[C.size() * 4];
-  std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+  auto it = C.begin();
   int counter = 0;
 
   for(; it != C.end(); ++it) {
@@ -1781,7 +1781,7 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
   dofManager<double> *myAssembler = new dofManager<double>(_lsys);
 
   //  myAssembler.fixVertex(*vs.begin(), 0, 1, 0);
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
+  for(auto it = vs.begin();
       it != vs.end(); ++it)
     myAssembler->numberVertex(*it, 0, 1);
 
@@ -1792,7 +1792,7 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
   fprintf(_f, "View \"grad\"{\n");
 
   simpleFunction<double> ONE(1.0);
-  laplaceTerm l(0, 1, &ONE);
+  laplaceTerm l(nullptr, 1, &ONE);
 
   std::map<MTriangle *, SVector3> gradients_of_theta;
 
@@ -1814,9 +1814,9 @@ static dofManager<double> *computeH(GModel *gm, std::vector<GFace *> &f,
       MEdge e0 = t->getEdge(0);
       MEdge e1 = t->getEdge(1);
       MEdge e2 = t->getEdge(2);
-      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it0 = C.find(e0);
-      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it1 = C.find(e1);
-      std::map<MEdge, cross2d, MEdgeLessThan>::iterator it2 = C.find(e2);
+      auto it0 = C.find(e0);
+      auto it1 = C.find(e1);
+      auto it2 = C.find(e2);
 
       //      printf("%g %ag %g\n",a0,a1,a2);
 
@@ -1973,7 +1973,7 @@ struct edgeCuts {
     idsOfCuts.push_back(id);
     return true;
   }
-  void finish(GModel *gm, FILE *f = NULL)
+  void finish(GModel *gm, FILE *f = nullptr)
   {
     for(size_t i = 0; i < ps.size(); i++) {
       GEdge *ge = gm->getEdgeByTag(indexOfCuts[i]);
@@ -1996,7 +1996,7 @@ struct edgeCuts {
 static bool addCut(const SPoint3 &p, const MEdge &e, int COUNT, int ID,
                    std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts)
 {
-  std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator itc = cuts.find(e);
+  auto itc = cuts.find(e);
   if(itc != cuts.end()) {
     if(!itc->second.add(p, COUNT, ID)) return false;
     return true;
@@ -2043,7 +2043,7 @@ static void computeOneIsoRecur(
   }
   std::vector<MElement *> lst = adj[v0];
 
-  MVertex *vs[2] = {NULL, NULL};
+  MVertex *vs[2] = {nullptr, nullptr};
   int count = 0;
   for(size_t i = 0; i < lst.size(); i++) {
     if((lst[i]->getVertex(0) == v0 && lst[i]->getVertex(1) == v1) ||
@@ -2276,7 +2276,7 @@ static bool computeIsos(
   }
 
   {
-    std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator it =
+    auto it =
       new2old.begin();
     for(; it != new2old.end(); ++it) {
       if(singularities.find(it->second) != singularities.end()) {
@@ -2287,7 +2287,7 @@ static bool computeIsos(
 
   std::map<MVertex *, MVertex *, MVertexPtrLessThan> duplicates;
   {
-    std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator it =
+    auto it =
       new2old.begin();
     for(; it != new2old.end(); ++it) {
       duplicates[it->first] = it->second;
@@ -2327,7 +2327,7 @@ static bool computeIsos(
   FILE *f = fopen(fn.c_str(), "w");
   fprintf(f, "View\"Big Cut\"{\n");
 
-  std::set<MVertex *, MVertexPtrLessThan>::iterator it = singularities.begin();
+  auto it = singularities.begin();
   for(; it != singularities.end(); ++it) {
     GEntity *ge = (*it)->onWhat();
     if(ge->dim() == 2 || ge->edges().size() == 0) {
@@ -2463,44 +2463,44 @@ static void createJumpyPairs(
         touched.insert(vv);
         MTriangle *t1 = c->_t[0];
         MTriangle *t2 = c->_t[1];
-        MVertex *v0 = NULL;
-        MVertex *v1 = NULL;
+        MVertex *v0 = nullptr;
+        MVertex *v1 = nullptr;
         if(t1->getVertex(0) == vv || t1->getVertex(1) == vv ||
            t1->getVertex(2) == vv) {
-          if(v0 == NULL)
+          if(v0 == nullptr)
             v0 = vv;
-          else if(v1 == NULL)
+          else if(v1 == nullptr)
             v1 = vv;
           else
             Msg::Error("error in JumpyPairs 1");
         }
         if(t2->getVertex(0) == vv || t2->getVertex(1) == vv ||
            t2->getVertex(2) == vv) {
-          if(v0 == NULL)
+          if(v0 == nullptr)
             v0 = vv;
-          else if(v1 == NULL)
+          else if(v1 == nullptr)
             v1 = vv;
           else
             Msg::Error("error in JumpyPairs 1");
         }
-        for(std::multimap<MVertex *, MVertex *>::iterator it =
+        for(auto it =
               old2new.lower_bound(vv);
             it != old2new.upper_bound(vv); ++it) {
           MVertex *vvv = it->second;
           if(t1->getVertex(0) == vvv || t1->getVertex(1) == vvv ||
              t1->getVertex(2) == vvv) {
-            if(v0 == NULL)
+            if(v0 == nullptr)
               v0 = vvv;
-            else if(v1 == NULL)
+            else if(v1 == nullptr)
               v1 = vvv;
             else
               Msg::Error("error in JumpyPairs 1");
           }
           if(t2->getVertex(0) == vvv || t2->getVertex(1) == vvv ||
              t2->getVertex(2) == vvv) {
-            if(v0 == NULL)
+            if(v0 == nullptr)
               v0 = vvv;
-            else if(v1 == NULL)
+            else if(v1 == nullptr)
               v1 = vvv;
             else
               Msg::Error("error in JumpyPairs 2");
@@ -2626,11 +2626,11 @@ public:
     for(size_t i = 0; i < f.size(); i++) {
       for(size_t j = 0; j < f[i]->triangles.size(); j++) {
         MTriangle *t = f[i]->triangles[j];
-        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it0 =
+        auto it0 =
           C.find(t->getEdge(0));
-        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it1 =
+        auto it1 =
           C.find(t->getEdge(1));
-        std::map<MEdge, cross2d, MEdgeLessThan>::iterator it2 =
+        auto it2 =
           C.find(t->getEdge(2));
 
         SVector3 d0 = it0->second.o_i;
@@ -2665,7 +2665,7 @@ public:
     std::string fn = modelName + "_" + name + ".pos";
     FILE *of = fopen(fn.c_str(), "w");
     fprintf(of, "View \"Direction fields\"{\n");
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+    auto it = C.begin();
     for(it = C.begin(); it != C.end(); ++it) {
       double a0 = it->second._a;
       MEdge e0 = it->second._e;
@@ -2772,7 +2772,7 @@ public:
 
     dofManager<double> *dof = new dofManager<double>(_lsys);
 
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+    auto it = C.begin();
     std::vector<MEdge> edges;
     for(; it != C.end(); ++it) {
       if(it->second.inBoundary) { edges.push_back(it->first); }
@@ -2783,13 +2783,13 @@ public:
     // AVERAGE
     dof->numberVertex(*vs.begin(), 1, 1);
 
-    for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
+    for(auto it = vs.begin();
         it != vs.end(); ++it){
       dof->numberVertex(*it, 0, 1);
     }
 
     simpleFunction<double> ONE(1.0);
-    laplaceTerm l(0, 1, &ONE);
+    laplaceTerm l(nullptr, 1, &ONE);
 
     std::set<GEntity *> firsts;
     for(size_t i = 0; i < f.size(); i++) {
@@ -2827,7 +2827,7 @@ public:
 	xx.normalize();
 
         MEdge edze(vi, vim);
-        std::map<MEdge, cross2d, MEdgeLessThan>::iterator itip = C.find(edze);
+        auto itip = C.find(edze);
         double sign = 1;
         if(itip != C.end()) {
           MTriangle *tt = itip->second._t[0];
@@ -2863,13 +2863,13 @@ public:
       }
     }
 
-    for(std::map<MVertex *, double>::iterator it = gaussianCurvatures.begin();it != gaussianCurvatures.end(); ++it){
+    for(auto it = gaussianCurvatures.begin();it != gaussianCurvatures.end(); ++it){
       Dof E(it->first->getNum(), Dof::createTypeWithTwoInts(0, 1));
       //_lsys->addToRightHandSide(dof->getDofNumber(E),-it->second);
     }
 
     double SSUM = 0;
-    for(std::map<MVertex *, int>::iterator it = sing.begin(); it != sing.end();
+    for(auto it = sing.begin(); it != sing.end();
         ++it) {
       Dof E(it->first->getNum(), Dof::createTypeWithTwoInts(0, 1));
       _lsys->addToRightHandSide(dof->getDofNumber(E),
@@ -2881,7 +2881,7 @@ public:
     // AVERAGE
     Dof EAVG((*vs.begin())->getNum(), Dof::createTypeWithTwoInts(1, 1));
 
-    for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = vs.begin();
+    for(auto it = vs.begin();
         it != vs.end(); ++it){
       Dof E((*it)->getNum(), Dof::createTypeWithTwoInts(0, 1));
       dof->assemble(EAVG, E, 1);
@@ -2896,7 +2896,7 @@ public:
   int computeHFromSingularities(std::map<MVertex *, int> &s)
   {
     myAssembler = computeHFromSingularities(s, 4);
-    for(std::map<MVertex *, int>::iterator it = s.begin(); it != s.end();
+    for(auto it = s.begin(); it != s.end();
         ++it) {
       singularities.insert(it->first);
     }
@@ -2968,7 +2968,7 @@ public:
 
         double H[3];
         for(int k = 0; k < 3; k++) {
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator itk =
+          auto itk =
             new2old.find(t->getVertex(k));
           if(itk == new2old.end())
             myAssembler->getDofValue(t->getVertex(k), 0, 1, H[k]);
@@ -3013,13 +3013,13 @@ public:
     double sum = 0;
     int count_ = 0;
 
-    std::map<MEdge, size_t, MEdgeLessThan>::iterator it = aaa.begin();
+    auto it = aaa.begin();
     for(; it != aaa.end(); ++it) {
       Dof d(it->second, Dof::createTypeWithTwoInts(0, 1));
       double t;
       theta->getDofValue(d, t);
       MVertex *v0, *v1;
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator it0 =
+      auto it0 =
         new2old.find(it->first.getVertex(0));
       if(it0 == new2old.end())
         v0 = it->first.getVertex(0);
@@ -3031,7 +3031,7 @@ public:
       else
         v1 = it0->second;
       MEdge e(v0, v1);
-      std::map<MEdge, cross2d, MEdgeLessThan>::iterator itc = C.find(e);
+      auto itc = C.find(e);
       // well... at first ...
       itc->second.o_i = SVector3(cos(t), sin(t), 0.0);
       // end well
@@ -3050,7 +3050,7 @@ public:
     }
 
     sum /= count_;
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator itc = C.begin();
+    auto itc = C.begin();
     for(; itc != C.end(); ++itc) {
       if(!itc->second.inBoundary) {
         itc->second._a -= sum;
@@ -3100,7 +3100,7 @@ public:
 
   quadLayoutData(GModel *_gm, std::vector<GFace *> &_f, const std::string &name,
                  bool includeFeatureEdges = true)
-    : gm(_gm), f(_f), myAssembler(NULL)
+    : gm(_gm), f(_f), myAssembler(nullptr)
   {
     modelName = name;
     for(size_t i = 0; i < f.size(); i++) {
@@ -3119,13 +3119,13 @@ public:
 	  SVector3 v1 (vk1->x()-vk->x(),vk1->y()-vk->y(),vk1->z()-vk->z());
 	  SVector3 v2 (vk2->x()-vk->x(),vk2->y()-vk->y(),vk2->z()-vk->z());
 	  double CURV = angle(v1,v2);
-	  std::map<MVertex *, double>::iterator itg = gaussianCurvatures.find(vk);
+	  auto itg = gaussianCurvatures.find(vk);
 	  if (itg == gaussianCurvatures.end()) gaussianCurvatures[vk] = 2*M_PI - CURV;
 	  else itg->second -= CURV;
 	  //---------------------------------------------------------------------
 
           cross2d c(e, t, e1, e2);
-          std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
+          auto it = C.find(e);
           if(it == C.end())
             C.insert(std::make_pair(e, c));
           else {
@@ -3143,20 +3143,20 @@ public:
           for(size_t k = 0; k < e[j]->lines.size(); k++) {
             MLine *l = e[j]->lines[k];
             MEdge e = l->getEdge(0);
-            std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.find(e);
+            auto it = C.find(e);
             if(it != C.end()) { it->second.inBoundary = true; }
           }
         }
       }
     }
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+    auto it = C.begin();
     for(; it != C.end(); ++it) it->second.finish(C);
     it = C.begin();
     for(; it != C.end(); ++it) it->second.finish2();
     FILE *F = fopen("gc.pos","w");
     fprintf(F,"View\"\"{\n");
     double dd = 0;
-    for (std::map<MVertex*,double>:: iterator it = gaussianCurvatures.begin(); it != gaussianCurvatures.end() ; ++it){
+    for (auto it = gaussianCurvatures.begin(); it != gaussianCurvatures.end() ; ++it){
       fprintf(F,"SP(%g,%g,%g){%g};\n",it->first->x(),it->first->y(),it->first->z(),it->second);
       dd += it->second;
     }
@@ -3174,7 +3174,7 @@ public:
     cutG.clear();
     new2old.clear();
     //    boundaries.clear();
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it = C.begin();
+    auto it = C.begin();
     for(; it != C.end(); ++it) {
       it->second.inCutGraph = false;
       it->second._btemp = 0;
@@ -3225,7 +3225,7 @@ public:
 
     std::set<MVertex *, MVertexPtrLessThan> isolated_singularities;
     {
-      for(std::set<MVertex *, MVertexPtrLessThan>::iterator it =
+      for(auto it =
             singularities.begin();
           it != singularities.end(); ++it) {
         int count = 0;
@@ -3300,8 +3300,8 @@ public:
     MVertex *e1 = e.getVertex(0);
     MVertex *e2 = e.getVertex(1);
 
-    if(e1 == v2) return NULL;
-    if(e2 == v2) return NULL;
+    if(e1 == v2) return nullptr;
+    if(e2 == v2) return nullptr;
 
     SVector3 e1e2(e2->x() - e1->x(), e2->y() - e1->y(), e2->z() - e1->z());
     SVector3 e1v1(v1->x() - e1->x(), v1->y() - e1->y(), v1->z() - e1->z());
@@ -3313,7 +3313,7 @@ public:
 
     if(!v2) {
       //      Msg::Error("Error In CutMesh");
-      return NULL;
+      return nullptr;
     }
 
     SVector3 e2v2(v2->x() - e2->x(), v2->y() - e2->y(), v2->z() - e2->z());
@@ -3329,17 +3329,17 @@ public:
       SPoint3(e.getVertex(1)->x(), e.getVertex(1)->y(), e.getVertex(1)->z()),
       SPoint3(v1->x(), v1->y(), v1->z()), SPoint3(v2->x(), v2->y(), v2->z()),
       x);
-    if(!inters) return NULL;
+    if(!inters) return nullptr;
     return new MEdgeVertex(v2->x() * x[1] + v1->x() * (1. - x[1]),
                            v2->y() * x[1] + v1->y() * (1. - x[1]),
-                           v2->z() * x[1] + v1->z() * (1. - x[1]), NULL, 0);
+                           v2->z() * x[1] + v1->z() * (1. - x[1]), nullptr, 0);
   }
 
   void cut_edge(std::map<MEdge, int, MEdgeLessThan> &ecuts, MVertex *v0,
                 MVertex *v1, MVertex *mid)
   {
     MEdge e(v0, v1);
-    std::map<MEdge, int, MEdgeLessThan>::iterator it = ecuts.find(e);
+    auto it = ecuts.find(e);
     if(it != ecuts.end()) {
       int index = it->second;
       ecuts.erase(it);
@@ -3359,7 +3359,7 @@ public:
     std::vector<MTriangle *> newt;
 
     for(size_t i = 0; i < ts.size(); ++i) {
-      MVertex *vs[3] = {NULL, NULL, NULL};
+      MVertex *vs[3] = {nullptr, nullptr, nullptr};
       for(size_t j = 0; j < 3; ++j) {
         MEdge e = ts[i]->getEdge(j);
         if(e_cut.find(e) == e_cut.end()) {
@@ -3453,7 +3453,7 @@ public:
 
   void cutMesh(std::map<MEdge, edgeCuts, MEdgeLessThan> &cuts)
   {
-    std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it = cuts.begin();
+    auto it = cuts.begin();
     std::map<MEdge, int, MEdgeLessThan> ecuts;
 
     FILE *F = fopen("addedpoints.pos", "w");
@@ -3468,7 +3468,7 @@ public:
 
         for(size_t k = 0; k < 3; k++) {
           MEdge e = f[i]->triangles[j]->getEdge(k);
-          std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it = cuts.find(e);
+          auto it = cuts.find(e);
           if(it != cuts.end()) {
             for(size_t l = 0; l < it->second.vs.size(); ++l) {
               std::pair<int, std::pair<MVertex *, std::pair<int, int> > > pp =
@@ -3482,15 +3482,14 @@ public:
           }
         }
 
-        std::set<int>::iterator iti = indices.begin();
+        auto iti = indices.begin();
         std::vector<MTriangle *> ttt;
         ttt.push_back(f[i]->triangles[j]);
         for(; iti != indices.end(); ++iti) {
           //	  if (*iti != 313310)continue;
           GEdge *ge = gm->getEdgeByTag(*iti);
           if(tcuts.count(*iti) == 1) {
-            std::multimap<
-              int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
+            auto itt =
               tcuts.lower_bound(*iti);
             MVertex *v0 = itt->second.first;
             int k = itt->second.second.first;
@@ -3499,8 +3498,7 @@ public:
                          *iti, F);
           }
           else if(tcuts.count(*iti) == 2) {
-            std::multimap<
-              int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
+            auto itt =
               tcuts.lower_bound(*iti);
             MVertex *v0 = itt->second.first;
             ++itt;
@@ -3508,8 +3506,7 @@ public:
             cutTriangles(ttt, f[i], v0, v1, ge, ecuts, *iti, F);
           }
           else if(tcuts.count(*iti) == 3) {
-            std::multimap<
-              int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
+            auto itt =
               tcuts.lower_bound(*iti);
             int k0 = itt->second.second.first;
             int id0 = itt->second.second.second;
@@ -3550,8 +3547,7 @@ public:
             }
           }
           else if(tcuts.count(*iti) == 4) {
-            std::multimap<
-              int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
+            auto itt =
               tcuts.lower_bound(*iti);
             int id0 = itt->second.second.second;
             MVertex *v0 = itt->second.first;
@@ -3581,8 +3577,7 @@ public:
 	    }
 	  }
           else if(tcuts.count(*iti) == 6) {
-            std::multimap<
-              int, std::pair<MVertex *, std::pair<int, int> > >::iterator itt =
+            auto itt =
               tcuts.lower_bound(*iti);
 	    std::pair<int,MVertex*> id[10];
 	    for (std::size_t kk=0;kk< tcuts.count(*iti);kk++){
@@ -3610,7 +3605,7 @@ public:
     F = fopen("edges.pos", "w");
     fprintf(F, "View \"\"{\n");
 
-    for(std::map<MEdge, int>::iterator it = ecuts.begin(); it != ecuts.end();
+    for(auto it = ecuts.begin(); it != ecuts.end();
         ++it) {
       GEdge *ge = gm->getEdgeByTag(it->second);
       ge->lines.push_back(
@@ -3638,7 +3633,7 @@ public:
   {
     std::map<MEdge, MEdge, MEdgeLessThan> duplicateEdges;
 
-    for(std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it = cuts.begin();
+    for(auto it = cuts.begin();
         it != cuts.end(); ++it) {
       MVertex *v0 = it->first.getVertex(0);
       MVertex *v1 = it->first.getVertex(1);
@@ -3649,12 +3644,12 @@ public:
       duplicateEdges[e0] = e1;
     }
 
-    for(std::map<MEdge, MEdge, MEdgeLessThan>::iterator it2 =
+    for(auto it2 =
           duplicateEdges.begin();
         it2 != duplicateEdges.end(); ++it2) {
-      std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it3 =
+      auto it3 =
         cuts.find(it2->first);
-      std::map<MEdge, edgeCuts, MEdgeLessThan>::iterator it4 =
+      auto it4 =
         cuts.find(it2->second);
       if(it3 != cuts.end() && it4 == cuts.end()) {
         cuts[it2->second] = it3->second;
@@ -3750,7 +3745,7 @@ static void findPhysicalGroupsForSingularities(GModel *gm,
 {
   std::map<int, std::vector<GEntity *> > groups[4];
   gm->getPhysicalGroups(groups);
-  for(std::map<int, std::vector<GEntity *> >::iterator it = groups[0].begin();
+  for(auto it = groups[0].begin();
       it != groups[0].end(); ++it) {
     std::string name = gm->getPhysicalName(0, it->first);
     if(name == "SINGULARITY_OF_INDEX_THREE") {
@@ -3827,8 +3822,8 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   name = gm->getName() + "_Directions";
   dd->setName(name);
   dd->setFileName(name + ".msh");
-  PViewDataGModel *U = NULL;
-  PViewDataGModel *V = NULL;
+  PViewDataGModel *U = nullptr;
+  PViewDataGModel *V = nullptr;
   if(layout) {
     U = new PViewDataGModel(PViewDataGModel::ElementNodeData);
     V = new PViewDataGModel(PViewDataGModel::ElementNodeData);
@@ -3866,7 +3861,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     V->addData(gm, dataV, 0, 0.0, 1, 1);
     V->finalize();
   }
-  for(std::map<MTriangle *, SVector3>::iterator it = qLayout.d0.begin();
+  for(auto it = qLayout.d0.begin();
       it != qLayout.d0.end(); ++it) {
     std::vector<double> jj;
     jj.push_back(it->second.x());
@@ -3874,7 +3869,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     jj.push_back(it->second.z());
     dataDir[it->first->getNum()] = jj;
   }
-  for(std::map<MTriangle *, SVector3>::iterator it = qLayout.d1.begin();
+  for(auto it = qLayout.d1.begin();
       it != qLayout.d1.end(); ++it) {
     std::vector<double> jj;
     jj.push_back(it->second.x());
@@ -3882,7 +3877,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     jj.push_back(it->second.z());
     dataDirOrtho[it->first->getNum()] = jj;
   }
-  for(std::set<MVertex *, MVertexPtrLessThan>::iterator it = qLayout.vs.begin();
+  for(auto it = qLayout.vs.begin();
       it != qLayout.vs.end(); ++it) {
     double h;
     qLayout.myAssembler->getDofValue(*it, 0, 1, h);
@@ -3917,7 +3912,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
 
   Msg::Info("Classifying the model");
   discreteEdge *de = new discreteEdge(
-    GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+    GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
   GModel::current()->add(de);
   computeNonManifoldEdges(GModel::current(), de->lines, true);
   classifyFaces(GModel::current(), M_PI / 4 * .999);
@@ -3929,7 +3924,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   gm->writeMSH(mshout, 4.0, false, true);
 
   int countError = 0;
-  for(GModel::fiter it = GModel::current()->firstFace();
+  for(auto it = GModel::current()->firstFace();
       it != GModel::current()->lastFace(); it++) {
     if((*it)->edges().size() != 4) {
       Msg::Warning("quad layout failed : face %lu has %lu boundaries",
@@ -3959,7 +3954,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
 
 static void getFacesOfTheModel(GModel *gm, std::vector<GFace *> &f)
 {
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+  for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     GFace *gf = *it;
     f.push_back(gf);
   }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -73,7 +73,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
 #endif
 
   // we need at least one model during option parsing
-  GModel *dummy = 0;
+  GModel *dummy = nullptr;
   if(GModel::list.empty()) dummy = new GModel();
 
   // Initialize messages (parallel stuff, etc.)
@@ -479,7 +479,7 @@ int GmshFLTK(int argc, char **argv)
   }
 
   // launch solver (if requested) and fill onelab tree
-  solver_cb(0, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+  solver_cb(nullptr, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
 
   // loop
   return FlGui::instance()->run();

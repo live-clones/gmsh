@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -402,7 +402,7 @@ static std::map<unsigned int, SPoint2> tags_rev;
 
 static unsigned int getTagForGraph2dDataPoint(const SPoint2 &p)
 {
-  std::map<SPoint2, unsigned int>::iterator it = tags.find(p);
+  auto it = tags.find(p);
   if(it != tags.end()) return it->second;
   int t = tags.size();
   tags[p] = t;

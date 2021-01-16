@@ -972,11 +972,11 @@ namespace jacobianBasedQuality {
   {
     GModel *m = GModel::current();
     std::set<GEntity *, GEntityPtrFullLessThan> entities;
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
       entities.insert(*it);
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+    for(auto it = m->firstFace(); it != m->lastFace(); it++)
       entities.insert(*it);
-    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
+    for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
       entities.insert(*it);
 
     std::set<GEntity *, GEntityPtrFullLessThan>::iterator it;

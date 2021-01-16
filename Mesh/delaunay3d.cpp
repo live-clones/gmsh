@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -56,7 +56,7 @@ public:
   inline double &lc() { return _lc; }
   inline operator double *() { return _x; }
   Vert(double X = 0, double Y = 0, double Z = 0, double lc = 0, int num = 0)
-    : _num(num), _t(NULL), _thread(0)
+    : _num(num), _t(nullptr), _thread(0)
   {
     _x[0] = X;
     _x[1] = Y;
@@ -184,8 +184,8 @@ struct Tet {
 
   Tet() : _modified(true)
   {
-    V[0] = V[1] = V[2] = V[3] = NULL;
-    T[0] = T[1] = T[2] = T[3] = NULL;
+    V[0] = V[1] = V[2] = V[3] = nullptr;
+    T[0] = T[1] = T[2] = T[3] = nullptr;
     setAllDeleted();
   }
   int setVerticesNoTest(Vert *v0, Vert *v1, Vert *v2, Vert *v3)
@@ -227,7 +227,7 @@ struct Tet {
   Tet(Vert *v0, Vert *v1, Vert *v2, Vert *v3)
   {
     setVertices(v0, v1, v2, v3);
-    T[0] = T[1] = T[2] = T[3] = NULL;
+    T[0] = T[1] = T[2] = T[3] = nullptr;
     setAllDeleted();
   }
   void setAllDeleted()
@@ -260,7 +260,7 @@ struct conn {
   Face f;
   int i;
   Tet *t;
-  conn() : f(0, 0, 0), i(0), t(0) {}
+  conn() : f(nullptr, nullptr, nullptr), i(0), t(nullptr) {}
   conn(Face _f, int _i, Tet *_t) : f(_f), i(_i), t(_t) {}
   bool operator==(const conn &c) const { return f == c.f; }
   bool operator<(const conn &c) const { return f < c.f; }
@@ -619,7 +619,7 @@ static void SortHilbert(std::vector<Vert *> &v, std::vector<int> &indices)
 static void computeAdjacencies(Tet *t, int iFace, connContainer &faceToTet)
 {
   conn c(t->getFace(iFace), iFace, t);
-  connContainer::iterator it = std::find(faceToTet.begin(), faceToTet.end(), c);
+  auto it = std::find(faceToTet.begin(), faceToTet.end(), c);
   if(it == faceToTet.end()) {
     faceToTet.push_back(c);
   }
@@ -674,7 +674,7 @@ static Tet *tetContainsV(Vert *v, cavityContainer &cavity)
     }
     if(count == 4) return cavity[i];
   }
-  return NULL;
+  return nullptr;
 }
 
 static void buildDelaunayBall(cavityContainer &cavity, connContainer &faceToTet)
@@ -685,7 +685,7 @@ static void buildDelaunayBall(cavityContainer &cavity, connContainer &faceToTet)
     for(std::size_t iFace = 0; iFace < 4; iFace++) {
       Tet *neigh = t->T[iFace];
       conn c(t->getFace(iFace), iFace, neigh);
-      connContainer::iterator it =
+      auto it =
         std::find(faceToTet.begin(), faceToTet.end(), c);
       if(it == faceToTet.end()) {
         faceToTet.push_back(c);
@@ -735,7 +735,7 @@ static Tet *tetInsideCavityWithFAce(Face &f, cavityContainer &cavity)
       }
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 static bool fixDelaunayCavity(Vert *v, cavityContainer &cavity,
@@ -765,7 +765,7 @@ static bool fixDelaunayCavity(Vert *v, cavityContainer &cavity,
       conn &c = bndK[_negatives[i]];
       Tet *toRemove = tetInsideCavityWithFAce(c.f, cavity);
       if(toRemove) {
-        std::vector<Tet *>::iterator it =
+        auto it =
           std::find(cavity.begin(), cavity.end(), toRemove);
         if(it != cavity.end()) {
           cavity.erase(it);
@@ -805,7 +805,7 @@ static void delaunayCavity2(Tet *tet, Tet *prevTet, Vert *v,
 
     for(int iNeigh = iNeighStart; iNeigh < iNeighEnd; iNeigh++) {
       Tet *neigh = t->T[iNeigh];
-      if(neigh == NULL) {
+      if(neigh == nullptr) {
         bnd.push_back(conn(t->getFace(iNeigh), iNeigh, neigh));
       }
       else if(neigh == prev) {
@@ -849,8 +849,8 @@ static Tet *walk(Tet *t, Vert *v, int maxx, double &totSearch, int thread)
   investigatedTets.insert(t);
   while(1) {
     totSearch++;
-    if(t == NULL) {
-      return NULL; // we should NEVER return here
+    if(t == nullptr) {
+      return nullptr; // we should NEVER return here
     }
     // if(t->inSphere(v,thread)){return t;}
     double _min = 0.0;
@@ -878,7 +878,7 @@ static Tet *walk(Tet *t, Vert *v, int maxx, double &totSearch, int thread)
     }
     else if(tets.empty()) {
       Msg::Error("Jump-and-walk failed (no neighbor)");
-      return 0;
+      return nullptr;
     }
     else {
       t = tets.front();
@@ -886,7 +886,7 @@ static Tet *walk(Tet *t, Vert *v, int maxx, double &totSearch, int thread)
     }
   }
   Msg::Error("Jump-and-walk failed (no neighbor)");
-  return 0;
+  return nullptr;
 }
 
 /*
@@ -1065,7 +1065,7 @@ void delaunayTrgl(const std::size_t numThreads,
       // FIND SEEDS
       for(std::size_t K = 0; K < NPTS_AT_ONCE; K++) {
 	vToAdd[K] = (iPGlob < assignTo[K + myThread * NPTS_AT_ONCE].size()) ?
-	  assignTo[K + myThread * NPTS_AT_ONCE][iPGlob] : NULL;
+	  assignTo[K + myThread * NPTS_AT_ONCE][iPGlob] : nullptr;
 
         if(vToAdd[K]) {
           // In 3D, insertion of a point may lead to deletion of tets !!
@@ -1091,11 +1091,11 @@ void delaunayTrgl(const std::size_t numThreads,
             if(bndK[i].t) bndK[i].t->unset(myThread, K);
           cavityK.clear();
           bndK.clear();
-          delaunayCavity2(t[K], NULL, vToAdd[K], cavityK, bndK, myThread, K);
+          delaunayCavity2(t[K], nullptr, vToAdd[K], cavityK, bndK, myThread, K);
           // verify the cavity
           if(fixDelaunayCavity(vToAdd[K], cavityK, bndK, myThread, K,
                                _negatives)) {
-            vToAdd[K] = NULL;
+            vToAdd[K] = nullptr;
             invalidCavities[myThread]++;
           }
         }
@@ -1129,7 +1129,7 @@ void delaunayTrgl(const std::size_t numThreads,
                                  vToAdd[K]);
             Tet *neigh = bndK[i].t;
             t->T[0] = neigh;
-            t->T[1] = t->T[2] = t->T[3] = NULL;
+            t->T[1] = t->T[2] = t->T[3] = nullptr;
             if(neigh) {
               if(neigh->getFace(0) == bndK[i].f)
                 neigh->T[0] = t;
@@ -1149,7 +1149,7 @@ void delaunayTrgl(const std::size_t numThreads,
             computeAdjacencies(t, 3, faceToTet);
           }
           for(std::size_t i = bSize; i < cSize; i++) {
-            cavityK[i]->V[0] = NULL;
+            cavityK[i]->V[0] = nullptr;
           }
         }
       }
@@ -1316,7 +1316,7 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
     }
     else {
       v->setNum(N + i + 1);
-      MVertex *mv = new MVertex(v->x(), v->y(), v->z(), NULL, N + (i + 1));
+      MVertex *mv = new MVertex(v->x(), v->y(), v->z(), nullptr, N + (i + 1));
       _temp[v->getNum()] = mv;
       S.push_back(mv);
     }

@@ -98,7 +98,7 @@ namespace {
   {
     int N = 40;
 
-    MVertex *previous = NULL;
+    MVertex *previous = nullptr;
 
     for(int i = 0; i < N + 1; ++i) {
       const double u = (double)i / N * 2 - 1;
@@ -163,38 +163,38 @@ namespace {
 
 namespace BoundaryLayerCurver {
   namespace InnerVertPlacementMatrices {
-    fullMatrix<double> *_triangle[10] = {NULL, NULL, NULL, NULL, NULL,
-                                         NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double> *_quadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
-                                           NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double> *_linearTriangle0[10] = {NULL, NULL, NULL, NULL, NULL,
-                                                NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double> *_linearTriangle2[10] = {NULL, NULL, NULL, NULL, NULL,
-                                                NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double> *_linearQuadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
-                                                 NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double> *_hexahedron[10] = {NULL, NULL, NULL, NULL, NULL,
-                                           NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double> *_triangle[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
+                                         nullptr, nullptr, nullptr, nullptr, nullptr};
+    fullMatrix<double> *_quadrangle[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
+                                           nullptr, nullptr, nullptr, nullptr, nullptr};
+    fullMatrix<double> *_linearTriangle0[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
+                                                nullptr, nullptr, nullptr, nullptr, nullptr};
+    fullMatrix<double> *_linearTriangle2[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
+                                                nullptr, nullptr, nullptr, nullptr, nullptr};
+    fullMatrix<double> *_linearQuadrangle[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
+                                                 nullptr, nullptr, nullptr, nullptr, nullptr};
+    fullMatrix<double> *_hexahedron[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
+                                           nullptr, nullptr, nullptr, nullptr, nullptr};
     fullMatrix<double> *_linearHexahedron[3][10] = {
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};
-    fullMatrix<double> *_prism[10] = {NULL, NULL, NULL, NULL, NULL,
-                                      NULL, NULL, NULL, NULL, NULL};
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
+    fullMatrix<double> *_prism[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
+                                      nullptr, nullptr, nullptr, nullptr, nullptr};
     fullMatrix<double> *_linearPrism[4][10] = {
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};
-    fullMatrix<double> *_tetrahedron[10] = {NULL, NULL, NULL, NULL, NULL,
-                                            NULL, NULL, NULL, NULL, NULL};
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
+    fullMatrix<double> *_tetrahedron[10] = {nullptr, nullptr, nullptr, nullptr, nullptr,
+                                            nullptr, nullptr, nullptr, nullptr, nullptr};
     fullMatrix<double> *_linearTet[6][10] = {
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-      {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr},
+      {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
 
     const fullMatrix<double> *triangle(int order, bool linear, int edge)
     {
@@ -440,7 +440,7 @@ namespace BoundaryLayerCurver {
       MElement *el = bndEl2column[i].first;
       for(std::size_t j = 0; j < el->getNumEdges(); ++j) {
         MEdge e = el->getEdge(j);
-        std::map<MEdge, int, MEdgeLessThan>::iterator it = edge2element.find(e);
+        auto it = edge2element.find(e);
         if(it != edge2element.end()) {
           adjacencies.push_back(std::make_pair(i, it->second));
           // This is for debug purpose, we expect that two elements at most
@@ -527,7 +527,7 @@ namespace BoundaryLayerCurver {
   {
     int numVertexPerLayer = c1.first->getNumPrimaryVertices();
     std::size_t numLayers = c1.second.size();
-    stack.assign(numVertexPerLayer * numLayers, NULL);
+    stack.assign(numVertexPerLayer * numLayers, nullptr);
 
     int k = 0;
     for(int i = 0; i < numVertexPerLayer; ++i) {
@@ -570,7 +570,7 @@ namespace BoundaryLayerCurver {
       // If there remains NULL values, it is because the vertex is the same
       // on bottom face and top face.
       for(int l = k; l < k + numVertexPerLayer; ++l) {
-        if(stack[l] == NULL) stack[l] = stack[l - numVertexPerLayer];
+        if(stack[l] == nullptr) stack[l] = stack[l - numVertexPerLayer];
       }
 
       k += numVertexPerLayer;
@@ -659,10 +659,10 @@ namespace BoundaryLayerCurver {
       }
       if(v2 == v1) {
         v2 = v3;
-        v3 = NULL;
+        v3 = nullptr;
       }
       else if(v3 == v0) {
-        v3 = NULL;
+        v3 = nullptr;
       }
       interface.push_back(
         stackElements[i]->getHighOrderFace(MFace(v0, v1, v2, v3)));
@@ -757,7 +757,7 @@ namespace BoundaryLayerCurver {
                          const MEdgeN &baseEdge,
                          const Parameters3DCurve &parameters, int nbPoints,
                          const IntPt *points, fullMatrix<double> &xyz,
-                         int triDirection = 0, const GFace *gFace = NULL)
+                         int triDirection = 0, const GFace *gFace = nullptr)
   {
     //  static int ITER = 0;
     //  ++ITER;
@@ -971,7 +971,7 @@ namespace BoundaryLayerCurver {
   {
     for(std::size_t i = 0; i < column.size(); ++i) {
       MFaceN &f = column[i];
-      const fullMatrix<double> *placement = NULL;
+      const fullMatrix<double> *placement = nullptr;
       if(f.isTriangular()) {
         // TODO Determine if edge 0 or 2
       }
@@ -1182,7 +1182,7 @@ namespace BoundaryLayerCurver {
     // TODO: reposition last elements
     for(std::size_t i = 0; i < column.size() - 1; ++i) {
       MElement *el = column[i];
-      const fullMatrix<double> *placement = NULL;
+      const fullMatrix<double> *placement = nullptr;
       const int order = el->getPolynomialOrder();
       int nFace, nOtherFace, sign, rot;
       switch(el->getType()) {

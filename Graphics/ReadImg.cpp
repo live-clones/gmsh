@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -38,7 +38,7 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads = 1,
 
   if(dim != 1 && dim != 2) {
     Msg::Error("Unable to obtain one-channel image");
-    return 0;
+    return nullptr;
   }
 
   PViewDataList *d = new PViewDataList();

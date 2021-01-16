@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -93,7 +93,7 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
     add(x, y, z, n, r, g, b, a, ele, unique, boundary);
   }
   else
-    add(x, y, z, n, 0, 0, 0, 0, ele, unique, boundary);
+    add(x, y, z, n, nullptr, nullptr, nullptr, nullptr, ele, unique, boundary);
 }
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned char *r,
@@ -105,7 +105,7 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
   if(boundary && npe == 3){
     ElementData<3> e(x, y, z, n, r, g, b, a, ele);
     ElementDataLessThan<3>::tolerance = (float)(CTX::instance()->lc * 1.e-12);
-    std::set<ElementData<3>, ElementDataLessThan<3> >::iterator it = _data3.find(e);
+    auto it = _data3.find(e);
     if(it == _data3.end())
       _data3.insert(e);
     else
@@ -138,7 +138,7 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
 void VertexArray::finalize()
 {
   if(_data3.size()){
-    std::set<ElementData<3>, ElementDataLessThan<3> >::iterator it = _data3.begin();
+    auto it = _data3.begin();
     for(; it != _data3.end(); it++){
       for(int i = 0; i < 3; i++){
         _addVertex(it->x(i), it->y(i), it->z(i));
@@ -200,8 +200,8 @@ void VertexArray::sort(double x, double y, double z)
   elements.reserve(n);
   for(int i = 0; i < n; i++){
     float *vp = &_vertices[3 * npe * i];
-    normal_type *np = _normals.empty() ? 0 : &_normals[3 * npe * i];
-    unsigned char *cp = _colors.empty() ? 0 : &_colors[4 * npe * i];
+    normal_type *np = _normals.empty() ? nullptr : &_normals[3 * npe * i];
+    unsigned char *cp = _colors.empty() ? nullptr : &_colors[4 * npe * i];
     elements.push_back(AlphaElement(vp, np, cp));
   }
   std::sort(elements.begin(), elements.end(), AlphaElementLessThan());

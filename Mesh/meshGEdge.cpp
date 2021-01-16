@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -124,7 +124,7 @@ struct F_Lc_aniso {
     FieldManager *fields = ge->model()->getFields();
     for(int i = 0; i < fields->getNumBoundaryLayerFields(); ++i) {
       Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-      if(bl_field == NULL) continue;
+      if(bl_field == nullptr) continue;
       BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
       if(blf->isEdgeBL(ge->tag())) break;
       SMetric3 lc_bgm;
@@ -468,7 +468,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
     (((int)ge->mesh_vertices.size() - last) >= nMinimumPoints);
   if(filteringObservesMinimumN) {
     for(int i = 0; i < last; i++) {
-      std::vector<MVertex *>::iterator it = std::find(
+      auto it = std::find(
         ge->mesh_vertices.begin(), ge->mesh_vertices.end(), lengths[i].second);
 
       if(it != ge->mesh_vertices.end()) { ge->mesh_vertices.erase(it); }
@@ -535,7 +535,7 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   // Check if edge is a BL edge
   for(int i = 0; i < n; ++i) {
     Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-    if(bl_field == NULL) continue;
+    if(bl_field == nullptr) continue;
     BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
     if(blf->isEdgeBL(ge->tag())) return;
   }
@@ -550,7 +550,7 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   // Check if extremity nodes are BL node
   for(int i = 0; i < n; ++i) {
     Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-    if(bl_field == NULL) continue;
+    if(bl_field == nullptr) continue;
     BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
     blf->setupFor1d(ge->tag());
 
@@ -666,7 +666,7 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
       if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
     }
     else {
-      for(std::vector<GFace *>::const_iterator it = faces.begin();
+      for(auto it = faces.begin();
           it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {
           if(N % 2 == 0) N++;

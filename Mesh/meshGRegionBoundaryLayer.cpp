@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -36,7 +36,7 @@ static GFace *haveTowGEdges(std::vector<GFace *> &faces, GEdge *ge1, GEdge *ge2)
        std::find(e.begin(), e.end(), ge2) != e.end())
       return faces[i];
   }
-  return NULL;
+  return nullptr;
 }
 
 static void meshPolygon(GRegion *gr, std::vector<MLine *> &poly,
@@ -133,10 +133,10 @@ public:
       if(gf == _f_per_normal[i]) return _v_per_face[i];
     }
     // if (gf) printf("NONE for face %d\n",gf->tag());
-    return NULL;
+    return nullptr;
   }
 
-  SVector3 average_normal(GFace *gf = NULL) const
+  SVector3 average_normal(GFace *gf = nullptr) const
   {
     SVector3 n(0, 0, 0);
     //    printf("%d %d\n",_normals.size(),_f_per_normal.size());
@@ -193,7 +193,7 @@ public:
     for(size_t i = 0; i < _gr->tetrahedra.size(); i++) {
       for(int j = 0; j < 4; j++) {
         MFace f = _gr->tetrahedra[i]->getFace(j);
-        std::map<MFace, SVector3, MFaceLessThan>::iterator it = t_normals.find(f);
+        auto it = t_normals.find(f);
         if(it == t_normals.end()) {
           SVector3 n = f.normal();
           MVertex *v = _gr->tetrahedra[i]->getVertex(3 - j);
@@ -226,7 +226,7 @@ public:
     std::vector<GEdge *> edges = gr->edges();
     std::vector<GFace *> faces = gr->faces();
     for(size_t i = 0; i < edges.size(); i++) {
-      GFace *f[2] = {NULL, NULL};
+      GFace *f[2] = {nullptr, nullptr};
       std::vector<GFace *> efaces = edges[i]->faces();
       int count = 0;
       bool seam = false;
@@ -245,7 +245,7 @@ public:
         for(size_t j = 0; j < edges[i]->lines.size(); j++) {
           for(int k = 0; k < 2; k++) {
             MVertex *v = edges[i]->lines[j]->getVertex(k);
-            std::set<blyr_mvertex>::iterator it = _vertices.find(v);
+            auto it = _vertices.find(v);
             if(it == _vertices.end()) Msg::Error("Unknow node in boundary layer");
             it->add_line(edges[i]->lines[j], edges[i]);
           }
@@ -260,7 +260,7 @@ public:
     for(size_t i = 0; i < bls.size(); i++) {
       for(size_t j = 0; j < bls[i]->triangles.size(); j++) {
         MTriangle *t = bls[i]->triangles[j];
-        std::map<MFace, SVector3, MFaceLessThan>::iterator it =
+        auto it =
           t_normals.find(t->getFace(0));
         SVector3 n;
         if(it == t_normals.end())
@@ -269,7 +269,7 @@ public:
           n = it->second;
         for(int k = 0; k < 3; k++) {
           MVertex *v = t->getVertex(k);
-          std::set<blyr_mvertex>::iterator it = _vertices.find(v);
+          auto it = _vertices.find(v);
           if(it == _vertices.end()) Msg::Error("Unknown node in boundary layer");
           it->add_triangle(t, n, bls[i]);
         }
@@ -283,7 +283,7 @@ public:
       if(_ridges[i]._ge == ge) return &_ridges[i];
     }
     Msg::Error("Unknown ridge %d", ge->tag());
-    return NULL;
+    return nullptr;
   }
 
   void classify_ridges()
@@ -298,9 +298,9 @@ public:
         MLine *l = ge->lines[j];
         MVertex *l0 = l->getVertex(0);
         MVertex *l1 = l->getVertex(1);
-        MVertex *op1 = 0;
+        MVertex *op1 = nullptr;
         SVector3 N[2];
-        std::set<blyr_mvertex>::iterator it = _vertices.find(l->getVertex(0));
+        auto it = _vertices.find(l->getVertex(0));
         for(size_t k = 0; k < it->_triangles.size(); k++) {
           MVertex *v0 = it->_triangles[k]->getVertex(0);
           MVertex *v1 = it->_triangles[k]->getVertex(1);
@@ -364,7 +364,7 @@ public:
 
   void classify_corners()
   {
-    std::set<blyr_mvertex>::iterator it = _vertices.begin();
+    auto it = _vertices.begin();
     for(; it != _vertices.end(); ++it) {
     }
   }
@@ -430,7 +430,7 @@ public:
     mean_plane plane;
     computeMeanPlaneSimple(aaa, plane);
 
-    std::map<std::pair<GFace *, GFace *>, std::vector<MVertex *> >::iterator
+    auto
       it = v._v_per_ridge.begin();
 
     std::vector<MLine *> plane_lines;
@@ -440,8 +440,8 @@ public:
       GFace *f0 = it->first.first;
       GFace *f1 = it->first.second;
       std::vector<MVertex *> &verts = it->second;
-      MVertex *v0 = NULL;
-      MVertex *v1 = NULL;
+      MVertex *v0 = nullptr;
+      MVertex *v1 = nullptr;
       for(size_t i = 0; i < v._v_per_face.size(); i++) {
         if(f0 == v._f_per_normal[i]) v0 = v._v_per_face[i];
         if(f1 == v._f_per_normal[i]) v1 = v._v_per_face[i];
@@ -463,15 +463,15 @@ public:
                    (p1.y() - plane.y) * plane.plan[1][1] +
                    (p1.z() - plane.z) * plane.plan[1][2]);
 
-      MVertex *v_plane_0 = NULL;
-      std::map<MVertex *, MVertex *>::iterator itp = plane_vertices.find(v0);
+      MVertex *v_plane_0 = nullptr;
+      auto itp = plane_vertices.find(v0);
       if(itp != plane_vertices.end())
         v_plane_0 = itp->second;
       else {
         v_plane_0 = new MVertex(P0.x(), P0.y(), 0, _gr);
         plane_vertices[v0] = v_plane_0;
       }
-      MVertex *v_plane_1 = NULL;
+      MVertex *v_plane_1 = nullptr;
       itp = plane_vertices.find(v1);
       if(itp != plane_vertices.end())
         v_plane_1 = itp->second;
@@ -528,7 +528,7 @@ public:
     }
 
     std::map<int, MVertex *> plane_vertices_inv;
-    for(std::map<MVertex *, MVertex *>::iterator it = plane_vertices.begin();
+    for(auto it = plane_vertices.begin();
         it != plane_vertices.end(); ++it)
       plane_vertices_inv[it->second->getNum()] = it->first;
     //    printf("%d vertices there\n",plane_vertices_inv.size());
@@ -621,8 +621,8 @@ public:
           MLine *l = r._ge->lines[j];
           MVertex *v0 = l->getVertex(0);
           MVertex *v1 = l->getVertex(1);
-          std::set<blyr_mvertex>::iterator it0 = _vertices.find(v0);
-          std::set<blyr_mvertex>::iterator it1 = _vertices.find(v1);
+          auto it0 = _vertices.find(v0);
+          auto it1 = _vertices.find(v1);
 
           MVertex *o00 = it0->extruded_vertex(f0);
           MVertex *o01 = it0->extruded_vertex(f1);
@@ -640,7 +640,7 @@ public:
   void extrude_vertices_on_faces()
   {
     std::vector<blyr_mvertex> new_vertices;
-    std::set<blyr_mvertex>::iterator it = _vertices.begin();
+    auto it = _vertices.begin();
     for(; it != _vertices.end(); ++it) {
       //      printf ("%d has %d lines %d tris\n",it->_v->getNum(),
       //      it->_lines.size(), it->_triangles.size());
@@ -649,7 +649,7 @@ public:
         GEdge *ge1 = it->_gedges[1];
         blyr_ridge *ridge0 = getRidge(ge0);
         blyr_ridge *ridge1 = getRidge(ge1);
-        if(ridge0 == NULL && ridge1 == NULL) // not a ridge
+        if(ridge0 == nullptr && ridge1 == nullptr) // not a ridge
           continue;
         else {
           if(ridge0->getType() == blyr_ridge::INTERNAL) {
@@ -672,7 +672,7 @@ public:
   void extrude_one_external()
   {
     std::vector<blyr_mvertex> vplus;
-    std::set<blyr_mvertex>::iterator it = _vertices.begin();
+    auto it = _vertices.begin();
     for(; it != _vertices.end(); ++it) {
       if(it->_lines.size() > 2) {
         std::vector<blyr_ridge *> _internals;
@@ -718,7 +718,7 @@ public:
                  n2.y(), n2.z());
           SPoint3 p(it->_v->x() + n.x(), it->_v->y() + n.y(),
                     it->_v->z() + n.z());
-          GFace *gf = NULL;
+          GFace *gf = nullptr;
           for(size_t k = 0; k < it->_gfaces.size(); k++) {
             std::vector<GEdge *> e = it->_gfaces[k]->edges();
             if(std::find(e.begin(), e.end(), ridge->_ge) == e.end()) {
@@ -748,7 +748,7 @@ public:
               }
             }
           }
-          std::set<blyr_mvertex>::iterator ite =
+          auto ite =
             _vertices.find(blyr_mvertex(_externals_v[0]));
           if(ite != _vertices.end()) {
             blv._v_per_face.push_back(ite->_v_per_face[0]);
@@ -772,7 +772,7 @@ public:
               std::pair<GFace *, GFace *> pa =
                 std::make_pair(_internals[k]->_f[0], _internals[k]->_f[1]);
               it->_v_per_ridge[pa] = fan;
-              std::set<blyr_mvertex>::iterator iti =
+              auto iti =
                 _vertices.find(blyr_mvertex(_internals_v[k]));
               MVertex *o = iti->_v_per_face[0];
               gf->quadrangles.push_back(
@@ -802,7 +802,7 @@ public:
 
   void extrude_vertices_basic()
   {
-    std::set<blyr_mvertex>::iterator it = _vertices.begin();
+    auto it = _vertices.begin();
     for(; it != _vertices.end(); ++it) {
       if(!it->_triangles.empty()) add_one_normal(*it);
     }
@@ -810,7 +810,7 @@ public:
 
   void extrude_vertices()
   {
-    std::set<blyr_mvertex>::iterator it = _vertices.begin();
+    auto it = _vertices.begin();
     for(; it != _vertices.end(); ++it) {
       if(it->_lines.empty()) {
         // simple vertex that is extruded along the average of face normals
@@ -828,7 +828,7 @@ public:
         blyr_ridge *ridge1 = getRidge(ge1);
         //	printf("%d %d %g %g %d
         //%d\n",ge0->tag(),ge1->tag(),ridge0->min_angle,ridge0->max_angle,ridge0->getType(),blyr_ridge::FLAT);
-        if(ridge0 == NULL && ridge1 == NULL) { // not a ridge
+        if(ridge0 == nullptr && ridge1 == nullptr) { // not a ridge
           if(!it->_triangles.empty()) add_one_normal(*it);
         }
         else {
@@ -906,7 +906,7 @@ public:
   void extrude_vertices_on_edges()
   {
     std::vector<blyr_mvertex> additional_vertices;
-    std::set<blyr_mvertex>::iterator it = _vertices.begin();
+    auto it = _vertices.begin();
     for(; it != _vertices.end(); ++it) {
       MVertex *v = it->_v;
 
@@ -963,12 +963,12 @@ public:
             SVector3(mev->x() - v->x(), mev->y() - v->y(), mev->z() - v->z());
         }
         else {
-          vplus.push_back(blyr_mvertex(NULL));
+          vplus.push_back(blyr_mvertex(nullptr));
         }
       }
 
       // CREATE A VOLUME VERTEX IN CASE OF A FULL INTERNAL CORNER
-      MVertex *vr = NULL;
+      MVertex *vr = nullptr;
       if(_externals.empty()) {
         vr =
           new MVertex(v->x() + NR.x(), v->y() + NR.y(), v->z() + NR.z(), _gr);
@@ -977,7 +977,7 @@ public:
 
       // ADD POINTS ON BOTH NEIGHBORING FACES IF RIDGE IS INTERNAL
       for(size_t iGe = 0; iGe < it->_gedges.size(); iGe++) {
-        if(vplus[iGe]._v != NULL) {
+        if(vplus[iGe]._v != nullptr) {
           GEdge *gei = it->_gedges[iGe];
           blyr_ridge *ridgei = getRidge(gei);
 
@@ -987,14 +987,14 @@ public:
               blyr_ridge *ridgej = getRidge(gej);
               GFace *gf = haveTowGEdges(_faces, gei, gej);
               if(gf) {
-                MVertex *vf = NULL;
+                MVertex *vf = nullptr;
                 //		printf("s %d %d %d -- %d %d -- %d -- %p
                 //%p\n",v->getNum(),iGe,jGe,gei->tag(),gej->tag(),gf->tag(),vplus[iGe]._v,vplus[jGe]._v);
 
                 SVector3 dx1(vplus[iGe]._v->x() - v->x(),
                              vplus[iGe]._v->y() - v->y(),
                              vplus[iGe]._v->z() - v->z());
-                if((vplus[jGe]._v != NULL) && (jGe > iGe)) {
+                if((vplus[jGe]._v != nullptr) && (jGe > iGe)) {
                   SVector3 dx2(vplus[jGe]._v->x() - v->x(),
                                vplus[jGe]._v->y() - v->y(),
                                vplus[jGe]._v->z() - v->z());
@@ -1063,7 +1063,7 @@ public:
                     vplus[jGe]._f_per_normal.push_back(gf);
                   }
                 }
-                else if(vplus[jGe]._v == NULL) {
+                else if(vplus[jGe]._v == nullptr) {
                   //		  printf("-------------------------------------->%d
                   //%d %d -- %d %d -- %d -- %p
                   //%p\n",v->getNum(),iGe,jGe,gei->tag(),gej->tag(),gf->tag(),vplus[iGe]._v,vplus[jGe]._v);
@@ -1120,7 +1120,7 @@ public:
       for(size_t iGe = 0; iGe < it->_gedges.size(); iGe++) {
         GEdge *ge = it->_gedges[iGe];
         MLine *ml = it->_lines[iGe];
-        std::map<GEdge *, MVertex *>::iterator itev = e2v.find(ge);
+        auto itev = e2v.find(ge);
         if(itev != e2v.end()) {
           MVertex *mev = itev->second;
           if(ml->getVertex(0) == v)
@@ -1170,9 +1170,9 @@ public:
         MVertex *v0 = _faces[i]->triangles[j]->getVertex(0);
         MVertex *v1 = _faces[i]->triangles[j]->getVertex(1);
         MVertex *v2 = _faces[i]->triangles[j]->getVertex(2);
-        std::set<blyr_mvertex>::iterator it0 = _vertices.find(v0);
-        std::set<blyr_mvertex>::iterator it1 = _vertices.find(v1);
-        std::set<blyr_mvertex>::iterator it2 = _vertices.find(v2);
+        auto it0 = _vertices.find(v0);
+        auto it1 = _vertices.find(v1);
+        auto it2 = _vertices.find(v2);
         MVertex *o0 = it0->extruded_vertex(_faces[i]);
         MVertex *o1 = it1->extruded_vertex(_faces[i]);
         MVertex *o2 = it2->extruded_vertex(_faces[i]);
@@ -1200,8 +1200,8 @@ public:
           MLine *l = r._ge->lines[j];
           MVertex *v0 = l->getVertex(0);
           MVertex *v1 = l->getVertex(1);
-          std::set<blyr_mvertex>::iterator it0 = _vertices.find(v0);
-          std::set<blyr_mvertex>::iterator it1 = _vertices.find(v1);
+          auto it0 = _vertices.find(v0);
+          auto it1 = _vertices.find(v1);
 
           MVertex *o00 = it0->extruded_vertex(f0);
           MVertex *o01 = it0->extruded_vertex(f1);
@@ -1214,8 +1214,7 @@ public:
           std::vector<MVertex *> fan0;
           std::vector<MVertex *> fan1;
 
-          std::map<std::pair<GFace *, GFace *>,
-                   std::vector<MVertex *> >::iterator it =
+          auto it =
             it0->_v_per_ridge.find(pa_pos);
           if(it != it0->_v_per_ridge.end())
             fan0 = it->second;
@@ -1256,7 +1255,7 @@ public:
 
   void extrude_external_corners()
   {
-    std::set<blyr_mvertex>::iterator it = _vertices.begin();
+    auto it = _vertices.begin();
     for(; it != _vertices.end(); ++it) {
       const blyr_mvertex &v = *it;
       for(size_t j = 0; j < v._triangles_at_corner.size(); j++) {

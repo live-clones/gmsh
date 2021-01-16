@@ -33,7 +33,7 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
   int np, ne, nt, na, ref;
   double cx, cy, cz;
 
-  if(MMG3D_Get_meshSize(mmg, &np, &ne, NULL, &nt, NULL, &na) != 1)
+  if(MMG3D_Get_meshSize(mmg, &np, &ne, nullptr, &nt, nullptr, &na) != 1)
     Msg::Error("Mmg3d: unable to get mesh size");
 
   // Store the nodes from the Mmg structures into the gmsh structures
@@ -41,10 +41,10 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
   // TODO: when MMG is allowed to modify the surface mesh, reclassify nodes
   // accordingly
   for(int k = 1; k <= np; k++) {
-    if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, &ref, NULL, NULL) != 1)
+    if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, &ref, nullptr, nullptr) != 1)
       Msg::Error("Mmg3d: unable to get vertex %d", k);
 
-    std::map<int, MVertex *>::iterator it = mmg2gmsh.find(ref);
+    auto it = mmg2gmsh.find(ref);
 
     if(it == mmg2gmsh.end()) {
       MVertex *v = new MVertex(cx, cy, cz, gr);
@@ -58,7 +58,7 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
   // Store the tets from the Mmg structures into the Gmsh structures
   for(int k = 1; k <= ne; k++) {
     int v1mmg, v2mmg, v3mmg, v4mmg;
-    if(MMG3D_Get_tetrahedron(mmg, &v1mmg, &v2mmg, &v3mmg, &v4mmg, &ref, NULL) !=
+    if(MMG3D_Get_tetrahedron(mmg, &v1mmg, &v2mmg, &v3mmg, &v4mmg, &ref, nullptr) !=
        1)
       Msg::Error("Mmg3d: unable to get tetrahedron %d", k);
 
@@ -113,7 +113,7 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
   // Count boundary triangles
   std::vector<GFace *> f = gr->faces();
   int nt = 0;
-  for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
+  for(auto it = f.begin(); it != f.end(); ++it) {
     nt += (*it)->triangles.size();
   }
 
@@ -129,13 +129,13 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
     Msg::Error("Mmg3d: unable to set metric size");
 
   std::map<MVertex *, std::pair<double, int> > LCS;
-  for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
+  for(auto it = f.begin(); it != f.end(); ++it) {
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       double L = t->maxEdge();
       for(int k = 0; k < 3; k++) {
         MVertex *v = t->getVertex(k);
-        std::map<MVertex *, std::pair<double, int> >::iterator itv =
+        auto itv =
           LCS.find(v);
         if(itv != LCS.end()) {
           itv->second.first += L;
@@ -150,7 +150,7 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
 
   int k = 1;
   std::map<int, int> gmsh2mmg_num;
-  for(std::set<MVertex *>::iterator it = allVertices.begin();
+  for(auto it = allVertices.begin();
       it != allVertices.end(); ++it) {
     if(MMG3D_Set_vertex(mmg, (*it)->x(), (*it)->y(), (*it)->z(),
                         (*it)->getNum(), k) != 1)
@@ -171,7 +171,7 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
     // double lc = BGM_MeshSize(v->onWhat(), U, V, v->x(), v->y(), v->z());
     SMetric3 m = BGM_MeshMetric(v->onWhat(), U, V, v->x(), v->y(), v->z());
 
-    std::map<MVertex *, std::pair<double, int> >::iterator itv = LCS.find(v);
+    auto itv = LCS.find(v);
     if(itv != LCS.end()) {
       mmg2gmsh[(*it)->getNum()] = *it;
       // if (CTX::instance()->mesh.lcExtendFromBoundary){
@@ -201,7 +201,7 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
   }
 
   k = 1;
-  for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
+  for(auto it = f.begin(); it != f.end(); ++it) {
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
       if(MMG3D_Set_triangle(
            mmg, gmsh2mmg_num[(*it)->triangles[i]->getVertex(0)->getNum()],
@@ -221,13 +221,13 @@ static void updateSizes(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
 
   std::map<MVertex *, std::pair<double, int> > LCS;
   // if (CTX::instance()->mesh.lcExtendFromBoundary){
-  for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
+  for(auto it = f.begin(); it != f.end(); ++it) {
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       double L = t->maxEdge();
       for(int k = 0; k < 3; k++) {
         MVertex *v = t->getVertex(k);
-        std::map<MVertex *, std::pair<double, int> >::iterator itv =
+        auto itv =
           LCS.find(v);
         if(itv != LCS.end()) {
           itv->second.first += L;
@@ -243,18 +243,18 @@ static void updateSizes(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
 
   int np;
 
-  MMG3D_Get_meshSize(mmg, &np, NULL, NULL, NULL, NULL, NULL);
+  MMG3D_Get_meshSize(mmg, &np, nullptr, nullptr, nullptr, nullptr, nullptr);
   for(int k = 1; k <= np; k++) {
     double cx, cy, cz;
-    if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, NULL, NULL, NULL) != 1)
+    if(MMG3D_Get_vertex(mmg, &cx, &cy, &cz, nullptr, nullptr, nullptr) != 1)
       Msg::Error("Mmg3d: unable to get vertex %d", k);
 
     SMetric3 m = BGM_MeshMetric(gr, 0, 0, cx, cy, cz);
 
-    std::map<int, MVertex *>::iterator it = mmg2gmsh.find(k);
+    auto it = mmg2gmsh.find(k);
 
     if(it != mmg2gmsh.end() && CTX::instance()->mesh.lcExtendFromBoundary) {
-      std::map<MVertex *, std::pair<double, int> >::iterator itv =
+      auto itv =
         LCS.find(it->second);
       if(itv != LCS.end()) {
         double LL = itv->second.first / itv->second.second;
@@ -278,8 +278,8 @@ static void updateSizes(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
 
 void refineMeshMMG(GRegion *gr)
 {
-  MMG5_pMesh mmg = NULL;
-  MMG5_pSol sol = NULL;
+  MMG5_pMesh mmg = nullptr;
+  MMG5_pSol sol = nullptr;
 
   std::map<int, MVertex *> mmg2gmsh;
 
@@ -302,7 +302,7 @@ void refineMeshMMG(GRegion *gr)
   for(int ITER = 0; ITER < iterMax; ITER++) {
     int nT, nTnow, np;
 
-    MMG3D_Get_meshSize(mmg, NULL, &nT, NULL, NULL, NULL, NULL);
+    MMG3D_Get_meshSize(mmg, nullptr, &nT, nullptr, nullptr, nullptr, nullptr);
 
     // Mmg parameters : verbosity + nosurf option
     int verb_mmg = (Msg::GetVerbosity() < 2) ? -1 : Msg::GetVerbosity() - 4;
@@ -325,7 +325,7 @@ void refineMeshMMG(GRegion *gr)
       Msg::Error("Mmg3d: failed (iteration %d)", ITER);
     }
     else {
-      MMG3D_Get_meshSize(mmg, &np, &nTnow, NULL, NULL, NULL, NULL);
+      MMG3D_Get_meshSize(mmg, &np, &nTnow, nullptr, nullptr, nullptr, nullptr);
       Msg::Info("Mmg3d: success (iteration %d) - %d nodes %d tetrahedra", ITER,
                 np, nTnow);
 

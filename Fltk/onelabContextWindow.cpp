@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -149,7 +149,7 @@ void onelabContextWindow::show(int dim, int tag)
       std::to_string(_tag);
     if(_name.size()) label += ": " + _name;
     char *str = strdup(label.c_str());
-    Fl_Menu_Item item = {str, 0, 0, 0, 0};
+    Fl_Menu_Item item = {str, 0, nullptr, nullptr, 0};
     toFree.push_back(str);
     menu.push_back(item);
   }
@@ -158,11 +158,11 @@ void onelabContextWindow::show(int dim, int tag)
       std::to_string(p.first);
     if(p.second.size()) label += ": " + p.second;
     char *str = strdup(label.c_str());
-    Fl_Menu_Item item = {str, 0, 0, 0, 0};
+    Fl_Menu_Item item = {str, 0, nullptr, nullptr, 0};
     toFree.push_back(str);
     menu.push_back(item);
   }
-  Fl_Menu_Item item = {0};
+  Fl_Menu_Item item = {nullptr};
   menu.push_back(item);
   _choice->copy(&menu[0]);
 

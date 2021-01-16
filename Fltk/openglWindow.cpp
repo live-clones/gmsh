@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,7 +32,7 @@ static void navigator_handler(void *data)
 {
   openglWindow *gl_win = (openglWindow *)data;
   if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
-    if(gl_win->Nautilus == 0) {
+    if(gl_win->Nautilus == nullptr) {
       gl_win->Nautilus = new Navigator(CTX::instance()->gamepad->frequency,
                                        gl_win->getDrawContext());
     }
@@ -43,7 +43,7 @@ static void navigator_handler(void *data)
   else {
     if(gl_win->Nautilus) {
       delete gl_win->Nautilus;
-      gl_win->Nautilus = 0;
+      gl_win->Nautilus = nullptr;
     }
     Fl::add_timeout(3., navigator_handler, data);
   }
@@ -71,7 +71,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1,
 
 openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
-    _selection(ENT_NONE), _trySelection(0), Nautilus(0)
+    _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
   _ctx = new drawContext(this);
 
@@ -361,7 +361,7 @@ void openglWindow::draw()
   _lock = false;
 }
 
-openglWindow *openglWindow::_lastHandled = 0;
+openglWindow *openglWindow::_lastHandled = nullptr;
 
 void openglWindow::_setLastHandled(openglWindow *w)
 {
@@ -438,7 +438,7 @@ int openglWindow::handle(int event)
         ParseString(CTX::instance()->post.doubleClickedGraphPointCommand, true);
       }
       else { // popup quick access menu
-        status_options_cb(0, (void *)"quick_access");
+        status_options_cb(nullptr, (void *)"quick_access");
       }
       Fl::event_clicks(-1);
       return 1;
@@ -914,7 +914,7 @@ void openglWindow::drawTooltip(const std::string &text)
   static char str[1024];
   strncpy(str, text.c_str(), sizeof(str) - 1);
   str[sizeof(str) - 1] = '\0';
-  Fl_Tooltip::exit(0);
+  Fl_Tooltip::exit(nullptr);
   bool enabled = Fl_Tooltip::enabled();
   if(!enabled) Fl_Tooltip::enable();
   double d1 = Fl_Tooltip::delay();
@@ -932,7 +932,7 @@ void openglWindow::moveWithGamepad()
 {
   if(CTX::instance()->gamepad && CTX::instance()->gamepad->active && Nautilus) {
     if(!(_ctx->camera.on)) _ctx->camera.init();
-    if(_drawn && (_lastHandled == this || _lastHandled == 0)) {
+    if(_drawn && (_lastHandled == this || _lastHandled == nullptr)) {
       Nautilus->move();
       this->flush();
     }

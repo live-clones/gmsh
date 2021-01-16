@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -55,7 +55,7 @@ incompleteBasis::incompleteBasis(int tag)
   // If the element is complete, compute the incomplete basis anyway
   : nodalBasis(ElementType::getType(ElementType::getParentType(tag),
                                     ElementType::getOrder(tag), true)),
-    completeBasis(NULL), polyBasis(NULL)
+    completeBasis(nullptr), polyBasis(nullptr)
 {
   int tagComplete = ElementType::getType(parentType, order, false);
   switch(parentType) {

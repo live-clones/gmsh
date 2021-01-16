@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,15 +19,15 @@
 #if defined(HAVE_KBIPACK)
 
 StringXNumber HomologyPostProcessingOptions_Number[] = {
-  {GMSH_FULLRC, "ApplyBoundaryOperatorToResults", NULL, 0}};
+  {GMSH_FULLRC, "ApplyBoundaryOperatorToResults", nullptr, 0}};
 
 StringXString HomologyPostProcessingOptions_String[] = {
-  {GMSH_FULLRC, "TransformationMatrix", NULL, "1, 0; 0, 1"},
-  {GMSH_FULLRC, "PhysicalGroupsOfOperatedChains", NULL, "1, 2"},
-  {GMSH_FULLRC, "PhysicalGroupsOfOperatedChains2", NULL, ""},
-  {GMSH_FULLRC, "PhysicalGroupsToTraceResults", NULL, ""},
-  {GMSH_FULLRC, "PhysicalGroupsToProjectResults", NULL, ""},
-  {GMSH_FULLRC, "NameForResultChains", NULL, "c"},
+  {GMSH_FULLRC, "TransformationMatrix", nullptr, "1, 0; 0, 1"},
+  {GMSH_FULLRC, "PhysicalGroupsOfOperatedChains", nullptr, "1, 2"},
+  {GMSH_FULLRC, "PhysicalGroupsOfOperatedChains2", nullptr, ""},
+  {GMSH_FULLRC, "PhysicalGroupsToTraceResults", nullptr, ""},
+  {GMSH_FULLRC, "PhysicalGroupsToProjectResults", nullptr, ""},
+  {GMSH_FULLRC, "NameForResultChains", nullptr, "c"},
 };
 
 extern "C" {
@@ -167,12 +167,12 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
         if(a != ',' && a != ';') {
           Msg::Error("Unexpected character \'%c\' while parsing \'%s\'", a,
                      HomologyPostProcessingOptions_String[0].str);
-          return 0;
+          return nullptr;
         }
         if(a == ';') {
           if(cols != 0 && cols != col) {
             Msg::Error("Number of columns must match (%d != %d)", cols, col);
-            return 0;
+            return nullptr;
           }
           cols = col;
           col = 0;
@@ -181,7 +181,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     }
     if(cols != 0 && cols != col && col != 0) {
       Msg::Error("Number of columns must match (%d != %d)", cols, col);
-      return 0;
+      return nullptr;
     }
     if(cols == 0) cols = col;
   }
@@ -193,21 +193,21 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
       Msg::Error(
         "Number of matrix rows and columns aren't compatible (residual: %d)",
         (int)matrix.size() % cols);
-      return 0;
+      return nullptr;
     }
   }
 
   std::vector<int> basisPhysicals;
-  if(!parseStringOpt(1, basisPhysicals)) return 0;
+  if(!parseStringOpt(1, basisPhysicals)) return nullptr;
   std::vector<int> basisPhysicals2;
-  if(!parseStringOpt(2, basisPhysicals2)) return 0;
+  if(!parseStringOpt(2, basisPhysicals2)) return nullptr;
 
   if(matrixString != "I" && (int)basisPhysicals.size() != cols &&
      basisPhysicals2.empty()) {
     Msg::Error(
       "Number of matrix columns and operated chains must match (%d != %d)",
       cols, basisPhysicals.size());
-    return 0;
+    return nullptr;
   }
   else if(matrixString == "I") {
     cols = basisPhysicals.size();
@@ -220,13 +220,13 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
      basisPhysicals.size() != basisPhysicals2.size()) {
     Msg::Error("Number of operated chains must match (%d != %d)",
                basisPhysicals.size(), basisPhysicals2.size());
-    return 0;
+    return nullptr;
   }
 
   std::vector<int> tracePhysicals;
-  if(!parseStringOpt(3, tracePhysicals)) return 0;
+  if(!parseStringOpt(3, tracePhysicals)) return nullptr;
   std::vector<int> projectPhysicals;
-  if(!parseStringOpt(4, projectPhysicals)) return 0;
+  if(!parseStringOpt(4, projectPhysicals)) return nullptr;
 
   std::vector<Chain<int> > curBasis;
   for(std::size_t i = 0; i < basisPhysicals.size(); i++) {
@@ -234,7 +234,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   }
   if(curBasis.empty()) {
     Msg::Error("No operated chains given");
-    return 0;
+    return nullptr;
   }
   int dim = curBasis.at(0).getDim();
 
@@ -268,7 +268,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     int det = detIntegerMatrix(matrix);
     if(det != 1 && det != -1)
       Msg::Warning("Incidence matrix is not unimodular (det = %d)", det);
-    if(!invertIntegerMatrix(matrix)) return 0;
+    if(!invertIntegerMatrix(matrix)) return nullptr;
     for(int i = 0; i < rows; i++)
       for(int j = 0; j < cols; j++)
         newBasis.at(i) += matrix.at(i * cols + j) * curBasis2.at(j);
@@ -315,7 +315,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     newBasis.at(i).addToModel(m);
   }
 
-  return 0;
+  return nullptr;
 }
 
 #endif

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -886,7 +886,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
         n3[1] = dlambda[1][1];
         for(int i = 0; i < 3; i++) {
           double product2 = 0;
-          std::vector<double> *normal(0);
+          std::vector<double> *normal(nullptr);
           switch(i) {
           case(0):
             product2 = lambda[1] * lambda[0];

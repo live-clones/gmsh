@@ -53,7 +53,7 @@ protected:
 
 template <class FuncType>
 ObjContribMetricMin<FuncType>::ObjContribMetricMin(double weight)
-  : ObjContrib("MetricMin", FuncType::getNamePrefix() + "MetricMin"), _mesh(0),
+  : ObjContrib("MetricMin", FuncType::getNamePrefix() + "MetricMin"), _mesh(nullptr),
     _weight(weight)
 {
 }

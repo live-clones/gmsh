@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -378,7 +378,7 @@ double TotalRam()
   int name[] = {CTL_HW, HW_MEMSIZE};
   int64_t value;
   size_t len = sizeof(value);
-  if(sysctl(name, 2, &value, &len, NULL, 0) != -1) ram = value / (1024 * 1024);
+  if(sysctl(name, 2, &value, &len, nullptr, 0) != -1) ram = value / (1024 * 1024);
 #elif defined(WIN32)
   MEMORYSTATUSEX status;
   status.dwLength = sizeof(status);
@@ -617,7 +617,7 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
       cmd = "./" + cmd;
     }
   }
-  if(!system(NULL)) {
+  if(!system(nullptr)) {
     Msg::Error("Could not find /bin/sh: aborting system call");
     return 1;
   }

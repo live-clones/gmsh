@@ -141,7 +141,7 @@ PView *GMSH_CurvedBndDistPlugin::execute(PView *v)
   PViewDataList *data = getDataList(pv);
   data->Time.push_back(0.);
   GModel *m = GModel::current();
-  for(GModel::fiter iface = m->firstFace(); iface != m->lastFace(); ++iface) {
+  for(auto iface = m->firstFace(); iface != m->lastFace(); ++iface) {
     GFace *face = *iface;
     for(size_t iElement = 0; iElement < face->getNumMeshElements();
         ++iElement) {
@@ -151,7 +151,7 @@ PView *GMSH_CurvedBndDistPlugin::execute(PView *v)
         int clId = elbasis.getClosureId(iEdge, 1);
         const std::vector<int> &closure = elbasis.closures[clId];
         std::vector<MVertex *> vertices;
-        GEdge *edge = NULL;
+        GEdge *edge = nullptr;
         for(size_t i = 0; i < closure.size(); ++i) {
           MVertex *v = element->getVertex(closure[i]);
           vertices.push_back(v);

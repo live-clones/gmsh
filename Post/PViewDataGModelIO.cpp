@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,7 +25,7 @@ bool PViewDataGModel::addData(GModel *model,
 
   if(numComp < 0) {
     numComp = 9;
-    for(std::map<int, std::vector<double> >::const_iterator it = data.begin();
+    for(auto it = data.begin();
         it != data.end(); it++)
       numComp = std::min(numComp, (int)it->second.size());
   }
@@ -40,7 +40,7 @@ bool PViewDataGModel::addData(GModel *model,
                                      model->getNumMeshElements();
   _steps[step]->resizeData(numEnt);
 
-  for(std::map<int, std::vector<double> >::const_iterator it = data.begin();
+  for(auto it = data.begin();
       it != data.end(); it++) {
     int mult = it->second.size() / numComp;
     double *d = _steps[step]->getData(it->first, true, mult);
@@ -232,7 +232,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
       "Cannot force ElementData for this dataset: saving native data");
   }
 
-  FILE *fp = 0;
+  FILE *fp = nullptr;
   GModel *model0 = _steps[0]->getModel();
   int numFile = 0;
 
@@ -293,7 +293,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
         fprintf(fp, "$InterpolationScheme\n");
         fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
         fprintf(fp, "%d\n", (int)_interpolation.size());
-        for(interpolationMatrices::iterator it = _interpolation.begin();
+        for(auto it = _interpolation.begin();
             it != _interpolation.end(); it++) {
           if(it->second.size() >= 2) {
             fprintf(fp, "%d\n2\n", it->first);

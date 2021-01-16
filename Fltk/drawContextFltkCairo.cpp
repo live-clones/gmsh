@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -40,7 +40,7 @@ public:
 
   ~queueString()
   {
-    for(std::vector<element>::iterator it = _elements.begin();
+    for(auto it = _elements.begin();
         it != _elements.end(); ++it) {
       cairo_font_face_destroy(it->fontFace);
     }
@@ -73,7 +73,7 @@ public:
     cairo_font_options_destroy(fontOptions);
 
     cairo_set_source_rgba(cr, 1, 1, 1, 1);
-    for(std::vector<element>::iterator it = _elements.begin();
+    for(auto it = _elements.begin();
         it != _elements.end(); ++it) {
       cairo_move_to(cr, pos - it->xBearing, -it->yBearing);
       cairo_set_font_size(cr, it->fontSize);
@@ -115,7 +115,7 @@ public:
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     pos = 0;
-    for(std::vector<element>::iterator it = _elements.begin();
+    for(auto it = _elements.begin();
         it != _elements.end(); ++it) {
       glTranslatef(it->x, it->y, it->z);
       glColor4f(it->r, it->g, it->b, it->alpha);

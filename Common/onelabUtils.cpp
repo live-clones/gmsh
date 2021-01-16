@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -61,7 +61,7 @@ namespace onelabUtils {
       sstream.precision(16);
       std::map<std::string, std::vector<double> > cln(
         Msg::GetCommandLineNumbers());
-      for(std::map<std::string, std::vector<double> >::iterator it =
+      for(auto it =
             cln.begin();
           it != cln.end(); it++) {
         if(it->second.size() == 1) {
@@ -74,7 +74,7 @@ namespace onelabUtils {
         }
       }
       std::map<std::string, std::string> cls(Msg::GetCommandLineStrings());
-      for(std::map<std::string, std::string>::iterator it = cls.begin();
+      for(auto it = cls.begin();
           it != cls.end(); it++)
         sstream << " -setstring " << it->first << " " << it->second;
       args.push_back(sstream.str());
@@ -271,7 +271,7 @@ namespace onelabUtils {
   {
     bool changed = false;
 #if defined(HAVE_POST)
-    PView *view = 0;
+    PView *view = nullptr;
 
     for(std::size_t i = 0; i < PView::list.size(); i++) {
       if(PView::list[i]->getData()->getFileName() == "ONELAB" + graphNum) {
@@ -338,7 +338,7 @@ namespace onelabUtils {
   {
     bool redraw = false;
 
-    onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
+    auto it = onelab::server::instance()->findClient("Gmsh");
     if(it == onelab::server::instance()->lastClient()) return redraw;
 
     // do nothing in case of a metamodel
@@ -472,7 +472,7 @@ namespace onelabUtils {
       onelab::server::instance()->set(n);
 
       // create client
-      onelab::localNetworkClient *c = 0;
+      onelab::localNetworkClient *c = nullptr;
       onelab::string o;
       if(name.size()) {
         c = new gmshLocalNetworkClient(name, exe, host);
@@ -601,7 +601,7 @@ namespace onelabUtils {
 
   bool haveSolverToRun()
   {
-    for(onelab::server::citer it = onelab::server::instance()->firstClient();
+    for(auto it = onelab::server::instance()->firstClient();
         it != onelab::server::instance()->lastClient(); it++) {
       onelab::client *c = *it;
       if(c->getName() != "Gmsh" && c->getName() != "Listen" &&
