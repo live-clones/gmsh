@@ -104,15 +104,11 @@ void FlGui::unlock()
   Fl::unlock();
 }
 
-int FlGui::locked()
-{
-  return _locked;
-}
+int FlGui::locked() { return _locked; }
 
 static void awake_cb(void *data)
 {
-  if(data)
-    FlGui::instance()->updateViews(true, false);
+  if(data) FlGui::instance()->updateViews(true, false);
 }
 
 void FlGui::awake(const std::string &action)
@@ -120,7 +116,7 @@ void FlGui::awake(const std::string &action)
   if(action.empty())
     Fl::awake(awake_cb, nullptr);
   else
-    Fl::awake(awake_cb, (void*)"update");
+    Fl::awake(awake_cb, (void *)"update");
 }
 
 void FlGui::setOpenedThroughMacFinder(const std::string &name)
@@ -421,9 +417,9 @@ void FlGui::applyColorScheme(bool redraw)
   // thinner scrollbars
   Fl::scrollbar_size(std::max(10, FL_NORMAL_SIZE));
 
-  if(redraw && available()){
+  if(redraw && available()) {
     updateViews(true, true);
-    for (Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
+    for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();
     }
   }
@@ -495,7 +491,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   applyColorScheme();
 
   // add gamepad handler
-  if(CTX::instance()->gamepad) Fl::add_timeout(5., gamepad_handler, (void *)nullptr);
+  if(CTX::instance()->gamepad)
+    Fl::add_timeout(5., gamepad_handler, (void *)nullptr);
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
@@ -1251,7 +1248,9 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
       sprintf(n, "%d", ne ? ne : nw);
       tmp += n;
       tmp += (ne > 1) ? " Errors" :
-                        ne ? " Error" : (nw > 1) ? " Warnings" : " Warning";
+             ne       ? " Error" :
+             (nw > 1) ? " Warnings" :
+                        " Warning";
       tmp += " : Click to show messages [ ... ";
       tmp += (ne ? Msg::GetFirstError() : Msg::GetFirstWarning());
       tmp += " ... ]";
@@ -1503,10 +1502,8 @@ void FlGui::saveMessages(const char *fileName)
 
 void FlGui::rebuildTree(bool deleteWidgets)
 {
-  if(onelab)
-    onelab->rebuildTree(deleteWidgets);
-  if(onelabContext)
-    onelabContext->rebuild(deleteWidgets);
+  if(onelab) onelab->rebuildTree(deleteWidgets);
+  if(onelabContext) onelabContext->rebuild(deleteWidgets);
 }
 
 void FlGui::openModule(const std::string &name)

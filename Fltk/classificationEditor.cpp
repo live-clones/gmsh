@@ -86,9 +86,9 @@ static void select_elements_cb(Fl_Widget *w, void *data)
 
   // allocate discrete edge to hold the selected mesh segments
   if(!e->selected) {
-    e->selected =
-      new discreteEdge(GModel::current(),
-                       GModel::current()->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
+    e->selected = new discreteEdge(
+      GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1,
+      nullptr, nullptr);
     GModel::current()->add(e->selected);
   }
 
@@ -230,8 +230,7 @@ static void delete_edge_cb(Fl_Widget *w, void *data)
   std::vector<MLine *> temp = e->selected->lines;
   e->selected->lines.clear();
   for(std::size_t i = 0; i < temp.size(); i++) {
-    auto it =
-      std::find(ele.begin(), ele.end(), temp[i]);
+    auto it = std::find(ele.begin(), ele.end(), temp[i]);
     if(it != ele.end())
       delete temp[i];
     else
@@ -265,9 +264,9 @@ static void classify_cb(Fl_Widget *w, void *data)
   classificationEditor *e = (classificationEditor *)data;
 
   if(!e->selected) {
-    e->selected =
-      new discreteEdge(GModel::current(),
-                       GModel::current()->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
+    e->selected = new discreteEdge(
+      GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1,
+      nullptr, nullptr);
     GModel::current()->add(e->selected);
   }
 

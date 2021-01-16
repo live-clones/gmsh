@@ -40,7 +40,8 @@ namespace jacobianBasedQuality {
 
   // For regression tests:
   void testAllMeasuresAllElements();
-  void testAllMeasures(MElement *el, const fullMatrix<double> *normals = nullptr);
+  void testAllMeasures(MElement *el,
+                       const fullMatrix<double> *normals = nullptr);
 
   class _coeffData {
   protected:

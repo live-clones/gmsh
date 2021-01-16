@@ -106,7 +106,7 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > entities;
   gmsh::model::getEntities(entities);
 
-  for(auto e: entities) {
+  for(auto e : entities) {
     std::vector<int> partitions;
     gmsh::model::getPartitions(e.first, e.second, partitions);
     if(partitions.size()) {
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
       std::cout << "Entity (" << e.first << "," << e.second << ") "
                 << "of type " << type << "\n";
       std::cout << " - Partition(s):";
-      for(auto p: partitions) std::cout << " " << p;
+      for(auto p : partitions) std::cout << " " << p;
       std::cout << "\n";
       int pdim, ptag;
       gmsh::model::getParent(e.first, e.second, pdim, ptag);
@@ -123,8 +123,7 @@ int main(int argc, char **argv)
       std::vector<std::pair<int, int> > bnd;
       gmsh::model::getBoundary({e}, bnd);
       std::cout << " - Boundary:";
-      for(auto b: bnd)
-        std::cout << " (" << b.first << "," << b.second << ")";
+      for(auto b : bnd) std::cout << " (" << b.first << "," << b.second << ")";
       std::cout << "\n";
     }
   }

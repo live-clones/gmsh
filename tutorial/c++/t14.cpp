@@ -77,8 +77,8 @@ int main(int argc, char **argv)
   gmsh::model::setPhysicalName(3, domain_physical_tag, "Whole domain");
 
   // Four "terminals" of the model
-  std::vector<int> terminal_tags = {e[3].second, e[5].second,
-                                    e[7].second, e[9].second};
+  std::vector<int> terminal_tags = {e[3].second, e[5].second, e[7].second,
+                                    e[9].second};
   int terminals_physical_tag = 2001;
   gmsh::model::addPhysicalGroup(2, terminal_tags, terminals_physical_tag);
   gmsh::model::setPhysicalName(2, terminals_physical_tag, "Terminals");
@@ -88,11 +88,11 @@ int main(int argc, char **argv)
   gmsh::model::getBoundary({{3, domain_tag}}, boundary_dimtags, false, false);
 
   std::vector<int> boundary_tags, complement_tags;
-  for(auto e: boundary_dimtags) {
+  for(auto e : boundary_dimtags) {
     complement_tags.push_back(e.second);
     boundary_tags.push_back(e.second);
   }
-  for(auto t: terminal_tags) {
+  for(auto t : terminal_tags) {
     auto it = std::find(complement_tags.begin(), complement_tags.end(), t);
     if(it != complement_tags.end()) complement_tags.erase(it);
   }

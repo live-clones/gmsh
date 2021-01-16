@@ -32,7 +32,8 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex,
 
 bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
                     int iTarget, const qmTetrahedron::Measures &cr,
-                    const localMeshModAction = GMSH_DOIT, double *result = nullptr);
+                    const localMeshModAction = GMSH_DOIT,
+                    double *result = nullptr);
 
 bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
                int iLocalEdge, const qmTetrahedron::Measures &cr);

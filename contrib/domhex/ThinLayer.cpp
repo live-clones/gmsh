@@ -66,9 +66,7 @@ void ThinLayer::perform()
 void ThinLayer::checkOppositeTriangles()
 {
   // all endTriangle will be set to active or not
-  for(auto it1 =
-        VertexToCorresp.begin();
-      it1 != VertexToCorresp.end(); it1++) {
+  for(auto it1 = VertexToCorresp.begin(); it1 != VertexToCorresp.end(); it1++) {
     std::vector<CorrespVertices *> vecCorr = (*it1).second;
     for(unsigned int i = 0; i < vecCorr.size(); i++) {
       CorrespVertices *currentCorr = vecCorr[i];
@@ -76,12 +74,9 @@ void ThinLayer::checkOppositeTriangles()
       MVertex *endP0 = currentEndTri.v[0];
       MVertex *endP1 = currentEndTri.v[1];
       MVertex *endP2 = currentEndTri.v[2];
-      auto it2 =
-        VertexToCorresp.find(endP0);
-      auto it3 =
-        VertexToCorresp.find(endP1);
-      auto it4 =
-        VertexToCorresp.find(endP2);
+      auto it2 = VertexToCorresp.find(endP0);
+      auto it3 = VertexToCorresp.find(endP1);
+      auto it4 = VertexToCorresp.find(endP2);
       (*it1).second[i]->setEndTriangleActive(false);
       if(it2 != VertexToCorresp.end()) {
         if(it3 != VertexToCorresp.end()) {
@@ -102,9 +97,7 @@ void ThinLayer::checkOppositeTriangles()
 
 void ThinLayer::fillvecOfThinSheets()
 {
-  for(auto it1 =
-        VertexToCorresp.begin();
-      it1 != VertexToCorresp.end(); it1++) {
+  for(auto it1 = VertexToCorresp.begin(); it1 != VertexToCorresp.end(); it1++) {
     std::vector<CorrespVertices *> vecCorr = (*it1).second;
     for(unsigned int i = 0; i < vecCorr.size(); i++) {
       CorrespVertices *currentCorr = vecCorr[i];
@@ -117,8 +110,7 @@ void ThinLayer::fillvecOfThinSheets()
         (*it1).second[i]->setTagMaster(-1);
         faceXtet faceEndSlave = (*it1).second[i]->getEndTriangle();
         for(unsigned int j = 0; j < 3; j++) {
-          auto it2 =
-            VertexToCorresp.find(faceEndSlave.v[j]);
+          auto it2 = VertexToCorresp.find(faceEndSlave.v[j]);
           if(it2 != VertexToCorresp.end()) {
             if(faceEndSlave.v[j]->onWhat()->dim() == 2) {
               (*it2).second[0]->setTagMaster(
@@ -137,8 +129,7 @@ void ThinLayer::fillvecOfThinSheets()
             for(std::size_t k = 0; k < surroundingTet[j]->getNumVertices();
                 k++) {
               MVertex *ToInsertTmp = surroundingTet[j]->getVertex(k);
-              auto
-                it2 = VertexToCorresp.find(ToInsertTmp);
+              auto it2 = VertexToCorresp.find(ToInsertTmp);
               if(ToInsertTmp->onWhat()->tag() == VToDo->onWhat()->tag()) {
                 // TODO: OR that onwhat -> dim <, for edges
                 if(it2 != VertexToCorresp.end()) {
@@ -151,8 +142,7 @@ void ThinLayer::fillvecOfThinSheets()
                     (*it2).second[0]->setTagMaster(-1);
                     faceXtet faceEndSlave2 = (*it2).second[0]->getEndTriangle();
                     for(unsigned int j = 0; j < 3; j++) {
-                      auto it3 =
-                        VertexToCorresp.find(faceEndSlave2.v[j]);
+                      auto it3 = VertexToCorresp.find(faceEndSlave2.v[j]);
                       if(it3 != VertexToCorresp.end()) {
                         if(faceEndSlave2.v[j]->onWhat()->dim() == 2) {
                           (*it3).second[0]->setTagMaster(
@@ -202,8 +192,7 @@ std::map<MVertex *, double> ThinLayer::computeAllDistToOppSide()
       }
     }
   }
-  for(auto it = BoundaryVertices.begin();
-      it != BoundaryVertices.end(); it++) {
+  for(auto it = BoundaryVertices.begin(); it != BoundaryVertices.end(); it++) {
     MVertex *toCompute = (*it);
     double resultTmp = computeDistToOppSide(toCompute);
     AllDistToOppSide[toCompute] = resultTmp;
@@ -418,9 +407,7 @@ MTet4 *ThinLayer::getTetFromPoint(MVertex *v, const SVector3 &InteriorNormal)
       ThinLayer::IsPositivOrientation(vecDir[2], vecDir[0], InteriorNormal);
     if(isPositiv1) {
       if(isPositiv2) {
-        if(isPositiv3) {
-          TetToGet = TetToTet4[currentVecTet[i]];
-        }
+        if(isPositiv3) { TetToGet = TetToTet4[currentVecTet[i]]; }
       }
     }
   }
@@ -435,9 +422,7 @@ bool ThinLayer::IsPositivOrientation(const SVector3 &a, const SVector3 &b,
                   a.x() * b.y() - a.y() * b.x());
   double ProdScal =
     ProdVec.x() * c.x() + ProdVec.y() * c.y() + ProdVec.z() * c.z();
-  if(ProdScal >= 0.0) {
-    result = true;
-  }
+  if(ProdScal >= 0.0) { result = true; }
   return result;
 }
 

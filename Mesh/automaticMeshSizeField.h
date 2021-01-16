@@ -206,7 +206,8 @@ public:
   }
 
   void update();
-  virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr);
+  virtual double operator()(double X, double Y, double Z,
+                            GEntity *ge = nullptr);
   virtual void operator()(double x, double y, double z, SMetric3 &m,
                           GEntity *ge = nullptr);
 };

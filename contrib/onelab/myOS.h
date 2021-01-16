@@ -19,7 +19,7 @@ std::string GetHostName();
 int UnlinkFile(const std::string &fileName);
 int StatFile(const std::string &fileName);
 int KillProcess(int pid);
-int SystemCall(const std::string &command, bool blocking=false);
+int SystemCall(const std::string &command, bool blocking = false);
 std::string getCurrentWorkdir();
 
 #endif

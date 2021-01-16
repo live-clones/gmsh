@@ -70,17 +70,18 @@ typedef unsigned long intptr_t;
 
 static void file_new_cb(Fl_Widget *w, void *data)
 {
- test:
+test:
   if(fileChooser(FILE_CHOOSER_CREATE, "New", "")) {
     std::string name = fileChooserGetName(1);
     std::vector<std::string> split = SplitFileName(name);
-    if(split[2] != ".geo"){
+    if(split[2] != ".geo") {
       if(fl_choice("File '%s' does not have the '.geo' extension.\n\n"
                    "Do you want to continue as-is?",
-                   "Continue as-is", "Use '.geo' extension", nullptr, name.c_str()))
+                   "Continue as-is", "Use '.geo' extension", nullptr,
+                   name.c_str()))
         name = split[0] + split[1] + ".geo";
     }
-    if(!StatFile(name)){
+    if(!StatFile(name)) {
       if(fl_choice("File '%s' already exists.\n\nDo you want to delete it?",
                    "Cancel", "Delete", nullptr, name.c_str()))
         UnlinkFile(name);
@@ -88,7 +89,7 @@ static void file_new_cb(Fl_Widget *w, void *data)
         goto test;
     }
     FILE *fp = Fopen(name.c_str(), "w");
-    if(!fp){
+    if(!fp) {
       Msg::Error("Unable to open file '%s'", name.c_str());
       return;
     }
@@ -154,12 +155,12 @@ static const char *input_formats =
 static void file_open_merge_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string mode((char*)data);
+  std::string mode((char *)data);
   int n = PView::list.size();
   int f = fileChooser(FILE_CHOOSER_MULTI, (mode == "open") ? "Open" : "Merge",
                       input_formats);
-  if(f){
-    for(int i = 1; i <= f; i++){
+  if(f) {
+    for(int i = 1; i <= f; i++) {
       if(mode == "open")
         OpenProject(fileChooserGetName(i));
       else
@@ -168,9 +169,10 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
     if(n != (int)PView::list.size())
       FlGui::instance()->openModule("Post-processing");
     if(CTX::instance()->launchSolverAtStartup >= 0)
-      solver_cb(nullptr, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
+      solver_cb(nullptr,
+                (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
     else if(onelabUtils::haveSolverToRun())
-      onelab_cb(nullptr, (void*)"check");
+      onelab_cb(nullptr, (void *)"check");
     drawContext::global()->draw();
   }
 }
@@ -178,16 +180,17 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
 static void file_open_recent_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string str((const char*)data);
+  std::string str((const char *)data);
   int n = PView::list.size();
   OpenProject(str);
   drawContext::global()->draw();
   if(n != (int)PView::list.size())
     FlGui::instance()->openModule("Post-processing");
   if(CTX::instance()->launchSolverAtStartup >= 0)
-    solver_cb(nullptr, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
+    solver_cb(nullptr,
+              (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
   else if(onelabUtils::haveSolverToRun())
-    onelab_cb(nullptr, (void*)"check");
+    onelab_cb(nullptr, (void *)"check");
 }
 
 static void file_clear_cb(Fl_Widget *w, void *data)
@@ -198,7 +201,7 @@ static void file_clear_cb(Fl_Widget *w, void *data)
   }
   ClearProject();
   if(onelabUtils::haveSolverToRun())
-    onelab_cb(nullptr, (void*)"reset"); // this will call OpenProject
+    onelab_cb(nullptr, (void *)"reset"); // this will call OpenProject
   else
     OpenProject(GModel::current()->getFileName());
   drawContext::global()->draw();
@@ -208,44 +211,44 @@ static void file_remote_cb(Fl_Widget *w, void *data)
 {
   onelab::localNetworkClient *c;
   auto it = onelab::server::instance()->findClient("GmshRemote");
-  if(it == onelab::server::instance()->lastClient()){
+  if(it == onelab::server::instance()->lastClient()) {
     c = new gmshLocalNetworkClient("GmshRemote", "");
     c->setSocketSwitch("-socket");
   }
   else
-    c = (onelab::localNetworkClient*)(*it);
+    c = (onelab::localNetworkClient *)(*it);
   GmshServer *server = c->getGmshServer();
 
-  std::string str((const char*)data);
+  std::string str((const char *)data);
 
-  if(str == "start"){
-    if(server){
+  if(str == "start") {
+    if(server) {
       Msg::Error("Cannot start: remote Gmsh is already running");
       return;
     }
     c->setExecutable(connectionChooser());
     if(c->getExecutable().size()) c->run();
   }
-  else{
-    if(!server){
+  else {
+    if(!server) {
       Msg::Error("Cannot %s: remote Gmsh not running", str.c_str());
       return;
     }
-    if(str == "stop"){
+    if(str == "stop") {
       server->SendString(GmshSocket::GMSH_STOP, "Disconnect!");
     }
-    else if(str == "merge"){
+    else if(str == "merge") {
       const char *file = fl_input("Merge", "/tmp/data.pos");
       if(file) server->SendString(GmshSocket::GMSH_MERGE_FILE, file);
     }
-    else if(str == "clear"){
+    else if(str == "clear") {
       server->SendString(GmshSocket::GMSH_PARSE_STRING, "Delete All;");
       for(int i = PView::list.size() - 1; i >= 0; i--)
         if(PView::list[i]->getData()->isRemote()) delete PView::list[i];
       FlGui::instance()->updateViews(true, true);
       drawContext::global()->draw();
     }
-    else if(str == "test"){
+    else if(str == "test") {
       server->SendString(GmshSocket::GMSH_SPEED_TEST, "Speed test");
     }
   }
@@ -253,165 +256,245 @@ static void file_remote_cb(Fl_Widget *w, void *data)
 
 static void file_window_cb(Fl_Widget *w, void *data)
 {
-  std::string str((const char*)data);
-  if(str == "new"){
+  std::string str((const char *)data);
+  if(str == "new") {
     graphicWindow *g1 = FlGui::instance()->graph.back();
     graphicWindow *g2 = new graphicWindow(false, CTX::instance()->numTiles);
     FlGui::instance()->graph.push_back(g2);
     g2->getWindow()->resize(g1->getWindow()->x() + 10,
-                            g1->getWindow()->y() + 10,
-                            g1->getWindow()->w(),
+                            g1->getWindow()->y() + 10, g1->getWindow()->w(),
                             g1->getWindow()->h());
     g2->getWindow()->show();
   }
-  else if(str == "split_h"){
+  else if(str == "split_h") {
     FlGui::instance()->splitCurrentOpenglWindow('h', 0.5);
   }
-  else if(str == "split_v"){
+  else if(str == "split_v") {
     FlGui::instance()->splitCurrentOpenglWindow('v', 0.5);
   }
-  else if(str == "split_u"){
+  else if(str == "split_u") {
     FlGui::instance()->splitCurrentOpenglWindow('u');
   }
-  else if(str == "copy"){
+  else if(str == "copy") {
     FlGui::instance()->copyCurrentOpenglWindowToClipboard();
   }
   drawContext::global()->draw();
   FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
 }
 
-static int _save_msh(const char *name){ return mshFileDialog(name); }
-static int _save_mesh_stat(const char *name){ return meshStatFileDialog(name); }
-static int _save_options(const char *name){ return optionsFileDialog(name); }
-static int _save_geo(const char *name){ return geoFileDialog(name); }
-static int _save_brep(const char *name){ CreateOutputFile(name, FORMAT_BREP); return 1; }
-static int _save_step(const char *name){ CreateOutputFile(name, FORMAT_STEP); return 1; }
-static int _save_xmt(const char *name){ CreateOutputFile(name, FORMAT_XMT); return 1; }
-static int _save_cgns(const char *name){ return cgnsFileDialog(name); }
-static int _save_unv(const char *name){ return unvinpFileDialog
-    (name, "UNV Options", FORMAT_UNV); }
-static int _save_vtk(const char *name){ return genericMeshFileDialog
-    (name, "VTK Options", FORMAT_VTK, true, false); }
-static int _save_tochnog(const char *name){ return genericMeshFileDialog
-    (name, "Tochnog Options", FORMAT_TOCHNOG, true, false); }
-static int _save_diff(const char *name){ return genericMeshFileDialog
-    (name, "Diffpack Options", FORMAT_DIFF, true, false); }
-static int _save_inp(const char *name){ return unvinpFileDialog
-    (name, "Abaqus INP Options", FORMAT_INP); }
-static int _save_key(const char *name){ return keyFileDialog
-    (name, "LSDYNA KEY Options", FORMAT_KEY); }
-static int _save_celum(const char *name){ return genericMeshFileDialog
-    (name, "CELUM Options", FORMAT_CELUM, false, false); }
-static int _save_su2(const char *name){ return genericMeshFileDialog
-    (name, "SU2 Options", FORMAT_SU2, false, false); }
-static int _save_med(const char *name){ return genericMeshFileDialog
-    (name, "MED Options", FORMAT_MED, false, false); }
-static int _save_mesh(const char *name){ return genericMeshFileDialog
-    (name, "MESH Options", FORMAT_MESH, false, true); }
-static int _save_mail(const char *name){ return genericMeshFileDialog
-    (name, "MAIL Options", FORMAT_MAIL, false, false); }
-static int _save_matlab(const char *name){ return genericMeshFileDialog
-    (name, "MATLAB Options", FORMAT_MATLAB, false, false); }
-static int _save_bdf(const char *name){ return bdfFileDialog(name); }
-static int _save_p3d(const char *name){ return genericMeshFileDialog
-    (name, "P3D Options", FORMAT_P3D, false, false); }
-static int _save_ir3(const char *name){ return genericMeshFileDialog
-    (name, "Iridium Options", FORMAT_IR3, false, true); }
-static int _save_stl(const char *name){ return stlFileDialog(name); }
-static int _save_vrml(const char *name){ return genericMeshFileDialog
-    (name, "VRML Options", FORMAT_VRML, false, false); }
-static int _save_ply2(const char *name){ return genericMeshFileDialog
-    (name, "PLY2 Options", FORMAT_PLY2, false, false); }
-static int _save_neu(const char *name){ return genericMeshFileDialog
-    (name, "NEU Options", FORMAT_NEU, false, false); }
-static int _save_eps(const char *name){ return gl2psFileDialog
-    (name, "EPS Options", FORMAT_EPS); }
-static int _save_gif(const char *name){ return gifFileDialog(name); }
-static int _save_jpeg(const char *name){ return genericBitmapFileDialog
-    (name, "JPEG Options", FORMAT_JPEG); }
-static int _save_mpeg(const char *name){ return mpegFileDialog(name); }
-static int _save_tex(const char *name){ return latexFileDialog(name); }
-static int _save_pdf(const char *name){ return gl2psFileDialog
-    (name, "PDF Options", FORMAT_PDF); }
-static int _save_png(const char *name){ return genericBitmapFileDialog
-    (name, "PNG Options", FORMAT_PNG); }
-static int _save_pgf(const char *name){ return pgfBitmapFileDialog
-    (name, "PGF Options", FORMAT_PGF); }
-static int _save_ps(const char *name){ return gl2psFileDialog
-    (name, "PS Options", FORMAT_PS); }
-static int _save_ppm(const char *name){ return genericBitmapFileDialog
-    (name, "PPM Options", FORMAT_PPM); }
-static int _save_svg(const char *name){ return gl2psFileDialog
-    (name, "SVG Options", FORMAT_SVG); }
-static int _save_tikz(const char *name){ return gl2psFileDialog
-    (name, "TIKZ Options", FORMAT_TIKZ); }
-static int _save_yuv(const char *name){ return genericBitmapFileDialog
-    (name, "YUV Options", FORMAT_YUV); }
-static int _save_view_pos(const char *name){ return posFileDialog(name); }
-static int _save_view_adapt_pvtu(const char *name){ return pvtuAdaptFileDialog(name); }
-static int _save_view_med(const char *name){ return genericViewFileDialog
-    (name, "MED Options", 6); }
-static int _save_view_txt(const char *name){ return genericViewFileDialog
-    (name, "TXT Options", 4); }
-static int _save_view_x3d(const char *name){ return x3dViewFileDialog
-    (name, "X3D Options", 7); }
+static int _save_msh(const char *name) { return mshFileDialog(name); }
+static int _save_mesh_stat(const char *name)
+{
+  return meshStatFileDialog(name);
+}
+static int _save_options(const char *name) { return optionsFileDialog(name); }
+static int _save_geo(const char *name) { return geoFileDialog(name); }
+static int _save_brep(const char *name)
+{
+  CreateOutputFile(name, FORMAT_BREP);
+  return 1;
+}
+static int _save_step(const char *name)
+{
+  CreateOutputFile(name, FORMAT_STEP);
+  return 1;
+}
+static int _save_xmt(const char *name)
+{
+  CreateOutputFile(name, FORMAT_XMT);
+  return 1;
+}
+static int _save_cgns(const char *name) { return cgnsFileDialog(name); }
+static int _save_unv(const char *name)
+{
+  return unvinpFileDialog(name, "UNV Options", FORMAT_UNV);
+}
+static int _save_vtk(const char *name)
+{
+  return genericMeshFileDialog(name, "VTK Options", FORMAT_VTK, true, false);
+}
+static int _save_tochnog(const char *name)
+{
+  return genericMeshFileDialog(name, "Tochnog Options", FORMAT_TOCHNOG, true,
+                               false);
+}
+static int _save_diff(const char *name)
+{
+  return genericMeshFileDialog(name, "Diffpack Options", FORMAT_DIFF, true,
+                               false);
+}
+static int _save_inp(const char *name)
+{
+  return unvinpFileDialog(name, "Abaqus INP Options", FORMAT_INP);
+}
+static int _save_key(const char *name)
+{
+  return keyFileDialog(name, "LSDYNA KEY Options", FORMAT_KEY);
+}
+static int _save_celum(const char *name)
+{
+  return genericMeshFileDialog(name, "CELUM Options", FORMAT_CELUM, false,
+                               false);
+}
+static int _save_su2(const char *name)
+{
+  return genericMeshFileDialog(name, "SU2 Options", FORMAT_SU2, false, false);
+}
+static int _save_med(const char *name)
+{
+  return genericMeshFileDialog(name, "MED Options", FORMAT_MED, false, false);
+}
+static int _save_mesh(const char *name)
+{
+  return genericMeshFileDialog(name, "MESH Options", FORMAT_MESH, false, true);
+}
+static int _save_mail(const char *name)
+{
+  return genericMeshFileDialog(name, "MAIL Options", FORMAT_MAIL, false, false);
+}
+static int _save_matlab(const char *name)
+{
+  return genericMeshFileDialog(name, "MATLAB Options", FORMAT_MATLAB, false,
+                               false);
+}
+static int _save_bdf(const char *name) { return bdfFileDialog(name); }
+static int _save_p3d(const char *name)
+{
+  return genericMeshFileDialog(name, "P3D Options", FORMAT_P3D, false, false);
+}
+static int _save_ir3(const char *name)
+{
+  return genericMeshFileDialog(name, "Iridium Options", FORMAT_IR3, false,
+                               true);
+}
+static int _save_stl(const char *name) { return stlFileDialog(name); }
+static int _save_vrml(const char *name)
+{
+  return genericMeshFileDialog(name, "VRML Options", FORMAT_VRML, false, false);
+}
+static int _save_ply2(const char *name)
+{
+  return genericMeshFileDialog(name, "PLY2 Options", FORMAT_PLY2, false, false);
+}
+static int _save_neu(const char *name)
+{
+  return genericMeshFileDialog(name, "NEU Options", FORMAT_NEU, false, false);
+}
+static int _save_eps(const char *name)
+{
+  return gl2psFileDialog(name, "EPS Options", FORMAT_EPS);
+}
+static int _save_gif(const char *name) { return gifFileDialog(name); }
+static int _save_jpeg(const char *name)
+{
+  return genericBitmapFileDialog(name, "JPEG Options", FORMAT_JPEG);
+}
+static int _save_mpeg(const char *name) { return mpegFileDialog(name); }
+static int _save_tex(const char *name) { return latexFileDialog(name); }
+static int _save_pdf(const char *name)
+{
+  return gl2psFileDialog(name, "PDF Options", FORMAT_PDF);
+}
+static int _save_png(const char *name)
+{
+  return genericBitmapFileDialog(name, "PNG Options", FORMAT_PNG);
+}
+static int _save_pgf(const char *name)
+{
+  return pgfBitmapFileDialog(name, "PGF Options", FORMAT_PGF);
+}
+static int _save_ps(const char *name)
+{
+  return gl2psFileDialog(name, "PS Options", FORMAT_PS);
+}
+static int _save_ppm(const char *name)
+{
+  return genericBitmapFileDialog(name, "PPM Options", FORMAT_PPM);
+}
+static int _save_svg(const char *name)
+{
+  return gl2psFileDialog(name, "SVG Options", FORMAT_SVG);
+}
+static int _save_tikz(const char *name)
+{
+  return gl2psFileDialog(name, "TIKZ Options", FORMAT_TIKZ);
+}
+static int _save_yuv(const char *name)
+{
+  return genericBitmapFileDialog(name, "YUV Options", FORMAT_YUV);
+}
+static int _save_view_pos(const char *name) { return posFileDialog(name); }
+static int _save_view_adapt_pvtu(const char *name)
+{
+  return pvtuAdaptFileDialog(name);
+}
+static int _save_view_med(const char *name)
+{
+  return genericViewFileDialog(name, "MED Options", 6);
+}
+static int _save_view_txt(const char *name)
+{
+  return genericViewFileDialog(name, "TXT Options", 4);
+}
+static int _save_view_x3d(const char *name)
+{
+  return x3dViewFileDialog(name, "X3D Options", 7);
+}
 
 static int _save_auto(const char *name)
 {
-  switch(GuessFileFormatFromFileName(name)){
-  case FORMAT_MSH  : return _save_msh(name);
-  case FORMAT_POS  : return _save_view_pos(name);
-  case FORMAT_X3D  : return _save_view_x3d(name);
-  case FORMAT_PVTU : return _save_view_adapt_pvtu(name);
-  case FORMAT_TXT  : return _save_view_txt(name);
-  case FORMAT_OPT  : return _save_options(name);
-  case FORMAT_GEO  : return _save_geo(name);
-  case FORMAT_BREP : return _save_brep(name);
-  case FORMAT_STEP : return _save_step(name);
-  case FORMAT_CGNS : return _save_cgns(name);
-  case FORMAT_UNV  : return _save_unv(name);
-  case FORMAT_VTK  : return _save_vtk(name);
+  switch(GuessFileFormatFromFileName(name)) {
+  case FORMAT_MSH: return _save_msh(name);
+  case FORMAT_POS: return _save_view_pos(name);
+  case FORMAT_X3D: return _save_view_x3d(name);
+  case FORMAT_PVTU: return _save_view_adapt_pvtu(name);
+  case FORMAT_TXT: return _save_view_txt(name);
+  case FORMAT_OPT: return _save_options(name);
+  case FORMAT_GEO: return _save_geo(name);
+  case FORMAT_BREP: return _save_brep(name);
+  case FORMAT_STEP: return _save_step(name);
+  case FORMAT_CGNS: return _save_cgns(name);
+  case FORMAT_UNV: return _save_unv(name);
+  case FORMAT_VTK: return _save_vtk(name);
   case FORMAT_TOCHNOG: return _save_tochnog(name);
-  case FORMAT_MED  : return _save_med(name);
-  case FORMAT_RMED : return _save_view_med(name);
-  case FORMAT_MESH : return _save_mesh(name);
-  case FORMAT_MAIL : return _save_mail(name);
-  case FORMAT_MATLAB : return _save_matlab(name);
-  case FORMAT_BDF  : return _save_bdf(name);
-  case FORMAT_DIFF : return _save_diff(name);
-  case FORMAT_INP  : return _save_inp(name);
-  case FORMAT_KEY  : return _save_key(name);
+  case FORMAT_MED: return _save_med(name);
+  case FORMAT_RMED: return _save_view_med(name);
+  case FORMAT_MESH: return _save_mesh(name);
+  case FORMAT_MAIL: return _save_mail(name);
+  case FORMAT_MATLAB: return _save_matlab(name);
+  case FORMAT_BDF: return _save_bdf(name);
+  case FORMAT_DIFF: return _save_diff(name);
+  case FORMAT_INP: return _save_inp(name);
+  case FORMAT_KEY: return _save_key(name);
   case FORMAT_CELUM: return _save_celum(name);
-  case FORMAT_SU2  : return _save_su2(name);
-  case FORMAT_P3D  : return _save_p3d(name);
-  case FORMAT_IR3  : return _save_ir3(name);
-  case FORMAT_STL  : return _save_stl(name);
-  case FORMAT_VRML : return _save_vrml(name);
-  case FORMAT_PLY2 : return _save_ply2(name);
-  case FORMAT_NEU  : return _save_neu(name);
-  case FORMAT_EPS  : return _save_eps(name);
-  case FORMAT_GIF  : return _save_gif(name);
-  case FORMAT_JPEG : return _save_jpeg(name);
-  case FORMAT_MPEG : return _save_mpeg(name);
-  case FORMAT_TEX  : return _save_tex(name);
-  case FORMAT_PDF  : return _save_pdf(name);
-  case FORMAT_PNG  : return _save_png(name);
-  case FORMAT_PGF  : return _save_pgf(name);
-  case FORMAT_PS   : return _save_ps(name);
-  case FORMAT_PPM  : return _save_ppm(name);
-  case FORMAT_SVG  : return _save_svg(name);
-  case FORMAT_TIKZ : return _save_tikz(name);
-  case FORMAT_YUV  : return _save_yuv(name);
-  case FORMAT_XMT  : return _save_xmt(name);
-  default :
-    CreateOutputFile(name, FORMAT_AUTO);
-    return 1;
+  case FORMAT_SU2: return _save_su2(name);
+  case FORMAT_P3D: return _save_p3d(name);
+  case FORMAT_IR3: return _save_ir3(name);
+  case FORMAT_STL: return _save_stl(name);
+  case FORMAT_VRML: return _save_vrml(name);
+  case FORMAT_PLY2: return _save_ply2(name);
+  case FORMAT_NEU: return _save_neu(name);
+  case FORMAT_EPS: return _save_eps(name);
+  case FORMAT_GIF: return _save_gif(name);
+  case FORMAT_JPEG: return _save_jpeg(name);
+  case FORMAT_MPEG: return _save_mpeg(name);
+  case FORMAT_TEX: return _save_tex(name);
+  case FORMAT_PDF: return _save_pdf(name);
+  case FORMAT_PNG: return _save_png(name);
+  case FORMAT_PGF: return _save_pgf(name);
+  case FORMAT_PS: return _save_ps(name);
+  case FORMAT_PPM: return _save_ppm(name);
+  case FORMAT_SVG: return _save_svg(name);
+  case FORMAT_TIKZ: return _save_tikz(name);
+  case FORMAT_YUV: return _save_yuv(name);
+  case FORMAT_XMT: return _save_xmt(name);
+  default: CreateOutputFile(name, FORMAT_AUTO); return 1;
   }
 }
 
-typedef struct{
+typedef struct {
   const char *pat;
-  int (*func) (const char *name);
+  int (*func)(const char *name);
 } patXfunc;
 
 static void file_export_cb(Fl_Widget *w, void *data)
@@ -493,7 +576,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     }
   }
 
- test:
+test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Export", pat)) {
     std::string name = fileChooserGetName(1);
     bool confirmOverwrite = CTX::instance()->confirmOverwrite;
@@ -508,10 +591,10 @@ static void file_export_cb(Fl_Widget *w, void *data)
           goto test;
     }
     int i = fileChooserGetFilter();
-    if(i >= 0 && i < nbformats){
+    if(i >= 0 && i < nbformats) {
       if(!formats[i].func(name.c_str())) goto test;
     }
-    else{ // handle any additional automatic fltk filter
+    else { // handle any additional automatic fltk filter
       if(!_save_auto(name.c_str())) goto test;
     }
   }
@@ -519,7 +602,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
 
 static void file_options_save_cb(Fl_Widget *w, void *data)
 {
-  std::string str((const char*)data), fileName;
+  std::string str((const char *)data), fileName;
   if(str == "file")
     fileName = GModel::current()->getFileName() + ".opt";
   else
@@ -534,7 +617,7 @@ static void file_options_save_cb(Fl_Widget *w, void *data)
 
 static void file_rename_cb(Fl_Widget *w, void *data)
 {
- test:
+test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Rename", "")) {
     std::string name = fileChooserGetName(1);
     bool confirmOverwrite = CTX::instance()->confirmOverwrite;
@@ -552,16 +635,15 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     GModel::current()->setFileName(name);
     GModel::current()->setName(SplitFileName(name)[1]);
     Msg::SetOnelabChanged(3);
-    if(onelabUtils::haveSolverToRun())
-      onelab_cb(nullptr, (void*)"check");
+    if(onelabUtils::haveSolverToRun()) onelab_cb(nullptr, (void *)"check");
     drawContext::global()->draw();
   }
 }
 
 static void file_delete_cb(Fl_Widget *w, void *data)
 {
-  if(fl_choice("Do you really want to delete file '%s'?",
-               "Cancel", "Delete", nullptr, GModel::current()->getFileName().c_str())){
+  if(fl_choice("Do you really want to delete file '%s'?", "Cancel", "Delete",
+               nullptr, GModel::current()->getFileName().c_str())) {
     UnlinkFile(GModel::current()->getFileName());
     Msg::Info("Deleted `%s'", GModel::current()->getFileName().c_str());
     file_clear_cb(nullptr, nullptr);
@@ -570,18 +652,15 @@ static void file_delete_cb(Fl_Widget *w, void *data)
 
 void file_quit_cb(Fl_Widget *w, void *data)
 {
-  if(FlGui::instance()->quitShouldExit()) {
-    Msg::Exit(0);
-  }
+  if(FlGui::instance()->quitShouldExit()) { Msg::Exit(0); }
   else {
     FlGui::instance()->onelabContext->disableRedraw();
 
     // hide all windows (in case they are not tracked by FlGui)...
-    std::vector<Fl_Window*> wins;
-    for (Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
+    std::vector<Fl_Window *> wins;
+    for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
       wins.push_back(win);
-    for (std::size_t i = 0; i < wins.size(); i++)
-      wins[i]->hide();
+    for(std::size_t i = 0; i < wins.size(); i++) wins[i]->hide();
 
     // process remaining events
     FlGui::check();
@@ -596,8 +675,8 @@ void file_watch_cb(Fl_Widget *w, void *data)
 
   if(CTX::instance()->watchFilePattern.empty()) return;
 
-  std::string pattern = FixRelativePath
-    (GModel::current()->getFileName(), CTX::instance()->watchFilePattern);
+  std::string pattern = FixRelativePath(GModel::current()->getFileName(),
+                                        CTX::instance()->watchFilePattern);
   std::string directory = SplitFileName(pattern)[0];
   if(directory.empty()) directory = "./";
 
@@ -605,13 +684,13 @@ void file_watch_cb(Fl_Widget *w, void *data)
   int num = fl_filename_list(directory.c_str(), &files, fl_numericsort);
   if(num <= 0) return;
   std::vector<std::string> matches;
-  for (int i = 0; i < num; i++) {
+  for(int i = 0; i < num; i++) {
     std::string name = directory + files[i]->d_name;
     if(fl_filename_match(name.c_str(), pattern.c_str()))
       matches.push_back(name);
-    free((void*)files[i]);
+    free((void *)files[i]);
   }
-  if(files) free((void*)files);
+  if(files) free((void *)files);
 
   Msg::Info("%d match%s for pattern '%s'", (int)matches.size(),
             (matches.size() > 1) ? "es" : "", pattern.c_str());
@@ -621,7 +700,8 @@ void file_watch_cb(Fl_Widget *w, void *data)
     allFiles.insert(GetFileNameWithoutPath(GModel::list[i]->getFileName()));
   for(std::size_t i = 0; i < PView::list.size(); i++)
     for(int j = 0; j < PView::list[i]->getData()->getNumTimeSteps(); j++)
-      allFiles.insert(GetFileNameWithoutPath(PView::list[i]->getData()->getFileName(j)));
+      allFiles.insert(
+        GetFileNameWithoutPath(PView::list[i]->getData()->getFileName(j)));
 
   for(std::size_t i = 0; i < matches.size(); i++)
     if(allFiles.find(GetFileNameWithoutPath(matches[i])) == allFiles.end())
@@ -661,14 +741,14 @@ void onelab_reload_cb(Fl_Widget *w, void *data)
   std::string fileName = GModel::current()->getFileName();
   ClearProject();
   GModel::current()->setFileName(fileName);
-  onelab_cb(nullptr, (void*)"reset"); // will call OpenProject
+  onelab_cb(nullptr, (void *)"reset"); // will call OpenProject
   drawContext::global()->draw();
 }
 
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
-  if(onelabUtils::haveSolverToRun()){
-    onelab_cb(nullptr, (void*)"check_always");
+  if(onelabUtils::haveSolverToRun()) {
+    onelab_cb(nullptr, (void *)"check_always");
   }
   else
     OpenProject(GModel::current()->getFileName());
@@ -697,13 +777,14 @@ static void add_new_point_based_entity(const std::string &what, int pane)
         FlGui::instance()->graph[i]->gl[j]->addPointMode = 1;
     std::string name = what;
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-    Msg::StatusGl("Move mouse and/or enter coordinates\n"
-                  "[Press 'Shift' to hold position, 'e' to add %s or 'q' to abort]",
-                  name.c_str());
+    Msg::StatusGl(
+      "Move mouse and/or enter coordinates\n"
+      "[Press 'Shift' to hold position, 'e' to add %s or 'q' to abort]",
+      name.c_str());
     char ib = FlGui::instance()->selectEntity(ENT_NONE);
     if(!FlGui::available()) return;
-    if(ib == 'e'){
-      switch(pane){
+    if(ib == 'e') {
+      switch(pane) {
       case 1:
         scriptAddPoint(GModel::current()->getFileName(),
                        FlGui::instance()->elementaryContext->input[4]->value(),
@@ -712,23 +793,25 @@ static void add_new_point_based_entity(const std::string &what, int pane)
                        FlGui::instance()->elementaryContext->input[7]->value());
         break;
       case 2:
-        scriptAddCircle(GModel::current()->getFileName(),
-                        FlGui::instance()->elementaryContext->input[8]->value(),
-                        FlGui::instance()->elementaryContext->input[9]->value(),
-                        FlGui::instance()->elementaryContext->input[10]->value(),
-                        FlGui::instance()->elementaryContext->input[11]->value(),
-                        FlGui::instance()->elementaryContext->input[12]->value(),
-                        FlGui::instance()->elementaryContext->input[13]->value());
+        scriptAddCircle(
+          GModel::current()->getFileName(),
+          FlGui::instance()->elementaryContext->input[8]->value(),
+          FlGui::instance()->elementaryContext->input[9]->value(),
+          FlGui::instance()->elementaryContext->input[10]->value(),
+          FlGui::instance()->elementaryContext->input[11]->value(),
+          FlGui::instance()->elementaryContext->input[12]->value(),
+          FlGui::instance()->elementaryContext->input[13]->value());
         break;
       case 3:
-        scriptAddEllipse(GModel::current()->getFileName(),
-                         FlGui::instance()->elementaryContext->input[14]->value(),
-                         FlGui::instance()->elementaryContext->input[15]->value(),
-                         FlGui::instance()->elementaryContext->input[16]->value(),
-                         FlGui::instance()->elementaryContext->input[17]->value(),
-                         FlGui::instance()->elementaryContext->input[18]->value(),
-                         FlGui::instance()->elementaryContext->input[19]->value(),
-                         FlGui::instance()->elementaryContext->input[20]->value());
+        scriptAddEllipse(
+          GModel::current()->getFileName(),
+          FlGui::instance()->elementaryContext->input[14]->value(),
+          FlGui::instance()->elementaryContext->input[15]->value(),
+          FlGui::instance()->elementaryContext->input[16]->value(),
+          FlGui::instance()->elementaryContext->input[17]->value(),
+          FlGui::instance()->elementaryContext->input[18]->value(),
+          FlGui::instance()->elementaryContext->input[19]->value(),
+          FlGui::instance()->elementaryContext->input[20]->value());
         break;
       case 4:
         scriptAddDisk(GModel::current()->getFileName(),
@@ -739,34 +822,37 @@ static void add_new_point_based_entity(const std::string &what, int pane)
                       FlGui::instance()->elementaryContext->input[25]->value());
         break;
       case 5:
-        scriptAddRectangle(GModel::current()->getFileName(),
-                           FlGui::instance()->elementaryContext->input[26]->value(),
-                           FlGui::instance()->elementaryContext->input[27]->value(),
-                           FlGui::instance()->elementaryContext->input[28]->value(),
-                           FlGui::instance()->elementaryContext->input[29]->value(),
-                           FlGui::instance()->elementaryContext->input[30]->value(),
-                           FlGui::instance()->elementaryContext->input[31]->value());
+        scriptAddRectangle(
+          GModel::current()->getFileName(),
+          FlGui::instance()->elementaryContext->input[26]->value(),
+          FlGui::instance()->elementaryContext->input[27]->value(),
+          FlGui::instance()->elementaryContext->input[28]->value(),
+          FlGui::instance()->elementaryContext->input[29]->value(),
+          FlGui::instance()->elementaryContext->input[30]->value(),
+          FlGui::instance()->elementaryContext->input[31]->value());
         break;
       case 6:
-        scriptAddSphere(GModel::current()->getFileName(),
-                        FlGui::instance()->elementaryContext->input[32]->value(),
-                        FlGui::instance()->elementaryContext->input[33]->value(),
-                        FlGui::instance()->elementaryContext->input[34]->value(),
-                        FlGui::instance()->elementaryContext->input[35]->value(),
-                        FlGui::instance()->elementaryContext->input[36]->value(),
-                        FlGui::instance()->elementaryContext->input[37]->value(),
-                        FlGui::instance()->elementaryContext->input[38]->value());
+        scriptAddSphere(
+          GModel::current()->getFileName(),
+          FlGui::instance()->elementaryContext->input[32]->value(),
+          FlGui::instance()->elementaryContext->input[33]->value(),
+          FlGui::instance()->elementaryContext->input[34]->value(),
+          FlGui::instance()->elementaryContext->input[35]->value(),
+          FlGui::instance()->elementaryContext->input[36]->value(),
+          FlGui::instance()->elementaryContext->input[37]->value(),
+          FlGui::instance()->elementaryContext->input[38]->value());
         break;
       case 7:
-        scriptAddCylinder(GModel::current()->getFileName(),
-                          FlGui::instance()->elementaryContext->input[39]->value(),
-                          FlGui::instance()->elementaryContext->input[40]->value(),
-                          FlGui::instance()->elementaryContext->input[41]->value(),
-                          FlGui::instance()->elementaryContext->input[42]->value(),
-                          FlGui::instance()->elementaryContext->input[43]->value(),
-                          FlGui::instance()->elementaryContext->input[44]->value(),
-                          FlGui::instance()->elementaryContext->input[45]->value(),
-                          FlGui::instance()->elementaryContext->input[46]->value());
+        scriptAddCylinder(
+          GModel::current()->getFileName(),
+          FlGui::instance()->elementaryContext->input[39]->value(),
+          FlGui::instance()->elementaryContext->input[40]->value(),
+          FlGui::instance()->elementaryContext->input[41]->value(),
+          FlGui::instance()->elementaryContext->input[42]->value(),
+          FlGui::instance()->elementaryContext->input[43]->value(),
+          FlGui::instance()->elementaryContext->input[44]->value(),
+          FlGui::instance()->elementaryContext->input[45]->value(),
+          FlGui::instance()->elementaryContext->input[46]->value());
         break;
       case 8:
         scriptAddBox(GModel::current()->getFileName(),
@@ -778,13 +864,14 @@ static void add_new_point_based_entity(const std::string &what, int pane)
                      FlGui::instance()->elementaryContext->input[52]->value());
         break;
       case 9:
-        scriptAddTorus(GModel::current()->getFileName(),
-                       FlGui::instance()->elementaryContext->input[53]->value(),
-                       FlGui::instance()->elementaryContext->input[54]->value(),
-                       FlGui::instance()->elementaryContext->input[55]->value(),
-                       FlGui::instance()->elementaryContext->input[56]->value(),
-                       FlGui::instance()->elementaryContext->input[57]->value(),
-                       FlGui::instance()->elementaryContext->input[58]->value());
+        scriptAddTorus(
+          GModel::current()->getFileName(),
+          FlGui::instance()->elementaryContext->input[53]->value(),
+          FlGui::instance()->elementaryContext->input[54]->value(),
+          FlGui::instance()->elementaryContext->input[55]->value(),
+          FlGui::instance()->elementaryContext->input[56]->value(),
+          FlGui::instance()->elementaryContext->input[57]->value(),
+          FlGui::instance()->elementaryContext->input[58]->value());
         break;
       case 10:
         scriptAddCone(GModel::current()->getFileName(),
@@ -799,20 +886,21 @@ static void add_new_point_based_entity(const std::string &what, int pane)
                       FlGui::instance()->elementaryContext->input[67]->value());
         break;
       case 11:
-        scriptAddWedge(GModel::current()->getFileName(),
-                       FlGui::instance()->elementaryContext->input[68]->value(),
-                       FlGui::instance()->elementaryContext->input[69]->value(),
-                       FlGui::instance()->elementaryContext->input[70]->value(),
-                       FlGui::instance()->elementaryContext->input[71]->value(),
-                       FlGui::instance()->elementaryContext->input[72]->value(),
-                       FlGui::instance()->elementaryContext->input[73]->value(),
-                       FlGui::instance()->elementaryContext->input[74]->value());
+        scriptAddWedge(
+          GModel::current()->getFileName(),
+          FlGui::instance()->elementaryContext->input[68]->value(),
+          FlGui::instance()->elementaryContext->input[69]->value(),
+          FlGui::instance()->elementaryContext->input[70]->value(),
+          FlGui::instance()->elementaryContext->input[71]->value(),
+          FlGui::instance()->elementaryContext->input[72]->value(),
+          FlGui::instance()->elementaryContext->input[73]->value(),
+          FlGui::instance()->elementaryContext->input[74]->value());
         break;
       }
       FlGui::instance()->resetVisibility();
       drawContext::global()->draw();
     }
-    if(ib == 'q'){
+    if(ib == 'q') {
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
           FlGui::instance()->graph[i]->gl[j]->addPointMode = 0;
@@ -848,14 +936,16 @@ static void add_new_multiline(const std::string &type)
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(!FlGui::available()) return;
     if(ib == 'l') {
-      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size();
+          i++) {
         FlGui::instance()->selectedVertices[i]->setSelection(1);
         p.push_back(FlGui::instance()->selectedVertices[i]->tag());
       }
       drawContext::global()->draw();
     }
     if(ib == 'r') {
-      Msg::Warning("Entity de-selection not supported yet during multi-line creation");
+      Msg::Warning(
+        "Entity de-selection not supported yet during multi-line creation");
     }
     if(ib == 'e') {
       if(p.size() >= 2)
@@ -866,7 +956,7 @@ static void add_new_multiline(const std::string &type)
       p.clear();
     }
     if(ib == 'u') {
-      if(p.size()){
+      if(p.size()) {
         GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
         drawContext::global()->draw();
@@ -907,10 +997,11 @@ static void add_new_line()
       p.push_back(FlGui::instance()->selectedVertices[0]->tag());
     }
     if(ib == 'r') {
-      Msg::Warning("Entity de-selection not supported yet during curve creation");
+      Msg::Warning(
+        "Entity de-selection not supported yet during curve creation");
     }
     if(ib == 'u') {
-      if(p.size()){
+      if(p.size()) {
         GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
         drawContext::global()->draw();
@@ -961,10 +1052,11 @@ static void add_new_circle_arc()
       p.push_back(FlGui::instance()->selectedVertices[0]->tag());
     }
     if(ib == 'r') {
-      Msg::Warning("Entity de-selection not supported yet during circle creation");
+      Msg::Warning(
+        "Entity de-selection not supported yet during circle creation");
     }
     if(ib == 'u') {
-      if(p.size()){
+      if(p.size()) {
         GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
         drawContext::global()->draw();
@@ -1019,10 +1111,11 @@ static void add_new_ellipse_arc()
       p.push_back(FlGui::instance()->selectedVertices[0]->tag());
     }
     if(ib == 'r') {
-      Msg::Warning("Entity de-selection not supported yet during ellipse creation");
+      Msg::Warning(
+        "Entity de-selection not supported yet during ellipse creation");
     }
     if(ib == 'u') {
-      if(p.size()){
+      if(p.size()) {
         GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
         drawContext::global()->draw();
@@ -1035,7 +1128,8 @@ static void add_new_ellipse_arc()
       break;
     }
     if(p.size() == 4) {
-      scriptAddEllipseArc(p[0], p[1], p[2], p[3], GModel::current()->getFileName());
+      scriptAddEllipseArc(p[0], p[1], p[2], p[3],
+                          GModel::current()->getFileName());
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       drawContext::global()->draw();
@@ -1046,11 +1140,11 @@ static void add_new_ellipse_arc()
   Msg::StatusGl("");
 }
 
-static int selectContour(int type, int num, List_T * List)
+static int selectContour(int type, int num, List_T *List)
 {
   int k = 0;
 
-  switch (type) {
+  switch(type) {
   case ENT_CURVE:
     k = allEdgesLinked(num, List);
     for(int i = 0; i < List_Nbr(List); i++) {
@@ -1101,7 +1195,7 @@ static void add_new_surface_volume(int mode)
     while(1) {
       if(!FlGui::available()) return;
 
-      if(type == ENT_CURVE){
+      if(type == ENT_CURVE) {
         if(!List_Nbr(List1))
           Msg::StatusGl("Select surface boundary\n"
                         "[Press 'q' to abort]");
@@ -1109,7 +1203,7 @@ static void add_new_surface_volume(int mode)
           Msg::StatusGl("Select surface boundary\n"
                         "[Press 'u' to undo last selection or 'q' to abort]");
       }
-      else{
+      else {
         if(!List_Nbr(List1))
           Msg::StatusGl("Select volume boundary\n"
                         "[Press 'q' to abort]");
@@ -1126,14 +1220,14 @@ static void add_new_surface_volume(int mode)
         goto stopall;
       }
       if(ib == 'u') {
-        if(List_Nbr(List1) > 0){
+        if(List_Nbr(List1) > 0) {
           int num;
-          List_Read(List1, List_Nbr(List1)-1, &num);
-          if(type == ENT_CURVE){
+          List_Read(List1, List_Nbr(List1) - 1, &num);
+          if(type == ENT_CURVE) {
             GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
             if(ge) ge->setSelection(0);
           }
-          else{
+          else {
             GFace *gf = GModel::current()->getFaceByTag(abs(num));
             if(gf) gf->setSelection(0);
           }
@@ -1147,8 +1241,8 @@ static void add_new_surface_volume(int mode)
       }
       if(ib == 'l') {
         int num = (type == ENT_CURVE) ?
-          FlGui::instance()->selectedEdges[0]->tag() :
-          FlGui::instance()->selectedFaces[0]->tag();
+                    FlGui::instance()->selectedEdges[0]->tag() :
+                    FlGui::instance()->selectedFaces[0]->tag();
         if(selectContour(type, num, List1)) {
           if(type == ENT_CURVE)
             scriptAddCurveLoop(List1, GModel::current()->getFileName(), &num);
@@ -1163,9 +1257,10 @@ static void add_new_surface_volume(int mode)
               Msg::StatusGl("Select hole boundaries (if none, press 'e')\n"
                             "[Press 'e' to end selection or 'q' to abort]");
             else
-              Msg::StatusGl("Select hole boundaries\n"
-                            "[Press 'e' to end selection, 'u' to undo last selection "
-                            "or 'q' to abort]");
+              Msg::StatusGl(
+                "Select hole boundaries\n"
+                "[Press 'e' to end selection, 'u' to undo last selection "
+                "or 'q' to abort]");
             ib = FlGui::instance()->selectEntity(type);
             if(!FlGui::available()) return;
             if(ib == 'q') {
@@ -1180,14 +1275,14 @@ static void add_new_surface_volume(int mode)
               break;
             }
             if(ib == 'u') {
-              if(List_Nbr(List1) > 0){
+              if(List_Nbr(List1) > 0) {
                 int num;
-                List_Read(List1, List_Nbr(List1)-1, &num);
-                if(type == ENT_CURVE){
+                List_Read(List1, List_Nbr(List1) - 1, &num);
+                if(type == ENT_CURVE) {
                   GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
                   if(ge) ge->setSelection(0);
                 }
-                else{
+                else {
                   GFace *gf = GModel::current()->getFaceByTag(abs(num));
                   if(gf) gf->setSelection(0);
                 }
@@ -1197,17 +1292,19 @@ static void add_new_surface_volume(int mode)
             }
             if(ib == 'l') {
               int size = (type == ENT_CURVE) ?
-                FlGui::instance()->selectedEdges.size() :
-                FlGui::instance()->selectedFaces.size();
-              for(int i=0;i<size;i++){
+                           FlGui::instance()->selectedEdges.size() :
+                           FlGui::instance()->selectedFaces.size();
+              for(int i = 0; i < size; i++) {
                 int num = (type == ENT_CURVE) ?
-                  FlGui::instance()->selectedEdges[i]->tag() :
-                  FlGui::instance()->selectedFaces[i]->tag();
+                            FlGui::instance()->selectedEdges[i]->tag() :
+                            FlGui::instance()->selectedFaces[i]->tag();
                 if(selectContour(type, num, List1)) {
                   if(type == ENT_CURVE)
-                    scriptAddCurveLoop(List1, GModel::current()->getFileName(), &num);
+                    scriptAddCurveLoop(List1, GModel::current()->getFileName(),
+                                       &num);
                   else
-                    scriptAddSurfaceLoop(List1, GModel::current()->getFileName(), &num);
+                    scriptAddSurfaceLoop(
+                      List1, GModel::current()->getFileName(), &num);
                   List_Reset(List1);
                   List_Add(List2, &num);
                 }
@@ -1218,14 +1315,20 @@ static void add_new_surface_volume(int mode)
                            "surface/volume creation");
             }
           }
-          List_Unique(List2,fcmp_absint);
+          List_Unique(List2, fcmp_absint);
           if(List_Nbr(List2)) {
-            switch (mode) {
-            case 0: scriptAddSurface("Plane Surface", List2,
-                                     GModel::current()->getFileName()); break;
-            case 1: scriptAddSurface("Surface", List2,
-                                     GModel::current()->getFileName()); break;
-            case 2: scriptAddVolume(List2, GModel::current()->getFileName()); break;
+            switch(mode) {
+            case 0:
+              scriptAddSurface("Plane Surface", List2,
+                               GModel::current()->getFileName());
+              break;
+            case 1:
+              scriptAddSurface("Surface", List2,
+                               GModel::current()->getFileName());
+              break;
+            case 2:
+              scriptAddVolume(List2, GModel::current()->getFileName());
+              break;
             }
             FlGui::instance()->resetVisibility();
             GModel::current()->setSelection(0);
@@ -1237,7 +1340,7 @@ static void add_new_surface_volume(int mode)
     }
   }
 
- stopall:
+stopall:
   List_Delete(List1);
   List_Delete(List2);
 
@@ -1247,7 +1350,7 @@ static void add_new_surface_volume(int mode)
 static void geometry_elementary_set_factory_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string str((const char*)data);
+  std::string str((const char *)data);
   scriptSetFactory(str, GModel::current()->getFileName());
   if(FlGui::available())
     Msg::StatusBar(false, "Setting %s factory", str.c_str());
@@ -1257,7 +1360,7 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
 
-  std::string str((const char*)data);
+  std::string str((const char *)data);
   if(str == "Parameter")
     FlGui::instance()->elementaryContext->show(0);
   else if(str == "Point")
@@ -1304,7 +1407,8 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
     Msg::Error("Unknown entity to create: %s", str.c_str());
 }
 
-static void action_point_line_surface_volume(int action, const std::string &onwhat="")
+static void action_point_line_surface_volume(int action,
+                                             const std::string &onwhat = "")
 {
   drawContext::global()->draw();
 
@@ -1324,62 +1428,81 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
 
     std::string str;
     int type;
-    if(what == "Point"){
+    if(what == "Point") {
       str = "points";
       type = ENT_POINT;
     }
-    else if(what == "Curve"){
+    else if(what == "Curve") {
       str = "curves";
       type = ENT_CURVE;
     }
-    else if(what == "Surface"){
+    else if(what == "Surface") {
       str = "surfaces";
       type = ENT_SURFACE;
     }
-    else if(what == "Volume"){
+    else if(what == "Volume") {
       str = "volumes";
       type = ENT_VOLUME;
     }
-    else{
-      switch(FlGui::instance()->transformContext->choice->value()){
-      case 1: str = "points"; type = ENT_POINT; break;
-      case 2: str = "curves"; type = ENT_CURVE; break;
-      case 3: str = "surfaces"; type = ENT_SURFACE; break;
-      case 4: str = "volumes"; type = ENT_VOLUME; break;
-      default: str = "entities"; type = ENT_ALL; break;
+    else {
+      switch(FlGui::instance()->transformContext->choice->value()) {
+      case 1:
+        str = "points";
+        type = ENT_POINT;
+        break;
+      case 2:
+        str = "curves";
+        type = ENT_CURVE;
+        break;
+      case 3:
+        str = "surfaces";
+        type = ENT_SURFACE;
+        break;
+      case 4:
+        str = "volumes";
+        type = ENT_VOLUME;
+        break;
+      default:
+        str = "entities";
+        type = ENT_ALL;
+        break;
       }
     }
 
     if(dimTags.empty())
       Msg::StatusGl("Select %s\n"
-                    "[Press 'e' to end selection or 'q' to abort]", str.c_str());
+                    "[Press 'e' to end selection or 'q' to abort]",
+                    str.c_str());
     else
       Msg::StatusGl("Select %s\n"
                     "[Press 'e' to end selection, 'u' to undo last selection "
-                    "or 'q' to abort]", str.c_str());
+                    "or 'q' to abort]",
+                    str.c_str());
 
     char ib = FlGui::instance()->selectEntity(type);
     if(!FlGui::available()) return;
     if(ib == 'l') {
-      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size();
+          i++) {
         FlGui::instance()->selectedVertices[i]->setSelection(1);
         std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
         if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
           dimTags.push_back(t);
       }
-      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++) {
         FlGui::instance()->selectedEdges[i]->setSelection(1);
         std::pair<int, int> t(1, FlGui::instance()->selectedEdges[i]->tag());
         if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
           dimTags.push_back(t);
       }
-      for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++) {
         FlGui::instance()->selectedFaces[i]->setSelection(1);
         std::pair<int, int> t(2, FlGui::instance()->selectedFaces[i]->tag());
         if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
           dimTags.push_back(t);
       }
-      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size();
+          i++) {
         FlGui::instance()->selectedRegions[i]->setSelection(1);
         std::pair<int, int> t(3, FlGui::instance()->selectedRegions[i]->tag());
         if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
@@ -1389,37 +1512,39 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
     }
     if(ib == 'r') {
       std::vector<std::pair<int, int> >::iterator it;
-      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size();
+          i++) {
         std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
         it = std::find(dimTags.begin(), dimTags.end(), t);
-        if(it != dimTags.end()){
+        if(it != dimTags.end()) {
           dimTags.erase(it);
           GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
           if(ge) ge->setSelection(0);
         }
       }
-      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++) {
         std::pair<int, int> t(1, FlGui::instance()->selectedEdges[i]->tag());
         it = std::find(dimTags.begin(), dimTags.end(), t);
-        if(it != dimTags.end()){
+        if(it != dimTags.end()) {
           dimTags.erase(it);
           GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
           if(ge) ge->setSelection(0);
         }
       }
-      for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++) {
         std::pair<int, int> t(2, FlGui::instance()->selectedFaces[i]->tag());
         it = std::find(dimTags.begin(), dimTags.end(), t);
-        if(it != dimTags.end()){
+        if(it != dimTags.end()) {
           dimTags.erase(it);
           GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
           if(ge) ge->setSelection(0);
         }
       }
-      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size();
+          i++) {
         std::pair<int, int> t(3, FlGui::instance()->selectedRegions[i]->tag());
         it = std::find(dimTags.begin(), dimTags.end(), t);
-        if(it != dimTags.end()){
+        if(it != dimTags.end()) {
           dimTags.erase(it);
           GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
           if(ge) ge->setSelection(0);
@@ -1436,18 +1561,17 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
         drawContext::global()->draw();
       }
     }
-    if(ib == 'i') {
-      Msg::Error("Inverting selection!");
-    }
+    if(ib == 'i') { Msg::Error("Inverting selection!"); }
     if(ib == 'e') {
-      if(dimTags.size()){
-        switch (action) {
+      if(dimTags.size()) {
+        switch(action) {
         case 0:
-          scriptTranslate(GModel::current()->getFileName(), dimTags,
-                          FlGui::instance()->transformContext->input[0]->value(),
-                          FlGui::instance()->transformContext->input[1]->value(),
-                          FlGui::instance()->transformContext->input[2]->value(),
-                          FlGui::instance()->transformContext->butt[0]->value());
+          scriptTranslate(
+            GModel::current()->getFileName(), dimTags,
+            FlGui::instance()->transformContext->input[0]->value(),
+            FlGui::instance()->transformContext->input[1]->value(),
+            FlGui::instance()->transformContext->input[2]->value(),
+            FlGui::instance()->transformContext->butt[0]->value());
           break;
         case 1:
           scriptRotate(GModel::current()->getFileName(), dimTags,
@@ -1501,106 +1625,100 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
                         FlGui::instance()->transformContext->butt[10]->value());
           break;
         case 6:
-          scriptDeleteEntities(GModel::current()->getFileName(), dimTags,
-                               FlGui::instance()->transformContext->butt[6]->value());
+          scriptDeleteEntities(
+            GModel::current()->getFileName(), dimTags,
+            FlGui::instance()->transformContext->butt[6]->value());
           break;
         case 7:
-        case 11:
-          {
-            std::vector<int> tags;
-            int dim = 0;
-            for(std::size_t i = 0; i < dimTags.size(); i++){
-              if((dimTags[i].first == 0 && what == "Point") ||
-                 (dimTags[i].first == 1 && what == "Curve") ||
-                 (dimTags[i].first == 2 && what == "Surface") ||
-                 (dimTags[i].first == 3 && what == "Volume")) {
-                dim = dimTags[i].first;
-                tags.push_back(dimTags[i].second);
-              }
+        case 11: {
+          std::vector<int> tags;
+          int dim = 0;
+          for(std::size_t i = 0; i < dimTags.size(); i++) {
+            if((dimTags[i].first == 0 && what == "Point") ||
+               (dimTags[i].first == 1 && what == "Curve") ||
+               (dimTags[i].first == 2 && what == "Surface") ||
+               (dimTags[i].first == 3 && what == "Volume")) {
+              dim = dimTags[i].first;
+              tags.push_back(dimTags[i].second);
             }
-            scriptAddRemovePhysicalGroup(GModel::current()->getFileName(), what, tags,
-                                         FlGui::instance()->physicalContext->selectedName,
-                                         FlGui::instance()->physicalContext->selectedTag,
-                                         FlGui::instance()->physicalContext->append,
-                                         FlGui::instance()->physicalContext->mode);
-            if(!FlGui::available()) return;
+          }
+          scriptAddRemovePhysicalGroup(
+            GModel::current()->getFileName(), what, tags,
+            FlGui::instance()->physicalContext->selectedName,
+            FlGui::instance()->physicalContext->selectedTag,
+            FlGui::instance()->physicalContext->append,
+            FlGui::instance()->physicalContext->mode);
+          if(!FlGui::available()) return;
 
-            // ask clients to update using the new physical definition
-            onelab_cb(nullptr, (void*)"check");
+          // ask clients to update using the new physical definition
+          onelab_cb(nullptr, (void *)"check");
 
-            // if onelab context parameters are defined for the physical group,
-            // show the parameter definition window and abort the physical group
-            // creation loop (otherwise events cannot be processed by outside
-            // codes through the api, as we are stuck in the while(1) for the
-            // physical creation mode)
-            std::vector<std::string> param;
-            onelab::server::instance()->getParameterNames
-              (param, "ONELAB Context/" + what + " Template");
-            if(tags.size() && param.size() && action == 7) {
-              FlGui::instance()->getCurrentOpenglWindow()->quitSelection = 1;
-              FlGui::instance()->getCurrentOpenglWindow()->selectionMode = false;
-              GModel::current()->setSelection(0);
-              FlGui::instance()->onelabContext->show(dim, tags[0]);
-              ib = 'z';
-            }
-            else {
-              FlGui::instance()->physicalContext->show(what, action == 7 ? false : true);
-            }
+          // if onelab context parameters are defined for the physical group,
+          // show the parameter definition window and abort the physical group
+          // creation loop (otherwise events cannot be processed by outside
+          // codes through the api, as we are stuck in the while(1) for the
+          // physical creation mode)
+          std::vector<std::string> param;
+          onelab::server::instance()->getParameterNames(
+            param, "ONELAB Context/" + what + " Template");
+          if(tags.size() && param.size() && action == 7) {
+            FlGui::instance()->getCurrentOpenglWindow()->quitSelection = 1;
+            FlGui::instance()->getCurrentOpenglWindow()->selectionMode = false;
+            GModel::current()->setSelection(0);
+            FlGui::instance()->onelabContext->show(dim, tags[0]);
+            ib = 'z';
           }
-          break;
-        case 8:
-          {
-            std::vector<int> tags;
-            for(std::size_t i = 0; i < dimTags.size(); i++){
-              if(dimTags[i].first == 0 && what == "Point")
-                tags.push_back(dimTags[i].second);
-            }
-            if(tags.size())
-              scriptSetMeshSize(GModel::current()->getFileName(), tags,
-                                FlGui::instance()->meshContext->input[0]->value());
+          else {
+            FlGui::instance()->physicalContext->show(what, action == 7 ? false :
+                                                                         true);
           }
-          break;
-        case 9:
-          {
-            std::vector<int> tags;
-            for(std::size_t i = 0; i < dimTags.size(); i++){
-              if(dimTags[i].first == 2 && what == "Surface")
-                tags.push_back(dimTags[i].second);
-            }
-            scriptRecombineSurface(GModel::current()->getFileName(), tags);
+        } break;
+        case 8: {
+          std::vector<int> tags;
+          for(std::size_t i = 0; i < dimTags.size(); i++) {
+            if(dimTags[i].first == 0 && what == "Point")
+              tags.push_back(dimTags[i].second);
           }
-          break;
-        case 10:
-          {
-            std::vector<int> tags;
-            for(std::size_t i = 0; i < dimTags.size(); i++){
-              if((dimTags[i].first == 1 && what == "Curve") ||
-                 (dimTags[i].first == 2 && what == "Surface") ||
-                 (dimTags[i].first == 3 && what == "Volume"))
-                tags.push_back(dimTags[i].second);
-            }
-            scriptSetCompound(GModel::current()->getFileName(), what, tags);
+          if(tags.size())
+            scriptSetMeshSize(
+              GModel::current()->getFileName(), tags,
+              FlGui::instance()->meshContext->input[0]->value());
+        } break;
+        case 9: {
+          std::vector<int> tags;
+          for(std::size_t i = 0; i < dimTags.size(); i++) {
+            if(dimTags[i].first == 2 && what == "Surface")
+              tags.push_back(dimTags[i].second);
           }
-          break;
+          scriptRecombineSurface(GModel::current()->getFileName(), tags);
+        } break;
+        case 10: {
+          std::vector<int> tags;
+          for(std::size_t i = 0; i < dimTags.size(); i++) {
+            if((dimTags[i].first == 1 && what == "Curve") ||
+               (dimTags[i].first == 2 && what == "Surface") ||
+               (dimTags[i].first == 3 && what == "Volume"))
+              tags.push_back(dimTags[i].second);
+          }
+          scriptSetCompound(GModel::current()->getFileName(), what, tags);
+        } break;
         case 12:
-          if(dimTagsSaved.empty()){
+          if(dimTagsSaved.empty()) {
             dimTagsSaved = dimTags;
             dimTags.clear();
             what = "Curve";
             continue;
           }
-          else{
+          else {
             std::vector<int> l;
-            for(std::size_t i = 0; i < dimTags.size(); i++){
+            for(std::size_t i = 0; i < dimTags.size(); i++) {
               if(dimTags[i].first == 1) l.push_back(dimTags[i].second);
             }
             scriptAddPipe(GModel::current()->getFileName(), dimTagsSaved, l);
             dimTagsSaved.clear();
           }
           break;
-        default:
-          Msg::Error("Unknown action on selected entities");
-          break;
+        default: Msg::Error("Unknown action on selected entities"); break;
         }
         dimTags.clear();
         FlGui::instance()->resetVisibility();
@@ -1689,7 +1807,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
   if(!data) return;
   FlGui::instance()->transformContext->show(4);
 
-  std::string mode((const char*)data);
+  std::string mode((const char *)data);
   bool selectObject = true;
   std::vector<std::pair<int, int> > object, tool;
 
@@ -1700,19 +1818,21 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
       Msg::StatusGl("Select object\n"
                     "[Press 'e' to end selection or 'q' to abort]");
     else if(selectObject)
-      Msg::StatusGl("Select object\n"
-                    "[Press 'e' to end selection, 'u' to undo last selection or "
-                    "'q' to abort]");
+      Msg::StatusGl(
+        "Select object\n"
+        "[Press 'e' to end selection, 'u' to undo last selection or "
+        "'q' to abort]");
     else if(tool.empty())
       Msg::StatusGl("Select tool\n"
                     "[Press 'e' to end selection or 'q' to abort]");
     else
-      Msg::StatusGl("Select tool\n"
-                    "[Press 'e' to end selection, 'u' to undo last selection or "
-                    "'q' to abort]");
+      Msg::StatusGl(
+        "Select tool\n"
+        "[Press 'e' to end selection, 'u' to undo last selection or "
+        "'q' to abort]");
 
     int type = ENT_ALL;
-    switch(FlGui::instance()->transformContext->choice->value()){
+    switch(FlGui::instance()->transformContext->choice->value()) {
     case 1: type = ENT_POINT; break;
     case 2: type = ENT_CURVE; break;
     case 3: type = ENT_SURFACE; break;
@@ -1722,8 +1842,8 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(type);
     if(!FlGui::available()) return;
     if(ib == 'l') {
-      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
-        if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++) {
+        if(FlGui::instance()->selectedEdges[i]->getSelection() != 1) {
           FlGui::instance()->selectedEdges[i]->setSelection(1);
           std::pair<int, int> t(1, FlGui::instance()->selectedEdges[i]->tag());
           if(selectObject)
@@ -1732,8 +1852,8 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
             tool.push_back(t);
         }
       }
-      for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
-        if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++) {
+        if(FlGui::instance()->selectedFaces[i]->getSelection() != 1) {
           FlGui::instance()->selectedFaces[i]->setSelection(1);
           std::pair<int, int> t(2, FlGui::instance()->selectedFaces[i]->tag());
           if(selectObject)
@@ -1742,10 +1862,12 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
             tool.push_back(t);
         }
       }
-      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
-        if(FlGui::instance()->selectedRegions[i]->getSelection() != 1){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size();
+          i++) {
+        if(FlGui::instance()->selectedRegions[i]->getSelection() != 1) {
           FlGui::instance()->selectedRegions[i]->setSelection(1);
-          std::pair<int, int> t(3, FlGui::instance()->selectedRegions[i]->tag());
+          std::pair<int, int> t(3,
+                                FlGui::instance()->selectedRegions[i]->tag());
           if(selectObject)
             object.push_back(t);
           else
@@ -1754,16 +1876,17 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'r') {
-      Msg::Warning("Entity de-selection not supported yet during boolean operation");
+      Msg::Warning(
+        "Entity de-selection not supported yet during boolean operation");
     }
     if(ib == 'u') {
-      if(selectObject && object.size()){
+      if(selectObject && object.size()) {
         std::pair<int, int> t = object.back();
         GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
         if(ge) ge->setSelection(0);
         object.pop_back();
       }
-      else if(tool.size()){
+      else if(tool.size()) {
         std::pair<int, int> t = tool.back();
         GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
         if(ge) ge->setSelection(0);
@@ -1771,20 +1894,21 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'e') {
-      if(selectObject){
+      if(selectObject) {
         if(object.empty())
           Msg::Error("At least one object must be selected");
         else
           selectObject = false;
       }
-      else if(tool.empty() && mode != "BooleanFragments"){
+      else if(tool.empty() && mode != "BooleanFragments") {
         Msg::Error("At least one tool must be selected");
       }
-      else{
+      else {
         scriptBoolean(GModel::current()->getFileName(), mode, object, tool,
                       FlGui::instance()->transformContext->butt[4]->value(),
                       tool.size() ?
-                      FlGui::instance()->transformContext->butt[5]->value() : 0);
+                        FlGui::instance()->transformContext->butt[5]->value() :
+                        0);
         GModel::current()->setSelection(0);
         selectObject = true;
         object.clear();
@@ -1819,59 +1943,64 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
       Msg::StatusGl("Select volume\n"
                     "[Press 'e' to end selection or 'q' to abort]");
     else if(selectRegions)
-      Msg::StatusGl("Select volume\n"
-                    "[Press 'e' to end selection, 'u' to undo last selection or "
-                    "'q' to abort]");
+      Msg::StatusGl(
+        "Select volume\n"
+        "[Press 'e' to end selection, 'u' to undo last selection or "
+        "'q' to abort]");
     else if(edges.empty())
       Msg::StatusGl("Select curve\n"
                     "[Press 'e' to end selection or 'q' to abort]");
     else
-      Msg::StatusGl("Select curve\n"
-                    "[Press 'e' to end selection, 'u' to undo last selection or "
-                    "'q' to abort]");
+      Msg::StatusGl(
+        "Select curve\n"
+        "[Press 'e' to end selection, 'u' to undo last selection or "
+        "'q' to abort]");
 
-    char ib = FlGui::instance()->selectEntity(selectRegions ? ENT_VOLUME : ENT_CURVE);
+    char ib =
+      FlGui::instance()->selectEntity(selectRegions ? ENT_VOLUME : ENT_CURVE);
     if(!FlGui::available()) return;
     if(ib == 'l') {
-      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
-        if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++) {
+        if(FlGui::instance()->selectedEdges[i]->getSelection() != 1) {
           FlGui::instance()->selectedEdges[i]->setSelection(1);
           edges.push_back(FlGui::instance()->selectedEdges[i]->tag());
         }
       }
-      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
-        if(FlGui::instance()->selectedRegions[i]->getSelection() != 1){
+      for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size();
+          i++) {
+        if(FlGui::instance()->selectedRegions[i]->getSelection() != 1) {
           FlGui::instance()->selectedRegions[i]->setSelection(1);
           regions.push_back(FlGui::instance()->selectedRegions[i]->tag());
         }
       }
     }
     if(ib == 'r') {
-      Msg::Warning("Entity de-selection not supported yet during boolean operation");
+      Msg::Warning(
+        "Entity de-selection not supported yet during boolean operation");
     }
     if(ib == 'u') {
-      if(selectRegions && regions.size()){
+      if(selectRegions && regions.size()) {
         GRegion *ge = GModel::current()->getRegionByTag(regions.back());
         if(ge) ge->setSelection(0);
         regions.pop_back();
       }
-      else if(edges.size()){
+      else if(edges.size()) {
         GEdge *ge = GModel::current()->getEdgeByTag(edges.back());
         if(ge) ge->setSelection(0);
         edges.pop_back();
       }
     }
     if(ib == 'e') {
-      if(selectRegions){
+      if(selectRegions) {
         if(regions.empty())
           Msg::Error("At least one volume must be selected");
         else
           selectRegions = false;
       }
-      else if(edges.empty()){
+      else if(edges.empty()) {
         Msg::Error("At least one curve must be selected");
       }
-      else{
+      else {
         scriptFillet(GModel::current()->getFileName(), regions, edges,
                      FlGui::instance()->transformContext->input[20]->value());
         GModel::current()->setSelection(0);
@@ -1898,15 +2027,13 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
   Msg::StatusGl("Select curve to split\n"
                 "[Press 'q' to abort]");
-  GEdge* edge_to_split = nullptr;
-  while(1){
+  GEdge *edge_to_split = nullptr;
+  while(1) {
     if(!FlGui::available()) return;
 
     char ib = FlGui::instance()->selectEntity(ENT_CURVE);
     if(!FlGui::available()) return;
-    if(ib == 'q') {
-      break;
-    }
+    if(ib == 'q') { break; }
     if(!FlGui::instance()->selectedEdges.empty()) {
       edge_to_split = FlGui::instance()->selectedEdges[0];
       edge_to_split->setSelection(1);
@@ -1920,19 +2047,19 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
                 "[Press 'e' to end selection or 'q' to abort]");
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
-  while(1){
+  while(1) {
     if(!FlGui::available()) return;
 
     char ib = FlGui::instance()->selectEntity(ENT_POINT);
     if(!FlGui::available()) return;
-    if(ib == 'q') {
+    if(ib == 'q') { break; }
+    if(ib == 'e' && edge_to_split) {
+      scriptSplitCurve(edge_to_split->tag(), List1,
+                       GModel::current()->getFileName());
       break;
     }
-    if(ib == 'e' && edge_to_split){
-      scriptSplitCurve(edge_to_split->tag(), List1, GModel::current()->getFileName());
-      break;
-    }
-    for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+    for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size();
+        i++) {
       int tag = FlGui::instance()->selectedVertices[i]->tag();
       int index = List_ISearchSeq(List1, &tag, fcmp_int);
       if(index < 0) List_Add(List1, &tag);
@@ -1953,7 +2080,7 @@ static void geometry_elementary_coherence_cb(Fl_Widget *w, void *data)
 static void geometry_physical_add_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string what((const char*)data);
+  std::string what((const char *)data);
   FlGui::instance()->physicalContext->show(what, false);
   action_point_line_surface_volume(7, what);
   if(!FlGui::available()) return;
@@ -1963,7 +2090,7 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
 static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string what((const char*)data);
+  std::string what((const char *)data);
   FlGui::instance()->physicalContext->show(what, true);
   action_point_line_surface_volume(11, what);
   if(FlGui::available()) FlGui::instance()->physicalContext->hide();
@@ -1972,7 +2099,7 @@ static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
 void mesh_save_cb(Fl_Widget *w, void *data)
 {
   std::string name = CTX::instance()->outputFileName;
-  if(name.empty()){
+  if(name.empty()) {
     if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
       name = GetDefaultFileName(FORMAT_MSH);
     else
@@ -2005,32 +2132,33 @@ void mesh_3d_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void mesh_modify_parts(Fl_Widget *w, void *data, const std::string &action)
+static void mesh_modify_parts(Fl_Widget *w, void *data,
+                              const std::string &action)
 {
-  const char *str = (const char*)data;
+  const char *str = (const char *)data;
   int what;
 
-  if(!strcmp(str, "elements")){
+  if(!strcmp(str, "elements")) {
     CTX::instance()->pickElements = 1;
     what = ENT_ALL;
   }
-  else if(!strcmp(str, "curves")){
+  else if(!strcmp(str, "curves")) {
     CTX::instance()->pickElements = 0;
     what = ENT_CURVE;
   }
-  else if(!strcmp(str, "surfaces")){
+  else if(!strcmp(str, "surfaces")) {
     CTX::instance()->pickElements = 0;
     what = ENT_SURFACE;
   }
-  else if(!strcmp(str, "volumes")){
+  else if(!strcmp(str, "volumes")) {
     CTX::instance()->pickElements = 0;
     what = ENT_VOLUME;
   }
   else
     return;
 
-  std::vector<MElement*> ele;
-  std::vector<GEntity*> ent;
+  std::vector<MElement *> ele;
+  std::vector<GEntity *> ent;
 
   while(1) {
     if(!FlGui::available()) return;
@@ -2039,39 +2167,46 @@ static void mesh_modify_parts(Fl_Widget *w, void *data, const std::string &actio
     drawContext::global()->draw();
 
     if(ele.size() || ent.size())
-      Msg::StatusGl("Select %s\n"
-                    "[Press 'e' to end selection, 'u' to undo last selection or "
-                    "'q' to abort]", str);
+      Msg::StatusGl(
+        "Select %s\n"
+        "[Press 'e' to end selection, 'u' to undo last selection or "
+        "'q' to abort]",
+        str);
     else
       Msg::StatusGl("Select %s\n"
-                    "[Press 'e' to end selection or 'q' to abort]", str);
+                    "[Press 'e' to end selection or 'q' to abort]",
+                    str);
 
     char ib = FlGui::instance()->selectEntity(what);
     if(!FlGui::available()) return;
     if(ib == 'l') {
-      if(CTX::instance()->pickElements){
-        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++){
-          if(FlGui::instance()->selectedElements[i]->getVisibility() != 2){
+      if(CTX::instance()->pickElements) {
+        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
+            i++) {
+          if(FlGui::instance()->selectedElements[i]->getVisibility() != 2) {
             FlGui::instance()->selectedElements[i]->setVisibility(2);
             ele.push_back(FlGui::instance()->selectedElements[i]);
           }
         }
       }
-      else{
-        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
-          if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
+      else {
+        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size();
+            i++) {
+          if(FlGui::instance()->selectedEdges[i]->getSelection() != 1) {
             FlGui::instance()->selectedEdges[i]->setSelection(1);
             ent.push_back(FlGui::instance()->selectedEdges[i]);
           }
         }
-        for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
-          if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size();
+            i++) {
+          if(FlGui::instance()->selectedFaces[i]->getSelection() != 1) {
             FlGui::instance()->selectedFaces[i]->setSelection(1);
             ent.push_back(FlGui::instance()->selectedFaces[i]);
           }
         }
-        for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
-          if(FlGui::instance()->selectedRegions[i]->getSelection() != 1){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size();
+            i++) {
+          if(FlGui::instance()->selectedRegions[i]->getSelection() != 1) {
             FlGui::instance()->selectedRegions[i]->setSelection(1);
             ent.push_back(FlGui::instance()->selectedRegions[i]);
           }
@@ -2079,41 +2214,43 @@ static void mesh_modify_parts(Fl_Widget *w, void *data, const std::string &actio
       }
     }
     if(ib == 'r') {
-      if(CTX::instance()->pickElements){
-        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size(); i++)
+      if(CTX::instance()->pickElements) {
+        for(std::size_t i = 0; i < FlGui::instance()->selectedElements.size();
+            i++)
           FlGui::instance()->selectedElements[i]->setVisibility(1);
       }
-      else{
+      else {
         for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
           FlGui::instance()->selectedEdges[i]->setSelection(0);
         for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
           FlGui::instance()->selectedFaces[i]->setSelection(0);
-        for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
+        for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size();
+            i++)
           FlGui::instance()->selectedRegions[i]->setSelection(0);
       }
     }
     if(ib == 'u') {
-      if(CTX::instance()->pickElements){
-        if(ele.size()){
+      if(CTX::instance()->pickElements) {
+        if(ele.size()) {
           ele[ele.size() - 1]->setVisibility(1);
           ele.pop_back();
         }
       }
-      else{
-        if(ent.size()){
+      else {
+        if(ent.size()) {
           ent[ent.size() - 1]->setSelection(0);
           ent.pop_back();
         }
       }
     }
     if(ib == 'e') {
-      if(CTX::instance()->pickElements){
+      if(CTX::instance()->pickElements) {
         for(std::size_t i = 0; i < ele.size(); i++)
           if(ele[i]->getVisibility() == 2) ele[i]->setVisibility(0);
       }
-      else{
+      else {
         for(std::size_t i = 0; i < ent.size(); i++)
-          if(ent[i]->getSelection() == 1){
+          if(ent[i]->getSelection() == 1) {
             ent[i]->setVisibility(0);
             ent[i]->setSelection(0);
           }
@@ -2162,19 +2299,19 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(ENT_ALL);
     if(!FlGui::available()) return;
     if(ib == 'l') {
-      if(FlGui::instance()->selectedElements.size()){
+      if(FlGui::instance()->selectedElements.size()) {
         MElement *ele = FlGui::instance()->selectedElements[0];
         GModel::current()->setSelection(0);
         ele->setVisibility(2);
         CTX::instance()->mesh.changed = ENT_ALL;
         drawContext::global()->draw();
-        std::vector<std::string> info = SplitString(ele->getInfoString(true), '\n');
+        std::vector<std::string> info =
+          SplitString(ele->getInfoString(true), '\n');
         for(std::size_t i = 0; i < info.size(); i++)
           Msg::Direct("%s", info[i].c_str());
-        if(CTX::instance()->tooltips){
+        if(CTX::instance()->tooltips) {
           std::string str;
-          for(std::size_t i = 0; i < info.size(); i++)
-            str += info[i] + "\n";
+          for(std::size_t i = 0; i < info.size(); i++) str += info[i] + "\n";
           FlGui::instance()->getCurrentOpenglWindow()->drawTooltip(str);
         }
       }
@@ -2214,7 +2351,7 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
   std::vector<int> tags;
-  computeCrossField (GModel::current(), tags);
+  computeCrossField(GModel::current(), tags);
   drawContext::global()->draw();
 }
 
@@ -2250,10 +2387,7 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
 }
 #endif
 
-static void mesh_partition_cb(Fl_Widget *w, void *data)
-{
-  partition_dialog();
-}
+static void mesh_partition_cb(Fl_Widget *w, void *data) { partition_dialog(); }
 
 static void mesh_unpartition_cb(Fl_Widget *w, void *data)
 {
@@ -2296,7 +2430,7 @@ static void mesh_define_recombine_cb(Fl_Widget *w, void *data)
 static void mesh_define_transfinite(int dim)
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  switch (dim) {
+  switch(dim) {
   case 1: opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1); break;
   case 2: opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1); break;
   case 3: opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1); break;
@@ -2308,7 +2442,7 @@ static void mesh_define_transfinite(int dim)
   while(1) {
     if(!FlGui::available()) return;
 
-    switch (dim) {
+    switch(dim) {
     case 1:
       if(p.empty())
         Msg::StatusGl("Select curves\n"
@@ -2330,18 +2464,17 @@ static void mesh_define_transfinite(int dim)
       ib = FlGui::instance()->selectEntity(ENT_VOLUME);
       if(!FlGui::available()) return;
       break;
-    default:
-      ib = 'l';
-      break;
+    default: ib = 'l'; break;
     }
 
     if(ib == 'e') {
       if(dim == 1) {
         if(p.size())
-          scriptSetTransfiniteLine(p, GModel::current()->getFileName(),
-                                   FlGui::instance()->meshContext->choice[0]->text(),
-                                   FlGui::instance()->meshContext->input[2]->value(),
-                                   FlGui::instance()->meshContext->input[1]->value());
+          scriptSetTransfiniteLine(
+            p, GModel::current()->getFileName(),
+            FlGui::instance()->meshContext->choice[0]->text(),
+            FlGui::instance()->meshContext->input[2]->value(),
+            FlGui::instance()->meshContext->input[1]->value());
       }
       GModel::current()->setSelection(0);
       drawContext::global()->draw();
@@ -2349,7 +2482,7 @@ static void mesh_define_transfinite(int dim)
     }
     if(ib == 'u') {
       if(dim == 1) {
-        if(p.size()){
+        if(p.size()) {
           GEdge *ge = GModel::current()->getEdgeByTag(p.back());
           if(ge) ge->setSelection(0);
           drawContext::global()->draw();
@@ -2367,9 +2500,10 @@ static void mesh_define_transfinite(int dim)
                    "transfinite definition");
     }
     if(ib == 'l') {
-      switch (dim) {
+      switch(dim) {
       case 1:
-        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size();
+            i++) {
           FlGui::instance()->selectedEdges[i]->setSelection(1);
           p.push_back(FlGui::instance()->selectedEdges[i]->tag());
         }
@@ -2377,12 +2511,12 @@ static void mesh_define_transfinite(int dim)
         break;
       case 2:
       case 3:
-        if(dim == 2){
+        if(dim == 2) {
           FlGui::instance()->selectedFaces[0]->setSelection(1);
           drawContext::global()->draw();
           p.push_back(FlGui::instance()->selectedFaces[0]->tag());
         }
-        else{
+        else {
           FlGui::instance()->selectedRegions[0]->setSelection(1);
           drawContext::global()->draw();
           p.push_back(FlGui::instance()->selectedRegions[0]->tag());
@@ -2394,13 +2528,15 @@ static void mesh_define_transfinite(int dim)
             Msg::StatusGl("Select (ordered) boundary points\n"
                           "[Press 'e' to end selection or 'q' to abort]");
           else
-            Msg::StatusGl("Select (ordered) boundary points\n"
-                          "[Press 'e' to end selection, 'u' to undo last selection "
-                          "or 'q' to abort]");
+            Msg::StatusGl(
+              "Select (ordered) boundary points\n"
+              "[Press 'e' to end selection, 'u' to undo last selection "
+              "or 'q' to abort]");
           ib = FlGui::instance()->selectEntity(ENT_POINT);
           if(!FlGui::available()) return;
           if(ib == 'l') {
-            for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+            for(std::size_t i = 0;
+                i < FlGui::instance()->selectedVertices.size(); i++) {
               FlGui::instance()->selectedVertices[i]->setSelection(1);
               p.push_back(FlGui::instance()->selectedVertices[i]->tag());
               break;
@@ -2408,7 +2544,7 @@ static void mesh_define_transfinite(int dim)
             drawContext::global()->draw();
           }
           if(ib == 'u') {
-            if(p.size() > 1){
+            if(p.size() > 1) {
               GVertex *gv = GModel::current()->getVertexByTag(p.back());
               if(gv) gv->setSelection(0);
               drawContext::global()->draw();
@@ -2420,11 +2556,12 @@ static void mesh_define_transfinite(int dim)
                          "transfinite definition");
           }
           if(ib == 'e') {
-            switch (dim) {
+            switch(dim) {
             case 2:
               if((p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1))
-                scriptSetTransfiniteSurface(p, GModel::current()->getFileName(),
-                                            FlGui::instance()->meshContext->choice[1]->text());
+                scriptSetTransfiniteSurface(
+                  p, GModel::current()->getFileName(),
+                  FlGui::instance()->meshContext->choice[1]->text());
               else
                 Msg::Error("Wrong number of points for mesh constraint");
               break;
@@ -2451,7 +2588,7 @@ static void mesh_define_transfinite(int dim)
     }
   }
 
- stopall:
+stopall:
   Msg::StatusGl("");
 }
 
@@ -2477,24 +2614,28 @@ static void mesh_define_transfinite_volume_cb(Fl_Widget *w, void *data)
 static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string what((const char*)data);
+  std::string what((const char *)data);
   std::vector<int> entities;
   bool selectEntities = true;
 
-  int type; const char *str = "";
-  if(what == "Surface"){
-    type = ENT_SURFACE; str = "surfaces";
+  int type;
+  const char *str = "";
+  if(what == "Surface") {
+    type = ENT_SURFACE;
+    str = "surfaces";
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(what == "Curve"){
-    type = ENT_CURVE; str = "curves";
+  else if(what == "Curve") {
+    type = ENT_CURVE;
+    str = "curves";
     opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(what == "Point"){
-    type = ENT_POINT; str = "points";
+  else if(what == "Point") {
+    type = ENT_POINT;
+    str = "points";
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else{
+  else {
     Msg::Error("Unknown type of entity to embed: %s", what.c_str());
     return;
   }
@@ -2503,17 +2644,21 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
 
     if(entities.empty())
       Msg::StatusGl("Select %s\n"
-                    "[Press 'e' to end selection or 'q' to abort]", str);
+                    "[Press 'e' to end selection or 'q' to abort]",
+                    str);
     else if(selectEntities)
-      Msg::StatusGl("Select %s\n"
-                    "[Press 'e' to end selection, 'u' to undo last selection or "
-                    "'q' to abort]", str);
+      Msg::StatusGl(
+        "Select %s\n"
+        "[Press 'e' to end selection, 'u' to undo last selection or "
+        "'q' to abort]",
+        str);
     else
       Msg::StatusGl("Select entity in which to embed the %s\n"
-                    "[Press 'q' to abort]", str);
+                    "[Press 'q' to abort]",
+                    str);
     int t = type;
-    if(!selectEntities){
-      switch(FlGui::instance()->transformContext->choice->value()){
+    if(!selectEntities) {
+      switch(FlGui::instance()->transformContext->choice->value()) {
       case 2: t = ENT_CURVE; break;
       case 3: t = ENT_SURFACE; break;
       case 4: t = ENT_VOLUME; break;
@@ -2523,32 +2668,35 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(t);
     if(!FlGui::available()) return;
     if(ib == 'l') {
-      if(selectEntities && what == "Point"){
-        for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
-          if(FlGui::instance()->selectedVertices[i]->getSelection() != 1){
+      if(selectEntities && what == "Point") {
+        for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size();
+            i++) {
+          if(FlGui::instance()->selectedVertices[i]->getSelection() != 1) {
             FlGui::instance()->selectedVertices[i]->setSelection(1);
             entities.push_back(FlGui::instance()->selectedVertices[i]->tag());
           }
         }
       }
-      else if(selectEntities && what == "Curve"){
-        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
-          if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
+      else if(selectEntities && what == "Curve") {
+        for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size();
+            i++) {
+          if(FlGui::instance()->selectedEdges[i]->getSelection() != 1) {
             FlGui::instance()->selectedEdges[i]->setSelection(1);
             entities.push_back(FlGui::instance()->selectedEdges[i]->tag());
           }
         }
       }
-      else if(selectEntities && what == "Surface"){
-        for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
-          if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
+      else if(selectEntities && what == "Surface") {
+        for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size();
+            i++) {
+          if(FlGui::instance()->selectedFaces[i]->getSelection() != 1) {
             FlGui::instance()->selectedFaces[i]->setSelection(1);
             entities.push_back(FlGui::instance()->selectedFaces[i]->tag());
           }
         }
       }
       else if(!selectEntities && (FlGui::instance()->selectedFaces.size() ||
-                                  FlGui::instance()->selectedRegions.size())){
+                                  FlGui::instance()->selectedRegions.size())) {
         int dim = FlGui::instance()->selectedFaces.size() ? 2 : 3;
         if(dim == 2)
           FlGui::instance()->selectedFaces[0]->setSelection(1);
@@ -2556,7 +2704,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
           FlGui::instance()->selectedRegions[0]->setSelection(1);
         drawContext::global()->draw();
         int tag = (dim == 2) ? FlGui::instance()->selectedFaces[0]->tag() :
-          FlGui::instance()->selectedRegions[0]->tag();
+                               FlGui::instance()->selectedRegions[0]->tag();
         scriptEmbed(GModel::current()->getFileName(), what, entities, dim, tag);
         GModel::current()->setSelection(0);
         selectEntities = true;
@@ -2564,10 +2712,11 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'r') {
-      Msg::Warning("Entity de-selection not supported yet during boolean operation");
+      Msg::Warning(
+        "Entity de-selection not supported yet during boolean operation");
     }
     if(ib == 'u') {
-      if(selectEntities && entities.size()){
+      if(selectEntities && entities.size()) {
         int dim = (what == "Surface") ? 2 : (what == "Curve") ? 1 : 0;
         GEntity *ge = GModel::current()->getEntityByTag(dim, entities.back());
         if(ge) ge->setSelection(0);
@@ -2575,7 +2724,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'e') {
-      if(selectEntities){
+      if(selectEntities) {
         if(entities.empty())
           Msg::Error("At least one entity must be selected");
         else
@@ -2597,6 +2746,8 @@ static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
 {
   action_point_line_surface_volume(10, (const char *)data);
 }
+
+// clang-format off
 
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics since they
 // are already defined as global shortcuts)
@@ -2740,6 +2891,8 @@ static Fl_Menu_Item sysbar_table[] = {
 
 #endif
 
+// clang-format on
+
 static graphicWindow *getGraphicWindow(Fl_Widget *w)
 {
   if(!w || !w->parent()) return FlGui::instance()->graph[0];
@@ -2751,114 +2904,118 @@ static graphicWindow *getGraphicWindow(Fl_Widget *w)
 
 void status_xyz1p_cb(Fl_Widget *w, void *data)
 {
-  const char *str = (const char*)data;
+  const char *str = (const char *)data;
 
-  std::vector<openglWindow*> gls;
+  std::vector<openglWindow *> gls;
   if(w)
     gls = getGraphicWindow(w)->gl;
   else
     gls.push_back(FlGui::instance()->getCurrentOpenglWindow());
 
-  for(std::size_t i = 0; i < gls.size(); i++){
+  for(std::size_t i = 0; i < gls.size(); i++) {
     drawContext *ctx = gls[i]->getDrawContext();
-    if(!strcmp(str, "r")){
+    if(!strcmp(str, "r")) {
       // rotate +90 or -90 (shift) degress around axis perp to the
       // screen, or sync rotation with first window (Ctrl)
       double axis[3] = {0., 0., 1.};
-      if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META)){
-        if(i != 0){
+      if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META)) {
+        if(i != 0) {
           drawContext *ctx0 = gls[0]->getDrawContext();
           ctx->setQuaternion(ctx0->quaternion[0], ctx0->quaternion[1],
                              ctx0->quaternion[2], ctx0->quaternion[3]);
         }
       }
-      else if(!Fl::event_state(FL_SHIFT)){
+      else if(!Fl::event_state(FL_SHIFT)) {
         ctx->addQuaternionFromAxisAndAngle(axis, -90.);
-	if (CTX::instance()->camera) ctx->camera.tiltHeadRight();
+        if(CTX::instance()->camera) ctx->camera.tiltHeadRight();
       }
-      else{
+      else {
         ctx->addQuaternionFromAxisAndAngle(axis, 90.);
-	if (CTX::instance()->camera) ctx->camera.tiltHeadLeft();
+        if(CTX::instance()->camera) ctx->camera.tiltHeadLeft();
       }
     }
-    else if(!strcmp(str, "x")){
+    else if(!strcmp(str, "x")) {
       // set X-axis pointing out or into (shift) the screen
-      if (CTX::instance()->camera) {
-	ctx->camera.alongX();}
-      else{
-	if(!Fl::event_state(FL_SHIFT)){
-	  ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = -90.;
-	}
-	else{
-	  ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 90.;
-	}
-	ctx->setQuaternionFromEulerAngles();
+      if(CTX::instance()->camera) { ctx->camera.alongX(); }
+      else {
+        if(!Fl::event_state(FL_SHIFT)) {
+          ctx->r[0] = -90.;
+          ctx->r[1] = 0.;
+          ctx->r[2] = -90.;
+        }
+        else {
+          ctx->r[0] = -90.;
+          ctx->r[1] = 0.;
+          ctx->r[2] = 90.;
+        }
+        ctx->setQuaternionFromEulerAngles();
       }
     }
-    else if(!strcmp(str, "y")){
+    else if(!strcmp(str, "y")) {
       // set Y-axis pointing out or into (shift) the screen
-      if (CTX::instance()->camera) {
-	ctx->camera.alongY();}
-      else{
-	if(!Fl::event_state(FL_SHIFT)){
-	  ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 180.;
-	}
-	else{
-	  ctx->r[0] = -90.; ctx->r[1] = 0.; ctx->r[2] = 0.;
-	}
-	ctx->setQuaternionFromEulerAngles();
+      if(CTX::instance()->camera) { ctx->camera.alongY(); }
+      else {
+        if(!Fl::event_state(FL_SHIFT)) {
+          ctx->r[0] = -90.;
+          ctx->r[1] = 0.;
+          ctx->r[2] = 180.;
+        }
+        else {
+          ctx->r[0] = -90.;
+          ctx->r[1] = 0.;
+          ctx->r[2] = 0.;
+        }
+        ctx->setQuaternionFromEulerAngles();
       }
     }
-    else if(!strcmp(str, "z")){
+    else if(!strcmp(str, "z")) {
       // set Z-axis pointing out or into (shift) the screen
-      if (CTX::instance()->camera) {
-	ctx->camera.alongZ();}
-      else{
-	if(!Fl::event_state(FL_SHIFT)){
-	  ctx->r[0] = 0.; ctx->r[1] = 0.; ctx->r[2] = 0.;
-	}
-	else{
-	  ctx->r[0] = 0.; ctx->r[1] = 180.; ctx->r[2] = 0.;
-	}
-	ctx->setQuaternionFromEulerAngles();
+      if(CTX::instance()->camera) { ctx->camera.alongZ(); }
+      else {
+        if(!Fl::event_state(FL_SHIFT)) {
+          ctx->r[0] = 0.;
+          ctx->r[1] = 0.;
+          ctx->r[2] = 0.;
+        }
+        else {
+          ctx->r[0] = 0.;
+          ctx->r[1] = 180.;
+          ctx->r[2] = 0.;
+        }
+        ctx->setQuaternionFromEulerAngles();
       }
     }
-    else if(!strcmp(str, "1:1")){
+    else if(!strcmp(str, "1:1")) {
       // if Shift is pressed, reset bounding box around visible
       // entities
-      if(Fl::event_state(FL_SHIFT))
-        SetBoundingBox(true);
+      if(Fl::event_state(FL_SHIFT)) SetBoundingBox(true);
       // reset translation and scaling, or sync translation and
       // scaling with the first window (alt)
-      if (CTX::instance()->camera) {
-	ctx->camera.lookAtCg();
-      }
-      else{
-        if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META)){
-	  if(i != 0){
-	    drawContext *ctx0 = gls[0]->getDrawContext();
-	    for(int j = 0; j < 3; j++){
-	      ctx->t[j] = ctx0->t[j];
-	      ctx->s[j] = ctx0->s[j];
-	    }
-	  }
-	}
-	else{
-	  ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-	  ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
-	}
+      if(CTX::instance()->camera) { ctx->camera.lookAtCg(); }
+      else {
+        if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META)) {
+          if(i != 0) {
+            drawContext *ctx0 = gls[0]->getDrawContext();
+            for(int j = 0; j < 3; j++) {
+              ctx->t[j] = ctx0->t[j];
+              ctx->s[j] = ctx0->s[j];
+            }
+          }
+        }
+        else {
+          ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+          ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+        }
       }
     }
-    else if(!strcmp(str, "reset")){
-      if (CTX::instance()->camera) {
-	ctx->camera.init();
-      }
-      else{
-	// reset everything
-	ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
-	ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
-	ctx->r[0] = ctx->r[1] = ctx->r[2] = 0.;
-	ctx->setQuaternionFromEulerAngles();
+    else if(!strcmp(str, "reset")) {
+      if(CTX::instance()->camera) { ctx->camera.init(); }
+      else {
+        // reset everything
+        ctx->t[0] = ctx->t[1] = ctx->t[2] = 0.;
+        ctx->s[0] = ctx->s[1] = ctx->s[2] = 1.;
+        ctx->r[0] = ctx->r[1] = ctx->r[2] = 0.;
+        ctx->setQuaternionFromEulerAngles();
       }
     }
   }
@@ -2869,7 +3026,7 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
 void quick_access_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string what((const char*)data);
+  std::string what((const char *)data);
   if(what == "general")
     general_options_cb(nullptr, nullptr);
   else if(what == "geometry")
@@ -2878,78 +3035,76 @@ void quick_access_cb(Fl_Widget *w, void *data)
     mesh_options_cb(nullptr, nullptr);
   else if(what == "view")
     view_options_cb(nullptr, (void *)-1);
-  else if(what == "reset_viewport"){
+  else if(what == "reset_viewport") {
     status_xyz1p_cb(nullptr, (void *)"1:1");
     status_xyz1p_cb(nullptr, (void *)"z");
   }
-  else if(what == "select_center"){
+  else if(what == "select_center") {
     opt_general_rotation_center_cg(0, GMSH_SET | GMSH_GUI, 0);
     general_options_ok_cb(nullptr, (void *)"rotation_center");
     general_options_rotation_center_select_cb(nullptr, nullptr);
   }
-  else if(what == "hover_meshes"){
-    opt_general_mouse_hover_meshes(0, GMSH_SET|GMSH_GUI,
-                                   !opt_general_mouse_hover_meshes(0, GMSH_GET, 0));
+  else if(what == "hover_meshes") {
+    opt_general_mouse_hover_meshes(
+      0, GMSH_SET | GMSH_GUI, !opt_general_mouse_hover_meshes(0, GMSH_GET, 0));
   }
-  else if(what == "split_hor"){
-    file_window_cb(nullptr, (void*)"split_h");
+  else if(what == "split_hor") {
+    file_window_cb(nullptr, (void *)"split_h");
   }
-  else if(what == "split_ver"){
-    file_window_cb(nullptr, (void*)"split_v");
+  else if(what == "split_ver") {
+    file_window_cb(nullptr, (void *)"split_v");
   }
-  else if(what == "unsplit"){
-    file_window_cb(nullptr, (void*)"split_u");
+  else if(what == "unsplit") {
+    file_window_cb(nullptr, (void *)"split_u");
   }
-  else if(what == "axes"){
+  else if(what == "axes") {
     int old = opt_general_axes(0, GMSH_GET, 0);
-    opt_general_axes(0, GMSH_SET|GMSH_GUI, old ? 0 : 3);
-    if(!old){
-      opt_general_axes_auto_position(0, GMSH_SET|GMSH_GUI, 0);
+    opt_general_axes(0, GMSH_SET | GMSH_GUI, old ? 0 : 3);
+    if(!old) {
+      opt_general_axes_auto_position(0, GMSH_SET | GMSH_GUI, 0);
       general_options_axes_fit_cb(nullptr, nullptr);
     }
   }
   else if(what == "orthographic")
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 1);
-  else if(what == "perspective"){
+  else if(what == "perspective") {
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 0);
     drawContext::global()->draw();
-    numberOrStringOptionChooser("General", 0, "ClipFactor",
-                                true, "Factor", true, 0.1, 20., 0.1);
+    numberOrStringOptionChooser("General", 0, "ClipFactor", true, "Factor",
+                                true, 0.1, 20., 0.1);
   }
   else if(what == "geometry_points")
-    opt_geometry_points(0, GMSH_SET|GMSH_GUI,
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI,
                         !opt_geometry_points(0, GMSH_GET, 0));
   else if(what == "geometry_curves")
-    opt_geometry_curves(0, GMSH_SET|GMSH_GUI,
-                       !opt_geometry_curves(0, GMSH_GET, 0));
+    opt_geometry_curves(0, GMSH_SET | GMSH_GUI,
+                        !opt_geometry_curves(0, GMSH_GET, 0));
   else if(what == "geometry_surfaces")
-    opt_geometry_surfaces(0, GMSH_SET|GMSH_GUI,
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI,
                           !opt_geometry_surfaces(0, GMSH_GET, 0));
   else if(what == "geometry_volumes")
-    opt_geometry_volumes(0, GMSH_SET|GMSH_GUI,
+    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI,
                          !opt_geometry_volumes(0, GMSH_GET, 0));
   else if(what == "mesh_points")
-    opt_mesh_points(0, GMSH_SET|GMSH_GUI,
-                    !opt_mesh_points(0, GMSH_GET, 0));
+    opt_mesh_points(0, GMSH_SET | GMSH_GUI, !opt_mesh_points(0, GMSH_GET, 0));
   else if(what == "mesh_lines")
-    opt_mesh_lines(0, GMSH_SET|GMSH_GUI,
-                   !opt_mesh_lines(0, GMSH_GET, 0));
+    opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
   else if(what == "mesh_surfaces_edges")
-    opt_mesh_surfaces_edges(0, GMSH_SET|GMSH_GUI,
+    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI,
                             !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
   else if(what == "mesh_surfaces_faces")
-    opt_mesh_surfaces_faces(0, GMSH_SET|GMSH_GUI,
+    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI,
                             !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
   else if(what == "mesh_volumes_edges")
-    opt_mesh_volumes_edges(0, GMSH_SET|GMSH_GUI,
+    opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI,
                            !opt_mesh_volumes_edges(0, GMSH_GET, 0));
   else if(what == "mesh_volumes_faces")
-    opt_mesh_volumes_faces(0, GMSH_SET|GMSH_GUI,
+    opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI,
                            !opt_mesh_volumes_faces(0, GMSH_GET, 0));
   else if(what == "mesh_size")
-    numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor",
-                                true, "Factor", true, 0.01, 100, 0.01);
-  else if(what == "view_element_outlines"){
+    numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor", true, "Factor",
+                                true, 0.01, 100, 0.01);
+  else if(what == "view_element_outlines") {
     int set = 0;
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) &&
@@ -2957,121 +3112,122 @@ void quick_access_cb(Fl_Widget *w, void *data)
         break;
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_show_element(i, GMSH_SET|GMSH_GUI, !set);
+        opt_view_show_element(i, GMSH_SET | GMSH_GUI, !set);
   }
-  else if(what == "view_normal_raise"){
+  else if(what == "view_normal_raise") {
     double val = 0.;
-    for(std::size_t i = 0; i < PView::list.size(); i++){
-      if(opt_view_visible(i, GMSH_GET, 0)){
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0)) {
         double maxval = std::max(fabs(opt_view_min(i, GMSH_GET, 0)),
                                  fabs(opt_view_max(i, GMSH_GET, 0)));
         if(!maxval) maxval = 1.;
         double val2 = 2. * CTX::instance()->lc / maxval;
-        val = numberOrStringOptionChooser("View", i, "NormalRaise",
-                                          true, "Raise", true, -val2, val2, val2 / 200.);
+        val =
+          numberOrStringOptionChooser("View", i, "NormalRaise", true, "Raise",
+                                      true, -val2, val2, val2 / 200.);
         break;
       }
     }
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_normal_raise(i, GMSH_SET|GMSH_GUI, val);
+        opt_view_normal_raise(i, GMSH_SET | GMSH_GUI, val);
   }
-  else if(what == "view_iso"){
+  else if(what == "view_iso") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 1);
+        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, 1);
     drawContext::global()->draw();
     double val = 0.;
-    for(std::size_t i = 0; i < PView::list.size(); i++){
-      if(opt_view_visible(i, GMSH_GET, 0)){
-        val = numberOrStringOptionChooser("View", i, "NbIso",
-                                          true, "Intervals", true, 1, 100, 1);
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0)) {
+        val = numberOrStringOptionChooser("View", i, "NbIso", true, "Intervals",
+                                          true, 1, 100, 1);
         break;
       }
     }
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_nb_iso(i, GMSH_SET|GMSH_GUI, val);
+        opt_view_nb_iso(i, GMSH_SET | GMSH_GUI, val);
   }
-  else if(what == "view_continous"){
+  else if(what == "view_continous") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 2);
+        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, 2);
   }
-  else if(what == "view_filled"){
+  else if(what == "view_filled") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 3);
+        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, 3);
     drawContext::global()->draw();
     double val = 0.;
-    for(std::size_t i = 0; i < PView::list.size(); i++){
-      if(opt_view_visible(i, GMSH_GET, 0)){
-        val = numberOrStringOptionChooser("View", i, "NbIso",
-                                          true, "Intervals", true, 1, 100, 1);
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0)) {
+        val = numberOrStringOptionChooser("View", i, "NbIso", true, "Intervals",
+                                          true, 1, 100, 1);
         break;
       }
     }
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_nb_iso(i, GMSH_SET|GMSH_GUI, val);
+        opt_view_nb_iso(i, GMSH_SET | GMSH_GUI, val);
   }
-  else if(what == "view_numeric"){
+  else if(what == "view_numeric") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 4);
+        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, 4);
   }
-  else if(what == "view_line"){
+  else if(what == "view_line") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_vector_type(i, GMSH_SET|GMSH_GUI, 1);
+        opt_view_vector_type(i, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(what == "view_3d_arrow"){
+  else if(what == "view_3d_arrow") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_vector_type(i, GMSH_SET|GMSH_GUI, 4);
+        opt_view_vector_type(i, GMSH_SET | GMSH_GUI, 4);
   }
-  else if(what == "view_displacement"){
+  else if(what == "view_displacement") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_vector_type(i, GMSH_SET|GMSH_GUI, 5);
+        opt_view_vector_type(i, GMSH_SET | GMSH_GUI, 5);
     drawContext::global()->draw();
     double val = 0.;
-    for(std::size_t i = 0; i < PView::list.size(); i++){
-      if(opt_view_visible(i, GMSH_GET, 0)){
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0)) {
         double maxval = std::max(fabs(opt_view_min(i, GMSH_GET, 0)),
                                  fabs(opt_view_max(i, GMSH_GET, 0)));
         if(!maxval) maxval = 1.;
         double val3 = 2. * CTX::instance()->lc / maxval;
-        val = numberOrStringOptionChooser("View", i, "DisplacementFactor",
-                                          true, "Factor", true, 0, val3, val3 / 100.);
+        val = numberOrStringOptionChooser("View", i, "DisplacementFactor", true,
+                                          "Factor", true, 0, val3, val3 / 100.);
         break;
       }
     }
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_displacement_factor(i, GMSH_SET|GMSH_GUI, val);
+        opt_view_displacement_factor(i, GMSH_SET | GMSH_GUI, val);
   }
-  else if(what == "view_glyph_barycenter"){
+  else if(what == "view_glyph_barycenter") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_glyph_location(i, GMSH_SET|GMSH_GUI, 1);
+        opt_view_glyph_location(i, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(what == "view_glyph_node"){
+  else if(what == "view_glyph_node") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_glyph_location(i, GMSH_SET|GMSH_GUI, 2);
+        opt_view_glyph_location(i, GMSH_SET | GMSH_GUI, 2);
   }
-  else if(what == "view_range_default"){
+  else if(what == "view_range_default") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_range_type(i, GMSH_SET|GMSH_GUI, 1);
+        opt_view_range_type(i, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(what == "view_range_per_step"){
+  else if(what == "view_range_per_step") {
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_range_type(i, GMSH_SET|GMSH_GUI, 3);
+        opt_view_range_type(i, GMSH_SET | GMSH_GUI, 3);
   }
-  else if(what == "mesh_toggle"){
+  else if(what == "mesh_toggle") {
     static int value = 1;
     static int old_p = (int)opt_mesh_points(0, GMSH_GET, 0.);
     static int old_l = (int)opt_mesh_lines(0, GMSH_GET, 0.);
@@ -3079,7 +3235,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
     static int old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
     static int old_ve = (int)opt_mesh_volumes_edges(0, GMSH_GET, 0.);
     static int old_vf = (int)opt_mesh_volumes_faces(0, GMSH_GET, 0.);
-    if(!value){ // retore visibility
+    if(!value) { // retore visibility
       Msg::StatusBar(false, "Mesh display restored");
       value = 1;
       opt_mesh_points(0, GMSH_SET | GMSH_GUI, old_p);
@@ -3089,7 +3245,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
       opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, old_ve);
       opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, old_vf);
     }
-    else{
+    else {
       Msg::StatusBar(false, "Mesh display OFF");
       value = 0;
       old_p = (int)opt_mesh_points(0, GMSH_GET, 0.);
@@ -3112,7 +3268,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
 #endif
 }
 
-static void model_switch_cb(Fl_Widget* w, void *data)
+static void model_switch_cb(Fl_Widget *w, void *data)
 {
   int index = (intptr_t)data;
   GModel::current(index);
@@ -3129,21 +3285,22 @@ static void model_switch_cb(Fl_Widget* w, void *data)
 void status_options_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string what((const char*)data);
+  std::string what((const char *)data);
 
-  if(what == "model"){ // model selection
-    std::vector<char*> tofree;
+  if(what == "model") { // model selection
+    std::vector<char *> tofree;
     std::vector<Fl_Menu_Item> menu;
     int selected = 0;
-    for(std::size_t i = 0; i < GModel::list.size(); i++){
+    for(std::size_t i = 0; i < GModel::list.size(); i++) {
       std::ostringstream sstream;
       sstream << "Model " << i;
       if(GModel::list[i]->getName().size())
         sstream << " - " << GModel::list[i]->getName();
       sstream << " ";
       char *str = strdup(sstream.str().c_str());
-      Fl_Menu_Item menuItem = {str, 0, model_switch_cb, (void*)(intptr_t)i, FL_MENU_RADIO};
-      if(GModel::list[i] == GModel::current()){
+      Fl_Menu_Item menuItem = {str, 0, model_switch_cb, (void *)(intptr_t)i,
+                               FL_MENU_RADIO};
+      if(GModel::list[i] == GModel::current()) {
         selected = i;
         menuItem.flags |= FL_MENU_VALUE;
       }
@@ -3152,22 +3309,23 @@ void status_options_cb(Fl_Widget *w, void *data)
     }
     Fl_Menu_Item it = {nullptr};
     menu.push_back(it);
-    Fl_Menu_Item *m = (Fl_Menu_Item*)(&menu[0])->popup(Fl::event_x(), Fl::event_y(),
-                                                       nullptr, &menu[selected], nullptr);
+    Fl_Menu_Item *m = (Fl_Menu_Item *)(&menu[0])->popup(
+      Fl::event_x(), Fl::event_y(), nullptr, &menu[selected], nullptr);
     if(m) m->do_callback(nullptr);
     for(std::size_t i = 0; i < tofree.size(); i++) free(tofree[i]);
     drawContext::global()->draw();
   }
-  else if(what == "?"){ // display options
+  else if(what == "?") { // display options
     help_options_cb(nullptr, nullptr);
     FlGui::instance()->help->options->show();
   }
-  else if(what == "p"){ // toggle projection mode
+  else if(what == "p") { // toggle projection mode
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI,
                              !opt_general_orthographic(0, GMSH_GET, 0));
     drawContext::global()->draw();
   }
-  else if(what == "quick_access"){ // quick access menu
+  else if(what == "quick_access") { // quick access menu
+    // clang-format off
     static Fl_Menu_Item menu[] = {
       { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport" },
       { "Select rotation center", 0, quick_access_cb, (void*)"select_center" },
@@ -3241,46 +3399,71 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "All view options...", 0, quick_access_cb, (void*)"view", 0, 0, FL_ITALIC },
       { nullptr }
     };
+    // clang-format on
     const int gen = 7, geo = 14, msh = 21, pos = 32, end = 54;
-    if(opt_general_axes(0, GMSH_GET, 0)) menu[gen + 0].set();
-    else menu[gen + 0].clear();
-    if(opt_general_mouse_hover_meshes(0, GMSH_GET, 0)) menu[gen + 1].set();
-    else menu[gen + 1].clear();
+    if(opt_general_axes(0, GMSH_GET, 0))
+      menu[gen + 0].set();
+    else
+      menu[gen + 0].clear();
+    if(opt_general_mouse_hover_meshes(0, GMSH_GET, 0))
+      menu[gen + 1].set();
+    else
+      menu[gen + 1].clear();
     for(std::size_t i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
         menu[gen + 7].set();
-    if(opt_geometry_points(0, GMSH_GET, 0)) menu[geo + 1].set();
-    else menu[geo + 1].clear();
-    if(opt_geometry_curves(0, GMSH_GET, 0)) menu[geo + 2].set();
-    else menu[geo + 2].clear();
-    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[geo + 3].set();
-    else menu[geo + 3].clear();
-    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[geo + 4].set();
-    else menu[geo + 4].clear();
-    if(opt_mesh_points(0, GMSH_GET, 0)) menu[msh + 1].set();
-    else menu[msh + 1].clear();
-    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[msh + 2].set();
-    else menu[msh + 2].clear();
-    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[msh + 3].set();
-    else menu[msh + 3].clear();
-    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[msh + 4].set();
-    else menu[msh + 4].clear();
-    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[msh + 5].set();
-    else menu[msh + 5].clear();
-    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[msh + 6].set();
-    else menu[msh + 6].clear();
-    if(PView::list.empty()){
+    if(opt_geometry_points(0, GMSH_GET, 0))
+      menu[geo + 1].set();
+    else
+      menu[geo + 1].clear();
+    if(opt_geometry_curves(0, GMSH_GET, 0))
+      menu[geo + 2].set();
+    else
+      menu[geo + 2].clear();
+    if(opt_geometry_surfaces(0, GMSH_GET, 0))
+      menu[geo + 3].set();
+    else
+      menu[geo + 3].clear();
+    if(opt_geometry_volumes(0, GMSH_GET, 0))
+      menu[geo + 4].set();
+    else
+      menu[geo + 4].clear();
+    if(opt_mesh_points(0, GMSH_GET, 0))
+      menu[msh + 1].set();
+    else
+      menu[msh + 1].clear();
+    if(opt_mesh_lines(0, GMSH_GET, 0))
+      menu[msh + 2].set();
+    else
+      menu[msh + 2].clear();
+    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0))
+      menu[msh + 3].set();
+    else
+      menu[msh + 3].clear();
+    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0))
+      menu[msh + 4].set();
+    else
+      menu[msh + 4].clear();
+    if(opt_mesh_volumes_edges(0, GMSH_GET, 0))
+      menu[msh + 5].set();
+    else
+      menu[msh + 5].clear();
+    if(opt_mesh_volumes_faces(0, GMSH_GET, 0))
+      menu[msh + 6].set();
+    else
+      menu[msh + 6].clear();
+    if(PView::list.empty()) {
       // if there are no post-processing view, hide all entries below the mesh
       // options...
       menu[pos - 1].flags = 0;
       for(int i = pos; i <= end; i++) menu[i].hide();
     }
-    else{
+    else {
       // otherwise add a divider and show the post-pro view entries
       menu[pos - 1].flags = FL_MENU_DIVIDER;
       for(int i = pos; i <= end; i++) menu[i].show();
       menu[pos].clear();
-      for(std::size_t i = 0; i < PView::list.size(); i++){
+      for(std::size_t i = 0; i < PView::list.size(); i++) {
         if(opt_view_visible(i, GMSH_GET, 0) &&
            opt_view_show_element(i, GMSH_GET, 0)) {
           menu[pos].set();
@@ -3289,20 +3472,22 @@ void status_options_cb(Fl_Widget *w, void *data)
       }
     }
     // popup the menu
-    static Fl_Menu_Item *picked = &menu[msh + 8]; // toggle mesh display - the default
-    picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), nullptr,
-                                        (picked && picked->visible()) ? picked :
-                                        &menu[msh + 8], nullptr);
-    if(picked && picked->callback()) picked->do_callback(nullptr, picked->user_data());
+    static Fl_Menu_Item *picked =
+      &menu[msh + 8]; // toggle mesh display - the default
+    picked = (Fl_Menu_Item *)menu->popup(
+      Fl::event_x(), Fl::event_y(), nullptr,
+      (picked && picked->visible()) ? picked : &menu[msh + 8], nullptr);
+    if(picked && picked->callback())
+      picked->do_callback(nullptr, picked->user_data());
     drawContext::global()->draw();
   }
-  else if(what == "S"){ // mouse selection
-    if(CTX::instance()->mouseSelection){
+  else if(what == "S") { // mouse selection
+    if(CTX::instance()->mouseSelection) {
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
       for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
         for(std::size_t j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->cursor
-            (FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+          FlGui::instance()->graph[i]->gl[j]->cursor(FL_CURSOR_DEFAULT,
+                                                     FL_BLACK, FL_WHITE);
     }
     else
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
@@ -3325,12 +3510,12 @@ void status_play_manual(int time, int incr, bool redraw)
   file_watch_cb(nullptr, nullptr);
 
   if(time) {
-    for(std::size_t i = 0; i < PView::list.size(); i++){
-      if(opt_view_visible(i, GMSH_GET, 0)){
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0)) {
         // skip empty steps
         int step = (int)opt_view_timestep(i, GMSH_GET, 0) + incr;
         int numSteps = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
-        for(int j = 0; j < numSteps; j++){
+        for(int j = 0; j < numSteps; j++) {
           if(PView::list[i]->getData()->hasTimeStep(step))
             break;
           else
@@ -3349,14 +3534,12 @@ void status_play_manual(int time, int incr, bool redraw)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
     else if(incr > 0) {
-      if((view_in_cycle += incr) >= (int)PView::list.size())
-        view_in_cycle = 0;
+      if((view_in_cycle += incr) >= (int)PView::list.size()) view_in_cycle = 0;
       for(int i = 0; i < (int)PView::list.size(); i++)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
     else {
-      if((view_in_cycle += incr) < 0)
-        view_in_cycle = PView::list.size() - 1;
+      if((view_in_cycle += incr) < 0) view_in_cycle = PView::list.size() - 1;
       for(int i = PView::list.size() - 1; i >= 0; i--)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
@@ -3374,11 +3557,11 @@ static void status_play_cb(Fl_Widget *w, void *data)
   while(1) {
     if(!FlGui::available()) return;
 
-    if(stop_anim)
-      break;
+    if(stop_anim) break;
     if(TimeOfDay() - anim_time > CTX::instance()->post.animDelay) {
       anim_time = TimeOfDay();
-      status_play_manual(!CTX::instance()->post.animCycle, CTX::instance()->post.animStep);
+      status_play_manual(!CTX::instance()->post.animCycle,
+                         CTX::instance()->post.animStep);
     }
     FlGui::check();
   }
@@ -3408,25 +3591,27 @@ static void status_rewind_cb(Fl_Widget *w, void *data)
 
 static void status_stepbackward_cb(Fl_Widget *w, void *data)
 {
-  status_play_manual(!CTX::instance()->post.animCycle, -CTX::instance()->post.animStep);
+  status_play_manual(!CTX::instance()->post.animCycle,
+                     -CTX::instance()->post.animStep);
 }
 
 static void status_stepforward_cb(Fl_Widget *w, void *data)
 {
-  status_play_manual(!CTX::instance()->post.animCycle, CTX::instance()->post.animStep);
+  status_play_manual(!CTX::instance()->post.animCycle,
+                     CTX::instance()->post.animStep);
 }
 
 static void remove_graphic_window_cb(Fl_Widget *w, void *data)
 {
-  std::vector<graphicWindow*> graph2;
+  std::vector<graphicWindow *> graph2;
   graphicWindow *deleteMe = nullptr;
-  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++){
+  for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++) {
     if(FlGui::instance()->graph[i]->getWindow() == w)
       deleteMe = FlGui::instance()->graph[i];
     else
       graph2.push_back(FlGui::instance()->graph[i]);
   }
-  if(deleteMe){
+  if(deleteMe) {
     openglWindow::setLastHandled(nullptr);
     FlGui::instance()->graph = graph2;
     delete deleteMe;
@@ -3435,56 +3620,56 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
 
 void show_hide_message_cb(Fl_Widget *w, void *data)
 {
-  graphicWindow *g = getGraphicWindow
-    (FlGui::instance()->getCurrentOpenglWindow()->parent());
+  graphicWindow *g =
+    getGraphicWindow(FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->showHideMessages();
   FlGui::check();
 }
 
 void show_hide_menu_cb(Fl_Widget *w, void *data)
 {
-  graphicWindow *g = getGraphicWindow
-    (FlGui::instance()->getCurrentOpenglWindow()->parent());
+  graphicWindow *g =
+    getGraphicWindow(FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->showHideMenu();
   FlGui::check();
 }
 
 void attach_detach_menu_cb(Fl_Widget *w, void *data)
 {
-  graphicWindow *g = getGraphicWindow
-    (FlGui::instance()->getCurrentOpenglWindow()->parent());
+  graphicWindow *g =
+    getGraphicWindow(FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->attachDetachMenu();
   FlGui::check();
 }
 
 static void message_menu_autoscroll_cb(Fl_Widget *w, void *data)
 {
-  graphicWindow *g = (graphicWindow*)data;
+  graphicWindow *g = (graphicWindow *)data;
   g->setAutoScroll(!g->getAutoScroll());
 }
 
 static void message_menu_clear_cb(Fl_Widget *w, void *data)
 {
-  graphicWindow *g = (graphicWindow*)data;
+  graphicWindow *g = (graphicWindow *)data;
   g->clearMessages();
 }
 
 static void message_menu_save_cb(Fl_Widget *w, void *data)
 {
-  graphicWindow *g = (graphicWindow*)data;
+  graphicWindow *g = (graphicWindow *)data;
   if(fileChooser(FILE_CHOOSER_CREATE, "Save Messages", ""))
     g->saveMessages(fileChooserGetName(1).c_str());
 }
 
 static void message_browser_cb(Fl_Widget *w, void *data)
 {
-  graphicWindow *g = (graphicWindow*)data;
+  graphicWindow *g = (graphicWindow *)data;
   g->copySelectedMessagesToClipboard();
 }
 
 static void message_menu_search_cb(Fl_Widget *w, void *data)
 {
-  graphicWindow *g = (graphicWindow*)data;
+  graphicWindow *g = (graphicWindow *)data;
   g->getMessageBrowser()->clear();
   for(int i = 0; i < (int)g->getMessages().size(); i++)
     g->getMessageBrowser()->add(g->getMessages()[i].c_str());
@@ -3492,7 +3677,7 @@ static void message_menu_search_cb(Fl_Widget *w, void *data)
 
 static void tile_cb(Fl_Widget *w, void *data)
 {
-  if(Fl::event() == FL_RELEASE){
+  if(Fl::event() == FL_RELEASE) {
     // rebuild the tree when we relase the mouse after resizing
     FlGui::instance()->rebuildTree(true);
   }
@@ -3502,25 +3687,29 @@ static void tile_cb(Fl_Widget *w, void *data)
 // FL_ENTER/FL_LEAVE events (the box widget in fltk > 1.1 does that, so that
 // gl->handle() was not called when the mouse moved)
 class dummyBox : public Fl_Box {
- private:
-  int handle(int){ return 0; } // always!
- public:
-  dummyBox(int x, int y, int w, int h, const char *l=nullptr) : Fl_Box(x, y, w, h, l) {}
+private:
+  int handle(int) { return 0; } // always!
+public:
+  dummyBox(int x, int y, int w, int h, const char *l = nullptr)
+    : Fl_Box(x, y, w, h, l)
+  {
+  }
 };
 
 // The main graphic window has a special resize behaviour forcing the message
 // tile to always keep its height
 class mainWindowSpecialResize : public mainWindow {
- public:
-  mainWindowSpecialResize(int w, int h, bool nonModal, const char *l=nullptr)
-    : mainWindow(w, h, nonModal, l) {}
-  virtual void resize(int X,int Y,int W,int H)
+public:
+  mainWindowSpecialResize(int w, int h, bool nonModal, const char *l = nullptr)
+    : mainWindow(w, h, nonModal, l)
+  {
+  }
+  virtual void resize(int X, int Y, int W, int H)
   {
     bool special = (FlGui::available() && shown() &&
-		    this == FlGui::instance()->graph[0]->getWindow());
+                    this == FlGui::instance()->graph[0]->getWindow());
     int mh = 0;
-    if(special)
-      mh = FlGui::instance()->graph[0]->getMessageHeight();
+    if(special) mh = FlGui::instance()->graph[0]->getMessageHeight();
     Fl_Window::resize(X, Y, W, H);
     const int minimum_non_message_height = 100;
     if(special && mh < h() - minimum_non_message_height)
@@ -3528,14 +3717,16 @@ class mainWindowSpecialResize : public mainWindow {
   }
 };
 
-class mainWindowProgress : public Fl_Progress{
+class mainWindowProgress : public Fl_Progress {
 public:
-  mainWindowProgress(int x, int y, int w, int h, const char *l=nullptr) :
-    Fl_Progress(x, y, w, h, l){}
+  mainWindowProgress(int x, int y, int w, int h, const char *l = nullptr)
+    : Fl_Progress(x, y, w, h, l)
+  {
+  }
   int handle(int event)
   {
-    if(event == FL_PUSH){
-      if(FlGui::available()){
+    if(event == FL_PUSH) {
+      if(FlGui::available()) {
         for(std::size_t i = 0; i < FlGui::instance()->graph.size(); i++)
           FlGui::instance()->graph[i]->showHideMessages();
       }
@@ -3559,7 +3750,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   int glheight = CTX::instance()->glSize[1] - mheight;
   int height = mh + glheight + mheight + sh;
   // make sure height < screen height
-  if(height > Fl::h()){
+  if(height > Fl::h()) {
     height = Fl::h();
     glheight = height - mh - mheight - sh;
     CTX::instance()->glSize[1] = glheight + mheight;
@@ -3569,7 +3760,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   int glwidth = CTX::instance()->glSize[0] - twidth;
   int width = glwidth + twidth;
   // make sure width < screen width
-  if(width > Fl::w()){
+  if(width > Fl::w()) {
     width = Fl::w();
     glwidth = width - twidth;
     CTX::instance()->glSize[0] = glwidth + twidth;
@@ -3577,11 +3768,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   // the graphic window should be a "normal" window (neither modal nor
   // non-modal)
-  if(main){
+  if(main) {
     _win = new mainWindowSpecialResize(width, height, false);
     _win->callback(file_quit_cb);
   }
-  else{
+  else {
     _win = new paletteWindow(width, height, false);
     _win->callback(remove_graphic_window_cb);
   }
@@ -3590,15 +3781,15 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _sysbar = nullptr;
 #endif
   _bar = nullptr;
-  if(main){
+  if(main) {
 #if defined(__APPLE__)
-    if(CTX::instance()->systemMenuBar){
+    if(CTX::instance()->systemMenuBar) {
       _sysbar = new Fl_Sys_Menu_Bar(1, 1, 1, 1);
       _sysbar->menu(sysbar_table);
       _sysbar->global();
       fillRecentHistoryMenu();
     }
-    else{
+    else {
 #endif
       _bar = new Fl_Menu_Bar(0, 0, width, BH);
       _bar->menu(bar_table);
@@ -3623,31 +3814,33 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
 
   int w2 = glwidth / 2, h2 = glheight / 2;
-  if(numTiles == 2){
+  if(numTiles == 2) {
     gl.push_back(new openglWindow(twidth, mh, w2, glheight));
     gl.back()->end();
     gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, glheight));
     gl.back()->end();
   }
-  else if(numTiles == 3){
+  else if(numTiles == 3) {
     gl.push_back(new openglWindow(twidth, mh, w2, glheight));
     gl.back()->end();
     gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, h2));
     gl.back()->end();
-    gl.push_back(new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
+    gl.push_back(
+      new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
     gl.back()->end();
   }
-  else if(numTiles == 4){
+  else if(numTiles == 4) {
     gl.push_back(new openglWindow(twidth, mh, w2, h2));
     gl.back()->end();
     gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, h2));
     gl.back()->end();
     gl.push_back(new openglWindow(twidth, mh + h2, w2, glheight - h2));
     gl.back()->end();
-    gl.push_back(new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
+    gl.push_back(
+      new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
     gl.back()->end();
   }
-  else{
+  else {
     gl.push_back(new openglWindow(twidth, mh, glwidth, glheight));
     gl.back()->end();
   }
@@ -3660,7 +3853,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
   for(std::size_t i = 0; i < gl.size(); i++) gl[i]->mode(mode);
 
-  if(main){
+  if(main) {
     _browser = new messageBrowser(twidth, mh + glheight, glwidth, mheight);
     int s = CTX::instance()->msgFontSize;
     _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 2 : s);
@@ -3670,15 +3863,15 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _browser->save_callback(message_menu_save_cb, this);
     _browser->clear_callback(message_menu_clear_cb, this);
   }
-  else{
+  else {
     _browser = nullptr;
   }
 
-  if(main && !detachedMenu){
+  if(main && !detachedMenu) {
     _onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
     _onelab->enableTreeWidgetResize(false);
   }
-  else{
+  else {
     _onelab = nullptr;
   }
 
@@ -3690,7 +3883,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   // if the tree widget is too small it will not be rebuilt correctly (probably
   // a bug)... so impose minimum width
-  int minw = 3 * BB/2 + 4 * WB;
+  int minw = 3 * BB / 2 + 4 * WB;
   if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
   _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
 
@@ -3701,14 +3894,15 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
 
-  _butt[5] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_models");
+  _butt[5] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_models");
   _butt[5]->callback(status_options_cb, (void *)"model");
   _butt[5]->tooltip("Set current (active) model");
   x += sw;
   _butt[8] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "O");
   _butt[8]->callback(status_options_cb, (void *)"quick_access");
   _butt[8]->tooltip("Open quick access menu (also available by double-clicking "
-                     "in the graphic window)");
+                    "in the graphic window)");
   x += sw;
   _butt[0] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "X");
   _butt[0]->callback(status_xyz1p_cb, (void *)"x");
@@ -3722,14 +3916,17 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[2]->callback(status_xyz1p_cb, (void *)"z");
   _butt[2]->tooltip("Set +Z or -Z (Shift) view (Alt+z or Alt+Shift+z)");
   x += sw;
-  _butt[4] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
+  _butt[4] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
   _butt[4]->callback(status_xyz1p_cb, (void *)"r");
-  _butt[4]->tooltip("Rotate +90 or -90 (Shift) degrees, or sync rotations (Ctrl)");
+  _butt[4]->tooltip(
+    "Rotate +90 or -90 (Shift) degrees, or sync rotations (Ctrl)");
   x += sw;
-  _butt[3] = new Fl_Button(x, mh + glheight + mheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
+  _butt[3] = new Fl_Button(x, mh + glheight + mheight + 2, 2 * FL_NORMAL_SIZE,
+                           sht, "1:1");
   _butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
   _butt[3]->tooltip("Set unit scale, sync scale between viewports (Ctrl), "
-                   "or reset bounding box around visible entities (Shift) "
+                    "or reset bounding box around visible entities (Shift) "
                     "(Alt+1, Alt+Ctrl+1, Alt+Shift+1)");
   x += 1.75 * FL_NORMAL_SIZE;
   _butt[9] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "S");
@@ -3737,22 +3934,26 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
   x += sw;
   x += 4;
-  _butt[6] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
+  _butt[6] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
   _butt[6]->callback(status_rewind_cb);
   _butt[6]->tooltip("Rewind animation");
   _butt[6]->deactivate();
   x += sw;
-  _butt[10] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_back");
+  _butt[10] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_back");
   _butt[10]->callback(status_stepbackward_cb);
   _butt[10]->tooltip("Step backward (Left arrow)");
   _butt[10]->deactivate();
   x += sw;
-  _butt[7] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_play");
+  _butt[7] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_play");
   _butt[7]->callback(status_play_cb);
   _butt[7]->tooltip("Play/pause animation");
   _butt[7]->deactivate();
   x += sw;
-  _butt[11] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_forward");
+  _butt[11] =
+    new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_forward");
   _butt[11]->callback(status_stepforward_cb);
   _butt[11]->tooltip("Step forward (Right arrow)");
   _butt[11]->deactivate();
@@ -3765,7 +3966,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
   x += 4;
-  _label = new mainWindowProgress(x, mh + glheight + mheight + 2, width - x - 2, sht);
+  _label =
+    new mainWindowProgress(x, mh + glheight + mheight + 2, width - x - 2, sht);
   _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   if(CTX::instance()->guiColorScheme)
@@ -3773,13 +3975,14 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   else
     _label->color(FL_BACKGROUND_COLOR, FL_DARK2);
 
-  _win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
+  _win->position(CTX::instance()->glPosition[0],
+                 CTX::instance()->glPosition[1]);
   _win->end();
 
-  if(main && detachedMenu){
-    _menuwin = new mainWindow
-      (CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
-       CTX::instance()->nonModalWindows ? true : false, "Gmsh");
+  if(main && detachedMenu) {
+    _menuwin =
+      new mainWindow(CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
+                     CTX::instance()->nonModalWindows ? true : false, "Gmsh");
     _menuwin->callback(file_quit_cb);
     _menuwin->box(GMSH_WINDOW_BOX);
     _onelab = new onelabGroup(0, 0, _menuwin->w(), _menuwin->h());
@@ -3787,10 +3990,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _menuwin->position(CTX::instance()->menuPosition[0],
                        CTX::instance()->menuPosition[1]);
     _menuwin->resizable(_onelab);
-    _menuwin->size_range(_onelab->getMinWindowWidth(), _onelab->getMinWindowHeight());
+    _menuwin->size_range(_onelab->getMinWindowWidth(),
+                         _onelab->getMinWindowHeight());
     _menuwin->end();
   }
-  else{
+  else {
     _menuwin = nullptr;
   }
 }
@@ -3801,7 +4005,7 @@ graphicWindow::~graphicWindow()
   _tile->clear();
   _win->clear();
   Fl::delete_widget(_win);
-  if(_menuwin){
+  if(_menuwin) {
     _menuwin->clear();
     Fl::delete_widget(_menuwin);
   }
@@ -3819,16 +4023,16 @@ void graphicWindow::detachMenu()
   int w = _onelab->w();
   _tile->remove(_onelab);
   _browser->resize(0, _browser->y(), _browser->w() + w, _browser->h());
-  for(std::size_t i = 0; i < gl.size(); i++){
-    if(gl[i]->x() == w){
+  for(std::size_t i = 0; i < gl.size(); i++) {
+    if(gl[i]->x() == w) {
       gl[i]->resize(0, gl[i]->y(), gl[i]->w() + w, gl[i]->h());
     }
   }
   _tile->redraw();
 
-  _menuwin = new mainWindow(_onelab->w(), CTX::instance()->menuSize[1],
-                            CTX::instance()->nonModalWindows ? true : false,
-                            "Gmsh");
+  _menuwin =
+    new mainWindow(_onelab->w(), CTX::instance()->menuSize[1],
+                   CTX::instance()->nonModalWindows ? true : false, "Gmsh");
   _menuwin->callback(file_quit_cb);
   _menuwin->box(GMSH_WINDOW_BOX);
   _onelab->box(FL_FLAT_BOX);
@@ -3837,7 +4041,8 @@ void graphicWindow::detachMenu()
   _menuwin->position(CTX::instance()->menuPosition[0],
                      CTX::instance()->menuPosition[1]);
   _menuwin->resizable(_onelab);
-  _menuwin->size_range(_onelab->getMinWindowWidth(), _onelab->getMinWindowHeight());
+  _menuwin->size_range(_onelab->getMinWindowWidth(),
+                       _onelab->getMinWindowHeight());
   _menuwin->end();
   _menuwin->show();
 
@@ -3859,8 +4064,8 @@ void graphicWindow::attachMenu()
   int w = _onelab->w();
   if(_browser->w() - w < 0) w = _browser->w() / 2;
   _browser->resize(w, _browser->y(), _browser->w() - w, _browser->h());
-  for(std::size_t i = 0; i < gl.size(); i++){
-    if(gl[i]->x() == 0){
+  for(std::size_t i = 0; i < gl.size(); i++) {
+    if(gl[i]->x() == 0) {
       gl[i]->resize(w, gl[i]->y(), gl[i]->w() - w, gl[i]->h());
     }
   }
@@ -3875,14 +4080,16 @@ void graphicWindow::attachMenu()
 
 void graphicWindow::attachDetachMenu()
 {
-  if(_menuwin) attachMenu();
-  else detachMenu();
+  if(_menuwin)
+    attachMenu();
+  else
+    detachMenu();
 }
 
 void graphicWindow::showMenu()
 {
   if(_menuwin || !_onelab || !_win->shown()) return;
-  if(_onelab->w() < FL_NORMAL_SIZE){
+  if(_onelab->w() < FL_NORMAL_SIZE) {
     int width = CTX::instance()->menuSize[0];
     if(width < FL_NORMAL_SIZE) width = _onelab->getMinWindowWidth();
     int maxw = _win->w();
@@ -3903,8 +4110,10 @@ void graphicWindow::hideMenu()
 void graphicWindow::showHideMenu()
 {
   if(_menuwin || !_onelab) return;
-  if(_onelab->w() < FL_NORMAL_SIZE) showMenu();
-  else hideMenu();
+  if(_onelab->w() < FL_NORMAL_SIZE)
+    showMenu();
+  else
+    hideMenu();
 }
 
 int graphicWindow::getMenuWidth()
@@ -3935,21 +4144,20 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
 {
   if(_tile->find(g) == _tile->children()) return false; // not found
 
-  if(how == 'u'){
+  if(how == 'u') {
     // after many tries I cannot figure out how to do this cleanly, so let's be
     // brutal :-)
     int mode = g->mode();
     openglWindow::setLastHandled(nullptr);
-    for(std::size_t i = 0; i < gl.size(); i++){
+    for(std::size_t i = 0; i < gl.size(); i++) {
       _tile->remove(gl[i]);
       delete gl[i];
     }
     gl.clear();
-    openglWindow *g2 = new openglWindow
-      (_tile->x() + (_onelab && !_menuwin ? _onelab->w() : 0),
-       _tile->y(),
-       _tile->w() - (_onelab && !_menuwin ? _onelab->w() : 0),
-       _tile->h() - (_browser ? _browser->h() : 0));
+    openglWindow *g2 = new openglWindow(
+      _tile->x() + (_onelab && !_menuwin ? _onelab->w() : 0), _tile->y(),
+      _tile->w() - (_onelab && !_menuwin ? _onelab->w() : 0),
+      _tile->h() - (_browser ? _browser->h() : 0));
     g2->end();
     g2->mode(mode);
     gl.push_back(g2);
@@ -3957,7 +4165,7 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     g2->show();
     openglWindow::setLastHandled(g2);
   }
-  else{
+  else {
     double fact = (ratio <= 0.) ? 0.01 : (ratio >= 1.) ? 0.99 : ratio;
     // make sure browser is not zero-size when adding children
     if(_browser && _browser->h() == 0) setMessageHeight(1);
@@ -3991,11 +4199,9 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
 void graphicWindow::setStereo(bool st)
 {
   openglWindow::setLastHandled(nullptr);
-  for(std::size_t i = 0; i < gl.size(); i++){
-    if (st) {
-      gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO);
-    }
-    else{
+  for(std::size_t i = 0; i < gl.size(); i++) {
+    if(st) { gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO); }
+    else {
       gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE);
     }
     gl[i]->show();
@@ -4018,24 +4224,22 @@ void graphicWindow::setAnimButtons(int mode)
 void graphicWindow::checkAnimButtons()
 {
   bool play = false;
-  if(CTX::instance()->post.animCycle){
-    play = true;
-  }
-  else{
-    for(std::size_t i = 0; i < PView::list.size(); i++){
-      if(PView::list[i]->getData()->getNumTimeSteps() > 1){
+  if(CTX::instance()->post.animCycle) { play = true; }
+  else {
+    for(std::size_t i = 0; i < PView::list.size(); i++) {
+      if(PView::list[i]->getData()->getNumTimeSteps() > 1) {
         play = true;
         break;
       }
     }
   }
-  if(play){
+  if(play) {
     _butt[6]->activate();
     _butt[7]->activate();
     _butt[10]->activate();
     _butt[11]->activate();
   }
-  else{
+  else {
     _butt[6]->deactivate();
     _butt[7]->deactivate();
     _butt[10]->deactivate();
@@ -4046,7 +4250,7 @@ void graphicWindow::checkAnimButtons()
 void graphicWindow::setMenuWidth(int w)
 {
   if(!_onelab) return;
-  if(_menuwin){
+  if(_menuwin) {
     _menuwin->size(std::max(w, _onelab->getMinWindowWidth()), _menuwin->h());
     _menuwin->redraw();
     return;
@@ -4054,12 +4258,13 @@ void graphicWindow::setMenuWidth(int w)
   if(!_browser) return;
   double dw = w - _onelab->w();
   if(!dw) return;
-  for(std::size_t i = 0; i < gl.size(); i++){
-    if(gl[i]->x() == _onelab->x() + _onelab->w()){
+  for(std::size_t i = 0; i < gl.size(); i++) {
+    if(gl[i]->x() == _onelab->x() + _onelab->w()) {
       gl[i]->resize(gl[i]->x() + dw, gl[i]->y(), gl[i]->w() - dw, gl[i]->h());
     }
   }
-  _browser->resize(_browser->x() + dw, _browser->y(), _browser->w() - dw, _browser->h());
+  _browser->resize(_browser->x() + dw, _browser->y(), _browser->w() - dw,
+                   _browser->h());
   _onelab->resize(_onelab->x(), _onelab->y(), _onelab->w() + dw, _onelab->h());
   _tile->redraw();
 }
@@ -4071,10 +4276,7 @@ int graphicWindow::getGlHeight()
   return h;
 }
 
-int graphicWindow::getGlWidth()
-{
-  return _win->w();
-}
+int graphicWindow::getGlWidth() { return _win->w(); }
 
 void graphicWindow::setGlWidth(int w)
 {
@@ -4097,13 +4299,13 @@ void graphicWindow::setMessageHeight(int h)
   if(!_browser) return;
   int dh = h - _browser->h();
   if(!dh) return;
-  for(std::size_t i = 0; i < gl.size(); i++){
-    if(gl[i]->y() + gl[i]->h() == _browser->y()){
+  for(std::size_t i = 0; i < gl.size(); i++) {
+    if(gl[i]->y() + gl[i]->h() == _browser->y()) {
       gl[i]->resize(gl[i]->x(), gl[i]->y(), gl[i]->w(), gl[i]->h() - dh);
     }
   }
-  _browser->resize(_browser->x(), _browser->y() - dh,
-                   _browser->w(), _browser->h() + dh);
+  _browser->resize(_browser->x(), _browser->y() - dh, _browser->w(),
+                   _browser->h() + dh);
   _tile->redraw();
 }
 
@@ -4111,15 +4313,14 @@ void graphicWindow::showMessages()
 {
   if(!_browser || !_win->shown()) return;
   Msg::ResetErrorCounter();
-  if(_browser->h() < FL_NORMAL_SIZE){
+  if(_browser->h() < FL_NORMAL_SIZE) {
     int height = CTX::instance()->msgSize;
     if(height < FL_NORMAL_SIZE) height = 10 * FL_NORMAL_SIZE;
     int maxh = _win->h() - _bottom->h();
     if(height > maxh) height = maxh / 2;
     setMessageHeight(height);
   }
-  if(_autoScrollMessages)
-    _browser->bottomline(_browser->size());
+  if(_autoScrollMessages) _browser->bottomline(_browser->size());
 }
 
 void graphicWindow::hideMessages()
@@ -4132,8 +4333,10 @@ void graphicWindow::hideMessages()
 void graphicWindow::showHideMessages()
 {
   if(!_browser) return;
-  if(_browser->h() < FL_NORMAL_SIZE) showMessages();
-  else hideMessages();
+  if(_browser->h() < FL_NORMAL_SIZE)
+    showMessages();
+  else
+    hideMessages();
 }
 
 int graphicWindow::getMessageHeight()
@@ -4146,9 +4349,9 @@ void graphicWindow::addMessage(const char *msg)
 {
   if(!_browser) return;
 
-  // this routine can be called from multiple threads, e.g. via Msg::Info calls
-  // in meshGFace(). We should use FlGui::lock/unlock, but currently this does
-  // not seem to work (17/02/2017)
+    // this routine can be called from multiple threads, e.g. via Msg::Info
+    // calls in meshGFace(). We should use FlGui::lock/unlock, but currently
+    // this does not seem to work (17/02/2017)
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
@@ -4225,20 +4428,27 @@ void graphicWindow::changeMessageFontSize(int incr)
 
 static bool check_utf8(const std::string &string)
 {
-  for (int i = 0, ix = string.length(); i < ix; i++){
+  for(int i = 0, ix = string.length(); i < ix; i++) {
     int n;
-    int c = (unsigned char) string[i];
-    if (0x00 <= c && c <= 0x7f) n = 0; // 0bbbbbbb
-    else if ((c & 0xE0) == 0xC0) n = 1; // 110bbbbb
-    else if (c==0xed && i < (ix-1) && ((unsigned char)string[i+1] & 0xa0) == 0xa0)
-      return false; //U+d800 to U+dfff
-    else if ((c & 0xF0) == 0xE0) n = 2; // 1110bbbb
-    else if ((c & 0xF8) == 0xF0) n = 3; // 11110bbb
-    //else if (($c & 0xFC) == 0xF8) n=4; // 111110bb //byte 5, unnecessary in 4 byte UTF-8
-    //else if (($c & 0xFE) == 0xFC) n=5; // 1111110b //byte 6, unnecessary in 4 byte UTF-8
-    else return false;
-    for (int j = 0; j < n && i < ix; j++) { // n bytes matching 10bbbbbb follow ?
-      if ((++i == ix) || (((unsigned char)string[i] & 0xC0) != 0x80))
+    int c = (unsigned char)string[i];
+    if(0x00 <= c && c <= 0x7f)
+      n = 0; // 0bbbbbbb
+    else if((c & 0xE0) == 0xC0)
+      n = 1; // 110bbbbb
+    else if(c == 0xed && i < (ix - 1) &&
+            ((unsigned char)string[i + 1] & 0xa0) == 0xa0)
+      return false; // U+d800 to U+dfff
+    else if((c & 0xF0) == 0xE0)
+      n = 2; // 1110bbbb
+    else if((c & 0xF8) == 0xF0)
+      n = 3; // 11110bbb
+    // else if (($c & 0xFC) == 0xF8) n=4; // 111110bb //byte 5, unnecessary in 4
+    // byte UTF-8 else if (($c & 0xFE) == 0xFC) n=5; // 1111110b //byte 6,
+    // unnecessary in 4 byte UTF-8
+    else
+      return false;
+    for(int j = 0; j < n && i < ix; j++) { // n bytes matching 10bbbbbb follow ?
+      if((++i == ix) || (((unsigned char)string[i] & 0xC0) != 0x80))
         return false;
     }
   }
@@ -4248,22 +4458,20 @@ static bool check_utf8(const std::string &string)
 void graphicWindow::fillRecentHistoryMenu()
 {
 #if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar && !_sysbar)
-    return;
+  if(CTX::instance()->systemMenuBar && !_sysbar) return;
 #endif
 
   Fl_Menu_Item *table = bar_table;
 #if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar)
-    table = sysbar_table;
+  if(CTX::instance()->systemMenuBar) table = sysbar_table;
 #endif
 
   static char recent[10][256];
-  for(int i = 0; i < 10; i++){
-    if(i < (int)CTX::instance()->recentFiles.size()){
+  for(int i = 0; i < 10; i++) {
+    if(i < (int)CTX::instance()->recentFiles.size()) {
       if(check_utf8(CTX::instance()->recentFiles[i]))
-         strcpy(recent[i], CTX::instance()->recentFiles[i].c_str());
-      else{
+        strcpy(recent[i], CTX::instance()->recentFiles[i].c_str());
+      else {
         Msg::Info("Ignoring invalid General.RecentFile%d", i);
         strcpy(recent[i], "");
       }
@@ -4271,16 +4479,15 @@ void graphicWindow::fillRecentHistoryMenu()
     else
       strcpy(recent[i], "");
     table[4 + i].text = recent[i];
-    table[4 + i].user_data_ = (void*)recent[i];
+    table[4 + i].user_data_ = (void *)recent[i];
   }
 
 #if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar)
-    _sysbar->menu(table);
+  if(CTX::instance()->systemMenuBar) _sysbar->menu(table);
 #endif
 }
 
-typedef struct{
+typedef struct {
   std::string label;
   Fl_Callback *callback;
   void *arg;
@@ -4288,185 +4495,165 @@ typedef struct{
 
 static menuItem static_modules[] = {
   {"0Modules/Geometry/Elementary entities/Set geometry kernel/Built-in",
-   (Fl_Callback *)geometry_elementary_set_factory_cb, (void*)"Built-in"} ,
+   (Fl_Callback *)geometry_elementary_set_factory_cb, (void *)"Built-in"},
   {"0Modules/Geometry/Elementary entities/Set geometry kernel/OpenCASCADE",
-   (Fl_Callback *)geometry_elementary_set_factory_cb, (void*)"OpenCASCADE"} ,
+   (Fl_Callback *)geometry_elementary_set_factory_cb, (void *)"OpenCASCADE"},
   {"0Modules/Geometry/Elementary entities/Add/Parameter",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Parameter"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Parameter"},
   {"0Modules/Geometry/Elementary entities/Add/Point",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Point"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Point"},
   {"0Modules/Geometry/Elementary entities/Add/Line",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Line"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Line"},
   {"0Modules/Geometry/Elementary entities/Add/Spline",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Spline"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Spline"},
   {"0Modules/Geometry/Elementary entities/Add/Bezier",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Bezier"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Bezier"},
   {"0Modules/Geometry/Elementary entities/Add/B-Spline",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"BSpline"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"BSpline"},
   {"0Modules/Geometry/Elementary entities/Add/Circle",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Circle"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Circle"},
   {"0Modules/Geometry/Elementary entities/Add/Circle arc",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Circle arc"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Circle arc"},
   {"0Modules/Geometry/Elementary entities/Add/Ellipse",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Ellipse"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Ellipse"},
   {"0Modules/Geometry/Elementary entities/Add/Ellipse arc",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Ellipse arc"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Ellipse arc"},
   {"0Modules/Geometry/Elementary entities/Add/Rectangle",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Rectangle"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Rectangle"},
   {"0Modules/Geometry/Elementary entities/Add/Disk",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Disk"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Disk"},
   {"0Modules/Geometry/Elementary entities/Add/Plane surface",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Plane Surface"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Plane Surface"},
   {"0Modules/Geometry/Elementary entities/Add/Surface filling",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Surface"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Surface"},
   {"0Modules/Geometry/Elementary entities/Add/Sphere",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Sphere"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Sphere"},
   {"0Modules/Geometry/Elementary entities/Add/Cylinder",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Cylinder"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Cylinder"},
   {"0Modules/Geometry/Elementary entities/Add/Box",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Box"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Box"},
   {"0Modules/Geometry/Elementary entities/Add/Torus",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Torus"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Torus"},
   {"0Modules/Geometry/Elementary entities/Add/Cone",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Cone"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Cone"},
   {"0Modules/Geometry/Elementary entities/Add/Wedge",
-  (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Wedge"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Wedge"},
   {"0Modules/Geometry/Elementary entities/Add/Volume",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Volume"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void *)"Volume"},
   {"0Modules/Geometry/Elementary entities/Transform/Translate",
-   (Fl_Callback *)geometry_elementary_translate_cb} ,
+   (Fl_Callback *)geometry_elementary_translate_cb},
   {"0Modules/Geometry/Elementary entities/Transform/Rotate",
-   (Fl_Callback *)geometry_elementary_rotate_cb} ,
+   (Fl_Callback *)geometry_elementary_rotate_cb},
   {"0Modules/Geometry/Elementary entities/Transform/Scale",
-   (Fl_Callback *)geometry_elementary_scale_cb} ,
+   (Fl_Callback *)geometry_elementary_scale_cb},
   {"0Modules/Geometry/Elementary entities/Transform/Symmetry",
-   (Fl_Callback *)geometry_elementary_symmetry_cb} ,
+   (Fl_Callback *)geometry_elementary_symmetry_cb},
   {"0Modules/Geometry/Elementary entities/Extrude/Translate",
-   (Fl_Callback *)geometry_elementary_extrude_translate_cb} ,
+   (Fl_Callback *)geometry_elementary_extrude_translate_cb},
   {"0Modules/Geometry/Elementary entities/Extrude/Rotate",
-   (Fl_Callback *)geometry_elementary_extrude_rotate_cb} ,
+   (Fl_Callback *)geometry_elementary_extrude_rotate_cb},
   {"0Modules/Geometry/Elementary entities/Extrude/Pipe",
-   (Fl_Callback *)geometry_elementary_pipe_cb} ,
+   (Fl_Callback *)geometry_elementary_pipe_cb},
   {"0Modules/Geometry/Elementary entities/Boolean/Intersection",
-   (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanIntersection"} ,
+   (Fl_Callback *)geometry_elementary_boolean_cb,
+   (void *)"BooleanIntersection"},
   {"0Modules/Geometry/Elementary entities/Boolean/Union",
-   (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanUnion"} ,
+   (Fl_Callback *)geometry_elementary_boolean_cb, (void *)"BooleanUnion"},
   {"0Modules/Geometry/Elementary entities/Boolean/Difference",
-   (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanDifference"} ,
+   (Fl_Callback *)geometry_elementary_boolean_cb, (void *)"BooleanDifference"},
   {"0Modules/Geometry/Elementary entities/Boolean/Fragments",
-   (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanFragments"} ,
+   (Fl_Callback *)geometry_elementary_boolean_cb, (void *)"BooleanFragments"},
   {"0Modules/Geometry/Elementary entities/Fillet",
    (Fl_Callback *)geometry_elementary_fillet_cb},
   {"0Modules/Geometry/Elementary entities/Split curve",
-   (Fl_Callback *)geometry_elementary_split_cb, (void*)"Curve"},
+   (Fl_Callback *)geometry_elementary_split_cb, (void *)"Curve"},
   {"0Modules/Geometry/Elementary entities/Delete",
-   (Fl_Callback *)geometry_elementary_delete_cb} ,
+   (Fl_Callback *)geometry_elementary_delete_cb},
   {"0Modules/Geometry/Elementary entities/Coherence",
-   (Fl_Callback *)geometry_elementary_coherence_cb} ,
+   (Fl_Callback *)geometry_elementary_coherence_cb},
   {"0Modules/Geometry/Physical groups/Add/Point",
-   (Fl_Callback *)geometry_physical_add_cb, (void*)"Point" } ,
+   (Fl_Callback *)geometry_physical_add_cb, (void *)"Point"},
   {"0Modules/Geometry/Physical groups/Add/Curve",
-   (Fl_Callback *)geometry_physical_add_cb, (void*)"Curve" } ,
+   (Fl_Callback *)geometry_physical_add_cb, (void *)"Curve"},
   {"0Modules/Geometry/Physical groups/Add/Surface",
-   (Fl_Callback *)geometry_physical_add_cb, (void*)"Surface" } ,
+   (Fl_Callback *)geometry_physical_add_cb, (void *)"Surface"},
   {"0Modules/Geometry/Physical groups/Add/Volume",
-   (Fl_Callback *)geometry_physical_add_cb, (void*)"Volume" } ,
+   (Fl_Callback *)geometry_physical_add_cb, (void *)"Volume"},
   {"0Modules/Geometry/Physical groups/Remove/Point",
-   (Fl_Callback *)geometry_physical_remove_cb, (void*)"Point" } ,
+   (Fl_Callback *)geometry_physical_remove_cb, (void *)"Point"},
   {"0Modules/Geometry/Physical groups/Remove/Curve",
-   (Fl_Callback *)geometry_physical_remove_cb, (void*)"Curve" } ,
+   (Fl_Callback *)geometry_physical_remove_cb, (void *)"Curve"},
   {"0Modules/Geometry/Physical groups/Remove/Surface",
-   (Fl_Callback *)geometry_physical_remove_cb, (void*)"Surface" } ,
+   (Fl_Callback *)geometry_physical_remove_cb, (void *)"Surface"},
   {"0Modules/Geometry/Physical groups/Remove/Volume",
-   (Fl_Callback *)geometry_physical_remove_cb, (void*)"Volume" } ,
-  {"0Modules/Geometry/Reload script",
-   (Fl_Callback *)geometry_reload_cb} ,
+   (Fl_Callback *)geometry_physical_remove_cb, (void *)"Volume"},
+  {"0Modules/Geometry/Reload script", (Fl_Callback *)geometry_reload_cb},
   {"0Modules/Geometry/Remove last script command",
-   (Fl_Callback *)geometry_remove_last_command_cb} ,
-  {"0Modules/Geometry/Edit script",
-   (Fl_Callback *)geometry_edit_cb} ,
-  {"0Modules/Mesh/Define/Size at points",
-   (Fl_Callback *)mesh_define_length_cb  } ,
-  {"0Modules/Mesh/Define/Size fields",
-   (Fl_Callback *)field_cb},
+   (Fl_Callback *)geometry_remove_last_command_cb},
+  {"0Modules/Geometry/Edit script", (Fl_Callback *)geometry_edit_cb},
+  {"0Modules/Mesh/Define/Size at points", (Fl_Callback *)mesh_define_length_cb},
+  {"0Modules/Mesh/Define/Size fields", (Fl_Callback *)field_cb},
   {"0Modules/Mesh/Define/Embedded/Point",
-   (Fl_Callback *)mesh_define_embedded_cb, (void*)"Point" } ,
+   (Fl_Callback *)mesh_define_embedded_cb, (void *)"Point"},
   {"0Modules/Mesh/Define/Embedded/Curve",
-   (Fl_Callback *)mesh_define_embedded_cb, (void*)"Curve" } ,
+   (Fl_Callback *)mesh_define_embedded_cb, (void *)"Curve"},
   {"0Modules/Mesh/Define/Embedded/Surface",
-   (Fl_Callback *)mesh_define_embedded_cb, (void*)"Surface" } ,
+   (Fl_Callback *)mesh_define_embedded_cb, (void *)"Surface"},
   {"0Modules/Mesh/Define/Transfinite/Curve",
-   (Fl_Callback *)mesh_define_transfinite_line_cb} ,
+   (Fl_Callback *)mesh_define_transfinite_line_cb},
   {"0Modules/Mesh/Define/Transfinite/Surface",
-   (Fl_Callback *)mesh_define_transfinite_surface_cb} ,
+   (Fl_Callback *)mesh_define_transfinite_surface_cb},
   {"0Modules/Mesh/Define/Transfinite/Volume",
-   (Fl_Callback *)mesh_define_transfinite_volume_cb} ,
+   (Fl_Callback *)mesh_define_transfinite_volume_cb},
   {"0Modules/Mesh/Define/Compound/Curve",
-   (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Curve"} ,
+   (Fl_Callback *)mesh_define_compound_entity_cb, (void *)"Curve"},
   {"0Modules/Mesh/Define/Compound/Surface",
-   (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Surface"} ,
-  {"0Modules/Mesh/Define/Recombine",
-   (Fl_Callback *)mesh_define_recombine_cb  } ,
-  {"0Modules/Mesh/1D",
-   (Fl_Callback *)mesh_1d_cb} ,
-  {"0Modules/Mesh/2D",
-   (Fl_Callback *)mesh_2d_cb} ,
-  {"0Modules/Mesh/3D",
-   (Fl_Callback *)mesh_3d_cb} ,
-  {"0Modules/Mesh/Optimize 3D",
-   (Fl_Callback *)mesh_optimize_cb} ,
+   (Fl_Callback *)mesh_define_compound_entity_cb, (void *)"Surface"},
+  {"0Modules/Mesh/Define/Recombine", (Fl_Callback *)mesh_define_recombine_cb},
+  {"0Modules/Mesh/1D", (Fl_Callback *)mesh_1d_cb},
+  {"0Modules/Mesh/2D", (Fl_Callback *)mesh_2d_cb},
+  {"0Modules/Mesh/3D", (Fl_Callback *)mesh_3d_cb},
+  {"0Modules/Mesh/Optimize 3D", (Fl_Callback *)mesh_optimize_cb},
 #if defined(HAVE_NETGEN)
   {"0Modules/Mesh/Optimize 3D (Netgen)",
-   (Fl_Callback *)mesh_optimize_netgen_cb} ,
+   (Fl_Callback *)mesh_optimize_netgen_cb},
 #endif
-  {"0Modules/Mesh/Set order 1",
-   (Fl_Callback *)mesh_degree_cb, (void*)1},
-  {"0Modules/Mesh/Set order 2",
-   (Fl_Callback *)mesh_degree_cb, (void*)2},
-  {"0Modules/Mesh/Set order 3",
-   (Fl_Callback *)mesh_degree_cb, (void*)3},
-  {"0Modules/Mesh/High-order tools",
-   (Fl_Callback *)highordertools_cb},
-  {"0Modules/Mesh/Refine by splitting",
-   (Fl_Callback *)mesh_refine_cb} ,
+  {"0Modules/Mesh/Set order 1", (Fl_Callback *)mesh_degree_cb, (void *)1},
+  {"0Modules/Mesh/Set order 2", (Fl_Callback *)mesh_degree_cb, (void *)2},
+  {"0Modules/Mesh/Set order 3", (Fl_Callback *)mesh_degree_cb, (void *)3},
+  {"0Modules/Mesh/High-order tools", (Fl_Callback *)highordertools_cb},
+  {"0Modules/Mesh/Refine by splitting", (Fl_Callback *)mesh_refine_cb},
 #if defined(HAVE_METIS)
-  {"0Modules/Mesh/Partition",
-   (Fl_Callback *)mesh_partition_cb} ,
-  {"0Modules/Mesh/Unpartition",
-    (Fl_Callback *)mesh_unpartition_cb} ,
+  {"0Modules/Mesh/Partition", (Fl_Callback *)mesh_partition_cb},
+  {"0Modules/Mesh/Unpartition", (Fl_Callback *)mesh_unpartition_cb},
 #endif
-  {"0Modules/Mesh/Smooth 2D",
-   (Fl_Callback *)mesh_smooth_cb} ,
-  {"0Modules/Mesh/Recombine 2D",
-   (Fl_Callback *)mesh_recombine_cb} ,
-  {"0Modules/Mesh/Reclassify 2D",
-   (Fl_Callback *)mesh_classify_cb} ,
+  {"0Modules/Mesh/Smooth 2D", (Fl_Callback *)mesh_smooth_cb},
+  {"0Modules/Mesh/Recombine 2D", (Fl_Callback *)mesh_recombine_cb},
+  {"0Modules/Mesh/Reclassify 2D", (Fl_Callback *)mesh_classify_cb},
   {"0Modules/Mesh/Experimental/Compute quad layout",
-   (Fl_Callback *)mesh_cross_compute_cb} ,
+   (Fl_Callback *)mesh_cross_compute_cb},
 #if defined(HAVE_METIS)
   {"0Modules/Mesh/Experimental/Convert old partitioning",
-    (Fl_Callback *)mesh_convert_old_partitioning_cb} ,
+   (Fl_Callback *)mesh_convert_old_partitioning_cb},
 #endif
-  {"0Modules/Mesh/Reverse/Elements",
-   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"elements"} ,
-  {"0Modules/Mesh/Reverse/Curves",
-   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"curves"} ,
-  {"0Modules/Mesh/Reverse/Surfaces",
-   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"surfaces"} ,
-  {"0Modules/Mesh/Reverse/Volumes",
-   (Fl_Callback *)mesh_reverse_parts_cb, (void*)"volumes"} ,
-  {"0Modules/Mesh/Delete/Elements",
-   (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
-  {"0Modules/Mesh/Delete/Curves",
-   (Fl_Callback *)mesh_delete_parts_cb, (void*)"curves"} ,
-  {"0Modules/Mesh/Delete/Surfaces",
-   (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
-  {"0Modules/Mesh/Delete/Volumes",
-   (Fl_Callback *)mesh_delete_parts_cb, (void*)"volumes"} ,
-  {"0Modules/Mesh/Inspect",
-   (Fl_Callback *)mesh_inspect_cb} ,
-  {"0Modules/Mesh/Save",
-   (Fl_Callback *)mesh_save_cb} ,
+  {"0Modules/Mesh/Reverse/Elements", (Fl_Callback *)mesh_reverse_parts_cb,
+   (void *)"elements"},
+  {"0Modules/Mesh/Reverse/Curves", (Fl_Callback *)mesh_reverse_parts_cb,
+   (void *)"curves"},
+  {"0Modules/Mesh/Reverse/Surfaces", (Fl_Callback *)mesh_reverse_parts_cb,
+   (void *)"surfaces"},
+  {"0Modules/Mesh/Reverse/Volumes", (Fl_Callback *)mesh_reverse_parts_cb,
+   (void *)"volumes"},
+  {"0Modules/Mesh/Delete/Elements", (Fl_Callback *)mesh_delete_parts_cb,
+   (void *)"elements"},
+  {"0Modules/Mesh/Delete/Curves", (Fl_Callback *)mesh_delete_parts_cb,
+   (void *)"curves"},
+  {"0Modules/Mesh/Delete/Surfaces", (Fl_Callback *)mesh_delete_parts_cb,
+   (void *)"surfaces"},
+  {"0Modules/Mesh/Delete/Volumes", (Fl_Callback *)mesh_delete_parts_cb,
+   (void *)"volumes"},
+  {"0Modules/Mesh/Inspect", (Fl_Callback *)mesh_inspect_cb},
+  {"0Modules/Mesh/Save", (Fl_Callback *)mesh_save_cb},
 };
 
 void onelabGroup::_addGmshMenus()
@@ -4474,11 +4661,13 @@ void onelabGroup::_addGmshMenus()
   _tree->sortorder(FL_TREE_SORT_NONE);
 
   // add static geometry and mesh module items
-  for(std::size_t i = 0; i < sizeof(static_modules) / sizeof(static_modules[0]); i++)
-    _addMenu(static_modules[i].label, static_modules[i].callback, static_modules[i].arg);
+  for(std::size_t i = 0; i < sizeof(static_modules) / sizeof(static_modules[0]);
+      i++)
+    _addMenu(static_modules[i].label, static_modules[i].callback,
+             static_modules[i].arg);
 
   // add dynamic solver module items
-  for(int i = 0; i < 5; i++){
+  for(int i = 0; i < 5; i++) {
     std::string name = opt_solver_name(i, GMSH_GET, "");
     if(name.size()) _addSolverMenu(i);
   }
@@ -4488,12 +4677,11 @@ void onelabGroup::_addGmshMenus()
 
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
 
-  if(_firstBuild){
+  if(_firstBuild) {
     _firstBuild = false;
     Fl_Tree_Item *n0 = _tree->find_item("0Modules");
-    for(Fl_Tree_Item *n = n0; n; n = n->next()){
-      if(!n->is_root() && n->has_children() && n->depth() > 1)
-        n->close();
+    for(Fl_Tree_Item *n = n0; n; n = n->next()) {
+      if(!n->is_root() && n->has_children() && n->depth() > 1) n->close();
     }
   }
 }
@@ -4502,8 +4690,8 @@ std::set<std::string> onelabGroup::_getClosedGmshMenus()
 {
   std::set<std::string> closed;
   Fl_Tree_Item *n0 = _tree->find_item("0Modules");
-  for(Fl_Tree_Item *n = n0; n; n = n->next()){
-    if(!n->is_root() && n->has_children() && n->is_close()){
+  for(Fl_Tree_Item *n = n0; n; n = n->next()) {
+    if(!n->is_root() && n->has_children() && n->is_close()) {
       char path[1024];
       _tree->item_pathname(path, sizeof(path), n);
       closed.insert(path);

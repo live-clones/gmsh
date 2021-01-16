@@ -250,8 +250,7 @@ BGMBase::get_nodal_values(const MElement *e,
   std::vector<std::vector<double> > res(e->getNumVertices());
 
   for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-    auto itfind =
-      data.find(const_cast<MVertex *>(e->getVertex(i)));
+    auto itfind = data.find(const_cast<MVertex *>(e->getVertex(i)));
     for(int j = 0; j < 3; j++) res[i].push_back((itfind->second)[j]);
   }
   return res;

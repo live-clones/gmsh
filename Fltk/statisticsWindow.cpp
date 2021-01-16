@@ -82,10 +82,10 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
           d[e->getNum()].push_back(e->minSIGEShapeMeasure());
       }
     }
-    std::string name =
-      (qmh == QMH_SICN_3D) ?
-        "SICN" :
-        (qmh == QMH_GAMMA_3D) ? "Gamma" : (qmh == QMH_SIGE_3D) ? "SIGE" : "";
+    std::string name = (qmh == QMH_SICN_3D)  ? "SICN" :
+                       (qmh == QMH_GAMMA_3D) ? "Gamma" :
+                       (qmh == QMH_SIGE_3D)  ? "SIGE" :
+                                               "";
     new PView(name, "ElementData", GModel::current(), d);
   }
 
@@ -174,8 +174,9 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       butt[4]->callback(statistics_histogram_cb, (void *)&qmh4);
       butt[5]->callback(statistics_histogram_cb, (void *)&qmh5);
 
-      visible = new Fl_Check_Button(2 * WB, 2 * WB + 17 * BH + WB,  width - 4 * WB,
-                                    BH, "Compute statistics for visible entities only");
+      visible =
+        new Fl_Check_Button(2 * WB, 2 * WB + 17 * BH + WB, width - 4 * WB, BH,
+                            "Compute statistics for visible entities only");
 
       group[1]->end();
     }

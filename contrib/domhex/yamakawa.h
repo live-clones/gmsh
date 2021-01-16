@@ -206,15 +206,15 @@ private:
 
 public:
   Tuple()
-    : vertex1(nullptr), vertex2(nullptr), vertex3(nullptr), element(nullptr), gf(nullptr),
-      hash(0)
+    : vertex1(nullptr), vertex2(nullptr), vertex3(nullptr), element(nullptr),
+      gf(nullptr), hash(0)
   {
   }
 
   Tuple(MVertex *const a, MVertex *const b, MVertex *const c,
         MElement *const element2, GFace *const gf2)
-    : vertex1(nullptr), vertex2(nullptr), vertex3(nullptr), element(element2), gf(gf2),
-      hash(a->getNum() + b->getNum() + c->getNum())
+    : vertex1(nullptr), vertex2(nullptr), vertex3(nullptr), element(element2),
+      gf(gf2), hash(a->getNum() + b->getNum() + c->getNum())
   {
     MVertex *tmp[3] = {a, b, c};
     std::sort(tmp, tmp + 3);
@@ -224,8 +224,8 @@ public:
   }
 
   Tuple(MVertex *const a, MVertex *const b, MVertex *const c)
-    : vertex1(nullptr), vertex2(nullptr), vertex3(nullptr), element(nullptr), gf(nullptr),
-      hash(a->getNum() + b->getNum() + c->getNum())
+    : vertex1(nullptr), vertex2(nullptr), vertex3(nullptr), element(nullptr),
+      gf(nullptr), hash(a->getNum() + b->getNum() + c->getNum())
   {
     MVertex *tmp[3] = {a, b, c};
     std::sort(tmp, tmp + 3);
@@ -331,8 +331,7 @@ private:
         MVertex *b = tet->getVertex((j + 1) % 4);
         MVertex *c = tet->getVertex((j + 2) % 4);
         MVertex *d = tet->getVertex((j + 3) % 4);
-        auto it =
-          vertex_to_vertices_.find(a);
+        auto it = vertex_to_vertices_.find(a);
         if(it != vertex_to_vertices_.end()) {
           it->second.insert(b);
           it->second.insert(c);
@@ -357,8 +356,7 @@ private:
       MElement *tet = region->getMeshElement(i);
       for(unsigned int j = 0; j < 4; j++) {
         MVertex *getVertex = tet->getVertex(j);
-        auto it =
-          vertex_to_elements_.find(getVertex);
+        auto it = vertex_to_elements_.find(getVertex);
         if(it != vertex_to_elements_.end()) { it->second.insert(tet); }
         else {
           std::set<MElement *> bin;

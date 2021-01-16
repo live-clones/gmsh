@@ -113,8 +113,8 @@ public:
   {
     if(p1 == other->p1 || p1 == other->p2) return p1;
     if(p2 == other->p1 || p2 == other->p2) return p2;
-    Msg::Error("Edge %d %d has no common node with edge %d %d",
-               p1->iD, p2->iD, other->p1->iD, other->p2->iD);
+    Msg::Error("Edge %d %d has no common node with edge %d %d", p1->iD, p2->iD,
+               other->p1->iD, other->p2->iD);
     return nullptr;
   }
   BDS_Point *othervertex(const BDS_Point *p) const
@@ -125,7 +125,7 @@ public:
     return nullptr;
   }
   void addface(BDS_Face *f) { _faces.push_back(f); }
-  bool operator < (const BDS_Edge &other) const
+  bool operator<(const BDS_Edge &other) const
   {
     if(*other.p1 < *p1) return true;
     if(*p1 < *other.p1) return false;
@@ -135,8 +135,8 @@ public:
   BDS_Face *otherFace(const BDS_Face *f) const
   {
     if(numfaces() != 2) {
-      Msg::Error("%d face(s) attached to edge %d %d", numfaces(),
-                 p1->iD, p2->iD);
+      Msg::Error("%d face(s) attached to edge %d %d", numfaces(), p1->iD,
+                 p2->iD);
       return nullptr;
     }
     if(f == _faces[0]) return _faces[1];
@@ -154,6 +154,7 @@ public:
   void oppositeof(BDS_Point *oface[2]) const;
   void computeNeighborhood(BDS_Point *oface[2], BDS_Point *t1[4],
                            BDS_Point *t2[4]) const;
+
 public:
   bool deleted;
   BDS_Point *p1, *p2;

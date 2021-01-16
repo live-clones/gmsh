@@ -203,7 +203,8 @@ int main(int argc, char **argv)
   // gmsh::option::setNumber("Mesh.MeshOnlyVisible", 1);
 
   // Meshing algorithms can changed globally using options:
-  gmsh::option::setNumber("Mesh.Algorithm", 6); // Frontal-Delaunay for 2D meshes
+  gmsh::option::setNumber("Mesh.Algorithm",
+                          6); // Frontal-Delaunay for 2D meshes
 
   // They can also be set for individual surfaces, e.g. for using `MeshAdapt' on
   // surface 1:

@@ -37,8 +37,7 @@ struct bidimMeshData {
     else
       indices[mv] = index;
     if(parametricCoordinates) {
-      auto it =
-        parametricCoordinates->find(mv);
+      auto it = parametricCoordinates->find(mv);
       if(it != parametricCoordinates->end()) {
         u = it->second.x();
         v = it->second.y();
@@ -100,8 +99,8 @@ public:
         return n->tri()->getVertex(j);
     return nullptr;
   }
-  MTri3(MTriangle *t, double lc, SMetric3 *m = nullptr, bidimMeshData *data = nullptr,
-        GFace *gf = nullptr);
+  MTri3(MTriangle *t, double lc, SMetric3 *m = nullptr,
+        bidimMeshData *data = nullptr, GFace *gf = nullptr);
   inline void setTri(MTriangle *t) { base = t; }
   inline MTriangle *tri() const { return base; }
   inline void setNeigh(int iN, MTri3 *n) { neigh[iN] = n; }
@@ -147,9 +146,10 @@ public:
 void connectTriangles(std::list<MTri3 *> &);
 void connectTriangles(std::vector<MTri3 *> &);
 void connectTriangles(std::set<MTri3 *, compareTri3Ptr> &AllTris);
-void bowyerWatson(GFace *gf, int MAXPNT = 1000000000,
-                  std::map<MVertex *, MVertex *> *equivalence = nullptr,
-                  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
+void bowyerWatson(
+  GFace *gf, int MAXPNT = 1000000000,
+  std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void bowyerWatsonFrontal(
   GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
   std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr,

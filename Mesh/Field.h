@@ -110,7 +110,8 @@ public:
   std::map<std::string, FieldCallback *> callbacks;
   virtual bool isotropic() const { return true; }
   // isotropic
-  virtual double operator()(double x, double y, double z, GEntity *ge = nullptr) = 0;
+  virtual double operator()(double x, double y, double z,
+                            GEntity *ge = nullptr) = 0;
   // anisotropic
   virtual void operator()(double x, double y, double z, SMetric3 &,
                           GEntity *ge = nullptr)
@@ -200,7 +201,8 @@ public:
   virtual std::string getDescription();
   BoundaryLayerField();
   ~BoundaryLayerField() { removeAttractors(); }
-  virtual double operator()(double x, double y, double z, GEntity *ge = nullptr);
+  virtual double operator()(double x, double y, double z,
+                            GEntity *ge = nullptr);
   virtual void operator()(double x, double y, double z, SMetric3 &metr,
                           GEntity *ge = nullptr);
   bool isEdgeBL(int iE) const
@@ -237,8 +239,7 @@ public:
   }
   double hWall(int iV)
   {
-    for(auto it = _hWallNNodes.begin();
-        it != _hWallNNodes.end(); ++it) {
+    for(auto it = _hWallNNodes.begin(); it != _hWallNNodes.end(); ++it) {
       int i = (int)*it;
       ++it;
       double h = *it;
@@ -279,8 +280,8 @@ class FieldOptionDouble : public FieldOption {
 public:
   double &val;
   FieldOptionType getType() { return FIELD_OPTION_DOUBLE; }
-  FieldOptionDouble(double &_val, const std::string &help, bool *status = nullptr,
-                    bool deprecated = false)
+  FieldOptionDouble(double &_val, const std::string &help,
+                    bool *status = nullptr, bool deprecated = false)
     : FieldOption(help, status, deprecated), val(_val)
   {
   }
@@ -382,8 +383,8 @@ public:
 class FieldOptionPath : public FieldOptionString {
 public:
   virtual FieldOptionType getType() { return FIELD_OPTION_PATH; }
-  FieldOptionPath(std::string &val, const std::string &help, bool *status = nullptr,
-                  bool deprecated = false)
+  FieldOptionPath(std::string &val, const std::string &help,
+                  bool *status = nullptr, bool deprecated = false)
     : FieldOptionString(val, help, status, deprecated)
   {
   }
@@ -447,7 +448,8 @@ public:
   GenericField();
   ~GenericField();
   using Field::operator();
-  virtual double operator()(double x, double y, double z, GEntity *ge = nullptr);
+  virtual double operator()(double x, double y, double z,
+                            GEntity *ge = nullptr);
   virtual const char *getName() { return "GenericField"; };
 
   // sets the callbacks

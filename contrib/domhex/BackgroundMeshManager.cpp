@@ -27,9 +27,7 @@ void BGMManager::set_use_cross_field(bool b)
 BGMBase *BGMManager::get(GRegion *gf)
 {
   auto itfind = data.find(gf);
-  if(itfind != data.end()) {
-    return itfind->second;
-  }
+  if(itfind != data.end()) { return itfind->second; }
 
   BGMBase *bgm = use_cross_field ? new frameFieldBackgroundMesh3D(gf) :
                                    new backgroundMesh3D(gf);

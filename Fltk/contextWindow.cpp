@@ -34,9 +34,7 @@ static bool getval(const char *str, double &val)
   std::vector<double> valVar;
 
   // we should probably use the actual .geo parser instead...
-  for(auto it =
-        gmsh_yysymbols.begin();
-      it != gmsh_yysymbols.end(); it++) {
+  for(auto it = gmsh_yysymbols.begin(); it != gmsh_yysymbols.end(); it++) {
     if(it->second.value.size() == 1) {
       var.push_back(it->first);
       valVar.push_back(it->second.value[0]);
@@ -1202,8 +1200,8 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
       input[0]->callback(physical_add_cb, (void *)"Name");
       input[0]->when(FL_WHEN_CHANGED);
 
-      value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH,
-                                    (int)(0.6 * width), BH, "Tag");
+      value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 3 * BH, (int)(0.6 * width),
+                                    BH, "Tag");
       value[0]->value(0);
       value[0]->deactivate();
       value[0]->align(FL_ALIGN_RIGHT);
@@ -1336,8 +1334,9 @@ void physicalContextWindow::show(const std::string &what, bool remove)
 }
 
 static Fl_Menu_Item menu_selection_mode[] = {
-  {"All entities", 0, nullptr, nullptr}, {"Points", 0, nullptr, nullptr},  {"Curves", 0, nullptr, nullptr},
-  {"Surfaces", 0, nullptr, nullptr},     {"Volumes", 0, nullptr, nullptr}, {nullptr}};
+  {"All entities", 0, nullptr, nullptr}, {"Points", 0, nullptr, nullptr},
+  {"Curves", 0, nullptr, nullptr},       {"Surfaces", 0, nullptr, nullptr},
+  {"Volumes", 0, nullptr, nullptr},      {nullptr}};
 
 static void selection_mode_cb(Fl_Widget *w, void *data)
 {
@@ -1568,8 +1567,10 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  static Fl_Menu menu_transfinite_dir[] = {
-    {"Left", 0, nullptr, nullptr}, {"Right", 0, nullptr, nullptr}, {"Alternated", 0, nullptr, nullptr}, {nullptr}};
+  static Fl_Menu menu_transfinite_dir[] = {{"Left", 0, nullptr, nullptr},
+                                           {"Right", 0, nullptr, nullptr},
+                                           {"Alternated", 0, nullptr, nullptr},
+                                           {nullptr}};
 
   int width = 29 * FL_NORMAL_SIZE;
   int height = 4 * WB + 4 * BH;
@@ -1599,7 +1600,10 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
       input[2]->value("1");
       for(int i = 1; i < 3; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       static Fl_Menu_Item menu_trsf_mesh[] = {
-        {"Progression", 0, nullptr, nullptr}, {"Bump", 0, nullptr, nullptr}, {"Beta", 0, nullptr, nullptr}, {nullptr}};
+        {"Progression", 0, nullptr, nullptr},
+        {"Bump", 0, nullptr, nullptr},
+        {"Beta", 0, nullptr, nullptr},
+        {nullptr}};
       choice[0] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Type");
       choice[0]->menu(menu_trsf_mesh);
       choice[0]->align(FL_ALIGN_RIGHT);

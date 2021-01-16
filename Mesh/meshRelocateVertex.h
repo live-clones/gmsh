@@ -16,7 +16,8 @@ void RelocateVertices(GRegion *region, int niter, double tol = 1.e-2);
 void RelocateVertices(std::vector<GRegion *> &regions, int niter,
                       double tol = 1.e-2);
 void RelocateVertices(GFace *, int niter, double tol = 1.e-6);
-void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol= 1.e-2);
-void RelocateVerticesOfPyramids(std::vector<GRegion *> &regions, int niter, double tol= 1.e-2);
+void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol = 1.e-2);
+void RelocateVerticesOfPyramids(std::vector<GRegion *> &regions, int niter,
+                                double tol = 1.e-2);
 
 #endif

@@ -38,18 +38,17 @@ static std::string getDimName(int dim)
 template <typename T>
 void onelabContextWindow::_addOnelabWidget(
   T &p, const std::string &pattern,
-  std::set<std::pair<std::string, Fl_Widget *>> &widgets)
+  std::set<std::pair<std::string, Fl_Widget *> > &widgets)
 {
-  if(p.getName().find(pattern) == std::string::npos)
-    return;
+  if(p.getName().find(pattern) == std::string::npos) return;
   // does the parameter exist?
   std::string in = getDimName(_dim) + " Template";
   std::string out;
-  if(_choice->value() == 0)  // elementary
+  if(_choice->value() == 0) // elementary
     out = getDimName(_dim) + " " + std::to_string(_tag);
   else // physical
     out = "Physical " + getDimName(_dim) + " " +
-      std::to_string(_physicalGroups[_choice->value() - 1].first);
+          std::to_string(_physicalGroups[_choice->value() - 1].first);
   std::string name = ReplaceSubString(in, out, p.getName());
   std::vector<T> pn;
   onelab::server::instance()->get(pn, name);
@@ -58,9 +57,7 @@ void onelabContextWindow::_addOnelabWidget(
     n = p;
     n.setName(name);
     auto attr = n.getAttributes();
-    for(auto &a : attr) {
-      ReplaceSubStringInPlace(in, out, a.second);
-    }
+    for(auto &a : attr) { ReplaceSubStringInPlace(in, out, a.second); }
     n.setAttributes(attr);
     onelab::server::instance()->set(n);
   }
@@ -71,9 +68,8 @@ void onelabContextWindow::_addOnelabWidget(
     bool highlight = false;
     Fl_Color c;
     if(getParameterColor(n.getAttribute("Highlight"), c)) highlight = true;
-    Fl_Widget *w =
-      addParameterWidget(n, WB, 1, _width / 2, BH, 1., n.getName(), highlight,
-                         c, win->color(), _toFree);
+    Fl_Widget *w = addParameterWidget(n, WB, 1, _width / 2, BH, 1., n.getName(),
+                                      highlight, c, win->color(), _toFree);
     w->copy_label(n.getShortName().c_str());
     std::string help = n.getHelp();
     if(help.empty()) help = n.getLabel();
@@ -112,10 +108,7 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE += deltaFontSize;
 }
 
-onelabContextWindow::~onelabContextWindow()
-{
-  Fl::delete_widget(win);
-}
+onelabContextWindow::~onelabContextWindow() { Fl::delete_widget(win); }
 
 void onelabContextWindow::show(int dim, int tag)
 {
@@ -132,8 +125,8 @@ void onelabContextWindow::show(int dim, int tag)
     GModel::current()->getPhysicalGroups(_dim, groups);
     for(auto &p : _entity->physicals) {
       int n = std::abs(p); // can be < 0 to switch orientation
-      _physicalGroups.push_back
-        (std::make_pair(n, GModel::current()->getPhysicalName(dim, n)));
+      _physicalGroups.push_back(
+        std::make_pair(n, GModel::current()->getPhysicalName(dim, n)));
       _physicalGroupEntities.push_back(groups[n]);
     }
   }
@@ -145,8 +138,7 @@ void onelabContextWindow::show(int dim, int tag)
   for(std::size_t i = 0; i < toFree.size(); i++) free(toFree[i]);
   toFree.clear();
   {
-    std::string label = getDimName(_dim) + " " +
-      std::to_string(_tag);
+    std::string label = getDimName(_dim) + " " + std::to_string(_tag);
     if(_name.size()) label += ": " + _name;
     char *str = strdup(label.c_str());
     Fl_Menu_Item item = {str, 0, nullptr, nullptr, 0};
@@ -154,8 +146,8 @@ void onelabContextWindow::show(int dim, int tag)
     menu.push_back(item);
   }
   for(auto &p : _physicalGroups) {
-    std::string label = "Physical " + getDimName(_dim) + " " +
-      std::to_string(p.first);
+    std::string label =
+      "Physical " + getDimName(_dim) + " " + std::to_string(p.first);
     if(p.second.size()) label += ": " + p.second;
     char *str = strdup(label.c_str());
     Fl_Menu_Item item = {str, 0, nullptr, nullptr, 0};
@@ -166,8 +158,7 @@ void onelabContextWindow::show(int dim, int tag)
   menu.push_back(item);
   _choice->copy(&menu[0]);
 
-  if(menu.size() > 1)
-    _choice->value(menu.size() - 2); // last physical
+  if(menu.size() > 1) _choice->value(menu.size() - 2); // last physical
 
   rebuild(true);
   highlightSelection();
@@ -176,10 +167,7 @@ void onelabContextWindow::show(int dim, int tag)
   win->enableRedraw();
 }
 
-void onelabContextWindow::hide()
-{
-  win->hide();
-}
+void onelabContextWindow::hide() { win->hide(); }
 
 void onelabContextWindow::rebuild(bool deleteWidgets)
 {
@@ -209,7 +197,7 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   // if the corresponding parameter exists; if not, create it and add it to the
   // server; then create the widget
   std::string pat = "ONELAB Context/" + getDimName(_dim) + " Template/";
-  std::set<std::pair<std::string, Fl_Widget *>> widgets;
+  std::set<std::pair<std::string, Fl_Widget *> > widgets;
   for(auto &p : pn) _addOnelabWidget(p, pat, widgets);
   for(auto &p : ps) _addOnelabWidget(p, pat, widgets);
   int h = _height;
@@ -230,10 +218,8 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
 
   // resize the window and restore the focus
   win->resize(win->x(), win->y(), win->w(), h);
-  for(auto w: _onelabWidgets) {
-    if(focus == std::string(w->label())) {
-      w->take_focus();
-    }
+  for(auto w : _onelabWidgets) {
+    if(focus == std::string(w->label())) { w->take_focus(); }
   }
 
   // we should add a "Check" button if Solver.AutoCheck is not set (as in the
@@ -243,7 +229,7 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
 void onelabContextWindow::highlightSelection()
 {
   GModel::current()->setSelection(0);
-  if(_choice->value() == 0) {  // elementary
+  if(_choice->value() == 0) { // elementary
     if(_entity) {
       _entity->setVisibility(1);
       _entity->setSelection(2);
@@ -260,7 +246,4 @@ void onelabContextWindow::highlightSelection()
   drawContext::global()->draw();
 }
 
-void onelabContextWindow::disableRedraw()
-{
-  win->disableRedraw();
-}
+void onelabContextWindow::disableRedraw() { win->disableRedraw(); }

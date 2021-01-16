@@ -161,7 +161,7 @@ public:
   // apply color scheme to widgets
   void applyColorScheme(bool redraw = false);
   // should the quit callback exit the app, or just close all windows?
-  bool quitShouldExit(){ return _quitShouldExit; }
+  bool quitShouldExit() { return _quitShouldExit; }
 };
 
 void redraw_cb(Fl_Widget *w, void *data);

@@ -48,7 +48,8 @@ void fourthPoint(double *p1, double *p2, double *p3, double *p4);
 void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners);
 int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(
-  GFace *gf, std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges = nullptr);
+  GFace *gf,
+  std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges = nullptr);
 bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh, bool debug = true,
                    std::vector<GEdge *> *replacement_edges = nullptr);

@@ -80,9 +80,7 @@ static void solver_remove_cb(Fl_Widget *w, void *data)
   opt_solver_remote_login(num, GMSH_SET, "");
 
   auto it = onelab::server::instance()->findClient(name);
-  if(it != onelab::server::instance()->lastClient()) {
-    delete *it;
-  }
+  if(it != onelab::server::instance()->lastClient()) { delete *it; }
   FlGui::instance()->onelab->rebuildSolverList();
 }
 

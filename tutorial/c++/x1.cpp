@@ -96,8 +96,7 @@ int main(int argc, char **argv)
 
     // * Number of mesh nodes and elements:
     int numElem = 0;
-    for(auto &tags : elemTags)
-      numElem += tags.size();
+    for(auto &tags : elemTags) numElem += tags.size();
     std::cout << " - Mesh has " << nodeTags.size() << " nodes and " << numElem
               << " elements\n";
 
@@ -134,8 +133,7 @@ int main(int argc, char **argv)
     gmsh::model::getPartitions(dim, tag, partitions);
     if(partitions.size()) {
       std::cout << " - Partition tags:";
-      for(auto part : partitions)
-        std::cout << " " << part;
+      for(auto part : partitions) std::cout << " " << part;
       int parentDim, parentTag;
       gmsh::model::getParent(dim, tag, parentDim, parentTag);
       std::cout << " - parent entity (" << parentDim << "," << parentTag
@@ -147,8 +145,8 @@ int main(int argc, char **argv)
       std::string name;
       int d, order, numv, numpv;
       std::vector<double> param;
-      gmsh::model::mesh::getElementProperties(elemType, name, d, order,
-                                              numv, param, numpv);
+      gmsh::model::mesh::getElementProperties(elemType, name, d, order, numv,
+                                              param, numpv);
       std::cout << " - Element type: " << name << ", order " << order << "\n";
       std::cout << "   with " << numv << " nodes in param coord: (";
       for(auto p : param) std::cout << p << " ";

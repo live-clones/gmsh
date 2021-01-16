@@ -1589,7 +1589,7 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
            singularities.find(v) != singularities.end()) {
           //	  printf("START POINT %lu %d %d\n",v->getNum(),cutgraph.find(v)
           //!= cutgraph.end() , 		  singularities.find(v) !=
-          //!singularities.end());
+          //! singularities.end());
           std::vector<cross2d *> group;
           do {
             MVertex *vnew = nullptr;

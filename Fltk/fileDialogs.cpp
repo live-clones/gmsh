@@ -178,9 +178,9 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     Fl_File_Chooser::show_label = "Format:";
     Fl_File_Chooser::all_files_label = "All files (*)";
     if(!fc) {
-      fc =
-        new flFileChooser(getenv("PWD") ? "." : CTX::instance()->homeDir.c_str(),
-                          thefilter2, Fl_File_Chooser::SINGLE, message);
+      fc = new flFileChooser(getenv("PWD") ? "." :
+                                             CTX::instance()->homeDir.c_str(),
+                             thefilter2, Fl_File_Chooser::SINGLE, message);
       fc->position(CTX::instance()->fileChooserPosition[0],
                    CTX::instance()->fileChooserPosition[1]);
     }
@@ -435,7 +435,8 @@ int pgfBitmapFileDialog(const char *name, const char *title, int format)
       if(!o) break;
       if(o == dialog->ok) {
         opt_print_text(0, GMSH_SET | GMSH_GUI, 0); // never print any text
-        opt_print_background(0, GMSH_SET | GMSH_GUI, 0); // never print background
+        opt_print_background(0, GMSH_SET | GMSH_GUI,
+                             0); // never print background
         opt_print_pgf_two_dim(0, GMSH_SET | GMSH_GUI,
                               (int)dialog->b[0]->value());
         opt_print_pgf_export_axis(0, GMSH_SET | GMSH_GUI,
@@ -516,8 +517,7 @@ int latexFileDialog(const char *name)
                                   (int)dialog->b[0]->value());
         opt_print_tex_force_fontsize(0, GMSH_SET | GMSH_GUI,
                                      (int)dialog->b[1]->value());
-        opt_print_tex_width_in_mm(0, GMSH_SET | GMSH_GUI,
-                                  dialog->v->value());
+        opt_print_tex_width_in_mm(0, GMSH_SET | GMSH_GUI, dialog->v->value());
         CreateOutputFile(name, FORMAT_TEX);
         dialog->window->hide();
         return 1;
@@ -677,7 +677,9 @@ int mpegFileDialog(const char *name)
       }
       if(o == dialog->ok || o == dialog->preview) {
         opt_post_anim_cycle(0, GMSH_SET | GMSH_GUI,
-                            dialog->b[2]->value() ? 2 : dialog->b[1]->value() ? 1 : 0);
+                            dialog->b[2]->value() ? 2 :
+                            dialog->b[1]->value() ? 1 :
+                                                    0);
         opt_post_anim_delay(0, GMSH_SET | GMSH_GUI, dialog->v[0]->value());
         opt_post_anim_step(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
 
@@ -843,11 +845,12 @@ int gl2psFileDialog(const char *name, const char *title, int format)
   };
   static _gl2psFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item sortmenu[] = {{"Raster image", 0, nullptr, nullptr},
-                                    {"Vector simple sort", 0, nullptr, nullptr},
-                                    {"Vector accurate sort", 0, nullptr, nullptr},
-                                    {"Vector unsorted", 0, nullptr, nullptr},
-                                    {nullptr}};
+  static Fl_Menu_Item sortmenu[] = {
+    {"Raster image", 0, nullptr, nullptr},
+    {"Vector simple sort", 0, nullptr, nullptr},
+    {"Vector accurate sort", 0, nullptr, nullptr},
+    {"Vector unsorted", 0, nullptr, nullptr},
+    {nullptr}};
 
   if(!dialog) {
     dialog = new _gl2psFileDialog;
@@ -1165,10 +1168,12 @@ int mshFileDialog(const char *name)
 {
   static _mshFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item formatmenu[] = {
-    {"Version 1", 0, nullptr, nullptr},        {"Version 2 ASCII", 0, nullptr, nullptr},
-    {"Version 2 Binary", 0, nullptr, nullptr}, {"Version 4 ASCII", 0, nullptr, nullptr},
-    {"Version 4 Binary", 0, nullptr, nullptr}, {nullptr}};
+  static Fl_Menu_Item formatmenu[] = {{"Version 1", 0, nullptr, nullptr},
+                                      {"Version 2 ASCII", 0, nullptr, nullptr},
+                                      {"Version 2 Binary", 0, nullptr, nullptr},
+                                      {"Version 4 ASCII", 0, nullptr, nullptr},
+                                      {"Version 4 Binary", 0, nullptr, nullptr},
+                                      {nullptr}};
 
   int BBB = BB + 9; // labels too long
 
@@ -1219,8 +1224,10 @@ int mshFileDialog(const char *name)
     dialog->c->value(!opt_mesh_binary(0, GMSH_GET, 0) ? 3 : 4);
   dialog->b[0]->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b[1]->value(opt_mesh_save_parametric(0, GMSH_GET, 0) ? 1 : 0);
-  dialog->b[2]->value(opt_mesh_partition_split_mesh_files(0, GMSH_GET, 0) ? 1 : 0);
-  dialog->b[3]->value(opt_mesh_partition_save_topology_file(0, GMSH_GET, 0) ? 1 : 0);
+  dialog->b[2]->value(opt_mesh_partition_split_mesh_files(0, GMSH_GET, 0) ? 1 :
+                                                                            0);
+  dialog->b[3]->value(
+    opt_mesh_partition_save_topology_file(0, GMSH_GET, 0) ? 1 : 0);
   if(GModel::current()->getNumPartitions() == 0) {
     dialog->b[2]->deactivate();
     dialog->b[3]->deactivate();
@@ -1233,10 +1240,13 @@ int mshFileDialog(const char *name)
       Fl_Widget *o = Fl::readqueue();
       if(!o) break;
       if(o == dialog->ok) {
-        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
-          (dialog->c->value() == 0) ? 1.0 :
-          (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 : 4.1);
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI,
+        opt_mesh_msh_file_version(
+          0, GMSH_SET | GMSH_GUI,
+          (dialog->c->value() == 0)                            ? 1.0 :
+          (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 :
+                                                                 4.1);
+        opt_mesh_binary(
+          0, GMSH_SET | GMSH_GUI,
           (dialog->c->value() == 2 || dialog->c->value() == 4) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
                           dialog->b[0]->value() ? 1 : 0);
@@ -1400,13 +1410,18 @@ int keyFileDialog(const char *name, const char *title, int format)
   }
 
   dialog->c[0]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 4) ? 1 :
-                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 8) ? 2 : 0);
+                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 8) ? 2 :
+                                                                     0);
   dialog->c[1]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 16) ? 1 :
-                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 32) ? 2 : 0);
-  dialog->c[2]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 64) ? 1 :
-                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 128) ? 2 : 0);
-  dialog->b[0]->value((int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 2 ? 1 : 0);
-  dialog->b[1]->value((int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 1 ? 1 : 0);
+                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 32) ? 2 :
+                                                                      0);
+  dialog->c[2]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 64)  ? 1 :
+                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 128) ? 2 :
+                                                                       0);
+  dialog->b[0]->value(
+    (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 2 ? 1 : 0);
+  dialog->b[1]->value(
+    (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 1 ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()) {
@@ -1417,11 +1432,11 @@ int keyFileDialog(const char *name, const char *title, int format)
       if(o == dialog->ok) {
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
                           dialog->c[0]->value() * 4 +
-                          dialog->c[1]->value() * 16 +
-                          dialog->c[2]->value() * 64);
+                            dialog->c[1]->value() * 16 +
+                            dialog->c[2]->value() * 64);
         opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
                                       (dialog->b[0]->value() ? 2 : 0) +
-                                      (dialog->b[1]->value() ? 1 : 0));
+                                        (dialog->b[1]->value() ? 1 : 0));
         CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
@@ -1488,7 +1503,8 @@ int bdfFileDialog(const char *name)
 
   dialog->c->value(opt_mesh_bdf_field_format(0, GMSH_GET, 0));
   dialog->d->value((opt_mesh_save_element_tag_type(0, GMSH_GET, 0) == 3) ? 2 :
-                   (opt_mesh_save_element_tag_type(0, GMSH_GET, 0) == 2) ? 1 : 0);
+                   (opt_mesh_save_element_tag_type(0, GMSH_GET, 0) == 2) ? 1 :
+                                                                           0);
   dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
   dialog->window->show();
 
@@ -1528,16 +1544,12 @@ int stlFileDialog(const char *name)
   static _stlFileDialog *dialog = nullptr;
 
   static Fl_Menu_Item formatmenu[] = {
-    {"ASCII", 0, nullptr, nullptr},
-    {"Binary", 0, nullptr, nullptr},
-    {nullptr}
-  };
+    {"ASCII", 0, nullptr, nullptr}, {"Binary", 0, nullptr, nullptr}, {nullptr}};
   static Fl_Menu_Item solidmenu[] = {
     {"Single", 0, nullptr, nullptr},
     {"Per surface", 0, nullptr, nullptr},
     {"Per physical surface", 0, nullptr, nullptr},
-    {nullptr}
-  };
+    {nullptr}};
 
   int BBB = BB + 9; // labels too long
 
@@ -1552,8 +1564,8 @@ int stlFileDialog(const char *name)
     y += BH;
     dialog->c[0]->menu(formatmenu);
     dialog->c[0]->align(FL_ALIGN_RIGHT);
-    dialog->b = new Fl_Check_Button
-      (WB, y, 2 * BBB + WB, BH, "Save all elements");
+    dialog->b =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save all elements");
     dialog->b->tooltip("Mesh.SaveAll");
     y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
@@ -1570,8 +1582,10 @@ int stlFileDialog(const char *name)
 
   dialog->c[0]->value(opt_mesh_binary(0, GMSH_GET, 0) ? 1 : 0);
   dialog->b->value(opt_mesh_save_all(0, GMSH_GET, 0) ? 1 : 0);
-  dialog->c[1]->value(opt_mesh_stl_one_solid_per_surface(0, GMSH_GET, 0) == 2 ? 2 :
-                      opt_mesh_stl_one_solid_per_surface(0, GMSH_GET, 0) == 1 ? 1 :0);
+  dialog->c[1]->value(
+    opt_mesh_stl_one_solid_per_surface(0, GMSH_GET, 0) == 2 ? 2 :
+    opt_mesh_stl_one_solid_per_surface(0, GMSH_GET, 0) == 1 ? 1 :
+                                                              0);
 
   if(dialog->c[1]->value() == 2)
     dialog->b->deactivate();
@@ -1666,7 +1680,8 @@ int genericMeshFileDialog(const char *name, const char *title, int format,
   else
     dialog->c->deactivate();
   dialog->d->value((opt_mesh_save_element_tag_type(0, GMSH_GET, 0) == 3) ? 2 :
-                   (opt_mesh_save_element_tag_type(0, GMSH_GET, 0) == 2) ? 1 : 0);
+                   (opt_mesh_save_element_tag_type(0, GMSH_GET, 0) == 2) ? 1 :
+                                                                           0);
   if(element_tag_support)
     dialog->d->activate();
   else
@@ -1754,8 +1769,10 @@ int posFileDialog(const char *name)
   };
   static _posFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item viewmenu[] = {
-    {"Current", 0, nullptr, nullptr}, {"Visible", 0, nullptr, nullptr}, {"All", 0, nullptr, nullptr}, {nullptr}};
+  static Fl_Menu_Item viewmenu[] = {{"Current", 0, nullptr, nullptr},
+                                    {"Visible", 0, nullptr, nullptr},
+                                    {"All", 0, nullptr, nullptr},
+                                    {nullptr}};
   static Fl_Menu_Item formatmenu[] = {{"Parsed", 0, nullptr, nullptr},
                                       {"Mesh-based", 0, nullptr, nullptr},
                                       {"Legacy ASCII", 0, nullptr, nullptr},
@@ -1879,8 +1896,10 @@ int pvtuAdaptFileDialog(const char *name)
   };
   static _pvtuAdaptFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item viewmenu[] = {
-    {"Current", 0, nullptr, nullptr}, {"Visible", 0, nullptr, nullptr}, {"All", 0, nullptr, nullptr}, {nullptr}};
+  static Fl_Menu_Item viewmenu[] = {{"Current", 0, nullptr, nullptr},
+                                    {"Visible", 0, nullptr, nullptr},
+                                    {"All", 0, nullptr, nullptr},
+                                    {nullptr}};
   static Fl_Menu_Item formatmenu[] = {
     {"Binary", 0, nullptr, nullptr}, {"ASCII", 0, nullptr, nullptr}, {nullptr}};
 
@@ -1990,8 +2009,10 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
   };
   static _viewFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item viewmenu[] = {
-    {"Current", 0, nullptr, nullptr}, {"Visible", 0, nullptr, nullptr}, {"All", 0, nullptr, nullptr}, {nullptr}};
+  static Fl_Menu_Item viewmenu[] = {{"Current", 0, nullptr, nullptr},
+                                    {"Visible", 0, nullptr, nullptr},
+                                    {"All", 0, nullptr, nullptr},
+                                    {nullptr}};
 
   int BBB = BB + 9; // labels too long
 
@@ -2079,8 +2100,10 @@ int genericViewFileDialog(const char *name, const char *title, int format)
   };
   static _viewFileDialog *dialog = nullptr;
 
-  static Fl_Menu_Item viewmenu[] = {
-    {"Current", 0, nullptr, nullptr}, {"Visible", 0, nullptr, nullptr}, {"All", 0, nullptr, nullptr}, {nullptr}};
+  static Fl_Menu_Item viewmenu[] = {{"Current", 0, nullptr, nullptr},
+                                    {"Visible", 0, nullptr, nullptr},
+                                    {"All", 0, nullptr, nullptr},
+                                    {nullptr}};
 
   int BBB = BB + 9; // labels too long
 

@@ -30,8 +30,9 @@ struct faceXtet {
 
     v[0] = std::min(std::min(v0, v1), v2);
     v[2] = std::max(std::max(v0, v1), v2);
-    v[1] =
-      (v0 != v[0] && v0 != v[2]) ? v0 : (v1 != v[0] && v1 != v[2]) ? v1 : v2;
+    v[1] = (v0 != v[0] && v0 != v[2]) ? v0 :
+           (v1 != v[0] && v1 != v[2]) ? v1 :
+                                        v2;
     //
     //    std::sort(v, v + 3);
   }

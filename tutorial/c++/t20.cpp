@@ -61,10 +61,10 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > s;
   s.push_back({2, gmsh::model::occ::addRectangle(xmin, ymin, zmin, L, H)});
   if(dir == "X") {
-    gmsh::model::occ::rotate({s[0]}, xmin, ymin, zmin, 0, 1, 0, -M_PI/2);
+    gmsh::model::occ::rotate({s[0]}, xmin, ymin, zmin, 0, 1, 0, -M_PI / 2);
   }
   else if(dir == "Y") {
-    gmsh::model::occ::rotate({s[0]}, xmin, ymin, zmin, 1, 0, 0, M_PI/2);
+    gmsh::model::occ::rotate({s[0]}, xmin, ymin, zmin, 1, 0, 0, M_PI / 2);
   }
   double tx = (dir == "X") ? dx / N : 0;
   double ty = (dir == "Y") ? dy / N : 0;

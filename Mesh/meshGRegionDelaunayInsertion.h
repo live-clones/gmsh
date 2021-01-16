@@ -215,12 +215,15 @@ public:
   }
 };
 
-void connectTets(std::list<MTet4 *> &, const std::set<MFace, MFaceLessThan> * = nullptr);
-void connectTets(std::vector<MTet4 *> &, const std::set<MFace, MFaceLessThan> * = nullptr);
+void connectTets(std::list<MTet4 *> &,
+                 const std::set<MFace, MFaceLessThan> * = nullptr);
+void connectTets(std::vector<MTet4 *> &,
+                 const std::set<MFace, MFaceLessThan> * = nullptr);
 void delaunayMeshIn3D(std::vector<MVertex *> &, std::vector<MTetrahedron *> &,
                       bool removeBox = false);
-void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarget,
-                            bool _classify = true, splitQuadRecovery *sqr = nullptr);
+void insertVerticesInRegion(GRegion *gr, int maxIter,
+                            double worstTetRadiusTarget, bool _classify = true,
+                            splitQuadRecovery *sqr = nullptr);
 void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 
 struct compareTet4Ptr {

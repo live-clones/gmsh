@@ -285,12 +285,12 @@ void help_options_cb(Fl_Widget *w, void *data)
       FlGui::instance()->help->browser->add(s0[i].c_str(), d);
     }
     else {
-      try{
+      try {
         // icase for case-insensitive search
-        if(std::regex_search(s0[i], std::regex(search, std::regex_constants::icase)))
+        if(std::regex_search(s0[i],
+                             std::regex(search, std::regex_constants::icase)))
           FlGui::instance()->help->browser->add(s0[i].c_str(), d);
-      }
-      catch(...) {
+      } catch(...) {
       }
     }
   }

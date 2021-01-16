@@ -238,13 +238,19 @@ public:
     {
       switch(instance()->getSortMode()) {
       case 1:
-        if(v1->getDim() < v2->getDim()) return true;
-        else if(v1->getDim() > v2->getDim()) return false;
-        else return v1->getTag() < v2->getTag();
+        if(v1->getDim() < v2->getDim())
+          return true;
+        else if(v1->getDim() > v2->getDim())
+          return false;
+        else
+          return v1->getTag() < v2->getTag();
       case -1:
-        if(v1->getDim() > v2->getDim()) return true;
-        else if(v1->getDim() < v2->getDim()) return false;
-        else return v1->getTag() < v2->getTag();
+        if(v1->getDim() > v2->getDim())
+          return true;
+        else if(v1->getDim() < v2->getDim())
+          return false;
+        else
+          return v1->getTag() < v2->getTag();
       case 2: return v1->getTag() < v2->getTag() ? true : false;
       case -2: return v1->getTag() > v2->getTag() ? true : false;
       case 3:
@@ -261,9 +267,7 @@ public:
   {
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
-    for(auto it =
-          gmsh_yysymbols.begin();
-        it != gmsh_yysymbols.end(); ++it)
+    for(auto it = gmsh_yysymbols.begin(); it != gmsh_yysymbols.end(); ++it)
       if(it->first.size())
         for(std::size_t i = 0; i < it->second.value.size(); i++)
           oldLabels[(int)it->second.value[i]] =
@@ -560,8 +564,7 @@ static void _add_face(GFace *gf, Fl_Tree *tree, const std::string &path)
   n->user_data((void *)gf);
   n->close();
   std::vector<GEdge *> const &edges = gf->edges();
-  for(auto it = edges.begin();
-      it != edges.end(); it++)
+  for(auto it = edges.begin(); it != edges.end(); it++)
     _add_edge(*it, tree, face.str());
 }
 
@@ -578,8 +581,7 @@ static void _add_region(GRegion *gr, Fl_Tree *tree, const std::string &path)
   n->user_data((void *)gr);
   n->close();
   std::vector<GFace *> faces = gr->faces();
-  for(auto it = faces.begin(); it != faces.end();
-      it++)
+  for(auto it = faces.begin(); it != faces.end(); it++)
     _add_face(*it, tree, region.str());
 }
 
@@ -683,18 +685,14 @@ static void _rebuild_tree_browser(bool force)
     m->getPhysicalGroups(groups);
     std::map<int, std::string> oldLabels;
 #if defined(HAVE_PARSER)
-    for(auto it =
-          gmsh_yysymbols.begin();
-        it != gmsh_yysymbols.end(); ++it)
+    for(auto it = gmsh_yysymbols.begin(); it != gmsh_yysymbols.end(); ++it)
       if(it->first.size())
         for(std::size_t i = 0; i < it->second.value.size(); i++)
           oldLabels[(int)it->second.value[i]] =
             std::string("(") + it->first + ")";
 #endif
     for(int i = 3; i >= 0; i--)
-      for(auto it =
-            groups[i].begin();
-          it != groups[i].end(); it++)
+      for(auto it = groups[i].begin(); it != groups[i].end(); it++)
         _add_physical_group(i, it->first, it->second, oldLabels,
                             FlGui::instance()->visibility->tree, physical);
   }
@@ -1212,23 +1210,21 @@ static void browser_cb(Fl_Widget *w, void *data)
 
 static void tree_cb(Fl_Widget *w, void *data)
 {
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
+#if(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
   Fl_Tree *tree = (Fl_Tree *)w;
-  if(tree->callback_reason() == FL_TREE_REASON_RESELECTED && Fl::event_clicks()) {
+  if(tree->callback_reason() == FL_TREE_REASON_RESELECTED &&
+     Fl::event_clicks()) {
     // double click
     Fl_Tree_Item *item = (Fl_Tree_Item *)tree->callback_item();
     GEntity *ge = nullptr;
     if(item) {
-      if(item->user_data()) {
-        ge = (GEntity*)item->user_data();
-      }
+      if(item->user_data()) { ge = (GEntity *)item->user_data(); }
       else if(item->children() && item->child(0) &&
               item->child(0)->user_data()) {
-        ge = (GEntity*)item->child(0)->user_data();
+        ge = (GEntity *)item->child(0)->user_data();
       }
     }
-    if(ge)
-      FlGui::instance()->onelabContext->show(ge->dim(), ge->tag());
+    if(ge) FlGui::instance()->onelabContext->show(ge->dim(), ge->tag());
   }
 #endif
 }
@@ -1358,7 +1354,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     tree->labelsize(FL_NORMAL_SIZE - 1);
     tree->selectmode(FL_TREE_SELECT_MULTI);
     tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
+#if(FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
     tree->item_reselect_mode(FL_TREE_SELECTABLE_ALWAYS); // for double-clicks
 #endif
     tree->callback(tree_cb);

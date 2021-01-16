@@ -66,11 +66,13 @@ public:
 class qmTetrahedron {
 public:
   enum Measures { QMTET_GAMMA, QMTET_ETA, QMTET_ONE, QMTET_COND };
-  static double qm(MTetrahedron *t, const Measures &cr, double *volume = nullptr);
+  static double qm(MTetrahedron *t, const Measures &cr,
+                   double *volume = nullptr);
   static double qm(const BDS_Point *p1, const BDS_Point *p2,
                    const BDS_Point *p3);
   static double qm(const MVertex *v1, const MVertex *v2, const MVertex *v3,
-                   const MVertex *v4, const Measures &cr, double *volume = nullptr);
+                   const MVertex *v4, const Measures &cr,
+                   double *volume = nullptr);
   static double qm(const double &x1, const double &y1, const double &z1,
                    const double &x2, const double &y2, const double &z2,
                    const double &x3, const double &y3, const double &z3,

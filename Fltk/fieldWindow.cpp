@@ -237,8 +237,7 @@ void fieldWindow::saveFieldOptions()
   char a;
   double d;
   sstream.precision(16);
-  for(auto it = f->options.begin();
-      it != f->options.end(); it++) {
+  for(auto it = f->options.begin(); it != f->options.end(); it++) {
     FieldOption *option = it->second;
     if(option->isDeprecated()) continue;
     sstream.str("");
@@ -310,8 +309,7 @@ void fieldWindow::loadFieldOptions()
 {
   Field *f = (Field *)editor_group->user_data();
   auto input = options_widget.begin();
-  for(auto it = f->options.begin();
-      it != f->options.end(); it++) {
+  for(auto it = f->options.begin(); it != f->options.end(); it++) {
     FieldOption *option = it->second;
     if(option->isDeprecated()) continue;
     std::ostringstream vstr;
@@ -399,8 +397,7 @@ void fieldWindow::editField(Field *f)
   ConvertToHTML(help);
   if(!f->options.empty())
     help += std::string("<p><center><b>Options</b></center>");
-  for(auto it = f->options.begin();
-      it != f->options.end(); it++) {
+  for(auto it = f->options.begin(); it != f->options.end(); it++) {
     if(it->second->isDeprecated()) continue;
     Fl_Widget *input;
     help += std::string("<p><b>") + it->first + "</b>";
@@ -439,9 +436,7 @@ void fieldWindow::editField(Field *f)
   }
   if(!f->callbacks.empty())
     help += std::string("<p><center><b>Actions</b></center>");
-  for(auto it =
-        f->callbacks.begin();
-      it != f->callbacks.end(); it++) {
+  for(auto it = f->callbacks.begin(); it != f->callbacks.end(); it++) {
     Fl_Widget *btn;
     help += std::string("<p><b>") + it->first + "</b>: ";
     help += it->second->getDescription();

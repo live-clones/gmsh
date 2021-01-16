@@ -69,8 +69,7 @@ void backgroundMesh3D::computeSizeField()
   MVertex *v;
   MElement *e;
 
-  for(auto it = faces.begin(); it != faces.end();
-      it++) { // for all GFace
+  for(auto it = faces.begin(); it != faces.end(); it++) { // for all GFace
     GFace *face = *it;
     frameFieldBackgroundMesh2D *bgm2d =
       dynamic_cast<frameFieldBackgroundMesh2D *>(BGMManager::get(face));
@@ -118,7 +117,7 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
   lsys->setGmres(1);
 #else
-   linearSystemFull<double> *lsys = new linearSystemFull<double>;
+  linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #endif
 
   size_t i;
@@ -149,9 +148,7 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
 
   for(it = interior.begin(); it != interior.end(); it++) {
     it2 = dirichlet.find(*it);
-    if(it2 == dirichlet.end()) {
-      assembler.numberVertex(*it, 0, 1);
-    }
+    if(it2 == dirichlet.end()) { assembler.numberVertex(*it, 0, 1); }
   }
 
   for(i = 0; i < gr->tetrahedra.size(); i++) {
@@ -170,9 +167,7 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
   // printf("number of tetrahedra = %d\n",count2);
   // printf("volume = %f\n",volume);
 
-  if(assembler.sizeOfR()) {
-    lsys->systemSolve();
-  }
+  if(assembler.sizeOfR()) { lsys->systemSolve(); }
 
   for(it = interior.begin(); it != interior.end(); it++) {
     assembler.getDofValue(*it, 0, 1, val);
@@ -244,8 +239,7 @@ MVertex *backgroundMesh3D::get_nearest_neighbor(const double *xyz,
     candidates[i] = v;
     distances[i] = p.distance(v->point());
   }
-  auto itmax =
-    std::max_element(distances.begin(), distances.end());
+  auto itmax = std::max_element(distances.begin(), distances.end());
   return candidates[std::distance(distances.begin(), itmax)];
 
   //  map<double,MVertex*> distances;
@@ -289,9 +283,7 @@ frameFieldBackgroundMesh3D::frameFieldBackgroundMesh3D(GRegion *_gr)
   initiate_ANN_research();
   initiate_crossfield();
 
-  if(smooth_the_crossfield) {
-    computeCrossField();
-  }
+  if(smooth_the_crossfield) { computeCrossField(); }
   else {
     computeSmoothnessOnlyFromBoundaries();
   }
@@ -313,8 +305,8 @@ void frameFieldBackgroundMesh3D::initiate_ANN_research()
   dataPtsBnd = annAllocPts(maxPts, 3);
   int i = 0;
   MVertex *v;
-  for(auto it = listOfBndVertices.begin();
-      it != listOfBndVertices.end(); it++) {
+  for(auto it = listOfBndVertices.begin(); it != listOfBndVertices.end();
+      it++) {
     v = *it;
     for(int k = 0; k < 3; ++k) dataPtsBnd[i][k] = (v->point())[k];
     ++i;
@@ -337,8 +329,8 @@ void frameFieldBackgroundMesh3D::computeSmoothnessOnlyFromBoundaries()
   double mean_angle = 0.;
   std::vector<double> vectorial_smoothness(3);
 
-  for(auto it_vertex = vert2elem.begin();
-      it_vertex != vert2elem.end(); it_vertex++) { // for all vertices
+  for(auto it_vertex = vert2elem.begin(); it_vertex != vert2elem.end();
+      it_vertex++) { // for all vertices
     themap.clear();
     neighbors.clear();
     MVertex const *current = it_vertex->first;
@@ -348,8 +340,7 @@ void frameFieldBackgroundMesh3D::computeSmoothnessOnlyFromBoundaries()
     for(; itgraph != range.second; itgraph++) { // for all neighbors
       neighbors.insert(itgraph->second.second);
     }
-    for(auto it = neighbors.begin();
-        it != neighbors.end(); it++) {
+    for(auto it = neighbors.begin(); it != neighbors.end(); it++) {
       themap.insert(std::make_pair(1., *it));
     }
 
@@ -386,8 +377,8 @@ void frameFieldBackgroundMesh3D::computeCrossField()
   std::map<MVertex const *const, bool> vertex_is_still;
   std::map<MVertex const *const, double> vertex_movement;
 
-  for(auto it_vertex = vert2elem.begin();
-      it_vertex != vert2elem.end(); it_vertex++) {
+  for(auto it_vertex = vert2elem.begin(); it_vertex != vert2elem.end();
+      it_vertex++) {
     MVertex const *const current = it_vertex->first;
 
     vertex_is_still[current] = current->onWhat()->dim() <= 2;
@@ -397,8 +388,8 @@ void frameFieldBackgroundMesh3D::computeCrossField()
 
   // OLD - NEW COMPARISON
   std::map<MVertex const *, double> vertex_to_rank;
-  for(auto it_vertex = vert2elem.begin();
-      it_vertex != vert2elem.end(); it_vertex++) { // for all vertices
+  for(auto it_vertex = vert2elem.begin(); it_vertex != vert2elem.end();
+      it_vertex++) { // for all vertices
     // vertex_to_rank[it_vertex->first] = 0.;
     vertex_to_rank[it_vertex->first] = 1.;
     rank.insert(std::make_pair(0., it_vertex->first));
@@ -503,8 +494,7 @@ void frameFieldBackgroundMesh3D::computeCrossField()
 
       // iterations, convergence of the local cavity...
       for(; Nlocaliter < 20; Nlocaliter++) {
-        auto it_neighbors_to_trust =
-          neighbors_to_trust.begin();
+        auto it_neighbors_to_trust = neighbors_to_trust.begin();
         crossFieldSmoothness[current] =
           compare_to_neighbors(current->point(), ref, it_neighbors_to_trust,
                                neighbors_to_trust.end(), mean_axis, mean_angle,
@@ -577,8 +567,8 @@ void frameFieldBackgroundMesh3D::computeCrossField()
   } // end Niter iterations
 
   // also computes smoothness for boundary points
-  for(auto it_vertex = vert2elem.begin();
-      it_vertex != vert2elem.end(); it_vertex++) {
+  for(auto it_vertex = vert2elem.begin(); it_vertex != vert2elem.end();
+      it_vertex++) {
     MVertex const *const current = it_vertex->first;
     if(current->onWhat()->dim() <= 2) {
       auto itcurrent = crossField.find(current);
@@ -632,8 +622,7 @@ void frameFieldBackgroundMesh3D::initiate_crossfield()
   std::vector<GFace *> faces = gr->faces();
   // here, not using the gm2D since we are interested by the new 2D vertices,
   // not the old (now erased) ones... alternative would be to reset the 2DBGM...
-  for(auto it = faces.begin(); it != faces.end();
-      it++) { // for all GFace
+  for(auto it = faces.begin(); it != faces.end(); it++) { // for all GFace
     GFace *face = *it;
     frameFieldBackgroundMesh2D *bgm2d =
       dynamic_cast<frameFieldBackgroundMesh2D *>(BGMManager::get(face));
@@ -846,8 +835,8 @@ void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level)
   std::multimap<int, MVertex const *> proximity;
   // int counter=0;
 
-  for(auto it_vertex = vert2elem.begin();
-      it_vertex != vert2elem.end(); it_vertex++) { // for all vertices
+  for(auto it_vertex = vert2elem.begin(); it_vertex != vert2elem.end();
+      it_vertex++) { // for all vertices
     MVertex const *const current_vertex = it_vertex->first;
     visited.clear();
     visited_elements.clear();
@@ -859,8 +848,7 @@ void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level)
     get_recursive_neighbors(start, visited, visited_elements, proximity,
                             max_recursion_level);
 
-    for(auto it1 = proximity.begin();
-        it1 != proximity.end(); it1++) {
+    for(auto it1 = proximity.begin(); it1 != proximity.end(); it1++) {
       graph.insert(std::make_pair(current_vertex,
                                   std::make_pair(it1->first, it1->second)));
     }
@@ -899,8 +887,8 @@ void frameFieldBackgroundMesh3D::get_recursive_neighbors(
 
   std::set<MVertex const *> new_vertices;
 
-  for(auto it_start = start.begin();
-      it_start != start.end(); it_start++) { // for all initial vertices
+  for(auto it_start = start.begin(); it_start != start.end();
+      it_start++) { // for all initial vertices
     MVertex const *current = *it_start;
     //      std::cout << "get_recursive_neighbors : on vertex " <<
     //      current->getNum()
@@ -1016,8 +1004,8 @@ double frameFieldBackgroundMesh3D::compare_to_neighbors(
   auto itan = all_angle.begin();
   auto itpond = ponderations_vec.begin();
 
-  for(auto ita = all_axis.begin();
-      ita != all_axis.end(); ita++, itan++, itpond++) {
+  for(auto ita = all_axis.begin(); ita != all_axis.end();
+      ita++, itan++, itpond++) {
     // mean_axis += ((*ita)*(*itan));
     mean_axis += ((*ita) * (*itan)) * (*itpond);
   }

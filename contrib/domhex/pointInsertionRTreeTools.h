@@ -43,9 +43,9 @@ public:
      + p1
 
    */
-  surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[4][NUMDIR],
-                                  SPoint2 &_mp, SMetric3 &meshMetric,
-                                  surfacePointWithExclusionRegion *father = nullptr);
+  surfacePointWithExclusionRegion(
+    MVertex *v, SPoint2 p[4][NUMDIR], SPoint2 &_mp, SMetric3 &meshMetric,
+    surfacePointWithExclusionRegion *father = nullptr);
 
   bool inExclusionZone(const SPoint2 &p);
   void minmax(double _min[2], double _max[2]) const;
@@ -107,9 +107,14 @@ private:
   bool ok;
 
 public:
-  Wrapper3D() : individual(nullptr), parent(nullptr), size(nullptr), cf(nullptr), vec(nullptr), ok(true) {}
+  Wrapper3D()
+    : individual(nullptr), parent(nullptr), size(nullptr), cf(nullptr),
+      vec(nullptr), ok(true)
+  {
+  }
   Wrapper3D(MVertex *_i, MVertex *_p)
-    : individual(_i), parent(_p), size(nullptr), cf(nullptr), vec(nullptr), ok(true)
+    : individual(_i), parent(_p), size(nullptr), cf(nullptr), vec(nullptr),
+      ok(true)
   {
   }
   ~Wrapper3D() {}

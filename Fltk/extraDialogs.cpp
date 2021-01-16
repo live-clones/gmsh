@@ -362,8 +362,6 @@ static cgnsImportDialog *_cgnsImport = nullptr;
 */
 int cgnsImport()
 {
-  if(!_cgnsImport) {
-    _cgnsImport = new cgnsImportDialog();
-  }
+  if(!_cgnsImport) { _cgnsImport = new cgnsImportDialog(); }
   return _cgnsImport->run();
 }

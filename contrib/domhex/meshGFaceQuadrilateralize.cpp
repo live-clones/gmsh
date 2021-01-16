@@ -352,9 +352,7 @@ bool edgeFront::formQuad(BDS_Edge *e, BDS_Edge *left, BDS_Edge *right)
     BDS_Point *p = toUpdate[i];
     for(std::list<BDS_Edge *>::iterator itp = p->edges.begin();
         itp != p->edges.end(); ++itp) {
-      if(inFront(*itp)) {
-        updateStatus(*itp);
-      }
+      if(inFront(*itp)) { updateStatus(*itp); }
     }
   }
   return true;

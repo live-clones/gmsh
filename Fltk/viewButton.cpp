@@ -158,7 +158,7 @@ static void view_save_cb(Fl_Widget *w, void *data)
     "MED\t*.rmed\nSTL Surface\t*.stl\nGeneric TXT\t*.txt\n";
 
   PView *view = PView::list[(intptr_t)data];
- test:
+test:
   if(fileChooser(FILE_CHOOSER_CREATE, "Export", formats,
                  view->getData()->getFileName().c_str())) {
     std::string name = fileChooserGetName(1);
@@ -253,7 +253,8 @@ static void view_all_visible_cb(Fl_Widget *w, void *data)
                      (mode == -1) ? 1 :
                      (mode == -2) ? 0 :
                      (mode == -3) ? !opt_view_visible(i, GMSH_GET, 0) :
-                     (name == PView::list[i]->getData()->getName()) ? 1 : 0);
+                     (name == PView::list[i]->getData()->getName()) ? 1 :
+                                                                      0);
   drawContext::global()->draw();
 }
 
@@ -323,7 +324,8 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _popup->add("Remove Views/With Same Name", 0,
               (Fl_Callback *)view_remove_all_cb, (void *)(intptr_t)num, 0);
 
-  _popup->add("Sort By Name", 0, (Fl_Callback *)view_sort_cb, (void *)nullptr, 0);
+  _popup->add("Sort By Name", 0, (Fl_Callback *)view_sort_cb, (void *)nullptr,
+              0);
   _popup->add("Set Visibility/All On", 0, (Fl_Callback *)view_all_visible_cb,
               (void *)-1, 0);
   _popup->add("Set Visibility/All Off", 0, (Fl_Callback *)view_all_visible_cb,

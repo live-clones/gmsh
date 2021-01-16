@@ -248,7 +248,7 @@ static void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
   for(auto itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
     if((*itr)->getNumMeshElements()) {
       meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder();
-      //complete = (meshOrder <= 2) ? true :
+      // complete = (meshOrder <= 2) ? true :
       //  (*itr)->getMeshElement(0)->getNumVolumeVertices() ? true : false;
       if((*itr)->isFullyDiscrete()) CAD = false;
       break;
@@ -432,10 +432,11 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[4]->align(FL_ALIGN_RIGHT);
   value[4]->value(CTX::instance()->mesh.hoPassMax);
 
-  static Fl_Menu_Item menu_strategy[] = {{"Disjoint strong", 0, nullptr, nullptr},
-                                         {"Adaptive one-by-one", 0, nullptr, nullptr},
-                                         {"Disjoint weak", 0, nullptr, nullptr},
-                                         {nullptr}};
+  static Fl_Menu_Item menu_strategy[] = {
+    {"Disjoint strong", 0, nullptr, nullptr},
+    {"Adaptive one-by-one", 0, nullptr, nullptr},
+    {"Disjoint weak", 0, nullptr, nullptr},
+    {nullptr}};
 
   y += BH;
   choice[3] = new Fl_Choice(x, y, IW, BH, "Strategy");

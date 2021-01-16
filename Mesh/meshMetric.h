@@ -140,7 +140,8 @@ public:
 
   // get metric at point(x,y,z)  (previously computes intersection of metrics if
   // not done yet)
-  virtual double operator()(double x, double y, double z, GEntity *ge = nullptr);
+  virtual double operator()(double x, double y, double z,
+                            GEntity *ge = nullptr);
   virtual void operator()(double x, double y, double z, SMetric3 &metr,
                           GEntity *ge = nullptr);
 

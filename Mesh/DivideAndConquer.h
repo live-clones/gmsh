@@ -109,8 +109,8 @@ public:
     return std::binary_search(_hull, _hull + _hullSize, i);
   }
   void makePosView(const std::string &, GFace *gf = nullptr);
-  void printMedialAxis(Octree *_octree, const std::string &, GFace *gf = nullptr,
-                       GEdge *ge = nullptr);
+  void printMedialAxis(Octree *_octree, const std::string &,
+                       GFace *gf = nullptr, GEdge *ge = nullptr);
   void voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const;
 
   std::set<std::pair<void *, void *> > boundaryEdges;
@@ -125,8 +125,7 @@ public:
   {
     void *a = (p1 < p2) ? p1 : p2;
     void *b = (p1 > p2) ? p1 : p2;
-    auto it =
-      boundaryEdges.find(std::make_pair(a, b));
+    auto it = boundaryEdges.find(std::make_pair(a, b));
     return it != boundaryEdges.end();
   }
 
@@ -155,8 +154,7 @@ public:
   {
     void *a = (p1 < p2) ? p1 : p2;
     void *b = (p1 > p2) ? p1 : p2;
-    auto it =
-      mesh_edges.find(std::make_pair(a, b));
+    auto it = mesh_edges.find(std::make_pair(a, b));
     return it != mesh_edges.end();
   }
 

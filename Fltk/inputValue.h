@@ -15,6 +15,7 @@
 class inputValue : public Fl_Value_Input {
 private:
   std::string _number_format;
+
 public:
   inputValue(int x, int y, int w, int h, const char *l = nullptr)
     : Fl_Value_Input(x, y, w, h, l)
@@ -23,9 +24,7 @@ public:
   void numberFormat(const std::string &fmt) { _number_format = fmt; }
   virtual int format(char *buffer)
   {
-    if(_number_format.empty()) {
-      return sprintf(buffer, "%g", value());
-    }
+    if(_number_format.empty()) { return sprintf(buffer, "%g", value()); }
     else {
       if(_number_format.find("d") != std::string::npos ||
          _number_format.find("u") != std::string::npos)

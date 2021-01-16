@@ -19,9 +19,12 @@ class GEntity;
 class contextWindow : public paletteWindow {
 private:
   bool _redraw;
+
 public:
   contextWindow(int w, int h, bool nonModal, const char *l = nullptr)
-    : paletteWindow(w, h, nonModal, l), _redraw(false) { }
+    : paletteWindow(w, h, nonModal, l), _redraw(false)
+  {
+  }
   virtual int handle(int event);
   void enableRedraw() { _redraw = true; }
   void disableRedraw() { _redraw = false; }
@@ -33,8 +36,9 @@ private:
   std::vector<char *> _toFree;
   std::vector<Fl_Widget *> _onelabWidgets;
   template <class T>
-  void _addOnelabWidget(T &p, const std::string &pattern,
-                        std::set<std::pair<std::string, Fl_Widget *>> &widgets);
+  void
+  _addOnelabWidget(T &p, const std::string &pattern,
+                   std::set<std::pair<std::string, Fl_Widget *> > &widgets);
   Fl_Choice *_choice;
   int _dim, _tag;
   GEntity *_entity;

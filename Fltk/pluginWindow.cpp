@@ -138,9 +138,7 @@ static void add_scripting(GMSH_PostPlugin *p, PView *view)
 
   fileName += ".opt";
   FILE *fp = Fopen(fileName.c_str(), "a");
-  if(!fp) {
-    Msg::Error("Could not open file '%s'", fileName.c_str());
-  }
+  if(!fp) { Msg::Error("Could not open file '%s'", fileName.c_str()); }
   else {
     fprintf(fp, "%s", p->serialize().c_str());
     fclose(fp);
@@ -327,8 +325,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
   view_browser->callback(plugin_browser_cb);
   view_browser->box(GMSH_SIMPLE_RIGHT_BOX);
 
-  for(auto it =
-        PluginManager::instance()->begin();
+  for(auto it = PluginManager::instance()->begin();
       it != PluginManager::instance()->end(); ++it) {
     GMSH_Plugin *p = it->second;
     if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN ||

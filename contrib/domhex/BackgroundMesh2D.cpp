@@ -111,13 +111,9 @@ void backgroundMesh2D::reset(bool erase_2D3D)
   create_face_mesh();
 
   // computes the mesh sizes at nodes
-  if(CTX::instance()->mesh.lcFromPoints) {
-    computeSizeField();
-  }
+  if(CTX::instance()->mesh.lcFromPoints) { computeSizeField(); }
   else
-    for(auto itv2 =
-          _2Dto3D.begin();
-        itv2 != _2Dto3D.end(); ++itv2)
+    for(auto itv2 = _2Dto3D.begin(); itv2 != _2Dto3D.end(); ++itv2)
       sizeField[itv2->first] = CTX::instance()->mesh.lcMax;
 
   // ensure that other criteria are fullfilled
@@ -211,14 +207,13 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
   linearSystemCSRGmm<double> *_lsys = new linearSystemCSRGmm<double>;
   _lsys->setGmres(1);
 #else
-   linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+  linearSystemFull<double> *_lsys = new linearSystemFull<double>;
 #endif
 
   dofManager<double> myAssembler(_lsys);
 
   // fix boundary conditions
-  for(auto itv = dirichlet.begin();
-      itv != dirichlet.end(); ++itv) {
+  for(auto itv = dirichlet.begin(); itv != dirichlet.end(); ++itv) {
     myAssembler.fixVertex(itv->first, 0, 1, itv->second);
   }
 
@@ -257,9 +252,7 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
   }
 
   // Solve
-  if(myAssembler.sizeOfR()) {
-    _lsys->systemSolve();
-  }
+  if(myAssembler.sizeOfR()) { _lsys->systemSolve(); }
 
   // save solution
   for(auto it = vs.begin(); it != vs.end(); ++it) {
@@ -581,8 +574,7 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
 
   // build vertex -> neighbors table
   std::multimap<MVertex *, MVertex *> vertex2vertex;
-  for(auto it = beginelements();
-      it != endelements(); it++) {
+  for(auto it = beginelements(); it != endelements(); it++) {
     MElement *e = *it;
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
       MVertex *current = e->getVertex(i);
@@ -595,8 +587,7 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
   }
 
   // compute smoothness
-  for(auto it = beginvertices();
-      it != endvertices(); it++) {
+  for(auto it = beginvertices(); it != endvertices(); it++) {
     MVertex *v = *it;
     double angle_current = angle(v);
     // compare to all neighbors...
@@ -605,8 +596,8 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
       range = vertex2vertex.equal_range(v);
     double minangle, totalangle = 0.;
     int N = 0;
-    for(auto itneighbor = range.first;
-        itneighbor != range.second; itneighbor++) {
+    for(auto itneighbor = range.first; itneighbor != range.second;
+        itneighbor++) {
       N++;
       minangle = M_PI / 2;
       MVertex *v_nb = itneighbor->second;
@@ -636,8 +627,7 @@ void frameFieldBackgroundMesh2D::exportCrossField(const std::string &filename)
   deltas[0] = 0.;
   deltas[1] = M_PI;
 
-  for(auto it = beginvertices();
-      it != endvertices(); it++) {
+  for(auto it = beginvertices(); it != endvertices(); it++) {
     MVertex *v = *it;
     double angle_current = angle(v);
     GPoint p = get_GPoint_from_MVertex(v);
@@ -735,9 +725,7 @@ bool frameFieldBackgroundMesh2D::compute_RK_infos(double u, double v, double x,
   FieldManager *fields = gf->model()->getFields();
   if(fields->getBackgroundField() > 0) {
     Field *f = fields->get(fields->getBackgroundField());
-    if(!f->isotropic()) {
-      (*f)(x, y, z, infos.metricField, gf);
-    }
+    if(!f->isotropic()) { (*f)(x, y, z, infos.metricField, gf); }
     else {
       L = (*f)(x, y, z, gf);
       infos.metricField = SMetric3(1. / (L * L));

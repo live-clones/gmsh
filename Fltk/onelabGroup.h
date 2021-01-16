@@ -76,15 +76,12 @@ public:
 };
 
 bool getParameterColor(const std::string &str, Fl_Color &c);
-Fl_Widget *addParameterWidget(onelab::number &p,
-                              int xx, int yy, int ww, int hh,
+Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
                               double labelRatio, const std::string &ppath,
                               bool highlight, Fl_Color c, Fl_Color bgc,
                               std::vector<char *> &stringsToFree);
-Fl_Widget *addParameterWidget(onelab::string &p,
-                              int xx, int yy, int ww, int hh,
-                              double labelRatio,
-                              const std::string &ppath,
+Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
+                              double labelRatio, const std::string &ppath,
                               bool highlight, Fl_Color c, Fl_Color bgc,
                               std::vector<char *> &stringsToFree);
 void solver_cb(Fl_Widget *w, void *data);
