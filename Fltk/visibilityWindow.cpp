@@ -38,6 +38,10 @@ typedef unsigned long intptr_t;
 #include "Options.h"
 #include "Context.h"
 #include "StringUtils.h"
+#include "partitionVertex.h"
+#include "partitionEdge.h"
+#include "partitionFace.h"
+#include "partitionRegion.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -204,10 +208,20 @@ public:
       if(allmodels || m == GModel::current()) {
         std::vector<GEntity *> entities;
         m->getEntities(entities);
-        for(std::size_t j = 0; j < entities.size(); j++)
-          for(std::size_t k = 0; k < entities[j]->getNumMeshElements(); k++)
-            if(entities[j]->getMeshElement(k)->getPartition() == _tag)
-              entities[j]->getMeshElement(k)->setVisibility(val);
+        for(std::size_t j = 0; j < entities.size(); j++) {
+          std::vector<int> ps;
+          if(entities[j]->geomType() == GEntity::PartitionPoint)
+            ps = static_cast<partitionVertex *>(entities[j])->getPartitions();
+          else if(entities[j]->geomType() == GEntity::PartitionCurve)
+            ps = static_cast<partitionEdge *>(entities[j])->getPartitions();
+          else if(entities[j]->geomType() == GEntity::PartitionSurface)
+            ps = static_cast<partitionFace *>(entities[j])->getPartitions();
+          else if(entities[j]->geomType() == GEntity::PartitionVolume)
+            ps = static_cast<partitionRegion *>(entities[j])->getPartitions();
+          for(auto p : ps) {
+            if(p == _tag) entities[j]->setVisibility(val, recursive);
+          }
+        }
       }
     }
   }
