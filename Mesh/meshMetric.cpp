@@ -232,8 +232,7 @@ std::vector<MVertex *> getLSBlob(std::size_t minNbPt, v2t_cont::iterator it,
   //  SPoint3 p0 = it->first->point();  // Vertex coordinates (center of circle)
   //
   //  double rad = 0.;
-  //  for (std::vector<MElement*>::iterator itEl = it->second.begin(); itEl !=
-  //  it->second.end(); itEl++)
+  //  for (auto itEl = it->second.begin(); itEl != it->second.end(); itEl++)
   //    rad = std::max(rad,(*itEl)->getOuterRadius());
   //  rad *= RADFACT;
 
@@ -937,7 +936,7 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
 double meshMetric::getLaplacian(MVertex *v)
 {
   MVertex *vNew = _vertexMap[v->getNum()];
-  std::map<MVertex *, SMetric3>::const_iterator it = hessians.find(vNew);
+  auto it = hessians.find(vNew);
   SMetric3 h = it->second;
   return h(0, 0) + h(1, 1) + h(2, 2);
 }
@@ -945,7 +944,7 @@ double meshMetric::getLaplacian(MVertex *v)
 SVector3 meshMetric::getGradient(MVertex *v)
 {
   MVertex *vNew = _vertexMap[v->getNum()];
-  std::map<MVertex *, SVector3>::const_iterator it = grads.find(vNew);
+  auto it = grads.find(vNew);
   SVector3 gr = it->second;
   return gr;
 }

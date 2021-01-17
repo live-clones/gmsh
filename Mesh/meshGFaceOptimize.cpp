@@ -141,7 +141,7 @@ bool buildMeshGenerationDataStructures(
   // take good care of embedded edges
   {
     std::vector<GEdge *> embedded_edges = gf->getEmbeddedEdges();
-    std::vector<GEdge *>::const_iterator ite = embedded_edges.begin();
+    auto ite = embedded_edges.begin();
     while(ite != embedded_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
         for(std::size_t i = 0; i < (*ite)->lines.size(); i++)
@@ -155,7 +155,7 @@ bool buildMeshGenerationDataStructures(
   // take care of small edges in  order not to "pollute" the size field
   {
     std::vector<GEdge *> _edges = gf->edges();
-    std::vector<GEdge *>::const_iterator ite = _edges.begin();
+    auto ite = _edges.begin();
     while(ite != _edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
         for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
@@ -945,7 +945,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   std::vector<MVertex *> emb_edgeverts;
   {
     std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
-    std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
+    auto ite = emb_edges.begin();
     while(ite != emb_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
         emb_edgeverts.insert(emb_edgeverts.end(), (*ite)->mesh_vertices.begin(),
@@ -1339,13 +1339,11 @@ void quadsToTriangles(GFace *gf, double minqual)
 
   //  std::map<MElement*,MElement*> _toFirst;
   std::map<MElement *, std::vector<MElement *> > newElemColumns;
-  std::map<MElement *, std::vector<MElement *> >::iterator it;
-  std::map<MElement *, std::pair<MElement *, MElement *> >::iterator it2;
 
-  for(it = _columns->_elemColumns.begin(); it != _columns->_elemColumns.end();
+  for(auto it = _columns->_elemColumns.begin(); it != _columns->_elemColumns.end();
       it++) {
     MElement *firstEl = it->first;
-    it2 = change.find(firstEl);
+    auto it2 = change.find(firstEl);
     if(it2 != change.end()) firstEl = it2->second.first;
     // it2->second.first may be the one that touch boundary or not...
 

@@ -350,8 +350,7 @@ static void copyMesh(GFace *source, GFace *target)
 
   std::set<GVertex *> checkVtcs(s_vtcs.begin(), s_vtcs.end());
 
-  for(std::vector<GVertex *>::const_iterator tvIter = t_vtcs.begin();
-      tvIter != t_vtcs.end(); ++tvIter) {
+  for(auto tvIter = t_vtcs.begin(); tvIter != t_vtcs.end(); ++tvIter) {
     GVertex *gvt = *tvIter;
     auto gvsIter = target->vertexCounterparts.find(gvt);
 
@@ -1171,10 +1170,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   std::vector<GEdge *> edges =
     replacement_edges ? *replacement_edges : gf->edges();
 
-  // build a set with all points of the boundaries
-  std::set<MVertex *, MVertexPtrLessThan> all_vertices, boundary;
-  std::vector<GEdge *>::const_iterator ite = edges.begin();
-
   FILE *fdeb = nullptr;
   if(debug && RECUR_ITER == 0) {
     char name[245];
@@ -1183,6 +1178,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     fprintf(fdeb, "View \"\"{\n");
   }
 
+  // build a set with all points of the boundaries
+  std::set<MVertex *, MVertexPtrLessThan> all_vertices, boundary;
+  auto ite = edges.begin();
   while(ite != edges.end()) {
     if((*ite)->isSeam(gf)) {
       if(fdeb != nullptr) fclose(fdeb);
@@ -2183,8 +2181,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     nbPointsTotal += emb_vertx.size();
     {
       std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
-      std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
       std::set<MVertex *> vs;
+      auto ite = emb_edges.begin();
       while(ite != emb_edges.end()) {
         for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
           for(std::size_t j = 0; j < 2; j++) {
@@ -2224,17 +2222,16 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     }
 
     std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
-    std::vector<GEdge *>::const_iterator ite = emb_edges.begin();
     std::set<MVertex *> vs;
     std::map<MVertex *, BDS_Point *> facile;
+    auto ite = emb_edges.begin();
     while(ite != emb_edges.end()) {
       m->add_geom(-(*ite)->tag(), 1);
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         for(std::size_t j = 0; j < 2; j++) {
           MVertex *v = (*ite)->lines[i]->getVertex(j);
           BDS_Point *pp = nullptr;
-          const std::map<MVertex *, std::set<BDS_Point *> >::iterator it =
-            invertedRecoverMap.find(v);
+          const auto it = invertedRecoverMap.find(v);
           if(it != invertedRecoverMap.end()) {
             if(it->second.size() > 1) {
               const GEdge *edge = (*ite);
@@ -2557,7 +2554,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   // now find an edge that has belongs to one of the exterior triangles
   {
-    std::vector<BDS_Edge *>::const_iterator ite = m->edges.begin();
+    auto ite = m->edges.begin();
     while(ite != m->edges.end()) {
       BDS_Edge *edge = *ite;
       if(edge->g && edge->numfaces() == 2) {
@@ -2592,7 +2589,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   m->cleanup();
 
   {
-    std::vector<BDS_Edge *>::const_iterator ite = m->edges.begin();
+    auto ite = m->edges.begin();
     while(ite != m->edges.end()) {
       BDS_Edge *edge = *ite;
       if(edge->numfaces() == 0)

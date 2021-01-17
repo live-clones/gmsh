@@ -259,16 +259,14 @@ FixErasedExtrScaleFlags(GModel *m, std::map<int, bool> &faceSkipScaleCalc,
                         std::map<int, bool> &edgeSkipScaleCalc)
 {
   unsigned int num_changed = 0;
-  std::set<GRegion *, GEntityPtrLessThan>::iterator itreg;
   // fix all extruded faces bordering ScaleLast regions
-  for(itreg = m->firstRegion(); itreg != m->lastRegion(); itreg++) {
+  for(auto itreg = m->firstRegion(); itreg != m->lastRegion(); itreg++) {
     ExtrudeParams *r_ep = (*itreg)->meshAttributes.extrude;
     if(!r_ep || !r_ep->mesh.ExtrudeMesh || r_ep->geo.Mode != EXTRUDED_ENTITY ||
        !r_ep->mesh.ScaleLast)
       continue;
     std::vector<GFace *> reg_faces = (*itreg)->faces();
-    std::vector<GFace *>::iterator itface;
-    for(itface = reg_faces.begin(); itface != reg_faces.end(); itface++) {
+    for(auto itface = reg_faces.begin(); itface != reg_faces.end(); itface++) {
       if(m->getFaceByTag(std::abs(r_ep->geo.Source)) != (*itface)) {
         ExtrudeParams *f_ep = (*itface)->meshAttributes.extrude;
         if(f_ep && f_ep->mesh.ExtrudeMesh && !f_ep->mesh.ScaleLast) {
@@ -288,8 +286,7 @@ FixErasedExtrScaleFlags(GModel *m, std::map<int, bool> &faceSkipScaleCalc,
     ExtrudeParams *f_ep = (*it)->meshAttributes.extrude;
     if(!f_ep || !f_ep->mesh.ExtrudeMesh || !f_ep->mesh.ScaleLast) continue;
     std::vector<GEdge *> f_edges = (*it)->edges();
-    std::vector<GEdge *>::iterator itedge;
-    for(itedge = f_edges.begin(); itedge != f_edges.end(); itedge++) {
+    for(auto itedge = f_edges.begin(); itedge != f_edges.end(); itedge++) {
       if(m->getEdgeByTag(std::abs(f_ep->geo.Source)) != (*itedge)) {
         ExtrudeParams *e_ep = (*itedge)->meshAttributes.extrude;
         if(e_ep && e_ep->mesh.ExtrudeMesh && !e_ep->mesh.ScaleLast) {

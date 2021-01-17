@@ -958,12 +958,10 @@ void DocRecord::concave(double x, double y, GFace *gf)
   MVertex *vertex1;
   MVertex *vertex2;
   std::set<int> set;
-  std::set<int>::iterator it2;
 
   std::vector<GEdge *> list = gf->edges();
-  std::vector<GEdge *>::const_iterator it1;
 
-  for(it1 = list.begin(); it1 != list.end(); it1++) {
+  for(auto it1 = list.begin(); it1 != list.end(); it1++) {
     edge = *it1;
     for(std::size_t i = 0; i < edge->getNumMeshElements(); i++) {
       element = edge->getMeshElement(i);
@@ -982,7 +980,7 @@ void DocRecord::concave(double x, double y, GFace *gf)
   }
 
   set = tagInterior(x, y);
-  for(it2 = set.begin(); it2 != set.end(); it2++) {
+  for(auto it2 = set.begin(); it2 != set.end(); it2++) {
     index1 = triangles[*it2].a;
     index2 = triangles[*it2].b;
     index3 = triangles[*it2].c;

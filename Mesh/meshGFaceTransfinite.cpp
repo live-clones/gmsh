@@ -100,8 +100,8 @@ static void computeEdgeLoops(const GFace *gf,
     }
   }
 
-  std::vector<GEdge *>::const_iterator it = edges.begin();
-  std::vector<int>::const_iterator ito = ori.begin();
+  auto it = edges.begin();
+  auto ito = ori.begin();
   indices.push_back(0);
   GVertex *start =
     ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();

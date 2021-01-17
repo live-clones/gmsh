@@ -967,8 +967,7 @@ namespace jacobianBasedQuality {
     for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
       entities.insert(*it);
 
-    std::set<GEntity *, GEntityPtrFullLessThan>::iterator it;
-    for(it = entities.begin(); it != entities.end(); ++it) {
+    for(auto it = entities.begin(); it != entities.end(); ++it) {
       unsigned num = (*it)->getNumMeshElements();
       for(unsigned i = 0; i < num; ++i) {
         MElement *el = (*it)->getMeshElement(i);

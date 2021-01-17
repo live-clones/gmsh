@@ -751,9 +751,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
 
   SPoint3 point;
 
-  faceContainer::iterator fIter;
-
-  fIter = faceVertices.find(MFace(v[29], v[27], v[102]));
+  auto fIter = faceVertices.find(MFace(v[29], v[27], v[102]));
   if(fIter != faceVertices.end())
     v[25] = fIter->second[0];
   else {

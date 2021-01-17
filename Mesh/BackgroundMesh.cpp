@@ -372,9 +372,9 @@ double backgroundMesh::getSmoothness(MElement *e)
   MVertex *v0 = _3Dto2D[e->getVertex(0)];
   MVertex *v1 = _3Dto2D[e->getVertex(1)];
   MVertex *v2 = _3Dto2D[e->getVertex(2)];
-  std::map<MVertex *, double>::const_iterator i0 = _angles.find(v0);
-  std::map<MVertex *, double>::const_iterator i1 = _angles.find(v1);
-  std::map<MVertex *, double>::const_iterator i2 = _angles.find(v2);
+  auto i0 = _angles.find(v0);
+  auto i1 = _angles.find(v1);
+  auto i2 = _angles.find(v2);
   double a[3] = {cos(4 * i0->second), cos(4 * i1->second), cos(4 * i2->second)};
   double b[3] = {sin(4 * i0->second), sin(4 * i1->second), sin(4 * i2->second)};
   double f[3];
@@ -394,9 +394,9 @@ double backgroundMesh::getSmoothness(double u, double v, double w)
   MVertex *v0 = e->getVertex(0);
   MVertex *v1 = e->getVertex(1);
   MVertex *v2 = e->getVertex(2);
-  std::map<MVertex *, double>::const_iterator i0 = _angles.find(v0);
-  std::map<MVertex *, double>::const_iterator i1 = _angles.find(v1);
-  std::map<MVertex *, double>::const_iterator i2 = _angles.find(v2);
+  auto i0 = _angles.find(v0);
+  auto i1 = _angles.find(v1);
+  auto i2 = _angles.find(v2);
   double a[3] = {cos(4 * i0->second), cos(4 * i1->second), cos(4 * i2->second)};
   double b[3] = {sin(4 * i0->second), sin(4 * i1->second), sin(4 * i2->second)};
   double f[3];

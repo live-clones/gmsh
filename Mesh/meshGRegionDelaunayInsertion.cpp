@@ -35,8 +35,8 @@ static void testIfBoundaryIsRecovered(GRegion *gr)
   std::map<MEdge, GEdge *, MEdgeLessThan> edges;
   std::map<MFace, GFace *, MFaceLessThan> faces;
 
-  std::vector<GEdge *>::const_iterator it = e.begin();
-  std::vector<GFace *>::iterator itf = f.begin();
+  auto it = e.begin();
+  auto itf = f.begin();
   for(; it != e.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); ++i) {
       if(distance((*it)->lines[i]->getVertex(0),
@@ -439,8 +439,8 @@ static void printTets(const char *fn, std::list<MTet4 *> &cavity,
   FILE *f = Fopen(fn, "w");
   if(f) {
     fprintf(f, "View \"\"{\n");
-    std::list<MTet4 *>::iterator ittet = cavity.begin();
-    std::list<MTet4 *>::iterator ittete = cavity.end();
+    auto ittet = cavity.begin();
+    auto ittete = cavity.end();
     while(ittet != ittete) {
       MTet4 *tet = *ittet;
       if(force || !tet->isDeleted()) {
@@ -561,8 +561,8 @@ static void setLcs(MTriangle *t,
     MEdge e = t->getEdge(i);
     MVertex *vi = e.getVertex(0);
     MVertex *vj = e.getVertex(1);
-    std::map<MVertex*,double>::iterator iti = vSizes.find(vi);
-    std::map<MVertex*,double>::iterator itj = vSizes.find(vj);
+    auto iti = vSizes.find(vi);
+    auto itj = vSizes.find(vj);
     // use largest edge length
     if (iti == vSizes.end() || iti->second > l) vSizes[vi] = l;
     if (itj == vSizes.end() || itj->second > l) vSizes[vj] = l;

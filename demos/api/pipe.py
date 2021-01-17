@@ -5,12 +5,9 @@ import sys
 
 gmsh.initialize(sys.argv)
 
-gmsh.option.setNumber('Mesh.MeshSizeMin', 0.1)
-gmsh.option.setNumber('Mesh.MeshSizeMax', 0.1)
-gmsh.option.setNumber('Geometry.NumSubEdges', 300) # nicer display of curves
+nturns = 2 # tested ok up to 100
 
-nturns = 3
-npts = 200
+npts = 100 * nturns
 r = 1.
 rd = 0.1
 h = 1. * nturns
@@ -30,9 +27,14 @@ gmsh.model.occ.rotate([(2, 1), (2, 2)], 0, 0, 0, 1, 0, 0, math.pi/2)
 
 #gmsh.model.occ.addPipe([(2, 1), (2, 2)], 1, 'DiscreteTrihedron')
 gmsh.model.occ.addPipe([(2, 1), (2, 2)], 1, 'Frenet')
-gmsh.model.occ.remove([(2, 1), (2, 2)])
+
+gmsh.model.occ.remove([(2, 1), (2, 2), (1, 1)])
 
 gmsh.model.occ.synchronize()
+
+gmsh.option.setNumber('Mesh.MeshSizeMin', 0.1)
+gmsh.option.setNumber('Mesh.MeshSizeMax', 0.1)
+gmsh.option.setNumber('Geometry.NumSubEdges', npts) # nicer display of curves
 
 if '-nopopup' not in sys.argv:
     gmsh.fltk.run()

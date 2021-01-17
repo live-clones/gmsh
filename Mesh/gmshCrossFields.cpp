@@ -1402,10 +1402,8 @@ static void cutGraph(std::map<MEdge, cross2d, MEdgeLessThan> &C,
   fclose(fff2);
 
   //  {
-  //    std::set<MVertex*,MVertexPtrLessThan>::iterator it = boundaries.begin();
-  //    for(; it != boundaries.end(); ++it) {
-  //      std::set<MVertex*,MVertexPtrLessThan>::iterator it2 =
-  //      singularities.find(*it); if(it2 != singularities.end())
+  //    for(auto it = boundaries.begin(); it != boundaries.end(); ++it) {
+  //      auto it2 = singularities.find(*it); if(it2 != singularities.end())
   //      singularities.erase(it2);
   //    }
   //  }
@@ -2663,9 +2661,8 @@ public:
 
   int computeCrossFieldExtrinsic(double tol, size_t nIterLaplace = 2000)
   {
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
     std::vector<cross2d *> pc;
-    for(it = C.begin(); it != C.end(); ++it) pc.push_back(&(it->second));
+    for(auto it = C.begin(); it != C.end(); ++it) pc.push_back(&(it->second));
 
     size_t ITER = 0;
     while(ITER++ < nIterLaplace) {
@@ -3144,10 +3141,9 @@ public:
   int computeUniqueVectorsPerTriangle()
   {
     // LIFTING
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
     std::set<cross2d *> visited;
     while(visited.size() != C.size()) {
-      for(it = C.begin(); it != C.end(); ++it) {
+      for(auto it = C.begin(); it != C.end(); ++it) {
         if(visited.find(&(it->second)) == visited.end() &&
            cutG.find(it->second._e) == cutG.end()) {
           computeLifting(&(it->second), 0, cutG, singularities, boundaries,
@@ -3163,10 +3159,9 @@ public:
 
   int computeCutGraph(std::map<MEdge, MEdge, MEdgeLessThan> &duplicateEdges)
   {
-    std::map<MEdge, cross2d, MEdgeLessThan>::iterator it;
     // COMPUTING CUT GRAPH
     cutGraph(C, cutG, singularities, boundaries);
-    for(it = C.begin(); it != C.end(); ++it) {
+    for(auto it = C.begin(); it != C.end(); ++it) {
       MEdge e0 = it->second._e;
       if(cutG.find(e0) != cutG.end()) it->second.inCutGraph = true;
     }

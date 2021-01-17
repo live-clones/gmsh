@@ -324,7 +324,7 @@ BDS_Edge *BDS_Mesh::recover_edge_fast(BDS_Point *p1, BDS_Point *p2)
 {
   std::vector<BDS_Face *> ts = p1->getTriangles();
 
-  std::vector<BDS_Face *>::const_iterator it = ts.begin();
+  auto it = ts.begin();
   while(it != ts.end()) {
     BDS_Face *t = *it;
     if(!t->e4) {
@@ -370,7 +370,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
 
     bool selfIntersection = false;
 
-    std::vector<BDS_Edge *>::const_iterator it = edges.begin();
+    auto it = edges.begin();
     while(it != edges.end()) {
       e = (*it);
       if(!e->deleted && e->p1 != p1 && e->p1 != p2 && e->p2 != p1 &&
@@ -539,8 +539,7 @@ void BDS_Mesh::del_point(BDS_Point *p)
 void BDS_Mesh::add_geom(int p1, int p2)
 {
   BDS_GeomEntity *e = new BDS_GeomEntity(p1, p2);
-  std::pair<std::set<BDS_GeomEntity *, GeomLessThan>::iterator, bool> res =
-    geom.insert(e);
+  auto res = geom.insert(e);
   if(!res.second) delete e;
 }
 
@@ -1320,7 +1319,7 @@ static inline double getTutteEnergy(const BDS_Point *p,
                                     double &RATIO)
 {
   double E = 0;
-  double MAX, MIN;
+  double MAX, MIN = 0;
   if(nbg.empty()) return 1.e22;
   for(size_t i = 0; i < nbg.size(); ++i) {
     const double dx = p->X - nbg[i]->X;
@@ -1574,7 +1573,7 @@ static inline bool minimizeTutteEnergyParam(BDS_Point *p, double E_unmoved,
 {
   double U, V, LC, oldX = p->X, oldY = p->Y, oldZ = p->Z, oldU = p->u,
                    oldV = p->v;
-  double RATIO2;
+  double RATIO2 = 0;
   getCentroidUV(p, gf, kernel, lc, U, V, LC);
   GPoint gp = gf->point(U, V);
   if(!gp.succeeded()) return false;
@@ -1631,7 +1630,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
 
   if(p->iD == CHECK) printf("%d adjacent vertices\n", (int)nbg.size());
 
-  double RATIO;
+  double RATIO = 0;
   double E_unmoved = getTutteEnergy(p, nbg, RATIO);
   if(RATIO > threshold) return false;
 

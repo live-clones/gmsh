@@ -270,28 +270,12 @@ void qmTriangle::NCJRange(const MTriangle *el, double &valMin, double &valMax)
 {
   const JacobianBasis *jac = el->getJacobianFuncSpace();
   fullMatrix<double> primNodesXYZ(3, 3);
-  //  SVector3 geoNorm(0.,0.,0.);
-  //  std::map<MElement*,GEntity*>::const_iterator itEl2ent =
-  //  element2entity.find(_el[iEl]); GEntity *ge = (itEl2ent ==
-  //  element2entity.end()) ? 0 : itEl2ent->second; const bool hasGeoNorm = ge
-  //  && (ge->dim() == 2) && ge->haveParametrization();
   for(int i = 0; i < jac->getNumPrimMapNodes(); i++) {
     const MVertex *v = el->getVertex(i);
     primNodesXYZ(i, 0) = v->x();
     primNodesXYZ(i, 1) = v->y();
     primNodesXYZ(i, 2) = v->z();
-    //    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
-    //      double u, v;
-    //      _vert[iV]->getParameter(0,u);
-    //      _vert[iV]->getParameter(1,v);
-    //      geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
-    //    }
   }
-  //  if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
-  //    SPoint2 param =
-  //    ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false); geoNorm =
-  //    ((GFace*)ge)->normal(param);
-  //  }
   fullMatrix<double> nM(1, 3);
   jac->getPrimNormal2D(primNodesXYZ, nM);
   SVector3 normal(nM(0, 0), nM(0, 1), nM(0, 2));
@@ -511,28 +495,12 @@ void qmQuadrangle::NCJRange(const MQuadrangle *el, double &valMin,
 {
   const JacobianBasis *jac = el->getJacobianFuncSpace();
   fullMatrix<double> primNodesXYZ(4, 3);
-  //  SVector3 geoNorm(0.,0.,0.);
-  //  std::map<MElement*,GEntity*>::const_iterator itEl2ent =
-  //  element2entity.find(_el[iEl]); GEntity *ge = (itEl2ent ==
-  //  element2entity.end()) ? 0 : itEl2ent->second; const bool hasGeoNorm = ge
-  //  && (ge->dim() == 2) && ge->haveParametrization();
   for(int i = 0; i < jac->getNumPrimMapNodes(); i++) {
     const MVertex *v = el->getVertex(i);
     primNodesXYZ(i, 0) = v->x();
     primNodesXYZ(i, 1) = v->y();
     primNodesXYZ(i, 2) = v->z();
-    //    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
-    //      double u, v;
-    //      _vert[iV]->getParameter(0,u);
-    //      _vert[iV]->getParameter(1,v);
-    //      geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
-    //    }
   }
-  //  if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
-  //    SPoint2 param =
-  //    ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false); geoNorm =
-  //    ((GFace*)ge)->normal(param);
-  //  }
   fullMatrix<double> nM(1, 3);
   jac->getPrimNormal2D(primNodesXYZ, nM);
   SVector3 normal(nM(0, 0), nM(0, 1), nM(0, 2));

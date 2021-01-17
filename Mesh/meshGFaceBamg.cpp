@@ -91,8 +91,6 @@ void meshGFaceBamg(GFace *gf)
   int index = 0;
   for(auto it = all.begin(); it != all.end(); ++it) {
     if((*it)->onWhat()->dim() <= 1) {
-      // for(std::set<MVertex*>::iterator it = bcVertex.begin();
-      // it!=bcVertex.end(); ++it){
       SPoint2 p;
       reparamMeshVertexOnFace(*it, gf, p);
       bamgVertices[index][0] = p.x();

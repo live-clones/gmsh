@@ -430,7 +430,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
     }
   }
 
-  std::vector<BDS_Edge *>::const_iterator it = m.edges.begin();
+  auto it = m.edges.begin();
   while(it != m.edges.end()) {
     if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g &&
        (*it)->g->classif_degree == 2) {
@@ -533,9 +533,8 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
                       int &nb_collaps, double &t)
 {
   double t1 = Cpu();
-  std::vector<BDS_Edge *>::const_iterator it = m.edges.begin();
   std::vector<std::pair<double, BDS_Edge *> > edges;
-
+  auto it = m.edges.begin();
   while(it != m.edges.end()) {
     if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g &&
        (*it)->g->classif_degree == 2) {
@@ -633,7 +632,7 @@ computeNodalSizes(GFace *gf, BDS_Mesh &m,
       (*itp)->lc() = MAX_LC;
       ++itp;
     }
-    std::vector<BDS_Edge *>::const_iterator it = m.edges.begin();
+    auto it = m.edges.begin();
     while(it != m.edges.end()) {
       bool degenerated = false;
 
@@ -669,8 +668,8 @@ computeNodalSizes(GFace *gf, BDS_Mesh &m,
     while(1) {
       bool allTouched = true;
       for(size_t i = 0; i < pts.size(); i++) {
-        std::vector<BDS_Edge *>::const_iterator it = pts[i]->edges.begin();
-        std::vector<BDS_Edge *>::const_iterator ite = pts[i]->edges.end();
+        auto it = pts[i]->edges.begin();
+        auto ite = pts[i]->edges.end();
         while(it != ite) {
           BDS_Point *p = (*it)->othervertex(pts[i]);
           if(p->lc() != MAX_LC) {

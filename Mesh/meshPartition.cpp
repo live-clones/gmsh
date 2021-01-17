@@ -1830,8 +1830,7 @@ static void createPartitionTopology(
       }
     }
     int numFaceEntity = model->getMaxElementaryNumber(2);
-    for(hashmapface::const_iterator it = faceToElement.begin();
-        it != faceToElement.end(); ++it) {
+    for(auto it = faceToElement.begin(); it != faceToElement.end(); ++it) {
       MFace f = it->first;
 
       std::vector<int> partitions;
@@ -1920,8 +1919,7 @@ static void createPartitionTopology(
     }
 
     int numEdgeEntity = model->getMaxElementaryNumber(1);
-    for(hashmapedge::const_iterator it = edgeToElement.begin();
-        it != edgeToElement.end(); ++it) {
+    for(auto it = edgeToElement.begin(); it != edgeToElement.end(); ++it) {
       MEdge e = it->first;
 
       std::vector<int> partitions;
@@ -2006,8 +2004,7 @@ static void createPartitionTopology(
       }
     }
     int numVertexEntity = model->getMaxElementaryNumber(0);
-    for(hashmapvertex::const_iterator it = vertexToElement.begin();
-        it != vertexToElement.end(); ++it) {
+    for(auto it = vertexToElement.begin(); it != vertexToElement.end(); ++it) {
       MVertex *v = it->first;
 
       std::vector<int> partitions;

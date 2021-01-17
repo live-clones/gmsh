@@ -193,7 +193,7 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m,
 
   size_t count = 0;
   c2v.resize(all.size());
-  // for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++)
+  // for(auto it = all.begin(); it != all.end(); it++)
   // {
   //   m->vertices.coord[4 * count + 0] = (*it)->x();
   //   m->vertices.coord[4 * count + 1] = (*it)->y();
@@ -930,7 +930,7 @@ static void assignSizeAfterRefinementAniso(p4est_iter_volume_info_t * info, void
       double kmax1 = -1.0e22;
       double kmax2 = -1.0e22;
       double hf = DBL_MAX;
-      for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
+      for(auto tri = candidates.begin(); tri != candidates.end(); ++tri){
         for(int i = 0; i < 3; ++i){
           int node = forestOptions->mesh->triangles.node[(size_t) 3*(*tri)+i];
           double *v1 = forestOptions->nodalCurvature + 6*node;
@@ -2075,8 +2075,7 @@ HXTStatus featureSize(Forest *forest)
              fmin(alpha1, fabs(M_PI - alpha1)) < M_PI / 8.) {
             // Add edge to the set (axis, though actually unused), modifiy size
             // at its extrmities and draw the dual facet
-            std::pair<std::set<MEdge, MEdgeLessThan>::iterator, bool> ret =
-              axis.insert(e);
+            auto ret = axis.insert(e);
 
             if(ret.second) {
               double h = e.length() / nLayersPerGap;
@@ -2594,9 +2593,8 @@ HXTStatus automaticMeshSizeField::updateHXT()
       // } else{
       //   Msg::Info("No volume in the model : looping over faces instead.");
       //   regions[0] = new GRegion(GModel::current(),-1);
-      //   for(std::set<GFace*, GEntityPtrLessThan>::iterator it =
-      //   GModel::current()->firstFace(); it != GModel::current()->lastFace();
-      //   ++it){
+      //   for(auto it = GModel::current()->firstFace(); it !=
+      //   GModel::current()->lastFace(); ++it){
       //     faces.push_back(*it);
       //     regions[0]->addEmbeddedFace(*it);
       //   }
@@ -2845,9 +2843,8 @@ HXTStatus automaticMeshSizeField::updateHXT()
 
       mesh = nullptr;
 
-      // for(std::set<GEdge*, GEntityPtrLessThan>::iterator it =
-      // GModel::current()->firstEdge(); it != GModel::current()->lastEdge();
-      // ++it){
+      // for(auto it = GModel::current()->firstEdge(); it !=
+      // GModel::current()->lastEdge(); ++it){
       //   GEdge *e = *it;
       //   curvFunctions.push_back([e](double par){ return e->curvature(par);
       //   }); xFunctions.push_back([e](double par){ return e->point(par).x();
