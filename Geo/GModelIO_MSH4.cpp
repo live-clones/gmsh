@@ -1696,8 +1696,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fwrite(&verticesSize, sizeof(std::size_t), 1, fp);
       int oriI = 0;
-      for(std::vector<GVertex *>::const_iterator itv = vertices.begin();
-          itv != vertices.end(); itv++) {
+      for(auto itv = vertices.begin(); itv != vertices.end(); itv++) {
         int brepTag = ori[oriI] * (*itv)->tag();
         fwrite(&brepTag, sizeof(int), 1, fp);
         oriI++;

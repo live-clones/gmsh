@@ -415,9 +415,8 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
   // visited once
 
   GFacesToGEdgeMap gFacesToGEdge;
-  TEdgeToGFacesMap::iterator it;
 
-  for(it = tEdgeToGFaces.begin(); it != tEdgeToGFaces.end(); ++it) {
+  for(auto it = tEdgeToGFaces.begin(); it != tEdgeToGFaces.end(); ++it) {
     std::set<GFace *> &gfaces = it->second;
     auto gfIter = gFacesToGEdge.find(gfaces);
     if(gfIter == gFacesToGEdge.end()) {
@@ -435,7 +434,7 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
 
   MElementFactory eltFactory;
 
-  for(it = tEdgeToGFaces.begin(); it != tEdgeToGFaces.end(); ++it) {
+  for(auto it = tEdgeToGFaces.begin(); it != tEdgeToGFaces.end(); ++it) {
     const topoEdge &te = it->first;
     std::set<GFace *> &gfaces = it->second;
 
@@ -468,11 +467,10 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
     if(split.size() != 1) splitEdge[*it] = split;
   }
 
-  GFaceToGEdgesMap::iterator gfToge;
-
   // add split edges to face map
 
-  for(gfToge = gFaceToGEdges.begin(); gfToge != gFaceToGEdges.end(); ++gfToge) {
+  for(auto gfToge = gFaceToGEdges.begin(); gfToge != gFaceToGEdges.end();
+      ++gfToge) {
     std::set<GEdge *> &edgeSet = gfToge->second;
     std::set<GEdge *> newEdgeSet;
     auto eIter = edgeSet.begin();
@@ -488,7 +486,8 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
 
   // connect GEdges and GFaces
 
-  for(gfToge = gFaceToGEdges.begin(); gfToge != gFaceToGEdges.end(); ++gfToge) {
+  for(auto gfToge = gFaceToGEdges.begin(); gfToge != gFaceToGEdges.end();
+      ++gfToge) {
     GFace *gf = gfToge->first;
     std::set<GEdge *> &gEdgeSet = gfToge->second;
 

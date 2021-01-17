@@ -316,8 +316,8 @@ int GModel::_readMSH2(const std::string &name)
           vertexVector[0] = nullptr;
         else
           vertexVector[numVertices] = nullptr;
-        std::map<int, MVertex *>::const_iterator it = vertexMap.begin();
-        for(; it != vertexMap.end(); ++it) vertexVector[it->first] = it->second;
+        for(auto it = vertexMap.begin(); it != vertexMap.end(); ++it)
+          vertexVector[it->first] = it->second;
         vertexMap.clear();
       }
     }
@@ -578,8 +578,7 @@ int GModel::_readMSH2(const std::string &name)
 
       for(int i = 0; i < 10; i++) elements[i].clear();
 
-      std::map<int, MElement *>::iterator ite;
-      for(ite = elems.begin(); ite != elems.end(); ite++) {
+      for(auto ite = elems.begin(); ite != elems.end(); ite++) {
         int num = ite->first;
         MElement *e = ite->second;
         if(parents.find(num) == parents.end()) {
@@ -710,9 +709,7 @@ static void writeElementMSH(FILE *fp, GModel *model, GEntity *ge, T *ele,
 
   std::vector<short> ghosts;
   if(model->getGhostCells().size()) {
-    std::pair<std::multimap<MElement *, short>::iterator,
-              std::multimap<MElement *, short>::iterator>
-      itp = model->getGhostCells().equal_range(ele);
+    auto itp = model->getGhostCells().equal_range(ele);
     for(auto it = itp.first; it != itp.second; it++)
       ghosts.push_back(it->second);
   }
@@ -1150,8 +1147,7 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
     Msg::Info("Writing ghost cells in debug file 'ghosts.pos'");
     FILE *fp = Fopen("ghosts.pos", "w");
     fprintf(fp, "View \"ghosts\"{\n");
-    for(std::multimap<MElement*, short>::iterator it = _ghostCells.begin();
-        it != _ghostCells.end(); it++)
+    for(auto it = _ghostCells.begin(); it != _ghostCells.end(); it++)
       it->first->writePOS(fp, false, true, false, false, false, false);
     fprintf(fp, "};\n");
     fclose(fp);

@@ -291,8 +291,7 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
       findTransfiniteCorners(gf, corners);
       std::size_t N = corners.size();
       for(std::size_t i = 0; i < N; i++) {
-        for(std::vector<GEdge *>::const_iterator it = redges.begin();
-            it != redges.end(); it++) {
+        for(auto it = redges.begin(); it != redges.end(); it++) {
           if((*it)->getBeginVertex()->mesh_vertices[0] == corners[i]) {
             corners.push_back((*it)->getEndVertex()->mesh_vertices[0]);
             break;

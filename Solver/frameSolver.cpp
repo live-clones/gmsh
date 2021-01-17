@@ -283,8 +283,7 @@ void frameSolver2d::computeRotationTags()
   }
 
   std::multimap<MVertex *, gmshBeam2d *>::iterator s_it;
-  for(auto it = v2b.begin();
-      it != v2b.end(); it = s_it) {
+  for(auto it = v2b.begin(); it != v2b.end(); it = s_it) {
     MVertex *theKey = it->first;
 
     std::pair<std::multimap<MVertex *, gmshBeam2d *>::iterator,

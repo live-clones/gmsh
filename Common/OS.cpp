@@ -698,15 +698,13 @@ void UnzipFile(const std::string &fileName, const std::string &prependDir)
   ziputils::unzipper zipFile;
   zipFile.open(fileName.c_str());
   std::vector<std::string> dirnames = zipFile.getFolders();
-  for(std::vector<std::string>::const_iterator it = dirnames.begin();
-      it != dirnames.end(); it++) {
+  for(auto it = dirnames.begin(); it != dirnames.end(); it++) {
     std::string folder = dir + *it;
     Msg::Info("Creating folder `%s'", folder.c_str());
     CreatePath(folder);
   }
   std::vector<std::string> filenames = zipFile.getFilenames();
-  for(std::vector<std::string>::const_iterator it = filenames.begin();
-      it != filenames.end(); it++) {
+  for(auto it = filenames.begin(); it != filenames.end(); it++) {
     zipFile.openEntry(it->c_str());
     std::string name = dir + *it;
     Msg::Info("Extracting file `%s'", name.c_str());

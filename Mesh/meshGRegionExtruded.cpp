@@ -287,8 +287,7 @@ void meshGRegionExtruded::operator()(GRegion *gr)
   // carve holes if any (only do it now if the mesh is final, i.e., if
   // the mesh is recombined)
   if(ep->mesh.Holes.size() && ep->mesh.Recombine) {
-    std::map<int, std::pair<double, std::vector<int> > >::iterator it;
-    for(it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
+    for(auto it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
       carveHole(gr, it->first, it->second.first, it->second.second);
   }
 }
@@ -621,8 +620,7 @@ int SubdivideExtrudedMesh(GModel *m)
     GRegion *gr = regions[i];
     ExtrudeParams *ep = gr->meshAttributes.extrude;
     if(ep->mesh.Holes.size()) {
-      std::map<int, std::pair<double, std::vector<int> > >::iterator it;
-      for(it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
+      for(auto it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
         carveHole(gr, it->first, it->second.first, it->second.second);
     }
   }
@@ -632,8 +630,7 @@ int SubdivideExtrudedMesh(GModel *m)
     GRegion *gr = regions_quadToTri[i];
     ExtrudeParams *ep = gr->meshAttributes.extrude;
     if(ep->mesh.Holes.size()) {
-      std::map<int, std::pair<double, std::vector<int> > >::iterator it;
-      for(it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
+      for(auto it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
         carveHole(gr, it->first, it->second.first, it->second.second);
     }
   }

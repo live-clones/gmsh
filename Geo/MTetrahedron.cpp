@@ -365,8 +365,7 @@ void _getIndicesReversedTet(int order, IndicesReversed &indices)
 
 void MTetrahedronN::reverse()
 {
-  std::map<int, IndicesReversed>::iterator it;
-  it = _order2indicesReversedTet.find(_order);
+  auto it = _order2indicesReversedTet.find(_order);
   if(it == _order2indicesReversedTet.end()) {
     IndicesReversed indices;
     _getIndicesReversedTet(_order, indices);

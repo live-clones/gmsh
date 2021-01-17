@@ -576,8 +576,7 @@ void _getIndicesReversedPri(int order, IndicesReversed &indices)
 
 void MPrismN::reverse()
 {
-  std::map<int, IndicesReversed>::iterator it;
-  it = _order2indicesReversedPri.find(_order);
+  auto it = _order2indicesReversedPri.find(_order);
   if(it == _order2indicesReversedPri.end()) {
     IndicesReversed indices;
     _getIndicesReversedPri(_order, indices);

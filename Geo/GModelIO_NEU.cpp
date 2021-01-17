@@ -332,9 +332,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
 
   // Element Groups
 
-  for(hashMap<unsigned, std::vector<unsigned> >::_::const_iterator it =
-        elementGroups.begin();
-      it != elementGroups.end(); ++it) {
+  for(auto it = elementGroups.begin(); it != elementGroups.end(); ++it) {
     fprintf(fp, "       ELEMENT GROUP 2.0.0\n");
     fprintf(fp,
             "GROUP: %10d ELEMENTS: %10lu MATERIAL:          0 NFLAGS: %10d\n",

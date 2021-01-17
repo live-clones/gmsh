@@ -425,9 +425,7 @@ int GModel::_readMSH3(const std::string &name)
           _vertexVectorCache[0] = nullptr;
         else
           _vertexVectorCache[numVertices] = nullptr;
-        for(std::map<int, MVertex *>::const_iterator it =
-              _vertexMapCache.begin();
-            it != _vertexMapCache.end(); ++it)
+        for(auto it = _vertexMapCache.begin(); it != _vertexMapCache.end(); ++it)
           _vertexVectorCache[it->first] = it->second;
         _vertexMapCache.clear();
       }
@@ -619,8 +617,7 @@ void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
     std::vector<int> tags, signs;
     for(auto itf = faces.begin(); itf != faces.end(); itf++)
       tags.push_back((*itf)->tag());
-    for(std::vector<int>::const_iterator itf = ori.begin(); itf != ori.end();
-        itf++)
+    for(auto itf = ori.begin(); itf != ori.end(); itf++)
       signs.push_back(*itf);
     if(tags.size() == signs.size()) {
       for(std::size_t i = 0; i < tags.size(); i++)
@@ -651,9 +648,7 @@ static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
 {
   if(model->getGhostCells().size()) {
     std::vector<short> ghosts;
-    std::pair<std::multimap<MElement *, short>::iterator,
-              std::multimap<MElement *, short>::iterator>
-      itp = model->getGhostCells().equal_range(ele);
+    auto itp = model->getGhostCells().equal_range(ele);
     for(auto it = itp.first; it != itp.second; it++)
       ghosts.push_back(it->second);
     ele->writeMSH3(fp, binary, elementary, &ghosts);

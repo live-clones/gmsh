@@ -560,8 +560,8 @@ int CGNSZoneStruct<DIM>::readOneInterface(
   //                             (DIM == 3) ? range[5]-1 : 0};
 
   // // identify donnor (master) zone
-  // std::map<std::string, int>::const_iterator itDN =
-  // name2Zone.find(donorName); if(itDN == name2Zone.end()) {
+  // auto itDN = name2Zone.find(donorName);
+  // if(itDN == name2Zone.end()) {
   //   Msg::Error("Donnor zone '%s' not found in structured connectivity '%s' "
   //              "of zone %i ('%s')", donorName, connectName, zone.index,
   //              zone.name);

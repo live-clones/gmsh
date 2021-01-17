@@ -15,8 +15,11 @@
 #if !defined(HAVE_MESH)
 
 BoundaryLayerField *getBLField(GModel *gm) { return 0; }
+
 bool buildAdditionalPoints2D(GFace *gf) { return false; }
+
 bool buildAdditionalPoints3D(GRegion *gr) { return false; }
+
 edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2, int side)
 {
   return edgeColumn(BoundaryLayerData(), BoundaryLayerData());
@@ -55,8 +58,8 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2, int side)
 {
   MEdgeEqual aaa;
   MEdge e(v1, v2);
-  std::map<MVertex *, BoundaryLayerFan>::const_iterator it1 = _fans.find(v1);
-  std::map<MVertex *, BoundaryLayerFan>::const_iterator it2 = _fans.find(v2);
+  auto it1 = _fans.find(v1);
+  auto it2 = _fans.find(v2);
   int N1 = getNbColumns(v1);
   int N2 = getNbColumns(v2);
 
@@ -279,12 +282,10 @@ static bool isEdgeOfFaceBL(GFace *gf, GEdge *ge, BoundaryLayerField *blf)
   if(blf->isEdgeBL(ge->tag())) return true;
   /*
   std::list<GFace*> faces = ge->faces();
-  for(std::list<GFace*>::iterator it = faces.begin();
-       it != faces.end() ; ++it){
+  for(auto it = faces.begin(); it != faces.end() ; ++it){
     if((*it) == gf)return false;
   }
-  for(std::list<GFace*>::iterator it = faces.begin();
-       it != faces.end() ; ++it){
+  for(auto it = faces.begin(); it != faces.end() ; ++it){
     if(blf->isFaceBL((*it)->tag()))return true;
   }
   */
@@ -475,8 +476,7 @@ bool buildAdditionalPoints2D(GFace *gf)
       else if(_connections.size() == 1) {
         MEdge e1(*it, _connections[0]);
         std::vector<SVector3> N1;
-        std::multimap<MEdge, SVector3, MEdgeLessThan>::iterator itm;
-        for(itm = _columns->_normals.lower_bound(e1);
+        for(auto itm = _columns->_normals.lower_bound(e1);
             itm != _columns->_normals.upper_bound(e1); ++itm)
           N1.push_back(itm->second);
         // one point has only one side and one normal : it has to be at the end
@@ -623,17 +623,18 @@ bool buildAdditionalPoints2D(GFace *gf)
   FILE *f = Fopen(name,"w");
   if(f){
     fprintf(f,"View \"\" {\n");
-    for(std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
+    for(auto it = _vertices.begin(); it != _vertices.end() ; ++it){
       MVertex *v = *it;
-      for(int i=0;i<_columns->getNbColumns(v);i++){
-        const BoundaryLayerData &data = _columns->getColumn(v,i);
+      for(int i = 0; i < _columns->getNbColumns(v); i++){
+        const BoundaryLayerData &data = _columns->getColumn(v, i);
         for(std::size_t j = 0; j < data._column.size(); j++){
           MVertex *blv = data._column[j];
-          fprintf(f,"SP(%g,%g,%g){%d};\n",blv->x(),blv->y(),blv->z(),v->getNum());
+          fprintf(f, "SP(%g,%g,%g){%d};\n", blv->x(), blv->y(), blv->z(),
+                  v->getNum());
         }
       }
     }
-    fprintf(f,"};\n");
+    fprintf(f, "};\n");
     fclose(f);
   }
 #endif

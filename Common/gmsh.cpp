@@ -1663,9 +1663,7 @@ GMSH_API void gmsh::model::mesh::getElements(
   nodeTags.clear();
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
-  for(std::map<int, std::vector<GEntity *> >::const_iterator it =
-        typeEnt.begin();
-      it != typeEnt.end(); it++) {
+  for(auto it = typeEnt.begin(); it != typeEnt.end(); it++) {
     elementTypes.push_back(it->first);
     elementTags.push_back(std::vector<std::size_t>());
     nodeTags.push_back(std::vector<std::size_t>());
@@ -1896,9 +1894,7 @@ GMSH_API void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,
   elementTypes.clear();
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
-  for(std::map<int, std::vector<GEntity *> >::const_iterator it =
-        typeEnt.begin();
-      it != typeEnt.end(); it++) {
+  for(auto it = typeEnt.begin(); it != typeEnt.end(); it++) {
     elementTypes.push_back(it->first);
   }
 }
@@ -4239,8 +4235,7 @@ gmsh::model::mesh::getGhostElements(const int dim, const int tag,
   else if(ge->geomType() == GEntity::GhostVolume)
     ghostCells = static_cast<ghostRegion *>(ge)->getGhostCells();
 
-  for(std::map<MElement *, int>::const_iterator it = ghostCells.begin();
-      it != ghostCells.end(); it++) {
+  for(auto it = ghostCells.begin(); it != ghostCells.end(); it++) {
     elementTags.push_back(it->first->getNum());
     partitions.push_back(it->second);
   }

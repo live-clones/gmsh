@@ -294,7 +294,6 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
   int flag;
   octantBucket *ptrBucket;
   ELink ptr1;
-  std::vector<void *>::iterator iter;
   void *ptrToEle = _globalPara->ptrToPrevElement;
 
   if(ptrToEle) {
@@ -331,7 +330,7 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
     ptr1 = ptr1->next;
   }
 
-  for(iter = (ptrBucket->listBB).begin(); iter != (ptrBucket->listBB).end();
+  for(auto iter = (ptrBucket->listBB).begin(); iter != (ptrBucket->listBB).end();
       iter++) {
     flag = xyzInElementBB(_pt, *iter, BBElement);
     if(flag == 1) flag = xyzInElement(*iter, _pt);
@@ -395,7 +394,6 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt,
 {
   int flag, flag1;
   octantBucket *ptrBucket;
-  std::vector<void *>::iterator iter;
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if(ptrBucket == nullptr) {
@@ -425,7 +423,7 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt,
     ptr1 = ptr1->next;
   }
 
-  for(iter = (ptrBucket->listBB).begin(); iter != (ptrBucket->listBB).end();
+  for(auto iter = (ptrBucket->listBB).begin(); iter != (ptrBucket->listBB).end();
       iter++) {
     flag = xyzInElementBB(_pt, *iter, BBElement);
     if(flag == 1) flag = xyzInElement(*iter, _pt);

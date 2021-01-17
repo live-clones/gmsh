@@ -119,7 +119,7 @@ void GMSH_SpanningTreePlugin::run(void)
     return;
   }
 
-  // Display physicals (as [poorly] parsed) //
+  // Display physicals (as [poorly] parsed)
   Msg::Info("--> PhysicalVolumes:  %s", volume.c_str());
   Msg::Info("--> PhysicalSurfaces: %s", surface.c_str());
   Msg::Info("--> PhysicalCurves:   %s", curve.c_str());
@@ -147,10 +147,7 @@ void GMSH_SpanningTreePlugin::spanningTree(EdgeSet &edge, DSU &vertex,
   // Kruskal's algorithm, without edge sorting, since we don't weight them
 
   // Iterate on edges
-  auto end = edge.end();
-  auto it = edge.begin();
-
-  for(; it != end; it++) { // Loop on edges:
+  for(auto it = edge.begin(); it != edge.end(); it++) { // Loop on edges:
     if(vertex.find(it->first) != vertex.find(it->second)) { // if the current
       tree.push_back(*it); // edge connects two
       vertex.join(it->first, it->second); // disjoint trees,
@@ -161,17 +158,17 @@ void GMSH_SpanningTreePlugin::spanningTree(EdgeSet &edge, DSU &vertex,
 
 string GMSH_SpanningTreePlugin::parse(string str, list<int> &physical)
 {
-  // Remove spaces //
+  // Remove spaces
   str.erase(remove(str.begin(), str.end(), ' '), str.end());
 
-  // Replace commas by spaces //
+  // Replace commas by spaces
   replace(str.begin(), str.end(), ',', ' ');
 
-  // Init string stream //
+  // Init string stream
   stringstream stream;
   stream << str;
 
-  // Parse stream for integers //
+  // Parse stream for integers
   int tag;
   string tmp;
   while(!stream.eof()) {
@@ -179,7 +176,7 @@ string GMSH_SpanningTreePlugin::parse(string str, list<int> &physical)
     if(sscanf(tmp.c_str(), "%d", &tag) > 0) physical.push_back(tag);
   }
 
-  // Return modified string //
+  // Return modified string
   return str;
 }
 
@@ -187,13 +184,12 @@ void GMSH_SpanningTreePlugin::getAllMElement(GModel &model, int physical,
                                              int dim, ElementSet &element)
 {
   std::map<int, std::vector<GEntity *> > group;
-  std::map<int, std::vector<GEntity *> >::iterator entity;
 
-  // Get groups //
+  // Get groups
   model.getPhysicalGroups(dim, group);
 
-  // Get entities, if any //
-  entity = group.find(physical);
+  // Get entities, if any
+  auto entity = group.find(physical);
   if(entity == group.end()) return;
 
   for(size_t i = 0; i < entity->second.size(); i++)

@@ -117,8 +117,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   Fl_Menu_Button *new_btn = new Fl_Menu_Button(x, y, w, BH, "New");
   FieldManager &fields = *GModel::current()->getFields();
 
-  std::map<std::string, FieldFactory *>::iterator it;
-  for(it = fields.mapTypeName.begin(); it != fields.mapTypeName.end(); it++)
+  for(auto it = fields.mapTypeName.begin(); it != fields.mapTypeName.end(); it++)
     new_btn->add(it->first.c_str());
   new_btn->callback(field_new_cb);
 
@@ -313,8 +312,6 @@ void fieldWindow::loadFieldOptions()
     FieldOption *option = it->second;
     if(option->isDeprecated()) continue;
     std::ostringstream vstr;
-    std::list<int>::const_iterator list_it;
-    std::list<double>::const_iterator listdouble_it;
     switch(option->getType()) {
     case FIELD_OPTION_STRING:
     case FIELD_OPTION_PATH:
@@ -329,20 +326,19 @@ void fieldWindow::loadFieldOptions()
       break;
     case FIELD_OPTION_LIST:
       vstr.str("");
-      for(list_it = option->list().begin(); list_it != option->list().end();
-          list_it++) {
-        if(list_it != option->list().begin()) vstr << ", ";
-        vstr << *list_it;
+      for(auto it = option->list().begin(); it != option->list().end(); it++) {
+        if(it != option->list().begin()) vstr << ", ";
+        vstr << *it;
       }
       ((Fl_Input *)(*input))->value(vstr.str().c_str());
       break;
     case FIELD_OPTION_LIST_DOUBLE:
       vstr.str("");
       vstr.precision(16);
-      for(listdouble_it = option->listdouble().begin();
-          listdouble_it != option->listdouble().end(); listdouble_it++) {
-        if(listdouble_it != option->listdouble().begin()) vstr << ", ";
-        vstr << *listdouble_it;
+      for(auto it = option->listdouble().begin(); it != option->listdouble().end();
+          it++) {
+        if(it != option->listdouble().begin()) vstr << ", ";
+        vstr << *it;
       }
       ((Fl_Input *)(*input))->value(vstr.str().c_str());
       break;

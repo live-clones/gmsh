@@ -306,9 +306,7 @@ public:
       std::map<int, std::vector<GEntity *> > groups[4];
       m->getPhysicalGroups(groups);
       for(int i = 0; i < 4; i++) {
-        std::map<int, std::vector<GEntity *> >::const_iterator it =
-          groups[i].begin();
-        for(; it != groups[i].end(); ++it) {
+        for(auto it = groups[i].begin(); it != groups[i].end(); ++it) {
           std::string name = m->getPhysicalName(i, it->first);
           if(name.empty()) name = oldLabels[it->first];
           Vis *v = new VisPhysical(it->first, i, it->second, name);

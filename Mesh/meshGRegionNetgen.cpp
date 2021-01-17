@@ -283,8 +283,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
   // FILE *fp = Fopen("debug.pos", "w");
   // if(fp){
   //   fprintf(fp, "View \"debug\" {\n");
-  //   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end();
-  //   it++)
+  //   for(auto it = faces.begin(); it != faces.end(); it++)
   //     for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
   //       (*it)->triangles[i]->writePOS(fp, 1., (*it)->tag());
   //   fprintf(fp, "};\n");

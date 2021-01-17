@@ -546,8 +546,7 @@ void MQuadrangleN::reorient(int rot, bool swap)
   if(rot == 0 && !swap) return;
 
   TupleReorientation mytuple(getTypeForMSH(), std::make_pair(rot, swap));
-  std::map<TupleReorientation, IndicesReoriented>::iterator it;
-  it = _tuple2indicesReoriented.find(mytuple);
+  auto it = _tuple2indicesReoriented.find(mytuple);
   if(it == _tuple2indicesReoriented.end()) {
     IndicesReoriented indices;
     _getIndicesReorientedQuad(_order, rot, swap, indices);
@@ -625,8 +624,7 @@ MFaceN MQuadrangleN::getHighOrderFace(int num, int sign, int rot)
 {
   const bool swap = sign == -1;
   TupleReorientation mytuple(TYPE_QUA, std::make_pair(rot, swap));
-  std::map<TupleReorientation, IndicesReoriented>::iterator it;
-  it = _tuple2indicesReoriented.find(mytuple);
+  auto it = _tuple2indicesReoriented.find(mytuple);
   if(it == _tuple2indicesReoriented.end()) {
     IndicesReoriented indices;
     _getIndicesReorientedQuad(_order, rot, swap, indices);

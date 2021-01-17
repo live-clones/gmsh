@@ -198,8 +198,8 @@ int GModel::readDIFF(const std::string &name)
           vertexVector[0] = nullptr;
         else
           vertexVector[numVertices] = nullptr;
-        std::map<int, MVertex *>::const_iterator it = vertexMap.begin();
-        for(; it != vertexMap.end(); ++it) vertexVector[it->first] = it->second;
+        for(auto it = vertexMap.begin(); it != vertexMap.end(); ++it)
+          vertexVector[it->first] = it->second;
         vertexMap.clear();
       }
       Msg::Info("%d ( %lf , %lf , %lf ) [%d]", i, xyz[0], xyz[1], xyz[2],

@@ -862,8 +862,7 @@ Affectation :
             for(int i = 0; i < List_Nbr($3); i++){
               double d;
               List_Read($3, i, &d);
-              std::vector<double>::iterator it = std::find(s.value.begin(),
-                                                           s.value.end(), d);
+              auto it = std::find(s.value.begin(), s.value.end(), d);
               if(it != s.value.end()) s.value.erase(it);
             }
             break;
@@ -908,8 +907,7 @@ Affectation :
       case 2: // remove
         for(int i = 0; i < List_Nbr($5); i++){
           List_Read($5, i, &d);
-          std::vector<double>::iterator it = std::find(s.value.begin(),
-                                                       s.value.end(), d);
+          auto it = std::find(s.value.begin(), s.value.end(), d);
           if(it != s.value.end()) s.value.erase(it);
         }
         break;
@@ -1132,13 +1130,13 @@ Affectation :
 #if defined(HAVE_MESH)
       std::vector<int> tags; ListOfDouble2Vector($4, tags);
       if(!strcmp($1,"Background")) {
-	if (tags.size() > 1)
+	if(tags.size() > 1)
 	  yymsg(0, "Only 1 field can be set as a background field.");
-	else if (tags.size() == 0)
+	else if(tags.size() == 0)
 	  yymsg(1, "No field given (Background Field).");
 	else
 	  GModel::current()->getFields()->setBackgroundFieldId((int)tags[0]);
-	  }
+      }
       else if(!strcmp($1,"BoundaryLayer"))
 	GModel::current()->getFields()->addBoundaryLayerFieldId(tags);
       else
@@ -1207,7 +1205,7 @@ Affectation :
       if(field){
 	FieldOption *option = field->options[$6];
 	if(option){
-	  if (option->getType() == FIELD_OPTION_LIST) {
+	  if(option->getType() == FIELD_OPTION_LIST) {
 	    std::list<int> vl = option->list();
 	    vl.clear();
 	    for(int i = 0; i < List_Nbr($9); i++){
@@ -1439,7 +1437,7 @@ FloatParameterOption :
         double v;
         List_Read($2, i, &v);
         floatOptions[key].push_back(v);
-        if (flag_Enum && !i) { member_ValMax = (int)v; }
+        if(flag_Enum && !i) { member_ValMax = (int)v; }
       }
       Free($1);
       List_Delete($2);
@@ -1456,9 +1454,9 @@ FloatParameterOption :
     {
       std::string key($1);
       double v;
-      if (!flag_Enum) {
+      if(!flag_Enum) {
         v = 1.;
-        if (key == "Enum") flag_Enum = 1;
+        if(key == "Enum") flag_Enum = 1;
       }
       else
         v = (double)++member_ValMax;
@@ -2415,7 +2413,7 @@ GeoEntity :
   | tGeoEntity '{' FExpr '}'
     {
       $$ = (int)$3;
-      if ($$<0 || $$>3) yymsg(0, "GeoEntity dim out of range [0,3]");
+      if($$ < 0 || $$ > 3) yymsg(0, "GeoEntity dim out of range [0,3]");
     }
 ;
 
@@ -2429,7 +2427,7 @@ GeoEntity123 :
   | tGeoEntity '{' FExpr '}'
     {
       $$ = (int)$3;
-      if ($$<1 || $$>3) yymsg(0, "GeoEntity dim out of range [1,3]");
+      if($$<1 || $$>3) yymsg(0, "GeoEntity dim out of range [1,3]");
     }
 ;
 
@@ -2441,7 +2439,7 @@ GeoEntity12 :
   | tGeoEntity '{' FExpr '}'
     {
       $$ = (int)$3;
-      if ($$<1 || $$>2) yymsg(0, "GeoEntity dim out of range [1,2]");
+      if($$<1 || $$>2) yymsg(0, "GeoEntity dim out of range [1,2]");
     }
 ;
 
@@ -2455,7 +2453,7 @@ GeoEntity02 :
   | tGeoEntity '{' FExpr '}'
     {
       $$ = (int)$3;
-      if ($$<0 || $$>2) yymsg(0, "GeoEntity dim out of range [0,2]");
+      if($$ < 0 || $$ > 2) yymsg(0, "GeoEntity dim out of range [0,2]");
     }
 ;
 
@@ -2807,9 +2805,9 @@ LevelSet :
       }
       else {
 	fullMatrix<double> centers(List_Nbr($8),3);
-	for (int i = 0; i < List_Nbr($8); i++){
+	for(int i = 0; i < List_Nbr($8); i++){
 	  List_T *l = *(List_T**)List_Pointer($8, i);
-	  for (int j = 0; j < List_Nbr(l); j++){
+	  for(int j = 0; j < List_Nbr(l); j++){
 	    centers(i,j) = (double)(*(double*)List_Pointer(l, j));
 	  }
 	}
@@ -3960,7 +3958,7 @@ Loop :
   | tElseIf '(' FExpr ')'
     {
       if(ImbricatedTest > 0){
-        if (statusImbricatedTests[ImbricatedTest]){
+        if(statusImbricatedTests[ImbricatedTest]){
           // Last test (If or ElseIf) was true, thus go after EndIf (out of If EndIf)
           skip("If", "EndIf");
           ImbricatedTest--;
@@ -4834,14 +4832,14 @@ Constraints :
   | tPeriodic tCurve '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' PeriodicTransform tEND
     {
-      if (List_Nbr($4) != List_Nbr($8)){
+      if(List_Nbr($4) != List_Nbr($8)){
         yymsg(0, "Number of master lines (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
         std::vector<double> transfo;
         if(List_Nbr($10) != 0) {
-          if (List_Nbr($10) < 12){
+          if(List_Nbr($10) < 12){
             yymsg(0, "Affine transformation requires at least 12 entries (we have %d)",
                   List_Nbr($10));
           }
@@ -4866,12 +4864,12 @@ Constraints :
   | tPeriodic tSurface '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' PeriodicTransform tEND
     {
-      if (List_Nbr($4) != List_Nbr($8)){
+      if(List_Nbr($4) != List_Nbr($8)){
         yymsg(0, "Number of master surfaces (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
-        if (List_Nbr($10) < 12){
+        if(List_Nbr($10) < 12){
           // FIXME full automatic case here if List_Nbr($10) == 0)
           yymsg(0, "Affine transformation requires at least 12 entries");
         }
@@ -4893,7 +4891,7 @@ Constraints :
   | tPeriodic tCurve '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
     {
-      if (List_Nbr($4) != List_Nbr($8)){
+      if(List_Nbr($4) != List_Nbr($8)){
         yymsg(0, "Number of master curves (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
@@ -4919,7 +4917,7 @@ Constraints :
   | tPeriodic tSurface '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
     {
-      if (List_Nbr($4) != List_Nbr($8)){
+      if(List_Nbr($4) != List_Nbr($8)){
         yymsg(0, "Number of master surfaces (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
@@ -4945,7 +4943,7 @@ Constraints :
   | tPeriodic tCurve '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
     {
-      if (List_Nbr($4) != List_Nbr($8)){
+      if(List_Nbr($4) != List_Nbr($8)){
         yymsg(0, "Number of master curves (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
@@ -4971,7 +4969,7 @@ Constraints :
   | tPeriodic tSurface '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
     {
-      if (List_Nbr($4) != List_Nbr($8)){
+      if(List_Nbr($4) != List_Nbr($8)){
         yymsg(0, "Number of master surfaces (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
@@ -4997,7 +4995,7 @@ Constraints :
   | tPeriodic tSurface FExpr '{' RecursiveListOfDouble '}'
     tAFFECT FExpr '{' RecursiveListOfDouble '}' tEND
     {
-      if (List_Nbr($5) != List_Nbr($10)){
+      if(List_Nbr($5) != List_Nbr($10)){
         yymsg(0, "Number of master surface curves (%d) different from number of "
               "slave (%d) curves", List_Nbr($10), List_Nbr($5));
       }
@@ -5005,7 +5003,7 @@ Constraints :
         int j_master = (int)$8;
         int j_slave = (int)$3;
         std::map<int,int> edgeCounterParts;
-        for (int i = 0; i < List_Nbr($5); i++){
+        for(int i = 0; i < List_Nbr($5); i++){
           double ds,dm;
           List_Read($5,i,&ds);
           List_Read($10,i,&dm);
@@ -5018,7 +5016,7 @@ Constraints :
     }
   | GeoEntity '{' RecursiveListOfDouble '}' tIn GeoEntity '{' FExpr '}' tEND
     {
-      if (($6==2 || $6==3) && $1<$6 ) {
+      if(($6==2 || $6==3) && $1<$6 ) {
         std::vector<int> tags; ListOfDouble2Vector($3, tags);
         addEmbedded($1, tags, $6, (int)$8);
       }
@@ -5644,7 +5642,7 @@ DefineStruct :
         struct_name($2.char2);
       Free($2.char1); Free($2.char2);
       int tag_out;
-      if (gmsh_yynamespaces.defStruct(struct_namespace, struct_name,
+      if(gmsh_yynamespaces.defStruct(struct_namespace, struct_name,
                                       floatOptions, charOptions,
                                       tag_out, member_ValMax, $3))
         yymsg(0, "Redefinition of Struct '%s::%s'",
@@ -6098,7 +6096,7 @@ FExpr_Multi :
         tmp.push_back(d);
       }
       std::sort(tmp.begin(), tmp.end());
-      std::vector<double>::iterator last = std::unique(tmp.begin(), tmp.end());
+      auto last = std::unique(tmp.begin(), tmp.end());
       tmp.erase(last, tmp.end());
       $$ = $3;
       List_Reset($$);
@@ -6456,7 +6454,7 @@ StringExpr :
     {
       int i = 0;
       while ($3[i]) {
-        if (i > 0 && $3[i-1] != '_')
+        if(i > 0 && $3[i-1] != '_')
           $3[i] = tolower($3[i]);
         i++;
       }
@@ -6841,8 +6839,7 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
     vec.push_back("// Numbers");
     vec.push_back("//");
   }
-  for(std::map<std::string, gmsh_yysymbol>::iterator it = gmsh_yysymbols.begin();
-      it != gmsh_yysymbols.end(); it++){
+  for(auto it = gmsh_yysymbols.begin(); it != gmsh_yysymbols.end(); it++){
     gmsh_yysymbol s(it->second);
     std::ostringstream sstream;
     sstream.precision(12);
@@ -6865,8 +6862,8 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
     vec.push_back("// Strings");
     vec.push_back("//");
   }
-  for(std::map<std::string, std::vector<std::string> >::iterator it =
-        gmsh_yystringsymbols.begin(); it != gmsh_yystringsymbols.end(); it++){
+  for(auto it = gmsh_yystringsymbols.begin(); it != gmsh_yystringsymbols.end();
+      it++){
     if(it->second.size() == 1)
       vec.push_back(it->first + " = \"" + it->second[0] + "\";");
     else{
@@ -6879,7 +6876,7 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
       vec.push_back(s);
     }
   }
-  if (gmsh_yynamespaces.size()){
+  if(gmsh_yynamespaces.size()){
     if(help){
       vec.push_back("//");
       vec.push_back("// Structures");
@@ -7001,7 +6998,7 @@ void addPeriodicFace(int iTarget, int iSource,
 
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
-  if (!target || !source) {
+  if(!target || !source) {
     Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget, iSource);
   }
@@ -7018,14 +7015,14 @@ void addPeriodicFace(int iTarget, int iSource,
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
   Msg::Info("Encoding periodic connection between %d and %d", iTarget, iSource);
-  std::map<int,int>::const_iterator sIter = edgeCounterparts.begin();
-  for (; sIter != edgeCounterparts.end(); ++sIter) {
+  for(auto sIter = edgeCounterparts.begin(); sIter != edgeCounterparts.end();
+      ++sIter) {
     Msg::Info("%d - %d", sIter->first, sIter->second);
   }
 
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
-  if (!target || !source) {
+  if(!target || !source) {
     Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget,iSource);
   }
@@ -7043,10 +7040,10 @@ void addPeriodicEdge(int iTarget,int iSource,
 
   GEdge *target = GModel::current()->getEdgeByTag(std::abs(iTarget));
   GEdge *source = GModel::current()->getEdgeByTag(std::abs(iSource));
-  if (!target || !source)
+  if(!target || !source)
     Msg::Error("Could not find curve %d or %d for periodic copy",
                iTarget,iSource);
-  if (affineTransform.size() >= 12) {
+  if(affineTransform.size() >= 12) {
     target->setMeshMaster(source, affineTransform);
   }
   else {
@@ -7082,13 +7079,13 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
   tfo[2*4+2] = ca + uz*uz*(1.-ca);
 
   int idx = 0;
-  for (size_t i = 0; i < 3; i++,idx++) {
+  for(size_t i = 0; i < 3; i++,idx++) {
     int tIdx = i*4+3;
     tfo[tIdx] = origin[i] + translation[i];
-    for (int j = 0; j < 3; j++,idx++) tfo[tIdx] -= tfo[idx] * origin[j];
+    for(int j = 0; j < 3; j++,idx++) tfo[tIdx] -= tfo[idx] * origin[j];
   }
 
-  for (int i = 0; i < 4; i++) tfo[12+i] = 0;
+  for(int i = 0; i < 4; i++) tfo[12+i] = 0;
   tfo[15] = 1;
 }
 
@@ -7211,8 +7208,7 @@ void getAllPhysicalTags(int dim, List_T *out)
 
   std::map<int, std::vector<GEntity*> > groups;
   GModel::current()->getPhysicalGroups(dim, groups);
-  for(std::map<int, std::vector<GEntity*> >::iterator it = groups.begin();
-      it != groups.end(); it++){
+  for(auto it = groups.begin(); it != groups.end(); it++){
     double d = it->first;
     List_Add(out, &d);
   }
@@ -7231,7 +7227,7 @@ void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out)
   for(int i = 0; i < List_Nbr(in); i++){
     double num;
     List_Read(in, i, &num);
-    std::map<int, std::vector<GEntity*> >::iterator it = groups.find(num);
+    auto it = groups.find(num);
     if(it != groups.end()){
       for(unsigned j = 0; j < it->second.size(); j++){
         double d = it->second[j]->tag();
@@ -7356,22 +7352,22 @@ double treat_Struct_FullName_Float
 {
   double out;
   if(!c1 && gmsh_yysymbols.count(c2)){
-    if (type_treat == 1) out = 1.; // Exists (type_treat == 1)
+    if(type_treat == 1) out = 1.; // Exists (type_treat == 1)
     else { // Get (0) or GetForced (2)
-      if (type_var == 1) {
+      if(type_var == 1) {
         gmsh_yysymbol &s(gmsh_yysymbols[c2]);
         if(s.value.empty()){
           out = val_default;
-          if (type_treat == 0) yymsg(0, "Uninitialized variable '%s'", c2);
+          if(type_treat == 0) yymsg(0, "Uninitialized variable '%s'", c2);
         }
         else
           out = s.value[0];
       }
-      else if (type_var == 2) {
+      else if(type_var == 2) {
         gmsh_yysymbol &s(gmsh_yysymbols[c2]);
         if(index < 0 || (int)s.value.size() < index + 1){
           out = val_default;
-          if (type_treat == 0) yymsg(0, "Uninitialized variable '%s[%d]'", c2, index);
+          if(type_treat == 0) yymsg(0, "Uninitialized variable '%s[%d]'", c2, index);
         }
         else{
           out = s.value[index];
@@ -7386,16 +7382,16 @@ double treat_Struct_FullName_Float
     out = 1.;
   }
   else{
-    if (type_var == 1) {
+    if(type_var == 1) {
       std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
       if(gmsh_yynamespaces.getTag(struct_namespace, struct_name, out)) {
         out = val_default;
-        if (type_treat == 0) yymsg(0, "Unknown variable '%s'", struct_name.c_str());
+        if(type_treat == 0) yymsg(0, "Unknown variable '%s'", struct_name.c_str());
       }
     }
     else {
       out = val_default;
-      if (type_treat == 0) yymsg(0, "Unknown variable '%s(.)'", c2);
+      if(type_treat == 0) yymsg(0, "Unknown variable '%s(.)'", c2);
     }
   }
   Free(c1); Free(c2);
@@ -7411,14 +7407,14 @@ double treat_Struct_FullName_dot_tSTRING_Float
   switch (gmsh_yynamespaces.getMember
           (struct_namespace, struct_name, key_member, out, index)) {
   case 0:
-    if (type_treat == 1) out = 1.; // Exists (type_treat == 1)
+    if(type_treat == 1) out = 1.; // Exists (type_treat == 1)
     break;
   case 1:
-    if (!NumberOption(GMSH_GET, c2, 0, c3, out, type_treat==0))
+    if(!NumberOption(GMSH_GET, c2, 0, c3, out, type_treat==0))
       out = val_default;
     break;
   case 2:
-    if (type_treat != 0) {
+    if(type_treat != 0) {
       const std::string * out_dummy = nullptr;
       out = (gmsh_yynamespaces.getMember
              (struct_namespace, struct_name, key_member, out_dummy))?
@@ -7426,13 +7422,13 @@ double treat_Struct_FullName_dot_tSTRING_Float
     }
     else {
       out = val_default;
-      if (type_treat == 0)
+      if(type_treat == 0)
         yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
     }
     break;
   case 3:
     out = val_default;
-    if (type_treat == 0)
+    if(type_treat == 0)
       yymsg(0, "Index %d out of range", index);
     break;
   }
@@ -7504,7 +7500,7 @@ char * treat_Struct_FullName_String
     // Get (0) or GetForced (2)
     if(gmsh_yystringsymbols[c2].size() != 1){
       out = &string_default;
-      if (type_treat == 0)
+      if(type_treat == 0)
         yymsg(0, "Expected single valued string variable '%s'", c2);
     }
     else {
@@ -7514,7 +7510,7 @@ char * treat_Struct_FullName_String
   }
   else{
     out = &string_default;
-    if (type_treat == 0) yymsg(0, "Unknown string variable '%s'", c2);
+    if(type_treat == 0) yymsg(0, "Unknown string variable '%s'", c2);
   }
   char* out_c = (char*)Malloc((out->size() + 1) * sizeof(char));
   strcpy(out_c, out->c_str());
@@ -7535,19 +7531,19 @@ char* treat_Struct_FullName_dot_tSTRING_String
   case 0:
     break;
   case 1:
-    if (StringOption(GMSH_GET, c2, 0, c3, out_tmp, type_treat==0))
+    if(StringOption(GMSH_GET, c2, 0, c3, out_tmp, type_treat==0))
       out = &out_tmp;
     else
       out = &string_default;
     break;
   case 2:
     out = &string_default;
-    if (type_treat == 0)
+    if(type_treat == 0)
       yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
     break;
   case 3:
     out = &string_default;
-    if (type_treat == 0)
+    if(type_treat == 0)
       yymsg(0, "Index %d out of range", index);
     break;
   }

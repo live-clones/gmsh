@@ -183,7 +183,7 @@ void linearSystemMUMPS<double>::addToMatrix(int row, int col, const double &val)
     _nz++;
     return;
   }
-  std::map<int, int>::iterator it = _ij[row].find(col);
+  auto it = _ij[row].find(col);
   if(it == _ij[row].end()) {
     _a.push_back(val);
     _irn.push_back(row);
@@ -204,7 +204,7 @@ void linearSystemMUMPS<double>::getFromMatrix(int row, int col,
     val = 0.;
     return;
   }
-  std::map<int, int>::const_iterator it = _ij[row].find(col);
+  auto it = _ij[row].find(col);
   if(it == _ij[row].end())
     val = 0.;
   else

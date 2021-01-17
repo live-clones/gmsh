@@ -523,9 +523,7 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
 
   // compute edge loops
   std::vector<MEdge> es;
-  for(std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>::const_iterator
-        it = edges.begin();
-      it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     if(it->second.size() == 1) { // on boundary
       es.push_back(it->first);
     }
@@ -624,9 +622,7 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
   lsys->allocate(nodes.size());
 
 #if defined(HAVE_PETSC)
-  for(std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>::const_iterator
-        it = edges.begin();
-      it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     for(int i = 0; i < 2; i++) {
       for(int j = 0; j < 2; j++) {
         lsys->insertInSparsityPattern(nodeIndex[it->first.getVertex(i)],
@@ -636,9 +632,7 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
   }
 #endif
 
-  for(std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>::const_iterator
-        it = edges.begin();
-      it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     for(int ij = 0; ij < 2; ij++) {
       MVertex *v0 = it->first.getVertex(ij);
       int index0 = nodeIndex[v0];

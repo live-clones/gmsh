@@ -16,8 +16,7 @@ void linearSystemBase::setParameter(const std::string &key, std::string value)
 
 std::string linearSystemBase::getParameter(const std::string &key) const
 {
-  std::map<std::string, std::string>::const_iterator it;
-  it = this->_parameters.find(key);
+  auto it = this->_parameters.find(key);
   if(it == this->_parameters.end())
     return "";
   else

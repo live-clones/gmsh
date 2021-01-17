@@ -230,8 +230,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   FILE *fp = fopen("debug.pos", "w");
   if(fp){
     fprintf(fp, "View \"Ele < 0\" {\n");
-    for(std::set<MElement*>::iterator it = oneside.begin(); it != oneside.end();
-  it++)
+    for(auto it = oneside.begin(); it != oneside.end(); it++)
       (*it)->writePOS(fp, false, true, false, false, false, false);
     fprintf(fp, "};\n");
     fclose(fp);

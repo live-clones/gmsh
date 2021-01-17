@@ -413,8 +413,7 @@ void _getIndicesReversedPyr(int order, IndicesReversed &indices)
 
 void MPyramidN::reverse()
 {
-  std::map<int, IndicesReversed>::iterator it;
-  it = _order2indicesReversedPyr.find(_order);
+  auto it = _order2indicesReversedPyr.find(_order);
   if(it == _order2indicesReversedPyr.end()) {
     IndicesReversed indices;
     _getIndicesReversedPyr(_order, indices);

@@ -243,8 +243,7 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
 
     // get and check data on master zone
     const std::string masterName(donorName);
-    const std::map<std::string, int>::const_iterator itMasterName =
-      name2Zone.find(masterName);
+    const auto itMasterName = name2Zone.find(masterName);
     if(itMasterName == name2Zone.end()) {
       Msg::Error("Zone name '%s' in not found in connection %i of zone %i",
                  masterName.c_str(), iConnect, index());

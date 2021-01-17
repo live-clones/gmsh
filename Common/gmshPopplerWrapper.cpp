@@ -60,7 +60,7 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres, double yres)
   int numPages = getNumPages();
   if(iPage < 0) iPage = 0;
   if(iPage > numPages - 1) iPage = numPages - 1;
-  std::map<int, GLuint>::iterator it = _pages2textures.find(iPage);
+  auto it = _pages2textures.find(iPage);
   if(it != _pages2textures.end()) return it->second;
   if(!_currentDoc) return 0;
 

@@ -447,8 +447,7 @@ void _getIndicesReversedHex(int order, IndicesReversed &indices)
 
 void MHexahedronN::reverse()
 {
-  std::map<int, IndicesReversed>::iterator it;
-  it = _order2indicesReversedHex.find(_order);
+  auto it = _order2indicesReversedHex.find(_order);
   if(it == _order2indicesReversedHex.end()) {
     IndicesReversed indices;
     _getIndicesReversedHex(_order, indices);

@@ -107,12 +107,10 @@ void GMSH_ShowNeighborElementsPlugin::_showLayers(GEntity *ent, int nLayer)
   std::set<MVertex *> &vert = _vertices;
   std::map<MElement *, int> el2cnt;
 
-  std::set<MVertex *>::iterator it;
-  for(it = vert.begin(); it != vert.end(); ++it) {
+  for(auto it = vert.begin(); it != vert.end(); ++it) {
     MVertex *v = *it;
-    std::multimap<MVertex *, MElement *>::iterator ite, itstop;
-    ite = _vert2elem.lower_bound(v);
-    itstop = _vert2elem.upper_bound(v);
+    auto ite = _vert2elem.lower_bound(v);
+    auto itstop = _vert2elem.upper_bound(v);
     for(; ite != itstop; ++ite) {
       MElement *el = ite->second;
       if(el2cnt.find(el) == el2cnt.end()) el2cnt[el] = 0;
@@ -120,8 +118,7 @@ void GMSH_ShowNeighborElementsPlugin::_showLayers(GEntity *ent, int nLayer)
     }
   }
 
-  std::map<MElement *, int>::iterator it2;
-  for(it2 = el2cnt.begin(); it2 != el2cnt.end(); ++it2) {
+  for(auto it2 = el2cnt.begin(); it2 != el2cnt.end(); ++it2) {
     if(it2->second && it2->second > 3 - nLayer) {
       it2->first->setVisibility(true);
     }

@@ -109,8 +109,7 @@ bool Cell::_sortVertexIndices()
     return false;
   }
 
-  std::map<MVertex *, int, MVertexPtrLessThan>::iterator it;
-  for(it = si.begin(); it != si.end(); it++) _si.push_back(it->second);
+  for(auto it = si.begin(); it != si.end(); it++) _si.push_back(it->second);
 
   return true;
 }
@@ -489,7 +488,7 @@ bool Cell::hasVertex(int vertex) const
   for(std::size_t i = 0; i < _v.size(); i++) {
     v.push_back(_v[(int)_si[i]]->getNum());
   }
-  std::vector<int>::const_iterator it = std::find(v.begin(), v.end(), vertex);
+  auto it = std::find(v.begin(), v.end(), vertex);
   if(it != v.end())
     return true;
   else

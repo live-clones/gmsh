@@ -43,8 +43,7 @@ inline void ElemChain::_sortVertexIndices()
 
   for(std::size_t i = 0; i < _v.size(); i++) si[_v[i]] = i;
 
-  std::map<MVertex *, int, MVertexPtrLessThan>::iterator it;
-  for(it = si.begin(); it != si.end(); it++) _si.push_back(it->second);
+  for(auto it = si.begin(); it != si.end(); it++) _si.push_back(it->second);
 }
 
 void findEntitiesInPhysicalGroups(GModel *m,
@@ -53,11 +52,10 @@ void findEntitiesInPhysicalGroups(GModel *m,
 {
   std::map<int, std::vector<GEntity *> > groups[4];
   m->getPhysicalGroups(groups);
-  std::map<int, std::vector<GEntity *> >::iterator it;
   for(std::size_t i = 0; i < physicalGroups.size(); i++) {
     bool found = false;
     for(int j = 0; j < 4; j++) {
-      it = groups[j].find(physicalGroups.at(i));
+      auto it = groups[j].find(physicalGroups.at(i));
       if(it != groups[j].end()) {
         found = true;
         std::vector<GEntity *> physicalGroup = it->second;

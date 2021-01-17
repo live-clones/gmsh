@@ -2439,10 +2439,9 @@ void adaptiveElements<T>::buildMapping(nodMap<T> &myNodMap, double tol,
     // with no missing node id in the connectivity This require a new local and
     // temporary mapping, based on uniqueNod already generated above
     if(tol > 0.0) {
-      std::set<int>::iterator jt;
       for(auto it = myNodMap.mapping.begin(); it != myNodMap.mapping.end();
           ++it) {
-        jt = uniqueNod.find(*it);
+        auto jt = uniqueNod.find(*it);
         *it = std::distance(uniqueNod.begin(), jt);
       }
     }

@@ -269,8 +269,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
   }
 
   int cntInverted = 0;
-  std::set<GEntity *, GEntityPtrFullLessThan>::iterator it;
-  for(it = entities.begin(); it != entities.end(); ++it) {
+  for(auto it = entities.begin(); it != entities.end(); ++it) {
     GEntity *entity = *it;
     unsigned num = entity->getNumMeshElements();
     fullMatrix<double> *normals = nullptr;

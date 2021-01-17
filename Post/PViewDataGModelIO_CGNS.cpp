@@ -577,8 +577,7 @@ bool PViewDataGModel::readCGNS(
     cgnsErr = cg_famname_read(famName);
     if(cgnsErr != CG_NODE_NOT_FOUND) {
       if(cgnsErr == CG_OK) {
-        Family2SolutionTransfo::const_iterator it =
-          allSolutionTransfo.find(std::string(famName));
+        auto it = allSolutionTransfo.find(std::string(famName));
         if(it != allSolutionTransfo.end()) zoneSolTransfo = &(it->second);
       }
       else

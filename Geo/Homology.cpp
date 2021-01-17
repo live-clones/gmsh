@@ -61,11 +61,10 @@ void Homology::_getEntities(const std::vector<int> &physicalGroups,
   entities.clear();
   std::map<int, std::vector<GEntity *> > groups[4];
   _model->getPhysicalGroups(groups);
-  std::map<int, std::vector<GEntity *> >::iterator it;
 
   for(std::size_t i = 0; i < physicalGroups.size(); i++) {
     for(int j = 0; j < 4; j++) {
-      it = groups[j].find(physicalGroups.at(i));
+      auto it = groups[j].find(physicalGroups.at(i));
       if(it != groups[j].end()) {
         std::vector<GEntity *> physicalGroup = (*it).second;
         for(std::size_t k = 0; k < physicalGroup.size(); k++) {

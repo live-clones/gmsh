@@ -358,8 +358,6 @@ void setGeomAndPhysicalEntities(GModel *model, int meshDim,
                                 std::vector<std::string> &allPhysName,
                                 std::multimap<std::string, int> &geomName2Phys)
 {
-  typedef std::multimap<std::string, int>::iterator Geom2PhysIter;
-
   // loop over dimensions
   for(int d = 0; d <= meshDim; d++) {
     // get entities fo dimension d
@@ -377,8 +375,7 @@ void setGeomAndPhysicalEntities(GModel *model, int meshDim,
       model->setElementaryName(d, geomTag, geomName);
 
       // associate physical tags to geometrical entity and store physical names
-      std::pair<Geom2PhysIter, Geom2PhysIter> range =
-        geomName2Phys.equal_range(geomName);
+      auto range = geomName2Phys.equal_range(geomName);
       for(auto it = range.first; it != range.second; ++it) {
         const int physTag = it->second;
         std::vector<int> &entPhys = ent[iEnt]->physicals;

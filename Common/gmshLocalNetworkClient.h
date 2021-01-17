@@ -39,8 +39,7 @@ public:
   void addClient(gmshLocalNetworkClient *client) { _clients.push_back(client); }
   void removeClient(gmshLocalNetworkClient *client)
   {
-    std::vector<gmshLocalNetworkClient *>::iterator it;
-    it = std::find(_clients.begin(), _clients.end(), client);
+    auto it = std::find(_clients.begin(), _clients.end(), client);
     if(it != _clients.end()) _clients.erase(it);
   }
   int getNumClients() { return _clients.size(); }

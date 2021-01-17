@@ -1511,11 +1511,10 @@ static void action_point_line_surface_volume(int action,
       drawContext::global()->draw();
     }
     if(ib == 'r') {
-      std::vector<std::pair<int, int> >::iterator it;
       for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size();
           i++) {
         std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
-        it = std::find(dimTags.begin(), dimTags.end(), t);
+        auto it = std::find(dimTags.begin(), dimTags.end(), t);
         if(it != dimTags.end()) {
           dimTags.erase(it);
           GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
@@ -1524,7 +1523,7 @@ static void action_point_line_surface_volume(int action,
       }
       for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++) {
         std::pair<int, int> t(1, FlGui::instance()->selectedEdges[i]->tag());
-        it = std::find(dimTags.begin(), dimTags.end(), t);
+        auto it = std::find(dimTags.begin(), dimTags.end(), t);
         if(it != dimTags.end()) {
           dimTags.erase(it);
           GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
@@ -1533,7 +1532,7 @@ static void action_point_line_surface_volume(int action,
       }
       for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++) {
         std::pair<int, int> t(2, FlGui::instance()->selectedFaces[i]->tag());
-        it = std::find(dimTags.begin(), dimTags.end(), t);
+        auto it = std::find(dimTags.begin(), dimTags.end(), t);
         if(it != dimTags.end()) {
           dimTags.erase(it);
           GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
@@ -1543,7 +1542,7 @@ static void action_point_line_surface_volume(int action,
       for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size();
           i++) {
         std::pair<int, int> t(3, FlGui::instance()->selectedRegions[i]->tag());
-        it = std::find(dimTags.begin(), dimTags.end(), t);
+        auto it = std::find(dimTags.begin(), dimTags.end(), t);
         if(it != dimTags.end()) {
           dimTags.erase(it);
           GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);

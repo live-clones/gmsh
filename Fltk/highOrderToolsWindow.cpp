@@ -51,8 +51,7 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   /*
   distanceFromMeshToGeometry_t dist;
   computeDistanceFromMeshToGeometry (GModel::current(), dist);
-  for (std::map<GEntity*, double> ::iterator it = dist.d2.begin();
-       it !=dist.d2.end();++it){
+  for (auto it = dist.d2.begin(); it != dist.d2.end(); ++it){
     printf("GEntity %d of dim %d : dist %12.5E\n",
            it->first->tag(), it->first->dim(), it->second);
   }

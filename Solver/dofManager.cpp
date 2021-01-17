@@ -67,15 +67,13 @@ void dofManagerBase::_parallelFinalize()
   if(Msg::GetCommRank() != Msg::GetCommSize() - 1)
     MPI_Send(&numTotal, 1, MPI_INT, Msg::GetCommRank() + 1, 0, MPI_COMM_WORLD);
   MPI_Bcast(&numTotal, 1, MPI_INT, Msg::GetCommSize() - 1, MPI_COMM_WORLD);
-  for(std::map<Dof, int>::iterator it = unknown.begin(); it != unknown.end();
-      it++)
+  for(auto it = unknown.begin(); it != unknown.end(); it++)
     it->second += numStart;
   std::vector<std::list<Dof> > ghostedByProc;
   int *nRequest = new int[Msg::GetCommSize()];
   int *nRequested = new int[Msg::GetCommSize()];
   for(int i = 0; i < Msg::GetCommSize(); i++) nRequest[i] = 0;
-  for(std::map<Dof, std::pair<int, int> >::iterator it = ghostByDof.begin();
-      it != ghostByDof.end(); it++) {
+  for(auto it = ghostByDof.begin(); it != ghostByDof.end(); it++) {
     int procId = it->second.first;
     it->second.second = nRequest[procId]++;
   }
@@ -98,8 +96,7 @@ void dofManagerBase::_parallelFinalize()
     ghostByProc[i].resize(nRequest[i], Dof(0, 0));
   }
   for(int i = 0; i < Msg::GetCommSize(); i++) nRequest[i] = 0;
-  for(std::map<Dof, std::pair<int, int> >::iterator it = ghostByDof.begin();
-      it != ghostByDof.end(); it++) {
+  for(auto it = ghostByDof.begin(); it != ghostByDof.end(); it++) {
     int proc = it->second.first;
     send0[proc][nRequest[proc] * 2] = it->first.getEntity();
     send0[proc][nRequest[proc] * 2 + 1] = it->first.getType();
@@ -124,7 +121,7 @@ void dofManagerBase::_parallelFinalize()
     if(status.MPI_TAG == 0) {
       for(int j = 0; j < nRequested[index]; j++) {
         Dof d(recv0[index][j * 2], recv0[index][j * 2 + 1]);
-        std::map<Dof, int>::iterator it = unknown.find(d);
+        auto it = unknown.find(d);
         if(it == unknown.end())
           Msg::Error("ghost Dof does not exist on parent process");
         send1[index][j] = it->second;
@@ -136,8 +133,7 @@ void dofManagerBase::_parallelFinalize()
   }
   for(int i = 0; i < Msg::GetCommSize(); i++)
     for(int i = 0; i < Msg::GetCommSize(); i++) nRequest[i] = 0;
-  for(std::map<Dof, std::pair<int, int> >::iterator it = ghostByDof.begin();
-      it != ghostByDof.end(); it++) {
+  for(auto it = ghostByDof.begin(); it != ghostByDof.end(); it++) {
     int proc = it->second.first;
     unknown[it->first] = recv1[proc][nRequest[proc]++];
   }

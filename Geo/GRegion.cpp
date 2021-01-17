@@ -446,7 +446,7 @@ bool GRegion::edgeConnected(GRegion *r) const
 {
   std::vector<GEdge *> e = edges(), e2 = r->edges();
 
-  std::vector<GEdge *>::const_iterator it = e.begin();
+  auto it = e.begin();
   while(it != e.end()) {
     if(std::find(e2.begin(), e2.end(), *it) != e2.end()) return true;
     ++it;
@@ -547,8 +547,7 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
   for(auto it = embedded_faces.begin(); it != embedded_faces.end(); it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
     std::vector<GEdge *> ed = (*it)->edges();
-    for(std::vector<GEdge *>::const_iterator it2 = ed.begin(); it2 != ed.end();
-        it2++) {
+    for(auto it2 = ed.begin(); it2 != ed.end(); it2++) {
       tmp.insert((*it2)->mesh_vertices.begin(), (*it2)->mesh_vertices.end());
       if((*it2)->getBeginVertex())
         tmp.insert((*it2)->getBeginVertex()->mesh_vertices.begin(),
