@@ -3391,7 +3391,8 @@ bool OCC_Internals::booleanOperator(
         if(_isBound(d, t)) unbind(_find(d, t), d, t, true);
       }
     }
-    _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true);
+    _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
+               (tag >= 0) ? false : true);
     _filterTags(outDimTags, minDim);
   }
   else {
