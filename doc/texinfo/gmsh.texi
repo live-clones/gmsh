@@ -4255,7 +4255,7 @@ separation of entries by type and a block structure with predictable
 sizes.
 @item
 Node and element tags in @code{$NodeData}, @code{$ElementData} and
-@code{$ElementNodeData} will be swicthed to @code{size_t}.
+@code{$ElementNodeData} will be switched to @code{size_t}.
 @end itemize
 
 @c -------------------------------------------------------------------------
