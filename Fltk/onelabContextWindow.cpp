@@ -90,6 +90,9 @@ onelabContextWindow::onelabContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
+  _dim = _tag = -1;
+  _entity = nullptr;
+
   _width = 26 * FL_NORMAL_SIZE;
   _height = 2 * WB + 1 * BH;
 
@@ -171,6 +174,8 @@ void onelabContextWindow::hide() { win->hide(); }
 
 void onelabContextWindow::rebuild(bool deleteWidgets)
 {
+  if(!_entity) return; // no entity selected
+
   // hide old widgets and record if one had the focus
   std::string focus;
   for(auto &w : _onelabWidgets) {
@@ -228,12 +233,12 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
 
 void onelabContextWindow::highlightSelection()
 {
+  if(!_entity) return;
+
   GModel::current()->setSelection(0);
   if(_choice->value() == 0) { // elementary
-    if(_entity) {
-      _entity->setVisibility(1);
-      _entity->setSelection(2);
-    }
+    _entity->setVisibility(1);
+    _entity->setSelection(2);
   }
   else { // physical
     if(_choice->value() - 1 < (int)_physicalGroupEntities.size()) {
