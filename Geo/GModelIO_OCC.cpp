@@ -2647,9 +2647,15 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
       }
       exclude.Append(_tagFace.Find(excludeFaceTags[i]));
     }
+#if OCC_VERSION_HEX > 0x070400
+    BRepOffsetAPI_MakeThickSolid ts;
+    ts.MakeThickSolidByJoin(shape, exclude, offset,
+                            CTX::instance()->geom.tolerance);
+#else
     BRepOffsetAPI_MakeThickSolid ts(shape, exclude, offset,
                                     CTX::instance()->geom.tolerance);
     ts.Build();
+#endif
     if(!ts.IsDone()) {
       Msg::Error("Could not build thick solid");
       return false;
