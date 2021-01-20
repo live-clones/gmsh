@@ -84,6 +84,10 @@ static void choice_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->onelabContext->rebuild(false);
   FlGui::instance()->onelabContext->highlightSelection();
+  // allow the solver code to react to the selection of the elementary or
+  // physical group
+  if(CTX::instance()->solver.autoCheck)
+     onelab_cb(nullptr, (void *)"check");
 }
 
 onelabContextWindow::onelabContextWindow(int deltaFontSize)
