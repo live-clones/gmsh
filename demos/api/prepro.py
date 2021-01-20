@@ -177,6 +177,7 @@ def eventLoop():
         # state
         gmsh.onelab.setString("ONELAB/Action", [""])
         # print("parameters = ", gmsh.onelab.get())
+        print("ONELAB check...")
         gmsh.fltk.update()
     elif action[0] == "reset":
         # user clicked on "Reset database"
