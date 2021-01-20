@@ -3456,7 +3456,7 @@ bool OCC_Internals::booleanOperator(
     if(mapDeleted[i]) { // deleted
     }
     else if(mapModified[i].Extent() == 0) { // not modified
-      dimTags.push_back(dimTag);
+      if(_isBound(dim, tag)) dimTags.push_back(dimTag);
     }
     else {
       TopTools_ListIteratorOfListOfShape it(mapModified[i]);
