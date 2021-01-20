@@ -110,13 +110,13 @@ parameters = """
   },
   {
     "type":"number",
-    "name":"My solver/1Some flag",
+    "name":"0Modules/Solver/My solver/1Some flag",
     "values":[0],
     "choices":[0, 1]
   },
   {
     "type":"number",
-    "name":"My solver/2Some parameter",
+    "name":"0Modules/Solver/My solver/2Some parameter",
     "values":[1.234],
     "min":0,
     "max":10,
@@ -124,23 +124,34 @@ parameters = """
   },
   {
     "type":"number",
-    "name":"My solver/3Some choice",
+    "name":"0Modules/Solver/My solver/3Some choice",
     "values":[0],
     "choices":[0, 1],
     "valueLabels":{"Choice 1": 0, "Choice 2": 1}
   },
   {
     "type":"string",
-    "name":"My solver/3Some input",
+    "name":"0Modules/Solver/My solver/3Some input",
     "values":[""]
   },
   {
     "type":"string",
-    "name":"My solver/5Some action",
+    "name":"0Modules/Solver/My solver/5Some action",
     "values":["select entity"],
     "attributes":{"Macro":"Action"}
+  },
+  {
+    "type":"string",
+    "name":"0Modules/Solver/My solver/6Some other action",
+    "values":["do something else"],
+    "attributes":{"Macro":"Action", "Aspect":"Button"}
   }
 ]"""
+
+# remove all entries in the defaut solver menu, so that we can have a clean
+# empty one for ourselves ;-)
+for i in range(5):
+    gmsh.option.setString('Solver.Name{}'.format(i), '')
 
 gmsh.onelab.set(parameters)
 
@@ -177,7 +188,7 @@ def eventLoop():
         gmsh.onelab.setString("ONELAB/Action", [""])
         runSolver()
     elif action[0] == "select entity":
-        # user clicked on "My solver/Select an entity"
+        # user clicked on "Select an entity"
         gmsh.onelab.setString("ONELAB/Action", [""])
         gmsh.fltk.setStatusMessage(
             "Please select an entity (or press 'q' to quit)", True)
@@ -186,6 +197,8 @@ def eventLoop():
         if r and len(ent):
             gmsh.fltk.showContextWindow(ent[0][0], ent[0][1])
         gmsh.fltk.setStatusMessage("", True)
+    elif action[0] == "some other action":
+        print('some other action...')
     return 1
 
 if "-nopopup" not in sys.argv:
