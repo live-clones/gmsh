@@ -1231,10 +1231,16 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
      p.getAttribute("Macro") == "GmshMergeFile" ||
      p.getAttribute("Macro") == "GmshParseString" ||
      p.getAttribute("Macro") == "Action") {
-    Fl_Button *but = new Fl_Button(xx, yy, ww / labelRatio, hh);
-    but->box(FL_FLAT_BOX);
-    but->color(bgc);
-    but->selection_color(bgc);
+    Fl_Button *but;
+    if(p.getAttribute("Aspect") == "Button") {
+      but = new Fl_Button(xx, yy, ww, hh);
+    }
+    else {
+      but = new Fl_Button(xx, yy, ww / labelRatio, hh);
+      but->box(FL_FLAT_BOX);
+      but->color(bgc);
+      but->selection_color(bgc);
+    }
     but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     but->callback(onelab_string_button_cb, (void *)path);
     if(highlight) {
