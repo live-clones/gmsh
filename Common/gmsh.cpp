@@ -3193,9 +3193,64 @@ gmsh::model::mesh::getEdgeNumber(const std::vector<int> &edgeNodes,
   }
 }
 
+static void _getEntities(const gmsh::vectorpair &dimTags,
+                         std::vector<GEntity*> &entities)
+{
+  if(dimTags.empty()) {
+    GModel::current()->getEntities(entities);
+  }
+  else {
+    for(auto dimTag : dimTags) {
+      int dim = dimTag.first, tag = dimTag.second;
+      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+      if(!ge) {
+        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+        return;
+      }
+      entities.push_back(ge);
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
+{
+  // FIXME: this should eventually be removed, when we replace edges/faces used
+  // in basis function keys simply with element tags
+  if(!_checkInit()) return;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      for(int k = 0; k < e->getNumEdges(); k++)
+        GModel::current()->addMEdge(e->getEdge(k));
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
+{
+  // FIXME: this should eventually be removed, when we replace edges/faces used
+  // in basis function keys simply with element tags
+  if(!_checkInit()) return;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      MElement *e = ge->getMeshElement(j);
+      for(int k = 0; k < e->getNumFaces(); k++)
+        GModel::current()->addMFace(e->getFace(k));
+    }
+  }
+}
+
 GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
   const int elementType, std::vector<int> &localMultipliers, const int tag)
 {
+  // FIXME: this should eventually be removed, or replaced with something more
+  // generic
   localMultipliers.clear();
   int basisOrder = 0;
   std::string fsName = "";

@@ -2393,9 +2393,9 @@ class model:
             """
             gmsh.model.mesh.getEdgeNumber(edgeNodes)
 
-            Get the global edge identifier `edgeNum' for an input list of node pairs,
-            concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-            feature and will probably change in a future release.
+            Get the global mesh edge identifier `edgeNum' for an input list of node
+            pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
+            experimental feature and will probably change in a future release.
 
             Return `edgeNum'.
             """
@@ -2409,6 +2409,38 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_edgeNum_, api_edgeNum_n_.value)
+
+        @staticmethod
+        def createEdges(dimTags=[]):
+            """
+            gmsh.model.mesh.createEdges(dimTags=[])
+
+            Create mesh edges for the entities `dimTags'. Warning: this is an
+            experimental feature and will probably change in a future release.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelMeshCreateEdges(
+                api_dimTags_, api_dimTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
+        def createFaces(dimTags=[]):
+            """
+            gmsh.model.mesh.createFaces(dimTags=[])
+
+            Create mesh faces for the entities `dimTags'. Warning: this is an
+            experimental feature and will probably change in a future release.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelMeshCreateFaces(
+                api_dimTags_, api_dimTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def getLocalMultipliersForHcurl0(elementType, tag=-1):

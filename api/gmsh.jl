@@ -1987,7 +1987,7 @@ end
 """
     gmsh.model.mesh.getEdgeNumber(edgeNodes)
 
-Get the global edge identifier `edgeNum` for an input list of node pairs,
+Get the global mesh edge identifier `edgeNum` for an input list of node pairs,
 concatenated in the vector `edgeNodes`.  Warning: this is an experimental
 feature and will probably change in a future release.
 
@@ -2003,6 +2003,40 @@ function getEdgeNumber(edgeNodes)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     edgeNum = unsafe_wrap(Array, api_edgeNum_[], api_edgeNum_n_[], own=true)
     return edgeNum
+end
+
+"""
+    gmsh.model.mesh.createEdges(dimTags = Tuple{Cint,Cint}[])
+
+Create mesh edges for the entities `dimTags`. Warning: this is an experimental
+feature and will probably change in a future release.
+"""
+function createEdges(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreateEdges, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.createFaces(dimTags = Tuple{Cint,Cint}[])
+
+Create mesh faces for the entities `dimTags`. Warning: this is an experimental
+feature and will probably change in a future release.
+"""
+function createFaces(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreateFaces, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
 end
 
 """

@@ -1056,11 +1056,23 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getEdgeNumber
       //
-      // Get the global edge identifier `edgeNum' for an input list of node pairs,
-      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-      // feature and will probably change in a future release.
+      // Get the global mesh edge identifier `edgeNum' for an input list of node
+      // pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
+      // experimental feature and will probably change in a future release.
       GMSH_API void getEdgeNumber(const std::vector<int> & edgeNodes,
                                   std::vector<int> & edgeNum);
+
+      // gmsh::model::mesh::createEdges
+      //
+      // Create mesh edges for the entities `dimTags'. Warning: this is an
+      // experimental feature and will probably change in a future release.
+      GMSH_API void createEdges(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
+      // gmsh::model::mesh::createFaces
+      //
+      // Create mesh faces for the entities `dimTags'. Warning: this is an
+      // experimental feature and will probably change in a future release.
+      GMSH_API void createFaces(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // gmsh::model::mesh::getLocalMultipliersForHcurl0
       //

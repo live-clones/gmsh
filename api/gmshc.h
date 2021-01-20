@@ -925,12 +925,22 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
                                                                            const int tag,
                                                                            int * ierr);
 
-/* Get the global edge identifier `edgeNum' for an input list of node pairs,
- * concatenated in the vector `edgeNodes'.  Warning: this is an experimental
- * feature and will probably change in a future release. */
+/* Get the global mesh edge identifier `edgeNum' for an input list of node
+ * pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
+ * experimental feature and will probably change in a future release. */
 GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n,
                                          int ** edgeNum, size_t * edgeNum_n,
                                          int * ierr);
+
+/* Create mesh edges for the entities `dimTags'. Warning: this is an
+ * experimental feature and will probably change in a future release. */
+GMSH_API void gmshModelMeshCreateEdges(int * dimTags, size_t dimTags_n,
+                                       int * ierr);
+
+/* Create mesh faces for the entities `dimTags'. Warning: this is an
+ * experimental feature and will probably change in a future release. */
+GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n,
+                                       int * ierr);
 
 /* Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
  * H(curl) basis functions. Warning: this is an experimental feature and will
