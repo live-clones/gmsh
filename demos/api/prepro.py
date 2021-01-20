@@ -188,7 +188,7 @@ def eventLoop():
         gmsh.onelab.setString("ONELAB/Action", [""])
         runSolver()
     elif action[0] == "select entity":
-        # user clicked on "Select an entity"
+        # user clicked on "Some action"
         gmsh.onelab.setString("ONELAB/Action", [""])
         gmsh.fltk.setStatusMessage(
             "Please select an entity (or press 'q' to quit)", True)
@@ -197,7 +197,9 @@ def eventLoop():
         if r and len(ent):
             gmsh.fltk.showContextWindow(ent[0][0], ent[0][1])
         gmsh.fltk.setStatusMessage("", True)
-    elif action[0] == "some other action":
+    elif action[0] == "do something else":
+        # user clicked on "Some other action"
+        gmsh.onelab.setString("ONELAB/Action", [""])
         print('some other action...')
     return 1
 
