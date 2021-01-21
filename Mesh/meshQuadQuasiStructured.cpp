@@ -7196,8 +7196,5 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
   qqs.stats["unstructured_time_cpu"] = t2-t1;
   qqs.stats["unstructured_time_wall"] = w2-w1;
   
-  // Msg::Error("early stop");
-  // return 0;
-
   return quadMeshToQuasiStructured(gm, faceInfo, qqs);
 }
