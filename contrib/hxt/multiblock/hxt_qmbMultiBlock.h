@@ -75,6 +75,7 @@ class MultiBlock
   std::vector<std::vector<uint64_t>> m_discrQuads;
   HXTMesh *m_quadMesh;
   // std::vector<std::vector<uint64_t>> m_discrHfuncEdges;
+  std::vector<std::vector<uint64_t>> m_vert2Block;
 
 
   bool m_mbDecompExists;
@@ -115,6 +116,7 @@ class MultiBlock
 			 std::vector<int> *allMeshLinesColors);
 
   //new
+  void findPatchBarycenter(const std::set<uint64_t> &setTri);
   void buildTotalPatches();
   bool isInTotalPatch(uint64_t tri);
   int localIntersection2(int sepID1, int sepID2, std::vector<std::array<double,3>> *intersectionPoints,std::vector<uint64_t> *newTriangles, std::vector<std::array<double,3>> *directions, std::vector<double> *length);
@@ -138,13 +140,22 @@ class MultiBlock
   int isPointSingularityOrCornerVec(std::array<double,3> *point);
   int getQuadEdgesData();
   int getBlock2Edge();
-  int getEdge2Block();
+  int getEdge2Block(); 
   HXTStatus collectTJunctionIndices();
   HXTStatus getTriangularPatchesIDs(std::vector<int> *triPatchesIDs);
   double getDistanceBetweeenTwoExtrVert(int sepIDNoLimCyc, int extrVertID, int tJuncVertID1);
-  int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID); 
-  HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs);
- 
+  int getBlockIDFromVertInd(int v1, int v2, int v3, int *blockID);
+  void getmbEdgIDFrom2ExtrVert(int node1, int node2, int *edgID);
+  void getmbEdgIDFrom2ExtrPoints(std::array<double,3> point1, std::array<double,3> point2 , int *edgID);
+  HXTStatus getTJunctionsPatchesIDs(std::vector<int> *tJunctionPatchesIDs, std::vector<int> *locTjunEdgInd, std::vector<int> *locTjuncInd);
+  HXTStatus mergeEdges(uint64_t edgID1, uint64_t edgID2, uint64_t connectingVertInd, std::vector<std::array<double,3>> *newEdgPoints, std::vector<uint64_t> *newEdgTri);
+  HXTStatus modifyTBlockNgbrs_TjuncOnRight(int tBlockID, int locIndTjuncVert, int locTjunEdgInd, std::vector<uint64_t> *vecBlocksDelete, std::vector<uint64_t> *vecEdgesDelete);
+  HXTStatus modifyTBlockNgbrs_TjuncOnLeft(int tBlockID, int locIndTjuncVert, int locTjunEdgInd, std::vector<uint64_t> *vecBlocksDelete, std::vector<uint64_t> *vecEdgesDelete);
+  HXTStatus recomputeMinEdgLength();
+  HXTStatus correctInvalidBlocks();
+  HXTStatus mergeBlocks(uint64_t blockID1, uint64_t blockID2, uint64_t edgToDelete, int currentNode,std::vector<uint64_t> *delBlocks, std::vector<uint64_t> *delEdges);
+  HXTStatus getVert2Block();
+   
   
   double normDiffVect(std::array<double,3> *coordP1, std::array<double,3> *coordP2);
   double computeDiscreteLineLength(std::vector<std::array<double,3>> *pCoordLine);
@@ -158,6 +169,7 @@ class MultiBlock
   HXTStatus getTriNumFromPointCoord(std::array<double, 3> pointCoord, std::vector<uint64_t> vectorTriangles, uint64_t *triNum, double *alpha, double *beta);
   HXTStatus getCrossesLifting(const std::vector<uint64_t> &tri, const std::vector<uint64_t> &glob2LocTri, std::vector<std::array<double,3>> &lift, uint64_t triInit, std::array<double,3> dirRef);
   HXTStatus parametrizeBlock(uint64_t idBlock, BlockParametrization &blockParam);
+  HXTStatus parametrizeBlock(std::vector<uint64_t> vectIdBlock, BlockParametrization &blockParam);
   HXTStatus computePatchsParametrization();
   HXTStatus dbgPosEdgData(const char *fileName);
   HXTStatus dbgPosFlagSetTri(const std::set<uint64_t> &tri, const char *fileName);
@@ -167,9 +179,13 @@ class MultiBlock
   int getParallelEdg(int blockNum, uint64_t edg1, uint64_t *edg2);
   int getAllSheets();
   int computeAdequatePartitionPerEdge(double sizeofElement, std::vector<double> hVal);
+  int computeAdequatePartitionPerEdgeV2(double sizeofElement, std::vector<double> hVal);
   void getExtrVertIDmbEdg(uint64_t extrID[2],int edgID);
   HXTStatus discretizeEdges(std::vector<double> hVal);
   HXTStatus discretizeQuads();
+  double getSingleQuadQuality(int iQuad);
+  int getMeshQuality(std::vector<double> *quadsQuality, double *averageQuality, double *worstQuality, double *procentageHighQualityElements);
+  HXTStatus hxtWriteQuadQualityScalarPos(std::vector<double> quadsQuality,const char *fileName);
 
 };
 

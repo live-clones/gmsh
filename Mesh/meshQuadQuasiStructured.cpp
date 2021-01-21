@@ -7041,10 +7041,12 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
       qqs.stats[kv.first] = kv.second;
     }
     int nt = 1;
+    #if defined(_OPENMP)
     #pragma omp parallel
     {
       nt = omp_get_num_threads();
     }
+    #endif
     qqs.stats["omp_num_threads"] = double(nt);
     qqs.stats["time_cpu"] = t2-t1;
     qqs.stats["time_wall"] = w2-w1;
@@ -7184,10 +7186,12 @@ int Mesh2DWithQuadQuasiStructured(GModel* gm)
 
   double t2 = Cpu(), w2 = TimeOfDay();
   int nt = 1;
+  #if defined(_OPENMP)
   #pragma omp parallel
   {
     nt = omp_get_num_threads();
   }
+  #endif
   qqs.stats["unstructured_omp_num_threads"] = double(nt);
   qqs.stats["unstructured_time_cpu"] = t2-t1;
   qqs.stats["unstructured_time_wall"] = w2-w1;

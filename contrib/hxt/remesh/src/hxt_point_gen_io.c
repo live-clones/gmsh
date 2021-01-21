@@ -148,6 +148,44 @@ HXTStatus hxtPointGenWriteDirections(HXTMesh *mesh,
   return HXT_STATUS_OK;
 }
 
+HXTStatus hxtPointGenWriteDirectionsOpposite(HXTMesh *mesh, 
+                                     const double *directions,
+                                     const char *filename)
+{
+  FILE *file = fopen(filename,"w");
+  fprintf(file,"View \"Directions\"{\n");
+  for (uint64_t i=0; i<mesh->vertices.num; i++){
+    for (uint32_t j=0; j<3; j++){
+      fprintf(file,"VT(");
+      double x = mesh->vertices.coord[4*i+0]; 
+      double y = mesh->vertices.coord[4*i+1]; 
+      double z = mesh->vertices.coord[4*i+2]; 
+  
+      for (uint32_t j=0; j<3; j++){
+        fprintf(file,"%f,%f,%f", x, y, z);
+        if (j<2)
+          fprintf(file,",");
+      }
+      fprintf(file,")");
+      fprintf(file,"{");
+      double tempx = -directions[9*i+3*j+0];
+      double tempy = -directions[9*i+3*j+1];
+      double tempz = -directions[9*i+3*j+2];
+  
+      for ( uint32_t j=0; j<3; j++){
+        fprintf(file,"%f,%f,%f", tempx,tempy,tempz);
+        if (j<2)
+          fprintf(file,",");
+      }
+      fprintf(file,"};\n");
+    }
+  }
+  fprintf(file,"};");
+  fclose(file);
+  
+  return HXT_STATUS_OK;
+}
+
 HXTStatus hxtPointGenWriteDirectionsEdges(HXTEdges *edges,
                                           const double *directions,
                                           const char *filename)

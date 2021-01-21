@@ -740,15 +740,19 @@ int meshGFaceHxt(GModel *gm)
   c2v.clear();
   //  HXT_CHECK(Hxt2Gmsh(gm, fmesh, v2c, c2v));
   
+  // NOT USED ANYMORE
+  if(0){
 
-  GModel *gm2 = new GModel(gm->getName());
-  
-  gm2->readMSH("finalmesh.msh");	  	  
-  
-  printf("WINSLOW START\n");
-  meshWinslow2d (gm2);
-  printf("WINSLOW ENDS\n");
-  gm2->writeMSH("finalmesh_smoothed.msh", 4.0, false, true);	  	  
+    GModel *gm2 = new GModel(gm->getName());
+    
+    gm2->readMSH("finalmesh.msh");	  	  
+    
+    printf("WINSLOW START\n");
+    meshWinslow2d (gm2);
+    printf("WINSLOW ENDS\n");
+    gm2->writeMSH("finalmesh_smoothed.msh", 4.0, false, true);	  	  
+  }
+
   HXT_CHECK(hxtMeshDelete(&fmesh));
  
  
