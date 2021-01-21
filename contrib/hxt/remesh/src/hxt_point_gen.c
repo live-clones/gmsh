@@ -115,11 +115,12 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   HXT_CHECK(hxtVerticesReserve(fmesh, estNumVertices));
 
   // Allocate final mesh 1-d point elements (corners)
+  // TODO this is way too big - reallocate down
   if (mesh->points.num != 0){
-    HXT_CHECK(hxtPointsReserve(fmesh,mesh->points.num));
+    HXT_CHECK(hxtPointsReserve(fmesh,estNumVertices));
   }
   else{
-    HXT_CHECK(hxtPointsReserve(fmesh,estNumVertices)); // TODO this is way too big - reallocate down
+    HXT_CHECK(hxtPointsReserve(fmesh,estNumVertices));   
   }
 
   // Allocate final mesh lines
@@ -502,17 +503,6 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   if (opt->verbosity>=1) HXT_CHECK(hxtMeshWriteGmsh(nmesh, "finalmeshTriangles.msh"));
   if (opt->quadSurfaces == 1){
 
-    if(opt->verbosity>=2){
-      FILE *test;
-      hxtPosInit("binIndices.pos","edges",&test);
-      for (uint32_t i=0; i<nmesh->vertices.num; i++){
-        hxtPosAddPoint(test,&nmesh->vertices.coord[4*i],bin[p2p[i]]);
-        //hxtPosAddText(test,&nmesh->vertices.coord[4*i],"%d",bin[p2p[i]]);
-      }
-
-      hxtPosFinish(test);
-    }
-
     // Transfer binary indices to final surface mesh 
     uint32_t *tbin;
     HXT_CHECK(hxtMalloc(&tbin,sizeof(uint32_t)*fmesh->vertices.size));
@@ -529,10 +519,23 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     }
     HXT_CHECK(hxtFree(&tbin));
 
+    // Output 
+    // TODO delete
+    if(opt->verbosity>=2){
+      FILE *test;
+      hxtPosInit("binIndices.pos","edges",&test);
+      for (uint32_t i=0; i<nmesh->vertices.num; i++){
+        hxtPosAddPoint(test,&nmesh->vertices.coord[4*i],bin[i]);
+      }
+      hxtPosFinish(test);
+    }
+
     // Convert final mesh "nmesh" to a quad mesh "qmesh"
     // and then rewrite qmesh onto nmesh
     HXT_CHECK(hxtPointGenQuadConvert(opt,mesh,nmesh,p2t,bin));
 
+    // Output 
+    // TODO delete
     if(opt->verbosity>=2){
       FILE *test;
       hxtPosInit("binIndicesAfter.pos","edges",&test);
