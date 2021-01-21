@@ -747,14 +747,15 @@ GlobalBackgroundMesh& getBackgroundMesh(const std::string& name) {
   return *(global_bmeshes.back());
 }
 
-EntityBackgroundMesh::~EntityBackgroundMesh(){
-  for (MVertex* v: vertices) delete v;
-  for (MElement* e: elements) delete e;
+GlobalBackgroundMesh::~GlobalBackgroundMesh() {
+  for (MVertex* v: mesh_vertices) if (v) delete v;
 }
 
-int GlobalBackgroundMesh::importEntityMeshes(GModel* gm, bool overwriteExisting, bool splitIntoSimplices) {
-  if (overwriteExisting) {
-    entityMesh.clear(); /* call the destructor of the EntityBackgroundMesh that will delete vertices/elements */
+int GlobalBackgroundMesh::importGModelMeshes(GModel* gm, bool overwriteExisting) {
+  if (overwriteExisting) { /* Clear mesh */
+    for (MVertex* v: mesh_vertices) if (v) delete v;
+    edgeBackgroundMeshes.clear();
+    faceBackgroundMeshes.clear();
   }
 
   std::unordered_map<MVertex*,MVertex*> old2new;
@@ -766,75 +767,90 @@ int GlobalBackgroundMesh::importEntityMeshes(GModel* gm, bool overwriteExisting,
     for (GEdge* e: gf->embeddedEdges()) edges.insert(e);
   }
 
+  /* MVertex from GVertex */
+  mesh_vertices.reserve(mesh_vertices.size()+vertices.size());
   for (GVertex* gv: vertices) {
-    std::vector<MElement*> copy_elements;
-    std::vector<MVertex*> copy_vertices(gv->mesh_vertices.size());
     for (size_t i = 0; i < gv->mesh_vertices.size(); ++i) {
       MVertex* v = gv->mesh_vertices[i];
-      copy_vertices[i] = new MVertex(v->x(),v->y(),v->z(),gv);
-      old2new[v] = copy_vertices[i];
+      mesh_vertices.push_back(new MVertex(v->x(),v->y(),v->z(),gv));
+      old2new[v] = mesh_vertices.back();
     }
-    entityMesh.emplace(std::piecewise_construct, std::forward_as_tuple(gv), std::forward_as_tuple(copy_vertices,copy_elements));
   }
 
-
+  /* MLine from GEdge */
   for (GEdge* ge: edges) {
-    std::vector<MVertex*> copy_vertices(ge->mesh_vertices.size());
+    edgeBackgroundMeshes[ge] = BackgroundMeshGEdge();
+    BackgroundMeshGEdge& bm = edgeBackgroundMeshes[ge];
+    bm.ge = ge;
     for (size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
       MVertex* v = ge->mesh_vertices[i];
       double t=0.;
       v->setParameter(0,t);
-      copy_vertices[i] = new MEdgeVertex(v->x(),v->y(),v->z(),ge,t);
-      old2new[v] = copy_vertices[i];
+      mesh_vertices.push_back(new MEdgeVertex(v->x(),v->y(),v->z(),ge,t));
+      old2new[v] = mesh_vertices.back();
     }
-    std::vector<MElement*> copy_elements(ge->lines.size());
+    bm.lines.reserve(ge->lines.size());
     for (size_t i = 0; i < ge->lines.size(); ++i) {
       MElement* elt = ge->lines[i];
-      copy_elements[i] = new MLine(old2new[elt->getVertex(0)],old2new[elt->getVertex(1)]);
+      MVertex* v0 = old2new[elt->getVertex(0)];
+      MVertex* v1 = old2new[elt->getVertex(1)];
+      if (v0 == NULL || v1 == NULL) {
+        Msg::Error("GlobalBackgroundMesh: failed to import mesh (1)");
+        // Note: some vertex are stored outside the GModel ?
+        return -1;
+      }
+      bm.lines.push_back(MLine(v0,v1));
     }
-    entityMesh.emplace(std::piecewise_construct, std::forward_as_tuple(ge), std::forward_as_tuple(copy_vertices,copy_elements));
   }
 
-  for (GFace* ge: gm->getFaces()) {
+  /* MTriangle from GFace */
+  for (GFace* gf: gm->getFaces()) {
+    faceBackgroundMeshes[gf] = BackgroundMeshGFace();
+    BackgroundMeshGFace& bm = faceBackgroundMeshes[gf];
+    bm.gf = gf;
     /* Vertices */
-    std::vector<MVertex*> copy_vertices(ge->mesh_vertices.size());
-    for (size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
-      MVertex* v = ge->mesh_vertices[i];
+    for (size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
+      MVertex* v = gf->mesh_vertices[i];
       double uv0=0.;
       double uv1=0.;
       v->setParameter(0,uv0);
       v->setParameter(1,uv1);
-      copy_vertices[i] = new MFaceVertex(v->x(),v->y(),v->z(),ge,uv0,uv1);
-      old2new[v] = copy_vertices[i];
+      mesh_vertices.push_back(new MFaceVertex(v->x(),v->y(),v->z(),gf,uv0,uv1));
+      old2new[v] = mesh_vertices.back();
     }
 
+    bm.triangles.reserve(gf->triangles.size()+2*gf->quadrangles.size());
     /* Triangles */
-    std::vector<MElement*> copy_elements(ge->triangles.size());
-    for (size_t i = 0; i < ge->triangles.size(); ++i) {
-      MElement* elt = ge->triangles[i];
-      copy_elements[i] = new MTriangle(old2new[elt->getVertex(0)],old2new[elt->getVertex(1)],old2new[elt->getVertex(2)]);
+    for (size_t i = 0; i < gf->triangles.size(); ++i) {
+      MElement* elt = gf->triangles[i];
+      MVertex* v0 = old2new[elt->getVertex(0)];
+      MVertex* v1 = old2new[elt->getVertex(1)];
+      MVertex* v2 = old2new[elt->getVertex(2)];
+      if (v0 == NULL || v1 == NULL || v2 == NULL) {
+        Msg::Error("GlobalBackgroundMesh: failed to import mesh (2)");
+        // Note: some vertex are stored outside the GModel ?
+        return -1;
+      }
+      bm.triangles.push_back(MTriangle(v0,v1,v2));
     }
 
     /* Quads */
-    if (ge->quadrangles.size() > 0) {
-      size_t i0 = copy_elements.size();
-      if (splitIntoSimplices) {
-        copy_elements.resize(copy_elements.size()+2*ge->quadrangles.size());
-        for (size_t i = 0; i < ge->quadrangles.size(); ++i) {
-          MElement* elt = ge->quadrangles[i];
-          copy_elements[i0+2*i+0] = new MTriangle(old2new[elt->getVertex(0)],old2new[elt->getVertex(1)],old2new[elt->getVertex(2)]);
-          copy_elements[i0+2*i+1] = new MTriangle(old2new[elt->getVertex(0)],old2new[elt->getVertex(2)],old2new[elt->getVertex(3)]);
+    if (gf->quadrangles.size() > 0) {
+      for (size_t i = 0; i < gf->quadrangles.size(); ++i) {
+        MElement* elt = gf->quadrangles[i];
+        MVertex* v0 = old2new[elt->getVertex(0)];
+        MVertex* v1 = old2new[elt->getVertex(1)];
+        MVertex* v2 = old2new[elt->getVertex(2)];
+        MVertex* v3 = old2new[elt->getVertex(3)];
+        if (v0 == NULL || v1 == NULL || v2 == NULL || v3 == NULL) {
+          Msg::Error("GlobalBackgroundMesh: failed to import mesh (3)");
+        // Note: some vertex are stored outside the GModel ?
+          return -1;
         }
-      } else {
-        copy_elements.resize(copy_elements.size()+ge->quadrangles.size());
-        for (size_t i = 0; i < ge->quadrangles.size(); ++i) {
-          MElement* elt = ge->quadrangles[i];
-          copy_elements[i0+i] = new MQuadrangle(old2new[elt->getVertex(0)],old2new[elt->getVertex(1)],old2new[elt->getVertex(2)],old2new[elt->getVertex(3)]);
-        }
+        bm.triangles.push_back(MTriangle(v0,v1,v2));
+        bm.triangles.push_back(MTriangle(v0,v2,v3));
       }
     }
-
-    entityMesh.emplace(std::piecewise_construct, std::forward_as_tuple(ge), std::forward_as_tuple(copy_vertices,copy_elements));
   }
 
   return 0;
