@@ -752,6 +752,8 @@ GlobalBackgroundMesh::~GlobalBackgroundMesh() {
 }
 
 int GlobalBackgroundMesh::importGModelMeshes(GModel* gm, bool overwriteExisting) {
+  Msg::Debug("GlobalBackgroundMesh: import GModel mesh ...");
+
   if (overwriteExisting) { /* Clear mesh */
     for (MVertex* v: mesh_vertices) if (v) delete v;
     edgeBackgroundMeshes.clear();

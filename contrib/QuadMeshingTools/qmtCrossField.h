@@ -39,7 +39,7 @@ class MLine;
 int computeCrossFieldWithHeatEquation(
     const std::vector<MTriangle*>& triangles, 
     const std::vector<MLine*>& lines, 
-    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    std::vector<std::array<double,3> >& triEdgeTheta, 
     int nbDiffusionLevels = 5, 
     double thresholdNormConvergence = 1.e-3, 
     int nbBoundaryExtensionLayer = 1,

@@ -34,6 +34,7 @@
 #include "Field.h"
 #include "Options.h"
 #include "Generator.h"
+#include "meshQuadQuasiStructured.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -1415,6 +1416,15 @@ void GenerateMesh(GModel *m, int ask)
   // discrete entities)
   SetOrder1(m, false, true);
   FixPeriodicMesh(m);
+
+  // Some meshing algorithms require a global background mesh 
+  // and a guiding field (e.g. cross field + size map)
+  if (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS
+      || CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    bool overwriteGModelMesh = false; /* use current mesh if available */
+    bool deleteGModelMeshAfter = true; /* mesh saved in background, no longer needed */
+    BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh, deleteGModelMeshAfter);
+  }
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {

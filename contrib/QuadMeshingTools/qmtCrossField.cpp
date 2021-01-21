@@ -22,11 +22,21 @@
 #include "MLine.h"
 #include "MTriangle.h"
 
-/* Direct linear solver */
+/* Linear algebra solver */
 #if defined(HAVE_EIGEN)
   #include<Eigen/IterativeLinearSolvers>
   #include<Eigen/SparseCholesky>
   #include<Eigen/SparseLU>
+#endif
+#if defined(HAVE_SOLVER)
+  #include "dofManager.h"
+  #include "laplaceTerm.h"
+  #include "linearSystemGmm.h"
+  #include "linearSystemCSR.h"
+  #include "linearSystemFull.h"
+  #include "linearSystemPETSc.h"
+  #include "linearSystemMUMPS.h"
+  #include "linearSystemEigen.h"
 #endif
 
 /* QuadMeshingTools includes */
@@ -537,7 +547,7 @@ namespace QMT {
     /* Bbox diagonal is used later to specify the diffusion length */
     double diag = bboxDiag(points);
     if (verbosity > 0)
-      Msg::Info("input: %li points, %li lines, %li triangles, %li internal edges, bbox diag = %li", points.size(),lines.size(),triangles.size(),uIEdges.size(), diag);
+      Msg::Info("Heat-based cross field computation, input: %li points, %li lines, %li triangles, %li internal edges, bbox diag = %li", points.size(),lines.size(),triangles.size(),uIEdges.size(), diag);
 
     if (uIEdges.size() == 0) {
       Msg::Error("no internal edges");
@@ -570,7 +580,7 @@ namespace QMT {
       }
     }
     if (verbosity >= 2)
-      Msg::Info("boundary conditions: %li crosses fixed on edges", nbc);
+      Msg::Info("- boundary conditions: %li crosses fixed on edges", nbc);
 
     if (nbBoundaryExtensionLayer > 0) {
       bool oke = expand_dirichlet_boundary_conditions(points, triangles, uIEdges, old2IEdge, uIEdgeToOld, nbBoundaryExtensionLayer, dirichletEdge, dirichletValue, verbosity);
@@ -584,7 +594,7 @@ namespace QMT {
     }
 
     if (verbosity >= 2)
-      Msg::Info("compute stiffness matrix coefficients (Crouzeix-Raviart) ...");
+      Msg::Info("- compute stiffness matrix coefficients (Crouzeix-Raviart) ...");
 
     vector<IV> K_diag;
     vector<IJV> K_coefs;
@@ -629,7 +639,7 @@ namespace QMT {
     eavg /= uIEdges.size();
 
     if (verbosity >= 2)
-      Msg::Info("edge size: min=%.3f, avg=%.3f, max=%.3f | bbox diag: %.3f",emin,eavg,emax,diag);
+      Msg::Info("- edge size: min=%.3f, avg=%.3f, max=%.3f | bbox diag: %.3f",emin,eavg,emax,diag);
 
 
     /* prepare system */
@@ -647,7 +657,7 @@ namespace QMT {
     double dtFinal = (3.*emin)*(3.*emin);
 
     if (verbosity >= 1)
-      Msg::Info("heat diffusion and projection loop (%li levels, %li unknowns, dt = %.3f .. %.3f) ...", nbDiffusionLevels, 2*uIEdges.size(),dtInitial, dtFinal);
+      Msg::Info("- diffusion and projection loop (%li levels, %li unknowns, dt = %.3f .. %.3f) ...", nbDiffusionLevels, 2*uIEdges.size(),dtInitial, dtFinal);
 
     double wti = TimeOfDay();
     for (size_t e = 0; e < uIEdges.size(); ++e) {
@@ -704,7 +714,7 @@ namespace QMT {
         prev_dt = dt;
 
         if (verbosity >= 1)
-          Msg::Info("  step %li/%li | dt = %.3f, linear system loop ...", iter+1, steps.size(), dt);
+          Msg::Info("  - step %li/%li | dt = %.3f, linear system loop ...", iter+1, steps.size(), dt);
 
         /* Update LHS matrix with the new timestep */
         for (size_t i = 0; i < Acol.size(); ++i) {
@@ -778,7 +788,7 @@ namespace QMT {
     }
     double et = TimeOfDay() - wti;
     if (verbosity >= 2)
-      Msg::Info("cross field elapsed time: %.3f", et);
+      Msg::Info("- cross field elapsed time: %.3f", et);
 
 
     { /* Export solution */
@@ -864,4 +874,228 @@ int computeCrossFieldWithHeatEquation(
       nbDiffusionLevels, thresholdNormConvergence,nbBoundaryExtensionLayer,
       verbosity);
   return ok ? 0 : -1;
+}
+
+inline double compat_orientation_extrinsic(const SVector3 &o0,
+    const SVector3 &n0,
+    const SVector3 &o1,
+    const SVector3 &n1,
+    SVector3 &a1, SVector3 &b1)
+{
+  SVector3 t0 = crossprod(n0, o0);
+  SVector3 t1 = crossprod(n1, o1);
+
+  const size_t permuts[8][2] = {{0, 0}, {1, 0}, {2, 0}, {3, 0},
+    {0, 1}, {1, 1}, {2, 1}, {3, 1}};
+  SVector3 A[4]{o0, t0, -o0, -t0};
+  SVector3 B[2]{o1, t1};
+
+  double maxx = -1;
+  int index = 0;
+  for(size_t i = 0; i < 8; i++) {
+    const double xx = dot(A[permuts[i][0]], B[permuts[i][1]]);
+    if(xx > maxx) {
+      index = i;
+      maxx = xx;
+    }
+  }
+  a1 = A[permuts[index][0]];
+  b1 = B[permuts[index][1]];
+  return maxx;
+}
+
+inline void cross_normalize(double &a)
+{
+  double D = M_PI * .5;
+  if(a < 0)
+    while(a < 0) a += D;
+  if(a >= D)
+    while(a >= D) a -= D;
+}
+
+inline double cross_lifting(double _a, double a)
+{
+  double D = M_PI * .5;
+  if(fabs(_a - a) < fabs(_a - (a + D)) && fabs(_a - a) < fabs(_a - (a - D))) {
+    return a;
+  }
+  else if(fabs(_a - (a + D)) < fabs(_a - a) &&
+      fabs(_a - (a + D)) < fabs(_a - (a - D))) {
+    return a + D;
+  }
+  else {
+    return a - D;
+  }
+  return DBL_MAX;
+}
+
+
+int computeCrossFieldConformalScaling(
+    const std::vector<MTriangle*>& triangles, 
+    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    std::unordered_map<MVertex*,double>& scaling)
+{
+#if defined(HAVE_SOLVER)
+  Msg::Debug("compute cross field scaling ...");
+  if (triangles.size() != triEdgeTheta.size()) {
+    Msg::Error("conformal scaling: incoherent number of elements in inputs");
+    return -1;
+  }
+
+#if defined(HAVE_PETSC)
+  Msg::Debug("- with PETSc solver");
+  linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_MUMPS)
+  Msg::Debug("- with MUMPS solver");
+  linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
+#elif defined(HAVE_EIGEN)
+  Msg::Debug("- with EIGEN solver");
+  linearSystemEigen<double> *_lsys = new linearSystemEigen<double>;
+#else
+  Msg::Debug("- with dense solver (slow, should not be used)");
+  linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+#endif
+  dofManager<double> *myAssembler = new dofManager<double>(_lsys);
+
+  /* Vertex unknowns */
+  std::set<MVertex *, MVertexPtrLessThan> vs;
+  for (MTriangle* t: triangles) {
+    for(size_t k = 0; k < 3; k++) { vs.insert(t->getVertex(k)); }
+  }
+  for (MVertex* v: vs) myAssembler->numberVertex(v,0,1);
+
+  simpleFunction<double> ONE(1.0);
+  laplaceTerm l(0, 1, &ONE);
+
+  /* Collect gradient of theta (cross field directions) */
+  std::map<MTriangle *, SVector3> gradients_of_theta;
+  for (size_t i = 0; i < triangles.size(); ++i) {
+    MTriangle* t = triangles[i];
+
+    SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
+        t->getVertex(1)->y() - t->getVertex(0)->y(),
+        t->getVertex(1)->z() - t->getVertex(0)->z());
+    SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
+        t->getVertex(2)->y() - t->getVertex(0)->y(),
+        t->getVertex(2)->z() - t->getVertex(0)->z());
+    SVector3 normal_to_triangle = crossprod(v20, v10);
+    normal_to_triangle.normalize();
+
+    SElement se(t);
+    l.addToMatrix(*myAssembler, &se);
+
+    SVector3 t_i, o_i, o_1, o_2, tgt0;
+    for (size_t le = 0; le < 3; ++ le) {
+      /* Edge ordered lower index to largest */
+      std::array<MVertex*,2> edge = {t->getVertex(le),t->getVertex((le+1)%3)};
+      if (edge[0]->getNum() > edge[1]->getNum()) std::reverse(edge.begin(),edge.end());
+
+      /* Edge tangent */
+      SVector3 tgt = edge[1]->point() - edge[0]->point();
+      if (tgt.norm() < 1.e-16) {
+        Msg::Warning("Edge (tri=%i,le=%i), length = %.e", t->getNum(), le, tgt.norm());
+        if (tgt.norm() == 0.) {return -1;}
+      }
+      tgt.normalize();
+      SVector3 tgt2 = crossprod(normal_to_triangle,tgt);
+      tgt2.normalize();
+
+      /* Cross angle  (from Crouzeix-Raviart cross field) */
+      double A = triEdgeTheta[i][le];
+
+      SVector3 o = tgt * cos(A) + tgt2 * sin(A);
+      o.normalize();
+      o -= normal_to_triangle * dot(normal_to_triangle, o_i);
+      o.normalize();
+
+      if (le == 0) {
+        t_i = crossprod(normal_to_triangle, tgt);
+        t_i -= normal_to_triangle * dot(normal_to_triangle, t_i);
+        t_i.normalize();
+        o_i = o;
+        tgt0 = tgt;
+      } else if (le == 1) {
+        o_1 = o;
+      } else if (le == 2) {
+        o_2 = o;
+      }
+    }
+
+    SVector3 x0, x1, x2, x3;
+    compat_orientation_extrinsic(o_i, normal_to_triangle, o_1, normal_to_triangle, x0, x1);
+    compat_orientation_extrinsic(o_i, normal_to_triangle, o_2, normal_to_triangle, x2, x3);
+
+    double a0 = atan2(dot(t_i, o_i), dot(tgt0, o_i));
+
+    x0 -= normal_to_triangle * dot(normal_to_triangle, x0);
+    x0.normalize();
+    x1 -= normal_to_triangle * dot(normal_to_triangle, x1);
+    x1.normalize();
+    x2 -= normal_to_triangle * dot(normal_to_triangle, x2);
+    x2.normalize();
+    x3 -= normal_to_triangle * dot(normal_to_triangle, x3);
+    x3.normalize();
+
+    cross_normalize(a0);
+    double A1 = atan2(dot(t_i, x1), dot(tgt0, x1));
+    double A2 = atan2(dot(t_i, x3), dot(tgt0, x3));
+    cross_normalize(A1);
+    double a1 = cross_lifting(a0,A1);
+    cross_normalize(A2);
+    double a2 = cross_lifting(a0,A2);
+
+    double a[3] = {a0 + a2 - a1, a0 + a1 - a2, a1 + a2 - a0};
+    double g[3] = {0, 0, 0};
+    t->interpolateGrad(a, 0, 0, 0, g);
+    gradients_of_theta[t] = SVector3(g[0], g[1], g[2]);
+    SPoint3 pp = t->barycenter();
+
+    SVector3 G(g[0], g[1], g[2]);
+    SVector3 GT = crossprod(G, normal_to_triangle);
+
+    double g1[3];
+    a[0] = 1;
+    a[1] = 0;
+    a[2] = 0;
+    t->interpolateGrad(a, 0, 0, 0, g1);
+    double RHS1 = g1[0] * GT.x() + g1[1] * GT.y() + g1[2] * GT.z();
+    a[0] = 0;
+    a[1] = 1;
+    a[2] = 0;
+    t->interpolateGrad(a, 0, 0, 0, g1);
+    double RHS2 = g1[0] * GT.x() + g1[1] * GT.y() + g1[2] * GT.z();
+    a[0] = 0;
+    a[1] = 0;
+    a[2] = 1;
+    t->interpolateGrad(a, 0, 0, 0, g1);
+    double RHS3 = g1[0] * GT.x() + g1[1] * GT.y() + g1[2] * GT.z();
+    int num1 = myAssembler->getDofNumber(l.getLocalDofR(&se, 0));
+    int num2 = myAssembler->getDofNumber(l.getLocalDofR(&se, 1));
+    int num3 = myAssembler->getDofNumber(l.getLocalDofR(&se, 2));
+    double V = -t->getVolume();
+    _lsys->addToRightHandSide(num1, RHS1 * V);
+    _lsys->addToRightHandSide(num2, RHS2 * V);
+    _lsys->addToRightHandSide(num3, RHS3 * V);
+  }
+  _lsys->systemSolve();
+  Msg::Info("Conformal Factor Computed (%d unknowns)",
+      myAssembler->sizeOfR());
+
+  /* Extract solution */
+  size_t i = 0;
+  for (MVertex* v: vs) {
+    double h;
+    myAssembler->getDofValue(v, 0, 1, h);
+    scaling[v] = h;
+    i += 1;
+  }
+
+  delete _lsys;
+
+#else 
+  Msg::Error("Computing cross field scaling requires the SOLVER module");
+  return -1;
+#endif
+
+  return 0;
 }
