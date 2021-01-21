@@ -7012,11 +7012,15 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
     Msg::Warning("failed to improve quad mesh topology, continue");
   }
 
-  Msg::Error("Benchmarking geometry smoothing ...");
-  benchmarkOptimizeGeometry(gm, faceInfo, qqs);
-  Msg::Error("stop");
-  // gmsh::fltk::run();
-  return 0;
+  bool benchmarkDMO = false;
+  QMT_Utils::read_from_env("benchmarkDMO", benchmarkDMO);
+  if (benchmarkDMO) {
+    Msg::Error("Benchmarking geometry smoothing ...");
+    benchmarkOptimizeGeometry(gm, faceInfo, qqs);
+    Msg::Error("stop");
+    // gmsh::fltk::run();
+    return 0;
+  }
 
   Msg::Info("[Step 7] Optimize geometry of quad mesh ...");
   int s7 = optimizeQuadMeshGeometry(gm, faceInfo, qqs);
