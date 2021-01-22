@@ -9,5 +9,8 @@
 
 
 namespace CppUtils {
-
+  /* Useless function, necessary for legacy compilers ? */
+  void dummy() {
+    return;
+  }
 }

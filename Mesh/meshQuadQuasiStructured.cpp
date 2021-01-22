@@ -16,9 +16,12 @@
 #include "BackgroundMesh.h"
 #include "Generator.h"
 
+#if defined(HAVE_QUADMESHINGTOOLS)
+
 /* QuadMeshingTools includes */
 #include "cppUtils.h"
 #include "qmtCrossField.h"
+
 
 using namespace CppUtils;
 
@@ -188,5 +191,18 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
   return 0;
 }
+
+#else
+
+/* QuadMeshingTools module not available */
+int BuildBackgroundMeshAndGuidingField(
+    GModel* gm, 
+    bool overwriteGModelMesh,
+    bool deleteGModelMeshAfter) {
+  Msg::Error("BuildBackgroundMeshAndGuidingField: Module QUADMESHINGTOOLS required");
+  return -1;
+}
+
+#endif
 
 

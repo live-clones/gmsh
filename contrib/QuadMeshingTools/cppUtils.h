@@ -198,4 +198,5 @@ namespace CppUtils {
           std::forward<T>(rest)...);
     }
 
+  void dummy();
 }
