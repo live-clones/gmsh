@@ -160,9 +160,9 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
           newv = new MVertex(ptx.x(), ptx.y(), ptx.z(), gf);
         }
         else {
-          SPoint3 ctr = t->barycenter();       // barycenter
-          const double pp[2] = {0.33, 0.33};    // best guess
-          GPoint gp = gf->closestPoint(ctr,pp); // gets the orthogonal Projection of baryctr
+          SPoint3 ctr = t->barycenter();
+          const double pp[2] = {0.5, 0.5}; // should be improved...
+          GPoint gp = gf->closestPoint(ctr, pp); // orthogonal projection
           newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
         }
         gf->mesh_vertices.push_back(newv);
