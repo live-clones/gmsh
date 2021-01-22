@@ -93,7 +93,7 @@ RUN cd ${SLEPC_DIR} && ./configure && make
 # MED
 # -----------------------
 
-RUN curl -L -O http://files.salome-platform.org/Salome/other/med-4.1.0.tar.gz && tar zxf med-4.1.0.tar.gz && cd med-4.1.0 && LIBS=-ldl ./configure --with-hdf5=/usr/local --enable-build-static --disable-shared --disable-python --disable-fortran --disable-tests && make -i install && cd .. && rm -rf med-4.1.0.tar.gz med-4.1.0
+RUN curl -L -O http://files.salome-platform.org/Salome/other/med-4.1.0.tar.gz && tar zxf med-4.1.0.tar.gz && cd med-4.1.0 && LIBS=-ldl ./configure --with-hdf5=/usr/local --enable-build-static --disable-shared --disable-python --disable-fortran --disable-tests --with-med_int=long && make -i install && cd .. && rm -rf med-4.1.0.tar.gz med-4.1.0
 
 # -----------------------
 # FLTK
