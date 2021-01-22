@@ -153,25 +153,17 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6) {
-        SPoint2 pt;
-        SPoint3 ptx;
-        t->pnt(1. / 3., 1. / 3., 0., ptx);
-        bool reparamOK = gf->haveParametrization();
-        if(reparamOK && !linear) {
-          for(int k = 0; k < 6; k++) {
-            SPoint2 temp;
-            reparamOK &= reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
-            pt[0] += temp[0] / 6.;
-            pt[1] += temp[1] / 6.;
-          }
-        }
         MVertex *newv;
-        if(linear || !reparamOK) {
+        if(linear) {
+          SPoint3 ptx;
+          t->pnt(1. / 3., 1. / 3., 0., ptx); // is the barycenter
           newv = new MVertex(ptx.x(), ptx.y(), ptx.z(), gf);
         }
         else {
-          GPoint gp = gf->point(pt);
-          newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, pt[0], pt[1]);
+          SPoint3 ctr = t->barycenter();       // barycenter
+          const double pp[2] = {0.33, 0.33};    // best guess
+          GPoint gp = gf->closestPoint(ctr,pp); // gets the orthogonal Projection of baryctr
+          newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
         }
         gf->mesh_vertices.push_back(newv);
         if(splitIntoHexas) faceVertices[t->getFace(0)].push_back(newv);
