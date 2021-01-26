@@ -380,7 +380,7 @@ int openglWindow::handle(int event)
     return Fl_Gl_Window::handle(event);
 
   case FL_PUSH:
-    if((Fl::event_clicks() == 1 || Fl::event_button() == 3) && !selectionMode) {
+    if(Fl::event_clicks() == 1 && !selectionMode) {
       // double-click and not in selection mode
       std::vector<GVertex *> vertices;
       std::vector<GEdge *> edges;
