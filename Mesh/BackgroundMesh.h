@@ -145,12 +145,13 @@ struct BackgroundMeshGFace {
 class GlobalBackgroundMesh {
   public:
     const std::string& name;
+    GModel* gm;
     std::unordered_map<GEdge*,BackgroundMeshGEdge> edgeBackgroundMeshes;
     std::unordered_map<GFace*,BackgroundMeshGFace> faceBackgroundMeshes;
     std::vector<MVertex*> mesh_vertices;
 
   public:
-    GlobalBackgroundMesh(const std::string& _name):name(_name){}
+    GlobalBackgroundMesh(const std::string& _name):name(_name),gm(NULL){}
     GlobalBackgroundMesh(GlobalBackgroundMesh const&) = delete;
     GlobalBackgroundMesh& operator=(GlobalBackgroundMesh const&) = delete;
     ~GlobalBackgroundMesh(); /* delete the MVertex instances stored in mesh_vertices */

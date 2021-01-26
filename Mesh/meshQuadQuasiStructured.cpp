@@ -2,7 +2,10 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Author: Maxence Reberol
 
+#include <array>
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -15,48 +18,122 @@
 #include "meshGRegion.h"
 #include "BackgroundMesh.h"
 #include "Generator.h"
+#include "Field.h"
+#include "gmsh.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewData.h"
+#include "PViewDataList.h"
+#include "PViewDataGModel.h"
+#include "PViewOptions.h"
+#endif
 
 #if defined(HAVE_QUADMESHINGTOOLS)
 
 /* QuadMeshingTools includes */
 #include "cppUtils.h"
+#include "qmtMeshUtils.h"
 #include "qmtCrossField.h"
-
+#include "qmtSizeMap.h"
+#include "arrayGeometry.h"
+#include "geolog.h"
 
 using namespace CppUtils;
+using namespace ArrayGeometry;
 
-std::vector<GFace*> model_faces(GModel* gm) {
-  std::vector<GFace*> faces;
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    faces.push_back(*it);
+
+int buildBackgroundField(
+    GModel* gm,
+    const std::vector<MTriangle*>& global_triangles,
+    const std::vector<std::array<double,9> >& global_triangle_directions,
+    const std::unordered_map<MVertex*,double>& global_size_map,
+    const std::string& viewName = "guiding_field")  {
+  Msg::Debug("build background guiding field ...");
+  if (global_triangles.size() != global_triangle_directions.size()) {
+    Msg::Error("build background field: incoherent sizes in input");
+    return -1;
   }
-  return faces;
+
+  std::vector<double> datalist;
+  datalist.reserve(global_triangles.size()*18);
+  for (size_t i = 0; i < global_triangles.size(); ++i) {
+    MTriangle* t = global_triangles[i];
+    /* Triangle coordinates */
+    for (size_t d = 0; d < 3; ++d) {
+      for (size_t lv = 0; lv < 3; ++lv) {
+        datalist.push_back(t->getVertex(lv)->point().data()[d]);
+      }
+    }
+    /* Vector field */
+    for (size_t lv = 0; lv < 3; ++lv) {
+      MVertex* v = t->getVertex(lv);
+      auto it = global_size_map.find(v);
+      if (it == global_size_map.end()) {
+        Msg::Error("Building background field, triangle vertex not found in global size map");
+        return -1;
+      }
+      double siz = it->second;
+      for (size_t d = 0; d < 3; ++d) {
+        double val = siz * global_triangle_directions[i][3*lv+d];
+        datalist.push_back(val);
+      }
+    }
+  }
+
+#if defined(HAVE_POST)
+  PView* view = PView::getViewByName(viewName);
+  if (view == NULL) {
+    view = new PView();
+    view->getData()->setName(viewName);
+  }
+  PViewDataList *d = dynamic_cast<PViewDataList *>(view->getData());
+  if(!d) { // change the view type
+    std::string name = view->getData()->getName();
+    delete view->getData();
+    d = new PViewDataList();
+    d->setName(name);
+    d->setFileName(name + ".pos");
+    view->setData(d);
+  }
+
+  size_t numElements = datalist.size()/(9+9);
+  int idxtype = 7; /* Post type: VT */
+  d->importList(idxtype, numElements, datalist, true);
+
+  gm->getFields()->setBackgroundMesh(view->getTag());
+
+  return 0;
+#else
+  Msg::Error("Module POST (post-processing) required to create background field view");
+  return -1;
+#endif
 }
 
-std::vector<GEdge*> face_edges(GFace* gf) {
-  std::vector<GEdge*> edges;
-  for (GEdge* ge: gf->edges()) {
-    edges.push_back(ge);
+void showCrossFieldInView(
+    const std::vector<MTriangle*>& global_triangles,
+    const std::vector<std::array<double,9> >& global_triangle_directions,
+    const std::string& viewName = "cross_field") {
+  for (size_t i = 0; i < global_triangles.size(); ++i) {
+    for (size_t lv = 0; lv < 3; ++lv) {
+      MVertex* v = global_triangles[i]->getVertex(lv);
+      vec3 dir = {
+        global_triangle_directions[i][3*lv+0],
+        global_triangle_directions[i][3*lv+1],
+        global_triangle_directions[i][3*lv+2]};
+      std::array<double,3> pt = v->point();
+      GeoLog::add(pt, dir, viewName);
+    }
   }
-  for (GEdge* ge: gf->embeddedEdges()) {
-    edges.push_back(ge);
-  }
-  sort_unique(edges);
-  return edges;
-}
-
-std::vector<GEdge*> model_edges(GModel* gm) {
-  std::vector<GEdge*> edges;
-  std::vector<GFace*> faces = model_faces(gm);
-  for (GFace* gf: faces) append(edges,face_edges(gf));
-  sort_unique(edges);
-  return edges;
+  GeoLog::flush();
 }
 
 int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, bool deleteGModelMesh) {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return 0;
   if (CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS
       && CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT) return 0;
+
+  const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
 
   Msg::Info("Build background mesh and guiding field ...");
 
@@ -132,13 +209,38 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     std::for_each(gm->firstRegion(), gm->lastRegion(), deMeshGRegion());
   }
 
-  /* Build cross field on background mesh */
+  /* Build guiding field on background mesh:
+   * - per GFace:
+   *   - cross field (unit vectors, one value per edge)
+   *   - conformal scaling (scalar, one value per vertex)
+   *   - offset conformal scaling by target number of quads 
+   *   -> one vector (scaled direction) per triangle corner
+   * - global:
+   *   - compute/extract size map
+   *   - apply size map to triangle vectors (take minimum)
+   *   - one-way smoothing with Dijkstra + gradient max
+   */
+  std::vector<MTriangle*> global_triangles;
+  std::vector<std::array<double,9> > global_triangle_directions;
+  std::vector<std::pair<MVertex*,double> > global_size_map;
   {
-    std::vector<GFace*> faces = model_faces(gm);
+    /* Per GFace computations, in parallel */
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
+    std::vector<GFace*> faces = model_faces(gm);
+    size_t ntris = 0;
+    for (size_t f = 0; f < faces.size(); ++f) {
+      GFace* gf = faces[f];
+      auto it = bmesh.faceBackgroundMeshes.find(gf);
+      if (it != bmesh.faceBackgroundMeshes.end()) {
+        ntris += it->second.triangles.size();
+      }
+    }
+    global_triangles.reserve(ntris);
+    global_size_map.reserve(3*ntris);
+
+    #if defined(_OPENMP)
+    #pragma omp parallel for schedule(dynamic)
+    #endif
     for (size_t f = 0; f < faces.size(); ++f) {
 
       GFace* gf = faces[f];
@@ -182,12 +284,95 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
           nbDiffusionLevels, thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
       if (scf != 0) {
         Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
-        continue;
+      }
+
+      std::unordered_map<MVertex*,double> conformalScaling;
+      Msg::Info("- Face %i/%li: compute cross field conformal scaling ...", gf->tag(), faces.size());
+      int scs = computeCrossFieldConformalScaling(triangles, triEdgeTheta, conformalScaling);
+      if (scs != 0) {
+        Msg::Warning("- Face %i: failed to compute conformal scaling, use uniform size", gf->tag());
+      }
+
+      std::vector<std::array<double,9> > triangleDirections;
+      int sc = convertToPerTriangleCrossFieldDirections(triangles, triEdgeTheta, triangleDirections);
+      if (sc != 0) {
+        Msg::Warning("- Face %i: failed to resample cross field at triangle corners", gf->tag());
+      }
+
+      size_t targetNumberOfQuads = gf->triangles.size()/2.;
+      if (targetNumberOfQuads == 0) { /* Check in background mesh */
+        auto it = bmesh.faceBackgroundMeshes.find(gf);
+        if (it == bmesh.faceBackgroundMeshes.end()) {
+          Msg::Error("- Face %i: background mesh not found", gf->tag());
+          targetNumberOfQuads = 1000;
+        } else {
+          targetNumberOfQuads = it->second.triangles.size()/2.;
+        }
+      }
+
+      int scso = computeQuadSizeMapFromCrossFieldConformalFactor(triangles, targetNumberOfQuads, conformalScaling);
+      if (scso != 0) {
+        Msg::Warning("- Face %i: failed to compute size map from conformal scaling", gf->tag());
+      }
+
+      #if defined(_OPENMP)
+      #pragma omp critical
+      #endif
+      {
+        append(global_triangles, triangles);
+        append(global_triangle_directions, triangleDirections);
+        for (auto& kv: conformalScaling) {
+          global_size_map.push_back({kv.first,kv.second});
+        }
       }
     }
+  }
+  sort_unique(global_size_map);
 
+  /* Warning: from now on, code is not optimized in terms of data structures
+   *          (slow unordered_map instead of contiguous vectors, etc) 
+   *          should be improved if this step is time-consuming in the 
+   *          global pipeline. */
+
+  if (SHOW_INTERMEDIATE_VIEWS) {
+    showCrossFieldInView(global_triangles, global_triangle_directions, "cross_field");
+    // gmsh::fltk::run();
   }
 
+
+  /* Global operations */
+  std::unordered_map<MVertex*,double> cadMinimalSizeOnCurves;
+  int scad = computeMinimalSizeOnCurves(bmesh, cadMinimalSizeOnCurves);
+  if (scad != 0) {
+    Msg::Warning("failed to compute minimal size on CAD curves");
+  }
+
+  /* Initialize global size map defined on the background mesh */
+  std::unordered_map<MVertex*,double> sizeMap = cadMinimalSizeOnCurves;
+  for (auto& kv: global_size_map) {
+    MVertex* v = kv.first;
+    auto it = sizeMap.find(v);
+    if (it == sizeMap.end()) {
+      sizeMap[kv.first] = kv.second;
+    } else {
+      it->second = std::min(it->second, kv.second);
+    }
+  }
+
+  /* One-way propagation of values */
+  const double gradientMax = 1.2; /* this param should be a global gmsh option */
+  int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
+  if (sop != 0) {
+    Msg::Warning("failed to compute one-way size map smoothing");
+  }
+
+  /* Build the background field */
+  int sbf = buildBackgroundField(gm, global_triangles, global_triangle_directions, sizeMap,
+      "guiding_field");
+  if (sbf != 0) {
+    Msg::Warning("failed to build background guiding field");
+    return -1;
+  }
 
   return 0;
 }

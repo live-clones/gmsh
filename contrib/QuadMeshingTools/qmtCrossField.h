@@ -9,8 +9,10 @@
 
 #include <vector>
 #include <array>
+#include <unordered_map>
 #include <utility>
 
+class MVertex;
 class MTriangle;
 class MLine;
 
@@ -45,3 +47,55 @@ int computeCrossFieldWithHeatEquation(
     int nbBoundaryExtensionLayer = 1,
     int verbosity = 1);
 
+/**
+ * @brief Compute the cross field conformal scaling by canceling the Lie bracket,
+ *        in a least square sense (singularities are not used).
+ *        The scaling defines the "intrinsic" cross field size map (up to a constant).
+ *
+ * @param[in] triangles Triangulation used to compute the cross field, and use to compute the scaling
+ * @param[in] triEdgeTheta The cross field, one angle per triangle edge, relative to the edge direction
+ *                     should be compatible with the result of computeCrossFieldWithHeatEquation()
+ * @param[out] scaling The conformal scaling, scalar field with one value per vertex (P1 FEM)
+ *
+ * @return 0 if success
+ */
+int computeCrossFieldConformalScaling(
+    const std::vector<MTriangle*>& triangles, 
+    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    std::unordered_map<MVertex*,double>& scaling);
+
+
+/**
+ * @brief Compute a size map from the conformal scaling by adding an offset
+ *        to get targetNumberOfQuads in the end (when integrating the sizemap).
+ *
+ * @param triangles Triangulation used to compute the conformal scaling
+ * @param targetNumberOfQuads The number of quads used to offset the scaling
+ * @param[in,out] scaling The size map to update with the offset
+ *
+ * @return 0 if success
+ */
+int computeQuadSizeMapFromCrossFieldConformalFactor(
+    const std::vector<MTriangle*>& triangles, 
+    std::size_t targetNumberOfQuads, 
+    std::unordered_map<MVertex*,double>& scaling);
+
+
+/**
+ * @brief Convert the edge-sampled cross field to a triangle-sampled cross field,
+ *        by using Crouzeix-Raviart interpolation.
+ *        Each triangle has 3 directions at its corner. This cross field is (slighly)
+ *        dicontinuous at triangle interfaces.
+ *
+ * @param[in] triangles Triangulation used to compute cross field and size map
+ * @param[in] triEdgeTheta The cross field, one angle per triangle edge, relative to the edge direction
+ *                     should be compatible with the result of computeCrossFieldWithHeatEquation()
+ * @param[out] triangleDirections The cross field sampled at triangle corners, three vectors 
+ *             per triangle (one per corner).  component ordering: [v1x,v1y,v1z,.., v3x,v3y,v3z]
+ *
+ * @return 0 if success
+ */
+int convertToPerTriangleCrossFieldDirections(
+    const std::vector<MTriangle*>& triangles, 
+    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    std::vector<std::array<double,9> >& triangleDirections);

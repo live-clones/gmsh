@@ -21,6 +21,7 @@
 #include "MVertex.h"
 #include "MLine.h"
 #include "MTriangle.h"
+#include "gmsh.h"
 
 /* Linear algebra solver */
 #if defined(HAVE_EIGEN)
@@ -42,6 +43,8 @@
 /* QuadMeshingTools includes */
 #include "arrayGeometry.h"
 #include "cppUtils.h"
+#include "qmtMeshUtils.h"
+#include "geolog.h"
 
 
 /* TODO list:
@@ -50,9 +53,10 @@
  * - MUMPS support
  */
 
+using namespace ArrayGeometry;
+using namespace CppUtils;
+
 namespace QMT {
-  using namespace ArrayGeometry;
-  using namespace CppUtils;
 
   constexpr double EPS = 1.e-14;
 
@@ -109,7 +113,7 @@ namespace QMT {
         const std::vector<std::vector<double>>& values,
         bool firstTime = false) {
 #if defined(HAVE_EIGEN)
-      Msg::Debug("Eigen call: add coefficients");
+      // Msg::Debug("Eigen call: add coefficients");
       std::vector<Eigen::Triplet<double> > triplets;
       triplets.reserve(values.size());
       if (firstTime) {
@@ -139,7 +143,7 @@ namespace QMT {
 
     bool set_rhs_values(const std::vector<double>& rhs) {
 #if defined(HAVE_EIGEN)
-      Msg::Debug("Eigen call: add rhs values");
+      // Msg::Debug("Eigen call: add rhs values");
       for (size_t i = 0; i < rhs.size(); ++i) if (rhs[i] != 0.) {
         b[i] = rhs[i];
       }
@@ -1078,16 +1082,32 @@ int computeCrossFieldConformalScaling(
     _lsys->addToRightHandSide(num3, RHS3 * V);
   }
   _lsys->systemSolve();
-  Msg::Info("Conformal Factor Computed (%d unknowns)",
-      myAssembler->sizeOfR());
 
   /* Extract solution */
+  double sMin =  DBL_MAX;
+  double sMax = -DBL_MAX;
   size_t i = 0;
   for (MVertex* v: vs) {
     double h;
     myAssembler->getDofValue(v, 0, 1, h);
-    scaling[v] = h;
+    double cs = exp(-h);
+    scaling[v] = cs;
+    sMin = std::min(sMin,cs);
+    sMax = std::max(sMax,cs);
     i += 1;
+  }
+  if (sMin == DBL_MAX || sMax == -DBL_MAX || sMin == 0.) {
+    Msg::Error("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f), wrong", 
+        myAssembler->sizeOfR(), triangles.size(), sMin, sMax);
+  } else {
+    Msg::Debug("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f)", 
+        myAssembler->sizeOfR(), triangles.size(), sMin, sMax);
+  }
+  if (Msg::GetVerbosity() >= 99) {
+    std::vector<MElement*> elements = dynamic_cast_vector<MTriangle*,MElement*>(triangles);
+    GeoLog::add(elements, scaling, "conformal_scaling");
+    GeoLog::flush();
+    // gmsh::fltk::run();
   }
 
   delete _lsys;
@@ -1096,6 +1116,189 @@ int computeCrossFieldConformalScaling(
   Msg::Error("Computing cross field scaling requires the SOLVER module");
   return -1;
 #endif
+
+  return 0;
+}
+
+int computeQuadSizeMapFromCrossFieldConformalFactor(
+    const std::vector<MTriangle*>& triangles, 
+    std::size_t targetNumberOfQuads, 
+    std::unordered_map<MVertex*,double>& scaling) {
+
+  Msg::Debug("Offset quad size map from cross field conformal factor to target %li quads ...", targetNumberOfQuads);
+
+  if (targetNumberOfQuads == 0) {
+    Msg::Error("targetNumberOfQuads: %i should be positive", targetNumberOfQuads);
+    return -1;
+  }
+
+  double csMin =  DBL_MAX;
+  double csMax = -DBL_MAX;
+  for (MTriangle* t: triangles) {
+    for (size_t lv = 0; lv < 3; ++lv) {
+      MVertex* v = t->getVertex(lv);
+      auto it = scaling.find(v);
+      if (it == scaling.end()) {
+        Msg::Error("scaling not found for vertex %i", v->getNum());
+        return -1;
+      }
+      GVertex* gv = v->onWhat()->cast2Vertex();
+      if (gv == nullptr) {
+        csMin = std::min(csMin, it->second);
+        csMax = std::max(csMax, it->second);
+      }
+    }
+  }
+  if (csMin == DBL_MAX || csMax == -DBL_MAX) {
+    Msg::Error("conformal scaling is wrong, %li values, min=%f, max=%f", scaling.size(), csMin, csMax);
+    return -1;
+  }
+
+  /* Compute integral of current size map */
+  double integral = 0.;
+  double smin = DBL_MAX;
+  double smax = -DBL_MAX;
+  std::vector<MVertex*> vertices;
+  std::unordered_set<MVertex*> done;
+  vertices.reserve(3*triangles.size());
+  for (MTriangle* t: triangles) {
+    double values[3] = {0,0,0};
+    for (size_t lv = 0; lv < 3; ++lv) {
+      MVertex* v = t->getVertex(lv);
+      auto it = scaling.find(v);
+      bool alreadyChanged = (done.find(v) != done.end());
+      if (alreadyChanged) {
+        values[lv] = it->second;;
+      } else {
+        double cs = it->second;
+        cs = clamp(cs, csMin, csMax);
+        values[lv] = it->second;;
+        smin = std::min(smin,values[lv]);
+        smax = std::max(smax,values[lv]);
+        vertices.push_back(v);
+        done.insert(v);
+      }
+    }
+    double a = std::abs(t->getVolume());
+    double avg = 1./3. * (values[0] + values[1] + values[2]);
+    if (avg == 0.) continue;
+    integral += a * 1. / std::pow(avg,2);
+  }
+
+  if (integral == 0.) {
+    Msg::Error("Size map from conformal scaling: total integral is 0 ... (%li triangles, smin=%.3e, smax=%.3e)", triangles.size(), smin, smax);
+    return -1;
+  }
+  Msg::Debug("- %li triangles, conformal scaling: min=%.3e, max=%.3e, integral=%.3e", triangles.size(), smin, smax, integral);
+  std::sort(vertices.begin(), vertices.end());
+  vertices.erase(std::unique(vertices.begin(), vertices.end() ), vertices.end());
+
+  /* Apply the scaling */
+  double target = double(targetNumberOfQuads);
+  double FAC = double(target) / integral;
+  double sf = 1./std::sqrt(FAC);
+  smin = DBL_MAX;
+  smax = -DBL_MAX;
+  for (size_t j = 0; j < vertices.size(); ++j) {
+    MVertex* v = vertices[j];
+    auto it = scaling.find(v);
+    it->second = sf * it->second;
+    smin = std::min(smin,it->second);
+    smax = std::max(smax,it->second);
+  }
+  Msg::Debug("- %li triangles, size map: min=%.3e, max=%.3e", triangles.size(), smin, smax);
+
+  return 0;
+}
+
+inline SVector3 tri_normal(MTriangle* t) {
+  SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
+      t->getVertex(1)->y() - t->getVertex(0)->y(),
+      t->getVertex(1)->z() - t->getVertex(0)->z());
+  SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
+      t->getVertex(2)->y() - t->getVertex(0)->y(),
+      t->getVertex(2)->z() - t->getVertex(0)->z());
+  SVector3 normal_to_triangle = crossprod(v20, v10);
+  normal_to_triangle.normalize();
+  return normal_to_triangle;
+}
+
+inline SVector3 crouzeix_raviart_interpolation(SVector3 lambda, SVector3 edge_values[3]) {
+  double x = lambda[1];
+  double y = lambda[2];
+  SVector3 shape = {1.0 - 2.0 * y, -1.0 + 2.0 * (x + y), 1.0 - 2.0 * x};
+  return shape[0] * edge_values[0] + shape[1] * edge_values[1] + shape[2] * edge_values[2];
+}
+
+int convertToPerTriangleCrossFieldDirections(
+    const std::vector<MTriangle*>& triangles, 
+    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    std::vector<std::array<double,9> >& triangleDirections) {
+
+  triangleDirections.resize(triangles.size());
+
+  for (size_t f = 0; f < triangles.size(); ++f) {
+    MTriangle* t = triangles[f];
+
+    SVector3 N = tri_normal(t);
+
+    /* Compute one branch at triangle vertices */
+    SVector3 refCross = {0.,0.,0.};
+    SVector3 avgCross = {0.,0.,0.};
+    SVector3 lifted_dirs[3];
+    for (size_t le = 0; le < 3; ++le) {
+      /* Get cross angle */
+      std::array<MVertex*,2> edge = {t->getVertex(le),t->getVertex((le+1)%3)};
+      if (edge[0]->getNum() > edge[1]->getNum()) std::reverse(edge.begin(),edge.end());
+
+      double A = triEdgeTheta[f][le];
+
+      /* Local reference frame */
+      SVector3 tgt = edge[1]->point() - edge[0]->point();
+      if (tgt.norm() < 1.e-16) {
+        Msg::Warning("Edge (tri=%i,le=%i), length = %.e", t->getNum(), le, tgt.norm());
+        if (tgt.norm() == 0.) {return -1;}
+      }
+      tgt.normalize();
+      SVector3 tgt2 = crossprod(N,tgt);
+      tgt2.normalize();
+
+      SVector3 cross1 = tgt * cos(A) + tgt2 * sin(A);
+      cross1.normalize();
+
+      SVector3 cross2 = crossprod(N,cross1);
+      cross2.normalize();
+
+      if (le == 0) {
+        refCross = cross1;
+        avgCross = avgCross + cross1;
+        lifted_dirs[le] = refCross;
+      } else {
+        SVector3 candidates[4] = {cross1,-1.*cross1,cross2,-1.*cross2};
+        SVector3 closest = {0.,0.,0.};
+        double dotmax = -DBL_MAX;
+        for (size_t k = 0; k < 4; ++k) {
+          if (dot(candidates[k],refCross) > dotmax) {
+            closest = candidates[k];
+            dotmax = dot(candidates[k],refCross);
+          }
+        }
+        lifted_dirs[le] = closest;
+        avgCross = avgCross + closest;
+      }
+    }
+    SVector3 vertex_dirs[3];
+    std::array<double,9> tDirs;
+    for (size_t lv = 0; lv < 3; ++lv) {
+      SVector3 lambda = {0.,0.,0.};
+      lambda[lv] = 1.;
+      SVector3 dir = crouzeix_raviart_interpolation(lambda,lifted_dirs);
+      for (size_t d = 0; d < 3; ++d) {
+        tDirs[3*lv+d] = dir.data()[d];
+      }
+    }
+    triangleDirections[f] = tDirs;
+  }
 
   return 0;
 }

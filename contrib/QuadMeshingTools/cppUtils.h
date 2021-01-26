@@ -18,7 +18,7 @@
 #include <string.h>
 
 /* Debugging macro to print variable name and value in the terminal, usage: DBG(x); DBG(x,..,z); */
-#define DBG(...) fprintf(stdout, "(DBG) %s:%i: ", __FILE__,__LINE__); QMT_Utils::show(std::cout, #__VA_ARGS__, __VA_ARGS__); fflush(stdout)
+#define DBG(...) fprintf(stdout, "(DBG) %s:%i: ", __FILE__,__LINE__); CppUtils::show(std::cout, #__VA_ARGS__, __VA_ARGS__); fflush(stdout)
 
 namespace CppUtils {
   using std::size_t;
@@ -109,6 +109,15 @@ namespace CppUtils {
       std::vector<T> s3;
       set_difference(s1.begin(),s1.end(),s2.begin(),s2.end(), std::inserter(s3,s3.begin()));
       return s3;
+    }
+
+  template<class T1, class T2> 
+    inline std::vector<T2> dynamic_cast_vector(const std::vector<T1>& pointers) { 
+      std::vector<T2> output(pointers.size(),NULL);
+      for (size_t i = 0; i < pointers.size(); ++i) {
+        output[i] = dynamic_cast<T2>(pointers[i]);
+      }
+      return output;
     }
 
   template<class T> 

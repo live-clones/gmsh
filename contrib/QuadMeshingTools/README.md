@@ -31,6 +31,10 @@ Shortcuts:
 - Add background mesh datastructures in Mesh/BackgroundMesh.h/cpp
 - Add Eigen-based sparse solver in Solver/linearSystemEigen.h/cpp
 - New file to drive the quad meshing pipeline in Mesh/meshQuadQuasiStructured.h/cpp
+- Add conformal scaling solver in contrib/QuadMeshingTools/qmtCrossField.h
+- Add size map tools (dist to curves, one-way smoothing) in contrib/QuadMeshingTools/qmtSizeMap.h
+- Add convenient wrapper around gmsh views for debugging (contrib/QuadMeshingTools/geolog.h/cpp)
+- Add implicit conversion from SPoint3/SVector3 to std::array<double,3>, is it ok ?
 
 # Todo
 
