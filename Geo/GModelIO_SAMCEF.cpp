@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -54,7 +54,7 @@ int GModel::readSAMCEF(const std::string &name)
         if(sscanf(buffer, "%s %d %s %lf %s %lf %s %lf", dummy, &num, dummy, &x,
                   dummy, &y, dummy, &z) != 8)
           return 0;
-        _vertexMapCache[num] = new MVertex(x, y, z, 0, num);
+        _vertexMapCache[num] = new MVertex(x, y, z, nullptr, num);
       }
       Msg::Info("Read %d mesh nodes", (int)_vertexMapCache.size());
     }

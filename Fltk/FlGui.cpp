@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -55,7 +55,7 @@
 #include "3M.h"
 #endif
 
-FlGui *FlGui::_instance = 0;
+FlGui *FlGui::_instance = nullptr;
 std::string FlGui::_openedThroughMacFinder = "";
 bool FlGui::_finishedProcessingCommandLine = false;
 std::atomic<int> FlGui::_locked(0);
@@ -104,23 +104,19 @@ void FlGui::unlock()
   Fl::unlock();
 }
 
-int FlGui::locked()
-{
-  return _locked;
-}
+int FlGui::locked() { return _locked; }
 
 static void awake_cb(void *data)
 {
-  if(data)
-    FlGui::instance()->updateViews(true, false);
+  if(data) FlGui::instance()->updateViews(true, false);
 }
 
 void FlGui::awake(const std::string &action)
 {
   if(action.empty())
-    Fl::awake(awake_cb, 0);
+    Fl::awake(awake_cb, nullptr);
   else
-    Fl::awake(awake_cb, (void*)"update");
+    Fl::awake(awake_cb, (void *)"update");
 }
 
 void FlGui::setOpenedThroughMacFinder(const std::string &name)
@@ -421,9 +417,9 @@ void FlGui::applyColorScheme(bool redraw)
   // thinner scrollbars
   Fl::scrollbar_size(std::max(10, FL_NORMAL_SIZE));
 
-  if(redraw && available()){
+  if(redraw && available()) {
     updateViews(true, true);
-    for (Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
+    for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win)) {
       win->redraw();
     }
   }
@@ -495,7 +491,8 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   applyColorScheme();
 
   // add gamepad handler
-  if(CTX::instance()->gamepad) Fl::add_timeout(5., gamepad_handler, (void *)0);
+  if(CTX::instance()->gamepad)
+    Fl::add_timeout(5., gamepad_handler, (void *)nullptr);
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
@@ -544,7 +541,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // add callback to respond to Mac Finder
 #if defined(__APPLE__)
   fl_open_callback(OpenProjectMacFinder);
-  fl_mac_set_about(help_about_cb, 0);
+  fl_mac_set_about(help_about_cb, nullptr);
 #endif
 
   // don't move input dialogs to follow mouse
@@ -643,7 +640,7 @@ FlGui::~FlGui()
   delete fullscreen;
 }
 
-bool FlGui::available() { return _instance != 0; }
+bool FlGui::available() { return _instance != nullptr; }
 
 FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
                        void (*error_handler)(const char *fmt, ...))
@@ -671,7 +668,7 @@ void FlGui::destroy()
 {
   if(!_instance) return;
   delete _instance;
-  _instance = 0;
+  _instance = nullptr;
 }
 
 int FlGui::run()
@@ -694,35 +691,35 @@ int FlGui::testGlobalShortcuts(int event)
   int status = 0;
 
   if(Fl::test_shortcut('0')) {
-    geometry_reload_cb(0, 0);
+    geometry_reload_cb(nullptr, nullptr);
     status = 1;
   }
   if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0') ||
      Fl::test_shortcut('9')) { // for Bruno
-    onelab_reload_cb(0, 0);
+    onelab_reload_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F + 1)) {
-    mesh_1d_cb(0, 0);
+    mesh_1d_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut('2') || Fl::test_shortcut(FL_F + 2)) {
-    mesh_2d_cb(0, 0);
+    mesh_2d_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut('3') || Fl::test_shortcut(FL_F + 3)) {
-    mesh_3d_cb(0, 0);
+    mesh_3d_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_CTRL + 'q') ||
           Fl::test_shortcut(FL_META + 'q')) {
     // only necessary when using the system menu bar, but hey, it cannot hurt...
-    file_quit_cb(0, 0);
+    file_quit_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_CTRL + 't') ||
           Fl::test_shortcut(FL_META + 't')) {
-    show_hide_menu_cb(0, 0);
+    show_hide_menu_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut('g')) {
@@ -742,7 +739,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut('w')) {
-    file_watch_cb(0, 0);
+    file_watch_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut('e')) {
@@ -811,7 +808,7 @@ int FlGui::testGlobalShortcuts(int event)
           Fl::test_shortcut(FL_CTRL + FL_Escape) ||
           Fl::test_shortcut(FL_ALT + FL_Escape)) {
     if(fullscreen->shown()) {
-      window_cb(0, (void *)"fullscreen");
+      window_cb(nullptr, (void *)"fullscreen");
       status = 1;
     }
     else {
@@ -826,37 +823,37 @@ int FlGui::testGlobalShortcuts(int event)
         status = 2;
       }
       else {
-        status_options_cb(0, (void *)"S");
+        status_options_cb(nullptr, (void *)"S");
         status = 1;
       }
     }
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'a')) {
-    window_cb(0, (void *)"front");
+    window_cb(nullptr, (void *)"front");
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'o')) {
-    general_options_cb(0, 0);
+    general_options_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'g')) {
-    geometry_options_cb(0, 0);
+    geometry_options_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'm')) {
-    mesh_options_cb(0, 0);
+    mesh_options_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 's')) {
-    solver_options_cb(0, 0);
+    solver_options_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'p')) {
-    post_options_cb(0, 0);
+    post_options_cb(nullptr, nullptr);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    view_options_cb(0, (void *)-1);
+    view_options_cb(nullptr, (void *)-1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
@@ -909,28 +906,28 @@ int FlGui::testGlobalShortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 'x') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
-    status_xyz1p_cb(0, (void *)"x");
+    status_xyz1p_cb(nullptr, (void *)"x");
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'y') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'y')) {
-    status_xyz1p_cb(0, (void *)"y");
+    status_xyz1p_cb(nullptr, (void *)"y");
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'z') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'z')) {
-    status_xyz1p_cb(0, (void *)"z");
+    status_xyz1p_cb(nullptr, (void *)"z");
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + '1') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + '1') ||
           Fl::test_shortcut(FL_ALT + FL_CTRL + '1') ||
           Fl::test_shortcut(FL_ALT + FL_META + '1')) {
-    status_xyz1p_cb(0, (void *)"1:1");
+    status_xyz1p_cb(nullptr, (void *)"1:1");
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'o')) {
-    status_options_cb(0, (void *)"p");
+    status_options_cb(nullptr, (void *)"p");
     status = 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'a')) {
@@ -1001,7 +998,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    quick_access_cb(0, (void *)"mesh_toggle");
+    quick_access_cb(nullptr, (void *)"mesh_toggle");
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 't')) {
@@ -1137,8 +1134,8 @@ void FlGui::updateFields()
 
 void FlGui::resetVisibility()
 {
-  if(visibility->win->shown()) visibility_cb(NULL, NULL);
-  if(help->options->shown()) help_options_cb(NULL, NULL);
+  if(visibility->win->shown()) visibility_cb(nullptr, nullptr);
+  if(help->options->shown()) help_options_cb(nullptr, nullptr);
 }
 
 openglWindow *FlGui::getCurrentOpenglWindow()
@@ -1211,7 +1208,7 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
   // generate handle
   HANDLE handle =
     (HANDLE)::GlobalAlloc(GHND, sizeof(BITMAPINFOHEADER) + nBytes);
-  if(handle != NULL) {
+  if(handle != nullptr) {
     // lock handle
     char *pData = (char *)::GlobalLock((HGLOBAL)handle);
     // copy header and data
@@ -1220,7 +1217,7 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
     // unlock
     ::GlobalUnlock((HGLOBAL)handle);
     // push DIB in clipboard
-    OpenClipboard(NULL);
+    OpenClipboard(nullptr);
     EmptyClipboard();
     SetClipboardData(CF_DIB, handle);
     CloseClipboard();
@@ -1251,7 +1248,9 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
       sprintf(n, "%d", ne ? ne : nw);
       tmp += n;
       tmp += (ne > 1) ? " Errors" :
-                        ne ? " Error" : (nw > 1) ? " Warnings" : " Warning";
+             ne       ? " Error" :
+             (nw > 1) ? " Warnings" :
+                        " Warning";
       tmp += " : Click to show messages [ ... ";
       tmp += (ne ? Msg::GetFirstError() : Msg::GetFirstWarning());
       tmp += " ... ]";
@@ -1503,10 +1502,8 @@ void FlGui::saveMessages(const char *fileName)
 
 void FlGui::rebuildTree(bool deleteWidgets)
 {
-  if(onelab)
-    onelab->rebuildTree(deleteWidgets);
-  if(onelabContext)
-    onelabContext->rebuild(deleteWidgets);
+  if(onelab) onelab->rebuildTree(deleteWidgets);
+  if(onelabContext) onelabContext->rebuild(deleteWidgets);
 }
 
 void FlGui::openModule(const std::string &name)

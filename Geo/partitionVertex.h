@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,18 +15,17 @@ private:
   GEntity *_parentEntity;
 
 public:
-  partitionVertex(GModel *model, int num,
-                  const std::vector<int> &partitions)
-    : discreteVertex(model, num), _partitions(partitions), _parentEntity(NULL)
+  partitionVertex(GModel *model, int num, const std::vector<int> &partitions)
+    : discreteVertex(model, num), _partitions(partitions),
+      _parentEntity(nullptr)
   {
   }
   partitionVertex(GModel *model, int num)
-    : discreteVertex(model, num), _partitions(), _parentEntity(NULL)
+    : discreteVertex(model, num), _partitions(), _parentEntity(nullptr)
   {
   }
-  partitionVertex(GModel *model,
-                  const std::vector<int> &partitions)
-    : discreteVertex(model), _partitions(partitions), _parentEntity(NULL)
+  partitionVertex(GModel *model, const std::vector<int> &partitions)
+    : discreteVertex(model), _partitions(partitions), _parentEntity(nullptr)
   {
   }
   virtual ~partitionVertex() {}
@@ -37,10 +36,7 @@ public:
   {
     _partitions = partitions;
   }
-  virtual const std::vector<int> &getPartitions() const
-  {
-    return _partitions;
-  }
+  virtual const std::vector<int> &getPartitions() const { return _partitions; }
   virtual int getPartition(std::size_t index) const
   {
     return _partitions[index];

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1056,11 +1056,23 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getEdgeNumber
       //
-      // Get the global edge identifier `edgeNum' for an input list of node pairs,
-      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-      // feature and will probably change in a future release.
+      // Get the global mesh edge identifier `edgeNum' for an input list of node
+      // pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
+      // experimental feature and will probably change in a future release.
       GMSH_API void getEdgeNumber(const std::vector<int> & edgeNodes,
                                   std::vector<int> & edgeNum);
+
+      // gmsh::model::mesh::createEdges
+      //
+      // Create mesh edges for the entities `dimTags'. Warning: this is an
+      // experimental feature and will probably change in a future release.
+      GMSH_API void createEdges(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
+      // gmsh::model::mesh::createFaces
+      //
+      // Create mesh faces for the entities `dimTags'. Warning: this is an
+      // experimental feature and will probably change in a future release.
+      GMSH_API void createFaces(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // gmsh::model::mesh::getLocalMultipliersForHcurl0
       //
@@ -2508,11 +2520,16 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::addPipe
       //
       // Add a pipe in the OpenCASCADE CAD representation, by extruding the
-      // entities `dimTags' along the wire `wireTag'. Return the pipe in
-      // `outDimTags'.
+      // entities `dimTags' along the wire `wireTag'. The type of sweep can be
+      // specified with `trihedron' (possible values: "DiscreteTrihedron",
+      // "CorrectedFrenet", "Fixed", "Frenet", "ConstantNormal", "Darboux",
+      // "GuideAC", "GuidePlan", "GuideACWithContact", "GuidePlanWithContact"). If
+      // `trihedron' is not provided, "DiscreteTrihedron" is assumed. Return the
+      // pipe in `outDimTags'.
       GMSH_API void addPipe(const gmsh::vectorpair & dimTags,
                             const int wireTag,
-                            gmsh::vectorpair & outDimTags);
+                            gmsh::vectorpair & outDimTags,
+                            const std::string & trihedron = "");
 
       // gmsh::model::occ::fillet
       //

@@ -1,10 +1,11 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "curvature.h"
 
 #define tolerance 0.1e-20
@@ -177,6 +178,10 @@ bool CurvatureRusinkiewicz(
 
   nodalCurvatures.resize(nVertices);
 
+  // for(int i = 0; i < nodes.size(); ++i){
+  //   nodalCurvatures[i] = std::make_pair(0.0,0.0);
+  // }
+
   std::vector<std::size_t> node2tri(3 * 2 * nTriangles);
 
   // first compute node normals and node-to-triangle connectivity
@@ -206,7 +211,8 @@ bool CurvatureRusinkiewicz(
   }
   for(std::size_t i = 0; i < nVertices; i++) normalize(&nodeNormals[3 * i]);
 
-  qsort(&node2tri[0], 3 * nTriangles, 2 * sizeof(std::size_t), node2trianglescmp);
+  qsort(&node2tri[0], 3 * nTriangles, 2 * sizeof(std::size_t),
+        node2trianglescmp);
 
   // compute the second fundamental tensor on each triangle using least squares
 
@@ -277,58 +283,227 @@ bool CurvatureRusinkiewicz(
       0.5 * (CURV[4 * i + 1] + CURV[4 * i + 2]);
   }
 
-  // get vertex curvatures by averaging triangle curvatures
-  std::size_t currentVertex = nVertices + 1;
-  std::size_t count = 0;
+  uint64_t count = 0;
   double uP[3] = {0., 0., 0.}, vP[3] = {0., 0., 0.};
   double A = 0., B = 0., D = 0.;
-  for(std::size_t i = 0; i < 6 * nTriangles; i += 2) {
-    std::size_t iVertex = node2tri[i];
-    std::size_t iTriangle = node2tri[i + 1];
-    if(currentVertex != iVertex) {
-      // compute the real stuff
-      if(currentVertex != nVertices + 1) {
-        A /= (double)count;
-        B /= (double)count;
-        D /= (double)count;
-        double lambda1, lambda2, v1x, v1y, v2x, v2y;
-        solveEig(A, B, B, D, &lambda1, &v1x, &v1y, &lambda2, &v2x, &v2y);
-
-        SVector3 cMax(fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]),
-                      fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]),
-                      fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]));
-        SVector3 cMin(fabs(lambda2) * (v2x * uP[0] + v2y * vP[0]),
-                      fabs(lambda2) * (v2x * uP[1] + v2y * vP[1]),
-                      fabs(lambda2) * (v2x * uP[2] + v2y * vP[2]));
-        nodalCurvatures[currentVertex] = std::make_pair(cMax, cMin);
-      }
-
-      count = 0;
-      A = 0.0;
-      B = 0.0;
-      D = 0.0;
-      computeLocalFrame(&nodeNormals[3 * iVertex], uP, vP);
-      currentVertex = iVertex;
+  uint64_t iTriangle;
+  uint64_t ind = 0;
+  for(uint64_t iVert = 0; iVert < nVertices; ++iVert) {
+    count = 0;
+    A = 0.0;
+    B = 0.0;
+    D = 0.0;
+    while(node2tri[2 * ind + 0] == iVert) {
+      iTriangle = node2tri[2 * ind + 1];
+      computeLocalFrame(&nodeNormals[3 * iVert], uP, vP);
+      // computing each curvature around a vertex
+      unitNormal2Triangle(nodes[triangles[3 * iTriangle + 0]].data(),
+                          nodes[triangles[3 * iTriangle + 1]].data(),
+                          nodes[triangles[3 * iTriangle + 2]].data(), n, &surf);
+      double uF[3], vF[3];
+      makevector(nodes[triangles[3 * iTriangle + 0]].data(),
+                 nodes[triangles[3 * iTriangle + 1]].data(), uF);
+      normalize(uF);
+      crossprod(n, uF, vF);
+      double *c = &CURV[4 * iTriangle];
+      double UP[3] = {dotprod(uP, uF), dotprod(uP, vF), 0};
+      normalize(UP);
+      double VP[3] = {dotprod(vP, uF), dotprod(vP, vF), 0};
+      normalize(VP);
+      A += (UP[0] * UP[0] * c[0] + 2 * UP[0] * UP[1] * c[1] +
+            UP[1] * UP[1] * c[3]);
+      D += (VP[0] * VP[0] * c[0] + 2 * VP[0] * VP[1] * c[1] +
+            VP[1] * VP[1] * c[3]);
+      B += (VP[0] * UP[0] * c[0] + (VP[1] * UP[0] + VP[0] * UP[1]) * c[1] +
+            VP[1] * UP[1] * c[3]);
+      ++count;
+      ++ind;
+      if(ind >= 3 * nTriangles) break;
     }
-    unitNormal2Triangle(nodes[triangles[3 * iTriangle + 0]].data(),
-                        nodes[triangles[3 * iTriangle + 1]].data(),
-                        nodes[triangles[3 * iTriangle + 2]].data(), n, &surf);
-    double uF[3], vF[3];
-    makevector(nodes[triangles[3 * iTriangle + 0]].data(),
-               nodes[triangles[3 * iTriangle + 1]].data(), uF);
-    normalize(uF);
-    crossprod(n, uF, vF);
-    double *c = &CURV[4 * iTriangle];
-    double UP[3] = {dotprod(uP, uF), dotprod(uP, vF), 0};
-    normalize(UP);
-    double VP[3] = {dotprod(vP, uF), dotprod(vP, vF), 0};
-    normalize(VP);
-    A += (UP[0] * UP[0] * c[0] + 2 * UP[0] * UP[1] * c[1] + UP[1] * UP[1] * c[3]);
-    D += (VP[0] * VP[0] * c[0] + 2 * VP[0] * VP[1] * c[1] + VP[1] * VP[1] * c[3]);
-    B += (VP[0] * UP[0] * c[0] + (VP[1] * UP[0] + VP[0] * UP[1]) * c[1] +
-          VP[1] * UP[1] * c[3]);
-    count++;
+
+    A /= (double)count;
+    B /= (double)count;
+    D /= (double)count;
+    double lambda1, lambda2, v1x, v1y, v2x, v2y;
+    solveEig(A, B, B, D, &lambda1, &v1x, &v1y, &lambda2, &v2x, &v2y);
+    SVector3 cMax(fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]),
+                  fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]),
+                  fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]));
+    SVector3 cMin(fabs(lambda2) * (v2x * uP[0] + v2y * vP[0]),
+                  fabs(lambda2) * (v2x * uP[1] + v2y * vP[1]),
+                  fabs(lambda2) * (v2x * uP[2] + v2y * vP[2]));
+    nodalCurvatures[iVert] = std::make_pair(cMax, cMin);
+  } // for iVert
+
+  return true;
+}
+
+bool CurvatureRusinkiewicz(
+  const std::vector<int> &triangles, const std::vector<SPoint3> &nodes,
+  std::vector<std::pair<SVector3, SVector3> > &nodalCurvatures,
+  std::vector<double> &nodeNormals)
+{
+  std::size_t nTriangles = triangles.size() / 3;
+  std::size_t nVertices = nodes.size();
+
+  nodalCurvatures.resize(nVertices);
+
+  // for(int i = 0; i < nodes.size(); ++i){
+  //   nodalCurvatures[i] = std::make_pair(0.0,0.0);
+  // }
+
+  std::vector<std::size_t> node2tri(3 * 2 * nTriangles);
+
+  // first compute node normals and node-to-triangle connectivity
+
+  // std::vector<double> nodeNormals(3 * nVertices, 0.);
+  std::size_t counter = 0;
+  double n[3], surf;
+
+  for(std::size_t i = 0; i < nTriangles; i++) {
+    node2tri[counter++] = triangles[3 * i + 0];
+    node2tri[counter++] = i;
+    node2tri[counter++] = triangles[3 * i + 1];
+    node2tri[counter++] = i;
+    node2tri[counter++] = triangles[3 * i + 2];
+    node2tri[counter++] = i;
+    unitNormal2Triangle(nodes[triangles[3 * i + 0]].data(),
+                        nodes[triangles[3 * i + 1]].data(),
+                        nodes[triangles[3 * i + 2]].data(), n, &surf);
+    double *n0 = &nodeNormals[3 * triangles[3 * i + 0]];
+    double *n1 = &nodeNormals[3 * triangles[3 * i + 1]];
+    double *n2 = &nodeNormals[3 * triangles[3 * i + 2]];
+    for(std::size_t i1 = 0; i1 < 3; i1++) {
+      n0[i1] += n[i1];
+      n1[i1] += n[i1];
+      n2[i1] += n[i1];
+    }
   }
+  for(std::size_t i = 0; i < nVertices; i++) normalize(&nodeNormals[3 * i]);
+
+  qsort(&node2tri[0], 3 * nTriangles, 2 * sizeof(std::size_t),
+        node2trianglescmp);
+
+  // compute the second fundamental tensor on each triangle using least squares
+
+  std::vector<double> CURV(4 * nTriangles);
+
+  for(std::size_t i = 0; i < nTriangles; i++) {
+    double *n0 = &nodeNormals[3 * triangles[3 * i + 0]];
+    double *n1 = &nodeNormals[3 * triangles[3 * i + 1]];
+    double *n2 = &nodeNormals[3 * triangles[3 * i + 2]];
+
+    double e0[3], e1[3], e2[3];
+    makevector(nodes[triangles[3 * i + 2]].data(),
+               nodes[triangles[3 * i + 1]].data(), e0);
+    makevector(nodes[triangles[3 * i + 0]].data(),
+               nodes[triangles[3 * i + 2]].data(), e1);
+    makevector(nodes[triangles[3 * i + 1]].data(),
+               nodes[triangles[3 * i + 0]].data(), e2);
+    unitNormal2Triangle(nodes[triangles[3 * i + 0]].data(),
+                        nodes[triangles[3 * i + 1]].data(),
+                        nodes[triangles[3 * i + 2]].data(), n, &surf);
+    double u[3], v[3];
+    makevector(nodes[triangles[3 * i + 0]].data(),
+               nodes[triangles[3 * i + 1]].data(), u);
+    normalize(u);
+    crossprod(n, u, v);
+
+    double sys[6][4], rhs[6], temp[3], invA[16], A[16], B[4];
+    sys[0][0] = sys[1][2] = dotprod(e0, u);
+    sys[0][1] = sys[1][3] = dotprod(e0, v);
+    sys[0][2] = sys[0][3] = sys[1][0] = sys[1][1] = 0;
+    makevector(n2, n1, temp);
+    rhs[0] = dotprod(temp, u);
+    rhs[1] = dotprod(temp, v);
+
+    sys[2][0] = sys[3][2] = dotprod(e1, u);
+    sys[2][1] = sys[3][3] = dotprod(e1, v);
+    sys[2][2] = sys[2][3] = sys[3][0] = sys[3][1] = 0;
+    makevector(n0, n2, temp);
+    rhs[2] = dotprod(temp, u);
+    rhs[3] = dotprod(temp, v);
+
+    sys[4][0] = sys[5][2] = dotprod(e2, u);
+    sys[4][1] = sys[5][3] = dotprod(e2, v);
+    sys[4][2] = sys[4][3] = sys[5][0] = sys[5][1] = 0;
+    makevector(n1, n0, temp);
+    rhs[4] = dotprod(temp, u);
+    rhs[5] = dotprod(temp, v);
+
+    for(std::size_t i1 = 0; i1 < 4; i1++) {
+      B[i1] = 0.0;
+      for(std::size_t i3 = 0; i3 < 6; i3++) { B[i1] += sys[i3][i1] * rhs[i3]; }
+      for(std::size_t i2 = 0; i2 < 4; i2++) {
+        A[i1 + 4 * i2] = 0.0;
+        for(std::size_t i3 = 0; i3 < 6; i3++) {
+          A[i1 + 4 * i2] += sys[i3][i2] * sys[i3][i1];
+        }
+      }
+    }
+    double det;
+    Inv4x4ColumnMajor(A, invA, &det);
+    for(std::size_t i1 = 0; i1 < 4; i1++) {
+      CURV[4 * i + i1] = 0.0;
+      for(std::size_t i2 = 0; i2 < 4; i2++) {
+        CURV[4 * i + i1] += invA[i1 + 4 * i2] * B[i2];
+      }
+    }
+    CURV[4 * i + 1] = CURV[4 * i + 2] =
+      0.5 * (CURV[4 * i + 1] + CURV[4 * i + 2]);
+  }
+
+  uint64_t count = 0;
+  double uP[3] = {0., 0., 0.}, vP[3] = {0., 0., 0.};
+  double A = 0., B = 0., D = 0.;
+  uint64_t iTriangle;
+  uint64_t ind = 0;
+  for(uint64_t iVert = 0; iVert < nVertices; ++iVert) {
+    count = 0;
+    A = 0.0;
+    B = 0.0;
+    D = 0.0;
+    while(node2tri[2 * ind + 0] == iVert) {
+      iTriangle = node2tri[2 * ind + 1];
+      computeLocalFrame(&nodeNormals[3 * iVert], uP, vP);
+      // computing each curvature around a vertex
+      unitNormal2Triangle(nodes[triangles[3 * iTriangle + 0]].data(),
+                          nodes[triangles[3 * iTriangle + 1]].data(),
+                          nodes[triangles[3 * iTriangle + 2]].data(), n, &surf);
+      double uF[3], vF[3];
+      makevector(nodes[triangles[3 * iTriangle + 0]].data(),
+                 nodes[triangles[3 * iTriangle + 1]].data(), uF);
+      normalize(uF);
+      crossprod(n, uF, vF);
+      double *c = &CURV[4 * iTriangle];
+      double UP[3] = {dotprod(uP, uF), dotprod(uP, vF), 0};
+      normalize(UP);
+      double VP[3] = {dotprod(vP, uF), dotprod(vP, vF), 0};
+      normalize(VP);
+      A += (UP[0] * UP[0] * c[0] + 2 * UP[0] * UP[1] * c[1] +
+            UP[1] * UP[1] * c[3]);
+      D += (VP[0] * VP[0] * c[0] + 2 * VP[0] * VP[1] * c[1] +
+            VP[1] * VP[1] * c[3]);
+      B += (VP[0] * UP[0] * c[0] + (VP[1] * UP[0] + VP[0] * UP[1]) * c[1] +
+            VP[1] * UP[1] * c[3]);
+      ++count;
+      ++ind;
+      if(ind >= 3 * nTriangles) break;
+    }
+
+    A /= (double)count;
+    B /= (double)count;
+    D /= (double)count;
+    double lambda1, lambda2, v1x, v1y, v2x, v2y;
+    solveEig(A, B, B, D, &lambda1, &v1x, &v1y, &lambda2, &v2x, &v2y);
+    SVector3 cMax(fabs(lambda1) * (v1x * uP[0] + v1y * vP[0]),
+                  fabs(lambda1) * (v1x * uP[1] + v1y * vP[1]),
+                  fabs(lambda1) * (v1x * uP[2] + v1y * vP[2]));
+    SVector3 cMin(fabs(lambda2) * (v2x * uP[0] + v2y * vP[0]),
+                  fabs(lambda2) * (v2x * uP[1] + v2y * vP[1]),
+                  fabs(lambda2) * (v2x * uP[2] + v2y * vP[2]));
+    nodalCurvatures[iVert] = std::make_pair(cMax, cMin);
+  } // for iVert
 
   return true;
 }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -540,7 +540,7 @@ static int assemble3d(const int num, const int exportAxis, std::string &axisstr,
   plotstr.append("\t    points={%%\n");
 
   unsigned int j = 0;
-  for(std::vector<int>::iterator it = acceptableAnchors.begin();
+  for(auto it = acceptableAnchors.begin();
       it != acceptableAnchors.end(); ++it, j++) {
     sprintf(tmp, "\t    (%f,%f,%f)", factor * axPts[*it][0],
             factor * axPts[*it][1], factor * axPts[*it][2]);
@@ -553,7 +553,7 @@ static int assemble3d(const int num, const int exportAxis, std::string &axisstr,
             ypix - (int)(axViewPt[*it][1] + 0.5));
     plotstr.append(tmp);
   }
-  for(std::vector<int>::iterator it = masked.begin(); it != masked.end();
+  for(auto it = masked.begin(); it != masked.end();
       ++it) {
     sprintf(tmp, "\t    (%f,%f,%f)", factor * axPts[*it][0],
             factor * axPts[*it][1], factor * axPts[*it][2]);
@@ -648,7 +648,7 @@ int print_pgf(const std::string &name, const int num, const int cnt,
   if(twoDim) {
     // try to trim the png...
     char tmp[2048];
-    if(system(NULL)) {
+    if(system(nullptr)) {
       std::string pngname = name;
       pngname.replace(pngname.end() - 3, pngname.end(), "png");
       sprintf(tmp, "convert -trim %s %s", pngname.c_str(), pngname.c_str());
@@ -683,7 +683,7 @@ int print_pgf(const std::string &name, const int num, const int cnt,
   // matrix is wrong!!!!
   if(!twoDim) {
     char tmp[2048];
-    if(system(NULL)) {
+    if(system(nullptr)) {
       std::string pngname = name;
       pngname.replace(pngname.end() - 3, pngname.end(), "png");
       sprintf(tmp, "convert -transparent white %s %s", pngname.c_str(),

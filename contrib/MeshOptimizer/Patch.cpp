@@ -55,12 +55,10 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
   if(!element2entity.empty()) _gEnt.resize(nElements);
   int iEl = 0;
   bool nonGeoMove = false;
-  for(std::set<MElement *>::const_iterator it = els.begin(); it != els.end();
-      ++it, ++iEl) {
+  for(auto it = els.begin(); it != els.end(); ++it, ++iEl) {
     _el[iEl] = *it;
     if(!element2entity.empty()) {
-      std::map<MElement *, GEntity *>::const_iterator itEl2Ent =
-        element2entity.find(*it);
+      auto itEl2Ent = element2entity.find(*it);
       _gEnt[iEl] = (itEl2Ent == element2entity.end()) ? 0 : itEl2Ent->second;
     }
     _nNodEl[iEl] = _el[iEl]->getNumVertices();
@@ -108,12 +106,10 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
     _bndEl2FV.resize(nBndElts);
     int iBndEl = 0;
     bool unknownVert = false;
-    for(std::set<MElement *>::iterator it = bndEls.begin(); it != bndEls.end();
-        ++it, ++iBndEl) {
+    for(auto it = bndEls.begin(); it != bndEls.end(); ++it, ++iBndEl) {
       MElement *bndEl = *it;
       _bndEl[iBndEl] = bndEl;
-      std::map<MElement *, GEntity *>::const_iterator itBndEl2Ent =
-        bndEl2Ent.find(bndEl);
+      auto itBndEl2Ent = bndEl2Ent.find(bndEl);
       _bndEl2Ent[iBndEl] =
         (itBndEl2Ent == bndEl2Ent.end()) ? 0 : itBndEl2Ent->second;
       int nBndElVerts = bndEl->getNumVertices();
@@ -121,14 +117,12 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
       _bndEl2FV[iBndEl].resize(nBndElVerts);
       for(int iVBndEl = 0; iVBndEl < nBndElVerts; iVBndEl++) {
         MVertex *vert = bndEl->getVertex(iVBndEl);
-        std::vector<MVertex *>::iterator itV =
-          std::find(_vert.begin(), _vert.end(), vert);
+        auto itV = std::find(_vert.begin(), _vert.end(), vert);
         if(itV == _vert.end())
           unknownVert = true;
         else
           _bndEl2V[iBndEl][iVBndEl] = std::distance(_vert.begin(), itV);
-        std::vector<MVertex *>::iterator itFV =
-          std::find(_freeVert.begin(), _freeVert.end(), vert);
+        auto itFV = std::find(_freeVert.begin(), _freeVert.end(), vert);
         if(itFV == _freeVert.end())
           _bndEl2FV[iBndEl][iVBndEl] = -1;
         else
@@ -153,8 +147,7 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
 
 int Patch::addVert(MVertex *vert)
 {
-  std::vector<MVertex *>::iterator itVert =
-    find(_vert.begin(), _vert.end(), vert);
+  auto itVert = find(_vert.begin(), _vert.end(), vert);
   if(itVert == _vert.end()) {
     _vert.push_back(vert);
     return _vert.size() - 1;
@@ -166,8 +159,7 @@ int Patch::addVert(MVertex *vert)
 int Patch::addFreeVert(MVertex *vert, const int iV, const int nPCV,
                        VertexCoord *param, std::set<MVertex *> &toFix)
 {
-  std::vector<MVertex *>::iterator itVert =
-    find(_freeVert.begin(), _freeVert.end(), vert);
+  auto itVert = find(_freeVert.begin(), _freeVert.end(), vert);
   if(itVert == _freeVert.end()) {
     const int iStart =
       (_startPCFV.size() == 0) ? 0 : _startPCFV.back() + _nPCFV.back();
@@ -372,7 +364,7 @@ void Patch::calcNormalEl2D(int iEl, NormalScaling scaling,
 
   fullMatrix<double> primNodesXYZ(jac->getNumPrimMapNodes(), 3);
   SVector3 geoNorm(0., 0., 0.);
-  GEntity *ge = (_gEnt.empty()) ? 0 : _gEnt[iEl];
+  GEntity *ge = (_gEnt.empty()) ? nullptr : _gEnt[iEl];
   const bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
   for(int i = 0; i < jac->getNumPrimMapNodes(); i++) {
     const int &iV = _el2V[iEl][i];
@@ -496,9 +488,7 @@ void Patch::metricMinAndGradients(int iEl, std::vector<double> &lambda,
   int iPC = 0;
   std::vector<SPoint3> gXyzV(numSamplingPnts);
   std::vector<SPoint3> gUvwV(numSamplingPnts);
-  for(int l = 0; l < numSamplingPnts; l++) {
-    lambda[l] = lambdaB(l);
-  }
+  for(int l = 0; l < numSamplingPnts; l++) { lambda[l] = lambdaB(l); }
   for(int i = 0; i < numMapNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if(iFVi >= 0) {
@@ -545,7 +535,7 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF,
     int clId = elbasis.getClosureId(iEdge, 1);
     const std::vector<int> &closure = elbasis.closures[clId];
     std::vector<MVertex *> vertices;
-    GEdge *edge = NULL;
+    GEdge *edge = nullptr;
     for(size_t i = 0; i < closure.size(); ++i) {
       MVertex *v = element->getVertex(closure[i]);
       vertices.push_back(v);
@@ -564,9 +554,7 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF,
         nodes[i] = _xyz[_el2V[iEl][closure[i]]];
         onedge[i] = element->getVertex(closure[i])->onWhat() == edge &&
                     _el2FV[iEl][closure[i]] >= 0;
-        if(onedge[i]) {
-          params[i] = _uvw[_el2FV[iEl][closure[i]]].x();
-        }
+        if(onedge[i]) { params[i] = _uvw[_el2FV[iEl][closure[i]]].x(); }
         else
           reparamMeshVertexOnEdge(element->getVertex(closure[i]), edge,
                                   params[i]);

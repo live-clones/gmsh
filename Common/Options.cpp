@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -63,7 +63,7 @@
 bool StringOption(int action, const char *category, int num, const char *name,
                   std::string &val, bool warnIfUnknown)
 {
-  StringXString *s = 0;
+  StringXString *s = nullptr;
   if(!strcmp(category, "General"))
     s = GeneralOptions_String;
   else if(!strcmp(category, "Geometry"))
@@ -121,7 +121,7 @@ static void SetStringOptionsGUI(int num, StringXString s[])
 
 static void PrintStringOptions(int num, int level, int diff, int help,
                                StringXString s[], const char *prefix,
-                               FILE *file, std::vector<std::string> *vec = 0)
+                               FILE *file, std::vector<std::string> *vec = nullptr)
 {
   int i = 0;
   while(s[i].str) {
@@ -185,7 +185,7 @@ static void PrintStringOptionsDoc(StringXString s[], const char *prefix,
 bool NumberOption(int action, const char *category, int num, const char *name,
                   double &val, bool warnIfUnknown)
 {
-  StringXNumber *s = 0;
+  StringXNumber *s = nullptr;
   if(!strcmp(category, "General"))
     s = GeneralOptions_Number;
   else if(!strcmp(category, "Geometry"))
@@ -244,7 +244,7 @@ static void SetNumberOptionsGUI(int num, StringXNumber s[])
 
 static void PrintNumberOptions(int num, int level, int diff, int help,
                                StringXNumber s[], const char *prefix,
-                               FILE *file, std::vector<std::string> *vec = 0)
+                               FILE *file, std::vector<std::string> *vec = nullptr)
 {
   int i = 0;
   char tmp[1024];
@@ -287,7 +287,7 @@ static void PrintNumberOptionsDoc(StringXNumber s[], const char *prefix,
 bool ColorOption(int action, const char *category, int num, const char *name,
                  unsigned int &val, bool warnIfUnknown)
 {
-  StringXColor *s = 0;
+  StringXColor *s = nullptr;
   if(!strcmp(category, "General"))
     s = GeneralOptions_Color;
   else if(!strcmp(category, "Geometry"))
@@ -543,7 +543,7 @@ void InitOptionsGUI(int num)
 }
 
 static void PrintOptionCategory(int level, int diff, int help, const char *cat,
-                                FILE *file, std::vector<std::string> *vec = 0)
+                                FILE *file, std::vector<std::string> *vec = nullptr)
 {
   if(diff || !help || !(level & GMSH_FULLRC)) return;
   if(file) {
@@ -650,7 +650,7 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
     }
   }
   else
-    file = 0;
+    file = nullptr;
 
   if((level & GMSH_SESSIONRC) && file) {
     fprintf(file, "// Gmsh Session File\n");
@@ -902,7 +902,7 @@ void PrintOptionsDoc()
       return;
     }
     fprintf(file, "%s@ftable @code\n", warn);
-    for(std::map<std::string, GMSH_Plugin *>::iterator it =
+    for(auto it =
           PluginManager::instance()->begin();
         it != PluginManager::instance()->end(); ++it) {
       GMSH_Plugin *p = it->second;
@@ -948,7 +948,7 @@ void PrintOptionsDoc()
     }
     fprintf(file, "%s@ftable @code\n", warn);
     FieldManager &fields = *GModel::current()->getFields();
-    for(std::map<std::string, FieldFactory *>::iterator it =
+    for(auto it =
           fields.mapTypeName.begin(); it != fields.mapTypeName.end(); it++) {
       fprintf(file, "@item %s\n", it->first.c_str());
       Field *f = (*it->second)();
@@ -958,7 +958,7 @@ void PrintOptionsDoc()
       if(!f->options.empty()) {
         fprintf(file, "Options:@*\n");
         fprintf(file, "@table @code\n");
-        for(std::map<std::string, FieldOption *>::iterator it2 =
+        for(auto it2 =
               f->options.begin(); it2 != f->options.end(); it2++) {
           if(it2->second->isDeprecated()) continue;
           fprintf(file, "@item %s\n", it2->first.c_str());
@@ -974,7 +974,7 @@ void PrintOptionsDoc()
       if(!f->callbacks.empty()) {
         fprintf(file, "Actions:@*\n");
         fprintf(file, "@table @code\n");
-        for(std::map<std::string, FieldCallback *>::iterator it2 =
+        for(auto it2 =
               f->callbacks.begin();
             it2 != f->callbacks.end(); it2++) {
           fprintf(file, "@item %s\n", it2->first.c_str());
@@ -3527,7 +3527,7 @@ double opt_general_gamepad(OPT_ARGS_NUM)
     else {
       if(CTX::instance()->gamepad) {
         delete CTX::instance()->gamepad;
-        CTX::instance()->gamepad = 0;
+        CTX::instance()->gamepad = nullptr;
       }
     }
   }
@@ -4163,7 +4163,7 @@ double opt_geometry_transform(OPT_ARGS_NUM)
       }
       else {
         drawTransform *tr = gl->getDrawContext()->getTransform();
-        gl->getDrawContext()->setTransform(0);
+        gl->getDrawContext()->setTransform(nullptr);
         if(tr) delete tr;
       }
     }

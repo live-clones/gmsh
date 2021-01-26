@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "fullMatrix.h"
-
 
 template <class FLOAT>
 bool computeAffineTransformation(const FLOAT *rc, const FLOAT *ra,
@@ -72,19 +71,18 @@ template bool computeAffineTransformation(const double *rc, const double *ra,
                                           const double *tr,
                                           std::vector<double> &tfo);
 
-
-template<class FLOAT>
+template <class FLOAT>
 bool getAffineTransformationParameters(const std::vector<double> &tfo,
                                        FLOAT *rc, FLOAT *ra, FLOAT *tr)
 {
   // rotation angles
-  ra[0] = std::atan2(-tfo[2*4+1], tfo[2*4+2]);
-  ra[1] = std::asin(tfo[2*4+0]);
-  ra[2] = std::atan2(-tfo[1*4+0], tfo[0*4+0]);
-  
+  ra[0] = std::atan2(-tfo[2 * 4 + 1], tfo[2 * 4 + 2]);
+  ra[1] = std::asin(tfo[2 * 4 + 0]);
+  ra[2] = std::atan2(-tfo[1 * 4 + 0], tfo[0 * 4 + 0]);
+
   // translation
   for(int i = 0; i < 3; i++) rc[i] = 0.;
-  for(int i = 0; i < 3; i++) tr[i] = tfo[4*i+3];
+  for(int i = 0; i < 3; i++) tr[i] = tfo[4 * i + 3];
 
   return true;
 }
@@ -96,7 +94,6 @@ template bool getAffineTransformationParameters(const std::vector<double> &tfo,
 template bool getAffineTransformationParameters(const std::vector<double> &tfo,
                                                 double *rc, double *ra,
                                                 double *tr);
-
 
 bool invertAffineTransformation(const std::vector<double> &tfo,
                                 std::vector<double> &newTfo)
@@ -110,7 +107,6 @@ bool invertAffineTransformation(const std::vector<double> &tfo,
     for(int j = 0; j < 4; j++) newTfo.push_back(inv(i, j));
   return true;
 }
-
 
 bool setUnitAffineTransformation(std::vector<double> &tfo)
 {

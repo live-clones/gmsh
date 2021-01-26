@@ -329,7 +329,7 @@ JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getAboutGmsh(JNIEnv *env,
   sstream << "<center><h3>Gmsh</h3>"
           << "Version " << GMSH_VERSION << " "
           << "(<i>Build date:</i> " << GMSH_DATE << ")"
-          << "<p>Copyright (C) 1997-2020 Christophe Geuzaine and "
+          << "<p>Copyright (C) 1997-2021 Christophe Geuzaine and "
              "Jean-Fran&ccedil;ois Remacle</p>"
           << "<p><a href=\"https://gmsh.info/CREDITS.txt\">Credits</a> "
           << "and <a href=\"https://gmsh.info/LICENSE.txt\">licensing "
@@ -343,17 +343,18 @@ JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getAboutGetDP(JNIEnv *env,
                                                                   jclass c)
 {
   std::ostringstream sstream;
-  sstream << "<center><h3>GetDP</h3>"
-          << "Version " << GETDP_VERSION << " "
-          << "(<i>Build date:</i> " << GETDP_DATE << ")"
-          << "<p>Copyright (C) 1997-2020 Patrick Dular and Christophe "
-             "Geuzaine, University of Li&egrave;ge</p>"
-          << "<p><a href=\"https://getdp.info/CREDITS.txt\">Credits</a> "
-          << "and <a href=\"https://getdp.info/LICENSE.txt\">licensing "
-             "information</a></p>"
-          << "<p><i>Build options:</i> " << GETDP_CONFIG_OPTIONS << "</p>"
-          << "<p>Visit <a href=\"https://getdp.info\">https://getdp.info</a> for "
-             "more information</p></center>";
+  sstream
+    << "<center><h3>GetDP</h3>"
+    << "Version " << GETDP_VERSION << " "
+    << "(<i>Build date:</i> " << GETDP_DATE << ")"
+    << "<p>Copyright (C) 1997-2021 Patrick Dular and Christophe "
+       "Geuzaine, University of Li&egrave;ge</p>"
+    << "<p><a href=\"https://getdp.info/CREDITS.txt\">Credits</a> "
+    << "and <a href=\"https://getdp.info/LICENSE.txt\">licensing "
+       "information</a></p>"
+    << "<p><i>Build options:</i> " << GETDP_CONFIG_OPTIONS << "</p>"
+    << "<p>Visit <a href=\"https://getdp.info\">https://getdp.info</a> for "
+       "more information</p></center>";
   return env->NewStringUTF(sstream.str().c_str());
 }
 }

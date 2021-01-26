@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -440,8 +440,7 @@ template <> double fullVector<double>::norm() const
   return sqrt(n);
 }
 
-template <>
-std::complex<double> fullVector<std::complex<double> >::norm() const
+template <> std::complex<double> fullVector<std::complex<double> >::norm() const
 {
   double n = 0.;
   for(int i = 0; i < _r; ++i)

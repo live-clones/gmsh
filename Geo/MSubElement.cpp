@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -27,13 +27,13 @@ const nodalBasis *MSubTetrahedron::getFunctionSpace(int order,
                                                     bool serendip) const
 {
   if(_orig) return _orig->getFunctionSpace(order, serendip);
-  return 0;
+  return nullptr;
 }
 
 const JacobianBasis *MSubTetrahedron::getJacobianFuncSpace(int order) const
 {
   if(_orig) return _orig->getJacobianFuncSpace(order);
-  return 0;
+  return nullptr;
 }
 
 void MSubTetrahedron::getShapeFunctions(double u, double v, double w,
@@ -102,13 +102,13 @@ std::size_t MSubTetrahedron::getNumPrimaryShapeFunctions() const
 const MVertex *MSubTetrahedron::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
-  return 0;
+  return nullptr;
 }
 
 MVertex *MSubTetrahedron::getShapeFunctionNode(int i)
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
-  return 0;
+  return nullptr;
 }
 
 void MSubTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
@@ -236,13 +236,13 @@ void MSubTriangle::updateParent(GModel *gm)
 const nodalBasis *MSubTriangle::getFunctionSpace(int order, bool serendip) const
 {
   if(_orig) return _orig->getFunctionSpace(order, serendip);
-  return 0;
+  return nullptr;
 }
 
 const JacobianBasis *MSubTriangle::getJacobianFuncSpace(int order) const
 {
   if(_orig) return _orig->getJacobianFuncSpace(order);
-  return 0;
+  return nullptr;
 }
 
 void MSubTriangle::getShapeFunctions(double u, double v, double w, double s[],
@@ -363,13 +363,13 @@ std::size_t MSubTriangle::getNumPrimaryShapeFunctions() const
 const MVertex *MSubTriangle::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
-  return 0;
+  return nullptr;
 }
 
 MVertex *MSubTriangle::getShapeFunctionNode(int i)
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
-  return 0;
+  return nullptr;
 }
 
 void MSubTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
@@ -494,13 +494,13 @@ void MSubLine::updateParent(GModel *gm)
 const nodalBasis *MSubLine::getFunctionSpace(int order, bool serendip) const
 {
   if(_orig) return _orig->getFunctionSpace(order, serendip);
-  return 0;
+  return nullptr;
 }
 
 const JacobianBasis *MSubLine::getJacobianFuncSpace(int order) const
 {
   if(_orig) return _orig->getJacobianFuncSpace(order);
-  return 0;
+  return nullptr;
 }
 
 void MSubLine::getShapeFunctions(double u, double v, double w, double s[],
@@ -610,13 +610,13 @@ std::size_t MSubLine::getNumPrimaryShapeFunctions() const
 const MVertex *MSubLine::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
-  return 0;
+  return nullptr;
 }
 
 MVertex *MSubLine::getShapeFunctionNode(int i)
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
-  return 0;
+  return nullptr;
 }
 
 void MSubLine::xyz2uvw(double xyz[3], double uvw[3]) const
@@ -742,13 +742,13 @@ void MSubPoint::updateParent(GModel *gm)
 const nodalBasis *MSubPoint::getFunctionSpace(int order, bool serendip) const
 {
   if(_orig) return _orig->getFunctionSpace(order, serendip);
-  return 0;
+  return nullptr;
 }
 
 const JacobianBasis *MSubPoint::getJacobianFuncSpace(int order) const
 {
   if(_orig) return _orig->getJacobianFuncSpace(order);
-  return 0;
+  return nullptr;
 }
 
 void MSubPoint::getShapeFunctions(double u, double v, double w, double s[],
@@ -816,13 +816,13 @@ std::size_t MSubPoint::getNumPrimaryShapeFunctions() const
 const MVertex *MSubPoint::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
-  return 0;
+  return nullptr;
 }
 
 MVertex *MSubPoint::getShapeFunctionNode(int i)
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
-  return 0;
+  return nullptr;
 }
 
 void MSubPoint::xyz2uvw(double xyz[3], double uvw[3]) const

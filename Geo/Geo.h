@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -41,7 +41,7 @@ public:
   int boundaryLayerIndex;
   Vertex(double X = 0., double Y = 0., double Z = 0., double l = 1.,
          double W = 1.)
-    : Num(0), lc(l), u(0.), w(W), geometry(0), boundaryLayerIndex(0)
+    : Num(0), lc(l), u(0.), w(W), geometry(nullptr), boundaryLayerIndex(0)
   {
     Typ = MSH_POINT;
     Pos.X = X;
@@ -250,8 +250,8 @@ bool SetVolumeSurfaces(Volume *v, List_T *loops);
 void SetTranslationMatrix(double matrix[4][4], double T[3]);
 void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,
                        double D);
-void SetDilatationMatrix(double matrix[4][4], double T[3], double A,
-                         double B, double C);
+void SetDilatationMatrix(double matrix[4][4], double T[3], double A, double B,
+                         double C);
 void SetRotationMatrix(double matrix[4][4], double Axe[3], double alpha);
 
 int NEWPOINT();

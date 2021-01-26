@@ -42,7 +42,7 @@ static std::string physicalName(GModel *m, int dim, int num)
             (dim == 3) ? "PhysicalVolume" :
             (dim == 2) ? "PhysicalSurface" :
             (dim == 1) ? "PhysicalLine" :
-            "PhysicalPoint",
+                         "PhysicalPoint",
             num);
     name = tmp;
   }
@@ -95,24 +95,24 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
   // Elements
   fprintf(fp, "(++++++++++++++ E L E M E N T S ++++++++++++++)\n");
   fprintf(fp, "\n");
-  for(viter it = firstVertex(); it != lastVertex(); ++it) {
+  for(auto it = firstVertex(); it != lastVertex(); ++it) {
     writeElementsTOCHNOG(fp, *it, (*it)->points, saveAll);
   }
 
   if(dim == 3) {
-    for(riter it = firstRegion(); it != lastRegion(); ++it) {
+    for(auto it = firstRegion(); it != lastRegion(); ++it) {
       writeElementsTOCHNOG(fp, *it, (*it)->tetrahedra, saveAll);
       writeElementsTOCHNOG(fp, *it, (*it)->hexahedra, saveAll);
     }
   }
   else if(dim == 2) {
-    for(fiter it = firstFace(); it != lastFace(); ++it) {
+    for(auto it = firstFace(); it != lastFace(); ++it) {
       writeElementsTOCHNOG(fp, *it, (*it)->triangles, saveAll);
       writeElementsTOCHNOG(fp, *it, (*it)->quadrangles, saveAll);
     }
   }
   else if(dim == 1) {
-    for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+    for(auto it = firstEdge(); it != lastEdge(); ++it) {
       writeElementsTOCHNOG(fp, *it, (*it)->lines, saveAll);
     }
   }
@@ -148,9 +148,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
 
   // Save elements sets for each physical group
   for(int dim = 1; dim <= 3; dim++) {
-    for(std::map<int, std::vector<GEntity *> >::iterator it =
-          groups[dim].begin();
-        it != groups[dim].end(); it++) {
+    for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
       std::vector<GEntity *> &entities = it->second;
       fprintf(fp, "\n");
       fprintf(fp,
@@ -174,8 +172,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
   // physical points)
   if(saveGroupsOfNodes) {
     for(int dim = 0; dim <= 3; dim++) {
-      for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
-          it != groups[dim].end(); it++) {
+      for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::set<MVertex *, MVertexPtrLessThan> nodes;
         std::vector<GEntity *> &entities = it->second;
         for(std::size_t i = 0; i < entities.size(); i++) {
@@ -186,12 +183,13 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
           }
         }
         fprintf(fp, "\n");
-        fprintf(fp, "(Node sets ===> Used to set BOUNDARY CONDITIONS in Tochnog =%s)\n",
-                physicalName(this, dim, it->first).c_str());
+        fprintf(
+          fp,
+          "(Node sets ===> Used to set BOUNDARY CONDITIONS in Tochnog =%s)\n",
+          physicalName(this, dim, it->first).c_str());
         fprintf(fp, "\n");
         int n = 0;
-        for(std::set<MVertex *, MVertexPtrLessThan>::iterator it2 = nodes.begin();
-            it2 != nodes.end(); it2++) {
+        for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
           if(n && !(n % 10)) fprintf(fp, "\n");
           fprintf(fp, "%ld ", (*it2)->getIndex());
           n++;

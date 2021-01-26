@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@ int GModel::writeMAIL(const std::string &name, bool saveAll,
   if(noPhysicalGroups()) saveAll = true;
 
   int numVertices = indexMeshVertices(saveAll), numTriangles = 0;
-  for(fiter it = firstFace(); it != lastFace(); ++it)
+  for(auto it = firstFace(); it != lastFace(); ++it)
     if(saveAll || (*it)->physicals.size())
       numTriangles += (*it)->triangles.size();
 
@@ -38,7 +38,7 @@ int GModel::writeMAIL(const std::string &name, bool saveAll,
     }
   }
 
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
       for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
         MTriangle *t = (*it)->triangles[i];
@@ -49,7 +49,7 @@ int GModel::writeMAIL(const std::string &name, bool saveAll,
   }
 
   // TODO write edges (with signs)
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
       for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
         // MTriangle *t = (*it)->triangles[i];

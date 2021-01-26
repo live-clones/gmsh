@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,7 +32,7 @@ static void navigator_handler(void *data)
 {
   openglWindow *gl_win = (openglWindow *)data;
   if(CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
-    if(gl_win->Nautilus == 0) {
+    if(gl_win->Nautilus == nullptr) {
       gl_win->Nautilus = new Navigator(CTX::instance()->gamepad->frequency,
                                        gl_win->getDrawContext());
     }
@@ -43,7 +43,7 @@ static void navigator_handler(void *data)
   else {
     if(gl_win->Nautilus) {
       delete gl_win->Nautilus;
-      gl_win->Nautilus = 0;
+      gl_win->Nautilus = nullptr;
     }
     Fl::add_timeout(3., navigator_handler, data);
   }
@@ -71,7 +71,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1,
 
 openglWindow::openglWindow(int x, int y, int w, int h)
   : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
-    _selection(ENT_NONE), _trySelection(0), Nautilus(0)
+    _selection(ENT_NONE), _trySelection(0), Nautilus(nullptr)
 {
   _ctx = new drawContext(this);
 
@@ -108,11 +108,10 @@ void openglWindow::show()
   /* You can uncomment this if you cannot use the very latest FLTK 1.4 version
      patched for macOS mojave
 
-#if defined(__APPLE__) && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_14)
-  Msg::Info("OpenGL hack for macOS 10.14: see http://www.fltk.org/str.php?L3496");
-  resize(x(), y(), w()+1, h());
-  resize(x(), y(), w()-1, h());
-#endif
+#if defined(__APPLE__) && (MAC_OS_X_VERSION_MAX_ALLOWED >=
+MAC_OS_X_VERSION_10_14) Msg::Info("OpenGL hack for macOS 10.14: see
+http://www.fltk.org/str.php?L3496"); resize(x(), y(), w()+1, h()); resize(x(),
+y(), w()-1, h()); #endif
 
   */
 }
@@ -182,9 +181,7 @@ void openglWindow::draw()
 
   Msg::Debug("openglWindow::draw()");
 
-  if(!context_valid()) {
-    _ctx->invalidateQuadricsAndDisplayLists();
-  }
+  if(!context_valid()) { _ctx->invalidateQuadricsAndDisplayLists(); }
 
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
@@ -249,7 +246,8 @@ void openglWindow::draw()
 
     _ctx->draw3d();
     glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-    float ps = CTX::instance()->geom.pointSize * _ctx->highResolutionPixelFactor();
+    float ps =
+      CTX::instance()->geom.pointSize * _ctx->highResolutionPixelFactor();
     glPointSize(ps);
     glBegin(GL_POINTS);
     glVertex3d(_point[0], _point[1], _point[2]);
@@ -361,7 +359,7 @@ void openglWindow::draw()
   _lock = false;
 }
 
-openglWindow *openglWindow::_lastHandled = 0;
+openglWindow *openglWindow::_lastHandled = nullptr;
 
 void openglWindow::_setLastHandled(openglWindow *w)
 {
@@ -391,9 +389,9 @@ int openglWindow::handle(int event)
       std::vector<MElement *> elements;
       std::vector<SPoint2> points;
       std::vector<PView *> views;
-      _select(ENT_ALL, false, CTX::instance()->mouseHoverMeshes,
-              true, Fl::event_x(), Fl::event_y(), 5, 5,
-              vertices, edges, faces, regions, elements, points, views);
+      _select(ENT_ALL, false, CTX::instance()->mouseHoverMeshes, true,
+              Fl::event_x(), Fl::event_y(), 5, 5, vertices, edges, faces,
+              regions, elements, points, views);
       if(vertices.size() &&
          CTX::instance()->geom.doubleClickedPointCommand.size()) {
         CTX::instance()->geom.doubleClickedEntityTag = vertices[0]->tag();
@@ -438,7 +436,7 @@ int openglWindow::handle(int event)
         ParseString(CTX::instance()->post.doubleClickedGraphPointCommand, true);
       }
       else { // popup quick access menu
-        status_options_cb(0, (void *)"quick_access");
+        status_options_cb(nullptr, (void *)"quick_access");
       }
       Fl::event_clicks(-1);
       return 1;
@@ -584,9 +582,7 @@ int openglWindow::handle(int event)
     {
       double dx = _curr.win[0] - _prev.win[0];
       double dy = _curr.win[1] - _prev.win[1];
-      if(lassoMode) {
-        redraw();
-      }
+      if(lassoMode) { redraw(); }
       else {
         if(Fl::event_state(FL_META)) {
           // will try to select or unselect entities on the fly
@@ -672,9 +668,7 @@ int openglWindow::handle(int event)
 
   case FL_MOVE:
     _curr.set(_ctx, Fl::event_x(), Fl::event_y());
-    if(lassoMode) {
-      redraw();
-    }
+    if(lassoMode) { redraw(); }
     else if(addPointMode && !Fl::event_state(FL_SHIFT)) {
       cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
       // find line in real space corresponding to current cursor position
@@ -902,11 +896,9 @@ char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
 void openglWindow::drawTooltip(const std::string &text)
 {
 #if defined(NEW_TOOLTIPS)
-  if(text.empty()){
-    _tooltip->hide();
-  }
-  else{
-    _tooltip->position(Fl::event_x_root(), Fl::event_y_root()+20);
+  if(text.empty()) { _tooltip->hide(); }
+  else {
+    _tooltip->position(Fl::event_x_root(), Fl::event_y_root() + 20);
     _tooltip->value(text);
     _tooltip->show();
   }
@@ -914,7 +906,7 @@ void openglWindow::drawTooltip(const std::string &text)
   static char str[1024];
   strncpy(str, text.c_str(), sizeof(str) - 1);
   str[sizeof(str) - 1] = '\0';
-  Fl_Tooltip::exit(0);
+  Fl_Tooltip::exit(nullptr);
   bool enabled = Fl_Tooltip::enabled();
   if(!enabled) Fl_Tooltip::enable();
   double d1 = Fl_Tooltip::delay();
@@ -932,7 +924,7 @@ void openglWindow::moveWithGamepad()
 {
   if(CTX::instance()->gamepad && CTX::instance()->gamepad->active && Nautilus) {
     if(!(_ctx->camera.on)) _ctx->camera.init();
-    if(_drawn && (_lastHandled == this || _lastHandled == 0)) {
+    if(_drawn && (_lastHandled == this || _lastHandled == nullptr)) {
       Nautilus->move();
       this->flush();
     }

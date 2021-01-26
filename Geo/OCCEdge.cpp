@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -37,11 +37,12 @@
 #include <BOPTools_AlgoTools.hxx>
 
 OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
-  : GEdge(m, num, v1, v2), _c(c), _trimmed(0)
+  : GEdge(m, num, v1, v2), _c(c), _trimmed(nullptr)
 {
   // force orientation of internal/external edges: otherwise reverse will not
   // produce the expected result
-  if(_c.Orientation() == TopAbs_INTERNAL || _c.Orientation() == TopAbs_EXTERNAL) {
+  if(_c.Orientation() == TopAbs_INTERNAL ||
+     _c.Orientation() == TopAbs_EXTERNAL) {
     _c = TopoDS::Edge(_c.Oriented(TopAbs_FORWARD));
   }
   _curve = BRep_Tool::Curve(_c, _s0, _s1);
@@ -69,13 +70,17 @@ SBoundingBox3d OCCEdge::bounds(bool fast)
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
 
   if(CTX::instance()->geom.occBoundsUseSTL)
-    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
+    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax,
+                                             zmax);
 
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
 }
 
-Range<double> OCCEdge::parBounds(int i) const { return Range<double>(_s0, _s1); }
+Range<double> OCCEdge::parBounds(int i) const
+{
+  return Range<double>(_s0, _s1);
+}
 
 Range<double> OCCEdge::parBoundsOnFace(GFace *face) const
 {
@@ -95,7 +100,7 @@ void OCCEdge::setTrimmed(OCCFace *f)
     _trimmed = f;
     const TopoDS_Face *s = (TopoDS_Face *)_trimmed->getNativePtr();
     _curve2d = BRep_Tool::CurveOnSurface(_c, *s, _s0, _s1);
-    if(_curve2d.IsNull()) _trimmed = 0;
+    if(_curve2d.IsNull()) _trimmed = nullptr;
   }
 }
 
@@ -111,9 +116,7 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     double t0, t1;
     Handle(Geom2d_Curve) c2d;
 
-    if(dir == 1) {
-      c2d = BRep_Tool::CurveOnSurface(_c, *s, t0, t1);
-    }
+    if(dir == 1) { c2d = BRep_Tool::CurveOnSurface(_c, *s, t0, t1); }
     else {
       c2d = BRep_Tool::CurveOnSurface(_c_rev, *s, t0, t1);
     }
@@ -140,9 +143,10 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       double dy = p1.y() - p2.y();
       double dz = p1.z() - p2.z();
       if(sqrt(dx * dx + dy * dy + dz * dz) > CTX::instance()->geom.tolerance) {
-        Msg::Debug("Reparam on surface was inaccurate for curve %d on surface %d "
-                   "at point %g",
-                   tag(), face->tag(), epar);
+        Msg::Debug(
+          "Reparam on surface was inaccurate for curve %d on surface %d "
+          "at point %g",
+          tag(), face->tag(), epar);
         Msg::Debug("On the surface %d local (%g %g) global (%g %g %g)",
                    face->tag(), u, v, p2.x(), p2.y(), p2.z());
         Msg::Debug("On the curve %d local (%g) global (%g %g %g)", tag(), epar,
@@ -158,12 +162,14 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
         dz = p1.z() - p2.z();
         if(sqrt(dx * dx + dy * dy + dz * dz) >
            CTX::instance()->geom.tolerance) {
-          Msg::Warning("Closest point was inaccurate for curve %d on surface %d "
-                       "at point %g", tag(), face->tag(), epar);
+          Msg::Warning(
+            "Closest point was inaccurate for curve %d on surface %d "
+            "at point %g",
+            tag(), face->tag(), epar);
           Msg::Warning("On the surface %d local (%g %g) global (%g %g %g)",
                        face->tag(), u, v, p2.x(), p2.y(), p2.z());
-          Msg::Warning("On the curve %d local (%g) global (%g %g %g)", tag(), epar,
-                       p1.x(), p1.y(), p1.z());
+          Msg::Warning("On the curve %d local (%g) global (%g %g %g)", tag(),
+                       epar, p1.x(), p1.y(), p1.z());
         }
       }
     }
@@ -184,16 +190,16 @@ bool OCCEdge::_project(const double p[3], double &u, double xyz[3]) const
   if(!periodic(0)) {
     const double du = umax - umin;
     const double utol = std::max(fabs(du) * 1e-8, 1e-12);
-    umin -=  utol;
-    umax +=  utol;
+    umin -= utol;
+    umax += utol;
   }
 
   gp_Pnt pnt(p[0], p[1], p[2]);
   GeomAPI_ProjectPointOnCurve proj(pnt, _curve, umin, umax);
 
   if(!proj.NbPoints()) {
-    Msg::Warning("Projection of point (%g, %g, %g) on curve %d failed",
-                 p[0], p[1], p[2], tag());
+    Msg::Warning("Projection of point (%g, %g, %g) on curve %d failed", p[0],
+                 p[1], p[2], tag());
     return false;
   }
 
@@ -255,13 +261,12 @@ GPoint OCCEdge::point(double par) const
     return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, par);
   }
   else if(degenerate(0)) {
-    return GPoint(getBeginVertex()->x(),
-                  getBeginVertex()->y(),
+    return GPoint(getBeginVertex()->x(), getBeginVertex()->y(),
                   getBeginVertex()->z());
   }
   else {
-    Msg::Warning("OpenCASCADE curve %d is neither a 3D curve nor a trimmed curve",
-                 tag());
+    Msg::Warning(
+      "OpenCASCADE curve %d is neither a 3D curve nor a trimmed curve", tag());
     return GPoint(0, 0, 0);
   }
 }
@@ -334,9 +339,7 @@ int OCCEdge::minimumMeshSegments() const
   // if it is a seam, then return 1
   if(_faces.size() == 1 && isSeam(_faces[0])) return 1;
 
-  if(geomType() == Line) {
-    np = GEdge::minimumMeshSegments();
-  }
+  if(geomType() == Line) { np = GEdge::minimumMeshSegments(); }
   else if(geomType() == Circle || geomType() == Ellipse) {
     double a = fabs(_s0 - _s1);
     double n = CTX::instance()->mesh.minCircPoints;

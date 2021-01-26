@@ -17,30 +17,31 @@ template <class scalar> class fullMatrix;
 namespace jacobianBasedQuality {
 
   void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
-                                 const fullMatrix<double> *normals = NULL,
+                                 const fullMatrix<double> *normals = nullptr,
                                  bool debug = false);
   double minIGEMeasure(MElement *el, bool knownValid = false,
                        bool reversedOk = false,
-                       const fullMatrix<double> *normals = NULL,
+                       const fullMatrix<double> *normals = nullptr,
                        bool debug = false);
   double minICNMeasure(MElement *el, bool knownValid = false,
                        bool reversedOk = false,
-                       const fullMatrix<double> *normals = NULL,
+                       const fullMatrix<double> *normals = nullptr,
                        bool debug = false);
   void sampleJacobianDeterminant(MElement *el, int order, double &min,
                                  double &max,
-                                 const fullMatrix<double> *normals = NULL);
+                                 const fullMatrix<double> *normals = nullptr);
   void sampleIGEMeasure(MElement *el, int order, double &min, double &max);
   void sampleICNMeasure(MElement *el, int order, double &min, double &max);
   void sampleJacobianDeterminant(MElement *el, int order,
                                  fullVector<double> &jac,
-                                 const fullMatrix<double> *normals = NULL);
+                                 const fullMatrix<double> *normals = nullptr);
   void sampleIGEMeasure(MElement *el, int order, fullVector<double> &ige);
   void sampleICNMeasure(MElement *el, int order, fullVector<double> &icn);
 
   // For regression tests:
   void testAllMeasuresAllElements();
-  void testAllMeasures(MElement *el, const fullMatrix<double> *normals = NULL);
+  void testAllMeasures(MElement *el,
+                       const fullMatrix<double> *normals = nullptr);
 
   class _coeffData {
   protected:

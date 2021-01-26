@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -888,6 +888,39 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
+      else if(argv[i] == "-size_field") {
+        i++;
+        if(i < argv.size()){
+          CTX::instance()->mesh.nLayersPerGap = atoi(argv[i].c_str());
+          CTX::instance()->batch = 9;
+        }
+        else{
+          Msg::Error("Missing number of layers per gap");
+          if(exitOnError) Msg::Exit(1);
+        }
+        i++;
+        if(i < argv.size()){
+          CTX::instance()->mesh.minElementsPerTwoPi = atoi(argv[i].c_str());
+          if(CTX::instance()->mesh.minElementsPerTwoPi <= 0.)
+            CTX::instance()->mesh.lcFromCurvature = 0;
+        }
+        else{
+          Msg::Error("Missing number of elements density");
+          if(exitOnError) Msg::Exit(1);
+        }
+        i++;
+        if(i < argv.size()){
+          CTX::instance()->mesh.gradation = atof(argv[i].c_str());
+          if(CTX::instance()->mesh.gradation <= 1.){
+            CTX::instance()->mesh.gradation = 1.05;
+            Msg::Info("Gradation must be > 1 : set to 1.05");
+          }
+        }
+        else{
+          Msg::Error("Missing gradation");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
       else if(argv[i] == "-windows") {
         i++;
         if(i < argv.size())
@@ -1254,13 +1287,13 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-help" || argv[i] == "--help") {
         Msg::Direct(
           "Gmsh, a 3D mesh generator with pre- and post-processing facilities");
-        Msg::Direct("Copyright (C) 1997-2020 C. Geuzaine and J.-F. Remacle");
+        Msg::Direct("Copyright (C) 1997-2021 C. Geuzaine and J.-F. Remacle");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }
       else if(argv[i] == "-help_options") {
         std::vector<std::string> s;
-        PrintOptions(0, GMSH_FULLRC, 0, 1, 0, &s);
+        PrintOptions(0, GMSH_FULLRC, 0, 1, nullptr, &s);
         for(std::size_t i = 0; i < s.size(); i++)
           Msg::Direct("%s\n", s[i].c_str());
         Msg::Exit(0);

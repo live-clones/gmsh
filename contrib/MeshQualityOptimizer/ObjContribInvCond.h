@@ -54,7 +54,7 @@ protected:
 template <class FuncType>
 ObjContribInvCondNum<FuncType>::ObjContribInvCondNum(double weight)
   : ObjContrib("InvCondNum", FuncType::getNamePrefix() + "InvCondNum"),
-    _mesh(0), _weight(weight)
+    _mesh(nullptr), _weight(weight)
 {
 }
 

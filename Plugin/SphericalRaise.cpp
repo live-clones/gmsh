@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,10 +7,10 @@
 #include "Numeric.h"
 
 StringXNumber SphericalRaiseOptions_Number[] = {
-  {GMSH_FULLRC, "Xc", NULL, 0.},     {GMSH_FULLRC, "Yc", NULL, 0.},
-  {GMSH_FULLRC, "Zc", NULL, 0.},     {GMSH_FULLRC, "Raise", NULL, 1.},
-  {GMSH_FULLRC, "Offset", NULL, 0.}, {GMSH_FULLRC, "TimeStep", NULL, 0.},
-  {GMSH_FULLRC, "View", NULL, -1.}};
+  {GMSH_FULLRC, "Xc", nullptr, 0.},     {GMSH_FULLRC, "Yc", nullptr, 0.},
+  {GMSH_FULLRC, "Zc", nullptr, 0.},     {GMSH_FULLRC, "Raise", nullptr, 1.},
+  {GMSH_FULLRC, "Offset", nullptr, 0.}, {GMSH_FULLRC, "TimeStep", nullptr, 0.},
+  {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterSphericalRaisePlugin()

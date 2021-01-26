@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,11 +12,11 @@
 #include "OS.h"
 
 StringXNumber BubblesOptions_Number[] = {
-  {GMSH_FULLRC, "ShrinkFactor", NULL, 0.},
+  {GMSH_FULLRC, "ShrinkFactor", nullptr, 0.},
 };
 
 StringXString BubblesOptions_String[] = {
-  {GMSH_FULLRC, "OutputFile", NULL, "bubbles.geo"}};
+  {GMSH_FULLRC, "OutputFile", nullptr, "bubbles.geo"}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterBubblesPlugin() { return new GMSH_BubblesPlugin(); }
@@ -100,13 +100,13 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
   double lc = norm(SVector3(bbox.max(), bbox.min())) / 100;
   fprintf(fp, "lc = %g;\n", lc);
 
-  for(GModel::viter vit = m->firstVertex(); vit != m->lastVertex(); vit++)
+  for(auto vit = m->firstVertex(); vit != m->lastVertex(); vit++)
     (*vit)->writeGEO(fp, "lc");
 
-  for(GModel::eiter eit = m->firstEdge(); eit != m->lastEdge(); eit++)
+  for(auto eit = m->firstEdge(); eit != m->lastEdge(); eit++)
     (*eit)->writeGEO(fp);
 
-  for(GModel::fiter fit = m->firstFace(); fit != m->lastFace(); fit++) {
+  for(auto fit = m->firstFace(); fit != m->lastFace(); fit++) {
     (*fit)->writeGEO(fp);
     fprintf(fp, "Delete { Surface {%d}; }\n", (*fit)->tag());
 
@@ -121,16 +121,14 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
           (*fit)->triangles[i]->barycenter());
 
     // add boundary vertices in map to get cells "closer" to the boundary
-    for(std::map<MVertex *, std::vector<SPoint3> >::iterator it = v2t.begin();
-        it != v2t.end(); it++) {
+    for(auto it = v2t.begin(); it != v2t.end(); it++) {
       MVertex *v = it->first;
       if(v->onWhat() && v->onWhat()->dim() < 2)
         it->second.push_back(
           SPoint3(it->first->x(), it->first->y(), it->first->z()));
     }
 
-    for(std::map<MVertex *, std::vector<SPoint3> >::iterator it = v2t.begin();
-        it != v2t.end(); it++) {
+    for(auto it = v2t.begin(); it != v2t.end(); it++) {
       if(it->second.size() > 2) {
         // get barycenter of cell boundary points and order them
         SPoint3 bc;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -71,19 +71,19 @@ int Msg::_atLeastOneErrorInRun = 0;
 std::string Msg::_firstWarning;
 std::string Msg::_firstError;
 std::string Msg::_lastError;
-GmshMessage *Msg::_callback = 0;
+GmshMessage *Msg::_callback = nullptr;
 std::vector<std::string> Msg::_commandLineArgs;
 std::string Msg::_launchDate;
 std::map<std::string, std::vector<double> > Msg::_commandLineNumbers;
 std::map<std::string, std::string> Msg::_commandLineStrings;
-GmshClient *Msg::_client = 0;
+GmshClient *Msg::_client = nullptr;
 std::string Msg::_execName;
 #if defined(HAVE_ONELAB)
-onelab::client *Msg::_onelabClient = 0;
-onelab::server *onelab::server::_server = 0;
+onelab::client *Msg::_onelabClient = nullptr;
+onelab::server *onelab::server::_server = nullptr;
 #endif
 std::string Msg::_logFileName;
-FILE *Msg::_logFile = 0;
+FILE *Msg::_logFile = nullptr;
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1310) //NET 2003
 #define vsnprintf _vsnprintf
@@ -140,7 +140,7 @@ void Msg::Init(int argc, char **argv)
     if(val != "-info" && val != "-help" && val != "-version" && val != "-v")
       sargv[sargc++] = argv[i];
   }
-  sargv[sargc] = NULL;
+  sargv[sargc] = nullptr;
   PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)
@@ -235,7 +235,7 @@ void Msg::SetLogFile(const std::string &name)
       Msg::Error("Could not open file '%s'", name.c_str());
   }
   else
-    _logFile = 0;
+    _logFile = nullptr;
 }
 
 std::string Msg::GetLaunchDate()
@@ -361,7 +361,7 @@ void Msg::Exit(int level)
 
   if(_logFile){
     fclose(_logFile);
-    _logFile = 0;
+    _logFile = nullptr;
   }
 
   // exit directly on abnormal program termination (level != 0). We
@@ -456,8 +456,8 @@ static int streamIsVT100(FILE *stream)
      "rxvt-cygwin", "rxvt-cygwin-native", "rxvt-unicode", "rxvt-unicode-256color",
      "screen", "screen-256color", "screen-256color-bce", "screen-bce", "screen-w",
      "screen.linux", "vt100", "xterm", "xterm-16color", "xterm-256color",
-     "xterm-88color", "xterm-color", "xterm-debian", 0};
-  const char** t = 0;
+     "xterm-88color", "xterm-color", "xterm-debian", nullptr};
+  const char** t = nullptr;
   const char* term = getenv("TERM");
   if(term){
     for(t = names; *t && strcmp(term, *t) != 0; ++t) {}
@@ -858,7 +858,7 @@ void Msg::PrintTimers()
 {
   // do a single stdio call!
   std::string str;
-  for(std::map<std::string, double>::iterator it = _timers.begin();
+  for(auto it = _timers.begin();
       it != _timers.end(); it++){
     if(it != _timers.begin()) str += ", ";
     char tmp[256];
@@ -1249,7 +1249,7 @@ std::string Msg::GetOnelabAction()
 void Msg::LoadOnelabClient(const std::string &clientName, const std::string &sockName)
 {
 #if defined(HAVE_ONELAB)
-  onelab::remoteNetworkClient *client = 0;
+  onelab::remoteNetworkClient *client = nullptr;
   client = new onelab::remoteNetworkClient(clientName, sockName);
   if(client){
     std::string action, cmd;
@@ -1544,7 +1544,7 @@ void Msg::ImportPhysicalGroupsInOnelab()
 
     int index = 1;
     for(int dim = 0; dim <= 3; dim++){
-      for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
+      for(auto it = groups[dim].begin();
           it != groups[dim].end(); it++){
         int num = it->first;
         std::string name = GModel::current()->getPhysicalName(dim, it->first);
@@ -1614,15 +1614,15 @@ void Msg::FinalizeOnelab()
 {
 #if defined(HAVE_ONELAB)
   // kill any running clients
-  for(onelab::server::citer it = onelab::server::instance()->firstClient();
+  for(auto it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     (*it)->kill();
   }
   // delete local client
   if(_onelabClient){
     delete _onelabClient;
-    _onelabClient = 0;
-    _client = 0;
+    _onelabClient = nullptr;
+    _client = nullptr;
   }
 #endif
 }

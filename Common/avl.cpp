@@ -142,7 +142,7 @@ int avl_delete(avl_tree *tree, void **key_p, void **value_p)
     /* prepare to delete node and replace it with rightmost of left tree */
   delete_item:
     *key_p = node->key;
-    if (value_p != 0) *value_p = node->value;
+    if (value_p != nullptr) *value_p = node->value;
     if (node->left == NIL(avl_node)) {
         *node_p = node->right;
     } else {
@@ -330,8 +330,8 @@ static void free_entry(avl_node *node, void (*key_free)(void *key), void (*value
     if (node != NIL(avl_node)) {
         free_entry(node->left, key_free, value_free);
         free_entry(node->right, key_free, value_free);
-        if (key_free != 0) (*key_free)(node->key);
-        if (value_free != 0) (*value_free)(node->value);
+        if (key_free != nullptr) (*key_free)(node->key);
+        if (value_free != nullptr) (*value_free)(node->value);
         FREE(node);
     }
 }

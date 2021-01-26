@@ -110,9 +110,7 @@ static void _computeIGE(const fullVector<double> &det,
 
   switch(type) {
   case TYPE_QUA:
-    for(int i = 0; i < sz; i++) {
-      ige(i) = det(i) / v(i, 0) / v(i, 1);
-    }
+    for(int i = 0; i < sz; i++) { ige(i) = det(i) / v(i, 0) / v(i, 1); }
     break;
   case TYPE_HEX:
     for(int i = 0; i < sz; i++) {
@@ -172,9 +170,7 @@ static void _computeICN(const fullVector<double> &det,
 
   for(int i = 0; i < sz; i++) {
     double p = 0;
-    for(int k = 0; k < grad.size2(); ++k) {
-      p += pow_int(grad(i, k), 2);
-    }
+    for(int k = 0; k < grad.size2(); ++k) { p += pow_int(grad(i, k), 2); }
     if(dim == 2)
       icn(i) = 2 * det(i) / p;
     else // 3D
@@ -212,7 +208,8 @@ static bool _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
       fsDet = FuncSpaceData(el, false, jacOrder, jacOrder - 3, false);
       break;
     default:
-      Msg::Info("Quality measure not implemented for %s", el->getName().c_str());
+      Msg::Info("Quality measure not implemented for %s",
+                el->getName().c_str());
       return false;
     }
   }
@@ -232,7 +229,8 @@ static bool _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
       fsDet = FuncSpaceData(el, true, 1, orderSamplingPoints - 1, false);
       break;
     default:
-      Msg::Info("Quality measure not implemented for %s", el->getName().c_str());
+      Msg::Info("Quality measure not implemented for %s",
+                el->getName().c_str());
       return false;
     }
   }
@@ -603,18 +601,14 @@ namespace jacobianBasedQuality {
     // J^2/(a^2+b^2), we would get with certainty a negative lower bound.
     // Returning 0.
     for(int i = 0; i < det.size(); ++i) {
-      if(det(i) < 0) {
-        return 0;
-      }
+      if(det(i) < 0) { return 0; }
     }
 
     fullMatrix<double> v;
     _computeCoeffLengthVectors(mat, v, _type);
 
     fullVector<double> prox[6];
-    for(int i = 0; i < v.size2(); ++i) {
-      prox[i].setAsProxy(v, i);
-    }
+    for(int i = 0; i < v.size2(); ++i) { prox[i].setAsProxy(v, i); }
 
     const bezierBasisRaiser *raiser = _coeffMat->getBezierBasis()->getRaiser();
     fullVector<double> coeffDenominator;
@@ -793,9 +787,7 @@ namespace jacobianBasedQuality {
     // Speedup: If one coeff _coeffDet is negative, we would get
     // a negative lower bound. For now, returning 0.
     for(int i = 0; i < det.size(); ++i) {
-      if(det(i) < 0) {
-        return 0;
-      }
+      if(det(i) < 0) { return 0; }
     }
 
     const bezierBasisRaiser *raiser = _coeffMat->getBezierBasis()->getRaiser();
@@ -821,9 +813,7 @@ namespace jacobianBasedQuality {
       // J (elements of P are automatically set to 0)
       fullVector<double> P(mat.size1());
       for(int i = 0; i < mat.size1(); ++i) {
-        for(int k = 0; k < mat.size2(); ++k) {
-          P(i) += mat(i, k) * mat(i, k);
-        }
+        for(int k = 0; k < mat.size2(); ++k) { P(i) += mat(i, k) * mat(i, k); }
         P(i) = std::sqrt(P(i));
       }
       raiser->computeCoeff(P, P, P, coeffDenominator);
@@ -860,9 +850,7 @@ namespace jacobianBasedQuality {
       }
       ++k;
     }
-    if(debug) {
-      std::cout << "Number of subdivisions: " << k << std::endl;
-    }
+    if(debug) { std::cout << "Number of subdivisions: " << k << std::endl; }
     else if(k == max_subdivision) {
       Msg::Error("Max subdivision (%d) (size domains %d)", max_subdivision,
                  domains.size());
@@ -972,15 +960,14 @@ namespace jacobianBasedQuality {
   {
     GModel *m = GModel::current();
     std::set<GEntity *, GEntityPtrFullLessThan> entities;
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++)
       entities.insert(*it);
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+    for(auto it = m->firstFace(); it != m->lastFace(); it++)
       entities.insert(*it);
-    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
+    for(auto it = m->firstEdge(); it != m->lastEdge(); it++)
       entities.insert(*it);
 
-    std::set<GEntity *, GEntityPtrFullLessThan>::iterator it;
-    for(it = entities.begin(); it != entities.end(); ++it) {
+    for(auto it = entities.begin(); it != entities.end(); ++it) {
       unsigned num = (*it)->getNumMeshElements();
       for(unsigned i = 0; i < num; ++i) {
         MElement *el = (*it)->getMeshElement(i);

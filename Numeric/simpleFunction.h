@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -44,7 +44,7 @@ class constantPerElement : public simpleFunction<scalar> {
   mutable MElement *_e;
 
 public:
-  constantPerElement() : _e(0) {}
+  constantPerElement() : _e(nullptr) {}
   void set(MElement *e, scalar v) { _data[e] = v; }
   void setElement(MElement *e) const { _e = e; }
   virtual scalar operator()(double x, double y, double z) const
@@ -61,7 +61,7 @@ class simpleFunctionOnElement : public simpleFunction<scalar> {
   mutable MElement *_e;
 
 public:
-  simpleFunctionOnElement(scalar val = 0) : simpleFunction<scalar>(val), _e(0)
+  simpleFunctionOnElement(scalar val = 0) : simpleFunction<scalar>(val), _e(nullptr)
   {
   }
   virtual ~simpleFunctionOnElement() {}

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,8 +16,8 @@ protected:
 
 public:
   laplaceTerm(GModel *gm, int iField, simpleFunction<double> *k,
-              std::map<MVertex *, SPoint3> *coord = NULL)
-    : helmholtzTerm<double>(gm, iField, iField, k, 0), _iField(iField),
+              std::map<MVertex *, SPoint3> *coord = nullptr)
+    : helmholtzTerm<double>(gm, iField, iField, k, nullptr), _iField(iField),
       _coordView(coord)
   {
   }
@@ -33,7 +33,7 @@ public:
     fullVector<double> val(nbSF);
     val.scale(0.);
     for(int i = 0; i < nbSF; i++) {
-      std::map<MVertex *, SPoint3>::iterator it =
+      auto it =
         _coordView->find(e->getShapeFunctionNode(i));
       SPoint3 UV = it->second;
       if(_iField == 1)
@@ -52,7 +52,7 @@ public:
 class massTerm : public helmholtzTerm<double> {
 public:
   massTerm(GModel *gm, int iField, simpleFunction<double> *a)
-    : helmholtzTerm<double>(gm, iField, iField, 0, a)
+    : helmholtzTerm<double>(gm, iField, iField, nullptr, a)
   {
   }
 };

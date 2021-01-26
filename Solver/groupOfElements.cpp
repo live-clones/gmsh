@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@ groupOfElements::groupOfElements(GRegion *gr)
 groupOfElements::groupOfElements(std::vector<MElement *> &elems)
 {
   elementFilterTrivial filter;
-  for(std::vector<MElement *>::iterator it = elems.begin(); it != elems.end();
+  for(auto it = elems.begin(); it != elems.end();
       it++) {
     MElement *e = *it;
     if(filter(e)) {

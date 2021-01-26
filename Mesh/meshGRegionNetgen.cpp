@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -28,7 +28,7 @@ static void getAllBoundingVertices(
   GRegion *gr, std::set<MVertex *, MVertexPtrLessThan> &allBoundingVertices)
 {
   std::vector<GFace *> faces = gr->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
 
   while(it != faces.end()) {
     GFace *gf = (*it);
@@ -52,8 +52,7 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   std::set<MVertex *, MVertexPtrLessThan> allBoundingVertices;
   getAllBoundingVertices(gr, allBoundingVertices);
 
-  std::set<MVertex *, MVertexPtrLessThan>::iterator itv =
-    allBoundingVertices.begin();
+  auto itv = allBoundingVertices.begin();
   int I = 1;
   while(itv != allBoundingVertices.end()) {
     double tmp[3];
@@ -77,7 +76,7 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
     }
   }
   std::vector<GFace *> faces = gr->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
   while(it != faces.end()) {
     GFace *gf = (*it);
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
@@ -167,9 +166,7 @@ static int intersectLineTriangle(double X[3], double Y[3], double Z[3],
   b[1] = P[1] - Y[0];
   b[2] = P[2] - Z[0];
 
-  if(!sys3x3_with_tol(mat, b, res, &det)) {
-    return 0;
-  }
+  if(!sys3x3_with_tol(mat, b, res, &det)) { return 0; }
   //  printf("coucou %g %g %g\n",res[0],res[1],res[2]);
   if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec && res[1] >= eps_prec &&
      res[1] <= 1.0 - eps_prec && 1 - res[0] - res[1] >= eps_prec &&
@@ -199,7 +196,7 @@ static void setRand(double r[6])
 static void meshNormalsPointOutOfTheRegion(GRegion *gr)
 {
   std::vector<GFace *> faces = gr->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
 
   // perform intersection check in normalized coordinates
   SBoundingBox3d bbox = gr->bounds();
@@ -242,7 +239,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
       N[1] += rrr[2] * v1[1] + rrr[3] * v2[1];
       N[2] += rrr[4] * v1[2] + rrr[5] * v2[2];
       norme(N);
-      std::vector<GFace *>::iterator it_b = faces.begin();
+      auto it_b = faces.begin();
       while(it_b != faces.end()) {
         GFace *gf_b = (*it_b);
         for(std::size_t i_b = 0; i_b < gf_b->triangles.size(); i_b++) {
@@ -271,9 +268,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
         break; // negative value means intersection is not "robust"
     }
 
-    if(nb_intersect < 0) {
-      setRand(rrr);
-    }
+    if(nb_intersect < 0) { setRand(rrr); }
     else {
       if(nb_intersect % 2 == 1) {
         // odd nb of intersections: the normal points inside the region
@@ -288,8 +283,7 @@ static void meshNormalsPointOutOfTheRegion(GRegion *gr)
   // FILE *fp = Fopen("debug.pos", "w");
   // if(fp){
   //   fprintf(fp, "View \"debug\" {\n");
-  //   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end();
-  //   it++)
+  //   for(auto it = faces.begin(); it != faces.end(); it++)
   //     for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
   //       (*it)->triangles[i]->writePOS(fp, 1., (*it)->tag());
   //   fprintf(fp, "};\n");
@@ -306,9 +300,10 @@ void meshGRegionNetgen(GRegion *gr)
 #else
   // sanity check for frontal algo
   std::vector<GFace *> faces = gr->faces();
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end(); it++) {
+  for(auto it = faces.begin(); it != faces.end(); it++) {
     if((*it)->quadrangles.size()) {
-      Msg::Error("Cannot use frontal 3D algorithm with quadrangles on boundary");
+      Msg::Error(
+        "Cannot use frontal 3D algorithm with quadrangles on boundary");
       return;
     }
   }
@@ -338,7 +333,7 @@ void optimizeMeshGRegionNetgen::operator()(GRegion *gr, bool always)
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
 
-  if(gr->prisms.size() || gr->hexahedra.size() || gr->pyramids.size()){
+  if(gr->prisms.size() || gr->hexahedra.size() || gr->pyramids.size()) {
     Msg::Info("Skipping Netgen optimizer for hybrid mesh");
     return;
   }

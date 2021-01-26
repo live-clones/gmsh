@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -49,9 +49,7 @@ void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
         }
         if(!found) {
           for(std::size_t k = 0; k < cavity.size(); k++) {
-            if(cavity[k] == neigh) {
-              found = true;
-            }
+            if(cavity[k] == neigh) { found = true; }
           }
         }
         if(!found) outside.push_back(neigh);
@@ -401,7 +399,7 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   MVertex *f1 = t1->tet()->getVertex(faces[iLocalFace][0]);
   MVertex *f2 = t1->tet()->getVertex(faces[iLocalFace][1]);
   MVertex *f3 = t1->tet()->getVertex(faces[iLocalFace][2]);
-  MVertex *v2 = 0;
+  MVertex *v2 = nullptr;
   for(int i = 0; i < 4; i++) {
     MVertex *v = t2->tet()->getVertex(i);
     if(v != f1 && v != f2 && v != f3) {
@@ -712,8 +710,8 @@ double smoothing_objective_function_3D(double X, double Y, double Z, MVertex *v,
   v->y() = Y;
   v->z() = Z;
 
-  std::vector<MTet4 *>::iterator it = ts.begin();
-  std::vector<MTet4 *>::iterator ite = ts.end();
+  auto it = ts.begin();
+  auto ite = ts.end();
   double qMin = 1, vol;
   while(it != ite) {
     qMin = std::min(
@@ -832,11 +830,9 @@ int LaplaceSmoothing(GRegion *gr)
   int N = 0;
   for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
     MVertex *v = gr->mesh_vertices[i];
-    std::multimap<MVertex *, MElement *>::iterator it =
-      vertexToElement.lower_bound(v);
-    std::multimap<MVertex *, MElement *>::iterator it_low = it;
-    std::multimap<MVertex *, MElement *>::iterator it_up =
-      vertexToElement.upper_bound(v);
+    auto it = vertexToElement.lower_bound(v);
+    auto it_low = it;
+    auto it_up = vertexToElement.upper_bound(v);
     double minQual = 1.e22;
     double volTot = 0.0;
     double xold = v->x(), yold = v->y(), zold = v->z();

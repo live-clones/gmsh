@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -31,11 +31,9 @@ private:
   TopoDS_Shape _sourceShape;
   std::string _label;
   std::vector<double> _color;
+
 public:
-  OCCAttributes()
-    : _dim(-1), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1)
-  {
-  }
+  OCCAttributes() : _dim(-1), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1) {}
   OCCAttributes(int dim, TopoDS_Shape shape)
     : _dim(dim), _shape(shape), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1)
   {
@@ -44,8 +42,8 @@ public:
     : _dim(dim), _shape(shape), _meshSize(size), _extrude(0), _sourceDim(-1)
   {
   }
-  OCCAttributes(int dim, TopoDS_Shape shape, ExtrudeParams *e,
-                    int sourceDim, TopoDS_Shape sourceShape)
+  OCCAttributes(int dim, TopoDS_Shape shape, ExtrudeParams *e, int sourceDim,
+                TopoDS_Shape sourceShape)
     : _dim(dim), _shape(shape), _meshSize(MAX_LC), _extrude(e),
       _sourceDim(sourceDim), _sourceShape(sourceShape)
   {
@@ -94,9 +92,9 @@ private:
     return true;
   }
   void _find(int dim, const TopoDS_Shape &shape,
-             std::vector<OCCAttributes *> &attr,
-             bool requireMeshSize, bool requireExtrudeParams, bool requireLabel,
-             bool requireColor, bool excludeSame)
+             std::vector<OCCAttributes *> &attr, bool requireMeshSize,
+             bool requireExtrudeParams, bool requireLabel, bool requireColor,
+             bool excludeSame)
   {
     attr.clear();
     if(dim < 0 || dim > 3) return;
@@ -206,7 +204,8 @@ public:
     try {
       BRepBndLib::Add(v->getShape(), box, Standard_False);
       if(box.IsVoid()) {
-        Msg::Debug("Inserting (null or degenerate) shape with void bounding box");
+        Msg::Debug(
+          "Inserting (null or degenerate) shape with void bounding box");
         // BRepTools::Dump(v->getShape(), std::cout);
         return;
       }
@@ -230,7 +229,8 @@ public:
     try {
       BRepBndLib::Add(v->getShape(), box, Standard_False);
       if(box.IsVoid()) {
-        Msg::Debug("Removing (null or degenerate) shape with void bounding box");
+        Msg::Debug(
+          "Removing (null or degenerate) shape with void bounding box");
         // BRepTools::Dump(v->getShape(), std::cout);
         return;
       }
@@ -279,8 +279,7 @@ public:
     std::vector<OCCAttributes *> attr;
     _find(dim, shape, attr, false, false, true, false, false);
     for(std::size_t i = 0; i < attr.size(); i++) {
-      if(!attr[i]->getLabel().empty())
-        labels.push_back(attr[i]->getLabel());
+      if(!attr[i]->getLabel().empty()) labels.push_back(attr[i]->getLabel());
     }
   }
   bool getColor(int dim, TopoDS_Shape shape, unsigned int &color,
@@ -290,7 +289,7 @@ public:
     _find(dim, shape, attr, false, false, false, true, false);
     for(std::size_t i = 0; i < attr.size(); i++) {
       const std::vector<double> &col = attr[i]->getColor();
-      if(col.size() >= 3){
+      if(col.size() >= 3) {
         int r = (int)(col[0] * 255);
         r = (r < 0) ? 0 : (r > 255) ? 255 : r;
         int g = (int)(col[1] * 255);
@@ -298,7 +297,7 @@ public:
         int b = (int)(col[2] * 255);
         b = (b < 0) ? 0 : (b > 255) ? 255 : b;
         int a = 255;
-        if(col.size() >= 4){
+        if(col.size() >= 4) {
           int a = (int)(col[3] * 255);
           a = (a < 0) ? 0 : (a > 255) ? 255 : a;
         }

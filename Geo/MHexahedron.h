@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -210,15 +210,17 @@ public:
     return e[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
-  virtual int getVertexSolin(int numEdge, int numVertex){
-    static const int eSolin[12][2] =  {{0, 1}, {0, 3}, {0, 4}, {1, 2},
-                                 {1, 5}, {3, 2}, {2, 6}, {3, 7},
-                                 {4, 5}, {4, 7}, {5, 6}, {7, 6}};
+  virtual int getVertexSolin(int numEdge, int numVertex)
+  {
+    static const int eSolin[12][2] = {{0, 1}, {0, 3}, {0, 4}, {1, 2},
+                                      {1, 5}, {3, 2}, {2, 6}, {3, 7},
+                                      {4, 5}, {4, 7}, {5, 6}, {7, 6}};
     return getVertex(eSolin[numEdge][numVertex])->getNum();
   }
-  virtual MFace getFaceSolin(int numFace){
+  virtual MFace getFaceSolin(int numFace)
+  {
     static const int fSolin[6][4] = {{0, 1, 3, 2}, {0, 1, 4, 5}, {0, 3, 4, 7},
-                                {1, 2, 5, 6}, {3, 2, 7, 6}, {4, 5, 7, 6}};
+                                     {1, 2, 5, 6}, {3, 2, 7, 6}, {4, 5, 7, 6}};
     return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
                  _v[fSolin[numFace][2]], _v[fSolin[numFace][3]]);
   }
@@ -664,9 +666,7 @@ public:
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
-    if(getIsAssimilatedSerendipity()) {
-      v.resize(4 * _order);
-    }
+    if(getIsAssimilatedSerendipity()) { v.resize(4 * _order); }
     else {
       v.resize((_order + 1) * (_order + 1));
     }
@@ -688,9 +688,7 @@ public:
 
     if((int)v.size() > count + 1) {
       int start = 12 * n + num * n * n;
-      for(int i = 0; i < n * n; i++) {
-        v[++count] = _vs[start + i];
-      }
+      for(int i = 0; i < n * n; i++) { v[++count] = _vs[start + i]; }
     }
   }
   virtual int getTypeForMSH() const

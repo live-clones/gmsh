@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -71,7 +71,7 @@ void OCCFace::_setup()
     std::vector<GEdge *> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()) {
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-      GEdge *e = 0;
+      GEdge *e = nullptr;
       if(model()->getOCCInternals())
         e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
       if(!e) { Msg::Error("Unknown curve in surface %d", tag()); }
@@ -113,7 +113,7 @@ void OCCFace::_setup()
   for(exp2.Init(_s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
       exp2.More(); exp2.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
-    GVertex *v = 0;
+    GVertex *v = nullptr;
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) { Msg::Error("Unknown point in surface %d", tag()); }
@@ -161,8 +161,7 @@ void OCCFace::_setup()
 
 SBoundingBox3d OCCFace::bounds(bool fast)
 {
-  if(CTX::instance()->geom.occBoundsUseSTL)
-    buildSTLTriangulation();
+  if(CTX::instance()->geom.occBoundsUseSTL) buildSTLTriangulation();
 
   Bnd_Box b;
   try {
@@ -175,7 +174,8 @@ SBoundingBox3d OCCFace::bounds(bool fast)
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
 
   if(CTX::instance()->geom.occBoundsUseSTL)
-    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
+    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax,
+                                             zmax);
 
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
@@ -240,20 +240,20 @@ bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
   if(!_periodic[0]) {
     const double du = _umax - _umin;
     const double utol = std::max(fabs(du) * 1e-8, 1e-12);
-    umin -=  utol;
-    umax +=  utol;
+    umin -= utol;
+    umax += utol;
   }
   if(!_periodic[1]) {
     const double dv = _vmax - _vmin;
     const double vtol = std::max(fabs(dv) * 1e-8, 1e-12);
-    vmin -=  vtol;
-    vmax +=  vtol;
+    vmin -= vtol;
+    vmax += vtol;
   }
   gp_Pnt pnt(p[0], p[1], p[2]);
   GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
   if(!proj.NbPoints()) {
-    Msg::Warning("Projection of point (%g, %g, %g) on surface %d failed",
-                 p[0], p[1], p[2], tag());
+    Msg::Warning("Projection of point (%g, %g, %g) on surface %d failed", p[0],
+                 p[1], p[2], tag());
     return false;
   }
   proj.LowerDistanceParameters(uv[0], uv[1]);
@@ -366,9 +366,8 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
     double angle = 0.;
     double v[3] = {pt.x(), pt.y(), pt.z()};
 
-    std::vector<int>::const_iterator ito = l_dirs.begin();
-    for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
-        it != l_edges.end(); it++) {
+    auto ito = l_dirs.begin();
+    for(auto it = l_edges.begin(); it != l_edges.end(); it++) {
       GEdge *c = *it;
       int ori = 1;
       if(ito != l_dirs.end()) {
@@ -406,7 +405,7 @@ bool OCCFace::buildSTLTriangulation(bool force)
   stl_vertices_xyz.clear();
   stl_triangles.clear();
   if(!model()->getOCCInternals()->makeFaceSTL(
-      _s, stl_vertices_uv, stl_vertices_xyz, stl_normals, stl_triangles)) {
+       _s, stl_vertices_uv, stl_vertices_xyz, stl_normals, stl_triangles)) {
     Msg::Info("OpenCASCADE triangulation of surface %d failed", tag());
     // add a dummy triangle so that we won't try again
     stl_vertices_uv.push_back(SPoint2(0., 0.));
@@ -417,12 +416,14 @@ bool OCCFace::buildSTLTriangulation(bool force)
     return false;
   }
 
-  // compute the triangulation of the edges which are the boundaries of this face
+  // compute the triangulation of the edges which are the boundaries of this
+  // face
   std::vector<GEdge *> const &e = edges();
-  for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end(); it++) {
-    if ((*it)->stl_vertices_xyz.size() == 0) {
+  for(auto it = e.begin(); it != e.end(); it++) {
+    if((*it)->stl_vertices_xyz.size() == 0) {
       const TopoDS_Edge *c = (TopoDS_Edge *)(*it)->getNativePtr();
-      model()->getOCCInternals()->makeEdgeSTLFromFace(*c, _s, &((*it)->stl_vertices_xyz));
+      model()->getOCCInternals()->makeEdgeSTLFromFace(
+        *c, _s, &((*it)->stl_vertices_xyz));
     }
   }
 

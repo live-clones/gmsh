@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -87,12 +87,12 @@ public:
 
 public:
   FlGui(int argc, char **argv, bool quitShouldExit,
-        void (*error_handler)(const char *fmt, ...) = 0);
+        void (*error_handler)(const char *fmt, ...) = nullptr);
   ~FlGui();
   // return the single static instance of the GUI
-  static FlGui *instance(int argc = 0, char **argv = 0,
+  static FlGui *instance(int argc = 0, char **argv = nullptr,
                          bool quitShouldExit = true,
-                         void (*error_handler)(const char *fmt, ...) = 0);
+                         void (*error_handler)(const char *fmt, ...) = nullptr);
   // destroy instance
   static void destroy();
   // check if the GUI is available
@@ -161,7 +161,7 @@ public:
   // apply color scheme to widgets
   void applyColorScheme(bool redraw = false);
   // should the quit callback exit the app, or just close all windows?
-  bool quitShouldExit(){ return _quitShouldExit; }
+  bool quitShouldExit() { return _quitShouldExit; }
 };
 
 void redraw_cb(Fl_Widget *w, void *data);

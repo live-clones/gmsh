@@ -31,7 +31,8 @@
 #include "MVertex.h"
 #include "fullMatrix.h"
 
-HighOrderMeshPeriodicity::HighOrderMeshPeriodicity(std::vector<GEntity *> &entities)
+HighOrderMeshPeriodicity::HighOrderMeshPeriodicity(
+  std::vector<GEntity *> &entities)
 {
   for(std::size_t i = 0; i < entities.size(); ++i) {
     // MVertex on GVertex cannot move
@@ -84,7 +85,8 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
         }
       }
 
-      std::map<MVertex *, MVertex *> &pointS2M = slave->correspondingHighOrderVertices;
+      std::map<MVertex *, MVertex *> &pointS2M =
+        slave->correspondingHighOrderVertices;
       for(vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
         MFaceVertex *v = dynamic_cast<MFaceVertex *>(vit->second);
         if(v && v->onWhat() == master) {
@@ -114,17 +116,16 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
 
         std::vector<double> tfo = _inverse(slave->affineTransform);
 
-        Msg::Info(
-          "Relocating %d main and %d high order nodes for %d nodes "
-          "of master edge %i (%i-%i) using slave %i (%i-%i)",
-          slave->correspondingVertices.size(),
-          slave->correspondingHighOrderVertices.size(), master->getNumMeshVertices(),
-          me->tag(),
-          me->getBeginVertex() ? me->getBeginVertex()->tag() : -1,
-          me->getEndVertex() ? me->getEndVertex()->tag() : -1,
-          se->tag(),
-          se->getBeginVertex() ? se->getBeginVertex()->tag() : -1,
-          se->getEndVertex() ? se->getEndVertex()->tag() : -1);
+        Msg::Info("Relocating %d main and %d high order nodes for %d nodes "
+                  "of master edge %i (%i-%i) using slave %i (%i-%i)",
+                  slave->correspondingVertices.size(),
+                  slave->correspondingHighOrderVertices.size(),
+                  master->getNumMeshVertices(), me->tag(),
+                  me->getBeginVertex() ? me->getBeginVertex()->tag() : -1,
+                  me->getEndVertex() ? me->getEndVertex()->tag() : -1,
+                  se->tag(),
+                  se->getBeginVertex() ? se->getBeginVertex()->tag() : -1,
+                  se->getEndVertex() ? se->getEndVertex()->tag() : -1);
 
         std::map<MVertex *, MVertex *>::iterator vit;
 
@@ -136,7 +137,8 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
             v->setXYZ(v->x() + gp.x(), v->y() + gp.y(), v->z() + gp.z());
           }
         }
-        std::map<MVertex *, MVertex *> &pointS2M = slave->correspondingHighOrderVertices;
+        std::map<MVertex *, MVertex *> &pointS2M =
+          slave->correspondingHighOrderVertices;
         for(vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
           MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(vit->second);
           if(v && v->onWhat() == master) {
@@ -207,7 +209,8 @@ void HighOrderMeshPeriodicity::_copyBackMasterVertices()
 
       int idx = 0;
 
-      std::map<MVertex *, MVertex *> &pointS2M = slave->correspondingHighOrderVertices;
+      std::map<MVertex *, MVertex *> &pointS2M =
+        slave->correspondingHighOrderVertices;
       for(vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
         MFaceVertex *sv = dynamic_cast<MFaceVertex *>(vit->first);
         MFaceVertex *mv = dynamic_cast<MFaceVertex *>(vit->second);
@@ -252,7 +255,8 @@ void HighOrderMeshPeriodicity::_copyBackMasterVertices()
         }
       }
 
-      std::map<MVertex *, MVertex *> &pointS2M = slave->correspondingHighOrderVertices;
+      std::map<MVertex *, MVertex *> &pointS2M =
+        slave->correspondingHighOrderVertices;
       for(vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
         MEdgeVertex *sv = dynamic_cast<MEdgeVertex *>(vit->first);
         MEdgeVertex *mv = dynamic_cast<MEdgeVertex *>(vit->second);
@@ -286,7 +290,8 @@ SPoint3 HighOrderMeshPeriodicity::_transform(MVertex *vsource,
   return SPoint3(res[0], res[1], res[2]);
 }
 
-std::vector<double> HighOrderMeshPeriodicity::_inverse(const std::vector<double> &tfo)
+std::vector<double>
+HighOrderMeshPeriodicity::_inverse(const std::vector<double> &tfo)
 {
   std::vector<double> result(16, 0.);
   if(tfo.size() < 16) {

@@ -1,11 +1,12 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "MakeSimplex.h"
 
-StringXNumber MakeSimplexOptions_Number[] = {{GMSH_FULLRC, "View", NULL, -1.}};
+StringXNumber MakeSimplexOptions_Number[] = {
+  {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin()
@@ -115,14 +116,10 @@ MakeSimplex::MakeSimplex(int numNodes, int numComponents, int numTimeSteps)
 int MakeSimplex::numSimplices()
 {
   switch(_numNodes) {
-  case 4:
-    return 2; // quad -> 2 tris
-  case 5:
-    return 2; // pyramid -> 2 tets
-  case 6:
-    return 3; // prism -> 3 tets
-  case 8:
-    return 6; // hexa -> 6 tets
+  case 4: return 2; // quad -> 2 tris
+  case 5: return 2; // pyramid -> 2 tets
+  case 6: return 3; // prism -> 3 tets
+  case 8: return 6; // hexa -> 6 tets
   }
   return 0;
 }

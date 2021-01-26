@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -88,7 +88,7 @@ public:
                 ps[0].setVisible(false);
                 ps[0].setValue("");
                 onelab::server::instance()->set(ps[0]);
-                if(FlGui::available()) onelab_cb(0, (void *)"refresh");
+                if(FlGui::available()) onelab_cb(nullptr, (void *)"refresh");
               }
               lastRefresh = start;
             }
@@ -380,14 +380,14 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     else if(ptype == "number") {
       std::vector<onelab::number> numbers;
       get(numbers);
-      for(std::vector<onelab::number>::iterator it = numbers.begin();
+      for(auto it = numbers.begin();
           it != numbers.end(); it++)
         replies.push_back((*it).toChar());
     }
     else if(ptype == "string") {
       std::vector<onelab::string> strings;
       get(strings);
-      for(std::vector<onelab::string>::iterator it = strings.begin();
+      for(auto it = strings.begin();
           it != strings.end(); it++)
         replies.push_back((*it).toChar());
     }
@@ -553,7 +553,7 @@ new_connection:
     // loop over all the clients (usually only one, but can be more if we
     // spawned subclients) and check if data is available for one of them
     bool stop = false, haveData = false;
-    gmshLocalNetworkClient *c = 0;
+    gmshLocalNetworkClient *c = nullptr;
     std::vector<gmshLocalNetworkClient *> toDelete;
     for(int i = 0; i < getNumClients(); i++) {
       c = getClient(i);
@@ -566,8 +566,8 @@ new_connection:
           // this subclient is not active anymore: shut down and delete its
           // server and mark the client for deletion
           GmshServer *s = c->getGmshServer();
-          c->setGmshServer(0);
-          c->setFather(0);
+          c->setGmshServer(nullptr);
+          c->setFather(nullptr);
           if(s) {
             s->Shutdown();
             delete s;
@@ -620,8 +620,8 @@ new_connection:
   for(int i = 0; i < getNumClients(); i++) {
     gmshLocalNetworkClient *c = getClient(i);
     GmshServer *s = c->getGmshServer();
-    c->setGmshServer(0);
-    c->setFather(0);
+    c->setGmshServer(nullptr);
+    c->setFather(nullptr);
     if(s) {
       s->Shutdown();
       delete s;

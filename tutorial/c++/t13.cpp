@@ -30,7 +30,6 @@ int main(int argc, char **argv)
   // along sharp geometrical features. This will create new discrete surfaces,
   // curves and points.
 
-
   // Angle between two triangles above which an edge is considered as sharp:
   double angle = 40;
 

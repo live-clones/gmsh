@@ -37,7 +37,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
   // count faces and vertices; the CELUM format duplicates vertices on the
   // boundary of CAD patches
   int numf = 0, nums = 0;
-  for(fiter it = firstFace(); it != lastFace(); it++) {
+  for(auto it = firstFace(); it != lastFace(); it++) {
     GFace *f = *it;
     if(!saveAll && f->physicals.empty()) continue;
     numf += f->triangles.size();
@@ -78,7 +78,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
   */
   fprintf(fpf, "%d\n\n", numf);
   fprintf(fps, "%d %g\n\n", nums, 1.0);
-  for(fiter it = firstFace(); it != lastFace(); it++) {
+  for(auto it = firstFace(); it != lastFace(); it++) {
     GFace *f = *it;
     if(!saveAll && f->physicals.empty()) continue;
     std::vector<MVertex *> vvec;
@@ -107,7 +107,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
     }
     for(std::size_t i = 0; i < vvec.size(); i++) {
       MVertex *v = vvec[i];
-      std::map<MVertex *, CelumInfo>::iterator it = vmap.find(v);
+      auto it = vmap.find(v);
       fprintf(fps, "%ld %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n\n",
               it->first->getIndex(), it->first->x(), it->first->y(),
               it->first->z(), it->second.normal.x(), it->second.normal.y(),

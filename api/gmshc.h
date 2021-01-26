@@ -1,5 +1,5 @@
 /*
- * Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+ * Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
  *
  * See the LICENSE.txt file for license information. Please report all
  * issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -925,12 +925,22 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
                                                                            const int tag,
                                                                            int * ierr);
 
-/* Get the global edge identifier `edgeNum' for an input list of node pairs,
- * concatenated in the vector `edgeNodes'.  Warning: this is an experimental
- * feature and will probably change in a future release. */
+/* Get the global mesh edge identifier `edgeNum' for an input list of node
+ * pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
+ * experimental feature and will probably change in a future release. */
 GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n,
                                          int ** edgeNum, size_t * edgeNum_n,
                                          int * ierr);
+
+/* Create mesh edges for the entities `dimTags'. Warning: this is an
+ * experimental feature and will probably change in a future release. */
+GMSH_API void gmshModelMeshCreateEdges(int * dimTags, size_t dimTags_n,
+                                       int * ierr);
+
+/* Create mesh faces for the entities `dimTags'. Warning: this is an
+ * experimental feature and will probably change in a future release. */
+GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n,
+                                       int * ierr);
 
 /* Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
  * H(curl) basis functions. Warning: this is an experimental feature and will
@@ -2224,10 +2234,15 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   int * ierr);
 
 /* Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
- * `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'. */
+ * `dimTags' along the wire `wireTag'. The type of sweep can be specified with
+ * `trihedron' (possible values: "DiscreteTrihedron", "CorrectedFrenet",
+ * "Fixed", "Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
+ * "GuideACWithContact", "GuidePlanWithContact"). If `trihedron' is not
+ * provided, "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'. */
 GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,
                                   const int wireTag,
                                   int ** outDimTags, size_t * outDimTags_n,
+                                  const char * trihedron,
                                   int * ierr);
 
 /* Fillet the volumes `volumeTags' on the curves `curveTags' with radii

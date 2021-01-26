@@ -939,8 +939,10 @@ void drawContext::drawSmallAxes()
 
 int drawContext::fix2dCoordinates(double *x, double *y)
 {
-  int ret =
-    (*x > 99999 && *y > 99999) ? 3 : (*y > 99999) ? 2 : (*x > 99999) ? 1 : 0;
+  int ret = (*x > 99999 && *y > 99999) ? 3 :
+            (*y > 99999)               ? 2 :
+            (*x > 99999)               ? 1 :
+                                         0;
 
   if(*x < 0) // measure from right border
     *x = _right + *x;

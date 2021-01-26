@@ -68,8 +68,8 @@ private:
   // Values for reporting
   double _initObj;
   void calcScale(std::vector<double> &scale);
-  void runOptim(std::vector<double> &x,
-                const std::vector<double> &initGradObj, int itMax, int iBar);
+  void runOptim(std::vector<double> &x, const std::vector<double> &initGradObj,
+                int itMax, int iBar);
 };
 
 #endif

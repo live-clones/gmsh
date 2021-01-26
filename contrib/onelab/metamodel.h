@@ -8,10 +8,13 @@
 
 #include <string>
 
-namespace onelab{ class client; }
+namespace onelab {
+  class client;
+}
 
 int metamodel(const std::string &todo);
-void initializeMetamodel(const std::string &, onelab::client *, void (*wait)(double time), const int verbosity);
+void initializeMetamodel(const std::string &, onelab::client *,
+                         void (*wait)(double time), const int verbosity);
 
 /* PYTHON functions */
 

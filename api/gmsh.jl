@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1987,7 +1987,7 @@ end
 """
     gmsh.model.mesh.getEdgeNumber(edgeNodes)
 
-Get the global edge identifier `edgeNum` for an input list of node pairs,
+Get the global mesh edge identifier `edgeNum` for an input list of node pairs,
 concatenated in the vector `edgeNodes`.  Warning: this is an experimental
 feature and will probably change in a future release.
 
@@ -2003,6 +2003,40 @@ function getEdgeNumber(edgeNodes)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     edgeNum = unsafe_wrap(Array, api_edgeNum_[], api_edgeNum_n_[], own=true)
     return edgeNum
+end
+
+"""
+    gmsh.model.mesh.createEdges(dimTags = Tuple{Cint,Cint}[])
+
+Create mesh edges for the entities `dimTags`. Warning: this is an experimental
+feature and will probably change in a future release.
+"""
+function createEdges(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreateEdges, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.createFaces(dimTags = Tuple{Cint,Cint}[])
+
+Create mesh faces for the entities `dimTags`. Warning: this is an experimental
+feature and will probably change in a future release.
+"""
+function createFaces(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCreateFaces, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
 end
 
 """
@@ -4471,22 +4505,26 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heig
 end
 
 """
-    gmsh.model.occ.addPipe(dimTags, wireTag)
+    gmsh.model.occ.addPipe(dimTags, wireTag, trihedron = "")
 
 Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
-`dimTags` along the wire `wireTag`. Return the pipe in `outDimTags`.
+`dimTags` along the wire `wireTag`. The type of sweep can be specified with
+`trihedron` (possible values: "DiscreteTrihedron", "CorrectedFrenet", "Fixed",
+"Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
+"GuideACWithContact", "GuidePlanWithContact"). If `trihedron` is not provided,
+"DiscreteTrihedron" is assumed. Return the pipe in `outDimTags`.
 
 Return `outDimTags`.
 """
-function addPipe(dimTags, wireTag)
+function addPipe(dimTags, wireTag, trihedron = "")
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccAddPipe, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_dimTags_, api_dimTags_n_, wireTag, api_outDimTags_, api_outDimTags_n_, ierr)
+          (Ptr{Cint}, Csize_t, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cchar}, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, wireTag, api_outDimTags_, api_outDimTags_n_, trihedron, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]

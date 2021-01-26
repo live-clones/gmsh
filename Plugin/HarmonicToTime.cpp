@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,13 +7,13 @@
 #include "GmshDefines.h"
 
 StringXNumber HarmonicToTimeOptions_Number[] = {
-  {GMSH_FULLRC, "RealPart", NULL, 0.},
-  {GMSH_FULLRC, "ImaginaryPart", NULL, 1.},
-  {GMSH_FULLRC, "NumSteps", NULL, 20.},
-  {GMSH_FULLRC, "TimeSign", NULL, -1.},
-  {GMSH_FULLRC, "Frequency", NULL, 1},
-  {GMSH_FULLRC, "NumPeriods", NULL, 1},
-  {GMSH_FULLRC, "View", NULL, -1.}};
+  {GMSH_FULLRC, "RealPart", nullptr, 0.},
+  {GMSH_FULLRC, "ImaginaryPart", nullptr, 1.},
+  {GMSH_FULLRC, "NumSteps", nullptr, 20.},
+  {GMSH_FULLRC, "TimeSign", nullptr, -1.},
+  {GMSH_FULLRC, "Frequency", nullptr, 1},
+  {GMSH_FULLRC, "NumPeriods", nullptr, 1},
+  {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterHarmonicToTimePlugin()
@@ -116,7 +116,8 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView *v)
   }
 
   for(int k = 0; k < nSteps; k++) {
-    double t = frequency ? (2. * M_PI * nPeriods * k / frequency / (double)nSteps) : 0.;
+    double t =
+      frequency ? (2. * M_PI * nPeriods * k / frequency / (double)nSteps) : 0.;
     data2->Time.push_back(t);
   }
   data2->setName(data1->getName() + "_HarmonicToTime");

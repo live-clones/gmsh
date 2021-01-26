@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -75,7 +75,7 @@ public:
   }
   virtual FunctionSpaceBase *clone(const int id) const
   {
-    return NULL;
+    return nullptr;
   }; // copy space with new Id
 };
 

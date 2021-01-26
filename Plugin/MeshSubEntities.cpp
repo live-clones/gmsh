@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,10 +18,10 @@
 #include "Context.h"
 
 StringXNumber MeshSubEntitiesOptions_Number[] = {
-  {GMSH_FULLRC, "InputDimension", NULL, 1.},
-  {GMSH_FULLRC, "InputPhysicalGroup", NULL, 1.},
-  {GMSH_FULLRC, "OuputDimension", NULL, 0.},
-  {GMSH_FULLRC, "OuputPhysicalGroup", NULL, 2000.},
+  {GMSH_FULLRC, "InputDimension", nullptr, 1.},
+  {GMSH_FULLRC, "InputPhysicalGroup", nullptr, 1.},
+  {GMSH_FULLRC, "OuputDimension", nullptr, 0.},
+  {GMSH_FULLRC, "OuputPhysicalGroup", nullptr, 2000.},
 };
 
 extern "C" {
@@ -88,10 +88,9 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
         vertices.insert(v);
       }
     }
-    for(std::set<MVertex *>::const_iterator it = vertices.begin();
-        it != vertices.end(); ++it) {
+    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
       MVertex *v = *it;
-      GVertex *gv = 0;
+      GVertex *gv = nullptr;
       if(v->onWhat() && v->onWhat()->dim() == 0) {
         gv = (GVertex *)v->onWhat();
       }
@@ -113,10 +112,9 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
         edges.insert(e);
       }
     }
-    for(std::set<MEdge, MEdgeLessThan>::const_iterator it = edges.begin();
-        it != edges.end(); ++it) {
+    for(auto it = edges.begin(); it != edges.end(); ++it) {
       const MEdge &e = *it;
-      GEdge *ge = 0;
+      GEdge *ge = nullptr;
       MVertex *v0 = e.getVertex(0), *v1 = e.getVertex(1);
       if(v0->onWhat() && v1->onWhat()) {
         if(v0->onWhat()->dim() == 1 &&
@@ -129,7 +127,8 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
           ge = (GEdge *)v1->onWhat();
       }
       if(!ge) {
-        ge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, 0, 0);
+        ge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr,
+                              nullptr);
         v0->setEntity(ge);
         v1->setEntity(ge);
         m->add(ge);

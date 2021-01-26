@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1606,9 +1606,9 @@ namespace gmsh { // Top-level functions
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
 
-      // Get the global edge identifier `edgeNum' for an input list of node pairs,
-      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-      // feature and will probably change in a future release.
+      // Get the global mesh edge identifier `edgeNum' for an input list of node
+      // pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
+      // experimental feature and will probably change in a future release.
       inline void getEdgeNumber(const std::vector<int> & edgeNodes,
                                 std::vector<int> & edgeNum)
       {
@@ -1619,6 +1619,28 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
         gmshFree(api_edgeNodes_);
         edgeNum.assign(api_edgeNum_, api_edgeNum_ + api_edgeNum_n_); gmshFree(api_edgeNum_);
+      }
+
+      // Create mesh edges for the entities `dimTags'. Warning: this is an
+      // experimental feature and will probably change in a future release.
+      inline void createEdges(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshCreateEdges(api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
+      }
+
+      // Create mesh faces for the entities `dimTags'. Warning: this is an
+      // experimental feature and will probably change in a future release.
+      inline void createFaces(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshCreateFaces(api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
       }
 
       // Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
@@ -3736,16 +3758,21 @@ namespace gmsh { // Top-level functions
       }
 
       // Add a pipe in the OpenCASCADE CAD representation, by extruding the
-      // entities `dimTags' along the wire `wireTag'. Return the pipe in
-      // `outDimTags'.
+      // entities `dimTags' along the wire `wireTag'. The type of sweep can be
+      // specified with `trihedron' (possible values: "DiscreteTrihedron",
+      // "CorrectedFrenet", "Fixed", "Frenet", "ConstantNormal", "Darboux",
+      // "GuideAC", "GuidePlan", "GuideACWithContact", "GuidePlanWithContact"). If
+      // `trihedron' is not provided, "DiscreteTrihedron" is assumed. Return the
+      // pipe in `outDimTags'.
       inline void addPipe(const gmsh::vectorpair & dimTags,
                           const int wireTag,
-                          gmsh::vectorpair & outDimTags)
+                          gmsh::vectorpair & outDimTags,
+                          const std::string & trihedron = "")
       {
         int ierr = 0;
         int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
         int *api_outDimTags_; size_t api_outDimTags_n_;
-        gmshModelOccAddPipe(api_dimTags_, api_dimTags_n_, wireTag, &api_outDimTags_, &api_outDimTags_n_, &ierr);
+        gmshModelOccAddPipe(api_dimTags_, api_dimTags_n_, wireTag, &api_outDimTags_, &api_outDimTags_n_, trihedron.c_str(), &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);

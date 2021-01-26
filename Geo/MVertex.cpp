@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -420,8 +420,7 @@ static void getAllParameters(MVertex *v, GFace *gf,
     GVertex *gv = (GVertex *)v->onWhat();
     std::vector<GEdge *> const &ed = gv->edges();
     bool seam = false;
-    for(std::vector<GEdge *>::const_iterator it = ed.begin(); it != ed.end();
-        it++) {
+    for(auto it = ed.begin(); it != ed.end(); it++) {
       if((*it)->isSeam(gf)) {
         Range<double> range = (*it)->parBounds(0);
         if(gv == (*it)->getBeginVertex()) {
@@ -534,8 +533,7 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
       param = gv->reparamOnFace(gf, 1);
     // shout, we could be on a seam
     std::vector<GEdge *> const &ed = gv->edges();
-    for(std::vector<GEdge *>::const_iterator it = ed.begin(); it != ed.end();
-        it++)
+    for(auto it = ed.begin(); it != ed.end(); it++)
       if((*it)->isSeam(gf)) return false;
   }
   else if(v->onWhat()->dim() == 1) {

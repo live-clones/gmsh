@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -51,8 +51,7 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   /*
   distanceFromMeshToGeometry_t dist;
   computeDistanceFromMeshToGeometry (GModel::current(), dist);
-  for (std::map<GEntity*, double> ::iterator it = dist.d2.begin();
-       it !=dist.d2.end();++it){
+  for (auto it = dist.d2.begin(); it != dist.d2.end(); ++it){
     printf("GEntity %d of dim %d : dist %12.5E\n",
            it->first->tag(), it->first->dim(), it->second);
   }
@@ -157,7 +156,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   bool onlyVisible = (bool)o->butt[1]->value();
 
   int NE = 0;
-  for(GModel::riter it = GModel::current()->firstRegion();
+  for(auto it = GModel::current()->firstRegion();
       it != GModel::current()->lastRegion(); ++it) {
     NE += (*it)->getNumMeshElements();
   }
@@ -245,16 +244,16 @@ static void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
   // order = 2+, a prism or a pyramid if order = 3+ or a tet if order = 4+ and
   // so on...  But it is more likely that we want complete elements so always
   // setting true to 'complete' variable is acceptable.
-  for(GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
+  for(auto itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
     if((*itr)->getNumMeshElements()) {
       meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder();
-      //complete = (meshOrder <= 2) ? true :
+      // complete = (meshOrder <= 2) ? true :
       //  (*itr)->getMeshElement(0)->getNumVolumeVertices() ? true : false;
       if((*itr)->isFullyDiscrete()) CAD = false;
       break;
     }
   }
-  for(GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
+  for(auto itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
     if((*itf)->getNumMeshElements()) {
       if(meshOrder == -1) {
         meshOrder = (*itf)->getMeshElement(0)->getPolynomialOrder();
@@ -362,11 +361,11 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
   static Fl_Menu_Item menu_method[] = {
-    {"Optimization", 0, 0, 0},
-    {"Elastic Analogy", 0, 0, 0},
-    {"Fast Curving", 0, 0, 0},
-    {"Curve boundary layers (3D is experimental)", 0, 0, 0},
-    {0}};
+    {"Optimization", 0, nullptr, nullptr},
+    {"Elastic Analogy", 0, nullptr, nullptr},
+    {"Fast Curving", 0, nullptr, nullptr},
+    {"Curve boundary layers (3D is experimental)", 0, nullptr, nullptr},
+    {nullptr}};
   choice[2] = new Fl_Choice(x, y, IW, BH, "Algorithm");
   choice[2]->align(FL_ALIGN_RIGHT);
   choice[2]->menu(menu_method);
@@ -406,7 +405,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
   static Fl_Menu_Item menu_objf[] = {
-    {"Fixed", 0, 0, 0}, {"Free", 0, 0, 0}, {0}};
+    {"Fixed", 0, nullptr, nullptr}, {"Free", 0, nullptr, nullptr}, {nullptr}};
   choice[0] = new Fl_Choice(x, y, IW, BH, "Boundary nodes");
   choice[0]->menu(menu_objf);
   choice[0]->align(FL_ALIGN_RIGHT);
@@ -432,10 +431,11 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[4]->align(FL_ALIGN_RIGHT);
   value[4]->value(CTX::instance()->mesh.hoPassMax);
 
-  static Fl_Menu_Item menu_strategy[] = {{"Disjoint strong", 0, 0, 0},
-                                         {"Adaptive one-by-one", 0, 0, 0},
-                                         {"Disjoint weak", 0, 0, 0},
-                                         {0}};
+  static Fl_Menu_Item menu_strategy[] = {
+    {"Disjoint strong", 0, nullptr, nullptr},
+    {"Adaptive one-by-one", 0, nullptr, nullptr},
+    {"Disjoint weak", 0, nullptr, nullptr},
+    {nullptr}};
 
   y += BH;
   choice[3] = new Fl_Choice(x, y, IW, BH, "Strategy");

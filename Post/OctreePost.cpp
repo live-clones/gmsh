@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -258,11 +258,11 @@ OctreePost::OctreePost(PViewData *data) { _create(data); }
 
 void OctreePost::_create(PViewData *data)
 {
-  _sp = _vp = _tp = _sl = _vl = _tl = _st = _vt = _tt = 0;
-  _sq = _vq = _tq = _ss = _vs = _ts = _sh = _vh = _th = 0;
-  _si = _vi = _ti = _sy = _vy = _ty = 0;
-  _theViewDataList = 0;
-  _theViewDataGModel = 0;
+  _sp = _vp = _tp = _sl = _vl = _tl = _st = _vt = _tt = nullptr;
+  _sq = _vq = _tq = _ss = _vs = _ts = _sh = _vh = _th = nullptr;
+  _si = _vi = _ti = _sy = _vy = _ty = nullptr;
+  _theViewDataList = nullptr;
+  _theViewDataGModel = nullptr;
 
   _theViewDataGModel = dynamic_cast<PViewDataGModel *>(data);
 
@@ -422,7 +422,7 @@ static void *getElement(double P[3], Octree *octree, int nbNod, int qn,
   else {
     return Octree_Search(P, octree);
   }
-  return 0;
+  return nullptr;
 }
 
 static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
@@ -452,7 +452,7 @@ static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
     SPoint3 uvw;
     return m->getMeshElementByCoord(pt, uvw, dim);
   }
-  return 0;
+  return nullptr;
 }
 
 bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
@@ -567,55 +567,43 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
       numSteps = _theViewDataList->getNumTimeSteps();
     else if(_theViewDataGModel)
       numSteps = _theViewDataGModel->getNumTimeSteps();
-    for(int i = 0; i < numSteps * mult; i++) {
-      values[i] = 0.;
-    }
+    for(int i = 0; i < numSteps * mult; i++) { values[i] = 0.; }
   }
   else {
     for(int i = 0; i < mult; i++) values[i] = 0.;
   }
 
   if(_theViewDataList) {
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _ss, 4, qn, qx, qy, qz), 3, 4, 1, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _ss, 4, qn, qx, qy, qz),
+                                          3, 4, 1, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _sh, 8, qn, qx, qy, qz), 3, 8, 1, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _sh, 8, qn, qx, qy, qz),
+                                          3, 8, 1, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _si, 6, qn, qx, qy, qz), 3, 6, 1, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _si, 6, qn, qx, qy, qz),
+                                          3, 6, 1, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _sy, 5, qn, qx, qy, qz), 3, 5, 1, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _sy, 5, qn, qx, qy, qz),
+                                          3, 5, 1, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 2) &&
-       _getValue(getElement(P, _st, 3, qn, qx, qy, qz), 2, 3, 1, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 2) && _getValue(getElement(P, _st, 3, qn, qx, qy, qz),
+                                          2, 3, 1, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 2) &&
-       _getValue(getElement(P, _sq, 4, qn, qx, qy, qz), 2, 4, 1, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 2) && _getValue(getElement(P, _sq, 4, qn, qx, qy, qz),
+                                          2, 4, 1, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 1) &&
-       _getValue(getElement(P, _sl, 2, qn, qx, qy, qz), 1, 2, 1, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 1) && _getValue(getElement(P, _sl, 2, qn, qx, qy, qz),
+                                          1, 2, 1, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 0) &&
-       _getValue(getElement(P, _sp, 1, qn, qx, qy, qz), 0, 1, 1, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 0) && _getValue(getElement(P, _sp, 1, qn, qx, qy, qz),
+                                          0, 1, 1, P, step, values, size, grad))
       return true;
   }
   else if(_theViewDataGModel) {
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
     if(m) {
       MElement *e = getElement(P, m, qn, qx, qy, qz, dim);
-      if(_getValue(e, 1, P, step, values, size, grad)) {
-        return true;
-      }
+      if(_getValue(e, 1, P, step, values, size, grad)) { return true; }
     }
   }
 
@@ -660,46 +648,36 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
   }
 
   if(_theViewDataList) {
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _vs, 4, qn, qx, qy, qz), 3, 4, 3, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _vs, 4, qn, qx, qy, qz),
+                                          3, 4, 3, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _vh, 8, qn, qx, qy, qz), 3, 8, 3, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _vh, 8, qn, qx, qy, qz),
+                                          3, 8, 3, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _vi, 6, qn, qx, qy, qz), 3, 6, 3, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _vi, 6, qn, qx, qy, qz),
+                                          3, 6, 3, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _vy, 5, qn, qx, qy, qz), 3, 5, 3, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _vy, 5, qn, qx, qy, qz),
+                                          3, 5, 3, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 2) &&
-       _getValue(getElement(P, _vt, 3, qn, qx, qy, qz), 2, 3, 3, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 2) && _getValue(getElement(P, _vt, 3, qn, qx, qy, qz),
+                                          2, 3, 3, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 2) &&
-       _getValue(getElement(P, _vq, 4, qn, qx, qy, qz), 2, 4, 3, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 2) && _getValue(getElement(P, _vq, 4, qn, qx, qy, qz),
+                                          2, 4, 3, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 1) &&
-       _getValue(getElement(P, _vl, 2, qn, qx, qy, qz), 1, 2, 3, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 1) && _getValue(getElement(P, _vl, 2, qn, qx, qy, qz),
+                                          1, 2, 3, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 0) &&
-       _getValue(getElement(P, _vp, 1, qn, qx, qy, qz), 0, 1, 3, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 0) && _getValue(getElement(P, _vp, 1, qn, qx, qy, qz),
+                                          0, 1, 3, P, step, values, size, grad))
       return true;
   }
   else if(_theViewDataGModel) {
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
     if(m) {
       MElement *e = getElement(P, m, qn, qx, qy, qz, dim);
-      if(_getValue(e, 3, P, step, values, size, grad)) {
-        return true;
-      }
+      if(_getValue(e, 3, P, step, values, size, grad)) { return true; }
     }
   }
 
@@ -744,46 +722,36 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
   }
 
   if(_theViewDataList) {
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _ts, 4, qn, qx, qy, qz), 3, 4, 9, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _ts, 4, qn, qx, qy, qz),
+                                          3, 4, 9, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _th, 8, qn, qx, qy, qz), 3, 8, 9, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _th, 8, qn, qx, qy, qz),
+                                          3, 8, 9, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _ti, 6, qn, qx, qy, qz), 3, 6, 9, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _ti, 6, qn, qx, qy, qz),
+                                          3, 6, 9, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 3) &&
-       _getValue(getElement(P, _ty, 5, qn, qx, qy, qz), 3, 5, 9, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 3) && _getValue(getElement(P, _ty, 5, qn, qx, qy, qz),
+                                          3, 5, 9, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 2) &&
-       _getValue(getElement(P, _tt, 3, qn, qx, qy, qz), 2, 3, 9, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 2) && _getValue(getElement(P, _tt, 3, qn, qx, qy, qz),
+                                          2, 3, 9, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 2) &&
-       _getValue(getElement(P, _tq, 4, qn, qx, qy, qz), 2, 4, 9, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 2) && _getValue(getElement(P, _tq, 4, qn, qx, qy, qz),
+                                          2, 4, 9, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 1) &&
-       _getValue(getElement(P, _tl, 2, qn, qx, qy, qz), 1, 2, 9, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 1) && _getValue(getElement(P, _tl, 2, qn, qx, qy, qz),
+                                          1, 2, 9, P, step, values, size, grad))
       return true;
-    if((dim < 0 || dim == 0) &&
-       _getValue(getElement(P, _tp, 1, qn, qx, qy, qz), 0, 1, 9, P, step,
-                 values, size, grad))
+    if((dim < 0 || dim == 0) && _getValue(getElement(P, _tp, 1, qn, qx, qy, qz),
+                                          0, 1, 9, P, step, values, size, grad))
       return true;
   }
   else if(_theViewDataGModel) {
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
     if(m) {
       MElement *e = getElement(P, m, qn, qx, qy, qz, dim);
-      if(_getValue(e, 9, P, step, values, size, grad)) {
-        return true;
-      }
+      if(_getValue(e, 9, P, step, values, size, grad)) { return true; }
     }
   }
 

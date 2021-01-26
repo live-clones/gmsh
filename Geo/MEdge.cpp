@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -76,21 +76,20 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
     MVertex *v0 = e[i].getVertex(0);
     MVertex *v1 = e[i].getVertex(1);
 
-    std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan>
-      ::iterator it0 = c.find(v0), it1 = c.find(v1);
+    auto it0 = c.find(v0), it1 = c.find(v1);
     if(it0 == c.end())
-      c[v0] = std::make_pair(v1, (MVertex *)NULL);
+      c[v0] = std::make_pair(v1, (MVertex *)nullptr);
     else {
-      if(it0->second.second == NULL) { it0->second.second = v1; }
+      if(it0->second.second == nullptr) { it0->second.second = v1; }
       else {
         Msg::Debug("A list of edges has points that are adjacent to 3 edges");
         return false;
       }
     }
     if(it1 == c.end())
-      c[v1] = std::make_pair(v0, (MVertex *)NULL);
+      c[v1] = std::make_pair(v0, (MVertex *)nullptr);
     else {
-      if(it1->second.second == NULL) { it1->second.second = v0; }
+      if(it1->second.second == nullptr) { it1->second.second = v0; }
       else {
         Msg::Debug("Wrong topology for a list of edges");
         Msg::Debug("Node %d is adjacent to more than 2 nodes %d %d",
@@ -103,21 +102,19 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
 
   while(!c.empty()) {
     std::vector<MVertex *> v;
-    MVertex *start = NULL;
+    MVertex *start = nullptr;
     {
-      std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan>
-        ::iterator it = c.begin();
+      auto it = c.begin();
       start = it->first;
       for(; it != c.end(); ++it) {
-        if(it->second.second == NULL) {
+        if(it->second.second == nullptr) {
           start = it->first;
           break;
         }
       }
     }
 
-    std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan >
-      ::iterator its = c.find(start);
+    auto its = c.find(start);
 
     MVertex *prev =
       (its->second.second == start) ? its->second.first : its->second.second;
@@ -129,9 +126,8 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
         return false;
       }
       v.push_back(current);
-      std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan>
-        ::iterator it = c.find(current);
-      if(it == c.end() || it->first == NULL) {
+      auto it = c.find(current);
+      if(it == c.end() || it->first == nullptr) {
         Msg::Error("Impossible to find %d", current->getNum());
         return false;
       }
@@ -148,7 +144,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       }
       prev = temp;
       if(current == start) { v.push_back(current); }
-    } while(current != start && current != NULL);
+    } while(current != start && current != nullptr);
     if(v.size() > 2 && v[v.size() - 2] == v[v.size() - 1]) {
       v.erase(v.begin() + v.size() - 1);
     }

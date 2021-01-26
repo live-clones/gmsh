@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -120,9 +120,7 @@ public:
   }
   int getFontSize()
   {
-    if(CTX::instance()->fontSize > 0) {
-      return CTX::instance()->fontSize;
-    }
+    if(CTX::instance()->fontSize > 0) { return CTX::instance()->fontSize; }
     else {
       int h = Fl::h(); // main (first) screen
       if(h < 800)
@@ -150,7 +148,7 @@ public:
   void drawString(const char *str) { gl_draw(str); }
   void resetFontTextures()
   {
-#if ((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
+#if((FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)) || defined(__APPLE__)
     // force font texture recomputation
     gl_texture_pile_height(gl_texture_pile_height());
 #endif

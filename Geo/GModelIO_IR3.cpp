@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,9 +19,9 @@ int GModel::writeIR3(const std::string &name, int elementTagType, bool saveAll,
   if(noPhysicalGroups()) saveAll = true;
 
   int numVertices = indexMeshVertices(saveAll), num2D = 0, num3D = 0;
-  for(fiter it = firstFace(); it != lastFace(); ++it)
+  for(auto it = firstFace(); it != lastFace(); ++it)
     if(saveAll || (*it)->physicals.size()) num2D += (*it)->getNumMeshElements();
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
     if(saveAll || (*it)->physicals.size()) num3D += (*it)->getNumMeshElements();
 
   fprintf(fp, "33\n");
@@ -43,7 +43,7 @@ int GModel::writeIR3(const std::string &name, int elementTagType, bool saveAll,
                 entities[i]->mesh_vertices[j]->z() * scalingFactor);
 
   int iElement = 1;
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     int numPhys = (*it)->physicals.size();
     if(saveAll || numPhys)
       for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++)
@@ -53,7 +53,7 @@ int GModel::writeIR3(const std::string &name, int elementTagType, bool saveAll,
   }
 
   iElement = 1;
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     int numPhys = (*it)->physicals.size();
     if(saveAll || numPhys)
       for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++)

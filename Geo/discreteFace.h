@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,7 +26,7 @@ private:
     std::vector<MTriangle> t3d;
     std::vector<SVector3> CURV;
     double umin, umax, vmin, vmax;
-    param() : oct(NULL), umin(-1), umax(1), vmin(-1), vmax(1) {}
+    param() : oct(nullptr), umin(-1), umax(1), vmin(-1), vmax(1) {}
     ~param();
     bool empty() const { return t2d.empty(); }
     void clear();
@@ -36,6 +36,7 @@ private:
   void _createGeometryFromSTL();
   void _computeSTLNormals();
   void _debugParametrization(bool uv);
+
 public:
   discreteFace(GModel *model, int num);
   discreteFace(GModel *model);
@@ -46,7 +47,7 @@ public:
   Range<double> parBounds(int i) const;
   bool containsParam(const SPoint2 &pt);
   GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance,
-                      SVector3 *normal = NULL) const;
+                      SVector3 *normal = nullptr) const;
   GPoint closestPoint(const SPoint3 &queryPoint,
                       const double initialGuess[2]) const;
   SVector3 normal(const SPoint2 &param) const;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -447,8 +447,7 @@ void _getIndicesReversedHex(int order, IndicesReversed &indices)
 
 void MHexahedronN::reverse()
 {
-  std::map<int, IndicesReversed>::iterator it;
-  it = _order2indicesReversedHex.find(_order);
+  auto it = _order2indicesReversedHex.find(_order);
   if(it == _order2indicesReversedHex.end()) {
     IndicesReversed indices;
     _getIndicesReversedHex(_order, indices);
@@ -464,12 +463,8 @@ void MHexahedronN::reverse()
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 8);
 
   // reverse
-  for(int i = 0; i < 8; ++i) {
-    _v[i] = oldv[indices[i]];
-  }
-  for(std::size_t i = 0; i < _vs.size(); ++i) {
-    _vs[i] = oldv[indices[8 + i]];
-  }
+  for(int i = 0; i < 8; ++i) { _v[i] = oldv[indices[i]]; }
+  for(std::size_t i = 0; i < _vs.size(); ++i) { _vs[i] = oldv[indices[8 + i]]; }
 }
 
 // void _getIndicesHighOrderFace(int order, int numFace, int sign, int rot,

@@ -25,10 +25,11 @@ int main(int argc, char **argv)
     return 0;
   }
 
-  // If the post-processing view was model-based instead of list-based (i.e. if it
-  // was based on an actual mesh), we would need to create a new model to contain
-  // the geometry so that meshing it does not destroy the background mesh. It's not
-  // necessary here since the view is list-based, but it does no harm:
+  // If the post-processing view was model-based instead of list-based (i.e. if
+  // it was based on an actual mesh), we would need to create a new model to
+  // contain the geometry so that meshing it does not destroy the background
+  // mesh. It's not necessary here since the view is list-based, but it does no
+  // harm:
   gmsh::model::add("t7");
 
   // Create a simple rectangular geometry:

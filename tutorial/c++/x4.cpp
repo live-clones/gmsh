@@ -32,10 +32,9 @@ int main(int argc, char **argv)
   // node-based data:
   int t1 = gmsh::view::add("A model-based view");
   for(int step = 0; step < 10; step++) {
-    gmsh::view::addHomogeneousModelData
-      (t1, step, "simple model", "NodeData",
-       {1, 2, 3, 4},  // tags of nodes
-       {10., 10., 12. + step, 13. + step});  // data, per node
+    gmsh::view::addHomogeneousModelData(
+      t1, step, "simple model", "NodeData", {1, 2, 3, 4}, // tags of nodes
+      {10., 10., 12. + step, 13. + step}); // data, per node
   }
 
   // Besided node-based data, which result in continuous fields, one can also
@@ -44,9 +43,8 @@ int main(int argc, char **argv)
   int t2 = gmsh::view::add("A discontinuous model-based view");
   for(int step = 0; step < 10; step++) {
     gmsh::view::addHomogeneousModelData(
-        t2, step, "simple model", "ElementNodeData",
-        {1, 2},  // tags of elements
-        {10., 10., 12. + step, 14., 15., 13. + step});  // data per element nodes
+      t2, step, "simple model", "ElementNodeData", {1, 2}, // tags of elements
+      {10., 10., 12. + step, 14., 15., 13. + step}); // data per element nodes
   }
 
   // Constant per element datasets can also be created using "ElementData". Note
@@ -69,8 +67,8 @@ int main(int argc, char **argv)
     std::vector<double> val;
     for(std::size_t i = 0; i < coord.size(); i += 3)
       val.push_back(step * coord[i]);
-    gmsh::view::addHomogeneousModelData
-      (t1, step, "another model", "NodeData", nodes, val);
+    gmsh::view::addHomogeneousModelData(t1, step, "another model", "NodeData",
+                                        nodes, val);
   }
 
   // This feature allows to create seamless animations for time-dependent

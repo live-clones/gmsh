@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -347,11 +347,17 @@ mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('fun
 doc = '''Preallocate data before calling `getBasisFunctionsOrientationForElements' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateBasisFunctionsOrientationForElements', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
-doc = '''Get the global edge identifier `edgeNum' for an input list of node pairs, concatenated in the vector `edgeNodes'.  Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getEdgeNumber',doc,None,ivectorint('edgeNodes'),ovectorint('edgeNum'))
+doc = '''Get the global mesh edge identifier `edgeNum' for an input list of node pairs, concatenated in the vector `edgeNodes'.  Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getEdgeNumber', doc, None, ivectorint('edgeNodes'), ovectorint('edgeNum'))
+
+doc = '''Create mesh edges for the entities `dimTags'. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('createEdges', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
+doc = '''Create mesh faces for the entities `dimTags'. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('createFaces', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
 doc = '''Get the local multipliers (to guarantee H(curl)-conformity) of the order 0 H(curl) basis functions. Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getLocalMultipliersForHcurl0',doc,None,iint('elementType'),ovectorint('localMultipliers'),iint('tag','-1'))
+mesh.add('getLocalMultipliersForHcurl0', doc, None, iint('elementType'), ovectorint('localMultipliers'), iint('tag','-1'))
 
 doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
@@ -740,8 +746,8 @@ occ.add('extrude', doc, None, ivectorpair('dimTags'), idouble('dx'), idouble('dy
 doc = '''Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using a rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. When the mesh is extruded the angle should be strictly smaller than 2*Pi. If `recombine' is set, recombine the mesh in the layers.'''
 occ.add('revolve', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'), idouble('z'), idouble('ax'), idouble('ay'), idouble('az'), idouble('angle'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
-doc = '''Add a pipe in the OpenCASCADE CAD representation, by extruding the entities `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'.'''
-occ.add('addPipe', doc, None, ivectorpair('dimTags'), iint('wireTag'), ovectorpair('outDimTags'))
+doc = '''Add a pipe in the OpenCASCADE CAD representation, by extruding the entities `dimTags' along the wire `wireTag'. The type of sweep can be specified with `trihedron' (possible values: "DiscreteTrihedron", "CorrectedFrenet", "Fixed", "Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan", "GuideACWithContact", "GuidePlanWithContact"). If `trihedron' is not provided, "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'.'''
+occ.add('addPipe', doc, None, ivectorpair('dimTags'), iint('wireTag'), ovectorpair('outDimTags'), istring('trihedron', '""'))
 
 doc = '''Fillet the volumes `volumeTags' on the curves `curveTags' with radii `radii'. The `radii' vector can either contain a single radius, as many radii as `curveTags', or twice as many as `curveTags' (in which case different radii are provided for the begin and end points of the curves). Return the filleted entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
 occ.add('fillet', doc, None, ivectorint('volumeTags'), ivectorint('curveTags'), ivectordouble('radii'), ovectorpair('outDimTags'), ibool('removeVolume', 'true', 'True'))

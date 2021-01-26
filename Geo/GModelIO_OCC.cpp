@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1895,9 +1895,10 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
         Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
         if(wire3D) {
           // use the 3D curves in the wire and project them onto the patch
-          Handle(Geom_Curve) cProj = GeomProjLib::Project
-            (new Geom_TrimmedCurve(c, first, last, Standard_True, Standard_False),
-             surf);
+          Handle(Geom_Curve) cProj = GeomProjLib::Project(
+            new Geom_TrimmedCurve(c, first, last, Standard_True,
+                                  Standard_False),
+            surf);
           TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge(
             cProj, cProj->FirstParameter(), cProj->LastParameter());
           w.Add(edgeProj);
@@ -2646,9 +2647,15 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
       }
       exclude.Append(_tagFace.Find(excludeFaceTags[i]));
     }
+#if OCC_VERSION_HEX > 0x070400
+    BRepOffsetAPI_MakeThickSolid ts;
+    ts.MakeThickSolidByJoin(shape, exclude, offset,
+                            CTX::instance()->geom.tolerance);
+#else
     BRepOffsetAPI_MakeThickSolid ts(shape, exclude, offset,
                                     CTX::instance()->geom.tolerance);
     ts.Build();
+#endif
     if(!ts.IsDone()) {
       Msg::Error("Could not build thick solid");
       return false;
@@ -2775,7 +2782,7 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge)
     while(++recur < CTX::instance()->mesh.maxRetries) {
       if(ge->tag() == p->geo.Source) {
         Msg::Info("Extrusion layer cycle detected for curve %d", ge->tag());
-        e = 0;
+        e = nullptr;
         break;
       }
       GEdge *src = ge->model()->getEdgeByTag(p->geo.Source);
@@ -2809,7 +2816,7 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GFace *gf)
     while(++recur < CTX::instance()->mesh.maxRetries) {
       if(gf->tag() == p->geo.Source) {
         Msg::Info("Extrusion layer cycle detected for surface %d", gf->tag());
-        e = 0;
+        e = nullptr;
         break;
       }
       GFace *src = gf->model()->getFaceByTag(p->geo.Source);
@@ -2880,7 +2887,7 @@ bool OCC_Internals::_extrudePerDim(
   int mode, int inDim, const std::vector<int> &inTags, double x, double y,
   double z, double dx, double dy, double dz, double ax, double ay, double az,
   double angle, int wireTag, std::vector<std::pair<int, int> > &outDimTags,
-  ExtrudeParams *e)
+  ExtrudeParams *e, const std::string &trihedron)
 {
   // build a single compound shape, so that we won't duplicate internal
   // boundaries
@@ -2910,8 +2917,8 @@ bool OCC_Internals::_extrudePerDim(
       }
       result = p.Shape();
       const BRepSweep_Prism &prism(p.Prism());
-      _setExtrudedAttributes(c, (BRepSweep_Prism *)&prism, 0, e, 0., 0., 0., dx,
-                             dy, dz, 0., 0., 0., 0.);
+      _setExtrudedAttributes(c, (BRepSweep_Prism *)&prism, nullptr, e, 0., 0.,
+                             0., dx, dy, dz, 0., 0., 0., 0.);
       dim = getReturnedShapes(c, (BRepSweep_Prism *)&prism, top, body, lateral);
     }
     else if(mode == 1) { // revolve
@@ -2924,8 +2931,8 @@ bool OCC_Internals::_extrudePerDim(
       }
       result = r.Shape();
       const BRepSweep_Revol &revol(r.Revol());
-      _setExtrudedAttributes(c, 0, (BRepSweep_Revol *)&revol, e, x, y, z, 0.,
-                             0., 0., ax, ay, az, angle);
+      _setExtrudedAttributes(c, nullptr, (BRepSweep_Revol *)&revol, e, x, y, z,
+                             0., 0., 0., ax, ay, az, angle);
       dim = getReturnedShapes(c, (BRepSweep_Revol *)&revol, top, body, lateral);
     }
     else if(mode == 2) { // pipe
@@ -2934,15 +2941,33 @@ bool OCC_Internals::_extrudePerDim(
         return false;
       }
       TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
-      BRepOffsetAPI_MakePipe p(wire, c, GeomFill_IsDiscreteTrihedron);
-      // Available choices:
-      //   GeomFill_IsCorrectedFrenet, GeomFill_IsFixed, GeomFill_IsFrenet,
-      //   GeomFill_IsConstantNormal, GeomFill_IsDarboux, GeomFill_IsGuideAC,
-      //   GeomFill_IsGuidePlan, GeomFill_IsGuideACWithContact,
-      //   GeomFill_IsGuidePlanWithContact, GeomFill_IsDiscreteTrihedron
       // DiscreteTrihedron seems the most robust; CorrectedFrenet e.g. fails on
-      // very simple cases with straight extrusions. We might want to make this
-      // an option.
+      // very simple cases with straight extrusions.
+      GeomFill_Trihedron mode = GeomFill_IsDiscreteTrihedron;
+      if(trihedron == "" || trihedron == "DiscreteTrihedron")
+        mode = GeomFill_IsDiscreteTrihedron;
+      else if(trihedron == "CorrectedFrenet")
+        mode = GeomFill_IsCorrectedFrenet;
+      else if(trihedron == "Fixed")
+        mode = GeomFill_IsFixed;
+      else if(trihedron == "Frenet")
+        mode = GeomFill_IsFrenet;
+      else if(trihedron == "ConstantNormal")
+        mode = GeomFill_IsConstantNormal;
+      else if(trihedron == "Darboux")
+        mode = GeomFill_IsDarboux;
+      else if(trihedron == "GuideAC")
+        mode = GeomFill_IsGuideAC;
+      else if(trihedron == "GuidePlan")
+        mode = GeomFill_IsGuidePlan;
+      else if(trihedron == "GuideACWithContact")
+        mode = GeomFill_IsGuideACWithContact;
+      else if(trihedron == "GuidePlanWithContact")
+        mode = GeomFill_IsGuidePlanWithContact;
+      else
+        Msg::Warning(
+          "Unknown trihedron mode for pipe: using 'DiscreteTrihedron'");
+      BRepOffsetAPI_MakePipe p(wire, c, mode);
       p.Build();
       if(!p.IsDone()) {
         Msg::Error("Could not create pipe");
@@ -2997,7 +3022,7 @@ bool OCC_Internals::_extrude(int mode,
                              double dz, double ax, double ay, double az,
                              double angle, int wireTag,
                              std::vector<std::pair<int, int> > &outDimTags,
-                             ExtrudeParams *e)
+                             ExtrudeParams *e, const std::string &trihedron)
 {
   std::vector<int> inTags[4];
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
@@ -3012,7 +3037,7 @@ bool OCC_Internals::_extrude(int mode,
     if(!inTags[dim].empty()) {
       std::vector<std::pair<int, int> > out;
       if(_extrudePerDim(mode, dim, inTags[dim], x, y, z, dx, dy, dz, ax, ay, az,
-                        angle, wireTag, out, e)) {
+                        angle, wireTag, out, e, trihedron)) {
         outDimTags.insert(outDimTags.end(), out.begin(), out.end());
       }
     }
@@ -3041,10 +3066,11 @@ bool OCC_Internals::revolve(const std::vector<std::pair<int, int> > &inDimTags,
 
 bool OCC_Internals::addPipe(const std::vector<std::pair<int, int> > &inDimTags,
                             int wireTag,
-                            std::vector<std::pair<int, int> > &outDimTags)
+                            std::vector<std::pair<int, int> > &outDimTags,
+                            const std::string &trihedron)
 {
   return _extrude(2, inDimTags, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., wireTag,
-                  outDimTags);
+                  outDimTags, nullptr, trihedron);
 }
 
 bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
@@ -3371,7 +3397,8 @@ bool OCC_Internals::booleanOperator(
         if(_isBound(d, t)) unbind(_find(d, t), d, t, true);
       }
     }
-    _multiBind(result, tag, outDimTags, true, true);
+    _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
+               (tag >= 0) ? false : true);
     _filterTags(outDimTags, minDim);
   }
   else {
@@ -3429,7 +3456,7 @@ bool OCC_Internals::booleanOperator(
     if(mapDeleted[i]) { // deleted
     }
     else if(mapModified[i].Extent() == 0) { // not modified
-      dimTags.push_back(dimTag);
+      if(_isBound(dim, tag)) dimTags.push_back(dimTag);
     }
     else {
       TopTools_ListIteratorOfListOfShape it(mapModified[i]);
@@ -3664,7 +3691,7 @@ bool OCC_Internals::translate(
     gp_Trsf t;
     t.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(dx, dy, dz));
     BRepBuilderAPI_Transform tfo(t);
-    return _transform(inDimTags, &tfo, 0);
+    return _transform(inDimTags, &tfo, nullptr);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -3680,7 +3707,7 @@ bool OCC_Internals::rotate(const std::vector<std::pair<int, int> > &inDimTags,
     gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(ax, ay, az));
     t.SetRotation(axisOfRevolution, angle);
     BRepBuilderAPI_Transform tfo(t);
-    return _transform(inDimTags, &tfo, 0);
+    return _transform(inDimTags, &tfo, nullptr);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -3696,7 +3723,7 @@ bool OCC_Internals::dilate(const std::vector<std::pair<int, int> > &inDimTags,
     gt.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
     gt.SetTranslationPart(gp_XYZ(x * (1 - a), y * (1 - b), z * (1 - c)));
     BRepBuilderAPI_GTransform gtfo(gt);
-    return _transform(inDimTags, 0, &gtfo);
+    return _transform(inDimTags, nullptr, &gtfo);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -3716,7 +3743,7 @@ bool OCC_Internals::symmetry(const std::vector<std::pair<int, int> > &inDimTags,
                                1. + c * c * f));
     gt.SetTranslationPart(gp_XYZ(a * d * f, b * d * f, c * d * f));
     BRepBuilderAPI_GTransform gtfo(gt);
-    return _transform(inDimTags, 0, &gtfo);
+    return _transform(inDimTags, nullptr, &gtfo);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -3737,7 +3764,7 @@ bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
       gp_Mat(a[0], a[1], a[2], a[4], a[5], a[6], a[8], a[9], a[10]));
     gt.SetTranslationPart(gp_XYZ(a[3], a[7], a[11]));
     BRepBuilderAPI_GTransform gtfo(gt);
-    return _transform(inDimTags, 0, &gtfo);
+    return _transform(inDimTags, nullptr, &gtfo);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -3830,14 +3857,12 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
     int dim =
-      (shape.ShapeType() == TopAbs_VERTEX) ?
-        0 :
-        (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
-        1 :
-        (shape.ShapeType() == TopAbs_FACE ||
-         shape.ShapeType() == TopAbs_SHELL) ?
-        2 :
-        3;
+      (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
+      (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
+                                             1 :
+      (shape.ShapeType() == TopAbs_FACE || shape.ShapeType() == TopAbs_SHELL) ?
+                                             2 :
+                                             3;
 
     Handle(TCollection_HAsciiString) matName;
     Handle(TCollection_HAsciiString) matDescription;
@@ -4040,24 +4065,22 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-      it++) {
+  for(auto it = model->firstRegion(); it != model->lastRegion(); it++) {
     GRegion *gr = *it;
     if(gr->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Solid *)gr->getNativePtr());
   }
-  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); it++) {
+  for(auto it = model->firstFace(); it != model->lastFace(); it++) {
     GFace *gf = *it;
     if(!gf->numRegions() && gf->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Face *)gf->getNativePtr());
   }
-  for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); it++) {
+  for(auto it = model->firstEdge(); it != model->lastEdge(); it++) {
     GEdge *ge = *it;
     if(!ge->numFaces() && ge->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Edge *)ge->getNativePtr());
   }
-  for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
-      it++) {
+  for(auto it = model->firstVertex(); it != model->lastVertex(); it++) {
     GVertex *gv = *it;
     if(!gv->numEdges() && gv->getNativeType() == GEntity::OpenCascadeModel)
       b.Add(c, *(TopoDS_Vertex *)gv->getNativePtr());
@@ -4437,7 +4460,7 @@ GVertex *OCC_Internals::getVertexForOCCShape(GModel *model,
 {
   if(_vertexTag.IsBound(toFind))
     return model->getVertexByTag(_vertexTag.Find(toFind));
-  return 0;
+  return nullptr;
 }
 
 GEdge *OCC_Internals::getEdgeForOCCShape(GModel *model,
@@ -4445,7 +4468,7 @@ GEdge *OCC_Internals::getEdgeForOCCShape(GModel *model,
 {
   if(_edgeTag.IsBound(toFind))
     return model->getEdgeByTag(_edgeTag.Find(toFind));
-  return 0;
+  return nullptr;
 }
 
 GFace *OCC_Internals::getFaceForOCCShape(GModel *model,
@@ -4453,7 +4476,7 @@ GFace *OCC_Internals::getFaceForOCCShape(GModel *model,
 {
   if(_faceTag.IsBound(toFind))
     return model->getFaceByTag(_faceTag.Find(toFind));
-  return 0;
+  return nullptr;
 }
 
 GRegion *OCC_Internals::getRegionForOCCShape(GModel *model,
@@ -4461,7 +4484,7 @@ GRegion *OCC_Internals::getRegionForOCCShape(GModel *model,
 {
   if(_solidTag.IsBound(toFind))
     return model->getRegionByTag(_solidTag.Find(toFind));
-  return 0;
+  return nullptr;
 }
 
 void OCC_Internals::_addShapeToMaps(const TopoDS_Shape &shape)
@@ -5121,7 +5144,7 @@ bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
                                 std::vector<SPoint2> &vertices_uv,
                                 std::vector<int> &triangles)
 {
-  return makeSTL(s, &vertices_uv, 0, 0, triangles);
+  return makeSTL(s, &vertices_uv, nullptr, nullptr, triangles);
 }
 
 bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
@@ -5138,7 +5161,7 @@ bool OCC_Internals::makeFaceSTL(const TopoDS_Face &s,
                                 std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)
 {
-  return makeSTL(s, 0, &vertices, &normals, triangles);
+  return makeSTL(s, nullptr, &vertices, &normals, triangles);
 }
 
 bool OCC_Internals::_makeSTL(const TopoDS_Shape &s,
@@ -5150,7 +5173,7 @@ bool OCC_Internals::_makeSTL(const TopoDS_Shape &s,
   TopExp_Explorer exp0;
   for(exp0.Init(s, TopAbs_FACE); exp0.More(); exp0.Next()) {
     TopoDS_Face face = TopoDS::Face(exp0.Current());
-    bool tmp = makeSTL(TopoDS::Face(face.Oriented(TopAbs_FORWARD)), 0,
+    bool tmp = makeSTL(TopoDS::Face(face.Oriented(TopAbs_FORWARD)), nullptr,
                        &vertices, &normals, triangles);
     if(!tmp) ret = false;
   }
@@ -5287,7 +5310,7 @@ void GModel::createOCCInternals()
 void GModel::deleteOCCInternals()
 {
   if(_occ_internals) delete _occ_internals;
-  _occ_internals = 0;
+  _occ_internals = nullptr;
 }
 
 void GModel::resetOCCInternals()
@@ -5360,7 +5383,7 @@ int GModel::importOCCShape(const void *shape)
 
 GVertex *GModel::getVertexForOCCShape(const void *shape)
 {
-  if(!_occ_internals) return 0;
+  if(!_occ_internals) return nullptr;
 #if defined(HAVE_OCC)
   return _occ_internals->getVertexForOCCShape(this, *(TopoDS_Vertex *)shape);
 #else
@@ -5370,7 +5393,7 @@ GVertex *GModel::getVertexForOCCShape(const void *shape)
 
 GEdge *GModel::getEdgeForOCCShape(const void *shape)
 {
-  if(!_occ_internals) return 0;
+  if(!_occ_internals) return nullptr;
 #if defined(HAVE_OCC)
   return _occ_internals->getEdgeForOCCShape(this, *(TopoDS_Edge *)shape);
 #else
@@ -5380,7 +5403,7 @@ GEdge *GModel::getEdgeForOCCShape(const void *shape)
 
 GFace *GModel::getFaceForOCCShape(const void *shape)
 {
-  if(!_occ_internals) return 0;
+  if(!_occ_internals) return nullptr;
 #if defined(HAVE_OCC)
   return _occ_internals->getFaceForOCCShape(this, *(TopoDS_Face *)shape);
 #else
@@ -5390,7 +5413,7 @@ GFace *GModel::getFaceForOCCShape(const void *shape)
 
 GRegion *GModel::getRegionForOCCShape(const void *shape)
 {
-  if(!_occ_internals) return 0;
+  if(!_occ_internals) return nullptr;
 #if defined(HAVE_OCC)
   return _occ_internals->getRegionForOCCShape(this, *(TopoDS_Solid *)shape);
 #else

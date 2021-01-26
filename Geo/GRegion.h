@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -45,7 +45,7 @@ public:
   virtual int dim() const { return 3; }
 
   // returns the parent entity for partitioned entities
-  virtual GEntity *getParentEntity() { return 0; }
+  virtual GEntity *getParentEntity() { return nullptr; }
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive = false);
@@ -151,10 +151,7 @@ public:
     double meshSize;
   } meshAttributes;
 
-  virtual double getMeshSize() const
-  {
-    return meshAttributes.meshSize;
-  }
+  virtual double getMeshSize() const { return meshAttributes.meshSize; }
 
   // a array for accessing the transfinite vertices using a triplet of
   // indices
@@ -179,7 +176,8 @@ public:
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns() { return &_columns; }
 
-  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
+  virtual bool reorder(const int elementType,
+                       const std::vector<std::size_t> &ordering);
 
   // set the reverseMesh constraint in the bounding surfaces so that the
   // boundary mesh has outward pointing normals, based on the STL triangulation

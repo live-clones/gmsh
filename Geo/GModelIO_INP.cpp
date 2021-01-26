@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,11 +21,10 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T *> &elements,
   if(elements.size() && (saveAll || ge->physicals.size())) {
     const char *typ = elements[0]->getStringForINP();
     if(typ) {
-      const char *str =
-        (ge->dim() == 3) ? "Volume" :
-        (ge->dim() == 2) ? "Surface" :
-        (ge->dim() == 1) ? "Line" :
-        "Point"; // currently unused
+      const char *str = (ge->dim() == 3) ? "Volume" :
+                        (ge->dim() == 2) ? "Surface" :
+                        (ge->dim() == 1) ? "Line" :
+                                           "Point"; // currently unused
       fprintf(fp, "*ELEMENT, type=%s, ELSET=%s%d\n", typ, str, ge->tag());
       for(std::size_t i = 0; i < elements.size(); i++)
         elements[i]->writeINP(fp, elements[i]->getNum());
@@ -42,7 +41,7 @@ static std::string physicalName(GModel *m, int dim, int num)
             (dim == 3) ? "PhysicalVolume" :
             (dim == 2) ? "PhysicalSurface" :
             (dim == 1) ? "PhysicalLine" :
-            "PhysicalPoint",
+                         "PhysicalPoint",
             num);
     name = tmp;
   }
@@ -60,7 +59,7 @@ static std::string elementaryName(GModel *m, int dim, int num)
             (dim == 3) ? "Volume" :
             (dim == 2) ? "Surface" :
             (dim == 1) ? "Line" :
-            "Point",
+                         "Point",
             num);
     name = tmp;
   }
@@ -94,17 +93,17 @@ int GModel::writeINP(const std::string &name, bool saveAll,
       entities[i]->mesh_vertices[j]->writeINP(fp, scalingFactor);
 
   fprintf(fp, "******* E L E M E N T S *************\n");
-  for(viter it = firstVertex(); it != lastVertex(); ++it) {
+  for(auto it = firstVertex(); it != lastVertex(); ++it) {
     writeElementsINP(fp, *it, (*it)->points, saveAll);
   }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+  for(auto it = firstEdge(); it != lastEdge(); ++it) {
     writeElementsINP(fp, *it, (*it)->lines, saveAll);
   }
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     writeElementsINP(fp, *it, (*it)->triangles, saveAll);
     writeElementsINP(fp, *it, (*it)->quadrangles, saveAll);
   }
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     writeElementsINP(fp, *it, (*it)->tetrahedra, saveAll);
     writeElementsINP(fp, *it, (*it)->hexahedra, saveAll);
     writeElementsINP(fp, *it, (*it)->prisms, saveAll);
@@ -118,8 +117,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     // save elements sets for each physical group (currently we don't save point
     // elements: is there this concept in Abaqus?)
     for(int dim = 1; dim <= 3; dim++) {
-      for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
-          it != groups[dim].end(); it++) {
+      for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::vector<GEntity *> &entities = it->second;
         fprintf(fp, "*ELSET,ELSET=%s\n",
                 physicalName(this, dim, it->first).c_str());
@@ -141,8 +139,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     // save a node set for each physical group (here we include node sets on
     // physical points)
     for(int dim = 0; dim <= 3; dim++) {
-      for(std::map<int, std::vector<GEntity *> >::iterator it = groups[dim].begin();
-          it != groups[dim].end(); it++) {
+      for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::set<MVertex *, MVertexPtrLessThan> nodes;
         std::vector<GEntity *> &entities = it->second;
         for(std::size_t i = 0; i < entities.size(); i++) {
@@ -155,8 +152,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
         fprintf(fp, "*NSET,NSET=%s\n",
                 physicalName(this, dim, it->first).c_str());
         int n = 0;
-        for(std::set<MVertex *, MVertexPtrLessThan>::iterator it2 = nodes.begin();
-            it2 != nodes.end(); it2++) {
+        for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
           if(n && !(n % 10)) fprintf(fp, "\n");
           fprintf(fp, "%ld, ", (*it2)->getIndex());
           n++;
@@ -176,18 +172,17 @@ int GModel::writeINP(const std::string &name, bool saveAll,
         for(std::size_t k = 0; k < e->getNumVertices(); k++)
           nodes.insert(e->getVertex(k));
       }
-      fprintf(fp, "*NSET,NSET=%s\n",
-              elementaryName(this, entities[i]->dim(), entities[i]->tag()).c_str());
+      fprintf(
+        fp, "*NSET,NSET=%s\n",
+        elementaryName(this, entities[i]->dim(), entities[i]->tag()).c_str());
       int n = 0;
-      for(std::set<MVertex *, MVertexPtrLessThan>::iterator it2 = nodes.begin();
-          it2 != nodes.end(); it2++) {
+      for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
         if(n && !(n % 10)) fprintf(fp, "\n");
         fprintf(fp, "%ld, ", (*it2)->getIndex());
         n++;
       }
       fprintf(fp, "\n");
     }
-
   }
 
   fclose(fp);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -66,7 +66,7 @@ int GModel::readUNV(const std::string &name)
           for(std::size_t i = 0; i < strlen(buffer); i++)
             if(buffer[i] == 'D') buffer[i] = 'E';
           if(sscanf(buffer, "%lf %lf %lf", &x, &y, &z) != 3) break;
-          _vertexMapCache[num] = new MVertex(x, y, z, 0, num);
+          _vertexMapCache[num] = new MVertex(x, y, z, nullptr, num);
         }
       }
       else if(record == 2412) { // elements
@@ -93,15 +93,9 @@ int GModel::readUNV(const std::string &name)
             if(warn[type]++ == 1)
               Msg::Warning("No element type: guessing from number of nodes");
             switch(numNodes) {
-            case 2:
-              type = 11;
-              break; // line
-            case 3:
-              type = 41;
-              break; // tri
-            case 4:
-              type = 111;
-              break; // tet
+            case 2: type = 11; break; // line
+            case 3: type = 41; break; // tri
+            case 4: type = 111; break; // tet
             }
           }
 
@@ -276,7 +270,8 @@ static std::string physicalName(GModel *m, int dim, int num)
     char tmp[256];
     sprintf(tmp, "%s%d",
             (dim == 3) ? "PhysicalVolume" :
-                         (dim == 2) ? "PhysicalSurface" : "PhysicalLine",
+            (dim == 2) ? "PhysicalSurface" :
+                         "PhysicalLine",
             num);
     name = tmp;
   }
@@ -306,8 +301,9 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
   fprintf(fp, "%6d\n", 2411);
   for(std::size_t i = 0; i < entities.size(); i++)
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      entities[i]->mesh_vertices[j]->writeUNV
-        (fp, CTX::instance()->mesh.unvStrictFormat ? true : false, scalingFactor);
+      entities[i]->mesh_vertices[j]->writeUNV(
+        fp, CTX::instance()->mesh.unvStrictFormat ? true : false,
+        scalingFactor);
   fprintf(fp, "%6d\n", -1);
 
   // elements
@@ -331,9 +327,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
   fprintf(fp, "%6d\n", -1);
   fprintf(fp, "%6d\n", 2477);
   for(int dim = 0; dim <= 3; dim++) {
-    for(std::map<int, std::vector<GEntity *> >::iterator it =
-          groups[dim].begin();
-        it != groups[dim].end(); it++) {
+    for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
       std::vector<GEntity *> &entities = it->second;
 
       std::set<MVertex *, MVertexPtrLessThan> nodes;
@@ -357,8 +351,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
 
       if(saveGroupsOfNodes) {
         int row = 0;
-        for(std::set<MVertex *, MVertexPtrLessThan>::iterator it2 = nodes.begin();
-            it2 != nodes.end(); it2++) {
+        for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
           if(row == 2) {
             fprintf(fp, "\n");
             row = 0;

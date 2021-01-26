@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -65,10 +65,10 @@ std::vector<GModel *> GModel::list;
 int GModel::_current = -1;
 
 GModel::GModel(const std::string &name)
-  : _destroying(false), _name(name), _visible(1), _elementOctree(0),
-    _geo_internals(0), _occ_internals(0), _acis_internals(0),
-    _parasolid_internals(0), _fields(0), _currentMeshEntity(0),
-    _numPartitions(0), normals(0)
+  : _destroying(false), _name(name), _visible(1), _elementOctree(nullptr),
+    _geo_internals(nullptr), _occ_internals(nullptr), _acis_internals(nullptr),
+    _parasolid_internals(nullptr), _fields(nullptr),
+    _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr)
 {
   _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
@@ -92,8 +92,7 @@ GModel::GModel(const std::string &name)
 
 GModel::~GModel()
 {
-  std::vector<GModel *>::iterator it =
-    std::find(list.begin(), list.end(), this);
+  auto it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
 
   if(getVisibility()) {
@@ -157,7 +156,7 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
     if(list[i]->getName() == name &&
        (fileName.empty() || !list[i]->hasFileName(fileName)))
       return list[i];
-  return 0;
+  return nullptr;
 }
 
 void GModel::destroy(bool keepName)
@@ -174,23 +173,23 @@ void GModel::destroy(bool keepName)
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
   _checkPointedMaxVertexNum = _maxVertexNum;
   _checkPointedMaxElementNum = _maxElementNum;
-  _currentMeshEntity = 0;
+  _currentMeshEntity = nullptr;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
 
-  for(riter it = firstRegion(); it != lastRegion(); ++it) delete *it;
+  for(auto it = firstRegion(); it != lastRegion(); ++it) delete *it;
   regions.clear();
   std::set<GRegion *, GEntityPtrLessThan>().swap(regions);
 
-  for(fiter it = firstFace(); it != lastFace(); ++it) delete *it;
+  for(auto it = firstFace(); it != lastFace(); ++it) delete *it;
   faces.clear();
   std::set<GFace *, GEntityPtrLessThan>().swap(faces);
 
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) delete *it;
+  for(auto it = firstEdge(); it != lastEdge(); ++it) delete *it;
   edges.clear();
   std::set<GEdge *, GEntityPtrLessThan>().swap(edges);
 
-  for(viter it = firstVertex(); it != lastVertex(); ++it) delete *it;
+  for(auto it = firstVertex(); it != lastVertex(); ++it) delete *it;
   vertices.clear();
   std::set<GVertex *, GEntityPtrLessThan>().swap(vertices);
 
@@ -199,7 +198,7 @@ void GModel::destroy(bool keepName)
   resetOCCInternals();
 
   if(normals) delete normals;
-  normals = 0;
+  normals = nullptr;
 
 #if defined(HAVE_MESH)
   _fields->reset();
@@ -222,17 +221,17 @@ void GModel::destroyMeshCaches()
   _elementIndexCache.clear();
   std::map<int, int>().swap(_elementIndexCache);
   delete _elementOctree;
-  _elementOctree = 0;
+  _elementOctree = nullptr;
 }
 
 void GModel::deleteMesh()
 {
-  for(riter it = firstRegion(); it != lastRegion(); ++it) (*it)->deleteMesh();
-  for(fiter it = firstFace(); it != lastFace(); ++it) (*it)->deleteMesh();
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) (*it)->deleteMesh();
-  for(viter it = firstVertex(); it != lastVertex(); ++it) (*it)->deleteMesh();
+  for(auto it = firstRegion(); it != lastRegion(); ++it) (*it)->deleteMesh();
+  for(auto it = firstFace(); it != lastFace(); ++it) (*it)->deleteMesh();
+  for(auto it = firstEdge(); it != lastEdge(); ++it) (*it)->deleteMesh();
+  for(auto it = firstVertex(); it != lastVertex(); ++it) (*it)->deleteMesh();
   destroyMeshCaches();
-  _currentMeshEntity = 0;
+  _currentMeshEntity = nullptr;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
 }
@@ -249,7 +248,7 @@ void GModel::deleteMesh(const std::vector<GEntity *> &entities)
     switch(ge->dim()) {
     case 0: {
       std::vector<GEdge *> e = ge->edges();
-      for(std::vector<GEdge *>::iterator it = e.begin(); it != e.end(); ++it) {
+      for(auto it = e.begin(); it != e.end(); ++it) {
         if((*it)->getNumMeshElements()) {
           ok = false;
           break;
@@ -258,7 +257,7 @@ void GModel::deleteMesh(const std::vector<GEntity *> &entities)
     } break;
     case 1: {
       std::vector<GFace *> f = ge->faces();
-      for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); ++it) {
+      for(auto it = f.begin(); it != f.end(); ++it) {
         if((*it)->getNumMeshElements()) {
           ok = false;
           break;
@@ -267,7 +266,7 @@ void GModel::deleteMesh(const std::vector<GEntity *> &entities)
     } break;
     case 2: {
       std::list<GRegion *> r = ge->regions();
-      for(std::list<GRegion *>::iterator it = r.begin(); it != r.end(); ++it) {
+      for(auto it = r.begin(); it != r.end(); ++it) {
         if((*it)->getNumMeshElements()) {
           ok = false;
           break;
@@ -283,20 +282,20 @@ void GModel::deleteMesh(const std::vector<GEntity *> &entities)
     }
   }
   destroyMeshCaches();
-  _currentMeshEntity = 0;
+  _currentMeshEntity = nullptr;
   _lastMeshEntityError.clear();
   _lastMeshVertexError.clear();
 }
 
 void GModel::deleteVertexArrays()
 {
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
     (*it)->deleteVertexArrays();
-  for(fiter it = firstFace(); it != lastFace(); ++it)
+  for(auto it = firstFace(); it != lastFace(); ++it)
     (*it)->deleteVertexArrays();
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+  for(auto it = firstEdge(); it != lastEdge(); ++it)
     (*it)->deleteVertexArrays();
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
+  for(auto it = firstVertex(); it != lastVertex(); ++it)
     (*it)->deleteVertexArrays();
 }
 
@@ -308,45 +307,41 @@ bool GModel::empty() const
 GRegion *GModel::getRegionByTag(int n) const
 {
   GEntity tmp((GModel *)this, n);
-  std::set<GRegion *, GEntityPtrLessThan>::const_iterator it =
-    regions.find((GRegion *)&tmp);
+  auto it = regions.find((GRegion *)&tmp);
   if(it != regions.end())
     return *it;
   else
-    return 0;
+    return nullptr;
 }
 
 GFace *GModel::getFaceByTag(int n) const
 {
   GEntity tmp((GModel *)this, n);
-  std::set<GFace *, GEntityPtrLessThan>::const_iterator it =
-    faces.find((GFace *)&tmp);
+  auto it = faces.find((GFace *)&tmp);
   if(it != faces.end())
     return *it;
   else
-    return 0;
+    return nullptr;
 }
 
 GEdge *GModel::getEdgeByTag(int n) const
 {
   GEntity tmp((GModel *)this, n);
-  std::set<GEdge *, GEntityPtrLessThan>::const_iterator it =
-    edges.find((GEdge *)&tmp);
+  auto it = edges.find((GEdge *)&tmp);
   if(it != edges.end())
     return *it;
   else
-    return 0;
+    return nullptr;
 }
 
 GVertex *GModel::getVertexByTag(int n) const
 {
   GEntity tmp((GModel *)this, n);
-  std::set<GVertex *, GEntityPtrLessThan>::const_iterator it =
-    vertices.find((GVertex *)&tmp);
+  auto it = vertices.find((GVertex *)&tmp);
   if(it != vertices.end())
     return *it;
   else
-    return 0;
+    return nullptr;
 }
 
 GEntity *GModel::getEntityByTag(int dim, int n) const
@@ -357,7 +352,7 @@ GEntity *GModel::getEntityByTag(int dim, int n) const
   case 2: return getFaceByTag(n);
   case 3: return getRegionByTag(n);
   }
-  return 0;
+  return nullptr;
 }
 
 std::vector<int> GModel::getTagsForPhysicalName(int dim,
@@ -368,8 +363,7 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
   getPhysicalGroups(dim, physicalGroups);
   std::vector<GEntity *> entities =
     physicalGroups[getPhysicalNumber(dim, name)];
-  for(std::vector<GEntity *>::iterator it = entities.begin();
-      it != entities.end(); it++) {
+  for(auto it = entities.begin(); it != entities.end(); it++) {
     GEntity *ge = *it;
     tags.push_back(ge->tag());
   }
@@ -378,29 +372,27 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
 
 void GModel::remove(GRegion *r)
 {
-  riter it = std::find(firstRegion(), lastRegion(), r);
+  auto it = std::find(firstRegion(), lastRegion(), r);
   if(it != (riter)regions.end()) {
     regions.erase(it);
     std::vector<GFace *> f = r->faces();
-    for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); it++)
-      (*it)->delRegion(r);
+    for(auto it = f.begin(); it != f.end(); it++) (*it)->delRegion(r);
   }
 }
 
 void GModel::remove(GFace *f)
 {
-  fiter it = std::find(firstFace(), lastFace(), f);
-  if(it != faces.end()){
+  auto it = std::find(firstFace(), lastFace(), f);
+  if(it != faces.end()) {
     faces.erase(it);
     std::vector<GEdge *> const &e = f->edges();
-    for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end(); it++)
-      (*it)->delFace(f);
+    for(auto it = e.begin(); it != e.end(); it++) (*it)->delFace(f);
   }
 }
 
 void GModel::remove(GEdge *e)
 {
-  eiter it = std::find(firstEdge(), lastEdge(), e);
+  auto it = std::find(firstEdge(), lastEdge(), e);
   if(it != edges.end()) {
     edges.erase(it);
     if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
@@ -410,7 +402,7 @@ void GModel::remove(GEdge *e)
 
 void GModel::remove(GVertex *v)
 {
-  viter it = std::find(firstVertex(), lastVertex(), v);
+  auto it = std::find(firstVertex(), lastVertex(), v);
   if(it != vertices.end()) vertices.erase(it);
 }
 
@@ -423,7 +415,7 @@ void GModel::remove(int dim, int tag, bool recursive)
       remove(gr);
       if(recursive) {
         std::vector<GFace *> f = gr->faces();
-        for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); it++)
+        for(auto it = f.begin(); it != f.end(); it++)
           remove(2, (*it)->tag(), recursive);
       }
     }
@@ -432,7 +424,7 @@ void GModel::remove(int dim, int tag, bool recursive)
     GFace *gf = getFaceByTag(tag);
     if(gf) {
       bool skip = false;
-      for(riter it = firstRegion(); it != lastRegion(); it++) {
+      for(auto it = firstRegion(); it != lastRegion(); it++) {
         std::vector<GFace *> f = (*it)->faces();
         if(std::find(f.begin(), f.end(), gf) != f.end()) {
           skip = true;
@@ -443,8 +435,7 @@ void GModel::remove(int dim, int tag, bool recursive)
         remove(gf);
         if(recursive) {
           std::vector<GEdge *> const &e = gf->edges();
-          for(std::vector<GEdge *>::const_iterator it = e.begin();
-              it != e.end(); it++)
+          for(auto it = e.begin(); it != e.end(); it++)
             remove(1, (*it)->tag(), recursive);
         }
       }
@@ -454,7 +445,7 @@ void GModel::remove(int dim, int tag, bool recursive)
     GEdge *ge = getEdgeByTag(tag);
     if(ge) {
       bool skip = false;
-      for(fiter it = firstFace(); it != lastFace(); it++) {
+      for(auto it = firstFace(); it != lastFace(); it++) {
         std::vector<GEdge *> const &e = (*it)->edges();
         if(std::find(e.begin(), e.end(), ge) != e.end()) {
           skip = true;
@@ -474,7 +465,7 @@ void GModel::remove(int dim, int tag, bool recursive)
     GVertex *gv = getVertexByTag(tag);
     if(gv) {
       bool skip = false;
-      for(eiter it = firstEdge(); it != lastEdge(); it++) {
+      for(auto it = firstEdge(); it != lastEdge(); it++) {
         GEdge *ge = *it;
         if(ge->getBeginVertex() == gv || ge->getEndVertex() == gv) {
           skip = true;
@@ -503,14 +494,13 @@ void GModel::remove()
 
 void GModel::snapVertices()
 {
-  viter vit = firstVertex();
+  auto vit = firstVertex();
 
   double tol = CTX::instance()->geom.tolerance;
 
   while(vit != lastVertex()) {
     std::vector<GEdge *> const &edges = (*vit)->edges();
-    for(std::vector<GEdge *>::const_iterator it = edges.begin();
-        it != edges.end(); ++it) {
+    for(auto it = edges.begin(); it != edges.end(); ++it) {
       Range<double> parb = (*it)->parBounds(0);
       double t;
       if((*it)->getBeginVertex() == *vit) { t = parb.low(); }
@@ -543,10 +533,8 @@ void GModel::getEntities(std::vector<GEntity *> &entities, int dim) const
   case 0:
     entities.insert(entities.end(), vertices.begin(), vertices.end());
     break;
-  case 1:
-    entities.insert(entities.end(), edges.begin(), edges.end()); break;
-  case 2:
-    entities.insert(entities.end(), faces.begin(), faces.end()); break;
+  case 1: entities.insert(entities.end(), edges.begin(), edges.end()); break;
+  case 2: entities.insert(entities.end(), faces.begin(), faces.end()); break;
   case 3:
     entities.insert(entities.end(), regions.begin(), regions.end());
     break;
@@ -598,16 +586,14 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
       if(gr) {
         if(recursive) {
           std::vector<GVertex *> const &vert = gr->vertices();
-          for(std::vector<GVertex *>::const_iterator it = vert.begin();
-              it != vert.end(); it++)
+          for(auto it = vert.begin(); it != vert.end(); it++)
             outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
         }
         else {
           std::vector<GFace *> faces(gr->faces());
           std::vector<int> const &orientations = gr->faceOrientations();
-          std::vector<int>::const_iterator ito = orientations.begin();
-          for(std::vector<GFace *>::iterator it = faces.begin();
-              it != faces.end(); it++) {
+          auto ito = orientations.begin();
+          for(auto it = faces.begin(); it != faces.end(); it++) {
             int t = (*it)->tag();
             if(oriented && ito != orientations.end()) {
               t *= *ito;
@@ -627,16 +613,14 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
       if(gf) {
         if(recursive) {
           std::vector<GVertex *> const &vert = gf->vertices();
-          for(std::vector<GVertex *>::const_iterator it = vert.begin();
-              it != vert.end(); it++)
+          for(auto it = vert.begin(); it != vert.end(); it++)
             outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
         }
         else {
           std::vector<GEdge *> const &edges = gf->edges();
           std::vector<int> orientations(gf->edgeOrientations());
-          std::vector<int>::iterator ito = orientations.begin();
-          for(std::vector<GEdge *>::const_iterator it = edges.begin();
-              it != edges.end(); it++) {
+          auto ito = orientations.begin();
+          for(auto it = edges.begin(); it != edges.end(); it++) {
             int t = (*it)->tag();
             if(oriented && ito != orientations.end()) {
               t *= *ito;
@@ -691,7 +675,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
       int dim = outDimTags[i].first;
       int tag = outDimTags[i].second;
       if(dim >= 0 && dim < 3) {
-        std::set<int, AbsIntLessThan>::iterator it = c[dim].find(tag);
+        auto it = c[dim].find(tag);
         if(it == c[dim].end())
           c[dim].insert(tag);
         else {
@@ -701,8 +685,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     }
     outDimTags.clear();
     for(int dim = 0; dim < 3; dim++) {
-      for(std::set<int, AbsIntLessThan>::iterator it = c[dim].begin();
-          it != c[dim].end(); it++)
+      for(auto it = c[dim].begin(); it != c[dim].end(); it++)
         outDimTags.push_back(std::pair<int, int>(dim, *it));
     }
   }
@@ -745,8 +728,7 @@ void GModel::getPhysicalGroups(
   }
   for(int dim = 0; dim < 4; ++dim) {
     std::map<int, std::vector<GEntity *> > &group(groups[dim]);
-    for(std::map<int, std::vector<GEntity *> >::iterator it = group.begin();
-        it != group.end(); ++it) {
+    for(auto it = group.begin(); it != group.end(); ++it) {
       std::vector<GEntity *> &v = it->second;
       std::sort(v.begin(), v.end(), GEntityPtrLessThan());
       std::unique(v.begin(), v.end(), GEntityPtrLessThan());
@@ -767,8 +749,7 @@ void GModel::getPhysicalGroups(
       groups[p].push_back(entities[i]);
     }
   }
-  for(std::map<int, std::vector<GEntity *> >::iterator it = groups.begin();
-      it != groups.end(); ++it) {
+  for(auto it = groups.begin(); it != groups.end(); ++it) {
     std::vector<GEntity *> &v = it->second;
     std::sort(v.begin(), v.end(), GEntityPtrLessThan());
     std::unique(v.begin(), v.end(), GEntityPtrLessThan());
@@ -782,8 +763,10 @@ void GModel::addPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
     if(ge)
       ge->physicals.push_back((t > 0) ? tag : -tag);
     else
-      Msg::Warning("Unknown entity of dimension %d and tag %d in physical group "
-                   "%d", dim, t, tag);
+      Msg::Warning(
+        "Unknown entity of dimension %d and tag %d in physical group "
+        "%d",
+        dim, t, tag);
   }
 }
 
@@ -827,8 +810,7 @@ void GModel::getInnerPhysicalNamesIterators(std::vector<piter> &iterators)
 {
   iterators.resize(4, firstPhysicalName());
 
-  for(piter physIt = firstPhysicalName(); physIt != lastPhysicalName();
-      ++physIt)
+  for(auto physIt = firstPhysicalName(); physIt != lastPhysicalName(); ++physIt)
     iterators[physIt->first.first] = physIt;
 }
 
@@ -859,16 +841,14 @@ GModel::piter GModel::setPhysicalName(piter pos, const std::string &name,
 
 std::string GModel::getPhysicalName(int dim, int number) const
 {
-  std::map<std::pair<int, int>, std::string>::const_iterator it =
-    _physicalNames.find(std::pair<int, int>(dim, number));
+  auto it = _physicalNames.find(std::pair<int, int>(dim, number));
   if(it != _physicalNames.end()) return it->second;
   return "";
 }
 
 void GModel::removePhysicalName(const std::string &name)
 {
-  std::map<std::pair<int, int>, std::string>::iterator it =
-    _physicalNames.begin();
+  auto it = _physicalNames.begin();
   while(it != _physicalNames.end()) {
     if(it->second == name)
       // it = _physicalNames.erase(it); // C++11 only
@@ -880,8 +860,7 @@ void GModel::removePhysicalName(const std::string &name)
 
 int GModel::getPhysicalNumber(const int &dim, const std::string &name)
 {
-  for(piter physIt = firstPhysicalName(); physIt != lastPhysicalName();
-      ++physIt)
+  for(auto physIt = firstPhysicalName(); physIt != lastPhysicalName(); ++physIt)
     if(dim == physIt->first.first && name == physIt->second)
       return physIt->first.second;
 
@@ -908,16 +887,14 @@ int GModel::getMeshDim() const
 
 std::string GModel::getElementaryName(int dim, int number)
 {
-  std::map<std::pair<int, int>, std::string>::iterator it =
-    _elementaryNames.find(std::pair<int, int>(dim, number));
+  auto it = _elementaryNames.find(std::pair<int, int>(dim, number));
   if(it != _elementaryNames.end()) return it->second;
   return "";
 }
 
 void GModel::removeElementaryName(const std::string &name)
 {
-  std::map<std::pair<int, int>, std::string>::iterator it =
-    _elementaryNames.begin();
+  auto it = _elementaryNames.begin();
   while(it != _elementaryNames.end()) {
     if(it->second == name)
       // it = _elementaryNames.erase(it); // C++11 only
@@ -987,7 +964,7 @@ int GModel::mesh(int dimension)
 bool GModel::setAllVolumesPositive()
 {
   bool ok = true;
-  for(riter it = regions.begin(); it != regions.end(); ++it)
+  for(auto it = regions.begin(); it != regions.end(); ++it)
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); ++i)
       if(!(*it)->getMeshElement(i)->setVolumePositive()) ok = false;
   return ok;
@@ -999,8 +976,7 @@ addToMap(std::multimap<MFace, MElement *, MFaceLessThan> &faceToElement,
            &elToNeighbors,
          const MFace &face, MElement *el)
 {
-  std::multimap<MFace, MElement *, MFaceLessThan>::iterator fit =
-    faceToElement.find(face);
+  auto fit = faceToElement.find(face);
   if(fit == faceToElement.end()) {
     faceToElement.insert(std::pair<MFace, MElement *>(face, el));
   }
@@ -1069,7 +1045,7 @@ void GModel::setAllVolumesPositiveTopology()
   std::multimap<MFace, MElement *, MFaceLessThan> faceToElement;
 
   MElement *el;
-  for(riter it = regions.begin(); it != regions.end(); ++it) {
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
     for(std::size_t iEl = 0; iEl < (*it)->getNumMeshElements(); ++iEl) {
       el = (*it)->getMeshElement(iEl);
       for(int iFace = 0; iFace < el->getNumFaces(); iFace++) {
@@ -1077,7 +1053,7 @@ void GModel::setAllVolumesPositiveTopology()
       }
     }
   }
-  for(riter it = regions.begin(); it != regions.end(); ++it) {
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
     for(std::size_t iEl = 0; iEl < (*it)->getNumMeshElements(); ++iEl) {
       el = (*it)->getMeshElement(iEl);
       for(int iFace = 0; iFace < el->getNumFaces(); iFace++) {
@@ -1228,7 +1204,7 @@ int GModel::adaptMesh(std::vector<int> technique,
       std::vector<MElement *> elements;
 
       if(getDim() == 2) {
-        for(fiter fit = firstFace(); fit != lastFace(); ++fit) {
+        for(auto fit = firstFace(); fit != lastFace(); ++fit) {
           if((*fit)->quadrangles.size()) return -1;
           for(unsigned i = 0; i < (*fit)->triangles.size(); i++) {
             elements.push_back((*fit)->triangles[i]);
@@ -1236,7 +1212,7 @@ int GModel::adaptMesh(std::vector<int> technique,
         }
       }
       else if(getDim() == 3) {
-        for(riter rit = firstRegion(); rit != lastRegion(); ++rit) {
+        for(auto rit = firstRegion(); rit != lastRegion(); ++rit) {
           if((*rit)->hexahedra.size()) return -1;
           for(unsigned i = 0; i < (*rit)->tetrahedra.size(); i++) {
             elements.push_back((*rit)->tetrahedra[i]);
@@ -1254,20 +1230,20 @@ int GModel::adaptMesh(std::vector<int> technique,
       fields->setBackgroundField(metric);
 
       if(getDim() == 2) {
-        for(fiter fit = firstFace(); fit != lastFace(); ++fit) {
+        for(auto fit = firstFace(); fit != lastFace(); ++fit) {
           if((*fit)->geomType() != GEntity::DiscreteSurface) {
             meshGFaceBamg(*fit);
             laplaceSmoothing(*fit, CTX::instance()->mesh.nbSmoothing);
           }
           if(_elementOctree) delete _elementOctree;
-          _elementOctree = 0;
+          _elementOctree = nullptr;
         }
       }
       else if(getDim() == 3) {
-        for(riter rit = firstRegion(); rit != lastRegion(); ++rit) {
+        for(auto rit = firstRegion(); rit != lastRegion(); ++rit) {
           refineMeshMMG(*rit);
           if(_elementOctree) delete _elementOctree;
-          _elementOctree = 0;
+          _elementOctree = nullptr;
         }
       }
 
@@ -1380,7 +1356,7 @@ int GModel::getMeshStatus(bool countDiscrete)
   bool toMesh3D = false;
   bool onlyVisible = CTX::instance()->mesh.meshOnlyVisible;
 
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     GRegion *gr = *it;
     if(countDiscrete || gr->geomType() != GEntity::DiscreteVolume)
       numEle3D += gr->getNumMeshElements();
@@ -1393,7 +1369,7 @@ int GModel::getMeshStatus(bool countDiscrete)
 
   std::size_t numEle2D = 0;
   bool toMesh2D = false, meshDone2D = true;
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     GFace *gf = *it;
     if(countDiscrete || gf->geomType() != GEntity::DiscreteSurface)
       numEle2D += gf->getNumMeshElements();
@@ -1405,12 +1381,11 @@ int GModel::getMeshStatus(bool countDiscrete)
        (!onlyVisible || (onlyVisible && gf->getVisibility())))
       meshDone2D = false;
   }
-  if(numEle2D && toMesh2D && meshDone2D)
-    return 2;
+  if(numEle2D && toMesh2D && meshDone2D) return 2;
 
   std::size_t numEle1D = 0;
   bool toMesh1D = false, meshDone1D = true;
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+  for(auto it = firstEdge(); it != lastEdge(); ++it) {
     GEdge *ge = *it;
     if(countDiscrete || ge->geomType() != GEntity::DiscreteCurve)
       numEle1D += ge->getNumMeshElements();
@@ -1422,10 +1397,9 @@ int GModel::getMeshStatus(bool countDiscrete)
        (!onlyVisible || (onlyVisible && ge->getVisibility())))
       meshDone1D = false;
   }
-  if(numEle1D && toMesh1D && meshDone1D)
-    return 1;
+  if(numEle1D && toMesh1D && meshDone1D) return 1;
 
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
+  for(auto it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;
 
   return -1;
@@ -1472,7 +1446,7 @@ int GModel::addMEdge(const MEdge &edge)
 
 int GModel::getEdgeNumber(const MEdge &edge)
 {
-  hashmapMEdge::iterator it = _mapEdgeNum.find(edge);
+  auto it = _mapEdgeNum.find(edge);
   if(it != _mapEdgeNum.end()) { return _mapEdgeNum.find(edge)->second; }
   else {
     Msg::Error("This edge does not exist in the mapEdgeNum");
@@ -1615,13 +1589,13 @@ std::size_t GModel::getNumMeshElements(unsigned c[6])
   c[3] = 0;
   c[4] = 0;
   c[5] = 0;
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
     (*it)->getNumMeshElements(c);
   if(c[0] + c[1] + c[2] + c[3] + c[4] + c[5]) return 3;
-  for(fiter it = firstFace(); it != lastFace(); ++it)
+  for(auto it = firstFace(); it != lastFace(); ++it)
     (*it)->getNumMeshElements(c);
   if(c[0] + c[1] + c[2]) return 2;
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+  for(auto it = firstEdge(); it != lastEdge(); ++it)
     (*it)->getNumMeshElements(c);
   if(c[0]) return 1;
   return 0;
@@ -1676,7 +1650,7 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
     getEntities(entities);
     if(dense) {
       // numbering starts at 1
-      _vertexVectorCache.resize(_maxVertexNum + 1, (MVertex *)0);
+      _vertexVectorCache.resize(_maxVertexNum + 1, (MVertex *)nullptr);
       for(std::size_t i = 0; i < entities.size(); i++)
         for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
           _vertexVectorCache[entities[i]->mesh_vertices[j]->getNum()] =
@@ -1693,7 +1667,8 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
 
 void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
 {
-  if(!onlyIfNecessary || (_elementVectorCache.empty() && _elementMapCache.empty())) {
+  if(!onlyIfNecessary ||
+     (_elementVectorCache.empty() && _elementMapCache.empty())) {
     Msg::Debug("Rebuilding mesh element cache");
     _elementVectorCache.clear();
     _elementMapCache.clear();
@@ -1711,7 +1686,7 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
     getEntities(entities);
     if(dense) {
       // numbering starts at 1
-      _elementVectorCache.resize(_maxElementNum + 1, (MElement *)0);
+      _elementVectorCache.resize(_maxElementNum + 1, (MElement *)nullptr);
       for(std::size_t i = 0; i < entities.size(); i++)
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
@@ -1778,7 +1753,7 @@ int GModel::getMeshElementIndex(MElement *e)
 {
   if(!e) return 0;
   if(_elementIndexCache.empty()) return e->getNum();
-  std::map<int, int>::iterator it = _elementIndexCache.find(e->getNum());
+  auto it = _elementIndexCache.find(e->getNum());
   if(it != _elementIndexCache.end()) return it->second;
   return e->getNum();
 }
@@ -1807,7 +1782,7 @@ static std::size_t removeInvisible(std::vector<T *> &elements, bool all)
 std::size_t GModel::removeInvisibleElements()
 {
   std::size_t n = 0;
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     bool all = !(*it)->getVisibility();
     n += removeInvisible((*it)->tetrahedra, all);
     n += removeInvisible((*it)->hexahedra, all);
@@ -1817,14 +1792,14 @@ std::size_t GModel::removeInvisibleElements()
     n += removeInvisible((*it)->polyhedra, all);
     (*it)->deleteVertexArrays();
   }
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     bool all = !(*it)->getVisibility();
     n += removeInvisible((*it)->triangles, all);
     n += removeInvisible((*it)->quadrangles, all);
     n += removeInvisible((*it)->polygons, all);
     (*it)->deleteVertexArrays();
   }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+  for(auto it = firstEdge(); it != lastEdge(); ++it) {
     bool all = !(*it)->getVisibility();
     n += removeInvisible((*it)->lines, all);
     (*it)->deleteVertexArrays();
@@ -1833,7 +1808,6 @@ std::size_t GModel::removeInvisibleElements()
   Msg::Info("Removed %lu elements", n);
   return n;
 }
-
 
 template <class T>
 static std::size_t reverseInvisible(std::vector<T *> &elements, bool all)
@@ -1853,7 +1827,7 @@ static std::size_t reverseInvisible(std::vector<T *> &elements, bool all)
 std::size_t GModel::reverseInvisibleElements()
 {
   std::size_t n = 0;
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     bool all = !(*it)->getVisibility();
     n += reverseInvisible((*it)->tetrahedra, all);
     n += reverseInvisible((*it)->hexahedra, all);
@@ -1864,7 +1838,7 @@ std::size_t GModel::reverseInvisibleElements()
     (*it)->deleteVertexArrays();
     if(all) (*it)->setVisibility(1);
   }
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     bool all = !(*it)->getVisibility();
     n += reverseInvisible((*it)->triangles, all);
     n += reverseInvisible((*it)->quadrangles, all);
@@ -1872,7 +1846,7 @@ std::size_t GModel::reverseInvisibleElements()
     (*it)->deleteVertexArrays();
     if(all) (*it)->setVisibility(1);
   }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+  for(auto it = firstEdge(); it != lastEdge(); ++it) {
     bool all = !(*it)->getVisibility();
     n += reverseInvisible((*it)->lines, all);
     (*it)->deleteVertexArrays();
@@ -2041,7 +2015,7 @@ void GModel::_storeElementsInEntities(
     case TYPE_LIN: {
       GEdge *e = getEdgeByTag(it->first);
       if(!e) {
-        e = new discreteEdge(this, it->first, 0, 0);
+        e = new discreteEdge(this, it->first, nullptr, nullptr);
         add(e);
       }
       _addElements(e->lines, it->second);
@@ -2112,23 +2086,23 @@ static void _associateEntityWithElementVertices(GEntity *ge,
   }
 }
 
-void GModel::createGeometryOfDiscreteEntities
-  (const std::vector<std::pair<int, int> > &dimTags)
+void GModel::createGeometryOfDiscreteEntities(
+  const std::vector<std::pair<int, int> > &dimTags)
 {
   std::vector<discreteEdge *> e;
   std::vector<discreteFace *> f;
   std::vector<discreteRegion *> r;
 
   if(dimTags.empty()) {
-    for(eiter it = firstEdge(); it != lastEdge(); it++) {
+    for(auto it = firstEdge(); it != lastEdge(); it++) {
       discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
       if(de) e.push_back(de);
     }
-    for(fiter it = firstFace(); it != lastFace(); it++) {
+    for(auto it = firstFace(); it != lastFace(); it++) {
       discreteFace *df = dynamic_cast<discreteFace *>(*it);
       if(df) f.push_back(df);
     }
-    for(riter it = firstRegion(); it != lastRegion(); it++) {
+    for(auto it = firstRegion(); it != lastRegion(); it++) {
       discreteRegion *dr = dynamic_cast<discreteRegion *>(*it);
       if(dr) r.push_back(dr);
     }
@@ -2139,18 +2113,25 @@ void GModel::createGeometryOfDiscreteEntities
       int tag = dimTags[i].second;
       if(dim == 1) {
         discreteEdge *de = dynamic_cast<discreteEdge *>(getEdgeByTag(tag));
-        if(de) e.push_back(de);
-        else Msg::Error("No discrete curve with tag %d", tag);
+        if(de)
+          e.push_back(de);
+        else
+          Msg::Error("No discrete curve with tag %d", tag);
       }
       else if(dim == 2) {
         discreteFace *df = dynamic_cast<discreteFace *>(getFaceByTag(tag));
-        if(df) f.push_back(df);
-        else Msg::Error("No discrete surface with tag %d", tag);
+        if(df)
+          f.push_back(df);
+        else
+          Msg::Error("No discrete surface with tag %d", tag);
       }
       else if(dim == 3) {
-        discreteRegion *dr = dynamic_cast<discreteRegion *>(getRegionByTag(tag));
-        if(dr) r.push_back(dr);
-        else Msg::Error("No discrete volume with tag %d", tag);
+        discreteRegion *dr =
+          dynamic_cast<discreteRegion *>(getRegionByTag(tag));
+        if(dr)
+          r.push_back(dr);
+        else
+          Msg::Error("No discrete volume with tag %d", tag);
       }
     }
   }
@@ -2160,11 +2141,14 @@ void GModel::createGeometryOfDiscreteEntities
     double t1 = Cpu(), w1 = TimeOfDay();
     for(std::size_t i = 0; i < e.size(); i++) {
       if(e[i]->createGeometry())
-        Msg::Error("Could not create geometry of discrete curve %d", e[i]->tag());
+        Msg::Error("Could not create geometry of discrete curve %d",
+                   e[i]->tag());
     }
     double t2 = Cpu(), w2 = TimeOfDay();
-    Msg::StatusBar(true, "Done creating geometry of discrete curves "
-                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+    Msg::StatusBar(true,
+                   "Done creating geometry of discrete curves "
+                   "(Wall %gs, CPU %gs)",
+                   w2 - w1, t2 - t1);
   }
 
   if(f.size()) {
@@ -2174,13 +2158,16 @@ void GModel::createGeometryOfDiscreteEntities
     for(std::size_t i = 0; i < f.size(); i++) {
       Msg::ProgressMeter(i, true, "Creating geometry");
       if(f[i]->createGeometry())
-        Msg::Error("Could not create geometry of discrete surface %d", f[i]->tag());
+        Msg::Error("Could not create geometry of discrete surface %d",
+                   f[i]->tag());
     }
     Msg::StopProgressMeter();
     double t2 = Cpu();
     double w2 = TimeOfDay();
-    Msg::StatusBar(true, "Done creating geometry of discrete surfaces "
-                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+    Msg::StatusBar(true,
+                   "Done creating geometry of discrete surfaces "
+                   "(Wall %gs, CPU %gs)",
+                   w2 - w1, t2 - t1);
   }
 
   if(r.size()) {
@@ -2188,11 +2175,14 @@ void GModel::createGeometryOfDiscreteEntities
     double t1 = Cpu(), w1 = TimeOfDay();
     for(std::size_t i = 0; i < r.size(); i++) {
       if(r[i]->createGeometry())
-        Msg::Error("Could not create geometry of discrete volume %d", r[i]->tag());
+        Msg::Error("Could not create geometry of discrete volume %d",
+                   r[i]->tag());
     }
     double t2 = Cpu(), w2 = TimeOfDay();
-    Msg::StatusBar(true, "Done creating geometry of discrete volumes "
-                   "(Wall %gs, CPU %gs)", w2 - w1, t2 - t1);
+    Msg::StatusBar(true,
+                   "Done creating geometry of discrete volumes "
+                   "(Wall %gs, CPU %gs)",
+                   w2 - w1, t2 - t1);
   }
 }
 
@@ -2201,7 +2191,7 @@ void GModel::_associateEntityWithMeshVertices()
   // loop on regions, then on faces, edges and vertices and store the entity
   // pointer in the the elements' vertices (this way we associate the entity of
   // lowest geometrical degree with each vertex)
-  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  for(auto it = firstRegion(); it != lastRegion(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->tetrahedra);
     _associateEntityWithElementVertices(*it, (*it)->hexahedra);
     _associateEntityWithElementVertices(*it, (*it)->prisms);
@@ -2209,22 +2199,22 @@ void GModel::_associateEntityWithMeshVertices()
     _associateEntityWithElementVertices(*it, (*it)->trihedra);
     _associateEntityWithElementVertices(*it, (*it)->polyhedra);
   }
-  for(fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->triangles);
     _associateEntityWithElementVertices(*it, (*it)->quadrangles);
     _associateEntityWithElementVertices(*it, (*it)->polygons);
   }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+  for(auto it = firstEdge(); it != lastEdge(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->lines);
   }
-  for(viter it = firstVertex(); it != lastVertex(); ++it) {
+  for(auto it = firstVertex(); it != lastVertex(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->points);
   }
 }
 
 void GModel::_storeVerticesInEntities(std::map<int, MVertex *> &vertices)
 {
-  std::map<int, MVertex *>::iterator it = vertices.begin();
+  auto it = vertices.begin();
   for(; it != vertices.end(); ++it) {
     MVertex *v = it->second;
     GEntity *ge = v->onWhat();
@@ -2247,7 +2237,7 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex *> &vertices)
         ge->mesh_vertices.push_back(v);
       else {
         delete v; // we delete all unused vertices
-        vertices[i] = 0;
+        vertices[i] = nullptr;
       }
     }
   }
@@ -2263,7 +2253,7 @@ void GModel::pruneMeshVertexAssociations()
       MElement *e = entities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
-        v->setEntity(0);
+        v->setEntity(nullptr);
         vertSet.insert(v);
       }
     }
@@ -2272,7 +2262,7 @@ void GModel::pruneMeshVertexAssociations()
   std::vector<MVertex *> vertices(vertSet.begin(), vertSet.end());
   _associateEntityWithMeshVertices();
   // associate mesh nodes primarily with chain entities
-  for(riter it = _chainRegions.begin(); it != _chainRegions.end(); ++it) {
+  for(auto it = _chainRegions.begin(); it != _chainRegions.end(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->tetrahedra, true);
     _associateEntityWithElementVertices(*it, (*it)->hexahedra, true);
     _associateEntityWithElementVertices(*it, (*it)->prisms, true);
@@ -2280,15 +2270,15 @@ void GModel::pruneMeshVertexAssociations()
     _associateEntityWithElementVertices(*it, (*it)->trihedra, true);
     _associateEntityWithElementVertices(*it, (*it)->polyhedra, true);
   }
-  for(fiter it = _chainFaces.begin(); it != _chainFaces.end(); ++it) {
+  for(auto it = _chainFaces.begin(); it != _chainFaces.end(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->triangles, true);
     _associateEntityWithElementVertices(*it, (*it)->quadrangles, true);
     _associateEntityWithElementVertices(*it, (*it)->polygons, true);
   }
-  for(eiter it = _chainEdges.begin(); it != _chainEdges.end(); ++it) {
+  for(auto it = _chainEdges.begin(); it != _chainEdges.end(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->lines, true);
   }
-  for(viter it = _chainVertices.begin(); it != _chainVertices.end(); ++it) {
+  for(auto it = _chainVertices.begin(); it != _chainVertices.end(); ++it) {
     _associateEntityWithElementVertices(*it, (*it)->points, true);
   }
   _storeVerticesInEntities(vertices);
@@ -2299,7 +2289,7 @@ void GModel::_storePhysicalTagsInEntities(
 {
   std::map<int, std::map<int, std::string> >::const_iterator it = map.begin();
   for(; it != map.end(); ++it) {
-    GEntity *ge = 0;
+    GEntity *ge = nullptr;
     switch(dim) {
     case 0: ge = getVertexByTag(it->first); break;
     case 1: ge = getEdgeByTag(it->first); break;
@@ -2308,7 +2298,7 @@ void GModel::_storePhysicalTagsInEntities(
     }
 
     if(ge) {
-      std::map<int, std::string>::const_iterator it2 = it->second.begin();
+      auto it2 = it->second.begin();
       for(; it2 != it->second.end(); ++it2) {
         if(std::find(ge->physicals.begin(), ge->physicals.end(), it2->first) ==
            ge->physicals.end()) {
@@ -2349,8 +2339,7 @@ void GModel::checkMeshCoherence(double tolerance)
       FILE *fp = Fopen("duplicate_nodes.pos", "w");
       if(fp) {
         fprintf(fp, "View \"duplicate vertices\"{\n");
-        for(std::set<MVertex *>::iterator it = duplicates.begin();
-            it != duplicates.end(); it++) {
+        for(auto it = duplicates.begin(); it != duplicates.end(); it++) {
           MVertex *v = *it;
           fprintf(fp, "SP(%.16g,%.16g,%.16g){%lu};\n", v->x(), v->y(), v->z(),
                   v->getNum());
@@ -2388,7 +2377,7 @@ void GModel::checkMeshCoherence(double tolerance)
     Msg::Info("Checking for isolated nodes...");
     std::vector<GEntity *> entities2;
     getEntities(entities2, getMeshDim());
-    std::set<MVertex*, MVertexPtrLessThan> allv;
+    std::set<MVertex *, MVertexPtrLessThan> allv;
     for(std::size_t i = 0; i < entities2.size(); i++) {
       for(std::size_t j = 0; j < entities2[i]->getNumMeshElements(); j++) {
         MElement *e = entities2[i]->getMeshElement(j);
@@ -2400,7 +2389,7 @@ void GModel::checkMeshCoherence(double tolerance)
     int diff = (int)(getNumMeshVertices() - allv.size());
     if(diff) {
       Msg::Warning("%d node%s not connected to any %dD elements", diff,
-                   (diff > 1) ? "s": "", getMeshDim());
+                   (diff > 1) ? "s" : "", getMeshDim());
     }
   }
 
@@ -2463,8 +2452,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
-        std::map<MVertex *, MVertex *>::iterator it =
-          duplicates.find(e->getVertex(k));
+        auto it = duplicates.find(e->getVertex(k));
         if(it != duplicates.end()) e->setVertex(k, it->second);
       }
     }
@@ -2475,7 +2463,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       for(cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
         MVertex *oldTgt = cIter->first;
         MVertex *newTgt = cIter->second;
-        std::map<MVertex *, MVertex *>::iterator cvIter = corrVtcs.find(oldTgt);
+        auto cvIter = corrVtcs.find(oldTgt);
         if(cvIter != corrVtcs.end()) {
           MVertex *src = cvIter->second;
           corrVtcs.erase(cvIter);
@@ -2484,8 +2472,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       }
       for(cIter = corrVtcs.begin(); cIter != corrVtcs.end(); ++cIter) {
         MVertex *oldSrc = cIter->second;
-        std::map<MVertex *, MVertex *>::iterator nIter =
-          duplicates.find(oldSrc);
+        auto nIter = duplicates.find(oldSrc);
         if(nIter != duplicates.end()) {
           MVertex *tgt = cIter->first;
           MVertex *newSrc = nIter->second;
@@ -2501,8 +2488,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
   // delete duplicates
   std::vector<MVertex *> to_delete;
-  for(std::map<MVertex *, MVertex *>::iterator it = duplicates.begin();
-      it != duplicates.end(); it++)
+  for(auto it = duplicates.begin(); it != duplicates.end(); it++)
     to_delete.push_back(it->first);
   for(std::size_t i = 0; i < to_delete.size(); i++) delete to_delete[i];
 
@@ -2523,11 +2509,11 @@ void GModel::alignPeriodicBoundaries()
 
   // realigning edges
 
-  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+  for(auto it = firstEdge(); it != lastEdge(); ++it) {
     GEdge *tgt = *it;
     GEdge *src = dynamic_cast<GEdge *>(tgt->getMeshMaster());
 
-    if(src != NULL && src != tgt) {
+    if(src != nullptr && src != tgt) {
       // compose a search list on master edge
 
       std::map<MEdge, MLine *, MEdgeLessThan> srcLines;
@@ -2560,7 +2546,7 @@ void GModel::alignPeriodicBoundaries()
           GEntity *ge = tgtVtx->onWhat();
           std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
           std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
-          std::map<MVertex *, MVertex *>::iterator srcIter = v2v.find(tgtVtx);
+          auto srcIter = v2v.find(tgtVtx);
           if(srcIter == v2v.end() || !srcIter->second) {
             srcIter = geV2v.find(tgtVtx);
             if(srcIter == geV2v.end() || !srcIter->second) {
@@ -2579,8 +2565,7 @@ void GModel::alignPeriodicBoundaries()
 
         MEdge tgtEdge(tgtVtcs[0], tgtVtcs[1]);
 
-        std::map<MEdge, MLine *, MEdgeLessThan>::iterator sIter =
-          srcLines.find(tgtEdge);
+        auto sIter = srcLines.find(tgtEdge);
 
         if(sIter == srcLines.end() || !sIter->second) {
           Msg::Debug(
@@ -2601,10 +2586,10 @@ void GModel::alignPeriodicBoundaries()
 
   // run through all model faces
 
-  for(GModel::fiter it = firstFace(); it != lastFace(); ++it) {
+  for(auto it = firstFace(); it != lastFace(); ++it) {
     GFace *tgt = *it;
     GFace *src = dynamic_cast<GFace *>(tgt->getMeshMaster());
-    if(src != NULL && src != tgt) {
+    if(src != nullptr && src != tgt) {
       std::map<MFace, MElement *, MFaceLessThan> srcElmts;
 
       for(std::size_t i = 0; i < src->getNumMeshElements(); ++i) {
@@ -2637,7 +2622,7 @@ void GModel::alignPeriodicBoundaries()
           std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
           std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
 
-          std::map<MVertex *, MVertex *>::iterator vIter = v2v.find(vtx);
+          auto vIter = v2v.find(vtx);
           if(vIter == v2v.end() || !vIter->second) {
             vIter = geV2v.find(vtx);
             if(vIter == geV2v.end() || !vIter->second) {
@@ -2654,7 +2639,7 @@ void GModel::alignPeriodicBoundaries()
         }
         MFace tgtFace(vtcs);
 
-        std::map<MFace, MElement *>::iterator mIter = srcElmts.find(tgtFace);
+        auto mIter = srcElmts.find(tgtFace);
         if(mIter == srcElmts.end()) {
           std::ostringstream faceDef;
           for(int iVtx = 0; iVtx < nbVtcs; iVtx++) {
@@ -2713,9 +2698,7 @@ static void connectMElementsByMFace(
     _stack.pop();
     if(touched.find(ff) == touched.end()) {
       touched.insert(ff);
-      for(std::multimap<MFace, MElement *, MFaceLessThan>::iterator it =
-            e2f.lower_bound(ff);
-          it != e2f.upper_bound(ff); ++it) {
+      for(auto it = e2f.lower_bound(ff); it != e2f.upper_bound(ff); ++it) {
         group.insert(it->second);
         for(int i = 0; i < it->second->getNumFaces(); ++i) {
           _stack.push(it->second->getFace(i));
@@ -2741,9 +2724,7 @@ static int connectedVolumes(std::vector<MElement *> &elements,
     std::vector<MElement *> temp;
     temp.insert(temp.begin(), group.begin(), group.end());
     regs.push_back(temp);
-    for(std::set<MFace, MFaceLessThan>::iterator it = touched.begin();
-        it != touched.end(); ++it)
-      e2f.erase(*it);
+    for(auto it = touched.begin(); it != touched.end(); ++it) e2f.erase(*it);
   }
   return regs.size();
 }
@@ -2761,9 +2742,7 @@ static void connectMElementsByMEdge(
     _stack.pop();
     if(touched.find(ee) == touched.end()) {
       touched.insert(ee);
-      for(std::multimap<MEdge, MElement *, MEdgeLessThan>::iterator it =
-            e2e.lower_bound(ee);
-          it != e2e.upper_bound(ee); ++it) {
+      for(auto it = e2e.lower_bound(ee); it != e2e.upper_bound(ee); ++it) {
         group.insert(it->second);
         for(int i = 0; i < it->second->getNumEdges(); ++i) {
           _stack.push(it->second->getEdge(i));
@@ -2789,9 +2768,7 @@ static int connectedSurfaces(std::vector<MElement *> &elements,
     std::vector<MElement *> temp;
     temp.insert(temp.begin(), group.begin(), group.end());
     faces.push_back(temp);
-    for(std::set<MEdge, MEdgeLessThan>::iterator it = touched.begin();
-        it != touched.end(); ++it)
-      e2e.erase(*it);
+    for(auto it = touched.begin(); it != touched.end(); ++it) e2e.erase(*it);
   }
   return faces.size();
 }
@@ -2801,14 +2778,13 @@ void GModel::makeDiscreteRegionsSimplyConnected()
   Msg::Info("Making discrete regions simply connected...");
 
   std::vector<discreteRegion *> discRegions;
-  for(riter it = firstRegion(); it != lastRegion(); it++)
+  for(auto it = firstRegion(); it != lastRegion(); it++)
     if((*it)->geomType() == GEntity::DiscreteVolume)
       discRegions.push_back((discreteRegion *)*it);
 
   std::set<MVertex *> touched;
 
-  for(std::vector<discreteRegion *>::iterator itR = discRegions.begin();
-      itR != discRegions.end(); itR++) {
+  for(auto itR = discRegions.begin(); itR != discRegions.end(); itR++) {
     std::vector<MElement *> allElements((*itR)->getNumMeshElements());
     for(std::size_t i = 0; i < (*itR)->getNumMeshElements(); i++)
       allElements[i] = (*itR)->getMeshElement(i);
@@ -2861,14 +2837,13 @@ void GModel::makeDiscreteFacesSimplyConnected()
   Msg::Info("Making discrete faces simply connected...");
 
   std::vector<discreteFace *> discFaces;
-  for(fiter it = firstFace(); it != lastFace(); it++)
+  for(auto it = firstFace(); it != lastFace(); it++)
     if((*it)->geomType() == GEntity::DiscreteSurface)
       discFaces.push_back((discreteFace *)*it);
 
   std::set<MVertex *> touched;
 
-  for(std::vector<discreteFace *>::iterator itF = discFaces.begin();
-      itF != discFaces.end(); itF++) {
+  for(auto itF = discFaces.begin(); itF != discFaces.end(); itF++) {
     std::vector<MElement *> allElements((*itF)->getNumMeshElements());
     for(std::size_t i = 0; i < (*itF)->getNumMeshElements(); i++)
       allElements[i] = (*itF)->getMeshElement(i);
@@ -2918,9 +2893,7 @@ makeSimplyConnected(std::map<int, std::vector<MElement *> > elements[11])
   // only for tetras and triangles
   Msg::Info("Make simply connected regions and surfaces");
   std::vector<int> regs;
-  for(std::map<int, std::vector<MElement *> >::iterator it =
-        elements[4].begin();
-      it != elements[4].end(); it++)
+  for(auto it = elements[4].begin(); it != elements[4].end(); it++)
     regs.push_back(it->first);
   std::multimap<MFace, MElement *, MFaceLessThan> f2e;
   if(regs.size() > 2) {
@@ -2955,8 +2928,7 @@ makeSimplyConnected(std::map<int, std::vector<MElement *> > elements[11])
             MElement *el = conRegions[j][k];
             for(int l = 0; l < el->getNumFaces(); l++) {
               MFace mf = el->getFace(l);
-              std::multimap<MFace, MElement *, MFaceLessThan>::iterator itl =
-                f2e.lower_bound(mf);
+              auto itl = f2e.lower_bound(mf);
               for(; itl != f2e.upper_bound(mf); itl++) {
                 if(itl->second != el) break;
               }
@@ -2999,9 +2971,7 @@ makeSimplyConnected(std::map<int, std::vector<MElement *> > elements[11])
   }
 
   std::vector<int> faces;
-  for(std::map<int, std::vector<MElement *> >::iterator it =
-        elements[2].begin();
-      it != elements[2].end(); it++)
+  for(auto it = elements[2].begin(); it != elements[2].end(); it++)
     faces.push_back(it->first);
   std::multimap<MEdge, MElement *, MEdgeLessThan> e2e;
   if(faces.size() > 2) {
@@ -3036,8 +3006,7 @@ makeSimplyConnected(std::map<int, std::vector<MElement *> > elements[11])
             MElement *el = conSurfaces[j][k];
             for(int l = 0; l < el->getNumEdges(); l++) {
               MEdge me = el->getEdge(l);
-              std::multimap<MEdge, MElement *, MEdgeLessThan>::iterator itl =
-                e2e.lower_bound(me);
+              auto itl = e2e.lower_bound(me);
               for(; itl != e2e.upper_bound(me); itl++) {
                 if(itl->second != el) break;
               }
@@ -3108,10 +3077,9 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
 
   for(int i = 0; i < 4; i++) {
     cutGM->_storePhysicalTagsInEntities(i, physicals[i]);
-    std::map<int, std::map<int, std::string> >::iterator it =
-      physicals[i].begin();
+    auto it = physicals[i].begin();
     for(; it != physicals[i].end(); it++) {
-      std::map<int, std::string>::iterator it2 = it->second.begin();
+      auto it2 = it->second.begin();
       for(; it2 != it->second.end(); it2++)
         if(it2->second != "")
           cutGM->setPhysicalName(it2->second, i, it2->first);
@@ -3208,13 +3176,11 @@ void GModel::computeHomology()
   typedef std::pair<const std::vector<int>, const std::vector<int> > dpair;
   typedef std::pair<const std::string, const std::vector<int> > tpair;
   std::set<dpair> domains;
-  for(std::multimap<dpair, tpair>::iterator it = _homologyRequests.begin();
-      it != _homologyRequests.end(); it++)
+  for(auto it = _homologyRequests.begin(); it != _homologyRequests.end(); it++)
     domains.insert(it->first);
   Msg::Info("Number of cell complexes to construct: %d", domains.size());
 
-  for(std::set<dpair>::iterator it = domains.begin(); it != domains.end();
-      it++) {
+  for(auto it = domains.begin(); it != domains.end(); it++) {
     std::pair<std::multimap<dpair, tpair>::iterator,
               std::multimap<dpair, tpair>::iterator>
       itp = _homologyRequests.equal_range(*it);
@@ -3225,8 +3191,7 @@ void GModel::computeHomology()
       new Homology(this, itp.first->first.first, itp.first->first.second,
                    imdomain, prepareToRestore);
 
-    for(std::multimap<dpair, tpair>::iterator itt = itp.first;
-        itt != itp.second; itt++) {
+    for(auto itt = itp.first; itt != itp.second; itt++) {
       std::string type = itt->second.first;
       std::vector<int> dim0 = itt->second.second;
       if(dim0.empty())
@@ -3289,11 +3254,23 @@ void GModel::computeHomology()
 #endif
 }
 
+void GModel::computeSizeField()
+{
+#if defined(HAVE_HXT) && defined(HAVE_P4EST)
+  FieldManager *fields = getFields();
+  int myId = fields->newId();
+  fields->newField(myId, std::string("AutomaticMeshSizeField"));
+  fields->get(myId)->update();
+#else
+  Msg::Error("Size field computation requires both HXT and P4EST");
+#endif
+}
+
 #if !defined(HAVE_ACIS)
 
-void GModel::createACISInternals() { }
+void GModel::createACISInternals() {}
 
-void GModel::deleteACISInternals() { }
+void GModel::deleteACISInternals() {}
 
 int GModel::readACISSAT(const std::string &fn)
 {
@@ -3306,9 +3283,9 @@ int GModel::readACISSAT(const std::string &fn)
 
 #if !defined(HAVE_PARASOLID)
 
-void GModel::createParasolidInternals() { }
+void GModel::createParasolidInternals() {}
 
-void GModel::deleteParasolidInternals() { }
+void GModel::deleteParasolidInternals() {}
 
 int GModel::readParasolidXMT(const std::string &fn)
 {

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -84,7 +84,7 @@ public:
   virtual ~gLevelset() {}
   static gLevelset *find(int tag);
   static void add(gLevelset *l);
-  virtual gLevelset *clone() const { return 0; }
+  virtual gLevelset *clone() const { return nullptr; }
   virtual double operator()(double x, double y, double z) const { return 0.; }
   bool isInsideDomain(const double &x, const double &y, const double &z) const
   {

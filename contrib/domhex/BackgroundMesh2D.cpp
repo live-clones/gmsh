@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -111,13 +111,9 @@ void backgroundMesh2D::reset(bool erase_2D3D)
   create_face_mesh();
 
   // computes the mesh sizes at nodes
-  if(CTX::instance()->mesh.lcFromPoints) {
-    computeSizeField();
-  }
+  if(CTX::instance()->mesh.lcFromPoints) { computeSizeField(); }
   else
-    for(std::map<MVertex const *const, MVertex *>::iterator itv2 =
-          _2Dto3D.begin();
-        itv2 != _2Dto3D.end(); ++itv2)
+    for(auto itv2 = _2Dto3D.begin(); itv2 != _2Dto3D.end(); ++itv2)
       sizeField[itv2->first] = CTX::instance()->mesh.lcMax;
 
   // ensure that other criteria are fullfilled
@@ -134,7 +130,7 @@ void backgroundMesh2D::unset()
   for(unsigned int i = 0; i < vertices.size(); i++) delete vertices[i];
   for(unsigned int i = 0; i < getNumMeshElements(); i++) delete elements[i];
   if(octree) delete octree;
-  octree = NULL;
+  octree = nullptr;
 }
 
 void backgroundMesh2D::create_mesh_copy()
@@ -151,8 +147,8 @@ void backgroundMesh2D::create_mesh_copy()
     MVertex *news[3];
     for(int j = 0; j < 3; j++) {
       MVertex *v = e->getVertex(j);
-      std::map<MVertex const *const, MVertex *>::iterator it = _3Dto2D.find(v);
-      MVertex *newv = 0;
+      auto it = _3Dto2D.find(v);
+      MVertex *newv = nullptr;
       if(it == _3Dto2D.end()) {
         SPoint2 p;
         reparamMeshVertexOnFace(v, face, p);
@@ -211,14 +207,13 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
   linearSystemCSRGmm<double> *_lsys = new linearSystemCSRGmm<double>;
   _lsys->setGmres(1);
 #else
-   linearSystemFull<double> *_lsys = new linearSystemFull<double>;
+  linearSystemFull<double> *_lsys = new linearSystemFull<double>;
 #endif
 
   dofManager<double> myAssembler(_lsys);
 
   // fix boundary conditions
-  for(DoubleStorageType::iterator itv = dirichlet.begin();
-      itv != dirichlet.end(); ++itv) {
+  for(auto itv = dirichlet.begin(); itv != dirichlet.end(); ++itv) {
     myAssembler.fixVertex(itv->first, 0, 1, itv->second);
   }
 
@@ -237,7 +232,7 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
 
   std::map<MVertex *, SPoint3> theMap;
   if(in_parametric_plane) {
-    for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it) {
+    for(auto it = vs.begin(); it != vs.end(); ++it) {
       SPoint2 p;
       reparamMeshVertexOnFace(*it, face, p);
       theMap[*it] = SPoint3((*it)->x(), (*it)->y(), (*it)->z());
@@ -245,11 +240,11 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
     }
   }
 
-  for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it)
+  for(auto it = vs.begin(); it != vs.end(); ++it)
     myAssembler.numberVertex(*it, 0, 1);
 
   // Assemble
-  laplaceTerm l(0, 1, &eval_diffusivity);
+  laplaceTerm l(nullptr, 1, &eval_diffusivity);
   for(unsigned int k = 0; k < face->triangles.size(); k++) {
     MTriangle *t = face->triangles[k];
     SElement se(t);
@@ -257,17 +252,15 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
   }
 
   // Solve
-  if(myAssembler.sizeOfR()) {
-    _lsys->systemSolve();
-  }
+  if(myAssembler.sizeOfR()) { _lsys->systemSolve(); }
 
   // save solution
-  for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it) {
+  for(auto it = vs.begin(); it != vs.end(); ++it) {
     myAssembler.getDofValue(*it, 0, 1, dirichlet[*it]);
   }
 
   if(in_parametric_plane) {
-    for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it) {
+    for(auto it = vs.begin(); it != vs.end(); ++it) {
       SPoint3 p = theMap[(*it)];
       (*it)->setXYZ(p.x(), p.y(), p.z());
     }
@@ -285,7 +278,7 @@ void backgroundMesh2D::computeSizeField()
   }
 
   std::vector<GEdge *> const &e = face->edges();
-  std::vector<GEdge *>::const_iterator it = e.begin();
+  auto it = e.begin();
   DoubleStorageType sizes;
 
   for(; it != e.end(); ++it) {
@@ -299,7 +292,7 @@ void backgroundMesh2D::computeSizeField()
                                (v1->z() - v2->z()) * (v1->z() - v2->z()));
           for(int k = 0; k < 2; k++) {
             MVertex *v = (*it)->lines[i]->getVertex(k);
-            DoubleStorageType::iterator itv = sizes.find(v);
+            auto itv = sizes.find(v);
             if(itv == sizes.end())
               sizes[v] = std::log(d);
             else
@@ -313,7 +306,7 @@ void backgroundMesh2D::computeSizeField()
   simpleFunction<double> ONE(1.0);
   propagateValues(sizes, ONE);
 
-  std::map<MVertex const *const, MVertex *>::iterator itv2 = _2Dto3D.begin();
+  auto itv2 = _2Dto3D.begin();
   for(; itv2 != _2Dto3D.end(); ++itv2) {
     MVertex const *const v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
@@ -330,7 +323,7 @@ inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
 
 void backgroundMesh2D::updateSizes()
 {
-  DoubleStorageType::iterator itv = sizeField.begin();
+  auto itv = sizeField.begin();
   for(; itv != sizeField.end(); ++itv) {
     SPoint2 p;
     MVertex const *const v = _2Dto3D[itv->first];
@@ -371,14 +364,14 @@ void backgroundMesh2D::updateSizes()
   }
   const double _beta = 1.3;
   for(int i = 0; i < 0; i++) {
-    std::set<MEdge, MEdgeLessThan>::iterator it = edges.begin();
+    auto it = edges.begin();
     for(; it != edges.end(); ++it) {
       MVertex *v0 = it->getVertex(0);
       MVertex *v1 = it->getVertex(1);
       MVertex *V0 = _2Dto3D[v0];
       MVertex *V1 = _2Dto3D[v1];
-      DoubleStorageType::iterator s0 = sizeField.find(V0);
-      DoubleStorageType::iterator s1 = sizeField.find(V1);
+      auto s0 = sizeField.find(V0);
+      auto s1 = sizeField.find(V1);
       if(s0->second < s1->second)
         s1->second = std::min(s1->second, _beta * s0->second);
       else
@@ -480,7 +473,7 @@ void frameFieldBackgroundMesh2D::computeCrossField(
     return;
   }
   std::vector<GEdge *> const &e = face->edges();
-  std::vector<GEdge *>::const_iterator it = e.begin();
+  auto it = e.begin();
 
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(face)) {
@@ -502,8 +495,8 @@ void frameFieldBackgroundMesh2D::computeCrossField(
         double _angle = myAngle(t1, d1, n);
         normalizeAngle(_angle);
         for(int i = 0; i < 2; i++) {
-          DoubleStorageType::iterator itc = _cosines4.find(v[i]);
-          DoubleStorageType::iterator its = _sines4.find(v[i]);
+          auto itc = _cosines4.find(v[i]);
+          auto its = _sines4.find(v[i]);
           if(itc != _cosines4.end()) {
             itc->second = 0.5 * (itc->second + std::cos(4 * _angle));
             its->second = 0.5 * (its->second + std::sin(4 * _angle));
@@ -520,7 +513,7 @@ void frameFieldBackgroundMesh2D::computeCrossField(
   propagateValues(_cosines4, eval_diffusivity, false);
   propagateValues(_sines4, eval_diffusivity, false);
 
-  std::map<MVertex const *const, MVertex *>::iterator itv2 = _2Dto3D.begin();
+  auto itv2 = _2Dto3D.begin();
   for(; itv2 != _2Dto3D.end(); ++itv2) {
     MVertex const *const v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
@@ -581,8 +574,7 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
 
   // build vertex -> neighbors table
   std::multimap<MVertex *, MVertex *> vertex2vertex;
-  for(std::vector<MElement *>::iterator it = beginelements();
-      it != endelements(); it++) {
+  for(auto it = beginelements(); it != endelements(); it++) {
     MElement *e = *it;
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
       MVertex *current = e->getVertex(i);
@@ -595,8 +587,7 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
   }
 
   // compute smoothness
-  for(std::vector<MVertex *>::iterator it = beginvertices();
-      it != endvertices(); it++) {
+  for(auto it = beginvertices(); it != endvertices(); it++) {
     MVertex *v = *it;
     double angle_current = angle(v);
     // compare to all neighbors...
@@ -605,8 +596,8 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
       range = vertex2vertex.equal_range(v);
     double minangle, totalangle = 0.;
     int N = 0;
-    for(std::multimap<MVertex *, MVertex *>::iterator itneighbor = range.first;
-        itneighbor != range.second; itneighbor++) {
+    for(auto itneighbor = range.first; itneighbor != range.second;
+        itneighbor++) {
       N++;
       minangle = M_PI / 2;
       MVertex *v_nb = itneighbor->second;
@@ -636,8 +627,7 @@ void frameFieldBackgroundMesh2D::exportCrossField(const std::string &filename)
   deltas[0] = 0.;
   deltas[1] = M_PI;
 
-  for(std::vector<MVertex *>::iterator it = beginvertices();
-      it != endvertices(); it++) {
+  for(auto it = beginvertices(); it != endvertices(); it++) {
     MVertex *v = *it;
     double angle_current = angle(v);
     GPoint p = get_GPoint_from_MVertex(v);
@@ -735,9 +725,7 @@ bool frameFieldBackgroundMesh2D::compute_RK_infos(double u, double v, double x,
   FieldManager *fields = gf->model()->getFields();
   if(fields->getBackgroundField() > 0) {
     Field *f = fields->get(fields->getBackgroundField());
-    if(!f->isotropic()) {
-      (*f)(x, y, z, infos.metricField, gf);
-    }
+    if(!f->isotropic()) { (*f)(x, y, z, infos.metricField, gf); }
     else {
       L = (*f)(x, y, z, gf);
       infos.metricField = SMetric3(1. / (L * L));

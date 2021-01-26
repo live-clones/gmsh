@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -79,7 +79,7 @@ private:
   void _printElements(FILE *f, bool simplex, int startingNum = 1)
   {
     int num = startingNum;
-    for(cellIter it = _activeCells.begin(); it != _activeCells.end(); ++it) {
+    for(auto it = _activeCells.begin(); it != _activeCells.end(); ++it) {
       int i, j, k;
       getCellIJK(*it, i, j, k);
       if(!simplex) {
@@ -318,7 +318,7 @@ public:
   }
   void createNodalValues()
   {
-    for(cellIter it = _activeCells.begin(); it != _activeCells.end(); ++it) {
+    for(auto it = _activeCells.begin(); it != _activeCells.end(); ++it) {
       const int &t = *it;
       int i, j, k;
       getCellIJK(t, i, j, k);

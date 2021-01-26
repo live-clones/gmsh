@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -608,8 +608,9 @@ public:
 
   // create a geometry (i.e. a parametrization for curves and surfaces) for the
   // given discrete entities (or all of them if dimTags is empty)
-  void createGeometryOfDiscreteEntities(const std::vector<std::pair<int, int> >
-                                        &dimTags = std::vector<std::pair<int, int> >());
+  void createGeometryOfDiscreteEntities(
+    const std::vector<std::pair<int, int> > &dimTags =
+      std::vector<std::pair<int, int> >());
 
   // make discrete entities simply connected
   void makeDiscreteRegionsSimplyConnected();
@@ -679,6 +680,9 @@ public:
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
   void computeHomology();
+
+  // compute automatic sizing field from curvature
+  void computeSizeField();
 
   // access global cache of discrete curvatures
   std::map<MVertex *, std::pair<SVector3, SVector3> > &getCurvatures()

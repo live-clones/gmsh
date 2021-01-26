@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -64,7 +64,8 @@ GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
 GFace *findInFaceSearchStructure(const MFace &f, const fs_cont &search);
 GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2,
                                  const es_cont &search);
-bool buildFaceSearchStructure(GModel *model, fs_cont &search, bool onlyTriangles = false);
+bool buildFaceSearchStructure(GModel *model, fs_cont &search,
+                              bool onlyTriangles = false);
 bool buildEdgeSearchStructure(GModel *model, es_cont &search);
 
 // hybrid mesh recovery structure
@@ -72,6 +73,7 @@ class splitQuadRecovery {
 private:
   std::map<MFace, MVertex *, MFaceLessThan> _quad;
   std::map<MFace, GFace *, MFaceLessThan> _tri;
+
 public:
   splitQuadRecovery() {}
   void add(const MFace &f, MVertex *v, GFace *gf);

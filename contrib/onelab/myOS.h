@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,7 +19,7 @@ std::string GetHostName();
 int UnlinkFile(const std::string &fileName);
 int StatFile(const std::string &fileName);
 int KillProcess(int pid);
-int SystemCall(const std::string &command, bool blocking=false);
+int SystemCall(const std::string &command, bool blocking = false);
 std::string getCurrentWorkdir();
 
 #endif

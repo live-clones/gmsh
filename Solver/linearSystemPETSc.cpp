@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -50,7 +50,7 @@ int linearSystemPETSc<fullMatrix<double> >::_getBlockSizeFromParameters() const
   if(_parameters.find("blockSize") == _parameters.end())
     Msg::Error("'blockSize' parameters must be set for linearSystemPETScBlock");
   int blockSize =
-    strtol(_parameters.find("blockSize")->second.c_str(), NULL, 10);
+    strtol(_parameters.find("blockSize")->second.c_str(), nullptr, 10);
   return blockSize;
 }
 

@@ -63,21 +63,21 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
       if(dim == 2)
         fprintf(f, "%ld %22.15E %22.15E\n", v->getIndex(), v->x(), v->y());
       else if(dim == 3)
-        fprintf(f, "%ld %22.15E %22.15E %22.5E\n", v->getIndex(), v->x(), v->y(),
-                v->z());
+        fprintf(f, "%ld %22.15E %22.15E %22.5E\n", v->getIndex(), v->x(),
+                v->y(), v->z());
     }
 
   if(dim == 2) {
     int nt = 0;
     int order = 0;
-    for(GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
+    for(auto itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
       std::vector<MTriangle *> &tris = (*itf)->triangles;
       nt += tris.size();
       if(tris.size()) order = tris[0]->getPolynomialOrder();
     }
     fprintf(f, "%d %d\n", nt, (order + 1) * (order + 2) / 2);
     int count = 1;
-    for(GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
+    for(auto itf = gm->firstFace(); itf != gm->lastFace(); ++itf) {
       std::vector<MTriangle *> &tris = (*itf)->triangles;
       for(size_t i = 0; i < tris.size(); i++) {
         MTriangle *t = tris[i];
@@ -89,13 +89,13 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
       }
     }
     int ne = 0;
-    for(GModel::eiter ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite) {
+    for(auto ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite) {
       std::vector<MLine *> &l = (*ite)->lines;
       ne += l.size();
     }
     fprintf(f, "%d %d\n", ne, (order + 1));
     count = 1;
-    for(GModel::eiter ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite) {
+    for(auto ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite) {
       std::vector<MLine *> &l = (*ite)->lines;
       for(size_t i = 0; i < l.size(); i++) {
         MLine *t = l[i];
@@ -207,9 +207,7 @@ static bool testElInDist(const SPoint3 &p, double limDist, MElement *el)
       const SPoint3 B = faceVert[1]->point();
       const SPoint3 C = faceVert[2]->point();
       if(faceVert.size() == 3) {
-        if(testTriSphereIntersect(A, B, C, p, limDistSq)){
-          return true;
-        }
+        if(testTriSphereIntersect(A, B, C, p, limDistSq)) { return true; }
         else {
           const SPoint3 D = faceVert[3]->point();
           if(testTriSphereIntersect(A, B, C, p, limDistSq) ||
@@ -295,7 +293,7 @@ double HOPatchDefParameters::maxDistance(MElement *el) const
 int HOPatchDefParameters::inPatch(const SPoint3 &badBary, double limDist,
                                   MElement *el, GEntity *gEnt) const
 {
-  if(lockCurvedBLElts && (gEnt != 0)) {
+  if(lockCurvedBLElts && (gEnt != nullptr)) {
     const std::set<MElement *> &lockedElts = gEnt->curvedBLElements;
     if(lockedElts.find(el) != lockedElts.end()) return -1;
   }

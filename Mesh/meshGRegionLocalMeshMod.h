@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,7 +32,8 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex,
 
 bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
                     int iTarget, const qmTetrahedron::Measures &cr,
-                    const localMeshModAction = GMSH_DOIT, double *result = 0);
+                    const localMeshModAction = GMSH_DOIT,
+                    double *result = nullptr);
 
 bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
                int iLocalEdge, const qmTetrahedron::Measures &cr);

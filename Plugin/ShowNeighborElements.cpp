@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,19 +16,18 @@
 #endif
 
 StringXNumber ShowNeighborElementsOptions_Number[] = {
-  {GMSH_FULLRC, "NumLayers", NULL, 1},
-  {GMSH_FULLRC, "Element1", NULL, 0},
-  {GMSH_FULLRC, "Element2", NULL, 0},
-  {GMSH_FULLRC, "Element3", NULL, 0},
-  {GMSH_FULLRC, "Element4", NULL, 0},
-  {GMSH_FULLRC, "Element5", NULL, 0}
-};
+  {GMSH_FULLRC, "NumLayers", nullptr, 1},
+  {GMSH_FULLRC, "Element1", nullptr, 0},
+  {GMSH_FULLRC, "Element2", nullptr, 0},
+  {GMSH_FULLRC, "Element3", nullptr, 0},
+  {GMSH_FULLRC, "Element4", nullptr, 0},
+  {GMSH_FULLRC, "Element5", nullptr, 0}};
 
 extern "C" {
-  GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin()
-  {
-    return new GMSH_ShowNeighborElementsPlugin();
-  }
+GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin()
+{
+  return new GMSH_ShowNeighborElementsPlugin();
+}
 }
 
 int GMSH_ShowNeighborElementsPlugin::getNbOptions() const
@@ -57,13 +56,13 @@ PView *GMSH_ShowNeighborElementsPlugin::execute(PView *v)
   _nel4 = static_cast<int>(ShowNeighborElementsOptions_Number[4].def);
   _nel5 = static_cast<int>(ShowNeighborElementsOptions_Number[5].def);
 
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++) {
+  for(auto it = m->firstFace(); it != m->lastFace(); it++) {
     GFace *f = *it;
     _init(f);
     _showLayers(f, _nLayers);
   }
 
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
+  for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
     GRegion *r = *it;
     _init(r);
     _showLayers(r, _nLayers);
@@ -74,7 +73,7 @@ PView *GMSH_ShowNeighborElementsPlugin::execute(PView *v)
   drawContext::global()->draw();
 #endif
 
-  return NULL;
+  return nullptr;
 }
 
 void GMSH_ShowNeighborElementsPlugin::_init(GEntity *ent)
@@ -108,12 +107,10 @@ void GMSH_ShowNeighborElementsPlugin::_showLayers(GEntity *ent, int nLayer)
   std::set<MVertex *> &vert = _vertices;
   std::map<MElement *, int> el2cnt;
 
-  std::set<MVertex *>::iterator it;
-  for(it = vert.begin(); it != vert.end(); ++it) {
+  for(auto it = vert.begin(); it != vert.end(); ++it) {
     MVertex *v = *it;
-    std::multimap<MVertex *, MElement *>::iterator ite, itstop;
-    ite = _vert2elem.lower_bound(v);
-    itstop = _vert2elem.upper_bound(v);
+    auto ite = _vert2elem.lower_bound(v);
+    auto itstop = _vert2elem.upper_bound(v);
     for(; ite != itstop; ++ite) {
       MElement *el = ite->second;
       if(el2cnt.find(el) == el2cnt.end()) el2cnt[el] = 0;
@@ -121,8 +118,7 @@ void GMSH_ShowNeighborElementsPlugin::_showLayers(GEntity *ent, int nLayer)
     }
   }
 
-  std::map<MElement *, int>::iterator it2;
-  for(it2 = el2cnt.begin(); it2 != el2cnt.end(); ++it2) {
+  for(auto it2 = el2cnt.begin(); it2 != el2cnt.end(); ++it2) {
     if(it2->second && it2->second > 3 - nLayer) {
       it2->first->setVisibility(true);
     }

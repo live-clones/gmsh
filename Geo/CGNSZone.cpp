@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@ CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex,
                    const Family2EltNodeTransfo &allEltNodeTransfo, int &err)
   : fileIndex_(fileIndex), baseIndex_(baseIndex), meshDim_(meshDim),
     zoneIndex_(zoneIndex), type_(type), startNode_(startNode),
-    eltNodeTransfo_(0), nbPerConnect_(0)
+    eltNodeTransfo_(nullptr), nbPerConnect_(0)
 {
   int cgnsErr;
 
@@ -39,8 +39,7 @@ CGNSZone::CGNSZone(int fileIndex, int baseIndex, int zoneIndex,
   cgnsErr = cg_famname_read(famName);
   if(cgnsErr != CG_NODE_NOT_FOUND) {
     if(cgnsErr == CG_OK) {
-      Family2EltNodeTransfo::const_iterator it =
-        allEltNodeTransfo.find(std::string(famName));
+      auto it = allEltNodeTransfo.find(std::string(famName));
       if(it != allEltNodeTransfo.end()) eltNodeTransfo_ = &(it->second);
     }
     else
@@ -244,8 +243,7 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
 
     // get and check data on master zone
     const std::string masterName(donorName);
-    const std::map<std::string, int>::const_iterator itMasterName =
-      name2Zone.find(masterName);
+    const auto itMasterName = name2Zone.find(masterName);
     if(itMasterName == name2Zone.end()) {
       Msg::Error("Zone name '%s' in not found in connection %i of zone %i",
                  masterName.c_str(), iConnect, index());
@@ -351,8 +349,8 @@ int CGNSZone::readBoundaryConditionRange(int iZoneBC,
   int cgnsErr;
 
   std::vector<cgsize_t> bcData(indexDataSize(2));
-  cgnsErr =
-    cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC, bcData.data(), 0);
+  cgnsErr = cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC,
+                         bcData.data(), nullptr);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get list of elements from range data
@@ -368,8 +366,8 @@ int CGNSZone::readBoundaryConditionList(int iZoneBC, cgsize_t nbVal,
 
   // read data
   std::vector<cgsize_t> bcData(indexDataSize(nbVal));
-  cgnsErr =
-    cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC, bcData.data(), 0);
+  cgnsErr = cg_boco_read(fileIndex(), baseIndex(), index(), iZoneBC,
+                         bcData.data(), nullptr);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
   // get list of elements from list data

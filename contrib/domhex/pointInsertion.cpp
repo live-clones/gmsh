@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -33,8 +33,7 @@ void print_nodal_info(const std::string &filename,
   std::ofstream out(filename.c_str());
 
   out << "View \"\"{" << std::endl;
-  for(typename std::map<MVertex *, T>::const_iterator it = map.begin();
-      it != map.end(); it++) {
+  for(auto it = map.begin(); it != map.end(); it++) {
     MVertex *v = it->first;
     out << "SP( " << v->x() << "," << v->y() << "," << v->z() << "){"
         << it->second << "};" << std::endl;
@@ -128,9 +127,7 @@ bool computeFourNeighbors(frameFieldBackgroundMesh2D *bgm,
     double L = infos.localsize;
     double newPoint[4][2];
     for(int j = 0; j < 2; j++) {
-      for(int i = 0; i < 4; i++) {
-        newPoint[i][j] = newP[i][0][j];
-      }
+      for(int i = 0; i < 4; i++) { newPoint[i][j] = newP[i][0][j]; }
     }
     double ERR[4];
     for(int i = 0; i < 4; i++) { //
@@ -345,7 +342,7 @@ void Filler2D::pointInsertion2D(GFace *gf, std::vector<MVertex *> &packed,
   RTree<surfacePointWithExclusionRegion *, double, 2, double> rtree;
   SMetric3 metricField(1.0);
   SPoint2 newp[4][NUMDIR];
-  std::set<MVertex *>::iterator it = bnd_vertices.begin();
+  auto it = bnd_vertices.begin();
 
   for(; it != bnd_vertices.end(); ++it) {
     SPoint2 midpoint;
@@ -536,8 +533,7 @@ bool Filler3D::treat_region(GRegion *gr)
   MElement *element;
   MVertex *vertex;
   std::vector<GFace *> faces = gr->faces();
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-      it++) {
+  for(auto it = faces.begin(); it != faces.end(); it++) {
     GFace *gf = *it;
     // int limit = code_kesskessai(gf->tag());
     for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
@@ -552,7 +548,7 @@ bool Filler3D::treat_region(GRegion *gr)
   }
 
   int geodim;
-  for(std::set<MVertex *>::iterator it = temp.begin(); it != temp.end(); it++) {
+  for(auto it = temp.begin(); it != temp.end(); it++) {
     geodim = (*it)->onWhat()->dim();
     if((geodim == 0) || (geodim == 1) || (geodim == 2))
       boundary_vertices.push_back(*it);
@@ -583,9 +579,7 @@ bool Filler3D::treat_region(GRegion *gr)
       bgm->eval_approximate_crossfield(closest, svp->cf);
 
       fifo->insert(svp);
-      if(debug) {
-        smoothness_forplot[svp->v] = svp->rank;
-      }
+      if(debug) { smoothness_forplot[svp->v] = svp->rank; }
     }
     else {
       STensor3 temp;
@@ -715,9 +709,7 @@ bool Filler3D::treat_region(GRegion *gr)
           }
         }
       }
-      if(!spawn_created) {
-        delete individual;
-      }
+      if(!spawn_created) { delete individual; }
     } // end loop on spawns
   }
 

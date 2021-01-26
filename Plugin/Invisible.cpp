@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,15 +7,15 @@
 #include "Invisible.h"
 
 StringXNumber InvisibleOptions_Number[] = {
-  {GMSH_FULLRC, "DeleteElements", NULL, 1.},
-  {GMSH_FULLRC, "ReverseElements", NULL, 0.},
+  {GMSH_FULLRC, "DeleteElements", nullptr, 1.},
+  {GMSH_FULLRC, "ReverseElements", nullptr, 0.},
 };
 
 extern "C" {
-  GMSH_Plugin *GMSH_RegisterInvisiblePlugin()
-  {
-    return new GMSH_InvisiblePlugin();
-  }
+GMSH_Plugin *GMSH_RegisterInvisiblePlugin()
+{
+  return new GMSH_InvisiblePlugin();
+}
 }
 
 std::string GMSH_InvisiblePlugin::getHelp() const
@@ -42,5 +42,5 @@ PView *GMSH_InvisiblePlugin::execute(PView *v)
   if(InvisibleOptions_Number[1].def)
     GModel::current()->reverseInvisibleElements();
 
-  return NULL;
+  return nullptr;
 }

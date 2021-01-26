@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -112,7 +112,8 @@ static void createHexPri(std::vector<MVertex *> &v, GRegion *to,
     addHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], to);
     if(j && warningReg != to->tag()) {
       warningReg = to->tag();
-      Msg::Warning("Degenerated hexahedron in extrusion of volume %d", to->tag());
+      Msg::Warning("Degenerated hexahedron in extrusion of volume %d",
+                   to->tag());
     }
   }
 }
@@ -164,8 +165,7 @@ static void extrudeMesh(GFace *from, GRegion *to, MVertexRTree &pos)
   // add all vertices on surface seams
   std::set<MVertex *> seam;
   std::vector<GEdge *> const &l_edges = from->edges();
-  for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
-      it != l_edges.end(); ++it) {
+  for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
     if((*it)->isSeam(from)) {
       seam.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
       if((*it)->getBeginVertex())
@@ -237,17 +237,15 @@ static void extrudeMesh(GFace *from, GRegion *to, MVertexRTree &pos)
 static void insertAllVertices(GRegion *gr, MVertexRTree &pos)
 {
   pos.insert(gr->mesh_vertices);
-  std::vector<MVertex*> embedded = gr->getEmbeddedMeshVertices();
+  std::vector<MVertex *> embedded = gr->getEmbeddedMeshVertices();
   pos.insert(embedded);
   std::vector<GFace *> faces = gr->faces();
-  for(std::vector<GFace *>::iterator itf = faces.begin(); itf != faces.end();
-      itf++) {
+  for(auto itf = faces.begin(); itf != faces.end(); itf++) {
     pos.insert((*itf)->mesh_vertices);
     std::vector<MVertex *> embedded = (*itf)->getEmbeddedMeshVertices();
     pos.insert(embedded);
     std::vector<GEdge *> const &edges = (*itf)->edges();
-    for(std::vector<GEdge *>::const_iterator ite = edges.begin(); ite != edges.end();
-        ite++) {
+    for(auto ite = edges.begin(); ite != edges.end(); ite++) {
       pos.insert((*ite)->mesh_vertices);
       if((*ite)->getBeginVertex())
         pos.insert((*ite)->getBeginVertex()->mesh_vertices);
@@ -289,8 +287,7 @@ void meshGRegionExtruded::operator()(GRegion *gr)
   // carve holes if any (only do it now if the mesh is final, i.e., if
   // the mesh is recombined)
   if(ep->mesh.Holes.size() && ep->mesh.Recombine) {
-    std::map<int, std::pair<double, std::vector<int> > >::iterator it;
-    for(it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
+    for(auto it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
       carveHole(gr, it->first, it->second.first, it->second.second);
   }
 }
@@ -318,8 +315,7 @@ static void deleteEdge(MVertex *v1, MVertex *v2,
 
 // subdivide the 3 lateral faces of each prism
 static void phase1(GRegion *gr, MVertexRTree &pos,
-                   std::set<std::pair<MVertex *, MVertex *> > &edges,
-                   int ntry)
+                   std::set<std::pair<MVertex *, MVertex *> > &edges, int ntry)
 {
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   GFace *from = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
@@ -330,15 +326,12 @@ static void phase1(GRegion *gr, MVertexRTree &pos,
       for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
         std::vector<MVertex *> v;
         if(getExtrudedVertices(from->triangles[i], ep, j, k, pos, v) == 6) {
-          if(ntry == 1){
-            if(!edgeExists(v[0], v[4], edges))
-              createEdge(v[1], v[3], edges);
-            if(!edgeExists(v[4], v[2], edges))
-              createEdge(v[1], v[5], edges);
-            if(!edgeExists(v[3], v[2], edges))
-              createEdge(v[0], v[5], edges);
+          if(ntry == 1) {
+            if(!edgeExists(v[0], v[4], edges)) createEdge(v[1], v[3], edges);
+            if(!edgeExists(v[4], v[2], edges)) createEdge(v[1], v[5], edges);
+            if(!edgeExists(v[3], v[2], edges)) createEdge(v[0], v[5], edges);
           }
-          else{ // from Michel Benhamou
+          else { // from Michel Benhamou
             if(v[1]->getNum() < v[0]->getNum())
               createEdge(v[1], v[3], edges);
             else
@@ -495,7 +488,7 @@ int SubdivideExtrudedMesh(GModel *m)
 #endif
 
   MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
+  for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
     ExtrudeParams *ep = (*it)->meshAttributes.extrude;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
        !ep->mesh.Recombine) {
@@ -536,9 +529,10 @@ int SubdivideExtrudedMesh(GModel *m)
           edges.clear();
           break;
         }
-        else{
-          Msg::Error("Unable to subdivide extruded mesh: change surface mesh or "
-                     "recombine extrusion instead");
+        else {
+          Msg::Error(
+            "Unable to subdivide extruded mesh: change surface mesh or "
+            "recombine extrusion instead");
           return -1;
         }
       }
@@ -556,21 +550,19 @@ int SubdivideExtrudedMesh(GModel *m)
     for(std::size_t i = 0; i < gr->hexahedra.size(); i++)
       delete gr->hexahedra[i];
     gr->hexahedra.clear();
-    for(std::size_t i = 0; i < gr->prisms.size(); i++)
-      delete gr->prisms[i];
+    for(std::size_t i = 0; i < gr->prisms.size(); i++) delete gr->prisms[i];
     gr->prisms.clear();
-    for(std::size_t i = 0; i < gr->pyramids.size(); i++)
-      delete gr->pyramids[i];
+    for(std::size_t i = 0; i < gr->pyramids.size(); i++) delete gr->pyramids[i];
     gr->pyramids.clear();
     phase3(gr, pos, edges);
   }
 
   // remesh bounding surfaces, to make them compatible with the volume mesh
-  std::set<GFace*> faces;
+  std::set<GFace *> faces;
   for(std::size_t i = 0; i < regions.size(); i++) {
     GRegion *gr = regions[i];
     std::vector<GFace *> f = gr->faces();
-    for(std::size_t i = 0; i < f.size(); i++){
+    for(std::size_t i = 0; i < f.size(); i++) {
       ExtrudeParams *ep = f[i]->meshAttributes.extrude;
       // TODO: this does not yet handle swapping of edges in COPIED_ENTITY
       // surfaces, whose mesh is copied during extrusion (the "top"
@@ -586,10 +578,9 @@ int SubdivideExtrudedMesh(GModel *m)
   int nIter = 0;
   while(1) {
     int nPending = 0;
-    for(std::set<GFace *>::iterator it = faces.begin(); it != faces.end();
-        it++) {
+    for(auto it = faces.begin(); it != faces.end(); it++) {
       GFace *gf = *it;
-      if(gf->meshStatistics.status == GFace::PENDING){
+      if(gf->meshStatistics.status == GFace::PENDING) {
         Msg::Info("Remeshing surface %d", gf->tag());
         for(std::size_t i = 0; i < gf->triangles.size(); i++)
           delete gf->triangles[i];
@@ -602,7 +593,7 @@ int SubdivideExtrudedMesh(GModel *m)
       }
     }
     if(!nPending) break;
-    if(nIter++ > 10){
+    if(nIter++ > 10) {
       Msg::Warning("Could not remesh all subdivided surfaces");
       break;
     }
@@ -629,8 +620,7 @@ int SubdivideExtrudedMesh(GModel *m)
     GRegion *gr = regions[i];
     ExtrudeParams *ep = gr->meshAttributes.extrude;
     if(ep->mesh.Holes.size()) {
-      std::map<int, std::pair<double, std::vector<int> > >::iterator it;
-      for(it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
+      for(auto it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
         carveHole(gr, it->first, it->second.first, it->second.second);
     }
   }
@@ -640,8 +630,7 @@ int SubdivideExtrudedMesh(GModel *m)
     GRegion *gr = regions_quadToTri[i];
     ExtrudeParams *ep = gr->meshAttributes.extrude;
     if(ep->mesh.Holes.size()) {
-      std::map<int, std::pair<double, std::vector<int> > >::iterator it;
-      for(it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
+      for(auto it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
         carveHole(gr, it->first, it->second.first, it->second.second);
     }
   }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -74,7 +74,7 @@ private:
   }
 
 public:
-  outputRange(int x, int y, int w, int h, const char *l = 0)
+  outputRange(int x, int y, int w, int h, const char *l = nullptr)
     : Fl_Group(x, y, w, h, l)
   {
     _graph_val.resize(36, '0');
@@ -141,10 +141,8 @@ public:
   void value(double val)
   {
     char buffer[256];
-    if(_number_format.empty()) {
-      sprintf(buffer, "%g", val);
-    }
-    else{
+    if(_number_format.empty()) { sprintf(buffer, "%g", val); }
+    else {
       if(_number_format.find("d") != std::string::npos ||
          _number_format.find("u") != std::string::npos)
         sprintf(buffer, _number_format.c_str(), (int)val);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,17 +15,16 @@
 class inputValue : public Fl_Value_Input {
 private:
   std::string _number_format;
+
 public:
-  inputValue(int x, int y, int w, int h, const char *l = 0)
+  inputValue(int x, int y, int w, int h, const char *l = nullptr)
     : Fl_Value_Input(x, y, w, h, l)
   {
   }
   void numberFormat(const std::string &fmt) { _number_format = fmt; }
   virtual int format(char *buffer)
   {
-    if(_number_format.empty()) {
-      return sprintf(buffer, "%g", value());
-    }
+    if(_number_format.empty()) { return sprintf(buffer, "%g", value()); }
     else {
       if(_number_format.find("d") != std::string::npos ||
          _number_format.find("u") != std::string::npos)
@@ -44,7 +43,7 @@ private:
   static void new_input_cb(Fl_Widget *, void *);
 
 public:
-  inputValueFloat(int x, int y, int w, int h, const char *l = 0);
+  inputValueFloat(int x, int y, int w, int h, const char *l = nullptr);
   int handle(int event);
 };
 

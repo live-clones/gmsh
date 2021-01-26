@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -27,9 +27,9 @@ void free_buckets(octantBucket *bucket)
   int i, numBuck = 8;
   ELink ptr1, ptr2;
 
-  if(bucket->next == NULL) {
+  if(bucket->next == nullptr) {
     ptr1 = bucket->lhead;
-    while(ptr1 != NULL) {
+    while(ptr1 != nullptr) {
       ptr2 = ptr1;
       ptr1 = ptr1->next;
       delete ptr2;
@@ -80,7 +80,7 @@ void Octree_Arrange(Octree *myOctree)
 
 void *Octree_Search(double *pt, Octree *myOctree)
 {
-  if(!myOctree) return 0;
+  if(!myOctree) return nullptr;
   return searchElement(myOctree->root, pt, myOctree->info,
                        myOctree->function_BB, myOctree->function_inElement);
 }

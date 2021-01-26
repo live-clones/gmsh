@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -112,7 +112,7 @@ void HierarchicalBasisH1Brick::generateBasis(double const &u, double const &v,
   }
   // edge shape functions:
   int indexEdgeBasis = 0;
-  std::vector<double> *vectorTarget1(0);
+  std::vector<double> *vectorTarget1(nullptr);
   for(int iEdge = 0; iEdge < _nedge; iEdge++) {
     switch(iEdge) {
     case(0):
@@ -137,7 +137,7 @@ void HierarchicalBasisH1Brick::generateBasis(double const &u, double const &v,
   }
   // face shape functions:
   int indexFaceFunction = 0;
-  std::vector<double> *vectorTarget2(0);
+  std::vector<double> *vectorTarget2(nullptr);
   for(int iFace = 0; iFace < _nfaceQuad; iFace++) {
     int indexLambda;
     switch(iFace) {
@@ -308,8 +308,8 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
   }
   // edge gradient:
   int indexEdgeBasis = 0;
-  std::vector<double> *vectorTarget1(0);
-  std::vector<std::vector<double> > *dvectorTarget1(0);
+  std::vector<double> *vectorTarget1(nullptr);
+  std::vector<std::vector<double> > *dvectorTarget1(nullptr);
   for(int iEdge = 0; iEdge < _nedge; iEdge++) {
     switch(iEdge) {
     case(0):
@@ -346,8 +346,8 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
   }
   // face gradient:
   int indexFaceFunction = 0;
-  std::vector<double> *vectorTarget2(0);
-  std::vector<std::vector<double> > *dvectorTarget2(0);
+  std::vector<double> *vectorTarget2(nullptr);
+  std::vector<std::vector<double> > *dvectorTarget2(nullptr);
   for(int iFace = 0; iFace < _nfaceQuad; iFace++) {
     int indexLambda;
     switch(iFace) {

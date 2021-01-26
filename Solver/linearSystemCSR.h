@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -39,10 +39,10 @@ public:
   int getNNZ() { return CSRList_Nbr(linearSystemCSR<scalar>::_a); }
   int getNbUnk() { return linearSystemCSR<scalar>::_b->size(); }
   linearSystemCSR()
-    : sorted(false), _entriesPreAllocated(false), _a(0), _b(0), _x(0)
+    : sorted(false), _entriesPreAllocated(false), _a(nullptr), _b(0), _x(0)
   {
   }
-  virtual bool isAllocated() const { return _a != 0; }
+  virtual bool isAllocated() const { return _a != nullptr; }
   virtual void allocate(int);
   virtual void clear() { allocate(0); }
   virtual ~linearSystemCSR() { allocate(0); }

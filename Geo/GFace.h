@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -73,12 +73,12 @@ public:
   void delRegion(GRegion *r)
   {
     if(r1 == r) r1 = r2;
-    r2 = NULL;
+    r2 = nullptr;
   }
   GRegion *getRegion(int const num) const { return num == 0 ? r1 : r2; }
 
   // get number of regions
-  std::size_t numRegions() const { return (r1 != NULL) + (r2 != NULL); }
+  std::size_t numRegions() const { return (r1 != nullptr) + (r2 != nullptr); }
 
   std::list<GRegion *> regions() const
   {
@@ -109,8 +109,7 @@ public:
 
   bool containsEdge(int const iEdge) const
   {
-    for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
-        it != l_edges.end(); ++it)
+    for(auto it = l_edges.begin(); it != l_edges.end(); ++it)
       if((*it)->tag() == iEdge) return true;
     return false;
   }
@@ -139,7 +138,7 @@ public:
   virtual int dim() const { return 2; }
 
   // returns the parent entity for partitioned entities
-  virtual GEntity *getParentEntity() { return 0; }
+  virtual GEntity *getParentEntity() { return nullptr; }
 
   // set visibility flag
   virtual void setVisibility(char val, bool recursive = false);
@@ -283,8 +282,8 @@ public:
   // add points (and optionally normals) in vectors so that two
   // points are at most maxDist apart
   bool fillPointCloud(double maxDist, std::vector<SPoint3> *points,
-                      std::vector<SPoint2> *uvpoints = 0,
-                      std::vector<SVector3> *normals = 0);
+                      std::vector<SPoint2> *uvpoints = nullptr,
+                      std::vector<SVector3> *normals = nullptr);
 
   // tells if it's a sphere, and if it is, returns parameters
   virtual bool isSphere(double &radius, SPoint3 &center) const { return false; }
@@ -319,23 +318,14 @@ public:
   } meshAttributes;
 
   int getMeshingAlgo() const;
-  void setMeshingAlgo(int val)
-  {
-    meshAttributes.algorithm = val;
-  }
-  void unsetMeshingAlgo()
-  {
-    meshAttributes.algorithm = 0;
-  }
+  void setMeshingAlgo(int val) { meshAttributes.algorithm = val; }
+  void unsetMeshingAlgo() { meshAttributes.algorithm = 0; }
   int getMeshSizeFromBoundary() const;
   void setMeshSizeFromBoundary(int val)
   {
     meshAttributes.meshSizeFromBoundary = val;
   }
-  virtual double getMeshSize() const
-  {
-    return meshAttributes.meshSize;
-  }
+  virtual double getMeshSize() const { return meshAttributes.meshSize; }
   virtual double getMeshSizeFactor() const
   {
     return meshAttributes.meshSizeFactor;

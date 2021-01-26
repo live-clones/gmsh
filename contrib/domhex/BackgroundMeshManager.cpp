@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -13,7 +13,7 @@
 
 std::map<GEntity *, BGMBase *> BGMManager::data =
   std::map<GEntity *, BGMBase *>();
-BGMBase *BGMManager::latest2Dbgm = NULL;
+BGMBase *BGMManager::latest2Dbgm = nullptr;
 bool BGMManager::use_cross_field = true;
 
 void BGMManager::set_use_cross_field(bool b)
@@ -26,10 +26,8 @@ void BGMManager::set_use_cross_field(bool b)
 
 BGMBase *BGMManager::get(GRegion *gf)
 {
-  std::map<GEntity *, BGMBase *>::iterator itfind = data.find(gf);
-  if(itfind != data.end()) {
-    return itfind->second;
-  }
+  auto itfind = data.find(gf);
+  if(itfind != data.end()) { return itfind->second; }
 
   BGMBase *bgm = use_cross_field ? new frameFieldBackgroundMesh3D(gf) :
                                    new backgroundMesh3D(gf);
@@ -40,7 +38,7 @@ BGMBase *BGMManager::get(GRegion *gf)
 
 BGMBase *BGMManager::get(GFace *gf)
 {
-  std::map<GEntity *, BGMBase *>::iterator itfind = data.find(gf);
+  auto itfind = data.find(gf);
   if(itfind != data.end()) {
     latest2Dbgm = itfind->second;
     return itfind->second;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -54,7 +54,7 @@ int GModel::readDIFF(const std::string &name)
   std::vector<MVertex *> vertexVector;
 
   {
-    while(strstr(str, "Number of space dim. =") == NULL) {
+    while(strstr(str, "Number of space dim. =") == nullptr) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
 
@@ -70,7 +70,7 @@ int GModel::readDIFF(const std::string &name)
       fclose(fp);
       return 0;
     }
-    while(strstr(str, "Number of elements   =") == NULL) {
+    while(strstr(str, "Number of elements   =") == nullptr) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
     if(sscanf(str, "%*s %*s %*s %*s %d", &numElements) != 1) {
@@ -84,7 +84,7 @@ int GModel::readDIFF(const std::string &name)
       fclose(fp);
       return 0;
     }
-    while(strstr(str, "Number of nodes      =") == NULL) {
+    while(strstr(str, "Number of nodes      =") == nullptr) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
     if(sscanf(str, "%*s %*s %*s %*s %d", &numVertices) != 1) {
@@ -98,7 +98,7 @@ int GModel::readDIFF(const std::string &name)
       fclose(fp);
       return 0;
     }
-    while(strstr(str, "Max number of nodes in an element:") == NULL) {
+    while(strstr(str, "Max number of nodes in an element:") == nullptr) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
     if(sscanf(str, "%*s %*s %*s %*s %*s %*s %*s %d", &numVerticesPerElement) !=
@@ -131,8 +131,8 @@ int GModel::readDIFF(const std::string &name)
       fclose(fp);
       return 0;
     }
-    while(strstr(str, "Boundary indicators:") == NULL &&
-          strstr(str, "boundary indicators:") == NULL) {
+    while(strstr(str, "Boundary indicators:") == nullptr &&
+          strstr(str, "boundary indicators:") == nullptr) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
     if(sscanf(str, "%d %*s %*s", &nbi) != 1) {
@@ -185,9 +185,8 @@ int GModel::readDIFF(const std::string &name)
       if(vertexMap.count(num))
         Msg::Warning("Skipping duplicate node %d", num);
       else
-        vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
-      if(numVertices > 100000)
-        Msg::ProgressMeter(i + 1, true, "Reading nodes");
+        vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], nullptr, num);
+      if(numVertices > 100000) Msg::ProgressMeter(i + 1, true, "Reading nodes");
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices &&
@@ -196,11 +195,11 @@ int GModel::readDIFF(const std::string &name)
         Msg::Info("Vertex numbering is dense");
         vertexVector.resize(vertexMap.size() + 1);
         if(minVertex == 1)
-          vertexVector[0] = 0;
+          vertexVector[0] = nullptr;
         else
-          vertexVector[numVertices] = 0;
-        std::map<int, MVertex *>::const_iterator it = vertexMap.begin();
-        for(; it != vertexMap.end(); ++it) vertexVector[it->first] = it->second;
+          vertexVector[numVertices] = nullptr;
+        for(auto it = vertexMap.begin(); it != vertexMap.end(); ++it)
+          vertexVector[it->first] = it->second;
         vertexMap.clear();
       }
       Msg::Info("%d ( %lf , %lf , %lf ) [%d]", i, xyz[0], xyz[1], xyz[2],
@@ -382,7 +381,6 @@ int GModel::readDIFF(const std::string &name)
         Msg::ProgressMeter(i + 1, true, "Reading elements");
     }
     Msg::StopProgressMeter();
-
   }
 
   // store the elements in their associated elementary entity. If the
@@ -432,10 +430,9 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   // faces, and the vertices would end up categorized on either one.)
   std::vector<std::list<int> > vertexTags(numVertices);
   std::list<int> boundaryIndicators;
-  for(riter it = firstRegion(); it != lastRegion(); it++) {
+  for(auto it = firstRegion(); it != lastRegion(); it++) {
     std::vector<GFace *> faces = (*it)->faces();
-    for(std::vector<GFace *>::iterator itf = faces.begin(); itf != faces.end();
-        itf++) {
+    for(auto itf = faces.begin(); itf != faces.end(); itf++) {
       GFace *gf = *itf;
       boundaryIndicators.push_back(gf->tag());
       for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
@@ -492,8 +489,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, " Only one subdomain               : dpFALSE\n");
   fprintf(fp, " Lattice data                     ? 0\n\n\n\n");
   fprintf(fp, " %d Boundary indicators:  ", (int)boundaryIndicators.size());
-  for(std::list<int>::iterator it = boundaryIndicators.begin();
-      it != boundaryIndicators.end(); it++)
+  for(auto it = boundaryIndicators.begin(); it != boundaryIndicators.end();
+      it++)
     fprintf(fp, " %d", *it);
 
   fprintf(fp, "\n\n\n");
@@ -512,7 +509,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
       if(v->getIndex() > 0) {
         v->writeDIFF(fp, binary, scalingFactor);
         fprintf(fp, " [%d] ", (int)vertexTags[v->getIndex() - 1].size());
-        for(std::list<int>::iterator it = vertexTags[v->getIndex() - 1].begin();
+        for(auto it = vertexTags[v->getIndex() - 1].begin();
             it != vertexTags[v->getIndex() - 1].end(); it++)
           fprintf(fp, " %d ", *it);
         fprintf(fp, "\n");
