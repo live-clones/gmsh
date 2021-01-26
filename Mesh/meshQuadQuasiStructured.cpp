@@ -336,7 +336,6 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
   if (SHOW_INTERMEDIATE_VIEWS) {
     showCrossFieldInView(global_triangles, global_triangle_directions, "cross_field");
-    // gmsh::fltk::run();
   }
 
 
@@ -364,6 +363,24 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
   int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
   if (sop != 0) {
     Msg::Warning("failed to compute one-way size map smoothing");
+  }
+
+  if (SHOW_INTERMEDIATE_VIEWS) {
+    std::vector<MElement*> elements = dynamic_cast_vector<MTriangle*,MElement*>(global_triangles);
+    GeoLog::add(elements, sizeMap, "size_map");
+    GeoLog::flush();
+  }
+
+  /* Clamp with global minimum/maximum mesh size */
+  {
+    // TODO: should be multiplied by lcFactor or not ?
+    for (auto& kv: global_size_map) {
+      if (kv.second < CTX::instance()->mesh.lcMin) {
+        kv.second = CTX::instance()->mesh.lcMin;
+      } else if (kv.second > CTX::instance()->mesh.lcMax) {
+        kv.second = CTX::instance()->mesh.lcMax;
+      }
+    }
   }
 
   /* Build the background field */

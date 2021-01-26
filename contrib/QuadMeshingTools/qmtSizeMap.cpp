@@ -106,7 +106,7 @@ int computeMinimalSizeOnCurves(
     if (gv == NULL) continue;
     /* Mesh size */
     double size = gv->prescribedMeshSizeAtVertex();
-    setMinimum(v, minSize, size);
+    if (size > 0 && size < 1.e22) setMinimum(v, minSize, size);
   }
 
   /* On curve vertices, minimum size is minimum of:
@@ -135,7 +135,7 @@ int computeMinimalSizeOnCurves(
         for (GVertex* extremity: ge->vertices()) {
           auto it = std::find(extremity->edges().begin(),extremity->edges().end(), ge2);
           if (it == extremity->edges().end()) {
-            curvesNotAdjacent.push_back(ge);
+            curvesNotAdjacent.push_back(ge2);
           }
         }
       }
@@ -146,13 +146,13 @@ int computeMinimalSizeOnCurves(
         double vMin = len; /* curve length */
 
         /* Size: minimum of projection to non-adj curves */
-        for (GEdge* ge: curvesNotAdjacent) {
+        for (GEdge* ge2: curvesNotAdjacent) {
           /* Warning: testing all MLine, slow, should have kdtree acceleration */
-          double dist = distanceToGEdgeBackgroundMesh(v->point(), gbm, ge);
-          vMin = std::min(vMin, dist);
+          double dist = distanceToGEdgeBackgroundMesh(v->point(), gbm, ge2);
+          if (vMin > 0) vMin = std::min(vMin, dist);
         }
 
-        setMinimum(v, minSize, vMin);
+        if (vMin > 0 && vMin < 1.e22) setMinimum(v, minSize, vMin);
       }
     }
   }

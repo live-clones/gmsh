@@ -1103,12 +1103,6 @@ int computeCrossFieldConformalScaling(
     Msg::Debug("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f)", 
         myAssembler->sizeOfR(), triangles.size(), sMin, sMax);
   }
-  if (Msg::GetVerbosity() >= 99) {
-    std::vector<MElement*> elements = dynamic_cast_vector<MTriangle*,MElement*>(triangles);
-    GeoLog::add(elements, scaling, "conformal_scaling");
-    GeoLog::flush();
-    // gmsh::fltk::run();
-  }
 
   delete _lsys;
 
