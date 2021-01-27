@@ -1056,11 +1056,21 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getEdgeNumber
       //
-      // Get the global mesh edge identifier `edgeNum' for an input list of node
-      // pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
+      // Get the global mesh edge identifiers `edgeNum' for an input list of node
+      // tag pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
       // experimental feature and will probably change in a future release.
-      GMSH_API void getEdgeNumber(const std::vector<int> & edgeNodes,
-                                  std::vector<int> & edgeNum);
+      GMSH_API void getEdgeNumber(const std::vector<std::size_t> & edgeNodes,
+                                  std::vector<std::size_t> & edgeNum);
+
+      // gmsh::model::mesh::getFaceNumber
+      //
+      // Get the global mesh face identifiers `faceNum' for an input list of node
+      // tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4),
+      // concatenated in the vector `faceNodes'.  Warning: this is an experimental
+      // feature and will probably change in a future release.
+      GMSH_API void getFaceNumber(const int faceType,
+                                  const std::vector<std::size_t> & faceNodes,
+                                  std::vector<std::size_t> & faceNum);
 
       // gmsh::model::mesh::createEdges
       //

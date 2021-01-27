@@ -2393,14 +2393,14 @@ class model:
             """
             gmsh.model.mesh.getEdgeNumber(edgeNodes)
 
-            Get the global mesh edge identifier `edgeNum' for an input list of node
-            pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
+            Get the global mesh edge identifiers `edgeNum' for an input list of node
+            tag pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
             experimental feature and will probably change in a future release.
 
             Return `edgeNum'.
             """
-            api_edgeNodes_, api_edgeNodes_n_ = _ivectorint(edgeNodes)
-            api_edgeNum_, api_edgeNum_n_ = POINTER(c_int)(), c_size_t()
+            api_edgeNodes_, api_edgeNodes_n_ = _ivectorsize(edgeNodes)
+            api_edgeNum_, api_edgeNum_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetEdgeNumber(
                 api_edgeNodes_, api_edgeNodes_n_,
@@ -2408,7 +2408,31 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorint(api_edgeNum_, api_edgeNum_n_.value)
+            return _ovectorsize(api_edgeNum_, api_edgeNum_n_.value)
+
+        @staticmethod
+        def getFaceNumber(faceType, faceNodes):
+            """
+            gmsh.model.mesh.getFaceNumber(faceType, faceNodes)
+
+            Get the global mesh face identifiers `faceNum' for an input list of node
+            tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4),
+            concatenated in the vector `faceNodes'.  Warning: this is an experimental
+            feature and will probably change in a future release.
+
+            Return `faceNum'.
+            """
+            api_faceNodes_, api_faceNodes_n_ = _ivectorsize(faceNodes)
+            api_faceNum_, api_faceNum_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetFaceNumber(
+                c_int(faceType),
+                api_faceNodes_, api_faceNodes_n_,
+                byref(api_faceNum_), byref(api_faceNum_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorsize(api_faceNum_, api_faceNum_n_.value)
 
         @staticmethod
         def createEdges(dimTags=[]):

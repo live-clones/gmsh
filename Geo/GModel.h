@@ -21,8 +21,8 @@
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
 
-#define hashmapMFace std::unordered_map<MFace, int, MFaceHash, MFaceEqual>
-#define hashmapMEdge std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual>
+#define hashmapMFace std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>
+#define hashmapMEdge std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>
 
 template <class scalar> class simpleFunction;
 
@@ -274,12 +274,14 @@ public:
     maxe = _checkPointedMaxElementNum;
   }
 
-  // number the edges
-  int addMEdge(const MEdge &edge);
-  // get the edge number
-  int getEdgeNumber(const MEdge &edge);
-  // number the faces
-  int addMFace(const MFace &face);
+  // add a mesh edge or face in the global edge or face map and number it
+  // (starting at 1)
+  std::size_t addMEdge(const MEdge &edge);
+  std::size_t addMFace(const MFace &face);
+  // get the number of an edge of face (or 0 if it is not stored in the global
+  // edge of face map)
+  std::size_t getEdgeNumber(const MEdge &edge);
+  std::size_t getFaceNumber(const MFace &face);
 
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)

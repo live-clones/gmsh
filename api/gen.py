@@ -347,8 +347,11 @@ mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('fun
 doc = '''Preallocate data before calling `getBasisFunctionsOrientationForElements' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateBasisFunctionsOrientationForElements', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
-doc = '''Get the global mesh edge identifier `edgeNum' for an input list of node pairs, concatenated in the vector `edgeNodes'.  Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getEdgeNumber', doc, None, ivectorint('edgeNodes'), ovectorint('edgeNum'))
+doc = '''Get the global mesh edge identifiers `edgeNum' for an input list of node tag pairs, concatenated in the vector `edgeNodes'.  Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getEdgeNumber', doc, None, ivectorsize('edgeNodes'), ovectorsize('edgeNum'))
+
+doc = '''Get the global mesh face identifiers `faceNum' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4), concatenated in the vector `faceNodes'.  Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getFaceNumber', doc, None, iint('faceType'), ivectorsize('faceNodes'), ovectorsize('faceNum'))
 
 doc = '''Create mesh edges for the entities `dimTags'. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('createEdges', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))

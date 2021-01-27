@@ -1987,22 +1987,44 @@ end
 """
     gmsh.model.mesh.getEdgeNumber(edgeNodes)
 
-Get the global mesh edge identifier `edgeNum` for an input list of node pairs,
-concatenated in the vector `edgeNodes`.  Warning: this is an experimental
+Get the global mesh edge identifiers `edgeNum` for an input list of node tag
+pairs, concatenated in the vector `edgeNodes`.  Warning: this is an experimental
 feature and will probably change in a future release.
 
 Return `edgeNum`.
 """
 function getEdgeNumber(edgeNodes)
-    api_edgeNum_ = Ref{Ptr{Cint}}()
+    api_edgeNum_ = Ref{Ptr{Csize_t}}()
     api_edgeNum_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetEdgeNumber, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cint}, edgeNodes), length(edgeNodes), api_edgeNum_, api_edgeNum_n_, ierr)
+          (Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Csize_t}, edgeNodes), length(edgeNodes), api_edgeNum_, api_edgeNum_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     edgeNum = unsafe_wrap(Array, api_edgeNum_[], api_edgeNum_n_[], own=true)
     return edgeNum
+end
+
+"""
+    gmsh.model.mesh.getFaceNumber(faceType, faceNodes)
+
+Get the global mesh face identifiers `faceNum` for an input list of node tag
+triplets (if `faceType` == 3) or quadruplets (if `faceType` == 4), concatenated
+in the vector `faceNodes`.  Warning: this is an experimental feature and will
+probably change in a future release.
+
+Return `faceNum`.
+"""
+function getFaceNumber(faceType, faceNodes)
+    api_faceNum_ = Ref{Ptr{Csize_t}}()
+    api_faceNum_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetFaceNumber, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          faceType, convert(Vector{Csize_t}, faceNodes), length(faceNodes), api_faceNum_, api_faceNum_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    faceNum = unsafe_wrap(Array, api_faceNum_[], api_faceNum_n_[], own=true)
+    return faceNum
 end
 
 """

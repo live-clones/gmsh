@@ -1353,14 +1353,28 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
   }
 }
 
-GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n, int ** edgeNum, size_t * edgeNum_n, int * ierr)
+GMSH_API void gmshModelMeshGetEdgeNumber(size_t * edgeNodes, size_t edgeNodes_n, size_t ** edgeNum, size_t * edgeNum_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_edgeNodes_(edgeNodes, edgeNodes + edgeNodes_n);
-    std::vector<int> api_edgeNum_;
+    std::vector<std::size_t> api_edgeNodes_(edgeNodes, edgeNodes + edgeNodes_n);
+    std::vector<std::size_t> api_edgeNum_;
     gmsh::model::mesh::getEdgeNumber(api_edgeNodes_, api_edgeNum_);
     vector2ptr(api_edgeNum_, edgeNum, edgeNum_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetFaceNumber(const int faceType, size_t * faceNodes, size_t faceNodes_n, size_t ** faceNum, size_t * faceNum_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_faceNodes_(faceNodes, faceNodes + faceNodes_n);
+    std::vector<std::size_t> api_faceNum_;
+    gmsh::model::mesh::getFaceNumber(faceType, api_faceNodes_, api_faceNum_);
+    vector2ptr(api_faceNum_, faceNum, faceNum_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

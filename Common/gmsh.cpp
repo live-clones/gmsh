@@ -3179,17 +3179,58 @@ gmsh::model::mesh::preallocateBasisFunctionsOrientationForElements(
 }
 
 GMSH_API void
-gmsh::model::mesh::getEdgeNumber(const std::vector<int> &edgeNodes,
-                                 std::vector<int> &edgeNum)
+gmsh::model::mesh::getEdgeNumber(const std::vector<std::size_t> &edgeNodes,
+                                 std::vector<std::size_t> &edgeNum)
 {
   edgeNum.clear();
-  int numEdges = edgeNodes.size() / 2;
+  std::size_t numEdges = edgeNodes.size() / 2;
   if(!numEdges) return;
   edgeNum.resize(numEdges);
-  for(int i = 0; i < numEdges; i++) {
-    MEdge edge(GModel::current()->getMeshVertexByTag(edgeNodes[2 * i]),
-               GModel::current()->getMeshVertexByTag(edgeNodes[2 * i + 1]));
-    edgeNum[i] = GModel::current()->getEdgeNumber(edge);
+  for(std::size_t i = 0; i < numEdges; i++) {
+    std::size_t n0 = edgeNodes[2 * i];
+    std::size_t n1 = edgeNodes[2 * i + 1];
+    MVertex *v0 = GModel::current()->getMeshVertexByTag(n0);
+    MVertex *v1 = GModel::current()->getMeshVertexByTag(n1);
+    if(v0 && v1) {
+      MEdge edge(v0, v1);
+      edgeNum[i] = GModel::current()->getEdgeNumber(edge);
+    }
+    else {
+      Msg::Error("Unknown mesh node %d or %d", n0, n1);
+    }
+  }
+}
+
+GMSH_API void
+gmsh::model::mesh::getFaceNumber(const int faceType,
+                                 const std::vector<std::size_t> &faceNodes,
+                                 std::vector<std::size_t> &faceNum)
+{
+  faceNum.clear();
+  if(faceType != 3 && faceType != 4) {
+    Msg::Error("Unknow face type (should be 3 or 4)");
+    return;
+  }
+  std::size_t numFaces = faceNodes.size() / faceType;
+  if(!numFaces) return;
+  faceNum.resize(numFaces);
+  for(std::size_t i = 0; i < numFaces; i++) {
+    std::size_t n0 = faceNodes[faceType * i];
+    std::size_t n1 = faceNodes[faceType * i + 1];
+    std::size_t n2 = faceNodes[faceType * i + 2];
+    std::size_t n3 = (faceType == 4) ? faceNodes[faceType * i + 3] : 0;
+    MVertex *v0 = GModel::current()->getMeshVertexByTag(n0);
+    MVertex *v1 = GModel::current()->getMeshVertexByTag(n1);
+    MVertex *v2 = GModel::current()->getMeshVertexByTag(n2);
+    MVertex *v3 = (faceType == 4) ? GModel::current()->getMeshVertexByTag(n3) :
+      nullptr;
+    if(v0 && v1 && v2) {
+      MFace face(v0, v1, v2, v3);
+      faceNum[i] = GModel::current()->getFaceNumber(face);
+    }
+    else {
+      Msg::Error("Unknown mesh node %d, %d or %d", n0, n1, n2);
+    }
   }
 }
 
@@ -3214,8 +3255,6 @@ static void _getEntities(const gmsh::vectorpair &dimTags,
 
 GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
 {
-  // FIXME: this should eventually be removed, when we replace edges/faces used
-  // in basis function keys simply with element tags
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
@@ -3231,8 +3270,6 @@ GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
 
 GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
 {
-  // FIXME: this should eventually be removed, when we replace edges/faces used
-  // in basis function keys simply with element tags
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
@@ -3498,7 +3535,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
             coordEdge[1] = 0.5 * (v1->y() + v2->y());
             coordEdge[2] = 0.5 * (v1->z() + v2->z());
           }
-          int edgeGlobalIndice = GModel::current()->addMEdge(edge);
+          std::size_t edgeGlobalIndice = GModel::current()->addMEdge(edge);
           for(int k = 1; k < const1; k++) {
             keys.push_back(std::pair<int, std::size_t>(k, edgeGlobalIndice));
             if(generateCoord) {
@@ -3526,7 +3563,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
             coordFace[1] /= face.getNumVertices();
             coordFace[2] /= face.getNumVertices();
           }
-          int faceGlobalIndice = GModel::current()->addMFace(face);
+          std::size_t faceGlobalIndice = GModel::current()->addMFace(face);
           int it2 = const2;
           if(jj >= numberQuadFaces) { it2 = const3; }
           for(int k = const1; k < it2; k++) {
@@ -3715,7 +3752,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
         coordEdge[1] = 0.5 * (v1->y() + v2->y());
         coordEdge[2] = 0.5 * (v1->z() + v2->z());
       }
-      int edgeGlobalIndice = GModel::current()->addMEdge(edge);
+      std::size_t edgeGlobalIndice = GModel::current()->addMEdge(edge);
       for(int k = 1; k < const1; k++) {
         keys.push_back(std::pair<int, std::size_t>(k, edgeGlobalIndice));
         if(generateCoord) {
@@ -3742,7 +3779,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
         coordFace[1] /= face.getNumVertices();
         coordFace[2] /= face.getNumVertices();
       }
-      int faceGlobalIndice = GModel::current()->addMFace(face);
+      std::size_t faceGlobalIndice = GModel::current()->addMFace(face);
       int it2 = const2;
       if(jj >= numberQuadFaces) { it2 = const3; }
       for(int k = const1; k < it2; k++) {

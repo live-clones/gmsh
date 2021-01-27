@@ -1606,19 +1606,36 @@ namespace gmsh { // Top-level functions
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
 
-      // Get the global mesh edge identifier `edgeNum' for an input list of node
-      // pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
+      // Get the global mesh edge identifiers `edgeNum' for an input list of node
+      // tag pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
       // experimental feature and will probably change in a future release.
-      inline void getEdgeNumber(const std::vector<int> & edgeNodes,
-                                std::vector<int> & edgeNum)
+      inline void getEdgeNumber(const std::vector<std::size_t> & edgeNodes,
+                                std::vector<std::size_t> & edgeNum)
       {
         int ierr = 0;
-        int *api_edgeNodes_; size_t api_edgeNodes_n_; vector2ptr(edgeNodes, &api_edgeNodes_, &api_edgeNodes_n_);
-        int *api_edgeNum_; size_t api_edgeNum_n_;
+        size_t *api_edgeNodes_; size_t api_edgeNodes_n_; vector2ptr(edgeNodes, &api_edgeNodes_, &api_edgeNodes_n_);
+        size_t *api_edgeNum_; size_t api_edgeNum_n_;
         gmshModelMeshGetEdgeNumber(api_edgeNodes_, api_edgeNodes_n_, &api_edgeNum_, &api_edgeNum_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_edgeNodes_);
         edgeNum.assign(api_edgeNum_, api_edgeNum_ + api_edgeNum_n_); gmshFree(api_edgeNum_);
+      }
+
+      // Get the global mesh face identifiers `faceNum' for an input list of node
+      // tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4),
+      // concatenated in the vector `faceNodes'.  Warning: this is an experimental
+      // feature and will probably change in a future release.
+      inline void getFaceNumber(const int faceType,
+                                const std::vector<std::size_t> & faceNodes,
+                                std::vector<std::size_t> & faceNum)
+      {
+        int ierr = 0;
+        size_t *api_faceNodes_; size_t api_faceNodes_n_; vector2ptr(faceNodes, &api_faceNodes_, &api_faceNodes_n_);
+        size_t *api_faceNum_; size_t api_faceNum_n_;
+        gmshModelMeshGetFaceNumber(faceType, api_faceNodes_, api_faceNodes_n_, &api_faceNum_, &api_faceNum_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_faceNodes_);
+        faceNum.assign(api_faceNum_, api_faceNum_ + api_faceNum_n_); gmshFree(api_faceNum_);
       }
 
       // Create mesh edges for the entities `dimTags'. Warning: this is an
