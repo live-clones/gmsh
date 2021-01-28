@@ -84,7 +84,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
 /**
  * @brief Convert the edge-sampled cross field to a triangle-sampled cross field,
  *        by using Crouzeix-Raviart interpolation.
- *        Each triangle has 3 directions at its corner. This cross field is (slighly)
+ *        Each triangle has 3 unit directions at its corner. This cross field is (slighly)
  *        dicontinuous at triangle interfaces.
  *
  * @param[in] triangles Triangulation used to compute cross field and size map

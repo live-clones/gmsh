@@ -35,6 +35,7 @@
 #include "Options.h"
 #include "Generator.h"
 #include "meshQuadQuasiStructured.h"
+#include "geolog.h" // TODO: remove this, only for debug
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -553,6 +554,15 @@ static void Mesh2D(GModel *m)
   }
 
   Msg::SetNumThreads(prevNumThreads);
+
+  if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    /* In the quasi-structured pipeline, the quad-dominant mesh
+     * is subdivided into a full quad mesh */
+    /* TODO: - a faster CAD projection approach (from uv) 
+     *       - verify quality during projection */
+    bool linear = false; 
+    RefineMesh(m, linear, true, false);
+  }
 
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->meshTimer[1] = w2 - w1;
@@ -1394,7 +1404,6 @@ void GenerateMesh(GModel *m, int ask)
   m->clearLastMeshEntityError();
   m->clearLastMeshVertexError();
 
-  int old = m->getMeshStatus(false);
 
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
@@ -1408,10 +1417,21 @@ void GenerateMesh(GModel *m, int ask)
   // and a guiding field (e.g. cross field + size map)
   if (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS
       || CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-    bool overwriteGModelMesh = false; /* use current mesh if available */
-    bool deleteGModelMeshAfter = true; /* mesh saved in background, no longer needed */
-    BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh, deleteGModelMeshAfter);
+    int old = m->getMeshStatus(false);
+    bool doIt = (ask >= 1 && ask <= 3); 
+    bool exists = backgroundMeshAndGuidingFieldExists(m);
+    if (old == 1 && ask == 1 && exists) doIt = true; 
+    if (old == 1 && ask == 2 && exists) doIt = false;
+    if (old == 2 && ask == 2 && exists) doIt = true; 
+    if (doIt) {
+      bool overwriteGModelMesh = false; /* use current mesh if available */
+      bool deleteGModelMeshAfter = true; /* mesh saved in background, no longer needed */
+      BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh, deleteGModelMeshAfter);
+    }
   }
+
+  // dimension of previous/existing mesh
+  int old = m->getMeshStatus(false);
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
@@ -1487,4 +1507,6 @@ void GenerateMesh(GModel *m, int ask)
 
   CTX::instance()->lock = 0;
   // ProfilerStop();
+
+  GeoLog::flush();
 }

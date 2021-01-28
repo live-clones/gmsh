@@ -175,8 +175,8 @@ class GlobalBackgroundMesh {
 
 /* Global storage for access deep in meshing algorithms without passing reference everywhere.
  * Use getBackgroundMesh(name) instead of direcly accessing the global variable. */
-
 extern std::vector<std::unique_ptr<GlobalBackgroundMesh> > global_bmeshes;
+bool backgroudMeshExists(const std::string& name);
 GlobalBackgroundMesh& getBackgroundMesh(const std::string& name);
 
 #endif

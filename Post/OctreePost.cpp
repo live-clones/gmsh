@@ -15,6 +15,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "Context.h"
+#include "SBoundingBox3d.h"
 
 // helper routines for list-based views
 
@@ -35,6 +36,18 @@ static void minmax(int n, double *X, double *Y, double *Z, double *min,
     max[1] = (Y[i] > max[1]) ? Y[i] : max[1];
     max[2] = (Z[i] > max[2]) ? Z[i] : max[2];
   }
+
+  // make boundary boxes larger
+  SBoundingBox3d bb(min[0],min[1],min[2],max[0],max[1],max[2]);
+  bb *= 1.1;
+  bb.makeCube();
+
+  max[0] = bb.max().x();
+  max[1] = bb.max().y();
+  max[2] = bb.max().z();
+  min[0] = bb.min().x();
+  min[1] = bb.min().y();
+  min[2] = bb.min().z();
 
   // make bounding boxes larger up to (absolute) geometrical tolerance
   double eps = CTX::instance()->geom.tolerance;
@@ -281,6 +294,10 @@ void OctreePost::_create(PViewData *data)
     }
 
     SBoundingBox3d bb = l->getBoundingBox();
+
+    // make boundary box larger, useful for 3D surface sampling
+    bb *= 1.1;
+
     // make bounding box larger up to (absolute) geometrical tolerance
     double eps = CTX::instance()->geom.tolerance;
     SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);

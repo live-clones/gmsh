@@ -544,6 +544,13 @@ void backgroundMesh::updateSizes(GFace *_gf)
       MVertex *V1 = _2Dto3D[v1];
       auto s0 = _sizes.find(V0);
       auto s1 = _sizes.find(V1);
+      if (s0 == _sizes.end() || s1  == _sizes.end()) {
+        // Note: this Warning is disabled because it's too verbose in logs
+        //       is this behavior normal ? Was doing undefined behavior before
+        //       (detected by valgrind)
+        // Msg::Warning("in backgroundMesh::updateSizes(), vertex not found in maps");
+        continue;
+      }
       if(s0->second < s1->second)
         s1->second = std::min(s1->second, _beta * s0->second);
       else
@@ -733,6 +740,13 @@ MElement *backgroundMesh::getMeshElementByCoord(double u, double v, double w,
 /* Global variable instanciation */
 std::vector<std::unique_ptr<GlobalBackgroundMesh> > global_bmeshes;
 
+bool backgroudMeshExists(const std::string& name) {
+  for (size_t i = 0; i < global_bmeshes.size(); ++i) {
+    if (global_bmeshes[i]->name == name) return true;
+  }
+  return false;
+}
+
 GlobalBackgroundMesh& getBackgroundMesh(const std::string& name) {
   for (size_t i = 0; i < global_bmeshes.size(); ++i) {
     if (global_bmeshes[i]->name == name) return *(global_bmeshes[i]);
@@ -742,17 +756,31 @@ GlobalBackgroundMesh& getBackgroundMesh(const std::string& name) {
 }
 
 GlobalBackgroundMesh::~GlobalBackgroundMesh() {
-  for (MVertex* v: mesh_vertices) if (v) delete v;
+  Msg::Debug("GlobalBackgroundMesh destructor call");
+  for (MVertex* v: mesh_vertices) if (v) {
+    delete v;
+    v = nullptr;
+  }
+  mesh_vertices.clear();
+  edgeBackgroundMeshes.clear();
+  faceBackgroundMeshes.clear();
 }
+
 
 int GlobalBackgroundMesh::importGModelMeshes(GModel* _gm, bool overwriteExisting) {
   Msg::Debug("GlobalBackgroundMesh: import GModel mesh ...");
   gm = _gm;
 
-  if (overwriteExisting) { /* Clear mesh */
-    for (MVertex* v: mesh_vertices) if (v) delete v;
+  if (overwriteExisting && mesh_vertices.size() > 0) { /* Clear mesh */
+    Msg::Debug("- delete existing mesh (for overwrite)");
+    for (MVertex* v: mesh_vertices) if (v) {
+      delete v;
+      v = nullptr;
+    }
+    mesh_vertices.clear();
     edgeBackgroundMeshes.clear();
     faceBackgroundMeshes.clear();
+    Msg::Debug("- import mesh from GModel");
   }
 
   std::unordered_map<MVertex*,MVertex*> old2new;
@@ -769,12 +797,16 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel* _gm, bool overwriteExisting
   for (GVertex* gv: vertices) {
     for (size_t i = 0; i < gv->mesh_vertices.size(); ++i) {
       MVertex* v = gv->mesh_vertices[i];
-      mesh_vertices.push_back(new MVertex(v->x(),v->y(),v->z(),gv));
-      old2new[v] = mesh_vertices.back();
+      auto it = old2new.find(v);
+      if (it == old2new.end()) {
+        mesh_vertices.push_back(new MVertex(v->x(),v->y(),v->z(),gv));
+        old2new[v] = mesh_vertices.back();
+      }
     }
   }
 
   /* MLine from GEdge */
+  size_t nlines = 0;
   for (GEdge* ge: edges) {
     edgeBackgroundMeshes[ge] = BackgroundMeshGEdge();
     BackgroundMeshGEdge& bm = edgeBackgroundMeshes[ge];
@@ -783,8 +815,11 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel* _gm, bool overwriteExisting
       MVertex* v = ge->mesh_vertices[i];
       double t=0.;
       v->setParameter(0,t);
-      mesh_vertices.push_back(new MEdgeVertex(v->x(),v->y(),v->z(),ge,t));
-      old2new[v] = mesh_vertices.back();
+      auto it = old2new.find(v);
+      if (it == old2new.end()) {
+        mesh_vertices.push_back(new MEdgeVertex(v->x(),v->y(),v->z(),ge,t));
+        old2new[v] = mesh_vertices.back();
+      }
     }
     bm.lines.reserve(ge->lines.size());
     for (size_t i = 0; i < ge->lines.size(); ++i) {
@@ -797,10 +832,12 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel* _gm, bool overwriteExisting
         return -1;
       }
       bm.lines.push_back(MLine(v0,v1));
+      nlines += 1;
     }
   }
 
   /* MTriangle from GFace */
+  size_t ntris = 0;
   for (GFace* gf: gm->getFaces()) {
     faceBackgroundMeshes[gf] = BackgroundMeshGFace();
     BackgroundMeshGFace& bm = faceBackgroundMeshes[gf];
@@ -808,12 +845,15 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel* _gm, bool overwriteExisting
     /* Vertices */
     for (size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
       MVertex* v = gf->mesh_vertices[i];
-      double uv0=0.;
-      double uv1=0.;
-      v->setParameter(0,uv0);
-      v->setParameter(1,uv1);
-      mesh_vertices.push_back(new MFaceVertex(v->x(),v->y(),v->z(),gf,uv0,uv1));
-      old2new[v] = mesh_vertices.back();
+      auto it = old2new.find(v);
+      if (it == old2new.end()) {
+        double uv0=0.;
+        double uv1=0.;
+        v->getParameter(0,uv0);
+        v->getParameter(1,uv1);
+        mesh_vertices.push_back(new MFaceVertex(v->x(),v->y(),v->z(),gf,uv0,uv1));
+        old2new[v] = mesh_vertices.back();
+      }
     }
 
     bm.triangles.reserve(gf->triangles.size()+2*gf->quadrangles.size());
@@ -829,6 +869,7 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel* _gm, bool overwriteExisting
         return -1;
       }
       bm.triangles.push_back(MTriangle(v0,v1,v2));
+      ntris += 1;
     }
 
     /* Quads */
@@ -846,9 +887,12 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel* _gm, bool overwriteExisting
         }
         bm.triangles.push_back(MTriangle(v0,v1,v2));
         bm.triangles.push_back(MTriangle(v0,v2,v3));
+        ntris += 2;
       }
     }
   }
+
+  Msg::Debug("- imported: %li vertices, %li lines, %li triangles", old2new.size(), nlines, ntris);
 
   return 0;
 }

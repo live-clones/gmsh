@@ -22,4 +22,12 @@ int BuildBackgroundMeshAndGuidingField(
     bool overwriteGModelMesh = false,
     bool deleteGModelMeshAfter = false);
 
+/**
+ * @brief To check if a compatible background mesh and
+ *        guiding field already exists
+ *
+ * @return true if exists
+ */
+bool backgroundMeshAndGuidingFieldExists(GModel* gm);
+
 #endif

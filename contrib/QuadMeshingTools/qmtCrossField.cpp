@@ -1287,6 +1287,7 @@ int convertToPerTriangleCrossFieldDirections(
       SVector3 lambda = {0.,0.,0.};
       lambda[lv] = 1.;
       SVector3 dir = crouzeix_raviart_interpolation(lambda,lifted_dirs);
+      if (length2(dir) != 0.) dir.normalize();
       for (size_t d = 0; d < 3; ++d) {
         tDirs[3*lv+d] = dir.data()[d];
       }

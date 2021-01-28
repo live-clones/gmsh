@@ -305,7 +305,8 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if(ptrBucket == nullptr) {
     // this is not an error
-    Msg::Debug("Could not find point in octree");
+    // TODO RE ENABLE MSG
+    // Msg::Debug("Could not find point in octree (in search element)");
     return nullptr;
   }
 
@@ -397,7 +398,7 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt,
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if(ptrBucket == nullptr) {
-    Msg::Debug("Could not find point in octree");
+    Msg::Debug("Could not find point in octree (in search all elements)");
     return nullptr;
   }
 

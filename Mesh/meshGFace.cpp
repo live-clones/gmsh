@@ -1706,7 +1706,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
           gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
     infty = true;
-    if(!onlyInitialMesh) buildBackgroundMesh(gf, false);
+    /* New version of PACK / QUADQS use a different background mesh */
+    // if(!onlyInitialMesh) buildBackgroundMesh(gf, false);
   }
 
   if(!onlyInitialMesh)
@@ -1723,7 +1724,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       bowyerWatsonParallelograms(gf);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
-      bowyerWatsonParallelogramsConstrained(gf, gf->constr_vertices);
+      Msg::Error("ALGO_2D_PACK_PRLGRMS_CSTR deprecated");
+      // bowyerWatsonParallelogramsConstrained(gf, gf->constr_vertices);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO) {
@@ -2753,7 +2755,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
           gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
     infty = true;
-    buildBackgroundMesh(gf, false, &equivalence, &parametricCoordinates);
+    /* New version of PACK / QUADQS use a different background mesh */
+    // buildBackgroundMesh(gf, false, &equivalence, &parametricCoordinates);
   }
 
   bool onlyInitialMesh = (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY);
@@ -2779,10 +2782,11 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       bowyerWatsonFrontalLayers(gf, true, &equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
       bowyerWatsonParallelograms(gf, &equivalence, &parametricCoordinates);
-    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
-      bowyerWatsonParallelogramsConstrained(
-        gf, gf->constr_vertices, &equivalence, &parametricCoordinates);
-    else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
+    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
+      Msg::Error("ALGO_2D_PACK_PRLGRMS_CSTR deprecated");
+      // bowyerWatsonParallelogramsConstrained(
+      //   gf, gf->constr_vertices, &equivalence, &parametricCoordinates);
+    } else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf, 1000000000, &equivalence, &parametricCoordinates);
     else
@@ -2864,8 +2868,39 @@ static bool isMeshValid(GFace *gf)
   return false;
 }
 
+class QuadQuasiStructuredUpdater {
+  public:
+    QuadQuasiStructuredUpdater() {
+      algo2d = CTX::instance()->mesh.algo2d;
+      recombineAll = CTX::instance()->mesh.recombineAll;
+      algoRecombine = CTX::instance()->mesh.algoRecombine;
+      quadDominantWithPack();
+    };
+    ~QuadQuasiStructuredUpdater() {
+      revert();
+    }
+  private:
+    void quadDominantWithPack() {
+      CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
+      CTX::instance()->mesh.recombineAll = 1;
+      CTX::instance()->mesh.algoRecombine = 0;
+    }
+
+    void revert() {
+      CTX::instance()->mesh.algo2d = algo2d;
+      CTX::instance()->mesh.recombineAll = recombineAll;
+      CTX::instance()->mesh.algoRecombine = algoRecombine;
+    }
+  private:
+    int algo2d;
+    int recombineAll;
+    int algoRecombine;
+};
+
+
 // for debugging, change value from -1 to -100;
 int debugSurface = -1; //-100;
+
 
 void meshGFace::operator()(GFace *gf, bool print)
 {
@@ -2897,6 +2932,14 @@ void meshGFace::operator()(GFace *gf, bool print)
     else
       Msg::Warning("Unknown mesh master surface %d",
                    gf->getMeshMaster()->tag());
+  }
+
+  /* The ALGO_2D_QUAD_QUASI_STRUCT is using ALGO_2D_PACK_PRLGRMS
+   * to generate a initial quad-dominant mesh. The updater
+   * changes gmsh global options before the 2D meshing call. */
+  QuadQuasiStructuredUpdater* qqs = NULL;
+  if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    qqs = new QuadQuasiStructuredUpdater();
   }
 
   const char *algo = "Unknown";
@@ -2970,6 +3013,8 @@ void meshGFace::operator()(GFace *gf, bool print)
     (*this)(gf, print);
     gf->unsetMeshingAlgo();
   }
+
+  if (qqs) delete qqs; /* Quad quasi-structured: restore options */
 }
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)

@@ -35,9 +35,12 @@ Shortcuts:
 - Add size map tools (dist to curves, one-way smoothing) in contrib/QuadMeshingTools/qmtSizeMap.h
 - Add convenient wrapper around gmsh views for debugging (contrib/QuadMeshingTools/geolog.h/cpp)
 - Add implicit conversion from SPoint3/SVector3 to std::array<double,3>, is it ok ?
+- In Mesh2D(): use a switch from ALGO_2D_QUAD_QUASI_STRUCT to ALGO_2D_PACK_PRLGRMS
+- packingOfParallelograms() replaced by the version in quadMeshingTools (Filler2D::pointInsertion2D removed)
+- in Post/OctreePost.cpp: use larger bounding boxes. Required for the background field sampling. Is it a good idea ?
+- change the xyz2uvw() function for triangles in Post/shapeFunctions.cpp. Required to sample triangles in 3D.
 
 # Todo
 
-- Conformal scaling in progress
 
 

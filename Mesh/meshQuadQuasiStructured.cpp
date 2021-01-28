@@ -28,6 +28,9 @@
 #include "PViewDataGModel.h"
 #include "PViewOptions.h"
 #endif
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#endif
 
 #if defined(HAVE_QUADMESHINGTOOLS)
 
@@ -42,6 +45,7 @@
 using namespace CppUtils;
 using namespace ArrayGeometry;
 
+const std::string BMESH_NAME = "bmesh_quadqs";
 
 int buildBackgroundField(
     GModel* gm,
@@ -100,6 +104,10 @@ int buildBackgroundField(
   size_t numElements = datalist.size()/(9+9);
   int idxtype = 7; /* Post type: VT */
   d->importList(idxtype, numElements, datalist, true);
+#if defined(HAVE_FLTK)
+  view->getOptions()->visible = 0;
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+#endif
 
   gm->getFields()->setBackgroundMesh(view->getTag());
 
@@ -124,6 +132,42 @@ void showCrossFieldInView(
       std::array<double,3> pt = v->point();
       GeoLog::add(pt, dir, viewName);
     }
+  }
+  GeoLog::flush();
+}
+
+void showUVParametrization(
+    GlobalBackgroundMesh& bgm,
+    const std::string& viewName = "uv") {
+  for (auto& kv: bgm.faceBackgroundMeshes) {
+    GFace* gf = kv.first;
+    std::unordered_map<MVertex*,double> param_u;
+    std::unordered_map<MVertex*,double> param_v;
+    std::vector<MElement*> tris;
+    for (MTriangle& t: kv.second.triangles) {
+      tris.push_back(&t);
+      for (size_t lv = 0; lv < 3; ++lv) {
+        MVertex* v = t.getVertex(lv);
+        auto it = param_u.find(v);
+        if (it == param_u.end()) {
+          GFace* dgf = dynamic_cast<GFace*>(v->onWhat());
+          if (dgf) {
+            double uv[2];
+            v->getParameter(0,uv[0]);
+            v->getParameter(1,uv[1]);
+            param_u[v] = uv[0];
+            param_v[v] = uv[1];
+          } else {
+            SPoint2 uv;
+            reparamMeshVertexOnFace(v, gf, uv);
+            param_u[v] = uv.x();
+            param_v[v] = uv.y();
+          }
+        }
+      }
+    }
+    GeoLog::add(tris,param_u,viewName+"_u");
+    GeoLog::add(tris,param_v,viewName+"_v");
   }
   GeoLog::flush();
 }
@@ -194,7 +238,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     if (shouldLock) CTX::instance()->lock = 1;
   }
 
-  GlobalBackgroundMesh& bmesh = getBackgroundMesh("bmesh_quadqs");
+  GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
   bool overwrite = true;
   int status = bmesh.importGModelMeshes(gm, overwrite);
   if (status != 0) {
@@ -204,9 +248,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
   if (deleteGModelMesh) {
     Msg::Debug("delete GModel mesh");
-    std::for_each(gm->firstRegion(), gm->lastRegion(), deMeshGRegion());
-    std::for_each(gm->firstFace(), gm->lastFace(), deMeshGFace());
-    std::for_each(gm->firstRegion(), gm->lastRegion(), deMeshGRegion());
+    gm->deleteMesh();
   }
 
   /* Build guiding field on background mesh:
@@ -271,6 +313,11 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
       triangles.reserve(triangles.size()+it->second.triangles.size());
       for (size_t i = 0; i < it->second.triangles.size(); ++i) {
         triangles.push_back(&(it->second.triangles[i]));
+      }
+
+      if (triangles.size() == 0) {
+        Msg::Error("- Face %i: no triangles in background mesh", gf->tag());
+        continue;
       }
 
       std::vector<std::array<double,3> > triEdgeTheta;
@@ -369,6 +416,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     std::vector<MElement*> elements = dynamic_cast_vector<MTriangle*,MElement*>(global_triangles);
     GeoLog::add(elements, sizeMap, "size_map");
     GeoLog::flush();
+    showUVParametrization(bmesh);
   }
 
   /* Clamp with global minimum/maximum mesh size */
@@ -391,7 +439,22 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     return -1;
   }
 
+  CTX::instance()->mesh.lcFactor = 1.; // TODO TEMP TEST
+
   return 0;
+}
+
+bool backgroundMeshAndGuidingFieldExists(GModel* gm) {
+  bool bgmOk = backgroudMeshExists(BMESH_NAME);
+  bool bfOk = false;
+  FieldManager *fields = gm->getFields();
+  if(fields->getBackgroundField() > 0) {        
+    Field* guiding_field = fields->get(fields->getBackgroundField());
+    if(guiding_field && guiding_field->numComponents() == 3) {
+      bfOk = true;
+    }
+  }
+  return bgmOk && bfOk;
 }
 
 #else
