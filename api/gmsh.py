@@ -2389,58 +2389,55 @@ class model:
             return api_result_
 
         @staticmethod
-        def getEdgeNumber(edgeNodes):
+        def getEdgeTags(nodeTags):
             """
-            gmsh.model.mesh.getEdgeNumber(edgeNodes)
+            gmsh.model.mesh.getEdgeTags(nodeTags)
 
-            Get the global mesh edge identifiers `edgeNum' for an input list of node
-            tag pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
-            experimental feature and will probably change in a future release.
+            Get the global unique mesh edge identifiers `edgeTags' for an input list of
+            node tag pairs defining these edges, concatenated in the vector `nodeTags'.
 
-            Return `edgeNum'.
+            Return `edgeTags'.
             """
-            api_edgeNodes_, api_edgeNodes_n_ = _ivectorsize(edgeNodes)
-            api_edgeNum_, api_edgeNum_n_ = POINTER(c_size_t)(), c_size_t()
+            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
+            api_edgeTags_, api_edgeTags_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetEdgeNumber(
-                api_edgeNodes_, api_edgeNodes_n_,
-                byref(api_edgeNum_), byref(api_edgeNum_n_),
+            lib.gmshModelMeshGetEdgeTags(
+                api_nodeTags_, api_nodeTags_n_,
+                byref(api_edgeTags_), byref(api_edgeTags_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorsize(api_edgeNum_, api_edgeNum_n_.value)
+            return _ovectorsize(api_edgeTags_, api_edgeTags_n_.value)
 
         @staticmethod
-        def getFaceNumber(faceType, faceNodes):
+        def getFaceTags(faceType, nodeTags):
             """
-            gmsh.model.mesh.getFaceNumber(faceType, faceNodes)
+            gmsh.model.mesh.getFaceTags(faceType, nodeTags)
 
-            Get the global mesh face identifiers `faceNum' for an input list of node
-            tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4),
-            concatenated in the vector `faceNodes'.  Warning: this is an experimental
-            feature and will probably change in a future release.
+            Get the global unique mesh face identifiers `faceTags' for an input list of
+            node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4)
+            defining these faces, concatenated in the vector `nodeTags'.
 
-            Return `faceNum'.
+            Return `faceTags'.
             """
-            api_faceNodes_, api_faceNodes_n_ = _ivectorsize(faceNodes)
-            api_faceNum_, api_faceNum_n_ = POINTER(c_size_t)(), c_size_t()
+            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
+            api_faceTags_, api_faceTags_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetFaceNumber(
+            lib.gmshModelMeshGetFaceTags(
                 c_int(faceType),
-                api_faceNodes_, api_faceNodes_n_,
-                byref(api_faceNum_), byref(api_faceNum_n_),
+                api_nodeTags_, api_nodeTags_n_,
+                byref(api_faceTags_), byref(api_faceTags_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorsize(api_faceNum_, api_faceNum_n_.value)
+            return _ovectorsize(api_faceTags_, api_faceTags_n_.value)
 
         @staticmethod
         def createEdges(dimTags=[]):
             """
             gmsh.model.mesh.createEdges(dimTags=[])
 
-            Create mesh edges for the entities `dimTags'. Warning: this is an
-            experimental feature and will probably change in a future release.
+            Create unique mesh edges for the entities `dimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2455,8 +2452,7 @@ class model:
             """
             gmsh.model.mesh.createFaces(dimTags=[])
 
-            Create mesh faces for the entities `dimTags'. Warning: this is an
-            experimental feature and will probably change in a future release.
+            Create unique mesh faces for the entities `dimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()

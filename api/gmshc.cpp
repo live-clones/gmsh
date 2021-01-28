@@ -1353,28 +1353,28 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
   }
 }
 
-GMSH_API void gmshModelMeshGetEdgeNumber(size_t * edgeNodes, size_t edgeNodes_n, size_t ** edgeNum, size_t * edgeNum_n, int * ierr)
+GMSH_API void gmshModelMeshGetEdgeTags(size_t * nodeTags, size_t nodeTags_n, size_t ** edgeTags, size_t * edgeTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<std::size_t> api_edgeNodes_(edgeNodes, edgeNodes + edgeNodes_n);
-    std::vector<std::size_t> api_edgeNum_;
-    gmsh::model::mesh::getEdgeNumber(api_edgeNodes_, api_edgeNum_);
-    vector2ptr(api_edgeNum_, edgeNum, edgeNum_n);
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<std::size_t> api_edgeTags_;
+    gmsh::model::mesh::getEdgeTags(api_nodeTags_, api_edgeTags_);
+    vector2ptr(api_edgeTags_, edgeTags, edgeTags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshGetFaceNumber(const int faceType, size_t * faceNodes, size_t faceNodes_n, size_t ** faceNum, size_t * faceNum_n, int * ierr)
+GMSH_API void gmshModelMeshGetFaceTags(const int faceType, size_t * nodeTags, size_t nodeTags_n, size_t ** faceTags, size_t * faceTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<std::size_t> api_faceNodes_(faceNodes, faceNodes + faceNodes_n);
-    std::vector<std::size_t> api_faceNum_;
-    gmsh::model::mesh::getFaceNumber(faceType, api_faceNodes_, api_faceNum_);
-    vector2ptr(api_faceNum_, faceNum, faceNum_n);
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<std::size_t> api_faceTags_;
+    gmsh::model::mesh::getFaceTags(faceType, api_nodeTags_, api_faceTags_);
+    vector2ptr(api_faceTags_, faceTags, faceTags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

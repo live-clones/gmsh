@@ -11,7 +11,8 @@ modernization (C++11); small bug fixes and improvements.
 
 * Incompatible API changes: new optional argument to mesh/classifySurfaces,
   occ/addBSplineSurface, occ/addBezierSurface, occ/addPipe and view/probe;
-  changed argument types of mesh/getEdgeNumber
+  renamed and mesh/getEdgeNumber as mesh/getEdgeTags and changed its argument
+  types
 
 4.7.1 (November 16, 2020): small bug fixes and improvements.
 
