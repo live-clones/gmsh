@@ -12,7 +12,8 @@ HXTStatus hxtPointGenExportPointsToPos(HXTMesh* m,
                                        const char* posFile) 
 {
   if (posFile == NULL) return HXT_STATUS_WRITE_ERROR;
-  printf("\nWriting %u points to \"%s\"\n", m->vertices.num, posFile);
+  HXT_INFO("Writing %u points to \"%s\"\n",m->vertices.num,posFile);
+  //printf("\nWriting %u points to \"%s\"\n", m->vertices.num, posFile);
   FILE* fp = fopen(posFile, "w");
   if (fp == NULL) return HXT_STATUS_WRITE_ERROR;
   fprintf(fp, "View \"%s\" {\n", "points");

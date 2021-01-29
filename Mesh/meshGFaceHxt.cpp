@@ -274,12 +274,13 @@ int computeCrossFieldAndScalingForHxt(
   }
 
   /* Adapt size map to CAD */
-  double smallestMultiplier = 0.05;
-  double gradientMax = 1.15;
-  bool oka = QSQ::adaptSizeMapToSmallFeatures(faces, scaling, smallestMultiplier, gradientMax);
-  if (!oka) {
-    Msg::Error("failed to adapt size map to smallest features");
-  }
+ 
+/*  double smallestMultiplier = 0.05;*/
+  //double gradientMax = 1.15;
+  //bool oka = QSQ::adaptSizeMapToSmallFeatures(faces, scaling, smallestMultiplier, gradientMax);
+  //if (!oka) {
+    //Msg::Error("failed to adapt size map to smallest features");
+  //}
 
   /* Extract values at triangle corners */
   std::unordered_map<MTriangle*, std::array<double,9> > triangleDirections;
@@ -722,7 +723,7 @@ int meshGFaceHxt(GModel *gm)
                              .generateVolumes = 0,
                              .remeshSurfaces = 1,
                              .quadSurfaces = 1,
-                             .walkMethod2D = 0,
+                             .walkMethod2D = 1,
                              .walkMethod3D = 0,
                              .dirType = 0,
                              .uniformSize = 1.0,
@@ -878,7 +879,7 @@ int meshGFaceHxt(GFace *gf) {
                              .generateVolumes = 0,
                              .remeshSurfaces = 1,
                              .quadSurfaces = 1,
-                             .walkMethod2D = 0,
+                             .walkMethod2D = 1,
                              .walkMethod3D = 0,
                              .dirType = 0,
                              .uniformSize = 1.0,
