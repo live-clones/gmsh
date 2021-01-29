@@ -1528,9 +1528,7 @@ public:
       else{
         l = sqrt (values[0]*values[0]+values[1]*values[1]+values[2]*values[2]);
       }
-    }
-
-    else if (numComponents() == 1){
+    } else if (numComponents() == 1){
       if(!_octree->searchScalarWithTol(x, y, z, &l, 0, 0, 0.05)){
         Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
       }

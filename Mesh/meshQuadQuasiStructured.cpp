@@ -477,8 +477,8 @@ namespace QSQ {
       double len = ge->length();
       for (GVertex* gv: ge->vertices()) {
         gv2ge[gv].push_back(ge);
-        if (gv->mesh_vertices.size() == 0) {
-          MVertex* v = gv->mesh_vertices[9];
+        if (gv->mesh_vertices.size() == 1) {
+          MVertex* v = gv->mesh_vertices[0];
           auto it = minDistToOtherFeature.find(v);
           if (it == minDistToOtherFeature.end()) {
             minDistToOtherFeature[v] = len;
@@ -7053,6 +7053,7 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
   }
   writeStatistics(qqs.stats, "statistics.json");
 
+  GeoLog::flush();
   return 0;
 }
 
