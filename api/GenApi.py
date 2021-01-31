@@ -1476,57 +1476,61 @@ class API:
             self.fwrite(
                 f, indent + "def " + name + "(" + ", ".join(
                     (parg(a) for a in iargs)) + "):\n")
-            indent += "    "
-            self.fwrite(f, indent + '"""\n')
+            ind = indent + "    "
+            self.fwrite(f, ind + '"""\n')
             self.fwrite(
-                f, indent + py_mpath + name + "(" +
+                f, ind + py_mpath + name + "(" +
                 ", ".join(parg(a) for a in iargs) + ")\n\n")
             self.fwrite(
                 f,
-                indent + ("\n" + indent).join(textwrap.wrap(doc, 75)) + "\n")
+                ind + ("\n" + ind).join(textwrap.wrap(doc, 75)) + "\n")
             if rtype or oargs:
                 self.fwrite(
-                    f, "\n" + indent + "Return " +
+                    f, "\n" + ind + "Return " +
                     ", ".join(([("an " if rtype.rtexi_type ==
                                  "integer value" else "a ") +
                                 rtype.rtexi_type] if rtype else []) +
                               [("`" + a.name + "'") for a in oargs]) + ".\n")
-            self.fwrite(f, indent + '"""\n')
+            self.fwrite(f, ind + '"""\n')
             for a in args:
-                if a.python_pre: self.fwrite(f, indent + a.python_pre + "\n")
-            self.fwrite(f, indent + "ierr = c_int()\n")
+                if a.python_pre: self.fwrite(f, ind + a.python_pre + "\n")
+            self.fwrite(f, ind + "ierr = c_int()\n")
             c_name = c_mpath + name[0].upper() + name[1:]
             if rtype is odouble:
-                self.fwrite(f, indent + "lib." + c_name + ".restype = c_double\n")
+                self.fwrite(f, ind + "lib." + c_name + ".restype = c_double\n")
             self.fwrite(
-                f, indent + "api_result_ = " if
-                ((rtype is oint) or (rtype is odouble)) else (indent))
+                f, ind + "api_result_ = " if
+                ((rtype is oint) or (rtype is odouble)) else (ind))
             self.fwrite(
-                f, "lib." + c_name + "(\n    " + indent +
-                (",\n" + indent + "    ").join(
+                f, "lib." + c_name + "(\n    " + ind +
+                (",\n" + ind + "    ").join(
                     tuple((a.python_arg
                            for a in args)) + ("byref(ierr)", )) + ")\n")
             if name == "finalize":  # special case for finalize() function
-                self.fwrite(f, indent + "if oldsig is not None:\n")
+                self.fwrite(f, ind + "if oldsig is not None:\n")
                 self.fwrite(
-                    f, indent + "    signal.signal(signal.SIGINT, oldsig)\n")
-            self.fwrite(f, indent + "if ierr.value != 0:\n")
+                    f, ind + "    signal.signal(signal.SIGINT, oldsig)\n")
+            self.fwrite(f, ind + "if ierr.value != 0:\n")
             if name == "getLastError":  # special case for getLastError() function
                 self.fwrite(
-                    f, indent +
+                    f, ind +
                     "    raise Exception('Could not get last error')\n")
             else:
                 self.fwrite(
-                    f, indent + "    raise Exception(logger.getLastError())\n")
+                    f, ind + "    raise Exception(logger.getLastError())\n")
             r = (["api_result_"]) if rtype else []
             r += list((o.python_return for o in oargs))
             if len(r) != 0:
                 if len(r) == 1:
-                    self.fwrite(f, indent + "return " + r[0] + "\n")
+                    self.fwrite(f, ind + "return " + r[0] + "\n")
                 else:
                     self.fwrite(
-                        f, indent + "return (\n" + indent + "    " +
-                        (",\n" + indent + "    ").join(r) + ")\n")
+                        f, ind + "return (\n" + ind + "    " +
+                        (",\n" + ind + "    ").join(r) + ")\n")
+            # define alias with underscore (standard python style)
+            name_ = re.sub('([A-Z]+)', r'_\1', name).lower()
+            if name != name_:
+                self.fwrite(f, indent + name_ + " = " + name + "\n")
 
         def write_module(f, m, c_mpath, py_mpath, indent):
             if c_mpath:
@@ -1620,6 +1624,10 @@ class API:
             else:
                 self.fwrite(f, ", ".join(r))
             self.fwrite(f, "\nend\n")
+            # define alias with underscore (closer to Julia style)
+            name_ = re.sub('([A-Z]+)', r'_\1', name).lower()
+            if name != name_:
+                self.fwrite(f, "const " + name_ + " = " + name + "\n")
 
         def write_module(f, m, c_mpath, jl_mpath, level):
             self.fwrite(f, '\n"""\n    ')

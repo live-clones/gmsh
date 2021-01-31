@@ -321,6 +321,7 @@ class option:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_number = setNumber
 
     @staticmethod
     def getNumber(name):
@@ -342,6 +343,7 @@ class option:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_value_.value
+    get_number = getNumber
 
     @staticmethod
     def setString(name, value):
@@ -359,6 +361,7 @@ class option:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_string = setString
 
     @staticmethod
     def getString(name):
@@ -380,6 +383,7 @@ class option:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ostring(api_value_)
+    get_string = getString
 
     @staticmethod
     def setColor(name, r, g, b, a=255):
@@ -402,6 +406,7 @@ class option:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_color = setColor
 
     @staticmethod
     def getColor(name):
@@ -434,6 +439,7 @@ class option:
             api_g_.value,
             api_b_.value,
             api_a_.value)
+    get_color = getColor
 
 
 class model:
@@ -503,6 +509,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ostring(api_name_)
+    get_current = getCurrent
 
     @staticmethod
     def setCurrent(name):
@@ -518,6 +525,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_current = setCurrent
 
     @staticmethod
     def getEntities(dim=-1):
@@ -539,6 +547,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
+    get_entities = getEntities
 
     @staticmethod
     def setEntityName(dim, tag, name):
@@ -555,6 +564,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_entity_name = setEntityName
 
     @staticmethod
     def getEntityName(dim, tag):
@@ -575,6 +585,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ostring(api_name_)
+    get_entity_name = getEntityName
 
     @staticmethod
     def getPhysicalGroups(dim=-1):
@@ -596,6 +607,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
+    get_physical_groups = getPhysicalGroups
 
     @staticmethod
     def getEntitiesForPhysicalGroup(dim, tag):
@@ -617,6 +629,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorint(api_tags_, api_tags_n_.value)
+    get_entities_for_physical_group = getEntitiesForPhysicalGroup
 
     @staticmethod
     def getPhysicalGroupsForEntity(dim, tag):
@@ -638,6 +651,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorint(api_physicalTags_, api_physicalTags_n_.value)
+    get_physical_groups_for_entity = getPhysicalGroupsForEntity
 
     @staticmethod
     def addPhysicalGroup(dim, tags, tag=-1):
@@ -660,6 +674,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_result_
+    add_physical_group = addPhysicalGroup
 
     @staticmethod
     def removePhysicalGroups(dimTags=[]):
@@ -676,6 +691,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    remove_physical_groups = removePhysicalGroups
 
     @staticmethod
     def setPhysicalName(dim, tag, name):
@@ -692,6 +708,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_physical_name = setPhysicalName
 
     @staticmethod
     def removePhysicalName(name):
@@ -706,6 +723,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    remove_physical_name = removePhysicalName
 
     @staticmethod
     def getPhysicalName(dim, tag):
@@ -726,6 +744,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ostring(api_name_)
+    get_physical_name = getPhysicalName
 
     @staticmethod
     def getBoundary(dimTags, combined=True, oriented=True, recursive=False):
@@ -754,6 +773,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+    get_boundary = getBoundary
 
     @staticmethod
     def getAdjacencies(dim, tag):
@@ -781,6 +801,7 @@ class model:
         return (
             _ovectorint(api_upward_, api_upward_n_.value),
             _ovectorint(api_downward_, api_downward_n_.value))
+    get_adjacencies = getAdjacencies
 
     @staticmethod
     def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
@@ -809,6 +830,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorpair(api_tags_, api_tags_n_.value)
+    get_entities_in_bounding_box = getEntitiesInBoundingBox
 
     @staticmethod
     def getBoundingBox(dim, tag):
@@ -847,6 +869,7 @@ class model:
             api_xmax_.value,
             api_ymax_.value,
             api_zmax_.value)
+    get_bounding_box = getBoundingBox
 
     @staticmethod
     def getDimension():
@@ -863,6 +886,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_result_
+    get_dimension = getDimension
 
     @staticmethod
     def addDiscreteEntity(dim, tag=-1, boundary=[]):
@@ -887,6 +911,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_result_
+    add_discrete_entity = addDiscreteEntity
 
     @staticmethod
     def removeEntities(dimTags, recursive=False):
@@ -904,6 +929,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    remove_entities = removeEntities
 
     @staticmethod
     def removeEntityName(name):
@@ -918,6 +944,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    remove_entity_name = removeEntityName
 
     @staticmethod
     def getType(dim, tag):
@@ -938,6 +965,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ostring(api_entityType_)
+    get_type = getType
 
     @staticmethod
     def getParent(dim, tag):
@@ -964,6 +992,7 @@ class model:
         return (
             api_parentDim_.value,
             api_parentTag_.value)
+    get_parent = getParent
 
     @staticmethod
     def getPartitions(dim, tag):
@@ -985,6 +1014,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorint(api_partitions_, api_partitions_n_.value)
+    get_partitions = getPartitions
 
     @staticmethod
     def getValue(dim, tag, parametricCoord):
@@ -1013,6 +1043,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectordouble(api_coord_, api_coord_n_.value)
+    get_value = getValue
 
     @staticmethod
     def getDerivative(dim, tag, parametricCoord):
@@ -1043,6 +1074,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectordouble(api_derivatives_, api_derivatives_n_.value)
+    get_derivative = getDerivative
 
     @staticmethod
     def getSecondDerivative(dim, tag, parametricCoord):
@@ -1075,6 +1107,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectordouble(api_derivatives_, api_derivatives_n_.value)
+    get_second_derivative = getSecondDerivative
 
     @staticmethod
     def getCurvature(dim, tag, parametricCoord):
@@ -1101,6 +1134,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectordouble(api_curvatures_, api_curvatures_n_.value)
+    get_curvature = getCurvature
 
     @staticmethod
     def getPrincipalCurvatures(tag, parametricCoord):
@@ -1135,6 +1169,7 @@ class model:
             _ovectordouble(api_curvatureMin_, api_curvatureMin_n_.value),
             _ovectordouble(api_directionMax_, api_directionMax_n_.value),
             _ovectordouble(api_directionMin_, api_directionMin_n_.value))
+    get_principal_curvatures = getPrincipalCurvatures
 
     @staticmethod
     def getNormal(tag, parametricCoord):
@@ -1159,6 +1194,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectordouble(api_normals_, api_normals_n_.value)
+    get_normal = getNormal
 
     @staticmethod
     def getParametrization(dim, tag, coord):
@@ -1186,6 +1222,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value)
+    get_parametrization = getParametrization
 
     @staticmethod
     def getParametrizationBounds(dim, tag):
@@ -1211,6 +1248,7 @@ class model:
         return (
             _ovectordouble(api_min_, api_min_n_.value),
             _ovectordouble(api_max_, api_max_n_.value))
+    get_parametrization_bounds = getParametrizationBounds
 
     @staticmethod
     def isInside(dim, tag, parametricCoord):
@@ -1235,6 +1273,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_result_
+    is_inside = isInside
 
     @staticmethod
     def getClosestPoint(dim, tag, coord):
@@ -1267,6 +1306,7 @@ class model:
         return (
             _ovectordouble(api_closestCoord_, api_closestCoord_n_.value),
             _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+    get_closest_point = getClosestPoint
 
     @staticmethod
     def reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which=0):
@@ -1296,6 +1336,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectordouble(api_surfaceParametricCoord_, api_surfaceParametricCoord_n_.value)
+    reparametrize_on_surface = reparametrizeOnSurface
 
     @staticmethod
     def setVisibility(dimTags, value, recursive=False):
@@ -1314,6 +1355,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_visibility = setVisibility
 
     @staticmethod
     def getVisibility(dim, tag):
@@ -1334,6 +1376,7 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_value_.value
+    get_visibility = getVisibility
 
     @staticmethod
     def setVisibilityPerWindow(value, windowIndex=0):
@@ -1350,6 +1393,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_visibility_per_window = setVisibilityPerWindow
 
     @staticmethod
     def setColor(dimTags, r, g, b, a=255, recursive=False):
@@ -1372,6 +1416,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_color = setColor
 
     @staticmethod
     def getColor(dim, tag):
@@ -1402,6 +1447,7 @@ class model:
             api_g_.value,
             api_b_.value,
             api_a_.value)
+    get_color = getColor
 
     @staticmethod
     def setCoordinates(tag, x, y, z):
@@ -1419,6 +1465,7 @@ class model:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_coordinates = setCoordinates
 
 
     class mesh:
@@ -1530,6 +1577,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_order = setOrder
 
         @staticmethod
         def getLastEntityError():
@@ -1549,6 +1597,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
+        get_last_entity_error = getLastEntityError
 
         @staticmethod
         def getLastNodeError():
@@ -1568,6 +1617,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
+        get_last_node_error = getLastNodeError
 
         @staticmethod
         def clear(dimTags=[]):
@@ -1627,6 +1677,7 @@ class model:
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value),
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+        get_nodes = getNodes
 
         @staticmethod
         def getNodesByElementType(elementType, tag=-1, returnParametricCoord=True):
@@ -1656,6 +1707,7 @@ class model:
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value),
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+        get_nodes_by_element_type = getNodesByElementType
 
         @staticmethod
         def getNode(nodeTag):
@@ -1682,6 +1734,7 @@ class model:
             return (
                 _ovectordouble(api_coord_, api_coord_n_.value),
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+        get_node = getNode
 
         @staticmethod
         def setNode(nodeTag, coord, parametricCoord):
@@ -1703,6 +1756,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_node = setNode
 
         @staticmethod
         def rebuildNodeCache(onlyIfNecessary=True):
@@ -1717,6 +1771,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        rebuild_node_cache = rebuildNodeCache
 
         @staticmethod
         def rebuildElementCache(onlyIfNecessary=True):
@@ -1731,6 +1786,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        rebuild_element_cache = rebuildElementCache
 
         @staticmethod
         def getNodesForPhysicalGroup(dim, tag):
@@ -1758,6 +1814,7 @@ class model:
             return (
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
+        get_nodes_for_physical_group = getNodesForPhysicalGroup
 
         @staticmethod
         def addNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
@@ -1787,6 +1844,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        add_nodes = addNodes
 
         @staticmethod
         def reclassifyNodes():
@@ -1803,6 +1861,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        reclassify_nodes = reclassifyNodes
 
         @staticmethod
         def relocateNodes(dim=-1, tag=-1):
@@ -1821,6 +1880,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        relocate_nodes = relocateNodes
 
         @staticmethod
         def getElements(dim=-1, tag=-1):
@@ -1860,6 +1920,7 @@ class model:
                 _ovectorint(api_elementTypes_, api_elementTypes_n_.value),
                 _ovectorvectorsize(api_elementTags_, api_elementTags_n_, api_elementTags_nn_),
                 _ovectorvectorsize(api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_))
+        get_elements = getElements
 
         @staticmethod
         def getElement(elementTag):
@@ -1886,6 +1947,7 @@ class model:
             return (
                 api_elementType_.value,
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
+        get_element = getElement
 
         @staticmethod
         def getElementByCoordinates(x, y, z, dim=-1, strict=False):
@@ -1930,6 +1992,7 @@ class model:
                 api_u_.value,
                 api_v_.value,
                 api_w_.value)
+        get_element_by_coordinates = getElementByCoordinates
 
         @staticmethod
         def getElementsByCoordinates(x, y, z, dim=-1, strict=False):
@@ -1958,6 +2021,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorsize(api_elementTags_, api_elementTags_n_.value)
+        get_elements_by_coordinates = getElementsByCoordinates
 
         @staticmethod
         def getLocalCoordinatesInElement(elementTag, x, y, z):
@@ -1991,6 +2055,7 @@ class model:
                 api_u_.value,
                 api_v_.value,
                 api_w_.value)
+        get_local_coordinates_in_element = getLocalCoordinatesInElement
 
         @staticmethod
         def getElementTypes(dim=-1, tag=-1):
@@ -2013,6 +2078,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_elementTypes_, api_elementTypes_n_.value)
+        get_element_types = getElementTypes
 
         @staticmethod
         def getElementType(familyName, order, serendip=False):
@@ -2035,6 +2101,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        get_element_type = getElementType
 
         @staticmethod
         def getElementProperties(elementType):
@@ -2074,6 +2141,7 @@ class model:
                 api_numNodes_.value,
                 _ovectordouble(api_localNodeCoord_, api_localNodeCoord_n_.value),
                 api_numPrimaryNodes_.value)
+        get_element_properties = getElementProperties
 
         @staticmethod
         def getElementsByType(elementType, tag=-1, task=0, numTasks=1):
@@ -2108,6 +2176,7 @@ class model:
             return (
                 _ovectorsize(api_elementTags_, api_elementTags_n_.value),
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
+        get_elements_by_type = getElementsByType
 
         @staticmethod
         def addElements(dim, tag, elementTypes, elementTags, nodeTags):
@@ -2138,6 +2207,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        add_elements = addElements
 
         @staticmethod
         def addElementsByType(tag, elementType, elementTags, nodeTags):
@@ -2163,6 +2233,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        add_elements_by_type = addElementsByType
 
         @staticmethod
         def getIntegrationPoints(elementType, integrationType):
@@ -2192,6 +2263,7 @@ class model:
             return (
                 _ovectordouble(api_localCoord_, api_localCoord_n_.value),
                 _ovectordouble(api_weights_, api_weights_n_.value))
+        get_integration_points = getIntegrationPoints
 
         @staticmethod
         def getJacobians(elementType, localCoord, tag=-1, task=0, numTasks=1):
@@ -2236,6 +2308,7 @@ class model:
                 _ovectordouble(api_jacobians_, api_jacobians_n_.value),
                 _ovectordouble(api_determinants_, api_determinants_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
+        get_jacobians = getJacobians
 
         @staticmethod
         def getJacobian(elementTag, localCoord):
@@ -2274,6 +2347,7 @@ class model:
                 _ovectordouble(api_jacobians_, api_jacobians_n_.value),
                 _ovectordouble(api_determinants_, api_determinants_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
+        get_jacobian = getJacobian
 
         @staticmethod
         def getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations=[]):
@@ -2320,6 +2394,7 @@ class model:
                 api_numComponents_.value,
                 _ovectordouble(api_basisFunctions_, api_basisFunctions_n_.value),
                 api_numOrientations_.value)
+        get_basis_functions = getBasisFunctions
 
         @staticmethod
         def getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag=-1, task=0, numTasks=1):
@@ -2348,6 +2423,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_.value)
+        get_basis_functions_orientation_for_elements = getBasisFunctionsOrientationForElements
 
         @staticmethod
         def getBasisFunctionsOrientationForElement(elementTag, functionSpaceType):
@@ -2368,6 +2444,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_basisFunctionsOrientation_.value
+        get_basis_functions_orientation_for_element = getBasisFunctionsOrientationForElement
 
         @staticmethod
         def getNumberOfOrientations(elementType, functionSpaceType):
@@ -2387,6 +2464,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        get_number_of_orientations = getNumberOfOrientations
 
         @staticmethod
         def getEdgeTags(nodeTags):
@@ -2408,6 +2486,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorsize(api_edgeTags_, api_edgeTags_n_.value)
+        get_edge_tags = getEdgeTags
 
         @staticmethod
         def getFaceTags(faceType, nodeTags):
@@ -2431,6 +2510,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorsize(api_faceTags_, api_faceTags_n_.value)
+        get_face_tags = getFaceTags
 
         @staticmethod
         def createEdges(dimTags=[]):
@@ -2446,6 +2526,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        create_edges = createEdges
 
         @staticmethod
         def createFaces(dimTags=[]):
@@ -2461,6 +2542,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        create_faces = createFaces
 
         @staticmethod
         def getLocalMultipliersForHcurl0(elementType, tag=-1):
@@ -2483,6 +2565,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_localMultipliers_, api_localMultipliers_n_.value)
+        get_local_multipliers_for_hcurl0 = getLocalMultipliersForHcurl0
 
         @staticmethod
         def getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True):
@@ -2514,6 +2597,7 @@ class model:
             return (
                 _ovectorpair(api_keys_, api_keys_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
+        get_keys_for_elements = getKeysForElements
 
         @staticmethod
         def getKeysForElement(elementTag, functionSpaceType, returnCoord=True):
@@ -2539,6 +2623,7 @@ class model:
             return (
                 _ovectorpair(api_keys_, api_keys_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
+        get_keys_for_element = getKeysForElement
 
         @staticmethod
         def getNumberOfKeysForElements(elementType, functionSpaceType):
@@ -2558,6 +2643,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        get_number_of_keys_for_elements = getNumberOfKeysForElements
 
         @staticmethod
         def getInformationForElements(keys, elementType, functionSpaceType):
@@ -2585,6 +2671,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_infoKeys_, api_infoKeys_n_.value)
+        get_information_for_elements = getInformationForElements
 
         @staticmethod
         def getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1):
@@ -2615,6 +2702,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
+        get_barycenters = getBarycenters
 
         @staticmethod
         def getElementEdgeNodes(elementType, tag=-1, primary=False, task=0, numTasks=1):
@@ -2645,6 +2733,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
+        get_element_edge_nodes = getElementEdgeNodes
 
         @staticmethod
         def getElementFaceNodes(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1):
@@ -2677,6 +2766,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorsize(api_nodeTags_, api_nodeTags_n_.value)
+        get_element_face_nodes = getElementFaceNodes
 
         @staticmethod
         def getGhostElements(dim, tag):
@@ -2702,6 +2792,7 @@ class model:
             return (
                 _ovectorsize(api_elementTags_, api_elementTags_n_.value),
                 _ovectorint(api_partitions_, api_partitions_n_.value))
+        get_ghost_elements = getGhostElements
 
         @staticmethod
         def setSize(dimTags, size):
@@ -2719,6 +2810,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_size = setSize
 
         @staticmethod
         def setSizeAtParametricPoints(dim, tag, parametricCoord, sizes):
@@ -2740,6 +2832,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_size_at_parametric_points = setSizeAtParametricPoints
 
         @staticmethod
         def setSizeCallback(callback):
@@ -2760,6 +2853,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_size_callback = setSizeCallback
 
         @staticmethod
         def removeSizeCallback():
@@ -2773,6 +2867,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        remove_size_callback = removeSizeCallback
 
         @staticmethod
         def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
@@ -2793,6 +2888,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_transfinite_curve = setTransfiniteCurve
 
         @staticmethod
         def setTransfiniteSurface(tag, arrangement="Left", cornerTags=[]):
@@ -2816,6 +2912,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_transfinite_surface = setTransfiniteSurface
 
         @staticmethod
         def setTransfiniteVolume(tag, cornerTags=[]):
@@ -2834,6 +2931,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_transfinite_volume = setTransfiniteVolume
 
         @staticmethod
         def setTransfiniteAutomatic(dimTags=[], cornerAngle=2.35, recombine=True):
@@ -2858,6 +2956,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_transfinite_automatic = setTransfiniteAutomatic
 
         @staticmethod
         def setRecombine(dim, tag):
@@ -2875,6 +2974,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_recombine = setRecombine
 
         @staticmethod
         def setSmoothing(dim, tag, val):
@@ -2892,6 +2992,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_smoothing = setSmoothing
 
         @staticmethod
         def setReverse(dim, tag, val=True):
@@ -2912,6 +3013,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_reverse = setReverse
 
         @staticmethod
         def setAlgorithm(dim, tag, val):
@@ -2929,6 +3031,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_algorithm = setAlgorithm
 
         @staticmethod
         def setSizeFromBoundary(dim, tag, val):
@@ -2947,6 +3050,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_size_from_boundary = setSizeFromBoundary
 
         @staticmethod
         def setCompound(dim, tags):
@@ -2965,6 +3069,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_compound = setCompound
 
         @staticmethod
         def setOutwardOrientation(tag):
@@ -2982,6 +3087,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_outward_orientation = setOutwardOrientation
 
         @staticmethod
         def embed(dim, tags, inDim, inTag):
@@ -3026,6 +3132,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        remove_embedded = removeEmbedded
 
         @staticmethod
         def getEmbedded(dim, tag):
@@ -3047,6 +3154,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
+        get_embedded = getEmbedded
 
         @staticmethod
         def reorderElements(elementType, tag, ordering):
@@ -3065,6 +3173,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        reorder_elements = reorderElements
 
         @staticmethod
         def renumberNodes():
@@ -3078,6 +3187,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        renumber_nodes = renumberNodes
 
         @staticmethod
         def renumberElements():
@@ -3091,6 +3201,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        renumber_elements = renumberElements
 
         @staticmethod
         def setPeriodic(dim, tags, tagsMaster, affineTransform):
@@ -3118,6 +3229,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_periodic = setPeriodic
 
         @staticmethod
         def getPeriodicNodes(dim, tag, includeHighOrderNodes=False):
@@ -3153,6 +3265,7 @@ class model:
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
                 _ovectorsize(api_nodeTagsMaster_, api_nodeTagsMaster_n_.value),
                 _ovectordouble(api_affineTransform_, api_affineTransform_n_.value))
+        get_periodic_nodes = getPeriodicNodes
 
         @staticmethod
         def removeDuplicateNodes():
@@ -3166,6 +3279,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        remove_duplicate_nodes = removeDuplicateNodes
 
         @staticmethod
         def splitQuadrangles(quality=1., tag=-1):
@@ -3182,6 +3296,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        split_quadrangles = splitQuadrangles
 
         @staticmethod
         def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True):
@@ -3207,6 +3322,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        classify_surfaces = classifySurfaces
 
         @staticmethod
         def createGeometry(dimTags=[]):
@@ -3226,6 +3342,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        create_geometry = createGeometry
 
         @staticmethod
         def createTopology(makeSimplyConnected=True, exportDiscrete=True):
@@ -3246,6 +3363,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        create_topology = createTopology
 
         @staticmethod
         def computeHomology(domainTags=[], subdomainTags=[], dims=[]):
@@ -3272,6 +3390,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        compute_homology = computeHomology
 
         @staticmethod
         def computeCohomology(domainTags=[], subdomainTags=[], dims=[]):
@@ -3298,6 +3417,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        compute_cohomology = computeCohomology
 
         @staticmethod
         def computeCrossField():
@@ -3318,6 +3438,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_viewTags_, api_viewTags_n_.value)
+        compute_cross_field = computeCrossField
 
         @staticmethod
         def triangulate(coord):
@@ -3418,6 +3539,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_number = setNumber
 
             @staticmethod
             def setString(tag, option, value):
@@ -3434,6 +3556,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_string = setString
 
             @staticmethod
             def setNumbers(tag, option, value):
@@ -3451,6 +3574,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_numbers = setNumbers
 
             @staticmethod
             def setAsBackgroundMesh(tag):
@@ -3465,6 +3589,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_as_background_mesh = setAsBackgroundMesh
 
             @staticmethod
             def setAsBoundaryLayer(tag):
@@ -3479,6 +3604,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_as_boundary_layer = setAsBoundaryLayer
 
 
     class geo:
@@ -3511,6 +3637,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_point = addPoint
 
         @staticmethod
         def addLine(startTag, endTag, tag=-1):
@@ -3533,6 +3660,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_line = addLine
 
         @staticmethod
         def addCircleArc(startTag, centerTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
@@ -3561,6 +3689,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_circle_arc = addCircleArc
 
         @staticmethod
         def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
@@ -3590,6 +3719,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_ellipse_arc = addEllipseArc
 
         @staticmethod
         def addSpline(pointTags, tag=-1):
@@ -3613,6 +3743,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_spline = addSpline
 
         @staticmethod
         def addBSpline(pointTags, tag=-1):
@@ -3636,6 +3767,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_bspline = addBSpline
 
         @staticmethod
         def addBezier(pointTags, tag=-1):
@@ -3657,6 +3789,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_bezier = addBezier
 
         @staticmethod
         def addPolyline(pointTags, tag=-1):
@@ -3679,6 +3812,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_polyline = addPolyline
 
         @staticmethod
         def addCompoundSpline(curveTags, numIntervals=5, tag=-1):
@@ -3703,6 +3837,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_compound_spline = addCompoundSpline
 
         @staticmethod
         def addCompoundBSpline(curveTags, numIntervals=20, tag=-1):
@@ -3727,6 +3862,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_compound_bspline = addCompoundBSpline
 
         @staticmethod
         def addCurveLoop(curveTags, tag=-1, reorient=False):
@@ -3753,6 +3889,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_curve_loop = addCurveLoop
 
         @staticmethod
         def addCurveLoops(curveTags):
@@ -3774,6 +3911,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_tags_, api_tags_n_.value)
+        add_curve_loops = addCurveLoops
 
         @staticmethod
         def addPlaneSurface(wireTags, tag=-1):
@@ -3797,6 +3935,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_plane_surface = addPlaneSurface
 
         @staticmethod
         def addSurfaceFilling(wireTags, tag=-1, sphereCenterTag=-1):
@@ -3821,6 +3960,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_surface_filling = addSurfaceFilling
 
         @staticmethod
         def addSurfaceLoop(surfaceTags, tag=-1):
@@ -3842,6 +3982,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_surface_loop = addSurfaceLoop
 
         @staticmethod
         def addVolume(shellTags, tag=-1):
@@ -3865,6 +4006,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_volume = addVolume
 
         @staticmethod
         def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
@@ -4017,6 +4159,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        extrude_boundary_layer = extrudeBoundaryLayer
 
         @staticmethod
         def translate(dimTags, dx, dy, dz):
@@ -4178,6 +4321,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        remove_all_duplicates = removeAllDuplicates
 
         @staticmethod
         def splitCurve(tag, pointTags):
@@ -4201,6 +4345,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_curveTags_, api_curveTags_n_.value)
+        split_curve = splitCurve
 
         @staticmethod
         def getMaxTag(dim):
@@ -4219,6 +4364,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        get_max_tag = getMaxTag
 
         @staticmethod
         def setMaxTag(dim, maxTag):
@@ -4235,6 +4381,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_max_tag = setMaxTag
 
         @staticmethod
         def addPhysicalGroup(dim, tags, tag=-1):
@@ -4257,6 +4404,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_physical_group = addPhysicalGroup
 
         @staticmethod
         def removePhysicalGroups(dimTags=[]):
@@ -4273,6 +4421,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        remove_physical_groups = removePhysicalGroups
 
         @staticmethod
         def synchronize():
@@ -4315,6 +4464,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_size = setSize
 
             @staticmethod
             def setTransfiniteCurve(tag, nPoints, meshType="Progression", coef=1.):
@@ -4336,6 +4486,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_transfinite_curve = setTransfiniteCurve
 
             @staticmethod
             def setTransfiniteSurface(tag, arrangement="Left", cornerTags=[]):
@@ -4359,6 +4510,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_transfinite_surface = setTransfiniteSurface
 
             @staticmethod
             def setTransfiniteVolume(tag, cornerTags=[]):
@@ -4377,6 +4529,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_transfinite_volume = setTransfiniteVolume
 
             @staticmethod
             def setRecombine(dim, tag, angle=45.):
@@ -4396,6 +4549,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_recombine = setRecombine
 
             @staticmethod
             def setSmoothing(dim, tag, val):
@@ -4414,6 +4568,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_smoothing = setSmoothing
 
             @staticmethod
             def setReverse(dim, tag, val=True):
@@ -4434,6 +4589,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_reverse = setReverse
 
             @staticmethod
             def setAlgorithm(dim, tag, val):
@@ -4452,6 +4608,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_algorithm = setAlgorithm
 
             @staticmethod
             def setSizeFromBoundary(dim, tag, val):
@@ -4470,6 +4627,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_size_from_boundary = setSizeFromBoundary
 
 
     class occ:
@@ -4502,6 +4660,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_point = addPoint
 
         @staticmethod
         def addLine(startTag, endTag, tag=-1):
@@ -4524,6 +4683,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_line = addLine
 
         @staticmethod
         def addCircleArc(startTag, centerTag, endTag, tag=-1):
@@ -4547,6 +4707,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_circle_arc = addCircleArc
 
         @staticmethod
         def addCircle(x, y, z, r, tag=-1, angle1=0., angle2=2*pi):
@@ -4574,6 +4735,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_circle = addCircle
 
         @staticmethod
         def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1):
@@ -4600,6 +4762,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_ellipse_arc = addEllipseArc
 
         @staticmethod
         def addEllipse(x, y, z, r1, r2, tag=-1, angle1=0., angle2=2*pi):
@@ -4631,6 +4794,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_ellipse = addEllipse
 
         @staticmethod
         def addSpline(pointTags, tag=-1):
@@ -4654,6 +4818,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_spline = addSpline
 
         @staticmethod
         def addBSpline(pointTags, tag=-1, degree=3, weights=[], knots=[], multiplicities=[]):
@@ -4685,6 +4850,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_bspline = addBSpline
 
         @staticmethod
         def addBezier(pointTags, tag=-1):
@@ -4706,6 +4872,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_bezier = addBezier
 
         @staticmethod
         def addWire(curveTags, tag=-1, checkClosed=False):
@@ -4730,6 +4897,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_wire = addWire
 
         @staticmethod
         def addCurveLoop(curveTags, tag=-1):
@@ -4754,6 +4922,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_curve_loop = addCurveLoop
 
         @staticmethod
         def addRectangle(x, y, z, dx, dy, tag=-1, roundedRadius=0.):
@@ -4781,6 +4950,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_rectangle = addRectangle
 
         @staticmethod
         def addDisk(xc, yc, zc, rx, ry, tag=-1):
@@ -4806,6 +4976,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_disk = addDisk
 
         @staticmethod
         def addPlaneSurface(wireTags, tag=-1):
@@ -4829,6 +5000,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_plane_surface = addPlaneSurface
 
         @staticmethod
         def addSurfaceFilling(wireTag, tag=-1, pointTags=[]):
@@ -4853,6 +5025,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_surface_filling = addSurfaceFilling
 
         @staticmethod
         def addBSplineFilling(wireTag, tag=-1, type=""):
@@ -4878,6 +5051,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_bspline_filling = addBSplineFilling
 
         @staticmethod
         def addBezierFilling(wireTag, tag=-1, type=""):
@@ -4903,6 +5077,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_bezier_filling = addBezierFilling
 
         @staticmethod
         def addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[], wireTags=[], wire3D=False):
@@ -4948,6 +5123,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_bspline_surface = addBSplineSurface
 
         @staticmethod
         def addBezierSurface(pointTags, numPointsU, tag=-1, wireTags=[], wire3D=False):
@@ -4979,6 +5155,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_bezier_surface = addBezierSurface
 
         @staticmethod
         def addTrimmedSurface(surfaceTag, wireTags=[], wire3D=False, tag=-1):
@@ -5006,6 +5183,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_trimmed_surface = addTrimmedSurface
 
         @staticmethod
         def addSurfaceLoop(surfaceTags, tag=-1, sewing=False):
@@ -5030,6 +5208,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_surface_loop = addSurfaceLoop
 
         @staticmethod
         def addVolume(shellTags, tag=-1):
@@ -5053,6 +5232,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_volume = addVolume
 
         @staticmethod
         def addSphere(xc, yc, zc, radius, tag=-1, angle1=-pi/2, angle2=pi/2, angle3=2*pi):
@@ -5082,6 +5262,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_sphere = addSphere
 
         @staticmethod
         def addBox(x, y, z, dx, dy, dz, tag=-1):
@@ -5108,6 +5289,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_box = addBox
 
         @staticmethod
         def addCylinder(x, y, z, dx, dy, dz, r, tag=-1, angle=2*pi):
@@ -5138,6 +5320,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_cylinder = addCylinder
 
         @staticmethod
         def addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, angle=2*pi):
@@ -5169,6 +5352,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_cone = addCone
 
         @staticmethod
         def addWedge(x, y, z, dx, dy, dz, tag=-1, ltx=0.):
@@ -5198,6 +5382,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_wedge = addWedge
 
         @staticmethod
         def addTorus(x, y, z, r1, r2, tag=-1, angle=2*pi):
@@ -5225,6 +5410,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        add_torus = addTorus
 
         @staticmethod
         def addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False, maxDegree=-1):
@@ -5255,6 +5441,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        add_thru_sections = addThruSections
 
         @staticmethod
         def addThickSolid(volumeTag, excludeSurfaceTags, offset, tag=-1):
@@ -5283,6 +5470,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        add_thick_solid = addThickSolid
 
         @staticmethod
         def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
@@ -5384,6 +5572,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        add_pipe = addPipe
 
         @staticmethod
         def fillet(volumeTags, curveTags, radii, removeVolume=True):
@@ -5714,6 +5903,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        affine_transform = affineTransform
 
         @staticmethod
         def copy(dimTags):
@@ -5768,6 +5958,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        remove_all_duplicates = removeAllDuplicates
 
         @staticmethod
         def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True):
@@ -5797,6 +5988,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        heal_shapes = healShapes
 
         @staticmethod
         def importShapes(fileName, highestDimOnly=True, format=""):
@@ -5823,6 +6015,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        import_shapes = importShapes
 
         @staticmethod
         def getEntities(dim=-1):
@@ -5844,6 +6037,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
+        get_entities = getEntities
 
         @staticmethod
         def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
@@ -5872,6 +6066,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_tags_, api_tags_n_.value)
+        get_entities_in_bounding_box = getEntitiesInBoundingBox
 
         @staticmethod
         def getBoundingBox(dim, tag):
@@ -5909,6 +6104,7 @@ class model:
                 api_xmax_.value,
                 api_ymax_.value,
                 api_zmax_.value)
+        get_bounding_box = getBoundingBox
 
         @staticmethod
         def getMass(dim, tag):
@@ -5929,6 +6125,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_mass_.value
+        get_mass = getMass
 
         @staticmethod
         def getCenterOfMass(dim, tag):
@@ -5957,6 +6154,7 @@ class model:
                 api_x_.value,
                 api_y_.value,
                 api_z_.value)
+        get_center_of_mass = getCenterOfMass
 
         @staticmethod
         def getMatrixOfInertia(dim, tag):
@@ -5978,6 +6176,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectordouble(api_mat_, api_mat_n_.value)
+        get_matrix_of_inertia = getMatrixOfInertia
 
         @staticmethod
         def getMaxTag(dim):
@@ -5996,6 +6195,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
+        get_max_tag = getMaxTag
 
         @staticmethod
         def setMaxTag(dim, maxTag):
@@ -6012,6 +6212,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+        set_max_tag = setMaxTag
 
         @staticmethod
         def synchronize():
@@ -6054,6 +6255,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
+            set_size = setSize
 
 
 class view:
@@ -6113,6 +6315,7 @@ class view:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_result_
+    get_index = getIndex
 
     @staticmethod
     def getTags():
@@ -6131,6 +6334,7 @@ class view:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorint(api_tags_, api_tags_n_.value)
+    get_tags = getTags
 
     @staticmethod
     def addModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0):
@@ -6166,6 +6370,7 @@ class view:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    add_model_data = addModelData
 
     @staticmethod
     def addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0):
@@ -6194,6 +6399,7 @@ class view:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    add_homogeneous_model_data = addHomogeneousModelData
 
     @staticmethod
     def getModelData(tag, step):
@@ -6230,6 +6436,7 @@ class view:
             _ovectorvectordouble(api_data_, api_data_n_, api_data_nn_),
             api_time_.value,
             api_numComponents_.value)
+    get_model_data = getModelData
 
     @staticmethod
     def getHomogeneousModelData(tag, step):
@@ -6266,6 +6473,7 @@ class view:
             _ovectordouble(api_data_, api_data_n_.value),
             api_time_.value,
             api_numComponents_.value)
+    get_homogeneous_model_data = getHomogeneousModelData
 
     @staticmethod
     def addListData(tag, dataType, numEle, data):
@@ -6293,6 +6501,7 @@ class view:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    add_list_data = addListData
 
     @staticmethod
     def getListData(tag):
@@ -6321,6 +6530,7 @@ class view:
             _ovectorstring(api_dataType_, api_dataType_n_.value),
             _ovectorint(api_numElements_, api_numElements_n_.value),
             _ovectorvectordouble(api_data_, api_data_n_, api_data_nn_))
+    get_list_data = getListData
 
     @staticmethod
     def addListDataString(tag, coord, data, style=[]):
@@ -6353,6 +6563,7 @@ class view:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    add_list_data_string = addListDataString
 
     @staticmethod
     def getListDataStrings(tag, dim):
@@ -6382,6 +6593,7 @@ class view:
             _ovectordouble(api_coord_, api_coord_n_.value),
             _ovectorstring(api_data_, api_data_n_.value),
             _ovectorstring(api_style_, api_style_n_.value))
+    get_list_data_strings = getListDataStrings
 
     @staticmethod
     def setInterpolationMatrices(tag, type, d, coef, exp, dGeo=0, coefGeo=[], expGeo=[]):
@@ -6417,6 +6629,7 @@ class view:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_interpolation_matrices = setInterpolationMatrices
 
     @staticmethod
     def addAlias(refTag, copyOptions=False, tag=-1):
@@ -6439,6 +6652,7 @@ class view:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_result_
+    add_alias = addAlias
 
     @staticmethod
     def copyOptions(refTag, tag):
@@ -6455,6 +6669,7 @@ class view:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    copy_options = copyOptions
 
     @staticmethod
     def combine(what, how, remove=True, copyOptions=True):
@@ -6549,6 +6764,7 @@ class view:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_visibility_per_window = setVisibilityPerWindow
 
 
 class plugin:
@@ -6571,6 +6787,7 @@ class plugin:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_number = setNumber
 
     @staticmethod
     def setString(name, option, value):
@@ -6587,6 +6804,7 @@ class plugin:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_string = setString
 
     @staticmethod
     def run(name):
@@ -6746,6 +6964,7 @@ class fltk:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_result_
+    is_available = isAvailable
 
     @staticmethod
     def selectEntities(dim=-1):
@@ -6768,6 +6987,7 @@ class fltk:
         return (
             api_result_,
             _ovectorpair(api_dimTags_, api_dimTags_n_.value))
+    select_entities = selectEntities
 
     @staticmethod
     def selectElements():
@@ -6788,6 +7008,7 @@ class fltk:
         return (
             api_result_,
             _ovectorsize(api_elementTags_, api_elementTags_n_.value))
+    select_elements = selectElements
 
     @staticmethod
     def selectViews():
@@ -6808,6 +7029,7 @@ class fltk:
         return (
             api_result_,
             _ovectorint(api_viewTags_, api_viewTags_n_.value))
+    select_views = selectViews
 
     @staticmethod
     def splitCurrentWindow(how="v", ratio=0.5):
@@ -6824,6 +7046,7 @@ class fltk:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    split_current_window = splitCurrentWindow
 
     @staticmethod
     def setCurrentWindow(windowIndex=0):
@@ -6840,6 +7063,7 @@ class fltk:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_current_window = setCurrentWindow
 
     @staticmethod
     def setStatusMessage(message, graphics=False):
@@ -6856,6 +7080,7 @@ class fltk:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_status_message = setStatusMessage
 
     @staticmethod
     def showContextWindow(dim, tag):
@@ -6871,6 +7096,7 @@ class fltk:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    show_context_window = showContextWindow
 
 
 class onelab:
@@ -6933,6 +7159,7 @@ class onelab:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorstring(api_names_, api_names_n_.value)
+    get_names = getNames
 
     @staticmethod
     def setNumber(name, value):
@@ -6951,6 +7178,7 @@ class onelab:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_number = setNumber
 
     @staticmethod
     def setString(name, value):
@@ -6969,6 +7197,7 @@ class onelab:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+    set_string = setString
 
     @staticmethod
     def getNumber(name):
@@ -6989,6 +7218,7 @@ class onelab:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectordouble(api_value_, api_value_n_.value)
+    get_number = getNumber
 
     @staticmethod
     def getString(name):
@@ -7009,6 +7239,7 @@ class onelab:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorstring(api_value_, api_value_n_.value)
+    get_string = getString
 
     @staticmethod
     def clear(name=""):
@@ -7122,6 +7353,7 @@ class logger:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_result_
+    get_wall_time = getWallTime
 
     @staticmethod
     def getCpuTime():
@@ -7139,6 +7371,7 @@ class logger:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return api_result_
+    get_cpu_time = getCpuTime
 
     @staticmethod
     def getLastError():
@@ -7157,3 +7390,4 @@ class logger:
         if ierr.value != 0:
             raise Exception('Could not get last error')
         return _ostring(api_error_)
+    get_last_error = getLastError

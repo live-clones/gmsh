@@ -5933,14 +5933,16 @@ header/module file for the exact definition in each supported language:
 in @url{@value{GITLAB-PREFIX}/api/gmsh.h,C++}
 @code{gmsh/model/geo/addPoint} will lead to a namespaced function
 @code{gmsh::model::geo::addPoint}, while in
-@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python}
-and
-@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia}
-it will lead to @code{gmsh.model.geo.addPoint}, and in
+@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python} and
+@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia} it will lead to
+@code{gmsh.model.geo.addPoint}, and in
 @url{@value{GITLAB-PREFIX}/api/gmshc.h,C} to
-@code{gmshModelGeoAddPoint}. Output values are passed by reference in
-C++, as pointers in C and directly returned (after the return value, if
-any) in Python and Julia.
+@code{gmshModelGeoAddPoint}.  In addition to the default ``camelCase''
+function names, the Python and Julia APIs also define ``snake case''
+aliases, i.e. @code{gmsh.model.geo.add_point}, as this is the
+recommended style in these languages.  Output values are passed by
+reference in C++, as pointers in C and directly returned (after the
+return value, if any) in Python and Julia.
 
 @include api.texi
 

@@ -32,6 +32,11 @@ gmsh.model.add("t1")
 lc = 1e-2
 gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
 
+# Note that in addition to the default ``camelCase'' function name `addPoint',
+# the Python API also defines a ``snake case'' alias, i.e. `add_point'. You can
+# use either interchangeably; all the tutorials are written using the camelCase
+# convention for consistency.
+
 # The distribution of the mesh element sizes will be obtained by interpolation
 # of these mesh sizes throughout the geometry. Another method to specify mesh
 # sizes is to use general mesh size Fields (see `t10.py'). A particular case is
