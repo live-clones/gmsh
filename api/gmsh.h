@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1054,13 +1054,32 @@ namespace gmsh { // Top-level functions
                                                                     std::vector<int> & basisFunctionsOrientation,
                                                                     const int tag = -1);
 
-      // gmsh::model::mesh::getEdgeNumber
+      // gmsh::model::mesh::getEdgeTags
       //
-      // Get the global edge identifier `edgeNum' for an input list of node pairs,
-      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-      // feature and will probably change in a future release.
-      GMSH_API void getEdgeNumber(const std::vector<int> & edgeNodes,
-                                  std::vector<int> & edgeNum);
+      // Get the global unique mesh edge identifiers `edgeTags' for an input list
+      // of node tag pairs defining these edges, concatenated in the vector
+      // `nodeTags'.
+      GMSH_API void getEdgeTags(const std::vector<std::size_t> & nodeTags,
+                                std::vector<std::size_t> & edgeTags);
+
+      // gmsh::model::mesh::getFaceTags
+      //
+      // Get the global unique mesh face identifiers `faceTags' for an input list
+      // of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' ==
+      // 4) defining these faces, concatenated in the vector `nodeTags'.
+      GMSH_API void getFaceTags(const int faceType,
+                                const std::vector<std::size_t> & nodeTags,
+                                std::vector<std::size_t> & faceTags);
+
+      // gmsh::model::mesh::createEdges
+      //
+      // Create unique mesh edges for the entities `dimTags'.
+      GMSH_API void createEdges(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
+      // gmsh::model::mesh::createFaces
+      //
+      // Create unique mesh faces for the entities `dimTags'.
+      GMSH_API void createFaces(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // gmsh::model::mesh::getLocalMultipliersForHcurl0
       //
@@ -1326,8 +1345,12 @@ namespace gmsh { // Top-level functions
       // Embed the model entities of dimension `dim' and tags `tags' in the
       // (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and
       // must be strictly smaller than `inDim', which must be either 2 or 3. The
-      // embedded entities should not be part of the boundary of the entity
-      // `inTag', whose mesh will conform to the mesh of the embedded entities.
+      // embedded entities should not intersect each other or be part of the
+      // boundary of the entity `inTag', whose mesh will conform to the mesh of the
+      // embedded entities. With the OpenCASCADE kernel, if the `fragment'
+      // operation is applied to entities of different dimensions, the lower
+      // dimensional entities will be automatically embedded in the higher
+      // dimensional entities if they are not on their boundary.
       GMSH_API void embed(const int dim,
                           const std::vector<int> & tags,
                           const int inDim,
@@ -1340,6 +1363,14 @@ namespace gmsh { // Top-level functions
       // points if `dim' == 0).
       GMSH_API void removeEmbedded(const gmsh::vectorpair & dimTags,
                                    const int dim = -1);
+
+      // gmsh::model::mesh::getEmbedded
+      //
+      // Get the entities (if any) embedded in the model entity of dimension `dim'
+      // and tag `tag'.
+      GMSH_API void getEmbedded(const int dim,
+                                const int tag,
+                                gmsh::vectorpair & dimTags);
 
       // gmsh::model::mesh::reorderElements
       //
@@ -1409,11 +1440,13 @@ namespace gmsh { // Top-level functions
       // boundary if the surface is open. If `forReparametrization' is set, create
       // edges and surfaces that can be reparametrized using a single map. If
       // `curveAngle' is less than Pi, also force curves to be split according to
-      // `curveAngle'.
+      // `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
+      // entities and export the discrete entities in the built-in CAD kernel.
       GMSH_API void classifySurfaces(const double angle,
                                      const bool boundary = true,
                                      const bool forReparametrization = false,
-                                     const double curveAngle = M_PI);
+                                     const double curveAngle = M_PI,
+                                     const bool exportDiscrete = true);
 
       // gmsh::model::mesh::createGeometry
       //
@@ -1668,6 +1701,13 @@ namespace gmsh { // Top-level functions
                                 const int tag = -1,
                                 const bool reorient = false);
 
+      // gmsh::model::geo::addCurveLoops
+      //
+      // Add curve loops in the built-in CAD representation based on the curves
+      // `curveTags'. Return the `tags' of found curve loops, if any.
+      GMSH_API void addCurveLoops(const std::vector<int> & curveTags,
+                                  std::vector<int> & tags);
+
       // gmsh::model::geo::addPlaneSurface
       //
       // Add a plane surface in the built-in CAD representation, defined by one or
@@ -1715,8 +1755,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the
-      // entities are extruded along their normal.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       GMSH_API void extrude(const gmsh::vectorpair & dimTags,
                             const double dx,
                             const double dy,
@@ -1735,7 +1775,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       GMSH_API void revolve(const gmsh::vectorpair & dimTags,
                             const double x,
                             const double y,
@@ -1759,7 +1800,7 @@ namespace gmsh { // Top-level functions
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
       // not empty, it provides the (cumulative) height of the different layers,
-      // normalized to 1.
+      // normalized to 1. If `recombine' is set, recombine the mesh in the layers.
       GMSH_API void twist(const gmsh::vectorpair & dimTags,
                           const double x,
                           const double y,
@@ -1775,6 +1816,25 @@ namespace gmsh { // Top-level functions
                           const std::vector<int> & numElements = std::vector<int>(),
                           const std::vector<double> & heights = std::vector<double>(),
                           const bool recombine = false);
+
+      // gmsh::model::geo::extrudeBoundaryLayer
+      //
+      // Extrude the entities `dimTags' in the built-in CAD representation along
+      // the normals of the mesh, creating discrete boundary layer entities. Return
+      // extruded entities in `outDimTags'. The entries in `numElements' give the
+      // number of elements in each layer. If `height' is not empty, it provides
+      // the height of the different layers. If `recombine' is set, recombine the
+      // mesh in the layers. A second boundary layer can be created from the same
+      // entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
+      // view to either specify the normals (if the view contains a vector field)
+      // or scale the normals (if the view is scalar).
+      GMSH_API void extrudeBoundaryLayer(const gmsh::vectorpair & dimTags,
+                                         gmsh::vectorpair & outDimTags,
+                                         const std::vector<int> & numElements = std::vector<int>(1, 1),
+                                         const std::vector<double> & heights = std::vector<double>(),
+                                         const bool recombine = false,
+                                         const bool second = false,
+                                         const int viewIndex = -1);
 
       // gmsh::model::geo::translate
       //
@@ -2429,7 +2489,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       GMSH_API void extrude(const gmsh::vectorpair & dimTags,
                             const double dx,
                             const double dy,
@@ -2448,7 +2509,8 @@ namespace gmsh { // Top-level functions
       // extrude the mesh: the entries in `numElements' give the number of elements
       // in each layer. If `height' is not empty, it provides the (cumulative)
       // height of the different layers, normalized to 1. When the mesh is extruded
-      // the angle should be strictly smaller than 2*Pi.
+      // the angle should be strictly smaller than 2*Pi. If `recombine' is set,
+      // recombine the mesh in the layers.
       GMSH_API void revolve(const gmsh::vectorpair & dimTags,
                             const double x,
                             const double y,
@@ -2465,11 +2527,16 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::addPipe
       //
       // Add a pipe in the OpenCASCADE CAD representation, by extruding the
-      // entities `dimTags' along the wire `wireTag'. Return the pipe in
-      // `outDimTags'.
+      // entities `dimTags' along the wire `wireTag'. The type of sweep can be
+      // specified with `trihedron' (possible values: "DiscreteTrihedron",
+      // "CorrectedFrenet", "Fixed", "Frenet", "ConstantNormal", "Darboux",
+      // "GuideAC", "GuidePlan", "GuideACWithContact", "GuidePlanWithContact"). If
+      // `trihedron' is not provided, "DiscreteTrihedron" is assumed. Return the
+      // pipe in `outDimTags'.
       GMSH_API void addPipe(const gmsh::vectorpair & dimTags,
                             const int wireTag,
-                            gmsh::vectorpair & outDimTags);
+                            gmsh::vectorpair & outDimTags,
+                            const std::string & trihedron = "");
 
       // gmsh::model::occ::fillet
       //
@@ -2552,12 +2619,15 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::fragment
       //
-      // Compute the boolean fragments (general fuse) of the entities
-      // `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
-      // Return the resulting entities in `outDimTags'. If `tag' is positive, try
-      // to set the tag explicitly (only valid if the boolean operation results in
-      // a single entity). Remove the object if `removeObject' is set. Remove the
-      // tool if `removeTool' is set.
+      // Compute the boolean fragments (general fuse) resulting from the
+      // intersection of the entities `objectDimTags' and `toolDimTags' in the
+      // OpenCASCADE CAD representation, making all iterfaces conformal. When
+      // applied to entities of different dimensions, the lower dimensional
+      // entities will be automatically embedded in the higher dimensional entities
+      // if they are not on their boundary. Return the resulting entities in
+      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
+      // valid if the boolean operation results in a single entity). Remove the
+      // object if `removeObject' is set. Remove the tool if `removeTool' is set.
       GMSH_API void fragment(const gmsh::vectorpair & objectDimTags,
                              const gmsh::vectorpair & toolDimTags,
                              gmsh::vectorpair & outDimTags,
@@ -3154,6 +3224,19 @@ namespace gmsh { // Top-level functions
     // appended at the end of the list.
     GMSH_API void setCurrentWindow(const int windowIndex = 0);
 
+    // gmsh::fltk::setStatusMessage
+    //
+    // Set a status message in the current window. If `graphics' is set, display
+    // the message inside the graphic window instead of the status bar.
+    GMSH_API void setStatusMessage(const std::string & message,
+                                   const bool graphics = false);
+
+    // gmsh::fltk::showContextWindow
+    //
+    // Show context window for the entity of dimension `dim' and tag `tag'.
+    GMSH_API void showContextWindow(const int dim,
+                                    const int tag);
+
   } // namespace fltk
 
   namespace onelab { // ONELAB server functions
@@ -3171,6 +3254,13 @@ namespace gmsh { // Top-level functions
     GMSH_API void get(std::string & data,
                       const std::string & name = "",
                       const std::string & format = "json");
+
+    // gmsh::onelab::getNames
+    //
+    // Get the names of the parameters in the ONELAB database matching the `search'
+    // regular expression. If `search' is empty, return all the names.
+    GMSH_API void getNames(std::vector<std::string> & names,
+                           const std::string & search = "");
 
     // gmsh::onelab::setNumber
     //

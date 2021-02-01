@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -210,19 +210,24 @@ void partition_dialog()
 {
   static PartitionDialog dlg;
 
-  static Fl_Menu_Item partitionTypeMenu[] = {{"Metis", 0, 0, 0}, {0}};
+  static Fl_Menu_Item partitionTypeMenu[] = {{"Metis", 0, nullptr, nullptr},
+                                             {nullptr}};
 
-  static Fl_Menu_Item metisAlgMenu[] = {
-    {"Recursive", 0, 0, 0}, {"K-way", 0, 0, 0}, {0}};
+  static Fl_Menu_Item metisAlgMenu[] = {{"Recursive", 0, nullptr, nullptr},
+                                        {"K-way", 0, nullptr, nullptr},
+                                        {nullptr}};
 
   static Fl_Menu_Item metisEdgeMatchingMenu[] = {
-    {"Random", 0, 0, 0}, {"Sorted heavy-edge", 0, 0, 0}, {0}};
+    {"Random", 0, nullptr, nullptr},
+    {"Sorted heavy-edge", 0, nullptr, nullptr},
+    {nullptr}};
 
-  static Fl_Menu_Item metisRefineAlgMenu[] = {{"FM-based cut", 0, 0, 0},
-                                              {"Greedy", 0, 0, 0},
-                                              {"Two-sided node FM", 0, 0, 0},
-                                              {"One-sided node FM", 0, 0, 0},
-                                              {0}};
+  static Fl_Menu_Item metisRefineAlgMenu[] = {
+    {"FM-based cut", 0, nullptr, nullptr},
+    {"Greedy", 0, nullptr, nullptr},
+    {"Two-sided node FM", 0, nullptr, nullptr},
+    {"One-sided node FM", 0, nullptr, nullptr},
+    {nullptr}};
 
   // This will be resized based on groups that are displayed
   const int h = 8 * WB + 5 * BH + 4;

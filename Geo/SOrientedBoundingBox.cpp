@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,12 +21,12 @@
 #include "DivideAndConquer.h"
 #endif
 
-double SOrientedBoundingRectangle::area() { return size[0] * size[1]; }
-
 SOrientedBoundingRectangle::SOrientedBoundingRectangle()
-  : center(2, 0.0), size(2, 0.0), axisX(2, 0.0), axisY(2, 0.0)
+  : center({0.0, 0.0}), size({0.0, 0.0}), axisX({0.0, 0.0}), axisY({0.0, 0.0})
 {
 }
+
+double SOrientedBoundingRectangle::area() { return size[0] * size[1]; }
 
 void SOrientedBoundingBox::fillp()
 {
@@ -168,8 +168,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
   vmaxs.setAll(-DBL_MAX);
 
   size_t idx = 0;
-  for(std::set<SPoint3>::iterator uIter = unique.begin(); uIter != unique.end();
-      ++uIter) {
+  for(auto uIter = unique.begin(); uIter != unique.end(); ++uIter) {
     const SPoint3 &pp = *uIter;
     for(int d = 0; d < 3; d++) {
       data(d, idx) = pp[d];
@@ -277,8 +276,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
     SPoint2 *p = new SPoint2(projected(smallest_comp == 0 ? 1 : 0, i),
                              projected(smallest_comp == 2 ? 1 : 2, i));
     bool keep = true;
-    for(std::vector<SPoint2 *>::iterator point = points.begin();
-        point != points.end(); point++) {
+    for(auto point = points.begin(); point != points.end(); point++) {
       if(std::abs((*p)[0] - (**point)[0]) < 10e-10 &&
          std::abs((*p)[1] - (**point)[1]) < 10e-10) {
         keep = false;
@@ -294,7 +292,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
   // Find the convex hull from a delaunay triangulation of the points
   DocRecord record(points.size());
   record.numPoints = points.size();
-  srand((unsigned)time(0));
+  srand((unsigned)time(nullptr));
   for(std::size_t i = 0; i < points.size(); i++) {
     record.points[i].where.h =
       points[i]->x() + (10e-6) * sizes[smallest_comp == 0 ? 1 : 0] *
@@ -302,7 +300,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
     record.points[i].where.v =
       points[i]->y() + (10e-6) * sizes[smallest_comp == 2 ? 1 : 0] *
                          (-0.5 + ((double)rand()) / RAND_MAX);
-    record.points[i].adjacent = NULL;
+    record.points[i].adjacent = nullptr;
   }
 
   try {
@@ -323,8 +321,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
 
     for(int j = 0; j < 3; j++) {
       bool okay = true;
-      for(std::vector<Segment>::iterator seg = convex_hull.begin();
-          seg != convex_hull.end(); seg++) {
+      for(auto seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
         if(((*seg).from == segs[j].from && (*seg).from == segs[j].to)
            // FIXME:
            // || ((*seg).from == segs[j].to && (*seg).from == segs[j].from)
@@ -356,8 +353,7 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
   fullVector<double> segment(2);
   fullMatrix<double> rotation(2, 2);
 
-  for(std::vector<Segment>::iterator seg = convex_hull.begin();
-      seg != convex_hull.end(); seg++) {
+  for(auto seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
     // segment(0) = record.points[(*seg).from].where.h -
     // record.points[(*seg).to].where.h;  segment(1) =
     // record.points[(*seg).from].where.v - record.points[(*seg).to].where.v;
@@ -374,11 +370,10 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
     rotation(1, 0) = -sine;
     rotation(1, 1) = cosine;
 
-    // TODO C++11 std::numeric_limits<double>
-    double max_x = -DBL_MAX;
-    double min_x = DBL_MAX;
-    double max_y = -DBL_MAX;
-    double min_y = DBL_MAX;
+    auto max_x = -std::numeric_limits<double>::max();
+    auto min_x = std::numeric_limits<double>::max();
+    auto max_y = -std::numeric_limits<double>::max();
+    auto min_y = std::numeric_limits<double>::max();
 
     for(int i = 0; i < record.numPoints; i++) {
       fullVector<double> pnt(2);
@@ -432,9 +427,9 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
       least_rectangle.axisY[1] = axis_rot2(1);
     }
   }
-  // TODO C++11 std::numeric_limits<double>::min() / max()
-  double min_pca = DBL_MAX;
-  double max_pca = -DBL_MAX;
+
+  auto min_pca = std::numeric_limits<double>::max();
+  auto max_pca = -std::numeric_limits<double>::max();
   for(int i = 0; i < num_vertices; i++) {
     min_pca = std::min(min_pca, projected(smallest_comp, i));
     max_pca = std::max(max_pca, projected(smallest_comp, i));

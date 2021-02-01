@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -76,8 +76,8 @@ namespace {
   {
     for(int j = 0; j < numMapNodes; j++) {
       const double &dPhidX = dShapeMat_dX(i, j);
-      JDJ(i, j) =                   dPhidX * (dydY * dzdZ - dzdY * dydZ);
-      JDJ(i, j + numMapNodes) =     dPhidX * (dzdY * dxdZ - dxdY * dzdZ);
+      JDJ(i, j) = dPhidX * (dydY * dzdZ - dzdY * dydZ);
+      JDJ(i, j + numMapNodes) = dPhidX * (dzdY * dxdZ - dxdY * dzdZ);
       JDJ(i, j + 2 * numMapNodes) = dPhidX * (dxdY * dydZ - dydY * dxdZ);
     }
     JDJ(i, 3 * numMapNodes) =
@@ -97,12 +97,12 @@ namespace {
     for(int j = 0; j < numMapNodes; j++) {
       const double &dPhidX = dShapeMat_dX(i, j);
       const double &dPhidY = dShapeMat_dY(i, j);
-      JDJ(i, j) =   dPhidX * (dydY * dzdZ - dzdY * dydZ)
-                  + dPhidY * (dzdX * dydZ - dydX * dzdZ);
-      JDJ(i, j + numMapNodes) =   dPhidX * (dzdY * dxdZ - dxdY * dzdZ)
-                                + dPhidY * (dxdX * dzdZ - dzdX * dxdZ);
-      JDJ(i, j + 2 * numMapNodes) =   dPhidX * (dxdY * dydZ - dydY * dxdZ)
-                                    + dPhidY * (dydX * dxdZ - dxdX * dydZ);
+      JDJ(i, j) = dPhidX * (dydY * dzdZ - dzdY * dydZ) +
+                  dPhidY * (dzdX * dydZ - dydX * dzdZ);
+      JDJ(i, j + numMapNodes) = dPhidX * (dzdY * dxdZ - dxdY * dzdZ) +
+                                dPhidY * (dxdX * dzdZ - dzdX * dxdZ);
+      JDJ(i, j + 2 * numMapNodes) = dPhidX * (dxdY * dydZ - dydY * dxdZ) +
+                                    dPhidY * (dydX * dxdZ - dxdX * dydZ);
     }
     JDJ(i, 3 * numMapNodes) =
       calcDet3D(dxdX, dxdY, dxdZ, dydX, dydY, dydZ, dzdX, dzdY, dzdZ);
@@ -122,15 +122,15 @@ namespace {
       const double &dPhidX = dShapeMat_dX(i, j);
       const double &dPhidY = dShapeMat_dY(i, j);
       const double &dPhidZ = dShapeMat_dZ(i, j);
-      JDJ(i, j) =   dPhidX * (dydY * dzdZ - dzdY * dydZ)
-                  + dPhidY * (dzdX * dydZ - dydX * dzdZ)
-                  + dPhidZ * (dydX * dzdY - dzdX * dydY);
-      JDJ(i, j + numMapNodes) =   dPhidX * (dzdY * dxdZ - dxdY * dzdZ)
-                                + dPhidY * (dxdX * dzdZ - dzdX * dxdZ)
-                                + dPhidZ * (dzdX * dxdY - dxdX * dzdY);
-      JDJ(i, j + 2 * numMapNodes) =   dPhidX * (dxdY * dydZ - dydY * dxdZ)
-                                    + dPhidY * (dydX * dxdZ - dxdX * dydZ)
-                                    + dPhidZ * (dxdX * dydY - dydX * dxdY);
+      JDJ(i, j) = dPhidX * (dydY * dzdZ - dzdY * dydZ) +
+                  dPhidY * (dzdX * dydZ - dydX * dzdZ) +
+                  dPhidZ * (dydX * dzdY - dzdX * dydY);
+      JDJ(i, j + numMapNodes) = dPhidX * (dzdY * dxdZ - dxdY * dzdZ) +
+                                dPhidY * (dxdX * dzdZ - dzdX * dxdZ) +
+                                dPhidZ * (dzdX * dxdY - dxdX * dzdY);
+      JDJ(i, j + 2 * numMapNodes) = dPhidX * (dxdY * dydZ - dydY * dxdZ) +
+                                    dPhidY * (dydX * dxdZ - dxdX * dydZ) +
+                                    dPhidZ * (dxdX * dydY - dydX * dxdY);
     }
     JDJ(i, 3 * numMapNodes) =
       calcDet3D(dxdX, dxdY, dxdZ, dydX, dydY, dydZ, dzdX, dzdY, dzdZ);
@@ -712,10 +712,9 @@ void JacobianBasis::getSignedJacAndGradientsGeneral(
     fullMatrix<double> dxyzdX(nSamplingPnts, 3);
     dSMat_dX.mult(nodesXYZ, dxyzdX);
     for(int i = 0; i < nSamplingPnts; i++) {
-      calcJDJ1D(dxyzdX(i, 0), normals(0, 0), normals(1, 0),
-                dxyzdX(i, 1), normals(0, 1), normals(1, 1),
-                dxyzdX(i, 2), normals(0, 2), normals(1, 2),
-                i, numMapNodes, dSMat_dX, JDJ);
+      calcJDJ1D(dxyzdX(i, 0), normals(0, 0), normals(1, 0), dxyzdX(i, 1),
+                normals(0, 1), normals(1, 1), dxyzdX(i, 2), normals(0, 2),
+                normals(1, 2), i, numMapNodes, dSMat_dX, JDJ);
     }
   } break;
   case 2: {
@@ -724,10 +723,9 @@ void JacobianBasis::getSignedJacAndGradientsGeneral(
     dSMat_dX.mult(nodesXYZ, dxyzdX);
     dSMat_dY.mult(nodesXYZ, dxyzdY);
     for(int i = 0; i < nSamplingPnts; i++) {
-      calcJDJ2D(dxyzdX(i, 0), dxyzdY(i, 0), normals(0, 0),
-                dxyzdX(i, 1), dxyzdY(i, 1), normals(0, 1),
-                dxyzdX(i, 2), dxyzdY(i, 2), normals(0, 2),
-                i, numMapNodes, dSMat_dX, dSMat_dY, JDJ);
+      calcJDJ2D(dxyzdX(i, 0), dxyzdY(i, 0), normals(0, 0), dxyzdX(i, 1),
+                dxyzdY(i, 1), normals(0, 1), dxyzdX(i, 2), dxyzdY(i, 2),
+                normals(0, 2), i, numMapNodes, dSMat_dX, dSMat_dY, JDJ);
     }
   } break;
   case 3: {
@@ -738,10 +736,10 @@ void JacobianBasis::getSignedJacAndGradientsGeneral(
     dSMat_dY.mult(nodesXYZ, dxyzdY);
     dSMat_dZ.mult(nodesXYZ, dxyzdZ);
     for(int i = 0; i < nSamplingPnts; i++) {
-      calcJDJ3D(dxyzdX(i, 0), dxyzdY(i, 0), dxyzdZ(i, 0),
-                dxyzdX(i, 1), dxyzdY(i, 1), dxyzdZ(i, 1),
-                dxyzdX(i, 2), dxyzdY(i, 2), dxyzdZ(i, 2),
-                i, numMapNodes, dSMat_dX, dSMat_dY, dSMat_dZ, JDJ);
+      calcJDJ3D(dxyzdX(i, 0), dxyzdY(i, 0), dxyzdZ(i, 0), dxyzdX(i, 1),
+                dxyzdY(i, 1), dxyzdZ(i, 1), dxyzdX(i, 2), dxyzdY(i, 2),
+                dxyzdZ(i, 2), i, numMapNodes, dSMat_dX, dSMat_dY, dSMat_dZ,
+                JDJ);
     }
   } break;
   }

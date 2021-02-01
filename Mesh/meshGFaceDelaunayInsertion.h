@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -37,8 +37,7 @@ struct bidimMeshData {
     else
       indices[mv] = index;
     if(parametricCoordinates) {
-      std::map<MVertex *, SPoint2>::iterator it =
-        parametricCoordinates->find(mv);
+      auto it = parametricCoordinates->find(mv);
       if(it != parametricCoordinates->end()) {
         u = it->second.x();
         v = it->second.y();
@@ -57,14 +56,14 @@ struct bidimMeshData {
   inline MVertex *equivalent(MVertex *v1) const
   {
     if(equivalence) {
-      std::map<MVertex *, MVertex *>::iterator it = equivalence->find(v1);
-      if(it == equivalence->end()) return 0;
+      auto it = equivalence->find(v1);
+      if(it == equivalence->end()) return nullptr;
       return it->second;
     }
-    return 0;
+    return nullptr;
   }
-  bidimMeshData(std::map<MVertex *, MVertex *> *e = 0,
-                std::map<MVertex *, SPoint2> *p = 0)
+  bidimMeshData(std::map<MVertex *, MVertex *> *e = nullptr,
+                std::map<MVertex *, SPoint2> *p = nullptr)
     : equivalence(e), parametricCoordinates(p)
   {
   }
@@ -92,16 +91,16 @@ public:
   inline MVertex *otherSide(int i)
   {
     MTri3 *n = neigh[i];
-    if(!n) return 0;
+    if(!n) return nullptr;
     MVertex *v1 = base->getVertex((i + 2) % 3);
     MVertex *v2 = base->getVertex(i);
     for(int j = 0; j < 3; j++)
       if(n->tri()->getVertex(j) != v1 && n->tri()->getVertex(j) != v2)
         return n->tri()->getVertex(j);
-    return 0;
+    return nullptr;
   }
-  MTri3(MTriangle *t, double lc, SMetric3 *m = 0, bidimMeshData *data = 0,
-        GFace *gf = 0);
+  MTri3(MTriangle *t, double lc, SMetric3 *m = nullptr,
+        bidimMeshData *data = nullptr, GFace *gf = nullptr);
   inline void setTri(MTriangle *t) { base = t; }
   inline MTriangle *tri() const { return base; }
   inline void setNeigh(int iN, MTri3 *n) { neigh[iN] = n; }
@@ -147,31 +146,32 @@ public:
 void connectTriangles(std::list<MTri3 *> &);
 void connectTriangles(std::vector<MTri3 *> &);
 void connectTriangles(std::set<MTri3 *, compareTri3Ptr> &AllTris);
-void bowyerWatson(GFace *gf, int MAXPNT = 1000000000,
-                  std::map<MVertex *, MVertex *> *equivalence = 0,
-                  std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
+void bowyerWatson(
+  GFace *gf, int MAXPNT = 1000000000,
+  std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void bowyerWatsonFrontal(
-  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = 0,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = 0,
-  std::vector<SPoint2> *true_boundary = 0);
+  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr,
+  std::vector<SPoint2> *true_boundary = nullptr);
 void bowyerWatsonFrontalLayers(
-  GFace *gf, bool quad, std::map<MVertex *, MVertex *> *equivalence = 0,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
+  GFace *gf, bool quad, std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void bowyerWatsonParallelograms(
-  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = 0,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
+  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void bowyerWatsonParallelogramsConstrained(
   GFace *gf, const std::set<MVertex *> &constr_vertices,
-  std::map<MVertex *, MVertex *> *equivalence = 0,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
+  std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void buildBackgroundMesh(
   GFace *gf, bool crossFieldClosestPoint = false,
-  std::map<MVertex *, MVertex *> *equivalence = 0,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = 0);
+  std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 
 void delaunayMeshIn2D(std::vector<MVertex *> &, std::vector<MTriangle *> &,
                       bool removeBox = true,
-                      std::vector<MEdge> *edgesToRecover = 0,
+                      std::vector<MEdge> *edgesToRecover = nullptr,
                       bool hilbertSort = true);
 
 struct edgeXface {

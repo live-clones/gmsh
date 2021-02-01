@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,14 +25,14 @@ struct LagrangeMultiplierField {
   double _tau;
   SVector3 _d;
   simpleFunction<double> *_f;
-  LagrangeMultiplierField() : _tag(0), g(0) {}
+  LagrangeMultiplierField() : _tag(0), g(nullptr) {}
 };
 
 struct elasticField {
   int _tag; // tag for the dofManager
   groupOfElements *g; // support for this field
   double _e, _nu; // specific elastic datas (should be somewhere else)
-  elasticField() : _tag(0), g(0) {}
+  elasticField() : _tag(0), g(nullptr) {}
 };
 
 struct BoundaryCondition {
@@ -40,18 +40,18 @@ struct BoundaryCondition {
   enum location { UNDEF, ON_VERTEX, ON_EDGE, ON_FACE, ON_VOLUME };
   location onWhat; // on vertices or elements
   groupOfElements *g; // support for this BC
-  BoundaryCondition() : _tag(0), onWhat(UNDEF), g(0) {}
+  BoundaryCondition() : _tag(0), onWhat(UNDEF), g(nullptr) {}
 };
 
 struct dirichletBC : public BoundaryCondition {
   int _comp; // component
   simpleFunction<double> *_f;
-  dirichletBC() : BoundaryCondition(), _comp(0), _f(0) {}
+  dirichletBC() : BoundaryCondition(), _comp(0), _f(nullptr) {}
 };
 
 struct neumannBC : public BoundaryCondition {
   simpleFunction<SVector3> *_f;
-  neumannBC() : BoundaryCondition(), _f(NULL) {}
+  neumannBC() : BoundaryCondition(), _f(nullptr) {}
 };
 // an elastic solver ...
 class elasticitySolver {
@@ -72,7 +72,7 @@ public:
   std::vector<dirichletBC> allDirichlet;
 
 public:
-  elasticitySolver(int tag) : _tag(tag), pAssembler(0), LagSpace(0) {}
+  elasticitySolver(int tag) : _tag(tag), pAssembler(nullptr), LagSpace(nullptr) {}
 
   elasticitySolver(GModel *model, int tag);
 

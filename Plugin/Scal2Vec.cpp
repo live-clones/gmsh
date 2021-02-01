@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,12 +7,12 @@
 #include "PViewOptions.h"
 #include "shapeFunctions.h"
 
-StringXNumber Scal2VecOptions_Number[] = {{GMSH_FULLRC, "ViewX", NULL, -1},
-                                          {GMSH_FULLRC, "ViewY", NULL, -1},
-                                          {GMSH_FULLRC, "ViewZ", NULL, -1}};
+StringXNumber Scal2VecOptions_Number[] = {{GMSH_FULLRC, "ViewX", nullptr, -1},
+                                          {GMSH_FULLRC, "ViewY", nullptr, -1},
+                                          {GMSH_FULLRC, "ViewZ", nullptr, -1}};
 
 StringXString Scal2VecOptions_String[] = {
-  {GMSH_FULLRC, "NameNewView", NULL, "NewView"}};
+  {GMSH_FULLRC, "NameNewView", nullptr, "NewView"}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterScal2VecPlugin() { return new GMSH_Scal2VecPlugin(); }
@@ -54,10 +54,10 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
     iView[comp] = (int)Scal2VecOptions_Number[comp].def;
 
   // Load data
-  PView *vRef = 0, *vComp[3];
+  PView *vRef = nullptr, *vComp[3];
   for(int comp = 0; comp < 3; comp++) {
     if(iView[comp] < 0)
-      vComp[comp] = 0;
+      vComp[comp] = nullptr;
     else {
       vComp[comp] = getView(iView[comp], v);
       if(!vComp[comp]) {

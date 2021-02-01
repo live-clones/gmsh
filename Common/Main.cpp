@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,12 +19,12 @@
 
 static char *toUTF8(wchar_t *src)
 {
-  if(!src) return NULL;
+  if(!src) return nullptr;
   size_t srclen = wcslen(src);
-  int len = WideCharToMultiByte(CP_UTF8, 0, src, srclen, 0, 0, NULL, NULL);
+  int len = WideCharToMultiByte(CP_UTF8, 0, src, srclen, 0, 0, nullptr, nullptr);
   char *out = new char[len + 1];
   if(out) {
-    WideCharToMultiByte(CP_UTF8, 0, src, srclen, out, len, NULL, NULL);
+    WideCharToMultiByte(CP_UTF8, 0, src, srclen, out, len, nullptr, nullptr);
     out[len] = '\0';
   }
   return out;
@@ -35,7 +35,7 @@ int wmain(int argc, wchar_t *wargv[], wchar_t *envp[])
   char **argv = new char*[argc + 1];
   for(int i = 0; i < argc; i++)
     argv[i] = toUTF8(wargv[i]);
-  argv[argc] = NULL;
+  argv[argc] = nullptr;
 
 #else
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -124,7 +124,7 @@ struct F_Lc_aniso {
     FieldManager *fields = ge->model()->getFields();
     for(int i = 0; i < fields->getNumBoundaryLayerFields(); ++i) {
       Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-      if(bl_field == NULL) continue;
+      if(bl_field == nullptr) continue;
       BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
       if(blf->isEdgeBL(ge->tag())) break;
       SMetric3 lc_bgm;
@@ -137,12 +137,18 @@ struct F_Lc_aniso {
   }
 };
 
+// static double dfbeta2 (double t, double beta){
+//  double ratio = (1+beta)/(beta-1);
+//  double zlog  = log(ratio);
+//  return 1.-acosh(beta*zlog/t - 1.0)/zlog;
+//  return beta*zlog / (1+cosh(zlog*(1-t)));
+//}
 
-static double dfbeta (double t, double beta)
+static double dfbeta(double t, double beta)
 {
   double ratio = (1 + beta) / (beta - 1);
   double zlog = log(ratio);
-  return beta * zlog / (1 + cosh(zlog * (1. - t)));
+  return 2 * beta / ((1 + beta - t) * (-1 + beta + t) * zlog);
 }
 
 struct F_Transfinite {
@@ -178,8 +184,7 @@ struct F_Transfinite {
     }
     else {
       switch(atype) {
-      case 1:
-      {
+      case 1: {
         // geometric progression ar^i; Sum of n terms = length = a (r^n-1)/(r-1)
         double r = (gmsh_sign(type) >= 0) ? coef : 1. / coef;
         double a = length * (r - 1.) / (std::pow(r, nbpt - 1.) - 1.);
@@ -187,38 +192,35 @@ struct F_Transfinite {
         val = d / (a * std::pow(r, (double)i));
       } break;
 
-      case 2:
-      {
+      case 2: {
         // "bump"
         double a;
         if(coef > 1.0) {
           a = -4. * std::sqrt(coef - 1.) *
-            std::atan2(1.0, std::sqrt(coef - 1.)) / ((double)nbpt * length);
+              std::atan2(1.0, std::sqrt(coef - 1.)) / ((double)nbpt * length);
         }
         else {
           a = 2. * std::sqrt(1. - coef) *
-            std::log(std::abs((1. + 1. / std::sqrt(1. - coef)) /
-                              (1. - 1. / std::sqrt(1. - coef)))) /
-            ((double)nbpt * length);
+              std::log(std::abs((1. + 1. / std::sqrt(1. - coef)) /
+                                (1. - 1. / std::sqrt(1. - coef)))) /
+              ((double)nbpt * length);
         }
         double b = -a * length * length / (4. * (coef - 1.));
         val = d / (-a * std::pow(t * length - (length)*0.5, 2) + b);
         break;
       }
-      case 3:
-      {
+      case 3: {
         // "beta" law
-	if(type < 0)
-	  val = dfbeta(1. - t, coef);
-	else
-	  val = dfbeta(t, coef);
-	break;
+        if(type < 0)
+          val = dfbeta(1. - t, coef);
+        else
+          val = dfbeta(t, coef);
+        break;
       }
-      case 4:
-      {
+      case 4: {
         // standard boundary layer progression: TODO
-	val = d / (length * t);
-	break;
+        val = d / (length * t);
+        break;
       }
       default:
         Msg::Warning("Unknown case in Transfinite Line mesh");
@@ -462,8 +464,8 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
     (((int)ge->mesh_vertices.size() - last) >= nMinimumPoints);
   if(filteringObservesMinimumN) {
     for(int i = 0; i < last; i++) {
-      std::vector<MVertex *>::iterator it = std::find(
-        ge->mesh_vertices.begin(), ge->mesh_vertices.end(), lengths[i].second);
+      auto it = std::find(ge->mesh_vertices.begin(), ge->mesh_vertices.end(),
+                          lengths[i].second);
 
       if(it != ge->mesh_vertices.end()) { ge->mesh_vertices.erase(it); }
       delete lengths[i].second;
@@ -529,7 +531,7 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   // Check if edge is a BL edge
   for(int i = 0; i < n; ++i) {
     Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-    if(bl_field == NULL) continue;
+    if(bl_field == nullptr) continue;
     BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
     if(blf->isEdgeBL(ge->tag())) return;
   }
@@ -544,7 +546,7 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   // Check if extremity nodes are BL node
   for(int i = 0; i < n; ++i) {
     Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-    if(bl_field == NULL) continue;
+    if(bl_field == nullptr) continue;
     BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
     blf->setupFor1d(ge->tag());
 
@@ -660,8 +662,7 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
       if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
     }
     else {
-      for(std::vector<GFace *>::const_iterator it = faces.begin();
-          it != faces.end(); it++) {
+      for(auto it = faces.begin(); it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {
           if(N % 2 == 0) N++;
           if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
@@ -732,7 +733,7 @@ void meshGEdge::operator()(GEdge *ge)
   int filterMinimumN;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
 
-  // printFandPrimitive(ge->tag(),Points);
+  //  printFandPrimitive(ge->tag(),Points);
 
   // if the curve is periodic and if the begin vertex is identical to
   // the end vertex and if this vertex has only one model curve

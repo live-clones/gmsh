@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -135,7 +135,7 @@ bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
       if(skipElement(firstNonEmptyStep, ent, ele)) continue;
       int type = getType(firstNonEmptyStep, ent, ele);
       int numComp = getNumComponents(firstNonEmptyStep, ent, ele);
-      const char *s = 0;
+      const char *s = nullptr;
       switch(type) {
       case TYPE_PNT:
         s = (numComp == 9) ? "TP" : (numComp == 3) ? "VP" : "SP";
@@ -291,8 +291,7 @@ void PViewData::sendToServer(const std::string &name)
   bool ok = toVector(vec);
 
   // Success ?
-  if(!ok)
-    Msg::Error("sendToServer: cannot vectorize PView");
+  if(!ok) Msg::Error("sendToServer: cannot vectorize PView");
 
   // Only one step ?
   if(vec.size() != 1)

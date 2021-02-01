@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -356,8 +356,8 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       std::vector<int> partitions;
       double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
       if(!readMSH4EntityInfo(fp, binary, str, strl, swap, version, partition,
-                             dim, tag, parentDim, parentTag, partitions, minX, minY,
-                             minZ, maxX, maxY, maxZ)) {
+                             dim, tag, parentDim, parentTag, partitions, minX,
+                             minY, minZ, maxX, maxY, maxZ)) {
         delete[] str;
         return false;
       }
@@ -386,13 +386,13 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
         GEdge *ge = model->getEdgeByTag(tag);
         if(!ge) {
           if(partition) {
-            ge = new partitionEdge(model, tag, 0, 0, partitions);
+            ge = new partitionEdge(model, tag, nullptr, nullptr, partitions);
             if(parentTag)
               static_cast<partitionEdge *>(ge)->setParentEntity(
                 model->getEntityByTag(parentDim, parentTag));
           }
           else {
-            ge = new discreteEdge(model, tag, 0, 0);
+            ge = new discreteEdge(model, tag, nullptr, nullptr);
           }
           model->add(ge);
         }
@@ -469,7 +469,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
 
   if(binary) {
     std::size_t data[4];
-    if(fread(data, sizeof(std::size_t), 4, fp) != 4) { return 0; }
+    if(fread(data, sizeof(std::size_t), 4, fp) != 4) { return nullptr; }
     if(swap) SwapBytes((char *)data, sizeof(std::size_t), 4);
     numBlock = data[0];
     totalNumNodes = data[1];
@@ -480,11 +480,13 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
     if(version >= 4.1) {
       if(fscanf(fp, "%lu %lu %lu %lu", &numBlock, &totalNumNodes, &minTag,
                 &maxTag) != 4) {
-        return 0;
+        return nullptr;
       }
     }
     else {
-      if(fscanf(fp, "%lu %lu", &numBlock, &totalNumNodes) != 2) { return 0; }
+      if(fscanf(fp, "%lu %lu", &numBlock, &totalNumNodes) != 2) {
+        return nullptr;
+      }
     }
   }
 
@@ -506,7 +508,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
       int data[3];
       if(fread(data, sizeof(int), 3, fp) != 3) {
         delete[] vertexCache;
-        return 0;
+        return nullptr;
       }
       if(swap) SwapBytes((char *)data, sizeof(int), 3);
       entityDim = data[0];
@@ -515,7 +517,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
 
       if(fread(&numNodes, sizeof(std::size_t), 1, fp) != 1) {
         delete[] vertexCache;
-        return 0;
+        return nullptr;
       }
       if(swap) SwapBytes((char *)&numNodes, sizeof(std::size_t), 1);
     }
@@ -524,14 +526,14 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         if(fscanf(fp, "%d %d %d %lu", &entityDim, &entityTag, &parametric,
                   &numNodes) != 4) {
           delete[] vertexCache;
-          return 0;
+          return nullptr;
         }
       }
       else {
         if(fscanf(fp, "%d %d %d %lu", &entityTag, &entityDim, &parametric,
                   &numNodes) != 4) {
           delete[] vertexCache;
-          return 0;
+          return nullptr;
         }
       }
     }
@@ -548,7 +550,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
       }
       case 1: {
         Msg::Info("Creating discrete curve %d", entityTag);
-        GEdge *ge = new discreteEdge(model, entityTag, 0, 0);
+        GEdge *ge = new discreteEdge(model, entityTag, nullptr, nullptr);
         GModel::current()->add(ge);
         entity = ge;
         break;
@@ -570,7 +572,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
       default: {
         Msg::Error("Invalid dimension %d to create discrete entity", entityDim);
         delete[] vertexCache;
-        return 0;
+        return nullptr;
       }
       }
     }
@@ -582,18 +584,18 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
     if(binary) {
       if(fread(&tags[0], sizeof(std::size_t), numNodes, fp) != numNodes) {
         delete[] vertexCache;
-        return 0;
+        return nullptr;
       }
       if(swap) SwapBytes((char *)&tags[0], sizeof(std::size_t), numNodes);
       std::vector<double> coord(n * numNodes);
       if(fread(&coord[0], sizeof(double), n * numNodes, fp) != n * numNodes) {
         delete[] vertexCache;
-        return 0;
+        return nullptr;
       }
       if(swap) SwapBytes((char *)&coord[0], sizeof(double), n * numNodes);
       std::size_t k = 0;
       for(std::size_t j = 0; j < numNodes; j++) {
-        MVertex *mv = 0;
+        MVertex *mv = nullptr;
         std::size_t tagNode = tags[j];
         if(n == 5) {
           mv = new MFaceVertex(coord[k], coord[k + 1], coord[k + 2], entity,
@@ -623,7 +625,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         for(std::size_t j = 0; j < numNodes; j++) {
           if(fscanf(fp, "%lu", &tags[j]) != 1) {
             delete[] vertexCache;
-            return 0;
+            return nullptr;
           }
         }
       }
@@ -633,15 +635,15 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         else {
           if(fscanf(fp, "%lu", &tagNode) != 1) {
             delete[] vertexCache;
-            return 0;
+            return nullptr;
           }
         }
-        MVertex *mv = 0;
+        MVertex *mv = nullptr;
         if(n == 5) {
           double x, y, z, u, v;
           if(fscanf(fp, "%lf %lf %lf %lf %lf", &x, &y, &z, &u, &v) != 5) {
             delete[] vertexCache;
-            return 0;
+            return nullptr;
           }
           mv = new MFaceVertex(x, y, z, entity, u, v, tagNode);
         }
@@ -649,7 +651,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
           double x, y, z, u;
           if(fscanf(fp, "%lf %lf %lf %lf", &x, &y, &z, &u) != 4) {
             delete[] vertexCache;
-            return 0;
+            return nullptr;
           }
           mv = new MEdgeVertex(x, y, z, entity, u, tagNode);
         }
@@ -657,14 +659,14 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
           double x, y, z;
           if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) {
             delete[] vertexCache;
-            return 0;
+            return nullptr;
           }
           // discard extra parametric coordinates, as Gmsh does not use them
           for(std::size_t k = 3; k < n; k++) {
             double dummy;
             if(fscanf(fp, "%lf", &dummy) != 1) {
               delete[] vertexCache;
-              return 0;
+              return nullptr;
             }
           }
           mv = new MVertex(x, y, z, entity, tagNode);
@@ -719,7 +721,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
   if(binary) {
     std::size_t data[4];
-    if(fread(data, sizeof(std::size_t), 4, fp) != 4) { return 0; }
+    if(fread(data, sizeof(std::size_t), 4, fp) != 4) { return nullptr; }
     if(swap) SwapBytes((char *)data, sizeof(std::size_t), 4);
     numBlock = data[0];
     totalNumElements = data[1];
@@ -730,11 +732,13 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     if(version >= 4.1) {
       if(fscanf(fp, "%lu %lu %lu %lu", &numBlock, &totalNumElements, &minTag,
                 &maxTag) != 4) {
-        return 0;
+        return nullptr;
       }
     }
     else {
-      if(fscanf(fp, "%lu %lu", &numBlock, &totalNumElements) != 2) { return 0; }
+      if(fscanf(fp, "%lu %lu", &numBlock, &totalNumElements) != 2) {
+        return nullptr;
+      }
     }
   }
 
@@ -754,7 +758,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       int data[3];
       if(fread(data, sizeof(int), 3, fp) != 3) {
         delete[] elementCache;
-        return 0;
+        return nullptr;
       }
       if(swap) SwapBytes((char *)data, sizeof(int), 3);
       entityDim = data[0];
@@ -763,7 +767,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
       if(fread(&numElements, sizeof(std::size_t), 1, fp) != 1) {
         delete[] elementCache;
-        return 0;
+        return nullptr;
       }
       if(swap) SwapBytes((char *)&numElements, sizeof(std::size_t), 1);
     }
@@ -772,14 +776,14 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         if(fscanf(fp, "%d %d %d %lu", &entityDim, &entityTag, &elmType,
                   &numElements) != 4) {
           delete[] elementCache;
-          return 0;
+          return nullptr;
         }
       }
       else {
         if(fscanf(fp, "%d %d %d %lu", &entityTag, &entityDim, &elmType,
                   &numElements) != 4) {
           delete[] elementCache;
-          return 0;
+          return nullptr;
         }
       }
     }
@@ -788,7 +792,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
     if(!entity) {
       Msg::Error("Unknown entity %d of dimension %d", entityTag, entityDim);
       delete[] elementCache;
-      return 0;
+      return nullptr;
     }
     if(entity->geomType() == GEntity::GhostCurve) {
       static_cast<ghostEdge *>(entity)->haveMesh(true);
@@ -807,12 +811,12 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       if(fread(&data[0], sizeof(std::size_t), numElements * n, fp) !=
          numElements * n) {
         delete[] elementCache;
-        return 0;
+        return nullptr;
       }
       if(swap)
         SwapBytes((char *)&data[0], sizeof(std::size_t), numElements * n);
 
-      std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)0);
+      std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)nullptr);
       for(std::size_t j = 0; j < numElements * n; j += n) {
         for(int k = 0; k < numVertPerElm; k++) {
           vertices[k] = model->getMeshVertexByTag(data[j + k + 1]);
@@ -820,18 +824,18 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
             Msg::Error("Unknown node %lu in element %lu", data[j + k + 1],
                        data[j]);
             delete[] elementCache;
-            return 0;
+            return nullptr;
           }
         }
 
         MElementFactory elementFactory;
-        MElement *element = elementFactory.create(elmType, vertices, data[j], 0,
-                                                  false, 0, 0, 0, 0);
+        MElement *element = elementFactory.create(
+          elmType, vertices, data[j], 0, false, 0, nullptr, nullptr, nullptr);
         if(!element) {
           Msg::Error("Could not create element %lu of type %d", data[j],
                      elmType);
           delete[] elementCache;
-          return 0;
+          return nullptr;
         }
         if(entity->geomType() != GEntity::GhostCurve &&
            entity->geomType() != GEntity::GhostSurface &&
@@ -855,27 +859,27 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         std::size_t elmTag = 0;
         if(fscanf(fp, "%lu", &elmTag) != 1) {
           delete[] elementCache;
-          return 0;
+          return nullptr;
         }
         if(!fgets(str, sizeof(str), fp)) {
           delete[] elementCache;
-          return 0;
+          return nullptr;
         }
 
-        std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)0);
+        std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)nullptr);
 
         for(int k = 0; k < numVertPerElm; k++) {
           std::size_t vertexTag = 0;
           if(k != numVertPerElm - 1) {
             if(sscanf(str, "%lu %[0-9- ]", &vertexTag, str) != 2) {
               delete[] elementCache;
-              return 0;
+              return nullptr;
             }
           }
           else {
             if(sscanf(str, "%lu", &vertexTag) != 1) {
               delete[] elementCache;
-              return 0;
+              return nullptr;
             }
           }
 
@@ -883,18 +887,18 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           if(!vertices[k]) {
             Msg::Error("Unknown node %lu in element %lu", vertexTag, elmTag);
             delete[] elementCache;
-            return 0;
+            return nullptr;
           }
         }
 
         MElementFactory elementFactory;
-        MElement *element = elementFactory.create(elmType, vertices, elmTag, 0,
-                                                  false, 0, 0, 0, 0);
+        MElement *element = elementFactory.create(
+          elmType, vertices, elmTag, 0, false, 0, nullptr, nullptr, nullptr);
         if(!element) {
           Msg::Error("Could not create element %lu of type %d", elmTag,
                      elmType);
           delete[] elementCache;
-          return 0;
+          return nullptr;
         }
         if(entity->geomType() != GEntity::GhostCurve &&
            entity->geomType() != GEntity::GhostSurface &&
@@ -964,7 +968,7 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       }
     }
 
-    GEntity *slave = 0, *master = 0;
+    GEntity *slave = nullptr, *master = nullptr;
     switch(slaveDim) {
     case 0:
       slave = model->getVertexByTag(slaveTag);
@@ -1148,7 +1152,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
     }
   }
 
-  std::vector<GEntity *> ghostEntities(model->getNumPartitions() + 1, 0);
+  std::vector<GEntity *> ghostEntities(model->getNumPartitions() + 1, nullptr);
   std::vector<GEntity *> entities;
   model->getEntities(entities);
   for(std::size_t i = 0; i < entities.size(); i++) {
@@ -1164,9 +1168,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
       ghostEntities[partNum] = ge;
   }
 
-  for(std::multimap<std::pair<MElement *, int>, int>::iterator it =
-        ghostCells.begin();
-      it != ghostCells.end(); ++it) {
+  for(auto it = ghostCells.begin(); it != ghostCells.end(); ++it) {
     if(it->second >= (int)ghostEntities.size()) {
       Msg::Error("Invalid partition %d in ghost elements", it->second);
       return false;
@@ -1197,18 +1199,12 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 
   std::size_t nParamE, nParamF;
 
-  if(binary){
-    if(fread(&nParamE, sizeof(std::size_t), 1, fp) != 1) {
-      return false;
-    }
-    if(fread(&nParamF, sizeof(std::size_t), 1, fp) != 1) {
-      return false;
-    }
+  if(binary) {
+    if(fread(&nParamE, sizeof(std::size_t), 1, fp) != 1) { return false; }
+    if(fread(&nParamF, sizeof(std::size_t), 1, fp) != 1) { return false; }
   }
-  else{
-    if(fscanf(fp, "%lu %lu", &nParamE, &nParamF) != 2) {
-      return false;
-    }
+  else {
+    if(fscanf(fp, "%lu %lu", &nParamE, &nParamF) != 2) { return false; }
   }
 
   // only report surface parametrizations
@@ -1217,15 +1213,11 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 
   for(std::size_t edge = 0; edge < nParamE; edge++) {
     int tag;
-    if(binary){
-      if(fread(&tag, sizeof(int), 1, fp) != 1) {
-        return false;
-      }
+    if(binary) {
+      if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
     }
-    else{
-      if(fscanf(fp, "%d", &tag) != 1) {
-        return false;
-      }
+    else {
+      if(fscanf(fp, "%d", &tag) != 1) { return false; }
     }
     GEdge *ge = model->getEdgeByTag(tag);
     if(ge) {
@@ -1238,15 +1230,11 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
 
   for(std::size_t face = 0; face < nParamF; face++) {
     int tag;
-    if(binary){
-      if(fread(&tag, sizeof(int), 1, fp) != 1) {
-        return false;
-      }
+    if(binary) {
+      if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
     }
-    else{
-      if(fscanf(fp, "%d", &tag) != 1) {
-        return false;
-      }
+    else {
+      if(fscanf(fp, "%d", &tag) != 1) { return false; }
     }
     GFace *gf = model->getFaceByTag(tag);
     if(gf) {
@@ -1381,7 +1369,7 @@ int GModel::_readMSH4(const std::string &name)
         return false;
       }
       if(dense) {
-        _vertexVectorCache.resize(maxNodeNum + 1, 0);
+        _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
         for(std::size_t i = 0; i < totalNumNodes; i++) {
           if(!_vertexVectorCache[vertexCache[i].first]) {
             _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
@@ -1416,7 +1404,7 @@ int GModel::_readMSH4(const std::string &name)
         return 0;
       }
       if(dense) {
-        _elementVectorCache.resize(maxElementNum + 1, (MElement *)0);
+        _elementVectorCache.resize(maxElementNum + 1, (MElement *)nullptr);
         for(std::size_t i = 0; i < totalNumElements; i++) {
           if(!_elementVectorCache[elementCache[i].first]) {
             _elementVectorCache[elementCache[i].first] = elementCache[i].second;
@@ -1574,38 +1562,34 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
   if(partition) {
-    for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
-        ++it) {
+    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       if((*it)->geomType() == GEntity::PartitionPoint) vertices.insert(*it);
     }
-    for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
+    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if((*it)->geomType() == GEntity::PartitionCurve) edges.insert(*it);
       if((*it)->geomType() == GEntity::GhostCurve) ghost.insert(*it);
     }
-    for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
+    for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if((*it)->geomType() == GEntity::PartitionSurface) faces.insert(*it);
       if((*it)->geomType() == GEntity::GhostSurface) ghost.insert(*it);
     }
-    for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-        ++it) {
+    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() == GEntity::PartitionVolume) regions.insert(*it);
       if((*it)->geomType() == GEntity::GhostVolume) ghost.insert(*it);
     }
   }
   else {
-    for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
-        ++it)
+    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it)
       if((*it)->geomType() != GEntity::PartitionPoint) vertices.insert(*it);
-    for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
+    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it)
       if((*it)->geomType() != GEntity::PartitionCurve &&
          (*it)->geomType() != GEntity::GhostCurve)
         edges.insert(*it);
-    for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it)
+    for(auto it = model->firstFace(); it != model->lastFace(); ++it)
       if((*it)->geomType() != GEntity::PartitionSurface &&
          (*it)->geomType() != GEntity::GhostSurface)
         faces.insert(*it);
-    for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-        ++it)
+    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it)
       if((*it)->geomType() != GEntity::PartitionVolume &&
          (*it)->geomType() != GEntity::GhostVolume)
         regions.insert(*it);
@@ -1627,8 +1611,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         tags.resize(2 * ghostSize);
         int index = 0;
-        for(std::set<GEntity *, GEntityPtrFullLessThan>::iterator it = ghost.begin();
-            it != ghost.end(); ++it) {
+        for(auto it = ghost.begin(); it != ghost.end(); ++it) {
           if((*it)->geomType() == GEntity::GhostCurve) {
             tags[index] = (*it)->tag();
             tags[++index] = static_cast<ghostEdge *>(*it)->getPartition();
@@ -1656,7 +1639,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     fwrite(&facesSize, sizeof(std::size_t), 1, fp);
     fwrite(&regionsSize, sizeof(std::size_t), 1, fp);
 
-    for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
+    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
       int entityTag = (*it)->tag();
       fwrite(&entityTag, sizeof(int), 1, fp);
       if(partition) {
@@ -1679,7 +1662,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
     }
 
-    for(GModel::eiter it = edges.begin(); it != edges.end(); ++it) {
+    for(auto it = edges.begin(); it != edges.end(); ++it) {
       std::vector<GVertex *> vertices;
       std::vector<int> ori;
       if((*it)->getBeginVertex()) {
@@ -1713,15 +1696,14 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fwrite(&verticesSize, sizeof(std::size_t), 1, fp);
       int oriI = 0;
-      for(std::vector<GVertex *>::const_iterator itv = vertices.begin();
-          itv != vertices.end(); itv++) {
+      for(auto itv = vertices.begin(); itv != vertices.end(); itv++) {
         int brepTag = ori[oriI] * (*itv)->tag();
         fwrite(&brepTag, sizeof(int), 1, fp);
         oriI++;
       }
     }
 
-    for(GModel::fiter it = faces.begin(); it != faces.end(); ++it) {
+    for(auto it = faces.begin(); it != faces.end(); ++it) {
       std::vector<GEdge *> const &edges = (*it)->edges();
       std::vector<int> const &ori = (*it)->edgeOrientations();
       std::size_t edgesSize = edges.size();
@@ -1747,8 +1729,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fwrite(&edgesSize, sizeof(std::size_t), 1, fp);
       std::vector<int> tags, signs;
-      for(std::vector<GEdge *>::const_iterator ite = edges.begin();
-          ite != edges.end(); ite++)
+      for(auto ite = edges.begin(); ite != edges.end(); ite++)
         tags.push_back((*ite)->tag());
 
       signs.insert(signs.end(), ori.begin(), ori.end());
@@ -1763,7 +1744,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       }
     }
 
-    for(GModel::riter it = regions.begin(); it != regions.end(); ++it) {
+    for(auto it = regions.begin(); it != regions.end(); ++it) {
       std::vector<GFace *> faces = (*it)->faces();
       std::vector<int> const &ori = (*it)->faceOrientations();
       std::size_t facesSize = faces.size();
@@ -1789,11 +1770,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fwrite(&facesSize, sizeof(std::size_t), 1, fp);
       std::vector<int> tags, signs;
-      for(std::vector<GFace *>::iterator itf = faces.begin();
-          itf != faces.end(); itf++)
+      for(auto itf = faces.begin(); itf != faces.end(); itf++)
         tags.push_back((*itf)->tag());
-      for(std::vector<int>::const_iterator itf = ori.begin(); itf != ori.end();
-          itf++)
+      for(auto itf = ori.begin(); itf != ori.end(); itf++)
         signs.push_back(*itf);
       if(tags.size() == signs.size()) {
         for(std::size_t i = 0; i < tags.size(); i++)
@@ -1816,8 +1795,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(ghostSize) {
         tags.resize(2 * ghostSize);
         int index = 0;
-        for(std::set<GEntity *, GEntityPtrFullLessThan>::iterator it = ghost.begin();
-            it != ghost.end(); ++it) {
+        for(auto it = ghost.begin(); it != ghost.end(); ++it) {
           if((*it)->geomType() == GEntity::GhostCurve) {
             tags[index] = (*it)->tag();
             tags[++index] = static_cast<ghostEdge *>(*it)->getPartition();
@@ -1843,7 +1821,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     fprintf(fp, "%lu %lu %lu %lu\n", vertices.size(), edges.size(),
             faces.size(), regions.size());
 
-    for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
+    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
       fprintf(fp, "%d ", (*it)->tag());
       if(partition) {
         partitionVertex *pv = static_cast<partitionVertex *>(*it);
@@ -1865,7 +1843,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       fprintf(fp, "\n");
     }
 
-    for(GModel::eiter it = edges.begin(); it != edges.end(); ++it) {
+    for(auto it = edges.begin(); it != edges.end(); ++it) {
       std::vector<GVertex *> vertices;
       std::vector<int> ori;
       if((*it)->getBeginVertex()) {
@@ -1897,15 +1875,14 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", vertices.size());
       int oriI = 0;
-      for(std::vector<GVertex *>::iterator itv = vertices.begin();
-          itv != vertices.end(); itv++) {
+      for(auto itv = vertices.begin(); itv != vertices.end(); itv++) {
         fprintf(fp, "%d ", ori[oriI] * (*itv)->tag());
         oriI++;
       }
       fprintf(fp, "\n");
     }
 
-    for(GModel::fiter it = faces.begin(); it != faces.end(); ++it) {
+    for(auto it = faces.begin(); it != faces.end(); ++it) {
       std::vector<GEdge *> const &edges = (*it)->edges();
       std::vector<int> const &ori = (*it)->edgeOrientations();
       fprintf(fp, "%d ", (*it)->tag());
@@ -1928,11 +1905,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", edges.size());
       std::vector<int> tags, signs;
-      for(std::vector<GEdge *>::const_iterator ite = edges.begin();
-          ite != edges.end(); ite++)
+      for(auto ite = edges.begin(); ite != edges.end(); ite++)
         tags.push_back((*ite)->tag());
-      for(std::vector<int>::const_iterator ite = ori.begin(); ite != ori.end();
-          ite++)
+      for(auto ite = ori.begin(); ite != ori.end(); ite++)
         signs.push_back(*ite);
       if(tags.size() == signs.size()) {
         for(std::size_t i = 0; i < tags.size(); i++)
@@ -1942,7 +1917,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       fprintf(fp, "\n");
     }
 
-    for(GModel::riter it = regions.begin(); it != regions.end(); ++it) {
+    for(auto it = regions.begin(); it != regions.end(); ++it) {
       std::vector<GFace *> const &faces = (*it)->faces();
       std::vector<int> const &ori = (*it)->faceOrientations();
       fprintf(fp, "%d ", (*it)->tag());
@@ -1954,22 +1929,21 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           parentEntityTag = pr->getParentEntity()->tag();
         }
         fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
-        std::vector<int> partitions(pr->getPartitions().begin(),
-                                    pr->getPartitions().end()); // FIXME
-        fprintf(fp, "%lu ", partitions.size());
-        for(std::size_t i = 0; i < partitions.size(); i++)
-          fprintf(fp, "%d ", partitions[i]);
+
+        fprintf(fp, "%lu ", pr->getPartitions().size());
+
+        for(auto const partition : pr->getPartitions()) {
+          fprintf(fp, "%d ", partition);
+        }
       }
       writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 3,
                            version);
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", faces.size());
-      // TODO C++11 std::transform or similiar
-      std::vector<int> tags;
-      tags.reserve(faces.size());
-      for(std::vector<GFace *>::const_iterator itf = faces.begin();
-          itf != faces.end(); itf++)
-        tags.push_back((*itf)->tag());
+
+      std::vector<int> tags(faces.size());
+      std::transform(begin(faces), end(faces), begin(tags),
+                     [](const GFace *const face) { return face->tag(); });
 
       std::vector<int> signs(ori.begin(), ori.end());
 
@@ -1977,7 +1951,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         for(std::size_t i = 0; i < tags.size(); i++)
           tags[i] *= (signs[i] > 0 ? 1 : -1);
       }
-      for(std::size_t i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
+
+      for(auto const tag : tags) { fprintf(fp, "%d ", tag); }
       fprintf(fp, "\n");
     }
   }
@@ -2068,13 +2043,11 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
 {
   std::size_t numVertices = 0;
 
-  for(std::set<GVertex *, GEntityPtrLessThan>::iterator it = vertices.begin();
-      it != vertices.end(); ++it) {
+  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
     numVertices += (*it)->getNumMeshVertices();
   }
 
-  for(std::set<GEdge *, GEntityPtrLessThan>::iterator it = edges.begin();
-      it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     numVertices += (*it)->getNumMeshVertices();
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
@@ -2115,8 +2088,7 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
     }
   }
 
-  for(std::set<GFace *, GEntityPtrLessThan>::iterator it = faces.begin();
-      it != faces.end(); ++it) {
+  for(auto it = faces.begin(); it != faces.end(); ++it) {
     numVertices += (*it)->getNumMeshVertices();
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
@@ -2157,8 +2129,7 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
     }
   }
 
-  for(std::set<GRegion *, GEntityPtrLessThan>::iterator it = regions.begin();
-      it != regions.end(); ++it) {
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
     numVertices += (*it)->getNumMeshVertices();
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
@@ -2210,23 +2181,21 @@ getEntitiesForNodes(GModel *const model, bool partitioned, bool saveAll,
                     std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
   if(partitioned) {
-    for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
-        ++it)
+    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it)
       if((*it)->geomType() == GEntity::PartitionPoint) vertices.insert(*it);
-    for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
+    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if((*it)->geomType() == GEntity::PartitionCurve)
         edges.insert(*it);
       else if((*it)->geomType() == GEntity::GhostCurve)
         if(static_cast<ghostEdge *>(*it)->saveMesh()) edges.insert(*it);
     }
-    for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
+    for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if((*it)->geomType() == GEntity::PartitionSurface)
         faces.insert(*it);
       else if((*it)->geomType() == GEntity::GhostSurface)
         if(static_cast<ghostFace *>(*it)->saveMesh()) faces.insert(*it);
     }
-    for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-        ++it) {
+    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() == GEntity::PartitionVolume)
         regions.insert(*it);
       else if((*it)->geomType() == GEntity::GhostVolume)
@@ -2234,23 +2203,21 @@ getEntitiesForNodes(GModel *const model, bool partitioned, bool saveAll,
     }
   }
   else {
-    for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
-        ++it)
+    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it)
       if((*it)->geomType() != GEntity::PartitionPoint &&
          (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0)))
         vertices.insert(*it);
-    for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
+    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it)
       if((*it)->geomType() != GEntity::PartitionCurve &&
          (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
           (*it)->geomType() == GEntity::GhostCurve))
         edges.insert(*it);
-    for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it)
+    for(auto it = model->firstFace(); it != model->lastFace(); ++it)
       if((*it)->geomType() != GEntity::PartitionSurface &&
          (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
           (*it)->geomType() == GEntity::GhostSurface))
         faces.insert(*it);
-    for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-        ++it)
+    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it)
       if((*it)->geomType() != GEntity::PartitionVolume &&
          (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
           (*it)->geomType() == GEntity::GhostVolume))
@@ -2280,25 +2247,25 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   fprintf(fp, "$Nodes\n");
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
-  for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
+  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
       minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
       maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
     }
   }
-  for(GModel::eiter it = edges.begin(); it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
       minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
       maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
     }
   }
-  for(GModel::fiter it = faces.begin(); it != faces.end(); ++it) {
+  for(auto it = faces.begin(); it != faces.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
       minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
       maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
     }
   }
-  for(GModel::riter it = regions.begin(); it != regions.end(); ++it) {
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
       minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
       maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
@@ -2326,19 +2293,19 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
-  for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
+  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
                          version);
   }
-  for(GModel::eiter it = edges.begin(); it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
                          version);
   }
-  for(GModel::fiter it = faces.begin(); it != faces.end(); ++it) {
+  for(auto it = faces.begin(); it != faces.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
                          version);
   }
-  for(GModel::riter it = regions.begin(); it != regions.end(); ++it) {
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
                          version);
   }
@@ -2357,23 +2324,21 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
   if(partitioned) {
-    for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
-        ++it)
+    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it)
       if((*it)->geomType() == GEntity::PartitionPoint) vertices.insert(*it);
-    for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
+    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if((*it)->geomType() == GEntity::PartitionCurve)
         edges.insert(*it);
       else if((*it)->geomType() == GEntity::GhostCurve)
         if(static_cast<ghostEdge *>(*it)->saveMesh()) edges.insert(*it);
     }
-    for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
+    for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if((*it)->geomType() == GEntity::PartitionSurface)
         faces.insert(*it);
       else if((*it)->geomType() == GEntity::GhostSurface)
         if(static_cast<ghostFace *>(*it)->saveMesh()) faces.insert(*it);
     }
-    for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-        ++it) {
+    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() == GEntity::PartitionVolume)
         regions.insert(*it);
       else if((*it)->geomType() == GEntity::GhostVolume)
@@ -2381,19 +2346,17 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     }
   }
   else {
-    for(GModel::viter it = model->firstVertex(); it != model->lastVertex();
-        ++it)
+    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it)
       if((*it)->geomType() != GEntity::PartitionPoint) vertices.insert(*it);
-    for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
+    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it)
       if((*it)->geomType() != GEntity::PartitionCurve &&
          (*it)->geomType() != GEntity::GhostCurve)
         edges.insert(*it);
-    for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it)
+    for(auto it = model->firstFace(); it != model->lastFace(); ++it)
       if((*it)->geomType() != GEntity::PartitionSurface &&
          (*it)->geomType() != GEntity::GhostSurface)
         faces.insert(*it);
-    for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-        ++it)
+    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it)
       if((*it)->geomType() != GEntity::PartitionVolume &&
          (*it)->geomType() != GEntity::GhostVolume)
         regions.insert(*it);
@@ -2402,7 +2365,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
   std::size_t numElements = 0;
 
-  for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it) {
+  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0) continue;
 
     numElements += (*it)->points.size();
@@ -2412,7 +2375,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
-  for(GModel::eiter it = edges.begin(); it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0 &&
        (*it)->geomType() != GEntity::GhostCurve)
       continue;
@@ -2424,7 +2387,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
-  for(GModel::fiter it = faces.begin(); it != faces.end(); ++it) {
+  for(auto it = faces.begin(); it != faces.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0 &&
        (*it)->geomType() != GEntity::GhostSurface)
       continue;
@@ -2442,7 +2405,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
-  for(GModel::riter it = regions.begin(); it != regions.end(); ++it) {
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0 &&
        (*it)->geomType() != GEntity::GhostVolume)
       continue;
@@ -2484,9 +2447,8 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
   for(int dim = 0; dim <= 3; dim++) {
-    for(std::map<std::pair<int, int>, std::vector<MElement *> >::iterator it =
-          elementsByType[dim].begin();
-        it != elementsByType[dim].end(); ++it) {
+    for(auto it = elementsByType[dim].begin(); it != elementsByType[dim].end();
+        ++it) {
       for(std::size_t i = 0; i < it->second.size(); i++) {
         minTag = std::min(minTag, it->second[i]->getNum());
         maxTag = std::max(maxTag, it->second[i]->getNum());
@@ -2508,9 +2470,8 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   }
 
   for(int dim = 0; dim <= 3; dim++) {
-    for(std::map<std::pair<int, int>, std::vector<MElement *> >::iterator it =
-          elementsByType[dim].begin();
-        it != elementsByType[dim].end(); ++it) {
+    for(auto it = elementsByType[dim].begin(); it != elementsByType[dim].end();
+        ++it) {
       int entityTag = it->first.first;
       int elmType = it->first.second;
       std::size_t numElm = it->second.size();
@@ -2591,7 +2552,6 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
     GEntity *g_master = g_slave->getMeshMaster();
 
     if(g_slave != g_master) {
-
       std::map<MVertex *, MVertex *> corrVert = g_slave->correspondingVertices;
       if(CTX::instance()->mesh.hoSavePeriodic)
         corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
@@ -2621,8 +2581,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
         std::size_t corrVertSize = corrVert.size();
         fwrite(&corrVertSize, sizeof(std::size_t), 1, fp);
 
-        for(std::map<MVertex *, MVertex *>::iterator it = corrVert.begin();
-            it != corrVert.end(); ++it) {
+        for(auto it = corrVert.begin(); it != corrVert.end(); ++it) {
           std::size_t numFirst = it->first->getNum();
           std::size_t numSecond = it->second->getNum();
           fwrite(&numFirst, sizeof(std::size_t), 1, fp);
@@ -2655,8 +2614,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
 
         fprintf(fp, "%lu\n", corrVert.size());
 
-        for(std::map<MVertex *, MVertex *>::iterator it = corrVert.begin();
-            it != corrVert.end(); ++it) {
+        for(auto it = corrVert.begin(); it != corrVert.end(); ++it) {
           fprintf(fp, "%lu %lu\n", it->first->getNum(), it->second->getNum());
         }
       }
@@ -2690,8 +2648,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
       partition = static_cast<ghostRegion *>(entities[i])->getPartition();
     }
 
-    for(std::map<MElement *, int>::iterator it = ghostElements.begin();
-        it != ghostElements.end(); ++it) {
+    for(auto it = ghostElements.begin(); it != ghostElements.end(); ++it) {
       if(ghostCells[it->first].size() == 0)
         ghostCells[it->first].push_back(it->second);
       ghostCells[it->first].push_back(partition);
@@ -2704,9 +2661,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
       std::size_t ghostCellsSize = ghostCells.size();
       fwrite(&ghostCellsSize, sizeof(std::size_t), 1, fp);
 
-      for(std::map<MElement *, std::vector<int> >::iterator it =
-            ghostCells.begin();
-          it != ghostCells.end(); ++it) {
+      for(auto it = ghostCells.begin(); it != ghostCells.end(); ++it) {
         std::size_t elmTag = it->first->getNum();
         int partNum = it->second[0];
         std::size_t numGhostPartitions = it->second.size() - 1;
@@ -2722,9 +2677,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
     else {
       fprintf(fp, "%ld\n", ghostCells.size());
 
-      for(std::map<MElement *, std::vector<int> >::iterator it =
-            ghostCells.begin();
-          it != ghostCells.end(); ++it) {
+      for(auto it = ghostCells.begin(); it != ghostCells.end(); ++it) {
         fprintf(fp, "%lu %d %ld", it->first->getNum(), it->second[0],
                 it->second.size() - 1);
         for(std::size_t i = 1; i < it->second.size(); i++) {
@@ -2742,11 +2695,11 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
 {
   std::size_t nParamE = 0, nParamF = 0;
 
-  for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
+  for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
     if(de && de->haveParametrization()) { nParamE++; }
   }
-  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
+  for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
     if(df && df->haveParametrization()) { nParamF++; }
   }
@@ -2755,29 +2708,33 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
 
   fprintf(fp, "$Parametrizations\n");
 
-  if(binary){
+  if(binary) {
     fwrite(&nParamE, sizeof(std::size_t), 1, fp);
     fwrite(&nParamF, sizeof(std::size_t), 1, fp);
   }
-  else{
+  else {
     fprintf(fp, "%lu %lu\n", nParamE, nParamF);
   }
 
-  for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it) {
+  for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
     discreteEdge *de = dynamic_cast<discreteEdge *>(*it);
     if(de && de->haveParametrization()) {
       int t = de->tag();
-      if(binary) fwrite(&t, sizeof(int), 1, fp);
-      else fprintf(fp, "%d\n", t);
+      if(binary)
+        fwrite(&t, sizeof(int), 1, fp);
+      else
+        fprintf(fp, "%d\n", t);
       de->writeParametrization(fp, binary);
     }
   }
-  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
+  for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
     discreteFace *df = dynamic_cast<discreteFace *>(*it);
     if(df && df->haveParametrization()) {
       int t = df->tag();
-      if(binary) fwrite(&t, sizeof(int), 1, fp);
-      else fprintf(fp, "%d\n", t);
+      if(binary)
+        fwrite(&t, sizeof(int), 1, fp);
+      else
+        fprintf(fp, "%d\n", t);
       df->writeParametrization(fp, binary);
     }
   }
@@ -2791,7 +2748,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        bool append)
 {
-  FILE *fp = 0;
+  FILE *fp = nullptr;
   if(append)
     fp = Fopen(name.c_str(), binary ? "ab" : "a");
   else
@@ -2824,7 +2781,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   if(numPhysicalNames() > 0) {
     fprintf(fp, "$PhysicalNames\n");
     fprintf(fp, "%d\n", numPhysicalNames());
-    for(piter it = firstPhysicalName(); it != lastPhysicalName(); ++it) {
+    for(auto it = firstPhysicalName(); it != lastPhysicalName(); ++it) {
       std::string name = it->second;
       if(name.size() > 128) name.resize(128);
       fprintf(fp, "%d %d \"%s\"\n", it->first.first, it->first.second,
@@ -2843,7 +2800,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
     std::vector<GEntity *> entities;
     getEntities(entities);
     std::size_t partEnt = 0;
-    for(auto &ge: entities) {
+    for(auto &ge : entities) {
       if(ge->geomType() == GEntity::PartitionPoint ||
          ge->geomType() == GEntity::PartitionCurve ||
          ge->geomType() == GEntity::PartitionSurface ||
@@ -2888,53 +2845,48 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
 static void associateVertices(GModel *model)
 {
-  for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex();
-      ++it) {
+  for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
     for(std::size_t j = 0; j < (*it)->getNumMeshElements(); j++) {
       for(std::size_t k = 0; k < (*it)->getMeshElement(j)->getNumVertices();
           k++) {
-        (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+        (*it)->getMeshElement(j)->getVertex(k)->setEntity(nullptr);
       }
     }
     (*it)->mesh_vertices.clear();
   }
-  for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge();
-      ++it) {
+  for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
     for(std::size_t j = 0; j < (*it)->getNumMeshElements(); j++) {
       for(std::size_t k = 0; k < (*it)->getMeshElement(j)->getNumVertices();
           k++) {
-        (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+        (*it)->getMeshElement(j)->getVertex(k)->setEntity(nullptr);
       }
     }
     (*it)->mesh_vertices.clear();
   }
-  for(GModel::const_fiter it = model->firstFace(); it != model->lastFace();
-      ++it) {
+  for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
     for(std::size_t j = 0; j < (*it)->getNumMeshElements(); j++) {
       for(std::size_t k = 0; k < (*it)->getMeshElement(j)->getNumVertices();
           k++) {
-        (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+        (*it)->getMeshElement(j)->getVertex(k)->setEntity(nullptr);
       }
     }
     (*it)->mesh_vertices.clear();
   }
-  for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion();
-      ++it) {
+  for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
     for(std::size_t j = 0; j < (*it)->getNumMeshElements(); j++) {
       for(std::size_t k = 0; k < (*it)->getMeshElement(j)->getNumVertices();
           k++) {
-        (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+        (*it)->getMeshElement(j)->getVertex(k)->setEntity(nullptr);
       }
     }
     (*it)->mesh_vertices.clear();
   }
 
-  for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex();
-      ++it) {
+  for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
     for(std::size_t j = 0; j < (*it)->getNumMeshElements(); j++) {
       for(std::size_t k = 0; k < (*it)->getMeshElement(j)->getNumVertices();
           k++) {
-        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0) {
+        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == nullptr) {
           (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
           (*it)->mesh_vertices.push_back(
             (*it)->getMeshElement(j)->getVertex(k));
@@ -2942,12 +2894,11 @@ static void associateVertices(GModel *model)
       }
     }
   }
-  for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge();
-      ++it) {
+  for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
     for(std::size_t j = 0; j < (*it)->getNumMeshElements(); j++) {
       for(std::size_t k = 0; k < (*it)->getMeshElement(j)->getNumVertices();
           k++) {
-        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0) {
+        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == nullptr) {
           (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
           (*it)->mesh_vertices.push_back(
             (*it)->getMeshElement(j)->getVertex(k));
@@ -2955,12 +2906,11 @@ static void associateVertices(GModel *model)
       }
     }
   }
-  for(GModel::const_fiter it = model->firstFace(); it != model->lastFace();
-      ++it) {
+  for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
     for(std::size_t j = 0; j < (*it)->getNumMeshElements(); j++) {
       for(std::size_t k = 0; k < (*it)->getMeshElement(j)->getNumVertices();
           k++) {
-        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0) {
+        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == nullptr) {
           (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
           (*it)->mesh_vertices.push_back(
             (*it)->getMeshElement(j)->getVertex(k));
@@ -2968,12 +2918,11 @@ static void associateVertices(GModel *model)
       }
     }
   }
-  for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion();
-      ++it) {
+  for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
     for(std::size_t j = 0; j < (*it)->getNumMeshElements(); j++) {
       for(std::size_t k = 0; k < (*it)->getMeshElement(j)->getNumVertices();
           k++) {
-        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0) {
+        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == nullptr) {
           (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
           (*it)->mesh_vertices.push_back(
             (*it)->getMeshElement(j)->getVertex(k));
@@ -3005,7 +2954,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
 
   for(std::size_t i = 1; i <= getNumPartitions(); i++) {
     std::set<GEntity *> entitiesSet;
-    GEntity *ghostEntity = 0;
+    GEntity *ghostEntity = nullptr;
 
     for(std::size_t j = 0; j < entities.size(); j++) {
       GEntity *ge = entities[j];
@@ -3185,9 +3134,7 @@ int GModel::writePartitionedTopology(std::string &name)
   std::vector<std::map<int, std::string> > tagToString(4);
   for(size_t i = 4; i > 0; --i) {
     fprintf(fp, "  // Dim %lu\n", i - 1);
-    for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it =
-          allParts[i - 1].begin();
-        it != allParts[i - 1].end(); ++it) {
+    for(auto it = allParts[i - 1].begin(); it != allParts[i - 1].end(); ++it) {
       std::string partName = "Part~{" + std::to_string(i - 1) + "}~{" +
                              std::to_string(it->second.first) + "}";
       fprintf(fp, "  Part~{%lu}~{%d}", i - 1, it->second.first);
@@ -3216,16 +3163,14 @@ int GModel::writePartitionedTopology(std::string &name)
   }
 
   // omega
-  for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it =
-        allParts[omegaDim].begin();
-      it != allParts[omegaDim].end(); ++it) {
+  for(auto it = allParts[omegaDim].begin(); it != allParts[omegaDim].end();
+      ++it) {
     if(it->second.second.size() == 1) {
       omegas[it->second.second[0]].push_back(it->first);
     }
   }
   fprintf(fp, "  // Omega\n");
-  for(std::map<int, std::vector<int> >::iterator it = omegas.begin();
-      it != omegas.end(); ++it) {
+  for(auto it = omegas.begin(); it != omegas.end(); ++it) {
     fprintf(fp, "  Omega~{%d} = Region[{", it->first);
     for(size_t j = 0; j < it->second.size(); ++j) {
       if(j == 0)
@@ -3239,8 +3184,7 @@ int GModel::writePartitionedTopology(std::string &name)
 
   if(omegaDim > 0) {
     // sigma
-    for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it =
-          allParts[omegaDim - 1].begin();
+    for(auto it = allParts[omegaDim - 1].begin();
         it != allParts[omegaDim - 1].end(); ++it) {
       if(it->second.second.size() == 2) {
         sigmasij[std::pair<int, int>(it->second.second[0],
@@ -3254,9 +3198,7 @@ int GModel::writePartitionedTopology(std::string &name)
       }
     }
     fprintf(fp, "  // Sigma\n");
-    for(std::map<std::pair<int, int>, std::vector<int> >::iterator it =
-          sigmasij.begin();
-        it != sigmasij.end(); ++it) {
+    for(auto it = sigmasij.begin(); it != sigmasij.end(); ++it) {
       fprintf(fp, "  Sigma~{%d}~{%d} = Region[{", it->first.first,
               it->first.second);
       for(size_t j = 0; j < it->second.size(); ++j) {
@@ -3269,8 +3211,7 @@ int GModel::writePartitionedTopology(std::string &name)
     }
     fprintf(fp, "\n");
 
-    for(std::map<int, std::vector<int> >::iterator it = sigmas.begin();
-        it != sigmas.end(); ++it) {
+    for(auto it = sigmas.begin(); it != sigmas.end(); ++it) {
       fprintf(fp, "  Sigma~{%d} = Region[{", it->first);
       for(size_t j = 0; j < it->second.size(); ++j) {
         if(j == 0)
@@ -3293,8 +3234,7 @@ int GModel::writePartitionedTopology(std::string &name)
 
   if(omegaDim > 0) {
     // D~{i}
-    for(std::multimap<int, std::pair<int, std::vector<int> > >::iterator it =
-          allParts[omegaDim - 1].begin();
+    for(auto it = allParts[omegaDim - 1].begin();
         it != allParts[omegaDim - 1].end(); ++it) {
       if(it->second.second.size() == 2) {
         neighbors[it->second.second[0]].insert(it->second.second[1]);
@@ -3303,8 +3243,7 @@ int GModel::writePartitionedTopology(std::string &name)
     }
     for(size_t i = 1; i <= getNumPartitions(); ++i) {
       fprintf(fp, "  D~{%lu}() = {", i);
-      for(std::set<int>::iterator it = neighbors[i].begin();
-          it != neighbors[i].end(); ++it) {
+      for(auto it = neighbors[i].begin(); it != neighbors[i].end(); ++it) {
         if(it != neighbors[i].begin()) fprintf(fp, ", ");
         fprintf(fp, "%d", *it);
       }

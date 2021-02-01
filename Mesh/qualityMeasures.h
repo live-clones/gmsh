@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -66,31 +66,33 @@ public:
 class qmTetrahedron {
 public:
   enum Measures { QMTET_GAMMA, QMTET_ETA, QMTET_ONE, QMTET_COND };
-  static double qm(MTetrahedron *t, const Measures &cr, double *volume = 0);
+  static double qm(MTetrahedron *t, const Measures &cr,
+                   double *volume = nullptr);
   static double qm(const BDS_Point *p1, const BDS_Point *p2,
                    const BDS_Point *p3);
   static double qm(const MVertex *v1, const MVertex *v2, const MVertex *v3,
-                   const MVertex *v4, const Measures &cr, double *volume = 0);
+                   const MVertex *v4, const Measures &cr,
+                   double *volume = nullptr);
   static double qm(const double &x1, const double &y1, const double &z1,
                    const double &x2, const double &y2, const double &z2,
                    const double &x3, const double &y3, const double &z3,
                    const double &x4, const double &y4, const double &z4,
-                   const Measures &cr, double *volume = 0);
+                   const Measures &cr, double *volume = nullptr);
   static double eta(const double &x1, const double &y1, const double &z1,
                     const double &x2, const double &y2, const double &z2,
                     const double &x3, const double &y3, const double &z3,
                     const double &x4, const double &y4, const double &z4,
-                    double *volume = 0);
+                    double *volume = nullptr);
   static double gamma(const double &x1, const double &y1, const double &z1,
                       const double &x2, const double &y2, const double &z2,
                       const double &x3, const double &y3, const double &z3,
                       const double &x4, const double &y4, const double &z4,
-                      double *volume = 0);
+                      double *volume = nullptr);
   static double cond(const double &x1, const double &y1, const double &z1,
                      const double &x2, const double &y2, const double &z2,
                      const double &x3, const double &y3, const double &z3,
                      const double &x4, const double &y4, const double &z4,
-                     double *volume = 0);
+                     double *volume = nullptr);
   static double minNCJ(const MTetrahedron *e);
   //  static void NCJRange(const MTetrahedron *e, double &valMin, double
   //  &valMax);

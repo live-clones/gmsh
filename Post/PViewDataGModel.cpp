@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,57 +32,57 @@ static MElement *_getOneElementOfGivenType(GModel *m, int type)
 {
   switch(type) {
   case TYPE_PNT:
-    for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++) {
+    for(auto it = m->firstVertex(); it != m->lastVertex(); it++) {
       if((*it)->points.size()) return (*it)->points[0];
     }
     break;
   case TYPE_LIN:
-    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++) {
+    for(auto it = m->firstEdge(); it != m->lastEdge(); it++) {
       if((*it)->lines.size()) return (*it)->lines[0];
     }
     break;
   case TYPE_TRI:
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++) {
+    for(auto it = m->firstFace(); it != m->lastFace(); it++) {
       if((*it)->triangles.size()) return (*it)->triangles[0];
     }
     break;
   case TYPE_QUA:
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++) {
+    for(auto it = m->firstFace(); it != m->lastFace(); it++) {
       if((*it)->quadrangles.size()) return (*it)->quadrangles[0];
     }
     break;
   case TYPE_POLYG:
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++) {
+    for(auto it = m->firstFace(); it != m->lastFace(); it++) {
       if((*it)->polygons.size()) return (*it)->polygons[0];
     }
     break;
   case TYPE_TET:
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       if((*it)->tetrahedra.size()) return (*it)->tetrahedra[0];
     }
     break;
   case TYPE_HEX:
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       if((*it)->hexahedra.size()) return (*it)->hexahedra[0];
     }
     break;
   case TYPE_PRI:
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       if((*it)->prisms.size()) return (*it)->prisms[0];
     }
     break;
   case TYPE_PYR:
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       if((*it)->pyramids.size()) return (*it)->pyramids[0];
     }
     break;
   case TYPE_POLYH:
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       if((*it)->polyhedra.size()) return (*it)->polyhedra[0];
     }
     break;
   }
-  return 0;
+  return nullptr;
 }
 
 bool PViewDataGModel::finalize(bool computeMinMax,
@@ -142,7 +142,7 @@ bool PViewDataGModel::finalize(bool computeMinMax,
       else
         Msg::Error("Could not find interpolation scheme '%s'",
                    interpolationScheme.c_str());
-      for(interpolationMatrices::iterator it = m.begin(); it != m.end(); it++) {
+      for(auto it = m.begin(); it != m.end(); it++) {
         if(it->second.size() == 2) {
           // use provided interpolation matrices for field interpolation and use
           // geometrical interpolation matrices from the mesh if the mesh is
@@ -255,7 +255,7 @@ bool PViewDataGModel::finalize(bool computeMinMax,
 MElement *PViewDataGModel::_getElement(int step, int ent, int ele)
 {
   static int lastStep = -1, lastEnt = -1, lastEle = -1;
-  static MElement *curr = 0;
+  static MElement *curr = nullptr;
   if(step != lastStep || ent != lastEnt || ele != lastEle)
     curr = _steps[step]->getEntity(ent)->getMeshElement(ele);
   return curr;
@@ -376,7 +376,7 @@ int PViewDataGModel::getNumPoints(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
+  for(auto it = m->firstVertex(); it != m->lastVertex(); ++it)
     n += (*it)->points.size();
   return n;
 }
@@ -386,7 +386,7 @@ int PViewDataGModel::getNumLines(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it)
     n += (*it)->lines.size();
   return n;
 }
@@ -396,7 +396,7 @@ int PViewDataGModel::getNumTriangles(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
     n += (*it)->triangles.size();
   return n;
 }
@@ -406,7 +406,7 @@ int PViewDataGModel::getNumQuadrangles(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
     n += (*it)->quadrangles.size();
   return n;
 }
@@ -416,7 +416,7 @@ int PViewDataGModel::getNumPolygons(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
     n += (*it)->polygons.size();
   return n;
 }
@@ -426,7 +426,7 @@ int PViewDataGModel::getNumTetrahedra(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
     n += (*it)->tetrahedra.size();
   return n;
 }
@@ -436,7 +436,7 @@ int PViewDataGModel::getNumHexahedra(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
     n += (*it)->hexahedra.size();
   return n;
 }
@@ -446,7 +446,7 @@ int PViewDataGModel::getNumPrisms(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
     n += (*it)->prisms.size();
   return n;
 }
@@ -456,7 +456,7 @@ int PViewDataGModel::getNumPyramids(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
     n += (*it)->pyramids.size();
   return n;
 }
@@ -466,7 +466,7 @@ int PViewDataGModel::getNumTrihedra(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
     n += (*it)->trihedra.size();
   return n;
 }
@@ -476,7 +476,7 @@ int PViewDataGModel::getNumPolyhedra(int step)
   if(_steps.empty()) return 0;
   GModel *m = _steps[0]->getModel(); // to generalize
   int n = 0;
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
     n += (*it)->polyhedra.size();
   return n;
 }
@@ -506,7 +506,7 @@ GEntity *PViewDataGModel::getEntity(int step, int ent)
 
 MElement *PViewDataGModel::getElement(int step, int ent, int element)
 {
-  if(_steps.empty()) return 0;
+  if(_steps.empty()) return nullptr;
   // to generalize
   if(step < 0) return _steps[0]->getEntity(ent)->getMeshElement(element);
   return _steps[step]->getEntity(ent)->getMeshElement(element);
@@ -775,8 +775,7 @@ bool PViewDataGModel::combineTime(nameData &nd)
   }
 
   // copy interpolation matrices
-  for(std::map<int, std::vector<fullMatrix<double> *> >::iterator it =
-        data[0]->_interpolation.begin();
+  for(auto it = data[0]->_interpolation.begin();
       it != data[0]->_interpolation.end(); it++)
     if(_interpolation[it->first].empty())
       for(std::size_t i = 0; i < it->second.size(); i++)

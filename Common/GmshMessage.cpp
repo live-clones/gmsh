@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -71,19 +71,19 @@ int Msg::_atLeastOneErrorInRun = 0;
 std::string Msg::_firstWarning;
 std::string Msg::_firstError;
 std::string Msg::_lastError;
-GmshMessage *Msg::_callback = 0;
+GmshMessage *Msg::_callback = nullptr;
 std::vector<std::string> Msg::_commandLineArgs;
 std::string Msg::_launchDate;
 std::map<std::string, std::vector<double> > Msg::_commandLineNumbers;
 std::map<std::string, std::string> Msg::_commandLineStrings;
-GmshClient *Msg::_client = 0;
+GmshClient *Msg::_client = nullptr;
 std::string Msg::_execName;
 #if defined(HAVE_ONELAB)
-onelab::client *Msg::_onelabClient = 0;
-onelab::server *onelab::server::_server = 0;
+onelab::client *Msg::_onelabClient = nullptr;
+onelab::server *onelab::server::_server = nullptr;
 #endif
 std::string Msg::_logFileName;
-FILE *Msg::_logFile = 0;
+FILE *Msg::_logFile = nullptr;
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1310) //NET 2003
 #define vsnprintf _vsnprintf
@@ -120,23 +120,6 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
   }
 }
 
-#if defined(HAVE_FLTK)
-static void FlGuiRateLimitedCheck()
-{
-  static double lastRefresh = 0.;
-  if(CTX::instance()->guiRefreshRate > 0) {
-    double start = TimeOfDay();
-    if(start - lastRefresh > 1. / CTX::instance()->guiRefreshRate) {
-      lastRefresh = start;
-      FlGui::check();
-    }
-  }
-  else {
-    FlGui::check();
-  }
-}
-#endif
-
 void Msg::Init(int argc, char **argv)
 {
   _startTime = TimeOfDay();
@@ -157,7 +140,7 @@ void Msg::Init(int argc, char **argv)
     if(val != "-info" && val != "-help" && val != "-version" && val != "-v")
       sargv[sargc++] = argv[i];
   }
-  sargv[sargc] = NULL;
+  sargv[sargc] = nullptr;
   PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)
@@ -170,24 +153,34 @@ void Msg::Init(int argc, char **argv)
   _launchDate = ctime(&now);
   _launchDate.resize(_launchDate.size() - 1);
 
+  bool _env = true, _locale = true;
   _commandLineArgs.resize(argc);
-  for(int i = 0; i < argc; i++)
+  for(int i = 0; i < argc; i++) {
     _commandLineArgs[i] = argv[i];
+    if(_commandLineArgs[i] == "-noenv")
+      _env = false;
+    else if(_commandLineArgs[i] == "-nolocale")
+      _locale = false;
+  }
 
   CTX::instance()->exeFileName = GetExecutableFileName();
   if(CTX::instance()->exeFileName.empty() && _commandLineArgs.size())
     CTX::instance()->exeFileName = _commandLineArgs[0];
 
-  // add the directory where the binary is installed to the path where Python
-  // looks for modules, and to the path for executables (this allows us to find
-  // the onelab.py module or subclients automatically)
-  addGmshPathToEnvironmentVar("PYTHONPATH");
-  addGmshPathToEnvironmentVar("PATH");
+  if(_env) {
+    // add the directory where the binary is installed to the path where Python
+    // looks for modules, and to the path for executables (this allows us to
+    // find the onelab.py module or subclients automatically)
+    addGmshPathToEnvironmentVar("PYTHONPATH");
+    addGmshPathToEnvironmentVar("PATH");
+  }
 
-  // make sure to use the "C" locale; in particular this ensures that we will
-  // use a dot for for the decimal separator when writing ASCII mesh files
-  std::setlocale(LC_ALL, "C.UTF-8");
-  std::setlocale(LC_NUMERIC, "C");
+  if(_locale) {
+    // make sure to use the "C" locale; in particular this ensures that we will
+    // use a dot for for the decimal separator when writing ASCII mesh files
+    std::setlocale(LC_ALL, "C.UTF-8");
+    std::setlocale(LC_NUMERIC, "C");
+  }
 
   InitializeOnelab("Gmsh");
 }
@@ -242,7 +235,7 @@ void Msg::SetLogFile(const std::string &name)
       Msg::Error("Could not open file '%s'", name.c_str());
   }
   else
-    _logFile = 0;
+    _logFile = nullptr;
 }
 
 std::string Msg::GetLaunchDate()
@@ -368,7 +361,7 @@ void Msg::Exit(int level)
 
   if(_logFile){
     fclose(_logFile);
-    _logFile = 0;
+    _logFile = nullptr;
   }
 
   // exit directly on abnormal program termination (level != 0). We
@@ -463,8 +456,8 @@ static int streamIsVT100(FILE *stream)
      "rxvt-cygwin", "rxvt-cygwin-native", "rxvt-unicode", "rxvt-unicode-256color",
      "screen", "screen-256color", "screen-256color-bce", "screen-bce", "screen-w",
      "screen.linux", "vt100", "xterm", "xterm-16color", "xterm-256color",
-     "xterm-88color", "xterm-color", "xterm-debian", 0};
-  const char** t = 0;
+     "xterm-88color", "xterm-color", "xterm-debian", nullptr};
+  const char** t = nullptr;
   const char* term = getenv("TERM");
   if(term){
     for(t = names; *t && strcmp(term, *t) != 0; ++t) {}
@@ -529,7 +522,7 @@ void Msg::Error(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_firstError.empty()) _firstError = str;
   _lastError = str;
@@ -586,7 +579,7 @@ void Msg::Warning(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Warning: %s\n", str);
   if(_callback) (*_callback)("Warning", str);
@@ -625,7 +618,7 @@ void Msg::Info(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_infoCpu || _infoMem){
     std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
@@ -640,7 +633,7 @@ void Msg::Info(const char *fmt, ...)
   if(FlGui::available()){
     std::string tmp = std::string("Info    : ") + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGuiRateLimitedCheck();
+    FlGui::check();
   }
 #endif
 
@@ -670,7 +663,7 @@ void Msg::Direct(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Direct: %s\n", str);
   if(_callback) (*_callback)("Direct", str);
@@ -681,7 +674,7 @@ void Msg::Direct(const char *fmt, ...)
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
       + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGuiRateLimitedCheck();
+    FlGui::check();
   }
 #endif
 
@@ -722,7 +715,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_infoCpu || _infoMem){
     std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
@@ -740,7 +733,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
     if(log){
       std::string tmp = std::string("Info    : ") + str;
       FlGui::instance()->addMessage(tmp.c_str());
-      FlGuiRateLimitedCheck();
+      FlGui::check();
     }
   }
 #endif
@@ -763,7 +756,7 @@ void Msg::StatusGl(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(FlGui::available())
     FlGui::instance()->setStatus(str, true);
@@ -788,7 +781,7 @@ void Msg::Debug(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Debug: %s\n", str);
   if(_callback) (*_callback)("Debug", str);
@@ -839,7 +832,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
-    int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+    int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
     sprintf(str2, "Info    : [%3d%%] %s", _progressMeterCurrent, str);
 
@@ -848,7 +841,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(FlGui::available() && GetVerbosity() > 4){
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
-      FlGuiRateLimitedCheck();
+      FlGui::check();
     }
 #endif
     if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
@@ -865,7 +858,7 @@ void Msg::PrintTimers()
 {
   // do a single stdio call!
   std::string str;
-  for(std::map<std::string, double>::iterator it = _timers.begin();
+  for(auto it = _timers.begin();
       it != _timers.end(); it++){
     if(it != _timers.begin()) str += ", ";
     char tmp[256];
@@ -1256,7 +1249,7 @@ std::string Msg::GetOnelabAction()
 void Msg::LoadOnelabClient(const std::string &clientName, const std::string &sockName)
 {
 #if defined(HAVE_ONELAB)
-  onelab::remoteNetworkClient *client = 0;
+  onelab::remoteNetworkClient *client = nullptr;
   client = new onelab::remoteNetworkClient(clientName, sockName);
   if(client){
     std::string action, cmd;
@@ -1551,7 +1544,7 @@ void Msg::ImportPhysicalGroupsInOnelab()
 
     int index = 1;
     for(int dim = 0; dim <= 3; dim++){
-      for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
+      for(auto it = groups[dim].begin();
           it != groups[dim].end(); it++){
         int num = it->first;
         std::string name = GModel::current()->getPhysicalName(dim, it->first);
@@ -1621,15 +1614,15 @@ void Msg::FinalizeOnelab()
 {
 #if defined(HAVE_ONELAB)
   // kill any running clients
-  for(onelab::server::citer it = onelab::server::instance()->firstClient();
+  for(auto it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     (*it)->kill();
   }
   // delete local client
   if(_onelabClient){
     delete _onelabClient;
-    _onelabClient = 0;
-    _client = 0;
+    _onelabClient = nullptr;
+    _client = nullptr;
   }
 #endif
 }

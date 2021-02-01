@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,7 +19,7 @@ private:
 public:
   MEdge()
   {
-    _v[0] = _v[1] = 0;
+    _v[0] = _v[1] = nullptr;
     _si[0] = _si[1] = 0;
   }
   MEdge(MVertex *v0, MVertex *v1)
@@ -116,10 +116,7 @@ inline bool operator!=(const MEdge &e1, const MEdge &e2)
 }
 
 struct MEdgeEqual {
-  bool operator()(const MEdge &e1, const MEdge &e2) const
-  {
-    return (e1 == e2);
-  }
+  bool operator()(const MEdge &e1, const MEdge &e2) const { return (e1 == e2); }
 };
 
 struct MEdgeLessThan {

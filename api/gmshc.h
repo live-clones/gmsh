@@ -1,5 +1,5 @@
 /*
- * Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+ * Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
  *
  * See the LICENSE.txt file for license information. Please report all
  * issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -925,12 +925,27 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
                                                                            const int tag,
                                                                            int * ierr);
 
-/* Get the global edge identifier `edgeNum' for an input list of node pairs,
- * concatenated in the vector `edgeNodes'.  Warning: this is an experimental
- * feature and will probably change in a future release. */
-GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n,
-                                         int ** edgeNum, size_t * edgeNum_n,
-                                         int * ierr);
+/* Get the global unique mesh edge identifiers `edgeTags' for an input list of
+ * node tag pairs defining these edges, concatenated in the vector `nodeTags'. */
+GMSH_API void gmshModelMeshGetEdgeTags(size_t * nodeTags, size_t nodeTags_n,
+                                       size_t ** edgeTags, size_t * edgeTags_n,
+                                       int * ierr);
+
+/* Get the global unique mesh face identifiers `faceTags' for an input list of
+ * node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4)
+ * defining these faces, concatenated in the vector `nodeTags'. */
+GMSH_API void gmshModelMeshGetFaceTags(const int faceType,
+                                       size_t * nodeTags, size_t nodeTags_n,
+                                       size_t ** faceTags, size_t * faceTags_n,
+                                       int * ierr);
+
+/* Create unique mesh edges for the entities `dimTags'. */
+GMSH_API void gmshModelMeshCreateEdges(int * dimTags, size_t dimTags_n,
+                                       int * ierr);
+
+/* Create unique mesh faces for the entities `dimTags'. */
+GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n,
+                                       int * ierr);
 
 /* Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
  * H(curl) basis functions. Warning: this is an experimental feature and will
@@ -1167,8 +1182,12 @@ GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag,
 /* Embed the model entities of dimension `dim' and tags `tags' in the
  * (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must
  * be strictly smaller than `inDim', which must be either 2 or 3. The embedded
- * entities should not be part of the boundary of the entity `inTag', whose
- * mesh will conform to the mesh of the embedded entities. */
+ * entities should not intersect each other or be part of the boundary of the
+ * entity `inTag', whose mesh will conform to the mesh of the embedded
+ * entities. With the OpenCASCADE kernel, if the `fragment' operation is
+ * applied to entities of different dimensions, the lower dimensional entities
+ * will be automatically embedded in the higher dimensional entities if they
+ * are not on their boundary. */
 GMSH_API void gmshModelMeshEmbed(const int dim,
                                  int * tags, size_t tags_n,
                                  const int inDim,
@@ -1181,6 +1200,13 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
 GMSH_API void gmshModelMeshRemoveEmbedded(int * dimTags, size_t dimTags_n,
                                           const int dim,
                                           int * ierr);
+
+/* Get the entities (if any) embedded in the model entity of dimension `dim'
+ * and tag `tag'. */
+GMSH_API void gmshModelMeshGetEmbedded(const int dim,
+                                       const int tag,
+                                       int ** dimTags, size_t * dimTags_n,
+                                       int * ierr);
 
 /* Reorder the elements of type `elementType' classified on the entity of tag
  * `tag' according to `ordering'. */
@@ -1238,11 +1264,13 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality,
  * boundary if the surface is open. If `forReparametrization' is set, create
  * edges and surfaces that can be reparametrized using a single map. If
  * `curveAngle' is less than Pi, also force curves to be split according to
- * `curveAngle'. */
+ * `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
+ * entities and export the discrete entities in the built-in CAD kernel. */
 GMSH_API void gmshModelMeshClassifySurfaces(const double angle,
                                             const int boundary,
                                             const int forReparametrization,
                                             const double curveAngle,
+                                            const int exportDiscrete,
                                             int * ierr);
 
 /* Create a geometry for the discrete entities `dimTags' (represented solely
@@ -1464,6 +1492,12 @@ GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n,
                                       const int reorient,
                                       int * ierr);
 
+/* Add curve loops in the built-in CAD representation based on the curves
+ * `curveTags'. Return the `tags' of found curve loops, if any. */
+GMSH_API void gmshModelGeoAddCurveLoops(int * curveTags, size_t curveTags_n,
+                                        int ** tags, size_t * tags_n,
+                                        int * ierr);
+
 /* Add a plane surface in the built-in CAD representation, defined by one or
  * more curve loops `wireTags'. The first curve loop defines the exterior
  * contour; additional curve loop define holes. If `tag' is positive, set the
@@ -1504,8 +1538,8 @@ GMSH_API int gmshModelGeoAddVolume(int * shellTags, size_t shellTags_n,
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
  * entries in `numElements' give the number of elements in each layer. If
  * `height' is not empty, it provides the (cumulative) height of the different
- * layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the entities are
- * extruded along their normal. */
+ * layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+ * layers. */
 GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -1523,7 +1557,8 @@ GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
  * entries in `numElements' give the number of elements in each layer. If
  * `height' is not empty, it provides the (cumulative) height of the different
- * layers, normalized to 1. */
+ * layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+ * layers. */
 GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -1545,7 +1580,8 @@ GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
  * smaller than Pi. Return extruded entities in `outDimTags'. If `numElements'
  * is not empty, also extrude the mesh: the entries in `numElements' give the
  * number of elements in each layer. If `height' is not empty, it provides the
- * (cumulative) height of the different layers, normalized to 1. */
+ * (cumulative) height of the different layers, normalized to 1. If
+ * `recombine' is set, recombine the mesh in the layers. */
 GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const double x,
                                 const double y,
@@ -1562,6 +1598,24 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 double * heights, size_t heights_n,
                                 const int recombine,
                                 int * ierr);
+
+/* Extrude the entities `dimTags' in the built-in CAD representation along the
+ * normals of the mesh, creating discrete boundary layer entities. Return
+ * extruded entities in `outDimTags'. The entries in `numElements' give the
+ * number of elements in each layer. If `height' is not empty, it provides the
+ * height of the different layers. If `recombine' is set, recombine the mesh
+ * in the layers. A second boundary layer can be created from the same
+ * entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
+ * view to either specify the normals (if the view contains a vector field) or
+ * scale the normals (if the view is scalar). */
+GMSH_API void gmshModelGeoExtrudeBoundaryLayer(int * dimTags, size_t dimTags_n,
+                                               int ** outDimTags, size_t * outDimTags_n,
+                                               int * numElements, size_t numElements_n,
+                                               double * heights, size_t heights_n,
+                                               const int recombine,
+                                               const int second,
+                                               const int viewIndex,
+                                               int * ierr);
 
 /* Translate the entities `dimTags' in the built-in CAD representation along
  * (`dx', `dy', `dz'). */
@@ -2149,7 +2203,8 @@ GMSH_API void gmshModelOccAddThickSolid(const int volumeTag,
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
  * entries in `numElements' give the number of elements in each layer. If
  * `height' is not empty, it provides the (cumulative) height of the different
- * layers, normalized to 1. */
+ * layers, normalized to 1. If `recombine' is set, recombine the mesh in the
+ * layers. */
 GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -2167,7 +2222,8 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
  * mesh: the entries in `numElements' give the number of elements in each
  * layer. If `height' is not empty, it provides the (cumulative) height of the
  * different layers, normalized to 1. When the mesh is extruded the angle
- * should be strictly smaller than 2*Pi. */
+ * should be strictly smaller than 2*Pi. If `recombine' is set, recombine the
+ * mesh in the layers. */
 GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -2183,10 +2239,15 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   int * ierr);
 
 /* Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
- * `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'. */
+ * `dimTags' along the wire `wireTag'. The type of sweep can be specified with
+ * `trihedron' (possible values: "DiscreteTrihedron", "CorrectedFrenet",
+ * "Fixed", "Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
+ * "GuideACWithContact", "GuidePlanWithContact"). If `trihedron' is not
+ * provided, "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'. */
 GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,
                                   const int wireTag,
                                   int ** outDimTags, size_t * outDimTags_n,
+                                  const char * trihedron,
                                   int * ierr);
 
 /* Fillet the volumes `volumeTags' on the curves `curveTags' with radii
@@ -2263,12 +2324,15 @@ GMSH_API void gmshModelOccCut(int * objectDimTags, size_t objectDimTags_n,
                               const int removeTool,
                               int * ierr);
 
-/* Compute the boolean fragments (general fuse) of the entities
- * `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
- * Return the resulting entities in `outDimTags'. If `tag' is positive, try to
- * set the tag explicitly (only valid if the boolean operation results in a
- * single entity). Remove the object if `removeObject' is set. Remove the tool
- * if `removeTool' is set. */
+/* Compute the boolean fragments (general fuse) resulting from the
+ * intersection of the entities `objectDimTags' and `toolDimTags' in the
+ * OpenCASCADE CAD representation, making all iterfaces conformal. When
+ * applied to entities of different dimensions, the lower dimensional entities
+ * will be automatically embedded in the higher dimensional entities if they
+ * are not on their boundary. Return the resulting entities in `outDimTags'.
+ * If `tag' is positive, try to set the tag explicitly (only valid if the
+ * boolean operation results in a single entity). Remove the object if
+ * `removeObject' is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccFragment(int * objectDimTags, size_t objectDimTags_n,
                                    int * toolDimTags, size_t toolDimTags_n,
                                    int ** outDimTags, size_t * outDimTags_n,
@@ -2779,6 +2843,17 @@ GMSH_API void gmshFltkSplitCurrentWindow(const char * how,
 GMSH_API void gmshFltkSetCurrentWindow(const int windowIndex,
                                        int * ierr);
 
+/* Set a status message in the current window. If `graphics' is set, display
+ * the message inside the graphic window instead of the status bar. */
+GMSH_API void gmshFltkSetStatusMessage(const char * message,
+                                       const int graphics,
+                                       int * ierr);
+
+/* Show context window for the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshFltkShowContextWindow(const int dim,
+                                        const int tag,
+                                        int * ierr);
+
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */
 GMSH_API void gmshOnelabSet(const char * data,
                             const char * format,
@@ -2790,6 +2865,12 @@ GMSH_API void gmshOnelabGet(char ** data,
                             const char * name,
                             const char * format,
                             int * ierr);
+
+/* Get the names of the parameters in the ONELAB database matching the
+ * `search' regular expression. If `search' is empty, return all the names. */
+GMSH_API void gmshOnelabGetNames(char *** names, size_t * names_n,
+                                 const char * search,
+                                 int * ierr);
 
 /* Set the value of the number parameter `name' in the ONELAB database. Create
  * the parameter if it does not exist; update the value if the parameter

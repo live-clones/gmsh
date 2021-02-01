@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,7 +32,7 @@ namespace {
 
 fullMatrix<double> *getInnerVertexPlacement(int type, int order)
 {
-  if(type < 3 || type > 8) return NULL;
+  if(type < 3 || type > 8) return nullptr;
   std::map<int, fullMatrix<double> *>::iterator it;
   it = storedMatrices[type - 3].find(order);
   if(it != storedMatrices[type - 3].end()) { return it->second; }

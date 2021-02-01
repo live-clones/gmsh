@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -89,7 +89,7 @@ namespace {
     // names
     std::ostringstream ossEnt;
     ossEnt << entTypeStr;
-    if(geParent != 0) ossEnt << "_" << geParent->tag();
+    if(geParent != nullptr) ossEnt << "_" << geParent->tag();
     ossEnt << "_" << ge->tag();
     entityName = model->getElementaryName(ge->dim(), ge->tag());
     if(!entityName.empty()) ossEnt << "_" << entityName;
@@ -170,17 +170,16 @@ void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
   // Periodic entities
   for(std::size_t i = 0; i < entitiesPer.size(); i++) {
     VertVertMap &vv = entitiesPer[i]->correspondingVertices;
-    for(VertVertMap::iterator itV = vv.begin(); itV != vv.end(); itV++) {
+    for(auto itV = vv.begin(); itV != vv.end(); itV++) {
       interfVert2Local[itV->first] = std::vector<LocalData>();
       interfVert2Local[itV->second] = std::vector<LocalData>();
     }
   }
 
   // Partition interface boundaries
-  typedef std::set<MVertex *>::iterator NodeSetIter;
   std::set<MVertex *> nodeSet;
   getNodesInEntities<false>(entitiesInterf, true, nodeSet);
-  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+  for(auto itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     interfVert2Local[*itN] = std::vector<LocalData>();
   }
 }
@@ -194,7 +193,6 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
               Vertex2LocalData &interfVert2Local, std::set<int> &eleMshTypes,
               std::map<GEntity *, std::string> &geomEntities)
 {
-  typedef std::set<MVertex *>::iterator NodeSetIter;
 #ifdef HAVE_LIBCGNS_CPEX0045
   const bool useCPEX0045 = CTX::instance()->mesh.cgnsExportCPEX0045;
 #else
@@ -210,20 +208,20 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
   // store local data correspondence for periodic/interface nodes
   std::vector<LocalData> global2Local(numNodesTotal + 1);
   cgsize_t numNodes = 0;
-  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+  for(auto itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     const long gInd = (*itN)->getIndex();
     if(gInd < 0) continue;
     numNodes++;
     LocalData &ld = global2Local[gInd];
     ld.partition = partition;
     ld.index = numNodes;
-    Vertex2LocalData::iterator itPN = interfVert2Local.find(*itN);
+    auto itPN = interfVert2Local.find(*itN);
     if(itPN != interfVert2Local.end()) itPN->second.push_back(ld);
   }
 
   // create lists of coordinates
   std::vector<double> xcoord(numNodes), ycoord(numNodes), zcoord(numNodes);
-  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+  for(auto itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     const long gInd = (*itN)->getIndex();
     if(gInd < 0) continue;
     const int ln = global2Local[gInd].index;
@@ -251,7 +249,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
   std::string modelName = cgnsString(model->getName(), 32 - partSuffix.size());
   zoneName[partition] = modelName + partSuffix;
   cgnsErr = cg_zone_write(cgIndexFile, cgIndexBase, zoneName[partition].c_str(),
-                          cgZoneSize, Unstructured, &cgIndexZone);
+                          cgZoneSize, CGNS_ENUMV(Unstructured), &cgIndexZone);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write ordinal (zone number) and family name for CPEX0045
@@ -273,14 +271,17 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
 
   // write list of coordinates
   int cgIndexCoord = 0;
-  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                           "CoordinateX", &xcoord[0], &cgIndexCoord);
+  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                           CGNS_ENUMV(RealDouble), "CoordinateX", &xcoord[0],
+                           &cgIndexCoord);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
-  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                           "CoordinateY", &ycoord[0], &cgIndexCoord);
+  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                           CGNS_ENUMV(RealDouble), "CoordinateY", &ycoord[0],
+                           &cgIndexCoord);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
-  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                           "CoordinateZ", &zcoord[0], &cgIndexCoord);
+  cgnsErr = cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                           CGNS_ENUMV(RealDouble), "CoordinateZ", &zcoord[0],
+                           &cgIndexCoord);
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write an element section for each entity, per element type
@@ -289,7 +290,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
     // get entities
     GEntity *ge = entities[i];
     GEntity *geGeom = ge->getParentEntity();
-    if(geGeom == 0) geGeom = ge;
+    if(geGeom == nullptr) geGeom = ge;
 
     // get or create the names for the entity
     std::string entityName, geomEntityName;
@@ -312,8 +313,8 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
       eleEnd += numEle;
       MElement *me = ge->getMeshElementByType(eleTypes[eleType], 0);
       int mshType = me->getTypeForMSH();
-      ElementType_t cgType = msh2CgnsEltType(mshType);
-      if(cgType == ElementTypeNull) {
+      CGNS_ENUMT(ElementType_t) cgType = msh2CgnsEltType(mshType);
+      if(cgType == CGNS_ENUMV(ElementTypeNull)) {
         Msg::Error("Unhandled element type in CGNS ouput (%d)", mshType);
         break;
       }
@@ -347,15 +348,16 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
     // write elementary entity as BC and geometrical entity as BC family name
     eleEntRange[1] = eleEnd;
     int iZoneBC;
-    cgnsErr =
-      cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone, entityName.c_str(),
-                    FamilySpecified, PointRange, 2, eleEntRange, &iZoneBC);
+    cgnsErr = cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                            entityName.c_str(), CGNS_ENUMV(FamilySpecified),
+                            CGNS_ENUMV(PointRange), 2, eleEntRange, &iZoneBC);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     // GridLocation not clear: can "Vertex" be understood as "point" elements?
-    // const GridLocation_t loc = (entDim == 2) ? FaceCenter :
-    //                            (entDim == 1) ? EdgeCenter :
-    //                            (entDim == 0) ? Vertex : CellCenter;
-    const GridLocation_t loc = CellCenter;
+    // const CGNS_ENUMT(GridLocation_t) loc =
+    //    (entDim == 2) ? CGNS_ENUMV(FaceCenter) :
+    //    (entDim == 1) ? CGNS_ENUMV(EdgeCenter) :
+    //    (entDim == 0) ? CGNS_ENUMV(Vertex) : CGNS_ENUMV(CellCenter);
+    const CGNS_ENUMT(GridLocation_t) loc = CGNS_ENUMV(CellCenter);
     cgnsErr = cg_boco_gridlocation_write(cgIndexFile, cgIndexBase, cgIndexZone,
                                          iZoneBC, loc);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
@@ -389,7 +391,7 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     GEntity *slaveEnt = entitiesPer[iEnt];
     GEntity *masterEnt = slaveEnt->getMeshMaster();
     VertVertMap &vv = slaveEnt->correspondingVertices;
-    for(VertVertMap::iterator itV = vv.begin(); itV != vv.end(); itV++) {
+    for(auto itV = vv.begin(); itV != vv.end(); itV++) {
       const std::vector<LocalData> &allSlaveData = interfVert2Local[itV->first];
       const std::vector<LocalData> &allMasterData =
         interfVert2Local[itV->second];
@@ -417,9 +419,8 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
   }
 
   // write periodic interfaces
-  typedef PeriodicConnection::iterator PerConnectIter;
   int cgnsErr;
-  for(PerConnectIter it = connect.begin(); it != connect.end(); ++it) {
+  for(auto it = connect.begin(); it != connect.end(); ++it) {
     printProgress("Writing periodic interface",
                   std::distance(connect.begin(), it) + 1, connect.size());
     const PeriodicInterface &perInt = it->first;
@@ -441,10 +442,11 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
     const std::string interfaceName = cgnsString(ossInt.str());
     int connIdx;
     cgnsErr = cg_conn_write(
-      cgIndexFile, cgIndexBase, slaveZone, interfaceName.c_str(), Vertex,
-      Abutting1to1, PointList, nodes1.size(), nodes1.data(),
-      masterZoneName.c_str(), Unstructured, PointListDonor, DataTypeNull,
-      nodes2.size(), nodes2.data(), &connIdx);
+      cgIndexFile, cgIndexBase, slaveZone, interfaceName.c_str(),
+      CGNS_ENUMV(Vertex), CGNS_ENUMV(Abutting1to1), CGNS_ENUMV(PointList),
+      nodes1.size(), nodes1.data(), masterZoneName.c_str(),
+      CGNS_ENUMV(Unstructured), CGNS_ENUMV(PointListDonor),
+      CGNS_ENUMV(DataTypeNull), nodes2.size(), nodes2.data(), &connIdx);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
     // get parameters from transformation (CGNS transfo = inverse Gmsh transfo)
     float rotCenter[3], rotAngle[3], trans[3];
@@ -482,7 +484,7 @@ void getEntitiesInPartitions(const std::vector<GEntity *> &entities,
 {
   for(std::size_t j = 0; j < entities.size(); j++) {
     GEntity *ge = entities[j];
-    const std::vector<int> *parts = 0;
+    const std::vector<int> *parts = nullptr;
     switch(ge->geomType()) {
     case GEntity::PartitionVolume: {
       partitionRegion *pr = static_cast<partitionRegion *>(ge);
@@ -510,7 +512,7 @@ void getEntitiesInPartitions(const std::vector<GEntity *> &entities,
     } break;
     default: break;
     } // switch
-    if(parts != 0) {
+    if(parts != nullptr) {
       for(std::size_t iPart = 0; iPart < parts->size(); iPart++) {
         entitiesPart[(*parts)[iPart]].push_back(ge);
       }
@@ -528,7 +530,6 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
   typedef std::map<PartitionInterface, NodeCorrespondence> PartitionConnection;
 
   // get nodes in partition interface entities
-  typedef std::set<MVertex *>::iterator NodeSetIter;
   std::set<MVertex *> nodeSet;
   getNodesInEntities<false>(entitiesInterf, true, nodeSet);
 
@@ -536,7 +537,7 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
   Msg::Info("Constructing connectivities for %i partition interface entities",
             entitiesInterf.size());
   PartitionConnection connect;
-  for(NodeSetIter itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
+  for(auto itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     const std::vector<LocalData> &allLocalData = interfVert2Local[*itN];
     for(std::size_t iLD1 = 0; iLD1 < allLocalData.size(); iLD1++) {
       const LocalData &localData1 = allLocalData[iLD1];
@@ -553,10 +554,9 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
   }
 
   // write partition interfaces
-  typedef PartitionConnection::iterator PartConnectIter;
   int cgnsErr;
   std::size_t iPartConnect = 0;
-  for(PartConnectIter it = connect.begin(); it != connect.end(); ++it) {
+  for(auto it = connect.begin(); it != connect.end(); ++it) {
     iPartConnect++;
     printProgress("Writing partition interface", iPartConnect, connect.size());
     const std::pair<unsigned int, unsigned int> &partInt = it->first;
@@ -569,10 +569,11 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
     const std::string interfaceName = cgnsString(ossInt.str());
     int dum;
     cgnsErr = cg_conn_write(
-      cgIndexFile, cgIndexBase, part1, interfaceName.c_str(), Vertex,
-      Abutting1to1, PointList, nc.first.size(), nc.first.data(),
-      masterZoneName.c_str(), Unstructured, PointListDonor, DataTypeNull,
-      nc.second.size(), nc.second.data(), &dum);
+      cgIndexFile, cgIndexBase, part1, interfaceName.c_str(),
+      CGNS_ENUMV(Vertex), CGNS_ENUMV(Abutting1to1), CGNS_ENUMV(PointList),
+      nc.first.size(), nc.first.data(), masterZoneName.c_str(),
+      CGNS_ENUMV(Unstructured), CGNS_ENUMV(PointListDonor),
+      CGNS_ENUMV(DataTypeNull), nc.second.size(), nc.second.data(), &dum);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
   }
 
@@ -593,8 +594,7 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
   // write node sets for each element type
-  typedef std::set<int>::iterator IntSetIter;
-  for(IntSetIter it = eleMshTypes.begin(); it != eleMshTypes.end(); ++it) {
+  for(auto it = eleMshTypes.begin(); it != eleMshTypes.end(); ++it) {
     // get node set
     const int mshType = *it;
     const nodalBasis *basis = BasisFactory::getNodalBasis(mshType);
@@ -607,7 +607,7 @@ int writeHOPointInfo(const std::set<int> &eleMshTypes, int cgIndexFile,
     msh2CgnsReferenceElement(mshType, mshPts, u, v, w);
 
     // write nodal set
-    ElementType_t cgnsType = msh2CgnsEltType(mshType);
+    CGNS_ENUMT(ElementType_t) cgnsType = msh2CgnsEltType(mshType);
     std::ostringstream ossInterp;
     ossInterp << "Element_" << cgnsType;
     std::string interpName = ossInterp.str();
@@ -634,8 +634,7 @@ int writeGeomEntities(std::map<GEntity *, std::string> &geomEntities,
 {
   int cgnsErr;
 
-  typedef std::map<GEntity *, std::string>::iterator GeomEntIter;
-  for(GeomEntIter it = geomEntities.begin(); it != geomEntities.end(); ++it) {
+  for(auto it = geomEntities.begin(); it != geomEntities.end(); ++it) {
     // get geometric entity
     GEntity *ge = it->first;
     std::string &geomName = it->second;

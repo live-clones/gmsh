@@ -28,12 +28,12 @@
 #include <iostream>
 
 StringXNumber CVTRemeshOptions_Number[] = {
-  {GMSH_FULLRC, "Sites", NULL, 20000.},
-  {GMSH_FULLRC, "Iterations", NULL, 20.},
-  {GMSH_FULLRC, "Anisotropy", NULL, 0.03},
-  {GMSH_FULLRC, "Variable density", NULL, 0.3},
-  {GMSH_FULLRC, "Feature sensitivity", NULL, 5.},
-  {GMSH_FULLRC, "Normal computation radius", NULL, 0.005}};
+  {GMSH_FULLRC, "Sites", nullptr, 20000.},
+  {GMSH_FULLRC, "Iterations", nullptr, 20.},
+  {GMSH_FULLRC, "Anisotropy", nullptr, 0.03},
+  {GMSH_FULLRC, "Variable density", nullptr, 0.3},
+  {GMSH_FULLRC, "Feature sensitivity", nullptr, 5.},
+  {GMSH_FULLRC, "Normal computation radius", nullptr, 0.005}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCVTRemeshPlugin()
@@ -140,9 +140,7 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
 
       // positions
       const double *x[3];
-      for(int i = 0; i < 3; ++i) {
-        x[i] = lifted_mesh.vertex(fverts[i]);
-      }
+      for(int i = 0; i < 3; ++i) { x[i] = lifted_mesh.vertex(fverts[i]); }
 
       // ratio
       double ratio = 1;
@@ -246,9 +244,7 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
   Revoropt::CVT::DirectMinimizer<Revoropt::ROMesh<3, 6> > cvt;
   cvt.set_sites(lifted_sites.data(), nsites);
   cvt.set_mesh(&lifted_mesh);
-  if(twfactor > 0) {
-    cvt.set_triangle_weights(triangle_weights.data());
-  }
+  if(twfactor > 0) { cvt.set_triangle_weights(triangle_weights.data()); }
 
   // setup the callback
   SolverCallback callback;

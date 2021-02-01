@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -343,15 +343,17 @@ public:
         gl2psEnable(GL2PS_LINE_STIPPLE);
         for(int dim = 0; dim < 2; dim++) {
           for(std::size_t i = 0; i < f->cross[dim].size(); i++) {
-            glBegin(GL_LINE_STRIP);
-            for(std::size_t j = 0; j < f->cross[dim][i].size(); j++) {
-              double x = f->cross[dim][i][j].x();
-              double y = f->cross[dim][i][j].y();
-              double z = f->cross[dim][i][j].z();
-              _ctx->transform(x, y, z);
-              glVertex3d(x, y, z);
+            if(f->cross[dim][i].size() >= 2) {
+              glBegin(GL_LINE_STRIP);
+              for(std::size_t j = 0; j < f->cross[dim][i].size(); j++) {
+                double x = f->cross[dim][i][j].x();
+                double y = f->cross[dim][i][j].y();
+                double z = f->cross[dim][i][j].z();
+                _ctx->transform(x, y, z);
+                glVertex3d(x, y, z);
+              }
+              glEnd();
             }
-            glEnd();
           }
         }
         glDisable(GL_LINE_STIPPLE);
@@ -359,7 +361,7 @@ public:
       }
     }
 
-    if(f->cross[0].size() && f->cross[0][0].size() >= 2) {
+    if(f->cross[0].size() && f->cross[0][0].size()) {
       int idx = f->cross[0][0].size() / 2;
       if(CTX::instance()->geom.surfacesNum || f->getSelection() > 1) {
         double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,11 +8,11 @@
 #include "Numeric.h"
 
 StringXNumber WarpOptions_Number[] = {
-  {GMSH_FULLRC, "Factor", NULL, 1.},
-  {GMSH_FULLRC, "TimeStep", NULL, 0.},
-  {GMSH_FULLRC, "SmoothingAngle", NULL, 180.},
-  {GMSH_FULLRC, "View", NULL, -1.},
-  {GMSH_FULLRC, "OtherView", NULL, -1.}};
+  {GMSH_FULLRC, "Factor", nullptr, 1.},
+  {GMSH_FULLRC, "TimeStep", nullptr, 0.},
+  {GMSH_FULLRC, "SmoothingAngle", nullptr, 180.},
+  {GMSH_FULLRC, "View", nullptr, -1.},
+  {GMSH_FULLRC, "OtherView", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterWarpPlugin() { return new GMSH_WarpPlugin(); }
@@ -72,7 +72,7 @@ PView *GMSH_WarpPlugin::execute(PView *v)
   }
 
   // create smooth normal field if we don't have an explicit warp field
-  smooth_normals *normals = 0;
+  smooth_normals *normals = nullptr;
   if(otherView < 0) {
     normals = new smooth_normals(AngleTol);
     for(int ent = 0; ent < data1->getNumEntities(0); ent++) {

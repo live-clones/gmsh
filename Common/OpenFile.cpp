@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -722,11 +722,11 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
   gmsh_yysymbols.clear();
   gmsh_yystringsymbols.clear();
   std::map<std::string, std::vector<double> > cln(Msg::GetCommandLineNumbers());
-  for(std::map<std::string, std::vector<double> >::iterator it = cln.begin();
+  for(auto it = cln.begin();
       it != cln.end(); it++)
     gmsh_yysymbols[it->first].value = it->second;
   std::map<std::string, std::string> cls(Msg::GetCommandLineStrings());
-  for(std::map<std::string, std::string>::iterator it = cls.begin();
+  for(auto it = cls.begin();
       it != cls.end(); it++)
     gmsh_yystringsymbols[it->first] = std::vector<std::string>(1, it->second);
   gmsh_yyfactory.clear();
@@ -762,7 +762,7 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    file_watch_cb(0, 0);
+    file_watch_cb(nullptr, nullptr);
     FlGui::instance()->resetVisibility();
     FlGui::instance()->updateViews(true, false);
     FlGui::instance()->updateFields();
@@ -783,7 +783,7 @@ void OpenProjectMacFinder(const char *fileName)
     OpenProject(fileName);
     drawContext::global()->draw();
     if(CTX::instance()->launchSolverAtStartup >= 0)
-      solver_cb(0, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+      solver_cb(nullptr, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
   }
 #endif
 }

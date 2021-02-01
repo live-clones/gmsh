@@ -1,6 +1,34 @@
 #include <gmsh.h>
 #include <math.h>
 
+void create_mesh(std::size_t N, std::vector<double> &coords,
+                 std::vector<std::size_t> &nodes,
+                 std::vector<std::size_t> &tris)
+{
+  auto get_node_tag = [N](std::size_t i, std::size_t j) {
+    return (N + 1) * i + j + 1;
+  };
+  std::size_t k = 0, l = 0;
+  for(std::size_t i = 0; i < N + 1; i++) {
+    for(std::size_t j = 0; j < N + 1; j++) {
+      nodes[k] = get_node_tag(i, j);
+      coords[3 * k] = (double)i / N;
+      coords[3 * k + 1] = (double)j / N;
+      coords[3 * k + 2] = 0.05 * sin(10 * (double)(i + j) / N);
+      k++;
+      if(i > 0 && j > 0) {
+        tris[6 * l] = get_node_tag(i - 1, j - 1);
+        tris[6 * l + 1] = get_node_tag(i, j - 1);
+        tris[6 * l + 2] = get_node_tag(i - 1, j);
+        tris[6 * l + 3] = get_node_tag(i, j - 1);
+        tris[6 * l + 4] = get_node_tag(i, j);
+        tris[6 * l + 5] = get_node_tag(i - 1, j);
+        l++;
+      }
+    }
+  }
+}
+
 int main()
 {
   gmsh::initialize();
@@ -15,29 +43,7 @@ int main()
   // connectivities (node tags) of triangle elements
   std::vector<std::size_t> tris(N * N * 2 * 3);
 
-  auto tag = [N](int i, int j) {
-    return (N + 1) * i + j + 1;
-  };
-
-  int k = 0, l = 0;
-  for(int i = 0; i < N + 1; i++) {
-    for(int j = 0; j < N + 1; j++) {
-      nodes[k] = tag(i, j);
-      coords[3 * k] = (double)i / N;
-      coords[3 * k + 1] = (double)j / N;
-      coords[3 * k + 2] = 0.05 * sin(10 * (double)(i + j) / N);
-      k++;
-      if(i > 0 && j > 0) {
-        tris[6 * l] = tag(i - 1, j - 1);
-        tris[6 * l + 1] = tag(i, j - 1);
-        tris[6 * l + 2] = tag(i - 1, j);
-        tris[6 * l + 3] = tag(i, j - 1);
-        tris[6 * l + 4] = tag(i, j);
-        tris[6 * l + 5] = tag(i - 1, j);
-        l++;
-      }
-    }
-  }
+  create_mesh(N, coords, nodes, tris);
 
   double toc = gmsh::logger::getWallTime();
   printf("==> created nodes and connectivities in %g seconds\n", toc - tic);

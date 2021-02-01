@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -72,8 +72,10 @@ public:
                          int numPoints);
   bool addCompoundBSpline(int &tag, const std::vector<int> &curveTags,
                           int numPoints);
-  bool addLineLoop(int &tag, const std::vector<int> &curveTags,
-                   bool reorient = false);
+  bool addCurveLoop(int &tag, const std::vector<int> &curveTags,
+                    bool reorient = false);
+  bool addCurveLoops(const std::vector<int> &curveTags,
+                     std::vector<int> &curveLoopTags);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
   bool addDiscreteSurface(int &tag);
   bool addSurfaceFilling(int &tag, const std::vector<int> &wireTags,

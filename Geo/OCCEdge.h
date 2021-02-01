@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -28,13 +28,14 @@ private:
   Handle(Geom_Curve) _curve;
   mutable Handle(Geom2d_Curve) _curve2d;
   mutable GFace *_trimmed;
+  bool _project(const double p[3], double &u, double xyz[3]) const;
 
 public:
   OCCEdge(GModel *model, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2);
   virtual ~OCCEdge();
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual Range<double> parBounds(int i) const;
-  virtual Range<double> parBoundsOnFace(GFace *face = NULL) const;
+  virtual Range<double> parBoundsOnFace(GFace *face = nullptr) const;
   virtual GeomType geomType() const;
   virtual bool degenerate(int) const { return BRep_Tool::Degenerated(_c); }
   virtual GPoint point(double p) const;
@@ -42,6 +43,7 @@ public:
   virtual double curvature(double par) const;
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
+  virtual double parFromPoint(const SPoint3 &P) const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
   virtual void *getNativePtr() const { return (void *)&_c; }
   virtual int minimumMeshSegments() const;

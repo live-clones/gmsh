@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -681,9 +681,7 @@ void Navigator::move()
     if(!pad->button[pad->button_map[4]]) {
       if(pad->axe[pad->axe_map[1]] != 0.) {
         acc = -pad->axe[pad->axe_map[1]] * ctx->camera.Lc / 500. * frequency;
-        if(acc > 0.) {
-          speed = reference_speed + acc;
-        }
+        if(acc > 0.) { speed = reference_speed + acc; }
         else {
           speed = reference_speed + 2. * acc;
         }
@@ -720,18 +718,14 @@ void Navigator::move()
       angular_fr = 1.0 * (pad->axe[pad->axe_map[0]]) * reference_angle;
       if(pad->axe[pad->axe_map[1]] != 0.) {
         acc = -pad->axe[pad->axe_map[1]] * ctx->camera.Lc / 1000. * frequency;
-        if(acc > 0.) {
-          speed = reference_speed + acc;
-        }
+        if(acc > 0.) { speed = reference_speed + acc; }
         else {
           speed = reference_speed + 2. * acc;
         }
         speed = std::max(speed, (frequency * ctx->camera.Lc / 1000.));
         reference_speed = std::min(speed, (frequency * (ctx->camera.Lc)));
       }
-      if(pad->button[pad->button_map[6]]) {
-        speed = reference_speed;
-      }
+      if(pad->button[pad->button_map[6]]) { speed = reference_speed; }
       else {
         speed = 0.;
       }
@@ -747,11 +741,9 @@ void Navigator::move()
     //-------------------------------------
     break; // end of mode DIVER
 
-  case PLANE:
-    break; // end of mode PLANE
+  case PLANE: break; // end of mode PLANE
 
-  case CAR:
-    break; // end of mode CAR
+  case CAR: break; // end of mode CAR
 
   default: break;
 

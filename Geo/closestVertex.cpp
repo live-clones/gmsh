@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -23,7 +23,7 @@ closestVertexFinder::closestVertexFinder(GEntity *ge, bool closure) : nbVtcs(0)
   vCoord = annAllocPts(nbVtcs, 3);
 
   int k = 0;
-  std::set<MVertex *>::iterator vIter = vtcs.begin();
+  auto vIter = vtcs.begin();
   for(; vIter != vtcs.end(); ++vIter, ++k) {
     MVertex *mv = *vIter;
     vCoord[k][0] = mv->x();
@@ -33,7 +33,8 @@ closestVertexFinder::closestVertexFinder(GEntity *ge, bool closure) : nbVtcs(0)
   }
   kdtree = new ANNkd_tree(vCoord, nbVtcs, 3);
 #else
-  Msg::Warning("Gmsh must be compiled with ANN support for finding closest nodes");
+  Msg::Warning(
+    "Gmsh must be compiled with ANN support for finding closest nodes");
 #endif
 }
 
@@ -54,13 +55,13 @@ MVertex *closestVertexFinder ::operator()(const SPoint3 &p)
 {
 #if defined(HAVE_ANN)
 
-  if(nbVtcs == 0) return NULL;
+  if(nbVtcs == 0) return nullptr;
 
   double xyz[3] = {p.x(), p.y(), p.z()};
   kdtree->annkSearch(xyz, 1, index, dist);
   return vertex[index[0]];
 #else
-  return NULL;
+  return nullptr;
 #endif
 }
 
@@ -69,7 +70,7 @@ MVertex *closestVertexFinder ::operator()(const SPoint3 &p,
 {
 #if defined(HAVE_ANN)
 
-  if(nbVtcs == 0) return NULL;
+  if(nbVtcs == 0) return nullptr;
 
   double ori[4] = {p.x(), p.y(), p.z(), 1};
   double xyz[4] = {0, 0, 0, 0};
@@ -83,6 +84,6 @@ MVertex *closestVertexFinder ::operator()(const SPoint3 &p,
   kdtree->annkSearch(xyz, 1, index, dist);
   return vertex[index[0]];
 #else
-  return NULL;
+  return nullptr;
 #endif
 }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -33,15 +33,15 @@ namespace {
       for(int iZoneSol = 1; iZoneSol <= nbZoneSol; iZoneSol++) {
         // get FlowSolution info
         char rawSolName[CGNS_MAX_STR_LEN];
-        GridLocation_t location;
+        CGNS_ENUMT(GridLocation_t) location;
         cgnsErr = cg_sol_info(fileIndex, baseIndex, iZone, iZoneSol, rawSolName,
                               &location);
         if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
         const std::string solName(rawSolName);
         PViewDataGModel::DataType type;
-        if(location == CellCenter)
+        if(location == CGNS_ENUMV(CellCenter))
           type = PViewDataGModel::ElementData;
-        else if(location == Vertex) {
+        else if(location == CGNS_ENUMV(Vertex)) {
           if(nbZone > 1) {
             Msg::Warning(
               "Multi-zone node-based solutions not supported in CGNS "
@@ -71,7 +71,7 @@ namespace {
 
         // get names of fields
         for(int iField = 1; iField <= nbField; iField++) {
-          DataType_t dataType;
+          CGNS_ENUMT(DataType_t) dataType;
           char rawFieldName[CGNS_MAX_STR_LEN];
           cgnsErr = cg_field_info(fileIndex, baseIndex, iZone, iZoneSol, iField,
                                   &dataType, rawFieldName);
@@ -91,10 +91,8 @@ namespace {
                 const std::string &fileName, int fileIndex, int baseIndex,
                 const std::map<SolFieldName, PViewDataGModel::DataType> &fields)
   {
-    typedef std::map<SolFieldName, PViewDataGModel::DataType>::const_iterator
-      FieldIter;
     int index = -1;
-    for(FieldIter it = fields.begin(); it != fields.end(); ++it) {
+    for(auto it = fields.begin(); it != fields.end(); ++it) {
       // field name and type
       const SolFieldName &solFieldName = it->first;
       const PViewDataGModel::DataType &fieldType = it->second;
@@ -107,7 +105,7 @@ namespace {
         fullFieldName, -1, -1); // DBGTT: to be checked for multi-file
       PViewDataGModel *d;
       bool create;
-      if(p != 0) {
+      if(p != nullptr) {
         d = dynamic_cast<PViewDataGModel *>(p->getData());
         create = false;
       }

@@ -85,14 +85,13 @@ double QualPatchDefParameters::elBadness(MElement *el, GEntity *gEnt) const
   if(_excludeHex && (typ == TYPE_HEX)) return 1.;
   if(_excludePrism && (typ == TYPE_PRI)) return 1.;
   if(_excludeBL) {
-    BoundaryLayerColumns *blc = 0;
+    BoundaryLayerColumns *blc = nullptr;
     if(gEnt->dim() == 2)
       blc = static_cast<GFace *>(gEnt)->getColumns();
     else if(gEnt->dim() == 3)
       blc = static_cast<GRegion *>(gEnt)->getColumns();
     if(blc) {
-      std::map<MElement *, MElement *>::iterator itBLEl =
-        blc->_toFirst.find(el);
+      auto itBLEl = blc->_toFirst.find(el);
       if(itBLEl != blc->_toFirst.end()) return 1.;
     }
   }
@@ -121,14 +120,13 @@ int QualPatchDefParameters::inPatch(const SPoint3 &badBary, double limDist,
   if(_excludeHex && (typ == TYPE_HEX)) return -1;
   if(_excludePrism && (typ == TYPE_PRI)) return -1;
   if(_excludeBL) {
-    BoundaryLayerColumns *blc = 0;
+    BoundaryLayerColumns *blc = nullptr;
     if(gEnt->dim() == 2)
       blc = static_cast<GFace *>(gEnt)->getColumns();
     else if(gEnt->dim() == 3)
       blc = static_cast<GRegion *>(gEnt)->getColumns();
     if(blc) {
-      std::map<MElement *, MElement *>::iterator itBLEl =
-        blc->_toFirst.find(el);
+      auto itBLEl = blc->_toFirst.find(el);
       if(itBLEl != blc->_toFirst.end()) return -1;
     }
   }

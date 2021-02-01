@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -35,7 +35,7 @@ namespace {
 
     // read element interpolation tranformation info
     char interpName[CGNS_MAX_STR_LEN];
-    ElementType_t cgnsType;
+    CGNS_ENUMT(ElementType_t) cgnsType;
     cgnsErr = cg_element_interpolation_read(fileIndex, baseIndex, familyIndex,
                                             interpIndex, interpName, &cgnsType);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
@@ -110,11 +110,11 @@ int readScale(int fileIndex, int baseIndex, double &scale)
 
   scale = 1.;
 
-  MassUnits_t mass;
-  LengthUnits_t length;
-  TimeUnits_t time;
-  TemperatureUnits_t temperature;
-  AngleUnits_t angle;
+  CGNS_ENUMT(MassUnits_t) mass;
+  CGNS_ENUMT(LengthUnits_t) length;
+  CGNS_ENUMT(TimeUnits_t) time;
+  CGNS_ENUMT(TemperatureUnits_t) temperature;
+  CGNS_ENUMT(AngleUnits_t) angle;
   cgnsErr = cg_goto(fileIndex, baseIndex, "end");
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
   cgnsErr = cg_units_read(&mass, &length, &time, &temperature, &angle);
@@ -126,23 +126,23 @@ int readScale(int fileIndex, int baseIndex, double &scale)
     return cgnsError(__FILE__, __LINE__, fileIndex);
 
   switch(length) {
-  case Centimeter:
+  case CGNS_ENUMT(Centimeter):
     Msg::Info("Length unit in CGNS file is cm, rescaling");
     scale = 0.01;
     break;
-  case Millimeter:
+  case CGNS_ENUMT(Millimeter):
     Msg::Info("Length unit in CGNS file is mm, rescaling");
     scale = 0.001;
     break;
-  case Foot:
+  case CGNS_ENUMT(Foot):
     Msg::Info("Length unit in CGNS file is feet, rescaling");
     scale = 0.3048;
     break;
-  case Inch:
+  case CGNS_ENUMT(Inch):
     Msg::Info("Length unit in CGNS file is inch, rescaling");
     scale = 0.0254;
     break;
-  case Meter:
+  case CGNS_ENUMT(Meter):
     Msg::Info("Length unit in CGNS file is meter, not rescaling");
     break;
   case CG_Null:
@@ -211,13 +211,13 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
   cgsize_t startNode = 0;
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     // read zone type
-    ZoneType_t zoneType;
+    CGNS_ENUMT(ZoneType_t) zoneType;
     cgnsErr = cg_zone_type(fileIndex, baseIndex, iZone, &zoneType);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
     // create zone
     int err = 1;
-    if(zoneType == Structured) {
+    if(zoneType == CGNS_ENUMV(Structured)) {
       if(meshDim == 2) {
         allZones[iZone] =
           new CGNSZoneStruct<2>(fileIndex, baseIndex, iZone, meshDim, startNode,
@@ -229,7 +229,7 @@ int createZones(int fileIndex, int baseIndex, int meshDim,
                                 allEltNodeTransfo, err);
       }
     }
-    else if(zoneType == Unstructured) {
+    else if(zoneType == CGNS_ENUMV(Unstructured)) {
       allZones[iZone] =
         new CGNSZoneUnstruct(fileIndex, baseIndex, iZone, meshDim, startNode,
                              allEltNodeTransfo, err);
@@ -284,7 +284,7 @@ void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
         // skip if another connnection with the same slave entity already
         // exists, or if the inverse connection already exists
         if(entCon.find(sEnt) != entCon.end()) continue;
-        EntConnect::iterator itInv = entCon.find(mEnt);
+        auto itInv = entCon.find(mEnt);
         if((itInv != entCon.end()) && (itInv->second == sEnt)) continue;
 
         // store connection and transformation and update corresponding vertices
@@ -296,7 +296,7 @@ void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
   }
 
   // set mesh master and transformation between entities
-  for(EntConnect::iterator it = entCon.begin(); it != entCon.end(); ++it) {
+  for(auto it = entCon.begin(); it != entCon.end(); ++it) {
     GEntity *sEnt = it->first, *mEnt = it->second;
     sEnt->setMeshMaster(mEnt, *(entTfo[sEnt]));
   }
@@ -358,8 +358,6 @@ void setGeomAndPhysicalEntities(GModel *model, int meshDim,
                                 std::vector<std::string> &allPhysName,
                                 std::multimap<std::string, int> &geomName2Phys)
 {
-  typedef std::multimap<std::string, int>::iterator Geom2PhysIter;
-
   // loop over dimensions
   for(int d = 0; d <= meshDim; d++) {
     // get entities fo dimension d
@@ -377,9 +375,8 @@ void setGeomAndPhysicalEntities(GModel *model, int meshDim,
       model->setElementaryName(d, geomTag, geomName);
 
       // associate physical tags to geometrical entity and store physical names
-      std::pair<Geom2PhysIter, Geom2PhysIter> range =
-        geomName2Phys.equal_range(geomName);
-      for(Geom2PhysIter it = range.first; it != range.second; ++it) {
+      auto range = geomName2Phys.equal_range(geomName);
+      for(auto it = range.first; it != range.second; ++it) {
         const int physTag = it->second;
         std::vector<int> &entPhys = ent[iEnt]->physicals;
         if(std::find(entPhys.begin(), entPhys.end(), physTag) ==

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -93,42 +93,42 @@ private:
     if(dim > -1 && dim < 5)
       return _hMatrix[dim];
     else
-      return NULL;
+      return nullptr;
   }
   gmp_matrix *getKerHMatrix(int dim) const
   {
     if(dim > -1 && dim < 5)
       return _kerH[dim];
     else
-      return NULL;
+      return nullptr;
   }
   gmp_matrix *getCodHMatrix(int dim) const
   {
     if(dim > -1 && dim < 5)
       return _codH[dim];
     else
-      return NULL;
+      return nullptr;
   }
   gmp_matrix *getJMatrix(int dim) const
   {
     if(dim > -1 && dim < 5)
       return _jMatrix[dim];
     else
-      return NULL;
+      return nullptr;
   }
   gmp_matrix *getQMatrix(int dim) const
   {
     if(dim > -1 && dim < 5)
       return _qMatrix[dim];
     else
-      return NULL;
+      return nullptr;
   }
   gmp_matrix *getHbasis(int dim) const
   {
     if(dim > -1 && dim < 5)
       return _hbasis[dim];
     else
-      return NULL;
+      return nullptr;
   }
 
   // local deformation tools for chains
@@ -160,7 +160,7 @@ public:
     if(dim > -1 && dim < 5)
       return _hMatrix[dim];
     else
-      return NULL;
+      return nullptr;
   }
 
   // compute basis for kernel and codomain of boundary operator matrix
@@ -189,7 +189,7 @@ public:
   // get the cell index
   int getCellIndex(Cell *cell)
   {
-    citer cit = _cellIndices[cell->getDim()].find(cell);
+    auto cit = _cellIndices[cell->getDim()].find(cell);
     if(cit != lastCell(cell->getDim()))
       return cit->second;
     else
@@ -202,8 +202,8 @@ public:
   // (deform: with local deformations to make chain smoother and to have
   // smaller support, deformed chain is homologous to the old one,
   // only works for chains of the primary chain complex)
-  void getBasisChain(std::map<Cell *, int, CellPtrLessThan> &chain, int num, int dim,
-                     int basis, bool deform = false);
+  void getBasisChain(std::map<Cell *, int, CellPtrLessThan> &chain, int num,
+                     int dim, int basis, bool deform = false);
   // get rank of a basis
   int getBasisSize(int dim, int basis);
   // homology torsion coefficient for dim-dimensional chain num
@@ -212,7 +212,7 @@ public:
   // apply a transformation T to a basis (T should be unimodular)
   void transformBasis(gmp_matrix *T, int dim, int basis)
   {
-    if(basis == 3 && _hbasis[dim] != NULL) {
+    if(basis == 3 && _hbasis[dim] != nullptr) {
       gmp_matrix_right_mult(_hbasis[dim], T);
     }
   }

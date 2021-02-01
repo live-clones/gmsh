@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -30,15 +30,13 @@ static void getDegeneratedVertices(
 {
   degenerated.clear();
 
-  std::vector<BDS_Edge *>::iterator it = m.edges.begin();
+  auto it = m.edges.begin();
 
   while(it != m.edges.end()) {
     BDS_Edge *e = *it;
     if(!e->deleted && e->numfaces() == 1) {
-      std::map<BDS_Point *, MVertex *, PointLessThan>::iterator itp1 =
-        recoverMap->find(e->p1);
-      std::map<BDS_Point *, MVertex *, PointLessThan>::iterator itp2 =
-        recoverMap->find(e->p2);
+      auto itp1 = recoverMap->find(e->p1);
+      auto itp2 = recoverMap->find(e->p2);
       if(itp1 != recoverMap->end() && itp2 != recoverMap->end() &&
          itp1->second == itp2->second) {
         degenerated.insert(itp1->second);
@@ -88,7 +86,7 @@ static double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
 static double NewGetLc(BDS_Point *point, GFace *gf)
 {
   return Extend1dMeshIn2dSurfaces(gf) ? std::min(point->lc(), point->lcBGM()) :
-    point->lcBGM();
+                                        point->lcBGM();
 }
 
 static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f)
@@ -168,8 +166,8 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
 static bool neighboringModified(BDS_Point *p)
 {
   if(p->config_modified) return true;
-  std::vector<BDS_Edge *>::iterator it = p->edges.begin();
-  std::vector<BDS_Edge *>::iterator ite = p->edges.end();
+  auto it = p->edges.begin();
+  auto ite = p->edges.end();
   while(it != ite) {
     BDS_Point *o = (*it)->othervertex(p);
     if(o->config_modified) return true;
@@ -363,7 +361,7 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
 static void getDegeneracy(BDS_Mesh &m, std::vector<BDS_Point *> &deg)
 {
   deg.clear();
-  std::set<BDS_Point *, PointLessThan>::iterator itp = m.points.begin();
+  auto itp = m.points.begin();
   while(itp != m.points.end()) {
     if((*itp)->degenerated) deg.push_back(*itp);
     itp++;
@@ -410,12 +408,10 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
   double t1 = Cpu();
   std::vector<std::pair<double, BDS_Edge *> > edges;
 
-
   SPoint2 out(gf->parBounds(0).high() + 1.21982512,
               gf->parBounds(1).high() + 1.8635436432);
 
-  for(std::set<BDS_Point *, PointLessThan>::iterator it = m.points.begin();
-      it != m.points.end(); ++it) {
+  for(auto it = m.points.begin(); it != m.points.end(); ++it) {
     BDS_Point *p = *it;
     if(!p->_periodicCounterpart && (p->g && p->g->classif_degree == 2)) {
       for(size_t i = 0; i < p->edges.size(); i++) {
@@ -434,7 +430,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
     }
   }
 
-  std::vector<BDS_Edge *>::const_iterator it = m.edges.begin();
+  auto it = m.edges.begin();
   while(it != m.edges.end()) {
     if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g &&
        (*it)->g->classif_degree == 2) {
@@ -452,7 +448,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
 
   for(std::size_t i = 0; i < edges.size(); ++i) {
     BDS_Edge *e = edges[i].second;
-    BDS_Point *mid = NULL;
+    BDS_Point *mid = nullptr;
     if(!e->deleted &&
        (neighboringModified(e->p1) || neighboringModified(e->p2))) {
       double U1 = e->p1->u;
@@ -511,9 +507,9 @@ double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e,
 
   double maxLc = 0.0;
   std::vector<BDS_Edge *> edges(p->edges);
-  std::vector<BDS_Edge *>::iterator eit = edges.begin();
+  auto eit = edges.begin();
   while(eit != edges.end()) {
-    BDS_Point *newP1 = 0, *newP2 = 0;
+    BDS_Point *newP1 = nullptr, *newP2 = nullptr;
     if((*eit)->p1 == p) {
       newP1 = o;
       newP2 = (*eit)->p2;
@@ -537,9 +533,8 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
                       int &nb_collaps, double &t)
 {
   double t1 = Cpu();
-  std::vector<BDS_Edge *>::const_iterator it = m.edges.begin();
   std::vector<std::pair<double, BDS_Edge *> > edges;
-
+  auto it = m.edges.begin();
   while(it != m.edges.end()) {
     if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g &&
        (*it)->g->classif_degree == 2) {
@@ -555,10 +550,9 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
     BDS_Edge *e = edges[i].second;
     if(!e->deleted &&
        (neighboringModified(e->p1) || neighboringModified(e->p2))) {
-
       double lone1 = 0.;
       bool collapseP1Allowed = false;
-      if (e->p1->iD > MAXNP){
+      if(e->p1->iD > MAXNP) {
         lone1 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p1);
         collapseP1Allowed =
           std::abs(lone1 - 1.0) < std::abs(edges[i].first - 1.0);
@@ -572,7 +566,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
           std::abs(lone2 - 1.0) < std::abs(edges[i].first - 1.0);
       }
 
-      BDS_Point *p = 0;
+      BDS_Point *p = nullptr;
       if(collapseP1Allowed && collapseP2Allowed) {
         if(std::abs(lone1 - lone2) < 1e-12)
           p = e->p1->iD < e->p2->iD ? e->p1 : e->p2;
@@ -584,8 +578,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
       else if(collapseP2Allowed && !collapseP1Allowed)
         p = e->p2;
 
-      if(p && m.collapse_edge_parametric(e, p))
-        nb_collaps++;
+      if(p && m.collapse_edge_parametric(e, p)) nb_collaps++;
     }
   }
   t += (Cpu() - t1);
@@ -596,7 +589,7 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q,
 {
   double t1 = Cpu();
   for(int i = 0; i < 1; i++) {
-    std::set<BDS_Point *, PointLessThan>::iterator itp = m.points.begin();
+    auto itp = m.points.begin();
     while(itp != m.points.end()) {
       if(neighboringModified(*itp)) {
         if(m.smooth_point_centroid(*itp, gf, threshold)) nb_smooth++;
@@ -611,10 +604,10 @@ static void
 computeNodalSizes(GFace *gf, BDS_Mesh &m,
                   std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap)
 {
-  std::set<BDS_Point *, PointLessThan>::iterator itp = m.points.begin();
+  auto itp = m.points.begin();
   while(itp != m.points.end()) {
-    std::vector<BDS_Edge *>::iterator it = (*itp)->edges.begin();
-    std::vector<BDS_Edge *>::iterator ite = (*itp)->edges.end();
+    auto it = (*itp)->edges.begin();
+    auto ite = (*itp)->edges.end();
     double L = 0;
     int ne = 0;
     while(it != ite) {
@@ -634,20 +627,18 @@ computeNodalSizes(GFace *gf, BDS_Mesh &m,
   }
   return;
   {
-    std::set<BDS_Point *, PointLessThan>::iterator itp = m.points.begin();
+    auto itp = m.points.begin();
     while(itp != m.points.end()) {
       (*itp)->lc() = MAX_LC;
       ++itp;
     }
-    std::vector<BDS_Edge *>::const_iterator it = m.edges.begin();
+    auto it = m.edges.begin();
     while(it != m.edges.end()) {
       bool degenerated = false;
 
       if(recoverMap) {
-        std::map<BDS_Point *, MVertex *, PointLessThan>::iterator itp1 =
-          recoverMap->find((*it)->p1);
-        std::map<BDS_Point *, MVertex *, PointLessThan>::iterator itp2 =
-          recoverMap->find((*it)->p2);
+        auto itp1 = recoverMap->find((*it)->p1);
+        auto itp2 = recoverMap->find((*it)->p2);
         if(itp1 != recoverMap->end() && itp2 != recoverMap->end() &&
            itp1->second == itp2->second) {
           degenerated = true;
@@ -677,8 +668,8 @@ computeNodalSizes(GFace *gf, BDS_Mesh &m,
     while(1) {
       bool allTouched = true;
       for(size_t i = 0; i < pts.size(); i++) {
-        std::vector<BDS_Edge *>::const_iterator it = pts[i]->edges.begin();
-        std::vector<BDS_Edge *>::const_iterator ite = pts[i]->edges.end();
+        auto it = pts[i]->edges.begin();
+        auto ite = pts[i]->edges.end();
         while(it != ite) {
           BDS_Point *p = (*it)->othervertex(pts[i]);
           if(p->lc() != MAX_LC) {
@@ -704,16 +695,14 @@ void modifyInitialMeshToRemoveDegeneracies(
   std::vector<BDS_Edge *> degenerated_edges;
   getDegeneratedVertices(m, recoverMap, degenerated, degenerated_edges);
 
-  for(std::map<BDS_Point *, MVertex *, PointLessThan>::iterator it =
-        recoverMap->begin();
-      it != recoverMap->end(); ++it) {
-    std::set<MVertex *, MVertexPtrLessThan>::iterator it2 =
-      degenerated.find(it->second);
+  for(auto it = recoverMap->begin(); it != recoverMap->end(); ++it) {
+    auto it2 = degenerated.find(it->second);
     if(it2 != degenerated.end()) {
       for(size_t K = 0; K < degenerated_edges.size(); K++) {
         if(degenerated_edges[K]->p1 == it->first ||
            degenerated_edges[K]->p2 == it->first) {
-          if(std::abs(degenerated_edges[K]->p1->u - degenerated_edges[K]->p2->u) < 1e-12) {
+          if(std::abs(degenerated_edges[K]->p1->u -
+                      degenerated_edges[K]->p2->u) < 1e-12) {
             Msg::Debug(
               "Degenerated edge on u = cst axis: treated as well now!");
             it->first->degenerated = 2;
@@ -752,10 +741,10 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   // face number to avoid mesh motion
   if(recoverMapInv) {
     std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
-    std::vector<GVertex *>::iterator itvx = emb_vertx.begin();
+    auto itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       MVertex *v = *((*itvx)->mesh_vertices.begin());
-      std::map<MVertex *, BDS_Point *>::iterator itp = recoverMapInv->find(v);
+      auto itp = recoverMapInv->find(v);
       if(itp != recoverMapInv->end()) {
         BDS_Point *p = itp->second;
         m.add_geom(-1, 2);
@@ -773,7 +762,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   const double MINE_ = 0.7, MAXE_ = 1.4;
 
   {
-    std::vector<BDS_Edge *>::iterator it = m.edges.begin();
+    auto it = m.edges.begin();
     while(it != m.edges.end()) {
       if(!(*it)->deleted) {
         (*it)->p1->config_modified = true;
@@ -868,12 +857,12 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     m.cleanup();
 
     double minL = 1.e22, maxL = 0;
-    std::vector<BDS_Edge *>::iterator it = m.edges.begin();
+    auto it = m.edges.begin();
     int LARGE = 0, SMALL = 0, TOTAL = 0;
     while(it != m.edges.end()) {
       if(!(*it)->deleted) {
         double lone = 2 * (*it)->length() /
-          (NewGetLc((*it)->p1, gf) + NewGetLc((*it)->p2, gf));
+                      (NewGetLc((*it)->p1, gf) + NewGetLc((*it)->p2, gf));
         if(lone > maxE) LARGE++;
         if(lone < minE) SMALL++;
         TOTAL++;

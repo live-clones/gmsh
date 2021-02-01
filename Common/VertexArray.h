@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -208,10 +208,10 @@ public:
   // element if another one with the same barycenter is not already
   // present)
   void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
-           MElement *ele = 0, bool unique = true, bool boundary = false);
-  void add(double *x, double *y, double *z, SVector3 *n, unsigned char *r = 0,
-           unsigned char *g = 0, unsigned char *b = 0, unsigned char *a = 0,
-           MElement *ele = 0, bool unique = true, bool boundary = false);
+           MElement *ele = nullptr, bool unique = true, bool boundary = false);
+  void add(double *x, double *y, double *z, SVector3 *n, unsigned char *r = nullptr,
+           unsigned char *g = nullptr, unsigned char *b = nullptr, unsigned char *a = nullptr,
+           MElement *ele = nullptr, bool unique = true, bool boundary = false);
   // finalize the arrays
   void finalize();
   // sort the arrays with elements back to front wrt the eye position

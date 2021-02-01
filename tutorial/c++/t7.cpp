@@ -25,10 +25,11 @@ int main(int argc, char **argv)
     return 0;
   }
 
-  // If the post-processing view was model-based instead of list-based (i.e. if it
-  // was based on an actual mesh), we would need to create a new model to contain
-  // the geometry so that meshing it does not destroy the background mesh. It's not
-  // necessary here since the view is list-based, but it does no harm:
+  // If the post-processing view was model-based instead of list-based (i.e. if
+  // it was based on an actual mesh), we would need to create a new model to
+  // contain the geometry so that meshing it does not destroy the background
+  // mesh. It's not necessary here since the view is list-based, but it does no
+  // harm:
   gmsh::model::add("t7");
 
   // Create a simple rectangular geometry:
@@ -47,6 +48,7 @@ int main(int argc, char **argv)
 
   // Add the post-processing view as a new size field:
   int bg_field = gmsh::model::mesh::field::add("PostView");
+  gmsh::model::mesh::field::setNumber(bg_field, "ViewIndex", 0);
 
   // Apply the view as the current background mesh size field:
   gmsh::model::mesh::field::setAsBackgroundMesh(bg_field);

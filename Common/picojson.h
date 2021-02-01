@@ -447,7 +447,7 @@ inline const value &value::get(const std::string &key) const {
 inline value &value::get(const std::string &key) {
   static value s_null;
   PICOJSON_ASSERT(is<object>());
-  object::iterator i = u_.object_->find(key);
+  auto i = u_.object_->find(key);
   return i != u_.object_->end() ? i->second : s_null;
 }
 
@@ -1063,7 +1063,7 @@ template <typename Iter> inline std::string parse(value &out, Iter &pos, const I
 
 template <typename Context, typename Iter> inline Iter _parse(Context &ctx, const Iter &first, const Iter &last, std::string *err) {
   input<Iter> in(first, last);
-  if (!_parse(ctx, in) && err != NULL) {
+  if (!_parse(ctx, in) && err != nullptr) {
     char buf[64];
     SNPRINTF(buf, sizeof(buf), "syntax error at line %d near: ", in.line());
     *err = buf;

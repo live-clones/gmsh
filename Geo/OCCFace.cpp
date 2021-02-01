@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -71,10 +71,10 @@ void OCCFace::_setup()
     std::vector<GEdge *> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()) {
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-      GEdge *e = 0;
+      GEdge *e = nullptr;
       if(model()->getOCCInternals())
         e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
-      if(!e) { Msg::Error("Unknown curve in face %d", tag()); }
+      if(!e) { Msg::Error("Unknown curve in surface %d", tag()); }
       else if(edge.Orientation() == TopAbs_INTERNAL) {
         Msg::Debug("Adding embedded curve %d in surface %d", e->tag(), tag());
         embedded_edges.push_back(e);
@@ -113,7 +113,7 @@ void OCCFace::_setup()
   for(exp2.Init(_s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
       exp2.More(); exp2.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
-    GVertex *v = 0;
+    GVertex *v = nullptr;
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) { Msg::Error("Unknown point in surface %d", tag()); }
@@ -161,8 +161,7 @@ void OCCFace::_setup()
 
 SBoundingBox3d OCCFace::bounds(bool fast)
 {
-  if(CTX::instance()->geom.occBoundsUseSTL)
-    buildSTLTriangulation();
+  if(CTX::instance()->geom.occBoundsUseSTL) buildSTLTriangulation();
 
   Bnd_Box b;
   try {
@@ -175,7 +174,8 @@ SBoundingBox3d OCCFace::bounds(bool fast)
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
 
   if(CTX::instance()->geom.occBoundsUseSTL)
-    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
+    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax,
+                                             zmax);
 
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
@@ -230,6 +230,46 @@ GPoint OCCFace::point(double par1, double par2) const
   return GPoint(val.X(), val.Y(), val.Z(), this, pp);
 }
 
+bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
+{
+  // little tolerance to converge on the borders of the surface
+  double umin = _umin;
+  double vmin = _vmin;
+  double umax = _umax;
+  double vmax = _vmax;
+  if(!_periodic[0]) {
+    const double du = _umax - _umin;
+    const double utol = std::max(fabs(du) * 1e-8, 1e-12);
+    umin -= utol;
+    umax += utol;
+  }
+  if(!_periodic[1]) {
+    const double dv = _vmax - _vmin;
+    const double vtol = std::max(fabs(dv) * 1e-8, 1e-12);
+    vmin -= vtol;
+    vmax += vtol;
+  }
+  gp_Pnt pnt(p[0], p[1], p[2]);
+  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
+  if(!proj.NbPoints()) {
+    Msg::Warning("Projection of point (%g, %g, %g) on surface %d failed", p[0],
+                 p[1], p[2], tag());
+    return false;
+  }
+  proj.LowerDistanceParameters(uv[0], uv[1]);
+
+  if(uv[0] < umin || uv[0] > umax || uv[1] < vmin || uv[1] > vmax)
+    Msg::Warning("Point projection is out of surface parameter bounds");
+
+  if(xyz) {
+    pnt = proj.NearestPoint();
+    xyz[0] = pnt.X();
+    xyz[1] = pnt.Y();
+    xyz[2] = pnt.Z();
+  }
+  return true;
+}
+
 GPoint OCCFace::closestPoint(const SPoint3 &qp,
                              const double initialGuess[2]) const
 {
@@ -238,37 +278,11 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   if(CTX::instance()->geom.occUseGenericClosestPoint)
     return GFace::closestPoint(qp, initialGuess);
 #endif
-
-  // little tolerance to converge on the borders of the surface
-  const double du = _umax - _umin;
-  const double dv = _vmax - _vmin;
-  double umin = _umin - std::max(fabs(du) / 100.0, 1e-12);
-  double vmin = _vmin - std::max(fabs(dv) / 100.0, 1e-12);
-  double umax = _umax + std::max(fabs(du) / 100.0, 1e-12);
-  double vmax = _vmax + std::max(fabs(dv) / 100.0, 1e-12);
-
-  gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
-
-  if(!proj.NbPoints()) {
-    Msg::Debug("OCC projection of point on surface failed");
-    GPoint gp(0, 0);
-    gp.setNoSuccess();
-    return gp;
-  }
-
-  double pp[2] = {initialGuess[0], initialGuess[1]};
-  proj.LowerDistanceParameters(pp[0], pp[1]);
-
-  if((pp[0] < umin || umax < pp[0]) || (pp[1] < vmin || vmax < pp[1])) {
-    Msg::Warning("Point projection is out of face bounds");
-    GPoint gp(0, 0);
-    gp.setNoSuccess();
-    return gp;
-  }
-
-  pnt = proj.NearestPoint();
-  return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, pp);
+  double uv[2], xyz[3];
+  if(_project(qp.data(), uv, xyz))
+    return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
+  else
+    return GFace::closestPoint(qp, initialGuess);
 }
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
@@ -276,25 +290,11 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
   // less robust but can be much faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
     return GFace::parFromPoint(qp);
-
-  gp_Pnt pnt(qp.x(), qp.y(), qp.z());
-
-  // little tolerance to converge on the borders of the surface
-  const double du = _umax - _umin;
-  const double dv = _vmax - _vmin;
-  double umin = _umin - std::max(fabs(du) / 100.0, 1e-12);
-  double vmin = _vmin - std::max(fabs(dv) / 100.0, 1e-12);
-  double umax = _umax + std::max(fabs(du) / 100.0, 1e-12);
-  double vmax = _vmax + std::max(fabs(dv) / 100.0, 1e-12);
-
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
-  if(!proj.NbPoints()) {
-    Msg::Error("OCC projection of point on surface failed");
+  double uv[2];
+  if(_project(qp.data(), uv, nullptr))
+    return SPoint2(uv[0], uv[1]);
+  else
     return GFace::parFromPoint(qp);
-  }
-  double U, V;
-  proj.LowerDistanceParameters(U, V);
-  return SPoint2(U, V);
 }
 
 GEntity::GeomType OCCFace::geomType() const
@@ -366,9 +366,8 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
     double angle = 0.;
     double v[3] = {pt.x(), pt.y(), pt.z()};
 
-    std::vector<int>::const_iterator ito = l_dirs.begin();
-    for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
-        it != l_edges.end(); it++) {
+    auto ito = l_dirs.begin();
+    for(auto it = l_edges.begin(); it != l_edges.end(); it++) {
       GEdge *c = *it;
       int ori = 1;
       if(ito != l_dirs.end()) {
@@ -406,7 +405,7 @@ bool OCCFace::buildSTLTriangulation(bool force)
   stl_vertices_xyz.clear();
   stl_triangles.clear();
   if(!model()->getOCCInternals()->makeFaceSTL(
-      _s, stl_vertices_uv, stl_vertices_xyz, stl_normals, stl_triangles)) {
+       _s, stl_vertices_uv, stl_vertices_xyz, stl_normals, stl_triangles)) {
     Msg::Info("OpenCASCADE triangulation of surface %d failed", tag());
     // add a dummy triangle so that we won't try again
     stl_vertices_uv.push_back(SPoint2(0., 0.));
@@ -417,12 +416,14 @@ bool OCCFace::buildSTLTriangulation(bool force)
     return false;
   }
 
-  // compute the triangulation of the edges which are the boundaries of this face
+  // compute the triangulation of the edges which are the boundaries of this
+  // face
   std::vector<GEdge *> const &e = edges();
-  for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end(); it++) {
-    if ((*it)->stl_vertices_xyz.size() == 0) {
+  for(auto it = e.begin(); it != e.end(); it++) {
+    if((*it)->stl_vertices_xyz.size() == 0) {
       const TopoDS_Edge *c = (TopoDS_Edge *)(*it)->getNativePtr();
-      model()->getOCCInternals()->makeEdgeSTLFromFace(*c, _s, &((*it)->stl_vertices_xyz));
+      model()->getOCCInternals()->makeEdgeSTLFromFace(
+        *c, _s, &((*it)->stl_vertices_xyz));
     }
   }
 

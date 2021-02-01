@@ -150,11 +150,9 @@ int main(int argc, char **argv)
     int NN = 30;
     std::vector<std::pair<int, int> > tmp;
     gmsh::model::getEntities(tmp, 1);
-    for(auto c: tmp) {
-      gmsh::model::mesh::setTransfiniteCurve(c.second, NN);
-    }
+    for(auto c : tmp) { gmsh::model::mesh::setTransfiniteCurve(c.second, NN); }
     gmsh::model::getEntities(tmp, 2);
-    for(auto s: tmp) {
+    for(auto s : tmp) {
       gmsh::model::mesh::setTransfiniteSurface(s.second);
       gmsh::model::mesh::setRecombine(s.first, s.second);
       gmsh::model::mesh::setSmoothing(s.first, s.second, 100);

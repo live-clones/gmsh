@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,22 +18,22 @@
 #if defined(HAVE_KBIPACK)
 
 StringXNumber HomologyComputationOptions_Number[] = {
-  {GMSH_FULLRC, "ComputeHomology", NULL, 1.},
-  {GMSH_FULLRC, "ComputeCohomology", NULL, 0.},
-  {GMSH_FULLRC, "HomologyPhysicalGroupsBegin", NULL, -1.},
-  {GMSH_FULLRC, "CohomologyPhysicalGroupsBegin", NULL, -1.},
-  {GMSH_FULLRC, "CreatePostProcessingViews", NULL, 1.},
-  {GMSH_FULLRC, "ReductionOmit", NULL, 1.},
-  {GMSH_FULLRC, "ReductionCombine", NULL, 3.},
-  {GMSH_FULLRC, "PostProcessSimplify", NULL, 1.},
-  {GMSH_FULLRC, "ReductionHeuristic", NULL, 1.}};
+  {GMSH_FULLRC, "ComputeHomology", nullptr, 1.},
+  {GMSH_FULLRC, "ComputeCohomology", nullptr, 0.},
+  {GMSH_FULLRC, "HomologyPhysicalGroupsBegin", nullptr, -1.},
+  {GMSH_FULLRC, "CohomologyPhysicalGroupsBegin", nullptr, -1.},
+  {GMSH_FULLRC, "CreatePostProcessingViews", nullptr, 1.},
+  {GMSH_FULLRC, "ReductionOmit", nullptr, 1.},
+  {GMSH_FULLRC, "ReductionCombine", nullptr, 3.},
+  {GMSH_FULLRC, "PostProcessSimplify", nullptr, 1.},
+  {GMSH_FULLRC, "ReductionHeuristic", nullptr, 1.}};
 
 StringXString HomologyComputationOptions_String[] = {
-  {GMSH_FULLRC, "DomainPhysicalGroups", NULL, ""},
-  {GMSH_FULLRC, "SubdomainPhysicalGroups", NULL, ""},
-  {GMSH_FULLRC, "ReductionImmunePhysicalGroups", NULL, ""},
-  {GMSH_FULLRC, "DimensionOfChainsToSave", NULL, "0, 1, 2, 3"},
-  {GMSH_FULLRC, "Filename", NULL, "homology.msh"}};
+  {GMSH_FULLRC, "DomainPhysicalGroups", nullptr, ""},
+  {GMSH_FULLRC, "SubdomainPhysicalGroups", nullptr, ""},
+  {GMSH_FULLRC, "ReductionImmunePhysicalGroups", nullptr, ""},
+  {GMSH_FULLRC, "DimensionOfChainsToSave", nullptr, "0, 1, 2, 3"},
+  {GMSH_FULLRC, "Filename", nullptr, "homology.msh"}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterHomologyComputationPlugin()
@@ -115,10 +115,10 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   std::vector<int> subdomain;
   std::vector<int> imdomain;
   std::vector<int> dimsave;
-  if(!parseStringOpt(0, domain)) return 0;
-  if(!parseStringOpt(1, subdomain)) return 0;
-  if(!parseStringOpt(2, imdomain)) return 0;
-  if(!parseStringOpt(3, dimsave)) return 0;
+  if(!parseStringOpt(0, domain)) return nullptr;
+  if(!parseStringOpt(1, subdomain)) return nullptr;
+  if(!parseStringOpt(2, imdomain)) return nullptr;
+  if(!parseStringOpt(3, dimsave)) return nullptr;
 
   GModel *m = GModel::current();
 
@@ -146,7 +146,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 
   delete homology;
 
-  return 0;
+  return nullptr;
 }
 
 #endif

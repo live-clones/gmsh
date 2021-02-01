@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -110,10 +110,11 @@ public:
   std::map<std::string, FieldCallback *> callbacks;
   virtual bool isotropic() const { return true; }
   // isotropic
-  virtual double operator()(double x, double y, double z, GEntity *ge = 0) = 0;
+  virtual double operator()(double x, double y, double z,
+                            GEntity *ge = nullptr) = 0;
   // anisotropic
   virtual void operator()(double x, double y, double z, SMetric3 &,
-                          GEntity *ge = 0)
+                          GEntity *ge = nullptr)
   {
   }
   bool updateNeeded;
@@ -200,9 +201,10 @@ public:
   virtual std::string getDescription();
   BoundaryLayerField();
   ~BoundaryLayerField() { removeAttractors(); }
-  virtual double operator()(double x, double y, double z, GEntity *ge = 0);
+  virtual double operator()(double x, double y, double z,
+                            GEntity *ge = nullptr);
   virtual void operator()(double x, double y, double z, SMetric3 &metr,
-                          GEntity *ge = 0);
+                          GEntity *ge = nullptr);
   bool isEdgeBL(int iE) const
   {
     return std::find(_curveTags.begin(), _curveTags.end(), iE) !=
@@ -222,8 +224,8 @@ public:
   {
     if(_fanPointTags.size() != _fanSizes.size())
       return CTX::instance()->mesh.boundaryLayerFanPoints;
-    std::list<int>::iterator it1 = _fanPointTags.begin();
-    std::list<int>::iterator it2 = _fanSizes.begin();
+    auto it1 = _fanPointTags.begin();
+    auto it2 = _fanSizes.begin();
     for(; it1 != _fanPointTags.end(); ++it1, ++it2) {
       if(*it1 == iV) return *it2;
     }
@@ -237,8 +239,7 @@ public:
   }
   double hWall(int iV)
   {
-    for(std::list<double>::iterator it = _hWallNNodes.begin();
-        it != _hWallNNodes.end(); ++it) {
+    for(auto it = _hWallNNodes.begin(); it != _hWallNNodes.end(); ++it) {
       int i = (int)*it;
       ++it;
       double h = *it;
@@ -257,7 +258,7 @@ public:
   std::string &val;
   virtual FieldOptionType getType() { return FIELD_OPTION_STRING; }
   FieldOptionString(std::string &_val, const std::string &help,
-                    bool *status = 0, bool deprecated = false)
+                    bool *status = nullptr, bool deprecated = false)
     : FieldOption(help, status, deprecated), val(_val)
   {
   }
@@ -279,8 +280,8 @@ class FieldOptionDouble : public FieldOption {
 public:
   double &val;
   FieldOptionType getType() { return FIELD_OPTION_DOUBLE; }
-  FieldOptionDouble(double &_val, const std::string &help, bool *status = 0,
-                    bool deprecated = false)
+  FieldOptionDouble(double &_val, const std::string &help,
+                    bool *status = nullptr, bool deprecated = false)
     : FieldOption(help, status, deprecated), val(_val)
   {
   }
@@ -303,7 +304,7 @@ class FieldOptionInt : public FieldOption {
 public:
   int &val;
   FieldOptionType getType() { return FIELD_OPTION_INT; }
-  FieldOptionInt(int &_val, const std::string &help, bool *status = 0,
+  FieldOptionInt(int &_val, const std::string &help, bool *status = nullptr,
                  bool deprecated = false)
     : FieldOption(help, status, deprecated), val(_val)
   {
@@ -327,7 +328,7 @@ public:
   std::list<int> &val;
   FieldOptionType getType() { return FIELD_OPTION_LIST; }
   FieldOptionList(std::list<int> &_val, const std::string &help,
-                  bool *status = 0, bool deprecated = false)
+                  bool *status = nullptr, bool deprecated = false)
     : FieldOption(help, status, deprecated), val(_val)
   {
   }
@@ -341,7 +342,7 @@ public:
   {
     std::ostringstream sstream;
     sstream << "{";
-    for(std::list<int>::iterator it = val.begin(); it != val.end(); it++) {
+    for(auto it = val.begin(); it != val.end(); it++) {
       if(it != val.begin()) sstream << ", ";
       sstream << *it;
     }
@@ -355,7 +356,7 @@ public:
   std::list<double> &val;
   FieldOptionType getType() { return FIELD_OPTION_LIST_DOUBLE; }
   FieldOptionListDouble(std::list<double> &_val, const std::string &help,
-                        bool *status = 0, bool deprecated = false)
+                        bool *status = nullptr, bool deprecated = false)
     : FieldOption(help, status, deprecated), val(_val)
   {
   }
@@ -370,7 +371,7 @@ public:
     std::ostringstream sstream;
     sstream.precision(16);
     sstream << "{";
-    for(std::list<double>::iterator it = val.begin(); it != val.end(); it++) {
+    for(auto it = val.begin(); it != val.end(); it++) {
       if(it != val.begin()) sstream << ", ";
       sstream << *it;
     }
@@ -382,8 +383,8 @@ public:
 class FieldOptionPath : public FieldOptionString {
 public:
   virtual FieldOptionType getType() { return FIELD_OPTION_PATH; }
-  FieldOptionPath(std::string &val, const std::string &help, bool *status = 0,
-                  bool deprecated = false)
+  FieldOptionPath(std::string &val, const std::string &help,
+                  bool *status = nullptr, bool deprecated = false)
     : FieldOptionString(val, help, status, deprecated)
   {
   }
@@ -393,7 +394,7 @@ class FieldOptionBool : public FieldOption {
 public:
   bool &val;
   FieldOptionType getType() { return FIELD_OPTION_BOOL; }
-  FieldOptionBool(bool &_val, const std::string &help, bool *status = 0,
+  FieldOptionBool(bool &_val, const std::string &help, bool *status = nullptr,
                   bool deprecated = false)
     : FieldOption(help, status, deprecated), val(_val)
   {
@@ -447,7 +448,8 @@ public:
   GenericField();
   ~GenericField();
   using Field::operator();
-  virtual double operator()(double x, double y, double z, GEntity *ge = 0);
+  virtual double operator()(double x, double y, double z,
+                            GEntity *ge = nullptr);
   virtual const char *getName() { return "GenericField"; };
 
   // sets the callbacks

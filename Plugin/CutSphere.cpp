@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -20,7 +20,7 @@ StringXNumber CutSphereOptions_Number[] = {
   {GMSH_FULLRC, "ExtractVolume", GMSH_CutSpherePlugin::callbackVol, 0.},
   {GMSH_FULLRC, "RecurLevel", GMSH_CutSpherePlugin::callbackRecur, 4},
   {GMSH_FULLRC, "TargetError", GMSH_CutSpherePlugin::callbackTarget, 0.},
-  {GMSH_FULLRC, "View", NULL, -1.}};
+  {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCutSpherePlugin()

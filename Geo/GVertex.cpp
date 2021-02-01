@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,8 +19,7 @@ GVertex::~GVertex() { GVertex::deleteMesh(); }
 
 void GVertex::deleteMesh()
 {
-  for(std::size_t i = 0; i < mesh_vertices.size(); i++)
-    delete mesh_vertices[i];
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   for(std::size_t i = 0; i < points.size(); i++) delete points[i];
   points.clear();
@@ -43,8 +42,7 @@ void GVertex::addEdge(GEdge *e)
 
 void GVertex::delEdge(GEdge *const e)
 {
-  std::vector<GEdge *>::iterator it =
-    std::find(l_edges.begin(), l_edges.end(), e);
+  auto it = std::find(l_edges.begin(), l_edges.end(), e);
   if(it != l_edges.end()) l_edges.erase(it);
 }
 
@@ -65,8 +63,7 @@ std::string GVertex::getAdditionalInfoString(bool multline)
 
   if(l_edges.size()) {
     sstream << "On boundary of curves: ";
-    for(std::vector<GEdge *>::iterator it = l_edges.begin();
-        it != l_edges.end(); ++it) {
+    for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
       if(it != l_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
@@ -77,10 +74,13 @@ std::string GVertex::getAdditionalInfoString(bool multline)
   }
 
   double lc = prescribedMeshSizeAtVertex();
-  if(lc < MAX_LC) {
-    sstream << "Mesh attributes: size " << lc;
-  }
-  return sstream.str();
+  if(lc < MAX_LC) { sstream << "Mesh attributes: size " << lc; }
+
+  std::string str = sstream.str();
+  if(str.size() && (str[str.size() - 1] == '\n' || str[str.size() - 1] == ' '))
+    str.resize(str.size() - 1);
+
+  return str;
 }
 
 void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
@@ -110,7 +110,7 @@ void GVertex::getNumMeshElements(unsigned *const c) const
 MElement *GVertex::getMeshElement(std::size_t index) const
 {
   if(index < points.size()) return points[index];
-  return 0;
+  return nullptr;
 }
 
 MElement *GVertex::getMeshElementByType(const int familyType,
@@ -118,17 +118,15 @@ MElement *GVertex::getMeshElementByType(const int familyType,
 {
   if(familyType == TYPE_PNT) return points[index];
 
-  return 0;
+  return nullptr;
 }
 
 bool GVertex::isOnSeam(const GFace *gf) const
 {
-  // TODO C++11 std::find_if
-  std::vector<GEdge *>::const_iterator eIter = l_edges.begin();
-  for(; eIter != l_edges.end(); eIter++) {
-    if((*eIter)->isSeam(gf)) return true;
-  }
-  return false;
+  auto const location =
+    std::find_if(begin(l_edges), end(l_edges),
+                 [&](GEdge *const edge) { return edge->isSeam(gf); });
+  return location != end(l_edges);
 }
 
 // faces that bound this entity or that this entity bounds.
@@ -136,8 +134,7 @@ std::vector<GFace *> GVertex::faces() const
 {
   std::vector<GFace *> faces;
 
-  for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
-      it != l_edges.end(); ++it) {
+  for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
     std::vector<GFace *> const &temp = (*it)->faces();
     faces.insert(faces.end(), temp.begin(), temp.end());
   }
@@ -151,9 +148,8 @@ std::vector<GFace *> GVertex::faces() const
 std::list<GRegion *> GVertex::regions() const
 {
   std::vector<GFace *> const _faces = faces();
-  std::vector<GFace *>::const_iterator it = _faces.begin();
   std::set<GRegion *> _r;
-  for(; it != _faces.end(); ++it) {
+  for(auto it = _faces.begin(); it != _faces.end(); ++it) {
     std::list<GRegion *> temp = (*it)->regions();
     _r.insert(temp.begin(), temp.end());
   }
@@ -184,7 +180,7 @@ void GVertex::removeElement(int type, MElement *e)
 {
   switch(type) {
   case TYPE_PNT: {
-    std::vector<MPoint *>::iterator it =
+    auto it =
       std::find(points.begin(), points.end(), reinterpret_cast<MPoint *>(e));
     if(it != points.end()) points.erase(it);
   } break;
@@ -192,14 +188,14 @@ void GVertex::removeElement(int type, MElement *e)
   }
 }
 
-bool GVertex::reorder(const int elementType, const std::vector<std::size_t> &ordering)
+bool GVertex::reorder(const int elementType,
+                      const std::vector<std::size_t> &ordering)
 {
   if(points.size() != 0) {
     if(points.front()->getTypeForMSH() == elementType) {
       if(ordering.size() != points.size()) return false;
 
-      for(std::vector<std::size_t>::const_iterator it = ordering.begin();
-          it != ordering.end(); ++it) {
+      for(auto it = ordering.begin(); it != ordering.end(); ++it) {
         if(*it >= points.size()) return false;
       }
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,8 +32,8 @@
 #include "gmshPopplerWrapper.h"
 #endif
 
-drawContextGlobal *drawContext::_global = 0;
-void (*drawContext::drawGeomTransient)(void *) = 0;
+drawContextGlobal *drawContext::_global = nullptr;
+void (*drawContext::drawGeomTransient)(void *) = nullptr;
 
 void drawContext::setDrawGeomTransientFunction(void (*fct)(void *))
 {
@@ -64,7 +64,7 @@ drawContext::drawContext(openglWindow *window, drawTransform *transform)
 
   _bgImageTexture = _bgImageW = _bgImageH = 0;
 
-  _quadric = 0; // cannot create it here: needs valid opengl context
+  _quadric = nullptr; // cannot create it here: needs valid opengl context
   _displayLists = 0;
 }
 
@@ -92,7 +92,7 @@ void drawContext::invalidateQuadricsAndDisplayLists()
 {
   if(_quadric) {
     gluDeleteQuadric(_quadric);
-    _quadric = 0;
+    _quadric = nullptr;
   }
   if(_displayLists) {
     glDeleteLists(_displayLists, 3);
@@ -429,7 +429,7 @@ bool drawContext::generateTextureForImage(const std::string &name, int page,
   else {
 #if defined(HAVE_FLTK)
     if(!imageTexture) {
-      Fl_RGB_Image *img = 0;
+      Fl_RGB_Image *img = nullptr;
       if(ext == ".jpg" || ext == ".JPG" || ext == ".jpeg" || ext == ".JPEG")
         img = new Fl_JPEG_Image(name.c_str());
       else if(ext == ".png" || ext == ".PNG")
@@ -911,7 +911,7 @@ static MElement *getElement(GEntity *e, int va_type, int index)
       return *e->va_triangles->getElementPointerArray(index);
     break;
   }
-  return 0;
+  return nullptr;
 }
 
 bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,

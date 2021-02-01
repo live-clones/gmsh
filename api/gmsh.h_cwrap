@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1606,19 +1606,55 @@ namespace gmsh { // Top-level functions
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
 
-      // Get the global edge identifier `edgeNum' for an input list of node pairs,
-      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-      // feature and will probably change in a future release.
-      inline void getEdgeNumber(const std::vector<int> & edgeNodes,
-                                std::vector<int> & edgeNum)
+      // Get the global unique mesh edge identifiers `edgeTags' for an input list
+      // of node tag pairs defining these edges, concatenated in the vector
+      // `nodeTags'.
+      inline void getEdgeTags(const std::vector<std::size_t> & nodeTags,
+                              std::vector<std::size_t> & edgeTags)
       {
         int ierr = 0;
-        int *api_edgeNodes_; size_t api_edgeNodes_n_; vector2ptr(edgeNodes, &api_edgeNodes_, &api_edgeNodes_n_);
-        int *api_edgeNum_; size_t api_edgeNum_n_;
-        gmshModelMeshGetEdgeNumber(api_edgeNodes_, api_edgeNodes_n_, &api_edgeNum_, &api_edgeNum_n_, &ierr);
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        size_t *api_edgeTags_; size_t api_edgeTags_n_;
+        gmshModelMeshGetEdgeTags(api_nodeTags_, api_nodeTags_n_, &api_edgeTags_, &api_edgeTags_n_, &ierr);
         if(ierr) throwLastError();
-        gmshFree(api_edgeNodes_);
-        edgeNum.assign(api_edgeNum_, api_edgeNum_ + api_edgeNum_n_); gmshFree(api_edgeNum_);
+        gmshFree(api_nodeTags_);
+        edgeTags.assign(api_edgeTags_, api_edgeTags_ + api_edgeTags_n_); gmshFree(api_edgeTags_);
+      }
+
+      // Get the global unique mesh face identifiers `faceTags' for an input list
+      // of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' ==
+      // 4) defining these faces, concatenated in the vector `nodeTags'.
+      inline void getFaceTags(const int faceType,
+                              const std::vector<std::size_t> & nodeTags,
+                              std::vector<std::size_t> & faceTags)
+      {
+        int ierr = 0;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        size_t *api_faceTags_; size_t api_faceTags_n_;
+        gmshModelMeshGetFaceTags(faceType, api_nodeTags_, api_nodeTags_n_, &api_faceTags_, &api_faceTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_nodeTags_);
+        faceTags.assign(api_faceTags_, api_faceTags_ + api_faceTags_n_); gmshFree(api_faceTags_);
+      }
+
+      // Create unique mesh edges for the entities `dimTags'.
+      inline void createEdges(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshCreateEdges(api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
+      }
+
+      // Create unique mesh faces for the entities `dimTags'.
+      inline void createFaces(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshCreateFaces(api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
       }
 
       // Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
@@ -2006,8 +2042,12 @@ namespace gmsh { // Top-level functions
       // Embed the model entities of dimension `dim' and tags `tags' in the
       // (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and
       // must be strictly smaller than `inDim', which must be either 2 or 3. The
-      // embedded entities should not be part of the boundary of the entity
-      // `inTag', whose mesh will conform to the mesh of the embedded entities.
+      // embedded entities should not intersect each other or be part of the
+      // boundary of the entity `inTag', whose mesh will conform to the mesh of the
+      // embedded entities. With the OpenCASCADE kernel, if the `fragment'
+      // operation is applied to entities of different dimensions, the lower
+      // dimensional entities will be automatically embedded in the higher
+      // dimensional entities if they are not on their boundary.
       inline void embed(const int dim,
                         const std::vector<int> & tags,
                         const int inDim,
@@ -2031,6 +2071,19 @@ namespace gmsh { // Top-level functions
         gmshModelMeshRemoveEmbedded(api_dimTags_, api_dimTags_n_, dim, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
+      }
+
+      // Get the entities (if any) embedded in the model entity of dimension `dim'
+      // and tag `tag'.
+      inline void getEmbedded(const int dim,
+                              const int tag,
+                              gmsh::vectorpair & dimTags)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_;
+        gmshModelMeshGetEmbedded(dim, tag, &api_dimTags_, &api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
       }
 
       // Reorder the elements of type `elementType' classified on the entity of tag
@@ -2134,14 +2187,16 @@ namespace gmsh { // Top-level functions
       // boundary if the surface is open. If `forReparametrization' is set, create
       // edges and surfaces that can be reparametrized using a single map. If
       // `curveAngle' is less than Pi, also force curves to be split according to
-      // `curveAngle'.
+      // `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
+      // entities and export the discrete entities in the built-in CAD kernel.
       inline void classifySurfaces(const double angle,
                                    const bool boundary = true,
                                    const bool forReparametrization = false,
-                                   const double curveAngle = M_PI)
+                                   const double curveAngle = M_PI,
+                                   const bool exportDiscrete = true)
       {
         int ierr = 0;
-        gmshModelMeshClassifySurfaces(angle, (int)boundary, (int)forReparametrization, curveAngle, &ierr);
+        gmshModelMeshClassifySurfaces(angle, (int)boundary, (int)forReparametrization, curveAngle, (int)exportDiscrete, &ierr);
         if(ierr) throwLastError();
       }
 
@@ -2525,6 +2580,20 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
+      // Add curve loops in the built-in CAD representation based on the curves
+      // `curveTags'. Return the `tags' of found curve loops, if any.
+      inline void addCurveLoops(const std::vector<int> & curveTags,
+                                std::vector<int> & tags)
+      {
+        int ierr = 0;
+        int *api_curveTags_; size_t api_curveTags_n_; vector2ptr(curveTags, &api_curveTags_, &api_curveTags_n_);
+        int *api_tags_; size_t api_tags_n_;
+        gmshModelGeoAddCurveLoops(api_curveTags_, api_curveTags_n_, &api_tags_, &api_tags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_curveTags_);
+        tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+      }
+
       // Add a plane surface in the built-in CAD representation, defined by one or
       // more curve loops `wireTags'. The first curve loop defines the exterior
       // contour; additional curve loop define holes. If `tag' is positive, set the
@@ -2594,8 +2663,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1. If `dx' == `dy' == `dz' == 0, the
-      // entities are extruded along their normal.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       inline void extrude(const gmsh::vectorpair & dimTags,
                           const double dx,
                           const double dy,
@@ -2625,7 +2694,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       inline void revolve(const gmsh::vectorpair & dimTags,
                           const double x,
                           const double y,
@@ -2660,7 +2730,7 @@ namespace gmsh { // Top-level functions
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
       // not empty, it provides the (cumulative) height of the different layers,
-      // normalized to 1.
+      // normalized to 1. If `recombine' is set, recombine the mesh in the layers.
       inline void twist(const gmsh::vectorpair & dimTags,
                         const double x,
                         const double y,
@@ -2683,6 +2753,36 @@ namespace gmsh { // Top-level functions
         int *api_numElements_; size_t api_numElements_n_; vector2ptr(numElements, &api_numElements_, &api_numElements_n_);
         double *api_heights_; size_t api_heights_n_; vector2ptr(heights, &api_heights_, &api_heights_n_);
         gmshModelGeoTwist(api_dimTags_, api_dimTags_n_, x, y, z, dx, dy, dz, ax, ay, az, angle, &api_outDimTags_, &api_outDimTags_n_, api_numElements_, api_numElements_n_, api_heights_, api_heights_n_, (int)recombine, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+        gmshFree(api_numElements_);
+        gmshFree(api_heights_);
+      }
+
+      // Extrude the entities `dimTags' in the built-in CAD representation along
+      // the normals of the mesh, creating discrete boundary layer entities. Return
+      // extruded entities in `outDimTags'. The entries in `numElements' give the
+      // number of elements in each layer. If `height' is not empty, it provides
+      // the height of the different layers. If `recombine' is set, recombine the
+      // mesh in the layers. A second boundary layer can be created from the same
+      // entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
+      // view to either specify the normals (if the view contains a vector field)
+      // or scale the normals (if the view is scalar).
+      inline void extrudeBoundaryLayer(const gmsh::vectorpair & dimTags,
+                                       gmsh::vectorpair & outDimTags,
+                                       const std::vector<int> & numElements = std::vector<int>(1, 1),
+                                       const std::vector<double> & heights = std::vector<double>(),
+                                       const bool recombine = false,
+                                       const bool second = false,
+                                       const int viewIndex = -1)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        int *api_numElements_; size_t api_numElements_n_; vector2ptr(numElements, &api_numElements_, &api_numElements_n_);
+        double *api_heights_; size_t api_heights_n_; vector2ptr(heights, &api_heights_, &api_heights_n_);
+        gmshModelGeoExtrudeBoundaryLayer(api_dimTags_, api_dimTags_n_, &api_outDimTags_, &api_outDimTags_n_, api_numElements_, api_numElements_n_, api_heights_, api_heights_n_, (int)recombine, (int)second, viewIndex, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
@@ -3612,7 +3712,8 @@ namespace gmsh { // Top-level functions
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
       // entries in `numElements' give the number of elements in each layer. If
       // `height' is not empty, it provides the (cumulative) height of the
-      // different layers, normalized to 1.
+      // different layers, normalized to 1. If `recombine' is set, recombine the
+      // mesh in the layers.
       inline void extrude(const gmsh::vectorpair & dimTags,
                           const double dx,
                           const double dy,
@@ -3642,7 +3743,8 @@ namespace gmsh { // Top-level functions
       // extrude the mesh: the entries in `numElements' give the number of elements
       // in each layer. If `height' is not empty, it provides the (cumulative)
       // height of the different layers, normalized to 1. When the mesh is extruded
-      // the angle should be strictly smaller than 2*Pi.
+      // the angle should be strictly smaller than 2*Pi. If `recombine' is set,
+      // recombine the mesh in the layers.
       inline void revolve(const gmsh::vectorpair & dimTags,
                           const double x,
                           const double y,
@@ -3670,16 +3772,21 @@ namespace gmsh { // Top-level functions
       }
 
       // Add a pipe in the OpenCASCADE CAD representation, by extruding the
-      // entities `dimTags' along the wire `wireTag'. Return the pipe in
-      // `outDimTags'.
+      // entities `dimTags' along the wire `wireTag'. The type of sweep can be
+      // specified with `trihedron' (possible values: "DiscreteTrihedron",
+      // "CorrectedFrenet", "Fixed", "Frenet", "ConstantNormal", "Darboux",
+      // "GuideAC", "GuidePlan", "GuideACWithContact", "GuidePlanWithContact"). If
+      // `trihedron' is not provided, "DiscreteTrihedron" is assumed. Return the
+      // pipe in `outDimTags'.
       inline void addPipe(const gmsh::vectorpair & dimTags,
                           const int wireTag,
-                          gmsh::vectorpair & outDimTags)
+                          gmsh::vectorpair & outDimTags,
+                          const std::string & trihedron = "")
       {
         int ierr = 0;
         int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
         int *api_outDimTags_; size_t api_outDimTags_n_;
-        gmshModelOccAddPipe(api_dimTags_, api_dimTags_n_, wireTag, &api_outDimTags_, &api_outDimTags_n_, &ierr);
+        gmshModelOccAddPipe(api_dimTags_, api_dimTags_n_, wireTag, &api_outDimTags_, &api_outDimTags_n_, trihedron.c_str(), &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
@@ -3821,12 +3928,15 @@ namespace gmsh { // Top-level functions
         outDimTagsMap.resize(api_outDimTagsMap_nn_); for(size_t i = 0; i < api_outDimTagsMap_nn_; ++i){ outDimTagsMap[i].resize(api_outDimTagsMap_n_[i] / 2); for(size_t j = 0; j < api_outDimTagsMap_n_[i] / 2; ++j){ outDimTagsMap[i][j].first = api_outDimTagsMap_[i][j * 2 + 0]; outDimTagsMap[i][j].second = api_outDimTagsMap_[i][j * 2 + 1]; } gmshFree(api_outDimTagsMap_[i]); } gmshFree(api_outDimTagsMap_); gmshFree(api_outDimTagsMap_n_);
       }
 
-      // Compute the boolean fragments (general fuse) of the entities
-      // `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
-      // Return the resulting entities in `outDimTags'. If `tag' is positive, try
-      // to set the tag explicitly (only valid if the boolean operation results in
-      // a single entity). Remove the object if `removeObject' is set. Remove the
-      // tool if `removeTool' is set.
+      // Compute the boolean fragments (general fuse) resulting from the
+      // intersection of the entities `objectDimTags' and `toolDimTags' in the
+      // OpenCASCADE CAD representation, making all iterfaces conformal. When
+      // applied to entities of different dimensions, the lower dimensional
+      // entities will be automatically embedded in the higher dimensional entities
+      // if they are not on their boundary. Return the resulting entities in
+      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
+      // valid if the boolean operation results in a single entity). Remove the
+      // object if `removeObject' is set. Remove the tool if `removeTool' is set.
       inline void fragment(const gmsh::vectorpair & objectDimTags,
                            const gmsh::vectorpair & toolDimTags,
                            gmsh::vectorpair & outDimTags,
@@ -4718,6 +4828,25 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // Set a status message in the current window. If `graphics' is set, display
+    // the message inside the graphic window instead of the status bar.
+    inline void setStatusMessage(const std::string & message,
+                                 const bool graphics = false)
+    {
+      int ierr = 0;
+      gmshFltkSetStatusMessage(message.c_str(), (int)graphics, &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // Show context window for the entity of dimension `dim' and tag `tag'.
+    inline void showContextWindow(const int dim,
+                                  const int tag)
+    {
+      int ierr = 0;
+      gmshFltkShowContextWindow(dim, tag, &ierr);
+      if(ierr) throwLastError();
+    }
+
   } // namespace fltk
 
   namespace onelab { // ONELAB server functions
@@ -4742,6 +4871,18 @@ namespace gmsh { // Top-level functions
       gmshOnelabGet(&api_data_, name.c_str(), format.c_str(), &ierr);
       if(ierr) throwLastError();
       data = std::string(api_data_); gmshFree(api_data_);
+    }
+
+    // Get the names of the parameters in the ONELAB database matching the `search'
+    // regular expression. If `search' is empty, return all the names.
+    inline void getNames(std::vector<std::string> & names,
+                         const std::string & search = "")
+    {
+      int ierr = 0;
+      char **api_names_; size_t api_names_n_;
+      gmshOnelabGetNames(&api_names_, &api_names_n_, search.c_str(), &ierr);
+      if(ierr) throwLastError();
+      names.resize(api_names_n_); for(size_t i = 0; i < api_names_n_; ++i){ names[i] = std::string(api_names_[i]); gmshFree(api_names_[i]); } gmshFree(api_names_);
     }
 
     // Set the value of the number parameter `name' in the ONELAB database. Create

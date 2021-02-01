@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,18 +15,17 @@ private:
   GEntity *_parentEntity;
 
 public:
-  partitionRegion(GModel *model, int num,
-                  const std::vector<int> &partitions)
-    : discreteRegion(model, num), _partitions(partitions), _parentEntity(NULL)
+  partitionRegion(GModel *model, int num, const std::vector<int> &partitions)
+    : discreteRegion(model, num), _partitions(partitions),
+      _parentEntity(nullptr)
   {
   }
   partitionRegion(GModel *model, int num)
-    : discreteRegion(model, num), _partitions(), _parentEntity(NULL)
+    : discreteRegion(model, num), _partitions(), _parentEntity(nullptr)
   {
   }
-  partitionRegion(GModel *model,
-                  const std::vector<int> &partitions)
-    : discreteRegion(model), _partitions(partitions), _parentEntity(NULL)
+  partitionRegion(GModel *model, const std::vector<int> &partitions)
+    : discreteRegion(model), _partitions(partitions), _parentEntity(nullptr)
   {
   }
   virtual ~partitionRegion() {}
@@ -37,10 +36,7 @@ public:
   {
     _partitions = partitions;
   }
-  virtual const std::vector<int> &getPartitions() const
-  {
-    return _partitions;
-  }
+  virtual const std::vector<int> &getPartitions() const { return _partitions; }
   virtual int getPartition(std::size_t index) const
   {
     return _partitions[index];

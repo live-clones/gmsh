@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -80,7 +80,7 @@ public:
     groupOfElements *LevelSetElements =
       new groupOfElements(_levelSetEntity.first, _levelSetEntity.second);
     // tag enriched vertex determination
-    std::set<MElement *>::const_iterator it = LevelSetElements->begin();
+    auto it = LevelSetElements->begin();
     for(; it != LevelSetElements->end(); it++) {
       MElement *e = *it;
       if(e->getParent()) { // if element got parents

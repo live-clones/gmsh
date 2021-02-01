@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,10 +19,10 @@
 static const std::string::size_type CGNS_MAX_STR_LEN = 33;
 
 // msh to CGNS element type
-ElementType_t msh2CgnsEltType(int mshTag);
+CGNS_ENUMT(ElementType_t) msh2CgnsEltType(int mshTag);
 
 // CGNS to msh element type
-int cgns2MshEltType(ElementType_t);
+int cgns2MshEltType(CGNS_ENUMT(ElementType_t));
 
 std::vector<int> &cgns2MshNodeIndex(int mshTag);
 

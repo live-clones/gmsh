@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -36,22 +36,21 @@
 //   at the begining of the zone name; the unstructured writer saves physical
 //   names in families
 //
-// - boundary conditions are created for physical groups of lower dimensions and
-//   also saved as families
+// - boundary conditions are created for all zone boundaries, and if physical
+//   groups are defined on boundaries they are also saved as families
 
 #if defined(HAVE_LIBCGNS)
 
 static bool isTransfinite(GFace *gf)
 {
-  return gf->transfinite_vertices.size() &&
-    gf->transfinite_vertices[0].size();
+  return gf->transfinite_vertices.size() && gf->transfinite_vertices[0].size();
 }
 
 static bool isTransfinite(GRegion *gr)
 {
   return gr->transfinite_vertices.size() &&
-    gr->transfinite_vertices[0].size() &&
-    gr->transfinite_vertices[0][0].size();
+         gr->transfinite_vertices[0].size() &&
+         gr->transfinite_vertices[0][0].size();
 }
 
 static std::string getDimName(int dim)
@@ -75,9 +74,7 @@ static std::string getZoneName(GEntity *ge, bool withPhysical = true,
       if(i) sstream << " ";
       int t = std::abs(ge->physicals[i]);
       std::string n = ge->model()->getPhysicalName(ge->dim(), t);
-      if(n.empty()) {
-        sstream << "P" << getDimName(ge->dim()) << t;
-      }
+      if(n.empty()) { sstream << "P" << getDimName(ge->dim()) << t; }
       else {
         sstream << n;
       }
@@ -100,9 +97,8 @@ static std::string getZoneName(GEntity *ge, bool withPhysical = true,
 static std::string getInterfaceName(GEntity *ge, GEntity *ge1, GEntity *ge2)
 {
   std::ostringstream sstream;
-  sstream << getZoneName(ge, false)
-          << " (" << getZoneName(ge1, false)
-          << " & " << getZoneName(ge2, false) << ")";
+  sstream << getZoneName(ge, false) << " (" << getZoneName(ge1, false) << " & "
+          << getZoneName(ge2, false) << ")";
   return sstream.str().substr(0, 32);
 }
 
@@ -129,13 +125,12 @@ static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
         transform[i] = (j + 1) * (r[i] * d[j] < 0 ? -1 : 1);
       }
     }
-    if(!transform[i])
-      Msg::Warning("Could not identify transform[%d]", i);
+    if(!transform[i]) Msg::Warning("Could not identify transform[%d]", i);
   }
 }
 
-static bool findRange2D(GFace *gf, GEdge *ge,
-                        int &ibeg, int &jbeg, int &iend, int &jend)
+static bool findRange2D(GFace *gf, GEdge *ge, int &ibeg, int &jbeg, int &iend,
+                        int &jend)
 {
   GVertex *gv1 = ge->getBeginVertex(), *gv2 = ge->getEndVertex();
   if(!gv1 || !gv1->getNumMeshVertices() || !gv2 || !gv2->getNumMeshVertices())
@@ -147,8 +142,14 @@ static bool findRange2D(GFace *gf, GEdge *ge,
   for(int i = 0; i < imax; i++) {
     for(int j = 0; j < jmax; j++) {
       if(i == 0 || j == 0 || i == imax - 1 || j == jmax - 1) {
-        if(v[i][j] == v1) { ibeg = i + 1; jbeg = j + 1; }
-        else if(v[i][j] == v2) { iend = i + 1; jend = j + 1; }
+        if(v[i][j] == v1) {
+          ibeg = i + 1;
+          jbeg = j + 1;
+        }
+        else if(v[i][j] == v2) {
+          iend = i + 1;
+          jend = j + 1;
+        }
       }
     }
   }
@@ -178,7 +179,8 @@ static int writeInterface2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
   }
   else {
     Msg::Warning("Could not identify interface between surfaces %d and %d, "
-                 "on curve %d", gf->tag(), gf2->tag(), ge->tag());
+                 "on curve %d",
+                 gf->tag(), gf2->tag(), ge->tag());
   }
   return 1;
 }
@@ -191,27 +193,30 @@ static int writeBC2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
     std::vector<cgsize_t> pointRange = {ibeg, jbeg, iend, jend};
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                     getZoneName(ge).c_str(), BCTypeNull, PointRange,
-                     2, &pointRange[0], &cgIndexBoco) != CG_OK) {
+                     getZoneName(ge).c_str(), CGNS_ENUMV(BCTypeNull),
+                     CGNS_ENUMV(PointRange), 2, &pointRange[0],
+                     &cgIndexBoco) != CG_OK) {
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
-    // this is redundant, but ICEM does it...
-    if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
-               "ZoneBC_t", 1, "BC_t", cgIndexBoco, "end") != CG_OK)
-      return cgnsError(__FILE__, __LINE__, cgIndexFile);
-    if(cg_famname_write(getZoneName(ge, true, false).c_str()) != CG_OK)
-      return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    // if the curve is part of a physical group, also write a family
+    if(ge->physicals.size()) {
+      if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone, "ZoneBC_t", 1,
+                 "BC_t", cgIndexBoco, "end") != CG_OK)
+        return cgnsError(__FILE__, __LINE__, cgIndexFile);
+      if(cg_famname_write(getZoneName(ge, true, false).c_str()) != CG_OK)
+        return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    }
   }
-  else{
+  else {
     Msg::Warning("Could not identify boundary condition on curve %d in "
-                 "surface %d", ge->tag(), gf->tag());
+                 "surface %d",
+                 ge->tag(), gf->tag());
   }
   return 1;
 }
 
 static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
-                              std::vector<GFace *> &faces,
-                              double scalingFactor)
+                              std::vector<GFace *> &faces, double scalingFactor)
 {
   for(auto gf : faces) {
     cgsize_t imax = gf->transfinite_vertices.size();
@@ -222,7 +227,7 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
     cgsize_t cgZoneSize[6] = {imax, jmax, imax - 1, jmax - 1, 0, 0};
     std::string zoneName = cgnsString(getZoneName(gf));
     if(cg_zone_write(cgIndexFile, cgIndexBase, zoneName.c_str(), cgZoneSize,
-                     Structured, &cgIndexZone) != CG_OK)
+                     CGNS_ENUMV(Structured), &cgIndexZone) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
     // write grid
@@ -240,8 +245,9 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
         data[cgZoneSize[0] * j + i] = v->x() * scalingFactor;
       }
     }
-    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                      "CoordinateX", &data[0], &cgIndexCoord) != CG_OK)
+    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                      CGNS_ENUMV(RealDouble), "CoordinateX", &data[0],
+                      &cgIndexCoord) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
     // write y coordinates
@@ -251,8 +257,9 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
         data[cgZoneSize[0] * j + i] = v->y() * scalingFactor;
       }
     }
-    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                      "CoordinateY", &data[0], &cgIndexCoord) != CG_OK)
+    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                      CGNS_ENUMV(RealDouble), "CoordinateY", &data[0],
+                      &cgIndexCoord) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
     // write z coordinates
@@ -262,19 +269,20 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
         data[cgZoneSize[0] * j + i] = v->z() * scalingFactor;
       }
     }
-    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                      "CoordinateZ", &data[0], &cgIndexCoord) != CG_OK)
+    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                      CGNS_ENUMV(RealDouble), "CoordinateZ", &data[0],
+                      &cgIndexCoord) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
-    for(auto ge: gf->edges()) {
+    for(auto ge : gf->edges()) {
       // write interface data
-      for(auto gf2: ge->faces()) {
+      for(auto gf2 : ge->faces()) {
         if(gf2 != gf && isTransfinite(gf2))
           writeInterface2D(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge, gf2);
       }
-      // write boundary conditions
-      if(!ge->physicals.empty())
-        writeBC2D(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge);
+      // write boundary condition for each curve (even those that don't belong
+      // to a physical group, to match ICEM)
+      writeBC2D(cgIndexFile, cgIndexBase, cgIndexZone, gf, ge);
     }
   }
   return 1;
@@ -307,13 +315,11 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
         transform[i] = (j + 1) * (r[i] * d[j] < 0 ? -1 : 1);
       }
     }
-    if(!transform[i])
-      Msg::Warning("Could not identify transform[%d]", i);
+    if(!transform[i]) Msg::Warning("Could not identify transform[%d]", i);
   }
 }
 
-static bool findRange3D(GRegion *gr, GFace *gf,
-                        int &ibeg, int &jbeg, int &kbeg,
+static bool findRange3D(GRegion *gr, GFace *gf, int &ibeg, int &jbeg, int &kbeg,
                         int &iend, int &jend, int &kend)
 {
   if(gf->transfinite_vertices.empty() || gf->transfinite_vertices[0].empty())
@@ -321,16 +327,25 @@ static bool findRange3D(GRegion *gr, GFace *gf,
   MVertex *v1 = gf->transfinite_vertices.front().front();
   MVertex *v2 = gf->transfinite_vertices.back().back();
 
-  std::vector<std::vector<std::vector<MVertex *> > > &v = gr->transfinite_vertices;
+  std::vector<std::vector<std::vector<MVertex *> > > &v =
+    gr->transfinite_vertices;
   int imax = v.size(), jmax = v[0].size(), kmax = v[0][0].size();
   ibeg = iend = jbeg = jend = kbeg = kend = -1;
   for(int i = 0; i < imax; i++) {
     for(int j = 0; j < jmax; j++) {
       for(int k = 0; k < kmax; k++) {
-        if(i == 0 || j == 0 || k == 0 ||
-           i == imax - 1 || j == jmax - 1 || k == kmax - 1) {
-          if(v[i][j][k] == v1) { ibeg = i + 1; jbeg = j + 1; kbeg = k + 1; }
-          else if(v[i][j][k] == v2) { iend = i + 1; jend = j + 1; kend = k + 1; }
+        if(i == 0 || j == 0 || k == 0 || i == imax - 1 || j == jmax - 1 ||
+           k == kmax - 1) {
+          if(v[i][j][k] == v1) {
+            ibeg = i + 1;
+            jbeg = j + 1;
+            kbeg = k + 1;
+          }
+          else if(v[i][j][k] == v2) {
+            iend = i + 1;
+            jend = j + 1;
+            kend = k + 1;
+          }
         }
       }
     }
@@ -362,7 +377,8 @@ static int writeInterface3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
   }
   else {
     Msg::Warning("Could not identify interface between volumes %d and %d, "
-                 "on surface %d", gr->tag(), gr2->tag(), gf->tag());
+                 "on surface %d",
+                 gr->tag(), gr2->tag(), gf->tag());
   }
   return 1;
 }
@@ -375,20 +391,24 @@ static int writeBC3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
     std::vector<cgsize_t> pointRange = {ibeg, jbeg, kbeg, iend, jend, kend};
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
-                     getZoneName(gf).c_str(), BCTypeNull, PointRange,
-                     2, &pointRange[0], &cgIndexBoco) != CG_OK) {
+                     getZoneName(gf).c_str(), CGNS_ENUMV(BCTypeNull),
+                     CGNS_ENUMV(PointRange), 2, &pointRange[0],
+                     &cgIndexBoco) != CG_OK) {
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
     }
-    // this is redundant, but ICEM does it...
-    if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone,
-               "ZoneBC_t", 1, "BC_t", cgIndexBoco, "end") != CG_OK)
-      return cgnsError(__FILE__, __LINE__, cgIndexFile);
-    if(cg_famname_write(getZoneName(gf, true, false).c_str()) != CG_OK)
-      return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    // if the surface is part of a physical group, also write a family
+    if(gf->physicals.size()) {
+      if(cg_goto(cgIndexFile, cgIndexBase, "Zone_t", cgIndexZone, "ZoneBC_t", 1,
+                 "BC_t", cgIndexBoco, "end") != CG_OK)
+        return cgnsError(__FILE__, __LINE__, cgIndexFile);
+      if(cg_famname_write(getZoneName(gf, true, false).c_str()) != CG_OK)
+        return cgnsError(__FILE__, __LINE__, cgIndexFile);
+    }
   }
-  else{
+  else {
     Msg::Warning("Could not identify boundary condition on surface %d in "
-                 "volume %d", gf->tag(), gr->tag());
+                 "volume %d",
+                 gf->tag(), gr->tag());
   }
   return 1;
 }
@@ -404,11 +424,11 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
 
     // write zone
     int cgIndexZone = 0;
-    cgsize_t cgZoneSize[9] = {imax, jmax, kmax, imax - 1, jmax - 1, kmax - 1,
-                              0, 0, 0};
+    cgsize_t cgZoneSize[9] = {imax,     jmax, kmax, imax - 1, jmax - 1,
+                              kmax - 1, 0,    0,    0};
     std::string zoneName = cgnsString(getZoneName(gr));
     if(cg_zone_write(cgIndexFile, cgIndexBase, zoneName.c_str(), cgZoneSize,
-                     Structured, &cgIndexZone) != CG_OK)
+                     CGNS_ENUMV(Structured), &cgIndexZone) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
     // write grid
@@ -428,8 +448,9 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
         }
       }
     }
-    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                      "CoordinateX", &data[0], &cgIndexCoord) != CG_OK)
+    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                      CGNS_ENUMV(RealDouble), "CoordinateX", &data[0],
+                      &cgIndexCoord) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
     // write y coordinates
@@ -441,8 +462,9 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
         }
       }
     }
-    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                      "CoordinateY", &data[0], &cgIndexCoord) != CG_OK)
+    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                      CGNS_ENUMV(RealDouble), "CoordinateY", &data[0],
+                      &cgIndexCoord) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
     // write z coordinates
@@ -454,21 +476,21 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
         }
       }
     }
-    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone, RealDouble,
-                      "CoordinateZ", &data[0], &cgIndexCoord) != CG_OK)
+    if(cg_coord_write(cgIndexFile, cgIndexBase, cgIndexZone,
+                      CGNS_ENUMV(RealDouble), "CoordinateZ", &data[0],
+                      &cgIndexCoord) != CG_OK)
       return cgnsError(__FILE__, __LINE__, cgIndexFile);
 
-    for(auto gf: gr->faces()) {
+    for(auto gf : gr->faces()) {
       // write interface data
-      for(auto gr2: gf->regions()) {
+      for(auto gr2 : gf->regions()) {
         if(gr2 != gr && isTransfinite(gr2))
           writeInterface3D(cgIndexFile, cgIndexBase, cgIndexZone, gr, gf, gr2);
       }
-      // write boundary conditions
-      if(!gf->physicals.empty())
-        writeBC3D(cgIndexFile, cgIndexBase, cgIndexZone, gr, gf);
+      // write boundary condition for each surface (even those that don't belong
+      // to a physical group, to match ICEM)
+      writeBC3D(cgIndexFile, cgIndexBase, cgIndexZone, gr, gf);
     }
-
   }
   return 1;
 }
@@ -479,7 +501,7 @@ int writeZonesStruct(GModel *model, double scalingFactor, int cgIndexFile,
   int meshDim = -1;
 
   std::vector<GFace *> faces;
-  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
+  for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
     if(isTransfinite(*it)) {
       meshDim = 2;
       faces.push_back(*it);
@@ -487,8 +509,7 @@ int writeZonesStruct(GModel *model, double scalingFactor, int cgIndexFile,
   }
 
   std::vector<GRegion *> regions;
-  for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-      ++it) {
+  for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
     if(isTransfinite(*it)) {
       meshDim = 3;
       regions.push_back(*it);

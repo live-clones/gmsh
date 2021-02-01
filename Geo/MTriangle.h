@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -68,7 +68,7 @@ public:
     if(_v[0] != v1 && _v[0] != v2) return _v[0];
     if(_v[1] != v1 && _v[1] != v2) return _v[1];
     if(_v[2] != v1 && _v[2] != v2) return _v[2];
-    return 0;
+    return nullptr;
   }
   virtual int getNumEdges() const { return 3; }
   virtual MEdge getEdge(int num) const
@@ -167,11 +167,12 @@ public:
     return e[edge][vert];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
-  virtual int getVertexSolin(int numEdge, int numVertex){
+  virtual int getVertexSolin(int numEdge, int numVertex)
+  {
     static const int eSolin[3][2] = {{0, 1}, {1, 2}, {2, 0}};
     return getVertex(eSolin[numEdge][numVertex])->getNum();
   }
-  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
+  virtual MFace getFaceSolin(int numFace) { return getFace(numFace); }
 };
 
 /*

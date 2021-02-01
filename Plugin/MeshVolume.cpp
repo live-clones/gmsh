@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,9 +8,8 @@
 #include "PViewOptions.h"
 
 StringXNumber MeshVolumeOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalGroup", NULL, -1},
-  {GMSH_FULLRC, "Dimension", NULL, 3}
-};
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1},
+  {GMSH_FULLRC, "Dimension", nullptr, 3}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterMeshVolumePlugin()
@@ -52,25 +51,21 @@ PView *GMSH_MeshVolumePlugin::execute(PView *v)
   }
 
   std::vector<GEntity *> entities;
-  if(physical == -1) {
-    model->getEntities(entities, dim);
-  }
+  if(physical == -1) { model->getEntities(entities, dim); }
   else {
     std::map<int, std::vector<GEntity *> > groups;
     model->getPhysicalGroups(dim, groups);
     entities = groups[physical];
   }
 
-  if(entities.empty())
-    Msg::Warning("The specified domain is empty");
+  if(entities.empty()) Msg::Warning("The specified domain is empty");
 
   double vol = 0;
   for(std::size_t i = 0; i < entities.size(); i++)
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
       vol += entities[i]->getMeshElement(j)->getVolume();
 
-  Msg::Info("Mesh volume (physical %d | dimension %d): %g",
-            physical, dim, vol);
+  Msg::Info("Mesh volume (physical %d | dimension %d): %g", physical, dim, vol);
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);

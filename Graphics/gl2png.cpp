@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -30,17 +30,17 @@ void create_png(FILE *file, PixelBuffer *buffer, int quality)
   }
 
   png_structp png_ptr =
-    png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 
-  if(png_ptr == NULL) {
+  if(png_ptr == nullptr) {
     Msg::Error("Could not create PNG write struct");
     return;
   }
 
   png_infop info_ptr = png_create_info_struct(png_ptr);
 
-  if(info_ptr == NULL) {
-    png_destroy_write_struct(&png_ptr, NULL);
+  if(info_ptr == nullptr) {
+    png_destroy_write_struct(&png_ptr, nullptr);
     Msg::Error("Could not create PNG info struct");
     return;
   }

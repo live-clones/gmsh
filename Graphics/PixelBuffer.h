@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -110,7 +110,7 @@ public:
           "Offscreen rendering only implemented for GL_RGB/GL_UNSIGNED_BYTE");
         return;
       }
-      OSMesaContext ctx = OSMesaCreateContextExt(OSMESA_RGB, 16, 0, 0, NULL);
+      OSMesaContext ctx = OSMesaCreateContextExt(OSMESA_RGB, 16, 0, 0, nullptr);
       if(!ctx) {
         Msg::Error("OSMesaCreateContext failed");
         return;

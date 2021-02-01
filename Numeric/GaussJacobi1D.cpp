@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -4178,8 +4178,8 @@ static double _gaussJacobiWt_20[5][5][20] = {
 
 void getGaussJacobiQuadrature(int a, int b, int n, double **pt, double **wt)
 {
-  *pt = NULL;
-  *wt = NULL;
+  *pt = nullptr;
+  *wt = nullptr;
   if(a < 0 || a > 4 || b < 0 || b > 4)
     Msg::Error("Gauss-Jacobi %i %i quadrature not available.", a, b);
   switch(n) {

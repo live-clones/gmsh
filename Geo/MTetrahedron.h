@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -198,12 +198,16 @@ public:
     return e[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
-  virtual int getVertexSolin(int numEdge, int numVertex){
-    static const int eSolin[6][2] =  {{0, 1}, {1, 2}, {2, 0}, {0, 3}, {2, 3}, {1, 3}};
+  virtual int getVertexSolin(int numEdge, int numVertex)
+  {
+    static const int eSolin[6][2] = {{0, 1}, {1, 2}, {2, 0},
+                                     {0, 3}, {2, 3}, {1, 3}};
     return getVertex(eSolin[numEdge][numVertex])->getNum();
   }
-  virtual MFace getFaceSolin(int numFace){
-    static const int fSolin[4][3] = {{0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
+  virtual MFace getFaceSolin(int numFace)
+  {
+    static const int fSolin[4][3] = {
+      {0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
     return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
                  _v[fSolin[numFace][2]]);
   }
@@ -423,9 +427,7 @@ public:
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
-    if(getIsAssimilatedSerendipity()) {
-      v.resize(3 * _order);
-    }
+    if(getIsAssimilatedSerendipity()) { v.resize(3 * _order); }
     else {
       v.resize((_order + 1) * (_order + 2) / 2);
     }
@@ -447,9 +449,7 @@ public:
 
     if((int)v.size() > count + 1) {
       int start = 6 * n + num * (n - 1) * n / 2;
-      for(int i = 0; i < (n - 1) * n / 2; i++) {
-        v[++count] = _vs[start + i];
-      }
+      for(int i = 0; i < (n - 1) * n / 2; i++) { v[++count] = _vs[start + i]; }
     }
   }
   virtual int getNumVolumeVertices() const

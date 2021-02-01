@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1228,11 +1228,13 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
         "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
         PROPERTIES COMPILE_FLAGS  "-fno-unsafe-math-optimizations -ffp-contract=off")
   else()
-    message(WARNING
-      "Unsupported compiler !
-       Make sure compiled functions from predicates.c
-       do NOT use extended double precision and follow IEEE754 standard.
-       It is crucial for the robustness of geometric predicates.")
+    message(WARNING "Unknown compiler: make sure compiled functions from "
+            "predicates.c do not use extended double precision and follow "
+            "the IEEE754 standard. It is crucial for the robustness of "
+            "geometric predicates.")
+  endif()
+  if(MSVC)
+    add_definitions(/bigobj)
   endif()
 endif()
 

@@ -1,5 +1,5 @@
 
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -79,9 +79,9 @@ public:
   int getNumTimeSteps() { return NbTimeStep; }
   double getTime(int step);
   double getMin(int step = -1, bool onlyVisible = false, int tensorRep = 0,
-                int forceNumComponents = 0, int componentMap[9] = 0);
+                int forceNumComponents = 0, int componentMap[9] = nullptr);
   double getMax(int step = -1, bool onlyVisible = false, int tensorRep = 0,
-                int forceNumComponents = 0, int componentMap[9] = 0);
+                int forceNumComponents = 0, int componentMap[9] = nullptr);
   void setMin(double min) { Min = min; }
   void setMax(double max) { Max = max; }
   SBoundingBox3d getBoundingBox(int step = -1) { return BBox; }

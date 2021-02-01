@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -35,9 +35,9 @@ namespace {
 
     // read solution interpolation tranformation info
     char interpName[CGNS_MAX_STR_LEN];
-    ElementType_t cgnsType;
+    CGNS_ENUMT(ElementType_t) cgnsType;
     int order, orderTime;
-    InterpolationType_t interpType;
+    CGNS_ENUMT(InterpolationType_t) interpType;
     cgnsErr = cg_solution_interpolation_read(fileIndex, baseIndex, familyIndex,
                                              interpIndex, interpName, &cgnsType,
                                              &order, &orderTime, &interpType);
@@ -215,8 +215,8 @@ namespace {
         monoMat = &(fs->monomials);
       }
       else {
-        coeffMat = 0;
-        monoMat = 0;
+        coeffMat = nullptr;
+        monoMat = nullptr;
       }
     }
   }
@@ -247,8 +247,8 @@ namespace {
       const int nbEltNode = ElementType::getNumVertices(mshType);
 
       // element node transformation if specified (CPEX0045)
-      const fullMatrix<double> *transfoMat = 0;
-      if((mshType != MSH_PNT) && (zoneSolTransfo != 0) &&
+      const fullMatrix<double> *transfoMat = nullptr;
+      if((mshType != MSH_PNT) && (zoneSolTransfo != nullptr) &&
          (zoneSolTransfo->size() > 0)) {
         transfoMat = &((*zoneSolTransfo)[mshType]);
       }
@@ -258,7 +258,7 @@ namespace {
       double *stepData = step->getData(eltNum, true, nbEltNode);
 
       // compute values at element nodes in step data
-      if(transfoMat == 0) {
+      if(transfoMat == nullptr) {
         // no basis specified: just reorder values from CGNS to Gmsh ordering
         const std::vector<int> &cgns2Msh = cgns2MshNodeIndex(mshType);
         for(int i = 0; i < nbEltNode; i++) stepData[cgns2Msh[i]] = eltData[i];
@@ -315,7 +315,7 @@ namespace {
 
   int getEntInPtSet(int fileIndex, int baseIndex, int zoneIndex,
                     int zoneSolIndex, bool isStructured, int dim,
-                    PointSetType_t ptSetType, cgsize_t ptSetSize,
+                    CGNS_ENUMT(PointSetType_t) ptSetType, cgsize_t ptSetSize,
                     const cgsize_t *zoneEntSize, cgsize_t *solReadRange,
                     std::vector<cgsize_t> &solEntSet)
   {
@@ -329,7 +329,7 @@ namespace {
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
     // get number of values and entities to read in solution
-    if(ptSetType == PointRange) {
+    if(ptSetType == CGNS_ENUMV(PointRange)) {
       if(isStructured) {
         for(int i = 0; i < dim; i++) {
           solReadRange[i] = 1;
@@ -360,7 +360,7 @@ namespace {
         UnstructuredIndexing::entFromRange(ptSet.data(), solEntSet);
       }
     }
-    else if(ptSetType == PointList) {
+    else if(ptSetType == CGNS_ENUMV(PointList)) {
       solReadRange[0] = 1;
       solReadRange[1] = ptSet.size();
       if(isStructured) {
@@ -405,7 +405,7 @@ namespace {
 
     // check FlowSolution name
     char rawSolName[CGNS_MAX_STR_LEN];
-    GridLocation_t location;
+    CGNS_ENUMT(GridLocation_t) location;
     cgnsErr = cg_sol_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
                           rawSolName, &location);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
@@ -413,12 +413,12 @@ namespace {
 
     // get zone dimension and type
     int dim;
-    ZoneType_t zoneType;
+    CGNS_ENUMT(ZoneType_t) zoneType;
     cgnsErr = cg_cell_dim(fileIndex, baseIndex, &dim);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
     cgnsErr = cg_zone_type(fileIndex, baseIndex, zoneIndex, &zoneType);
     if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
-    const bool isStructured = (zoneType == Structured);
+    const bool isStructured = (zoneType == CGNS_ENUMV(Structured));
 
     // get total number of vertices and elements in zone
     char zoneName[CGNS_MAX_STR_LEN];
@@ -428,8 +428,9 @@ namespace {
 
     // type and total number of entities (either vertices or elements) in zone
     const bool nodeOrEltData = (dataType == PViewDataGModel::NodeData);
-    const cgsize_t *zoneEntSize =
-      nodeOrEltData ? zoneSize : isStructured ? zoneSize + dim : zoneSize + 1;
+    const cgsize_t *zoneEntSize = nodeOrEltData ? zoneSize :
+                                  isStructured  ? zoneSize + dim :
+                                                  zoneSize + 1;
 
     // get solution order
     int order = 1;
@@ -442,7 +443,7 @@ namespace {
     // read point range if it exists, otherwise use all entities
     // (vertices/elements) in zone
     std::vector<cgsize_t> solEntSet;
-    PointSetType_t ptSetType;
+    CGNS_ENUMT(PointSetType_t) ptSetType;
     cgsize_t ptSetSize;
     cgsize_t solReadRange[6];
     cgnsErr = cg_sol_ptset_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
@@ -494,7 +495,7 @@ namespace {
     // get field data
     for(int iField = 1; iField <= nbField; iField++) {
       // field name
-      DataType_t cgnsDataType;
+      CGNS_ENUMT(DataType_t) cgnsDataType;
       char rawFieldName[CGNS_MAX_STR_LEN];
       cgnsErr = cg_field_info(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
                               iField, &cgnsDataType, rawFieldName);
@@ -503,9 +504,10 @@ namespace {
 
       // read field data
       std::vector<double> data(dataSize);
-      cgnsErr = cg_field_read(
-        fileIndex, baseIndex, zoneIndex, zoneSolIndex, rawFieldName, RealDouble,
-        solReadRangeMin, solReadRangeMax, static_cast<void *>(data.data()));
+      cgnsErr =
+        cg_field_read(fileIndex, baseIndex, zoneIndex, zoneSolIndex,
+                      rawFieldName, CGNS_ENUMV(RealDouble), solReadRangeMin,
+                      solReadRangeMax, static_cast<void *>(data.data()));
       if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex);
 
       // scan through data to populate step (possibly converting from custom
@@ -568,15 +570,14 @@ bool PViewDataGModel::readCGNS(
   // loop over zones
   for(int iZone = 1; iZone <= nbZone; iZone++) {
     // read family name and retrieve solution node transformations (CPEX0045)
-    const ZoneSolutionTransfo *zoneSolTransfo = 0;
+    const ZoneSolutionTransfo *zoneSolTransfo = nullptr;
     cgnsErr = cg_goto(fileIndex, baseIndex, "Zone_t", iZone, "end");
     if(cgnsErr != CG_OK) err = cgnsError(__FILE__, __LINE__, fileIndex);
     char famName[CGNS_MAX_STR_LEN];
     cgnsErr = cg_famname_read(famName);
     if(cgnsErr != CG_NODE_NOT_FOUND) {
       if(cgnsErr == CG_OK) {
-        Family2SolutionTransfo::const_iterator it =
-          allSolutionTransfo.find(std::string(famName));
+        auto it = allSolutionTransfo.find(std::string(famName));
         if(it != allSolutionTransfo.end()) zoneSolTransfo = &(it->second);
       }
       else

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -136,31 +136,36 @@ StringXString GeneralOptions_String[] = {
   { F, "WatchFilePattern", opt_general_watch_file_pattern , "" ,
      "Pattern of files to merge as they become available"},
 
-   { 0, 0 , 0 , "" , 0 }
+   { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString GeometryOptions_String[] = {
-  { F|O, "DoubleClickedPointCommand" , opt_geometry_double_clicked_point_command, "" ,
-    "Command parsed when double-clicking on a point" },
-  { F|O, "DoubleClickedCurveCommand" , opt_geometry_double_clicked_curve_command, "" ,
-    "Command parsed when double-clicking on a line" },
-  { F|O|D, "DoubleClickedLineCommand" , opt_geometry_double_clicked_curve_command, "" ,
-    "Command parsed when double-clicking on a line" },
-  { F|O, "DoubleClickedSurfaceCommand" , opt_geometry_double_clicked_surface_command, "" ,
-    "Command parsed when double-clicking on a surface" },
-  { F|O, "DoubleClickedVolumeCommand" , opt_geometry_double_clicked_volume_command, "" ,
-    "Command parsed when double-clicking on a volume" },
+  { F|O, "DoubleClickedPointCommand" , opt_geometry_double_clicked_point_command,
+    "ONELAB" , "Command parsed when double-clicking on a point, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O, "DoubleClickedCurveCommand" , opt_geometry_double_clicked_curve_command,
+    "ONELAB" , "Command parsed when double-clicking on a curve, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O|D, "DoubleClickedLineCommand" , opt_geometry_double_clicked_curve_command,
+    "ONELAB" , "Command parsed when double-clicking on a curve, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O, "DoubleClickedSurfaceCommand" , opt_geometry_double_clicked_surface_command,
+    "ONELAB" , "Command parsed when double-clicking on a surface, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
+  { F|O, "DoubleClickedVolumeCommand" , opt_geometry_double_clicked_volume_command,
+    "ONELAB" , "Command parsed when double-clicking on a volume, or 'ONELAB' "
+    "to edit associated ONELAB parameters" },
 
   { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "
     "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use OpenCASCADE "
     "default bahavior)"},
 
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString MeshOptions_String[] = {
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString SolverOptions_String[] = {
@@ -264,7 +269,7 @@ StringXString SolverOptions_String[] = {
     "by appending the unique client id. If baseport is 0 or is not provided, the "
     "port is chosen automatically (recommended))"},
 
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString PostProcessingOptions_String[] = {
@@ -275,7 +280,7 @@ StringXString PostProcessingOptions_String[] = {
   { F|O, "GraphPointCommand" , opt_post_double_clicked_graph_point_command, "" ,
     "Synonym for `DoubleClickedGraphPointCommand'" },
 
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString ViewOptions_String[] = {
@@ -339,7 +344,7 @@ StringXString ViewOptions_String[] = {
   { F|O, "Stipple9" , opt_view_stipple9 , "1*0xFFFF" ,
     "Tenth stippling pattern" },
 
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString PrintOptions_String[] = {
@@ -348,7 +353,7 @@ StringXString PrintOptions_String[] = {
     "General.Clip0D=Print.Parameter; SetChanged;" ,
     "Command parsed when the print parameter is changed" },
 
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 // NUMBERS
@@ -830,7 +835,9 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "VectorType" , opt_general_vector_type , 4 ,
     "Default vector display type (for normals, etc.)" },
   { F|O, "Verbosity" , opt_general_verbosity , 5. ,
-    "Level of information printed during processing (0: no information)" },
+    "Level of information printed on the terminal and the message console "
+    "(0: silent except for fatal errors, 1: +errors, 2: +warnings, 3: +direct, "
+    "4: +information, 5: +status, 99: +debug)" },
   { F|S, "VisibilityPositionX" , opt_general_visibility_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the visibility "
     "window" },
@@ -841,7 +848,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 4.0 ,
     "Middle mouse button zoom acceleration factor" },
 
-  { 0, 0 , 0 , 0. , 0 }
+  { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
 StringXNumber GeometryOptions_Number[] = {
@@ -1029,7 +1036,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "VolumeNumbers" , opt_geometry_volumes_num , 0. ,
     "Display volume labels?" },
 
-  { 0, 0 , 0 , 0. , 0 }
+  { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
 StringXNumber MeshOptions_Number[] = {
@@ -1047,7 +1054,7 @@ StringXNumber MeshOptions_Number[] = {
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AngleToleranceFacetOverlap" , opt_mesh_angle_tolerance_facet_overlap , 0.1,
     "Consider connected facets as overlapping when the dihedral angle between the facets is "
-    "smaller than the user's defined tolerance" },
+    "smaller than the user's defined tolerance (in degrees)" },
   { F|O, "AnisoMax" , opt_mesh_aniso_max, 1.e33,
     "Maximum anisotropy of the mesh" },
   { F|O, "AllowSwapAngle" , opt_mesh_allow_swap_edge_angle , 10.0 ,
@@ -1488,7 +1495,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ZoneDefinition" , opt_mesh_zone_definition , 0. ,
     "Method for defining a zone (0: single zone, 1: by partition, 2: by physical)" },
 
-  { 0, 0 , 0 , 0. , 0 }
+  { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
 StringXNumber SolverOptions_Number[] = {
@@ -1523,7 +1530,7 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "Timeout" , opt_solver_timeout , 5. ,
     "Time (in seconds) before closing the socket if no connection is happening" },
 
-  { 0, 0 , 0 , 0. , 0 }
+  { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
 StringXNumber PostProcessingOptions_Number[] = {
@@ -1580,7 +1587,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 
-  { 0, 0 , 0 , 0. }
+  { 0, nullptr , nullptr , 0. }
 } ;
 
 StringXNumber ViewOptions_Number[] = {
@@ -1872,7 +1879,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Width" , opt_view_size0 , 300. ,
     "Width (in pixels) of the scale or 2D plot" },
 
-  { 0, 0 , 0 , 0. , 0 }
+  { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
 StringXNumber PrintOptions_Number[] = {
@@ -1994,7 +2001,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },
 
-  { 0, 0 , 0 , 0. }
+  { 0, nullptr , nullptr , 0. }
 } ;
 
 // COLORS
@@ -2032,7 +2039,7 @@ StringXColor GeneralOptions_Color[] = {
   { F|O, "SpecularLight" , opt_general_color_specular_light,
     {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255},
     "Specular light color" },
-  { 0, 0 , 0 ,  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr ,  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , nullptr }
 } ;
 
 StringXColor GeometryOptions_Color[] = {
@@ -2072,7 +2079,7 @@ StringXColor GeometryOptions_Color[] = {
   { F|O, "Projection" , opt_geometry_color_projection ,
     {0, 255, 0, 255}, {0, 255, 0, 255}, {0, 0, 0, 255}, {0, 255, 0, 255},
     "Projection surface color" },
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 #define COLW  {210, 210, 210, 255}
@@ -2180,15 +2187,15 @@ StringXColor MeshOptions_Color[] = {
     "Color 18 in color carousel" },
   { F|O, "Nineteen" , opt_mesh_color_19, COL19, COL19, COLW, COL19,
     "Color 19 in color carousel" },
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , nullptr }
 } ;
 
 StringXColor SolverOptions_Color[] = {
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 StringXColor PostProcessingOptions_Color[] = {
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 #define ELECOL  {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {245, 245, 245, 255}
@@ -2215,11 +2222,11 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Background2D" , opt_view_color_background2d ,
     {255, 255, 255, 200}, {255, 255, 255, 200}, {255, 255, 255, 200}, {245, 245, 245, 200},
     "Bacground color for 2D plots" },
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 StringXColor PrintOptions_Color[] = {
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 #undef S

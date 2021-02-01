@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -67,15 +67,6 @@ append_gmsh_src(contrib/hxt/reparam/include "${INC}")
 list(APPEND HXT_INC_DIRS
      contrib/hxt/reparam/src
      contrib/hxt/reparam/include)
-
-
-#################################################################################
-# HXT sizeField
-#################################################################################
-if(HAVE_P4EST)
-  append_gmsh_src(contrib/hxt/sizeField "hxt_octree.cpp;hxt_octree.h" )
-  list(APPEND HXT_INC_DIRS contrib/hxt/sizeField)
-endif()
 
 #################################################################################
 # HXT predicates

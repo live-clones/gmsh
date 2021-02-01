@@ -75,7 +75,7 @@ namespace {
   {
     const int nVert = controlPoints.getNumCoeff();
 
-    MVertex *previous = NULL;
+    MVertex *previous = nullptr;
     for(int i = 0; i < nVert; ++i) {
       MVertex *v = new MVertex(controlPoints(i, 0), controlPoints(i, 1),
                                controlPoints(i, 2), gedge);
@@ -89,11 +89,9 @@ namespace {
   }
 
   void drawBezierControlPolygon(const std::vector<MVertex *> &vertices,
-                                GEdge *gedge = NULL)
+                                GEdge *gedge = nullptr)
   {
-    if(!gedge) {
-      gedge = *GModel::current()->firstEdge();
-    }
+    if(!gedge) { gedge = *GModel::current()->firstEdge(); }
 
     const int nVert = (int)vertices.size();
     fullMatrix<double> xyz(nVert, 3);
@@ -124,7 +122,7 @@ namespace {
   }
 
   void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,
-                   double unitDimension, GFace *gFace = NULL)
+                   double unitDimension, GFace *gFace = nullptr)
   {
     return;
     if(!gFace) gFace = *GModel::current()->firstFace();
@@ -249,9 +247,7 @@ namespace BoundaryLayerCurver {
         t = _gedge->firstDer(paramGeoEdge);
         t.normalize();
       }
-      if(!_gedge || t.norm() == 0) {
-        t = _edgeOnBoundary->tangent(paramEdge);
-      }
+      if(!_gedge || t.norm() == 0) { t = _edgeOnBoundary->tangent(paramEdge); }
 
       if(_gface) {
         SPoint2 paramGFace;
@@ -353,7 +349,7 @@ namespace BoundaryLayerCurver {
                                 double coeffs[2][3], GEdge *gedge)
     {
       int N = 100;
-      MVertex *previous = NULL;
+      MVertex *previous = nullptr;
 
       for(int i = 0; i < N + 1; ++i) {
         const double u = (double)i / N * 2 - 1;
@@ -585,9 +581,7 @@ namespace BoundaryLayerCurver {
         for(int i = 0; i < nbDofh; ++i) {
           double sf[100];
           fs->f(refNodesh(i, 0), refNodesh(i, 1), refNodesh(i, 2), sf);
-          for(int j = 0; j < nbDof; ++j) {
-            Mh(i, j) = sf[j];
-          }
+          for(int j = 0; j < nbDof; ++j) { Mh(i, j) = sf[j]; }
         }
         //      Mh.print("Mh");
 
@@ -607,9 +601,7 @@ namespace BoundaryLayerCurver {
           double *val = new double[nbDofh];
           for(int i = 0; i < nbDofh; ++i) {
             LegendrePolynomials::fc(order + 1, refNodesh(i, 0), val);
-            for(int j = 0; j < nbDofh; ++j) {
-              vandermonde(i, j) = val[j];
-            }
+            for(int j = 0; j < nbDofh; ++j) { vandermonde(i, j) = val[j]; }
           }
           delete val;
 
@@ -626,9 +618,7 @@ namespace BoundaryLayerCurver {
           double *val = new double[nbDof];
           for(int i = 0; i < nbDof; ++i) {
             LegendrePolynomials::fc(order, refNodes(i, 0), val);
-            for(int j = 0; j < nbDof; ++j) {
-              Me(i, j) = val[j];
-            }
+            for(int j = 0; j < nbDof; ++j) { Me(i, j) = val[j]; }
           }
           delete val;
         }
@@ -1011,9 +1001,7 @@ namespace BoundaryLayerCurver {
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), 0, 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1049,9 +1037,7 @@ namespace BoundaryLayerCurver {
             M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
-        for(int i = 0; i < nConstraint; ++i) {
-          M2(szSpace + i, nGP + i) = 1;
-        }
+        for(int i = 0; i < nConstraint; ++i) { M2(szSpace + i, nGP + i) = 1; }
       }
 
       fullMatrix<double> M1(szSpace + nConstraint, szSpace + nConstraint, true);
@@ -1073,9 +1059,7 @@ namespace BoundaryLayerCurver {
       {
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), refNodes(i, 1), 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1111,9 +1095,7 @@ namespace BoundaryLayerCurver {
             M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
-        for(int i = 0; i < nConstraint; ++i) {
-          M2(szSpace + i, nGP + i) = 1;
-        }
+        for(int i = 0; i < nConstraint; ++i) { M2(szSpace + i, nGP + i) = 1; }
       }
 
       fullMatrix<double> M1(szSpace + nConstraint, szSpace + nConstraint, true);
@@ -1135,9 +1117,7 @@ namespace BoundaryLayerCurver {
       {
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), refNodes(i, 1), 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1190,7 +1170,7 @@ namespace BoundaryLayerCurver {
     const std::vector<MElement *> &stackElements = column.second;
     int numVertexPerLayer = 2;
     unsigned long numLayers = stackElements.size();
-    stack.assign(numVertexPerLayer * numLayers, NULL);
+    stack.assign(numVertexPerLayer * numLayers, nullptr);
 
     int k = 0;
     for(int i = 0; i < numVertexPerLayer; ++i) {
@@ -1222,18 +1202,14 @@ namespace BoundaryLayerCurver {
         }
 
         for(int l = k - numVertexPerLayer; l < k; ++l) {
-          if(stack[l] == vbot) {
-            stack[l + numVertexPerLayer] = vtop;
-          }
+          if(stack[l] == vbot) { stack[l + numVertexPerLayer] = vtop; }
         }
       }
 
       // If there remains NULL values, it is because the vertex is the same
       // on bottom face and top face.
       for(int l = k; l < k + numVertexPerLayer; ++l) {
-        if(stack[l] == NULL) {
-          stack[l] = stack[l - numVertexPerLayer];
-        }
+        if(stack[l] == nullptr) { stack[l] = stack[l - numVertexPerLayer]; }
       }
 
       k += numVertexPerLayer;
@@ -1504,7 +1480,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     //    symetric of concave if (bndEl2column[i].first->getNum() != 1156)
     //    continue; // Strange if (bndEl2column[i].first->getNum() != 1157)
     //    continue; // next to Strange
-    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], NULL, gedge, normal);
+    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], nullptr, gedge, normal);
   }
 }
 

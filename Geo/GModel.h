@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,8 +21,8 @@
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
 
-#define hashmapMFace std::unordered_map<MFace, int, MFaceHash, MFaceEqual>
-#define hashmapMEdge std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual>
+#define hashmapMFace std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>
+#define hashmapMEdge std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>
 
 template <class scalar> class simpleFunction;
 
@@ -274,12 +274,14 @@ public:
     maxe = _checkPointedMaxElementNum;
   }
 
-  // number the edges
-  int addMEdge(const MEdge &edge);
-  // get the edge number
-  int getEdgeNumber(const MEdge &edge);
-  // number the faces
-  int addMFace(const MFace &face);
+  // add a mesh edge or face in the global edge or face map and number it
+  // (starting at 1)
+  std::size_t addMEdge(const MEdge &edge);
+  std::size_t addMFace(const MFace &face);
+  // get the number of an edge of face (or 0 if it is not stored in the global
+  // edge of face map)
+  std::size_t getEdgeNumber(const MEdge &edge);
+  std::size_t getFaceNumber(const MFace &face);
 
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
@@ -608,8 +610,9 @@ public:
 
   // create a geometry (i.e. a parametrization for curves and surfaces) for the
   // given discrete entities (or all of them if dimTags is empty)
-  void createGeometryOfDiscreteEntities(const std::vector<std::pair<int, int> >
-                                        &dimTags = std::vector<std::pair<int, int> >());
+  void createGeometryOfDiscreteEntities(
+    const std::vector<std::pair<int, int> > &dimTags =
+      std::vector<std::pair<int, int> >());
 
   // make discrete entities simply connected
   void makeDiscreteRegionsSimplyConnected();
@@ -679,6 +682,9 @@ public:
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
   void computeHomology();
+
+  // compute automatic sizing field from curvature
+  void computeSizeField();
 
   // access global cache of discrete curvatures
   std::map<MVertex *, std::pair<SVector3, SVector3> > &getCurvatures()

@@ -16,25 +16,26 @@ class GmshClient;
 
 #ifndef GMSH_MESSAGE_H
 // the external message handler
-class GmshMessage{
- public:
-  GmshMessage(){}
-  virtual ~GmshMessage(){}
-  virtual void operator()(std::string level, std::string message){}
+class GmshMessage {
+public:
+  GmshMessage() {}
+  virtual ~GmshMessage() {}
+  virtual void operator()(std::string level, std::string message) {}
 };
 #endif
 
-class fullNameLessThan{
+class fullNameLessThan {
 public:
   int compareFullNames(const std::string a, const std::string b) const;
-  bool operator()(const std::string p1, const std::string p2) const{
-    return compareFullNames(p1,p2);
+  bool operator()(const std::string p1, const std::string p2) const
+  {
+    return compareFullNames(p1, p2);
   }
 };
 
 // a class to manage messages
 class OLMsg {
- private:
+private:
   // current cpu number and total number of cpus
   static int _commRank, _commSize;
   // verbosity level (0: silent except fatal errors, 1: +errors, 2:
@@ -58,7 +59,8 @@ class OLMsg {
   static std::set<std::string, fullNameLessThan> _fullNameDict;
   // Gmsh wait function
   static void (*gui_wait_fct)(double time);
- public:
+
+public:
   OLMsg() {}
   static void Init(int argc, char **argv);
   static void Exit(int level);
@@ -71,8 +73,8 @@ class OLMsg {
   /* static int GetNumThreads(); */
   /* static int GetMaxThreads(); */
   /* static int GetThreadNum(); */
-  static void SetVerbosity(int val){ _verbosity = val; }
-  static int GetVerbosity(){ return _verbosity; }
+  static void SetVerbosity(int val) { _verbosity = val; }
+  static int GetVerbosity() { return _verbosity; }
   /* static std::string GetLaunchDate(){ return _launchDate; } */
   /* static std::string GetCommandLineArgs(){ return _commandLine; } */
   static void Fatal(const char *fmt, ...);
@@ -84,52 +86,64 @@ class OLMsg {
   static void StatusBar(int num, bool log, const char *fmt, ...);
   static void Debug(const char *fmt, ...);
   static void ProgressMeter(int n, int N, const char *fmt, ...);
-  static void ProgressMeter(int n, int N){ ProgressMeter(n, N, ""); }
-  static void SetProgressMeterStep(int step){ _progressMeterStep = step; }
-  static void ResetProgressMeter(){ if(!_commRank) _progressMeterCurrent = 0; }
-  static double &Timer(std::string str){ return _timers[str]; }
+  static void ProgressMeter(int n, int N) { ProgressMeter(n, N, ""); }
+  static void SetProgressMeterStep(int step) { _progressMeterStep = step; }
+  static void ResetProgressMeter()
+  {
+    if(!_commRank) _progressMeterCurrent = 0;
+  }
+  static double &Timer(std::string str) { return _timers[str]; }
   static void PrintTimers();
 
-  static void ResetErrorCounter(){ _warningCount = 0; _errorCount = 0; }
+  static void ResetErrorCounter()
+  {
+    _warningCount = 0;
+    _errorCount = 0;
+  }
   static void PrintErrorCounter(const char *title);
-  static int GetErrorCount(){ return _errorCount; }
+  static int GetErrorCount() { return _errorCount; }
 
   static double GetValue(const char *text, double defaultval);
   static std::string GetString(const char *text, std::string defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero,
-                       const char *one, const char *two=0);
-  //static void InitClient(std::string sockname);
-  //static void FinalizeClient();
-  static GmshClient *GetClient(){ return _client; }
+                       const char *one, const char *two = 0);
+  // static void InitClient(std::string sockname);
+  // static void FinalizeClient();
+  static GmshClient *GetClient() { return _client; }
 
-  //static void SetLoaderName(const std::string &name){ _loaderName = name; }
-  //static std::string GetLoaderName(){ return _loaderName; }
+  // static void SetLoaderName(const std::string &name){ _loaderName = name; }
+  // static std::string GetLoaderName(){ return _loaderName; }
   static void SetGuiWaitFunction(void (*fct)(double time));
   static void (*GetGuiWaitFunction())(double);
-  static void SetOnelabClient(onelab::client *client){ _onelabClient = client;}
+  static void SetOnelabClient(onelab::client *client)
+  {
+    _onelabClient = client;
+  }
 
   static void InitializeOnelab(const std::string &name);
   static void FinalizeOnelab();
 
-  static void SetOnelabNumber(std::string name, double val, bool visible=true);
+  static void SetOnelabNumber(std::string name, double val,
+                              bool visible = true);
   static void GetOnelabNumber(std::string name, double *val);
   static double GetOnelabNumber(std::string name);
-  static void SetOnelabString(std::string name, std::string val, bool visible=true);
+  static void SetOnelabString(std::string name, std::string val,
+                              bool visible = true);
   static std::string GetOnelabString(std::string name);
   static void SetVisible(std::string name, bool visible);
-  static void SetOnelabAttributeString(std::string name,
-				       std::string attrib,std::string val);
-  static std::string GetOnelabAttributeString(std::string name,std::string attrib);
+  static void SetOnelabAttributeString(std::string name, std::string attrib,
+                                       std::string val);
+  static std::string GetOnelabAttributeString(std::string name,
+                                              std::string attrib);
   static std::string GetOnelabAttributeNumber(std::string name,
-					      std::string attrib);
-  //static std::vector<std::string> GetOnelabChoices(std::string name);
-  static bool GetOnelabChoices(std::string name, std::vector<std::string> &choices);
-  static void ExchangeOnelabParameter(const std::string &key,
-				      std::vector<double> &val,
-				      std::map<std::string,
-				      std::vector<double> > &fopt,
-				      std::map<std::string,
-				      std::vector<std::string> > &copt);
+                                              std::string attrib);
+  // static std::vector<std::string> GetOnelabChoices(std::string name);
+  static bool GetOnelabChoices(std::string name,
+                               std::vector<std::string> &choices);
+  static void ExchangeOnelabParameter(
+    const std::string &key, std::vector<double> &val,
+    std::map<std::string, std::vector<double> > &fopt,
+    std::map<std::string, std::vector<std::string> > &copt);
   static void MergeFile(const std::string &name);
   static bool hasGmsh;
   static void recordFullName(const std::string &name);

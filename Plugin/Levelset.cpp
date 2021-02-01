@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -543,9 +543,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   }
 
   PViewData *vdata = getPossiblyAdaptiveData(v), *wdata;
-  if(_valueView < 0) {
-    wdata = vdata;
-  }
+  if(_valueView < 0) { wdata = vdata; }
   else if(_valueView > (int)PView::list.size() - 1) {
     Msg::Error("View[%d] does not exist: reverting to View[%d]", _valueView,
                v->getIndex());
@@ -620,7 +618,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     }
   }
 
-  return 0;
+  return nullptr;
 }
 
 // On high order maps, we draw only the elements that have a cut with

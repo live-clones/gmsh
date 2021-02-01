@@ -36,7 +36,7 @@ struct FastCurvingParameters {
   bool onlyVisible; // Apply curving to visible entities ONLY?
   bool optimizeGeometry; // Optimize boundary edges/faces to fit geometry?
   OUTERBLCURVE
-    curveOuterBL; // Curve also the outer surface of the boundary layer?
+  curveOuterBL; // Curve also the outer surface of the boundary layer?
   int maxNumLayers; // Maximum number of layers of elements to curve in BL
   double
     maxRho; // Maximum ratio min/max edge/face size for elements to curve in BL

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -251,7 +251,7 @@ static void _relocateVertexOfPyramid(MVertex *ver,
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
   int N = 0;
-  MElement *pyramid = NULL;
+  MElement *pyramid = nullptr;
 
   for(std::size_t i = 0; i < lt.size(); i++) {
     double XCG = 0.0, YCG = 0.0, ZCG = 0.0;
@@ -305,7 +305,6 @@ static void _relocateVertexGolden(MVertex *ver,
   double x = 0.0, y = 0.0, z = 0.0;
   int N = 0;
   for(std::size_t i = 0; i < lt.size(); i++) {
-    // TODO C++11 use std::accumulate instead
     double XCG = 0.0, YCG = 0.0, ZCG = 0.0;
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
       XCG += lt[i]->getVertex(j)->x();
@@ -371,9 +370,7 @@ static double _relocateVertex(GFace *gf, MVertex *ver,
 
   SPoint2 p1(0, 0);
   SPoint2 p2;
-  if(ver->getParameter(0, p2[0])) {
-    ver->getParameter(1, p2[1]);
-  }
+  if(ver->getParameter(0, p2[0])) { ver->getParameter(1, p2[1]); }
   else {
     return _relocateVertex2(gf, ver, lt, tol);
   }
@@ -421,7 +418,7 @@ void RelocateVertices(GFace *gf, int niter, double tol)
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
   for(int i = 0; i < niter; i++) {
-    v2t_cont::iterator it = adj.begin();
+    auto it = adj.begin();
     while(it != adj.end()) {
       if(vs.find(it->first) == vs.end()) {
         _relocateVertex(gf, it->first, it->second, tol);
@@ -441,7 +438,7 @@ void RelocateVertices(GRegion *region, int niter, double tol)
   buildVertexToElement(region->prisms, adj);
   buildVertexToElement(region->hexahedra, adj);
   for(int i = 0; i < niter + 2; i++) {
-    v2t_cont::iterator it = adj.begin();
+    auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
       _relocateVertexGolden(it->first, it->second, relax, tol);
@@ -499,7 +496,7 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 
   for(int i = 0; i < 10; i++) {
     double X = (double)(i + 1) / 10.;
-    v2t_cont::iterator it = adj.begin();
+    auto it = adj.begin();
     while(it != adj.end()) {
       _relocateVertexOfPyramid(it->first, it->second, X);
       ++it;
@@ -507,7 +504,7 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
   }
   //  return;
   for(int i = 0; i < niter + 2; i++) {
-    v2t_cont::iterator it = adj.begin();
+    auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
       _relocateVertexGolden(it->first, it->second, relax, tol);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -60,7 +60,7 @@ void addFaces(std::vector<T *> &elements, std::set<MFace, MFaceLessThan> &faces)
   for(std::size_t i = 0; i < elements.size(); i++) {
     for(int j = 0; j < elements[i]->getNumFaces(); j++) {
       MFace f = elements[i]->getFace(j);
-      std::set<MFace, MFaceLessThan>::iterator it = faces.find(f);
+      auto it = faces.find(f);
       if(it == faces.end())
         faces.insert(f);
       else
@@ -119,7 +119,7 @@ void carveHole(GRegion *gr, int num, double distance,
   if(!gf) return;
   std::set<MFace, MFaceLessThan> faces;
   std::vector<GFace *> f = gr->faces();
-  for(std::vector<GFace *>::iterator it = f.begin(); it != f.end(); it++) {
+  for(auto it = f.begin(); it != f.end(); it++) {
     addFaces((*it)->triangles, faces);
     addFaces((*it)->quadrangles, faces);
   }
@@ -129,8 +129,7 @@ void carveHole(GRegion *gr, int num, double distance,
   addFaces(gr->pyramids, faces);
 
   std::set<MVertex *> verts;
-  for(std::set<MFace, MFaceLessThan>::iterator it = faces.begin();
-      it != faces.end(); it++) {
+  for(auto it = faces.begin(); it != faces.end(); it++) {
     for(std::size_t i = 0; i < it->getNumVertices(); i++) {
       it->getVertex(i)->setEntity(gf);
       verts.insert(it->getVertex(i));

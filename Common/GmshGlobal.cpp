@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,7 +26,7 @@ typedef unsigned long intptr_t;
 #include "robustPredicates.h"
 #include "BasisFactory.h"
 #include "gmshCrossFields.h"
-
+#include "automaticMeshSizeField.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -73,7 +73,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
 #endif
 
   // we need at least one model during option parsing
-  GModel *dummy = 0;
+  GModel *dummy = nullptr;
   if(GModel::list.empty()) dummy = new GModel();
 
   // Initialize messages (parallel stuff, etc.)
@@ -307,17 +307,24 @@ int GmshBatch()
 
 #if defined(HAVE_POST) && defined(HAVE_MESH)
   if(!CTX::instance()->bgmFileName.empty()) {
-    MergePostProcessingFile(CTX::instance()->bgmFileName);
-    if(PView::list.size())
-      GModel::current()->getFields()->setBackgroundMesh(PView::list.size() - 1);
-    else
-      Msg::Error("Invalid background mesh (no view)");
+    if(CTX::instance()->bgmFileName.substr(
+         CTX::instance()->bgmFileName.find_last_of(".") + 1) == "p4est") {
+      automaticMeshSizeField *a =
+        new automaticMeshSizeField(CTX::instance()->bgmFileName);
+      GModel::current()->getFields()->setBackgroundField(a);
+    }
+    else {
+      MergePostProcessingFile(CTX::instance()->bgmFileName);
+      if(PView::list.size())
+        GModel::current()->getFields()->setBackgroundMesh(PView::list.size() -
+                                                          1);
+      else
+        Msg::Error("Invalid background mesh (no view)");
+    }
   }
 #endif
 
-  if(CTX::instance()->batch == -3) {
-    GmshRemote();
-  }
+  if(CTX::instance()->batch == -3) { GmshRemote(); }
   else if(CTX::instance()->batch == -2) {
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
 #if defined(HAVE_PARSER)
@@ -343,18 +350,21 @@ int GmshBatch()
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
                                     false, false, true);
     else if(CTX::instance()->batch == 7)
-      GModel::current()->classifySurfaces
-        (CTX::instance()->batchSomeValue * M_PI / 180., true, false, M_PI);
-    else if(CTX::instance()->batch == 8){
-      GModel::current()->classifySurfaces
-        (CTX::instance()->batchSomeValue * M_PI / 180., true, true, M_PI);
+      GModel::current()->classifySurfaces(
+        CTX::instance()->batchSomeValue * M_PI / 180., true, false, M_PI);
+    else if(CTX::instance()->batch == 8) {
+      GModel::current()->classifySurfaces(
+        CTX::instance()->batchSomeValue * M_PI / 180., true, true, M_PI);
       GModel::current()->createGeometryOfDiscreteEntities();
     }
-    else if(CTX::instance()->batch == 69){
+    else if(CTX::instance()->batch == 9) {
+      GModel::current()->computeSizeField();
+    }
+    else if(CTX::instance()->batch == 69) {
       std::vector<int> tags;
-      computeCrossField (GModel::current(), tags);
+      computeCrossField(GModel::current(), tags);
       GoodbyeMessage();
-      CTX::instance()->batch =0;
+      CTX::instance()->batch = 0;
       // still a bug in allocation somewhere
       exit(0);
     }
@@ -441,11 +451,25 @@ int GmshFLTK(int argc, char **argv)
 
   // read background mesh if any
   if(!CTX::instance()->bgmFileName.empty()) {
-    MergePostProcessingFile(CTX::instance()->bgmFileName);
-    if(PView::list.size())
-      GModel::current()->getFields()->setBackgroundMesh(PView::list.size() - 1);
-    else
-      Msg::Error("Invalid background mesh (no view)");
+    // If the background mesh is an octree (we us p4est), then we load the
+    // background mesh as an automaticMeshSizeField
+    if(CTX::instance()->bgmFileName.substr(
+         CTX::instance()->bgmFileName.find_last_of(".") + 1) == "p4est") {
+      automaticMeshSizeField *a =
+        new automaticMeshSizeField(CTX::instance()->bgmFileName);
+      //      int newId = GModel::current()->getFields()->newId();
+      //      (*GModel::current()->getFields())[newId] = a;
+      //      printf("loading %s\n",CTX::instance()->bgmFileName.c_str());
+      GModel::current()->getFields()->setBackgroundField(a);
+    }
+    else {
+      MergePostProcessingFile(CTX::instance()->bgmFileName);
+      if(PView::list.size())
+        GModel::current()->getFields()->setBackgroundMesh(PView::list.size() -
+                                                          1);
+      else
+        Msg::Error("Invalid background mesh (no view)");
+    }
   }
 
   // listen to external solvers
@@ -455,7 +479,7 @@ int GmshFLTK(int argc, char **argv)
   }
 
   // launch solver (if requested) and fill onelab tree
-  solver_cb(0, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+  solver_cb(nullptr, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
 
   // loop
   return FlGui::instance()->run();

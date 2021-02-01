@@ -2,23 +2,23 @@
 
 @ftable @code
 @item Geometry.DoubleClickedPointCommand
-Command parsed when double-clicking on a point@*
-Default value: @code{""}@*
+Command parsed when double-clicking on a point, or 'ONELAB' to edit associated ONELAB parameters@*
+Default value: @code{"ONELAB"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.DoubleClickedCurveCommand
-Command parsed when double-clicking on a line@*
-Default value: @code{""}@*
+Command parsed when double-clicking on a curve, or 'ONELAB' to edit associated ONELAB parameters@*
+Default value: @code{"ONELAB"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.DoubleClickedSurfaceCommand
-Command parsed when double-clicking on a surface@*
-Default value: @code{""}@*
+Command parsed when double-clicking on a surface, or 'ONELAB' to edit associated ONELAB parameters@*
+Default value: @code{"ONELAB"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.DoubleClickedVolumeCommand
-Command parsed when double-clicking on a volume@*
-Default value: @code{""}@*
+Command parsed when double-clicking on a volume, or 'ONELAB' to edit associated ONELAB parameters@*
+Default value: @code{"ONELAB"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCTargetUnit

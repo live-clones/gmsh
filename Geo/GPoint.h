@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -27,7 +27,8 @@ public:
   inline double u() const { return par[0]; }
   inline double v() const { return par[1]; }
   inline const GEntity *g() const { return e; }
-  GPoint(double _x = 0, double _y = 0, double _z = 0, const GEntity *onwhat = 0)
+  GPoint(double _x = 0, double _y = 0, double _z = 0,
+         const GEntity *onwhat = nullptr)
     : X(_x), Y(_y), Z(_z), e(onwhat), success(true)
   {
     par[0] = -1.;

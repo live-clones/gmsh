@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,10 +26,12 @@ struct edge_angle {
 };
 
 // TODO: switch to unordered_map here & verify deterministic bahavior
-typedef std::map<MVertex *, std::vector<MElement *>, MVertexPtrLessThan> v2t_cont;
-//typedef std::unordered_map<MVertex *, std::vector<MElement *> > v2t_cont;
+typedef std::map<MVertex *, std::vector<MElement *>, MVertexPtrLessThan>
+  v2t_cont;
+// typedef std::unordered_map<MVertex *, std::vector<MElement *> > v2t_cont;
 
-typedef std::map<MEdge, std::pair<MElement *, MElement *>, MEdgeLessThan> e2t_cont;
+typedef std::map<MEdge, std::pair<MElement *, MElement *>, MEdgeLessThan>
+  e2t_cont;
 
 template <class T>
 void buildVertexToElement(std::vector<T *> const &elements, v2t_cont &adj)
@@ -113,8 +115,8 @@ struct RecombineTriangle {
   {
     n1 = me.getVertex(0);
     n2 = me.getVertex(1);
-    n3 = 0;
-    n4 = 0;
+    n3 = nullptr;
+    n4 = nullptr;
 
     if(t1->getVertex(0) != n1 && t1->getVertex(0) != n2)
       n3 = t1->getVertex(0);

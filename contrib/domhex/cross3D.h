@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -552,16 +552,12 @@ double computeSetSmoothness(std::vector<cross3D> S)
       }
     }
     // on a trouve le quat approprie
-    for(unsigned int j = 0; j < 4; j++) {
-      qmean[j] += qTmp[j];
-    }
+    for(unsigned int j = 0; j < 4; j++) { qmean[j] += qTmp[j]; }
   }
   double normQt = sqrt(qmean[0] * qmean[0] + qmean[1] * qmean[1] +
                        qmean[2] * qmean[2] + qmean[3] * qmean[3]);
   if(normQt != 0.0) {
-    for(unsigned int j = 0; j < 4; j++) {
-      qmean[j] = qmean[j] / normQt;
-    }
+    for(unsigned int j = 0; j < 4; j++) { qmean[j] = qmean[j] / normQt; }
   }
   for(it1 = S.begin(); it1 != S.end(); it1++) {
     // pour chaque element du set
@@ -572,9 +568,7 @@ double computeSetSmoothness(std::vector<cross3D> S)
       // on trouve la cross appropriee
       Qtn qTmpi = cTmp.get(i).correspQuat();
       double prodVeci = 0.0;
-      for(unsigned int j = 0; j < 4; j++) {
-        prodVeci += qmean[j] * qTmpi.v[j];
-      }
+      for(unsigned int j = 0; j < 4; j++) { prodVeci += qmean[j] * qTmpi.v[j]; }
       if(prodVeci >= 0.0) {
         if(prodVeci > prodVecMin) {
           prodVecMin = prodVeci;
@@ -591,9 +585,7 @@ double computeSetSmoothness(std::vector<cross3D> S)
       }
     }
     // on a trouve le quat approprie
-    if(prodVecMin < result) {
-      result = prodVecMin;
-    }
+    if(prodVecMin < result) { result = prodVecMin; }
   }
   return result;
 }

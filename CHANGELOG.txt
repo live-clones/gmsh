@@ -1,11 +1,19 @@
-4.8.0 (Work-in-progress): new API functions for creating trimmed BSpline/Bezier
-patches, perform raw triangulations and tetrehedralizations; improved
-performance of high-order meshing of OCC models; improved handling of high
-resolution displays; new structured CGNS exporter; added support for embedded
-curves in HXT; small bug fixes.
+4.8.0 (Work-in-progress): new interactive and fully parametrizable definition of
+boundary conditions, materials, etc. through ONELAB variables; new API functions
+for creating trimmed BSpline/Bezier patches, perform raw triangulations and
+tetrehedralizations, get upward adjacencies, and create extruded boundary layers
+and automatic curve loops in built-in kernel; improved performance of high-order
+meshing of OCC models; improved handling of high resolution displays; new
+structured CGNS exporter; new transfinite Beta law; added support for embedded
+curves in HXT; added automatic conversion from partitioned MSH2 files to new
+partitioned entities; fixed order of Gauss quadrature for quads and hexas; code
+modernization (C++11); Python and Julia APIs now also define "snake case"
+aliases for all camelCase function names; small bug fixes and improvements.
 
-* Incompatible API changes: new optional argument to occ/addBSplineSurface,
-  occ/addBezierSurface and view/probe
+* Incompatible API changes: new optional argument to mesh/classifySurfaces,
+  occ/addBSplineSurface, occ/addBezierSurface, occ/addPipe and view/probe;
+  renamed and mesh/getEdgeNumber as mesh/getEdgeTags and changed its argument
+  types
 
 4.7.1 (November 16, 2020): small bug fixes and improvements.
 

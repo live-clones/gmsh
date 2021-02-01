@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -43,7 +43,8 @@ protected:
   GEntity *_ge;
 
 public:
-  MVertex(double x, double y, double z, GEntity *ge = 0, std::size_t num = 0);
+  MVertex(double x, double y, double z, GEntity *ge = nullptr,
+          std::size_t num = 0);
   virtual ~MVertex() {}
   void deleteLast();
 
@@ -134,7 +135,7 @@ public:
 
   MEdgeVertex(double x, double y, double z, GEntity *ge, double u,
               std::size_t num = 0, double lc = -1.0)
-    : MVertex(x, y, z, ge, num), _u(u), _lc(lc), bl_data(0)
+    : MVertex(x, y, z, ge, num), _u(u), _lc(lc), bl_data(nullptr)
   {
   }
   virtual ~MEdgeVertex()
@@ -149,7 +150,7 @@ public:
   }
   virtual bool setParameter(int i, double par)
   {
-    if (i != 0  ) return false;
+    if(i != 0) return false;
     _u = par;
     return true;
   }
@@ -165,7 +166,7 @@ public:
 
   MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v,
               std::size_t num = 0)
-    : MVertex(x, y, z, ge, num), _u(u), _v(v), bl_data(0)
+    : MVertex(x, y, z, ge, num), _u(u), _v(v), bl_data(nullptr)
   {
   }
   virtual ~MFaceVertex()
@@ -221,10 +222,7 @@ struct MVertexPtrEqual {
 };
 
 struct MVertexPtrHash {
-  size_t operator()(const MVertex *v) const
-  {
-    return v->getNum();
-  }
+  size_t operator()(const MVertex *v) const { return v->getNum(); }
 };
 
 bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,

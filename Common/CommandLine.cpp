@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -128,6 +128,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "(Mesh.MeshSizeMin)"));
   s.push_back(mp("-clmax value", "Set maximum mesh element size "
                  "(Mesh.MeshSizeMax)"));
+  s.push_back(mp("-clextend value", "Extend mesh element sizes from boundaries "
+                 "(Mesh.MeshSizeExtendFromBoundary)"));
   s.push_back(mp("-clcurv value", "Compute mesh element size from curvature, with "
                  "given minimum number of elements per 2*pi radians "
                  "(Mesh.MeshSizeFromCurvature and "
@@ -193,13 +195,15 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-bg file", "Load background (image or PDF) file "
                  "(General.BackgroundImageFileName)"));
   s.push_back(mp("-v int", "Set verbosity level (General.Verbosity)"));
-  s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts "
-                 "(General.NoPopup)"));
   s.push_back(mp("-string \"string\"", "Parse command string at startup"));
   s.push_back(mp("-setnumber name value", "Set constant or option number "
                  "name=value"));
   s.push_back(mp("-setstring name value", "Set constant or option string "
                  "name=value"));
+  s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts "
+                 "(General.NoPopup)"));
+  s.push_back(mp("-noenv", "Don't modify the environment at startup"));
+  s.push_back(mp("-nolocale", "Don't modify the locale at startup"));
   s.push_back(mp("-option file", "Parse option file at startup"));
   s.push_back(mp("-convert files", "Convert files into latest binary formats, "
                  "then exit"));
@@ -885,6 +889,39 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
+      else if(argv[i] == "-size_field") {
+        i++;
+        if(i < argv.size()){
+          CTX::instance()->mesh.nLayersPerGap = atoi(argv[i].c_str());
+          CTX::instance()->batch = 9;
+        }
+        else{
+          Msg::Error("Missing number of layers per gap");
+          if(exitOnError) Msg::Exit(1);
+        }
+        i++;
+        if(i < argv.size()){
+          CTX::instance()->mesh.minElementsPerTwoPi = atoi(argv[i].c_str());
+          if(CTX::instance()->mesh.minElementsPerTwoPi <= 0.)
+            CTX::instance()->mesh.lcFromCurvature = 0;
+        }
+        else{
+          Msg::Error("Missing number of elements density");
+          if(exitOnError) Msg::Exit(1);
+        }
+        i++;
+        if(i < argv.size()){
+          CTX::instance()->mesh.gradation = atof(argv[i].c_str());
+          if(CTX::instance()->mesh.gradation <= 1.){
+            CTX::instance()->mesh.gradation = 1.05;
+            Msg::Info("Gradation must be > 1 : set to 1.05");
+          }
+        }
+        else{
+          Msg::Error("Missing gradation");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
       else if(argv[i] == "-windows") {
         i++;
         if(i < argv.size())
@@ -1009,6 +1046,15 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
             if(exitOnError) Msg::Exit(1);
           }
         }
+        else {
+          Msg::Error("Missing number");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
+      else if(argv[i] == "-clextend") {
+        i++;
+        if(i < argv.size())
+          opt_mesh_lc_extend_from_boundary(0, GMSH_SET, atof(argv[i++].c_str()));
         else {
           Msg::Error("Missing number");
           if(exitOnError) Msg::Exit(1);
@@ -1242,13 +1288,13 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-help" || argv[i] == "--help") {
         Msg::Direct(
           "Gmsh, a 3D mesh generator with pre- and post-processing facilities");
-        Msg::Direct("Copyright (C) 1997-2020 C. Geuzaine and J.-F. Remacle");
+        Msg::Direct("Copyright (C) 1997-2021 C. Geuzaine and J.-F. Remacle");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }
       else if(argv[i] == "-help_options") {
         std::vector<std::string> s;
-        PrintOptions(0, GMSH_FULLRC, 0, 1, 0, &s);
+        PrintOptions(0, GMSH_FULLRC, 0, 1, nullptr, &s);
         for(std::size_t i = 0; i < s.size(); i++)
           Msg::Direct("%s\n", s[i].c_str());
         Msg::Exit(0);

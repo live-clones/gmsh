@@ -31,7 +31,7 @@ struct PointRecord {
   int flag; // 0:to be kept, 1:to be removed
   int identificator;
   std::vector<void *> vicinity;
-  PointRecord() : adjacent(0), data(0), flag(0), identificator(0)
+  PointRecord() : adjacent(nullptr), data(nullptr), flag(0), identificator(0)
   {
     where.v = where.h = 0.;
   }
@@ -108,9 +108,9 @@ public:
   {
     return std::binary_search(_hull, _hull + _hullSize, i);
   }
-  void makePosView(const std::string &, GFace *gf = NULL);
-  void printMedialAxis(Octree *_octree, const std::string &, GFace *gf = NULL,
-                       GEdge *ge = NULL);
+  void makePosView(const std::string &, GFace *gf = nullptr);
+  void printMedialAxis(Octree *_octree, const std::string &,
+                       GFace *gf = nullptr, GEdge *ge = nullptr);
   void voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const;
 
   std::set<std::pair<void *, void *> > boundaryEdges;
@@ -125,8 +125,7 @@ public:
   {
     void *a = (p1 < p2) ? p1 : p2;
     void *b = (p1 > p2) ? p1 : p2;
-    std::set<std::pair<void *, void *> >::iterator it =
-      boundaryEdges.find(std::make_pair(a, b));
+    auto it = boundaryEdges.find(std::make_pair(a, b));
     return it != boundaryEdges.end();
   }
 
@@ -155,8 +154,7 @@ public:
   {
     void *a = (p1 < p2) ? p1 : p2;
     void *b = (p1 > p2) ? p1 : p2;
-    std::set<std::pair<void *, void *> >::iterator it =
-      mesh_edges.find(std::make_pair(a, b));
+    auto it = mesh_edges.find(std::make_pair(a, b));
     return it != mesh_edges.end();
   }
 
@@ -172,6 +170,6 @@ void centroidOfOrientedBox(std::vector<SPoint2> &pts, const double &angle,
                            double &area);
 void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts, double &xc,
                        double &yc, double &inertia, double &areaCell,
-                       simpleFunction<double> *bgm = 0);
+                       simpleFunction<double> *bgm = nullptr);
 
 #endif

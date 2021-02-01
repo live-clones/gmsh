@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,7 +18,8 @@
 
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _meshMaster(this), _visible(1), _selection(0),
-    _allElementsVisible(1), _obb(0), va_lines(0), va_triangles(0)
+    _allElementsVisible(1), _obb(nullptr), va_lines(nullptr),
+    va_triangles(nullptr)
 {
   _color = CTX::instance()->packColor(0, 0, 255, 0);
 }
@@ -26,9 +27,9 @@ GEntity::GEntity(GModel *m, int t)
 void GEntity::deleteVertexArrays()
 {
   if(va_lines) delete va_lines;
-  va_lines = 0;
+  va_lines = nullptr;
   if(va_triangles) delete va_triangles;
-  va_triangles = 0;
+  va_triangles = nullptr;
 }
 
 char GEntity::getVisibility()
@@ -61,6 +62,11 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
   default: break;
   }
 
+  {
+    std::string name = model()->getElementaryName(dim(), tag());
+    if(name.size()) sstream << ": " << name;
+  }
+
   if(additional) {
     std::string info = getAdditionalInfoString(multiline);
     if(info.size()) {
@@ -69,17 +75,6 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
       else
         sstream << " ";
       sstream << info;
-    }
-  }
-
-  {
-    std::string name = model()->getElementaryName(dim(), tag());
-    if(name.size()) {
-      if(multiline)
-        sstream << "\n";
-      else
-        sstream << ", ";
-      sstream << name;
     }
   }
 
@@ -96,19 +91,14 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
       case 2: sstream << "Surface"; break;
       case 3: sstream << "Volume"; break;
       }
-      sstream << " " << physicals[i];
-      std::string name = model()->getPhysicalName(dim(), physicals[i]);
-      if(name.size()) {
-        if(multiline)
-          sstream << "\n";
-        else
-          sstream << ", ";
-        sstream << name;
-      }
+      sstream << " " << std::abs(physicals[i]);
+      std::string name =
+        model()->getPhysicalName(dim(), std::abs(physicals[i]));
+      if(name.size()) sstream << ": " << name;
     }
   }
 
-  if(useColor()){
+  if(useColor()) {
     int r = CTX::instance()->unpackRed(_color);
     int g = CTX::instance()->unpackGreen(_color);
     int b = CTX::instance()->unpackBlue(_color);
@@ -125,8 +115,7 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
 // removes a MeshVertex
 void GEntity::removeMeshVertex(MVertex *v)
 {
-  std::vector<MVertex *>::iterator it =
-    std::find(mesh_vertices.begin(), mesh_vertices.end(), v);
+  auto it = std::find(mesh_vertices.begin(), mesh_vertices.end(), v);
   if(it != mesh_vertices.end()) mesh_vertices.erase(it);
 }
 
@@ -157,7 +146,7 @@ void GEntity::setMeshMaster(GEntity *gMaster, const std::vector<double> &tfo,
     return;
   }
 
-  if(tfo.empty()){
+  if(tfo.empty()) {
     GEntity::setMeshMaster(gMaster);
     return;
   }
@@ -182,21 +171,21 @@ void GEntity::addVerticesInSet(std::set<MVertex *> &vtcs, bool closure) const
     switch(dim()) {
     case 3: {
       std::vector<GFace *> clos = faces();
-      std::vector<GFace *>::iterator cIter = clos.begin();
+      auto cIter = clos.begin();
       for(; cIter != clos.end(); ++cIter)
         (*cIter)->addVerticesInSet(vtcs, true);
       break;
     }
     case 2: {
       std::vector<GEdge *> clos = edges();
-      std::vector<GEdge *>::iterator cIter = clos.begin();
+      auto cIter = clos.begin();
       for(; cIter != clos.end(); ++cIter)
         (*cIter)->addVerticesInSet(vtcs, true);
       break;
     }
     case 1: {
       std::vector<GVertex *> clos = vertices();
-      std::vector<GVertex *>::iterator cIter = clos.begin();
+      auto cIter = clos.begin();
       for(; cIter != clos.end(); ++cIter)
         (*cIter)->addVerticesInSet(vtcs, true);
       break;
@@ -219,7 +208,7 @@ void GEntity::updateCorrespondingVertices()
       std::set<MVertex *> vtcs;
       this->addVerticesInSet(vtcs, true);
 
-      std::set<MVertex *>::iterator vIter = vtcs.begin();
+      auto vIter = vtcs.begin();
       for(; vIter != vtcs.end(); ++vIter) {
         MVertex *tv = *vIter;
         // double tgt[4] = {tv->x(),tv->y(),tv->z(),1};
@@ -251,8 +240,7 @@ void GEntity::updateCorrespondingVertices()
 void GEntity::copyMasterCoordinates()
 {
   if(_meshMaster != this && affineTransform.size() == 16) {
-    std::map<MVertex *, MVertex *>::iterator cvIter =
-      correspondingVertices.begin();
+    auto cvIter = correspondingVertices.begin();
 
     for(; cvIter != correspondingVertices.end(); ++cvIter) {
       MVertex *tv = cvIter->first;

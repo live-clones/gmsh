@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,6 +14,7 @@
 #include "SPoint2.h"
 
 #include <algorithm>
+#include <array>
 #include <vector>
 
 class SOrientedBoundingRectangle {
@@ -23,11 +24,10 @@ public:
   double area();
 
 public:
-  // TODO C++11 std::array<double, 2>
-  std::vector<double> center;
-  std::vector<double> size;
-  std::vector<double> axisX;
-  std::vector<double> axisY;
+  std::array<double, 2> center;
+  std::array<double, 2> size;
+  std::array<double, 2> axisX;
+  std::array<double, 2> axisY;
 };
 
 class SOrientedBoundingBox {

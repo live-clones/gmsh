@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1353,14 +1353,60 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
   }
 }
 
-GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n, int ** edgeNum, size_t * edgeNum_n, int * ierr)
+GMSH_API void gmshModelMeshGetEdgeTags(size_t * nodeTags, size_t nodeTags_n, size_t ** edgeTags, size_t * edgeTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_edgeNodes_(edgeNodes, edgeNodes + edgeNodes_n);
-    std::vector<int> api_edgeNum_;
-    gmsh::model::mesh::getEdgeNumber(api_edgeNodes_, api_edgeNum_);
-    vector2ptr(api_edgeNum_, edgeNum, edgeNum_n);
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<std::size_t> api_edgeTags_;
+    gmsh::model::mesh::getEdgeTags(api_nodeTags_, api_edgeTags_);
+    vector2ptr(api_edgeTags_, edgeTags, edgeTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetFaceTags(const int faceType, size_t * nodeTags, size_t nodeTags_n, size_t ** faceTags, size_t * faceTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<std::size_t> api_faceTags_;
+    gmsh::model::mesh::getFaceTags(faceType, api_nodeTags_, api_faceTags_);
+    vector2ptr(api_faceTags_, faceTags, faceTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshCreateEdges(int * dimTags, size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::createEdges(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::createFaces(api_dimTags_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1716,6 +1762,19 @@ GMSH_API void gmshModelMeshRemoveEmbedded(int * dimTags, size_t dimTags_n, const
   }
 }
 
+GMSH_API void gmshModelMeshGetEmbedded(const int dim, const int tag, int ** dimTags, size_t * dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_;
+    gmsh::model::mesh::getEmbedded(dim, tag, api_dimTags_);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshReorderElements(const int elementType, const int tag, size_t * ordering, size_t ordering_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1803,11 +1862,11 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag,
   }
 }
 
-GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, const double curveAngle, int * ierr)
+GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, const double curveAngle, const int exportDiscrete, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization, curveAngle);
+    gmsh::model::mesh::classifySurfaces(angle, boundary, forReparametrization, curveAngle, exportDiscrete);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2140,6 +2199,20 @@ GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n, const
   return result_api_;
 }
 
+GMSH_API void gmshModelGeoAddCurveLoops(int * curveTags, size_t curveTags_n, int ** tags, size_t * tags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_curveTags_(curveTags, curveTags + curveTags_n);
+    std::vector<int> api_tags_;
+    gmsh::model::geo::addCurveLoops(api_curveTags_, api_tags_);
+    vector2ptr(api_tags_, tags, tags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelGeoAddPlaneSurface(int * wireTags, size_t wireTags_n, const int tag, int * ierr)
 {
   int result_api_ = 0;
@@ -2249,6 +2322,26 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n, const double x,
     std::vector<int> api_numElements_(numElements, numElements + numElements_n);
     std::vector<double> api_heights_(heights, heights + heights_n);
     gmsh::model::geo::twist(api_dimTags_, x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_numElements_, api_heights_, recombine);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelGeoExtrudeBoundaryLayer(int * dimTags, size_t dimTags_n, int ** outDimTags, size_t * outDimTags_n, int * numElements, size_t numElements_n, double * heights, size_t heights_n, const int recombine, const int second, const int viewIndex, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<int> api_numElements_(numElements, numElements + numElements_n);
+    std::vector<double> api_heights_(heights, heights + heights_n);
+    gmsh::model::geo::extrudeBoundaryLayer(api_dimTags_, api_outDimTags_, api_numElements_, api_heights_, recombine, second, viewIndex);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(...){
@@ -3020,7 +3113,7 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n, const double 
   }
 }
 
-GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n, const int wireTag, int ** outDimTags, size_t * outDimTags_n, int * ierr)
+GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n, const int wireTag, int ** outDimTags, size_t * outDimTags_n, const char * trihedron, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -3030,7 +3123,7 @@ GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n, const int wir
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::vectorpair api_outDimTags_;
-    gmsh::model::occ::addPipe(api_dimTags_, wireTag, api_outDimTags_);
+    gmsh::model::occ::addPipe(api_dimTags_, wireTag, api_outDimTags_, trihedron);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(...){
@@ -3924,6 +4017,28 @@ GMSH_API void gmshFltkSetCurrentWindow(const int windowIndex, int * ierr)
   }
 }
 
+GMSH_API void gmshFltkSetStatusMessage(const char * message, const int graphics, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::setStatusMessage(message, graphics);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshFltkShowContextWindow(const int dim, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::showContextWindow(dim, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshOnelabSet(const char * data, const char * format, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -3942,6 +4057,19 @@ GMSH_API void gmshOnelabGet(char ** data, const char * name, const char * format
     std::string api_data_;
     gmsh::onelab::get(api_data_, name, format);
     *data = strdup(api_data_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshOnelabGetNames(char *** names, size_t * names_n, const char * search, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_names_;
+    gmsh::onelab::getNames(api_names_, search);
+    vectorstring2charptrptr(api_names_, names, names_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

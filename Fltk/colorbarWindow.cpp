@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,8 +18,8 @@
 colorbarWindow::colorbarWindow(int x, int y, int w, int h, const char *l)
   : Fl_Window(x, y, w, h, l)
 {
-  ct = NULL;
-  label = NULL;
+  ct = nullptr;
+  label = nullptr;
   help_flag = 1;
   font_height = FL_NORMAL_SIZE - 1; // use slightly smaller font
   marker_height = font_height;

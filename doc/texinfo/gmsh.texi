@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file for license information. Please report all
 @c issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2020 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2021 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -2182,8 +2182,11 @@ combined).
 
 @item Sphere ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a sphere, defined by the 3 coordinates of its center and a
-radius. Additional expressions define 3 angle limits. @code{Sphere} is
-only available with the OpenCASCADE kernel.
+radius. Additional expressions define 3 angle limits. The first two
+optional arguments define the polar angle opening (from -Pi/2 to
+Pi/2). The optional `angle3' argument defines the azimuthal opening
+(from 0 to 2*Pi). @code{Sphere} is only available with the OpenCASCADE
+kernel.
 
 @item Box ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a box, defined by the 3 coordinates of a point and the 3
@@ -2375,7 +2378,10 @@ Computes the union of the object and the tool.
 Subtract the tool from the object.
 @item BooleanFragments @{ @var{boolean-list} @} @{ @var{boolean-list} @}
 Computes all the fragments resulting from the intersection of the
-entities in the object and in the tool, and makes all interfaces unique.
+entities in the object and in the tool, making all interfaces conformal.
+When applied to entities of different dimensions, the lower dimensional
+entities will be automatically embedded in the higher dimensional
+entities if they are not on their boundary.
 @end ftable
 
 with
@@ -3370,7 +3376,8 @@ be given in several formats: in human-readable ``parsed'' format (these
 are just part of a standard input script, but are usually put in
 separate files with a @file{.pos} extension), in native MSH files (ASCII
 or binary files with @file{.msh} extensions: see @ref{File formats}), or
-in standard third-party formats.
+in standard third-party formats. Datasets can also be directly imported
+using the Gmsh API, in the @code{gmsh/view} module (@pxref{Gmsh API}).
 
 Once loaded into Gmsh, scalar fields can be displayed as iso-curves,
 iso-surfaces or color maps, whereas vector fields can be represented
@@ -3988,7 +3995,7 @@ $NodeData
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  nodeTag(size_t) value(double) ...
+  nodeTag(int) value(double) ...
   ...
 $EndNodeData
 
@@ -3999,7 +4006,7 @@ $ElementData
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  elementTag(size_t) value(double) ...
+  elementTag(int) value(double) ...
   ...
 $EndElementData
 
@@ -4010,7 +4017,7 @@ $ElementNodeData
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  elementTag(size_t) numNodesPerElement(int) value(double) ...
+  elementTag(int) numNodesPerElement(int) value(double) ...
   ...
 $EndElementNodeData
 
@@ -4246,6 +4253,9 @@ The @code{$GhostElements}, @code{$NodeData}, @code{$ElementData} and
 @code{$ElementNodeData} will be reworked for greater IO efficiency, with
 separation of entries by type and a block structure with predictable
 sizes.
+@item
+Node and element tags in @code{$NodeData}, @code{$ElementData} and
+@code{$ElementNodeData} will be switched to @code{size_t}.
 @end itemize
 
 @c -------------------------------------------------------------------------
@@ -5662,17 +5672,18 @@ is to save some of these options in a per-user ``session resource'' file
 (cf. ``Saved in: @code{General.SessionFileName}'' in the lists below)
 every time Gmsh is shut down. This permits for example to automatically
 remember the size and location of the windows or which fonts to use. A
-second set of options can be saved (automatically or manually with
-the `File->Save Options->As Default' menu) in a per-user ``option'' file
+second set of options can be saved (automatically or manually with the
+`File->Save Options As Default' menu) in a per-user ``option'' file
 (cf. ``Saved in: @code{General.OptionsFileName}'' in the lists below),
 automatically loaded by Gmsh every time it starts up. Finally, other
 options are only saved to disk manually, either by explicitly saving an
 option file with `File->Export', or when saving per-model options with
-`File->Save Options->For Current File' (cf. ``Saved in: @code{-}'' in
-the lists below).
+`File->Save Model Options' (cf. ``Saved in: @code{-}'' in the lists
+below).
 
-To reset all options to their default values, use the `Restore default
-options' button in `Tools->Options->General->Advanced', or erase the
+To reset all options to their default values, use `Help->Restore All
+Options to Default Settings' or the `Restore all options to default
+settings' button in `Tools->Options->General->Advanced', or erase the
 @code{General.SessionFileName} and @code{General.OptionsFileName} files
 by hand.
 
@@ -5922,14 +5933,16 @@ header/module file for the exact definition in each supported language:
 in @url{@value{GITLAB-PREFIX}/api/gmsh.h,C++}
 @code{gmsh/model/geo/addPoint} will lead to a namespaced function
 @code{gmsh::model::geo::addPoint}, while in
-@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python}
-and
-@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia}
-it will lead to @code{gmsh.model.geo.addPoint}, and in
+@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python} and
+@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia} it will lead to
+@code{gmsh.model.geo.addPoint}, and in
 @url{@value{GITLAB-PREFIX}/api/gmshc.h,C} to
-@code{gmshModelGeoAddPoint}. Output values are passed by reference in
-C++, as pointers in C and directly returned (after the return value, if
-any) in Python and Julia.
+@code{gmshModelGeoAddPoint}.  In addition to the default ``camelCase''
+function names, the Python and Julia APIs also define ``snake case''
+aliases, i.e. @code{gmsh.model.geo.add_point}, as this is the
+recommended style in these languages.  Output values are passed by
+reference in C++, as pointers in C and directly returned (after the
+return value, if any) in Python and Julia.
 
 @include api.texi
 

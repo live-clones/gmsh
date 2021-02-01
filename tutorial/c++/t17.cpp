@@ -39,6 +39,7 @@ int main(int argc, char **argv)
 
   // Apply the view as the current background mesh
   int bg_field = gmsh::model::mesh::field::add("PostView");
+  gmsh::model::mesh::field::setNumber(bg_field, "ViewIndex", 0);
   gmsh::model::mesh::field::setAsBackgroundMesh(bg_field);
 
   // Use bamg

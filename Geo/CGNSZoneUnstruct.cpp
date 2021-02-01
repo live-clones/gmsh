@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -17,8 +17,9 @@
 
 namespace {
 
-  MElement *createElement(ElementType_t sectEltType, std::size_t vertShift,
-                          int entity, const std::vector<MVertex *> &allVert,
+  MElement *createElement(CGNS_ENUMT(ElementType_t) sectEltType,
+                          std::size_t vertShift, int entity,
+                          const std::vector<MVertex *> &allVert,
                           std::map<int, std::vector<MElement *> > *allElt,
                           const std::vector<cgsize_t> &sectData,
                           const ZoneEltNodeTransfo *eltNodeTransfo,
@@ -26,9 +27,9 @@ namespace {
                           std::size_t &iSectData)
   {
     // get element type
-    ElementType_t eltType;
-    if(sectEltType == MIXED) {
-      eltType = static_cast<ElementType_t>(sectData[iSectData]);
+    CGNS_ENUMT(ElementType_t) eltType;
+    if(sectEltType == CGNS_ENUMV(MIXED)) {
+      eltType = static_cast<CGNS_ENUMT(ElementType_t)>(sectData[iSectData]);
       iSectData++;
     }
     else
@@ -40,8 +41,8 @@ namespace {
 
     // element high-order node transformation if specified (CPEX0045), otherwise
     // use the classic CGNS order
-    const std::vector<int> *nodeTransfo = 0;
-    if((mshEltType != MSH_PNT) && (eltNodeTransfo != 0) &&
+    const std::vector<int> *nodeTransfo = nullptr;
+    if((mshEltType != MSH_PNT) && (eltNodeTransfo != nullptr) &&
        (eltNodeTransfo->size() > 0)) {
       nodeTransfo = &((*eltNodeTransfo)[mshEltType]);
     }
@@ -82,8 +83,8 @@ namespace {
 CGNSZoneUnstruct::CGNSZoneUnstruct(
   int fileIndex, int baseIndex, int zoneIndex, int meshDim, cgsize_t startNode,
   const Family2EltNodeTransfo &allEltNodeTransfo, int &err)
-  : CGNSZone(fileIndex, baseIndex, zoneIndex, Unstructured, meshDim, startNode,
-             allEltNodeTransfo, err)
+  : CGNSZone(fileIndex, baseIndex, zoneIndex, CGNS_ENUMV(Unstructured), meshDim,
+             startNode, allEltNodeTransfo, err)
 {
   if(err == 0) return;
 
@@ -104,7 +105,7 @@ int CGNSZoneUnstruct::readSection(
 
   // read section information
   char sectName[CGNS_MAX_STR_LEN];
-  ElementType_t sectEltType;
+  CGNS_ENUMT(ElementType_t) sectEltType;
   cgsize_t startElt, endElt;
   int nbBnd, parentFlag;
   cgnsErr =
@@ -114,7 +115,7 @@ int CGNSZoneUnstruct::readSection(
 
     // check for compatibility with MIXED element sections
 #if CGNS_VERSION < 4000
-  if(sectEltType == MIXED) {
+  if(sectEltType == CGNS_ENUMV(MIXED)) {
     Msg::Error("Reading MIXED element sections requires CGNS library version"
                "4 or superior");
     return 0;
@@ -129,15 +130,16 @@ int CGNSZoneUnstruct::readSection(
 
   // read connectivity data
   std::vector<cgsize_t> sectData(dataSize), offsetData(endElt - startElt + 2);
-  if(sectEltType == MIXED) {
+  if(sectEltType == CGNS_ENUMV(MIXED)) {
 #if CGNS_VERSION >= 4000
-    cgnsErr = cg_poly_elements_read(fileIndex(), baseIndex(), index(), iSect,
-                                    sectData.data(), offsetData.data(), 0);
+    cgnsErr =
+      cg_poly_elements_read(fileIndex(), baseIndex(), index(), iSect,
+                            sectData.data(), offsetData.data(), nullptr);
 #endif
   }
   else {
     cgnsErr = cg_elements_read(fileIndex(), baseIndex(), index(), iSect,
-                               sectData.data(), 0);
+                               sectData.data(), nullptr);
   }
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
@@ -146,7 +148,7 @@ int CGNSZoneUnstruct::readSection(
   if(endElt > (cgsize_t)zoneElt.size()) zoneElt.resize(endElt);
   const cgsize_t iStartElt = startElt - 1, iEndElt = endElt - 1;
   for(int iElt = iStartElt; iElt <= iEndElt; iElt++) {
-    const std::map<cgsize_t, int>::const_iterator it = elt2Geom().find(iElt);
+    const auto it = elt2Geom().find(iElt);
     const int entity = (it == elt2Geom().end()) ? 1 : it->second;
     MElement *me =
       createElement(sectEltType, startNode(), entity, allVert, allElt, sectData,
@@ -167,7 +169,7 @@ int CGNSZoneUnstruct::readElements(
   // data structures for node coordinate transformation (CPEX0045)
   // std::vector<bool> nodeUpdated;
   std::vector<SPoint3> rawNode;
-  if(eltNodeTransfo() != 0) {
+  if(eltNodeTransfo() != nullptr) {
     // nodeUpdated = std::vector<bool>(nbNode(), false);
     rawNode.resize(nbNode());
     for(int iN = 0; iN < nbNode(); iN++) {

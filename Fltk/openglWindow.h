@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,9 +19,10 @@
 #include <FL/fl_draw.H>
 
 class tooltipWindow : public Fl_Menu_Window {
- private:
+private:
   char _text[1024];
- public:
+
+public:
   tooltipWindow() : Fl_Menu_Window(1, 1)
   {
     strcpy(_text, "");
@@ -34,11 +35,12 @@ class tooltipWindow : public Fl_Menu_Window {
     draw_box(FL_BORDER_BOX, 0, 0, w(), h(), Fl_Color(175));
     fl_color(FL_BLACK);
     fl_font(labelfont(), labelsize());
-    fl_draw(_text, 3, 3, w() - 6, h() - 6, Fl_Align(FL_ALIGN_LEFT|FL_ALIGN_WRAP));
+    fl_draw(_text, 3, 3, w() - 6, h() - 6,
+            Fl_Align(FL_ALIGN_LEFT | FL_ALIGN_WRAP));
   }
   int handle(int e)
   {
-    if (e == FL_PUSH || e == FL_KEYDOWN) {
+    if(e == FL_PUSH || e == FL_KEYDOWN) {
       hide();
       return 1;
     }

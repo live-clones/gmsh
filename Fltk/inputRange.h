@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -247,7 +247,7 @@ private:
 
 public:
   inputRange(int x, int y, int w, int h, double max_number,
-             bool readOnlyRange = false, const char *l = 0)
+             bool readOnlyRange = false, const char *l = nullptr)
     : Fl_Group(x, y, w, h, l), _min(-max_number), _max(max_number), _step(0.),
       _max_number(max_number), _do_callback_on_values(true)
   {

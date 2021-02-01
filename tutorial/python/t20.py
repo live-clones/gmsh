@@ -25,7 +25,7 @@ v = gmsh.model.occ.importShapes(os.path.join(path, os.pardir, 't20_data.step'))
 
 # If we had specified
 #
-# gmsh.option.setString('OCCTargetUnit', 'M')
+# gmsh.option.setString('Geometry.OCCTargetUnit', 'M')
 #
 # before merging the STEP file, OpenCASCADE would have converted the units to
 # meters (instead of the default, which is millimeters).

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -93,8 +93,7 @@ namespace {
   bool inclusion(MVertex *v1, MVertex *v2, MVertex *v3,
                  const std::set<MElement *> &tets)
   {
-    for(std::set<MElement *>::const_iterator it = tets.begin();
-        it != tets.end(); it++) {
+    for(auto it = tets.begin(); it != tets.end(); it++) {
       if(tet_contains_vertex(*it, v1) && tet_contains_vertex(*it, v2) &&
          tet_contains_vertex(*it, v3)) {
         return true;
@@ -393,8 +392,7 @@ namespace {
   {
     TetMeshConnectivity::TetSet tets_around_v =
       tet_mesh.tets_around_vertex(vertex);
-    for(TetMeshConnectivity::TetSet::const_iterator tet = tets_around_v.begin();
-        tet != tets_around_v.end(); ++tet) {
+    for(auto tet = tets_around_v.begin(); tet != tets_around_v.end(); ++tet) {
       if(hex_contains_tet(hex, *tet)) { result.insert(*tet); }
     }
   }
@@ -413,7 +411,7 @@ namespace {
       MVertex *v = tet->getVertex(i);
       if(v != v1 && v != v2 && v != v3) { return v; }
     }
-    return NULL;
+    return nullptr;
   }
 
   // Among the input tetrahedra find the first tet that contains v1, v2, and v3
@@ -424,22 +422,21 @@ namespace {
   MVertex *find(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
                 const std::set<MElement *> &tets)
   {
-    for(std::set<MElement *>::const_iterator it = tets.begin();
-        it != tets.end(); it++) {
+    for(auto it = tets.begin(); it != tets.end(); it++) {
       MElement *tet = *it;
       if(tet_contains_vertex(tet, v1) && tet_contains_vertex(tet, v2) &&
          tet_contains_vertex(tet, v3) && !tet_contains_vertex(tet, v4)) {
         return last_tet_vertex(tet, v1, v2, v3);
       }
     }
-    return NULL;
+    return nullptr;
   }
 
   template <class T>
   bool find_value_in_multiset(const std::multiset<T> &set, const T &value,
                               T &value_in_set)
   {
-    typename std::multiset<T>::const_iterator it = set.find(value);
+    auto it = set.find(value);
     for(; it != set.end() && it->get_hash() == value.get_hash(); ++it) {
       if(value.same_vertices(*it)) {
         value_in_set = *it;
@@ -453,7 +450,7 @@ namespace {
   template <class T>
   bool find_value_in_multiset(const std::multiset<T> &set, const T &value)
   {
-    typename std::multiset<T>::const_iterator it = set.find(value);
+    auto it = set.find(value);
     for(; it != set.end() && it->get_hash() == value.get_hash(); ++it) {
       if(value.same_vertices(*it)) { return true; }
     }
@@ -494,29 +491,25 @@ void export_gregion_mesh(GRegion *gr, const string &filename)
   map<MVertex *, int> vertices;
   int counterv = 1;
 
-  for(vector<MTetrahedron *>::iterator it = gr->tetrahedra.begin();
-      it != gr->tetrahedra.end(); it++) {
+  for(auto it = gr->tetrahedra.begin(); it != gr->tetrahedra.end(); it++) {
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       vertices.insert(make_pair((*it)->getVertex(i), counterv));
       counterv++;
     }
   }
-  for(vector<MHexahedron *>::iterator it = gr->hexahedra.begin();
-      it != gr->hexahedra.end(); it++) {
+  for(auto it = gr->hexahedra.begin(); it != gr->hexahedra.end(); it++) {
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       vertices.insert(make_pair((*it)->getVertex(i), counterv));
       counterv++;
     }
   }
-  for(vector<MPrism *>::iterator it = gr->prisms.begin();
-      it != gr->prisms.end(); it++) {
+  for(auto it = gr->prisms.begin(); it != gr->prisms.end(); it++) {
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       vertices.insert(make_pair((*it)->getVertex(i), counterv));
       counterv++;
     }
   }
-  for(vector<MPyramid *>::iterator it = gr->pyramids.begin();
-      it != gr->pyramids.end(); it++) {
+  for(auto it = gr->pyramids.begin(); it != gr->pyramids.end(); it++) {
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       vertices.insert(make_pair((*it)->getVertex(i), counterv));
       counterv++;
@@ -531,8 +524,7 @@ void export_gregion_mesh(GRegion *gr, const string &filename)
       << "$Nodes" << endl
       << vertices.size() << endl;
   // write vertices
-  for(map<MVertex *, int>::iterator it = vertices.begin(); it != vertices.end();
-      it++)
+  for(auto it = vertices.begin(); it != vertices.end(); it++)
     out << it->second << " " << it->first->x() << " " << it->first->y() << " "
         << it->first->z() << endl;
   out << "$EndNodes" << endl
@@ -543,8 +535,7 @@ void export_gregion_mesh(GRegion *gr, const string &filename)
 
   // write elems
   int counter = 1;
-  for(vector<MTetrahedron *>::iterator it = gr->tetrahedra.begin();
-      it != gr->tetrahedra.end(); it++) {
+  for(auto it = gr->tetrahedra.begin(); it != gr->tetrahedra.end(); it++) {
     out << counter << " 4 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
@@ -553,8 +544,7 @@ void export_gregion_mesh(GRegion *gr, const string &filename)
     out << endl;
     counter++;
   }
-  for(vector<MHexahedron *>::iterator it = gr->hexahedra.begin();
-      it != gr->hexahedra.end(); it++) {
+  for(auto it = gr->hexahedra.begin(); it != gr->hexahedra.end(); it++) {
     out << counter << " 5 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
@@ -563,8 +553,7 @@ void export_gregion_mesh(GRegion *gr, const string &filename)
     out << endl;
     counter++;
   }
-  for(vector<MPrism *>::iterator it = gr->prisms.begin();
-      it != gr->prisms.end(); it++) {
+  for(auto it = gr->prisms.begin(); it != gr->prisms.end(); it++) {
     out << counter << " 6 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
@@ -573,8 +562,7 @@ void export_gregion_mesh(GRegion *gr, const string &filename)
     out << endl;
     counter++;
   }
-  for(vector<MPyramid *>::iterator it = gr->pyramids.begin();
-      it != gr->pyramids.end(); it++) {
+  for(auto it = gr->pyramids.begin(); it != gr->pyramids.end(); it++) {
     out << counter << " 7 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
@@ -605,10 +593,7 @@ bool compare_hex_ptr_by_quality(Hex *a, Hex *b)
 
 Recombinator::~Recombinator()
 {
-  for(std::vector<Hex *>::iterator it = potential.begin();
-      it != potential.end(); it++) {
-    delete *it;
-  }
+  for(auto it = potential.begin(); it != potential.end(); it++) { delete *it; }
 }
 
 void Recombinator::execute()
@@ -617,8 +602,8 @@ void Recombinator::execute()
   // Backup the current mesh
   model->writeMSH("beforeyamakawa.msh");
 
-  for(GModel::riter region_itr = model->firstRegion();
-      region_itr != model->lastRegion(); region_itr++) {
+  for(auto region_itr = model->firstRegion(); region_itr != model->lastRegion();
+      region_itr++) {
     GRegion *region = *region_itr;
 
     if(region->getNumMeshElements() > 0) { execute(region); }
@@ -647,8 +632,7 @@ void Recombinator::print_all_potential_hex() const
   std::cout
     << "__________________________ START POT HEX LISTING ____________________ "
     << endl;
-  for(std::vector<Hex *>::const_iterator it = potential.begin();
-      it != potential.end(); it++) {
+  for(auto it = potential.begin(); it != potential.end(); it++) {
     cout << "--- Potential hex : " << *(*it) << "   " << (*it)->get_quality()
          << endl;
   }
@@ -722,13 +706,13 @@ void Recombinator::pattern1()
       remove_values_from_set(bin3, added);
 
       added.resize(7);
-      for(vertex_set_itr it1 = bin1.begin(); it1 != bin1.end(); it1++) {
+      for(auto it1 = bin1.begin(); it1 != bin1.end(); it1++) {
         MVertex *p = *it1;
         added[4] = p;
-        for(vertex_set_itr it2 = bin2.begin(); it2 != bin2.end(); it2++) {
+        for(auto it2 = bin2.begin(); it2 != bin2.end(); it2++) {
           MVertex *q = *it2;
           added[5] = q;
-          for(vertex_set_itr it3 = bin3.begin(); it3 != bin3.end(); it3++) {
+          for(auto it3 = bin3.begin(); it3 != bin3.end(); it3++) {
             MVertex *r = *it3;
             added[6] = r;
             if(p != q && p != r && q != r) {
@@ -737,8 +721,7 @@ void Recombinator::pattern1()
               tet_mesh.vertices_around_vertices(p, q, r, bin4);
               remove_values_from_set(bin4, added);
 
-              for(std::set<MVertex *>::iterator it4 = bin4.begin();
-                  it4 != bin4.end(); it4++) {
+              for(auto it4 = bin4.begin(); it4 != bin4.end(); it4++) {
                 MVertex *s = *it4;
                 Hex *hex = new Hex(a, b, q, c, d, p, s, r);
 
@@ -785,10 +768,10 @@ void Recombinator::pattern2()
       MVertex *s = find(a, b, d, c, verif);
       MVertex *p = find(b, c, d, a, verif);
 
-      if(s != NULL && p != NULL) {
+      if(s != nullptr && p != nullptr) {
         MVertex *r = find(s, b, d, a, verif);
         MVertex *q = find(p, b, d, c, verif);
-        if(r != 0 && q != 0) {
+        if(r != nullptr && q != nullptr) {
           // 2 possible hexes
           Hex *hex = new Hex(a, s, b, c, d, r, q, p);
           add_or_free_potential_hex(hex);
@@ -832,11 +815,12 @@ void Recombinator::pattern3()
       MVertex *bA = find(a, c, b, d, verif2);
       MVertex *bB = find(a, c, d, b, verif2);
 
-      if(fA != 0 && fB != 0 && bA != 0 && bB != 0 && fA != fB && bA != bB) {
+      if(fA != nullptr && fB != nullptr && bA != nullptr && bB != nullptr &&
+         fA != fB && bA != bB) {
         if(scalar(fA, fB, a, b) > scalar(fA, fB, b, c) &&
            scalar(bA, bB, a, b) > scalar(bA, bB, b, c)) {
-          MVertex *p = NULL;
-          MVertex *q = NULL;
+          MVertex *p = nullptr;
+          MVertex *q = nullptr;
           if(distance(fA, b, c) < distance(fB, b, c)) {
             p = fA;
             q = fB;
@@ -846,8 +830,8 @@ void Recombinator::pattern3()
             q = fA;
           }
 
-          MVertex *r = NULL;
-          MVertex *s = NULL;
+          MVertex *r = nullptr;
+          MVertex *s = nullptr;
           if(distance(bA, b, c) < distance(bB, b, c)) {
             r = bA;
             s = bB;
@@ -876,8 +860,8 @@ void Recombinator::pattern3()
         } // copy paste alert
         else if(scalar(fA, fB, a, b) <= scalar(fA, fB, b, c) &&
                 scalar(bA, bB, a, b) <= scalar(bA, bB, b, c)) {
-          MVertex *p = NULL;
-          MVertex *q = NULL;
+          MVertex *p = nullptr;
+          MVertex *q = nullptr;
           if(distance(fA, a, b) < distance(fB, a, b)) {
             p = fA;
             q = fB;
@@ -886,8 +870,8 @@ void Recombinator::pattern3()
             p = fB;
             q = fA;
           }
-          MVertex *r = NULL;
-          MVertex *s = NULL;
+          MVertex *r = nullptr;
+          MVertex *s = nullptr;
           if(distance(bA, a, b) < distance(bB, a, b)) {
             r = bA;
             s = bB;
@@ -935,10 +919,9 @@ void add_hex_to_region(GRegion *region, const Hex &hex)
 
 bool Recombinator::are_all_tets_free(const std::set<MElement *> &tets) const
 {
-  for(std::set<MElement *>::const_iterator it = tets.begin(); it != tets.end();
-      it++) {
+  for(auto it = tets.begin(); it != tets.end(); it++) {
     MElement *tet = *it;
-    std::map<MElement *, bool>::const_iterator it2 = markings.find(tet);
+    auto it2 = markings.find(tet);
     if(it2->second == true) { return false; }
   }
   return true;
@@ -946,9 +929,8 @@ bool Recombinator::are_all_tets_free(const std::set<MElement *> &tets) const
 
 void Recombinator::mark_tets(const std::set<MElement *> &tets)
 {
-  for(std::set<MElement *>::const_iterator it = tets.begin(); it != tets.end();
-      ++it) {
-    std::map<MElement *, bool>::iterator it2 = markings.find(*it);
+  for(auto it = tets.begin(); it != tets.end(); ++it) {
+    auto it2 = markings.find(*it);
     it2->second = true;
   }
 }
@@ -956,8 +938,7 @@ void Recombinator::mark_tets(const std::set<MElement *> &tets)
 void remove_slivers(std::set<MElement *> &tets, const Hex &hex,
                     std::set<MElement *> &slivers)
 {
-  for(std::set<MElement *>::iterator it = tets.begin(); it != tets.end();
-      ++it) {
+  for(auto it = tets.begin(); it != tets.end(); ++it) {
     if(is_combinatorially_sliver(*it, hex)) {
       slivers.insert(*it);
       tets.erase(it);
@@ -974,7 +955,7 @@ void Recombinator::delete_marked_tets_in_region() const
   current_region->tetrahedra.clear();
   for(unsigned int i = 0; i < copy_tets.size(); i++) {
     MElement *element = (MElement *)(copy_tets[i]);
-    std::map<MElement *, bool>::const_iterator it2 = markings.find(element);
+    auto it2 = markings.find(element);
     if(it2->second == false) {
       current_region->tetrahedra.push_back(copy_tets[i]);
     }
@@ -1077,8 +1058,7 @@ void Recombinator::build_tuples()
 
   std::vector<GFace *> faces = current_region->faces();
 
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-      it++) {
+  for(auto it = faces.begin(); it != faces.end(); it++) {
     GFace *gf = *it;
 
     for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
@@ -1124,8 +1104,7 @@ void Recombinator::create_quads_on_boundary()
 void Recombinator::delete_quad_triangles_in_boundary() const
 {
   std::vector<GFace *> faces = current_region->faces();
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-      it++) {
+  for(auto it = faces.begin(); it != faces.end(); it++) {
     GFace *gf = *it;
     std::vector<MElement *> triangles_to_keep;
     triangles_to_keep.reserve(gf->triangles.size());
@@ -1288,11 +1267,11 @@ bool Recombinator::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
     Tuple tuple1(a, b, c);
     Tuple tuple2(c, d, a);
 
-    std::multiset<Tuple>::iterator it1 = tuples.find(tuple1);
-    std::multiset<Tuple>::iterator it2 = tuples.find(tuple2);
+    auto it1 = tuples.find(tuple1);
+    auto it2 = tuples.find(tuple2);
 
-    GFace *gf1 = NULL;
-    GFace *gf2 = NULL;
+    GFace *gf1 = nullptr;
+    GFace *gf2 = nullptr;
 
     while(it1 != tuples.end() && it1->get_hash() == tuple1.get_hash()) {
       if(tuple1.same_vertices(*it1)) { gf1 = it1->get_gf(); }
@@ -1307,7 +1286,7 @@ bool Recombinator::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
 
     assert((gf1 == NULL && gf2 == NULL) || (gf1 != NULL && gf2 != NULL));
 
-    if(gf1 != NULL && gf2 != NULL) {
+    if(gf1 != nullptr && gf2 != nullptr) {
       if(gf1 != gf2) { return false; }
       else
         return true;
@@ -1319,11 +1298,11 @@ bool Recombinator::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
     Tuple tuple1(a, b, d);
     Tuple tuple2(b, c, d);
 
-    std::multiset<Tuple>::iterator it1 = tuples.find(tuple1);
-    std::multiset<Tuple>::iterator it2 = tuples.find(tuple2);
+    auto it1 = tuples.find(tuple1);
+    auto it2 = tuples.find(tuple2);
 
-    GFace *gf1 = NULL;
-    GFace *gf2 = NULL;
+    GFace *gf1 = nullptr;
+    GFace *gf2 = nullptr;
 
     while(it1 != tuples.end() && it1->get_hash() == tuple1.get_hash()) {
       if(tuple1.same_vertices(*it1)) { gf1 = it1->get_gf(); }
@@ -1335,7 +1314,7 @@ bool Recombinator::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
       it2++;
     }
 
-    if(gf1 != NULL && gf2 != NULL) {
+    if(gf1 != nullptr && gf2 != nullptr) {
       if(gf1 != gf2) { return false; }
       else
         return true;
@@ -1981,7 +1960,7 @@ void Supplementary::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
   std::multiset<Tuple>::iterator it1;
   std::multiset<Tuple>::iterator it2;
 
-  gf1 = NULL;
+  gf1 = nullptr;
   // gf2 = NULL;
 
   tuple1 = Tuple(a, b, c);
@@ -2675,8 +2654,8 @@ bool Supplementary::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
 
   bool ok = 1;
 
-  gf1 = NULL;
-  gf2 = NULL;
+  gf1 = nullptr;
+  gf2 = nullptr;
 
   Tuple tuple1(a, b, c);
   Tuple tuple2(c, d, a);
@@ -2765,7 +2744,7 @@ void Supplementary::build_vertex_to_vertices(GRegion *gr)
         MVertex *c = element->getVertex((j + 2) % 4);
         MVertex *d = element->getVertex((j + 3) % 4);
 
-        Vertex2Vertices::iterator it = vertex_to_vertices.find(a);
+        auto it = vertex_to_vertices.find(a);
         if(it != vertex_to_vertices.end()) {
           it->second.insert(b);
           it->second.insert(c);
@@ -2795,7 +2774,7 @@ void Supplementary::build_vertex_to_tetrahedra(GRegion *gr)
       for(std::size_t j = 0; j < element->getNumVertices(); j++) {
         MVertex *getVertex = element->getVertex(j);
 
-        Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
+        auto it = vertex_to_tetrahedra.find(getVertex);
         if(it != vertex_to_tetrahedra.end()) { it->second.insert(element); }
         else {
           bin.clear();
@@ -3082,7 +3061,7 @@ void PostOp::executeNew(GRegion *gr)
       std::set<MElement *> potential;
       find_tetrahedra(f.get_a(), f.get_b(), f.get_c(), potential);
 
-      element_set_itr it = potential.begin();
+      auto it = potential.begin();
       while(it != potential.end()) {
         if(tetrahedra.find(*it) == tetrahedra.end())
           potential.erase(it++);
@@ -3247,7 +3226,7 @@ MVertex *PostOp::otherVertexQuadFace(MFace &f, MVertex *v1, MVertex *v2,
                                      MVertex *v3)
 {
   int n = 0;
-  MVertex *v = 0;
+  MVertex *v = nullptr;
   for(int i = 0; i < 4; ++i) {
     if(f.getVertex(i) != v1 && f.getVertex(i) != v2 && f.getVertex(i) != v3) {
       ++n;
@@ -3255,7 +3234,7 @@ MVertex *PostOp::otherVertexQuadFace(MFace &f, MVertex *v1, MVertex *v2,
     }
   }
   if(n == 1) return v;
-  return NULL;
+  return nullptr;
 }
 
 void PostOp::matchQuadFace(MFace &f, MVertex *v1, MVertex *v2, MVertex *v3)
@@ -3584,7 +3563,7 @@ void PostOp::split_pyramids(GRegion *gr)
     std::set<MElement *> otherPyr;
     find_pyramids_from_quad(a, b, c, d, otherPyr);
     if(otherPyr.size() == 2) {
-      element_set_itr myit = otherPyr.begin();
+      auto myit = otherPyr.begin();
       MElement *other = *myit;
       if(other == element) { other = *(++myit); }
       // TODO test also quality of tet after split of other pyr ?
@@ -4115,7 +4094,7 @@ void PostOp::pyramids2(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
   // y = (diagA->y() + diagB->y())/2.0;
   // z = (diagA->z() + diagB->z())/2.0;
 
-  mid = 0;
+  mid = nullptr;
   movables.clear();
 
   if(tetrahedra.size() > 0 || pyramids.size() > 0) {
@@ -4197,7 +4176,7 @@ void PostOp::pyramids2(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
         MVertex *Nin = other(*it, diagA, diagB, Nout);
         //        N1 = other(*it,diagA,diagB);
 
-        if(Nout != 0 && Nin != 0) {
+        if(Nout != nullptr && Nin != nullptr) {
           Ns.insert(N1);
           Ns.insert(N2);
 
@@ -4242,7 +4221,7 @@ void PostOp::pyramids2(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
         build_vertex_to_pyramids(temp2);
 
         MVertex *NoutDiag = findInTriFace(diagA, diagB, nDiagA, nDiagB, *it);
-        MVertex *NoutNDiag = NULL;
+        MVertex *NoutNDiag = nullptr;
         for(int iV = 0; iV < 5; iV++) {
           MVertex *v = (*it)->getVertex(iV);
           if(v != a && v != b && v != c && v != d && v != NoutDiag) {
@@ -4506,7 +4485,7 @@ void PostOp::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
   std::multiset<Tuple>::iterator it1;
   std::multiset<Tuple>::iterator it2;
 
-  gf1 = NULL;
+  gf1 = nullptr;
   // gf2 = NULL;
 
   tuple1 = Tuple(a, b, c);
@@ -4682,7 +4661,7 @@ bool PostOp::different(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
 
 MVertex *PostOp::other(MElement *element, MVertex *v1, MVertex *v2)
 {
-  MVertex *pointer = NULL;
+  MVertex *pointer = nullptr;
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
     MVertex *getVertex = element->getVertex(i);
@@ -4697,7 +4676,7 @@ MVertex *PostOp::other(MElement *element, MVertex *v1, MVertex *v2)
 
 MVertex *PostOp::other(MElement *element, MVertex *v1, MVertex *v2, MVertex *v3)
 {
-  MVertex *pointer = NULL;
+  MVertex *pointer = nullptr;
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
     MVertex *getVertex = element->getVertex(i);
@@ -4821,13 +4800,13 @@ MVertex *PostOp::findInTriFace(MVertex *in0, MVertex *in1, MVertex *out0,
         if(face.getVertex(iV) != in0 && face.getVertex(iV) != in1)
           return face.getVertex(iV);
   }
-  return NULL;
+  return nullptr;
 }
 
 MVertex *PostOp::find(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
                       MElement *element)
 {
-  MVertex *pointer = NULL;
+  MVertex *pointer = nullptr;
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
     MVertex *getVertex = element->getVertex(i);
@@ -5054,7 +5033,7 @@ void PostOp::build_vertex_to_tetrahedra(MElement *element)
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
     MVertex *getVertex = element->getVertex(i);
 
-    Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
+    auto it = vertex_to_tetrahedra.find(getVertex);
     if(it != vertex_to_tetrahedra.end()) { it->second.insert(element); }
     else {
       bin.clear();
@@ -5070,7 +5049,7 @@ void PostOp::erase_vertex_to_tetrahedra(MElement *element)
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
     MVertex *getVertex = element->getVertex(i);
 
-    Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
+    auto it = vertex_to_tetrahedra.find(getVertex);
     if(it != vertex_to_tetrahedra.end()) { it->second.erase(element); }
   }
 }
@@ -5092,7 +5071,7 @@ void PostOp::build_vertex_to_pyramids(MElement *element)
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
     MVertex *getVertex = element->getVertex(i);
 
-    Vertex2Elements::iterator it = vertex_to_pyramids.find(getVertex);
+    auto it = vertex_to_pyramids.find(getVertex);
     if(it != vertex_to_pyramids.end()) { it->second.insert(element); }
     else {
       bin.clear();
@@ -5108,7 +5087,7 @@ void PostOp::erase_vertex_to_pyramids(MElement *element)
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
     MVertex *getVertex = element->getVertex(i);
 
-    Vertex2Elements::iterator it = vertex_to_pyramids.find(getVertex);
+    auto it = vertex_to_pyramids.find(getVertex);
     if(it != vertex_to_pyramids.end()) { it->second.erase(element); }
   }
 }
@@ -5130,7 +5109,7 @@ void PostOp::build_vertex_to_hexPrism(MElement *element)
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
     MVertex *getVertex = element->getVertex(i);
 
-    Vertex2Elements::iterator it = vertex_to_hexPrism.find(getVertex);
+    auto it = vertex_to_hexPrism.find(getVertex);
     if(it != vertex_to_hexPrism.end()) { it->second.insert(element); }
     else {
       bin.clear();
@@ -5146,7 +5125,7 @@ void PostOp::erase_vertex_to_hexPrism(MElement *element)
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
     MVertex *getVertex = element->getVertex(i);
 
-    Vertex2Elements::iterator it = vertex_to_hexPrism.find(getVertex);
+    auto it = vertex_to_hexPrism.find(getVertex);
     if(it != vertex_to_hexPrism.end()) { it->second.erase(element); }
   }
 }
@@ -5197,20 +5176,19 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
 {
   ofstream out(filename.c_str());
   out << "Graph G {" << endl;
-  typename multimap<int, set<T> >::reverse_iterator it_all = cl.allQ.rbegin();
+  auto it_all = cl.allQ.rbegin();
 
   for(int i = 0; i < clique_number; i++) { it_all++; }
   //  int clique_size = it_all->second.size();
-  typename set<T>::iterator ithex = it_all->second.begin();
-  typename set<T>::iterator ithexen = it_all->second.end();
+  auto ithex = it_all->second.begin();
+  auto ithexen = it_all->second.end();
 
   int counter = 1;
   map<T, int> visited_hex;
   multimap<int, int> done;
 
   // export all hex
-  typename cliques_compatibility_graph<T>::graph::const_iterator itgraph =
-    cl.begin_graph();
+  auto itgraph = cl.begin_graph();
   typename cliques_compatibility_graph<T>::graph_data::const_iterator
     itgraphdata;
 
@@ -5218,7 +5196,7 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
     T firsthex = itgraph->second.first;
     //    if (!post_check_validation(firsthex)) continue;
 
-    typename map<T, int>::iterator itfind = visited_hex.find(firsthex);
+    auto itfind = visited_hex.find(firsthex);
     int num1 = 0;
     if(itfind == visited_hex.end()) {
       num1 = counter;
@@ -5244,8 +5222,7 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
       bool found = false;
       pair<multimap<int, int>::iterator, multimap<int, int>::iterator> range =
         done.equal_range(num1);
-      for(multimap<int, int>::iterator it = range.first; it != range.second;
-          it++) {
+      for(auto it = range.first; it != range.second; it++) {
         if(it->second == num2) {
           found = true;
           break;
@@ -5261,7 +5238,7 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
   // export chosen hex with different color
   for(; ithex != ithexen;
       ithex++) { // brutal post-check: random pickup of hexahedra in clique
-    typename map<T, int>::iterator itfind = visited_hex.find(*ithex);
+    auto itfind = visited_hex.find(*ithex);
     if(itfind == visited_hex.end()) {
       cout << "graph export: should not happen ! " << endl;
       throw;
@@ -5301,10 +5278,9 @@ void clique_stop_criteria<T>::export_corresponding_mesh(
   set<MElement *> hexs;
   map<MVertex *, int> vertices;
   int counterv = 1;
-  typename map<T, std::set<MElement *> >::const_iterator it =
-    hex_to_tet.begin();
+  auto it = hex_to_tet.begin();
   for(; it != hex_to_tet.end(); it++) {
-    std::set<MElement *>::const_iterator itt = it->second.begin();
+    auto itt = it->second.begin();
     for(; itt != it->second.end(); itt++) {
       tets.insert(*itt);
       for(int i = 0; i < 4; i++) {
@@ -5315,10 +5291,8 @@ void clique_stop_criteria<T>::export_corresponding_mesh(
   }
 
   // create MHexahedron, remove included tets from set "tets"
-  for(typename graph_data_no_hash::const_iterator it = clique.begin();
-      it != clique.end(); it++) {
-    typename map<T, std::set<MElement *> >::const_iterator itfind =
-      hex_to_tet.find(*it);
+  for(auto it = clique.begin(); it != clique.end(); it++) {
+    auto itfind = hex_to_tet.find(*it);
     if(itfind == hex_to_tet.end()) {
       cout << "clique_stop_criteria::void export_corresponding_mesh : not "
               "found !!!"
@@ -5326,8 +5300,8 @@ void clique_stop_criteria<T>::export_corresponding_mesh(
       throw;
     }
     // remove tets
-    for(set<MElement *>::const_iterator ittet = itfind->second.begin();
-        ittet != itfind->second.end(); ittet++) {
+    for(auto ittet = itfind->second.begin(); ittet != itfind->second.end();
+        ittet++) {
       tets.erase(*ittet);
     }
     // create MHexahedron
@@ -5357,8 +5331,7 @@ void clique_stop_criteria<T>::export_corresponding_mesh(
           << "$Nodes" << endl
           << vertices.size() << endl;
   // write vertices
-  for(map<MVertex *, int>::iterator it = vertices.begin(); it != vertices.end();
-      it++) {
+  for(auto it = vertices.begin(); it != vertices.end(); it++) {
     out << it->second << " " << it->first->x() << " " << it->first->y() << " "
         << it->first->z() << endl;
     outtets << it->second << " " << it->first->x() << " " << it->first->y()
@@ -5373,7 +5346,7 @@ void clique_stop_criteria<T>::export_corresponding_mesh(
   // write hexs
   int counter = 1;
   int countertets = 1;
-  for(set<MElement *>::iterator it = hexs.begin(); it != hexs.end(); it++) {
+  for(auto it = hexs.begin(); it != hexs.end(); it++) {
     out << counter << " 5 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
       MVertex *v = (*it)->getVertex(i);
@@ -5383,7 +5356,7 @@ void clique_stop_criteria<T>::export_corresponding_mesh(
     counter++;
   }
   // write tets
-  for(set<MElement *>::iterator it = tets.begin(); it != tets.end(); it++) {
+  for(auto it = tets.begin(); it != tets.end(); it++) {
     out << counter << " 4 2 0 26";
     outtets << counter << " 4 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
@@ -5415,18 +5388,16 @@ bool clique_stop_criteria<T>::stop(const graph_data_no_hash &clique) const
 
   set<MElement *> thetets;
   //  set<MElement*> slivers;
-  for(typename graph_data_no_hash::const_iterator it = clique.begin();
-      it != clique.end(); it++) {
-    typename map<T, std::set<MElement *> >::const_iterator itfind =
-      hex_to_tet.find(*it);
+  for(auto it = clique.begin(); it != clique.end(); it++) {
+    auto itfind = hex_to_tet.find(*it);
     if(itfind == hex_to_tet.end()) {
       cout << "clique_stop_criteria::bool stop : not found !!!" << endl;
       throw;
     }
     //    total += (itfind->second.size());
     //    cout << "volumes=" << endl;
-    for(set<MElement *>::const_iterator ittet = itfind->second.begin();
-        ittet != itfind->second.end(); ittet++) {
+    for(auto ittet = itfind->second.begin(); ittet != itfind->second.end();
+        ittet++) {
       //      set<MElement*>::iterator itfindtet = thetets.find(*ittet);
       //      if (itfindtet!=thetets.end()){
       //        cout << "Tet " << *ittet << " already done !!!" << endl;
@@ -5439,16 +5410,14 @@ bool clique_stop_criteria<T>::stop(const graph_data_no_hash &clique) const
 
   // to be sure, adding volume criteria...
   vector<double> volumes;
-  for(set<MElement *>::iterator it = thetets.begin(); it != thetets.end();
-      it++) {
+  for(auto it = thetets.begin(); it != thetets.end(); it++) {
     volumes.push_back((*it)->getVolume());
   }
   int meanvolume =
     (std::accumulate(volumes.begin(), volumes.end(), 0)) / volumes.size();
   int nb_slivers = 0;
   double threshold = 1.e-3 * meanvolume;
-  for(set<MElement *>::iterator it = thetets.begin(); it != thetets.end();
-      it++) {
+  for(auto it = thetets.begin(); it != thetets.end(); it++) {
     if((*it)->getVolume() < threshold) { nb_slivers++; }
   }
 
@@ -5486,7 +5455,7 @@ template <class T> void cliques_compatibility_graph<T>::find_cliques()
 {
   // init
   graph_data s;
-  for(typename graph::iterator it = G.begin(); it != G.end(); it++) {
+  for(auto it = G.begin(); it != G.end(); it++) {
     s.insert(make_pair(it->first, it->second.first));
   }
   find_cliques(s, 0);
@@ -5545,8 +5514,7 @@ template <class T> void cliques_compatibility_graph<T>::store_clique(int n)
     }
   }
   if(store_it) {
-    typename multimap<int, set<T> >::iterator itstore =
-      allQ.insert(make_pair(Q.size(), set<T>()));
+    auto itstore = allQ.insert(make_pair(Q.size(), set<T>()));
     itstore->second.insert(Q.begin(), Q.end());
     // for (typename graph_data_no_hash::iterator it = Q.begin(); it != Q.end();
     // it++) {
@@ -5615,7 +5583,7 @@ void cliques_compatibility_graph<T>::find_cliques(graph_data &subgraph, int n)
     return;
   }
   if(subgraph.size() == 1) {
-    typename graph_data::iterator ittemp = subgraph.begin();
+    auto ittemp = subgraph.begin();
     T u = ittemp->second;
     Q.insert(u);
     store_clique(n);
@@ -5654,7 +5622,7 @@ void cliques_compatibility_graph<T>::find_cliques(graph_data &subgraph, int n)
 
     black.clear();
     if(white.size() > 0) {
-      typename graph_data::iterator ittemp = white.begin();
+      auto ittemp = white.begin();
       u = ittemp->second;
       u_key = ittemp->first;
       fill_black_set(u, u_key, subgraph, black); // building the black set only
@@ -5669,7 +5637,7 @@ void cliques_compatibility_graph<T>::erase_entry(graph_data &subgraph, T &u,
   pair<typename graph_data::iterator, typename graph_data::iterator> range =
     subgraph.equal_range(key);
 
-  typename graph_data::iterator it = range.first;
+  auto it = range.first;
   for(; it != range.second; it++) {
     if(it->second == u) {
       subgraph.erase(it);
@@ -5687,8 +5655,7 @@ void cliques_compatibility_graph<T>::choose_u(const graph_data &subgraph, T &u,
                                               hash_key &u_key)
 {
   double valuemax = -DBL_MAX;
-  for(typename graph_data::const_iterator it = subgraph.begin();
-      it != subgraph.end(); it++) {
+  for(auto it = subgraph.begin(); it != subgraph.end(); it++) {
     double value = function_to_maximize_for_u(it->second, it->first, subgraph);
     if(value > valuemax) {
       valuemax = value;
@@ -5707,7 +5674,7 @@ void cliques_compatibility_graph<T>::split_set_BW(const T &u,
 {
   // splitting set subgraph into white and black nodes
   white.insert(make_pair(u_key, u));
-  typename graph_data::const_iterator it = subgraph.begin();
+  auto it = subgraph.begin();
   for(; it != subgraph.end(); it++) {
     if(u == (it->second)) continue;
     if(!compatibility(u, u_key, it->second, it->first))
@@ -5724,7 +5691,7 @@ void cliques_compatibility_graph<T>::fill_black_set(const T &u,
                                                     graph_data &black)
 {
   // filling black set
-  typename graph_data::const_iterator it = subgraph.begin();
+  auto it = subgraph.begin();
   for(; it != subgraph.end(); it++) {
     if(u == (it->second)) continue;
     if(compatibility(u, u_key, it->second, it->first))
@@ -5740,8 +5707,7 @@ double cliques_compatibility_graph<T>::function_to_maximize_for_u(
   const T &u, const hash_key &u_key, const graph_data &subgraph)
 {
   int counter = 0;
-  for(typename graph_data::const_iterator it = subgraph.begin();
-      it != subgraph.end(); it++) {
+  for(auto it = subgraph.begin(); it != subgraph.end(); it++) {
     if((it->second) == u) continue;
     if(compatibility(u, u_key, it->second, it->first)) counter++;
   }
@@ -5758,15 +5724,15 @@ bool cliques_compatibility_graph<T>::compatibility(const T &u,
   // Find u data
   pair<typename graph::const_iterator, typename graph::const_iterator>
     range_ukey = G.equal_range(u_key);
-  typename graph::const_iterator itfind_u = range_ukey.first;
+  auto itfind_u = range_ukey.first;
   for(; itfind_u != range_ukey.second; itfind_u++) {
     if(itfind_u->second.first == u) break;
   }
   // Check if v is in u data
   pair<typename graph_data::const_iterator, typename graph_data::const_iterator>
     range_vkey = itfind_u->second.second.equal_range(v_key);
-  for(typename graph_data::const_iterator itfind_v = range_vkey.first;
-      itfind_v != range_vkey.second; itfind_v++) {
+  for(auto itfind_v = range_vkey.first; itfind_v != range_vkey.second;
+      itfind_v++) {
     if(itfind_v->second == v) { return true; }
   }
   return false;
@@ -5830,8 +5796,7 @@ bool PEEntity::hasVertex(MVertex *v) const
 
 bool PEEntity::same_vertices(const PEEntity *t) const
 {
-  for(vector<MVertex *>::const_iterator it = vertices.begin();
-      it != vertices.end(); it++) {
+  for(auto it = vertices.begin(); it != vertices.end(); it++) {
     if(!(t->hasVertex(*it))) return false;
   }
   return true;
@@ -5938,7 +5903,7 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex)
   // non, c'est pas toujours le cas !!! ???
 
   set<MVertex *> vertices;
-  for(element_set_itr it = parts.begin(); it != parts.end(); it++) {
+  for(auto it = parts.begin(); it != parts.end(); it++) {
     element = *it;
     for(int i = 0; i < 4; i++) { vertices.insert(element->getVertex(i)); }
   }
@@ -5967,8 +5932,7 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex)
   // deviennent b c d a, on a une rotation et un hex tout pourri... mais qui a
   // même hash et mêmes noeuds ?!?! now, check if the hex already exists...
   if(!bypass) {
-    graph_data::const_iterator itfind =
-      find_the_created_potential_hex(hex, created_potential_hex);
+    auto itfind = find_the_created_potential_hex(hex, created_potential_hex);
     if(itfind != created_potential_hex.end()) {
       delete hex;
       if(very_verbose)
@@ -5990,7 +5954,7 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex)
   // counting the number of triangular external faces. If different from 12,
   // discard the hex ! if not, build the face/hex table
   std::multimap<unsigned long long, pair<PETriangle *, int> > faces_temp;
-  for(element_set_itr it_tet = parts.begin(); it_tet != parts.end();
+  for(auto it_tet = parts.begin(); it_tet != parts.end();
       it_tet++) { // for all tets
     for(int i = 0; i < 4; i++) { // for all faces
       MFace f = (*it_tet)->getFace(i);
@@ -5999,10 +5963,8 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex)
   }
 
   int count = 0;
-  std::multimap<unsigned long long, pair<PETriangle *, int> >::iterator
-    it_face = faces_temp.begin();
-  std::multimap<unsigned long long, pair<PETriangle *, int> >::iterator
-    it_faceen = faces_temp.end();
+  auto it_face = faces_temp.begin();
+  auto it_faceen = faces_temp.end();
   for(; it_face != it_faceen; it_face++) // counting
     if(it_face->second.second == 1) count++;
 
@@ -6031,7 +5993,7 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex)
   // might be a source of the above problem... but I am quite unsure. JP.
   created_potential_hex.insert(make_pair(hex->get_hash(), hex));
   add_edges(hex);
-  for(element_set_itr it = parts.begin(); it != parts.end(); it++) {
+  for(auto it = parts.begin(); it != parts.end(); it++) {
     element = *it;
     tet_to_hex[element].insert(hex);
     hex_to_tet[hex].insert(element);
@@ -6094,11 +6056,11 @@ void Recombinator_Graph::execute_blossom(unsigned int max_nb_cliques,
 
 Recombinator_Graph::~Recombinator_Graph()
 {
-  for(iter it = triangular_faces.begin(); it != triangular_faces.end(); it++) {
+  for(auto it = triangular_faces.begin(); it != triangular_faces.end(); it++) {
     delete it->second;
   }
-  for(linemap::iterator it = edges_and_diagonals.begin();
-      it != edges_and_diagonals.end(); it++) {
+  for(auto it = edges_and_diagonals.begin(); it != edges_and_diagonals.end();
+      it++) {
     delete it->second;
   }
 
@@ -6135,11 +6097,10 @@ void Recombinator_Graph::createBlossomInfo(GRegion *gr)
 
   cout << "recover blossom info" << endl;
 
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-      it++) {
+  for(auto it = faces.begin(); it != faces.end(); it++) {
     gf = *it;
 
-    std::vector<MQuadrangle *>::iterator it_quad = gf->quadrangles.begin();
+    auto it_quad = gf->quadrangles.begin();
 
     for(; it_quad != gf->quadrangles.end(); it_quad++) {
       element = *it_quad;
@@ -6323,7 +6284,7 @@ PETriangle *Recombinator_Graph::get_triangle(MElement *element, int i, int j,
   v.push_back(element->getVertex(j));
   v.push_back(element->getVertex(k));
   t = new PETriangle(v);
-  citer itfind = find_the_triangle(t, triangular_faces);
+  auto itfind = find_the_triangle(t, triangular_faces);
   if(itfind == triangular_faces.end()) {
     itfind = triangular_faces.insert(make_pair(t->get_hash(), t));
   }
@@ -6440,8 +6401,8 @@ void Recombinator_Graph::merge_clique(GRegion *gr,
                                       cliques_losses_graph<Hex *> &cl,
                                       int clique_number)
 {
-  multimap<int, set<Hex *> >::reverse_iterator it_all = cl.allQ.rbegin();
-  multimap<int, set<Hex *> >::reverse_iterator it_allen = cl.allQ.rend();
+  auto it_all = cl.allQ.rbegin();
+  auto it_allen = cl.allQ.rend();
   int clique_counter = 0;
   std::set<MElement *> parts;
   // int clique_size = 0;
@@ -6453,8 +6414,8 @@ void Recombinator_Graph::merge_clique(GRegion *gr,
 
     // cout << "--------------------- clique " << clique_counter << " made of ";
     // clique_size = it_all->second.size();
-    set<Hex *>::iterator ithex = it_all->second.begin();
-    set<Hex *>::iterator ithexen = it_all->second.end();
+    auto ithex = it_all->second.begin();
+    auto ithexen = it_all->second.end();
     double quality = 0.;
     int count = 0;
 
@@ -6480,7 +6441,7 @@ bool Recombinator_Graph::merge_hex(GRegion *gr, Hex *hex)
   MHexahedron *h = new MHexahedron(hex->vertices());
   gr->addHexahedron(h);
 
-  std::set<MElement *>::iterator it_tet_to_remove = hex_to_tet[hex].begin();
+  auto it_tet_to_remove = hex_to_tet[hex].begin();
   std::vector<MTetrahedron *>::iterator itfind_tet_region;
   for(; it_tet_to_remove != hex_to_tet[hex].end(); it_tet_to_remove++) {
     itfind_tet_region = std::find(gr->tetrahedra.begin(), gr->tetrahedra.end(),
@@ -6513,8 +6474,8 @@ void Recombinator_Graph::export_tets(set<MElement *> &tetset, Hex *hex,
   ofstream out(ss.str().c_str());
 
   out << "View \"hex tets parts\" {" << endl;
-  element_set_itr it = tetset.begin();
-  element_set_itr iten = tetset.end();
+  auto it = tetset.begin();
+  auto iten = tetset.end();
   int count = 0;
   for(; it != iten; it++, count++) {
     out << "SS(";
@@ -6544,8 +6505,8 @@ void Recombinator_Graph::export_single_hex_tet(Hex *hex, const string &s)
   ofstream out(ss.str().c_str());
 
   out << "View \"hex tets\" {" << endl;
-  element_set_itr it = hex_to_tet[hex].begin();
-  element_set_itr iten = hex_to_tet[hex].end();
+  auto it = hex_to_tet[hex].begin();
+  auto iten = hex_to_tet[hex].end();
   int count = 0;
   for(; it != iten; it++, count++) {
     out << "SS(";
@@ -6609,8 +6570,8 @@ void Recombinator_Graph::export_single_hex_faces(Hex *hex, const string &s)
   ofstream out(ss.str().c_str());
 
   out << "View \"hex faces\" {" << endl;
-  std::set<PETriangle *>::iterator it = hex_to_faces[hex].begin();
-  std::set<PETriangle *>::iterator iten = hex_to_faces[hex].end();
+  auto it = hex_to_faces[hex].begin();
+  auto iten = hex_to_faces[hex].end();
   int count = 0;
   for(; it != iten; it++, count++) {
     out << "ST(";
@@ -6639,7 +6600,7 @@ void Recombinator_Graph::export_hex_init_degree(
   ss << ".pos";
   ofstream out(ss.str().c_str());
 
-  std::vector<Hex *>::const_iterator it = chosen_hex.begin();
+  auto it = chosen_hex.begin();
   out << "View \"hex\" {" << endl;
   for(; it != chosen_hex.end(); it++) {
     out << "SH(";
@@ -6648,7 +6609,7 @@ void Recombinator_Graph::export_hex_init_degree(
       out << v->x() << "," << v->y() << "," << v->z();
       if(n != 7) out << ",";
     }
-    map<Hex *, int>::const_iterator itfind = init_degree.find(*it);
+    auto itfind = init_degree.find(*it);
     out << "){";
     for(int n = 0; n < 8; n++) {
       out << itfind->second;
@@ -6693,7 +6654,7 @@ void Recombinator_Graph::export_all_hex(int &file, GRegion *gr)
   ssinit << ".pos";
   ofstream out(ss.str().c_str());
 
-  std::vector<MHexahedron *>::iterator it = gr->hexahedra.begin();
+  auto it = gr->hexahedra.begin();
   int i = 1;
   out << "View \"hex\" {" << endl;
   for(; it != gr->hexahedra.end(); it++, i++) {
@@ -6727,9 +6688,9 @@ bool Recombinator_Graph::is_not_good_enough(Hex *hex)
 // tetrahedra For the entry to be added the hex also have to be good_enough
 void Recombinator_Graph::create_indirect_neighbors_graph()
 {
-  std::map<MElement *, std::set<Hex *> >::iterator it_tet = tet_to_hex.begin();
+  auto it_tet = tet_to_hex.begin();
   for(; it_tet != tet_to_hex.end(); it_tet++) {
-    std::set<Hex *>::iterator it_hex1 = it_tet->second.begin();
+    auto it_hex1 = it_tet->second.begin();
     for(; it_hex1 != it_tet->second.end(); it_hex1++) {
       Hex *hex = *it_hex1;
 
@@ -6739,7 +6700,7 @@ void Recombinator_Graph::create_indirect_neighbors_graph()
         continue;
       }
       if(is_not_good_enough(hex)) { continue; }
-      graph::iterator itfind_graph = find_hex_in_graph(hex);
+      auto itfind_graph = find_hex_in_graph(hex);
       if(itfind_graph == incompatibility_graph.end()) {
         // Add the hex to the graph
         itfind_graph = incompatibility_graph.insert(
@@ -6748,7 +6709,7 @@ void Recombinator_Graph::create_indirect_neighbors_graph()
       }
       // Link the hex as incompatible to all the good enough hex
       // that share the current tet
-      for(std::set<Hex *>::iterator it_hex2 = it_tet->second.begin();
+      for(auto it_hex2 = it_tet->second.begin();
           it_hex2 != it_tet->second.end(); it_hex2++) {
         Hex *hex2 = *it_hex2;
         if(hex != hex2 && !is_not_good_enough(hex2)) {
@@ -6766,7 +6727,7 @@ Recombinator_Graph::find_the_created_potential_hex(
 {
   std::pair<graph_data::const_iterator, graph_data::const_iterator> range =
     list.equal_range(hex->get_hash());
-  for(graph_data::const_iterator it = range.first; it != range.second; it++) {
+  for(auto it = range.first; it != range.second; it++) {
     Hex *candidate = it->second;
     if(candidate->same_vertices(hex)) { return it; }
   }
@@ -6782,9 +6743,7 @@ Recombinator_Graph::find_the_triangle(
     std::multimap<unsigned long long, pair<PETriangle *, int> >::iterator,
     std::multimap<unsigned long long, pair<PETriangle *, int> >::iterator>
     range = list.equal_range(t->get_hash());
-  for(std::multimap<unsigned long long, pair<PETriangle *, int> >::iterator it =
-        range.first;
-      it != range.second; it++) {
+  for(auto it = range.first; it != range.second; it++) {
     PETriangle *candidate = it->second.first;
     if(candidate->same_vertices(t)) {
       it->second.second++;
@@ -6798,7 +6757,7 @@ Recombinator_Graph::citer
 Recombinator_Graph::find_the_triangle(PETriangle *t, const trimap &list)
 {
   std::pair<citer, citer> range = list.equal_range(t->get_hash());
-  for(citer it = range.first; it != range.second; it++) {
+  for(auto it = range.first; it != range.second; it++) {
     if(it->second->same_vertices(t)) return it;
   }
   return list.end();
@@ -6809,7 +6768,7 @@ Recombinator_Graph::find_the_line(PELine *t, const linemap &list)
 {
   std::pair<linemap::const_iterator, linemap::const_iterator> range =
     list.equal_range(t->get_hash());
-  for(linemap::const_iterator it = range.first; it != range.second; it++) {
+  for(auto it = range.first; it != range.second; it++) {
     if(it->second->same_vertices(t)) return it;
   }
   return list.end();
@@ -6821,7 +6780,7 @@ void Recombinator_Graph::export_direct_neighbor_table(int max)
   ss << "neighbors_table";
   ofstream out(ss.str().c_str());
 
-  std::multimap<int, Hex *>::iterator it = ndegree.begin();
+  auto it = ndegree.begin();
 
   int counter = 0;
   out << " n  neighbors_rank hex* quality" << endl;
@@ -6859,8 +6818,7 @@ void Recombinator_Graph::export_direct_neighbor_table(int max)
 void print_stats_graph(const Recombinator_Graph::graph &in)
 {
   int total = 0;
-  for(Recombinator_Graph::graph::const_iterator it = in.begin(); it != in.end();
-      it++) {
+  for(auto it = in.begin(); it != in.end(); it++) {
     total += it->second.second.size();
   }
   size_t nb_entries = in.size();
@@ -6885,9 +6843,7 @@ void Recombinator_Graph::create_losses_graph(GRegion *gr)
 // common) but DO NOT pass the compatibility tests)
 void Recombinator_Graph::create_direct_neighbors_incompatibility_graph()
 {
-  for(std::map<Hex *, std::set<MElement *> >::iterator it_hex =
-        hex_to_tet.begin();
-      it_hex != hex_to_tet.end(); it_hex++) {
+  for(auto it_hex = hex_to_tet.begin(); it_hex != hex_to_tet.end(); it_hex++) {
     Hex *hex = it_hex->first;
     if(is_not_good_enough(hex)) {
       // Why is it even there in the first place? JP
@@ -6895,7 +6851,7 @@ void Recombinator_Graph::create_direct_neighbors_incompatibility_graph()
     }
 
     // Find or create the hex data in the incompatibility graph
-    graph::iterator itfind_graph = find_hex_in_graph(hex);
+    auto itfind_graph = find_hex_in_graph(hex);
     if(itfind_graph == incompatibility_graph.end()) {
       incompatibility_graph.insert(
         make_pair(hex->get_hash(), make_pair(hex, graph_data())));
@@ -6908,13 +6864,12 @@ void Recombinator_Graph::create_direct_neighbors_incompatibility_graph()
     std::vector<Hex *> visited_hex;
     // Check compatibility with the that share an facet with hex
     const std::set<PETriangle *> &hex_faces = hex_to_faces[hex];
-    for(std::set<PETriangle *>::const_iterator it_faces = hex_faces.begin();
-        it_faces != hex_faces.end(); it_faces++) {
+    for(auto it_faces = hex_faces.begin(); it_faces != hex_faces.end();
+        it_faces++) {
       PETriangle *face = *it_faces;
 
       const std::set<Hex *> &hex_sharing_triangle = faces_to_hex[face];
-      for(std::set<Hex *>::const_iterator it_neighbors =
-            hex_sharing_triangle.begin();
+      for(auto it_neighbors = hex_sharing_triangle.begin();
           it_neighbors != hex_sharing_triangle.end(); it_neighbors++) {
         Hex *other_hex = *it_neighbors;
         if(other_hex == hex) continue;
@@ -6933,12 +6888,11 @@ void Recombinator_Graph::create_direct_neighbors_incompatibility_graph()
     // change following...
 
     const std::set<PELine *> &hex_edges = hex_to_edges[hex];
-    for(std::set<PELine *>::const_iterator it_line = hex_edges.begin();
-        it_line != hex_edges.end(); it_line++) {
+    for(auto it_line = hex_edges.begin(); it_line != hex_edges.end();
+        it_line++) {
       PELine *line = *it_line;
       const std::set<Hex *> &hex_sharing_edge = edges_to_hex[line];
-      for(std::set<Hex *>::const_iterator it_neighbors =
-            hex_sharing_edge.begin();
+      for(auto it_neighbors = hex_sharing_edge.begin();
           it_neighbors != hex_sharing_edge.end(); it_neighbors++) {
         Hex *other_hex = *it_neighbors;
         if(other_hex == hex) continue;
@@ -7007,8 +6961,7 @@ void Recombinator_Graph::add_face(
   v.push_back(b);
   v.push_back(c);
   PETriangle *q = new PETriangle(v);
-  std::multimap<unsigned long long, pair<PETriangle *, int> >::iterator itfind =
-    find_the_triangle(q, f);
+  auto itfind = find_the_triangle(q, f);
   if(itfind == f.end()) { f.insert(make_pair(q->get_hash(), make_pair(q, 1))); }
   else {
     delete q;
@@ -7022,7 +6975,7 @@ void Recombinator_Graph::add_face(MVertex *a, MVertex *b, MVertex *c, Hex *hex)
   v.push_back(b);
   v.push_back(c);
   PETriangle *q = new PETriangle(v);
-  citer itfind = find_the_triangle(q, triangular_faces);
+  auto itfind = find_the_triangle(q, triangular_faces);
   if(itfind == triangular_faces.end()) {
     itfind = triangular_faces.insert(make_pair(q->get_hash(), q));
   }
@@ -7059,7 +7012,7 @@ void Recombinator_Graph::fill_edges_table(
 
       // see if already exists or not...
       PELine *l = new PELine(edge);
-      linemap::const_iterator itfind = find_the_line(l, edges_and_diagonals);
+      auto itfind = find_the_line(l, edges_and_diagonals);
       if(itfind == edges_and_diagonals.end()) {
         itfind = edges_and_diagonals.insert(make_pair(l->get_hash(), l));
       }
@@ -7081,7 +7034,7 @@ Recombinator_Graph::find_hex_in_graph(Hex *hex)
     incompatibility_graph.equal_range(hex->get_hash());
   if(range.first == range.second) return incompatibility_graph.end();
 
-  graph::iterator it = range.first;
+  auto it = range.first;
   for(; it != range.second; it++) {
     if(it->second.first == hex) { return it; }
   }
@@ -7095,7 +7048,7 @@ Recombinator_Graph::find_hex_in_graphrow(Hex *hex, graph_data &row)
     row.equal_range(hex->get_hash());
   if(range.first == range.second) return row.end();
 
-  graph_data::iterator it = range.first;
+  auto it = range.first;
   for(; it != range.second; it++) {
     if(it->second == hex) { return it; }
   }
@@ -7104,17 +7057,17 @@ Recombinator_Graph::find_hex_in_graphrow(Hex *hex, graph_data &row)
 
 bool Recombinator_Graph::find_hex_couple_in_graph(Hex *hex, Hex *other_hex)
 {
-  graph::iterator it = find_hex_in_graph(hex);
+  auto it = find_hex_in_graph(hex);
   if(it == incompatibility_graph.end()) return false;
 
-  graph_data::iterator itt = find_hex_in_graphrow(other_hex, it->second.second);
+  auto itt = find_hex_in_graphrow(other_hex, it->second.second);
   if(itt == it->second.second.end()) return false;
   return true;
 }
 
 void Recombinator_Graph::add_graph_entry(Hex *hex, Hex *other_hex)
 {
-  graph::iterator itfind_graph = find_hex_in_graph(hex);
+  auto itfind_graph = find_hex_in_graph(hex);
 
   if(itfind_graph == incompatibility_graph.end()) {
     itfind_graph = incompatibility_graph.insert(
@@ -7133,13 +7086,11 @@ void Recombinator_Graph::compute_hex_ranks()
 {
   create_faces_connectivity();
 
-  for(std::map<Hex *, set<PETriangle *> >::iterator it = hex_to_faces.begin();
-      it != hex_to_faces.end(); it++) {
+  for(auto it = hex_to_faces.begin(); it != hex_to_faces.end(); it++) {
     Hex *hex = it->first;
     // Count the number of facets on boundary for the hex
     int boundary_count = 0.;
-    for(set<PETriangle *>::iterator itf = it->second.begin();
-        itf != it->second.end(); itf++) {
+    for(auto itf = it->second.begin(); itf != it->second.end(); itf++) {
       PETriangle *face = *itf;
       if(faces_connectivity[face] == 1) boundary_count += 1.;
     }
@@ -7154,9 +7105,7 @@ void Recombinator_Graph::compute_hex_ranks()
 // Complex way to get the number of tets around a triangular facet
 void Recombinator_Graph::create_faces_connectivity()
 {
-  for(std::map<MElement *, std::set<Hex *> >::iterator it_tet =
-        tet_to_hex.begin();
-      it_tet != tet_to_hex.end(); it_tet++) {
+  for(auto it_tet = tet_to_hex.begin(); it_tet != tet_to_hex.end(); it_tet++) {
     add_face_connectivity(it_tet->first, 0, 1, 2);
     add_face_connectivity(it_tet->first, 0, 1, 3);
     add_face_connectivity(it_tet->first, 0, 2, 3);
@@ -7174,7 +7123,7 @@ void Recombinator_Graph::add_face_connectivity(MElement *tet, int i, int j,
   v.push_back(tet->getVertex(j));
   v.push_back(tet->getVertex(k));
   t = new PETriangle(v);
-  citer itfind = find_the_triangle(t, triangular_faces);
+  auto itfind = find_the_triangle(t, triangular_faces);
   if(itfind != triangular_faces.end()) { faces_connectivity[itfind->second]++; }
   delete t;
 }
@@ -7183,15 +7132,13 @@ void Recombinator_Graph::compute_hex_ranks_blossom()
 {
   create_faces_connectivity();
 
-  for(map<Hex *, set<PETriangle *> >::iterator it = hex_to_faces.begin();
-      it != hex_to_faces.end(); it++) {
+  for(auto it = hex_to_faces.begin(); it != hex_to_faces.end(); it++) {
     Hex *hex = it->first;
     double nb_faces_on_boundary = 0.;
-    for(set<PETriangle *>::iterator face = it->second.begin();
-        face != it->second.end(); face++) {
+    for(auto face = it->second.begin(); face != it->second.end(); face++) {
       if(faces_connectivity[*face] == 1) nb_faces_on_boundary += 1.;
     }
-    map<Hex *, vector<double> >::iterator itfind = hex_ranks.find(hex);
+    auto itfind = hex_ranks.find(hex);
     if(itfind == hex_ranks.end())
       hex_ranks.insert(make_pair(hex, vector<double>(3)));
     hex_ranks[hex][0] = nb_faces_on_boundary;
@@ -7232,14 +7179,14 @@ PETriangle *Recombinator_Graph::get_triangle(MVertex *a, MVertex *b, MVertex *c)
   v.push_back(b);
   v.push_back(c);
   PETriangle *t = new PETriangle(v);
-  citer it_find_tri = find_the_triangle(t, triangular_faces);
+  auto it_find_tri = find_the_triangle(t, triangular_faces);
   delete t;
   return (it_find_tri->second);
 }
 
 bool Recombinator_Graph::is_blossom_pair(PETriangle *t1, PETriangle *t2)
 {
-  tripair::iterator itfind = blossom_info.find(t1);
+  auto itfind = blossom_info.find(t1);
   if(itfind != blossom_info.end()) {
     if(t2 == itfind->second) return true;
   }

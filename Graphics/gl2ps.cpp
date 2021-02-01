@@ -26,7 +26,7 @@
  * file named "COPYING.GL2PS"; if not, I will be glad to provide one.
  *
  * For the latest info about gl2ps and a full list of contributors, see
- * http://www.geuz.org/gl2ps/.
+ * https://geuz.org/gl2ps/.
  *
  * Please report all issues on https://gitlab.onelab.info/gl2ps/gl2ps/issues.
  */
@@ -2858,6 +2858,7 @@ static void gl2psPrintPostScriptHeader(void)
               "/STRR{ gsave FCT moveto rotate SW neg SH neg rmoveto show grestore } BD\n");
 
   gl2psPrintf("/P  { newpath 0.0 360.0 arc closepath fill } BD\n"
+              "/R  { newpath moveto lineto lineto lineto closepath fill } BD\n"
               "/LS { newpath moveto } BD\n"
               "/L  { lineto } BD\n"
               "/LE { lineto stroke } BD\n"
@@ -3098,8 +3099,22 @@ static void gl2psPrintPostScriptPrimitive(void *data)
   switch(prim->type){
   case GL2PS_POINT :
     gl2psPrintPostScriptColor(prim->verts[0].rgba);
-    gl2psPrintf("%g %g %g P\n",
-                prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5 * prim->width);
+    if(gl2ps->options & GL2PS_SQUARE_POINTS) {
+      gl2psPrintf("%g %g %g %g %g %g %g %g R\n",
+                  prim->verts[0].xyz[0] - 0.5*prim->width,
+                  prim->verts[0].xyz[1] - 0.5*prim->width,
+                  prim->verts[0].xyz[0] - 0.5*prim->width,
+                  prim->verts[0].xyz[1] + 0.5*prim->width,
+                  prim->verts[0].xyz[0] + 0.5*prim->width,
+                  prim->verts[0].xyz[1] + 0.5*prim->width,
+                  prim->verts[0].xyz[0] + 0.5*prim->width,
+                  prim->verts[0].xyz[1] - 0.5*prim->width);
+    }
+    else {
+      gl2psPrintf("%g %g %g P\n",
+                  prim->verts[0].xyz[0], prim->verts[0].xyz[1],
+                  0.5 * prim->width);
+    }
     break;
   case GL2PS_LINE :
     if(!gl2psSamePosition(gl2ps->lastvertex.xyz, prim->verts[0].xyz) ||
@@ -3849,10 +3864,15 @@ static void gl2psPDFgroupListWriteMainStream(void)
       gl2ps->streamlength += gl2psPrintPDFStrokeColor(prim->verts[0].rgba);
       for(j = 0; j <= lastel; ++j){
         prim = *(GL2PSprimitive**)gl2psListPointer(gro->ptrlist, j);
-        gl2ps->streamlength +=
-          gl2psPrintf("%f %f m %f %f l\n",
-                      prim->verts[0].xyz[0], prim->verts[0].xyz[1],
-                      prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
+        if(gl2ps->options & GL2PS_SQUARE_POINTS)
+          gl2ps->streamlength +=
+            gl2psPrintf("%f %f 1 1 re\n", prim->verts[0].xyz[0],
+                        prim->verts[0].xyz[1]);
+        else
+          gl2ps->streamlength +=
+            gl2psPrintf("%f %f m %f %f l\n", prim->verts[0].xyz[0],
+                        prim->verts[0].xyz[1], prim->verts[0].xyz[0],
+                        prim->verts[0].xyz[1]);
       }
       gl2ps->streamlength += gl2psPrintf("S\n");
       gl2ps->streamlength += gl2psPrintf("0 J\n");
@@ -5321,10 +5341,19 @@ static void gl2psPrintSVGPrimitive(void *data)
   switch(prim->type){
   case GL2PS_POINT :
     gl2psSVGGetColorString(rgba[0], col);
-    gl2psPrintf("<circle fill=\"%s\" ", col);
-    if(rgba[0][3] < 1.0F) gl2psPrintf("fill-opacity=\"%g\" ", rgba[0][3]);
-    gl2psPrintf("cx=\"%g\" cy=\"%g\" r=\"%g\"/>\n",
-                xyz[0][0], xyz[0][1], 0.5 * prim->width);
+    if(gl2ps->options & GL2PS_SQUARE_POINTS){
+      gl2psPrintf("<rect fill=\"%s\" ", col);
+      if (rgba[0][3] < 1.0F) gl2psPrintf("fill-opacity=\"%g\" ", rgba[0][3]);
+      gl2psPrintf("x=\"%g\" y=\"%g\" width=\"%g\" height=\"%g\"/>\n",
+                  xyz[0][0] - 0.5*prim->width, xyz[0][1] - 0.5*prim->width,
+                  prim->width, prim->width);
+    }
+    else {
+      gl2psPrintf("<circle fill=\"%s\" ", col);
+      if (rgba[0][3] < 1.0F) gl2psPrintf("fill-opacity=\"%g\" ", rgba[0][3]);
+      gl2psPrintf("cx=\"%g\" cy=\"%g\" r=\"%g\"/>\n",
+                  xyz[0][0], xyz[0][1], 0.5 * prim->width);
+    }
     break;
   case GL2PS_LINE :
     if(!gl2psSamePosition(gl2ps->lastvertex.xyz, prim->verts[0].xyz) ||
@@ -5645,12 +5674,16 @@ static void gl2psPrintPGFPrimitive(void *data)
   case GL2PS_POINT :
     /* Points in openGL are rectangular */
     gl2psPrintPGFColor(prim->verts[0].rgba);
-    fprintf(gl2ps->stream,
-            "\\pgfpathrectangle{\\pgfpoint{%fpt}{%fpt}}"
-            "{\\pgfpoint{%fpt}{%fpt}}\n\\pgfusepath{fill}\n",
-            prim->verts[0].xyz[0]-0.5*prim->width,
-            prim->verts[0].xyz[1]-0.5*prim->width,
-            prim->width,prim->width);
+    if(gl2ps->options & GL2PS_SQUARE_POINTS)
+      fprintf(gl2ps->stream, "\\pgfpathrectangle{\\pgfpoint{%fpt}{%fpt}}"
+              "{\\pgfpoint{%fpt}{%fpt}}\n\\pgfusepath{fill}\n",
+              prim->verts[0].xyz[0]-0.5*prim->width,
+              prim->verts[0].xyz[1]-0.5*prim->width,
+              prim->width, prim->width);
+    else
+      fprintf(gl2ps->stream, "\\pgfpathcircle{\\pgfpoint{%fpt}{%fpt}}"
+              "{%fpt}\n\\pgfusepath{fill}\n",
+              prim->verts[0].xyz[0], prim->verts[0].xyz[1], 0.5*prim->width);
     break;
   case GL2PS_LINE :
     gl2psPrintPGFColor(prim->verts[0].rgba);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -77,7 +77,7 @@ int GModel::readACTRAN(const std::string &name)
           sscanf(buffer, "%d %lf %lf %lf", &num, &x, &y, &z);
         else
           sscanf(buffer, "%d %lf %lf", &num, &x, &y);
-        _vertexMapCache[num] = new MVertex(x, y, z, 0, num);
+        _vertexMapCache[num] = new MVertex(x, y, z, nullptr, num);
       }
     }
     else if(!strcmp(str, "BEGIN") && !strcmp(str2, "ELEMENT")) {

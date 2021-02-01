@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,8 +16,7 @@ void linearSystemBase::setParameter(const std::string &key, std::string value)
 
 std::string linearSystemBase::getParameter(const std::string &key) const
 {
-  std::map<std::string, std::string>::const_iterator it;
-  it = this->_parameters.find(key);
+  auto it = this->_parameters.find(key);
   if(it == this->_parameters.end())
     return "";
   else

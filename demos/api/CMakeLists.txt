@@ -3,6 +3,17 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 # TODO: Gmsh should create a cmake file when installing the lib, so all the
 # external dependencies can be obtained automatically
 
+# if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
+# build type to "RelWithDebInfo" ("-O2 -g" with gcc) prior to calling
+# project()
+if(DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose build type")
+else()
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose build type")
+endif()
+
+project(api_demos CXX C)
+
 set(CMAKE_CXX_STANDARD 11)
 
 find_library(GMSH_LIB gmsh)

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -27,6 +27,7 @@ private:
   double _radius;
   SPoint3 _center;
   void _setup();
+  bool _project(const double p[3], double uv[2], double xyz[3]) const;
 
 public:
   OCCFace(GModel *m, TopoDS_Face s, int num);

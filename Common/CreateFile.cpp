@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -179,7 +179,7 @@ std::string GetKnownFileFormats(bool onlyMeshFormats)
 #if defined(HAVE_FLTK)
 static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 {
-  openglWindow *newg = 0;
+  openglWindow *newg = nullptr;
 
   if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0){
     GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
@@ -259,7 +259,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   }
 
   if(newg){
-    openglWindow::setLastHandled(0);
+    openglWindow::setLastHandled(nullptr);
     newg->hide();
     delete newg;
   }
@@ -588,7 +588,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       while(res == GL2PS_OVERFLOW) {
         buffsize += 2048 * 2048;
         gl2psBeginPage(base.c_str(), "Gmsh", pixel_viewport,
-                       psformat, pssort, psoptions, GL_RGBA, 0, NULL,
+                       psformat, pssort, psoptions, GL_RGBA, 0, nullptr,
                        15, 20, 10, buffsize, fp, base.c_str());
         if(CTX::instance()->print.epsQuality == 0){
           double modelview[16], projection[16];
@@ -647,7 +647,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         gl2psBeginPage(base.c_str(), "Gmsh", pixel_viewport,
                        GL2PS_TEX, GL2PS_NO_SORT,
                        CTX::instance()->print.texForceFontSize ? GL2PS_NONE :
-                       GL2PS_NO_TEX_FONTSIZE, GL_RGBA, 0, NULL,
+                       GL2PS_NO_TEX_FONTSIZE, GL_RGBA, 0, nullptr,
                        0, 0, 0, buffsize, fp, base.c_str());
         gl2psSetTexScaling(scaling);
         int oldtext = CTX::instance()->print.text;
@@ -706,7 +706,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
 
       std::string parFileName = CTX::instance()->homeDir + ".gmsh-mpeg_encode.par";
-      FILE *fp = 0;
+      FILE *fp = nullptr;
       if(format != FORMAT_MPEG_PREVIEW){
         fp = Fopen(parFileName.c_str(), "w");
         if(!fp){
