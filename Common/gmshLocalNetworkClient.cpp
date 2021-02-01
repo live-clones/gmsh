@@ -128,8 +128,8 @@ public:
         tmp
           << GetHostName(); // prepend hostname if only the port number is given
       tmp << CTX::instance()->solver.socketName;
-      if(atoi(port + 1)) // nonzero port is given - append client id
-        tmp << _client->getId();
+      //if(atoi(port + 1)) // nonzero port is given - append client id
+      //  tmp << _client->getId();
       sockname = tmp.str();
     }
 
