@@ -154,8 +154,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-combine", "Combine views having identical names into "
                  "multi-time-step views"));
   s.push_back(mp("Solver:", ""));
-  s.push_back(mp("-listen", "Always listen to incoming connection requests "
-                 "(Solver.AlwaysListen)"));
+  s.push_back(mp("-listen string", "Always listen to incoming connection requests "
+                 "(Solver.AlwaysListen) on the given socket "
+                 "(uses Solver.SocketName if not specified)"));
   s.push_back(mp("-minterpreter string", "Name of Octave interpreter "
                  "(Solver.OctaveInterpreter)"));
   s.push_back(mp("-pyinterpreter string", "Name of Python interpreter "

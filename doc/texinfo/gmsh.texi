@@ -6565,7 +6565,8 @@ Another approach is to modify your program so that it can communicate
 with Gmsh through ONELAB over a socket, select `Always listen to
 incoming connection requests' in the solver option panel (or run gmsh
 with the @code{-listen} command line option), and Gmsh will always
-listen for your program on the @code{Solver.SocketName} socket.
+listen for your program on the given socket (or on the @code{Solver.SocketName}
+if no socket is specified).
 
 Using the Gmsh API, you can also directly embed Gmsh in your own solver,
 and use ONELAB for interactive parameter definition and

@@ -105,7 +105,7 @@ Combine views having identical names into multi-time-step views
  Solver:
 @ftable @code
 @item -listen
-Always listen to incoming connection requests (Solver.AlwaysListen)
+Always listen to incoming connection requests (Solver.AlwaysListen) on the given socket (uses Solver.SocketName if not specified).
 @item -minterpreter string
 Name of Octave interpreter (Solver.OctaveInterpreter)
 @item -pyinterpreter string
