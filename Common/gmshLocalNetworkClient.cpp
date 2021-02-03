@@ -114,6 +114,7 @@ public:
   {
     std::string sockname;
     std::ostringstream tmp;
+    static bool first = true;
     const char *port = strstr(CTX::instance()->solver.socketName.c_str(), ":");
     if(!port) {
       // Unix socket
@@ -127,13 +128,16 @@ public:
          CTX::instance()->solver.socketName[0] == ':')
         tmp << GetHostName(); // prepend hostname if only port number is given
       tmp << CTX::instance()->solver.socketName;
-      if(atoi(port + 1) && !CTX::instance()->solver.listen) {
-        // if a port number is given and we are not in "listen" mode, we append
-        // the client number in order to be able to manage several clients; it
-        // is however recommended to not specify a port number explicitly when
-        // not in "listen" mode, so that the port is automatically assigned by
-        // the OS
-        tmp << _client->getId();
+      if(atoi(port + 1)) {
+        // if a port number is given we use it for the first client, then we
+        // append the client id so that we can manage several clients at once;
+        // this is ugly but it leads to the expected result if a single client
+        // is instanciated (in general it is recommended to *not* specify the
+        // port number, and let the OS assign a port number automatically)
+        if(!first) {
+          tmp << _client->getId();
+          first = false;
+        }
       }
       sockname = tmp.str();
     }
