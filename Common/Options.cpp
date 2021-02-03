@@ -4384,7 +4384,7 @@ double opt_geometry_volumes(OPT_ARGS_NUM)
   return CTX::instance()->geom.volumes;
 }
 
-double opt_geometry_points_num(OPT_ARGS_NUM)
+double opt_geometry_point_labels(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.pointsNum = (int)val;
 #if defined(HAVE_FLTK)
@@ -4395,7 +4395,7 @@ double opt_geometry_points_num(OPT_ARGS_NUM)
   return CTX::instance()->geom.pointsNum;
 }
 
-double opt_geometry_curves_num(OPT_ARGS_NUM)
+double opt_geometry_curve_labels(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.curvesNum = (int)val;
 #if defined(HAVE_FLTK)
@@ -4406,7 +4406,7 @@ double opt_geometry_curves_num(OPT_ARGS_NUM)
   return CTX::instance()->geom.curvesNum;
 }
 
-double opt_geometry_surfaces_num(OPT_ARGS_NUM)
+double opt_geometry_surface_labels(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.surfacesNum = (int)val;
 #if defined(HAVE_FLTK)
@@ -4417,7 +4417,7 @@ double opt_geometry_surfaces_num(OPT_ARGS_NUM)
   return CTX::instance()->geom.surfacesNum;
 }
 
-double opt_geometry_volumes_num(OPT_ARGS_NUM)
+double opt_geometry_volume_labels(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.volumesNum = (int)val;
 #if defined(HAVE_FLTK)

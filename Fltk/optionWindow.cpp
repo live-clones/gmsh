@@ -462,10 +462,10 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_curves(0, GMSH_SET, o->geo.butt[1]->value());
   opt_geometry_surfaces(0, GMSH_SET, o->geo.butt[2]->value());
   opt_geometry_volumes(0, GMSH_SET, o->geo.butt[3]->value());
-  opt_geometry_points_num(0, GMSH_SET, o->geo.butt[4]->value());
-  opt_geometry_curves_num(0, GMSH_SET, o->geo.butt[5]->value());
-  opt_geometry_surfaces_num(0, GMSH_SET, o->geo.butt[6]->value());
-  opt_geometry_volumes_num(0, GMSH_SET, o->geo.butt[7]->value());
+  opt_geometry_point_labels(0, GMSH_SET, o->geo.butt[4]->value());
+  opt_geometry_curve_labels(0, GMSH_SET, o->geo.butt[5]->value());
+  opt_geometry_surface_labels(0, GMSH_SET, o->geo.butt[6]->value());
+  opt_geometry_volume_labels(0, GMSH_SET, o->geo.butt[7]->value());
   opt_geometry_auto_coherence(0, GMSH_SET, o->geo.butt[8]->value());
   opt_geometry_light(0, GMSH_SET, o->geo.butt[9]->value());
   opt_geometry_highlight_orphans(0, GMSH_SET, o->geo.butt[10]->value());
