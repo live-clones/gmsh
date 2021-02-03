@@ -1247,7 +1247,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-listen") {
         i++;
         opt_solver_listen(0, GMSH_SET, 1);
-        if(i < argv.size() && argv[i].size() && argv[i][0] != "-")
+        if(i < argv.size() && argv[i].size() && argv[i][0] != '-')
           opt_solver_socket_name(0, GMSH_SET, argv[i++]);
       }
       else if(argv[i] == "-minterpreter") {
