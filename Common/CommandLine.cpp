@@ -314,7 +314,7 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp("Alt+Shift+c", "Loop through predefined colormaps"));
   s.push_back(mp("Alt+Shift+d", "Hide/show mesh surface faces"));
   s.push_back(mp("Alt+Shift+l", "Hide/show mesh lines"));
-  s.push_back(mp("Alt+Shift+p", "Hide/show mesh points"));
+  s.push_back(mp("Alt+Shift+p", "Hide/show mesh nodes"));
   s.push_back(mp("Alt+Shift+s", "Hide/show mesh surface edges"));
   s.push_back(mp("Alt+Shift+t", "Same as Alt+t, but with numeric mode "
                  "included"));
@@ -1332,22 +1332,22 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
         i++;
       }
       else if(argv[i] == "-nomesh") {
-        opt_mesh_points(0, GMSH_SET, 0.);
+        opt_mesh_nodes(0, GMSH_SET, 0.);
         opt_mesh_lines(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_edges(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_faces(0, GMSH_SET, 0.);
-        opt_mesh_volumes_edges(0, GMSH_SET, 0.);
-        opt_mesh_volumes_faces(0, GMSH_SET, 0.);
+        opt_mesh_surface_edges(0, GMSH_SET, 0.);
+        opt_mesh_surface_faces(0, GMSH_SET, 0.);
+        opt_mesh_volume_edges(0, GMSH_SET, 0.);
+        opt_mesh_volume_faces(0, GMSH_SET, 0.);
         i++;
       }
       else if(argv[i] == "-n") {
         opt_view_visible(0, GMSH_SET, 0);
-        opt_mesh_points(0, GMSH_SET, 0.);
+        opt_mesh_nodes(0, GMSH_SET, 0.);
         opt_mesh_lines(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_edges(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_faces(0, GMSH_SET, 0.);
-        opt_mesh_volumes_edges(0, GMSH_SET, 0.);
-        opt_mesh_volumes_faces(0, GMSH_SET, 0.);
+        opt_mesh_surface_edges(0, GMSH_SET, 0.);
+        opt_mesh_surface_faces(0, GMSH_SET, 0.);
+        opt_mesh_volume_edges(0, GMSH_SET, 0.);
+        opt_mesh_volume_faces(0, GMSH_SET, 0.);
         i++;
       }
       else if(argv[i] == "-link") {

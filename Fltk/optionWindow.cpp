@@ -536,7 +536,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
   opt_mesh_ho_optimize(0, GMSH_SET, o->mesh.butt[3]->value() ? 2 : 0);
   opt_mesh_second_order_incomplete(0, GMSH_SET, o->mesh.butt[4]->value());
-  opt_mesh_points(0, GMSH_SET, o->mesh.butt[6]->value());
+  opt_mesh_nodes(0, GMSH_SET, o->mesh.butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, o->mesh.butt[7]->value());
   opt_mesh_triangles(0, GMSH_SET, o->mesh.menu->menu()[0].value() ? 1 : 0);
   opt_mesh_quadrangles(0, GMSH_SET, o->mesh.menu->menu()[1].value() ? 1 : 0);
@@ -545,14 +545,14 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_prisms(0, GMSH_SET, o->mesh.menu->menu()[4].value() ? 1 : 0);
   opt_mesh_pyramids(0, GMSH_SET, o->mesh.menu->menu()[5].value() ? 1 : 0);
   opt_mesh_trihedra(0, GMSH_SET, o->mesh.menu->menu()[6].value() ? 1 : 0);
-  opt_mesh_surfaces_edges(0, GMSH_SET, o->mesh.butt[8]->value());
-  opt_mesh_surfaces_faces(0, GMSH_SET, o->mesh.butt[9]->value());
-  opt_mesh_volumes_edges(0, GMSH_SET, o->mesh.butt[10]->value());
-  opt_mesh_volumes_faces(0, GMSH_SET, o->mesh.butt[11]->value());
-  opt_mesh_points_num(0, GMSH_SET, o->mesh.butt[12]->value());
-  opt_mesh_lines_num(0, GMSH_SET, o->mesh.butt[13]->value());
-  opt_mesh_surfaces_num(0, GMSH_SET, o->mesh.butt[14]->value());
-  opt_mesh_volumes_num(0, GMSH_SET, o->mesh.butt[15]->value());
+  opt_mesh_surface_edges(0, GMSH_SET, o->mesh.butt[8]->value());
+  opt_mesh_surface_faces(0, GMSH_SET, o->mesh.butt[9]->value());
+  opt_mesh_volume_edges(0, GMSH_SET, o->mesh.butt[10]->value());
+  opt_mesh_volume_faces(0, GMSH_SET, o->mesh.butt[11]->value());
+  opt_mesh_node_labels(0, GMSH_SET, o->mesh.butt[12]->value());
+  opt_mesh_line_labels(0, GMSH_SET, o->mesh.butt[13]->value());
+  opt_mesh_surface_labels(0, GMSH_SET, o->mesh.butt[14]->value());
+  opt_mesh_volume_labels(0, GMSH_SET, o->mesh.butt[15]->value());
   opt_mesh_light(0, GMSH_SET, o->mesh.butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, o->mesh.butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, o->mesh.butt[19]->value());
@@ -570,12 +570,12 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_explode(0, GMSH_SET, o->mesh.value[9]->value());
   opt_mesh_tangents(0, GMSH_SET, o->mesh.value[13]->value());
   opt_mesh_num_sub_edges(0, GMSH_SET, o->mesh.value[14]->value());
-  opt_mesh_point_size(0, GMSH_SET, o->mesh.value[10]->value());
+  opt_mesh_node_size(0, GMSH_SET, o->mesh.value[10]->value());
   opt_mesh_line_width(0, GMSH_SET, o->mesh.value[11]->value());
   opt_mesh_label_sampling(0, GMSH_SET, o->mesh.value[12]->value());
   opt_mesh_angle_smooth_normals(0, GMSH_SET, o->mesh.value[18]->value());
 
-  opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
+  opt_mesh_node_type(0, GMSH_SET, o->mesh.choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
                   (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
                   (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
@@ -2155,25 +2155,25 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.butt[4] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
                                         BW / 2 - WB, BH, "Point labels");
-      geo.butt[4]->tooltip("Geometry.PointNumbers");
+      geo.butt[4]->tooltip("Geometry.PointLabels");
       geo.butt[4]->type(FL_TOGGLE_BUTTON);
       geo.butt[4]->callback(geometry_options_ok_cb);
 
       geo.butt[5] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH,
                                         BW / 2 - WB, BH, "Curve labels");
-      geo.butt[5]->tooltip("Geometry.CurveNumbers");
+      geo.butt[5]->tooltip("Geometry.CurveLabels");
       geo.butt[5]->type(FL_TOGGLE_BUTTON);
       geo.butt[5]->callback(geometry_options_ok_cb);
 
       geo.butt[6] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH,
                                         BW / 2 - WB, BH, "Surface labels");
-      geo.butt[6]->tooltip("Geometry.SurfaceNumbers");
+      geo.butt[6]->tooltip("Geometry.SurfaceLabels");
       geo.butt[6]->type(FL_TOGGLE_BUTTON);
       geo.butt[6]->callback(geometry_options_ok_cb);
 
       geo.butt[7] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
                                         BW / 2 - WB, BH, "Volume labels");
-      geo.butt[7]->tooltip("Geometry.VolumeNumbers");
+      geo.butt[7]->tooltip("Geometry.VolumeLabels");
       geo.butt[7]->type(FL_TOGGLE_BUTTON);
       geo.butt[7]->callback(geometry_options_ok_cb);
 
@@ -2630,25 +2630,25 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
                                           BW / 2 - WB, BH, "Node labels");
-      mesh.butt[12]->tooltip("Mesh.PointNumbers");
+      mesh.butt[12]->tooltip("Mesh.NodeLabels");
       mesh.butt[12]->type(FL_TOGGLE_BUTTON);
       mesh.butt[12]->callback(mesh_options_ok_cb);
 
       mesh.butt[13] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH,
                                           BW / 2 - WB, BH, "1D element labels");
-      mesh.butt[13]->tooltip("Mesh.LineNumbers");
+      mesh.butt[13]->tooltip("Mesh.LineLabels");
       mesh.butt[13]->type(FL_TOGGLE_BUTTON);
       mesh.butt[13]->callback(mesh_options_ok_cb);
 
       mesh.butt[14] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH,
                                           BW / 2 - WB, BH, "2D element labels");
-      mesh.butt[14]->tooltip("Mesh.SurfaceNumbers");
+      mesh.butt[14]->tooltip("Mesh.SurfaceLabels");
       mesh.butt[14]->type(FL_TOGGLE_BUTTON);
       mesh.butt[14]->callback(mesh_options_ok_cb);
 
       mesh.butt[15] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
                                           BW / 2 - WB, BH, "3D element labels");
-      mesh.butt[15]->tooltip("Mesh.VolumeNumbers");
+      mesh.butt[15]->tooltip("Mesh.VolumeLabels");
       mesh.butt[15]->type(FL_TOGGLE_BUTTON);
       mesh.butt[15]->callback(mesh_options_ok_cb);
 

@@ -4386,46 +4386,46 @@ double opt_geometry_volumes(OPT_ARGS_NUM)
 
 double opt_geometry_point_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->geom.pointsNum = (int)val;
+  if(action & GMSH_SET) CTX::instance()->geom.pointLabels = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->geo.butt[4]->value(
-      CTX::instance()->geom.pointsNum);
+      CTX::instance()->geom.pointLabels);
 #endif
-  return CTX::instance()->geom.pointsNum;
+  return CTX::instance()->geom.pointLabels;
 }
 
 double opt_geometry_curve_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->geom.curvesNum = (int)val;
+  if(action & GMSH_SET) CTX::instance()->geom.curveLabels = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->geo.butt[5]->value(
-      CTX::instance()->geom.curvesNum);
+      CTX::instance()->geom.curveLabels);
 #endif
-  return CTX::instance()->geom.curvesNum;
+  return CTX::instance()->geom.curveLabels;
 }
 
 double opt_geometry_surface_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->geom.surfacesNum = (int)val;
+  if(action & GMSH_SET) CTX::instance()->geom.surfaceLabels = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->geo.butt[6]->value(
-      CTX::instance()->geom.surfacesNum);
+      CTX::instance()->geom.surfaceLabels);
 #endif
-  return CTX::instance()->geom.surfacesNum;
+  return CTX::instance()->geom.surfaceLabels;
 }
 
 double opt_geometry_volume_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->geom.volumesNum = (int)val;
+  if(action & GMSH_SET) CTX::instance()->geom.volumeLabels = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->geo.butt[7]->value(
-      CTX::instance()->geom.volumesNum);
+      CTX::instance()->geom.volumeLabels);
 #endif
-  return CTX::instance()->geom.volumesNum;
+  return CTX::instance()->geom.volumeLabels;
 }
 
 double opt_geometry_label_type(OPT_ARGS_NUM)
@@ -5220,15 +5220,15 @@ double opt_mesh_first_node_tag(OPT_ARGS_NUM)
   return CTX::instance()->mesh.firstNodeTag;
 }
 
-double opt_mesh_points(OPT_ARGS_NUM)
+double opt_mesh_nodes(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.points = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.nodes = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[6]->value(
-      CTX::instance()->mesh.points);
+      CTX::instance()->mesh.nodes);
 #endif
-  return CTX::instance()->mesh.points;
+  return CTX::instance()->mesh.nodes;
 }
 
 double opt_mesh_lines(OPT_ARGS_NUM)
@@ -5379,131 +5379,131 @@ double opt_mesh_trihedra(OPT_ARGS_NUM)
   return CTX::instance()->mesh.trihedra;
 }
 
-double opt_mesh_surfaces_edges(OPT_ARGS_NUM)
+double opt_mesh_surface_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX::instance()->mesh.surfacesEdges != val)
+    if(CTX::instance()->mesh.surfaceEdges != val)
       CTX::instance()->mesh.changed |= ENT_SURFACE;
-    CTX::instance()->mesh.surfacesEdges = (int)val;
+    CTX::instance()->mesh.surfaceEdges = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[8]->value(
-      CTX::instance()->mesh.surfacesEdges);
+      CTX::instance()->mesh.surfaceEdges);
 #endif
-  return CTX::instance()->mesh.surfacesEdges;
+  return CTX::instance()->mesh.surfaceEdges;
 }
 
-double opt_mesh_surfaces_faces(OPT_ARGS_NUM)
+double opt_mesh_surface_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX::instance()->mesh.surfacesFaces != val)
+    if(CTX::instance()->mesh.surfaceFaces != val)
       CTX::instance()->mesh.changed |= ENT_SURFACE;
-    CTX::instance()->mesh.surfacesFaces = (int)val;
+    CTX::instance()->mesh.surfaceFaces = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[9]->value(
-      CTX::instance()->mesh.surfacesFaces);
+      CTX::instance()->mesh.surfaceFaces);
 #endif
-  return CTX::instance()->mesh.surfacesFaces;
+  return CTX::instance()->mesh.surfaceFaces;
 }
 
-double opt_mesh_volumes_edges(OPT_ARGS_NUM)
+double opt_mesh_volume_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX::instance()->mesh.volumesEdges != val)
+    if(CTX::instance()->mesh.volumeEdges != val)
       CTX::instance()->mesh.changed |= ENT_VOLUME;
-    CTX::instance()->mesh.volumesEdges = (int)val;
+    CTX::instance()->mesh.volumeEdges = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[10]->value(
-      CTX::instance()->mesh.volumesEdges);
+      CTX::instance()->mesh.volumeEdges);
 #endif
-  return CTX::instance()->mesh.volumesEdges;
+  return CTX::instance()->mesh.volumeEdges;
 }
 
-double opt_mesh_volumes_faces(OPT_ARGS_NUM)
+double opt_mesh_volume_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX::instance()->mesh.volumesFaces != val)
+    if(CTX::instance()->mesh.volumeFaces != val)
       CTX::instance()->mesh.changed |= ENT_VOLUME;
-    CTX::instance()->mesh.volumesFaces = (int)val;
+    CTX::instance()->mesh.volumeFaces = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[11]->value(
-      CTX::instance()->mesh.volumesFaces);
+      CTX::instance()->mesh.volumeFaces);
 #endif
-  return CTX::instance()->mesh.volumesFaces;
+  return CTX::instance()->mesh.volumeFaces;
 }
 
-double opt_mesh_points_num(OPT_ARGS_NUM)
+double opt_mesh_node_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.pointsNum = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.nodeLabels = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[12]->value(
-      CTX::instance()->mesh.pointsNum);
+      CTX::instance()->mesh.nodeLabels);
 #endif
-  return CTX::instance()->mesh.pointsNum;
+  return CTX::instance()->mesh.nodeLabels;
 }
 
-double opt_mesh_lines_num(OPT_ARGS_NUM)
+double opt_mesh_line_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.linesNum = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.lineLabels = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[13]->value(
-      CTX::instance()->mesh.linesNum);
+      CTX::instance()->mesh.lineLabels);
 #endif
-  return CTX::instance()->mesh.linesNum;
+  return CTX::instance()->mesh.lineLabels;
 }
 
-double opt_mesh_surfaces_num(OPT_ARGS_NUM)
+double opt_mesh_surface_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.surfacesNum = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.surfaceLabels = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[14]->value(
-      CTX::instance()->mesh.surfacesNum);
+      CTX::instance()->mesh.surfaceLabels);
 #endif
-  return CTX::instance()->mesh.surfacesNum;
+  return CTX::instance()->mesh.surfaceLabels;
 }
 
-double opt_mesh_volumes_num(OPT_ARGS_NUM)
+double opt_mesh_volume_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.volumesNum = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.volumeLabels = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[15]->value(
-      CTX::instance()->mesh.volumesNum);
+      CTX::instance()->mesh.volumeLabels);
 #endif
-  return CTX::instance()->mesh.volumesNum;
+  return CTX::instance()->mesh.volumeLabels;
 }
 
-double opt_mesh_point_size(OPT_ARGS_NUM)
+double opt_mesh_node_size(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.pointSize = val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.nodeSize = val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.value[10]->value(
-      CTX::instance()->mesh.pointSize);
+      CTX::instance()->mesh.nodeSize);
 #endif
-  return CTX::instance()->mesh.pointSize;
+  return CTX::instance()->mesh.nodeSize;
 }
 
-double opt_mesh_point_type(OPT_ARGS_NUM)
+double opt_mesh_node_type(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.pointType = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.nodeType = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->mesh.choice[0]->value(
-      CTX::instance()->mesh.pointType ? 1 : 0);
+      CTX::instance()->mesh.nodeType ? 1 : 0);
   }
 #endif
-  return CTX::instance()->mesh.pointType;
+  return CTX::instance()->mesh.nodeType;
 }
 
 double opt_mesh_line_width(OPT_ARGS_NUM)

@@ -90,8 +90,7 @@ void CTX::init()
   mesh.radiusInf = mesh.radiusSup = 0;
   mesh.lines = mesh.triangles = mesh.tetrahedra = mesh.quadrangles = 0;
   mesh.prisms = mesh.pyramids = mesh.hexahedra = mesh.trihedra = 0;
-  mesh.volumesEdges = mesh.volumesFaces = mesh.surfacesEdges = mesh.surfacesFaces = 0;
-  mesh.volumesFaces = mesh.surfacesEdges = mesh.surfacesFaces = 0;
+  mesh.volumeEdges = mesh.volumeFaces = mesh.surfaceEdges = mesh.surfaceFaces = 0;
   mesh.hoOptimize = mesh.smoothNormals = 0;
   mesh.explode = mesh.angleSmoothNormals = 0.;
   mesh.numSubEdges = 0;

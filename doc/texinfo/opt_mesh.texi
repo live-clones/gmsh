@@ -271,7 +271,7 @@ Display mesh lines (1D elements)?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.LineNumbers
+@item Mesh.LineLabels
 Display mesh line labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -546,6 +546,26 @@ Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coo
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Nodes
+Display mesh nodes?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NodeLabels
+Display mesh node labels?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NodeSize
+Display size of mesh nodes (in pixels)@*
+Default value: @code{4}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NodeType
+Display mesh nodes as solid color dots (0) or 3D spheres (1)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Normals
 Display size of normal vectors (in pixels)@*
 Default value: @code{0}@*
@@ -568,26 +588,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeNetgen
 Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Points
-Display mesh nodes (vertices)?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PointNumbers
-Display mesh node labels?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PointSize
-Display size of mesh nodes (in pixels)@*
-Default value: @code{4}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PointType
-Display mesh nodes as solid color dots (0) or 3D spheres (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -811,7 +811,7 @@ Display faces of surface mesh?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SurfaceNumbers
+@item Mesh.SurfaceLabels
 Display surface mesh element labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -861,7 +861,7 @@ Display faces of volume mesh?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.VolumeNumbers
+@item Mesh.VolumeLabels
 Display volume mesh element labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
