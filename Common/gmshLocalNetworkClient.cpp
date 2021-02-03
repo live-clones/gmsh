@@ -125,11 +125,16 @@ public:
       // TCP/IP socket
       if(CTX::instance()->solver.socketName.size() &&
          CTX::instance()->solver.socketName[0] == ':')
-        tmp
-          << GetHostName(); // prepend hostname if only the port number is given
+        tmp << GetHostName(); // prepend hostname if only port number is given
       tmp << CTX::instance()->solver.socketName;
-      //if(atoi(port + 1)) // nonzero port is given - append client id
-      //  tmp << _client->getId();
+      if(atoi(port + 1) && !CTX::instance()->solver.listen) {
+        // if a port number is given and we are not in "listen" mode, we append
+        // the client number in order to be able to manage several clients; it
+        // is however recommended to not specify a port number explicitly when
+        // not in "listen" mode, so that the port is automatically assigned by
+        // the OS
+        tmp << _client->getId();
+      }
       sockname = tmp.str();
     }
 
