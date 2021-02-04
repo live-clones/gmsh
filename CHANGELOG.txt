@@ -12,10 +12,9 @@ documented terminology (Mesh.Point -> Mesh.Node, ...; old names are still
 accepted, but deprecated); Python and Julia APIs now also define "snake case"
 aliases for all camelCase function names; small bug fixes and improvements.
 
-* Incompatible API changes: new optional argument to mesh/classifySurfaces,
+* Incompatible API changes: new optional arguments to mesh/classifySurfaces,
   occ/addBSplineSurface, occ/addBezierSurface, occ/addPipe and view/probe;
-  renamed and mesh/getEdgeNumber as mesh/getEdgeTags and changed its argument
-  types
+  renamed mesh/getEdgeNumber as mesh/getEdges
 
 4.7.1 (November 16, 2020): small bug fixes and improvements.
 

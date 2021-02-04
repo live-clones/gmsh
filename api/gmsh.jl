@@ -2063,47 +2063,55 @@ end
 const get_number_of_orientations = getNumberOfOrientations
 
 """
-    gmsh.model.mesh.getEdgeTags(nodeTags)
+    gmsh.model.mesh.getEdges(nodeTags)
 
-Get the global unique mesh edge identifiers `edgeTags` for an input list of node
-tag pairs defining these edges, concatenated in the vector `nodeTags`.
+Get the global unique mesh edge identifiers `edgeTags` and orientations
+`edgeOrientation` for an input list of node tag pairs defining these edges,
+concatenated in the vector `nodeTags`.
 
-Return `edgeTags`.
+Return `edgeTags`, `edgeOrientations`.
 """
-function getEdgeTags(nodeTags)
+function getEdges(nodeTags)
     api_edgeTags_ = Ref{Ptr{Csize_t}}()
     api_edgeTags_n_ = Ref{Csize_t}()
+    api_edgeOrientations_ = Ref{Ptr{Cint}}()
+    api_edgeOrientations_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetEdgeTags, gmsh.lib), Cvoid,
-          (Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_edgeTags_, api_edgeTags_n_, ierr)
+    ccall((:gmshModelMeshGetEdges, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_edgeTags_, api_edgeTags_n_, api_edgeOrientations_, api_edgeOrientations_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     edgeTags = unsafe_wrap(Array, api_edgeTags_[], api_edgeTags_n_[], own=true)
-    return edgeTags
+    edgeOrientations = unsafe_wrap(Array, api_edgeOrientations_[], api_edgeOrientations_n_[], own=true)
+    return edgeTags, edgeOrientations
 end
-const get_edge_tags = getEdgeTags
+const get_edges = getEdges
 
 """
-    gmsh.model.mesh.getFaceTags(faceType, nodeTags)
+    gmsh.model.mesh.getFaces(faceType, nodeTags)
 
-Get the global unique mesh face identifiers `faceTags` for an input list of node
-tag triplets (if `faceType` == 3) or quadruplets (if `faceType` == 4) defining
-these faces, concatenated in the vector `nodeTags`.
+Get the global unique mesh face identifiers `faceTags` and orientations
+`faceOrientations` for an input list of node tag triplets (if `faceType` == 3)
+or quadruplets (if `faceType` == 4) defining these faces, concatenated in the
+vector `nodeTags`.
 
-Return `faceTags`.
+Return `faceTags`, `faceOrientations`.
 """
-function getFaceTags(faceType, nodeTags)
+function getFaces(faceType, nodeTags)
     api_faceTags_ = Ref{Ptr{Csize_t}}()
     api_faceTags_n_ = Ref{Csize_t}()
+    api_faceOrientations_ = Ref{Ptr{Cint}}()
+    api_faceOrientations_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetFaceTags, gmsh.lib), Cvoid,
-          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          faceType, convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_faceTags_, api_faceTags_n_, ierr)
+    ccall((:gmshModelMeshGetFaces, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          faceType, convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_faceTags_, api_faceTags_n_, api_faceOrientations_, api_faceOrientations_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     faceTags = unsafe_wrap(Array, api_faceTags_[], api_faceTags_n_[], own=true)
-    return faceTags
+    faceOrientations = unsafe_wrap(Array, api_faceOrientations_[], api_faceOrientations_n_[], own=true)
+    return faceTags, faceOrientations
 end
-const get_face_tags = getFaceTags
+const get_faces = getFaces
 
 """
     gmsh.model.mesh.createEdges(dimTags = Tuple{Cint,Cint}[])

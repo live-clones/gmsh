@@ -1054,22 +1054,25 @@ namespace gmsh { // Top-level functions
                                                                     std::vector<int> & basisFunctionsOrientation,
                                                                     const int tag = -1);
 
-      // gmsh::model::mesh::getEdgeTags
+      // gmsh::model::mesh::getEdges
       //
-      // Get the global unique mesh edge identifiers `edgeTags' for an input list
-      // of node tag pairs defining these edges, concatenated in the vector
-      // `nodeTags'.
-      GMSH_API void getEdgeTags(const std::vector<std::size_t> & nodeTags,
-                                std::vector<std::size_t> & edgeTags);
+      // Get the global unique mesh edge identifiers `edgeTags' and orientations
+      // `edgeOrientation' for an input list of node tag pairs defining these
+      // edges, concatenated in the vector `nodeTags'.
+      GMSH_API void getEdges(const std::vector<std::size_t> & nodeTags,
+                             std::vector<std::size_t> & edgeTags,
+                             std::vector<int> & edgeOrientations);
 
-      // gmsh::model::mesh::getFaceTags
+      // gmsh::model::mesh::getFaces
       //
-      // Get the global unique mesh face identifiers `faceTags' for an input list
-      // of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' ==
-      // 4) defining these faces, concatenated in the vector `nodeTags'.
-      GMSH_API void getFaceTags(const int faceType,
-                                const std::vector<std::size_t> & nodeTags,
-                                std::vector<std::size_t> & faceTags);
+      // Get the global unique mesh face identifiers `faceTags' and orientations
+      // `faceOrientations' for an input list of node tag triplets (if `faceType'
+      // == 3) or quadruplets (if `faceType' == 4) defining these faces,
+      // concatenated in the vector `nodeTags'.
+      GMSH_API void getFaces(const int faceType,
+                             const std::vector<std::size_t> & nodeTags,
+                             std::vector<std::size_t> & faceTags,
+                             std::vector<int> & faceOrientations);
 
       // gmsh::model::mesh::createEdges
       //

@@ -1444,10 +1444,14 @@ std::size_t GModel::addMEdge(const MEdge &edge)
   return it.first->second;
 }
 
-std::size_t GModel::getEdgeNumber(const MEdge &edge)
+std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
 {
-  auto it = _mapEdgeNum.find(edge);
-  if(it != _mapEdgeNum.end()) { return _mapEdgeNum.find(edge)->second; }
+  MEdge e(v0, v1);
+  auto it = _mapEdgeNum.find(e);
+  if(it != _mapEdgeNum.end()) {
+    edge = it->first;
+    return it->second;
+  }
   else {
     Msg::Error("Unknown edge %d %d", edge.getVertex(0)->getNum(),
                edge.getVertex(1)->getNum());
@@ -1462,10 +1466,15 @@ std::size_t GModel::addMFace(const MFace &face)
   return it.first->second;
 }
 
-std::size_t GModel::getFaceNumber(const MFace &face)
+std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+                             MFace &face)
 {
-  auto it = _mapFaceNum.find(face);
-  if(it != _mapFaceNum.end()) { return _mapFaceNum.find(face)->second; }
+  MFace f(v0, v1, v2, v3);
+  auto it = _mapFaceNum.find(f);
+  if(it != _mapFaceNum.end()) {
+    face = it->first;
+    return it->second;
+  }
   else {
     Msg::Error("Unknown face %d %d %d", face.getVertex(0)->getNum(),
                face.getVertex(1)->getNum(), face.getVertex(2)->getNum());

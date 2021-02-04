@@ -278,10 +278,11 @@ public:
   // (starting at 1)
   std::size_t addMEdge(const MEdge &edge);
   std::size_t addMFace(const MFace &face);
-  // get the number of an edge of face (or 0 if it is not stored in the global
-  // edge of face map)
-  std::size_t getEdgeNumber(const MEdge &edge);
-  std::size_t getFaceNumber(const MFace &face);
+  // get the edge of face and its global number given mesh nodes (return 0 if
+  // the edge or face does not exist in the edge or face map)
+  std::size_t getMEdge(MVertex *v0, MVertex *v1, MEdge &edge);
+  std::size_t getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+                       MFace &face);
 
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)

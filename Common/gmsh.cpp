@@ -3179,21 +3179,30 @@ gmsh::model::mesh::preallocateBasisFunctionsOrientationForElements(
 }
 
 GMSH_API void
-gmsh::model::mesh::getEdgeTags(const std::vector<std::size_t> &nodeTags,
-                               std::vector<std::size_t> &edgeTags)
+gmsh::model::mesh::getEdges(const std::vector<std::size_t> &nodeTags,
+                            std::vector<std::size_t> &edgeTags,
+                            std::vector<int> &edgeOrientations)
 {
   edgeTags.clear();
+  edgeOrientations.clear();
   std::size_t numEdges = nodeTags.size() / 2;
   if(!numEdges) return;
   edgeTags.resize(numEdges);
+  edgeOrientations.resize(numEdges);
   for(std::size_t i = 0; i < numEdges; i++) {
     std::size_t n0 = nodeTags[2 * i];
     std::size_t n1 = nodeTags[2 * i + 1];
     MVertex *v0 = GModel::current()->getMeshVertexByTag(n0);
     MVertex *v1 = GModel::current()->getMeshVertexByTag(n1);
     if(v0 && v1) {
-      MEdge edge(v0, v1);
-      edgeTags[i] = GModel::current()->getEdgeNumber(edge);
+      MEdge edge;
+      edgeTags[i] = GModel::current()->getMEdge(v0, v1, edge);
+      if(edge.getVertex(0) == v0 && edge.getVertex(1) == v1)
+        edgeOrientations[i] = 1;
+      else if(edge.getVertex(1) == v0 && edge.getVertex(0) == v1)
+        edgeOrientations[i] = -1;
+      else
+        edgeOrientations[i] = 0;
     }
     else {
       Msg::Error("Unknown mesh node %d or %d", n0, n1);
@@ -3202,11 +3211,13 @@ gmsh::model::mesh::getEdgeTags(const std::vector<std::size_t> &nodeTags,
 }
 
 GMSH_API void
-gmsh::model::mesh::getFaceTags(const int faceType,
-                               const std::vector<std::size_t> &nodeTags,
-                               std::vector<std::size_t> &faceTags)
+gmsh::model::mesh::getFaces(const int faceType,
+                            const std::vector<std::size_t> &nodeTags,
+                            std::vector<std::size_t> &faceTags,
+                            std::vector<int> &orientations)
 {
   faceTags.clear();
+  orientations.clear();
   if(faceType != 3 && faceType != 4) {
     Msg::Error("Unknow face type (should be 3 or 4)");
     return;
@@ -3214,6 +3225,7 @@ gmsh::model::mesh::getFaceTags(const int faceType,
   std::size_t numFaces = nodeTags.size() / faceType;
   if(!numFaces) return;
   faceTags.resize(numFaces);
+  orientations.resize(numFaces, 0); // TODO
   for(std::size_t i = 0; i < numFaces; i++) {
     std::size_t n0 = nodeTags[faceType * i];
     std::size_t n1 = nodeTags[faceType * i + 1];
@@ -3225,8 +3237,8 @@ gmsh::model::mesh::getFaceTags(const int faceType,
     MVertex *v3 = (faceType == 4) ? GModel::current()->getMeshVertexByTag(n3) :
       nullptr;
     if(v0 && v1 && v2) {
-      MFace face(v0, v1, v2, v3);
-      faceTags[i] = GModel::current()->getFaceNumber(face);
+      MFace face;
+      faceTags[i] = GModel::current()->getMFace(v0, v1, v2, v3, face);
     }
     else {
       Msg::Error("Unknown mesh node %d, %d or %d", n0, n1, n2);

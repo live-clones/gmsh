@@ -2467,50 +2467,60 @@ class model:
         get_number_of_orientations = getNumberOfOrientations
 
         @staticmethod
-        def getEdgeTags(nodeTags):
+        def getEdges(nodeTags):
             """
-            gmsh.model.mesh.getEdgeTags(nodeTags)
+            gmsh.model.mesh.getEdges(nodeTags)
 
-            Get the global unique mesh edge identifiers `edgeTags' for an input list of
-            node tag pairs defining these edges, concatenated in the vector `nodeTags'.
+            Get the global unique mesh edge identifiers `edgeTags' and orientations
+            `edgeOrientation' for an input list of node tag pairs defining these edges,
+            concatenated in the vector `nodeTags'.
 
-            Return `edgeTags'.
+            Return `edgeTags', `edgeOrientations'.
             """
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             api_edgeTags_, api_edgeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_edgeOrientations_, api_edgeOrientations_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetEdgeTags(
+            lib.gmshModelMeshGetEdges(
                 api_nodeTags_, api_nodeTags_n_,
                 byref(api_edgeTags_), byref(api_edgeTags_n_),
+                byref(api_edgeOrientations_), byref(api_edgeOrientations_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorsize(api_edgeTags_, api_edgeTags_n_.value)
-        get_edge_tags = getEdgeTags
+            return (
+                _ovectorsize(api_edgeTags_, api_edgeTags_n_.value),
+                _ovectorint(api_edgeOrientations_, api_edgeOrientations_n_.value))
+        get_edges = getEdges
 
         @staticmethod
-        def getFaceTags(faceType, nodeTags):
+        def getFaces(faceType, nodeTags):
             """
-            gmsh.model.mesh.getFaceTags(faceType, nodeTags)
+            gmsh.model.mesh.getFaces(faceType, nodeTags)
 
-            Get the global unique mesh face identifiers `faceTags' for an input list of
-            node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4)
-            defining these faces, concatenated in the vector `nodeTags'.
+            Get the global unique mesh face identifiers `faceTags' and orientations
+            `faceOrientations' for an input list of node tag triplets (if `faceType' ==
+            3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
+            in the vector `nodeTags'.
 
-            Return `faceTags'.
+            Return `faceTags', `faceOrientations'.
             """
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             api_faceTags_, api_faceTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_faceOrientations_, api_faceOrientations_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetFaceTags(
+            lib.gmshModelMeshGetFaces(
                 c_int(faceType),
                 api_nodeTags_, api_nodeTags_n_,
                 byref(api_faceTags_), byref(api_faceTags_n_),
+                byref(api_faceOrientations_), byref(api_faceOrientations_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorsize(api_faceTags_, api_faceTags_n_.value)
-        get_face_tags = getFaceTags
+            return (
+                _ovectorsize(api_faceTags_, api_faceTags_n_.value),
+                _ovectorint(api_faceOrientations_, api_faceOrientations_n_.value))
+        get_faces = getFaces
 
         @staticmethod
         def createEdges(dimTags=[]):
