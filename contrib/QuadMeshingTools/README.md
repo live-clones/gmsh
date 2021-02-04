@@ -41,6 +41,8 @@ Shortcuts:
 - change the xyz2uvw() function for triangles in Post/shapeFunctions.cpp. Required to sample triangles in 3D.
 - ALGO_2D_PACK_PRLGRMS_CSTR deprecated
 - ALGO_2D_PACK_PRLGRMS (algo pack) improved, works on surfaces now
+- Add disk quadrangulation remeshing
+- Add patch smoothing (UV laplacian + DMO)
 
 # Todo
 

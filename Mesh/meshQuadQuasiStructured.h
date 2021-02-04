@@ -30,4 +30,27 @@ int BuildBackgroundMeshAndGuidingField(
  */
 bool backgroundMeshAndGuidingFieldExists(GModel* gm);
 
+/**
+ * @brief Look for non-ideal vertex valences in quad mesh and find a better
+ *        local remeshing by looking into all disk quadrangulations.
+ *        Quad quality (SICN) is monitored and the minimum will not decrease.
+ *        Executes over CAD faces in parallel if multiple threads available.
+ *
+ * @param gm The model containing the face quad meshes.
+ *
+ * @return 0 if success
+ */
+int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm);
+
+/**
+ * @brief Mesh vertices on seam curves (and isolated corners) are
+ *        reparametrized on the associated GFace and transfered.
+ *        The seam curves have empty meshes in the end.
+ *
+ * @param gm The model containing the meshes
+ *
+ * @return 0 if success
+ */
+int transferSeamGEdgesVerticesToGFace(GModel* gm);
+
 #endif

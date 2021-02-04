@@ -78,6 +78,26 @@ namespace CppUtils {
   }
 
   template<class T> 
+    void compress(const std::vector<std::vector<T> >& vov,
+        std::vector<size_t>& first, std::vector<T>& values) {
+      first.resize(vov.size()+1);
+      size_t count = 0;
+      for (size_t i = 0; i < vov.size(); ++i) {
+        first[i] = count;
+        count += vov[i].size();
+      }
+      first[vov.size()] = count;
+      values.resize(count);
+      for (size_t i = 0; i < vov.size(); ++i) {
+        for (size_t j = 0; j < vov[i].size(); ++j) {
+          values[first[i]+j] = vov[i][j];
+        }
+      }
+      first.shrink_to_fit();
+      values.shrink_to_fit();
+    }
+
+  template<class T> 
     std::vector<T> intersection(const std::vector<T>& v1, const std::vector<T>& v2) {
       std::vector<T> s1 = v1;
       std::vector<T> s2 = v2;

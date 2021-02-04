@@ -562,6 +562,8 @@ static void Mesh2D(GModel *m)
      *       - verify quality during projection */
     bool linear = false; 
     RefineMesh(m, linear, true, false);
+
+    OptimizeMesh(m, "DiskQuadrangulation");
   }
 
   double t2 = Cpu(), w2 = TimeOfDay();
@@ -994,7 +996,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
   if(how != "" && how != "Gmsh" && how != "Optimize" && how != "Netgen" &&
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
-     how != "Relocate2D" && how != "Relocate3D") {
+     how != "Relocate2D" && how != "Relocate3D" &&
+     how != "DiskQuadrangulation" && how != "QuadQuasiStructured") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
   }
@@ -1075,6 +1078,14 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
       GRegion *gr = *it;
       RelocateVertices(gr, niter);
     }
+  } 
+  else if(how == "DiskQuadrangulation") {
+    transferSeamGEdgesVerticesToGFace(m);
+    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
+  }
+  else if(how == "QuadQuasiStructured") {
+    transferSeamGEdgesVerticesToGFace(m);
+    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
   }
 
   if(Msg::GetVerbosity() > 98)

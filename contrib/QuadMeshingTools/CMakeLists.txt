@@ -1,4 +1,6 @@
 set(QMT_SRC
+  qmtMeshGeometryOptimization.cpp
+  qmtDiskQuadrangulationRemeshing.cpp
   qmtCrossField.cpp
   qmtSizeMap.cpp
   qmtMeshUtils.cpp
