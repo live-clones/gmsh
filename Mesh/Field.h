@@ -223,7 +223,7 @@ public:
   int fanSize(int iV)
   {
     if(_fanPointTags.size() != _fanSizes.size())
-      return CTX::instance()->mesh.boundaryLayerFanPoints;
+      return CTX::instance()->mesh.boundaryLayerFanElements;
     auto it1 = _fanPointTags.begin();
     auto it2 = _fanSizes.begin();
     for(; it1 != _fanPointTags.end(); ++it1, ++it2) {

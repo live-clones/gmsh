@@ -7,7 +7,9 @@ meshing of OCC models; improved handling of high resolution displays; new
 structured CGNS exporter; new transfinite Beta law; added support for embedded
 curves in HXT; added automatic conversion from partitioned MSH2 files to new
 partitioned entities; fixed order of Gauss quadrature for quads and hexas; code
-modernization (C++11); Python and Julia APIs now also define "snake case"
+modernization (C++11); further uniformization of option names to match the
+documented terminology (Mesh.Point -> Mesh.Node, ...; old names are still
+accepted, but deprecated); Python and Julia APIs now also define "snake case"
 aliases for all camelCase function names; small bug fixes and improvements.
 
 * Incompatible API changes: new optional argument to mesh/classifySurfaces,

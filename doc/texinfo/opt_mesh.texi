@@ -46,8 +46,8 @@ Write mesh files in binary format (if possible)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.BoundaryLayerFanPoints
-Number of points (per Pi radians) for 2D boundary layer fans@*
+@item Mesh.BoundaryLayerFanElements
+Number of elements (per Pi radians) for 2D boundary layer fans@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -381,13 +381,13 @@ METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, 3: Two
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumCirclePoints
+@item Mesh.MinimumCircleNodes
 Minimum number of nodes used to mesh circles and ellipses@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumCurvePoints
-Minimum number of points used to mesh curves other than lines, circles and ellipses@*
+@item Mesh.MinimumCurveNodes
+Minimum number of nodes used to mesh curves other than lines, circles and ellipses@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -876,12 +876,12 @@ Method for defining a zone (0: single zone, 1: by partition, 2: by physical)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Color.Points
+@item Mesh.Color.Nodes
 Mesh node color@*
 Default value: @code{@{0,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Color.PointsSup
+@item Mesh.Color.NodesSup
 Second order mesh node color@*
 Default value: @code{@{255,0,255@}}@*
 Saved in: @code{General.OptionsFileName}

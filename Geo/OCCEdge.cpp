@@ -342,14 +342,14 @@ int OCCEdge::minimumMeshSegments() const
   if(geomType() == Line) { np = GEdge::minimumMeshSegments(); }
   else if(geomType() == Circle || geomType() == Ellipse) {
     double a = fabs(_s0 - _s1);
-    double n = CTX::instance()->mesh.minCircPoints;
+    double n = CTX::instance()->mesh.minCircleNodes;
     if(a > 6.28)
       np = n;
     else
       np = (int)(0.99 + (n - 1) * a / (2 * M_PI));
   }
   else {
-    np = CTX::instance()->mesh.minCurvPoints - 1;
+    np = CTX::instance()->mesh.minCurveNodes - 1;
   }
 
   // if the edge is closed, ensure that at least 3 points are generated in the

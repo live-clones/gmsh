@@ -5753,14 +5753,14 @@ double opt_mesh_binary(OPT_ARGS_NUM)
   return CTX::instance()->mesh.binary;
 }
 
-double opt_mesh_boundary_layer_fan_points(OPT_ARGS_NUM)
+double opt_mesh_boundary_layer_fan_elements(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    int fanPoints = (int)val;
-    if(fanPoints < 0) fanPoints = 0;
-    CTX::instance()->mesh.boundaryLayerFanPoints = fanPoints;
+    int n = (int)val;
+    if(n < 0) n = 0;
+    CTX::instance()->mesh.boundaryLayerFanElements = n;
   }
-  return CTX::instance()->mesh.boundaryLayerFanPoints;
+  return CTX::instance()->mesh.boundaryLayerFanElements;
 }
 
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM)
@@ -6030,15 +6030,15 @@ double opt_mesh_mesh_only_empty(OPT_ARGS_NUM)
   return CTX::instance()->mesh.meshOnlyEmpty;
 }
 
-double opt_mesh_min_circ_points(OPT_ARGS_NUM)
+double opt_mesh_min_circle_nodes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(!(action & GMSH_SET_DEFAULT) &&
-       (int)val != CTX::instance()->mesh.minCircPoints)
+       (int)val != CTX::instance()->mesh.minCircleNodes)
       Msg::SetOnelabChanged(2);
-    CTX::instance()->mesh.minCircPoints = (int)val;
+    CTX::instance()->mesh.minCircleNodes = (int)val;
   }
-  return CTX::instance()->mesh.minCircPoints;
+  return CTX::instance()->mesh.minCircleNodes;
 }
 
 double opt_mesh_min_elements_2pi(OPT_ARGS_NUM)
@@ -6063,10 +6063,10 @@ double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM)
   return CTX::instance()->mesh.allowSwapEdgeAngle;
 }
 
-double opt_mesh_min_curv_points(OPT_ARGS_NUM)
+double opt_mesh_min_curve_nodes(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.minCurvPoints = (int)val;
-  return CTX::instance()->mesh.minCurvPoints;
+  if(action & GMSH_SET) CTX::instance()->mesh.minCurveNodes = (int)val;
+  return CTX::instance()->mesh.minCurveNodes;
 }
 
 double opt_mesh_order(OPT_ARGS_NUM)

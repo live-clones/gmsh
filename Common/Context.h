@@ -32,7 +32,7 @@ struct contextMeshOptions {
   int flexibleTransfinite, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
-  int minCircPoints, minCurvPoints, minElementsPerTwoPi;
+  int minCircleNodes, minCurveNodes, minElementsPerTwoPi;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD, hoSavePeriodic;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
@@ -40,7 +40,7 @@ struct contextMeshOptions {
   int hoCurveOuterBL;
   double hoMaxRho, hoMaxAngle, hoMaxInnerAngle;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
-  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanPoints;
+  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
   int renumber, compoundClassify, reparamMaxTriangles;

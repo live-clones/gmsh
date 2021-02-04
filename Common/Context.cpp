@@ -109,7 +109,7 @@ void CTX::init()
   mesh.lcIntegrationPrecision = mesh.randFactor = 0;
   mesh.algo2d = mesh.algo3d = mesh.algoRecombine = mesh.recombineAll = 0;
   mesh.recombine3DAll = mesh.algoSubdivide = mesh.meshOnlyVisible = 0;
-  mesh.minCircPoints = mesh.order = 0;
+  mesh.minCircleNodes = mesh.order = 0;
   mesh.secondOrderLinear = mesh.secondOrderIncomplete = 0;
   mesh.lightLines = 2;
   mesh.lcCallback = nullptr;
