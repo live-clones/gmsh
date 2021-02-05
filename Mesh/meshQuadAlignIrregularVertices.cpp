@@ -45,9 +45,12 @@
 #endif
 
 // Gecode
+#if defined(HAVE_GECODE)
 #include <gecode/int.hh>
 #include <gecode/search.hh>
+#endif
 
+#if defined(HAVE_GECODE)
 using namespace Gecode;
 
 class SendMoreMoney : public Space {
@@ -6278,3 +6281,11 @@ void alignQuadMesh(GModel* gm) {
     GeoLog::flush();
     gmsh::fltk::run();
 }
+#else
+
+void alignQuadMesh(GModel* gm) {
+  Msg::Error("Module GECODE required for alignQuadMesh");
+  return;
+}
+
+#endif
