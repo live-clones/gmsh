@@ -7053,7 +7053,6 @@ int quadMeshToQuasiStructured(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo,
   }
   writeStatistics(qqs.stats, "statistics.json");
 
-  GeoLog::flush();
   return 0;
 }
 
