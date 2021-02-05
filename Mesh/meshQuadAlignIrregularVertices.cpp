@@ -97,16 +97,16 @@ int createMeshHalfEdges(const GModel* gm, MeshHalfEdges& M) {
             M.hedges[nh+mod(k-1,4)].v2 = mv2new[mv]; // current vertex is head of previous he:
         }
         // Match opposite half-edges
-        F(k, 4) {
-            HalfEdge* he = &(M.hedges[nh+k]);
-            pair<Vertex*,Vertex*> v1v2 = {he->v1, he->v2}, v2v1 = {he->v2, he->v1};
-            vPair2he[v1v2] = he;
-            if(vPair2he.find(v2v1) != vPair2he.end()) {
-                he->oppo = vPair2he[v2v1];
-                vPair2he[v2v1]->oppo = he;
-            }
-        }
-        M.faces.back().he = &(M.hedges[nh]); // any of the 4 half-edges will do
+        //F(k, 4) {
+            //HalfEdge* he = &(M.hedges[nh+k]);
+            //pair<Vertex*,Vertex*> v1v2 = {he->v1, he->v2}, v2v1 = {he->v2, he->v1};
+            //vPair2he[v1v2] = he;
+            //if(vPair2he.find(v2v1) != vPair2he.end()) {
+                //he->oppo = vPair2he[v2v1];
+                //vPair2he[v2v1]->oppo = he;
+            //}
+        //}
+        //M.faces.back().he = &(M.hedges[nh]); // any of the 4 half-edges will do
     }
 
     return 0;
