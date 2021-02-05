@@ -92,6 +92,7 @@ PluginManager::~PluginManager()
 {
   for(auto it = allPlugins.begin(); it != allPlugins.end(); ++it)
     delete it->second;
+  _instance = nullptr;
 }
 
 GMSH_Plugin *PluginManager::find(const std::string &pluginName)

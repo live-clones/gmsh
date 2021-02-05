@@ -120,7 +120,7 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
   }
 }
 
-void Msg::Init(int argc, char **argv)
+void Msg::Initialize(int argc, char **argv)
 {
   _startTime = TimeOfDay();
 #if defined(HAVE_MPI)
@@ -183,6 +183,24 @@ void Msg::Init(int argc, char **argv)
   }
 
   InitializeOnelab("Gmsh");
+}
+
+void Msg::Finalize()
+{
+#if defined(HAVE_SLEPC)
+  SlepcFinalize();
+#endif
+#if defined(HAVE_PETSC)
+  // this often crashes when called multiple times
+  //PetscFinalize();
+#endif
+#if defined(HAVE_MPI)
+  int finalized; // Some PETSc versions call MPI_FINALIZE
+  MPI_Finalized(&finalized);
+  if (!finalized)
+    MPI_Finalize();
+#endif
+  FinalizeOnelab();
 }
 
 int Msg::GetCommRank()
@@ -364,26 +382,15 @@ void Msg::Exit(int level)
     _logFile = nullptr;
   }
 
-  // exit directly on abnormal program termination (level != 0). We
-  // used to call abort() to flush open streams, but on modern OSes
-  // this calls the annoying "report this crash to the mothership"
-  // window... so just exit!
+  // exit directly on abnormal program termination (level != 0). We used to call
+  // abort() to flush open streams, but on modern OSes this calls the annoying
+  // "report this crash to the mothership" window... so just exit!
   if(level){
-#if defined(HAVE_SLEPC)
-    SlepcFinalize();
-#endif
-#if defined(HAVE_PETSC)
-    PetscFinalize();
-#endif
+    Finalize();
 #if defined(HAVE_MPI)
     // force general abort (even if the fatal error occurred on 1 cpu only)
     MPI_Abort(MPI_COMM_WORLD, level);
-    int finalized;
-    MPI_Finalized(&finalized);
-    if (!finalized)
-      MPI_Finalize();
 #endif
-    FinalizeOnelab();
     exit(level);
   }
 
@@ -404,22 +411,7 @@ void Msg::Exit(int level)
   }
 #endif
 
-#if defined(HAVE_SLEPC)
-  SlepcFinalize();
-#endif
-#if defined(HAVE_PETSC)
-  PetscFinalize();
-#endif
-#if defined(HAVE_MPI)
-  int finalized; // Some PETSc versions call MPI_FINALIZE
-  MPI_Finalized(&finalized);
-  if (!finalized)
-    MPI_Finalize();
-#endif
-#if defined(HAVE_PLUGINS)
-  delete PluginManager::instance();
-#endif
-  FinalizeOnelab();
+  Finalize();
   exit(_atLeastOneErrorInRun);
 }
 
@@ -1222,6 +1214,23 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 #endif
 }
 
+void Msg::FinalizeOnelab()
+{
+#if defined(HAVE_ONELAB)
+  // kill any running clients
+  for(auto it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++){
+    (*it)->kill();
+  }
+  // delete local client
+  if(_onelabClient){
+    delete _onelabClient;
+    _onelabClient = nullptr;
+    _client = nullptr;
+  }
+#endif
+}
+
 void Msg::SetOnelabAction(const std::string &action)
 {
 #if defined(HAVE_ONELAB)
@@ -1607,23 +1616,6 @@ void Msg::SetOnelabChanged(int value, const std::string &client)
 {
 #if defined(HAVE_ONELAB)
   onelab::server::instance()->setChanged(value, client);
-#endif
-}
-
-void Msg::FinalizeOnelab()
-{
-#if defined(HAVE_ONELAB)
-  // kill any running clients
-  for(auto it = onelab::server::instance()->firstClient();
-      it != onelab::server::instance()->lastClient(); it++){
-    (*it)->kill();
-  }
-  // delete local client
-  if(_onelabClient){
-    delete _onelabClient;
-    _onelabClient = nullptr;
-    _client = nullptr;
-  }
 #endif
 }
 
