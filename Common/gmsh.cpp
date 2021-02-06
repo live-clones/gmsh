@@ -2708,11 +2708,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         if(eSize != 0) {
           for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
             MEdge edge = element->getEdge(iEdge);
+            MEdge edgeSolin = element->getEdgeSolin(iEdge);
             const int orientationFlag =
-              (edge.getMinVertex()->getNum() !=
-                   unsigned(element->getVertexSolin(iEdge, 0)) ?
-                 -1 :
-                 1);
+              (edge.getMinVertex() != edgeSolin.getVertex(0)) ? -1 : 1;
             for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
               basis->orientEdge(orientationFlag, iEdge, eTableCopy[q],
                                 eTable[q], eTableNegativeFlag[q]);
@@ -2868,11 +2866,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
         if(eSize != 0) {
           for(int iEdge = 0; iEdge < basis->getNumEdge(); ++iEdge) {
             MEdge edge = element->getEdge(iEdge);
+            MEdge edgeSolin = element->getEdgeSolin(iEdge);
             const int orientationFlag =
-              (edge.getMinVertex()->getNum() !=
-                   unsigned(element->getVertexSolin(iEdge, 0)) ?
-                 -1 :
-                 1);
+              (edge.getMinVertex() != edgeSolin.getVertex(0) ? -1 : 1);
             for(unsigned int q = 0; q < numberOfGaussPoints; ++q) {
               basis->orientEdge(orientationFlag, iEdge, eTableCopy[q],
                                 eTable[q], eTableNegativeFlag[q]);
@@ -3301,64 +3297,37 @@ GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
   // FIXME: this should eventually be removed, or replaced with something more
   // generic
   localMultipliers.clear();
-  int basisOrder = 0;
-  std::string fsName = "";
   int dim = ElementType::getDimension(elementType);
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
-  HierarchicalBasis *basis(nullptr);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
-  switch(familyType) {
-  case TYPE_QUA: {
-    basis = new HierarchicalBasisHcurlQuad(basisOrder);
-  } break;
-  case TYPE_HEX: {
-    basis = new HierarchicalBasisHcurlBrick(basisOrder);
-  } break;
-  case TYPE_TRI: {
-    basis = new HierarchicalBasisHcurlTria(basisOrder);
-  } break;
-  case TYPE_TET: {
-    basis = new HierarchicalBasisHcurlTetra(basisOrder);
-  } break;
-  case TYPE_PRI: {
-    basis = new HierarchicalBasisHcurlPri(basisOrder);
-  } break;
-  case TYPE_LIN: {
-    basis = new HierarchicalBasisHcurlLine(basisOrder);
-  } break;
-  default:
-    Msg::Error("Unknown familyType %i for basis function type %s", familyType,
-               fsName.c_str());
-    return;
-  }
-  // compute the number of Element :
-  std::size_t numElements = 0;
+  std::size_t numElements = 0, numEdgesPerEle = 0;
+
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
-    std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
-    numElements += numElementsInEntitie;
+    std::size_t n = ge->getNumMeshElementsByType(familyType);
+    numElements += n;
+    if(n && !numEdgesPerEle)
+      numEdgesPerEle = ge->getMeshElementByType(familyType, 0)->getNumEdges();
   }
-  if(!numElements) return;
-  int numberEdge = basis->getNumEdge();
-  localMultipliers.resize(numElements * numberEdge, 1);
+  if(!numElements || !numEdgesPerEle) return;
+  localMultipliers.resize(numElements * numEdgesPerEle, 1);
   size_t indexNumElement = 0;
   for(std::size_t ii = 0; ii < entities.size(); ii++) {
     GEntity *ge = entities[ii];
     for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
       MElement *e = ge->getMeshElementByType(familyType, j);
-      for(int iEdge = 0; iEdge < basis->getNumEdge(); iEdge++) {
+      for(int iEdge = 0; iEdge < e->getNumEdges(); iEdge++) {
         MEdge edge = e->getEdge(iEdge);
-        if(edge.getMinVertex()->getNum() !=
-           unsigned(e->getVertexSolin(iEdge, 0))) {
-          localMultipliers[indexNumElement * numberEdge + iEdge] = -1;
+        MEdge edgeSolin = e->getEdgeSolin(iEdge);
+        if(edge.getMinVertex() != edgeSolin.getVertex(0)) {
+          localMultipliers[indexNumElement * numEdgesPerEle + iEdge] = -1;
         }
       }
       indexNumElement++;
     }
   }
-  delete basis;
 }
 
 GMSH_API void gmsh::model::mesh::getKeysForElements(

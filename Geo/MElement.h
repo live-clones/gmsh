@@ -114,11 +114,7 @@ public:
   {
     Msg::Error("Vertex information not available for this element");
   }
-  // get the face  using the local orientation defined by Solin
-  virtual MFace getFaceSolin(int numFace) = 0;
-  // get the global vertex num of a edge using the local orientation defined by
-  // Solin
-  virtual int getVertexSolin(int numEdge, int numVertex) = 0;
+
   // get the vertex using the I-deas UNV ordering
   virtual MVertex *getVertexUNV(int num) { return getVertex(num); }
 
@@ -178,6 +174,9 @@ public:
     return -1;
   }
 
+  // get the edge using the local orientation defined by Solin
+  virtual MEdge getEdgeSolin(int numEdge) { return getEdge(numEdge); }
+
   // get an edge representation for drawing
   virtual int getNumEdgesRep(bool curved) = 0;
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
@@ -201,6 +200,9 @@ public:
     Msg::Error("Face information not available for this element");
     return false;
   }
+
+  // get the face using the local orientation defined by Solin
+  virtual MFace getFaceSolin(int numFace) { return getFace(numFace); }
 
   // get a face representation for drawing
   virtual int getNumFacesRep(bool curved) = 0;
