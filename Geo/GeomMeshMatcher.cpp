@@ -38,7 +38,7 @@ template <class T, class container>
 void getIntersection(std::vector<T> &res, std::vector<container> &lists)
 {
   res.clear();
-
+  if(lists.empty()) return;
   container const &first_list = lists[0];
   bool allsame = true;
   for(auto item = first_list.begin(); item != first_list.end(); item++) {
@@ -113,7 +113,7 @@ GeomMeshMatcher::matchVertices(GModel *m1, GModel *m2, bool &ok)
   }
 
   if(num_matched_vertices != num_total_vertices) ok = false;
-  Msg::Info("Matched %i points out of %i.", num_matched_vertices,
+  Msg::Info("Matched %i nodes out of %i", num_matched_vertices,
             num_total_vertices);
   return (coresp_v);
 }
@@ -206,7 +206,7 @@ GeomMeshMatcher::matchEdges(GModel *m1, GModel *m2,
     num_matched_edges++;
   }
 
-  Msg::Info("Matched %i curves out of %i.", num_matched_edges, num_total_edges);
+  Msg::Info("Matched %i curves out of %i", num_matched_edges, num_total_edges);
   if(num_matched_edges != num_total_edges) ok = false;
   return (coresp_e);
 }
@@ -237,12 +237,11 @@ GeomMeshMatcher::matchFaces(GModel *m1, GModel *m2,
       //      boundary_edge->getEndVertex() &&
       if(!(*boundary_edge)->isSeam(f1)) {
         GEdge *ge = findMatching<GEdge *>(*coresp_e, *boundary_edge);
-        if(!ge) {
-          Msg::Error(
-            "Could not find matching edge %i in face %i during matching",
-            (*boundary_edge)->tag(), f1->tag());
-        }
-        lists.push_back(ge->faces());
+        if(!ge)
+          Msg::Error("Could not find curve %i in surface %i during matching",
+                     (*boundary_edge)->tag(), f1->tag());
+        else
+          lists.push_back(ge->faces());
       }
     }
     std::vector<GFace *> common_faces;
@@ -250,7 +249,7 @@ GeomMeshMatcher::matchFaces(GModel *m1, GModel *m2,
     GFace *choice = nullptr;
 
     if(common_faces.size() == 0) {
-      Msg::Debug("Could not match face %i (geom).", f1->tag());
+      Msg::Debug("Could not match surface %i", f1->tag());
       continue;
     }
 
@@ -264,7 +263,7 @@ GeomMeshMatcher::matchFaces(GModel *m1, GModel *m2,
       for(auto candidate = common_faces.begin();
           candidate != common_faces.end(); candidate++) {
         SOrientedBoundingBox mesh_obb = (*candidate)->getOBB();
-        Msg::Info("Comparing score : %f",
+        Msg::Info("Comparing score : %g",
                   SOrientedBoundingBox::compare(geo_obb, mesh_obb));
         double score = SOrientedBoundingBox::compare(geo_obb, mesh_obb);
 
@@ -276,8 +275,7 @@ GeomMeshMatcher::matchFaces(GModel *m1, GModel *m2,
     }
 
     if(choice) {
-      Msg::Debug("Faces %i (geom) and %i (mesh) match.", f1->tag(),
-                 choice->tag());
+      Msg::Debug("Surfaces %i and %i match", f1->tag(), choice->tag());
       coresp_f->push_back(Pair<GFace *, GFace *>(f1, choice));
       // copy topological information
       choice->setTag(f1->tag());
@@ -286,7 +284,7 @@ GeomMeshMatcher::matchFaces(GModel *m1, GModel *m2,
     }
   }
 
-  Msg::Info("Matched %i surfaces out of %i.", num_matched_faces,
+  Msg::Info("Matched %i surfaces out of %i", num_matched_faces,
             num_total_faces);
 
   return coresp_f;
@@ -312,8 +310,8 @@ GeomMeshMatcher::matchRegions(GModel *m1, GModel *m2,
   m2->getEntities(m2_entities, 3);
 
   if(m1_entities.empty() || m2_entities.empty()) {
-    Msg::Info(
-      "No volumes could be matched since one of the models doesn't have any");
+    Msg::Info("No volumes could be matched since one of the models does "
+              "not have any");
     return coresp_r;
   }
 
@@ -370,7 +368,7 @@ GeomMeshMatcher::matchRegions(GModel *m1, GModel *m2,
           candidate != common_regions.end(); candidate++) {
         // Again, build an array with the vertices.
         SOrientedBoundingBox mesh_obb = (*candidate)->getOBB();
-        Msg::Info("Comparing score : %f",
+        Msg::Info("Comparing score: %g",
                   SOrientedBoundingBox::compare(geo_obb, mesh_obb));
         double score = SOrientedBoundingBox::compare(geo_obb, mesh_obb);
 
@@ -389,7 +387,7 @@ GeomMeshMatcher::matchRegions(GModel *m1, GModel *m2,
     }
   }
 
-  Msg::Info("Volumes matched : %i / %i", num_matched_regions,
+  Msg::Info("Volumes matched: %i / %i", num_matched_regions,
             num_total_regions);
   if(num_matched_regions != num_total_regions) ok = false;
   return coresp_r;
@@ -515,8 +513,9 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
         }
       }
       if(!found)
-        Msg::Error("Node %d classified on %d %d not matched", v->getNum(),
-                   v->onWhat()->dim(), v->onWhat()->tag());
+        Msg::Error("Node %d classified on entity of dimension %d and tag %d "
+                   "not matched", v->getNum(), v->onWhat()->dim(),
+                   v->onWhat()->tag());
     }
   }
   for(auto it = mesh->firstEdge(); it != mesh->lastEdge(); ++it) {
@@ -614,9 +613,9 @@ static void copy_periodicity(std::vector<Pair<GEType *, GEType *> > &eCor,
       GEType *newTgt = srcIter->second;
       auto tgtIter = eMap.find(oldSrc);
       if(tgtIter == eMap.end()) {
-        Msg::Error("Could not find matched entity for %d",
-                   "which has a matched periodic counterpart %d", oldSrc->tag(),
-                   oldTgt->tag());
+        Msg::Error("Could not find matched entity for %d, which has a matched "
+                   "periodic counterpart %d", oldSrc->tag(), oldTgt->tag());
+        continue;
       }
       GEType *newSrc = tgtIter->second;
       newTgt->setMeshMaster(newSrc, oldTgt->affineTransform);
@@ -633,15 +632,17 @@ static void copy_periodicity(std::vector<Pair<GEType *, GEType *> > &eCor,
         auto newSvIter = mesh_to_geom.find(oldSrcV);
 
         if(newTvIter == mesh_to_geom.end()) {
-          Msg::Error(
-            "Could not find copy of target node %d in entity %d of dim",
-            oldTgtV->getIndex(), oldTgt->tag(), oldTgt->dim());
+          Msg::Error("Could not find copy of target node %d in entity %d "
+                     "of dim %d", oldTgtV->getIndex(), oldTgt->tag(),
+                     oldTgt->dim());
+          continue;
         }
 
         if(newSvIter == mesh_to_geom.end()) {
-          Msg::Error(
-            "Could not find copy of source node %d in entity %d of dim",
-            oldSrcV->getIndex(), oldSrc->tag(), oldSrc->dim());
+          Msg::Error("Could not find copy of source node %d in entity %d "
+                     "of dim %d", oldSrcV->getIndex(), oldSrc->tag(),
+                     oldSrc->dim());
+          continue;
         }
         newV2v[newTvIter->second] = newSvIter->second;
       }
@@ -711,12 +712,12 @@ static void copy_vertices(GEdge *to, GEdge *from,
 {
   to->deleteMesh();
   if(!from) {
-    Msg::Warning("Edge %d in the mesh do not match any edge of the model",
+    Msg::Warning("Curve %d in the mesh do not match any curve in the model",
                  to->tag());
     return;
   }
   if(!to) {
-    Msg::Warning("Edge %d in the geometry do not match any edge of the mesh",
+    Msg::Warning("Curve %d in the geometry do not match any curve in the mesh",
                  from->tag());
     return;
   }
@@ -745,17 +746,13 @@ static void copy_vertices(GFace *to, GFace *from,
                  (v_from->z() - gp.z()) * (v_from->z() - gp.z());
 
     if(sqrt(DDD) > 1.e-1)
-      Msg::Error("Impossible to match point: "
-                 "original point (%f,%f,%f),"
-                 "New point (%f,%f,%f)",
+      Msg::Error("Impossible to match node: original (%g,%g,%g), new (%g,%g,%g)",
                  v_from->x(), v_from->y(), v_from->z(), gp.x(), gp.y(), gp.z());
 
     else if(sqrt(DDD) > 1.e-3)
-      Msg::Warning("One mesh vertex (%f,%f,%f) of GFace %d \n"
-                   "is difficult to match : "
-                   "closest point (%f,%f,%f)",
-                   v_from->x(), v_from->y(), v_from->z(), to->tag(), gp.x(),
-                   gp.y(), gp.z());
+      Msg::Warning("One mesh node (%g,%g,%g) of surface %d is difficult to match: "
+                   "closest point (%g,%g,%g)", v_from->x(), v_from->y(), v_from->z(),
+                   to->tag(), gp.x(), gp.y(), gp.z());
 
     MFaceVertex *v_to = new MFaceVertex(v_from->x(), v_from->y(), v_from->z(),
                                         to, gp.u(), gp.v());
@@ -776,16 +773,15 @@ static void copy_elements(std::vector<ELEMENT *> &to,
     std::vector<MVertex *> nodes;
     for(std::size_t j = 0; j < e->getNumVertices(); j++) {
       auto vIter = _mesh_to_geom.find(e->getVertex(j));
-
       if(vIter == _mesh_to_geom.end()) {
-        Msg::Error("Could not find match for node %i during element copy "
-                   "while matching discrete to actual CAD",
+        Msg::Error("Could not find match for node %i during element copy",
                    e->getVertex(j)->getNum());
       }
       else
         nodes.push_back(vIter->second);
     }
-    to.push_back((ELEMENT *)(toto.create(e->getTypeForMSH(), nodes)));
+    if(nodes.size() == e->getNumVertices())
+      to.push_back((ELEMENT *)(toto.create(e->getTypeForMSH(), nodes)));
   }
 }
 
@@ -853,7 +849,7 @@ void copy_elements(GModel *geom, GModel *mesh,
 
 int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 {
-  Msg::StatusBar(true, "Matching discrete mesh to actual CAD ...");
+  Msg::StatusBar(true, "Matching discrete mesh to CAD model...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
   GModel::setCurrent(geom);
@@ -873,16 +869,16 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
       coresp_f = matchFaces(geom, mesh, coresp_e, ok);
       if(ok) { coresp_r = matchRegions(geom, mesh, coresp_f, ok); }
       else
-        Msg::Error("Could only match %i faces out of %i ... stopping match",
+        Msg::Error("Could only match %i surfaces out of %i: stopping match",
                    coresp_f->size(), mesh->getNumFaces());
     }
     else
-      Msg::Error("Could only match %i edges out of %i ... stopping match",
+      Msg::Error("Could only match %i curves out of %i: stopping match",
                  coresp_e->size(), mesh->getNumEdges());
   }
   else
-    Msg::Error("Could only match %i nodes out of %i ... "
-               "check mesh/CAD or increase Geom.MatchMeshTolerance (now %g)",
+    Msg::Error("Could only match %i points out of %i: check mesh/CAD or "
+               "increase Geom.MatchMeshTolerance (currently %g)",
                coresp_v->size(), mesh->getNumVertices(),
                CTX::instance()->geom.matchMeshTolerance);
 
@@ -912,7 +908,7 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
     Msg::StatusBar(true, "Successfully matched mesh to CAD (Wall %gs, CPU %gs)",
                    TimeOfDay() - w1, Cpu() - t1);
   else
-    Msg::Error("Failed to match mesh to CAD, please check");
+    Msg::Error("Failed to match mesh to CAD");
 
   return ok ? 1 : 0;
 }
