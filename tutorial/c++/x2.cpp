@@ -16,8 +16,8 @@
 // discrete entities, entirely defined by the mesh.
 //
 // Discrete entities can be reparametrized (see `t13.py') so that they can be
-// remeshed later on; and they can also be combined with CAD entities to produce
-// hybrid models.
+// remeshed later on; and they can also be combined with built-in CAD entities
+// to produce hybrid models.
 //
 // We combine all these features in this tutorial to perform terrain meshing,
 // where the terrain is described by a discrete surface (that we then
@@ -115,7 +115,9 @@ int main(int argc, char **argv)
   // discrete entities and the topology; but we would then have to extract the
   // boundaries afterwards.
 
-  // Create other CAD entities to form one volume below the terrain surface:
+  // Create other CAD entities to form one volume below the terrain surface.
+  // Beware that only built-in CAD entities can be hybrid, i.e. have discrete
+  // entities on their boundary: OpenCASCADE does not support this feature.
   int p1 = gmsh::model::geo::addPoint(0, 0, -0.5);
   int p2 = gmsh::model::geo::addPoint(1, 0, -0.5);
   int p3 = gmsh::model::geo::addPoint(1, 1, -0.5);
