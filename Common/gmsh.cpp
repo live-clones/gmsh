@@ -4106,11 +4106,11 @@ static bool _getIntegrationInfo(const std::string &intType,
 
 GMSH_API void gmsh::model::mesh::getIntegrationPoints(
   const int elementType, const std::string &integrationType,
-  std::vector<double> &localCoord, std::vector<double> &weigths)
+  std::vector<double> &localCoord, std::vector<double> &weights)
 {
   if(!_checkInit()) return;
   localCoord.clear();
-  weigths.clear();
+  weights.clear();
   std::string intName = "";
   int intOrder = 0;
   if(!_getIntegrationInfo(integrationType, intName, intOrder)) {
@@ -4127,12 +4127,12 @@ GMSH_API void gmsh::model::mesh::getIntegrationPoints(
     return;
   }
   localCoord.resize(3 * pts.size1());
-  weigths.resize(pts.size1());
+  weights.resize(pts.size1());
   for(int i = 0; i < pts.size1(); i++) {
     localCoord[3 * i] = pts(i, 0);
     localCoord[3 * i + 1] = pts(i, 1);
     localCoord[3 * i + 2] = pts(i, 2);
-    weigths[i] = weights(i);
+    weights[i] = weights(i);
   }
 }
 
