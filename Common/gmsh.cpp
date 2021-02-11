@@ -4120,9 +4120,9 @@ GMSH_API void gmsh::model::mesh::getIntegrationPoints(
   // get quadrature info
   int familyType = ElementType::getParentType(elementType);
   fullMatrix<double> pts;
-  fullVector<double> weights;
-  gaussIntegration::get(familyType, intOrder, pts, weights);
-  if(pts.size1() != weights.size() || pts.size2() != 3) {
+  fullVector<double> wgs;
+  gaussIntegration::get(familyType, intOrder, pts, wgs);
+  if(pts.size1() != wgs.size() || pts.size2() != 3) {
     Msg::Error("Wrong integration point format");
     return;
   }
@@ -4132,7 +4132,7 @@ GMSH_API void gmsh::model::mesh::getIntegrationPoints(
     localCoord[3 * i] = pts(i, 0);
     localCoord[3 * i + 1] = pts(i, 1);
     localCoord[3 * i + 2] = pts(i, 2);
-    weights[i] = weights(i);
+    weights[i] = wgs(i);
   }
 }
 
