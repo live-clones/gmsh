@@ -5933,14 +5933,16 @@ header/module file for the exact definition in each supported language:
 in @url{@value{GITLAB-PREFIX}/api/gmsh.h,C++}
 @code{gmsh/model/geo/addPoint} will lead to a namespaced function
 @code{gmsh::model::geo::addPoint}, while in
-@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python}
-and
-@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia}
-it will lead to @code{gmsh.model.geo.addPoint}, and in
+@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python} and
+@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia} it will lead to
+@code{gmsh.model.geo.addPoint}, and in
 @url{@value{GITLAB-PREFIX}/api/gmshc.h,C} to
-@code{gmshModelGeoAddPoint}. Output values are passed by reference in
-C++, as pointers in C and directly returned (after the return value, if
-any) in Python and Julia.
+@code{gmshModelGeoAddPoint}.  In addition to the default ``camelCase''
+function names, the Python and Julia APIs also define ``snake case''
+aliases, i.e. @code{gmsh.model.geo.add_point}, as this is the
+recommended style in these languages.  Output values are passed by
+reference in C++, as pointers in C and directly returned (after the
+return value, if any) in Python and Julia.
 
 @include api.texi
 
@@ -6576,7 +6578,8 @@ Another approach is to modify your program so that it can communicate
 with Gmsh through ONELAB over a socket, select `Always listen to
 incoming connection requests' in the solver option panel (or run gmsh
 with the @code{-listen} command line option), and Gmsh will always
-listen for your program on the @code{Solver.SocketName} socket.
+listen for your program on the given socket (or on the @code{Solver.SocketName}
+if no socket is specified).
 
 Using the Gmsh API, you can also directly embed Gmsh in your own solver,
 and use ONELAB for interactive parameter definition and

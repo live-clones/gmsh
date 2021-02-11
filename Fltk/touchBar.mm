@@ -427,12 +427,12 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 {
   NSInteger segment = ((NSSegmentedControl *)sender).selectedSegment;
   switch(segment) {
-  case 0: quick_access_cb(0, (void *)"mesh_points"); break;
+  case 0: quick_access_cb(0, (void *)"mesh_nodes"); break;
   case 1: quick_access_cb(0, (void *)"mesh_lines"); break;
-  case 2: quick_access_cb(0, (void *)"mesh_surfaces_edges"); break;
-  case 3: quick_access_cb(0, (void *)"mesh_surfaces_faces"); break;
-  case 4: quick_access_cb(0, (void *)"mesh_volumes_edges"); break;
-  case 5: quick_access_cb(0, (void *)"mesh_volumes_faces"); break;
+  case 2: quick_access_cb(0, (void *)"mesh_surface_edges"); break;
+  case 3: quick_access_cb(0, (void *)"mesh_surface_faces"); break;
+  case 4: quick_access_cb(0, (void *)"mesh_volume_edges"); break;
+  case 5: quick_access_cb(0, (void *)"mesh_volume_faces"); break;
   default: break;
   }
   drawContext::global()->draw();
@@ -461,43 +461,43 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   NSInteger segment = ((NSSegmentedControl *)sender).selectedSegment;
   switch(segment) {
   case 0: // show all
-    if(!opt_mesh_points(0, GMSH_GET, 0)) {
-      quick_access_cb(0, (void *)"mesh_points");
+    if(!opt_mesh_nodes(0, GMSH_GET, 0)) {
+      quick_access_cb(0, (void *)"mesh_nodes");
     }
     if(!opt_mesh_lines(0, GMSH_GET, 0)) {
       quick_access_cb(0, (void *)"mesh_lines");
     }
-    if(!opt_mesh_surfaces_edges(0, GMSH_GET, 0)) {
-      quick_access_cb(0, (void *)"mesh_surfaces_edges");
+    if(!opt_mesh_surface_edges(0, GMSH_GET, 0)) {
+      quick_access_cb(0, (void *)"mesh_surface_edges");
     }
-    if(!opt_mesh_surfaces_faces(0, GMSH_GET, 0)) {
-      quick_access_cb(0, (void *)"mesh_surfaces_faces");
+    if(!opt_mesh_surface_faces(0, GMSH_GET, 0)) {
+      quick_access_cb(0, (void *)"mesh_surface_faces");
     }
-    if(!opt_mesh_volumes_edges(0, GMSH_GET, 0)) {
-      quick_access_cb(0, (void *)"mesh_volumes_edges");
+    if(!opt_mesh_volume_edges(0, GMSH_GET, 0)) {
+      quick_access_cb(0, (void *)"mesh_volume_edges");
     }
-    if(!opt_mesh_volumes_faces(0, GMSH_GET, 0)) {
-      quick_access_cb(0, (void *)"mesh_volumes_faces");
+    if(!opt_mesh_volume_faces(0, GMSH_GET, 0)) {
+      quick_access_cb(0, (void *)"mesh_volume_faces");
     }
     break;
   case 1: // hide all
-    if(opt_mesh_points(0, GMSH_GET, 0)) {
-      quick_access_cb(0, (void *)"mesh_points");
+    if(opt_mesh_nodes(0, GMSH_GET, 0)) {
+      quick_access_cb(0, (void *)"mesh_nodes");
     }
     if(opt_mesh_lines(0, GMSH_GET, 0)) {
       quick_access_cb(0, (void *)"mesh_lines");
     }
-    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) {
-      quick_access_cb(0, (void *)"mesh_surfaces_edges");
+    if(opt_mesh_surface_edges(0, GMSH_GET, 0)) {
+      quick_access_cb(0, (void *)"mesh_surface_edges");
     }
-    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) {
-      quick_access_cb(0, (void *)"mesh_surfaces_faces");
+    if(opt_mesh_surface_faces(0, GMSH_GET, 0)) {
+      quick_access_cb(0, (void *)"mesh_surface_faces");
     }
-    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) {
-      quick_access_cb(0, (void *)"mesh_volumes_edges");
+    if(opt_mesh_volume_edges(0, GMSH_GET, 0)) {
+      quick_access_cb(0, (void *)"mesh_volume_edges");
     }
-    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) {
-      quick_access_cb(0, (void *)"mesh_volumes_faces");
+    if(opt_mesh_volume_faces(0, GMSH_GET, 0)) {
+      quick_access_cb(0, (void *)"mesh_volume_faces");
     }
     break;
   default: break;
@@ -585,7 +585,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 
 - (void)updateMesh
 {
-  if(opt_mesh_points(0, GMSH_GET, 0)) {
+  if(opt_mesh_nodes(0, GMSH_GET, 0)) {
     [_meshButtons setSelected:YES forSegment:0];
   }
   else {
@@ -599,28 +599,28 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
     [_meshButtons setSelected:NO forSegment:1];
   }
 
-  if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) {
+  if(opt_mesh_surface_edges(0, GMSH_GET, 0)) {
     [_meshButtons setSelected:YES forSegment:2];
   }
   else {
     [_meshButtons setSelected:NO forSegment:2];
   }
 
-  if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) {
+  if(opt_mesh_surface_faces(0, GMSH_GET, 0)) {
     [_meshButtons setSelected:YES forSegment:3];
   }
   else {
     [_meshButtons setSelected:NO forSegment:3];
   }
 
-  if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) {
+  if(opt_mesh_volume_edges(0, GMSH_GET, 0)) {
     [_meshButtons setSelected:YES forSegment:4];
   }
   else {
     [_meshButtons setSelected:NO forSegment:4];
   }
 
-  if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) {
+  if(opt_mesh_volume_faces(0, GMSH_GET, 0)) {
     [_meshButtons setSelected:YES forSegment:5];
   }
   else {

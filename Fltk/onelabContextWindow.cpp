@@ -68,6 +68,9 @@ void onelabContextWindow::_addOnelabWidget(
     bool highlight = false;
     Fl_Color c;
     if(getParameterColor(n.getAttribute("Highlight"), c)) highlight = true;
+
+    // TODO: detect if "Aspect" is "ReturnButton" and put it to the right + add
+    // some padding
     Fl_Widget *w = addParameterWidget(n, WB, 1, _width / 2, BH, 1., n.getName(),
                                       highlight, c, win->color(), _toFree);
     w->copy_label(n.getShortName().c_str());
@@ -218,21 +221,28 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   }
   else {
     for(auto &w : widgets) {
-      w.second->position(WB, h);
+      w.second->position(w.second->x(), h);
       win->add(w.second);
       h += BH;
     }
   }
+  // resizable starting at 1/3 of window to resize label more than widget, and
+  // to have minimal window width of _width / 3 as well
+  Fl_Box *r = new Fl_Box(_width / 3, h, _width - _width / 3, WB);
+  _onelabWidgets.push_back(r);
+  win->add(r);
   h += WB;
 
   // resize the window and restore the focus
   win->resize(win->x(), win->y(), win->w(), h);
   for(auto w : _onelabWidgets) {
-    if(focus == std::string(w->label())) { w->take_focus(); }
+    if(w->label() && focus == std::string(w->label())) { w->take_focus(); }
   }
 
-  // we should add a "Check" button if Solver.AutoCheck is not set (as in the
-  // main ONELAB tree)
+  win->resizable(r);
+
+  // TODO: we should add a "Check" button if Solver.AutoCheck is not set (as in
+  // the main ONELAB tree)
 }
 
 void onelabContextWindow::highlightSelection()

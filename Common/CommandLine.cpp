@@ -156,8 +156,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-combine", "Combine views having identical names into "
                  "multi-time-step views"));
   s.push_back(mp("Solver:", ""));
-  s.push_back(mp("-listen", "Always listen to incoming connection requests "
-                 "(Solver.AlwaysListen)"));
+  s.push_back(mp("-listen string", "Always listen to incoming connection requests "
+                 "(Solver.AlwaysListen) on the given socket "
+                 "(uses Solver.SocketName if not specified)"));
   s.push_back(mp("-minterpreter string", "Name of Octave interpreter "
                  "(Solver.OctaveInterpreter)"));
   s.push_back(mp("-pyinterpreter string", "Name of Python interpreter "
@@ -314,7 +315,7 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp("Alt+Shift+c", "Loop through predefined colormaps"));
   s.push_back(mp("Alt+Shift+d", "Hide/show mesh surface faces"));
   s.push_back(mp("Alt+Shift+l", "Hide/show mesh lines"));
-  s.push_back(mp("Alt+Shift+p", "Hide/show mesh points"));
+  s.push_back(mp("Alt+Shift+p", "Hide/show mesh nodes"));
   s.push_back(mp("Alt+Shift+s", "Hide/show mesh surface edges"));
   s.push_back(mp("Alt+Shift+t", "Same as Alt+t, but with numeric mode "
                  "included"));
@@ -1248,6 +1249,8 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-listen") {
         i++;
         opt_solver_listen(0, GMSH_SET, 1);
+        if(i < argv.size() && argv[i].size() && argv[i][0] != '-')
+          opt_solver_socket_name(0, GMSH_SET, argv[i++]);
       }
       else if(argv[i] == "-minterpreter") {
         i++;
@@ -1334,22 +1337,22 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
         i++;
       }
       else if(argv[i] == "-nomesh") {
-        opt_mesh_points(0, GMSH_SET, 0.);
+        opt_mesh_nodes(0, GMSH_SET, 0.);
         opt_mesh_lines(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_edges(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_faces(0, GMSH_SET, 0.);
-        opt_mesh_volumes_edges(0, GMSH_SET, 0.);
-        opt_mesh_volumes_faces(0, GMSH_SET, 0.);
+        opt_mesh_surface_edges(0, GMSH_SET, 0.);
+        opt_mesh_surface_faces(0, GMSH_SET, 0.);
+        opt_mesh_volume_edges(0, GMSH_SET, 0.);
+        opt_mesh_volume_faces(0, GMSH_SET, 0.);
         i++;
       }
       else if(argv[i] == "-n") {
         opt_view_visible(0, GMSH_SET, 0);
-        opt_mesh_points(0, GMSH_SET, 0.);
+        opt_mesh_nodes(0, GMSH_SET, 0.);
         opt_mesh_lines(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_edges(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_faces(0, GMSH_SET, 0.);
-        opt_mesh_volumes_edges(0, GMSH_SET, 0.);
-        opt_mesh_volumes_faces(0, GMSH_SET, 0.);
+        opt_mesh_surface_edges(0, GMSH_SET, 0.);
+        opt_mesh_surface_faces(0, GMSH_SET, 0.);
+        opt_mesh_volume_edges(0, GMSH_SET, 0.);
+        opt_mesh_volume_faces(0, GMSH_SET, 0.);
         i++;
       }
       else if(argv[i] == "-link") {

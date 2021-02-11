@@ -143,6 +143,7 @@ function setNumber(name, value)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_number = setNumber
 
 """
     gmsh.option.getNumber(name)
@@ -162,6 +163,7 @@ function getNumber(name)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_value_[]
 end
+const get_number = getNumber
 
 """
     gmsh.option.setString(name, value)
@@ -178,6 +180,7 @@ function setString(name, value)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_string = setString
 
 """
     gmsh.option.getString(name)
@@ -198,6 +201,7 @@ function getString(name)
     value = unsafe_string(api_value_[])
     return value
 end
+const get_string = getString
 
 """
     gmsh.option.setColor(name, r, g, b, a = 255)
@@ -216,6 +220,7 @@ function setColor(name, r, g, b, a = 255)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_color = setColor
 
 """
     gmsh.option.getColor(name)
@@ -239,6 +244,7 @@ function getColor(name)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_r_[], api_g_[], api_b_[], api_a_[]
 end
+const get_color = getColor
 
 end # end of module option
 
@@ -316,6 +322,7 @@ function getCurrent()
     name = unsafe_string(api_name_[])
     return name
 end
+const get_current = getCurrent
 
 """
     gmsh.model.setCurrent(name)
@@ -331,6 +338,7 @@ function setCurrent(name)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_current = setCurrent
 
 """
     gmsh.model.getEntities(dim = -1)
@@ -353,6 +361,7 @@ function getEntities(dim = -1)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
+const get_entities = getEntities
 
 """
     gmsh.model.setEntityName(dim, tag, name)
@@ -367,6 +376,7 @@ function setEntityName(dim, tag, name)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_entity_name = setEntityName
 
 """
     gmsh.model.getEntityName(dim, tag)
@@ -385,6 +395,7 @@ function getEntityName(dim, tag)
     name = unsafe_string(api_name_[])
     return name
 end
+const get_entity_name = getEntityName
 
 """
     gmsh.model.getPhysicalGroups(dim = -1)
@@ -407,6 +418,7 @@ function getPhysicalGroups(dim = -1)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
+const get_physical_groups = getPhysicalGroups
 
 """
     gmsh.model.getEntitiesForPhysicalGroup(dim, tag)
@@ -427,6 +439,7 @@ function getEntitiesForPhysicalGroup(dim, tag)
     tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
     return tags
 end
+const get_entities_for_physical_group = getEntitiesForPhysicalGroup
 
 """
     gmsh.model.getPhysicalGroupsForEntity(dim, tag)
@@ -447,6 +460,7 @@ function getPhysicalGroupsForEntity(dim, tag)
     physicalTags = unsafe_wrap(Array, api_physicalTags_[], api_physicalTags_n_[], own=true)
     return physicalTags
 end
+const get_physical_groups_for_entity = getPhysicalGroupsForEntity
 
 """
     gmsh.model.addPhysicalGroup(dim, tags, tag = -1)
@@ -465,6 +479,7 @@ function addPhysicalGroup(dim, tags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_physical_group = addPhysicalGroup
 
 """
     gmsh.model.removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
@@ -482,6 +497,7 @@ function removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const remove_physical_groups = removePhysicalGroups
 
 """
     gmsh.model.setPhysicalName(dim, tag, name)
@@ -496,6 +512,7 @@ function setPhysicalName(dim, tag, name)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_physical_name = setPhysicalName
 
 """
     gmsh.model.removePhysicalName(name)
@@ -510,6 +527,7 @@ function removePhysicalName(name)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const remove_physical_name = removePhysicalName
 
 """
     gmsh.model.getPhysicalName(dim, tag)
@@ -528,6 +546,7 @@ function getPhysicalName(dim, tag)
     name = unsafe_string(api_name_[])
     return name
 end
+const get_physical_name = getPhysicalName
 
 """
     gmsh.model.getBoundary(dimTags, combined = true, oriented = true, recursive = false)
@@ -555,6 +574,7 @@ function getBoundary(dimTags, combined = true, oriented = true, recursive = fals
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
+const get_boundary = getBoundary
 
 """
     gmsh.model.getAdjacencies(dim, tag)
@@ -580,6 +600,7 @@ function getAdjacencies(dim, tag)
     downward = unsafe_wrap(Array, api_downward_[], api_downward_n_[], own=true)
     return upward, downward
 end
+const get_adjacencies = getAdjacencies
 
 """
     gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
@@ -602,6 +623,7 @@ function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
     tags = [ (tmp_api_tags_[i], tmp_api_tags_[i+1]) for i in 1:2:length(tmp_api_tags_) ]
     return tags
 end
+const get_entities_in_bounding_box = getEntitiesInBoundingBox
 
 """
     gmsh.model.getBoundingBox(dim, tag)
@@ -626,6 +648,7 @@ function getBoundingBox(dim, tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_xmin_[], api_ymin_[], api_zmin_[], api_xmax_[], api_ymax_[], api_zmax_[]
 end
+const get_bounding_box = getBoundingBox
 
 """
     gmsh.model.getDimension()
@@ -642,6 +665,7 @@ function getDimension()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const get_dimension = getDimension
 
 """
     gmsh.model.addDiscreteEntity(dim, tag = -1, boundary = Cint[])
@@ -662,6 +686,7 @@ function addDiscreteEntity(dim, tag = -1, boundary = Cint[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_discrete_entity = addDiscreteEntity
 
 """
     gmsh.model.removeEntities(dimTags, recursive = false)
@@ -679,6 +704,7 @@ function removeEntities(dimTags, recursive = false)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const remove_entities = removeEntities
 
 """
     gmsh.model.removeEntityName(name)
@@ -693,6 +719,7 @@ function removeEntityName(name)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const remove_entity_name = removeEntityName
 
 """
     gmsh.model.getType(dim, tag)
@@ -711,6 +738,7 @@ function getType(dim, tag)
     entityType = unsafe_string(api_entityType_[])
     return entityType
 end
+const get_type = getType
 
 """
     gmsh.model.getParent(dim, tag)
@@ -731,6 +759,7 @@ function getParent(dim, tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_parentDim_[], api_parentTag_[]
 end
+const get_parent = getParent
 
 """
     gmsh.model.getPartitions(dim, tag)
@@ -751,6 +780,7 @@ function getPartitions(dim, tag)
     partitions = unsafe_wrap(Array, api_partitions_[], api_partitions_n_[], own=true)
     return partitions
 end
+const get_partitions = getPartitions
 
 """
     gmsh.model.getValue(dim, tag, parametricCoord)
@@ -776,6 +806,7 @@ function getValue(dim, tag, parametricCoord)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     return coord
 end
+const get_value = getValue
 
 """
     gmsh.model.getDerivative(dim, tag, parametricCoord)
@@ -803,6 +834,7 @@ function getDerivative(dim, tag, parametricCoord)
     derivatives = unsafe_wrap(Array, api_derivatives_[], api_derivatives_n_[], own=true)
     return derivatives
 end
+const get_derivative = getDerivative
 
 """
     gmsh.model.getSecondDerivative(dim, tag, parametricCoord)
@@ -831,6 +863,7 @@ function getSecondDerivative(dim, tag, parametricCoord)
     derivatives = unsafe_wrap(Array, api_derivatives_[], api_derivatives_n_[], own=true)
     return derivatives
 end
+const get_second_derivative = getSecondDerivative
 
 """
     gmsh.model.getCurvature(dim, tag, parametricCoord)
@@ -854,6 +887,7 @@ function getCurvature(dim, tag, parametricCoord)
     curvatures = unsafe_wrap(Array, api_curvatures_[], api_curvatures_n_[], own=true)
     return curvatures
 end
+const get_curvature = getCurvature
 
 """
     gmsh.model.getPrincipalCurvatures(tag, parametricCoord)
@@ -885,6 +919,7 @@ function getPrincipalCurvatures(tag, parametricCoord)
     directionMin = unsafe_wrap(Array, api_directionMin_[], api_directionMin_n_[], own=true)
     return curvatureMax, curvatureMin, directionMax, directionMin
 end
+const get_principal_curvatures = getPrincipalCurvatures
 
 """
     gmsh.model.getNormal(tag, parametricCoord)
@@ -907,6 +942,7 @@ function getNormal(tag, parametricCoord)
     normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], own=true)
     return normals
 end
+const get_normal = getNormal
 
 """
     gmsh.model.getParametrization(dim, tag, coord)
@@ -931,6 +967,7 @@ function getParametrization(dim, tag, coord)
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
     return parametricCoord
 end
+const get_parametrization = getParametrization
 
 """
     gmsh.model.getParametrizationBounds(dim, tag)
@@ -954,6 +991,7 @@ function getParametrizationBounds(dim, tag)
     max = unsafe_wrap(Array, api_max_[], api_max_n_[], own=true)
     return min, max
 end
+const get_parametrization_bounds = getParametrizationBounds
 
 """
     gmsh.model.isInside(dim, tag, parametricCoord)
@@ -973,6 +1011,7 @@ function isInside(dim, tag, parametricCoord)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const is_inside = isInside
 
 """
     gmsh.model.getClosestPoint(dim, tag, coord)
@@ -1000,6 +1039,7 @@ function getClosestPoint(dim, tag, coord)
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
     return closestCoord, parametricCoord
 end
+const get_closest_point = getClosestPoint
 
 """
     gmsh.model.reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which = 0)
@@ -1024,6 +1064,7 @@ function reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which = 0
     surfaceParametricCoord = unsafe_wrap(Array, api_surfaceParametricCoord_[], api_surfaceParametricCoord_n_[], own=true)
     return surfaceParametricCoord
 end
+const reparametrize_on_surface = reparametrizeOnSurface
 
 """
     gmsh.model.setVisibility(dimTags, value, recursive = false)
@@ -1041,6 +1082,7 @@ function setVisibility(dimTags, value, recursive = false)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_visibility = setVisibility
 
 """
     gmsh.model.getVisibility(dim, tag)
@@ -1058,6 +1100,7 @@ function getVisibility(dim, tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_value_[]
 end
+const get_visibility = getVisibility
 
 """
     gmsh.model.setVisibilityPerWindow(value, windowIndex = 0)
@@ -1073,6 +1116,7 @@ function setVisibilityPerWindow(value, windowIndex = 0)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_visibility_per_window = setVisibilityPerWindow
 
 """
     gmsh.model.setColor(dimTags, r, g, b, a = 255, recursive = false)
@@ -1091,6 +1135,7 @@ function setColor(dimTags, r, g, b, a = 255, recursive = false)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_color = setColor
 
 """
     gmsh.model.getColor(dim, tag)
@@ -1111,6 +1156,7 @@ function getColor(dim, tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_r_[], api_g_[], api_b_[], api_a_[]
 end
+const get_color = getColor
 
 """
     gmsh.model.setCoordinates(tag, x, y, z)
@@ -1125,6 +1171,7 @@ function setCoordinates(tag, x, y, z)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_coordinates = setCoordinates
 
 """
     module gmsh.model.mesh
@@ -1240,6 +1287,7 @@ function setOrder(order)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_order = setOrder
 
 """
     gmsh.model.mesh.getLastEntityError()
@@ -1261,6 +1309,7 @@ function getLastEntityError()
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
+const get_last_entity_error = getLastEntityError
 
 """
     gmsh.model.mesh.getLastNodeError()
@@ -1281,6 +1330,7 @@ function getLastNodeError()
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     return nodeTags
 end
+const get_last_node_error = getLastNodeError
 
 """
     gmsh.model.mesh.clear(dimTags = Tuple{Cint,Cint}[])
@@ -1336,6 +1386,7 @@ function getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricC
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
     return nodeTags, coord, parametricCoord
 end
+const get_nodes = getNodes
 
 """
     gmsh.model.mesh.getNodesByElementType(elementType, tag = -1, returnParametricCoord = true)
@@ -1362,6 +1413,7 @@ function getNodesByElementType(elementType, tag = -1, returnParametricCoord = tr
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
     return nodeTags, coord, parametricCoord
 end
+const get_nodes_by_element_type = getNodesByElementType
 
 """
     gmsh.model.mesh.getNode(nodeTag)
@@ -1387,6 +1439,7 @@ function getNode(nodeTag)
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
     return coord, parametricCoord
 end
+const get_node = getNode
 
 """
     gmsh.model.mesh.setNode(nodeTag, coord, parametricCoord)
@@ -1404,6 +1457,7 @@ function setNode(nodeTag, coord, parametricCoord)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_node = setNode
 
 """
     gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary = true)
@@ -1418,6 +1472,7 @@ function rebuildNodeCache(onlyIfNecessary = true)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const rebuild_node_cache = rebuildNodeCache
 
 """
     gmsh.model.mesh.rebuildElementCache(onlyIfNecessary = true)
@@ -1432,6 +1487,7 @@ function rebuildElementCache(onlyIfNecessary = true)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const rebuild_element_cache = rebuildElementCache
 
 """
     gmsh.model.mesh.getNodesForPhysicalGroup(dim, tag)
@@ -1457,6 +1513,7 @@ function getNodesForPhysicalGroup(dim, tag)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     return nodeTags, coord
 end
+const get_nodes_for_physical_group = getNodesForPhysicalGroup
 
 """
     gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
@@ -1478,6 +1535,7 @@ function addNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const add_nodes = addNodes
 
 """
     gmsh.model.mesh.reclassifyNodes()
@@ -1495,6 +1553,7 @@ function reclassifyNodes()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const reclassify_nodes = reclassifyNodes
 
 """
     gmsh.model.mesh.relocateNodes(dim = -1, tag = -1)
@@ -1512,6 +1571,7 @@ function relocateNodes(dim = -1, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const relocate_nodes = relocateNodes
 
 """
     gmsh.model.mesh.getElements(dim = -1, tag = -1)
@@ -1554,6 +1614,7 @@ function getElements(dim = -1, tag = -1)
     nodeTags = [ unsafe_wrap(Array, tmp_api_nodeTags_[i], tmp_api_nodeTags_n_[i], own=true) for i in 1:api_nodeTags_nn_[] ]
     return elementTypes, elementTags, nodeTags
 end
+const get_elements = getElements
 
 """
     gmsh.model.mesh.getElement(elementTag)
@@ -1576,6 +1637,7 @@ function getElement(elementTag)
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     return api_elementType_[], nodeTags
 end
+const get_element = getElement
 
 """
     gmsh.model.mesh.getElementByCoordinates(x, y, z, dim = -1, strict = false)
@@ -1605,6 +1667,7 @@ function getElementByCoordinates(x, y, z, dim = -1, strict = false)
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     return api_elementTag_[], api_elementType_[], nodeTags, api_u_[], api_v_[], api_w_[]
 end
+const get_element_by_coordinates = getElementByCoordinates
 
 """
     gmsh.model.mesh.getElementsByCoordinates(x, y, z, dim = -1, strict = false)
@@ -1629,6 +1692,7 @@ function getElementsByCoordinates(x, y, z, dim = -1, strict = false)
     elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
     return elementTags
 end
+const get_elements_by_coordinates = getElementsByCoordinates
 
 """
     gmsh.model.mesh.getLocalCoordinatesInElement(elementTag, x, y, z)
@@ -1651,6 +1715,7 @@ function getLocalCoordinatesInElement(elementTag, x, y, z)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_u_[], api_v_[], api_w_[]
 end
+const get_local_coordinates_in_element = getLocalCoordinatesInElement
 
 """
     gmsh.model.mesh.getElementTypes(dim = -1, tag = -1)
@@ -1672,6 +1737,7 @@ function getElementTypes(dim = -1, tag = -1)
     elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], own=true)
     return elementTypes
 end
+const get_element_types = getElementTypes
 
 """
     gmsh.model.mesh.getElementType(familyName, order, serendip = false)
@@ -1691,6 +1757,7 @@ function getElementType(familyName, order, serendip = false)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const get_element_type = getElementType
 
 """
     gmsh.model.mesh.getElementProperties(elementType)
@@ -1720,6 +1787,7 @@ function getElementProperties(elementType)
     localNodeCoord = unsafe_wrap(Array, api_localNodeCoord_[], api_localNodeCoord_n_[], own=true)
     return elementName, api_dim_[], api_order_[], api_numNodes_[], localNodeCoord, api_numPrimaryNodes_[]
 end
+const get_element_properties = getElementProperties
 
 """
     gmsh.model.mesh.getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
@@ -1749,6 +1817,7 @@ function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     return elementTags, nodeTags
 end
+const get_elements_by_type = getElementsByType
 
 """
     gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)
@@ -1773,6 +1842,7 @@ function addElements(dim, tag, elementTypes, elementTags, nodeTags)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const add_elements = addElements
 
 """
     gmsh.model.mesh.addElementsByType(tag, elementType, elementTags, nodeTags)
@@ -1793,6 +1863,7 @@ function addElementsByType(tag, elementType, elementTags, nodeTags)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const add_elements_by_type = addElementsByType
 
 """
     gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
@@ -1820,6 +1891,7 @@ function getIntegrationPoints(elementType, integrationType)
     weights = unsafe_wrap(Array, api_weights_[], api_weights_n_[], own=true)
     return localCoord, weights
 end
+const get_integration_points = getIntegrationPoints
 
 """
     gmsh.model.mesh.getJacobians(elementType, localCoord, tag = -1, task = 0, numTasks = 1)
@@ -1857,6 +1929,7 @@ function getJacobians(elementType, localCoord, tag = -1, task = 0, numTasks = 1)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     return jacobians, determinants, coord
 end
+const get_jacobians = getJacobians
 
 """
     gmsh.model.mesh.getJacobian(elementTag, localCoord)
@@ -1891,6 +1964,7 @@ function getJacobian(elementTag, localCoord)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     return jacobians, determinants, coord
 end
+const get_jacobian = getJacobian
 
 """
     gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations = Cint[])
@@ -1926,6 +2000,7 @@ function getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOri
     basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
     return api_numComponents_[], basisFunctions, api_numOrientations_[]
 end
+const get_basis_functions = getBasisFunctions
 
 """
     gmsh.model.mesh.getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
@@ -1949,6 +2024,7 @@ function getBasisFunctionsOrientationForElements(elementType, functionSpaceType,
     basisFunctionsOrientation = unsafe_wrap(Array, api_basisFunctionsOrientation_[], api_basisFunctionsOrientation_n_[], own=true)
     return basisFunctionsOrientation
 end
+const get_basis_functions_orientation_for_elements = getBasisFunctionsOrientationForElements
 
 """
     gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
@@ -1966,6 +2042,7 @@ function getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_basisFunctionsOrientation_[]
 end
+const get_basis_functions_orientation_for_element = getBasisFunctionsOrientationForElement
 
 """
     gmsh.model.mesh.getNumberOfOrientations(elementType, functionSpaceType)
@@ -1983,33 +2060,63 @@ function getNumberOfOrientations(elementType, functionSpaceType)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const get_number_of_orientations = getNumberOfOrientations
 
 """
-    gmsh.model.mesh.getEdgeNumber(edgeNodes)
+    gmsh.model.mesh.getEdges(nodeTags)
 
-Get the global mesh edge identifier `edgeNum` for an input list of node pairs,
-concatenated in the vector `edgeNodes`.  Warning: this is an experimental
-feature and will probably change in a future release.
+Get the global unique mesh edge identifiers `edgeTags` and orientations
+`edgeOrientation` for an input list of node tag pairs defining these edges,
+concatenated in the vector `nodeTags`.
 
-Return `edgeNum`.
+Return `edgeTags`, `edgeOrientations`.
 """
-function getEdgeNumber(edgeNodes)
-    api_edgeNum_ = Ref{Ptr{Cint}}()
-    api_edgeNum_n_ = Ref{Csize_t}()
+function getEdges(nodeTags)
+    api_edgeTags_ = Ref{Ptr{Csize_t}}()
+    api_edgeTags_n_ = Ref{Csize_t}()
+    api_edgeOrientations_ = Ref{Ptr{Cint}}()
+    api_edgeOrientations_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetEdgeNumber, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cint}, edgeNodes), length(edgeNodes), api_edgeNum_, api_edgeNum_n_, ierr)
+    ccall((:gmshModelMeshGetEdges, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_edgeTags_, api_edgeTags_n_, api_edgeOrientations_, api_edgeOrientations_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    edgeNum = unsafe_wrap(Array, api_edgeNum_[], api_edgeNum_n_[], own=true)
-    return edgeNum
+    edgeTags = unsafe_wrap(Array, api_edgeTags_[], api_edgeTags_n_[], own=true)
+    edgeOrientations = unsafe_wrap(Array, api_edgeOrientations_[], api_edgeOrientations_n_[], own=true)
+    return edgeTags, edgeOrientations
 end
+const get_edges = getEdges
+
+"""
+    gmsh.model.mesh.getFaces(faceType, nodeTags)
+
+Get the global unique mesh face identifiers `faceTags` and orientations
+`faceOrientations` for an input list of node tag triplets (if `faceType` == 3)
+or quadruplets (if `faceType` == 4) defining these faces, concatenated in the
+vector `nodeTags`.
+
+Return `faceTags`, `faceOrientations`.
+"""
+function getFaces(faceType, nodeTags)
+    api_faceTags_ = Ref{Ptr{Csize_t}}()
+    api_faceTags_n_ = Ref{Csize_t}()
+    api_faceOrientations_ = Ref{Ptr{Cint}}()
+    api_faceOrientations_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetFaces, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          faceType, convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_faceTags_, api_faceTags_n_, api_faceOrientations_, api_faceOrientations_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    faceTags = unsafe_wrap(Array, api_faceTags_[], api_faceTags_n_[], own=true)
+    faceOrientations = unsafe_wrap(Array, api_faceOrientations_[], api_faceOrientations_n_[], own=true)
+    return faceTags, faceOrientations
+end
+const get_faces = getFaces
 
 """
     gmsh.model.mesh.createEdges(dimTags = Tuple{Cint,Cint}[])
 
-Create mesh edges for the entities `dimTags`. Warning: this is an experimental
-feature and will probably change in a future release.
+Create unique mesh edges for the entities `dimTags`.
 """
 function createEdges(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -2021,12 +2128,12 @@ function createEdges(dimTags = Tuple{Cint,Cint}[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const create_edges = createEdges
 
 """
     gmsh.model.mesh.createFaces(dimTags = Tuple{Cint,Cint}[])
 
-Create mesh faces for the entities `dimTags`. Warning: this is an experimental
-feature and will probably change in a future release.
+Create unique mesh faces for the entities `dimTags`.
 """
 function createFaces(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -2038,6 +2145,7 @@ function createFaces(dimTags = Tuple{Cint,Cint}[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const create_faces = createFaces
 
 """
     gmsh.model.mesh.getLocalMultipliersForHcurl0(elementType, tag = -1)
@@ -2059,6 +2167,7 @@ function getLocalMultipliersForHcurl0(elementType, tag = -1)
     localMultipliers = unsafe_wrap(Array, api_localMultipliers_[], api_localMultipliers_n_[], own=true)
     return localMultipliers
 end
+const get_local_multipliers_for_hcurl0 = getLocalMultipliersForHcurl0
 
 """
     gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
@@ -2087,6 +2196,7 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     return keys, coord
 end
+const get_keys_for_elements = getKeysForElements
 
 """
     gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
@@ -2110,6 +2220,7 @@ function getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     return keys, coord
 end
+const get_keys_for_element = getKeysForElement
 
 """
     gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
@@ -2127,6 +2238,7 @@ function getNumberOfKeysForElements(elementType, functionSpaceType)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const get_number_of_keys_for_elements = getNumberOfKeysForElements
 
 """
     gmsh.model.mesh.getInformationForElements(keys, elementType, functionSpaceType)
@@ -2154,6 +2266,7 @@ function getInformationForElements(keys, elementType, functionSpaceType)
     infoKeys = [ (tmp_api_infoKeys_[i], tmp_api_infoKeys_[i+1]) for i in 1:2:length(tmp_api_infoKeys_) ]
     return infoKeys
 end
+const get_information_for_elements = getInformationForElements
 
 """
     gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
@@ -2178,6 +2291,7 @@ function getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
     barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], own=true)
     return barycenters
 end
+const get_barycenters = getBarycenters
 
 """
     gmsh.model.mesh.getElementEdgeNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
@@ -2203,6 +2317,7 @@ function getElementEdgeNodes(elementType, tag = -1, primary = false, task = 0, n
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     return nodeTags
 end
+const get_element_edge_nodes = getElementEdgeNodes
 
 """
     gmsh.model.mesh.getElementFaceNodes(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
@@ -2229,6 +2344,7 @@ function getElementFaceNodes(elementType, faceType, tag = -1, primary = false, t
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
     return nodeTags
 end
+const get_element_face_nodes = getElementFaceNodes
 
 """
     gmsh.model.mesh.getGhostElements(dim, tag)
@@ -2252,6 +2368,7 @@ function getGhostElements(dim, tag)
     partitions = unsafe_wrap(Array, api_partitions_[], api_partitions_n_[], own=true)
     return elementTags, partitions
 end
+const get_ghost_elements = getGhostElements
 
 """
     gmsh.model.mesh.setSize(dimTags, size)
@@ -2269,6 +2386,7 @@ function setSize(dimTags, size)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_size = setSize
 
 """
     gmsh.model.mesh.setSizeAtParametricPoints(dim, tag, parametricCoord, sizes)
@@ -2285,6 +2403,7 @@ function setSizeAtParametricPoints(dim, tag, parametricCoord, sizes)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_size_at_parametric_points = setSizeAtParametricPoints
 
 """
     gmsh.model.mesh.setSizeCallback(callback)
@@ -2303,6 +2422,7 @@ function setSizeCallback(callback)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_size_callback = setSizeCallback
 
 """
     gmsh.model.mesh.removeSizeCallback()
@@ -2317,6 +2437,7 @@ function removeSizeCallback()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const remove_size_callback = removeSizeCallback
 
 """
     gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
@@ -2334,6 +2455,7 @@ function setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_transfinite_curve = setTransfiniteCurve
 
 """
     gmsh.model.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
@@ -2353,6 +2475,7 @@ function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_transfinite_surface = setTransfiniteSurface
 
 """
     gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags = Cint[])
@@ -2369,6 +2492,7 @@ function setTransfiniteVolume(tag, cornerTags = Cint[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_transfinite_volume = setTransfiniteVolume
 
 """
     gmsh.model.mesh.setTransfiniteAutomatic(dimTags = Tuple{Cint,Cint}[], cornerAngle = 2.35, recombine = true)
@@ -2391,6 +2515,7 @@ function setTransfiniteAutomatic(dimTags = Tuple{Cint,Cint}[], cornerAngle = 2.3
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_transfinite_automatic = setTransfiniteAutomatic
 
 """
     gmsh.model.mesh.setRecombine(dim, tag)
@@ -2407,6 +2532,7 @@ function setRecombine(dim, tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_recombine = setRecombine
 
 """
     gmsh.model.mesh.setSmoothing(dim, tag, val)
@@ -2422,6 +2548,7 @@ function setSmoothing(dim, tag, val)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_smoothing = setSmoothing
 
 """
     gmsh.model.mesh.setReverse(dim, tag, val = true)
@@ -2439,6 +2566,7 @@ function setReverse(dim, tag, val = true)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_reverse = setReverse
 
 """
     gmsh.model.mesh.setAlgorithm(dim, tag, val)
@@ -2454,6 +2582,7 @@ function setAlgorithm(dim, tag, val)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_algorithm = setAlgorithm
 
 """
     gmsh.model.mesh.setSizeFromBoundary(dim, tag, val)
@@ -2470,6 +2599,7 @@ function setSizeFromBoundary(dim, tag, val)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_size_from_boundary = setSizeFromBoundary
 
 """
     gmsh.model.mesh.setCompound(dim, tags)
@@ -2486,6 +2616,7 @@ function setCompound(dim, tags)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_compound = setCompound
 
 """
     gmsh.model.mesh.setOutwardOrientation(tag)
@@ -2502,6 +2633,7 @@ function setOutwardOrientation(tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_outward_orientation = setOutwardOrientation
 
 """
     gmsh.model.mesh.embed(dim, tags, inDim, inTag)
@@ -2541,6 +2673,7 @@ function removeEmbedded(dimTags, dim = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const remove_embedded = removeEmbedded
 
 """
     gmsh.model.mesh.getEmbedded(dim, tag)
@@ -2562,6 +2695,7 @@ function getEmbedded(dim, tag)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
+const get_embedded = getEmbedded
 
 """
     gmsh.model.mesh.reorderElements(elementType, tag, ordering)
@@ -2577,6 +2711,7 @@ function reorderElements(elementType, tag, ordering)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const reorder_elements = reorderElements
 
 """
     gmsh.model.mesh.renumberNodes()
@@ -2591,6 +2726,7 @@ function renumberNodes()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const renumber_nodes = renumberNodes
 
 """
     gmsh.model.mesh.renumberElements()
@@ -2605,6 +2741,7 @@ function renumberElements()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const renumber_elements = renumberElements
 
 """
     gmsh.model.mesh.setPeriodic(dim, tags, tagsMaster, affineTransform)
@@ -2625,6 +2762,7 @@ function setPeriodic(dim, tags, tagsMaster, affineTransform)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_periodic = setPeriodic
 
 """
     gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
@@ -2654,6 +2792,7 @@ function getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
     affineTransform = unsafe_wrap(Array, api_affineTransform_[], api_affineTransform_n_[], own=true)
     return api_tagMaster_[], nodeTags, nodeTagsMaster, affineTransform
 end
+const get_periodic_nodes = getPeriodicNodes
 
 """
     gmsh.model.mesh.removeDuplicateNodes()
@@ -2668,6 +2807,7 @@ function removeDuplicateNodes()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const remove_duplicate_nodes = removeDuplicateNodes
 
 """
     gmsh.model.mesh.splitQuadrangles(quality = 1., tag = -1)
@@ -2683,6 +2823,7 @@ function splitQuadrangles(quality = 1., tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const split_quadrangles = splitQuadrangles
 
 """
     gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
@@ -2704,6 +2845,7 @@ function classifySurfaces(angle, boundary = true, forReparametrization = false, 
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const classify_surfaces = classifySurfaces
 
 """
     gmsh.model.mesh.createGeometry(dimTags = Tuple{Cint,Cint}[])
@@ -2724,6 +2866,7 @@ function createGeometry(dimTags = Tuple{Cint,Cint}[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const create_geometry = createGeometry
 
 """
     gmsh.model.mesh.createTopology(makeSimplyConnected = true, exportDiscrete = true)
@@ -2742,6 +2885,7 @@ function createTopology(makeSimplyConnected = true, exportDiscrete = true)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const create_topology = createTopology
 
 """
     gmsh.model.mesh.computeHomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
@@ -2763,6 +2907,7 @@ function computeHomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cin
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const compute_homology = computeHomology
 
 """
     gmsh.model.mesh.computeCohomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
@@ -2784,6 +2929,7 @@ function computeCohomology(domainTags = Cint[], subdomainTags = Cint[], dims = C
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const compute_cohomology = computeCohomology
 
 """
     gmsh.model.mesh.computeCrossField()
@@ -2804,6 +2950,7 @@ function computeCrossField()
     viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
     return viewTags
 end
+const compute_cross_field = computeCrossField
 
 """
     gmsh.model.mesh.triangulate(coord)
@@ -2901,6 +3048,7 @@ function setNumber(tag, option, value)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_number = setNumber
 
 """
     gmsh.model.mesh.field.setString(tag, option, value)
@@ -2915,6 +3063,7 @@ function setString(tag, option, value)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_string = setString
 
 """
     gmsh.model.mesh.field.setNumbers(tag, option, value)
@@ -2929,6 +3078,7 @@ function setNumbers(tag, option, value)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_numbers = setNumbers
 
 """
     gmsh.model.mesh.field.setAsBackgroundMesh(tag)
@@ -2943,6 +3093,7 @@ function setAsBackgroundMesh(tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_as_background_mesh = setAsBackgroundMesh
 
 """
     gmsh.model.mesh.field.setAsBoundaryLayer(tag)
@@ -2957,6 +3108,7 @@ function setAsBoundaryLayer(tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_as_boundary_layer = setAsBoundaryLayer
 
 end # end of module field
 
@@ -2991,6 +3143,7 @@ function addPoint(x, y, z, meshSize = 0., tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_point = addPoint
 
 """
     gmsh.model.geo.addLine(startTag, endTag, tag = -1)
@@ -3010,6 +3163,7 @@ function addLine(startTag, endTag, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_line = addLine
 
 """
     gmsh.model.geo.addCircleArc(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
@@ -3030,6 +3184,7 @@ function addCircleArc(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., n
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_circle_arc = addCircleArc
 
 """
     gmsh.model.geo.addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
@@ -3051,6 +3206,7 @@ function addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0.,
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_ellipse_arc = addEllipseArc
 
 """
     gmsh.model.geo.addSpline(pointTags, tag = -1)
@@ -3070,6 +3226,7 @@ function addSpline(pointTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_spline = addSpline
 
 """
     gmsh.model.geo.addBSpline(pointTags, tag = -1)
@@ -3089,6 +3246,7 @@ function addBSpline(pointTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_bspline = addBSpline
 
 """
     gmsh.model.geo.addBezier(pointTags, tag = -1)
@@ -3107,6 +3265,7 @@ function addBezier(pointTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_bezier = addBezier
 
 """
     gmsh.model.geo.addPolyline(pointTags, tag = -1)
@@ -3126,6 +3285,7 @@ function addPolyline(pointTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_polyline = addPolyline
 
 """
     gmsh.model.geo.addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
@@ -3146,6 +3306,7 @@ function addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_compound_spline = addCompoundSpline
 
 """
     gmsh.model.geo.addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
@@ -3165,6 +3326,7 @@ function addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_compound_bspline = addCompoundBSpline
 
 """
     gmsh.model.geo.addCurveLoop(curveTags, tag = -1, reorient = false)
@@ -3187,6 +3349,7 @@ function addCurveLoop(curveTags, tag = -1, reorient = false)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_curve_loop = addCurveLoop
 
 """
     gmsh.model.geo.addCurveLoops(curveTags)
@@ -3207,6 +3370,7 @@ function addCurveLoops(curveTags)
     tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
     return tags
 end
+const add_curve_loops = addCurveLoops
 
 """
     gmsh.model.geo.addPlaneSurface(wireTags, tag = -1)
@@ -3227,6 +3391,7 @@ function addPlaneSurface(wireTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_plane_surface = addPlaneSurface
 
 """
     gmsh.model.geo.addSurfaceFilling(wireTags, tag = -1, sphereCenterTag = -1)
@@ -3247,6 +3412,7 @@ function addSurfaceFilling(wireTags, tag = -1, sphereCenterTag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_surface_filling = addSurfaceFilling
 
 """
     gmsh.model.geo.addSurfaceLoop(surfaceTags, tag = -1)
@@ -3265,6 +3431,7 @@ function addSurfaceLoop(surfaceTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_surface_loop = addSurfaceLoop
 
 """
     gmsh.model.geo.addVolume(shellTags, tag = -1)
@@ -3285,6 +3452,7 @@ function addVolume(shellTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_volume = addVolume
 
 """
     gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
@@ -3401,6 +3569,7 @@ function extrudeBoundaryLayer(dimTags, numElements = [1], heights = Cdouble[], r
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
+const extrude_boundary_layer = extrudeBoundaryLayer
 
 """
     gmsh.model.geo.translate(dimTags, dx, dy, dz)
@@ -3544,6 +3713,7 @@ function removeAllDuplicates()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const remove_all_duplicates = removeAllDuplicates
 
 """
     gmsh.model.geo.splitCurve(tag, pointTags)
@@ -3564,6 +3734,7 @@ function splitCurve(tag, pointTags)
     curveTags = unsafe_wrap(Array, api_curveTags_[], api_curveTags_n_[], own=true)
     return curveTags
 end
+const split_curve = splitCurve
 
 """
     gmsh.model.geo.getMaxTag(dim)
@@ -3581,6 +3752,7 @@ function getMaxTag(dim)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const get_max_tag = getMaxTag
 
 """
     gmsh.model.geo.setMaxTag(dim, maxTag)
@@ -3596,6 +3768,7 @@ function setMaxTag(dim, maxTag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_max_tag = setMaxTag
 
 """
     gmsh.model.geo.addPhysicalGroup(dim, tags, tag = -1)
@@ -3614,6 +3787,7 @@ function addPhysicalGroup(dim, tags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_physical_group = addPhysicalGroup
 
 """
     gmsh.model.geo.removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
@@ -3631,6 +3805,7 @@ function removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const remove_physical_groups = removePhysicalGroups
 
 """
     gmsh.model.geo.synchronize()
@@ -3675,6 +3850,7 @@ function setSize(dimTags, size)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_size = setSize
 
 """
     gmsh.model.geo.mesh.setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
@@ -3692,6 +3868,7 @@ function setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_transfinite_curve = setTransfiniteCurve
 
 """
     gmsh.model.geo.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
@@ -3712,6 +3889,7 @@ function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_transfinite_surface = setTransfiniteSurface
 
 """
     gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags = Cint[])
@@ -3728,6 +3906,7 @@ function setTransfiniteVolume(tag, cornerTags = Cint[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_transfinite_volume = setTransfiniteVolume
 
 """
     gmsh.model.geo.mesh.setRecombine(dim, tag, angle = 45.)
@@ -3744,6 +3923,7 @@ function setRecombine(dim, tag, angle = 45.)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_recombine = setRecombine
 
 """
     gmsh.model.geo.mesh.setSmoothing(dim, tag, val)
@@ -3760,6 +3940,7 @@ function setSmoothing(dim, tag, val)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_smoothing = setSmoothing
 
 """
     gmsh.model.geo.mesh.setReverse(dim, tag, val = true)
@@ -3778,6 +3959,7 @@ function setReverse(dim, tag, val = true)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_reverse = setReverse
 
 """
     gmsh.model.geo.mesh.setAlgorithm(dim, tag, val)
@@ -3793,6 +3975,7 @@ function setAlgorithm(dim, tag, val)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_algorithm = setAlgorithm
 
 """
     gmsh.model.geo.mesh.setSizeFromBoundary(dim, tag, val)
@@ -3809,6 +3992,7 @@ function setSizeFromBoundary(dim, tag, val)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_size_from_boundary = setSizeFromBoundary
 
 end # end of module mesh
 
@@ -3843,6 +4027,7 @@ function addPoint(x, y, z, meshSize = 0., tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_point = addPoint
 
 """
     gmsh.model.occ.addLine(startTag, endTag, tag = -1)
@@ -3862,6 +4047,7 @@ function addLine(startTag, endTag, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_line = addLine
 
 """
     gmsh.model.occ.addCircleArc(startTag, centerTag, endTag, tag = -1)
@@ -3881,6 +4067,7 @@ function addCircleArc(startTag, centerTag, endTag, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_circle_arc = addCircleArc
 
 """
     gmsh.model.occ.addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
@@ -3900,6 +4087,7 @@ function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_circle = addCircle
 
 """
     gmsh.model.occ.addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1)
@@ -3921,6 +4109,7 @@ function addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_ellipse_arc = addEllipseArc
 
 """
     gmsh.model.occ.addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi)
@@ -3944,6 +4133,7 @@ function addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_ellipse = addEllipse
 
 """
     gmsh.model.occ.addSpline(pointTags, tag = -1)
@@ -3963,6 +4153,7 @@ function addSpline(pointTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_spline = addSpline
 
 """
     gmsh.model.occ.addBSpline(pointTags, tag = -1, degree = 3, weights = Cdouble[], knots = Cdouble[], multiplicities = Cint[])
@@ -3984,6 +4175,7 @@ function addBSpline(pointTags, tag = -1, degree = 3, weights = Cdouble[], knots 
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_bspline = addBSpline
 
 """
     gmsh.model.occ.addBezier(pointTags, tag = -1)
@@ -4002,6 +4194,7 @@ function addBezier(pointTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_bezier = addBezier
 
 """
     gmsh.model.occ.addWire(curveTags, tag = -1, checkClosed = false)
@@ -4022,6 +4215,7 @@ function addWire(curveTags, tag = -1, checkClosed = false)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_wire = addWire
 
 """
     gmsh.model.occ.addCurveLoop(curveTags, tag = -1)
@@ -4043,6 +4237,7 @@ function addCurveLoop(curveTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_curve_loop = addCurveLoop
 
 """
     gmsh.model.occ.addRectangle(x, y, z, dx, dy, tag = -1, roundedRadius = 0.)
@@ -4063,6 +4258,7 @@ function addRectangle(x, y, z, dx, dy, tag = -1, roundedRadius = 0.)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_rectangle = addRectangle
 
 """
     gmsh.model.occ.addDisk(xc, yc, zc, rx, ry, tag = -1)
@@ -4082,6 +4278,7 @@ function addDisk(xc, yc, zc, rx, ry, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_disk = addDisk
 
 """
     gmsh.model.occ.addPlaneSurface(wireTags, tag = -1)
@@ -4102,6 +4299,7 @@ function addPlaneSurface(wireTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_plane_surface = addPlaneSurface
 
 """
     gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
@@ -4121,6 +4319,7 @@ function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_surface_filling = addSurfaceFilling
 
 """
     gmsh.model.occ.addBSplineFilling(wireTag, tag = -1, type = "")
@@ -4143,6 +4342,7 @@ function addBSplineFilling(wireTag, tag = -1, type = "")
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_bspline_filling = addBSplineFilling
 
 """
     gmsh.model.occ.addBezierFilling(wireTag, tag = -1, type = "")
@@ -4165,6 +4365,7 @@ function addBezierFilling(wireTag, tag = -1, type = "")
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_bezier_filling = addBezierFilling
 
 """
     gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = Cdouble[], knotsU = Cdouble[], knotsV = Cdouble[], multiplicitiesU = Cint[], multiplicitiesV = Cint[], wireTags = Cint[], wire3D = false)
@@ -4191,6 +4392,7 @@ function addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_bspline_surface = addBSplineSurface
 
 """
     gmsh.model.occ.addBezierSurface(pointTags, numPointsU, tag = -1, wireTags = Cint[], wire3D = false)
@@ -4214,6 +4416,7 @@ function addBezierSurface(pointTags, numPointsU, tag = -1, wireTags = Cint[], wi
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_bezier_surface = addBezierSurface
 
 """
     gmsh.model.occ.addTrimmedSurface(surfaceTag, wireTags = Cint[], wire3D = false, tag = -1)
@@ -4235,6 +4438,7 @@ function addTrimmedSurface(surfaceTag, wireTags = Cint[], wire3D = false, tag = 
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_trimmed_surface = addTrimmedSurface
 
 """
     gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
@@ -4255,6 +4459,7 @@ function addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_surface_loop = addSurfaceLoop
 
 """
     gmsh.model.occ.addVolume(shellTags, tag = -1)
@@ -4275,6 +4480,7 @@ function addVolume(shellTags, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_volume = addVolume
 
 """
     gmsh.model.occ.addSphere(xc, yc, zc, radius, tag = -1, angle1 = -pi/2, angle2 = pi/2, angle3 = 2*pi)
@@ -4296,6 +4502,7 @@ function addSphere(xc, yc, zc, radius, tag = -1, angle1 = -pi/2, angle2 = pi/2, 
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_sphere = addSphere
 
 """
     gmsh.model.occ.addBox(x, y, z, dx, dy, dz, tag = -1)
@@ -4315,6 +4522,7 @@ function addBox(x, y, z, dx, dy, dz, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_box = addBox
 
 """
     gmsh.model.occ.addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*pi)
@@ -4336,6 +4544,7 @@ function addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*pi)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_cylinder = addCylinder
 
 """
     gmsh.model.occ.addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*pi)
@@ -4357,6 +4566,7 @@ function addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*pi)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_cone = addCone
 
 """
     gmsh.model.occ.addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0.)
@@ -4377,6 +4587,7 @@ function addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0.)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_wedge = addWedge
 
 """
     gmsh.model.occ.addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
@@ -4397,6 +4608,7 @@ function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_torus = addTorus
 
 """
     gmsh.model.occ.addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false, maxDegree = -1)
@@ -4423,6 +4635,7 @@ function addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
+const add_thru_sections = addThruSections
 
 """
     gmsh.model.occ.addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
@@ -4447,6 +4660,7 @@ function addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
+const add_thick_solid = addThickSolid
 
 """
     gmsh.model.occ.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
@@ -4530,6 +4744,7 @@ function addPipe(dimTags, wireTag, trihedron = "")
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
+const add_pipe = addPipe
 
 """
     gmsh.model.occ.fillet(volumeTags, curveTags, radii, removeVolume = true)
@@ -4847,6 +5062,7 @@ function affineTransform(dimTags, a)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const affine_transform = affineTransform
 
 """
     gmsh.model.occ.copy(dimTags)
@@ -4904,6 +5120,7 @@ function removeAllDuplicates()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const remove_all_duplicates = removeAllDuplicates
 
 """
     gmsh.model.occ.healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true)
@@ -4929,6 +5146,7 @@ function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerat
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
+const heal_shapes = healShapes
 
 """
     gmsh.model.occ.importShapes(fileName, highestDimOnly = true, format = "")
@@ -4953,6 +5171,7 @@ function importShapes(fileName, highestDimOnly = true, format = "")
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
+const import_shapes = importShapes
 
 """
     gmsh.model.occ.getEntities(dim = -1)
@@ -4975,6 +5194,7 @@ function getEntities(dim = -1)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
+const get_entities = getEntities
 
 """
     gmsh.model.occ.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
@@ -4997,6 +5217,7 @@ function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
     tags = [ (tmp_api_tags_[i], tmp_api_tags_[i+1]) for i in 1:2:length(tmp_api_tags_) ]
     return tags
 end
+const get_entities_in_bounding_box = getEntitiesInBoundingBox
 
 """
     gmsh.model.occ.getBoundingBox(dim, tag)
@@ -5020,6 +5241,7 @@ function getBoundingBox(dim, tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_xmin_[], api_ymin_[], api_zmin_[], api_xmax_[], api_ymax_[], api_zmax_[]
 end
+const get_bounding_box = getBoundingBox
 
 """
     gmsh.model.occ.getMass(dim, tag)
@@ -5037,6 +5259,7 @@ function getMass(dim, tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_mass_[]
 end
+const get_mass = getMass
 
 """
     gmsh.model.occ.getCenterOfMass(dim, tag)
@@ -5057,6 +5280,7 @@ function getCenterOfMass(dim, tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_x_[], api_y_[], api_z_[]
 end
+const get_center_of_mass = getCenterOfMass
 
 """
     gmsh.model.occ.getMatrixOfInertia(dim, tag)
@@ -5077,6 +5301,7 @@ function getMatrixOfInertia(dim, tag)
     mat = unsafe_wrap(Array, api_mat_[], api_mat_n_[], own=true)
     return mat
 end
+const get_matrix_of_inertia = getMatrixOfInertia
 
 """
     gmsh.model.occ.getMaxTag(dim)
@@ -5094,6 +5319,7 @@ function getMaxTag(dim)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const get_max_tag = getMaxTag
 
 """
     gmsh.model.occ.setMaxTag(dim, maxTag)
@@ -5109,6 +5335,7 @@ function setMaxTag(dim, maxTag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_max_tag = setMaxTag
 
 """
     gmsh.model.occ.synchronize()
@@ -5153,6 +5380,7 @@ function setSize(dimTags, size)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_size = setSize
 
 end # end of module mesh
 
@@ -5218,6 +5446,7 @@ function getIndex(tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const get_index = getIndex
 
 """
     gmsh.view.getTags()
@@ -5237,6 +5466,7 @@ function getTags()
     tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
     return tags
 end
+const get_tags = getTags
 
 """
     gmsh.view.addModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
@@ -5263,6 +5493,7 @@ function addModelData(tag, step, modelName, dataType, tags, data, time = 0., num
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const add_model_data = addModelData
 
 """
     gmsh.view.addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
@@ -5281,6 +5512,7 @@ function addHomogeneousModelData(tag, step, modelName, dataType, tags, data, tim
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const add_homogeneous_model_data = addHomogeneousModelData
 
 """
     gmsh.view.getModelData(tag, step)
@@ -5312,6 +5544,7 @@ function getModelData(tag, step)
     data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], own=true) for i in 1:api_data_nn_[] ]
     return dataType, tags, data, api_time_[], api_numComponents_[]
 end
+const get_model_data = getModelData
 
 """
     gmsh.view.getHomogeneousModelData(tag, step)
@@ -5341,6 +5574,7 @@ function getHomogeneousModelData(tag, step)
     data = unsafe_wrap(Array, api_data_[], api_data_n_[], own=true)
     return dataType, tags, data, api_time_[], api_numComponents_[]
 end
+const get_homogeneous_model_data = getHomogeneousModelData
 
 """
     gmsh.view.addListData(tag, dataType, numEle, data)
@@ -5364,6 +5598,7 @@ function addListData(tag, dataType, numEle, data)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const add_list_data = addListData
 
 """
     gmsh.view.getListData(tag)
@@ -5395,6 +5630,7 @@ function getListData(tag)
     data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], own=true) for i in 1:api_data_nn_[] ]
     return dataType, numElements, data
 end
+const get_list_data = getListData
 
 """
     gmsh.view.addListDataString(tag, coord, data, style = [])
@@ -5420,6 +5656,7 @@ function addListDataString(tag, coord, data, style = [])
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const add_list_data_string = addListDataString
 
 """
     gmsh.view.getListDataStrings(tag, dim)
@@ -5449,6 +5686,7 @@ function getListDataStrings(tag, dim)
     style = [unsafe_string(tmp_api_style_[i]) for i in 1:length(tmp_api_style_) ]
     return coord, data, style
 end
+const get_list_data_strings = getListDataStrings
 
 """
     gmsh.view.setInterpolationMatrices(tag, type, d, coef, exp, dGeo = 0, coefGeo = Cdouble[], expGeo = Cdouble[])
@@ -5472,6 +5710,7 @@ function setInterpolationMatrices(tag, type, d, coef, exp, dGeo = 0, coefGeo = C
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_interpolation_matrices = setInterpolationMatrices
 
 """
     gmsh.view.addAlias(refTag, copyOptions = false, tag = -1)
@@ -5491,6 +5730,7 @@ function addAlias(refTag, copyOptions = false, tag = -1)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const add_alias = addAlias
 
 """
     gmsh.view.copyOptions(refTag, tag)
@@ -5505,6 +5745,7 @@ function copyOptions(refTag, tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const copy_options = copyOptions
 
 """
     gmsh.view.combine(what, how, remove = true, copyOptions = true)
@@ -5577,6 +5818,7 @@ function setVisibilityPerWindow(tag, value, windowIndex = 0)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_visibility_per_window = setVisibilityPerWindow
 
 end # end of module view
 
@@ -5602,6 +5844,7 @@ function setNumber(name, option, value)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_number = setNumber
 
 """
     gmsh.plugin.setString(name, option, value)
@@ -5616,6 +5859,7 @@ function setString(name, option, value)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_string = setString
 
 """
     gmsh.plugin.run(name)
@@ -5788,6 +6032,7 @@ function isAvailable()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const is_available = isAvailable
 
 """
     gmsh.fltk.selectEntities(dim = -1)
@@ -5809,6 +6054,7 @@ function selectEntities(dim = -1)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return api_result_, dimTags
 end
+const select_entities = selectEntities
 
 """
     gmsh.fltk.selectElements()
@@ -5828,6 +6074,7 @@ function selectElements()
     elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
     return api_result_, elementTags
 end
+const select_elements = selectElements
 
 """
     gmsh.fltk.selectViews()
@@ -5847,6 +6094,7 @@ function selectViews()
     viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
     return api_result_, viewTags
 end
+const select_views = selectViews
 
 """
     gmsh.fltk.splitCurrentWindow(how = "v", ratio = 0.5)
@@ -5862,6 +6110,7 @@ function splitCurrentWindow(how = "v", ratio = 0.5)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const split_current_window = splitCurrentWindow
 
 """
     gmsh.fltk.setCurrentWindow(windowIndex = 0)
@@ -5878,6 +6127,7 @@ function setCurrentWindow(windowIndex = 0)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_current_window = setCurrentWindow
 
 """
     gmsh.fltk.setStatusMessage(message, graphics = false)
@@ -5893,6 +6143,7 @@ function setStatusMessage(message, graphics = false)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_status_message = setStatusMessage
 
 """
     gmsh.fltk.showContextWindow(dim, tag)
@@ -5907,6 +6158,7 @@ function showContextWindow(dim, tag)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const show_context_window = showContextWindow
 
 end # end of module fltk
 
@@ -5972,6 +6224,7 @@ function getNames(search = "")
     names = [unsafe_string(tmp_api_names_[i]) for i in 1:length(tmp_api_names_) ]
     return names
 end
+const get_names = getNames
 
 """
     gmsh.onelab.setNumber(name, value)
@@ -5987,6 +6240,7 @@ function setNumber(name, value)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_number = setNumber
 
 """
     gmsh.onelab.setString(name, value)
@@ -6002,6 +6256,7 @@ function setString(name, value)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
+const set_string = setString
 
 """
     gmsh.onelab.getNumber(name)
@@ -6022,6 +6277,7 @@ function getNumber(name)
     value = unsafe_wrap(Array, api_value_[], api_value_n_[], own=true)
     return value
 end
+const get_number = getNumber
 
 """
     gmsh.onelab.getString(name)
@@ -6043,6 +6299,7 @@ function getString(name)
     value = [unsafe_string(tmp_api_value_[i]) for i in 1:length(tmp_api_value_) ]
     return value
 end
+const get_string = getString
 
 """
     gmsh.onelab.clear(name = "")
@@ -6162,6 +6419,7 @@ function getWallTime()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const get_wall_time = getWallTime
 
 """
     gmsh.logger.getCpuTime()
@@ -6178,6 +6436,7 @@ function getCpuTime()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
+const get_cpu_time = getCpuTime
 
 """
     gmsh.logger.getLastError()
@@ -6196,6 +6455,7 @@ function getLastError()
     error = unsafe_string(api_error_[])
     return error
 end
+const get_last_error = getLastError
 
 end # end of module logger
 

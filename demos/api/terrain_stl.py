@@ -34,7 +34,9 @@ for i in range(len(c)):
     p.extend([pt[0][1]])
     xyz.extend(gmsh.model.getValue(0, pt[0][1], []))
 
-# create other CAD entities to form one volume below the terrain surface
+# create other CAD entities to form one volume below the terrain surface; beware
+# that only built-in CAD entities can be hybrid, i.e. have discrete entities on
+# their boundary: OpenCASCADE does not support this feature
 p1 = gmsh.model.geo.addPoint(xyz[0], xyz[1], z)
 p2 = gmsh.model.geo.addPoint(xyz[3], xyz[4], z)
 p3 = gmsh.model.geo.addPoint(xyz[6], xyz[7], z)

@@ -71,7 +71,8 @@ private:
 
 public:
   Msg() {}
-  static void Init(int argc, char **argv);
+  static void Initialize(int argc, char **argv);
+  static void Finalize();
   static void Exit(int level);
   static int GetCommRank();
   static int GetCommSize();
@@ -126,6 +127,7 @@ public:
                        const char *one, const char *two = nullptr);
   static void InitializeOnelab(const std::string &name,
                                const std::string &sockname = "");
+  static void FinalizeOnelab();
   static void SetExecutableName(const std::string &name);
   static std::string GetExecutableName();
   static void LoadOnelabClient(const std::string &name,
@@ -135,7 +137,6 @@ public:
 #if defined(HAVE_ONELAB)
   static onelab::client *GetOnelabClient();
 #endif
-  static void FinalizeOnelab();
   static bool UseOnelab();
   static void SetOnelabNumber(const std::string &name, double val,
                               bool visible = true, bool persistent = false,

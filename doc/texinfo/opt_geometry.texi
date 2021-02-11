@@ -46,7 +46,7 @@ Display geometry curves?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.CurveNumbers
+@item Geometry.CurveLabels
 Display curve labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -241,7 +241,7 @@ Display geometry points?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.PointNumbers
+@item Geometry.PointLabels
 Display points labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -296,7 +296,7 @@ Display geometry surfaces?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.SurfaceNumbers
+@item Geometry.SurfaceLabels
 Display surface labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -376,7 +376,7 @@ Display geometry volumes?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.VolumeNumbers
+@item Geometry.VolumeLabels
 Display volume labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}

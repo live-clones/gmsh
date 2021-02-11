@@ -77,7 +77,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
   if(GModel::list.empty()) dummy = new GModel();
 
   // Initialize messages (parallel stuff, etc.)
-  Msg::Init(argc, argv);
+  Msg::Initialize(argc, argv);
 
   // Load default options
   InitOptions(0);
@@ -253,6 +253,9 @@ int GmshFinalize()
   // Delete static _interpolationSchemes of PViewData class
   PViewData::removeAllInterpolationSchemes();
 #endif
+#if defined(HAVE_PLUGINS)
+  delete PluginManager::instance();
+#endif
 
   // Delete static interpolation bases
   BasisFactory::clearAll();
@@ -260,6 +263,8 @@ int GmshFinalize()
   // Delete all Gmodels
   while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
   std::vector<GModel *>().swap(GModel::list);
+
+  Msg::Finalize();
 
   isInitialized = false;
 

@@ -45,7 +45,10 @@ RUN curl -L -O https://github.com/Kitware/CMake/releases/download/v3.13.4/cmake-
 # OpenCASCADE
 # -----------------------
 
-RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_4_0p1;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt.tgz occt-*
+# RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_5_1;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt.tgz occt-*
+
+# OCC 7.5.1 still has the annoying bounding box bug - this is OCCT master from Feb 4 2021
+RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=4ad4054;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt.tgz occt-*
 
 # -----------------------
 # HDF5
@@ -63,9 +66,9 @@ RUN git clone https://github.com/CGNS/CGNS.git && cd CGNS && git checkout v3.4.0
 # PETSc
 # -----------------------
 
-RUN curl -L -O http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.10.2.tar.gz
-RUN tar zxf petsc-3.10.2.tar.gz
-ENV PETSC_DIR ${PWD}/petsc-3.10.2
+RUN curl -L -O http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.14.4.tar.gz
+RUN tar zxf petsc-3.14.4.tar.gz
+ENV PETSC_DIR ${PWD}/petsc-3.14.4
 
 ENV PETSC_ARCH real_mumps_seq
 RUN cd ${PETSC_DIR} && ./configure CC=$CC CXX=$CXX FC=$FC CFLAGS=$CFLAGS CXXFLAGS=$CXXFLAGS FFLAGS=$FFLAGS --with-clanguage=cxx --with-debugging=0 --with-mpi=0 --with-mpiuni-fortran-binding=0 --download-mumps=yes --with-mumps-serial --with-shared-libraries=0 --with-x=0 --with-ssl=0 --with-scalar-type=real --with-blaslapack-lib="/usr/local/lib/libopenblas.a /usr/local/lib64/libgfortran.a /usr/local/lib64/libquadmath.a -lpthread" && make
@@ -73,17 +76,17 @@ RUN cd ${PETSC_DIR} && ./configure CC=$CC CXX=$CXX FC=$FC CFLAGS=$CFLAGS CXXFLAG
 ENV PETSC_ARCH complex_mumps_seq
 RUN cd ${PETSC_DIR} && ./configure CC=$CC CXX=$CXX FC=$FC CFLAGS=$CFLAGS CXXFLAGS=$CXXFLAGS FFLAGS=$FFLAGS --with-clanguage=cxx --with-debugging=0 --with-mpi=0 --with-mpiuni-fortran-binding=0 --download-mumps=yes --with-mumps-serial --with-shared-libraries=0 --with-x=0 --with-ssl=0 --with-scalar-type=complex --with-blaslapack-lib="/usr/local/lib/libopenblas.a /usr/local/lib64/libgfortran.a /usr/local/lib64/libquadmath.a -lpthread" && make
 
-RUN sed -i 's|-lgfortran -lquadmath -lpthread -lstdc++ -ldl -lgfortran -lm -lgfortran -lm -lgcc_s -lquadmath -lstdc++ -ldl|/usr/local/lib64/libgfortran.a /usr/local/lib64/libquadmath.a -lpthread -lstdc++ -static-libstdc++ -ldl -lm -lgcc_s|' /petsc-3.10.2/complex_mumps_seq/lib/petsc/conf/petscvariables
+RUN sed -i 's|-lgfortran -lquadmath -lpthread -lstdc++ -ldl -lgfortran -lm -lgfortran -lm -lgcc_s -lquadmath -lstdc++ -ldl|/usr/local/lib64/libgfortran.a /usr/local/lib64/libquadmath.a -lpthread -lstdc++ -static-libstdc++ -ldl -lm -lgcc_s|' /petsc-3.14.4/complex_mumps_seq/lib/petsc/conf/petscvariables
 
-RUN sed -i 's|-lgfortran -lquadmath -lpthread -lstdc++ -ldl -lgfortran -lm -lgfortran -lm -lgcc_s -lquadmath -lstdc++ -ldl|/usr/local/lib64/libgfortran.a /usr/local/lib64/libquadmath.a -lpthread -lstdc++ -static-libstdc++ -ldl -lm -lgcc_s|' /petsc-3.10.2/real_mumps_seq/lib/petsc/conf/petscvariables
+RUN sed -i 's|-lgfortran -lquadmath -lpthread -lstdc++ -ldl -lgfortran -lm -lgfortran -lm -lgcc_s -lquadmath -lstdc++ -ldl|/usr/local/lib64/libgfortran.a /usr/local/lib64/libquadmath.a -lpthread -lstdc++ -static-libstdc++ -ldl -lm -lgcc_s|' /petsc-3.14.4/real_mumps_seq/lib/petsc/conf/petscvariables
 
 # -----------------------
 # SLEPc
 # -----------------------
 
-RUN curl -L -O https://slepc.upv.es/download/distrib/slepc-3.10.1.tar.gz
-RUN tar zxf slepc-3.10.1.tar.gz
-ENV SLEPC_DIR ${PWD}/slepc-3.10.1
+RUN curl -L -O https://slepc.upv.es/download/distrib/slepc-3.14.1.tar.gz
+RUN tar zxf slepc-3.14.1.tar.gz
+ENV SLEPC_DIR ${PWD}/slepc-3.14.1
 ENV PETSC_ARCH real_mumps_seq
 RUN cd ${SLEPC_DIR} && ./configure && make
 ENV PETSC_ARCH complex_mumps_seq

@@ -261,11 +261,11 @@ static int needPolygonOffset()
 {
   GModel *m = GModel::current();
   if(m->getMeshStatus() == 2 &&
-     (CTX::instance()->mesh.surfacesEdges || CTX::instance()->geom.curves ||
+     (CTX::instance()->mesh.surfaceEdges || CTX::instance()->geom.curves ||
       CTX::instance()->geom.surfaces))
     return 1;
-  if(m->getMeshStatus() == 3 && (CTX::instance()->mesh.surfacesEdges ||
-                                 CTX::instance()->mesh.volumesEdges))
+  if(m->getMeshStatus() == 3 && (CTX::instance()->mesh.surfaceEdges ||
+                                 CTX::instance()->mesh.volumeEdges))
     return 1;
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     PViewOptions *opt = PView::list[i]->getOptions();
@@ -302,10 +302,10 @@ void drawContext::draw3d()
     // speedup drawing of textured fonts on cocoa mac version
 #if defined(HAVE_FLTK) && defined(__APPLE__)
   std::size_t numStrings = GModel::current()->getNumVertices();
-  if(CTX::instance()->mesh.pointsNum)
+  if(CTX::instance()->mesh.nodeLabels)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshVertices());
-  if(CTX::instance()->mesh.linesNum || CTX::instance()->mesh.surfacesNum ||
-     CTX::instance()->mesh.volumesNum)
+  if(CTX::instance()->mesh.lineLabels || CTX::instance()->mesh.surfaceLabels ||
+     CTX::instance()->mesh.volumeLabels)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshElements());
   numStrings *= 2;
   if(gl_texture_pile_height() < numStrings) gl_texture_pile_height(numStrings);
