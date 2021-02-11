@@ -32,7 +32,7 @@ struct GeomOptimStats {
  *        The patch boundary is fixed.
  *        Use direct solver and arithmetric average to ensure
  *        maximum principle.
- *        Not always applicable: (if no param, if the patch contains a CAD uv singularity)
+ *        Not always applicable: if no param, if the patch contains a CAD uv singularity
  *
  * @param[in,out] patch The mesh patch to smooth. The new positions and uv are directly updated 
  *                      in the MVertex instances.
@@ -83,3 +83,16 @@ bool patchOptimizeGeometryWithKernel(
  * @param[out] sicnAvg Average element SICN quality
  */
 void computeSICN(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg);
+
+
+bool quadMeshOptimizeDMOKernelGreedy(
+    GFace* gf,
+    std::vector<MElement*>& elements,
+    std::vector<MVertex*>& freeVertices,
+    double rangeMin,
+    double rangeMax,
+    size_t iterMax,
+    double timeMax,
+    bool invertCADNormals,
+    GeomOptimStats& stats);
+

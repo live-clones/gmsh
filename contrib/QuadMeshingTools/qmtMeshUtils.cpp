@@ -11,6 +11,7 @@
 #include <vector>
 #include <array>
 #include <unordered_map>
+#include <unordered_set>
 #include <cstdint>
 #include <math.h>
 #include <algorithm>
@@ -30,9 +31,12 @@
 
 // /* QuadMeshingTools includes */
 #include "cppUtils.h"
+#include "geolog.h"
+#include "gmsh.h"
 
 using namespace CppUtils;
 using std::unordered_map;
+using std::unordered_set;
 
 std::vector<GFace*> model_faces(const GModel* gm) {
   std::vector<GFace*> faces;
@@ -272,6 +276,10 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
     if (it == gf->mesh_vertices.end()) {
       Msg::Error("GFaceMeshDiff::execute(): vertex %li (entity dim=%i) not found in gf->mesh_vertices (size %li), should NEVER happen, memory corrupted",
           ov->getNum(), ov->onWhat()->dim(), gf->mesh_vertices.size());
+      gmsh::initialize();
+      GeoLog::add(ov->point(),0.,"bad_property_v" + std::to_string(ov->getNum()));
+      GeoLog::flush();
+      gmsh::fltk::run();
       abort();
     }
     if (after.intVertices.size() > 0) {
@@ -372,4 +380,156 @@ GFaceMeshDiff::~GFaceMeshDiff() {
       e = nullptr;
     }
   }
+}
+
+PatchGeometryBackup::PatchGeometryBackup(GFaceMeshPatch& p, bool includeBoundary) {
+  for (MVertex* v: p.intVertices) {
+    SPoint2 uv(DBL_MAX,DBL_MAX);
+    GFace* gf = dynamic_cast<GFace*>(v->onWhat());
+    if (gf != nullptr) {
+      v->getParameter(0,uv.data()[0]);
+      v->getParameter(1,uv.data()[1]);
+    }
+    old[v] = {uv,v->point()};
+  }
+  if (includeBoundary) {
+    for (MVertex* v: p.bdrVertices) {
+      SPoint2 uv(DBL_MAX,DBL_MAX);
+      GFace* gf = dynamic_cast<GFace*>(v->onWhat());
+      if (gf != nullptr) {
+        v->getParameter(0,uv.data()[0]);
+        v->getParameter(1,uv.data()[1]);
+      }
+      old[v] = {uv,v->point()};
+    }
+  }
+}
+
+bool PatchGeometryBackup::restore() {
+  for (auto& kv: old) {
+    MVertex* v = kv.first;
+    SPoint2 uv = kv.second.first;
+    SPoint3 pt = kv.second.second;
+    if (uv.x() != DBL_MAX) {
+      v->setParameter(0,uv.x());
+      v->setParameter(1,uv.y());
+    }
+    v->setXYZ(pt.x(),pt.y(),pt.z());
+  }
+  return true;
+}
+
+MVertex* centerOfElements(const std::vector<MElement*>& elements) {
+  if (elements.size() == 0) return NULL;
+
+  std::map<std::array<MVertex*,2>,size_t> vPairCount;
+  unordered_map<MVertex*, unordered_set<MVertex*> > v2v;
+  for (MElement* f: elements) {
+    size_t N = f->getNumEdges();
+    for (size_t le = 0; le < N; ++le) {
+      MVertex* v1 = f->getVertex(le);
+      MVertex* v2 = f->getVertex((le+1)%N);
+      v2v[v1].insert(v2);
+      v2v[v2].insert(v1);
+      std::array<MVertex*,2> vPair = {v1,v2};
+      if (v2 < v1) {
+        vPair = {v2,v1};
+      }
+      vPairCount[vPair] += 1;
+    }
+  }
+
+  /* Init from boundary */
+  unordered_map<MVertex*,double> dist;
+  std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q; 
+  for (const auto& kv: vPairCount) if (kv.second == 1) {
+    dist[kv.first[0]] = 0.;
+    dist[kv.first[1]] = 0.;
+    Q.push({0.,kv.first[0]});
+    Q.push({0.,kv.first[1]});
+  }
+
+  /* Dijkstra propagation */
+  while (Q.size() > 0) {
+    MVertex* v = Q.top().second;
+    double cdist = Q.top().first;
+    Q.pop();
+    for (MVertex* v2: v2v[v]) {
+      double w_ij = v->distance(v2);
+      auto it = dist.find(v2);
+      if (it == dist.end() || cdist + w_ij < it->second) {
+        double new_dist = cdist + w_ij;
+        dist[v2] = cdist + w_ij;
+        Q.push({new_dist,v2});
+      }
+    }
+  }
+
+  double dmax = 0.;
+  MVertex* center = NULL;
+  for (const auto& kv: dist) {
+    if (kv.second > dmax) {
+      dmax = kv.second;
+      center = kv.first;
+    }
+  }
+  return center;
+}
+
+bool setVertexGFaceUV(GFace* gf, MVertex* v, double uv[2]) {
+  bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
+  if (onGf) {
+    v->getParameter(0,uv[0]);
+    v->getParameter(1,uv[1]);
+    return true;
+  } else {
+    GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
+    if (ge != NULL) {
+      double t;
+      v->getParameter(0,t);
+      SPoint2 uvp = ge->reparamOnFace(gf, t, -1);
+      uv[0] = uvp.x();
+      uv[1] = uvp.y();
+      return true;
+    } else {
+      GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
+      if (gv != NULL) {
+        SPoint2 uvp = gv->reparamOnFace(gf,0);
+        uv[0] = uvp.x();
+        uv[1] = uvp.y();
+        return true;
+      }
+    }
+  }
+  uv[0] = 0.;
+  uv[1] = 0.;
+  return false;
+}
+
+bool orientElementsAccordingToBoundarySegment(MVertex* a, MVertex* b, std::vector<MElement*>& elements) {
+  int reorient = 0;
+  for (MElement* e: elements) {
+    size_t n = e->getNumVertices();
+    for (size_t lv = 0; lv < n; ++lv) {
+      MVertex* v0 = e->getVertex(lv);
+      MVertex* v1 = e->getVertex((lv+1)%n);
+      if (v0 == a && v1 == b) {
+        reorient = -1;
+        break;
+      } else if (v0 == b && v1 == a) {
+        reorient = 1;
+        break;
+      }
+    }
+    if (reorient != 0) break;
+  }
+  if (reorient == 1) {
+    for (MElement* e: elements) {
+      e->reverse();
+    }
+  } else if (reorient == 0) {
+    Msg::Error("orientElementsAccordingToBoundarySegment: bdr quad edge not found, weird");
+    return false;
+  }
+  return true;
 }

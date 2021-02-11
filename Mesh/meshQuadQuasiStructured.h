@@ -53,4 +53,17 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm);
  */
 int transferSeamGEdgesVerticesToGFace(GModel* gm);
 
+/**
+ * @brief Look for patches of quads with >=3 irregular vertices which 
+ *        can be remeshed with more regular quad meshes. The replacement
+ *        meshes are subdivisions of a list of predefined patterns.
+ *        Irregular vertices matching cross field singularities are
+ *        preserved.
+ *
+ * @param gm The model containing the face quad meshes.
+ *
+ * @return 0 if success
+ */
+int optimizeTopologyWithCavityRemeshing(GModel* gm);
+
 #endif

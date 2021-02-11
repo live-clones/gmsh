@@ -28,6 +28,7 @@
 #include "MElement.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "gmsh.h" // api
 
 /* QuadMeshingTools includes */
 #include "cppUtils.h"
@@ -58,37 +59,6 @@ namespace QMT {
     uint32_t n = 0;
     vec2 jump = {0.,0.};
   };
-
-
-  bool setVertexGFaceUV(GFace* gf, MVertex* v, double uv[2]) {
-    bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
-    if (onGf) {
-      v->getParameter(0,uv[0]);
-      v->getParameter(1,uv[1]);
-      return true;
-    } else {
-      GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
-      if (ge != NULL) {
-        double t;
-        v->getParameter(0,t);
-        SPoint2 uvp = ge->reparamOnFace(gf, t, -1);
-        uv[0] = uvp.x();
-        uv[1] = uvp.y();
-        return true;
-      } else {
-        GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
-        if (gv != NULL) {
-          SPoint2 uvp = gv->reparamOnFace(gf,0);
-          uv[0] = uvp.x();
-          uv[1] = uvp.y();
-          return true;
-        }
-      }
-    }
-    uv[0] = 0.;
-    uv[1] = 0.;
-    return false;
-  }
 
 
   bool buildCondensedStructure(
@@ -440,6 +410,8 @@ namespace QMT {
     return true;
   }
 
+  bool SHOW_QUALITY = false;
+
   /* p0, p1, p2, p3: the four (ordered and oriented) corners
    * N: reference normal (normalized) */
   inline double quad_shape(const vec3& p0, const vec3& p1, const vec3& p2, const vec3& p3, const vec3& N) {
@@ -467,12 +439,28 @@ namespace QMT {
     const double q1 = a1/(len0_sq+len1_sq);
     const double q2 = a2/(len1_sq+len2_sq);
     const double q3 = a3/(len2_sq+len3_sq);
+    if (SHOW_QUALITY && (q0 < 0 || q1 < 0 || q2 < 0 || q3 < 0)) {
+      DBG("------");
+      DBG(len0_sq, len1_sq, len2_sq, len3_sq);
+      DBG(N);
+      DBG(N0,N1,N2,N3);
+      DBG(q0,q1,q2,q3);
+      vec3 mid = (p0+p1+p2+p3)*0.25;
+      GeoLog::add(mid,N,"Ni");
+      GeoLog::add(p0,N0,"Ni");
+      GeoLog::add(p1,N1,"Ni");
+      GeoLog::add(p2,N2,"Ni");
+      GeoLog::add(p3,N3,"Ni");
+      GeoLog::add({p0,p1,p2,p3},0.,"quad");
+      GeoLog::flush();
+      gmsh::fltk::run();
+      abort();
+    }
     return 2.*std::min(std::min(q0,q1),std::min(q2,q3));
   }
 
   inline double computeQualityQuadOneRing(const vec5& v, const OneRing& ring, const vec3& normal,
       double breakIfBelowThreshold = -DBL_MAX) {
-    constexpr bool USE_FAST_VERSION = false;
     if (ring.n % 2 != 0) return -DBL_MAX;
     double qmin = DBL_MAX;
     const vec3 p = {v[0],v[1],v[2]};
@@ -789,5 +777,166 @@ bool patchOptimizeGeometryWithKernel(
   Msg::Debug("optimize geometry kernel: %li/%li free vertices, %li elements, SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec",
       patch.intVertices.size(), patch.intVertices.size()+patch.bdrVertices.size(), patch.elements.size(),
       stats.sicnMinBefore, stats.sicnMinAfter, stats.sicnAvgBefore, stats.sicnAvgAfter, stats.timeCpu);
-  return 0;
+
+  return true;
 }
+
+bool quadMeshOptimizeDMOKernelGreedy(
+    GFace* gf,
+    std::vector<MElement*>& elements,
+    std::vector<MVertex*>& freeVertices,
+    double rangeMin,
+    double rangeMax,
+    size_t iterMax,
+    double timeMax,
+    bool invertCADNormals,
+    GeomOptimStats& stats) {
+
+  if (gf == NULL) return -1;
+  if (!gf->haveParametrization()) {
+    Msg::Error("optimize geometry dmo greedy: face %i have no parametrization", gf->tag());
+    return -1;
+  }
+
+  double t1 = Cpu();
+
+  /* Data for smoothing */
+  std::vector<vec5> point_uv;
+  std::vector<size_t> one_ring_first;
+  std::vector<uint32_t> one_ring_values;
+  std::vector<MVertex*> new2old;
+  bool okb = buildUVSmoothingDataStructures(gf, elements, freeVertices, point_uv, 
+      one_ring_first, one_ring_values, new2old);
+  if (!okb) {
+    Msg::Error("optimize geometry kernel: failed to build adjacency datastructures");
+    return -1;
+  }
+  OneRing ring;
+  std::vector<vec5> ringGeometric(10);
+  if (gf->periodic(0)) ring.jump[0] = gf->period(0);
+  if (gf->periodic(1)) ring.jump[1] = gf->period(1);
+  ring.p_uv = ringGeometric.data();
+  const double sign = invertCADNormals ? -1. : 1.;
+
+  size_t dmo_grid_width = 8;
+  size_t dmo_grid_depth = 3;
+
+  /* Initialization: all vertices locked */
+  std::vector<bool> locked(freeVertices.size(),true);
+
+  /* Explicit smoothing loop */
+  for (size_t iter = 0; iter < iterMax; ++iter) {
+    size_t nMoved = 0;
+
+    /* Loop over interior vertices */
+    for (size_t v = 0; v < freeVertices.size(); ++v) {
+      if (iter > 0 && locked[v]) continue;
+
+      /* Fill the OneRing geometric information */
+      ring.n = one_ring_first[v+1]-one_ring_first[v];
+      if (ring.n >= ringGeometric.size()) {
+        ringGeometric.resize(ring.n);
+        ring.p_uv = ringGeometric.data();
+      }
+      for (size_t lv = 0; lv < ring.n; ++lv) {
+        ring.p_uv[lv] = point_uv[one_ring_values[one_ring_first[v]+lv]];
+      }
+
+      /* Current position, normal and quality */
+      vec5 pos = point_uv[v];
+      vec3 normal = sign * gf->normal(SPoint2(pos[3],pos[4]));
+      if (length2(normal) == 0.) {
+        Msg::Warning("optimize geometry kernel: CAD normal length is 0 !");
+        continue;
+      }
+      normalize(normal);
+      double quality = computeQualityQuadOneRing(pos, ring, normal);
+
+      if (iter == 0) { /* First iteration: unlocked low quality vertices */
+        if (quality < rangeMin) {
+          locked[v] = false;
+        } else {
+          continue;
+        }
+      }
+
+      if (quality > rangeMax) {
+        locked[v] = true;
+        continue;
+      }
+
+      /* Optimize vertex position with DMO (adaptive grid sampling) */
+
+      double qualityBefore = quality;
+      // if (qualityBefore < 0) {
+      //   SHOW_QUALITY = true;
+      //   quality = computeQualityQuadOneRing(pos, ring, normal);
+      // }
+
+      vec5 newPos = dmoOptimizeVertexPosition(gf, pos, ring, dmo_grid_width, dmo_grid_depth, normal, quality);
+      point_uv[v] = newPos;
+      nMoved += 1;
+
+      // DBG(iter, v, pos, newPos, qualityBefore, quality);
+      if (qualityBefore < 0. || quality < 0.9*qualityBefore) {
+        DBG("-------- quality decreased locally", v, iter);
+        DBG(qualityBefore, quality);
+        // gmsh::fltk::run();
+        // abort();
+      }
+      // if (quality < 0 || qualityBefore < 0) abort();
+
+      if (quality > rangeMax) {
+        locked[v] = true;
+        continue;
+      } else { /* Unlock neighbors ! */
+        for (size_t lv = 0; lv < ring.n; ++lv) {
+          uint32_t v2 = one_ring_values[one_ring_first[v]+lv];
+          if (v2 < freeVertices.size()) locked[v2] = false;
+        }
+      }
+    }
+
+    if (nMoved == 0) break;
+  }
+
+  computeSICN(elements, stats.sicnMinBefore, stats.sicnAvgBefore);
+
+  // bool DBG_VIZU_LOCAL = false;
+  // const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
+  // if (stats.sicnMinAfter < stats.sicnMinBefore) {
+  //   DBG_VIZU_LOCAL = true;
+  // }
+  // if (DBG_VIZU || DBG_VIZU_LOCAL) {
+  //   GeoLog::add(elements, "optim_K_IN_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgBefore));
+  // }
+
+  for (size_t i = 0; i < freeVertices.size(); ++i) {
+    new2old[i]->setParameter(0,point_uv[i][3]);
+    new2old[i]->setParameter(1,point_uv[i][4]);
+    new2old[i]->setXYZ(point_uv[i][0],point_uv[i][1],point_uv[i][2]);
+  }
+
+  /* Statistics */
+  computeSICN(elements, stats.sicnMinAfter, stats.sicnAvgAfter);
+
+  // if (DBG_VIZU || DBG_VIZU_LOCAL) {
+  //   GeoLog::add(elements, "optim_K_OUT_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgAfter));
+  //   GeoLog::flush();
+  // }
+
+  double t2 = Cpu();
+  stats.timeCpu = t2 - t1;
+  stats.nFree = freeVertices.size();
+  stats.nLock = point_uv.size() - stats.nFree;
+
+  Msg::Debug("optimize geometry DMO greedy: SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec",
+      stats.sicnMinBefore, stats.sicnMinAfter, stats.sicnAvgBefore, stats.sicnAvgAfter, stats.timeCpu);
+
+  // if (DBG_VIZU_LOCAL) {
+  //   gmsh::fltk::run();
+  // }
+
+  return true;
+}
+

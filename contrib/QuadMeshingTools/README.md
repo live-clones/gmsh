@@ -43,6 +43,7 @@ Shortcuts:
 - ALGO_2D_PACK_PRLGRMS (algo pack) improved, works on surfaces now
 - Add disk quadrangulation remeshing
 - Add patch smoothing (UV laplacian + DMO)
+- Add cavity remeshing (contrib/QuadMeshingTools/qmtQuadCavityRemeshing.h/cpp)
 
 # Todo
 

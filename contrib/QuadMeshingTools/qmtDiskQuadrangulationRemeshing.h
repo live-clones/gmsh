@@ -20,8 +20,10 @@ int initDiskQuadrangulations();
 
 /**
  * @brief Look for the best topological disk quadrangulation remeshing 
- * which match the allowed valence ranges.
- * Requires that the disk quadrangulation data is initialized, see initDiskQuadrangulations()
+ *        which match the allowed valence ranges.
+ *        Requires that the disk quadrangulation data is initialized, see initDiskQuadrangulations()
+ *        The GFace mesh is not changed, the changes are stored in the diff 
+ *        which can executed by the caller.
  *
  * @param[in] gf CAD face containing the elements
  * @param[in] elements Elements (triangles or quads) in the input patch. May be empty
@@ -30,8 +32,8 @@ int initDiskQuadrangulations();
  * @param[in] bndIdealValence The ideal inside quad valence for the boundary corners
  * @param[in] bndAllowedValenceRange The allowed range of inside quad valence
  * @param[in] neighborsForGeometry Adjacent elements that may be used for geometry untangling
- * @param[in] minSICNafer Minimum SICN quality required in the remeshed patch. Computed after
- *                        geometry untangling/smoothing.
+ * @param[in] minSICNafer Minimum SICN quality required in the remeshed patch. 
+ *                        Compared after geometry untangling/smoothing.
  * @param[in] invertNormalsForQuality The CAD normals are used to compute signed quality.
  *                                    This flag invert invert the CAD normals in the measure.
  * @param[out] diff The mesh diff (to the GFace) containing the remeshing candidate

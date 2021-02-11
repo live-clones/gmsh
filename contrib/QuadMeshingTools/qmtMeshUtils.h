@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include "SPoint2.h"
 #include "SPoint3.h"
 
 
@@ -47,9 +48,14 @@ void sicnQuality(const GFaceMeshPatch& patch, double& sicnMin, double& sicnAvg);
 
 bool patchIsTopologicallyValid(const GFaceMeshPatch& patch);
 
-
 bool getConnectedComponents(const std::vector<MElement*>& elements, 
     std::vector<std::vector<MElement*> >& components);
+
+bool setVertexGFaceUV(GFace* gf, MVertex* v, double uv[2]);
+
+MVertex* centerOfElements(const std::vector<MElement*>& elements);
+
+bool orientElementsAccordingToBoundarySegment(MVertex* a, MVertex* b, std::vector<MElement*>& elements);
 
 struct GFaceMeshDiff {
   GFace* gf = nullptr;
@@ -74,3 +80,18 @@ struct GFaceMeshDiff {
   ~GFaceMeshDiff(); 
 };
 
+
+/**
+ * @brief Store the geometry (uv + 3D) of a GFaceMeshPatch.
+ *        Useful to restore the initial geometry after trying
+ *        various smoothing operations that were not successful.
+ */
+struct PatchGeometryBackup {
+  std::vector<MVertex*> vertices;
+  std::vector<SPoint2> UVs;
+  std::vector<SPoint3> positions;
+  std::unordered_map<MVertex*,std::pair<SPoint2,SPoint3> > old;
+
+  PatchGeometryBackup(GFaceMeshPatch& p, bool includeBoundary = false);
+  bool restore();
+};

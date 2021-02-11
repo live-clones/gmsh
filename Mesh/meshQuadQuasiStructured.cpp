@@ -45,6 +45,7 @@
 #include "qmtCrossField.h"
 #include "qmtSizeMap.h"
 #include "qmtDiskQuadrangulationRemeshing.h"
+#include "qmtQuadCavityRemeshing.h"
 #include "qmtMeshGeometryOptimization.h"
 #include "arrayGeometry.h"
 #include "geolog.h"
@@ -284,6 +285,9 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
       if (it != bmesh.faceBackgroundMeshes.end()) {
         ntris += it->second.triangles.size();
       }
+      /* warning: initialize global storage of singularities
+       *          before parallel loop to avoid race conditions */
+      global_singularities[gf] = {}; 
     }
     global_triangles.reserve(ntris);
     global_size_map.reserve(3*ntris);
@@ -328,6 +332,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
         continue;
       }
 
+      /* Cross field */
       std::vector<std::array<double,3> > triEdgeTheta;
       int nbDiffusionLevels = 4;
       double thresholdNormConvergence = 1.e-2;
@@ -341,6 +346,24 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
         Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
       }
 
+      /* Cross field singularities */
+      bool addSingularitiesAtAcuteCorners = true;
+      double thresholdInDeg = 30.;
+      std::vector<std::pair<SPoint3,int> > singularities;
+      int scsi = detectCrossFieldSingularities(triangles, triEdgeTheta, 
+          addSingularitiesAtAcuteCorners, thresholdInDeg,
+          singularities);
+      if (scsi != 0) {
+        Msg::Warning("- Face %i: failed to compute cross field singularities", gf->tag());
+      }
+      global_singularities[gf] = singularities; /* warning: global storage of singularities ! */
+      if (SHOW_INTERMEDIATE_VIEWS) {
+        for (auto& kv: singularities) {
+          GeoLog::add(kv.first,double(kv.second),"singularities");
+        }
+      }
+
+      /* Conformal scaling associated to cross field */
       std::unordered_map<MVertex*,double> conformalScaling;
       Msg::Info("- Face %i/%li: compute cross field conformal scaling ...", gf->tag(), faces.size());
       int scs = computeCrossFieldConformalScaling(triangles, triEdgeTheta, conformalScaling);
@@ -511,7 +534,15 @@ int transferSeamGEdgesVerticesToGFace(GModel* gm) {
 
         /* GEdge boundary vertices */
         for (GVertex* gv: ge->vertices()) if (gv->mesh_vertices.size() == 1) {
-          if (gv->edges().size() != 1 || gv->edges()[0] != ge) continue;
+          size_t nbOtherCurves = 0;
+          for (GEdge* ge2: gv->edges()) if (ge2 != ge) {
+            if (ge2->vertices().front() == ge2->vertices().back() 
+                && ge2->length() == 0.) { /* Empty curve */
+              continue;
+            }
+            nbOtherCurves += 1;
+          }
+          if (nbOtherCurves > 0) continue;
           MVertex* ov = gv->mesh_vertices[0];
           auto it = old2new.find(ov);
           if (it != old2new.end()) continue; /* already changed */
@@ -727,38 +758,6 @@ std::vector<MElement*> getNeighbors(
   return neighbors;
 }
 
-struct PatchGeometryBackup {
-  std::vector<MVertex*> vertices;
-  std::vector<SPoint2> UVs;
-  std::vector<SPoint3> positions;
-  unordered_map<MVertex*,std::pair<SPoint2,SPoint3> > old;
-  PatchGeometryBackup(GFaceMeshPatch& p) {
-    for (MVertex* v: p.intVertices) {
-      SPoint2 uv(DBL_MAX,DBL_MAX);
-      GFace* gf = dynamic_cast<GFace*>(v->onWhat());
-      if (gf != nullptr) {
-        v->getParameter(0,uv.data()[0]);
-        v->getParameter(1,uv.data()[1]);
-      }
-      old[v] = {uv,v->point()};
-    }
-  }
-
-  bool restore() {
-    for (auto& kv: old) {
-      MVertex* v = kv.first;
-      SPoint2 uv = kv.second.first;
-      SPoint3 pt = kv.second.second;
-      if (uv.x() != DBL_MAX) {
-        v->setParameter(0,uv.x());
-        v->setParameter(1,uv.y());
-      }
-      v->setXYZ(pt.x(),pt.y(),pt.z());
-    }
-    return true;
-  }
-};
-
 bool smoothThePool(
     GFace* gf,
     const std::vector<MVertex*>& smoothingPool,
@@ -833,6 +832,21 @@ int improveCornerValences(
   std::vector<MVertex*> smoothingPool; /* for smoothing after topological changes */
   smoothingPool.reserve(gf->mesh_vertices.size());
 
+  /* qValIdeal is unordered_map and its ordering is random, we replace 
+   * it with a deterministic ordering, containing only the corners */
+  std::vector<std::pair<MVertex*,double> > cornerAndIdeal;
+  for (auto& kv: qValIdeal) {
+    GVertex* gv = dynamic_cast<GVertex*>(kv.first->onWhat());
+    if (gv != nullptr) {
+      cornerAndIdeal.push_back({kv.first,kv.second});
+    }
+  }
+  std::sort(cornerAndIdeal.begin(),cornerAndIdeal.end(),
+      [](const std::pair<MVertex*, double>& lhs, const std::pair<MVertex*, double>& rhs) {
+      return lhs.second < rhs.second 
+      || (lhs.second == rhs.second && lhs.first->getNum() < rhs.first->getNum()); } );
+
+
   int SMALL_PATCH = 0; /* just the quads adjacent to corner */
   int LARGER_PATCH = 1; /* add the neighbors */
   /* We try larger cavities first because the result is usually better
@@ -840,7 +854,7 @@ int improveCornerValences(
    * not work when the larger cavity is too constrained by CAD curves,
    * so we try the small cavity after */
   for (int pass: {LARGER_PATCH,SMALL_PATCH}) {
-    for (const auto& kv: qValIdeal) {
+    for (const auto& kv: cornerAndIdeal) {
       MVertex* v = kv.first;
       GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
       if (gv == nullptr) continue;
@@ -907,7 +921,7 @@ int improveCornerValences(
   if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, invertNormalsForQuality);
 
   /* Remaining cases, just for stats */
-  for (const auto& kv: qValIdeal) {
+  for (const auto& kv: cornerAndIdeal) {
     MVertex* v = kv.first;
     GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
     if (gv == nullptr) continue;
@@ -933,7 +947,23 @@ int improveCurveValences(
   std::vector<MVertex*> smoothingPool; /* for smoothing after topological changes */
   smoothingPool.reserve(gf->mesh_vertices.size());
 
-  for (const auto& kv: qValIdeal) {
+  /* qValIdeal is unordered_map and its ordering is random, we replace 
+   * it with a deterministic ordering, containing only the corners */
+  std::vector<std::pair<MVertex*,double> > curveVertexAndIdeal;
+  curveVertexAndIdeal.reserve(qValIdeal.size());
+  for (auto& kv: qValIdeal) {
+    MVertex* v = kv.first;
+    GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
+    if (ge != nullptr) {
+      curveVertexAndIdeal.push_back({kv.first,kv.second});
+    }
+  }
+  std::sort(curveVertexAndIdeal.begin(),curveVertexAndIdeal.end(),
+      [](const std::pair<MVertex*, double>& lhs, const std::pair<MVertex*, double>& rhs) {
+      return lhs.second < rhs.second 
+      || (lhs.second == rhs.second && lhs.first->getNum() < rhs.first->getNum()); } );
+
+  for (const auto& kv: curveVertexAndIdeal) {
     MVertex* v = kv.first;
     GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
     if (ge == nullptr) continue;
@@ -991,7 +1021,7 @@ int improveCurveValences(
   if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, invertNormalsForQuality);
 
   /* Remaining cases, just for stats */
-  for (const auto& kv: qValIdeal) {
+  for (const auto& kv: curveVertexAndIdeal) {
     MVertex* v = kv.first;
     GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
     if (ge == nullptr) continue;
@@ -1245,6 +1275,41 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
     if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
 
     optimizeQuadMeshWithDiskQuadrangulationRemeshing(gf);
+  }
+
+  return 0;
+}
+
+
+
+int optimizeTopologyWithCavityRemeshing(GModel* gm) {
+  std::vector<GFace*> faces = model_faces(gm);
+  Msg::Debug("optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
+
+  initQuadPatterns();
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+  for (size_t f = 0; f < faces.size(); ++f) {
+    GFace* gf = faces[f];
+    if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if (CTX::instance()->debugSurface > 0 &&
+        gf->tag() != CTX::instance()->debugSurface) continue;
+    if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+
+    /* Get singularities from global storage */
+    std::vector<std::pair<SPoint3,int> > singularities;
+    auto it = global_singularities.find(gf);
+    if (it == global_singularities.end()) {
+      Msg::Warning("optimize topology with cavity remeshing: cross field singularities not found for face %i", gf->tag());
+      Msg::Warning("TODO: compute cross field on quad mesh !");
+    } else {
+      singularities = it->second;
+    }
+
+    bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
+    improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, invertNormals);
   }
 
   return 0;

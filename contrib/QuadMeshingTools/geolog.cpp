@@ -6,6 +6,7 @@
 #define GMSH_LINKED
 #if defined(GMSH_LINKED)
   #include "gmsh.h"
+  #include "Context.h"
   #include "MVertex.h"
   #include "MElement.h"
   #include "MTriangle.h"
@@ -289,7 +290,9 @@ namespace GeoLog {
 
 
       /* gmsh API calls */
-      gmsh::initialize();
+      int aboe = CTX::instance()->abortOnError;
+      gmsh::initialize(); /* changes abortOnError !! */
+      CTX::instance()->abortOnError = aboe;
       int view = gmsh::view::add(views[v].name);
       for (const auto& kv: data_TYPE) {
         if (kv.first != "" && kv.first != "text") {

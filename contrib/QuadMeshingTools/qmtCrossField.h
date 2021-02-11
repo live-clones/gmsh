@@ -11,10 +11,12 @@
 #include <array>
 #include <unordered_map>
 #include <utility>
+#include "SPoint3.h"
 
 class MVertex;
 class MTriangle;
 class MLine;
+class GFace;
 
 /**
  * @brief Compute a smooth boundary-aligned cross field by alternating
@@ -99,3 +101,33 @@ int convertToPerTriangleCrossFieldDirections(
     const std::vector<MTriangle*>& triangles, 
     const std::vector<std::array<double,3> >& triEdgeTheta, 
     std::vector<std::array<double,9> >& triangleDirections);
+
+/**
+ * @brief Detect the singularities in a cross field by adding angle differences around
+ *        vertex one-rings
+ *
+ * @param[in] triangles Triangulation used to compute cross field and size map
+ * @param[in] triEdgeTheta The cross field, one angle per triangle edge, relative to the edge direction
+ *                     should be compatible with the result of computeCrossFieldWithHeatEquation()
+ * @param[in] addSingularitiesAtAcuteCorners If true, at singularity at corners whose angle is small
+ * @param[in] thresholdInDeg Corners are considered acute if inferior to this threshold, e.g. 30 (degrees)
+ * @param[out] singularities Cross field singularities, position and index (-1 for valence 5, 
+ *                           +1 for valence 3)
+ *
+ * @return 0 if success
+ */
+int detectCrossFieldSingularities(
+    const std::vector<MTriangle*>& triangles, 
+    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    bool addSingularitiesAtAcuteCorners,
+    double thresholdInDeg,
+    std::vector<std::pair<SPoint3,int> >& singularities);
+
+
+
+/**
+ * @brief Global storage to associate singularities with faces. Can be used from the
+ *        exterior. Not modified by any function in this file.
+ *        User must be very careful (global variable is bad and dangerous, etc)
+ */
+extern std::unordered_map<GFace*,std::vector<std::pair<SPoint3,int> > > global_singularities;

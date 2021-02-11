@@ -56,14 +56,18 @@
 using namespace ArrayGeometry;
 using namespace CppUtils;
 
+using std::vector;
+using std::unordered_map;
+using std::array;
+using std::pair;
+
+/* Global variable instanciation */
+std::unordered_map<GFace*,std::vector<std::pair<SPoint3,int> > > global_singularities;
+
 namespace QMT {
 
   constexpr double EPS = 1.e-14;
 
-  using std::vector;
-  using std::unordered_map;
-  using std::array;
-  using std::pair;
   using id   = uint32_t;
   using sid  = int64_t;
   using id2  = std::array<id,2>;
@@ -810,6 +814,122 @@ namespace QMT {
     return true;
   }
 
+
+  inline SVector3 tri_normal(MTriangle* t) {
+    SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
+        t->getVertex(1)->y() - t->getVertex(0)->y(),
+        t->getVertex(1)->z() - t->getVertex(0)->z());
+    SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
+        t->getVertex(2)->y() - t->getVertex(0)->y(),
+        t->getVertex(2)->z() - t->getVertex(0)->z());
+    SVector3 normal_to_triangle = crossprod(v20, v10);
+    normal_to_triangle.normalize();
+    return normal_to_triangle;
+  }
+
+  inline SVector3 crouzeix_raviart_interpolation(SVector3 lambda, SVector3 edge_values[3]) {
+    double x = lambda[1];
+    double y = lambda[2];
+    SVector3 shape = {1.0 - 2.0 * y, -1.0 + 2.0 * (x + y), 1.0 - 2.0 * x};
+    return shape[0] * edge_values[0] + shape[1] * edge_values[1] + shape[2] * edge_values[2];
+  }
+
+  int local_frame(const MVertex* v, const std::vector<MTriangle*>& tris, 
+      SVector3& e_x, SVector3& e_y, SVector3& e_z) {
+    e_x = SVector3(DBL_MAX,DBL_MAX,DBL_MAX);
+    SVector3 avg(0.,0.,0.);
+    for (MTriangle* t: tris) {
+      avg += tri_normal(t);
+      if (e_x.x() == DBL_MAX) {
+        for (size_t le = 0; le < 3; ++le) {
+          MVertex* v1 = t->getVertex(le);
+          MVertex* v2 = t->getVertex((le+1)%3);
+          if (v1 == v) {
+            e_x = v2->point() - v1->point();
+            break;
+          } else if (v2 == v) {
+            e_x = v1->point() - v2->point();
+            break;
+          }
+        }
+      }
+    }
+    if (avg.norm() < 1.e-16) {
+      Msg::Error("local frame for %li triangles: avg normal = %.2f, %.2f, %.2f", 
+          tris.size(), avg.x(), avg.y(), avg.z());
+      return -1;
+    }
+    if (e_x.norm() < 1.e-16) {
+      Msg::Error("local frame for %li triangles: e_x = %.2f, %.2f, %.2f", 
+          tris.size(), e_x.x(), e_x.y(), e_x.z());
+      return -1;
+    }
+    e_x.normalize();
+    avg.normalize();
+    e_z = avg;
+    e_y = crossprod(e_z,e_x);
+    if (e_y.norm() < 1.e-16) {
+      Msg::Error("local frame for %li triangles: e_y = %.2f, %.2f, %.2f", 
+          tris.size(), e_y.x(), e_y.y(), e_y.z());
+      return -1;
+    }
+    e_y.normalize();
+
+    return 0;
+  }
+
+  int ordered_fan_around_vertex(const MVertex* v, const std::vector<MTriangle*>& tris,
+      std::vector<std::array<MVertex*,2> >& vPairs) {
+    vPairs.clear();
+    if (tris.size() < 3) return -1;
+
+    std::unordered_set<MTriangle*> done;
+    { /* Init */
+      MTriangle* t = tris[0];
+      for (size_t le = 0; le < 3; ++le) {
+        MVertex* v1 = t->getVertex(le);
+        MVertex* v2 = t->getVertex((le+1)%3);
+        if (v1 != v && v2 != v) {
+          vPairs.push_back({v1,v2});
+          done.insert(t);
+          break;
+        }
+      }
+    }
+
+    while (vPairs.back().back() != vPairs[0][0]) {
+      MVertex* last = vPairs.back().back();
+      /* Look for next edge connected to last */
+      bool found = false;
+      for (MTriangle* t: tris) {
+        if (done.find(t) != done.end()) continue;
+        for (size_t le = 0; le < 3; ++le) {
+          MVertex* v1 = t->getVertex(le);
+          MVertex* v2 = t->getVertex((le+1)%3);
+          if (v1 != v && v2 != v) {
+            if (v1 == last) {
+              vPairs.push_back({v1,v2});
+              done.insert(t);
+              found = true;
+              break;
+            } else if (v2 == last) {
+              vPairs.push_back({v2,v1});
+              done.insert(t);
+              found = true;
+              break;
+            }
+          }
+        }
+        if (found) break;
+      }
+      if (!found) {
+        Msg::Error("failed to order fan vertex pairs");
+        return -1;
+      }
+    }
+
+    return 0;
+  }
 }
 
 
@@ -1205,25 +1325,6 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   return 0;
 }
 
-inline SVector3 tri_normal(MTriangle* t) {
-  SVector3 v10(t->getVertex(1)->x() - t->getVertex(0)->x(),
-      t->getVertex(1)->y() - t->getVertex(0)->y(),
-      t->getVertex(1)->z() - t->getVertex(0)->z());
-  SVector3 v20(t->getVertex(2)->x() - t->getVertex(0)->x(),
-      t->getVertex(2)->y() - t->getVertex(0)->y(),
-      t->getVertex(2)->z() - t->getVertex(0)->z());
-  SVector3 normal_to_triangle = crossprod(v20, v10);
-  normal_to_triangle.normalize();
-  return normal_to_triangle;
-}
-
-inline SVector3 crouzeix_raviart_interpolation(SVector3 lambda, SVector3 edge_values[3]) {
-  double x = lambda[1];
-  double y = lambda[2];
-  SVector3 shape = {1.0 - 2.0 * y, -1.0 + 2.0 * (x + y), 1.0 - 2.0 * x};
-  return shape[0] * edge_values[0] + shape[1] * edge_values[1] + shape[2] * edge_values[2];
-}
-
 int convertToPerTriangleCrossFieldDirections(
     const std::vector<MTriangle*>& triangles, 
     const std::vector<std::array<double,3> >& triEdgeTheta, 
@@ -1234,7 +1335,7 @@ int convertToPerTriangleCrossFieldDirections(
   for (size_t f = 0; f < triangles.size(); ++f) {
     MTriangle* t = triangles[f];
 
-    SVector3 N = tri_normal(t);
+    SVector3 N = QMT::tri_normal(t);
 
     /* Compute one branch at triangle vertices */
     SVector3 refCross = {0.,0.,0.};
@@ -1286,7 +1387,7 @@ int convertToPerTriangleCrossFieldDirections(
     for (size_t lv = 0; lv < 3; ++lv) {
       SVector3 lambda = {0.,0.,0.};
       lambda[lv] = 1.;
-      SVector3 dir = crouzeix_raviart_interpolation(lambda,lifted_dirs);
+      SVector3 dir = QMT::crouzeix_raviart_interpolation(lambda,lifted_dirs);
       if (length2(dir) != 0.) dir.normalize();
       for (size_t d = 0; d < 3; ++d) {
         tDirs[3*lv+d] = dir.data()[d];
@@ -1297,3 +1398,216 @@ int convertToPerTriangleCrossFieldDirections(
 
   return 0;
 }
+
+inline double angle2PI(const SVector3& u, const SVector3& v, const SVector3& n) {
+  const double dp = dot(u,v);
+  const double tp = dot(n,crossprod(u,v));
+  double angle = atan2(tp,dp);
+  if (angle < 0) angle += 2. * M_PI;
+  return angle;
+}
+
+int detectCrossFieldSingularities(
+    const std::vector<MTriangle*>& triangles, 
+    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    bool addSingularitiesAtAcuteCorners,
+    double thresholdInDeg,
+    std::vector<std::pair<SPoint3,int> >& singularities) {
+  singularities.clear();
+  if (triangles.size() != triEdgeTheta.size()) {
+    Msg::Error("detect cross field singularities: wrong inputs");
+    return -1;
+  }
+
+  /* Get interior vertices and adjacent triangles */
+  unordered_map<MVertex*,vector<MTriangle*> > v2t;
+
+  /* put edge angles here, maybe a bit slow ... */
+  unordered_map<MEdge,double,MEdgeHash,MEdgeEqual> edgeTheta; 
+
+  for (size_t i = 0; i < triangles.size(); ++i) {
+    MTriangle* t = triangles[i];
+    for (size_t le = 0; le < 3; ++le) {
+      MVertex* v1 = t->getVertex(le);
+      MVertex* v2 = t->getVertex((le+1)%3);
+
+      MEdge edg(v1,v2);
+      edgeTheta[edg] = triEdgeTheta[i][le];
+
+      GFace* gf = dynamic_cast<GFace*>(v1->onWhat());
+      if (gf == nullptr) continue;
+      v2t[v1].push_back(t);
+    }
+  }
+
+  /* Compute index at each vertex (looking on the one rings) */
+  unordered_map<MVertex*,int> vertexIndex;
+  for (auto& kv: v2t) {
+    MVertex* v = kv.first;
+    const vector<MTriangle*>& tris = kv.second;
+
+    SVector3 e_x, e_y, N;
+    int st = QMT::local_frame(v, tris, e_x, e_y, N);
+    if (st != 0) {
+      Msg::Error("no local frame for v=%li", v->getNum());
+      continue;
+    }
+
+    std::vector<std::array<MVertex*,2> > vPairs;
+    int st2 = QMT::ordered_fan_around_vertex(v, tris, vPairs);
+    if (st2 != 0) {
+      Msg::Error("no ordered fan around v=%li", v->getNum());
+      continue;
+    }
+
+    double angle_deficit = 2.*M_PI;
+    std::vector<SVector3> rep_vectors(vPairs.size()); /* cross field representation vector in local frame (+e_x,+e_y) */
+    for (size_t j = 0; j < vPairs.size(); ++j) {
+      MVertex* v1 = vPairs[j][0];
+      MVertex* v2 = vPairs[j][1];
+      angle_deficit -= angle3Vertices(v1, v, v2); /* gaussian curvature */
+
+      SVector3 tgt;
+      if (v1->getNum() < v2->getNum()) {
+        tgt = v2->point() - v1->point();
+      } else {
+        tgt = v1->point() - v2->point();
+      }
+      tgt.normalize();
+      SVector3 tgt2 = crossprod(N,tgt);
+      tgt2.normalize();
+      std::array<size_t,2> vPair = {v1->getNum(),v2->getNum()};
+      if (vPair[1] < vPair[0]) vPair = {v2->getNum(),v1->getNum()};
+      MEdge query(v1,v2);
+      auto it = edgeTheta.find(query);
+      if (it == edgeTheta.end()) {
+        Msg::Error("Edge (%li,%li) not found in edgeTheta",vPair[0],vPair[1]);
+        return -1;
+      }
+      double A = it->second;
+
+      SVector3 branchInQuadrant;
+      bool found = false;
+      double dpmax = -DBL_MAX; size_t kmax = (size_t) -1;
+      for (size_t k = 0; k < 4; ++k) { /* Loop over branches */
+        SVector3 branch = tgt * cos(A+k*M_PI/2) + tgt2 * sin(A+k*M_PI/2);
+        if (dot(branch,e_x) >= 0. && dot(branch,e_y) >= 0.) {
+          branchInQuadrant = branch;
+          found = true;
+          break;
+        }
+        double dp = dot(branch,SVector3(std::sqrt(2),std::sqrt(2),0.));
+        if (dp > dpmax) {dpmax = dp; kmax = k;}
+      }
+      if (!found && kmax != (size_t)-1 ) { /* if numerical errors */
+        branchInQuadrant = tgt * cos(A+kmax*M_PI/2) + tgt2 * sin(A+kmax*M_PI/2);
+      }
+
+      double theta = acos(dot(branchInQuadrant,e_x));
+      rep_vectors[j] = {cos(4.*theta),sin(4.*theta),0.};
+    }
+    double sum_diff = 0.;
+    for (size_t j = 0; j < vPairs.size(); ++j) {
+      SVector3 vertical(0.,0.,1.);
+      const SVector3 r1 = rep_vectors[j];
+      const SVector3 r2 = rep_vectors[(j+1)%rep_vectors.size()];
+      double diff_angle = angle2PI(r1,r2,vertical);
+      if (diff_angle > M_PI) diff_angle -= 2.*M_PI;
+      sum_diff += diff_angle;
+    }
+    if (std::abs(sum_diff-2*M_PI) < 0.05*M_PI) {
+      vertexIndex[v] = -1;
+    } else if (std::abs(sum_diff+2*M_PI) < 0.05*M_PI) {
+      vertexIndex[v] = 1;
+    } else if (std::abs(sum_diff) > 0.05 * M_PI) {
+      Msg::Debug("singularity detection, v=%i, sum of diff is %.3f deg, ignored", v->getNum(), sum_diff);
+    }
+  }
+
+  /* Three types of singularities with Crouzeix-Raviart interpolation:
+   * - on vertex
+   * - on edge
+   * - on triangle */
+
+  /* triangle singularities */
+  for (MTriangle* t: triangles) {
+    MVertex* v1 = t->getVertex(0);
+    MVertex* v2 = t->getVertex(1);
+    MVertex* v3 = t->getVertex(2);
+    for (double index: {-1.,1.}) {
+      if (vertexIndex[v1] == index 
+          && vertexIndex[v2] == index 
+          && vertexIndex[v3] == index) {
+        SPoint3 p = (v1->point()+v2->point()+v3->point()) * double(1./3.);
+        singularities.push_back({p,index});
+        /* remove from list of available singularities */
+        vertexIndex[v1] = 0.; 
+        vertexIndex[v2] = 0.;
+        vertexIndex[v3] = 0.;
+      }
+    }
+  }
+  /* edge singularities */
+  for (MTriangle* t: triangles) {
+    for (size_t le = 0; le < 3; ++le) {
+      MVertex* v1 = t->getVertex(le);
+      MVertex* v2 = t->getVertex((le+1)%3);
+      for (double index: {-1.,1.}) {
+        if (vertexIndex[v1] == index 
+            && vertexIndex[v2] == index) {
+          SPoint3 p = (v1->point()+v2->point()) * 0.5;
+          singularities.push_back({p,index});
+          /* remove from list of available singularities */
+          vertexIndex[v1] = 0.; 
+          vertexIndex[v2] = 0.;
+        }
+      }
+    }
+  }
+  /* vertex singularities */
+  for (auto& kv: vertexIndex) if (kv.second != 0) {
+    singularities.push_back({kv.first->point(),kv.second});
+  }
+
+  Msg::Debug("detect cross field singularities: found %li singularities (%li triangles)",
+      singularities.size(), triangles.size());
+
+  if (addSingularitiesAtAcuteCorners) {
+    size_t nb = singularities.size();
+    unordered_map<MVertex*, double> cornerAngle;
+    unordered_map<MVertex*, std::vector<MTriangle*> > cornerToTris;
+    for (MTriangle* t: triangles) {
+      for (size_t le = 0; le < 3; ++le) {
+        MVertex* v2 = t->getVertex((le+1)%3);
+        if (v2->onWhat()->cast2Vertex() != NULL) {
+          MVertex* v1 = t->getVertex(le);
+          MVertex* v3 = t->getVertex((le+2)%3);
+          double agl = std::abs(angle3Vertices(v1,v2,v3));
+          cornerAngle[v2] += agl;
+          cornerToTris[v2].push_back(t);
+        }
+      }
+    }
+    for (const auto& kv: cornerAngle) {
+      MVertex* v = kv.first;
+      double agl = kv.second;
+      if (agl * 180. / M_PI < thresholdInDeg)  {
+        std::vector<MTriangle*>& tris = cornerToTris[v];
+        if (tris.size() == 0) continue;
+        SPoint3 p(0.,0.,0.);
+        for (MTriangle* t: tris) {
+          p += t->barycenter();
+        }
+        p = p * double(1./double(tris.size())); 
+        singularities.push_back({p,1});
+      }
+    }
+    if (singularities.size() > nb) {
+      Msg::Debug("detect cross field singularities: added %li artificial singularities at acute corners",
+          singularities.size()-nb);
+    }
+  }
+
+  return 0;
+}
+

@@ -2938,7 +2938,9 @@ void meshGFace::operator()(GFace *gf, bool print)
    * to generate a initial quad-dominant mesh. The updater
    * changes gmsh global options before the 2D meshing call. */
   QuadQuasiStructuredUpdater* qqs = NULL;
-  if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+  if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT
+      || CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS
+      ) {
     qqs = new QuadQuasiStructuredUpdater();
   }
 

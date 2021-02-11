@@ -210,11 +210,6 @@ namespace QMT {
     return (best != DBL_MAX);
   }
 
-  double randomInRange(double vMin, double vMax) {
-    double v = (double) rand() / RAND_MAX;
-    return vMin + v * (vMax-vMin);
-  }
-
   /* WARNING: GFace is not modified, just the "floating" MVertex
    * and MQuadrangle are created, they must be inserted in the GFace
    * later is the pattern is kept.
@@ -227,6 +222,7 @@ namespace QMT {
       std::vector<MVertex*> & newVertices,               /* new vertices inside the cavity */
       std::vector<MElement*> & newElements               /* new quads inside the cavity */
       ) {
+    if (bnd.size() < 4) return false;
 
     const double EPS_RANDOM = 1.e-16;
 
@@ -238,6 +234,7 @@ namespace QMT {
       std::rotate(bndr.begin(),bndr.begin()+(size_t) std::abs(rotation),bndr.end());
     }
 
+    size_t count = 0;
     unordered_map<id,MVertex*> pv2mv;
     for (size_t f = 0; f < quads.size(); ++f) {
       std::array<MVertex*,4> vert;
@@ -249,16 +246,17 @@ namespace QMT {
           auto it = pv2mv.find(pv);
           if (it == pv2mv.end()) {
             SVector3 p = bndr[0]->point();
-            p.data()[0] += randomInRange(-EPS_RANDOM,EPS_RANDOM);
-            p.data()[1] += randomInRange(-EPS_RANDOM,EPS_RANDOM);
-            p.data()[2] += randomInRange(-EPS_RANDOM,EPS_RANDOM);
+            p.data()[0] += count * EPS_RANDOM;
+            p.data()[1] += count * EPS_RANDOM;
+            p.data()[2] += count * EPS_RANDOM;
             double uv[2] = {0.,0.};
-            uv[0] = randomInRange(-EPS_RANDOM,EPS_RANDOM);
-            uv[1] = randomInRange(-EPS_RANDOM,EPS_RANDOM);
+            uv[0] = count * EPS_RANDOM;
+            uv[1] = count * EPS_RANDOM;
             MVertex *mv = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
             pv2mv[pv] = mv;
             vert[lv] = mv;
             newVertices.push_back(mv);
+            count += 1;
           } else {
             vert[lv] = it->second;
           }
@@ -272,90 +270,13 @@ namespace QMT {
     }
 
     /* Ensure coherent orientation between the new mesh and the boundary */
-    {
-      MVertex* a = bnd[0];
-      MVertex* b = bnd[1];
-      int reorient = 0;
-      for (MElement* e: newElements) {
-        for (size_t lv = 0; lv < 4; ++lv) {
-          MVertex* v0 = e->getVertex(lv);
-          MVertex* v1 = e->getVertex((lv+1)%4);
-          if (v0 == a && v1 == b) {
-            reorient = -1;
-            break;
-          } else if (v0 == b && v1 == a) {
-            reorient = 1;
-            break;
-          }
-        }
-        if (reorient != 0) break;
-      }
-      if (reorient == 1) {
-        for (MElement* e: newElements) {
-          e->reverse();
-        }
-      } else if (reorient == 0) {
-        Msg::Error("getDiskQuadrangulationRemeshing: bdr quad edge not found, weird");
-        return false;
-      }
+    bool oko = orientElementsAccordingToBoundarySegment(bnd[0],bnd[1], newElements);
+    if (!oko) {
+      Msg::Error("getDiskQuadrangulationRemeshing: bdr quad edge not found, weird");
+      return false;
     }
-
-    // TODO: ensure coherent orientation before / after remeshing
-    //       check quad bdr vs bnd in input
 
     return true;
-  }
-  
-  int patchOptimizeGeometryWithExteriorStorage(
-      int method,
-      GFaceMeshPatch& patch, 
-      const GeomOptimOptions& opt,
-      GeomOptimStats& stats,
-      std::unordered_map<MVertex*,SPoint2>& newUVs,
-      std::unordered_map<MVertex*,SPoint3>& newPositions) {
-
-    /* Save old positions */
-    std::unordered_map<MVertex*,SPoint2> oldUVs;
-    std::unordered_map<MVertex*,SPoint3> oldPositions;
-    for (MVertex* v: patch.intVertices) {
-      if (dynamic_cast<GFace*>(v->onWhat()) != nullptr) {
-        double uv[2];
-        v->getParameter(0,uv[0]);
-        v->getParameter(1,uv[1]);
-        oldUVs[v] = SPoint2(uv[0],uv[1]);
-      }
-      oldPositions[v] = v->point();
-    }
-
-    if (method == 0) {
-      int st = patchOptimizeGeometryGlobal(patch, stats);
-      if (st != 0) return st;
-    } else if (method == 1) {
-      int st = patchOptimizeGeometryWithKernel(patch, opt, stats);
-      if (st != 0) return st;
-    } else if (method == 2) {
-      int st = patchOptimizeGeometryGlobal(patch, stats);
-      if (st != 0) return st;
-      st = patchOptimizeGeometryWithKernel(patch, opt, stats);
-      if (st != 0) return st;
-    }
-
-    /* Save new positions and restore old ones */
-    for (MVertex* v: patch.intVertices) {
-      if (dynamic_cast<GFace*>(v->onWhat()) != nullptr) {
-        double uv[2];
-        v->getParameter(0,uv[0]);
-        v->getParameter(1,uv[1]);
-        newUVs[v] = SPoint2(uv[0],uv[1]);
-        SPoint2 oldUV = oldUVs[v];
-        v->setParameter(oldUV[0],oldUV[1]);
-      }
-      newPositions[v] = v->point();
-      SPoint3 oldPt = oldPositions[v];
-      v->setXYZ(oldPt.x(),oldPt.y(),oldPt.z());
-    }
-
-    return 0;
   }
 
 }
@@ -482,27 +403,25 @@ int remeshLocalWithDiskQuadrangulation(
       Msg::Debug("try smoothing the extended cavity (%li -> %li free vertices)", 
           patch.intVertices.size(), largerPatch.intVertices.size());
 
+      /* Store the geometry */
+      PatchGeometryBackup backup(largerPatch);
+
       GeomOptimOptions opt;
       opt.invertCADNormals = invertNormalsForQuality;
       GeomOptimStats stats;
 
-      std::unordered_map<MVertex*,SPoint2> newUVs;
-      std::unordered_map<MVertex*,SPoint3> newPositions;
-      int globalUVThenLocalKernel = 2;
-      int s0 = patchOptimizeGeometryWithExteriorStorage(globalUVThenLocalKernel, largerPatch, opt, stats, newUVs, newPositions);
+      int s0 = patchOptimizeGeometryGlobal(largerPatch, stats);
+      int s1 = patchOptimizeGeometryWithKernel(largerPatch, opt, stats);
 
-      if (s0 == 0 && stats.sicnAvgAfter > minSICNafer) {
+      if (s0 == 0 && s1 == 0 && stats.sicnAvgAfter > minSICNafer) {
         geometryOk = true;
-        /* Apply the new UV and positions (will the change the bdr of the initial patch) */
-        for (auto& kv: newUVs) {
-          kv.first->setParameter(0,kv.second.x());
-          kv.first->setParameter(1,kv.second.y());
-        }
-        for (auto& kv: newPositions) {
-          kv.first->setXYZ(kv.second.x(),kv.second.y(),kv.second.z());
-        }
-        diff.after = patch; 
+        /* warning: the small patch, not the larger one !
+         *          but geometry of the patch boundary has been
+         *          changed via the smoothing of the larger patch */
+        diff.after = patch;  
         break;
+      } else {
+        backup.restore();
       }
     }
   }
