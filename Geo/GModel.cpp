@@ -1437,27 +1437,49 @@ std::size_t GModel::getNumMeshParentElements() const
   return n;
 }
 
-int GModel::addMEdge(const MEdge &edge)
+std::size_t GModel::addMEdge(const MEdge &edge)
 {
-  std::pair<MEdge, int> key(edge, _mapEdgeNum.size());
+  std::pair<MEdge, std::size_t> key(edge, _mapEdgeNum.size() + 1);
   std::pair<hashmapMEdge::iterator, bool> it = _mapEdgeNum.insert(key);
   return it.first->second;
 }
 
-int GModel::getEdgeNumber(const MEdge &edge)
+std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
 {
-  auto it = _mapEdgeNum.find(edge);
-  if(it != _mapEdgeNum.end()) { return _mapEdgeNum.find(edge)->second; }
+  MEdge e(v0, v1);
+  auto it = _mapEdgeNum.find(e);
+  if(it != _mapEdgeNum.end()) {
+    edge = it->first;
+    return it->second;
+  }
   else {
-    Msg::Error("This edge does not exist in the mapEdgeNum");
-    return -1;
+    Msg::Error("Unknown edge %d %d", edge.getVertex(0)->getNum(),
+               edge.getVertex(1)->getNum());
+    return 0;
   }
 }
-int GModel::addMFace(const MFace &face)
+
+std::size_t GModel::addMFace(const MFace &face)
 {
-  std::pair<MFace, int> key(face, _mapFaceNum.size());
+  std::pair<MFace, std::size_t> key(face, _mapFaceNum.size() + 1);
   std::pair<hashmapMFace::iterator, bool> it = _mapFaceNum.insert(key);
   return it.first->second;
+}
+
+std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+                             MFace &face)
+{
+  MFace f(v0, v1, v2, v3);
+  auto it = _mapFaceNum.find(f);
+  if(it != _mapFaceNum.end()) {
+    face = it->first;
+    return it->second;
+  }
+  else {
+    Msg::Error("Unknown face %d %d %d", face.getVertex(0)->getNum(),
+               face.getVertex(1)->getNum(), face.getVertex(2)->getNum());
+    return 0;
+  }
 }
 
 void GModel::renumberMeshVertices()

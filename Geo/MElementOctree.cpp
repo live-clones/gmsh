@@ -11,6 +11,7 @@
 #include "fullMatrix.h"
 #include "bezierBasis.h"
 #include "BasisFactory.h"
+#include "SBoundingBox3d.h"
 
 void MElementBB(void *a, double *min, double *max)
 {
@@ -47,12 +48,17 @@ void MElementBB(void *a, double *min, double *max)
       max[2] = std::max(max[2], bezNodes(i, 2));
     }
   }
-  // make bounding boxes larger up to (absolute) geometrical tolerance
-  double const eps = CTX::instance()->geom.tolerance;
-  for(int i = 0; i < 3; i++) {
-    min[i] -= eps;
-    max[i] += eps;
-  }
+
+  // make cubic bounding box with a 10% buffer
+  SBoundingBox3d bb(min[0], min[1], min[2], max[0], max[1], max[2]);
+  bb *= 1.1;
+  bb.makeCube();
+  max[0] = bb.max().x();
+  max[1] = bb.max().y();
+  max[2] = bb.max().z();
+  min[0] = bb.min().x();
+  min[1] = bb.min().y();
+  min[2] = bb.min().z();
 }
 
 static void MElementCentroid(void *a, double *x)
@@ -86,11 +92,9 @@ int MElementInEle(void *a, double *x)
 MElementOctree::MElementOctree(GModel *m) : _gm(m)
 {
   SBoundingBox3d bb = m->bounds();
-  // make bounding box larger up to (absolute) geometrical tolerance
-  double eps = CTX::instance()->geom.tolerance;
-  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
-  bbmin -= bbeps;
-  bbmax += bbeps;
+  // make bounding box larger
+  bb *= 1.1;
+  SPoint3 bbmin = bb.min(), bbmax = bb.max();
   double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
                     bbmax.z() - bbmin.z()};
@@ -125,11 +129,9 @@ MElementOctree::MElementOctree(const std::vector<MElement *> &v)
                     v[i]->getVertex(j)->z());
     }
   }
-  // make bounding box larger up to (absolute) geometrical tolerance
-  double eps = CTX::instance()->geom.tolerance;
-  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
-  bbmin -= bbeps;
-  bbmax += bbeps;
+  // make bounding box larger
+  bb *= 1.1;
+  SPoint3 bbmin = bb.min(), bbmax = bb.max();
   double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
                     bbmax.z() - bbmin.z()};

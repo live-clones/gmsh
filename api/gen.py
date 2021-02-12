@@ -347,13 +347,16 @@ mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('fun
 doc = '''Preallocate data before calling `getBasisFunctionsOrientationForElements' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateBasisFunctionsOrientationForElements', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
-doc = '''Get the global mesh edge identifier `edgeNum' for an input list of node pairs, concatenated in the vector `edgeNodes'.  Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getEdgeNumber', doc, None, ivectorint('edgeNodes'), ovectorint('edgeNum'))
+doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'.'''
+mesh.add('getEdges', doc, None, ivectorsize('nodeTags'), ovectorsize('edgeTags'), ovectorint('edgeOrientations'))
 
-doc = '''Create mesh edges for the entities `dimTags'. Warning: this is an experimental feature and will probably change in a future release.'''
+doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated in the vector `nodeTags'.'''
+mesh.add('getFaces', doc, None, iint('faceType'), ivectorsize('nodeTags'), ovectorsize('faceTags'), ovectorint('faceOrientations'))
+
+doc = '''Create unique mesh edges for the entities `dimTags'.'''
 mesh.add('createEdges', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
-doc = '''Create mesh faces for the entities `dimTags'. Warning: this is an experimental feature and will probably change in a future release.'''
+doc = '''Create unique mesh faces for the entities `dimTags'.'''
 mesh.add('createFaces', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
 doc = '''Get the local multipliers (to guarantee H(curl)-conformity) of the order 0 H(curl) basis functions. Warning: this is an experimental feature and will probably change in a future release.'''

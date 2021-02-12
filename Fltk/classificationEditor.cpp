@@ -161,18 +161,18 @@ static void hide_cb(Fl_Widget *w, void *data)
 static void show_only_edges_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor *)data;
-  static int old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
-  static int old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
+  static int old_sf = (int)opt_mesh_surface_faces(0, GMSH_GET, 0.);
+  static int old_se = (int)opt_mesh_surface_edges(0, GMSH_GET, 0.);
   if(e->toggles[CLASS_TOGGLE_SHOW_ONLY_EDGES]->value()) {
     opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 1.);
-    old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
-    old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
-    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, 0.);
-    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, 0.);
+    old_sf = (int)opt_mesh_surface_faces(0, GMSH_GET, 0.);
+    old_se = (int)opt_mesh_surface_edges(0, GMSH_GET, 0.);
+    opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI, 0.);
+    opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI, 0.);
   }
   else {
-    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, old_sf);
-    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, old_se);
+    opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI, old_sf);
+    opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI, old_se);
   }
   drawContext::global()->draw();
 }

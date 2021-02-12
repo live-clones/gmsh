@@ -965,7 +965,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'p')) {
-    opt_mesh_points(0, GMSH_SET | GMSH_GUI, !opt_mesh_points(0, GMSH_GET, 0));
+    opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, !opt_mesh_nodes(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'l')) {
@@ -973,13 +973,13 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 's')) {
-    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI,
-                            !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
+    opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI,
+                           !opt_mesh_surface_edges(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
-    opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_volumes_edges(0, GMSH_GET, 0));
+    opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI,
+                          !opt_mesh_volume_edges(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'd')) {
@@ -988,13 +988,13 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'd')) {
-    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI,
-                            !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
+    opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI,
+                           !opt_mesh_surface_faces(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'b')) {
-    opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_volumes_faces(0, GMSH_GET, 0));
+    opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI,
+                          !opt_mesh_volume_faces(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'm')) {

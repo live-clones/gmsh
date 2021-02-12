@@ -75,7 +75,9 @@ gmsh.model.mesh.reclassifyNodes()
 gmsh.model.mesh.createGeometry()
 
 # create other CAD entities to form one volume below the terrain surface, and
-# one volume on top
+# one volume on top; beware that only built-in CAD entities can be hybrid,
+# i.e. have discrete entities on their boundary: OpenCASCADE does not support
+# this feature
 p1 = gmsh.model.geo.addPoint(0, 0, -0.5)
 p2 = gmsh.model.geo.addPoint(1, 0, -0.5)
 p3 = gmsh.model.geo.addPoint(1, 1, -0.5)

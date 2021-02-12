@@ -6961,8 +6961,11 @@ void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List
 
 void yyerror(const char *s)
 {
-  Msg::Error("'%s', line %d: %s (%s)", gmsh_yyname.c_str(), gmsh_yylineno - 1,
-             s, gmsh_yytext);
+  if(gmsh_yyname.empty())
+    Msg::Error("%s (%s)", s, gmsh_yytext);
+  else
+    Msg::Error("'%s', line %d: %s (%s)", gmsh_yyname.c_str(), gmsh_yylineno - 1,
+               s, gmsh_yytext);
   gmsh_yyerrorstate++;
 }
 
@@ -6976,14 +6979,23 @@ void yymsg(int level, const char *fmt, ...)
   va_end(args);
 
   if(level == 0){
-    Msg::Error("'%s', line %d: %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
+    if(gmsh_yyname.empty())
+      Msg::Error("%s", tmp);
+    else
+      Msg::Error("'%s', line %d: %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
     gmsh_yyerrorstate++;
   }
   else if(level == 1){
-    Msg::Warning("'%s', line %d: %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
+    if(gmsh_yyname.empty())
+      Msg::Warning("%s", tmp);
+    else
+      Msg::Warning("'%s', line %d: %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
   }
   else{
-    Msg::Info("'%s', line %d: %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
+    if(gmsh_yyname.empty())
+      Msg::Info("%s", tmp);
+    else
+      Msg::Info("'%s', line %d: %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
   }
 }
 

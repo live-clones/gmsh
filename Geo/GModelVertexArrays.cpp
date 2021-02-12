@@ -306,7 +306,7 @@ private:
   int _estimateNumLines(GFace *f)
   {
     int num = 0;
-    if(CTX::instance()->mesh.surfacesEdges) {
+    if(CTX::instance()->mesh.surfaceEdges) {
       num += (3 * f->triangles.size() + 4 * f->quadrangles.size() +
               4 * f->polygons.size()) /
              2;
@@ -318,7 +318,7 @@ private:
   int _estimateNumTriangles(GFace *f)
   {
     int num = 0;
-    if(CTX::instance()->mesh.surfacesFaces) {
+    if(CTX::instance()->mesh.surfaceFaces) {
       num += (f->triangles.size() + 2 * f->quadrangles.size() +
               2 * f->polygons.size());
       if(_curved) num *= 4;
@@ -336,8 +336,8 @@ public:
                              CTX::instance()->mesh.quadrangles &&
                              areAllElementsVisible(f->quadrangles));
 
-    bool edg = CTX::instance()->mesh.surfacesEdges;
-    bool fac = CTX::instance()->mesh.surfacesFaces;
+    bool edg = CTX::instance()->mesh.surfaceEdges;
+    bool fac = CTX::instance()->mesh.surfaceFaces;
     if(edg || fac) {
       _curved = (areSomeElementsCurved(f->triangles) ||
                  areSomeElementsCurved(f->quadrangles));
@@ -379,7 +379,7 @@ private:
   int _estimateNumLines(GRegion *r)
   {
     int num = 0;
-    if(CTX::instance()->mesh.volumesEdges) {
+    if(CTX::instance()->mesh.volumeEdges) {
       // suppose edge shared by 4 elements on averge (pessmistic)
       int numLP = 0;
       for(std::size_t i = 0; i < r->polyhedra.size(); i++)
@@ -397,7 +397,7 @@ private:
   int _estimateNumTriangles(GRegion *r)
   {
     int num = 0;
-    if(CTX::instance()->mesh.volumesFaces) {
+    if(CTX::instance()->mesh.volumeFaces) {
       int numFP = 0;
       for(std::size_t i = 0; i < r->polyhedra.size(); i++)
         numFP += r->polyhedra[i]->getNumFaces();
@@ -425,8 +425,8 @@ public:
       areAllElementsVisible(r->pyramids) && CTX::instance()->mesh.trihedra &&
       areAllElementsVisible(r->trihedra));
 
-    bool edg = CTX::instance()->mesh.volumesEdges;
-    bool fac = CTX::instance()->mesh.volumesFaces;
+    bool edg = CTX::instance()->mesh.volumeEdges;
+    bool fac = CTX::instance()->mesh.volumeFaces;
     if(edg || fac) {
       _curved = (areSomeElementsCurved(r->tetrahedra) ||
                  areSomeElementsCurved(r->hexahedra) ||

@@ -108,7 +108,7 @@ public:
       }
     }
 
-    if(CTX::instance()->geom.pointsNum || v->getSelection() > 1) {
+    if(CTX::instance()->geom.pointLabels || v->getSelection() > 1) {
       double offset =
         (0.5 * ps + 0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       if(v->getSelection() > 1)
@@ -205,7 +205,7 @@ public:
       }
     }
 
-    if(CTX::instance()->geom.curvesNum || e->getSelection() > 1) {
+    if(CTX::instance()->geom.curveLabels || e->getSelection() > 1) {
       GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
       double offset = (0.5 * CTX::instance()->geom.curveWidth +
                        0.1 * CTX::instance()->glFontSize) *
@@ -327,7 +327,7 @@ public:
 
     if(((CTX::instance()->geom.surfaces || f->getSelection() > 1) &&
         CTX::instance()->geom.surfaceType == 0) ||
-       CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals)
+       CTX::instance()->geom.surfaceLabels || CTX::instance()->geom.normals)
       f->buildRepresentationCross();
 
     if(CTX::instance()->geom.surfaces || f->getSelection() > 1) {
@@ -363,7 +363,7 @@ public:
 
     if(f->cross[0].size() && f->cross[0][0].size()) {
       int idx = f->cross[0][0].size() / 2;
-      if(CTX::instance()->geom.surfacesNum || f->getSelection() > 1) {
+      if(CTX::instance()->geom.surfaceLabels || f->getSelection() > 1) {
         double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
         double x = f->cross[0][0][idx].x();
         double y = f->cross[0][0][idx].y();
@@ -432,7 +432,7 @@ public:
     const double size = 8.;
     double x = 0., y = 0., z = 0.;
 
-    if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumesNum ||
+    if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumeLabels ||
        r->getSelection() > 1) {
       SPoint3 p = r->bounds(true).center(); // fast approx if mesh-based
       x = p.x();
@@ -444,7 +444,7 @@ public:
     if(CTX::instance()->geom.volumes || r->getSelection() > 1)
       _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
 
-    if(CTX::instance()->geom.volumesNum || r->getSelection() > 1) {
+    if(CTX::instance()->geom.volumeLabels || r->getSelection() > 1) {
       double offset =
         (1. * size + 0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       if(r->getSelection() > 1)

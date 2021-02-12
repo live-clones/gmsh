@@ -198,18 +198,17 @@ public:
     return e[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
-  virtual int getVertexSolin(int numEdge, int numVertex)
+  virtual MEdge getEdgeSolin(int num)
   {
     static const int eSolin[6][2] = {{0, 1}, {1, 2}, {2, 0},
                                      {0, 3}, {2, 3}, {1, 3}};
-    return getVertex(eSolin[numEdge][numVertex])->getNum();
+    return MEdge(_v[eSolin[num][0]], _v[eSolin[num][1]]);
   }
-  virtual MFace getFaceSolin(int numFace)
+  virtual MFace getFaceSolin(int num)
   {
     static const int fSolin[4][3] = {
       {0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3}};
-    return MFace(_v[fSolin[numFace][0]], _v[fSolin[numFace][1]],
-                 _v[fSolin[numFace][2]]);
+    return MFace(_v[fSolin[num][0]], _v[fSolin[num][1]], _v[fSolin[num][2]]);
   }
 };
 

@@ -41,6 +41,7 @@ gmsh.model.geo.synchronize()
 
 # Add the post-processing view as a new size field:
 bg_field = gmsh.model.mesh.field.add("PostView")
+gmsh.model.mesh.field.setNumber(bg_field, "ViewIndex", 0)
 
 # Apply the view as the current background mesh size field:
 gmsh.model.mesh.field.setAsBackgroundMesh(bg_field)

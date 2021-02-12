@@ -33,6 +33,7 @@ gmsh.merge(os.path.join(path, os.pardir, 't17_bgmesh.pos'))
 
 # Apply the view as the current background mesh
 bg_field = gmsh.model.mesh.field.add("PostView")
+gmsh.model.mesh.field.setNumber(bg_field, "ViewIndex", 0)
 gmsh.model.mesh.field.setAsBackgroundMesh(bg_field)
 
 # Use bamg

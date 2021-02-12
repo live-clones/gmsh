@@ -172,24 +172,24 @@
                 forControlEvents:UIControlEventValueChanged];
     }
     else if(indexPath.row == 1) {
-      [lblOptions setText:@"Show geometry lines"];
+      [lblOptions setText:@"Show geometry curves"];
       [showHideOptions setOn:(CTX::instance()->geom.curves)];
       [showHideOptions addTarget:self
-                          action:@selector(setShowGeomLines:)
+                          action:@selector(setShowGeomCurves:)
                 forControlEvents:UIControlEventValueChanged];
     }
     else if(indexPath.row == 2) {
       [lblOptions setText:@"Show mesh surface edges"];
-      [showHideOptions setOn:(CTX::instance()->mesh.surfacesEdges)];
+      [showHideOptions setOn:(CTX::instance()->mesh.surfaceEdges)];
       [showHideOptions addTarget:self
-                          action:@selector(setShowMeshSurfacesEdges:)
+                          action:@selector(setShowMeshSurfaceEdges:)
                 forControlEvents:UIControlEventValueChanged];
     }
     else if(indexPath.row == 3) {
-      [lblOptions setText:@"Show mesh volumes edges"];
-      [showHideOptions setOn:CTX::instance()->mesh.volumesEdges];
+      [lblOptions setText:@"Show mesh volume edges"];
+      [showHideOptions setOn:CTX::instance()->mesh.volumeEdges];
       [showHideOptions addTarget:self
-                          action:@selector(setShowMeshVolumesEdges:)
+                          action:@selector(setShowMeshVolumeEdges:)
                 forControlEvents:UIControlEventValueChanged];
     }
     [cell addSubview:showHideOptions];
@@ -260,24 +260,24 @@
                                                       object:nil];
 }
 
-- (void)setShowGeomLines:(UISwitch *)sender
+- (void)setShowGeomCurves:(UISwitch *)sender
 {
   CTX::instance()->geom.curves = sender.on;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
                                                       object:nil];
 }
 
-- (void)setShowMeshVolumesEdges:(UISwitch *)sender
+- (void)setShowMeshVolumeEdges:(UISwitch *)sender
 {
-  CTX::instance()->mesh.volumesEdges = sender.on;
+  CTX::instance()->mesh.volumeEdges = sender.on;
   CTX::instance()->mesh.changed = ENT_VOLUME;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
                                                       object:nil];
 }
 
-- (void)setShowMeshSurfacesEdges:(UISwitch *)sender
+- (void)setShowMeshSurfaceEdges:(UISwitch *)sender
 {
-  CTX::instance()->mesh.surfacesEdges = sender.on;
+  CTX::instance()->mesh.surfaceEdges = sender.on;
   CTX::instance()->mesh.changed = ENT_SURFACE;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
                                                       object:nil];

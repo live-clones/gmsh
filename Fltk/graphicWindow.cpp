@@ -3084,22 +3084,22 @@ void quick_access_cb(Fl_Widget *w, void *data)
   else if(what == "geometry_volumes")
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI,
                          !opt_geometry_volumes(0, GMSH_GET, 0));
-  else if(what == "mesh_points")
-    opt_mesh_points(0, GMSH_SET | GMSH_GUI, !opt_mesh_points(0, GMSH_GET, 0));
+  else if(what == "mesh_nodes")
+    opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, !opt_mesh_nodes(0, GMSH_GET, 0));
   else if(what == "mesh_lines")
     opt_mesh_lines(0, GMSH_SET | GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
-  else if(what == "mesh_surfaces_edges")
-    opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI,
-                            !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
-  else if(what == "mesh_surfaces_faces")
-    opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI,
-                            !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
-  else if(what == "mesh_volumes_edges")
-    opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_volumes_edges(0, GMSH_GET, 0));
-  else if(what == "mesh_volumes_faces")
-    opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI,
-                           !opt_mesh_volumes_faces(0, GMSH_GET, 0));
+  else if(what == "mesh_surface_edges")
+    opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI,
+                           !opt_mesh_surface_edges(0, GMSH_GET, 0));
+  else if(what == "mesh_surface_faces")
+    opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI,
+                           !opt_mesh_surface_faces(0, GMSH_GET, 0));
+  else if(what == "mesh_volume_edges")
+    opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI,
+                          !opt_mesh_volume_edges(0, GMSH_GET, 0));
+  else if(what == "mesh_volume_faces")
+    opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI,
+                          !opt_mesh_volume_faces(0, GMSH_GET, 0));
   else if(what == "mesh_size")
     numberOrStringOptionChooser("Mesh", 0, "MeshSizeFactor", true, "Factor",
                                 true, 0.01, 100, 0.01);
@@ -3228,37 +3228,37 @@ void quick_access_cb(Fl_Widget *w, void *data)
   }
   else if(what == "mesh_toggle") {
     static int value = 1;
-    static int old_p = (int)opt_mesh_points(0, GMSH_GET, 0.);
+    static int old_p = (int)opt_mesh_nodes(0, GMSH_GET, 0.);
     static int old_l = (int)opt_mesh_lines(0, GMSH_GET, 0.);
-    static int old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
-    static int old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
-    static int old_ve = (int)opt_mesh_volumes_edges(0, GMSH_GET, 0.);
-    static int old_vf = (int)opt_mesh_volumes_faces(0, GMSH_GET, 0.);
+    static int old_se = (int)opt_mesh_surface_edges(0, GMSH_GET, 0.);
+    static int old_sf = (int)opt_mesh_surface_faces(0, GMSH_GET, 0.);
+    static int old_ve = (int)opt_mesh_volume_edges(0, GMSH_GET, 0.);
+    static int old_vf = (int)opt_mesh_volume_faces(0, GMSH_GET, 0.);
     if(!value) { // retore visibility
       Msg::StatusBar(false, "Mesh display restored");
       value = 1;
-      opt_mesh_points(0, GMSH_SET | GMSH_GUI, old_p);
+      opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, old_p);
       opt_mesh_lines(0, GMSH_SET | GMSH_GUI, old_l);
-      opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, old_se);
-      opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, old_sf);
-      opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, old_ve);
-      opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, old_vf);
+      opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI, old_se);
+      opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI, old_sf);
+      opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI, old_ve);
+      opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI, old_vf);
     }
     else {
       Msg::StatusBar(false, "Mesh display OFF");
       value = 0;
-      old_p = (int)opt_mesh_points(0, GMSH_GET, 0.);
+      old_p = (int)opt_mesh_nodes(0, GMSH_GET, 0.);
       old_l = (int)opt_mesh_lines(0, GMSH_GET, 0.);
-      old_se = (int)opt_mesh_surfaces_edges(0, GMSH_GET, 0.);
-      old_sf = (int)opt_mesh_surfaces_faces(0, GMSH_GET, 0.);
-      old_ve = (int)opt_mesh_volumes_edges(0, GMSH_GET, 0.);
-      old_vf = (int)opt_mesh_volumes_faces(0, GMSH_GET, 0.);
-      opt_mesh_points(0, GMSH_SET | GMSH_GUI, 0);
+      old_se = (int)opt_mesh_surface_edges(0, GMSH_GET, 0.);
+      old_sf = (int)opt_mesh_surface_faces(0, GMSH_GET, 0.);
+      old_ve = (int)opt_mesh_volume_edges(0, GMSH_GET, 0.);
+      old_vf = (int)opt_mesh_volume_faces(0, GMSH_GET, 0.);
+      opt_mesh_nodes(0, GMSH_SET | GMSH_GUI, 0);
       opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 0);
-      opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI, 0);
-      opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, 0);
-      opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, 0);
-      opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, 0);
+      opt_mesh_surface_edges(0, GMSH_SET | GMSH_GUI, 0);
+      opt_mesh_surface_faces(0, GMSH_SET | GMSH_GUI, 0);
+      opt_mesh_volume_edges(0, GMSH_SET | GMSH_GUI, 0);
+      opt_mesh_volume_faces(0, GMSH_SET | GMSH_GUI, 0);
     }
   }
 
@@ -3356,18 +3356,18 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Mesh visibility", 0, nullptr, nullptr, FL_SUBMENU },
-         { "Nodes", FL_ALT + FL_SHIFT + 'p', quick_access_cb, (void*)"mesh_points",
+         { "Nodes", FL_ALT + FL_SHIFT + 'p', quick_access_cb, (void*)"mesh_nodes",
            FL_MENU_TOGGLE },
          { "1D elements", FL_ALT + FL_SHIFT + 'l', quick_access_cb, (void*)"mesh_lines",
            FL_MENU_TOGGLE },
          { "2D element edges ", FL_ALT + FL_SHIFT + 's', quick_access_cb,
-           (void*)"mesh_surfaces_edges", FL_MENU_TOGGLE },
+           (void*)"mesh_surface_edges", FL_MENU_TOGGLE },
          { "2D element faces", FL_ALT + FL_SHIFT + 'd', quick_access_cb,
-           (void*)"mesh_surfaces_faces", FL_MENU_TOGGLE },
+           (void*)"mesh_surface_faces", FL_MENU_TOGGLE },
          { "3D element edges", FL_ALT + FL_SHIFT + 'v', quick_access_cb,
-           (void*)"mesh_volumes_edges", FL_MENU_TOGGLE },
+           (void*)"mesh_volume_edges", FL_MENU_TOGGLE },
          { "3D element faces", FL_ALT + FL_SHIFT + 'b', quick_access_cb,
-           (void*)"mesh_volumes_faces", FL_MENU_TOGGLE },
+           (void*)"mesh_volume_faces", FL_MENU_TOGGLE },
          { nullptr },
       { "Toggle mesh display", FL_ALT + 'm', quick_access_cb, (void*)"mesh_toggle" },
       { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
@@ -3427,7 +3427,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       menu[geo + 4].set();
     else
       menu[geo + 4].clear();
-    if(opt_mesh_points(0, GMSH_GET, 0))
+    if(opt_mesh_nodes(0, GMSH_GET, 0))
       menu[msh + 1].set();
     else
       menu[msh + 1].clear();
@@ -3435,19 +3435,19 @@ void status_options_cb(Fl_Widget *w, void *data)
       menu[msh + 2].set();
     else
       menu[msh + 2].clear();
-    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0))
+    if(opt_mesh_surface_edges(0, GMSH_GET, 0))
       menu[msh + 3].set();
     else
       menu[msh + 3].clear();
-    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0))
+    if(opt_mesh_surface_faces(0, GMSH_GET, 0))
       menu[msh + 4].set();
     else
       menu[msh + 4].clear();
-    if(opt_mesh_volumes_edges(0, GMSH_GET, 0))
+    if(opt_mesh_volume_edges(0, GMSH_GET, 0))
       menu[msh + 5].set();
     else
       menu[msh + 5].clear();
-    if(opt_mesh_volumes_faces(0, GMSH_GET, 0))
+    if(opt_mesh_volume_faces(0, GMSH_GET, 0))
       menu[msh + 6].set();
     else
       menu[msh + 6].clear();

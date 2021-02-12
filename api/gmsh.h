@@ -1054,24 +1054,34 @@ namespace gmsh { // Top-level functions
                                                                     std::vector<int> & basisFunctionsOrientation,
                                                                     const int tag = -1);
 
-      // gmsh::model::mesh::getEdgeNumber
+      // gmsh::model::mesh::getEdges
       //
-      // Get the global mesh edge identifier `edgeNum' for an input list of node
-      // pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
-      // experimental feature and will probably change in a future release.
-      GMSH_API void getEdgeNumber(const std::vector<int> & edgeNodes,
-                                  std::vector<int> & edgeNum);
+      // Get the global unique mesh edge identifiers `edgeTags' and orientations
+      // `edgeOrientation' for an input list of node tag pairs defining these
+      // edges, concatenated in the vector `nodeTags'.
+      GMSH_API void getEdges(const std::vector<std::size_t> & nodeTags,
+                             std::vector<std::size_t> & edgeTags,
+                             std::vector<int> & edgeOrientations);
+
+      // gmsh::model::mesh::getFaces
+      //
+      // Get the global unique mesh face identifiers `faceTags' and orientations
+      // `faceOrientations' for an input list of node tag triplets (if `faceType'
+      // == 3) or quadruplets (if `faceType' == 4) defining these faces,
+      // concatenated in the vector `nodeTags'.
+      GMSH_API void getFaces(const int faceType,
+                             const std::vector<std::size_t> & nodeTags,
+                             std::vector<std::size_t> & faceTags,
+                             std::vector<int> & faceOrientations);
 
       // gmsh::model::mesh::createEdges
       //
-      // Create mesh edges for the entities `dimTags'. Warning: this is an
-      // experimental feature and will probably change in a future release.
+      // Create unique mesh edges for the entities `dimTags'.
       GMSH_API void createEdges(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // gmsh::model::mesh::createFaces
       //
-      // Create mesh faces for the entities `dimTags'. Warning: this is an
-      // experimental feature and will probably change in a future release.
+      // Create unique mesh faces for the entities `dimTags'.
       GMSH_API void createFaces(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // gmsh::model::mesh::getLocalMultipliersForHcurl0

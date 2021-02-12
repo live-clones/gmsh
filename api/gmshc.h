@@ -925,20 +925,29 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
                                                                            const int tag,
                                                                            int * ierr);
 
-/* Get the global mesh edge identifier `edgeNum' for an input list of node
- * pairs, concatenated in the vector `edgeNodes'.  Warning: this is an
- * experimental feature and will probably change in a future release. */
-GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n,
-                                         int ** edgeNum, size_t * edgeNum_n,
-                                         int * ierr);
+/* Get the global unique mesh edge identifiers `edgeTags' and orientations
+ * `edgeOrientation' for an input list of node tag pairs defining these edges,
+ * concatenated in the vector `nodeTags'. */
+GMSH_API void gmshModelMeshGetEdges(size_t * nodeTags, size_t nodeTags_n,
+                                    size_t ** edgeTags, size_t * edgeTags_n,
+                                    int ** edgeOrientations, size_t * edgeOrientations_n,
+                                    int * ierr);
 
-/* Create mesh edges for the entities `dimTags'. Warning: this is an
- * experimental feature and will probably change in a future release. */
+/* Get the global unique mesh face identifiers `faceTags' and orientations
+ * `faceOrientations' for an input list of node tag triplets (if `faceType' ==
+ * 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
+ * in the vector `nodeTags'. */
+GMSH_API void gmshModelMeshGetFaces(const int faceType,
+                                    size_t * nodeTags, size_t nodeTags_n,
+                                    size_t ** faceTags, size_t * faceTags_n,
+                                    int ** faceOrientations, size_t * faceOrientations_n,
+                                    int * ierr);
+
+/* Create unique mesh edges for the entities `dimTags'. */
 GMSH_API void gmshModelMeshCreateEdges(int * dimTags, size_t dimTags_n,
                                        int * ierr);
 
-/* Create mesh faces for the entities `dimTags'. Warning: this is an
- * experimental feature and will probably change in a future release. */
+/* Create unique mesh faces for the entities `dimTags'. */
 GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n,
                                        int * ierr);
 

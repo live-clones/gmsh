@@ -162,7 +162,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     if(openEntities[i]->dim() < 1) continue;
     for(std::size_t j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
       MElement *e = openEntities[i]->getMeshElement(j);
-      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+      for(std::size_t k = 0; k < e->getNumPrimaryVertices(); k++) {
         MVertex *v = e->getVertex(k);
         if(bndVerticesFromOpenBoundary.find(v) ==
            bndVerticesFromOpenBoundary.end())

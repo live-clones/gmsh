@@ -19,8 +19,7 @@ extern unsigned int getColorByEntity(GEntity *e);
 
 void drawMeshVertex(GVertex *e)
 {
-  if(!CTX::instance()->mesh.points && !CTX::instance()->mesh.pointsNum) return;
-  if(!CTX::instance()->mesh.points) return;
+  if(!CTX::instance()->mesh.nodes) return;
   std::vector<GLfloat> vertex;
   std::vector<GLubyte> color;
   for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) {
@@ -28,8 +27,8 @@ void drawMeshVertex(GVertex *e)
     if(!v->getVisibility()) continue;
     unsigned int col;
     if(CTX::instance()->mesh.colorCarousel == 0 ||
-       CTX::instance()->mesh.volumesFaces ||
-       CTX::instance()->mesh.surfacesFaces) {
+       CTX::instance()->mesh.volumeFaces ||
+       CTX::instance()->mesh.surfaceFaces) {
       if(v->getPolynomialOrder() > 1)
         col = CTX::instance()->color.mesh.nodeSup;
       else

@@ -22,6 +22,7 @@ typedef unsigned long intptr_t;
 #include <FL/Fl_Light_Button.H>
 #include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Output.H>
+#include <FL/Fl_Return_Button.H>
 #include <FL/fl_ask.H>
 #include "inputRange.h"
 #include "outputRange.h"
@@ -1235,13 +1236,16 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
     if(p.getAttribute("Aspect") == "Button") {
       but = new Fl_Button(xx, yy, ww, hh);
     }
+    else if(p.getAttribute("Aspect") == "ReturnButton") {
+      but = new Fl_Return_Button(xx, yy, ww, hh);
+    }
     else {
       but = new Fl_Button(xx, yy, ww / labelRatio, hh);
       but->box(FL_FLAT_BOX);
       but->color(bgc);
       but->selection_color(bgc);
+      but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     }
-    but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     but->callback(onelab_string_button_cb, (void *)path);
     if(highlight) {
       but->color(c);
