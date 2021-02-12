@@ -365,7 +365,6 @@ void PrintUsage(const std::string &name)
 std::vector<std::string> GetBuildInfo()
 {
   std::vector<std::string> s;
-  char tmp[256];
   s.push_back(std::string("Version       : ") + GMSH_VERSION);
   s.push_back(std::string("License       : ") + GMSH_SHORT_LICENSE);
   s.push_back(std::string("Build OS      : ") + GMSH_OS);
@@ -373,29 +372,41 @@ std::vector<std::string> GetBuildInfo()
   s.push_back(std::string("Build host    : ") + GMSH_HOST);
   s.push_back(std::string("Build options :") + GMSH_CONFIG_OPTIONS);
 #if defined(HAVE_FLTK)
-  sprintf(tmp, "%d.%d.%d", FL_MAJOR_VERSION, FL_MINOR_VERSION,
-          FL_PATCH_VERSION);
-  s.push_back(std::string("FLTK version  : ") + tmp);
+  {
+    char tmp[256];
+    sprintf(tmp, "%d.%d.%d", FL_MAJOR_VERSION, FL_MINOR_VERSION,
+            FL_PATCH_VERSION);
+    s.push_back(std::string("FLTK version  : ") + tmp);
+  }
 #endif
 #if defined(HAVE_PETSC)
-  sprintf(tmp, "%d.%d.%d (%s arithmtic)", PETSC_VERSION_MAJOR,
-          PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
+  {
+    char tmp[256];
+    sprintf(tmp, "%d.%d.%d (%s arithmtic)", PETSC_VERSION_MAJOR,
+            PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
 #if defined(PETSC_USE_COMPLEX)
-          "complex"
+            "complex"
 #else
-          "real"
+            "real"
 #endif
-  );
-  s.push_back(std::string("PETSc version : ") + tmp);
+            );
+    s.push_back(std::string("PETSc version : ") + tmp);
+  }
 #endif
 #if defined(HAVE_OCC)
-  sprintf(tmp, "%d.%d.%d", OCC_VERSION_MAJOR, OCC_VERSION_MINOR,
-          OCC_VERSION_MAINTENANCE);
-  s.push_back(std::string("OCC version   : ") + tmp);
+  {
+    char tmp[256];
+    sprintf(tmp, "%d.%d.%d", OCC_VERSION_MAJOR, OCC_VERSION_MINOR,
+            OCC_VERSION_MAINTENANCE);
+    s.push_back(std::string("OCC version   : ") + tmp);
+  }
 #endif
 #if defined(HAVE_MED)
-  sprintf(tmp, "%d.%d.%d", MED_NUM_MAJEUR, MED_NUM_MINEUR, MED_NUM_RELEASE);
-  s.push_back(std::string("MED version   : ") + tmp);
+  {
+    char tmp[256];
+    sprintf(tmp, "%d.%d.%d", MED_NUM_MAJEUR, MED_NUM_MINEUR, MED_NUM_RELEASE);
+    s.push_back(std::string("MED version   : ") + tmp);
+  }
 #endif
   s.push_back(std::string("Packaged by   : ") + GMSH_PACKAGER);
   s.push_back("Web site      : https://gmsh.info");

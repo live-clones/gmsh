@@ -791,7 +791,7 @@ public:
   }
 };
 
-static bool
+bool
 makePartitionSimplyConnected(std::vector<MTriangle *> &t,
                              std::vector<std::vector<MTriangle *> > &ts)
 {

@@ -7202,6 +7202,7 @@ GMSH_API void gmsh::graphics::draw()
 
 // gmsh::fltk
 
+#if defined(HAVE_FLTK)
 static void _errorHandlerFltk(const char *fmt, ...)
 {
   char str[5000];
@@ -7214,11 +7215,10 @@ static void _errorHandlerFltk(const char *fmt, ...)
 
 static void _createFltk()
 {
-#if defined(HAVE_FLTK)
   if(!FlGui::available())
     FlGui::instance(_argc, _argv, false,  _errorHandlerFltk);
-#endif
 }
+#endif
 
 GMSH_API void gmsh::fltk::initialize()
 {
