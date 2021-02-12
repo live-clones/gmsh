@@ -405,13 +405,15 @@ if(ENABLE_EIGEN)
       set_config_option(HAVE_EIGEN "Eigen[system]")
     endif()
   endif()
-  if(NOT HAVE_EIGEN)
+  if(NOT HAVE_EIGEN AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/eigen)
     include_directories(contrib/eigen)
     set_config_option(HAVE_EIGEN "Eigen")
   endif()
   # We could also add an option to use BLAS with Eigen
   # add_definitions(-DEIGEN_USE_BLAS)
-elseif(ENABLE_BLAS_LAPACK)
+endif()
+
+if(NOT HAVE_EIGEN AND ENABLE_BLAS_LAPACK)
   if(BLAS_LAPACK_LIBRARIES)
     # use libs as specified in the BLAS_LAPACK_LIBRARIES variable
     set_config_option(HAVE_BLAS "Blas[custom]")
