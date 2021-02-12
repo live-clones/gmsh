@@ -1499,8 +1499,8 @@ namespace QMT {
       vector<MElement*> neighbors;
       {
         /* Cavity boundary vertices, inside the surface, not changed by diff.execute() */
-        toSmooth.reserve(diff.after.bdrVertices.size());
-        for (MVertex* v: diff.after.bdrVertices) {
+        toSmooth.reserve(diff.after.bdrVertices.front().size());
+        for (MVertex* v: diff.after.bdrVertices.front()) {
           GFace* gf = dynamic_cast<GFace*>(v->onWhat());
           if (gf != nullptr) toSmooth.push_back(v);
         }
@@ -2114,14 +2114,14 @@ int remeshPatchWithQuadPattern(
   diff.before.intVertices = intVertices;
   diff.before.elements = elements;
   /* - build a continuous bdr loop from the sides */
-  diff.before.bdrVertices.push_back(sides.front().front());
+  diff.before.bdrVertices = {{sides.front().front()}};
   for (auto& side: sides) for (MVertex* v: side) {
-    if (v != diff.before.bdrVertices.back()) {
-      diff.before.bdrVertices.push_back(v);
+    if (v != diff.before.bdrVertices.front().back()) {
+      diff.before.bdrVertices.front().push_back(v);
     }
   }
-  if (diff.before.bdrVertices.back() == diff.before.bdrVertices.front()) {
-    diff.before.bdrVertices.pop_back();
+  if (diff.before.bdrVertices.front().back() == diff.before.bdrVertices.front().front()) {
+    diff.before.bdrVertices.front().pop_back();
   }
   diff.after.bdrVertices = diff.before.bdrVertices; /* the new patch has the same bdr */
 
@@ -2129,7 +2129,10 @@ int remeshPatchWithQuadPattern(
   GeomOptimStats stats;
   int s0 = patchOptimizeGeometryGlobal(diff.after, stats);
   if (s0 != 0) {
-    Msg::Warning("failed to optimize geometry with global UV smoothing");
+    Msg::Debug("failed to optimize geometry with global UV smoothing");
+  }
+  if (s0 == -2) { /* Failed to get continuous UV on bdr, apply method without param */
+
   }
   if (stats.sicnMinAfter < minSICNafer) {
     return -1;

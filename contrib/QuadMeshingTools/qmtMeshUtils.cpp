@@ -144,6 +144,69 @@ bool buildBoundary (const std::vector<MElement*>& elements, std::vector<MVertex*
   return true;
 }
 
+bool buildBoundaries(const std::vector<MElement*>& elements, std::vector<std::vector<MVertex*> >& loops) {
+  loops.clear();
+  std::vector<MEdge> eds,veds;
+
+  for (MElement* e: elements) {
+    for (size_t j=0;j<(size_t)e->getNumEdges();j++){
+      eds.push_back(e->getEdge(j));
+    }
+  }
+
+  MEdgeLessThan melt;
+  std::sort(eds.begin(),eds.end(), melt);
+  for(size_t i=0;i<eds.size();i++){
+    if (i != eds.size()-1 && eds[i] == eds[i+1])i++;
+    else veds.push_back(eds[i]);
+  }
+
+  std::vector<std::vector<MVertex *> > vsorted;
+  bool oks = SortEdgeConsecutive(veds, vsorted);
+  if (!oks || vsorted.empty()) {
+    return false;
+  }
+
+  /* Reverse vertices if necessary, to keep coherent with elements orientation */
+  for (size_t l = 0; l < vsorted.size(); ++l) {
+    std::vector<MVertex*>& loop = vsorted[l];
+    /* Find a MEdge on the loop */
+    MVertex* a = nullptr;
+    MVertex* b = nullptr;
+    for (MEdge e: veds) {
+      MVertex* v1 = e.getVertex(0);
+      MVertex* v2 = e.getVertex(1);
+      auto it = std::find(loop.begin(),loop.end(),v1);
+      if (it != loop.end()) {
+        /* v1 from the MEdge found on the loop */
+        a = v1;
+        b = v2;
+        break;
+      }
+    }
+    if (a == nullptr || b == nullptr) {
+      Msg::Error("buildBoundaries(): vertex not found in sorted vertices, weird");
+      return false;
+    }
+
+    auto it = std::find(loop.begin(),loop.end(),a);
+    size_t i = it - loop.begin();
+    size_t i_next = (i+1)%loop.size();
+    size_t i_prev = (i-1+loop.size())%loop.size();
+    if (loop[i_next] == b) { 
+      // good ordering
+    } else if (loop[i_prev] == b) { // apply reverse
+      std::reverse(loop.begin(),loop.end());
+    } else {
+      Msg::Error("buildBoundaries(): second vertex not found in adjacent sorted vertices, weird");
+      return false;
+    }
+  }
+
+  loops = vsorted;
+  return true;
+}
+
 bool getConnectedComponents(const std::vector<MElement*>& elements,
     std::vector<std::vector<MElement*> >& components) {
   components.clear();
@@ -195,11 +258,13 @@ bool getConnectedComponents(const std::vector<MElement*>& elements,
 
 bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceMeshPatch& patch) {
   patch.gf = gf;
-  bool okb = buildBoundary(elements, patch.bdrVertices);
+  bool okb = buildBoundaries(elements, patch.bdrVertices);
   if (!okb) return false;
 
-  /* Ensure no repetition in the boundary loop */
-  if (patch.bdrVertices.back() == patch.bdrVertices.front()) patch.bdrVertices.pop_back();
+  /* Ensure no repetition in the boundary loops */
+  for (std::vector<MVertex*>& loop: patch.bdrVertices) {
+    if (loop.back() == loop.front()) loop.pop_back();
+  }
 
   patch.intVertices.reserve(4*elements.size());
   for (MElement* e: elements)  {
@@ -211,7 +276,9 @@ bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceM
       patch.intVertices.push_back(e->getVertex(lv));
     }
   }
-  patch.intVertices = difference(patch.intVertices, patch.bdrVertices);
+  std::vector<MVertex*> bdr;
+  for (size_t i = 0; i < patch.bdrVertices.size(); ++i) append(bdr, patch.bdrVertices[i]);
+  patch.intVertices = difference(patch.intVertices, bdr);
   patch.elements = elements;
 
   return true;
@@ -393,14 +460,16 @@ PatchGeometryBackup::PatchGeometryBackup(GFaceMeshPatch& p, bool includeBoundary
     old[v] = {uv,v->point()};
   }
   if (includeBoundary) {
-    for (MVertex* v: p.bdrVertices) {
-      SPoint2 uv(DBL_MAX,DBL_MAX);
-      GFace* gf = dynamic_cast<GFace*>(v->onWhat());
-      if (gf != nullptr) {
-        v->getParameter(0,uv.data()[0]);
-        v->getParameter(1,uv.data()[1]);
+    for (std::vector<MVertex*>& bdr : p.bdrVertices) {
+      for (MVertex* v: bdr) {
+        SPoint2 uv(DBL_MAX,DBL_MAX);
+        GFace* gf = dynamic_cast<GFace*>(v->onWhat());
+        if (gf != nullptr) {
+          v->getParameter(0,uv.data()[0]);
+          v->getParameter(1,uv.data()[1]);
+        }
+        old[v] = {uv,v->point()};
       }
-      old[v] = {uv,v->point()};
     }
   }
 }
@@ -532,4 +601,85 @@ bool orientElementsAccordingToBoundarySegment(MVertex* a, MVertex* b, std::vecto
     return false;
   }
   return true;
+}
+
+std::array<SPoint2,3> paramOnTriangle(GFace* gf, MTriangle* t) {
+  std::array<SPoint2,3> tri_uvs = {SPoint2{0.,0.},SPoint2{0.,0.},SPoint2{0.,0.}};
+  if (t == nullptr) return tri_uvs;
+  bool check_periodicity = false;
+  for (size_t lv = 0; lv < t->getNumVertices(); ++lv) {
+    MVertex* v = t->getVertex(lv);
+    bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
+    if (onGf) {
+      v->getParameter(0,tri_uvs[lv][0]);
+      v->getParameter(1,tri_uvs[lv][1]);
+    } else {
+      check_periodicity = true;
+    }
+  }
+
+  if (check_periodicity) {
+    for (size_t lv = 0; lv < t->getNumVertices(); ++lv) {
+      MVertex* v1 = t->getVertex(lv);
+      bool onGf = (dynamic_cast<GFace*>(v1->onWhat()) == gf);
+      if (onGf || lv == 2) { /* If neither of the 3 are on surface, takes random ... */
+        MVertex* v2 = t->getVertex((lv+1)%3);
+        MVertex* v3 = t->getVertex((lv+2)%3);
+        SPoint2 param1;
+        SPoint2 param2;
+        SPoint2 param3;
+        reparamMeshEdgeOnFace(v1, v2, gf, param1, param2);
+        reparamMeshEdgeOnFace(v1, v3, gf, param1, param3);
+        tri_uvs[(lv+0)%3] = {param1.x(),param1.y()};
+        tri_uvs[(lv+1)%3] = {param2.x(),param2.y()};
+        tri_uvs[(lv+2)%3] = {param3.x(),param3.y()};
+        break;
+      }
+    }
+  }
+
+  return tri_uvs;
+}
+
+std::array<SPoint2,4> paramOnQuad(GFace* gf, MQuadrangle* t) {
+  std::array<SPoint2,4> uvs = {SPoint2{0.,0.},SPoint2{0.,0.},
+    SPoint2{0.,0.},SPoint2{0.,0.}};
+  if (t == nullptr) return uvs;
+  bool check_periodicity = false;
+  for (size_t lv = 0; lv < t->getNumVertices(); ++lv) {
+    MVertex* v = t->getVertex(lv);
+    bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
+    if (onGf) {
+      v->getParameter(0,uvs[lv][0]);
+      v->getParameter(1,uvs[lv][1]);
+    } else {
+      check_periodicity = true;
+    }
+  }
+
+  if (check_periodicity) {
+    for (size_t lv = 0; lv < t->getNumVertices(); ++lv) {
+      MVertex* v1 = t->getVertex(lv);
+      bool onGf = (dynamic_cast<GFace*>(v1->onWhat()) == gf);
+      if (onGf || lv == 3) { /* If neither of the 3 are on surface, takes random ... */
+        MVertex* v2 = t->getVertex((lv+1)%4);
+        MVertex* v3 = t->getVertex((lv+2)%4);
+        MVertex* v4 = t->getVertex((lv+3)%4);
+        SPoint2 param1;
+        SPoint2 param2;
+        SPoint2 param3;
+        SPoint2 param4;
+        reparamMeshEdgeOnFace(v1, v2, gf, param1, param2);
+        reparamMeshEdgeOnFace(v1, v3, gf, param1, param3);
+        reparamMeshEdgeOnFace(v1, v4, gf, param1, param4);
+        uvs[(lv+0)%4] = {param1.x(),param1.y()};
+        uvs[(lv+1)%4] = {param2.x(),param2.y()};
+        uvs[(lv+2)%4] = {param3.x(),param3.y()};
+        uvs[(lv+3)%4] = {param4.x(),param4.y()};
+        break;
+      }
+    }
+  }
+
+  return uvs;
 }

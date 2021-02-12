@@ -35,7 +35,6 @@
 #include "Options.h"
 #include "Generator.h"
 #include "meshQuadQuasiStructured.h"
-#include "geolog.h" // TODO: remove this, only for debug
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -1090,9 +1089,9 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     optimizeTopologyWithCavityRemeshing(m);
   }
   else if(how == "QuadQuasiStructured") {
-    // transferSeamGEdgesVerticesToGFace(m);
-    // optimizeTopologyWithDiskQuadrangulationRemeshing(m);
-    // optimizeTopologyWithCavityRemeshing(m);
+    transferSeamGEdgesVerticesToGFace(m);
+    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
+    optimizeTopologyWithCavityRemeshing(m);
   }
 
   if(Msg::GetVerbosity() > 98)
@@ -1525,6 +1524,4 @@ void GenerateMesh(GModel *m, int ask)
 
   CTX::instance()->lock = 0;
   // ProfilerStop();
-
-  GeoLog::flush();
 }

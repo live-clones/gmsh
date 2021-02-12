@@ -152,33 +152,20 @@ void showUVParametrization(
     const std::string& viewName = "uv") {
   for (auto& kv: bgm.faceBackgroundMeshes) {
     GFace* gf = kv.first;
-    std::unordered_map<MVertex*,double> param_u;
-    std::unordered_map<MVertex*,double> param_v;
+    if (!gf->haveParametrization()) continue;
     std::vector<MElement*> tris;
+    std::vector<std::vector<double> > values_u;
+    std::vector<std::vector<double> > values_v;
     for (MTriangle& t: kv.second.triangles) {
       tris.push_back(&t);
-      for (size_t lv = 0; lv < 3; ++lv) {
-        MVertex* v = t.getVertex(lv);
-        auto it = param_u.find(v);
-        if (it == param_u.end()) {
-          GFace* dgf = dynamic_cast<GFace*>(v->onWhat());
-          if (dgf) {
-            double uv[2];
-            v->getParameter(0,uv[0]);
-            v->getParameter(1,uv[1]);
-            param_u[v] = uv[0];
-            param_v[v] = uv[1];
-          } else {
-            SPoint2 uv;
-            reparamMeshVertexOnFace(v, gf, uv);
-            param_u[v] = uv.x();
-            param_v[v] = uv.y();
-          }
-        }
-      }
+      std::array<SPoint2,3> tris_uvs = paramOnTriangle(gf,&t);
+      std::vector<double> us = {tris_uvs[0][0],tris_uvs[1][0],tris_uvs[2][0]};
+      std::vector<double> vs = {tris_uvs[0][1],tris_uvs[1][1],tris_uvs[2][1]};
+      values_u.push_back(us);
+      values_v.push_back(vs);
     }
-    GeoLog::add(tris,param_u,viewName+"_u");
-    GeoLog::add(tris,param_v,viewName+"_v");
+    GeoLog::add(tris,values_u,viewName+"_u");
+    GeoLog::add(tris,values_v,viewName+"_v");
   }
   GeoLog::flush();
 }
@@ -612,11 +599,11 @@ bool getBoundaryIdealAndAllowedValences(
     std::vector<int>& bndIdealValence,
     std::vector<std::pair<int,int> >& bndAllowedValenceRange) {
   if (fixingDim < 0 || fixingDim > 2) return false;
-  size_t N = patch.bdrVertices.size();
+  size_t N = patch.bdrVertices.front().size();
   bndIdealValence.resize(N);
   bndAllowedValenceRange.resize(N);
   for (size_t i = 0; i < N; ++i) {
-    MVertex* bv = patch.bdrVertices[i];
+    MVertex* bv = patch.bdrVertices.front()[i];
     GVertex* gv = dynamic_cast<GVertex*>(bv->onWhat());
     GEdge* ge = dynamic_cast<GEdge*>(bv->onWhat());
     GFace* gf = dynamic_cast<GFace*>(bv->onWhat());
@@ -726,7 +713,7 @@ void updateAdjacencies(
     }
   }
   /* Remove old elements from adjacency values */
-  for (MVertex* bv: before.bdrVertices) {
+  for (MVertex* bv: before.bdrVertices.front()) {
     auto it = adj.find(bv);
     if (it != adj.end()) {
       it->second = difference(it->second, before.elements);
@@ -792,19 +779,33 @@ bool smoothThePool(
 
     PatchGeometryBackup backup(patch);
 
-    /* Pure UV smoothing in CAD domain */
     GeomOptimStats stats;
-    patchOptimizeGeometryGlobal(patch, stats);
-    double sicnBefore = stats.sicnMinBefore;
+    double sicnBefore = 0.;
+    if (gf->haveParametrization()) {
+      if (patch.bdrVertices.size() == 1) { /* disk topology */
+        /* Global UV smoothing */
+        patchOptimizeGeometryGlobal(patch, stats);
+        sicnBefore = stats.sicnMinBefore;
 
-    if (stats.sicnMinAfter < 0.5) {
-      /* Kernel smoothing */
-      GeomOptimOptions opt;
-      opt.invertCADNormals = invertNormalsForQuality;
-      patchOptimizeGeometryWithKernel(patch, opt, stats);
+        if (stats.sicnMinAfter < 0.5) {
+          /* Kernel smoothing */
+          GeomOptimOptions opt;
+          opt.invertCADNormals = invertNormalsForQuality;
+          patchOptimizeGeometryWithKernel(patch, opt, stats);
+        }
+      } else {
+        double sicnAvg;
+        computeSICN(patch.elements, sicnBefore, sicnAvg);
+        if (sicnBefore < 0.5) {
+          /* Kernel smoothing */
+          GeomOptimOptions opt;
+          opt.invertCADNormals = invertNormalsForQuality;
+          patchOptimizeGeometryWithKernel(patch, opt, stats);
+        }
+      }
     }
 
-    /* Check after both smoothing */
+    /* Check after smoothing */
     if (stats.sicnMinAfter < sicnBefore) {
       Msg::Debug("quality (SICN) decreased (%.3f -> %.3f), restore previous geometry",
           sicnBefore, stats.sicnMinAfter);
@@ -884,6 +885,10 @@ int improveCornerValences(
         bool okp = patchFromElements(gf, quads, patch); 
         if (!okp) continue;
       }
+      if (patch.bdrVertices.size() != 1) {
+        Msg::Debug("patch has %li bdr loops, weird", patch.bdrVertices.size());
+        continue;
+      }
 
       std::vector<int> bndIdealValence;
       std::vector<std::pair<int,int> > bndAllowedValenceRange;
@@ -895,7 +900,7 @@ int improveCornerValences(
       std::vector<MElement*> neighborsForGeometry = getNeighbors(patch.elements, adj);
       double minSICNafer = 0.1;
       int sdq = remeshLocalWithDiskQuadrangulation(gf,
-          patch.elements, patch.intVertices, patch.bdrVertices, bndIdealValence, bndAllowedValenceRange,
+          patch.elements, patch.intVertices, patch.bdrVertices.front(), bndIdealValence, bndAllowedValenceRange,
           neighborsForGeometry, minSICNafer, invertNormalsForQuality, diff);
       if (sdq == 0) {
         /* Copy the pointers to update the adjacencies in case success */
@@ -907,7 +912,7 @@ int improveCornerValences(
         if (ok) {
           updateAdjacencies(patchBefore, patchAfter, adj);
           append(smoothingPool, patchBefore.intVertices);
-          append(smoothingPool, patchBefore.bdrVertices);
+          append(smoothingPool, patchBefore.bdrVertices.front());
           stats.nCornerValFixed += 1;
         } else {
           Msg::Error("failed to apply diff, abort");
@@ -985,6 +990,10 @@ int improveCurveValences(
     GFaceMeshPatch patch;
     bool okp = patchFromElements(gf, quads, patch); 
     if (!okp) continue;
+    if (patch.bdrVertices.size() != 1) {
+      Msg::Debug("patch has %li bdr loops, weird", patch.bdrVertices.size());
+      continue;
+    }
 
     std::vector<int> bndIdealValence;
     std::vector<std::pair<int,int> > bndAllowedValenceRange;
@@ -996,7 +1005,7 @@ int improveCurveValences(
     std::vector<MElement*> neighborsForGeometry = getNeighbors(patch.elements, adj);
     double minSICNafer = 0.1;
     int sdq = remeshLocalWithDiskQuadrangulation(gf,
-        patch.elements, patch.intVertices, patch.bdrVertices, bndIdealValence, bndAllowedValenceRange,
+        patch.elements, patch.intVertices, patch.bdrVertices.front(), bndIdealValence, bndAllowedValenceRange,
         neighborsForGeometry, minSICNafer, invertNormalsForQuality, diff);
     if (sdq == 0) {
       /* Copy the pointers to update the adjacencies in case success */
@@ -1008,7 +1017,7 @@ int improveCurveValences(
       if (ok) {
         updateAdjacencies(patchBefore, patchAfter, adj);
         append(smoothingPool, patchBefore.intVertices);
-        append(smoothingPool, patchBefore.bdrVertices);
+        append(smoothingPool, patchBefore.bdrVertices.front());
         stats.nCurveValFixed += 1;
       } else {
         Msg::Error("failed to apply diff, abort");
@@ -1046,7 +1055,7 @@ double irregularityEnergy(
 {
   double Ir = 0.;
   /* Boundary vertices */
-  for (MVertex* v: patch.bdrVertices) {
+  for (MVertex* v: patch.bdrVertices.front()) {
     double valIdeal = 4.;
     auto it = qValIdeal.find(v);
     if (it != qValIdeal.end()) {
@@ -1117,7 +1126,7 @@ int improveInteriorValences(
     /* Build patch with quads adjacent to very irregular vertex */
     GFaceMeshPatch patch;
     bool okp = patchFromElements(gf, quads, patch); 
-    if (!okp) continue;
+    if (!okp || patch.bdrVertices.size() != 1) continue;
 
     double Ir = irregularityEnergy(gf, quads, qValIdeal, adj);
     if (Ir > 0.) Q.push({Ir,v});
@@ -1137,7 +1146,7 @@ int improveInteriorValences(
     /* Build patch with quads adjacent to very irregular vertex */
     GFaceMeshPatch patch;
     bool okp = patchFromElements(gf, quads, patch); 
-    if (!okp) continue;
+    if (!okp || patch.bdrVertices.size() != 1) continue;
 
 
     /* Get ideal and allowed ranges on the patch boundary */
@@ -1152,7 +1161,7 @@ int improveInteriorValences(
     std::vector<MElement*> neighborsForGeometry = getNeighbors(patch.elements, adj);
     double minSICNafer = 0.1;
     int sdq = remeshLocalWithDiskQuadrangulation(gf,
-        patch.elements, patch.intVertices, patch.bdrVertices, bndIdealValence, bndAllowedValenceRange,
+        patch.elements, patch.intVertices, patch.bdrVertices.front(), bndIdealValence, bndAllowedValenceRange,
         neighborsForGeometry, minSICNafer, invertNormalsForQuality, diff);
     if (sdq == 0) {
       /* Copy the pointers to update the adjacencies in case success */
@@ -1167,12 +1176,12 @@ int improveInteriorValences(
       if (ok) {
         updateAdjacencies(patchBefore, patchAfter, adj);
         append(smoothingPool, patchBefore.intVertices);
-        append(smoothingPool, patchBefore.bdrVertices);
+        append(smoothingPool, patchBefore.bdrVertices.front());
         stats.nSurfaceValFixed += 1;
 
         /* If new very irregular vertices have been created,
          * add them to the queue */
-        for (MVertex* bv: patchAfter.bdrVertices) {
+        for (MVertex* bv: patchAfter.bdrVertices.front()) {
           auto it2 = adj.find(bv);
           if (it2 == adj.end()) continue; 
           const std::vector<MElement*>& quads2 = it2->second;
@@ -1331,33 +1340,46 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
   GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
 
 
+  unordered_map<MVertex*,MVertex*> old2new;
+
   std::vector<GEdge*> edges = model_edges(gm);
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
   for (size_t e = 0; e < edges.size(); ++e) {
     GEdge* ge = edges[e];
     if (CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
     if (ge->lines.size() == 0 || ge->mesh_vertices.size() == 0) continue;
 
-    bool haveParam = ge->haveParametrization();
+    unordered_map<MVertex*,MVertex*> old2new_ge;
     double tPrev = 0;
-    for (MVertex* v: ge->mesh_vertices) if (v->getNum() > maxNumBeforeRefine) {
-      double t = tPrev;
-      GPoint proj = ge->closestPoint(v->point(), t);
-      if (proj.succeeded()) {
-        v->setXYZ(proj.x(),proj.y(),proj.z());
-        if (haveParam) {
-          v->setParameter(0,t);
+    for (size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
+      MVertex* v = ge->mesh_vertices[i];
+      if (v->getNum() > maxNumBeforeRefine) {
+        double t = tPrev;
+        GPoint proj = ge->closestPoint(v->point(), t);
+        if (proj.succeeded()) {
+          /* Need to change the type of the MVertex */
+          MVertex *v2 = new MEdgeVertex(proj.x(),proj.y(),proj.z(),ge,proj.u());
+          ge->mesh_vertices[i] = v2;
+          old2new_ge[v] = v2;
+          delete v;
+        } else {
+          Msg::Error("- Edge %i, vertex %li: curve projection failed", ge->tag(), v->getNum());
         }
-      } else {
-        Msg::Error("- Edge %i, vertex %li: curve projection failed", ge->tag(), v->getNum());
+        tPrev = t;
       }
-
-      tPrev = t;
     }
-  }
 
+    /* Update Lines */
+    for (MLine* l: ge->lines) for (size_t lv = 0; lv < 2; ++lv) {
+      MVertex* v = l->getVertex(lv);
+      auto it = old2new_ge.find(v);
+      if (it != old2new_ge.end()) {
+        l->setVertex(lv,it->second);
+      }
+    }
+
+    /* Need also to update the tri/quad on faces */
+    for (auto& kv: old2new_ge) old2new[kv.first] = kv.second;
+  }
 
   std::vector<GFace*> faces = model_faces(gm);
 #if defined(_OPENMP)
@@ -1368,13 +1390,14 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if (CTX::instance()->debugSurface > 0 &&
         gf->tag() != CTX::instance()->debugSurface) continue;
-    if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+    if (gf->triangles.size() == 0 && gf->quadrangles.size() == 0) continue;
 
     auto it = bmesh.faceBackgroundMeshes.find(gf);
     if (it == bmesh.faceBackgroundMeshes.end()) {
       Msg::Error("background mesh not found for face %i", gf->tag());
       continue;
     }
+
 
     /* Get pointers to triangles in the background mesh */
     std::vector<MTriangle*> triangles(it->second.triangles.size());
@@ -1389,8 +1412,6 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
       continue;
     }
 
-    const bool haveParam = gf->haveParametrization();
-
     /* Project the vertices which have been introduced by the RefineMesh */
     bool evalOnCAD = gf->haveParametrization();
     bool projOnCad = false;
@@ -1398,21 +1419,40 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
       /* Strong disortion in sphere parametrization, use projection */
       projOnCad = true;
     }
-    for (MVertex* v: gf->mesh_vertices) if (v->getNum() > maxNumBeforeRefine) {
-      GPoint proj = sp.closestPoint(v->point().data(), evalOnCAD, projOnCad);
-      if (proj.succeeded()) {
-        v->setXYZ(proj.x(),proj.y(),proj.z());
-        if (haveParam) {
-          v->setParameter(0,proj.u());
-          v->setParameter(1,proj.v());
+
+    unordered_map<MVertex*,MVertex*> old2new_gf;
+    for (size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
+      MVertex* v = gf->mesh_vertices[i];
+      if (v->getNum() > maxNumBeforeRefine) {
+        GPoint proj = sp.closestPoint(v->point().data(), evalOnCAD, projOnCad);
+        if (proj.succeeded()) {
+          /* Need to change the type of the MVertex */
+          MVertex* v2 = new MFaceVertex(proj.x(),proj.y(),proj.z(),gf,proj.u(),proj.v());
+          gf->mesh_vertices[i] = v2;
+          old2new_gf[v] = v2;
+          delete v;
+        } else {
+          Msg::Error("- Face %i, vertex %li: surface projection failed", gf->tag(), v->getNum());
         }
-      } else {
-        Msg::Error("- Face %i, vertex %li: surface projection failed", gf->tag(), v->getNum());
+      }
+    }
+
+    /* Update elements */
+    for (size_t i = 0; i < gf->getNumMeshElements(); ++i) {
+      MElement* e = gf->getMeshElement(i);
+      for (size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+        MVertex* v = e->getVertex(lv);
+        auto it = old2new.find(v);
+        if (it != old2new.end()) {
+          e->setVertex(lv,it->second);
+        }
+        auto it2 = old2new_gf.find(v);
+        if (it2 != old2new_gf.end()) {
+          e->setVertex(lv,it2->second);
+        }
       }
     }
   }
-
-  GeoLog::flush();
 
   return 0;
 }

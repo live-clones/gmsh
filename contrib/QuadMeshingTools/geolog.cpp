@@ -177,6 +177,37 @@ namespace GeoLog {
     return true;
 #endif
     return false;
+  }
+
+  bool add(const std::vector<MElement*>& elements, const std::vector<std::vector<double> >& field, const std::string& view) {
+#if defined(GMSH_LINKED)
+    if (elements.size() != field.size()) return false;
+    View& V = get_global_view(view);
+    size_t e0 = V.objs.size();
+    V.objs.resize(V.objs.size()+elements.size());
+    for (size_t i = 0; i < elements.size(); ++i) {
+      MElement* elt = elements[i];
+      size_t nv = elt->getNumVertices();
+      if (field[i].size() != nv) return false;
+      V.objs[e0+i].isVector = false;
+      V.objs[e0+i].isCell = false;
+      if (elt->getDim() == 3) {
+        V.objs[e0+i].isCell = true;
+      }
+      V.objs[e0+i].pts.resize(nv);
+      V.objs[e0+i].values.resize(nv,0.);
+      for (size_t lv = 0; lv < nv; ++lv) {
+        MVertex* v = elt->getVertex(lv);
+        V.objs[e0+i].pts[lv][0] = v->x();
+        V.objs[e0+i].pts[lv][1] = v->y();
+        V.objs[e0+i].pts[lv][2] = v->z();
+        V.objs[e0+i].values[lv] = field[i][lv];
+      }
+    }
+
+    return true;
+#endif
+    return false;
 
   }
 

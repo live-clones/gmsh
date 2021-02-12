@@ -10,6 +10,8 @@
 #include <float.h>
 #include "qmtMeshUtils.h"
 
+class SurfaceProjector;
+
 /**
  * @brief Mesh optimization statistics
  */
@@ -57,18 +59,23 @@ struct GeomOptimOptions {
   double dxLocalMax = 1.e-5; /* lock a vertex if moved less than dxLocalMax*local_size */
   double timeMax = DBL_MAX; /* stop smoothing is timeMax elapsed */
   bool invertCADNormals = false; /* invert the CAD normals for the quality computation */
+  SurfaceProjector* sp = nullptr; /* if present, surface projection is used instead of CAD */
+  bool qualityRangeTechnique = false;
+  double qualityRangeMin = 0.5;
+  double qualityRangeMax = 0.8;
 };
 
 /**
  * @brief Optimize the mesh by iteratively moving the vertices (explicit approach).
  *        The patch boundary is fixed.
+ *        Require a parametrization on the face.
  *
  * @param[in,out] patch The mesh patch to smooth. The new positions and uv are directly updated 
  *                      in the MVertex instances.
  * @param[in] opt The optimization parameters
  * @param[out] stats Some statistics on the smoothing
  *
- * @return 
+ * @return true if success
  */
 bool patchOptimizeGeometryWithKernel(
     GFaceMeshPatch& patch, 
@@ -83,16 +90,4 @@ bool patchOptimizeGeometryWithKernel(
  * @param[out] sicnAvg Average element SICN quality
  */
 void computeSICN(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg);
-
-
-bool quadMeshOptimizeDMOKernelGreedy(
-    GFace* gf,
-    std::vector<MElement*>& elements,
-    std::vector<MVertex*>& freeVertices,
-    double rangeMin,
-    double rangeMax,
-    size_t iterMax,
-    double timeMax,
-    bool invertCADNormals,
-    GeomOptimStats& stats);
 

@@ -34,13 +34,16 @@ struct GFaceMeshPatch {
   /* Warning: simple container for pointers, memory not managed by this struct.
    * The GFaceMeshDiff wrapper is doing some memory management for the content. */
   GFace* gf = nullptr;
-  std::vector<MVertex*> bdrVertices; /* ordered boundary loop */
+  /* bdrVertices are the ordered boundary loops, there is only one
+   * if patch is a topological disk */
+  std::vector<std::vector<MVertex*> > bdrVertices; 
   std::vector<MVertex*> intVertices;
   std::vector<MElement*> elements;
 };
 
 
 bool buildBoundary (const std::vector<MElement*>& elements, std::vector<MVertex*>& bnd);
+bool buildBoundaries(const std::vector<MElement*>& elements, std::vector<std::vector<MVertex*> >& loops);
 bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceMeshPatch& patch);
 bool patchFromQuads(GFace* gf, const std::vector<MQuadrangle*>& quads, GFaceMeshPatch& patch);
 
@@ -56,6 +59,11 @@ bool setVertexGFaceUV(GFace* gf, MVertex* v, double uv[2]);
 MVertex* centerOfElements(const std::vector<MElement*>& elements);
 
 bool orientElementsAccordingToBoundarySegment(MVertex* a, MVertex* b, std::vector<MElement*>& elements);
+
+std::array<SPoint2,3> paramOnTriangle(GFace* gf, MTriangle* t);
+std::array<SPoint2,4> paramOnQuad(GFace* gf, MQuadrangle* q);
+
+
 
 struct GFaceMeshDiff {
   GFace* gf = nullptr;

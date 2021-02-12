@@ -261,9 +261,16 @@ namespace QMT {
     }
 
     /* Get associated uv in GFace */
-    std::vector<std::array<double,3> > uvs(old2new.size());
-    for (size_t i = 0; i < new2old.size(); ++i) {
-      setVertexGFaceUV(gf, new2old[i], uvs[i].data());
+    std::vector<std::array<double,2> > uvs(old2new.size(),{DBL_MAX,DBL_MAX});
+    for (size_t i = 0; i < elements.size(); ++i) {
+      std::array<SPoint2,4> quad_uvs = paramOnQuad(gf, dynamic_cast<MQuadrangle*>(elements[i]));
+      for (size_t lv = 0; lv < 4; ++lv) {
+        size_t v = quads[i][lv];
+        if (uvs[v][0] == DBL_MAX) {
+          uvs[v][0] = quad_uvs[lv][0];
+          uvs[v][1] = quad_uvs[lv][1];
+        }
+      }
     }
 
     /* Compact 3D + uv */
@@ -281,7 +288,6 @@ namespace QMT {
 
     return true;
   }
-
 
 
   bool getContinuousUVOnLoop(
@@ -318,6 +324,60 @@ namespace QMT {
       }
       prev = uv;
       bndUvs[i] = uv;
+    }
+    if (Ts[0] > 0 && gapMax[0] > 0.5 * Ts[0]) {
+      Msg::Debug("getContinuousUVOnLoop: reject because gap on boundary: %f (period %f)", gapMax[0], Ts[0]);
+      return false;
+    }
+    if (Ts[1] > 0 && gapMax[1] > 0.5 * Ts[1]) {
+      Msg::Debug("getContinuousUVOnLoop: reject because gap on boundary: %f (period %f)", gapMax[1], Ts[1]);
+      return false;
+    }
+    return true;
+  }
+
+  /* Second version using reparamMeshEdgeOnFace() */
+  bool getContinuousUVOnLoopV2(
+      GFace* gf,
+      const std::vector<MVertex*>& bndOrdered,
+      std::vector<SPoint2>& bndUvs) {
+    /* If periodic parametrization, get periods */
+    double Ts[2] = {0.,0.};
+    if (gf->periodic(0)) Ts[0] = gf->period(0);
+    if (gf->periodic(1)) Ts[1] = gf->period(1);
+
+    /* Get start point on the loop, inside GFace if possible */
+    size_t i0 = 0;
+    for (size_t i = 0; i < bndOrdered.size(); ++i) {
+      MVertex* v = bndOrdered[i];
+      if (v->onWhat() == gf) {
+        i0 = i;
+        break;
+      }
+    }
+    
+    SPoint2 uv0;
+    bool ok = setVertexGFaceUV(gf, bndOrdered[i0], uv0.data());
+    if (!ok) return false;
+
+    bndUvs.resize(bndOrdered.size());
+    MVertex* pv = bndOrdered[i0];
+    SPoint2 prevUV = uv0;
+    double gapMax[2] = {0.,0.};
+    const size_t N = bndOrdered.size();
+    for (size_t k = 0; k < N; ++k) {
+      size_t i = (i0+k)%N;
+      MVertex* v = bndOrdered[i];
+      SPoint2 uv;
+      if (v->onWhat() == gf) {
+        bool ok = setVertexGFaceUV(gf, v, uv.data());
+        if (!ok) return false;
+      } else {
+        reparamMeshEdgeOnFace(pv, v, gf, prevUV, uv);
+      }
+      bndUvs[i] = uv;
+      gapMax[0] = std::max(gapMax[0],std::abs(uv.data()[0] - prevUV.data()[0]));
+      gapMax[1] = std::max(gapMax[1],std::abs(uv.data()[1] - prevUV.data()[1]));
     }
     if (Ts[0] > 0 && gapMax[0] > 0.5 * Ts[0]) {
       Msg::Debug("getContinuousUVOnLoop: reject because gap on boundary: %f (period %f)", gapMax[0], Ts[0]);
@@ -573,22 +633,19 @@ int patchOptimizeGeometryGlobal(
   if (gf == NULL) return -1;
   if (!gf->haveParametrization()) {
     Msg::Error("optimize geometry global: face %i have no parametrization", gf->tag());
+    return -2;
+  }
+  if (patch.bdrVertices.size() != 1) {
+    Msg::Error("optimize geometry global: patch has multiple boundary loops (%li)", patch.bdrVertices.size());
     return -1;
   }
   if (patch.intVertices.size() == 0) {
     Msg::Error("optimize geometry global: no interior vertices (%li bdr vertices, %li elements)", 
-        patch.bdrVertices.size(), patch.elements.size());
+        patch.bdrVertices.front().size(), patch.elements.size());
     return -1;
   }
 
   double t1 = Cpu();
-
-  vector<SPoint2> bndUvs;
-  bool okl = getContinuousUVOnLoop(gf, patch.bdrVertices, bndUvs);
-  if (!okl) {
-    Msg::Debug("optimize geometry global: failed to get continuous UV on boundary loop");
-    return -1;
-  }
 
   unordered_map<MVertex*,size_t> old2new;
   std::vector<vector<size_t> > v2v;
@@ -596,6 +653,13 @@ int patchOptimizeGeometryGlobal(
   if (!oks) {
     Msg::Debug("optimize geometry global: failed to build edge graph");
     return -1;
+  }
+
+  vector<SPoint2> bndUvs;
+  bool okl = getContinuousUVOnLoopV2(gf, patch.bdrVertices.front(), bndUvs);
+  if (!okl) {
+    Msg::Debug("optimize geometry global: failed to get continuous UV on boundary loop");
+    return -2;
   }
 
   /* uvs/v2v: first all the free vertices, then the bdr vertices */
@@ -607,8 +671,8 @@ int patchOptimizeGeometryGlobal(
     uvs[v] = SPoint2(0.,0.);
   }
   /* Boundary vertices */
-  for (size_t i = 0; i < patch.bdrVertices.size(); ++i){
-    MVertex* v = patch.bdrVertices[i];
+  for (size_t i = 0; i < patch.bdrVertices.front().size(); ++i){
+    MVertex* v = patch.bdrVertices.front()[i];
     auto it = old2new.find(v);
     if (it == old2new.end()) {
       Msg::Error("optimize geometry global: bdr vertex not found in old2new");
@@ -657,35 +721,26 @@ int patchOptimizeGeometryGlobal(
   double t2 = Cpu();
   stats.timeCpu = t2 - t1;
   stats.nFree = patch.intVertices.size();
-  stats.nLock = patch.bdrVertices.size();
+  stats.nLock = patch.bdrVertices.front().size();
 
   Msg::Debug("optimize geometry global (UV Laplacian): %li/%li free vertices, %li elements, SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec",
-      patch.intVertices.size(), patch.intVertices.size()+patch.bdrVertices.size(), patch.elements.size(),
+      patch.intVertices.size(), patch.intVertices.size()+patch.bdrVertices.front().size(), patch.elements.size(),
       stats.sicnMinBefore, stats.sicnMinAfter, stats.sicnAvgBefore, stats.sicnAvgAfter, stats.timeCpu);
 
 
   return 0;
 }
 
-bool patchOptimizeGeometryWithKernel(
+bool kernelLoopWithParametrization(
     GFaceMeshPatch& patch, 
     const GeomOptimOptions& opt,
     GeomOptimStats& stats) {
 
   GFace* gf = patch.gf;
-  if (gf == NULL) return -1;
   if (!gf->haveParametrization()) {
     Msg::Error("optimize geometry kernel: face %i have no parametrization", gf->tag());
-    return -1;
+    return false;
   }
-  if (patch.intVertices.size() == 0) {
-    Msg::Error("optimize geometry kernel: no interior vertices (%li bdr vertices, %li elements)", 
-        patch.bdrVertices.size(), patch.elements.size());
-    return -1;
-  }
-
-  double t1 = Cpu();
-
 
   /* Data for smoothing */
   std::vector<vec5> point_uv;
@@ -709,10 +764,16 @@ bool patchOptimizeGeometryWithKernel(
   size_t dmo_grid_width = 8;
   size_t dmo_grid_depth = 3;
 
+  /* Initialization: all vertices locked */
+  std::vector<bool> locked(patch.intVertices.size(),false);
+  if (opt.qualityRangeTechnique) {
+    std::fill(locked.begin(),locked.end(),true);
+  }
 
   /* Explicit smoothing loop */
   const size_t nFree = patch.intVertices.size();
   for (size_t iter = 0; iter < opt.outerLoopIterMax; ++iter) {
+    size_t nMoved = 0;
 
     /* Loop over interior vertices */
     for (size_t v = 0; v < nFree; ++v) {
@@ -738,32 +799,97 @@ bool patchOptimizeGeometryWithKernel(
       normalize(normal);
       double quality = computeQualityQuadOneRing(pos, ring, normal);
 
-      if (quality < opt.useDmoIfSICNbelow) {
-        /* Optimize vertex position with DMO (adaptive grid sampling) */
-        vec5 newPos = dmoOptimizeVertexPosition(gf, pos, ring, dmo_grid_width, dmo_grid_depth, normal, quality);
-        point_uv[v] = newPos;
+      if (opt.qualityRangeTechnique && iter == 0) {
+        /* First iteration: unlocked low quality vertices */
+        if (quality < opt.qualityRangeMin) {
+          locked[v] = false;
+        } else {
+          continue;
+        }
+      }
+      if (opt.qualityRangeTechnique && quality > opt.qualityRangeMax) {
+        locked[v] = true;
+        continue;
       }
 
-      // TODO: lock vertex is local dx reduction
+      /* Optimize vertex position with DMO (adaptive grid sampling) */
+      if (opt.qualityRangeTechnique || quality < opt.useDmoIfSICNbelow) {
+        vec5 newPos = dmoOptimizeVertexPosition(gf, pos, ring, dmo_grid_width, dmo_grid_depth, normal, quality);
+        point_uv[v] = newPos;
+        nMoved += 1;
+      }
+
+      if (opt.qualityRangeTechnique) {
+        if (quality > opt.qualityRangeTechnique) {
+          locked[v] = true;
+          continue;
+        } else { /* Unlock neighbors ! */
+          for (size_t lv = 0; lv < ring.n; ++lv) {
+            uint32_t v2 = one_ring_values[one_ring_first[v]+lv];
+            if (v2 < nFree) locked[v2] = false;
+          }
+        }
+      } else {
+        // TODO: lock vertex is local dx reduction
+      }
     }
   }
 
-  computeSICN(patch.elements, stats.sicnMinBefore, stats.sicnAvgBefore);
-
-  const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
-  if (DBG_VIZU) {
-    GeoLog::add(patch.elements, "optim_K_IN_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgBefore));
-  }
-
+  /* Update the positions */
   for (size_t i = 0; i < patch.intVertices.size(); ++i) {
     new2old[i]->setParameter(0,point_uv[i][3]);
     new2old[i]->setParameter(1,point_uv[i][4]);
     new2old[i]->setXYZ(point_uv[i][0],point_uv[i][1],point_uv[i][2]);
   }
 
+  return true;
+}
+
+size_t nbVerticesOnBoundary(const GFaceMeshPatch& patch) {
+  size_t n = 0;
+  for (size_t i = 0; i < patch.bdrVertices.size(); ++i)
+    n += patch.bdrVertices[i].size();
+  return n;
+}
+
+bool patchOptimizeGeometryWithKernel(
+    GFaceMeshPatch& patch, 
+    const GeomOptimOptions& opt,
+    GeomOptimStats& stats) {
+
+  GFace* gf = patch.gf;
+  if (gf == NULL) return -1;
+  if (patch.intVertices.size() == 0) {
+    Msg::Error("optimize geometry kernel: no interior vertices (%li elements)", 
+        patch.elements.size());
+    return -1;
+  }
+
+  double t1 = Cpu();
+  computeSICN(patch.elements, stats.sicnMinBefore, stats.sicnAvgBefore);
+
+  /* Debug visualization */
+  const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
+  if (DBG_VIZU) {
+    GeoLog::add(patch.elements, "optim_K_IN_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgBefore));
+  }
+
+  bool useParam = gf->haveParametrization();
+  if (useParam && gf->geomType() == GFace::GeomType::Sphere) useParam = false;
+
+  if (useParam) {
+    bool okl = kernelLoopWithParametrization(patch, opt, stats);
+    if (!okl) {
+      Msg::Error("optimize geometry kernel: the loop failed (%li elements)", 
+          patch.elements.size());
+      return -1;
+    }
+  }
+
   /* Statistics */
   computeSICN(patch.elements, stats.sicnMinAfter, stats.sicnAvgAfter);
 
+  /* Debug visualization */
   if (DBG_VIZU) {
     GeoLog::add(patch.elements, "optim_K_OUT_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgAfter));
     GeoLog::flush();
@@ -772,170 +898,11 @@ bool patchOptimizeGeometryWithKernel(
   double t2 = Cpu();
   stats.timeCpu = t2 - t1;
   stats.nFree = patch.intVertices.size();
-  stats.nLock = patch.bdrVertices.size();
+  stats.nLock = nbVerticesOnBoundary(patch);
 
   Msg::Debug("optimize geometry kernel: %li/%li free vertices, %li elements, SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec",
-      patch.intVertices.size(), patch.intVertices.size()+patch.bdrVertices.size(), patch.elements.size(),
+      patch.intVertices.size(), stats.nFree + stats.nLock, patch.elements.size(),
       stats.sicnMinBefore, stats.sicnMinAfter, stats.sicnAvgBefore, stats.sicnAvgAfter, stats.timeCpu);
-
-  return true;
-}
-
-bool quadMeshOptimizeDMOKernelGreedy(
-    GFace* gf,
-    std::vector<MElement*>& elements,
-    std::vector<MVertex*>& freeVertices,
-    double rangeMin,
-    double rangeMax,
-    size_t iterMax,
-    double timeMax,
-    bool invertCADNormals,
-    GeomOptimStats& stats) {
-
-  if (gf == NULL) return -1;
-  if (!gf->haveParametrization()) {
-    Msg::Error("optimize geometry dmo greedy: face %i have no parametrization", gf->tag());
-    return -1;
-  }
-
-  double t1 = Cpu();
-
-  /* Data for smoothing */
-  std::vector<vec5> point_uv;
-  std::vector<size_t> one_ring_first;
-  std::vector<uint32_t> one_ring_values;
-  std::vector<MVertex*> new2old;
-  bool okb = buildUVSmoothingDataStructures(gf, elements, freeVertices, point_uv, 
-      one_ring_first, one_ring_values, new2old);
-  if (!okb) {
-    Msg::Error("optimize geometry kernel: failed to build adjacency datastructures");
-    return -1;
-  }
-  OneRing ring;
-  std::vector<vec5> ringGeometric(10);
-  if (gf->periodic(0)) ring.jump[0] = gf->period(0);
-  if (gf->periodic(1)) ring.jump[1] = gf->period(1);
-  ring.p_uv = ringGeometric.data();
-  const double sign = invertCADNormals ? -1. : 1.;
-
-  size_t dmo_grid_width = 8;
-  size_t dmo_grid_depth = 3;
-
-  /* Initialization: all vertices locked */
-  std::vector<bool> locked(freeVertices.size(),true);
-
-  /* Explicit smoothing loop */
-  for (size_t iter = 0; iter < iterMax; ++iter) {
-    size_t nMoved = 0;
-
-    /* Loop over interior vertices */
-    for (size_t v = 0; v < freeVertices.size(); ++v) {
-      if (iter > 0 && locked[v]) continue;
-
-      /* Fill the OneRing geometric information */
-      ring.n = one_ring_first[v+1]-one_ring_first[v];
-      if (ring.n >= ringGeometric.size()) {
-        ringGeometric.resize(ring.n);
-        ring.p_uv = ringGeometric.data();
-      }
-      for (size_t lv = 0; lv < ring.n; ++lv) {
-        ring.p_uv[lv] = point_uv[one_ring_values[one_ring_first[v]+lv]];
-      }
-
-      /* Current position, normal and quality */
-      vec5 pos = point_uv[v];
-      vec3 normal = sign * gf->normal(SPoint2(pos[3],pos[4]));
-      if (length2(normal) == 0.) {
-        Msg::Warning("optimize geometry kernel: CAD normal length is 0 !");
-        continue;
-      }
-      normalize(normal);
-      double quality = computeQualityQuadOneRing(pos, ring, normal);
-
-      if (iter == 0) { /* First iteration: unlocked low quality vertices */
-        if (quality < rangeMin) {
-          locked[v] = false;
-        } else {
-          continue;
-        }
-      }
-
-      if (quality > rangeMax) {
-        locked[v] = true;
-        continue;
-      }
-
-      /* Optimize vertex position with DMO (adaptive grid sampling) */
-
-      double qualityBefore = quality;
-      // if (qualityBefore < 0) {
-      //   SHOW_QUALITY = true;
-      //   quality = computeQualityQuadOneRing(pos, ring, normal);
-      // }
-
-      vec5 newPos = dmoOptimizeVertexPosition(gf, pos, ring, dmo_grid_width, dmo_grid_depth, normal, quality);
-      point_uv[v] = newPos;
-      nMoved += 1;
-
-      // DBG(iter, v, pos, newPos, qualityBefore, quality);
-      if (qualityBefore < 0. || quality < 0.9*qualityBefore) {
-        DBG("-------- quality decreased locally", v, iter);
-        DBG(qualityBefore, quality);
-        // gmsh::fltk::run();
-        // abort();
-      }
-      // if (quality < 0 || qualityBefore < 0) abort();
-
-      if (quality > rangeMax) {
-        locked[v] = true;
-        continue;
-      } else { /* Unlock neighbors ! */
-        for (size_t lv = 0; lv < ring.n; ++lv) {
-          uint32_t v2 = one_ring_values[one_ring_first[v]+lv];
-          if (v2 < freeVertices.size()) locked[v2] = false;
-        }
-      }
-    }
-
-    if (nMoved == 0) break;
-  }
-
-  computeSICN(elements, stats.sicnMinBefore, stats.sicnAvgBefore);
-
-  // bool DBG_VIZU_LOCAL = false;
-  // const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
-  // if (stats.sicnMinAfter < stats.sicnMinBefore) {
-  //   DBG_VIZU_LOCAL = true;
-  // }
-  // if (DBG_VIZU || DBG_VIZU_LOCAL) {
-  //   GeoLog::add(elements, "optim_K_IN_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgBefore));
-  // }
-
-  for (size_t i = 0; i < freeVertices.size(); ++i) {
-    new2old[i]->setParameter(0,point_uv[i][3]);
-    new2old[i]->setParameter(1,point_uv[i][4]);
-    new2old[i]->setXYZ(point_uv[i][0],point_uv[i][1],point_uv[i][2]);
-  }
-
-  /* Statistics */
-  computeSICN(elements, stats.sicnMinAfter, stats.sicnAvgAfter);
-
-  // if (DBG_VIZU || DBG_VIZU_LOCAL) {
-  //   GeoLog::add(elements, "optim_K_OUT_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgAfter));
-  //   GeoLog::flush();
-  // }
-
-  double t2 = Cpu();
-  stats.timeCpu = t2 - t1;
-  stats.nFree = freeVertices.size();
-  stats.nLock = point_uv.size() - stats.nFree;
-
-  Msg::Debug("optimize geometry DMO greedy: SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec",
-      stats.sicnMinBefore, stats.sicnMinAfter, stats.sicnAvgBefore, stats.sicnAvgAfter, stats.timeCpu);
-
-  // if (DBG_VIZU_LOCAL) {
-  //   gmsh::fltk::run();
-  // }
 
   return true;
 }

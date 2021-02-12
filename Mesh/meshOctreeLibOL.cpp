@@ -21,6 +21,9 @@ extern "C" {
 // QuadMeshingTools headers
 #include "arrayGeometry.h"
 
+// Debug vizu
+#include "geolog.h"
+
 using namespace ArrayGeometry;
 
 namespace SurfaceProjectorUtils {
@@ -325,30 +328,11 @@ bool SurfaceProjector::initialize(GFace* gf_, const std::vector<MTriangle*>& gfT
           v->getParameter(0,tri_uvs[lv][0]);
           v->getParameter(1,tri_uvs[lv][1]);
         } else {
-          GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
-          if (ge != NULL) {
-            double t;
-            v->getParameter(0,t);
-            SPoint2 uv = ge->reparamOnFace(gf, t, -1);
-            tri_uvs[lv] = {uv.x(),uv.y()};
-            if (ge->isSeam(gf)) { /* multiple uv param are possible, see later*/
-              check_periodicity = true;
-            } 
-          } else {
-            check_periodicity = true;
-            GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
-            if (gv != NULL) {
-              if (disableParamPoles) no_eval = true;
-              SPoint2 uv = gv->reparamOnFace(gf,0);
-              tri_uvs[lv] = {uv.x(),uv.y()};
-            } else {
-              Msg::Error("SurfaceProjector: vertex not on GEntity ?");
-              return false;
-            }
-          }
+          check_periodicity = true;
         }
       }
     }
+
     if (check_periodicity) {
       for (size_t lv = 0; lv < 3; ++lv) {
         MVertex* v1 = f->getVertex(lv);
@@ -372,6 +356,13 @@ bool SurfaceProjector::initialize(GFace* gf_, const std::vector<MTriangle*>& gfT
     triangles.push_back(tri_pts);
     if (paramAvailable) triangle_uvs.push_back(tri_uvs);
     if (paramAvailable && disableParamPoles) triangle_no_uv_eval.push_back(no_eval);
+    // Debug to visualize param
+    // {
+    //   GeoLog::add({points[tri_pts[0]-1], points[tri_pts[1]-1], points[tri_pts[2]-1]},
+    //       std::vector<double>{tri_uvs[0][0],tri_uvs[1][0],tri_uvs[2][0]}, "sp_u");
+    //   GeoLog::add({points[tri_pts[0]-1], points[tri_pts[1]-1], points[tri_pts[2]-1]},
+    //       std::vector<double>{tri_uvs[0][1],tri_uvs[1][1],tri_uvs[2][1]}, "sp_v");
+    // }
   }
 
   points.shrink_to_fit();

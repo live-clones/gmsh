@@ -304,6 +304,10 @@ int remeshLocalWithDiskQuadrangulation(
     Msg::Error("Missing disk quadrangulation database, call initDiskQuadrangulations() before");
     return -1;
   }
+  if (bdrVertices.size() == 0) {
+    Msg::Error("disk quadrangulation remeshing: no boundary vertices", bdrVertices.size());
+    return -1;
+  }
 
 
   /* Get disk quadrangulations with the same boundary size */
@@ -355,16 +359,16 @@ int remeshLocalWithDiskQuadrangulation(
     /* New GFace mesh patch */
     GFaceMeshPatch patch;
     patch.gf = gf;
-    patch.bdrVertices = bdrVertices;
+    patch.bdrVertices = {bdrVertices};
 
-    bool ok = getDiskQuadrangulationRemeshing(gf, patch.bdrVertices,
+    bool ok = getDiskQuadrangulationRemeshing(gf, bdrVertices,
         rotation, quads, patch.intVertices, patch.elements);
     if (!ok) {
       Msg::Debug("disk quandrangulation remeshing: failed to remesh small cavity");
       continue;
     }
     Msg::Debug("disk quadrangulation remeshing: try %li/%li, dq=[%li,%i], %li bdr, %i->%i int vertices, %i->%i quads",
-        i, N, no, rotation, patch.bdrVertices.size(), intVertices.size(), patch.intVertices.size(), elements.size(), patch.elements.size());
+        i, N, no, rotation, patch.bdrVertices.front().size(), intVertices.size(), patch.intVertices.size(), elements.size(), patch.elements.size());
 
     /* Try to only move the interior vertices (in general, it is not enough) */
     if (patch.intVertices.size() > 0) {
@@ -437,7 +441,7 @@ int remeshLocalWithDiskQuadrangulation(
   diff.before.gf = gf;
   diff.before.elements = elements;
   diff.before.intVertices = intVertices;
-  diff.before.bdrVertices = bdrVertices;
+  diff.before.bdrVertices = {bdrVertices};
 
   return 0;
 }
