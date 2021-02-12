@@ -25,6 +25,8 @@
 #include "MQuadrangle.h"
 #include "MLine.h"
 #include "gmsh.h"
+#include "meshRefine.h"
+#include "meshOctreeLibOL.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -225,12 +227,12 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     /* Change meshing parameters to build a good triangulation
      * for cross field */
     double scalingOnTriangulation = 0.8;
-    int minCurvPoints = CTX::instance()->mesh.minCurvPoints;
-    int minCircPoints = CTX::instance()->mesh.minCircPoints;
+    int minCurveNodes = CTX::instance()->mesh.minCurveNodes;
+    int minCircleNodes = CTX::instance()->mesh.minCircleNodes;
     double lcFactor = CTX::instance()->mesh.lcFactor;
     int algo = CTX::instance()->mesh.algo2d;
-    CTX::instance()->mesh.minCurvPoints = std::min(minCurvPoints,5);
-    CTX::instance()->mesh.minCircPoints = std::min(minCircPoints,30);
+    CTX::instance()->mesh.minCurveNodes = std::min(minCurveNodes,5);
+    CTX::instance()->mesh.minCircleNodes = std::min(minCircleNodes,30);
     CTX::instance()->mesh.lcFactor = lcFactor * scalingOnTriangulation;
     CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
 
@@ -238,8 +240,8 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     GenerateMesh(gm,2);
 
     /* Restore parameters */
-    CTX::instance()->mesh.minCurvPoints = minCurvPoints;
-    CTX::instance()->mesh.minCircPoints = minCircPoints;
+    CTX::instance()->mesh.minCurveNodes = minCurveNodes;
+    CTX::instance()->mesh.minCircleNodes = minCircleNodes;
     CTX::instance()->mesh.lcFactor = lcFactor;
     CTX::instance()->mesh.algo2d = algo;
 
@@ -1311,6 +1313,106 @@ int optimizeTopologyWithCavityRemeshing(GModel* gm) {
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
     improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, invertNormals);
   }
+
+  return 0;
+}
+
+int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
+  if (!backgroudMeshExists(BMESH_NAME)) {
+    Msg::Error("refine mesh with background projection: no background mesh");
+    return -1;
+  } 
+
+  size_t maxNumBeforeRefine = gm->getMaxVertexNumber();
+
+  bool linear = true; 
+  RefineMesh(gm, linear, true, false);
+
+  GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
+
+
+  std::vector<GEdge*> edges = model_edges(gm);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+  for (size_t e = 0; e < edges.size(); ++e) {
+    GEdge* ge = edges[e];
+    if (CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
+    if (ge->lines.size() == 0 || ge->mesh_vertices.size() == 0) continue;
+
+    bool haveParam = ge->haveParametrization();
+    double tPrev = 0;
+    for (MVertex* v: ge->mesh_vertices) if (v->getNum() > maxNumBeforeRefine) {
+      double t = tPrev;
+      GPoint proj = ge->closestPoint(v->point(), t);
+      if (proj.succeeded()) {
+        v->setXYZ(proj.x(),proj.y(),proj.z());
+        if (haveParam) {
+          v->setParameter(0,t);
+        }
+      } else {
+        Msg::Error("- Edge %i, vertex %li: curve projection failed", ge->tag(), v->getNum());
+      }
+
+      tPrev = t;
+    }
+  }
+
+
+  std::vector<GFace*> faces = model_faces(gm);
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+  for (size_t f = 0; f < faces.size(); ++f) {
+    GFace* gf = faces[f];
+    if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if (CTX::instance()->debugSurface > 0 &&
+        gf->tag() != CTX::instance()->debugSurface) continue;
+    if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+
+    auto it = bmesh.faceBackgroundMeshes.find(gf);
+    if (it == bmesh.faceBackgroundMeshes.end()) {
+      Msg::Error("background mesh not found for face %i", gf->tag());
+      continue;
+    }
+
+    /* Get pointers to triangles in the background mesh */
+    std::vector<MTriangle*> triangles(it->second.triangles.size());
+    for (size_t i = 0; i < it->second.triangles.size(); ++i) {
+      triangles[i] = &(it->second.triangles[i]);
+    }
+
+    SurfaceProjector sp;
+    bool oki = sp.initialize(gf,triangles);
+    if (!oki) {
+      Msg::Error("failed to initialize surface projector");
+      continue;
+    }
+
+    const bool haveParam = gf->haveParametrization();
+
+    /* Project the vertices which have been introduced by the RefineMesh */
+    bool evalOnCAD = gf->haveParametrization();
+    bool projOnCad = false;
+    if (evalOnCAD && gf->geomType() == GFace::GeomType::Sphere) {
+      /* Strong disortion in sphere parametrization, use projection */
+      projOnCad = true;
+    }
+    for (MVertex* v: gf->mesh_vertices) if (v->getNum() > maxNumBeforeRefine) {
+      GPoint proj = sp.closestPoint(v->point().data(), evalOnCAD, projOnCad);
+      if (proj.succeeded()) {
+        v->setXYZ(proj.x(),proj.y(),proj.z());
+        if (haveParam) {
+          v->setParameter(0,proj.u());
+          v->setParameter(1,proj.v());
+        }
+      } else {
+        Msg::Error("- Face %i, vertex %li: surface projection failed", gf->tag(), v->getNum());
+      }
+    }
+  }
+
+  GeoLog::flush();
 
   return 0;
 }

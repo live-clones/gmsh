@@ -560,8 +560,9 @@ static void Mesh2D(GModel *m)
      * is subdivided into a full quad mesh */
     /* TODO: - a faster CAD projection approach (from uv) 
      *       - verify quality during projection */
-    bool linear = false; 
-    RefineMesh(m, linear, true, false);
+    // bool linear = false; 
+    // RefineMesh(m, linear, true, false);
+    RefineMeshWithBackgroundMeshProjection(m);
 
     OptimizeMesh(m, "QuadQuasiStructured");
   }
@@ -1089,9 +1090,9 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     optimizeTopologyWithCavityRemeshing(m);
   }
   else if(how == "QuadQuasiStructured") {
-    transferSeamGEdgesVerticesToGFace(m);
-    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
-    optimizeTopologyWithCavityRemeshing(m);
+    // transferSeamGEdgesVerticesToGFace(m);
+    // optimizeTopologyWithDiskQuadrangulationRemeshing(m);
+    // optimizeTopologyWithCavityRemeshing(m);
   }
 
   if(Msg::GetVerbosity() > 98)

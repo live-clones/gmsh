@@ -66,4 +66,7 @@ int transferSeamGEdgesVerticesToGFace(GModel* gm);
  */
 int optimizeTopologyWithCavityRemeshing(GModel* gm);
 
+
+int RefineMeshWithBackgroundMeshProjection(GModel* gm);
+
 #endif
