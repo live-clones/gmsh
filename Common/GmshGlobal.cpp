@@ -25,8 +25,6 @@ typedef unsigned long intptr_t;
 #include "Context.h"
 #include "robustPredicates.h"
 #include "BasisFactory.h"
-#include "gmshCrossFields.h"
-#include "automaticMeshSizeField.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -46,6 +44,8 @@ typedef unsigned long intptr_t;
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshPartition.h"
+#include "gmshCrossFields.h"
+#include "automaticMeshSizeField.h"
 #endif
 
 #if defined(HAVE_PLUGINS)
