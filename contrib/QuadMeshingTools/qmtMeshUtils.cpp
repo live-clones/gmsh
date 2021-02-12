@@ -67,6 +67,13 @@ std::vector<GEdge*> model_edges(const GModel* gm) {
   return edges;
 }
 
+bool haveNiceParametrization(GFace* gf) {
+  if (!gf->haveParametrization()) return false;
+  if (gf->geomType() == GFace::GeomType::Sphere) return false;
+
+  return true;
+}
+
 bool buildVertexToVertexMap(
     const std::vector<MTriangle*>& triangles,
     std::unordered_map<MVertex*,std::vector<MVertex*> >& v2v) {
@@ -682,4 +689,16 @@ std::array<SPoint2,4> paramOnQuad(GFace* gf, MQuadrangle* t) {
   }
 
   return uvs;
+}
+
+std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quads) {
+  std::vector<MTriangle*> tris;
+  tris.reserve(2*quads.size());
+  for (MQuadrangle* q: quads) {
+    MTriangle *t11 = new MTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(2));
+    MTriangle *t12 = new MTriangle(q->getVertex(0), q->getVertex(2), q->getVertex(3));
+    tris.push_back(t11);
+    tris.push_back(t12);
+  }
+  return tris;
 }

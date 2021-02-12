@@ -10,6 +10,8 @@
 #include "qmtMeshUtils.h"
 
 
+class SurfaceProjector;
+
 /**
  * @brief Parse the disk quadrangulation list at runtime. 
  *        Must be called one-time before using remeshLocalWithDiskQuadrangulation()
@@ -36,6 +38,8 @@ int initDiskQuadrangulations();
  *                        Compared after geometry untangling/smoothing.
  * @param[in] invertNormalsForQuality The CAD normals are used to compute signed quality.
  *                                    This flag invert invert the CAD normals in the measure.
+ * @param[in] sp If not nullptr, the surface projector is used instead of the CAD parametrization
+ *               in the smoothing. Required if there is no surface parametrization.
  * @param[out] diff The mesh diff (to the GFace) containing the remeshing candidate
  *
  * @return 0 if a valid remeshing has been found
@@ -50,4 +54,5 @@ int remeshLocalWithDiskQuadrangulation(
     const std::vector<MElement*>& neighborsForGeometry,
     double minSICNafer,
     bool invertNormalsForQuality,
+    SurfaceProjector* sp,
     GFaceMeshDiff& diff);

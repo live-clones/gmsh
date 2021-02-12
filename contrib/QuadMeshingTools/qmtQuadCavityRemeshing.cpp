@@ -31,6 +31,7 @@
 #include "MQuadrangle.h"
 #include "BackgroundMesh.h"
 #include "StringUtils.h"
+#include "meshOctreeLibOL.h"
 #include "gmsh.h" // api
 
 /* QuadMeshingTools includes */
@@ -903,6 +904,7 @@ namespace QMT {
     bool invertNormalsForQuality = false;
     size_t nTryMaxPerVertex = 2;
     size_t nTryCloseReset = 5;
+    SurfaceProjector* sp = nullptr;
     /* Stats on execution */
     double t0 = 0.;
     size_t nSingCavityRemesh = 0;
@@ -1467,7 +1469,7 @@ namespace QMT {
     const double minSICNafer = 0.1;
     GFaceMeshDiff diff;
     int st = remeshPatchWithQuadPattern(gf, patternNoAndRot, sides, elements, 
-        intVertices, minSICNafer, invertNormalsForQuality, diff);
+        intVertices, minSICNafer, invertNormalsForQuality, ctx.sp, diff);
     if (st != 0) {
       if (DBG_VERBOSE) {Msg::Debug("remesh cavity: %li quads, failed to remesh path with quad pattern",
           cav.elements.size());}
@@ -1541,11 +1543,22 @@ namespace QMT {
 
       /* Boundary vertex smoothing, to get a smooth transition with the
        * rest of the mesh after cavity remeshing */
-
-      // TODO re activate !
-      //GeomOptimStats stats;
-      //quadMeshOptimizeDMOKernelGreedy(gf, neighbors, toSmooth,
-      //    0.5, 0.8, 50, 10., ctx.invertNormalsForQuality, stats);
+      {
+        GFaceMeshPatch patchBdr;
+        bool okp = patchFromElements(gf, neighbors, patchBdr);
+        if (okp) {
+          Msg::Debug("----P smooth cavity boundary (%li vertices, %li quads)",
+              patchBdr.intVertices.size(),patchBdr.elements.size());
+          GeomOptimStats stats;
+          GeomOptimOptions opt;
+          opt.sp = ctx.sp;
+          opt.outerLoopIterMax = 20.;
+          opt.timeMax = 10.;
+          opt.withBackup = true;
+          opt.invertCADNormals = ctx.invertNormalsForQuality;
+          patchOptimizeGeometryWithKernel(patchBdr, opt, stats);
+        }
+      }
 
       adj.clear(); /* was not longer valid after execute() */
       return true;
@@ -1787,14 +1800,14 @@ namespace QMT {
     ctx.nQuadCavityRemesh += nbCavityRemeshed;
 
     if (false && nbCavityRemeshed > 0) {
-      Msg::Debug("-- surface mesh smoothing");
-      GeomOptimStats stats;
-      std::vector<MElement*> elements = dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles);
-      quadMeshOptimizeDMOKernelGreedy(gf, elements, gf->mesh_vertices,
-          0.5, 0.7, 50, 10., ctx.invertNormalsForQuality, stats);
-      if (stats.sicnMinAfter < 0.) {
-        Msg::Error("Negative quality after cavity remeshing ! SICN min: %.3f", stats.sicnMinAfter);
-      }
+      // Msg::Debug("-- surface mesh smoothing");
+      // GeomOptimStats stats;
+      // std::vector<MElement*> elements = dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles);
+      // quadMeshOptimizeDMOKernelGreedy(gf, elements, gf->mesh_vertices,
+      //     0.5, 0.7, 50, 10., ctx.invertNormalsForQuality, stats);
+      // if (stats.sicnMinAfter < 0.) {
+      //   Msg::Error("Negative quality after cavity remeshing ! SICN min: %.3f", stats.sicnMinAfter);
+      // }
     }
 
     // TODO: smoothing the pool ?
@@ -1960,14 +1973,14 @@ namespace QMT {
 
     // TODO: smoothing the pool ?
     if (false && nbCavityRemeshed > 0) {
-      Msg::Debug("-- surface mesh smoothing");
-      GeomOptimStats stats;
-      std::vector<MElement*> elements = dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles);
-      quadMeshOptimizeDMOKernelGreedy(gf, elements, gf->mesh_vertices,
-          0.5, 0.7, 50, 10., ctx.invertNormalsForQuality, stats);
-      if (stats.sicnMinAfter < 0.) {
-        Msg::Error("Negative quality after cavity remeshing ! SICN min: %.3f", stats.sicnMinAfter);
-      }
+      // Msg::Debug("-- surface mesh smoothing");
+      // GeomOptimStats stats;
+      // std::vector<MElement*> elements = dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles);
+      // quadMeshOptimizeDMOKernelGreedy(gf, elements, gf->mesh_vertices,
+      //     0.5, 0.7, 50, 10., ctx.invertNormalsForQuality, stats);
+      // if (stats.sicnMinAfter < 0.) {
+      //   Msg::Error("Negative quality after cavity remeshing ! SICN min: %.3f", stats.sicnMinAfter);
+      // }
     }
 
     return true;
@@ -2049,6 +2062,7 @@ int remeshPatchWithQuadPattern(
     const std::vector<MVertex*>& intVertices,
     double minSICNafer,
     bool invertNormalsForQuality,
+    SurfaceProjector* sp,
     GFaceMeshDiff& diff) {
   if (patterns.size() == 0) {
     Msg::Error("Quad patterns are not loaded, please call initQuadPatterns() before");
@@ -2130,9 +2144,19 @@ int remeshPatchWithQuadPattern(
   int s0 = patchOptimizeGeometryGlobal(diff.after, stats);
   if (s0 != 0) {
     Msg::Debug("failed to optimize geometry with global UV smoothing");
+    if (gf->haveParametrization() || sp != nullptr) {
+      bool okp = patchProjectOnSurface(diff.after, sp);
+      if (!okp) {
+        Msg::Debug("failed to project geometry");
+        return -1;
+      }
+    }
   }
-  if (s0 == -2) { /* Failed to get continuous UV on bdr, apply method without param */
-
+  if (s0 == -2 && sp != nullptr) { /* Failed to get continuous UV on bdr, apply method without param */
+    GeomOptimOptions opt;
+    opt.sp = sp;
+    opt.invertCADNormals = invertNormalsForQuality;
+    patchOptimizeGeometryWithKernel(diff.after, opt, stats);
   }
   if (stats.sicnMinAfter < minSICNafer) {
     return -1;
@@ -2158,6 +2182,42 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
   QuadqsContext qqs;
   QuadqsGFaceContext ctx(qqs);
   ctx.invertNormalsForQuality = invertNormalsForQuality;
+
+  if (!haveNiceParametrization(gf)) {
+    ctx.sp = new SurfaceProjector();
+    bool deleteTheTris = false;
+    std::vector<MTriangle*> triangles;
+
+    /* warning: name should be the same a in meshQuadQuasiStructured.cpp
+     * for this to work ! */
+    const std::string BMESH_NAME = "bmesh_quadqs"; 
+    if (backgroudMeshExists(BMESH_NAME)) {
+      GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
+      auto it = bmesh.faceBackgroundMeshes.find(gf);
+      if (it == bmesh.faceBackgroundMeshes.end()) {
+        Msg::Error("background mesh not found for face %i", gf->tag());
+        return -3;
+      }
+
+      /* Get pointers to triangles in the background mesh */
+      triangles.resize(it->second.triangles.size());
+      for (size_t i = 0; i < it->second.triangles.size(); ++i) {
+        triangles[i] = &(it->second.triangles[i]);
+      }
+    } else {
+      triangles = trianglesFromQuads(gf->quadrangles);
+      deleteTheTris = true;
+    }
+
+    bool oki = ctx.sp->initialize(gf, triangles);
+    if (!oki) {
+      Msg::Error("failed to initialize the surface projector");
+    }
+
+    if (deleteTheTris){
+      for (MTriangle* t: triangles) delete t;
+    }
+  }
 
 
   unordered_map<size_t,size_t> patternSizeLimits;
@@ -2216,6 +2276,11 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
     size_t nq2 = gf->quadrangles.size();
     size_t nv2 = gf->mesh_vertices.size();
     if (nq2 != nq1 || nv2 != nv1) running = true;
+  }
+
+  if (ctx.sp) {
+    delete ctx.sp;
+    ctx.sp = nullptr;
   }
 
   Msg::Info("- Face %i: remeshed %i singular and %i quadrilateral cavities, %i -> %i quads, %i -> %i vertices",

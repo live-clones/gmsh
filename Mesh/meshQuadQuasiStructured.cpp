@@ -27,6 +27,7 @@
 #include "gmsh.h"
 #include "meshRefine.h"
 #include "meshOctreeLibOL.h"
+#include "robin_hood.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -54,7 +55,15 @@
 
 using namespace CppUtils;
 using namespace ArrayGeometry;
-using std::unordered_map;
+
+template <typename Key, typename T, typename Hash = robin_hood::hash<Key>,
+         typename KeyEqual = std::equal_to<Key>, size_t MaxLoadFactor100 = 80>
+           using unordered_map = robin_hood::detail::Table<true, MaxLoadFactor100, Key, T, Hash, KeyEqual>;
+
+template <typename Key, typename Hash = robin_hood::hash<Key>, typename KeyEqual = std::equal_to<Key>,
+         size_t MaxLoadFactor100 = 80>
+           using unordered_set = robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
+
 
 const std::string BMESH_NAME = "bmesh_quadqs";
 
@@ -781,7 +790,7 @@ bool smoothThePool(
 
     GeomOptimStats stats;
     double sicnBefore = 0.;
-    if (gf->haveParametrization()) {
+    if (haveNiceParametrization(gf)) {
       if (patch.bdrVertices.size() == 1) { /* disk topology */
         /* Global UV smoothing */
         patchOptimizeGeometryGlobal(patch, stats);
@@ -816,6 +825,11 @@ bool smoothThePool(
   return true;
 }
 
+struct DQOptions {
+  bool invertNormalsForQuality = false;
+  SurfaceProjector* sp = nullptr;
+};
+
 struct DQStats {
   size_t nCornerValFixed = 0;
   size_t nCurveValFixed = 0;
@@ -829,7 +843,7 @@ int improveCornerValences(
     GFace* gf,
     const unordered_map<MVertex *, double>& qValIdeal, /* valence on bdr vertices */
     unordered_map<MVertex *, std::vector<MElement *> >& adj,
-    bool invertNormalsForQuality,
+    DQOptions& opt,
     DQStats& stats
     ) {
   std::vector<MVertex*> smoothingPool; /* for smoothing after topological changes */
@@ -901,7 +915,7 @@ int improveCornerValences(
       double minSICNafer = 0.1;
       int sdq = remeshLocalWithDiskQuadrangulation(gf,
           patch.elements, patch.intVertices, patch.bdrVertices.front(), bndIdealValence, bndAllowedValenceRange,
-          neighborsForGeometry, minSICNafer, invertNormalsForQuality, diff);
+          neighborsForGeometry, minSICNafer, opt.invertNormalsForQuality, opt.sp, diff);
       if (sdq == 0) {
         /* Copy the pointers to update the adjacencies in case success */
         GFaceMeshPatch patchBefore = diff.before;
@@ -925,7 +939,7 @@ int improveCornerValences(
     }
   }
 
-  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, invertNormalsForQuality);
+  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality);
 
   /* Remaining cases, just for stats */
   for (const auto& kv: cornerAndIdeal) {
@@ -948,7 +962,7 @@ int improveCurveValences(
     GFace* gf,
     const unordered_map<MVertex *, double>& qValIdeal, /* valence on bdr vertices */
     unordered_map<MVertex *, std::vector<MElement *> >& adj,
-    bool invertNormalsForQuality,
+    DQOptions& opt,
     DQStats& stats
     ) {
   std::vector<MVertex*> smoothingPool; /* for smoothing after topological changes */
@@ -1006,7 +1020,7 @@ int improveCurveValences(
     double minSICNafer = 0.1;
     int sdq = remeshLocalWithDiskQuadrangulation(gf,
         patch.elements, patch.intVertices, patch.bdrVertices.front(), bndIdealValence, bndAllowedValenceRange,
-        neighborsForGeometry, minSICNafer, invertNormalsForQuality, diff);
+        neighborsForGeometry, minSICNafer, opt.invertNormalsForQuality, opt.sp, diff);
     if (sdq == 0) {
       /* Copy the pointers to update the adjacencies in case success */
       GFaceMeshPatch patchBefore = diff.before;
@@ -1029,7 +1043,7 @@ int improveCurveValences(
     }
   }
 
-  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, invertNormalsForQuality);
+  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality);
 
   /* Remaining cases, just for stats */
   for (const auto& kv: curveVertexAndIdeal) {
@@ -1100,7 +1114,7 @@ int improveInteriorValences(
     GFace* gf,
     const unordered_map<MVertex *, double>& qValIdeal, /* valence on bdr vertices */
     unordered_map<MVertex *, std::vector<MElement *> >& adj,
-    bool invertNormalsForQuality,
+    DQOptions& opt,
     DQStats& stats
     ) {
 
@@ -1162,7 +1176,7 @@ int improveInteriorValences(
     double minSICNafer = 0.1;
     int sdq = remeshLocalWithDiskQuadrangulation(gf,
         patch.elements, patch.intVertices, patch.bdrVertices.front(), bndIdealValence, bndAllowedValenceRange,
-        neighborsForGeometry, minSICNafer, invertNormalsForQuality, diff);
+        neighborsForGeometry, minSICNafer, opt.invertNormalsForQuality, opt.sp, diff);
     if (sdq == 0) {
       /* Copy the pointers to update the adjacencies in case success */
       GFaceMeshPatch patchBefore = diff.before;
@@ -1202,7 +1216,7 @@ int improveInteriorValences(
   }
   // GeoLog::flush();
 
-  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, invertNormalsForQuality);
+  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality);
 
   /* Remaining cases, just for stats */
   for (const auto& kv: adj) {
@@ -1215,112 +1229,6 @@ int improveInteriorValences(
     const size_t val = quads.size();
     if (3 <= val && val <= 5) continue;
     stats.nSurfaceValRemaining += 1;
-  }
-
-  return 0;
-}
-
-
-int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
-  if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) return -1;
-
-  // Disk quadrangulation remeshing use the CAD normals to compute the signed quality,
-  // so the orientation is important.
-  bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
-
-  /* For each bdr vertex, compute the ideal valence (based on angle viewed from the face) */
-  unordered_map<MVertex *, double> qValIdeal;
-  computeBdrVertexIdealValence(gf->quadrangles, qValIdeal);
-
-  /* Vertex to quads */
-  unordered_map<MVertex *, std::vector<MElement *> > adj;
-  for (MQuadrangle* f: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv) {
-    MVertex* v = f->getVertex(lv);
-    adj[v].push_back(f);
-  }
-
-  DQStats stats;
-
-  double t1 = Cpu();
-
-  int sc = improveCornerValences(gf, qValIdeal, adj, invertNormals, stats);
-  if (sc != 0) {
-    Msg::Warning("optimize quad topology: failed to improve corner valences");
-  }
-
-  int scu = improveCurveValences(gf, qValIdeal, adj, invertNormals, stats);
-  if (scu != 0) {
-    Msg::Warning("optimize quad topology: failed to improve curve valences");
-  }
-
-  int sci = improveInteriorValences(gf, qValIdeal, adj, invertNormals, stats);
-  if (sci != 0) {
-    Msg::Warning("optimize quad topology: failed to improve interior valences");
-  }
-
-  double t2 = Cpu();
-
-  Msg::Info("- Face %i: disk quadrangulation remeshing, improved valence on %li/%li/%li corner/curve/surface vertices (in %.3f sec), remaining non-ideal: %li/%li/%li",
-      gf->tag(),
-      stats.nCornerValFixed, stats.nCurveValFixed, stats.nSurfaceValFixed,
-      t2-t1,
-      stats.nCornerValRemaining, stats.nCurveValRemaining, stats.nSurfaceValRemaining);
-
-  return 0;
-}
-
-int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
-  Msg::Debug("optimize topology of quad meshes with disk quadrangulation remeshing ...");
-
-  initDiskQuadrangulations();
-
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
-  std::vector<GFace*> faces = model_faces(gm);
-  for (size_t f = 0; f < faces.size(); ++f) {
-    GFace* gf = faces[f];
-    if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
-    if (CTX::instance()->debugSurface > 0 &&
-        gf->tag() != CTX::instance()->debugSurface) continue;
-    if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
-
-    optimizeQuadMeshWithDiskQuadrangulationRemeshing(gf);
-  }
-
-  return 0;
-}
-
-
-
-int optimizeTopologyWithCavityRemeshing(GModel* gm) {
-  std::vector<GFace*> faces = model_faces(gm);
-  Msg::Debug("optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
-
-  initQuadPatterns();
-
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
-  for (size_t f = 0; f < faces.size(); ++f) {
-    GFace* gf = faces[f];
-    if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
-    if (CTX::instance()->debugSurface > 0 &&
-        gf->tag() != CTX::instance()->debugSurface) continue;
-    if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
-
-    /* Get singularities from global storage */
-    std::vector<std::pair<SPoint3,int> > singularities;
-    auto it = global_singularities.find(gf);
-    if (it == global_singularities.end()) {
-      Msg::Warning("optimize topology with cavity remeshing: cross field singularities not found for face %i", gf->tag());
-      Msg::Warning("TODO: compute cross field on quad mesh !");
-    } else {
-      singularities = it->second;
-    }
-
-    bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
-    improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, invertNormals);
   }
 
   return 0;
@@ -1456,3 +1364,150 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
 
   return 0;
 }
+
+
+int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
+  if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) return -1;
+
+  // Disk quadrangulation remeshing use the CAD normals to compute the signed quality,
+  // so the orientation is important.
+  bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
+
+  /* For each bdr vertex, compute the ideal valence (based on angle viewed from the face) */
+  unordered_map<MVertex *, double> qValIdeal;
+  computeBdrVertexIdealValence(gf->quadrangles, qValIdeal);
+
+  /* Vertex to quads */
+  unordered_map<MVertex *, std::vector<MElement *> > adj;
+  for (MQuadrangle* f: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv) {
+    MVertex* v = f->getVertex(lv);
+    adj[v].push_back(f);
+  }
+
+  DQStats stats;
+  DQOptions opt;
+  opt.invertNormalsForQuality = invertNormals;
+  if (!haveNiceParametrization(gf)) {
+    opt.sp = new SurfaceProjector();
+    bool deleteTheTris = false;
+    std::vector<MTriangle*> triangles;
+
+    if (backgroudMeshExists(BMESH_NAME)) {
+      GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
+      auto it = bmesh.faceBackgroundMeshes.find(gf);
+      if (it == bmesh.faceBackgroundMeshes.end()) {
+        Msg::Error("background mesh not found for face %i", gf->tag());
+        return -3;
+      }
+
+      /* Get pointers to triangles in the background mesh */
+      triangles.resize(it->second.triangles.size());
+      for (size_t i = 0; i < it->second.triangles.size(); ++i) {
+        triangles[i] = &(it->second.triangles[i]);
+      }
+    } else {
+      triangles = trianglesFromQuads(gf->quadrangles);
+      deleteTheTris = true;
+    }
+
+    bool oki = opt.sp->initialize(gf, triangles);
+    if (!oki) {
+      Msg::Error("failed to initialize the surface projector");
+    }
+
+    if (deleteTheTris){
+      for (MTriangle* t: triangles) delete t;
+    }
+  }
+
+  double t1 = Cpu();
+
+  int sc = improveCornerValences(gf, qValIdeal, adj, opt, stats);
+  if (sc != 0) {
+    Msg::Warning("optimize quad topology: failed to improve corner valences");
+  }
+
+  int scu = improveCurveValences(gf, qValIdeal, adj, opt, stats);
+  if (scu != 0) {
+    Msg::Warning("optimize quad topology: failed to improve curve valences");
+  }
+
+  int sci = improveInteriorValences(gf, qValIdeal, adj, opt, stats);
+  if (sci != 0) {
+    Msg::Warning("optimize quad topology: failed to improve interior valences");
+  }
+
+  if (opt.sp) {
+    delete opt.sp;
+    opt.sp = nullptr;
+  }
+
+  double t2 = Cpu();
+
+  Msg::Info("- Face %i: disk quadrangulation remeshing, improved valence on %li/%li/%li corner/curve/surface vertices (in %.3f sec), remaining non-ideal: %li/%li/%li",
+      gf->tag(),
+      stats.nCornerValFixed, stats.nCurveValFixed, stats.nSurfaceValFixed,
+      t2-t1,
+      stats.nCornerValRemaining, stats.nCurveValRemaining, stats.nSurfaceValRemaining);
+
+
+  return 0;
+}
+
+int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
+  Msg::Debug("optimize topology of quad meshes with disk quadrangulation remeshing ...");
+
+  initDiskQuadrangulations();
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+  std::vector<GFace*> faces = model_faces(gm);
+  for (size_t f = 0; f < faces.size(); ++f) {
+    GFace* gf = faces[f];
+    if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if (CTX::instance()->debugSurface > 0 &&
+        gf->tag() != CTX::instance()->debugSurface) continue;
+    if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+
+    optimizeQuadMeshWithDiskQuadrangulationRemeshing(gf);
+  }
+
+  return 0;
+}
+
+
+
+int optimizeTopologyWithCavityRemeshing(GModel* gm) {
+  std::vector<GFace*> faces = model_faces(gm);
+  Msg::Debug("optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
+
+  initQuadPatterns();
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+  for (size_t f = 0; f < faces.size(); ++f) {
+    GFace* gf = faces[f];
+    if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if (CTX::instance()->debugSurface > 0 &&
+        gf->tag() != CTX::instance()->debugSurface) continue;
+    if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+
+    /* Get singularities from global storage */
+    std::vector<std::pair<SPoint3,int> > singularities;
+    auto it = global_singularities.find(gf);
+    if (it == global_singularities.end()) {
+      Msg::Warning("optimize topology with cavity remeshing: cross field singularities not found for face %i", gf->tag());
+      Msg::Warning("TODO: compute cross field on quad mesh !");
+    } else {
+      singularities = it->second;
+    }
+
+    bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
+    improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, invertNormals);
+  }
+
+  return 0;
+}
+

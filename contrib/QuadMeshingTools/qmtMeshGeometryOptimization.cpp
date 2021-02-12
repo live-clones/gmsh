@@ -28,6 +28,8 @@
 #include "MElement.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "robin_hood.h"
+#include "meshOctreeLibOL.h"
 #include "gmsh.h" // api
 
 /* QuadMeshingTools includes */
@@ -47,12 +49,148 @@ using namespace CppUtils;
 using namespace ArrayGeometry;
 
 using std::vector;
-using std::unordered_map;
 using vec4 = std::array<double,4>;
 using vec5 = std::array<double,5>;
 
+template <typename Key, typename T, typename Hash = robin_hood::hash<Key>,
+         typename KeyEqual = std::equal_to<Key>, size_t MaxLoadFactor100 = 80>
+           using unordered_map = robin_hood::detail::Table<true, MaxLoadFactor100, Key, T, Hash, KeyEqual>;
+
+template <typename Key, typename Hash = robin_hood::hash<Key>, typename KeyEqual = std::equal_to<Key>,
+         size_t MaxLoadFactor100 = 80>
+           using unordered_set = robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
+
 namespace QMT {
   constexpr size_t NO_SIZE_T = (size_t) -1;
+
+  inline bool kernelWinslowSpecialStencil(const vec3 ptsStencil[8], vec3& newPos) {
+    /* Stencil:
+     *   6---1---4
+     *   |   |   |
+     *   2--- ---0
+     *   |   |   |
+     *   7---3---5
+     */
+    /* warning: 2D stencil but 3D coordinates */
+    const double hx = 1.;
+    const double hy = 1.;
+
+    /* 1. Compute the winslow coefficients (alpha_i, beta_i in the Karman paper) */
+    /*    a. Compute first order derivatives of the position */
+    vec3 r_i[2];
+    r_i[0] = 1./hx * (ptsStencil[0] - ptsStencil[2]);
+    r_i[1] = 1./hy * (ptsStencil[1] - ptsStencil[3]);
+    /*    b. Compute the alpha_i coefficients */
+    const double alpha_0 = dot(r_i[1],r_i[1]);
+    const double alpha_1 = dot(r_i[0],r_i[0]);
+    /*    c. Compute the beta coefficient */
+    const double beta =  dot(r_i[0],r_i[1]);
+
+    /* cross derivative */
+    const vec3 u_xy = 1./(4.*hx*hy) * (ptsStencil[4]+ptsStencil[7]-ptsStencil[6]-ptsStencil[5]);
+
+    /* 2. Compute the "winslow new position" */
+    const double denom = 2. * alpha_0 / (hx*hx) + 2. * alpha_1 / (hy*hy);
+    if (std::abs(denom) < 1.e-18) return false;
+    newPos = 1. / denom * (
+        alpha_0/(hx*hx) * (ptsStencil[0] + ptsStencil[2])
+        + alpha_1/(hy*hy) * (ptsStencil[1] + ptsStencil[3])
+        - 2. * beta * u_xy
+        );
+    return true;
+  }
+
+  inline bool kernelWinslow(const std::array<vec3,8>& stencil, vec3& newPos) {
+    /* Continuous ordering in input stencil */
+    const std::array<uint32_t,8> o2n = {0, 2, 4, 6, 1, 7, 3, 5};
+    const std::array<vec3,8> winStencil = {
+      stencil[o2n[0]], stencil[o2n[1]], stencil[o2n[2]], stencil[o2n[3]],
+      stencil[o2n[4]], stencil[o2n[5]], stencil[o2n[6]], stencil[o2n[7]]};
+    return kernelWinslowSpecialStencil(winStencil.data(), newPos);
+  }
+
+  bool kernelLaplacian(const std::vector<vec3>& points, vec3& newPos) {
+    const size_t N = points.size();
+    if (N == 0) return false;
+    newPos = {0.,0.,0.};
+    for (size_t i = 0; i < N; ++i) {
+      newPos = newPos + points[i];
+    }
+    newPos = 1./double(N) * newPos;
+    return true;
+  }
+
+  bool kernelAngleBased(const vec3& center, const std::vector<vec3>& points, vec3& newPos) {
+    const size_t N = points.size();
+    std::vector<vec3> rotated(N);
+    std::vector<double> angles(N);
+    double sum_angle = 0.;
+    for (size_t i = 0; i < N; ++i) {
+      const vec3& prev = points[(N+i-1)%N];
+      const vec3& cur = points[i];
+      const vec3& next = points[(i+1)%N];
+      vec3 oldDir = (center - cur);
+      double len = length(oldDir);
+      if (len == 0.) return false;
+      vec3 d1 = prev-cur;
+      if (length2(d1) == 0.) return false;
+      vec3 d2 = next-cur;
+      if (length2(d2) == 0.) return false;
+      normalize(d1);
+      normalize(d2);
+      vec3 newDir = d1+d2;
+      if (length2(newDir) == 0.) return false;
+      normalize(newDir);
+      if (dot(newDir,oldDir) < 0.) {
+        newDir = -1. * newDir;
+      }
+      rotated[i] = cur + len * newDir;
+      normalize(oldDir);
+      double agl = angleVectorsAlreadyNormalized(newDir,oldDir);
+      angles[i] = agl;
+      sum_angle += agl;
+    }
+    if (sum_angle == 0.) return false;
+    newPos.data()[0] = 0.;
+    newPos.data()[1] = 0.;
+    newPos.data()[2] = 0.;
+    for (size_t i = 0; i < N; ++i) {
+      double w = angles[i] / sum_angle;
+      // double w = 1./double(N);
+      newPos = newPos + w * rotated[i];
+    }
+    return true;
+  }
+
+  std::array<vec3,8> fillStencilRegular(
+      size_t v,
+      const std::vector<vec3>& points,
+      const std::vector<size_t>& one_ring_first,
+      const std::vector<uint32_t>& one_ring_values) {
+    return std::array<vec3,8>{
+      points[one_ring_values[one_ring_first[v]+0]],
+      points[one_ring_values[one_ring_first[v]+1]],
+      points[one_ring_values[one_ring_first[v]+2]],
+      points[one_ring_values[one_ring_first[v]+3]],
+      points[one_ring_values[one_ring_first[v]+4]],
+      points[one_ring_values[one_ring_first[v]+5]],
+      points[one_ring_values[one_ring_first[v]+6]],
+      points[one_ring_values[one_ring_first[v]+7]]
+    };
+  }
+
+  void fillStencilIrregular(
+      size_t v,
+      const std::vector<vec3>& points,
+      const std::vector<size_t>& one_ring_first,
+      const std::vector<uint32_t>& one_ring_values,
+      std::vector<vec3>& stencil) {
+    stencil.resize(one_ring_first[v+1]-one_ring_first[v]);
+    for (size_t i = 0; i < stencil.size(); ++i) {
+      stencil[i] = points[one_ring_first[v]+i];
+    }
+  }
+
 
   struct OneRing {
     vec5* p_uv = NULL;
@@ -256,7 +394,7 @@ namespace QMT {
     bool okc = buildCondensedStructure(elements,freeVertices,old2new,new2old,
         quads,v2q,oneRings,points);
     if (!okc) {
-      Msg::Error("smoothElementsWithLocalKernel: failed to build condensed representation");
+      Msg::Error("buildCondensedStructure: failed to build condensed representation");
       return false;
     }
 
@@ -764,7 +902,7 @@ bool kernelLoopWithParametrization(
   size_t dmo_grid_width = 8;
   size_t dmo_grid_depth = 3;
 
-  /* Initialization: all vertices locked */
+  /* Initialization: all vertices unlocked */
   std::vector<bool> locked(patch.intVertices.size(),false);
   if (opt.qualityRangeTechnique) {
     std::fill(locked.begin(),locked.end(),true);
@@ -845,6 +983,91 @@ bool kernelLoopWithParametrization(
   return true;
 }
 
+bool kernelLoopWithProjection(
+    GFaceMeshPatch& patch, 
+    const GeomOptimOptions& opt,
+    GeomOptimStats& stats) {
+  GFace* gf = patch.gf;
+  if (opt.sp == nullptr) {
+    Msg::Error("kernel loop with projection: no surface projector");
+    return false;
+  }
+
+  /* Data for smoothing */
+  std::vector<size_t> one_ring_first;
+  std::vector<uint32_t> one_ring_values;
+  std::vector<MVertex*> new2old;
+  unordered_map<MVertex*,uint32_t> old2new;
+  std::vector<std::array<double,3> > points;
+  {
+    std::vector<std::array<uint32_t,4> > quads;
+    std::vector<std::vector<uint32_t> > v2q;
+    std::vector<std::vector<uint32_t> > oneRings;
+    bool okc = buildCondensedStructure(patch.elements,patch.intVertices,
+        old2new,new2old, quads,v2q,oneRings,points);
+    if (!okc) {
+      Msg::Error("buildCondensedStructure: failed to build condensed representation");
+      return false;
+    }
+    compress(oneRings, one_ring_first, one_ring_values);
+  }
+  std::vector<std::array<double,2> > point_uvs;
+  if (gf->haveParametrization()) point_uvs.resize(points.size());
+
+  /* Initialization: all vertices unlocked */
+  std::vector<bool> locked(patch.intVertices.size(),false);
+
+  /* Explicit smoothing loop */
+  const size_t nFree = patch.intVertices.size();
+  std::vector<vec3> stencilIrreg(10);
+  for (size_t iter = 0; iter < opt.outerLoopIterMax; ++iter) {
+    size_t nMoved = 0;
+
+    /* Loop over interior vertices */
+    for (size_t v = 0; v < nFree; ++v) {
+      size_t n = one_ring_first[v+1] - one_ring_first[v];
+      vec3 newPos;
+      if (n == 8) { /* regular vertex */
+        std::array<vec3,8> stencil = fillStencilRegular(v, points, one_ring_first, one_ring_values);
+        bool ok = kernelWinslow(stencil, newPos);
+        if (!ok) continue;
+      } else { /* irregular vertex */
+        fillStencilIrregular(v, points, one_ring_first, one_ring_values, stencilIrreg);
+        bool ok = kernelAngleBased(points[v], stencilIrreg, newPos);
+        if (!ok) continue;
+      }
+      GPoint proj = opt.sp->closestPoint(newPos.data(), false, false);
+      if (proj.succeeded()) {
+        points[v] = {proj.x(),proj.y(),proj.z()};
+        if (point_uvs.size()) {
+          point_uvs[v] = {proj.u(),proj.v()};
+        }
+      }
+    }
+  }
+
+  /* Update the positions */
+  for (size_t i = 0; i < patch.intVertices.size(); ++i) {
+    MVertex* v = new2old[i];
+    v->setXYZ(points[i][0],points[i][1],points[i][2]);
+    if (point_uvs.size()) {
+      v->setParameter(0,point_uvs[i][0]);
+      v->setParameter(1,point_uvs[i][1]);
+
+      SPoint3 query = v->point();
+      GPoint proj = gf->closestPoint(query, point_uvs[i].data());
+      if (proj.succeeded()) {
+        v->setXYZ(proj.x(),proj.y(),proj.z());
+        v->setParameter(proj.u(),proj.v());
+      }
+    }
+
+  }
+
+  return true;
+}
+
+
 size_t nbVerticesOnBoundary(const GFaceMeshPatch& patch) {
   size_t n = 0;
   for (size_t i = 0; i < patch.bdrVertices.size(); ++i)
@@ -865,8 +1088,15 @@ bool patchOptimizeGeometryWithKernel(
     return -1;
   }
 
+  stats.sicnMinBefore = -1.; /* if no element */
+  stats.sicnAvgBefore = -1.;
   double t1 = Cpu();
   computeSICN(patch.elements, stats.sicnMinBefore, stats.sicnAvgBefore);
+
+  PatchGeometryBackup* backup = nullptr;
+  if (opt.withBackup) {
+    backup = new PatchGeometryBackup(patch);
+  }
 
   /* Debug visualization */
   const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
@@ -875,12 +1105,19 @@ bool patchOptimizeGeometryWithKernel(
   }
 
   bool useParam = gf->haveParametrization();
-  if (useParam && gf->geomType() == GFace::GeomType::Sphere) useParam = false;
+  if (opt.sp != nullptr) useParam = false;
 
   if (useParam) {
     bool okl = kernelLoopWithParametrization(patch, opt, stats);
     if (!okl) {
-      Msg::Error("optimize geometry kernel: the loop failed (%li elements)", 
+      Msg::Error("optimize geometry kernel: the loop with param. failed (%li elements)", 
+          patch.elements.size());
+      return -1;
+    }
+  } else {
+    bool okl = kernelLoopWithProjection(patch, opt, stats);
+    if (!okl) {
+      Msg::Error("optimize geometry kernel: the loop with projection failed (%li elements)", 
           patch.elements.size());
       return -1;
     }
@@ -888,6 +1125,12 @@ bool patchOptimizeGeometryWithKernel(
 
   /* Statistics */
   computeSICN(patch.elements, stats.sicnMinAfter, stats.sicnAvgAfter);
+
+  if (opt.withBackup && backup && stats.sicnMinAfter < stats.sicnMinBefore) {
+    backup->restore();
+    stats.sicnMinAfter = stats.sicnMinBefore;
+    stats.sicnAvgAfter = stats.sicnAvgBefore;
+  }
 
   /* Debug visualization */
   if (DBG_VIZU) {
@@ -900,10 +1143,54 @@ bool patchOptimizeGeometryWithKernel(
   stats.nFree = patch.intVertices.size();
   stats.nLock = nbVerticesOnBoundary(patch);
 
-  Msg::Debug("optimize geometry kernel: %li/%li free vertices, %li elements, SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec",
-      patch.intVertices.size(), stats.nFree + stats.nLock, patch.elements.size(),
-      stats.sicnMinBefore, stats.sicnMinAfter, stats.sicnAvgBefore, stats.sicnAvgAfter, stats.timeCpu);
+  if (backup) delete backup;
+
+  if (useParam) {
+    Msg::Debug("optimize geometry kernel (using CAD param): %li/%li free vertices, %li elements, SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec",
+        patch.intVertices.size(), stats.nFree + stats.nLock, patch.elements.size(),
+        stats.sicnMinBefore, stats.sicnMinAfter, stats.sicnAvgBefore, stats.sicnAvgAfter, stats.timeCpu);
+  } else {
+    Msg::Debug("optimize geometry kernel (using triangulation): %li/%li free vertices, %li elements, SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec",
+        patch.intVertices.size(), stats.nFree + stats.nLock, patch.elements.size(),
+        stats.sicnMinBefore, stats.sicnMinAfter, stats.sicnAvgBefore, stats.sicnAvgAfter, stats.timeCpu);
+  }
 
   return true;
 }
 
+bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp) {
+  Msg::Debug("patch surface projection (%i vertices) ...", patch.intVertices.size());
+  bool useParam = patch.gf->haveParametrization();
+  for (MVertex* v: patch.intVertices) {
+    GPoint proj;
+    if (sp != nullptr) {
+      proj = sp->closestPoint(v->point().data(),false,false);
+      if (proj.succeeded()) {
+        v->setXYZ(proj.x(),proj.y(),proj.z());
+      }
+      if (useParam) {
+        double uv[2] = {proj.u(),proj.v()};
+        GPoint proj2 = patch.gf->closestPoint(v->point(),uv);
+        if (proj2.succeeded()) {
+          v->setXYZ(proj2.x(),proj2.y(),proj2.z());
+          v->setParameter(0,proj2.u());
+          v->setParameter(1,proj2.v());
+        }
+      }
+    } else if (useParam) {
+      double uv[2];
+      v->getParameter(0,uv[0]);
+      v->getParameter(1,uv[1]);
+      GPoint proj2 = patch.gf->closestPoint(v->point(),uv);
+      if (proj2.succeeded()) {
+        v->setXYZ(proj2.x(),proj2.y(),proj2.z());
+        v->setParameter(0,proj2.u());
+        v->setParameter(1,proj2.v());
+      }
+    } else {
+      Msg::Error("patch projection: no parametrization and no surface projector");
+      return false;
+    }
+  }
+  return true;
+}

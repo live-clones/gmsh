@@ -9,6 +9,8 @@
 
 #include "qmtMeshUtils.h"
 
+class SurfaceProjector;
+
 
 /**
  * @brief Apply iterative cavity remeshing to the face mesh
@@ -93,6 +95,8 @@ bool patchIsRemeshableWithQuadPattern(
  *                        Compared after geometry untangling/smoothing.
  * @param[in] invertNormalsForQuality The CAD normals are used to compute signed quality.
  *                                    This flag invert invert the CAD normals in the measure.
+ * @param[in] sp If not nullptr, the surface projector is used instead of the CAD parametrization
+ *               in the smoothing. Required if there is no surface parametrization.
  * @param[out] diff The mesh diff (to the GFace) containing the remeshing candidate
  *
  * @return 0 if success
@@ -105,4 +109,5 @@ int remeshPatchWithQuadPattern(
     const std::vector<MVertex*>& intVertices,
     double minSICNafer,
     bool invertNormalsForQuality,
+    SurfaceProjector* sp,
     GFaceMeshDiff& diff);

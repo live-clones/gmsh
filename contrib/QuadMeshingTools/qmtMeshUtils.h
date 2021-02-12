@@ -25,6 +25,8 @@ std::vector<GFace*> model_faces(const GModel* gm);
 std::vector<GEdge*> face_edges(const GFace* gf);
 std::vector<GEdge*> model_edges(const GModel* gm);
 
+bool haveNiceParametrization(GFace* gf);
+
 bool buildVertexToVertexMap(
     const std::vector<MTriangle*>& triangles,
     std::unordered_map<MVertex*,std::vector<MVertex*> >& v2v);
@@ -63,6 +65,8 @@ bool orientElementsAccordingToBoundarySegment(MVertex* a, MVertex* b, std::vecto
 std::array<SPoint2,3> paramOnTriangle(GFace* gf, MTriangle* t);
 std::array<SPoint2,4> paramOnQuad(GFace* gf, MQuadrangle* q);
 
+/* warning: triangles are allocated, should be delete by the caller */
+std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quads);
 
 
 struct GFaceMeshDiff {

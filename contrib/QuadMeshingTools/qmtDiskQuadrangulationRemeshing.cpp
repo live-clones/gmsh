@@ -299,6 +299,7 @@ int remeshLocalWithDiskQuadrangulation(
     const std::vector<MElement*>& neighborsForGeometry,
     double minSICNafer,
     bool invertNormalsForQuality,
+    SurfaceProjector* sp,
     GFaceMeshDiff& diff) {
   if (QMT::B_disk_quadrangulations.size() == 0) {
     Msg::Error("Missing disk quadrangulation database, call initDiskQuadrangulations() before");
@@ -378,6 +379,7 @@ int remeshLocalWithDiskQuadrangulation(
 
       /* Kernel smoothing */
       GeomOptimOptions opt;
+      if (sp != nullptr) opt.sp = sp;
       opt.invertCADNormals = invertNormalsForQuality;
       int s1 = patchOptimizeGeometryWithKernel(patch, opt, stats);
       if (stats.sicnAvgAfter > minSICNafer) {
@@ -411,6 +413,7 @@ int remeshLocalWithDiskQuadrangulation(
       PatchGeometryBackup backup(largerPatch);
 
       GeomOptimOptions opt;
+      if (sp != nullptr) opt.sp = sp;
       opt.invertCADNormals = invertNormalsForQuality;
       GeomOptimStats stats;
 

@@ -60,9 +60,11 @@ struct GeomOptimOptions {
   double timeMax = DBL_MAX; /* stop smoothing is timeMax elapsed */
   bool invertCADNormals = false; /* invert the CAD normals for the quality computation */
   SurfaceProjector* sp = nullptr; /* if present, surface projection is used instead of CAD */
+  bool smart = true; /* compute quality before/after and do not decrease */
   bool qualityRangeTechnique = false;
   double qualityRangeMin = 0.5;
   double qualityRangeMax = 0.8;
+  bool withBackup = true; /* save the geometry before, restore if quality decreased */
 };
 
 /**
@@ -90,4 +92,17 @@ bool patchOptimizeGeometryWithKernel(
  * @param[out] sicnAvg Average element SICN quality
  */
 void computeSICN(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg);
+
+
+/**
+ * @brief Project the patch interior vertices on the surface.
+ *        If no parametrization, only the SurfaceProjector is used.
+ *        If param, the SurfaceProjector is used as a initial guess.
+ *
+ * @param patch The patch containing the vertices
+ * @param sp If not nullptr, use it to project
+ *
+ * @return true if success
+ */
+bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp = nullptr);
 
