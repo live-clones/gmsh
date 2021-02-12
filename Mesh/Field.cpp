@@ -2056,7 +2056,7 @@ public:
     for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
       GEdge *e = GModel::current()->getEdgeByTag(*it);
       if(e) {
-        for(int i = 1; i < _numPointsPerCurve - 1; i++) {
+        for(int i = 0; i < _numPointsPerCurve; i++) {
           double u = (double)i / (_numPointsPerCurve - 1);
           Range<double> b = e->parBounds(0);
           double t = b.low() + u * (b.high() - b.low());

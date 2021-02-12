@@ -1966,7 +1966,7 @@ bool OCC_Internals::addBSplineSurface(
   // automatic default weights if not provided:
   if(w.empty()) w.resize(pointTags.size(), 1);
   if(w.size() != pointTags.size()) {
-    Msg::Error("Wrong number of weigths for BSpline surface");
+    Msg::Error("Wrong number of weights for BSpline surface");
     return false;
   }
   bool periodicU = true;
