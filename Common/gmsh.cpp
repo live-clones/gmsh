@@ -6744,6 +6744,7 @@ GMSH_API void gmsh::view::getListData(const int tag,
 #endif
 }
 
+#if defined(HAVE_POST)
 static double getStringStyle(const std::vector<std::string> &style)
 {
   if(style.empty()) return 0.;
@@ -6766,6 +6767,7 @@ static double getStringStyle(const std::vector<std::string> &style)
   }
   return (double)((align << 16) | (font << 8) | (fontsize));
 }
+#endif
 
 GMSH_API void
 gmsh::view::addListDataString(const int tag, const std::vector<double> &coord,
