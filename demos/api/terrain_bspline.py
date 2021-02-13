@@ -10,10 +10,6 @@ gmsh.model.add("terrain")
 # a simple function):
 N = 100
 ps = []
-p1 = -1
-p2 = -1
-p3 = -1
-p4 = -1
 
 # create a bspline surface
 for i in range(N + 1):
