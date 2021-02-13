@@ -95,6 +95,7 @@ opt(SLEPC "Enable SLEPc eigensolvers" OFF)
 opt(SOLVER "Enable built-in finite element solvers (required for reparametrization)" ${DEFAULT})
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
+opt(TESTS "Enable tests" ${DEFAULT})
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
@@ -2120,7 +2121,7 @@ macro(filter_tests IN OUT)
   endforeach()
 endmacro()
 
-if(NOT DISABLE_GMSH_TESTS)
+if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   # disabling tests is useful when including this CMakeLists in an external project
   include(CTest)
   file(GLOB_RECURSE ALLFILES
