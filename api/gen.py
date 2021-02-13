@@ -434,6 +434,9 @@ mesh.add('setCompound', doc, None, iint('dim'), ivectorint('tags'))
 doc = '''Set meshing constraints on the bounding surfaces of the volume of tag `tag' so that all surfaces are oriented with outward pointing normals. Currently only available with the OpenCASCADE kernel, as it relies on the STL triangulation.'''
 mesh.add('setOutwardOrientation', doc, None, iint('tag'))
 
+doc = '''Remove all meshing constraints from the model entities `dimTags'. If `dimTags' is empty, remove all constraings.'''
+mesh.add('removeConstraints', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
 doc = '''Embed the model entities of dimension `dim' and tags `tags' in the (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must be strictly smaller than `inDim', which must be either 2 or 3. The embedded entities should not intersect each other or be part of the boundary of the entity `inTag', whose mesh will conform to the mesh of the embedded entities. With the OpenCASCADE kernel, if the `fragment' operation is applied to entities of different dimensions, the lower dimensional entities will be automatically embedded in the higher dimensional entities if they are not on their boundary.'''
 mesh.add('embed', doc, None, iint('dim'), ivectorint('tags'), iint('inDim'), iint('inTag'))
 

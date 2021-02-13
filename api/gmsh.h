@@ -1343,6 +1343,12 @@ namespace gmsh { // Top-level functions
       // STL triangulation.
       GMSH_API void setOutwardOrientation(const int tag);
 
+      // gmsh::model::mesh::removeConstraints
+      //
+      // Remove all meshing constraints from the model entities `dimTags'. If
+      // `dimTags' is empty, remove all constraings.
+      GMSH_API void removeConstraints(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
       // gmsh::model::mesh::embed
       //
       // Embed the model entities of dimension `dim' and tags `tags' in the

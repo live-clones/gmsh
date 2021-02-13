@@ -2636,6 +2636,24 @@ end
 const set_outward_orientation = setOutwardOrientation
 
 """
+    gmsh.model.mesh.removeConstraints(dimTags = Tuple{Cint,Cint}[])
+
+Remove all meshing constraints from the model entities `dimTags`. If `dimTags`
+is empty, remove all constraings.
+"""
+function removeConstraints(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRemoveConstraints, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const remove_constraints = removeConstraints
+
+"""
     gmsh.model.mesh.embed(dim, tags, inDim, inTag)
 
 Embed the model entities of dimension `dim` and tags `tags` in the (`inDim`,

@@ -3100,6 +3100,23 @@ class model:
         set_outward_orientation = setOutwardOrientation
 
         @staticmethod
+        def removeConstraints(dimTags=[]):
+            """
+            gmsh.model.mesh.removeConstraints(dimTags=[])
+
+            Remove all meshing constraints from the model entities `dimTags'. If
+            `dimTags' is empty, remove all constraings.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelMeshRemoveConstraints(
+                api_dimTags_, api_dimTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        remove_constraints = removeConstraints
+
+        @staticmethod
         def embed(dim, tags, inDim, inTag):
             """
             gmsh.model.mesh.embed(dim, tags, inDim, inTag)

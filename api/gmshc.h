@@ -1183,6 +1183,11 @@ GMSH_API void gmshModelMeshSetCompound(const int dim,
 GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag,
                                                  int * ierr);
 
+/* Remove all meshing constraints from the model entities `dimTags'. If
+ * `dimTags' is empty, remove all constraings. */
+GMSH_API void gmshModelMeshRemoveConstraints(int * dimTags, size_t dimTags_n,
+                                             int * ierr);
+
 /* Embed the model entities of dimension `dim' and tags `tags' in the
  * (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must
  * be strictly smaller than `inDim', which must be either 2 or 3. The embedded

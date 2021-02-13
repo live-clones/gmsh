@@ -4650,6 +4650,15 @@ GMSH_API void gmsh::model::mesh::setOutwardOrientation(const int tag)
   gr->setOutwardOrientationMeshConstraint();
 }
 
+GMSH_API void gmsh::model::mesh::removeConstraints(const vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
+  for(std::size_t i = 0; i < entities.size(); i++)
+    entities[i]->resetMeshAttributes();
+}
+
 GMSH_API void gmsh::model::mesh::embed(const int dim,
                                        const std::vector<int> &tags,
                                        const int inDim, const int inTag)

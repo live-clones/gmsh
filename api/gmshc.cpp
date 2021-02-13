@@ -1738,6 +1738,22 @@ GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag, int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshRemoveConstraints(int * dimTags, size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::removeConstraints(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshEmbed(const int dim, int * tags, size_t tags_n, const int inDim, const int inTag, int * ierr)
 {
   if(ierr) *ierr = 0;
