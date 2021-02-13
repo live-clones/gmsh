@@ -43,21 +43,21 @@ StringXNumber *GMSH_MeshSizeFieldViewPlugin::getOption(int iopt)
 
 PView *GMSH_MeshSizeFieldViewPlugin::execute(PView *view)
 {
+#if defined(HAVE_MESH)
   int field = (int)MeshSizeFieldViewOptions_Number[0].def;
   int iView = (int)MeshSizeFieldViewOptions_Number[1].def;
   int comp = (int)MeshSizeFieldViewOptions_Number[2].def;
 
   PView *v1 = getView(iView, view);
   if(!v1) return view;
-
-#if defined(HAVE_MESH)
   Field *f = GModel::current()->getFields()->get(field);
   if(f)
     f->putOnView(v1, comp);
   else
     Msg::Error("Unknown mesh size field %d", field);
+  return v1;
 #else
   Msg::Error("Plugin(MeshSizeFieldView) requires the mesh module");
+  return view;
 #endif
-  return v1;
 }
