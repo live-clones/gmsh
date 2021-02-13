@@ -348,6 +348,10 @@ namespace onelabUtils {
     onelab::server::instance()->get(pn, "IsMetamodel");
     if(pn.size() && pn[0].getValue()) return redraw;
 
+    // do nothing if there is no file name associated with the model (e.g. when
+    // Gmsh is run interactively through the API and no model file is opened)
+    if(GModel::current()->getFileName().empty()) return redraw;
+
     onelab::client *c = *it;
     std::string mshFileName = onelabUtils::getMshFileName(c);
 
