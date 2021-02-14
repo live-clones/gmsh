@@ -282,7 +282,7 @@ void change_print_parameter(int frame)
 }
 
 void CreateOutputFile(const std::string &fileName, int format,
-                      bool status, bool redraw)
+                      bool status)
 {
   std::string name = fileName;
   if(name.empty()) name = GetDefaultFileName(format);
@@ -303,7 +303,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       int format = GuessFileFormatFromFileName(name, &version);
       if(format == FORMAT_MSH && version > 0.)
         CTX::instance()->mesh.mshFileVersion = version;
-      CreateOutputFile(name, format, false, false);
+      CreateOutputFile(name, format, false);
     }
     break;
 
@@ -535,6 +535,7 @@ void CreateOutputFile(const std::string &fileName, int format,
 
       delete buffer;
       fclose(fp);
+      drawContext::global()->draw();
     }
     break;
 
@@ -614,6 +615,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
 
       fclose(fp);
+      drawContext::global()->draw();
     }
     break;
 
@@ -693,6 +695,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       if(restoreGeneralAxis) opt_general_axes(0, GMSH_SET| GMSH_GUI, 1);
       if(restoreSmallAxis) opt_general_small_axes(0, GMSH_SET | GMSH_GUI, 1);
       if(cnt > 0) opt_view_show_scale(num, GMSH_SET, 1);
+      drawContext::global()->draw();
     }
     break;
 
@@ -746,7 +749,7 @@ void CreateOutputFile(const std::string &fileName, int format,
           change_print_parameter(i);
         if(fp)
           CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM,
-                           false, false);
+                           false);
         else{
           drawContext::global()->draw();
           SleepInSeconds(CTX::instance()->post.animDelay);
@@ -807,8 +810,4 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   if(status && !error)
     Msg::StatusBar(true, "Done writing '%s'", name.c_str());
-
-#if defined(HAVE_OPENGL)
-  if(redraw) drawContext::global()->draw();
-#endif
 }
