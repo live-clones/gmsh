@@ -303,6 +303,18 @@ GMSH_API void gmsh::model::setCurrent(const std::string &name)
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+GMSH_API void gmsh::model::getFileName(std::string &fileName)
+{
+  if(!_checkInit()) return;
+  fileName = GModel::current()->getFileName();
+}
+
+GMSH_API void gmsh::model::setFileName(const std::string &fileName)
+{
+  if(!_checkInit()) return;
+  GModel::current()->setFileName(fileName);
+}
+
 GMSH_API void gmsh::model::getEntities(vectorpair &dimTags, const int dim)
 {
   if(!_checkInit()) return;
@@ -7207,7 +7219,7 @@ GMSH_API void gmsh::plugin::run(const std::string &name)
 GMSH_API void gmsh::graphics::draw()
 {
 #if defined(HAVE_OPENGL)
-  drawContext::global()->draw();
+  drawContext::global()->draw(false); // not rate-limited
 #endif
 }
 
@@ -7237,7 +7249,7 @@ GMSH_API void gmsh::fltk::initialize()
 #if defined(HAVE_FLTK)
   _createFltk();
   FlGui::setFinishedProcessingCommandLine();
-  FlGui::check(true);
+  FlGui::check();
 #else
   Msg::Error("Fltk not available");
 #endif
@@ -7259,9 +7271,9 @@ GMSH_API void gmsh::fltk::wait(const double time)
 #if defined(HAVE_FLTK)
   _createFltk();
   if(time >= 0)
-    FlGui::wait(time, true);
+    FlGui::wait(time);
   else
-    FlGui::wait(true);
+    FlGui::wait();
 #else
   Msg::Error("Fltk not available");
 #endif

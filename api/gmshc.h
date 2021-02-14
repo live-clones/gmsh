@@ -142,6 +142,15 @@ GMSH_API void gmshModelGetCurrent(char ** name,
 GMSH_API void gmshModelSetCurrent(const char * name,
                                   int * ierr);
 
+/* Get the file name (if any) associated with the current model. A file name
+ * is associated when a model is read from a file on disk. */
+GMSH_API void gmshModelGetFileName(char ** fileName,
+                                   int * ierr);
+
+/* Set the file name associated with the current model. */
+GMSH_API void gmshModelSetFileName(const char * fileName,
+                                   int * ierr);
+
 /* Get all the entities in the current model. If `dim' is >= 0, return only
  * the entities of the specified dimension (e.g. points if `dim' == 0). The
  * entities are returned as a vector of (dim, tag) integer pairs. */

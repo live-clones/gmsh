@@ -103,6 +103,12 @@ model.add('getCurrent', doc, None, ostring('name'))
 doc = '''Set the current model to the model with name `name'. If several models have the same name, select the one that was added first.'''
 model.add('setCurrent', doc, None, istring('name'))
 
+doc = '''Get the file name (if any) associated with the current model. A file name is associated when a model is read from a file on disk.'''
+model.add('getFileName', doc, None, ostring('fileName'))
+
+doc = '''Set the file name associated with the current model.'''
+model.add('setFileName', doc, None, istring('fileName'))
+
 doc = '''Get all the entities in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) integer pairs.'''
 model.add('getEntities', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
 

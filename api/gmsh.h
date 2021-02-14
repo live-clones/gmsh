@@ -182,6 +182,17 @@ namespace gmsh { // Top-level functions
     // the same name, select the one that was added first.
     GMSH_API void setCurrent(const std::string & name);
 
+    // gmsh::model::getFileName
+    //
+    // Get the file name (if any) associated with the current model. A file name is
+    // associated when a model is read from a file on disk.
+    GMSH_API void getFileName(std::string & fileName);
+
+    // gmsh::model::setFileName
+    //
+    // Set the file name associated with the current model.
+    GMSH_API void setFileName(const std::string & fileName);
+
     // gmsh::model::getEntities
     //
     // Get all the entities in the current model. If `dim' is >= 0, return only the

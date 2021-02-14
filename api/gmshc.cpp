@@ -264,6 +264,30 @@ GMSH_API void gmshModelSetCurrent(const char * name, int * ierr)
   }
 }
 
+GMSH_API void gmshModelGetFileName(char ** fileName, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_fileName_;
+    gmsh::model::getFileName(api_fileName_);
+    *fileName = strdup(api_fileName_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelSetFileName(const char * fileName, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::setFileName(fileName);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelGetEntities(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
