@@ -234,12 +234,13 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   h += WB;
 
   // resize the window and restore the focus
+  win->resizable(0);
   win->resize(win->x(), win->y(), win->w(), h);
+  win->resizable(r);
+
   for(auto w : _onelabWidgets) {
     if(w->label() && focus == std::string(w->label())) { w->take_focus(); }
   }
-
-  win->resizable(r);
 
   // TODO: we should add a "Check" button if Solver.AutoCheck is not set (as in
   // the main ONELAB tree)
