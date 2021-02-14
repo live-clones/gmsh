@@ -213,8 +213,9 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   for(auto &p : pn) _addOnelabWidget(p, pat, widgets);
   for(auto &p : ps) _addOnelabWidget(p, pat, widgets);
   int h = _height;
+  int w = win->w();
   if(widgets.empty()) {
-    Fl_Box *b = new Fl_Box(WB, h, _width - 2 * WB, BH, "No parameters");
+    Fl_Box *b = new Fl_Box(WB, h, w - 2 * WB, BH, "No parameters");
     _onelabWidgets.push_back(b);
     win->add(b);
     h += BH;
@@ -227,8 +228,8 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
     }
   }
   // resizable starting at 1/3 of window to resize label more than widget, and
-  // to have minimal window width of _width / 3 as well
-  Fl_Box *r = new Fl_Box(_width / 3, h, _width - _width / 3, WB);
+  // to have minimal window width of w / 3 as well
+  Fl_Box *r = new Fl_Box(w / 3, h, w - w / 3, WB);
   _onelabWidgets.push_back(r);
   win->add(r);
   h += WB;
