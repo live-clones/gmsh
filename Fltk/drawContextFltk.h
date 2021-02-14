@@ -24,7 +24,7 @@ typedef unsigned long intptr_t;
 
 class drawContextFltk : public drawContextGlobal {
 public:
-  void draw()
+  void draw(bool rateLimited = true)
   {
     if(!FlGui::available()) return;
     if(FlGui::instance()->fullscreen->shown()) {
@@ -45,7 +45,7 @@ public:
         }
       }
     }
-    FlGui::check();
+    FlGui::check(rateLimited);
   }
   void drawCurrentOpenglWindow(bool make_current)
   {

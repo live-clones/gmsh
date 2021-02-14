@@ -25,12 +25,9 @@ class drawContextFltkCairo : public drawContextFltk {
   int _currentFontSize;
 
 public:
-  void draw();
   drawContextFltkCairo();
   ~drawContextFltkCairo();
   double getStringWidth(const char *str);
-  // int getStringHeight();
-  // int getStringDescent();
   void flushString();
   void drawString(const char *str);
   void setFont(int fontid, int fontsize);
