@@ -128,6 +128,7 @@ int main(int argc, char **argv)
     if(action.size() and action[0] == "check") {
       gmsh::onelab::setString("ONELAB/Action", {""});
       createGeometryAndMesh();
+      gmsh::graphics::draw();
     }
     return true;
   };

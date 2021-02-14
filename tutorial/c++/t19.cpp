@@ -78,7 +78,7 @@ int main(int argc, char **argv)
   gmsh::model::occ::rotate({{2, 1000}}, 0, 0, 0, 1, 0, 0, M_PI / 2);
 
   // We extrude the disk along the spline to create a pipe:
-  gmsh::model::occ::addPipe({{2, 1000}}, 1000, out);
+  gmsh::model::occ::addPipe({{2, 1000}}, 1000, out, "DiscreteTrihedron");
 
   // We delete the source surface, and increase the number of sub-edges for a
   // nicer display of the geometry:

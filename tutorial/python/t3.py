@@ -119,6 +119,7 @@ def checkForEvent():
     if len(action) and action[0] == "check":
         gmsh.onelab.setString("ONELAB/Action", [""])
         createGeometryAndMesh()
+        gmsh.graphics.draw()
     return True
 
 if "-nopopup" not in sys.argv:
