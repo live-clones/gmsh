@@ -49,10 +49,8 @@ void MElementBB(void *a, double *min, double *max)
     }
   }
 
-  // make cubic bounding box with a 10% buffer
   SBoundingBox3d bb(min[0], min[1], min[2], max[0], max[1], max[2]);
-  bb *= 1.1;
-  bb.makeCube();
+  bb.thicken(0.01); // make 1% thicker
   max[0] = bb.max().x();
   max[1] = bb.max().y();
   max[2] = bb.max().z();
@@ -92,8 +90,7 @@ int MElementInEle(void *a, double *x)
 MElementOctree::MElementOctree(GModel *m) : _gm(m)
 {
   SBoundingBox3d bb = m->bounds();
-  // make bounding box larger
-  bb *= 1.1;
+  bb.thicken(0.01); // make 1% thicker
   SPoint3 bbmin = bb.min(), bbmax = bb.max();
   double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
@@ -129,8 +126,7 @@ MElementOctree::MElementOctree(const std::vector<MElement *> &v)
                     v[i]->getVertex(j)->z());
     }
   }
-  // make bounding box larger
-  bb *= 1.1;
+  bb.thicken(0.01); // make 1% thicker
   SPoint3 bbmin = bb.min(), bbmax = bb.max();
   double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),

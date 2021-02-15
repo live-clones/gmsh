@@ -100,6 +100,13 @@ public:
     double sc = len.norm() * 0.5;
     scale(sc, sc, sc);
   }
+  void thicken(double factor)
+  {
+    double d = factor * diag();
+    SPoint3 t(d, d, d);
+    MinPt -= t;
+    MaxPt += t;
+  }
   bool contains(const SBoundingBox3d &bound)
   {
     if(bound.MinPt.x() >= MinPt.x() && bound.MinPt.y() >= MinPt.y() &&
