@@ -1661,7 +1661,7 @@ namespace QMT {
     unordered_map<MVertex*, vector<MQuadrangle*> > v2q;
     unordered_set<MVertex*> allowedIrregularVertices;
     unordered_set<MVertex*> forbiddenIrregularVertices;
-    std::vector<MVertex*> irregularVertices; /* to be preserved */
+    std::vector<MVertex*> singularVertices; /* to be preserved */
     std::vector<SPoint3> repulsion; /* to distribute the cavities, add repulsion after remeshing */
 
     size_t nbCavityRemeshed = 0;
@@ -1704,16 +1704,20 @@ namespace QMT {
           }
 
           /* Get vertices to preserve from cross field singularities */
-          assignSingularitiesToIrregularVertices(gf, v2q, singularities, irregularVertices);
+          assignSingularitiesToIrregularVertices(gf, v2q, singularities, singularVertices);
           forbiddenIrregularVertices.clear();
-          for (MVertex* v: irregularVertices) forbiddenIrregularVertices.insert(v);
+          for (MVertex* v: singularVertices) forbiddenIrregularVertices.insert(v);
 
           if (pass == PASS_FROM_IRREGULAR) {
             /* Update the queue */
             while (!Qirreg.empty()) { /* empty the queue */
               Qirreg.pop();
             }
-            for (MVertex* v: irregularVertices) {
+            for (auto& kv: v2q) if (kv.second.size() != 4) {
+              MVertex* v = kv.first;
+              if (v->onWhat() != gf) continue;
+              if (forbiddenIrregularVertices.find(v) != forbiddenIrregularVertices.end()) continue;
+
               SPoint3 pt = v->point();
               double prio = 0.;
               for (const SPoint3& r: repulsion) {
@@ -1942,7 +1946,11 @@ namespace QMT {
       size_t nPreviousTry = 0;
       auto itt = seedNbTries.find(vSing);
       if (itt != seedNbTries.end()) nPreviousTry = itt->second;
-      if (nPreviousTry >= ctx.nTryMaxPerVertex) continue;
+      if (nPreviousTry >= ctx.nTryMaxPerVertex) {
+        Msg::Debug("---- singular vertex %li, reached maximum number of tries (%li/%li)", 
+            vSing->getNum(), nPreviousTry, ctx.nTryMaxPerVertex);
+        continue;
+      }
 
       Msg::Debug("---< start cavity with %i quads adjacent to singularity vertex %li", 
           quadsInit.size(), vSing->getNum());
@@ -2286,6 +2294,8 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
     running = false;
     size_t ncrb = ctx.nQuadCavityRemesh + ctx.nSingCavityRemesh;
 
+    Msg::Debug("<< start cavity remeshing iteration");
+
     /* 1st pass: check regular quad patch remeshing only */
     patternsToCheck = {PATTERN_QUAD_REGULAR};
     bool ok1 = remeshQuadrilateralCavities(gf, singularities, patternsToCheck, patternSizeLimits, seedNbTries, ctx);
@@ -2343,7 +2353,6 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
         }
       }
 
-
       /* Decrease the try counter, to enable a new try everywhere */
       for (auto& kv: seedNbTries) if (kv.second > 0) {
         kv.second -= 1;
@@ -2352,7 +2361,7 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
 
     /* Restart a full iteration if some cavities have been remeshed */
     if (ncra > ncrb) running = true;
-    Msg::Debug("-- end of cavity remeshing iteration");
+    Msg::Debug(">> end of cavity remeshing iteration");
   }
 
   if (ctx.sp) {

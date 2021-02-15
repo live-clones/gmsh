@@ -1555,6 +1555,8 @@ int optimizeTopologyWithCavityRemeshing(GModel* gm) {
     improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, invertNormals);
   }
 
+  GeoLog::flush();
+
   return 0;
 }
 
