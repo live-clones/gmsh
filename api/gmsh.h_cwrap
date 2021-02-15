@@ -290,6 +290,25 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // Get the file name (if any) associated with the current model. A file name is
+    // associated when a model is read from a file on disk.
+    inline void getFileName(std::string & fileName)
+    {
+      int ierr = 0;
+      char *api_fileName_;
+      gmshModelGetFileName(&api_fileName_, &ierr);
+      if(ierr) throwLastError();
+      fileName = std::string(api_fileName_); gmshFree(api_fileName_);
+    }
+
+    // Set the file name associated with the current model.
+    inline void setFileName(const std::string & fileName)
+    {
+      int ierr = 0;
+      gmshModelSetFileName(fileName.c_str(), &ierr);
+      if(ierr) throwLastError();
+    }
+
     // Get all the entities in the current model. If `dim' is >= 0, return only the
     // entities of the specified dimension (e.g. points if `dim' == 0). The
     // entities are returned as a vector of (dim, tag) integer pairs.
@@ -2044,6 +2063,17 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         gmshModelMeshSetOutwardOrientation(tag, &ierr);
         if(ierr) throwLastError();
+      }
+
+      // Remove all meshing constraints from the model entities `dimTags'. If
+      // `dimTags' is empty, remove all constraings.
+      inline void removeConstraints(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshRemoveConstraints(api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
       }
 
       // Embed the model entities of dimension `dim' and tags `tags' in the

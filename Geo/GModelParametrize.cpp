@@ -64,8 +64,6 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
   return ge;
 }
 
-#endif
-
 static void
 addTriangle(MTriangle *t,
             std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan> &tris)
@@ -100,10 +98,11 @@ static bool breakForLargeAngle(MVertex *vprev, MVertex *vmid, MVertex *vpos,
   return false;
 }
 
+#endif
+
 void classifyFaces(GModel *gm, double curveAngleThreshold)
 {
 #if defined(HAVE_MESH)
-
   size_t MAX0 = gm->getMaxElementaryNumber(0);
   size_t MAX1 = gm->getMaxElementaryNumber(1);
   size_t MAX2 = gm->getMaxElementaryNumber(2);
@@ -792,7 +791,7 @@ public:
   }
 };
 
-static bool
+bool
 makePartitionSimplyConnected(std::vector<MTriangle *> &t,
                              std::vector<std::vector<MTriangle *> > &ts)
 {

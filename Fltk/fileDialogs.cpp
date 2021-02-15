@@ -6,7 +6,6 @@
 // Contributor(s):
 //   Stephen Guzik
 //   Sebastian Eiser
-//
 
 #include <limits>
 #include <sstream>
@@ -697,7 +696,7 @@ int mpegFileDialog(const char *name)
                                    (int)dialog->c[2]->value());
         int format = (o == dialog->preview) ? FORMAT_MPEG_PREVIEW : FORMAT_MPEG;
         dialog->buttons->deactivate();
-        CreateOutputFile(name, format, o == dialog->ok, true);
+        CreateOutputFile(name, format, o == dialog->ok);
         dialog->buttons->activate();
         if(o == dialog->ok) {
           dialog->window->hide();

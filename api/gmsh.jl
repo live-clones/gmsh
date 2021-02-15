@@ -341,6 +341,41 @@ end
 const set_current = setCurrent
 
 """
+    gmsh.model.getFileName()
+
+Get the file name (if any) associated with the current model. A file name is
+associated when a model is read from a file on disk.
+
+Return `fileName`.
+"""
+function getFileName()
+    api_fileName_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetFileName, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          api_fileName_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    fileName = unsafe_string(api_fileName_[])
+    return fileName
+end
+const get_file_name = getFileName
+
+"""
+    gmsh.model.setFileName(fileName)
+
+Set the file name associated with the current model.
+"""
+function setFileName(fileName)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetFileName, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          fileName, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_file_name = setFileName
+
+"""
     gmsh.model.getEntities(dim = -1)
 
 Get all the entities in the current model. If `dim` is >= 0, return only the
@@ -2634,6 +2669,24 @@ function setOutwardOrientation(tag)
     return nothing
 end
 const set_outward_orientation = setOutwardOrientation
+
+"""
+    gmsh.model.mesh.removeConstraints(dimTags = Tuple{Cint,Cint}[])
+
+Remove all meshing constraints from the model entities `dimTags`. If `dimTags`
+is empty, remove all constraings.
+"""
+function removeConstraints(dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRemoveConstraints, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const remove_constraints = removeConstraints
 
 """
     gmsh.model.mesh.embed(dim, tags, inDim, inTag)

@@ -528,6 +528,41 @@ class model:
     set_current = setCurrent
 
     @staticmethod
+    def getFileName():
+        """
+        gmsh.model.getFileName()
+
+        Get the file name (if any) associated with the current model. A file name
+        is associated when a model is read from a file on disk.
+
+        Return `fileName'.
+        """
+        api_fileName_ = c_char_p()
+        ierr = c_int()
+        lib.gmshModelGetFileName(
+            byref(api_fileName_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ostring(api_fileName_)
+    get_file_name = getFileName
+
+    @staticmethod
+    def setFileName(fileName):
+        """
+        gmsh.model.setFileName(fileName)
+
+        Set the file name associated with the current model.
+        """
+        ierr = c_int()
+        lib.gmshModelSetFileName(
+            c_char_p(fileName.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    set_file_name = setFileName
+
+    @staticmethod
     def getEntities(dim=-1):
         """
         gmsh.model.getEntities(dim=-1)
@@ -3098,6 +3133,23 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
         set_outward_orientation = setOutwardOrientation
+
+        @staticmethod
+        def removeConstraints(dimTags=[]):
+            """
+            gmsh.model.mesh.removeConstraints(dimTags=[])
+
+            Remove all meshing constraints from the model entities `dimTags'. If
+            `dimTags' is empty, remove all constraings.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelMeshRemoveConstraints(
+                api_dimTags_, api_dimTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        remove_constraints = removeConstraints
 
         @staticmethod
         def embed(dim, tags, inDim, inTag):

@@ -5179,7 +5179,7 @@ Python and Julia API examples, see the respective subdirectories in
 @menu
 * t1::  Geometry basics, elementary entities, physical groups
 * t2::  Transformations, extruded geometries, volumes
-* t3::  Extruded meshes, parameters, options
+* t3::  Extruded meshes, ONELAB parameters, options
 * t4::  Built-in functions, holes in surfaces, annotations, entity colors
 * t5::  Mesh sizes, macros, loops, holes in volumes
 * t6::  Transfinite meshes
@@ -5251,7 +5251,7 @@ and Julia
 @c -------------------------------------------------------------------------
 
 @node t3, t4, t2, Tutorial
-@section @code{t3}: Extruded meshes, parameters, options
+@section @code{t3}: Extruded meshes, ONELAB parameters, options
 
 See
 @url{@value{GITLAB-PREFIX}/tutorial/t3.geo,t3.geo}.

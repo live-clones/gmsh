@@ -303,6 +303,18 @@ GMSH_API void gmsh::model::setCurrent(const std::string &name)
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+GMSH_API void gmsh::model::getFileName(std::string &fileName)
+{
+  if(!_checkInit()) return;
+  fileName = GModel::current()->getFileName();
+}
+
+GMSH_API void gmsh::model::setFileName(const std::string &fileName)
+{
+  if(!_checkInit()) return;
+  GModel::current()->setFileName(fileName);
+}
+
 GMSH_API void gmsh::model::getEntities(vectorpair &dimTags, const int dim)
 {
   if(!_checkInit()) return;
@@ -4650,6 +4662,15 @@ GMSH_API void gmsh::model::mesh::setOutwardOrientation(const int tag)
   gr->setOutwardOrientationMeshConstraint();
 }
 
+GMSH_API void gmsh::model::mesh::removeConstraints(const vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
+  for(std::size_t i = 0; i < entities.size(); i++)
+    entities[i]->resetMeshAttributes();
+}
+
 GMSH_API void gmsh::model::mesh::embed(const int dim,
                                        const std::vector<int> &tags,
                                        const int inDim, const int inTag)
@@ -6744,6 +6765,7 @@ GMSH_API void gmsh::view::getListData(const int tag,
 #endif
 }
 
+#if defined(HAVE_POST)
 static double getStringStyle(const std::vector<std::string> &style)
 {
   if(style.empty()) return 0.;
@@ -6766,6 +6788,7 @@ static double getStringStyle(const std::vector<std::string> &style)
   }
   return (double)((align << 16) | (font << 8) | (fontsize));
 }
+#endif
 
 GMSH_API void
 gmsh::view::addListDataString(const int tag, const std::vector<double> &coord,
@@ -7196,12 +7219,13 @@ GMSH_API void gmsh::plugin::run(const std::string &name)
 GMSH_API void gmsh::graphics::draw()
 {
 #if defined(HAVE_OPENGL)
-  drawContext::global()->draw();
+  drawContext::global()->draw(false); // not rate-limited
 #endif
 }
 
 // gmsh::fltk
 
+#if defined(HAVE_FLTK)
 static void _errorHandlerFltk(const char *fmt, ...)
 {
   char str[5000];
@@ -7214,11 +7238,10 @@ static void _errorHandlerFltk(const char *fmt, ...)
 
 static void _createFltk()
 {
-#if defined(HAVE_FLTK)
   if(!FlGui::available())
     FlGui::instance(_argc, _argv, false,  _errorHandlerFltk);
-#endif
 }
+#endif
 
 GMSH_API void gmsh::fltk::initialize()
 {
@@ -7226,7 +7249,7 @@ GMSH_API void gmsh::fltk::initialize()
 #if defined(HAVE_FLTK)
   _createFltk();
   FlGui::setFinishedProcessingCommandLine();
-  FlGui::check(true);
+  FlGui::check();
 #else
   Msg::Error("Fltk not available");
 #endif
@@ -7248,9 +7271,9 @@ GMSH_API void gmsh::fltk::wait(const double time)
 #if defined(HAVE_FLTK)
   _createFltk();
   if(time >= 0)
-    FlGui::wait(time, true);
+    FlGui::wait(time);
   else
-    FlGui::wait(true);
+    FlGui::wait();
 #else
   Msg::Error("Fltk not available");
 #endif

@@ -99,12 +99,14 @@ public:
   static bool available();
   // run the GUI until there's no window left
   static int run();
-  // check (now!) if there are any pending events, and process them
-  static void check(bool force = false);
+  // check if there are any pending events, and process them (if rateLimited is
+  // set, only perform the check if one has not been made in the last 1 /
+  // General.FltkRefreshRate seconds)
+  static void check(bool rateLimited = false);
   // wait (possibly indefinitely) for any events, then process them
-  static void wait(bool force = false);
+  static void wait();
   // wait (at most time seconds) for any events, then process them
-  static void wait(double time, bool force = false);
+  static void wait(double time);
   // lock/unlock child threads
   static void lock();
   static void unlock();

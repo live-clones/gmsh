@@ -155,8 +155,6 @@ double drawContextFltkCairo::getStringWidth(const char *str)
   return e.width;
 }
 
-void drawContextFltkCairo::draw() { drawContextFltk::draw(); }
-
 void drawContextFltkCairo::flushString() { _queue->flush(); }
 
 void drawContextFltkCairo::drawString(const char *str)

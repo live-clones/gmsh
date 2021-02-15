@@ -16,6 +16,6 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats = false);
 std::string GetDefaultFileName(int format);
 std::string GetKnownFileFormats(bool onlyMeshFormats = false);
 void CreateOutputFile(const std::string &fileName, int format,
-                      bool status = true, bool redraw = true);
+                      bool status = true);
 
 #endif

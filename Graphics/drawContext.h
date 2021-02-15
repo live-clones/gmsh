@@ -94,7 +94,7 @@ class drawContextGlobal {
 public:
   drawContextGlobal() {}
   virtual ~drawContextGlobal() {}
-  virtual void draw() {}
+  virtual void draw(bool rateLimited = true) {}
   virtual void drawCurrentOpenglWindow(bool make_current) {}
   virtual int getFontIndex(const char *fontname) { return 0; }
   virtual int getFontEnum(int index) { return 0; }

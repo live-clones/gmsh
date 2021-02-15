@@ -309,7 +309,7 @@ void Msg::StopProgressMeter()
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     FlGui::instance()->setProgress("", 0, 0, 1);
-    FlGui::check();
+    FlGui::check(true);
   }
 #endif
 }
@@ -530,7 +530,7 @@ void Msg::Error(const char *fmt, ...)
       FlGui::instance()->addMessage(tmp.c_str());
       FlGui::instance()->setLastStatus
         (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
-      FlGui::check();
+      FlGui::check(true);
     }
 #endif
     if(CTX::instance()->terminal){
@@ -584,7 +584,7 @@ void Msg::Warning(const char *fmt, ...)
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstWarning.empty()) _firstWarning = str;
     FlGui::instance()->setLastStatus();
-    FlGui::check();
+    FlGui::check(true);
   }
 #endif
 
@@ -625,7 +625,7 @@ void Msg::Info(const char *fmt, ...)
   if(FlGui::available()){
     std::string tmp = std::string("Info    : ") + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGui::check();
+    FlGui::check(true);
   }
 #endif
 
@@ -666,7 +666,7 @@ void Msg::Direct(const char *fmt, ...)
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
       + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGui::check();
+    FlGui::check(true);
   }
 #endif
 
@@ -725,7 +725,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
     if(log){
       std::string tmp = std::string("Info    : ") + str;
       FlGui::instance()->addMessage(tmp.c_str());
-      FlGui::check();
+      FlGui::check(true);
     }
   }
 #endif
@@ -833,7 +833,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(FlGui::available() && GetVerbosity() > 4){
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
-      FlGui::check();
+      FlGui::check(true);
     }
 #endif
     if(_logFile) fprintf(_logFile, "Progress: %s\n", str);

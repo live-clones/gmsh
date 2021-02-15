@@ -1517,7 +1517,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   FL_NORMAL_SIZE += CTX::instance()->deltaFontSize;
 
-  FlGui::check(); // necessary e.g. on windows to avoid "ghosting"
+  FlGui::check(true); // necessary e.g. on windows to avoid "ghosting"
 
   if(deleteWidgets) {
     // this needs to be performed after FlGui::check()

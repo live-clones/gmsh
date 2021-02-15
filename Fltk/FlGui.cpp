@@ -61,34 +61,35 @@ bool FlGui::_finishedProcessingCommandLine = false;
 std::atomic<int> FlGui::_locked(0);
 
 // check (now!) if there are any pending events, and process them
-void FlGui::check(bool force)
+void FlGui::check(bool rateLimited)
 {
-  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  if(Msg::GetThreadNum() > 0 || _locked > 0) return;
 
   static double lastRefresh = 0.;
-  if(CTX::instance()->guiRefreshRate > 0) {
-    double start = TimeOfDay();
+  double start = TimeOfDay();
+  if(rateLimited && CTX::instance()->guiRefreshRate > 0) {
     if(start - lastRefresh > 1. / CTX::instance()->guiRefreshRate) {
       lastRefresh = start;
       Fl::check();
     }
   }
   else {
+    lastRefresh = start;
     Fl::check();
   }
 }
 
 // wait (possibly indefinitely) for any events, then process them
-void FlGui::wait(bool force)
+void FlGui::wait()
 {
-  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  if(Msg::GetThreadNum() > 0 || _locked > 0) return;
   Fl::wait();
 }
 
 // wait (at most time seconds) for any events, then process them
-void FlGui::wait(double time, bool force)
+void FlGui::wait(double time)
 {
-  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
+  if(Msg::GetThreadNum() > 0 || _locked > 0) return;
   Fl::wait(time);
 }
 
@@ -674,7 +675,7 @@ void FlGui::destroy()
 int FlGui::run()
 {
   // draw the scene
-  drawContext::global()->draw();
+  drawContext::global()->draw(false);
 
 #if defined(HAVE_TOUCHBAR)
   updateTouchBar();
@@ -1086,12 +1087,10 @@ int FlGui::testArrowShortcuts()
   else if(Fl::test_shortcut('u') || Fl::test_shortcut(FL_Page_Up)) {
     gmshPopplerWrapper::setCurrentPageDown();
     drawContext::global()->draw();
-    drawContext::global()->draw();
     return 1;
   }
   else if(Fl::test_shortcut('d') || Fl::test_shortcut(FL_Page_Down)) {
     gmshPopplerWrapper::setCurrentPageUp();
-    drawContext::global()->draw();
     drawContext::global()->draw();
     return 1;
   }
