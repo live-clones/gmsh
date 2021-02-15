@@ -63,6 +63,8 @@ template <typename Key, typename Hash = robin_hood::hash<Key>, typename KeyEqual
 namespace QMT {
   constexpr size_t NO_SIZE_T = (size_t) -1;
 
+  bool SHOW_QUALITY = false; /* Debug only */
+
   inline bool kernelWinslowSpecialStencil(const vec3 ptsStencil[8], vec3& newPos) {
     /* Stencil:
      *   6---1---4
@@ -187,10 +189,121 @@ namespace QMT {
       std::vector<vec3>& stencil) {
     stencil.resize(one_ring_first[v+1]-one_ring_first[v]);
     for (size_t i = 0; i < stencil.size(); ++i) {
-      stencil[i] = points[one_ring_first[v]+i];
+      stencil[i] = points[one_ring_values[one_ring_first[v]+i]];
     }
   }
 
+  double stencilAverageLength(const std::array<vec3,8>& stencil) {
+    double avg = 0.;
+    const uint32_t N = stencil.size();
+    for (uint32_t i = 0; i < N; ++i) {
+      const vec3& p0 = stencil[i];
+      const vec3& p1 = stencil[(i+1)%N];
+      avg += length(p1-p0);
+    }
+    avg /= double(N);
+    return avg;
+  }
+
+  double stencilAverageLength(const std::vector<vec3>& stencil) {
+    double avg = 0.;
+    const uint32_t N = stencil.size();
+    for (uint32_t i = 0; i < N; ++i) {
+      const vec3& p0 = stencil[i];
+      const vec3& p1 = stencil[(i+1)%N];
+      avg += length(p1-p0);
+    }
+    avg /= double(N);
+    return avg;
+  }
+
+  /* p0, p1, p2, p3: the four (ordered and oriented) corners
+   * Quad normal reference computed from the corners. Element should not
+   * be inverted or too tangled */
+  inline double quad_shape_ln(const vec3& p0, const vec3& p1, const vec3& p2, const vec3& p3) {
+    /* Based on Sandia Verdict document */
+    constexpr double EPS = 1.e-16;
+    constexpr double EPS2 = EPS*EPS;
+    const vec3 L0 = p1 - p0;
+    const vec3 L1 = p2 - p1;
+    const vec3 L2 = p3 - p2;
+    const vec3 L3 = p0 - p3;
+    const vec3 X1 = L0 - L2;
+    const vec3 X2 = L1 - L3;
+    vec3 Nc = cross(X1,X2);
+    const double lenNc_sq = length2(Nc);
+    if (lenNc_sq < EPS2) return 0.;
+    normalize(Nc);
+    const double len0_sq = length2(L0);
+    const double len1_sq = length2(L1);
+    const double len2_sq = length2(L2);
+    const double len3_sq = length2(L3);
+    if (len0_sq < EPS2 || len1_sq < EPS2 || len2_sq < EPS2 || len3_sq < EPS2) return 0.;
+    const vec3 N0 = cross(L3,L0);
+    const vec3 N1 = cross(L0,L1);
+    const vec3 N2 = cross(L1,L2);
+    const vec3 N3 = cross(L2,L3);
+    const double a0 = dot(Nc,N0); /* bad if non planar quad ? */
+    const double a1 = dot(Nc,N1);
+    const double a2 = dot(Nc,N2);
+    const double a3 = dot(Nc,N3);
+    const double q0 = a0/(len3_sq+len0_sq);
+    const double q1 = a1/(len0_sq+len1_sq);
+    const double q2 = a2/(len1_sq+len2_sq);
+    const double q3 = a3/(len2_sq+len3_sq);
+    if (SHOW_QUALITY && (q0 < 0 || q1 < 0 || q2 < 0 || q3 < 0)) {
+      vec3 mid = (p0+p1+p2+p3)*0.25;
+      DBG(q0,q1,q2,q3);
+      GeoLog::add(mid,Nc,"Nc");
+      GeoLog::add(p0,N0,"Ni");
+      GeoLog::add(p1,N1,"Ni");
+      GeoLog::add(p2,N2,"Ni");
+      GeoLog::add(p3,N3,"Ni");
+      GeoLog::add({p0,p1,p2,p3},0.,"quad");
+      GeoLog::flush();
+      gmsh::fltk::run();
+      abort();
+    }
+    return 2.*std::min(std::min(q0,q1),std::min(q2,q3));
+  }
+
+
+  inline double stencilQualitySICNmin(
+      const vec3& center, 
+      const std::array<vec3,8>& stencil,
+      double breakIfBelowThreshold = -DBL_MAX) {
+    double qmin = DBL_MAX;
+    constexpr uint32_t N = 4;
+    for (uint32_t i = 0; i < N; ++i) {
+      const vec3& p0 = stencil[2*i+0];
+      const vec3& p1 = stencil[2*i+1];
+      const size_t i2 = (2*i+2)%(2*N);
+      const vec3& p2 = stencil[i2];
+      const double q = quad_shape_ln(p0,p1,p2,center);
+      qmin = std::min(q,qmin);
+      if (qmin < breakIfBelowThreshold) return qmin;
+    }
+    return qmin;
+  }
+
+  inline double stencilQualitySICNmin(
+      const vec3& center, 
+      const std::vector<vec3>& stencil,
+      double breakIfBelowThreshold = -DBL_MAX) {
+    if (stencil.size() % 2 != 0) return -DBL_MAX;
+    double qmin = DBL_MAX;
+    const uint32_t N = stencil.size() / 2;
+    for (uint32_t i = 0; i < N; ++i) {
+      const vec3& p0 = stencil[2*i+0];
+      const vec3& p1 = stencil[2*i+1];
+      const size_t i2 = (2*i+2)%(2*N);
+      const vec3& p2 = stencil[i2];
+      const double q = quad_shape_ln(p0,p1,p2,center);
+      qmin = std::min(q,qmin);
+      if (qmin < breakIfBelowThreshold) return qmin;
+    }
+    return qmin;
+  }
 
   struct OneRing {
     vec5* p_uv = NULL;
@@ -608,7 +721,6 @@ namespace QMT {
     return true;
   }
 
-  bool SHOW_QUALITY = false;
 
   /* p0, p1, p2, p3: the four (ordered and oriented) corners
    * N: reference normal (normalized) */
@@ -674,36 +786,78 @@ namespace QMT {
     return qmin;
   }
 
+  inline double dist_abs(double a, double b) {
+    return std::abs(a-b);
+  }
+
   inline vec2 uv_adjust_jump(vec2 uv, const vec2& uv_ref, const vec2& jump) {
     for (uint32_t d = 0; d < 2; ++d) if (jump[d] != 0.) {
-      const double diff = uv[d] - uv_ref[d];
-      const double diffP = std::abs(uv[d] + jump[d] - uv_ref[d]);
-      const double diffN = std::abs(uv[d] - jump[d] - uv_ref[d]);
-      if (diffP < diff) {
-        uv[d] += jump[d];
-      } else if (diffN < diff) {
-        uv[d] -= jump[d];
+      if (uv[d] < uv_ref[d]) {
+        double cand = uv[d] + jump[d];
+        while (dist_abs(cand,uv_ref[d]) < dist_abs(uv[d], uv_ref[d])) {
+          uv[d] = cand;
+          cand = uv[d] + jump[d];
+        }
+      } else {
+        double cand = uv[d] - jump[d];
+        while (dist_abs(cand,uv_ref[d]) < dist_abs(uv[d], uv_ref[d])) {
+          uv[d] = cand;
+          cand = uv[d] - jump[d];
+        }
       }
     }
     return uv;
   }
 
   inline vec2 getDeltaUV(const vec5& v, const OneRing& ring, size_t n) {
+    constexpr bool useBboxUV = false;
     bool periodic = (ring.jump[0] != 0. || ring.jump[1] != 0.);
-    const vec2 uv_0 = {v[3],v[4]};
-    double u_range[2] = {DBL_MAX,-DBL_MAX};
-    double v_range[2] = {DBL_MAX,-DBL_MAX};
-    for (uint32_t i = 0; i < ring.n; ++i) {
-      vec2 uv_i = {ring.p_uv[i][3],ring.p_uv[i][4]};
-      if (periodic) uv_i = uv_adjust_jump(uv_i, uv_0, ring.jump);
-      u_range[0] = std::min(u_range[0],uv_i[0]);
-      u_range[1] = std::max(u_range[1],uv_i[0]);
-      v_range[0] = std::min(v_range[0],uv_i[1]);
-      v_range[1] = std::max(v_range[1],uv_i[1]);
+    if (useBboxUV) {
+      const vec2 uv_0 = {v[3],v[4]};
+      double u_range[2] = {DBL_MAX,-DBL_MAX};
+      double v_range[2] = {DBL_MAX,-DBL_MAX};
+      for (uint32_t i = 0; i < ring.n; ++i) {
+        vec2 uv_i = {ring.p_uv[i][3],ring.p_uv[i][4]};
+        if (periodic) uv_i = uv_adjust_jump(uv_i, uv_0, ring.jump);
+        u_range[0] = std::min(u_range[0],uv_i[0]);
+        u_range[1] = std::max(u_range[1],uv_i[0]);
+        v_range[0] = std::min(v_range[0],uv_i[1]);
+        v_range[1] = std::max(v_range[1],uv_i[1]);
+      }
+      const double du = u_range[1] - u_range[0];
+      const double dv = v_range[1] - v_range[0];
+      return {du,dv};
+    } else {
+      bool periodic = (ring.jump[0] != 0. || ring.jump[1] != 0.);
+      const vec2 uv_0 = {v[3],v[4]};
+      double du = 0.;
+      double dv = 0.;
+      // DBG(uv_0, ring.jump);
+      for (uint32_t i = 0; i < ring.n; ++i) {
+        vec2 uv_i = {ring.p_uv[i][3],ring.p_uv[i][4]};
+        vec2 uv_n = {ring.p_uv[(i+1)%ring.n][3],ring.p_uv[(i+1)%ring.n][4]};
+        // DBG(i, uv_i, uv_n);
+        if (periodic) uv_n = uv_adjust_jump(uv_n, uv_i, ring.jump);
+        double duc = std::abs(uv_n[0]-uv_i[0]);
+        double dvc = std::abs(uv_n[1]-uv_i[1]);
+        // DBG(i, uv_i, uv_n, duc, dvc);
+        if (periodic && ring.jump[0] > 0. && duc > 0.5 * ring.jump[0]) duc = 0.;
+        if (periodic && ring.jump[1] > 0. && dvc > 0.5 * ring.jump[1]) dvc = 0.;
+        du = std::max(du,duc);
+        dv = std::max(dv,dvc);
+      }
+      return {2.*du,2.*dv};
     }
-    const double du = u_range[1] - u_range[0];
-    const double dv = v_range[1] - v_range[0];
-    return {du,dv};
+  }
+
+  inline double getRingDispMaxL2(const vec5& v, const OneRing& ring, size_t n) {
+    double dMax2 = 0.;
+    for (uint32_t i = 0; i < ring.n; ++i) {
+      vec3 p_i = {ring.p_uv[i][0], ring.p_uv[i][1], ring.p_uv[i][2]};
+      vec3 p_n = {ring.p_uv[(i+1)%ring.n][0], ring.p_uv[(i+1)%ring.n][1], ring.p_uv[(i+1)%ring.n][2]};
+      dMax2 = std::max(dMax2, length2(p_i-p_n));
+    }
+    return dMax2;
   }
 
   inline vec4 getGrid(const vec5& v, vec2 deltaUV, size_t n, double w) {
@@ -727,6 +881,9 @@ namespace QMT {
     vec5 vmax = v;
     vec2 deltaUV = getDeltaUV(v, ring, n);
 
+    const bool checkDisplacement = ring.jump[0] > 0. || ring.jump[1] > 0.;
+    const double dispMax2 = checkDisplacement ? getRingDispMaxL2(v, ring, n) : 0.;
+
     /* warning: not in C++ standard but we don't want template or alloc */
     for (size_t iter = 0; iter < nIter; ++iter) {
       vec4 grid = getGrid(v, deltaUV, n, w);
@@ -736,6 +893,10 @@ namespace QMT {
         for (size_t j = 0; j < n; ++j) {
           uv.data()[1] = double(j)/double(n-1)*grid[1] + double(n-1-j)/double(n-1)*grid[3];
           GPoint newPos = gf->point(uv);
+          if (checkDisplacement && 
+              length2(vec3{newPos.x(),newPos.y(),newPos.z()} - vec3{v[0],v[1],v[2]}) > dispMax2) {
+            continue;
+          }
           const vec5 v2 = {newPos.x(),newPos.y(),newPos.z(),uv.data()[0],uv.data()[1]};
           double q2 = computeQualityQuadOneRing(v2, ring, normal, qmax);
           if (q2 > qmax) {
@@ -898,9 +1059,12 @@ bool kernelLoopWithParametrization(
   ring.p_uv = ringGeometric.data();
   const double sign = opt.invertCADNormals ? -1. : 1.;
 
-
   size_t dmo_grid_width = 8;
   size_t dmo_grid_depth = 3;
+  if (!haveNiceParametrization(gf)) {
+    dmo_grid_width = 12;
+    dmo_grid_depth = 4;
+  }
 
   /* Initialization: all vertices unlocked */
   std::vector<bool> locked(patch.intVertices.size(),false);
@@ -1025,25 +1189,85 @@ bool kernelLoopWithProjection(
 
     /* Loop over interior vertices */
     for (size_t v = 0; v < nFree; ++v) {
+      if (locked[v]) continue;
+
       size_t n = one_ring_first[v+1] - one_ring_first[v];
       vec3 newPos;
+      GPoint proj;
+      double stDx = 0.;
       if (n == 8) { /* regular vertex */
+        /* Extract geometric stencil */
         std::array<vec3,8> stencil = fillStencilRegular(v, points, one_ring_first, one_ring_values);
+
+        /* Smoothing (in 3D, not on surface) */
         bool ok = kernelWinslow(stencil, newPos);
         if (!ok) continue;
+
+        /* Projection on surface */
+        proj = opt.sp->closestPoint(newPos.data(), false, false);
+        if (!proj.succeeded()) {
+          Msg::Debug("kernel smoothing: projection failed");
+          continue;
+        }
+        newPos = {proj.x(),proj.y(),proj.z()};
+
+        /* In smart mode, check if the quality did not decrease below threshold */
+        if (opt.smartMinThreshold != -DBL_MAX) {
+          double qAfter = stencilQualitySICNmin(newPos, stencil);
+          if (qAfter < opt.smartMinThreshold) {
+            double qBefore = stencilQualitySICNmin(points[v], stencil);
+            if (qAfter < qBefore) continue;
+          }
+        }
+
+        stDx = stencilAverageLength(stencil);
       } else { /* irregular vertex */
+        /* Extract geometric stencil */
         fillStencilIrregular(v, points, one_ring_first, one_ring_values, stencilIrreg);
+
+        /* Smoothing (in 3D, not on surface) */
         bool ok = kernelAngleBased(points[v], stencilIrreg, newPos);
         if (!ok) continue;
+
+        /* Projection on surface */
+        proj = opt.sp->closestPoint(newPos.data(), false, false);
+        if (!proj.succeeded()) {
+          Msg::Debug("kernel smoothing: projection failed");
+          continue;
+        }
+        newPos = {proj.x(),proj.y(),proj.z()};
+
+        /* In smart mode, check if the quality did not decrease below threshold */
+        if (opt.smartMinThreshold != -DBL_MAX) {
+          double qAfter = stencilQualitySICNmin(newPos, stencilIrreg);
+          if (qAfter < opt.smartMinThreshold) {
+            double qBefore = stencilQualitySICNmin(points[v], stencilIrreg);
+            if (qAfter < qBefore) continue;
+          }
+        }
+
+        stDx = stencilAverageLength(stencilIrreg);
       }
-      GPoint proj = opt.sp->closestPoint(newPos.data(), false, false);
-      if (proj.succeeded()) {
-        points[v] = {proj.x(),proj.y(),proj.z()};
-        if (point_uvs.size()) {
-          point_uvs[v] = {proj.u(),proj.v()};
+
+      /* Modify the coordinates */
+      double dx = length(newPos - points[v]);
+      points[v] = newPos;
+      if (point_uvs.size()) {
+        point_uvs[v] = {proj.u(),proj.v()};
+      }
+      nMoved += 1;
+
+      if (opt.localLocking && dx < opt.dxLocalMax * stDx) {
+        locked[v] = true;
+      } else if (opt.localLocking){ /* Unlock neighbors */
+        for (size_t lv = 0; lv < n; ++lv) {
+          uint32_t v2 = one_ring_values[one_ring_first[v]+lv];
+          if (v2 < nFree) locked[v2] = false;
         }
       }
     }
+
+    if (nMoved == 0) break;
   }
 
   /* Update the positions */
@@ -1164,11 +1388,13 @@ bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp) {
   for (MVertex* v: patch.intVertices) {
     GPoint proj;
     if (sp != nullptr) {
+      /* Triangulation projection */
       proj = sp->closestPoint(v->point().data(),false,false);
       if (proj.succeeded()) {
         v->setXYZ(proj.x(),proj.y(),proj.z());
       }
       if (useParam) {
+        /* CAD projection */
         double uv[2] = {proj.u(),proj.v()};
         GPoint proj2 = patch.gf->closestPoint(v->point(),uv);
         if (proj2.succeeded()) {
@@ -1181,6 +1407,7 @@ bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp) {
       double uv[2];
       v->getParameter(0,uv[0]);
       v->getParameter(1,uv[1]);
+      /* CAD projection */
       GPoint proj2 = patch.gf->closestPoint(v->point(),uv);
       if (proj2.succeeded()) {
         v->setXYZ(proj2.x(),proj2.y(),proj2.z());

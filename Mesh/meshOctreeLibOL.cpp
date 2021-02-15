@@ -283,6 +283,25 @@ SurfaceProjector::~SurfaceProjector() {
   clear();
 }
 
+bool SurfaceProjector::setAnalyticalProjection(GFace* gf) {
+  if (gf->geomType() == GFace::GeomType::Sphere) {
+    double radius = 0.;
+    SPoint3 center;
+    if (gf->isSphere(radius, center)) {
+      analyticalShape = GFace::GeomType::Sphere;
+      useAnalyticalFormula = true;
+      analyticalParameters[0] = center.x();
+      analyticalParameters[1] = center.y();
+      analyticalParameters[2] = center.z();
+      analyticalParameters[3] = radius;
+      return true;
+    }
+  }
+
+  Msg::Error("Surface projecor: analytical formula for given shape not supported");
+  return false;
+}
+
 bool SurfaceProjector::initialize(GFace* gf_, const std::vector<MTriangle*>& gfTriangles) {
   clear();
   gf = gf_;
@@ -393,14 +412,38 @@ bool SurfaceProjector::initialize(GFace* gf_, const std::vector<MTriangle*>& gfT
   return true;
 }
 
-
 GPoint failedProjection() {
   GPoint fail(DBL_MAX,DBL_MAX,DBL_MAX,NULL);
   fail.setNoSuccess();
   return fail;
 }
 
+GPoint sphereProjection(GFace* gf, const double query[3], const std::array<double,10>& analyticalParameters) {
+  vec3 dir = {
+    query[0] - analyticalParameters[0],
+    query[1] - analyticalParameters[1],
+    query[2] - analyticalParameters[2]};
+  if (length2(dir) == 0.) {
+    return failedProjection();
+  }
+  normalize(dir);
+  const vec3 newPos = {
+    analyticalParameters[0] + analyticalParameters[3] * dir[0],
+    analyticalParameters[1] + analyticalParameters[3] * dir[1],
+    analyticalParameters[2] + analyticalParameters[3] * dir[2]};
+  return GPoint(newPos[0],newPos[1],newPos[2],gf);
+}
+
 GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD, bool projectOnCAD) const {
+  if (useAnalyticalFormula) {
+    if (analyticalShape == GFace::GeomType::Sphere) {
+      return sphereProjection(gf, query, analyticalParameters);
+    } else {
+      Msg::Error("SurfaceProjector::closestPoint(): no analytical formula for shape");
+      return failedProjection();
+    }
+  }
+
   if (OctIdx == 0) {
     Msg::Error("SurfaceProjector::closestPoint(): no octree");
     return failedProjection();

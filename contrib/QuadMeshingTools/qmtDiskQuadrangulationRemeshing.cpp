@@ -234,7 +234,24 @@ namespace QMT {
       std::rotate(bndr.begin(),bndr.begin()+(size_t) std::abs(rotation),bndr.end());
     }
 
-    size_t count = 0;
+    /* Default position/uv for new vertices */
+    SPoint3 defaultPoint;
+    SPoint2 defaultParam;
+    size_t num = (size_t) -1;
+    for (MVertex* v: bnd) {
+      if (v->onWhat() == gf && v->getNum() < num) {
+        defaultPoint = v->point();
+        v->getParameter(0,defaultParam[0]);
+        v->getParameter(1,defaultParam[1]);
+        num = v->getNum();
+      }
+    }
+    if (num == (size_t) -1) { /* No bdr vertex inside face */
+      defaultPoint = bndr[0]->point();
+      reparamMeshVertexOnFace(bndr[0], gf, defaultParam);
+    }
+
+    size_t count = 1;
     unordered_map<id,MVertex*> pv2mv;
     for (size_t f = 0; f < quads.size(); ++f) {
       std::array<MVertex*,4> vert;
@@ -245,13 +262,13 @@ namespace QMT {
         } else {
           auto it = pv2mv.find(pv);
           if (it == pv2mv.end()) {
-            SVector3 p = bndr[0]->point();
+            SVector3 p = defaultPoint;
             p.data()[0] += count * EPS_RANDOM;
             p.data()[1] += count * EPS_RANDOM;
             p.data()[2] += count * EPS_RANDOM;
-            double uv[2] = {0.,0.};
-            uv[0] = count * EPS_RANDOM;
-            uv[1] = count * EPS_RANDOM;
+            double uv[2] = {defaultParam.x(),defaultParam.y()};
+            uv[0] = uv[0] + count * EPS_RANDOM;
+            uv[1] = uv[1] + count * EPS_RANDOM;
             MVertex *mv = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
             pv2mv[pv] = mv;
             vert[lv] = mv;
@@ -373,9 +390,11 @@ int remeshLocalWithDiskQuadrangulation(
 
     /* Try to only move the interior vertices (in general, it is not enough) */
     if (patch.intVertices.size() > 0) {
-      /* Pure UV smoothing in CAD domain */
       GeomOptimStats stats;
-      int s0 = patchOptimizeGeometryGlobal(patch, stats);
+      if (haveNiceParametrization(gf)) {
+        /* Pure UV smoothing in CAD domain */
+        int s0 = patchOptimizeGeometryGlobal(patch, stats);
+      }
 
       /* Kernel smoothing */
       GeomOptimOptions opt;
@@ -417,10 +436,12 @@ int remeshLocalWithDiskQuadrangulation(
       opt.invertCADNormals = invertNormalsForQuality;
       GeomOptimStats stats;
 
-      int s0 = patchOptimizeGeometryGlobal(largerPatch, stats);
+      if (haveNiceParametrization(gf)) {
+        patchOptimizeGeometryGlobal(largerPatch, stats);
+      }
       int s1 = patchOptimizeGeometryWithKernel(largerPatch, opt, stats);
 
-      if (s0 == 0 && s1 == 0 && stats.sicnAvgAfter > minSICNafer) {
+      if (s1 == 0 && stats.sicnAvgAfter > minSICNafer) {
         geometryOk = true;
         /* warning: the small patch, not the larger one !
          *          but geometry of the patch boundary has been

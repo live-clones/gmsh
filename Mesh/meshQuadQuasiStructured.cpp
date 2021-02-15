@@ -210,6 +210,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
   }
 
   /* Generate triangulation */
+  double scalingOnTriangulation = 1;
   if (!surfaceMeshed) {
     Msg::Debug("build background triangulation ...");
 
@@ -222,7 +223,8 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
     /* Change meshing parameters to build a good triangulation
      * for cross field */
-    double scalingOnTriangulation = 0.8;
+    /* - the triangulation must be a bit more refined than the quad mesh */
+    scalingOnTriangulation = 0.75; 
     int minCurveNodes = CTX::instance()->mesh.minCurveNodes;
     int minCircleNodes = CTX::instance()->mesh.minCircleNodes;
     double lcFactor = CTX::instance()->mesh.lcFactor;
@@ -382,8 +384,13 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
           Msg::Error("- Face %i: background mesh not found", gf->tag());
           targetNumberOfQuads = 1000;
         } else {
-          targetNumberOfQuads = it->second.triangles.size()/2.;
+          size_t nbTriRef = (size_t) (double(it->second.triangles.size()) * std::pow(scalingOnTriangulation,2));
+          targetNumberOfQuads = nbTriRef/2;
         }
+      }
+
+      { /* Midpoint subdivision => 4 times more quads */
+        targetNumberOfQuads /= 4;
       }
 
       int scso = computeQuadSizeMapFromCrossFieldConformalFactor(triangles, targetNumberOfQuads, conformalScaling);
@@ -760,7 +767,8 @@ bool smoothThePool(
     GFace* gf,
     const std::vector<MVertex*>& smoothingPool,
     const unordered_map<MVertex *, std::vector<MElement *> >& adj,
-    bool invertNormalsForQuality) {
+    bool invertNormalsForQuality,
+    SurfaceProjector* sp = nullptr) {
   /* Get all quads used for smoothing */
   std::vector<MElement*> elements;
   {
@@ -812,6 +820,17 @@ bool smoothThePool(
           patchOptimizeGeometryWithKernel(patch, opt, stats);
         }
       }
+    } else {
+      GeomOptimOptions opt;
+      opt.sp = sp;
+      opt.outerLoopIterMax = 20.;
+      opt.timeMax = 10.;
+      opt.withBackup = true;
+      opt.invertCADNormals = invertNormalsForQuality;
+      opt.smartMinThreshold = 0.1;
+      opt.localLocking = true;
+      opt.dxLocalMax = 1.e-4;
+      patchOptimizeGeometryWithKernel(patch, opt, stats);
     }
 
     /* Check after smoothing */
@@ -939,7 +958,7 @@ int improveCornerValences(
     }
   }
 
-  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality);
+  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality, opt.sp);
 
   /* Remaining cases, just for stats */
   for (const auto& kv: cornerAndIdeal) {
@@ -1043,7 +1062,7 @@ int improveCurveValences(
     }
   }
 
-  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality);
+  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality, opt.sp);
 
   /* Remaining cases, just for stats */
   for (const auto& kv: curveVertexAndIdeal) {
@@ -1216,7 +1235,7 @@ int improveInteriorValences(
   }
   // GeoLog::flush();
 
-  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality);
+  if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality, opt.sp);
 
   /* Remaining cases, just for stats */
   for (const auto& kv: adj) {
@@ -1235,6 +1254,7 @@ int improveInteriorValences(
 }
 
 int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
+  Msg::Debug("Refine mesh with background projection ...");
   if (!backgroudMeshExists(BMESH_NAME)) {
     Msg::Error("refine mesh with background projection: no background mesh");
     return -1;
@@ -1314,7 +1334,8 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     }
 
     SurfaceProjector sp;
-    bool oki = sp.initialize(gf,triangles);
+    bool oki = false;
+    oki = sp.initialize(gf,triangles);
     if (!oki) {
       Msg::Error("failed to initialize surface projector");
       continue;
@@ -1323,8 +1344,9 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     /* Project the vertices which have been introduced by the RefineMesh */
     bool evalOnCAD = gf->haveParametrization();
     bool projOnCad = false;
-    if (evalOnCAD && gf->geomType() == GFace::GeomType::Sphere) {
-      /* Strong disortion in sphere parametrization, use projection */
+    if (evalOnCAD && !haveNiceParametrization(gf)) {
+      /* Strong disortion in parametrization, use projection */
+      evalOnCAD = false;
       projOnCad = true;
     }
 
@@ -1387,6 +1409,7 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
   DQStats stats;
   DQOptions opt;
   opt.invertNormalsForQuality = invertNormals;
+  // if (!gf->haveParametrization()) {
   if (!haveNiceParametrization(gf)) {
     opt.sp = new SurfaceProjector();
     bool deleteTheTris = false;
@@ -1435,6 +1458,30 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
   int sci = improveInteriorValences(gf, qValIdeal, adj, opt, stats);
   if (sci != 0) {
     Msg::Warning("optimize quad topology: failed to improve interior valences");
+  }
+
+
+  /* Mesh smoothing */
+  {
+    GFaceMeshPatch globalPatch;
+    bool okp = patchFromQuads(gf, gf->quadrangles, globalPatch);
+    if (okp) {
+      Msg::Debug("-- smooth face quad mesh (%li vertices, %li quads)",
+          globalPatch.intVertices.size(),globalPatch.elements.size());
+      GeomOptimStats stats;
+      GeomOptimOptions opts;
+      opts.sp = opt.sp;
+      opts.outerLoopIterMax = 20;
+      opts.timeMax = 10.;
+      opts.withBackup = true;
+      opts.invertCADNormals = opt.invertNormalsForQuality;
+      opts.smartMinThreshold = 0.1;
+      opts.localLocking = true;
+      opts.dxLocalMax = 1.e-4;
+      patchOptimizeGeometryWithKernel(globalPatch, opts, stats);
+    } else {
+      Msg::Debug("-- failed to build global face patch for smoothing");
+    }
   }
 
   if (opt.sp) {

@@ -1235,6 +1235,20 @@ namespace QMT {
     return true;
   }
 
+  double cavityIrregularity(const Cavity& cav) {
+    unordered_set<MVertex*> onBdr;
+    for (const COEdge& pe: cav.boundary) {
+      onBdr.insert(pe[0]);
+    };
+    double irreg = 0.;
+    for (const auto& kv : cav.valence) {
+      MVertex* v = kv.first;
+      if (onBdr.find(v) != onBdr.end()) continue;
+      irreg += std::pow(kv.second-4.,2);
+    }
+    return irreg;
+  }
+
 
   enum GrowthPolicy {
     GROW_MINIMAL,
@@ -1252,7 +1266,7 @@ namespace QMT {
   }
 
   /* TODO note
-   * This function is slow, mainly because of getCavitySides and getCavityValences
+   * This function is slow, mainly because of getCavitySides
    * Try to reduce the cavity to a condensed structure here ? 
    * Or try to use the position in gf->quadrangles as quad identifier ? 
    * + vector<bool> for inside/outside
@@ -1290,8 +1304,12 @@ namespace QMT {
       for (size_t j = 1; j < sides[i].size()-1; ++j) {
         MVertex* v = sides[i][j];
         GVertex* gv = dynamic_cast<GVertex*>(v->onWhat());
-        GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
-        if (gv != nullptr || ge != nullptr) { /* side touching face boundary */
+        // GEdge* ge = dynamic_cast<GEdge*>(v->onWhat());
+        // if (gv != nullptr || ge != nullptr) { /* side touching face boundary */
+        //   candidate = false;
+        //   break;
+        // }
+        if (gv != nullptr) { /* side touching CAD corner */
           candidate = false;
           break;
         }
@@ -1307,6 +1325,7 @@ namespace QMT {
         Cavity cav2 = cav;
 
         /* Add the new quads */
+        size_t nAdded = 0;
         std::vector<MQuadrangle*> cQuads;
         cQuads.reserve(4*sides[i].size());
         for (size_t j = 1; j < sides[i].size()-1; ++j) {
@@ -1320,8 +1339,10 @@ namespace QMT {
           auto it2 = cav2.elements.find(q2);
           if (it2 == cav2.elements.end()) {
             cav2.add(q2);
+            nAdded += 1;
           }
         }
+        if (nAdded == 0) continue; /* try next side */
 
         /* Convexify the cavity */
         bool okc = convexify(cav2, adj);
@@ -1417,7 +1438,7 @@ namespace QMT {
         double irregMeasure;
         std::pair<size_t,int> par;
         bool meshable = patchIsRemeshableWithQuadPattern(patternsToCheck, Ncorners, sideSizes, par, irregMeasure);
-        if (meshable && irregMeasure < bestIrreg) {
+        if (meshable && irregMeasure < bestIrreg && irregMeasure < cavityIrregularity(cav)) {
           /* set last remeshable cavity */
           bestIrreg = irregMeasure;
           lastNbIrregular = nIrreg;
@@ -1556,9 +1577,13 @@ namespace QMT {
           opt.timeMax = 10.;
           opt.withBackup = true;
           opt.invertCADNormals = ctx.invertNormalsForQuality;
+          opt.smartMinThreshold = 0.1;
+          opt.localLocking = true;
+          opt.dxLocalMax = 1.e-4;
           patchOptimizeGeometryWithKernel(patchBdr, opt, stats);
         }
       }
+      Msg::Debug("---->");
 
       adj.clear(); /* was not longer valid after execute() */
       return true;
@@ -1593,7 +1618,6 @@ namespace QMT {
     }
 
     /* Assign singular vertices */
-    irregularVertices.resize(singularities.size(),nullptr);
     for (size_t i = 0; i < singularities.size(); ++i) {
       int index = singularities[i].second;
       vector<MVertex*>* verticesp;
@@ -1618,7 +1642,7 @@ namespace QMT {
         }
       }
       if (best != nullptr) {
-        irregularVertices[i] = best;
+        irregularVertices.push_back(best);
       } else {
         Msg::Warning("- Face %i, singular node %i, failed to assign to irregular vertex", gf->tag(), i);
       }
@@ -1900,6 +1924,7 @@ namespace QMT {
       /* Initialize a remeshing cavity */
       if (Q.empty()) continue;
       GrowthPolicy policy = GROW_MINIMAL;
+      if (singularities.size() == 1) policy = GROW_MAXIMAL;
       MVertex* vSing = Q.top().second;
       Q.pop();
       auto it = v2q.find(vSing);
@@ -2140,32 +2165,82 @@ int remeshPatchWithQuadPattern(
   diff.after.bdrVertices = diff.before.bdrVertices; /* the new patch has the same bdr */
 
   /* Determine the new patch geometry by smoothing on the surface */
+  bool haveNiceParam = haveNiceParametrization(gf);
   GeomOptimStats stats;
-  int s0 = patchOptimizeGeometryGlobal(diff.after, stats);
-  if (s0 != 0) {
-    Msg::Debug("failed to optimize geometry with global UV smoothing");
-    if (gf->haveParametrization() || sp != nullptr) {
-      bool okp = patchProjectOnSurface(diff.after, sp);
-      if (!okp) {
-        Msg::Debug("failed to project geometry");
-        return -1;
-      }
+  int stGeoGlobal = -1;
+  if (haveNiceParam) {
+    stGeoGlobal = patchOptimizeGeometryGlobal(diff.after, stats);
+    if (stGeoGlobal != 0) {
+      Msg::Debug("failed to optimize geometry with global UV smoothing");
     }
   }
-  if (s0 == -2 && sp != nullptr) { /* Failed to get continuous UV on bdr, apply method without param */
+
+  if (!haveNiceParam || stGeoGlobal != 0) {
+    bool okp = patchProjectOnSurface(diff.after, sp);
+    if (!okp) {
+      Msg::Debug("failed to project geometry");
+      return -1;
+    }
     GeomOptimOptions opt;
     opt.sp = sp;
     opt.invertCADNormals = invertNormalsForQuality;
+    opt.smartMinThreshold = 0.1;
+    opt.localLocking = true;
+    opt.dxLocalMax = 1.e-4;
+    opt.outerLoopIterMax = 100;
+    opt.timeMax = 100;
+    opt.withBackup = false;
     patchOptimizeGeometryWithKernel(diff.after, opt, stats);
   }
+
   if (stats.sicnMinAfter < minSICNafer) {
+    Msg::Debug("remesh patch with quad pattern: rejected because SICN min is %.3f", stats.sicnMinAfter);
     return -1;
   }
 
-  // TODO: need another smoothing method ...
-  //       winslow/angle-based with fast projections ?
-
   return 0;
+}
+
+bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp) {
+  if (gf->geomType() == GFace::GeomType::Sphere) {
+    bool oka = sp->setAnalyticalProjection(gf);
+    return oka;
+  }
+
+  bool deleteTheTris = false;
+  std::vector<MTriangle*> triangles;
+
+  /* warning: name should be the same a in meshQuadQuasiStructured.cpp
+   * for this to work ! */
+  const std::string BMESH_NAME = "bmesh_quadqs"; 
+  if (backgroudMeshExists(BMESH_NAME)) {
+    GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
+    auto it = bmesh.faceBackgroundMeshes.find(gf);
+    if (it == bmesh.faceBackgroundMeshes.end()) {
+      Msg::Error("background mesh not found for face %i", gf->tag());
+      return -3;
+    }
+
+    /* Get pointers to triangles in the background mesh */
+    triangles.resize(it->second.triangles.size());
+    for (size_t i = 0; i < it->second.triangles.size(); ++i) {
+      triangles[i] = &(it->second.triangles[i]);
+    }
+  } else {
+    triangles = trianglesFromQuads(gf->quadrangles);
+    deleteTheTris = true;
+  }
+
+  bool oki = sp->initialize(gf, triangles);
+  if (!oki) {
+    Msg::Error("failed to initialize the surface projector");
+  }
+
+  if (deleteTheTris){
+    for (MTriangle* t: triangles) delete t;
+  }
+
+  return true;
 }
 
 
@@ -2185,37 +2260,9 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
 
   if (!haveNiceParametrization(gf)) {
     ctx.sp = new SurfaceProjector();
-    bool deleteTheTris = false;
-    std::vector<MTriangle*> triangles;
-
-    /* warning: name should be the same a in meshQuadQuasiStructured.cpp
-     * for this to work ! */
-    const std::string BMESH_NAME = "bmesh_quadqs"; 
-    if (backgroudMeshExists(BMESH_NAME)) {
-      GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
-      auto it = bmesh.faceBackgroundMeshes.find(gf);
-      if (it == bmesh.faceBackgroundMeshes.end()) {
-        Msg::Error("background mesh not found for face %i", gf->tag());
-        return -3;
-      }
-
-      /* Get pointers to triangles in the background mesh */
-      triangles.resize(it->second.triangles.size());
-      for (size_t i = 0; i < it->second.triangles.size(); ++i) {
-        triangles[i] = &(it->second.triangles[i]);
-      }
-    } else {
-      triangles = trianglesFromQuads(gf->quadrangles);
-      deleteTheTris = true;
-    }
-
-    bool oki = ctx.sp->initialize(gf, triangles);
-    if (!oki) {
-      Msg::Error("failed to initialize the surface projector");
-    }
-
-    if (deleteTheTris){
-      for (MTriangle* t: triangles) delete t;
+    bool okf = fillSurfaceProjector(gf, ctx.sp);
+    if (!okf) {
+      return false;
     }
   }
 
@@ -2237,8 +2284,7 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
   bool running = true;
   while (running) {
     running = false;
-    size_t nq1 = gf->quadrangles.size();
-    size_t nv1 = gf->mesh_vertices.size();
+    size_t ncrb = ctx.nQuadCavityRemesh + ctx.nSingCavityRemesh;
 
     /* 1st pass: check regular quad patch remeshing only */
     patternsToCheck = {PATTERN_QUAD_REGULAR};
@@ -2272,10 +2318,41 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
       return false;
     }
 
-    /* Restart a full iteration if the number of elements changed */
-    size_t nq2 = gf->quadrangles.size();
-    size_t nv2 = gf->mesh_vertices.size();
-    if (nq2 != nq1 || nv2 != nv1) running = true;
+    size_t ncra = ctx.nQuadCavityRemesh + ctx.nSingCavityRemesh;
+    if (ncra > ncrb) { /* The mesh changed */
+      /* Quad mesh smoothing */
+      {
+        GFaceMeshPatch globalPatch;
+        bool okp = patchFromQuads(gf, gf->quadrangles, globalPatch);
+        if (okp) {
+          Msg::Debug("-- smooth face quad mesh (%li vertices, %li quads)",
+              globalPatch.intVertices.size(),globalPatch.elements.size());
+          GeomOptimStats stats;
+          GeomOptimOptions opt;
+          opt.sp = ctx.sp;
+          opt.outerLoopIterMax = 20;
+          opt.timeMax = 10.;
+          opt.withBackup = true;
+          opt.invertCADNormals = ctx.invertNormalsForQuality;
+          opt.smartMinThreshold = 0.1;
+          opt.localLocking = true;
+          opt.dxLocalMax = 1.e-4;
+          patchOptimizeGeometryWithKernel(globalPatch, opt, stats);
+        } else {
+          Msg::Debug("-- failed to build face quad mesh patch");
+        }
+      }
+
+
+      /* Decrease the try counter, to enable a new try everywhere */
+      for (auto& kv: seedNbTries) if (kv.second > 0) {
+        kv.second -= 1;
+      }
+    }
+
+    /* Restart a full iteration if some cavities have been remeshed */
+    if (ncra > ncrb) running = true;
+    Msg::Debug("-- end of cavity remeshing iteration");
   }
 
   if (ctx.sp) {

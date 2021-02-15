@@ -10,8 +10,8 @@
 #include <array>
 #include <string>
 #include "GPoint.h"
+#include "GFace.h"
 
-class GFace;
 class MTriangle;
 
 /**
@@ -46,6 +46,17 @@ class SurfaceProjector {
     void clear();
 
     /**
+     * @brief The SurfaceProjector can project with an analytical formula instead of
+     *        a triangulation and a octree
+     *        Supported shapes: Sphere
+     *
+     * @param gf The face containing the analytical parameters
+     *
+     * @return true if success
+     */
+    bool setAnalyticalProjection(GFace* gf);
+
+    /**
      * @brief Get the query closest point on the triangulated surface.
      *
      * @param query[3] 3D coordinates of the query point
@@ -64,7 +75,12 @@ class SurfaceProjector {
     std::vector<std::array<int32_t,3> >  triangles;
     std::vector<std::array<std::array<double,2>,3 > >  triangle_uvs;
     std::vector<bool>  triangle_no_uv_eval; /* no eval. at param. singularity */
-    int64_t OctIdx;
+    int64_t OctIdx; /* pointer to libOL octree (C structure) */
+
+    /* For simple CAD shapes, we have analytical formula for projection */
+    bool useAnalyticalFormula = false;
+    GFace::GeomType analyticalShape = GFace::GeomType::Unknown;
+    std::array<double,10> analyticalParameters;
 };
 
 #endif

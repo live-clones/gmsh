@@ -56,12 +56,13 @@ int patchOptimizeGeometryGlobal(
 struct GeomOptimOptions {
   double useDmoIfSICNbelow = 0.1; /* use the DMO kernel if SICN quality below threshold */
   size_t outerLoopIterMax = 100; /* maximum number of loops over all vertices */
-  double dxLocalMax = 1.e-5; /* lock a vertex if moved less than dxLocalMax*local_size */
   double timeMax = DBL_MAX; /* stop smoothing is timeMax elapsed */
   bool invertCADNormals = false; /* invert the CAD normals for the quality computation */
   SurfaceProjector* sp = nullptr; /* if present, surface projection is used instead of CAD */
-  bool smart = true; /* compute quality before/after and do not decrease */
+  double smartMinThreshold = -DBL_MAX; /* do not displace if inducing min(SICN) < smartMinThreshold */
   bool qualityRangeTechnique = false;
+  bool localLocking = true; /* Lock if small displacement, unlocked neighbors else */
+  double dxLocalMax = 1.e-5; /* If not smart and localLocking, lock a vertex if moved less than dxLocalMax*local_size */
   double qualityRangeMin = 0.5;
   double qualityRangeMax = 0.8;
   bool withBackup = true; /* save the geometry before, restore if quality decreased */
