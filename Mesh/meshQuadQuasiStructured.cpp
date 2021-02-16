@@ -832,8 +832,8 @@ bool smoothThePool(
       opt.timeMax = 10.;
       opt.withBackup = true;
       opt.invertCADNormals = invertNormalsForQuality;
-      opt.smartMinThreshold = 0.1;
-      opt.localLocking = true;
+      // opt.smartMinThreshold = 0.1;
+      // opt.localLocking = true;
       opt.dxLocalMax = 1.e-4;
       patchOptimizeGeometryWithKernel(patch, opt, stats);
     }
@@ -1465,7 +1465,6 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
     Msg::Warning("optimize quad topology: failed to improve interior valences");
   }
 
-
   /* Mesh smoothing */
   {
     GFaceMeshPatch globalPatch;
@@ -1476,13 +1475,14 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
       GeomOptimStats stats;
       GeomOptimOptions opts;
       opts.sp = opt.sp;
-      opts.outerLoopIterMax = 20;
-      opts.timeMax = 10.;
+      opts.outerLoopIterMax = 100;
+      opts.timeMax = 3.;
       opts.withBackup = true;
       opts.invertCADNormals = opt.invertNormalsForQuality;
-      opts.smartMinThreshold = 0.1;
-      opts.localLocking = true;
+      // opts.smartMinThreshold = 0.1;
+      // opts.localLocking = true;
       opts.dxLocalMax = 1.e-4;
+      opts.useDmoIfSICNbelow = 0.5;
       patchOptimizeGeometryWithKernel(globalPatch, opts, stats);
     } else {
       Msg::Debug("-- failed to build global face patch for smoothing");

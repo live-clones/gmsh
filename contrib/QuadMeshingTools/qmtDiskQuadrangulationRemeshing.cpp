@@ -398,8 +398,9 @@ int remeshLocalWithDiskQuadrangulation(
 
       /* Kernel smoothing */
       GeomOptimOptions opt;
-      if (sp != nullptr) opt.sp = sp;
+      opt.sp = sp;
       opt.invertCADNormals = invertNormalsForQuality;
+      opt.useDmoIfSICNbelow = 0.5;
       int s1 = patchOptimizeGeometryWithKernel(patch, opt, stats);
       if (stats.sicnAvgAfter > minSICNafer) {
         geometryOk = true;
@@ -432,8 +433,9 @@ int remeshLocalWithDiskQuadrangulation(
       PatchGeometryBackup backup(largerPatch);
 
       GeomOptimOptions opt;
-      if (sp != nullptr) opt.sp = sp;
+      opt.sp = sp;
       opt.invertCADNormals = invertNormalsForQuality;
+      opt.useDmoIfSICNbelow = 0.5;
       GeomOptimStats stats;
 
       if (haveNiceParametrization(gf)) {

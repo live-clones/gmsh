@@ -61,7 +61,7 @@ struct GeomOptimOptions {
   SurfaceProjector* sp = nullptr; /* if present, surface projection is used instead of CAD */
   double smartMinThreshold = -DBL_MAX; /* do not displace if inducing min(SICN) < smartMinThreshold */
   bool qualityRangeTechnique = false;
-  bool localLocking = true; /* Lock if small displacement, unlocked neighbors else */
+  bool localLocking = false; /* Lock if small displacement, unlocked neighbors else */
   double dxLocalMax = 1.e-5; /* If not smart and localLocking, lock a vertex if moved less than dxLocalMax*local_size */
   double qualityRangeMin = 0.5;
   double qualityRangeMax = 0.8;

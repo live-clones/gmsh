@@ -232,7 +232,7 @@ namespace QMT {
     const vec3 X2 = L1 - L3;
     vec3 Nc = cross(X1,X2);
     const double lenNc_sq = length2(Nc);
-    if (lenNc_sq < EPS2) return 0.;
+    if (lenNc_sq < EPS2) return -1.;
     normalize(Nc);
     const double len0_sq = length2(L0);
     const double len1_sq = length2(L1);
@@ -309,6 +309,7 @@ namespace QMT {
     vec5* p_uv = NULL;
     uint32_t n = 0;
     vec2 jump = {0.,0.};
+    vec3 range = {0.,0.};
   };
 
 
@@ -736,7 +737,7 @@ namespace QMT {
     const double len1_sq = length2(L1);
     const double len2_sq = length2(L2);
     const double len3_sq = length2(L3);
-    if (len0_sq < EPS2 || len1_sq < EPS2 || len2_sq < EPS2 || len3_sq < EPS2) return 0.;
+    if (len0_sq < EPS2 || len1_sq < EPS2 || len2_sq < EPS2 || len3_sq < EPS2) return -1.;
     const vec3 N0 = cross(L3,L0);
     const vec3 N1 = cross(L0,L1);
     const vec3 N2 = cross(L1,L2);
@@ -809,7 +810,12 @@ namespace QMT {
     return uv;
   }
 
-  inline vec2 getDeltaUV(const vec5& v, const OneRing& ring, size_t n) {
+  inline double abs_diff_wperiod(double a, double b, double T) {
+    if (T == 0.) return std::abs(a-b);
+    return std::abs(fmod(a-b,T));
+  }
+
+  inline vec2 getDeltaUV(const vec5& v, const OneRing& ring) {
     constexpr bool useBboxUV = false;
     bool periodic = (ring.jump[0] != 0. || ring.jump[1] != 0.);
     if (useBboxUV) {
@@ -834,15 +840,10 @@ namespace QMT {
       double dv = 0.;
       // DBG(uv_0, ring.jump);
       for (uint32_t i = 0; i < ring.n; ++i) {
-        vec2 uv_i = {ring.p_uv[i][3],ring.p_uv[i][4]};
-        vec2 uv_n = {ring.p_uv[(i+1)%ring.n][3],ring.p_uv[(i+1)%ring.n][4]};
-        // DBG(i, uv_i, uv_n);
-        if (periodic) uv_n = uv_adjust_jump(uv_n, uv_i, ring.jump);
-        double duc = std::abs(uv_n[0]-uv_i[0]);
-        double dvc = std::abs(uv_n[1]-uv_i[1]);
-        // DBG(i, uv_i, uv_n, duc, dvc);
-        if (periodic && ring.jump[0] > 0. && duc > 0.5 * ring.jump[0]) duc = 0.;
-        if (periodic && ring.jump[1] > 0. && dvc > 0.5 * ring.jump[1]) dvc = 0.;
+        double duc = abs_diff_wperiod(ring.p_uv[i][3],ring.p_uv[(i+1)%ring.n][3], ring.jump[0]);
+        double dvc = abs_diff_wperiod(ring.p_uv[i][4],ring.p_uv[(i+1)%ring.n][4], ring.jump[1]);
+        if (ring.jump[0] > 0. && duc > 0.5 * ring.jump[0]) duc = 0.;
+        if (ring.jump[1] > 0. && dvc > 0.5 * ring.jump[1]) dvc = 0.;
         du = std::max(du,duc);
         dv = std::max(dv,dvc);
       }
@@ -850,14 +851,14 @@ namespace QMT {
     }
   }
 
-  inline double getRingDispMaxL2(const vec5& v, const OneRing& ring, size_t n) {
+  inline double getRingDispMax(const vec5& v, const OneRing& ring) {
     double dMax2 = 0.;
     for (uint32_t i = 0; i < ring.n; ++i) {
       vec3 p_i = {ring.p_uv[i][0], ring.p_uv[i][1], ring.p_uv[i][2]};
       vec3 p_n = {ring.p_uv[(i+1)%ring.n][0], ring.p_uv[(i+1)%ring.n][1], ring.p_uv[(i+1)%ring.n][2]};
       dMax2 = std::max(dMax2, length2(p_i-p_n));
     }
-    return dMax2;
+    return std::sqrt(dMax2);
   }
 
   inline vec4 getGrid(const vec5& v, vec2 deltaUV, size_t n, double w) {
@@ -879,10 +880,16 @@ namespace QMT {
       qmax = computeQualityQuadOneRing(v, ring, normal);
     }
     vec5 vmax = v;
-    vec2 deltaUV = getDeltaUV(v, ring, n);
+    vec2 deltaUV = getDeltaUV(v, ring);
 
-    const bool checkDisplacement = ring.jump[0] > 0. || ring.jump[1] > 0.;
-    const double dispMax2 = checkDisplacement ? getRingDispMaxL2(v, ring, n) : 0.;
+    /* Sanity check on the UV variation */
+    if (ring.jump[0] > 0. && deltaUV[0] > 0.5*ring.jump[0]) return v;
+    if (ring.jump[1] > 0. && deltaUV[1] > 0.5*ring.jump[1]) return v;
+    if (deltaUV[0] > 0.05 * ring.range[0]) return v;
+    if (deltaUV[1] > 0.05 * ring.range[1]) return v;
+
+    const bool checkDisplacement = ring.jump[0] != 0. || ring.jump[1] != 0.;
+    const double dispMax = checkDisplacement ? getRingDispMax(v, ring) : 0.;
 
     /* warning: not in C++ standard but we don't want template or alloc */
     for (size_t iter = 0; iter < nIter; ++iter) {
@@ -893,9 +900,16 @@ namespace QMT {
         for (size_t j = 0; j < n; ++j) {
           uv.data()[1] = double(j)/double(n-1)*grid[1] + double(n-1-j)/double(n-1)*grid[3];
           GPoint newPos = gf->point(uv);
-          if (checkDisplacement && 
-              length2(vec3{newPos.x(),newPos.y(),newPos.z()} - vec3{v[0],v[1],v[2]}) > dispMax2) {
-            continue;
+          if (!newPos.succeeded()) continue;
+          if (checkDisplacement) {
+            double disp = length(vec3{newPos.x(),newPos.y(),newPos.z()} - vec3{v[0],v[1],v[2]});
+            if (disp > 1 || dispMax > 1) {
+              DBG(disp, dispMax, v, deltaUV, uv, ring.jump);
+              abort();
+              //gmsh::fltk::run();
+              //abort();
+            }
+            if (disp > dispMax) continue;
           }
           const vec5 v2 = {newPos.x(),newPos.y(),newPos.z(),uv.data()[0],uv.data()[1]};
           double q2 = computeQualityQuadOneRing(v2, ring, normal, qmax);
@@ -919,6 +933,9 @@ void computeSICN(const std::vector<MElement*>& elements, double& sicnMin, double
   sicnAvg = 0.;
   for (size_t i = 0; i < elements.size(); ++i)  {
     double q = elements[i]->minSICNShapeMeasure();
+    if (std::isnan(q)) {
+      q = -1.;
+    }
     sicnMin = std::min(sicnMin, q);
     sicnAvg += q;
   }
@@ -1056,6 +1073,8 @@ bool kernelLoopWithParametrization(
   std::vector<vec5> ringGeometric(10);
   if (gf->periodic(0)) ring.jump[0] = gf->period(0);
   if (gf->periodic(1)) ring.jump[1] = gf->period(1);
+  ring.range[0] = gf->parBounds(0).high()-gf->parBounds(0).low();
+  ring.range[1] = gf->parBounds(1).high()-gf->parBounds(1).low();
   ring.p_uv = ringGeometric.data();
   const double sign = opt.invertCADNormals ? -1. : 1.;
 
@@ -1076,6 +1095,7 @@ bool kernelLoopWithParametrization(
   const size_t nFree = patch.intVertices.size();
   for (size_t iter = 0; iter < opt.outerLoopIterMax; ++iter) {
     size_t nMoved = 0;
+    double iterQmin = 1.;
 
     /* Loop over interior vertices */
     for (size_t v = 0; v < nFree; ++v) {
@@ -1118,6 +1138,7 @@ bool kernelLoopWithParametrization(
       if (opt.qualityRangeTechnique || quality < opt.useDmoIfSICNbelow) {
         vec5 newPos = dmoOptimizeVertexPosition(gf, pos, ring, dmo_grid_width, dmo_grid_depth, normal, quality);
         point_uv[v] = newPos;
+        iterQmin = std::min(iterQmin,quality);
         nMoved += 1;
       }
 
@@ -1135,6 +1156,7 @@ bool kernelLoopWithParametrization(
         // TODO: lock vertex is local dx reduction
       }
     }
+    // DBG(iter, nMoved, iterQmin);
   }
 
   /* Update the positions */

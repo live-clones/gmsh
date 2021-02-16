@@ -310,9 +310,9 @@ bool SurfaceProjector::initialize(GFace* gf_, const std::vector<MTriangle*>& gfT
   const int BasIdx = 1; /* indices start at one in libOL */
 
   /* If periodic parametrization, get periods */
-  bool disableParamPoles = false;
+  bool disableParamPer = false;
   if (paramAvailable && (gf->periodic(0) || gf->periodic(1))) {
-    disableParamPoles = true;
+    disableParamPer = true;
   }
 
   /* Collect coordinates and triangle-continuous uv param */
@@ -322,7 +322,7 @@ bool SurfaceProjector::initialize(GFace* gf_, const std::vector<MTriangle*>& gfT
   points.reserve(gfTriangles.size());
   if (paramAvailable) {
     triangle_uvs.reserve(gfTriangles.size());
-    if (disableParamPoles) triangle_no_uv_eval.reserve(gfTriangles.size());
+    if (disableParamPer) triangle_no_uv_eval.reserve(gfTriangles.size());
   }
   for (MTriangle* f: gfTriangles) {
     std::array<int32_t,3> tri_pts;
@@ -353,10 +353,11 @@ bool SurfaceProjector::initialize(GFace* gf_, const std::vector<MTriangle*>& gfT
     }
 
     if (check_periodicity) {
+      bool found = false;
       for (size_t lv = 0; lv < 3; ++lv) {
         MVertex* v1 = f->getVertex(lv);
         bool onGf = (dynamic_cast<GFace*>(v1->onWhat()) == gf);
-        if (onGf || lv == 2) { /* If neither of the 3 are on surface, takes random ... */
+        if (onGf) { /* If neither of the 3 are on surface, takes random ... */
           MVertex* v2 = f->getVertex((lv+1)%3);
           MVertex* v3 = f->getVertex((lv+2)%3);
           SPoint2 param1;
@@ -367,14 +368,44 @@ bool SurfaceProjector::initialize(GFace* gf_, const std::vector<MTriangle*>& gfT
           tri_uvs[(lv+0)%3] = {param1.x(),param1.y()};
           tri_uvs[(lv+1)%3] = {param2.x(),param2.y()};
           tri_uvs[(lv+2)%3] = {param3.x(),param3.y()};
+          found = true;
           break;
+        }
+      }
+      if (!found) {
+        /* Triangle with no vertex inside the GFace, difficult to get
+         * good UV parametrization, we use center projection to get
+         * a initial guess */
+        SPoint3 center = f->barycenter();
+        double initialGuess[2] = {0.,0.};
+        GPoint proj = gf->closestPoint(center,initialGuess);
+        if (proj.succeeded()) {
+          MFaceVertex cv(proj.x(),proj.y(),proj.z(),gf,proj.u(),proj.v());
+          MVertex* v1 = f->getVertex(0);
+          MVertex* v2 = f->getVertex(1);
+          MVertex* v3 = f->getVertex(2);
+          SPoint2 paramc;
+          SPoint2 param1;
+          SPoint2 param2;
+          SPoint2 param3;
+          reparamMeshEdgeOnFace(&cv, v1, gf, paramc, param1);
+          reparamMeshEdgeOnFace(&cv, v2, gf, paramc, param2);
+          reparamMeshEdgeOnFace(&cv, v3, gf, paramc, param3);
+          tri_uvs[0] = {param1.x(),param1.y()};
+          tri_uvs[1] = {param2.x(),param2.y()};
+          tri_uvs[2] = {param3.x(),param3.y()};
+        } else {
+          no_eval = true;
+          tri_uvs[0] = {0.,0.};
+          tri_uvs[1] = {0.,0.};
+          tri_uvs[2] = {0.,0.};
         }
       }
     }
 
     triangles.push_back(tri_pts);
     if (paramAvailable) triangle_uvs.push_back(tri_uvs);
-    if (paramAvailable && disableParamPoles) triangle_no_uv_eval.push_back(no_eval);
+    if (paramAvailable && disableParamPer) triangle_no_uv_eval.push_back(no_eval);
     // Debug to visualize param
     // {
     //   GeoLog::add({points[tri_pts[0]-1], points[tri_pts[1]-1], points[tri_pts[2]-1]},

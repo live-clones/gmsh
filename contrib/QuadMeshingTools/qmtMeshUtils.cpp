@@ -28,6 +28,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "robin_hood.h"
 
 // /* QuadMeshingTools includes */
 #include "cppUtils.h"
@@ -70,6 +71,8 @@ std::vector<GEdge*> model_edges(const GModel* gm) {
 bool haveNiceParametrization(GFace* gf) {
   if (!gf->haveParametrization()) return false;
   if (gf->geomType() == GFace::GeomType::Sphere) return false;
+
+  // if (gf->periodic(0) || gf->periodic(1)) return false;
 
   return true;
 }
@@ -626,10 +629,11 @@ std::array<SPoint2,3> paramOnTriangle(GFace* gf, MTriangle* t) {
   }
 
   if (check_periodicity) {
+    bool found = false;
     for (size_t lv = 0; lv < t->getNumVertices(); ++lv) {
       MVertex* v1 = t->getVertex(lv);
       bool onGf = (dynamic_cast<GFace*>(v1->onWhat()) == gf);
-      if (onGf || lv == 2) { /* If neither of the 3 are on surface, takes random ... */
+      if (onGf) {
         MVertex* v2 = t->getVertex((lv+1)%3);
         MVertex* v3 = t->getVertex((lv+2)%3);
         SPoint2 param1;
@@ -640,7 +644,36 @@ std::array<SPoint2,3> paramOnTriangle(GFace* gf, MTriangle* t) {
         tri_uvs[(lv+0)%3] = {param1.x(),param1.y()};
         tri_uvs[(lv+1)%3] = {param2.x(),param2.y()};
         tri_uvs[(lv+2)%3] = {param3.x(),param3.y()};
+        found = true;
         break;
+      }
+    }
+    if (!found) {
+      /* Triangle with no vertex inside the GFace, difficult to get
+       * good UV parametrization, we use center projection to get
+       * a initial guess */
+      SPoint3 center = t->barycenter();
+      double initialGuess[2] = {0.,0.};
+      GPoint proj = gf->closestPoint(center,initialGuess);
+      if (proj.succeeded()) {
+        MFaceVertex cv(proj.x(),proj.y(),proj.z(),gf,proj.u(),proj.v());
+        MVertex* v1 = t->getVertex(0);
+        MVertex* v2 = t->getVertex(1);
+        MVertex* v3 = t->getVertex(2);
+        SPoint2 paramc;
+        SPoint2 param1;
+        SPoint2 param2;
+        SPoint2 param3;
+        reparamMeshEdgeOnFace(&cv, v1, gf, paramc, param1);
+        reparamMeshEdgeOnFace(&cv, v2, gf, paramc, param2);
+        reparamMeshEdgeOnFace(&cv, v3, gf, paramc, param3);
+        tri_uvs[0] = {param1.x(),param1.y()};
+        tri_uvs[1] = {param2.x(),param2.y()};
+        tri_uvs[2] = {param3.x(),param3.y()};
+      } else {
+        tri_uvs[0] = {0.,0.};
+        tri_uvs[1] = {0.,0.};
+        tri_uvs[2] = {0.,0.};
       }
     }
   }
@@ -665,6 +698,7 @@ std::array<SPoint2,4> paramOnQuad(GFace* gf, MQuadrangle* t) {
   }
 
   if (check_periodicity) {
+    bool found = false;
     for (size_t lv = 0; lv < t->getNumVertices(); ++lv) {
       MVertex* v1 = t->getVertex(lv);
       bool onGf = (dynamic_cast<GFace*>(v1->onWhat()) == gf);
@@ -684,6 +718,39 @@ std::array<SPoint2,4> paramOnQuad(GFace* gf, MQuadrangle* t) {
         uvs[(lv+2)%4] = {param3.x(),param3.y()};
         uvs[(lv+3)%4] = {param4.x(),param4.y()};
         break;
+      }
+    }
+    if (!found) {
+      /* Quad with no vertex inside the GFace, difficult to get
+       * good UV parametrization, we use center projection to get
+       * a initial guess */
+      SPoint3 center = t->barycenter();
+      double initialGuess[2] = {0.,0.};
+      GPoint proj = gf->closestPoint(center,initialGuess);
+      if (proj.succeeded()) {
+        MFaceVertex cv(proj.x(),proj.y(),proj.z(),gf,proj.u(),proj.v());
+        MVertex* v1 = t->getVertex(0);
+        MVertex* v2 = t->getVertex(1);
+        MVertex* v3 = t->getVertex(2);
+        MVertex* v4 = t->getVertex(3);
+        SPoint2 paramc;
+        SPoint2 param1;
+        SPoint2 param2;
+        SPoint2 param3;
+        SPoint2 param4;
+        reparamMeshEdgeOnFace(&cv, v1, gf, paramc, param1);
+        reparamMeshEdgeOnFace(&cv, v2, gf, paramc, param2);
+        reparamMeshEdgeOnFace(&cv, v3, gf, paramc, param3);
+        reparamMeshEdgeOnFace(&cv, v4, gf, paramc, param4);
+        uvs[0] = {param1.x(),param1.y()};
+        uvs[1] = {param2.x(),param2.y()};
+        uvs[2] = {param3.x(),param3.y()};
+        uvs[3] = {param4.x(),param4.y()};
+      } else {
+        uvs[0] = {0.,0.};
+        uvs[1] = {0.,0.};
+        uvs[2] = {0.,0.};
+        uvs[3] = {0.,0.};
       }
     }
   }
