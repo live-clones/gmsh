@@ -242,32 +242,16 @@ int GmshWriteFile(const std::string &fileName)
 
 int GmshFinalize()
 {
-#if defined(HAVE_POST)
-  // Delete all PViewData stored in static list of PView class
-  while(PView::list.size() > 0) delete PView::list[PView::list.size() - 1];
-  std::vector<PView *>().swap(PView::list);
+  // delete all models and views
+  DeleteAllModelsAndViews();
 
-  // reset global view tag
-  PView::setGlobalTag(0);
-
-  // Delete static _interpolationSchemes of PViewData class
-  PViewData::removeAllInterpolationSchemes();
-#endif
+  // clear remaining static data
 #if defined(HAVE_PLUGINS)
   delete PluginManager::instance();
 #endif
-
-  // Delete static interpolation bases
   BasisFactory::clearAll();
-
-  // Delete all Gmodels
-  while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
-  std::vector<GModel *>().swap(GModel::list);
-
   Msg::Finalize();
-
   isInitialized = false;
-
   return 1;
 }
 

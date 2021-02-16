@@ -767,10 +767,10 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|S, "SaveOptions" , opt_general_options_save, 0. ,
     "Automatically save current options in General.OptionsFileName (1) or per model (2)"
-    "each time you quit Gmsh?" },
+    "when the graphical user interface is closed?" },
   { F|S, "SaveSession" , opt_general_session_save, 1. ,
     "Automatically save session specific information in General.SessionFileName "
-    "each time you quit Gmsh?" },
+    "when the graphical user interface is closed?" },
   { F,   "ScaleX" , opt_general_scale0 , 1.0 ,
     "X-axis scale factor" },
   { F,   "ScaleY" , opt_general_scale1 , 1.0 ,

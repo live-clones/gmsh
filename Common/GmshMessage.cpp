@@ -187,6 +187,12 @@ void Msg::Initialize(int argc, char **argv)
 
 void Msg::Finalize()
 {
+  // close log file
+  if(_logFile){
+    fclose(_logFile);
+    _logFile = nullptr;
+  }
+
 #if defined(HAVE_SLEPC)
   SlepcFinalize();
 #endif
@@ -370,49 +376,11 @@ onelab::client *Msg::GetOnelabClient()
 
 void Msg::Exit(int level)
 {
-  if(GModel::current())
-    delete GModel::current();
-
-  // delete the temp file
-  if(!GetCommRank())
-    UnlinkFile(CTX::instance()->homeDir + CTX::instance()->tmpFileName);
-
-  if(_logFile){
-    fclose(_logFile);
-    _logFile = nullptr;
-  }
-
-  // exit directly on abnormal program termination (level != 0). We used to call
-  // abort() to flush open streams, but on modern OSes this calls the annoying
-  // "report this crash to the mothership" window... so just exit!
-  if(level){
-    Finalize();
-#if defined(HAVE_MPI)
-    // force general abort (even if the fatal error occurred on 1 cpu only)
-    MPI_Abort(MPI_COMM_WORLD, level);
-#endif
-    exit(level);
-  }
-
-#if defined(HAVE_FLTK)
-  // if we exit cleanly (level==0) and we are in full GUI mode, save
-  // the persistent info to disk
-  if(FlGui::available() && !GetCommRank()) {
-    if(CTX::instance()->sessionSave)
-      PrintOptions(0, GMSH_SESSIONRC, 0, 0,
-                   (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
-    if(CTX::instance()->optionsSave == 1)
-      PrintOptions(0, GMSH_OPTIONSRC, 1, 0,
-                   (CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str());
-    else if(CTX::instance()->optionsSave == 2){
-      std::string fileName = GModel::current()->getFileName() + ".opt";
-      PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
-    }
-  }
-#endif
-
   Finalize();
-  exit(_atLeastOneErrorInRun);
+#if defined(HAVE_MPI)
+  if(level) MPI_Abort(MPI_COMM_WORLD, level);
+#endif
+  exit(level ? level : _atLeastOneErrorInRun);
 }
 
 static int streamIsFile(FILE *stream)
