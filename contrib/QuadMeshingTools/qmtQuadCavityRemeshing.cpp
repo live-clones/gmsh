@@ -1508,7 +1508,8 @@ namespace QMT {
       size_t nea = diff.after.elements.size();
       size_t nvb = diff.before.intVertices.size();
       size_t nva = diff.after.intVertices.size();
-      if (true) {
+
+      if (false) {
         static size_t ccount = 0;
         ccount += 1;
         std::string name = "cr" + std::to_string(ccount);

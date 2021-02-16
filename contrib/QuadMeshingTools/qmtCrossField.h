@@ -27,6 +27,7 @@ class GFace;
  *        edge. Returned values are copied on the triangle for ease of
  *        use in other methods.
  *
+ * @param[in] N symmetry invariance, N=4 for crosses, N=6 for asterisks
  * @param[in] triangles Triangulation used for the Crouzeix-Raviart computation, must be connected
  * @param[in] lines Boundary conditions (cross aligned, theta angle is 0), must be non-empty
  * @param[out] triEdgeTheta The cross field, one angle (in radians) per triangle edge. 
@@ -41,6 +42,7 @@ class GFace;
  * @return 0 if success
  */
 int computeCrossFieldWithHeatEquation(
+    int N,
     const std::vector<MTriangle*>& triangles, 
     const std::vector<MLine*>& lines, 
     std::vector<std::array<double,3> >& triEdgeTheta, 
@@ -54,6 +56,7 @@ int computeCrossFieldWithHeatEquation(
  *        in a least square sense (singularities are not used).
  *        The scaling defines the "intrinsic" cross field size map (up to a constant).
  *
+ * @param[in] N symmetry invariance, N=4 for crosses, N=6 for asterisks
  * @param[in] triangles Triangulation used to compute the cross field, and use to compute the scaling
  * @param[in] triEdgeTheta The cross field, one angle per triangle edge, relative to the edge direction
  *                     should be compatible with the result of computeCrossFieldWithHeatEquation()
@@ -62,6 +65,7 @@ int computeCrossFieldWithHeatEquation(
  * @return 0 if success
  */
 int computeCrossFieldConformalScaling(
+    int N,
     const std::vector<MTriangle*>& triangles, 
     const std::vector<std::array<double,3> >& triEdgeTheta, 
     std::unordered_map<MVertex*,double>& scaling);
@@ -89,6 +93,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
  *        Each triangle has 3 unit directions at its corner. This cross field is (slighly)
  *        dicontinuous at triangle interfaces.
  *
+ * @param[in] N symmetry invariance, N=4 for crosses, N=6 for asterisks
  * @param[in] triangles Triangulation used to compute cross field and size map
  * @param[in] triEdgeTheta The cross field, one angle per triangle edge, relative to the edge direction
  *                     should be compatible with the result of computeCrossFieldWithHeatEquation()
@@ -98,6 +103,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
  * @return 0 if success
  */
 int convertToPerTriangleCrossFieldDirections(
+    int N,
     const std::vector<MTriangle*>& triangles, 
     const std::vector<std::array<double,3> >& triEdgeTheta, 
     std::vector<std::array<double,9> >& triangleDirections);
@@ -106,6 +112,7 @@ int convertToPerTriangleCrossFieldDirections(
  * @brief Detect the singularities in a cross field by adding angle differences around
  *        vertex one-rings
  *
+ * @param[in] N symmetry invariance, N=4 for crosses, N=6 for asterisks
  * @param[in] triangles Triangulation used to compute cross field and size map
  * @param[in] triEdgeTheta The cross field, one angle per triangle edge, relative to the edge direction
  *                     should be compatible with the result of computeCrossFieldWithHeatEquation()
@@ -117,6 +124,7 @@ int convertToPerTriangleCrossFieldDirections(
  * @return 0 if success
  */
 int detectCrossFieldSingularities(
+    int N,
     const std::vector<MTriangle*>& triangles, 
     const std::vector<std::array<double,3> >& triEdgeTheta, 
     bool addSingularitiesAtAcuteCorners,

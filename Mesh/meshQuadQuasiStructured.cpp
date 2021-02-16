@@ -179,10 +179,15 @@ void showUVParametrization(
   GeoLog::flush();
 }
 
-int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, bool deleteGModelMesh) {
+
+int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, bool deleteGModelMesh, int N) {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return 0;
   if (CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS
       && CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT) return 0;
+  if (N != 4 && N != 6) {
+    Msg::Error("guiding field: %i-symmetry field not supported", N);
+    return -1;
+  }
 
   const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
 
@@ -340,7 +345,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
       int verbosity = 0;
       Msg::Info("- Face %i/%li: compute cross field (%li triangles, %li B.C. edges, %i diffusion levels) ...",
           gf->tag(), faces.size(), triangles.size(), lines.size(), nbDiffusionLevels);
-      int scf = computeCrossFieldWithHeatEquation(triangles, lines, triEdgeTheta, 
+      int scf = computeCrossFieldWithHeatEquation(N, triangles, lines, triEdgeTheta, 
           nbDiffusionLevels, thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
       if (scf != 0) {
         Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
@@ -350,7 +355,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
       bool addSingularitiesAtAcuteCorners = true;
       double thresholdInDeg = 30.;
       std::vector<std::pair<SPoint3,int> > singularities;
-      int scsi = detectCrossFieldSingularities(triangles, triEdgeTheta, 
+      int scsi = detectCrossFieldSingularities(N, triangles, triEdgeTheta, 
           addSingularitiesAtAcuteCorners, thresholdInDeg,
           singularities);
       if (scsi != 0) {
@@ -366,13 +371,13 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
       /* Conformal scaling associated to cross field */
       std::unordered_map<MVertex*,double> conformalScaling;
       Msg::Info("- Face %i/%li: compute cross field conformal scaling ...", gf->tag(), faces.size());
-      int scs = computeCrossFieldConformalScaling(triangles, triEdgeTheta, conformalScaling);
+      int scs = computeCrossFieldConformalScaling(N, triangles, triEdgeTheta, conformalScaling);
       if (scs != 0) {
         Msg::Warning("- Face %i: failed to compute conformal scaling, use uniform size", gf->tag());
       }
 
       std::vector<std::array<double,9> > triangleDirections;
-      int sc = convertToPerTriangleCrossFieldDirections(triangles, triEdgeTheta, triangleDirections);
+      int sc = convertToPerTriangleCrossFieldDirections(N, triangles, triEdgeTheta, triangleDirections);
       if (sc != 0) {
         Msg::Warning("- Face %i: failed to resample cross field at triangle corners", gf->tag());
       }

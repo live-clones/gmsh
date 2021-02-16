@@ -280,6 +280,7 @@ namespace QMT {
 
   /* two unknowns (x_2i, x_2i+1) for each edge */
   bool stiffness_coefficient(
+      int N,
       const std::vector<std::array<double,3> >& points,
       const std::vector<std::array<id,3> >& triangles,
       id e, 
@@ -370,13 +371,14 @@ namespace QMT {
     id y_i = 2*e+1;
     iv.push_back({x_i,1.});
     iv.push_back({y_i,1.});
+    double Nd = double(N);
     for (size_t j = 0; j < 4; ++j) {
       id x_j = 2*bvars[j];
       id y_j = 2*bvars[j]+1;
-      ijv.push_back({{x_i,x_j},CR_weight[j]    *cos(4.*alpha[j])});
-      ijv.push_back({{x_i,y_j},CR_weight[j]*-1.*sin(4.*alpha[j])});
-      ijv.push_back({{y_i,x_j},CR_weight[j]    *sin(4.*alpha[j])});
-      ijv.push_back({{y_i,y_j},CR_weight[j]    *cos(4.*alpha[j])});
+      ijv.push_back({{x_i,x_j},CR_weight[j]    *cos(Nd*alpha[j])});
+      ijv.push_back({{x_i,y_j},CR_weight[j]*-1.*sin(Nd*alpha[j])});
+      ijv.push_back({{y_i,x_j},CR_weight[j]    *sin(Nd*alpha[j])});
+      ijv.push_back({{y_i,y_j},CR_weight[j]    *cos(Nd*alpha[j])});
     }
 
     return true;
@@ -431,6 +433,7 @@ namespace QMT {
 
 
   bool expand_dirichlet_boundary_conditions(
+      int N,
       const std::vector<std::array<double,3> >& points,
       const std::vector<std::array<id,3> >& triangles,
       const vector<id2>& uIEdges,
@@ -476,7 +479,7 @@ namespace QMT {
       id e = new_edges[k];
       vector<IV> iv;
       vector<IJV> ijv;
-      bool oks = stiffness_coefficient(points, triangles, e, uIEdges, old2IEdge, uIEdgeToOld, iv, ijv);
+      bool oks = stiffness_coefficient(N, points, triangles, e, uIEdges, old2IEdge, uIEdgeToOld, iv, ijv);
       if (!oks || iv.size() != 2 || iv[0].i != 2*e || iv[1].i != 2*e+1) {
         Msg::Error("failed to get stiffness coefficients for edge e = %li", e);
         return false;
@@ -530,6 +533,7 @@ namespace QMT {
   }
 
   bool compute_cross_field_with_multilevel_diffusion(
+      int N,
       const std::vector<std::array<double,3> >& points,
       const std::vector<std::array<id,2> >& lines,
       const std::vector<std::array<id,3> >& triangles,
@@ -538,6 +542,7 @@ namespace QMT {
       double thresholdNormConvergence,
       int nbBoundaryExtensionLayer,
       int verbosity) {
+    if (N != 4 && N != 6) return false;
 
     /* Build unique edges and association with adjacent triangles,
      * including the non-manifold cases */
@@ -562,7 +567,7 @@ namespace QMT {
       return false;
     }
 
-    /* System unknowns: cos(4t),sin(4t) for each edge */
+    /* System unknowns: cos(Nt),sin(Nt) for each edge */
     vector<double> x(2*uIEdges.size(),0.);
 
     /* Initial Dirichlet boundary conditions 
@@ -591,7 +596,7 @@ namespace QMT {
       Msg::Info("- boundary conditions: %li crosses fixed on edges", nbc);
 
     if (nbBoundaryExtensionLayer > 0) {
-      bool oke = expand_dirichlet_boundary_conditions(points, triangles, uIEdges, old2IEdge, uIEdgeToOld, nbBoundaryExtensionLayer, dirichletEdge, dirichletValue, verbosity);
+      bool oke = expand_dirichlet_boundary_conditions(N, points, triangles, uIEdges, old2IEdge, uIEdgeToOld, nbBoundaryExtensionLayer, dirichletEdge, dirichletValue, verbosity);
       if (!oke) {
         Msg::Warning("failed to expand dirichlet boundary conditions");
       }
@@ -612,7 +617,7 @@ namespace QMT {
       if (!dirichletEdge[e]) {
         vector<IV> iv;
         vector<IJV> ijv;
-        bool oks = stiffness_coefficient(points, triangles, e, uIEdges, old2IEdge, uIEdgeToOld, iv, ijv);
+        bool oks = stiffness_coefficient(N, points, triangles, e, uIEdges, old2IEdge, uIEdgeToOld, iv, ijv);
         if (!oks) {
           Msg::Error("failed to compute stiffness matrix coefficients for e = %li", e);
           return false;
@@ -805,7 +810,7 @@ namespace QMT {
         for (size_t le = 0; le < 3; ++le) {
           id e = old2IEdge[3*t+le];
           double len = std::sqrt(x[2*e]*x[2*e]+x[2*e+1]*x[2*e+1]);
-          double theta = (len > EPS) ? 1./4*atan2(x[2*e+1]/len,x[2*e]/len) : 0.;
+          double theta = (len > EPS) ? 1./double(N)*atan2(x[2*e+1]/len,x[2*e]/len) : 0.;
           triEdgeTheta[t][le] = theta;
         }
       }
@@ -934,6 +939,7 @@ namespace QMT {
 
 
 int computeCrossFieldWithHeatEquation(
+    int N,
     const std::vector<MTriangle*>& triangles, 
     const std::vector<MLine*>& lines, 
     std::vector<std::array<double,3> >& triEdgeTheta, 
@@ -993,14 +999,16 @@ int computeCrossFieldWithHeatEquation(
   }
 
 
-  bool ok = QMT::compute_cross_field_with_multilevel_diffusion(
+  bool ok = QMT::compute_cross_field_with_multilevel_diffusion(N,
       dpoints, dlines, dtriangles, triEdgeTheta,
       nbDiffusionLevels, thresholdNormConvergence,nbBoundaryExtensionLayer,
       verbosity);
   return ok ? 0 : -1;
 }
 
-inline double compat_orientation_extrinsic(const SVector3 &o0,
+inline double compat_orientation_extrinsic(
+    int Ns,
+    const SVector3 &o0,
     const SVector3 &n0,
     const SVector3 &o1,
     const SVector3 &n1,
@@ -1008,38 +1016,45 @@ inline double compat_orientation_extrinsic(const SVector3 &o0,
 {
   SVector3 t0 = crossprod(n0, o0);
   SVector3 t1 = crossprod(n1, o1);
-
-  const size_t permuts[8][2] = {{0, 0}, {1, 0}, {2, 0}, {3, 0},
-    {0, 1}, {1, 1}, {2, 1}, {3, 1}};
-  SVector3 A[4]{o0, t0, -o0, -t0};
-  SVector3 B[2]{o1, t1};
-
+  t0.normalize();
+  t1.normalize();
+  std::vector<SVector3> A(Ns);
+  std::vector<SVector3> B(Ns);
+  for (int i = 0; i < Ns; ++i) {
+    double agl = double(i)/double(Ns) * 2. * M_PI;
+    A[i] = o0 * cos(agl) + t0 * sin(agl);
+    B[i] = o1 * cos(agl) + t1 * sin(agl);
+  }
   double maxx = -1;
-  int index = 0;
-  for(size_t i = 0; i < 8; i++) {
-    const double xx = dot(A[permuts[i][0]], B[permuts[i][1]]);
-    if(xx > maxx) {
-      index = i;
-      maxx = xx;
+  size_t is = 0;
+  size_t js = 0;
+  for (int i = 0; i < Ns; ++i) {
+    for (int j = 0; j < Ns; ++j) {
+      const double xx = dot(A[i], B[j]);
+      if(xx > maxx) {
+        is = i;
+        js = j;
+        maxx = xx;
+      }
     }
   }
-  a1 = A[permuts[index][0]];
-  b1 = B[permuts[index][1]];
+  a1 = A[is];
+  b1 = B[js];
   return maxx;
 }
 
-inline void cross_normalize(double &a)
+inline void cross_normalize(int Ns, double &a)
 {
-  double D = M_PI * .5;
+  double D = 2. * M_PI / double(Ns);
   if(a < 0)
     while(a < 0) a += D;
   if(a >= D)
     while(a >= D) a -= D;
 }
 
-inline double cross_lifting(double _a, double a)
+inline double cross_lifting(int Ns, double _a, double a)
 {
-  double D = M_PI * .5;
+  double D = 2. * M_PI / double(Ns);
   if(fabs(_a - a) < fabs(_a - (a + D)) && fabs(_a - a) < fabs(_a - (a - D))) {
     return a;
   }
@@ -1055,6 +1070,7 @@ inline double cross_lifting(double _a, double a)
 
 
 int computeCrossFieldConformalScaling(
+    int Ns,
     const std::vector<MTriangle*>& triangles, 
     const std::vector<std::array<double,3> >& triEdgeTheta, 
     std::unordered_map<MVertex*,double>& scaling)
@@ -1146,8 +1162,8 @@ int computeCrossFieldConformalScaling(
     }
 
     SVector3 x0, x1, x2, x3;
-    compat_orientation_extrinsic(o_i, normal_to_triangle, o_1, normal_to_triangle, x0, x1);
-    compat_orientation_extrinsic(o_i, normal_to_triangle, o_2, normal_to_triangle, x2, x3);
+    compat_orientation_extrinsic(Ns, o_i, normal_to_triangle, o_1, normal_to_triangle, x0, x1);
+    compat_orientation_extrinsic(Ns, o_i, normal_to_triangle, o_2, normal_to_triangle, x2, x3);
 
     double a0 = atan2(dot(t_i, o_i), dot(tgt0, o_i));
 
@@ -1160,13 +1176,13 @@ int computeCrossFieldConformalScaling(
     x3 -= normal_to_triangle * dot(normal_to_triangle, x3);
     x3.normalize();
 
-    cross_normalize(a0);
+    cross_normalize(Ns,a0);
     double A1 = atan2(dot(t_i, x1), dot(tgt0, x1));
     double A2 = atan2(dot(t_i, x3), dot(tgt0, x3));
-    cross_normalize(A1);
-    double a1 = cross_lifting(a0,A1);
-    cross_normalize(A2);
-    double a2 = cross_lifting(a0,A2);
+    cross_normalize(Ns,A1);
+    double a1 = cross_lifting(Ns,a0,A1);
+    cross_normalize(Ns,A2);
+    double a2 = cross_lifting(Ns,a0,A2);
 
     double a[3] = {a0 + a2 - a1, a0 + a1 - a2, a1 + a2 - a0};
     double g[3] = {0, 0, 0};
@@ -1326,6 +1342,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
 }
 
 int convertToPerTriangleCrossFieldDirections(
+    int Ns,
     const std::vector<MTriangle*>& triangles, 
     const std::vector<std::array<double,3> >& triEdgeTheta, 
     std::vector<std::array<double,9> >& triangleDirections) {
@@ -1369,15 +1386,26 @@ int convertToPerTriangleCrossFieldDirections(
         avgCross = avgCross + cross1;
         lifted_dirs[le] = refCross;
       } else {
-        SVector3 candidates[4] = {cross1,-1.*cross1,cross2,-1.*cross2};
         SVector3 closest = {0.,0.,0.};
         double dotmax = -DBL_MAX;
-        for (size_t k = 0; k < 4; ++k) {
-          if (dot(candidates[k],refCross) > dotmax) {
-            closest = candidates[k];
-            dotmax = dot(candidates[k],refCross);
+        for (int k = 0; k < Ns; ++k) {
+          double agl = A + double(k)/double(Ns) * 2. * M_PI;
+          SVector3 candidate = tgt * cos(agl) + tgt2 * sin(agl);
+          candidate.normalize();
+          if (dot(candidate,refCross) > dotmax) {
+            closest = candidate;
+            dotmax = dot(candidate,refCross);
           }
         }
+        // SVector3 candidates[4] = {cross1,-1.*cross1,cross2,-1.*cross2};
+        // SVector3 closest = {0.,0.,0.};
+        // double dotmax = -DBL_MAX;
+        // for (size_t k = 0; k < 4; ++k) {
+        //   if (dot(candidates[k],refCross) > dotmax) {
+        //     closest = candidates[k];
+        //     dotmax = dot(candidates[k],refCross);
+        //   }
+        // }
         lifted_dirs[le] = closest;
         avgCross = avgCross + closest;
       }
@@ -1408,6 +1436,7 @@ inline double angle2PI(const SVector3& u, const SVector3& v, const SVector3& n) 
 }
 
 int detectCrossFieldSingularities(
+    int Ns,
     const std::vector<MTriangle*>& triangles, 
     const std::vector<std::array<double,3> >& triEdgeTheta, 
     bool addSingularitiesAtAcuteCorners,
@@ -1489,8 +1518,9 @@ int detectCrossFieldSingularities(
       SVector3 branchInQuadrant;
       bool found = false;
       double dpmax = -DBL_MAX; size_t kmax = (size_t) -1;
-      for (size_t k = 0; k < 4; ++k) { /* Loop over branches */
-        SVector3 branch = tgt * cos(A+k*M_PI/2) + tgt2 * sin(A+k*M_PI/2);
+      for (size_t k = 0; k < Ns; ++k) { /* Loop over branches */
+        double agl = A + double(k)/double(Ns) * 2. * M_PI;
+        SVector3 branch = tgt * cos(agl) + tgt2 * sin(agl);
         if (dot(branch,e_x) >= 0. && dot(branch,e_y) >= 0.) {
           branchInQuadrant = branch;
           found = true;
@@ -1500,11 +1530,12 @@ int detectCrossFieldSingularities(
         if (dp > dpmax) {dpmax = dp; kmax = k;}
       }
       if (!found && kmax != (size_t)-1 ) { /* if numerical errors */
-        branchInQuadrant = tgt * cos(A+kmax*M_PI/2) + tgt2 * sin(A+kmax*M_PI/2);
+        double agl = A + double(kmax)/double(Ns) * 2. * M_PI;
+        branchInQuadrant = tgt * cos(agl) + tgt2 * sin(agl);
       }
 
       double theta = acos(dot(branchInQuadrant,e_x));
-      rep_vectors[j] = {cos(4.*theta),sin(4.*theta),0.};
+      rep_vectors[j] = {cos(double(Ns)*theta),sin(double(Ns)*theta),0.};
     }
     double sum_diff = 0.;
     for (size_t j = 0; j < vPairs.size(); ++j) {

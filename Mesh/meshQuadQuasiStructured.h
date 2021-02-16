@@ -11,16 +11,18 @@ class GModel;
 /**
  * @brief 
  *
- * @param gm GModel containing the CAD and/or meshes
- * @param overwriteGModelMesh delete existing mesh, rebuild from CAD
- * @param deleteGModelMeshAfter after background mesh creation, delete the GModel mesh
+ * @param[in] gm GModel containing the CAD and/or meshes
+ * @param[in] overwriteGModelMesh delete existing mesh, rebuild from CAD
+ * @param[in] deleteGModelMeshAfter after background mesh creation, delete the GModel mesh
+ * @param[in] N the N-symmetry field invariance. N=4 for cross and N=6 for asterisk fields
  *
  * @return 0 if success
  */
 int BuildBackgroundMeshAndGuidingField(
     GModel* gm, 
     bool overwriteGModelMesh = false,
-    bool deleteGModelMeshAfter = false);
+    bool deleteGModelMeshAfter = false,
+    int N = 4);
 
 /**
  * @brief To check if a compatible background mesh and
