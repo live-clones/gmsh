@@ -495,7 +495,6 @@ GMSH_API int GmshMainBatch(int argc, char **argv)
 
   GmshBatch();
   GmshFinalize();
-
   Msg::Exit(0);
   return 1;
 }
@@ -523,7 +522,7 @@ GMSH_API int GmshMainFLTK(int argc, char **argv)
   if(CTX::instance()->batch) {
     if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
     GmshBatch();
-    // GmshFinalize();
+    GmshFinalize();
     Msg::Exit(0);
   }
 
