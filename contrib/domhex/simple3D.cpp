@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -282,7 +282,9 @@ void Filler::treat_model()
 
   for(it = model->firstRegion(); it != model->lastRegion(); it++) {
     gr = *it;
-    if(gr->getNumMeshElements() > 0) { treat_region(gr); }
+    if(gr->getNumMeshElements() > 0) {
+      treat_region(gr);
+    }
   }
 }
 
@@ -345,15 +347,21 @@ void Filler::treat_region(GRegion *gr)
   }
 
   for(it = temp.begin(); it != temp.end(); it++) {
-    if((*it)->onWhat()->dim() == 0) { boundary_vertices.push_back(*it); }
+    if((*it)->onWhat()->dim() == 0) {
+      boundary_vertices.push_back(*it);
+    }
   }
 
   for(it = temp.begin(); it != temp.end(); it++) {
-    if((*it)->onWhat()->dim() == 1) { boundary_vertices.push_back(*it); }
+    if((*it)->onWhat()->dim() == 1) {
+      boundary_vertices.push_back(*it);
+    }
   }
 
   for(it = temp.begin(); it != temp.end(); it++) {
-    if((*it)->onWhat()->dim() == 2) { boundary_vertices.push_back(*it); }
+    if((*it)->onWhat()->dim() == 2) {
+      boundary_vertices.push_back(*it);
+    }
   }
 
   std::queue<Node *> fifo;
@@ -386,7 +394,9 @@ void Filler::treat_region(GRegion *gr)
     }
 
     std::vector<Node *> spawns(6);
-    for(int i = 0; i < 6; i++) { spawns[i] = new Node(); }
+    for(int i = 0; i < 6; i++) {
+      spawns[i] = new Node();
+    }
 
     create_spawns(gr, octree, parent, spawns);
 
@@ -423,7 +433,9 @@ void Filler::treat_region(GRegion *gr)
       if(!ok2) delete individual;
     }
 
-    if(count % 100 == 0) { printf("%d\n", count); }
+    if(count % 100 == 0) {
+      printf("%d\n", count);
+    }
     count++;
   }
 
@@ -489,7 +501,9 @@ Metric Filler::get_metric(double x, double y, double z, GEntity *ge)
   manager = ge->model()->getFields();
   if(manager->getBackgroundField() > 0) {
     field = manager->get(manager->getBackgroundField());
-    if(field) { (*field)(x, y, z, temp, ge); }
+    if(field) {
+      (*field)(x, y, z, temp, ge);
+    }
   }
 
   m.set_m11(v1.x());
@@ -522,7 +536,9 @@ double Filler::get_size(double x, double y, double z, GEntity *ge)
   manager = ge->model()->getFields();
   if(manager->getBackgroundField() > 0) {
     field = manager->get(manager->getBackgroundField());
-    if(field) { h = (*field)(x, y, z, ge); }
+    if(field) {
+      h = (*field)(x, y, z, ge);
+    }
   }
 
   return h;
@@ -532,7 +548,7 @@ bool Filler::inside_domain(MElementOctree *octree, double x, double y, double z)
 {
   MElement *element;
   element = (MElement *)octree->find(x, y, z, 3, true);
-  if(element != nullptr)
+  if(element != NULL)
     return 1;
   else
     return 0;
@@ -558,8 +574,8 @@ bool Filler::far_from_boundary(MElementOctree *octree, Node *node)
   e5 = (MElement *)octree->find(x, y, z + k2 * h, 3, true);
   e6 = (MElement *)octree->find(x, y, z - k2 * h, 3, true);
 
-  if(e1 != nullptr && e2 != nullptr && e3 != nullptr && e4 != nullptr &&
-     e5 != nullptr && e6 != nullptr)
+  if(e1 != NULL && e2 != NULL && e3 != NULL && e4 != NULL && e5 != NULL &&
+     e6 != NULL)
     return 1;
   else
     return 0;
@@ -668,14 +684,18 @@ double Filler::improvement(GEntity *ge, MElementOctree *octree,
   y = point.y() + h1 * direction.y();
   z = point.z() + h1 * direction.z();
 
-  if(inside_domain(octree, x, y, z)) { h2 = get_size(x, y, z); }
+  if(inside_domain(octree, x, y, z)) {
+    h2 = get_size(x, y, z);
+  }
   else
     h2 = h1;
 
   coeffA = 1.0;
   coeffB = 0.16;
 
-  if(h2 > h1) { average = coeffA * h1 + (1.0 - coeffA) * h2; }
+  if(h2 > h1) {
+    average = coeffA * h1 + (1.0 - coeffA) * h2;
+  }
   else {
     average = coeffB * h1 + (1.0 - coeffB) * h2;
   }
