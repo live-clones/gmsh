@@ -25,6 +25,7 @@
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
 #include "fullMatrix.h"
+#include "gmsh.h" // for debug
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertion.h"
@@ -1675,6 +1676,11 @@ void bowyerWatsonParallelograms(
 
   transferDataStructure(gf, AllTris, DATA);
   backgroundMesh::unset();
+
+
+  Msg::Debug("bowyerWatsonParallelograms: %li candidate points -> %li inserted vertices",
+      packed.size(), gf->mesh_vertices.size());
+
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 }

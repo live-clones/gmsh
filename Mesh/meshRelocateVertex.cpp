@@ -410,6 +410,7 @@ void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs);
 void RelocateVertices(GFace *gf, int niter, double tol)
 {
   if(!niter) return;
+  Msg::Debug("relocate vertices (face %i)", gf->tag());
 
   std::set<MVertex *> vs;
   getAllBoundaryLayerVertices(gf, vs);

@@ -1735,6 +1735,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       bowyerWatson(gf, 15000);
       meshGFaceBamg(gf);
     }
+
     if(!infty ||
        !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
       laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
@@ -1765,7 +1766,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
      !onlyInitialMesh && CTX::instance()->mesh.algoRecombine <= 1) {
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-    recombineIntoQuads(gf, blossom, topo, true, 0.1);
+    bool nodeRepositioning = false;
+    recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
   }
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
@@ -2811,7 +2813,12 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
      CTX::instance()->mesh.algoRecombine <= 1) {
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-    recombineIntoQuads(gf, blossom, topo, false, 0.1); // no node repositioning
+    bool nodeRepositioning = true;
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
+        CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+      nodeRepositioning = false;
+    }
+    recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
   }
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,

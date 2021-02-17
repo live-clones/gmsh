@@ -54,3 +54,11 @@ int sizeMapOneWaySmoothing(
     std::unordered_map<MVertex*,double>& values,
     double gradientMax = 1.2);
 
+
+/**
+ * @brief Remove extremities in the histogram
+ *
+ * @param scaling the values on which to apply the filtering
+ * @param critera keep values which are in [critera,1-critera] in the histogram
+ */
+void quantileFiltering(std::unordered_map<MVertex*,double>& scaling, double critera);

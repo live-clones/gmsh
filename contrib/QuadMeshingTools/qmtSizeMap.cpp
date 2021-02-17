@@ -201,3 +201,24 @@ int sizeMapOneWaySmoothing(
 
   return 0;
 }
+
+void quantileFiltering(std::unordered_map<MVertex*,double>& scaling, double critera) {
+  std::vector<double> values(scaling.size());
+  size_t count = 0;
+  for (auto& kv: scaling) {
+    values[count] = kv.second;
+    count += 1;
+  }
+  std::sort(values.begin(),values.end());
+  size_t n = values.size();
+  double clamp_min = values[size_t(critera*double(n))];
+  double clamp_max = values[size_t((1.-critera)*double(n))];
+  for (auto& kv: scaling) {
+    if (kv.second < clamp_min) {
+      kv.second = clamp_min;
+    } else if (kv.second > clamp_max) {
+      kv.second = clamp_max;
+    }
+  }
+}
+

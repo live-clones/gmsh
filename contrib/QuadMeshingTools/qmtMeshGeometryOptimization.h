@@ -62,7 +62,8 @@ struct GeomOptimOptions {
   double smartMinThreshold = -DBL_MAX; /* do not displace if inducing min(SICN) < smartMinThreshold */
   bool qualityRangeTechnique = false;
   bool localLocking = false; /* Lock if small displacement, unlocked neighbors else */
-  double dxLocalMax = 1.e-5; /* If not smart and localLocking, lock a vertex if moved less than dxLocalMax*local_size */
+  double dxLocalMax = 1.e-5; /* lock a vertex if dx < dxLocalMax * local_size */
+  double dxGlobalMax = 1.e-5; /* stop if sum(dx) < dxGlobalMax * sum(dx_0) */
   double qualityRangeMin = 0.5;
   double qualityRangeMax = 0.8;
   bool withBackup = true; /* save the geometry before, restore if quality decreased */
@@ -108,3 +109,14 @@ void computeSICN(const std::vector<MElement*>& elements, double& sicnMin, double
  */
 bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp = nullptr);
 
+/**
+ * @brief High-level function which try to make good parameter choices
+ *        automatically.
+ *
+ * @param gf The face containing the quad mesh to smooth
+ * @param sp Surface projector (faster than CAD projection)
+ * @param timeMax Time budget for the smoothing
+ *
+ * @return true if success
+ */
+bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX);

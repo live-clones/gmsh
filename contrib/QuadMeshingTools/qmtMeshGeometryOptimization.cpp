@@ -186,10 +186,19 @@ namespace QMT {
       const std::vector<vec3>& points,
       const std::vector<size_t>& one_ring_first,
       const std::vector<uint32_t>& one_ring_values,
-      std::vector<vec3>& stencil) {
-    stencil.resize(one_ring_first[v+1]-one_ring_first[v]);
-    for (size_t i = 0; i < stencil.size(); ++i) {
-      stencil[i] = points[one_ring_values[one_ring_first[v]+i]];
+      std::vector<vec3>& stencil,
+      bool oneOverTwo = false) {
+    if (oneOverTwo) {
+      size_t n = (one_ring_first[v+1]-one_ring_first[v])/2;
+      stencil.resize(n);
+      for (size_t i = 0; i < stencil.size(); ++i) {
+        stencil[i] = points[one_ring_values[one_ring_first[v]+2*i]];
+      }
+    } else {
+      stencil.resize(one_ring_first[v+1]-one_ring_first[v]);
+      for (size_t i = 0; i < stencil.size(); ++i) {
+        stencil[i] = points[one_ring_values[one_ring_first[v]+i]];
+      }
     }
   }
 
@@ -1205,10 +1214,11 @@ bool movePointWithKernelAndProjection(
       newUv = {proj.u(),proj.v()};
     }
   } else { /* irregular vertex */
-    std::vector<vec3> stencilIrreg(12);
+    std::vector<vec3> stencilIrreg(8);
 
     /* Extract geometric stencil */
-    fillStencilIrregular(v, points, one_ring_first, one_ring_values, stencilIrreg);
+    constexpr bool oneOverTwo = true; /* angle-based does not use diagonals */
+    fillStencilIrregular(v, points, one_ring_first, one_ring_values, stencilIrreg, oneOverTwo);
 
     /* Smoothing (in 3D, not on surface) */
     bool ok = kernelAngleBased(points[v], stencilIrreg, newPos);
@@ -1278,6 +1288,7 @@ bool kernelLoopWithProjection(
   std::vector<bool> locked(patch.intVertices.size(),false);
 
   /* Explicit smoothing loop */
+  double t0 = Cpu();
   double sum_dx0 = 0;
   std::vector<vec3> stencilIrreg(10);
   for (size_t iter = 0; iter < opt.outerLoopIterMax; ++iter) {
@@ -1312,9 +1323,11 @@ bool kernelLoopWithProjection(
     if (iter == 0) {
       sum_dx0 = sum_dx;
     } else {
-      // TODO: can check global dx reduction here
+      if (sum_dx < opt.dxGlobalMax * sum_dx0) break;
       if (nMoved == 0) break;
     }
+
+    if (Cpu() - t0 > opt.timeMax) break;
   }
 
   /* Update the positions */
@@ -1466,5 +1479,93 @@ bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp) {
       return false;
     }
   }
+  return true;
+}
+
+bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
+{
+  if (!gf->haveParametrization() && sp == nullptr) {
+    Msg::Error("optimize geometry: face %i, no CAD and no surface projector", gf->tag());
+    return false;
+  }
+
+  if (gf->quadrangles.size() == 0) {
+    Msg::Error("optimize geometry: face %i, no quads", gf->tag());
+    return false;
+  }
+
+  GFaceMeshPatch patch;
+  bool okp = patchFromQuads(gf, gf->quadrangles, patch);
+  if (!okp) {
+    Msg::Warning("optimize geometry: face %i, failed to build patch", gf->tag());
+    return false;
+  }
+
+  int countMax = 3;
+  bool running = true;
+  size_t niter = 50;
+  int count = 0;
+  if (gf->geomType() == GEntity::Plane) {
+    /* Much faster projection, we can smooth */
+    niter = 100;
+  }
+
+  double t0 = Cpu();
+
+  while (running && count < countMax) {
+    running = false;
+    count += 1;
+    if (Cpu() - t0 > timeMax) {
+      Msg::Debug("optimize geometry: face %i, reached time limit", gf->tag());
+      break;
+    }
+
+    PatchGeometryBackup backup(patch);
+
+    double minSICNb = DBL_MAX;
+    double avgSICNb = 0.;
+    computeSICN(patch.elements, minSICNb, avgSICNb);
+
+    GeomOptimStats stats;
+    GeomOptimOptions opt;
+    opt.sp = sp;
+    opt.outerLoopIterMax = niter;
+    opt.timeMax = timeMax;
+    opt.localLocking = true;
+    opt.dxGlobalMax = 1.e-3;
+    opt.dxLocalMax = 1.e-5;
+    opt.force3DwithProjection = true;
+    opt.withBackup = false;
+    double t1 = Cpu();
+    bool okk = kernelLoopWithProjection(patch, opt, stats);
+    if (!okk) {
+      return false;
+    }
+    double etime = Cpu() - t1;
+
+    double minSICNa = DBL_MAX;
+    double avgSICNa = 0.;
+    computeSICN(patch.elements, minSICNa, avgSICNa);
+
+    bool keep = true;
+    if (minSICNa < minSICNb && avgSICNa < avgSICNb) keep = false;
+    if (minSICNa < 0.1 && minSICNa < minSICNb) keep = false;
+    if (minSICNa < 0.75 * minSICNb) keep = false;
+
+    if (keep) {
+      Msg::Debug("- Face %i: kernel smoothing (Mix Winslow/Angle, explicit with projections, %li vertices, %li iter max, %.3f sec), SICN min: %f -> %f, avg: %f -> %f",
+          gf->tag(),gf->mesh_vertices.size(), niter,etime,minSICNb,minSICNa,avgSICNb,avgSICNa);
+      if (minSICNa >= minSICNb && 0.99*avgSICNa > avgSICNb && etime < 1) {
+        niter *= 1.5;
+        running = true;
+      }
+    } else {
+      Msg::Debug("- Face %i: worst quality after global smoothing (Mix Winslow/Angle, explicit, %li iter max), roll back (SICN min: %f -> %f, avg: %f -> %f)",
+          gf->tag(),niter,minSICNb,minSICNa,avgSICNb,avgSICNa);
+      backup.restore();
+      break;
+    }
+  }
+
   return true;
 }

@@ -266,6 +266,17 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
   Msg::Info("Build background mesh and guiding field ...");
 
+  {
+    FieldManager *fields = gm->getFields();
+    if(fields->getBackgroundField() > 0) {        
+      Field* guiding_field = fields->get(fields->getBackgroundField());
+      if(guiding_field && guiding_field->numComponents() == 3) {
+        Msg::Info("background field exists, using it");
+        return 0;
+      }
+    }
+  }
+
   /* Todo:
    * - check if background mesh exists
    * - check if background guiding field exists */
@@ -449,6 +460,10 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
         Msg::Warning("- Face %i: failed to compute conformal scaling, use uniform size", gf->tag());
       }
 
+      /* Quantile filtering on the conformal scaling histogram */
+      double filteringRange = 0.05;
+      quantileFiltering(conformalScaling, filteringRange);
+
       std::vector<std::array<double,9> > triangleDirections;
       int sc = convertToPerTriangleCrossFieldDirections(N, triangles, triEdgeTheta, triangleDirections);
       if (sc != 0) {
@@ -471,7 +486,6 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
         targetNumberOfQuads /= 4;
       }
 
-      DBG(gf->tag(),targetNumberOfQuads);
       int scso = computeQuadSizeMapFromCrossFieldConformalFactor(triangles, targetNumberOfQuads, conformalScaling);
       if (scso != 0) {
         Msg::Warning("- Face %i: failed to compute size map from conformal scaling", gf->tag());
@@ -502,12 +516,12 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
 
   /* Global operations */
-  Msg::Warning("TODO: enable minimal size on curves again");
+  // Msg::Warning("TODO: enable minimal size on curves again");
   std::unordered_map<MVertex*,double> cadMinimalSizeOnCurves;
-  // int scad = computeMinimalSizeOnCurves(bmesh, cadMinimalSizeOnCurves);
-  // if (scad != 0) {
-  //   Msg::Warning("failed to compute minimal size on CAD curves");
-  // }
+  int scad = computeMinimalSizeOnCurves(bmesh, cadMinimalSizeOnCurves);
+  if (scad != 0) {
+    Msg::Warning("failed to compute minimal size on CAD curves");
+  }
 
   /* Initialize global size map defined on the background mesh */
   std::unordered_map<MVertex*,double> sizeMap = cadMinimalSizeOnCurves;
@@ -522,12 +536,12 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
   }
 
   /* One-way propagation of values */
-  Msg::Warning("TODO: enable one way prop");
-  // const double gradientMax = 1.2; /* this param should be a global gmsh option */
-  // int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
-  // if (sop != 0) {
-  //   Msg::Warning("failed to compute one-way size map smoothing");
-  // }
+  // Msg::Warning("TODO: enable one way prop");
+  const double gradientMax = 1.2; /* this param should be a global gmsh option */
+  int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
+  if (sop != 0) {
+    Msg::Warning("failed to compute one-way size map smoothing");
+  }
 
   if (SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement*> elements = dynamic_cast_vector<MTriangle*,MElement*>(global_triangles);
@@ -1336,9 +1350,14 @@ int improveInteriorValences(
 }
 
 int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
-  GeoLog::flush();
-  gmsh::fltk::run();
-  abort();
+  const bool SHOW_QUADTRI = false;
+  if (SHOW_QUADTRI) {
+    gmsh::initialize();
+    GeoLog::flush();
+    gmsh::fltk::run();
+    abort();
+  }
+
 
   Msg::Debug("Refine mesh with background projection ...");
   if (!backgroudMeshExists(BMESH_NAME)) {
@@ -1362,6 +1381,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     if (CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
     if (ge->lines.size() == 0 || ge->mesh_vertices.size() == 0) continue;
 
+    Msg::Debug("- Curve %i: project midpoints on curve", ge->tag());
     unordered_map<MVertex*,MVertex*> old2new_ge;
     double tPrev = 0;
     for (size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
@@ -1428,6 +1448,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     }
 
     /* Project the vertices which have been introduced by the RefineMesh */
+    Msg::Debug("- Face %i: project midpoints on surface", gf->tag());
     bool evalOnCAD = gf->haveParametrization();
     bool projOnCad = false;
     if (evalOnCAD && !haveNiceParametrization(gf)) {
@@ -1468,6 +1489,18 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
         }
       }
     }
+
+    /* Smooth geometry (quick) */
+    double timeMax = 0.3;
+    optimizeGeometryQuadMesh(gf, &sp, timeMax);
+  }
+
+  const bool SHOW_QUADINIT = true;
+  if (SHOW_QUADINIT) {
+    gmsh::initialize();
+    GeoLog::flush();
+    gmsh::fltk::run();
+    abort();
   }
 
   return 0;

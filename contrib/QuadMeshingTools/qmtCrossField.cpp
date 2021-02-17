@@ -1332,6 +1332,8 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
 
   double csMin =  DBL_MAX;
   double csMax = -DBL_MAX;
+  double Hmin  =  DBL_MAX;
+  double Hmax  = -DBL_MAX;
   for (MTriangle* t: triangles) {
     for (size_t lv = 0; lv < 3; ++lv) {
       MVertex* v = t->getVertex(lv);
@@ -1344,6 +1346,9 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
       if (gv != nullptr) continue; /* Remove corner values from range */
       csMin = std::min(csMin, it->second);
       csMax = std::max(csMax, it->second);
+      // double H = -log(it->second);
+      // Hmin = std::min(H,Hmin);
+      // Hmax = std::min(H,Hmax);
     }
   }
   if (csMin == DBL_MAX || csMax == -DBL_MAX) {

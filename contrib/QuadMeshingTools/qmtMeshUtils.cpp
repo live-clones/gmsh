@@ -171,6 +171,8 @@ bool buildBoundaries(const std::vector<MElement*>& elements, std::vector<std::ve
     else veds.push_back(eds[i]);
   }
 
+  if (veds.size() == 0) return true; /* No boundary, e.g. sphere */
+
   std::vector<std::vector<MVertex *> > vsorted;
   bool oks = SortEdgeConsecutive(veds, vsorted);
   if (!oks || vsorted.empty()) {
