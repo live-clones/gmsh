@@ -66,6 +66,7 @@ struct GeomOptimOptions {
   double qualityRangeMin = 0.5;
   double qualityRangeMax = 0.8;
   bool withBackup = true; /* save the geometry before, restore if quality decreased */
+  bool force3DwithProjection = false;
 };
 
 /**

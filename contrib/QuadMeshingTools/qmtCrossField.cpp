@@ -1006,46 +1006,107 @@ int computeCrossFieldWithHeatEquation(
   return ok ? 0 : -1;
 }
 
-inline double compat_orientation_extrinsic(
-    int Ns,
+// inline double compat_orientation_extrinsic(
+//     int Ns,
+//     const SVector3 &o0,
+//     const SVector3 &n0,
+//     const SVector3 &o1,
+//     const SVector3 &n1,
+//     SVector3 &a1, SVector3 &b1)
+// {
+//   SVector3 t0 = crossprod(n0, o0);
+//   SVector3 t1 = crossprod(n1, o1);
+//   t0.normalize();
+//   t1.normalize();
+//   std::vector<SVector3> A(Ns);
+//   std::vector<SVector3> B(Ns);
+//   for (int i = 0; i < Ns; ++i) {
+//     double agl = double(i)/double(Ns) * 2. * M_PI;
+//     A[i] = o0 * cos(agl) + t0 * sin(agl);
+//     B[i] = o1 * cos(agl) + t1 * sin(agl);
+//   }
+//   double maxx = -1;
+//   size_t is = 0;
+//   size_t js = 0;
+//   for (int i = 0; i < Ns; ++i) {
+//     for (int j = 0; j < Ns; ++j) {
+//       const double xx = dot(A[i], B[j]);
+//       if(xx > maxx) {
+//         is = i;
+//         js = j;
+//         maxx = xx;
+//       }
+//     }
+//   }
+//   a1 = A[is];
+//   b1 = B[js];
+//   return maxx;
+// }
+//
+// inline void cross_normalize(int Ns, double &a)
+// {
+//   double D = 2. * M_PI / double(Ns);
+//   if(a < 0)
+//     while(a < 0) a += D;
+//   if(a >= D)
+//     while(a >= D) a -= D;
+// }
+// 
+// inline double cross_lifting(int Ns, double _a, double a)
+// {
+//   double D = 2. * M_PI / double(Ns);
+//   if(fabs(_a - a) < fabs(_a - (a + D)) && fabs(_a - a) < fabs(_a - (a - D))) {
+//     return a;
+//   }
+//   else if(fabs(_a - (a + D)) < fabs(_a - a) &&
+//       fabs(_a - (a + D)) < fabs(_a - (a - D))) {
+//     return a + D;
+//   }
+//   else {
+//     return a - D;
+//   }
+//   return DBL_MAX;
+// }
+
+
+inline double compat_orientation_extrinsic(int Ns, 
     const SVector3 &o0,
     const SVector3 &n0,
     const SVector3 &o1,
     const SVector3 &n1,
     SVector3 &a1, SVector3 &b1)
 {
+  if (Ns != 4) return DBL_MAX;
+
   SVector3 t0 = crossprod(n0, o0);
   SVector3 t1 = crossprod(n1, o1);
-  t0.normalize();
-  t1.normalize();
-  std::vector<SVector3> A(Ns);
-  std::vector<SVector3> B(Ns);
-  for (int i = 0; i < Ns; ++i) {
-    double agl = double(i)/double(Ns) * 2. * M_PI;
-    A[i] = o0 * cos(agl) + t0 * sin(agl);
-    B[i] = o1 * cos(agl) + t1 * sin(agl);
-  }
+
+  const size_t permuts[8][2] = {{0, 0}, {1, 0}, {2, 0}, {3, 0},
+    {0, 1}, {1, 1}, {2, 1}, {3, 1}};
+  SVector3 A[4]{o0, t0, -o0, -t0};
+  SVector3 B[2]{o1, t1};
+
   double maxx = -1;
-  size_t is = 0;
-  size_t js = 0;
-  for (int i = 0; i < Ns; ++i) {
-    for (int j = 0; j < Ns; ++j) {
-      const double xx = dot(A[i], B[j]);
-      if(xx > maxx) {
-        is = i;
-        js = j;
-        maxx = xx;
-      }
+  int index = 0;
+  for(size_t i = 0; i < 8; i++) {
+    const double xx = dot(A[permuts[i][0]], B[permuts[i][1]]);
+    if(xx > maxx) {
+      index = i;
+      maxx = xx;
     }
   }
-  a1 = A[is];
-  b1 = B[js];
+  a1 = A[permuts[index][0]];
+  b1 = B[permuts[index][1]];
   return maxx;
 }
 
 inline void cross_normalize(int Ns, double &a)
 {
-  double D = 2. * M_PI / double(Ns);
+  if (Ns != 4) {
+    a = DBL_MAX;
+    return ;
+  }
+  double D = M_PI * .5;
   if(a < 0)
     while(a < 0) a += D;
   if(a >= D)
@@ -1054,7 +1115,8 @@ inline void cross_normalize(int Ns, double &a)
 
 inline double cross_lifting(int Ns, double _a, double a)
 {
-  double D = 2. * M_PI / double(Ns);
+  if (Ns != 4) return DBL_MAX;
+  double D = M_PI * .5;
   if(fabs(_a - a) < fabs(_a - (a + D)) && fabs(_a - a) < fabs(_a - (a - D))) {
     return a;
   }
@@ -1076,7 +1138,7 @@ int computeCrossFieldConformalScaling(
     std::unordered_map<MVertex*,double>& scaling)
 {
 #if defined(HAVE_SOLVER)
-  Msg::Debug("compute cross field scaling ...");
+  Msg::Debug("compute cross field scaling (N=%i, %li triangles) ...", Ns, triangles.size());
   if (triangles.size() != triEdgeTheta.size()) {
     Msg::Error("conformal scaling: incoherent number of elements in inputs");
     return -1;
@@ -1236,11 +1298,17 @@ int computeCrossFieldConformalScaling(
     Msg::Error("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f), wrong", 
         myAssembler->sizeOfR(), triangles.size(), sMin, sMax);
   } else {
-    Msg::Debug("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f)", 
-        myAssembler->sizeOfR(), triangles.size(), sMin, sMax);
+    Msg::Debug("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f, width=%.3f)", 
+        myAssembler->sizeOfR(), triangles.size(), sMin, sMax, sMax - sMin);
   }
 
   delete _lsys;
+
+  {
+    std::vector<MElement*> elts = dynamic_cast_vector<MTriangle*,MElement*>(triangles);
+    GeoLog::add(elts, scaling, "h=exp(-H)");
+    GeoLog::flush();
+  }
 
 #else 
   Msg::Error("Computing cross field scaling requires the SOLVER module");
@@ -1273,10 +1341,9 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
         return -1;
       }
       GVertex* gv = v->onWhat()->cast2Vertex();
-      if (gv == nullptr) {
-        csMin = std::min(csMin, it->second);
-        csMax = std::max(csMax, it->second);
-      }
+      if (gv != nullptr) continue; /* Remove corner values from range */
+      csMin = std::min(csMin, it->second);
+      csMax = std::max(csMax, it->second);
     }
   }
   if (csMin == DBL_MAX || csMax == -DBL_MAX) {
@@ -1289,25 +1356,24 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   double smin = DBL_MAX;
   double smax = -DBL_MAX;
   std::vector<MVertex*> vertices;
-  std::unordered_set<MVertex*> done;
   vertices.reserve(3*triangles.size());
   for (MTriangle* t: triangles) {
     double values[3] = {0,0,0};
     for (size_t lv = 0; lv < 3; ++lv) {
       MVertex* v = t->getVertex(lv);
       auto it = scaling.find(v);
-      bool alreadyChanged = (done.find(v) != done.end());
-      if (alreadyChanged) {
-        values[lv] = it->second;;
-      } else {
-        double cs = it->second;
-        cs = clamp(cs, csMin, csMax);
-        values[lv] = it->second;;
-        smin = std::min(smin,values[lv]);
-        smax = std::max(smax,values[lv]);
-        vertices.push_back(v);
-        done.insert(v);
+      if (it == scaling.end()) {
+        Msg::Error("scaling value not found for v=%li",v->getNum());
+        return -1;
       }
+      /* Clamp with range without corners */
+      if (it->second < csMin || it->second > csMax) { 
+        it->second = clamp(it->second,csMin,csMax);
+      }
+      values[lv] = it->second;
+      smin = std::min(smin,values[lv]);
+      smax = std::max(smax,values[lv]);
+      vertices.push_back(v);
     }
     double a = std::abs(t->getVolume());
     double avg = 1./3. * (values[0] + values[1] + values[2]);
@@ -1316,10 +1382,12 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   }
 
   if (integral == 0.) {
-    Msg::Error("Size map from conformal scaling: total integral is 0 ... (%li triangles, smin=%.3e, smax=%.3e)", triangles.size(), smin, smax);
+    Msg::Error("Size map from conformal scaling: total integral is 0 ... (%li triangles, smin=%.3e, smax=%.3e)", 
+        triangles.size(), smin, smax);
     return -1;
   }
-  Msg::Debug("- %li triangles, conformal scaling: min=%.3e, max=%.3e, integral=%.3e", triangles.size(), smin, smax, integral);
+  Msg::Debug("- %li triangles, conformal scaling: min=%.3e, max=%.3e, #=%.3e", 
+      triangles.size(), smin, smax, integral);
   std::sort(vertices.begin(), vertices.end());
   vertices.erase(std::unique(vertices.begin(), vertices.end() ), vertices.end());
 
@@ -1336,7 +1404,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
     smin = std::min(smin,it->second);
     smax = std::max(smax,it->second);
   }
-  Msg::Debug("- %li triangles, size map: min=%.3e, max=%.3e", triangles.size(), smin, smax);
+  Msg::Debug("- %li triangles, sizemap range: [%.3e, %.3e] (factor applied: %3f)", triangles.size(), smin, smax, FAC);
 
   return 0;
 }

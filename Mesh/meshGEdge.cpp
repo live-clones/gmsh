@@ -828,6 +828,10 @@ void meshGEdge::operator()(GEdge *ge)
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
   }
+
+  Msg::Debug("Meshing curve %d (%s): %li interior vertices", ge->tag(), ge->getTypeString().c_str(),
+      ge->mesh_vertices.size());
+
   ge->meshStatistics.status = GEdge::DONE;
 }
 

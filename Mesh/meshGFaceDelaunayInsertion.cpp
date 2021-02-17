@@ -1625,6 +1625,8 @@ void bowyerWatsonParallelograms(
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
 
+  Msg::Info("%lu Nodes created --> now staring insertion",packed.size());
+
   if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)) {
     Msg::Error("Invalid meshing data structure");
     return;

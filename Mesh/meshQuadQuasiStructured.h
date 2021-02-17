@@ -9,6 +9,36 @@
 class GModel;
 
 /**
+ * @brief The QuadQuasiStructured meshing mode requires control 
+ *        over various meshing parameters which are stored in the
+ *        global context. To deal with this without adding conditions
+ *        everywhere in the other meshing parts, we use this updater
+ *        which must be created at the beginning of the meshing cycle,
+ *        and deleted at the end to restore the initial values.
+ */
+class QuadqsContextUpdater {
+  public:
+    QuadqsContextUpdater();
+    ~QuadqsContextUpdater();
+
+  protected:
+    void setQuadqsOptions();
+    void restoreInitialOption();
+
+  protected:
+    int algo2d;
+    int recombineAll;
+    int algoRecombine;
+    int recombineOptimizeTopology;
+    double lcFactor;
+    double lcMin;
+    double lcMax;
+    int lcFromPoints;
+    int minCurveNodes;
+    int minCircleNodes;
+};
+
+/**
  * @brief 
  *
  * @param[in] gm GModel containing the CAD and/or meshes
@@ -69,6 +99,15 @@ int transferSeamGEdgesVerticesToGFace(GModel* gm);
 int optimizeTopologyWithCavityRemeshing(GModel* gm);
 
 
+/**
+ * @brief Midpoint subdivision of the surface mesh with projections
+ *        on the CAD surfaces, using the background mesh for
+ *        faster projections.
+ *
+ * @param gm The model containg the surface meshes
+ *
+ * @return 0 if success
+ */
 int RefineMeshWithBackgroundMeshProjection(GModel* gm);
 
 #endif

@@ -1432,6 +1432,7 @@ void GenerateMesh(GModel *m, int ask)
 
   // Some meshing algorithms require a global background mesh 
   // and a guiding field (e.g. cross field + size map)
+  QuadqsContextUpdater* qqs = nullptr;
   if (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS
       || CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     int old = m->getMeshStatus(false);
@@ -1444,6 +1445,12 @@ void GenerateMesh(GModel *m, int ask)
       bool overwriteGModelMesh = false; /* use current mesh if available */
       bool deleteGModelMeshAfter = true; /* mesh saved in background, no longer needed */
       BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh, deleteGModelMeshAfter);
+    }
+
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+      /* note: the creation of QuadqsContextUpdater modifies many
+       *       meshing parameters */
+      qqs = new QuadqsContextUpdater();
     }
   }
 
@@ -1521,6 +1528,8 @@ void GenerateMesh(GModel *m, int ask)
             m->getNumMeshElements());
 
   Msg::PrintErrorCounter("Mesh generation error summary");
+
+  if (qqs != nullptr) delete qqs;
 
   CTX::instance()->lock = 0;
   // ProfilerStop();

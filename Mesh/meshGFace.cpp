@@ -2868,36 +2868,6 @@ static bool isMeshValid(GFace *gf)
   return false;
 }
 
-class QuadQuasiStructuredUpdater {
-  public:
-    QuadQuasiStructuredUpdater() {
-      algo2d = CTX::instance()->mesh.algo2d;
-      recombineAll = CTX::instance()->mesh.recombineAll;
-      algoRecombine = CTX::instance()->mesh.algoRecombine;
-      quadDominantWithPack();
-    };
-    ~QuadQuasiStructuredUpdater() {
-      revert();
-    }
-  private:
-    void quadDominantWithPack() {
-      CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
-      CTX::instance()->mesh.recombineAll = 1;
-      CTX::instance()->mesh.algoRecombine = 0;
-    }
-
-    void revert() {
-      CTX::instance()->mesh.algo2d = algo2d;
-      CTX::instance()->mesh.recombineAll = recombineAll;
-      CTX::instance()->mesh.algoRecombine = algoRecombine;
-    }
-  private:
-    int algo2d;
-    int recombineAll;
-    int algoRecombine;
-};
-
-
 // for debugging, change value from -1 to -100;
 int debugSurface = -1; //-100;
 
@@ -2935,13 +2905,11 @@ void meshGFace::operator()(GFace *gf, bool print)
   }
 
   /* The ALGO_2D_QUAD_QUASI_STRUCT is using ALGO_2D_PACK_PRLGRMS
-   * to generate a initial quad-dominant mesh. The updater
-   * changes gmsh global options before the 2D meshing call. */
-  QuadQuasiStructuredUpdater* qqs = NULL;
-  if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT
-      || CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS
-      ) {
-    qqs = new QuadQuasiStructuredUpdater();
+   * to generate a initial quad-dominant mesh */
+  bool quadqs = false;
+  if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    quadqs = true;
+    CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
   }
 
   const char *algo = "Unknown";
@@ -3016,7 +2984,7 @@ void meshGFace::operator()(GFace *gf, bool print)
     gf->unsetMeshingAlgo();
   }
 
-  if (qqs) delete qqs; /* Quad quasi-structured: restore options */
+  if (quadqs) CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
 }
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)

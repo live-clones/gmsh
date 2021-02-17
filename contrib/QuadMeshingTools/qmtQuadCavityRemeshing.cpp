@@ -1486,6 +1486,14 @@ namespace QMT {
     }
     intVertices = difference(intVertices, bdr);
 
+    bool SHOW_REMESH_CAV = false;
+    static size_t ccount = 0;
+    if (SHOW_REMESH_CAV) {
+      ccount += 1;
+      std::string name = "cav" + std::to_string(ccount);
+      GeoLog::add(elements,name+"_try");
+    }
+
     /* Call the remeshing code */
     const double minSICNafer = 0.1;
     GFaceMeshDiff diff;
@@ -1509,12 +1517,9 @@ namespace QMT {
       size_t nvb = diff.before.intVertices.size();
       size_t nva = diff.after.intVertices.size();
 
-      if (false) {
-        static size_t ccount = 0;
-        ccount += 1;
-        std::string name = "cr" + std::to_string(ccount);
-        GeoLog::add(diff.before.elements,name+"_b");
-        GeoLog::add(diff.after.elements,name+"_a");
+      if (SHOW_REMESH_CAV) {
+        std::string name = "cav" + std::to_string(ccount);
+        GeoLog::add(diff.after.elements,name+"_OK");
       }
 
       /* To smooth the interface between remeshed cavity and rest of the mesh,
@@ -1591,6 +1596,10 @@ namespace QMT {
     } else {
       Msg::Debug("----X reject cavity new geometry, SICN min: %.3f -> %.3f, avg: %.3f -> %.3f",
           sicnMin, sicnMinAfter, sicnAvg, sicnAvgAfter);
+      if (SHOW_REMESH_CAV) {
+        std::string name = "cav" + std::to_string(ccount);
+        GeoLog::add(diff.after.elements,name+"_REJQ");
+      }
     }
 
     return false;
@@ -1677,18 +1686,27 @@ namespace QMT {
       gedges.push(ge);
     }
 
+    /* for PASS_FROM_CORNERS
+     * The queue contains the CAD corners which are not concave */
+    std::queue<GVertex*> gcorners;
+    for (GVertex* gv: gf->vertices()) {
+      gcorners.push(gv);
+    }
+
     /* for PASS_FROM_IRREGULAR
      * The priority queue contains the irregular vertices not associated 
      * to cross field singularity and a priority based on repulsion.
      * Higher values appear first when doing Q.top() */
     std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> > > Qirreg; 
 
-    const size_t PASS_ALONG_GEDGES = 1;
-    const size_t PASS_FROM_IRREGULAR = 2;
-    for (size_t pass : {PASS_ALONG_GEDGES, PASS_FROM_IRREGULAR}) {
+    const size_t PASS_FROM_CORNERS = 1;
+    const size_t PASS_ALONG_GEDGES = 2;
+    const size_t PASS_FROM_IRREGULAR = 3;
+    for (size_t pass : {PASS_FROM_CORNERS, PASS_ALONG_GEDGES, PASS_FROM_IRREGULAR}) {
       bool updateRequired = true;
       bool inProgress = true;
       while (inProgress 
+          || (pass == PASS_FROM_CORNERS && gcorners.size() > 0)
           || (pass == PASS_ALONG_GEDGES && gedges.size() > 0)
           || (pass == PASS_FROM_IRREGULAR && Qirreg.size() > 0)) {
         inProgress = false;
@@ -1738,7 +1756,21 @@ namespace QMT {
         GrowthPolicy policy;
         SPoint3 pos; /* only used with PASS_FROM_IRREGULAR */
         MVertex* vIrreg = nullptr; /* only used with PASS_FROM_IRREGULAR */
-        if (pass == PASS_ALONG_GEDGES) {
+        if (pass == PASS_FROM_CORNERS) {
+          if (gcorners.empty()) continue;
+          policy = GROW_MAXIMAL;
+          allowedIrregularVertices.clear();
+          GVertex* gv = gcorners.front();
+          gcorners.pop();
+          for (MVertex* v: gv->mesh_vertices) {
+            auto it = v2q.find(v);
+            if (it == v2q.end()) continue;
+            append(quadsInit,it->second);
+          }
+          sort_unique(quadsInit);
+          if (quadsInit.size() >= 3) continue; /* do not start from concave corners */
+          Msg::Debug("---< start cavity with %i quads adjacent to corner %i", quadsInit.size(), gv->tag());
+        } else if (pass == PASS_ALONG_GEDGES) {
           if (gedges.empty()) continue;
           policy = GROW_MAXIMAL;
           allowedIrregularVertices.clear();
@@ -2185,19 +2217,22 @@ int remeshPatchWithQuadPattern(
   }
 
   if (!haveNiceParam || stGeoGlobal != 0) {
+    /* Project */
     bool okp = patchProjectOnSurface(diff.after, sp);
     if (!okp) {
       Msg::Debug("failed to project geometry");
       return -1;
     }
+
+    /* Smooth with kernel */
     GeomOptimOptions opt;
     opt.sp = sp;
     opt.invertCADNormals = invertNormalsForQuality;
-    opt.smartMinThreshold = 0.1;
-    opt.localLocking = true;
-    opt.dxLocalMax = 1.e-4;
+    // opt.smartMinThreshold = 0.1;
+    // opt.localLocking = true;
+    // opt.dxLocalMax = 1.e-4;
     opt.outerLoopIterMax = 100;
-    opt.timeMax = 100;
+    opt.timeMax = 10;
     opt.withBackup = false;
     patchOptimizeGeometryWithKernel(diff.after, opt, stats);
   }

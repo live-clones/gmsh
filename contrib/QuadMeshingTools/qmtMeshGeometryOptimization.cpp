@@ -948,15 +948,15 @@ int patchOptimizeGeometryGlobal(
   GFace* gf = patch.gf;
   if (gf == NULL) return -1;
   if (!gf->haveParametrization()) {
-    Msg::Error("optimize geometry global: face %i have no parametrization", gf->tag());
+    Msg::Debug("optimize geometry global: face %i have no parametrization", gf->tag());
     return -2;
   }
   if (patch.bdrVertices.size() != 1) {
-    Msg::Error("optimize geometry global: patch has multiple boundary loops (%li)", patch.bdrVertices.size());
+    Msg::Debug("optimize geometry global: patch has multiple boundary loops (%li)", patch.bdrVertices.size());
     return -1;
   }
   if (patch.intVertices.size() == 0) {
-    Msg::Error("optimize geometry global: no interior vertices (%li bdr vertices, %li elements)", 
+    Msg::Debug("optimize geometry global: no interior vertices (%li bdr vertices, %li elements)", 
         patch.bdrVertices.front().size(), patch.elements.size());
     return -1;
   }
@@ -1169,6 +1169,64 @@ bool kernelLoopWithParametrization(
   return true;
 }
 
+bool movePointWithKernelAndProjection(
+    uint32_t v,
+    const std::vector<std::array<double,3> >& points,
+    const std::vector<size_t>& one_ring_first,
+    const std::vector<uint32_t>& one_ring_values,
+    bool project,
+    SurfaceProjector* sp,
+    vec3& newPos,
+    vec2& newUv) 
+{
+  if (project && sp == nullptr) {
+    Msg::Error("cannot project with surface projector");
+    return false;
+  }
+
+  size_t n = one_ring_first[v+1] - one_ring_first[v];
+  GPoint proj;
+  double stDx = 0.;
+  if (n == 8) { /* regular vertex */
+    /* Extract geometric stencil */
+    std::array<vec3,8> stencil = fillStencilRegular(v, points, one_ring_first, one_ring_values);
+
+    /* Smoothing (in 3D, not on surface) */
+    bool ok = kernelWinslow(stencil, newPos);
+    if (!ok) return false;
+
+    if (project) { /* Projection on surface */
+      proj = sp->closestPoint(newPos.data(), false, false);
+      if (!proj.succeeded()) {
+        Msg::Debug("kernel smoothing: projection failed");
+        return false;
+      }
+      newPos = {proj.x(),proj.y(),proj.z()};
+      newUv = {proj.u(),proj.v()};
+    }
+  } else { /* irregular vertex */
+    std::vector<vec3> stencilIrreg(12);
+
+    /* Extract geometric stencil */
+    fillStencilIrregular(v, points, one_ring_first, one_ring_values, stencilIrreg);
+
+    /* Smoothing (in 3D, not on surface) */
+    bool ok = kernelAngleBased(points[v], stencilIrreg, newPos);
+    if (!ok) return false;
+
+    if (project) { /* Projection on surface */
+      proj = sp->closestPoint(newPos.data(), false, false);
+      if (!proj.succeeded()) {
+        Msg::Debug("kernel smoothing: projection failed");
+        return false;
+      }
+      newPos = {proj.x(),proj.y(),proj.z()};
+      newUv = {proj.u(),proj.v()};
+    }
+  }
+  return true;
+}
+
 bool kernelLoopWithProjection(
     GFaceMeshPatch& patch, 
     const GeomOptimOptions& opt,
@@ -1199,97 +1257,64 @@ bool kernelLoopWithProjection(
   }
   std::vector<std::array<double,2> > point_uvs;
   if (gf->haveParametrization()) point_uvs.resize(points.size());
+  const size_t nFree = patch.intVertices.size();
+
+  /* Local sizes */
+  vector<double> localAvgSize(nFree,0.);
+  for (size_t v = 0; v < nFree; ++v) {
+    size_t n = one_ring_first[v+1] - one_ring_first[v];
+    if (n == 0) continue;
+    for (size_t lv = 0; lv < n; ++lv) {
+      uint32_t v2 = one_ring_values[one_ring_first[v]+lv];
+      localAvgSize[v] += length(points[v]-points[v2]);
+    }
+    localAvgSize[v] /= double(n);
+  }
+
+  bool project = true;
+  if (gf->geomType() == GFace::GeomType::Plane) project = false;
 
   /* Initialization: all vertices unlocked */
   std::vector<bool> locked(patch.intVertices.size(),false);
 
   /* Explicit smoothing loop */
-  const size_t nFree = patch.intVertices.size();
+  double sum_dx0 = 0;
   std::vector<vec3> stencilIrreg(10);
   for (size_t iter = 0; iter < opt.outerLoopIterMax; ++iter) {
     size_t nMoved = 0;
 
+    double sum_dx = 0.;
     /* Loop over interior vertices */
     for (size_t v = 0; v < nFree; ++v) {
       if (locked[v]) continue;
 
-      size_t n = one_ring_first[v+1] - one_ring_first[v];
       vec3 newPos;
-      GPoint proj;
-      double stDx = 0.;
-      if (n == 8) { /* regular vertex */
-        /* Extract geometric stencil */
-        std::array<vec3,8> stencil = fillStencilRegular(v, points, one_ring_first, one_ring_values);
+      vec2 newUv;
 
-        /* Smoothing (in 3D, not on surface) */
-        bool ok = kernelWinslow(stencil, newPos);
-        if (!ok) continue;
-
-        /* Projection on surface */
-        proj = opt.sp->closestPoint(newPos.data(), false, false);
-        if (!proj.succeeded()) {
-          Msg::Debug("kernel smoothing: projection failed");
-          continue;
+      bool ok = movePointWithKernelAndProjection(v, points, one_ring_first, one_ring_values, 
+          project, opt.sp, newPos, newUv);
+      if (ok) {
+        double dx = length(newPos - points[v]);
+        sum_dx += dx;
+        /* Modify the coordinates */
+        points[v] = newPos;
+        point_uvs[v] = newUv;
+        if (opt.localLocking && dx < opt.dxLocalMax*localAvgSize[v]) {
+          locked[v] = true;
+        } else {
+          nMoved += 1;
         }
-        newPos = {proj.x(),proj.y(),proj.z()};
-
-        /* In smart mode, check if the quality did not decrease below threshold */
-        if (opt.smartMinThreshold != -DBL_MAX) {
-          double qAfter = stencilQualitySICNmin(newPos, stencil);
-          if (qAfter < opt.smartMinThreshold) {
-            double qBefore = stencilQualitySICNmin(points[v], stencil);
-            if (qAfter < qBefore) continue;
-          }
-        }
-
-        stDx = stencilAverageLength(stencil);
-      } else { /* irregular vertex */
-        /* Extract geometric stencil */
-        fillStencilIrregular(v, points, one_ring_first, one_ring_values, stencilIrreg);
-
-        /* Smoothing (in 3D, not on surface) */
-        bool ok = kernelAngleBased(points[v], stencilIrreg, newPos);
-        if (!ok) continue;
-
-        /* Projection on surface */
-        proj = opt.sp->closestPoint(newPos.data(), false, false);
-        if (!proj.succeeded()) {
-          Msg::Debug("kernel smoothing: projection failed");
-          continue;
-        }
-        newPos = {proj.x(),proj.y(),proj.z()};
-
-        /* In smart mode, check if the quality did not decrease below threshold */
-        if (opt.smartMinThreshold != -DBL_MAX) {
-          double qAfter = stencilQualitySICNmin(newPos, stencilIrreg);
-          if (qAfter < opt.smartMinThreshold) {
-            double qBefore = stencilQualitySICNmin(points[v], stencilIrreg);
-            if (qAfter < qBefore) continue;
-          }
-        }
-
-        stDx = stencilAverageLength(stencilIrreg);
-      }
-
-      /* Modify the coordinates */
-      double dx = length(newPos - points[v]);
-      points[v] = newPos;
-      if (point_uvs.size()) {
-        point_uvs[v] = {proj.u(),proj.v()};
-      }
-      nMoved += 1;
-
-      if (opt.localLocking && dx < opt.dxLocalMax * stDx) {
+      } else {
         locked[v] = true;
-      } else if (opt.localLocking){ /* Unlock neighbors */
-        for (size_t lv = 0; lv < n; ++lv) {
-          uint32_t v2 = one_ring_values[one_ring_first[v]+lv];
-          if (v2 < nFree) locked[v2] = false;
-        }
       }
     }
 
-    if (nMoved == 0) break;
+    if (iter == 0) {
+      sum_dx0 = sum_dx;
+    } else {
+      // TODO: can check global dx reduction here
+      if (nMoved == 0) break;
+    }
   }
 
   /* Update the positions */
@@ -1307,7 +1332,6 @@ bool kernelLoopWithProjection(
         v->setParameter(proj.u(),proj.v());
       }
     }
-
   }
 
   return true;
@@ -1352,6 +1376,7 @@ bool patchOptimizeGeometryWithKernel(
 
   bool useParam = gf->haveParametrization();
   if (opt.sp != nullptr) useParam = false;
+  if (opt.force3DwithProjection) useParam = false;
 
   if (useParam) {
     bool okl = kernelLoopWithParametrization(patch, opt, stats);

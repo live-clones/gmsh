@@ -5,6 +5,8 @@
 //
 // Author: Maxence Reberol
 
+#include "meshQuadQuasiStructured.h"
+
 #include <array>
 #include <queue>
 
@@ -41,7 +43,6 @@
 #endif
 
 #if defined(HAVE_QUADMESHINGTOOLS)
-
 /* QuadMeshingTools includes */
 #include "cppUtils.h"
 #include "qmtMeshUtils.h"
@@ -52,6 +53,7 @@
 #include "qmtMeshGeometryOptimization.h"
 #include "arrayGeometry.h"
 #include "geolog.h"
+#endif
 
 using namespace CppUtils;
 using namespace ArrayGeometry;
@@ -66,6 +68,54 @@ template <typename Key, typename Hash = robin_hood::hash<Key>, typename KeyEqual
 
 
 const std::string BMESH_NAME = "bmesh_quadqs";
+
+QuadqsContextUpdater::QuadqsContextUpdater() {
+  algo2d = CTX::instance()->mesh.algo2d;
+  recombineAll = CTX::instance()->mesh.recombineAll;
+  algoRecombine = CTX::instance()->mesh.algoRecombine;
+  recombineOptimizeTopology = CTX::instance()->mesh.recombineOptimizeTopology;
+  lcFactor = CTX::instance()->mesh.lcFactor;
+  lcMin = CTX::instance()->mesh.lcMin;
+  lcMax = CTX::instance()->mesh.lcMax;
+  lcFromPoints = CTX::instance()->mesh.lcFromPoints;
+  minCurveNodes = CTX::instance()->mesh.minCurveNodes;
+  minCircleNodes = CTX::instance()->mesh.minCircleNodes;
+
+  setQuadqsOptions();
+}
+
+QuadqsContextUpdater::~QuadqsContextUpdater() {
+  restoreInitialOption();
+}
+
+void QuadqsContextUpdater::setQuadqsOptions() {
+  Msg::Debug("set special quadqs options in the global context");
+  CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
+  CTX::instance()->mesh.recombineAll = 1;
+  CTX::instance()->mesh.algoRecombine = 0;
+  CTX::instance()->mesh.recombineOptimizeTopology = 0;
+  CTX::instance()->mesh.lcFactor = 1.;
+  CTX::instance()->mesh.lcMin = 0.;
+  CTX::instance()->mesh.lcMax = 1.e22;
+  CTX::instance()->mesh.lcFromPoints = 0;
+  CTX::instance()->mesh.minCurveNodes = 0;
+  CTX::instance()->mesh.minCircleNodes = 0;
+}
+
+void QuadqsContextUpdater::restoreInitialOption() {
+  Msg::Debug("restore options in the global context");
+  CTX::instance()->mesh.algo2d = algo2d;
+  CTX::instance()->mesh.recombineAll = recombineAll;
+  CTX::instance()->mesh.algoRecombine = algoRecombine;
+  CTX::instance()->mesh.recombineOptimizeTopology = recombineOptimizeTopology;
+  CTX::instance()->mesh.lcFactor = lcFactor;
+  CTX::instance()->mesh.lcMin = lcMin;
+  CTX::instance()->mesh.lcMax = lcMax;
+  CTX::instance()->mesh.lcFromPoints = lcFromPoints;
+  CTX::instance()->mesh.minCurveNodes = minCurveNodes;
+  CTX::instance()->mesh.minCircleNodes = minCircleNodes;
+}
+
 
 int buildBackgroundField(
     GModel* gm,
@@ -177,6 +227,29 @@ void showUVParametrization(
     GeoLog::add(tris,values_v,viewName+"_v");
   }
   GeoLog::flush();
+}
+
+void printSizeMapStats(
+    const std::vector<MTriangle*>& triangles, 
+    std::unordered_map<MVertex*,double>& sizemap) {
+  double vmin = DBL_MAX;
+  double vmax = -DBL_MAX;
+  for (auto& kv: sizemap) {
+    vmin = std::min(vmin,kv.second);
+    vmax = std::max(vmax,kv.second);
+  }
+  double integral = 0.;
+  for (MTriangle* t: triangles) {
+    double values[3] = {0,0,0};
+    for (size_t lv = 0; lv < 3; ++lv) {
+      MVertex* v = t->getVertex(lv);
+      auto it = sizemap.find(v);
+      values[lv] = it->second;;
+    }
+    double a = std::abs(t->getVolume());
+    integral += a * 1. / std::pow(1./3. * (values[0] + values[1] + values[2]),2);
+  }
+  Msg::Info("Size map statistics: min=%.3f, max=%.3f, target #elements: %.3f", vmin, vmax, integral);
 }
 
 
@@ -389,8 +462,8 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
           Msg::Error("- Face %i: background mesh not found", gf->tag());
           targetNumberOfQuads = 1000;
         } else {
-          size_t nbTriRef = (size_t) (double(it->second.triangles.size()) * std::pow(scalingOnTriangulation,2));
-          targetNumberOfQuads = nbTriRef/2;
+          targetNumberOfQuads = 0.5 * it->second.triangles.size();
+          targetNumberOfQuads *= std::pow(scalingOnTriangulation,2);
         }
       }
 
@@ -398,6 +471,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
         targetNumberOfQuads /= 4;
       }
 
+      DBG(gf->tag(),targetNumberOfQuads);
       int scso = computeQuadSizeMapFromCrossFieldConformalFactor(triangles, targetNumberOfQuads, conformalScaling);
       if (scso != 0) {
         Msg::Warning("- Face %i: failed to compute size map from conformal scaling", gf->tag());
@@ -428,11 +502,12 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
 
   /* Global operations */
+  Msg::Warning("TODO: enable minimal size on curves again");
   std::unordered_map<MVertex*,double> cadMinimalSizeOnCurves;
-  int scad = computeMinimalSizeOnCurves(bmesh, cadMinimalSizeOnCurves);
-  if (scad != 0) {
-    Msg::Warning("failed to compute minimal size on CAD curves");
-  }
+  // int scad = computeMinimalSizeOnCurves(bmesh, cadMinimalSizeOnCurves);
+  // if (scad != 0) {
+  //   Msg::Warning("failed to compute minimal size on CAD curves");
+  // }
 
   /* Initialize global size map defined on the background mesh */
   std::unordered_map<MVertex*,double> sizeMap = cadMinimalSizeOnCurves;
@@ -447,11 +522,12 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
   }
 
   /* One-way propagation of values */
-  const double gradientMax = 1.2; /* this param should be a global gmsh option */
-  int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
-  if (sop != 0) {
-    Msg::Warning("failed to compute one-way size map smoothing");
-  }
+  Msg::Warning("TODO: enable one way prop");
+  // const double gradientMax = 1.2; /* this param should be a global gmsh option */
+  // int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
+  // if (sop != 0) {
+  //   Msg::Warning("failed to compute one-way size map smoothing");
+  // }
 
   if (SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement*> elements = dynamic_cast_vector<MTriangle*,MElement*>(global_triangles);
@@ -461,16 +537,19 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
   }
 
   /* Clamp with global minimum/maximum mesh size */
-  {
-    // TODO: should be multiplied by lcFactor or not ?
-    for (auto& kv: global_size_map) {
-      if (kv.second < CTX::instance()->mesh.lcMin) {
-        kv.second = CTX::instance()->mesh.lcMin;
-      } else if (kv.second > CTX::instance()->mesh.lcMax) {
-        kv.second = CTX::instance()->mesh.lcMax;
-      }
-    }
-  }
+  // {
+  // // TODO: apply on sizeMap instead
+  //   // TODO: should be multiplied by lcFactor or not ?
+  //   for (auto& kv: global_size_map) {
+  //     if (kv.second < CTX::instance()->mesh.lcMin) {
+  //       kv.second = CTX::instance()->mesh.lcMin;
+  //     } else if (kv.second > CTX::instance()->mesh.lcMax) {
+  //       kv.second = CTX::instance()->mesh.lcMax;
+  //     }
+  //   }
+  // }
+
+  printSizeMapStats(global_triangles, sizeMap);
 
   /* Build the background field */
   int sbf = buildBackgroundField(gm, global_triangles, global_triangle_directions, sizeMap,
@@ -498,18 +577,16 @@ bool backgroundMeshAndGuidingFieldExists(GModel* gm) {
   return bgmOk && bfOk;
 }
 
-#else
 
-/* QuadMeshingTools module not available */
-int BuildBackgroundMeshAndGuidingField(
-    GModel* gm, 
-    bool overwriteGModelMesh,
-    bool deleteGModelMeshAfter) {
-  Msg::Error("BuildBackgroundMeshAndGuidingField: Module QUADMESHINGTOOLS required");
-  return -1;
-}
+// /* QuadMeshingTools module not available */
+// int BuildBackgroundMeshAndGuidingField(
+//     GModel* gm, 
+//     bool overwriteGModelMesh,
+//     bool deleteGModelMeshAfter) {
+//   Msg::Error("BuildBackgroundMeshAndGuidingField: Module QUADMESHINGTOOLS required");
+//   return -1;
+// }
 
-#endif
 
 
 int transferSeamGEdgesVerticesToGFace(GModel* gm) {
@@ -1259,6 +1336,10 @@ int improveInteriorValences(
 }
 
 int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
+  GeoLog::flush();
+  gmsh::fltk::run();
+  abort();
+
   Msg::Debug("Refine mesh with background projection ...");
   if (!backgroudMeshExists(BMESH_NAME)) {
     Msg::Error("refine mesh with background projection: no background mesh");
@@ -1415,7 +1496,9 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
   DQOptions opt;
   opt.invertNormalsForQuality = invertNormals;
   // if (!gf->haveParametrization()) {
-  if (!haveNiceParametrization(gf)) {
+  if (!haveNiceParametrization(gf) || (gf->periodic(0) || gf->periodic(1))) {
+    /* note: for the moment, period jumps (e.g. across seam edge) are causing issues,
+     * we use surface projector in these cases */
     opt.sp = new SurfaceProjector();
     bool deleteTheTris = false;
     std::vector<MTriangle*> triangles;
@@ -1507,6 +1590,7 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
 }
 
 int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
+  return 0;
   Msg::Debug("optimize topology of quad meshes with disk quadrangulation remeshing ...");
 
   initDiskQuadrangulations();
@@ -1531,6 +1615,8 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
 
 
 int optimizeTopologyWithCavityRemeshing(GModel* gm) {
+  return 0;
+
   std::vector<GFace*> faces = model_faces(gm);
   Msg::Debug("optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
 
