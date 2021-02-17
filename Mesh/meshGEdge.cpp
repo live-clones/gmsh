@@ -795,7 +795,8 @@ void meshGEdge::operator()(GEdge *ge)
     v0->z() = beg_p.z();
   }
   ge->meshStatistics.status = GEdge::DONE;
-  Msg::Debug("  -> curve mesh has %li interior points", ge->mesh_vertices.size());
+  Msg::Debug("Meshing curve %d (%s): %li interior vertices", ge->tag(), ge->getTypeString().c_str(),
+      ge->mesh_vertices.size());
 }
 
 void orientMeshGEdge::operator()(GEdge *ge)

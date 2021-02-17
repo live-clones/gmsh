@@ -478,7 +478,7 @@ namespace QSQ {
       for (GVertex* gv: ge->vertices()) {
         gv2ge[gv].push_back(ge);
         if (gv->mesh_vertices.size() == 1) {
-          MVertex* v = gv->mesh_vertices[0];
+          MVertex* v = gv->mesh_vertices.front();
           auto it = minDistToOtherFeature.find(v);
           if (it == minDistToOtherFeature.end()) {
             minDistToOtherFeature[v] = len;
@@ -688,6 +688,29 @@ namespace QSQ {
     }
 
     return true;
+  }
+
+  void printSizeMapStats(
+      const std::vector<GFace*>& faces, 
+      std::unordered_map<MVertex*,double>& sizemap) {
+    double vmin = DBL_MAX;
+    double vmax = -DBL_MAX;
+    for (auto& kv: sizemap) {
+      vmin = std::min(vmin,kv.second);
+      vmax = std::max(vmax,kv.second);
+    }
+    double integral = 0.;
+    for (GFace* gf: faces) for (MTriangle* t: gf->triangles) {
+      double values[3] = {0,0,0};
+      for (size_t lv = 0; lv < 3; ++lv) {
+        MVertex* v = t->getVertex(lv);
+        auto it = sizemap.find(v);
+        values[lv] = it->second;;
+      }
+      double a = std::abs(t->getVolume());
+      integral += a * 1. / std::pow(1./3. * (values[0] + values[1] + values[2]),2);
+    }
+    Msg::Info("Size map statistics: min=%.3f, max=%.3f, target #elements: %.3f", vmin, vmax, integral);
   }
 
   struct QuadqsContext {
@@ -5410,7 +5433,7 @@ int createCrossFieldAndSizeMap(GModel* gm,
   double thresholdNormConvergence = 1.e-2;
   int nbBoundaryExtensionLayer = 1;
   int verbosity = 0;
-  double conformalScalingQuantileFiltering = 0.02;
+  double conformalScalingQuantileFiltering = 0.;
 
   vector<GFace*> faces = model_faces(gm);
 
@@ -5494,6 +5517,7 @@ int createCrossFieldAndSizeMap(GModel* gm,
   for (size_t i = 0; i < components.size(); ++i) {
     std::vector<MTriangle*> componentTriangles;
     getFacesTriangles(components[i],componentTriangles);
+    DBG(i,componentNumberOfQuads[i]);
     int status2 = computeQuadSizeMapFromCrossFieldConformalFactor(componentTriangles, componentNumberOfQuads[i], scaling);
     if (status2 != 0) {
       Msg::Error("Failed to compute quad mesh size map");
@@ -5534,6 +5558,8 @@ int createCrossFieldAndSizeMap(GModel* gm,
   } else {
     Msg::Warning("Size map adaptation to CAD disabled");
   }
+
+  printSizeMapStats(faces, scaling);
 
   if (SHOW_SIZEMAP) create_view_with_sizemap(triangles, scaling, "dbg_sizemap");
 
@@ -5602,6 +5628,7 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
   int flexibleTransfiniteOld = CTX::instance()->mesh.flexibleTransfinite;
   int meshRecombineAllOld = CTX::instance()->mesh.recombineAll;
   if (forceEvenNbEdges) {
+    Msg::Debug("generateCurve1DMeshes: forceEvenNbEdges set to true");
     CTX::instance()->mesh.flexibleTransfinite = 1;
     CTX::instance()->mesh.algoRecombine = 2;
     CTX::instance()->mesh.recombineAll = 1;
@@ -5704,6 +5731,9 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
 }
 
 int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo) {
+  Msg::Error("generatePatternBasedQuadMeshesOnSimpleFaces disabled (for testing only !!)");
+  return 0;
+
   CTX::instance()->lock = 0;
   std::vector<GFace*> faces = model_faces(gm);
   size_t count = 0;
@@ -5739,6 +5769,9 @@ int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFa
 }
 
 int midpointSubdivisionToFullQuad(GModel* gm, bool tryProjection = false) {
+  gmsh::fltk::run();
+  abort();
+
   Msg::Info("Midpoint subdivision (quad-tri to full quad) ...");
 
   /* Linear subdivision, no projection */
@@ -6622,6 +6655,8 @@ int improveQuadMeshTopology(GModel* gm,
     printPatternUsage();
   }
 
+  Msg::Error("cavity remeshing disabled (for testing only !!)");
+  return 0;
   // Msg::Error("early stop DBG");
   // return 0;
 
