@@ -1235,9 +1235,11 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
     Fl_Button *but;
     if(p.getAttribute("Aspect") == "Button") {
       but = new Fl_Button(xx, yy, ww, hh);
+      but->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     }
     else if(p.getAttribute("Aspect") == "ReturnButton") {
       but = new Fl_Return_Button(xx, yy, ww, hh);
+      but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     }
     else {
       but = new Fl_Button(xx, yy, ww / labelRatio, hh);
