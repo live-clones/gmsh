@@ -104,9 +104,9 @@ public:
   // General.FltkRefreshRate seconds)
   static void check(bool rateLimited = false);
   // wait (possibly indefinitely) for any events, then process them
-  static void wait();
+  static void wait(bool force = false);
   // wait (at most time seconds) for any events, then process them
-  static void wait(double time);
+  static void wait(double time, bool force = false);
   // lock/unlock child threads
   static void lock();
   static void unlock();

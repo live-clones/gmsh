@@ -80,16 +80,16 @@ void FlGui::check(bool rateLimited)
 }
 
 // wait (possibly indefinitely) for any events, then process them
-void FlGui::wait()
+void FlGui::wait(bool force)
 {
-  if(Msg::GetThreadNum() > 0 || _locked > 0) return;
+  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
   Fl::wait();
 }
 
 // wait (at most time seconds) for any events, then process them
-void FlGui::wait(double time)
+void FlGui::wait(double time, bool force)
 {
-  if(Msg::GetThreadNum() > 0 || _locked > 0) return;
+  if((Msg::GetThreadNum() > 0 || _locked > 0) && !force) return;
   Fl::wait(time);
 }
 

@@ -7271,9 +7271,9 @@ GMSH_API void gmsh::fltk::wait(const double time)
 #if defined(HAVE_FLTK)
   _createFltk();
   if(time >= 0)
-    FlGui::wait(time);
+    FlGui::wait(time, true); // force
   else
-    FlGui::wait();
+    FlGui::wait(true); // force
 #else
   Msg::Error("Fltk not available");
 #endif
