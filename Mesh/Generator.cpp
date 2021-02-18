@@ -1081,17 +1081,43 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     }
   } 
   else if(how == "DiskQuadrangulation") {
+    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::DONE){
+      gf->meshStatistics.status = GFace::PENDING;
+    }
+
     transferSeamGEdgesVerticesToGFace(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
+
+    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::PENDING){
+      gf->meshStatistics.status = GFace::DONE;
+    }
   }
   else if(how == "QuadCavityRemeshing") {
+    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::DONE){
+      gf->meshStatistics.status = GFace::PENDING;
+    }
+
     transferSeamGEdgesVerticesToGFace(m);
     optimizeTopologyWithCavityRemeshing(m);
+    
+    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::PENDING){
+      gf->meshStatistics.status = GFace::DONE;
+    }
   }
   else if(how == "QuadQuasiStructured") {
+    /* The following methods only act on faces whose status is PENDING */
+    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::DONE){
+      gf->meshStatistics.status = GFace::PENDING;
+    }
+
     transferSeamGEdgesVerticesToGFace(m);
+    quadMeshingOfSimpleFacesWithPatterns(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
+
+    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::PENDING){
+      gf->meshStatistics.status = GFace::DONE;
+    }
   }
 
   if(Msg::GetVerbosity() > 98)

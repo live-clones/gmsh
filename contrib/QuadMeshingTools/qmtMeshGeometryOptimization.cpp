@@ -30,6 +30,7 @@
 #include "MQuadrangle.h"
 #include "robin_hood.h"
 #include "meshOctreeLibOL.h"
+#include "Context.h"
 #include "gmsh.h" // api
 
 /* QuadMeshingTools includes */
@@ -43,7 +44,8 @@
 #include<Eigen/IterativeLinearSolvers>
 #endif
 
-constexpr bool DBG_VIZU = false;
+constexpr bool DBG_VIZU_K = false;
+constexpr bool DBG_VIZU_G = false;
 
 using namespace CppUtils;
 using namespace ArrayGeometry;
@@ -524,7 +526,7 @@ namespace QMT {
     /* Get associated uv in GFace */
     std::vector<std::array<double,2> > uvs(old2new.size(),{DBL_MAX,DBL_MAX});
     for (size_t i = 0; i < elements.size(); ++i) {
-      std::array<SPoint2,4> quad_uvs = paramOnQuad(gf, dynamic_cast<MQuadrangle*>(elements[i]));
+      std::vector<SPoint2> quad_uvs = paramOnElement(gf, elements[i]);
       for (size_t lv = 0; lv < 4; ++lv) {
         size_t v = quads[i][lv];
         if (uvs[v][0] == DBL_MAX) {
@@ -550,58 +552,12 @@ namespace QMT {
     return true;
   }
 
-
   bool getContinuousUVOnLoop(
       GFace* gf,
       const std::vector<MVertex*>& bndOrdered,
       std::vector<SPoint2>& bndUvs) {
-    /* If periodic parametrization, get periods */
-    double Ts[2] = {0.,0.};
-    if (gf->periodic(0)) Ts[0] = gf->period(0);
-    if (gf->periodic(1)) Ts[1] = gf->period(1);
+    if (bndOrdered.size() < 3) return false;
 
-    bndUvs.resize(bndOrdered.size());
-    SPoint2 prev(DBL_MAX,DBL_MAX);
-    double gapMax[2] = {0.,0.};
-    for (size_t i = 0; i < bndOrdered.size(); ++i) {
-      MVertex* v = bndOrdered[i];
-      SPoint2 uv;
-      bool ok = setVertexGFaceUV(gf, v, uv.data());
-      if (!ok) return false;
-      if (prev.x() != DBL_MAX) {
-        for (size_t d = 0; d < 2; ++d) if (Ts[d] != 0.) {
-          double diff = std::abs(uv.data()[d] - prev.data()[d]);
-          if (diff > 0.5 * Ts[d]) { /* Probably got a period jump ! */
-            double diffP = std::abs(uv.data()[d] + Ts[d] - prev.data()[d]);
-            double diffN = std::abs(uv.data()[d] - Ts[d] - prev.data()[d]);
-            if (diffP < diff) {
-              uv.data()[d] += Ts[d];
-            } else if (diffN < diff) {
-              uv.data()[d] -= Ts[d];
-            }
-          }
-          gapMax[d] = std::max(gapMax[d],std::abs(uv.data()[d] - prev.data()[d]));
-        }
-      }
-      prev = uv;
-      bndUvs[i] = uv;
-    }
-    if (Ts[0] > 0 && gapMax[0] > 0.5 * Ts[0]) {
-      Msg::Debug("getContinuousUVOnLoop: reject because gap on boundary: %f (period %f)", gapMax[0], Ts[0]);
-      return false;
-    }
-    if (Ts[1] > 0 && gapMax[1] > 0.5 * Ts[1]) {
-      Msg::Debug("getContinuousUVOnLoop: reject because gap on boundary: %f (period %f)", gapMax[1], Ts[1]);
-      return false;
-    }
-    return true;
-  }
-
-  /* Second version using reparamMeshEdgeOnFace() */
-  bool getContinuousUVOnLoopV2(
-      GFace* gf,
-      const std::vector<MVertex*>& bndOrdered,
-      std::vector<SPoint2>& bndUvs) {
     /* If periodic parametrization, get periods */
     double Ts[2] = {0.,0.};
     if (gf->periodic(0)) Ts[0] = gf->period(0);
@@ -616,30 +572,27 @@ namespace QMT {
         break;
       }
     }
-    
-    SPoint2 uv0;
-    bool ok = setVertexGFaceUV(gf, bndOrdered[i0], uv0.data());
-    if (!ok) return false;
 
+    /* Get all the parameters on the loop */
     bndUvs.resize(bndOrdered.size());
-    MVertex* pv = bndOrdered[i0];
-    SPoint2 prevUV = uv0;
+    reparamMeshVertexOnFace(bndOrdered[i0],gf,bndUvs[i0],true);
+    SPoint2 prevUV = bndUvs[i0];
+
     double gapMax[2] = {0.,0.};
     const size_t N = bndOrdered.size();
-    for (size_t k = 0; k < N; ++k) {
+    for (size_t k = 1; k < N; ++k) {
       size_t i = (i0+k)%N;
       MVertex* v = bndOrdered[i];
-      SPoint2 uv;
-      if (v->onWhat() == gf) {
-        bool ok = setVertexGFaceUV(gf, v, uv.data());
-        if (!ok) return false;
-      } else {
-        reparamMeshEdgeOnFace(pv, v, gf, prevUV, uv);
-      }
-      bndUvs[i] = uv;
-      gapMax[0] = std::max(gapMax[0],std::abs(uv.data()[0] - prevUV.data()[0]));
-      gapMax[1] = std::max(gapMax[1],std::abs(uv.data()[1] - prevUV.data()[1]));
+      bool okr = reparamMeshVertexOnFaceWithRef(gf, v, prevUV, bndUvs[i]);
+      if (!okr) return false;
+
+      gapMax[0] = std::max(gapMax[0],std::abs(bndUvs[i].data()[0] - prevUV.data()[0]));
+      gapMax[1] = std::max(gapMax[1],std::abs(bndUvs[i].data()[1] - prevUV.data()[1]));
+      prevUV = bndUvs[i];
     }
+    gapMax[0] = std::max(gapMax[0],std::abs(bndUvs.front().data()[0] - bndUvs.back().data()[0]));
+    gapMax[1] = std::max(gapMax[1],std::abs(bndUvs.front().data()[1] - bndUvs.back().data()[1]));
+
     if (Ts[0] > 0 && gapMax[0] > 0.5 * Ts[0]) {
       Msg::Debug("getContinuousUVOnLoop: reject because gap on boundary: %f (period %f)", gapMax[0], Ts[0]);
       return false;
@@ -648,6 +601,7 @@ namespace QMT {
       Msg::Debug("getContinuousUVOnLoop: reject because gap on boundary: %f (period %f)", gapMax[1], Ts[1]);
       return false;
     }
+
     return true;
   }
 
@@ -970,6 +924,13 @@ int patchOptimizeGeometryGlobal(
     return -1;
   }
 
+  bool debugCreateViews = DBG_VIZU_G;
+  if (Msg::GetVerbosity() >= 99 
+      && CTX::instance()->debugSurface == patch.gf->tag()) {
+    debugCreateViews = true;
+  }
+  const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
+
   double t1 = Cpu();
 
   unordered_map<MVertex*,size_t> old2new;
@@ -980,12 +941,6 @@ int patchOptimizeGeometryGlobal(
     return -1;
   }
 
-  vector<SPoint2> bndUvs;
-  bool okl = getContinuousUVOnLoopV2(gf, patch.bdrVertices.front(), bndUvs);
-  if (!okl) {
-    Msg::Debug("optimize geometry global: failed to get continuous UV on boundary loop");
-    return -2;
-  }
 
   /* uvs/v2v: first all the free vertices, then the bdr vertices */
   vector<SPoint2> uvs(old2new.size(),SPoint2(DBL_MAX,DBL_MAX));
@@ -995,17 +950,29 @@ int patchOptimizeGeometryGlobal(
     sort_unique(v2v[v]);
     uvs[v] = SPoint2(0.,0.);
   }
+
   /* Boundary vertices */
-  for (size_t i = 0; i < patch.bdrVertices.front().size(); ++i){
-    MVertex* v = patch.bdrVertices.front()[i];
-    auto it = old2new.find(v);
-    if (it == old2new.end()) {
-      Msg::Error("optimize geometry global: bdr vertex not found in old2new");
-      return -1;
+  for (size_t loop = 0; loop < patch.bdrVertices.size(); ++loop) {
+    vector<SPoint2> bndUvs;
+    bool okl = getContinuousUVOnLoop(gf, patch.bdrVertices[loop], bndUvs);
+    if (!okl) {
+      Msg::Debug("optimize geometry global: failed to get continuous UV on boundary loop");
+      return -2;
     }
-    size_t idx = it->second;
-    if (uvs[idx].x() != DBL_MAX) continue;
-    uvs[idx] = bndUvs[i];
+    for (size_t i = 0; i < patch.bdrVertices[loop].size(); ++i){
+      MVertex* v = patch.bdrVertices[loop][i];
+      auto it = old2new.find(v);
+      if (it == old2new.end()) {
+        Msg::Error("optimize geometry global: bdr vertex not found in old2new");
+        return -1;
+      }
+      size_t idx = it->second;
+      if (uvs[idx].x() != DBL_MAX) continue;
+      uvs[idx] = bndUvs[i];
+      double dist = std::pow(bndUvs[(i+1)%bndUvs.size()].x() - bndUvs[i].x(),2)
+        + std::pow(bndUvs[(i+1)%bndUvs.size()].y() - bndUvs[i].y(),2);
+      dist = std::sqrt(dist);
+    }
   }
 
   computeSICN(patch.elements, stats.sicnMinBefore, stats.sicnAvgBefore);
@@ -1017,8 +984,7 @@ int patchOptimizeGeometryGlobal(
     return -1;
   }
 
-  const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
-  if (DBG_VIZU) {
+  if (debugCreateViews) {
     GeoLog::add(patch.elements, "optim_Duv_IN_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgBefore));
   }
 
@@ -1038,9 +1004,8 @@ int patchOptimizeGeometryGlobal(
 
   computeSICN(patch.elements, stats.sicnMinAfter, stats.sicnAvgAfter);
 
-  if (DBG_VIZU) {
+  if (debugCreateViews) {
     GeoLog::add(patch.elements, "optim_Duv_OUT_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgAfter));
-    GeoLog::flush();
   }
 
   double t2 = Cpu();
@@ -1265,9 +1230,16 @@ bool kernelLoopWithProjection(
     }
     compress(oneRings, one_ring_first, one_ring_values);
   }
-  std::vector<std::array<double,2> > point_uvs;
-  if (gf->haveParametrization()) point_uvs.resize(points.size());
   const size_t nFree = patch.intVertices.size();
+
+  std::vector<std::array<double,2> > point_uvs;
+  if (gf->haveParametrization()) {
+    point_uvs.resize(points.size());
+    for (size_t v = 0; v < nFree; ++v) {
+      new2old[v]->getParameter(0,point_uvs[v][0]);
+      new2old[v]->getParameter(1,point_uvs[v][1]);
+    }
+  }
 
   /* Local sizes */
   vector<double> localAvgSize(nFree,0.);
@@ -1299,8 +1271,9 @@ bool kernelLoopWithProjection(
     for (size_t v = 0; v < nFree; ++v) {
       if (locked[v]) continue;
 
-      vec3 newPos;
+      vec3 newPos = points[v];
       vec2 newUv;
+      if (point_uvs.size()) { newUv = point_uvs[v]; }
 
       bool ok = movePointWithKernelAndProjection(v, points, one_ring_first, one_ring_values, 
           project, opt.sp, newPos, newUv);
@@ -1342,7 +1315,8 @@ bool kernelLoopWithProjection(
       GPoint proj = gf->closestPoint(query, point_uvs[i].data());
       if (proj.succeeded()) {
         v->setXYZ(proj.x(),proj.y(),proj.z());
-        v->setParameter(proj.u(),proj.v());
+        v->setParameter(0,proj.u());
+        v->setParameter(1,proj.v());
       }
     }
   }
@@ -1363,33 +1337,44 @@ bool patchOptimizeGeometryWithKernel(
     const GeomOptimOptions& opt,
     GeomOptimStats& stats) {
 
-  GFace* gf = patch.gf;
-  if (gf == NULL) return -1;
-  if (patch.intVertices.size() == 0) {
-    Msg::Error("optimize geometry kernel: no interior vertices (%li elements)", 
-        patch.elements.size());
-    return -1;
+  /* Debug visualization */
+  bool debugCreateViews = DBG_VIZU_K;
+  if (Msg::GetVerbosity() >= 99 
+      && CTX::instance()->debugSurface == patch.gf->tag()) {
+    debugCreateViews = true;
   }
+  const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
+
+
+  GFace* gf = patch.gf;
+  if (gf == NULL || patch.elements.size() == 0) return -1;
 
   stats.sicnMinBefore = -1.; /* if no element */
   stats.sicnAvgBefore = -1.;
   double t1 = Cpu();
   computeSICN(patch.elements, stats.sicnMinBefore, stats.sicnAvgBefore);
 
+  if (patch.intVertices.size() == 0) {
+    Msg::Debug("optimize geometry kernel: no interior vertices (%li elements)", 
+        patch.elements.size());
+    stats.sicnMinAfter = stats.sicnMinBefore;
+    stats.sicnAvgAfter = stats.sicnAvgBefore;
+    return true;
+  }
+
   PatchGeometryBackup* backup = nullptr;
   if (opt.withBackup) {
     backup = new PatchGeometryBackup(patch);
   }
 
-  /* Debug visualization */
-  const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
-  if (DBG_VIZU) {
-    GeoLog::add(patch.elements, "optim_K_IN_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgBefore));
-  }
-
   bool useParam = gf->haveParametrization();
   if (opt.sp != nullptr) useParam = false;
   if (opt.force3DwithProjection) useParam = false;
+
+  if (debugCreateViews) {
+    std::string method = "K" + (useParam ? std::string("uv") : std::string("3d+p"));
+    GeoLog::add(patch.elements, "optim_"+method+"_IN_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgBefore));
+  }
 
   if (useParam) {
     bool okl = kernelLoopWithParametrization(patch, opt, stats);
@@ -1417,8 +1402,9 @@ bool patchOptimizeGeometryWithKernel(
   }
 
   /* Debug visualization */
-  if (DBG_VIZU) {
-    GeoLog::add(patch.elements, "optim_K_OUT_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgAfter));
+  if (debugCreateViews) {
+    std::string method = "K" + (useParam ? std::string("uv") : std::string("3d+p"));
+    GeoLog::add(patch.elements, "optim_"+method+"_OUT_"+std::to_string(rdi) + "_" + std::to_string(stats.sicnAvgAfter));
     GeoLog::flush();
   }
 
@@ -1494,12 +1480,20 @@ bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
     return false;
   }
 
+  bool forceEvenIfBadBoundary = true;
   GFaceMeshPatch patch;
-  bool okp = patchFromQuads(gf, gf->quadrangles, patch);
+  bool okp = patchFromQuads(gf, gf->quadrangles, patch, forceEvenIfBadBoundary);
   if (!okp) {
     Msg::Warning("optimize geometry: face %i, failed to build patch", gf->tag());
     return false;
   }
+
+  bool debugCreateViews = DBG_VIZU_G;
+  if (Msg::GetVerbosity() >= 99 
+      && CTX::instance()->debugSurface == patch.gf->tag()) {
+    debugCreateViews = true;
+  }
+  const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
 
   int countMax = 3;
   bool running = true;
@@ -1526,6 +1520,11 @@ bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
     double avgSICNb = 0.;
     computeSICN(patch.elements, minSICNb, avgSICNb);
 
+    if (debugCreateViews) {
+      std::string method = "GFace_K";
+      GeoLog::add(patch.elements, "optim_"+method+"_IN_"+std::to_string(rdi) + "_" + std::to_string(minSICNb));
+    }
+
     GeomOptimStats stats;
     GeomOptimOptions opt;
     opt.sp = sp;
@@ -1551,6 +1550,11 @@ bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
     if (minSICNa < minSICNb && avgSICNa < avgSICNb) keep = false;
     if (minSICNa < 0.1 && minSICNa < minSICNb) keep = false;
     if (minSICNa < 0.75 * minSICNb) keep = false;
+
+    if (debugCreateViews) {
+      std::string method = "GFace_K";
+      GeoLog::add(patch.elements, "optim_"+method+"_OUT_"+std::to_string(rdi) + "_" + std::to_string(minSICNa) + "_keep=" + std::to_string(keep));
+    }
 
     if (keep) {
       Msg::Debug("- Face %i: kernel smoothing (Mix Winslow/Angle, explicit with projections, %li vertices, %li iter max, %.3f sec), SICN min: %f -> %f, avg: %f -> %f",

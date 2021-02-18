@@ -296,6 +296,47 @@ namespace QMT {
     return true;
   }
 
+  bool smallCavitySmoothing(GFaceMeshPatch& patch, 
+      SurfaceProjector* sp, bool invertNormalsForQuality,
+      GeomOptimStats& stats) {
+    if (patch.intVertices.size() == 0) {
+      computeSICN(patch.elements, stats.sicnMinBefore, stats.sicnAvgBefore);
+      computeSICN(patch.elements, stats.sicnMinAfter, stats.sicnAvgAfter);
+      return true;
+    }
+
+
+    bool cadInitOk = false;
+    if (haveNiceParametrization(patch.gf)) {
+      PatchGeometryBackup backup(patch);
+      /* Try pure UV smoothing in parameter space */
+      int s0 = patchOptimizeGeometryGlobal(patch, stats);
+      if (stats.sicnMinAfter > 0.) {
+        cadInitOk = true;
+      } else {
+        backup.restore();
+      }
+    }
+
+    /* Kernel smoothing (in parameter space or in 3D space with proj.) */
+    GeomOptimOptions opt;
+    opt.invertCADNormals = invertNormalsForQuality;
+    opt.localLocking = true;
+    opt.dxLocalMax = 1.e-5;
+    opt.outerLoopIterMax = 100;
+    opt.timeMax = 0.25 * double(patch.intVertices.size());
+    if (cadInitOk) {
+      opt.force3DwithProjection = false;
+      opt.useDmoIfSICNbelow = 0.5;
+    } else {
+      opt.sp = sp;
+      opt.force3DwithProjection = true;
+    }
+
+    bool okk = patchOptimizeGeometryWithKernel(patch, opt, stats);
+    return okk;
+  }
+
 }
 
 using namespace QMT;
@@ -389,29 +430,10 @@ int remeshLocalWithDiskQuadrangulation(
         i, N, no, rotation, patch.bdrVertices.front().size(), intVertices.size(), patch.intVertices.size(), elements.size(), patch.elements.size());
 
     /* Try to only move the interior vertices (in general, it is not enough) */
-    if (patch.intVertices.size() > 0) {
+    {
       GeomOptimStats stats;
-      if (haveNiceParametrization(gf)) {
-        /* Pure UV smoothing in CAD domain */
-        int s0 = patchOptimizeGeometryGlobal(patch, stats);
-      }
-
-      /* Kernel smoothing */
-      GeomOptimOptions opt;
-      opt.sp = sp;
-      opt.invertCADNormals = invertNormalsForQuality;
-      opt.useDmoIfSICNbelow = 0.5;
-      int s1 = patchOptimizeGeometryWithKernel(patch, opt, stats);
-      if (stats.sicnAvgAfter > minSICNafer) {
-        geometryOk = true;
-        diff.after = patch; /* set the diff output ! */
-        break;
-      }
-    } else {
-      double sicnMin = -1.;
-      double sicnAvg = -1.;
-      computeSICN(patch.elements, sicnMin, sicnAvg);
-      if (sicnMin > minSICNafer) {
+      bool oks = smallCavitySmoothing(patch, sp, invertNormalsForQuality, stats);
+      if (oks && stats.sicnMinAfter > minSICNafer) {
         geometryOk = true;
         diff.after = patch; /* set the diff output ! */
         break;
@@ -429,29 +451,12 @@ int remeshLocalWithDiskQuadrangulation(
       Msg::Debug("try smoothing the extended cavity (%li -> %li free vertices)", 
           patch.intVertices.size(), largerPatch.intVertices.size());
 
-      /* Store the geometry */
-      PatchGeometryBackup backup(largerPatch);
-
-      GeomOptimOptions opt;
-      opt.sp = sp;
-      opt.invertCADNormals = invertNormalsForQuality;
-      opt.useDmoIfSICNbelow = 0.5;
       GeomOptimStats stats;
-
-      if (haveNiceParametrization(gf)) {
-        patchOptimizeGeometryGlobal(largerPatch, stats);
-      }
-      int s1 = patchOptimizeGeometryWithKernel(largerPatch, opt, stats);
-
-      if (s1 == 0 && stats.sicnAvgAfter > minSICNafer) {
+      bool oks = smallCavitySmoothing(largerPatch, sp, invertNormalsForQuality, stats);
+      if (oks && stats.sicnMinAfter > minSICNafer) {
         geometryOk = true;
-        /* warning: the small patch, not the larger one !
-         *          but geometry of the patch boundary has been
-         *          changed via the smoothing of the larger patch */
-        diff.after = patch;  
+        diff.after = patch; /* set the diff output (the patch, not the largerPatch) ! */
         break;
-      } else {
-        backup.restore();
       }
     }
   }

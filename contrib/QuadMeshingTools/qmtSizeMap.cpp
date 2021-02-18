@@ -131,13 +131,14 @@ int computeMinimalSizeOnCurves(
 
       /* Collect non-adjacent curves */
       std::vector<GEdge*> curvesNotAdjacent;
-      for (GFace* gf: ge->faces()) for (GEdge* ge2: gf->edges()) {
-        for (GVertex* extremity: ge->vertices()) {
-          auto it = std::find(extremity->edges().begin(),extremity->edges().end(), ge2);
-          if (it == extremity->edges().end()) {
-            curvesNotAdjacent.push_back(ge2);
+      for (GFace* gf: ge->faces()) for (GEdge* ge2: gf->edges()) if (ge2 != ge) {
+        bool isAdjacent = false;
+        for (GVertex* extremity: ge2->vertices()) {
+          if (inVector(extremity, ge->vertices())) {
+            isAdjacent = true;
           }
         }
+        if (!isAdjacent) curvesNotAdjacent.push_back(ge2);
       }
       sort_unique(curvesNotAdjacent);
 

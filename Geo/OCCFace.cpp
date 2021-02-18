@@ -252,7 +252,7 @@ bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
   gp_Pnt pnt(p[0], p[1], p[2]);
   GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
   if(!proj.NbPoints()) {
-    Msg::Warning("Projection of point (%g, %g, %g) on surface %d failed", p[0],
+    Msg::Debug("Projection of point (%g, %g, %g) on surface %d failed", p[0],
                  p[1], p[2], tag());
     return false;
   }

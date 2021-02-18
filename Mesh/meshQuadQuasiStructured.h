@@ -67,6 +67,7 @@ bool backgroundMeshAndGuidingFieldExists(GModel* gm);
  *        local remeshing by looking into all disk quadrangulations.
  *        Quad quality (SICN) is monitored and the minimum will not decrease.
  *        Executes over CAD faces in parallel if multiple threads available.
+ *        Only faces whose meshing status is GFace::PENDING are processed
  *
  * @param gm The model containing the face quad meshes.
  *
@@ -91,12 +92,28 @@ int transferSeamGEdgesVerticesToGFace(GModel* gm);
  *        meshes are subdivisions of a list of predefined patterns.
  *        Irregular vertices matching cross field singularities are
  *        preserved.
+ *        Executes over CAD faces in parallel if multiple threads available.
+ *        Only faces whose meshing status is GFace::PENDING are processed
  *
  * @param gm The model containing the face quad meshes.
  *
  * @return 0 if success
  */
 int optimizeTopologyWithCavityRemeshing(GModel* gm);
+
+/**
+ * @brief Look for simple CAD faces (topological disk, a few corners)
+ *        which can be remeshed with simple quad patterns.
+ *        The patterns are the same that are used in cavity remeshing.
+ *        Executes over CAD faces in parallel if multiple threads available.
+ *        Only faces whose meshing status is GFace::PENDING are processed
+ *
+ * @param gm The model containing the face quad meshes.
+ * @param minimumQualityRequired Minimum quality (SICN) required to accept a new quad mesh
+ *
+ * @return 0 if success
+ */
+int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequired = 0.5);
 
 
 /**

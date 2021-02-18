@@ -181,6 +181,12 @@ int buildBackgroundField(
 
   gm->getFields()->setBackgroundMesh(view->getTag());
 
+  if (Msg::GetVerbosity() >= 99) {
+    std::string name = gm->getName() + "_bgm.pos";
+    Msg::Warning("export background field to '%s' ", name.c_str());
+    view->write(name,0);
+  }
+
   return 0;
 #else
   Msg::Error("Module POST (post-processing) required to create background field view");
@@ -207,24 +213,37 @@ void showCrossFieldInView(
 }
 
 void showUVParametrization(
+    GFace* gf,
+    const std::vector<MElement*>& elts,
+    const std::string& viewName = "uv") {
+  std::vector<std::vector<double> > values_u;
+  std::vector<std::vector<double> > values_v;
+  for (MElement* t: elts) {
+    std::vector<SPoint2> tris_uvs = paramOnElement(gf,t);
+    std::vector<double> us(tris_uvs.size());
+    std::vector<double> vs(tris_uvs.size());
+    for (size_t k = 0; k < us.size(); ++k) {
+      us[k] = tris_uvs[k][0];
+      vs[k] = tris_uvs[k][1];
+    }
+    values_u.push_back(us);
+    values_v.push_back(vs);
+  }
+  GeoLog::add(elts,values_u,viewName+"_u");
+  GeoLog::add(elts,values_v,viewName+"_v");
+}
+
+void showUVParametrization(
     GlobalBackgroundMesh& bgm,
     const std::string& viewName = "uv") {
   for (auto& kv: bgm.faceBackgroundMeshes) {
     GFace* gf = kv.first;
     if (!gf->haveParametrization()) continue;
     std::vector<MElement*> tris;
-    std::vector<std::vector<double> > values_u;
-    std::vector<std::vector<double> > values_v;
     for (MTriangle& t: kv.second.triangles) {
       tris.push_back(&t);
-      std::array<SPoint2,3> tris_uvs = paramOnTriangle(gf,&t);
-      std::vector<double> us = {tris_uvs[0][0],tris_uvs[1][0],tris_uvs[2][0]};
-      std::vector<double> vs = {tris_uvs[0][1],tris_uvs[1][1],tris_uvs[2][1]};
-      values_u.push_back(us);
-      values_v.push_back(vs);
     }
-    GeoLog::add(tris,values_u,viewName+"_u");
-    GeoLog::add(tris,values_v,viewName+"_v");
+    showUVParametrization(gf, tris, viewName);
   }
   GeoLog::flush();
 }
@@ -387,6 +406,10 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     for (size_t f = 0; f < faces.size(); ++f) {
 
       GFace* gf = faces[f];
+
+      if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+      if (CTX::instance()->debugSurface > 0 && gf->tag() != CTX::instance()->debugSurface) continue;
+
       /* Compute a cross field on each face */
       std::vector<MLine*> lines;
       std::vector<MTriangle*> triangles;
@@ -961,6 +984,7 @@ int improveCornerValences(
     DQOptions& opt,
     DQStats& stats
     ) {
+  Msg::Debug("- Face %i: improve corner valences", gf->tag());
   std::vector<MVertex*> smoothingPool; /* for smoothing after topological changes */
   smoothingPool.reserve(gf->mesh_vertices.size());
 
@@ -1080,6 +1104,7 @@ int improveCurveValences(
     DQOptions& opt,
     DQStats& stats
     ) {
+  Msg::Debug("- Face %i: improve curve valences", gf->tag());
   std::vector<MVertex*> smoothingPool; /* for smoothing after topological changes */
   smoothingPool.reserve(gf->mesh_vertices.size());
 
@@ -1232,6 +1257,7 @@ int improveInteriorValences(
     DQOptions& opt,
     DQStats& stats
     ) {
+  Msg::Debug("- Face %i: improve interior valences", gf->tag());
 
   std::vector<MVertex*> smoothingPool; /* for smoothing after topological changes */
   smoothingPool.reserve(gf->mesh_vertices.size());
@@ -1350,28 +1376,34 @@ int improveInteriorValences(
 }
 
 int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
-  const bool SHOW_QUADTRI = false;
+  const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
+
+  const bool SHOW_QUADTRI = SHOW_INTERMEDIATE_VIEWS;
   if (SHOW_QUADTRI) {
-    gmsh::initialize();
+    std::vector<MElement*> elements;
+    for (GFace* gf: model_faces(gm)) {
+      append(elements,dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles));
+      append(elements,dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles));
+      // showUVParametrization(gf,dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles),"quadtri_uvs");
+      // showUVParametrization(gf,dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles),"quadtri_uvs");
+    }
+    GeoLog::add(elements, "qqs_quadtri");
     GeoLog::flush();
-    gmsh::fltk::run();
-    abort();
   }
 
 
   Msg::Debug("Refine mesh with background projection ...");
-  if (!backgroudMeshExists(BMESH_NAME)) {
-    Msg::Error("refine mesh with background projection: no background mesh");
-    return -1;
-  } 
 
-  size_t maxNumBeforeRefine = gm->getMaxVertexNumber();
 
   bool linear = true; 
   RefineMesh(gm, linear, true, false);
 
-  GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
-
+  GlobalBackgroundMesh* bmesh = nullptr;
+  if (backgroudMeshExists(BMESH_NAME)) {
+    bmesh = &(getBackgroundMesh(BMESH_NAME));
+  } else {
+    Msg::Warning("refine mesh with background projection: no background mesh, using CAD projection (slow)");
+  }
 
   unordered_map<MVertex*,MVertex*> old2new;
 
@@ -1386,7 +1418,8 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     double tPrev = 0;
     for (size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
       MVertex* v = ge->mesh_vertices[i];
-      if (v->getNum() > maxNumBeforeRefine) {
+      MEdgeVertex* mev = dynamic_cast<MEdgeVertex*>(v);
+      if (mev == nullptr) {
         double t = tPrev;
         GPoint proj = ge->closestPoint(v->point(), t);
         if (proj.succeeded()) {
@@ -1426,25 +1459,26 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
         gf->tag() != CTX::instance()->debugSurface) continue;
     if (gf->triangles.size() == 0 && gf->quadrangles.size() == 0) continue;
 
-    auto it = bmesh.faceBackgroundMeshes.find(gf);
-    if (it == bmesh.faceBackgroundMeshes.end()) {
-      Msg::Error("background mesh not found for face %i", gf->tag());
-      continue;
-    }
+    SurfaceProjector* sp = nullptr;
+    if (bmesh) {
+      auto it = bmesh->faceBackgroundMeshes.find(gf);
+      if (it == bmesh->faceBackgroundMeshes.end()) {
+        Msg::Error("background mesh not found for face %i", gf->tag());
+        continue;
+      }
 
+      /* Get pointers to triangles in the background mesh */
+      std::vector<MTriangle*> triangles(it->second.triangles.size());
+      for (size_t i = 0; i < it->second.triangles.size(); ++i) {
+        triangles[i] = &(it->second.triangles[i]);
+      }
 
-    /* Get pointers to triangles in the background mesh */
-    std::vector<MTriangle*> triangles(it->second.triangles.size());
-    for (size_t i = 0; i < it->second.triangles.size(); ++i) {
-      triangles[i] = &(it->second.triangles[i]);
-    }
-
-    SurfaceProjector sp;
-    bool oki = false;
-    oki = sp.initialize(gf,triangles);
-    if (!oki) {
-      Msg::Error("failed to initialize surface projector");
-      continue;
+      sp = new SurfaceProjector();
+      bool oki = sp->initialize(gf,triangles);
+      if (!oki) {
+        Msg::Error("failed to initialize surface projector");
+        continue;
+      }
     }
 
     /* Project the vertices which have been introduced by the RefineMesh */
@@ -1460,8 +1494,15 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     unordered_map<MVertex*,MVertex*> old2new_gf;
     for (size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
       MVertex* v = gf->mesh_vertices[i];
-      if (v->getNum() > maxNumBeforeRefine) {
-        GPoint proj = sp.closestPoint(v->point().data(), evalOnCAD, projOnCad);
+      MFaceVertex* mfv = dynamic_cast<MFaceVertex*>(v);
+      if (mfv == nullptr) {
+        GPoint proj;
+        if (sp != nullptr) {
+          proj = sp->closestPoint(v->point().data(), evalOnCAD, projOnCad);
+        } else {
+          double uvg[2] = {0.,0.};
+          proj = gf->closestPoint(v->point(), uvg);
+        }
         if (proj.succeeded()) {
           /* Need to change the type of the MVertex */
           MVertex* v2 = new MFaceVertex(proj.x(),proj.y(),proj.z(),gf,proj.u(),proj.v());
@@ -1491,16 +1532,23 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     }
 
     /* Smooth geometry (quick) */
-    double timeMax = 0.3;
-    optimizeGeometryQuadMesh(gf, &sp, timeMax);
+    if (sp != nullptr) {
+      double timeMax = 0.3;
+      optimizeGeometryQuadMesh(gf, sp, timeMax);
+    }
+
+    if (sp != nullptr) delete sp;
   }
 
-  const bool SHOW_QUADINIT = true;
+  const bool SHOW_QUADINIT = SHOW_INTERMEDIATE_VIEWS;
   if (SHOW_QUADINIT) {
-    gmsh::initialize();
+    std::vector<MElement*> elements;
+    for (GFace* gf: model_faces(gm)) {
+      append(elements,dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles));
+      // showUVParametrization(gf,dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles),"quad_uvs");
+    }
+    GeoLog::add(elements, "qqs_quadinit");
     GeoLog::flush();
-    gmsh::fltk::run();
-    abort();
   }
 
   return 0;
@@ -1528,39 +1576,13 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
   DQStats stats;
   DQOptions opt;
   opt.invertNormalsForQuality = invertNormals;
-  // if (!gf->haveParametrization()) {
-  if (!haveNiceParametrization(gf) || (gf->periodic(0) || gf->periodic(1))) {
-    /* note: for the moment, period jumps (e.g. across seam edge) are causing issues,
-     * we use surface projector in these cases */
+  bool alwaysBuildSurfaceProjector = true;
+  if (alwaysBuildSurfaceProjector || !haveNiceParametrization(gf) || (gf->periodic(0) || gf->periodic(1))) {
     opt.sp = new SurfaceProjector();
-    bool deleteTheTris = false;
-    std::vector<MTriangle*> triangles;
-
-    if (backgroudMeshExists(BMESH_NAME)) {
-      GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
-      auto it = bmesh.faceBackgroundMeshes.find(gf);
-      if (it == bmesh.faceBackgroundMeshes.end()) {
-        Msg::Error("background mesh not found for face %i", gf->tag());
-        return -3;
-      }
-
-      /* Get pointers to triangles in the background mesh */
-      triangles.resize(it->second.triangles.size());
-      for (size_t i = 0; i < it->second.triangles.size(); ++i) {
-        triangles[i] = &(it->second.triangles[i]);
-      }
-    } else {
-      triangles = trianglesFromQuads(gf->quadrangles);
-      deleteTheTris = true;
-    }
-
-    bool oki = opt.sp->initialize(gf, triangles);
-    if (!oki) {
-      Msg::Error("failed to initialize the surface projector");
-    }
-
-    if (deleteTheTris){
-      for (MTriangle* t: triangles) delete t;
+    bool okf = fillSurfaceProjector(gf, opt.sp);
+    if (!okf) {
+      Msg::Error("- Face %i: failed to get a surface projector", gf->tag());
+      return false;
     }
   }
 
@@ -1581,29 +1603,9 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
     Msg::Warning("optimize quad topology: failed to improve interior valences");
   }
 
-  /* Mesh smoothing */
-  {
-    GFaceMeshPatch globalPatch;
-    bool okp = patchFromQuads(gf, gf->quadrangles, globalPatch);
-    if (okp) {
-      Msg::Debug("-- smooth face quad mesh (%li vertices, %li quads)",
-          globalPatch.intVertices.size(),globalPatch.elements.size());
-      GeomOptimStats stats;
-      GeomOptimOptions opts;
-      opts.sp = opt.sp;
-      opts.outerLoopIterMax = 100;
-      opts.timeMax = 3.;
-      opts.withBackup = true;
-      opts.invertCADNormals = opt.invertNormalsForQuality;
-      // opts.smartMinThreshold = 0.1;
-      // opts.localLocking = true;
-      opts.dxLocalMax = 1.e-4;
-      opts.useDmoIfSICNbelow = 0.5;
-      patchOptimizeGeometryWithKernel(globalPatch, opts, stats);
-    } else {
-      Msg::Debug("-- failed to build global face patch for smoothing");
-    }
-  }
+  /* Smooth geometry (quick) */
+  double timeMax = 0.3;
+  optimizeGeometryQuadMesh(gf, opt.sp, timeMax);
 
   if (opt.sp) {
     delete opt.sp;
@@ -1622,8 +1624,35 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
   return 0;
 }
 
-int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
+int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequired) {
+  std::vector<GFace*> faces = model_faces(gm);
+  Msg::Debug("optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
+
+  initQuadPatterns();
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+  for (size_t f = 0; f < faces.size(); ++f) {
+    GFace* gf = faces[f];
+    if (gf->meshStatistics.status != GFace::PENDING) continue;
+    if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if (CTX::instance()->debugSurface > 0 &&
+        gf->tag() != CTX::instance()->debugSurface) continue;
+    if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+
+    bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
+    meshFaceWithGlobalPattern(gf, invertNormals, minimumQualityRequired);
+  }
+
   return 0;
+}
+
+
+
+int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
+  // return 0;
+
   Msg::Debug("optimize topology of quad meshes with disk quadrangulation remeshing ...");
 
   initDiskQuadrangulations();
@@ -1634,6 +1663,7 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
   std::vector<GFace*> faces = model_faces(gm);
   for (size_t f = 0; f < faces.size(); ++f) {
     GFace* gf = faces[f];
+    if (gf->meshStatistics.status != GFace::PENDING) continue;
     if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if (CTX::instance()->debugSurface > 0 &&
         gf->tag() != CTX::instance()->debugSurface) continue;
@@ -1645,10 +1675,8 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
   return 0;
 }
 
-
-
 int optimizeTopologyWithCavityRemeshing(GModel* gm) {
-  return 0;
+//  return 0;
 
   std::vector<GFace*> faces = model_faces(gm);
   Msg::Debug("optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
@@ -1660,10 +1688,12 @@ int optimizeTopologyWithCavityRemeshing(GModel* gm) {
 #endif
   for (size_t f = 0; f < faces.size(); ++f) {
     GFace* gf = faces[f];
+    if (gf->meshStatistics.status != GFace::PENDING) continue;
     if (CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if (CTX::instance()->debugSurface > 0 &&
         gf->tag() != CTX::instance()->debugSurface) continue;
     if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+      gf->meshStatistics.status = GFace::DONE;
 
     /* Get singularities from global storage */
     std::vector<std::pair<SPoint3,int> > singularities;

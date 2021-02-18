@@ -126,6 +126,7 @@ namespace GeoLog {
     V.objs.resize(V.objs.size()+elements.size());
     for (size_t i = 0; i < elements.size(); ++i) {
       MElement* elt = elements[i];
+      if (elt == nullptr) continue;
       size_t nv = elt->getNumVertices();
       V.objs[e0+i].isVector = false;
       V.objs[e0+i].isCell = false;
@@ -154,6 +155,7 @@ namespace GeoLog {
     V.objs.resize(V.objs.size()+elements.size());
     for (size_t i = 0; i < elements.size(); ++i) {
       MElement* elt = elements[i];
+      if (elt == nullptr) continue;
       size_t nv = elt->getNumVertices();
       V.objs[e0+i].isVector = false;
       V.objs[e0+i].isCell = false;
@@ -187,6 +189,7 @@ namespace GeoLog {
     V.objs.resize(V.objs.size()+elements.size());
     for (size_t i = 0; i < elements.size(); ++i) {
       MElement* elt = elements[i];
+      if (elt == nullptr) continue;
       size_t nv = elt->getNumVertices();
       if (field[i].size() != nv) return false;
       V.objs[e0+i].isVector = false;

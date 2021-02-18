@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <set>
 #include <vector>
 #include <unordered_map>
 #include "SPoint2.h"
@@ -14,12 +15,14 @@
 
 
 class GModel;
+class GVertex;
 class GFace;
 class GEdge;
 class MTriangle;
 class MQuadrangle;
 class MVertex;
 class MElement;
+class SurfaceProjector;
 
 std::vector<GFace*> model_faces(const GModel* gm);
 std::vector<GEdge*> face_edges(const GFace* gf);
@@ -46,8 +49,8 @@ struct GFaceMeshPatch {
 
 bool buildBoundary (const std::vector<MElement*>& elements, std::vector<MVertex*>& bnd);
 bool buildBoundaries(const std::vector<MElement*>& elements, std::vector<std::vector<MVertex*> >& loops);
-bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceMeshPatch& patch);
-bool patchFromQuads(GFace* gf, const std::vector<MQuadrangle*>& quads, GFaceMeshPatch& patch);
+bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceMeshPatch& patch, bool forceEvenIfBadBoundary = false);
+bool patchFromQuads(GFace* gf, const std::vector<MQuadrangle*>& quads, GFaceMeshPatch& patch, bool forceEvenIfBadBoundary = false);
 
 void sicnQuality(const GFaceMeshPatch& patch, double& sicnMin, double& sicnAvg);
 
@@ -62,11 +65,26 @@ MVertex* centerOfElements(const std::vector<MElement*>& elements);
 
 bool orientElementsAccordingToBoundarySegment(MVertex* a, MVertex* b, std::vector<MElement*>& elements);
 
-std::array<SPoint2,3> paramOnTriangle(GFace* gf, MTriangle* t);
-std::array<SPoint2,4> paramOnQuad(GFace* gf, MQuadrangle* q);
+bool reparamMeshVertexOnFaceWithRef(GFace* gf, MVertex* v, const SPoint2& ref, SPoint2& param);
+
+std::vector<SPoint2> paramOnElement(GFace* gf, MElement* e);
 
 /* warning: triangles are allocated, should be delete by the caller */
 std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quads);
+
+bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp);
+
+int surfaceEulerCharacteristicDiscrete(const std::vector<MTriangle*>& triangles);
+
+struct GFaceInfo {
+  GFace* gf = NULL;
+  int chi = 0;
+  std::set<GVertex*> cornerIsNonManifold;
+  std::array<std::set<GVertex*>,5> bdrValVertices;
+  int intSumVal3mVal5 = 0;
+};
+
+bool fillGFaceInfo(GFace* gf, GFaceInfo& info);
 
 
 struct GFaceMeshDiff {

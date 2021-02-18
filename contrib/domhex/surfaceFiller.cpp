@@ -94,7 +94,7 @@ bool compute4neighbors(
   double rhs1[2] = {dot(t1, s1)*L, dot(t1, s2)*L}, covar1[2];
   bool singular = false;
   if(!sys2x2(metric, rhs1, covar1)) {
-    Msg::Error("SINGULAR AT %g %g",midpoint.x(),midpoint.y());
+    Msg::Debug("surface filler: SINGULAR AT %g %g",midpoint.x(),midpoint.y());
     return false;
     covar1[1] = 1.0;
     covar1[0] = 0.0;
@@ -102,7 +102,7 @@ bool compute4neighbors(
   }
   double rhs2[2] = {dot(t2, s1)*L, dot(t2, s2)*L}, covar2[2];
   if(!sys2x2(metric, rhs2, covar2)) {
-    Msg::Error("SINGULAR AT %g %g",midpoint.x(),midpoint.y());
+    Msg::Debug("surface filler: SINGULAR AT %g %g",midpoint.x(),midpoint.y());
     return false;
     covar2[0] = 1.0;
     covar2[1] = 0.0;

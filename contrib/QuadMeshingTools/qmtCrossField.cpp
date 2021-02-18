@@ -1304,7 +1304,7 @@ int computeCrossFieldConformalScaling(
 
   delete _lsys;
 
-  {
+  if (false) {
     std::vector<MElement*> elts = dynamic_cast_vector<MTriangle*,MElement*>(triangles);
     GeoLog::add(elts, scaling, "h=exp(-H)");
     GeoLog::flush();

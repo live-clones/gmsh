@@ -29,9 +29,12 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "robin_hood.h"
+#include "meshOctreeLibOL.h"
+#include "BackgroundMesh.h"
 
 // /* QuadMeshingTools includes */
 #include "cppUtils.h"
+#include "arrayGeometry.h"
 #include "geolog.h"
 #include "gmsh.h"
 
@@ -268,10 +271,27 @@ bool getConnectedComponents(const std::vector<MElement*>& elements,
   return true;
 }
 
-bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceMeshPatch& patch) {
+bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceMeshPatch& patch, bool forceEvenIfBadBoundary) {
   patch.gf = gf;
   bool okb = buildBoundaries(elements, patch.bdrVertices);
-  if (!okb) return false;
+  if (!okb) {
+    if (forceEvenIfBadBoundary) {
+      /* Boundaries are not manifold, put all vertices in a unordered loop */
+      patch.bdrVertices.resize(1);
+      patch.bdrVertices[0].clear();
+      for (MElement* e: elements)  {
+        for (size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+          MVertex* v = e->getVertex(lv);
+          if (v->onWhat() != gf) {
+            patch.bdrVertices[0].push_back(v);
+          }
+        }
+      }
+      sort_unique(patch.bdrVertices[0]);
+    } else {
+      return false;
+    }
+  }
 
   /* Ensure no repetition in the boundary loops */
   for (std::vector<MVertex*>& loop: patch.bdrVertices) {
@@ -296,9 +316,9 @@ bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceM
   return true;
 }
 
-bool patchFromQuads(GFace* gf, const std::vector<MQuadrangle*>& quads, GFaceMeshPatch& patch) {
+bool patchFromQuads(GFace* gf, const std::vector<MQuadrangle*>& quads, GFaceMeshPatch& patch, bool forceEvenIfBadBoundary) {
   std::vector<MElement*> elts = dynamic_cast_vector<MQuadrangle*,MElement*>(quads);
-  return patchFromElements(gf, elts, patch);
+  return patchFromElements(gf, elts, patch, forceEvenIfBadBoundary);
 }
 
 struct as2Hash {
@@ -615,148 +635,144 @@ bool orientElementsAccordingToBoundarySegment(MVertex* a, MVertex* b, std::vecto
   return true;
 }
 
-std::array<SPoint2,3> paramOnTriangle(GFace* gf, MTriangle* t) {
-  std::array<SPoint2,3> tri_uvs = {SPoint2{0.,0.},SPoint2{0.,0.},SPoint2{0.,0.}};
-  if (t == nullptr) return tri_uvs;
-  bool check_periodicity = false;
-  for (size_t lv = 0; lv < t->getNumVertices(); ++lv) {
-    MVertex* v = t->getVertex(lv);
-    bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
-    if (onGf) {
-      v->getParameter(0,tri_uvs[lv][0]);
-      v->getParameter(1,tri_uvs[lv][1]);
-    } else {
-      check_periodicity = true;
-    }
+void getAllParametersWithPeriodJump(MVertex *v, GFace *gf, std::vector<SPoint2> &params)
+{
+  params.clear();
+
+  if(gf->geomType() == GEntity::DiscreteSurface) {
+    params.push_back(gf->parFromPoint(SPoint3(v->x(), v->y(), v->z())));
+    return;
   }
 
-  if (check_periodicity) {
-    bool found = false;
-    for (size_t lv = 0; lv < t->getNumVertices(); ++lv) {
-      MVertex* v1 = t->getVertex(lv);
-      bool onGf = (dynamic_cast<GFace*>(v1->onWhat()) == gf);
-      if (onGf) {
-        MVertex* v2 = t->getVertex((lv+1)%3);
-        MVertex* v3 = t->getVertex((lv+2)%3);
-        SPoint2 param1;
-        SPoint2 param2;
-        SPoint2 param3;
-        reparamMeshEdgeOnFace(v1, v2, gf, param1, param2);
-        reparamMeshEdgeOnFace(v1, v3, gf, param1, param3);
-        tri_uvs[(lv+0)%3] = {param1.x(),param1.y()};
-        tri_uvs[(lv+1)%3] = {param2.x(),param2.y()};
-        tri_uvs[(lv+2)%3] = {param3.x(),param3.y()};
-        found = true;
-        break;
+  if(v->onWhat()->dim() == 0) {
+    GVertex *gv = (GVertex *)v->onWhat();
+    std::vector<GEdge *> const &ed = gv->edges();
+    bool seam = false;
+    for(auto it = ed.begin(); it != ed.end(); it++) {
+      if((*it)->isSeam(gf)) {
+        Range<double> range = (*it)->parBounds(0);
+        if(gv == (*it)->getBeginVertex()) {
+          params.push_back((*it)->reparamOnFace(gf, range.low(), -1));
+          params.push_back((*it)->reparamOnFace(gf, range.low(), 1));
+        }
+        if(gv == (*it)->getEndVertex()) {
+          params.push_back((*it)->reparamOnFace(gf, range.high(), -1));
+          params.push_back((*it)->reparamOnFace(gf, range.high(), 1));
+        }
+        if(gv != (*it)->getBeginVertex() && gv != (*it)->getEndVertex()) {
+          Msg::Warning("Strange!");
+        }
+        seam = true;
       }
     }
-    if (!found) {
-      /* Triangle with no vertex inside the GFace, difficult to get
-       * good UV parametrization, we use center projection to get
-       * a initial guess */
-      SPoint3 center = t->barycenter();
-      double initialGuess[2] = {0.,0.};
-      GPoint proj = gf->closestPoint(center,initialGuess);
-      if (proj.succeeded()) {
-        MFaceVertex cv(proj.x(),proj.y(),proj.z(),gf,proj.u(),proj.v());
-        MVertex* v1 = t->getVertex(0);
-        MVertex* v2 = t->getVertex(1);
-        MVertex* v3 = t->getVertex(2);
-        SPoint2 paramc;
-        SPoint2 param1;
-        SPoint2 param2;
-        SPoint2 param3;
-        reparamMeshEdgeOnFace(&cv, v1, gf, paramc, param1);
-        reparamMeshEdgeOnFace(&cv, v2, gf, paramc, param2);
-        reparamMeshEdgeOnFace(&cv, v3, gf, paramc, param3);
-        tri_uvs[0] = {param1.x(),param1.y()};
-        tri_uvs[1] = {param2.x(),param2.y()};
-        tri_uvs[2] = {param3.x(),param3.y()};
-      } else {
-        tri_uvs[0] = {0.,0.};
-        tri_uvs[1] = {0.,0.};
-        tri_uvs[2] = {0.,0.};
+    if(!seam) params.push_back(gv->reparamOnFace(gf, 1));
+  }
+  else if(v->onWhat()->dim() == 1) {
+    GEdge *ge = (GEdge *)v->onWhat();
+    if(!ge->haveParametrization()) return;
+    double UU;
+    v->getParameter(0, UU);
+    if(UU == 0.0) UU = ge->parFromPoint(v->point());
+    params.push_back(ge->reparamOnFace(gf, UU, 1));
+    if(ge->isSeam(gf)) params.push_back(ge->reparamOnFace(gf, UU, -1));
+  }
+  else {
+    double UU, VV;
+    if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV)) {
+      params.push_back(SPoint2(UU, VV));
+      if (gf->periodic(0) && gf->periodic(1)) {
+        double Tu = gf->period(0);
+        double Tv = gf->period(1);
+        params.push_back(SPoint2(UU+Tu, VV+Tv));
+        params.push_back(SPoint2(UU+Tu, VV-Tv));
+        params.push_back(SPoint2(UU-Tu, VV+Tv));
+        params.push_back(SPoint2(UU-Tu, VV-Tv));
+      } else if (gf->periodic(0)) {
+        double Tu = gf->period(0);
+        params.push_back(SPoint2(UU+Tu, VV));
+        params.push_back(SPoint2(UU-Tu, VV));
+      } else if (gf->periodic(1)) {
+        double Tv = gf->period(1);
+        params.push_back(SPoint2(UU, VV+Tv));
+        params.push_back(SPoint2(UU, VV-Tv));
       }
     }
   }
-
-  return tri_uvs;
 }
 
-std::array<SPoint2,4> paramOnQuad(GFace* gf, MQuadrangle* t) {
-  std::array<SPoint2,4> uvs = {SPoint2{0.,0.},SPoint2{0.,0.},
-    SPoint2{0.,0.},SPoint2{0.,0.}};
-  if (t == nullptr) return uvs;
-  bool check_periodicity = false;
-  for (size_t lv = 0; lv < t->getNumVertices(); ++lv) {
+bool reparamMeshVertexOnFaceWithRef(GFace* gf, MVertex* v, const SPoint2& ref, SPoint2& param) {
+  std::vector<SPoint2> p1s;
+  getAllParametersWithPeriodJump(v, gf, p1s);
+  if (p1s.size() == 0) {
+    return false;
+  } else if (p1s.size() == 0) {
+    param = p1s[0];
+    return true;
+  }
+
+  double dmin2 = DBL_MAX;
+  for (size_t i = 0; i < p1s.size(); ++i) {
+    const SPoint2& uv = p1s[i];
+    double d2 = std::pow(uv.x()-ref.x(),2)+ std::pow(uv.y()-ref.y(),2);
+    if (d2 < dmin2) {
+      dmin2 = d2;
+      param = uv;
+    }
+  }
+  return true;
+}
+
+std::vector<SPoint2> paramOnElement(GFace* gf, MElement* t) {
+  if (t == nullptr) return {};
+  const size_t n = t->getNumVertices();
+  std::vector<SPoint2> uvs(n,SPoint2(0.,0.));
+
+  bool reparam = false;
+  for (size_t lv = 0; lv < n; ++lv) {
     MVertex* v = t->getVertex(lv);
     bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
     if (onGf) {
       v->getParameter(0,uvs[lv][0]);
       v->getParameter(1,uvs[lv][1]);
     } else {
-      check_periodicity = true;
+      reparam = true;
     }
   }
 
-  if (check_periodicity) {
+  if (reparam) {
     bool found = false;
-    for (size_t lv = 0; lv < t->getNumVertices(); ++lv) {
-      MVertex* v1 = t->getVertex(lv);
-      bool onGf = (dynamic_cast<GFace*>(v1->onWhat()) == gf);
-      if (onGf || lv == 3) { /* If neither of the 3 are on surface, takes random ... */
-        MVertex* v2 = t->getVertex((lv+1)%4);
-        MVertex* v3 = t->getVertex((lv+2)%4);
-        MVertex* v4 = t->getVertex((lv+3)%4);
-        SPoint2 param1;
-        SPoint2 param2;
-        SPoint2 param3;
-        SPoint2 param4;
-        reparamMeshEdgeOnFace(v1, v2, gf, param1, param2);
-        reparamMeshEdgeOnFace(v1, v3, gf, param1, param3);
-        reparamMeshEdgeOnFace(v1, v4, gf, param1, param4);
-        uvs[(lv+0)%4] = {param1.x(),param1.y()};
-        uvs[(lv+1)%4] = {param2.x(),param2.y()};
-        uvs[(lv+2)%4] = {param3.x(),param3.y()};
-        uvs[(lv+3)%4] = {param4.x(),param4.y()};
+    for (size_t lv = 0; lv < n; ++lv) {
+      MVertex* v = t->getVertex(lv);
+      bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
+      if (onGf) { 
+        v->getParameter(0,uvs[lv][0]);
+        v->getParameter(1,uvs[lv][1]);
+        for (size_t k = 1; k < n; ++k) {
+          MVertex* v2 = t->getVertex((lv+k)%n);
+          reparamMeshVertexOnFaceWithRef(gf, v2, uvs[lv], uvs[(lv+k)%n]);
+        }
+        found = true;
         break;
       }
     }
     if (!found) {
-      /* Quad with no vertex inside the GFace, difficult to get
+      /* Element with no vertex inside the GFace, difficult to get
        * good UV parametrization, we use center projection to get
        * a initial guess */
       SPoint3 center = t->barycenter();
       double initialGuess[2] = {0.,0.};
       GPoint proj = gf->closestPoint(center,initialGuess);
       if (proj.succeeded()) {
-        MFaceVertex cv(proj.x(),proj.y(),proj.z(),gf,proj.u(),proj.v());
-        MVertex* v1 = t->getVertex(0);
-        MVertex* v2 = t->getVertex(1);
-        MVertex* v3 = t->getVertex(2);
-        MVertex* v4 = t->getVertex(3);
-        SPoint2 paramc;
-        SPoint2 param1;
-        SPoint2 param2;
-        SPoint2 param3;
-        SPoint2 param4;
-        reparamMeshEdgeOnFace(&cv, v1, gf, paramc, param1);
-        reparamMeshEdgeOnFace(&cv, v2, gf, paramc, param2);
-        reparamMeshEdgeOnFace(&cv, v3, gf, paramc, param3);
-        reparamMeshEdgeOnFace(&cv, v4, gf, paramc, param4);
-        uvs[0] = {param1.x(),param1.y()};
-        uvs[1] = {param2.x(),param2.y()};
-        uvs[2] = {param3.x(),param3.y()};
-        uvs[3] = {param4.x(),param4.y()};
+        SPoint2 ref(proj.u(),proj.v());
+        for (size_t k = 0; k < n; ++k) {
+          MVertex* v = t->getVertex(k);
+          reparamMeshVertexOnFaceWithRef(gf, v, ref, uvs[k]);
+        }
       } else {
-        uvs[0] = {0.,0.};
-        uvs[1] = {0.,0.};
-        uvs[2] = {0.,0.};
-        uvs[3] = {0.,0.};
+        Msg::Error("parametrization not found for element");
       }
     }
   }
-
   return uvs;
 }
 
@@ -770,4 +786,205 @@ std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quad
     tris.push_back(t12);
   }
   return tris;
+}
+
+bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp) {
+  if (sp == nullptr) {
+    Msg::Error("fillSurfaceProjector: given SurfaceProjector* is null !");
+    abort();
+  }
+
+  if (gf->geomType() == GFace::GeomType::Sphere) {
+    bool oka = sp->setAnalyticalProjection(gf);
+    return oka;
+  }
+
+  bool deleteTheTris = false;
+  std::vector<MTriangle*> triangles;
+
+  /* warning: name should be the same a in meshQuadQuasiStructured.cpp
+   * for this to work ! */
+  const std::string BMESH_NAME = "bmesh_quadqs"; 
+  if (backgroudMeshExists(BMESH_NAME)) {
+    GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
+    auto it = bmesh.faceBackgroundMeshes.find(gf);
+    if (it != bmesh.faceBackgroundMeshes.end() && it->second.triangles.size() > 0) {
+      /* Get pointers to triangles in the background mesh */
+      triangles.resize(it->second.triangles.size());
+      for (size_t i = 0; i < it->second.triangles.size(); ++i) {
+        triangles[i] = &(it->second.triangles[i]);
+      }
+      deleteTheTris = false;
+    }
+  } 
+
+  if (triangles.size() == 0) {
+    if (gf->triangles.size() > 0 && gf->quadrangles.size() == 0) {
+      triangles = gf->triangles;
+      deleteTheTris = false;
+    } else if (gf->triangles.size() == 0 && gf->quadrangles.size() > 0) {
+      triangles = trianglesFromQuads(gf->quadrangles);
+      deleteTheTris = true;
+    } else {
+      Msg::Error("fillSurfaceProjector: case not supported");
+      return false;
+    }
+  }
+
+  if (triangles.size() == 0) {
+    Msg::Error("fillSurfaceProjector: no triangles to use");
+    return false;
+  }
+
+  bool oki = sp->initialize(gf, triangles);
+  if (!oki) {
+    Msg::Error("failed to initialize the surface projector");
+  }
+
+  if (deleteTheTris){
+    for (MTriangle* t: triangles) delete t;
+  }
+
+  return true;
+}
+
+int surfaceEulerCharacteristicDiscrete(const std::vector<MTriangle*>& triangles) {
+  if (triangles.size() == 0) {
+    Msg::Error("no triangulation for face, cannot compute discrete Euler characteristic");
+    return std::numeric_limits<int>::max();
+  }
+  std::vector<size_t> vertices;
+  std::vector<std::array<size_t,2> > edges;
+  vertices.reserve(3*triangles.size());
+  edges.reserve(3*triangles.size());
+  for (MTriangle* t: triangles) {
+    for (size_t lv = 0; lv < 3; ++lv) {
+      size_t v1 = t->getVertex(lv)->getNum();
+      size_t v2 = t->getVertex((lv+1)%3)->getNum();
+      std::array<size_t,2> vPair = {v1,v2};
+      if (v1 > v2) vPair = {v2,v1};
+      edges.push_back(vPair);
+      vertices.push_back(v1);
+    }
+  }
+  sort_unique(vertices);
+  sort_unique(edges);
+  int S = triangles.size();
+  int E = edges.size();
+  int V = vertices.size();
+  return V - E + S;
+}
+
+inline void normalize_accurate(SVector3& a) {
+  double amp = std::abs(a.data()[0]);
+  amp = std::max(amp,std::abs(a.data()[1]));
+  amp = std::max(amp,std::abs(a.data()[2]));
+  if (amp == 0.) {
+    return;
+  }
+  a = amp * a;
+  a.normalize();
+}
+
+inline double angleVectors(SVector3 a, SVector3 b) {
+  if (a.normSq() == 0. || b.normSq() == 0.) return DBL_MAX;
+  normalize_accurate(a);
+  normalize_accurate(b);
+  return acos(ArrayGeometry::clamp(dot(a,b),-1.,1.)); 
+}
+
+bool fillGFaceInfo(GFace* gf, GFaceInfo& info) {
+  info.gf = gf;
+  info.chi = 0;
+  info.cornerIsNonManifold.clear();
+  for (auto& a: info.bdrValVertices) a.clear();
+  info.intSumVal3mVal5 = 0;
+
+  std::vector<MTriangle*> triangles;
+  bool delTriangles = false;
+  if (gf->triangles.size() > 0 && gf->quadrangles.size() == 0) {
+    triangles = gf->triangles;
+  } else if (gf->quadrangles.size() > 0 && gf->triangles.size() == 0) {
+    triangles.reserve(2*gf->quadrangles.size());
+    for (MQuadrangle* f: gf->quadrangles) {
+      MVertex* v0 = f->getVertex(0);
+      MVertex* v1 = f->getVertex(1);
+      MVertex* v2 = f->getVertex(2);
+      MVertex* v3 = f->getVertex(3);
+      MTriangle* t1 = new MTriangle(v0,v1,v2);
+      MTriangle* t2 = new MTriangle(v0,v2,v3);
+      triangles.push_back(t1);
+      triangles.push_back(t2);
+    }
+    delTriangles = true;
+  } else {
+    Msg::Error("fillGFaceInfo: no triangles and no quads, cannot compute");
+    return false;
+  }
+
+  /* Compute geometric info */
+  robin_hood::unordered_map<GVertex*,std::vector<MElement*> > corner2tris;
+  robin_hood::unordered_map<GVertex*,double> corner2angle;
+  for (MTriangle* t: triangles) {
+    for (size_t lv = 0; lv < 3; ++lv) {
+      MVertex* v = t->getVertex(lv);
+      GVertex* gv = v->onWhat()->cast2Vertex();
+      if (gv != nullptr) {
+        MVertex* vPrev = t->getVertex((3+lv-1)%3);
+        MVertex* vNext = t->getVertex((lv+1)%3);
+        SVector3 pNext = vNext->point();
+        SVector3 pPrev = vPrev->point();
+        SVector3 pCurr = v->point();
+        double agl = angleVectors(pNext-pCurr,pPrev-pCurr);
+        corner2tris[gv].push_back(t);
+        corner2angle[gv] += agl;
+      }
+    }
+  }
+  robin_hood::unordered_set<GVertex*> boundaryCADcorners;
+  for (GEdge* ge: gf->edges()) for (GVertex* gv: ge->vertices()) {
+    boundaryCADcorners.insert(gv);
+  }
+
+  for (const auto& kv: corner2tris) {
+    GVertex* gv = kv.first;
+    /* Check if corner is manifold */
+    {
+      auto it = boundaryCADcorners.find(gv);
+      if (it == boundaryCADcorners.end()) continue; /* ignore interior GVertex */
+    }
+    std::vector<MElement*> elts = kv.second;
+    std::vector<MVertex*> bnd;
+    bool okb = buildBoundary(elts, bnd);
+    if (!okb) {
+      info.cornerIsNonManifold.insert(gv);
+      continue;
+    }
+    double angle = corner2angle[gv];
+    double angle_deg = 180. / M_PI * angle;
+    if (angle_deg < 90. + 45.) {
+      info.bdrValVertices[1].insert(gv);
+    } else if (angle_deg < 180. + 45.) {
+      info.bdrValVertices[2].insert(gv);
+    } else if (angle_deg < 270. + 45.) {
+      info.bdrValVertices[3].insert(gv);
+    } else if (angle_deg < 360.) {
+      info.bdrValVertices[4].insert(gv);
+    } else {
+      Msg::Warning("CAD vertex (surf=%i,node=%i) has angle = %f deg (interior node ?)", gf->tag(), gv->tag(), angle_deg);
+      continue;
+    }
+  }
+  info.chi = surfaceEulerCharacteristicDiscrete(triangles);
+
+  /* discrete topological relations between irregular vertices:
+   *  sum3m5 = n_val3 - n_val5 = 4 \chi + m_val3 - m_val1  + 2 m_val4 */
+  info.intSumVal3mVal5 = 4*info.chi + int(info.bdrValVertices[3].size()) 
+    - int(info.bdrValVertices[1].size()) + 2 * int(info.bdrValVertices[4].size());
+
+  if (delTriangles) {
+    for (MTriangle* t: triangles) delete t;
+  }
+
+  return true;
 }

@@ -30,6 +30,20 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
     const std::vector<std::pair<SPoint3,int> >& singularities,
     bool invertNormalsForQuality);
 
+/**
+ * @brief Consider the current face mesh as a global single cavity
+ *        and try to mesh it with the exising patterns.
+ *        The quad patterns must be loaded before (see initQuadPatterns()).
+ *
+ * @param[in,out] gf The face containing the quad mesh to improve
+ * @param[in] invertNormalsForQuality The CAD normals are used to compute signed quality.
+ *                                    This flag invert invert the CAD normals in the measure.
+ * @param[in] minimumQualityRequired Minimum quality (SICN) required to accept a new quad mesh
+ *
+ * @return 0 if success
+ */
+int meshFaceWithGlobalPattern(GFace* gf, bool invertNormalsForQuality, double minimumQualityRequired);
+
 
 /* List of patterns */
 extern const size_t PATTERN_QUAD_REGULAR;
@@ -91,7 +105,7 @@ bool patchIsRemeshableWithQuadPattern(
  *                  patchIsRemeshableWithQuadPattern()
  * @param[in] elements The old elements in the patch, may be empty
  * @param[in] intVertices The old interior vertices in the patch, may empty
- * @param[in] minSICNafer Minimum SICN quality required in the remeshed patch. 
+ * @param[in] minSICNrequired Minimum SICN quality required in the remeshed patch. 
  *                        Compared after geometry untangling/smoothing.
  * @param[in] invertNormalsForQuality The CAD normals are used to compute signed quality.
  *                                    This flag invert invert the CAD normals in the measure.
@@ -107,7 +121,7 @@ int remeshPatchWithQuadPattern(
     const std::vector<std::vector<MVertex*> > & sides,
     const std::vector<MElement*> & elements,
     const std::vector<MVertex*>& intVertices,
-    double minSICNafer,
+    double minSICNrequired,
     bool invertNormalsForQuality,
     SurfaceProjector* sp,
     GFaceMeshDiff& diff);
