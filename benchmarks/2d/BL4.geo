@@ -1,5 +1,3 @@
-Mesh.CharacteristicLengthFromCurvature=1;
-Mesh.MinimumCirclePoints=20;
 l = .2;
 Point(7) = {-1.4, 0.5, 0, l};
 //+

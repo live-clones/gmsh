@@ -1,13 +1,11 @@
 
-Mesh.CharacteristicLengthFactor=.2;
+Mesh.MeshSizeFactor=.2;
 
-//Mesh.CharacteristicLengthFromCurvature=1; //-clcurv
-Mesh.CharacteristicLengthMin = 0.25; //-clmin
-Mesh.CharacteristicLengthMax = 4.0; //-clmax
+//Mesh.MeshSizeFromCurvature=15; //-clcurv
+Mesh.MeshSizeMin = 0.25; //-clmin
+Mesh.MeshSizeMax = 4.0; //-clmax
 //Mesh.LcIntegrationPrecision=1.e-5; //-epslc1d
-
-Mesh.MinimumElementsPerTwoPi=15;
-//Mesh.CharacteristicLengthExtendFromBoundary=0;
+//Mesh.MeshSizeExtendFromBoundary=0;
 
 Merge "linkrods.step";
 

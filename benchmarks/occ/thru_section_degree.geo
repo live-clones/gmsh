@@ -754,5 +754,4 @@ Transfinite Surface{1,2};
 Recombine Surface {1,2};
 */
 
-Mesh.CharacteristicLengthFromCurvature = 1;
-Mesh.MinimumElementsPerTwoPi = 10;
+Mesh.MeshSizeFromCurvature = 10;

@@ -140,7 +140,7 @@ public:
   ~automaticMeshSizeField();
   automaticMeshSizeField(
     std::string fFile = "",
-    int minElementsPerTwoPi = CTX::instance()->mesh.minElementsPerTwoPi,
+    int minElementsPerTwoPi = CTX::instance()->mesh.lcFromCurvature,
     int nLayersPerGap = CTX::instance()->mesh.nLayersPerGap,
     double gradation = CTX::instance()->mesh.gradation, double hmin = -1.0,
     double hmax = -1.0, double hbulk = -1.0, int smoothing = true,

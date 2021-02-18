@@ -14,5 +14,4 @@ BooleanUnion(6) = { Volume{4}; Delete; }{ Volume{5}; Delete; };
 BooleanDifference(10) = { Volume{3}; Delete; }{ Volume{6}; Delete; };
 
 Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthFromCurvature = 1;
-Mesh.MinimumElementsPerTwoPi = 10;
+Mesh.MeshSizeFromCurvature = 10;

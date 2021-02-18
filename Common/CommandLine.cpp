@@ -131,9 +131,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-clextend value", "Extend mesh element sizes from boundaries "
                  "(Mesh.MeshSizeExtendFromBoundary)"));
   s.push_back(mp("-clcurv value", "Compute mesh element size from curvature, with "
-                 "given minimum number of elements per 2*pi radians "
-                 "(Mesh.MeshSizeFromCurvature and "
-                 "Mesh.MinimumElementsPerTwoPi)"));
+                 "value the target number of elements per 2*pi radians "
+                 "(Mesh.MeshSizeFromCurvature)"));
   s.push_back(mp("-aniso_max value", "Set maximum anisotropy for bamg "
                  "(Mesh.AnisoMax)"));
   s.push_back(mp("-smooth_ratio value", "Set smoothing ration between mesh sizes "
@@ -912,8 +911,8 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
         }
         i++;
         if(i < argv.size()){
-          CTX::instance()->mesh.minElementsPerTwoPi = atoi(argv[i].c_str());
-          if(CTX::instance()->mesh.minElementsPerTwoPi <= 0.)
+          CTX::instance()->mesh.lcFromCurvature = atoi(argv[i].c_str());
+          if(CTX::instance()->mesh.lcFromCurvature <= 0.)
             CTX::instance()->mesh.lcFromCurvature = 0;
         }
         else{
@@ -1112,8 +1111,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-clcurv") {
         i++;
         if(i < argv.size()) {
-          opt_mesh_lc_from_curvature(0, GMSH_SET, 1);
-          opt_mesh_min_elements_2pi(0, GMSH_SET, atof(argv[i++].c_str()));
+          opt_mesh_lc_from_curvature(0, GMSH_SET, atof(argv[i++].c_str()));
         }
         else {
           Msg::Error("Missing number");
@@ -1121,7 +1119,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
         }
       }
       else if(argv[i] == "-clcurviso") {
-        opt_mesh_lc_from_curvature(0, GMSH_SET, 2);
+        opt_mesh_lc_from_curvature_iso(0, GMSH_SET, 1);
         i++;
       }
       else if(argv[i] == "-smooth") {

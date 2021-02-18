@@ -36,11 +36,10 @@ Field[2*n+1].FieldsList = {n+1:2*n};
 
 If(field)
   Background Field = 2*n+1;
-  Mesh.CharacteristicLengthExtendFromBoundary = 0;
+  Mesh.MeshSizeExtendFromBoundary = 0;
   //Field[2*n+2] = Octree;
   //Field[2*n+2].InField = 2*n+1;
   //Background Field = 2*n+2;
 Else
-  Mesh.CharacteristicLengthFromCurvature = 1;
-  Mesh.MinimumElementsPerTwoPi = 10;
+  Mesh.MeshSizeFromCurvature = 10;
 EndIf

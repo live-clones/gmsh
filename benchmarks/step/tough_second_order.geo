@@ -1,10 +1,9 @@
 // This is a tough one to make at order 2
 
 Merge "tough_second_order.step";
-Mesh.CharacteristicLengthMin = 8;
-Mesh.CharacteristicLengthMax = 40;
-Mesh.CharacteristicLengthFromCurvature = 40;
-Mesh.MinimumElementsPerTwoPi = 20;
+Mesh.MeshSizeMin = 8;
+Mesh.MeshSizeMax = 40;
+Mesh.MeshSizeFromCurvature = 20;
 Mesh.ElementOrder = 2;
 Mesh.OptimizeNetgen = 1;
 Mesh.HighOrderOptimize = 2;

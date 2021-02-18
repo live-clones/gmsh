@@ -337,7 +337,12 @@ Default value: @code{1e+22}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshSizeFromCurvature
-Automatically compute mesh element sizes from curvature@*
+Automatically compute mesh element sizes from curvature, using the value as the target number of elements per 2 * Pi radians@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFromCurvatureIsotropic
+Force isotropic curvature estimation when the mesh size is computed from curvature@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -392,8 +397,8 @@ Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumElementsPerTwoPi
-Minimum number of elements per 2 * Pi radians when the mesh size is adapted to the curvature@*
-Default value: @code{6}@*
+[Deprecated]@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
