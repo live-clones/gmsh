@@ -30,10 +30,6 @@
 #include "StringUtils.h"
 #include "OS.h"
 
-#if defined(HAVE_PLUGINS)
-#include "PluginManager.h"
-#endif
-
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
 #include "onelabUtils.h"
