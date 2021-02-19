@@ -854,7 +854,6 @@ namespace QMT {
     const bool checkDisplacement = ring.jump[0] != 0. || ring.jump[1] != 0.;
     const double dispMax = checkDisplacement ? getRingDispMax(v, ring) : 0.;
 
-    /* warning: not in C++ standard but we don't want template or alloc */
     for (size_t iter = 0; iter < nIter; ++iter) {
       vec4 grid = getGrid(v, deltaUV, n, w);
       SPoint2 uv;
@@ -866,12 +865,12 @@ namespace QMT {
           if (!newPos.succeeded()) continue;
           if (checkDisplacement) {
             double disp = length(vec3{newPos.x(),newPos.y(),newPos.z()} - vec3{v[0],v[1],v[2]});
-            if (disp > 1 || dispMax > 1) {
-              DBG(disp, dispMax, v, deltaUV, uv, ring.jump);
-              abort();
-              //gmsh::fltk::run();
-              //abort();
-            }
+            // if (disp > 1 || dispMax > 1) {
+            //   // DBG(disp, dispMax, v, deltaUV, uv, ring.jump);
+            //   // abort();
+            //   //gmsh::fltk::run();
+            //   //abort();
+            // }
             if (disp > dispMax) continue;
           }
           const vec5 v2 = {newPos.x(),newPos.y(),newPos.z(),uv.data()[0],uv.data()[1]};
@@ -925,7 +924,7 @@ int patchOptimizeGeometryGlobal(
   }
 
   bool debugCreateViews = DBG_VIZU_G;
-  if (Msg::GetVerbosity() >= 99 
+  if (Msg::GetVerbosity() >= 999
       && CTX::instance()->debugSurface == patch.gf->tag()) {
     debugCreateViews = true;
   }
@@ -1339,7 +1338,7 @@ bool patchOptimizeGeometryWithKernel(
 
   /* Debug visualization */
   bool debugCreateViews = DBG_VIZU_K;
-  if (Msg::GetVerbosity() >= 99 
+  if (Msg::GetVerbosity() >= 999 
       && CTX::instance()->debugSurface == patch.gf->tag()) {
     debugCreateViews = true;
   }
@@ -1395,10 +1394,14 @@ bool patchOptimizeGeometryWithKernel(
   /* Statistics */
   computeSICN(patch.elements, stats.sicnMinAfter, stats.sicnAvgAfter);
 
+  bool cancel = false;
+
   if (opt.withBackup && backup && stats.sicnMinAfter < stats.sicnMinBefore) {
+    Msg::Debug("optimize geometry kernel: restore patch geometry with backup", patch.elements.size());
     backup->restore();
     stats.sicnMinAfter = stats.sicnMinBefore;
     stats.sicnAvgAfter = stats.sicnAvgBefore;
+    cancel = true;
   }
 
   /* Debug visualization */
@@ -1414,6 +1417,8 @@ bool patchOptimizeGeometryWithKernel(
   stats.nLock = nbVerticesOnBoundary(patch);
 
   if (backup) delete backup;
+
+  if (cancel) return true;
 
   if (useParam) {
     Msg::Debug("optimize geometry kernel (using CAD param): %li/%li free vertices, %li elements, SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec",
@@ -1489,7 +1494,7 @@ bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
   }
 
   bool debugCreateViews = DBG_VIZU_G;
-  if (Msg::GetVerbosity() >= 99 
+  if (Msg::GetVerbosity() >= 999 
       && CTX::instance()->debugSurface == patch.gf->tag()) {
     debugCreateViews = true;
   }

@@ -10,38 +10,40 @@ select "Quasi-structured quad (experimental)" in Mesh > 2D algorithm
 
 gmsh -algo quadqs -2 <other options>
 
-The mesh size is mainly controled by the -clscale option.
+The mesh size is mainly controlled by the -clscale option.
 
 ### General pipeline:
 
 1. generate initial triangulation
 2. compute cross field
 3. compute size map 
-4. apply curve quantization constraints (including transfinite)
-5. generate curve meshes
-6. generate transfinite quad meshes
-7. generate unstructured quad-dominant meshes with algo pack (or fallback meshers)
-8. midpoint subdivision
-9. improve quad mesh topology with disk quadrangulation and cavity remeshing
-10. geometry smoothing
+4. save as background mesh, background field, delete mesh
+5. apply curve quantization constraints (including transfinite) (not re-implemented yet)
+6. generate curve meshes
+7. generate transfinite quad meshes (not re-implemented yet)
+8. generate unstructured quad-dominant meshes with algo pack
+9. midpoint subdivision
+10. mesh simple CAD faces with patterns
+11. improve quad mesh topology with disk quadrangulation remeshing
+12. improve quad mesh topology with cavity remeshing
+13. geometry smoothing (also applied during the previous steps)
 
 ### Shortcuts:
 
 - If triangulation available: start at step 2
-- If scaled cross field available: start at step 4
+- If scaled cross field available: start at step 5
 - If scalar size map available: import it in step 3
-- If quad mesh available: start at step 9
-
+- If quad mesh available: start at step 10
 
 # Content of contrib/QuadMeshingTools
 
 - Heat-based cross/asterisk field solver in qmtCrossField.h/cpp
-- Conformal scaling solver (least-square, for angles) in qmtCrossField.h/cpp
+- Conformal scaling solver (least-square, based on angle gradients) in qmtCrossField.h/cpp
 - Size map tools (dist to curves, one-way smoothing) in qmtSizeMap.h/cpp
-- GeoLog: convenient wrapper around gmsh views for debugging, geolog.h/cpp
 - Disk quadrangulation remeshing, qmtDiskQuadrangulationRemeshing.h/cpp
 - Pattern-based cavity remeshing, qmtQuadCavityRemeshing.h/cpp
 - Various geometry smoothers (global UV Laplacian, Winslow/Angled-based local kernel, DMO UV kernel), in qmtMeshGeometryOptimization.h/cpp
+- GeoLog: convenient wrapper around gmsh views for debugging, geolog.h/cpp
 
 
 # Changes to gmsh
@@ -66,5 +68,7 @@ The mesh size is mainly controled by the -clscale option.
 - Ensure robustness (quality > 0) of each step, as in quadMeshingTools branch
 - Add raw quantization / transfinite on simple faces, as in quadMeshingTools branch
 - Faster cavity remeshing implementation, as in quadMeshingTools branch
+- Add MUMPS solver (with analysis / factorize)
+- Split raw string literal for MSVC
 
 

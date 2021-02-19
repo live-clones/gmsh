@@ -1161,3 +1161,15 @@ void writeStatistics(const unordered_map<std::string,double>& stats, const std::
   out << "}\n";
   out.close();
 }
+
+void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elts, const std::string& msg) {
+  double vmin = DBL_MAX;
+  for (MElement* e: elts) {
+    double q = e->minSICNShapeMeasure();
+    vmin = std::min(vmin,q);
+  }
+  if (vmin < 0.) {
+    Msg::Error("Face %i, negative element (in %li tested): SICN min = %.3f. %s", gf->tag(), elts.size(), vmin, msg.c_str());
+    abort();
+  }
+}

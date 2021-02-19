@@ -68,6 +68,8 @@ template <typename Key, typename Hash = robin_hood::hash<Key>, typename KeyEqual
 
 const std::string BMESH_NAME = "bmesh_quadqs";
 
+constexpr bool PARANO_QUALITY = false;
+
 
 int buildBackgroundField(
     GModel* gm,
@@ -292,7 +294,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     CTX::instance()->mesh.minCurveNodes = std::min(minCurveNodes,5);
     CTX::instance()->mesh.minCircleNodes = std::min(minCircleNodes,30);
     CTX::instance()->mesh.lcFactor = lcFactor * scalingOnTriangulation;
-    CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
+    CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
 
     /* Generate the triangulation with standard gmsh pipeline */
     GenerateMesh(gm,2);
@@ -491,12 +493,24 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
 
   /* Global operations */
-  // Msg::Warning("TODO: enable minimal size on curves again");
+
+  /* Compute minimum / maximum of "natural" size map.
+   * Use this to avoid cases when minimal size on curves
+   * tends to 0 */
+  double smMin =  DBL_MAX;
+  for (auto& kv: global_size_map) {
+    smMin = std::min(smMin, kv.second);
+  }
+  double factor = 0.1; /* size map can be reduced up to factor */
+  double minSizeClampMin = factor * smMin;
+
+  /* Minimal size on curves */
   std::unordered_map<MVertex*,double> cadMinimalSizeOnCurves;
   int scad = computeMinimalSizeOnCurves(bmesh, cadMinimalSizeOnCurves);
   if (scad != 0) {
     Msg::Warning("failed to compute minimal size on CAD curves");
   }
+
 
   /* Initialize global size map defined on the background mesh */
   std::unordered_map<MVertex*,double> sizeMap = cadMinimalSizeOnCurves;
@@ -504,9 +518,10 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     MVertex* v = kv.first;
     auto it = sizeMap.find(v);
     if (it == sizeMap.end()) {
-      sizeMap[kv.first] = kv.second;
+      sizeMap[kv.first] = kv.second; /* "natural" size */
     } else {
-      it->second = std::min(it->second, kv.second);
+      double sizeFromAdaptation = std::max(it->second,minSizeClampMin);
+      it->second = std::min(sizeFromAdaptation, kv.second);
     }
   }
 
@@ -899,8 +914,8 @@ int improveCornerValences(
       size_t num = v->getNum();
 
       /* From here, we try to change the local configuration */
-      Msg::Debug("- Face %i: try to fix corner %li, val %li instead of %li", 
-          gf->tag(), num, it->second.size(), ival);
+      Msg::Debug("- Face %i: try to fix corner %i (vertex %li), val %li instead of %li", 
+          gf->tag(), gv->tag(), num, it->second.size(), ival);
 
       /* Init patch with quads adjacent to corner */
       GFaceMeshPatch patch;
@@ -1049,6 +1064,10 @@ int improveCurveValences(
         append(smoothingPool, patchBefore.intVertices);
         append(smoothingPool, patchBefore.bdrVertices.front());
         stats.nCurveValFixed += 1;
+
+        if (PARANO_QUALITY) {
+          errorAndAbortIfNegativeElement(gf, dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after execute");
+        }
       } else {
         Msg::Error("failed to apply diff, abort");
         abort();
@@ -1056,10 +1075,22 @@ int improveCurveValences(
       Msg::Debug("-- curve vertex %li fixed", num);
     } else {
       Msg::Debug("-- failed to fix curve vertex %li", num);
+
+      if (PARANO_QUALITY) {
+        errorAndAbortIfNegativeElement(gf, dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after failed to fix, baaad");
+      }
     }
   }
 
+  if (PARANO_QUALITY) {
+    errorAndAbortIfNegativeElement(gf, dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "before pool");
+  }
+
   if (smoothingPool.size() > 0) smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality, opt.sp);
+
+  if (PARANO_QUALITY) {
+    errorAndAbortIfNegativeElement(gf, dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after pool");
+  }
 
   /* Remaining cases, just for stats */
   for (const auto& kv: curveVertexAndIdeal) {
@@ -1472,15 +1503,24 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
   if (sc != 0) {
     Msg::Warning("optimize quad topology: failed to improve corner valences");
   }
+  if (PARANO_QUALITY) {
+    errorAndAbortIfNegativeElement(gf, dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after corner");
+  }
 
   int scu = improveCurveValences(gf, qValIdeal, adj, opt, stats);
   if (scu != 0) {
     Msg::Warning("optimize quad topology: failed to improve curve valences");
   }
+  if (PARANO_QUALITY) {
+    errorAndAbortIfNegativeElement(gf, dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after curve");
+  }
 
   int sci = improveInteriorValences(gf, qValIdeal, adj, opt, stats);
   if (sci != 0) {
     Msg::Warning("optimize quad topology: failed to improve interior valences");
+  }
+  if (PARANO_QUALITY) {
+    errorAndAbortIfNegativeElement(gf, dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after interior");
   }
 
   /* Smooth geometry (quick) */
@@ -1500,6 +1540,9 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
       t2-t1,
       stats.nCornerValRemaining, stats.nCurveValRemaining, stats.nSurfaceValRemaining);
 
+  if (PARANO_QUALITY) {
+    errorAndAbortIfNegativeElement(gf, dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after geom optim");
+  }
 
   return 0;
 }
@@ -1559,11 +1602,14 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
   appendQuadMeshStatistics(gm, stats, "Mesh_");
   printStatistics(stats,"Quad mesh after disk quadrangulation remeshing:");
 
+  if (stats["Mesh_SICN_min"] < 0.) {
+    Msg::Error("negative quality");
+  }
+
   return 0;
 }
 
 int optimizeTopologyWithCavityRemeshing(GModel* gm) {
-
   std::vector<GFace*> faces = model_faces(gm);
   Msg::Info("Optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
 
@@ -1599,6 +1645,7 @@ int optimizeTopologyWithCavityRemeshing(GModel* gm) {
   appendQuadMeshStatistics(gm, stats, "Mesh_");
   printStatistics(stats,"Quad mesh after cavity remeshing:");
 
+  writeStatistics(stats, "quadqs_statistics.json");
 
   GeoLog::flush();
 

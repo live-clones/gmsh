@@ -92,6 +92,8 @@ bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>
 void printStatistics(const std::unordered_map<std::string,double>& stats, const std::string& title = "Statistics:");
 void writeStatistics(const std::unordered_map<std::string,double>& stats, const std::string& path); /* json format */
 
+void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elts, const std::string& msg = "");
+
 struct GFaceMeshDiff {
   GFace* gf = nullptr;
   GFaceMeshPatch before;

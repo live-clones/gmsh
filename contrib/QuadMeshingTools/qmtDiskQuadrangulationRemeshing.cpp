@@ -39,6 +39,8 @@
 
 using namespace CppUtils;
 
+constexpr bool PARANO_QUALITY = false;
+
 namespace QMT {
   using id = uint32_t;
   using id4 = std::array<id,4>;
@@ -355,7 +357,7 @@ int remeshLocalWithDiskQuadrangulation(
     const std::vector<int>& bndIdealValence,
     const std::vector<std::pair<int,int> >& bndAllowedValenceRange,
     const std::vector<MElement*>& neighborsForGeometry,
-    double minSICNafer,
+    double minSICNrequired,
     bool invertNormalsForQuality,
     SurfaceProjector* sp,
     GFaceMeshDiff& diff) {
@@ -433,7 +435,7 @@ int remeshLocalWithDiskQuadrangulation(
     {
       GeomOptimStats stats;
       bool oks = smallCavitySmoothing(patch, sp, invertNormalsForQuality, stats);
-      if (oks && stats.sicnMinAfter > minSICNafer) {
+      if (oks && stats.sicnMinAfter > minSICNrequired) {
         geometryOk = true;
         diff.after = patch; /* set the diff output ! */
         break;
@@ -448,15 +450,20 @@ int remeshLocalWithDiskQuadrangulation(
       bool okp = patchFromElements(gf, largerElements, largerPatch);
       if (!okp || largerPatch.intVertices.size() == 0) continue;
 
+      PatchGeometryBackup bdrBackup(largerPatch);
+
       Msg::Debug("try smoothing the extended cavity (%li -> %li free vertices)", 
           patch.intVertices.size(), largerPatch.intVertices.size());
 
       GeomOptimStats stats;
       bool oks = smallCavitySmoothing(largerPatch, sp, invertNormalsForQuality, stats);
-      if (oks && stats.sicnMinAfter > minSICNafer) {
+      if (oks && stats.sicnMinAfter > minSICNrequired) {
         geometryOk = true;
         diff.after = patch; /* set the diff output (the patch, not the largerPatch) ! */
         break;
+      } else {
+        /* restore boundary positions */
+        bdrBackup.restore();
       }
     }
   }
@@ -473,6 +480,7 @@ int remeshLocalWithDiskQuadrangulation(
   diff.before.elements = elements;
   diff.before.intVertices = intVertices;
   diff.before.bdrVertices = {bdrVertices};
+
 
   return 0;
 }

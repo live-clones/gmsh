@@ -27,6 +27,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "BackgroundMesh.h"
+#include "gmsh.h" // debug
 
 /* QuadMeshingTools includes */
 #include "cppUtils.h"
@@ -109,6 +110,12 @@ int computeMinimalSizeOnCurves(
     if (size > 0 && size < 1.e22) setMinimum(v, minSize, size);
   }
 
+  std::unordered_map<GVertex*,std::vector<GEdge*> > gv2ge;
+  for (GEdge* ge: model_edges(gm)) for (GVertex* gv: ge->vertices()) {
+    gv2ge[gv].push_back(ge);
+  }
+  for (auto& kv: gv2ge) sort_unique(kv.second);
+
   /* On curve vertices, minimum size is minimum of:
    * - existing size
    * - curve length
@@ -130,16 +137,27 @@ int computeMinimalSizeOnCurves(
       sort_unique(curve_vertices);
 
       /* Collect non-adjacent curves */
-      std::vector<GEdge*> curvesNotAdjacent;
-      for (GFace* gf: ge->faces()) for (GEdge* ge2: gf->edges()) if (ge2 != ge) {
-        bool isAdjacent = false;
-        for (GVertex* extremity: ge2->vertices()) {
-          if (inVector(extremity, ge->vertices())) {
-            isAdjacent = true;
+      std::vector<GEdge*> curvesAjacent;
+      for (GVertex* gv: ge->vertices()) {
+        for (GEdge* ge2: gv2ge[gv]) if (ge2 != ge) {
+          curvesAjacent.push_back(ge2);
+
+          if (ge2->length() == 0.) { /* yes CAD is annoying ... */
+            for (GVertex* gv2: ge2->vertices()) {
+              for (GEdge* ge3: gv2ge[gv2]) if (ge3 != ge) {
+                curvesAjacent.push_back(ge3);
+              }
+            }
           }
         }
-        if (!isAdjacent) curvesNotAdjacent.push_back(ge2);
       }
+      sort_unique(curvesAjacent);
+
+      std::vector<GEdge*> curvesNotAdjacent;
+      for (GFace* gf: ge->faces()) for (GEdge* ge2: gf->edges()) if (ge2 != ge) {
+        curvesNotAdjacent.push_back(ge2);
+      }
+      curvesNotAdjacent = difference(curvesNotAdjacent,curvesAjacent);
       sort_unique(curvesNotAdjacent);
 
       double len = ge->length();
