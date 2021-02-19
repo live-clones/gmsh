@@ -57,6 +57,7 @@ The mesh size is mainly controled by the -clscale option.
 - ALGO_2D_PACK_PRLGRMS_CSTR deprecated
 - Add implicit conversion from SPoint3/SVector3 to std::array<double,3>
 - Many Msg::Warning switch to Msg::Debug in CAD/Post projections
+- Special case for quadqs in bbox sizing in Post/OctreePost.cpp, should find something better
 
 # Todo
 
