@@ -53,7 +53,6 @@
 #include "qmtMeshGeometryOptimization.h"
 #include "arrayGeometry.h"
 #include "geolog.h"
-#endif
 
 using namespace CppUtils;
 using namespace ArrayGeometry;
@@ -68,53 +67,6 @@ template <typename Key, typename Hash = robin_hood::hash<Key>, typename KeyEqual
 
 
 const std::string BMESH_NAME = "bmesh_quadqs";
-
-QuadqsContextUpdater::QuadqsContextUpdater() {
-  algo2d = CTX::instance()->mesh.algo2d;
-  recombineAll = CTX::instance()->mesh.recombineAll;
-  algoRecombine = CTX::instance()->mesh.algoRecombine;
-  recombineOptimizeTopology = CTX::instance()->mesh.recombineOptimizeTopology;
-  lcFactor = CTX::instance()->mesh.lcFactor;
-  lcMin = CTX::instance()->mesh.lcMin;
-  lcMax = CTX::instance()->mesh.lcMax;
-  lcFromPoints = CTX::instance()->mesh.lcFromPoints;
-  minCurveNodes = CTX::instance()->mesh.minCurveNodes;
-  minCircleNodes = CTX::instance()->mesh.minCircleNodes;
-
-  setQuadqsOptions();
-}
-
-QuadqsContextUpdater::~QuadqsContextUpdater() {
-  restoreInitialOption();
-}
-
-void QuadqsContextUpdater::setQuadqsOptions() {
-  Msg::Debug("set special quadqs options in the global context");
-  CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
-  CTX::instance()->mesh.recombineAll = 1;
-  CTX::instance()->mesh.algoRecombine = 0;
-  CTX::instance()->mesh.recombineOptimizeTopology = 0;
-  CTX::instance()->mesh.lcFactor = 1.;
-  CTX::instance()->mesh.lcMin = 0.;
-  CTX::instance()->mesh.lcMax = 1.e22;
-  CTX::instance()->mesh.lcFromPoints = 0;
-  CTX::instance()->mesh.minCurveNodes = 0;
-  CTX::instance()->mesh.minCircleNodes = 0;
-}
-
-void QuadqsContextUpdater::restoreInitialOption() {
-  Msg::Debug("restore options in the global context");
-  CTX::instance()->mesh.algo2d = algo2d;
-  CTX::instance()->mesh.recombineAll = recombineAll;
-  CTX::instance()->mesh.algoRecombine = algoRecombine;
-  CTX::instance()->mesh.recombineOptimizeTopology = recombineOptimizeTopology;
-  CTX::instance()->mesh.lcFactor = lcFactor;
-  CTX::instance()->mesh.lcMin = lcMin;
-  CTX::instance()->mesh.lcMax = lcMax;
-  CTX::instance()->mesh.lcFromPoints = lcFromPoints;
-  CTX::instance()->mesh.minCurveNodes = minCurveNodes;
-  CTX::instance()->mesh.minCircleNodes = minCircleNodes;
-}
 
 
 int buildBackgroundField(
@@ -625,82 +577,6 @@ bool backgroundMeshAndGuidingFieldExists(GModel* gm) {
 // }
 
 
-
-int transferSeamGEdgesVerticesToGFace(GModel* gm) {
-  std::vector<GFace*> faces = model_faces(gm);
-  for (size_t fi = 0; fi < faces.size(); ++fi) {
-    GFace* gf = faces[fi];
-
-    /* Transfer the vertices from seam GEdge to associated GFace */
-    unordered_map<MVertex*,MVertex*> old2new;
-    for (GEdge* ge: gf->edges()) {
-      if (ge->isSeam(gf) && ge->faces().size() == 1 && ge->faces()[0] == gf) {
-        /* GEdge interior vertices */
-        for (MVertex* ov: ge->mesh_vertices) {
-          auto it = old2new.find(ov);
-          if (it != old2new.end()) continue; /* already changed */
-          SPoint3 p = ov->point();
-          double t;
-          ov->getParameter(0,t);
-          SPoint2 uv = ge->reparamOnFace(gf, t, -1);
-          MVertex *nv = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
-          nv->setParameter(0,uv[0]);
-          nv->setParameter(1,uv[1]);
-          gf->mesh_vertices.push_back(nv);
-          old2new[ov] = nv;
-          delete ov;
-        }
-        ge->mesh_vertices.clear();
-        for (size_t i = 0; i < ge->lines.size(); ++i) {
-          delete ge->lines[i];
-        }
-        ge->lines.clear();
-
-        /* GEdge boundary vertices */
-        for (GVertex* gv: ge->vertices()) if (gv->mesh_vertices.size() == 1) {
-          size_t nbOtherCurves = 0;
-          for (GEdge* ge2: gv->edges()) if (ge2 != ge) {
-            if (ge2->vertices().front() == ge2->vertices().back() 
-                && ge2->length() == 0.) { /* Empty curve */
-              continue;
-            }
-            nbOtherCurves += 1;
-          }
-          if (nbOtherCurves > 0) continue;
-          MVertex* ov = gv->mesh_vertices[0];
-          auto it = old2new.find(ov);
-          if (it != old2new.end()) continue; /* already changed */
-          SPoint3 p = ov->point();
-          SPoint2 uv = gv->reparamOnFace(gf,0);
-          MVertex *nv = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
-          nv->setParameter(0,uv[0]);
-          nv->setParameter(1,uv[1]);
-          gf->mesh_vertices.push_back(nv);
-          old2new[ov] = nv;
-          delete ov;
-          gv->mesh_vertices.clear();
-        }
-      }
-    }
-    if (old2new.size() > 0) {
-      for (MElement* f: gf->triangles) for (size_t lv = 0; lv < 3; ++lv){ 
-        MVertex* v = f->getVertex(lv);
-        auto it = old2new.find(v);
-        if (it != old2new.end()) {
-          f->setVertex(lv, it->second);
-        }
-      }
-      for (MElement* f: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv){ 
-        MVertex* v = f->getVertex(lv);
-        auto it = old2new.find(v);
-        if (it != old2new.end()) {
-          f->setVertex(lv, it->second);
-        }
-      }
-    }
-  }
-  return 0;
-}
 
 void computeBdrVertexIdealValence(const std::vector<MQuadrangle*>& quads,
     unordered_map<MVertex *, double>& qValIdeal) {
@@ -1659,7 +1535,6 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequir
 
 
 int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
-  // return 0;
 
   Msg::Info("Optimize topology of quad meshes with disk quadrangulation remeshing ...");
 
@@ -1688,7 +1563,6 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
 }
 
 int optimizeTopologyWithCavityRemeshing(GModel* gm) {
-//  return 0;
 
   std::vector<GFace*> faces = model_faces(gm);
   Msg::Info("Optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
@@ -1729,5 +1603,157 @@ int optimizeTopologyWithCavityRemeshing(GModel* gm) {
   GeoLog::flush();
 
   return 0;
+}
+
+#else
+/* else: without QUADMESHINGTOOLS module*/
+
+int BuildBackgroundMeshAndGuidingField( GModel* gm, bool overwriteGModelMesh, bool deleteGModelMeshAfter, int N) {
+  Msg::Error("Module QUADMESHINGTOOLS required for function BuildBackgroundMeshAndGuidingField");
+  return -10;
+}
+bool backgroundMeshAndGuidingFieldExists(GModel* gm) {
+  Msg::Error("Module QUADMESHINGTOOLS required for function backgroundMeshAndGuidingFieldExists");
+  return -10;
+}
+int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
+  Msg::Error("Module QUADMESHINGTOOLS required for function optimizeTopologyWithCavityRemeshing");
+  return -10;
+}
+int optimizeTopologyWithCavityRemeshing(GModel* gm) {
+  Msg::Error("Module QUADMESHINGTOOLS required for function optimizeTopologyWithCavityRemeshing");
+  return -10;
+}
+int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequired) {
+  Msg::Error("Module QUADMESHINGTOOLS required for function quadMeshingOfSimpleFacesWithPatterns");
+  return -10;
+}
+int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
+  Msg::Error("Module QUADMESHINGTOOLS required for function RefineMeshWithBackgroundMeshProjection");
+  return -10;
+}
+
+#endif
+/* endif: QUADMESHINGTOOLS*/
+
+
+int transferSeamGEdgesVerticesToGFace(GModel* gm) {
+  for (GFace* gf: gm->getFaces()) {
+    /* Transfer the vertices from seam GEdge to associated GFace */
+    std::unordered_map<MVertex*,MVertex*> old2new;
+    for (GEdge* ge: gf->edges()) {
+      if (ge->isSeam(gf) && ge->faces().size() == 1 && ge->faces()[0] == gf) {
+        /* GEdge interior vertices */
+        for (MVertex* ov: ge->mesh_vertices) {
+          auto it = old2new.find(ov);
+          if (it != old2new.end()) continue; /* already changed */
+          SPoint3 p = ov->point();
+          double t;
+          ov->getParameter(0,t);
+          SPoint2 uv = ge->reparamOnFace(gf, t, -1);
+          MVertex *nv = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
+          nv->setParameter(0,uv[0]);
+          nv->setParameter(1,uv[1]);
+          gf->mesh_vertices.push_back(nv);
+          old2new[ov] = nv;
+          delete ov;
+        }
+        ge->mesh_vertices.clear();
+        for (size_t i = 0; i < ge->lines.size(); ++i) {
+          delete ge->lines[i];
+        }
+        ge->lines.clear();
+
+        /* GEdge boundary vertices */
+        for (GVertex* gv: ge->vertices()) if (gv->mesh_vertices.size() == 1) {
+          size_t nbOtherCurves = 0;
+          for (GEdge* ge2: gv->edges()) if (ge2 != ge) {
+            if (ge2->vertices().front() == ge2->vertices().back() 
+                && ge2->length() == 0.) { /* Empty curve */
+              continue;
+            }
+            nbOtherCurves += 1;
+          }
+          if (nbOtherCurves > 0) continue;
+          MVertex* ov = gv->mesh_vertices[0];
+          auto it = old2new.find(ov);
+          if (it != old2new.end()) continue; /* already changed */
+          SPoint3 p = ov->point();
+          SPoint2 uv = gv->reparamOnFace(gf,0);
+          MVertex *nv = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
+          nv->setParameter(0,uv[0]);
+          nv->setParameter(1,uv[1]);
+          gf->mesh_vertices.push_back(nv);
+          old2new[ov] = nv;
+          delete ov;
+          gv->mesh_vertices.clear();
+        }
+      }
+    }
+    if (old2new.size() > 0) {
+      for (MElement* f: gf->triangles) for (size_t lv = 0; lv < 3; ++lv){ 
+        MVertex* v = f->getVertex(lv);
+        auto it = old2new.find(v);
+        if (it != old2new.end()) {
+          f->setVertex(lv, it->second);
+        }
+      }
+      for (MElement* f: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv){ 
+        MVertex* v = f->getVertex(lv);
+        auto it = old2new.find(v);
+        if (it != old2new.end()) {
+          f->setVertex(lv, it->second);
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+QuadqsContextUpdater::QuadqsContextUpdater() {
+  algo2d = CTX::instance()->mesh.algo2d;
+  recombineAll = CTX::instance()->mesh.recombineAll;
+  algoRecombine = CTX::instance()->mesh.algoRecombine;
+  recombineOptimizeTopology = CTX::instance()->mesh.recombineOptimizeTopology;
+  lcFactor = CTX::instance()->mesh.lcFactor;
+  lcMin = CTX::instance()->mesh.lcMin;
+  lcMax = CTX::instance()->mesh.lcMax;
+  lcFromPoints = CTX::instance()->mesh.lcFromPoints;
+  minCurveNodes = CTX::instance()->mesh.minCurveNodes;
+  minCircleNodes = CTX::instance()->mesh.minCircleNodes;
+
+  setQuadqsOptions();
+}
+
+QuadqsContextUpdater::~QuadqsContextUpdater() {
+  restoreInitialOption();
+}
+
+void QuadqsContextUpdater::setQuadqsOptions() {
+  Msg::Debug("set special quadqs options in the global context");
+  CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
+  CTX::instance()->mesh.recombineAll = 1;
+  CTX::instance()->mesh.algoRecombine = 0;
+  CTX::instance()->mesh.recombineOptimizeTopology = 0;
+  CTX::instance()->mesh.lcFactor = 1.;
+  CTX::instance()->mesh.lcMin = 0.;
+  CTX::instance()->mesh.lcMax = 1.e22;
+  CTX::instance()->mesh.lcFromPoints = 0;
+  CTX::instance()->mesh.minCurveNodes = 0;
+  CTX::instance()->mesh.minCircleNodes = 0;
+}
+
+void QuadqsContextUpdater::restoreInitialOption() {
+  Msg::Debug("restore options in the global context");
+  CTX::instance()->mesh.algo2d = algo2d;
+  CTX::instance()->mesh.recombineAll = recombineAll;
+  CTX::instance()->mesh.algoRecombine = algoRecombine;
+  CTX::instance()->mesh.recombineOptimizeTopology = recombineOptimizeTopology;
+  CTX::instance()->mesh.lcFactor = lcFactor;
+  CTX::instance()->mesh.lcMin = lcMin;
+  CTX::instance()->mesh.lcMax = lcMax;
+  CTX::instance()->mesh.lcFromPoints = lcFromPoints;
+  CTX::instance()->mesh.minCurveNodes = minCurveNodes;
+  CTX::instance()->mesh.minCircleNodes = minCircleNodes;
 }
 

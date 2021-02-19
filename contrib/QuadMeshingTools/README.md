@@ -52,7 +52,7 @@ The mesh size is mainly controled by the -clscale option.
 - Add libOL octree for meshing library at Common/libol1.h/c, MIT license
 - Add SurfaceProjector based on libOL octree, in Mesh/meshOctreeLibOL.h/cpp
 - Add background mesh datastructures, in Mesh/BackgroundMesh.h/cpp
-- contrib/domhex replaced by the version from quadMeshingTools branch
+- contrib/domhex replaced by the version from quadMeshingTools branch (contains JF changes to algo pack)
 - Post/OctreePost.cpp: use larger bounding boxes. Required for the background field sampling
 - ALGO_2D_PACK_PRLGRMS_CSTR deprecated
 - Add implicit conversion from SPoint3/SVector3 to std::array<double,3>
