@@ -66,9 +66,12 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
     Crv = gf->curvature(SPoint2(U, V));
   } break;
   }
-  double lc = Crv > 0 ?
-                2 * M_PI / Crv / CTX::instance()->mesh.minElementsPerTwoPi :
-                MAX_LC;
+  double ne = CTX::instance()->mesh.lcFromCurvature;
+  if(ne < 1) {
+    Msg::Warning("Invalid number of elements per 2*pi curvature %g", ne);
+    ne = 1;
+  }
+  double lc = Crv > 0 ? 2 * M_PI / Crv / ne : MAX_LC;
   return lc;
 }
 
@@ -76,8 +79,12 @@ SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
 {
   SVector3 t = ge->firstDer(u);
   t.normalize();
-  double l_t = (2 * M_PI) / (fabs(ge->curvature(u)) *
-                             CTX::instance()->mesh.minElementsPerTwoPi);
+  double ne = CTX::instance()->mesh.lcFromCurvature;
+  if(ne < 1) {
+    Msg::Warning("Invalid number of elements per 2*pi curvature %g", ne);
+    ne = 1;
+  }
+  double l_t = (2 * M_PI) / (fabs(ge->curvature(u)) * ne);
   double l_n = 1.e12;
   return buildMetricTangentToCurve(t, l_t, l_n);
 }
@@ -110,7 +117,7 @@ static SMetric3 metric_based_on_surface_curvature(const GVertex *gv,
 
 SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
 {
-  bool iso_surf = CTX::instance()->mesh.lcFromCurvature == 2;
+  bool iso_surf = CTX::instance()->mesh.lcFromCurvatureIso;
 
   switch(ge->dim()) {
   case 0:
@@ -213,7 +220,7 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
 
   // lc from curvature
   double l2 = MAX_LC;
-  if(ge && CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
+  if(ge && CTX::instance()->mesh.lcFromCurvature > 0 && ge->dim() < 3)
     l2 = LC_MVertex_CURV(ge, U, V);
 
   // lc from fields
@@ -321,7 +328,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
   }
 
   // intersect with metrics from curvature if applicable
-  SMetric3 m = (CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3) ?
+  SMetric3 m = (CTX::instance()->mesh.lcFromCurvature > 0 && ge->dim() < 3) ?
                  intersection(m1, LC_MVertex_CURV_ANISO(ge, U, V)) :
                  m1;
 
@@ -351,19 +358,22 @@ SMetric3 max_edge_curvature_metric(const GVertex *gv)
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
     SMetric3 cc;
+    double ne = CTX::instance()->mesh.lcFromCurvature;
+    if(ne < 1) {
+      Msg::Warning("Invalid number of elements per 2*pi curvature %g", ne);
+      ne = 1;
+    }
     if(gv == _myGEdge->getBeginVertex()) {
       SVector3 t = _myGEdge->firstDer(range.low());
       t.normalize();
-      double l_t = ((2 * M_PI) / (fabs(_myGEdge->curvature(range.low())) *
-                                  CTX::instance()->mesh.minElementsPerTwoPi));
+      double l_t = 2 * M_PI / (fabs(_myGEdge->curvature(range.low())) * ne);
       double l_n = 1.e12;
       cc = buildMetricTangentToCurve(t, l_t, l_n);
     }
     else {
       SVector3 t = _myGEdge->firstDer(range.high());
       t.normalize();
-      double l_t = ((2 * M_PI) / (fabs(_myGEdge->curvature(range.high())) *
-                                  CTX::instance()->mesh.minElementsPerTwoPi));
+      double l_t = 2 * M_PI / (fabs(_myGEdge->curvature(range.high())) * ne);
       double l_n = 1.e12;
       cc = buildMetricTangentToCurve(t, l_t, l_n);
     }
@@ -383,10 +393,13 @@ SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v,
   cmax = gf->curvatures(SPoint2(u, v), dirMax, dirMin, cmax, cmin);
   if(cmin == 0) cmin = 1.e-12;
   if(cmax == 0) cmax = 1.e-12;
-  double lambda1 =
-    ((2 * M_PI) / (fabs(cmin) * CTX::instance()->mesh.minElementsPerTwoPi));
-  double lambda2 =
-    ((2 * M_PI) / (fabs(cmax) * CTX::instance()->mesh.minElementsPerTwoPi));
+  double ne = CTX::instance()->mesh.lcFromCurvature;
+  if(ne < 1) {
+    Msg::Warning("Invalid number of elements per 2*pi curvature %g", ne);
+    ne = 1;
+  }
+  double lambda1 = 2 * M_PI / (fabs(cmin) * ne);
+  double lambda2 = 2 * M_PI / (fabs(cmax) * ne);
   SVector3 Z = crossprod(dirMax, dirMin);
   if(surface_isotropic) lambda2 = lambda1 = std::min(lambda2, lambda1);
   dirMin.normalize();

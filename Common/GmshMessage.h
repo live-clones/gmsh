@@ -26,7 +26,7 @@ public:
   virtual void operator()(std::string level, std::string message) {}
 };
 
-// a class to manage messages
+// a class to manage messages and communications
 class Msg {
 private:
   // current cpu number and total number of cpus

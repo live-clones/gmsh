@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 4.8.0-git-e54215dd8; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20210213; Build host: MacBook-Pro-Christophe.local; Build options: 64Bit ALGLIB ANN Bamg Blas[petsc] Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen Fltk GMP Gmm Hxt Jpeg Kbipack Lapack[petsc] MathEx Med Mesh Metis Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom P4est PETSc Parasolid ParasolidSTEP Parser Plugins Png Post QuadTri Solver TetGen/BR TouchBar Voro++ Zlib; FLTK version: 1.4.0; PETSc version: 3.14.4 (complex arithmtic); OCC version: 7.6.0; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 4.8.0-git-e3eb5cdb2; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20210218; Build host: MacBook-Pro-Christophe.local; Build options: 64Bit ALGLIB ANN Bamg Blas[petsc] Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen Fltk GMP Gmm Hxt Jpeg Kbipack Lapack[petsc] MathEx Med Mesh Metis Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom P4est PETSc Parasolid ParasolidSTEP Parser Plugins Png Post QuadTri Solver TetGen/BR TouchBar Voro++ Zlib; FLTK version: 1.4.0; PETSc version: 3.14.4 (complex arithmtic); OCC version: 7.6.0; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -168,7 +168,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.8.0-git-e54215dd8"}@*
+Default value: @code{"4.8.0-git-e3eb5cdb2"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
@@ -1042,12 +1042,12 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item General.SaveOptions
-Automatically save current options in General.OptionsFileName (1) or per model (2)each time you quit Gmsh?@*
+Automatically save current options in General.OptionsFileName (1) or per model (2)when the graphical user interface is closed?@*
 Default value: @code{0}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.SaveSession
-Automatically save session specific information in General.SessionFileName each time you quit Gmsh?@*
+Automatically save session specific information in General.SessionFileName when the graphical user interface is closed?@*
 Default value: @code{1}@*
 Saved in: @code{General.SessionFileName}
 

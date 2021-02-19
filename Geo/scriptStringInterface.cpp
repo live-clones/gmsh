@@ -73,7 +73,7 @@ static void scriptAddCommand(const std::string &text,
           Msg::Error("Unable to open file '%s'", newFileName.c_str());
           return;
         }
-        fprintf(fp, "Merge \"%s\";\n%s\n", (split[1] + split[2]).c_str(),
+        fprintf(fp, "Merge \"%s\";\n//+\n%s\n", (split[1] + split[2]).c_str(),
                 text.c_str());
         fclose(fp);
         OpenProject(newFileName);

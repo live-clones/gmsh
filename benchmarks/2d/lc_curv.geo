@@ -11,5 +11,4 @@ Spline(1) = {1, 2, 3, 4, 5, 6};
 Line(2) = {6, 1};
 Line Loop(1) = {1, 2};
 Plane Surface(1) = {1};
-Mesh.CharacteristicLengthFromCurvature = 1;
-Mesh.MinimumElementsPerTwoPi = 50;
+Mesh.MeshSizeFromCurvature = 50;

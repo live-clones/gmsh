@@ -9,8 +9,10 @@ curves in HXT; added automatic conversion from partitioned MSH2 files to new
 partitioned entities; fixed order of Gauss quadrature for quads and hexas; code
 modernization (C++11); further uniformization of option names to match the
 documented terminology (Mesh.Point -> Mesh.Node, ...; old names are still
-accepted, but deprecated); Python and Julia APIs now also define "snake case"
-aliases for all camelCase function names; small bug fixes and improvements.
+accepted, but deprecated); deprecated Mesh.MinimumElementsPerTwoPi: set value
+directly to Mesh.MeshSizeFromCurvature instead; Python and Julia APIs now also
+define "snake case" aliases for all camelCase function names; small bug fixes
+and improvements.
 
 * Incompatible API changes: new optional arguments to mesh/classifySurfaces,
   occ/addBSplineSurface, occ/addBezierSurface, occ/addPipe and view/probe;

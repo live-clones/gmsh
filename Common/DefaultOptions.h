@@ -767,10 +767,10 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|S, "SaveOptions" , opt_general_options_save, 0. ,
     "Automatically save current options in General.OptionsFileName (1) or per model (2)"
-    "each time you quit Gmsh?" },
+    "when the graphical user interface is closed?" },
   { F|S, "SaveSession" , opt_general_session_save, 1. ,
     "Automatically save session specific information in General.SessionFileName "
-    "each time you quit Gmsh?" },
+    "when the graphical user interface is closed?" },
   { F,   "ScaleX" , opt_general_scale0 , 1.0 ,
     "X-axis scale factor" },
   { F,   "ScaleY" , opt_general_scale1 , 1.0 ,
@@ -1239,11 +1239,16 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MeshSizeMax" , opt_mesh_lc_max, 1.e22,
     "Maximum mesh element size" },
   { F|O, "MeshSizeFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
-    "Automatically compute mesh element sizes from curvature" },
+    "Automatically compute mesh element sizes from curvature, using the value "
+    "as the target number of elements per 2 * Pi radians" },
+  { F|O, "MeshSizeFromCurvatureIsotropic" , opt_mesh_lc_from_curvature_iso , 0. ,
+    "Force isotropic curvature estimation when the mesh size is computed from "
+    "curvature" },
   { F|O, "MeshSizeFromPoints" , opt_mesh_lc_from_points , 1. ,
     "Compute mesh element sizes from values given at geometry points" },
   { F|O, "MeshSizeFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
-    "Compute mesh element sizes from values given at geometry points defining parametric curves"},
+    "Compute mesh element sizes from values given at geometry points defining "
+    "parametric curves"},
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
     "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
@@ -1267,9 +1272,8 @@ StringXNumber MeshOptions_Number[] = {
     "ellipses"},
   { F|O|D, "MinimumCurvePoints" , opt_mesh_min_curve_nodes, 3. ,
     "[Deprecated]"},
-  { F|O, "MinimumElementsPerTwoPi" , opt_mesh_min_elements_2pi, 6. ,
-    "Minimum number of elements per 2 * Pi radians when the mesh size is adapted "
-    "to the curvature" },
+  { F|O, "MinimumElementsPerTwoPi" , opt_mesh_lc_from_curvature, 0. ,
+    "[Deprecated]" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.1 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,

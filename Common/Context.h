@@ -25,14 +25,15 @@ struct contextMeshOptions {
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
   double anisoMax, smoothRatio;
-  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary, lcFromParametricPoints;
+  int lcFromPoints, lcFromParametricPoints, lcFromCurvature, lcFromCurvatureIso;
+  int lcExtendFromBoundary;
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
   int flexibleTransfinite, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
-  int minCircleNodes, minCurveNodes, minElementsPerTwoPi;
+  int minCircleNodes, minCurveNodes;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD, hoSavePeriodic;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;

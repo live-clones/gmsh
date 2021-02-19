@@ -5019,12 +5019,22 @@ double opt_mesh_lc_from_curvature(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->mesh.butt[1]->value(
-      CTX::instance()->mesh.lcFromCurvature ? 1 : 0);
-    FlGui::instance()->options->activate("mesh_curvature");
+    FlGui::instance()->options->mesh.value[1]->value(
+      CTX::instance()->mesh.lcFromCurvature);
   }
 #endif
   return CTX::instance()->mesh.lcFromCurvature;
+}
+
+double opt_mesh_lc_from_curvature_iso(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.lcFromCurvatureIso)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.lcFromCurvatureIso = (int)val;
+  }
+  return CTX::instance()->mesh.lcFromCurvatureIso;
 }
 
 double opt_mesh_lc_from_points(OPT_ARGS_NUM)
@@ -6042,22 +6052,6 @@ double opt_mesh_min_circle_nodes(OPT_ARGS_NUM)
     CTX::instance()->mesh.minCircleNodes = (int)val;
   }
   return CTX::instance()->mesh.minCircleNodes;
-}
-
-double opt_mesh_min_elements_2pi(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    if(!(action & GMSH_SET_DEFAULT) &&
-       (int)val != CTX::instance()->mesh.minElementsPerTwoPi)
-      Msg::SetOnelabChanged(2);
-    CTX::instance()->mesh.minElementsPerTwoPi = (int)val;
-  }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->mesh.value[1]->value(
-      CTX::instance()->mesh.minElementsPerTwoPi);
-#endif
-  return CTX::instance()->mesh.minElementsPerTwoPi;
 }
 
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM)

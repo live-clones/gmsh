@@ -657,26 +657,43 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
 #endif
 }
 
-void ClearProject()
+void DeleteAllModelsAndViews()
 {
-  Msg::Info("Clearing all models and views...");
 #if defined(HAVE_POST)
-  for(int i = PView::list.size() - 1; i >= 0; i--) delete PView::list[i];
+  // delete all views
+  while(PView::list.size() > 0) delete PView::list[PView::list.size() - 1];
+  std::vector<PView *>().swap(PView::list);
   PView::setGlobalTag(0);
+  PViewData::removeAllInterpolationSchemes();
 #endif
+
 #if defined(HAVE_PARSER)
+  // clear parser data
   gmsh_yysymbols.clear();
   gmsh_yystringsymbols.clear();
   gmsh_yyfactory.clear();
   gmsh_yynamespaces.clear();
 #endif
-  for(int i = GModel::list.size() - 1; i >= 0; i--) delete GModel::list[i];
+
+  // delete the temp file
+  if(!Msg::GetCommRank())
+    UnlinkFile(CTX::instance()->homeDir + CTX::instance()->tmpFileName);
+
+  // delete all models
+  while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
+  std::vector<GModel *>().swap(GModel::list);
 
   // close the files that might have been left open by ParseFile
   if(openedFiles.size()) {
     for(std::size_t i = 0; i < openedFiles.size(); i++) fclose(openedFiles[i]);
     openedFiles.clear();
   }
+}
+
+void ClearProject()
+{
+  Msg::Info("Clearing all models and views...");
+  DeleteAllModelsAndViews();
   Msg::Info("Done clearing all models and views");
 
   new GModel();

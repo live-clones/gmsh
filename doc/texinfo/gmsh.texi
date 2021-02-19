@@ -2831,10 +2831,10 @@ over-refinement in some areas, so that you may have to add ``dummy''
 geometrical entities in the model in order to get the desired element
 sizes or use more advanced methods explained below.
 @item
-Second, if @code{Mesh.MeshSizeFromCurvature} is set (it is not by
-default), the mesh will be adapted with respect to the curvature of the
-model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
-which gives the number of elements per 2 Pi radians.
+Second, if @code{Mesh.MeshSizeFromCurvature} is set to a positive value
+(it is set to 0 by default), the mesh will be adapted with respect to
+the curvature of the model entities, the value giving the target number
+of elements per 2 Pi radians.
 @item
 Next, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:

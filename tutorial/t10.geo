@@ -90,8 +90,8 @@ Background Field = 7;
 // 1) the size of the model bounding box;
 // 2) if `Mesh.MeshSizeFromPoints' is set, the mesh size specified at
 //    geometrical points;
-// 3) if `Mesh.MeshSizeFromCurvature' is set, the mesh size based on the
-//    curvature and `Mesh.MinimumElementsPerTwoPi';
+// 3) if `Mesh.MeshSizeFromCurvature' is positive, the mesh size based on
+//    curvature (the value specifying the number of elements per 2 * pi rad);
 // 4) the background mesh size field;
 // 5) any per-entity mesh size constraint.
 //

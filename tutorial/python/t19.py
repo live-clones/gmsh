@@ -78,11 +78,9 @@ gmsh.option.setNumber("Geometry.NumSubEdges", 1000)
 
 gmsh.model.occ.synchronize()
 
-# We can activate the calculation of mesh element sizes based on curvature:
-gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 1)
-
-# And we set the minimum number of elements per 2*Pi radians:
-gmsh.option.setNumber("Mesh.MinimumElementsPerTwoPi", 20)
+# We can activate the calculation of mesh element sizes based on curvature
+# (here with a target of 20 elements per 2*Pi radians):
+gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 20)
 
 # We can constraint the min and max element sizes to stay within reasonnable
 # values (see `t10.py' for more details):
