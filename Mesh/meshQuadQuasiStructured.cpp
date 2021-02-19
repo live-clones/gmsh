@@ -459,9 +459,10 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
         }
       }
 
-      { /* Midpoint subdivision => 4 times more quads */
-        targetNumberOfQuads /= 4;
-      }
+      /* Midpoint subdivision => 4 times more quads */
+      targetNumberOfQuads /= 4;
+
+      if (targetNumberOfQuads == 0) targetNumberOfQuads = 1;
 
       int scso = computeQuadSizeMapFromCrossFieldConformalFactor(triangles, targetNumberOfQuads, conformalScaling);
       if (scso != 0) {
@@ -1383,8 +1384,9 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
       sp = new SurfaceProjector();
       bool oki = sp->initialize(gf,triangles);
       if (!oki) {
-        Msg::Error("failed to initialize surface projector");
-        continue;
+        Msg::Warning("failed to initialize surface projector");
+        delete sp;
+        sp = nullptr;
       }
     }
 
@@ -1406,6 +1408,11 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
         GPoint proj;
         if (sp != nullptr) {
           proj = sp->closestPoint(v->point().data(), evalOnCAD, projOnCad);
+
+          if (!proj.succeeded() && gf->haveParametrization()) {
+            double uvg[2] = {0.,0.};
+            proj = gf->closestPoint(v->point(), uvg);
+          }
         } else {
           double uvg[2] = {0.,0.};
           proj = gf->closestPoint(v->point(), uvg);
@@ -1603,7 +1610,7 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
   printStatistics(stats,"Quad mesh after disk quadrangulation remeshing:");
 
   if (stats["Mesh_SICN_min"] < 0.) {
-    Msg::Error("negative quality");
+    Msg::Warning("negative quality on some quads");
   }
 
   return 0;

@@ -484,7 +484,7 @@ GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD, boo
   }
 
   if (OctIdx == 0) {
-    Msg::Error("SurfaceProjector::closestPoint(): no octree");
+    Msg::Error("SurfaceProjector::closestPoint(): no octree (face %i, %li points, %li triangles)", gf->tag(), points.size(), triangles.size());
     return failedProjection();
   }
 
@@ -495,7 +495,7 @@ GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD, boo
   double dis;
   int idx = LolGetNearest(OctIdx, LolTypTri, crd, &dis, 0, NULL, NULL, 0);
   if (idx <= 0) {
-    Msg::Error("SurfaceProjector::closestPoint(): no octree");
+    Msg::Warning("SurfaceProjector::closestPoint(): no closest triangle found (face %i, %li triangles)", gf->tag(), triangles.size());
     return failedProjection();
   }
   size_t tri = idx - 1;
