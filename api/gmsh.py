@@ -7160,6 +7160,36 @@ class fltk:
             raise Exception(logger.getLastError())
     show_context_window = showContextWindow
 
+    @staticmethod
+    def openTreeItem(name):
+        """
+        gmsh.fltk.openTreeItem(name)
+
+        Open the `name' item in the menu tree.
+        """
+        ierr = c_int()
+        lib.gmshFltkOpenTreeItem(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    open_tree_item = openTreeItem
+
+    @staticmethod
+    def closeTreeItem(name):
+        """
+        gmsh.fltk.closeTreeItem(name)
+
+        Close the `name' item in the menu tree.
+        """
+        ierr = c_int()
+        lib.gmshFltkCloseTreeItem(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    close_tree_item = closeTreeItem
+
 
 class onelab:
     """

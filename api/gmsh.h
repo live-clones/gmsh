@@ -3257,6 +3257,16 @@ namespace gmsh { // Top-level functions
     GMSH_API void showContextWindow(const int dim,
                                     const int tag);
 
+    // gmsh::fltk::openTreeItem
+    //
+    // Open the `name' item in the menu tree.
+    GMSH_API void openTreeItem(const std::string & name);
+
+    // gmsh::fltk::closeTreeItem
+    //
+    // Close the `name' item in the menu tree.
+    GMSH_API void closeTreeItem(const std::string & name);
+
   } // namespace fltk
 
   namespace onelab { // ONELAB server functions

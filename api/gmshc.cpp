@@ -4083,6 +4083,28 @@ GMSH_API void gmshFltkShowContextWindow(const int dim, const int tag, int * ierr
   }
 }
 
+GMSH_API void gmshFltkOpenTreeItem(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::openTreeItem(name);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshFltkCloseTreeItem(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::closeTreeItem(name);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshOnelabSet(const char * data, const char * format, int * ierr)
 {
   if(ierr) *ierr = 0;

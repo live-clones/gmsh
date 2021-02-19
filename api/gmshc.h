@@ -2872,6 +2872,14 @@ GMSH_API void gmshFltkShowContextWindow(const int dim,
                                         const int tag,
                                         int * ierr);
 
+/* Open the `name' item in the menu tree. */
+GMSH_API void gmshFltkOpenTreeItem(const char * name,
+                                   int * ierr);
+
+/* Close the `name' item in the menu tree. */
+GMSH_API void gmshFltkCloseTreeItem(const char * name,
+                                    int * ierr);
+
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */
 GMSH_API void gmshOnelabSet(const char * data,
                             const char * format,

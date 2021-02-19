@@ -32,7 +32,7 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
   if(CTX::instance()->geom.labelType == 1) {
     sprintf(str, "%d", e->tag());
   }
-  else {
+  else if(CTX::instance()->geom.labelType == 2) {
     strcpy(str, "");
     for(std::size_t i = 0; i < e->physicals.size(); i++) {
       char tmp[32];
@@ -41,6 +41,19 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
       strcat(str, tmp);
     }
   }
+  else if(CTX::instance()->geom.labelType == 3) {
+    strcpy(str, e->model()->getElementaryName(e->dim(), e->tag()).c_str());
+  }
+  else {
+    strcpy(str, "");
+    std::string name = "";
+    for(std::size_t i = 0; i < e->physicals.size(); i++) {
+      if(name.size()) strcat(str, ", ");
+      name = e->model()->getPhysicalName(e->dim(), std::abs(e->physicals[i]));
+      if(name.size()) strcat(str, name.c_str());
+    }
+  }
+
   ctx->drawString(str, xx, yy, zz);
 }
 

@@ -92,7 +92,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LabelType
-Type of entity label (0: description, 1: elementary entity tag, 2: physical group tag)@*
+Type of entity label (0: description, 1: elementary entity tag, 2: physical group tag, 3: elementary name, 4: physical name)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

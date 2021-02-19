@@ -148,11 +148,6 @@ parameters = """
   }
 ]"""
 
-# remove all entries in the defaut solver menu, so that we can have a clean
-# empty one for ourselves ;-)
-for i in range(5):
-    gmsh.option.setString('Solver.Name{}'.format(i), '')
-
 gmsh.onelab.set(parameters)
 
 def runSolver():
@@ -206,6 +201,8 @@ def eventLoop():
 
 if "-nopopup" not in sys.argv:
     gmsh.fltk.initialize()
+    # show the contents of the solver menu
+    gmsh.fltk.openTreeItem("0Modules/Solver")
     while eventLoop():
         pass
 else:
