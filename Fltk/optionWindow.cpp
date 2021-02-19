@@ -2418,6 +2418,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Packing of Parallelograms (experimental, planar only)", 0, nullptr,
          nullptr},
         {"Initial Mesh Only (no node insertion)", 0, nullptr, nullptr},
+        {"Quasi-structured quad (experimental)", 0, nullptr, nullptr},
         {nullptr}};
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, nullptr, nullptr},

@@ -988,3 +988,176 @@ bool fillGFaceInfo(GFace* gf, GFaceInfo& info) {
 
   return true;
 }
+
+bool appendCADStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix) {
+  stats[prefix+"n_corners"] = double(gm->getVertices().size());
+  stats[prefix+"n_curves"] = double(model_edges(gm).size());
+  stats[prefix+"n_faces"] = double(model_faces(gm).size());
+  stats[prefix+"n_volumes"] = double(gm->getRegions().size());
+  return true;
+}
+
+bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix) {
+  Msg::Debug("compute quad mesh statistics ...");
+  /* Stats on regularity of vertices */
+  std::vector<MQuadrangle*> all_quads;
+  {
+    std::vector<int> nValFace(10,0);
+    std::vector<int> nValCurve(10,0);
+    std::vector<int> nValCorner(10,0);
+    double nVert = 0.; /* repetition on shared GVertex / GEdge */
+    double nQuad = 0.;
+    for (GFace* gf: model_faces(gm)) {
+      append(all_quads,gf->quadrangles);
+      unordered_map<MVertex *, std::vector<MElement *> > adj;
+      for (MQuadrangle* f: gf->quadrangles) {
+        nQuad += 1.;
+        for (size_t lv = 0; lv < 4; ++lv) {
+          MVertex* v = f->getVertex(lv);
+          adj[v].push_back(f);
+        }
+      }
+      for (auto& kv: adj) {
+        nVert += 1.;
+        MVertex* v = kv.first;
+        GEntity* ent = v->onWhat();
+        bool onCorner = (dynamic_cast<GVertex*>(ent) != NULL);
+        bool onCurve = (dynamic_cast<GEdge*>(ent) != NULL);
+        bool onFace = (dynamic_cast<GFace*>(ent) != NULL);
+        int val = (int) kv.second.size();
+        if (onCorner) {
+          if ((size_t)val >= nValCorner.size()) nValCorner.resize(val+1);
+          nValCorner[val] += 1;
+        } else if (onCurve) {
+          if ((size_t)val >= nValCurve.size()) nValCurve.resize(val+1);
+          nValCurve[val] += 1;
+        } else if (onFace) {
+          if ((size_t)val >= nValFace.size()) nValFace.resize(val+1);
+          nValFace[val] += 1;
+        }
+      }
+    }
+    double regular = 0.;
+    double irregular = 0.;
+    double very_irregular = 0.;
+    double val3 = 0.;
+    double val5 = 0.;
+    for (size_t val = 0; val < nValCurve.size(); ++val) {
+      if (val == 2) {
+        regular += double(nValCurve[val]);
+      } else if (val == 1 || val == 3){
+        irregular += double(nValCurve[val]);
+      } else {
+        very_irregular += double(nValCurve[val]);
+      }
+    }
+    for (size_t val = 0; val < nValFace.size(); ++val) {
+      if (val == 4) {
+        regular += double(nValFace[val]);
+      } else if (val == 3) {
+        irregular += double(nValFace[val]);
+        val3 += double(nValFace[val]);
+      } else if (val == 5) {
+        irregular += double(nValFace[val]);
+        val5 += double(nValFace[val]);
+      } else {
+        very_irregular += double(nValFace[val]);
+      }
+    }
+    stats[prefix+"n_quads"] = nQuad;
+    stats[prefix+"n_vertices"] = nVert;
+    stats[prefix+"n_regular"] = regular;
+    stats[prefix+"n_irregular"] = irregular;
+    stats[prefix+"n_very_irregular"] = very_irregular;
+    stats[prefix+"n_val3"] = val3;
+    stats[prefix+"n_val5"] = val5;
+  }
+
+  /* Quality stats */
+  if (all_quads.size() > 0){
+    std::vector<double> quality(all_quads.size());
+    std::vector<double> edgeLen(4*all_quads.size());
+    double edge_len_min = DBL_MAX;
+    double edge_len_avg = 0.;
+    double edge_len_max = 0.;
+    double edge_n = 0.;
+    double avg = 0.;
+    for (size_t f = 0; f < all_quads.size(); ++f) {
+      quality[f] = all_quads[f]->minSICNShapeMeasure();
+      avg += quality[f];
+      for (size_t le = 0; le < 4; ++le) {
+        SPoint3 p1 = all_quads[f]->getVertex(le)->point();
+        SPoint3 p2 = all_quads[f]->getVertex((le+1)%4)->point();
+        double len = p1.distance(p2);
+        edgeLen[4*f+le] = len;
+        edge_len_min = std::min(edge_len_min, len);
+        edge_len_max = std::max(edge_len_max, len);
+        edge_len_avg += len;
+        edge_n += 1.;
+      }
+    }
+    avg /= quality.size();
+    edge_len_avg /= edge_n;
+    std::sort(quality.begin(),quality.end());
+    std::sort(edgeLen.begin(),edgeLen.end());
+    stats[prefix+"SICN_min"] = quality[0];
+    stats[prefix+"SICN_avg"] = avg;
+    stats[prefix+"SICN_max"] = quality.back();
+    stats[prefix+"SICN_med"] = quality[size_t(0.50*double(quality.size()))];
+    // stats[prefix+"SICN_01% <"] = quality[size_t(0.01*double(quality.size()))];
+    // stats[prefix+"SICN_10% <"] = quality[size_t(0.10*double(quality.size()))];
+    // stats[prefix+"SICN_25% <"] = quality[size_t(0.25*double(quality.size()))];
+    // stats[prefix+"SICN_50% <"] = quality[size_t(0.50*double(quality.size()))];
+    // stats[prefix+"SICN_75% <"] = quality[size_t(0.75*double(quality.size()))];
+    // stats[prefix+"SICN_90% <"] = quality[size_t(0.90*double(quality.size()))];
+    // stats[prefix+"SICN_99% <"] = quality[size_t(0.99*double(quality.size()))];
+
+    stats[prefix+"edge_min"] = edgeLen.front();
+    stats[prefix+"edge_avg"] = edge_len_avg;
+    stats[prefix+"edge_med"] = edgeLen[size_t(0.5*double(edgeLen.size()))];
+    stats[prefix+"edge_max"] = edgeLen.back();
+  }
+
+
+  return true;
+}
+
+void printStatistics(const unordered_map<std::string,double>& stats, const std::string& title) {
+  std::vector<std::string> keys;
+  for (auto& kv: stats) keys.push_back(kv.first);
+  std::sort(keys.begin(),keys.end());
+  Msg::Info("%s", title.c_str());;
+  for (std::string key: keys) {
+    double val = stats.at(key);
+    if (std::trunc(val) == val) {
+      Msg::Info("- %s: %i", key.c_str(),int(val));
+    } else {
+      Msg::Info("- %s: %f", key.c_str(),val);
+    }
+  }
+}
+
+void writeStatistics(const unordered_map<std::string,double>& stats, const std::string& path) {
+  std::vector<std::string> keys;
+  for (auto& kv: stats) keys.push_back(kv.first);
+  std::sort(keys.begin(),keys.end());
+
+  std::ofstream out(path);
+  out << "{\n";
+  for (size_t i = 0; i < keys.size(); ++i) {
+    std::string key = keys[i];
+    double val = stats.at(key);
+    if (std::trunc(val) == val) {
+      out << "\"" << key << "\"" << ": " << int(val);
+    } else {
+      out << "\"" << key << "\"" << ": " << val;
+    }
+    if ((int)i < (int)keys.size()-1) {
+      out << ",\n";
+    } else {
+      out << "\n";
+    }
+  }
+  out << "}\n";
+  out.close();
+}

@@ -182,11 +182,11 @@ bool compute4neighbors(
 	double DIFF_L2   = fabs(L2-LS[i]);
 	newPoint[i][0]=uvt[0];
 	newPoint[i][1]=uvt[1];
-	if (DIFF_L2 <= DIFF_L && DIFF_ANG2 <= DIFF_ANG){
-	}
-	else{
-	  Msg::Warning("Difficult to find a point %lu L %g vs %g (ps %12.5E) ",i,L,L2,DIFF_ANG2);
-	}
+  if (DIFF_L2 <= DIFF_L && DIFF_ANG2 <= DIFF_ANG){
+  }
+  else{
+    Msg::Debug("Difficult to find a point %lu L %g vs %g (ps %12.5E) ",i,L,L2,DIFF_ANG2);
+  }
       }
       else{
 	SPoint3 p_test (v_center->x() + dirs[i].x() * LS[i],

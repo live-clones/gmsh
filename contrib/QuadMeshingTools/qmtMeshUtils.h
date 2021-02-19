@@ -9,6 +9,7 @@
 
 #include <set>
 #include <vector>
+#include <string>
 #include <unordered_map>
 #include "SPoint2.h"
 #include "SPoint3.h"
@@ -86,6 +87,10 @@ struct GFaceInfo {
 
 bool fillGFaceInfo(GFace* gf, GFaceInfo& info);
 
+bool appendCADStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix = "CAD_");
+bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix = "Mesh_");
+void printStatistics(const std::unordered_map<std::string,double>& stats, const std::string& title = "Statistics:");
+void writeStatistics(const std::unordered_map<std::string,double>& stats, const std::string& path); /* json format */
 
 struct GFaceMeshDiff {
   GFace* gf = nullptr;

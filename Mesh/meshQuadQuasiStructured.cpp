@@ -1392,7 +1392,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
   }
 
 
-  Msg::Debug("Refine mesh with background projection ...");
+  Msg::Info("Refine mesh (midpoint subdivision, with background projection) ...");
 
 
   bool linear = true; 
@@ -1551,6 +1551,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     GeoLog::flush();
   }
 
+  std::unordered_map<std::string,double> stats;
+  appendQuadMeshStatistics(gm, stats, "Mesh_");
+  printStatistics(stats,"Quad mesh after subdivision and projection:");
+
   return 0;
 }
 
@@ -1626,7 +1630,7 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace* gf) {
 
 int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequired) {
   std::vector<GFace*> faces = model_faces(gm);
-  Msg::Debug("optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
+  Msg::Info("Pattern-based quad meshing of simple CAD faces ...", faces.size());
 
   initQuadPatterns();
 
@@ -1645,6 +1649,10 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequir
     meshFaceWithGlobalPattern(gf, invertNormals, minimumQualityRequired);
   }
 
+  std::unordered_map<std::string,double> stats;
+  appendQuadMeshStatistics(gm, stats, "Mesh_");
+  printStatistics(stats,"Quad mesh after simple face pattern-based remeshing:");
+
   return 0;
 }
 
@@ -1653,7 +1661,7 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequir
 int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
   // return 0;
 
-  Msg::Debug("optimize topology of quad meshes with disk quadrangulation remeshing ...");
+  Msg::Info("Optimize topology of quad meshes with disk quadrangulation remeshing ...");
 
   initDiskQuadrangulations();
 
@@ -1672,6 +1680,10 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
     optimizeQuadMeshWithDiskQuadrangulationRemeshing(gf);
   }
 
+  std::unordered_map<std::string,double> stats;
+  appendQuadMeshStatistics(gm, stats, "Mesh_");
+  printStatistics(stats,"Quad mesh after disk quadrangulation remeshing:");
+
   return 0;
 }
 
@@ -1679,7 +1691,7 @@ int optimizeTopologyWithCavityRemeshing(GModel* gm) {
 //  return 0;
 
   std::vector<GFace*> faces = model_faces(gm);
-  Msg::Debug("optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
+  Msg::Info("Optimize topology of quad meshes with cavity remeshing (%li faces) ...", faces.size());
 
   initQuadPatterns();
 
@@ -1708,6 +1720,11 @@ int optimizeTopologyWithCavityRemeshing(GModel* gm) {
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
     improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, invertNormals);
   }
+
+  std::unordered_map<std::string,double> stats;
+  appendQuadMeshStatistics(gm, stats, "Mesh_");
+  printStatistics(stats,"Quad mesh after cavity remeshing:");
+
 
   GeoLog::flush();
 
