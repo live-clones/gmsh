@@ -157,11 +157,7 @@ def runSolver():
     for d in diffus:
         print(d, "=", gmsh.onelab.getNumber(d))
 
-def eventLoop():
-    # terminate the event loop if the GUI was closed
-    if gmsh.fltk.isAvailable() == 0: return 0
-    # wait for an event
-    gmsh.fltk.wait()
+def checkForEvent():
     # check if an action is requested
     action = gmsh.onelab.getString("ONELAB/Action")
     if len(action) < 1:
@@ -203,8 +199,8 @@ if "-nopopup" not in sys.argv:
     gmsh.fltk.initialize()
     # show the contents of the solver menu
     gmsh.fltk.openTreeItem("0Modules/Solver")
-    while eventLoop():
-        pass
+    while gmsh.fltk.isAvailable() and checkForEvent():
+        gmsh.fltk.wait()
 else:
     runSolver()
 
