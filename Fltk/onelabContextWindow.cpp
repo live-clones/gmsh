@@ -227,17 +227,11 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
       h += BH;
     }
   }
-  // resizable starting at 1/3 of window to resize label more than widget, and
-  // to have minimal window width of w / 3 as well
-  Fl_Box *r = new Fl_Box(w / 3, h, w - w / 3, WB);
-  _onelabWidgets.push_back(r);
-  win->add(r);
   h += WB;
 
   // resize the window and restore the focus
-  win->resizable(0);
   win->resize(win->x(), win->y(), win->w(), h);
-  win->resizable(r);
+  win->size_range(_width, win->h(), 0, win->h());
 
   for(auto w : _onelabWidgets) {
     if(w->label() && focus == std::string(w->label())) { w->take_focus(); }
