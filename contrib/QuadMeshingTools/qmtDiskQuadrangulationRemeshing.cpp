@@ -35,7 +35,8 @@
 #include "cppUtils.h"
 #include "qmtMeshUtils.h"
 #include "qmtMeshGeometryOptimization.h"
-#include "dataDiskQuadrangulations.hpp" // list of disk quadrangulations as a raw string literal
+// #include "dataDiskQuadrangulations.hpp" // list of disk quadrangulations as a raw string literal
+#include "dataDiskQuadrangulationsSplit.hpp" // list of disk quadrangulations as many strings
 
 using namespace CppUtils;
 
@@ -73,7 +74,9 @@ namespace QMT {
     Msg::Info("loading disk quadrangulations ...");
     B_disk_quadrangulations.reserve(20);
     B_BVL_ids.reserve(20);
-    std::string data(disk_quadrangulations);
+    // std::string data(disk_quadrangulations);
+    std::string data;
+    diskQuadrangulationConcat(data);
     vector<std::string> lines = SplitString(data,'\n');
     Quadrangulation qdrl;
     vector<std::string> numbers;
