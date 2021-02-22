@@ -225,6 +225,13 @@ void printSizeMapStats(
   Msg::Info("Size map statistics: min=%.3f, max=%.3f, target #elements: %.3f", vmin, vmax, integral);
 }
 
+int fillSizemapFromTriangleSizes(
+    const std::vector<MTriangle*>& triangles, 
+    std::unordered_map<MVertex*,double>& sizeMap)
+{
+  return 0;
+}
+
 
 int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, bool deleteGModelMesh, int N) {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return 0;
@@ -238,14 +245,24 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
   const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
 
   Msg::Info("Build background mesh and guiding field ...");
+  bool externalSizemap = false;
+  const int qqsSizemapMethod = CTX::instance()->mesh.quadqsSizemapMethod;
 
   {
     FieldManager *fields = gm->getFields();
     if(fields->getBackgroundField() > 0) {        
-      Field* guiding_field = fields->get(fields->getBackgroundField());
-      if(guiding_field && guiding_field->numComponents() == 3) {
-        Msg::Info("background field exists, using it");
+      Field* field = fields->get(fields->getBackgroundField());
+      if(field && field->numComponents() == 3) {
+        Msg::Info("vector background field exists, using it as a guiding field");
         return 0;
+      } else if (field && field->numComponents() == 1) {
+        if (qqsSizemapMethod == 0) {
+          Msg::Info("scalar background field exists, using it as size map");
+          externalSizemap = true;
+        } else {
+          Msg::Warning("scalar background field exists, but ignored because QuadqsSizemapMethod is %i",
+              CTX::instance()->mesh.quadqsSizemapMethod);
+        }
       }
     }
   }
@@ -431,15 +448,22 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
       /* Conformal scaling associated to cross field */
       std::unordered_map<MVertex*,double> conformalScaling;
-      Msg::Info("- Face %i/%li: compute cross field conformal scaling ...", gf->tag(), faces.size());
-      int scs = computeCrossFieldConformalScaling(N, triangles, triEdgeTheta, conformalScaling);
-      if (scs != 0) {
-        Msg::Warning("- Face %i: failed to compute conformal scaling, use uniform size", gf->tag());
-      }
+      if (externalSizemap) { /* Size map from background field */
 
-      /* Quantile filtering on the conformal scaling histogram */
-      double filteringRange = 0.05;
-      quantileFiltering(conformalScaling, filteringRange);
+      } else if (qqsSizemapMethod == 3) { /* Size map from background triangulation */
+
+      } else {
+        Msg::Info("- Face %i/%li: compute cross field conformal scaling ...", gf->tag(), faces.size());
+        int scs = computeCrossFieldConformalScaling(N, triangles, triEdgeTheta, conformalScaling);
+        if (scs != 0) {
+          Msg::Warning("- Face %i: failed to compute conformal scaling, use uniform size", gf->tag());
+        }
+
+        /* Quantile filtering on the conformal scaling histogram */
+        Msg::Debug("- Face %i/%li: conformal scaling quantile filtering ...", gf->tag(), faces.size());
+        double filteringRange = 0.05;
+        quantileFiltering(conformalScaling, filteringRange);
+      }
 
       std::vector<std::array<double,9> > triangleDirections;
       int sc = convertToPerTriangleCrossFieldDirections(N, triangles, triEdgeTheta, triangleDirections);

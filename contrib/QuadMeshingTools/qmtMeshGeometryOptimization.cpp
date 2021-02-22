@@ -620,7 +620,7 @@ namespace QMT {
     b_v.fill(0.);
     double PENALTY = 1.e8;
 
-    std::vector<Eigen::Triplet<double> > triplets;
+    std::vector<Eigen::Triplet<double, size_t> > triplets;
     for (size_t v = 0; v < uvs.size(); ++v) {
       if (v < nInterior) {
         triplets.push_back({v,v,1.});
