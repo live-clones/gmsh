@@ -1486,10 +1486,6 @@ if none of the @var{expression} of the previous matching codes
 Ends a matching @code{If} command.
 @end ftable
 
-See @ref{t5}, for an example of @code{For} and @code{If} commands. Gmsh
-does not provide any @code{Else} (or similar) command at the time of this
-writing.
-
 @c -------------------------------------------------------------------------
 @c General commands
 @c -------------------------------------------------------------------------
