@@ -229,6 +229,19 @@ int fillSizemapFromTriangleSizes(
     const std::vector<MTriangle*>& triangles, 
     std::unordered_map<MVertex*,double>& sizeMap)
 {
+  std::unordered_map<MVertex*, std::vector<MVertex*> > v2v;
+  buildVertexToVertexMap(triangles, v2v);
+  for (auto& kv: v2v) {
+    MVertex* v = kv.first;
+    double sum = 0.;
+    double avg = 0.;
+    for (MVertex* v2: kv.second) {
+      avg += v->distance(v2);
+      sum += 1.;
+    }
+    if (sum == 0.) continue;
+    sizeMap[v] = avg/sum;
+  }
   return 0;
 }
 
@@ -446,52 +459,61 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
         }
       }
 
-      /* Conformal scaling associated to cross field */
-      std::unordered_map<MVertex*,double> conformalScaling;
-      if (externalSizemap) { /* Size map from background field */
-
-      } else if (qqsSizemapMethod == 3) { /* Size map from background triangulation */
-
-      } else {
-        Msg::Info("- Face %i/%li: compute cross field conformal scaling ...", gf->tag(), faces.size());
-        int scs = computeCrossFieldConformalScaling(N, triangles, triEdgeTheta, conformalScaling);
-        if (scs != 0) {
-          Msg::Warning("- Face %i: failed to compute conformal scaling, use uniform size", gf->tag());
-        }
-
-        /* Quantile filtering on the conformal scaling histogram */
-        Msg::Debug("- Face %i/%li: conformal scaling quantile filtering ...", gf->tag(), faces.size());
-        double filteringRange = 0.05;
-        quantileFiltering(conformalScaling, filteringRange);
-      }
-
       std::vector<std::array<double,9> > triangleDirections;
       int sc = convertToPerTriangleCrossFieldDirections(N, triangles, triEdgeTheta, triangleDirections);
       if (sc != 0) {
         Msg::Warning("- Face %i: failed to resample cross field at triangle corners", gf->tag());
       }
 
-      size_t targetNumberOfQuads = gf->triangles.size()/2.;
-      if (targetNumberOfQuads == 0) { /* Check in background mesh */
-        auto it = bmesh.faceBackgroundMeshes.find(gf);
-        if (it == bmesh.faceBackgroundMeshes.end()) {
-          Msg::Error("- Face %i: background mesh not found", gf->tag());
-          targetNumberOfQuads = 1000;
-        } else {
-          targetNumberOfQuads = 0.5 * it->second.triangles.size();
-          targetNumberOfQuads *= std::pow(scalingOnTriangulation,2);
+
+      /* Build the size map of the guiding field */
+      std::unordered_map<MVertex*,double> localSizemap;
+      if (externalSizemap) { /* Size map from background field */
+
+      } else if (qqsSizemapMethod == 3) { /* Size map from background triangulation */
+        int sts = fillSizemapFromTriangleSizes(triangles, localSizemap);
+        if (sts != 0) {
+          Msg::Warning("- Face %i: failed to fill size map from triangle sizes", gf->tag());
+        }
+      } else {
+        /* Conformal scaling associated to cross field */
+        Msg::Info("- Face %i/%li: compute cross field conformal scaling ...", gf->tag(), faces.size());
+        int scs = computeCrossFieldConformalScaling(N, triangles, triEdgeTheta, localSizemap);
+        if (scs != 0) {
+          Msg::Warning("- Face %i: failed to compute conformal scaling, use uniform size", gf->tag());
+          for (MTriangle* t: triangles) for (size_t lv = 0; lv < 3; ++lv) {
+            localSizemap[t->getVertex(lv)] = 1.;
+          }
+        }
+
+        /* Quantile filtering on the conformal scaling histogram */
+        Msg::Debug("- Face %i/%li: conformal scaling quantile filtering ...", gf->tag(), faces.size());
+        double filteringRange = 0.05;
+        quantileFiltering(localSizemap, filteringRange);
+
+        size_t targetNumberOfQuads = gf->triangles.size()/2.;
+        if (targetNumberOfQuads == 0) { /* Check in background mesh */
+          auto it = bmesh.faceBackgroundMeshes.find(gf);
+          if (it == bmesh.faceBackgroundMeshes.end()) {
+            Msg::Error("- Face %i: background mesh not found", gf->tag());
+            targetNumberOfQuads = 1000;
+          } else {
+            targetNumberOfQuads = 0.5 * it->second.triangles.size();
+            targetNumberOfQuads *= std::pow(scalingOnTriangulation,2);
+          }
+        }
+
+        /* Midpoint subdivision => 4 times more quads */
+        targetNumberOfQuads /= 4;
+
+        if (targetNumberOfQuads == 0) targetNumberOfQuads = 1;
+
+        int scso = computeQuadSizeMapFromCrossFieldConformalFactor(triangles, targetNumberOfQuads, localSizemap);
+        if (scso != 0) {
+          Msg::Warning("- Face %i: failed to compute size map from conformal scaling", gf->tag());
         }
       }
 
-      /* Midpoint subdivision => 4 times more quads */
-      targetNumberOfQuads /= 4;
-
-      if (targetNumberOfQuads == 0) targetNumberOfQuads = 1;
-
-      int scso = computeQuadSizeMapFromCrossFieldConformalFactor(triangles, targetNumberOfQuads, conformalScaling);
-      if (scso != 0) {
-        Msg::Warning("- Face %i: failed to compute size map from conformal scaling", gf->tag());
-      }
 
       #if defined(_OPENMP)
       #pragma omp critical
@@ -499,7 +521,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
       {
         append(global_triangles, triangles);
         append(global_triangle_directions, triangleDirections);
-        for (auto& kv: conformalScaling) {
+        for (auto& kv: localSizemap) {
           global_size_map.push_back({kv.first,kv.second});
         }
       }

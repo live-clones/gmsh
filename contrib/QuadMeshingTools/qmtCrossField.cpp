@@ -118,7 +118,7 @@ namespace QMT {
         bool firstTime = false) {
 #if defined(HAVE_EIGEN)
       // Msg::Debug("Eigen call: add coefficients");
-      std::vector<Eigen::Triplet<double> > triplets;
+      std::vector<Eigen::Triplet<double,size_t> > triplets;
       triplets.reserve(values.size());
       if (firstTime) {
         for (size_t i = 0; i < columns.size(); ++i) {

@@ -1293,7 +1293,7 @@ namespace QMT {
     // and we add the getNum of the first vertex for reproductibility. */
     vector<std::pair<size_t,size_t> > sizeAndSide(sides.size());
     for (size_t i = 0; i < sides.size(); ++i) {
-      sizeAndSide[i] = {1e7*sides[i].size()+sides[i].front()->getNum(),i};
+      sizeAndSide[i] = {size_t(1e7*sides[i].size()+sides[i].front()->getNum()),i};
     }
     std::sort(sizeAndSide.begin(),sizeAndSide.end());
     std::reverse(sizeAndSide.begin(),sizeAndSide.end());
