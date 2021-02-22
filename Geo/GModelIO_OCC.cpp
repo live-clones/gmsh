@@ -5134,11 +5134,14 @@ bool OCC_Internals::makeEdgeSTLFromFace(const TopoDS_Edge &c,
   if(edgepoly->NbNodes() < 2) return false;
 
   for(int i = 1; i <= edgepoly->NbNodes(); i++) {
-#if OCC_VERSION_HEX >= 0x070600
+#if OCC_VERSION_HEX > 0x070600
     int j = edgepoly->Node(i);
-    gp_Pnt pp = trian->Node(j);
 #else
     int j = (edgepoly->Nodes())(i);
+#endif
+#if OCC_VERSION_HEX >= 0x070600
+    gp_Pnt pp = trian->Node(j);
+#else
     gp_Pnt pp = (trian->Nodes())(j);
 #endif
     if(!transf.IsIdentity()) { pp.Transform(transf); }
