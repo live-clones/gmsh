@@ -245,6 +245,36 @@ int fillSizemapFromTriangleSizes(
   return 0;
 }
 
+int fillSizemapFromScalarBackgroundField(
+    GModel* gm,
+    const std::vector<MTriangle*>& triangles, 
+    std::unordered_map<MVertex*,double>& sizeMap)
+{
+  Field* field = nullptr;
+  FieldManager *fields = gm->getFields();
+  if(fields->getBackgroundField() > 0) {        
+    field = fields->get(fields->getBackgroundField());
+    if (field && field->numComponents() != 1) {
+      field = nullptr;
+    }
+  }
+  if (field == nullptr) {
+    Msg::Error("Scalar background field not found");
+    return -1;
+  }
+  for (MTriangle* t: triangles) for (size_t lv = 0; lv < 3; ++lv) {
+    MVertex* v = t->getVertex(lv);
+    auto it = sizeMap.find(v);
+    if (it == sizeMap.end()) {
+      double value = (*field)(v->point().x(),v->point().y(),v->point().z());
+      if (std::isnan(value) || value == -DBL_MAX || value == DBL_MAX) continue;
+      sizeMap[v] = value;
+    }
+  }
+  return 0;
+}
+
+
 
 int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, bool deleteGModelMesh, int N) {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return 0;
@@ -469,7 +499,10 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
       /* Build the size map of the guiding field */
       std::unordered_map<MVertex*,double> localSizemap;
       if (externalSizemap) { /* Size map from background field */
-
+        int sts = fillSizemapFromScalarBackgroundField(gm, triangles, localSizemap);
+        if (sts != 0) {
+          Msg::Warning("- Face %i: failed to fill size map from scalar background field", gf->tag());
+        }
       } else if (qqsSizemapMethod == 3) { /* Size map from background triangulation */
         int sts = fillSizemapFromTriangleSizes(triangles, localSizemap);
         if (sts != 0) {
@@ -514,7 +547,6 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
         }
       }
 
-
       #if defined(_OPENMP)
       #pragma omp critical
       #endif
@@ -553,11 +585,12 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
   /* Minimal size on curves */
   std::unordered_map<MVertex*,double> cadMinimalSizeOnCurves;
-  int scad = computeMinimalSizeOnCurves(bmesh, cadMinimalSizeOnCurves);
-  if (scad != 0) {
-    Msg::Warning("failed to compute minimal size on CAD curves");
+  if ((qqsSizemapMethod == 0 && !externalSizemap) || qqsSizemapMethod == 2) {
+    int scad = computeMinimalSizeOnCurves(bmesh, cadMinimalSizeOnCurves);
+    if (scad != 0) {
+      Msg::Warning("failed to compute minimal size on CAD curves");
+    }
   }
-
 
   /* Initialize global size map defined on the background mesh */
   std::unordered_map<MVertex*,double> sizeMap = cadMinimalSizeOnCurves;
