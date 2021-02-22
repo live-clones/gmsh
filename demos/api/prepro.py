@@ -66,7 +66,11 @@ parameters = """
     "values":[20],
     "min":0,
     "max":100,
-    "step":0.1
+    "step":0.1,
+    "attributes":
+      {
+        "Custom attribute to track the id":"ONELAB Context/Curve Template"
+      }
   },
   {
     "type":"number",
@@ -167,7 +171,7 @@ def checkForEvent():
         # database was changed: update/define new parameters depending on new
         # state
         gmsh.onelab.setString("ONELAB/Action", [""])
-        # print("parameters = ", gmsh.onelab.get())
+        #print("parameters = ", gmsh.onelab.get())
         print("ONELAB check...")
         gmsh.fltk.update()
     elif action[0] == "reset":
