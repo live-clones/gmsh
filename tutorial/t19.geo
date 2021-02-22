@@ -32,7 +32,7 @@ Fillet{v(0)}{e()}{0.1}
 
 // OpenCASCADE also allows general extrusions along a smooth path. Let's first
 // define a spline curve:
-nturns = DefineNumber[ 1, Min 0.1, Max 3, Step 0.01, Name "Parameters/Turn" ];
+nturns = 1;
 npts = 20;
 r = 1;
 h = 1 * nturns;

@@ -1486,10 +1486,6 @@ if none of the @var{expression} of the previous matching codes
 Ends a matching @code{If} command.
 @end ftable
 
-See @ref{t5}, for an example of @code{For} and @code{If} commands. Gmsh
-does not provide any @code{Else} (or similar) command at the time of this
-writing.
-
 @c -------------------------------------------------------------------------
 @c General commands
 @c -------------------------------------------------------------------------
@@ -3335,25 +3331,28 @@ as well as the way meshes are displayed in the GUI, is given in
 
 Solvers and other external codes can be driven by Gmsh through the
 ONELAB interface (see @url{http://www.onelab.info}), which allows to
-have them share parameters and modeling information.  To add a new
-external solver, you need to specify its name (@code{Solver.Name0},
+have them share parameters and modeling information.
+
+Using the Gmsh API, you can directly embed Gmsh in your C++, C, Python
+or Julia solver, use ONELAB for interactive parameter definition and
+modification, and to create post-processing data on the fly. See
+@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,prepro.py},
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py} and
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp} for
+examples.
+
+If you prefer to keep codes separate, you can also communicate with Gmsh
+through a socket by providing the solver name (@code{Solver.Name0},
 @code{Solver.Name1}, etc.) and the path to the executable
-(@code{Solver.Executable0}, @code{Solver.Executable1}, etc.).  The list
-of all the solver options is given in @ref{Solver options
-list}. Examples on how to interface solvers are available in the source
-distribution (in the
-@url{@value{GITLAB-PREFIX}/utils/solvers,utils/solvers}
-directory). A full-featured solver interfaced in this manner is GetDP
+(@code{Solver.Executable0}, @code{Solver.Executable1}, etc.). Parameters
+can then be exchanged using the ONELAB protocol: see the
+@url{@value{GITLAB-PREFIX}/utils/solvers,utils/solvers} directory for
+examples. A full-featured solver interfaced in this manner is GetDP
 (@uref{https://getdp.info}), a general finite element solver using mixed
 finite elements.
 
-Using the Gmsh API, you can also directly embed Gmsh in your own solver,
-and use ONELAB for interactive parameter definition and
-modification. See
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py}
-and
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp})
-for examples.
+The list of all the solver options is given in @ref{Solver options
+list}.
 
 @c =========================================================================
 @c Post-processing module
@@ -6569,25 +6568,25 @@ interact with external solvers. See @ref{Solver module}.
 
 @item Can I launch Gmsh from my solver (instead of launching my solver from Gmsh) in order to monitor a solution?
 
-The simplest (but rather crude) approach if to re-launch Gmsh everytime
-you want to visualize something (a simple C program showing how to do
-this is given in
+Using the Gmsh API, you can directly embed Gmsh in your own solver, use
+ONELAB for interactive parameter definition and modification, and create
+visualization data on the fly. See e.g.
+@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,prepro.py},
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py},
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp}.
+
+Another (rather crude) approach if to launch the Gmsh app everytime you
+want to visualize something (a simple C program showing how to do this
+is given in
 @url{@value{GITLAB-PREFIX}/utils/misc/callgmsh.c,utils/misc/callgmsh.c}).
 
-Another approach is to modify your program so that it can communicate
-with Gmsh through ONELAB over a socket, select `Always listen to
-incoming connection requests' in the solver option panel (or run gmsh
-with the @code{-listen} command line option), and Gmsh will always
-listen for your program on the given socket (or on the @code{Solver.SocketName}
-if no socket is specified).
+Yet another approach is to modify your program so that it can
+communicate with Gmsh through ONELAB over a socket. Select `Always
+listen to incoming connection requests' in the Gmsh solver option panel
+(or run gmsh with the @code{-listen} command line option), and Gmsh will
+always listen for your program on the given socket (or on the
+@code{Solver.SocketName} if no socket is specified).
 
-Using the Gmsh API, you can also directly embed Gmsh in your own solver,
-and use ONELAB for interactive parameter definition and
-modification. See
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py}
-and
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp})
-for examples.
 @end enumerate
 
 @c -------------------------------------------------------------------------

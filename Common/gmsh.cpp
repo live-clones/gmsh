@@ -86,6 +86,7 @@
 #include "FlGui.h"
 #include "openglWindow.h"
 #include "onelabContextWindow.h"
+#include "onelabGroup.h"
 #endif
 
 #if defined(HAVE_ONELAB)
@@ -7457,6 +7458,24 @@ GMSH_API void gmsh::fltk::showContextWindow(const int dim, const int tag)
 #if defined(HAVE_FLTK)
   _createFltk();
   FlGui::instance()->onelabContext->show(dim, tag);
+#endif
+}
+
+GMSH_API void gmsh::fltk::openTreeItem(const std::string &name)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->onelab->openTreeItem(name);
+#endif
+}
+
+GMSH_API void gmsh::fltk::closeTreeItem(const std::string &name)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_FLTK)
+  _createFltk();
+  FlGui::instance()->onelab->closeTreeItem(name);
 #endif
 }
 

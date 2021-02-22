@@ -5064,17 +5064,29 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
   if(verticesXYZ) start = verticesXYZ->size();
   for(int i = 1; i <= triangulation->NbNodes(); i++) {
     if(verticesUV) {
+#if OCC_VERSION_HEX >= 0x070600
+      gp_Pnt2d p = triangulation->UVNode(i);
+#else
       gp_Pnt2d p = (triangulation->UVNodes())(i);
+#endif
       verticesUV->push_back(SPoint2(p.X(), p.Y()));
     }
     if(verticesXYZ) {
+#if OCC_VERSION_HEX >= 0x070600
+      gp_Pnt pp = triangulation->Node(i);
+#else
       gp_Pnt pp = (triangulation->Nodes())(i);
+#endif
       double x = pp.X(), y = pp.Y(), z = pp.Z();
       loc.Transformation().Transforms(x, y, z);
       verticesXYZ->push_back(SPoint3(x, y, z));
     }
     if(normals) {
+#if OCC_VERSION_HEX >= 0x070600
+      gp_Pnt2d p = triangulation->UVNode(i);
+#else
       gp_Pnt2d p = (triangulation->UVNodes())(i);
+#endif
       Handle(Geom_Surface) sur = BRep_Tool::Surface(s);
       gp_Pnt pnt;
       gp_Vec du, dv;
@@ -5088,7 +5100,11 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
     }
   }
   for(int i = 1; i <= triangulation->NbTriangles(); i++) {
+#if OCC_VERSION_HEX >= 0x070600
+    Poly_Triangle triangle = triangulation->Triangle(i);
+#else
     Poly_Triangle triangle = (triangulation->Triangles())(i);
+#endif
     int p1, p2, p3;
     triangle.Get(p1, p2, p3);
     triangles.push_back(start + p1 - 1);
@@ -5108,35 +5124,29 @@ bool OCC_Internals::makeEdgeSTLFromFace(const TopoDS_Edge &c,
                                         const TopoDS_Face &s,
                                         std::vector<SPoint3> *verticesXYZ)
 {
-  // here we compute the vertices of a discretization of an edge c
-  // that is a boundary of the face s, which we just discretized
-  // the code below is inspired in pythonocc's tesselator.cpp
-  // that is GPLv3+ Copyright 2011 Fotios Sioutis, but it was rewritten
-  // from scratch to keep Gmsh GPLv2
-
   TopLoc_Location transf;
   Handle(Poly_Triangulation) trian = BRep_Tool::Triangulation(s, transf);
-
-  if(trian.IsNull()) { return false; }
+  if(trian.IsNull()) return false;
 
   Handle(Poly_PolygonOnTriangulation) edgepoly =
     BRep_Tool::PolygonOnTriangulation(c, trian, transf);
+  if(edgepoly.IsNull()) return false;
+  if(edgepoly->NbNodes() < 2) return false;
 
-  if(edgepoly.IsNull()) { return false; }
-
-  const TColgp_Array1OfPnt &trainVerts = trian->Nodes();
-  const TColStd_Array1OfInteger &edgeVerts = edgepoly->Nodes();
-
-  if(edgeVerts.Length() < 2) { return false; }
-
-  for(int node = edgeVerts.Lower(); node <= edgeVerts.Upper(); node++) {
-    int index = edgeVerts.Value(node);
-    gp_Pnt trinode = trainVerts.Value(index);
-    if(!transf.IsIdentity()) { trinode.Transform(transf); }
-
-    verticesXYZ->push_back(SPoint3(trinode.X(), trinode.Y(), trinode.Z()));
+  for(int i = 1; i <= edgepoly->NbNodes(); i++) {
+#if OCC_VERSION_HEX > 0x070600
+    int j = edgepoly->Node(i);
+#else
+    int j = (edgepoly->Nodes())(i);
+#endif
+#if OCC_VERSION_HEX >= 0x070600
+    gp_Pnt pp = trian->Node(j);
+#else
+    gp_Pnt pp = (trian->Nodes())(j);
+#endif
+    if(!transf.IsIdentity()) { pp.Transform(transf); }
+    verticesXYZ->push_back(SPoint3(pp.X(), pp.Y(), pp.Z()));
   }
-
   return true;
 }
 

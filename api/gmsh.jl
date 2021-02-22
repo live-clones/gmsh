@@ -6213,6 +6213,36 @@ function showContextWindow(dim, tag)
 end
 const show_context_window = showContextWindow
 
+"""
+    gmsh.fltk.openTreeItem(name)
+
+Open the `name` item in the menu tree.
+"""
+function openTreeItem(name)
+    ierr = Ref{Cint}()
+    ccall((:gmshFltkOpenTreeItem, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const open_tree_item = openTreeItem
+
+"""
+    gmsh.fltk.closeTreeItem(name)
+
+Close the `name` item in the menu tree.
+"""
+function closeTreeItem(name)
+    ierr = Ref{Cint}()
+    ccall((:gmshFltkCloseTreeItem, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const close_tree_item = closeTreeItem
+
 end # end of module fltk
 
 """

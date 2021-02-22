@@ -68,7 +68,8 @@ gmsh.model.occ.addWire([1000], 1000)
 gmsh.model.occ.addDisk(1, 0, 0, 0.2, 0.2, 1000)
 gmsh.model.occ.rotate([(2, 1000)], 0, 0, 0, 1, 0, 0, math.pi / 2)
 
-# We extrude the disk along the spline to create a pipe:
+# We extrude the disk along the spline to create a pipe (other sweeping types
+# can be specified; try e.g. 'Frenet' instead of 'DiscreteTrihedron'):
 gmsh.model.occ.addPipe([(2, 1000)], 1000, 'DiscreteTrihedron')
 
 # We delete the source surface, and increase the number of sub-edges for a

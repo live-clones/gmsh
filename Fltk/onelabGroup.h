@@ -47,6 +47,7 @@ public:
   void enableTreeWidgetResize(bool value) { _enableTreeWidgetResize = value; }
   void redrawTree() { _tree->redraw(); }
   void openTreeItem(const std::string &name);
+  void closeTreeItem(const std::string &name);
   void setButtonVisibility();
   void setButtonMode(const std::string &butt0, const std::string &butt1);
   bool isBusy();

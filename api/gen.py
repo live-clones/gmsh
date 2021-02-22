@@ -978,6 +978,12 @@ fltk.add('setStatusMessage', doc, None, istring('message'), ibool('graphics', 'f
 doc = '''Show context window for the entity of dimension `dim' and tag `tag'.'''
 fltk.add('showContextWindow', doc, None, iint('dim'), iint('tag'))
 
+doc = '''Open the `name' item in the menu tree.'''
+fltk.add('openTreeItem', doc, None, istring('name'))
+
+doc = '''Close the `name' item in the menu tree.'''
+fltk.add('closeTreeItem', doc, None, istring('name'))
+
 ################################################################################
 
 onelab = gmsh.add_module('onelab', 'ONELAB server functions')

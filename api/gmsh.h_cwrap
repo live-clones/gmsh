@@ -4884,6 +4884,22 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // Open the `name' item in the menu tree.
+    inline void openTreeItem(const std::string & name)
+    {
+      int ierr = 0;
+      gmshFltkOpenTreeItem(name.c_str(), &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // Close the `name' item in the menu tree.
+    inline void closeTreeItem(const std::string & name)
+    {
+      int ierr = 0;
+      gmshFltkCloseTreeItem(name.c_str(), &ierr);
+      if(ierr) throwLastError();
+    }
+
   } // namespace fltk
 
   namespace onelab { // ONELAB server functions

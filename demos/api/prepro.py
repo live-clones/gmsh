@@ -148,11 +148,6 @@ parameters = """
   }
 ]"""
 
-# remove all entries in the defaut solver menu, so that we can have a clean
-# empty one for ourselves ;-)
-for i in range(5):
-    gmsh.option.setString('Solver.Name{}'.format(i), '')
-
 gmsh.onelab.set(parameters)
 
 def runSolver():
@@ -162,11 +157,7 @@ def runSolver():
     for d in diffus:
         print(d, "=", gmsh.onelab.getNumber(d))
 
-def eventLoop():
-    # terminate the event loop if the GUI was closed
-    if gmsh.fltk.isAvailable() == 0: return 0
-    # wait for an event
-    gmsh.fltk.wait()
+def checkForEvent():
     # check if an action is requested
     action = gmsh.onelab.getString("ONELAB/Action")
     if len(action) < 1:
@@ -206,8 +197,10 @@ def eventLoop():
 
 if "-nopopup" not in sys.argv:
     gmsh.fltk.initialize()
-    while eventLoop():
-        pass
+    # show the contents of the solver menu
+    gmsh.fltk.openTreeItem("0Modules/Solver")
+    while gmsh.fltk.isAvailable() and checkForEvent():
+        gmsh.fltk.wait()
 else:
     runSolver()
 
