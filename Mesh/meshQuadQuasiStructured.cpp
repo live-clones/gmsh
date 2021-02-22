@@ -1306,6 +1306,12 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
   bool linear = true; 
   RefineMesh(gm, linear, true, false);
 
+  if (Msg::GetVerbosity() >= 99) {
+    std::unordered_map<std::string,double> stats;
+    appendQuadMeshStatistics(gm, stats, "MPS_");
+    printStatistics(stats,"Quad mesh after subdivision, before projection:");
+  }
+
   GlobalBackgroundMesh* bmesh = nullptr;
   if (backgroudMeshExists(BMESH_NAME)) {
     bmesh = &(getBackgroundMesh(BMESH_NAME));
@@ -1313,9 +1319,11 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     Msg::Warning("refine mesh with background projection: no background mesh, using CAD projection (slow)");
   }
 
-  unordered_map<MVertex*,MVertex*> old2new;
-
   std::vector<GEdge*> edges = model_edges(gm);
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
   for (size_t e = 0; e < edges.size(); ++e) {
     GEdge* ge = edges[e];
     if (CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
@@ -1323,6 +1331,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
 
     Msg::Debug("- Curve %i: project midpoints on curve", ge->tag());
     unordered_map<MVertex*,MVertex*> old2new_ge;
+    unordered_map<MVertex*,SPoint3> backupPositionLinear;
     double tPrev = 0;
     for (size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
       MVertex* v = ge->mesh_vertices[i];
@@ -1333,15 +1342,24 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
         if (proj.succeeded()) {
           /* Need to change the type of the MVertex */
           MVertex *v2 = new MEdgeVertex(proj.x(),proj.y(),proj.z(),ge,proj.u());
+          tPrev = proj.u();
           ge->mesh_vertices[i] = v2;
           old2new_ge[v] = v2;
+          backupPositionLinear[v2] = v->point();
           delete v;
         } else {
-          Msg::Error("- Edge %i, vertex %li: curve projection failed", ge->tag(), v->getNum());
+          Msg::Warning("- Edge %i, vertex %li: curve projection failed", ge->tag(), v->getNum());
+          MVertex *v2 = new MEdgeVertex(v->point().x(),v->point().y(),v->point().z(), ge, tPrev);
+          ge->mesh_vertices[i] = v2;
+          old2new_ge[v] = v2;
+          backupPositionLinear[v2] = v->point();
+          delete v;
         }
         tPrev = t;
       }
     }
+
+    bool qualityOk = true;
 
     /* Update Lines */
     for (MLine* l: ge->lines) for (size_t lv = 0; lv < 2; ++lv) {
@@ -1352,8 +1370,36 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
       }
     }
 
-    /* Need also to update the tri/quad on faces */
-    for (auto& kv: old2new_ge) old2new[kv.first] = kv.second;
+    /* Update adjacent faces */
+    for (GFace* gf: ge->faces()) {
+      for (size_t i = 0; i < gf->getNumMeshElements(); ++i) {
+        MElement* e = gf->getMeshElement(i);
+        for (size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+          MVertex* v = e->getVertex(lv);
+          auto it = old2new_ge.find(v);
+          if (it != old2new_ge.end()) {
+            e->setVertex(lv,it->second);
+          }
+        }
+      }
+
+      /* Check quality of quads */
+      if (gf->quadrangles.size() > 0) {
+        double sicnMin, sicnAvg;
+        computeSICN(dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), sicnMin, sicnAvg);
+        if (sicnMin < 0.) {
+          Msg::Warning("- refine with projection: quality negative (%.3f) on face %i after curve %i projection, rollback", 
+              sicnMin, gf->tag(), ge->tag());
+          qualityOk = false;
+        }
+      }
+    }
+
+    if (!qualityOk) { /* restore positions on the curve */
+      for (auto& kv: backupPositionLinear) {
+        kv.first->setXYZ(kv.second);
+      }
+    }
   }
 
   std::vector<GFace*> faces = model_faces(gm);
@@ -1401,6 +1447,8 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     }
 
     unordered_map<MVertex*,MVertex*> old2new_gf;
+    unordered_map<MVertex*,SPoint3> backupPositionLinear;
+
     for (size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
       MVertex* v = gf->mesh_vertices[i];
       MFaceVertex* mfv = dynamic_cast<MFaceVertex*>(v);
@@ -1421,10 +1469,16 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
           /* Need to change the type of the MVertex */
           MVertex* v2 = new MFaceVertex(proj.x(),proj.y(),proj.z(),gf,proj.u(),proj.v());
           gf->mesh_vertices[i] = v2;
+          backupPositionLinear[v2] = v->point();
           old2new_gf[v] = v2;
           delete v;
         } else {
-          Msg::Error("- Face %i, vertex %li: surface projection failed", gf->tag(), v->getNum());
+          MVertex* v2 = new MFaceVertex(v->point().x(),v->point().y(),v->point().z(),gf,0.,0.);
+          gf->mesh_vertices[i] = v2;
+          backupPositionLinear[v2] = v->point();
+          old2new_gf[v] = v2;
+          delete v;
+          Msg::Warning("- Face %i, vertex %li: surface projection failed", gf->tag(), v->getNum());
         }
       }
     }
@@ -1434,13 +1488,26 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
       MElement* e = gf->getMeshElement(i);
       for (size_t lv = 0; lv < e->getNumVertices(); ++lv) {
         MVertex* v = e->getVertex(lv);
-        auto it = old2new.find(v);
-        if (it != old2new.end()) {
-          e->setVertex(lv,it->second);
-        }
         auto it2 = old2new_gf.find(v);
         if (it2 != old2new_gf.end()) {
           e->setVertex(lv,it2->second);
+        }
+      }
+    }
+
+    /* Check quality of quads */
+    if (gf->quadrangles.size() > 0) {
+      bool qualityOk = true;
+      double sicnMin, sicnAvg;
+      computeSICN(dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), sicnMin, sicnAvg);
+      if (sicnMin < 0.) {
+        Msg::Warning("- refine with projection: quality negative (%.3f) on face %i after projection, rollback", 
+            sicnMin, gf->tag());
+        qualityOk = false;
+      }
+      if (!qualityOk) {
+        for (auto& kv: backupPositionLinear) {
+          kv.first->setXYZ(kv.second);
         }
       }
     }
@@ -1465,9 +1532,11 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     GeoLog::flush();
   }
 
-  std::unordered_map<std::string,double> stats;
-  appendQuadMeshStatistics(gm, stats, "Mesh_");
-  printStatistics(stats,"Quad mesh after subdivision and projection:");
+  if (Msg::GetVerbosity() >= 99) {
+    std::unordered_map<std::string,double> stats;
+    appendQuadMeshStatistics(gm, stats, "Mesh_");
+    printStatistics(stats,"Quad mesh after subdivision, projection and small smoothing:");
+  }
 
   return 0;
 }
