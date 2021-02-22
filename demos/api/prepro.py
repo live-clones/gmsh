@@ -66,11 +66,13 @@ parameters = """
     "values":[20],
     "min":0,
     "max":100,
-    "step":0.1,
-    "attributes":
-      {
-        "Custom attribute to track the id":"ONELAB Context/Curve Template"
-      }
+    "step":0.1
+  },
+  {
+    "type":"string",
+    "name":"ONELAB Context/Curve Template/2Action on curve",
+    "values":["Some action on ONELAB Context/Curve Template"],
+    "attributes":{"Macro":"Action", "Aspect":"Button"}
   },
   {
     "type":"number",
@@ -193,10 +195,9 @@ def checkForEvent():
         if r and len(ent):
             gmsh.fltk.showContextWindow(ent[0][0], ent[0][1])
         gmsh.fltk.setStatusMessage("", True)
-    elif action[0] == "do something else":
-        # user clicked on "Some other action"
+    elif len(action[0]):
         gmsh.onelab.setString("ONELAB/Action", [""])
-        print('some other action...')
+        print('Action to perform = ', action[0])
     return 1
 
 if "-nopopup" not in sys.argv:

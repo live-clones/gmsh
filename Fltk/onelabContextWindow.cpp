@@ -35,6 +35,35 @@ static std::string getDimName(int dim)
   return "";
 }
 
+static void replaceTemplateString(onelab::number &n,
+                                  const std::string &in,
+                                  const std::string &out)
+{
+  // for number parameter replace the template only in attributes
+  auto attr = n.getAttributes();
+  for(auto &a : attr) { ReplaceSubStringInPlace(in, out, a.second); }
+  n.setAttributes(attr);
+}
+
+static void replaceTemplateString(onelab::string &n,
+                                  const std::string &in,
+                                  const std::string &out)
+{
+  // for string parameters replace the template in the values, the attributes
+  // and the choices
+  auto vals = n.getValues();
+  for(auto &v : vals) { ReplaceSubStringInPlace(in, out, v); }
+  n.setValues(vals);
+
+  auto choices = n.getChoices();
+  for(auto &c : choices) { ReplaceSubStringInPlace(in, out, c); }
+  n.setChoices(choices);
+
+  auto attr = n.getAttributes();
+  for(auto &a : attr) { ReplaceSubStringInPlace(in, out, a.second); }
+  n.setAttributes(attr);
+}
+
 template <typename T>
 void onelabContextWindow::_addOnelabWidget(
   T &p, const std::string &pattern,
@@ -56,9 +85,10 @@ void onelabContextWindow::_addOnelabWidget(
   if(pn.empty()) {
     n = p;
     n.setName(name);
-    auto attr = n.getAttributes();
-    for(auto &a : attr) { ReplaceSubStringInPlace(in, out, a.second); }
-    n.setAttributes(attr);
+    // replace the template string in the parameter so that e.g. the attributes
+    // can be used in entity-dependent server actions, the value can be used in
+    // a user action, etc.
+    replaceTemplateString(n, in, out);
     onelab::server::instance()->set(n);
   }
   else
