@@ -1699,7 +1699,8 @@ void bowyerWatsonParallelogramsConstrained(
   std::vector<SMetric3> metrics;
 
 #if defined(HAVE_DOMHEX)
-  packingOfParallelogramsConstrained(gf, constr_vertices, packed, metrics);
+  // packingOfParallelogramsConstrained no longer exists
+  // packingOfParallelogramsConstrained(gf, constr_vertices, packed, metrics);
 #else
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif

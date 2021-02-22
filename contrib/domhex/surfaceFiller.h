@@ -16,8 +16,5 @@ class MVertex;
 
 void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
                              std::vector<SMetric3> &metrics);
-void packingOfParallelogramsConstrained(
-  GFace *gf, const std::set<MVertex *> &constr_vertices,
-  std::vector<MVertex *> &packed, std::vector<SMetric3> &metrics);
 
 #endif
