@@ -22,7 +22,7 @@
 #if defined(HAVE_HXT)
 // HXT INCLUDES
 extern "C" {
-  #include "hxt_tools.h"
+  // #include "hxt_tools.h"
   #include "hxt_mesh.h"
   #include "hxt_bbox.h"
 }
@@ -30,6 +30,7 @@ extern "C" {
 
 // Information needed to create and compute a forest of octrees
 typedef struct ForestOptions{
+  bool          aniso;
   int           dim;
   double        hmax;
   double        hmin;
@@ -41,14 +42,21 @@ typedef struct ForestOptions{
   double      (*sizeFunction)(double, double, double, double);
   std::vector<double>       *featureSizeAtVertices;
   RTree<uint64_t,double,3>  *triRTree;
+  RTree<uint64_t,double,3>  *tetRTree;
 #ifdef HAVE_HXT
-  HXTMesh                   *mesh;
+  HXTMesh                   *mesh2D;
+  HXTMesh                   *mesh3D;
+  // Reformuler ça sous forme d'une struct avec un HxtMesh, un c2v et un v2c pour le domaine et pour sa surface
+  std::vector<MVertex*>     *c2v3D;
+  std::map<MVertex*, uint32_t> *v2cBnd;
+  std::vector<MVertex*>        *c2vBnd;
 #endif
   double                    *nodalCurvature;
   double                    *nodeNormals;
-  // std::vector<std::function<double(double)>> *curvFunctions;
-  // std::vector<std::function<double(double)>> *xFunctions;
-  // std::vector<std::function<double(double)>> *yFunctions;
+  double                    *directions;
+  double                    *directionsU;
+  double                    *directionsV;
+  double                    *directionsW;
   FILE* file1;
   FILE* file2;
   FILE* file3;
@@ -64,13 +72,17 @@ typedef struct Forest{
 
 // Data available on each tree cell
 typedef struct size_data{
-  double size;
+  double size[3];       // Isotropic mesh size or anisotropic sizes hc1, hc2 and hn
+  double dir[9];        // Principal directions (aniso only)
+  SMetric3 M;           // Metric tensor
 #ifdef HAVE_P4EST
-  double ds[3]; // Size gradient
+  // Size gradient : ds[0->2] is the gradient of the isotropic size if isotropic size field
+  // If anisotropic, ds[0->2] is grad(hc1), ds[3->5] is grad(hc2) and ds[6->8] is grad(hn)
+  // hc1 and hc2 are the curvature sizes and hn is the normal (feature) size.
+  double ds[9];
 #endif
-  double h;     // Isotropic cell size
-  SMetric3 M;   // Anisotropic size
-
+  double h;             // Length of an octant's edge
+  
   // Données pour l'interpolation des directions de courbure
   bool hasIntersection;
   SVector3 t1, t2, n;
@@ -86,6 +98,7 @@ typedef struct size_point{
   SMetric3 m;
   bool isFound;
   int parcourus;
+  bool hasIntersection;
 } size_point_t;
 
 typedef struct interpolation_data{
