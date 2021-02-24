@@ -4737,6 +4737,11 @@ namespace QSQ {
     size_t Ncorners = disk ? 0 : sideSizes.size();
     double irreg;
     std::vector<size_t> patternsToCheck = getAllLoadedPatterns();
+    if (CTX::instance()->mesh.quadqsNoSizeTransition) {
+      patternsToCheck.erase(std::remove(patternsToCheck.begin(), patternsToCheck.end(), PATTERN_QUAD_DIAG35), patternsToCheck.end());
+      patternsToCheck.erase(std::remove(patternsToCheck.begin(), patternsToCheck.end(), PATTERN_QUAD_ALIGNED35), patternsToCheck.end());
+      patternsToCheck.erase(std::remove(patternsToCheck.begin(), patternsToCheck.end(), PATTERN_QUAD_CHORD_UTURN), patternsToCheck.end());
+    }
     // remove_element_if_inside(PATTERN_DISK, patternsToCheck);
     // TODO: keep disk (and others curved patterns?) if good curvature
     bool meshable = patchIsRemeshableWithQuadPattern(patternsToCheck,Ncorners, sideSizes, patternNoAndRot, irreg);
@@ -5433,7 +5438,7 @@ int createCrossFieldAndSizeMap(GModel* gm,
   double thresholdNormConvergence = 1.e-2;
   int nbBoundaryExtensionLayer = 1;
   int verbosity = 0;
-  double conformalScalingQuantileFiltering = 0.;
+  double conformalScalingQuantileFiltering = 0.05;
 
   vector<GFace*> faces = model_faces(gm);
 
@@ -5579,6 +5584,14 @@ int createCrossFieldAndSizeMap(GModel* gm,
 
   Msg::Info("Set background field from scaled cross field");
   gm->getFields()->setBackgroundMesh(viewTag);
+
+  {
+    Msg::Warning("save background field to guiding_field.pos");
+    PView* view = PView::getViewByName(name);
+    if (view) {
+      view->write("guiding_field.pos",0);
+    }
+  }
 
   Msg::Info("Add singularities at acute corners");
   double acute = 30.;
@@ -5731,8 +5744,8 @@ int generateCurve1DMeshes(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo, boo
 }
 
 int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFaceInfo>& faceInfo) {
-  Msg::Error("generatePatternBasedQuadMeshesOnSimpleFaces disabled (for testing only !!)");
-  return 0;
+  // Msg::Error("generatePatternBasedQuadMeshesOnSimpleFaces disabled (for testing only !!)");
+  // return 0;
 
   CTX::instance()->lock = 0;
   std::vector<GFace*> faces = model_faces(gm);
@@ -5769,8 +5782,13 @@ int generatePatternBasedQuadMeshesOnSimpleFaces(GModel* gm, std::map<GFace*, GFa
 }
 
 int midpointSubdivisionToFullQuad(GModel* gm, bool tryProjection = false) {
-  gmsh::fltk::run();
-  abort();
+  const bool SHOW_QUADTRI = false;
+  if (SHOW_QUADTRI) {
+    gmsh::initialize();
+    GeoLog::flush();
+    gmsh::fltk::run();
+    abort();
+  }
 
   Msg::Info("Midpoint subdivision (quad-tri to full quad) ...");
 
@@ -6484,6 +6502,9 @@ int improveQuadMeshOfFace(GFace* gf, vector<MVertex*>& singularVertices, Surface
     { /* 4d pass: size transition patterns */
       vector<size_t> patternsToCheck = {PATTERN_QUAD_REGULAR, PATTERN_QUAD_DIAG35, PATTERN_QUAD_ALIGNED35, PATTERN_QUAD_CHORD_UTURN};
       // patternsToCheck = {PATTERN_QUAD_REGULAR, PATTERN_QUAD_DIAG35, PATTERN_QUAD_ALIGNED35};
+      if (CTX::instance()->mesh.quadqsNoSizeTransition) {
+        patternsToCheck = {PATTERN_QUAD_REGULAR};
+      }
       remeshQuadrilateralPatches(GROW_MINIMAL, gf, singularVertices, patternsToCheck, sp, ctx);
 
       if (ctx.elapsedCpuTime() > qqs.timeoutQuadqsPerGFace) {
@@ -6655,8 +6676,8 @@ int improveQuadMeshTopology(GModel* gm,
     printPatternUsage();
   }
 
-  Msg::Error("cavity remeshing disabled (for testing only !!)");
-  return 0;
+  // Msg::Error("cavity remeshing disabled (for testing only !!)");
+  // return 0;
   // Msg::Error("early stop DBG");
   // return 0;
 

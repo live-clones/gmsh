@@ -407,6 +407,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
   int terminal = CTX::instance()->terminal;
   CTX::instance()->terminal = 99;
   CTX::instance()->mesh.quadqsUseDiscreteGeometry = 0;
+  CTX::instance()->mesh.quadqsNoSizeTransition = 0;
 
 #if defined(HAVE_PARSER)
   if(readConfigFiles) {
@@ -557,6 +558,10 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       }
       else if(argv[i] == "-quadqsUseDiscreteGeometry") {
         CTX::instance()->mesh.quadqsUseDiscreteGeometry = 1;
+        i++;
+      }
+      else if(argv[i] == "-quadqsNoSizeTransition") {
+        CTX::instance()->mesh.quadqsNoSizeTransition = 1;
         i++;
       }
     else if(argv[i] == "-part") {

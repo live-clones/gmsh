@@ -990,6 +990,9 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
   }
 
   if(!niter) return;
+
+  Msg::Debug("laplace smoothing (face %i, %i iterations)", gf->tag(), niter);
+
   std::set<MVertex *> vs;
   getAllBoundaryLayerVertices(gf, vs);
   v2t_cont adj;
