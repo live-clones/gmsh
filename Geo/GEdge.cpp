@@ -64,7 +64,6 @@ void GEdge::deleteMesh()
 void GEdge::setMeshMaster(GEdge *ge, int ori)
 {
   // FIXME: missing computation of affine transformation during setMeshMaster
-
   GEntity::setMeshMaster(ge);
   masterOrientation = ori > 0 ? 1 : -1;
 

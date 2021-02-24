@@ -15399,8 +15399,9 @@ void addPeriodicFace(int iTarget, int iSource,
   if(!target || !source) {
     Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget, iSource);
+    return;
   }
-  else target->setMeshMaster(source, affineTransform);
+  target->setMeshMaster(source, affineTransform);
 }
 
 void addPeriodicFace(int iTarget, int iSource,
@@ -15423,8 +15424,9 @@ void addPeriodicFace(int iTarget, int iSource,
   if(!target || !source) {
     Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget,iSource);
+    return;
   }
-  else target->setMeshMaster(source, edgeCounterparts);
+  target->setMeshMaster(source, edgeCounterparts);
 }
 
 void addPeriodicEdge(int iTarget,int iSource,
@@ -15438,9 +15440,11 @@ void addPeriodicEdge(int iTarget,int iSource,
 
   GEdge *target = GModel::current()->getEdgeByTag(std::abs(iTarget));
   GEdge *source = GModel::current()->getEdgeByTag(std::abs(iSource));
-  if(!target || !source)
+  if(!target || !source) {
     Msg::Error("Could not find curve %d or %d for periodic copy",
                iTarget,iSource);
+    return;
+  }
   if(affineTransform.size() >= 12) {
     target->setMeshMaster(source, affineTransform);
   }
