@@ -37,10 +37,12 @@
 #include "arrayGeometry.h"
 #include "geolog.h"
 #include "gmsh.h"
+#include "row_echelon_integer.hpp"
 
 using namespace CppUtils;
 using std::unordered_map;
 using std::unordered_set;
+using std::vector;
 
 std::vector<GFace*> model_faces(const GModel* gm) {
   std::vector<GFace*> faces;
@@ -788,6 +790,54 @@ std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quad
   return tris;
 }
 
+bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, bool& requireDelete) {
+  triangles.clear();
+  requireDelete = false;
+
+  /* Existing pure tri or pure quad mesh on the GFace */
+  if (gf->triangles.size() > 0 && gf->quadrangles.size() == 0) {
+    triangles = gf->triangles;
+    requireDelete = false;
+    return true;
+  } else if (gf->triangles.size() == 0 && gf->quadrangles.size() > 0) {
+    triangles = trianglesFromQuads(gf->quadrangles);
+    requireDelete = true;
+    return true;
+  } 
+
+  /* Check if there is the quadqs background mesh */
+  const std::string BMESH_NAME = "bmesh_quadqs"; 
+  if (backgroudMeshExists(BMESH_NAME)) {
+    GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
+    auto it = bmesh.faceBackgroundMeshes.find(gf);
+    if (it != bmesh.faceBackgroundMeshes.end() && it->second.triangles.size() > 0) {
+      /* Get pointers to triangles in the background mesh */
+      triangles.resize(it->second.triangles.size());
+      for (size_t i = 0; i < it->second.triangles.size(); ++i) {
+        triangles[i] = &(it->second.triangles[i]);
+      }
+      requireDelete = false;
+      return true;
+    }
+  }
+
+  /* Check if there is another background mesh */
+  for (auto& bmesh: global_bmeshes) {
+    auto it = bmesh->faceBackgroundMeshes.find(gf);
+    if (it != bmesh->faceBackgroundMeshes.end() && it->second.triangles.size() > 0) {
+      /* Get pointers to triangles in the background mesh */
+      triangles.resize(it->second.triangles.size());
+      for (size_t i = 0; i < it->second.triangles.size(); ++i) {
+        triangles[i] = &(it->second.triangles[i]);
+      }
+      requireDelete = false;
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp) {
   if (sp == nullptr) {
     Msg::Error("fillSurfaceProjector: given SurfaceProjector* is null !");
@@ -801,38 +851,9 @@ bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp) {
 
   bool deleteTheTris = false;
   std::vector<MTriangle*> triangles;
-
-  /* warning: name should be the same a in meshQuadQuasiStructured.cpp
-   * for this to work ! */
-  const std::string BMESH_NAME = "bmesh_quadqs"; 
-  if (backgroudMeshExists(BMESH_NAME)) {
-    GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
-    auto it = bmesh.faceBackgroundMeshes.find(gf);
-    if (it != bmesh.faceBackgroundMeshes.end() && it->second.triangles.size() > 0) {
-      /* Get pointers to triangles in the background mesh */
-      triangles.resize(it->second.triangles.size());
-      for (size_t i = 0; i < it->second.triangles.size(); ++i) {
-        triangles[i] = &(it->second.triangles[i]);
-      }
-      deleteTheTris = false;
-    }
-  } 
-
-  if (triangles.size() == 0) {
-    if (gf->triangles.size() > 0 && gf->quadrangles.size() == 0) {
-      triangles = gf->triangles;
-      deleteTheTris = false;
-    } else if (gf->triangles.size() == 0 && gf->quadrangles.size() > 0) {
-      triangles = trianglesFromQuads(gf->quadrangles);
-      deleteTheTris = true;
-    } else {
-      Msg::Error("fillSurfaceProjector: case not supported");
-      return false;
-    }
-  }
-
-  if (triangles.size() == 0) {
-    Msg::Error("fillSurfaceProjector: no triangles to use");
+  bool okgt = getGFaceTriangles(gf, triangles, deleteTheTris);
+  if (!okgt) {
+    Msg::Error("fillSurfaceProjector: case not supported, no triangles");
     return false;
   }
 
@@ -841,7 +862,7 @@ bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp) {
     Msg::Error("failed to initialize the surface projector");
   }
 
-  if (deleteTheTris){
+  if (deleteTheTris) {
     for (MTriangle* t: triangles) delete t;
   }
 
@@ -893,34 +914,12 @@ inline double angleVectors(SVector3 a, SVector3 b) {
   return acos(ArrayGeometry::clamp(dot(a,b),-1.,1.)); 
 }
 
-bool fillGFaceInfo(GFace* gf, GFaceInfo& info) {
+bool fillGFaceInfo(GFace* gf, GFaceInfo& info, const std::vector<MTriangle*>& triangles) {
   info.gf = gf;
   info.chi = 0;
   info.cornerIsNonManifold.clear();
   for (auto& a: info.bdrValVertices) a.clear();
   info.intSumVal3mVal5 = 0;
-
-  std::vector<MTriangle*> triangles;
-  bool delTriangles = false;
-  if (gf->triangles.size() > 0 && gf->quadrangles.size() == 0) {
-    triangles = gf->triangles;
-  } else if (gf->quadrangles.size() > 0 && gf->triangles.size() == 0) {
-    triangles.reserve(2*gf->quadrangles.size());
-    for (MQuadrangle* f: gf->quadrangles) {
-      MVertex* v0 = f->getVertex(0);
-      MVertex* v1 = f->getVertex(1);
-      MVertex* v2 = f->getVertex(2);
-      MVertex* v3 = f->getVertex(3);
-      MTriangle* t1 = new MTriangle(v0,v1,v2);
-      MTriangle* t2 = new MTriangle(v0,v2,v3);
-      triangles.push_back(t1);
-      triangles.push_back(t2);
-    }
-    delTriangles = true;
-  } else {
-    Msg::Error("fillGFaceInfo: no triangles and no quads, cannot compute");
-    return false;
-  }
 
   /* Compute geometric info */
   robin_hood::unordered_map<GVertex*,std::vector<MElement*> > corner2tris;
@@ -982,9 +981,146 @@ bool fillGFaceInfo(GFace* gf, GFaceInfo& info) {
   info.intSumVal3mVal5 = 4*info.chi + int(info.bdrValVertices[3].size()) 
     - int(info.bdrValVertices[1].size()) + 2 * int(info.bdrValVertices[4].size());
 
-  if (delTriangles) {
+  return true;
+
+}
+
+bool fillGFaceInfo(GFace* gf, GFaceInfo& info) {
+  info.gf = gf;
+  info.chi = 0;
+  info.cornerIsNonManifold.clear();
+  for (auto& a: info.bdrValVertices) a.clear();
+  info.intSumVal3mVal5 = 0;
+
+
+  bool deleteTheTris = false;
+  std::vector<MTriangle*> triangles;
+  bool okgt = getGFaceTriangles(gf, triangles, deleteTheTris);
+  if (!okgt) {
+    Msg::Error("fillSurfaceProjector: case not supported, no triangles");
+    return false;
+  }
+
+  bool okr = fillGFaceInfo(gf, info, triangles);
+
+  if (deleteTheTris) {
     for (MTriangle* t: triangles) delete t;
   }
+
+  return okr;
+}
+
+bool isTopologicalDisk(const GFaceInfo& info) {
+  return info.chi == 1;
+}
+
+bool haveConcaveCorners(const GFaceInfo& info) {
+  if (info.bdrValVertices[3].size() > 0 || info.bdrValVertices[4].size() > 0) {
+    return true;
+  }
+  return false;
+}
+
+bool faceOrderedSideLoops(GFace* gf, const GFaceInfo& info, 
+    std::vector<std::vector<std::vector<std::pair<GEdge*,bool> > > >& loopSideEdgesAndInv) {
+  if (info.gf != gf) return false;
+  loopSideEdgesAndInv.clear();
+
+  std::unordered_set<GVertex*> isCorner;
+  for (GVertex* gv: info.bdrValVertices[1]) isCorner.insert(gv);
+  for (GVertex* gv: info.bdrValVertices[3]) isCorner.insert(gv);
+  for (GVertex* gv: info.bdrValVertices[4]) isCorner.insert(gv);
+
+  const std::vector<GEdge *>& edges = gf->edges();
+  std::unordered_map<GVertex*, std::vector<GEdge*> > v2e;
+  for (GEdge* ge: edges) {
+    for (GVertex* gv: ge->vertices()) v2e[gv].push_back(ge);
+  }
+  for (auto& kv: v2e) sort_unique(kv.second);
+
+
+  std::unordered_set<GEdge*> visited;
+
+  int withCorner = 0;
+  int withoutCorner = 1;
+  for (int pass: {withCorner, withoutCorner}) {
+    for (GEdge* e0: edges) {
+      bool already = (visited.find(e0) != visited.end());
+      if (already) continue;
+
+      if (e0->periodic(0)) {
+        /* New loop with a single periodic GEdge */
+        loopSideEdgesAndInv.resize(loopSideEdgesAndInv.size()+1);
+        loopSideEdgesAndInv.back() = { { {e0,false} }  };
+        visited.insert(e0); 
+        continue;
+      }
+
+      GVertex* v1 = e0->vertices()[0];
+      GVertex* v2 = e0->vertices()[1];
+      if (pass == withCorner) {
+        bool v1IsCorner = (isCorner.find(v1) != isCorner.end());
+        if (!v1IsCorner) continue;
+      }
+
+      /* New loop */
+      loopSideEdgesAndInv.resize(loopSideEdgesAndInv.size()+1);
+
+
+      if (pass == withoutCorner) { /* New side from no corner */
+        loopSideEdgesAndInv.back().resize(loopSideEdgesAndInv.back().size()+1);
+      }
+
+      size_t infLoop = 0;
+      GVertex* v = v1;
+      GEdge* e = e0;
+      bool inv = false;
+      do {
+        infLoop += 1;
+        if (infLoop > 1e6) {
+          Msg::Warning("infinite loop in edges of face %i, cancel simple quad mesh", gf->tag());
+          return -1;
+        }
+        bool vIsCorner = (isCorner.find(v) != isCorner.end());
+        if (vIsCorner) { /* new side in current loop */
+          loopSideEdgesAndInv.back().resize(loopSideEdgesAndInv.back().size()+1);
+        }
+        v1 = e->vertices()[0];
+        v2 = e->vertices()[1];
+
+        inv = (v == v2);
+
+        loopSideEdgesAndInv.back().back().push_back({e,inv});
+
+        visited.insert(e);
+
+        GVertex* v_next = NULL;
+        if (v2 != v) {
+          v_next = v2;
+        } else {
+          v_next = v1;
+        }
+        GEdge* e_next = NULL;
+        if (v2e[v_next].size() == 2) {
+          e_next = (v2e[v_next][0] != e) ? v2e[v_next][0] : v2e[v_next][1];
+        } else {
+          Msg::Warning("non manifold edge loop around face %li, cancel simple quad mesh", gf->tag());
+          return -1;
+        }
+
+        e = e_next;
+        v = v_next;
+      } while (e != e0);
+    }
+  }
+
+  // Msg::Warning("- Face %i: %li loops", gf->tag(), loopSideEdgesAndInv.size());
+  // for (size_t i = 0; i < loopSideEdgesAndInv.size(); ++i) {
+  //   Msg::Warning("-      loop %li: %li sides", i, loopSideEdgesAndInv[i].size());
+  //   for (size_t j = 0; j < loopSideEdgesAndInv[i].size(); ++j) {
+  //     Msg::Warning("-          side %li: %li edges ", j, loopSideEdgesAndInv[i][j].size());
+  //   }
+  // }
 
   return true;
 }
@@ -1173,3 +1309,4 @@ void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elt
     abort();
   }
 }
+

@@ -3,6 +3,7 @@ set(QMT_SRC
   qmtDiskQuadrangulationRemeshing.cpp
   qmtQuadCavityRemeshing.cpp
   qmtCrossField.cpp
+  qmtCurveQuantization.cpp
   qmtSizeMap.cpp
   qmtMeshUtils.cpp
   arrayGeometry.cpp

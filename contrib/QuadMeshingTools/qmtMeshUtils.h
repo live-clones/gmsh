@@ -53,6 +53,7 @@ bool buildBoundaries(const std::vector<MElement*>& elements, std::vector<std::ve
 bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceMeshPatch& patch, bool forceEvenIfBadBoundary = false);
 bool patchFromQuads(GFace* gf, const std::vector<MQuadrangle*>& quads, GFaceMeshPatch& patch, bool forceEvenIfBadBoundary = false);
 
+
 void sicnQuality(const GFaceMeshPatch& patch, double& sicnMin, double& sicnAvg);
 
 bool patchIsTopologicallyValid(const GFaceMeshPatch& patch);
@@ -73,6 +74,9 @@ std::vector<SPoint2> paramOnElement(GFace* gf, MElement* e);
 /* warning: triangles are allocated, should be delete by the caller */
 std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quads);
 
+bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, bool& requireDelete);
+
+
 bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp);
 
 int surfaceEulerCharacteristicDiscrete(const std::vector<MTriangle*>& triangles);
@@ -85,7 +89,14 @@ struct GFaceInfo {
   int intSumVal3mVal5 = 0;
 };
 
+bool fillGFaceInfo(GFace* gf, GFaceInfo& info, const std::vector<MTriangle*>& triangles);
 bool fillGFaceInfo(GFace* gf, GFaceInfo& info);
+
+bool isTopologicalDisk(const GFaceInfo& info);
+bool haveConcaveCorners(const GFaceInfo& info);
+
+bool faceOrderedSideLoops(GFace* gf, const GFaceInfo& info, 
+    std::vector<std::vector<std::vector<std::pair<GEdge*,bool> > > >& loopSideEdgesAndInv);
 
 bool appendCADStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix = "CAD_");
 bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix = "Mesh_");
@@ -132,3 +143,4 @@ struct PatchGeometryBackup {
   PatchGeometryBackup(GFaceMeshPatch& p, bool includeBoundary = false);
   bool restore();
 };
+

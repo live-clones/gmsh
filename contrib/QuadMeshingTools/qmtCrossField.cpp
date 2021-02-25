@@ -1346,14 +1346,17 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
       if (gv != nullptr) continue; /* Remove corner values from range */
       csMin = std::min(csMin, it->second);
       csMax = std::max(csMax, it->second);
-      // double H = -log(it->second);
-      // Hmin = std::min(H,Hmin);
-      // Hmax = std::min(H,Hmax);
     }
   }
+
   if (csMin == DBL_MAX || csMax == -DBL_MAX) {
-    Msg::Error("conformal scaling is wrong, %li values, min=%f, max=%f", scaling.size(), csMin, csMax);
-    return -1;
+    Msg::Warning("conformal scaling is wrong, %li values, min=DBL_MAX or max=-DBL_MAX, filling with unit values", scaling.size(), csMin, csMax);
+    for (MTriangle* t: triangles) {
+      for (size_t lv = 0; lv < 3; ++lv) {
+        MVertex* v = t->getVertex(lv);
+        scaling[v] = 1.;
+      }
+    }
   }
 
   /* Compute integral of current size map */

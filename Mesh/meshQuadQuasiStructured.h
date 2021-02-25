@@ -127,4 +127,5 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequir
  */
 int RefineMeshWithBackgroundMeshProjection(GModel* gm);
 
+
 #endif

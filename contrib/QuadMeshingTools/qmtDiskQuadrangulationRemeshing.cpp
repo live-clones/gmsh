@@ -380,7 +380,7 @@ int remeshLocalWithDiskQuadrangulation(
     small_patterns = &(B_disk_quadrangulations[bdrVertices.size()]);
   } else {
     // TODO: a simple remeshing by using parallel quads ?
-    Msg::Error("disk quadrangulation remeshing: no pattern for input boundary loop size (%li bdr vertices)", 
+    Msg::Warning("disk quadrangulation remeshing: no pattern for input boundary loop size (%li bdr vertices)", 
         bdrVertices.size());
     return -1;
   }

@@ -426,6 +426,10 @@ void gmshEdge::writeGEO(FILE *fp)
         fprintf(fp, " Using Progression ");
       else if(std::abs(meshAttributes.typeTransfinite) == 2)
         fprintf(fp, " Using Bump ");
+      else if(std::abs(meshAttributes.typeTransfinite) == 3)
+        fprintf(fp, " Using Beta ");
+      else if(std::abs(meshAttributes.typeTransfinite) == 4)
+        fprintf(fp, " Using Sizemap ");
       fprintf(fp, "%g", meshAttributes.coeffTransfinite);
     }
     fprintf(fp, ";\n");

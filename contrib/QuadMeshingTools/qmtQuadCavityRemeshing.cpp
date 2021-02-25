@@ -2400,12 +2400,8 @@ int meshFaceWithGlobalPattern(GFace* gf, bool invertNormalsForQuality, double mi
   if (!okf) return -1;
 
   /* Check if convex topological disk */
-  bool topologicalDisk = false;
-  if (info.chi == 1 && info.bdrValVertices[1].size() >= 0 
-      && info.bdrValVertices[3].size() == 0 && info.bdrValVertices[4].size() == 0) {
-    topologicalDisk = true;
-  }
-  if (!topologicalDisk) {
+  bool convexTopologicalDisk = isTopologicalDisk(info) && !haveConcaveCorners(info);
+  if (!convexTopologicalDisk) {
     return -1;
   }
 

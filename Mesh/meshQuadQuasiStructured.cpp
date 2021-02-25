@@ -48,6 +48,7 @@
 #include "qmtMeshUtils.h"
 #include "qmtCrossField.h"
 #include "qmtSizeMap.h"
+#include "qmtCurveQuantization.h"
 #include "qmtDiskQuadrangulationRemeshing.h"
 #include "qmtQuadCavityRemeshing.h"
 #include "qmtMeshGeometryOptimization.h"
@@ -275,6 +276,50 @@ int fillSizemapFromScalarBackgroundField(
 }
 
 
+bool generateMeshWithSpecialParameters(GModel* gm, double& scalingOnTriangulation) {
+  Msg::Debug("build background triangulation ...");
+
+  /* Unlock if called from GenerateMesh() */
+  bool shouldLock = false;
+  if (CTX::instance()->lock) {
+    CTX::instance()->lock = 0;
+    shouldLock = true;
+  }
+
+  /* Change meshing parameters to build a good triangulation
+   * for cross field */
+  /* - the triangulation must be a bit more refined than the quad mesh */
+  scalingOnTriangulation = 0.75; 
+  int minCurveNodes = CTX::instance()->mesh.minCurveNodes;
+  int minCircleNodes = CTX::instance()->mesh.minCircleNodes;
+  double lcFactor = CTX::instance()->mesh.lcFactor;
+  int recombineAll = CTX::instance()->mesh.recombineAll;
+  int algoRecombine = CTX::instance()->mesh.algoRecombine;
+  int algo = CTX::instance()->mesh.algo2d;
+  CTX::instance()->mesh.minCurveNodes = std::min(minCurveNodes,5);
+  CTX::instance()->mesh.minCircleNodes = std::min(minCircleNodes,30);
+  CTX::instance()->mesh.lcFactor = lcFactor * scalingOnTriangulation;
+  CTX::instance()->mesh.recombineAll = 0;
+  CTX::instance()->mesh.algoRecombine = 0;
+  CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
+
+  /* Generate the triangulation with standard gmsh pipeline */
+  GenerateMesh(gm,2);
+
+  /* Restore parameters */
+  CTX::instance()->mesh.minCurveNodes = minCurveNodes;
+  CTX::instance()->mesh.minCircleNodes = minCircleNodes;
+  CTX::instance()->mesh.lcFactor = lcFactor;
+  CTX::instance()->mesh.recombineAll = recombineAll;
+  CTX::instance()->mesh.algoRecombine = algoRecombine;
+  CTX::instance()->mesh.algo2d = algo;
+
+  /* Lock again before going back to GenerateMesh() */
+  if (shouldLock) CTX::instance()->lock = 1;
+
+  return true;
+}
+
 
 int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, bool deleteGModelMesh, int N) {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return 0;
@@ -334,40 +379,19 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
   /* Generate triangulation */
   double scalingOnTriangulation = 1;
   if (!surfaceMeshed) {
-    Msg::Debug("build background triangulation ...");
-
-    /* Unlock if called from GenerateMesh() */
-    bool shouldLock = false;
-    if (CTX::instance()->lock) {
-      CTX::instance()->lock = 0;
-      shouldLock = true;
-    }
-
-    /* Change meshing parameters to build a good triangulation
-     * for cross field */
-    /* - the triangulation must be a bit more refined than the quad mesh */
-    scalingOnTriangulation = 0.75; 
-    int minCurveNodes = CTX::instance()->mesh.minCurveNodes;
-    int minCircleNodes = CTX::instance()->mesh.minCircleNodes;
-    double lcFactor = CTX::instance()->mesh.lcFactor;
-    int algo = CTX::instance()->mesh.algo2d;
-    CTX::instance()->mesh.minCurveNodes = std::min(minCurveNodes,5);
-    CTX::instance()->mesh.minCircleNodes = std::min(minCircleNodes,30);
-    CTX::instance()->mesh.lcFactor = lcFactor * scalingOnTriangulation;
-    CTX::instance()->mesh.algo2d = ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
-
-    /* Generate the triangulation with standard gmsh pipeline */
-    GenerateMesh(gm,2);
-
-    /* Restore parameters */
-    CTX::instance()->mesh.minCurveNodes = minCurveNodes;
-    CTX::instance()->mesh.minCircleNodes = minCircleNodes;
-    CTX::instance()->mesh.lcFactor = lcFactor;
-    CTX::instance()->mesh.algo2d = algo;
-
-    /* Lock again before going back to GenerateMesh() */
-    if (shouldLock) CTX::instance()->lock = 1;
+    generateMeshWithSpecialParameters(gm, scalingOnTriangulation);
   }
+
+  // {
+  //   setQuadqsTransfiniteConstraints(gm, 0.34);
+  //   gm->deleteMesh();
+  //   generateMeshWithSpecialParameters(gm, scalingOnTriangulation);
+  //   gmsh::initialize();
+  //   gmsh::fltk::run();
+  //   abort();
+  // }
+
+
 
   GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
   bool overwrite = true;
@@ -645,6 +669,7 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
 
   CTX::instance()->mesh.lcFactor = 1.; // TODO TEMP TEST
 
+
   return 0;
 }
 
@@ -660,16 +685,6 @@ bool backgroundMeshAndGuidingFieldExists(GModel* gm) {
   }
   return bgmOk && bfOk;
 }
-
-
-// /* QuadMeshingTools module not available */
-// int BuildBackgroundMeshAndGuidingField(
-//     GModel* gm, 
-//     bool overwriteGModelMesh,
-//     bool deleteGModelMeshAfter) {
-//   Msg::Error("BuildBackgroundMeshAndGuidingField: Module QUADMESHINGTOOLS required");
-//   return -1;
-// }
 
 
 
@@ -1738,10 +1753,11 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
 
   initDiskQuadrangulations();
 
+  std::vector<GFace*> faces = model_faces(gm);
+
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
-  std::vector<GFace*> faces = model_faces(gm);
   for (size_t f = 0; f < faces.size(); ++f) {
     GFace* gf = faces[f];
     if (gf->meshStatistics.status != GFace::PENDING) continue;

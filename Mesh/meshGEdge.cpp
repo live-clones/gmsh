@@ -609,6 +609,7 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     ge->setTooSmall(true);
   }
 
+
   // Integrate detJ/lc du
   filterMinimumN = 1;
   if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.) {
@@ -620,6 +621,13 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     Msg::Debug("Curve %d is degenerated", ge->tag());
     a = 0.;
     N = 1;
+  }
+  else if(ge->meshAttributes.method == MESH_TRANSFINITE && ge->meshAttributes.typeTransfinite == 4) {
+    // Transfinite (prescribed number of edges) but the points are positioned according
+    // to the standard size constraints (size map, etc)
+    a = Integration(ge, t_begin, t_end, F_Lc(), Points,
+        CTX::instance()->mesh.lcIntegrationPrecision);
+    N = ge->meshAttributes.nbPointsTransfinite;
   }
   else if(ge->meshAttributes.method == MESH_TRANSFINITE) {
     a = Integration(ge, t_begin, t_end, F_Transfinite(), Points,
@@ -805,7 +813,9 @@ void meshGEdge::operator()(GEdge *ge)
     mesh_vertices = vv;
   }
 
-  if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
+  if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG
+      && CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT
+      && CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS)
     if(_addBegin.empty() && _addEnd.empty())
       filterPoints(ge, filterMinimumN - 2);
 
