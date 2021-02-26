@@ -739,6 +739,9 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
       ge->meshAttributes.nbPointsTransfinite = N;
       ge->meshAttributes.typeTransfinite = 1; /* Progression */
       ge->meshAttributes.coeffTransfinite = 1.;
+      if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+        ge->meshAttributes.typeTransfinite = 4; /* Use size map */
+      }
       ne += 1;
     }
   }

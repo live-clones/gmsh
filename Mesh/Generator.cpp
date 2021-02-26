@@ -1474,17 +1474,17 @@ void GenerateMesh(GModel *m, int ask)
     }
 
     if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+      /* note: the creation of QuadqsContextUpdater modifies many
+       *       meshing parameters */
+      qqs = new QuadqsContextUpdater();
+    }
+
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       std::set<GFace *> faces;
       for (GFace* gf: m->getFaces()) if (gf->edges().size() == 4) {
         faces.insert(gf);
       }
       MeshSetTransfiniteFacesAutomatic(faces);
-    }
-
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-      /* note: the creation of QuadqsContextUpdater modifies many
-       *       meshing parameters */
-      qqs = new QuadqsContextUpdater();
     }
   }
 

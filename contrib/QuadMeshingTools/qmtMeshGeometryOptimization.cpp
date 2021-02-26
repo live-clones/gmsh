@@ -470,7 +470,7 @@ namespace QMT {
         if (v0 != NULL) break;
       }
       if (v0 == NULL) {
-        Msg::Error("buildCondensedStructure: failed to found v0");
+        Msg::Warning("buildCondensedStructure: failed to found v0");
         return false;
       }
       for (size_t j = 0; j < bnd.size(); ++j) {
@@ -479,11 +479,11 @@ namespace QMT {
         }
       }
       if (bnd.front() != v0) {
-        Msg::Error("buildCondensedStructure: wrong start");
+        Msg::Warning("buildCondensedStructure: wrong start");
         return false;
       }
       if (bnd.size() < 6 || bnd.size() % 2 != 0) {
-        Msg::Error("buildCondensedStructure: wrong boundary, size %li", bnd.size());
+        Msg::Warning("buildCondensedStructure: wrong boundary, size %li", bnd.size());
         return false;
       }
 
@@ -519,7 +519,7 @@ namespace QMT {
     bool okc = buildCondensedStructure(elements,freeVertices,old2new,new2old,
         quads,v2q,oneRings,points);
     if (!okc) {
-      Msg::Error("buildCondensedStructure: failed to build condensed representation");
+      Msg::Warning("buildCondensedStructure: failed to build condensed representation");
       return false;
     }
 
@@ -1346,7 +1346,8 @@ bool patchOptimizeGeometryWithKernel(
 
 
   GFace* gf = patch.gf;
-  if (gf == NULL || patch.elements.size() == 0) return -1;
+  if (gf == NULL || patch.elements.size() == 0) return false;
+  if (patch.intVertices.size() == 0) return false;
 
   stats.sicnMinBefore = -1.; /* if no element */
   stats.sicnAvgBefore = -1.;
@@ -1378,14 +1379,14 @@ bool patchOptimizeGeometryWithKernel(
   if (useParam) {
     bool okl = kernelLoopWithParametrization(patch, opt, stats);
     if (!okl) {
-      Msg::Error("optimize geometry kernel: the loop with param. failed (%li elements)", 
+      Msg::Warning("optimize geometry kernel: the loop with param. failed (%li elements)", 
           patch.elements.size());
       return -1;
     }
   } else {
     bool okl = kernelLoopWithProjection(patch, opt, stats);
     if (!okl) {
-      Msg::Error("optimize geometry kernel: the loop with projection failed (%li elements)", 
+      Msg::Warning("optimize geometry kernel: the loop with projection failed (%li elements)", 
           patch.elements.size());
       return -1;
     }

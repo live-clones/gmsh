@@ -662,6 +662,8 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     return -1;
   }
 
+  // CTX::instance()->mesh.lcFactor = 1.; // TODOMX test
+
   return 0;
 }
 
@@ -1616,7 +1618,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     GeoLog::flush();
   }
 
-  if (Msg::GetVerbosity() >= 99) {
+  if (true || Msg::GetVerbosity() >= 99) {
     std::unordered_map<std::string,double> stats;
     appendQuadMeshStatistics(gm, stats, "Mesh_");
     printStatistics(stats,"Quad mesh after subdivision, projection and small smoothing:");

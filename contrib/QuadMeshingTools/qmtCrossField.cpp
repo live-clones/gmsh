@@ -1283,7 +1283,8 @@ int computeCrossFieldConformalScaling(
   int status = _lsys->systemSolve();
 
   if (status == -1) { /* failed to solve */
-    Msg::Warning("conformal scaling, failed to solve linear system, use uniform scaling");
+    Msg::Warning("conformal scaling (%li triangles, %li variables), failed to solve linear system, use uniform scaling",
+        triangles.size(), vs.size());
     for (MVertex* v: vs) {
       scaling[v] = 1.;
     }
@@ -1344,6 +1345,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   double csMax = -DBL_MAX;
   double Hmin  =  DBL_MAX;
   double Hmax  = -DBL_MAX;
+  size_t nWoCorner = 0;
   for (MTriangle* t: triangles) {
     for (size_t lv = 0; lv < 3; ++lv) {
       MVertex* v = t->getVertex(lv);
@@ -1356,10 +1358,11 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
       if (gv != nullptr) continue; /* Remove corner values from range */
       csMin = std::min(csMin, it->second);
       csMax = std::max(csMax, it->second);
+      nWoCorner += 1;
     }
   }
 
-  if (csMin == DBL_MAX || csMax == -DBL_MAX) {
+  if (nWoCorner > 0 && (csMin == DBL_MAX || csMax == -DBL_MAX)) {
     Msg::Warning("conformal scaling is wrong, %li values, min=DBL_MAX or max=-DBL_MAX, filling with unit values", scaling.size(), csMin, csMax);
     for (MTriangle* t: triangles) {
       for (size_t lv = 0; lv < 3; ++lv) {
@@ -1385,7 +1388,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
         return -1;
       }
       /* Clamp with range without corners */
-      if (it->second < csMin || it->second > csMax) { 
+      if (nWoCorner > 0 && (it->second < csMin || it->second > csMax)) { 
         it->second = clamp(it->second,csMin,csMax);
       }
       values[lv] = it->second;
@@ -1400,7 +1403,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   }
 
   if (integral == 0.) {
-    Msg::Error("Size map from conformal scaling: total integral is 0 ... (%li triangles, smin=%.3e, smax=%.3e)", 
+    Msg::Warning("Size map from conformal scaling: total integral is 0 ... (%li triangles, smin=%.3e, smax=%.3e)", 
         triangles.size(), smin, smax);
     return -1;
   }
