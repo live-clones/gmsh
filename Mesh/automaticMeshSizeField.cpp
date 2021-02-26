@@ -1074,7 +1074,7 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
           kmax  = fmax(kmax,  fmax(k1,k2));
           hf = fmin(hf, (*forestOptions->featureSizeAtVertices)[node]);
         }
-      } else{
+      } else{ // dim = 2
         for(int i = 0; i < 2; ++i){
           int node = forestOptions->mesh2D->lines.node[(size_t) 2*bndElem+i];
           kmax = forestOptions->nodalCurvature[node];
@@ -1246,7 +1246,7 @@ static void computeGradientCenterAniso(p4est_iter_face_info_t * info, void *user
         which_face_opp = side[iOpp]->face; /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
 
         // Current cells are hanging
-        if (side[i]->is_hanging){
+        if(side[i]->is_hanging){
           data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
           // Unit directions of the opposite cells
           SVector3 e(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]);
@@ -1268,9 +1268,7 @@ static void computeGradientCenterAniso(p4est_iter_face_info_t * info, void *user
             case 4 : data_opp->ds[3*k+2] -= 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
             case 5 : data_opp->ds[3*k+2] += 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
           }
-        }
-        // Current cell is full
-        else{
+        } else{ // Current cell is full
           data = (size_data_t *) side[i]->is.full.quad->p.user_data;
 
           if(side[iOpp]->is_hanging){
@@ -1319,36 +1317,6 @@ static void computeGradientCenterAniso(p4est_iter_face_info_t * info, void *user
               case 4 : data_opp->ds[3*k+2] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
               case 5 : data_opp->ds[3*k+2] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
             }
-          }
-        }
-        else {
-          // Current full - Opposite full
-          data_opp = (size_data_t *)side[iOpp]->is.full.quad->p.user_data;
-          switch(which_face_opp) {
-          case 0:
-            data_opp->ds[0] -= 0.5 * (data->size - data_opp->size) /
-                               (data_opp->h / 2. + data->h / 2.);
-            break;
-          case 1:
-            data_opp->ds[0] += 0.5 * (data->size - data_opp->size) /
-                               (data_opp->h / 2. + data->h / 2.);
-            break;
-          case 2:
-            data_opp->ds[1] -= 0.5 * (data->size - data_opp->size) /
-                               (data_opp->h / 2. + data->h / 2.);
-            break;
-          case 3:
-            data_opp->ds[1] += 0.5 * (data->size - data_opp->size) /
-                               (data_opp->h / 2. + data->h / 2.);
-            break;
-          case 4:
-            data_opp->ds[2] -= 0.5 * (data->size - data_opp->size) /
-                               (data_opp->h / 2. + data->h / 2.);
-            break;
-          case 5:
-            data_opp->ds[2] += 0.5 * (data->size - data_opp->size) /
-                               (data_opp->h / 2. + data->h / 2.);
-            break;
           }
         }
       }
@@ -3324,8 +3292,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
     std::string root = _forestFile.substr(0, lastindex);
     std::string forestFile = root + ".p4est";
     std::string dataFile = root + ".data";
-    HXT_CHECK(
-      forestLoad(&forest, forestFile.c_str(), dataFile.c_str(), forestOptions));
+    HXT_CHECK(forestLoad(&forest, forestFile.c_str(), dataFile.c_str(), forestOptions));
   }
   else {
     // Compute the size field otherwise
@@ -3336,12 +3303,10 @@ HXTStatus automaticMeshSizeField::updateHXT()
     Msg::Info("Gradation = %f\n", _gradation);
     Msg::Info("Node density = %d\n", _nPointsPerCircle);
     if(dim == 3) {
-      if(_nPointsPerGap > 0) {
+      if(_nPointsPerGap > 0) { 
         Msg::Info("Layers per gap = %d\n", _nPointsPerGap);
-      }
-      else {
-        Msg::Info("Layers per gap = %d : not detecting features.\n",
-                  _nPointsPerGap);
+      } else { 
+        Msg::Info("Layers per gap = %d : not detecting features.\n", _nPointsPerGap);
       }
     }
 
@@ -3701,7 +3666,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
 
     std::vector<double> sizeAtVertices(meshBnd->vertices.num, DBL_MAX);
 
-    forestOptions->aniso = true;
+    forestOptions->aniso = false;
     forestOptions->dim = dim;
     forestOptions->hmax = 1e3; // _hmax;
     forestOptions->hmin = 1e-3; // _hmin;
@@ -3730,7 +3695,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
       Msg::Info("Detecting features...");
       if(dim == 3){ HXT_CHECK(featureSize(forest));   }
       if(dim == 2){ HXT_CHECK(featureSize2D(forest)); }
-    }
+    }/
 
     if(_nPointsPerCircle > 0){
       Msg::Info("Refining octree...");
@@ -3743,8 +3708,8 @@ HXTStatus automaticMeshSizeField::updateHXT()
         HXT_CHECK(forestSmoothDirections(forest));
         HXT_CHECK(forestExport(forest, "initialSize.pos"));
       }
-      // Msg::Info("Limiting size gradient...");
-      // HXT_CHECK(forestSizeSmoothing(forest));
+      Msg::Info("Limiting size gradient...");
+      HXT_CHECK(forestSizeSmoothing(forest));
     }
 
     // double elemEstimation;
