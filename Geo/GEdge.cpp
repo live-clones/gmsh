@@ -153,9 +153,7 @@ void GEdge::reverse()
   GVertex *tmp = _v0;
   _v0 = _v1;
   _v1 = tmp;
-  for(std::vector<MLine *>::iterator line = lines.begin(); line != lines.end();
-      line++)
-    (*line)->reverse();
+  for(auto it = lines.begin(); it != lines.end(); it++) (*it)->reverse();
 }
 
 std::size_t GEdge::getNumMeshElementsByType(const int familyType) const
@@ -218,8 +216,7 @@ void GEdge::addFace(GFace *f)
 
 void GEdge::delFace(GFace *f)
 {
-  std::vector<GFace *>::iterator it =
-    std::find(_faces.begin(), _faces.end(), f);
+  auto it = std::find(_faces.begin(), _faces.end(), f);
   if(it != _faces.end()) _faces.erase(it);
 }
 
@@ -324,8 +321,7 @@ std::string GEdge::getAdditionalInfoString(bool multline)
 
   if(_faces.size()) {
     sstream << "On boundary of surfaces: ";
-    for(std::vector<GFace *>::iterator it = _faces.begin(); it != _faces.end();
-        ++it) {
+    for(auto it = _faces.begin(); it != _faces.end(); ++it) {
       if(it != _faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
@@ -635,9 +631,8 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z, double &u,
 std::list<GRegion *> GEdge::regions() const
 {
   std::vector<GFace *> _faces = faces();
-  std::vector<GFace *>::const_iterator it = _faces.begin();
   std::set<GRegion *> _r;
-  for(; it != _faces.end(); ++it) {
+  for(auto it = _faces.begin(); it != _faces.end(); ++it) {
     std::list<GRegion *> temp = (*it)->regions();
     _r.insert(temp.begin(), temp.end());
   }
@@ -719,7 +714,7 @@ void GEdge::removeElement(int type, MElement *e)
 {
   switch(type) {
   case TYPE_LIN: {
-    std::vector<MLine *>::iterator it =
+    auto it =
       std::find(lines.begin(), lines.end(), reinterpret_cast<MLine *>(e));
     if(it != lines.end()) lines.erase(it);
   } break;
@@ -800,11 +795,11 @@ static bool recreateConsecutiveElements(GEdge *ge)
 
 static void meshCompound(GEdge *ge)
 {
-  discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000);
+  auto *de = new discreteEdge(ge->model(), ge->tag() + 100000);
   ge->model()->add(de);
   std::vector<int> phys;
   for(std::size_t i = 0; i < ge->compound.size(); i++) {
-    GEdge *c = (GEdge *)ge->compound[i];
+    auto *c = (GEdge *)ge->compound[i];
     de->lines.insert(de->lines.end(), c->lines.begin(), c->lines.end());
     c->compoundCurve = de;
     phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
@@ -840,7 +835,7 @@ void GEdge::mesh(bool verbose)
     if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
       for(std::size_t i = 0; i < compound.size(); i++) {
-        GEdge *ge = (GEdge *)compound[i];
+        auto *ge = (GEdge *)compound[i];
         ok &= (ge->meshStatistics.status == GEdge::DONE);
       }
       if(!ok) { meshStatistics.status = GEdge::PENDING; }
@@ -862,8 +857,7 @@ bool GEdge::reorder(const int elementType,
 
     if(ordering.size() != lines.size()) return false;
 
-    for(std::vector<std::size_t>::const_iterator it = ordering.begin();
-        it != ordering.end(); ++it) {
+    for(auto it = ordering.begin(); it != ordering.end(); ++it) {
       if(*it >= lines.size()) return false;
     }
 
@@ -890,8 +884,7 @@ std::vector<GVertex *> GEdge::vertices() const
 double GEdge::prescribedMeshSizeAtParam(double u)
 {
   if(_lc.empty()) { return MAX_LC; }
-  const std::vector<double>::iterator &it =
-    std::lower_bound(_u_lc.begin(), _u_lc.end(), u);
+  const auto &it = std::lower_bound(_u_lc.begin(), _u_lc.end(), u);
   size_t i1 = std::min<size_t>(it - _u_lc.begin(), _u_lc.size() - 1);
   size_t i0 = std::max<size_t>(1, i1) - 1;
   double u0 = _u_lc[i0], u1 = _u_lc[i1];

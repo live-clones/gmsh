@@ -2030,16 +2030,14 @@ public:
 #endif
     _kdTree->annkSearch(xyz, 1, _index, _dist);
     double d = sqrt(_dist[0]);
-    double lTg = d < _dMin ?
-                   _lMinTangent :
-                   d > _dMax ? _lMaxTangent :
-                               _lMinTangent + (_lMaxTangent - _lMinTangent) *
-                                                (d - _dMin) / (_dMax - _dMin);
-    double lN = d < _dMin ?
-                  _lMinNormal :
-                  d > _dMax ? _lMaxNormal :
-                              _lMinNormal + (_lMaxNormal - _lMinNormal) *
+    double lTg = d < _dMin ? _lMinTangent :
+                 d > _dMax ? _lMaxTangent :
+                             _lMinTangent + (_lMaxTangent - _lMinTangent) *
                                               (d - _dMin) / (_dMax - _dMin);
+    double lN = d < _dMin ? _lMinNormal :
+                d > _dMax ? _lMaxNormal :
+                            _lMinNormal + (_lMaxNormal - _lMinNormal) *
+                                            (d - _dMin) / (_dMax - _dMin);
     SVector3 t = _tg[_index[0]];
     SVector3 n0 = crossprod(t, fabs(t(0)) > fabs(t(1)) ? SVector3(0, 1, 0) :
                                                          SVector3(1, 0, 0));

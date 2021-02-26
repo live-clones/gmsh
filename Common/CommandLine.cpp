@@ -146,7 +146,6 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-rand value", "Set random perturbation factor "
                  "(Mesh.RandomFactor)"));
   s.push_back(mp("-bgm file", "Load background mesh from file"));
-  s.push_back(mp("-size_field value", "Compute size field from surface curvature"));
   s.push_back(mp("-check", "Perform various consistency checks on mesh"));
   s.push_back(mp("-ignore_periocity", "Ignore periodic boundaries "
                  "(Mesh.IgnorePeriodicity)"));
