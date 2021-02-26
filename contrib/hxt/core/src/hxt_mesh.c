@@ -37,6 +37,10 @@ HXTStatus hxtMeshDelete ( HXTMesh** mesh) {
   HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles.node) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->triangles.color) );
 
+  // quads
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->quads.node) );
+  HXT_CHECK( hxtAlignedFree(&(*mesh)->quads.colors) );
+
   // lines
   HXT_CHECK( hxtAlignedFree(&(*mesh)->lines.node) );
   HXT_CHECK( hxtAlignedFree(&(*mesh)->lines.color) );

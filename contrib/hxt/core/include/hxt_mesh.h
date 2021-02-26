@@ -40,6 +40,14 @@ typedef struct {
     uint64_t size;
   } triangles;
 
+  // quads
+  struct {
+    uint32_t* node;
+    uint16_t* colors;
+    uint64_t num;
+    uint64_t size;
+  } quads;
+
   // lines
   struct {
     uint32_t* node;

@@ -3695,7 +3695,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
       Msg::Info("Detecting features...");
       if(dim == 3){ HXT_CHECK(featureSize(forest));   }
       if(dim == 2){ HXT_CHECK(featureSize2D(forest)); }
-    }/
+    }
 
     if(_nPointsPerCircle > 0){
       Msg::Info("Refining octree...");

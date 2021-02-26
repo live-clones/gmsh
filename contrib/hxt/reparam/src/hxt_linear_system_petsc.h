@@ -2,6 +2,7 @@
 #define HEXTREME_LINEAR_SYSTEM_PETSC_H
 
 #include "hxt_message.h"
+#include "hxt_tools.h"
 #include <stdint.h>
 #include <petscmat.h>
 

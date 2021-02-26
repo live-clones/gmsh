@@ -42,17 +42,44 @@ list(APPEND HXT_INC_DIRS
 # HXT reparam
 #################################################################################
 set(SRC
-    hxt_class_macro.h
-    hxt_curvature.c
-    hxt_edge.c
-    hxt_linear_system.c
-    hxt_linear_system_lu.c
-    hxt_linear_system_lu.h
-    hxt_linear_system_petsc.c
-    hxt_linear_system_petsc.h
-    hxt_mean_values.c
-    hxt_non_linear_solver.c
-    hxt_non_linear_solver.h
+    hxt_class_macro.h          
+    hxt_non_linear_solver.h              
+    hxt_orientation3d_scaling.c
+    hxt_curvature.c            
+    hxt_orientation3d.c                  
+    hxt_orientation3d_scaling.h
+    hxt_edge.c                 
+    hxt_orientation3d_cleanMeshStruct.c  
+    hxt_orientation3d_tools.c
+    hxt_eigenvectors.cpp       
+    hxt_orientation3d_cleanMeshStruct.h  
+    hxt_orientation3d_tools.h
+    hxt_eigenvectors.h         
+    hxt_orientation3d_explicit.cpp       
+    hxt_uvw_cpp_utils.hpp
+    hxt_ginzburg.c             
+    hxt_orientation3d_explicit.h         
+    hxt_uvw_parametrization.cpp
+    hxt_ginzburg.h             
+    hxt_uvw_parametrization.h
+    hxt_linear_system.c        
+    Octree.hpp
+    hxt_linear_system_lu.c     
+    hxt_orientation3d_integrability.c    
+    OpenNL_example.c
+    hxt_linear_system_lu.h     
+    hxt_orientation3d_integrability.h    
+    OpenNL_psm.c
+    hxt_linear_system_petsc.c  
+    hxt_orientation3d_io.cpp             
+    OpenNL_psm.h
+    hxt_linear_system_petsc.h  
+    hxt_orientation3d_io.h               
+    rtree.hpp
+    hxt_mean_values.c          
+    hxt_orientation3d_NL.c
+    hxt_non_linear_solver.c    
+    hxt_orientation3d_NL.h
    )
 
 set(INC
@@ -60,6 +87,7 @@ set(INC
     hxt_edge.h
     hxt_linear_system.h
     hxt_mean_values.h
+    hxt_orientation3d.h
    )
 
 append_gmsh_src(contrib/hxt/reparam/src "${SRC}")
@@ -135,7 +163,6 @@ append_gmsh_src(contrib/hxt/tetMesh/include "${INC}")
 list(APPEND HXT_INC_DIRS
      contrib/hxt/tetMesh/src
      contrib/hxt/tetMesh/include)
-
 
 #################################################################################
 # propagate HXT_INC_DIRS to parent CMakeLists
