@@ -1,6 +1,23 @@
 #include "hxt_eigenvectors.h"
+#include "GmshConfig.h"
 
-#ifdef HXT_HAVE_EIGEN
+#ifdef HAVE_EIGEN
+
+#warning "C Preprocessor got here!"
+#warning "C Preprocessor got here!"
+#warning "C Preprocessor got here!"
+#warning "C Preprocessor got here!"
+#warning "C Preprocessor got here!"
+#warning "C Preprocessor got here!"
+#warning "C Preprocessor got here!"
+#pragma message ( "DEFINI" )
+#pragma message ( "DEFINI" )
+#pragma message ( "DEFINI" )
+#pragma message ( "DEFINI" )
+#pragma message ( "DEFINI" )
+#pragma message ( "DEFINI" )
+#pragma message ( "DEFINI" )
+#pragma message ( "DEFINI" )
 
 #include <Eigen/Eigenvalues>
 
@@ -38,6 +55,22 @@ HXTStatus eigMat(double * __restrict__ mat,
 }
 
 #else
+
+#warning "PAS DEFINI"
+#warning "PAS DEFINI"
+#warning "PAS DEFINI"
+#warning "PAS DEFINI"
+#warning "PAS DEFINI"
+#warning "PAS DEFINI"
+#warning "PAS DEFINI"
+#warning "PAS DEFINI"
+
+#pragma message ( "PAS DEFINI" )
+#pragma message ( "PAS DEFINI" )
+#pragma message ( "PAS DEFINI" )
+#pragma message ( "PAS DEFINI" )
+#pragma message ( "PAS DEFINI" )
+#pragma message ( "PAS DEFINI" )
 
 #include <stdlib.h>
 

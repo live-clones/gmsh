@@ -43,7 +43,6 @@ set(HXT_REPARAM_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_orientation3d_tools.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_uvw_parametrization.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/OpenNL_psm.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/OpenNL_example.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_curvature.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_edge.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_linear_system.h"

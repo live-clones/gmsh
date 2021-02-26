@@ -1,10 +1,3 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
-//
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
-//
-// Contributed by Arthur Bawin
-
 #ifndef AUTOMATIC_MESH_SIZE_FIELD_H
 #define AUTOMATIC_MESH_SIZE_FIELD_H
 
@@ -78,7 +71,7 @@ typedef struct ForestOptions{
 } ForestOptions;
 
 // The structure containing the size field information (forest)
-typedef struct Forest {
+typedef struct Forest{
 #ifdef HAVE_P4EST
   p4est_t *p4est;
 #endif
@@ -99,7 +92,7 @@ typedef struct size_data{
 } size_data_t;
 
 // A node to search in the tree
-typedef struct size_point {
+typedef struct size_point{
   double x;
   double y;
   double z;
@@ -110,7 +103,7 @@ typedef struct size_point {
   bool hasIntersection;
 } size_point_t;
 
-typedef struct interpolation_data {
+typedef struct interpolation_data{
   double center[3];
   SVector3 t1;
   SVector3 t2;
@@ -121,22 +114,19 @@ typedef struct interpolation_data {
 HXTStatus forestOptionsCreate(ForestOptions **forestOptions);
 HXTStatus forestOptionsDelete(ForestOptions **forestOptions);
 
-HXTStatus forestCreate(int argc, char **argv, Forest **forest,
-                       const char *filename, ForestOptions *forestOptions);
+HXTStatus forestCreate(int argc, char **argv, Forest **forest, const char* filename, ForestOptions *forestOptions);
 HXTStatus forestDelete(Forest **forest);
 
-HXTStatus forestSave(Forest *forest, const char *forestFile,
-                     const char *dataFile);
+HXTStatus forestSave(Forest *forest, const char* forestFile, const char *dataFile);
 HXTStatus forestExport(Forest *forest, const char *forestFile);
 HXTStatus forestExport2D(Forest *forest, const char *forestFile);
-HXTStatus forestLoad(Forest **forest, const char *forestFile,
-                     const char *dataFile, ForestOptions *forestOptions);
+HXTStatus forestLoad(Forest **forest, const char* forestFile, const char *dataFile, ForestOptions *forestOptions);
 
-HXTStatus forestSearchOne(Forest *forest, double x, double y, double z,
-                          double *size, int linear);
+HXTStatus forestSearchOne(Forest *forest, double x, double y, double z, double *size, int linear);
 #endif
 
 class automaticMeshSizeField : public Field {
+
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   struct Forest *forest;
   struct ForestOptions *forestOptions;
@@ -151,64 +141,61 @@ class automaticMeshSizeField : public Field {
   double _gradation;
   bool _smoothing, _gaps;
 
-public:
+ public:
   ~automaticMeshSizeField();
-  automaticMeshSizeField(
-    std::string fFile = "",
-    int minElementsPerTwoPi = CTX::instance()->mesh.minElementsPerTwoPi,
-    int nLayersPerGap = CTX::instance()->mesh.nLayersPerGap,
-    double gradation = CTX::instance()->mesh.gradation, double hmin = -1.0,
-    double hmax = -1.0, double hbulk = -1.0, int smoothing = true,
-    int gaps = true)
+  automaticMeshSizeField(std::string fFile = "",
+                         int minElementsPerTwoPi = CTX::instance()->mesh.minElementsPerTwoPi,
+                         int nLayersPerGap       = CTX::instance()->mesh.nLayersPerGap,
+                         double gradation        = CTX::instance()->mesh.gradation,
+                         double hmin = -1.0,
+                         double hmax = -1.0,
+                         double hbulk = -1.0,
+                         int smoothing = true,
+                         int gaps = true)
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
-    : forest(NULL), forestOptions(NULL)
+  :  forest(NULL), forestOptions(NULL)
 #endif
   {
-    _forestFile = fFile;
+    _forestFile       = fFile;
     _nPointsPerCircle = minElementsPerTwoPi ? minElementsPerTwoPi : 20;
-    _nPointsPerGap = nLayersPerGap ? nLayersPerGap : 0;
-    _hmin = hmin;
-    _hmax = hmax;
-    _hbulk = hbulk;
-    _gradation = (int)gradation ? gradation : 1.1;
-    _smoothing = smoothing;
-    _gaps = gaps;
+    _nPointsPerGap    = nLayersPerGap ? nLayersPerGap : 0;
+    _hmin             = hmin;
+    _hmax             = hmax;
+    _hbulk            = hbulk;
+    _gradation        = (int) gradation ? gradation : 1.1;
+    _smoothing        = smoothing;
+    _gaps             = gaps;
 
-    options["p4estFileToLoad"] = new FieldOptionString(
-      _forestFile, "p4est file containing the size field", &updateNeeded);
+    options["p4estFileToLoad"] = new FieldOptionString(_forestFile,
+                 "p4est file containing the size field",&updateNeeded);
 
-    options["nPointsPerCircle"] = new FieldOptionInt(
-      _nPointsPerCircle,
-      "Number of points per circle (adapt to curvature of surfaces)",
-      &updateNeeded);
+    options["nPointsPerCircle"] = new FieldOptionInt(_nPointsPerCircle,
+						     "Number of points per circle (adapt to curvature of surfaces)",&updateNeeded);
 
-    options["nPointsPerGap"] = new FieldOptionInt(
-      _nPointsPerGap, "Number of layers of elements in thin layers",
-      &updateNeeded);
+    options["nPointsPerGap"] = new FieldOptionInt(_nPointsPerGap,
+						  "Number of layers of elements in thin layers",&updateNeeded);
 
-    options["hMin"] =
-      new FieldOptionDouble(_hmin, "Minimum size", &updateNeeded);
+    options["hMin"] = new FieldOptionDouble(_hmin,
+               "Minimum size", &updateNeeded);
 
-    options["hMax"] =
-      new FieldOptionDouble(_hmax, "Maximum size", &updateNeeded);
+    options["hMax"] = new FieldOptionDouble(_hmax,
+               "Maximum size", &updateNeeded);
 
-    options["hBulk"] = new FieldOptionDouble(
-      _hbulk, "Default size where it is not prescribed", &updateNeeded);
+    options["hBulk"] = new FieldOptionDouble(_hbulk,
+					     "Default size where it is not prescribed", &updateNeeded);
 
-    options["gradation"] = new FieldOptionDouble(
-      _gradation, "Maximum growth ratio for the edges lengths", &updateNeeded);
+    options["gradation"] = new FieldOptionDouble(_gradation,
+						   "Maximum growth ratio for the edges lengths",&updateNeeded);
 
-    options["smoothing"] = new FieldOptionBool(
-      _smoothing, "Enable size smoothing (should always be true)",
-      &updateNeeded);
+    options["smoothing"] = new FieldOptionBool(_smoothing,
+              "Enable size smoothing (should always be true)",&updateNeeded);
 
-    options["features"] = new FieldOptionBool(
-      _gaps, "Enable computation of local feature size (thin channels)",
-      &updateNeeded);
+    options["features"] = new FieldOptionBool(_gaps,
+              "Enable computation of local feature size (thin channels)",&updateNeeded);
 
     updateNeeded = true;
 
-    if(fFile != "") update();
+    if (fFile != "") update();
   }
 
   virtual bool isotropic() const { return false; }
@@ -222,8 +209,7 @@ public:
 
   void update();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = 0);
-  virtual void operator()(double x, double y, double z, SMetric3 &m,
-                          GEntity *ge = 0);
+  virtual void operator()(double x, double y, double z, SMetric3 &m, GEntity *ge = 0);
 };
 
 #endif

@@ -66,7 +66,6 @@ set(SRC
     Octree.hpp
     hxt_linear_system_lu.c     
     hxt_orientation3d_integrability.c    
-    OpenNL_example.c
     hxt_linear_system_lu.h     
     hxt_orientation3d_integrability.h    
     OpenNL_psm.c
