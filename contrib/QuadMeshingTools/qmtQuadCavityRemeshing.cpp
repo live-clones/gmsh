@@ -54,6 +54,31 @@ const size_t PATTERN_2CORNERS = 6;
 const size_t PATTERN_1CORNER = 7;
 const size_t PATTERN_DISK = 8;
 
+size_t patternNumberOfCorners(size_t pId) {
+  switch (pId) {
+    case PATTERN_QUAD_REGULAR:
+      return 4;
+    case PATTERN_TRIANGLE:
+      return 3;
+    case PATTERN_PENTAGON:
+      return 5;
+    case PATTERN_QUAD_DIAG35:
+      return 4;
+    case PATTERN_QUAD_ALIGNED35:
+      return 4;
+    case PATTERN_QUAD_CHORD_UTURN:
+      return 4;
+    case PATTERN_2CORNERS:
+      return 2;
+    case PATTERN_1CORNER:
+      return 1;
+    case PATTERN_DISK:
+      return 0;
+    default:
+      Msg::Error("patternNumberOfCorners: pattern not supported");
+  };
+  return 0;
+}
 
 
 namespace QMT {
@@ -86,7 +111,7 @@ namespace QMT {
   using id2 = std::array<id,2>;
   using id4 = std::array<id,4>;
 
-  constexpr bool DBG_VERBOSE = true;
+  constexpr bool DBG_VERBOSE = false;
 
   /* Quad meshes of patterns, known at compile time
    * These patterns must be CONVEX
@@ -924,6 +949,11 @@ namespace QMT {
     }
   };
 
+  enum GrowthPolicy {
+    GROW_MINIMAL,
+    GROW_MAXIMAL,
+  };
+
 
   /* Cavity oriented edge */
   using COEdge = std::array<MVertex*,2>;
@@ -943,6 +973,826 @@ namespace QMT {
       hash_combine(seed, robin_hood::hash_bytes(&(pr[1]), sizeof(MVertex*)));
       return seed;
     }
+  };
+
+  // struct u32Hash {
+  //   size_t operator()(const std::array<uint32_t,2> &pr) const noexcept {
+  //     size_t seed = 0;
+  //     hash_combine(seed, robin_hood::hash_bytes(&(pr[0]), sizeof(uint32_t)));
+  //     hash_combine(seed, robin_hood::hash_bytes(&(pr[1]), sizeof(uint32_t)));
+  //     return seed;
+  //   }
+  // };
+
+  const uint32_t NO_U32 = (uint32_t) -1;
+
+  struct RemeshableCavity {
+    std::vector<MElement*> elements;
+    std::vector<std::vector<MVertex*> > sides;
+    std::vector<MVertex*> intVertices;
+    double irregularityMeasure = 0;
+    uint32_t nIrregular = 0; // # irregular vertices outside allowed ones
+    std::pair<size_t,int> patternNoAndRot = {(size_t)-1,0};
+  };
+
+  struct GrowingCavity {
+    std::vector<bool> quadIsInside;      /* fixed size: farmer.quads.size() */
+    std::vector<uint32_t> quadEdgeIsBdr; /* fixed size: 4*farmer.quads.size() */
+    unordered_set<uint32_t> verticesInt; /* growing with cavity */
+    unordered_set<uint32_t> verticesBdr; /* growing with cavity */
+    unordered_set<uint32_t> elements;    /* growing with cavity */
+    /* nb of irregular vertices strictly inside cavity (include singularities) */
+    uint32_t nIrregInterior = 0; 
+
+    void clear() {
+      quadIsInside.clear();
+      quadEdgeIsBdr.clear();
+      verticesInt.clear();
+      verticesBdr.clear();
+      elements.clear();
+      nIrregInterior = 0;
+    }
+  };
+
+  struct CavityFarmer { /* the guy who grows cavities */
+    public:
+      GFace* gf = nullptr;
+
+      /* contiguous representation of the GFace quad mesh  */
+      std::vector<MVertex*> vertices; 
+      unordered_map<MVertex*,uint32_t> vertexLocal;
+      std::vector<MQuadrangle*> quadrangles; 
+      unordered_map<MQuadrangle*,uint32_t> quadLocal;
+      std::vector<std::array<uint32_t,4> > quads;
+
+      /* quad adjacency information */
+      std::vector<uint32_t> adjacent; /* adjacent[4*q1+le1] = 4*q2+le2 */
+      std::vector<uint32_t> v2q_first; /* vertex to quads */
+      std::vector<uint32_t> v2q_values; /* vertex to quads */
+
+      GrowingCavity cav; /* current cavity */
+      GrowingCavity cavBackup; /* potential extension */
+
+      /* growth constraints */
+      std::vector<bool> vertexForbidden;
+
+    public:
+      CavityFarmer(GFace* gf_):gf(gf_) {};
+
+      void clear() {
+        vertices.clear();
+        vertexLocal.clear();
+        quadrangles.clear();
+        quadLocal.clear();
+        quads.clear();
+        adjacent.clear();
+        v2q_first.clear();
+        v2q_values.clear();
+        vertexForbidden.clear();
+        cav.clear();
+        cavBackup.clear();
+      }
+
+      void debug_show_cavity(const std::string& name, bool light = true) {
+        std::vector<MElement*> elts;
+        for (uint32_t f: cav.elements) {
+          elts.push_back(quadrangles[f]);
+        }
+        if (light) {
+          GeoLog::add(elts,name);
+          return;
+        }
+        GeoLog::add(elts,name+"_cav.elements");
+        std::vector<array<double,3> > interior;
+        std::vector<array<double,3> > bdr;
+        for (uint32_t v: cav.verticesInt) {
+          interior.push_back(vertices[v]->point());
+        }
+        for (uint32_t v: cav.verticesBdr) {
+          bdr.push_back(vertices[v]->point());
+        }
+        GeoLog::add(interior,0.,name+"_cav.verticesInt");
+        GeoLog::add(bdr,1.,name+"_cav.verticesBdr");
+
+        std::vector<MElement*> elts2;
+        for (size_t f = 0; f < quadrangles.size(); ++f) if (cav.quadIsInside[f]) {
+          elts2.push_back(quadrangles[f]);
+        }
+        GeoLog::add(elts2,name+"_cav.quadIsInside");
+        for (size_t f = 0; f < quadrangles.size(); ++f) {
+          for (size_t le = 0; le < 4; ++le) {
+            if (cav.quadEdgeIsBdr[4*f+le]) {
+              uint32_t v1 = quads[f][le];
+              uint32_t v2 = quads[f][(le+1)%4];
+              std::vector<array<double,3> > bdrEdges = {vertices[v1]->point(), vertices[v2]->point()};
+              GeoLog::add(bdrEdges,0.,name+"_cav.quadEdgeIsBdr");
+            }
+          }
+        }
+        GeoLog::flush();
+      }
+
+      bool updateFarmer(GFace* gf) {
+        /* assume coherent orientation of quads in GFace */
+        clear();
+        std::vector<uint32_t> valence;
+        vertices.reserve(2*gf->mesh_vertices.size());
+        valence.reserve(2*gf->mesh_vertices.size());
+        quads.reserve(gf->quadrangles.size());
+        quadrangles = gf->quadrangles;
+        for (size_t f = 0; f < quadrangles.size(); ++f) {
+          MQuadrangle* q = quadrangles[f];
+          quadLocal[q] = f;
+          array<uint32_t,4> quad;
+          for (size_t lv = 0; lv < 4; ++lv) {
+            MVertex* v = q->getVertex(lv);
+            auto it = vertexLocal.find(v);
+            if (it != vertexLocal.end()) {
+              uint32_t nv = it->second;
+              quad[lv] = nv;
+              valence[nv] += 1;
+            } else {
+              uint32_t nv = vertices.size();
+              vertices.push_back(v);
+              valence.push_back(1);
+              vertexLocal[v] = nv;
+              quad[lv] = nv;
+            }
+          }
+          quads.push_back(quad);
+        }
+
+        /* Build the vertex to quads adjacencies */
+        v2q_first.resize(vertices.size()+1,0);
+        for (uint32_t v = 0; v < vertices.size(); ++v) {
+          v2q_first[v+1] = v2q_first[v] + valence[v];
+        }
+        v2q_values.resize(v2q_first.back(), NO_U32);
+        for (uint32_t f = 0; f < quads.size(); ++f) {
+          for (uint32_t lv = 0; lv < 4; ++lv) {
+            const uint32_t v = quads[f][lv];
+            const uint32_t begin = v2q_first[v];
+            const uint32_t end = v2q_first[v+1];
+            bool foundSlot = false;
+            for (uint32_t pos = begin; pos < end; ++pos) {
+              if (v2q_values[pos] == NO_U32) {
+                v2q_values[pos] = f;
+                foundSlot = true;
+                break;
+              }
+            }
+            if (!foundSlot) {
+              Msg::Error("cavity farmer: no slot found !");
+              return false;
+            }
+          }
+        }
+
+        /* Build the quad to quads adjacencies */
+        adjacent.resize(4*quads.size(),NO_U32);
+        for (uint32_t f = 0; f < quads.size(); ++f) {
+          for (uint32_t le = 0; le < 4; ++le) {
+            if (adjacent[4*f+le] != NO_U32) continue;
+            const uint32_t v1 = quads[f][le];
+            const uint32_t v2 = quads[f][(le+1)%4];
+            const uint32_t begin = v2q_first[v1];
+            const uint32_t end = v2q_first[v1+1];
+            for (uint32_t pos = begin; pos < end; ++pos) {
+              const uint32_t f2 = v2q_values[pos];
+              for (uint32_t le2 = 0; le2 < 4; ++le2) {
+                const uint32_t av1 = quads[f2][le2];
+                const uint32_t av2 = quads[f2][(le2+1)%4];
+                if (av1 == v2 && av2 == v1) {
+                  adjacent[4*f+le] = 4*f2+le2;
+                  adjacent[4*f2+le2] = 4*f+le;
+                  break;
+                }
+              }
+              if (adjacent[4*f+le] != NO_U32) break;
+            }
+          }
+        }
+
+        return true;
+      }
+
+      bool vertexValence(uint32_t v, uint32_t& valIn, uint32_t& valOut, uint32_t* qOut = nullptr) {
+        valIn = 0;
+        valOut = 0;
+        if (v >= v2q_first.size()) {
+          Msg::Error("vertexValence: incoherent state");
+          return false;
+        }
+        const uint32_t begin = v2q_first[v];
+        const uint32_t end = v2q_first[v+1];
+        for (uint32_t pos = begin; pos < end; ++pos) {
+          const uint32_t f = v2q_values[pos];
+          if (f == NO_U32) continue;
+          if (cav.quadIsInside[f]) {
+            valIn += 1;
+          } else {
+            valOut += 1;
+            if (qOut != nullptr) {
+              *qOut = f;
+            }
+          } 
+        }
+        return true;
+      }
+
+      /* warning: when false is returned, the current cavity
+       *          is no longer valid and it should be discarded
+       *          or repaired by a external backup */
+      bool addQuads(const std::vector<uint32_t>& toAdd, bool checkForbidden = true) {
+        vector<uint32_t> touched;
+        touched.reserve(4*toAdd.size());
+        for (uint32_t f: toAdd) {
+          if (cav.quadIsInside[f] == false) {
+            cav.quadIsInside[f] = true;
+            cav.elements.insert(f);
+          } else {
+            Msg::Error("cavity farmer: quad already in cavity, should not happen");
+            abort(); // TODOMX
+            return false;
+          }
+          for (size_t le = 0; le < 4; ++le) {
+            touched.push_back(quads[f][le]);
+            uint32_t opp = adjacent[4*f+le];
+            if (cav.quadEdgeIsBdr[4*f+le]) { 
+              Msg::Error("cavity farmer: quad edge already cavity bdr, should not happen");
+              abort(); // TODOMX
+              return false;
+            } else if (opp != NO_U32 && cav.quadEdgeIsBdr[opp]) { 
+              /* adjacent quad was in cavity and boundary 
+                 => no longer boundary */
+              cav.quadEdgeIsBdr[opp] = false;
+            } else {
+              /* adjacent quad edge was not cavity bdr, this one becomes one */
+              cav.quadEdgeIsBdr[4*f+le] = true;
+            }
+          }
+        }
+        sort_unique(touched);
+
+        for (uint32_t v: touched) {
+          uint32_t valIn, valOut;
+          vertexValence(v, valIn, valOut);
+          if (valOut > 0) {
+            cav.verticesBdr.insert(v);
+          } else if (valOut == 0 && valIn > 0) {
+            MVertex* pv = vertices[v];
+            GFace* pgf = pv->onWhat()->cast2Face();
+            if (pgf != nullptr) { /* vertex inside GFace */
+              auto it = cav.verticesInt.find(v);
+              if (it == cav.verticesInt.end()) { /* New interior */
+                if (checkForbidden && vertexForbidden[v]) {
+                  return false;
+                }
+                cav.verticesInt.insert(v);
+
+                if (valIn != 4) {
+                  cav.nIrregInterior += 1;
+                }
+
+                /* remove from boundary*/
+                auto itb = cav.verticesBdr.find(v);
+                if (itb != cav.verticesBdr.end()) {
+                  cav.verticesBdr.erase(itb);
+                }
+              }
+            } else { /* vertex on GFace boundary */
+              cav.verticesBdr.insert(v);
+            }
+          } else {
+            Msg::Error("cavity farmer: incoherent vertex state in addQuads");
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      double cavityIrregularity(uint32_t& nIrregular, uint32_t& nConvexCorners) { 
+        nIrregular = 0;
+        nConvexCorners = 0;
+        double ir = 0.;
+        for (uint32_t v: cav.verticesInt) {
+          uint32_t valIn, valOut;
+          vertexValence(v, valIn, valOut);
+          if (valOut) {
+            Msg::Error("weird: cavity interior vertex has valence-out=%i",valOut);
+          }
+          if (valIn != 4) {
+            ir += std::pow(valIn-4.,2);
+            nIrregular += 1;
+          }
+        }
+        for (uint32_t v: cav.verticesBdr) {
+          uint32_t valIn, valOut;
+          vertexValence(v, valIn, valOut);
+          if (valIn == 1) {
+            nConvexCorners += 1;
+          } else if (valIn > 2) { 
+            /* inside-valence 3+ on cavity boundary will be eliminated
+             * inside-valence 1 is a cavity corner, does not count as irregular here*/
+            nIrregular += 1;
+            ir += std::pow(valIn-2.,2);
+          }
+        }
+        return ir;
+      }
+
+      bool isValidConvexCavity() {
+        for (uint32_t v: cav.verticesBdr) {
+          uint32_t valIn, valOut;
+          vertexValence(v, valIn, valOut);
+          if (valOut == 1) {
+            MVertex* vp = vertices[v];
+            GFace* gf = vp->onWhat()->cast2Face();
+            if (gf != nullptr) {
+              /* Concave cavity corner, inside the surface mesh */
+              return false;
+            }
+          } else if (valOut >= 3) {
+            MVertex* vp = vertices[v];
+            GVertex* gv = vp->onWhat()->cast2Vertex();
+            if (gv != nullptr) {
+              /* CAD corner, valence is superior or equal to three, should not be absorbed in cavity */
+              return false;
+            }
+          } else if (valIn == 3 && valOut == 2 && vertexForbidden[v]) {
+            /* Would change a valence 5 singularity into a regular vertex */
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      bool convexify(bool checkForbidden = true) {
+        bool running = true;
+        while (running) {
+          running = false;
+          std::vector<uint32_t> quadsAtConcavities;
+          for (uint32_t v: cav.verticesBdr) {
+            uint32_t valIn, valOut;
+            uint32_t qOut = NO_U32;
+            vertexValence(v, valIn, valOut, &qOut);
+            /* Add exterior quad if cavity bdr vertex out-valence is one
+             * and cavity bdr vertex is inside the GFace */
+            if (valOut == 1) {
+              GFace* pgf = vertices[v]->onWhat()->cast2Face();
+              if (pgf == nullptr) continue;
+              quadsAtConcavities.push_back(qOut);
+            }
+          }
+          if (quadsAtConcavities.size() > 0) {
+            sort_unique(quadsAtConcavities);
+            bool oka = addQuads(quadsAtConcavities, checkForbidden);
+            if (!oka) return false;
+            running = true;
+          }
+        }
+        return isValidConvexCavity();
+      }
+
+      bool getCavitySides(uint32_t& Ncorners,
+          std::vector<std::vector<uint32_t> >& sides) {
+
+        /* Prepare the cavity boundary edges to make
+         * a continuous loop on them */
+        vector<uint32_t> pos2vertex;
+        vector<uint32_t> vertex2pos(vertices.size()); /* allocation outside ? */
+        vector<uint32_t> pos2nextVertex;
+        vector<bool> isCorner;
+        pos2vertex.reserve(cav.verticesBdr.size());
+        pos2vertex.reserve(cav.verticesBdr.size());
+        isCorner.reserve(cav.verticesBdr.size());
+        uint32_t v0 = NO_U32;
+
+        for (uint32_t v: cav.verticesBdr) {
+          uint32_t n = v2q_first[v+1]-v2q_first[v];
+          bool edgeFound = false;
+          for (uint32_t lq = 0; lq < n; ++lq) {
+            uint32_t q = v2q_values[v2q_first[v]+lq];
+            if (!cav.quadIsInside[q]) continue;
+            for (uint32_t le = 0; le < 4; ++le) {
+              if (quads[q][le] == v && cav.quadEdgeIsBdr[4*q+le]) {
+                edgeFound = true;
+                uint32_t v2 = quads[q][(le+1)%4];
+                vertex2pos[v] = pos2vertex.size();
+                pos2vertex.push_back(v);
+                pos2nextVertex.push_back(v2);
+                uint32_t valIn, valOut;
+                vertexValence(v, valIn, valOut);
+                if (valIn == 1) {
+                  isCorner.push_back(true);
+                  Ncorners += 1;
+                  if (v0 == NO_U32) {
+                    v0 = v;
+                  } else {
+                    /* deterministic choice of the start */
+                    size_t num0 = vertices[v0]->getNum();
+                    size_t num = vertices[v]->getNum();
+                    if (num < num0) {
+                      v0 = v;
+                    }
+                  }
+                } else {
+                  isCorner.push_back(false);
+                }
+
+                break;
+              }
+            }
+            if (edgeFound) break;
+          }
+          if (!edgeFound) {
+            Msg::Error("cavity sides: cavity bdr edge not found around vertex %i", v);
+            DBG(cav.elements.size());
+            DBG(cav.verticesInt.size());
+            DBG(cav.verticesBdr.size());
+            debug_show_cavity("bdrEdgeNotFoundAround_" + randomIdentifier() + "_");
+            gmsh::initialize();
+            GeoLog::flush();
+            gmsh::fltk::run();
+            abort(); // TODOMX
+            return false;
+          }
+        }
+        if (pos2vertex.size() == 0) {
+          return false;
+        }
+
+        if (v0 == NO_U32) { 
+          /* No corner, the cavity is a disk */
+          v0 = pos2vertex[0];
+          sides.resize(1);
+          sides[0].push_back(v0);
+        }
+
+        /* Propagation along the boundary */
+        uint32_t nCornerVisited = 0;
+        uint32_t v = v0;
+        uint32_t iter = 0;
+        while (true) {
+          iter += 1;
+          if (iter > 1e7) {
+            Msg::Error("getCavitySides: infinite loop ? iter = {}", iter);
+            return false;
+          }
+
+          uint32_t pos = vertex2pos[v];
+          if (isCorner[pos]) {
+            nCornerVisited += 1;
+            sides.resize(sides.size()+1);
+            sides.back().push_back(v);
+          }
+
+          uint32_t v2 = pos2nextVertex[pos];
+          sides.back().push_back(v2);
+          v = v2;
+
+          if (v2 == v0) { /* closed the loop */
+            break;
+          }
+        }
+
+        if (nCornerVisited != Ncorners) {
+          Msg::Debug("getCavitySides: not all corners were visited, bdr has multiple loops ?");
+          return false;
+        }
+
+        return true;
+      }
+
+      bool growCavityStep() {
+        std::vector<std::vector<uint32_t> > sides;
+        uint32_t Ncorners = 0;
+        bool oks = getCavitySides(Ncorners, sides);
+        if (!oks) {
+          if (DBG_VERBOSE) {Msg::Debug("cavity farmer: grow one side, failed to build cavity boundary");}
+          return false;
+        }
+
+        // For isotropic growth, we choose try the largest sides first,
+        // and we add the getNum of the first vertex for reproductibility. */
+        vector<std::pair<size_t,size_t> > sizeAndSide(sides.size());
+        for (size_t i = 0; i < sides.size(); ++i) {
+          size_t num = vertices[sides[i].front()]->getNum();
+          sizeAndSide[i] = {size_t(1e7*sides[i].size()+num),i};
+        }
+        std::sort(sizeAndSide.begin(),sizeAndSide.end());
+        std::reverse(sizeAndSide.begin(),sizeAndSide.end());
+
+        cavBackup = cav; /* to be able to restore if candidate is not good */
+
+        for (size_t k = 0; k < sizeAndSide.size(); ++k) {
+          size_t i = sizeAndSide[k].second;
+          if (sides[i].size() < 2) continue;
+          bool candidate = true;
+          /* Look at side interior vertices */
+          for (size_t j = 1; j < sides[i].size()-1; ++j) {
+            uint32_t v = sides[i][j];
+            /* Check if side is touching a growth limit */
+            if (vertexForbidden[v]) {
+              candidate = false;
+              break;
+            }
+            /* Check if touching a CAD corner */
+            MVertex* pv = vertices[v];
+            GVertex* gv = dynamic_cast<GVertex*>(pv->onWhat());
+            if (gv != nullptr) { /* side touching CAD corner */
+              candidate = false;
+              break;
+            }
+          }
+
+          if (candidate) {
+            /* Build the new convex cavity by expanding on the side
+             * and check if it is a valid */
+
+            /* Add the new quads */
+            size_t nAdded = 0;
+            std::vector<uint32_t> cQuads;
+            cQuads.reserve(4*sides[i].size());
+            if (sides[i].size() == 2) { /* Side is one edge */
+              uint32_t v1 = sides[i][0];
+              uint32_t v2 = sides[i][1];
+              const uint32_t begin = v2q_first[v1];
+              const uint32_t end = v2q_first[v1+1];
+              for (uint32_t pos = begin; pos < end; ++pos) {
+                const uint32_t f = v2q_values[pos];
+                if (!cav.quadIsInside[f]) {
+                  for (size_t le = 0; le < 4; ++le) {
+                    uint32_t qv1 = quads[f][le];
+                    uint32_t qv2 = quads[f][(le+1)%4];
+                    if ((qv1 == v1 && qv2 == v2) || (qv1 == v2 && qv2 == v1)) {
+                      cQuads.push_back(f);
+                      break;
+                    }
+                  }
+                }
+                if (cQuads.size() > 0) break;
+              }
+            } else { /* Take quads adjacent to interior side vertices */
+              for (size_t j = 1; j < sides[i].size()-1; ++j) {
+                uint32_t v = sides[i][j];
+
+                const uint32_t begin = v2q_first[v];
+                const uint32_t end = v2q_first[v+1];
+                for (uint32_t pos = begin; pos < end; ++pos) {
+                  const uint32_t f = v2q_values[pos];
+                  if (!cav.quadIsInside[f]) {
+                    cQuads.push_back(f);
+                  }
+                }
+              }
+            }
+            if (cQuads.size() == 0) continue;
+            sort_unique(cQuads);
+            bool oka = addQuads(cQuads);
+            if (!oka) { /* try next side */
+              if (DBG_VERBOSE) {
+                Msg::Debug("cavity grow one side: %li quads, side %i, FAILED to add %li quads",
+                  cav.elements.size(), k, cQuads.size());}
+              cav = cavBackup;
+              continue;
+            }
+
+            /* Convexify the cavity */
+            bool okc = convexify();
+            if (!okc) { /* try next side */
+              if (DBG_VERBOSE) {
+                Msg::Debug("cavity grow one side: %li quads, side %i, FAILED to convexify after adding %li quads",
+                  cav.elements.size(), k, cQuads.size());}
+              cav = cavBackup;
+              continue; 
+            }
+
+            /* Extended cavity is good, keep it */
+            cavBackup.clear();
+
+            if (DBG_VERBOSE) {
+              Msg::Debug("cavity grow one side: %li quads, side %i, OK convexify (after adding %li quads)",
+                  cav.elements.size(), k, cQuads.size());}
+
+            return true;
+          }
+        }
+        if (DBG_VERBOSE) {
+          Msg::Debug("cavity grow one side: %li quads, tried all sides, no extension possible",
+              cav.elements.size());}
+        cav = cavBackup;
+        return false;
+      }
+
+
+      bool growCavity(
+          const std::vector<MQuadrangle*>& quadsInit,
+          GrowthPolicy policy,
+          const std::vector<size_t>& patternsToCheck,
+          const unordered_map<size_t,size_t>& patternSizeLimits,
+          const unordered_set<MVertex*>& allowedIrregularVertices,
+          const unordered_set<MVertex*>& forbiddenIrregularVertices,
+          RemeshableCavity& rcav){
+        static size_t ccc = 0; // TODOMX temp
+        ccc += 1;
+
+        /* clear current cavity */
+        cav.clear();
+        cavBackup.clear();
+        cav.quadIsInside.resize(quads.size(),false);
+        cav.quadEdgeIsBdr.resize(4*quads.size(),false);
+
+        /* constrain the growth */
+        vertexForbidden.clear();
+        vertexForbidden.resize(vertices.size(),false);
+        for (MVertex* v: forbiddenIrregularVertices) {
+          if (allowedIrregularVertices.find(v) != allowedIrregularVertices.end()) {
+            continue;
+          }
+          auto it = vertexLocal.find(v);
+          if (it != vertexLocal.end()) vertexForbidden[it->second] = true;
+        }
+
+        /* initialize the cavity with given quads */
+        vector<uint32_t> lquads;
+        for (MQuadrangle* q: quadsInit) {
+          auto it = quadLocal.find(q);
+          if (it == quadLocal.end()) {
+            Msg::Error("cavity farmer: quad not found in farmer mesh");
+            return false;
+          }
+          lquads.push_back(it->second);
+        }
+        sort_unique(lquads);
+
+        bool oka = addQuads(lquads);
+        if (!oka) {
+          Msg::Error("cavity farmer: failed to initialize");
+          return false;
+        }
+
+        uint32_t lastNbIrregular = 0;
+        bool running = true;
+        uint32_t iter = 0;
+        while (running) {
+          iter += 1;
+          /* Grow the cavity on one of its sides */
+          bool okg = growCavityStep();
+          if (false) {
+            std::string name = "cav" + std::to_string(ccc) + "_it" + std::to_string(iter) + "_" + std::to_string(okg);
+            debug_show_cavity(name, true);
+            GeoLog::flush();
+          }
+          if (!okg) {
+            if (DBG_VERBOSE) {Msg::Debug("------ grow cavity: iter %li, %li vertices, failed to grow cavity",
+                iter, cav.verticesInt.size() + cav.verticesBdr.size());}
+            break;
+          }
+
+          /* nb of irregular vertices in cavity, counting interior and boundary, and singularities */
+          uint32_t curCavityNirreg = 0; 
+          uint32_t curNcorners = 0;
+          double curCavityIrregularity = cavityIrregularity(curCavityNirreg, curNcorners);
+          /* If no new irregular vertices, continue the growth */
+          if (curCavityNirreg <= lastNbIrregular) continue;
+
+          /* Check if the cavity is topologicaly remeshable with patterns */
+          std::vector<std::vector<uint32_t> > sides; /* same for the different pattern checks */
+          uint32_t Ncorners = 0;
+          double bestIrreg = DBL_MAX;
+          for (size_t pId: patternsToCheck) {
+            /* Check pattern size limit if any */
+            auto it = patternSizeLimits.find(pId);
+            if (it != patternSizeLimits.end() && cav.elements.size() > it->second)
+              continue;
+
+            if (patternNumberOfCorners(pId) != curNcorners) {
+              if (DBG_VERBOSE) {Msg::Debug("------ grow cavity: iter %li, %li quads, not right number of corners (%i)",
+                  iter, cav.elements.size(), curNcorners);}
+              continue;
+            }
+
+            if (pId == PATTERN_QUAD_DIAG35 || pId == PATTERN_QUAD_ALIGNED35 
+                || pId == PATTERN_QUAD_CHORD_UTURN) {
+              /* these patterns have two irregular vertices inside, no need to check
+               * if there are only two irregular vertices in current cavity */
+              if (curCavityNirreg <= 2) continue;
+            }
+
+            /* Get the sides to check if remeshable */
+            if (sides.size() == 0) { /* first time, same for the next pattern checks */
+              bool oks = getCavitySides(Ncorners, sides);
+              if (!oks) {
+                if (DBG_VERBOSE) {Msg::Debug("------ grow cavity: iter %li, %li quads, failed to build cavity boundary",
+                    iter, cav.elements.size());}
+                break;
+              }
+            }
+
+            /* Number of vertices on each side, including extremities */
+            std::vector<size_t> sideSizes(sides.size());
+            for (size_t i = 0; i < sideSizes.size(); ++i) sideSizes[i] = sides[i].size();
+
+            if (pId == PATTERN_QUAD_REGULAR) { 
+              /* two opposite sides must have same number of vertices, no need to check else */
+              if (sideSizes.size() != 4) continue;
+              if (sideSizes[0] != sideSizes[2] || sideSizes[1] != sideSizes[3]) continue;
+            }
+
+            /* Check if remeshable with pattern pId */
+            double irregAfterRemeshing = 0.; /* to ensure irregularity decrease with remeshing */
+            std::pair<size_t,int> par;
+            bool meshable = patchIsRemeshableWithQuadPattern({pId}, Ncorners, sideSizes, par, irregAfterRemeshing);
+
+            if (DBG_VERBOSE) {Msg::Debug("------ grow cavity: iter %li, %li quads, #sides=%li, #irregular=%i, cavityIrregularity=%f | CHECK pId %li: remeshability: %i, irregAfterRemeshing=%e (best was %e)",
+                iter, cav.elements.size(), sides.size(), curCavityNirreg, curCavityIrregularity, pId, meshable, irregAfterRemeshing, bestIrreg);}
+
+            if (!meshable) continue;
+            if (irregAfterRemeshing >= bestIrreg) {
+              if (DBG_VERBOSE) {Msg::Debug("------- discard because irregAfterRemeshing=%f >= bestIrreg=%f",
+                  irregAfterRemeshing, bestIrreg);}
+              continue;
+            }
+            if (irregAfterRemeshing >= curCavityIrregularity) {
+              if (DBG_VERBOSE) {Msg::Debug("------- discard because irregAfterRemeshing=%f >= curCavityIrregularity=%f",
+                  irregAfterRemeshing, curCavityIrregularity);}
+              continue;
+            }
+
+            { /* set last remeshable cavity */
+              if (DBG_VERBOSE) {Msg::Debug("------ grow cavity: iter %li, %li quads, set new remeshable cavity (irregAfterRemeshing=%f)",
+                  iter, cav.elements.size(), irregAfterRemeshing);}
+              bestIrreg = irregAfterRemeshing;
+              lastNbIrregular = curCavityNirreg;
+
+              /* set last remeshable cavity */
+              rcav.irregularityMeasure = irregAfterRemeshing;
+              rcav.nIrregular = curCavityNirreg;
+              rcav.patternNoAndRot = par;
+              /* - convert local indices to gmsh elements */
+              rcav.elements.clear();
+              rcav.elements.reserve(cav.elements.size());
+              for (uint32_t f: cav.elements) {
+                rcav.elements.push_back(quadrangles[f]);
+              }
+              rcav.intVertices.clear();
+              rcav.intVertices.reserve(cav.verticesInt.size());
+              for (uint32_t v: cav.verticesInt) {
+                rcav.intVertices.push_back(vertices[v]);
+              }
+              rcav.sides.resize(sides.size());
+              for (size_t i = 0; i < sides.size(); ++i) {
+                rcav.sides[i].resize(sides[i].size());
+                for (size_t j = 0; j < sides[i].size(); ++j) {
+                  rcav.sides[i][j] = vertices[sides[i][j]];
+                }
+              }
+
+              if (DBG_VERBOSE) {Msg::Debug("------ grow cavity: iter %li, %li quads, SET LAST remeshable cavity (#irreg = %li)",
+                  iter, rcav.elements.size(), curCavityNirreg);}
+            }
+          }
+          if (policy == GROW_MINIMAL && bestIrreg != DBL_MAX && lastNbIrregular > 0) {
+            /* Found a remeshable cavity, return */
+            if (DBG_VERBOSE) {Msg::Debug("------ grow cavity: iter %li, %li quads, policy is MINIMAL growth, RETURN cavity",
+                iter, rcav.elements.size());}
+            return true;
+          }
+        }
+        
+        if (lastNbIrregular > 0) {
+          if (DBG_VERBOSE) {Msg::Debug("------ grow cavity: iter %li, %li quads, MAXIMAL growth, RETURN cavity",
+              iter, rcav.elements.size());}
+        }
+
+        return lastNbIrregular > 0;
+      }
+
+      bool getCavityNeighbors(RemeshableCavity& rcav, std::vector<MElement*>& neighbors) {
+        neighbors.clear();
+        std::vector<uint32_t> bdr;
+        for (auto& side: rcav.sides) for (MVertex* v: side) {
+          auto it = vertexLocal.find(v);
+          if (it != vertexLocal.end()) {
+            bdr.push_back(it->second);
+          }
+        }
+        sort_unique(bdr);
+        for (uint32_t v: bdr) {
+          const uint32_t begin = v2q_first[v];
+          const uint32_t end = v2q_first[v+1];
+          for (uint32_t pos = begin; pos < end; ++pos) {
+            const uint32_t f = v2q_values[pos];
+            MElement* elt = quadrangles[f];
+            neighbors.push_back(elt);
+          }
+        }
+        neighbors = difference(neighbors,rcav.elements);
+        return true;
+      }
   };
 
 
@@ -1251,11 +2101,6 @@ namespace QMT {
   }
 
 
-  enum GrowthPolicy {
-    GROW_MINIMAL,
-    GROW_MAXIMAL,
-  };
-
   std::vector<MQuadrangle*> vector_from_set(const unordered_set<MQuadrangle*> input) {
     std::vector<MQuadrangle*> output(input.size());
     size_t i = 0;
@@ -1399,6 +2244,7 @@ namespace QMT {
 
     size_t lastNbIrregular = 0; // # irregular vertices outside allowed ones
 
+
     bool running = true;
     while (running) {
       iter += 1;
@@ -1438,7 +2284,7 @@ namespace QMT {
         for (size_t i = 0; i < sideSizes.size(); ++i) sideSizes[i] = sides[i].size();
         double irregMeasure;
         std::pair<size_t,int> par;
-        bool meshable = patchIsRemeshableWithQuadPattern(patternsToCheck, Ncorners, sideSizes, par, irregMeasure);
+        bool meshable = patchIsRemeshableWithQuadPattern({pId}, Ncorners, sideSizes, par, irregMeasure);
         if (meshable && irregMeasure < bestIrreg && irregMeasure < cavityIrregularity(cav)) {
           /* set last remeshable cavity */
           bestIrreg = irregMeasure;
@@ -1606,6 +2452,114 @@ namespace QMT {
     return false;
   }
 
+  bool remeshCavity(GFace* gf, RemeshableCavity& cav, QuadqsGFaceContext& ctx,
+      const std::vector<MElement*>& cavityNeighborsForSmoothing) {
+    /* Collect current patch components */
+    bool SHOW_REMESH_CAV = false;
+    static size_t ccount = 0;
+    if (SHOW_REMESH_CAV) {
+      ccount += 1;
+      std::string name = "cav" + std::to_string(ccount);
+      GeoLog::add(cav.elements,name+"_try");
+    }
+
+    /* Call the remeshing code */
+    const double minSICNafer = 0.1;
+    GFaceMeshDiff diff;
+    int st = remeshPatchWithQuadPattern(gf, cav.patternNoAndRot, cav.sides, cav.elements, 
+        cav.intVertices, minSICNafer, ctx.invertNormalsForQuality, ctx.sp, diff);
+    if (st != 0) {
+      if (DBG_VERBOSE) {Msg::Debug("remesh cavity: %li quads, failed to remesh path with quad pattern",
+          cav.elements.size());}
+      return false;
+    }
+
+    /* Check the geometry quality before / after*/
+    double sicnMin, sicnAvg;
+    computeSICN(diff.before.elements, sicnMin, sicnAvg);
+    double sicnMinAfter, sicnAvgAfter;
+    computeSICN(diff.after.elements, sicnMinAfter, sicnAvgAfter);
+    if ((sicnMin > 0.3 && sicnAvg > 0.5) || sicnMinAfter > sicnMin) {
+      constexpr bool verifyTopology = true;
+      size_t neb = diff.before.elements.size();
+      size_t nea = diff.after.elements.size();
+      size_t nvb = diff.before.intVertices.size();
+      size_t nva = diff.after.intVertices.size();
+
+      if (SHOW_REMESH_CAV) {
+        std::string name = "cav" + std::to_string(ccount);
+        GeoLog::add(diff.after.elements,name+"_OK");
+      }
+
+      /* To smooth the interface between remeshed cavity and rest of the mesh,
+       * we collect the boundary (interior to the mesh) and its adjacent quads */
+      vector<MVertex*> toSmooth;
+      vector<MElement*> neighbors = cavityNeighborsForSmoothing;
+      {
+        /* Cavity boundary vertices, inside the surface, not changed by diff.execute() */
+        toSmooth.reserve(diff.after.bdrVertices.front().size());
+        for (MVertex* v: diff.after.bdrVertices.front()) {
+          GFace* gf = dynamic_cast<GFace*>(v->onWhat());
+          if (gf != nullptr) toSmooth.push_back(v);
+        }
+
+        /* New quads inside cavity, touching boundary, still present after execute() */
+        for (MElement* e: diff.after.elements) for (size_t lv = 0; lv < 4; ++lv) {
+          MVertex* v = e->getVertex(lv);
+          auto it = std::find(toSmooth.begin(),toSmooth.end(),v);
+          if (it != toSmooth.end()) {
+            neighbors.push_back(e);
+            break;
+          }
+        }
+        sort_unique(neighbors);
+      }
+
+      /* Modify the GFace mesh ! (and empty the diff content) */
+      bool oke = diff.execute(verifyTopology);
+      if (!oke) {
+        Msg::Error("remesh cavity: diff execute() failed, should not happen");
+        return false;
+      }
+
+      Msg::Debug("----V remeshed a cavity, %li -> %li quads, %li -> %li int. vertices, SICN min: %.3f -> %.3f",
+          neb, nea, nvb, nva, sicnMin, sicnMinAfter);
+
+      /* Boundary vertex smoothing, to get a smooth transition with the
+       * rest of the mesh after cavity remeshing */
+      {
+        GFaceMeshPatch patchBdr;
+        bool okp = patchFromElements(gf, neighbors, patchBdr);
+        if (okp) {
+          Msg::Debug("----P smooth cavity boundary (%li vertices, %li quads)",
+              patchBdr.intVertices.size(),patchBdr.elements.size());
+          GeomOptimStats stats;
+          GeomOptimOptions opt;
+          opt.sp = ctx.sp;
+          opt.outerLoopIterMax = 20.;
+          opt.timeMax = 10.;
+          opt.withBackup = true;
+          opt.invertCADNormals = ctx.invertNormalsForQuality;
+          opt.smartMinThreshold = 0.1;
+          opt.localLocking = true;
+          opt.dxLocalMax = 1.e-4;
+          patchOptimizeGeometryWithKernel(patchBdr, opt, stats);
+        }
+      }
+      Msg::Debug("---->");
+      return true;
+    } else {
+      Msg::Debug("----X reject cavity new geometry, SICN min: %.3f -> %.3f, avg: %.3f -> %.3f",
+          sicnMin, sicnMinAfter, sicnAvg, sicnAvgAfter);
+      if (SHOW_REMESH_CAV) {
+        std::string name = "cav" + std::to_string(ccount);
+        GeoLog::add(diff.after.elements,name+"_REJQ");
+      }
+    }
+
+    return false;
+  }
+
   bool quadMeshIsMinimal(GFace* gf,
       const unordered_map<MVertex*,std::vector<MQuadrangle*> > & adj,
       const std::vector<std::pair<SPoint3,int> >& singularities) {
@@ -1681,6 +2635,66 @@ namespace QMT {
     }
   }
 
+  struct CavityStart {
+    std::vector<MVertex*> vertInit;
+
+    CavityStart(const std::vector<MVertex*>& _vs) {
+      vertInit = _vs;
+      sort_unique(vertInit);
+    }
+
+    bool operator==(CavityStart const& b) const {
+      return b.vertInit == vertInit;
+    }
+  };
+
+  struct CavityStartHash {
+    size_t operator()(const CavityStart& start) const noexcept {
+      size_t seed = 0;
+      for (MVertex* v: start.vertInit) {
+        hash_combine(seed, robin_hood::hash_bytes(&(v), sizeof(MVertex*)));
+
+      }
+      return seed;
+    }
+  };
+
+  struct StartStats {
+    int nTry = 0;
+    int nTryMax = 0;
+  };
+
+  struct CavityRegulator {
+    unordered_map<CavityStart, StartStats, CavityStartHash> starts;
+
+    bool authorized(const CavityStart& start) {
+      auto it = starts.find(start);
+      if (it == starts.end()) {
+        return true;
+      } else {
+        if (it->second.nTry < it->second.nTryMax) return true;
+      }
+      return false;
+    }
+
+    void declare(const CavityStart& start, int nTryMaxIfFirstTime = 3) {
+      auto it = starts.find(start);
+      if (it != starts.end()) {
+        it->second.nTry += 1;
+      } else { /* new start */
+        StartStats st;
+        st.nTry = 1;
+        st.nTryMax = nTryMaxIfFirstTime;
+        starts[start] = st;
+      }
+    }
+
+  };
+
+  unordered_map<MVertex*,size_t> seedNbTries;
+
+  constexpr bool USE_FAST_CAVITY = true;
+
   bool remeshQuadrilateralCavities(GFace* gf, 
       const std::vector<std::pair<SPoint3,int> >& singularities,
       const std::vector<size_t>& patternsToCheck,
@@ -1723,6 +2737,8 @@ namespace QMT {
      * Higher values appear first when doing Q.top() */
     std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> > > Qirreg; 
 
+    CavityFarmer farmer(gf);
+
     const size_t PASS_FROM_CORNERS = 1;
     const size_t PASS_ALONG_GEDGES = 2;
     const size_t PASS_FROM_IRREGULAR = 3;
@@ -1736,6 +2752,8 @@ namespace QMT {
         inProgress = false;
 
         if (updateRequired) {
+          farmer.updateFarmer(gf);
+
           /* Update adjacencies */
           v2q.clear();
           for (MQuadrangle* q: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv) {
@@ -1839,19 +2857,38 @@ namespace QMT {
         if (quadsInit.size() == 0) continue;
 
         /* Grow a convex cavity containg irregular vertices to remove */
-        Cavity cav;
-        std::pair<size_t,int> patternNoAndRot;
-        std::vector<std::vector<MVertex*> > sides;
-        bool okg = growCavity(policy, patternsToCheck, patternSizeLimits, quadsInit,
-            v2q, allowedIrregularVertices, forbiddenIrregularVertices, cav, sides, patternNoAndRot);
-        if (!okg) {
-          if (vIrreg != nullptr) seedNbTries[vIrreg] += 1;
-          continue;
+        bool okr = false;
+        if (USE_FAST_CAVITY) {
+          RemeshableCavity cav;
+          bool okg = farmer.growCavity(quadsInit, policy, patternsToCheck, patternSizeLimits,
+              allowedIrregularVertices, forbiddenIrregularVertices, cav);
+          if (!okg) {
+            if (vIrreg != nullptr) seedNbTries[vIrreg] += 1;
+            continue;
+          }
+
+          Msg::Debug("---- found a topological cavity with %i quads, try geometrical remeshing", cav.elements.size());
+
+          std::vector<MElement*> neighbors;
+          farmer.getCavityNeighbors(cav, neighbors);
+
+          okr = remeshCavity(gf, cav, ctx, neighbors);
+        } else {
+          Cavity cav;
+          std::pair<size_t,int> patternNoAndRot;
+          std::vector<std::vector<MVertex*> > sides;
+          bool okg = growCavity(policy, patternsToCheck, patternSizeLimits, quadsInit,
+              v2q, allowedIrregularVertices, forbiddenIrregularVertices, cav, sides, patternNoAndRot);
+          if (!okg) {
+            if (vIrreg != nullptr) seedNbTries[vIrreg] += 1;
+            continue;
+          }
+
+          Msg::Debug("---- found a topological cavity with %i quads, try geometrical remeshing", cav.elements.size());
+
+          okr = remeshCavity(gf, cav, sides, patternNoAndRot, ctx.invertNormalsForQuality, v2q, ctx);
         }
 
-        Msg::Debug("---- found a topological cavity with %i quads, try geometrical remeshing", cav.elements.size());
-
-        bool okr = remeshCavity(gf, cav, sides, patternNoAndRot, ctx.invertNormalsForQuality, v2q, ctx);
         if (okr) {
           /* GFace mesh has changed, need to update adjacency info (v2q is no longer usable) */
           updateRequired = true;
@@ -1932,12 +2969,16 @@ namespace QMT {
      * Higher values appear first when doing Q.top() */
     std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> > > Q; 
 
+    CavityFarmer farmer(gf);
+
     bool updateRequired = true;
     bool inProgress = true;
     while (inProgress || Q.size() > 0) {
       inProgress = false;
 
       if (updateRequired) {
+        farmer.updateFarmer(gf);
+
         /* Update adjacencies */
         v2q.clear();
         for (MQuadrangle* q: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv) {
@@ -2028,19 +3069,38 @@ namespace QMT {
           quadsInit.size(), vSing->getNum());
 
       /* Grow a convex cavity containg irregular vertices to remove */
-      Cavity cav;
-      std::pair<size_t,int> patternNoAndRot;
-      std::vector<std::vector<MVertex*> > sides;
-      bool okg = growCavity(policy, patternsToCheck, patternSizeLimits, quadsInit,
-          v2q, allowedIrregularVertices, forbiddenIrregularVertices, cav, sides, patternNoAndRot);
-      if (!okg) {
-        seedNbTries[vSing] += 1;
-        continue;
+      bool okr = false;
+      if (USE_FAST_CAVITY) {
+        RemeshableCavity cav;
+        bool okg = farmer.growCavity(quadsInit, policy, patternsToCheck, patternSizeLimits,
+            allowedIrregularVertices, forbiddenIrregularVertices, cav);
+        if (!okg) {
+          if (vSing != nullptr) seedNbTries[vSing] += 1;
+          continue;
+        }
+
+        Msg::Debug("---- found a topological cavity with %i quads, try geometrical remeshing", cav.elements.size());
+
+        std::vector<MElement*> neighbors;
+        farmer.getCavityNeighbors(cav, neighbors);
+
+        okr = remeshCavity(gf, cav, ctx, neighbors);
+      } else {
+        Cavity cav;
+        std::pair<size_t,int> patternNoAndRot;
+        std::vector<std::vector<MVertex*> > sides;
+        bool okg = growCavity(policy, patternsToCheck, patternSizeLimits, quadsInit,
+            v2q, allowedIrregularVertices, forbiddenIrregularVertices, cav, sides, patternNoAndRot);
+        if (!okg) {
+          if (vSing != nullptr) seedNbTries[vSing] += 1;
+          continue;
+        }
+
+        Msg::Debug("---- found a topological cavity with %i quads, try geometrical remeshing", cav.elements.size());
+
+        okr = remeshCavity(gf, cav, sides, patternNoAndRot, ctx.invertNormalsForQuality, v2q, ctx);
       }
 
-      Msg::Debug("---- found a topological cavity with %i quads, try geometrical remeshing", cav.elements.size());
-
-      bool okr = remeshCavity(gf, cav, sides, patternNoAndRot, ctx.invertNormalsForQuality, v2q, ctx);
       if (okr) {
         /* GFace mesh has changed, need to update adjacency info (v2q is no longer usable) */
         updateRequired = true;
@@ -2395,6 +3455,9 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
 }
 
 int meshFaceWithGlobalPattern(GFace* gf, bool invertNormalsForQuality, double minimumQualityRequired) {
+  Msg::Warning("TODOMX: meshFaceWithGlobalPattern disabled");
+  return 0;
+
   GFaceInfo info;
   bool okf = fillGFaceInfo(gf, info);
   if (!okf) return -1;

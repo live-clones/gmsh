@@ -105,6 +105,8 @@ void writeStatistics(const std::unordered_map<std::string,double>& stats, const 
 
 void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elts, const std::string& msg = "");
 
+std::string randomIdentifier();
+
 struct GFaceMeshDiff {
   GFace* gf = nullptr;
   GFaceMeshPatch before;

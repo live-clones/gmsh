@@ -57,6 +57,11 @@ extern const size_t PATTERN_1CORNER;
 extern const size_t PATTERN_DISK;
 
 /**
+ * @return the number of corners in the input pattern
+ */
+size_t patternNumberOfCorners(size_t pId);
+
+/**
  * @brief Initialize the pattern datastructures from raw meshes.
  *        Must be called one-time before using remeshPatchWithQuadPattern()
  *

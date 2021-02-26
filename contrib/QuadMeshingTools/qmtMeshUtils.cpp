@@ -1310,3 +1310,8 @@ void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elt
   }
 }
 
+std::string randomIdentifier() {
+  time_t timev;
+  time(&timev);
+  return std::to_string(timev);
+}
