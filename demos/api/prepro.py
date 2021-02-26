@@ -70,9 +70,15 @@ parameters = """
   },
   {
     "type":"string",
-    "name":"ONELAB Context/Curve Template/2Action on curve",
+    "name":"ONELAB Context/Curve Template/2Action",
     "values":["Some action on ONELAB Context/Curve Template"],
-    "attributes":{"Macro":"Action", "Aspect":"Button"}
+    "attributes":{"Macro":"Action", "Aspect":"MiddleButton"}
+  },
+  {
+    "type":"string",
+    "name":"ONELAB Context/Curve Template/3Other action",
+    "values":["Some other action on ONELAB Context/Curve Template"],
+    "attributes":{"Macro":"Action", "Aspect":"RightReturnButton"}
   },
   {
     "type":"number",

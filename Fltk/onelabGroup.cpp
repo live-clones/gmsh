@@ -1233,13 +1233,19 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
      p.getAttribute("Macro") == "GmshParseString" ||
      p.getAttribute("Macro") == "Action") {
     Fl_Button *but;
-    if(p.getAttribute("Aspect") == "Button") {
+    if(p.getAttribute("Aspect") == "Button" ||
+       p.getAttribute("Aspect") == "LeftButton" ||
+       p.getAttribute("Aspect") == "MiddleButton" ||
+       p.getAttribute("Aspect") == "RightButton") {
       but = new Fl_Button(xx, yy, ww, hh);
       but->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     }
-    else if(p.getAttribute("Aspect") == "ReturnButton") {
+    else if(p.getAttribute("Aspect") == "ReturnButton" ||
+            p.getAttribute("Aspect") == "LeftReturnButton" ||
+            p.getAttribute("Aspect") == "MiddleReturnButton" ||
+            p.getAttribute("Aspect") == "RightReturnButton") {
       but = new Fl_Return_Button(xx, yy, ww, hh);
-      but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+      but->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     }
     else {
       but = new Fl_Button(xx, yy, ww / labelRatio, hh);
