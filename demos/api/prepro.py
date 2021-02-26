@@ -69,6 +69,18 @@ parameters = """
     "step":0.1
   },
   {
+    "type":"string",
+    "name":"ONELAB Context/Curve Template/2Action",
+    "values":["Some action on ONELAB Context/Curve Template"],
+    "attributes":{"Macro":"Action", "Aspect":"MiddleButton"}
+  },
+  {
+    "type":"string",
+    "name":"ONELAB Context/Curve Template/3Other action",
+    "values":["Some other action on ONELAB Context/Curve Template"],
+    "attributes":{"Macro":"Action", "Aspect":"RightReturnButton"}
+  },
+  {
     "type":"number",
     "name":"ONELAB Context/Surface Template/0Material",
     "values":[1],
@@ -167,7 +179,7 @@ def checkForEvent():
         # database was changed: update/define new parameters depending on new
         # state
         gmsh.onelab.setString("ONELAB/Action", [""])
-        # print("parameters = ", gmsh.onelab.get())
+        #print("parameters = ", gmsh.onelab.get())
         print("ONELAB check...")
         gmsh.fltk.update()
     elif action[0] == "reset":
@@ -189,10 +201,9 @@ def checkForEvent():
         if r and len(ent):
             gmsh.fltk.showContextWindow(ent[0][0], ent[0][1])
         gmsh.fltk.setStatusMessage("", True)
-    elif action[0] == "do something else":
-        # user clicked on "Some other action"
+    elif len(action[0]):
         gmsh.onelab.setString("ONELAB/Action", [""])
-        print('some other action...')
+        print('Action to perform = ', action[0])
     return 1
 
 if "-nopopup" not in sys.argv:

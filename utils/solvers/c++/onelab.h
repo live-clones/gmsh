@@ -48,9 +48,10 @@ namespace onelab {
   class parameter {
   private:
     // the name of the parameter, including its '/'-separated path in the
-    // parameter hierarchy. Parameters or subpaths can start with numbers to
-    // force their relative ordering (such numbers are automatically hidden in
-    // the interface). All strings in onelab are supposed to be UTF8-encoded.
+    // parameter hierarchy. Subpaths can start with white space, numbers or
+    // braces (in that order) to force their relative ordering; getShortName()
+    // can be used to remove these prefixes automatically. All strings in ONELAB
+    // are supposed to be UTF8-encoded.
     std::string _name;
     // the parameter label: if provided it serves as a better way to display the
     // parameter in the interface
@@ -861,7 +862,7 @@ namespace onelab {
   };
 
   // The parameter space, i.e., the set of parameters stored and handled by the
-  // onelab server.
+  // ONELAB server.
   class parameterSpace {
   private:
     std::set<number *, parameterLessThan> _numbers;
@@ -1165,10 +1166,10 @@ namespace onelab {
       picojson::value v;
       std::string err = picojson::parse(v, json);
       if(err.size()) return false;
-      if(v.is<picojson::object>()){ // onelab database or single parameter
+      if(v.is<picojson::object>()){ // full database or single parameter
         const picojson::value::object &obj = v.get<picojson::object>();
         auto it = obj.find("onelab");
-        if(it != obj.end()){ // onelab database
+        if(it != obj.end()){ // full database
           if(!it->second.is<picojson::object>()) return false;
           const picojson::value::object &db = it->second.get<picojson::object>();
           for(auto j = db.begin(); j != db.end(); ++j) {
@@ -1231,7 +1232,7 @@ namespace onelab {
 #endif
   };
 
-  // The onelab client: a class that communicates with the onelab server. Each
+  // The ONELAB client: a class that communicates with the ONELAB server. Each
   // client should be derived from this one. A client can be understood as "one
   // simulation step in a complex computation".
   class client {
@@ -1326,8 +1327,8 @@ namespace onelab {
     }
   };
 
-  // The onelab server: a singleton that stores the parameter space and
-  // interacts with onelab clients.
+  // The ONELAB server: a singleton that stores the parameter space and
+  // interacts with ONELAB clients.
   class server {
   private:
     // the unique server (singleton behaviour due to the "static" specifier)

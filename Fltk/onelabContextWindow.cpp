@@ -35,6 +35,35 @@ static std::string getDimName(int dim)
   return "";
 }
 
+static void replaceTemplateString(onelab::number &n,
+                                  const std::string &in,
+                                  const std::string &out)
+{
+  // for number parameter replace the template only in attributes
+  auto attr = n.getAttributes();
+  for(auto &a : attr) { ReplaceSubStringInPlace(in, out, a.second); }
+  n.setAttributes(attr);
+}
+
+static void replaceTemplateString(onelab::string &n,
+                                  const std::string &in,
+                                  const std::string &out)
+{
+  // for string parameters replace the template in the values, the attributes
+  // and the choices
+  auto vals = n.getValues();
+  for(auto &v : vals) { ReplaceSubStringInPlace(in, out, v); }
+  n.setValues(vals);
+
+  auto choices = n.getChoices();
+  for(auto &c : choices) { ReplaceSubStringInPlace(in, out, c); }
+  n.setChoices(choices);
+
+  auto attr = n.getAttributes();
+  for(auto &a : attr) { ReplaceSubStringInPlace(in, out, a.second); }
+  n.setAttributes(attr);
+}
+
 template <typename T>
 void onelabContextWindow::_addOnelabWidget(
   T &p, const std::string &pattern,
@@ -56,9 +85,10 @@ void onelabContextWindow::_addOnelabWidget(
   if(pn.empty()) {
     n = p;
     n.setName(name);
-    auto attr = n.getAttributes();
-    for(auto &a : attr) { ReplaceSubStringInPlace(in, out, a.second); }
-    n.setAttributes(attr);
+    // replace the template string in the parameter so that e.g. the attributes
+    // can be used in entity-dependent server actions, the value can be used in
+    // a user action, etc.
+    replaceTemplateString(n, in, out);
     onelab::server::instance()->set(n);
   }
   else
@@ -69,9 +99,24 @@ void onelabContextWindow::_addOnelabWidget(
     Fl_Color c;
     if(getParameterColor(n.getAttribute("Highlight"), c)) highlight = true;
 
-    // TODO: detect if "Aspect" is "ReturnButton" and put it to the right + add
-    // some padding
-    Fl_Widget *w = addParameterWidget(n, WB, 1, _width / 2, BH, 1., n.getName(),
+    int xx = 0, yy = 0, ww = _width / 2;
+    std::string aspect = n.getAttribute("Aspect");
+    if(aspect.find("Left") != std::string::npos) {
+      xx = 1;
+      yy = 1;
+      ww = _width / 3;
+    }
+    if(aspect.find("Middle") != std::string::npos) {
+      xx = 2;
+      yy = 1;
+      ww = _width / 3;
+    }
+    if(aspect.find("Right") != std::string::npos) {
+      xx = 3;
+      yy = 1;
+      ww = _width / 3;
+    }
+    Fl_Widget *w = addParameterWidget(n, xx, yy, ww, BH, 1., n.getName(),
                                       highlight, c, win->color(), _toFree);
     w->copy_label(n.getShortName().c_str());
     std::string help = n.getHelp();
@@ -209,22 +254,44 @@ void onelabContextWindow::rebuild(bool deleteWidgets)
   // if the corresponding parameter exists; if not, create it and add it to the
   // server; then create the widget
   std::string pat = "ONELAB Context/" + getDimName(_dim) + " Template/";
-  std::set<std::pair<std::string, Fl_Widget *> > widgets;
-  for(auto &p : pn) _addOnelabWidget(p, pat, widgets);
-  for(auto &p : ps) _addOnelabWidget(p, pat, widgets);
+  std::set<std::pair<std::string, Fl_Widget *> > wset;
+  for(auto &p : pn) _addOnelabWidget(p, pat, wset);
+  for(auto &p : ps) _addOnelabWidget(p, pat, wset);
+  std::vector<std::pair<std::string, Fl_Widget *> > wvec(wset.begin(),
+                                                         wset.end());
   int h = _height;
   int w = win->w();
-  if(widgets.empty()) {
+  if(wvec.empty()) {
     Fl_Box *b = new Fl_Box(WB, h, w - 2 * WB, BH, "No parameters");
     _onelabWidgets.push_back(b);
     win->add(b);
     h += BH;
   }
   else {
-    for(auto &w : widgets) {
-      w.second->position(w.second->x(), h);
-      win->add(w.second);
-      h += BH;
+    for(std::size_t i = 0; i < wvec.size(); i++) {
+      // x, y of widgets used to decide how to position them
+      int ww = wvec[i].second->w();
+      int xx =
+        (wvec[i].second->x() == 3) ? _width - ww - WB : // right
+        (wvec[i].second->x() == 2) ? _width - 2 * ww - 2 * WB : // middle
+        (wvec[i].second->x() == 1) ? _width - 3 * ww - 3 * WB : // left
+        WB; // left
+      int yy =
+        (wvec[i].second->y() == 1) ? h + 2 * WB : // vertical padding
+        h; // none
+      if((i < wvec.size() - 1) && (wvec[i].second->x() > 0) &&
+         (wvec[i + 1].second->x() == (wvec[i].second->x() + 1))) {
+        // next button to the right, don't increment horizontal position
+      }
+      else if(wvec[i].second->y() == 1) {
+        // padding
+        h += wvec[i].second->h() + 2 * WB;
+      }
+      else { // default
+        h += wvec[i].second->h();
+      }
+      wvec[i].second->position(xx, yy);
+      win->add(wvec[i].second);
     }
   }
   h += WB;
