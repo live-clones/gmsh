@@ -16,7 +16,11 @@
 void MElementBB(void *a, double *min, double *max)
 {
   MElement *e = static_cast<MElement *>(a);
-  if(e->getPolynomialOrder() == 1) {
+
+  // TODO: serendip elements (at least prisms) are not fully supported yet in
+  // bezierBasis; use the (potentially too-small) node-based bounding box for
+  // now
+  if(e->getPolynomialOrder() == 1 || e->getIsOnlySerendipity()) {
     MVertex *v = e->getVertex(0);
     min[0] = max[0] = v->x();
     min[1] = max[1] = v->y();
