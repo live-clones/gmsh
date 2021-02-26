@@ -18,9 +18,9 @@ The mesh size is mainly controlled by the -clscale option.
 2. compute cross field
 3. compute size map 
 4. save as background mesh, background field, delete mesh
-5. apply curve quantization constraints (including transfinite) (not re-implemented yet)
+5. apply curve quantization constraints (using automatic transfinite for the moment)
 6. generate curve meshes
-7. generate transfinite quad meshes (not re-implemented yet)
+7. generate transfinite quad meshes
 8. generate unstructured quad-dominant meshes with algo pack
 9. midpoint subdivision
 10. mesh simple CAD faces with patterns
@@ -43,6 +43,7 @@ The mesh size is mainly controlled by the -clscale option.
 - Disk quadrangulation remeshing, qmtDiskQuadrangulationRemeshing.h/cpp
 - Pattern-based cavity remeshing, qmtQuadCavityRemeshing.h/cpp
 - Various geometry smoothers (global UV Laplacian, Winslow/Angled-based local kernel, DMO UV kernel), in qmtMeshGeometryOptimization.h/cpp
+- Curve quantization simple CAD faces to get regular meshes, in progress, not usable yet, in qmtCurveQuantization.h/cpp
 - GeoLog: convenient wrapper around gmsh views for debugging, geolog.h/cpp
 
 
@@ -60,15 +61,15 @@ The mesh size is mainly controlled by the -clscale option.
 - Add implicit conversion from SPoint3/SVector3 to std::array<double,3>
 - Many Msg::Warning switch to Msg::Debug in CAD/Post projections
 - Special case for quadqs in bbox sizing in Post/OctreePost.cpp, should find something better
+- Add an option quadqsSizemapMethod in global context CTX::instance()->mesh
+- Add a curve transfinite method (ge->meshAttributes.typeTransfinite = 4) to get vertex positioning via size map
 
 # Todo
 
-- Support for user-prescribed size map
+- Support for user-prescribed size map (requires quality metric taking size map into account)
 - Add options in global context for better control
-- Ensure robustness (quality > 0) of each step, as in quadMeshingTools branch
-- Add raw quantization / transfinite on simple faces, as in quadMeshingTools branch
-- Faster cavity remeshing implementation, as in quadMeshingTools branch
 - Add MUMPS solver (with analysis / factorize)
-- Split raw string literal for MSVC
-
+- Better cavity initialization strategies (e.g. pathes between irregular vertices)
+- Better CAD quantization (support for T-junctions, rings, etc)
+- Filter anisotropy after cavity remeshing to avoid some distorted patches
 

@@ -1279,7 +1279,17 @@ int computeCrossFieldConformalScaling(
     _lsys->addToRightHandSide(num2, RHS2 * V);
     _lsys->addToRightHandSide(num3, RHS3 * V);
   }
-  _lsys->systemSolve();
+
+  int status = _lsys->systemSolve();
+
+  if (status == -1) { /* failed to solve */
+    Msg::Warning("conformal scaling, failed to solve linear system, use uniform scaling");
+    for (MVertex* v: vs) {
+      scaling[v] = 1.;
+    }
+    delete _lsys;
+    return 0;
+  }
 
   /* Extract solution */
   double sMin =  DBL_MAX;

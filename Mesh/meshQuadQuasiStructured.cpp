@@ -355,10 +355,6 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     }
   }
 
-  /* Todo:
-   * - check if background mesh exists
-   * - check if background guiding field exists */
-
   if (overwriteGModelMesh) {
     Msg::Debug("delete GModel mesh");
     std::for_each(gm->firstRegion(), gm->lastRegion(), deMeshGRegion());
@@ -630,7 +626,6 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
   }
 
   /* One-way propagation of values */
-  // Msg::Warning("TODO: enable one way prop");
   const double gradientMax = 1.2; /* this param should be a global gmsh option */
   int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
   if (sop != 0) {
@@ -666,9 +661,6 @@ int BuildBackgroundMeshAndGuidingField(GModel* gm, bool overwriteGModelMesh, boo
     Msg::Warning("failed to build background guiding field");
     return -1;
   }
-
-  CTX::instance()->mesh.lcFactor = 1.; // TODO TEMP TEST
-
 
   return 0;
 }
@@ -1263,8 +1255,6 @@ int improveInteriorValences(
 
   std::vector<MVertex*> smoothingPool; /* for smoothing after topological changes */
   smoothingPool.reserve(gf->mesh_vertices.size());
-
-  // TODO IMPORTANT: add strict decrease of irregularity to avoid infinite loops
 
   /* Priority queue */
   std::priority_queue<std::pair<double,MVertex*>, std::vector<std::pair<double,MVertex*> > > Q; 

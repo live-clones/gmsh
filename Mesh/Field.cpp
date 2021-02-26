@@ -31,10 +31,6 @@
 #include "fullMatrix.h"
 #include "nanoflann.hpp"
 
-#if defined(HAVE_QUADMESHINGTOOLS)
-#include "geolog.h" // TODO: only for debug, remove this
-#endif
-
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "OctreePost.h"
@@ -1573,10 +1569,6 @@ public:
       if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, 0.05)){
         if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .1)){
           Msg::Debug("Field sampling: no vector element found containing point (%g,%g,%g) (for norm)", x, y, z);
-#if defined(HAVE_QUADMESHINGTOOLS)
-          std::array<double,3> pt = {x,y,z};
-          GeoLog::add({pt},0.,"octree_no_vector_elt_found_sc");
-#endif
         } else {
           l = sqrt (values[0]*values[0]+values[1]*values[1]+values[2]*values[2]);
         }
@@ -1611,13 +1603,7 @@ public:
       double values[3];
       if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .05)){
         if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .1)){
-          // Disable this Debug output because too verbose
-          // TODO RE RENABLE
-          // Msg::Debug("Field sampling: no vector element found containing point (%g,%g,%g)", x, y, z);
-#if defined(HAVE_QUADMESHINGTOOLS)
-          std::array<double,3> pt = {x,y,z};
-          GeoLog::add({pt},0.,"octree_no_vector_elt_found_vc");
-#endif
+          Msg::Debug("Field sampling: no vector element found containing point (%g,%g,%g)", x, y, z);
         } else {
           v = SVector3(values[0],values[1],values[2]);
         }
