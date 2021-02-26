@@ -14,19 +14,25 @@
 #include "rtree.h"
 
 #if defined(HAVE_P4EST)
-// P4EST INCLUDES
 #include <p4est_to_p8est.h>
 #include <p8est_extended.h>
 #endif
 
 #if defined(HAVE_HXT)
-// HXT INCLUDES
 extern "C" {
-  // #include "hxt_tools.h"
   #include "hxt_mesh.h"
   #include "hxt_bbox.h"
 }
 #endif
+
+typedef struct meshData{
+#ifdef HAVE_HXT
+  HXTMesh                      *m;
+#endif
+  std::map<MVertex*,uint32_t>  *v2c;
+  std::vector<MVertex*>        *c2v;
+  RTree<uint64_t,double,3>     *rtree;
+} meshData;
 
 // Information needed to create and compute a forest of octrees
 typedef struct ForestOptions{
@@ -40,26 +46,28 @@ typedef struct ForestOptions{
   int           nodePerGap;
   double       *bbox;
   double      (*sizeFunction)(double, double, double, double);
-  std::vector<double>       *featureSizeAtVertices;
-  RTree<uint64_t,double,3>  *triRTree;
-  RTree<uint64_t,double,3>  *tetRTree;
+  RTree<uint64_t,double,3>  *bndRTree;
+  RTree<uint64_t,double,3>  *domRTree;
 #ifdef HAVE_HXT
   HXTMesh                   *mesh2D;
   HXTMesh                   *mesh3D;
   // Reformuler ça sous forme d'une struct avec un HxtMesh, un c2v et un v2c pour le domaine et pour sa surface
-  std::vector<MVertex*>     *c2v3D;
-  std::map<MVertex*, uint32_t> *v2cBnd;
+  std::vector<MVertex*>        *c2vDom;
+  std::map<MVertex*, uint32_t> *v2cDom;
   std::vector<MVertex*>        *c2vBnd;
+  std::map<MVertex*, uint32_t> *v2cBnd;
 #endif
   double                    *nodalCurvature;
+  std::vector<double>       *featureSizeAtVertices;
   double                    *nodeNormals;
   double                    *directions;
   double                    *directionsU;
   double                    *directionsV;
   double                    *directionsW;
-  FILE* file1;
-  FILE* file2;
-  FILE* file3;
+
+  // meshData                  *meshDom;
+  // meshData                  *meshBnd;
+
 } ForestOptions;
 
 // The structure containing the size field information (forest)
@@ -75,18 +83,12 @@ typedef struct size_data{
   double size[3];       // Isotropic mesh size or anisotropic sizes hc1, hc2 and hn
   double dir[9];        // Principal directions (aniso only)
   SMetric3 M;           // Metric tensor
-#ifdef HAVE_P4EST
   // Size gradient : ds[0->2] is the gradient of the isotropic size if isotropic size field
   // If anisotropic, ds[0->2] is grad(hc1), ds[3->5] is grad(hc2) and ds[6->8] is grad(hn)
   // hc1 and hc2 are the curvature sizes and hn is the normal (feature) size.
   double ds[9];
-#endif
   double h;             // Length of an octant's edge
-  
-  // Données pour l'interpolation des directions de courbure
-  bool hasIntersection;
-  SVector3 t1, t2, n;
-
+  bool hasIntersection; // Has an intersection with the boundary mesh
 } size_data_t;
 
 // A node to search in the tree

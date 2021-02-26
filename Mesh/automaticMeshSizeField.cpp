@@ -43,7 +43,7 @@ extern "C" {
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
 // Mark all the points which are in mesh->(points | lines) but not in triangles
 // Used to get the empty mesh of 2D boundary mesh
-static void markMeshPoints(HXTMesh* mesh){
+static void markMeshPoints(HXTMesh* mesh, bool markTriangles){
   for(uint32_t i=0; i<mesh->vertices.num; i++)
     mesh->vertices.coord[4*i+3] = 0.0;
   for(uint64_t i=0; i<mesh->lines.num; i++)
@@ -51,6 +51,114 @@ static void markMeshPoints(HXTMesh* mesh){
       mesh->vertices.coord[4* mesh->lines.node[2*i+j] + 3] = 1.0;
   for(uint64_t i=0; i<mesh->points.num; i++)
     mesh->vertices.coord[4* mesh->points.node[i] + 3] = 1.0;
+  if(markTriangles){
+    for(uint64_t i=0; i<mesh->triangles.num; i++)
+      for(int j=0; j<3; j++)
+        mesh->vertices.coord[4* mesh->triangles.node[3*i+j] + 3] = 1.0;
+  }
+}
+
+static HXTStatus emptyMesh2D(HXTMesh *mesh, bool keepTriangles, const char* filename){
+  if(!keepTriangles){
+    // Remove triangles
+    HXT_CHECK(hxtAlignedFree(&mesh->triangles.node));
+    HXT_CHECK(hxtAlignedFree(&mesh->triangles.color));
+    mesh->triangles.num = mesh->triangles.size = 0;
+  }
+  // Add a single other point in (0,0,1)
+  uint64_t n = mesh->vertices.num;
+  Msg::Info("n = %d", n);
+  if(mesh->vertices.size == n) {
+    HXT_CHECK( hxtAlignedRealloc(&mesh->vertices.coord, 4*sizeof(double) * (n + 1)) );
+    mesh->vertices.size++;
+  }
+  mesh->vertices.coord[4 * n + 0] = 0;
+  mesh->vertices.coord[4 * n + 1] = 0;
+  mesh->vertices.coord[4 * n + 2] = 1;
+  mesh->vertices.num++;
+
+  // Compute the Delaunay of only the point in mesh->points, mesh->lines and the one we added
+  HXTNodeInfo* nodeInfo;
+  HXT_CHECK( hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo)*mesh->vertices.num) );
+  markMeshPoints(mesh, keepTriangles);
+  uint32_t numToInsert = 0;
+  for (uint32_t i=0; i<mesh->vertices.num; i++) {
+    if(mesh->vertices.coord[4 * i + 3]==1.0 || i==n) {
+      nodeInfo[numToInsert].node = i;
+      nodeInfo[numToInsert].status = HXT_STATUS_TRYAGAIN;
+      numToInsert++;
+    }
+  }
+  HXT_INFO("Creating an empty mesh with %u vertices", numToInsert);
+  HXTDelaunayOptions delaunayOptions = {NULL, NULL, 0, 0, 0, 0, 0, 1, 0};
+  HXT_CHECK( hxtDelaunaySteadyVertices(mesh, &delaunayOptions, nodeInfo, numToInsert) );
+  HXT_INFO("Empty mesh finished\n");
+  HXT_CHECK( hxtAlignedFree(&nodeInfo) );
+
+  // Find the lines that are missing
+  uint64_t nbMissingLines = 0;
+  uint64_t* lines2TetMap;
+  HXT_CHECK( hxtAlignedMalloc(&lines2TetMap, mesh->lines.num*sizeof(uint64_t)) );
+  HXT_CHECK( hxtGetLines2TetMap(mesh, lines2TetMap, &nbMissingLines) );
+
+  // Recover the missing lines
+  if (nbMissingLines!=0){
+    HXT_INFO("Recovering %" HXTu64 " missing edge(s)", nbMissingLines);
+
+    uint32_t oldNumVertices = mesh->vertices.num;
+    HXT_CHECK( hxt_boundary_recovery(mesh) );
+
+    if(oldNumVertices < mesh->vertices.num) {
+      HXT_INFO("Steiner(s) point(s) were inserted");
+    }
+
+    HXT_CHECK( hxtGetLines2TetMap(mesh, lines2TetMap, &nbMissingLines) );
+
+    if(nbMissingLines!=0)
+      return HXT_ERROR_MSG( HXT_STATUS_ERROR, "%" HXTu64 " constrained edge%s still missing (after recovery step).", nbMissingLines, (nbMissingLines>1)?"s are":" is" );
+
+    HXT_INFO("Constrained lines and triangles recovered\n");
+  }
+
+  // HXT_INFO("Writing constrained 3D mesh");
+  // HXT_CHECK(hxtMeshWriteGmsh(mesh, "out3D_constrained.msh"));
+
+  // There will be exactly one triangle per non-ghost tetrahedron
+  HXT_CHECK( hxtRemoveGhosts(mesh) );
+  if(!keepTriangles){
+    HXT_CHECK(hxtAlignedMalloc(&mesh->triangles.node, 3 * sizeof(uint32_t) * mesh->tetrahedra.num) );
+
+    for(uint64_t i=0; i<mesh->tetrahedra.num; i++) {
+      for(int j=0; j<4; j++) {
+        uint32_t n0 = mesh->tetrahedra.node[4 * i + getNode0FromFacet(j)];
+        uint32_t n1 = mesh->tetrahedra.node[4 * i + getNode1FromFacet(j)];
+        uint32_t n2 = mesh->tetrahedra.node[4 * i + getNode2FromFacet(j)];
+        if(n0 != n && n1 != n && n2 != n) {
+          // add the triangle
+          mesh->triangles.node[3 * mesh->triangles.num + 0] = n0;
+          mesh->triangles.node[3 * mesh->triangles.num + 1] = n1;
+          mesh->triangles.node[3 * mesh->triangles.num + 2] = n2;
+          mesh->triangles.num++;
+          break;
+        } 
+      }
+    }
+
+    HXT_ASSERT_MSG(mesh->triangles.num == mesh->tetrahedra.num, "My math is broken... or is it the mesh ?");
+  }
+
+  HXT_CHECK(hxtMeshWriteGmsh(mesh, filename));
+
+
+  // HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.color) );
+  // HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.flag) );
+  // HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.node) );
+  // HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.neigh) );
+  // mesh->tetrahedra.num = 0;
+  // mesh->tetrahedra.size = 0;
+
+
+  return HXT_STATUS_OK;
 }
 
 static inline void norme2(double v[3], double* norme2){
@@ -161,11 +269,7 @@ static HXTStatus getAllEdgesOfAllFaces(std::vector<GFace *> &faces, HXTMesh *m, 
   return HXT_STATUS_OK;
 }
 
-HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces,
-                   std::vector<GRegion *> &regions, HXTMesh *m,
-                   std::map<MVertex *, uint32_t> &v2c,
-                   std::vector<MVertex *> &c2v)
-{
+HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, std::vector<GRegion *> &regions, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v){
   std::vector<GEdge *> edges;
   HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
   std::set<MVertex *> all;
@@ -293,10 +397,7 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces,
   return HXT_STATUS_OK;
 }
 
-HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m,
-       std::map<MVertex *, uint32_t> &v2c,
-       std::vector<MVertex *> &c2v)
-{
+HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v){
   std::vector<GEdge *> edges;
   HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
   std::set<MVertex *> all;
@@ -504,57 +605,57 @@ HXTStatus Gmsh2HxtLocal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVerte
   return HXT_STATUS_OK;
 }
 
-HXTStatus Gmsh2HxtGlobal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v){
-  std::vector<GEdge *> edges;
-  HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
-  std::set<MVertex *> all;
+// HXTStatus Gmsh2HxtGlobal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v){
+//   std::vector<GEdge *> edges;
+//   HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
+//   std::set<MVertex *> all;
 
-  uint64_t cumsum = 0;
-  uint64_t cumsumNoEdges = 0;
-  for(size_t j = 0; j < edges.size(); j++) {
-    GEdge *ge = edges[j];
-    cumsum += ge->lines.size();
-    for(size_t i = 0; i < ge->lines.size(); i++) {
-      all.insert(ge->lines[i]->getVertex(0));
-      all.insert(ge->lines[i]->getVertex(1));
-    }
-  }
+//   uint64_t cumsum = 0;
+//   uint64_t cumsumNoEdges = 0;
+//   for(size_t j = 0; j < edges.size(); j++) {
+//     GEdge *ge = edges[j];
+//     cumsum += ge->lines.size();
+//     for(size_t i = 0; i < ge->lines.size(); i++) {
+//       all.insert(ge->lines[i]->getVertex(0));
+//       all.insert(ge->lines[i]->getVertex(1));
+//     }
+//   }
 
-  for(size_t j = 0; j < faces.size(); j++) {
-    GFace *gf = faces[j];
-    cumsum += gf->triangles.size();
-    cumsumNoEdges += gf->triangles.size();
-    for(size_t i = 0; i < gf->triangles.size(); i++) {
-      all.insert(gf->triangles[i]->getVertex(0));
-      all.insert(gf->triangles[i]->getVertex(1));
-      all.insert(gf->triangles[i]->getVertex(2));
-    }
-  }
+//   for(size_t j = 0; j < faces.size(); j++) {
+//     GFace *gf = faces[j];
+//     cumsum += gf->triangles.size();
+//     cumsumNoEdges += gf->triangles.size();
+//     for(size_t i = 0; i < gf->triangles.size(); i++) {
+//       all.insert(gf->triangles[i]->getVertex(0));
+//       all.insert(gf->triangles[i]->getVertex(1));
+//       all.insert(gf->triangles[i]->getVertex(2));
+//     }
+//   }
 
-  c2v.resize(cumsum);
-  all.clear();
+//   c2v.resize(cumsum);
+//   all.clear();
 
-  cumsum = 0;
-  size_t count_c2v2 = 0;
-  for(size_t j = 0; j < faces.size(); ++j){
-    // all propre à la face
-    GFace *gf = faces[j];
-    cumsum += gf->triangles.size();
-    for(size_t i = 0; i < gf->triangles.size(); i++) {
-      all.insert(gf->triangles[i]->getVertex(0));
-      all.insert(gf->triangles[i]->getVertex(1));
-      all.insert(gf->triangles[i]->getVertex(2));
-    }
-    size_t count = 0;
-    for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
-      v2c[*it] = count++;
-      c2v[count_c2v2++] = *it;
-    }
-    all.clear();
-  }
+//   cumsum = 0;
+//   size_t count_c2v2 = 0;
+//   for(size_t j = 0; j < faces.size(); ++j){
+//     // all propre à la face
+//     GFace *gf = faces[j];
+//     cumsum += gf->triangles.size();
+//     for(size_t i = 0; i < gf->triangles.size(); i++) {
+//       all.insert(gf->triangles[i]->getVertex(0));
+//       all.insert(gf->triangles[i]->getVertex(1));
+//       all.insert(gf->triangles[i]->getVertex(2));
+//     }
+//     size_t count = 0;
+//     for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
+//       v2c[*it] = count++;
+//       c2v[count_c2v2++] = *it;
+//     }
+//     all.clear();
+//   }
 
-  return HXT_STATUS_OK;
-}
+//   return HXT_STATUS_OK;
+// }
 
 /* ======================================================================================
    Functions from hxt_octree
@@ -830,7 +931,7 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
   getCellBBox(p4est, which_tree, q, min, max);
 
   std::vector<uint64_t> candidates;
-  forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
+  forestOptions->bndRTree->Search(min, max, rtreeCallback, &candidates);
 
   if(!candidates.empty()){
     double kmax = -1.e22; // To get min curvature size
@@ -884,7 +985,7 @@ static int coarsenCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4est_quad
     getCellBBox(p4est, which_tree, children[n], min, max);
 
     std::vector<uint64_t> candidates;
-    forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
+    forestOptions->bndRTree->Search(min, max, rtreeCallback, &candidates);
 
     // Cells are not merged if any one of them touches the surface mesh.
     if(!candidates.empty()) return 0;
@@ -911,7 +1012,7 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
   getCellBBox(p4est, which_tree, q, min, max);
 
   std::vector<uint64_t> candidates;
-  forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
+  forestOptions->bndRTree->Search(min, max, rtreeCallback, &candidates);
 
   if(!candidates.empty()){
     double k1, k2, k1max = -1.0e22, k2max = -1.0e22, kmax = -1.0e22, hf = DBL_MAX;
@@ -1582,7 +1683,7 @@ static void assignDirectionsCallback(p4est_iter_volume_info_t * info, void *user
     getCellCenter(p4est, which_tree, q, center);
     getCellBBox(p4est, which_tree, q, min, max);
     std::vector<uint64_t> candidates;
-    forestOptions->tetRTree->Search(min, max, rtreeCallback, &candidates);
+    forestOptions->domRTree->Search(min, max, rtreeCallback, &candidates);
 
     if(!candidates.empty()){
       uint32_t closestNodeToCenter = -1;
@@ -1597,10 +1698,10 @@ static void assignDirectionsCallback(p4est_iter_volume_info_t * info, void *user
         uint32_t n2 = mesh3D->tetrahedra.node[4*(*tet)+2];
         uint32_t n3 = mesh3D->tetrahedra.node[4*(*tet)+3];
 
-        MTetrahedron tetGMSH((*forestOptions->c2v3D)[n0],
-                             (*forestOptions->c2v3D)[n1],
-                             (*forestOptions->c2v3D)[n2],
-                             (*forestOptions->c2v3D)[n3]);
+        MTetrahedron tetGMSH((*forestOptions->c2vDom)[n0],
+                             (*forestOptions->c2vDom)[n1],
+                             (*forestOptions->c2vDom)[n2],
+                             (*forestOptions->c2vDom)[n3]);
 
         double uvw[3];
         tetGMSH.xyz2uvw(center, uvw);
@@ -1698,181 +1799,239 @@ static void assignDirectionsCallback(p4est_iter_volume_info_t * info, void *user
 HXTStatus forestSmoothDirections(Forest *forest){
   
   ForestOptions *forestOptions = forest->forestOptions;
-  HXTMesh *mesh3D = forest->forestOptions->mesh3D;
-  double *frames;//c'est un tableau qui contient les 9 composantes representant les frames en chaque noeuds du maillage.
+  HXTMesh *meshDom = forest->forestOptions->mesh3D;
+  HXTMesh *meshBnd = forest->forestOptions->mesh2D;
+  double *frames; // C'est un tableau qui contient les 9 composantes representant les frames en chaque noeuds du maillage.
   //--structure: frames[9*iNode + k], k compris entre 0 et 8 inclus
-  HXT_CHECK(hxtMalloc(&frames, mesh3D->vertices.num*sizeof(double)*9));
+  HXT_CHECK(hxtMalloc(&frames, meshDom->vertices.num*sizeof(double)*9));
+  for (uint64_t i = 0; i < meshDom->vertices.num*9; ++i)
+    frames[i] = 0.; 
 
   double *directions = forestOptions->directions;
 
   int *isBoundaryCondition;
-  HXT_CHECK(hxtMalloc(&isBoundaryCondition, mesh3D->vertices.num*sizeof(int)));
-  for (uint64_t i = 0; i < mesh3D->vertices.num; ++i)
-    isBoundaryCondition[i]=0;
-
-  for (uint64_t i = 0; i < mesh3D->vertices.num*9; ++i){
-    frames[i] = 0.;
-  }
 
   FILE* myfile = fopen("justTheDirections.pos","w");
   fprintf(myfile,"View \"justTheDirections\"{\n");
 
-  for(size_t i = 0; i < mesh3D->triangles.num; ++i){
-  // for(size_t iNbc = 0; iNbc < forest->forestOptions->mesh->vertices.num; ++iNbc){
-    for(size_t jj = 0; jj < 3; ++jj){
-      uint32_t iNbc = mesh3D->triangles.node[(size_t) 3*i+jj];
-      double *v1 = forestOptions->nodalCurvature + 6*iNbc;
-      double *v2 = forestOptions->nodalCurvature + 6*iNbc + 3;
-      double *n  = forestOptions->nodeNormals    + 3*iNbc;
+  if(forestOptions->dim == 3){
 
-      double *x = forest->forestOptions->mesh3D->vertices.coord + 4*iNbc;
+    HXT_CHECK(hxtMalloc(&isBoundaryCondition, meshDom->vertices.num*sizeof(int)));
+    for (uint64_t i = 0; i < meshDom->vertices.num; ++i)
+      isBoundaryCondition[i]=0;
 
-      double tol = 1e-6;
-      SVector3 V1(v1[0],v1[1],v1[2]); if(V1.norm() >= tol){ V1.normalize(); }; 
-      SVector3 V2(v2[0],v2[1],v2[2]); if(V2.norm() >= tol){ V2.normalize(); };
-      SVector3  N( n[0], n[1], n[2]); if( N.norm() >= tol){  N.normalize(); };
+    for(size_t i = 0; i < meshDom->triangles.num; ++i){
+      for(size_t jj = 0; jj < 3; ++jj){
+        uint32_t iNbc = meshDom->triangles.node[(size_t) 3*i+jj];
+        double *v1 = forestOptions->nodalCurvature + 6*iNbc;
+        double *v2 = forestOptions->nodalCurvature + 6*iNbc + 3;
+        double *n  = forestOptions->nodeNormals    + 3*iNbc;
 
-      double dirBC[9];
-      // if(V1.norm() >= V2.norm()){
+        double *x = meshDom->vertices.coord + 4*iNbc;
+
+        double tol = 1e-6;
+        SVector3 V1(v1[0],v1[1],v1[2]); if(V1.norm() >= tol){ V1.normalize(); }; 
+        SVector3 V2(v2[0],v2[1],v2[2]); if(V2.norm() >= tol){ V2.normalize(); };
+        SVector3  N( n[0], n[1], n[2]); if( N.norm() >= tol){  N.normalize(); };
+
+        double dirBC[9];
         dirBC[0] = V1[0]; dirBC[1] = V1[1]; dirBC[2] = V1[2];
         dirBC[3] = V2[0]; dirBC[4] = V2[1]; dirBC[5] = V2[2];
         dirBC[6] =  N[0]; dirBC[7] =  N[1]; dirBC[8] =  N[2];
-      // } else{
-      //   dirBC[0] = V2[0]; dirBC[1] = V2[1]; dirBC[2] = V2[2];
-      //   dirBC[3] = V1[0]; dirBC[4] = V1[1]; dirBC[5] = V1[2];
-      //   dirBC[6] =  N[0]; dirBC[7] =  N[1]; dirBC[8] =  N[2];
-      // }
 
-      for (int j = 0; j < 3; ++j) {
-        double d[3] = {dirBC[3*j+0], dirBC[3*j+1], dirBC[3*j+2]};
-        if(j==0){
-          fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 1.0/2.0*d[0], 1.0/2.0*d[1], 1.0/2.0*d[2]);
-          fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-1.0/2.0*d[0],-1.0/2.0*d[1],-1.0/2.0*d[2]);
-        } else{
-          fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], d[0], d[1], d[2]);
-          fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-d[0],-d[1],-d[2]);
-        }
-      }
-
-      // Converting BC directions to BC frames
-      if(V1.norm() >= tol && V2.norm() >= tol && N.norm() >= tol){
-        isBoundaryCondition[iNbc] = 1;
-
-        // Assigning those directions directly in the directions array for boundary nodes
-        for(size_t j = 0; j < 9; ++j){
-          directions[9*iNbc+j] = dirBC[j];
+        for (int j = 0; j < 3; ++j) {
+          double d[3] = {dirBC[3*j+0], dirBC[3*j+1], dirBC[3*j+2]};
+          if(j==0){
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 1.0/2.0*d[0], 1.0/2.0*d[1], 1.0/2.0*d[2]);
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-1.0/2.0*d[0],-1.0/2.0*d[1],-1.0/2.0*d[2]);
+          } else{
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], d[0], d[1], d[2]);
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-d[0],-d[1],-d[2]);
+          }
         }
 
-        double frameBC[9]={0.0};
-        hxtOr3DdirectionsToFrame(dirBC, frameBC);
-        double frameProj[9]={0.0};
-        hxtOr3DprojectFrameOnCrossManifold(frameBC, frameProj);
-        for(int k = 0; k < 9 ; ++k)
-          frames[9*iNbc + k]=frameProj[k];
-        // for(size_t k = 0; k < 9; ++k)
-        //   frames[9*iNbc + k]= frameBC[k]; // pour k de 0 à 8
+        // Converting BC directions to BC frames
+        if(V1.norm() >= tol && V2.norm() >= tol && N.norm() >= tol){
+          isBoundaryCondition[iNbc] = 1;
+
+          // Assigning those directions directly in the directions array for boundary nodes
+          for(size_t j = 0; j < 9; ++j){
+            directions[9*iNbc+j] = dirBC[j];
+          }
+
+          double frameBC[9]={0.0};
+          hxtOr3DdirectionsToFrame(dirBC, frameBC);
+          double frameProj[9]={0.0};
+          hxtOr3DprojectFrameOnCrossManifold(frameBC, frameProj);
+          for(int k = 0; k < 9 ; ++k)
+            frames[9*iNbc + k]=frameProj[k];
+          // for(size_t k = 0; k < 9; ++k)
+          //   frames[9*iNbc + k]= frameBC[k]; // pour k de 0 à 8
+        }
       }
-    }
-  } // for boundary nodes
+    } // for boundary nodes
+  } else{ // dim = 2
+    HXT_CHECK(hxtMalloc(&isBoundaryCondition, meshDom->vertices.num*sizeof(int)));
+    for (uint64_t i = 0; i < meshDom->vertices.num; ++i)
+      isBoundaryCondition[i]=0;
+
+    for(size_t iLine = 0; iLine < meshDom->lines.num; ++iLine){
+      for(size_t i = 0; i < 2; ++i){
+        uint32_t iNbc = meshDom->lines.node[(size_t) 2*iLine + i];
+        MVertex *v = (*forestOptions->c2vBnd)[iNbc]; // The current vertex
+        uint32_t c = (*forestOptions->v2cBnd)[v];    // Its label in the HXTMesh
+
+        if(c != iNbc) Msg::Error("%d - %d\n", c, iNbc);
+
+        double  r = forestOptions->nodalCurvature[c];
+        double *n = forestOptions->nodeNormals + 3*c;
+        double *x = meshDom->vertices.coord + 4*iNbc;
+
+        double tol = 1e-6;
+        SVector3 N(n[0], n[1], n[2]); 
+        if( N.norm() >= tol){  N.normalize(); };
+        SVector3 R = crossprod(N, SVector3(0.,0.,1.));
+        if( R.norm() >= tol){  R.normalize(); };
+
+        double dirBC[9];
+        dirBC[0] = R[0]; dirBC[1] = R[1]; dirBC[2] = R[2];
+        dirBC[3] = N[0]; dirBC[4] = N[1]; dirBC[5] = N[2];
+        dirBC[6] =   0.; dirBC[7] =   0.; dirBC[8] =   1.;
+
+        for(int j = 0; j < 3; ++j){
+          double d[3] = {dirBC[3*j+0], dirBC[3*j+1], dirBC[3*j+2]};
+          if(j==0){
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 1.0/2.0*d[0], 1.0/2.0*d[1], 1.0/2.0*d[2]);
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-1.0/2.0*d[0],-1.0/2.0*d[1],-1.0/2.0*d[2]);
+          } else{
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], d[0], d[1], d[2]);
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-d[0],-d[1],-d[2]);
+          }
+        }
+
+        Msg::Info("N = (%+2.2e,%+2.2e,%+2.2e) - R = (%+2.2e,%+2.2e,%+2.2e)\n", N[0], N[1], N[2], R[0], R[1], R[2]);
+
+        // Converting BC directions to BC frames
+        if(N.norm() >= tol && R.norm() >= tol){
+          isBoundaryCondition[iNbc] = 1;
+          // Assigning those directions directly in the directions array for boundary nodes
+          for(size_t j = 0; j < 9; ++j){
+            directions[9*iNbc+j] = dirBC[j];
+          }
+          double frameBC[9]={0.0};
+          hxtOr3DdirectionsToFrame(dirBC, frameBC);
+          double frameProj[9]={0.0};
+          hxtOr3DprojectFrameOnCrossManifold(frameBC, frameProj);
+          for(int k = 0; k < 9 ; ++k)
+            frames[9*iNbc + k]=frameProj[k];
+          // for(size_t k = 0; k < 9; ++k)
+          //   frames[9*iNbc + k]= frameBC[k]; // pour k de 0 à 8
+        }
+      }
+    } // for boundary nodes
+  }
 
   fprintf(myfile,"};");
   fclose(myfile);
- 
 
-  HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(forest->forestOptions->mesh2D, frames, "myFramesBeforeSolve.pos", NULL));
+  HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(meshDom, frames, "myFramesBeforeSolve.pos", NULL));
   
   HXT_CHECK(hxtInitializeLinearSystems(NULL, NULL));
   int solver=5;
   int maxIter=3000;
-  double precision=1e-4;
+  double precision=1e-6;
   double epsilon=-1.0;
   int L=1;
   int P=0;
-  HXT_CHECK(hxtOr3DComputeFrames(mesh3D, frames, precision, maxIter, solver, epsilon, L, P, isBoundaryCondition));
-  HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(mesh3D, frames, "myFrames.pos", NULL));
+  HXT_CHECK(hxtOr3DComputeFrames(meshDom, frames, precision, maxIter, solver, epsilon, L, P, isBoundaryCondition));
+  HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(meshDom, frames, "myFrames.pos", NULL));
 
-
-  HxtUVWParamOptions uvwOptions;
-  uvwOptions.ignore_scaling = 0;
-  uvwOptions.debug = 1;
-  uvwOptions.verbose = 1;
-  double *liftU; //Une direction par tet, liftU[3*tetNum + i], i = 0..2
-  HXT_CHECK(hxtMalloc(&liftU, mesh3D->tetrahedra.num*3*sizeof(double)));
-  double *liftV; //Une direction par tet, liftV[3*tetNum + i], i = 0..2
-  HXT_CHECK(hxtMalloc(&liftV, mesh3D->tetrahedra.num*3*sizeof(double)));
-  double *liftW; //Une direction par tet, liftW[3*tetNum + i], i = 0..2
-  HXT_CHECK(hxtMalloc(&liftW, mesh3D->tetrahedra.num*3*sizeof(double)));
-  double *directionsVertices;
-  HXT_CHECK(hxtMalloc(&directionsVertices, sizeof(double)*9*mesh3D->tetrahedra.num));
-  for (uint64_t i = 0; i < mesh3D->vertices.num; ++i){ //Transforme les représentations des frames en 3 directions orthogonales qui sont stockées dans directionsVertices
-    double stableDir[3]={0.0};
-    hxtOr3DframeToDirections(frames + 9*i, stableDir, directionsVertices + 9*i);
-   }
-  double *directionsElem;
-  HXT_CHECK(hxtMalloc(&directionsElem, sizeof(double)*9*mesh3D->tetrahedra.num));
-  double *smoothnessIndicator;
-  HXT_CHECK(hxtMalloc(&smoothnessIndicator, mesh3D->tetrahedra.num*sizeof(double)));
+  // HxtUVWParamOptions uvwOptions;
+  // uvwOptions.ignore_scaling = 0;
+  // uvwOptions.debug = 1;
+  // uvwOptions.verbose = 1;
+  // double *liftU; //Une direction par tet, liftU[3*tetNum + i], i = 0..2
+  // HXT_CHECK(hxtMalloc(&liftU, meshDom->tetrahedra.num*3*sizeof(double)));
+  // double *liftV; //Une direction par tet, liftV[3*tetNum + i], i = 0..2
+  // HXT_CHECK(hxtMalloc(&liftV, meshDom->tetrahedra.num*3*sizeof(double)));
+  // double *liftW; //Une direction par tet, liftW[3*tetNum + i], i = 0..2
+  // HXT_CHECK(hxtMalloc(&liftW, meshDom->tetrahedra.num*3*sizeof(double)));
+  // double *directionsVertices;
+  // HXT_CHECK(hxtMalloc(&directionsVertices, sizeof(double)*9*meshDom->tetrahedra.num));
+  // for (uint64_t i = 0; i < meshDom->vertices.num; ++i){ //Transforme les représentations des frames en 3 directions orthogonales qui sont stockées dans directionsVertices
+  //   double stableDir[3]={0.0};
+  //   hxtOr3DframeToDirections(frames + 9*i, stableDir, directionsVertices + 9*i);
+  //  }
+  // double *directionsElem;
+  // HXT_CHECK(hxtMalloc(&directionsElem, sizeof(double)*9*meshDom->tetrahedra.num));
+  // double *smoothnessIndicator;
+  // HXT_CHECK(hxtMalloc(&smoothnessIndicator, meshDom->tetrahedra.num*sizeof(double)));
     
-  HXT_CHECK(hxtOr3DcrossNodesToElem(mesh3D, directionsVertices, directionsElem, smoothnessIndicator)); //On a besoin de transformer les croix par noeuds en croix par tet pour faire le lifting plus facilement
-  HXT_CHECK(get_lifting(mesh3D, directionsElem, smoothnessIndicator, &uvwOptions, liftU, liftV, liftW));
-  hxtOr3DWritePosVectorTet(mesh3D, liftU, "liftU.pos"); //Crée un fichier pos pour visualiser le lifting
-  hxtOr3DWritePosVectorTet(mesh3D, liftV, "liftV.pos");
-  hxtOr3DWritePosVectorTet(mesh3D, liftW, "liftW.pos");
+  // HXT_CHECK(hxtOr3DcrossNodesToElem(meshDom, directionsVertices, directionsElem, smoothnessIndicator)); //On a besoin de transformer les croix par noeuds en croix par tet pour faire le lifting plus facilement
+  // HXT_CHECK(get_lifting(meshDom, directionsElem, smoothnessIndicator, &uvwOptions, liftU, liftV, liftW));
+  // hxtOr3DWritePosVectorTet(meshDom, liftU, "liftU.pos"); //Crée un fichier pos pour visualiser le lifting
+  // hxtOr3DWritePosVectorTet(meshDom, liftV, "liftV.pos");
+  // hxtOr3DWritePosVectorTet(meshDom, liftW, "liftW.pos");
 
-  //--une fois les frames calculées, il faut postraiter pour récupérer les directions
-  // boucle sur tous les noeuds du maillage iN
-  for(size_t i = 0; i < mesh3D->vertices.num; ++i){
-    if(!isBoundaryCondition[i]){
-      double stableDir[3]={0.0}; //données sur la qualité de la frame, pas d'utilité pour toi
-      double dirN[9]={0.0};      //directions de la croix, stockées comme ça: {u0,u1,u2,v0,v1,v2,w0,w1,w2}
-      hxtOr3DframeToDirections(frames + 9*i, stableDir, dirN);
-      for(size_t j = 0; j < 9; ++j){
-        directions[9*i+j] = dirN[j];
-      }
-    }
-  }
+  // //--une fois les frames calculées, il faut postraiter pour récupérer les directions
+  // // boucle sur tous les noeuds du maillage iN
+  // for(size_t i = 0; i < meshDom->vertices.num; ++i){
+  //   if(!isBoundaryCondition[i]){
+  //     double stableDir[3]={0.0}; //données sur la qualité de la frame, pas d'utilité pour toi
+  //     double dirN[9]={0.0};      //directions de la croix, stockées comme ça: {u0,u1,u2,v0,v1,v2,w0,w1,w2}
+  //     hxtOr3DframeToDirections(frames + 9*i, stableDir, dirN);
+  //     for(size_t j = 0; j < 9; ++j){
+  //       directions[9*i+j] = dirN[j];
+  //     }
+  //   }
+  // }
 
-  FILE* myfile2 = fopen("directionsPreservees.pos","w");
-  fprintf(myfile2,"View \"directionsPreservees\"{\n");
-  for(size_t i = 0; i < mesh3D->triangles.num; ++i){
-    for(size_t jj = 0; jj < 3; ++jj){
-      uint32_t iNbc = mesh3D->triangles.node[(size_t) 3*i+jj];
-      double *x = forest->forestOptions->mesh3D->vertices.coord + 4*iNbc;
-      double localDir[9] = {directions[9*iNbc+0],directions[9*iNbc+1],directions[9*iNbc+2],
-                            directions[9*iNbc+3],directions[9*iNbc+4],directions[9*iNbc+5],
-                            directions[9*iNbc+6],directions[9*iNbc+7],directions[9*iNbc+8],};
-      for (int j = 0; j < 3; ++j) {
-        double d[3] = {localDir[3*j+0], localDir[3*j+1], localDir[3*j+2]};
-        if(j==0){
-          fprintf(myfile2,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 1.0/2.0*d[0], 1.0/2.0*d[1], 1.0/2.0*d[2]);
-          fprintf(myfile2,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-1.0/2.0*d[0],-1.0/2.0*d[1],-1.0/2.0*d[2]);
-        } else{
-          fprintf(myfile2,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], d[0], d[1], d[2]);
-          fprintf(myfile2,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-d[0],-d[1],-d[2]);
-        }
-      }
-    }
-  }
+  // FILE* myfile2 = fopen("directionsPreservees.pos","w");
+  // fprintf(myfile2,"View \"directionsPreservees\"{\n");
+  // for(size_t i = 0; i < meshDom->triangles.num; ++i){
+  //   for(size_t jj = 0; jj < 3; ++jj){
+  //     uint32_t iNbc = meshDom->triangles.node[(size_t) 3*i+jj];
+  //     double *x = meshDom->vertices.coord + 4*iNbc;
+  //     double localDir[9] = {directions[9*iNbc+0],directions[9*iNbc+1],directions[9*iNbc+2],
+  //                           directions[9*iNbc+3],directions[9*iNbc+4],directions[9*iNbc+5],
+  //                           directions[9*iNbc+6],directions[9*iNbc+7],directions[9*iNbc+8],};
+  //     for (int j = 0; j < 3; ++j) {
+  //       double d[3] = {localDir[3*j+0], localDir[3*j+1], localDir[3*j+2]};
+  //       if(j==0){
+  //         fprintf(myfile2,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 1.0/2.0*d[0], 1.0/2.0*d[1], 1.0/2.0*d[2]);
+  //         fprintf(myfile2,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-1.0/2.0*d[0],-1.0/2.0*d[1],-1.0/2.0*d[2]);
+  //       } else{
+  //         fprintf(myfile2,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], d[0], d[1], d[2]);
+  //         fprintf(myfile2,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-d[0],-d[1],-d[2]);
+  //       }
+  //     }
+  //   }
+  // }
 
-  fprintf(myfile2,"};");
-  fclose(myfile2);
+  // fprintf(myfile2,"};");
+  // fclose(myfile2);
 
-  HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(forest->forestOptions->mesh2D, frames, "thisShouldBeBetter.pos", NULL));
+  // HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(forest->forestOptions->mesh2D, frames, "thisShouldBeBetter.pos", NULL));
 
-  for(uint64_t i = 0; i < 3*mesh3D->tetrahedra.num; ++i){
-    forestOptions->directionsU[i] = liftU[i];
-    forestOptions->directionsV[i] = liftV[i];
-    forestOptions->directionsW[i] = liftW[i];
-  }
+  // for(uint64_t i = 0; i < 3*meshDom->tetrahedra.num; ++i){
+  //   forestOptions->directionsU[i] = liftU[i];
+  //   forestOptions->directionsV[i] = liftV[i];
+  //   forestOptions->directionsW[i] = liftW[i];
+  // }
 
-  p4est_iterate(forest->p4est, NULL, (void*) forest->forestOptions, assignDirectionsCallback, NULL, NULL, NULL);
+  // p4est_iterate(forest->p4est, NULL, (void*) forest->forestOptions, assignDirectionsCallback, NULL, NULL, NULL);
 
-  HXT_CHECK(hxtFree(&directionsElem));
-  HXT_CHECK(hxtFree(&smoothnessIndicator));
-  HXT_CHECK(hxtFree(&liftU));
-  HXT_CHECK(hxtFree(&liftV));
-  HXT_CHECK(hxtFree(&liftW));
+  // HXT_CHECK(hxtFree(&directionsElem));
+  // HXT_CHECK(hxtFree(&smoothnessIndicator));
+  // HXT_CHECK(hxtFree(&liftU));
+  // HXT_CHECK(hxtFree(&liftV));
+  // HXT_CHECK(hxtFree(&liftW));
   HXT_CHECK(hxtFree(&frames));
+  HXT_CHECK(hxtFree(&isBoundaryCondition));
+
+  Msg::Error("Ending");
+  Msg::Exit(1);
+
 
   return HXT_STATUS_OK;
 }
@@ -2696,142 +2855,6 @@ HXTStatus hxtOctreeElementEstimation(Forest *forest, double *elemEstimate){
 }
 
 /* ========================================================================================================
-   INTERPOLATION OF CURVATURE DIRECTIONS
-   ======================================================================================================== */
-
-int intersections;
-
-static void markIntersectingCells(p4est_iter_volume_info_t * info, void *user_data){
-  ForestOptions   *forestOptions = (ForestOptions *) info->p4est->user_pointer;
-  size_data_t     *data = (size_data_t *) info->quad->p.user_data;
-  if(forestOptions->dim == 3){
-    double min[3], max[3];
-    getCellBBox(info->p4est, info->treeid, info->quad, min, max);
-    std::vector<uint64_t> candidates;
-    forestOptions->triRTree->Search(min, max, rtreeCallback, &candidates);
-    if(!candidates.empty()){
-      data->hasIntersection = true;
-      ++intersections;
-    }
-  }
-}
-
-static void pushInterpolationData(p4est_iter_volume_info_t * info, void *user_data){
-  size_data_t     *data = (size_data_t *) info->quad->p.user_data;
-  if(!data->hasIntersection){
-    p4est_quadrant_t   *q = info->quad;
-    p4est_t            *p4est = info->p4est;
-    p4est_topidx_t      which_tree = info->treeid;
-
-    std::vector<interpolation_data_t> *cellCenters = (std::vector<interpolation_data_t>*) user_data;
-
-    double center[3];
-    getCellCenter(p4est, which_tree, q, center);
-    interpolation_data_t intdata = { {center[0], center[1], center[2]}, SVector3(0.), SVector3(0.), 0. };
-    (*cellCenters).push_back( intdata );
-  }
-}
-
-int cellCounter;
-
-static void addDistanceContribution(p4est_iter_volume_info_t * info, void *user_data){
-  size_data_t     *data = (size_data_t *) info->quad->p.user_data;
-  if(data->hasIntersection){
-    p4est_quadrant_t   *q = info->quad;
-    p4est_t            *p4est = info->p4est;
-    p4est_topidx_t      which_tree = info->treeid;
-    std::vector<interpolation_data_t> *cellCenters = (std::vector<interpolation_data_t>*) user_data;
-    double center[3];
-    getCellCenter(p4est, which_tree, q, center);
-    double dist, xc, yc, zc;
-
-    for(size_t i = 0; i < (*cellCenters).size(); ++i){
-      xc = (*cellCenters)[i].center[0];
-      yc = (*cellCenters)[i].center[1];
-      zc = (*cellCenters)[i].center[2];
-      dist = sqrt( (center[0]-xc)*(center[0]-xc) + (center[1]-yc)*(center[1]-yc) +  (center[2]-zc)*(center[2]-zc) );
-      (*cellCenters)[i].denom += 1. / dist;
-      (*cellCenters)[i].t1 += data->t1 * (1. / dist);
-      (*cellCenters)[i].t2 += data->t2 * (1. / dist);
-    }
-
-  }
-}
-
-static void assignDirections(p4est_iter_volume_info_t * info, void *user_data){
-  size_data_t     *data = (size_data_t *) info->quad->p.user_data;
-  if(!data->hasIntersection){
-    p4est_quadrant_t   *q = info->quad;
-    p4est_t            *p4est = info->p4est;
-    p4est_topidx_t      which_tree = info->treeid;
-    std::vector<interpolation_data_t> *cellCenters = (std::vector<interpolation_data_t>*) user_data;
-    double center[3];
-    getCellCenter(p4est, which_tree, q, center);
-
-    double xc, yc, zc;
-    for(size_t i = 0; i < (*cellCenters).size(); ++i){
-      xc = (*cellCenters)[i].center[0];
-      yc = (*cellCenters)[i].center[1];
-      zc = (*cellCenters)[i].center[2];
-      if(fabs(center[0] - xc) < 1e-13 && fabs(center[1] - yc) < 1e-13 && fabs(center[2] - zc) < 1e-13 ){
-        data->t1 = (*cellCenters)[i].t1 * (1. / (*cellCenters)[i].denom);
-        data->t2 = (*cellCenters)[i].t2 * (1. / (*cellCenters)[i].denom);
-        data->n = crossprod(data->t1,data->t2);
-        data->n = data->n.unit();
-        break;
-      }
-    }
-
-  }
-}
-
-static void drawDirections(p4est_iter_volume_info_t * info, void *user_data){
-  size_data_t        *data = (size_data_t *) info->quad->p.user_data;
-  ForestOptions      *forestOptions = (ForestOptions *) info->p4est->user_pointer;
-  p4est_quadrant_t   *q = info->quad;
-  p4est_t            *p4est = info->p4est;
-  p4est_topidx_t      which_tree = info->treeid;
-
-  double center[3];
-  getCellCenter(p4est, which_tree, q, center);
-
-  double x = center[0];
-  double y = center[1];
-  double z = center[2];
-  fprintf(forestOptions->file3, "SL(%f,%f,%f, %f,%f,%f){%f,%f};\n",
-    x, y, z, x+data->t1[0], y+data->t1[1], z+data->t1[2], 1.0, 1.0);
-  fprintf(forestOptions->file3, "SL(%f,%f,%f, %f,%f,%f){%f,%f};\n",
-    x, y, z, x+data->t2[0], y+data->t2[1], z+data->t2[2], 1.0, 1.0);
-  fprintf(forestOptions->file3, "SL(%f,%f,%f, %f,%f,%f){%f,%f};\n",
-    x, y, z, x+data->n[0],  y+data->n[1],  z+data->n[2], 1.0, 1.0);
-}
-
-// Deprecated
-HXTStatus forestInterpolateDirections(Forest *forest){
-  intersections = 0;
-  p4est_iterate(forest->p4est, NULL, NULL, markIntersectingCells, NULL, NULL, NULL);
-
-  std::vector<interpolation_data_t> cellCenters;
-  cellCounter = 0;
-  p4est_iterate(forest->p4est, NULL, &cellCenters, pushInterpolationData, NULL, NULL, NULL);
-  p4est_iterate(forest->p4est, NULL, &cellCenters, addDistanceContribution, NULL, NULL, NULL);
-  p4est_iterate(forest->p4est, NULL, &cellCenters, assignDirections, NULL, NULL, NULL);
-
-  forest->forestOptions->file3 = fopen("directions.pos", "w");
-  if(forest->forestOptions->file3==NULL) return HXT_ERROR(HXT_STATUS_FILE_CANNOT_BE_OPENED);
-
-  fprintf(forest->forestOptions->file3, "View \"directions\" {\n");
-
-  p4est_iterate(forest->p4est, NULL, NULL, drawDirections, NULL, NULL, NULL);
-
-  fprintf(forest->forestOptions->file3, "};");
-  fclose(forest->forestOptions->file3);
-
-
-  return HXT_STATUS_OK;
-}
-
-/* ========================================================================================================
    EXPORT
    ======================================================================================================== */
 
@@ -3038,6 +3061,49 @@ HXTStatus forestWriteSolFileVolume(Forest *forest, const char *solFile){
   return HXT_STATUS_OK;
 }
 
+HXTStatus writeRTree(RTree<uint64_t,double,3>  *rtree, const char *filename){
+  RTree<uint64_t, double, 3>::Iterator it;
+  FILE* f = fopen(filename, "w");
+  fprintf(f, "View \"rtree\" {\n");
+  int itIndex = 0;
+  double s = 1.0;
+  double x[8], y[8], z[8];
+  // Using custom GetNext2 to display intermediary rectangles
+  for( rtree->GetFirst(it); !rtree->IsNull(it); rtree->GetNext2(it) )
+  {
+    int value = rtree->GetAt(it);
+    double boundsMin[3] = {0,0,0};
+    double boundsMax[3] = {0,0,0};
+    it.GetBounds(boundsMin, boundsMax);
+    std::cout << "it[" << itIndex++ << "] " << value << " = (" << boundsMin[0] << "," << boundsMin[1] << "," << boundsMin[2] << "," << boundsMax[0] << "," << boundsMax[1] << "," << boundsMax[2] << ")\n";
+    x[0] = x[3] = x[4] = x[7] = boundsMin[0];
+    x[1] = x[2] = x[5] = x[6] = boundsMax[0];
+    y[0] = y[1] = y[4] = y[5] = boundsMin[1];
+    y[2] = y[3] = y[6] = y[7] = boundsMax[1];
+    z[0] = z[1] = z[2] = z[3] = boundsMin[2];
+    z[4] = z[5] = z[6] = z[7] = boundsMax[2];
+    fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n",
+      x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3],
+      x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7],
+      s, s, s, s, s, s, s, s);
+  }
+  // Adding the root rectangle (the bbox)
+  // x[0] = x[3] = x[4] = x[7] = bbox_mesh.min[0];
+  // x[1] = x[2] = x[5] = x[6] = bbox_mesh.max[0];
+  // y[0] = y[1] = y[4] = y[5] = bbox_mesh.min[1];
+  // y[2] = y[3] = y[6] = y[7] = bbox_mesh.max[1];
+  // z[0] = z[1] = z[2] = z[3] = bbox_mesh.min[2];
+  // z[4] = z[5] = z[6] = z[7] = bbox_mesh.max[2];
+  // fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n",
+  //     x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3],
+  //     x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7],
+  //     s, s, s, s, s, s, s, s);
+  fprintf(f, "};");
+  fclose(f);
+
+  return HXT_STATUS_OK;
+}
+
 #endif
 
 /* ======================================================================================
@@ -3053,7 +3119,7 @@ double automaticMeshSizeField::operator()(double X, double Y, double Z, GEntity 
   }
   else Msg::Error ("Cannot find point %g %g %g in the octree",X,Y,Z);
 #else
-  Msg::Error ("Gmsh has to be compiled with HXT and P4EST for using automaticMeshSizeField");
+  Msg::Error ("Gmsh has to be compiled with HXT and P4EST to use automaticMeshSizeField");
 #endif
   return val;
 }
@@ -3061,13 +3127,11 @@ double automaticMeshSizeField::operator()(double X, double Y, double Z, GEntity 
 void automaticMeshSizeField::operator()(double X, double Y, double Z, SMetric3 &m, GEntity *ge){
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   HXTStatus s = forestSearchOneAniso(forest, X, Y, Z, m, false);
-  // m.print("m");
   if(fabs(m.determinant()) < 1e-13)
     m = SMetric3();
-  // m.print("m");
   if (s != HXT_STATUS_OK) Msg::Error ("Cannot find point %g %g %g in the octree",X,Y,Z);
 #else
-  Msg::Error ("Gmsh has to be compiled with HXT and P4EST for using automaticMeshSizeField");
+  Msg::Error ("Gmsh has to be compiled with HXT and P4EST to use automaticMeshSizeField");
 #endif
 }
 
@@ -3116,168 +3180,91 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     // The bounding box of the mesh/model
     double bbox_vertices[6];
 
-    RTree<uint64_t, double, 3> triRTree;
-    RTree<uint64_t, double, 3> tetRTree;
-    HXTMesh *mesh2D;
-    HXTMesh *mesh3D;
+    RTree<uint64_t, double, 3> bndRTree;
+    RTree<uint64_t, double, 3> domRTree;
+    HXTMesh *meshDom;
+    HXTMesh *meshBnd;
+    std::vector<MVertex *>        c2vDom;
+    std::map<MVertex *, uint32_t> v2cDom;
+    std::vector<MVertex *>        c2vBnd;
+    std::map<MVertex *, uint32_t> v2cBnd;
+
     double *nodalCurvature;
     double *directions;
     double *directionsU;
     double *directionsV;
     double *directionsW;
-    std::vector<MVertex *> c2v3D;
-    std::map<MVertex *, uint32_t> v2cEdges;
-    std::vector<MVertex *> c2vEdges;
-    // double *nodeNormals;
-
-    int debug = true;
-
-    GModel* gm = GModel::current();
-
-    size_t numVertices = gm->getNumMeshVertices();
-    HXT_CHECK(hxtMalloc(&nodalCurvature,6*numVertices*sizeof(double)));
-    HXT_CHECK(hxtMalloc(&directions,9*numVertices*sizeof(double)));
     std::vector<double> nodeNormals;
-    for(size_t i = 0; i < 6*numVertices; ++i){ nodalCurvature[i] = NAN; }
+
+    int debug = true;    
 
     if(dim == 3){
 
       // 1. Get all faces of the model and create HXT mesh structure
       std::vector<GFace*> faces;
       std::vector<GRegion*> regions;
-      for(auto const &region : GModel::current()->getRegions())
+      HXT_CHECK(hxtMeshCreate(&meshBnd));
+      HXT_CHECK(hxtMeshCreate(&meshDom));
+
+      for(auto const &region : GModel::current()->getRegions()){
         regions.push_back(region);
+      }
       HXT_CHECK( getAllFacesOfAllRegions(regions, NULL, faces) );
       if(regions.empty() || faces.empty()){
         if(regions.empty()) Msg::Info("No volume in the model : looping over model faces instead.");
         if(faces.empty())   Msg::Info("No faces found in model volumes : looping over model faces instead.");
         for(auto const &face : GModel::current()->getFaces()){
           faces.push_back(face);
-          Msg::Info("Looping over faces - current has %d elements\n", face->getNumMeshElements());
+          Msg::Info("Looping over model faces - current has %d elements\n", face->getNumMeshElements());
         }
       }
 
       if(faces.empty()){
         Msg::Error("Error : model has no faces or volume faces.");
       }
-
-      HXT_CHECK(hxtMeshCreate(&mesh2D));
-      std::map<MVertex *, uint32_t> v2c;
-      std::vector<MVertex *> c2v;
-      HXT_CHECK(Gmsh2Hxt(faces, mesh2D, v2c, c2v));
-
-      HXT_CHECK(hxtMeshCreate(&mesh3D));
-      std::map<MVertex *, uint32_t> v2c3D;
-      // std::vector<MVertex *> c2v3D;
-      HXT_CHECK(Gmsh2Hxt(faces, regions, mesh3D, v2c3D, c2v3D));
-
-      HXT_CHECK(hxtMalloc(&directionsU,3*mesh3D->tetrahedra.num*sizeof(double)));
-      HXT_CHECK(hxtMalloc(&directionsV,3*mesh3D->tetrahedra.num*sizeof(double)));
-      HXT_CHECK(hxtMalloc(&directionsW,3*mesh3D->tetrahedra.num*sizeof(double)));
+      
+      HXT_CHECK(Gmsh2Hxt(faces, meshBnd, v2cBnd, c2vBnd));
+      HXT_CHECK(Gmsh2Hxt(faces, regions, meshDom, v2cDom, c2vDom));
 
       Msg::Info("Comparaison des maillages HXT :");
-      printf("Nombre de noeuds : 2D - %d \t 3D - %d\n", mesh2D->vertices.num, mesh3D->vertices.num);
-      printf("Nombre de triang : 2D - %lu \t 3D - %lu\n", mesh2D->triangles.num, mesh3D->triangles.num);
-      printf("Nombre de tetras : 2D - %lu \t 3D - %lu\n", mesh2D->tetrahedra.num, mesh3D->tetrahedra.num);
+      printf("Nombre de noeuds : 2D - %d \t 3D - %d\n", meshBnd->vertices.num, meshDom->vertices.num);
+      printf("Nombre de triang : 2D - %lu \t 3D - %lu\n", meshBnd->triangles.num, meshDom->triangles.num);
+      printf("Nombre de tetras : 2D - %lu \t 3D - %lu\n", meshBnd->tetrahedra.num, meshDom->tetrahedra.num);
 
-      if(mesh2D->vertices.num == 0){
-        Msg::Error("Surface mesh is empty");
-        HXT_CHECK(hxtMeshDelete(&mesh2D));
-        HXT_CHECK(hxtMeshDelete(&mesh3D));
+      if(meshBnd->vertices.num == 0){
+        Msg::Error("Boundary mesh is empty");
+        HXT_CHECK(hxtMeshDelete(&meshBnd));
+        HXT_CHECK(hxtMeshDelete(&meshDom));
         Msg::Exit(1);
       }
 
       // 2. Compute curvature of the faces
-      // Create HXT mesh structure for each GFace
-      std::vector<HXTMesh *> faceMeshes;
-      for(size_t i = 0; i < faces.size(); ++i){
-        HXTMesh *meshFace;
-        HXT_CHECK(hxtMeshCreate(&meshFace));
-        std::vector<GFace*> oneFace;
-        oneFace.push_back(faces[i]);
-        std::map<MVertex *, uint32_t> v2cLoc;
-        std::vector<MVertex *> c2vLoc;
-        Gmsh2HxtLocal(oneFace, meshFace, v2cLoc, c2vLoc);
-        faceMeshes.push_back(meshFace);
-      }
-
-      std::map<MVertex *, uint32_t> v2c2;
-      std::vector<MVertex *> c2v2;
-      Gmsh2HxtGlobal(faces, NULL, v2c2, c2v2);
-
-      size_t nVertices = 0;
-
-      assert(faces.size() == faceMeshes.size());
+      HXT_CHECK(hxtMalloc(&nodalCurvature,6*meshBnd->vertices.num*sizeof(double)));
 
       // Compute curvature of the faces
-      int counter = 0;
-      for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-        HXTMesh *meshFace = faceMeshes[counter++];
+      for(auto const &face : faces) {
+        HXTMesh *meshFace;
+        HXT_CHECK(hxtMeshCreate(&meshFace));
+        std::vector<GFace*> oneFace(1, face);
+        std::map<MVertex *, uint32_t> v2cLoc;
+        std::vector<MVertex *>        c2vLoc;
+        Gmsh2HxtLocal(oneFace, meshFace, v2cLoc, c2vLoc);
 
-        if(meshFace==NULL){
-          Msg::Error("meshFace == NULL");
-        }
-
-        GFace *gf = *it;
-        std::map<MVertex *, int> nodeIndex;
-        std::vector<SPoint3> nodes;
-        std::vector<int> tris;
         std::vector<std::pair<SVector3, SVector3> > curv;
-        for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-          MTriangle *t = gf->triangles[i];
-          for(int j = 0; j < 3; j++) {
-            MVertex *v = t->getVertex(j);
-            if(nodeIndex.find(v) == nodeIndex.end()) {
-              int idx = nodes.size();
-              nodeIndex[v] = idx;
-              nodes.push_back(v->point());
-              tris.push_back(idx);
-            }
-            else {
-              tris.push_back(nodeIndex[v]);
-            }
-          }
+        std::vector<int> tris(meshFace->triangles.node, meshFace->triangles.node + 3*meshFace->triangles.num);
+        std::vector<SPoint3> nodes(meshFace->vertices.num);
+        for(uint32_t i = 0; i < meshFace->vertices.num; ++i){
+          nodes[i] = c2vLoc[i]->point();
         }
 
-        for(size_t i = 0; i < meshFace->vertices.num; ++i){
-          nodes[i] = SPoint3(meshFace->vertices.coord[(size_t) 4*i+0],
-                             meshFace->vertices.coord[(size_t) 4*i+1],
-                             meshFace->vertices.coord[(size_t) 4*i+2]);
-          // nodes[i] = gm->getMeshVertexByTag(i)
-        }
-
-        for(size_t i = 0; i < meshFace->triangles.num; ++i){
-          tris[3*i+0] = meshFace->triangles.node[3*i+0];
-          tris[3*i+1] = meshFace->triangles.node[3*i+1];
-          tris[3*i+2] = meshFace->triangles.node[3*i+2];
-        }
-
-        if(gf->triangles.empty()){
-          Msg::Info("Skipping curvature computation on face %d with 0 element", counter-1);
+        if(face->triangles.empty()){
+          Msg::Info("Skipping curvature computation on face %d with 0 element", face->tag());
         } else{
-
           // Compute curvature of the face
           CurvatureRusinkiewicz(tris, nodes, curv);
-
           // Assemble curvature vectors of the face in global nodalCurvature structure
-          for (uint64_t i = 0; i<meshFace->vertices.num; ++i){
-            uint64_t nodeGlobal = v2c[ c2v2[nVertices+i] ];
-
-            debug = true;
-            if(debug){ // Check the vertex of the face and the global vertex are the same
-              double x1,y1,z1,x2,y2,z2;
-              x1 = meshFace->vertices.coord[(size_t) 4*i+0];
-              y1 = meshFace->vertices.coord[(size_t) 4*i+1];
-              z1 = meshFace->vertices.coord[(size_t) 4*i+2];
-              x2 = mesh2D->vertices.coord[(size_t) 4*nodeGlobal+0];
-              y2 = mesh2D->vertices.coord[(size_t) 4*nodeGlobal+1];
-              z2 = mesh2D->vertices.coord[(size_t) 4*nodeGlobal+2];
-              if(!isPoint(x1,y1,z1,x2,y2,z2,1e-12)){
-                printf("Mismatch : (%10.12e,%10.12e,%10.12e) - (%10.12e,%10.12e,%10.12e)\n",x1,y1,z1,x2,y2,z2);
-              }
-              assert(isPoint(x1,y1,z1,x2,y2,z2,1e-15));
-            }
-
+          for (uint32_t i = 0; i < meshFace->vertices.num; ++i){
+            uint32_t nodeGlobal = v2cBnd[ c2vLoc[i] ];
             nodalCurvature[6 * nodeGlobal + 0] = curv[i].first[0];
             nodalCurvature[6 * nodeGlobal + 1] = curv[i].first[1];
             nodalCurvature[6 * nodeGlobal + 2] = curv[i].first[2];
@@ -3285,37 +3272,29 @@ HXTStatus automaticMeshSizeField::updateHXT(){
             nodalCurvature[6 * nodeGlobal + 4] = curv[i].second[1];
             nodalCurvature[6 * nodeGlobal + 5] = curv[i].second[2];
           }
-
-          nVertices += meshFace->vertices.num;
         }
+
+        HXT_CHECK(hxtMeshDelete(&meshFace));
       } // for faces.size()
 
       debug = true;
-      if(debug) writeNodalCurvature(nodalCurvature, mesh2D->vertices.num, "nodalCurvature.txt");
+      if(debug) writeNodalCurvature(nodalCurvature, meshBnd->vertices.num, "nodalCurvature.txt");
 
       // 3. Compute an approximation of the medial axis to get feature size
       // Compute Delaunay tetrahedrization of the (empty) surface mesh
       HXTDelaunayOptions delaunayOptions = {NULL, NULL, 0, 0, 0, 0, 2, 1, 0};
-      HXT_CHECK(hxtEmptyMesh(mesh2D, &delaunayOptions));
+      HXT_CHECK(hxtEmptyMesh(meshBnd, &delaunayOptions));
 
       // Compute normal vectors
-      std::vector<int> tris(3*mesh2D->triangles.num, 0);
-      for(std::size_t i = 0; i < mesh2D->triangles.num; ++i){
-        tris[3*i+0] = mesh2D->triangles.node[3*i+0];
-        tris[3*i+1] = mesh2D->triangles.node[3*i+1];
-        tris[3*i+2] = mesh2D->triangles.node[3*i+2];
-      }
-
-      std::vector<SPoint3> nodes(mesh2D->vertices.num);
-      for(size_t i = 0; i < mesh2D->vertices.num; ++i){
-        nodes[i] = SPoint3(mesh2D->vertices.coord[(size_t) 4*i+0],
-                           mesh2D->vertices.coord[(size_t) 4*i+1],
-                           mesh2D->vertices.coord[(size_t) 4*i+2]);
-      }
-
       std::vector<std::pair<SVector3, SVector3> > curv;
-      nodeNormals.reserve(3*mesh2D->vertices.num);
-      for(uint32_t i = 0; i < 3*mesh2D->vertices.num; ++i)
+      std::vector<int> tris(meshBnd->triangles.node, meshBnd->triangles.node + 3*meshBnd->triangles.num);
+      std::vector<SPoint3> nodes(meshBnd->vertices.num);
+      for(size_t i = 0; i < meshBnd->vertices.num; ++i){
+        nodes[i] = c2vBnd[i]->point();
+      }
+
+      nodeNormals.reserve(3*meshBnd->vertices.num);
+      for(uint32_t i = 0; i < 3*meshBnd->vertices.num; ++i)
         nodeNormals[i] = 0.0;
 
       // Same function but returns the normals
@@ -3324,86 +3303,43 @@ HXTStatus automaticMeshSizeField::updateHXT(){
 
       // Add bboxes of the surface mesh to rtree
       HXTBbox bbox_triangle;
-      for(uint64_t i = 0; i < mesh2D->triangles.num; ++i){
+      for(uint64_t i = 0; i < meshBnd->triangles.num; ++i){
         hxtBboxInit(&bbox_triangle);
         for(uint64_t j = 0; j < 3; ++j){
           double coord[3];
-          uint32_t node = mesh2D->triangles.node[3*i+j];
-          for(uint32_t k = 0; k < 3; ++k){ coord[k] = mesh2D->vertices.coord[(size_t) 4*node+k]; }
+          uint32_t node = meshBnd->triangles.node[3*i+j];
+          for(uint32_t k = 0; k < 3; ++k){ coord[k] = meshBnd->vertices.coord[(size_t) 4*node+k]; }
           hxtBboxAddOne(&bbox_triangle, coord);
         }
         SBoundingBox3d cube_bbox(bbox_triangle.min[0], bbox_triangle.min[1], bbox_triangle.min[2],
                                  bbox_triangle.max[0], bbox_triangle.max[1], bbox_triangle.max[2]);
-        // cube_bbox.makeCube();
-        triRTree.Insert((double*)(cube_bbox.min()), (double*)(cube_bbox.max()), i);
+        bndRTree.Insert((double*)(cube_bbox.min()), (double*)(cube_bbox.max()), i);
       }
 
       // Add bboxes of the volume mesh to rtree
       HXTBbox bbox_tet;
-      for(uint64_t i = 0; i < mesh3D->tetrahedra.num; ++i){
+      for(uint64_t i = 0; i < meshDom->tetrahedra.num; ++i){
         hxtBboxInit(&bbox_tet);
         for(uint64_t j = 0; j < 4; ++j){
           double coord[3];
-          uint32_t node = mesh3D->tetrahedra.node[4*i+j];
-          for(uint32_t k = 0; k < 3; ++k){ coord[k] = mesh3D->vertices.coord[(size_t) 4*node+k]; }
+          uint32_t node = meshDom->tetrahedra.node[4*i+j];
+          for(uint32_t k = 0; k < 3; ++k){ coord[k] = meshDom->vertices.coord[(size_t) 4*node+k]; }
           hxtBboxAddOne(&bbox_tet, coord);
         }
         SBoundingBox3d cube_bbox(bbox_tet.min[0], bbox_tet.min[1], bbox_tet.min[2],
                                  bbox_tet.max[0], bbox_tet.max[1], bbox_tet.max[2]);
-        tetRTree.Insert((double*)(cube_bbox.min()), (double*)(cube_bbox.max()), i);
+        domRTree.Insert((double*)(cube_bbox.min()), (double*)(cube_bbox.max()), i);
       }
 
-      // Compute bbox of the mesh
-      HXTBbox bbox_mesh;
-      hxtBboxInit(&bbox_mesh);
-      hxtBboxAdd(&bbox_mesh, mesh2D->vertices.coord, mesh2D->vertices.num);
-      for(int i = 0; i < 3; ++i){
-        bbox_vertices[i  ] = bbox_mesh.min[i];
-        bbox_vertices[i+3] = bbox_mesh.max[i];
-      }
-
-      // Export surface mesh RTree in .pos file
+      // Export RTrees in .pos file
       bool exportRTree = false;
-      if(exportRTree){
-        RTree<uint64_t, double, 3>::Iterator it;
-        FILE* f = fopen("rtree.pos", "w");
-        fprintf(f, "View \"sizeField\" {\n");
-        int itIndex = 0;
-        double s = 1.0;
-        double x[8], y[8], z[8];
-        // Using custom GetNext2 to display intermediary rectangles
-        for( triRTree.GetFirst(it); !triRTree.IsNull(it); triRTree.GetNext2(it) )
-        {
-          int value = triRTree.GetAt(it);
-          double boundsMin[3] = {0,0,0};
-          double boundsMax[3] = {0,0,0};
-          it.GetBounds(boundsMin, boundsMax);
-          std::cout << "it[" << itIndex++ << "] " << value << " = (" << boundsMin[0] << "," << boundsMin[1] << "," << boundsMin[2] << "," << boundsMax[0] << "," << boundsMax[1] << "," << boundsMax[2] << ")\n";
-          x[0] = x[3] = x[4] = x[7] = boundsMin[0];
-          x[1] = x[2] = x[5] = x[6] = boundsMax[0];
-          y[0] = y[1] = y[4] = y[5] = boundsMin[1];
-          y[2] = y[3] = y[6] = y[7] = boundsMax[1];
-          z[0] = z[1] = z[2] = z[3] = boundsMin[2];
-          z[4] = z[5] = z[6] = z[7] = boundsMax[2];
-          fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n",
-            x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3],
-            x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7],
-            s, s, s, s, s, s, s, s);
-        }
-        // Adding the root rectangle (the bbox)
-        x[0] = x[3] = x[4] = x[7] = bbox_mesh.min[0];
-        x[1] = x[2] = x[5] = x[6] = bbox_mesh.max[0];
-        y[0] = y[1] = y[4] = y[5] = bbox_mesh.min[1];
-        y[2] = y[3] = y[6] = y[7] = bbox_mesh.max[1];
-        z[0] = z[1] = z[2] = z[3] = bbox_mesh.min[2];
-        z[4] = z[5] = z[6] = z[7] = bbox_mesh.max[2];
-        fprintf(f, "SH(%f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f, %f,%f,%f){%f,%f,%f,%f,%f,%f,%f,%f};\n",
-            x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], x[3], y[3], z[3],
-            x[4], y[4], z[4], x[5], y[5], z[5], x[6], y[6], z[6], x[7], y[7], z[7],
-            s, s, s, s, s, s, s, s);
-        fprintf(f, "};");
-        fclose(f);
-      }
+      if(exportRTree){ HXT_CHECK(writeRTree(&bndRTree, "rtreeBnd.pos")); }
+      if(exportRTree){ HXT_CHECK(writeRTree(&domRTree, "rtreeDom.pos")); }
+
+      HXT_CHECK(hxtMalloc(&directions,9*meshDom->vertices.num*sizeof(double)));
+      HXT_CHECK(hxtMalloc(&directionsU,3*meshDom->tetrahedra.num*sizeof(double)));
+      HXT_CHECK(hxtMalloc(&directionsV,3*meshDom->tetrahedra.num*sizeof(double)));
+      HXT_CHECK(hxtMalloc(&directionsW,3*meshDom->tetrahedra.num*sizeof(double)));
 
     } // if dim==3
 
@@ -3411,11 +3347,12 @@ HXTStatus automaticMeshSizeField::updateHXT(){
       // 1. Get all faces of the model and create global HXT mesh structure
       std::vector<GEdge*> edges;
       std::vector<GFace*> faces;
-      HXT_CHECK(hxtMeshCreate(&mesh2D));
-      std::map<MVertex *, uint32_t> v2c;
-      std::vector<MVertex *> c2v;
-      for(auto const &face : GModel::current()->getFaces())
+      HXT_CHECK(hxtMeshCreate(&meshDom));
+      HXT_CHECK(hxtMeshCreate(&meshBnd));
+
+      for(auto const &face : GModel::current()->getFaces()){
         faces.push_back(face);
+      }
       HXT_CHECK( getAllEdgesOfAllFaces(faces, NULL, edges) );
       if(faces.empty() || edges.empty()){
         if(faces.empty()) Msg::Info("No faces in the model : looping over model edges instead.");
@@ -3432,44 +3369,28 @@ HXTStatus automaticMeshSizeField::updateHXT(){
         Msg::Info("Model has %d edges and %d faces\n", edges.size(), faces.size());
       }
 
-      HXT_CHECK(Gmsh2Hxt(faces, mesh2D, v2c, c2v));
+      HXT_CHECK(Gmsh2Hxt(faces, meshDom, v2cDom, c2vDom));
+      HXT_CHECK(Gmsh2Hxt(edges, meshBnd, v2cBnd, c2vBnd));
 
-      // HXT_CHECK(hxtMeshCreate(&mesh3D));
-      // std::map<MVertex *, uint32_t> v2c3D;
-      // // std::vector<MVertex *> c2v3D;
-      // HXT_CHECK(Gmsh2Hxt(faces, regions, mesh3D, v2c3D, c2v3D));
-
-      // HXT_CHECK(hxtMalloc(&directionsU,3*mesh3D->tetrahedra.num*sizeof(double)));
-      // HXT_CHECK(hxtMalloc(&directionsV,3*mesh3D->tetrahedra.num*sizeof(double)));
-      // HXT_CHECK(hxtMalloc(&directionsW,3*mesh3D->tetrahedra.num*sizeof(double)));
-
-      Msg::Info("Maillages HXT :");
-      printf("Nombre de noeuds : 2D - %d\n",  mesh2D->vertices.num);
-      printf("Nombre de lignes : 2D - %lu\n", mesh2D->lines.num);
-      printf("Nombre de triang : 2D - %lu\n", mesh2D->triangles.num);
-      printf("Nombre de tetras : 2D - %lu\n", mesh2D->tetrahedra.num);
-
-      if(mesh2D->vertices.num == 0){
-        Msg::Error("Surface mesh is empty");
-        HXT_CHECK(hxtMeshDelete(&mesh2D));
-        // HXT_CHECK(hxtMeshDelete(&mesh3D));
+      if(meshBnd->vertices.num == 0){
+        Msg::Error("Boundary mesh is empty : can't compute a size field.");
+        HXT_CHECK(hxtMeshDelete(&meshDom));
+        HXT_CHECK(hxtMeshDelete(&meshBnd));
         Msg::Exit(1);
       }
       
       // 2. Compute curvature of the edges
-      HXT_CHECK(hxtMalloc(&nodalCurvature,mesh2D->vertices.num*sizeof(double)));
+      HXT_CHECK(hxtMalloc(&nodalCurvature,meshBnd->vertices.num*sizeof(double)));
 
       for(auto const &edge : edges){
         discreteEdge dEdge(GModel::current(), edge->tag());
-        // Msg::Info("Edge %d has %d mesh elements and %d mesh vertices\n", edge->tag(), edge->getNumMeshElements(), edge->mesh_vertices.size());
         for(size_t i = 0; i < edge->getNumMeshElementsByType(TYPE_LIN); ++i){
           dEdge.addElement(TYPE_LIN, edge->getMeshElementByType(TYPE_LIN,i));
         }
         dEdge.createGeometry();
-        // Msg::Info("Discrete edge has %d mesh elements and %d mesh vertices\n", dEdge.getNumMeshElements(), dEdge.mesh_vertices.size());
         for(auto const &vert : edge->mesh_vertices){
           double par = dEdge.parFromPoint(vert->point());
-          nodalCurvature[v2c[vert]] = dEdge.curvature(par);
+          nodalCurvature[v2cBnd[vert]] = dEdge.curvature(par);
         }
         while(dEdge.getNumMeshElements()){
           dEdge.removeElement(TYPE_LIN, dEdge.getMeshElement(0));
@@ -3479,114 +3400,29 @@ HXTStatus automaticMeshSizeField::updateHXT(){
       // 3. Compute an approximation of the medial axis
 
       // Get Delaunay triangulation (empty mesh) of the edges vertices
-      HXTMesh *meshBnd;
-      HXT_CHECK(hxtMeshCreate(&meshBnd));
-      HXT_CHECK(Gmsh2Hxt(edges, meshBnd, v2cEdges, c2vEdges));
-      // Remove triangles
-      HXT_CHECK(hxtAlignedFree(&meshBnd->triangles.node));
-      HXT_CHECK(hxtAlignedFree(&meshBnd->triangles.color));
-      meshBnd->triangles.num = meshBnd->triangles.size = 0;
-      // Add a single other point
-      uint64_t n = meshBnd->vertices.num;
-      if(meshBnd->vertices.size == n) {
-        HXT_CHECK( hxtAlignedRealloc(&meshBnd->vertices.coord, 4*sizeof(double) * (n + 1)) );
-        meshBnd->vertices.size++;
-      }
-      meshBnd->vertices.coord[4 * n + 0] = 0;
-      meshBnd->vertices.coord[4 * n + 1] = 0;
-      meshBnd->vertices.coord[4 * n + 2] = 1;
-      meshBnd->vertices.num++;
+      HXT_CHECK(emptyMesh2D(meshBnd, false, "delaunayBnd.msh"));
+      HXT_CHECK(emptyMesh2D(meshDom, true , "delaunayDom.msh"));
 
-      // Compute the Delaunay of only the point in meshBnd->points, meshBnd->lines and the one we added
-      HXTNodeInfo* nodeInfo;
-      HXT_CHECK( hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo)*meshBnd->vertices.num) );
-      markMeshPoints(meshBnd);
-      uint32_t numToInsert = 0;
-      for (uint32_t i=0; i<meshBnd->vertices.num; i++) {
-        if(meshBnd->vertices.coord[4 * i + 3]==1.0 || i==n) {
-          nodeInfo[numToInsert].node = i;
-          nodeInfo[numToInsert].status = HXT_STATUS_TRYAGAIN;
-          numToInsert++;
-        }
-      }
-      HXT_INFO("Creating an empty mesh with %u vertices", numToInsert);
-      HXTDelaunayOptions delaunayOptions = {NULL, NULL, 0, 0, 0, 0, 0, 1, 0};
-      HXT_CHECK( hxtDelaunaySteadyVertices(meshBnd, &delaunayOptions, nodeInfo, numToInsert) );
-      HXT_INFO("Empty mesh finished\n");
-      HXT_CHECK( hxtAlignedFree(&nodeInfo) );
+      Msg::Info("Boundary mesh :");
+      Msg::Info("Nombre de noeuds : %d\n",  meshBnd->vertices.num);
+      Msg::Info("Nombre de lignes : %lu\n", meshBnd->lines.num);
+      Msg::Info("Nombre de triang : %lu\n", meshBnd->triangles.num);
+      Msg::Info("Nombre de tetras : %lu\n", meshBnd->tetrahedra.num);
 
-      // Find the lines that are missing
-      uint64_t nbMissingLines = 0;
-      uint64_t* lines2TetMap;
-      HXT_CHECK( hxtAlignedMalloc(&lines2TetMap, meshBnd->lines.num*sizeof(uint64_t)) );
-      HXT_CHECK( hxtGetLines2TetMap(meshBnd, lines2TetMap, &nbMissingLines) );
-
-      // Recover the missing lines
-      if (nbMissingLines!=0){
-        HXT_INFO("Recovering %" HXTu64 " missing edge(s)", nbMissingLines);
-
-        uint32_t oldNumVertices = meshBnd->vertices.num;
-        HXT_CHECK( hxt_boundary_recovery(meshBnd) );
-
-        if(oldNumVertices < meshBnd->vertices.num) {
-          HXT_INFO("Steiner(s) point(s) were inserted");
-        }
-
-        HXT_CHECK( hxtGetLines2TetMap(meshBnd, lines2TetMap, &nbMissingLines) );
-
-        if(nbMissingLines!=0)
-          return HXT_ERROR_MSG( HXT_STATUS_ERROR, "%" HXTu64 " constrained edge%s still missing (after recovery step).", nbMissingLines, (nbMissingLines>1)?"s are":" is" );
-
-        HXT_INFO("Constrained lines and triangles recovered\n");
-      }
-
-      // HXT_INFO("Writing constrained 3D mesh");
-      // HXT_CHECK(hxtMeshWriteGmsh(meshBnd, "out3D_constrained.msh"));
-
-      // There will be exactly one triangle per non-ghost tetrahedron
-      HXT_CHECK( hxtRemoveGhosts(meshBnd) );
-      HXT_CHECK(hxtAlignedMalloc(&meshBnd->triangles.node, 3 * sizeof(uint32_t) * meshBnd->tetrahedra.num) );
-
-      for(uint64_t i=0; i<meshBnd->tetrahedra.num; i++) {
-        for(int j=0; j<4; j++) {
-          uint32_t n0 = meshBnd->tetrahedra.node[4 * i + getNode0FromFacet(j)];
-          uint32_t n1 = meshBnd->tetrahedra.node[4 * i + getNode1FromFacet(j)];
-          uint32_t n2 = meshBnd->tetrahedra.node[4 * i + getNode2FromFacet(j)];
-          if(n0 != n && n1 != n && n2 != n) {
-            // add the triangle
-            meshBnd->triangles.node[3 * meshBnd->triangles.num + 0] = n0;
-            meshBnd->triangles.node[3 * meshBnd->triangles.num + 1] = n1;
-            meshBnd->triangles.node[3 * meshBnd->triangles.num + 2] = n2;
-            meshBnd->triangles.num++;
-            break;
-          } 
-        }
-      }
-      HXT_ASSERT_MSG(meshBnd->triangles.num == meshBnd->tetrahedra.num, "My math is broken... or is it the mesh ?");
-
-      // HXT_CHECK( hxtAlignedFree(&meshBnd->tetrahedra.color) );
-      // HXT_CHECK( hxtAlignedFree(&meshBnd->tetrahedra.flag) );
-      // HXT_CHECK( hxtAlignedFree(&meshBnd->tetrahedra.node) );
-      // HXT_CHECK( hxtAlignedFree(&meshBnd->tetrahedra.neigh) );
-      // meshBnd->tetrahedra.num = 0;
-      // meshBnd->tetrahedra.size = 0;
-
-      HXT_CHECK(hxtMeshWriteGmsh(meshBnd, "out2D.msh"));
-
-      Msg::Info("MeshBnd :");
-      printf("Nombre de noeuds : 2D - %d\n",  meshBnd->vertices.num);
-      printf("Nombre de lignes : 2D - %lu\n", meshBnd->lines.num);
-      printf("Nombre de triang : 2D - %lu\n", meshBnd->triangles.num);
-      printf("Nombre de tetras : 2D - %lu\n", meshBnd->tetrahedra.num);
+      Msg::Info("Domain mesh :");
+      Msg::Info("Nombre de noeuds : %d\n",  meshDom->vertices.num);
+      Msg::Info("Nombre de lignes : %lu\n", meshDom->lines.num);
+      Msg::Info("Nombre de triang : %lu\n", meshDom->triangles.num);
+      Msg::Info("Nombre de tetras : %lu\n", meshDom->tetrahedra.num);
 
       // Normal vectors at vertices
-
       FILE* myfile = fopen("normals.pos","w");
       fprintf(myfile,"View \"normals\"{\n");
 
       nodeNormals.reserve(3*meshBnd->vertices.num);
       for(uint32_t i = 0; i < 3*meshBnd->vertices.num; ++i)
         nodeNormals[i] = 0.0;
+
       // Loop over the GEdge
       for(auto const &edge : edges){
         for(size_t i = 0; i < edge->getNumMeshElementsByType(TYPE_LIN); ++i){
@@ -3596,12 +3432,12 @@ HXTStatus automaticMeshSizeField::updateHXT(){
             normal = crossprod(t, SVector3(0.,0.,1.));
           }
           normal.normalize();
-          nodeNormals[3*v2cEdges[e.getVertex(0)]+0] += normal(0);
-          nodeNormals[3*v2cEdges[e.getVertex(0)]+1] += normal(1);
-          nodeNormals[3*v2cEdges[e.getVertex(0)]+2] += normal(2);
-          nodeNormals[3*v2cEdges[e.getVertex(1)]+0] += normal(0);
-          nodeNormals[3*v2cEdges[e.getVertex(1)]+1] += normal(1);
-          nodeNormals[3*v2cEdges[e.getVertex(1)]+2] += normal(2);
+          nodeNormals[3*v2cBnd[e.getVertex(0)]+0] += normal(0);
+          nodeNormals[3*v2cBnd[e.getVertex(0)]+1] += normal(1);
+          nodeNormals[3*v2cBnd[e.getVertex(0)]+2] += normal(2);
+          nodeNormals[3*v2cBnd[e.getVertex(1)]+0] += normal(0);
+          nodeNormals[3*v2cBnd[e.getVertex(1)]+1] += normal(1);
+          nodeNormals[3*v2cBnd[e.getVertex(1)]+2] += normal(2);
           // fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",
           //   (e.getVertex(0)->x() + e.getVertex(1)->x())/2.,
           //   (e.getVertex(0)->y() + e.getVertex(1)->y())/2.,
@@ -3627,27 +3463,23 @@ HXTStatus automaticMeshSizeField::updateHXT(){
       fprintf(myfile,"};");
       fclose(myfile);
 
-      forestOptions->v2cBnd = &v2cEdges;
-      forestOptions->c2vBnd = &c2vEdges;
-
-      // Msg::Info("2D Size field is not ready yet");
-      // Msg::Exit(1);
+      forestOptions->v2cBnd = &v2cBnd;
+      forestOptions->c2vBnd = &c2vBnd;
 
       // 4. RTree for surface and boundary meshes
       // Add bboxes of the inside/volume mesh to rtree
       HXTBbox bbox_triangle;
-      for(uint64_t i = 0; i < mesh2D->triangles.num; ++i){
+      for(uint64_t i = 0; i < meshDom->triangles.num; ++i){
         hxtBboxInit(&bbox_triangle);
         for(uint64_t j = 0; j < 3; ++j){
           double coord[3];
-          uint32_t node = mesh2D->triangles.node[3*i+j];
-          for(uint32_t k = 0; k < 3; ++k){ coord[k] = mesh2D->vertices.coord[(size_t) 4*node+k]; }
+          uint32_t node = meshDom->triangles.node[3*i+j];
+          for(uint32_t k = 0; k < 3; ++k){ coord[k] = meshDom->vertices.coord[(size_t) 4*node+k]; }
           hxtBboxAddOne(&bbox_triangle, coord);
         }
         SBoundingBox3d cube_bbox(bbox_triangle.min[0], bbox_triangle.min[1], bbox_triangle.min[2],
                                  bbox_triangle.max[0], bbox_triangle.max[1], bbox_triangle.max[2]);
-        // cube_bbox.makeCube();
-        tetRTree.Insert((double*)(cube_bbox.min()), (double*)(cube_bbox.max()), i);
+        domRTree.Insert((double*)(cube_bbox.min()), (double*)(cube_bbox.max()), i);
       }
 
       // Add bboxes of the boundary mesh to rtree
@@ -3662,21 +3494,28 @@ HXTStatus automaticMeshSizeField::updateHXT(){
         }
         SBoundingBox3d cube_bbox(bbox_edge.min[0], bbox_edge.min[1], bbox_edge.min[2],
                                  bbox_edge.max[0], bbox_edge.max[1], bbox_edge.max[2]);
-        triRTree.Insert((double*)(cube_bbox.min()), (double*)(cube_bbox.max()), i);
+        bndRTree.Insert((double*)(cube_bbox.min()), (double*)(cube_bbox.max()), i);
       }
 
-      // Compute bbox of the mesh
-      HXTBbox bbox_mesh;
-      hxtBboxInit(&bbox_mesh);
-      hxtBboxAdd(&bbox_mesh, mesh2D->vertices.coord, mesh2D->vertices.num);
-      for(int i = 0; i < 3; ++i){
-        bbox_vertices[i  ] = bbox_mesh.min[i];
-        bbox_vertices[i+3] = bbox_mesh.max[i];
-      }
-
-      mesh3D = mesh2D;
-      mesh2D = meshBnd;
+      HXT_CHECK(hxtMalloc(&directions,9*meshDom->vertices.num*sizeof(double)));
+      // HXT_CHECK(hxtMalloc(&directionsU,3*mesh3D->tetrahedra.num*sizeof(double)));
+      // HXT_CHECK(hxtMalloc(&directionsV,3*mesh3D->tetrahedra.num*sizeof(double)));
+      // HXT_CHECK(hxtMalloc(&directionsW,3*mesh3D->tetrahedra.num*sizeof(double)));
     }
+
+    // Compute bbox of the mesh
+    HXTBbox bbox_mesh;
+    hxtBboxInit(&bbox_mesh);
+    hxtBboxAdd(&bbox_mesh, meshBnd->vertices.coord, meshBnd->vertices.num);
+    for(int i = 0; i < 3; ++i){
+      bbox_vertices[i  ] = bbox_mesh.min[i];
+      bbox_vertices[i+3] = bbox_mesh.max[i];
+    }
+
+    // Export RTrees in .pos file
+    bool exportRTree = false;
+    if(exportRTree){ HXT_CHECK(writeRTree(&bndRTree, "rtreeBnd.pos")); }
+    if(exportRTree){ HXT_CHECK(writeRTree(&domRTree, "rtreeDom.pos")); }
 
     // Set the bulk size and the min size from the bbox
     if(_hbulk < 0 || _hmin < 0){
@@ -3693,9 +3532,9 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     if(_hmax < 0)
       _hmax = _hbulk;
 
-    std::vector<double> sizeAtVertices(mesh2D->vertices.num, DBL_MAX);
+    std::vector<double> sizeAtVertices(meshBnd->vertices.num, DBL_MAX);
 
-    forestOptions->aniso = false;
+    forestOptions->aniso = true;
     forestOptions->dim = dim;
     forestOptions->hmax = 1e3; // _hmax;
     forestOptions->hmin = 1e-3; // _hmin;
@@ -3712,57 +3551,38 @@ HXTStatus automaticMeshSizeField::updateHXT(){
     forestOptions->directionsW = directionsW;
     forestOptions->nodeNormals = &nodeNormals[0];
     forestOptions->featureSizeAtVertices = &sizeAtVertices;
-    forestOptions->triRTree = &triRTree;
-    forestOptions->tetRTree = &tetRTree;
-    forestOptions->mesh2D = mesh2D;
-    forestOptions->mesh3D = mesh3D;
-    forestOptions->c2v3D = &c2v3D;
+    forestOptions->bndRTree = &bndRTree;
+    forestOptions->domRTree = &domRTree;
+    forestOptions->mesh2D = meshBnd;
+    forestOptions->mesh3D = meshDom;
+    forestOptions->c2vDom = &c2vDom;
 
     HXT_CHECK(forestCreate(0, NULL, &forest, NULL, forestOptions));
 
-    if(dim == 3){
-      if(_nPointsPerGap > 0){
-        Msg::Info("Detecting features...");
-        HXT_CHECK(featureSize(forest)); 
-      }
-
-      if(_nPointsPerCircle > 0){
-        Msg::Info("Refining octree...");
-        HXT_CHECK(forestRefine(forest));
-      }
-
-      if(_smoothing){
-        if(forestOptions->aniso){
-          Msg::Info("Propagating directions...");
-          HXT_CHECK(forestSmoothDirections(forest));
-          HXT_CHECK(forestExport(forest, "initialSize.pos"));
-        }
-        Msg::Info("Limiting size gradient...");
-        HXT_CHECK(forestSizeSmoothing(forest));
-      }
-
-      double elemEstimation;
-      HXT_CHECK(hxtOctreeElementEstimation(forest, &elemEstimation));
-      Msg::Info("Estimated number of tetrahedra in the bounding box : %ld", (uint64_t) ceil(elemEstimation));
-    }
-    else{
-      if(_nPointsPerGap > 0){
-        Msg::Info("Detecting features...");
-        HXT_CHECK(featureSize2D(forest));
-      }
-
-      if(_nPointsPerCircle > 0){
-        Msg::Info("Refining octree...");
-        HXT_CHECK(forestRefine(forest));
-      }
-
-      if(_smoothing){
-        Msg::Info("Limiting size gradient...");
-        HXT_CHECK(forestSizeSmoothing(forest));
-      }
+    if(_nPointsPerGap > 0){
+      Msg::Info("Detecting features...");
+      if(dim == 3){ HXT_CHECK(featureSize(forest));   }
+      if(dim == 2){ HXT_CHECK(featureSize2D(forest)); }
     }
 
-    // forestInterpolateDirections(forest);
+    if(_nPointsPerCircle > 0){
+      Msg::Info("Refining octree...");
+      HXT_CHECK(forestRefine(forest));
+    }
+
+    if(_smoothing){
+      if(forestOptions->aniso){
+        Msg::Info("Propagating directions...");
+        HXT_CHECK(forestSmoothDirections(forest));
+        HXT_CHECK(forestExport(forest, "initialSize.pos"));
+      }
+      // Msg::Info("Limiting size gradient...");
+      // HXT_CHECK(forestSizeSmoothing(forest));
+    }
+
+    // double elemEstimation;
+    // HXT_CHECK(hxtOctreeElementEstimation(forest, &elemEstimation));
+    // Msg::Info("Estimated number of tetrahedra in the bounding box : %ld", (uint64_t) ceil(elemEstimation));
 
     // Save forest in .p4est file
     std::string forestFile = GModel::current()->getName() + ".p4est";
@@ -3772,27 +3592,24 @@ HXTStatus automaticMeshSizeField::updateHXT(){
 
     // Export .sol file for MMG if aniso
     if(forestOptions->aniso){
-      HXT_CHECK(forestWriteSolFileSurface(forest, "metric2D.sol"));
-      HXT_CHECK(forestWriteSolFileVolume(forest, "metric3D.sol"));
+      HXT_CHECK(forestWriteSolFileSurface(forest, "metricBnd.sol"));
+      HXT_CHECK(forestWriteSolFileVolume(forest, "metricDom.sol"));
     }
 
-    debug = true;
+    debug = false;
     if(debug){
       // Export size field in .pos file
       forestFile = GModel::current()->getName() + ".pos";
       HXT_CHECK(forestExport(forest, forestFile.c_str()));
     }
 
-    if(dim == 3){
-      if(nodalCurvature) HXT_CHECK(hxtFree(&nodalCurvature));
-      if(directions)     HXT_CHECK(hxtFree(&directions));
-      if(directionsU)    HXT_CHECK(hxtFree(&directionsU));
-      if(directionsV)    HXT_CHECK(hxtFree(&directionsV));
-      if(directionsW)    HXT_CHECK(hxtFree(&directionsW));
-      // if(nodeNormals)    HXT_CHECK(hxtFree(&nodeNormals));
-      HXT_CHECK(hxtMeshDelete(&mesh2D));
-      HXT_CHECK(hxtMeshDelete(&mesh3D));
-    }
+    HXT_CHECK(hxtFree(&nodalCurvature));
+    HXT_CHECK(hxtFree(&directions));
+    HXT_CHECK(hxtFree(&directionsU));
+    HXT_CHECK(hxtFree(&directionsV));
+    HXT_CHECK(hxtFree(&directionsW));
+    HXT_CHECK(hxtMeshDelete(&meshBnd));
+    HXT_CHECK(hxtMeshDelete(&meshDom));
   }
 
   return HXT_STATUS_OK;
