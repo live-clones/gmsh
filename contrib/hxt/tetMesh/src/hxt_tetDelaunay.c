@@ -768,17 +768,12 @@ HXT_ASSERT(((size_t) verticesID)%SIMD_ALIGN==0);
 
 
 /**************************************************************
- * compute adjacencies by sorting => O(n log n)
+ * compute adjacencies with a hash table => ~O(n)
  **************************************************************/
-
-static inline uint64_t hash64(uint64_t x) {
-    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
-    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
-    return x ^ (x >> 31);
-}
-
-// key must be unique, and it cannot be 0
-static inline uint64_t hashTableSearch(HXTGroup2* pairs, uint64_t mask, uint64_t key, uint64_t neigh) {
+// search neighbors in an already initialized hash table. `key` must be unique, and cannot be 0
+static inline uint64_t hashTableSearch(HXTGroup2* pairs, uint64_t mask, uint64_t key, uint64_t value) {
+  HXT_ASSERT(key != 0);
+  
   uint64_t hash = hash64(key) & mask;
   while(pairs[hash].v[0] != key && pairs[hash].v[0] != 0) {
     hash = (hash + 1) & mask;
@@ -788,10 +783,9 @@ static inline uint64_t hashTableSearch(HXTGroup2* pairs, uint64_t mask, uint64_t
   }
 
   pairs[hash].v[0] = key;
-  pairs[hash].v[1] = neigh;
+  pairs[hash].v[1] = value;
   return HXT_NO_ADJACENT;
 }
-
 
 static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, const uint64_t start, const uint64_t blength)
 {
@@ -845,7 +839,9 @@ static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, c
 }
 
 
-
+/**************************************************************
+ * compute adjacencies by sorting => O(n log n)
+ **************************************************************/
 // static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, const uint64_t start, const uint64_t blength)
 // {
 //   HXTGroup2* edges;
