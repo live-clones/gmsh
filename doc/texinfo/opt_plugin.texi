@@ -614,11 +614,11 @@ Default value: @code{0}
 @end table
 
 @item Plugin(Integrate)
-Plugin(Integrate) integrates a scalar field over all the elements of the view `View' (if `Dimension' < 0), or over all elements of the prescribed dimension (if `Dimension' > 0). If the field is a vector field,the circulation/flux of the field over line/surface elements is calculated.@*
+Plugin(Integrate) integrates a scalar field over all the elements of the view `View' (if `Dimension' < 0), or over all elements of the prescribed dimension (if `Dimension' > 0). If the field is a vector field, the circulation/flux of the field over  line/surface elements is calculated.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-If `OverTime' = i > -1 , the plugin integrates the scalar view over time instead of over space, starting at iteration i.If `Visible' = 1, the plugin only integrates overvisible entities.@*
+If `OverTime' = i > -1 , the plugin integrates the scalar view over time (using the trapezoidal rule) instead of over space, starting at step i. If `Visible' = 1, the plugin only integrates over visible entities.@*
 @*
 Plugin(Integrate) creates one new list-based view.
 Numeric options:

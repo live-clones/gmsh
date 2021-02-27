@@ -11,7 +11,7 @@ if len(sys.argv) > 1:
     gmsh.open(sys.argv[1])
 
 # For Gmsh to know which types of boundary conditions, materials, etc., are
-# available, one should define "template" ONELAB parameters with names
+# available, you should define "template" ONELAB parameters with names
 # containing the following substrings:
 #
 # - "ONELAB Context/Point Template/"
@@ -22,31 +22,35 @@ if len(sys.argv) > 1:
 # Double- (or right-) clicking on an entity in the GUI will then pop-up a
 # context window where instances of these variables for the given entity can be
 # edited. For example, if the "ONELAB Context/Curve Template/0Boundary
-# condition" exists, double-clicking on curve 123 in the model will create
-# "ONELAB Context/Curve 123/0Boundary condition" (or "ONELAB Context/Physical
-# Curve 1000/0Boundary condition" depending on the choice in the context window,
-# if curve 123 belongs to the physical curve 1000). The context window is also
-# shown automatically when a new physical group is created in the GUI.
+# condition" exists, double-clicking on curve 123 in the model (or in the
+# visibility browser) will create "ONELAB Context/Curve 123/0Boundary condition"
+# (or "ONELAB Context/Physical Curve 1000/0Boundary condition" depending on the
+# choice in the context window, if curve 123 belongs to the physical curve
+# 1000). The context window is also shown automatically when a new physical
+# group is created in the GUI.
 #
-# Every time the ONELAB database is changed, the "ONELAB/Action" parameter is
-# set to "check", which gives the Python code the opportunity to react in the
-# event loop. This could e.g. be used to define new variables depending on the
-# choices just made, or to show/hide existing variables. To make things simpler,
-# several special attributes can be specified ("ServerActionSet",
-# "ServerActionShow", "ServerActionShowMatch", "ServerActionHide", ...) when
-# creating parameters, which allows to set the visibility or the value of
-# dependent parameters without explicitly processing the "check" action.
+# As usual, every time the ONELAB database is changed the "ONELAB/Action"
+# parameter is set to "check", which gives the Python code the opportunity to
+# react in the event loop. This can e.g. be used to define new variables
+# depending on the choices just made, or to show/hide existing variables. To
+# make things simpler, several special attributes can also be specified
+# ("ServerActionSet", "ServerActionShow", "ServerActionShowMatch",
+# "ServerActionHide", ...) when creating parameters, which allow to set the
+# visibility or the value of dependent parameters without explicitly processing
+# the "check" action.
 #
-# Other actions can be defined as well:
+# Finally, explicit actions can be defined as well:
 #
 # * The "ONELAB/Button" parameter governs the behavior of the main "Run" button
 #   in the GUI; in this example the "run" action could trigger running the
-#   finite element solver with the defined parameters
+#   finite element solver with the current values of the parameters
 #
 # * Parameters with the "Macro" attribute set to "Action" will trigger an action
-#   named after their value; in this example we use a macro to create a "select
-#   entity" action where the user is asked to interactively select an entity in
-#   the model.
+#   named after their value; several such actions are defined in example below,
+#   in the main ONELAB tree or in the context window. Setting the "Aspect"
+#   attribute to "MiddleButton", "MiddleReturnButton", "RightButton",
+#   etc. allows to construct a context window with the usual button layout for
+#   action dialogs.
 #
 # See https://gitlab.onelab.info/doc/tutorials/-/wikis/ONELAB-JSON-interface for
 # more information about the ONELAB JSON database interface.
