@@ -960,6 +960,7 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
 static HXTStatus insertion(HXT2Sync* shared2sync,
                            TetLocal* local,
                            int perfectDelaunay,
+                           int allowOuterInsertion,
                            unsigned char* verticesID,
                            HXTNodalSizes* nodalSizes,
                            uint64_t* curTet,
@@ -975,6 +976,9 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
   }
   else {
     color = mesh->tetrahedra.color[*curTet];
+    if(!allowOuterInsertion && color==HXT_COLOR_OUT) {
+      return HXT_STATUS_FALSE;
+    }
   }
 
   if(nodalSizes!=NULL && nodalSizes->enabled && filterTet(mesh, nodalSizes, *curTet, vta)){
@@ -1453,6 +1457,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
             if(nodeInfo[passStart + passIndex].status==HXT_STATUS_TRYAGAIN){
               HXTStatus status = insertion(&shared2sync,
                                            &Locals[threadID],
+                                           options->allowOuterInsertion,
                                            options->perfectDelaunay,
                                            verticesID,
                                            options->nodalSizes,
