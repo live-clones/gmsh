@@ -1175,7 +1175,11 @@ int onelab_cb(std::string action)
 
   if(action == "reset") {
     onelab::server::instance()->clear();
-    onelabUtils::runGmshClient(action, true);
+    try {
+      onelabUtils::runGmshClient(action, true);
+    } catch(...) {
+      Msg::Error("Gmsh was aborted");
+    }
     action = "check";
   }
 
@@ -1189,7 +1193,11 @@ int onelab_cb(std::string action)
 
   do {
     // run Gmsh (only if necessary)
-    onelabUtils::runGmshClient(action, true);
+    try {
+      onelabUtils::runGmshClient(action, true);
+    } catch(...) {
+      Msg::Error("Gmsh was aborted");
+    }
 
     // run GetDP (always -- to not confuse the user)
     onelab::string o("GetDP/Action", action);
@@ -1225,7 +1233,7 @@ int onelab_cb(std::string action)
     try {
       getdp(args, onelab::server::instance());
     } catch(...) {
-      Msg::Error("Calculation was aborted");
+      Msg::Error("GetDP was aborted");
     }
   } while(action == "compute" && !onelabStop &&
           (onelabUtils::incrementLoop("3") || onelabUtils::incrementLoop("2") ||
