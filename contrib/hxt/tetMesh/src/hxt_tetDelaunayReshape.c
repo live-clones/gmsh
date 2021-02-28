@@ -283,7 +283,7 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
   uint64_t size = UINT64_C(1) << u64_log2(5*numTet/2);// we want a hash table of at least 2.5*numTet for a good load factor
   uint64_t mask = size - 1;
 
-  int64_t* faces;
+  uint64_t* faces;
   HXTGroup2* pairs;
 
   HXT_CHECK( hxtMalloc(&pairs, sizeof(HXTGroup2) * size));
@@ -295,7 +295,7 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
   }
 
   // 2.
-  HXT_CHECK( hxtMalloc(&faces, sizeof(int64_t) * 4 * numTet) );
+  HXT_CHECK( hxtMalloc(&faces, sizeof(uint64_t) * 4 * numTet) );
 
   // 3.
   uint64_t curFace = 0;
@@ -315,7 +315,7 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
       else { // it should be the next one in the ball, (we didn't change the order since @diggingACavity)
         HXT_ASSERT(local->ball.array[curFace].neigh==neigh);
         local->ball.array[curFace].neigh = 4 * i + j;
-        faces[4 * i + j] = -curFace; // TODO:we probably don't even need to negate it...
+        faces[4 * i + j] = curFace;
         curFace++;
       }
     }
@@ -362,14 +362,14 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
     for(int f=0; f<4; f++) {
       uint64_t neigh = mesh->tetrahedra.neigh[4 * tetToUndelete + f];
       if(!getDeletedFlag(mesh, neigh / 4)) { // it is an exterior facet, so we have to remove it from the ball !
-        int64_t face = -faces[4 * (in / 4) + f];
+        uint64_t face = faces[4 * (in / 4) + f];
         if(face < curFace) {
           curFace--;
           if(face != curFace) {
             local->ball.array[face] = local->ball.array[curFace];
             uint64_t inOther = local->ball.array[face].neigh;
-            HXT_ASSERT(faces[inOther] == -curFace);
-            faces[inOther] =  -face;
+            HXT_ASSERT(faces[inOther] == curFace);
+            faces[inOther] = face;
           }
           face = curFace;
         }
@@ -379,13 +379,13 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
         if(face != local->ball.num) {
           local->ball.array[face] = local->ball.array[local->ball.num];
           uint64_t inOther = local->ball.array[face].neigh;
-          HXT_ASSERT(faces[inOther] == -local->ball.num);
-          faces[inOther] =  -face;
+          HXT_ASSERT(faces[inOther] == local->ball.num);
+          faces[inOther] = face;
         }
       }
       else { // we have to add a boundary facet at the end
         uint64_t out = faces[4 * (in / 4) + f];
-        faces[out] = -local->ball.num;
+        faces[out] = local->ball.num;
 
 
         uint64_t* curNeigh = mesh->tetrahedra.neigh + tetToUndelete*4;
