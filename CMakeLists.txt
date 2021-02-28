@@ -322,6 +322,7 @@ if(ENABLE_OPENMP)
     set_config_option(HAVE_OPENMP "OpenMP")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    list(APPEND EXTERNAL_LIBRARIES "${OpenMP_CXX_LIBRARIES}")
   elseif(APPLE AND EXISTS "/opt/local/lib/libomp")
     # official Apple compiler with macports' libomp
     set_config_option(HAVE_OPENMP "OpenMP[MacPorts]")
