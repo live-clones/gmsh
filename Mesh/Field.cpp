@@ -2838,17 +2838,19 @@ void BoundaryLayerField::setupFor1d(int iE)
 
   if(!found) {
     GEdge *ge = GModel::current()->getEdgeByTag(iE);
-    GVertex *gv0 = ge->getBeginVertex();
-    if(gv0) {
-      found = std::find(_pointTagsSaved.begin(), _pointTagsSaved.end(),
-                        gv0->tag()) != _pointTagsSaved.end();
-      if(found) _pointTags.push_back(gv0->tag());
-    }
-    GVertex *gv1 = ge->getEndVertex();
-    if(gv1) {
-      found = std::find(_pointTagsSaved.begin(), _pointTagsSaved.end(),
-                        gv1->tag()) != _pointTagsSaved.end();
-      if(found) _pointTags.push_back(gv1->tag());
+    if(ge) {
+      GVertex *gv0 = ge->getBeginVertex();
+      if(gv0) {
+        found = std::find(_pointTagsSaved.begin(), _pointTagsSaved.end(),
+                          gv0->tag()) != _pointTagsSaved.end();
+        if(found) _pointTags.push_back(gv0->tag());
+      }
+      GVertex *gv1 = ge->getEndVertex();
+      if(gv1) {
+        found = std::find(_pointTagsSaved.begin(), _pointTagsSaved.end(),
+                          gv1->tag()) != _pointTagsSaved.end();
+        if(found) _pointTags.push_back(gv1->tag());
+      }
     }
   }
   removeAttractors();
@@ -2875,6 +2877,7 @@ bool BoundaryLayerField::setupFor2d(int iF)
   // OR (better) CHANGE THE PHILOSOPHY
 
   GFace *gf = GModel::current()->getFaceByTag(iF);
+  if(!gf) return false;
   std::vector<GEdge *> ed = gf->edges();
   std::vector<GEdge *> const &embedded_edges = gf->embeddedEdges();
   ed.insert(ed.begin(), embedded_edges.begin(), embedded_edges.end());
@@ -2961,16 +2964,18 @@ void BoundaryLayerField::computeFor1dMesh(double x, double y, double z,
   double distk = 1.e22;
   for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
     GVertex *v = GModel::current()->getVertexByTag(*it);
-    double xp = v->x();
-    double yp = v->y();
-    double zp = v->z();
-    const double dist =
-      sqrt((x - xp) * (x - xp) + (y - yp) * (y - yp) + (z - zp) * (z - zp));
-    if(dist < distk) {
-      distk = dist;
-      xpk = xp;
-      ypk = yp;
-      zpk = zp;
+    if(v) {
+      double xp = v->x();
+      double yp = v->y();
+      double zp = v->z();
+      const double dist =
+        sqrt((x - xp) * (x - xp) + (y - yp) * (y - yp) + (z - zp) * (z - zp));
+      if(dist < distk) {
+        distk = dist;
+        xpk = xp;
+        ypk = yp;
+        zpk = zp;
+      }
     }
   }
 
@@ -3012,6 +3017,7 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
   double beta = CTX::instance()->mesh.smoothRatio;
   if(pp.first.dim == 0) {
     GVertex *v = GModel::current()->getVertexByTag(pp.first.ent);
+    if(!v) return;
     SVector3 t1;
     if(dist < thickness) { t1 = SVector3(1, 0, 0); }
     else {
@@ -3022,6 +3028,7 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
   }
   else if(pp.first.dim == 1) {
     GEdge *e = GModel::current()->getEdgeByTag(pp.first.ent);
+    if(!e) return;
     if(dist < thickness) {
       SVector3 t1 = e->firstDer(pp.first.u);
       double crv = e->curvature(pp.first.u);
@@ -3043,6 +3050,7 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
   }
   else {
     GFace *gf = GModel::current()->getFaceByTag(pp.first.ent);
+    if(!gf) return;
     if(dist < thickness) {
       double cmin, cmax;
       SVector3 dirMax, dirMin;
