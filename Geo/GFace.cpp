@@ -26,6 +26,11 @@
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "BackgroundMeshTools.h"
+#if 0
+// TEST
+#include "meshTriangulation.h"
+// TEST
+#endif
 #endif
 
 #if defined(HAVE_ALGLIB)
@@ -1636,6 +1641,11 @@ void GFace::mesh(bool verbose)
   if(compound.size())
     meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
 
+  // FIXME TEST
+#if 0
+  GFaceInitialMesh (tag());
+#endif
+  
   meshGFace mesher;
   mesher(this, verbose);
 
