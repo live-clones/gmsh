@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,8 +25,6 @@ typedef unsigned long intptr_t;
 #include "Context.h"
 #include "robustPredicates.h"
 #include "BasisFactory.h"
-#include "gmshCrossFields.h"
-#include "automaticMeshSizeField.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -46,6 +44,8 @@ typedef unsigned long intptr_t;
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshPartition.h"
+#include "gmshCrossFields.h"
+#include "automaticMeshSizeField.h"
 #endif
 
 #if defined(HAVE_PLUGINS)
@@ -73,11 +73,11 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
 #endif
 
   // we need at least one model during option parsing
-  GModel *dummy = 0;
+  GModel *dummy = nullptr;
   if(GModel::list.empty()) dummy = new GModel();
 
   // Initialize messages (parallel stuff, etc.)
-  Msg::Init(argc, argv);
+  Msg::Initialize(argc, argv);
 
   // Load default options
   InitOptions(0);
@@ -242,27 +242,16 @@ int GmshWriteFile(const std::string &fileName)
 
 int GmshFinalize()
 {
-#if defined(HAVE_POST)
-  // Delete all PViewData stored in static list of PView class
-  while(PView::list.size() > 0) delete PView::list[PView::list.size() - 1];
-  std::vector<PView *>().swap(PView::list);
+  // delete all models and views
+  DeleteAllModelsAndViews();
 
-  // reset global view tag
-  PView::setGlobalTag(0);
-
-  // Delete static _interpolationSchemes of PViewData class
-  PViewData::removeAllInterpolationSchemes();
+  // clear remaining static data
+#if defined(HAVE_PLUGINS)
+  delete PluginManager::instance();
 #endif
-
-  // Delete static interpolation bases
   BasisFactory::clearAll();
-
-  // Delete all Gmodels
-  while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
-  std::vector<GModel *>().swap(GModel::list);
-
+  Msg::Finalize();
   isInitialized = false;
-
   return 1;
 }
 
@@ -479,7 +468,7 @@ int GmshFLTK(int argc, char **argv)
   }
 
   // launch solver (if requested) and fill onelab tree
-  solver_cb(0, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+  solver_cb(nullptr, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
 
   // loop
   return FlGui::instance()->run();
@@ -506,7 +495,6 @@ GMSH_API int GmshMainBatch(int argc, char **argv)
 
   GmshBatch();
   GmshFinalize();
-
   Msg::Exit(0);
   return 1;
 }
@@ -534,7 +522,7 @@ GMSH_API int GmshMainFLTK(int argc, char **argv)
   if(CTX::instance()->batch) {
     if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
     GmshBatch();
-    // GmshFinalize();
+    GmshFinalize();
     Msg::Exit(0);
   }
 

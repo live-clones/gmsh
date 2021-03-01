@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -66,9 +66,7 @@ void ThinLayer::perform()
 void ThinLayer::checkOppositeTriangles()
 {
   // all endTriangle will be set to active or not
-  for(std::map<MVertex *, std::vector<CorrespVertices *> >::iterator it1 =
-        VertexToCorresp.begin();
-      it1 != VertexToCorresp.end(); it1++) {
+  for(auto it1 = VertexToCorresp.begin(); it1 != VertexToCorresp.end(); it1++) {
     std::vector<CorrespVertices *> vecCorr = (*it1).second;
     for(unsigned int i = 0; i < vecCorr.size(); i++) {
       CorrespVertices *currentCorr = vecCorr[i];
@@ -76,12 +74,9 @@ void ThinLayer::checkOppositeTriangles()
       MVertex *endP0 = currentEndTri.v[0];
       MVertex *endP1 = currentEndTri.v[1];
       MVertex *endP2 = currentEndTri.v[2];
-      std::map<MVertex *, std::vector<CorrespVertices *> >::iterator it2 =
-        VertexToCorresp.find(endP0);
-      std::map<MVertex *, std::vector<CorrespVertices *> >::iterator it3 =
-        VertexToCorresp.find(endP1);
-      std::map<MVertex *, std::vector<CorrespVertices *> >::iterator it4 =
-        VertexToCorresp.find(endP2);
+      auto it2 = VertexToCorresp.find(endP0);
+      auto it3 = VertexToCorresp.find(endP1);
+      auto it4 = VertexToCorresp.find(endP2);
       (*it1).second[i]->setEndTriangleActive(false);
       if(it2 != VertexToCorresp.end()) {
         if(it3 != VertexToCorresp.end()) {
@@ -102,9 +97,7 @@ void ThinLayer::checkOppositeTriangles()
 
 void ThinLayer::fillvecOfThinSheets()
 {
-  for(std::map<MVertex *, std::vector<CorrespVertices *> >::iterator it1 =
-        VertexToCorresp.begin();
-      it1 != VertexToCorresp.end(); it1++) {
+  for(auto it1 = VertexToCorresp.begin(); it1 != VertexToCorresp.end(); it1++) {
     std::vector<CorrespVertices *> vecCorr = (*it1).second;
     for(unsigned int i = 0; i < vecCorr.size(); i++) {
       CorrespVertices *currentCorr = vecCorr[i];
@@ -117,8 +110,7 @@ void ThinLayer::fillvecOfThinSheets()
         (*it1).second[i]->setTagMaster(-1);
         faceXtet faceEndSlave = (*it1).second[i]->getEndTriangle();
         for(unsigned int j = 0; j < 3; j++) {
-          std::map<MVertex *, std::vector<CorrespVertices *> >::iterator it2 =
-            VertexToCorresp.find(faceEndSlave.v[j]);
+          auto it2 = VertexToCorresp.find(faceEndSlave.v[j]);
           if(it2 != VertexToCorresp.end()) {
             if(faceEndSlave.v[j]->onWhat()->dim() == 2) {
               (*it2).second[0]->setTagMaster(
@@ -137,8 +129,7 @@ void ThinLayer::fillvecOfThinSheets()
             for(std::size_t k = 0; k < surroundingTet[j]->getNumVertices();
                 k++) {
               MVertex *ToInsertTmp = surroundingTet[j]->getVertex(k);
-              std::map<MVertex *, std::vector<CorrespVertices *> >::iterator
-                it2 = VertexToCorresp.find(ToInsertTmp);
+              auto it2 = VertexToCorresp.find(ToInsertTmp);
               if(ToInsertTmp->onWhat()->tag() == VToDo->onWhat()->tag()) {
                 // TODO: OR that onwhat -> dim <, for edges
                 if(it2 != VertexToCorresp.end()) {
@@ -151,9 +142,7 @@ void ThinLayer::fillvecOfThinSheets()
                     (*it2).second[0]->setTagMaster(-1);
                     faceXtet faceEndSlave2 = (*it2).second[0]->getEndTriangle();
                     for(unsigned int j = 0; j < 3; j++) {
-                      std::map<MVertex *,
-                               std::vector<CorrespVertices *> >::iterator it3 =
-                        VertexToCorresp.find(faceEndSlave2.v[j]);
+                      auto it3 = VertexToCorresp.find(faceEndSlave2.v[j]);
                       if(it3 != VertexToCorresp.end()) {
                         if(faceEndSlave2.v[j]->onWhat()->dim() == 2) {
                           (*it3).second[0]->setTagMaster(
@@ -182,12 +171,12 @@ std::map<MVertex *, double> ThinLayer::computeAllDistToOppSide()
   // std::vector<MElement*> crackElements;
   std::set<MVertex *> BoundaryVertices;
 
-  for(GModel::riter itr = m->firstRegion(); itr != m->lastRegion(); itr++) {
+  for(auto itr = m->firstRegion(); itr != m->lastRegion(); itr++) {
     GRegion *rTmp = (*itr);
     for(unsigned int i = 0; i < rTmp->tetrahedra.size(); i++) {
       MTet4 *tet4Tmp = TetToTet4[rTmp->tetrahedra[i]];
       for(unsigned int j = 0; j < 4; j++) {
-        if(tet4Tmp->getNeigh(j) == 0) {
+        if(tet4Tmp->getNeigh(j) == nullptr) {
           // find the 4th point,and fill the two vector of the boundary triangle
           faceXtet fxtTmp(tet4Tmp, j);
           for(int k = 0; k < 3; k++) {
@@ -203,8 +192,7 @@ std::map<MVertex *, double> ThinLayer::computeAllDistToOppSide()
       }
     }
   }
-  for(std::set<MVertex *>::iterator it = BoundaryVertices.begin();
-      it != BoundaryVertices.end(); it++) {
+  for(auto it = BoundaryVertices.begin(); it != BoundaryVertices.end(); it++) {
     MVertex *toCompute = (*it);
     double resultTmp = computeDistToOppSide(toCompute);
     AllDistToOppSide[toCompute] = resultTmp;
@@ -225,14 +213,14 @@ double ThinLayer::computeDistToOppSide(MVertex *v)
   MTet4 *PastTet = FirstTet;
   SPoint3 CurrentPos = SPoint3(v->x(), v->y(), v->z());
   SPoint3 LastPos = CurrentPos;
-  int *CurrentTri = 0;
+  int *CurrentTri = nullptr;
   CorrespVertices CVTemp;
   CVTemp.setStartPoint(v);
   CVTemp.setStartNormal(InteriorNormal);
   FindNewPoint((&CurrentPos), CurrentTri, CurrentTet, InteriorNormal);
   faceXtet fxtCV(CurrentTet, (*CurrentTri));
   //	while(CurrentTet->getNeigh((*CurrentTri)) != 0){
-  while(CurrentTet != 0) {
+  while(CurrentTet != nullptr) {
     PastTet = CurrentTet;
     faceXtet fxtCVtmp(PastTet, (*CurrentTri));
     FindNewPoint((&CurrentPos), CurrentTri, CurrentTet, InteriorNormal);
@@ -279,7 +267,7 @@ SVector3 ThinLayer::computeInteriorNormal(MVertex *v)
   for(unsigned int i = 0; i < currentVecTet.size(); i++) {
     MTet4 *tet4Tmp = TetToTet4[currentVecTet[i]];
     for(int j = 0; j < 4; j++) {
-      if(tet4Tmp->getNeigh(j) == 0) {
+      if(tet4Tmp->getNeigh(j) == nullptr) {
         // find the 4th point,and fill the two vector of the boundary triangle
         faceXtet fxtTmp(tet4Tmp, j);
         for(int k = 0; k < 4; k++) {
@@ -388,7 +376,7 @@ SVector3 ThinLayer::computeInteriorNormal(MVertex *v)
 
 MTet4 *ThinLayer::getTetFromPoint(MVertex *v, const SVector3 &InteriorNormal)
 {
-  MTet4 *TetToGet = 0;
+  MTet4 *TetToGet = nullptr;
   std::vector<MTetrahedron *> currentVecTet = VertexToTets[v];
   for(unsigned int i = 0; i < currentVecTet.size(); i++) {
     std::vector<SVector3> vecDir;
@@ -419,9 +407,7 @@ MTet4 *ThinLayer::getTetFromPoint(MVertex *v, const SVector3 &InteriorNormal)
       ThinLayer::IsPositivOrientation(vecDir[2], vecDir[0], InteriorNormal);
     if(isPositiv1) {
       if(isPositiv2) {
-        if(isPositiv3) {
-          TetToGet = TetToTet4[currentVecTet[i]];
-        }
+        if(isPositiv3) { TetToGet = TetToTet4[currentVecTet[i]]; }
       }
     }
   }
@@ -436,9 +422,7 @@ bool ThinLayer::IsPositivOrientation(const SVector3 &a, const SVector3 &b,
                   a.x() * b.y() - a.y() * b.x());
   double ProdScal =
     ProdVec.x() * c.x() + ProdVec.y() * c.y() + ProdVec.z() * c.z();
-  if(ProdScal >= 0.0) {
-    result = true;
-  }
+  if(ProdScal >= 0.0) { result = true; }
   return result;
 }
 
@@ -547,7 +531,7 @@ void ThinLayer::FindNewPoint(SPoint3 *CurrentPoint, int *CurrentTri,
 void ThinLayer::fillVertexToTets()
 {
   GModel *m = GModel::current();
-  for(GModel::riter itr = m->firstRegion(); itr != m->lastRegion(); itr++) {
+  for(auto itr = m->firstRegion(); itr != m->lastRegion(); itr++) {
     GRegion *rTmp = (*itr);
     for(unsigned int i = 0; i < rTmp->tetrahedra.size(); i++) {
       MTetrahedron *elem = rTmp->tetrahedra[i];
@@ -561,7 +545,7 @@ void ThinLayer::fillVertexToTets()
       }
     }
   }
-  for(GModel::riter itr = m->firstRegion(); itr != m->lastRegion(); itr++) {
+  for(auto itr = m->firstRegion(); itr != m->lastRegion(); itr++) {
     GRegion *rTmp = (*itr);
     for(unsigned int i = 0; i < rTmp->tetrahedra.size(); i++) {
       MTetrahedron *elem = rTmp->tetrahedra[i];
@@ -577,7 +561,7 @@ void ThinLayer::fillTetToTet4()
   GModel *m = GModel::current();
   std::vector<MTet4 *> vecAllTet4;
   vecAllTet4.clear();
-  for(GModel::riter itr = m->firstRegion(); itr != m->lastRegion(); itr++) {
+  for(auto itr = m->firstRegion(); itr != m->lastRegion(); itr++) {
     GRegion *rTmp = (*itr);
     for(unsigned int i = 0; i < rTmp->tetrahedra.size(); i++) {
       MTetrahedron *elem = rTmp->tetrahedra[i];

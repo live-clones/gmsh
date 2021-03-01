@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,8 +32,8 @@ protected:
 
 public:
   MPolyhedron(std::vector<MVertex *> v, int num = 0, int part = 0,
-              bool owner = false, MElement *orig = NULL)
-    : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
+              bool owner = false, MElement *orig = nullptr)
+    : MElement(num, part), _owner(owner), _orig(orig), _intpt(nullptr)
   {
     if(v.size() % 4) {
       Msg::Error("Got %d nodes for polyhedron", (int)v.size());
@@ -44,8 +44,8 @@ public:
     _init();
   }
   MPolyhedron(std::vector<MTetrahedron *> vT, int num = 0, int part = 0,
-              bool owner = false, MElement *orig = NULL)
-    : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
+              bool owner = false, MElement *orig = nullptr)
+    : MElement(num, part), _owner(owner), _orig(orig), _intpt(nullptr)
   {
     for(std::size_t i = 0; i < vT.size(); i++) _parts.push_back(vT[i]);
     _init();
@@ -129,11 +129,11 @@ public:
   virtual const nodalBasis *getFunctionSpace(int order = -1,
                                              bool serendip = false) const
   {
-    return (_orig ? _orig->getFunctionSpace(order, serendip) : 0);
+    return (_orig ? _orig->getFunctionSpace(order, serendip) : nullptr);
   }
   virtual const JacobianBasis *getJacobianFuncSpace(int order = -1) const
   {
-    return (_orig ? _orig->getJacobianFuncSpace(order) : 0);
+    return (_orig ? _orig->getJacobianFuncSpace(order) : nullptr);
   }
   virtual void getShapeFunctions(double u, double v, double w, double s[],
                                  int o) const
@@ -160,11 +160,11 @@ public:
   }
   virtual const MVertex *getShapeFunctionNode(int i) const
   {
-    return (_orig ? _orig->getShapeFunctionNode(i) : 0);
+    return (_orig ? _orig->getShapeFunctionNode(i) : nullptr);
   }
   virtual MVertex *getShapeFunctionNode(int i)
   {
-    return (_orig ? _orig->getShapeFunctionNode(i) : 0);
+    return (_orig ? _orig->getShapeFunctionNode(i) : nullptr);
   }
 
   // the parametric coordinates of the polyhedron are
@@ -193,8 +193,6 @@ public:
   {
     return 1;
   }
-  virtual int getVertexSolin(int numEdge, int numVertex){return 0;}
-  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
 };
 
 class MPolygon : public MElement {
@@ -210,16 +208,16 @@ protected:
 
 public:
   MPolygon(std::vector<MVertex *> v, int num = 0, int part = 0,
-           bool owner = false, MElement *orig = NULL)
-    : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
+           bool owner = false, MElement *orig = nullptr)
+    : MElement(num, part), _owner(owner), _orig(orig), _intpt(nullptr)
   {
     for(std::size_t i = 0; i < v.size() / 3; i++)
       _parts.push_back(new MTriangle(v[i * 3], v[i * 3 + 1], v[i * 3 + 2]));
     _initVertices();
   }
   MPolygon(std::vector<MTriangle *> vT, int num = 0, int part = 0,
-           bool owner = false, MElement *orig = NULL)
-    : MElement(num, part), _owner(owner), _orig(orig), _intpt(0)
+           bool owner = false, MElement *orig = nullptr)
+    : MElement(num, part), _owner(owner), _orig(orig), _intpt(nullptr)
   {
     for(std::size_t i = 0; i < vT.size(); i++) {
       MTriangle *t = (MTriangle *)vT[i];
@@ -304,11 +302,11 @@ public:
   virtual const nodalBasis *getFunctionSpace(int order = -1,
                                              bool serendip = false) const
   {
-    return (_orig ? _orig->getFunctionSpace(order, serendip) : 0);
+    return (_orig ? _orig->getFunctionSpace(order, serendip) : nullptr);
   }
   virtual const JacobianBasis *getJacobianFuncSpace(int order = -1) const
   {
-    return (_orig ? _orig->getJacobianFuncSpace(order) : 0);
+    return (_orig ? _orig->getJacobianFuncSpace(order) : nullptr);
   }
   virtual void getShapeFunctions(double u, double v, double w, double s[],
                                  int o) const
@@ -335,11 +333,11 @@ public:
   }
   virtual const MVertex *getShapeFunctionNode(int i) const
   {
-    return (_orig ? _orig->getShapeFunctionNode(i) : 0);
+    return (_orig ? _orig->getShapeFunctionNode(i) : nullptr);
   }
   virtual MVertex *getShapeFunctionNode(int i)
   {
-    return (_orig ? _orig->getShapeFunctionNode(i) : 0);
+    return (_orig ? _orig->getShapeFunctionNode(i) : nullptr);
   }
 
   // the parametric coordinates of the polygon are
@@ -359,8 +357,6 @@ public:
   {
     return 1;
   }
-  virtual int getVertexSolin(int numEdge, int numVertex){return 0;}
-  virtual MFace getFaceSolin(int numFace){return getFace(numFace);}
 };
 
 class MLineChild : public MLine {
@@ -371,13 +367,13 @@ protected:
 
 public:
   MLineChild(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
-             bool owner = false, MElement *orig = NULL)
-    : MLine(v0, v1, num, part), _owner(owner), _orig(orig), _intpt(0)
+             bool owner = false, MElement *orig = nullptr)
+    : MLine(v0, v1, num, part), _owner(owner), _orig(orig), _intpt(nullptr)
   {
   }
   MLineChild(const std::vector<MVertex *> &v, int num = 0, int part = 0,
-             bool owner = false, MElement *orig = NULL)
-    : MLine(v, num, part), _owner(owner), _orig(orig), _intpt(0)
+             bool owner = false, MElement *orig = nullptr)
+    : MLine(v, num, part), _owner(owner), _orig(orig), _intpt(nullptr)
   {
   }
   ~MLineChild()
@@ -389,12 +385,12 @@ public:
                                              bool serendip = false) const
   {
     if(_orig) return _orig->getFunctionSpace(order, serendip);
-    return 0;
+    return nullptr;
   }
   virtual const JacobianBasis *getJacobianFuncSpace(int order = -1) const
   {
     if(_orig) return _orig->getJacobianFuncSpace(order);
-    return 0;
+    return nullptr;
   }
   virtual void getShapeFunctions(double u, double v, double w, double s[],
                                  int o) const
@@ -433,15 +429,15 @@ protected:
 
 public:
   MTriangleBorder(MVertex *v0, MVertex *v1, MVertex *v2, int num = 0,
-                  int part = 0, MElement *d1 = NULL, MElement *d2 = NULL)
-    : MTriangle(v0, v1, v2, num, part), _intpt(0)
+                  int part = 0, MElement *d1 = nullptr, MElement *d2 = nullptr)
+    : MTriangle(v0, v1, v2, num, part), _intpt(nullptr)
   {
     _domains[0] = d1;
     _domains[1] = d2;
   }
   MTriangleBorder(const std::vector<MVertex *> &v, int num = 0, int part = 0,
-                  MElement *d1 = NULL, MElement *d2 = NULL)
-    : MTriangle(v, num, part), _intpt(0)
+                  MElement *d1 = nullptr, MElement *d2 = nullptr)
+    : MTriangle(v, num, part), _intpt(nullptr)
   {
     _domains[0] = d1;
     _domains[1] = d2;
@@ -453,7 +449,7 @@ public:
   {
     if(_domains[0]) return _domains[0]->getParent();
     if(_domains[1]) return _domains[1]->getParent();
-    return NULL;
+    return nullptr;
   }
   virtual int getTypeForMSH() const { return MSH_TRI_B; }
   virtual bool isInside(double u, double v, double w) const;
@@ -469,17 +465,17 @@ protected:
 
 public:
   MPolygonBorder(const std::vector<MTriangle *> &v, int num = 0, int part = 0,
-                 bool own = false, MElement *p = NULL, MElement *d1 = NULL,
-                 MElement *d2 = NULL)
-    : MPolygon(v, num, part, own, p), _intpt(0)
+                 bool own = false, MElement *p = nullptr,
+                 MElement *d1 = nullptr, MElement *d2 = nullptr)
+    : MPolygon(v, num, part, own, p), _intpt(nullptr)
   {
     _domains[0] = d1;
     _domains[1] = d2;
   }
   MPolygonBorder(const std::vector<MVertex *> &v, int num = 0, int part = 0,
-                 bool own = false, MElement *p = NULL, MElement *d1 = NULL,
-                 MElement *d2 = NULL)
-    : MPolygon(v, num, part, own, p), _intpt(0)
+                 bool own = false, MElement *p = nullptr,
+                 MElement *d1 = nullptr, MElement *d2 = nullptr)
+    : MPolygon(v, num, part, own, p), _intpt(nullptr)
   {
     _domains[0] = d1;
     _domains[1] = d2;
@@ -491,7 +487,7 @@ public:
   {
     if(_domains[0]) return _domains[0]->getParent();
     if(_domains[1]) return _domains[1]->getParent();
-    return NULL;
+    return nullptr;
   }
   virtual int getTypeForMSH() const { return MSH_POLYG_B; }
 };
@@ -503,15 +499,15 @@ protected:
 
 public:
   MLineBorder(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
-              MElement *d1 = NULL, MElement *d2 = NULL)
-    : MLine(v0, v1, num, part), _intpt(0)
+              MElement *d1 = nullptr, MElement *d2 = nullptr)
+    : MLine(v0, v1, num, part), _intpt(nullptr)
   {
     _domains[0] = d1;
     _domains[1] = d2;
   }
   MLineBorder(const std::vector<MVertex *> &v, int num = 0, int part = 0,
-              MElement *d1 = NULL, MElement *d2 = NULL)
-    : MLine(v, num, part), _intpt(0)
+              MElement *d1 = nullptr, MElement *d2 = nullptr)
+    : MLine(v, num, part), _intpt(nullptr)
   {
     _domains[0] = d1;
     _domains[1] = d2;
@@ -523,7 +519,7 @@ public:
   {
     if(_domains[0]) return _domains[0]->getParent();
     if(_domains[1]) return _domains[1]->getParent();
-    return NULL;
+    return nullptr;
   }
   virtual int getTypeForMSH() const { return MSH_LIN_B; }
   virtual bool isInside(double u, double v, double w) const;

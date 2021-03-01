@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -136,7 +136,7 @@ StringXString GeneralOptions_String[] = {
   { F, "WatchFilePattern", opt_general_watch_file_pattern , "" ,
      "Pattern of files to merge as they become available"},
 
-   { 0, 0 , 0 , "" , 0 }
+   { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString GeometryOptions_String[] = {
@@ -147,8 +147,7 @@ StringXString GeometryOptions_String[] = {
     "ONELAB" , "Command parsed when double-clicking on a curve, or 'ONELAB' "
     "to edit associated ONELAB parameters" },
   { F|O|D, "DoubleClickedLineCommand" , opt_geometry_double_clicked_curve_command,
-    "ONELAB" , "Command parsed when double-clicking on a curve, or 'ONELAB' "
-    "to edit associated ONELAB parameters" },
+    "ONELAB" , "[Deprecated]" },
   { F|O, "DoubleClickedSurfaceCommand" , opt_geometry_double_clicked_surface_command,
     "ONELAB" , "Command parsed when double-clicking on a surface, or 'ONELAB' "
     "to edit associated ONELAB parameters" },
@@ -161,11 +160,11 @@ StringXString GeometryOptions_String[] = {
     "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use OpenCASCADE "
     "default bahavior)"},
 
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString MeshOptions_String[] = {
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString SolverOptions_String[] = {
@@ -269,7 +268,7 @@ StringXString SolverOptions_String[] = {
     "by appending the unique client id. If baseport is 0 or is not provided, the "
     "port is chosen automatically (recommended))"},
 
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString PostProcessingOptions_String[] = {
@@ -280,7 +279,7 @@ StringXString PostProcessingOptions_String[] = {
   { F|O, "GraphPointCommand" , opt_post_double_clicked_graph_point_command, "" ,
     "Synonym for `DoubleClickedGraphPointCommand'" },
 
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString ViewOptions_String[] = {
@@ -344,7 +343,7 @@ StringXString ViewOptions_String[] = {
   { F|O, "Stipple9" , opt_view_stipple9 , "1*0xFFFF" ,
     "Tenth stippling pattern" },
 
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 StringXString PrintOptions_String[] = {
@@ -353,7 +352,7 @@ StringXString PrintOptions_String[] = {
     "General.Clip0D=Print.Parameter; SetChanged;" ,
     "Command parsed when the print parameter is changed" },
 
-  { 0, 0 , 0 , "" , 0 }
+  { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
 // NUMBERS
@@ -768,10 +767,10 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|S, "SaveOptions" , opt_general_options_save, 0. ,
     "Automatically save current options in General.OptionsFileName (1) or per model (2)"
-    "each time you quit Gmsh?" },
+    "when the graphical user interface is closed?" },
   { F|S, "SaveSession" , opt_general_session_save, 1. ,
     "Automatically save session specific information in General.SessionFileName "
-    "each time you quit Gmsh?" },
+    "when the graphical user interface is closed?" },
   { F,   "ScaleX" , opt_general_scale0 , 1.0 ,
     "X-axis scale factor" },
   { F,   "ScaleY" , opt_general_scale1 , 1.0 ,
@@ -848,7 +847,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ZoomFactor" , opt_general_zoom_factor , 4.0 ,
     "Middle mouse button zoom acceleration factor" },
 
-  { 0, 0 , 0 , 0. , 0 }
+  { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
 StringXNumber GeometryOptions_Number[] = {
@@ -864,8 +863,10 @@ StringXNumber GeometryOptions_Number[] = {
     "entities with built-in geometry kernel?" },
   { F|O, "Curves" , opt_geometry_curves , 1. ,
     "Display geometry curves?" },
-  { F|O, "CurveNumbers" , opt_geometry_curves_num , 0. ,
+  { F|O, "CurveLabels" , opt_geometry_curve_labels , 0. ,
     "Display curve labels?" },
+  { F|O|D, "CurveNumbers" , opt_geometry_curve_labels , 0. ,
+    "[Deprecated]" },
   { F|O, "CurveSelectWidth" , opt_geometry_curve_sel_width , 3. ,
     "Display width of selected curves (in pixels)" },
   { F|O, "CurveType" , opt_geometry_curve_type , 0. ,
@@ -890,22 +891,21 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "LabelType" , opt_geometry_label_type , 0. ,
     "Type of entity label (0: description, 1: elementary entity tag, "
-    "2: physical group tag)" },
+    "2: physical group tag, 3: elementary name, 4: physical name)" },
   { F|O, "Light" , opt_geometry_light , 1. ,
     "Enable lighting for the geometry" },
   { F|O, "LightTwoSide" , opt_geometry_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O|D, "Lines" , opt_geometry_curves , 1. ,
-    "Display geometry curves?" },
-  { F|O|D, "LineNumbers" , opt_geometry_curves_num , 0. ,
-    "Display curve labels?" },
+    "[Deprecated]" },
+  { F|O|D, "LineNumbers" , opt_geometry_curve_labels , 0. ,
+    "[Deprecated]" },
   { F|O|D, "LineSelectWidth" , opt_geometry_curve_sel_width , 3. ,
-    "Display width of selected curves (in pixels)" },
+    "[Deprecated]" },
   { F|O|D, "LineType" , opt_geometry_curve_type , 0. ,
-    "Display curves as solid color segments (0), 3D cylinders (1) or tapered "
-    "cylinders (2)" },
+    "[Deprecated]" },
   { F|O|D, "LineWidth" , opt_geometry_curve_width , 2. ,
-    "Display width of lines (in pixels)" },
+    "[Deprecated]" },
 
   { F|O, "MatchGeomAndMesh" , opt_geometry_match_geom_and_mesh, 0 ,
     "Matches geometries and meshes" },
@@ -974,8 +974,10 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "Points" , opt_geometry_points , 1. ,
     "Display geometry points?" },
-  { F|O, "PointNumbers" , opt_geometry_points_num , 0. ,
+  { F|O, "PointLabels" , opt_geometry_point_labels , 0. ,
     "Display points labels?" },
+  { F|O|D, "PointNumbers" , opt_geometry_point_labels , 0. ,
+    "[Deprecated]" },
   { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 6. ,
     "Display size of selected points (in pixels)" },
   { F|O, "PointSize" , opt_geometry_point_size , 4. ,
@@ -998,8 +1000,10 @@ StringXNumber GeometryOptions_Number[] = {
     "Snapping grid spacing along the Z-axis" },
   { F|O, "Surfaces" , opt_geometry_surfaces , 0. ,
     "Display geometry surfaces?" },
-  { F|O, "SurfaceNumbers" , opt_geometry_surfaces_num , 0. ,
+  { F|O, "SurfaceLabels" , opt_geometry_surface_labels , 0. ,
     "Display surface labels?" },
+  { F|O|D, "SurfaceNumbers" , opt_geometry_surface_labels , 0. ,
+    "[Deprecated]" },
   { F|O, "SurfaceType" , opt_geometry_surface_type , 0. ,
     "Surface display type (0: cross, 1: wireframe, 2: solid). Wireframe and solid "
     "are not available with the built-in geometry kernel." },
@@ -1033,10 +1037,12 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "Volumes" , opt_geometry_volumes , 0. ,
     "Display geometry volumes?" },
-  { F|O, "VolumeNumbers" , opt_geometry_volumes_num , 0. ,
+  { F|O, "VolumeLabels" , opt_geometry_volume_labels , 0. ,
     "Display volume labels?" },
+  { F|O|D, "VolumeNumbers" , opt_geometry_volume_labels , 0. ,
+    "[Deprecated]" },
 
-  { 0, 0 , 0 , 0. , 0 }
+  { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
 StringXNumber MeshOptions_Number[] = {
@@ -1065,8 +1071,10 @@ StringXNumber MeshOptions_Number[] = {
     "Field format for Nastran BDF files (0: free, 1: small, 2: large)" },
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
-  { F|O, "BoundaryLayerFanPoints" , opt_mesh_boundary_layer_fan_points, 5. ,
-    "Number of points (per Pi radians) for 2D boundary layer fans" },
+  { F|O, "BoundaryLayerFanElements" , opt_mesh_boundary_layer_fan_elements, 5. ,
+    "Number of elements (per Pi radians) for 2D boundary layer fans" },
+  { F|O|D, "BoundaryLayerFanPoints" , opt_mesh_boundary_layer_fan_elements, 5. ,
+    "[Deprecated]" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Order of the mesh to be created by coarsening CGNS structured zones (1 to "
@@ -1083,21 +1091,19 @@ StringXNumber MeshOptions_Number[] = {
    "Export transfinite meshes as structured CGNS grids" },
   { F|O|D, "CharacteristicLengthExtendFromBoundary" ,
     opt_mesh_lc_extend_from_boundary, 1. ,
-    "Extend computation of mesh element sizes from the boundaries into the interior "
-    "(for 3D Delaunay, use 1: longest or 2: shortest surface edge length)"},
+    "[Deprecated]"},
   { F|O|D, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
-    "Factor applied to all mesh element sizes" },
+    "[Deprecated]" },
   { F|O|D, "CharacteristicLengthMin" , opt_mesh_lc_min, 0.0 ,
-    "Minimum mesh element size" },
+    "[Deprecated]" },
   { F|O|D, "CharacteristicLengthMax" , opt_mesh_lc_max, 1.e22,
-    "Maximum mesh element size" },
+    "[Deprecated]" },
   { F|O|D, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
-    "Automatically compute mesh element sizes from curvature" },
+    "[Deprecated]" },
   { F|O|D, "CharacteristicLengthFromPoints" , opt_mesh_lc_from_points , 1. ,
-    "Compute mesh element sizes from values given at geometry points" },
+    "[Deprecated]" },
   { F|O|D, "CharacteristicLengthFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
-    "Compute mesh element sizes from values given at geometry points defining "
-    "parametric curves"},
+    "[Deprecated]"},
   { F,   "Clip" , opt_mesh_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
@@ -1108,7 +1114,7 @@ StringXNumber MeshOptions_Number[] = {
     "surface, 1: on the original geometrical surfaces - incompatible with e.g. high-order "
     "meshing)" },
   { F|O|D, "CompoundCharacteristicLengthFactor" , opt_mesh_compound_lc_factor , 0.5 ,
-    "Mesh size factor applied to compound parts" },
+    "[Deprecated]" },
   { F|O, "CompoundMeshSizeFactor" , opt_mesh_compound_lc_factor , 0.5 ,
     "Mesh size factor applied to compound parts" },
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
@@ -1200,8 +1206,10 @@ StringXNumber MeshOptions_Number[] = {
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "Lines" , opt_mesh_lines , 0. ,
     "Display mesh lines (1D elements)?" },
-  { F|O, "LineNumbers" , opt_mesh_lines_num , 0. ,
+  { F|O, "LineLabels" , opt_mesh_line_labels , 0. ,
     "Display mesh line labels?" },
+  { F|O|D, "LineNumbers" , opt_mesh_line_labels , 0. ,
+    "[Deprecated]" },
   { F|O, "LineWidth" , opt_mesh_line_width , 1.0 ,
     "Display width of mesh lines (in pixels)" },
 
@@ -1231,11 +1239,16 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MeshSizeMax" , opt_mesh_lc_max, 1.e22,
     "Maximum mesh element size" },
   { F|O, "MeshSizeFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
-    "Automatically compute mesh element sizes from curvature" },
+    "Automatically compute mesh element sizes from curvature, using the value "
+    "as the target number of elements per 2 * Pi radians" },
+  { F|O, "MeshSizeFromCurvatureIsotropic" , opt_mesh_lc_from_curvature_iso , 0. ,
+    "Force isotropic curvature estimation when the mesh size is computed from "
+    "curvature" },
   { F|O, "MeshSizeFromPoints" , opt_mesh_lc_from_points , 1. ,
     "Compute mesh element sizes from values given at geometry points" },
   { F|O, "MeshSizeFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
-    "Compute mesh element sizes from values given at geometry points defining parametric curves"},
+    "Compute mesh element sizes from values given at geometry points defining "
+    "parametric curves"},
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
     "METIS partitioning algorithm 'ptype' (1: Recursive, 2: K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 2. ,
@@ -1250,14 +1263,17 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MetisRefinementAlgorithm" , opt_mesh_partition_metis_refinement_algorithm, 2. ,
     "METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
-  { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
+  { F|O, "MinimumCircleNodes" , opt_mesh_min_circle_nodes, 7. ,
     "Minimum number of nodes used to mesh circles and ellipses" },
-  { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
-    "Minimum number of points used to mesh curves other than lines, circles and "
+  { F|O|D, "MinimumCirclePoints" , opt_mesh_min_circle_nodes, 7. ,
+    "[Deprecated]" },
+  { F|O, "MinimumCurveNodes" , opt_mesh_min_curve_nodes, 3. ,
+    "Minimum number of nodes used to mesh curves other than lines, circles and "
     "ellipses"},
-  { F|O, "MinimumElementsPerTwoPi" , opt_mesh_min_elements_2pi, 6. ,
-    "Minimum number of elements per 2 * Pi radians when the mesh size is adapted "
-    "to the curvature" },
+  { F|O|D, "MinimumCurvePoints" , opt_mesh_min_curve_nodes, 3. ,
+    "[Deprecated]"},
+  { F|O, "MinimumElementsPerTwoPi" , opt_mesh_lc_from_curvature, 0. ,
+    "[Deprecated]" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 4.1 ,
     "Version of the MSH file format to use" },
   { F|O, "MedFileMinorVersion" , opt_mesh_med_file_minor_version , -1. ,
@@ -1325,6 +1341,14 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "NewtonConvergenceTestXYZ" , opt_mesh_newton_convergence_test_xyz , 0. ,
     "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
     "coordinates (experimental)" },
+  { F|O, "Nodes" , opt_mesh_nodes , 0. ,
+    "Display mesh nodes?" },
+  { F|O, "NodeLabels" , opt_mesh_node_labels , 0. ,
+    "Display mesh node labels?" },
+  { F|O, "NodeSize" , opt_mesh_node_size , 4. ,
+    "Display size of mesh nodes (in pixels)" },
+  { F|O, "NodeType" , opt_mesh_node_type , 0. ,
+    "Display mesh nodes as solid color dots (0) or 3D spheres (1)" },
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
     "Display size of normal vectors (in pixels)" },
   { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,
@@ -1338,14 +1362,14 @@ StringXNumber MeshOptions_Number[] = {
     "Optimize the mesh using Netgen to improve the quality of tetrahedral "
     "elements" },
 
-  { F|O, "Points" , opt_mesh_points , 0. ,
-    "Display mesh nodes (vertices)?" },
-  { F|O, "PointNumbers" , opt_mesh_points_num , 0. ,
-    "Display mesh node labels?" },
-  { F|O, "PointSize" , opt_mesh_point_size , 4. ,
-    "Display size of mesh nodes (in pixels)" },
-  { F|O, "PointType" , opt_mesh_point_type , 0. ,
-    "Display mesh nodes as solid color dots (0) or 3D spheres (1)" },
+  { F|O|D, "Points" , opt_mesh_nodes , 0. ,
+    "[Deprecated]" },
+  { F|O|D, "PointNumbers" , opt_mesh_node_labels , 0. ,
+    "[Deprecated]" },
+  { F|O|D, "PointSize" , opt_mesh_node_size , 4. ,
+    "[Deprecated]" },
+  { F|O|D, "PointType" , opt_mesh_node_type , 0. ,
+    "[Deprecated]" },
   { F|O, "Prisms" , opt_mesh_prisms , 1. ,
     "Display mesh prisms?" },
   { F|O, "Pyramids" , opt_mesh_pyramids , 1. ,
@@ -1458,12 +1482,14 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,
     "Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, "
     "3: barycentric)" },
-  { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. ,
+  { F|O, "SurfaceEdges" , opt_mesh_surface_edges , 1. ,
     "Display edges of surface mesh?" },
-  { F|O, "SurfaceFaces" , opt_mesh_surfaces_faces , 0. ,
+  { F|O, "SurfaceFaces" , opt_mesh_surface_faces , 0. ,
     "Display faces of surface mesh?" },
-  { F|O, "SurfaceNumbers" , opt_mesh_surfaces_num , 0. ,
+  { F|O, "SurfaceLabels" , opt_mesh_surface_labels , 0. ,
     "Display surface mesh element labels?" },
+  { F|O|D, "SurfaceNumbers" , opt_mesh_surface_labels , 0. ,
+    "[Deprecated]" },
   { F|O, "SwitchElementTags", opt_mesh_switch_elem_tags, 0. ,
     "Invert elementary and physical tags when reading the mesh"},
 
@@ -1483,19 +1509,21 @@ StringXNumber MeshOptions_Number[] = {
     "Use strict format specification for UNV files, with 'D' for exponents (instead of "
     "'E' as used by some tools)" },
 
-  { F|O, "VolumeEdges" , opt_mesh_volumes_edges , 1. ,
+  { F|O, "VolumeEdges" , opt_mesh_volume_edges , 1. ,
     "Display edges of volume mesh?" },
-  { F|O, "VolumeFaces" , opt_mesh_volumes_faces , 0. ,
+  { F|O, "VolumeFaces" , opt_mesh_volume_faces , 0. ,
     "Display faces of volume mesh?" },
-  { F|O, "VolumeNumbers" , opt_mesh_volumes_num , 0. ,
+  { F|O, "VolumeLabels" , opt_mesh_volume_labels , 0. ,
     "Display volume mesh element labels?" },
+  { F|O|D, "VolumeNumbers" , opt_mesh_volume_labels , 0. ,
+    "[Deprecated]" },
   { F|O, "Voronoi" , opt_mesh_voronoi , 0. ,
     "Display the voronoi diagram" },
 
   { F|O, "ZoneDefinition" , opt_mesh_zone_definition , 0. ,
     "Method for defining a zone (0: single zone, 1: by partition, 2: by physical)" },
 
-  { 0, 0 , 0 , 0. , 0 }
+  { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
 StringXNumber SolverOptions_Number[] = {
@@ -1530,7 +1558,7 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "Timeout" , opt_solver_timeout , 5. ,
     "Time (in seconds) before closing the socket if no connection is happening" },
 
-  { 0, 0 , 0 , 0. , 0 }
+  { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
 StringXNumber PostProcessingOptions_Number[] = {
@@ -1587,7 +1615,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 
-  { 0, 0 , 0 , 0. }
+  { 0, nullptr , nullptr , 0. }
 } ;
 
 StringXNumber ViewOptions_Number[] = {
@@ -1879,7 +1907,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Width" , opt_view_size0 , 300. ,
     "Width (in pixels) of the scale or 2D plot" },
 
-  { 0, 0 , 0 , 0. , 0 }
+  { 0, nullptr , nullptr , 0. , nullptr }
 } ;
 
 StringXNumber PrintOptions_Number[] = {
@@ -2001,7 +2029,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },
 
-  { 0, 0 , 0 , 0. }
+  { 0, nullptr , nullptr , 0. }
 } ;
 
 // COLORS
@@ -2039,7 +2067,7 @@ StringXColor GeneralOptions_Color[] = {
   { F|O, "SpecularLight" , opt_general_color_specular_light,
     {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255}, {255, 255, 255, 255},
     "Specular light color" },
-  { 0, 0 , 0 ,  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr ,  {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , nullptr }
 } ;
 
 StringXColor GeometryOptions_Color[] = {
@@ -2051,7 +2079,7 @@ StringXColor GeometryOptions_Color[] = {
     "Normal geometry curve color" },
   { F|O|D, "Lines" , opt_geometry_color_curves ,
     {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {0, 0, 255, 255},
-    "Normal geometry curve color" },
+    "[Deprecated]" },
   { F|O, "Surfaces" , opt_geometry_color_surfaces ,
     {128, 128, 128, 255}, {128, 128, 128, 255}, {0, 0, 0, 255}, {128, 128, 128, 255},
     "Normal geometry surface color" },
@@ -2079,7 +2107,7 @@ StringXColor GeometryOptions_Color[] = {
   { F|O, "Projection" , opt_geometry_color_projection ,
     {0, 255, 0, 255}, {0, 255, 0, 255}, {0, 0, 0, 255}, {0, 255, 0, 255},
     "Projection surface color" },
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 #define COLW  {210, 210, 210, 255}
@@ -2111,12 +2139,18 @@ StringXColor GeometryOptions_Color[] = {
 #define COL19 {184, 0, 255, 255}
 
 StringXColor MeshOptions_Color[] = {
-  { F|O, "Points" , opt_mesh_color_nodes ,
+  { F|O, "Nodes" , opt_mesh_color_nodes ,
     {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {0, 0, 255, 255},
     "Mesh node color" },
-  { F|O, "PointsSup" , opt_mesh_color_nodes_sup ,
+  { F|O|D, "Points" , opt_mesh_color_nodes ,
+    {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255}, {0, 0, 255, 255},
+    "[Deprecated]" },
+  { F|O, "NodesSup" , opt_mesh_color_nodes_sup ,
     {255, 0, 255, 255}, {255, 0, 255, 255}, {0, 0, 0, 255}, {255, 0, 255, 255},
     "Second order mesh node color" },
+  { F|O|D, "PointsSup" , opt_mesh_color_nodes_sup ,
+    {255, 0, 255, 255}, {255, 0, 255, 255}, {0, 0, 0, 255}, {255, 0, 255, 255},
+    "[Deprecated]" },
   { F|O, "Lines" , opt_mesh_color_lines ,
     {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
     "Mesh line color" },
@@ -2187,15 +2221,15 @@ StringXColor MeshOptions_Color[] = {
     "Color 18 in color carousel" },
   { F|O, "Nineteen" , opt_mesh_color_19, COL19, COL19, COLW, COL19,
     "Color 19 in color carousel" },
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , {0, 0, 0, 0} , nullptr }
 } ;
 
 StringXColor SolverOptions_Color[] = {
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 StringXColor PostProcessingOptions_Color[] = {
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 #define ELECOL  {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}, {245, 245, 245, 255}
@@ -2222,11 +2256,11 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Background2D" , opt_view_color_background2d ,
     {255, 255, 255, 200}, {255, 255, 255, 200}, {255, 255, 255, 200}, {245, 245, 245, 200},
     "Bacground color for 2D plots" },
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 StringXColor PrintOptions_Color[] = {
-  { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
+  { 0, nullptr , nullptr , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , nullptr }
 } ;
 
 #undef S

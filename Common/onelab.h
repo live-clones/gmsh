@@ -1,4 +1,4 @@
-// ONELAB - Copyright (C) 2011-2020 Universite de Liege - Universite catholique
+// ONELAB - Copyright (C) 2011-2021 Universite de Liege - Universite catholique
 // de Louvain
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -48,9 +48,10 @@ namespace onelab {
   class parameter {
   private:
     // the name of the parameter, including its '/'-separated path in the
-    // parameter hierarchy. Parameters or subpaths can start with numbers to
-    // force their relative ordering (such numbers are automatically hidden in
-    // the interface). All strings in onelab are supposed to be UTF8-encoded.
+    // parameter hierarchy. Subpaths can start with white space, numbers or
+    // braces (in that order) to force their relative ordering; getShortName()
+    // can be used to remove these prefixes automatically. All strings in ONELAB
+    // are supposed to be UTF8-encoded.
     std::string _name;
     // the parameter label: if provided it serves as a better way to display the
     // parameter in the interface
@@ -92,11 +93,11 @@ namespace onelab {
     void setChanged(int changed, const std::string &client = "")
     {
       if(client.size()) {
-        std::map<std::string, int>::iterator it = _clients.find(client);
+        auto it = _clients.find(client);
         if(it != _clients.end()) it->second = changed;
       }
       else {
-        for(std::map<std::string, int>::iterator it = _clients.begin();
+        for(auto it = _clients.begin();
             it != _clients.end(); it++)
           it->second = changed;
       }
@@ -171,7 +172,7 @@ namespace onelab {
     int getChanged(const std::string &client = "") const
     {
       if(client.size()) {
-        std::map<std::string, int>::const_iterator it = _clients.find(client);
+        auto it = _clients.find(client);
         if(it != _clients.end())
           return it->second;
         else
@@ -179,7 +180,7 @@ namespace onelab {
       }
       else {
         int changed = 0;
-        for(std::map<std::string, int>::const_iterator it = _clients.begin();
+        for(auto it = _clients.begin();
             it != _clients.end(); it++) {
           changed = std::max(changed, it->second);
         }
@@ -192,7 +193,7 @@ namespace onelab {
     bool getReadOnly() const { return _readOnly; }
     std::string getAttribute(const std::string &key) const
     {
-      std::map<std::string, std::string>::const_iterator it =
+      auto it =
         _attributes.find(key);
       if(it != _attributes.end()) return it->second;
       return "";
@@ -261,13 +262,13 @@ namespace onelab {
               << getChangedValue() << charSep() << (getVisible() ? 1 : 0)
               << charSep() << (getReadOnly() ? 1 : 0) << charSep()
               << _attributes.size() << charSep();
-      for(std::map<std::string, std::string>::const_iterator it =
+      for(auto it =
             _attributes.begin();
           it != _attributes.end(); it++)
         sstream << sanitize(it->first) << charSep() << sanitize(it->second)
                 << charSep();
       sstream << getClients().size() << charSep();
-      for(std::map<std::string, int>::const_iterator it = getClients().begin();
+      for(auto it = getClients().begin();
           it != getClients().end(); it++)
         sstream << sanitize(it->first) << charSep() << (it->second ? 1 : 0)
                 << charSep();
@@ -353,7 +354,7 @@ namespace onelab {
               << ", \"readOnly\":" << (getReadOnly() ? "true" : "false");
       if(_attributes.size()) {
         sstream << ", \"attributes\":{ ";
-        for(std::map<std::string, std::string>::const_iterator it =
+        for(auto it =
               _attributes.begin();
             it != _attributes.end(); it++) {
           if(it != _attributes.begin()) sstream << ", ";
@@ -364,7 +365,7 @@ namespace onelab {
       }
       if(getClients().size()) {
         sstream << ", \"clients\":{ ";
-        for(std::map<std::string, int>::const_iterator it =
+        for(auto it =
               getClients().begin();
             it != getClients().end(); it++) {
           if(it != getClients().begin()) sstream << ", ";
@@ -377,7 +378,7 @@ namespace onelab {
 #if defined(HAVE_PICOJSON)
     virtual bool fromJSON(const picojson::value::object &par)
     {
-      for(picojson::value::object::const_iterator it = par.begin();
+      for(auto it = par.begin();
           it != par.end(); ++it) {
         if(it->first == "name") {
           if(!it->second.is<std::string>()) return false;
@@ -407,7 +408,7 @@ namespace onelab {
           if(!it->second.is<picojson::object>()) return false;
           const picojson::value::object &obj =
             it->second.get<picojson::object>();
-          for(picojson::value::object::const_iterator i = obj.begin();
+          for(auto i = obj.begin();
               i != obj.end(); ++i) {
             std::string key(i->first);
             if(!i->second.is<std::string>()) return false;
@@ -418,7 +419,7 @@ namespace onelab {
           if(!it->second.is<picojson::object>()) return false;
           const picojson::value::object &obj =
             it->second.get<picojson::object>();
-          for(picojson::value::object::const_iterator i = obj.begin();
+          for(auto i = obj.begin();
               i != obj.end(); ++i) {
             std::string client(i->first);
             if(!i->second.is<double>()) return false;
@@ -514,7 +515,7 @@ namespace onelab {
     }
     std::string getValueLabel(double value) const
     {
-      std::map<double, std::string>::const_iterator it =
+      auto it =
         _valueLabels.find(value);
       if(it != _valueLabels.end()) return it->second;
       return "";
@@ -558,7 +559,7 @@ namespace onelab {
       for(std::size_t i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
       sstream << _valueLabels.size() << charSep();
-      for(std::map<double, std::string>::const_iterator it =
+      for(auto it =
             _valueLabels.begin();
           it != _valueLabels.end(); it++) {
         sstream << it->first << charSep() << sanitize(it->second) << charSep();
@@ -608,7 +609,7 @@ namespace onelab {
       }
       if(_valueLabels.size()) {
         sstream << ", \"valueLabels\":{ ";
-        for(std::map<double, std::string>::const_iterator it =
+        for(auto it =
               _valueLabels.begin();
             it != _valueLabels.end(); it++) {
           if(it != _valueLabels.begin()) sstream << ", ";
@@ -627,7 +628,7 @@ namespace onelab {
       if(err.size()) return false;
       if(!v.is<picojson::object>()) return false;
       const picojson::value::object &par = v.get<picojson::object>();
-      picojson::value::object::const_iterator it = par.find("type");
+      auto it = par.find("type");
       if(it == par.end()) return false;
       if(it->second.to_str() == "number") {
         fromJSON(par);
@@ -640,7 +641,7 @@ namespace onelab {
     bool fromJSON(const picojson::value::object &par)
     {
       if(!parameter::fromJSON(par)) return false;
-      for(picojson::value::object::const_iterator it = par.begin();
+      for(auto it = par.begin();
           it != par.end(); ++it) {
         if(it->first == "values") {
           if(!it->second.is<picojson::array>()) return false;
@@ -680,7 +681,7 @@ namespace onelab {
           if(!it->second.is<picojson::object>()) return false;
           const picojson::value::object &obj =
             it->second.get<picojson::object>();
-          for(picojson::value::object::const_iterator i = obj.begin();
+          for(auto i = obj.begin();
               i != obj.end(); ++i) {
             if(!i->second.is<double>()) return false;
             _valueLabels[i->second.get<double>()] = i->first;
@@ -817,7 +818,7 @@ namespace onelab {
       if(err.size()) return false;
       if(!v.is<picojson::object>()) return false;
       const picojson::value::object &par = v.get<picojson::object>();
-      picojson::value::object::const_iterator it = par.find("type");
+      auto it = par.find("type");
       if(it == par.end()) return false;
       if(it->second.to_str() == "string") {
         fromJSON(par);
@@ -830,7 +831,7 @@ namespace onelab {
     bool fromJSON(const picojson::value::object &par)
     {
       if(!parameter::fromJSON(par)) return false;
-      for(picojson::value::object::const_iterator it = par.begin();
+      for(auto it = par.begin();
           it != par.end(); ++it) {
         if(it->first == "values") {
           if(!it->second.is<picojson::array>()) return false;
@@ -861,7 +862,7 @@ namespace onelab {
   };
 
   // The parameter space, i.e., the set of parameters stored and handled by the
-  // onelab server.
+  // ONELAB server.
   class parameterSpace {
   private:
     std::set<number *, parameterLessThan> _numbers;
@@ -875,7 +876,7 @@ namespace onelab {
     {
       if(name.empty() && client.size()) {
         std::vector<T *> toDelete;
-        for(typename std::set<T *, parameterLessThan>::iterator it = ps.begin();
+        for(auto it = ps.begin();
             it != ps.end();) {
           T *p = *it;
           if(p->hasClient(client)) {
@@ -889,7 +890,7 @@ namespace onelab {
       }
       else {
         T tmp(name);
-        typename std::set<T *, parameterLessThan>::iterator it = ps.find(&tmp);
+        auto it = ps.find(&tmp);
         if(it != ps.end()) {
           T *p = *it;
           if(client.empty() || p->hasClient(client)) {
@@ -910,7 +911,7 @@ namespace onelab {
               std::set<T *, parameterLessThan> &ps)
     {
       _mutex.lock();
-      typename std::set<T *, parameterLessThan>::iterator it = ps.find((T *)&p);
+      auto it = ps.find((T *)&p);
       if(it != ps.end()) {
         (*it)->update(p);
         if(client.size())
@@ -935,13 +936,13 @@ namespace onelab {
     {
       p.clear();
       if(name.empty()) {
-        for(typename std::set<T *, parameterLessThan>::iterator it = ps.begin();
+        for(auto it = ps.begin();
             it != ps.end(); it++)
           p.push_back(**it);
       }
       else {
         T tmp(name);
-        typename std::set<T *, parameterLessThan>::iterator it = ps.find(&tmp);
+        auto it = ps.find(&tmp);
         if(it != ps.end()) {
           if(client.size()){
             _mutex.lock();
@@ -958,7 +959,7 @@ namespace onelab {
                std::set<T *, parameterLessThan> ps)
     {
       T tmp(name);
-      typename std::set<T *, parameterLessThan>::iterator it = ps.find(&tmp);
+      auto it = ps.find(&tmp);
       if(it != ps.end()) {
         if(client.size()){
           _mutex.lock();
@@ -967,7 +968,7 @@ namespace onelab {
         }
         return *it;
       }
-      return NULL;
+      return nullptr;
     }
 
   public:
@@ -978,7 +979,7 @@ namespace onelab {
       if(name.empty() && client.empty()) {
         std::set<parameter *, parameterLessThan> ps;
         getAllParameters(ps);
-        for(std::set<parameter *, parameterLessThan>::iterator it = ps.begin();
+        for(auto it = ps.begin();
             it != ps.end(); it++)
           delete *it;
         _numbers.clear();
@@ -1054,7 +1055,7 @@ namespace onelab {
     {
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
-      for(std::set<parameter *, parameterLessThan>::iterator it = ps.begin();
+      for(auto it = ps.begin();
           it != ps.end(); it++)
         if((*it)->hasClient(client)) return true;
       return false;
@@ -1066,7 +1067,7 @@ namespace onelab {
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
       int changed = 0;
-      for(std::set<parameter *, parameterLessThan>::iterator it = ps.begin();
+      for(auto it = ps.begin();
           it != ps.end(); it++) {
         changed = std::max(changed, (*it)->getChanged(client));
       }
@@ -1078,7 +1079,7 @@ namespace onelab {
     {
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
-      for(std::set<parameter *, parameterLessThan>::iterator it = ps.begin();
+      for(auto it = ps.begin();
           it != ps.end(); it++)
         (*it)->setChanged(changed, client);
     }
@@ -1086,7 +1087,7 @@ namespace onelab {
     {
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
-      for(std::set<parameter *, parameterLessThan>::iterator it = ps.begin();
+      for(auto it = ps.begin();
           it != ps.end(); it++) {
         int changed = (*it)->getChanged(client);
         if(changed > threshold) (*it)->setChanged(threshold, client);
@@ -1099,7 +1100,7 @@ namespace onelab {
       std::vector<std::string> s;
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
-      for(std::set<parameter *, parameterLessThan>::const_iterator it =
+      for(auto it =
             ps.begin();
           it != ps.end(); it++)
         if(client.empty() || (*it)->hasClient(client)) {
@@ -1146,7 +1147,7 @@ namespace onelab {
       json += "  \"parameters\":[\n";
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
-      for(std::set<parameter *, parameterLessThan>::const_iterator it =
+      for(auto it =
             ps.begin();
           it != ps.end(); it++) {
         if(it != ps.begin()) json += ",\n";
@@ -1165,13 +1166,13 @@ namespace onelab {
       picojson::value v;
       std::string err = picojson::parse(v, json);
       if(err.size()) return false;
-      if(v.is<picojson::object>()){ // onelab database or single parameter
+      if(v.is<picojson::object>()){ // full database or single parameter
         const picojson::value::object &obj = v.get<picojson::object>();
-        picojson::value::object::const_iterator it = obj.find("onelab");
-        if(it != obj.end()){ // onelab database
+        auto it = obj.find("onelab");
+        if(it != obj.end()){ // full database
           if(!it->second.is<picojson::object>()) return false;
           const picojson::value::object &db = it->second.get<picojson::object>();
-          for(picojson::value::object::const_iterator j = db.begin(); j != db.end(); ++j) {
+          for(auto j = db.begin(); j != db.end(); ++j) {
             if(j->first == "version") {
               if(!j->second.is<std::string>()) return false;
               if(j->second.get<std::string>() != parameter::version())
@@ -1212,7 +1213,7 @@ namespace onelab {
 #if defined(HAVE_PICOJSON)
     bool fromJSON(const picojson::value::object &par, const std::string &client = "")
     {
-      picojson::value::object::const_iterator it = par.find("type");
+      auto it = par.find("type");
       if(it == par.end()) return false;
       if(it->second.to_str() == "number") {
         number p;
@@ -1231,7 +1232,7 @@ namespace onelab {
 #endif
   };
 
-  // The onelab client: a class that communicates with the onelab server. Each
+  // The ONELAB client: a class that communicates with the ONELAB server. Each
   // client should be derived from this one. A client can be understood as "one
   // simulation step in a complex computation".
   class client {
@@ -1326,8 +1327,8 @@ namespace onelab {
     }
   };
 
-  // The onelab server: a singleton that stores the parameter space and
-  // interacts with onelab clients.
+  // The ONELAB server: a singleton that stores the parameter space and
+  // interacts with ONELAB clients.
   class server {
   private:
     // the unique server (singleton behaviour due to the "static" specifier)
@@ -1368,7 +1369,7 @@ namespace onelab {
     int getNumClients() { return (int)_clients.size(); };
     citer findClient(const std::string &name)
     {
-      for(citer it = _clients.begin(); it != _clients.end(); it++)
+      for(auto it = _clients.begin(); it != _clients.end(); it++)
         if((*it)->getName() == name) return it;
       return _clients.end();
     }
@@ -1531,7 +1532,7 @@ namespace onelab {
       : localClient(name), _executable(executable),
         _treatExecutableAsFullCommandLine(treatExecutableAsFullCommandLine),
         _remoteLogin(remoteLogin), _socketSwitch("-onelab"), _pid(-1),
-        _gmshServer(0)
+        _gmshServer(nullptr)
     {
     }
     virtual ~localNetworkClient() {}
@@ -1682,7 +1683,7 @@ namespace onelab {
       _gmshClient = new GmshClient();
       if(_gmshClient->Connect(_serverAddress.c_str()) < 0) {
         delete _gmshClient;
-        _gmshClient = 0;
+        _gmshClient = nullptr;
       }
       else {
         _gmshClient->Start();
@@ -1695,7 +1696,7 @@ namespace onelab {
         _gmshClient->Stop();
         _gmshClient->Disconnect();
         delete _gmshClient;
-        _gmshClient = 0;
+        _gmshClient = nullptr;
       }
     }
     GmshClient *getGmshClient() { return _gmshClient; }

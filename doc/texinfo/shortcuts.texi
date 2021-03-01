@@ -158,7 +158,7 @@ Hide/show mesh surface faces
 @item Alt+Shift+l
 Hide/show mesh lines
 @item Alt+Shift+p
-Hide/show mesh points
+Hide/show mesh nodes
 @item Alt+Shift+s
 Hide/show mesh surface edges
 @item Alt+Shift+t

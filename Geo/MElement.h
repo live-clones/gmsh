@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -114,11 +114,7 @@ public:
   {
     Msg::Error("Vertex information not available for this element");
   }
-  // get the face  using the local orientation defined by Solin
-  virtual MFace getFaceSolin(int numFace) = 0;
-  // get the global vertex num of a edge using the local orientation defined by
-  // Solin
-  virtual int getVertexSolin(int numEdge, int numVertex) = 0;
+
   // get the vertex using the I-deas UNV ordering
   virtual MVertex *getVertexUNV(int num) { return getVertex(num); }
 
@@ -178,6 +174,9 @@ public:
     return -1;
   }
 
+  // get the edge using the local orientation defined by Solin
+  virtual MEdge getEdgeSolin(int numEdge) { return getEdge(numEdge); }
+
   // get an edge representation for drawing
   virtual int getNumEdgesRep(bool curved) = 0;
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
@@ -202,6 +201,9 @@ public:
     return false;
   }
 
+  // get the face using the local orientation defined by Solin
+  virtual MFace getFaceSolin(int numFace) { return getFace(numFace); }
+
   // get a face representation for drawing
   virtual int getNumFacesRep(bool curved) = 0;
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
@@ -218,11 +220,11 @@ public:
   }
 
   // get and set parent and children for hierarchial grids
-  virtual MElement *getParent() const { return NULL; }
+  virtual MElement *getParent() const { return nullptr; }
   virtual void setParent(MElement *p, bool owner = false) {}
   virtual void updateParent(GModel *gm) {} // used only for reading msh files
   virtual int getNumChildren() const { return 0; }
-  virtual MElement *getChild(int i) const { return NULL; }
+  virtual MElement *getChild(int i) const { return nullptr; }
   virtual bool ownsParent() const { return false; }
 
   // get base element in case of MSubElement
@@ -230,7 +232,7 @@ public:
   virtual MElement *getBaseElement() { return this; }
 
   // get and set domain for borders
-  virtual MElement *getDomain(int i) const { return NULL; }
+  virtual MElement *getDomain(int i) const { return nullptr; }
   virtual void setDomain(MElement *e, int i) {}
 
   // get the type of the element
@@ -270,10 +272,10 @@ public:
   double minScaledJacobian(bool knownValid = false, bool reversedOk = false);
   virtual double angleShapeMeasure() { return 1.0; }
   virtual void scaledJacRange(double &jmin, double &jmax,
-                              GEntity *ge = 0) const;
-  virtual void idealJacRange(double &jmin, double &jmax, GEntity *ge = 0);
+                              GEntity *ge = nullptr) const;
+  virtual void idealJacRange(double &jmin, double &jmax, GEntity *ge = nullptr);
   virtual void signedInvCondNumRange(double &iCNMin, double &iCNMax,
-                                     GEntity *ge = 0);
+                                     GEntity *ge = nullptr);
   virtual void signedInvGradErrorRange(double &minSIGE, double &maxSIGE);
 
   // get the radius of the inscribed circle/sphere if it exists, otherwise get
@@ -411,7 +413,8 @@ public:
   double interpolate(double val[], double u, double v, double w, int stride = 1,
                      int order = -1);
   void interpolateGrad(double val[], double u, double v, double w, double f[],
-                       int stride = 1, double invjac[3][3] = 0, int order = -1);
+                       int stride = 1, double invjac[3][3] = nullptr,
+                       int order = -1);
   void interpolateCurl(double val[], double u, double v, double w, double f[],
                        int stride = 3, int order = -1);
   double interpolateDiv(double val[], double u, double v, double w,
@@ -423,7 +426,7 @@ public:
     Msg::Error("No integration points defined for this type of element: %d",
                this->getType());
     *npts = 0;
-    *pts = 0;
+    *pts = nullptr;
   }
   double integrate(double val[], int pOrder, int stride = 1, int order = -1);
   // val[] must contain interpolation data for face/edge vertices of given
@@ -435,9 +438,9 @@ public:
   virtual void writeMSH2(FILE *fp, double version = 1.0, bool binary = false,
                          int num = 0, int elementary = 1, int physical = 1,
                          int parentNum = 0, int dom1Num = 0, int dom2Num = 0,
-                         std::vector<short> *ghosts = 0);
+                         std::vector<short> *ghosts = nullptr);
   virtual void writeMSH3(FILE *fp, bool binary = false, int elementary = 1,
-                         std::vector<short> *ghosts = 0);
+                         std::vector<short> *ghosts = nullptr);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto, double scalingFactor = 1.0,
@@ -472,16 +475,16 @@ public:
   virtual int getTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
   virtual int getTypeForVTK() const { return 0; }
-  virtual const char *getStringForTOCHNOG() const { return 0; }
-  virtual const char *getStringForPOS() const { return 0; }
-  virtual const char *getStringForBDF() const { return 0; }
-  virtual const char *getStringForDIFF() const { return 0; }
-  virtual const char *getStringForINP() const { return 0; }
-  virtual const char *getStringForKEY() const { return 0; }
+  virtual const char *getStringForTOCHNOG() const { return nullptr; }
+  virtual const char *getStringForPOS() const { return nullptr; }
+  virtual const char *getStringForBDF() const { return nullptr; }
+  virtual const char *getStringForDIFF() const { return nullptr; }
+  virtual const char *getStringForINP() const { return nullptr; }
+  virtual const char *getStringForKEY() const { return nullptr; }
 
   // return the number of vertices, as well as the element name if 'name' != 0
   static unsigned int getInfoMSH(const int typeMSH,
-                                 const char **const name = 0);
+                                 const char **const name = nullptr);
   std::string getName();
   virtual std::size_t getNumVerticesForMSH() { return getNumVertices(); }
   virtual void getVerticesIdForMSH(std::vector<int> &verts);
@@ -501,8 +504,8 @@ class MElementFactory {
 public:
   MElement *create(int type, std::vector<MVertex *> &v, std::size_t num = 0,
                    int part = 0, bool owner = false, int parent = 0,
-                   MElement *parent_ptr = NULL, MElement *d1 = 0,
-                   MElement *d2 = 0);
+                   MElement *parent_ptr = nullptr, MElement *d1 = nullptr,
+                   MElement *d2 = nullptr);
   MElement *create(int num, int type, const std::vector<int> &data,
                    GModel *model);
 };

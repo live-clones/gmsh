@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -166,7 +166,8 @@ public:
   double _distance;
   SPoint3 _closestPoint;
   MTriangle *_t3d, *_t2d;
-  dfWrapper(const SPoint3 &p) : _p(p), _distance(1.e22), _t3d(NULL), _t2d(NULL)
+  dfWrapper(const SPoint3 &p)
+    : _p(p), _distance(1.e22), _t3d(nullptr), _t2d(nullptr)
   {
   }
 };
@@ -270,8 +271,7 @@ Range<double> discreteFace::parBounds(int i) const
 bool discreteFace::containsParam(const SPoint2 &pt)
 {
   if(_param.empty()) return false;
-  if(_param.oct->find(pt.x(), pt.y(), 0.0, -1, true))
-    return true;
+  if(_param.oct->find(pt.x(), pt.y(), 0.0, -1, true)) return true;
   return false;
 }
 
@@ -419,8 +419,8 @@ void discreteFace::_debugParametrization(bool uv)
       }
       fprintf(fp, "ST(%g,%g,%g, %g,%g,%g, %g,%g,%g){%g,%g,%g, %g,%g,%g};\n",
               xyz0.x(), xyz0.y(), xyz0.z(), xyz1.x(), xyz1.y(), xyz1.z(),
-              xyz2.x(), xyz2.y(), xyz2.z(), uv0.x(), uv1.x(), uv2.x(),
-              uv0.y(), uv1.y(), uv2.y());
+              xyz2.x(), xyz2.y(), xyz2.z(), uv0.x(), uv1.x(), uv2.x(), uv0.y(),
+              uv1.y(), uv2.y());
     }
     fprintf(fp, "};\n");
     fclose(fp);
@@ -436,21 +436,20 @@ int discreteFace::createGeometry()
   if(triangles.empty()) return 0;
 
   double minq = 1.;
-  for(auto t : triangles)
-    minq = std::min(minq, t->gammaShapeMeasure());
+  for(auto t : triangles) minq = std::min(minq, t->gammaShapeMeasure());
   if(minq < 1e-3)
     Msg::Warning("Poor input mesh quality (min gamma = %g) for computing "
-                 "parametrization", minq);
+                 "parametrization",
+                 minq);
 
   std::vector<MVertex *> nodes;
-  computeParametrization(triangles, nodes,
-                         stl_vertices_uv, stl_vertices_xyz, stl_triangles);
+  computeParametrization(triangles, nodes, stl_vertices_uv, stl_vertices_xyz,
+                         stl_triangles);
 
   if(model()->getCurvatures().size()) {
     stl_curvatures.resize(2 * nodes.size());
     for(std::size_t i = 0; i < nodes.size(); i++) {
-      std::map<MVertex *, std::pair<SVector3, SVector3> >::iterator it =
-        model()->getCurvatures().find(nodes[i]);
+      auto it = model()->getCurvatures().find(nodes[i]);
       if(it == model()->getCurvatures().end()) {
         Msg::Error("Curvature not found for node %d", nodes[i]->getNum());
       }
@@ -502,9 +501,8 @@ void discreteFace::_createGeometryFromSTL()
   _param.clear();
 
   for(size_t i = 0; i < stl_vertices_uv.size(); i++) {
-    _param.v2d.push_back(MVertex(stl_vertices_uv[i].x(),
-                                 stl_vertices_uv[i].y(),
-                                 0.0));
+    _param.v2d.push_back(
+      MVertex(stl_vertices_uv[i].x(), stl_vertices_uv[i].y(), 0.0));
     _param.v3d.push_back(MVertex(stl_vertices_xyz[i].x(),
                                  stl_vertices_xyz[i].y(),
                                  stl_vertices_xyz[i].z()));
@@ -569,7 +567,7 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
   if(_param.empty()) return 0.;
 
   MTriangle *t2d = (MTriangle *)_param.oct->find(uv[0], uv[1], 0.0, -1, true);
-  MTriangle *t3d = NULL;
+  MTriangle *t3d = nullptr;
   if(t2d) {
     int position = (int)(t2d - &_param.t2d[0]);
     t3d = &_param.t3d[position];

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -35,12 +35,12 @@ static const int NBANN = 2;
 static const int MAX_THREADS = 256;
 
 std::vector<backgroundMesh *> backgroundMesh::_current =
-  std::vector<backgroundMesh *>(MAX_THREADS, (backgroundMesh *)0);
+  std::vector<backgroundMesh *>(MAX_THREADS, (backgroundMesh *)nullptr);
 
 void backgroundMesh::set(GFace *gf)
 {
   int t = Msg::GetThreadNum();
-  if(t >= MAX_THREADS){
+  if(t >= MAX_THREADS) {
     Msg::Error("Maximum number of threads (%d) exceeded in background mesh",
                MAX_THREADS);
     return;
@@ -62,19 +62,20 @@ void backgroundMesh::unset()
   int t = Msg::GetThreadNum();
   if(t >= MAX_THREADS) return;
   if(_current[t]) delete _current[t];
-  _current[t] = 0;
+  _current[t] = nullptr;
 }
 
 backgroundMesh *backgroundMesh::current()
 {
   int t = Msg::GetThreadNum();
-  if(t >= MAX_THREADS) return 0;
+  if(t >= MAX_THREADS) return nullptr;
   return _current[t];
 }
 
 backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
 #if defined(HAVE_ANN)
-  : _octree(0), uv_kdtree(0), nodes(0), angle_nodes(0), angle_kdtree(0)
+  : _octree(nullptr), uv_kdtree(nullptr), nodes(nullptr), angle_nodes(nullptr),
+    angle_kdtree(nullptr)
 #endif
 {
   if(cfd) {
@@ -93,8 +94,8 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
     MVertex *news[3];
     for(int j = 0; j < 3; j++) {
       MVertex *v = e->getVertex(j);
-      std::map<MVertex *, MVertex *>::iterator it = _3Dto2D.find(v);
-      MVertex *newv = 0;
+      auto it = _3Dto2D.find(v);
+      MVertex *newv = nullptr;
       if(it == _3Dto2D.end()) {
         SPoint2 p;
         reparamMeshVertexOnFace(v, _gf, p);
@@ -116,7 +117,7 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
   index = new ANNidx[2];
   dist = new ANNdist[2];
   nodes = annAllocPts(myBCNodes.size(), 3);
-  std::set<SPoint2>::iterator itp = myBCNodes.begin();
+  auto itp = myBCNodes.begin();
   int ind = 0;
   while(itp != myBCNodes.end()) {
     SPoint2 pt = *itp;
@@ -133,11 +134,9 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
   _octree = new MElementOctree(_triangles);
 
   // compute the mesh sizes at nodes
-  if(CTX::instance()->mesh.lcFromPoints) {
-    propagate1dMesh(_gf);
-  }
+  if(CTX::instance()->mesh.lcFromPoints) { propagate1dMesh(_gf); }
   else {
-    std::map<MVertex *, MVertex *>::iterator itv2 = _2Dto3D.begin();
+    auto itv2 = _2Dto3D.begin();
     for(; itv2 != _2Dto3D.end(); ++itv2) {
       _sizes[itv2->first] = CTX::instance()->mesh.lcMax;
     }
@@ -184,7 +183,7 @@ static void propagateValuesOnFace(GFace *_gf,
   dofManager<double> myAssembler(_lsys);
 
   // fix boundary conditions
-  std::map<MVertex *, double>::iterator itv = dirichlet.begin();
+  auto itv = dirichlet.begin();
   for(; itv != dirichlet.end(); ++itv) {
     myAssembler.fixVertex(itv->first, 0, 1, itv->second);
   }
@@ -198,7 +197,7 @@ static void propagateValuesOnFace(GFace *_gf,
 
   std::map<MVertex *, SPoint3> theMap;
   if(in_parametric_plane) {
-    for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it) {
+    for(auto it = vs.begin(); it != vs.end(); ++it) {
       SPoint2 p;
       reparamMeshVertexOnFace(*it, _gf, p);
       theMap[*it] = SPoint3((*it)->x(), (*it)->y(), (*it)->z());
@@ -206,11 +205,11 @@ static void propagateValuesOnFace(GFace *_gf,
     }
   }
 
-  for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it)
+  for(auto it = vs.begin(); it != vs.end(); ++it)
     myAssembler.numberVertex(*it, 0, 1);
 
   // Assemble
-  laplaceTerm l(0, 1, ONE);
+  laplaceTerm l(nullptr, 1, ONE);
   for(std::size_t k = 0; k < _gf->triangles.size(); k++) {
     MTriangle *t = _gf->triangles[k];
     SElement se(t);
@@ -218,17 +217,15 @@ static void propagateValuesOnFace(GFace *_gf,
   }
 
   // Solve
-  if(myAssembler.sizeOfR()) {
-    _lsys->systemSolve();
-  }
+  if(myAssembler.sizeOfR()) { _lsys->systemSolve(); }
 
   // save solution
-  for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it) {
+  for(auto it = vs.begin(); it != vs.end(); ++it) {
     myAssembler.getDofValue(*it, 0, 1, dirichlet[*it]);
   }
 
   if(in_parametric_plane) {
-    for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it) {
+    for(auto it = vs.begin(); it != vs.end(); ++it) {
       SPoint3 p = theMap[(*it)];
       (*it)->setXYZ(p.x(), p.y(), p.z());
     }
@@ -240,7 +237,7 @@ static void propagateValuesOnFace(GFace *_gf,
 void backgroundMesh::propagate1dMesh(GFace *_gf)
 {
   std::vector<GEdge *> const &e = _gf->edges();
-  std::vector<GEdge *>::const_iterator it = e.begin();
+  auto it = e.begin();
   std::map<MVertex *, double> sizes;
 
   for(; it != e.end(); ++it) {
@@ -254,7 +251,7 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
                           (v1->z() - v2->z()) * (v1->z() - v2->z()));
           for(int k = 0; k < 2; k++) {
             MVertex *v = (*it)->lines[i]->getVertex(k);
-            std::map<MVertex *, double>::iterator itv = sizes.find(v);
+            auto itv = sizes.find(v);
             if(itv == sizes.end())
               sizes[v] = log(d);
             else
@@ -268,7 +265,7 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
   simpleFunction<double> ONE(1.0);
   propagateValuesOnFace(_gf, sizes, &ONE);
 
-  std::map<MVertex *, MVertex *>::iterator itv2 = _2Dto3D.begin();
+  auto itv2 = _2Dto3D.begin();
   for(; itv2 != _2Dto3D.end(); ++itv2) {
     MVertex *v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
@@ -294,7 +291,7 @@ crossField2d::crossField2d(MVertex *v, GEdge *ge)
 void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
 {
   std::vector<GEdge *> const &e = _gf->edges();
-  std::vector<GEdge *>::const_iterator it = e.begin();
+  auto it = e.begin();
   std::map<MVertex *, double> _cosines4, _sines4;
   std::map<MVertex *, SPoint2> _param;
 
@@ -317,8 +314,8 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
         //        double angle = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
         crossField2d::normalizeAngle(_angle);
         for(int i = 0; i < 2; i++) {
-          std::map<MVertex *, double>::iterator itc = _cosines4.find(v[i]);
-          std::map<MVertex *, double>::iterator its = _sines4.find(v[i]);
+          auto itc = _cosines4.find(v[i]);
+          auto its = _sines4.find(v[i]);
           if(itc != _cosines4.end()) {
             itc->second = 0.5 * (itc->second + cos(4 * _angle));
             its->second = 0.5 * (its->second + sin(4 * _angle));
@@ -337,7 +334,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
   index = new ANNidx[NBANN];
   dist = new ANNdist[NBANN];
   angle_nodes = annAllocPts(_cosines4.size(), 3);
-  std::map<MVertex *, double>::iterator itp = _cosines4.begin();
+  auto itp = _cosines4.begin();
   int ind = 0;
   _sin.clear();
   _cos.clear();
@@ -375,9 +372,9 @@ double backgroundMesh::getSmoothness(MElement *e)
   MVertex *v0 = _3Dto2D[e->getVertex(0)];
   MVertex *v1 = _3Dto2D[e->getVertex(1)];
   MVertex *v2 = _3Dto2D[e->getVertex(2)];
-  std::map<MVertex *, double>::const_iterator i0 = _angles.find(v0);
-  std::map<MVertex *, double>::const_iterator i1 = _angles.find(v1);
-  std::map<MVertex *, double>::const_iterator i2 = _angles.find(v2);
+  auto i0 = _angles.find(v0);
+  auto i1 = _angles.find(v1);
+  auto i2 = _angles.find(v2);
   double a[3] = {cos(4 * i0->second), cos(4 * i1->second), cos(4 * i2->second)};
   double b[3] = {sin(4 * i0->second), sin(4 * i1->second), sin(4 * i2->second)};
   double f[3];
@@ -397,9 +394,9 @@ double backgroundMesh::getSmoothness(double u, double v, double w)
   MVertex *v0 = e->getVertex(0);
   MVertex *v1 = e->getVertex(1);
   MVertex *v2 = e->getVertex(2);
-  std::map<MVertex *, double>::const_iterator i0 = _angles.find(v0);
-  std::map<MVertex *, double>::const_iterator i1 = _angles.find(v1);
-  std::map<MVertex *, double>::const_iterator i2 = _angles.find(v2);
+  auto i0 = _angles.find(v0);
+  auto i1 = _angles.find(v1);
+  auto i2 = _angles.find(v2);
   double a[3] = {cos(4 * i0->second), cos(4 * i1->second), cos(4 * i2->second)};
   double b[3] = {sin(4 * i0->second), sin(4 * i1->second), sin(4 * i2->second)};
   double f[3];
@@ -453,7 +450,7 @@ void backgroundMesh::propagateCrossField(GFace *_gf,
 {
   std::map<MVertex *, double> _cosines4, _sines4;
   std::vector<GEdge *> const &e = _gf->edges();
-  std::vector<GEdge *>::const_iterator it = e.begin();
+  auto it = e.begin();
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(_gf)) {
       for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
@@ -474,8 +471,8 @@ void backgroundMesh::propagateCrossField(GFace *_gf,
         double _angle = myAngle(t1, d1, n);
         crossField2d::normalizeAngle(_angle);
         for(int i = 0; i < 2; i++) {
-          std::map<MVertex *, double>::iterator itc = _cosines4.find(v[i]);
-          std::map<MVertex *, double>::iterator its = _sines4.find(v[i]);
+          auto itc = _cosines4.find(v[i]);
+          auto its = _sines4.find(v[i]);
           if(itc != _cosines4.end()) {
             itc->second = 0.5 * (itc->second + cos(4 * _angle));
             its->second = 0.5 * (its->second + sin(4 * _angle));
@@ -495,7 +492,7 @@ void backgroundMesh::propagateCrossField(GFace *_gf,
   //    print("cos4.pos",0,_cosines4,0);
   //    print("sin4.pos",0,_sines4,0);
 
-  std::map<MVertex *, MVertex *>::iterator itv2 = _2Dto3D.begin();
+  auto itv2 = _2Dto3D.begin();
   for(; itv2 != _2Dto3D.end(); ++itv2) {
     MVertex *v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
@@ -507,7 +504,7 @@ void backgroundMesh::propagateCrossField(GFace *_gf,
 
 void backgroundMesh::updateSizes(GFace *_gf)
 {
-  std::map<MVertex *, double>::iterator itv = _sizes.begin();
+  auto itv = _sizes.begin();
   for(; itv != _sizes.end(); ++itv) {
     SPoint2 p;
     MVertex *v = _2Dto3D[itv->first];
@@ -539,14 +536,14 @@ void backgroundMesh::updateSizes(GFace *_gf)
   }
   const double _beta = 1.3;
   for(int i = 0; i < 3; i++) {
-    std::set<MEdge, MEdgeLessThan>::iterator it = edges.begin();
+    auto it = edges.begin();
     for(; it != edges.end(); ++it) {
       MVertex *v0 = it->getVertex(0);
       MVertex *v1 = it->getVertex(1);
       MVertex *V0 = _2Dto3D[v0];
       MVertex *V1 = _2Dto3D[v1];
-      std::map<MVertex *, double>::iterator s0 = _sizes.find(V0);
-      std::map<MVertex *, double>::iterator s1 = _sizes.find(V1);
+      auto s0 = _sizes.find(V0);
+      auto s1 = _sizes.find(V1);
       if(s0->second < s1->second)
         s1->second = std::min(s1->second, _beta * s0->second);
       else
@@ -558,12 +555,12 @@ void backgroundMesh::updateSizes(GFace *_gf)
 bool backgroundMesh::inDomain(double u, double v, double w) const
 {
   if(!_octree) return false;
-  return _octree->find(u, v, w, 2, true) != 0;
+  return _octree->find(u, v, w, 2, true) != nullptr;
 }
 
 double backgroundMesh::operator()(double u, double v, double w) const
 {
-  if(!_octree){
+  if(!_octree) {
     Msg::Error("No octree in background mesh");
     return 0.;
   }
@@ -575,7 +572,8 @@ double backgroundMesh::operator()(double u, double v, double w) const
     if(uv_kdtree->nPoints() < 2) return -1000.;
     double pt[3] = {u, v, 0.0};
 #if defined(_OPENMP)
-#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp                                                                    \
+  critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
@@ -591,12 +589,9 @@ double backgroundMesh::operator()(double u, double v, double w) const
     }
   }
   e->xyz2uvw(uv, uv2);
-  std::map<MVertex *, double>::const_iterator itv1 =
-    _sizes.find(e->getVertex(0));
-  std::map<MVertex *, double>::const_iterator itv2 =
-    _sizes.find(e->getVertex(1));
-  std::map<MVertex *, double>::const_iterator itv3 =
-    _sizes.find(e->getVertex(2));
+  auto itv1 = _sizes.find(e->getVertex(0));
+  auto itv2 = _sizes.find(e->getVertex(1));
+  auto itv3 = _sizes.find(e->getVertex(2));
   return itv1->second * (1 - uv2[0] - uv2[1]) + itv2->second * uv2[0] +
          itv3->second * uv2[1];
 }
@@ -611,7 +606,8 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     if(angle_kdtree->nPoints() >= NBANN) {
       double pt[3] = {u, v, 0.0};
 #if defined(_OPENMP)
-#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp                                                                    \
+  critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
       angle_kdtree->annkSearch(pt, NBANN, index, dist);
       double SINE = 0.0, COSINE = 0.0;
@@ -644,7 +640,8 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     if(uv_kdtree->nPoints() < 2) return -1000.0;
     double pt[3] = {u, v, 0.0};
 #if defined(_OPENMP)
-#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp                                                                    \
+  critical // just to avoid crash (still incorrect) - should use nanoflann
 #endif
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
@@ -660,12 +657,9 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     }
   }
   e->xyz2uvw(uv, uv2);
-  std::map<MVertex *, double>::const_iterator itv1 =
-    _angles.find(e->getVertex(0));
-  std::map<MVertex *, double>::const_iterator itv2 =
-    _angles.find(e->getVertex(1));
-  std::map<MVertex *, double>::const_iterator itv3 =
-    _angles.find(e->getVertex(2));
+  auto itv1 = _angles.find(e->getVertex(0));
+  auto itv2 = _angles.find(e->getVertex(1));
+  auto itv3 = _angles.find(e->getVertex(2));
 
   double cos4 = cos(4 * itv1->second) * (1 - uv2[0] - uv2[1]) +
                 cos(4 * itv2->second) * uv2[0] + cos(4 * itv3->second) * uv2[1];
@@ -703,9 +697,9 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
       MVertex *v1 = _triangles[i]->getVertex(0);
       MVertex *v2 = _triangles[i]->getVertex(1);
       MVertex *v3 = _triangles[i]->getVertex(2);
-      std::map<MVertex *, double>::const_iterator itv1 = _whatToPrint.find(v1);
-      std::map<MVertex *, double>::const_iterator itv2 = _whatToPrint.find(v2);
-      std::map<MVertex *, double>::const_iterator itv3 = _whatToPrint.find(v3);
+      auto itv1 = _whatToPrint.find(v1);
+      auto itv2 = _whatToPrint.find(v2);
+      auto itv3 = _whatToPrint.find(v3);
       if(!gf) {
         fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n", v1->x(),
                 v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), v3->x(), v3->y(),

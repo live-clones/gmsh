@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -51,9 +51,7 @@ SMetric3::SMetric3(const double l1, // l1 = h1^-2
 void SMetric3::getMat(fullMatrix<double> &mat) const
 {
   for(int i = 0; i < 3; i++) {
-    for(int j = 0; j < 3; j++) {
-      mat(i, j) = _val[getIndex(i, j)];
-    }
+    for(int j = 0; j < 3; j++) { mat(i, j) = _val[getIndex(i, j)]; }
   }
 }
 
@@ -103,8 +101,7 @@ SMetric3 SMetric3::transform(fullMatrix<double> &V)
   return a;
 }
 
-void SMetric3::eig(fullMatrix<double> &V, fullVector<double> &S,
-                   bool s) const
+void SMetric3::eig(fullMatrix<double> &V, fullVector<double> &S, bool s) const
 {
   fullMatrix<double> me(3, 3), right(3, 3);
   fullVector<double> im(3);
@@ -309,9 +306,7 @@ SMetric3 interpolation(const SMetric3 &m1, const SMetric3 &m2,
 void STensor3::getMat(fullMatrix<double> &mat) const
 {
   for(int i = 0; i < 3; i++) {
-    for(int j = 0; j < 3; j++) {
-      mat(i, j) = _val[getIndex(i, j)];
-    }
+    for(int j = 0; j < 3; j++) { mat(i, j) = _val[getIndex(i, j)]; }
   }
 }
 
@@ -321,8 +316,7 @@ void STensor3::setMat(const fullMatrix<double> &mat)
     for(int j = 0; j < 3; j++) _val[getIndex(i, j)] = mat(i, j);
 }
 
-void STensor3::eig(fullMatrix<double> &V, fullVector<double> &S,
-                   bool s) const
+void STensor3::eig(fullMatrix<double> &V, fullVector<double> &S, bool s) const
 {
   fullMatrix<double> me(3, 3), left(3, 3);
   fullVector<double> im(3);

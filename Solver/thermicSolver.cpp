@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -193,7 +193,7 @@ double thermicSolver::computeL2Norm(simpleFunction<double> *sol)
   double val = 0.0;
   SolverField<double> solField(pAssembler, LagSpace);
   for(std::size_t i = 0; i < thermicFields.size(); ++i) {
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           thermicFields[i].g->begin();
         it != thermicFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -232,7 +232,7 @@ double thermicSolver::computeLagNorm(int tag, simpleFunction<double> *sol)
   SolverField<double> solField(pAssembler, LagrangeMultiplierSpace);
   for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); ++i) {
     if(tag != LagrangeMultiplierFields[i]._tag) continue;
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           LagrangeMultiplierFields[i].g->begin();
         it != LagrangeMultiplierFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -275,7 +275,7 @@ PView *thermicSolver::buildTemperatureView(const std::string postFileName)
   std::set<MVertex *> v;
   std::map<MVertex *, MElement *> vCut;
   for(std::size_t i = 0; i < thermicFields.size(); ++i) {
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           thermicFields[i].g->begin();
         it != thermicFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -293,7 +293,7 @@ PView *thermicSolver::buildTemperatureView(const std::string postFileName)
   }
   std::map<int, std::vector<double> > data;
   SolverField<double> Field(pAssembler, LagSpace);
-  for(std::set<MVertex *>::iterator it = v.begin(); it != v.end(); ++it) {
+  for(auto it = v.begin(); it != v.end(); ++it) {
     double val;
     MPoint p(*it);
     Field.f(&p, 0, 0, 0, val); // printf("valv=%g\n",val);
@@ -301,7 +301,7 @@ PView *thermicSolver::buildTemperatureView(const std::string postFileName)
     vec.push_back(val);
     data[(*it)->getNum()] = vec;
   }
-  for(std::map<MVertex *, MElement *>::iterator it = vCut.begin();
+  for(auto it = vCut.begin();
       it != vCut.end(); ++it) {
     double val;
     double uvw[3];
@@ -324,7 +324,7 @@ thermicSolver::buildLagrangeMultiplierView(const std::string &postFileName)
   if(!LagrangeMultiplierSpace) return new PView();
   std::set<MVertex *> v;
   for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); ++i) {
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           LagrangeMultiplierFields[i].g->begin();
         it != LagrangeMultiplierFields[i].g->end(); ++it) {
       MElement *e = *it;
@@ -334,7 +334,7 @@ thermicSolver::buildLagrangeMultiplierView(const std::string &postFileName)
   }
   std::map<int, std::vector<double> > data;
   SolverField<double> Field(pAssembler, LagrangeMultiplierSpace);
-  for(std::set<MVertex *>::iterator it = v.begin(); it != v.end(); ++it) {
+  for(auto it = v.begin(); it != v.end(); ++it) {
     double val;
     MPoint p(*it);
     Field.f(&p, 0, 0, 0, val);
@@ -354,7 +354,7 @@ PView *thermicSolver::buildErrorEstimateView(const std::string &errorFileName,
 
   SolverField<double> solField(pAssembler, LagSpace);
   for(std::size_t i = 0; i < thermicFields.size(); ++i) {
-    for(groupOfElements::elementContainer::const_iterator it =
+    for(auto it =
           thermicFields[i].g->begin();
         it != thermicFields[i].g->end(); ++it) {
       MElement *e = *it;

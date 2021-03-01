@@ -27,7 +27,6 @@ gmsh.initialize()
 
 # Let us start by creating a simple geometry with two adjacent squares sharing
 # an edge:
-
 gmsh.model.add("t21")
 gmsh.model.occ.addRectangle(0, 0, 0, 1, 1, 1)
 gmsh.model.occ.addRectangle(1, 0, 0, 1, 1, 2)
@@ -43,63 +42,131 @@ gmsh.model.addPhysicalGroup(2, [2], 200)
 gmsh.model.setPhysicalName(2, 200, "Right")
 gmsh.model.mesh.generate(2)
 
-# We now define several constants to fine-tune how the mesh will be partitioned
-partitioner = 0  # 0 for Metis, 1 for SimplePartition
-N = 3  # Number of partitions
-topology = 1  # Create partition topology (BRep)?
-ghosts = 0  # Create ghost cells?
-physicals = 0  # Create new physical groups?
-write = 1  # Write file to disk?
-split = 1  # Write one file per partition?
+# We now define several ONELAB parameters to fine-tune how the mesh will be
+# partitioned:
+gmsh.onelab.set("""[
+  {
+    "type":"number",
+    "name":"Parameters/0Mesh partitioner",
+    "values":[0],
+    "choices":[0, 1],
+    "valueLabels":{"Metis":0, "SimplePartition":1}
+  },
+  {
+    "type":"number",
+    "name":"Parameters/1Number of partitions",
+    "values":[3],
+    "min":1,
+    "max":256,
+    "step":1
+  },
+  {
+    "type":"number",
+    "name":"Parameters/2Create partition topology (BRep)?",
+    "values":[1],
+    "choices":[0, 1]
+  },
+  {
+    "type":"number",
+    "name":"Parameters/3Create ghost cells?",
+    "values":[0],
+    "choices":[0, 1]
+  },
+  {
+    "type":"number",
+    "name":"Parameters/3Create new physical groups?",
+    "values":[0],
+    "choices":[0, 1]
+  },
+  {
+    "type":"number",
+    "name":"Parameters/3Write file to disk?",
+    "values":[1],
+    "choices":[0, 1]
+  },
+  {
+    "type":"number",
+    "name":"Parameters/4Write one file per partition?",
+    "values":[0],
+    "choices":[0, 1]
+  }
+]""")
 
-# Should we create the boundary representation of the partition entities?
-gmsh.option.setNumber("Mesh.PartitionCreateTopology", topology)
+def partitionMesh():
+    # Number of partitions
+    N = int(gmsh.onelab.getNumber("Parameters/1Number of partitions")[0])
 
-# Should we create ghost cells?
-gmsh.option.setNumber("Mesh.PartitionCreateGhostCells", ghosts)
+    # Should we create the boundary representation of the partition entities?
+    gmsh.option.setNumber("Mesh.PartitionCreateTopology",
+                          gmsh.onelab.getNumber
+                          ("Parameters/2Create partition topology (BRep)?")[0])
 
-# Should we automatically create new physical groups on the partition entities?
-gmsh.option.setNumber("Mesh.PartitionCreatePhysicals", physicals)
+    # Should we create ghost cells?
+    gmsh.option.setNumber("Mesh.PartitionCreateGhostCells",
+                          gmsh.onelab.getNumber
+                          ("Parameters/3Create ghost cells?")[0])
 
-# Should we keep backward compatibility with pre-Gmsh 4, e.g. to save the mesh
-# in MSH2 format?
-gmsh.option.setNumber("Mesh.PartitionOldStyleMsh2", 0)
+    # Should we automatically create new physical groups on the partition
+    # entities?
+    gmsh.option.setNumber("Mesh.PartitionCreatePhysicals",
+                          gmsh.onelab.getNumber
+                          ("Parameters/3Create new physical groups?")[0])
 
-# Should we save one mesh file per partition?
-gmsh.option.setNumber("Mesh.PartitionSplitMeshFiles", split)
+    # Should we keep backward compatibility with pre-Gmsh 4, e.g. to save the
+    # mesh in MSH2 format?
+    gmsh.option.setNumber("Mesh.PartitionOldStyleMsh2", 0)
 
-if partitioner == 0:
-    # Use Metis to create N partitions
-    gmsh.model.mesh.partition(N)
-    # Several options can be set to control Metis: `Mesh.MetisAlgorithm' (1:
-    # Recursive, 2: K-way), `Mesh.MetisObjective' (1: min. edge-cut, 2:
-    # min. communication volume), `Mesh.PartitionTriWeight' (weight of
-    # triangles), `Mesh.PartitionQuadWeight' (weight of quads), ...
-else:
-    # Use the `SimplePartition' plugin to create chessboard-like partitions
-    gmsh.plugin.setNumber("SimplePartition", "NumSlicesX", N)
-    gmsh.plugin.setNumber("SimplePartition", "NumSlicesY", 1)
-    gmsh.plugin.setNumber("SimplePartition", "NumSlicesZ", 1)
-    gmsh.plugin.run("SimplePartition")
+    # Should we save one mesh file per partition?
+    gmsh.option.setNumber("Mesh.PartitionSplitMeshFiles",
+                          gmsh.onelab.getNumber
+                          ("Parameters/4Write one file per partition?")[0])
 
-# Save mesh file (or files, if `Mesh.PartitionSplitMeshFiles' is set):
-if write:
-    gmsh.write("t21.msh")
+    if gmsh.onelab.getNumber("Parameters/0Mesh partitioner")[0] == 0:
+        # Use Metis to create N partitions
+        gmsh.model.mesh.partition(N)
+        # Several options can be set to control Metis: `Mesh.MetisAlgorithm' (1:
+        # Recursive, 2: K-way), `Mesh.MetisObjective' (1: min. edge-cut, 2:
+        # min. communication volume), `Mesh.PartitionTriWeight' (weight of
+        # triangles), `Mesh.PartitionQuadWeight' (weight of quads), ...
+    else:
+        # Use the `SimplePartition' plugin to create chessboard-like partitions
+        gmsh.plugin.setNumber("SimplePartition", "NumSlicesX", N)
+        gmsh.plugin.setNumber("SimplePartition", "NumSlicesY", 1)
+        gmsh.plugin.setNumber("SimplePartition", "NumSlicesZ", 1)
+        gmsh.plugin.run("SimplePartition")
 
-# Iterate over partitioned entities and print some info (see the first extended
-# tutorial `x1.py' for additional information):
-entities = gmsh.model.getEntities()
-for e in entities:
-    partitions = gmsh.model.getPartitions(e[0], e[1])
-    if len(partitions):
-        print("Entity " + str(e) + " of type " +
-              gmsh.model.getType(e[0], e[1]))
-        print(" - Partition(s): " + str(partitions))
-        print(" - Parent: " + str(gmsh.model.getParent(e[0], e[1])))
-        print(" - Boundary: " + str(gmsh.model.getBoundary([e])))
+    # Save mesh file (or files, if `Mesh.PartitionSplitMeshFiles' is set):
+    if gmsh.onelab.getNumber("Parameters/3Write file to disk?")[0] == 1:
+        gmsh.write("t21.msh")
 
-# Launch the GUI to see the results:
-if '-nopopup' not in sys.argv:
-    gmsh.fltk.run()
+    # Iterate over partitioned entities and print some info (see the first
+    # extended tutorial `x1.py' for additional information):
+    entities = gmsh.model.getEntities()
+    for e in entities:
+        partitions = gmsh.model.getPartitions(e[0], e[1])
+        if len(partitions):
+            print("Entity " + str(e) + " of type " +
+                  gmsh.model.getType(e[0], e[1]))
+            print(" - Partition(s): " + str(partitions))
+            print(" - Parent: " + str(gmsh.model.getParent(e[0], e[1])))
+            print(" - Boundary: " + str(gmsh.model.getBoundary([e])))
+
+
+partitionMesh()
+
+# Launch the GUI and handle the "check" event to re-partition the mesh according
+# to the choices made in the GUI
+def checkForEvent():
+    action = gmsh.onelab.getString("ONELAB/Action")
+    if len(action) and action[0] == "check":
+        gmsh.onelab.setString("ONELAB/Action", [""])
+        partitionMesh()
+        gmsh.graphics.draw()
+    return True
+
+if "-nopopup" not in sys.argv:
+    gmsh.fltk.initialize()
+    while gmsh.fltk.isAvailable() and checkForEvent():
+        gmsh.fltk.wait()
 
 gmsh.finalize()

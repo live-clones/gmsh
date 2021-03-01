@@ -36,10 +36,10 @@ int main(int argc, char **argv)
   // each step if there are several time steps).
 
   // Let's create two triangles...
-  std::vector<double> triangle1 =
-    {0., 1., 1., // x coordinates of the 3 triangle nodes
-     0., 0., 1., // y coordinates of the 3 triangle nodes
-     0., 0., 0.}; // z coordinates of the 3 triangle nodes
+  std::vector<double> triangle1 = {
+    0., 1., 1., // x coordinates of the 3 triangle nodes
+    0., 0., 1., // y coordinates of the 3 triangle nodes
+    0., 0., 0.}; // z coordinates of the 3 triangle nodes
   std::vector<double> triangle2 = {0., 1., 0., 0., 1., 1., 0., 0., 0.};
 
   // ... and append values for 10 time steps
@@ -63,15 +63,13 @@ int main(int argc, char **argv)
   // difference beeing the type (starting with "V" for vector fields and "T" for
   // tensor fields) and the number of components. For example a vector field on
   // a line element can be added as follows:
-  std::vector<double> line =
-    {0., 1.,   // x coordinate of the 2 line nodes
-     1.2, 1.2, // y coordinate of the 2 line nodes
-     0., 0.};  // z coordinate of the 2 line nodes
+  std::vector<double> line = {0.,  1., // x coordinate of the 2 line nodes
+                              1.2, 1.2, // y coordinate of the 2 line nodes
+                              0.,  0.}; // z coordinate of the 2 line nodes
 
   for(int step = 0; step < 10; step++) {
     // 3 vector components for each node (2 nodes here), for each step
-    line.insert(line.end(), {10. + step, 0., 0.,
-                             10. + step, 0., 0.});
+    line.insert(line.end(), {10. + step, 0., 0., 10. + step, 0., 0.});
   }
   gmsh::view::addListData(t1, "VL", 1, line);
 
@@ -115,10 +113,10 @@ int main(int argc, char **argv)
   int t2 = gmsh::view::add("Second order quad");
 
   // Set the node coordinates:
-  std::vector<double> quad =
-    {0., 1., 1., 0.,         // x coordinates of the 4 quadrangle nodes
-     -1.2, -1.2, -0.2, -0.2, // y coordinates of the 4 quadrangle nodes
-     0., 0., 0., 0.};        // z coordinates of the 4 quadrangle nodes
+  std::vector<double> quad = {
+    0.,   1.,   1.,   0., // x coordinates of the 4 quadrangle nodes
+    -1.2, -1.2, -0.2, -0.2, // y coordinates of the 4 quadrangle nodes
+    0.,   0.,   0.,   0.}; // z coordinates of the 4 quadrangle nodes
 
   // Add nine values that will be interpolated by second order basis functions
   quad.insert(quad.end(), {1., 1., 1., 1., 3., 3., 3., 3., -3.});
@@ -127,25 +125,17 @@ int main(int argc, char **argv)
   // basis functions: f[i](u, v, w) = sum_(j = 0, ..., d - 1) c[i][j] u^e[j][0]
   // v^e[j][1] w^e[j][2], i = 0, ..., d-1, with u, v, w the coordinates in the
   // reference element:
-  gmsh::view::setInterpolationMatrices(t2, "Quadrangle", 9,
-                                       {0, 0, 0.25, 0, 0, -0.25, -0.25, 0, 0.25,
-                                        0, 0, 0.25, 0, 0, -0.25, 0.25, 0, -0.25,
-                                        0, 0, 0.25, 0, 0, 0.25, 0.25, 0, 0.25,
-                                        0, 0, 0.25, 0, 0, 0.25, -0.25, 0, -0.25,
-                                        0, 0, -0.5, 0.5, 0, 0.5, 0, -0.5, 0,
-                                        0, 0.5, -0.5, 0, 0.5, 0, -0.5, 0, 0,
-                                        0, 0, -0.5, 0.5, 0, -0.5, 0, 0.5, 0,
-                                        0, 0.5, -0.5, 0, -0.5, 0, 0.5, 0, 0,
-                                        1, -1, 1, -1, 0, 0, 0, 0, 0},
-                                       {0, 0, 0,
-                                        2, 0, 0,
-                                        2, 2, 0,
-                                        0, 2, 0,
-                                        1, 0, 0,
-                                        2, 1, 0,
-                                        1, 2, 0,
-                                        0, 1, 0,
-                                        1, 1, 0});
+  gmsh::view::setInterpolationMatrices(
+    t2, "Quadrangle", 9,
+    {0,    0,   0.25,  0,    0,   -0.25, -0.25, 0,    0.25, 0,     0,   0.25,
+     0,    0,   -0.25, 0.25, 0,   -0.25, 0,     0,    0.25, 0,     0,   0.25,
+     0.25, 0,   0.25,  0,    0,   0.25,  0,     0,    0.25, -0.25, 0,   -0.25,
+     0,    0,   -0.5,  0.5,  0,   0.5,   0,     -0.5, 0,    0,     0.5, -0.5,
+     0,    0.5, 0,     -0.5, 0,   0,     0,     0,    -0.5, 0.5,   0,   -0.5,
+     0,    0.5, 0,     0,    0.5, -0.5,  0,     -0.5, 0,    0.5,   0,   0,
+     1,    -1,  1,     -1,   0,   0,     0,     0,    0},
+    {0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 0, 1, 0,
+     0, 2, 1, 0, 1, 2, 0, 0, 1, 0, 1, 1, 0});
 
   // Note that two additional interpolation matrices could also be provided to
   // interpolate the geometry, i.e. to interpolate curved elements.

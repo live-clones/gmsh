@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -41,8 +41,8 @@ namespace {
 
     // element high-order node transformation if specified (CPEX0045), otherwise
     // use the classic CGNS order
-    const std::vector<int> *nodeTransfo = 0;
-    if((mshEltType != MSH_PNT) && (eltNodeTransfo != 0) &&
+    const std::vector<int> *nodeTransfo = nullptr;
+    if((mshEltType != MSH_PNT) && (eltNodeTransfo != nullptr) &&
        (eltNodeTransfo->size() > 0)) {
       nodeTransfo = &((*eltNodeTransfo)[mshEltType]);
     }
@@ -132,13 +132,14 @@ int CGNSZoneUnstruct::readSection(
   std::vector<cgsize_t> sectData(dataSize), offsetData(endElt - startElt + 2);
   if(sectEltType == CGNS_ENUMV(MIXED)) {
 #if CGNS_VERSION >= 4000
-    cgnsErr = cg_poly_elements_read(fileIndex(), baseIndex(), index(), iSect,
-                                    sectData.data(), offsetData.data(), 0);
+    cgnsErr =
+      cg_poly_elements_read(fileIndex(), baseIndex(), index(), iSect,
+                            sectData.data(), offsetData.data(), nullptr);
 #endif
   }
   else {
     cgnsErr = cg_elements_read(fileIndex(), baseIndex(), index(), iSect,
-                               sectData.data(), 0);
+                               sectData.data(), nullptr);
   }
   if(cgnsErr != CG_OK) return cgnsError(__FILE__, __LINE__, fileIndex());
 
@@ -147,7 +148,7 @@ int CGNSZoneUnstruct::readSection(
   if(endElt > (cgsize_t)zoneElt.size()) zoneElt.resize(endElt);
   const cgsize_t iStartElt = startElt - 1, iEndElt = endElt - 1;
   for(int iElt = iStartElt; iElt <= iEndElt; iElt++) {
-    const std::map<cgsize_t, int>::const_iterator it = elt2Geom().find(iElt);
+    const auto it = elt2Geom().find(iElt);
     const int entity = (it == elt2Geom().end()) ? 1 : it->second;
     MElement *me =
       createElement(sectEltType, startNode(), entity, allVert, allElt, sectData,
@@ -168,7 +169,7 @@ int CGNSZoneUnstruct::readElements(
   // data structures for node coordinate transformation (CPEX0045)
   // std::vector<bool> nodeUpdated;
   std::vector<SPoint3> rawNode;
-  if(eltNodeTransfo() != 0) {
+  if(eltNodeTransfo() != nullptr) {
     // nodeUpdated = std::vector<bool>(nbNode(), false);
     rawNode.resize(nbNode());
     for(int iN = 0; iN < nbNode(); iN++) {

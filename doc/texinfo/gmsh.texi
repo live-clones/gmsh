@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file for license information. Please report all
 @c issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2020 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2021 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -1486,10 +1486,6 @@ if none of the @var{expression} of the previous matching codes
 Ends a matching @code{If} command.
 @end ftable
 
-See @ref{t5}, for an example of @code{For} and @code{If} commands. Gmsh
-does not provide any @code{Else} (or similar) command at the time of this
-writing.
-
 @c -------------------------------------------------------------------------
 @c General commands
 @c -------------------------------------------------------------------------
@@ -2182,8 +2178,11 @@ combined).
 
 @item Sphere ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a sphere, defined by the 3 coordinates of its center and a
-radius. Additional expressions define 3 angle limits. @code{Sphere} is
-only available with the OpenCASCADE kernel.
+radius. Additional expressions define 3 angle limits. The first two
+optional arguments define the polar angle opening (from -Pi/2 to
+Pi/2). The optional `angle3' argument defines the azimuthal opening
+(from 0 to 2*Pi). @code{Sphere} is only available with the OpenCASCADE
+kernel.
 
 @item Box ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a box, defined by the 3 coordinates of a point and the 3
@@ -2828,10 +2827,10 @@ over-refinement in some areas, so that you may have to add ``dummy''
 geometrical entities in the model in order to get the desired element
 sizes or use more advanced methods explained below.
 @item
-Second, if @code{Mesh.MeshSizeFromCurvature} is set (it is not by
-default), the mesh will be adapted with respect to the curvature of the
-model entities and the value of @code{Mesh.MinimumElementsPerTwoPi},
-which gives the number of elements per 2 Pi radians.
+Second, if @code{Mesh.MeshSizeFromCurvature} is set to a positive value
+(it is set to 0 by default), the mesh will be adapted with respect to
+the curvature of the model entities, the value giving the target number
+of elements per 2 Pi radians.
 @item
 Next, you can specify a general background mesh size, expressed as a
 combination of so-called mesh size fields:
@@ -3332,25 +3331,28 @@ as well as the way meshes are displayed in the GUI, is given in
 
 Solvers and other external codes can be driven by Gmsh through the
 ONELAB interface (see @url{http://www.onelab.info}), which allows to
-have them share parameters and modeling information.  To add a new
-external solver, you need to specify its name (@code{Solver.Name0},
+have them share parameters and modeling information.
+
+Using the Gmsh API, you can directly embed Gmsh in your C++, C, Python
+or Julia solver, use ONELAB for interactive parameter definition and
+modification, and to create post-processing data on the fly. See
+@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,prepro.py},
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py} and
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp} for
+examples.
+
+If you prefer to keep codes separate, you can also communicate with Gmsh
+through a socket by providing the solver name (@code{Solver.Name0},
 @code{Solver.Name1}, etc.) and the path to the executable
-(@code{Solver.Executable0}, @code{Solver.Executable1}, etc.).  The list
-of all the solver options is given in @ref{Solver options
-list}. Examples on how to interface solvers are available in the source
-distribution (in the
-@url{@value{GITLAB-PREFIX}/utils/solvers,utils/solvers}
-directory). A full-featured solver interfaced in this manner is GetDP
+(@code{Solver.Executable0}, @code{Solver.Executable1}, etc.). Parameters
+can then be exchanged using the ONELAB protocol: see the
+@url{@value{GITLAB-PREFIX}/utils/solvers,utils/solvers} directory for
+examples. A full-featured solver interfaced in this manner is GetDP
 (@uref{https://getdp.info}), a general finite element solver using mixed
 finite elements.
 
-Using the Gmsh API, you can also directly embed Gmsh in your own solver,
-and use ONELAB for interactive parameter definition and
-modification. See
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py}
-and
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp})
-for examples.
+The list of all the solver options is given in @ref{Solver options
+list}.
 
 @c =========================================================================
 @c Post-processing module
@@ -3992,7 +3994,7 @@ $NodeData
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  nodeTag(size_t) value(double) ...
+  nodeTag(int) value(double) ...
   ...
 $EndNodeData
 
@@ -4003,7 +4005,7 @@ $ElementData
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  elementTag(size_t) value(double) ...
+  elementTag(int) value(double) ...
   ...
 $EndElementData
 
@@ -4014,7 +4016,7 @@ $ElementNodeData
   realTag(ASCII double) ...
   numIntegerTags(ASCII int)
   integerTag(ASCII int) ...
-  elementTag(size_t) numNodesPerElement(int) value(double) ...
+  elementTag(int) numNodesPerElement(int) value(double) ...
   ...
 $EndElementNodeData
 
@@ -4250,6 +4252,9 @@ The @code{$GhostElements}, @code{$NodeData}, @code{$ElementData} and
 @code{$ElementNodeData} will be reworked for greater IO efficiency, with
 separation of entries by type and a block structure with predictable
 sizes.
+@item
+Node and element tags in @code{$NodeData}, @code{$ElementData} and
+@code{$ElementNodeData} will be switched to @code{size_t}.
 @end itemize
 
 @c -------------------------------------------------------------------------
@@ -5173,7 +5178,7 @@ Python and Julia API examples, see the respective subdirectories in
 @menu
 * t1::  Geometry basics, elementary entities, physical groups
 * t2::  Transformations, extruded geometries, volumes
-* t3::  Extruded meshes, parameters, options
+* t3::  Extruded meshes, ONELAB parameters, options
 * t4::  Built-in functions, holes in surfaces, annotations, entity colors
 * t5::  Mesh sizes, macros, loops, holes in volumes
 * t6::  Transfinite meshes
@@ -5245,7 +5250,7 @@ and Julia
 @c -------------------------------------------------------------------------
 
 @node t3, t4, t2, Tutorial
-@section @code{t3}: Extruded meshes, parameters, options
+@section @code{t3}: Extruded meshes, ONELAB parameters, options
 
 See
 @url{@value{GITLAB-PREFIX}/tutorial/t3.geo,t3.geo}.
@@ -5927,14 +5932,16 @@ header/module file for the exact definition in each supported language:
 in @url{@value{GITLAB-PREFIX}/api/gmsh.h,C++}
 @code{gmsh/model/geo/addPoint} will lead to a namespaced function
 @code{gmsh::model::geo::addPoint}, while in
-@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python}
-and
-@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia}
-it will lead to @code{gmsh.model.geo.addPoint}, and in
+@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python} and
+@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia} it will lead to
+@code{gmsh.model.geo.addPoint}, and in
 @url{@value{GITLAB-PREFIX}/api/gmshc.h,C} to
-@code{gmshModelGeoAddPoint}. Output values are passed by reference in
-C++, as pointers in C and directly returned (after the return value, if
-any) in Python and Julia.
+@code{gmshModelGeoAddPoint}.  In addition to the default ``camelCase''
+function names, the Python and Julia APIs also define ``snake case''
+aliases, i.e. @code{gmsh.model.geo.add_point}, as this is the
+recommended style in these languages.  Output values are passed by
+reference in C++, as pointers in C and directly returned (after the
+return value, if any) in Python and Julia.
 
 @include api.texi
 
@@ -6561,24 +6568,25 @@ interact with external solvers. See @ref{Solver module}.
 
 @item Can I launch Gmsh from my solver (instead of launching my solver from Gmsh) in order to monitor a solution?
 
-The simplest (but rather crude) approach if to re-launch Gmsh everytime
-you want to visualize something (a simple C program showing how to do
-this is given in
+Using the Gmsh API, you can directly embed Gmsh in your own solver, use
+ONELAB for interactive parameter definition and modification, and create
+visualization data on the fly. See e.g.
+@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,prepro.py},
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py},
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp}.
+
+Another (rather crude) approach if to launch the Gmsh app everytime you
+want to visualize something (a simple C program showing how to do this
+is given in
 @url{@value{GITLAB-PREFIX}/utils/misc/callgmsh.c,utils/misc/callgmsh.c}).
 
-Another approach is to modify your program so that it can communicate
-with Gmsh through ONELAB over a socket, select `Always listen to
-incoming connection requests' in the solver option panel (or run gmsh
-with the @code{-listen} command line option), and Gmsh will always
-listen for your program on the @code{Solver.SocketName} socket.
+Yet another approach is to modify your program so that it can
+communicate with Gmsh through ONELAB over a socket. Select `Always
+listen to incoming connection requests' in the Gmsh solver option panel
+(or run gmsh with the @code{-listen} command line option), and Gmsh will
+always listen for your program on the given socket (or on the
+@code{Solver.SocketName} if no socket is specified).
 
-Using the Gmsh API, you can also directly embed Gmsh in your own solver,
-and use ONELAB for interactive parameter definition and
-modification. See
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py}
-and
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp})
-for examples.
 @end enumerate
 
 @c -------------------------------------------------------------------------

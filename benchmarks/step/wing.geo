@@ -42,10 +42,9 @@ p() = PointsOf{ Surface{s1()}; };
 Characteristic Length{p()} = dx / 10;
 
 // adapt mesh to curvature, with 20 elements per 2*pi
-Mesh.CharacteristicLengthFromCurvature = 1;
-Mesh.CharacteristicLengthFromPoints = 1;
-Mesh.MinimumElementsPerTwoPi = 20;
+Mesh.MeshSizeFromCurvature = 20;
+Mesh.MeshSizeFromPoints = 1;
 
 // contrain min/max mesh size
-Mesh.CharacteristicLengthMin = dx / 100;
-Mesh.CharacteristicLengthMax = dx;
+Mesh.MeshSizeMin = dx / 100;
+Mesh.MeshSizeMax = dx;

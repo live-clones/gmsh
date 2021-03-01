@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -45,7 +45,7 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
              std::vector<std::pair<GEdge *, std::vector<GFace *> > > &newEdges,
              size_t &MAX1)
 {
-  if(gfs.size() == 2 && gfs[0] == gfs[1]) return NULL;
+  if(gfs.size() == 2 && gfs[0] == gfs[1]) return nullptr;
   for(size_t i = 0; i < newEdges.size(); i++) {
     if(gfs.size() == newEdges[i].second.size()) {
       bool found = true;
@@ -59,12 +59,10 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
     }
   }
 
-  discreteEdge *ge = new discreteEdge(gm, (MAX1++) + 1, 0, 0);
+  discreteEdge *ge = new discreteEdge(gm, (MAX1++) + 1, nullptr, nullptr);
   newEdges.push_back(std::make_pair(ge, gfs));
   return ge;
 }
-
-#endif
 
 static void
 addTriangle(MTriangle *t,
@@ -72,7 +70,7 @@ addTriangle(MTriangle *t,
 {
   for(int i = 0; i < 3; i++) {
     MEdge e = t->getEdge(i);
-    std::map<MEdge, std::vector<MTriangle *> >::iterator it = tris.find(e);
+    auto it = tris.find(e);
     if(it == tris.end()) {
       std::vector<MTriangle *> v;
       v.push_back(t);
@@ -100,17 +98,18 @@ static bool breakForLargeAngle(MVertex *vprev, MVertex *vmid, MVertex *vpos,
   return false;
 }
 
+#endif
+
 void classifyFaces(GModel *gm, double curveAngleThreshold)
 {
 #if defined(HAVE_MESH)
-
   size_t MAX0 = gm->getMaxElementaryNumber(0);
   size_t MAX1 = gm->getMaxElementaryNumber(1);
   size_t MAX2 = gm->getMaxElementaryNumber(2);
 
   // check if mesh is high-order
   bool ho = false;
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
+  for(auto it = gm->firstFace(); it != gm->lastFace(); it++) {
     GFace *gf = *it;
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       if(gf->triangles[i]->getPolynomialOrder() > 1) {
@@ -129,7 +128,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
   // from the model
   std::set<MLine *, MLinePtrLessThan> lines;
   std::vector<GEdge *> edgesToRemove;
-  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+  for(auto it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       lines.insert((*it)->lines[i]);
     }
@@ -141,7 +140,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 
   // remove points from model
   std::vector<GVertex *> pointsToRemove;
-  for(GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
+  for(auto it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
     pointsToRemove.push_back(*it);
   }
   for(std::size_t i = 0; i < pointsToRemove.size(); ++i) {
@@ -152,7 +151,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
   std::map<MTriangle *, GFace *> reverse_old;
   std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan> tris;
   std::set<MTriangle *, MElementPtrLessThan> touched;
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
+  for(auto it = gm->firstFace(); it != gm->lastFace(); it++) {
     GFace *gf = *it;
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       touched.insert(gf->triangles[i]);
@@ -169,10 +168,9 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
   }
 
   // reset classification of all mesh nodes
-  for(std::set<MTriangle *, MElementPtrLessThan>::iterator it = touched.begin();
-      it != touched.end(); it++) {
+  for(auto it = touched.begin(); it != touched.end(); it++) {
     for(std::size_t j = 0; j < (*it)->getNumVertices(); j++)
-      (*it)->getVertex(j)->setEntity(0);
+      (*it)->getVertex(j)->setEntity(nullptr);
   }
 
   std::map<MTriangle *, GFace *> reverse;
@@ -192,18 +190,16 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
         st.pop();
         for(int i = 0; i < 3; i++) {
           MEdge e = t->getEdge(i);
-          std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>::iterator
-            it = tris.find(e);
+          auto it = tris.find(e);
           if(it == tris.end()) {
             Msg::Error("Could not find triangle linked to edge");
             break;
           }
           MLine ll(e.getVertex(0), e.getVertex(1));
-          std::set<MLine *, MLinePtrLessThan>::iterator itl = lines.find(&ll);
+          auto itl = lines.find(&ll);
           if(itl == lines.end()) {
             MTriangle *tt = it->second[0] == t ? it->second[1] : it->second[0];
-            std::set<MTriangle *, MElementPtrLessThan>::iterator it2 =
-              touched.find(tt);
+            auto it2 = touched.find(tt);
             if(it2 != touched.end()) {
               st.push(tt);
               touched.erase(it2);
@@ -223,15 +219,12 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 
   // now we have all faces coloured. If some regions were existing, replace
   // their faces by the new ones
-  for(GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
     std::vector<GFace *> _xfaces = (*rit)->faces();
     std::set<GFace *, GEntityPtrLessThan> _newFaces;
-    for(std::vector<GFace *>::iterator itf = _xfaces.begin();
-        itf != _xfaces.end(); ++itf) {
-      std::multimap<GFace *, GFace *>::iterator itLow =
-        replacedBy.lower_bound(*itf);
-      std::multimap<GFace *, GFace *>::iterator itUp =
-        replacedBy.upper_bound(*itf);
+    for(auto itf = _xfaces.begin(); itf != _xfaces.end(); ++itf) {
+      auto itLow = replacedBy.lower_bound(*itf);
+      auto itUp = replacedBy.upper_bound(*itf);
 
       for(; itLow != itUp; ++itLow) _newFaces.insert(itLow->second);
     }
@@ -240,11 +233,10 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 
   std::vector<std::pair<GEdge *, std::vector<GFace *> > > newEdges;
   {
-    std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>::iterator it =
-      tris.begin();
+    auto it = tris.begin();
     for(; it != tris.end(); ++it) {
       MLine ml(it->first.getVertex(0), it->first.getVertex(1));
-      std::set<MLine *, MLinePtrLessThan>::iterator itl = lines.find(&ml);
+      auto itl = lines.find(&ml);
       if(itl != lines.end()) {
         std::vector<GFace *> faces;
         for(size_t i = 0; i < it->second.size(); ++i)
@@ -262,9 +254,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
     newFaceTopology;
   std::map<MVertex *, GVertex *> modelVertices;
 
-  for(std::vector<std::pair<GEdge *, std::vector<GFace *> > >::iterator ite =
-        newEdges.begin();
-      ite != newEdges.end(); ++ite) {
+  for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
     std::vector<MEdge> allEdges;
 
     for(std::size_t i = 0; i < ite->first->lines.size(); i++) {
@@ -326,7 +316,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       MVertex *vB = vs[i][0];
       MVertex *vE = vs[i][vs[i].size() - 1];
 
-      std::map<MVertex *, GVertex *>::iterator itMV = modelVertices.find(vB);
+      auto itMV = modelVertices.find(vB);
       if(itMV == modelVertices.end()) {
         GVertex *newGv =
           new discreteVertex(gm, (MAX0++) + 1, vB->x(), vB->y(), vB->z());
@@ -372,14 +362,12 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
     }
   }
 
-  for(std::map<discreteFace *, std::vector<int>, GEntityPtrLessThan>::iterator
-        itFT = newFaceTopology.begin(); itFT != newFaceTopology.end(); ++itFT) {
+  for(auto itFT = newFaceTopology.begin(); itFT != newFaceTopology.end();
+      ++itFT) {
     itFT->first->setBoundEdges(itFT->second);
   }
 
-  for(std::vector<std::pair<GEdge *, std::vector<GFace *> > >::iterator ite =
-        newEdges.begin();
-      ite != newEdges.end(); ++ite) {
+  for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
     GEdge *ge = ite->first;
     gm->remove(ge);
     // delete ge;
@@ -387,8 +375,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 
   // delete empty mesh faces and reclasssify
   std::set<GFace *, GEntityPtrLessThan> fac = gm->getFaces();
-  for(std::set<GFace *, GEntityPtrLessThan>::iterator fit = fac.begin();
-      fit != fac.end(); ++fit) {
+  for(auto fit = fac.begin(); fit != fac.end(); ++fit) {
     std::set<MVertex *, MVertexPtrLessThan> verts;
     (*fit)->mesh_vertices.clear();
     for(std::size_t i = 0; i < (*fit)->triangles.size(); i++) {
@@ -419,14 +406,14 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
   double t1 = Cpu(), w1 = TimeOfDay();
 
   std::vector<MElement *> elements;
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+  for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     elements.insert(elements.end(), (*it)->triangles.begin(),
                     (*it)->triangles.end());
     elements.insert(elements.end(), (*it)->quadrangles.begin(),
                     (*it)->quadrangles.end());
   }
 
-  discreteEdge *edge = new discreteEdge(gm, (MAX1++) + 1, 0, 0);
+  discreteEdge *edge = new discreteEdge(gm, (MAX1++) + 1, nullptr, nullptr);
   gm->add(edge);
 
   e2t_cont adj;
@@ -476,7 +463,7 @@ int computeDiscreteCurvatures(GModel *gm)
 {
   std::map<MVertex *, std::pair<SVector3, SVector3> > &C = gm->getCurvatures();
   C.clear();
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+  for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     GFace *gf = *it;
     std::map<MVertex *, int> nodeIndex;
     std::vector<SPoint3> nodes;
@@ -498,8 +485,7 @@ int computeDiscreteCurvatures(GModel *gm)
       }
     }
     CurvatureRusinkiewicz(tris, nodes, curv);
-    for(std::map<MVertex *, int>::iterator itv = nodeIndex.begin();
-        itv != nodeIndex.end(); itv++) {
+    for(auto itv = nodeIndex.begin(); itv != nodeIndex.end(); itv++) {
       C[itv->first] = curv[itv->second];
     }
   }
@@ -536,8 +522,7 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
 
   // compute edge loops
   std::vector<MEdge> es;
-  for(std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>::const_iterator
-        it = edges.begin(); it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     if(it->second.size() == 1) { // on boundary
       es.push_back(it->first);
     }
@@ -545,7 +530,8 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
     }
     else { // non-manifold: not supported
       Msg::Error("Wrong topology of triangulation for parametrization: one "
-                 "edge is incident to %d triangles", it->second.size());
+                 "edge is incident to %d triangles",
+                 it->second.size());
       return false;
     }
   }
@@ -560,7 +546,8 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
   }
 
   Msg::Debug("Parametrisation of surface with %lu triangles, %lu edges and "
-             "%lu holes", triangles.size(), edges.size(), vs.size() - 1);
+             "%lu holes",
+             triangles.size(), edges.size(), vs.size() - 1);
 
   // find longest loop and use it as the "exterior" loop
   int loop = 0;
@@ -634,9 +621,7 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
   lsys->allocate(nodes.size());
 
 #if defined(HAVE_PETSC)
-  for(std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>::const_iterator
-        it = edges.begin();
-      it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     for(int i = 0; i < 2; i++) {
       for(int j = 0; j < 2; j++) {
         lsys->insertInSparsityPattern(nodeIndex[it->first.getVertex(i)],
@@ -646,9 +631,7 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
   }
 #endif
 
-  for(std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan>::const_iterator
-        it = edges.begin();
-      it != edges.end(); ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     for(int ij = 0; ij < 2; ij++) {
       MVertex *v0 = it->first.getVertex(ij);
       int index0 = nodeIndex[v0];
@@ -661,19 +644,18 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
       if(vLeft == v0 || vLeft == v1) vLeft = tLeft->getVertex(2);
       double e[3] = {v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z()};
       double ne = sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
-      double a[3] = {vLeft->x() - v0->x(),
-                     vLeft->y() - v0->y(),
+      double a[3] = {vLeft->x() - v0->x(), vLeft->y() - v0->y(),
                      vLeft->z() - v0->z()};
       double na = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
-      double thetaL = acos((a[0] * e[0] + a[1] * e[1] + a[2] * e[2]) / (na * ne));
+      double thetaL =
+        acos((a[0] * e[0] + a[1] * e[1] + a[2] * e[2]) / (na * ne));
       double thetaR = 0.;
       if(it->second.size() == 2) {
         MTriangle *tRight = it->second[1];
         MVertex *vRight = tRight->getVertex(0);
         if(vRight == v0 || vRight == v1) vRight = tRight->getVertex(1);
         if(vRight == v0 || vRight == v1) vRight = tRight->getVertex(2);
-        double b[3] = {vRight->x() - v0->x(),
-                       vRight->y() - v0->y(),
+        double b[3] = {vRight->x() - v0->x(), vRight->y() - v0->y(),
                        vRight->z() - v0->z()};
         double nb = sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
         thetaR = acos((b[0] * e[0] + b[1] * e[1] + b[2] * e[2]) / (nb * ne));
@@ -741,8 +723,7 @@ static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
     surf += t[i]->getVolume();
     for(int j = 0; j < 3; j++) {
       v.insert(t[i]->getVertex(j));
-      std::map<MEdge, int, MEdgeLessThan>::iterator it =
-        e.find(t[i]->getEdge(j));
+      auto it = e.find(t[i]->getEdge(j));
       if(it == e.end())
         e[t[i]->getEdge(j)] = 1;
       else
@@ -750,8 +731,7 @@ static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
     }
   }
   std::vector<MEdge> bnd;
-  for(std::map<MEdge, int, MEdgeLessThan>::iterator it = e.begin();
-      it != e.end(); ++it) {
+  for(auto it = e.begin(); it != e.end(); ++it) {
     if(it->second == 1) bnd.push_back(it->first);
   }
   if(bnd.empty()) {
@@ -802,16 +782,16 @@ void makeMLinesUnique(std::vector<MLine *> &v)
 class twoT {
 public:
   MTriangle *t1, *t2;
-  twoT(MTriangle *t) : t1(t), t2(NULL) {}
+  twoT(MTriangle *t) : t1(t), t2(nullptr) {}
   MTriangle *other(MTriangle *t) const
   {
     if(t == t1) return t2;
     if(t == t2) return t1;
-    return NULL;
+    return nullptr;
   }
 };
 
-static bool
+bool
 makePartitionSimplyConnected(std::vector<MTriangle *> &t,
                              std::vector<std::vector<MTriangle *> > &ts)
 {
@@ -819,7 +799,7 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
   for(std::size_t i = 0; i < t.size(); i++) {
     for(int j = 0; j < 3; j++) {
       MEdge e = t[i]->getEdge(j);
-      std::map<MEdge, twoT, MEdgeLessThan>::iterator it = conn.find(e);
+      auto it = conn.find(e);
       twoT twt(t[i]);
       if(it == conn.end())
         conn.insert(std::make_pair(e, twt));
@@ -838,7 +818,7 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
       _s.pop();
       for(int j = 0; j < 3; j++) {
         MEdge e = x->getEdge(j);
-        std::map<MEdge, twoT, MEdgeLessThan>::iterator it = conn.find(e);
+        auto it = conn.find(e);
         if(it->second.t2) {
           MTriangle *tt = it->second.other(x);
           if(tt && touch.find(tt) == touch.end()) _s.push(tt);
@@ -861,7 +841,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
 {
   Msg::Info("Splitting triangulations to make them parametrizable:");
 
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+  for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     int part = 0;
     if((*it)->triangles.empty()) continue;
     std::vector<MVertex *> verts = (*it)->mesh_vertices;
@@ -887,8 +867,8 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                                   vs.end());
       partitions.pop();
       std::ostringstream why;
-      int np = isTriangulationParametrizable((*it)->triangles,
-                                             max_elems_per_cut, why);
+      int np =
+        isTriangulationParametrizable((*it)->triangles, max_elems_per_cut, why);
       if(np > 1) {
         Msg::Info(" - Level %d partition with %d triangles split in %d "
                   "parts because %s",
@@ -933,13 +913,12 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
       }
     }
     (*it)->triangles.clear();
-    for(std::map<MTriangle *, int, MElementPtrLessThan>::iterator it2 =
-          global.begin(); it2 != global.end(); ++it2) {
+    for(auto it2 = global.begin(); it2 != global.end(); ++it2) {
       MTriangle *t = it2->first;
       (*it)->triangles.push_back(t);
       for(int i = 0; i < 3; i++) {
         MEdge ed = t->getEdge(i);
-        std::map<MEdge, int, MEdgeLessThan>::iterator it3 = cuts.find(ed);
+        auto it3 = cuts.find(ed);
         if(it3 == cuts.end())
           cuts[ed] = it2->second;
         else {
@@ -957,11 +936,10 @@ void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
                              bool addBoundary)
 {
   std::map<MEdge, int, MEdgeLessThan> m;
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+  for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       for(int j = 0; j < 3; j++) {
-        std::map<MEdge, int, MEdgeLessThan>::iterator it2 =
-          m.find((*it)->triangles[i]->getEdge(j));
+        auto it2 = m.find((*it)->triangles[i]->getEdge(j));
         if(it2 == m.end())
           m[(*it)->triangles[i]->getEdge(j)] = 1;
         else
@@ -971,7 +949,7 @@ void computeNonManifoldEdges(GModel *gm, std::vector<MLine *> &cut,
   }
   {
     int countNM = 0, countBND = 0;
-    std::map<MEdge, int, MEdgeLessThan>::iterator it = m.begin();
+    auto it = m.begin();
     for(; it != m.end(); ++it) {
       if(it->second > 2) {
         cut.push_back(

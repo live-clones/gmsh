@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -50,9 +50,7 @@ static void decasteljau(double tol, discreteList &discrete, int pos,
   double d = std::max(dot(d130, d130), dot(d230, d230));
   double l2 = dot(d30, d30);
 
-  if(d < tol * tol * l2) {
-    return;
-  }
+  if(d < tol * tol * l2) { return; }
 
   SPoint3 p01((p0 + p1) * 0.5);
   SPoint3 p12((p1 + p2) * 0.5);
@@ -126,9 +124,7 @@ static void discretizeCurve(Curve *c, double tol, std::vector<SPoint3> &pts,
       double t1 = (iCurve) / (double)(NbCurves);
       double t2 = (iCurve + 1) / (double)(NbCurves);
       SPoint3 pt[4];
-      for(int i = 0; i < 4; i++) {
-        pt[i] = curveGetPoint(c, iCurve * 3 + i);
-      }
+      for(int i = 0; i < 4; i++) { pt[i] = curveGetPoint(c, iCurve * 3 + i); }
       back = discretizeBezier(tol, discrete, back, pt, t1, t2, iCurve == 0);
     }
     break;

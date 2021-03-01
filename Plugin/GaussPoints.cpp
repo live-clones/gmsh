@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,9 +9,9 @@
 #include "PView.h"
 
 StringXNumber GaussPointsOptions_Number[] = {
-  {GMSH_FULLRC, "Order", NULL, 0},
-  {GMSH_FULLRC, "Dimension", NULL, 2},
-  {GMSH_FULLRC, "PhysicalGroup", NULL, 0}};
+  {GMSH_FULLRC, "Order", nullptr, 0},
+  {GMSH_FULLRC, "Dimension", nullptr, 2},
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, 0}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterGaussPointsPlugin()

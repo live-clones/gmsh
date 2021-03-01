@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,7 +21,7 @@ private:
 
 public:
   ghostEdge(GModel *model, const int num, const int partition)
-    : discreteEdge(model, num, NULL, NULL), _partition(partition),
+    : discreteEdge(model, num, nullptr, nullptr), _partition(partition),
       _ghostCells(), _saveMesh(false), _haveMesh(false)
   {
   }
@@ -33,32 +33,24 @@ public:
     }
   }
   virtual GeomType geomType() const { return GhostCurve; }
-  virtual void setPartition(const int partition)
-  {
-    _partition = partition;
-  }
+  virtual void setPartition(const int partition) { _partition = partition; }
   virtual int getPartition() const { return _partition; }
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
-  virtual std::map<MElement *, int> &getGhostCells()
-  {
-    return _ghostCells;
-  }
+  virtual std::map<MElement *, int> &getGhostCells() { return _ghostCells; }
 
   void addLine(MLine *l, int onWhichPartition)
   {
     GEdge::addLine(l);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(l, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(l, onWhichPartition));
     model()->addGhostCells(l, _partition);
   }
   void addElement(int type, MElement *e, int onWhichPartition)
   {
     GEdge::addElement(type, e);
-    _ghostCells.insert(
-      std::pair<MElement *, int>(e, onWhichPartition));
+    _ghostCells.insert(std::pair<MElement *, int>(e, onWhichPartition));
     model()->addGhostCells(e, _partition);
   }
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -181,6 +181,17 @@ namespace gmsh { // Top-level functions
     // Set the current model to the model with name `name'. If several models have
     // the same name, select the one that was added first.
     GMSH_API void setCurrent(const std::string & name);
+
+    // gmsh::model::getFileName
+    //
+    // Get the file name (if any) associated with the current model. A file name is
+    // associated when a model is read from a file on disk.
+    GMSH_API void getFileName(std::string & fileName);
+
+    // gmsh::model::setFileName
+    //
+    // Set the file name associated with the current model.
+    GMSH_API void setFileName(const std::string & fileName);
 
     // gmsh::model::getEntities
     //
@@ -1054,13 +1065,35 @@ namespace gmsh { // Top-level functions
                                                                     std::vector<int> & basisFunctionsOrientation,
                                                                     const int tag = -1);
 
-      // gmsh::model::mesh::getEdgeNumber
+      // gmsh::model::mesh::getEdges
       //
-      // Get the global edge identifier `edgeNum' for an input list of node pairs,
-      // concatenated in the vector `edgeNodes'.  Warning: this is an experimental
-      // feature and will probably change in a future release.
-      GMSH_API void getEdgeNumber(const std::vector<int> & edgeNodes,
-                                  std::vector<int> & edgeNum);
+      // Get the global unique mesh edge identifiers `edgeTags' and orientations
+      // `edgeOrientation' for an input list of node tag pairs defining these
+      // edges, concatenated in the vector `nodeTags'.
+      GMSH_API void getEdges(const std::vector<std::size_t> & nodeTags,
+                             std::vector<std::size_t> & edgeTags,
+                             std::vector<int> & edgeOrientations);
+
+      // gmsh::model::mesh::getFaces
+      //
+      // Get the global unique mesh face identifiers `faceTags' and orientations
+      // `faceOrientations' for an input list of node tag triplets (if `faceType'
+      // == 3) or quadruplets (if `faceType' == 4) defining these faces,
+      // concatenated in the vector `nodeTags'.
+      GMSH_API void getFaces(const int faceType,
+                             const std::vector<std::size_t> & nodeTags,
+                             std::vector<std::size_t> & faceTags,
+                             std::vector<int> & faceOrientations);
+
+      // gmsh::model::mesh::createEdges
+      //
+      // Create unique mesh edges for the entities `dimTags'.
+      GMSH_API void createEdges(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
+      // gmsh::model::mesh::createFaces
+      //
+      // Create unique mesh faces for the entities `dimTags'.
+      GMSH_API void createFaces(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // gmsh::model::mesh::getLocalMultipliersForHcurl0
       //
@@ -1320,6 +1353,12 @@ namespace gmsh { // Top-level functions
       // Currently only available with the OpenCASCADE kernel, as it relies on the
       // STL triangulation.
       GMSH_API void setOutwardOrientation(const int tag);
+
+      // gmsh::model::mesh::removeConstraints
+      //
+      // Remove all meshing constraints from the model entities `dimTags'. If
+      // `dimTags' is empty, remove all constraings.
+      GMSH_API void removeConstraints(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
       // gmsh::model::mesh::embed
       //
@@ -2508,11 +2547,16 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::addPipe
       //
       // Add a pipe in the OpenCASCADE CAD representation, by extruding the
-      // entities `dimTags' along the wire `wireTag'. Return the pipe in
-      // `outDimTags'.
+      // entities `dimTags' along the wire `wireTag'. The type of sweep can be
+      // specified with `trihedron' (possible values: "DiscreteTrihedron",
+      // "CorrectedFrenet", "Fixed", "Frenet", "ConstantNormal", "Darboux",
+      // "GuideAC", "GuidePlan", "GuideACWithContact", "GuidePlanWithContact"). If
+      // `trihedron' is not provided, "DiscreteTrihedron" is assumed. Return the
+      // pipe in `outDimTags'.
       GMSH_API void addPipe(const gmsh::vectorpair & dimTags,
                             const int wireTag,
-                            gmsh::vectorpair & outDimTags);
+                            gmsh::vectorpair & outDimTags,
+                            const std::string & trihedron = "");
 
       // gmsh::model::occ::fillet
       //
@@ -3212,6 +3256,16 @@ namespace gmsh { // Top-level functions
     // Show context window for the entity of dimension `dim' and tag `tag'.
     GMSH_API void showContextWindow(const int dim,
                                     const int tag);
+
+    // gmsh::fltk::openTreeItem
+    //
+    // Open the `name' item in the menu tree.
+    GMSH_API void openTreeItem(const std::string & name);
+
+    // gmsh::fltk::closeTreeItem
+    //
+    // Close the `name' item in the menu tree.
+    GMSH_API void closeTreeItem(const std::string & name);
 
   } // namespace fltk
 

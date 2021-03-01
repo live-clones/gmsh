@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -381,10 +381,10 @@ double opt_geometry_points(OPT_ARGS_NUM);
 double opt_geometry_curves(OPT_ARGS_NUM);
 double opt_geometry_surfaces(OPT_ARGS_NUM);
 double opt_geometry_volumes(OPT_ARGS_NUM);
-double opt_geometry_points_num(OPT_ARGS_NUM);
-double opt_geometry_curves_num(OPT_ARGS_NUM);
-double opt_geometry_surfaces_num(OPT_ARGS_NUM);
-double opt_geometry_volumes_num(OPT_ARGS_NUM);
+double opt_geometry_point_labels(OPT_ARGS_NUM);
+double opt_geometry_curve_labels(OPT_ARGS_NUM);
+double opt_geometry_surface_labels(OPT_ARGS_NUM);
+double opt_geometry_volume_labels(OPT_ARGS_NUM);
 double opt_geometry_label_type(OPT_ARGS_NUM);
 double opt_geometry_point_size(OPT_ARGS_NUM);
 double opt_geometry_point_sel_size(OPT_ARGS_NUM);
@@ -444,6 +444,7 @@ double opt_mesh_tolerance_edge_length(OPT_ARGS_NUM);
 double opt_mesh_tolerance_initial_delaunay(OPT_ARGS_NUM);
 double opt_mesh_lc_factor(OPT_ARGS_NUM);
 double opt_mesh_lc_from_curvature(OPT_ARGS_NUM);
+double opt_mesh_lc_from_curvature_iso(OPT_ARGS_NUM);
 double opt_mesh_lc_from_points(OPT_ARGS_NUM);
 double opt_mesh_lc_from_parametric_points(OPT_ARGS_NUM);
 double opt_mesh_lc_extend_from_boundary(OPT_ARGS_NUM);
@@ -458,7 +459,7 @@ double opt_mesh_radius_sup(OPT_ARGS_NUM);
 double opt_mesh_label_type(OPT_ARGS_NUM);
 double opt_mesh_first_element_tag(OPT_ARGS_NUM);
 double opt_mesh_first_node_tag(OPT_ARGS_NUM);
-double opt_mesh_points(OPT_ARGS_NUM);
+double opt_mesh_nodes(OPT_ARGS_NUM);
 double opt_mesh_lines(OPT_ARGS_NUM);
 double opt_mesh_triangles(OPT_ARGS_NUM);
 double opt_mesh_quadrangles(OPT_ARGS_NUM);
@@ -467,16 +468,16 @@ double opt_mesh_hexahedra(OPT_ARGS_NUM);
 double opt_mesh_prisms(OPT_ARGS_NUM);
 double opt_mesh_pyramids(OPT_ARGS_NUM);
 double opt_mesh_trihedra(OPT_ARGS_NUM);
-double opt_mesh_surfaces_edges(OPT_ARGS_NUM);
-double opt_mesh_surfaces_faces(OPT_ARGS_NUM);
-double opt_mesh_volumes_edges(OPT_ARGS_NUM);
-double opt_mesh_volumes_faces(OPT_ARGS_NUM);
-double opt_mesh_points_num(OPT_ARGS_NUM);
-double opt_mesh_lines_num(OPT_ARGS_NUM);
-double opt_mesh_surfaces_num(OPT_ARGS_NUM);
-double opt_mesh_volumes_num(OPT_ARGS_NUM);
-double opt_mesh_point_size(OPT_ARGS_NUM);
-double opt_mesh_point_type(OPT_ARGS_NUM);
+double opt_mesh_surface_edges(OPT_ARGS_NUM);
+double opt_mesh_surface_faces(OPT_ARGS_NUM);
+double opt_mesh_volume_edges(OPT_ARGS_NUM);
+double opt_mesh_volume_faces(OPT_ARGS_NUM);
+double opt_mesh_node_labels(OPT_ARGS_NUM);
+double opt_mesh_line_labels(OPT_ARGS_NUM);
+double opt_mesh_surface_labels(OPT_ARGS_NUM);
+double opt_mesh_volume_labels(OPT_ARGS_NUM);
+double opt_mesh_node_size(OPT_ARGS_NUM);
+double opt_mesh_node_type(OPT_ARGS_NUM);
 double opt_mesh_line_width(OPT_ARGS_NUM);
 double opt_mesh_smooth_normals(OPT_ARGS_NUM);
 double opt_mesh_smooth_ratio(OPT_ARGS_NUM);
@@ -522,7 +523,7 @@ double opt_mesh_stl_remove_duplicate_triangles(OPT_ARGS_NUM);
 double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM);
 double opt_mesh_stl_linear_deflection(OPT_ARGS_NUM);
 double opt_mesh_stl_angular_deflection(OPT_ARGS_NUM);
-double opt_mesh_boundary_layer_fan_points(OPT_ARGS_NUM);
+double opt_mesh_boundary_layer_fan_elements(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
 double opt_mesh_algo2d(OPT_ARGS_NUM);
 double opt_mesh_algo3d(OPT_ARGS_NUM);
@@ -538,10 +539,9 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_empty(OPT_ARGS_NUM);
-double opt_mesh_min_circ_points(OPT_ARGS_NUM);
-double opt_mesh_min_elements_2pi(OPT_ARGS_NUM);
+double opt_mesh_min_circle_nodes(OPT_ARGS_NUM);
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM);
-double opt_mesh_min_curv_points(OPT_ARGS_NUM);
+double opt_mesh_min_curve_nodes(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
 double opt_mesh_ho_optimize(OPT_ARGS_NUM);
 double opt_mesh_ho_periodic(OPT_ARGS_NUM);
@@ -915,7 +915,7 @@ void InitOptions(int num);
 void InitOptionsGUI(int num);
 void ReInitOptions(int num);
 void PrintOptions(int num, int level, int diff, int help, const char *filename,
-                  std::vector<std::string> *vec = 0);
+                  std::vector<std::string> *vec = nullptr);
 void PrintOptionsDoc();
 
 bool StringOption(int action, const char *category, int num, const char *name,

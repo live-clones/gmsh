@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,7 +8,7 @@
 #include "pyramidalBasis.h"
 #include "pointsGenerators.h"
 
-pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag), bergot(0)
+pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag), bergot(nullptr)
 {
   if(serendip && order > 2) {
     Msg::Warning("Serendipity pyramid for order %i not yet implemented", order);

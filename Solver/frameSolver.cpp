@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -17,7 +17,7 @@
 #include "PViewData.h"
 #endif
 
-frameSolver2d::frameSolver2d(GModel *gm) : pAssembler(0), _myModel(gm) {}
+frameSolver2d::frameSolver2d(GModel *gm) : pAssembler(nullptr), _myModel(gm) {}
 
 void frameSolver2d::addFixations(const std::vector<int> &dirs,
                                  const std::vector<int> &modelVertices,
@@ -180,7 +180,7 @@ void frameSolver2d::solve()
   createDofs();
 
   // force vector
-  std::vector<std::pair<GVertex *, std::vector<double> > >::iterator it =
+  auto it =
     _nodalForces.begin();
   for(; it != _nodalForces.end(); ++it) {
     MVertex *v = it->first->mesh_vertices[0];
@@ -283,8 +283,7 @@ void frameSolver2d::computeRotationTags()
   }
 
   std::multimap<MVertex *, gmshBeam2d *>::iterator s_it;
-  for(std::multimap<MVertex *, gmshBeam2d *>::iterator it = v2b.begin();
-      it != v2b.end(); it = s_it) {
+  for(auto it = v2b.begin(); it != v2b.end(); it = s_it) {
     MVertex *theKey = it->first;
 
     std::pair<std::multimap<MVertex *, gmshBeam2d *>::iterator,

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -11,11 +11,16 @@
 #include "fullMatrix.h"
 #include "bezierBasis.h"
 #include "BasisFactory.h"
+#include "SBoundingBox3d.h"
 
 void MElementBB(void *a, double *min, double *max)
 {
   MElement *e = static_cast<MElement *>(a);
-  if(e->getPolynomialOrder() == 1) {
+
+  // TODO: serendip elements (at least prisms) are not fully supported yet in
+  // bezierBasis; use the (potentially too-small) node-based bounding box for
+  // now
+  if(e->getPolynomialOrder() == 1 || e->getIsOnlySerendipity()) {
     MVertex *v = e->getVertex(0);
     min[0] = max[0] = v->x();
     min[1] = max[1] = v->y();
@@ -47,12 +52,15 @@ void MElementBB(void *a, double *min, double *max)
       max[2] = std::max(max[2], bezNodes(i, 2));
     }
   }
-  // make bounding boxes larger up to (absolute) geometrical tolerance
-  double const eps = CTX::instance()->geom.tolerance;
-  for(int i = 0; i < 3; i++) {
-    min[i] -= eps;
-    max[i] += eps;
-  }
+
+  SBoundingBox3d bb(min[0], min[1], min[2], max[0], max[1], max[2]);
+  bb.thicken(0.01); // make 1% thicker
+  max[0] = bb.max().x();
+  max[1] = bb.max().y();
+  max[2] = bb.max().z();
+  min[0] = bb.min().x();
+  min[1] = bb.min().y();
+  min[2] = bb.min().z();
 }
 
 static void MElementCentroid(void *a, double *x)
@@ -86,11 +94,8 @@ int MElementInEle(void *a, double *x)
 MElementOctree::MElementOctree(GModel *m) : _gm(m)
 {
   SBoundingBox3d bb = m->bounds();
-  // make bounding box larger up to (absolute) geometrical tolerance
-  double eps = CTX::instance()->geom.tolerance;
-  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
-  bbmin -= bbeps;
-  bbmax += bbeps;
+  bb.thicken(0.01); // make 1% thicker
+  SPoint3 bbmin = bb.min(), bbmax = bb.max();
   double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
                     bbmax.z() - bbmin.z()};
@@ -116,7 +121,7 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
 }
 
 MElementOctree::MElementOctree(const std::vector<MElement *> &v)
-  : _gm(0), _elems(v)
+  : _gm(nullptr), _elems(v)
 {
   SBoundingBox3d bb;
   for(std::size_t i = 0; i < v.size(); i++) {
@@ -125,11 +130,8 @@ MElementOctree::MElementOctree(const std::vector<MElement *> &v)
                     v[i]->getVertex(j)->z());
     }
   }
-  // make bounding box larger up to (absolute) geometrical tolerance
-  double eps = CTX::instance()->geom.tolerance;
-  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
-  bbmin -= bbeps;
-  bbmax += bbeps;
+  bb.thicken(0.01); // make 1% thicker
+  SPoint3 bbmin = bb.min(), bbmax = bb.max();
   double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
                     bbmax.z() - bbmin.z()};
@@ -152,7 +154,7 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
   std::vector<void *> v;
   std::vector<MElement *> e;
   Octree_SearchAll(P, _octree, &v);
-  for(std::vector<void *>::iterator it = v.begin(); it != v.end(); ++it) {
+  for(auto it = v.begin(); it != v.end(); ++it) {
     MElement *el = (MElement *)*it;
     if(dim == -1 || el->getDim() == dim) e.push_back(el);
   }
@@ -168,9 +170,7 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *el = entities[i]->getMeshElement(j);
           if(dim == -1 || el->getDim() == dim) {
-            if(MElementInEle(el, P)) {
-              e.push_back(el);
-            }
+            if(MElementInEle(el, P)) { e.push_back(el); }
           }
         }
       }
@@ -190,9 +190,7 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
       for(std::size_t i = 0; i < _elems.size(); i++) {
         MElement *el = _elems[i];
         if(dim == -1 || el->getDim() == dim) {
-          if(MElementInEle(el, P)) {
-            e.push_back(el);
-          }
+          if(MElementInEle(el, P)) { e.push_back(el); }
         }
       }
       if(!e.empty()) {
@@ -215,11 +213,9 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
   std::vector<void *> l;
   if(e && e->getDim() != dim) {
     Octree_SearchAll(P, _octree, &l);
-    for(std::vector<void *>::iterator it = l.begin(); it != l.end(); it++) {
+    for(auto it = l.begin(); it != l.end(); it++) {
       MElement *el = (MElement *)*it;
-      if(el->getDim() == dim) {
-        return el;
-      }
+      if(el->getDim() == dim) { return el; }
     }
   }
   if(!strict && _gm) {
@@ -264,5 +260,5 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
     MElement::setTolerance(initialTol);
     // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
-  return NULL;
+  return nullptr;
 }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -217,7 +217,7 @@ public:
     if(constraints.find(key) != constraints.end()) return;
     if(ghostByDof.find(key) != ghostByDof.end()) return;
 
-    std::map<Dof, int>::iterator it = unknown.find(key);
+    auto it = unknown.find(key);
     if(it == unknown.end()) {
       std::size_t size = unknown.size();
       unknown[key] = size;
@@ -236,7 +236,7 @@ public:
                                   std::vector<dataVec> &Vals)
   {
     for(std::size_t i = 0; i < keys.size(); i++) {
-      std::map<Dof, Dof>::iterator it = associatedWith.find(keys[i]);
+      auto it = associatedWith.find(keys[i]);
       if (it != associatedWith.end())keys[i] = it->second;
     }
 
@@ -249,7 +249,7 @@ public:
   virtual inline bool getAnUnknown(Dof key, dataVec &val) const
   {
     if(ghostValue.find(key) == ghostValue.end()) {
-      std::map<Dof, int>::const_iterator it = unknown.find(key);
+      auto it = unknown.find(key);
       if(it != unknown.end()) {
         _current->getFromSolution(it->second, val);
         return true;
@@ -273,10 +273,10 @@ public:
   virtual inline void getDofValue(Dof key, dataVec &val) const
   {
     {      
-      typename std::map<Dof, Dof>::const_iterator it = associatedWith.find(key);
+      auto it = associatedWith.find(key);
       if (it != associatedWith.end()){
 	//	  printf("ass to %d\n",it->second.getEntity());
-	std::map<Dof, int>::const_iterator itx = unknown.find(it->second);
+	auto itx = unknown.find(it->second);
 	if(itx != unknown.end()) {
 	  _current->getFromSolution(itx->second, val);
 	  return;
@@ -292,7 +292,7 @@ public:
       }
     }
     {
-      std::map<Dof, int>::const_iterator it = unknown.find(key);
+      auto it = unknown.find(key);
       if(it != unknown.end()) {
         _current->getFromSolution(it->second, val);
         return;
@@ -335,7 +335,7 @@ public:
   virtual inline void insertInSparsityPatternLinConst(const Dof &R,
                                                       const Dof &C)
   {
-    std::map<Dof, int>::iterator itR = unknown.find(R);
+    auto itR = unknown.find(R);
     if(itR != unknown.end()) {
       typename std::map<Dof, DofAffineConstraint<dataVec> >::iterator
         itConstraint;
@@ -362,9 +362,9 @@ public:
   {
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
-    std::map<Dof, int>::iterator itR = unknown.find(R);
+    auto itR = unknown.find(R);
     if(itR != unknown.end()) {
-      std::map<Dof, int>::iterator itC = unknown.find(C);
+      auto itC = unknown.find(C);
       if(itC != unknown.end()) {
         _current->insertInSparsityPattern(itR->second, itC->second);
       }
@@ -394,9 +394,9 @@ public:
   {
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
-    std::map<Dof, int>::iterator itR = unknown.find(R);
+    auto itR = unknown.find(R);
     if(itR != unknown.end()) {
-      std::map<Dof, int>::iterator itC = unknown.find(C);
+      auto itC = unknown.find(C);
       if(itC != unknown.end()) {
         _current->addToMatrix(itR->second, itC->second, value);
       }
@@ -424,25 +424,25 @@ public:
     printf("coucou\n");
 
     for(std::size_t i = 0; i < R.size(); i++) {
-      std::map<Dof, Dof>::iterator it = associatedWith.find(R[i]);
+      auto it = associatedWith.find(R[i]);
       if (it != associatedWith.end())R[i] = it->second;
     }
     for(std::size_t i = 0; i < C.size(); i++) {
-      std::map<Dof, Dof>::iterator it = associatedWith.find(C[i]);
+      auto it = associatedWith.find(C[i]);
       if (it != associatedWith.end())C[i] = it->second;
     }
     
     std::vector<int> NR(R.size()), NC(C.size());
 
     for(std::size_t i = 0; i < R.size(); i++) {
-      std::map<Dof, int>::iterator itR = unknown.find(R[i]);
+      auto itR = unknown.find(R[i]);
       if(itR != unknown.end())
         NR[i] = itR->second;
       else
         NR[i] = -1;
     }
     for(std::size_t i = 0; i < C.size(); i++) {
-      std::map<Dof, int>::iterator itC = unknown.find(C[i]);
+      auto itC = unknown.find(C[i]);
       if(itC != unknown.end())
         NC[i] = itC->second;
       else
@@ -484,14 +484,14 @@ public:
     printf("coucou RHS\n");
 
     for(std::size_t i = 0; i < R.size(); i++) {
-      std::map<Dof, Dof>::iterator it = associatedWith.find(R[i]);
+      auto it = associatedWith.find(R[i]);
       if (it != associatedWith.end())R[i] = it->second;
     }
 
 
     std::vector<int> NR(R.size());
     for(std::size_t i = 0; i < R.size(); i++) {
-      std::map<Dof, int>::iterator itR = unknown.find(R[i]);
+      auto itR = unknown.find(R[i]);
       if(itR != unknown.end())
         NR[i] = itR->second;
       else
@@ -522,13 +522,13 @@ public:
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
     for(std::size_t i = 0; i < R.size(); i++) {
-      std::map<Dof, Dof>::iterator it = associatedWith.find(R[i]);
+      auto it = associatedWith.find(R[i]);
       if (it != associatedWith.end())R[i] = it->second;
     }
 
     std::vector<int> NR(R.size());
     for(std::size_t i = 0; i < R.size(); i++) {
-      std::map<Dof, int>::iterator itR = unknown.find(R[i]);
+      auto itR = unknown.find(R[i]);
       if(itR != unknown.end())
         NR[i] = itR->second;
       else
@@ -576,7 +576,7 @@ public:
   {
     if(_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
-    std::map<Dof, int>::iterator itR = unknown.find(R);
+    auto itR = unknown.find(R);
     if(itR != unknown.end()) {
       _current->addToRightHandSide(itR->second, value);
     }
@@ -656,7 +656,7 @@ public:
   virtual inline void assembleLinConst(const Dof &R, const Dof &C,
                                        const dataMat &value)
   {
-    std::map<Dof, int>::iterator itR = unknown.find(R);
+    auto itR = unknown.find(R);
     if(itR != unknown.end()) {
       typename std::map<Dof, DofAffineConstraint<dataVec> >::iterator
         itConstraint;
@@ -709,11 +709,11 @@ public:
   {
     Dof key = ky;
     {
-      std::map<Dof, Dof>::iterator it = associatedWith.find(ky);
+      auto it = associatedWith.find(ky);
       if (it != associatedWith.end())key = it->second;
     }
     
-    std::map<Dof, int>::iterator it = unknown.find(key);
+    auto it = unknown.find(key);
     if(it == unknown.end()) {
       return -1;
     }

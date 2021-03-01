@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -57,10 +57,10 @@ static void readMSHEntities(FILE *fp, GModel *gm)
     if(fscanf(fp, "%d %d", &tag, &n) != 2) return;
     GEdge *ge = gm->getEdgeByTag(tag);
     if(!ge) {
-      GVertex *v1 = 0, *v2 = 0;
+      GVertex *v1 = nullptr, *v2 = nullptr;
       for(int j = 0; j < n; j++) {
         int tagv;
-        if(fscanf(fp, "%d", &tagv) != 1){
+        if(fscanf(fp, "%d", &tagv) != 1) {
           delete ge;
           return;
         }
@@ -83,7 +83,7 @@ static void readMSHEntities(FILE *fp, GModel *gm)
       std::vector<int> edges, signs;
       for(int j = 0; j < n; j++) {
         int tage;
-        if(fscanf(fp, "%d", &tage) != 1){
+        if(fscanf(fp, "%d", &tage) != 1) {
           delete df;
           return;
         }
@@ -106,7 +106,7 @@ static void readMSHEntities(FILE *fp, GModel *gm)
       std::vector<int> faces, signs;
       for(int j = 0; j < n; j++) {
         int tagf;
-        if(fscanf(fp, "%d", &tagf) != 1){
+        if(fscanf(fp, "%d", &tagf) != 1) {
           delete dr;
           return;
         }
@@ -131,7 +131,7 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm) // also used in MSH2
 
     if(fscanf(fp, "%d %d %d", &dim, &slave, &master) != 3) continue;
 
-    GEntity *s = 0, *m = 0;
+    GEntity *s = nullptr, *m = nullptr;
     switch(dim) {
     case 0:
       s = gm->getVertexByTag(slave);
@@ -295,7 +295,7 @@ int GModel::_readMSH3(const std::string &name)
       for(int i = 0; i < numVertices; i++) {
         int num, entity, dim;
         double xyz[3];
-        MVertex *vertex = 0;
+        MVertex *vertex = nullptr;
         if(!binary) {
           if(fscanf(fp, "%d %lf %lf %lf %d", &num, &xyz[0], &xyz[1], &xyz[2],
                     &entity) != 5) {
@@ -321,7 +321,7 @@ int GModel::_readMSH3(const std::string &name)
           if(swap) SwapBytes((char *)&entity, sizeof(int), 1);
         }
         if(!entity) {
-          vertex = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
+          vertex = new MVertex(xyz[0], xyz[1], xyz[2], nullptr, num);
         }
         else {
           if(!binary) {
@@ -422,12 +422,10 @@ int GModel::_readMSH3(const std::string &name)
         Msg::Debug("Vertex numbering is dense");
         _vertexVectorCache.resize(_vertexMapCache.size() + 1);
         if(minVertex == 1)
-          _vertexVectorCache[0] = 0;
+          _vertexVectorCache[0] = nullptr;
         else
-          _vertexVectorCache[numVertices] = 0;
-        for(std::map<int, MVertex *>::const_iterator it =
-              _vertexMapCache.begin();
-            it != _vertexMapCache.end(); ++it)
+          _vertexVectorCache[numVertices] = nullptr;
+        for(auto it = _vertexMapCache.begin(); it != _vertexMapCache.end(); ++it)
           _vertexVectorCache[it->first] = it->second;
         _vertexMapCache.clear();
       }
@@ -569,7 +567,7 @@ static void writeMSHPhysicals(FILE *fp, GEntity *ge)
 {
   std::vector<int> phys = ge->physicals;
   fprintf(fp, "%d ", (int)phys.size());
-  for(std::vector<int>::iterator itp = phys.begin(); itp != phys.end(); itp++)
+  for(auto itp = phys.begin(); itp != phys.end(); itp++)
     fprintf(fp, "%d ", *itp);
 }
 
@@ -578,30 +576,28 @@ void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
   fprintf(fp, "$Entities\n");
   fprintf(fp, "%lu %lu %lu %lu\n", gm->getNumVertices(), gm->getNumEdges(),
           gm->getNumFaces(), gm->getNumRegions());
-  for(GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
+  for(auto it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
     fprintf(fp, "%d ", (*it)->tag());
     writeMSHPhysicals(fp, *it);
     fprintf(fp, "\n");
   }
-  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+  for(auto it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
     std::list<GVertex *> vertices;
     if((*it)->getBeginVertex()) vertices.push_back((*it)->getBeginVertex());
     if((*it)->getEndVertex()) vertices.push_back((*it)->getEndVertex());
     fprintf(fp, "%d %d ", (*it)->tag(), (int)vertices.size());
-    for(std::list<GVertex *>::iterator itv = vertices.begin();
-        itv != vertices.end(); itv++) {
+    for(auto itv = vertices.begin(); itv != vertices.end(); itv++) {
       fprintf(fp, "%d ", (*itv)->tag());
     }
     writeMSHPhysicals(fp, *it);
     fprintf(fp, "\n");
   }
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+  for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     std::vector<GEdge *> const &edges = (*it)->edges();
     std::vector<int> const &ori = (*it)->edgeOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)edges.size());
     std::vector<int> tags;
-    for(std::vector<GEdge *>::const_iterator ite = edges.begin();
-        ite != edges.end(); ite++)
+    for(auto ite = edges.begin(); ite != edges.end(); ite++)
       tags.push_back((*ite)->tag());
 
     std::vector<int> signs(ori.begin(), ori.end());
@@ -614,16 +610,14 @@ void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
     writeMSHPhysicals(fp, *it);
     fprintf(fp, "\n");
   }
-  for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
+  for(auto it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
     std::vector<GFace *> faces = (*it)->faces();
     std::vector<int> ori = (*it)->faceOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)faces.size());
     std::vector<int> tags, signs;
-    for(std::vector<GFace *>::iterator itf = faces.begin(); itf != faces.end();
-        itf++)
+    for(auto itf = faces.begin(); itf != faces.end(); itf++)
       tags.push_back((*itf)->tag());
-    for(std::vector<int>::const_iterator itf = ori.begin(); itf != ori.end();
-        itf++)
+    for(auto itf = ori.begin(); itf != ori.end(); itf++)
       signs.push_back(*itf);
     if(tags.size() == signs.size()) {
       for(std::size_t i = 0; i < tags.size(); i++)
@@ -654,11 +648,8 @@ static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
 {
   if(model->getGhostCells().size()) {
     std::vector<short> ghosts;
-    std::pair<std::multimap<MElement *, short>::iterator,
-              std::multimap<MElement *, short>::iterator>
-      itp = model->getGhostCells().equal_range(ele);
-    for(std::multimap<MElement *, short>::iterator it = itp.first;
-        it != itp.second; it++)
+    auto itp = model->getGhostCells().equal_range(ele);
+    for(auto it = itp.first; it != itp.second; it++)
       ghosts.push_back(it->second);
     ele->writeMSH3(fp, binary, elementary, &ghosts);
   }
@@ -684,10 +675,10 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
                            bool renumber, bool saveAll) // also used in MSH2
 {
   int count = 0;
-  for(std::size_t i = 0; i < entities.size(); i++){
+  for(std::size_t i = 0; i < entities.size(); i++) {
     if(entities[i]->getMeshMaster() != entities[i] &&
        (saveAll || (entities[i]->physicals.size() &&
-                    entities[i]->getMeshMaster()->physicals.size()))){
+                    entities[i]->getMeshMaster()->physicals.size()))) {
       count++;
     }
   }
@@ -699,7 +690,7 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
     GEntity *g_master = g_slave->getMeshMaster();
     if(g_slave != g_master &&
        (saveAll || (entities[i]->physicals.size() &&
-                    entities[i]->getMeshMaster()->physicals.size()))){
+                    entities[i]->getMeshMaster()->physicals.size()))) {
       fprintf(fp, "%d %d %d\n", g_slave->dim(), g_slave->tag(),
               g_master->tag());
 
@@ -716,8 +707,7 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
                         g_slave->correspondingHighOrderVertices.end());
 
       fprintf(fp, "%d\n", (int)corrVert.size());
-      for(std::map<MVertex *, MVertex *>::iterator it = corrVert.begin();
-          it != corrVert.end(); it++) {
+      for(auto it = corrVert.begin(); it != corrVert.end(); it++) {
         MVertex *v1 = it->first;
         MVertex *v2 = it->second;
         if(renumber)
@@ -780,7 +770,7 @@ int GModel::_writeMSH3(const std::string &name, double version, bool binary,
   if(numPhysicalNames()) {
     fprintf(fp, "$PhysicalNames\n");
     fprintf(fp, "%d\n", numPhysicalNames());
-    for(piter it = firstPhysicalName(); it != lastPhysicalName(); it++) {
+    for(auto it = firstPhysicalName(); it != lastPhysicalName(); it++) {
       std::string name = it->second;
       if(name.size() > 254) name.resize(254);
       fprintf(fp, "%d %d \"%s\"\n", it->first.first, it->first.second,
@@ -806,31 +796,31 @@ int GModel::_writeMSH3(const std::string &name, double version, bool binary,
 
   _elementIndexCache.clear();
 
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->tetrahedra, saveAll,
                      saveSinglePartition, binary);
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->hexahedra, saveAll,
                      saveSinglePartition, binary);
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->prisms, saveAll, saveSinglePartition,
                      binary);
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->pyramids, saveAll,
                      saveSinglePartition, binary);
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->trihedra, saveAll,
                      saveSinglePartition, binary);
-  for(fiter it = firstFace(); it != lastFace(); ++it)
+  for(auto it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->triangles, saveAll,
                      saveSinglePartition, binary);
-  for(fiter it = firstFace(); it != lastFace(); ++it)
+  for(auto it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->quadrangles, saveAll,
                      saveSinglePartition, binary);
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+  for(auto it = firstEdge(); it != lastEdge(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->lines, saveAll, saveSinglePartition,
                      binary);
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
+  for(auto it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->points, saveAll, saveSinglePartition,
                      binary);
 

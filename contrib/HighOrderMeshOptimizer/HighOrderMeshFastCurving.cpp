@@ -225,12 +225,12 @@ namespace {
   {
     const double maxDP = std::cos(p.maxAngle);
 
-    MElement *el = 0;
+    MElement *el = nullptr;
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
       std::vector<MElement *> newElts = ed2el[elBaseEd];
       if((iLayer > 0) && (newElts.size() < 2)) {
-        aboveElt = 0;
+        aboveElt = nullptr;
         break;
       }
       el = (newElts[0] == el) ? newElts[1] : newElts[0];
@@ -256,13 +256,13 @@ namespace {
     const double maxDP = std::cos(p.maxAngle);
     const double maxDPIn = std::cos(p.maxAngleInner);
 
-    MElement *el0 = 0, *el1 = 0;
+    MElement *el0 = nullptr, *el1 = nullptr;
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
       // Get first element in layer
       std::vector<MElement *> newElts0 = ed2el[elBaseEd];
       if((iLayer > 0) && (newElts0.size() < 2)) {
-        aboveElt = 0;
+        aboveElt = nullptr;
         break;
       }
       el0 = (newElts0[0] == el1) ? newElts0[1] : newElts0[0];
@@ -278,7 +278,7 @@ namespace {
       // Get second element in layer
       std::vector<MElement *> newElts1 = ed2el[elTopEd0];
       if(newElts1.size() < 2) {
-        aboveElt = 0;
+        aboveElt = nullptr;
         break;
       }
       el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
@@ -455,22 +455,22 @@ namespace {
     // Build top face from max face (with right correspondance)
     MVertex *maxVert[3] = {elMaxFace.getVertex(0), elMaxFace.getVertex(1),
                            elMaxFace.getVertex(2)};
-    std::vector<MVertex *> topVert(3, static_cast<MVertex *>(0));
+    std::vector<MVertex *> topVert(3, static_cast<MVertex *>(nullptr));
     // Two vertices of elTopFace are those of elMaxFace coinciding with
     // elBaseFace
     for(int iBaseV = 0; iBaseV < 3; iBaseV++)
       for(int iMaxV = 0; iMaxV < 3; iMaxV++)
         if(elBaseFace.getVertex(iBaseV) == maxVert[iMaxV]) {
           topVert[iBaseV] = maxVert[iMaxV];
-          maxVert[iMaxV] = 0;
+          maxVert[iMaxV] = nullptr;
         }
     // Set last vertex of elTopFace as remaining vertex in elMaxFace
-    MVertex *thirdMaxVert = (maxVert[0] != 0) ?
-                              maxVert[0] :
-                              (maxVert[1] != 0) ? maxVert[1] : maxVert[2];
-    if(topVert[0] == 0)
+    MVertex *thirdMaxVert = (maxVert[0] != nullptr) ? maxVert[0] :
+                            (maxVert[1] != nullptr) ? maxVert[1] :
+                                                      maxVert[2];
+    if(topVert[0] == nullptr)
       topVert[0] = thirdMaxVert;
-    else if(topVert[1] == 0)
+    else if(topVert[1] == nullptr)
       topVert[1] = thirdMaxVert;
     else
       topVert[2] = thirdMaxVert;
@@ -485,13 +485,13 @@ namespace {
     const double maxDP = std::cos(p.maxAngle);
     const double maxDPIn = std::cos(p.maxAngleInner);
 
-    MElement *el0 = 0, *el1 = 0, *el2 = 0;
+    MElement *el0 = nullptr, *el1 = nullptr, *el2 = nullptr;
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
       // Get first element in layer
       std::vector<MElement *> newElts0 = face2el[elBaseFace];
       if((iLayer > 0) && (newElts0.size() < 2)) {
-        aboveElt = 0;
+        aboveElt = nullptr;
         break;
       }
       el0 = (newElts0[0] == el2) ? newElts0[1] : newElts0[0];
@@ -508,7 +508,7 @@ namespace {
       // Get second element in layer
       std::vector<MElement *> newElts1 = face2el[elTopFace0];
       if(newElts1.size() < 2) {
-        aboveElt = 0;
+        aboveElt = nullptr;
         break;
       }
       el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
@@ -523,7 +523,7 @@ namespace {
       // Get third element in layer
       std::vector<MElement *> newElts2 = face2el[elTopFace1];
       if(newElts2.size() < 2) {
-        aboveElt = 0;
+        aboveElt = nullptr;
         break;
       }
       el2 = (newElts2[0] == el1) ? newElts2[1] : newElts2[0];
@@ -557,12 +557,12 @@ namespace {
   {
     const double maxDP = std::cos(p.maxAngle);
 
-    MElement *el = 0;
+    MElement *el = nullptr;
 
     for(int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
       std::vector<MElement *> newElts = face2el[elBaseFace];
       if((iLayer > 0) && (newElts.size() < 2)) {
-        aboveElt = 0;
+        aboveElt = nullptr;
         break;
       }
       el = (newElts[0] == el) ? newElts[1] : newElts[0];
@@ -599,7 +599,7 @@ namespace {
     el->getFaceInfo(baseFace, iFirstElFace, iDum, iDum);
     el->getFaceVertices(iFirstElFace, baseVert);
     MFace elBaseFace(baseVert[0], baseVert[1], baseVert[2],
-                     (nbBaseFaceVert == 3) ? 0 : baseVert[3]);
+                     (nbBaseFaceVert == 3) ? nullptr : baseVert[3]);
 
     // Sweep column upwards by choosing largest faces in each element
     if(nbBaseFaceVert == 3) {
@@ -690,8 +690,7 @@ namespace {
       fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
       fprintf(fp, "$Nodes\n");
       fprintf(fp, "%d\n", vert_.size());
-      for(std::set<MVertex *>::iterator itV = vert_.begin(); itV != vert_.end();
-          ++itV) {
+      for(auto itV = vert_.begin(); itV != vert_.end(); ++itV) {
         SPoint3 p = (*itV)->point();
         fprintf(fp, "%i %g %g %g\n", (*itV)->getNum(), p.x(), p.y(), p.z());
       }
@@ -977,7 +976,7 @@ namespace {
     metaElt.setCurvedTop(deformFact);
     std::set<MVertex *> movedVertDum;
     curveElement(metaElt, movedVertDum, lastElt);
-    if(aboveElt == 0) return 1.;
+    if(aboveElt == nullptr) return 1.;
     double minJacDet, maxJacDet;
     jacobianBasedQuality::minMaxJacobianDeterminant(aboveElt, minJacDet,
                                                     maxJacDet);
@@ -1054,7 +1053,7 @@ namespace {
     bool foundCol;
     std::vector<MVertex *> baseVert, topPrimVert;
     std::vector<MElement *> blob;
-    MElement *aboveElt = 0;
+    MElement *aboveElt = nullptr;
     if(bndType == TYPE_LIN) { // 1D boundary
       MVertex *vb0 = bndElt->getVertex(0);
       MVertex *vb1 = bndElt->getVertex(1);
@@ -1073,7 +1072,7 @@ namespace {
         metaElType = TYPE_HEX;
       }
       else {
-        vb3 = 0;
+        vb3 = nullptr;
         metaElType = TYPE_PRI;
       }
       MFace baseFace(vb0, vb1, vb2, vb3);
@@ -1085,7 +1084,7 @@ namespace {
     // DbgOutputCol dbgOutCol;
     // dbgOutCol.addBlob(blob);
     // dbgOutCol.write("col_KO", bndElt->getNum());
-    if(aboveElt == 0)
+    if(aboveElt == nullptr)
       std::cout << "DBGTT: aboveElt = 0 for bnd. elt. " << bndElt->getNum()
                 << std::endl;
     curveColumn(p, ent, bndEnt, metaElType, baseVert, topPrimVert, aboveElt,
@@ -1105,13 +1104,13 @@ namespace {
     std::vector<std::pair<MElement *, std::vector<MElement *> > > bndEl2column;
     std::vector<MElement *> aboveElements;
 
-    std::list<MElement *>::iterator it = bndElts.begin();
+    auto it = bndElts.begin();
     while(it != bndElts.end()) {
       MElement *bndEl = *it;
       const int bndType = bndEl->getType();
       bool foundCol;
       std::vector<MVertex *> baseVert, topPrimVert;
-      MElement *aboveElt = 0;
+      MElement *aboveElt = nullptr;
 
       if(bndType == TYPE_LIN) { // 1D boundary
         MVertex *vb0 = bndEl->getVertex(0);
@@ -1120,7 +1119,7 @@ namespace {
 
         // Check if baseEd is adjacent to an element of the face
         // (the contrary can happen with degenerate edge, see fix b91a1b822)
-        MEdgeVecMEltMap::iterator myit = ed2el.find(baseEd);
+        auto myit = ed2el.find(baseEd);
         if(myit == ed2el.end()) {
           ++it;
           continue;
@@ -1129,7 +1128,7 @@ namespace {
         std::vector<MElement *> vec;
         bndEl2column.push_back(
           std::make_pair(bndEl, std::vector<MElement *>()));
-        aboveElements.push_back(NULL);
+        aboveElements.push_back(nullptr);
         foundCol =
           getColumn2D(ed2el, p, baseEd, baseVert, topPrimVert,
                       bndEl2column.back().second, aboveElements.back());
@@ -1138,12 +1137,12 @@ namespace {
         MVertex *vb0 = bndEl->getVertex(0);
         MVertex *vb1 = bndEl->getVertex(1);
         MVertex *vb2 = bndEl->getVertex(2);
-        MVertex *vb3 = NULL;
+        MVertex *vb3 = nullptr;
         if(bndType == TYPE_QUA) vb3 = bndEl->getVertex(3);
         MFace baseFace(vb0, vb1, vb2, vb3);
         bndEl2column.push_back(
           std::make_pair(bndEl, std::vector<MElement *>()));
-        aboveElements.push_back(NULL);
+        aboveElements.push_back(nullptr);
         foundCol =
           getColumn3D(face2el, p, baseFace, baseVert, topPrimVert,
                       bndEl2column.back().second, aboveElements.back());
@@ -1216,8 +1215,8 @@ namespace {
     // Loop over boundary elements to curve them by columns
     DbgOutputMeta dbgOut;
     std::set<MVertex *> movedVert;
-    for(std::list<MElement *>::iterator itBE = bndEl.begin();
-        itBE != bndEl.end(); itBE++) // Loop over bnd. elements
+    for(auto itBE = bndEl.begin(); itBE != bndEl.end();
+        itBE++) // Loop over bnd. elements
       curveMeshFromBndElt(ed2el, face2el, ent, bndEnt, *itBE, movedVert, p,
                           dbgOut);
     //  dbgOut.write("meta-elements", bndEnt->tag());
@@ -1243,7 +1242,7 @@ namespace {
     for(std::size_t i = 0; i < gFace->quadrangles.size(); i++)
       bndElts.push_back(gFace->quadrangles[i]);
 
-    std::list<MElement *>::iterator it = bndElts.begin();
+    auto it = bndElts.begin();
     while(it != bndElts.end()) {
       MElement *bndEl = *it;
       const int bndType = bndEl->getType();
@@ -1253,7 +1252,7 @@ namespace {
       MVertex *vb0 = bndEl->getVertex(0);
       MVertex *vb1 = bndEl->getVertex(1);
       MVertex *vb2 = bndEl->getVertex(2);
-      MVertex *vb3 = NULL;
+      MVertex *vb3 = nullptr;
       if(bndType == TYPE_QUA) vb3 = bndEl->getVertex(3);
       MFace baseFace(vb0, vb1, vb2, vb3);
       bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement *>()));
@@ -1289,7 +1288,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
     int n = fields->getNumBoundaryLayerFields();
     for(int i = 0; i < n; ++i) {
       Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-      if(bl_field == NULL) continue;
+      if(bl_field == nullptr) continue;
       blFields.push_back(dynamic_cast<BoundaryLayerField *>(bl_field));
     }
   }

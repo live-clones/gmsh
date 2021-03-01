@@ -24,14 +24,14 @@ struct LagrangeMultiplierFieldT {
   groupOfElements *g;
   double _tau;
   simpleFunction<double> *_f;
-  LagrangeMultiplierFieldT() : _tag(0), g(0) {}
+  LagrangeMultiplierFieldT() : _tag(0), g(nullptr) {}
 };
 
 struct thermicField {
   int _tag; // tag for the dofManager
   groupOfElements *g; // support for this field
   double _k; // diffusivity
-  thermicField() : _tag(0), g(0) {}
+  thermicField() : _tag(0), g(nullptr) {}
 };
 
 struct BoundaryConditionT {
@@ -39,17 +39,17 @@ struct BoundaryConditionT {
   enum location { UNDEF, ON_VERTEX, ON_EDGE, ON_FACE, ON_VOLUME };
   location onWhat; // on vertices or elements
   groupOfElements *g; // support for this BC
-  BoundaryConditionT() : _tag(0), onWhat(UNDEF), g(0) {}
+  BoundaryConditionT() : _tag(0), onWhat(UNDEF), g(nullptr) {}
 };
 
 struct dirichletBCT : public BoundaryConditionT {
   simpleFunction<double> *_f;
-  dirichletBCT() : BoundaryConditionT(), _f(0) {}
+  dirichletBCT() : BoundaryConditionT(), _f(nullptr) {}
 };
 
 struct neumannBCT : public BoundaryConditionT {
   simpleFunction<double> *_f;
-  neumannBCT() : BoundaryConditionT(), _f(0) {}
+  neumannBCT() : BoundaryConditionT(), _f(nullptr) {}
 };
 // a thermic solver ...
 class thermicSolver {
@@ -70,7 +70,7 @@ protected:
 
 public:
   thermicSolver(int tag)
-    : _tag(tag), pAssembler(0), LagSpace(0), LagrangeMultiplierSpace(0)
+    : _tag(tag), pAssembler(nullptr), LagSpace(nullptr), LagrangeMultiplierSpace(nullptr)
   {
   }
 

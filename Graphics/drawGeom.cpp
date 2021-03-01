@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,7 +32,7 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
   if(CTX::instance()->geom.labelType == 1) {
     sprintf(str, "%d", e->tag());
   }
-  else {
+  else if(CTX::instance()->geom.labelType == 2) {
     strcpy(str, "");
     for(std::size_t i = 0; i < e->physicals.size(); i++) {
       char tmp[32];
@@ -41,6 +41,19 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
       strcat(str, tmp);
     }
   }
+  else if(CTX::instance()->geom.labelType == 3) {
+    strcpy(str, e->model()->getElementaryName(e->dim(), e->tag()).c_str());
+  }
+  else {
+    strcpy(str, "");
+    std::string name = "";
+    for(std::size_t i = 0; i < e->physicals.size(); i++) {
+      if(name.size()) strcat(str, ", ");
+      name = e->model()->getPhysicalName(e->dim(), std::abs(e->physicals[i]));
+      if(name.size()) strcat(str, name.c_str());
+    }
+  }
+
   ctx->drawString(str, xx, yy, zz);
 }
 
@@ -108,7 +121,7 @@ public:
       }
     }
 
-    if(CTX::instance()->geom.pointsNum || v->getSelection() > 1) {
+    if(CTX::instance()->geom.pointLabels || v->getSelection() > 1) {
       double offset =
         (0.5 * ps + 0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       if(v->getSelection() > 1)
@@ -205,7 +218,7 @@ public:
       }
     }
 
-    if(CTX::instance()->geom.curvesNum || e->getSelection() > 1) {
+    if(CTX::instance()->geom.curveLabels || e->getSelection() > 1) {
       GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
       double offset = (0.5 * CTX::instance()->geom.curveWidth +
                        0.1 * CTX::instance()->glFontSize) *
@@ -327,7 +340,7 @@ public:
 
     if(((CTX::instance()->geom.surfaces || f->getSelection() > 1) &&
         CTX::instance()->geom.surfaceType == 0) ||
-       CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals)
+       CTX::instance()->geom.surfaceLabels || CTX::instance()->geom.normals)
       f->buildRepresentationCross();
 
     if(CTX::instance()->geom.surfaces || f->getSelection() > 1) {
@@ -363,7 +376,7 @@ public:
 
     if(f->cross[0].size() && f->cross[0][0].size()) {
       int idx = f->cross[0][0].size() / 2;
-      if(CTX::instance()->geom.surfacesNum || f->getSelection() > 1) {
+      if(CTX::instance()->geom.surfaceLabels || f->getSelection() > 1) {
         double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
         double x = f->cross[0][0][idx].x();
         double y = f->cross[0][0][idx].y();
@@ -432,7 +445,7 @@ public:
     const double size = 8.;
     double x = 0., y = 0., z = 0.;
 
-    if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumesNum ||
+    if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumeLabels ||
        r->getSelection() > 1) {
       SPoint3 p = r->bounds(true).center(); // fast approx if mesh-based
       x = p.x();
@@ -444,7 +457,7 @@ public:
     if(CTX::instance()->geom.volumes || r->getSelection() > 1)
       _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
 
-    if(CTX::instance()->geom.volumesNum || r->getSelection() > 1) {
+    if(CTX::instance()->geom.volumeLabels || r->getSelection() > 1) {
       double offset =
         (1. * size + 0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       if(r->getSelection() > 1)

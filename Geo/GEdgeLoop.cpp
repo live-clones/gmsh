@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,8 +14,7 @@ void GEdgeSigned::print() const
     Msg::Info("Curve %d sign %d, begin point %d, end point %d", ge->tag(),
               _sign, getBeginVertex()->tag(), getEndVertex()->tag());
   else
-    Msg::Info("Curve %d sign %d, no begin or end points", ge->tag(),
-              _sign);
+    Msg::Info("Curve %d sign %d, no begin or end points", ge->tag(), _sign);
 }
 
 int countInList(std::list<GEdge *> &wire, GEdge *ge)
@@ -35,8 +34,8 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
 
   std::list<GEdge *> possibleChoices;
 
-  std::list<GEdge *>::iterator it = wire.begin();
-  std::list<GEdge *>::iterator ite = wire.end();
+  auto it = wire.begin();
+  auto ite = wire.end();
   while(it != ite) {
     GEdge *ge = *it;
     GVertex *v1 = ge->getBeginVertex();
@@ -81,13 +80,13 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
   }
 
   // should never end up here
-  return GEdgeSigned(0, 0);
+  return GEdgeSigned(0, nullptr);
 }
 
 int GEdgeLoop::count(GEdge *ge) const
 {
   int count = 0;
-  for(GEdgeLoop::citer it = begin(); it != end(); ++it) {
+  for(auto it = begin(); it != end(); ++it) {
     if(it->ge == ge) count++;
   }
   return count;
@@ -95,38 +94,32 @@ int GEdgeLoop::count(GEdge *ge) const
 
 void GEdgeLoop::print() const
 {
-  for(GEdgeLoop::citer it = begin(); it != end(); ++it) {
-    it->print();
-  }
+  for(auto it = begin(); it != end(); ++it) { it->print(); }
 }
 
-void GEdgeLoop::getEdges(std::vector<GEdge*> &edges) const
+void GEdgeLoop::getEdges(std::vector<GEdge *> &edges) const
 {
   edges.clear();
-  for(GEdgeLoop::citer it = begin(); it != end(); ++it) {
-    edges.push_back(it->getEdge());
-  }
+  for(auto it = begin(); it != end(); ++it) { edges.push_back(it->getEdge()); }
 }
 
 void GEdgeLoop::getSigns(std::vector<int> &signs) const
 {
   signs.clear();
-  for(GEdgeLoop::citer it = begin(); it != end(); ++it) {
-    signs.push_back(it->getSign());
-  }
+  for(auto it = begin(); it != end(); ++it) { signs.push_back(it->getSign()); }
 }
 
 static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,
                         GEdge **degeneratedToInsert)
 {
-  GEdgeSigned *prevOne = 0;
-  GEdgeSigned ges(0, 0);
+  GEdgeSigned *prevOne = nullptr;
+  GEdgeSigned ges(0, nullptr);
 
   while(wire.size()) {
     if(prevOne && (*degeneratedToInsert) &&
        (*degeneratedToInsert)->getBeginVertex() == prevOne->getEndVertex()) {
       ges = GEdgeSigned(1, *degeneratedToInsert);
-      *degeneratedToInsert = 0;
+      *degeneratedToInsert = nullptr;
       // printf("second degenerated edge inserted\n");
     }
     else
@@ -148,9 +141,8 @@ GEdgeLoop::GEdgeLoop(const std::vector<GEdge *> &cwire)
   // gmsh
   std::list<GEdge *> wire;
   std::vector<GEdge *> degenerated;
-  GEdge *degeneratedToInsert = 0;
-  for(std::vector<GEdge *>::const_iterator it = cwire.begin();
-      it != cwire.end(); ++it) {
+  GEdge *degeneratedToInsert = nullptr;
+  for(auto it = cwire.begin(); it != cwire.end(); ++it) {
     GEdge *ed = *it;
     if(ed->degenerate(0))
       degenerated.push_back(ed);
@@ -158,9 +150,7 @@ GEdgeLoop::GEdgeLoop(const std::vector<GEdge *> &cwire)
       wire.push_back(ed);
   }
 
-  if(degenerated.size() == 1) {
-    wire.push_front(degenerated[0]);
-  }
+  if(degenerated.size() == 1) { wire.push_front(degenerated[0]); }
   else if(degenerated.size() == 2) {
     degeneratedToInsert = degenerated[1];
     wire.push_front(degenerated[0]);
@@ -170,7 +160,5 @@ GEdgeLoop::GEdgeLoop(const std::vector<GEdge *> &cwire)
       "More than two degenerated edges in one model face of an OCC model");
   }
 
-  while(!wire.empty()) {
-    loopTheLoop(wire, loop, &degeneratedToInsert);
-  }
+  while(!wire.empty()) { loopTheLoop(wire, loop, &degeneratedToInsert); }
 }

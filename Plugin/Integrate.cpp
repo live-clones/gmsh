@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,10 +8,10 @@
 #include "PViewOptions.h"
 
 StringXNumber IntegrateOptions_Number[] = {
-  {GMSH_FULLRC, "View", NULL, -1.},
-  {GMSH_FULLRC, "OverTime", NULL, -1.},
-  {GMSH_FULLRC, "Dimension", NULL, -1.},
-  {GMSH_FULLRC, "Visible", NULL, 1.}};
+  {GMSH_FULLRC, "View", nullptr, -1.},
+  {GMSH_FULLRC, "OverTime", nullptr, -1.},
+  {GMSH_FULLRC, "Dimension", nullptr, -1.},
+  {GMSH_FULLRC, "Visible", nullptr, 1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterIntegratePlugin()
@@ -22,17 +22,16 @@ GMSH_Plugin *GMSH_RegisterIntegratePlugin()
 
 std::string GMSH_IntegratePlugin::getHelp() const
 {
-  return "Plugin(Integrate) integrates a scalar field over "
-         "all the elements of the view `View' (if `Dimension' < 0), "
-         "or over all elements of the prescribed dimension "
-         "(if `Dimension' > 0). If the field is a vector field,"
-         "the circulation/flux of the field over "
-         "line/surface elements is calculated.\n\n"
+  return "Plugin(Integrate) integrates a scalar field over all the elements "
+         "of the view `View' (if `Dimension' < 0), or over all elements of "
+         "the prescribed dimension (if `Dimension' > 0). If the field is a "
+         "vector field, the circulation/flux of the field over  line/surface "
+         "elements is calculated.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "If `OverTime' = i > -1 , the plugin integrates the scalar view "
-         "over time instead of over space, starting at iteration i."
-         "If `Visible' = 1, the plugin only integrates over"
-         "visible entities.\n\n"
+         "over time (using the trapezoidal rule) instead of over space, "
+         "starting at step i. If `Visible' = 1, the plugin only integrates "
+         "over visible entities.\n\n"
          "Plugin(Integrate) creates one new list-based view.";
 }
 
@@ -125,40 +124,44 @@ PView *GMSH_IntegratePlugin::execute(PView *v)
     }
   }
   else {
-    int timeBeg = data1->getFirstNonEmptyTimeStep();
-    int timeEnd = data1->getNumTimeSteps();
-    for(int ent = 0; ent < data1->getNumEntities(timeBeg); ent++) {
-      for(int ele = 0; ele < data1->getNumElements(timeBeg, ent); ele++) {
-        if(data1->skipElement(timeBeg, ent, ele)) continue;
-        int dim = data1->getDimension(timeBeg, ent, ele);
+    int firstStep = data1->getFirstNonEmptyTimeStep();
+    int numSteps = data1->getNumTimeSteps();
+    for(int ent = 0; ent < data1->getNumEntities(firstStep); ent++) {
+      for(int ele = 0; ele < data1->getNumElements(firstStep, ent); ele++) {
+        if(data1->skipElement(firstStep, ent, ele)) continue;
+        int dim = data1->getDimension(firstStep, ent, ele);
         if((dimension > 0) && (dim != dimension)) continue;
 
-        int numNodes = data1->getNumNodes(timeBeg, ent, ele);
-        int type = data1->getType(timeBeg, ent, ele);
-        int numComp = data1->getNumComponents(timeBeg, ent, ele);
+        int numNodes = data1->getNumNodes(firstStep, ent, ele);
+        int type = data1->getType(firstStep, ent, ele);
+        int numComp = data1->getNumComponents(firstStep, ent, ele);
         if(numComp != 1)
           Msg::Error("Can only integrate scalar views over time");
         std::vector<double> *out =
           data2->incrementList(numComp, type, numNodes);
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
         for(int nod = 0; nod < numNodes; nod++)
-          data1->getNode(timeBeg, ent, ele, nod, x[nod], y[nod], z[nod]);
+          data1->getNode(firstStep, ent, ele, nod, x[nod], y[nod], z[nod]);
         for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]);
         for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
         for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
 
-        std::vector<double> timeIntegral(numNodes, 0.);
-        double time =
-          (overTime > 0) ? data1->getTime(timeBeg + overTime - 1) : 0.0;
-        for(int step = timeBeg + overTime; step < timeEnd; step++) {
+        std::vector<double> val, t;
+        for(int step = firstStep + overTime; step < numSteps - 1; step++) {
           if(!data1->hasTimeStep(step)) continue;
-          double newTime = data1->getTime(step);
-          double dt = newTime - time;
-          time = newTime;
+          t.push_back(data1->getTime(step));
           for(int nod = 0; nod < numNodes; nod++) {
-            double val;
-            data1->getValue(step, ent, ele, nod, 0, val);
-            timeIntegral[nod] += val * dt;
+            double v;
+            data1->getValue(step, ent, ele, nod, 0, v);
+            val.push_back(v);
+          }
+        }
+        std::vector<double> timeIntegral(numNodes, 0.);
+        for(std::size_t step = 0; step < t.size() - 1; step++) {
+          double dt = t[step + 1] - t[step];
+          for(int nod = 0; nod < numNodes; nod++) {
+            timeIntegral[nod] += 0.5 *
+              (val[step * numNodes + nod] + val[(step + 1) * numNodes + nod]) * dt;
           }
         }
         for(int nod = 0; nod < numNodes; nod++)

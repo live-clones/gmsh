@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,12 +25,9 @@ class drawContextFltkCairo : public drawContextFltk {
   int _currentFontSize;
 
 public:
-  void draw();
   drawContextFltkCairo();
   ~drawContextFltkCairo();
   double getStringWidth(const char *str);
-  // int getStringHeight();
-  // int getStringDescent();
   void flushString();
   void drawString(const char *str);
   void setFont(int fontid, int fontsize);

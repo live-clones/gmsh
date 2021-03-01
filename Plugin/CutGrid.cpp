@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,7 +25,7 @@ StringXNumber CutGridOptions_Number[] = {
   {GMSH_FULLRC, "NumPointsU", GMSH_CutGridPlugin::callbackU, 20},
   {GMSH_FULLRC, "NumPointsV", GMSH_CutGridPlugin::callbackV, 20},
   {GMSH_FULLRC, "ConnectPoints", GMSH_CutGridPlugin::callbackConnect, 1},
-  {GMSH_FULLRC, "View", NULL, -1.}};
+  {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCutGridPlugin() { return new GMSH_CutGridPlugin(); }

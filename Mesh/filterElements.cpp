@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -136,7 +136,7 @@ bool overlap2D(MElement *e1, MElement *e2)
       MEdge ed2 = e2->getEdge(j);
       if(intersectEdge2d(ed1, ed2)) {
         //	printf("apero time nnodes %d %d partitions %d %d  : %g %g -- %g %g
-        //vs %g %g -- %g %g\n",
+        // vs %g %g -- %g %g\n",
         //	       e1->getNumVertices(),e2->getNumVertices(),
         //	       e1->getPartition(),e2->getPartition(),
         //	       ed1.getVertex(0)->x(),ed1.getVertex(0)->y(),ed1.getVertex(1)->x(),ed1.getVertex(1)->y(),
@@ -185,9 +185,7 @@ void filterColumns(std::vector<MElement *> &elem,
 {
   std::sort(elem.begin(), elem.end());
   std::vector<MElement *> toKeep;
-  for(std::map<MElement *, std::vector<MElement *> >::iterator it =
-        _elemColumns.begin();
-      it != _elemColumns.end(); ++it) {
+  for(auto it = _elemColumns.begin(); it != _elemColumns.end(); ++it) {
     const std::vector<MElement *> &c = it->second;
     std::size_t MAX = c.size();
     //    printf("size of column %d\n",c.size());

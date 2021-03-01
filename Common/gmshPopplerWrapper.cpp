@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -60,7 +60,7 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres, double yres)
   int numPages = getNumPages();
   if(iPage < 0) iPage = 0;
   if(iPage > numPages - 1) iPage = numPages - 1;
-  std::map<int, GLuint>::iterator it = _pages2textures.find(iPage);
+  auto it = _pages2textures.find(iPage);
   if(it != _pages2textures.end()) return it->second;
   if(!_currentDoc) return 0;
 

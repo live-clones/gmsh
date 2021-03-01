@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -353,11 +353,10 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
     jmax = 0.;
     return;
   }
-  double scale = (dim == 1.) ?
-                   invMeanEdLength :
-                   (dim == 2.) ?
-                   invMeanEdLength * invMeanEdLength :
-                   invMeanEdLength * invMeanEdLength * invMeanEdLength;
+  double scale =
+    (dim == 1.) ? invMeanEdLength :
+    (dim == 2.) ? invMeanEdLength * invMeanEdLength :
+                  invMeanEdLength * invMeanEdLength * invMeanEdLength;
   if(ge && (ge->dim() == 2) && ge->haveParametrization()) {
     // If parametrized surface entity provided...
     SVector3 geoNorm(0., 0., 0.);
@@ -667,7 +666,7 @@ const nodalBasis *MElement::getFunctionSpace(int order, bool serendip) const
 {
   if(order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
   int type = ElementType::getType(getType(), order, serendip);
-  return type ? BasisFactory::getNodalBasis(type) : NULL;
+  return type ? BasisFactory::getNodalBasis(type) : nullptr;
 }
 
 const FuncSpaceData MElement::getFuncSpaceData(int order, bool serendip) const
@@ -680,7 +679,7 @@ const JacobianBasis *MElement::getJacobianFuncSpace(int orderElement) const
 {
   if(orderElement == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
   int tag = ElementType::getType(getType(), orderElement);
-  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+  return tag ? BasisFactory::getJacobianBasis(tag) : nullptr;
 }
 
 const FuncSpaceData MElement::getJacobianFuncSpaceData(int orderElement) const
@@ -1739,9 +1738,9 @@ void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
     else
       fprintf(fp, " %ld", getVertex(i)->getIndex());
   fprintf(fp, " %d\n",
-          (elementTagType == 3) ?
-            _partition :
-            (elementTagType == 2) ? abs(physical) : elementary);
+          (elementTagType == 3) ? _partition :
+          (elementTagType == 2) ? abs(physical) :
+                                  elementary);
 
   if(physical < 0) reverse();
 }
@@ -1766,9 +1765,9 @@ void MElement::writeIR3(FILE *fp, int elementTagType, int num, int elementary,
 
   int numVert = getNumVertices();
   fprintf(fp, "%d %d %d", num,
-          (elementTagType == 3) ?
-            _partition :
-            (elementTagType == 2) ? abs(physical) : elementary,
+          (elementTagType == 3) ? _partition :
+          (elementTagType == 2) ? abs(physical) :
+                                  elementary,
           numVert);
   for(int i = 0; i < numVert; i++)
     fprintf(fp, " %ld", getVertex(i)->getIndex());
@@ -1789,9 +1788,9 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType,
 
   if(physical < 0) reverse();
 
-  int tag = (elementTagType == 3) ?
-              _partition :
-              (elementTagType == 2) ? abs(physical) : elementary;
+  int tag = (elementTagType == 3) ? _partition :
+            (elementTagType == 2) ? abs(physical) :
+                                    elementary;
 
   if(format == 0) { // free field format
     fprintf(fp, "%s,%lu,%d", str, _num, tag);
@@ -2373,7 +2372,7 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
       if(vertexMap.count(numV))
         vmv.push_back(vertexMap[numV]);
       else {
-        MVertex *mv = new MVertex(v->x(), v->y(), v->z(), 0, numV);
+        MVertex *mv = new MVertex(v->x(), v->y(), v->z(), nullptr, numV);
         vmv.push_back(mv);
         vertexMap[numV] = mv;
       }
@@ -2387,7 +2386,7 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
         if(vertexMap.count(numV))
           vmv.push_back(vertexMap[numV]);
         else {
-          MVertex *mv = new MVertex(v->x(), v->y(), v->z(), 0, numV);
+          MVertex *mv = new MVertex(v->x(), v->y(), v->z(), nullptr, numV);
           vmv.push_back(mv);
           vertexMap[numV] = mv;
         }
@@ -2395,9 +2394,9 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
     }
   }
 
-  MElement *parent = 0;
+  MElement *parent = nullptr;
   if(eParent && !getDomain(0) && !getDomain(1)) {
-    std::map<MElement *, MElement *>::iterator it = newParents.find(eParent);
+    auto it = newParents.find(eParent);
     MElement *newParent;
     if(it == newParents.end()) {
       newParent = eParent->copy(vertexMap, newParents, newDomains);
@@ -2415,7 +2414,7 @@ MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
   for(int i = 0; i < 2; i++) {
     MElement *dom = getDomain(i);
     if(!dom) continue;
-    std::map<MElement *, MElement *>::iterator it = newDomains.find(dom);
+    auto it = newDomains.find(dom);
     MElement *newDom;
     if(it == newDomains.end()) {
       newDom = dom->copy(vertexMap, newParents, newDomains);
@@ -2558,7 +2557,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex *> &v,
   case MSH_PYR_285: return new MPyramidN(v, 8, num, part);
   case MSH_PYR_385: return new MPyramidN(v, 9, num, part);
   case MSH_TRIH_4: return new MTrihedron(v, num, part);
-  default: return 0;
+  default: return nullptr;
   }
 }
 
@@ -2583,13 +2582,13 @@ MElement *MElementFactory::create(int num, int type,
       if(v) { vertices[i] = v; }
       else {
         Msg::Error("Unknown node %d in element %d", numVertex, num);
-        return 0;
+        return nullptr;
       }
     }
   }
   else {
     Msg::Error("Missing data in element %d", num);
-    return 0;
+    return nullptr;
   }
 
   unsigned int part = 0;

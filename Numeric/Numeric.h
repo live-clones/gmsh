@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -153,7 +153,7 @@ double triangle_area(double p0[3], double p1[3], double p2[3]);
 double triangle_area2d(double p0[2], double p1[2], double p2[2]);
 void circumCenterXY(double *p1, double *p2, double *p3, double *res);
 void circumCenterXYZ(double *p1, double *p2, double *p3, double *res,
-                     double *uv = 0);
+                     double *uv = nullptr);
 // operate a transformation on the 4 points of a Quad in 3D, to have an
 // equivalent Quad in 2D
 void planarQuad_xyz2xy(double *x, double *y, double *z, double *xn, double *yn);

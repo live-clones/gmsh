@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -13,7 +13,7 @@
 // Derive the main window from Fl_Window (it shows up faster that way)
 class mainWindow : public Fl_Window {
 public:
-  mainWindow(int w, int h, bool nonModal, const char *l = 0)
+  mainWindow(int w, int h, bool nonModal, const char *l = nullptr)
     : Fl_Window(w, h, l)
   {
     if(nonModal) set_non_modal();
@@ -30,7 +30,7 @@ public:
 #else
       if(Fl::test_shortcut(FL_CTRL + 'w')) {
 #endif
-        if(fl_choice("Do you really want to quit?", "Cancel", "Quit", 0))
+        if(fl_choice("Do you really want to quit?", "Cancel", "Quit", nullptr))
           do_callback();
         return 1;
       }

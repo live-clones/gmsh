@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -100,25 +100,25 @@ MElement *const *GRegion::getStartElementType(int type) const
 {
   switch(type) {
   case 0:
-    if(tetrahedra.empty()) return 0; // msvc would throw an exception
+    if(tetrahedra.empty()) return nullptr; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&tetrahedra[0]);
   case 1:
-    if(hexahedra.empty()) return 0; // msvc would throw an exception
+    if(hexahedra.empty()) return nullptr; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&hexahedra[0]);
   case 2:
-    if(prisms.empty()) return 0; // msvc would throw an exception
+    if(prisms.empty()) return nullptr; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&prisms[0]);
   case 3:
-    if(pyramids.empty()) return 0; // msvc would throw an exception
+    if(pyramids.empty()) return nullptr; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&pyramids[0]);
   case 4:
-    if(trihedra.empty()) return 0;
+    if(trihedra.empty()) return nullptr;
     return reinterpret_cast<MElement *const *>(&trihedra[0]);
   case 5:
-    if(polyhedra.empty()) return 0;
+    if(polyhedra.empty()) return nullptr;
     return reinterpret_cast<MElement *const *>(&polyhedra[0]);
   }
-  return 0;
+  return nullptr;
 }
 
 MElement *GRegion::getMeshElement(std::size_t index) const
@@ -142,7 +142,7 @@ MElement *GRegion::getMeshElement(std::size_t index) const
     return polyhedra[index - tetrahedra.size() - hexahedra.size() -
                      prisms.size() - pyramids.size() - trihedra.size()];
 
-  return 0;
+  return nullptr;
 }
 
 MElement *GRegion::getMeshElementByType(const int familyType,
@@ -161,14 +161,14 @@ MElement *GRegion::getMeshElementByType(const int familyType,
   else if(familyType == TYPE_POLYH)
     return polyhedra[index];
 
-  return 0;
+  return nullptr;
 }
 
 void GRegion::resetMeshAttributes()
 {
   meshAttributes.recombine3D = 0;
   meshAttributes.method = MESH_UNSTRUCTURED;
-  meshAttributes.extrude = 0;
+  meshAttributes.extrude = nullptr;
   meshAttributes.QuadTri = NO_QUADTRI;
   meshAttributes.meshSize = MAX_LC;
 }
@@ -446,7 +446,7 @@ bool GRegion::edgeConnected(GRegion *r) const
 {
   std::vector<GEdge *> e = edges(), e2 = r->edges();
 
-  std::vector<GEdge *>::const_iterator it = e.begin();
+  auto it = e.begin();
   while(it != e.end()) {
     if(std::find(e2.begin(), e2.end(), *it) != e2.end()) return true;
     ++it;
@@ -547,8 +547,7 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
   for(auto it = embedded_faces.begin(); it != embedded_faces.end(); it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
     std::vector<GEdge *> ed = (*it)->edges();
-    for(std::vector<GEdge *>::const_iterator it2 = ed.begin(); it2 != ed.end();
-        it2++) {
+    for(auto it2 = ed.begin(); it2 != ed.end(); it2++) {
       tmp.insert((*it2)->mesh_vertices.begin(), (*it2)->mesh_vertices.end());
       if((*it2)->getBeginVertex())
         tmp.insert((*it2)->getBeginVertex()->mesh_vertices.begin(),

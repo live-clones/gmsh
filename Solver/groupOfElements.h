@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -99,7 +99,7 @@ class groupOfLagMultElements : public groupOfElements {
 private:
   void fillElementContainer(groupOfElements &pElem, groupOfElements &sElem)
   {
-    groupOfElements::elementContainer::const_iterator itp = pElem.begin();
+    auto itp = pElem.begin();
     for(; itp != pElem.end(); itp++) {
       if((*itp)->getParent()) {
         if(sElem.find(*itp))

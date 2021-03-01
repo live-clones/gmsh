@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -42,7 +42,7 @@ public:
   int count(GEdge *) const;
   int count() const { return (int)loop.size(); }
   void print() const;
-  void getEdges(std::vector<GEdge*> &edges) const;
+  void getEdges(std::vector<GEdge *> &edges) const;
   void getSigns(std::vector<int> &signs) const;
 };
 

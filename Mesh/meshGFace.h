@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -48,10 +48,11 @@ void fourthPoint(double *p1, double *p2, double *p3, double *p4);
 void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners);
 int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(
-  GFace *gf, std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges = 0);
+  GFace *gf,
+  std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges = nullptr);
 bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh, bool debug = true,
-                   std::vector<GEdge *> *replacement_edges = 0);
+                   std::vector<GEdge *> *replacement_edges = nullptr);
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N);
 

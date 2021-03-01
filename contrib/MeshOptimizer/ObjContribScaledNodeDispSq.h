@@ -55,7 +55,7 @@ ObjContribScaledNodeDispSq<FuncType>::ObjContribScaledNodeDispSq(
   double weight, Patch::LengthScaling scaling)
   : ObjContrib("ScaledNodeDispSq",
                FuncType::getNamePrefix() + "ScaledNodeDispSq"),
-    _mesh(0), _weight(weight), _scaling(scaling)
+    _mesh(nullptr), _weight(weight), _scaling(scaling)
 {
 }
 
@@ -75,8 +75,8 @@ void ObjContribScaledNodeDispSq<FuncType>::initialize(Patch *mesh)
 }
 
 template <class FuncType>
-bool ObjContribScaledNodeDispSq<FuncType>::addContrib(double &Obj,
-                                                      std::vector<double> &gradObj)
+bool ObjContribScaledNodeDispSq<FuncType>::addContrib(
+  double &Obj, std::vector<double> &gradObj)
 {
   _min = BIGVAL;
   _max = -BIGVAL;

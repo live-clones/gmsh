@@ -79,7 +79,7 @@ Set maximum mesh element size (Mesh.MeshSizeMax)
 @item -clextend value
 Extend mesh element sizes from boundaries (Mesh.MeshSizeExtendFromBoundary)
 @item -clcurv value
-Compute mesh element size from curvature, with given minimum number of elements per 2*pi radians (Mesh.MeshSizeFromCurvature and Mesh.MinimumElementsPerTwoPi)
+Compute mesh element size from curvature, with value the target number of elements per 2*pi radians (Mesh.MeshSizeFromCurvature)
 @item -aniso_max value
 Set maximum anisotropy for bamg (Mesh.AnisoMax)
 @item -smooth_ratio value
@@ -106,8 +106,8 @@ Combine views having identical names into multi-time-step views
 @end ftable
  Solver:
 @ftable @code
-@item -listen
-Always listen to incoming connection requests (Solver.AlwaysListen)
+@item -listen string
+Always listen to incoming connection requests (Solver.AlwaysListen) on the given socket (uses Solver.SocketName if not specified)
 @item -minterpreter string
 Name of Octave interpreter (Solver.OctaveInterpreter)
 @item -pyinterpreter string

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,7 +18,7 @@ public:
   virtual SVector3 firstDer(double par) const { return SVector3(); }
   virtual SVector3 secondDer(double par) const { return SVector3(); }
   ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return NULL; }
+  void *getNativePtr() const { return nullptr; }
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const
   {
     return SPoint2();

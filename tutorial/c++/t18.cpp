@@ -107,11 +107,11 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > sxmin;
   gmsh::model::getEntitiesInBoundingBox(2 - eps, -eps, -eps, 2 + eps, 1 + eps,
                                         1 + eps, sxmin, 2);
-  for(auto i: sxmin) {
+  for(auto i : sxmin) {
     // Then we get the bounding box of each left surface
     double xmin, ymin, zmin, xmax, ymax, zmax;
-    gmsh::model::getBoundingBox(i.first, i.second, xmin, ymin,
-                                zmin, xmax, ymax, zmax);
+    gmsh::model::getBoundingBox(i.first, i.second, xmin, ymin, zmin, xmax, ymax,
+                                zmax);
     // We translate the bounding box to the right and look for surfaces inside
     // it:
     std::vector<std::pair<int, int> > sxmax;
@@ -119,18 +119,17 @@ int main(int argc, char **argv)
                                           zmin - eps, xmax + eps + 1,
                                           ymax + eps, zmax + eps, sxmax, 2);
     // For all the matches, we compare the corresponding bounding boxes...
-    for(auto j: sxmax) {
+    for(auto j : sxmax) {
       double xmin2, ymin2, zmin2, xmax2, ymax2, zmax2;
-      gmsh::model::getBoundingBox(j.first, j.second, xmin2, ymin2,
-                                  zmin2, xmax2, ymax2, zmax2);
+      gmsh::model::getBoundingBox(j.first, j.second, xmin2, ymin2, zmin2, xmax2,
+                                  ymax2, zmax2);
       xmin2 -= 1;
       xmax2 -= 1;
       // ...and if they match, we apply the periodicity constraint
       if(std::abs(xmin2 - xmin) < eps && std::abs(xmax2 - xmax) < eps &&
          std::abs(ymin2 - ymin) < eps && std::abs(ymax2 - ymax) < eps &&
          std::abs(zmin2 - zmin) < eps && std::abs(zmax2 - zmax) < eps) {
-        gmsh::model::mesh::setPeriodic(2, {j.second}, {i.second},
-                                       translation);
+        gmsh::model::mesh::setPeriodic(2, {j.second}, {i.second}, translation);
       }
     }
   }

@@ -46,8 +46,8 @@ Write mesh files in binary format (if possible)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.BoundaryLayerFanPoints
-Number of points (per Pi radians) for 2D boundary layer fans@*
+@item Mesh.BoundaryLayerFanElements
+Number of elements (per Pi radians) for 2D boundary layer fans@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -271,7 +271,7 @@ Display mesh lines (1D elements)?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.LineNumbers
+@item Mesh.LineLabels
 Display mesh line labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -337,7 +337,12 @@ Default value: @code{1e+22}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshSizeFromCurvature
-Automatically compute mesh element sizes from curvature@*
+Automatically compute mesh element sizes from curvature, using the value as the target number of elements per 2 * Pi radians@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFromCurvatureIsotropic
+Force isotropic curvature estimation when the mesh size is computed from curvature@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -381,19 +386,19 @@ METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, 3: Two
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumCirclePoints
+@item Mesh.MinimumCircleNodes
 Minimum number of nodes used to mesh circles and ellipses@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumCurvePoints
-Minimum number of points used to mesh curves other than lines, circles and ellipses@*
+@item Mesh.MinimumCurveNodes
+Minimum number of nodes used to mesh curves other than lines, circles and ellipses@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumElementsPerTwoPi
-Minimum number of elements per 2 * Pi radians when the mesh size is adapted to the curvature@*
-Default value: @code{6}@*
+[Deprecated]@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
@@ -546,6 +551,26 @@ Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coo
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Nodes
+Display mesh nodes?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NodeLabels
+Display mesh node labels?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NodeSize
+Display size of mesh nodes (in pixels)@*
+Default value: @code{4}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NodeType
+Display mesh nodes as solid color dots (0) or 3D spheres (1)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Normals
 Display size of normal vectors (in pixels)@*
 Default value: @code{0}@*
@@ -568,26 +593,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeNetgen
 Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Points
-Display mesh nodes (vertices)?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PointNumbers
-Display mesh node labels?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PointSize
-Display size of mesh nodes (in pixels)@*
-Default value: @code{4}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PointType
-Display mesh nodes as solid color dots (0) or 3D spheres (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -811,7 +816,7 @@ Display faces of surface mesh?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SurfaceNumbers
+@item Mesh.SurfaceLabels
 Display surface mesh element labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -861,7 +866,7 @@ Display faces of volume mesh?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.VolumeNumbers
+@item Mesh.VolumeLabels
 Display volume mesh element labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -876,12 +881,12 @@ Method for defining a zone (0: single zone, 1: by partition, 2: by physical)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Color.Points
+@item Mesh.Color.Nodes
 Mesh node color@*
 Default value: @code{@{0,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Color.PointsSup
+@item Mesh.Color.NodesSup
 Second order mesh node color@*
 Default value: @code{@{255,0,255@}}@*
 Saved in: @code{General.OptionsFileName}

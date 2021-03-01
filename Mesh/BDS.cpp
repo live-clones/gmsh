@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -54,8 +54,8 @@ void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
       return;
     }
     fprintf(view_c, "View \"paramC\"{\n");
-    std::vector<BDS_Face *>::iterator tit = t.begin();
-    std::vector<BDS_Face *>::iterator tite = t.end();
+    auto tit = t.begin();
+    auto tite = t.end();
     while(tit != tite) {
       BDS_Point *pts[4];
       if(!(*tit)->deleted && (*tit)->getNodes(pts)) {
@@ -94,8 +94,8 @@ void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
     return;
   }
   fprintf(f, "View \"scalar\" {\n");
-  std::vector<BDS_Face *>::iterator tit = t.begin();
-  std::vector<BDS_Face *>::iterator tite = t.end();
+  auto tit = t.begin();
+  auto tite = t.end();
   while(tit != tite) {
     BDS_Point *pts[4];
     if(!(*tit)->deleted && (*tit)->getNodes(pts)) {
@@ -239,7 +239,7 @@ std::vector<BDS_Face *> BDS_Point::getTriangles() const
   std::vector<BDS_Face *> t;
   t.reserve(edges.size());
 
-  std::vector<BDS_Edge *>::const_iterator it = edges.begin();
+  auto it = edges.begin();
   while(it != edges.end()) {
     std::size_t const number_of_faces = (*it)->numfaces();
 
@@ -277,20 +277,20 @@ BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GFace *gf)
 BDS_Point *BDS_Mesh::find_point(int p)
 {
   BDS_Point P(p);
-  std::set<BDS_Point *, PointLessThan>::iterator it = points.find(&P);
+  auto it = points.find(&P);
 
-  return it != points.end() ? static_cast<BDS_Point *>(*it) : NULL;
+  return it != points.end() ? static_cast<BDS_Point *>(*it) : nullptr;
 }
 
 BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p, int num2)
 {
-  std::vector<BDS_Edge *>::iterator eit = p->edges.begin();
+  auto eit = p->edges.begin();
   while(eit != p->edges.end()) {
     if((*eit)->p1 == p && (*eit)->p2->iD == num2) return (*eit);
     if((*eit)->p2 == p && (*eit)->p1->iD == num2) return (*eit);
     ++eit;
   }
-  return 0;
+  return nullptr;
 }
 
 BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p1, BDS_Point *p2)
@@ -324,7 +324,7 @@ BDS_Edge *BDS_Mesh::recover_edge_fast(BDS_Point *p1, BDS_Point *p2)
 {
   std::vector<BDS_Face *> ts = p1->getTriangles();
 
-  std::vector<BDS_Face *>::const_iterator it = ts.begin();
+  auto it = ts.begin();
   while(it != ts.end()) {
     BDS_Face *t = *it;
     if(!t->e4) {
@@ -341,7 +341,7 @@ BDS_Edge *BDS_Mesh::recover_edge_fast(BDS_Point *p1, BDS_Point *p2)
     }
     ++it;
   }
-  return 0;
+  return nullptr;
 }
 
 BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
@@ -358,7 +358,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
 
   if(!p1 || !p2) {
     Msg::Error("Could not find points %d or %d in BDS mesh", num1, num2);
-    return 0;
+    return nullptr;
   }
 
   Msg::Debug("Edge %d %d has to be recovered", num1, num2);
@@ -370,7 +370,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
 
     bool selfIntersection = false;
 
-    std::vector<BDS_Edge *>::const_iterator it = edges.begin();
+    auto it = edges.begin();
     while(it != edges.end()) {
       e = (*it);
       if(!e->deleted && e->p1 != p1 && e->p1 != p2 && e->p2 != p1 &&
@@ -378,12 +378,10 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
         if(Intersect_Edges_2d(e->p1->u, e->p1->v, e->p2->u, e->p2->v, p1->u,
                               p1->v, p2->u, p2->v, x)) {
           // intersect
-          if(e2r &&
-             e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, 0)) != e2r->end()) {
-            std::set<EdgeToRecover>::iterator itr1 =
-              e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, 0));
-            std::set<EdgeToRecover>::iterator itr2 =
-              e2r->find(EdgeToRecover(num1, num2, 0));
+          if(e2r && e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, nullptr)) !=
+                      e2r->end()) {
+            auto itr1 = e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, nullptr));
+            auto itr2 = e2r->find(EdgeToRecover(num1, num2, nullptr));
             Msg::Debug("edge %d %d on model edge %d cannot be recovered because"
                        " it intersects %d %d on model edge %d",
                        num1, num2, itr2->ge->tag(), e->p1->iD, e->p2->iD,
@@ -394,13 +392,13 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
               EdgeToRecover(e->p1->iD, e->p2->iD, itr1->ge));
             selfIntersection = true;
           }
-          if(e->numfaces() != e->numTriangles()) return 0;
+          if(e->numfaces() != e->numTriangles()) return nullptr;
           intersected.push_back(e);
         }
       ++it;
     }
 
-    if(selfIntersection) return 0;
+    if(selfIntersection) return nullptr;
 
     if(!intersected.size() || ix > 300) {
       BDS_Edge *eee = find_edge(num1, num2);
@@ -417,7 +415,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
           Msg::Debug("edge %d %d cannot be recovered at all", num1, num2);
         }
         _fatal = true;
-        return 0;
+        return nullptr;
       }
       return eee;
     }
@@ -431,12 +429,12 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
     if(!success) {
       Msg::Debug("edge %d %d cannot be recovered at all\n", num1, num2);
       _fatal = true;
-      return 0;
+      return nullptr;
     }
 
     ix++;
   }
-  return 0;
+  return nullptr;
 }
 
 BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const
@@ -447,7 +445,7 @@ BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const
   if(t->e1->p1->iD == E.p1->iD && t->e1->p2->iD == E.p2->iD) return t->e1;
   if(t->e2->p1->iD == E.p1->iD && t->e2->p2->iD == E.p2->iD) return t->e2;
   if(t->e3->p1->iD == E.p1->iD && t->e3->p2->iD == E.p2->iD) return t->e3;
-  return 0;
+  return nullptr;
 }
 
 static bool is_equivalent(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3,
@@ -475,7 +473,7 @@ BDS_Face *BDS_Mesh::find_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3)
     BDS_Face *t = e3->faces(i);
     if(is_equivalent(e1, e2, e3, t->e1, t->e2, t->e3)) { return t; }
   }
-  return 0;
+  return nullptr;
 }
 
 BDS_Edge *BDS_Mesh::add_edge(int const p1, int const p2)
@@ -488,7 +486,7 @@ BDS_Edge *BDS_Mesh::add_edge(int const p1, int const p2)
 
   if(!pp1 || !pp2) {
     Msg::Error("Could not find points %d or %d", p1, p2);
-    return 0;
+    return nullptr;
   }
   edges.push_back(new BDS_Edge(pp1, pp2));
 
@@ -501,7 +499,7 @@ BDS_Face *BDS_Mesh::add_triangle(int p1, int p2, int p3)
   BDS_Edge *e2 = add_edge(p2, p3);
   BDS_Edge *e3 = add_edge(p3, p1);
   if(e1 && e2 && e3) return add_triangle(e1, e2, e3);
-  return 0;
+  return nullptr;
 }
 
 BDS_Face *BDS_Mesh::add_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3)
@@ -511,7 +509,7 @@ BDS_Face *BDS_Mesh::add_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3)
     triangles.push_back(t);
     return t;
   }
-  return 0;
+  return nullptr;
 }
 
 void BDS_Mesh::del_face(BDS_Face *t)
@@ -541,17 +539,16 @@ void BDS_Mesh::del_point(BDS_Point *p)
 void BDS_Mesh::add_geom(int p1, int p2)
 {
   BDS_GeomEntity *e = new BDS_GeomEntity(p1, p2);
-  std::pair<std::set<BDS_GeomEntity *, GeomLessThan>::iterator, bool> res =
-    geom.insert(e);
+  auto res = geom.insert(e);
   if(!res.second) delete e;
 }
 
 void BDS_Edge::computeNeighborhood(BDS_Point *pts1[4], BDS_Point *pts2[4],
                                    BDS_Point *oface[2]) const
 {
-  oface[0] = oface[1] = 0;
-  pts1[0] = pts1[1] = pts1[2] = pts1[3] = 0;
-  pts2[0] = pts2[1] = pts2[2] = pts2[3] = 0;
+  oface[0] = oface[1] = nullptr;
+  pts1[0] = pts1[1] = pts1[2] = pts1[3] = nullptr;
+  pts2[0] = pts2[1] = pts2[2] = pts2[3] = nullptr;
   if(faces(0)) {
     if(!faces(0)->getNodes(pts1)) return;
     if(pts1[0] != p1 && pts1[0] != p2)
@@ -574,7 +571,7 @@ void BDS_Edge::computeNeighborhood(BDS_Point *pts1[4], BDS_Point *pts2[4],
 
 void BDS_Edge::oppositeof(BDS_Point *oface[2]) const
 {
-  oface[0] = oface[1] = 0;
+  oface[0] = oface[1] = nullptr;
   if(faces(0)) {
     BDS_Point *pts[4];
     if(!faces(0)->getNodes(pts)) return;
@@ -600,8 +597,8 @@ void BDS_Edge::oppositeof(BDS_Point *oface[2]) const
 BDS_GeomEntity *BDS_Mesh::get_geom(int p1, int p2)
 {
   BDS_GeomEntity ge(p1, p2);
-  std::set<BDS_GeomEntity *, GeomLessThan>::iterator it = geom.find(&ge);
-  if(it == geom.end()) return 0;
+  auto it = geom.find(&ge);
+  if(it == geom.end()) return nullptr;
   return (BDS_GeomEntity *)(*it);
 }
 
@@ -645,9 +642,9 @@ struct is_not_deleted {
 void BDS_Mesh::cleanup()
 {
   {
-    std::vector<BDS_Face *>::iterator last =
+    auto last =
       std::partition(triangles.begin(), triangles.end(), is_not_deleted());
-    std::vector<BDS_Face *>::iterator it = last;
+    auto it = last;
     while(it != triangles.end()) {
       delete *it;
       ++it;
@@ -655,9 +652,8 @@ void BDS_Mesh::cleanup()
     triangles.erase(last, triangles.end());
   }
   {
-    std::vector<BDS_Edge *>::iterator last =
-      std::partition(edges.begin(), edges.end(), is_not_deleted());
-    std::vector<BDS_Edge *>::iterator it = last;
+    auto last = std::partition(edges.begin(), edges.end(), is_not_deleted());
+    auto it = last;
     while(it != edges.end()) {
       delete *it;
       ++it;
@@ -729,7 +725,7 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid, bool check_area_param)
     }
   }
 
-  BDS_GeomEntity *g1 = 0, *g2 = 0, *ge = e->g;
+  BDS_GeomEntity *g1 = nullptr, *g2 = nullptr, *ge = e->g;
 
   BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
   BDS_Edge *op1_p2 = find_edge(op[0], p2, e->faces(0));
@@ -858,7 +854,7 @@ bool BDS_SwapEdgeTestQuality::operator()(BDS_Point *_p1, BDS_Point *_p2,
                                          BDS_Point *_oq2, BDS_Point *_oq3) const
 {
   // Check if new edge is not on a seam or degenerated
-  BDS_Point *p1 = 0, *p2 = 0;
+  BDS_Point *p1 = nullptr, *p2 = nullptr;
   if(_op1 != _oq1 && _op1 != _oq2 && _op1 != _oq3) {
     p1 = _op2;
     p2 = _op3;
@@ -976,7 +972,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest,
 
   if(p1->iD == CHECK1 && p2->iD == CHECK2) printf("topology OK \n");
 
-  BDS_GeomEntity *g1 = 0, *g2 = 0, *ge = e->g;
+  BDS_GeomEntity *g1 = nullptr, *g2 = nullptr, *ge = e->g;
 
   // compute the orientation of the face
   // with respect to the edge
@@ -1144,7 +1140,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
   double area_old = 0.0;
   double area_new = 0.0;
   {
-    std::vector<BDS_Face *>::iterator it = t.begin();
+    auto it = t.begin();
     while(it != t.end()) {
       BDS_Face *t = *it;
       BDS_Point *pts[4];
@@ -1179,7 +1175,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
     return false;
   }
   {
-    std::vector<BDS_Face *>::iterator it = t.begin();
+    auto it = t.begin();
     while(it != t.end()) {
       del_face(*it);
       ++it;
@@ -1189,7 +1185,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
   int kk = 0;
   {
     std::vector<BDS_Edge *> edges(p->edges);
-    std::vector<BDS_Edge *>::iterator eit = edges.begin();
+    auto eit = edges.begin();
     while(eit != edges.end()) {
       (*eit)->p1->config_modified = (*eit)->p2->config_modified = true;
       ept[0][kk] = ((*eit)->p1 == p) ? (o ? o->iD : -1) : (*eit)->p1->iD;
@@ -1323,7 +1319,7 @@ static inline double getTutteEnergy(const BDS_Point *p,
                                     double &RATIO)
 {
   double E = 0;
-  double MAX, MIN;
+  double MAX, MIN = 0;
   if(nbg.empty()) return 1.e22;
   for(size_t i = 0; i < nbg.size(); ++i) {
     const double dx = p->X - nbg[i]->X;
@@ -1396,7 +1392,7 @@ static inline void computeSomeKindOfKernel(const BDS_Point *p,
                                            std::vector<SPoint2> &kernel,
                                            std::vector<double> &lc, int check)
 {
-  FILE *f = NULL;
+  FILE *f = nullptr;
   if(p->iD == check) f = fopen("kernel.pos", "w");
 
   SPoint2 pp(p->u, p->v);
@@ -1577,7 +1573,7 @@ static inline bool minimizeTutteEnergyParam(BDS_Point *p, double E_unmoved,
 {
   double U, V, LC, oldX = p->X, oldY = p->Y, oldZ = p->Z, oldU = p->u,
                    oldV = p->v;
-  double RATIO2;
+  double RATIO2 = 0;
   getCentroidUV(p, gf, kernel, lc, U, V, LC);
   GPoint gp = gf->point(U, V);
   if(!gp.succeeded()) return false;
@@ -1634,7 +1630,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
 
   if(p->iD == CHECK) printf("%d adjacent vertices\n", (int)nbg.size());
 
-  double RATIO;
+  double RATIO = 0;
   double E_unmoved = getTutteEnergy(p, nbg, RATIO);
   if(RATIO > threshold) return false;
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -123,7 +123,7 @@ public:
                                 fullMatrix<double> &gradLambdaJ) const;
   inline void getSignedJacobian(const fullMatrix<double> &nodesXYZ,
                                 fullVector<double> &jacobian,
-                                const fullMatrix<double> *normals = NULL) const
+                                const fullMatrix<double> *normals = nullptr) const
   {
     getJacobianGeneral(numSamplingPnts, _gradBasis->dShapeMat_dX,
                        _gradBasis->dShapeMat_dY, _gradBasis->dShapeMat_dZ,
@@ -133,7 +133,7 @@ public:
                                 const fullMatrix<double> &nodesY,
                                 const fullMatrix<double> &nodesZ,
                                 fullMatrix<double> &jacobian,
-                                const fullMatrix<double> *normals = NULL) const
+                                const fullMatrix<double> *normals = nullptr) const
   {
     getJacobianGeneral(numSamplingPnts, _gradBasis->dShapeMat_dX,
                        _gradBasis->dShapeMat_dY, _gradBasis->dShapeMat_dZ,
@@ -142,7 +142,7 @@ public:
   inline void
   getSignedIdealJacobian(const fullMatrix<double> &nodesXYZ,
                          fullVector<double> &jacobian,
-                         const fullMatrix<double> *normals = NULL) const
+                         const fullMatrix<double> *normals = nullptr) const
   {
     getJacobianGeneral(numSamplingPnts, _gradBasis->dShapeIdealMat_dX,
                        _gradBasis->dShapeIdealMat_dY,
@@ -152,7 +152,7 @@ public:
   inline void getSignedIdealJacobian(
     const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
     const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian,
-    const fullMatrix<double> *normals = NULL) const
+    const fullMatrix<double> *normals = nullptr) const
   {
     getJacobianGeneral(numSamplingPnts, _gradBasis->dShapeIdealMat_dX,
                        _gradBasis->dShapeIdealMat_dY,
@@ -164,7 +164,7 @@ public:
   {
     getJacobianGeneral(numSamplingPnts, _gradBasis->dShapeMat_dX,
                        _gradBasis->dShapeMat_dY, _gradBasis->dShapeMat_dZ,
-                       nodesXYZ, false, true, jacobian, NULL);
+                       nodesXYZ, false, true, jacobian, nullptr);
   }
   inline void getScaledJacobian(const fullMatrix<double> &nodesX,
                                 const fullMatrix<double> &nodesY,
@@ -173,12 +173,12 @@ public:
   {
     getJacobianGeneral(numSamplingPnts, _gradBasis->dShapeMat_dX,
                        _gradBasis->dShapeMat_dY, _gradBasis->dShapeMat_dZ,
-                       nodesX, nodesY, nodesZ, false, true, jacobian, NULL);
+                       nodesX, nodesY, nodesZ, false, true, jacobian, nullptr);
   }
   inline void
   getSignedJacobianFast(const fullMatrix<double> &nodesXYZ,
                         fullVector<double> &jacobian,
-                        const fullMatrix<double> *normals = NULL) const
+                        const fullMatrix<double> *normals = nullptr) const
   {
     getJacobianGeneral(numSamplingPntsFast, dFastShapeMat_dX, dFastShapeMat_dY,
                        dFastShapeMat_dZ, nodesXYZ, false, false, jacobian,
@@ -187,7 +187,7 @@ public:
   inline void
   getScaledJacobianFast(const fullMatrix<double> &nodesXYZ,
                         fullVector<double> &jacobian,
-                        const fullMatrix<double> *normals = NULL) const
+                        const fullMatrix<double> *normals = nullptr) const
   {
     getJacobianGeneral(numSamplingPntsFast, dFastShapeMat_dX, dFastShapeMat_dY,
                        dFastShapeMat_dZ, nodesXYZ, false, true, jacobian,

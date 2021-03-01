@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -79,7 +79,7 @@ void CTX::init()
   numWindows = numTiles = 1;
   deltaFontSize = 0;
   recentFiles.resize(10);
-  gamepad = 0;
+  gamepad = nullptr;
   mesh.switchElementTags = 0;
   terminal = 0;
 
@@ -90,8 +90,7 @@ void CTX::init()
   mesh.radiusInf = mesh.radiusSup = 0;
   mesh.lines = mesh.triangles = mesh.tetrahedra = mesh.quadrangles = 0;
   mesh.prisms = mesh.pyramids = mesh.hexahedra = mesh.trihedra = 0;
-  mesh.volumesEdges = mesh.volumesFaces = mesh.surfacesEdges = mesh.surfacesFaces = 0;
-  mesh.volumesFaces = mesh.surfacesEdges = mesh.surfacesFaces = 0;
+  mesh.volumeEdges = mesh.volumeFaces = mesh.surfaceEdges = mesh.surfaceFaces = 0;
   mesh.hoOptimize = mesh.smoothNormals = 0;
   mesh.explode = mesh.angleSmoothNormals = 0.;
   mesh.numSubEdges = 0;
@@ -110,13 +109,13 @@ void CTX::init()
   mesh.lcIntegrationPrecision = mesh.randFactor = 0;
   mesh.algo2d = mesh.algo3d = mesh.algoRecombine = mesh.recombineAll = 0;
   mesh.recombine3DAll = mesh.algoSubdivide = mesh.meshOnlyVisible = 0;
-  mesh.minCircPoints = mesh.order = 0;
+  mesh.minCircleNodes = mesh.order = 0;
   mesh.secondOrderLinear = mesh.secondOrderIncomplete = 0;
   mesh.lightLines = 2;
-  mesh.lcCallback = NULL;
+  mesh.lcCallback = nullptr;
 }
 
-CTX *CTX::_instance = NULL;
+CTX *CTX::_instance = nullptr;
 
 CTX *CTX::instance()
 {

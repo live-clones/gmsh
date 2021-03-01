@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -69,7 +69,8 @@ private:
 
   // enqueue cells in queue if they are not there already
   void enqueueCells(std::map<Cell *, short int, CellPtrLessThan> &cells,
-                    std::queue<Cell *> &Q, std::set<Cell *, CellPtrLessThan> &Qset);
+                    std::queue<Cell *> &Q,
+                    std::set<Cell *, CellPtrLessThan> &Qset);
 
   // insert/remove a cell from this cell complex
   void removeCell(Cell *cell, bool other = true, bool del = false);
@@ -108,10 +109,12 @@ public:
   // domain = 0: cells in domain relative to subdomain
   // domain = 1: cells in domain
   // domain = 2: cells in subdomain
-  void getCells(std::set<Cell *, CellPtrLessThan> &cells, int dim, int domain = 0);
+  void getCells(std::set<Cell *, CellPtrLessThan> &cells, int dim,
+                int domain = 0);
   int getNumCells(int dim, int domain = 0);
   Cell *getACell(int dim, int domain = 0);
-  // std::set<Cell*, CellPtrLessThan> getOrigCells(int dim){ return _ocells[dim]; }
+  // std::set<Cell*, CellPtrLessThan> getOrigCells(int dim){ return
+  // _ocells[dim]; }
 
   // iterator for the cells of same dimension
   typedef std::set<Cell *, CellPtrLessThan>::iterator citer;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -29,10 +29,6 @@
 #include "OpenFile.h"
 #include "StringUtils.h"
 #include "OS.h"
-
-#if defined(HAVE_PLUGINS)
-#include "PluginManager.h"
-#endif
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
@@ -71,19 +67,19 @@ int Msg::_atLeastOneErrorInRun = 0;
 std::string Msg::_firstWarning;
 std::string Msg::_firstError;
 std::string Msg::_lastError;
-GmshMessage *Msg::_callback = 0;
+GmshMessage *Msg::_callback = nullptr;
 std::vector<std::string> Msg::_commandLineArgs;
 std::string Msg::_launchDate;
 std::map<std::string, std::vector<double> > Msg::_commandLineNumbers;
 std::map<std::string, std::string> Msg::_commandLineStrings;
-GmshClient *Msg::_client = 0;
+GmshClient *Msg::_client = nullptr;
 std::string Msg::_execName;
 #if defined(HAVE_ONELAB)
-onelab::client *Msg::_onelabClient = 0;
-onelab::server *onelab::server::_server = 0;
+onelab::client *Msg::_onelabClient = nullptr;
+onelab::server *onelab::server::_server = nullptr;
 #endif
 std::string Msg::_logFileName;
-FILE *Msg::_logFile = 0;
+FILE *Msg::_logFile = nullptr;
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1310) //NET 2003
 #define vsnprintf _vsnprintf
@@ -120,7 +116,7 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
   }
 }
 
-void Msg::Init(int argc, char **argv)
+void Msg::Initialize(int argc, char **argv)
 {
   _startTime = TimeOfDay();
 #if defined(HAVE_MPI)
@@ -140,7 +136,7 @@ void Msg::Init(int argc, char **argv)
     if(val != "-info" && val != "-help" && val != "-version" && val != "-v")
       sargv[sargc++] = argv[i];
   }
-  sargv[sargc] = NULL;
+  sargv[sargc] = nullptr;
   PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)
@@ -183,6 +179,30 @@ void Msg::Init(int argc, char **argv)
   }
 
   InitializeOnelab("Gmsh");
+}
+
+void Msg::Finalize()
+{
+  // close log file
+  if(_logFile){
+    fclose(_logFile);
+    _logFile = nullptr;
+  }
+
+#if defined(HAVE_SLEPC)
+  SlepcFinalize();
+#endif
+#if defined(HAVE_PETSC)
+  // this often crashes when called multiple times
+  //PetscFinalize();
+#endif
+#if defined(HAVE_MPI)
+  int finalized; // Some PETSc versions call MPI_FINALIZE
+  MPI_Finalized(&finalized);
+  if (!finalized)
+    MPI_Finalize();
+#endif
+  FinalizeOnelab();
 }
 
 int Msg::GetCommRank()
@@ -235,7 +255,7 @@ void Msg::SetLogFile(const std::string &name)
       Msg::Error("Could not open file '%s'", name.c_str());
   }
   else
-    _logFile = 0;
+    _logFile = nullptr;
 }
 
 std::string Msg::GetLaunchDate()
@@ -291,7 +311,7 @@ void Msg::StopProgressMeter()
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     FlGui::instance()->setProgress("", 0, 0, 1);
-    FlGui::check();
+    FlGui::check(true);
   }
 #endif
 }
@@ -352,75 +372,11 @@ onelab::client *Msg::GetOnelabClient()
 
 void Msg::Exit(int level)
 {
-  if(GModel::current())
-    delete GModel::current();
-
-  // delete the temp file
-  if(!GetCommRank())
-    UnlinkFile(CTX::instance()->homeDir + CTX::instance()->tmpFileName);
-
-  if(_logFile){
-    fclose(_logFile);
-    _logFile = 0;
-  }
-
-  // exit directly on abnormal program termination (level != 0). We
-  // used to call abort() to flush open streams, but on modern OSes
-  // this calls the annoying "report this crash to the mothership"
-  // window... so just exit!
-  if(level){
-#if defined(HAVE_SLEPC)
-    SlepcFinalize();
-#endif
-#if defined(HAVE_PETSC)
-    PetscFinalize();
-#endif
+  Finalize();
 #if defined(HAVE_MPI)
-    // force general abort (even if the fatal error occurred on 1 cpu only)
-    MPI_Abort(MPI_COMM_WORLD, level);
-    int finalized;
-    MPI_Finalized(&finalized);
-    if (!finalized)
-      MPI_Finalize();
+  if(level) MPI_Abort(MPI_COMM_WORLD, level);
 #endif
-    FinalizeOnelab();
-    exit(level);
-  }
-
-#if defined(HAVE_FLTK)
-  // if we exit cleanly (level==0) and we are in full GUI mode, save
-  // the persistent info to disk
-  if(FlGui::available() && !GetCommRank()) {
-    if(CTX::instance()->sessionSave)
-      PrintOptions(0, GMSH_SESSIONRC, 0, 0,
-                   (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
-    if(CTX::instance()->optionsSave == 1)
-      PrintOptions(0, GMSH_OPTIONSRC, 1, 0,
-                   (CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str());
-    else if(CTX::instance()->optionsSave == 2){
-      std::string fileName = GModel::current()->getFileName() + ".opt";
-      PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
-    }
-  }
-#endif
-
-#if defined(HAVE_SLEPC)
-  SlepcFinalize();
-#endif
-#if defined(HAVE_PETSC)
-  PetscFinalize();
-#endif
-#if defined(HAVE_MPI)
-  int finalized; // Some PETSc versions call MPI_FINALIZE
-  MPI_Finalized(&finalized);
-  if (!finalized)
-    MPI_Finalize();
-#endif
-#if defined(HAVE_PLUGINS)
-  delete PluginManager::instance();
-#endif
-  FinalizeOnelab();
-  exit(_atLeastOneErrorInRun);
+  exit(level ? level : _atLeastOneErrorInRun);
 }
 
 static int streamIsFile(FILE *stream)
@@ -456,8 +412,8 @@ static int streamIsVT100(FILE *stream)
      "rxvt-cygwin", "rxvt-cygwin-native", "rxvt-unicode", "rxvt-unicode-256color",
      "screen", "screen-256color", "screen-256color-bce", "screen-bce", "screen-w",
      "screen.linux", "vt100", "xterm", "xterm-16color", "xterm-256color",
-     "xterm-88color", "xterm-color", "xterm-debian", 0};
-  const char** t = 0;
+     "xterm-88color", "xterm-color", "xterm-debian", nullptr};
+  const char** t = nullptr;
   const char* term = getenv("TERM");
   if(term){
     for(t = names; *t && strcmp(term, *t) != 0; ++t) {}
@@ -538,7 +494,7 @@ void Msg::Error(const char *fmt, ...)
       FlGui::instance()->addMessage(tmp.c_str());
       FlGui::instance()->setLastStatus
         (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
-      FlGui::check();
+      FlGui::check(true);
     }
 #endif
     if(CTX::instance()->terminal){
@@ -592,7 +548,7 @@ void Msg::Warning(const char *fmt, ...)
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstWarning.empty()) _firstWarning = str;
     FlGui::instance()->setLastStatus();
-    FlGui::check();
+    FlGui::check(true);
   }
 #endif
 
@@ -633,7 +589,7 @@ void Msg::Info(const char *fmt, ...)
   if(FlGui::available()){
     std::string tmp = std::string("Info    : ") + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGui::check();
+    FlGui::check(true);
   }
 #endif
 
@@ -674,7 +630,7 @@ void Msg::Direct(const char *fmt, ...)
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
       + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGui::check();
+    FlGui::check(true);
   }
 #endif
 
@@ -733,7 +689,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
     if(log){
       std::string tmp = std::string("Info    : ") + str;
       FlGui::instance()->addMessage(tmp.c_str());
-      FlGui::check();
+      FlGui::check(true);
     }
   }
 #endif
@@ -841,7 +797,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(FlGui::available() && GetVerbosity() > 4){
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
-      FlGui::check();
+      FlGui::check(true);
     }
 #endif
     if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
@@ -858,7 +814,7 @@ void Msg::PrintTimers()
 {
   // do a single stdio call!
   std::string str;
-  for(std::map<std::string, double>::iterator it = _timers.begin();
+  for(auto it = _timers.begin();
       it != _timers.end(); it++){
     if(it != _timers.begin()) str += ", ";
     char tmp[256];
@@ -1222,6 +1178,23 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 #endif
 }
 
+void Msg::FinalizeOnelab()
+{
+#if defined(HAVE_ONELAB)
+  // kill any running clients
+  for(auto it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++){
+    (*it)->kill();
+  }
+  // delete local client
+  if(_onelabClient){
+    delete _onelabClient;
+    _onelabClient = nullptr;
+    _client = nullptr;
+  }
+#endif
+}
+
 void Msg::SetOnelabAction(const std::string &action)
 {
 #if defined(HAVE_ONELAB)
@@ -1249,7 +1222,7 @@ std::string Msg::GetOnelabAction()
 void Msg::LoadOnelabClient(const std::string &clientName, const std::string &sockName)
 {
 #if defined(HAVE_ONELAB)
-  onelab::remoteNetworkClient *client = 0;
+  onelab::remoteNetworkClient *client = nullptr;
   client = new onelab::remoteNetworkClient(clientName, sockName);
   if(client){
     std::string action, cmd;
@@ -1544,7 +1517,7 @@ void Msg::ImportPhysicalGroupsInOnelab()
 
     int index = 1;
     for(int dim = 0; dim <= 3; dim++){
-      for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
+      for(auto it = groups[dim].begin();
           it != groups[dim].end(); it++){
         int num = it->first;
         std::string name = GModel::current()->getPhysicalName(dim, it->first);
@@ -1607,23 +1580,6 @@ void Msg::SetOnelabChanged(int value, const std::string &client)
 {
 #if defined(HAVE_ONELAB)
   onelab::server::instance()->setChanged(value, client);
-#endif
-}
-
-void Msg::FinalizeOnelab()
-{
-#if defined(HAVE_ONELAB)
-  // kill any running clients
-  for(onelab::server::citer it = onelab::server::instance()->firstClient();
-      it != onelab::server::instance()->lastClient(); it++){
-    (*it)->kill();
-  }
-  // delete local client
-  if(_onelabClient){
-    delete _onelabClient;
-    _onelabClient = 0;
-    _client = 0;
-  }
 #endif
 }
 

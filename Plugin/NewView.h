@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,9 +8,8 @@
 
 #include "Plugin.h"
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterNewViewPlugin();
+extern "C" {
+GMSH_Plugin *GMSH_RegisterNewViewPlugin();
 }
 
 class GMSH_NewViewPlugin : public GMSH_PostPlugin {
@@ -29,13 +28,10 @@ public:
   PView *execute(PView *);
 
 private:
-  void nodeData(int numComp,
-                double value,
+  void nodeData(int numComp, double value,
                 std::map<int, std::vector<double> > &d);
-  void elementData(int numComp,
-                   double value,
-                   std::map<int, std::vector<double> > &d,
-                   int phys);
+  void elementData(int numComp, double value,
+                   std::map<int, std::vector<double> > &d, int phys);
 };
 
 #endif

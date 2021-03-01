@@ -138,7 +138,8 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-  UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+  UITableViewCell *cell =
+    [tableView dequeueReusableCellWithIdentifier:@"postproCell"];
   if(cell == nil) {
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
                                   reuseIdentifier:@"postproCell"];
@@ -148,88 +149,79 @@
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
                                   reuseIdentifier:@"postproCell"];
   }
+
+  [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
   [cell
     setFrame:CGRectMake(cell.frame.origin.x, cell.frame.origin.x,
                         tableView.frame.size.width, cell.frame.size.height)];
   switch(indexPath.section) {
   case 0: {
-    [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-    UISwitch *showHideOptions =
+    UISwitch *showHide =
       [[UISwitch alloc] initWithFrame:CGRectMake(15, 6.5, 100, 30)];
-    UILabel *lblOptions = [[UILabel alloc]
-      initWithFrame:CGRectMake(25 + (showHideOptions.frame.size.width), 8,
+    UILabel *label = [[UILabel alloc]
+      initWithFrame:CGRectMake(25 + (showHide.frame.size.width), 8,
                                (tableView.frame.size.width -
-                                (showHideOptions.frame.size.width) - 50),
+                                (showHide.frame.size.width) - 50),
                                30)];
     // set font size at 90% of default size
-    lblOptions.font = [lblOptions.font fontWithSize:(0.9 * lblOptions.font.pointSize)];
+    label.font =
+      [label.font fontWithSize:(0.9 * label.font.pointSize)];
 
     if(indexPath.row == 0) {
-      [lblOptions setText:@"Show geometry points"];
-      [showHideOptions setOn:(CTX::instance()->geom.points)];
-      [showHideOptions addTarget:self
+      [label setText:@"Show geometry points"];
+      [showHide setOn:(CTX::instance()->geom.points)];
+      [showHide addTarget:self
                           action:@selector(setShowGeomPoints:)
                 forControlEvents:UIControlEventValueChanged];
     }
     else if(indexPath.row == 1) {
-      [lblOptions setText:@"Show geometry lines"];
-      [showHideOptions setOn:(CTX::instance()->geom.curves)];
-      [showHideOptions addTarget:self
-                          action:@selector(setShowGeomLines:)
+      [label setText:@"Show geometry curves"];
+      [showHide setOn:(CTX::instance()->geom.curves)];
+      [showHide addTarget:self
+                          action:@selector(setShowGeomCurves:)
                 forControlEvents:UIControlEventValueChanged];
     }
     else if(indexPath.row == 2) {
-      [lblOptions setText:@"Show mesh surface edges"];
-      [showHideOptions setOn:(CTX::instance()->mesh.surfacesEdges)];
-      [showHideOptions addTarget:self
-                          action:@selector(setShowMeshSurfacesEdges:)
+      [label setText:@"Show mesh surface edges"];
+      [showHide setOn:(CTX::instance()->mesh.surfaceEdges)];
+      [showHide addTarget:self
+                          action:@selector(setShowMeshSurfaceEdges:)
                 forControlEvents:UIControlEventValueChanged];
     }
     else if(indexPath.row == 3) {
-      [lblOptions setText:@"Show mesh volumes edges"];
-      [showHideOptions setOn:CTX::instance()->mesh.volumesEdges];
-      [showHideOptions addTarget:self
-                          action:@selector(setShowMeshVolumesEdges:)
+      [label setText:@"Show mesh volume edges"];
+      [showHide setOn:CTX::instance()->mesh.volumeEdges];
+      [showHide addTarget:self
+                          action:@selector(setShowMeshVolumeEdges:)
                 forControlEvents:UIControlEventValueChanged];
     }
-    [cell addSubview:showHideOptions];
-    [cell addSubview:lblOptions];
+    [cell.contentView addSubview:showHide];
+    [cell.contentView addSubview:label];
   } break;
   case 1: {
-    NSArray *rows = [tableView indexPathsForVisibleRows];
-    for(NSIndexPath *mIndexpath in rows)
-      if(![mIndexpath isEqual:indexPath]) {
-        UITableViewCell *tmp = [tableView cellForRowAtIndexPath:indexPath];
-        for(UIView *tmpv in tmp.subviews)
-          for(UIView *v in tmpv.subviews)
-            if([v isKindOfClass:[UISwitch class]])
-              [(UISwitch *)v setOn:PView::list[v.tag]->getOptions()->visible];
-      }
-
-    [cell setSelectionStyle:UITableViewCellSelectionStyleGray];
     int i = (int)(PView::list.size() - 1 - indexPath.row);
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     UISwitch *showHide =
       [[UISwitch alloc] initWithFrame:CGRectMake(15, 6.5, 100, 30)];
-    UILabel *lbl = [[UILabel alloc]
+    UILabel *label = [[UILabel alloc]
       initWithFrame:CGRectMake(25 + (showHide.frame.size.width), 8,
                                (tableView.frame.size.width -
                                 showHide.frame.size.width - 50),
                                30)];
     // set font size at 90% of default size
-    lbl.font = [lbl.font fontWithSize:(0.9 * lbl.font.pointSize)];
+    label.font = [label.font fontWithSize:(0.9 * label.font.pointSize)];
     [showHide setOn:(PView::list[i]->getOptions()->visible == 1)];
     [showHide setTag:i];
     [showHide addTarget:self
                  action:@selector(PViewVisible:)
        forControlEvents:UIControlEventValueChanged];
-    [lbl setBackgroundColor:[UIColor clearColor]];
-    [lbl setText:[Utils getStringFromCString:PView::list[i]
+    [label setBackgroundColor:[UIColor clearColor]];
+    [label setText:[Utils getStringFromCString:PView::list[i]
                                                ->getData()
                                                ->getName()
                                                .c_str()]];
-    [cell addSubview:showHide];
-    [cell addSubview:lbl];
+    [cell.contentView addSubview:showHide];
+    [cell.contentView addSubview:label];
   } break;
   }
   return cell;
@@ -260,24 +252,24 @@
                                                       object:nil];
 }
 
-- (void)setShowGeomLines:(UISwitch *)sender
+- (void)setShowGeomCurves:(UISwitch *)sender
 {
   CTX::instance()->geom.curves = sender.on;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
                                                       object:nil];
 }
 
-- (void)setShowMeshVolumesEdges:(UISwitch *)sender
+- (void)setShowMeshVolumeEdges:(UISwitch *)sender
 {
-  CTX::instance()->mesh.volumesEdges = sender.on;
+  CTX::instance()->mesh.volumeEdges = sender.on;
   CTX::instance()->mesh.changed = ENT_VOLUME;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
                                                       object:nil];
 }
 
-- (void)setShowMeshSurfacesEdges:(UISwitch *)sender
+- (void)setShowMeshSurfaceEdges:(UISwitch *)sender
 {
-  CTX::instance()->mesh.surfacesEdges = sender.on;
+  CTX::instance()->mesh.surfaceEdges = sender.on;
   CTX::instance()->mesh.changed = ENT_SURFACE;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender"
                                                       object:nil];

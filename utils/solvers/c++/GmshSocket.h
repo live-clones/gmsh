@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -22,8 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#ifndef _GMSH_SOCKET_H_
-#define _GMSH_SOCKET_H_
+#ifndef GMSH_SOCKET_H
+#define GMSH_SOCKET_H
 
 //#include "GmshConfig.h"
 
@@ -98,7 +98,7 @@ class GmshSocket{
   // statistics
   unsigned long int _sent, _received;
   // send some data over the socket
-  int _SendData(const void *buffer, int bytes)
+  int _sendData(const void *buffer, int bytes)
   {
     const char *buf = (const char *)buffer;
     long int sofar = 0;
@@ -113,7 +113,7 @@ class GmshSocket{
     return bytes;
   }
   // receive some data over the socket
-  int _ReceiveData(void *buffer, int bytes)
+  int _receiveData(void *buffer, int bytes)
   {
     char *buf = (char *)buffer;
     long int sofar = 0;
@@ -129,7 +129,7 @@ class GmshSocket{
     return bytes;
   }
   // utility function to swap bytes in an array
-  void _SwapBytes(char *array, int size, int n)
+  void _swapBytes(char *array, int size, int n)
   {
     char *x = new char[size];
     for(int i = 0; i < n; i++) {
@@ -141,7 +141,7 @@ class GmshSocket{
     delete [] x;
   }
   // sleep for some milliseconds
-  void _Sleep(int ms)
+  void _sleep(int ms)
   {
 #if !defined(WIN32) || defined(__CYGWIN__)
     usleep(1000 * ms);
@@ -178,19 +178,19 @@ class GmshSocket{
     FD_SET(s, &rfds);
     // select checks all IO descriptors between 0 and its first arg, minus 1;
     // hence the +1 below
-    return select(s + 1, &rfds, NULL, NULL, &tv);
+    return select(s + 1, &rfds, nullptr, nullptr, &tv);
   }
   void SendMessage(int type, int length, const void *msg)
   {
     // send header (type + length)
-    _SendData(&type, sizeof(int));
-    _SendData(&length, sizeof(int));
+    _sendData(&type, sizeof(int));
+    _sendData(&length, sizeof(int));
     // send body
-    _SendData(msg, length);
+    _sendData(msg, length);
   }
   void SendString(int type, const char *str)
   {
-    SendMessage(type, strlen(str), str);
+    SendMessage(type, (int)strlen(str), str);
   }
   void Info(const char *str){ SendString(GMSH_INFO, str); }
   void Warning(const char *str){ SendString(GMSH_WARNING, str); }
@@ -209,15 +209,15 @@ class GmshSocket{
   int ReceiveHeader(int *type, int *len, int *swap)
   {
     *swap = 0;
-    if(_ReceiveData(type, sizeof(int)) > 0){
+    if(_receiveData(type, sizeof(int)) > 0){
       if(*type > 65535){
         // the data comes from a machine with different endianness and
         // we must swap the bytes
         *swap = 1;
-        _SwapBytes((char*)type, sizeof(int), 1);
+        _swapBytes((char*)type, sizeof(int), 1);
       }
-      if(_ReceiveData(len, sizeof(int)) > 0){
-        if(*swap) _SwapBytes((char*)len, sizeof(int), 1);
+      if(_receiveData(len, sizeof(int)) > 0){
+        if(*swap) _swapBytes((char*)len, sizeof(int), 1);
         return 1;
       }
     }
@@ -225,13 +225,13 @@ class GmshSocket{
   }
   int ReceiveMessage(int len, void *buffer)
   {
-    if(_ReceiveData(buffer, len) == len) return 1;
+    if(_receiveData(buffer, len) == len) return 1;
     return 0;
   }
   // str should be allocated with size (len+1)
   int ReceiveString(int len, char *str)
   {
-    if(_ReceiveData(str, len) == len) {
+    if(_receiveData(str, len) == len) {
       str[len] = '\0';
       return 1;
     }
@@ -274,7 +274,7 @@ class GmshClient : public GmshSocket {
       for(int tries = 0; tries < 5; tries++) {
         if(connect(_sock, (struct sockaddr *)&addr_un, sizeof(addr_un)) >= 0)
           return _sock;
-        _Sleep(100);
+        _sleep(100);
       }
 #else
       return -1; // Unix sockets are not available on Windows
@@ -290,16 +290,19 @@ class GmshClient : public GmshSocket {
       // try to connect socket to host:port
       const char *port = strstr(sockname, ":");
       int portno = atoi(port + 1);
-      int remotelen = strlen(sockname) - strlen(port);
-      char remote[256];
+      char *remote = strdup(sockname);
+      int remotelen = (int)(strlen(remote) - strlen(port));
       if(remotelen > 0)
         strncpy(remote, sockname, remotelen);
-      remote[remotelen] = '\0';
+      if(remotelen >= 0)
+        remote[remotelen] = '\0';
       struct hostent *server;
       if(!(server = gethostbyname(remote))){
         CloseSocket(_sock);
+        free(remote);
         return -3; // no such host
       }
+      free(remote);
       struct sockaddr_in addr_in;
       memset((char *) &addr_in, 0, sizeof(addr_in));
       addr_in.sin_family = AF_INET;
@@ -309,7 +312,7 @@ class GmshClient : public GmshSocket {
         if(connect(_sock, (struct sockaddr *)&addr_in, sizeof(addr_in)) >= 0){
           return _sock;
 	}
-        _Sleep(100);
+        _sleep(100);
       }
     }
     CloseSocket(_sock);
@@ -400,7 +403,7 @@ class GmshServer : public GmshSocket{
         socklen_t addrlen = sizeof(addr_in);
         getsockname(tmpsock, (struct sockaddr *)&addr_in, &addrlen);
         _portno = ntohs(addr_in.sin_port);
-	int pos = _sockname.find(':'); // remove trailing ' ' or '0'
+	int pos = (int)_sockname.find(':'); // remove trailing ' ' or '0'
         char tmp[256];
 	sprintf(tmp, "%s:%d", _sockname.substr(0, pos).c_str(), _portno);
         _sockname.assign(tmp);

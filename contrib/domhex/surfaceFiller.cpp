@@ -45,7 +45,7 @@ bool compute4neighbors(
   bool goNonLinear, // do we compute the position in the real surface which is
                     // nonlinear
   SPoint2 newP[4][NUMDIR], // look into other directions
-  SMetric3 &metricField, FILE *crossf = 0) // the mesh metric
+  SMetric3 &metricField, FILE *crossf = nullptr) // the mesh metric
 {
   // we assume that v is on surface gf
 
@@ -243,8 +243,8 @@ double get_smoothness(MVertex *v, GFace *gf,
     elem = backgroundMesh::current()->getMeshElementByCoord(
       param_point[0], param_point[1], 0., false);
     if(!elem)
-      Msg::Warning("No element found for coordinate (%g, %g, %g)",
-                   sp3.x(), sp3.y(), sp3.z());
+      Msg::Warning("No element found for coordinate (%g, %g, %g)", sp3.x(),
+                   sp3.y(), sp3.z());
   }
 
   // recover element's vertices:
@@ -266,11 +266,9 @@ double get_smoothness(MVertex *v, GFace *gf,
   // interpolate :
   double val[3];
   int i = 0;
-  for(std::vector<MVertex *>::iterator it = localvertices.begin();
-      it != localvertices.end(); it++) {
+  for(auto it = localvertices.begin(); it != localvertices.end(); it++) {
     MVertex *localv = *it;
-    std::map<MVertex *, double>::const_iterator itfind =
-      vertices2smoothness.find(localv);
+    auto itfind = vertices2smoothness.find(localv);
     if(itfind == vertices2smoothness.end()) {
       Msg::Warning("Background vertex not found");
       return 0;
@@ -281,12 +279,13 @@ double get_smoothness(MVertex *v, GFace *gf,
   return res;
 }
 
-void print_nodal_info_int(const std::string &filename, std::map<MVertex *, int> &mapp)
+void print_nodal_info_int(const std::string &filename,
+                          std::map<MVertex *, int> &mapp)
 {
   std::ofstream out(filename.c_str());
 
   out << "View \"\"{" << std::endl;
-  for(std::map<MVertex *, int>::iterator it = mapp.begin(); it != mapp.end(); it++) {
+  for(auto it = mapp.begin(); it != mapp.end(); it++) {
     MVertex *v = it->first;
     out << "SP( " << v->x() << "," << v->y() << "," << v->z() << "){"
         << it->second << "};" << std::endl;
@@ -303,8 +302,7 @@ void print_nodal_info_double(const std::string &filename,
   std::ofstream out(filename.c_str());
 
   out << "View \"\"{" << std::endl;
-  for(std::map<MVertex *, double>::iterator it = mapp.begin(); it != mapp.end();
-      it++) {
+  for(auto it = mapp.begin(); it != mapp.end(); it++) {
     MVertex *v = it->first;
     out << "SP( " << v->x() << "," << v->y() << "," << v->z() << "){"
         << it->second << "};" << std::endl;
@@ -360,7 +358,7 @@ void export_point(surfacePointWithExclusionRegion *sp, int DIR, FILE *crossf,
   double size_1 = sqrt(1. / dot(t1, metricField, t1));
   double size_2 = sqrt(1. / dot(t2, metricField, t2));
 
-  if(crossf){
+  if(crossf) {
     fprintf(crossf, "VP(%g,%g,%g) {%g,%g,%g};\n", sp->_v->x(), sp->_v->y(),
             sp->_v->z(), t1.x() * size_1, t1.y() * size_1, t1.z() * size_1);
     fprintf(crossf, "VP(%g,%g,%g) {%g,%g,%g};\n", sp->_v->x(), sp->_v->y(),
@@ -378,7 +376,7 @@ bool get_local_sizes_and_directions(const MVertex *v_center,
                                     double (&covar2)[2], double &size_param_1,
                                     double &size_param_2, double &L,
                                     SVector3 &t1, SVector3 &t2, SVector3 &n,
-                                    FILE *crossf = NULL)
+                                    FILE *crossf = nullptr)
 {
   // bool get_RK_stuff(const MVertex *v_center, const SPoint2 &midpoint, const
   // int DIR, GFace* gf, double (&covar1)[2], double (&covar2)[2], double
@@ -521,8 +519,7 @@ void packingOfParallelogramsSmoothness(GFace *gf,
 
   // build vertex -> neighbors table
   std::multimap<MVertex *, MVertex *> vertex2vertex;
-  for(std::vector<MElement *>::iterator it =
-        backgroundMesh::current()->begin_triangles();
+  for(auto it = backgroundMesh::current()->begin_triangles();
       it != backgroundMesh::current()->end_triangles(); it++) {
     MElement *e = *it;
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
@@ -538,8 +535,7 @@ void packingOfParallelogramsSmoothness(GFace *gf,
   // build table vertex->smoothness
   std::map<MVertex *, double> vertices2smoothness;
   std::map<MVertex *, double> smoothness_essai;
-  for(std::vector<MVertex *>::iterator it =
-        backgroundMesh::current()->begin_vertices();
+  for(auto it = backgroundMesh::current()->begin_vertices();
       it != backgroundMesh::current()->end_vertices(); it++) {
     MVertex *v = *it;
 
@@ -559,8 +555,8 @@ void packingOfParallelogramsSmoothness(GFace *gf,
     double covar1_nb[2], covar2_nb[2], L_nb, size_param_1_nb, size_param_2_nb;
     double maxprod, angle = 0.;
     int N = 0;
-    for(std::multimap<MVertex *, MVertex *>::iterator itneighbor = range.first;
-        itneighbor != range.second; itneighbor++) {
+    for(auto itneighbor = range.first; itneighbor != range.second;
+        itneighbor++) {
       N++;
       maxprod = 0.;
       MVertex *v_nb = itneighbor->second;
@@ -586,8 +582,7 @@ void packingOfParallelogramsSmoothness(GFace *gf,
     ss << "backgroundmesh_element_smoothness_" << gf->tag() << ".pos";
     std::ofstream out(ss.str().c_str());
     out << "View \"directions\" {" << std::endl;
-    for(std::vector<MElement *>::iterator it =
-          backgroundMesh::current()->begin_triangles();
+    for(auto it = backgroundMesh::current()->begin_triangles();
         it != backgroundMesh::current()->end_triangles(); it++) {
       MElement *e = *it;
       std::vector<MVertex *> nodes;
@@ -638,14 +633,12 @@ void packingOfParallelogramsSmoothness(GFace *gf,
   RTree<surfacePointWithExclusionRegion *, double, 2, double> rtree;
   SMetric3 metricField(1.0);
   SPoint2 newp[4][NUMDIR];
-  std::set<MVertex *>::iterator it = bnd_vertices.begin();
+  auto it = bnd_vertices.begin();
 
   char NAME[345];
   sprintf(NAME, "crossReal%d.pos", gf->tag());
-  FILE *crossf = NULL;
-  if(debug) {
-    crossf = Fopen(NAME, "w");
-  }
+  FILE *crossf = nullptr;
+  if(debug) { crossf = Fopen(NAME, "w"); }
   if(crossf) fprintf(crossf, "View \"\"{\n");
   for(; it != bnd_vertices.end(); ++it) {
     SPoint2 midpoint;
@@ -660,9 +653,7 @@ void packingOfParallelogramsSmoothness(GFace *gf,
     mp.rank = get_smoothness(*it, gf, vertices2smoothness);
     fifo.insert(mp);
 
-    if(debug) {
-      smoothness_essai[*it] = mp.rank;
-    }
+    if(debug) { smoothness_essai[*it] = mp.rank; }
 
     vertices.push_back(sp);
     double _min[2], _max[2];
@@ -725,14 +716,13 @@ void packingOfParallelogramsSmoothness(GFace *gf,
   }
 
   // add the vertices as additional vertices in the surface mesh
-  char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
-  FILE *f = NULL;
-  if(debug){
-    f = Fopen(ccc,"w");
-  }
+  char ccc[256];
+  sprintf(ccc, "points%d.pos", gf->tag());
+  FILE *f = nullptr;
+  if(debug) { f = Fopen(ccc, "w"); }
   if(f) fprintf(f, "View \"\"{\n");
   for(unsigned int i = 0; i < vertices.size(); i++) {
-    if(f) vertices[i]->print(f,i);
+    if(f) vertices[i]->print(f, i);
     if(vertices[i]->_v->onWhat() == gf) {
       packed.push_back(vertices[i]->_v);
       metrics.push_back(vertices[i]->_meshMetric);
@@ -741,8 +731,8 @@ void packingOfParallelogramsSmoothness(GFace *gf,
     }
     delete vertices[i];
   }
-  if(f){
-    fprintf(f,"};");
+  if(f) {
+    fprintf(f, "};");
     fclose(f);
   }
 }
@@ -761,7 +751,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 
   const bool goNonLinear = true;
 
-  if(debug){
+  if(debug) {
     std::stringstream ssa;
     ssa << "oldbgm_angles_" << gf->tag() << ".pos";
     backgroundMesh::current()->print(ssa.str(), gf, 1);
@@ -779,20 +769,19 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 
   // put boundary vertices in a fifo queue
   std::set<surfacePointWithExclusionRegion *,
-           compareSurfacePointWithExclusionRegionPtr> fifo;
+           compareSurfacePointWithExclusionRegionPtr>
+    fifo;
   std::vector<surfacePointWithExclusionRegion *> vertices;
   // put the RTREE
   RTree<surfacePointWithExclusionRegion *, double, 2, double> rtree;
   SMetric3 metricField(1.0);
   SPoint2 newp[4][NUMDIR];
-  std::set<MVertex *>::iterator it = bnd_vertices.begin();
+  auto it = bnd_vertices.begin();
 
   char NAME[345];
   sprintf(NAME, "crossReal%d.pos", gf->tag());
-  FILE *crossf = NULL;
-  if(debug) {
-    crossf = Fopen(NAME, "w");
-  }
+  FILE *crossf = nullptr;
+  if(debug) { crossf = Fopen(NAME, "w"); }
   if(crossf) fprintf(crossf, "View \"\"{\n");
   for(; it != bnd_vertices.end(); ++it) {
     SPoint2 midpoint;
@@ -843,10 +832,8 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   // add the vertices as additional vertices in the surface mesh
   char ccc[256];
   sprintf(ccc, "points%d.pos", gf->tag());
-  FILE *f = NULL;
-  if(debug){
-    f = Fopen(ccc, "w");
-  }
+  FILE *f = nullptr;
+  if(debug) { f = Fopen(ccc, "w"); }
   if(f) fprintf(f, "View \"\"{\n");
   for(unsigned int i = 0; i < vertices.size(); i++) {
     //    if(vertices[i]->_v->onWhat() != gf)
@@ -894,7 +881,8 @@ void packingOfParallelogramsConstrained(
 
   // put boundary vertices in a fifo queue
   std::set<surfacePointWithExclusionRegion *,
-           compareSurfacePointWithExclusionRegionPtr> fifo;
+           compareSurfacePointWithExclusionRegionPtr>
+    fifo;
   std::vector<surfacePointWithExclusionRegion *> vertices;
   // put the RTREE
   RTree<surfacePointWithExclusionRegion *, double, 2, double> rtree;
@@ -905,9 +893,7 @@ void packingOfParallelogramsConstrained(
   char NAME[345];
   sprintf(NAME, "crossReal%d.pos", gf->tag());
   FILE *crossf = NULL;
-  if(debug){
-    crossf = Fopen(NAME, "w");
-  }
+  if(debug) { crossf = Fopen(NAME, "w"); }
   if(crossf) fprintf(crossf, "View \"\"{\n");
   std::cout << "      entering first for" << std::endl;
   for(; it != bnd_vertices.end(); ++it) {
@@ -996,9 +982,7 @@ void packingOfParallelogramsConstrained(
   char ccc[256];
   sprintf(ccc, "points%d.pos", gf->tag());
   FILE *f = NULL;
-  if(debug){
-    f = Fopen(ccc, "w");
-  }
+  if(debug) { f = Fopen(ccc, "w"); }
   if(f) fprintf(f, "View \"\"{\n");
   std::cout << "      entering another for" << std::endl;
   for(unsigned int i = 0; i < vertices.size(); i++) {
@@ -1018,7 +1002,7 @@ void packingOfParallelogramsConstrained(
     }
     delete vertices[i];
   }
-  if(f){
+  if(f) {
     fprintf(f, "};");
     fclose(f);
   }

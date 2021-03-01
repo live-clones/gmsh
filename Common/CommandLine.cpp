@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -131,9 +131,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-clextend value", "Extend mesh element sizes from boundaries "
                  "(Mesh.MeshSizeExtendFromBoundary)"));
   s.push_back(mp("-clcurv value", "Compute mesh element size from curvature, with "
-                 "given minimum number of elements per 2*pi radians "
-                 "(Mesh.MeshSizeFromCurvature and "
-                 "Mesh.MinimumElementsPerTwoPi)"));
+                 "value the target number of elements per 2*pi radians "
+                 "(Mesh.MeshSizeFromCurvature)"));
   s.push_back(mp("-aniso_max value", "Set maximum anisotropy for bamg "
                  "(Mesh.AnisoMax)"));
   s.push_back(mp("-smooth_ratio value", "Set smoothing ration between mesh sizes "
@@ -156,8 +155,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-combine", "Combine views having identical names into "
                  "multi-time-step views"));
   s.push_back(mp("Solver:", ""));
-  s.push_back(mp("-listen", "Always listen to incoming connection requests "
-                 "(Solver.AlwaysListen)"));
+  s.push_back(mp("-listen string", "Always listen to incoming connection requests "
+                 "(Solver.AlwaysListen) on the given socket "
+                 "(uses Solver.SocketName if not specified)"));
   s.push_back(mp("-minterpreter string", "Name of Octave interpreter "
                  "(Solver.OctaveInterpreter)"));
   s.push_back(mp("-pyinterpreter string", "Name of Python interpreter "
@@ -314,7 +314,7 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp("Alt+Shift+c", "Loop through predefined colormaps"));
   s.push_back(mp("Alt+Shift+d", "Hide/show mesh surface faces"));
   s.push_back(mp("Alt+Shift+l", "Hide/show mesh lines"));
-  s.push_back(mp("Alt+Shift+p", "Hide/show mesh points"));
+  s.push_back(mp("Alt+Shift+p", "Hide/show mesh nodes"));
   s.push_back(mp("Alt+Shift+s", "Hide/show mesh surface edges"));
   s.push_back(mp("Alt+Shift+t", "Same as Alt+t, but with numeric mode "
                  "included"));
@@ -364,7 +364,6 @@ void PrintUsage(const std::string &name)
 std::vector<std::string> GetBuildInfo()
 {
   std::vector<std::string> s;
-  char tmp[256];
   s.push_back(std::string("Version       : ") + GMSH_VERSION);
   s.push_back(std::string("License       : ") + GMSH_SHORT_LICENSE);
   s.push_back(std::string("Build OS      : ") + GMSH_OS);
@@ -372,29 +371,41 @@ std::vector<std::string> GetBuildInfo()
   s.push_back(std::string("Build host    : ") + GMSH_HOST);
   s.push_back(std::string("Build options :") + GMSH_CONFIG_OPTIONS);
 #if defined(HAVE_FLTK)
-  sprintf(tmp, "%d.%d.%d", FL_MAJOR_VERSION, FL_MINOR_VERSION,
-          FL_PATCH_VERSION);
-  s.push_back(std::string("FLTK version  : ") + tmp);
+  {
+    char tmp[256];
+    sprintf(tmp, "%d.%d.%d", FL_MAJOR_VERSION, FL_MINOR_VERSION,
+            FL_PATCH_VERSION);
+    s.push_back(std::string("FLTK version  : ") + tmp);
+  }
 #endif
 #if defined(HAVE_PETSC)
-  sprintf(tmp, "%d.%d.%d (%s arithmtic)", PETSC_VERSION_MAJOR,
-          PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
+  {
+    char tmp[256];
+    sprintf(tmp, "%d.%d.%d (%s arithmtic)", PETSC_VERSION_MAJOR,
+            PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
 #if defined(PETSC_USE_COMPLEX)
-          "complex"
+            "complex"
 #else
-          "real"
+            "real"
 #endif
-  );
-  s.push_back(std::string("PETSc version : ") + tmp);
+            );
+    s.push_back(std::string("PETSc version : ") + tmp);
+  }
 #endif
 #if defined(HAVE_OCC)
-  sprintf(tmp, "%d.%d.%d", OCC_VERSION_MAJOR, OCC_VERSION_MINOR,
-          OCC_VERSION_MAINTENANCE);
-  s.push_back(std::string("OCC version   : ") + tmp);
+  {
+    char tmp[256];
+    sprintf(tmp, "%d.%d.%d", OCC_VERSION_MAJOR, OCC_VERSION_MINOR,
+            OCC_VERSION_MAINTENANCE);
+    s.push_back(std::string("OCC version   : ") + tmp);
+  }
 #endif
 #if defined(HAVE_MED)
-  sprintf(tmp, "%d.%d.%d", MED_NUM_MAJEUR, MED_NUM_MINEUR, MED_NUM_RELEASE);
-  s.push_back(std::string("MED version   : ") + tmp);
+  {
+    char tmp[256];
+    sprintf(tmp, "%d.%d.%d", MED_NUM_MAJEUR, MED_NUM_MINEUR, MED_NUM_RELEASE);
+    s.push_back(std::string("MED version   : ") + tmp);
+  }
 #endif
   s.push_back(std::string("Packaged by   : ") + GMSH_PACKAGER);
   s.push_back("Web site      : https://gmsh.info");
@@ -900,8 +911,8 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
         }
         i++;
         if(i < argv.size()){
-          CTX::instance()->mesh.minElementsPerTwoPi = atoi(argv[i].c_str());
-          if(CTX::instance()->mesh.minElementsPerTwoPi <= 0.)
+          CTX::instance()->mesh.lcFromCurvature = atoi(argv[i].c_str());
+          if(CTX::instance()->mesh.lcFromCurvature <= 0.)
             CTX::instance()->mesh.lcFromCurvature = 0;
         }
         else{
@@ -1100,8 +1111,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-clcurv") {
         i++;
         if(i < argv.size()) {
-          opt_mesh_lc_from_curvature(0, GMSH_SET, 1);
-          opt_mesh_min_elements_2pi(0, GMSH_SET, atof(argv[i++].c_str()));
+          opt_mesh_lc_from_curvature(0, GMSH_SET, atof(argv[i++].c_str()));
         }
         else {
           Msg::Error("Missing number");
@@ -1109,7 +1119,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
         }
       }
       else if(argv[i] == "-clcurviso") {
-        opt_mesh_lc_from_curvature(0, GMSH_SET, 2);
+        opt_mesh_lc_from_curvature_iso(0, GMSH_SET, 1);
         i++;
       }
       else if(argv[i] == "-smooth") {
@@ -1246,6 +1256,8 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-listen") {
         i++;
         opt_solver_listen(0, GMSH_SET, 1);
+        if(i < argv.size() && argv[i].size() && argv[i][0] != '-')
+          opt_solver_socket_name(0, GMSH_SET, argv[i++]);
       }
       else if(argv[i] == "-minterpreter") {
         i++;
@@ -1285,13 +1297,13 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-help" || argv[i] == "--help") {
         Msg::Direct(
           "Gmsh, a 3D mesh generator with pre- and post-processing facilities");
-        Msg::Direct("Copyright (C) 1997-2020 C. Geuzaine and J.-F. Remacle");
+        Msg::Direct("Copyright (C) 1997-2021 C. Geuzaine and J.-F. Remacle");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }
       else if(argv[i] == "-help_options") {
         std::vector<std::string> s;
-        PrintOptions(0, GMSH_FULLRC, 0, 1, 0, &s);
+        PrintOptions(0, GMSH_FULLRC, 0, 1, nullptr, &s);
         for(std::size_t i = 0; i < s.size(); i++)
           Msg::Direct("%s\n", s[i].c_str());
         Msg::Exit(0);
@@ -1332,22 +1344,22 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
         i++;
       }
       else if(argv[i] == "-nomesh") {
-        opt_mesh_points(0, GMSH_SET, 0.);
+        opt_mesh_nodes(0, GMSH_SET, 0.);
         opt_mesh_lines(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_edges(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_faces(0, GMSH_SET, 0.);
-        opt_mesh_volumes_edges(0, GMSH_SET, 0.);
-        opt_mesh_volumes_faces(0, GMSH_SET, 0.);
+        opt_mesh_surface_edges(0, GMSH_SET, 0.);
+        opt_mesh_surface_faces(0, GMSH_SET, 0.);
+        opt_mesh_volume_edges(0, GMSH_SET, 0.);
+        opt_mesh_volume_faces(0, GMSH_SET, 0.);
         i++;
       }
       else if(argv[i] == "-n") {
         opt_view_visible(0, GMSH_SET, 0);
-        opt_mesh_points(0, GMSH_SET, 0.);
+        opt_mesh_nodes(0, GMSH_SET, 0.);
         opt_mesh_lines(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_edges(0, GMSH_SET, 0.);
-        opt_mesh_surfaces_faces(0, GMSH_SET, 0.);
-        opt_mesh_volumes_edges(0, GMSH_SET, 0.);
-        opt_mesh_volumes_faces(0, GMSH_SET, 0.);
+        opt_mesh_surface_edges(0, GMSH_SET, 0.);
+        opt_mesh_surface_faces(0, GMSH_SET, 0.);
+        opt_mesh_volume_edges(0, GMSH_SET, 0.);
+        opt_mesh_volume_faces(0, GMSH_SET, 0.);
         i++;
       }
       else if(argv[i] == "-link") {

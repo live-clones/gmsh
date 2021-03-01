@@ -411,25 +411,25 @@ NSInteger compareParameter(id p1, id p2, void *context)
          cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
   // get the param with his name
-  static NSString *CellIdentifier = @"parameterCell";
   if(indexPath.section >= _sections.count)
     return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
-                                  reuseIdentifier:CellIdentifier];
+                                  reuseIdentifier:@"parameterCell"];
   NSMutableArray *sectionContent =
     [_sections objectAtIndex:[indexPath section]];
   if(indexPath.row >= sectionContent.count)
     return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
-                                  reuseIdentifier:CellIdentifier];
+                                  reuseIdentifier:@"parameterCell"];
   Parameter *tmp = [sectionContent objectAtIndex:[indexPath row]];
-
-  UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-  if(cell == nil)
+  UITableViewCell *cell =
+    [tableView dequeueReusableCellWithIdentifier:@"parameterCell"];
+  if(cell == nil) {
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
-                                  reuseIdentifier:CellIdentifier];
+                                  reuseIdentifier:@"parameterCell"];
+  }
   else {
     cell = nil;
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
-                                  reuseIdentifier:CellIdentifier];
+                                  reuseIdentifier:@"parameterCell"];
   }
 
   float lm = 20.; // left margin
@@ -437,39 +437,48 @@ NSInteger compareParameter(id p1, id p2, void *context)
   float h2 = cell.frame.size.height / 2.;
 
   [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-  [tmp setLabelFrame:CGRectMake(lm, 5, ww, h2)];
-  [cell addSubview:[tmp getLabel]];
   if([tmp isKindOfClass:[ParameterStringList class]]) {
     ParameterStringList *param = (ParameterStringList *)tmp;
-    [param setFrame:CGRectMake(lm, h2 + 10, ww, h2)];
-    [cell addSubview:[param getUIView]];
+    [param setLabelFrame:CGRectMake(lm, 5, ww, h2)];
+    [param setFrame:CGRectMake(lm, h2 + 15, ww, h2)];
+    [cell.contentView addSubview:[param getLabel]];
+    [cell.contentView addSubview:[param getUIView]];
   }
   else if([tmp isKindOfClass:[ParameterNumberList class]]) {
     ParameterNumberList *param = (ParameterNumberList *)tmp;
-    [param setFrame:CGRectMake(lm, h2 + 10, ww, h2)];
-    [cell addSubview:[param getUIView]];
+    [param setLabelFrame:CGRectMake(lm, 5, ww, h2)];
+    [param setFrame:CGRectMake(lm, h2 + 15, ww, h2)];
+    [cell.contentView addSubview:[param getLabel]];
+    [cell.contentView addSubview:[param getUIView]];
   }
   else if([tmp isKindOfClass:[ParameterNumberCheckbox class]]) {
     ParameterNumberCheckbox *param = (ParameterNumberCheckbox *)tmp;
     [param
       setLabelFrame:CGRectMake(85, 12, tableView.frame.size.width - 100, h2)];
-    [param setFrame:CGRectMake(lm, 6.5, ww, cell.frame.size.height)];
-    [cell addSubview:[param getCheckbox]];
+    [param setFrame:CGRectMake(lm, 6.5, ww, cell.frame.size.height - 6.5)];
+    [cell.contentView addSubview:[param getLabel]];
+    [cell.contentView addSubview:[param getCheckbox]];
   }
   else if([tmp isKindOfClass:[ParameterNumberStepper class]]) {
     ParameterNumberStepper *param = (ParameterNumberStepper *)tmp;
+    [param setLabelFrame:CGRectMake(lm, 5, ww, h2)];
     [param setFrame:CGRectMake(lm, h2 + 10, ww, h2)];
-    [cell addSubview:[param getStepper]];
+    [cell.contentView addSubview:[param getLabel]];
+    [cell.contentView addSubview:[param getStepper]];
   }
   else if([tmp isKindOfClass:[ParameterNumberRange class]]) {
     ParameterNumberRange *param = (ParameterNumberRange *)tmp;
-    [param setFrame:CGRectMake(lm, h2 + 10, ww, h2)];
-    [cell addSubview:[param getSlider]];
+    [param setLabelFrame:CGRectMake(lm, 5, ww, h2)];
+    [param setFrame:CGRectMake(lm, h2 + 15, ww, h2)];
+    [cell.contentView addSubview:[param getLabel]];
+    [cell.contentView addSubview:[param getSlider]];
   }
   else if([tmp isKindOfClass:[ParameterNumberTextbox class]]) {
     ParameterNumberTextbox *param = (ParameterNumberTextbox *)tmp;
+    [param setLabelFrame:CGRectMake(lm, 5, ww, h2)];
     [param setFrame:CGRectMake(lm, h2 + 10, ww, h2)];
-    [cell addSubview:[param getTextbox]];
+    [cell.contentView addSubview:[param getLabel]];
+    [cell.contentView addSubview:[param getTextbox]];
   }
 
   return cell;

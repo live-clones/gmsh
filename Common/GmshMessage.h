@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,7 +26,7 @@ public:
   virtual void operator()(std::string level, std::string message) {}
 };
 
-// a class to manage messages
+// a class to manage messages and communications
 class Msg {
 private:
   // current cpu number and total number of cpus
@@ -71,7 +71,8 @@ private:
 
 public:
   Msg() {}
-  static void Init(int argc, char **argv);
+  static void Initialize(int argc, char **argv);
+  static void Finalize();
   static void Exit(int level);
   static int GetCommRank();
   static int GetCommSize();
@@ -123,9 +124,10 @@ public:
   static double GetValue(const char *text, double defaultval);
   static std::string GetString(const char *text, const std::string &defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero,
-                       const char *one, const char *two = 0);
+                       const char *one, const char *two = nullptr);
   static void InitializeOnelab(const std::string &name,
                                const std::string &sockname = "");
+  static void FinalizeOnelab();
   static void SetExecutableName(const std::string &name);
   static std::string GetExecutableName();
   static void LoadOnelabClient(const std::string &name,
@@ -135,7 +137,6 @@ public:
 #if defined(HAVE_ONELAB)
   static onelab::client *GetOnelabClient();
 #endif
-  static void FinalizeOnelab();
   static bool UseOnelab();
   static void SetOnelabNumber(const std::string &name, double val,
                               bool visible = true, bool persistent = false,

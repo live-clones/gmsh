@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,6 +19,7 @@ int MergeFile(const std::string &fileName, bool errorIfMissing = false,
 int MergePostProcessingFile(const std::string &fileName, int showViews = 2,
                             bool showLastStep = false,
                             bool errorIfMissing = false);
+void DeleteAllModelsAndViews();
 void ClearProject();
 void SetBoundingBox(double xmin, double xmax, double ymin, double ymax,
                     double zmin, double zmax);

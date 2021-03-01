@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,7 +19,7 @@
 static void dVecRead(std::vector<double> &v, int n, FILE *fp, bool binary,
                      int swap)
 {
-  if(!n) return;
+  if(n <= 0) return;
   v.resize(n);
   if(binary) {
     if(!fread(&v[0], sizeof(double), n, fp)) Msg::Error("Read error");
@@ -27,7 +27,7 @@ static void dVecRead(std::vector<double> &v, int n, FILE *fp, bool binary,
   }
   else {
     for(int i = 0; i < n; i++) {
-      if(!fscanf(fp, "%lf", &v[i])) {
+      if(fscanf(fp, "%lf", &v[i]) != 1) {
         Msg::Error("Read error");
         break;
       }
@@ -38,7 +38,7 @@ static void dVecRead(std::vector<double> &v, int n, FILE *fp, bool binary,
 static void cVecRead(std::vector<char> &v, int n, FILE *fp, bool binary,
                      int swap, bool oldStyle)
 {
-  if(!n) return;
+  if(n <= 0) return;
   v.resize(n);
   if(binary) {
     if(!fread(&v[0], sizeof(char), n, fp)) Msg::Error("Read error");
@@ -47,7 +47,7 @@ static void cVecRead(std::vector<char> &v, int n, FILE *fp, bool binary,
   else {
     if(oldStyle) {
       for(int i = 0; i < n; i++) {
-        if(!fscanf(fp, "%c", &v[i])) {
+        if(fscanf(fp, "%c", &v[i]) != 1) {
           Msg::Error("Read error");
           break;
         }
@@ -103,9 +103,9 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
 
   if(version <= 1.0) {
     Msg::Debug("Detected post-processing view format <= 1.0");
-    if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", name,
-               &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL, &NbST,
-               &NbVT, &NbTT, &NbSS, &NbVS, &NbTS)) {
+    if(fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n", name,
+              &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL, &NbST,
+              &NbVT, &NbTT, &NbSS, &NbVS, &NbTS) != 14) {
       Msg::Error("Read error");
       return false;
     }
@@ -113,40 +113,40 @@ bool PViewDataList::readPOS(FILE *fp, double version, bool binary)
   }
   else if(version == 1.1) {
     Msg::Debug("Detected post-processing view format 1.1");
-    if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-               &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS, &NbT2, &t2l, &NbT3,
-               &t3l)) {
+    if(fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+              name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
+              &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS, &NbT2, &t2l, &NbT3,
+              &t3l) != 18) {
       Msg::Error("Read error");
       return false;
     }
   }
   else if(version == 1.2 || version == 1.3) {
     Msg::Debug("Detected post-processing view format %g", version);
-    if(!fscanf(fp,
-               "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-               "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-               &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
-               &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
-               &NbT2, &t2l, &NbT3, &t3l)) {
+    if(fscanf(fp,
+              "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+              "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+              name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
+              &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
+              &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
+              &NbT2, &t2l, &NbT3, &t3l) != 30) {
       Msg::Error("Read error");
       return false;
     }
   }
   else if(version == 1.4) {
     Msg::Debug("Detected post-processing view format 1.4");
-    if(!fscanf(fp,
-               "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-               &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
-               &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
-               &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2, &NbTT2, &NbSQ2, &NbVQ2,
-               &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2, &NbVH2, &NbTH2, &NbSI2,
-               &NbVI2, &NbTI2, &NbSY2, &NbVY2, &NbTY2, &NbT2, &t2l, &NbT3,
-               &t3l)) {
+    if(fscanf(fp,
+              "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+              "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+              "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+              name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
+              &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS,
+              &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
+              &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2, &NbTT2, &NbSQ2, &NbVQ2,
+              &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2, &NbVH2, &NbTH2, &NbSI2,
+              &NbVI2, &NbTI2, &NbSY2, &NbVY2, &NbTY2, &NbT2, &t2l, &NbT3,
+              &t3l) != 51) {
       Msg::Error("Read error");
       return false;
     }
@@ -543,7 +543,7 @@ public:
   int nbnod;
   int nod;
   double *data;
-  nodeData() : nbnod(0), nod(0), data(0) {}
+  nodeData() : nbnod(0), nod(0), data(nullptr) {}
   nodeData(int _nbnod, int _nod, double *_data)
     : nbnod(_nbnod), nod(_nod), data(_data)
   {
@@ -654,8 +654,8 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
 
   int numComponents = 9;
   for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = 0;
-    int *numEle = 0, numNodes, numComp;
+    std::vector<double> *list = nullptr;
+    int *numEle = nullptr, numNodes, numComp;
     _getRawData(i, &list, &numEle, &numComp, &numNodes);
     if(*numEle) numComponents = std::min(numComponents, numComp);
     createVertices(*list, *numEle, numNodes, vertices);
@@ -670,11 +670,11 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
   std::map<MVertex *, nodeData> vertexData;
 
   for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = 0;
-    int *numEle = 0, numComp, numNodes;
+    std::vector<double> *list = nullptr;
+    int *numEle = nullptr, numComp, numNodes;
     int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
     createElements(*list, *numEle, numNodes, pos, elements, typ,
-                   forceNodeData ? &vertexData : 0);
+                   forceNodeData ? &vertexData : nullptr);
   }
 
   int num = 0;
@@ -682,7 +682,8 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
 
   if(version > 2.2)
     Msg::Warning("Mesh-based export of list-based datasets not available with "
-                 "MSH %g: using MSH 2.2", version);
+                 "MSH %g: using MSH 2.2",
+                 version);
 
   fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
 
@@ -709,8 +710,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     fprintf(fp, "$InterpolationScheme\n");
     fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
     fprintf(fp, "%d\n", (int)_interpolation.size());
-    for(interpolationMatrices::iterator it = _interpolation.begin();
-        it != _interpolation.end(); it++) {
+    for(auto it = _interpolation.begin(); it != _interpolation.end(); it++) {
       if(it->second.size() >= 2) {
         fprintf(fp, "%d\n2\n", it->first);
         for(int mat = 0; mat < 2; mat++) {
@@ -763,8 +763,8 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     else {
       int n = 0;
       for(int i = 0; i < 24; i++) {
-        std::vector<double> *list = 0;
-        int *numEle = 0, numComp, numNodes;
+        std::vector<double> *list = nullptr;
+        int *numEle = nullptr, numComp, numNodes;
         int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
         if(*numEle) {
           int mult = numNodes;
@@ -800,8 +800,8 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
 void PViewDataList::importLists(int N[24], std::vector<double> *V[24])
 {
   for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = 0;
-    int *nbe = 0, nbc, nbn;
+    std::vector<double> *list = nullptr;
+    int *nbe = nullptr, nbc, nbn;
     _getRawData(i, &list, &nbe, &nbc, &nbn);
     *nbe = N[i];
     *list = *V[i]; // deep copy
@@ -816,8 +816,8 @@ void PViewDataList::importList(int index, int n, const std::vector<double> &v,
     Msg::Error("Wrong list index to import");
     return;
   }
-  std::vector<double> *list = 0;
-  int *nbe = 0, nbc, nbn;
+  std::vector<double> *list = nullptr;
+  int *nbe = nullptr, nbc, nbn;
   _getRawData(index, &list, &nbe, &nbc, &nbn);
   *nbe = n;
   *list = v; // deep copy
@@ -827,8 +827,8 @@ void PViewDataList::importList(int index, int n, const std::vector<double> &v,
 void PViewDataList::getListPointers(int N[24], std::vector<double> *V[24])
 {
   for(int i = 0; i < 24; i++) {
-    std::vector<double> *list = 0;
-    int *nbe = 0, nbc, nbn;
+    std::vector<double> *list = nullptr;
+    int *nbe = nullptr, nbc, nbn;
     _getRawData(i, &list, &nbe, &nbc, &nbn);
     N[i] = *nbe;
     V[i] = list; // copy pointer only

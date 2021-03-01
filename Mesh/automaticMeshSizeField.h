@@ -1,3 +1,10 @@
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributed by Arthur Bawin
+
 #ifndef AUTOMATIC_MESH_SIZE_FIELD_H
 #define AUTOMATIC_MESH_SIZE_FIELD_H
 
@@ -46,12 +53,13 @@ typedef struct ForestOptions{
   int           nodePerGap;
   double       *bbox;
   double      (*sizeFunction)(double, double, double, double);
+
+  // TODO : Reformuler ça avec 2 meshData (domaine et frontière)
   RTree<uint64_t,double,3>  *bndRTree;
   RTree<uint64_t,double,3>  *domRTree;
 #ifdef HAVE_HXT
   HXTMesh                   *mesh2D;
   HXTMesh                   *mesh3D;
-  // Reformuler ça sous forme d'une struct avec un HxtMesh, un c2v et un v2c pour le domaine et pour sa surface
   std::vector<MVertex*>        *c2vDom;
   std::map<MVertex*, uint32_t> *v2cDom;
   std::vector<MVertex*>        *c2vBnd;
@@ -126,7 +134,6 @@ HXTStatus forestSearchOne(Forest *forest, double x, double y, double z, double *
 #endif
 
 class automaticMeshSizeField : public Field {
-
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
   struct Forest *forest;
   struct ForestOptions *forestOptions;
@@ -141,10 +148,10 @@ class automaticMeshSizeField : public Field {
   double _gradation;
   bool _smoothing, _gaps;
 
- public:
+public:
   ~automaticMeshSizeField();
   automaticMeshSizeField(std::string fFile = "",
-                         int minElementsPerTwoPi = CTX::instance()->mesh.minElementsPerTwoPi,
+                         int minElementsPerTwoPi = CTX::instance()->mesh.lcFromCurvature,
                          int nLayersPerGap       = CTX::instance()->mesh.nLayersPerGap,
                          double gradation        = CTX::instance()->mesh.gradation,
                          double hmin = -1.0,
@@ -166,36 +173,41 @@ class automaticMeshSizeField : public Field {
     _smoothing        = smoothing;
     _gaps             = gaps;
 
-    options["p4estFileToLoad"] = new FieldOptionString(_forestFile,
-                 "p4est file containing the size field",&updateNeeded);
+    options["p4estFileToLoad"] = new FieldOptionString(
+      _forestFile, "p4est file containing the size field", &updateNeeded);
 
-    options["nPointsPerCircle"] = new FieldOptionInt(_nPointsPerCircle,
-						     "Number of points per circle (adapt to curvature of surfaces)",&updateNeeded);
+    options["nPointsPerCircle"] = new FieldOptionInt(
+      _nPointsPerCircle,
+      "Number of points per circle (adapt to curvature of surfaces)",
+      &updateNeeded);
 
-    options["nPointsPerGap"] = new FieldOptionInt(_nPointsPerGap,
-						  "Number of layers of elements in thin layers",&updateNeeded);
+    options["nPointsPerGap"] = new FieldOptionInt(
+      _nPointsPerGap, "Number of layers of elements in thin layers",
+      &updateNeeded);
 
-    options["hMin"] = new FieldOptionDouble(_hmin,
-               "Minimum size", &updateNeeded);
+    options["hMin"] =
+      new FieldOptionDouble(_hmin, "Minimum size", &updateNeeded);
 
-    options["hMax"] = new FieldOptionDouble(_hmax,
-               "Maximum size", &updateNeeded);
+    options["hMax"] =
+      new FieldOptionDouble(_hmax, "Maximum size", &updateNeeded);
 
-    options["hBulk"] = new FieldOptionDouble(_hbulk,
-					     "Default size where it is not prescribed", &updateNeeded);
+    options["hBulk"] = new FieldOptionDouble(
+      _hbulk, "Default size where it is not prescribed", &updateNeeded);
 
-    options["gradation"] = new FieldOptionDouble(_gradation,
-						   "Maximum growth ratio for the edges lengths",&updateNeeded);
+    options["gradation"] = new FieldOptionDouble(
+      _gradation, "Maximum growth ratio for the edges lengths", &updateNeeded);
 
-    options["smoothing"] = new FieldOptionBool(_smoothing,
-              "Enable size smoothing (should always be true)",&updateNeeded);
+    options["smoothing"] = new FieldOptionBool(
+      _smoothing, "Enable size smoothing (should always be true)",
+      &updateNeeded);
 
-    options["features"] = new FieldOptionBool(_gaps,
-              "Enable computation of local feature size (thin channels)",&updateNeeded);
+    options["features"] = new FieldOptionBool(
+      _gaps, "Enable computation of local feature size (thin channels)",
+      &updateNeeded);
 
     updateNeeded = true;
 
-    if (fFile != "") update();
+    if(fFile != "") update();
   }
 
   virtual bool isotropic() const { return false; }
@@ -203,13 +215,13 @@ class automaticMeshSizeField : public Field {
 
   std::string getDescription()
   {
-    return "Compute a mesh size field that is quite automatic "
+    return "Compute a mesh size field that is quite automatic."
            "Takes into account surface curvatures and closeness of objects";
   }
 
   void update();
-  virtual double operator()(double X, double Y, double Z, GEntity *ge = 0);
-  virtual void operator()(double x, double y, double z, SMetric3 &m, GEntity *ge = 0);
+  virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr);
+  virtual void operator()(double x, double y, double z, SMetric3 &m, GEntity *ge = nullptr);
 };
 
 #endif

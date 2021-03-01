@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,13 +9,13 @@
 #include <string>
 
 int GetFileFormatFromExtension(const std::string &fileName,
-                               double *version = 0);
+                               double *version = nullptr);
 int GuessFileFormatFromFileName(const std::string &fileName,
-                                double *version = 0);
+                                double *version = nullptr);
 std::string GetDefaultFileExtension(int format, bool onlyMeshFormats = false);
 std::string GetDefaultFileName(int format);
 std::string GetKnownFileFormats(bool onlyMeshFormats = false);
 void CreateOutputFile(const std::string &fileName, int format,
-                      bool status = true, bool redraw = true);
+                      bool status = true);
 
 #endif

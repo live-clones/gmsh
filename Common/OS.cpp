@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -250,7 +250,7 @@ static unsigned int utf8FromUtf16(char *dst, unsigned int dstlen,
   return count;
 }
 
-static wchar_t *wbuf[3] = {NULL, NULL, NULL};
+static wchar_t *wbuf[3] = {nullptr, nullptr, nullptr};
 
 static void setwbuf(int i, const char *f)
 {
@@ -262,7 +262,7 @@ static void setwbuf(int i, const char *f)
     return;
   }
   size_t l = strlen(f);
-  unsigned int wn = utf8toUtf16(f, (unsigned int)l, NULL, 0) + 1;
+  unsigned int wn = utf8toUtf16(f, (unsigned int)l, nullptr, 0) + 1;
   wbuf[i] = (wchar_t *)realloc(wbuf[i], sizeof(wchar_t) * wn);
   wn = utf8toUtf16(f, (unsigned)l, (unsigned short *)wbuf[i], wn);
   wbuf[i][wn] = 0;
@@ -378,7 +378,8 @@ double TotalRam()
   int name[] = {CTL_HW, HW_MEMSIZE};
   int64_t value;
   size_t len = sizeof(value);
-  if(sysctl(name, 2, &value, &len, NULL, 0) != -1) ram = value / (1024 * 1024);
+  if(sysctl(name, 2, &value, &len, nullptr, 0) != -1)
+    ram = value / (1024 * 1024);
 #elif defined(WIN32)
   MEMORYSTATUSEX status;
   status.dwLength = sizeof(status);
@@ -424,7 +425,7 @@ std::string GetExecutableFileName()
   std::string name = "";
 #if defined(WIN32) && !defined(__CYGWIN__)
   wchar_t src[MAX_PATH];
-  unsigned long size = GetModuleFileNameW(NULL, src, MAX_PATH);
+  unsigned long size = GetModuleFileNameW(nullptr, src, MAX_PATH);
   if(size) {
     char dst[MAX_PATH];
     utf8FromUtf16(dst, MAX_PATH, src, size);
@@ -455,7 +456,7 @@ std::string GetAbsolutePath(const std::string &fileName)
 #if defined(WIN32) && !defined(__CYGWIN__)
   setwbuf(0, fileName.c_str());
   wchar_t path[MAX_PATH];
-  unsigned long size = GetFullPathNameW(wbuf[0], MAX_PATH, path, NULL);
+  unsigned long size = GetFullPathNameW(wbuf[0], MAX_PATH, path, nullptr);
   if(size) {
     char dst[MAX_PATH];
     utf8FromUtf16(dst, MAX_PATH, path, size);
@@ -565,7 +566,7 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
     setwbuf(0, "open");
     setwbuf(1, exe.c_str());
     setwbuf(2, argsOrCommand.c_str());
-    ShellExecuteW(NULL, wbuf[0], wbuf[1], wbuf[2], NULL, 0);
+    ShellExecuteW(nullptr, wbuf[0], wbuf[1], wbuf[2], nullptr, 0);
   }
   else {
     STARTUPINFOW suInfo;
@@ -575,8 +576,8 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
     Msg::Info("Calling '%s'", command.c_str());
     setwbuf(0, command.c_str());
     if(blocking) {
-      CreateProcessW(NULL, wbuf[0], NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS,
-                     NULL, NULL, &suInfo, &prInfo);
+      CreateProcessW(nullptr, wbuf[0], nullptr, nullptr, FALSE,
+                     NORMAL_PRIORITY_CLASS, nullptr, nullptr, &suInfo, &prInfo);
       // wait until child process exits.
       WaitForSingleObject(prInfo.hProcess, INFINITE);
       // close process and thread handles.
@@ -586,8 +587,8 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
     else {
       // DETACHED_PROCESS removes the console (useful if the program to launch
       // is a console-mode exe)
-      CreateProcessW(NULL, wbuf[0], NULL, NULL, FALSE,
-                     NORMAL_PRIORITY_CLASS | DETACHED_PROCESS, NULL, NULL,
+      CreateProcessW(nullptr, wbuf[0], nullptr, nullptr, FALSE,
+                     NORMAL_PRIORITY_CLASS | DETACHED_PROCESS, nullptr, nullptr,
                      &suInfo, &prInfo);
     }
   }
@@ -617,7 +618,7 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
       cmd = "./" + cmd;
     }
   }
-  if(!system(NULL)) {
+  if(!system(nullptr)) {
     Msg::Error("Could not find /bin/sh: aborting system call");
     return 1;
   }
@@ -650,7 +651,7 @@ void RedirectIOToConsole()
         FILE *fp = _fdopen(hConHandle, "w");
         if(fp) {
           *stdout = *fp;
-          setvbuf(stdout, NULL, _IONBF, 0);
+          setvbuf(stdout, nullptr, _IONBF, 0);
         }
       }
     }
@@ -663,7 +664,7 @@ void RedirectIOToConsole()
         FILE *fp = _fdopen(hConHandle, "r");
         if(fp) {
           *stdin = *fp;
-          setvbuf(stdin, NULL, _IONBF, 0);
+          setvbuf(stdin, nullptr, _IONBF, 0);
         }
       }
     }
@@ -676,7 +677,7 @@ void RedirectIOToConsole()
         FILE *fp = _fdopen(hConHandle, "w");
         if(fp) {
           *stderr = *fp;
-          setvbuf(stderr, NULL, _IONBF, 0);
+          setvbuf(stderr, nullptr, _IONBF, 0);
         }
       }
     }
@@ -697,15 +698,13 @@ void UnzipFile(const std::string &fileName, const std::string &prependDir)
   ziputils::unzipper zipFile;
   zipFile.open(fileName.c_str());
   std::vector<std::string> dirnames = zipFile.getFolders();
-  for(std::vector<std::string>::const_iterator it = dirnames.begin();
-      it != dirnames.end(); it++) {
+  for(auto it = dirnames.begin(); it != dirnames.end(); it++) {
     std::string folder = dir + *it;
     Msg::Info("Creating folder `%s'", folder.c_str());
     CreatePath(folder);
   }
   std::vector<std::string> filenames = zipFile.getFilenames();
-  for(std::vector<std::string>::const_iterator it = filenames.begin();
-      it != filenames.end(); it++) {
+  for(auto it = filenames.begin(); it != filenames.end(); it++) {
     zipFile.openEntry(it->c_str());
     std::string name = dir + *it;
     Msg::Info("Extracting file `%s'", name.c_str());

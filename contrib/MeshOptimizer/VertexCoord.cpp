@@ -93,9 +93,8 @@ void VertexCoordParent::gXyz2gUvw(const SPoint3 &uvw,
 
   if(ge->dim() == 1) {
     SVector3 der = static_cast<GEdge *>(ge)->firstDer(uvw[0]);
-    std::vector<SPoint3>::iterator itUvw = gUvw.begin();
-    for(std::vector<SPoint3>::const_iterator itXyz = gXyz.begin();
-        itXyz != gXyz.end(); itXyz++) {
+    auto itUvw = gUvw.begin();
+    for(auto itXyz = gXyz.begin(); itXyz != gXyz.end(); itXyz++) {
       (*itUvw)[0] =
         itXyz->x() * der.x() + itXyz->y() * der.y() + itXyz->z() * der.z();
       itUvw++;
@@ -104,9 +103,8 @@ void VertexCoordParent::gXyz2gUvw(const SPoint3 &uvw,
   else {
     Pair<SVector3, SVector3> der =
       static_cast<GFace *>(ge)->firstDer(SPoint2(uvw[0], uvw[1]));
-    std::vector<SPoint3>::iterator itUvw = gUvw.begin();
-    for(std::vector<SPoint3>::const_iterator itXyz = gXyz.begin();
-        itXyz != gXyz.end(); itXyz++) {
+    auto itUvw = gUvw.begin();
+    for(auto itXyz = gXyz.begin(); itXyz != gXyz.end(); itXyz++) {
       (*itUvw)[0] = itXyz->x() * der.first().x() +
                     itXyz->y() * der.first().y() + itXyz->z() * der.first().z();
       (*itUvw)[1] = itXyz->x() * der.second().x() +
@@ -177,8 +175,7 @@ VertexCoordLocalLine::VertexCoordLocalLine(MVertex *v)
     MElement *el = ge->getMeshElement(iEl);
     std::vector<MVertex *> lVerts;
     el->getVertices(lVerts);
-    std::vector<MVertex *>::iterator itV =
-      std::find(lVerts.begin(), lVerts.end(), v);
+    auto itV = std::find(lVerts.begin(), lVerts.end(), v);
     if(itV != lVerts.end()) {
       const int iNode = std::distance(lVerts.begin(), itV);
       dir += getLineElTangent(el, iNode);
@@ -198,8 +195,7 @@ VertexCoordLocalSurf::VertexCoordLocalSurf(MVertex *v)
     MElement *el = ge->getMeshElement(iEl);
     std::vector<MVertex *> lVerts;
     el->getVertices(lVerts);
-    std::vector<MVertex *>::iterator itV =
-      std::find(lVerts.begin(), lVerts.end(), v);
+    auto itV = std::find(lVerts.begin(), lVerts.end(), v);
     if(itV != lVerts.end()) {
       const int iNode = std::distance(lVerts.begin(), itV);
       n += getSurfElNormal(el, iNode);

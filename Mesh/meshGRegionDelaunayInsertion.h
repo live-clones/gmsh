@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -64,19 +64,19 @@ private:
 public:
   static int radiusNorm; // 2 is euclidian norm, -1 is infinite norm
   ~MTet4() {}
-  MTet4() : deleted(false), circum_radius(0.0), base(0), gr(0)
+  MTet4() : deleted(false), circum_radius(0.0), base(nullptr), gr(nullptr)
   {
-    neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+    neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
   }
   MTet4(MTetrahedron *t, double qual)
-    : deleted(false), circum_radius(qual), base(t), gr(0)
+    : deleted(false), circum_radius(qual), base(t), gr(nullptr)
   {
-    neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+    neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
   }
   MTet4(MTetrahedron *t, const qmTetrahedron::Measures &qm)
-    : deleted(false), base(t), gr(0)
+    : deleted(false), base(t), gr(nullptr)
   {
-    neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+    neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
     double vol;
     circum_radius = qmTetrahedron::qm(t, qm, &vol);
   }
@@ -90,14 +90,14 @@ public:
     double B[4] = {v1->x(), v1->y(), v1->z()};
     double C[4] = {v2->x(), v2->y(), v2->z()};
     double D[4] = {v3->x(), v3->y(), v3->z()};
-    tetcircumcenter(A, B, C, D, res, NULL, NULL, NULL);
+    tetcircumcenter(A, B, C, D, res, nullptr, nullptr, nullptr);
   }
 
   void setup(MTetrahedron *t, std::vector<double> &sizes,
              std::vector<double> &sizesBGM)
   {
     base = t;
-    neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+    neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
     double center[3];
     circumcenter(center);
     const double dx = base->getVertex(0)->x() - center[0];
@@ -134,7 +134,7 @@ public:
              std::vector<double> &sizesBGM, double lcA, double lcB)
   {
     base = t;
-    neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+    neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
     double center[3];
     circumcenter(center);
     const double dx = base->getVertex(0)->x() - center[0];
@@ -215,12 +215,15 @@ public:
   }
 };
 
-void connectTets(std::list<MTet4 *> &, const std::set<MFace, MFaceLessThan> * = 0);
-void connectTets(std::vector<MTet4 *> &, const std::set<MFace, MFaceLessThan> * = 0);
+void connectTets(std::list<MTet4 *> &,
+                 const std::set<MFace, MFaceLessThan> * = nullptr);
+void connectTets(std::vector<MTet4 *> &,
+                 const std::set<MFace, MFaceLessThan> * = nullptr);
 void delaunayMeshIn3D(std::vector<MVertex *> &, std::vector<MTetrahedron *> &,
                       bool removeBox = false);
-void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarget,
-                            bool _classify = true, splitQuadRecovery *sqr = 0);
+void insertVerticesInRegion(GRegion *gr, int maxIter,
+                            double worstTetRadiusTarget, bool _classify = true,
+                            splitQuadRecovery *sqr = nullptr);
 void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 
 struct compareTet4Ptr {
@@ -301,7 +304,7 @@ public:
   void Free(MTet4 *t)
   {
     if(t->tet()) delete t->tet();
-    t->tet() = 0;
+    t->tet() = nullptr;
 #ifdef GMSH_PRE_ALLOCATE_STRATEGY
     emptySlots.push(t);
     t->setDeleted(true);

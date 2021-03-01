@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -35,8 +35,8 @@ static void testIfBoundaryIsRecovered(GRegion *gr)
   std::map<MEdge, GEdge *, MEdgeLessThan> edges;
   std::map<MFace, GFace *, MFaceLessThan> faces;
 
-  std::vector<GEdge *>::const_iterator it = e.begin();
-  std::vector<GFace *>::iterator itf = f.begin();
+  auto it = e.begin();
+  auto itf = f.begin();
   for(; it != e.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); ++i) {
       if(distance((*it)->lines[i]->getVertex(0),
@@ -111,12 +111,12 @@ struct edgeContainerB {
   }
 };
 
-static void createAllEmbeddedEdges(GRegion *gr,
-                                   std::set<MEdge, MEdgeLessThan> &allEmbeddedEdges)
+static void
+createAllEmbeddedEdges(GRegion *gr,
+                       std::set<MEdge, MEdgeLessThan> &allEmbeddedEdges)
 {
   std::vector<GEdge *> const &e = gr->embeddedEdges();
-  for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
-      ++it) {
+  for(auto it = e.begin(); it != e.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       allEmbeddedEdges.insert(
         MEdge((*it)->lines[i]->getVertex(0), (*it)->lines[i]->getVertex(1)));
@@ -127,8 +127,7 @@ static void createAllEmbeddedEdges(GRegion *gr,
 static void createAllEmbeddedEdges(GRegion *gr, edgeContainerB &embedded)
 {
   std::vector<GEdge *> const &e = gr->embeddedEdges();
-  for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
-      ++it) {
+  for(auto it = e.begin(); it != e.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       embedded.addNewEdge(
         MEdge((*it)->lines[i]->getVertex(0), (*it)->lines[i]->getVertex(1)));
@@ -136,12 +135,12 @@ static void createAllEmbeddedEdges(GRegion *gr, edgeContainerB &embedded)
   }
 }
 
-static void createAllEmbeddedFaces(GRegion *gr,
-                                   std::set<MFace, MFaceLessThan> &allEmbeddedFaces)
+static void
+createAllEmbeddedFaces(GRegion *gr,
+                       std::set<MFace, MFaceLessThan> &allEmbeddedFaces)
 {
   std::vector<GFace *> const &f = gr->embeddedFaces();
-  for(std::vector<GFace *>::const_iterator it = f.begin(); it != f.end();
-      ++it) {
+  for(auto it = f.begin(); it != f.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       allEmbeddedFaces.insert((*it)->triangles[i]->getFace(0));
     }
@@ -177,7 +176,7 @@ struct faceXtet {
   MTet4 *t1;
   int i1;
 
-  faceXtet(MTet4 *_t = 0, int iFac = 0) : t1(_t), i1(iFac)
+  faceXtet(MTet4 *_t = nullptr, int iFac = 0) : t1(_t), i1(iFac)
   {
     unsorted[0] = v[0] = t1->tet()->getVertex(faces[iFac][0]);
     unsorted[1] = v[1] = t1->tet()->getVertex(faces[iFac][1]);
@@ -248,8 +247,9 @@ void connectTets_vector2_templ(std::size_t _size, ITER beg, ITER end,
 }
 
 template <class ITER>
-void connectTets(ITER beg, ITER end,
-                 const std::set<MFace, MFaceLessThan> *allEmbeddedFaces = 0)
+void connectTets(
+  ITER beg, ITER end,
+  const std::set<MFace, MFaceLessThan> *allEmbeddedFaces = nullptr)
 {
   std::set<faceXtet> conn;
   while(beg != end) {
@@ -260,7 +260,7 @@ void connectTets(ITER beg, ITER end,
         if(!allEmbeddedFaces ||
            allEmbeddedFaces->find(MFace(fxt.v[0], fxt.v[1], fxt.v[2])) ==
              allEmbeddedFaces->end()) {
-          std::set<faceXtet>::iterator found = conn.find(fxt);
+          auto found = conn.find(fxt);
           if(found == conn.end())
             conn.insert(fxt);
           else if(found->t1 != *beg) {
@@ -310,8 +310,7 @@ static void removeFromCavity(std::vector<faceXtet> &shell,
 
   for(int i = 0; i < 4; i++) {
     faceXtet fxt2(toRemove.t1, i);
-    std::vector<faceXtet>::iterator it =
-      std::find(shell.begin(), shell.end(), fxt2);
+    auto it = std::find(shell.begin(), shell.end(), fxt2);
     if(it == shell.end()) {
       MTet4 *opposite = toRemove.t1->getNeigh(toRemove.i1);
       if(opposite) {
@@ -333,8 +332,7 @@ static void extendCavity(std::vector<faceXtet> &shell,
   MTet4 *opposite = t->getNeigh(toExtend.i1);
   for(int i = 0; i < 4; i++) {
     faceXtet fxt(opposite, i);
-    std::vector<faceXtet>::iterator it =
-      std::find(shell.begin(), shell.end(), fxt);
+    auto it = std::find(shell.begin(), shell.end(), fxt);
     if(it == shell.end())
       shell.push_back(fxt);
     else
@@ -355,8 +353,7 @@ static bool verifyShell(MVertex *v, MTet4 *t, std::vector<faceXtet> &shell)
     faceXtet fxt(t, i);
     bool starShaped = fxt.visible(v);
     if(!starShaped) {
-      std::vector<faceXtet>::iterator its =
-        std::find(shell.begin(), shell.end(), fxt);
+      auto its = std::find(shell.begin(), shell.end(), fxt);
       if(its == shell.end())
         NBAD_AFTER++;
       else
@@ -371,8 +368,7 @@ int makeCavityStarShaped(std::vector<faceXtet> &shell,
                          std::vector<MTet4 *> &cavity, MVertex *v)
 {
   std::vector<faceXtet> wrong;
-  for(std::vector<faceXtet>::iterator it = shell.begin(); it != shell.end();
-      ++it) {
+  for(auto it = shell.begin(); it != shell.end(); ++it) {
     faceXtet &fxt = *it;
     bool starShaped = fxt.visible(v);
     if(!starShaped) { wrong.push_back(fxt); }
@@ -399,7 +395,8 @@ int makeCavityStarShaped(std::vector<faceXtet> &shell,
     }
     wrong.erase(wrong.begin());
   }
-  // printf("after : shell size %d cavity size %d\n", shell.size(), cavity.size());
+  // printf("after : shell size %d cavity size %d\n", shell.size(),
+  // cavity.size());
   return 1;
 }
 
@@ -442,8 +439,8 @@ static void printTets(const char *fn, std::list<MTet4 *> &cavity,
   FILE *f = Fopen(fn, "w");
   if(f) {
     fprintf(f, "View \"\"{\n");
-    std::list<MTet4 *>::iterator ittet = cavity.begin();
-    std::list<MTet4 *>::iterator ittete = cavity.end();
+    auto ittet = cavity.begin();
+    auto ittete = cavity.end();
     while(ittet != ittete) {
       MTet4 *tet = *ittet;
       if(force || !tet->isDeleted()) {
@@ -472,7 +469,7 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
   std::vector<MTet4 *> new_tets;
   new_tets.reserve(shell.size());
 
-  std::vector<faceXtet>::iterator it = shell.begin();
+  auto it = shell.begin();
 
   bool onePointIsTooClose = false;
   while(it != shell.end()) {
@@ -509,8 +506,8 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
   }
   else /* one point is too close */ {
     for(std::size_t i = 0; i < shell.size(); i++) myFactory.Free(new_tets[i]);
-    std::vector<MTet4 *>::iterator ittet = cavity.begin();
-    std::vector<MTet4 *>::iterator ittete = cavity.end();
+    auto ittet = cavity.begin();
+    auto ittete = cavity.end();
     while(ittet != ittete) {
       (*ittet)->setDeleted(false);
       ++ittet;
@@ -532,10 +529,8 @@ static void setLcs(MTriangle *t,
     double dy = vi->y() - vj->y();
     double dz = vi->z() - vj->z();
     double l = std::sqrt(dx * dx + dy * dy + dz * dz);
-    std::map<MVertex *, double, MVertexPtrLessThan>::iterator iti =
-      vSizes.find(vi);
-    std::map<MVertex *, double, MVertexPtrLessThan>::iterator itj =
-      vSizes.find(vj);
+    auto iti = vSizes.find(vi);
+    auto itj = vSizes.find(vj);
     if(CTX::instance()->mesh.lcExtendFromBoundary == 2) {
       // use smallest edge length
       if(iti == vSizes.end() || iti->second > l) vSizes[vi] = l;
@@ -566,8 +561,8 @@ static void setLcs(MTriangle *t,
     MEdge e = t->getEdge(i);
     MVertex *vi = e.getVertex(0);
     MVertex *vj = e.getVertex(1);
-    std::map<MVertex*,double>::iterator iti = vSizes.find(vi);
-    std::map<MVertex*,double>::iterator itj = vSizes.find(vj);
+    auto iti = vSizes.find(vi);
+    auto itj = vSizes.find(vj);
     // use largest edge length
     if (iti == vSizes.end() || iti->second > l) vSizes[vi] = l;
     if (itj == vSizes.end() || itj->second > l) vSizes[vj] = l;
@@ -586,8 +581,7 @@ static void setLcs(MTetrahedron *t,
 
       // smallest tet edge
       if(bndVertices.find(vi) == bndVertices.end()) {
-        std::map<MVertex *, double, MVertexPtrLessThan>::iterator iti =
-          vSizes.find(vi);
+        auto iti = vSizes.find(vi);
 
         double const length =
           hypotenuse(vi->x() - vj->x(), vi->y() - vj->y(), vi->z() - vj->z());
@@ -596,8 +590,7 @@ static void setLcs(MTetrahedron *t,
       }
 
       if(bndVertices.find(vj) == bndVertices.end()) {
-        std::map<MVertex *, double, MVertexPtrLessThan>::iterator itj =
-          vSizes.find(vj);
+        auto itj = vSizes.find(vj);
 
         double const length =
           hypotenuse(vi->x() - vj->x(), vi->y() - vj->y(), vi->z() - vj->z());
@@ -611,7 +604,7 @@ static void setLcs(MTetrahedron *t,
 static void completeTheSetOfFaces(GModel *model, std::set<GFace *> &faces_bound)
 {
   std::set<GFace *> toAdd;
-  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
+  for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
     if(faces_bound.find(*it) != faces_bound.end()) {
       if((*it)->compound.size()) {
         for(std::size_t i = 0; i < (*it)->compound.size(); ++i) {
@@ -629,7 +622,7 @@ GRegion *getRegionFromBoundingFaces(GModel *model,
 {
   completeTheSetOfFaces(model, faces_bound);
 
-  GModel::riter git = model->firstRegion();
+  auto git = model->firstRegion();
   while(git != model->lastRegion()) {
     GRegion *gr = *git;
     ExtrudeParams *ep = gr->meshAttributes.extrude;
@@ -641,8 +634,7 @@ GRegion *getRegionFromBoundingFaces(GModel *model,
       std::vector<GFace *> _faces = (*git)->faces();
       if(_faces.size() == faces_bound.size()) {
         bool ok = true;
-        for(std::vector<GFace *>::iterator it = _faces.begin();
-            it != _faces.end(); ++it) {
+        for(auto it = _faces.begin(); it != _faces.end(); ++it) {
           if(faces_bound.find(*it) == faces_bound.end()) ok = false;
         }
         if(ok) return *git;
@@ -650,7 +642,7 @@ GRegion *getRegionFromBoundingFaces(GModel *model,
     }
     ++git;
   }
-  return 0;
+  return nullptr;
 }
 
 void non_recursive_classify(MTet4 *t, std::list<MTet4 *> &theRegion,
@@ -719,7 +711,7 @@ void adaptMeshGRegion::operator()(GRegion *gr)
     double avg = 0;
     int count = 0;
     for(int i = 0; i < nbRanges; i++) quality_ranges[i] = 0;
-    for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double vol = fabs((*it)->tet()->getVolume());
         double qual = (*it)->getQuality();
@@ -751,7 +743,7 @@ void adaptMeshGRegion::operator()(GRegion *gr)
 
   while(1) {
     std::vector<MTet4 *> newTets;
-    for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         for(int i = 0; i < 4; i++) {
           for(int j = 0; j < 4; j++) {
@@ -764,7 +756,7 @@ void adaptMeshGRegion::operator()(GRegion *gr)
       }
     }
 
-    for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double qq = (*it)->getQuality();
         if(qq < qMin) {
@@ -781,7 +773,7 @@ void adaptMeshGRegion::operator()(GRegion *gr)
     illegals.clear();
     for(int i = 0; i < nbRanges; i++) quality_ranges[i] = 0;
 
-    for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double qq = (*it)->getQuality();
         if(qq < qMin)
@@ -817,7 +809,7 @@ void adaptMeshGRegion::operator()(GRegion *gr)
     }
 
     // relocate vertices
-    for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double qq = (*it)->getQuality();
         if(qq < qMin)
@@ -831,7 +823,7 @@ void adaptMeshGRegion::operator()(GRegion *gr)
     double worst = 1.0;
     double avg = 0;
     int count = 0;
-    for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double vol = fabs((*it)->tet()->getVolume());
         double qual = (*it)->getQuality();
@@ -844,8 +836,9 @@ void adaptMeshGRegion::operator()(GRegion *gr)
     double t2 = Cpu(), w2 = TimeOfDay();
     Msg::Info("%d edge swaps, %d face swaps, %d node collapse, %d node "
               "relocations (volume = %g): worst = %g / average = %g "
-              "(Wall %gs, CPU %gs)", nbESwap, nbFSwap, nbCollapse, nbReloc,
-              totalVolumeb, worst, avg / count, w2 - w1, t2 - t1);
+              "(Wall %gs, CPU %gs)",
+              nbESwap, nbFSwap, nbCollapse, nbReloc, totalVolumeb, worst,
+              avg / count, w2 - w1, t2 - t1);
     break;
   }
 
@@ -864,10 +857,11 @@ void adaptMeshGRegion::operator()(GRegion *gr)
   for(int i = 0; i < nbRanges; i++) {
     double low = (double)i / nbRanges;
     double high = (double)(i + 1) / nbRanges;
-    Msg::Info("%3.2f < quality < %3.2f: %9d elements", low, high, quality_ranges[i]);
+    Msg::Info("%3.2f < quality < %3.2f: %9d elements", low, high,
+              quality_ranges[i]);
   }
 
-  for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+  for(auto it = allTets.begin(); it != allTets.end(); ++it) {
     if(!(*it)->isDeleted()) {
       gr->tetrahedra.push_back((*it)->tet());
       delete *it;
@@ -921,7 +915,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     double avg = 0;
     int count = 0;
     for(int i = 0; i < nbRanges; i++) quality_ranges[i] = 0;
-    for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double vol = fabs((*it)->tet()->getVolume());
         double qual = (*it)->getQuality();
@@ -936,8 +930,9 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
         }
       }
     }
-    Msg::Info("Optimization starts (volume = %g) with worst = %g / average = %g:",
-              totalVolumeb, worst, avg / count);
+    Msg::Info(
+      "Optimization starts (volume = %g) with worst = %g / average = %g:",
+      totalVolumeb, worst, avg / count);
     for(int i = 0; i < nbRanges; i++) {
       double low = (double)i / nbRanges;
       double high = (double)(i + 1) / nbRanges;
@@ -956,7 +951,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     illegals.clear();
     for(int i = 0; i < nbRanges; i++) quality_ranges[i] = 0;
 
-    for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double qq = (*it)->getQuality();
         if(qq < qMin) {
@@ -994,10 +989,10 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 
     // relocate vertices
     if(gr->hexahedra.empty() && gr->prisms.empty() && gr->pyramids.empty()) {
-      for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+      for(auto it = allTets.begin(); it != allTets.end(); ++it) {
         if(!(*it)->isDeleted()) {
           double qq = (*it)->getQuality();
-          if(qq < qMin){
+          if(qq < qMin) {
             for(int i = 0; i < 4; i++) {
               if(smoothVertex(*it, i, qm)) nbReloc++;
             }
@@ -1010,7 +1005,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     double worst = 1.0;
     double avg = 0;
     int count = 0;
-    for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double vol = fabs((*it)->tet()->getVolume());
         double qual = (*it)->getQuality();
@@ -1024,15 +1019,14 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     double t2 = Cpu(), w2 = TimeOfDay();
     Msg::Info("%d edge swaps, %d node relocations (volume = %g): "
               "worst = %g / average = %g (Wall %gs, CPU %gs)",
-              nbESwap, nbReloc, totalVolumeb, worst, avg / count,
-              w2 - w1, t2 - t1);
+              nbESwap, nbReloc, totalVolumeb, worst, avg / count, w2 - w1,
+              t2 - t1);
     if(worstA != 0.0 && worst - worstA < 1.e-6) break;
     worstA = worst;
   }
 
   if(illegals.size()) {
-    Msg::Warning("%d ill-shaped tets are still in the mesh",
-                 illegals.size());
+    Msg::Warning("%d ill-shaped tets are still in the mesh", illegals.size());
   }
   else {
     Msg::Info("No ill-shaped tets in the mesh :-)");
@@ -1045,7 +1039,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
               quality_ranges[i]);
   }
 
-  for(CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it) {
+  for(auto it = allTets.begin(); it != allTets.end(); ++it) {
     if(!(*it)->isDeleted()) {
       gr->tetrahedra.push_back((*it)->tet());
       delete *it;
@@ -1112,7 +1106,7 @@ double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
   circumcenter[1] = ycirca + a[1];
   circumcenter[2] = zcirca + a[2];
 
-  if(xi != (double *)NULL) {
+  if(xi != (double *)nullptr) {
     /* To interpolate a linear function at the circumcenter, define a    */
     /*   coordinate system with a xi-axis directed from `a' to `b',      */
     /*   an eta-axis directed from `a' to `c', and a zeta-axis directed  */
@@ -1132,7 +1126,7 @@ static void memoryCleanup(MTet4Factory &myFactory,
                           std::set<MTet4 *, compareTet4Ptr> &allTets)
 {
   // int n1 = allTets.size();
-  std::set<MTet4 *, compareTet4Ptr>::iterator itd = allTets.begin();
+  auto itd = allTets.begin();
   while(itd != allTets.end()) {
     if((*itd)->isDeleted()) {
       myFactory.Free((*itd));
@@ -1148,19 +1142,17 @@ static int isCavityCompatibleWithEmbeddedEdges(std::vector<MTet4 *> &cavity,
                                                std::vector<faceXtet> &shell,
                                                edgeContainerB &allEmbeddedEdges)
 {
-  if (allEmbeddedEdges.empty())return 1;
+  if(allEmbeddedEdges.empty()) return 1;
   std::vector<MEdge> ed;
   ed.reserve(shell.size() * 3);
 
-  for(std::vector<faceXtet>::iterator it = shell.begin(); it != shell.end();
-      it++) {
+  for(auto it = shell.begin(); it != shell.end(); it++) {
     ed.push_back(MEdge(it->v[0], it->v[1]));
     ed.push_back(MEdge(it->v[1], it->v[2]));
     ed.push_back(MEdge(it->v[2], it->v[0]));
   }
 
-  for(std::vector<MTet4 *>::iterator itc = cavity.begin(); itc != cavity.end();
-      ++itc) {
+  for(auto itc = cavity.begin(); itc != cavity.end(); ++itc) {
     for(int j = 0; j < 6; j++) {
       MEdge e = (*itc)->tet()->getEdge(j);
       if(std::find(ed.begin(), ed.end(), e) == ed.end() &&
@@ -1176,19 +1168,17 @@ static int isCavityCompatibleWithEmbeddedFace(
   const std::vector<MTet4 *> &cavity, const std::vector<faceXtet> &shell,
   const std::set<MFace, MFaceLessThan> &allEmbeddedFaces)
 {
-  if (allEmbeddedFaces.empty())return 1;
+  if(allEmbeddedFaces.empty()) return 1;
   std::vector<MFace> shellFaces;
   shellFaces.reserve(shell.size());
 
-  for(std::vector<faceXtet>::const_iterator it = shell.begin();
-      it != shell.end(); it++) {
+  for(auto it = shell.begin(); it != shell.end(); it++) {
     const faceXtet &face = (*it);
     shellFaces.push_back(
       MFace(face.unsorted[0], face.unsorted[1], face.unsorted[2]));
   }
 
-  for(std::vector<MTet4 *>::const_iterator itc = cavity.begin();
-      itc != cavity.end(); ++itc) {
+  for(auto itc = cavity.begin(); itc != cavity.end(); ++itc) {
     for(int j = 0; j < 4; j++) {
       MFace f = (*itc)->tet()->getFace(j);
       if((std::find(shellFaces.begin(), shellFaces.end(), f) ==
@@ -1220,10 +1210,10 @@ static void _deleteUnusedVertices(GRegion *gr)
                            allverts.end());
 }
 
-void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarget,
-                            bool _classify, splitQuadRecovery *sqr)
+void insertVerticesInRegion(GRegion *gr, int maxIter,
+                            double worstTetRadiusTarget, bool _classify,
+                            splitQuadRecovery *sqr)
 {
-
 #ifdef DEBUG_BOUNDARY_RECOVERY
   testIfBoundaryIsRecovered(gr);
 #endif
@@ -1238,11 +1228,10 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
     std::map<MVertex *, double, MVertexPtrLessThan> vSizesMap;
     std::set<MVertex *, MVertexPtrLessThan> bndVertices;
 
-    for(GModel::riter rit = gr->model()->firstRegion();
-        rit != gr->model()->lastRegion(); ++rit) {
+    for(auto rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion();
+        ++rit) {
       std::vector<GEdge *> const &e = (*rit)->embeddedEdges();
-      for(std::vector<GEdge *>::const_iterator it = e.begin(); it != e.end();
-          ++it) {
+      for(auto it = e.begin(); it != e.end(); ++it) {
         for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
           MVertex *vi = (*it)->lines[i]->getVertex(0);
           MVertex *vj = (*it)->lines[i]->getVertex(1);
@@ -1251,10 +1240,8 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
           double dz = vi->z() - vj->z();
           double l = std::sqrt(dx * dx + dy * dy + dz * dz);
 
-          std::map<MVertex *, double, MVertexPtrLessThan>::iterator iti =
-            vSizesMap.find(vi);
-          std::map<MVertex *, double, MVertexPtrLessThan>::iterator itj =
-            vSizesMap.find(vj);
+          auto iti = vSizesMap.find(vi);
+          auto itj = vSizesMap.find(vj);
 
           // smallest tet edge
           if(iti == vSizesMap.end() || iti->second > l) vSizesMap[vi] = l;
@@ -1263,21 +1250,19 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
       }
     }
 
-    for(GModel::riter rit = gr->model()->firstRegion();
-        rit != gr->model()->lastRegion(); ++rit) {
+    for(auto rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion();
+        ++rit) {
       std::vector<GVertex *> const &vertices = (*rit)->embeddedVertices();
-      for(std::vector<GVertex *>::const_iterator it = vertices.begin();
-          it != vertices.end(); ++it) {
+      for(auto it = vertices.begin(); it != vertices.end(); ++it) {
         MVertex *v = (*it)->getMeshVertex(0);
         double l = (*it)->prescribedMeshSizeAtVertex();
-        std::map<MVertex *, double, MVertexPtrLessThan>::iterator itv =
-          vSizesMap.find(v);
+        auto itv = vSizesMap.find(v);
         if(itv == vSizesMap.end() || itv->second > l) vSizesMap[v] = l;
       }
     }
 
-    for(GModel::fiter it = gr->model()->firstFace();
-        it != gr->model()->lastFace(); ++it) {
+    for(auto it = gr->model()->firstFace(); it != gr->model()->lastFace();
+        ++it) {
       GFace *gf = *it;
       for(std::size_t i = 0; i < gf->triangles.size(); i++) {
         setLcs(gf->triangles[i], vSizesMap, bndVertices);
@@ -1286,9 +1271,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
     for(std::size_t i = 0; i < gr->tetrahedra.size(); i++)
       setLcs(gr->tetrahedra[i], vSizesMap, bndVertices);
 
-    for(std::map<MVertex *, double, MVertexPtrLessThan>::iterator it =
-          vSizesMap.begin();
-        it != vSizesMap.end(); ++it) {
+    for(auto it = vSizesMap.begin(); it != vSizesMap.end(); ++it) {
       it->first->setIndex(NUM++);
       vSizes.push_back(it->second);
       vSizesBGM.push_back(it->second);
@@ -1312,8 +1295,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
     buildFaceSearchStructure(gr->model(), search, true); // only triangles
     if(sqr) search.insert(sqr->getTri().begin(), sqr->getTri().end());
 
-    for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end();
-        ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->onWhat()) {
         std::list<MTet4 *> theRegion;
         std::set<GFace *> faces_bound;
@@ -1331,16 +1313,14 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
           // a geometrical region (with no mesh) associated to the list of faces
           // has been found
           Msg::Info("Found volume %d", myGRegion->tag());
-          for(std::list<MTet4 *>::iterator it2 = theRegion.begin();
-              it2 != theRegion.end(); ++it2) {
+          for(auto it2 = theRegion.begin(); it2 != theRegion.end(); ++it2) {
             (*it2)->setOnWhat(myGRegion);
 
             // Make sure that Steiner points will end up in the right region
             std::vector<MVertex *> vertices;
             (*it2)->tet()->getVertices(vertices);
-            for(std::vector<MVertex *>::iterator itv = vertices.begin();
-                itv != vertices.end(); ++itv) {
-              if((*itv)->onWhat() != NULL && (*itv)->onWhat()->dim() == 3 &&
+            for(auto itv = vertices.begin(); itv != vertices.end(); ++itv) {
+              if((*itv)->onWhat() != nullptr && (*itv)->onWhat()->dim() == 3 &&
                  (*itv)->onWhat() != myGRegion) {
                 myGRegion->addMeshVertex((*itv));
                 (*itv)->setEntity(myGRegion);
@@ -1351,8 +1331,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
         else {
           // the tets are in the void
           Msg::Info("Found void region");
-          for(std::list<MTet4 *>::iterator it2 = theRegion.begin();
-              it2 != theRegion.end(); ++it2)
+          for(auto it2 = theRegion.begin(); it2 != theRegion.end(); ++it2)
             (*it2)->setDeleted(true);
         }
       }
@@ -1361,21 +1340,21 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
   }
   else {
     // FIXME ... too simple
-    for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it)
+    for(auto it = allTets.begin(); it != allTets.end(); ++it)
       (*it)->setOnWhat(gr);
   }
 
-  for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it) {
-    (*it)->setNeigh(0, 0);
-    (*it)->setNeigh(1, 0);
-    (*it)->setNeigh(2, 0);
-    (*it)->setNeigh(3, 0);
+  for(auto it = allTets.begin(); it != allTets.end(); ++it) {
+    (*it)->setNeigh(0, nullptr);
+    (*it)->setNeigh(1, nullptr);
+    (*it)->setNeigh(2, nullptr);
+    (*it)->setNeigh(3, nullptr);
   }
   // store all embedded faces
   std::set<MFace, MFaceLessThan> allEmbeddedFaces;
   edgeContainerB allEmbeddedEdges;
-  for(GModel::riter it = gr->model()->firstRegion();
-      it != gr->model()->lastRegion(); ++it) {
+  for(auto it = gr->model()->firstRegion(); it != gr->model()->lastRegion();
+      ++it) {
     createAllEmbeddedFaces((*it), allEmbeddedFaces);
     createAllEmbeddedEdges((*it), allEmbeddedEdges);
   }
@@ -1408,8 +1387,10 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
     }
     else {
       if(ITER++ % 500 == 0)
-        Msg::Info("It. %d - %d nodes created - worst tet radius %g (nodes removed %d %d)",
-                  ITER - 1, REALCOUNT, worst->getRadius(), COUNT_MISS_1, COUNT_MISS_2);
+        Msg::Info("It. %d - %d nodes created - worst tet radius %g (nodes "
+                  "removed %d %d)",
+                  ITER - 1, REALCOUNT, worst->getRadius(), COUNT_MISS_1,
+                  COUNT_MISS_2);
       if(worst->getRadius() < worstTetRadiusTarget) break;
       double center[3];
       double uvw[3];
@@ -1424,7 +1405,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
       double pd[3] = {base->getVertex(3)->x(), base->getVertex(3)->y(),
                       base->getVertex(3)->z()};
 
-      tetcircumcenter(pa, pb, pc, pd, center, NULL, NULL, NULL);
+      tetcircumcenter(pa, pb, pc, pd, center, nullptr, nullptr, nullptr);
 
       // A TEST !!!
       std::vector<faceXtet> shell;
@@ -1432,8 +1413,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
       MVertex vv(center[0], center[1], center[2], worst->onWhat());
       findCavity(shell, cavity, &vv, worst);
       bool FOUND = false;
-      for(std::vector<MTet4 *>::iterator itc = cavity.begin();
-          itc != cavity.end(); ++itc) {
+      for(auto itc = cavity.begin(); itc != cavity.end(); ++itc) {
         MTetrahedron *toto = (*itc)->tet();
         // (*itc)->setDeleted(false);
         toto->xyz2uvw(center, uvw);
@@ -1447,7 +1427,8 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
 
       if(FOUND && (!allEmbeddedEdges.empty() || !allEmbeddedFaces.empty())) {
         FOUND =
-          isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges) &&
+          isCavityCompatibleWithEmbeddedEdges(cavity, shell,
+                                              allEmbeddedEdges) &&
           isCavityCompatibleWithEmbeddedFace(cavity, shell, allEmbeddedFaces);
       }
 
@@ -1458,7 +1439,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
           new MVertex(center[0], center[1], center[2], worst->onWhat());
         v->setIndex(NUM++);
 #ifdef PRINT_TETS
-        printTets ("before.pos", cavity, true);
+        printTets("before.pos", cavity, true);
 #endif
         bool starShaped = true;
         bool correctCavity = false;
@@ -1487,15 +1468,15 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
                      uvw[0] * vSizes[worst->tet()->getVertex(1)->getIndex()] +
                      uvw[1] * vSizes[worst->tet()->getVertex(2)->getIndex()] +
                      uvw[2] * vSizes[worst->tet()->getVertex(3)->getIndex()];
-        double lc2 = BGM_MeshSize(worst->onWhat(), 0, 0, center[0], center[1], center[2]);
+        double lc2 =
+          BGM_MeshSize(worst->onWhat(), 0, 0, center[0], center[1], center[2]);
 
         if(correctedCavityIncompatibleWithEmbeddedEntities || !starShaped ||
            !insertVertexB(shell, cavity, v, lc1, lc2, vSizes, vSizesBGM, worst,
                           myFactory, allTets, allEmbeddedFaces)) {
           COUNT_MISS_1++;
           myFactory.changeTetRadius(allTets.begin(), 0.);
-          for(std::vector<MTet4 *>::iterator itc = cavity.begin();
-              itc != cavity.end(); ++itc)
+          for(auto itc = cavity.begin(); itc != cavity.end(); ++itc)
             (*itc)->setDeleted(false);
           delete v;
           NUM--;
@@ -1511,8 +1492,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
       else {
         myFactory.changeTetRadius(allTets.begin(), 0.0);
         COUNT_MISS_2++;
-        for(std::vector<MTet4 *>::iterator itc = cavity.begin();
-            itc != cavity.end(); ++itc)
+        for(auto itc = cavity.begin(); itc != cavity.end(); ++itc)
           (*itc)->setDeleted(false);
       }
     }
@@ -1529,19 +1509,17 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
   double t2 = TimeOfDay();
   double dt = (t2 - t1);
   int COUNT_MISS = COUNT_MISS_1 + COUNT_MISS_2;
-  Msg::Info("3D refinement terminated (%d nodes total):",
-            (int)vSizes.size());
+  Msg::Info("3D refinement terminated (%d nodes total):", (int)vSizes.size());
   Msg::Info(" - %d Delaunay cavities modified for star shapeness",
             NB_CORRECTION_OF_CAVITY);
   Msg::Info(" - %d nodes could not be inserted", COUNT_MISS);
-  Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/s)",
-            allTets.size(), dt, (int)(allTets.size() / dt));
+  Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/s)", allTets.size(),
+            dt, (int)(allTets.size() / dt));
 
   // relocate vertices
   int nbReloc = 0;
   for(int SM = 0; SM < CTX::instance()->mesh.nbSmoothing; SM++) {
-    for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end();
-        ++it) {
+    for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->isDeleted()) {
         double qq = (*it)->getQuality();
         if(qq < .4)
@@ -1557,7 +1535,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
     MTet4 *worst = *allTets.begin();
     if(!worst->isDeleted()) {
       worst->onWhat()->tetrahedra.push_back(worst->tet());
-      worst->tet() = 0;
+      worst->tet() = nullptr;
     }
     myFactory.Free(worst);
     allTets.erase(allTets.begin());
@@ -1569,13 +1547,12 @@ void insertVerticesInRegion(GRegion *gr, int maxIter, double worstTetRadiusTarge
 // do a 3D delaunay mesh assuming a set of vertices
 
 void delaunayMeshIn3D(std::vector<MVertex *> &v,
-                      std::vector<MTetrahedron *> &result,
-                      bool removeBox)
+                      std::vector<MTetrahedron *> &result, bool removeBox)
 {
   Msg::Info("Tetrahedrizing %d nodes...", v.size());
   double t1 = Cpu(), w1 = TimeOfDay();
   delaunayTriangulation(1, 1, v, result, removeBox);
   double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::Info("Done tetrahedrizing %d nodes (Wall %gs, CPU %gs)",
-            v.size(), w2 - w1, t2 - t1);
+  Msg::Info("Done tetrahedrizing %d nodes (Wall %gs, CPU %gs)", v.size(),
+            w2 - w1, t2 - t1);
 }

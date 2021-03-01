@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -125,8 +125,7 @@ bool isElementVisible(MElement *ele)
     bool hidden = false;
     for(int clip = 0; clip < 6; clip++) {
       if(CTX::instance()->mesh.clip & (1 << clip)) {
-        if(ele->getDim() < 3 && CTX::instance()->clipOnlyVolume) {
-        }
+        if(ele->getDim() < 3 && CTX::instance()->clipOnlyVolume) {}
         else {
           double d = intersectClipPlane(clip, ele);
           if(ele->getDim() == 3 &&
@@ -307,7 +306,7 @@ private:
   int _estimateNumLines(GFace *f)
   {
     int num = 0;
-    if(CTX::instance()->mesh.surfacesEdges) {
+    if(CTX::instance()->mesh.surfaceEdges) {
       num += (3 * f->triangles.size() + 4 * f->quadrangles.size() +
               4 * f->polygons.size()) /
              2;
@@ -319,7 +318,7 @@ private:
   int _estimateNumTriangles(GFace *f)
   {
     int num = 0;
-    if(CTX::instance()->mesh.surfacesFaces) {
+    if(CTX::instance()->mesh.surfaceFaces) {
       num += (f->triangles.size() + 2 * f->quadrangles.size() +
               2 * f->polygons.size());
       if(_curved) num *= 4;
@@ -337,13 +336,14 @@ public:
                              CTX::instance()->mesh.quadrangles &&
                              areAllElementsVisible(f->quadrangles));
 
-    bool edg = CTX::instance()->mesh.surfacesEdges;
-    bool fac = CTX::instance()->mesh.surfacesFaces;
+    bool edg = CTX::instance()->mesh.surfaceEdges;
+    bool fac = CTX::instance()->mesh.surfaceFaces;
     if(edg || fac) {
       _curved = (areSomeElementsCurved(f->triangles) ||
                  areSomeElementsCurved(f->quadrangles));
       f->va_lines = new VertexArray(2, edg ? _estimateNumLines(f) : 100);
-      f->va_triangles = new VertexArray(3, fac ? _estimateNumTriangles(f) : 100);
+      f->va_triangles =
+        new VertexArray(3, fac ? _estimateNumTriangles(f) : 100);
       if(CTX::instance()->mesh.triangles)
         addElementsInArrays(f, f->triangles, edg, fac);
       if(CTX::instance()->mesh.quadrangles)
@@ -362,12 +362,12 @@ private:
   {
     if(CTX::instance()->clipWholeElements) {
       for(int clip = 0; clip < 6; clip++) {
-        if(CTX::instance()->mesh.clip & (1 << clip)){
-          if(CTX::instance()->clipOnlyDrawIntersectingVolume){
+        if(CTX::instance()->mesh.clip & (1 << clip)) {
+          if(CTX::instance()->clipOnlyDrawIntersectingVolume) {
             // let be more aggressive than num^{2/3}
             return (int)sqrt((double)num);
           }
-          else{
+          else {
             // why not :-)
             return num / 4;
           }
@@ -379,7 +379,7 @@ private:
   int _estimateNumLines(GRegion *r)
   {
     int num = 0;
-    if(CTX::instance()->mesh.volumesEdges) {
+    if(CTX::instance()->mesh.volumeEdges) {
       // suppose edge shared by 4 elements on averge (pessmistic)
       int numLP = 0;
       for(std::size_t i = 0; i < r->polyhedra.size(); i++)
@@ -397,7 +397,7 @@ private:
   int _estimateNumTriangles(GRegion *r)
   {
     int num = 0;
-    if(CTX::instance()->mesh.volumesFaces) {
+    if(CTX::instance()->mesh.volumeFaces) {
       int numFP = 0;
       for(std::size_t i = 0; i < r->polyhedra.size(); i++)
         numFP += r->polyhedra[i]->getNumFaces();
@@ -425,8 +425,8 @@ public:
       areAllElementsVisible(r->pyramids) && CTX::instance()->mesh.trihedra &&
       areAllElementsVisible(r->trihedra));
 
-    bool edg = CTX::instance()->mesh.volumesEdges;
-    bool fac = CTX::instance()->mesh.volumesFaces;
+    bool edg = CTX::instance()->mesh.volumeEdges;
+    bool fac = CTX::instance()->mesh.volumeFaces;
     if(edg || fac) {
       _curved = (areSomeElementsCurved(r->tetrahedra) ||
                  areSomeElementsCurved(r->hexahedra) ||
@@ -434,7 +434,8 @@ public:
                  areSomeElementsCurved(r->pyramids) ||
                  areSomeElementsCurved(r->trihedra));
       r->va_lines = new VertexArray(2, edg ? _estimateNumLines(r) : 100);
-      r->va_triangles = new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
+      r->va_triangles =
+        new VertexArray(3, fac ? _estimateNumTriangles(r) : 100);
       if(CTX::instance()->mesh.tetrahedra)
         addElementsInArrays(r, r->tetrahedra, edg, fac);
       if(CTX::instance()->mesh.hexahedra)

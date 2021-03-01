@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -501,7 +501,7 @@ int writeZonesStruct(GModel *model, double scalingFactor, int cgIndexFile,
   int meshDim = -1;
 
   std::vector<GFace *> faces;
-  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it) {
+  for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
     if(isTransfinite(*it)) {
       meshDim = 2;
       faces.push_back(*it);
@@ -509,8 +509,7 @@ int writeZonesStruct(GModel *model, double scalingFactor, int cgIndexFile,
   }
 
   std::vector<GRegion *> regions;
-  for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-      ++it) {
+  for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
     if(isTransfinite(*it)) {
       meshDim = 3;
       regions.push_back(*it);

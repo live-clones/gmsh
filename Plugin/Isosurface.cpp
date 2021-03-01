@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -11,9 +11,9 @@ StringXNumber IsosurfaceOptions_Number[] = {
   {GMSH_FULLRC, "ExtractVolume", GMSH_IsosurfacePlugin::callbackVol, 0.},
   {GMSH_FULLRC, "RecurLevel", GMSH_IsosurfacePlugin::callbackRecur, 4},
   {GMSH_FULLRC, "TargetError", GMSH_IsosurfacePlugin::callbackTarget, 0},
-  {GMSH_FULLRC, "View", NULL, -1.},
-  {GMSH_FULLRC, "OtherTimeStep", NULL, -1.},
-  {GMSH_FULLRC, "OtherView", NULL, -1.}};
+  {GMSH_FULLRC, "View", nullptr, -1.},
+  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1.},
+  {GMSH_FULLRC, "OtherView", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterIsosurfacePlugin()

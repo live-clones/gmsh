@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -87,7 +87,7 @@ static colorhash_table ppm_alloccolorhash()
 
   cht = (colorhash_table)Malloc(HASH_SIZE * sizeof(colorhist_list));
 
-  for(i = 0; i < HASH_SIZE; ++i) cht[i] = (colorhist_list)0;
+  for(i = 0; i < HASH_SIZE; ++i) cht[i] = (colorhist_list)nullptr;
 
   return cht;
 }
@@ -98,7 +98,7 @@ static void ppm_freecolorhash(colorhash_table cht)
   colorhist_list chl, chlnext;
 
   for(i = 0; i < HASH_SIZE; ++i)
-    for(chl = cht[i]; chl != (colorhist_list)0; chl = chlnext) {
+    for(chl = cht[i]; chl != (colorhist_list)nullptr; chl = chlnext) {
       chlnext = chl->next;
       Free((char *)chl);
     }
@@ -122,14 +122,14 @@ static colorhash_table ppm_computecolorhash(pixel **const pixels,
   for(row = 0; row < rows; ++row)
     for(col = 0, pP = pixels[row]; col < cols; ++col, ++pP) {
       hash = ppm_hashpixel(*pP);
-      for(chl = cht[hash]; chl != (colorhist_list)0; chl = chl->next)
+      for(chl = cht[hash]; chl != (colorhist_list)nullptr; chl = chl->next)
         if(PPM_EQUAL(chl->ch.color, *pP)) break;
-      if(chl != (colorhist_list)0)
+      if(chl != (colorhist_list)nullptr)
         ++(chl->ch.value);
       else {
         if(++(*colorsP) > maxcolors) {
           ppm_freecolorhash(cht);
-          return (colorhash_table)0;
+          return (colorhash_table)nullptr;
         }
         chl = (colorhist_list)Malloc(sizeof(struct colorhist_list_item));
         chl->ch.color = *pP;
@@ -169,7 +169,7 @@ static colorhist_vector ppm_colorhashtocolorhist(const colorhash_table cht,
   /* Loop through the hash table. */
   j = 0;
   for(i = 0; i < HASH_SIZE; ++i)
-    for(chl = cht[i]; chl != (colorhist_list)0; chl = chl->next) {
+    for(chl = cht[i]; chl != (colorhist_list)nullptr; chl = chl->next) {
       /* Add the new entry. */
       chv[j] = chl->ch;
       ++j;
@@ -192,7 +192,7 @@ static colorhash_table ppm_colorhisttocolorhash(const colorhist_vector chv,
   for(i = 0; i < colors; ++i) {
     color = chv[i].color;
     hash = ppm_hashpixel(color);
-    for(chl = cht[hash]; chl != (colorhist_list)0; chl = chl->next)
+    for(chl = cht[hash]; chl != (colorhist_list)nullptr; chl = chl->next)
       if(PPM_EQUAL(chl->ch.color, color))
         Msg::Error("GIF: same color found twice - %d %d %d", PPM_GETR(color),
                    PPM_GETG(color), PPM_GETB(color));
@@ -215,7 +215,7 @@ static colorhist_vector ppm_computecolorhist(pixel **const pixels,
   colorhist_vector chv;
 
   cht = ppm_computecolorhash(pixels, cols, rows, maxcolors, colorsP);
-  if(cht == (colorhash_table)0) return (colorhist_vector)0;
+  if(cht == (colorhash_table)nullptr) return (colorhist_vector)nullptr;
   chv = ppm_colorhashtocolorhist(cht, maxcolors);
   ppm_freecolorhash(cht);
   return chv;
@@ -227,7 +227,7 @@ static int ppm_lookupcolor(const colorhash_table cht, const pixel *const colorP)
   colorhist_list chl;
 
   hash = ppm_hashpixel(*colorP);
-  for(chl = cht[hash]; chl != (colorhist_list)0; chl = chl->next)
+  for(chl = cht[hash]; chl != (colorhist_list)nullptr; chl = chl->next)
     if(PPM_EQUAL(chl->ch.color, *colorP)) return chl->ch.value;
 
   return -1;
@@ -354,7 +354,7 @@ static colorhist_vector mediancut(colorhist_vector chv, int colors, int sum,
   bv = (box_vector)malloc(sizeof(struct box) * newcolors);
   colormap =
     (colorhist_vector)malloc(sizeof(struct colorhist_item) * newcolors);
-  if(bv == (box_vector)0 || colormap == (colorhist_vector)0)
+  if(bv == (box_vector)nullptr || colormap == (colorhist_vector)nullptr)
     Msg::Error("GIF: out of memory");
   for(i = 0; i < newcolors; ++i) PPM_ASSIGN(colormap[i].color, 0, 0, 0);
 
@@ -1119,8 +1119,8 @@ void create_gif(FILE *outfile, PixelBuffer *buffer, int dither, int sort,
   pixel *pP;
   int col, row, limitcol, ind;
   int newcolors = 256;
-  long *thisrerr = NULL, *nextrerr = NULL, *thisgerr = NULL, *nextgerr = NULL;
-  long *thisberr = NULL, *nextberr = NULL, *temperr = NULL;
+  long *thisrerr = nullptr, *nextrerr = nullptr, *thisgerr = nullptr, *nextgerr = nullptr;
+  long *thisberr = nullptr, *nextberr = nullptr, *temperr = nullptr;
   long sr = 0, sg = 0, sb = 0, err = 0;
   int fs_direction = 0;
 
@@ -1151,7 +1151,7 @@ void create_gif(FILE *outfile, PixelBuffer *buffer, int dither, int sort,
 
   /* Fuck, there are more than 256 colors in the picture: we need to quantize */
 
-  if(chv == (colorhist_vector)0) {
+  if(chv == (colorhist_vector)nullptr) {
     Msg::Debug("GIF: too many colors in image");
 
     rows = height;
@@ -1161,7 +1161,7 @@ void create_gif(FILE *outfile, PixelBuffer *buffer, int dither, int sort,
       Msg::Debug("GIF: making histogram...");
       chv = ppm_computecolorhist(static_pixels, width, height, MAXCOL2,
                                  &static_nbcolors);
-      if(chv != (colorhist_vector)0) break;
+      if(chv != (colorhist_vector)nullptr) break;
       Msg::Debug("GIF: still too many colors!");
       newmaxval = maxval / 2;
       Msg::Debug("GIF: scaling colors from maxval=%d to maxval=%d to improve "

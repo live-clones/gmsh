@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -3341,7 +3341,7 @@ static IntPt *GQTetSolin[22] = {
 static int GQTetnPtSolin[22] = {1,   1,   4,   5,   11,   14,  24,  31,
                                 43,  53,  126, 126, 210,  210, 330, 330,
                                 495, 495, 715, 715, 1001, 1001};
-static std::vector<IntPt*> GQTetGL(40, nullptr);
+static std::vector<IntPt *> GQTetGL(40, nullptr);
 
 IntPt *getGQTetPts(int order)
 {

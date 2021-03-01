@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -167,7 +167,7 @@ public:
     return sum;
   }
   void interpolateGrad(double val[], double u, double v, double w, double f[3],
-                       int stride = 1, double invjac[3][3] = NULL)
+                       int stride = 1, double invjac[3][3] = nullptr)
   {
     double dfdu[3] = {0., 0., 0.};
     int j = 0;
@@ -179,9 +179,7 @@ public:
       dfdu[2] += val[j] * s[2];
       j += stride;
     }
-    if(invjac) {
-      matvec(invjac, dfdu, f);
-    }
+    if(invjac) { matvec(invjac, dfdu, f); }
     else {
       double jac[3][3], inv[3][3];
       getJacobian(u, v, w, jac);
@@ -518,20 +516,32 @@ public:
     for(int i = 0; i < 3; i++) v[i] = integrate(&val[i], 3);
     return prosca(n, v);
   }
-#if 0 // faster, but only valid for triangles in the z=0 plane
   void xyz2uvw(double xyz[3], double uvw[3])
   {
-    double mat[2][2], b[2];
-    mat[0][0] = _x[1] - _x[0];
-    mat[0][1] = _x[2] - _x[0];
-    mat[1][0] = _y[1] - _y[0];
-    mat[1][1] = _y[2] - _y[0];
-    b[0] = xyz[0] - _x[0];
-    b[1] = xyz[1] - _y[0];
-    sys2x2(mat, b, uvw);
-    uvw[2] = 0.;
+    const double O[3] = {_x[0], _y[0], _z[0]};
+
+    const double d[3] = {xyz[0] - O[0], xyz[1] - O[1], xyz[2] - O[2]};
+    const double d1[3] = {_x[1] - O[0], _y[1] - O[1], _z[1] - O[2]};
+    const double d2[3] = {_x[2] - O[0], _y[2] - O[1], _z[2] - O[2]};
+
+    const double Jxy = d1[0] * d2[1] - d1[1] * d2[0];
+    const double Jxz = d1[0] * d2[2] - d1[2] * d2[0];
+    const double Jyz = d1[1] * d2[2] - d1[2] * d2[1];
+
+    if((std::abs(Jxy) > std::abs(Jxz)) && (std::abs(Jxy) > std::abs(Jyz))) {
+      uvw[0] = (d[0] * d2[1] - d[1] * d2[0]) / Jxy;
+      uvw[1] = (d[1] * d1[0] - d[0] * d1[1]) / Jxy;
+    }
+    else if(std::abs(Jxz) > std::abs(Jyz)) {
+      uvw[0] = (d[0] * d2[2] - d[2] * d2[0]) / Jxz;
+      uvw[1] = (d[2] * d1[0] - d[0] * d1[2]) / Jxz;
+    }
+    else {
+      uvw[0] = (d[1] * d2[2] - d[2] * d2[1]) / Jyz;
+      uvw[1] = (d[2] * d1[1] - d[1] * d1[2]) / Jyz;
+    }
+    uvw[2] = 0.0;
   }
-#endif
   int isInside(double u, double v, double w)
   {
     if(u < -TOL || v < -TOL || u > ((1. + TOL) - v) || std::abs(w) > TOL)
@@ -1405,7 +1415,7 @@ public:
         return new pyramid(x, y, z, copy ? numNodes : 0);
       else
         return new tetrahedron(x, y, z, copy ? numNodes : 0);
-    default: Msg::Error("Unknown type of element in factory"); return NULL;
+    default: Msg::Error("Unknown type of element in factory"); return nullptr;
     }
   }
 };

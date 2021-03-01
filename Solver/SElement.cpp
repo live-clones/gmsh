@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,8 +22,8 @@ etc.
 
  */
 
-simpleFunction<double> *SElement::_enrichement_s = 0,
-                       *SElement::_enrichement_t = 0;
+simpleFunction<double> *SElement::_enrichement_s = nullptr,
+                       *SElement::_enrichement_t = nullptr;
 
 void SElement::gradNodalFunctions(double u, double v, double w,
                                   double invjac[3][3], double Grads[][3],

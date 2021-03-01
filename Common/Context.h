@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,14 +25,15 @@ struct contextMeshOptions {
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
   double anisoMax, smoothRatio;
-  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary, lcFromParametricPoints;
+  int lcFromPoints, lcFromParametricPoints, lcFromCurvature, lcFromCurvatureIso;
+  int lcExtendFromBoundary;
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
   int flexibleTransfinite, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
-  int minCircPoints, minCurvPoints, minElementsPerTwoPi;
+  int minCircleNodes, minCurveNodes;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD, hoSavePeriodic;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
@@ -40,7 +41,7 @@ struct contextMeshOptions {
   int hoCurveOuterBL;
   double hoMaxRho, hoMaxAngle, hoMaxInnerAngle;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
-  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanPoints;
+  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap;
   int renumber, compoundClassify, reparamMaxTriangles;
@@ -73,12 +74,12 @@ struct contextMeshOptions {
   int metisObjective, metisMinConn;
   double metisMaxLoadImbalance;
   // mesh display
-  int draw, changed, light, lightTwoSide, lightLines, pointType;
-  int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
+  int draw, changed, light, lightTwoSide, lightLines, nodeType;
+  int nodes, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
   int pyramids, trihedra;
-  int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
-  int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
-  double pointSize, lineWidth;
+  int surfaceEdges, surfaceFaces, volumeEdges, volumeFaces, numSubEdges;
+  int nodeLabels, lineLabels, surfaceLabels, volumeLabels, qualityType, labelType;
+  double nodeSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int smoothNormals, clip;
 };
@@ -103,7 +104,7 @@ struct contextGeometryOptions {
   int reparamOnFaceRobust;
   // geometry display
   int draw, light, lightTwoSide, points, curves, surfaces, volumes;
-  int pointsNum, curvesNum, surfacesNum, volumesNum, labelType;
+  int pointLabels, curveLabels, surfaceLabels, volumeLabels, labelType;
   double pointSize, curveWidth, selectedPointSize, selectedCurveWidth;
   int pointType, curveType, surfaceType, numSubEdges;
   double normals, tangents, scalingFactor;

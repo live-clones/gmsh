@@ -3,7 +3,7 @@ import math
 
 gmsh.initialize()
 
-N = 250
+N = 2500
 
 tic = gmsh.logger.getWallTime()
 

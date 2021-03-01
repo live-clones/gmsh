@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,8 +12,8 @@
 #endif
 
 StringXNumber ExtractEdgesOptions_Number[] = {
-  {GMSH_FULLRC, "Angle", NULL, 40.},
-  {GMSH_FULLRC, "IncludeBoundary", NULL, 1.},
+  {GMSH_FULLRC, "Angle", nullptr, 40.},
+  {GMSH_FULLRC, "IncludeBoundary", nullptr, 1.},
 };
 
 extern "C" {
@@ -58,14 +58,14 @@ static void add_edge(edge_angle &ea, PViewDataList *data)
 PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
 {
   std::vector<MTriangle *> elements;
-  for(GModel::fiter it = GModel::current()->firstFace();
+  for(auto it = GModel::current()->firstFace();
       it != GModel::current()->lastFace(); ++it)
     elements.insert(elements.end(), (*it)->triangles.begin(),
                     (*it)->triangles.end());
 
   if(elements.empty()) {
     Msg::Error("No triangles in mesh to extract edges from");
-    return 0;
+    return nullptr;
   }
 
   PView *v2 = new PView();

@@ -23,11 +23,11 @@ std::map<FuncSpaceData, GradientBasis *> BasisFactory::gs;
 const nodalBasis *BasisFactory::getNodalBasis(int tag)
 {
   // If the Basis has already been built, return it.
-  std::map<int, nodalBasis *>::const_iterator it = fs.find(tag);
+  auto it = fs.find(tag);
   if(it != fs.end()) { return it->second; }
   // Get the parent type to see which kind of basis
   // we want to create
-  nodalBasis *F = NULL;
+  nodalBasis *F = nullptr;
   if(tag == MSH_TRI_MINI)
     F = new miniBasisTri();
   else if(tag == MSH_TET_MINI)
@@ -45,18 +45,16 @@ const nodalBasis *BasisFactory::getNodalBasis(int tag)
     case(TYPE_PYR): F = new pyramidalBasis(tag); break;
     default:
       Msg::Error("Unknown type of element %d (in BasisFactory)", tag);
-      return NULL;
+      return nullptr;
     }
   }
 
   std::pair<std::map<int, nodalBasis *>::const_iterator, bool> inserted;
-
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
   {
     inserted = fs.insert(std::make_pair(tag, F));
-
     if(!inserted.second) delete F;
   }
 
@@ -67,7 +65,7 @@ const JacobianBasis *BasisFactory::getJacobianBasis(int tag, FuncSpaceData fsd)
 {
   FuncSpaceData data = fsd.getForNonSerendipitySpace();
 
-  std::map<FuncSpaceData, JacobianBasis *>::const_iterator it = js.find(data);
+  auto it = js.find(data);
   if(it != js.end()) return it->second;
 
   JacobianBasis *J = new JacobianBasis(tag, data);
@@ -98,7 +96,7 @@ const JacobianBasis *BasisFactory::getJacobianBasis(int tag)
 
 const CondNumBasis *BasisFactory::getCondNumBasis(int tag, int cnOrder)
 {
-  std::map<int, CondNumBasis *>::const_iterator it = cs.find(tag);
+  auto it = cs.find(tag);
   if(it != cs.end()) return it->second;
 
   CondNumBasis *M = new CondNumBasis(tag, cnOrder);
@@ -110,7 +108,7 @@ const GradientBasis *BasisFactory::getGradientBasis(int tag, FuncSpaceData fsd)
 {
   FuncSpaceData data = fsd.getForNonSerendipitySpace();
 
-  std::map<FuncSpaceData, GradientBasis *>::const_iterator it = gs.find(data);
+  auto it = gs.find(data);
   if(it != gs.end()) return it->second;
 
   GradientBasis *G = new GradientBasis(tag, data);
@@ -133,7 +131,7 @@ const bezierBasis *BasisFactory::getBezierBasis(FuncSpaceData fsd)
 {
   FuncSpaceData data = fsd.getForNonSerendipitySpace();
 
-  std::map<FuncSpaceData, bezierBasis *>::const_iterator it = bs.find(data);
+  auto it = bs.find(data);
   if(it != bs.end()) return it->second;
 
   bezierBasis *B = new bezierBasis(data);
@@ -153,28 +151,28 @@ const bezierBasis *BasisFactory::getBezierBasis(int tag)
 
 void BasisFactory::clearAll()
 {
-  std::map<int, nodalBasis *>::iterator itF = fs.begin();
+  auto itF = fs.begin();
   while(itF != fs.end()) {
     delete itF->second;
     itF++;
   }
   fs.clear();
 
-  std::map<FuncSpaceData, JacobianBasis *>::iterator itJ = js.begin();
+  auto itJ = js.begin();
   while(itJ != js.end()) {
     delete itJ->second;
     itJ++;
   }
   js.clear();
 
-  std::map<FuncSpaceData, GradientBasis *>::iterator itG = gs.begin();
+  auto itG = gs.begin();
   while(itG != gs.end()) {
     delete itG->second;
     itG++;
   }
   gs.clear();
 
-  std::map<FuncSpaceData, bezierBasis *>::iterator itB = bs.begin();
+  auto itB = bs.begin();
   while(itB != bs.end()) {
     delete itB->second;
     itB++;

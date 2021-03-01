@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -153,25 +153,17 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6) {
-        SPoint2 pt;
-        SPoint3 ptx;
-        t->pnt(1. / 3., 1. / 3., 0., ptx);
-        bool reparamOK = gf->haveParametrization();
-        if(reparamOK && !linear){
-          for(int k = 0; k < 6; k++) {
-            SPoint2 temp;
-            reparamOK &= reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
-            pt[0] += temp[0] / 6.;
-            pt[1] += temp[1] / 6.;
-          }
-        }
         MVertex *newv;
-        if(linear || !reparamOK) {
+        if(linear) {
+          SPoint3 ptx;
+          t->pnt(1. / 3., 1. / 3., 0., ptx); // is the barycenter
           newv = new MVertex(ptx.x(), ptx.y(), ptx.z(), gf);
         }
         else {
-          GPoint gp = gf->point(pt);
-          newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, pt[0], pt[1]);
+          SPoint3 ctr = t->barycenter();
+          const double pp[2] = {0.5, 0.5}; // should be improved...
+          GPoint gp = gf->closestPoint(ctr, pp); // orthogonal projection
+          newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
         }
         gf->mesh_vertices.push_back(newv);
         if(splitIntoHexas) faceVertices[t->getFace(0)].push_back(newv);
@@ -280,10 +272,8 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
         std::vector<MVertex *> newv;
         for(int j = 0; j < t->getNumFaces(); j++) {
           MFace face = t->getFace(j);
-          faceContainer::iterator fIter = faceVertices.find(face);
-          if(fIter != faceVertices.end()) {
-            newv.push_back(fIter->second[0]);
-          }
+          auto fIter = faceVertices.find(face);
+          if(fIter != faceVertices.end()) { newv.push_back(fIter->second[0]); }
           else {
             SPoint3 pc = face.barycenter();
             newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
@@ -324,10 +314,8 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
         std::vector<MVertex *> newv;
         for(int j = 0; j < 2; j++) {
           MFace face = p->getFace(j);
-          faceContainer::iterator fIter = faceVertices.find(face);
-          if(fIter != faceVertices.end()) {
-            newv.push_back(fIter->second[0]);
-          }
+          auto fIter = faceVertices.find(face);
+          if(fIter != faceVertices.end()) { newv.push_back(fIter->second[0]); }
           else {
             SPoint3 pc = face.barycenter();
             newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
@@ -500,19 +488,18 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
 
   // Subdivide the second order elements to create the refined linear
   // mesh
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
-    Subdivide(*it);
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+  for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) Subdivide(*it);
+  for(auto it = m->firstFace(); it != m->lastFace(); ++it)
     Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices, linear);
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it, splitIntoHexas, faceVertices);
 
   // Check all 3D elements for negative volume and reverse if needed
   m->setAllVolumesPositive();
 
   double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done refining mesh (Wall %gs, CPU %gs)",
-                 w2 - w1, t2 - t1);
+  Msg::StatusBar(true, "Done refining mesh (Wall %gs, CPU %gs)", w2 - w1,
+                 t2 - t1);
 }
 
 void BarycentricRefineMesh(GModel *m)
@@ -524,7 +511,7 @@ void BarycentricRefineMesh(GModel *m)
 
   // Only update triangles in 2D, only update tets in 3D
   if(m->getNumRegions() == 0) {
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
       GFace *gf = *it;
       std::size_t numt = gf->triangles.size();
       if(!numt) continue;
@@ -547,7 +534,7 @@ void BarycentricRefineMesh(GModel *m)
     }
   }
   else {
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
       GRegion *gr = *it;
       std::size_t numt = gr->tetrahedra.size();
       if(!numt) continue;
@@ -706,9 +693,7 @@ static int schneiders_connect(int i, int j)
                 69, 67, 73,  71,  73, 96, 97, 3,  100, 101, 29, 103, 100,
                 4,  5,  100, 103, 86, 86, 30, 35, 0,   94};
 
-  if(i == 0) {
-    return n0[j];
-  }
+  if(i == 0) { return n0[j]; }
   else if(i == 1) {
     return n1[j];
   }
@@ -736,7 +721,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
                        faceContainer &faceVertices,
                        std::vector<MHexahedron *> &dwarfs88)
 {
-  std::vector<MVertex *> v(105, (MVertex *)NULL);
+  std::vector<MVertex *> v(105, (MVertex *)nullptr);
 
   v[29] = element->getVertex(0);
   v[27] = element->getVertex(1);
@@ -758,9 +743,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
 
   SPoint3 point;
 
-  faceContainer::iterator fIter;
-
-  fIter = faceVertices.find(MFace(v[29], v[27], v[102]));
+  auto fIter = faceVertices.find(MFace(v[29], v[27], v[102]));
   if(fIter != faceVertices.end())
     v[25] = fIter->second[0];
   else {

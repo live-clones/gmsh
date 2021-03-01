@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -657,26 +657,43 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
 #endif
 }
 
-void ClearProject()
+void DeleteAllModelsAndViews()
 {
-  Msg::Info("Clearing all models and views...");
 #if defined(HAVE_POST)
-  for(int i = PView::list.size() - 1; i >= 0; i--) delete PView::list[i];
+  // delete all views
+  while(PView::list.size() > 0) delete PView::list[PView::list.size() - 1];
+  std::vector<PView *>().swap(PView::list);
   PView::setGlobalTag(0);
+  PViewData::removeAllInterpolationSchemes();
 #endif
+
 #if defined(HAVE_PARSER)
+  // clear parser data
   gmsh_yysymbols.clear();
   gmsh_yystringsymbols.clear();
   gmsh_yyfactory.clear();
   gmsh_yynamespaces.clear();
 #endif
-  for(int i = GModel::list.size() - 1; i >= 0; i--) delete GModel::list[i];
+
+  // delete the temp file
+  if(!Msg::GetCommRank())
+    UnlinkFile(CTX::instance()->homeDir + CTX::instance()->tmpFileName);
+
+  // delete all models
+  while(GModel::list.size() > 0) delete GModel::list[GModel::list.size() - 1];
+  std::vector<GModel *>().swap(GModel::list);
 
   // close the files that might have been left open by ParseFile
   if(openedFiles.size()) {
     for(std::size_t i = 0; i < openedFiles.size(); i++) fclose(openedFiles[i]);
     openedFiles.clear();
   }
+}
+
+void ClearProject()
+{
+  Msg::Info("Clearing all models and views...");
+  DeleteAllModelsAndViews();
   Msg::Info("Done clearing all models and views");
 
   new GModel();
@@ -722,11 +739,11 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
   gmsh_yysymbols.clear();
   gmsh_yystringsymbols.clear();
   std::map<std::string, std::vector<double> > cln(Msg::GetCommandLineNumbers());
-  for(std::map<std::string, std::vector<double> >::iterator it = cln.begin();
+  for(auto it = cln.begin();
       it != cln.end(); it++)
     gmsh_yysymbols[it->first].value = it->second;
   std::map<std::string, std::string> cls(Msg::GetCommandLineStrings());
-  for(std::map<std::string, std::string>::iterator it = cls.begin();
+  for(auto it = cls.begin();
       it != cls.end(); it++)
     gmsh_yystringsymbols[it->first] = std::vector<std::string>(1, it->second);
   gmsh_yyfactory.clear();
@@ -762,7 +779,7 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
-    file_watch_cb(0, 0);
+    file_watch_cb(nullptr, nullptr);
     FlGui::instance()->resetVisibility();
     FlGui::instance()->updateViews(true, false);
     FlGui::instance()->updateFields();
@@ -783,7 +800,7 @@ void OpenProjectMacFinder(const char *fileName)
     OpenProject(fileName);
     drawContext::global()->draw();
     if(CTX::instance()->launchSolverAtStartup >= 0)
-      solver_cb(0, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
+      solver_cb(nullptr, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);
   }
 #endif
 }

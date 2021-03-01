@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -40,13 +40,14 @@ private:
   void _addGmshMenus();
 
 public:
-  onelabGroup(int x, int y, int w, int h, const char *l = 0);
+  onelabGroup(int x, int y, int w, int h, const char *l = nullptr);
   void updateGearMenu();
   void rebuildSolverList();
   void rebuildTree(bool deleteWidgets);
   void enableTreeWidgetResize(bool value) { _enableTreeWidgetResize = value; }
   void redrawTree() { _tree->redraw(); }
   void openTreeItem(const std::string &name);
+  void closeTreeItem(const std::string &name);
   void setButtonVisibility();
   void setButtonMode(const std::string &butt0, const std::string &butt1);
   bool isBusy();
@@ -76,15 +77,12 @@ public:
 };
 
 bool getParameterColor(const std::string &str, Fl_Color &c);
-Fl_Widget *addParameterWidget(onelab::number &p,
-                              int xx, int yy, int ww, int hh,
+Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
                               double labelRatio, const std::string &ppath,
                               bool highlight, Fl_Color c, Fl_Color bgc,
                               std::vector<char *> &stringsToFree);
-Fl_Widget *addParameterWidget(onelab::string &p,
-                              int xx, int yy, int ww, int hh,
-                              double labelRatio,
-                              const std::string &ppath,
+Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
+                              double labelRatio, const std::string &ppath,
                               bool highlight, Fl_Color c, Fl_Color bgc,
                               std::vector<char *> &stringsToFree);
 void solver_cb(Fl_Widget *w, void *data);

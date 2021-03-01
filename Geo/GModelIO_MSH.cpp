@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -50,13 +50,11 @@ int GModel::readMSH(const std::string &name)
         return 0;
       }
       fclose(fp);
-      if(version < 3.0){
-        return _readMSH2(name);
-      }
-      else if(version < 4.0){
+      if(version < 3.0) { return _readMSH2(name); }
+      else if(version < 4.0) {
         return _readMSH3(name);
       }
-      else if(version < 5.0){
+      else if(version < 5.0) {
         return _readMSH4(name);
       }
       else {
@@ -77,8 +75,7 @@ int GModel::readMSH(const std::string &name)
 
 int GModel::writeMSH(const std::string &name, double version, bool binary,
                      bool saveAll, bool saveParametric, double scalingFactor,
-                     int elementStartNum, int saveSinglePartition,
-                     bool append)
+                     int elementStartNum, int saveSinglePartition, bool append)
 {
   if(version < 4.0 && getNumPartitions() > 0) {
     Msg::Warning("Saving a partitioned mesh in a format older than 4.0 may "

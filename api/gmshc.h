@@ -1,5 +1,5 @@
 /*
- * Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+ * Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
  *
  * See the LICENSE.txt file for license information. Please report all
  * issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -141,6 +141,15 @@ GMSH_API void gmshModelGetCurrent(char ** name,
  * the same name, select the one that was added first. */
 GMSH_API void gmshModelSetCurrent(const char * name,
                                   int * ierr);
+
+/* Get the file name (if any) associated with the current model. A file name
+ * is associated when a model is read from a file on disk. */
+GMSH_API void gmshModelGetFileName(char ** fileName,
+                                   int * ierr);
+
+/* Set the file name associated with the current model. */
+GMSH_API void gmshModelSetFileName(const char * fileName,
+                                   int * ierr);
 
 /* Get all the entities in the current model. If `dim' is >= 0, return only
  * the entities of the specified dimension (e.g. points if `dim' == 0). The
@@ -925,12 +934,31 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
                                                                            const int tag,
                                                                            int * ierr);
 
-/* Get the global edge identifier `edgeNum' for an input list of node pairs,
- * concatenated in the vector `edgeNodes'.  Warning: this is an experimental
- * feature and will probably change in a future release. */
-GMSH_API void gmshModelMeshGetEdgeNumber(int * edgeNodes, size_t edgeNodes_n,
-                                         int ** edgeNum, size_t * edgeNum_n,
-                                         int * ierr);
+/* Get the global unique mesh edge identifiers `edgeTags' and orientations
+ * `edgeOrientation' for an input list of node tag pairs defining these edges,
+ * concatenated in the vector `nodeTags'. */
+GMSH_API void gmshModelMeshGetEdges(size_t * nodeTags, size_t nodeTags_n,
+                                    size_t ** edgeTags, size_t * edgeTags_n,
+                                    int ** edgeOrientations, size_t * edgeOrientations_n,
+                                    int * ierr);
+
+/* Get the global unique mesh face identifiers `faceTags' and orientations
+ * `faceOrientations' for an input list of node tag triplets (if `faceType' ==
+ * 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
+ * in the vector `nodeTags'. */
+GMSH_API void gmshModelMeshGetFaces(const int faceType,
+                                    size_t * nodeTags, size_t nodeTags_n,
+                                    size_t ** faceTags, size_t * faceTags_n,
+                                    int ** faceOrientations, size_t * faceOrientations_n,
+                                    int * ierr);
+
+/* Create unique mesh edges for the entities `dimTags'. */
+GMSH_API void gmshModelMeshCreateEdges(int * dimTags, size_t dimTags_n,
+                                       int * ierr);
+
+/* Create unique mesh faces for the entities `dimTags'. */
+GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n,
+                                       int * ierr);
 
 /* Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
  * H(curl) basis functions. Warning: this is an experimental feature and will
@@ -1163,6 +1191,11 @@ GMSH_API void gmshModelMeshSetCompound(const int dim,
  * triangulation. */
 GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag,
                                                  int * ierr);
+
+/* Remove all meshing constraints from the model entities `dimTags'. If
+ * `dimTags' is empty, remove all constraings. */
+GMSH_API void gmshModelMeshRemoveConstraints(int * dimTags, size_t dimTags_n,
+                                             int * ierr);
 
 /* Embed the model entities of dimension `dim' and tags `tags' in the
  * (`inDim', `inTag') model entity. The dimension `dim' can 0, 1 or 2 and must
@@ -2224,10 +2257,15 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   int * ierr);
 
 /* Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
- * `dimTags' along the wire `wireTag'. Return the pipe in `outDimTags'. */
+ * `dimTags' along the wire `wireTag'. The type of sweep can be specified with
+ * `trihedron' (possible values: "DiscreteTrihedron", "CorrectedFrenet",
+ * "Fixed", "Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
+ * "GuideACWithContact", "GuidePlanWithContact"). If `trihedron' is not
+ * provided, "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'. */
 GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,
                                   const int wireTag,
                                   int ** outDimTags, size_t * outDimTags_n,
+                                  const char * trihedron,
                                   int * ierr);
 
 /* Fillet the volumes `volumeTags' on the curves `curveTags' with radii
@@ -2833,6 +2871,14 @@ GMSH_API void gmshFltkSetStatusMessage(const char * message,
 GMSH_API void gmshFltkShowContextWindow(const int dim,
                                         const int tag,
                                         int * ierr);
+
+/* Open the `name' item in the menu tree. */
+GMSH_API void gmshFltkOpenTreeItem(const char * name,
+                                   int * ierr);
+
+/* Close the `name' item in the menu tree. */
+GMSH_API void gmshFltkCloseTreeItem(const char * name,
+                                    int * ierr);
 
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */
 GMSH_API void gmshOnelabSet(const char * data,

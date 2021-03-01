@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -45,12 +45,10 @@ void OCCRegion::_setup()
     Msg::Debug("OCC volume %d - new shell", tag());
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()) {
       TopoDS_Face face = TopoDS::Face(exp3.Current());
-      GFace *f = 0;
+      GFace *f = nullptr;
       if(model()->getOCCInternals())
         f = model()->getOCCInternals()->getFaceForOCCShape(model(), face);
-      if(!f) {
-        Msg::Error("Unknown surface in volume %d", tag());
-      }
+      if(!f) { Msg::Error("Unknown surface in volume %d", tag()); }
       else if(face.Orientation() == TopAbs_INTERNAL) {
         Msg::Debug("Adding embedded surface %d in volume %d", f->tag(), tag());
         embedded_faces.push_back(f);
@@ -64,12 +62,10 @@ void OCCRegion::_setup()
 
   for(exp3.Init(_s, TopAbs_EDGE, TopAbs_FACE); exp3.More(); exp3.Next()) {
     TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-    GEdge *e = 0;
+    GEdge *e = nullptr;
     if(model()->getOCCInternals())
       e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
-    if(!e) {
-      Msg::Error("Unknown curve in volume %d", tag());
-    }
+    if(!e) { Msg::Error("Unknown curve in volume %d", tag()); }
     else if(edge.Orientation() == TopAbs_INTERNAL) {
       Msg::Debug("Adding embedded curve %d in volume %d", e->tag(), tag());
       embedded_edges.push_back(e);
@@ -80,12 +76,10 @@ void OCCRegion::_setup()
 
   for(exp3.Init(_s, TopAbs_VERTEX, TopAbs_FACE); exp3.More(); exp3.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp3.Current());
-    GVertex *v = 0;
+    GVertex *v = nullptr;
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
-    if(!v) {
-      Msg::Error("Unknown point in volume %d", tag());
-    }
+    if(!v) { Msg::Error("Unknown point in volume %d", tag()); }
     else if(vertex.Orientation() == TopAbs_INTERNAL) {
       Msg::Debug("Adding embedded point %d in volume %d", v->tag(), tag());
       embedded_vertices.push_back(v);
@@ -101,8 +95,7 @@ SBoundingBox3d OCCRegion::bounds(bool fast)
     // if a triangulation exist on a shape, OCC will use it to compute more
     // accurate bounds
     std::vector<GFace *> f = faces();
-    for(std::size_t i = 0; i < f.size(); i++)
-      f[i]->buildSTLTriangulation();
+    for(std::size_t i = 0; i < f.size(); i++) f[i]->buildSTLTriangulation();
   }
 
   Bnd_Box b;
@@ -116,7 +109,8 @@ SBoundingBox3d OCCRegion::bounds(bool fast)
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
 
   if(CTX::instance()->geom.occBoundsUseSTL)
-    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
+    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax,
+                                             zmax);
 
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;

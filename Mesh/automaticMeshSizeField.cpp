@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -156,14 +156,12 @@ static HXTStatus emptyMesh2D(HXTMesh *mesh, bool keepTriangles, const char* file
 
   HXT_CHECK(hxtMeshWriteGmsh(mesh, filename));
 
-
   // HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.color) );
   // HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.flag) );
   // HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.node) );
   // HXT_CHECK( hxtAlignedFree(&mesh->tetrahedra.neigh) );
   // mesh->tetrahedra.num = 0;
   // mesh->tetrahedra.size = 0;
-
 
   return HXT_STATUS_OK;
 }
@@ -616,58 +614,6 @@ HXTStatus Gmsh2HxtLocal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVerte
   return HXT_STATUS_OK;
 }
 
-// HXTStatus Gmsh2HxtGlobal(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v){
-//   std::vector<GEdge *> edges;
-//   HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
-//   std::set<MVertex *> all;
-
-//   uint64_t cumsum = 0;
-//   uint64_t cumsumNoEdges = 0;
-//   for(size_t j = 0; j < edges.size(); j++) {
-//     GEdge *ge = edges[j];
-//     cumsum += ge->lines.size();
-//     for(size_t i = 0; i < ge->lines.size(); i++) {
-//       all.insert(ge->lines[i]->getVertex(0));
-//       all.insert(ge->lines[i]->getVertex(1));
-//     }
-//   }
-
-//   for(size_t j = 0; j < faces.size(); j++) {
-//     GFace *gf = faces[j];
-//     cumsum += gf->triangles.size();
-//     cumsumNoEdges += gf->triangles.size();
-//     for(size_t i = 0; i < gf->triangles.size(); i++) {
-//       all.insert(gf->triangles[i]->getVertex(0));
-//       all.insert(gf->triangles[i]->getVertex(1));
-//       all.insert(gf->triangles[i]->getVertex(2));
-//     }
-//   }
-
-//   c2v.resize(cumsum);
-//   all.clear();
-
-//   cumsum = 0;
-//   size_t count_c2v2 = 0;
-//   for(size_t j = 0; j < faces.size(); ++j){
-//     // all propre à la face
-//     GFace *gf = faces[j];
-//     cumsum += gf->triangles.size();
-//     for(size_t i = 0; i < gf->triangles.size(); i++) {
-//       all.insert(gf->triangles[i]->getVertex(0));
-//       all.insert(gf->triangles[i]->getVertex(1));
-//       all.insert(gf->triangles[i]->getVertex(2));
-//     }
-//     size_t count = 0;
-//     for(std::set<MVertex *>::iterator it = all.begin(); it != all.end(); it++) {
-//       v2c[*it] = count++;
-//       c2v[count_c2v2++] = *it;
-//     }
-//     all.clear();
-//   }
-
-//   return HXT_STATUS_OK;
-// }
-
 /* ======================================================================================
    Functions from hxt_octree
    ======================================================================================
@@ -1060,7 +1006,6 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
 
   if(!candidates.empty()){
     double k1, k2, k1max = -1.0e22, k2max = -1.0e22, kmax = -1.0e22, hf = DBL_MAX;
-    // for(std::vector<uint64_t>::iterator tri = candidates.begin(); tri != candidates.end(); ++tri){
     for(auto const &bndElem : candidates){
       if(forestOptions->dim == 3){
         for(int i = 0; i < 3; ++i){
@@ -1628,7 +1573,7 @@ static void limitSizeAniso(p4est_iter_face_info_t * info, void *user_data){
               }
 
             }
-          } // if gradient trop grand
+          } // if gradient is too large
         } // else
       }
     }
@@ -1827,16 +1772,6 @@ static void assignDirectionsCallback(p4est_iter_volume_info_t * info, void *user
         for(size_t i = 0; i < 9; ++i)
           data->dir[i] = forestOptions->directions[9*closestNode+i];
       }
-
-      // data->dir[0] = 1.;
-      // data->dir[1] = 0.;
-      // data->dir[2] = 0.;
-      // data->dir[3] = 0.;
-      // data->dir[4] = 1.;
-      // data->dir[5] = 0.;
-      // data->dir[6] = 0.;
-      // data->dir[7] = 0.;
-      // data->dir[8] = 1.;
       data->hasIntersection = false;
     }
   // }
@@ -1846,7 +1781,7 @@ HXTStatus forestSmoothDirections(Forest *forest){
 
   ForestOptions *forestOptions = forest->forestOptions;
   HXTMesh *meshDom = forest->forestOptions->mesh3D;
-  HXTMesh *meshBnd = forest->forestOptions->mesh2D;
+  // HXTMesh *meshBnd = forest->forestOptions->mesh2D;
   double *frames; // C'est un tableau qui contient les 9 composantes representant les frames en chaque noeuds du maillage.
   //--structure: frames[9*iNode + k], k compris entre 0 et 8 inclus
   HXT_CHECK(hxtMalloc(&frames, meshDom->vertices.num*sizeof(double)*9));
@@ -1859,9 +1794,6 @@ HXTStatus forestSmoothDirections(Forest *forest){
 
   FILE* myfile = fopen("justTheDirections.pos","w");
   fprintf(myfile,"View \"justTheDirections\"{\n");
-
-  Msg::Info("Coucou");
-
 
   if(forestOptions->dim == 3){
 
@@ -1876,7 +1808,7 @@ HXTStatus forestSmoothDirections(Forest *forest){
         double *v2 = forestOptions->nodalCurvature + 6*iNbc + 3;
         double *n  = forestOptions->nodeNormals    + 3*iNbc;
 
-        double *x = meshDom->vertices.coord + 4*iNbc;
+        // double *x = meshDom->vertices.coord + 4*iNbc;
 
         double tol = 1e-6;
         SVector3 V1(v1[0],v1[1],v1[2]); if(V1.norm() >= tol){ V1.normalize(); };
@@ -1932,7 +1864,7 @@ HXTStatus forestSmoothDirections(Forest *forest){
 
         if(c != iNbc) Msg::Error("%d - %d\n", c, iNbc);
 
-        double  r = forestOptions->nodalCurvature[c];
+        // double  r = forestOptions->nodalCurvature[c];
         double *n = forestOptions->nodeNormals + 3*c;
         double *x = meshDom->vertices.coord + 4*iNbc;
 
@@ -2068,7 +2000,7 @@ HXTStatus forestSmoothDirections(Forest *forest){
   //   forestOptions->directionsW[i] = liftW[i];
   // }
 
-  // p4est_iterate(forest->p4est, NULL, (void*) forest->forestOptions, assignDirectionsCallback, NULL, NULL, NULL);
+  p4est_iterate(forest->p4est, NULL, (void*) forest->forestOptions, assignDirectionsCallback, NULL, NULL, NULL);
 
   // HXT_CHECK(hxtFree(&directionsElem));
   // HXT_CHECK(hxtFree(&smoothnessIndicator));
@@ -2078,9 +2010,8 @@ HXTStatus forestSmoothDirections(Forest *forest){
   HXT_CHECK(hxtFree(&frames));
   HXT_CHECK(hxtFree(&isBoundaryCondition));
 
-  Msg::Error("Ending");
+  Msg::Error("2D anisotropic size field is still work in progress : exiting.");
   Msg::Exit(1);
-
 
   return HXT_STATUS_OK;
 }
@@ -2296,7 +2227,7 @@ HXTStatus forestSearchOneAniso(Forest *forest, double x, double y, double z,
   p->m = SMetric3(1.0);
   p->isFound = false;
 
-  p4est_search(forest->p4est, NULL, searchAndAssignConstantAniso, points);
+  p4est_search(forest->p4est, nullptr, searchAndAssignConstantAniso, points);
 
   if(!p->isFound)
     Msg::Info("Point (%f,%f,%f) n'a pas été trouvé dans l'octree 8-|", x, y, z);
@@ -2328,7 +2259,7 @@ HXTStatus hxtForestSearch(Forest *forest, std::vector<double> *x,
   }
 
   // Search on all cells
-  p4est_search(forest->p4est, NULL, searchAndAssignLinear, points);
+  p4est_search(forest->p4est, nullptr, searchAndAssignLinear, points);
 
   // Get the sizes
   for(size_t i = 0; i < (*x).size(); ++i) {
@@ -2349,7 +2280,12 @@ HXTStatus hxtForestSearch(Forest *forest, std::vector<double> *x,
 
 // To quickly sort 3 integers
 static void sort3(int *d){
-#define SWAP(x,y) if (d[y] < d[x]) { int tmp = d[x]; d[x] = d[y]; d[y] = tmp; }
+#define SWAP(x, y)                                                             \
+  if(d[y] < d[x]) {                                                            \
+    int tmp = d[x];                                                            \
+    d[x] = d[y];                                                               \
+    d[y] = tmp;                                                                \
+  }
   SWAP(0, 1);
   SWAP(1, 2);
   SWAP(0, 1);
@@ -2845,9 +2781,7 @@ HXTStatus featureSize2D(Forest* forest){
     double theta = M_PI/8., rho = 8., maxAngle, minRatio, localAngle, alpha0, alpha1;
     std::vector<MEdge> checkedEdges;
     bool checked;
-    // for(size_t j = 0; j < edgIncidents[i].size(); ++j){ // boucler sur les aretes incidentes à p
     for(auto const &e : edgIncidents[i]){ // boucler sur les aretes incidentes à p
-      // MEdge e = edgIncidents[i][j];
       checked = false;
       for(size_t k = 0; k < checkedEdges.size(); ++k) {
         if(e == checkedEdges[k]) {
@@ -2878,7 +2812,6 @@ HXTStatus featureSize2D(Forest* forest){
           localAngle = fmin(localAngle, fabs(M_PI - localAngle));
           maxAngle = fmax(maxAngle, localAngle);
 
-
           // Ratio condition
           // MTriangle tri(up[l].getVertex(0),up[l].getVertex(1),up[l].getVertex(2));
           // minRatio = fmin(minRatio, e.length() / tri.getOuterRadius());
@@ -2895,8 +2828,7 @@ HXTStatus featureSize2D(Forest* forest){
              fmin(alpha1, fabs(M_PI - alpha1)) < M_PI / 8.) {
             // Add edge to the set (axis, though actually unused), modifiy size
             // at its extrmities and draw the dual facet
-            std::pair<std::set<MEdge, MEdgeLessThan>::iterator, bool> ret =
-              axis.insert(e);
+            auto ret = axis.insert(e);
 
             if(ret.second) {
               double h = e.length() / nLayersPerGap;
@@ -2971,8 +2903,7 @@ static void elementEstimate(p4est_iter_volume_info_t *info, void *user_data)
 
 HXTStatus hxtOctreeElementEstimation(Forest *forest, double *elemEstimate)
 {
-  p4est_iterate(forest->p4est, NULL, (void *)elemEstimate, elementEstimate,
-                NULL, NULL, NULL);
+  p4est_iterate(forest->p4est, nullptr, (void *)elemEstimate, elementEstimate, nullptr, nullptr, nullptr);
   return HXT_STATUS_OK;
 }
 
@@ -3097,7 +3028,6 @@ static void exportToCrossesAnisoCallback(p4est_iter_volume_info_t * info, void *
 static void exportToQuadCallback(p4est_iter_volume_info_t * info, void *user_data){
   p4est_quadrant_t   *q = info->quad;
   size_data_t        *data = (size_data_t *) q->p.user_data;
-
   p4est_t *p4est = info->p4est;
   p4est_topidx_t which_tree = info->treeid;
 
@@ -3111,6 +3041,7 @@ static void exportToQuadCallback(p4est_iter_volume_info_t * info, void *user_dat
   x[1] = x[2] = center[0]+h + epsilon;
   y[0] = y[1] = center[1]-h - epsilon;
   y[2] = y[3] = center[1]+h + epsilon;
+
   z[0] = z[1] = 0.0;
   z[2] = z[3] = 0.0;
 
@@ -3315,7 +3246,6 @@ HXTStatus automaticMeshSizeField::updateHXT()
 
     // The bounding box of the mesh/model
     double bbox_vertices[6];
-
     RTree<uint64_t, double, 3> bndRTree;
     RTree<uint64_t, double, 3> domRTree;
     HXTMesh *meshDom;
@@ -3669,16 +3599,16 @@ HXTStatus automaticMeshSizeField::updateHXT()
 
     std::vector<double> sizeAtVertices(meshBnd->vertices.num, DBL_MAX);
 
-    forestOptions->aniso = true;
+    forestOptions->aniso = false; // TODO : maybe a command line option ?
     forestOptions->dim = dim;
-    forestOptions->hmax = 1e3; // _hmax;
-    forestOptions->hmin = 1e-3; // _hmin;
-    forestOptions->hbulk = 1e3; //_hbulk;
+    forestOptions->hmax = _hmax;
+    forestOptions->hmin = _hmin;
+    forestOptions->hbulk = _hbulk;
     forestOptions->gradation = _gradation;
     forestOptions->nodePerTwoPi = _nPointsPerCircle;
     forestOptions->nodePerGap = _nPointsPerGap;
     forestOptions->bbox = bbox_vertices;
-    forestOptions->sizeFunction = NULL;
+    forestOptions->sizeFunction = nullptr;
     forestOptions->nodalCurvature = nodalCurvature;
     forestOptions->directions = directions;
     forestOptions->directionsU = directionsU;
@@ -3692,7 +3622,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
     forestOptions->mesh3D = meshDom;
     forestOptions->c2vDom = &c2vDom;
 
-    HXT_CHECK(forestCreate(0, NULL, &forest, NULL, forestOptions));
+    HXT_CHECK(forestCreate(0, nullptr, &forest, nullptr, forestOptions));
 
     if(_nPointsPerGap > 0){
       Msg::Info("Detecting features...");
@@ -3709,7 +3639,6 @@ HXTStatus automaticMeshSizeField::updateHXT()
       if(forestOptions->aniso){
         Msg::Info("Propagating directions...");
         HXT_CHECK(forestSmoothDirections(forest));
-        HXT_CHECK(forestExport(forest, "initialSize.pos"));
       }
       Msg::Info("Limiting size gradient...");
       HXT_CHECK(forestSizeSmoothing(forest));
@@ -3740,9 +3669,11 @@ HXTStatus automaticMeshSizeField::updateHXT()
 
     HXT_CHECK(hxtFree(&nodalCurvature));
     HXT_CHECK(hxtFree(&directions));
-    HXT_CHECK(hxtFree(&directionsU));
-    HXT_CHECK(hxtFree(&directionsV));
-    HXT_CHECK(hxtFree(&directionsW));
+    if(dim == 3){
+      HXT_CHECK(hxtFree(&directionsU));
+      HXT_CHECK(hxtFree(&directionsV));
+      HXT_CHECK(hxtFree(&directionsW));
+    }
     HXT_CHECK(hxtMeshDelete(&meshBnd));
     HXT_CHECK(hxtMeshDelete(&meshDom));
   }

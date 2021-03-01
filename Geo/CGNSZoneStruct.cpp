@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -251,7 +251,7 @@ namespace {
     }
 
     // do no add element if it is part of an internal interface between blocks
-    if(isInternalInterface) return 0;
+    if(isInternalInterface) return nullptr;
 
     // create element
     MElementFactory factory;
@@ -336,7 +336,7 @@ namespace {
     }
 
     // do no add element if it is part of an internal interface between blocks
-    if(isInternalInterface) return 0;
+    if(isInternalInterface) return nullptr;
 
     // create element
     MElementFactory factory;
@@ -430,11 +430,11 @@ int CGNSZoneStruct<DIM>::readElements(
       cgsize_t ijk[3] = {0, j * order, k * order};
       MElement *me;
       me = makeBndElement(ijk, dir, order, firstDefaultEnt, allVert, allElt);
-      if(me != 0) zoneElt.push_back(me);
+      if(me != nullptr) zoneElt.push_back(me);
       ijk[0] = nbNodeIJK(0) - 1;
       me =
         makeBndElement(ijk, dir, order, firstDefaultEnt + 1, allVert, allElt);
-      if(me != 0) zoneElt.push_back(me);
+      if(me != nullptr) zoneElt.push_back(me);
     }
   }
 
@@ -446,11 +446,11 @@ int CGNSZoneStruct<DIM>::readElements(
       MElement *me;
       me =
         makeBndElement(ijk, dir, order, firstDefaultEnt + 2, allVert, allElt);
-      if(me != 0) zoneElt.push_back(me);
+      if(me != nullptr) zoneElt.push_back(me);
       ijk[1] = nbNodeIJK(1) - 1;
       me =
         makeBndElement(ijk, dir, order, firstDefaultEnt + 3, allVert, allElt);
-      if(me != 0) zoneElt.push_back(me);
+      if(me != nullptr) zoneElt.push_back(me);
     }
   }
 
@@ -463,11 +463,11 @@ int CGNSZoneStruct<DIM>::readElements(
         MElement *me;
         me =
           makeBndElement(ijk, dir, order, firstDefaultEnt + 4, allVert, allElt);
-        if(me != 0) zoneElt.push_back(me);
+        if(me != nullptr) zoneElt.push_back(me);
         ijk[2] = nbNodeIJK(2) - 1;
         me =
           makeBndElement(ijk, dir, order, firstDefaultEnt + 5, allVert, allElt);
-        if(me != 0) zoneElt.push_back(me);
+        if(me != nullptr) zoneElt.push_back(me);
       }
     }
   }
@@ -481,10 +481,8 @@ MElement *CGNSZoneStruct<DIM>::makeBndElement(
   std::vector<MVertex *> &allVert,
   std::map<int, std::vector<MElement *> > *allElt)
 {
-  typedef std::map<cgsize_t, int>::const_iterator Elt2GeomIter;
-
   cgsize_t iElt = ijk2Ind<DIM>(ijk, nbNodeIJK());
-  const Elt2GeomIter it = elt2Geom().find(iElt);
+  const auto it = elt2Geom().find(iElt);
   const int entity = (it == elt2Geom().end()) ? defaultEntity : it->second;
 
   return createBndElement<DIM>(ijk, nbNodeIJK(), dir, order, entity,
@@ -562,8 +560,8 @@ int CGNSZoneStruct<DIM>::readOneInterface(
   //                             (DIM == 3) ? range[5]-1 : 0};
 
   // // identify donnor (master) zone
-  // std::map<std::string, int>::const_iterator itDN =
-  // name2Zone.find(donorName); if(itDN == name2Zone.end()) {
+  // auto itDN = name2Zone.find(donorName);
+  // if(itDN == name2Zone.end()) {
   //   Msg::Error("Donnor zone '%s' not found in structured connectivity '%s' "
   //              "of zone %i ('%s')", donorName, connectName, zone.index,
   //              zone.name);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -284,7 +284,7 @@ void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
         // skip if another connnection with the same slave entity already
         // exists, or if the inverse connection already exists
         if(entCon.find(sEnt) != entCon.end()) continue;
-        EntConnect::iterator itInv = entCon.find(mEnt);
+        auto itInv = entCon.find(mEnt);
         if((itInv != entCon.end()) && (itInv->second == sEnt)) continue;
 
         // store connection and transformation and update corresponding vertices
@@ -296,7 +296,7 @@ void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
   }
 
   // set mesh master and transformation between entities
-  for(EntConnect::iterator it = entCon.begin(); it != entCon.end(); ++it) {
+  for(auto it = entCon.begin(); it != entCon.end(); ++it) {
     GEntity *sEnt = it->first, *mEnt = it->second;
     sEnt->setMeshMaster(mEnt, *(entTfo[sEnt]));
   }
@@ -358,8 +358,6 @@ void setGeomAndPhysicalEntities(GModel *model, int meshDim,
                                 std::vector<std::string> &allPhysName,
                                 std::multimap<std::string, int> &geomName2Phys)
 {
-  typedef std::multimap<std::string, int>::iterator Geom2PhysIter;
-
   // loop over dimensions
   for(int d = 0; d <= meshDim; d++) {
     // get entities fo dimension d
@@ -377,9 +375,8 @@ void setGeomAndPhysicalEntities(GModel *model, int meshDim,
       model->setElementaryName(d, geomTag, geomName);
 
       // associate physical tags to geometrical entity and store physical names
-      std::pair<Geom2PhysIter, Geom2PhysIter> range =
-        geomName2Phys.equal_range(geomName);
-      for(Geom2PhysIter it = range.first; it != range.second; ++it) {
+      auto range = geomName2Phys.equal_range(geomName);
+      for(auto it = range.first; it != range.second; ++it) {
         const int physTag = it->second;
         std::vector<int> &entPhys = ent[iEnt]->physicals;
         if(std::find(entPhys.begin(), entPhys.end(), physTag) ==

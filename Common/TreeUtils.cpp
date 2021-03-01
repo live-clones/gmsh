@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -23,20 +23,20 @@ Tree_T *Tree_Create(int size, int (*fcmp)(const void *a, const void *b))
 void Tree_Delete(Tree_T *tree)
 {
   if(!tree) return;
-  avl_free_table(tree->root, Free, 0);
+  avl_free_table(tree->root, Free, nullptr);
   Free(tree);
 }
 
 void Tree_Delete(Tree_T *tree, void (*freefn)(void *))
 {
   if(!tree) return;
-  avl_free_table(tree->root, freefn, 0);
+  avl_free_table(tree->root, freefn, nullptr);
   Free(tree);
 }
 
 void *Tree_Add(Tree_T *tree, void *data)
 {
-  if(!tree) return 0;
+  if(!tree) return nullptr;
   void *ptr = Malloc(tree->size);
   memcpy(ptr, data, tree->size);
   avl_insert(tree->root, ptr, ptr);
@@ -76,9 +76,9 @@ int Tree_Query(Tree_T *tree, void *data)
 
 void *Tree_PQuery(Tree_T *tree, void *data)
 {
-  if(!tree) return 0;
+  if(!tree) return nullptr;
   void *ptr;
-  if(!avl_lookup(tree->root, data, &ptr)) return 0;
+  if(!avl_lookup(tree->root, data, &ptr)) return nullptr;
   return ptr;
 }
 

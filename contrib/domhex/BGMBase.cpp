@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -31,7 +31,7 @@ void BGMBase::export_scalar(const std::string &filename,
     elem = getElement(i);
     nvertex = elem->getNumVertices();
     type = elem->getType();
-    const char *s = 0;
+    const char *s = nullptr;
     switch(type) {
     case TYPE_PNT: s = "SP"; break;
     case TYPE_LIN: s = "SL"; break;
@@ -89,7 +89,7 @@ void BGMBase::export_vector(const std::string &filename,
     elem = getElement(i);
     nvertex = elem->getNumVertices();
     type = elem->getType();
-    const char *s = 0;
+    const char *s = nullptr;
     switch(type) {
     case TYPE_PNT: s = "VP"; break;
     case TYPE_LIN: s = "VL"; break;
@@ -141,7 +141,7 @@ void BGMBase::export_tensor_as_vectors(
 
   fprintf(f, "View \"Background Mesh\"{\n");
 
-  TensorStorageType::const_iterator it = _whatToPrint.begin();
+  auto it = _whatToPrint.begin();
   const char *s = "VP";
 
   for(; it != _whatToPrint.end(); it++) { // for all vertices
@@ -158,7 +158,7 @@ void BGMBase::export_tensor_as_vectors(
 }
 
 BGMBase::BGMBase(int dim, GEntity *_gf)
-  : octree(NULL), gf(_gf), DIM(dim), order(1)
+  : octree(nullptr), gf(_gf), DIM(dim), order(1)
 {
 }
 
@@ -166,7 +166,7 @@ BGMBase::~BGMBase() {}
 
 bool BGMBase::inDomain(double u, double v, double w)
 {
-  return (findElement(u, v, w) != NULL);
+  return (findElement(u, v, w) != nullptr);
 }
 
 const MElement *BGMBase::findElement(double u, double v, double w, bool strict)
@@ -224,7 +224,7 @@ double BGMBase::size(const MVertex *v) { return get_nodal_value(v, sizeField); }
 std::vector<double>
 BGMBase::get_nodal_value(const MVertex *v, const VectorStorageType &data) const
 {
-  VectorStorageType::const_iterator itfind = data.find(v);
+  auto itfind = data.find(v);
   if(itfind == data.end()) {
     Msg::Error("Unknown vertex %d in BGMBase::get_nodal_value", v->getNum());
     return std::vector<double>(3, 0.);
@@ -235,7 +235,7 @@ BGMBase::get_nodal_value(const MVertex *v, const VectorStorageType &data) const
 double BGMBase::get_nodal_value(const MVertex *v,
                                 const DoubleStorageType &data) const
 {
-  DoubleStorageType::const_iterator itfind = data.find(v);
+  auto itfind = data.find(v);
   if(itfind == data.end()) {
     Msg::Error("Unknown vertex %d in BGMBase::get_nodal_value", v->getNum());
     return 0.;
@@ -250,8 +250,7 @@ BGMBase::get_nodal_values(const MElement *e,
   std::vector<std::vector<double> > res(e->getNumVertices());
 
   for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-    VectorStorageType::const_iterator itfind =
-      data.find(const_cast<MVertex *>(e->getVertex(i)));
+    auto itfind = data.find(const_cast<MVertex *>(e->getVertex(i)));
     for(int j = 0; j < 3; j++) res[i].push_back((itfind->second)[j]);
   }
   return res;

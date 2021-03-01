@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -24,8 +24,8 @@
 #endif
 
 GEdge::GEdge(GModel *model, int tag, GVertex *v0, GVertex *v1)
-  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), _v0(v0),
-    _v1(v1), masterOrientation(0), compoundCurve(NULL)
+  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(nullptr), _v0(v0),
+    _v1(v1), masterOrientation(0), compoundCurve(nullptr)
 {
   if(_v0) _v0->addEdge(this);
   if(_v1 && _v1 != _v0) _v1->addEdge(this);
@@ -34,8 +34,8 @@ GEdge::GEdge(GModel *model, int tag, GVertex *v0, GVertex *v1)
 }
 
 GEdge::GEdge(GModel *model, int tag)
-  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0), _v0(0), _v1(0),
-    masterOrientation(0), compoundCurve(NULL)
+  : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(nullptr),
+    _v0(nullptr), _v1(nullptr), masterOrientation(0), compoundCurve(nullptr)
 {
   meshStatistics.status = GEdge::PENDING;
   GEdge::resetMeshAttributes();
@@ -64,7 +64,6 @@ void GEdge::deleteMesh()
 void GEdge::setMeshMaster(GEdge *ge, int ori)
 {
   // FIXME: missing computation of affine transformation during setMeshMaster
-
   GEntity::setMeshMaster(ge);
   masterOrientation = ori > 0 ? 1 : -1;
 
@@ -177,14 +176,14 @@ void GEdge::getNumMeshElements(unsigned *const c) const
 
 MElement *const *GEdge::getStartElementType(int type) const
 {
-  if(lines.empty()) return 0; // msvc would throw an exception
+  if(lines.empty()) return nullptr; // msvc would throw an exception
   return reinterpret_cast<MElement *const *>(&lines[0]);
 }
 
 MElement *GEdge::getMeshElement(std::size_t index) const
 {
   if(index < lines.size()) return lines[index];
-  return 0;
+  return nullptr;
 }
 
 MElement *GEdge::getMeshElementByType(const int familyType,
@@ -192,7 +191,7 @@ MElement *GEdge::getMeshElementByType(const int familyType,
 {
   if(familyType == TYPE_LIN) return lines[index];
 
-  return 0;
+  return nullptr;
 }
 
 void GEdge::resetMeshAttributes()
@@ -201,7 +200,7 @@ void GEdge::resetMeshAttributes()
   meshAttributes.coeffTransfinite = 0.;
   meshAttributes.nbPointsTransfinite = 0;
   meshAttributes.typeTransfinite = 0;
-  meshAttributes.extrude = 0;
+  meshAttributes.extrude = nullptr;
   meshAttributes.meshSize = MAX_LC;
   meshAttributes.meshSizeFactor = 1.;
   meshAttributes.minimumMeshSegments = 1;
@@ -448,7 +447,7 @@ double GEdge::curvature(double par) const
 
 double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 {
-  double *t = 0, *w = 0;
+  double *t = nullptr, *w = nullptr;
   gmshGaussLegendre1D(nbQuadPoints, &t, &w);
   if(!t) {
     Msg::Error("Gauss-Legendre integration returned no points");

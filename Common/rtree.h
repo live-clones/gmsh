@@ -478,7 +478,7 @@ public:
 
   RTFileStream()
   {
-    m_file = NULL;
+    m_file = nullptr;
   }
 
   ~RTFileStream()
@@ -511,7 +511,7 @@ public:
     if(m_file)
     {
       fclose(m_file);
-      m_file = NULL;
+      m_file = nullptr;
     }
   }
 

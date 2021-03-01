@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -46,85 +46,75 @@ extern StringXColor GeometryOptions_Color[];
 extern StringXColor MeshOptions_Color[];
 extern StringXColor ViewOptions_Color[];
 
-static Fl_Menu_Item menu_point_display[] = {
-  {"Color dot", 0, 0, 0},
-  {"3D sphere", 0, 0, 0},
-  {0}
-};
+static Fl_Menu_Item menu_point_display[] = {{"Color dot", 0, nullptr, nullptr},
+                                            {"3D sphere", 0, nullptr, nullptr},
+                                            {nullptr}};
 
 static Fl_Menu_Item menu_point_display_post[] = {
-  {"Color dot", 0, 0, 0},
-  {"3D sphere", 0, 0, 0},
-  {"Scaled dot", 0, 0, 0},
-  {"Scaled sphere", 0, 0, 0},
-  {0}
-};
+  {"Color dot", 0, nullptr, nullptr},
+  {"3D sphere", 0, nullptr, nullptr},
+  {"Scaled dot", 0, nullptr, nullptr},
+  {"Scaled sphere", 0, nullptr, nullptr},
+  {nullptr}};
 
 static Fl_Menu_Item menu_line_display[] = {
-  {"Color segment", 0, 0, 0},
-  {"3D cylinder", 0, 0, 0},
-  {0}
-};
+  {"Color segment", 0, nullptr, nullptr},
+  {"3D cylinder", 0, nullptr, nullptr},
+  {nullptr}};
 
 static Fl_Menu_Item menu_line_display_post[] = {
-  {"Color segment", 0, 0, 0},
-  {"3D cylinder", 0, 0, 0},
-  {"Tapered cylinder", 0, 0, 0},
-  {0}
-};
+  {"Color segment", 0, nullptr, nullptr},
+  {"3D cylinder", 0, nullptr, nullptr},
+  {"Tapered cylinder", 0, nullptr, nullptr},
+  {nullptr}};
 
 static Fl_Menu_Item menu_surface_display[] = {
-  {"Cross", 0, 0, 0},
-  {"Wireframe", 0, 0, 0},
-  {"Solid", 0, 0, 0},
-  {0}
-};
+  {"Cross", 0, nullptr, nullptr},
+  {"Wireframe", 0, nullptr, nullptr},
+  {"Solid", 0, nullptr, nullptr},
+  {nullptr}};
 
-static Fl_Menu_Item menu_axes_mode[] = {
-  {"None", 0, 0, 0},
-  {"Simple axes", 0, 0, 0},
-  {"Box", 0, 0, 0},
-  {"Full grid", 0, 0, 0},
-  {"Open grid", 0, 0, 0},
-  {"Ruler", 0, 0, 0},
-  {0}
-};
+static Fl_Menu_Item menu_axes_mode[] = {{"None", 0, nullptr, nullptr},
+                                        {"Simple axes", 0, nullptr, nullptr},
+                                        {"Box", 0, nullptr, nullptr},
+                                        {"Full grid", 0, nullptr, nullptr},
+                                        {"Open grid", 0, nullptr, nullptr},
+                                        {"Ruler", 0, nullptr, nullptr},
+                                        {nullptr}};
 
 static Fl_Menu_Item menu_position[] = {
-  {"Manual", 0, 0, 0},
-  {"Automatic", 0, 0, 0},
-  {"Top left", 0, 0, 0},
-  {"Top right", 0, 0, 0},
-  {"Bottom left", 0, 0, 0},
-  {"Bottom right", 0, 0, 0},
-  {"Top", 0, 0, 0},
-  {"Bottom", 0, 0, 0},
-  {"Left", 0, 0, 0},
-  {"Right", 0, 0, 0},
-  {"Full", 0, 0, 0},
-  {"Top third", 0, 0, 0},
-  {"In model coordinates", 0, 0, 0},
-  {0}
-};
+  {"Manual", 0, nullptr, nullptr},
+  {"Automatic", 0, nullptr, nullptr},
+  {"Top left", 0, nullptr, nullptr},
+  {"Top right", 0, nullptr, nullptr},
+  {"Bottom left", 0, nullptr, nullptr},
+  {"Bottom right", 0, nullptr, nullptr},
+  {"Top", 0, nullptr, nullptr},
+  {"Bottom", 0, nullptr, nullptr},
+  {"Left", 0, nullptr, nullptr},
+  {"Right", 0, nullptr, nullptr},
+  {"Full", 0, nullptr, nullptr},
+  {"Top third", 0, nullptr, nullptr},
+  {"In model coordinates", 0, nullptr, nullptr},
+  {nullptr}};
 
 Fl_Menu_Item menu_font_names[] = {
-  {"Times-Roman", 0, 0, (void *)FL_TIMES},
-  {"Times-Bold", 0, 0, (void *)FL_TIMES_BOLD},
-  {"Times-Italic", 0, 0, (void *)FL_TIMES_ITALIC},
-  {"Times-BoldItalic", 0, 0, (void *)FL_TIMES_BOLD_ITALIC},
-  {"Helvetica", 0, 0, (void *)FL_HELVETICA},
-  {"Helvetica-Bold", 0, 0, (void *)FL_HELVETICA_BOLD},
-  {"Helvetica-Oblique", 0, 0, (void *)FL_HELVETICA_ITALIC},
-  {"Helvetica-BoldOblique", 0, 0, (void *)FL_HELVETICA_BOLD_ITALIC},
-  {"Courier", 0, 0, (void *)FL_COURIER},
-  {"Courier-Bold", 0, 0, (void *)FL_COURIER_BOLD},
-  {"Courier-Oblique", 0, 0, (void *)FL_COURIER_ITALIC},
-  {"Courier-BoldOblique", 0, 0, (void *)FL_COURIER_BOLD_ITALIC},
-  {"Symbol", 0, 0, (void *)FL_SYMBOL},
-  {"ZapfDingbats", 0, 0, (void *)FL_ZAPF_DINGBATS},
-  {"Screen", 0, 0, (void *)FL_SCREEN},
-  {0}
-};
+  {"Times-Roman", 0, nullptr, (void *)FL_TIMES},
+  {"Times-Bold", 0, nullptr, (void *)FL_TIMES_BOLD},
+  {"Times-Italic", 0, nullptr, (void *)FL_TIMES_ITALIC},
+  {"Times-BoldItalic", 0, nullptr, (void *)FL_TIMES_BOLD_ITALIC},
+  {"Helvetica", 0, nullptr, (void *)FL_HELVETICA},
+  {"Helvetica-Bold", 0, nullptr, (void *)FL_HELVETICA_BOLD},
+  {"Helvetica-Oblique", 0, nullptr, (void *)FL_HELVETICA_ITALIC},
+  {"Helvetica-BoldOblique", 0, nullptr, (void *)FL_HELVETICA_BOLD_ITALIC},
+  {"Courier", 0, nullptr, (void *)FL_COURIER},
+  {"Courier-Bold", 0, nullptr, (void *)FL_COURIER_BOLD},
+  {"Courier-Oblique", 0, nullptr, (void *)FL_COURIER_ITALIC},
+  {"Courier-BoldOblique", 0, nullptr, (void *)FL_COURIER_BOLD_ITALIC},
+  {"Symbol", 0, nullptr, (void *)FL_SYMBOL},
+  {"ZapfDingbats", 0, nullptr, (void *)FL_ZAPF_DINGBATS},
+  {"Screen", 0, nullptr, (void *)FL_SCREEN},
+  {nullptr}};
 
 static void color_cb(Fl_Widget *w, void *data)
 {
@@ -187,7 +177,7 @@ void options_restore_defaults_cb(Fl_Widget *w, void *data)
 {
   if(fl_choice(
        "Do you really want to reset all options to their default values?",
-       "Cancel", "Restore", 0)) {
+       "Cancel", "Restore", nullptr)) {
     UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
     UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
     ReInitOptions(0);
@@ -211,8 +201,9 @@ static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
 
 void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusGl("Select geometrical entity, mesh element or post-processing view\n"
-                "[Press 'q' to abort]");
+  Msg::StatusGl(
+    "Select geometrical entity, mesh element or post-processing view\n"
+    "[Press 'q' to abort]");
 
   CTX::instance()->pickElements = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -234,7 +225,11 @@ void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
       pc = FlGui::instance()->selectedRegions[0]->bounds().center();
     else if(FlGui::instance()->selectedViews.size() &&
             FlGui::instance()->selectedViews[0]->getData())
-      pc = FlGui::instance()->selectedViews[0]->getData()->getBoundingBox().center();
+      pc = FlGui::instance()
+             ->selectedViews[0]
+             ->getData()
+             ->getBoundingBox()
+             .center();
     opt_general_rotation_center0(0, GMSH_SET | GMSH_GUI, pc.x());
     opt_general_rotation_center1(0, GMSH_SET | GMSH_GUI, pc.y());
     opt_general_rotation_center2(0, GMSH_SET | GMSH_GUI, pc.z());
@@ -253,7 +248,7 @@ void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 void general_options_axes_fit_cb(Fl_Widget *w, void *data)
 {
   SBoundingBox3d bbox = GModel::current()->bounds(true);
-  for(std::size_t i = 0; i < PView::list.size(); i++){
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
     if(PView::list[i]->getOptions()->visible &&
        !PView::list[i]->getData()->getBoundingBox().empty())
       bbox += PView::list[i]->getData()->getBoundingBox();
@@ -262,12 +257,12 @@ void general_options_axes_fit_cb(Fl_Widget *w, void *data)
     bbox = SBoundingBox3d(CTX::instance()->min[0], CTX::instance()->min[1],
                           CTX::instance()->min[2], CTX::instance()->max[0],
                           CTX::instance()->max[1], CTX::instance()->max[2]);
-  opt_general_axes_xmin(0, GMSH_SET|GMSH_GUI, bbox.min().x());
-  opt_general_axes_ymin(0, GMSH_SET|GMSH_GUI, bbox.min().y());
-  opt_general_axes_zmin(0, GMSH_SET|GMSH_GUI, bbox.min().z());
-  opt_general_axes_xmax(0, GMSH_SET|GMSH_GUI, bbox.max().x());
-  opt_general_axes_ymax(0, GMSH_SET|GMSH_GUI, bbox.max().y());
-  opt_general_axes_zmax(0, GMSH_SET|GMSH_GUI, bbox.max().z());
+  opt_general_axes_xmin(0, GMSH_SET | GMSH_GUI, bbox.min().x());
+  opt_general_axes_ymin(0, GMSH_SET | GMSH_GUI, bbox.min().y());
+  opt_general_axes_zmin(0, GMSH_SET | GMSH_GUI, bbox.min().z());
+  opt_general_axes_xmax(0, GMSH_SET | GMSH_GUI, bbox.max().x());
+  opt_general_axes_ymax(0, GMSH_SET | GMSH_GUI, bbox.max().y());
+  opt_general_axes_zmax(0, GMSH_SET | GMSH_GUI, bbox.max().z());
   drawContext::global()->draw();
 }
 
@@ -467,10 +462,10 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_curves(0, GMSH_SET, o->geo.butt[1]->value());
   opt_geometry_surfaces(0, GMSH_SET, o->geo.butt[2]->value());
   opt_geometry_volumes(0, GMSH_SET, o->geo.butt[3]->value());
-  opt_geometry_points_num(0, GMSH_SET, o->geo.butt[4]->value());
-  opt_geometry_curves_num(0, GMSH_SET, o->geo.butt[5]->value());
-  opt_geometry_surfaces_num(0, GMSH_SET, o->geo.butt[6]->value());
-  opt_geometry_volumes_num(0, GMSH_SET, o->geo.butt[7]->value());
+  opt_geometry_point_labels(0, GMSH_SET, o->geo.butt[4]->value());
+  opt_geometry_curve_labels(0, GMSH_SET, o->geo.butt[5]->value());
+  opt_geometry_surface_labels(0, GMSH_SET, o->geo.butt[6]->value());
+  opt_geometry_volume_labels(0, GMSH_SET, o->geo.butt[7]->value());
   opt_geometry_auto_coherence(0, GMSH_SET, o->geo.butt[8]->value());
   opt_geometry_light(0, GMSH_SET, o->geo.butt[9]->value());
   opt_geometry_highlight_orphans(0, GMSH_SET, o->geo.butt[10]->value());
@@ -531,8 +526,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   optionWindow *o = FlGui::instance()->options;
   o->activate((const char *)data);
 
-  opt_mesh_lc_from_curvature(0, GMSH_SET, o->mesh.butt[1]->value());
-  opt_mesh_min_elements_2pi(0, GMSH_SET, o->mesh.value[1]->value());
+  opt_mesh_lc_from_curvature(0, GMSH_SET, o->mesh.value[1]->value());
   opt_mesh_lc_from_points(0, GMSH_SET, o->mesh.butt[5]->value());
   opt_mesh_lc_from_parametric_points(0, GMSH_SET, o->mesh.butt[26]->value());
   opt_mesh_lc_extend_from_boundary(0, GMSH_SET, o->mesh.butt[16]->value());
@@ -541,7 +535,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
   opt_mesh_ho_optimize(0, GMSH_SET, o->mesh.butt[3]->value() ? 2 : 0);
   opt_mesh_second_order_incomplete(0, GMSH_SET, o->mesh.butt[4]->value());
-  opt_mesh_points(0, GMSH_SET, o->mesh.butt[6]->value());
+  opt_mesh_nodes(0, GMSH_SET, o->mesh.butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, o->mesh.butt[7]->value());
   opt_mesh_triangles(0, GMSH_SET, o->mesh.menu->menu()[0].value() ? 1 : 0);
   opt_mesh_quadrangles(0, GMSH_SET, o->mesh.menu->menu()[1].value() ? 1 : 0);
@@ -550,14 +544,14 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_prisms(0, GMSH_SET, o->mesh.menu->menu()[4].value() ? 1 : 0);
   opt_mesh_pyramids(0, GMSH_SET, o->mesh.menu->menu()[5].value() ? 1 : 0);
   opt_mesh_trihedra(0, GMSH_SET, o->mesh.menu->menu()[6].value() ? 1 : 0);
-  opt_mesh_surfaces_edges(0, GMSH_SET, o->mesh.butt[8]->value());
-  opt_mesh_surfaces_faces(0, GMSH_SET, o->mesh.butt[9]->value());
-  opt_mesh_volumes_edges(0, GMSH_SET, o->mesh.butt[10]->value());
-  opt_mesh_volumes_faces(0, GMSH_SET, o->mesh.butt[11]->value());
-  opt_mesh_points_num(0, GMSH_SET, o->mesh.butt[12]->value());
-  opt_mesh_lines_num(0, GMSH_SET, o->mesh.butt[13]->value());
-  opt_mesh_surfaces_num(0, GMSH_SET, o->mesh.butt[14]->value());
-  opt_mesh_volumes_num(0, GMSH_SET, o->mesh.butt[15]->value());
+  opt_mesh_surface_edges(0, GMSH_SET, o->mesh.butt[8]->value());
+  opt_mesh_surface_faces(0, GMSH_SET, o->mesh.butt[9]->value());
+  opt_mesh_volume_edges(0, GMSH_SET, o->mesh.butt[10]->value());
+  opt_mesh_volume_faces(0, GMSH_SET, o->mesh.butt[11]->value());
+  opt_mesh_node_labels(0, GMSH_SET, o->mesh.butt[12]->value());
+  opt_mesh_line_labels(0, GMSH_SET, o->mesh.butt[13]->value());
+  opt_mesh_surface_labels(0, GMSH_SET, o->mesh.butt[14]->value());
+  opt_mesh_volume_labels(0, GMSH_SET, o->mesh.butt[15]->value());
   opt_mesh_light(0, GMSH_SET, o->mesh.butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, o->mesh.butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, o->mesh.butt[19]->value());
@@ -575,12 +569,12 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_explode(0, GMSH_SET, o->mesh.value[9]->value());
   opt_mesh_tangents(0, GMSH_SET, o->mesh.value[13]->value());
   opt_mesh_num_sub_edges(0, GMSH_SET, o->mesh.value[14]->value());
-  opt_mesh_point_size(0, GMSH_SET, o->mesh.value[10]->value());
+  opt_mesh_node_size(0, GMSH_SET, o->mesh.value[10]->value());
   opt_mesh_line_width(0, GMSH_SET, o->mesh.value[11]->value());
   opt_mesh_label_sampling(0, GMSH_SET, o->mesh.value[12]->value());
   opt_mesh_angle_smooth_normals(0, GMSH_SET, o->mesh.value[18]->value());
 
-  opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
+  opt_mesh_node_type(0, GMSH_SET, o->mesh.choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
                   (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
                   (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
@@ -589,13 +583,13 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[2]->value() == 5) ? ALGO_2D_FRONTAL_QUAD :
                   (o->mesh.choice[2]->value() == 6) ? ALGO_2D_PACK_PRLGRMS :
                   (o->mesh.choice[2]->value() == 7) ? ALGO_2D_INITIAL_ONLY :
-                  ALGO_2D_AUTO);
+                                                      ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
                   (o->mesh.choice[3]->value() == 2) ? ALGO_3D_HXT :
                   (o->mesh.choice[3]->value() == 3) ? ALGO_3D_MMG3D :
                   (o->mesh.choice[3]->value() == 4) ? ALGO_3D_INITIAL_ONLY :
-                  ALGO_3D_DELAUNAY);
+                                                      ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
@@ -628,7 +622,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
     (int)opt_solver_listen(0, GMSH_GET, o->solver.butt[0]->value());
   opt_solver_listen(0, GMSH_SET, o->solver.butt[0]->value());
   if(!old_listen && o->solver.butt[0]->value()) {
-    onelab::server::citer it = onelab::server::instance()->findClient("Listen");
+    auto it = onelab::server::instance()->findClient("Listen");
     if(it == onelab::server::instance()->lastClient()) {
       onelab::localNetworkClient *c = new gmshLocalNetworkClient("Listen", "");
       c->run();
@@ -913,11 +907,10 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       val = o->view.choice[13]->value() + 1;
       if(force || (val != type)) opt_view_type(i, GMSH_SET, val);
 
-      val = (o->view.choice[14]->value() == 1) ?
-              1 :
-              (o->view.choice[14]->value() == 2) ?
-              3 :
-              (o->view.choice[14]->value() == 3) ? 9 : 0;
+      val = (o->view.choice[14]->value() == 1) ? 1 :
+            (o->view.choice[14]->value() == 2) ? 3 :
+            (o->view.choice[14]->value() == 3) ? 9 :
+                                                 0;
       if(force || (val != force_num_components))
         opt_view_force_num_components(i, GMSH_SET, val);
 
@@ -1290,8 +1283,8 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
                               opt_view_color_text3d(current, GMSH_GET, 0));
         opt_view_color_axes(i, GMSH_SET,
                             opt_view_color_axes(current, GMSH_GET, 0));
-        opt_view_color_background2d(i, GMSH_SET,
-                                    opt_view_color_background2d(current, GMSH_GET, 0));
+        opt_view_color_background2d(
+          i, GMSH_SET, opt_view_color_background2d(current, GMSH_GET, 0));
       }
 
       // colorbar window
@@ -1322,41 +1315,41 @@ static void view_options_max_recursion_cb(Fl_Widget *w, void *data)
     FlGui::instance()->options->view.value[33]->value(val - 1);
   else if(str == "+")
     FlGui::instance()->options->view.value[33]->value(val + 1);
-  view_options_ok_cb(0, 0);
+  view_options_ok_cb(nullptr, nullptr);
 }
 
 optionWindow::optionWindow(int deltaFontSize)
 {
-  general.butt.resize(50, 0);
-  general.push.resize(50, 0);
-  general.value.resize(50, 0);
-  general.color.resize(50, 0);
-  general.input.resize(50, 0);
-  general.choice.resize(50, 0);
-  geo.butt.resize(50, 0);
-  geo.value.resize(50, 0);
-  geo.color.resize(50, 0);
-  geo.choice.resize(50, 0);
-  mesh.butt.resize(50, 0);
-  mesh.retbutt.resize(50, 0);
-  mesh.input.resize(50, 0);
-  mesh.value.resize(50, 0);
-  mesh.color.resize(50, 0);
-  mesh.choice.resize(50, 0);
-  solver.butt.resize(50, 0);
-  solver.value.resize(50, 0);
-  solver.input.resize(50, 0);
-  post.butt.resize(50, 0);
-  post.value.resize(50, 0);
-  post.choice.resize(50, 0);
-  view.butt.resize(50, 0);
-  view.value.resize(100, 0);
-  view.input.resize(50, 0);
-  view.push.resize(50, 0);
-  view.choice.resize(50, 0);
-  view.color.resize(50, 0);
-  view.label.resize(50, 0);
-  view.menu.resize(50, 0);
+  general.butt.resize(50, nullptr);
+  general.push.resize(50, nullptr);
+  general.value.resize(50, nullptr);
+  general.color.resize(50, nullptr);
+  general.input.resize(50, nullptr);
+  general.choice.resize(50, nullptr);
+  geo.butt.resize(50, nullptr);
+  geo.value.resize(50, nullptr);
+  geo.color.resize(50, nullptr);
+  geo.choice.resize(50, nullptr);
+  mesh.butt.resize(50, nullptr);
+  mesh.retbutt.resize(50, nullptr);
+  mesh.input.resize(50, nullptr);
+  mesh.value.resize(50, nullptr);
+  mesh.color.resize(50, nullptr);
+  mesh.choice.resize(50, nullptr);
+  solver.butt.resize(50, nullptr);
+  solver.value.resize(50, nullptr);
+  solver.input.resize(50, nullptr);
+  post.butt.resize(50, nullptr);
+  post.value.resize(50, nullptr);
+  post.choice.resize(50, nullptr);
+  view.butt.resize(50, nullptr);
+  view.value.resize(100, nullptr);
+  view.input.resize(50, nullptr);
+  view.push.resize(50, nullptr);
+  view.choice.resize(50, nullptr);
+  view.color.resize(50, nullptr);
+  view.label.resize(50, nullptr);
+  view.menu.resize(50, nullptr);
 
   FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -1476,8 +1469,9 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[10]->callback(general_options_ok_cb,
                                   (void *)"rotation_center_coord");
 
-      general.butt[22] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 11 * BH, BW, BH, "Invert mouse wheel zoom direction");
+      general.butt[22] =
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,
+                            "Invert mouse wheel zoom direction");
       general.butt[22]->tooltip("General.MouseInvertZoom");
       general.butt[22]->type(FL_TOGGLE_BUTTON);
       general.butt[22]->callback(general_options_ok_cb);
@@ -1550,8 +1544,8 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[10]->type(FL_TOGGLE_BUTTON);
       general.butt[10]->callback(general_options_ok_cb);
 
-      general.value[32] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
-                                            "Number of threads");
+      general.value[32] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW,
+                                             BH, "Number of threads");
       general.value[32]->tooltip("General.NumThreads");
       general.value[32]->minimum(0);
       general.value[32]->maximum(16);
@@ -1564,7 +1558,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
 #if defined(HAVE_VISUDEV)
       general.butt[20] =
-       new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW / 2 - WB, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW / 2 - WB, BH,
                             "Enable heavy visualization capabilities");
       general.butt[20]->type(FL_TOGGLE_BUTTON);
       general.butt[20]->callback(general_options_ok_cb);
@@ -1720,10 +1714,9 @@ optionWindow::optionWindow(int deltaFontSize)
       o->hide();
 
       static Fl_Menu_Item menu_projection[] = {
-        {"Orthographic", 0, 0, 0},
-        {"Perspective", 0, 0, 0},
-        {0}
-      };
+        {"Orthographic", 0, nullptr, nullptr},
+        {"Perspective", 0, nullptr, nullptr},
+        {nullptr}};
       general.choice[2] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Projection mode");
       general.choice[2]->tooltip("General.Orthographic (Alt+o)");
@@ -1792,12 +1785,11 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[7]->callback(general_options_ok_cb);
 
       static Fl_Menu_Item menu_genvectype[] = {
-        {"Line", 0, 0, 0},
-        {"Arrow", 0, 0, 0},
-        {"Pyramid", 0, 0, 0},
-        {"3D arrow", 0, 0, 0},
-        {0}
-      };
+        {"Line", 0, nullptr, nullptr},
+        {"Arrow", 0, nullptr, nullptr},
+        {"Pyramid", 0, nullptr, nullptr},
+        {"3D arrow", 0, nullptr, nullptr},
+        {nullptr}};
       general.choice[0] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Vector display");
       general.choice[0]->tooltip("General.VectorType");
@@ -1810,15 +1802,15 @@ optionWindow::optionWindow(int deltaFontSize)
       b->callback(general_arrow_param_cb);
 
       static Fl_Menu_Item menu_font_engine[] = {
-        {"Native", 0, 0, 0},
-        {"Cairo", 0, 0, 0
+        {"Native", 0, nullptr, nullptr},
+        {"Cairo", 0, nullptr, nullptr
 #if !defined(HAVE_CAIRO)
-         , FL_MENU_INACTIVE
+         ,
+         FL_MENU_INACTIVE
 #endif
         },
-        {"StringTexture", 0, 0, 0},
-        {0}
-      };
+        {"StringTexture", 0, nullptr, nullptr},
+        {nullptr}};
       general.choice[7] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH,
                                         "Font rendering engine");
       general.choice[7]->tooltip("General.GraphicsFontEngine");
@@ -1918,12 +1910,11 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[0]->callback(general_options_ok_cb);
 
       static Fl_Menu_Item menu_color_scheme[] = {
-        {"Light", 0, 0, 0},
-        {"Default", 0, 0, 0},
-        {"Grayscale", 0, 0, 0},
-        {"Dark", 0, 0, 0},
-        {0}
-      };
+        {"Light", 0, nullptr, nullptr},
+        {"Default", 0, nullptr, nullptr},
+        {"Grayscale", 0, nullptr, nullptr},
+        {"Dark", 0, nullptr, nullptr},
+        {nullptr}};
 
       general.choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH,
                                         "Predefined color scheme");
@@ -1932,13 +1923,11 @@ optionWindow::optionWindow(int deltaFontSize)
       general.choice[3]->align(FL_ALIGN_RIGHT);
       general.choice[3]->callback(general_options_color_scheme_cb);
 
-      static Fl_Menu_Item menu_bg_grad[] = {
-        {"None", 0, 0, 0},
-        {"Vertical", 0, 0, 0},
-        {"Horizontal", 0, 0, 0},
-        {"Radial", 0, 0, 0},
-        {0}
-      };
+      static Fl_Menu_Item menu_bg_grad[] = {{"None", 0, nullptr, nullptr},
+                                            {"Vertical", 0, nullptr, nullptr},
+                                            {"Horizontal", 0, nullptr, nullptr},
+                                            {"Radial", 0, nullptr, nullptr},
+                                            {nullptr}};
 
       general.choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH,
                                         "Background gradient");
@@ -1963,7 +1952,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                    (void *)GeneralOptions_Color[j].function);
         i++;
         j++;
-        if(i >= general.color.size()){
+        if(i >= general.color.size()) {
           Msg::Error("General color widget vector should be resized");
           break;
         }
@@ -2084,9 +2073,8 @@ optionWindow::optionWindow(int deltaFontSize)
       b->box(FL_ENGRAVED_FRAME);
       b->labeltype(FL_NO_LABEL);
 
-      Fl_Box *b2 =
-        new Fl_Box(FL_NO_BOX, L + 2 * WB, 2 * WB + 3 * BH + 1, IW, BH,
-                   "Open CASCADE model healing options:");
+      Fl_Box *b2 = new Fl_Box(FL_NO_BOX, L + 2 * WB, 2 * WB + 3 * BH + 1, IW,
+                              BH, "Open CASCADE model healing options:");
       b2->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
 
       geo.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
@@ -2113,8 +2101,8 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[13]->type(FL_TOGGLE_BUTTON);
       geo.butt[13]->callback(geometry_options_ok_cb);
 
-      geo.butt[14] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Fix shells and make solids");
+      geo.butt[14] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
+                                         "Fix shells and make solids");
       geo.butt[14]->tooltip("Geometry.OCCMakeSolids");
       geo.butt[14]->type(FL_TOGGLE_BUTTON);
       geo.butt[14]->callback(geometry_options_ok_cb);
@@ -2166,34 +2154,35 @@ optionWindow::optionWindow(int deltaFontSize)
 
       geo.butt[4] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
                                         BW / 2 - WB, BH, "Point labels");
-      geo.butt[4]->tooltip("Geometry.PointNumbers");
+      geo.butt[4]->tooltip("Geometry.PointLabels");
       geo.butt[4]->type(FL_TOGGLE_BUTTON);
       geo.butt[4]->callback(geometry_options_ok_cb);
 
       geo.butt[5] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH,
                                         BW / 2 - WB, BH, "Curve labels");
-      geo.butt[5]->tooltip("Geometry.CurveNumbers");
+      geo.butt[5]->tooltip("Geometry.CurveLabels");
       geo.butt[5]->type(FL_TOGGLE_BUTTON);
       geo.butt[5]->callback(geometry_options_ok_cb);
 
       geo.butt[6] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH,
                                         BW / 2 - WB, BH, "Surface labels");
-      geo.butt[6]->tooltip("Geometry.SurfaceNumbers");
+      geo.butt[6]->tooltip("Geometry.SurfaceLabels");
       geo.butt[6]->type(FL_TOGGLE_BUTTON);
       geo.butt[6]->callback(geometry_options_ok_cb);
 
       geo.butt[7] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
                                         BW / 2 - WB, BH, "Volume labels");
-      geo.butt[7]->tooltip("Geometry.VolumeNumbers");
+      geo.butt[7]->tooltip("Geometry.VolumeLabels");
       geo.butt[7]->type(FL_TOGGLE_BUTTON);
       geo.butt[7]->callback(geometry_options_ok_cb);
 
       static Fl_Menu_Item menu_label_type[] = {
-        {"Description", 0, 0, 0},
-        {"Elementary tag", 0, 0, 0},
-        {"Physical tag(s)", 0, 0, 0},
-        {0}
-      };
+        {"Description", 0, nullptr, nullptr},
+        {"Elementary tag", 0, nullptr, nullptr},
+        {"Physical tag(s)", 0, nullptr, nullptr},
+        {"Elementary name", 0, nullptr, nullptr},
+        {"Physical name(s)", 0, nullptr, nullptr},
+        {nullptr}};
       geo.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Label type");
       geo.choice[4]->tooltip("Geometry.LabelType");
@@ -2228,11 +2217,9 @@ optionWindow::optionWindow(int deltaFontSize)
                                  height - 2 * WB - BH, "Transfo");
       o->hide();
 
-      static Fl_Menu_Item menu_transform[] = {
-        {"None", 0, 0, 0},
-        {"Scaling", 0, 0, 0},
-        {0}
-      };
+      static Fl_Menu_Item menu_transform[] = {{"None", 0, nullptr, nullptr},
+                                              {"Scaling", 0, nullptr, nullptr},
+                                              {nullptr}};
       geo.choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH,
                                     "Main window transform");
       geo.choice[3]->tooltip("Geometry.Transform");
@@ -2398,7 +2385,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                (void *)GeometryOptions_Color[j].function);
         i++;
         j++;
-        if(i >= geo.color.size()){
+        if(i >= geo.color.size()) {
           Msg::Error("Geometry color widget vector should be resized");
           break;
         }
@@ -2422,37 +2409,34 @@ optionWindow::optionWindow(int deltaFontSize)
       o->hide();
 
       static Fl_Menu_Item menu_2d_algo[] = {
-        {"Automatic", 0, 0, 0},
-        {"MeshAdapt", 0, 0, 0},
-        {"Delaunay", 0, 0, 0},
-        {"Frontal-Delaunay", 0, 0, 0},
-        {"BAMG (experimental)", 0, 0, 0},
-        {"Frontal-Delaunay for Quads (experimental)", 0, 0, 0},
-        {"Packing of Parallelograms (experimental, planar only)", 0, 0, 0},
-        {"Initial Mesh Only (no node insertion)", 0, 0, 0},
-        {0}
-      };
+        {"Automatic", 0, nullptr, nullptr},
+        {"MeshAdapt", 0, nullptr, nullptr},
+        {"Delaunay", 0, nullptr, nullptr},
+        {"Frontal-Delaunay", 0, nullptr, nullptr},
+        {"BAMG (experimental)", 0, nullptr, nullptr},
+        {"Frontal-Delaunay for Quads (experimental)", 0, nullptr, nullptr},
+        {"Packing of Parallelograms (experimental, planar only)", 0, nullptr,
+         nullptr},
+        {"Initial Mesh Only (no node insertion)", 0, nullptr, nullptr},
+        {nullptr}};
       static Fl_Menu_Item menu_3d_algo[] = {
-        {"Delaunay", 0, 0, 0},
-        {"Frontal", 0, 0, 0},
-        {"HXT (experimental)", 0, 0, 0},
-        {"MMG3D (experimental, single volume only)", 0, 0, 0},
-        {"Initial Mesh Only (no node insertion)", 0, 0, 0},
-        {0}
-      };
+        {"Delaunay", 0, nullptr, nullptr},
+        {"Frontal", 0, nullptr, nullptr},
+        {"HXT (experimental)", 0, nullptr, nullptr},
+        {"MMG3D (experimental, single volume only)", 0, nullptr, nullptr},
+        {"Initial Mesh Only (no node insertion)", 0, nullptr, nullptr},
+        {nullptr}};
       static Fl_Menu_Item menu_recombination_algo[] = {
-        {"Simple", 0, 0, 0},
-        {"Blossom", 0, 0, 0},
-        {"Simple Full-Quad", 0, 0, 0},
-        {"Blossom Full-Quad", 0, 0, 0},
-        {0}
-      };
+        {"Simple", 0, nullptr, nullptr},
+        {"Blossom", 0, nullptr, nullptr},
+        {"Simple Full-Quad", 0, nullptr, nullptr},
+        {"Blossom Full-Quad", 0, nullptr, nullptr},
+        {nullptr}};
       static Fl_Menu_Item menu_subdivision_algo[] = {
-        {"None", 0, 0, 0},
-        {"All Quads", 0, 0, 0},
-        {"All Hexas", 0, 0, 0},
-        {0}
-      };
+        {"None", 0, nullptr, nullptr},
+        {"All Quads", 0, nullptr, nullptr},
+        {"All Hexas", 0, nullptr, nullptr},
+        {nullptr}};
 
       mesh.choice[2] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "2D algorithm");
@@ -2547,45 +2531,40 @@ optionWindow::optionWindow(int deltaFontSize)
                             "Compute element sizes using point values");
       mesh.butt[5]->tooltip("Mesh.MeshSizeFromPoints");
       mesh.butt[5]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[5]->callback(mesh_options_ok_cb,(void*)"mesh_lc_from_points");
+      mesh.butt[5]->callback(mesh_options_ok_cb);
 
-      mesh.butt[26] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
-                            "Compute element sizes using parametric point values");
+      mesh.butt[26] = new Fl_Check_Button(
+        L + 2 * WB, 2 * WB + 2 * BH, BW, BH,
+        "Compute element sizes using parametric point values");
       mesh.butt[26]->tooltip("Mesh.MeshSizeFromParametricPoints");
       mesh.butt[26]->type(FL_TOGGLE_BUTTON);
       mesh.butt[26]->callback(mesh_options_ok_cb);
 
-      mesh.butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
-        "Compute element sizes from curvature");
-      mesh.butt[1]->tooltip("Mesh.MeshSizeFromCurvature");
-      mesh.butt[1]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[1]->callback(mesh_options_ok_cb, (void *)"mesh_curvature");
-
-      mesh.value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW / 2, BH,
-                                         "Number of elements per 2 pi radians");
-      mesh.value[1]->tooltip("Mesh.MinimumElementsPerTwoPi");
-      mesh.value[1]->minimum(3);
+      mesh.value[1] =
+        new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW / 2, BH,
+                           "Compute element sizes from curvature");
+      mesh.value[1]->tooltip("Mesh.MeshSizeFromCurvature (number of elements "
+                             "per 2 * Pi radians)");
+      mesh.value[1]->minimum(0);
       mesh.value[1]->maximum(50);
       if(CTX::instance()->inputScrolling) mesh.value[1]->step(1);
       mesh.value[1]->align(FL_ALIGN_RIGHT);
-      mesh.value[1]->deactivate();
       mesh.value[1]->callback(mesh_options_ok_cb);
 
-      mesh.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
+      mesh.butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
                                           "Extend element sizes from boundary");
       mesh.butt[16]->tooltip("Mesh.MeshSizeExtendFromBoundary");
       mesh.butt[16]->type(FL_TOGGLE_BUTTON);
       mesh.butt[16]->callback(mesh_options_ok_cb);
 
-      mesh.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
+      mesh.butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
                                          "Optimize quality of tetrahedra");
       mesh.butt[2]->tooltip("Mesh.Optimize");
       mesh.butt[2]->type(FL_TOGGLE_BUTTON);
       mesh.butt[2]->callback(mesh_options_ok_cb);
 
       mesh.butt[24] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
                             "Optimize quality of tetrahedra with Netgen");
       mesh.butt[24]->tooltip("Mesh.OptimizeNetgen");
       mesh.butt[24]->type(FL_TOGGLE_BUTTON);
@@ -2594,9 +2573,8 @@ optionWindow::optionWindow(int deltaFontSize)
 #endif
       mesh.butt[24]->callback(mesh_options_ok_cb);
 
-      mesh.butt[3] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
-                            "Optimize high-order meshes");
+      mesh.butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH,
+                                         "Optimize high-order meshes");
       mesh.butt[3]->tooltip("Mesh.HighOrderOptimize");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
@@ -2646,36 +2624,35 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[12] = new Fl_Check_Button(L + width / 2, 2 * WB + 1 * BH,
                                           BW / 2 - WB, BH, "Node labels");
-      mesh.butt[12]->tooltip("Mesh.PointNumbers");
+      mesh.butt[12]->tooltip("Mesh.NodeLabels");
       mesh.butt[12]->type(FL_TOGGLE_BUTTON);
       mesh.butt[12]->callback(mesh_options_ok_cb);
 
       mesh.butt[13] = new Fl_Check_Button(L + width / 2, 2 * WB + 2 * BH,
                                           BW / 2 - WB, BH, "1D element labels");
-      mesh.butt[13]->tooltip("Mesh.LineNumbers");
+      mesh.butt[13]->tooltip("Mesh.LineLabels");
       mesh.butt[13]->type(FL_TOGGLE_BUTTON);
       mesh.butt[13]->callback(mesh_options_ok_cb);
 
       mesh.butt[14] = new Fl_Check_Button(L + width / 2, 2 * WB + 3 * BH,
                                           BW / 2 - WB, BH, "2D element labels");
-      mesh.butt[14]->tooltip("Mesh.SurfaceNumbers");
+      mesh.butt[14]->tooltip("Mesh.SurfaceLabels");
       mesh.butt[14]->type(FL_TOGGLE_BUTTON);
       mesh.butt[14]->callback(mesh_options_ok_cb);
 
       mesh.butt[15] = new Fl_Check_Button(L + width / 2, 2 * WB + 4 * BH,
                                           BW / 2 - WB, BH, "3D element labels");
-      mesh.butt[15]->tooltip("Mesh.VolumeNumbers");
+      mesh.butt[15]->tooltip("Mesh.VolumeLabels");
       mesh.butt[15]->type(FL_TOGGLE_BUTTON);
       mesh.butt[15]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_label_type[] = {
-        {"Node/element tag", 0, 0, 0},
-        {"Elementary entity tag", 0, 0, 0},
-        {"Physical group tag(s)", 0, 0, 0},
-        {"Mesh partition", 0, 0, 0},
-        {"Coordinates", 0, 0, 0},
-        {0}
-      };
+        {"Node/element tag", 0, nullptr, nullptr},
+        {"Elementary entity tag", 0, nullptr, nullptr},
+        {"Physical group tag(s)", 0, nullptr, nullptr},
+        {"Mesh partition", 0, nullptr, nullptr},
+        {"Coordinates", 0, nullptr, nullptr},
+        {nullptr}};
       mesh.choice[7] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Label type");
       mesh.choice[7]->tooltip("Mesh.LabelType");
@@ -2695,20 +2672,20 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[12]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_mesh_element_types[] = {
-        {"Triangles", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Quadrangles", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Tetrahedra", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Hexahedra", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Prisms", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Pyramids", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Trihedra", 0, 0, 0, FL_MENU_TOGGLE},
-        {0}
-      };
+        {"Triangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Quadrangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Tetrahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Hexahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Prisms", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Pyramids", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Trihedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {nullptr}};
 
       mesh.menu =
         new Fl_Menu_Button(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Elements");
-      mesh.menu->tooltip("Mesh.Triangles, Mesh.Quadrangles, Mesh.Tetrahedra, "
-                         "Mesh.Hexahedra, Mesh.Prisms, Mesh.Pyramids, Mesh.Trihedra");
+      mesh.menu->tooltip(
+        "Mesh.Triangles, Mesh.Quadrangles, Mesh.Tetrahedra, "
+        "Mesh.Hexahedra, Mesh.Prisms, Mesh.Pyramids, Mesh.Trihedra");
       mesh.menu->menu(menu_mesh_element_types);
       mesh.menu->callback(mesh_options_ok_cb);
 
@@ -2732,13 +2709,11 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[5]->when(FL_WHEN_RELEASE);
       mesh.value[5]->callback(mesh_options_ok_cb);
 
-      static Fl_Menu_Item menu_quality_type[] = {
-        {"SICN", 0, 0, 0},
-        {"SIGE", 0, 0, 0},
-        {"Gamma", 0, 0, 0},
-        {"Disto", 0, 0, 0},
-        {0}
-      };
+      static Fl_Menu_Item menu_quality_type[] = {{"SICN", 0, nullptr, nullptr},
+                                                 {"SIGE", 0, nullptr, nullptr},
+                                                 {"Gamma", 0, nullptr, nullptr},
+                                                 {"Disto", 0, nullptr, nullptr},
+                                                 {nullptr}};
       mesh.choice[6] = new Fl_Choice(L + 2 * WB + IW / 2, 2 * WB + 9 * BH,
                                      IW / 2, BH, "Quality range");
       mesh.choice[6]->tooltip("Mesh.QualityType");
@@ -2846,11 +2821,10 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[17]->callback(mesh_options_ok_cb, (void *)"mesh_light");
 
       static Fl_Menu_Item menu_mesh_light_lines[] = {
-        {"No", 0, 0, 0},
-        {"Surface", 0, 0, 0},
-        {"Volume and surface", 0, 0, 0},
-        {0}
-      };
+        {"No", 0, nullptr, nullptr},
+        {"Surface", 0, nullptr, nullptr},
+        {"Volume and surface", 0, nullptr, nullptr},
+        {nullptr}};
       mesh.choice[10] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Edge lighting");
       mesh.choice[10]->tooltip("Mesh.LightLines");
@@ -2881,12 +2855,11 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[18]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_mesh_color[] = {
-        {"By element type", 0, 0, 0},
-        {"By elementary entity", 0, 0, 0},
-        {"By physical group", 0, 0, 0},
-        {"By mesh partition", 0, 0, 0},
-        {0}
-      };
+        {"By element type", 0, nullptr, nullptr},
+        {"By elementary entity", 0, nullptr, nullptr},
+        {"By physical group", 0, nullptr, nullptr},
+        {"By mesh partition", 0, nullptr, nullptr},
+        {nullptr}};
       mesh.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Coloring mode");
       mesh.choice[4]->tooltip("Mesh.ColorCarousel");
@@ -2908,7 +2881,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                 (void *)MeshOptions_Color[j].function);
         i++;
         j++;
-        if(i >= mesh.color.size()){
+        if(i >= mesh.color.size()) {
           Msg::Error("Mesh color widget vector should be resized");
           break;
         }
@@ -2979,10 +2952,9 @@ optionWindow::optionWindow(int deltaFontSize)
                                  height - 2 * WB - BH, "General");
 
       static Fl_Menu_Item menu_links[] = {
-        {"Apply next changes to selected views", 0, 0, 0},
-        {"Force same options for selected views", 0, 0, 0},
-        {0}
-      };
+        {"Apply next changes to selected views", 0, nullptr, nullptr},
+        {"Force same options for selected views", 0, nullptr, nullptr},
+        {nullptr}};
 
       post.choice[0] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "View links");
@@ -3045,13 +3017,11 @@ optionWindow::optionWindow(int deltaFontSize)
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB,
                                  height - 2 * WB - BH, "General");
 
-      static Fl_Menu_Item menu_plot_type[] = {
-        {"3D", 0, 0, 0},
-        {"2D space", 0, 0, 0},
-        {"2D time", 0, 0, 0},
-        {"2D", 0, 0, 0},
-        {0}
-      };
+      static Fl_Menu_Item menu_plot_type[] = {{"3D", 0, nullptr, nullptr},
+                                              {"2D space", 0, nullptr, nullptr},
+                                              {"2D time", 0, nullptr, nullptr},
+                                              {"2D", 0, nullptr, nullptr},
+                                              {nullptr}};
       view.choice[13] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Plot type");
       view.choice[13]->tooltip("View.Type");
@@ -3105,12 +3075,11 @@ optionWindow::optionWindow(int deltaFontSize)
       view.input[1]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_iso[] = {
-        {"Iso-values", 0, 0, 0},
-        {"Continuous map", 0, 0, 0},
-        {"Filled iso-values", 0, 0, 0},
-        {"Numeric values", 0, 0, 0},
-        {0}
-      };
+        {"Iso-values", 0, nullptr, nullptr},
+        {"Continuous map", 0, nullptr, nullptr},
+        {"Filled iso-values", 0, nullptr, nullptr},
+        {"Numeric values", 0, nullptr, nullptr},
+        {nullptr}};
       view.choice[0] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Intervals type");
       view.choice[0]->tooltip("View.IntervalsType (Alt+t)");
@@ -3119,11 +3088,10 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[0]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_scale[] = {
-        {"Linear", 0, 0, 0},
-        {"Logarithmic", 0, 0, 0},
-        {"Double logarithmic", 0, 0, 0},
-        {0}
-      };
+        {"Linear", 0, nullptr, nullptr},
+        {"Logarithmic", 0, nullptr, nullptr},
+        {"Double logarithmic", 0, nullptr, nullptr},
+        {nullptr}};
       view.choice[1] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
                                      2 * WB + 5 * BH, (int)(0.85 * IW), BH);
       view.choice[1]->tooltip("View.ScaleType");
@@ -3131,12 +3099,10 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[1]->align(FL_ALIGN_RIGHT);
       view.choice[1]->callback(view_options_ok_cb);
 
-      static Fl_Menu_Item menu_range[] = {
-        {"Default", 0, 0, 0},
-        {"Custom", 0, 0, 0},
-        {"Per step", 0, 0, 0},
-        {0}
-      };
+      static Fl_Menu_Item menu_range[] = {{"Default", 0, nullptr, nullptr},
+                                          {"Custom", 0, nullptr, nullptr},
+                                          {"Per step", 0, nullptr, nullptr},
+                                          {nullptr}};
       view.choice[7] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Range mode");
       view.choice[7]->tooltip("View.RangeType (Alt+r)");
@@ -3367,16 +3333,15 @@ optionWindow::optionWindow(int deltaFontSize)
       view.butt[4]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item time_display[] = {
-        {"None", 0, 0, 0},
-        {"Time series", 0, 0, 0},
-        {"Harmonic data", 0, 0, 0},
-        {"Automatic", 0, 0, 0},
-        {"Step data", 0, 0, 0},
-        {"Multi-step data", 0, 0, 0},
-        {"Real eigenvalues", 0, 0, 0},
-        {"Complex eigenvalues", 0, 0, 0},
-        {0}
-      };
+        {"None", 0, nullptr, nullptr},
+        {"Time series", 0, nullptr, nullptr},
+        {"Harmonic data", 0, nullptr, nullptr},
+        {"Automatic", 0, nullptr, nullptr},
+        {"Step data", 0, nullptr, nullptr},
+        {"Multi-step data", 0, nullptr, nullptr},
+        {"Real eigenvalues", 0, nullptr, nullptr},
+        {"Complex eigenvalues", 0, nullptr, nullptr},
+        {nullptr}};
       view.choice[12] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Time display");
       view.choice[12]->tooltip("View.ShowTime");
@@ -3403,22 +3368,22 @@ optionWindow::optionWindow(int deltaFontSize)
       view.butt[2]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_view_element_types[] = {
-        {"Points", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Lines", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Triangles", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Quadrangles", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Tetrahedra", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Hexahedra", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Prisms", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Pyramids", 0, 0, 0, FL_MENU_TOGGLE},
-        {0}
-      };
+        {"Points", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Lines", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Triangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Quadrangles", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Tetrahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Hexahedra", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Prisms", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Pyramids", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {nullptr}};
 
       view.menu[1] =
         new Fl_Menu_Button(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Elements");
-      view.menu[1]->tooltip("View.DrawPoints, View.DrawLines, View.DrawTriangles, "
-                            "View.DrawQuadrangles, View.DrawTetrahedra, View.DrawHexahedra, "
-                            "View.DrawPrisms, View.DrawPyramids");
+      view.menu[1]->tooltip(
+        "View.DrawPoints, View.DrawLines, View.DrawTriangles, "
+        "View.DrawQuadrangles, View.DrawTetrahedra, View.DrawHexahedra, "
+        "View.DrawPrisms, View.DrawPyramids");
       view.menu[1]->menu(menu_view_element_types);
       view.menu[1]->callback(view_options_ok_cb);
 
@@ -3433,12 +3398,11 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[6]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_boundary[] = {
-        {"None", 0, 0, 0},
-        {"Dimension - 1", 0, 0, 0},
-        {"Dimension - 2", 0, 0, 0},
-        {"Dimension - 3", 0, 0, 0},
-        {0}
-      };
+        {"None", 0, nullptr, nullptr},
+        {"Dimension - 1", 0, nullptr, nullptr},
+        {"Dimension - 2", 0, nullptr, nullptr},
+        {"Dimension - 3", 0, nullptr, nullptr},
+        {nullptr}};
       view.choice[9] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH,
                                      "Element boundary mode");
       view.choice[9]->tooltip("View.Boundary");
@@ -3467,24 +3431,23 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[1]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_view_field_types[] = {
-        {"Scalar", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Vector", 0, 0, 0, FL_MENU_TOGGLE},
-        {"Tensor", 0, 0, 0, FL_MENU_TOGGLE},
-        {0}
-      };
+        {"Scalar", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Vector", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {"Tensor", 0, nullptr, nullptr, FL_MENU_TOGGLE},
+        {nullptr}};
       view.menu[0] =
         new Fl_Menu_Button(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields");
-      view.menu[0]->tooltip("View.DrawScalars, View.DrawVectors, View.DrawTensors");
+      view.menu[0]->tooltip(
+        "View.DrawScalars, View.DrawVectors, View.DrawTensors");
       view.menu[0]->menu(menu_view_field_types);
       view.menu[0]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_force_field_type[] = {
-        {"Original Field", 0, 0, 0},
-        {"Force Scalar", 0, 0, 0},
-        {"Force Vector", 0, 0, 0},
-        {"Force Tensor", 0, 0, 0},
-        {0}
-      };
+        {"Original Field", 0, nullptr, nullptr},
+        {"Force Scalar", 0, nullptr, nullptr},
+        {"Force Vector", 0, nullptr, nullptr},
+        {"Force Tensor", 0, nullptr, nullptr},
+        {nullptr}};
       view.choice[14] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH);
       view.choice[14]->tooltip("View.ForceNumComponents");
       view.choice[14]->menu(menu_force_field_type);
@@ -3662,9 +3625,9 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[6]->align(FL_ALIGN_RIGHT);
       view.choice[6]->callback(view_options_ok_cb);
 
-      view.butt[26] = new Fl_Check_Button(L + width - (int)(0.85 * IW) - 2 * WB,
-                                          2 * WB + 4 * BH, (int)(0.85 * IW), BH,
-                                          "Stipple");
+      view.butt[26] =
+        new Fl_Check_Button(L + width - (int)(0.85 * IW) - 2 * WB,
+                            2 * WB + 4 * BH, (int)(0.85 * IW), BH, "Stipple");
       view.butt[26]->tooltip("View.Stipple");
       view.butt[26]->type(FL_TOGGLE_BUTTON);
       view.butt[26]->callback(view_options_ok_cb);
@@ -3680,14 +3643,13 @@ optionWindow::optionWindow(int deltaFontSize)
 
       {
         static Fl_Menu_Item menu_vectype[] = {
-          {"Line", 0, 0, 0},
-          {"Arrow", 0, 0, 0},
-          {"Pyramid", 0, 0, 0},
-          {"3D arrow", 0, 0, 0},
-          {"Displacement", 0, 0, 0},
-          {"Comet", 0, 0, 0},
-          {0}
-        };
+          {"Line", 0, nullptr, nullptr},
+          {"Arrow", 0, nullptr, nullptr},
+          {"Pyramid", 0, nullptr, nullptr},
+          {"3D arrow", 0, nullptr, nullptr},
+          {"Displacement", 0, nullptr, nullptr},
+          {"Comet", 0, nullptr, nullptr},
+          {nullptr}};
         view.choice[2] =
           new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
         view.choice[2]->tooltip("View.VectorType");
@@ -3731,10 +3693,9 @@ optionWindow::optionWindow(int deltaFontSize)
       }
 
       static Fl_Menu_Item menu_glyph_loc[] = {
-        {"Barycenter", 0, 0, 0},
-        {"Node", 0, 0, 0},
-        {0}
-      };
+        {"Barycenter", 0, nullptr, nullptr},
+        {"Node", 0, nullptr, nullptr},
+        {nullptr}};
       view.choice[3] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
       view.choice[3]->tooltip("View.GlyphLocation");
@@ -3743,11 +3704,10 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[3]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_glyph_center[] = {
-        {"Left-aligned", 0, 0, 0},
-        {"Centered", 0, 0, 0},
-        {"Right-aligned", 0, 0, 0},
-        {0}
-      };
+        {"Left-aligned", 0, nullptr, nullptr},
+        {"Centered", 0, nullptr, nullptr},
+        {"Right-aligned", 0, nullptr, nullptr},
+        {nullptr}};
       view.choice[15] = new Fl_Choice(L + width - (int)(0.85 * IW) - 2 * WB,
                                       2 * WB + 10 * BH, (int)(0.85 * IW), BH);
       view.choice[15]->tooltip("View.CenterGlyphs");
@@ -3755,15 +3715,14 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[15]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_tensor[] = {
-        {"Von-Mises", 0, 0, 0},
-        {"Maximum eigenvalue", 0, 0, 0},
-        {"Minimum eigenvalue", 0, 0, 0},
-        {"Eigenvectors", 0, 0, 0},
-        {"Ellipse", 0, 0, 0},
-        {"Ellipsoid", 0, 0, 0},
-        {"Frame", 0, 0, 0},
-        {0}
-      };
+        {"Von-Mises", 0, nullptr, nullptr},
+        {"Maximum eigenvalue", 0, nullptr, nullptr},
+        {"Minimum eigenvalue", 0, nullptr, nullptr},
+        {"Eigenvectors", 0, nullptr, nullptr},
+        {"Ellipse", 0, nullptr, nullptr},
+        {"Ellipsoid", 0, nullptr, nullptr},
+        {"Frame", 0, nullptr, nullptr},
+        {nullptr}};
       view.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");
       view.choice[4]->tooltip("View.TensorType");
@@ -3832,7 +3791,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                 (void *)ViewOptions_Color[j].function);
         i++;
         j++;
-        if(i >= view.color.size()){
+        if(i >= view.color.size()) {
           Msg::Error("View color widget vector should be resized");
           break;
         }
@@ -3942,8 +3901,8 @@ void optionWindow::resetExternalViewList()
   view.choice[11]->add("Self");
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     sprintf(str, "View [%lu]", i);
-    view.choice[10]->add(str, 0, NULL);
-    view.choice[11]->add(str, 0, NULL);
+    view.choice[10]->add(str, 0, nullptr);
+    view.choice[11]->add(str, 0, nullptr);
   }
   if(view.index >= 0 && view.index < (int)PView::list.size()) {
     opt_view_external_view(view.index, GMSH_GUI, 0);
@@ -4254,14 +4213,10 @@ void optionWindow::activate(const char *what)
     else {
       general.gamepadconfig->deactivate();
     }
-
-    if(general.butt[17]->value() == 0) {
-      general.value[29]->deactivate();
-    }
+    if(general.butt[17]->value() == 0) { general.value[29]->deactivate(); }
     else {
       general.value[29]->activate();
     }
-
     if(general.butt[18]->value() == 0) {
       general.value[30]->deactivate();
       general.value[31]->deactivate();
@@ -4271,7 +4226,6 @@ void optionWindow::activate(const char *what)
       general.value[31]->activate();
     }
   }
-
   else if(!strcmp(what, "geo_transform")) {
     if(geo.choice[3]->value() == 1) {
       for(int i = 7; i <= 18; i++) geo.value[i]->activate();
@@ -4340,14 +4294,6 @@ void optionWindow::activate(const char *what)
       mesh.butt[19]->deactivate();
       mesh.choice[10]->deactivate();
       mesh.value[18]->deactivate();
-    }
-  }
-  else if(!strcmp(what, "mesh_curvature")) {
-    if(mesh.butt[1]->value()) {
-      mesh.value[1]->activate();
-    }
-    else {
-      mesh.value[1]->deactivate();
     }
   }
   else if(!strcmp(what, "view_light")) {

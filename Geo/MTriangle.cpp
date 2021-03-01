@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -123,7 +123,6 @@ double MTriangle::gammaShapeMeasure()
 
 void MTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
 {
-  
   //  double M[2][2], R[2];
   //  const SPoint2 p0 (getVertex(0)->x(),getVertex(0)->y());
   //  const SPoint2 p1 (getVertex(1)->x(),getVertex(1)->y());
@@ -365,7 +364,7 @@ void MTriangleN::reverse()
   _v[2] = tmp;
 
   int npts = _order - 1, base = 0;
-  std::vector<MVertex *>::iterator begin = _vs.begin() + base;
+  auto begin = _vs.begin() + base;
 
   while(npts > 0) {
     std::reverse(begin, begin + 3 * npts);
@@ -451,8 +450,7 @@ void MTriangleN::reorient(int rot, bool swap)
   if(rot == 0 && !swap) return;
 
   TupleReorientation mytuple(getTypeForMSH(), std::make_pair(rot, swap));
-  std::map<TupleReorientation, IndicesReoriented>::iterator it;
-  it = _tuple2indicesReoriented.find(mytuple);
+  auto it = _tuple2indicesReoriented.find(mytuple);
   if(it == _tuple2indicesReoriented.end()) {
     IndicesReoriented indices;
     _getIndicesReorientedTri(_order, rot, swap, indices);
@@ -468,12 +466,8 @@ void MTriangleN::reorient(int rot, bool swap)
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 3);
 
   // reorient
-  for(int i = 0; i < 3; ++i) {
-    _v[i] = oldv[indices[i]];
-  }
-  for(std::size_t i = 0; i < _vs.size(); ++i) {
-    _vs[i] = oldv[indices[3 + i]];
-  }
+  for(int i = 0; i < 3; ++i) { _v[i] = oldv[indices[i]]; }
+  for(std::size_t i = 0; i < _vs.size(); ++i) { _vs[i] = oldv[indices[3 + i]]; }
 }
 
 MFaceN MTriangle::getHighOrderFace(int num, int sign, int rot)
@@ -514,8 +508,7 @@ MFaceN MTriangleN::getHighOrderFace(int num, int sign, int rot)
   const bool swap = sign == -1;
 
   TupleReorientation mytuple(TYPE_TRI, std::make_pair(rot, swap));
-  std::map<TupleReorientation, IndicesReoriented>::iterator it;
-  it = _tuple2indicesReoriented.find(mytuple);
+  auto it = _tuple2indicesReoriented.find(mytuple);
   if(it == _tuple2indicesReoriented.end()) {
     IndicesReoriented indices;
     _getIndicesReorientedTri(_order, rot, swap, indices);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -29,7 +29,7 @@
 #endif
 
 #if defined(__APPLE__)
-#define RUSAGE_SELF      0
+#define RUSAGE_SELF 0
 #define RUSAGE_CHILDREN -1
 #endif
 
@@ -82,7 +82,7 @@ static void GetResources(double *s, long *mem)
   *mem = (long)r.ru_maxrss;
 #else
   FILETIME creation, exit, kernel, user;
-  if(GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user)){
+  if(GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user)) {
     *s = 1.e-7 * 4294967296. * (double)user.dwHighDateTime +
          1.e-7 * (double)user.dwLowDateTime;
   }
@@ -92,7 +92,7 @@ static void GetResources(double *s, long *mem)
 
 void CheckResources()
 {
-#if !defined (WIN32) || defined(__CYGWIN__)
+#if !defined(WIN32) || defined(__CYGWIN__)
   static struct rlimit r;
 
   getrlimit(RLIMIT_STACK, &r);
@@ -100,8 +100,9 @@ void CheckResources()
   // Try to get at least 16 MB of stack. Running with too small a stack
   // can cause crashes in the recursive calls (e.g. for tet
   // classification in 3D Delaunay)
-  if(r.rlim_cur < 16 * 1024 * 1024){
-    OLMsg::Info("Increasing process stack size (%d kB < 16 MB)", r.rlim_cur / 1024);
+  if(r.rlim_cur < 16 * 1024 * 1024) {
+    OLMsg::Info("Increasing process stack size (%d kB < 16 MB)",
+                r.rlim_cur / 1024);
     r.rlim_cur = r.rlim_max;
     setrlimit(RLIMIT_STACK, &r);
   }
@@ -163,11 +164,10 @@ int StatFile(const std::string &fileName)
 int KillProcess(int pid)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
-  if(kill(pid, 9))
-    return 0;
+  if(kill(pid, 9)) return 0;
 #else
   HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
-  if(!TerminateProcess(hProc, 0)){
+  if(!TerminateProcess(hProc, 0)) {
     CloseHandle(hProc);
     return 0;
   }
@@ -183,22 +183,21 @@ int SystemCall(const std::string &command, bool blocking)
   memset(&suInfo, 0, sizeof(suInfo));
   suInfo.cb = sizeof(suInfo);
   OLMsg::Info("Calling <%s>", command.c_str());
-  if(blocking){
-    CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
-                  NORMAL_PRIORITY_CLASS, NULL, NULL,
-                  &suInfo, &prInfo);
+  if(blocking) {
+    CreateProcess(NULL, (char *)command.c_str(), NULL, NULL, FALSE,
+                  NORMAL_PRIORITY_CLASS, NULL, NULL, &suInfo, &prInfo);
     // wait until child process exits.
     WaitForSingleObject(prInfo.hProcess, INFINITE);
     // close process and thread handles.
     CloseHandle(prInfo.hProcess);
     CloseHandle(prInfo.hThread);
   }
-  else{
+  else {
     // DETACHED_PROCESS removes the console
     // (useful if the program to launch is a console-mode exe)
-    CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
-                  NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
-                  &suInfo, &prInfo);
+    CreateProcess(NULL, (char *)command.c_str(), NULL, NULL, FALSE,
+                  NORMAL_PRIORITY_CLASS | DETACHED_PROCESS, NULL, NULL, &suInfo,
+                  &prInfo);
   }
   return 0;
 #else
@@ -217,12 +216,13 @@ int SystemCall(const std::string &command, bool blocking)
 #define MAXPATHLEN 1024
 #endif
 
-std::string getCurrentWorkdir(){
+std::string getCurrentWorkdir()
+{
   char path[MAXPATHLEN];
   if(!getcwd(path, MAXPATHLEN)) return "";
   std::string str = path;
-  //match the convention of SplitFileName that delivers directory path
-  //endig with a directory separator
+  // match the convention of SplitFileName that delivers directory path
+  // endig with a directory separator
 #if defined(WIN32)
   str.append("\\");
 #else

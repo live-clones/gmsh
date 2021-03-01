@@ -2,7 +2,7 @@
 //
 //  Gmsh GEO tutorial 3
 //
-//  Extruded meshes, parameters, options
+//  Extruded meshes, ONELAB parameters, options
 //
 // -----------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -29,14 +29,23 @@ IntPt GQQ4[4] = {
   {{xq4[3], yq4[3], 0}, pq4[3]},
 };
 
-const double xq7[7] = {0., 0., 0.,
-                       0.7745966692414834, 0.7745966692414834,-0.7745966692414834,
+const double xq7[7] = {0.,
+                       0.,
+                       0.,
+                       0.7745966692414834,
+                       0.7745966692414834,
+                       -0.7745966692414834,
                        -0.7745966692414834};
-const double yq7[7] = {0., 0.9660917830792959, -0.9660917830792959,
-                       0.7745966692414834, -0.7745966692414834, 0.7745966692414834,
+const double yq7[7] = {0.,
+                       0.9660917830792959,
+                       -0.9660917830792959,
+                       0.7745966692414834,
+                       -0.7745966692414834,
+                       0.7745966692414834,
                        -0.7745966692414834};
-const double pq7[7] = {1.1428571428571428, 0.31746031746031744,0.31746031746031744,
-                       0.5555555555555556, 0.5555555555555556, 0.5555555555555556,
+const double pq7[7] = {1.1428571428571428,  0.31746031746031744,
+                       0.31746031746031744, 0.5555555555555556,
+                       0.5555555555555556,  0.5555555555555556,
                        0.5555555555555556};
 IntPt GQQ7[7] = {{{xq7[0], yq7[0], 0}, pq7[0]}, {{xq7[1], yq7[1], 0}, pq7[1]},
                  {{xq7[2], yq7[2], 0}, pq7[2]}, {{xq7[3], yq7[3], 0}, pq7[3]},
@@ -83,7 +92,7 @@ IntPt GQQ16[16] = {
 
 static IntPt *GQQ[3] = {GQQ1, GQQ3, GQQ7};
 static int GQQnPt[3] = {1, 3, 7};
-static std::vector<IntPt*> GQQGL(40, nullptr);
+static std::vector<IntPt *> GQQGL(40, nullptr);
 
 IntPt *getGQQPts(int order)
 {

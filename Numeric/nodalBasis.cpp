@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -643,8 +643,9 @@ namespace ClosureGen {
       std::vector<int> &cl = closure[i];
       if(cl.size() == 0) continue;
       clFull.resize(6, -1);
-      int &ref =
-        cl.size() == 3 ? ref3 : (cl[0] / 3 + cl[1] / 3) % 2 ? ref4b : ref4a;
+      int &ref = cl.size() == 3              ? ref3 :
+                 (cl[0] / 3 + cl[1] / 3) % 2 ? ref4b :
+                                               ref4a;
       if(ref == -1) ref = i;
       closureRef[i] = ref;
       for(std::size_t j = 0; j < cl.size(); j++)
@@ -685,7 +686,7 @@ namespace ClosureGen {
             nodeSum += faces[iFace][iNode] < 0 ?
                          faces[iFace][iNode] :
                          closureFull[i][faces[iFace][iNode]];
-          std::map<int, int>::iterator it = nodeSum2Face.find(nodeSum);
+          auto it = nodeSum2Face.find(nodeSum);
           if(it == nodeSum2Face.end()) Msg::Error("Prism face not found");
           int mappedFaceId = it->second;
           if(mappedFaceId > 1) {
@@ -863,62 +864,46 @@ int nodalBasis::getNumBubbleShapeFunctions() const
 {
   int numBubble = -1;
   switch(parentType) {
-  case TYPE_PNT:
-    numBubble = 0;
-    break;
-  case TYPE_LIN:
-    numBubble = ElementType::getNumVertices(type) - 2;
-    break;
+  case TYPE_PNT: numBubble = 0; break;
+  case TYPE_LIN: numBubble = ElementType::getNumVertices(type) - 2; break;
   case TYPE_TRI:
-    if(serendip) {
-      numBubble = 0;
-    }
+    if(serendip) { numBubble = 0; }
     else {
       numBubble = (order - 1) * (order - 2) / 2;
     }
     break;
   case TYPE_QUA:
-    if(serendip) {
-      numBubble = 0;
-    }
+    if(serendip) { numBubble = 0; }
     else {
       numBubble = (order - 1) * (order - 1);
     }
     break;
   case TYPE_TET:
-    if(serendip) {
-      numBubble = 0;
-    }
+    if(serendip) { numBubble = 0; }
     else {
       numBubble = ((order - 1) * (order - 2) * (order - 3)) / 6;
     }
     break;
   case TYPE_PRI:
-    if(serendip) {
-      numBubble = 0;
-    }
+    if(serendip) { numBubble = 0; }
     else {
       numBubble = (order - 1) * (((order - 1) - 1) * (order - 1) / 2);
     }
     break;
   case TYPE_HEX:
-    if(serendip) {
-      numBubble = 0;
-    }
+    if(serendip) { numBubble = 0; }
     else {
       numBubble = (order - 1) * (order - 1) * (order - 1);
     }
     break;
   case TYPE_PYR:
-    if(serendip) {
-      numBubble = 0;
-    }
+    if(serendip) { numBubble = 0; }
     else {
       numBubble = (order - 2) * ((order - 2) + 1) * (2 * (order - 2) + 1) / 6;
     }
     break;
   }
-  
+
   return numBubble;
 }
 

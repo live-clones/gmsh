@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -110,7 +110,7 @@ void GVertex::getNumMeshElements(unsigned *const c) const
 MElement *GVertex::getMeshElement(std::size_t index) const
 {
   if(index < points.size()) return points[index];
-  return 0;
+  return nullptr;
 }
 
 MElement *GVertex::getMeshElementByType(const int familyType,
@@ -118,7 +118,7 @@ MElement *GVertex::getMeshElementByType(const int familyType,
 {
   if(familyType == TYPE_PNT) return points[index];
 
-  return 0;
+  return nullptr;
 }
 
 bool GVertex::isOnSeam(const GFace *gf) const

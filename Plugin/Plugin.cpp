@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,7 +16,7 @@
 #include "drawContext.h"
 #endif
 
-void (*GMSH_Plugin::draw)(void *) = 0;
+void (*GMSH_Plugin::draw)(void *) = nullptr;
 
 void GMSH_Plugin::setDrawFunction(void (*fct)(void *))
 {
@@ -87,13 +87,13 @@ PView *GMSH_PostPlugin::getView(int index, PView *view)
   }
   else {
     Msg::Error("View[%d] does not exist", index);
-    return 0;
+    return nullptr;
   }
 }
 
 PViewData *GMSH_PostPlugin::getPossiblyAdaptiveData(PView *view)
 {
-  if(!view) return 0;
+  if(!view) return nullptr;
   PViewData *data = view->getData();
   if(data->getAdaptiveData() && data->getNumTimeSteps() > 1)
     Msg::Warning(
@@ -106,7 +106,7 @@ PViewData *GMSH_PostPlugin::getPossiblyAdaptiveData(PView *view)
 
 PViewDataList *GMSH_PostPlugin::getDataList(PView *view, bool showError)
 {
-  if(!view) return 0;
+  if(!view) return nullptr;
 
   PViewDataList *data = dynamic_cast<PViewDataList *>(view->getData());
   if(data)
@@ -114,5 +114,5 @@ PViewDataList *GMSH_PostPlugin::getDataList(PView *view, bool showError)
   else if(showError)
     Msg::Error(
       "This plugin can only be run on list-based views (`.pos' files)");
-  return 0;
+  return nullptr;
 }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle and Jeremy Theler
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle and Jeremy Theler
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,14 +25,12 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
 {
   bool useGeoSTL = false;
   unsigned int nfacets = 0;
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-      ++it) {
+  for(auto it = faces.begin(); it != faces.end(); ++it) {
     nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
   }
   if(!nfacets) { // use CAD STL if there is no mesh
     useGeoSTL = true;
-    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-        ++it) {
+    for(auto it = faces.begin(); it != faces.end(); ++it) {
       (*it)->buildSTLTriangulation();
       nfacets += (*it)->stl_triangles.size() / 3;
     }
@@ -49,8 +47,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
       // floating-point data will be duplicated)
       fprintf(fp, "     <IndexedTriangleSet DEF=\"set%s\" index=\"\n",
               name.c_str());
-      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-          ++it) {
+      for(auto it = faces.begin(); it != faces.end(); ++it) {
         if((*it)->stl_triangles.size()) {
           for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i++) {
             fprintf(fp, "%d ", (*it)->stl_triangles[i]);
@@ -61,8 +58,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
       fprintf(fp, "\">\n");
 
       fprintf(fp, "      <Coordinate point=\"\n");
-      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-          ++it) {
+      for(auto it = faces.begin(); it != faces.end(); ++it) {
         if((*it)->stl_vertices_uv.size()) {
           for(std::size_t i = 0; i < (*it)->stl_vertices_uv.size(); i++) {
             SPoint2 &p((*it)->stl_vertices_uv[i]);
@@ -79,8 +75,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
       fprintf(fp, "\"></Coordinate>\n");
 
       fprintf(fp, "      <Normal vector=\"\n");
-      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-          ++it) {
+      for(auto it = faces.begin(); it != faces.end(); ++it) {
         if((*it)->stl_normals.size()) {
           for(std::size_t i = 0; i < (*it)->stl_normals.size(); i++) {
             SVector3 &n((*it)->stl_normals[i]);
@@ -101,8 +96,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
       fprintf(fp, "     <TriangleSet DEF=\"set%s\">\n", name.c_str());
 
       fprintf(fp, "      <Coordinate point=\"\n");
-      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-          ++it) {
+      for(auto it = faces.begin(); it != faces.end(); ++it) {
         if((*it)->stl_vertices_uv.size()) {
           for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i += 3) {
             SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
@@ -128,8 +122,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
       fprintf(fp, "\"></Coordinate>\n");
 
       fprintf(fp, "      <Normal vector=\"\n");
-      for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-          ++it) {
+      for(auto it = faces.begin(); it != faces.end(); ++it) {
         if((*it)->stl_normals.size()) {
           for(std::size_t i = 0; i < (*it)->stl_triangles.size(); i++) {
             SVector3 &n((*it)->stl_normals[(*it)->stl_triangles[i]]);
@@ -148,8 +141,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
   else {
     fprintf(fp, "     <TriangleSet DEF=\"set%s\">\n", name.c_str());
     fprintf(fp, "      <Coordinate point=\"\n");
-    for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-        ++it) {
+    for(auto it = faces.begin(); it != faces.end(); ++it) {
       for(std::size_t i = 0; i < (*it)->triangles.size(); i++)
         (*it)->triangles[i]->writeX3D(fp, scalingFactor);
       for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++)
@@ -165,8 +157,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
 static void writeX3dEdges(FILE *fp, std::vector<GEdge *> &edges,
                           double scalingFactor, const std::string &name)
 {
-  for(std::vector<GEdge *>::iterator it = edges.begin(); it != edges.end();
-      ++it) {
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
     if((*it)->stl_vertices_xyz.size()) {
       fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
       fprintf(fp,
@@ -229,7 +220,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
     if(x3dsurfaces == 1) {
       // all surfaces in a single x3d object
       std::vector<GFace *> faces;
-      for(fiter it = firstFace(); it != lastFace(); ++it) {
+      for(auto it = firstFace(); it != lastFace(); ++it) {
         if(saveAll || (*it)->physicals.size()) { faces.push_back(*it); }
       }
       std::string name = "face";
@@ -237,7 +228,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
     }
     else if(x3dsurfaces == 2) {
       // one x3d object for each physical surface
-      for(fiter it = firstFace(); it != lastFace(); ++it) {
+      for(auto it = firstFace(); it != lastFace(); ++it) {
         if(saveAll || (*it)->physicals.size()) {
           std::vector<GFace *> faces(1, *it);
           std::string name = getElementaryName(2, (*it)->tag());
@@ -254,8 +245,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
       // one x3d object per physical surface
       std::map<int, std::vector<GEntity *> > phys;
       getPhysicalGroups(2, phys);
-      for(std::map<int, std::vector<GEntity *> >::iterator it = phys.begin();
-          it != phys.end(); it++) {
+      for(auto it = phys.begin(); it != phys.end(); it++) {
         std::vector<GFace *> faces;
         for(std::size_t i = 0; i < it->second.size(); i++) {
           faces.push_back(static_cast<GFace *>(it->second[i]));
@@ -279,7 +269,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
     if(x3dedges == 1) {
       // all edges in a single x3d object
       std::vector<GEdge *> edges;
-      for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+      for(auto it = firstEdge(); it != lastEdge(); ++it) {
         if(saveAll || (*it)->physicals.size()) { edges.push_back(*it); }
       }
       std::string name = "edge";
@@ -287,7 +277,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
     }
     else if(x3dedges == 2) {
       // one x3d object for each physical edge
-      for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+      for(auto it = firstEdge(); it != lastEdge(); ++it) {
         if(saveAll || (*it)->physicals.size()) {
           std::vector<GEdge *> edges(1, *it);
           std::string name = getElementaryName(1, (*it)->tag());
@@ -304,8 +294,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
       // one x3d object per physical edge
       std::map<int, std::vector<GEntity *> > phys;
       getPhysicalGroups(1, phys);
-      for(std::map<int, std::vector<GEntity *> >::iterator it = phys.begin();
-          it != phys.end(); it++) {
+      for(auto it = phys.begin(); it != phys.end(); it++) {
         std::vector<GEdge *> edges;
         for(std::size_t i = 0; i < it->second.size(); i++) {
           edges.push_back(static_cast<GEdge *>(it->second[i]));
@@ -326,7 +315,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
   if(x3dvertices != 0) {
     fprintf(fp, "   <Group DEF=\"vertices\" render=\"false\">\n");
 
-    for(viter it = firstVertex(); it != lastVertex(); ++it) {
+    for(auto it = firstVertex(); it != lastVertex(); ++it) {
       fprintf(fp, "   <Transform DEF=\"vertex%d\" translation=\"%g %g %g\">\n",
               (*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z());
       fprintf(fp, "    <Shape>\n");

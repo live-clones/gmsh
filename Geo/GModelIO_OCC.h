@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -130,12 +130,12 @@ private:
                       double dz, double ax, double ay, double az, double angle,
                       int wireTag,
                       std::vector<std::pair<int, int> > &outDimTags,
-                      ExtrudeParams *e);
+                      ExtrudeParams *e, const std::string &trihedron);
   bool _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
                 double x, double y, double z, double dx, double dy, double dz,
                 double ax, double ay, double az, double angle, int wireTag,
                 std::vector<std::pair<int, int> > &outDimTags,
-                ExtrudeParams *e = 0);
+                ExtrudeParams *e = nullptr, const std::string &trihedron = "");
 
   // apply fillet-like operations
   bool _fillet(int mode, const std::vector<int> &volumeTags,
@@ -226,15 +226,11 @@ public:
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>());
-  bool addBSplineFilling(int &tag, int wireTag,
-                         const std::string &type = "");
-  bool addBezierFilling(int &tag, int wireTag,
-                        const std::string &type = "");
-  bool addBSplineSurface(int &tag,
-                         const std::vector<int> &pointTags,
-                         const int numPointsU,
-                         const int degreeU, const int degreeV,
-                         const std::vector<double> &weights,
+  bool addBSplineFilling(int &tag, int wireTag, const std::string &type = "");
+  bool addBezierFilling(int &tag, int wireTag, const std::string &type = "");
+  bool addBSplineSurface(int &tag, const std::vector<int> &pointTags,
+                         const int numPointsU, const int degreeU,
+                         const int degreeV, const std::vector<double> &weights,
                          const std::vector<double> &knotsU,
                          const std::vector<double> &knotsV,
                          const std::vector<int> &multiplicitiesU,
@@ -245,8 +241,8 @@ public:
                         const int numPointsU,
                         const std::vector<int> &wireTags = std::vector<int>(),
                         bool wire3D = true);
-  bool addTrimmedSurface(int &tag, int surfaceTag, const std::vector<int> &wireTags,
-                         bool wire3D);
+  bool addTrimmedSurface(int &tag, int surfaceTag,
+                         const std::vector<int> &wireTags, bool wire3D);
   bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags,
                       bool sewing);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
@@ -276,13 +272,14 @@ public:
   bool extrude(const std::vector<std::pair<int, int> > &inDimTags, double dx,
                double dy, double dz,
                std::vector<std::pair<int, int> > &outDimTags,
-               ExtrudeParams *e = 0);
+               ExtrudeParams *e = nullptr);
   bool revolve(const std::vector<std::pair<int, int> > &inDimTags, double x,
                double y, double z, double ax, double ay, double az,
                double angle, std::vector<std::pair<int, int> > &outDimTags,
-               ExtrudeParams *e = 0);
+               ExtrudeParams *e = nullptr);
   bool addPipe(const std::vector<std::pair<int, int> > &inDimTags, int wireTag,
-               std::vector<std::pair<int, int> > &outDimTags);
+               std::vector<std::pair<int, int> > &outDimTags,
+               const std::string &trihedron = "");
 
   // fillet
   bool fillet(const std::vector<int> &volumeTags,
@@ -537,21 +534,17 @@ public:
   {
     return _error("add surface filling");
   }
-  bool addBSplineFilling(int &tag, int wireTag,
-                         const std::string &type = "")
+  bool addBSplineFilling(int &tag, int wireTag, const std::string &type = "")
   {
     return _error("add BSpline filling");
   }
-  bool addBezierFilling(int &tag, int wireTag,
-                        const std::string &type = "")
+  bool addBezierFilling(int &tag, int wireTag, const std::string &type = "")
   {
     return _error("add Bezier filling");
   }
-  bool addBSplineSurface(int &tag,
-                         const std::vector<int> &pointTags,
-                         const int numPointsU,
-                         const int degreeU, const int degreeV,
-                         const std::vector<double> &weights,
+  bool addBSplineSurface(int &tag, const std::vector<int> &pointTags,
+                         const int numPointsU, const int degreeU,
+                         const int degreeV, const std::vector<double> &weights,
                          const std::vector<double> &knotsU,
                          const std::vector<double> &knotsV,
                          const std::vector<int> &multiplicitiesU,
@@ -569,8 +562,7 @@ public:
     return _error("add Bezier surface");
   }
   bool addTrimmedSurface(int &tag, int surfaceTag,
-                         const std::vector<int> &wireTags,
-                         bool wire3D)
+                         const std::vector<int> &wireTags, bool wire3D)
   {
     return _error("add trimmed surface");
   }
@@ -642,7 +634,8 @@ public:
     return _error("revolve");
   }
   bool addPipe(const std::vector<std::pair<int, int> > &inDimTags, int wireTag,
-               std::vector<std::pair<int, int> > &outDimTags)
+               std::vector<std::pair<int, int> > &outDimTags,
+               const std::string &trihedron = "")
   {
     return _error("add pipe");
   }

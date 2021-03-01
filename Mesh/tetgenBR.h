@@ -1428,17 +1428,13 @@ public:
 
   void freememory()
   {
-    if(bgm != NULL) {
-      delete bgm;
-    }
+    if(bgm != NULL) { delete bgm; }
 
     if(points != (memorypool *)NULL) {
       delete points;
       delete[] dummypoint;
     }
-    if(tetrahedrons != (memorypool *)NULL) {
-      delete tetrahedrons;
-    }
+    if(tetrahedrons != (memorypool *)NULL) { delete tetrahedrons; }
     if(subfaces != (memorypool *)NULL) {
       delete subfaces;
       delete subsegs;
@@ -1448,21 +1444,11 @@ public:
       delete tet2subpool;
     }
 
-    if(badtetrahedrons) {
-      delete badtetrahedrons;
-    }
-    if(badsubfacs) {
-      delete badsubfacs;
-    }
-    if(badsubsegs) {
-      delete badsubsegs;
-    }
-    if(encseglist) {
-      delete encseglist;
-    }
-    if(encshlist) {
-      delete encshlist;
-    }
+    if(badtetrahedrons) { delete badtetrahedrons; }
+    if(badsubfacs) { delete badsubfacs; }
+    if(badsubsegs) { delete badsubsegs; }
+    if(encseglist) { delete encseglist; }
+    if(encshlist) { delete encshlist; }
 
     if(flippool != NULL) {
       delete flippool;
@@ -1497,13 +1483,9 @@ public:
       delete[] facetverticeslist;
     }
 
-    if(segmentendpointslist != NULL) {
-      delete[] segmentendpointslist;
-    }
+    if(segmentendpointslist != NULL) { delete[] segmentendpointslist; }
 
-    if(highordertable != NULL) {
-      delete[] highordertable;
-    }
+    if(highordertable != NULL) { delete[] highordertable; }
 
     initializetetgenmesh();
   }
@@ -2258,9 +2240,7 @@ inline void tetgenmesh::tsbond(triface &t, face &s)
     // Allocate space for this tet.
     (t).tet[9] = (tetrahedron)tet2subpool->alloc();
     // Initialize.
-    for(int i = 0; i < 4; i++) {
-      ((shellface *)(t).tet[9])[i] = NULL;
-    }
+    for(int i = 0; i < 4; i++) { ((shellface *)(t).tet[9])[i] = NULL; }
   }
   // Bond t <== s.
   ((shellface *)(t).tet[9])[(t).ver & 3] =
@@ -2296,13 +2276,11 @@ inline void tetgenmesh::tspivot(triface &t, face &s)
 inline void tetgenmesh::stpivot(face &s, triface &t)
 {
   decode((tetrahedron)s.sh[9 + (s.shver & 1)], t);
-  if((t).tet == NULL) {
-    return;
-  }
+  if((t).tet == NULL) { return; }
   (t).ver = stpivottbl[t.ver][s.shver];
 }
 
-  // Quickly check if this subface is attached to a tetrahedron.
+// Quickly check if this subface is attached to a tetrahedron.
 
 #define isshtet(s) ((s).sh[9 + ((s).shver & 1)])
 
@@ -2310,9 +2288,7 @@ inline void tetgenmesh::stpivot(face &s, triface &t)
 
 inline void tetgenmesh::tsdissolve(triface &t)
 {
-  if((t).tet[9] != NULL) {
-    ((shellface *)(t).tet[9])[(t).ver & 3] = NULL;
-  }
+  if((t).tet[9] != NULL) { ((shellface *)(t).tet[9])[(t).ver & 3] = NULL; }
 }
 
 // stdissolve() dissolve a bond (from the subface side).
@@ -2354,7 +2330,7 @@ inline void tetgenmesh::sspivot(face &s, face &edge)
   sdecode((shellface)s.sh[6 + (s.shver >> 1)], edge);
 }
 
-  // Quickly check if the edge is a subsegment.
+// Quickly check if the edge is a subsegment.
 
 #define isshsubseg(s) ((s).sh[6 + ((s).shver >> 1)])
 
@@ -2370,9 +2346,7 @@ inline void tetgenmesh::tssbond1(triface &t, face &s)
     // Allocate space for this tet.
     (t).tet[8] = (tetrahedron)tet2segpool->alloc();
     // Initialization.
-    for(int i = 0; i < 6; i++) {
-      ((shellface *)(t).tet[8])[i] = NULL;
-    }
+    for(int i = 0; i < 6; i++) { ((shellface *)(t).tet[8])[i] = NULL; }
   }
   ((shellface *)(t).tet[8])[ver2edge[(t).ver]] = sencode((s));
 }
@@ -2404,7 +2378,7 @@ inline void tetgenmesh::tsspivot1(triface &t, face &s)
   }
 }
 
-  // Quickly check whether 't' is a segment or not.
+// Quickly check whether 't' is a segment or not.
 
 #define issubseg(t) ((t).tet[8] && ((t).tet[8])[ver2edge[(t).ver]])
 
@@ -2597,9 +2571,7 @@ inline bool tetgenmesh::issteinerpoint(point pt)
 inline void tetgenmesh::point2tetorg(point pa, triface &searchtet)
 {
   decode(point2tet(pa), searchtet);
-  if((point)searchtet.tet[4] == pa) {
-    searchtet.ver = 11;
-  }
+  if((point)searchtet.tet[4] == pa) { searchtet.ver = 11; }
   else if((point)searchtet.tet[5] == pa) {
     searchtet.ver = 3;
   }
@@ -2616,9 +2588,7 @@ inline void tetgenmesh::point2tetorg(point pa, triface &searchtet)
 inline void tetgenmesh::point2shorg(point pa, face &searchsh)
 {
   sdecode(point2sh(pa), searchsh);
-  if((point)searchsh.sh[3] == pa) {
-    searchsh.shver = 0;
-  }
+  if((point)searchsh.sh[3] == pa) { searchsh.shver = 0; }
   else if((point)searchsh.sh[4] == pa) {
     searchsh.shver = (searchsh.sh[5] != NULL ? 2 : 1);
   }

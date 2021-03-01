@@ -513,7 +513,7 @@ double computeBndDist(MElement *element, int distanceDefinition,
     int clId = elbasis.getClosureId(iEdge, 1);
     const std::vector<int> &closure = elbasis.closures[clId];
     std::vector<SPoint3> xyz;
-    GEdge *edge = NULL;
+    GEdge *edge = nullptr;
     std::vector<MVertex *> vertices(closure.size());
     for(size_t i = 0; i < closure.size(); ++i) {
       MVertex *v = element->getVertex(closure[i]);

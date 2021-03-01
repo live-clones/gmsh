@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,7 +16,8 @@ static std::string physicalName(GModel *m, int dim, int num)
     char tmp[256];
     sprintf(tmp, "%s%d",
             (dim == 3) ? "PhysicalVolume" :
-                         (dim == 2) ? "PhysicalSurface" : "PhysicalLine",
+            (dim == 2) ? "PhysicalSurface" :
+                         "PhysicalLine",
             num);
     name = tmp;
   }
@@ -50,12 +51,12 @@ int GModel::writeSU2(const std::string &name, bool saveAll,
   // node ordering is the same as VTK
   int nelem = 0;
   if(ndime == 2) {
-    for(fiter it = firstFace(); it != lastFace(); it++)
+    for(auto it = firstFace(); it != lastFace(); it++)
       if(saveAll || (*it)->physicals.size())
         nelem += (*it)->getNumMeshElements();
   }
   else {
-    for(riter it = firstRegion(); it != lastRegion(); it++)
+    for(auto it = firstRegion(); it != lastRegion(); it++)
       if(saveAll || (*it)->physicals.size())
         nelem += (*it)->getNumMeshElements();
   }
@@ -67,13 +68,13 @@ int GModel::writeSU2(const std::string &name, bool saveAll,
   fprintf(fp, "NELEM= %d\n", nelem);
   int num = 0;
   if(ndime == 2) {
-    for(fiter it = firstFace(); it != lastFace(); it++)
+    for(auto it = firstFace(); it != lastFace(); it++)
       if(saveAll || (*it)->physicals.size())
         for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++)
           (*it)->getMeshElement(i)->writeSU2(fp, num++);
   }
   else {
-    for(riter it = firstRegion(); it != lastRegion(); it++)
+    for(auto it = firstRegion(); it != lastRegion(); it++)
       if(saveAll || (*it)->physicals.size())
         for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++)
           (*it)->getMeshElement(i)->writeSU2(fp, num++);
@@ -93,9 +94,8 @@ int GModel::writeSU2(const std::string &name, bool saveAll,
   int nmark = groups[ndime - 1].size();
   if(nmark) {
     fprintf(fp, "NMARK= %d\n", nmark);
-    for(std::map<int, std::vector<GEntity *> >::iterator it =
-          groups[ndime - 1].begin();
-        it != groups[ndime - 1].end(); it++) {
+    for(auto it = groups[ndime - 1].begin(); it != groups[ndime - 1].end();
+        it++) {
       std::vector<GEntity *> &entities = it->second;
       int n = 0;
       for(std::size_t i = 0; i < entities.size(); i++)

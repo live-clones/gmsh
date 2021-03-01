@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,7 +16,7 @@ static double max_surf_curvature(const GEdge *ge, double u)
 {
   double val = 0;
   std::vector<GFace *> faces = ge->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
   while(it != faces.end()) {
     SPoint2 par = ge->reparamOnFace((*it), u, 1);
     double cc = (*it)->curvatureMax(par);
@@ -30,8 +30,7 @@ static double max_edge_curvature(const GVertex *gv)
 {
   double val = 0;
   std::vector<GEdge *> const &l_edges = gv->edges();
-  for(std::vector<GEdge *>::const_iterator ite = l_edges.begin();
-      ite != l_edges.end(); ++ite) {
+  for(auto ite = l_edges.begin(); ite != l_edges.end(); ++ite) {
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
     double cc;
@@ -67,8 +66,12 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
     Crv = gf->curvature(SPoint2(U, V));
   } break;
   }
-  double lc =
-    Crv > 0 ? 2 * M_PI / Crv / CTX::instance()->mesh.minElementsPerTwoPi : MAX_LC;
+  double ne = CTX::instance()->mesh.lcFromCurvature;
+  if(ne < 1) {
+    Msg::Warning("Invalid number of elements per 2*pi curvature %g", ne);
+    ne = 1;
+  }
+  double lc = Crv > 0 ? 2 * M_PI / Crv / ne : MAX_LC;
   return lc;
 }
 
@@ -76,8 +79,12 @@ SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
 {
   SVector3 t = ge->firstDer(u);
   t.normalize();
-  double l_t =
-    (2 * M_PI) / (fabs(ge->curvature(u)) * CTX::instance()->mesh.minElementsPerTwoPi);
+  double ne = CTX::instance()->mesh.lcFromCurvature;
+  if(ne < 1) {
+    Msg::Warning("Invalid number of elements per 2*pi curvature %g", ne);
+    ne = 1;
+  }
+  double l_t = (2 * M_PI) / (fabs(ge->curvature(u)) * ne);
   double l_n = 1.e12;
   return buildMetricTangentToCurve(t, l_t, l_n);
 }
@@ -87,7 +94,7 @@ static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u,
 {
   SMetric3 mesh_size(1.e-12);
   std::vector<GFace *> faces = ge->faces();
-  std::vector<GFace *>::iterator it = faces.begin();
+  auto it = faces.begin();
   // we choose the metric eigenvectors to be the ones
   // related to the edge ...
   SMetric3 curvMetric = max_edge_curvature_metric(ge, u);
@@ -110,7 +117,7 @@ static SMetric3 metric_based_on_surface_curvature(const GVertex *gv,
 
 SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
 {
-  bool iso_surf = CTX::instance()->mesh.lcFromCurvature == 2;
+  bool iso_surf = CTX::instance()->mesh.lcFromCurvatureIso;
 
   switch(ge->dim()) {
   case 0:
@@ -213,12 +220,12 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
 
   // lc from curvature
   double l2 = MAX_LC;
-  if(ge && CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
+  if(ge && CTX::instance()->mesh.lcFromCurvature > 0 && ge->dim() < 3)
     l2 = LC_MVertex_CURV(ge, U, V);
 
   // lc from fields
   double l3 = MAX_LC;
-  if(ge){
+  if(ge) {
     FieldManager *fields = ge->model()->getFields();
     if(fields->getBackgroundField() > 0) {
       Field *f = fields->get(fields->getBackgroundField());
@@ -230,7 +237,8 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
   double l4 = ge ? ge->getMeshSize() : MAX_LC;
 
   double l5 = (ge && ge->dim() == 1) ?
-    ((GEdge*)ge)->prescribedMeshSizeAtParam(U) : MAX_LC;
+                ((GEdge *)ge)->prescribedMeshSizeAtParam(U) :
+                MAX_LC;
 
   // lc from callback
   double l6 = MAX_LC;
@@ -241,8 +249,8 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
   }
 
   // take the minimum
-  double lc = std::min(std::min(std::min(std::min(std::min(l1, l2), l3), l4),
-                                l5), l6);
+  double lc =
+    std::min(std::min(std::min(std::min(std::min(l1, l2), l3), l4), l5), l6);
 
   return lc;
 }
@@ -251,8 +259,7 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y,
                     double Z)
 {
-  if(!ge)
-    Msg::Warning("No entity in background mesh size evaluation");
+  if(!ge) Msg::Warning("No entity in background mesh size evaluation");
 
   // default size to size of model
   double lc = CTX::instance()->lc;
@@ -311,9 +318,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
     Field *f = fields->get(fields->getBackgroundField());
     if(f) {
       SMetric3 l4;
-      if(!f->isotropic()) {
-        (*f)(X, Y, Z, l4, ge);
-      }
+      if(!f->isotropic()) { (*f)(X, Y, Z, l4, ge); }
       else {
         const double L = (*f)(X, Y, Z, ge);
         l4 = SMetric3(1 / (L * L));
@@ -323,12 +328,13 @@ SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
   }
 
   // intersect with metrics from curvature if applicable
-  SMetric3 m = (CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3) ?
+  SMetric3 m = (CTX::instance()->mesh.lcFromCurvature > 0 && ge->dim() < 3) ?
                  intersection(m1, LC_MVertex_CURV_ANISO(ge, U, V)) :
                  m1;
 
   // apply global size factor
-  if(CTX::instance()->mesh.lcFactor != 0 && CTX::instance()->mesh.lcFactor != 1.)
+  if(CTX::instance()->mesh.lcFactor != 0 &&
+     CTX::instance()->mesh.lcFactor != 1.)
     m *= 1. / (CTX::instance()->mesh.lcFactor * CTX::instance()->mesh.lcFactor);
 
   return m;
@@ -348,24 +354,26 @@ SMetric3 max_edge_curvature_metric(const GVertex *gv)
 {
   SMetric3 val(1.e-12);
   std::vector<GEdge *> const &l_edges = gv->edges();
-  for(std::vector<GEdge *>::const_iterator ite = l_edges.begin();
-      ite != l_edges.end(); ++ite) {
+  for(auto ite = l_edges.begin(); ite != l_edges.end(); ++ite) {
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
     SMetric3 cc;
+    double ne = CTX::instance()->mesh.lcFromCurvature;
+    if(ne < 1) {
+      Msg::Warning("Invalid number of elements per 2*pi curvature %g", ne);
+      ne = 1;
+    }
     if(gv == _myGEdge->getBeginVertex()) {
       SVector3 t = _myGEdge->firstDer(range.low());
       t.normalize();
-      double l_t = ((2 * M_PI) / (fabs(_myGEdge->curvature(range.low())) *
-                                  CTX::instance()->mesh.minElementsPerTwoPi));
+      double l_t = 2 * M_PI / (fabs(_myGEdge->curvature(range.low())) * ne);
       double l_n = 1.e12;
       cc = buildMetricTangentToCurve(t, l_t, l_n);
     }
     else {
       SVector3 t = _myGEdge->firstDer(range.high());
       t.normalize();
-      double l_t = ((2 * M_PI) / (fabs(_myGEdge->curvature(range.high())) *
-                                  CTX::instance()->mesh.minElementsPerTwoPi));
+      double l_t = 2 * M_PI / (fabs(_myGEdge->curvature(range.high())) * ne);
       double l_n = 1.e12;
       cc = buildMetricTangentToCurve(t, l_t, l_n);
     }
@@ -385,10 +393,13 @@ SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v,
   cmax = gf->curvatures(SPoint2(u, v), dirMax, dirMin, cmax, cmin);
   if(cmin == 0) cmin = 1.e-12;
   if(cmax == 0) cmax = 1.e-12;
-  double lambda1 =
-    ((2 * M_PI) / (fabs(cmin) * CTX::instance()->mesh.minElementsPerTwoPi));
-  double lambda2 =
-    ((2 * M_PI) / (fabs(cmax) * CTX::instance()->mesh.minElementsPerTwoPi));
+  double ne = CTX::instance()->mesh.lcFromCurvature;
+  if(ne < 1) {
+    Msg::Warning("Invalid number of elements per 2*pi curvature %g", ne);
+    ne = 1;
+  }
+  double lambda1 = 2 * M_PI / (fabs(cmin) * ne);
+  double lambda2 = 2 * M_PI / (fabs(cmax) * ne);
   SVector3 Z = crossprod(dirMax, dirMin);
   if(surface_isotropic) lambda2 = lambda1 = std::min(lambda2, lambda1);
   dirMin.normalize();

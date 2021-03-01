@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -81,7 +81,8 @@ bool PView::readPOS(const std::string &fileName, int fileIndex)
   return true;
 }
 
-bool PView::readMSH(const std::string &fileName, int fileIndex, int partitionToRead)
+bool PView::readMSH(const std::string &fileName, int fileIndex,
+                    int partitionToRead)
 {
   FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp) {
@@ -276,12 +277,13 @@ bool PView::readMSH(const std::string &fileName, int fileIndex, int partitionToR
           }
         }
         if(partitionToRead == -1 || partitionToRead == partition) {
-          // if default (no particular partition requested from MergeFile -> -1)  or
-          // if current partition corresponds to the requested partition, read the data
+          // if default (no particular partition requested from MergeFile -> -1)
+          // or if current partition corresponds to the requested partition,
+          // read the data
           if(numEnt > 0) {
             // either get existing viewData, or create new one
             PView *p = getViewByName(viewName, timeStep, partition);
-            PViewDataGModel *d = 0;
+            PViewDataGModel *d = nullptr;
             if(p) d = dynamic_cast<PViewDataGModel *>(p->getData());
             bool create = d ? false : true;
             if(create) d = new PViewDataGModel(type);
@@ -302,8 +304,9 @@ bool PView::readMSH(const std::string &fileName, int fileIndex, int partitionToR
           }
         }
         else if(blocksize > 0 && partitionToRead != partition) {
-          // if current partition does not correspond to the requested partition and
-          // if its blocksise has been read (5th integer in the header), jump over it
+          // if current partition does not correspond to the requested partition
+          // and if its blocksise has been read (5th integer in the header),
+          // jump over it
           fseek(fp, blocksize, SEEK_CUR);
         }
       }
@@ -328,7 +331,7 @@ bool PView::readMED(const std::string &fileName, int fileIndex)
 
   for(std::size_t index = 0; index < fieldNames.size(); index++) {
     if(fileIndex < 0 || (int)index == fileIndex) {
-      PViewDataGModel *d = 0;
+      PViewDataGModel *d = nullptr;
       // we use the filename as a kind of "partition" indicator, allowing to
       // complete datasets provided in separate files (e.g. coming from DDM)
       PView *p = getViewByName(fieldNames[index], -1, -1, fileName);
@@ -378,15 +381,9 @@ bool PView::write(const std::string &fileName, int format, bool append)
 
   bool ret;
   switch(format) {
-  case 0:
-    ret = _data->writePOS(fileName, false, false, append);
-    break; // ASCII
-  case 1:
-    ret = _data->writePOS(fileName, true, false, append);
-    break; // binary
-  case 2:
-    ret = _data->writePOS(fileName, false, true, append);
-    break; // parsed
+  case 0: ret = _data->writePOS(fileName, false, false, append); break; // ASCII
+  case 1: ret = _data->writePOS(fileName, true, false, append); break; // binary
+  case 2: ret = _data->writePOS(fileName, false, true, append); break; // parsed
   case 3: ret = _data->writeSTL(fileName); break;
   case 4: ret = _data->writeTXT(fileName); break;
   case 5:
@@ -444,6 +441,7 @@ bool PView::writeAdapt(const std::string &guifileName, int useDefaultName,
 
 void PView::sendToServer(const std::string &name)
 {
-  Msg::Info("Sending View[%d] to ONELAB as parameter '%s'", _index, name.c_str());
+  Msg::Info("Sending View[%d] to ONELAB as parameter '%s'", _index,
+            name.c_str());
   _data->sendToServer(name);
 }

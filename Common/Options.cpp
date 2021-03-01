@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -63,7 +63,7 @@
 bool StringOption(int action, const char *category, int num, const char *name,
                   std::string &val, bool warnIfUnknown)
 {
-  StringXString *s = 0;
+  StringXString *s = nullptr;
   if(!strcmp(category, "General"))
     s = GeneralOptions_String;
   else if(!strcmp(category, "Geometry"))
@@ -121,7 +121,7 @@ static void SetStringOptionsGUI(int num, StringXString s[])
 
 static void PrintStringOptions(int num, int level, int diff, int help,
                                StringXString s[], const char *prefix,
-                               FILE *file, std::vector<std::string> *vec = 0)
+                               FILE *file, std::vector<std::string> *vec = nullptr)
 {
   int i = 0;
   while(s[i].str) {
@@ -185,7 +185,7 @@ static void PrintStringOptionsDoc(StringXString s[], const char *prefix,
 bool NumberOption(int action, const char *category, int num, const char *name,
                   double &val, bool warnIfUnknown)
 {
-  StringXNumber *s = 0;
+  StringXNumber *s = nullptr;
   if(!strcmp(category, "General"))
     s = GeneralOptions_Number;
   else if(!strcmp(category, "Geometry"))
@@ -244,7 +244,7 @@ static void SetNumberOptionsGUI(int num, StringXNumber s[])
 
 static void PrintNumberOptions(int num, int level, int diff, int help,
                                StringXNumber s[], const char *prefix,
-                               FILE *file, std::vector<std::string> *vec = 0)
+                               FILE *file, std::vector<std::string> *vec = nullptr)
 {
   int i = 0;
   char tmp[1024];
@@ -287,7 +287,7 @@ static void PrintNumberOptionsDoc(StringXNumber s[], const char *prefix,
 bool ColorOption(int action, const char *category, int num, const char *name,
                  unsigned int &val, bool warnIfUnknown)
 {
-  StringXColor *s = 0;
+  StringXColor *s = nullptr;
   if(!strcmp(category, "General"))
     s = GeneralOptions_Color;
   else if(!strcmp(category, "Geometry"))
@@ -543,7 +543,7 @@ void InitOptionsGUI(int num)
 }
 
 static void PrintOptionCategory(int level, int diff, int help, const char *cat,
-                                FILE *file, std::vector<std::string> *vec = 0)
+                                FILE *file, std::vector<std::string> *vec = nullptr)
 {
   if(diff || !help || !(level & GMSH_FULLRC)) return;
   if(file) {
@@ -650,7 +650,7 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
     }
   }
   else
-    file = 0;
+    file = nullptr;
 
   if((level & GMSH_SESSIONRC) && file) {
     fprintf(file, "// Gmsh Session File\n");
@@ -902,7 +902,7 @@ void PrintOptionsDoc()
       return;
     }
     fprintf(file, "%s@ftable @code\n", warn);
-    for(std::map<std::string, GMSH_Plugin *>::iterator it =
+    for(auto it =
           PluginManager::instance()->begin();
         it != PluginManager::instance()->end(); ++it) {
       GMSH_Plugin *p = it->second;
@@ -948,7 +948,7 @@ void PrintOptionsDoc()
     }
     fprintf(file, "%s@ftable @code\n", warn);
     FieldManager &fields = *GModel::current()->getFields();
-    for(std::map<std::string, FieldFactory *>::iterator it =
+    for(auto it =
           fields.mapTypeName.begin(); it != fields.mapTypeName.end(); it++) {
       fprintf(file, "@item %s\n", it->first.c_str());
       Field *f = (*it->second)();
@@ -958,7 +958,7 @@ void PrintOptionsDoc()
       if(!f->options.empty()) {
         fprintf(file, "Options:@*\n");
         fprintf(file, "@table @code\n");
-        for(std::map<std::string, FieldOption *>::iterator it2 =
+        for(auto it2 =
               f->options.begin(); it2 != f->options.end(); it2++) {
           if(it2->second->isDeprecated()) continue;
           fprintf(file, "@item %s\n", it2->first.c_str());
@@ -974,7 +974,7 @@ void PrintOptionsDoc()
       if(!f->callbacks.empty()) {
         fprintf(file, "Actions:@*\n");
         fprintf(file, "@table @code\n");
-        for(std::map<std::string, FieldCallback *>::iterator it2 =
+        for(auto it2 =
               f->callbacks.begin();
             it2 != f->callbacks.end(); it2++) {
           fprintf(file, "@item %s\n", it2->first.c_str());
@@ -3527,7 +3527,7 @@ double opt_general_gamepad(OPT_ARGS_NUM)
     else {
       if(CTX::instance()->gamepad) {
         delete CTX::instance()->gamepad;
-        CTX::instance()->gamepad = 0;
+        CTX::instance()->gamepad = nullptr;
       }
     }
   }
@@ -4163,7 +4163,7 @@ double opt_geometry_transform(OPT_ARGS_NUM)
       }
       else {
         drawTransform *tr = gl->getDrawContext()->getTransform();
-        gl->getDrawContext()->setTransform(0);
+        gl->getDrawContext()->setTransform(nullptr);
         if(tr) delete tr;
       }
     }
@@ -4384,48 +4384,48 @@ double opt_geometry_volumes(OPT_ARGS_NUM)
   return CTX::instance()->geom.volumes;
 }
 
-double opt_geometry_points_num(OPT_ARGS_NUM)
+double opt_geometry_point_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->geom.pointsNum = (int)val;
+  if(action & GMSH_SET) CTX::instance()->geom.pointLabels = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->geo.butt[4]->value(
-      CTX::instance()->geom.pointsNum);
+      CTX::instance()->geom.pointLabels);
 #endif
-  return CTX::instance()->geom.pointsNum;
+  return CTX::instance()->geom.pointLabels;
 }
 
-double opt_geometry_curves_num(OPT_ARGS_NUM)
+double opt_geometry_curve_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->geom.curvesNum = (int)val;
+  if(action & GMSH_SET) CTX::instance()->geom.curveLabels = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->geo.butt[5]->value(
-      CTX::instance()->geom.curvesNum);
+      CTX::instance()->geom.curveLabels);
 #endif
-  return CTX::instance()->geom.curvesNum;
+  return CTX::instance()->geom.curveLabels;
 }
 
-double opt_geometry_surfaces_num(OPT_ARGS_NUM)
+double opt_geometry_surface_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->geom.surfacesNum = (int)val;
+  if(action & GMSH_SET) CTX::instance()->geom.surfaceLabels = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->geo.butt[6]->value(
-      CTX::instance()->geom.surfacesNum);
+      CTX::instance()->geom.surfaceLabels);
 #endif
-  return CTX::instance()->geom.surfacesNum;
+  return CTX::instance()->geom.surfaceLabels;
 }
 
-double opt_geometry_volumes_num(OPT_ARGS_NUM)
+double opt_geometry_volume_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->geom.volumesNum = (int)val;
+  if(action & GMSH_SET) CTX::instance()->geom.volumeLabels = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->geo.butt[7]->value(
-      CTX::instance()->geom.volumesNum);
+      CTX::instance()->geom.volumeLabels);
 #endif
-  return CTX::instance()->geom.volumesNum;
+  return CTX::instance()->geom.volumeLabels;
 }
 
 double opt_geometry_label_type(OPT_ARGS_NUM)
@@ -4433,7 +4433,7 @@ double opt_geometry_label_type(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->geom.labelType = (int)val;
     if(CTX::instance()->geom.labelType < 0 ||
-       CTX::instance()->geom.labelType > 2)
+       CTX::instance()->geom.labelType > 4)
       CTX::instance()->geom.labelType = 0;
   }
 #if defined(HAVE_FLTK)
@@ -5019,12 +5019,22 @@ double opt_mesh_lc_from_curvature(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
-    FlGui::instance()->options->mesh.butt[1]->value(
-      CTX::instance()->mesh.lcFromCurvature ? 1 : 0);
-    FlGui::instance()->options->activate("mesh_curvature");
+    FlGui::instance()->options->mesh.value[1]->value(
+      CTX::instance()->mesh.lcFromCurvature);
   }
 #endif
   return CTX::instance()->mesh.lcFromCurvature;
+}
+
+double opt_mesh_lc_from_curvature_iso(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.lcFromCurvatureIso)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.lcFromCurvatureIso = (int)val;
+  }
+  return CTX::instance()->mesh.lcFromCurvatureIso;
 }
 
 double opt_mesh_lc_from_points(OPT_ARGS_NUM)
@@ -5220,15 +5230,15 @@ double opt_mesh_first_node_tag(OPT_ARGS_NUM)
   return CTX::instance()->mesh.firstNodeTag;
 }
 
-double opt_mesh_points(OPT_ARGS_NUM)
+double opt_mesh_nodes(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.points = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.nodes = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[6]->value(
-      CTX::instance()->mesh.points);
+      CTX::instance()->mesh.nodes);
 #endif
-  return CTX::instance()->mesh.points;
+  return CTX::instance()->mesh.nodes;
 }
 
 double opt_mesh_lines(OPT_ARGS_NUM)
@@ -5379,131 +5389,131 @@ double opt_mesh_trihedra(OPT_ARGS_NUM)
   return CTX::instance()->mesh.trihedra;
 }
 
-double opt_mesh_surfaces_edges(OPT_ARGS_NUM)
+double opt_mesh_surface_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX::instance()->mesh.surfacesEdges != val)
+    if(CTX::instance()->mesh.surfaceEdges != val)
       CTX::instance()->mesh.changed |= ENT_SURFACE;
-    CTX::instance()->mesh.surfacesEdges = (int)val;
+    CTX::instance()->mesh.surfaceEdges = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[8]->value(
-      CTX::instance()->mesh.surfacesEdges);
+      CTX::instance()->mesh.surfaceEdges);
 #endif
-  return CTX::instance()->mesh.surfacesEdges;
+  return CTX::instance()->mesh.surfaceEdges;
 }
 
-double opt_mesh_surfaces_faces(OPT_ARGS_NUM)
+double opt_mesh_surface_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX::instance()->mesh.surfacesFaces != val)
+    if(CTX::instance()->mesh.surfaceFaces != val)
       CTX::instance()->mesh.changed |= ENT_SURFACE;
-    CTX::instance()->mesh.surfacesFaces = (int)val;
+    CTX::instance()->mesh.surfaceFaces = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[9]->value(
-      CTX::instance()->mesh.surfacesFaces);
+      CTX::instance()->mesh.surfaceFaces);
 #endif
-  return CTX::instance()->mesh.surfacesFaces;
+  return CTX::instance()->mesh.surfaceFaces;
 }
 
-double opt_mesh_volumes_edges(OPT_ARGS_NUM)
+double opt_mesh_volume_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX::instance()->mesh.volumesEdges != val)
+    if(CTX::instance()->mesh.volumeEdges != val)
       CTX::instance()->mesh.changed |= ENT_VOLUME;
-    CTX::instance()->mesh.volumesEdges = (int)val;
+    CTX::instance()->mesh.volumeEdges = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[10]->value(
-      CTX::instance()->mesh.volumesEdges);
+      CTX::instance()->mesh.volumeEdges);
 #endif
-  return CTX::instance()->mesh.volumesEdges;
+  return CTX::instance()->mesh.volumeEdges;
 }
 
-double opt_mesh_volumes_faces(OPT_ARGS_NUM)
+double opt_mesh_volume_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(CTX::instance()->mesh.volumesFaces != val)
+    if(CTX::instance()->mesh.volumeFaces != val)
       CTX::instance()->mesh.changed |= ENT_VOLUME;
-    CTX::instance()->mesh.volumesFaces = (int)val;
+    CTX::instance()->mesh.volumeFaces = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[11]->value(
-      CTX::instance()->mesh.volumesFaces);
+      CTX::instance()->mesh.volumeFaces);
 #endif
-  return CTX::instance()->mesh.volumesFaces;
+  return CTX::instance()->mesh.volumeFaces;
 }
 
-double opt_mesh_points_num(OPT_ARGS_NUM)
+double opt_mesh_node_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.pointsNum = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.nodeLabels = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[12]->value(
-      CTX::instance()->mesh.pointsNum);
+      CTX::instance()->mesh.nodeLabels);
 #endif
-  return CTX::instance()->mesh.pointsNum;
+  return CTX::instance()->mesh.nodeLabels;
 }
 
-double opt_mesh_lines_num(OPT_ARGS_NUM)
+double opt_mesh_line_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.linesNum = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.lineLabels = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[13]->value(
-      CTX::instance()->mesh.linesNum);
+      CTX::instance()->mesh.lineLabels);
 #endif
-  return CTX::instance()->mesh.linesNum;
+  return CTX::instance()->mesh.lineLabels;
 }
 
-double opt_mesh_surfaces_num(OPT_ARGS_NUM)
+double opt_mesh_surface_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.surfacesNum = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.surfaceLabels = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[14]->value(
-      CTX::instance()->mesh.surfacesNum);
+      CTX::instance()->mesh.surfaceLabels);
 #endif
-  return CTX::instance()->mesh.surfacesNum;
+  return CTX::instance()->mesh.surfaceLabels;
 }
 
-double opt_mesh_volumes_num(OPT_ARGS_NUM)
+double opt_mesh_volume_labels(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.volumesNum = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.volumeLabels = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[15]->value(
-      CTX::instance()->mesh.volumesNum);
+      CTX::instance()->mesh.volumeLabels);
 #endif
-  return CTX::instance()->mesh.volumesNum;
+  return CTX::instance()->mesh.volumeLabels;
 }
 
-double opt_mesh_point_size(OPT_ARGS_NUM)
+double opt_mesh_node_size(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.pointSize = val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.nodeSize = val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.value[10]->value(
-      CTX::instance()->mesh.pointSize);
+      CTX::instance()->mesh.nodeSize);
 #endif
-  return CTX::instance()->mesh.pointSize;
+  return CTX::instance()->mesh.nodeSize;
 }
 
-double opt_mesh_point_type(OPT_ARGS_NUM)
+double opt_mesh_node_type(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) { CTX::instance()->mesh.pointType = (int)val; }
+  if(action & GMSH_SET) { CTX::instance()->mesh.nodeType = (int)val; }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->mesh.choice[0]->value(
-      CTX::instance()->mesh.pointType ? 1 : 0);
+      CTX::instance()->mesh.nodeType ? 1 : 0);
   }
 #endif
-  return CTX::instance()->mesh.pointType;
+  return CTX::instance()->mesh.nodeType;
 }
 
 double opt_mesh_line_width(OPT_ARGS_NUM)
@@ -5753,14 +5763,14 @@ double opt_mesh_binary(OPT_ARGS_NUM)
   return CTX::instance()->mesh.binary;
 }
 
-double opt_mesh_boundary_layer_fan_points(OPT_ARGS_NUM)
+double opt_mesh_boundary_layer_fan_elements(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    int fanPoints = (int)val;
-    if(fanPoints < 0) fanPoints = 0;
-    CTX::instance()->mesh.boundaryLayerFanPoints = fanPoints;
+    int n = (int)val;
+    if(n < 0) n = 0;
+    CTX::instance()->mesh.boundaryLayerFanElements = n;
   }
-  return CTX::instance()->mesh.boundaryLayerFanPoints;
+  return CTX::instance()->mesh.boundaryLayerFanElements;
 }
 
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM)
@@ -6030,31 +6040,15 @@ double opt_mesh_mesh_only_empty(OPT_ARGS_NUM)
   return CTX::instance()->mesh.meshOnlyEmpty;
 }
 
-double opt_mesh_min_circ_points(OPT_ARGS_NUM)
+double opt_mesh_min_circle_nodes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(!(action & GMSH_SET_DEFAULT) &&
-       (int)val != CTX::instance()->mesh.minCircPoints)
+       (int)val != CTX::instance()->mesh.minCircleNodes)
       Msg::SetOnelabChanged(2);
-    CTX::instance()->mesh.minCircPoints = (int)val;
+    CTX::instance()->mesh.minCircleNodes = (int)val;
   }
-  return CTX::instance()->mesh.minCircPoints;
-}
-
-double opt_mesh_min_elements_2pi(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    if(!(action & GMSH_SET_DEFAULT) &&
-       (int)val != CTX::instance()->mesh.minElementsPerTwoPi)
-      Msg::SetOnelabChanged(2);
-    CTX::instance()->mesh.minElementsPerTwoPi = (int)val;
-  }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->mesh.value[1]->value(
-      CTX::instance()->mesh.minElementsPerTwoPi);
-#endif
-  return CTX::instance()->mesh.minElementsPerTwoPi;
+  return CTX::instance()->mesh.minCircleNodes;
 }
 
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM)
@@ -6063,10 +6057,10 @@ double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM)
   return CTX::instance()->mesh.allowSwapEdgeAngle;
 }
 
-double opt_mesh_min_curv_points(OPT_ARGS_NUM)
+double opt_mesh_min_curve_nodes(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.minCurvPoints = (int)val;
-  return CTX::instance()->mesh.minCurvPoints;
+  if(action & GMSH_SET) CTX::instance()->mesh.minCurveNodes = (int)val;
+  return CTX::instance()->mesh.minCurveNodes;
 }
 
 double opt_mesh_order(OPT_ARGS_NUM)

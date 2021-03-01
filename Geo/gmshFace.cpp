@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,14 +32,11 @@ bool gmshFace::degenerate(int dim) const
   std::vector<GEdge *> const &eds = edges();
   int numNonDegenerate = 0;
   std::set<GEdge *> t;
-  for(std::vector<GEdge *>::const_iterator it = eds.begin(); it != eds.end();
-      ++it) {
+  for(auto it = eds.begin(); it != eds.end(); ++it) {
     GEdge *e = *it;
     GVertex *start = e->getBeginVertex();
     GVertex *next = e->getEndVertex();
-    if(start != next && t.find(e) == t.end()) {
-      numNonDegenerate++;
-    }
+    if(start != next && t.find(e) == t.end()) { numNonDegenerate++; }
     t.insert(e);
   }
   //  printf("%d \n",numNonDegenerate);
@@ -81,7 +78,7 @@ void gmshFace::resetNativePtr(Surface *s)
   std::vector<GEdge *> l_wire;
   l_wire.reserve(eds.size());
 
-  GVertex *first = 0;
+  GVertex *first = nullptr;
   for(std::size_t i = 0; i < eds.size(); i++) {
     GEdge *e = eds[i];
     int num = nums[i];
@@ -92,7 +89,7 @@ void gmshFace::resetNativePtr(Surface *s)
     if(next == first) {
       edgeLoops.push_back(GEdgeLoop(l_wire));
       l_wire.clear();
-      first = 0;
+      first = nullptr;
     }
     l_edges.push_back(e);
     e->addFace(this);
@@ -169,7 +166,9 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
       for(int i = 0; i < List_Nbr(_s->Generatrices); i++) {
         Curve *c;
         List_Read(_s->Generatrices, i, &c);
-        int N = (c->Typ == MSH_SEGM_LINE && List_Nbr(c->Control_Points) == 2) ? 1 : NP;
+        int N = (c->Typ == MSH_SEGM_LINE && List_Nbr(c->Control_Points) == 2) ?
+                  1 :
+                  NP;
         for(int j = 0; j < N; j++) {
           double u1 = (double)j / (double)N;
           double u2 = (double)(j + 1) / (double)N;
@@ -266,16 +265,12 @@ GPoint gmshFace::closestPoint(const SPoint3 &qp,
     double BN[2], UV[2];
     for(int i = 0; i < 2; i++) {
       BN[i] = 0;
-      for(int k = 0; k < 3; k++) {
-        BN[i] += B[k] * M[k][i];
-      }
+      for(int k = 0; k < 3; k++) { BN[i] += B[k] * M[k][i]; }
     }
     for(int i = 0; i < 2; i++) {
       for(int j = 0; j < 2; j++) {
         MN[i][j] = 0;
-        for(int k = 0; k < 3; k++) {
-          MN[i][j] += M[k][i] * M[k][j];
-        }
+        for(int k = 0; k < 3; k++) { MN[i][j] += M[k][i] * M[k][j]; }
       }
     }
     sys2x2(MN, BN, UV);
@@ -288,7 +283,7 @@ GPoint gmshFace::closestPoint(const SPoint3 &qp,
   v.Pos.Z = qp.z();
   double u[2] = {initialGuess[0], initialGuess[1]};
   bool result = ProjectPointOnSurface(_s, v, u);
-  if(!result) return GPoint(-1.e22, -1.e22, -1.e22, 0, u);
+  if(!result) return GPoint(-1.e22, -1.e22, -1.e22, nullptr, u);
   return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
 

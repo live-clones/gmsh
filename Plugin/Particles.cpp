@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,13 +26,13 @@ StringXNumber ParticlesOptions_Number[] = {
   {GMSH_FULLRC, "Z2", GMSH_ParticlesPlugin::callbackZ2, 0.},
   {GMSH_FULLRC, "NumPointsU", GMSH_ParticlesPlugin::callbackU, 10},
   {GMSH_FULLRC, "NumPointsV", GMSH_ParticlesPlugin::callbackV, 1},
-  {GMSH_FULLRC, "A2", NULL, 1.},
-  {GMSH_FULLRC, "A1", NULL, 0.},
-  {GMSH_FULLRC, "A0", NULL, 0.},
-  {GMSH_FULLRC, "DT", NULL, .1},
-  {GMSH_FULLRC, "MaxIter", NULL, 100},
-  {GMSH_FULLRC, "TimeStep", NULL, 0},
-  {GMSH_FULLRC, "View", NULL, -1.}};
+  {GMSH_FULLRC, "A2", nullptr, 1.},
+  {GMSH_FULLRC, "A1", nullptr, 0.},
+  {GMSH_FULLRC, "A0", nullptr, 0.},
+  {GMSH_FULLRC, "DT", nullptr, .1},
+  {GMSH_FULLRC, "MaxIter", nullptr, 100},
+  {GMSH_FULLRC, "TimeStep", nullptr, 0},
+  {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterParticlesPlugin()

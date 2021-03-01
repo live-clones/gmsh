@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -88,7 +88,7 @@ public:
   adaptivePoint(adaptiveVertex *p1) : visible(false)
   {
     p[0] = p1;
-    e[0] = 0;
+    e[0] = nullptr;
   }
   inline double V() const { return p[0]->val; }
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
@@ -115,7 +115,7 @@ public:
   {
     p[0] = p1;
     p[1] = p2;
-    e[0] = e[1] = 0;
+    e[0] = e[1] = nullptr;
   }
   inline double V() const { return (p[0]->val + p[1]->val) / 2.; }
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
@@ -145,7 +145,7 @@ public:
     p[0] = p1;
     p[1] = p2;
     p[2] = p3;
-    e[0] = e[1] = e[2] = e[3] = 0;
+    e[0] = e[1] = e[2] = e[3] = nullptr;
   }
   inline double V() const { return (p[0]->val + p[1]->val + p[2]->val) / 3.; }
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
@@ -178,7 +178,7 @@ public:
     p[1] = p2;
     p[2] = p3;
     p[3] = p4;
-    e[0] = e[1] = e[2] = e[3] = 0;
+    e[0] = e[1] = e[2] = e[3] = nullptr;
   }
   inline double V() const
   {
@@ -217,8 +217,8 @@ public:
     p[3] = p4;
     p[4] = p5;
     p[5] = p6;
-    e[0] = e[1] = e[2] = e[3] = NULL;
-    e[4] = e[5] = e[6] = e[7] = NULL;
+    e[0] = e[1] = e[2] = e[3] = nullptr;
+    e[4] = e[5] = e[6] = e[7] = nullptr;
   }
   inline double V() const
   {
@@ -259,8 +259,8 @@ public:
     p[1] = p2;
     p[2] = p3;
     p[3] = p4;
-    e[0] = e[1] = e[2] = e[3] = 0;
-    e[4] = e[5] = e[6] = e[7] = 0;
+    e[0] = e[1] = e[2] = e[3] = nullptr;
+    e[4] = e[5] = e[6] = e[7] = nullptr;
   }
   inline double V() const
   {
@@ -302,8 +302,8 @@ public:
     p[5] = p6;
     p[6] = p7;
     p[7] = p8;
-    e[0] = e[1] = e[2] = e[3] = 0;
-    e[4] = e[5] = e[6] = e[7] = 0;
+    e[0] = e[1] = e[2] = e[3] = nullptr;
+    e[4] = e[5] = e[6] = e[7] = nullptr;
   }
   inline double V() const
   {
@@ -349,7 +349,7 @@ public:
     p[2] = p3;
     p[3] = p4;
     p[4] = p5;
-    for(int i = 0; i < 10; i++) e[i] = NULL;
+    for(int i = 0; i < 10; i++) e[i] = nullptr;
   }
   inline double V() const
   {
@@ -390,17 +390,13 @@ public:
   {
     sizev = obj.sizev;
     v = new double[sizev];
-    for(int i = 0; i < sizev; i++) {
-      v[i] = obj.v[i];
-    }
+    for(int i = 0; i < sizev; i++) { v[i] = obj.v[i]; }
   }
   PValues(int size)
   {
     sizev = size;
     v = new double[sizev];
-    for(int i = 0; i < sizev; i++) {
-      v[i] = 0.0;
-    }
+    for(int i = 0; i < sizev; i++) { v[i] = 0.0; }
   }
   PValues(double vx)
   {
@@ -439,9 +435,7 @@ public:
     if(sizev != obj.sizev)
       Msg::Error("In PValues overlodaing operator: size mistmatch %d %d",
                  sizev);
-    for(int i = 0; i < sizev; i++) {
-      v[i] = obj.v[i];
-    }
+    for(int i = 0; i < sizev; i++) { v[i] = obj.v[i]; }
   }
 };
 
@@ -456,7 +450,7 @@ public:
   globalVTKData();
   static void clearGlobalConnectivity()
   {
-    for(std::vector<vectInt>::iterator it = vtkGlobalConnectivity.begin();
+    for(auto it = vtkGlobalConnectivity.begin();
         it != vtkGlobalConnectivity.end(); ++it) {
       it->clear();
     }
@@ -562,7 +556,7 @@ public:
   }
   void clearLocalData()
   {
-    for(std::vector<vectInt>::iterator it = vtkLocalConnectivity.begin();
+    for(auto it = vtkLocalConnectivity.begin();
         it != vtkLocalConnectivity.end(); ++it) {
       it->clear();
     }
@@ -614,12 +608,12 @@ public:
   // elements in coords/values
   bool adapt(double tol, int numComp, std::vector<PCoords> &coords,
              std::vector<PValues> &values, double &minVal, double &maxVal,
-             GMSH_PostPlugin *plug = 0, bool onlyComputeMinMax = false);
+             GMSH_PostPlugin *plug = nullptr, bool onlyComputeMinMax = false);
   // adapt all the T-type elements in the input view and add the
   // refined elements in the output view (we will remove this when we
   // switch to true on-the-fly local refinement in drawPost())
   void addInView(double tol, int step, PViewData *in, PViewDataList *out,
-                 GMSH_PostPlugin *plug = 0);
+                 GMSH_PostPlugin *plug = nullptr);
 
   // Routines for
   // - export of adapted views to pvtu file format for parallel visualization
@@ -679,7 +673,7 @@ public:
   ~adaptiveData();
   PViewData *getData() { return (PViewData *)_outData; }
   void changeResolution(int step, int level, double tol,
-                        GMSH_PostPlugin *plug = 0);
+                        GMSH_PostPlugin *plug = nullptr);
   int countTotElmLev0(int step, PViewData *in);
   void changeResolutionForVTK(int step, int level, double tol, int npart = 1,
                               bool isBinary = true,

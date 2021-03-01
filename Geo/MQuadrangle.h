@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -172,16 +172,18 @@ public:
   virtual double getOuterRadius();
   static int edges_quad(const int edge, const int vert)
   {
-    static const int e[4][2] =  {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
+    static const int e[4][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
     return e[edge][vert];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
-  virtual int getVertexSolin(int numEdge, int numVertex){
-    static const int eSolin[4][2] =  {{0, 1}, {1, 2}, {3, 2}, {0, 3}};
-    return getVertex(eSolin[numEdge][numVertex])->getNum();
+  virtual MEdge getEdgeSolin(int num)
+  {
+    static const int eSolin[4][2] = {{0, 1}, {1, 2}, {3, 2}, {0, 3}};
+    return MEdge(_v[eSolin[num][0]], _v[eSolin[num][1]]);
   }
-  virtual MFace getFaceSolin(int numFace){
-    return  MFace(_v[0], _v[1], _v[3], _v[2]);
+  virtual MFace getFaceSolin(int numFace)
+  {
+    return MFace(_v[0], _v[1], _v[3], _v[2]);
   }
 };
 

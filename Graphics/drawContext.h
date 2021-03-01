@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -59,11 +59,11 @@ private:
   double _tra[3];
 
 public:
-  drawTransformScaled(double mat[3][3], double tra[3] = 0) : drawTransform()
+  drawTransformScaled(double mat[3][3], double tra[3] = nullptr) : drawTransform()
   {
     drawTransformScaled::setMatrix(mat, tra);
   }
-  virtual void setMatrix(double mat[3][3], double tra[3] = 0)
+  virtual void setMatrix(double mat[3][3], double tra[3] = nullptr)
   {
     for(int i = 0; i < 3; i++) {
       for(int j = 0; j < 3; j++) _mat[i][j] = mat[i][j];
@@ -94,7 +94,7 @@ class drawContextGlobal {
 public:
   drawContextGlobal() {}
   virtual ~drawContextGlobal() {}
-  virtual void draw() {}
+  virtual void draw(bool rateLimited = true) {}
   virtual void drawCurrentOpenglWindow(bool make_current) {}
   virtual int getFontIndex(const char *fontname) { return 0; }
   virtual int getFontEnum(int index) { return 0; }
@@ -145,7 +145,7 @@ public:
   enum RenderMode { GMSH_RENDER = 1, GMSH_SELECT = 2, GMSH_FEEDBACK = 3 };
   int render_mode; // current rendering mode
 public:
-  drawContext(openglWindow *window = 0, drawTransform *transform = 0);
+  drawContext(openglWindow *window = nullptr, drawTransform *transform = nullptr);
   ~drawContext();
   // factor between the (true) size in pixels and the size reported by OSes
   // (e.g. 2 on an Apple "retina" display)
@@ -186,12 +186,12 @@ public:
   void hide(PView *v) { _hiddenViews.insert(v); }
   void show(GModel *m)
   {
-    std::set<GModel *>::iterator it = _hiddenModels.find(m);
+    auto it = _hiddenModels.find(m);
     if(it != _hiddenModels.end()) _hiddenModels.erase(it);
   }
   void show(PView *v)
   {
-    std::set<PView *>::iterator it = _hiddenViews.find(v);
+    auto it = _hiddenViews.find(v);
     if(it != _hiddenViews.end()) _hiddenViews.erase(it);
   }
   void showAll()

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -270,28 +270,12 @@ void qmTriangle::NCJRange(const MTriangle *el, double &valMin, double &valMax)
 {
   const JacobianBasis *jac = el->getJacobianFuncSpace();
   fullMatrix<double> primNodesXYZ(3, 3);
-  //  SVector3 geoNorm(0.,0.,0.);
-  //  std::map<MElement*,GEntity*>::const_iterator itEl2ent =
-  //  element2entity.find(_el[iEl]); GEntity *ge = (itEl2ent ==
-  //  element2entity.end()) ? 0 : itEl2ent->second; const bool hasGeoNorm = ge
-  //  && (ge->dim() == 2) && ge->haveParametrization();
   for(int i = 0; i < jac->getNumPrimMapNodes(); i++) {
     const MVertex *v = el->getVertex(i);
     primNodesXYZ(i, 0) = v->x();
     primNodesXYZ(i, 1) = v->y();
     primNodesXYZ(i, 2) = v->z();
-    //    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
-    //      double u, v;
-    //      _vert[iV]->getParameter(0,u);
-    //      _vert[iV]->getParameter(1,v);
-    //      geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
-    //    }
   }
-  //  if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
-  //    SPoint2 param =
-  //    ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false); geoNorm =
-  //    ((GFace*)ge)->normal(param);
-  //  }
   fullMatrix<double> nM(1, 3);
   jac->getPrimNormal2D(primNodesXYZ, nM);
   SVector3 normal(nM(0, 0), nM(0, 1), nM(0, 2));
@@ -511,28 +495,12 @@ void qmQuadrangle::NCJRange(const MQuadrangle *el, double &valMin,
 {
   const JacobianBasis *jac = el->getJacobianFuncSpace();
   fullMatrix<double> primNodesXYZ(4, 3);
-  //  SVector3 geoNorm(0.,0.,0.);
-  //  std::map<MElement*,GEntity*>::const_iterator itEl2ent =
-  //  element2entity.find(_el[iEl]); GEntity *ge = (itEl2ent ==
-  //  element2entity.end()) ? 0 : itEl2ent->second; const bool hasGeoNorm = ge
-  //  && (ge->dim() == 2) && ge->haveParametrization();
   for(int i = 0; i < jac->getNumPrimMapNodes(); i++) {
     const MVertex *v = el->getVertex(i);
     primNodesXYZ(i, 0) = v->x();
     primNodesXYZ(i, 1) = v->y();
     primNodesXYZ(i, 2) = v->z();
-    //    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
-    //      double u, v;
-    //      _vert[iV]->getParameter(0,u);
-    //      _vert[iV]->getParameter(1,v);
-    //      geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
-    //    }
   }
-  //  if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
-  //    SPoint2 param =
-  //    ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false); geoNorm =
-  //    ((GFace*)ge)->normal(param);
-  //  }
   fullMatrix<double> nM(1, 3);
   jac->getPrimNormal2D(primNodesXYZ, nM);
   SVector3 normal(nM(0, 0), nM(0, 1), nM(0, 2));
@@ -669,9 +637,9 @@ double qmTetrahedron::qm(const double &x1, const double &y1, const double &z1,
   case QMTET_ONE: return 1.0;
   case QMTET_ETA:
     return eta(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, volume);
-  case QMTET_GAMMA:{
+  case QMTET_GAMMA: {
     double G = gamma(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, volume);
-    *volume = fabs (*volume);
+    *volume = fabs(*volume);
     return G;
   }
   case QMTET_COND:
@@ -719,27 +687,31 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
 
   *volume = (robustPredicates::orient3d(p0, p1, p2, p3)) / 6.0;
 
-  if (fabs(*volume) == 0) return 0;
+  if(fabs(*volume) == 0) return 0;
 
-  double la = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1);
-  double lb = (x3-x1)*(x3-x1) + (y3-y1)*(y3-y1) + (z3-z1)*(z3-z1);
-  double lc = (x4-x1)*(x4-x1) + (y4-y1)*(y4-y1) + (z4-z1)*(z4-z1);
-  double lA = (x4-x3)*(x4-x3) + (y4-y3)*(y4-y3) + (z4-z3)*(z4-z3);
-  double lB = (x4-x2)*(x4-x2) + (y4-y2)*(y4-y2) + (z4-z2)*(z4-z2);
-  double lC = (x3-x2)*(x3-x2) + (y3-y2)*(y3-y2) + (z3-z2)*(z3-z2);
+  double la =
+    (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1);
+  double lb =
+    (x3 - x1) * (x3 - x1) + (y3 - y1) * (y3 - y1) + (z3 - z1) * (z3 - z1);
+  double lc =
+    (x4 - x1) * (x4 - x1) + (y4 - y1) * (y4 - y1) + (z4 - z1) * (z4 - z1);
+  double lA =
+    (x4 - x3) * (x4 - x3) + (y4 - y3) * (y4 - y3) + (z4 - z3) * (z4 - z3);
+  double lB =
+    (x4 - x2) * (x4 - x2) + (y4 - y2) * (y4 - y2) + (z4 - z2) * (z4 - z2);
+  double lC =
+    (x3 - x2) * (x3 - x2) + (y3 - y2) * (y3 - y2) + (z3 - z2) * (z3 - z2);
 
-  double lalA = std::sqrt(la*lA);
-  double lblB = std::sqrt(lb*lB);
-  double lclC = std::sqrt(lc*lC);
+  double lalA = std::sqrt(la * lA);
+  double lblB = std::sqrt(lb * lB);
+  double lclC = std::sqrt(lc * lC);
 
-  double insideSqrt =   ( lalA + lblB + lclC)
-                      * ( lalA + lblB - lclC)
-                      * ( lalA - lblB + lclC)
-                      * (-lalA + lblB + lclC);
+  double insideSqrt = (lalA + lblB + lclC) * (lalA + lblB - lclC) *
+                      (lalA - lblB + lclC) * (-lalA + lblB + lclC);
 
   // This happens when the 4 points are (nearly) co-planar
   // => R is actually undetermined but the quality is (close to) zero
-  if (insideSqrt <= 0) return 0;
+  if(insideSqrt <= 0) return 0;
 
   double R = std::sqrt(insideSqrt) / 24 / *volume;
 
@@ -747,7 +719,7 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
   double s2 = fabs(triangle_area(p0, p2, p3));
   double s3 = fabs(triangle_area(p0, p1, p3));
   double s4 = fabs(triangle_area(p1, p2, p3));
-  double rho = 3 * 3 * *volume / (s1+s2+s3+s4);
+  double rho = 3 * 3 * *volume / (s1 + s2 + s3 + s4);
 
   return rho / R;
 }

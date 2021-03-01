@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,12 +15,12 @@
 #include "Context.h"
 
 StringXNumber CrackOptions_Number[] = {
-  {GMSH_FULLRC, "Dimension", NULL, 1.},
-  {GMSH_FULLRC, "PhysicalGroup", NULL, 1.},
-  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", NULL, 0.},
-  {GMSH_FULLRC, "NormalX", NULL, 0.},
-  {GMSH_FULLRC, "NormalY", NULL, 0.},
-  {GMSH_FULLRC, "NormalZ", NULL, 1.}};
+  {GMSH_FULLRC, "Dimension", nullptr, 1.},
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
+  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
+  {GMSH_FULLRC, "NormalX", nullptr, 0.},
+  {GMSH_FULLRC, "NormalY", nullptr, 0.},
+  {GMSH_FULLRC, "NormalZ", nullptr, 1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCrackPlugin() { return new GMSH_CrackPlugin(); }
@@ -62,7 +62,8 @@ public:
   std::vector<MVertex *> data;
 };
 
-struct MEdgeDataLessThan : public std::binary_function<EdgeData, EdgeData, bool> {
+struct MEdgeDataLessThan
+  : public std::binary_function<EdgeData, EdgeData, bool> {
   bool operator()(const EdgeData &e1, const EdgeData &e2) const
   {
     if(e1.edge.getMinVertex() < e2.edge.getMinVertex()) return true;
@@ -123,7 +124,8 @@ PView *GMSH_CrackPlugin::execute(PView *view)
         MVertex *v = crackElements[i]->getVertex(j);
         crackVertices.insert(v);
       }
-      for(std::size_t j = 0; j < crackElements[i]->getNumPrimaryVertices(); j++) {
+      for(std::size_t j = 0; j < crackElements[i]->getNumPrimaryVertices();
+          j++) {
         MVertex *v = crackElements[i]->getVertex(j);
         if(bndVertices.find(v) == bndVertices.end())
           bndVertices.insert(v);
@@ -149,8 +151,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
           bnd.erase(ed);
       }
     }
-    for(std::set<EdgeData, MEdgeDataLessThan>::iterator it = bnd.begin();
-        it != bnd.end(); it++)
+    for(auto it = bnd.begin(); it != bnd.end(); it++)
       bndVertices.insert(it->data.begin(), it->data.end());
   }
 
@@ -161,9 +162,10 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     if(openEntities[i]->dim() < 1) continue;
     for(std::size_t j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
       MElement *e = openEntities[i]->getMeshElement(j);
-      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+      for(std::size_t k = 0; k < e->getNumPrimaryVertices(); k++) {
         MVertex *v = e->getVertex(k);
-        if(bndVerticesFromOpenBoundary.find(v) == bndVerticesFromOpenBoundary.end())
+        if(bndVerticesFromOpenBoundary.find(v) ==
+           bndVerticesFromOpenBoundary.end())
           bndVerticesFromOpenBoundary.insert(v);
         else
           bndVerticesFromOpenBoundary.erase(v);
@@ -182,13 +184,13 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       MElement *e = openEntities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         MVertex *v = e->getVertex(k);
-        if(bndVerticesFromOpenBoundary.find(v) == bndVerticesFromOpenBoundary.end())
+        if(bndVerticesFromOpenBoundary.find(v) ==
+           bndVerticesFromOpenBoundary.end())
           bndVertices.erase(v);
       }
     }
   }
-  for(std::set<MVertex *>::iterator it = bndVertices.begin();
-      it != bndVertices.end(); it++)
+  for(auto it = bndVertices.begin(); it != bndVertices.end(); it++)
     crackVertices.erase(*it);
 
   // compute elements on one side of the crack
@@ -204,7 +206,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
           // element touches the crack: find the closest crack element
           SPoint3 b = e->barycenter();
           double d = 1e200;
-          MElement *ce = 0;
+          MElement *ce = nullptr;
           for(std::size_t k = 0; k < crackElements.size(); k++) {
             double d2 = b.distance(crackElements[k]->barycenter());
             if(d2 < d) {
@@ -218,9 +220,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
             n = crossprod(normal1d, ce->getEdge(0).tangent());
           else
             n = ce->getFace(0).normal();
-          if(dot(n, dv) < 0) {
-            oneside.insert(e);
-          }
+          if(dot(n, dv) < 0) { oneside.insert(e); }
         }
       }
     }
@@ -230,8 +230,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   FILE *fp = fopen("debug.pos", "w");
   if(fp){
     fprintf(fp, "View \"Ele < 0\" {\n");
-    for(std::set<MElement*>::iterator it = oneside.begin(); it != oneside.end();
-  it++)
+    for(auto it = oneside.begin(); it != oneside.end(); it++)
       (*it)->writePOS(fp, false, true, false, false, false, false);
     fprintf(fp, "};\n");
     fclose(fp);
@@ -255,10 +254,11 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   // single new surface/curve, which is probably fine as in solvers we won't use
   // the internal seams.
 
-  GEdge *crackEdge = 0;
-  GFace *crackFace = 0;
+  GEdge *crackEdge = nullptr;
+  GFace *crackFace = nullptr;
   if(dim == 1) {
-    crackEdge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, 0, 0);
+    crackEdge =
+      new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
     m->add(crackEdge);
   }
   else {
@@ -271,8 +271,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
 
   // duplicate internal crack nodes
   std::map<MVertex *, MVertex *> vxv;
-  for(std::set<MVertex *>::iterator it = crackVertices.begin();
-      it != crackVertices.end(); it++) {
+  for(auto it = crackVertices.begin(); it != crackVertices.end(); it++) {
     MVertex *v = *it;
     MVertex *newv = new MVertex(v->x(), v->y(), v->z(), crackEntity);
     crackEntity->mesh_vertices.push_back(newv);
@@ -298,8 +297,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
 
   // replace vertices in elements on one side of the crack
-  for(std::set<MElement *>::iterator it = oneside.begin(); it != oneside.end();
-      it++) {
+  for(auto it = oneside.begin(); it != oneside.end(); it++) {
     MElement *e = *it;
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
       if(vxv.count(e->getVertex(i))) e->setVertex(i, vxv[e->getVertex(i)]);

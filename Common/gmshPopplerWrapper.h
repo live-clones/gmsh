@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -67,8 +67,7 @@ public:
     if(_currentPage >= getNumPages()) _currentPage = getNumPages() - 1;
     if(_currentPage < 0) _currentPage = 0;
     CTX::instance()->bgImagePage = _currentPage;
-    std::map<int, std::pair<GModel *, std::string> >::const_iterator it =
-      _macros.find(_currentPage);
+    auto it = _macros.find(_currentPage);
     if(it == _macros.end()) it = _macros.find(-1);
     if(it != _macros.end()) {
       if(GModel::current() != it->second.first) {

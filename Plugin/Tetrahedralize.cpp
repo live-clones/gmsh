@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,7 +14,7 @@
 #endif
 
 StringXNumber TetrahedralizeOptions_Number[] = {
-  {GMSH_FULLRC, "View", NULL, -1.}};
+  {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterTetrahedralizePlugin()
@@ -44,15 +44,15 @@ StringXNumber *GMSH_TetrahedralizePlugin::getOption(int iopt)
 #if defined(HAVE_MESH)
 
 namespace {
-class PointData : public MVertex {
-public:
-  std::vector<double> val;
-  PointData(double x, double y, double z, int numVal) : MVertex(x, y, z)
-  {
-    val.resize(numVal);
-  }
-};
-}
+  class PointData : public MVertex {
+  public:
+    std::vector<double> val;
+    PointData(double x, double y, double z, int numVal) : MVertex(x, y, z)
+    {
+      val.resize(numVal);
+    }
+  };
+} // namespace
 
 PView *GMSH_TetrahedralizePlugin::execute(PView *v)
 {
@@ -101,16 +101,16 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   for(std::size_t i = 0; i < tets.size(); i++) {
     bool ok = true;
     PointData *p[4];
-    for(int j = 0; j < 4; j++){
-      p[j] = dynamic_cast<PointData*>(tets[i]->getVertex(j));
-      if(!p[j]){ // tet connected to enclosing box
+    for(int j = 0; j < 4; j++) {
+      p[j] = dynamic_cast<PointData *>(tets[i]->getVertex(j));
+      if(!p[j]) { // tet connected to enclosing box
         ok = false;
         break;
       }
     }
     if(!ok) continue;
     int numComp = 0;
-    std::vector<double> *vec = 0;
+    std::vector<double> *vec = nullptr;
     if((int)p[0]->val.size() == 9 * numSteps &&
        (int)p[1]->val.size() == 9 * numSteps &&
        (int)p[2]->val.size() == 9 * numSteps &&

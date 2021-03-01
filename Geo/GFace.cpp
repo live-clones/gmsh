@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -26,6 +26,11 @@
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "BackgroundMeshTools.h"
+#if 0
+// TEST
+#include "meshTriangulation.h"
+// TEST
+#endif
 #endif
 
 #if defined(HAVE_ALGLIB)
@@ -34,7 +39,8 @@
 #endif
 
 GFace::GFace(GModel *model, int tag)
-  : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0), compoundSurface(0)
+  : GEntity(model, tag), r1(nullptr), r2(nullptr), va_geom_triangles(nullptr),
+    compoundSurface(nullptr)
 {
   meshStatistics.status = GFace::PENDING;
   meshStatistics.refineAllEdges = false;
@@ -180,16 +186,16 @@ MElement *const *GFace::getStartElementType(int type) const
 {
   switch(type) {
   case 0:
-    if(triangles.empty()) return 0; // msvc would throw an exception
+    if(triangles.empty()) return nullptr; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&triangles[0]);
   case 1:
-    if(quadrangles.empty()) return 0; // msvc would throw an exception
+    if(quadrangles.empty()) return nullptr; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&quadrangles[0]);
   case 2:
-    if(polygons.empty()) return 0;
+    if(polygons.empty()) return nullptr;
     return reinterpret_cast<MElement *const *>(&polygons[0]);
   }
-  return 0;
+  return nullptr;
 }
 
 MElement *GFace::getMeshElement(std::size_t index) const
@@ -200,7 +206,7 @@ MElement *GFace::getMeshElement(std::size_t index) const
     return quadrangles[index - triangles.size()];
   else if(index < triangles.size() + quadrangles.size() + polygons.size())
     return polygons[index - triangles.size() - quadrangles.size()];
-  return 0;
+  return nullptr;
 }
 
 MElement *GFace::getMeshElementByType(const int familyType,
@@ -213,7 +219,7 @@ MElement *GFace::getMeshElementByType(const int familyType,
   else if(familyType == TYPE_POLYG)
     return polygons[index];
 
-  return 0;
+  return nullptr;
 }
 
 void GFace::resetMeshAttributes()
@@ -223,7 +229,7 @@ void GFace::resetMeshAttributes()
   meshAttributes.method = MESH_UNSTRUCTURED;
   meshAttributes.transfiniteArrangement = 0;
   meshAttributes.transfiniteSmoothing = -1;
-  meshAttributes.extrude = 0;
+  meshAttributes.extrude = nullptr;
   meshAttributes.reverseMesh = false;
   meshAttributes.meshSize = MAX_LC;
   meshAttributes.meshSizeFactor = 1.;
@@ -1103,7 +1109,7 @@ private:
 public:
   data_wrapper()
   {
-    gf = NULL;
+    gf = nullptr;
     point = SPoint3();
   }
   ~data_wrapper() {}
@@ -1193,7 +1199,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint,
     data_wrapper w;
     w.set_point(queryPoint);
     w.set_face(this);
-    minlbfgsoptimize(state, bfgs_callback, NULL, &w);
+    minlbfgsoptimize(state, bfgs_callback, nullptr, &w);
 
     // Get results
     alglib::minlbfgsreport rep;
@@ -1635,6 +1641,11 @@ void GFace::mesh(bool verbose)
   if(compound.size())
     meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
 
+    // FIXME TEST
+#if 0
+  GFaceInitialMesh (tag());
+#endif
+
   meshGFace mesher;
   mesher(this, verbose);
 
@@ -1768,7 +1779,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     SPoint3 xyzTfo((*mvIter)->x(), (*mvIter)->y(), (*mvIter)->z());
     xyzTfo.transform(tfo);
 
-    GVertex *l_vertex = NULL;
+    GVertex *l_vertex = nullptr;
 
     double dist_min = 1.e22;
     for(auto lvIter = l_vertices.begin(); lvIter != l_vertices.end();
@@ -1782,7 +1793,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
       }
     }
 
-    if(l_vertex == NULL) {
+    if(l_vertex == nullptr) {
       Msg::Error("No corresponding point %d for periodic connection of surface "
                  "%d to %d (min. distance = %g, tolerance = %g)",
                  m_vertex->tag(), master->tag(), tag(), dist_min,
@@ -1813,7 +1824,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     std::pair<GVertex *, GVertex *> backward(forward.second, forward.first);
     int numb = m_vtxToEdge.count(backward);
     int sign = 0;
-    GEdge *masterEdge = 0;
+    GEdge *masterEdge = nullptr;
 
     // unique matches
     if(!masterEdge && numf == 1 &&

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -86,7 +86,7 @@ public:
   virtual int dim() const { return 1; }
 
   // returns the parent entity for partitioned entities
-  virtual GEntity *getParentEntity() { return 0; }
+  virtual GEntity *getParentEntity() { return nullptr; }
 
   // get the list of vertices
   virtual std::vector<GVertex *> vertices() const;
@@ -163,14 +163,12 @@ public:
   double length(const double &u0, const double &u1, const int nbQuadPoints = 4);
 
   // get the prescribed mesh size on the edge
-  double prescribedMeshSizeAtVertex() const
-  {
-    return meshAttributes.meshSize;
-  }
+  double prescribedMeshSizeAtVertex() const { return meshAttributes.meshSize; }
 
   double prescribedMeshSizeAtParam(double u);
 
-  void setMeshSizeParametric(const std::vector<double> u, const std::vector<double> lc);
+  void setMeshSizeParametric(const std::vector<double> u,
+                             const std::vector<double> lc);
 
   // true if start == end and no more than 2 segments
   void setTooSmall(bool const b) { _tooSmall = b; }
@@ -213,7 +211,7 @@ public:
 
   // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;
-  virtual Range<double> parBoundsOnFace(GFace *face = NULL) const
+  virtual Range<double> parBoundsOnFace(GFace *face = nullptr) const
   {
     return parBounds(0);
   }
@@ -262,7 +260,8 @@ public:
   SPoint3 closestPointWithTol(SPoint3 &p, double tolerance);
   virtual void mesh(bool verbose);
 
-  virtual bool reorder(const int elementType, const std::vector<std::size_t> &ordering);
+  virtual bool reorder(const int elementType,
+                       const std::vector<std::size_t> &ordering);
 };
 
 #endif
