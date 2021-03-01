@@ -1914,7 +1914,9 @@ int transferSeamGEdgesVerticesToGFace(GModel* gm) {
             }
             otherCurves.push_back(ge2);
           }
-          sort_unique(otherCurves);
+          std::sort( otherCurves.begin(), otherCurves.end() );
+          otherCurves.erase( std::unique( otherCurves.begin(), otherCurves.end() ), otherCurves.end() );
+
           if (otherCurves.size() > 0) continue;
           MVertex* ov = gv->mesh_vertices[0];
           auto it = old2new.find(ov);
