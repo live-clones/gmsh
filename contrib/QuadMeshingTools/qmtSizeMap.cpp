@@ -24,6 +24,7 @@
 #include "GFace.h"
 #include "GModel.h"
 #include "MVertex.h"
+#include "Context.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "BackgroundMesh.h"
@@ -142,7 +143,7 @@ int computeMinimalSizeOnCurves(
         for (GEdge* ge2: gv2ge[gv]) if (ge2 != ge) {
           curvesAjacent.push_back(ge2);
 
-          if (ge2->length() == 0.) { /* yes CAD is annoying ... */
+          if (ge2->length() <= CTX::instance()->geom.tolerance) { /* yes CAD is annoying ... */
             for (GVertex* gv2: ge2->vertices()) {
               for (GEdge* ge3: gv2ge[gv2]) if (ge3 != ge) {
                 curvesAjacent.push_back(ge3);

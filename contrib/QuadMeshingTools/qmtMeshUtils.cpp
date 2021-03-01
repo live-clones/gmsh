@@ -377,10 +377,12 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
     if (it == gf->mesh_vertices.end()) {
       Msg::Error("GFaceMeshDiff::execute(): vertex %li (entity dim=%i) not found in gf->mesh_vertices (size %li), should NEVER happen, memory corrupted",
           ov->getNum(), ov->onWhat()->dim(), gf->mesh_vertices.size());
-      gmsh::initialize();
-      GeoLog::add(ov->point(),0.,"bad_property_v" + std::to_string(ov->getNum()));
-      GeoLog::flush();
-      gmsh::fltk::run();
+      if (Msg::GetVerbosity() >= 99) {
+        gmsh::initialize();
+        GeoLog::add(ov->point(),0.,"bad_property_v" + std::to_string(ov->getNum()));
+        GeoLog::flush();
+        gmsh::fltk::run();
+      }
       abort();
     }
     if (after.intVertices.size() > 0) {
@@ -488,8 +490,11 @@ PatchGeometryBackup::PatchGeometryBackup(GFaceMeshPatch& p, bool includeBoundary
     SPoint2 uv(DBL_MAX,DBL_MAX);
     GFace* gf = dynamic_cast<GFace*>(v->onWhat());
     if (gf != nullptr) {
-      v->getParameter(0,uv.data()[0]);
-      v->getParameter(1,uv.data()[1]);
+      MFaceVertex* mfv = dynamic_cast<MFaceVertex*>(v);
+      if (mfv != nullptr) {
+        mfv->getParameter(0,uv.data()[0]);
+        mfv->getParameter(1,uv.data()[1]);
+      }
     }
     old[v] = {uv,v->point()};
   }
@@ -499,8 +504,11 @@ PatchGeometryBackup::PatchGeometryBackup(GFaceMeshPatch& p, bool includeBoundary
         SPoint2 uv(DBL_MAX,DBL_MAX);
         GFace* gf = dynamic_cast<GFace*>(v->onWhat());
         if (gf != nullptr) {
-          v->getParameter(0,uv.data()[0]);
-          v->getParameter(1,uv.data()[1]);
+          MFaceVertex* mfv = dynamic_cast<MFaceVertex*>(v);
+          if (mfv != nullptr) {
+            mfv->getParameter(0,uv.data()[0]);
+            mfv->getParameter(1,uv.data()[1]);
+          }
         }
         old[v] = {uv,v->point()};
       }
@@ -1311,7 +1319,5 @@ void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elt
 }
 
 std::string randomIdentifier() {
-  time_t timev;
-  time(&timev);
-  return std::to_string(timev);
+  return std::to_string(rand());
 }

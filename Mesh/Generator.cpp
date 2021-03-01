@@ -1484,7 +1484,8 @@ void GenerateMesh(GModel *m, int ask)
       for (GFace* gf: m->getFaces()) if (gf->edges().size() == 4) {
         faces.insert(gf);
       }
-      MeshSetTransfiniteFacesAutomatic(faces);
+      double maxDiffRel = 0.34; /* do not deviate more than 34% from size map */
+      MeshSetTransfiniteFacesAutomatic(faces,2.35,true,maxDiffRel);
     }
   }
 

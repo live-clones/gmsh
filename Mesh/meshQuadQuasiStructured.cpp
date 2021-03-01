@@ -1537,6 +1537,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
 
     for (size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
       MVertex* v = gf->mesh_vertices[i];
+      if (v->onWhat() != gf) {
+        Msg::Error("- Face %i: vertex %li is associated to entity (%i,%i)", gf->tag(), v->getNum(), v->onWhat()->dim(), v->onWhat()->tag());
+        abort();
+      }
       MFaceVertex* mfv = dynamic_cast<MFaceVertex*>(v);
       if (mfv == nullptr) {
         GPoint proj;
@@ -1566,7 +1570,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
           delete v;
           Msg::Warning("- Face %i, vertex %li: surface projection failed", gf->tag(), v->getNum());
         }
-      }
+      } 
     }
 
     /* Update elements */
@@ -1577,6 +1581,32 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
         auto it2 = old2new_gf.find(v);
         if (it2 != old2new_gf.end()) {
           e->setVertex(lv,it2->second);
+        }
+      }
+    }
+
+    if (Msg::GetVerbosity() >= 99) {
+      Msg::Debug("- Face %i, verify vertices ...", gf->tag());
+      for (size_t i = 0; i < gf->getNumMeshElements(); ++i) {
+        MElement* e = gf->getMeshElement(i);
+        for (size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+          MVertex* v = e->getVertex(lv);
+          if (v->onWhat()->cast2Edge()) {
+            MEdgeVertex* mev = dynamic_cast<MEdgeVertex*>(v);
+            if (mev == nullptr) {
+              Msg::Error("vertex attached to curve %i but not MEdgeVertex", v->onWhat()->cast2Edge()->tag());
+              abort();
+            }
+          } else if (v->onWhat()->cast2Face()) {
+            MFaceVertex* mfv = dynamic_cast<MFaceVertex*>(v);
+            if (mfv == nullptr) {
+              Msg::Error("vertex attached to face %i but not MFaceVertex", v->onWhat()->cast2Face()->tag());
+              abort();
+            }
+          } else if (v->onWhat()->cast2Vertex()) {
+          } else {
+            Msg::Error("vertex not attach to a CAD entity");
+          }
         }
       }
     }
@@ -1876,18 +1906,20 @@ int transferSeamGEdgesVerticesToGFace(GModel* gm) {
 
         /* GEdge boundary vertices */
         for (GVertex* gv: ge->vertices()) if (gv->mesh_vertices.size() == 1) {
-          size_t nbOtherCurves = 0;
+          std::vector<GEdge*> otherCurves;
           for (GEdge* ge2: gv->edges()) if (ge2 != ge) {
             if (ge2->vertices().front() == ge2->vertices().back() 
-                && ge2->length() == 0.) { /* Empty curve */
+                && ge2->length() < CTX::instance()->geom.tolerance) { /* Empty curve */
               continue;
             }
-            nbOtherCurves += 1;
+            otherCurves.push_back(ge2);
           }
-          if (nbOtherCurves > 0) continue;
+          sort_unique(otherCurves);
+          if (otherCurves.size() > 0) continue;
           MVertex* ov = gv->mesh_vertices[0];
           auto it = old2new.find(ov);
           if (it != old2new.end()) continue; /* already changed */
+          Msg::Debug("transfer: mesh vertex at CAD corner %i moved to face %i",gv->tag(),gf->tag());
           SPoint3 p = ov->point();
           SPoint2 uv = gv->reparamOnFace(gf,0);
           MVertex *nv = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
