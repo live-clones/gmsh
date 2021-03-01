@@ -47,8 +47,8 @@ drawContext::drawContext(float fontFactor, bool retina)
 
 static void checkGlError(const char *op)
 {
-  // for (GLint error = glGetError(); error; error = glGetError())
-  //  Msg::Error("%s: glError (0x%x)",op,error);
+  for (GLint error = glGetError(); error; error = glGetError())
+    printf("*** %s: glError (0x%x)\n", op, error);
 }
 
 void drawContext::load(std::string filename)
@@ -1178,7 +1178,7 @@ int onelab_cb(std::string action)
     try {
       onelabUtils::runGmshClient(action, true);
     } catch(...) {
-      Msg::Error("Gmsh was aborted");
+      printf("*** runGmshClient() exception\n");
     }
     action = "check";
   }
@@ -1196,7 +1196,7 @@ int onelab_cb(std::string action)
     try {
       onelabUtils::runGmshClient(action, true);
     } catch(...) {
-      Msg::Error("Gmsh was aborted");
+      printf("*** runGmshClient() exception\n");
     }
 
     // run GetDP (always -- to not confuse the user)
@@ -1233,11 +1233,12 @@ int onelab_cb(std::string action)
     try {
       getdp(args, onelab::server::instance());
     } catch(...) {
-      Msg::Error("GetDP was aborted");
+      printf("*** getdp() exception\n");
     }
   } while(action == "compute" && !onelabStop &&
           (onelabUtils::incrementLoop("3") || onelabUtils::incrementLoop("2") ||
            onelabUtils::incrementLoop("1")));
+
   onelabStop = false;
   locked = false;
   return onelab::server::instance()->getChanged();
