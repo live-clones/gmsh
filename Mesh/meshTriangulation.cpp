@@ -75,7 +75,7 @@ struct pair_hash
   }
 };
 
-int GFace2PolyMesh (size_t faceTag, PolyMesh **pm){
+int GFace2PolyMesh (int faceTag, PolyMesh **pm){
 
   *pm = new PolyMesh;
   
@@ -420,7 +420,7 @@ void GFaceDelaunayRefinement (size_t faceTag){
       if (gp.succeeded()){
 	PolyMesh::Face *f = he->f;
 	f = Walk (f,gp.u(), gp.v());
-	if (f && f->data == faceTag){	  
+	if (f && f->data == (size_t) faceTag){	  
 	  std::vector<PolyMesh::HalfEdge*> _touched;
 	  pm->split_triangle(gp.u(),gp.v(),0,f,delaunayEdgeCriterionPlaneIsotropic,gf,&_touched);
 	  if (_touched.size() == 3){
@@ -449,7 +449,7 @@ void GFaceDelaunayRefinement (size_t faceTag){
 }
 
 
-void GFaceDelaunayRefinementOldMesher (size_t faceTag){
+void GFaceDelaunayRefinementOldMesher (int faceTag){
   
   PolyMesh *pm = GFaceInitialMesh (faceTag);
 
@@ -565,7 +565,7 @@ static void getNodeCopies (GFace *gf,
 }
 
 
-PolyMesh * GFaceInitialMesh (size_t faceTag, int recover ){
+PolyMesh * GFaceInitialMesh (int faceTag, int recover ){
 
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
   
@@ -576,14 +576,14 @@ PolyMesh * GFaceInitialMesh (size_t faceTag, int recover ){
 
   SBoundingBox3d bb;
   for (auto c : copies)  {
-    for (int i = 0; i<c.second.nbCopies;i++)
+    for (size_t i = 0; i<c.second.nbCopies;i++)
       bb += SPoint3(c.second.u[i],c.second.v[i],0);
   }
   bb *= 1.1;
   pm->initialize_rectangle (bb.min().x(),bb.max().x(),bb.min().y(),bb.max().y());
   PolyMesh::Face *f = pm->faces[0];
   for (std::map<size_t, nodeCopies>::iterator it = copies.begin() ; it != copies.end() ; ++it)  {
-    for (int i = 0; i<it->second.nbCopies;i++){
+    for (size_t i = 0; i<it->second.nbCopies;i++){
       double x = it->second.u[i];
       double y = it->second.v[i];
       // find face in which lies x,y
@@ -617,7 +617,7 @@ PolyMesh * GFaceInitialMesh (size_t faceTag, int recover ){
 	if (c0->second.nbCopies > c1->second.nbCopies){
 	  auto cc = c0; c0 = c1; c1 = cc;
 	}
-	for (int j=0;j<c0->second.nbCopies;j++){
+	for (size_t j=0;j<c0->second.nbCopies;j++){
 	  PolyMesh::Vertex *v0 = pm->vertices[c0->second.id[j]];
 	  PolyMesh::Vertex *v1 = pm->vertices[c1->second.closest(c0->second.u[j],c0->second.v[j])];
 	  int result = recover_edge (pm, v0, v1);
