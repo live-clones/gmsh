@@ -244,7 +244,7 @@ Field[1].YMax = 0.1;
 Field[1].YMin = -0.1;
 Field[1].Thickness = 2;
 
-Field[3] = Min;
+Field[3] = MinAniso;
 Field[3].FieldsList = {1, 2};
 Background Field = 3;
 BoundaryLayer Field = 2;
