@@ -38,16 +38,12 @@
 #include "boundaryLayersData.h"
 #include "filterElements.h"
 
-
-
 // define this to use the old initial delaunay
 #define OLD_CODE_DELAUNAY 1
 
 #ifndef OLD_CODE_DELAUNAY
 #include "meshTriangulation.h"
 #endif
-
-
 
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N)
@@ -1382,37 +1378,36 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     // -- color triangles
 
     std::vector<GEdge *> temp;
-    if (replacement_edges){
+    if(replacement_edges) {
       temp = gf->edges();
       gf->set(*replacement_edges);
     }
     // TEST --> recover and color so most of the code below
     // can go away. Works also for periodic faces
-    GFaceInitialMesh (gf->tag(), 1);    
-    
-    PolyMesh * pm = GFaceInitialMesh (gf->tag(), 1);    
+    GFaceInitialMesh(gf->tag(), 1);
 
-    if (replacement_edges){
-      gf->set(temp);
-    }
-    
-    std::map<int,BDS_Point *> aaa;
+    PolyMesh *pm = GFaceInitialMesh(gf->tag(), 1);
+
+    if(replacement_edges) { gf->set(temp); }
+
+    std::map<int, BDS_Point *> aaa;
     for(auto it = all_vertices.begin(); it != all_vertices.end(); it++) {
       MVertex *here = *it;
       aaa[here->getNum()] = recoverMapInv[here];
-    }    
-    
+    }
+
     for(int ip = 0; ip < 4; ip++) {
       PolyMesh::Vertex *v = pm->vertices[ip];
-      v->data = -ip-1;
-      BDS_Point *pp = m->add_point(v->data, v->position.x(), v->position.y(), gf);
+      v->data = -ip - 1;
+      BDS_Point *pp =
+        m->add_point(v->data, v->position.x(), v->position.y(), gf);
       m->add_geom(gf->tag(), 2);
       BDS_GeomEntity *g = m->get_geom(gf->tag(), 2);
       pp->g = g;
       aaa[v->data] = pp;
     }
 
-    for(size_t i=0; i < pm->faces.size(); i++) {
+    for(size_t i = 0; i < pm->faces.size(); i++) {
       PolyMesh::HalfEdge *he = pm->faces[i]->he;
       int a = he->v->data;
       int b = he->next->v->data;
@@ -2088,12 +2083,12 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
   if(CTX::instance()->debugSurface > 0) debug = true;
 
-  // TEST !!!
+    // TEST !!!
 #ifndef OLD_CODE_DELAUNAY
-  //  PolyMesh * pm = GFaceInitialMesh (gf->tag(), 1);    
+    //  PolyMesh * pm = GFaceInitialMesh (gf->tag(), 1);
 #endif
   // TEST !!!
-  
+
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
   std::multimap<MVertex *, BDS_Point *> recoverMultiMapInv;
 
