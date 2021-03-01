@@ -225,17 +225,14 @@ Line(8) = {1003,1000};
 Line Loop(9) = {6,7,8,5};
 Line Loop(10) = {2,1};
 Plane Surface(11) = {9,10};
-//Plane Surface(12) = {10};
-//Plane Surface(11) = {9};
 
 Field[1] = BoundaryLayer;
-Field[1].EdgesList = {1, 2};
-Field[1].hwall_n = 0.0001*SC;
-Field[1].ratio = 2.4;
-Field[1].thickness = 0.02*SC;
-//Field[1].fan_angle = 80;
-//Background Field = 1;
-//Field[1].NodesList = {1};
-Field[1].FanNodesList = {1};
+Field[1].CurvesList = {1, 2};
+Field[1].Size = 0.0001*SC;
+Field[1].Ratio = 2.4;
+Field[1].Thickness = 0.02*SC;
+Field[1].PointsList = {1};
 Field[1].Quads = 1;
+Field[1].FanPointsList = {1};
+
 BoundaryLayer Field = 1;

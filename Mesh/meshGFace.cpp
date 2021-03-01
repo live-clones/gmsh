@@ -41,6 +41,10 @@
 // define this to use the old initial delaunay
 #define OLD_CODE_DELAUNAY 1
 
+#ifndef OLD_CODE_DELAUNAY
+#include "meshTriangulation.h"
+#endif
+
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N)
 {
@@ -1368,44 +1372,52 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   }
 #else
   {
-    std::vector<MVertex *> v;
-    std::vector<MTriangle *> result;
-    v.insert(v.end(), all_vertices.begin(), all_vertices.end());
+    // New Stuff comes here --> it actually does everything
+    // -- triangulate points
+    // -- recover edges
+    // -- color triangles
 
-    std::map<MVertex *, SPoint3> pos;
-    for(std::size_t i = 0; i < v.size(); i++) {
-      MVertex *v0 = v[i];
-      BDS_Point *p0 = recoverMapInv[v0];
-      pos[v0] = SPoint3(v0->x(), v0->y(), v0->z());
-      v0->setXYZ(p0->u, p0->v, 0.0);
+    std::vector<GEdge *> temp;
+    if(replacement_edges) {
+      temp = gf->edges();
+      gf->set(*replacement_edges);
     }
-    delaunayMeshIn2D(v, result, 0);
+    // TEST --> recover and color so most of the code below
+    // can go away. Works also for periodic faces
+    GFaceInitialMesh(gf->tag(), 1);
 
-    for(std::size_t i = 0; i < v.size() - 4; i++) {
-      MVertex *v0 = v[i];
-      SPoint3 pp = pos[v0];
-      v0->setXYZ(pp.x(), pp.y(), pp.z());
+    PolyMesh *pm = GFaceInitialMesh(gf->tag(), 1);
+
+    if(replacement_edges) { gf->set(temp); }
+
+    std::map<int, BDS_Point *> aaa;
+    for(auto it = all_vertices.begin(); it != all_vertices.end(); it++) {
+      MVertex *here = *it;
+      aaa[here->getNum()] = recoverMapInv[here];
     }
 
-    // add the four corners
     for(int ip = 0; ip < 4; ip++) {
-      MVertex *vv = v[v.size() - ip - 1];
-      BDS_Point *pp = m->add_point(-ip - 1, vv->x(), vv->y(), gf);
+      PolyMesh::Vertex *v = pm->vertices[ip];
+      v->data = -ip - 1;
+      BDS_Point *pp =
+        m->add_point(v->data, v->position.x(), v->position.y(), gf);
       m->add_geom(gf->tag(), 2);
-      recoverMapInv[vv] = pp;
       BDS_GeomEntity *g = m->get_geom(gf->tag(), 2);
       pp->g = g;
+      aaa[v->data] = pp;
     }
-    // add the triangles
-    for(std::size_t i = 0; i < result.size(); i++) {
-      MVertex *v0 = result[i]->getVertex(0);
-      MVertex *v1 = result[i]->getVertex(1);
-      MVertex *v2 = result[i]->getVertex(2);
-      BDS_Point *p0 = recoverMapInv[v0];
-      BDS_Point *p1 = recoverMapInv[v1];
-      BDS_Point *p2 = recoverMapInv[v2];
-      m->add_triangle(p0->iD, p1->iD, p2->iD);
+
+    for(size_t i = 0; i < pm->faces.size(); i++) {
+      PolyMesh::HalfEdge *he = pm->faces[i]->he;
+      int a = he->v->data;
+      int b = he->next->v->data;
+      int c = he->next->next->v->data;
+      BDS_Point *p1 = aaa[a];
+      BDS_Point *p2 = aaa[b];
+      BDS_Point *p3 = aaa[c];
+      m->add_triangle(p1->iD, p2->iD, p3->iD);
     }
+    delete pm;
   }
 #endif
 
@@ -2074,6 +2086,12 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     return true;
   }
   if(CTX::instance()->debugSurface > 0) debug = true;
+
+    // TEST !!!
+#ifndef OLD_CODE_DELAUNAY
+    //  PolyMesh * pm = GFaceInitialMesh (gf->tag(), 1);
+#endif
+  // TEST !!!
 
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
   std::multimap<MVertex *, BDS_Point *> recoverMultiMapInv;

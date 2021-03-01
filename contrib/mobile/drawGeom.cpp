@@ -79,12 +79,12 @@ void drawContext::drawGeom()
   for(unsigned int i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     if(!m->getVisibility()) continue;
-    if(CTX::instance()->geom.points || CTX::instance()->geom.pointsNum)
+    if(CTX::instance()->geom.points || CTX::instance()->geom.pointLabels)
       std::for_each(m->firstVertex(), m->lastVertex(), drawGeomVertex);
-    if(CTX::instance()->geom.curves || CTX::instance()->geom.curvesNum ||
+    if(CTX::instance()->geom.curves || CTX::instance()->geom.curveLabels ||
        CTX::instance()->geom.tangents)
       std::for_each(m->firstEdge(), m->lastEdge(), drawGeomEdge);
-    if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfacesNum ||
+    if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfaceLabels ||
        CTX::instance()->geom.normals)
       std::for_each(m->firstFace(), m->lastFace(), drawGeomFace);
   }
