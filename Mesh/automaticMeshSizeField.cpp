@@ -1860,15 +1860,18 @@ HXTStatus forestSmoothDirections(Forest *forest){
   FILE* myfile = fopen("justTheDirections.pos","w");
   fprintf(myfile,"View \"justTheDirections\"{\n");
 
+  Msg::Info("Coucou");
+
+
   if(forestOptions->dim == 3){
 
     HXT_CHECK(hxtMalloc(&isBoundaryCondition, meshDom->vertices.num*sizeof(int)));
     for (uint64_t i = 0; i < meshDom->vertices.num; ++i)
       isBoundaryCondition[i]=0;
 
-    for(size_t i = 0; i < meshDom->triangles.num; ++i){
-      for(size_t jj = 0; jj < 3; ++jj){
-        uint32_t iNbc = meshDom->triangles.node[(size_t) 3*i+jj];
+    for(size_t iTri = 0; iTri < meshDom->triangles.num; ++iTri){
+      for(size_t jNode = 0; jNode < 3; ++jNode){
+        uint32_t iNbc = meshDom->triangles.node[(size_t) 3*iTri+jNode];
         double *v1 = forestOptions->nodalCurvature + 6*iNbc;
         double *v2 = forestOptions->nodalCurvature + 6*iNbc + 3;
         double *n  = forestOptions->nodeNormals    + 3*iNbc;
@@ -1885,16 +1888,16 @@ HXTStatus forestSmoothDirections(Forest *forest){
         dirBC[3] = V2[0]; dirBC[4] = V2[1]; dirBC[5] = V2[2];
         dirBC[6] =  N[0]; dirBC[7] =  N[1]; dirBC[8] =  N[2];
 
-        for (int j = 0; j < 3; ++j) {
-          double d[3] = {dirBC[3*j+0], dirBC[3*j+1], dirBC[3*j+2]};
-          if(j==0){
-            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 1.0/2.0*d[0], 1.0/2.0*d[1], 1.0/2.0*d[2]);
-            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-1.0/2.0*d[0],-1.0/2.0*d[1],-1.0/2.0*d[2]);
-          } else{
-            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], d[0], d[1], d[2]);
-            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-d[0],-d[1],-d[2]);
-          }
-        }
+        // for (int j = 0; j < 3; ++j) {
+        //   double d[3] = {dirBC[3*j+0], dirBC[3*j+1], dirBC[3*j+2]};
+        //   if(j==0){
+        //     fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 1.0/2.0*d[0], 1.0/2.0*d[1], 1.0/2.0*d[2]);
+        //     fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-1.0/2.0*d[0],-1.0/2.0*d[1],-1.0/2.0*d[2]);
+        //   } else{
+        //     fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], d[0], d[1], d[2]);
+        //     fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-d[0],-d[1],-d[2]);
+        //   }
+        // }
 
         // Converting BC directions to BC frames
         if(V1.norm() >= tol && V2.norm() >= tol && N.norm() >= tol){
@@ -1980,7 +1983,7 @@ HXTStatus forestSmoothDirections(Forest *forest){
   fprintf(myfile,"};");
   fclose(myfile);
 
-  HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(meshDom, frames, "myFramesBeforeSolve.pos", NULL));
+  // HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(meshDom, frames, "myFramesBeforeSolve.pos", NULL));
 
   HXT_CHECK(hxtInitializeLinearSystems(NULL, NULL));
   int solver=5;
@@ -3666,7 +3669,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
 
     std::vector<double> sizeAtVertices(meshBnd->vertices.num, DBL_MAX);
 
-    forestOptions->aniso = false;
+    forestOptions->aniso = true;
     forestOptions->dim = dim;
     forestOptions->hmax = 1e3; // _hmax;
     forestOptions->hmin = 1e-3; // _hmin;
