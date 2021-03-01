@@ -374,7 +374,7 @@ static PolyMesh::HalfEdge* Color (PolyMesh::HalfEdge *he, int color){
   std::stack<PolyMesh::Face*> _stack;
   _stack.push(he->f);
 
-  PolyMesh::HalfEdge*other_side;
+  PolyMesh::HalfEdge*other_side=nullptr;
   
   while (!_stack.empty()){
     PolyMesh::Face* f = _stack.top();
