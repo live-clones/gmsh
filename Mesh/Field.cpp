@@ -1535,12 +1535,22 @@ public:
     }
     return v;
   }
+
   virtual bool isotropic() const
   {
     PView *v = getView();
     if(v && v->getData()->getNumTensors()) return false;
     return true;
   }
+
+  virtual int numComponents() const
+  {
+    PView *v = getView();
+    if(v && v->getData()->getNumTensors()) return 9;
+    if(v && v->getData()->getNumVectors()) return 3;
+    return 1;
+  }
+
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     PView *v = getView();
@@ -1550,14 +1560,62 @@ public:
       _octree = new OctreePost(v);
       updateNeeded = false;
     }
+
     double l = 0.;
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
-    if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.05))
-      Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
+    if (numComponents() == 3){// scaled cross field
+      double values[3];
+      if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, 0.05)){
+        if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .1)){
+          Msg::Debug("Field sampling: no vector element found containing point (%g,%g,%g) (for norm)", x, y, z);
+        } else {
+          l = sqrt (values[0]*values[0]+values[1]*values[1]+values[2]*values[2]);
+        }
+      } else {
+        l = sqrt (values[0]*values[0]+values[1]*values[1]+values[2]*values[2]);
+      }
+    } else if (numComponents() == 1){
+      if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.05)){
+        Msg::Debug("Field sampling: no scalar element found containing point (%g,%g,%g)", x, y, z);
+      }
+    } else {
+      Msg::Error("Field sampling: no view with the right dimension", x, y, z);
+    }
+
     if(l <= 0 && _cropNegativeValues) return MAX_LC;
     return l;
   }
+
+  void operator()(double x, double y, double z, SVector3 &v, GEntity *ge = 0){
+    PView *vie = getView();
+    if(!vie) {
+      Msg::Error("PostViewField: no view");
+      v.data()[0] = MAX_LC; v.data()[1] = MAX_LC; v.data()[2] = MAX_LC;
+      return;
+    }
+    if(updateNeeded) {
+      if(_octree) delete _octree;
+      _octree = new OctreePost(vie);
+      updateNeeded = false;
+    }
+    if (numComponents() == 3){// scaled cross field
+      double values[3];
+      if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .05)){
+        if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .1)){
+          Msg::Debug("Field sampling: no vector element found containing point (%g,%g,%g)", x, y, z);
+        } else {
+          v = SVector3(values[0],values[1],values[2]);
+        }
+      } else{
+        v = SVector3(values[0],values[1],values[2]);
+      }
+    } else {
+      Msg::Error("Field sampling: no vector element");
+    }
+  }
+
+
   void operator()(double x, double y, double z, SMetric3 &metr,
                   GEntity *ge = nullptr)
   {
@@ -1572,7 +1630,7 @@ public:
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
     if(!_octree->searchTensorWithTol(x, y, z, l, 0, nullptr, 0.05))
-      Msg::Info("No tensor element found containing point (%g,%g,%g)", x, y, z);
+      Msg::Debug("Field sampling: no tensor element found containing point (%g,%g,%g)", x, y, z);
     if(0 && _cropNegativeValues) {
       if(l[0] <= 0 && l[1] <= 0 && l[2] <= 0 && l[3] <= 0 && l[4] <= 0 &&
          l[5] <= 0 && l[6] <= 0 && l[7] <= 0 && l[8] <= 0) {

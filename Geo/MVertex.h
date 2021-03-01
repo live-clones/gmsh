@@ -71,6 +71,12 @@ public:
     _y = y;
     _z = z;
   }
+  void setXYZ(const SPoint3& pt)
+  {
+    _x = pt.x();
+    _y = pt.y();
+    _z = pt.z();
+  }
 
   // get/set the parent entity
   GEntity *onWhat() const { return _ge; }

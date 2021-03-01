@@ -34,6 +34,8 @@ set(SRC
   filterElements.cpp
   gmshCrossFields.cpp
   automaticMeshSizeField.cpp
+  meshQuadQuasiStructured.cpp
+  meshOctreeLibOL.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

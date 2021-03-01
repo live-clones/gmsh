@@ -544,6 +544,13 @@ void backgroundMesh::updateSizes(GFace *_gf)
       MVertex *V1 = _2Dto3D[v1];
       auto s0 = _sizes.find(V0);
       auto s1 = _sizes.find(V1);
+      if (s0 == _sizes.end() || s1  == _sizes.end()) {
+        // Note: this Warning is disabled because it's too verbose in logs
+        //       is this behavior normal ? Was doing undefined behavior before
+        //       (detected by valgrind)
+        // Msg::Warning("in backgroundMesh::updateSizes(), vertex not found in maps");
+        continue;
+      }
       if(s0->second < s1->second)
         s1->second = std::min(s1->second, _beta * s0->second);
       else
@@ -727,4 +734,165 @@ MElement *backgroundMesh::getMeshElementByCoord(double u, double v, double w,
     _octree = new MElementOctree(_triangles);
   }
   return _octree->find(u, v, w, 2, strict);
+}
+
+
+/* Global variable instanciation */
+std::vector<std::unique_ptr<GlobalBackgroundMesh> > global_bmeshes;
+
+bool backgroudMeshExists(const std::string& name) {
+  for (size_t i = 0; i < global_bmeshes.size(); ++i) {
+    if (global_bmeshes[i]->name == name) return true;
+  }
+  return false;
+}
+
+GlobalBackgroundMesh& getBackgroundMesh(const std::string& name) {
+  for (size_t i = 0; i < global_bmeshes.size(); ++i) {
+    if (global_bmeshes[i]->name == name) return *(global_bmeshes[i]);
+  }
+  global_bmeshes.push_back(std::unique_ptr<GlobalBackgroundMesh>(new GlobalBackgroundMesh(name)));
+  return *(global_bmeshes.back());
+}
+
+GlobalBackgroundMesh::~GlobalBackgroundMesh() {
+  Msg::Debug("GlobalBackgroundMesh destructor call");
+  for (MVertex* v: mesh_vertices) if (v) {
+    delete v;
+    v = nullptr;
+  }
+  mesh_vertices.clear();
+  edgeBackgroundMeshes.clear();
+  faceBackgroundMeshes.clear();
+}
+
+
+int GlobalBackgroundMesh::importGModelMeshes(GModel* _gm, bool overwriteExisting) {
+  Msg::Debug("GlobalBackgroundMesh: import GModel mesh ...");
+  gm = _gm;
+
+  if (overwriteExisting && mesh_vertices.size() > 0) { /* Clear mesh */
+    Msg::Debug("- delete existing mesh (for overwrite)");
+    for (MVertex* v: mesh_vertices) if (v) {
+      delete v;
+      v = nullptr;
+    }
+    mesh_vertices.clear();
+    edgeBackgroundMeshes.clear();
+    faceBackgroundMeshes.clear();
+    Msg::Debug("- import mesh from GModel");
+  }
+
+  std::unordered_map<MVertex*,MVertex*> old2new;
+
+  std::set<GVertex*,GEntityPtrLessThan> vertices = gm->getVertices();
+  std::set<GEdge*,GEntityPtrLessThan> edges = gm->getEdges();
+  for (GFace* gf: gm->getFaces()) {
+    for (GVertex* e: gf->embeddedVertices()) vertices.insert(e);
+    for (GEdge* e: gf->embeddedEdges()) edges.insert(e);
+  }
+
+  /* MVertex from GVertex */
+  mesh_vertices.reserve(mesh_vertices.size()+vertices.size());
+  for (GVertex* gv: vertices) {
+    for (size_t i = 0; i < gv->mesh_vertices.size(); ++i) {
+      MVertex* v = gv->mesh_vertices[i];
+      auto it = old2new.find(v);
+      if (it == old2new.end()) {
+        mesh_vertices.push_back(new MVertex(v->x(),v->y(),v->z(),gv));
+        old2new[v] = mesh_vertices.back();
+      }
+    }
+  }
+
+  /* MLine from GEdge */
+  size_t nlines = 0;
+  for (GEdge* ge: edges) {
+    edgeBackgroundMeshes[ge] = BackgroundMeshGEdge();
+    BackgroundMeshGEdge& bm = edgeBackgroundMeshes[ge];
+    bm.ge = ge;
+    for (size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
+      MVertex* v = ge->mesh_vertices[i];
+      double t=0.;
+      v->setParameter(0,t);
+      auto it = old2new.find(v);
+      if (it == old2new.end()) {
+        mesh_vertices.push_back(new MEdgeVertex(v->x(),v->y(),v->z(),ge,t));
+        old2new[v] = mesh_vertices.back();
+      }
+    }
+    bm.lines.reserve(ge->lines.size());
+    for (size_t i = 0; i < ge->lines.size(); ++i) {
+      MElement* elt = ge->lines[i];
+      MVertex* v0 = old2new[elt->getVertex(0)];
+      MVertex* v1 = old2new[elt->getVertex(1)];
+      if (v0 == NULL || v1 == NULL) {
+        Msg::Error("GlobalBackgroundMesh: failed to import mesh (1)");
+        // Note: some vertex are stored outside the GModel ?
+        return -1;
+      }
+      bm.lines.push_back(MLine(v0,v1));
+      nlines += 1;
+    }
+  }
+
+  /* MTriangle from GFace */
+  size_t ntris = 0;
+  for (GFace* gf: gm->getFaces()) {
+    faceBackgroundMeshes[gf] = BackgroundMeshGFace();
+    BackgroundMeshGFace& bm = faceBackgroundMeshes[gf];
+    bm.gf = gf;
+    /* Vertices */
+    for (size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
+      MVertex* v = gf->mesh_vertices[i];
+      auto it = old2new.find(v);
+      if (it == old2new.end()) {
+        double uv0=0.;
+        double uv1=0.;
+        v->getParameter(0,uv0);
+        v->getParameter(1,uv1);
+        mesh_vertices.push_back(new MFaceVertex(v->x(),v->y(),v->z(),gf,uv0,uv1));
+        old2new[v] = mesh_vertices.back();
+      }
+    }
+
+    bm.triangles.reserve(gf->triangles.size()+2*gf->quadrangles.size());
+    /* Triangles */
+    for (size_t i = 0; i < gf->triangles.size(); ++i) {
+      MElement* elt = gf->triangles[i];
+      MVertex* v0 = old2new[elt->getVertex(0)];
+      MVertex* v1 = old2new[elt->getVertex(1)];
+      MVertex* v2 = old2new[elt->getVertex(2)];
+      if (v0 == NULL || v1 == NULL || v2 == NULL) {
+        Msg::Error("GlobalBackgroundMesh: failed to import mesh (2)");
+        // Note: some vertex are stored outside the GModel ?
+        return -1;
+      }
+      bm.triangles.push_back(MTriangle(v0,v1,v2));
+      ntris += 1;
+    }
+
+    /* Quads */
+    if (gf->quadrangles.size() > 0) {
+      for (size_t i = 0; i < gf->quadrangles.size(); ++i) {
+        MElement* elt = gf->quadrangles[i];
+        MVertex* v0 = old2new[elt->getVertex(0)];
+        MVertex* v1 = old2new[elt->getVertex(1)];
+        MVertex* v2 = old2new[elt->getVertex(2)];
+        MVertex* v3 = old2new[elt->getVertex(3)];
+        if (v0 == NULL || v1 == NULL || v2 == NULL || v3 == NULL) {
+          Msg::Error("GlobalBackgroundMesh: failed to import mesh (3)");
+        // Note: some vertex are stored outside the GModel ?
+          return -1;
+        }
+        bm.triangles.push_back(MTriangle(v0,v1,v2));
+        bm.triangles.push_back(MTriangle(v0,v2,v3));
+        ntris += 2;
+      }
+    }
+  }
+
+  Msg::Debug("- imported: %li vertices, %li lines, %li triangles", old2new.size(), nlines, ntris);
+
+  return 0;
 }

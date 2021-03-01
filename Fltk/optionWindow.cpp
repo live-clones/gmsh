@@ -583,7 +583,8 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[2]->value() == 5) ? ALGO_2D_FRONTAL_QUAD :
                   (o->mesh.choice[2]->value() == 6) ? ALGO_2D_PACK_PRLGRMS :
                   (o->mesh.choice[2]->value() == 7) ? ALGO_2D_INITIAL_ONLY :
-                                                      ALGO_2D_AUTO);
+                  (o->mesh.choice[2]->value() == 8) ? ALGO_2D_QUAD_QUASI_STRUCT :
+                  ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
                   (o->mesh.choice[3]->value() == 2) ? ALGO_3D_HXT :
@@ -2418,6 +2419,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Packing of Parallelograms (experimental, planar only)", 0, nullptr,
          nullptr},
         {"Initial Mesh Only (no node insertion)", 0, nullptr, nullptr},
+        {"Quasi-structured quad (experimental)", 0, nullptr, nullptr},
         {nullptr}};
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, nullptr, nullptr},
