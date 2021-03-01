@@ -420,7 +420,7 @@ void GFaceDelaunayRefinement (size_t faceTag){
       if (gp.succeeded()){
 	PolyMesh::Face *f = he->f;
 	f = Walk (f,gp.u(), gp.v());
-	if (f && f->data == faceTag){	  
+	if (f && f->data == (size_t) faceTag){	  
 	  std::vector<PolyMesh::HalfEdge*> _touched;
 	  pm->split_triangle(gp.u(),gp.v(),0,f,delaunayEdgeCriterionPlaneIsotropic,gf,&_touched);
 	  if (_touched.size() == 3){
