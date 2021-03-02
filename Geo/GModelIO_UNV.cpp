@@ -45,7 +45,7 @@ int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
   std::map<int, std::vector<MElement *> > elements[7];
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<int, MElement *> elementTags;
-  std::map<MElement *, std::vector<int> > elementGroups;
+  std::map<MElement *, std::vector<int>, MElementPtrLessThan> elementGroups;
   std::map<int, std::string> groupNames;
   _vertexMapCache.clear();
 
@@ -339,7 +339,7 @@ int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
           elementsNew[k][elementaryNew].push_back(e);
           if(it.second.size() > 2) {
             // we have one or more element groups
-            for(int g = 2; g < it.second.size(); g++) {
+            for(std::size_t g = 2; g < it.second.size(); g++) {
               int physicalNew = it.second[g];
               if(!physicals[dim].count(elementaryNew) ||
                  !physicals[dim][elementaryNew].count(physicalNew))
@@ -348,7 +348,8 @@ int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
             }
           }
           else if(it.second.size() > 1){
-            int physicalNew = it.second[1];
+            int physicalNew = CTX::instance()->mesh.switchElementTags ?
+              it.second[0] : it.second[1];
             // if the group num exists, add an offset (we could also simply not
             // define physical groups other than those in the element
             // groups... not sure what's best)
