@@ -6086,6 +6086,7 @@ problems. For example, on Linux you can use
 @code{valgrind --leak-check=full gmsh file.geo -3}.
 @c macOS: (gdb) set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib
 @c export LD_PRELOAD=libnjamd.so kill -USR1
+@c macOS: (lldb) env DYLD_INSERT_LIBRARIES=/usr/lib/libgmalloc.dylib
 @end itemize
 
 @c -------------------------------------------------------------------------
