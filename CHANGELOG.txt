@@ -1,4 +1,4 @@
-4.8.0 (Work-in-progress): new interactive and fully parametrizable definition of
+4.8.0 (March 2, 2021): new interactive and fully parametrizable definition of
 boundary conditions, materials, etc. through ONELAB variables; new API functions
 for creating trimmed BSpline/Bezier patches, perform raw triangulations and
 tetrehedralizations, get upward adjacencies, and create extruded boundary layers
