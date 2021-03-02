@@ -2320,12 +2320,14 @@ void GModel::_storePhysicalTagsInEntities(
     }
 
     if(ge) {
-      auto it2 = it->second.begin();
-      for(; it2 != it->second.end(); ++it2) {
+      for(auto it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
         if(std::find(ge->physicals.begin(), ge->physicals.end(), it2->first) ==
            ge->physicals.end()) {
           ge->physicals.push_back(it2->first);
         }
+        if(it2->second.size() && it2->second != "unnamed")
+          _physicalNames.insert
+            (std::make_pair(std::make_pair(dim, it2->first), it2->second));
       }
     }
   }

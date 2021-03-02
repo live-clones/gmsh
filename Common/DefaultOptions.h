@@ -1191,6 +1191,12 @@ StringXNumber MeshOptions_Number[] = {
     "Maximum angle between edges/faces within layers of BL triangles/tets "
     "for the detection of columns in the fast curving algorithm"},
 
+  { F|O, "IgnoreParametrization" , opt_mesh_ignore_parametrization, 0. ,
+    "Skip parametrization section when reading meshes in the MSH4 format." },
+  { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 1. ,
+    "Skip periodic node section and skip periodic boundary alignement step when "
+    "reading meshes in the MSH2 format." },
+
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },
   { F|O, "LabelType" , opt_mesh_label_type , 0. ,
@@ -1282,43 +1288,6 @@ StringXNumber MeshOptions_Number[] = {
     "Import groups of nodes (0: no; 1: create geometrical point for each node)?" },
   { F|O, "MedSingleModel" , opt_mesh_med_single_model , 0. ,
     "Import MED meshes in the current model, even if several MED mesh names exist" },
-  { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
-    "Weight of hexahedral element for METIS load balancing (-1: automatic)" },
-  { F|O, "PartitionLineWeight" , opt_mesh_partition_line_weight , -1 ,
-    "Weight of line element for METIS load balancing (-1: automatic)" },
-  { F|O, "PartitionPrismWeight" , opt_mesh_partition_pri_weight , -1 ,
-    "Weight of prismatic element (wedge) for METIS load balancing (-1: automatic)" },
-  { F|O, "PartitionPyramidWeight" , opt_mesh_partition_pyr_weight , -1 ,
-    "Weight of pyramidal element for METIS load balancing (-1: automatic)" },
-  { F|O, "PartitionQuadWeight" , opt_mesh_partition_qua_weight , -1 ,
-    "Weight of quadrangle for METIS load balancing (-1: automatic)" },
-  { F|O, "PartitionTrihedronWeight" , opt_mesh_partition_trih_weight , 0 ,
-    "Weight of trihedron element for METIS load balancing (-1: automatic)" },
-  { F|O, "PartitionTetWeight" , opt_mesh_partition_tet_weight , -1 ,
-    "Weight of tetrahedral element for METIS load balancing (-1: automatic)" },
-  { F|O, "PartitionTriWeight" , opt_mesh_partition_tri_weight , -1 ,
-    "Weight of triangle element for METIS load balancing (-1: automatic)" },
-  { F|O, "PartitionCreateTopology" , opt_mesh_partition_create_topology , 1 ,
-    "Create boundary representation of partitions" },
-  { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 1 ,
-    "Create physical groups for partitions, based on existing physical groups" },
-  { F|O, "PartitionCreateGhostCells" , opt_mesh_partition_create_ghost_cells , 0 ,
-    "Create ghost cells, i.e. create for each partition a ghost entity containing "
-    "elements connected to neighboring partitions by at least one node." },
-  { F|O, "PartitionSplitMeshFiles" , opt_mesh_partition_split_mesh_files , 0 ,
-    "Write one file for each mesh partition" },
-  { F|O, "PartitionTopologyFile" , opt_mesh_partition_save_topology_file , 0 ,
-    "Write a .pro file with the partition topology" },
-  { F|O, "PartitionOldStyleMsh2" , opt_mesh_partition_old_style_msh2 , 1 ,
-    "Write partitioned meshes in MSH2 format using old style (i.e. by not "
-    "referencing new partitioned entities, except on partition boundaries), "
-    "for backward compatibility" },
-  { F|O, "PartitionConvertMsh2" , opt_mesh_partition_convert_msh2 , 1 ,
-    "When reading partitioned meshes in MSH2 format, create new partition "
-    "entities"},
-
-  { F|O, "ReparamMaxTriangles" , opt_mesh_reparam_max_triangles , 250000 ,
-    "Maximum number of triangles in a single parametrization patch" },
 
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. ,
     "Number of hexahedra in the current mesh (read-only)" },
@@ -1362,6 +1331,40 @@ StringXNumber MeshOptions_Number[] = {
     "Optimize the mesh using Netgen to improve the quality of tetrahedral "
     "elements" },
 
+  { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
+    "Weight of hexahedral element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionLineWeight" , opt_mesh_partition_line_weight , -1 ,
+    "Weight of line element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionPrismWeight" , opt_mesh_partition_pri_weight , -1 ,
+    "Weight of prismatic element (wedge) for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionPyramidWeight" , opt_mesh_partition_pyr_weight , -1 ,
+    "Weight of pyramidal element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionQuadWeight" , opt_mesh_partition_qua_weight , -1 ,
+    "Weight of quadrangle for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionTrihedronWeight" , opt_mesh_partition_trih_weight , 0 ,
+    "Weight of trihedron element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionTetWeight" , opt_mesh_partition_tet_weight , -1 ,
+    "Weight of tetrahedral element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionTriWeight" , opt_mesh_partition_tri_weight , -1 ,
+    "Weight of triangle element for METIS load balancing (-1: automatic)" },
+  { F|O, "PartitionCreateTopology" , opt_mesh_partition_create_topology , 1 ,
+    "Create boundary representation of partitions" },
+  { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 1 ,
+    "Create physical groups for partitions, based on existing physical groups" },
+  { F|O, "PartitionCreateGhostCells" , opt_mesh_partition_create_ghost_cells , 0 ,
+    "Create ghost cells, i.e. create for each partition a ghost entity containing "
+    "elements connected to neighboring partitions by at least one node." },
+  { F|O, "PartitionSplitMeshFiles" , opt_mesh_partition_split_mesh_files , 0 ,
+    "Write one file for each mesh partition" },
+  { F|O, "PartitionTopologyFile" , opt_mesh_partition_save_topology_file , 0 ,
+    "Write a .pro file with the partition topology" },
+  { F|O, "PartitionOldStyleMsh2" , opt_mesh_partition_old_style_msh2 , 1 ,
+    "Write partitioned meshes in MSH2 format using old style (i.e. by not "
+    "referencing new partitioned entities, except on partition boundaries), "
+    "for backward compatibility" },
+  { F|O, "PartitionConvertMsh2" , opt_mesh_partition_convert_msh2 , 1 ,
+    "When reading partitioned meshes in MSH2 format, create new partition "
+    "entities"},
   { F|O|D, "Points" , opt_mesh_nodes , 0. ,
     "[Deprecated]" },
   { F|O|D, "PointNumbers" , opt_mesh_node_labels , 0. ,
@@ -1370,6 +1373,9 @@ StringXNumber MeshOptions_Number[] = {
     "[Deprecated]" },
   { F|O|D, "PointType" , opt_mesh_node_type , 0. ,
     "[Deprecated]" },
+  { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
+    "Preserve element numbering in MSH2 format (will break meshes with multiple "
+    "physical groups for a single elementary entity)"},
   { F|O, "Prisms" , opt_mesh_prisms , 1. ,
     "Display mesh prisms?" },
   { F|O, "Pyramids" , opt_mesh_pyramids , 1. ,
@@ -1397,17 +1403,13 @@ StringXNumber MeshOptions_Number[] = {
     "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
   { F|O, "RandomFactor3D" , opt_mesh_rand_factor3d , 1.e-12 ,
     "Random factor used in the 3D meshing algorithm" },
-
   { F|O, "RandomSeed" , opt_mesh_random_seed , 1. ,
     "Seed of pseudo-random number generator" },
-  { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
-    "Preserve element numbering in MSH2 format (will break meshes with multiple "
-    "physical groups for a single elementary entity)"},
-  { F|O, "IgnoreParametrization" , opt_mesh_ignore_parametrization, 0. ,
-    "Skip parametrization section when reading meshes in the MSH4 format." },
-  { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 1. ,
-    "Skip periodic node section and skip periodic boundary alignement step when "
-    "reading meshes in the MSH2 format." },
+
+
+  { F|O, "ReadGroupsOfElements" , opt_mesh_read_groups_of_elements , 1. ,
+    "Read groups of elements in UNV meshes (this will discard the elementary "
+    "entity tags inferred from the element section)"},
 #if defined(HAVE_BLOSSOM)
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 1 ,
 #else
@@ -1434,6 +1436,8 @@ StringXNumber MeshOptions_Number[] = {
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
   { F|O, "Renumber" , opt_mesh_renumber , 1 ,
     "Renumber nodes and elements in a continuous sequence after mesh generation" },
+  { F|O, "ReparamMaxTriangles" , opt_mesh_reparam_max_triangles , 250000 ,
+    "Maximum number of triangles in a single parametrization patch" },
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. ,
     "Save all elements, even if they don't belong to physical groups (for some "
@@ -1446,7 +1450,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
     "Save parametric coordinates of nodes" },
   { F|O, "SaveGroupsOfElements" , opt_mesh_save_groups_of_elements , 1. ,
-    "Save groups of elements for each physical group (for INP mesh format)" },
+    "Save groups of elements for each physical group (for UNV and INP mesh format)" },
   { F|O, "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. ,
     "Save groups of nodes for each physical group (for UNV, INP and Tochnog "
     "mesh formats). For the INP format, a negative value will save a group of node "

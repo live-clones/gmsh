@@ -55,6 +55,7 @@ struct contextMeshOptions {
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveTri, saveGroupsOfNodes, saveGroupsOfElements;
+  int readGroupsOfElements;
   int binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
   double stlLinearDeflection, stlAngularDeflection;

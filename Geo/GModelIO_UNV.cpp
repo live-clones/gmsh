@@ -33,7 +33,7 @@ typedef FILE *gmshFILE;
 #define gmsheof feof
 #endif
 
-int GModel::readUNV(const std::string &name)
+int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
 {
   gmshFILE fp = gmshopen(name.c_str(), "r");
   if(!fp) {
@@ -44,7 +44,9 @@ int GModel::readUNV(const std::string &name)
   char buffer[256];
   std::map<int, std::vector<MElement *> > elements[7];
   std::map<int, std::map<int, std::string> > physicals[4];
-
+  std::map<int, MElement *> elementTags;
+  std::map<MElement *, std::vector<int> > elementGroups;
+  std::map<int, std::string> groupNames;
   _vertexMapCache.clear();
 
   while(!gmsheof(fp)) {
@@ -74,7 +76,7 @@ int GModel::readUNV(const std::string &name)
         std::map<int, int> warn;
         while(gmshgets(buffer, sizeof(buffer), fp)) {
           if(strlen(buffer) < 3)
-            continue; // possible line ending after last fscanf
+            continue; // possible line ending after last fgets
           if(!strncmp(buffer, "    -1", 6)) break;
           int num, type, elementary, physical, color, numNodes;
           if(!CTX::instance()->mesh.switchElementTags) {
@@ -137,19 +139,21 @@ int GModel::readUNV(const std::string &name)
             }
           }
           int dim = -1;
+          MElement *e = nullptr;
           switch(type) {
           case 11:
           case 21:
           case 22:
           case 31:
-            elements[0][elementary].push_back(new MLine(vertices, num));
+            e = new MLine(vertices, num);
+            elements[0][elementary].push_back(e);
             dim = 1;
             break;
           case 23:
           case 24:
           case 32:
-            elements[0][elementary].push_back(
-              new MLine3(vertices[0], vertices[2], vertices[1], num));
+            e = new MLine3(vertices[0], vertices[2], vertices[1], num);
+            elements[0][elementary].push_back(e);
             dim = 1;
             break;
           case 41:
@@ -158,7 +162,8 @@ int GModel::readUNV(const std::string &name)
           case 74:
           case 81:
           case 91:
-            elements[1][elementary].push_back(new MTriangle(vertices, num));
+            e = new MTriangle(vertices, num);
+            elements[1][elementary].push_back(e);
             dim = 2;
             break;
           case 42:
@@ -167,9 +172,9 @@ int GModel::readUNV(const std::string &name)
           case 72:
           case 82:
           case 92:
-            elements[1][elementary].push_back(
-              new MTriangle6(vertices[0], vertices[2], vertices[4], vertices[1],
-                             vertices[3], vertices[5], num));
+            e = new MTriangle6(vertices[0], vertices[2], vertices[4],
+                               vertices[1], vertices[3], vertices[5], num);
+            elements[1][elementary].push_back(e);
             dim = 2;
             break;
           case 44:
@@ -178,7 +183,8 @@ int GModel::readUNV(const std::string &name)
           case 71:
           case 84:
           case 94:
-            elements[2][elementary].push_back(new MQuadrangle(vertices, num));
+            e = new MQuadrangle(vertices, num);
+            elements[2][elementary].push_back(e);
             dim = 2;
             break;
           case 45:
@@ -187,49 +193,58 @@ int GModel::readUNV(const std::string &name)
           case 75:
           case 85:
           case 95:
-            elements[2][elementary].push_back(new MQuadrangle8(
-              vertices[0], vertices[2], vertices[4], vertices[6], vertices[1],
-              vertices[3], vertices[5], vertices[7], num));
+            e = new MQuadrangle8(vertices[0], vertices[2], vertices[4],
+                                 vertices[6], vertices[1], vertices[3],
+                                 vertices[5], vertices[7], num);
+            elements[2][elementary].push_back(e);
             dim = 2;
             break;
           case 111:
-            elements[3][elementary].push_back(new MTetrahedron(vertices, num));
+            e = new MTetrahedron(vertices, num);
+            elements[3][elementary].push_back(e);
             dim = 3;
             break;
           case 118:
-            elements[3][elementary].push_back(new MTetrahedron10(
-              vertices[0], vertices[2], vertices[4], vertices[9], vertices[1],
-              vertices[3], vertices[5], vertices[6], vertices[8], vertices[7],
-              num));
+            e = new MTetrahedron10(vertices[0], vertices[2], vertices[4],
+                                   vertices[9], vertices[1], vertices[3],
+                                   vertices[5], vertices[6], vertices[8],
+                                   vertices[7], num);
+            elements[3][elementary].push_back(e);
             dim = 3;
             break;
           case 104:
           case 115:
-            elements[4][elementary].push_back(new MHexahedron(vertices, num));
+            e = new MHexahedron(vertices, num);
+            elements[4][elementary].push_back(e);
             dim = 3;
             break;
           case 105:
           case 116:
-            elements[4][elementary].push_back(new MHexahedron20(
-              vertices[0], vertices[2], vertices[4], vertices[6], vertices[12],
-              vertices[14], vertices[16], vertices[18], vertices[1],
-              vertices[7], vertices[8], vertices[3], vertices[9], vertices[5],
-              vertices[10], vertices[11], vertices[13], vertices[19],
-              vertices[15], vertices[17], num));
+            e = new MHexahedron20(vertices[0], vertices[2], vertices[4],
+                                  vertices[6], vertices[12], vertices[14],
+                                  vertices[16], vertices[18], vertices[1],
+                                  vertices[7], vertices[8], vertices[3],
+                                  vertices[9], vertices[5], vertices[10],
+                                  vertices[11], vertices[13], vertices[19],
+                                  vertices[15], vertices[17], num);
+            elements[4][elementary].push_back(e);
             dim = 3;
             break;
           case 101:
           case 112:
-            elements[5][elementary].push_back(new MPrism(vertices, num));
+            e = new MPrism(vertices, num);
+            elements[5][elementary].push_back(e);
             dim = 3;
             break;
           case 102:
           case 113:
-            elements[5][elementary].push_back(
-              new MPrism15(vertices[0], vertices[2], vertices[4], vertices[9],
-                           vertices[11], vertices[13], vertices[1], vertices[5],
-                           vertices[6], vertices[3], vertices[7], vertices[8],
-                           vertices[10], vertices[14], vertices[12], num));
+            e = new MPrism15(vertices[0], vertices[2], vertices[4],
+                             vertices[9], vertices[11], vertices[13],
+                             vertices[1], vertices[5], vertices[6],
+                             vertices[3], vertices[7], vertices[8],
+                             vertices[10], vertices[14], vertices[12],
+                             num);
+            elements[5][elementary].push_back(e);
             dim = 3;
             break;
           default:
@@ -242,14 +257,111 @@ int GModel::readUNV(const std::string &name)
              (!physicals[dim].count(elementary) ||
               !physicals[dim][elementary].count(physical)))
             physicals[dim][elementary][physical] = "unnamed";
+
+          if(e) {
+            elementTags[num] = e;
+            elementGroups[e].push_back(elementary);
+            elementGroups[e].push_back(physical);
+          }
         }
       }
-      else if(record == 2477) { // groups elements
-        Msg::Info(
-          "Discarding element/node groups: currently still reading physical "
-          "tags directly from elements");
+      else if(record == 2477 || record == 2452 || record == 2435) {
+        if(!readGroupsOfElements) {
+          Msg::Info("Ignoring groups (set Mesh.ReadGroupsOfElements to read "
+                    "groups of elements)");
+        }
+        else {
+          Msg::Info("Reading groups");
+          while(gmshgets(buffer, sizeof(buffer), fp)) {
+            if(strlen(buffer) < 3)
+              continue; // possible line ending after last fgets
+            if(!strncmp(buffer, "    -1", 6)) break;
+            int num, constraint, restraint, load, dof, temperature, contact, n;
+            if(sscanf(buffer, "%d %d %d %d %d %d %d %d", &num, &constraint,
+                      &restraint, &load, &dof, &temperature, &contact, &n) != 8)
+              break;
+            if(!gmshgets(buffer, sizeof(buffer), fp)) break;
+            char name[256];
+            if(!sscanf(buffer, "%s", name)) break;
+            groupNames[num] = name;
+            int e = 0;
+            while(e < n) {
+              if(!gmshgets(buffer, sizeof(buffer), fp)) break;
+              int type, tag, leaf, comp, type2, tag2, leaf2, comp2;
+              int r = sscanf(buffer, "%d %d %d %d %d %d %d %d", &type, &tag,
+                             &leaf, &comp, &type2, &tag2, &leaf2, &comp2);
+              if(r >= 4) {
+                e++;
+                if(type == 8) elementGroups[elementTags[tag]].push_back(num);
+              }
+              if(r == 8) {
+                e++;
+                if(type2 == 8) elementGroups[elementTags[tag2]].push_back(num);
+              }
+              if(r != 4 && r != 8) break;
+            }
+          }
+        }
       }
     }
+  }
+
+  if(groupNames.size()) {
+    // if element groups are given, create new elementary entity tags for each
+    // unique combination of (elementary, physical, group(s)), as (elementary,
+    // physical) has no garantee to be coherent with the element groups (and is
+    // usually not - see e.g. the UNV files created by ANSA, where e.g. all
+    // surface elements can be associated with the same (elementary, physical)
+    // pair but be split amongst (possibly overlapping) element groups)
+    std::map<std::vector<int>, int> entity;
+    std::map<int, std::vector<MElement *> > elementsNew[7];
+    std::map<int, std::map<int, std::string> > physicalsNew[4];
+
+    int maxgroup = 0;
+    for(auto g : groupNames) maxgroup = std::max(g.first, maxgroup);
+
+    for(auto &it : elementGroups) {
+      MElement *e = it.first;
+      if(e) {
+        int elementaryNew = 0;
+        auto ent = entity.find(it.second);
+        if(ent == entity.end()) {
+          elementaryNew = entity.size() + 1;
+          entity[it.second] = elementaryNew;
+        }
+        else
+          elementaryNew = ent->second;
+        int t = e->getType();
+        int k = (t == TYPE_LIN) ? 0 : (t == TYPE_TRI) ? 1 : (t == TYPE_QUA) ? 2 :
+          (t == TYPE_TET) ? 3 : (t == TYPE_HEX) ? 4 : (t == TYPE_PRI) ? 5 : -1;
+        int dim = e->getDim();
+        if(k >= 0) {
+          elementsNew[k][elementaryNew].push_back(e);
+          if(it.second.size() > 2) {
+            // we have one or more element groups
+            for(int g = 2; g < it.second.size(); g++) {
+              int physicalNew = it.second[g];
+              if(!physicals[dim].count(elementaryNew) ||
+                 !physicals[dim][elementaryNew].count(physicalNew))
+                physicals[dim][elementaryNew][physicalNew] =
+                  groupNames[physicalNew];
+            }
+          }
+          else if(it.second.size() > 1){
+            int physicalNew = it.second[1];
+            // if the group num exists, add an offset (we could also simply not
+            // define physical groups other than those in the element
+            // groups... not sure what's best)
+            if(groupNames.count(physicalNew)) physicalNew += maxgroup;
+            if(!physicals[dim].count(elementaryNew) ||
+               !physicals[dim][elementaryNew].count(physicalNew))
+              physicals[dim][elementaryNew][physicalNew] = "unnamed";
+          }
+        }
+      }
+    }
+    for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+      elements[i] = elementsNew[i];
   }
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
@@ -281,7 +393,8 @@ static std::string physicalName(GModel *m, int dim, int num)
 }
 
 int GModel::writeUNV(const std::string &name, bool saveAll,
-                     bool saveGroupsOfNodes, double scalingFactor)
+                     bool saveGroupsOfElements, bool saveGroupsOfNodes,
+                     double scalingFactor)
 {
   FILE *fp = Fopen(name.c_str(), "w");
   if(!fp) {
@@ -319,67 +432,71 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
   }
   fprintf(fp, "%6d\n", -1);
 
-  std::map<int, std::vector<GEntity *> > groups[4];
-  getPhysicalGroups(groups);
+  // save groups of elements and/or groups of nodes, if requested, for each
+  // physical group
+  if(saveGroupsOfNodes || saveGroupsOfElements) {
 
-  // save groups of elements (and groups of nodes if requested) for each
-  // physical
-  fprintf(fp, "%6d\n", -1);
-  fprintf(fp, "%6d\n", 2477);
-  for(int dim = 0; dim <= 3; dim++) {
-    for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
-      std::vector<GEntity *> &entities = it->second;
+    std::map<int, std::vector<GEntity *> > groups[4];
+    getPhysicalGroups(groups);
 
-      std::set<MVertex *, MVertexPtrLessThan> nodes;
-      if(saveGroupsOfNodes) {
-        for(std::size_t i = 0; i < entities.size(); i++) {
-          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-            MElement *e = entities[i]->getMeshElement(j);
-            for(std::size_t k = 0; k < e->getNumVertices(); k++)
-              nodes.insert(e->getVertex(k));
+    fprintf(fp, "%6d\n", -1);
+    fprintf(fp, "%6d\n", 2477);
+    for(int dim = 0; dim <= 3; dim++) {
+      for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
+        std::vector<GEntity *> &entities = it->second;
+
+        std::set<MVertex *, MVertexPtrLessThan> nodes;
+        if(saveGroupsOfNodes) {
+          for(std::size_t i = 0; i < entities.size(); i++) {
+            for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+              MElement *e = entities[i]->getMeshElement(j);
+              for(std::size_t k = 0; k < e->getNumVertices(); k++)
+                nodes.insert(e->getVertex(k));
+            }
           }
         }
-      }
 
-      int nele = 0;
-      for(std::size_t i = 0; i < entities.size(); i++)
-        nele += entities[i]->getNumMeshElements();
-
-      fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n", it->first, 0, 0, 0, 0,
-              0, 0, (int)nodes.size() + nele);
-      fprintf(fp, "%s\n", physicalName(this, dim, it->first).c_str());
-
-      if(saveGroupsOfNodes) {
-        int row = 0;
-        for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
-          if(row == 2) {
-            fprintf(fp, "\n");
-            row = 0;
-          }
-          fprintf(fp, "%10d%10ld%10d%10d", 7, (*it2)->getIndex(), 0, 0);
-          row++;
+        int nele = 0;
+        if(saveGroupsOfElements) {
+          for(std::size_t i = 0; i < entities.size(); i++)
+            nele += entities[i]->getNumMeshElements();
         }
-        fprintf(fp, "\n");
-      }
 
-      {
-        int row = 0;
-        for(std::size_t i = 0; i < entities.size(); i++) {
-          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-            MElement *e = entities[i]->getMeshElement(j);
+        fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n", it->first, 0, 0, 0, 0,
+                0, 0, (int)nodes.size() + nele);
+        fprintf(fp, "%s\n", physicalName(this, dim, it->first).c_str());
+
+        if(saveGroupsOfNodes) {
+          int row = 0;
+          for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
             if(row == 2) {
               fprintf(fp, "\n");
               row = 0;
             }
-            fprintf(fp, "%10d%10lu%10d%10d", 8, e->getNum(), 0, 0);
+            fprintf(fp, "%10d%10ld%10d%10d", 7, (*it2)->getIndex(), 0, 0);
             row++;
           }
+          fprintf(fp, "\n");
         }
-        fprintf(fp, "\n");
+        if(saveGroupsOfElements) {
+          int row = 0;
+          for(std::size_t i = 0; i < entities.size(); i++) {
+            for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+              MElement *e = entities[i]->getMeshElement(j);
+              if(row == 2) {
+                fprintf(fp, "\n");
+                row = 0;
+              }
+              fprintf(fp, "%10d%10lu%10d%10d", 8, e->getNum(), 0, 0);
+              row++;
+            }
+          }
+          fprintf(fp, "\n");
+        }
       }
     }
+    fprintf(fp, "%6d\n", -1);
   }
-  fprintf(fp, "%6d\n", -1);
 
   fclose(fp);
   return 1;

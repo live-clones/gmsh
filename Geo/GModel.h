@@ -769,9 +769,10 @@ public:
                 double scalingFactor = 1.0);
 
   // I-deas universal mesh format
-  int readUNV(const std::string &name);
+  int readUNV(const std::string &name, bool readGroupsOfElements = true);
   int writeUNV(const std::string &name, bool saveAll = false,
-               bool saveGroupsOfNodes = false, double scalingFactor = 1.0);
+               bool saveGroupsOfElements = true, bool saveGroupsOfNodes = false,
+               double scalingFactor = 1.0);
 
   // Medit (INRIA) mesh format
   int readMESH(const std::string &name);
