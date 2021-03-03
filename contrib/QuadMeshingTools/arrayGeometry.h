@@ -31,7 +31,7 @@ namespace ArrayGeometry {
   inline double length   (const vec3& a) { return sqrt(length2(a)); }
   inline double maxAbs   (const vec3& a) { return maxAbs(a[0],a[1],a[2]); }
   inline vec3 cross(const vec3& a, const vec3& b) { return {a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]};}
-  inline void normalizeFast(vec3& a) { a = 1./std::sqrt(length2(a)) * a; } /* no check, not safe, not accurate */
+  inline void normalizeFast(vec3& a) { a = 1./sqrt(length2(a)) * a; } /* no check, not safe, not accurate */
   inline void normalize(vec3& a) { double amp = maxAbs(a); if (amp == 0.) { return; } a = amp * a; normalizeFast(a); }
   inline double angleVectorsAlreadyNormalized(const vec3& a, const vec3& b) { return acos(clamp(dot(a,b),-1.,1.)); }
   inline double angleVectors(vec3 a, vec3 b);
@@ -52,7 +52,7 @@ namespace ArrayGeometry {
   inline vec3 triangleNormal(const vec3& p0, const vec3& p1, const vec3& p2); /* normalized */
   inline double triangleArea(const vec3& p0, const vec3& p1, const vec3& p2);
 
-  
+
 
   /**********************/
   /* inline definitions */
