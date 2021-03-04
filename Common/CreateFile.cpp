@@ -362,7 +362,9 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_UNV:
     GModel::current()->writeUNV
-      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
+      (name, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.saveGroupsOfElements,
+       CTX::instance()->mesh.saveGroupsOfNodes,
        CTX::instance()->mesh.scalingFactor);
     break;
 

@@ -6308,6 +6308,12 @@ double opt_mesh_save_topology(OPT_ARGS_NUM)
   return CTX::instance()->mesh.saveTopology;
 }
 
+double opt_mesh_read_groups_of_elements(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.readGroupsOfElements = (int)val;
+  return CTX::instance()->mesh.readGroupsOfElements;
+}
+
 double opt_mesh_save_groups_of_elements(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.saveGroupsOfElements = (int)val;

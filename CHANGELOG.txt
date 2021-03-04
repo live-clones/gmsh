@@ -1,4 +1,4 @@
-4.8.0 (Work-in-progress): new interactive and fully parametrizable definition of
+4.8.0 (March 2, 2021): new interactive and fully parametrizable definition of
 boundary conditions, materials, etc. through ONELAB variables; new API functions
 for creating trimmed BSpline/Bezier patches, perform raw triangulations and
 tetrehedralizations, get upward adjacencies, and create extruded boundary layers
@@ -6,13 +6,14 @@ and automatic curve loops in built-in kernel; improved performance of high-order
 meshing of OCC models; improved handling of high resolution displays; new
 structured CGNS exporter; new transfinite Beta law; added support for embedded
 curves in HXT; added automatic conversion from partitioned MSH2 files to new
-partitioned entities; fixed order of Gauss quadrature for quads and hexas; code
-modernization (C++11); further uniformization of option names to match the
-documented terminology (Mesh.Point -> Mesh.Node, ...; old names are still
-accepted, but deprecated); deprecated Mesh.MinimumElementsPerTwoPi: set value
-directly to Mesh.MeshSizeFromCurvature instead; Python and Julia APIs now also
-define "snake case" aliases for all camelCase function names; small bug fixes
-and improvements.
+partitioned entities; element groups can now be imported from UNV files; fixed
+order of Gauss quadrature for quads and hexas; code modernization (C++11);
+further uniformization of option names to match the documented terminology
+(Mesh.Point -> Mesh.Node, ...; old names are still accepted, but deprecated);
+deprecated Mesh.MinimumElementsPerTwoPi: set value directly to
+Mesh.MeshSizeFromCurvature instead; Python and Julia APIs now also define "snake
+case" aliases for all camelCase function names; small bug fixes and
+improvements.
 
 * Incompatible API changes: new optional arguments to mesh/classifySurfaces,
   occ/addBSplineSurface, occ/addBezierSurface, occ/addPipe and view/probe;
