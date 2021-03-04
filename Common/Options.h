@@ -574,6 +574,7 @@ double opt_mesh_save_all(OPT_ARGS_NUM);
 double opt_mesh_save_element_tag_type(OPT_ARGS_NUM);
 double opt_mesh_save_parametric(OPT_ARGS_NUM);
 double opt_mesh_save_topology(OPT_ARGS_NUM);
+double opt_mesh_read_groups_of_elements(OPT_ARGS_NUM);
 double opt_mesh_save_groups_of_elements(OPT_ARGS_NUM);
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM);
 double opt_mesh_color_carousel(OPT_ARGS_NUM);

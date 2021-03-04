@@ -387,7 +387,8 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
     status = GModel::current()->readParasolidXMT(fileName);
   }
   else if(ext == ".unv" || ext == ".UNV") {
-    status = GModel::current()->readUNV(fileName);
+    status = GModel::current()->readUNV
+      (fileName, CTX::instance()->mesh.readGroupsOfElements);
   }
   else if(ext == ".vtk" || ext == ".VTK") {
     status = GModel::current()->readVTK(fileName, CTX::instance()->bigEndian);

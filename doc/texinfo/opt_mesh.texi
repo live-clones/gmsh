@@ -236,6 +236,16 @@ Maximum angle between edges/faces within layers of BL triangles/tets for the det
 Default value: @code{0.523599}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.IgnoreParametrization
+Skip parametrization section when reading meshes in the MSH4 format.@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.IgnorePeriodicity
+Skip periodic node section and skip periodic boundary alignement step when reading meshes in the MSH2 format.@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.LabelSampling
 Label sampling rate (display one label every `LabelSampling' elements)@*
 Default value: @code{1}@*
@@ -421,86 +431,6 @@ Import MED meshes in the current model, even if several MED mesh names exist@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PartitionHexWeight
-Weight of hexahedral element for METIS load balancing (-1: automatic)@*
-Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionLineWeight
-Weight of line element for METIS load balancing (-1: automatic)@*
-Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionPrismWeight
-Weight of prismatic element (wedge) for METIS load balancing (-1: automatic)@*
-Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionPyramidWeight
-Weight of pyramidal element for METIS load balancing (-1: automatic)@*
-Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionQuadWeight
-Weight of quadrangle for METIS load balancing (-1: automatic)@*
-Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionTrihedronWeight
-Weight of trihedron element for METIS load balancing (-1: automatic)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionTetWeight
-Weight of tetrahedral element for METIS load balancing (-1: automatic)@*
-Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionTriWeight
-Weight of triangle element for METIS load balancing (-1: automatic)@*
-Default value: @code{-1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionCreateTopology
-Create boundary representation of partitions@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionCreatePhysicals
-Create physical groups for partitions, based on existing physical groups@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionCreateGhostCells
-Create ghost cells, i.e. create for each partition a ghost entity containing elements connected to neighboring partitions by at least one node.@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionSplitMeshFiles
-Write one file for each mesh partition@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionTopologyFile
-Write a .pro file with the partition topology@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionOldStyleMsh2
-Write partitioned meshes in MSH2 format using old style (i.e. by not referencing new partitioned entities, except on partition boundaries), for backward compatibility@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PartitionConvertMsh2
-When reading partitioned meshes in MSH2 format, create new partition entities@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ReparamMaxTriangles
-Maximum number of triangles in a single parametrization patch@*
-Default value: @code{250000}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.NbHexahedra
 Number of hexahedra in the current mesh (read-only)@*
 Default value: @code{0}@*
@@ -596,6 +526,86 @@ Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.PartitionHexWeight
+Weight of hexahedral element for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionLineWeight
+Weight of line element for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionPrismWeight
+Weight of prismatic element (wedge) for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionPyramidWeight
+Weight of pyramidal element for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionQuadWeight
+Weight of quadrangle for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTrihedronWeight
+Weight of trihedron element for METIS load balancing (-1: automatic)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTetWeight
+Weight of tetrahedral element for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTriWeight
+Weight of triangle element for METIS load balancing (-1: automatic)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionCreateTopology
+Create boundary representation of partitions@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionCreatePhysicals
+Create physical groups for partitions, based on existing physical groups@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionCreateGhostCells
+Create ghost cells, i.e. create for each partition a ghost entity containing elements connected to neighboring partitions by at least one node.@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionSplitMeshFiles
+Write one file for each mesh partition@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTopologyFile
+Write a .pro file with the partition topology@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionOldStyleMsh2
+Write partitioned meshes in MSH2 format using old style (i.e. by not referencing new partitioned entities, except on partition boundaries), for backward compatibility@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionConvertMsh2
+When reading partitioned meshes in MSH2 format, create new partition entities@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PreserveNumberingMsh2
+Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Prisms
 Display mesh prisms?@*
 Default value: @code{1}@*
@@ -656,18 +666,8 @@ Seed of pseudo-random number generator@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PreserveNumberingMsh2
-Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.IgnoreParametrization
-Skip parametrization section when reading meshes in the MSH4 format.@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.IgnorePeriodicity
-Skip periodic node section and skip periodic boundary alignement step when reading meshes in the MSH2 format.@*
+@item Mesh.ReadGroupsOfElements
+Read groups of elements in UNV meshes (this will discard the elementary entity tags inferred from the element section)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -711,6 +711,11 @@ Renumber nodes and elements in a continuous sequence after mesh generation@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.ReparamMaxTriangles
+Maximum number of triangles in a single parametrization patch@*
+Default value: @code{250000}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveAll
 Save all elements, even if they don't belong to physical groups (for some mesh formats, this removes physical groups altogether)@*
 Default value: @code{0}@*
@@ -732,7 +737,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveGroupsOfElements
-Save groups of elements for each physical group (for INP mesh format)@*
+Save groups of elements for each physical group (for UNV and INP mesh format)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
