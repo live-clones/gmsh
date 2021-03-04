@@ -31,9 +31,10 @@ cleanup and performance improvements), Celestin Marot (HXT/tetMesh),
 Pierre-Alexandre Beaufort (HXT/reparam), Zhidong Han (LSDYNA export), Ismail
 Badia (hierarchical basis functions), Jeremy Theler (X3D export), Thomas
 Toulorge (high order mesh optimizer, new CGNS IO), Max Orok (binary PLY), Marek
-Wojciechowski (PyPi packaging), Maxence Reberol (automatic transfinite), Michael
-Ermakov (Gambit export). See comments in the sources for more information. If we
-forgot to list your contributions please send us an email!
+Wojciechowski (PyPi packaging), Maxence Reberol (automatic transfinite, quad
+meshing tools), Michael Ermakov (Gambit export). See comments in the sources for
+more information. If we forgot to list your contributions please send us an
+email!
 
 Thanks to the following folks who have contributed by providing fresh ideas on
 theoretical or programming topics, who have sent patches, requests for changes
@@ -140,6 +141,14 @@ warranty.
 The colorbar widget (Fltk/colorbarWindow.cpp) was inspired by code from the
 Vis5d program for visualizing five dimensional gridded data sets, copyright (C)
 1990-1995, Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
+
+The libOL code (Common/libol1.{c,h}) is Copyright 2012-2018 - by Loïc Maréchal /
+INRIA. This program is a free software. You can redistribute it and/or modify it
+under the terms of the MIT License as published by the Open Source Initiative.
+
+The Fast & memory efficient hashtable based on robin hood hashing
+(Common/robin_hood.h) is Copyright (c) 2018-2020 Martin Ankerl and is licensed
+under the MIT License.
 
 In addition, this version of Gmsh may contain the following contributed,
 optional codes in the contrib/ directory, each governed by their own license:
