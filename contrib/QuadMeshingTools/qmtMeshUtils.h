@@ -104,6 +104,8 @@ void printStatistics(const std::unordered_map<std::string,double>& stats, const 
 void writeStatistics(const std::unordered_map<std::string,double>& stats, const std::string& path); /* json format */
 
 void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elts, const std::string& msg = "");
+void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement*>& elts, const std::string& msg = "");
+void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg = "");
 
 std::string randomIdentifier();
 

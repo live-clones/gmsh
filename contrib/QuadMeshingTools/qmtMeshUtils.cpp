@@ -1307,6 +1307,7 @@ void writeStatistics(const unordered_map<std::string,double>& stats, const std::
 }
 
 void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elts, const std::string& msg) {
+  Msg::Debug("errorAndAbortIfNegativeElement ... (! SLOW !)");
   double vmin = DBL_MAX;
   for (MElement* e: elts) {
     double q = e->minSICNShapeMeasure();
@@ -1315,6 +1316,89 @@ void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elt
   if (vmin < 0.) {
     Msg::Error("Face %i, negative element (in %li tested): SICN min = %.3f. %s", gf->tag(), elts.size(), vmin, msg.c_str());
     abort();
+  }
+}
+
+void errorAndAbortIfInvalidVertex(MVertex* v, const std::string& msg) {
+  size_t numMax = GModel::current()->getMaxVertexNumber();
+  if (v == nullptr) {
+    Msg::Error("Invalid vertex: v = %p | %s", 
+        v, msg.c_str());
+    abort();
+  }
+  if (v->getNum() > numMax) {
+    Msg::Error("Invalid vertex: v = %p, num = %li > numMax=%li | %s", 
+        v, v->getNum(), numMax, msg.c_str());
+    abort();
+  }
+  GEntity* ge = v->onWhat();
+  if (ge == nullptr) {
+    Msg::Error("Invalid vertex: v = %p, num = %li has no entity | %s", 
+        v, v->getNum(), msg.c_str());
+    abort();
+  }
+  auto it = std::find(ge->mesh_vertices.begin(),ge->mesh_vertices.end(),v);
+  if (it == ge->mesh_vertices.end()) {
+    Msg::Error("Invalid vertex: v = %p, num = %li, not found in its entity mesh_vertices (dim %i, tag %i) | %s", 
+        v, v->getNum(), ge->dim(), ge->tag(), msg.c_str());
+    abort();
+  }
+}
+
+void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement*>& elts, const std::string& msg) {
+  Msg::Debug("errorAndAbortIfInvalidVertexInElements ... (! SLOW !)");
+  size_t numMax = GModel::current()->getMaxVertexNumber();
+  for (MElement* e: elts) {
+    if (e == nullptr) continue;
+    for (size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+      MVertex* v = e->getVertex(lv);
+      if (v == nullptr) {
+        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p | %s", 
+            e->getNum(), e->getDim(), lv, v, msg.c_str());
+        abort();
+      }
+      if (v->getNum() > numMax) {
+        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li > numMax=%li | %s", 
+            e->getNum(), e->getDim(), lv, v, v->getNum(), numMax, msg.c_str());
+        abort();
+      }
+      GEntity* ge = v->onWhat();
+      if (ge == nullptr) {
+        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li has no entity | %s", 
+            e->getNum(), e->getDim(), lv, v, v->getNum(), msg.c_str());
+        abort();
+      }
+      auto it = std::find(ge->mesh_vertices.begin(),ge->mesh_vertices.end(),v);
+      if (it == ge->mesh_vertices.end()) {
+        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li, not found in its entity mesh_vertices (dim %i, tag %i) | %s", 
+            e->getNum(), e->getDim(), lv, v, v->getNum(), ge->dim(), ge->tag(), msg.c_str());
+        abort();
+      }
+
+      // // this ones require to rebuild vertex cache
+      // MVertex* v2 = GModel::current()->getMeshVertexByTag(v->getNum());
+      // if (v2 != v) {
+      //   Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li -> getMeshVertexByTag -> v = %p | %s", 
+      //       e->getNum(), e->getDim(), lv, v, v->getNum(), v2, msg.c_str());
+      //   abort();
+      // }
+    }
+  }
+}
+
+void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg) {
+  Msg::Debug("errorAndAbortIfInvalidVertexInModel ... (! SLOW !)");
+  for (GVertex* gv: gm->getVertices()) {
+    for (MVertex* v: gv->mesh_vertices) {
+      errorAndAbortIfInvalidVertex(v, msg);
+    }
+  }
+  for (GEdge* ge: model_edges(gm)) {
+    errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MLine*,MElement*>(ge->lines), msg);
+  }
+  for (GFace* gf: model_faces(gm)) {
+    errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles), msg);
+    errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), msg);
   }
 }
 

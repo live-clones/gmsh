@@ -70,6 +70,7 @@ template <typename Key, typename Hash = robin_hood::hash<Key>, typename KeyEqual
 const std::string BMESH_NAME = "bmesh_quadqs";
 
 constexpr bool PARANO_QUALITY = false;
+constexpr bool PARANO_VALIDITY = false;
 
 
 int buildBackgroundField(
@@ -1486,6 +1487,9 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
         kv.first->setXYZ(kv.second);
       }
     }
+    if (PARANO_VALIDITY) {
+      errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MLine*,MElement*>(ge->lines), "after curve proj");
+    }
   }
 
   std::vector<GFace*> faces = model_faces(gm);
@@ -1530,6 +1534,23 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
       /* Strong disortion in parametrization, use projection */
       evalOnCAD = false;
       projOnCad = true;
+    }
+
+    if (Msg::GetVerbosity() >= 999) {
+      /* In some models (S9 from MAMBO) and with some resolution (clscale 0.1),
+       * there is this issue of vertex on wrong face ...
+       * I guess this is because the CAD is garbage (duplicated corners, degenerate edges) */
+      Msg::Debug("- Face %i, verify vertices before ...", gf->tag());
+      for (size_t i = 0; i < gf->getNumMeshElements(); ++i) {
+        MElement* e = gf->getMeshElement(i);
+        for (size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+          MVertex* v = e->getVertex(lv);
+          if (v->onWhat()->cast2Face() && v->onWhat() != gf) {
+            Msg::Error("- Face %i: element vertex %li is associated to entity (%i,%i)", gf->tag(), v->getNum(), v->onWhat()->dim(), v->onWhat()->tag());
+            abort();
+          }
+        }
+      }
     }
 
     unordered_map<MVertex*,MVertex*> old2new_gf;
@@ -1635,6 +1656,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     }
 
     if (sp != nullptr) delete sp;
+
+    if (PARANO_VALIDITY) {
+      errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after surf proj");
+    }
   }
 
   const bool SHOW_QUADINIT = SHOW_INTERMEDIATE_VIEWS;
@@ -1652,6 +1677,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel* gm) {
     std::unordered_map<std::string,double> stats;
     appendQuadMeshStatistics(gm, stats, "Mesh_");
     printStatistics(stats,"Quad mesh after subdivision, projection and small smoothing:");
+  }
+
+  if (PARANO_VALIDITY) {
+    errorAndAbortIfInvalidVertexInModel(gm, "after refine + proj");
   }
 
   return 0;
@@ -1758,11 +1787,19 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequir
 
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
     meshFaceWithGlobalPattern(gf, invertNormals, minimumQualityRequired);
+
+    if (PARANO_VALIDITY) {
+      errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after face pattern meshing");
+    }
   }
 
   std::unordered_map<std::string,double> stats;
   appendQuadMeshStatistics(gm, stats, "Mesh_");
   printStatistics(stats,"Quad mesh after simple face pattern-based remeshing:");
+
+  if (PARANO_VALIDITY) {
+    errorAndAbortIfInvalidVertexInModel(gm, "global check after face pattern meshing");
+  }
 
   return 0;
 }
@@ -1789,6 +1826,10 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
     if (gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
 
     optimizeQuadMeshWithDiskQuadrangulationRemeshing(gf);
+
+    if (PARANO_VALIDITY) {
+      errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after disk quadrangulation remeshing");
+    }
   }
 
   std::unordered_map<std::string,double> stats;
@@ -1797,6 +1838,10 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm) {
 
   if (stats["Mesh_SICN_min"] < 0.) {
     Msg::Warning("negative quality on some quads");
+  }
+
+  if (PARANO_VALIDITY) {
+    errorAndAbortIfInvalidVertexInModel(gm, "global check after disk quadrangulation remeshing");
   }
 
   return 0;
@@ -1832,6 +1877,10 @@ int optimizeTopologyWithCavityRemeshing(GModel* gm) {
 
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
     improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, invertNormals);
+
+    if (PARANO_VALIDITY) {
+      errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), "after cavity remeshing");
+    }
   }
 
   std::unordered_map<std::string,double> stats;
@@ -1839,6 +1888,10 @@ int optimizeTopologyWithCavityRemeshing(GModel* gm) {
   printStatistics(stats,"Quad mesh after cavity remeshing:");
 
   writeStatistics(stats, "quadqs_statistics.json");
+
+  if (PARANO_VALIDITY) {
+    errorAndAbortIfInvalidVertexInModel(gm, "global check after cavity remeshing");
+  }
 
   GeoLog::flush();
 
@@ -1929,8 +1982,12 @@ int transferSeamGEdgesVerticesToGFace(GModel* gm) {
           nv->setParameter(1,uv[1]);
           gf->mesh_vertices.push_back(nv);
           old2new[ov] = nv;
-          delete ov;
-          gv->mesh_vertices.clear();
+
+          /* Note/warning: let the MVertex on the GVertex live. If the MVertex is deleted,
+           *  I/O is broken.
+           * FIXME: support for GVertex without MVertex in mesh I/O */
+          // delete ov;
+          // gv->mesh_vertices.clear();
         }
       }
     }
