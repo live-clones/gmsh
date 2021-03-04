@@ -36,7 +36,7 @@ gmsh.onelab.set("""[
 ]""")
 
 def setMeshConstraint():
-    if gmsh.onelab.getNumber('Parameters/Full-hex mesh?') == 1:
+    if gmsh.onelab.getNumber('Parameters/Full-hex mesh?')[0] == 1:
         NN = 30
         for c in gmsh.model.getEntities(1):
             gmsh.model.mesh.setTransfiniteCurve(c[1], NN)
@@ -57,6 +57,8 @@ def checkForEvent():
         gmsh.onelab.setString("ONELAB/Action", [""])
         setMeshConstraint()
     return 1
+
+setMeshConstraint()
 
 if "-nopopup" not in sys.argv:
     gmsh.fltk.initialize()
