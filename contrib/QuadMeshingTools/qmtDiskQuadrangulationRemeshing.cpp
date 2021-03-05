@@ -35,7 +35,6 @@
 #include "cppUtils.h"
 #include "qmtMeshUtils.h"
 #include "qmtMeshGeometryOptimization.h"
-// #include "dataDiskQuadrangulations.hpp" // list of disk quadrangulations as a raw string literal
 #include "dataDiskQuadrangulationsSplit.hpp" // list of disk quadrangulations as many strings
 
 using namespace CppUtils;
