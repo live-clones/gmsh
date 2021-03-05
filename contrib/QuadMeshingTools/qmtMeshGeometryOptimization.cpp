@@ -12,7 +12,7 @@
 // #include <array>
 // #include <unordered_map>
 // #include <cstdint>
-// #include <math.h>
+// #include <cmath>
 // #include <queue>
 // #include <algorithm>
 
@@ -280,7 +280,7 @@ namespace QMT {
 
 
   inline double stencilQualitySICNmin(
-      const vec3& center, 
+      const vec3& center,
       const std::array<vec3,8>& stencil,
       double breakIfBelowThreshold = -DBL_MAX) {
     double qmin = DBL_MAX;
@@ -298,7 +298,7 @@ namespace QMT {
   }
 
   inline double stencilQualitySICNmin(
-      const vec3& center, 
+      const vec3& center,
       const std::vector<vec3>& stencil,
       double breakIfBelowThreshold = -DBL_MAX) {
     if (stencil.size() % 2 != 0) return -DBL_MAX;
@@ -319,8 +319,8 @@ namespace QMT {
   struct OneRing {
     vec5* p_uv = NULL;
     uint32_t n = 0;
-    vec2 jump = {0.,0.};
-    vec3 range = {0.,0.};
+    vec2 jump = {{0.,0.}};
+    vec3 range = {{0.,0.,0.}};
   };
 
 
@@ -678,7 +678,7 @@ namespace QMT {
       return false;
     }
 
-#else 
+#else
     Msg::Error("solveLaplaceLinearSystem requires the EIGEN module");
     return -1;
 #endif
@@ -905,7 +905,7 @@ void computeSICN(const std::vector<MElement*>& elements, double& sicnMin, double
 }
 
 int patchOptimizeGeometryGlobal(
-    GFaceMeshPatch& patch, 
+    GFaceMeshPatch& patch,
     GeomOptimStats& stats) {
   GFace* gf = patch.gf;
   if (gf == NULL) return -1;
@@ -918,7 +918,7 @@ int patchOptimizeGeometryGlobal(
     return -1;
   }
   if (patch.intVertices.size() == 0) {
-    Msg::Debug("optimize geometry global: no interior vertices (%li bdr vertices, %li elements)", 
+    Msg::Debug("optimize geometry global: no interior vertices (%li bdr vertices, %li elements)",
         patch.bdrVertices.front().size(), patch.elements.size());
     return -1;
   }
@@ -1021,7 +1021,7 @@ int patchOptimizeGeometryGlobal(
 }
 
 bool kernelLoopWithParametrization(
-    GFaceMeshPatch& patch, 
+    GFaceMeshPatch& patch,
     const GeomOptimOptions& opt,
     GeomOptimStats& stats) {
 
@@ -1036,7 +1036,7 @@ bool kernelLoopWithParametrization(
   std::vector<size_t> one_ring_first;
   std::vector<uint32_t> one_ring_values;
   std::vector<MVertex*> new2old;
-  bool okb = buildUVSmoothingDataStructures(gf, patch.elements, patch.intVertices, point_uv, 
+  bool okb = buildUVSmoothingDataStructures(gf, patch.elements, patch.intVertices, point_uv,
       one_ring_first, one_ring_values, new2old);
   if (!okb) {
     Msg::Error("optimize geometry kernel: failed to build adjacency datastructures");
@@ -1150,7 +1150,7 @@ bool movePointWithKernelAndProjection(
     bool project,
     SurfaceProjector* sp,
     vec3& newPos,
-    vec2& newUv) 
+    vec2& newUv)
 {
   if (project && sp == nullptr) {
     Msg::Error("cannot project with surface projector");
@@ -1202,7 +1202,7 @@ bool movePointWithKernelAndProjection(
 }
 
 bool kernelLoopWithProjection(
-    GFaceMeshPatch& patch, 
+    GFaceMeshPatch& patch,
     const GeomOptimOptions& opt,
     GeomOptimStats& stats) {
   GFace* gf = patch.gf;
@@ -1274,7 +1274,7 @@ bool kernelLoopWithProjection(
       vec2 newUv;
       if (point_uvs.size()) { newUv = point_uvs[v]; }
 
-      bool ok = movePointWithKernelAndProjection(v, points, one_ring_first, one_ring_values, 
+      bool ok = movePointWithKernelAndProjection(v, points, one_ring_first, one_ring_values,
           project, opt.sp, newPos, newUv);
       if (ok) {
         double dx = length(newPos - points[v]);
@@ -1332,13 +1332,13 @@ size_t nbVerticesOnBoundary(const GFaceMeshPatch& patch) {
 }
 
 bool patchOptimizeGeometryWithKernel(
-    GFaceMeshPatch& patch, 
+    GFaceMeshPatch& patch,
     const GeomOptimOptions& opt,
     GeomOptimStats& stats) {
 
   /* Debug visualization */
   bool debugCreateViews = DBG_VIZU_K;
-  if (Msg::GetVerbosity() >= 999 
+  if (Msg::GetVerbosity() >= 999
       && CTX::instance()->debugSurface == patch.gf->tag()) {
     debugCreateViews = true;
   }
@@ -1355,7 +1355,7 @@ bool patchOptimizeGeometryWithKernel(
   computeSICN(patch.elements, stats.sicnMinBefore, stats.sicnAvgBefore);
 
   if (patch.intVertices.size() == 0) {
-    Msg::Debug("optimize geometry kernel: no interior vertices (%li elements)", 
+    Msg::Debug("optimize geometry kernel: no interior vertices (%li elements)",
         patch.elements.size());
     stats.sicnMinAfter = stats.sicnMinBefore;
     stats.sicnAvgAfter = stats.sicnAvgBefore;
@@ -1379,14 +1379,14 @@ bool patchOptimizeGeometryWithKernel(
   if (useParam) {
     bool okl = kernelLoopWithParametrization(patch, opt, stats);
     if (!okl) {
-      Msg::Warning("optimize geometry kernel: the loop with param. failed (%li elements)", 
+      Msg::Warning("optimize geometry kernel: the loop with param. failed (%li elements)",
           patch.elements.size());
       return -1;
     }
   } else {
     bool okl = kernelLoopWithProjection(patch, opt, stats);
     if (!okl) {
-      Msg::Warning("optimize geometry kernel: the loop with projection failed (%li elements)", 
+      Msg::Warning("optimize geometry kernel: the loop with projection failed (%li elements)",
           patch.elements.size());
       return -1;
     }
@@ -1495,7 +1495,7 @@ bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
   }
 
   bool debugCreateViews = DBG_VIZU_G;
-  if (Msg::GetVerbosity() >= 999 
+  if (Msg::GetVerbosity() >= 999
       && CTX::instance()->debugSurface == patch.gf->tag()) {
     debugCreateViews = true;
   }

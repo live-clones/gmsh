@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <cstdint>
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 #include <queue>
 
@@ -146,7 +146,7 @@ bool buildBoundary (const std::vector<MElement*>& elements, std::vector<MVertex*
     size_t i = it - vsorted[0].begin();
     size_t i_next = (i+1)%vsorted[0].size();
     size_t i_prev = (i-1+vsorted[0].size())%vsorted[0].size();
-    if (vsorted[0][i_next] == v2) { 
+    if (vsorted[0][i_next] == v2) {
       // good ordering
     } else if (vsorted[0][i_prev] == v2) { // apply reverse
       std::reverse(vsorted[0].begin(),vsorted[0].end());
@@ -210,7 +210,7 @@ bool buildBoundaries(const std::vector<MElement*>& elements, std::vector<std::ve
     size_t i = it - loop.begin();
     size_t i_next = (i+1)%loop.size();
     size_t i_prev = (i-1+loop.size())%loop.size();
-    if (loop[i_next] == b) { 
+    if (loop[i_next] == b) {
       // good ordering
     } else if (loop[i_prev] == b) { // apply reverse
       std::reverse(loop.begin(),loop.end());
@@ -463,7 +463,7 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
 }
 
 GFaceMeshDiff::~GFaceMeshDiff() {
-  if (done) { 
+  if (done) {
     /* execute() should have already cleared these vectors, just doing by security */
     for (MVertex* v: before.intVertices) if (v != nullptr) {
       delete v;
@@ -552,7 +552,7 @@ MVertex* centerOfElements(const std::vector<MElement*>& elements) {
 
   /* Init from boundary */
   unordered_map<MVertex*,double> dist;
-  std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q; 
+  std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q;
   for (const auto& kv: vPairCount) if (kv.second == 1) {
     dist[kv.first[0]] = 0.;
     dist[kv.first[1]] = 0.;
@@ -754,7 +754,7 @@ std::vector<SPoint2> paramOnElement(GFace* gf, MElement* t) {
     for (size_t lv = 0; lv < n; ++lv) {
       MVertex* v = t->getVertex(lv);
       bool onGf = (dynamic_cast<GFace*>(v->onWhat()) == gf);
-      if (onGf) { 
+      if (onGf) {
         v->getParameter(0,uvs[lv][0]);
         v->getParameter(1,uvs[lv][1]);
         for (size_t k = 1; k < n; ++k) {
@@ -811,10 +811,10 @@ bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, bool& requ
     triangles = trianglesFromQuads(gf->quadrangles);
     requireDelete = true;
     return true;
-  } 
+  }
 
   /* Check if there is the quadqs background mesh */
-  const std::string BMESH_NAME = "bmesh_quadqs"; 
+  const std::string BMESH_NAME = "bmesh_quadqs";
   if (backgroudMeshExists(BMESH_NAME)) {
     GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
     auto it = bmesh.faceBackgroundMeshes.find(gf);
@@ -919,7 +919,7 @@ inline double angleVectors(SVector3 a, SVector3 b) {
   if (a.normSq() == 0. || b.normSq() == 0.) return DBL_MAX;
   normalize_accurate(a);
   normalize_accurate(b);
-  return acos(ArrayGeometry::clamp(dot(a,b),-1.,1.)); 
+  return acos(ArrayGeometry::clamp(dot(a,b),-1.,1.));
 }
 
 bool fillGFaceInfo(GFace* gf, GFaceInfo& info, const std::vector<MTriangle*>& triangles) {
@@ -986,7 +986,7 @@ bool fillGFaceInfo(GFace* gf, GFaceInfo& info, const std::vector<MTriangle*>& tr
 
   /* discrete topological relations between irregular vertices:
    *  sum3m5 = n_val3 - n_val5 = 4 \chi + m_val3 - m_val1  + 2 m_val4 */
-  info.intSumVal3mVal5 = 4*info.chi + int(info.bdrValVertices[3].size()) 
+  info.intSumVal3mVal5 = 4*info.chi + int(info.bdrValVertices[3].size())
     - int(info.bdrValVertices[1].size()) + 2 * int(info.bdrValVertices[4].size());
 
   return true;
@@ -1029,7 +1029,7 @@ bool haveConcaveCorners(const GFaceInfo& info) {
   return false;
 }
 
-bool faceOrderedSideLoops(GFace* gf, const GFaceInfo& info, 
+bool faceOrderedSideLoops(GFace* gf, const GFaceInfo& info,
     std::vector<std::vector<std::vector<std::pair<GEdge*,bool> > > >& loopSideEdgesAndInv) {
   if (info.gf != gf) return false;
   loopSideEdgesAndInv.clear();
@@ -1060,7 +1060,7 @@ bool faceOrderedSideLoops(GFace* gf, const GFaceInfo& info,
         /* New loop with a single periodic GEdge */
         loopSideEdgesAndInv.resize(loopSideEdgesAndInv.size()+1);
         loopSideEdgesAndInv.back() = { { {e0,false} }  };
-        visited.insert(e0); 
+        visited.insert(e0);
         continue;
       }
 
@@ -1322,24 +1322,24 @@ void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elt
 void errorAndAbortIfInvalidVertex(MVertex* v, const std::string& msg) {
   size_t numMax = GModel::current()->getMaxVertexNumber();
   if (v == nullptr) {
-    Msg::Error("Invalid vertex: v = %p | %s", 
+    Msg::Error("Invalid vertex: v = %p | %s",
         v, msg.c_str());
     abort();
   }
   if (v->getNum() > numMax) {
-    Msg::Error("Invalid vertex: v = %p, num = %li > numMax=%li | %s", 
+    Msg::Error("Invalid vertex: v = %p, num = %li > numMax=%li | %s",
         v, v->getNum(), numMax, msg.c_str());
     abort();
   }
   GEntity* ge = v->onWhat();
   if (ge == nullptr) {
-    Msg::Error("Invalid vertex: v = %p, num = %li has no entity | %s", 
+    Msg::Error("Invalid vertex: v = %p, num = %li has no entity | %s",
         v, v->getNum(), msg.c_str());
     abort();
   }
   auto it = std::find(ge->mesh_vertices.begin(),ge->mesh_vertices.end(),v);
   if (it == ge->mesh_vertices.end()) {
-    Msg::Error("Invalid vertex: v = %p, num = %li, not found in its entity mesh_vertices (dim %i, tag %i) | %s", 
+    Msg::Error("Invalid vertex: v = %p, num = %li, not found in its entity mesh_vertices (dim %i, tag %i) | %s",
         v, v->getNum(), ge->dim(), ge->tag(), msg.c_str());
     abort();
   }
@@ -1353,24 +1353,24 @@ void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement*>& elts, 
     for (size_t lv = 0; lv < e->getNumVertices(); ++lv) {
       MVertex* v = e->getVertex(lv);
       if (v == nullptr) {
-        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p | %s", 
+        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p | %s",
             e->getNum(), e->getDim(), lv, v, msg.c_str());
         abort();
       }
       if (v->getNum() > numMax) {
-        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li > numMax=%li | %s", 
+        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li > numMax=%li | %s",
             e->getNum(), e->getDim(), lv, v, v->getNum(), numMax, msg.c_str());
         abort();
       }
       GEntity* ge = v->onWhat();
       if (ge == nullptr) {
-        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li has no entity | %s", 
+        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li has no entity | %s",
             e->getNum(), e->getDim(), lv, v, v->getNum(), msg.c_str());
         abort();
       }
       auto it = std::find(ge->mesh_vertices.begin(),ge->mesh_vertices.end(),v);
       if (it == ge->mesh_vertices.end()) {
-        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li, not found in its entity mesh_vertices (dim %i, tag %i) | %s", 
+        Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li, not found in its entity mesh_vertices (dim %i, tag %i) | %s",
             e->getNum(), e->getDim(), lv, v, v->getNum(), ge->dim(), ge->tag(), msg.c_str());
         abort();
       }
@@ -1378,7 +1378,7 @@ void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement*>& elts, 
       // // this ones require to rebuild vertex cache
       // MVertex* v2 = GModel::current()->getMeshVertexByTag(v->getNum());
       // if (v2 != v) {
-      //   Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li -> getMeshVertexByTag -> v = %p | %s", 
+      //   Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p, num = %li -> getMeshVertexByTag -> v = %p | %s",
       //       e->getNum(), e->getDim(), lv, v, v->getNum(), v2, msg.c_str());
       //   abort();
       // }

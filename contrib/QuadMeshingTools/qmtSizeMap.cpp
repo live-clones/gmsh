@@ -12,7 +12,7 @@
 #include <array>
 #include <unordered_map>
 #include <cstdint>
-#include <math.h>
+#include <cmath>
 #include <queue>
 #include <algorithm>
 
@@ -192,7 +192,7 @@ int sizeMapOneWaySmoothing(
   std::unordered_map<MVertex*, std::vector<MVertex*> > v2v;
   buildVertexToVertexMap(triangles, v2v);
 
-  std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q; 
+  std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q;
   for (const auto& kv: values) {
     Q.push({kv.second,kv.first});
   }
@@ -241,4 +241,3 @@ void quantileFiltering(std::unordered_map<MVertex*,double>& scaling, double crit
     }
   }
 }
-

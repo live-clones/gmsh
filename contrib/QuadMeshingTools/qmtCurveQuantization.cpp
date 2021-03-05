@@ -12,7 +12,7 @@
 #include <array>
 #include <unordered_map>
 #include <cstdint>
-#include <math.h>
+#include <cmath>
 #include <queue>
 #include <algorithm>
 
@@ -60,7 +60,7 @@ namespace QMT {
     const size_t Ne = n.size();
     double current = (n[node] == UNASSIGNED) ? 0. : double(n[node]);
     const double dp = x_ideal[node] - current;
-    if (1. <= dp) { 
+    if (1. <= dp) {
       return 1./ (dp+1.);
     } else if (0. <= dp && dp < 1.) {
       return Ne / (dp+1.);
@@ -83,10 +83,10 @@ namespace QMT {
     std::vector<int> parent(node2side2nodes.size(),UNASSIGNED);
     std::vector<int> initialSide(node2side2nodes.size(),UNASSIGNED);
 
-    std::priority_queue<std::pair<double,int>, std::vector<std::pair<double,int> > > Q; 
+    std::priority_queue<std::pair<double,int>, std::vector<std::pair<double,int> > > Q;
     parent[nodeInit] = START;
     Q.push({DBL_MAX,nodeInit});
-    
+
     std::vector<int> initialSideEnding(node2side2nodes[nodeInit].size(),UNASSIGNED);
     if (initialSideEnding.size() == 0 || initialSideEnding.size() > 2) {
       Msg::Error("wrong number of initial sides: %li", initialSideEnding.size());
@@ -112,7 +112,7 @@ namespace QMT {
       if (DBGPRINT) {
         DBG(nodeInit, node, parentNode, currentInitialSide);
       }
-      
+
 
       /* Propagate on side which is not the origin (i.e. contains the parent) */
       bool prop = false;
@@ -143,7 +143,7 @@ namespace QMT {
         }
 
       }
-      if (!prop && currentInitialSide != UNASSIGNED 
+      if (!prop && currentInitialSide != UNASSIGNED
           && initialSideEnding[currentInitialSide] == UNASSIGNED) {
         initialSideEnding[currentInitialSide] = node;
         if (DBGPRINT)   {
@@ -242,7 +242,7 @@ namespace QMT {
     int OTHERS = 1;
     for (int pass: {EXISTING_TRANSFINITE,OTHERS}) {
       /* Order the unassigned edges, shorter ideal length first */
-      std::priority_queue<std::pair<double,int>, std::vector<std::pair<double,int> >, std::greater<std::pair<double,int> > > Q; 
+      std::priority_queue<std::pair<double,int>, std::vector<std::pair<double,int> >, std::greater<std::pair<double,int> > > Q;
       if (pass == EXISTING_TRANSFINITE) {
         for (int e0 = 0; e0 < count; ++e0) if (n[e0] == UNASSIGNED ) {
           if (new2old[e0]->meshAttributes.method == MESH_TRANSFINITE) {
@@ -360,7 +360,7 @@ int initialCurveQuantization(GModel* gm, double maxDiffNbLines,
     DBG(isTopologicalDisk(info),haveConcaveCorners(info),info.bdrValVertices[1].size());
 
     /* Rectangular face with 4 convex corners */
-    if (isTopologicalDisk(info) && !haveConcaveCorners(info) 
+    if (isTopologicalDisk(info) && !haveConcaveCorners(info)
         && info.bdrValVertices[1].size() == 4) {
       vector<pair<vector<GEdge*>,vector<GEdge*> > > GFoppositeSides;
       size_t NS = 0;

@@ -12,7 +12,7 @@
 #include <array>
 #include <unordered_map>
 #include <cstdint>
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 
 /* Gmsh includes */
@@ -283,7 +283,7 @@ namespace QMT {
       int N,
       const std::vector<std::array<double,3> >& points,
       const std::vector<std::array<id,3> >& triangles,
-      id e, 
+      id e,
       const vector<id2>& uIEdges,
       const vector<id>& old2IEdge,
       const vector<vector<id>>& uIEdgeToOld,
@@ -524,7 +524,7 @@ namespace QMT {
     }
 
     /* Set expanded edges as Dirichlet edges */
-    for (size_t e = 0; e < uIEdges.size(); ++e) if (extDirichletEdge[e] 
+    for (size_t e = 0; e < uIEdges.size(); ++e) if (extDirichletEdge[e]
         && !dirichletEdge[e] && length(dirichletValue[e]) > EPS) {
       dirichletEdge[e] = true;
     }
@@ -537,7 +537,7 @@ namespace QMT {
       const std::vector<std::array<double,3> >& points,
       const std::vector<std::array<id,2> >& lines,
       const std::vector<std::array<id,3> >& triangles,
-      std::vector<std::array<double,3> >& triEdgeTheta, 
+      std::vector<std::array<double,3> >& triEdgeTheta,
       int nbDiffusionLevels,
       double thresholdNormConvergence,
       int nbBoundaryExtensionLayer,
@@ -570,8 +570,8 @@ namespace QMT {
     /* System unknowns: cos(Nt),sin(Nt) for each edge */
     vector<double> x(2*uIEdges.size(),0.);
 
-    /* Initial Dirichlet boundary conditions 
-     * alignement of crosses with edges (relative angle = 0) 
+    /* Initial Dirichlet boundary conditions
+     * alignement of crosses with edges (relative angle = 0)
      * theta_e = 0 => (cos4t/sin4t) = (1,0) */
     size_t nbc = 0;
     vector<bool> dirichletEdge(uIEdges.size(),false);
@@ -622,9 +622,9 @@ namespace QMT {
           Msg::Error("failed to compute stiffness matrix coefficients for e = %li", e);
           return false;
         }
-        for (size_t i = 0; i < iv.size(); ++i) 
+        for (size_t i = 0; i < iv.size(); ++i)
           K_diag.push_back(iv[i]);
-        for (size_t i = 0; i < ijv.size(); ++i) 
+        for (size_t i = 0; i < ijv.size(); ++i)
           K_coefs.push_back(ijv[i]);
         id t1 = uIEdgeToOld[e][0]/3;
         id t2 = uIEdgeToOld[e][1]/3;
@@ -665,7 +665,7 @@ namespace QMT {
         return false;
       }
     }
-    
+
     double dtInitial = (0.1*diag)*(0.1*diag);
     double dtFinal = (3.*emin)*(3.*emin);
 
@@ -692,7 +692,7 @@ namespace QMT {
       /* Initialize system (I/dt + M^-1 * L) x_(i+1) = 1/dt * x_i     (Ax = B) */
       vector<vector<size_t>> Acol = K_columns;
       vector<vector<double>> Aval_add = K_values; /* to get sparsity pattern */
-      for (size_t i = 0; i < Aval_add.size(); ++i) 
+      for (size_t i = 0; i < Aval_add.size(); ++i)
         std::fill(Aval_add[i].begin(),Aval_add[i].end(),0.);
       vector<double> B = x;
       vector<double> norms(uIEdges.size(),0.);
@@ -761,7 +761,7 @@ namespace QMT {
             return false;
           }
 
-          
+
           /* Normalize cross field and gather norm stats */
           double nmi = DBL_MAX;
           double nma = -DBL_MAX;
@@ -839,7 +839,7 @@ namespace QMT {
     return shape[0] * edge_values[0] + shape[1] * edge_values[1] + shape[2] * edge_values[2];
   }
 
-  int local_frame(const MVertex* v, const std::vector<MTriangle*>& tris, 
+  int local_frame(const MVertex* v, const std::vector<MTriangle*>& tris,
       SVector3& e_x, SVector3& e_y, SVector3& e_z) {
     e_x = SVector3(DBL_MAX,DBL_MAX,DBL_MAX);
     SVector3 avg(0.,0.,0.);
@@ -860,12 +860,12 @@ namespace QMT {
       }
     }
     if (avg.norm() < 1.e-16) {
-      Msg::Error("local frame for %li triangles: avg normal = %.2f, %.2f, %.2f", 
+      Msg::Error("local frame for %li triangles: avg normal = %.2f, %.2f, %.2f",
           tris.size(), avg.x(), avg.y(), avg.z());
       return -1;
     }
     if (e_x.norm() < 1.e-16) {
-      Msg::Error("local frame for %li triangles: e_x = %.2f, %.2f, %.2f", 
+      Msg::Error("local frame for %li triangles: e_x = %.2f, %.2f, %.2f",
           tris.size(), e_x.x(), e_x.y(), e_x.z());
       return -1;
     }
@@ -874,7 +874,7 @@ namespace QMT {
     e_z = avg;
     e_y = crossprod(e_z,e_x);
     if (e_y.norm() < 1.e-16) {
-      Msg::Error("local frame for %li triangles: e_y = %.2f, %.2f, %.2f", 
+      Msg::Error("local frame for %li triangles: e_y = %.2f, %.2f, %.2f",
           tris.size(), e_y.x(), e_y.y(), e_y.z());
       return -1;
     }
@@ -940,10 +940,10 @@ namespace QMT {
 
 int computeCrossFieldWithHeatEquation(
     int N,
-    const std::vector<MTriangle*>& triangles, 
-    const std::vector<MLine*>& lines, 
-    std::vector<std::array<double,3> >& triEdgeTheta, 
-    int nbDiffusionLevels, 
+    const std::vector<MTriangle*>& triangles,
+    const std::vector<MLine*>& lines,
+    std::vector<std::array<double,3> >& triEdgeTheta,
+    int nbDiffusionLevels,
     double thresholdNormConvergence,
     int nbBoundaryExtensionLayer,
     int verbosity) {
@@ -1051,7 +1051,7 @@ int computeCrossFieldWithHeatEquation(
 //   if(a >= D)
 //     while(a >= D) a -= D;
 // }
-// 
+//
 // inline double cross_lifting(int Ns, double _a, double a)
 // {
 //   double D = 2. * M_PI / double(Ns);
@@ -1069,7 +1069,7 @@ int computeCrossFieldWithHeatEquation(
 // }
 
 
-inline double compat_orientation_extrinsic(int Ns, 
+inline double compat_orientation_extrinsic(int Ns,
     const SVector3 &o0,
     const SVector3 &n0,
     const SVector3 &o1,
@@ -1133,8 +1133,8 @@ inline double cross_lifting(int Ns, double _a, double a)
 
 int computeCrossFieldConformalScaling(
     int Ns,
-    const std::vector<MTriangle*>& triangles, 
-    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    const std::vector<MTriangle*>& triangles,
+    const std::vector<std::array<double,3> >& triEdgeTheta,
     std::unordered_map<MVertex*,double>& scaling)
 {
 #if defined(HAVE_SOLVER)
@@ -1306,10 +1306,10 @@ int computeCrossFieldConformalScaling(
     i += 1;
   }
   if (sMin == DBL_MAX || sMax == -DBL_MAX || sMin == 0.) {
-    Msg::Error("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f), wrong", 
+    Msg::Error("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f), wrong",
         myAssembler->sizeOfR(), triangles.size(), sMin, sMax);
   } else {
-    Msg::Debug("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f, width=%.3f)", 
+    Msg::Debug("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f, width=%.3f)",
         myAssembler->sizeOfR(), triangles.size(), sMin, sMax, sMax - sMin);
   }
 
@@ -1321,7 +1321,7 @@ int computeCrossFieldConformalScaling(
     GeoLog::flush();
   }
 
-#else 
+#else
   Msg::Error("Computing cross field scaling requires the SOLVER module");
   return -1;
 #endif
@@ -1330,8 +1330,8 @@ int computeCrossFieldConformalScaling(
 }
 
 int computeQuadSizeMapFromCrossFieldConformalFactor(
-    const std::vector<MTriangle*>& triangles, 
-    std::size_t targetNumberOfQuads, 
+    const std::vector<MTriangle*>& triangles,
+    std::size_t targetNumberOfQuads,
     std::unordered_map<MVertex*,double>& scaling) {
 
   Msg::Debug("Offset quad size map from cross field conformal factor to target %li quads ...", targetNumberOfQuads);
@@ -1388,7 +1388,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
         return -1;
       }
       /* Clamp with range without corners */
-      if (nWoCorner > 0 && (it->second < csMin || it->second > csMax)) { 
+      if (nWoCorner > 0 && (it->second < csMin || it->second > csMax)) {
         it->second = clamp(it->second,csMin,csMax);
       }
       values[lv] = it->second;
@@ -1403,11 +1403,11 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   }
 
   if (integral == 0.) {
-    Msg::Warning("Size map from conformal scaling: total integral is 0 ... (%li triangles, smin=%.3e, smax=%.3e)", 
+    Msg::Warning("Size map from conformal scaling: total integral is 0 ... (%li triangles, smin=%.3e, smax=%.3e)",
         triangles.size(), smin, smax);
     return -1;
   }
-  Msg::Debug("- %li triangles, conformal scaling: min=%.3e, max=%.3e, #=%.3e", 
+  Msg::Debug("- %li triangles, conformal scaling: min=%.3e, max=%.3e, #=%.3e",
       triangles.size(), smin, smax, integral);
   std::sort(vertices.begin(), vertices.end());
   vertices.erase(std::unique(vertices.begin(), vertices.end() ), vertices.end());
@@ -1432,8 +1432,8 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
 
 int convertToPerTriangleCrossFieldDirections(
     int Ns,
-    const std::vector<MTriangle*>& triangles, 
-    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    const std::vector<MTriangle*>& triangles,
+    const std::vector<std::array<double,3> >& triEdgeTheta,
     std::vector<std::array<double,9> >& triangleDirections) {
 
   triangleDirections.resize(triangles.size());
@@ -1526,8 +1526,8 @@ inline double angle2PI(const SVector3& u, const SVector3& v, const SVector3& n) 
 
 int detectCrossFieldSingularities(
     int Ns,
-    const std::vector<MTriangle*>& triangles, 
-    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    const std::vector<MTriangle*>& triangles,
+    const std::vector<std::array<double,3> >& triEdgeTheta,
     bool addSingularitiesAtAcuteCorners,
     double thresholdInDeg,
     std::vector<std::pair<SPoint3,int> >& singularities) {
@@ -1541,7 +1541,7 @@ int detectCrossFieldSingularities(
   unordered_map<MVertex*,vector<MTriangle*> > v2t;
 
   /* put edge angles here, maybe a bit slow ... */
-  unordered_map<MEdge,double,MEdgeHash,MEdgeEqual> edgeTheta; 
+  unordered_map<MEdge,double,MEdgeHash,MEdgeEqual> edgeTheta;
 
   for (size_t i = 0; i < triangles.size(); ++i) {
     MTriangle* t = triangles[i];
@@ -1655,13 +1655,13 @@ int detectCrossFieldSingularities(
     MVertex* v2 = t->getVertex(1);
     MVertex* v3 = t->getVertex(2);
     for (double index: {-1.,1.}) {
-      if (vertexIndex[v1] == index 
-          && vertexIndex[v2] == index 
+      if (vertexIndex[v1] == index
+          && vertexIndex[v2] == index
           && vertexIndex[v3] == index) {
         SPoint3 p = (v1->point()+v2->point()+v3->point()) * double(1./3.);
         singularities.push_back({p,index});
         /* remove from list of available singularities */
-        vertexIndex[v1] = 0.; 
+        vertexIndex[v1] = 0.;
         vertexIndex[v2] = 0.;
         vertexIndex[v3] = 0.;
       }
@@ -1673,12 +1673,12 @@ int detectCrossFieldSingularities(
       MVertex* v1 = t->getVertex(le);
       MVertex* v2 = t->getVertex((le+1)%3);
       for (double index: {-1.,1.}) {
-        if (vertexIndex[v1] == index 
+        if (vertexIndex[v1] == index
             && vertexIndex[v2] == index) {
           SPoint3 p = (v1->point()+v2->point()) * 0.5;
           singularities.push_back({p,index});
           /* remove from list of available singularities */
-          vertexIndex[v1] = 0.; 
+          vertexIndex[v1] = 0.;
           vertexIndex[v2] = 0.;
         }
       }
@@ -1718,7 +1718,7 @@ int detectCrossFieldSingularities(
         for (MTriangle* t: tris) {
           p += t->barycenter();
         }
-        p = p * double(1./double(tris.size())); 
+        p = p * double(1./double(tris.size()));
         singularities.push_back({p,1});
       }
     }
@@ -1730,4 +1730,3 @@ int detectCrossFieldSingularities(
 
   return 0;
 }
-

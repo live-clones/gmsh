@@ -11,7 +11,7 @@
 #include <vector>
 #include <cstdint>
 #include <cfloat>
-#include <math.h>
+#include <cmath>
 
 namespace ArrayGeometry {
   using vec2 = std::array<double,2>;
