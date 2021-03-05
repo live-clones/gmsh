@@ -22,10 +22,10 @@ namespace ArrayGeometry {
   inline double maxAbs(double x, double y, double z) { return std::max(std::abs(x),std::max(std::abs(y),std::abs(z))); }
 
   /* vec3 math */
-  inline vec3 operator-(const vec3& a, const vec3& b) { return {a[0]-b[0], a[1]-b[1], a[2]-b[2]}; }
-  inline vec3 operator+(const vec3& a, const vec3& b) { return {a[0]+b[0], a[1]+b[1], a[2]+b[2]}; }
-  inline vec3 operator*(const double& a, const vec3& b) { return {a*b[0], a*b[1], a*b[2]}; }
-  inline vec3 operator*(const vec3& a, const double& b) { return {a[0]*b, a[1]*b, a[2]*b}; }
+  inline vec3 operator-(const vec3& a, const vec3& b) { return {{a[0]-b[0], a[1]-b[1], a[2]-b[2]}}; }
+  inline vec3 operator+(const vec3& a, const vec3& b) { return {{a[0]+b[0], a[1]+b[1], a[2]+b[2]}}; }
+  inline vec3 operator*(const double& a, const vec3& b) { return {{a*b[0], a*b[1], a*b[2]}}; }
+  inline vec3 operator*(const vec3& a, const double& b) { return {{a[0]*b, a[1]*b, a[2]*b}}; }
   inline double dot      (const vec3& a, const vec3& b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
   inline double length2  (const vec3& a) { return dot(a,a); }
   inline double length   (const vec3& a) { return sqrt(length2(a)); }
@@ -37,10 +37,10 @@ namespace ArrayGeometry {
   inline double angleVectors(vec3 a, vec3 b);
 
   /* vec2 math */
-  inline vec2 operator-(const vec2& a, const vec2& b) { return {a[0]-b[0], a[1]-b[1]}; }
-  inline vec2 operator+(const vec2& a, const vec2& b) { return {a[0]+b[0], a[1]+b[1]}; }
-  inline vec2 operator*(const double& a, const vec2& b) { return {a*b[0], a*b[1]}; }
-  inline vec2 operator*(const vec2& a, const double& b) { return {a[0]*b, a[1]*b}; }
+  inline vec2 operator-(const vec2& a, const vec2& b) { return {{a[0]-b[0], a[1]-b[1]}}; }
+  inline vec2 operator+(const vec2& a, const vec2& b) { return {{a[0]+b[0], a[1]+b[1]}}; }
+  inline vec2 operator*(const double& a, const vec2& b) { return {{a*b[0], a*b[1]}}; }
+  inline vec2 operator*(const vec2& a, const double& b) { return {{a[0]*b, a[1]*b}}; }
   inline double dot      (const vec2& a, const vec2& b) { return a[0]*b[0]+a[1]*b[1]; }
   inline double length2  (const vec2& a) { return dot(a,a); }
   inline double length   (const vec2& a) { return sqrt(length2(a)); }
@@ -71,7 +71,7 @@ namespace ArrayGeometry {
 
   vec3 triangleNormal(const vec3& p0, const vec3& p1, const vec3& p2) {
     vec3 N = cross(p2-p0,p1-p0);
-    if (maxAbs(N) == 0.) return {0.,0.,0.};
+    if (maxAbs(N) == 0.) return {{0.,0.,0.}};
     normalize(N);
     return N;
   }

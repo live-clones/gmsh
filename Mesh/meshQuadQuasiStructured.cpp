@@ -160,9 +160,9 @@ void showCrossFieldInView(
   for(size_t i = 0; i < global_triangles.size(); ++i) {
     for(size_t lv = 0; lv < 3; ++lv) {
       MVertex *v = global_triangles[i]->getVertex(lv);
-      vec3 dir = {global_triangle_directions[i][3 * lv + 0],
-                  global_triangle_directions[i][3 * lv + 1],
-                  global_triangle_directions[i][3 * lv + 2]};
+      vec3 dir = {{global_triangle_directions[i][3 * lv + 0],
+                   global_triangle_directions[i][3 * lv + 1],
+                   global_triangle_directions[i][3 * lv + 2]}};
       std::array<double, 3> pt = v->point();
       GeoLog::add(pt, dir, viewName);
     }

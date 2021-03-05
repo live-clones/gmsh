@@ -27,19 +27,19 @@ namespace SurfaceProjectorUtils {
   using vec3 = std::array<double, 3>;
   inline vec3 operator-(const vec3 &a, const vec3 &b)
   {
-    return {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
+    return {{a[0] - b[0], a[1] - b[1], a[2] - b[2]}};
   }
   inline vec3 operator+(const vec3 &a, const vec3 &b)
   {
-    return {a[0] + b[0], a[1] + b[1], a[2] + b[2]};
+    return {{a[0] + b[0], a[1] + b[1], a[2] + b[2]}};
   }
   inline vec3 operator*(const double &a, const vec3 &b)
   {
-    return {a * b[0], a * b[1], a * b[2]};
+    return {{a * b[0], a * b[1], a * b[2]}};
   }
   inline vec3 operator*(const vec3 &a, const double &b)
   {
-    return {a[0] * b, a[1] * b, a[2] * b};
+    return {{a[0] * b, a[1] * b, a[2] * b}};
   }
   inline double dot(const vec3 &a, const vec3 &b)
   {
@@ -427,9 +427,9 @@ bool SurfaceProjector::initialize(GFace *gf_,
           SPoint2 param3;
           reparamMeshEdgeOnFace(v1, v2, gf, param1, param2);
           reparamMeshEdgeOnFace(v1, v3, gf, param1, param3);
-          tri_uvs[(lv + 0) % 3] = {param1.x(), param1.y()};
-          tri_uvs[(lv + 1) % 3] = {param2.x(), param2.y()};
-          tri_uvs[(lv + 2) % 3] = {param3.x(), param3.y()};
+          tri_uvs[(lv + 0) % 3] = {{param1.x(), param1.y()}};
+          tri_uvs[(lv + 1) % 3] = {{param2.x(), param2.y()}};
+          tri_uvs[(lv + 2) % 3] = {{param3.x(), param3.y()}};
           found = true;
           break;
         }
@@ -453,15 +453,15 @@ bool SurfaceProjector::initialize(GFace *gf_,
           reparamMeshEdgeOnFace(&cv, v1, gf, paramc, param1);
           reparamMeshEdgeOnFace(&cv, v2, gf, paramc, param2);
           reparamMeshEdgeOnFace(&cv, v3, gf, paramc, param3);
-          tri_uvs[0] = {param1.x(), param1.y()};
-          tri_uvs[1] = {param2.x(), param2.y()};
-          tri_uvs[2] = {param3.x(), param3.y()};
+          tri_uvs[0] = {{param1.x(), param1.y()}};
+          tri_uvs[1] = {{param2.x(), param2.y()}};
+          tri_uvs[2] = {{param3.x(), param3.y()}};
         }
         else {
           no_eval = true;
-          tri_uvs[0] = {0., 0.};
-          tri_uvs[1] = {0., 0.};
-          tri_uvs[2] = {0., 0.};
+          tri_uvs[0] = {{0., 0.}};
+          tri_uvs[1] = {{0., 0.}};
+          tri_uvs[2] = {{0., 0.}};
         }
       }
     }
@@ -515,15 +515,15 @@ GPoint failedProjection()
 GPoint sphereProjection(GFace *gf, const double query[3],
                         const std::array<double, 10> &analyticalParameters)
 {
-  vec3 dir = {query[0] - analyticalParameters[0],
-              query[1] - analyticalParameters[1],
-              query[2] - analyticalParameters[2]};
+  vec3 dir = {{query[0] - analyticalParameters[0],
+               query[1] - analyticalParameters[1],
+               query[2] - analyticalParameters[2]}};
   if(length2(dir) == 0.) { return failedProjection(); }
   normalize(dir);
-  const vec3 newPos = {
+  const vec3 newPos = {{
     analyticalParameters[0] + analyticalParameters[3] * dir[0],
     analyticalParameters[1] + analyticalParameters[3] * dir[1],
-    analyticalParameters[2] + analyticalParameters[3] * dir[2]};
+    analyticalParameters[2] + analyticalParameters[3] * dir[2]}};
   return GPoint(newPos[0], newPos[1], newPos[2], gf);
 }
 
@@ -563,7 +563,7 @@ GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD,
   size_t tri = idx - 1;
 
   /* Projection to get the barycentric coordinates */
-  const vec3 queryv3 = {query[0], query[1], query[2]};
+  const vec3 queryv3 = {{query[0], query[1], query[2]}};
   const vec3 &p1 = points[triangles[tri][0] - BasIdx];
   const vec3 &p2 = points[triangles[tri][1] - BasIdx];
   const vec3 &p3 = points[triangles[tri][2] - BasIdx];

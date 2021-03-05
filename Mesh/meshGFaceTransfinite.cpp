@@ -582,7 +582,7 @@ bool faceIsValidQuad(GFace *gf, double angle_threshold_rad)
 
   std::vector<std::array<int, 2> > vpairs;
   for(GEdge *ge : gf->edges()) {
-    vpairs.push_back({ge->getBeginVertex()->tag(), ge->getEndVertex()->tag()});
+    vpairs.push_back({{ge->getBeginVertex()->tag(), ge->getEndVertex()->tag()}});
   }
   std::vector<int> loop;
   bool ok = id_loop_from_closed_pairs(vpairs, loop);

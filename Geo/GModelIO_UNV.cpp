@@ -315,7 +315,6 @@ int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
     // pair but be split amongst (possibly overlapping) element groups)
     std::map<std::vector<int>, int> entity;
     std::map<int, std::vector<MElement *> > elementsNew[7];
-    std::map<int, std::map<int, std::string> > physicalsNew[4];
 
     int maxgroup = 0;
     for(auto g : groupNames) maxgroup = std::max(g.first, maxgroup);
