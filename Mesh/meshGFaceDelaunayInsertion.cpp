@@ -1608,8 +1608,10 @@ void bowyerWatsonParallelograms(
   std::vector<SMetric3> metrics;
 
   Msg::Debug("- Face %i: bowyerWatsonParallelograms ...", gf->tag());
-  if (!gf->haveParametrization()) {
-    Msg::Error("- Face %i: no CAD parametrization available, cannot mesh with algo PACK", gf->tag());
+  if(!gf->haveParametrization()) {
+    Msg::Error(
+      "- Face %i: no CAD parametrization available, cannot mesh with algo PACK",
+      gf->tag());
     return;
   }
 
@@ -1617,7 +1619,8 @@ void bowyerWatsonParallelograms(
   if(old_algo_hexa()) {
     Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");
     packingOfParallelograms(gf, packed, metrics);
-  } else {
+  }
+  else {
     Msg::Debug("bowyerWatsonParallelograms: call Filler2D::pointInsertion2D()");
     Filler2D f;
     f.pointInsertion2D(gf, packed, metrics);
@@ -1626,7 +1629,7 @@ void bowyerWatsonParallelograms(
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
 
-  Msg::Info("%lu Nodes created --> now staring insertion",packed.size());
+  Msg::Info("%lu Nodes created --> now staring insertion", packed.size());
 
   if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)) {
     Msg::Error("Invalid meshing data structure");
@@ -1635,8 +1638,9 @@ void bowyerWatsonParallelograms(
 
   // std::sort(packed.begin(), packed.end(), MVertexPtrLessThanLexicographic());
   SortHilbert(packed);
-  Msg::Debug("bowyerWatsonParallelograms: %li candidate points to insert in the triangulation",
-      packed.size());
+  Msg::Debug("bowyerWatsonParallelograms: %li candidate points to insert in "
+             "the triangulation",
+             packed.size());
 
   MTri3 *oneNewTriangle = nullptr;
   for(std::size_t i = 0; i < packed.size();) {
@@ -1677,10 +1681,9 @@ void bowyerWatsonParallelograms(
   transferDataStructure(gf, AllTris, DATA);
   backgroundMesh::unset();
 
-
-  Msg::Debug("bowyerWatsonParallelograms: %li candidate points -> %li inserted vertices",
-      packed.size(), gf->mesh_vertices.size());
-
+  Msg::Debug(
+    "bowyerWatsonParallelograms: %li candidate points -> %li inserted vertices",
+    packed.size(), gf->mesh_vertices.size());
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 }

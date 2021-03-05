@@ -59,15 +59,16 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
 /**
  * @brief Automatically set transfinite constraints on curves and faces
  *        in the candidate_faces if possible. Curves on opposide sides
- *        of rectangular faces are constrained to reiceive the same number 
+ *        of rectangular faces are constrained to reiceive the same number
  *        of points.
  *
  * @param candidate_faces The faces which are candidate for transfinite
  * @param cornerAngle Threshold on the angle (viewed from face) at corners
- * @param setRecombine If true, quads will be built instead of triangles when meshing
- * @param maxDiffRel Reject transfinite constraints if the relative difference on the
- *                   initial number of lines (from sizing constraints) on opposite sides
- *                   is larger than the maxDiffRel
+ * @param setRecombine If true, quads will be built instead of triangles when
+ * meshing
+ * @param maxDiffRel Reject transfinite constraints if the relative difference
+ * on the initial number of lines (from sizing constraints) on opposite sides is
+ * larger than the maxDiffRel
  *
  * @return true if success
  */

@@ -9,7 +9,7 @@
 class GModel;
 
 /**
- * @brief The QuadQuasiStructured meshing mode requires control 
+ * @brief The QuadQuasiStructured meshing mode requires control
  *        over various meshing parameters which are stored in the
  *        global context. To deal with this without adding conditions
  *        everywhere in the other meshing parts, we use this updater
@@ -17,42 +17,43 @@ class GModel;
  *        and deleted at the end to restore the initial values.
  */
 class QuadqsContextUpdater {
-  public:
-    QuadqsContextUpdater();
-    ~QuadqsContextUpdater();
+public:
+  QuadqsContextUpdater();
+  ~QuadqsContextUpdater();
 
-  protected:
-    void setQuadqsOptions();
-    void restoreInitialOption();
+protected:
+  void setQuadqsOptions();
+  void restoreInitialOption();
 
-  protected:
-    int algo2d;
-    int recombineAll;
-    int algoRecombine;
-    int recombineOptimizeTopology;
-    double lcFactor;
-    double lcMin;
-    double lcMax;
-    int lcFromPoints;
-    int minCurveNodes;
-    int minCircleNodes;
+protected:
+  int algo2d;
+  int recombineAll;
+  int algoRecombine;
+  int recombineOptimizeTopology;
+  double lcFactor;
+  double lcMin;
+  double lcMax;
+  int lcFromPoints;
+  int minCurveNodes;
+  int minCircleNodes;
 };
 
 /**
- * @brief 
+ * @brief
  *
  * @param[in] gm GModel containing the CAD and/or meshes
  * @param[in] overwriteGModelMesh delete existing mesh, rebuild from CAD
- * @param[in] deleteGModelMeshAfter after background mesh creation, delete the GModel mesh
- * @param[in] N the N-symmetry field invariance. N=4 for cross and N=6 for asterisk fields
+ * @param[in] deleteGModelMeshAfter after background mesh creation, delete the
+ * GModel mesh
+ * @param[in] N the N-symmetry field invariance. N=4 for cross and N=6 for
+ * asterisk fields
  *
  * @return 0 if success
  */
-int BuildBackgroundMeshAndGuidingField(
-    GModel* gm, 
-    bool overwriteGModelMesh = false,
-    bool deleteGModelMeshAfter = false,
-    int N = 4);
+int BuildBackgroundMeshAndGuidingField(GModel *gm,
+                                       bool overwriteGModelMesh = false,
+                                       bool deleteGModelMeshAfter = false,
+                                       int N = 4);
 
 /**
  * @brief To check if a compatible background mesh and
@@ -60,7 +61,7 @@ int BuildBackgroundMeshAndGuidingField(
  *
  * @return true if exists
  */
-bool backgroundMeshAndGuidingFieldExists(GModel* gm);
+bool backgroundMeshAndGuidingFieldExists(GModel *gm);
 
 /**
  * @brief Look for non-ideal vertex valences in quad mesh and find a better
@@ -73,7 +74,7 @@ bool backgroundMeshAndGuidingFieldExists(GModel* gm);
  *
  * @return 0 if success
  */
-int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm);
+int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm);
 
 /**
  * @brief Mesh vertices on seam curves (and isolated corners) are
@@ -84,10 +85,10 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel* gm);
  *
  * @return 0 if success
  */
-int transferSeamGEdgesVerticesToGFace(GModel* gm);
+int transferSeamGEdgesVerticesToGFace(GModel *gm);
 
 /**
- * @brief Look for patches of quads with >=3 irregular vertices which 
+ * @brief Look for patches of quads with >=3 irregular vertices which
  *        can be remeshed with more regular quad meshes. The replacement
  *        meshes are subdivisions of a list of predefined patterns.
  *        Irregular vertices matching cross field singularities are
@@ -99,7 +100,7 @@ int transferSeamGEdgesVerticesToGFace(GModel* gm);
  *
  * @return 0 if success
  */
-int optimizeTopologyWithCavityRemeshing(GModel* gm);
+int optimizeTopologyWithCavityRemeshing(GModel *gm);
 
 /**
  * @brief Look for simple CAD faces (topological disk, a few corners)
@@ -109,12 +110,13 @@ int optimizeTopologyWithCavityRemeshing(GModel* gm);
  *        Only faces whose meshing status is GFace::PENDING are processed
  *
  * @param gm The model containing the face quad meshes.
- * @param minimumQualityRequired Minimum quality (SICN) required to accept a new quad mesh
+ * @param minimumQualityRequired Minimum quality (SICN) required to accept a new
+ * quad mesh
  *
  * @return 0 if success
  */
-int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequired = 0.5);
-
+int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
+                                         double minimumQualityRequired = 0.5);
 
 /**
  * @brief Midpoint subdivision of the surface mesh with projections
@@ -125,7 +127,6 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel* gm, double minimumQualityRequir
  *
  * @return 0 if success
  */
-int RefineMeshWithBackgroundMeshProjection(GModel* gm);
-
+int RefineMeshWithBackgroundMeshProjection(GModel *gm);
 
 #endif

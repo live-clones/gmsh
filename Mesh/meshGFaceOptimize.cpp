@@ -34,7 +34,8 @@ extern "C" int perfect_match(int ncount, CCdatagroup *dat, int ecount,
                              int partialprice, double *totalzeit);
 #endif
 
-RecombineTriangle::RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_t2, Field *cross_field)
+RecombineTriangle::RecombineTriangle(const MEdge &me, MElement *_t1,
+                                     MElement *_t2, Field *cross_field)
   : t1(_t1), t2(_t2)
 {
   n1 = me.getVertex(0);
@@ -48,17 +49,17 @@ RecombineTriangle::RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_
     n3 = t1->getVertex(1);
   else if(t1->getVertex(2) != n1 && t1->getVertex(2) != n2)
     n3 = t1->getVertex(2);
-  
+
   if(t2->getVertex(0) != n1 && t2->getVertex(0) != n2)
     n4 = t2->getVertex(0);
   else if(t2->getVertex(1) != n1 && t2->getVertex(1) != n2)
     n4 = t2->getVertex(1);
   else if(t2->getVertex(2) != n1 && t2->getVertex(2) != n2)
     n4 = t2->getVertex(2);
-  
+
   MQuadrangle q(n1, n3, n2, n4);
   angle = q.etaShapeMeasure();
-  
+
   double const a1 = 180 * angle3Vertices(n1, n4, n2) / M_PI;
   double const a2 = 180 * angle3Vertices(n4, n2, n3) / M_PI;
   double const a3 = 180 * angle3Vertices(n2, n3, n1) / M_PI;
@@ -68,28 +69,27 @@ RecombineTriangle::RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_
   quality = std::max(std::abs(90. - a3), quality);
   quality = std::max(std::abs(90. - a4), quality);
 
-  if (cross_field){
+  if(cross_field) {
     SVector3 t1;
-    SVector3 t2 (me.getVertex(1)->x()-me.getVertex(0)->x(),
-		 me.getVertex(1)->y()-me.getVertex(0)->y(),
-		 me.getVertex(1)->z()-me.getVertex(0)->z());
-    (*cross_field)(0.5*(me.getVertex(0)->x()+me.getVertex(1)->x()),
-		   0.5*(me.getVertex(0)->y()+me.getVertex(1)->y()),
-		   0.5*(me.getVertex(0)->z()+me.getVertex(1)->z()),t1, NULL);
+    SVector3 t2(me.getVertex(1)->x() - me.getVertex(0)->x(),
+                me.getVertex(1)->y() - me.getVertex(0)->y(),
+                me.getVertex(1)->z() - me.getVertex(0)->z());
+    (*cross_field)(0.5 * (me.getVertex(0)->x() + me.getVertex(1)->x()),
+                   0.5 * (me.getVertex(0)->y() + me.getVertex(1)->y()),
+                   0.5 * (me.getVertex(0)->z() + me.getVertex(1)->z()), t1,
+                   NULL);
     //    double L1 = t1.norm();
     t1.normalize();
     //    double L2 = t2.norm();
     t2.normalize();
-    SVector3 n = crossprod(t1,t2);
-    double ErrDir = std::min(fabs(dot(t1,t2)),n.norm());        
+    SVector3 n = crossprod(t1, t2);
+    double ErrDir = std::min(fabs(dot(t1, t2)), n.norm());
     //    double ErrL = fabs(L1-L2)/(L1);
     //    printf("quality %g err %g L %g %g\n",quality,ErrL,L1,L2);
     quality /= ErrDir;
-    if (n1->onWhat()->dim() < 2 || n2->onWhat()->dim() < 2)quality /= 10;
-
+    if(n1->onWhat()->dim() < 2 || n2->onWhat()->dim() < 2) quality /= 10;
   }
 }
-
 
 edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
   : v1(_v1), v2(_v2)
@@ -1059,9 +1059,9 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   Field *cross_field = NULL;
   SVector3 t1;
   // double L; /* unused ? */
-  if(fields->getBackgroundField() > 0) {        
+  if(fields->getBackgroundField() > 0) {
     cross_field = fields->get(fields->getBackgroundField());
-    if(cross_field->numComponents() != 3) {// we hae a true scaled cross fiel
+    if(cross_field->numComponents() != 3) { // we hae a true scaled cross fiel
       cross_field = NULL;
     }
   }
@@ -1077,8 +1077,8 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
                             it->first.getVertex(0)) ||
         !std::binary_search(emb_edgeverts.begin(), emb_edgeverts.end(),
                             it->first.getVertex(1)))) {
-      pairs.push_back(
-        RecombineTriangle(it->first, it->second.first, it->second.second, cross_field));
+      pairs.push_back(RecombineTriangle(it->first, it->second.first,
+                                        it->second.second, cross_field));
     }
     else if(!it->second.second && it->second.first->getNumVertices() == 3) {
       for(int i = 0; i < 2; i++) {
@@ -1411,8 +1411,8 @@ void quadsToTriangles(GFace *gf, double minqual)
   //  std::map<MElement*,MElement*> _toFirst;
   std::map<MElement *, std::vector<MElement *> > newElemColumns;
 
-  for(auto it = _columns->_elemColumns.begin(); it != _columns->_elemColumns.end();
-      it++) {
+  for(auto it = _columns->_elemColumns.begin();
+      it != _columns->_elemColumns.end(); it++) {
     MElement *firstEl = it->first;
     auto it2 = change.find(firstEl);
     if(it2 != change.end()) firstEl = it2->second.first;

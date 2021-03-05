@@ -609,7 +609,6 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     ge->setTooSmall(true);
   }
 
-
   // Integrate detJ/lc du
   filterMinimumN = 1;
   if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.) {
@@ -622,11 +621,12 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     a = 0.;
     N = 1;
   }
-  else if(ge->meshAttributes.method == MESH_TRANSFINITE && ge->meshAttributes.typeTransfinite == 4) {
-    // Transfinite (prescribed number of edges) but the points are positioned according
-    // to the standard size constraints (size map, etc)
+  else if(ge->meshAttributes.method == MESH_TRANSFINITE &&
+          ge->meshAttributes.typeTransfinite == 4) {
+    // Transfinite (prescribed number of edges) but the points are positioned
+    // according to the standard size constraints (size map, etc)
     a = Integration(ge, t_begin, t_end, F_Lc(), Points,
-        CTX::instance()->mesh.lcIntegrationPrecision);
+                    CTX::instance()->mesh.lcIntegrationPrecision);
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else if(ge->meshAttributes.method == MESH_TRANSFINITE) {
@@ -813,9 +813,9 @@ void meshGEdge::operator()(GEdge *ge)
     mesh_vertices = vv;
   }
 
-  if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG
-      && CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT
-      && CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS)
+  if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG &&
+     CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT &&
+     CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS)
     if(_addBegin.empty() && _addEnd.empty())
       filterPoints(ge, filterMinimumN - 2);
 
@@ -839,8 +839,8 @@ void meshGEdge::operator()(GEdge *ge)
     v0->z() = beg_p.z();
   }
 
-  Msg::Debug("Meshing curve %d (%s): %li interior vertices", ge->tag(), ge->getTypeString().c_str(),
-      ge->mesh_vertices.size());
+  Msg::Debug("Meshing curve %d (%s): %li interior vertices", ge->tag(),
+             ge->getTypeString().c_str(), ge->mesh_vertices.size());
 
   ge->meshStatistics.status = GEdge::DONE;
 }

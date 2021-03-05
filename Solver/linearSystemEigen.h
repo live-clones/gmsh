@@ -14,7 +14,7 @@
 
 #if defined(HAVE_EIGEN)
 
-#include<Eigen/Sparse>
+#include <Eigen/Sparse>
 
 template <class scalar> class linearSystemEigen : public linearSystem<scalar> {
 public:
@@ -47,7 +47,8 @@ enum linearSystemEigenSolver {
   EigenCholeskyLDLT,
   EigenSparseLU,
   EigenSparseQR,
-  /* warning: no preconditionner for iterative solver by default, should be changed */
+  /* warning: no preconditionner for iterative solver by default, should be
+     changed */
   EigenCG,
   EigenCGLeastSquare,
   EigenBiCGSTAB
