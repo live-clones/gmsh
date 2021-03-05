@@ -64,6 +64,7 @@
 #cmakedefine HAVE_POST
 #cmakedefine HAVE_POPPLER
 #cmakedefine HAVE_QUADTRI
+#cmakedefine HAVE_QUADMESHINGTOOLS
 #cmakedefine HAVE_REVOROPT
 #cmakedefine HAVE_SALOME
 #cmakedefine HAVE_SGEOM

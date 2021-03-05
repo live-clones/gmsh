@@ -198,7 +198,7 @@ bool OCCEdge::_project(const double p[3], double &u, double xyz[3]) const
   GeomAPI_ProjectPointOnCurve proj(pnt, _curve, umin, umax);
 
   if(!proj.NbPoints()) {
-    Msg::Warning("Projection of point (%g, %g, %g) on curve %d failed", p[0],
+    Msg::Debug("Projection of point (%g, %g, %g) on curve %d failed", p[0],
                  p[1], p[2], tag());
     return false;
   }

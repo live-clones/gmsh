@@ -51,6 +51,8 @@ public:
     if(other.P[1] < P[1]) return true;
     return false;
   }
+  const double *data() const { return P; }
+  double *data() { return P; }
 };
 
 inline SPoint2 operator+(const SPoint2 &a, const SPoint2 &b)

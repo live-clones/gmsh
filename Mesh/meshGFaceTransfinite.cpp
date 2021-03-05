@@ -663,7 +663,7 @@ GEdge *quad_face_opposite_edge(GFace *face, GEdge *edge)
 }
 
 void build_chords(const std::set<GFace *> &faces,
-                  std::vector<std::set<GEdge *> > &chords)
+                  std::vector<std::set<GEdge *> > &chords, double maxDiffRel)
 {
   /* Connectivity */
   std::map<GEdge *, std::vector<GFace *> > edge2faces;
@@ -687,10 +687,15 @@ void build_chords(const std::set<GFace *> &faces,
     while(Q.size() > 0) {
       GEdge *ge = Q.front();
       Q.pop();
+      int n = meshGEdgeTargetNumberOfPoints(ge);
       chord.insert(ge);
       for(GFace *gf : edge2faces[ge]) {
         GEdge *ge2 = quad_face_opposite_edge(gf, ge);
         if(ge2 && done.find(ge2) == done.end()) {
+          int n2 = meshGEdgeTargetNumberOfPoints(ge2);
+          if(double(std::abs(n2 - n)) / double(std::max(n, n2)) > maxDiffRel) {
+            continue;
+          }
           Q.push(ge2);
           done[ge2] = true;
         }
@@ -702,7 +707,8 @@ void build_chords(const std::set<GFace *> &faces,
 }
 
 bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
-                                      double cornerAngle, bool setRecombine)
+                                      double cornerAngle, bool setRecombine,
+                                      double maxDiffRel)
 {
   /* Filter with topology and geometry */
   std::set<GFace *> faces;
@@ -714,7 +720,7 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
     "transfinite automatic: building chords from %li quadrangular faces ...",
     faces.size());
   std::vector<std::set<GEdge *> > chords;
-  build_chords(faces, chords);
+  build_chords(faces, chords, maxDiffRel);
   Msg::Debug("... found %li chords", chords.size());
 
   /* Determine the number of points, set the transfinite curves */
@@ -739,6 +745,9 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
       ge->meshAttributes.nbPointsTransfinite = N;
       ge->meshAttributes.typeTransfinite = 1; /* Progression */
       ge->meshAttributes.coeffTransfinite = 1.;
+      if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+        ge->meshAttributes.typeTransfinite = 4; /* Use size map */
+      }
       ne += 1;
     }
   }
@@ -747,10 +756,17 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
   std::size_t nf = 0;
   for(GFace *gf : faces) {
     bool transfinite = true;
+    std::vector<int> nPoints(4, 0);
+    std::size_t count = 0;
     for(GEdge *ge : gf->edges()) {
-      if(ge->meshAttributes.method != MESH_TRANSFINITE) transfinite = false;
+      if(ge->meshAttributes.method != MESH_TRANSFINITE) {
+        transfinite = false;
+        break;
+      }
+      nPoints[count] = ge->meshAttributes.nbPointsTransfinite;
+      count += 1;
     }
-    if(transfinite) {
+    if(transfinite && nPoints[0] == nPoints[2] && nPoints[1] == nPoints[3]) {
       nf += 1;
       gf->meshAttributes.method = MESH_TRANSFINITE;
       gf->meshAttributes.transfiniteArrangement = 1; /* Right */

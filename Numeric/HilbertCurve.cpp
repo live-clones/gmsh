@@ -50,7 +50,7 @@ struct HilbertSort {
     }
     bbox *= 1.01;
     MVertex **pv = &v[0];
-    int depth;
+    int depth = 0; 
     MultiscaleSortHilbert(pv, (int)v.size(), 10, 0.125, &depth);
   }
 };

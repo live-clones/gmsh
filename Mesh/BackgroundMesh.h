@@ -8,15 +8,21 @@
 
 #include <cmath>
 #include <vector>
+#include <unordered_map>
 #include <list>
+#include <memory>
 #include "simpleFunction.h"
 #include "BackgroundMeshTools.h"
+#include "MLine.h"
+#include "MTriangle.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
 class ANNkd_tree;
 #endif
 
+class GEntity;
+class GModel;
 class MElementOctree;
 class GFace;
 class GEdge;
@@ -115,5 +121,64 @@ public:
     return _triangles.end();
   }
 };
+
+/************************************************************/
+/* Alternative datastructures for storing background meshes */
+/************************************************************/
+
+struct BackgroundMeshGEdge {
+  GEdge *ge = NULL;
+  std::vector<MLine> lines;
+};
+
+struct BackgroundMeshGFace {
+  GFace *gf = NULL;
+  std::vector<MTriangle> triangles;
+};
+
+/* @brief Store a collection of GEntity background meshes.
+ *        Deal with the mesh import (see importEntityMeshes())
+ *        New MVertex* instance are created by the import
+ *        and are deleted by the destructor.
+ */
+class GlobalBackgroundMesh {
+public:
+  const std::string &name;
+  GModel *gm;
+  std::unordered_map<GEdge *, BackgroundMeshGEdge> edgeBackgroundMeshes;
+  std::unordered_map<GFace *, BackgroundMeshGFace> faceBackgroundMeshes;
+  std::vector<MVertex *> mesh_vertices;
+
+public:
+  GlobalBackgroundMesh(const std::string &_name) : name(_name), gm(NULL) {}
+  GlobalBackgroundMesh(GlobalBackgroundMesh const &) = delete;
+  GlobalBackgroundMesh &operator=(GlobalBackgroundMesh const &) = delete;
+  ~GlobalBackgroundMesh(); /* delete the MVertex instances stored in
+                              mesh_vertices */
+
+  /**
+   * @brief Fill the entityMesh map by copying the meshes in the GModel.
+   *        New MVertex, MLine and MTriangle instances are created, the
+   * background meshes are totally independant from the ones in the GModel after
+   *        this function call.
+   *        Quadrangles in GFace are split into two triangles.
+   *
+   * @param gm the GModel containing the GEntity whose meshes are imported
+   * @param overwriteExisting Delete existing background meshes before importing
+   * new ones
+   *
+   * @warning Only import GVertex, GEdge, GFace for the moment, not GRegion
+   *
+   * @return 0 if successful import
+   */
+  int importGModelMeshes(GModel *gm, bool overwriteExisting = true);
+};
+
+/* Global storage for access deep in meshing algorithms without passing
+ * reference everywhere. Use getBackgroundMesh(name) instead of direcly
+ * accessing the global variable. */
+extern std::vector<std::unique_ptr<GlobalBackgroundMesh> > global_bmeshes;
+bool backgroudMeshExists(const std::string &name);
+GlobalBackgroundMesh &getBackgroundMesh(const std::string &name);
 
 #endif

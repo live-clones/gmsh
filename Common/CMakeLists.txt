@@ -26,6 +26,7 @@ set(SRC
   GmshRemote.cpp
   gmshLocalNetworkClient.cpp
   gmsh.cpp
+  libol1.c # should do something different for C file ?
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

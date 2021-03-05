@@ -8,6 +8,7 @@ set(SRC
   linearSystemCSR.cpp
   linearSystemPETSc.cpp
   linearSystemMUMPS.cpp
+  linearSystemEigen.cpp
   dofManager.cpp
   groupOfElements.cpp
   elasticityTerm.cpp

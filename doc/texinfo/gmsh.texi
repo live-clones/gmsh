@@ -2093,12 +2093,15 @@ be defined separately). Likewise, a curve loop defining a hole should not
 have any curves in common with another curve loop defining a hole in the
 same surface (in which case the two curve loops should be combined).
 
-@item Surface ( @var{expression} ) = @{ @var{expression-list} @} < In Sphere @{ @var{expression} @} >;
+@item Surface ( @var{expression} ) = @{ @var{expression-list} @} < In Sphere @{ @var{expression} @}, Using Point @{ @var{expression-list} @} >;
 Creates a surface filling. With the built-in kernel, the first curve
-loop should be composed of either three or four curves. With the
-built-in kernel, the optional @code{In Sphere} argument forces the
-surface to be a spherical patch (the extra parameter gives the tag of
-the center of the sphere).
+loop should be composed of either three or four curves, the surface is
+constructed using transfinite interpolation, and the optional @code{In
+Sphere} argument forces the surface to be a spherical patch (the extra
+parameter gives the tag of the center of the sphere). With the
+OpenCASCADE kernel, a BSpline surface is constructucted by optimization
+to match the bounding curves, as well as the (optional) points provided
+after @code{Using Point}.
 
 @item BSpline Surface ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a BSpline surface filling. Only a single curve loop made of 2, 3

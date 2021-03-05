@@ -145,8 +145,8 @@ int main(int argc, char **argv)
   // `.msh4' extension.
 
   // To visualize the model we can run the graphical user interface with
-  // `gmsh::fltk::run()'. Here we run it only if the "-nopopup" is not provided
-  // in the command line arguments:
+  // `gmsh::fltk::run()'. Here we run it only if "-nopopup" is not provided in
+  // the command line arguments:
   std::set<std::string> args(argv, argv + argc);
   if(!args.count("-nopopup")) gmsh::fltk::run();
 
