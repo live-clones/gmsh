@@ -1383,8 +1383,16 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,
     "Display mesh trihedra?" },
 
+  { F|O, "QuadqsSizemapMethod" , opt_mesh_quadqs_sizemap_method, 0. ,
+    "Size map method in QuadQuasiStructured. 0: default, 1: cross-field,"
+      "2: cross-field + CAD small features adaptation,"
+      "3: from background mesh (e.g. sizes in current triangulation)"
+  },
+
   { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. ,
     "Display mesh quadrangles?" },
+
+
   { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 ,
     "Only display elements whose quality measure is greater than QualityInf" },
   { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 ,
