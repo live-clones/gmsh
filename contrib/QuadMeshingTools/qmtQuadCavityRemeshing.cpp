@@ -1415,6 +1415,7 @@ namespace QMT {
 
         /* Propagation along the boundary */
         uint32_t nCornerVisited = 0;
+        uint32_t nVertexVisited = 0;
         uint32_t v = v0;
         uint32_t iter = 0;
         while (true) {
@@ -1440,14 +1441,19 @@ namespace QMT {
           uint32_t v2 = pos2nextVertex[pos];
           sides.back().push_back(v2);
           v = v2;
+          nVertexVisited += 1;
 
           if (v2 == v0) { /* closed the loop */
             break;
           }
         }
 
-        if (nCornerVisited != Ncorners) {
-          Msg::Debug("getCavitySides: not all corners were visited, bdr has multiple loops ?");
+        if (nCornerVisited != Ncorners || nVertexVisited != cav.verticesBdr.size()) {
+          Msg::Debug("getCavitySides: not all cavity bdr corners/vertices were visited, bdr has multiple loops (i.e. not a topo. disk)");
+
+          // debug_show_cavity("bad_cav_" + std::to_string(nVertexVisited) + "!=" + std::to_string(cav.verticesBdr.size()));
+          // GeoLog::flush();
+          
           return false;
         }
 
@@ -2076,6 +2082,7 @@ namespace QMT {
     for (GEdge* ge: gf->edges()) {
       /* Ignore periodic curves */
       if (ge->vertices().size() != 2) continue;
+      if (ge->periodic(0)) continue;
       if (ge->vertices().front() == ge->vertices().back()) continue;
       gedges.push(ge);
     }
