@@ -126,6 +126,8 @@ class client :
   _GMSH_PARSE_STRING = 21
   _GMSH_PARAMETER = 23
   _GMSH_PARAMETER_QUERY = 24
+  _GMSH_PARAMETER_QUERY_ALL = 25
+  _GMSH_PARAMETER_QUERY_END = 26
   _GMSH_CONNECT = 27
   _GMSH_OLPARSE = 28
   _GMSH_PARAMETER_NOT_FOUND = 29
@@ -193,6 +195,16 @@ class client :
       param.fromchar(msg)
     elif t == self._GMSH_PARAMETER_NOT_FOUND and warn_if_not_found :
       print ('Unknown parameter %s' %(param.name))
+
+  def _getAllParameters(self, type, lst) :
+    if not self.socket :
+      return
+    self._send(self._GMSH_PARAMETER_QUERY_ALL,
+               _parameter(type, name='dummy').tochar())
+    (t, msg) = self._receive()
+    while t == self._GMSH_PARAMETER_QUERY_ALL:
+      lst.append(_parameter(type, name='dummy').fromchar(msg))
+      (t, msg) = self._receive()
 
   def defineNumber(self, name, **param):
     if 'value' in param :
@@ -288,6 +300,16 @@ class client :
     param = _parameter('string', name=name)
     self._getParameter(param, warn_if_not_found)
     return param.values
+
+  def getAllParameters(self):
+    lst = []
+    self._getAllParameters('number', lst)
+    self._getAllParameters('string', lst)
+    dic = {}
+    for p in lst:
+      dic[p.name] = {a[0]: getattr(p, a[0])
+                     for a in _parameter._members[p.type]}
+    return dic
 
   def getNumberChoices(self, name, warn_if_not_found=True):
     param = _parameter('number', name=name)
