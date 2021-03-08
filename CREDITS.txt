@@ -158,7 +158,7 @@ optional codes in the contrib/ directory, each governed by their own license:
 
 * contrib/gmm copyright (C) 2002-2008 Yves Renard;
 
-* contrib/hxt - Copyright (C) 2017-2018 - Universite catholique de Louvain;
+* contrib/hxt - Copyright (C) 2017-2020 - Universite catholique de Louvain;
 
 * contrib/kbipack copyright (C) 2005 Saku Suuriniemi;
 
@@ -189,4 +189,4 @@ optional codes in the contrib/ directory, each governed by their own license:
 * contrib/zipper from MiniZip - Copyright (c) 1998-2010 - by Gilles Vollant -
   version 1.1 64 bits from Mathias Svensson.
 
-heck the configuration options to see which have been enabled.
+Check the configuration options to see which have been enabled.
