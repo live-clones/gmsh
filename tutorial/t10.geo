@@ -74,13 +74,13 @@ Field[6].XMin = 0.3;
 Field[6].XMax = 0.6;
 Field[6].YMin = 0.3;
 Field[6].YMax = 0.6;
+Field[6].Thickness = 0.3;
 
 // Many other types of fields are available: see the reference manual for a
 // complete list. You can also create fields directly in the graphical user
 // interface by selecting `Define->Size fields' in the `Mesh' module.
 
-// Finally, let's use the minimum of all the fields as the background mesh size
-// field
+// Let's use the minimum of all the fields as the background mesh size field
 Field[7] = Min;
 Field[7].FieldsList = {2, 3, 5, 6};
 Background Field = 7;
@@ -109,3 +109,10 @@ Mesh.MeshSizeFromPoints = 0;
 Mesh.MeshSizeFromCurvature = 0;
 
 // This will prevent over-refinement due to small mesh sizes on the boundary.
+
+// Finally, while the default "Frontal-Delaunay" 2D meshing algorithm
+// (Mesh.Algorithm = 6) usually leads to the highest quality meshes, the
+// "Delaunay" algorithm (Mesh.Algorithm = 5) will handle complex mesh size
+// fields better - in particular size fields with large element size gradients:
+
+Mesh.Algorithm = 5;
