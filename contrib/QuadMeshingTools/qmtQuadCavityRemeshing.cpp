@@ -1002,6 +1002,7 @@ namespace QMT {
 
       /* growth constraints */
       std::vector<bool> vertexForbidden;
+      std::vector<bool> quadEdgeForbidden;
 
     public:
       CavityFarmer(GFace* gf_):gf(gf_) {};
@@ -1016,6 +1017,7 @@ namespace QMT {
         v2q_first.clear();
         v2q_values.clear();
         vertexForbidden.clear();
+        quadEdgeForbidden.clear();
         cav.clear();
         cavBackup.clear();
       }
@@ -1140,6 +1142,38 @@ namespace QMT {
           }
         }
 
+        /* Embedded edges in faces */
+        for (GEdge* ge: gf->embeddedEdges()) {
+          unordered_set<id2,id2hash> embLines;
+          for (MLine* line: ge->lines) {
+            MVertex* v1 = line->getVertex(0);
+            MVertex* v2 = line->getVertex(1);
+            auto it1 = vertexLocal.find(v1);
+            auto it2 = vertexLocal.find(v2);
+            if (it1 == vertexLocal.end() || it2 == vertexLocal.end()) {
+              Msg::Debug("cavity farmer update: vertex of embedded line not found, weird");
+              continue;
+            }
+            id2 vpair = sorted(it1->second,it2->second);
+            embLines.insert(vpair);
+          }
+          if (embLines.size() == 0) continue;
+          if (quadEdgeForbidden.size() == 0) {
+            quadEdgeForbidden.resize(4*quads.size(),false);
+            for (uint32_t f = 0; f < quads.size(); ++f) {
+              for (uint32_t le = 0; le < 4; ++le) {
+                const uint32_t v1 = quads[f][le];
+                const uint32_t v2 = quads[f][(le+1)%4];
+                id2 vpair = sorted(v1,v2);
+                auto it = embLines.find(vpair);
+                if (it != embLines.end()) {
+                  quadEdgeForbidden[4*f+le] = true;
+                }
+              }
+            }
+          }
+        }
+
         return true;
       }
 
@@ -1206,8 +1240,14 @@ namespace QMT {
               Msg::Error("cavity farmer: quad edge already cavity bdr, should not happen");
               return false;
             } else if (opp != NO_U32 && cav.quadEdgeIsBdr[opp]) {
-              /* adjacent quad was in cavity and boundary
-                 => no longer boundary */
+              /* adjacent quad was in cavity and boundary */
+
+              if (checkForbidden && quadEdgeForbidden.size() > 0) {
+                /* check if adding the quad would include a forbidden quad edge */
+                if (quadEdgeForbidden[4*f+le]) return false;
+              }
+
+              /* adjacent quad was in cavity and boundary => no longer boundary */
               cav.quadEdgeIsBdr[opp] = false;
             } else {
               /* adjacent quad edge was not cavity bdr, this one becomes one */
@@ -2124,7 +2164,6 @@ namespace QMT {
 
           /* Get vertices to preserve from cross field singularities */
           assignSingularitiesToIrregularVertices(gf, farmer, singularities, singularVertices);
-
           forbiddenIrregularVertices.clear();
           for (MVertex* v: singularVertices) forbiddenIrregularVertices.insert(v);
 

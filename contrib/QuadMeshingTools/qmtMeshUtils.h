@@ -43,7 +43,8 @@ struct GFaceMeshPatch {
   /* bdrVertices are the ordered boundary loops, there is only one
    * if patch is a topological disk */
   std::vector<std::vector<MVertex*> > bdrVertices; 
-  std::vector<MVertex*> intVertices;
+  std::vector<MVertex*> intVertices; /* interior free vertices */
+  std::vector<MVertex*> embVertices; /* fixed vertices inside patch */
   std::vector<MElement*> elements;
 };
 

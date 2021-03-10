@@ -1045,6 +1045,7 @@ int improveCornerValences(
       MVertex *v = kv.first;
       GVertex *gv = dynamic_cast<GVertex *>(v->onWhat());
       if(gv == nullptr) continue;
+
       auto it = adj.find(v);
       if(it == adj.end()) continue;
       const std::vector<MElement *> &quads = it->second;
@@ -1073,6 +1074,10 @@ int improveCornerValences(
       }
       if(patch.bdrVertices.size() != 1) {
         Msg::Debug("patch has %li bdr loops, weird", patch.bdrVertices.size());
+        continue;
+      }
+      if (patch.embVertices.size() > 0) {
+        Msg::Debug("patch has %li embedded vertices loops, avoid", patch.embVertices.size());
         continue;
       }
 
@@ -1188,6 +1193,10 @@ int improveCurveValences(
     if(!okp) continue;
     if(patch.bdrVertices.size() != 1) {
       Msg::Debug("patch has %li bdr loops, weird", patch.bdrVertices.size());
+      continue;
+    }
+    if (patch.embVertices.size() > 0) {
+      Msg::Debug("patch has %li embedded vertices loops, avoid", patch.embVertices.size());
       continue;
     }
 
@@ -1349,6 +1358,11 @@ int improveInteriorValences(
     bool okp = patchFromElements(gf, quads, patch);
     if(!okp || patch.bdrVertices.size() != 1) continue;
 
+    if (patch.embVertices.size() > 0) {
+      Msg::Debug("patch has %li embedded vertices loops, avoid", patch.embVertices.size());
+      continue;
+    }
+
     double Ir = irregularityEnergy(gf, quads, qValIdeal, adj);
     if(Ir > 0.) Q.push({Ir, v});
   }
@@ -1488,6 +1502,14 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 
   std::vector<GEdge *> edges = model_edges(gm);
 
+  /* Build custom edgeToFaces because ge->faces() does not work
+   * for embedded edges */
+  std::unordered_map<GEdge*,std::unordered_set<GFace*> > edgeToFaces;
+  for (GFace* gf: model_faces(gm)) {
+    std::vector<GEdge*> fedges = face_edges(gf);
+    for (GEdge* ge: fedges) edgeToFaces[ge].insert(gf);
+  }
+
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -1541,7 +1563,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
       }
 
     /* Update adjacent faces */
-    for(GFace *gf : ge->faces()) {
+    for(GFace *gf : edgeToFaces[ge]) {
       for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
         MElement *e = gf->getMeshElement(i);
         for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
@@ -1902,6 +1924,7 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
        gf->tag() != CTX::instance()->debugSurface)
       continue;
     if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+    if(gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0) continue;
 
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
     meshFaceWithGlobalPattern(gf, invertNormals, minimumQualityRequired);
