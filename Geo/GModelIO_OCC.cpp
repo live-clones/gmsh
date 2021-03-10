@@ -371,7 +371,7 @@ void OCC_Internals::bind(const TopoDS_Solid &solid, int tag, bool recursive)
     for(exp0.Init(solid, TopAbs_FACE); exp0.More(); exp0.Next()) {
       TopoDS_Face face = TopoDS::Face(exp0.Current());
       if(!_faceTag.IsBound(face)) {
-        int t = getMaxTag(3) + 1;
+        int t = getMaxTag(2) + 1;
         bind(face, t, recursive);
       }
     }
