@@ -95,13 +95,13 @@ int main(int argc, char **argv)
   gmsh::model::mesh::field::setNumber(6, "XMax", 0.6);
   gmsh::model::mesh::field::setNumber(6, "YMin", 0.3);
   gmsh::model::mesh::field::setNumber(6, "YMax", 0.6);
+  gmsh::model::mesh::field::setNumber(6, "Thickness", 0.3);
 
   // Many other types of fields are available: see the reference manual for a
   // complete list. You can also create fields directly in the graphical user
   // interface by selecting `Define->Size fields' in the `Mesh' module.
 
-  // Finally, let's use the minimum of all the fields as the background mesh
-  // field:
+  // Let's use the minimum of all the fields as the background mesh field:
   gmsh::model::mesh::field::add("Min", 7);
   gmsh::model::mesh::field::setNumbers(7, "FieldsList", {2, 3, 5, 6});
 
@@ -140,6 +140,14 @@ int main(int argc, char **argv)
   gmsh::option::setNumber("Mesh.MeshSizeFromCurvature", 0);
 
   // This will prevent over-refinement due to small mesh sizes on the boundary.
+
+  // Finally, while the default "Frontal-Delaunay" 2D meshing algorithm
+  // (Mesh.Algorithm = 6) usually leads to the highest quality meshes, the
+  // "Delaunay" algorithm (Mesh.Algorithm = 5) will handle complex mesh size
+  // fields better - in particular size fields with large element size
+  // gradients:
+
+  gmsh::option::setNumber("Mesh.Algorithm", 5);
 
   gmsh::model::mesh::generate(2);
   gmsh::write("t10.msh");
