@@ -1480,6 +1480,14 @@ void GenerateMesh(GModel *m, int ask)
                                          deleteGModelMeshAfter);
     }
 
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT 
+        && old == 2 && ask == 2 && exists) {
+      /* transferSeamGEdgesVerticesToGFace() called by quadqs remove the 1D
+       * meshes of the seam GEdge, so 2D initial meshing does not work without
+       * first remeshing the seam GEdge. We delete the whole mesh by security */
+      m->deleteMesh();
+    }
+
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       /* note: the creation of QuadqsContextUpdater modifies many
        *       meshing parameters */
