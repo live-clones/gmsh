@@ -1662,7 +1662,7 @@ namespace QMT {
 
         bool oka = addQuads(lquads);
         if (!oka) {
-          Msg::Error("cavity farmer: failed to initialize");
+          Msg::Debug("cavity remeshing: failed to initialize (%li quads)", lquads.size());
           return false;
         }
 
