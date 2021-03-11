@@ -675,6 +675,13 @@ class AlignQuadMesh : public IntMinimizeSpace {
         }
 };
 
+struct Cluster {
+    V<TVertex*> tvertices;
+    int type; // 0 = regular, 1 = singular, 2 = GVertex, 3 = CAD (non-GVertex)
+    MVertex* center;
+    GFace* gface;
+};
+
 // Main function
 void alignQuadMesh(GModel* gm) {
     // Build MeshHalfEdges
@@ -688,30 +695,14 @@ void alignQuadMesh(GModel* gm) {
     H(S(TM.tedges));
     H(S(TM.tvertices));
 
-    //// geolog irregular vertices
-    //for(TVertex* tvertex : TM.tvertices) {
-        //if(tvertex->isSingular)
 
-    for(TEdge* tedge : TM.tedges)
-        if(tedge->isStitch) P("stitch");
-
-    //gmsh::initialize();
-    //GeoLog::flush();
-    //gmsh::fltk::run();
-
-    P("building model");
 
     // Initialize and run Gecode model
+    P("building model");
     AlignQuadMesh* model = new AlignQuadMesh(TM);
     BAB<AlignQuadMesh> engine(model);
     delete model;
-
-    gmsh::initialize();
-    GeoLog::flush();
-    gmsh::fltk::run();
-
     P("running BAB...");
-
     clock_t start = clock();
     V<int> solution;
     while(AlignQuadMesh* state = engine.next()) {
@@ -723,93 +714,88 @@ void alignQuadMesh(GModel* gm) {
     double elapsed = double(clock()-start) / CLOCKS_PER_SEC;
     H(elapsed);
 
-    // Measure time: Cpu
-
-    for(TEdge* tedge : TM.tedges)
-        cout << solution[tedge->id] - tedge->len << " ";
-    cout << endl;
 
     // Draw T-edges with positive length
-    for(TEdge* tedge : TM.tedges) {
-        if(solution[tedge->id]) tedge->geolog(0, "length > 0");
-    }
+    for(TEdge* tedge : TM.tedges) if(solution[tedge->id])
+        tedge->geolog(0, "length > 0");
 
-    // Merge T-vertices with distance 0
-    V<V<TVertex*>> clusters;
-    map<TVertex*, int> inCluster;
-    V<int> type; // 0 = regular, 1 = singular, 2 = GVertex, 3 = CAD (non-GVertex)
-    // V<bool> onCAD;
-    V<MVertex*> centers;
-    V<GFace*> cluster2face;
+    // Merge T-vertices with distance 0 into clusters
+    V<Cluster*> clusters;
+    //V<V<TVertex*>> clusters;
+    map<TVertex*, Cluster*> inCluster;
+    //V<int> type; // 0 = regular, 1 = singular, 2 = GVertex, 3 = CAD (non-GVertex)
+    //V<MVertex*> centers;
+    //V<GFace*> cluster2face;
     for(TVertex* tvertex : TM.tvertices) if(!inCluster.count(tvertex)) {
-        clusters.pb({tvertex});
-        inCluster[tvertex] = S(clusters)-1;
+        Cluster* cluster = new Cluster; clusters.pb(cluster);
+        cluster->tvertices.pb(tvertex);
+        inCluster[tvertex] = cluster;
         queue<TVertex*> q; q.push(tvertex);
         while(S(q)) {
             TVertex* u = q.front(); q.pop();
             for(auto p : u->adj) {
                 TVertex* v = p.first;
                 if(!inCluster.count(v) && solution[p.second->id] == 0) {
-                    clusters.back().pb(v);
-                    inCluster[v] = S(clusters)-1;
+                    cluster->tvertices.pb(v);
+                    inCluster[v] = cluster;
                     q.push(v);
                 }
             }
         }
         // Determine type and center
-        type.pb(0);
-        SVector3 mean(0.0);
-        centers.emplace_back();
-        cluster2face.pb(NULL);
-        for(TVertex* tvertex : clusters.back()) {
+        cluster->type = 0;
+        cluster->gface = NULL;
+        for(TVertex* tvertex : cluster->tvertices) {
             MVertex* mvertex = tvertex->vertex->ptr;
             GEntity* gentity = mvertex->onWhat();
             GFace* gf = dynamic_cast<GFace*>(gentity);
-            if(gf != NULL) cluster2face.back() = gf;
-
-
-            //mean += tvertex->vertex->ptr->point() * (1.0 / S(clusters.back()));
+            if(gf != NULL) {
+                //P("GFace found!");
+                cluster->gface = gf;
+            }
             if(dynamic_cast<GVertex*>(gentity) != NULL) {
-                type.back() = 2;
-                centers.back() = mvertex;
-                //centers.back() = tvertex->vertex->ptr->point();
+                cluster->type = 2;
+                cluster->center = mvertex;
                 break; // since there can be only one GVertex per cluster
             } else if(dynamic_cast<GEdge*>(gentity) != NULL) {
-                type.back() = 3;
-                centers.back() = mvertex;
-                //centers.back() = tvertex->vertex->ptr->point();
+                cluster->type = 3;
+                cluster->center = mvertex;
                 // We don't break since there could be a GVertex in the cluster
-            } else if(tvertex->isSingular) {
-                type.back() = 1;
-                centers.back() = mvertex;
-                //centers.back() = tvertex->vertex->ptr->point();
+            } else if(tvertex->isSingular) { // non-geometric singularity
+                cluster->type = 1;
+                cluster->center = mvertex;
                 break; // since there can be only one sing per cluster
             }
         }
-        if(type.back() == 0) // any vertex will do
-            centers.back() = clusters.back()[0]->vertex->ptr;
+        H(cluster->type);
+        H(cluster->gface);
+
+        if(cluster->type == 0) // any vertex will do
+            cluster->center = cluster->tvertices[0]->vertex->ptr;
+            //centers.back() = clusters.back()[0]->vertex->ptr;
             //centers.back() = mean;
-        GeoLog::add(SVector3(centers.back()->point()), type.back(), "centers");
+        GeoLog::add(SVector3(cluster->center->point()), cluster->type, "centers");
     }
 
     // Draw T-vertices, grouped by cluster
-    for(V<TVertex*> cluster : clusters) {
+    for(Cluster* cluster : clusters) {
         int color = rand();
-        for(TVertex* tvertex : cluster) {
+        for(TVertex* tvertex : cluster->tvertices)
             tvertex->geolog(color, "clusters");
-        }
     }
 
-    // Draw edges between connected (if not both on CAD)
+    // Draw edges between connected clusters (if not both on CAD)
     for(TVertex* tvertex1 : TM.tvertices) {
         for(auto p : tvertex1->adj) {
             TVertex* tvertex2 = p.first;
-            int cluster1 = inCluster[tvertex1], cluster2 = inCluster[tvertex2];
-            int type1 = type[cluster1],         type2 = type[cluster2];
+            Cluster *cluster1 = inCluster[tvertex1], *cluster2 = inCluster[tvertex2];
+            int type1 = cluster1->type, type2 = cluster2->type;
             if(type1 <= 1 || type2 <= 1) { // if not both on CAD
-                GFace* gf = (type1 <= 1) ? cluster2face[cluster1] : cluster2face[cluster2];
-                MVertex* center1 = centers[cluster1], *center2 = centers[cluster2];
+                GFace* gf = (type1 <= 1) ? cluster1->gface : cluster2->gface;
+                H(gf);
+                MVertex* center1 = cluster1->center, *center2 = cluster2->center;
                 SPoint2 param1, param2;
+                P("coucou");
                 bool status1 = reparamMeshVertexOnFace(center1, gf, param1);
                 bool status2 = reparamMeshVertexOnFace(center2, gf, param2);
                 GPoint proj1 = gf->closestPoint(center1->point(), center1->point());
@@ -819,7 +805,8 @@ void alignQuadMesh(GModel* gm) {
                 cout << param2 << endl;
                 cout << proj2.u() << " " << proj2.v() << endl;
 
-                int n = 10;
+
+                int n = 50;
                 V<GPoint> curve(n+1);
                 F(i,n+1) {
                     double lambda = (double)i/n;
@@ -839,50 +826,17 @@ void alignQuadMesh(GModel* gm) {
                     //SVector3 p1(curve[i-1].x(), curve[i-1].y(), curve[i-1].z());
                     GeoLog::add({p1, p2}, 0, "minimal mesh");
                 }
-
-
-                //printf("%d %d, types = (%d %d)\n", res1, res2, type[inCluster[tvertex]], type[inCluster[p.first]]);
-                //cout << res1 << ' ' << res2 << " types = ;
-
-                //cout << param1 << " " << param2 << endl;
-
-                //int n = 10;
-                //V<SVector3> curve(n+1);
-                //V<SVector3> curve_proj(n+1);
-                //cout << '(' << centers[inCluster[tvertex]][0] << ", " << centers[inCluster[tvertex]][1] << ", " << centers[inCluster[tvertex]][2] << "), ";
-                //F(i,n+1) {
-                    //double lambda = (double)i/n;
-                    //curve[i] = lambda * centers[inCluster[tvertex]] + (1-lambda) * centers[inCluster[p.first]];
-                    //for(GFace* gf : gm->getFaces()) {
-                        //if(normSq(curve_proj[i] - curve[i]) > normSq(SVector3(gf->closestPoint(SPoint3(curve[i]), curve[i])) - curve[i])) {
-                            //curve_proj[i] = gf->closestPoint(SPoint3(curve[i]), curve[i]);
-                        //}
-                    //}
-
-
-                    ////cout << '(' << curve[i][0] << ", " << curve[i][1] << ", " << curve[i][2] << "), ";
-                //}
-                //cout << endl;
-                //// todo
-                //FR(i,1,n+1) {
-                    //GeoLog::add({curve_proj[i-1], curve_proj[i]}, 0, "minimal mesh");
-                //}
-
-                //GeoLog::add({SVector3(center1->point()), SVector3(center2->point())}, 0, "minimal mesh");
             }
         }
     }
+    
     P("coucou");
+
     // Draw CAD
     for(TEdge* tedge : TM.tedges)
         if(tedge->gedge != NULL || tedge->isStitch)
             tedge->geolog(0, "minimal mesh");
             //tedge->geolog(1, "minimal mesh");
-
-    //// Choose views to show
-    //PView* p = PView::getViewByName("T-mesh (faces)");
-    //gmsh::option::setNumber("View["+std::to_string(p->getTag())+"].Visible", 0);
-
 
     gmsh::initialize();
     GeoLog::flush();
