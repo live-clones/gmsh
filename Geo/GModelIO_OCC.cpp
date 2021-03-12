@@ -3493,7 +3493,7 @@ bool OCC_Internals::booleanOperator(
         Msg::Debug("BOOL (%d,%d) other", dim, tag);
       }
     }
-    for(int dim = -2; dim <= 3; dim++) _recomputeMaxTag(dim);
+    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
     // bind all remaining entities and add the new ones to the returned list
     _multiBind(result, -1, outDimTags, false, true, true);
     _filterTags(outDimTags, minDim);
@@ -3740,7 +3740,7 @@ bool OCC_Internals::_transform(
     // cube. But the original face will actually be re-bound (with a warning) at
     // the next syncronization point, so it's not too bad...
     unbindWithoutChecks(inShapes[i]);
-    for(int dim = -2; dim <= 3; dim++) _recomputeMaxTag(dim);
+    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
 
     // FIXME: it would be even better to code a rebind() function to reuse the
     // tags not only of the shape, but of all the sub-shapes as well
