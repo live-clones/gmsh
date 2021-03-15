@@ -550,6 +550,10 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
+      else if(argv[i] == "-alignIrregularVertices") {
+        CTX::instance()->batch = 70;
+        i++;
+      }
       else if(argv[i] == "-quadlayout") {
         CTX::instance()->batch = 69;
         i++;
