@@ -38,6 +38,8 @@ using namespace Gecode;
 #define V vector
 #define pb push_back
 #define mt make_tuple
+// TODO: replace this one
+#define RFC(_COND,...) do { if (_COND) {error(__VA_ARGS__); return false;} } while(0)
 
 // Print vector
 template<class T> ostream &operator<<(ostream &os, V<T> v) {
@@ -62,6 +64,8 @@ ostream &operator<<(ostream &os, GPoint p) {
 
 // Modulo that works for negative numbers (since (-a)%m == -(a%m))
 int mod(int a, int m) { return (a % m + m) % m; }
+
+const bool ERROR_VISU = true;
 
 struct HalfEdge;
 struct Face;
@@ -678,9 +682,120 @@ class AlignQuadMesh : public IntMinimizeSpace {
 struct Cluster {
     V<TVertex*> tvertices;
     int type; // 0 = regular, 1 = singular, 2 = GVertex, 3 = CAD (non-GVertex)
-    MVertex* center;
+    Vertex* center;
     GFace* gface;
 };
+
+// Resample polyline
+bool compute_subdivided_edge_internal_points(const std::vector<SPoint3>& pts, size_t N, vector<SPoint3>& newPts) {
+    newPts.clear();
+    if (N == 0) return true;
+
+    /* Size map size(t) */
+    vector<SPoint3> failed_probes;
+    vector<double> size(pts.size(),0.);
+    F(i, size.size()) {
+    // size[i] = sizemap.eval(pts[i]);
+    size[i] = 1;
+    if (size[i] == DBL_MAX) {
+      failed_probes.push_back(pts[i]);
+    }
+    }
+
+    vector<double> Pri(pts.size(),0.);
+    /* Integral of inverse, Pri = int(1/size(t),t) */
+    double totalLen = 0.;
+    F(i,pts.size()-1.) {
+        double len = pts[i].distance(pts[i+1]);
+    //double len = distance(pts[i+1], pts[i]);
+        totalLen += len;
+        Pri[i+1] = Pri[i] + 0.5 * (1./double(size[i]) + 1./double(size[i+1])) * len;
+    }
+
+
+
+    vector<double> targetLens(N, 0.);
+    F(i,N) {
+    double n = double(1.+i)/double(1.+N) * Pri.back();
+    double len_j = 0.;
+    double len_jp1 = 0.;
+    F(j,pts.size()-1) {
+      len_jp1 = len_j + pts[j].distance(pts[j+1]);
+      //len_jp1 = len_j + length(pts[j+1] - pts[j]);
+      if (Pri[j] <= n && n < Pri[j+1]) {
+        double lambda = (n - Pri[j]) / (Pri[j+1] - Pri[j]);
+        targetLens[i] = (1.-lambda) * len_j + lambda * len_jp1;
+      } else if (n == Pri[j+1]) {
+        targetLens[i] = len_jp1;
+      }
+      len_j = len_jp1;
+    }
+    }
+
+    constexpr bool NAIVE = false;
+    size_t prev_j = 0;
+    double prev_acc = 0.;
+    F(i,N) {
+    double targetLen = targetLens[i];
+
+    bool found = false;
+    if (NAIVE) {
+      double len_j = 0.;
+      for(size_t j = 0; j < pts.size()-1; ++j) {
+        //double acc = length(pts[j+1]-pts[j]);
+        double acc = pts[j].distance(pts[j+1]);
+        double len_jp1 = len_j + acc;
+
+        if (len_j < targetLen && targetLen <= len_jp1) {
+          double lambda = (targetLen - len_j) / (len_jp1 - len_j);
+          SPoint3 pt = SPoint3((1.-lambda) * pts[j] + lambda * pts[j+1]);
+          // double h = (1.-lambda) * size[j] + lambda * size[j+1];
+          newPts.push_back(pt);
+          // newSizes.push_back(h);
+          found = true;
+          break;
+        }
+
+        len_j = len_jp1;
+      }
+    } else {
+      double acc = prev_acc;
+      for(size_t j = prev_j; j < pts.size()-1; ++j) {
+        double len_j = acc;
+        acc += pts[j].distance(pts[j+1]);
+        //acc += length(pts[j+1]-pts[j]);
+        double len_jp1 = acc;
+
+        if (len_j < targetLen && targetLen <= len_jp1) {
+          double lambda = (targetLen - len_j) / (len_jp1 - len_j);
+          SPoint3 pt = SPoint3((1.-lambda) * pts[j] + lambda * pts[j+1]);
+          // double h = (1.-lambda) * size[j] + lambda * size[j+1];
+          newPts.push_back(pt);
+          // newSizes.push_back(h);
+          found = true;
+          prev_j = j;
+          prev_acc = len_j;
+          break;
+        }
+      }
+    }
+    if (!found) {
+      cout << "sample point not found !" << endl;
+      return false;
+    }
+}
+
+if (ERROR_VISU && failed_probes.size() > 0) {
+F(i,failed_probes.size()) {
+  GeoLog::add({SVector3(failed_probes[i])},double(i), "compute_subdivided_edge_internal_points");
+}
+GeoLog::flush();
+}
+//RFC(failed_probes.size() > 0, "compute_subdivided_edge_internal_points | {} probe failures", failed_probes.size());
+
+return true;
+}
+
 
 // Main function
 void alignQuadMesh(GModel* gm) {
@@ -746,8 +861,8 @@ void alignQuadMesh(GModel* gm) {
         cluster->type = 0;
         cluster->gface = NULL;
         for(TVertex* tvertex : cluster->tvertices) {
-            MVertex* mvertex = tvertex->vertex->ptr;
-            GEntity* gentity = mvertex->onWhat();
+            Vertex* vertex = tvertex->vertex;
+            GEntity* gentity = vertex->ptr->onWhat();
             GFace* gf = dynamic_cast<GFace*>(gentity);
             if(gf != NULL) {
                 //P("GFace found!");
@@ -755,15 +870,15 @@ void alignQuadMesh(GModel* gm) {
             }
             if(dynamic_cast<GVertex*>(gentity) != NULL) {
                 cluster->type = 2;
-                cluster->center = mvertex;
+                cluster->center = vertex;
                 break; // since there can be only one GVertex per cluster
             } else if(dynamic_cast<GEdge*>(gentity) != NULL) {
                 cluster->type = 3;
-                cluster->center = mvertex;
+                cluster->center = vertex;
                 // We don't break since there could be a GVertex in the cluster
             } else if(tvertex->isSingular) { // non-geometric singularity
                 cluster->type = 1;
-                cluster->center = mvertex;
+                cluster->center = vertex;
                 break; // since there can be only one sing per cluster
             }
         }
@@ -771,10 +886,10 @@ void alignQuadMesh(GModel* gm) {
         H(cluster->gface);
 
         if(cluster->type == 0) // any vertex will do
-            cluster->center = cluster->tvertices[0]->vertex->ptr;
+            cluster->center = cluster->tvertices[0]->vertex;
             //centers.back() = clusters.back()[0]->vertex->ptr;
             //centers.back() = mean;
-        GeoLog::add(SVector3(cluster->center->point()), cluster->type, "centers");
+        GeoLog::add(SVector3(cluster->center->ptr->point()), cluster->type, "centers");
     }
 
     // Draw T-vertices, grouped by cluster
@@ -785,47 +900,96 @@ void alignQuadMesh(GModel* gm) {
     }
 
     // Draw edges between connected clusters (if not both on CAD)
+    set<pair<Cluster*,Cluster*>> connected; // pairs of clusters that are already connected
     for(TVertex* tvertex1 : TM.tvertices) {
         for(auto p : tvertex1->adj) {
             TVertex* tvertex2 = p.first;
             Cluster *cluster1 = inCluster[tvertex1], *cluster2 = inCluster[tvertex2];
+            if(connected.count({cluster1,cluster2}) || connected.count({cluster2,cluster1})) continue;
+            connected.insert({cluster1, cluster2});
             int type1 = cluster1->type, type2 = cluster2->type;
             if(type1 <= 1 || type2 <= 1) { // if not both on CAD
                 GFace* gf = (type1 <= 1) ? cluster1->gface : cluster2->gface;
-                H(gf);
-                MVertex* center1 = cluster1->center, *center2 = cluster2->center;
-                SPoint2 param1, param2;
-                P("coucou");
-                bool status1 = reparamMeshVertexOnFace(center1, gf, param1);
-                bool status2 = reparamMeshVertexOnFace(center2, gf, param2);
-                GPoint proj1 = gf->closestPoint(center1->point(), center1->point());
-                GPoint proj2 = gf->closestPoint(center2->point(), center2->point());
-                cout << param1 << endl;
-                cout << proj1.u() << " " << proj1.v() << endl;
-                cout << param2 << endl;
-                cout << proj2.u() << " " << proj2.v() << endl;
+                Vertex* center1 = cluster1->center, *center2 = cluster2->center;
 
-
-                int n = 50;
-                V<GPoint> curve(n+1);
-                F(i,n+1) {
-                    double lambda = (double)i/n;
-                    SPoint2 param(proj1.u() * (1-lambda) + proj2.u() * (lambda), proj1.v() * (1-lambda) + proj2.v() * (lambda));
-                    curve[i] = gf->point(param);
-                    //P(curve[i]);
-                    //cout << curve[i] << endl;
+                // Find shortest path on mesh between center1 and center2
+                queue<Vertex*> q; q.push(center1);
+                map<Vertex*, Vertex*> parent; parent[center1] = NULL;
+                bool done = false;
+                while(!done && S(q)) {
+                    Vertex* u = q.front(); q.pop();
+                    HalfEdge* he = u->he;
+                    F(k, u->valence) {
+                        he = he->oppo->next;
+                        Vertex* v = he->v2;
+                        if(v == center2) {
+                            parent[v] = u;
+                            done = true; break;
+                        }
+                        if(!isOnCAD(v) && !parent.count(v)) {
+                            parent[v] = u;
+                            q.push(v);
+                        }
+                    }
                 }
 
-                //cout << gpoint1 << " " << gpoint2 << endl;
-                cout << endl;
+                V<Vertex*> path; path.pb(center2);
+                Vertex* u = center2;
+                do {
+                    u = parent[u];
+                    path.pb(u);
+                } while(u != center1);
 
-                // Draw curve
-                FR(i,1,n+1) {
-                    SVector3 p1(curve[i-1].x(), curve[i-1].y(), curve[i-1].z());
-                    SVector3 p2(curve[i].x(), curve[i].y(), curve[i].z());
+                V<SPoint3> pts(S(path));
+                F(i, S(path)) pts[i] = path[i]->ptr->point();
+                V<SPoint3> ipts;
+                int nb_ipts = 10;
+                bool oks = compute_subdivided_edge_internal_points(pts, nb_ipts, ipts);
+                // Add first and last point
+                ipts.insert(ipts.begin(), pts[0]);
+                ipts.pb(pts.back());
+
+                int color = rand();
+                FR(i, 1, S(ipts)) {
+                    GeoLog::add({SVector3(ipts[i-1]), SVector3(ipts[i])}, color, "minimal mesh");
+                    //GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
+                }
+
+                H(S(path));
+
+
+                //SPoint2 param1, param2;
+                //P("coucou");
+                //bool status1 = reparamMeshVertexOnFace(center1, gf, param1);
+                //bool status2 = reparamMeshVertexOnFace(center2, gf, param2);
+                //GPoint proj1 = gf->closestPoint(center1->point(), center1->point());
+                //GPoint proj2 = gf->closestPoint(center2->point(), center2->point());
+                //cout << param1 << endl;
+                //cout << proj1.u() << " " << proj1.v() << endl;
+                //cout << param2 << endl;
+                //cout << proj2.u() << " " << proj2.v() << endl;
+
+
+                //int n = 50;
+                //V<GPoint> curve(n+1);
+                //F(i,n+1) {
+                    //double lambda = (double)i/n;
+                    //SPoint2 param(proj1.u() * (1-lambda) + proj2.u() * (lambda), proj1.v() * (1-lambda) + proj2.v() * (lambda));
+                    //curve[i] = gf->point(param);
+                    ////P(curve[i]);
+                    ////cout << curve[i] << endl;
+                //}
+
+                ////cout << gpoint1 << " " << gpoint2 << endl;
+                //cout << endl;
+
+                //// Draw curve
+                //FR(i,1,n+1) {
                     //SVector3 p1(curve[i-1].x(), curve[i-1].y(), curve[i-1].z());
-                    GeoLog::add({p1, p2}, 0, "minimal mesh");
-                }
+                    //SVector3 p2(curve[i].x(), curve[i].y(), curve[i].z());
+                    ////SVector3 p1(curve[i-1].x(), curve[i-1].y(), curve[i-1].z());
+                    //GeoLog::add({p1, p2}, 0, "minimal mesh");
+                //}
             }
         }
     }
