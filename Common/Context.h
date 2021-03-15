@@ -49,7 +49,7 @@ struct contextMeshOptions {
   unsigned int randomSeed;
   int nLayersPerGap;
   double gradation;
-  int quadqsSizemapMethod;
+  int quadqsSizemapMethod, quadqsTopoOptimMethods;
   std::function<double(int, int, double, double, double)> lcCallback;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;

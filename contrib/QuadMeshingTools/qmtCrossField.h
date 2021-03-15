@@ -131,11 +131,3 @@ int detectCrossFieldSingularities(
     double thresholdInDeg,
     std::vector<std::pair<SPoint3,int> >& singularities);
 
-
-
-/**
- * @brief Global storage to associate singularities with faces. Can be used from the
- *        exterior. Not modified by any function in this file.
- *        User must be very careful (global variable is bad and dangerous, etc)
- */
-extern std::unordered_map<GFace*,std::vector<std::pair<SPoint3,int> > > global_singularities;
