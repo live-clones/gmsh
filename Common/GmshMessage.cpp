@@ -55,7 +55,7 @@ int Msg::_commRank = 0;
 int Msg::_commSize = 1;
 int Msg::_verbosity = 5;
 int Msg::_progressMeterStep = 10;
-int Msg::_progressMeterCurrent = -1;
+std::atomic<int> Msg::_progressMeterCurrent(-1);
 int Msg::_progressMeterTotal = 0;
 std::map<std::string, double> Msg::_timers;
 bool Msg::_infoCpu = false;
@@ -595,8 +595,10 @@ void Msg::Info(const char *fmt, ...)
 
   if(CTX::instance()->terminal){
     if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
-       _commSize == 1)
-      fprintf(stdout, "Info    : [%3d%%] %s\n", _progressMeterCurrent, str);
+       _commSize == 1) {
+      int p =  _progressMeterCurrent;
+      fprintf(stdout, "Info    : [%3d%%] %s\n", p, str);
+    }
     else if(_commSize > 1)
       fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
     else
@@ -773,12 +775,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     while(p < percent) p += _progressMeterStep;
     if(p >= 100) p = 100;
 
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-    {
-      _progressMeterCurrent = p;
-    }
+    _progressMeterCurrent = p;
 
     // TODO With C++11 use std::string (contiguous layout) and avoid all these C
     // problems
@@ -789,8 +786,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
     int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
-
-    sprintf(str2, "Info    : [%3d%%] %s", _progressMeterCurrent, str);
+    sprintf(str2, "Info    : [%3d%%] %s", p, str);
 
     if(_client) _client->Progress(str2);
 
