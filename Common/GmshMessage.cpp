@@ -780,7 +780,7 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     // TODO With C++11 use std::string (contiguous layout) and avoid all these C
     // problems
     // str2 needs to have at least 5018 bytes or buffer overflow will occur
-    char str[5000], str2[5018];
+    char str[5000], str2[5100];
     va_list args;
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
