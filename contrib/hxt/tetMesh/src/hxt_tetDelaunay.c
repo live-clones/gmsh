@@ -517,7 +517,6 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
 
     // we should pass in orient3d mode here :p
     unsigned index = 4;
-    unsigned outside = 0;
     unsigned randomU = hxtReproducibleLCG(&seed);
     for (unsigned j=0; j<4; j++)
     {
@@ -535,7 +534,6 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
           //                        vtaCoord[0], vtaCoord[1], vtaCoord[2]);
           // }
 
-          outside = 1;
           uint32_t node = mesh->tetrahedra.node[curNeigh[i]];
 
           if(node==HXT_GHOST_VERTEX) {
@@ -543,10 +541,11 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
             return HXT_STATUS_OK;
           }
 
-          if(!vertexOutOfPartition(vertices, node, rel, partition->startDist)){
-            index=i;
-            break;
-          }
+          if(vertexOutOfPartition(vertices, node, rel, partition->startDist))
+            return HXT_STATUS_CONFLICT;
+
+          index=i;
+          break;
         }
       }
     }
@@ -556,19 +555,22 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
       const double* __restrict__ b = vertices[curNode[1]].coord;
       const double* __restrict__ c = vertices[curNode[2]].coord;
       const double* __restrict__ d = vertices[curNode[3]].coord;
-      if(outside) {
-        return HXT_STATUS_CONFLICT;
-      }
-      else if( (orient3d(a,b,c,vtaCoord)>=0) +
-               (orient3d(a,b,vtaCoord,d)>=0) +
-               (orient3d(a,vtaCoord,c,d)>=0) +
-               (orient3d(vtaCoord,b,c,d)>=0)>2 ){
+      if( (orient3d(a,b,c,vtaCoord)>=0) +
+          (orient3d(a,b,vtaCoord,d)>=0) +
+          (orient3d(a,vtaCoord,c,d)>=0) +
+          (orient3d(vtaCoord,b,c,d)>=0)>2 ){
         *curTet = nextTet;
         return HXT_STATUS_DOUBLE_PT;
       }
       *curTet = nextTet;
       return HXT_STATUS_OK;
     }
+
+#ifdef DEBUG
+    nstep++;
+    if(nstep > mesh->tetrahedra.num)
+      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "walk stuck in an infinite loop");
+#endif
 
     enteringFace = curNeigh[index]&3;
     nextTet = curNeigh[index]/4;
@@ -927,6 +929,18 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
     mesh->tetrahedra.neigh[4*newTet] = neigh;
 
     mesh->tetrahedra.flag[newTet] = local->ball.array[i].flag;
+
+    #ifdef DEBUG
+      if((getFacetConstraint(mesh, neigh / 4, neigh % 4)!=0) ^ (getFacetConstraint(mesh, newTet, 0)!=0))
+        return HXT_ERROR_MSG(HXT_STATUS_ERROR, "constraints are not the same on both side of the new tet");
+      if(getFacetConstraint(mesh, newTet, 1) || getFacetConstraint(mesh, newTet, 2) || getFacetConstraint(mesh, newTet, 3))
+        return HXT_ERROR_MSG(HXT_STATUS_ERROR, "new tetrahedron flag are erroneous (face constraint on new face)");
+      if(getEdgeConstraint(mesh, newTet, getEdgeFromNodes(0, 1)) ||
+         getEdgeConstraint(mesh, newTet, getEdgeFromNodes(0, 2)) ||
+         getEdgeConstraint(mesh, newTet, getEdgeFromNodes(0, 3))
+         )
+        return HXT_ERROR_MSG(HXT_STATUS_ERROR, "new tetrahedron flag are erroneous (edge constraint on new edge)");
+    #endif
 
     // update neighbor's neighbor
     mesh->tetrahedra.neigh[neigh] = 4*newTet;
@@ -1450,8 +1464,6 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
           ******************************************************/
           for (uint32_t i=0; i<localN; i++)
           {
-            // if( i%1000==0)
-            //   printf("%f %%\n", 100.0*i/localN);
             uint32_t passIndex = (localStart+i)%passLength;
             uint32_t vta = nodeInfo[passStart + passIndex].node;
             if(nodeInfo[passStart + passIndex].status==HXT_STATUS_TRYAGAIN){

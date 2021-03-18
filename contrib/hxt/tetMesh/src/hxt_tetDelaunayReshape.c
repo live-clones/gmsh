@@ -387,7 +387,6 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
         uint64_t out = faces[4 * (in / 4) + f];
         faces[out] = local->ball.num;
 
-
         uint64_t* curNeigh = mesh->tetrahedra.neigh + tetToUndelete*4;
         uint32_t* curNode = mesh->tetrahedra.node + tetToUndelete*4;
         if(f==0) {
@@ -442,7 +441,9 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
   }
   local->deleted.num -= shift;
 
-  // HXT_ASSERT( isStarShaped(local, mesh, vta, &blindFace)==HXT_STATUS_OK );
+#ifdef DEBUG
+  HXT_ASSERT( isStarShaped(local, mesh, vta, &blindFace)==HXT_STATUS_OK );
+#endif
 
   return HXT_STATUS_OK;
 }
