@@ -1698,12 +1698,7 @@ void MElement::writeMATLAB(FILE *fp, int filetype, int elementary, int physical,
 void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 {
   int type = getTypeForUNV();
-  if(!type) {
-    Msg::Warning("Unknown element type for UNV export (MSH type %d) - "
-                 "output file might be invalid",
-                 getTypeForMSH());
-    return;
-  }
+  if(!type) return;
 
   int n = getNumVertices();
   int physical_property = elementary;
