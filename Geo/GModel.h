@@ -561,7 +561,7 @@ public:
   void scaleMesh(double factor);
 
   // set/get entity that is currently being meshed (for error reporting)
-  void setCurrentMeshEntity(GEntity *e) { _currentMeshEntity = e; }
+  void setCurrentMeshEntity(GEntity *e);
   GEntity *getCurrentMeshEntity() { return _currentMeshEntity; }
 
   // set/get entities/vertices linked meshing errors
