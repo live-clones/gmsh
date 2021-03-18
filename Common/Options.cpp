@@ -6580,6 +6580,11 @@ double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)
   return CTX::instance()->mesh.quadqsSizemapMethod;
 }
 
+double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM) {
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsTopoOptimMethods = (int)val;
+  return CTX::instance()->mesh.quadqsTopoOptimMethods;
+}
+
 double opt_solver_listen(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->solver.listen = (int)val;

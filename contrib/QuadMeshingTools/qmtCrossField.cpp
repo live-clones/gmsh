@@ -61,9 +61,6 @@ using std::unordered_map;
 using std::array;
 using std::pair;
 
-/* Global variable instanciation */
-std::unordered_map<GFace*,std::vector<std::pair<SPoint3,int> > > global_singularities;
-
 namespace QMT {
 
   constexpr double EPS = 1.e-14;
