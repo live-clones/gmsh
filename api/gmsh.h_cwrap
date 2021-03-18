@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.8.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.8.1).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -1377,6 +1377,30 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
         elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
+      }
+
+      // Get the quality of elements in 'elementTags'. `elementTags' is a vector
+      // containing the tags (unique, strictly positive identifiers) of the
+      // elements. `qualityName' is the quality mesure requested ("minSJ" for the
+      // minimal scaled jacobien, "minSICN" for the minimal signed inverted
+      // condition number and "minSIGE" for the signed inverted gradient error.
+      // Default is "minSJ"). 'elementQuality' is a vector containing qualities of
+      // elements in 'elementTags', in the same order as 'elementTags'. If
+      // `numTasks' > 1, only compute and return the part of the data indexed by
+      // `task'.
+      inline void getElementQualities(const std::vector<std::size_t> & elementTags,
+                                      std::vector<double> & elementQualities,
+                                      const std::string & qualityName = "minSJ",
+                                      const std::size_t task = 0,
+                                      const std::size_t numTasks = 1)
+      {
+        int ierr = 0;
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        double *api_elementQualities_; size_t api_elementQualities_n_;
+        gmshModelMeshGetElementQualities(api_elementTags_, api_elementTags_n_, &api_elementQualities_, &api_elementQualities_n_, qualityName.c_str(), task, numTasks, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_elementTags_);
+        elementQualities.assign(api_elementQualities_, api_elementQualities_ + api_elementQualities_n_); gmshFree(api_elementQualities_);
       }
 
       // Add elements classified on the entity of dimension `dim' and tag `tag'.

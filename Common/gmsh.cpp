@@ -2058,6 +2058,60 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(
   }
 }
 
+GMSH_API void gmsh::model::mesh::getElementQualities(
+  const std::vector<std::size_t> &elementTags, std::vector<double> &elementQualities,
+  const std::string &qualityName, const std::size_t task, const std::size_t numTasks)
+{
+  if(!_checkInit()) return;
+  if(!numTasks) {
+    Msg::Error("Number of tasks should be > 0");
+    return;
+  }
+  std::size_t numElements = elementTags.size();
+  const std::size_t begin = (task * numElements) / numTasks;
+  const std::size_t end = ((task + 1) * numElements) / numTasks;
+  bool haveElementQualities = elementQualities.size();
+  if(!haveElementQualities){
+    if(numTasks > 1)
+      Msg::Warning("elementQualities should be preallocated "
+                   "if numTasks > 1");
+    haveElementQualities=true;
+    elementQualities.clear();
+    elementQualities.resize(numElements,0.0);
+  }
+  if(haveElementQualities && (elementQualities.size() < numElements)){
+    Msg::Error("Wrong size of elementQualities array (%d < %d)", elementQualities.size(),
+               numElements);
+    return;
+  }
+  if(qualityName != "minSICN" && qualityName != "minSIGE"
+     && qualityName != "minSJ") {
+    Msg::Error("Unknown quality mesure '%s'", qualityName.c_str());
+    return;
+  }
+  for(size_t k=begin;k<end;k++){
+    MElement *e = GModel::current()->getMeshElementByTag(elementTags[k]);
+    if(!e) {
+      Msg::Error("Unknown element %d", elementTags[k]);
+      elementQualities[k]=0.0;
+      continue;
+    }
+    // int elementType = e->getTypeForMSH();
+    double quality=-1.0;
+    if(qualityName=="minSICN"){
+      quality=e->minSICNShapeMeasure();
+    }
+    else if(qualityName=="minSIGE"){
+      quality=e->minSIGEShapeMeasure();
+    }
+    else if(qualityName=="minSJ"){
+      quality=e->distoShapeMeasure();
+    }
+    elementQualities[k]=quality;
+  }
+  return;
+}
+
 static bool _getFunctionSpaceInfo(const std::string &fsType,
                                   std::string &fsName, int &fsOrder,
                                   int &fsComp)

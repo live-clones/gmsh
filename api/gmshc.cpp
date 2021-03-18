@@ -1213,6 +1213,20 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType, cons
   }
 }
 
+GMSH_API void gmshModelMeshGetElementQualities(size_t * elementTags, size_t elementTags_n, double ** elementQualities, size_t * elementQualities_n, const char * qualityName, const size_t task, const size_t numTasks, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    std::vector<double> api_elementQualities_;
+    gmsh::model::mesh::getElementQualities(api_elementTags_, api_elementQualities_, qualityName, task, numTasks);
+    vector2ptr(api_elementQualities_, elementQualities, elementQualities_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshAddElements(const int dim, const int tag, int * elementTypes, size_t elementTypes_n, const size_t ** elementTags, const size_t * elementTags_n, size_t elementTags_nn, const size_t ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn, int * ierr)
 {
   if(ierr) *ierr = 0;
