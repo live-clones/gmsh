@@ -65,21 +65,40 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, 
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
 
   // find non-coplanar vertices
-  double orientation = 0.0;
-
+  int orientation = 0;
   uint32_t i=0, j=1, k=2, l=3;
-  for (i=0; orientation==0.0 && i<nToInsert-3; i++)
+  for (i=0; orientation==0 && i<nToInsert-3; i++)
   {
-    for (j=i+1; orientation==0.0 && j<nToInsert-2; j++)
+    double* d = vertices[nodeInfo[i].node].coord;
+    for (j=i+1; orientation==0 && j<nToInsert-2; j++)
     {
-      for (k=j+1; orientation==0.0 && k<nToInsert-1; k++)
+      double* c = vertices[nodeInfo[j].node].coord;
+      double cdx = c[0] - d[0];
+      double cdy = c[1] - d[1];
+      double cdz = c[2] - d[2];
+      if(cdx == 0.0 && cdy == 0.0 && cdz == 0.0)
+        continue;
+      for (k=j+1; orientation==0 && k<nToInsert-1; k++)
       {
-        for (l=k+1; orientation==0.0 && l<nToInsert; l++)
+        double* b = vertices[nodeInfo[k].node].coord;
+        double bdx = b[0] - d[0];
+        double bdy = b[1] - d[1];
+        double bdz = b[2] - d[2];
+
+        double crossx = bdy * cdz - bdz * cdy;
+        double crossy = bdz * cdx - bdx * cdz;
+        double crossz = bdx * cdy - bdx * cdy;
+        // check for colinearity: cross product
+        if(crossx == 0.0 && crossy == 0.0 && crossz == 0.0)
+          continue;
+        for (l=k+1; orientation==0 && l<nToInsert; l++)
         {
-          orientation = orient3d(vertices[nodeInfo[i].node].coord,
-                                 vertices[nodeInfo[j].node].coord,
-                                 vertices[nodeInfo[k].node].coord,
-                                 vertices[nodeInfo[l].node].coord);
+          double* a = vertices[nodeInfo[l].node].coord;
+          double adx = a[0] - d[0];
+          double ady = a[1] - d[1];
+          double adz = a[2] - d[2];
+          double det = adx * crossx + ady * crossy + adz * crossz;
+          orientation = (det > o3dstaticfilter) - (det < -o3dstaticfilter);
         }
       }
     }
@@ -87,8 +106,8 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, 
   l--; k--; j--; i--;
 
 
-  if(orientation==0.0){
-    return HXT_ERROR_MSG(HXT_STATUS_FAILED, "all vertices are coplanar");
+  if(orientation==0){
+    return HXT_ERROR_MSG(HXT_STATUS_FAILED, "all vertices are coplanar or nearly coplanar");
   }
 
   // swap 0<->i  1<->j 2<->k 3<->l
@@ -119,7 +138,7 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, 
   }
 
 
-  if(orientation > 0.0){
+  if(orientation > 0){
     uint32_t tmp = i;
     i = j;
     j = tmp;
