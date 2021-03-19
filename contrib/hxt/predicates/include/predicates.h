@@ -11,6 +11,12 @@
 extern "C" {
 #endif
 
+#ifdef _MSC_VER
+#ifndef __restrict__
+#define __restrict__ __restrict
+#endif
+#endif
+
 extern double splitter;
 extern double o3dstaticfilter;
 extern double o3derrboundA;
