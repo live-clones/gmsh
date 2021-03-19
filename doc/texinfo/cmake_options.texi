@@ -114,6 +114,8 @@ Enable Poppler for displaying PDF documents (experimental) (default: OFF)
 Enable private API (default: OFF)
 @item ENABLE_PRO
 Enable PRO extensions (default: ON)
+@item ENABLE_QUADMESHINGTOOLS
+Enable QuadMeshingTools extensions (default: ON)
 @item ENABLE_QUADTRI
 Enable QuadTri structured meshing extensions (default: ON)
 @item ENABLE_REVOROPT

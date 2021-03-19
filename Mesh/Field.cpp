@@ -1535,12 +1535,22 @@ public:
     }
     return v;
   }
+
   virtual bool isotropic() const
   {
     PView *v = getView();
     if(v && v->getData()->getNumTensors()) return false;
     return true;
   }
+
+  virtual int numComponents() const
+  {
+    PView *v = getView();
+    if(v && v->getData()->getNumTensors()) return 9;
+    if(v && v->getData()->getNumVectors()) return 3;
+    return 1;
+  }
+
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     PView *v = getView();
@@ -1550,14 +1560,79 @@ public:
       _octree = new OctreePost(v);
       updateNeeded = false;
     }
+
     double l = 0.;
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
-    if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.05))
-      Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
+    if(numComponents() == 3) { // scaled cross field
+      double values[3];
+      if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, 0.05)) {
+        if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .1)) {
+          Msg::Debug("Field sampling: no vector element found containing point "
+                     "(%g,%g,%g) (for norm)",
+                     x, y, z);
+        }
+        else {
+          l = sqrt(values[0] * values[0] + values[1] * values[1] +
+                   values[2] * values[2]);
+        }
+      }
+      else {
+        l = sqrt(values[0] * values[0] + values[1] * values[1] +
+                 values[2] * values[2]);
+      }
+    }
+    else if(numComponents() == 1) {
+      if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.05)) {
+        Msg::Debug(
+          "Field sampling: no scalar element found containing point (%g,%g,%g)",
+          x, y, z);
+      }
+    }
+    else {
+      Msg::Error("Field sampling: no view with the right dimension", x, y, z);
+    }
+
     if(l <= 0 && _cropNegativeValues) return MAX_LC;
     return l;
   }
+
+  void operator()(double x, double y, double z, SVector3 &v, GEntity *ge = 0)
+  {
+    PView *vie = getView();
+    if(!vie) {
+      Msg::Error("PostViewField: no view");
+      v.data()[0] = MAX_LC;
+      v.data()[1] = MAX_LC;
+      v.data()[2] = MAX_LC;
+      return;
+    }
+    if(updateNeeded) {
+      if(_octree) delete _octree;
+      _octree = new OctreePost(vie);
+      updateNeeded = false;
+    }
+    if(numComponents() == 3) { // scaled cross field
+      double values[3];
+      if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .05)) {
+        if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .1)) {
+          Msg::Debug("Field sampling: no vector element found containing point "
+                     "(%g,%g,%g)",
+                     x, y, z);
+        }
+        else {
+          v = SVector3(values[0], values[1], values[2]);
+        }
+      }
+      else {
+        v = SVector3(values[0], values[1], values[2]);
+      }
+    }
+    else {
+      Msg::Error("Field sampling: no vector element");
+    }
+  }
+
   void operator()(double x, double y, double z, SMetric3 &metr,
                   GEntity *ge = nullptr)
   {
@@ -1572,7 +1647,9 @@ public:
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
     if(!_octree->searchTensorWithTol(x, y, z, l, 0, nullptr, 0.05))
-      Msg::Info("No tensor element found containing point (%g,%g,%g)", x, y, z);
+      Msg::Debug(
+        "Field sampling: no tensor element found containing point (%g,%g,%g)",
+        x, y, z);
     if(0 && _cropNegativeValues) {
       if(l[0] <= 0 && l[1] <= 0 && l[2] <= 0 && l[3] <= 0 && l[4] <= 0 &&
          l[5] <= 0 && l[6] <= 0 && l[7] <= 0 && l[8] <= 0) {
@@ -2838,17 +2915,19 @@ void BoundaryLayerField::setupFor1d(int iE)
 
   if(!found) {
     GEdge *ge = GModel::current()->getEdgeByTag(iE);
-    GVertex *gv0 = ge->getBeginVertex();
-    if(gv0) {
-      found = std::find(_pointTagsSaved.begin(), _pointTagsSaved.end(),
-                        gv0->tag()) != _pointTagsSaved.end();
-      if(found) _pointTags.push_back(gv0->tag());
-    }
-    GVertex *gv1 = ge->getEndVertex();
-    if(gv1) {
-      found = std::find(_pointTagsSaved.begin(), _pointTagsSaved.end(),
-                        gv1->tag()) != _pointTagsSaved.end();
-      if(found) _pointTags.push_back(gv1->tag());
+    if(ge) {
+      GVertex *gv0 = ge->getBeginVertex();
+      if(gv0) {
+        found = std::find(_pointTagsSaved.begin(), _pointTagsSaved.end(),
+                          gv0->tag()) != _pointTagsSaved.end();
+        if(found) _pointTags.push_back(gv0->tag());
+      }
+      GVertex *gv1 = ge->getEndVertex();
+      if(gv1) {
+        found = std::find(_pointTagsSaved.begin(), _pointTagsSaved.end(),
+                          gv1->tag()) != _pointTagsSaved.end();
+        if(found) _pointTags.push_back(gv1->tag());
+      }
     }
   }
   removeAttractors();
@@ -2875,6 +2954,7 @@ bool BoundaryLayerField::setupFor2d(int iF)
   // OR (better) CHANGE THE PHILOSOPHY
 
   GFace *gf = GModel::current()->getFaceByTag(iF);
+  if(!gf) return false;
   std::vector<GEdge *> ed = gf->edges();
   std::vector<GEdge *> const &embedded_edges = gf->embeddedEdges();
   ed.insert(ed.begin(), embedded_edges.begin(), embedded_edges.end());
@@ -2961,16 +3041,18 @@ void BoundaryLayerField::computeFor1dMesh(double x, double y, double z,
   double distk = 1.e22;
   for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
     GVertex *v = GModel::current()->getVertexByTag(*it);
-    double xp = v->x();
-    double yp = v->y();
-    double zp = v->z();
-    const double dist =
-      sqrt((x - xp) * (x - xp) + (y - yp) * (y - yp) + (z - zp) * (z - zp));
-    if(dist < distk) {
-      distk = dist;
-      xpk = xp;
-      ypk = yp;
-      zpk = zp;
+    if(v) {
+      double xp = v->x();
+      double yp = v->y();
+      double zp = v->z();
+      const double dist =
+        sqrt((x - xp) * (x - xp) + (y - yp) * (y - yp) + (z - zp) * (z - zp));
+      if(dist < distk) {
+        distk = dist;
+        xpk = xp;
+        ypk = yp;
+        zpk = zp;
+      }
     }
   }
 
@@ -3012,6 +3094,7 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
   double beta = CTX::instance()->mesh.smoothRatio;
   if(pp.first.dim == 0) {
     GVertex *v = GModel::current()->getVertexByTag(pp.first.ent);
+    if(!v) return;
     SVector3 t1;
     if(dist < thickness) { t1 = SVector3(1, 0, 0); }
     else {
@@ -3022,6 +3105,7 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
   }
   else if(pp.first.dim == 1) {
     GEdge *e = GModel::current()->getEdgeByTag(pp.first.ent);
+    if(!e) return;
     if(dist < thickness) {
       SVector3 t1 = e->firstDer(pp.first.u);
       double crv = e->curvature(pp.first.u);
@@ -3043,6 +3127,7 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
   }
   else {
     GFace *gf = GModel::current()->getFaceByTag(pp.first.ent);
+    if(!gf) return;
     if(dist < thickness) {
       double cmin, cmax;
       SVector3 dirMax, dirMin;

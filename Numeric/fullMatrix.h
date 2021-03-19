@@ -17,6 +17,7 @@
 #ifdef Success // in X11 header X.h
 #undef Success
 #endif
+#include <sstream>
 #include <Eigen/Dense>
 #endif
 

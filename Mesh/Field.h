@@ -108,10 +108,16 @@ public:
   int id;
   std::map<std::string, FieldOption *> options;
   std::map<std::string, FieldCallback *> callbacks;
+  virtual int numComponents() const { return 1; }
   virtual bool isotropic() const { return true; }
   // isotropic
   virtual double operator()(double x, double y, double z,
                             GEntity *ge = nullptr) = 0;
+  // vector value
+  virtual void operator()(double x, double y, double z, SVector3 &,
+                          GEntity *ge = 0)
+  {
+  }
   // anisotropic
   virtual void operator()(double x, double y, double z, SMetric3 &,
                           GEntity *ge = nullptr)

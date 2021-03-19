@@ -109,7 +109,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "coordinates (Mesh.SaveParametric)"));
   s.push_back(mp("-save_topology", "Save model topology (Mesh.SaveTopology)"));
   s.push_back(mp("-algo string", "Select mesh algorithm: auto, meshadapt, del2d, "
-                 "front2d, delquad, pack, initial2d, del3d, front3d, mmg3d, hxt, "
+                 "front2d, delquad, quadqs, initial2d, del3d, front3d, mmg3d, hxt, "
                  "initial3d (Mesh.Algorithm and Mesh.Algorithm3D)"));
   s.push_back(mp("-smooth int", "Set number of mesh smoothing steps "
                  "(Mesh.Smoothing)"));
@@ -1201,6 +1201,8 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL_QUAD);
           else if(argv[i] == "PackingOfParallelograms" || argv[i] == "pack")
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
+          else if(argv[i] == "QuadQuasiStructured" || argv[i] == "quadqs")
+            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_QUAD_QUASI_STRUCT);
           else if(argv[i] == "initial2d")
             opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_INITIAL_ONLY);
           else if(argv[i] == "del3d" || argv[i] == "gmsh3d")

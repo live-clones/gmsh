@@ -582,7 +582,8 @@ bool faceIsValidQuad(GFace *gf, double angle_threshold_rad)
 
   std::vector<std::array<int, 2> > vpairs;
   for(GEdge *ge : gf->edges()) {
-    vpairs.push_back({ge->getBeginVertex()->tag(), ge->getEndVertex()->tag()});
+    vpairs.push_back(
+      {{ge->getBeginVertex()->tag(), ge->getEndVertex()->tag()}});
   }
   std::vector<int> loop;
   bool ok = id_loop_from_closed_pairs(vpairs, loop);
@@ -663,12 +664,17 @@ GEdge *quad_face_opposite_edge(GFace *face, GEdge *edge)
 }
 
 void build_chords(const std::set<GFace *> &faces,
-                  std::vector<std::set<GEdge *> > &chords)
+                  std::vector<std::set<GEdge *> > &chords, double maxDiffRel,
+                  bool ignoreEmbedded = false)
 {
   /* Connectivity */
   std::map<GEdge *, std::vector<GFace *> > edge2faces;
-  for(GFace *gf : faces)
+  for(GFace *gf : faces) {
+    if(!ignoreEmbedded &&
+       (gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0))
+      continue;
     for(GEdge *ge : gf->edges()) { edge2faces[ge].push_back(gf); }
+  }
 
   Msg::Debug("build chords: %li faces, %li edges", faces.size(),
              edge2faces.size());
@@ -687,10 +693,15 @@ void build_chords(const std::set<GFace *> &faces,
     while(Q.size() > 0) {
       GEdge *ge = Q.front();
       Q.pop();
+      int n = meshGEdgeTargetNumberOfPoints(ge);
       chord.insert(ge);
       for(GFace *gf : edge2faces[ge]) {
         GEdge *ge2 = quad_face_opposite_edge(gf, ge);
         if(ge2 && done.find(ge2) == done.end()) {
+          int n2 = meshGEdgeTargetNumberOfPoints(ge2);
+          if(double(std::abs(n2 - n)) / double(std::max(n, n2)) > maxDiffRel) {
+            continue;
+          }
           Q.push(ge2);
           done[ge2] = true;
         }
@@ -702,19 +713,24 @@ void build_chords(const std::set<GFace *> &faces,
 }
 
 bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
-                                      double cornerAngle, bool setRecombine)
+                                      double cornerAngle, bool setRecombine,
+                                      double maxDiffRel, bool ignoreEmbedded)
 {
   /* Filter with topology and geometry */
   std::set<GFace *> faces;
-  for(GFace *gf : candidate_faces)
+  for(GFace *gf : candidate_faces) {
+    if(!ignoreEmbedded &&
+       (gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0))
+      continue;
     if(faceIsValidQuad(gf, cornerAngle)) { faces.insert(gf); }
+  }
 
   /* Build the topological chords in quad structure */
   Msg::Debug(
     "transfinite automatic: building chords from %li quadrangular faces ...",
     faces.size());
   std::vector<std::set<GEdge *> > chords;
-  build_chords(faces, chords);
+  build_chords(faces, chords, maxDiffRel);
   Msg::Debug("... found %li chords", chords.size());
 
   /* Determine the number of points, set the transfinite curves */
@@ -739,6 +755,9 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
       ge->meshAttributes.nbPointsTransfinite = N;
       ge->meshAttributes.typeTransfinite = 1; /* Progression */
       ge->meshAttributes.coeffTransfinite = 1.;
+      if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+        ge->meshAttributes.typeTransfinite = 4; /* Use size map */
+      }
       ne += 1;
     }
   }
@@ -747,10 +766,17 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
   std::size_t nf = 0;
   for(GFace *gf : faces) {
     bool transfinite = true;
+    std::vector<int> nPoints(4, 0);
+    std::size_t count = 0;
     for(GEdge *ge : gf->edges()) {
-      if(ge->meshAttributes.method != MESH_TRANSFINITE) transfinite = false;
+      if(ge->meshAttributes.method != MESH_TRANSFINITE) {
+        transfinite = false;
+        break;
+      }
+      nPoints[count] = ge->meshAttributes.nbPointsTransfinite;
+      count += 1;
     }
-    if(transfinite) {
+    if(transfinite && nPoints[0] == nPoints[2] && nPoints[1] == nPoints[3]) {
       nf += 1;
       gf->meshAttributes.method = MESH_TRANSFINITE;
       gf->meshAttributes.transfiniteArrangement = 1; /* Right */

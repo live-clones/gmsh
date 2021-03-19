@@ -6,7 +6,7 @@ enable_simulator=0
 #buildtype=Debug
 buildtype=Release
 version=2.3.4
-build=53 # must be incremented for each submitted build
+build=56 # must be incremented for each submitted build
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -46,7 +46,7 @@ iphoneos_version_min="-target arm64-apple-ios9.0" # iOS 13 SDK
 if [ $enable_simulator != 0 ]; then
   ios=iossimulator
   iphoneos=iphonesimulator
-  iphoneos_version_min=
+  iphoneos_version_min="-target x86_64-apple-ios9.0" # iOS 14 SDK
 fi
 
 gmsh_git="${HOME}/src/gmsh/"
@@ -126,6 +126,8 @@ if [ $enable_simulator != 0 ]; then
   # change blas/lapack for simulator
   sed -e "s|lastKnownFileType = archive.ar; name = libf2cblas.a; path = ${appname}/frameworks/petsc.framework/libf2cblas.a;|lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework;|" -i "" $gmsh_git/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj;
   sed -e "s|lastKnownFileType = archive.ar; name = libf2clapack.a; path = ${appname}/frameworks/petsc.framework/libf2clapack.a;|lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework;|" -i "" $gmsh_git/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj;
+  # change VALID_ARCHS
+  sed -e "s|VALID_ARCHS = arm64|VALID_ARCHS = x86_64|" -i "" $gmsh_git/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj;
 fi
 
 # TODO:

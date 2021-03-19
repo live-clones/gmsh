@@ -19,6 +19,7 @@ set(SRC
     meshGRegionLocalMeshMod.cpp meshGRegionMMG.cpp
   meshGRegionBoundaryLayer.cpp
   meshRelocateVertex.cpp
+  meshTriangulation.cpp
   meshMetric.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp
@@ -33,6 +34,8 @@ set(SRC
   filterElements.cpp
   gmshCrossFields.cpp
   automaticMeshSizeField.cpp
+  meshQuadQuasiStructured.cpp
+  meshOctreeLibOL.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

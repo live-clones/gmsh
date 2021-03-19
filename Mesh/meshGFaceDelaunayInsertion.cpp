@@ -25,6 +25,7 @@
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
 #include "fullMatrix.h"
+#include "gmsh.h" // for debug
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertion.h"
@@ -1436,6 +1437,7 @@ void buildBackgroundMesh(GFace *gf, bool crossFieldClosestPoint,
 #if defined(HAVE_DOMHEX)
   if(!old_algo_hexa()) return;
 #endif
+  Msg::Debug("build background mesh (Bowyer Watson, fixed size) ...");
 
   quadsToTriangles(gf, 100000);
 
@@ -1605,16 +1607,29 @@ void bowyerWatsonParallelograms(
   std::vector<MVertex *> packed;
   std::vector<SMetric3> metrics;
 
+  Msg::Debug("- Face %i: bowyerWatsonParallelograms ...", gf->tag());
+  if(!gf->haveParametrization()) {
+    Msg::Error(
+      "- Face %i: no CAD parametrization available, cannot mesh with algo PACK",
+      gf->tag());
+    return;
+  }
+
 #if defined(HAVE_DOMHEX)
-  if(old_algo_hexa())
+  if(old_algo_hexa()) {
+    Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");
     packingOfParallelograms(gf, packed, metrics);
+  }
   else {
+    Msg::Debug("bowyerWatsonParallelograms: call Filler2D::pointInsertion2D()");
     Filler2D f;
     f.pointInsertion2D(gf, packed, metrics);
   }
 #else
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
+
+  Msg::Info("%lu Nodes created --> now staring insertion", packed.size());
 
   if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)) {
     Msg::Error("Invalid meshing data structure");
@@ -1623,6 +1638,9 @@ void bowyerWatsonParallelograms(
 
   // std::sort(packed.begin(), packed.end(), MVertexPtrLessThanLexicographic());
   SortHilbert(packed);
+  Msg::Debug("bowyerWatsonParallelograms: %li candidate points to insert in "
+             "the triangulation",
+             packed.size());
 
   MTri3 *oneNewTriangle = nullptr;
   for(std::size_t i = 0; i < packed.size();) {
@@ -1663,6 +1681,10 @@ void bowyerWatsonParallelograms(
   transferDataStructure(gf, AllTris, DATA);
   backgroundMesh::unset();
 
+  Msg::Debug(
+    "bowyerWatsonParallelograms: %li candidate points -> %li inserted vertices",
+    packed.size(), gf->mesh_vertices.size());
+
   splitElementsInBoundaryLayerIfNeeded(gf);
 }
 
@@ -1671,13 +1693,17 @@ void bowyerWatsonParallelogramsConstrained(
   std::map<MVertex *, MVertex *> *equivalence,
   std::map<MVertex *, SPoint2> *parametricCoordinates)
 {
+  Msg::Error("bowyerWatsonParallelogramsConstrained deprecated");
+  return;
+
   std::set<MTri3 *, compareTri3Ptr> AllTris;
   bidimMeshData DATA(equivalence, parametricCoordinates);
   std::vector<MVertex *> packed;
   std::vector<SMetric3> metrics;
 
 #if defined(HAVE_DOMHEX)
-  packingOfParallelogramsConstrained(gf, constr_vertices, packed, metrics);
+  // packingOfParallelogramsConstrained no longer exists
+  // packingOfParallelogramsConstrained(gf, constr_vertices, packed, metrics);
 #else
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif

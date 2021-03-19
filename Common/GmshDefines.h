@@ -241,6 +241,7 @@
 #define ALGO_2D_FRONTAL_QUAD      8
 #define ALGO_2D_PACK_PRLGRMS      9
 #define ALGO_2D_PACK_PRLGRMS_CSTR 10
+#define ALGO_2D_QUAD_QUASI_STRUCT 11
 
 // 3D meshing algorithms (numbers should not be changed)
 #define ALGO_3D_DELAUNAY     1

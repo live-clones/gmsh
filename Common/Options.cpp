@@ -5860,7 +5860,7 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
     case ALGO_2D_FRONTAL_QUAD:
       FlGui::instance()->options->mesh.choice[2]->value(5);
       break;
-    case ALGO_2D_PACK_PRLGRMS:
+    case ALGO_2D_QUAD_QUASI_STRUCT:
       FlGui::instance()->options->mesh.choice[2]->value(6);
       break;
     case ALGO_2D_INITIAL_ONLY:
@@ -6305,6 +6305,12 @@ double opt_mesh_save_topology(OPT_ARGS_NUM)
   return CTX::instance()->mesh.saveTopology;
 }
 
+double opt_mesh_read_groups_of_elements(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.readGroupsOfElements = (int)val;
+  return CTX::instance()->mesh.readGroupsOfElements;
+}
+
 double opt_mesh_save_groups_of_elements(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.saveGroupsOfElements = (int)val;
@@ -6566,6 +6572,17 @@ double opt_mesh_ignore_parametrization(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.ignoreParametrizationMsh4 = (int)val;
   return CTX::instance()->mesh.ignoreParametrizationMsh4;
+}
+
+double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsSizemapMethod = (int)val;
+  return CTX::instance()->mesh.quadqsSizemapMethod;
+}
+
+double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM) {
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsTopoOptimMethods = (int)val;
+  return CTX::instance()->mesh.quadqsTopoOptimMethods;
 }
 
 double opt_solver_listen(OPT_ARGS_NUM)
