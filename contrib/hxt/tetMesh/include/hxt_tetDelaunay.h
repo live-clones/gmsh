@@ -52,6 +52,7 @@ typedef struct {
   int perfectDelaunay;        /**< set to 1 if the current mesh is perfectly Delaunay (no edge or facet constraints applied)
                                *   and if you don't want any edge or facet constraints to be applied.
                                *   This speeds up the empty mesh. */
+  int allowOuterInsertion;    /**< set to 0 to avoid insertion in the outer volume (only applies if colors are set) */
 
   int verbosity;              /**<
                                *  - if verbosity<=0: don't print information.
