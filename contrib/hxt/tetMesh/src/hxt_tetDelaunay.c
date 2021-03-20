@@ -87,7 +87,7 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, 
 
         double crossx = bdy * cdz - bdz * cdy;
         double crossy = bdz * cdx - bdx * cdz;
-        double crossz = bdx * cdy - bdx * cdy;
+        double crossz = bdx * cdy - bdy * cdx;
         // check for colinearity: cross product
         if(crossx == 0.0 && crossy == 0.0 && crossz == 0.0)
           continue;
