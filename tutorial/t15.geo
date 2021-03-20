@@ -43,7 +43,7 @@ p = newp;
 Point(p) = {0.07, 0.15, 0.025, lc};
 Point{p} In Volume {1};
 
-l = newl;
+l = newc;
 Point(p+1) = {0.025, 0.15, 0.025, lc};
 Line(l) = {7, p+1};
 Curve{l} In Volume {1};
@@ -58,7 +58,7 @@ Line(l+1) = {p+2, p+3};
 Line(l+2) = {p+3, p+4};
 Line(l+3) = {p+4, p+5};
 Line(l+4) = {p+5, p+2};
-ll = newll;
+ll = newcl;
 Curve Loop(ll) = {l+1:l+4};
 s = news;
 Plane Surface(s) = {ll};

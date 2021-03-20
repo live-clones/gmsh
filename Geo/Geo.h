@@ -255,8 +255,8 @@ void SetDilatationMatrix(double matrix[4][4], double T[3], double A, double B,
 void SetRotationMatrix(double matrix[4][4], double Axe[3], double alpha);
 
 int NEWPOINT();
-int NEWLINE();
-int NEWLINELOOP();
+int NEWCURVE();
+int NEWCURVELOOP();
 int NEWSURFACE();
 int NEWSURFACELOOP();
 int NEWVOLUME();
