@@ -210,18 +210,26 @@ void GModel::destroy(bool keepName)
 
 void GModel::destroyMeshCaches()
 {
-  _vertexVectorCache.clear();
-  std::vector<MVertex *>().swap(_vertexVectorCache);
-  _vertexMapCache.clear();
-  std::map<int, MVertex *>().swap(_vertexMapCache);
-  _elementVectorCache.clear();
-  std::vector<MElement *>().swap(_elementVectorCache);
-  _elementMapCache.clear();
-  std::map<int, MElement *>().swap(_elementMapCache);
-  _elementIndexCache.clear();
-  std::map<int, int>().swap(_elementIndexCache);
-  delete _elementOctree;
-  _elementOctree = nullptr;
+  // this is called in GEntity::deleteMesh()
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+  {
+    _vertexVectorCache.clear();
+    std::vector<MVertex *>().swap(_vertexVectorCache);
+    _vertexMapCache.clear();
+    std::map<int, MVertex *>().swap(_vertexMapCache);
+    _elementVectorCache.clear();
+    std::vector<MElement *>().swap(_elementVectorCache);
+    _elementMapCache.clear();
+    std::map<int, MElement *>().swap(_elementMapCache);
+    _elementIndexCache.clear();
+    std::map<int, int>().swap(_elementIndexCache);
+    if(_elementOctree) {
+      delete _elementOctree;
+      _elementOctree = nullptr;
+    }
+  }
 }
 
 void GModel::deleteMesh()
@@ -1944,6 +1952,14 @@ void GModel::scaleMesh(double factor)
       v->y() *= factor;
       v->z() *= factor;
     }
+}
+
+void GModel::setCurrentMeshEntity(GEntity *e)
+{
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+  _currentMeshEntity = e;
 }
 
 int GModel::partitionMesh(int numPart)
