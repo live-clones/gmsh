@@ -15,7 +15,7 @@ import sys
 gmsh.initialize()
 
 # set a parameter in the onelab database
-gmsh.onelab.setNumber('Parameters/Materials/hc', 920000. / 2.)
+gmsh.onelab.setNumber('Parameters/Materials/hc', [920000. / 2.])
 
 # run the getdp client (which will connect through a socket), by forcing the
 # value of murCore

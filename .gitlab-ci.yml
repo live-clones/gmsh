@@ -116,8 +116,6 @@ linux64_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz"
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 linux64-sdk_official_snapshot:
   image: onelab/debian.wheezy.64bit
@@ -138,8 +136,6 @@ linux64-sdk_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 linux64-nox-sdk_official_snapshot:
   image: onelab/debian.wheezy.64bit
@@ -168,8 +164,6 @@ linux32_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux32.tgz && ln -s gmsh-${VERSION}-Linux32.tgz gmsh-stable-Linux32.tgz"
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 linux32-sdk_official_snapshot:
   image: onelab/debian.wheezy.32bit
@@ -190,8 +184,6 @@ linux32-sdk_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux32-sdk.tgz && ln -s gmsh-${VERSION}-Linux32-sdk.tgz gmsh-stable-Linux32-sdk.tgz"
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 # --------------------------------------------
 # Official Windows builds (master branch only)
@@ -228,8 +220,6 @@ windows64_official_release:
     - official
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 windows64-sdk_official_snapshot:
   variables:
@@ -253,8 +243,6 @@ windows64-sdk_official_release:
     - official
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 windows32_official_snapshot:
   <<: *windows_official
@@ -276,8 +264,6 @@ windows32_official_release:
     - official
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 windows32-sdk_official_snapshot:
   variables:
@@ -301,8 +287,6 @@ windows32-sdk_official_release:
     - official
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 # ------------------------------------------
 # Official MacOS builds (master branch only)
@@ -341,8 +325,6 @@ macos64_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg"
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 macos64-sdk_official_snapshot:
   variables:
@@ -361,8 +343,6 @@ macos64-sdk_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX-sdk.tgz && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 # ----------------------------------------------
 # Official source snapshots (master branch only)
@@ -399,8 +379,6 @@ source_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source.tgz && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 # ----------------------------------------------
 # Official documentation (master branch only)
@@ -444,8 +422,6 @@ doc_official_release:
     - docker
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
 
 # ----------------------------------------------
 # Cookbook
@@ -494,5 +470,3 @@ pypi_official_release:
     - docker
   only:
     - /^gmsh_.*$/
-  except:
-    - branches
