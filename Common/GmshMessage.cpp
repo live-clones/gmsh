@@ -1296,6 +1296,22 @@ static void _setStandardOptions(onelab::parameter *p,
     p->setAttribute("AutoCheck", fopt["AutoCheck"][0] ? "1" : "0");
 }
 
+static void _setOtherAttributes(onelab::parameter *p,
+                                std::map<std::string, std::vector<std::string> > &copt)
+{
+  for(auto it = copt.begin(); it != copt.end(); it++)
+    if(p->getAttribute(it->first).empty() &&
+       it->first.compare("Name")          &&
+       it->first.compare("Label")         &&
+       it->first.compare("ShortHelp")     &&
+       it->first.compare("Help")          &&
+       it->first.compare("Visible")       &&
+       it->first.compare("ReadOnly")      &&
+       it->first.compare("NeverChanged")  &&
+       it->first.compare("ChangedValue")) // Attribute 'it' was not already set
+      p->setAttribute(it->first, it->second[0]);
+}
+
 static std::string _getParameterName(const std::string &key,
                                      std::map<std::string, std::vector<std::string> > &copt)
 {
@@ -1419,6 +1435,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(copt.count("NumberFormat"))
     ps[0].setAttribute("NumberFormat", copt["NumberFormat"][0]);
   _setStandardOptions(&ps[0], fopt, copt);
+  _setOtherAttributes(&ps[0], copt);
   _onelabClient->set(ps[0]);
 #endif
 }
@@ -1475,6 +1492,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noMultipleSelection && copt.count("MultipleSelection"))
     ps[0].setAttribute("MultipleSelection", copt["MultipleSelection"][0]);
   _setStandardOptions(&ps[0], fopt, copt);
+  _setOtherAttributes(&ps[0], copt);
   _onelabClient->set(ps[0]);
 #endif
 }
