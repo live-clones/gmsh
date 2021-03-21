@@ -15,9 +15,9 @@ Delete{ Surface{1}; Curve{4}; }
 p1 = newp; Point(p1) = {-0.05, 0.05, 0, lc};
 p2 = newp; Point(p2) = {-0.05, 0.1, 0, lc};
 
-l1 = newl; Line(l1) = {1, p1};
-l2 = newl; Line(l2) = {p1, p2};
-l3 = newl; Line(l3) = {p2, 4};
+l1 = newc; Line(l1) = {1, p1};
+l2 = newc; Line(l2) = {p1, p2};
+l3 = newc; Line(l3) = {p2, 4};
 
 // Create a surface:
 Curve Loop(2) = {2, -1, l1, l2, l3, -3};

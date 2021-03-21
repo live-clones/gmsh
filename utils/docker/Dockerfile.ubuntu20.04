@@ -2,18 +2,20 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get install -y apt-utils git curl cmake g++ gfortran python3 python3-numpy python3-scipy python3-pip swig clang-tidy emacs-nox valgrind texlive texlive-latex-recommended texinfo libreoffice fonts-cmu petsc-dev slepc-dev python3-dev libopenblas-dev libfltk1.3-dev libfreetype6-dev libgl1-mesa-dev libxi-dev libxmu-dev mesa-common-dev tcl-dev tk-dev libhdf5-dev libcgns-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev libocct-foundation-dev libocct-data-exchange-dev libocct-ocaf-dev libopenmpi-dev libboost-dev && apt-get clean
+RUN apt-get update && apt-get install -y apt-utils git curl cmake g++ gfortran python3 python3-numpy python3-scipy python3-pip swig clang-tidy emacs-nox valgrind texlive texlive-latex-recommended texinfo libreoffice fonts-cmu petsc-dev slepc-dev python3-dev libopenblas-dev libfltk1.3-dev libfreetype6-dev libgl1-mesa-dev libxi-dev libxmu-dev mesa-common-dev tcl-dev tk-dev libhdf5-dev libcgns-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev libocct-foundation-dev libocct-data-exchange-dev libocct-ocaf-dev libopenmpi-dev libboost-dev cargo clang gcovr && apt-get clean
 
 RUN pip3 install twine
 
 # to convert a .fodt document, simply run
 # soffice --headless --convert-to pdf Tutorials.fodt
 
-RUN apt-get update && apt-get install -y cargo && apt-get clean
 RUN cargo install --root /opt/cargo mdbook --version "^0.3.7"
 
 # mmg
 RUN git clone https://github.com/MmgTools/mmg.git && cd mmg && mkdir build && cd build && cmake -DBUILD_SHARED_LIBS=1 .. && make -j8 && make install && cd .. && rm -rf mmg
+
+# libomp with ThreadSanitizer support (see https://gitlab.onelab.info/gmsh/gmsh/-/issues/1250)
+RUN git clone https://github.com/llvm/llvm-project && cd llvm-project && mkdir build && cd build && cmake -DLIBOMP_TSAN_SUPPORT=1 ../openmp && cmake --build . --target install
 
 # "docker build --build-arg REBUILD_GMSH=somethingnew"
 ARG REBUILD_GMSH=

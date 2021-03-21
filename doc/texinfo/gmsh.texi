@@ -1552,7 +1552,7 @@ one). This is mostly useful when writing user-defined macros
 does not know @emph{a priori} which tags are already attributed, and
 which ones are still available.
 
-@item newl
+@item newc
 Returns the next available curve tag.
 
 @item news
@@ -1561,7 +1561,7 @@ Returns the next available surface tag.
 @item newv
 Returns the next available volume tag.
 
-@item newll
+@item newcl
 Returns the next available curve loop tag.
 
 @item newsl

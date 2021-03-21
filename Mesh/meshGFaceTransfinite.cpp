@@ -582,7 +582,8 @@ bool faceIsValidQuad(GFace *gf, double angle_threshold_rad)
 
   std::vector<std::array<int, 2> > vpairs;
   for(GEdge *ge : gf->edges()) {
-    vpairs.push_back({{ge->getBeginVertex()->tag(), ge->getEndVertex()->tag()}});
+    vpairs.push_back(
+      {{ge->getBeginVertex()->tag(), ge->getEndVertex()->tag()}});
   }
   std::vector<int> loop;
   bool ok = id_loop_from_closed_pairs(vpairs, loop);
@@ -663,12 +664,17 @@ GEdge *quad_face_opposite_edge(GFace *face, GEdge *edge)
 }
 
 void build_chords(const std::set<GFace *> &faces,
-                  std::vector<std::set<GEdge *> > &chords, double maxDiffRel)
+                  std::vector<std::set<GEdge *> > &chords, double maxDiffRel,
+                  bool ignoreEmbedded = false)
 {
   /* Connectivity */
   std::map<GEdge *, std::vector<GFace *> > edge2faces;
-  for(GFace *gf : faces)
+  for(GFace *gf : faces) {
+    if(!ignoreEmbedded &&
+       (gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0))
+      continue;
     for(GEdge *ge : gf->edges()) { edge2faces[ge].push_back(gf); }
+  }
 
   Msg::Debug("build chords: %li faces, %li edges", faces.size(),
              edge2faces.size());
@@ -708,12 +714,16 @@ void build_chords(const std::set<GFace *> &faces,
 
 bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
                                       double cornerAngle, bool setRecombine,
-                                      double maxDiffRel)
+                                      double maxDiffRel, bool ignoreEmbedded)
 {
   /* Filter with topology and geometry */
   std::set<GFace *> faces;
-  for(GFace *gf : candidate_faces)
+  for(GFace *gf : candidate_faces) {
+    if(!ignoreEmbedded &&
+       (gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0))
+      continue;
     if(faceIsValidQuad(gf, cornerAngle)) { faces.insert(gf); }
+  }
 
   /* Build the topological chords in quad structure */
   Msg::Debug(

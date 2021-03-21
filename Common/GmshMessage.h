@@ -9,6 +9,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <atomic>
 #include <stdarg.h>
 
 #include "GmshConfig.h"
@@ -35,7 +36,8 @@ private:
   // 3: +direct, 4: +info, 5 (=normal): +statusbar, 99: debug)
   static int _verbosity;
   // step (in %) of the progress meter and current progress (in %)
-  static int _progressMeterStep, _progressMeterCurrent;
+  static int _progressMeterStep;
+  static std::atomic<int> _progressMeterCurrent;
   // total number of items considered in the current progress meter calculation
   static int _progressMeterTotal;
   // timers

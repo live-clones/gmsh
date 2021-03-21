@@ -73,10 +73,16 @@ const std::string BMESH_NAME = "bmesh_quadqs";
 constexpr bool PARANO_QUALITY = false;
 constexpr bool PARANO_VALIDITY = false;
 
+
+/* scaling applied on integer values stored in view (background field),
+ * so the visualization is not broken by the integers */
+constexpr double VIEW_INT_SCALING = 1.e-8;
+
 int buildBackgroundField(
   GModel *gm, const std::vector<MTriangle *> &global_triangles,
   const std::vector<std::array<double, 9> > &global_triangle_directions,
   const std::unordered_map<MVertex *, double> &global_size_map,
+  const std::vector<std::array<double, 5> >& global_singularity_list,
   const std::string &viewName = "guiding_field")
 {
   Msg::Debug("build background guiding field ...");
@@ -129,12 +135,32 @@ int buildBackgroundField(
   }
 
   size_t numElements = datalist.size() / (9 + 9);
-  int idxtype = 7; /* Post type: VT */
-  d->importList(idxtype, numElements, datalist, true);
+  int idxtypeVT = 7; /* Post type: VT */
+  d->importList(idxtypeVT, numElements, datalist, false);
+
 #if defined(HAVE_FLTK)
   view->getOptions()->visible = 0;
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
+
+  /* singularities */
+  if (global_singularity_list.size() > 0){
+    int idxtypeVP = 1; /* Post type: VP */
+    std::vector<double> datalistSING;
+    datalistSING.reserve(global_singularity_list.size()*6);
+    for (size_t i = 0; i < global_singularity_list.size(); ++i) {
+      datalistSING.push_back(global_singularity_list[i][2]); /* x */
+      datalistSING.push_back(global_singularity_list[i][3]); /* y */
+      datalistSING.push_back(global_singularity_list[i][4]); /* z */
+      datalistSING.push_back(VIEW_INT_SCALING*double(global_singularity_list[i][0])); /* gf->tag() */
+      datalistSING.push_back(VIEW_INT_SCALING*double(global_singularity_list[i][1])); /* index */
+      datalistSING.push_back(0.); /* empty */
+    }
+    d->importList(idxtypeVP, datalistSING.size()/6, datalistSING, false);
+  }
+
+
+  d->finalize();
 
   gm->getFields()->setBackgroundMesh(view->getTag());
 
@@ -275,6 +301,19 @@ int fillSizemapFromScalarBackgroundField(
   return 0;
 }
 
+std::string nameOfSizeMapMethod(int method) {
+  if (method == 0) {
+    return "default (cross-field conformal scaling and CAD adaptation)";
+  } else if (method == 1) {
+    return "cross-field conformal scaling";
+  } else if (method == 2) {
+    return "cross-field conformal scaling and CAD adaptation";
+  } else if (method == 3) {
+    return "background mesh sizes";
+  }
+  return "unknown";
+}
+
 bool generateMeshWithSpecialParameters(GModel *gm,
                                        double &scalingOnTriangulation)
 {
@@ -382,6 +421,9 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   /* Generate triangulation */
+  /* - scalingOnTriangulation: updated by generateMeshWithSpecialParameters
+   *   this factor is used to get a triangulation a bit more finer than the
+   *   target quadrangulation, to get a more accurate cross field */
   double scalingOnTriangulation = 1;
   if(!surfaceMeshed) {
     generateMeshWithSpecialParameters(gm, scalingOnTriangulation);
@@ -423,8 +465,10 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   std::vector<MTriangle *> global_triangles;
   std::vector<std::array<double, 9> > global_triangle_directions;
   std::vector<std::pair<MVertex *, double> > global_size_map;
+  std::vector<std::array<double, 5> > global_singularity_list; /* format: gf->tag(), index, x, y, z */
+  /* Per GFace computations, in parallel */
   {
-    /* Per GFace computations, in parallel */
+    Msg::Info("- quadqs sizemap method: %s", nameOfSizeMapMethod(CTX::instance()->mesh.quadqsSizemapMethod).c_str());
 
     std::vector<GFace *> faces = model_faces(gm);
     size_t ntris = 0;
@@ -434,9 +478,6 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       if(it != bmesh.faceBackgroundMeshes.end()) {
         ntris += it->second.triangles.size();
       }
-      /* warning: initialize global storage of singularities
-       *          before parallel loop to avoid race conditions */
-      global_singularities[gf] = {};
     }
     global_triangles.reserve(ntris);
     global_size_map.reserve(3 * ntris);
@@ -517,8 +558,12 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         Msg::Warning("- Face %i: failed to compute cross field singularities",
                      gf->tag());
       }
-      global_singularities[gf] =
-        singularities; /* warning: global storage of singularities ! */
+      std::vector<std::array<double,5> > singularity_list(singularities.size());
+      for (size_t k = 0; k < singularities.size(); ++k) {
+        singularity_list[k] = {double(gf->tag()), double(singularities[k].second),
+          singularities[k].first.x(), singularities[k].first.y(), singularities[k].first.z()};
+      }
+
       if(SHOW_INTERMEDIATE_VIEWS) {
         for(auto &kv : singularities) {
           GeoLog::add(kv.first, double(kv.second), "singularities");
@@ -551,6 +596,12 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         if(sts != 0) {
           Msg::Warning("- Face %i: failed to fill size map from triangle sizes",
                        gf->tag());
+        } else if (sts == 0 && scalingOnTriangulation > 0.) {
+          /* re-adjust the target edge size as if the triangulation was
+           * not finer for more accurate cross field */
+          for (auto& kv: localSizemap) {
+            kv.second /= scalingOnTriangulation;
+          }
         }
       }
       else {
@@ -608,6 +659,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       {
         append(global_triangles, triangles);
         append(global_triangle_directions, triangleDirections);
+        append(global_singularity_list, singularity_list);
         for(auto &kv : localSizemap) {
           global_size_map.push_back({kv.first, kv.second});
         }
@@ -690,13 +742,11 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
 
   /* Build the background field */
   int sbf = buildBackgroundField(
-    gm, global_triangles, global_triangle_directions, sizeMap, "guiding_field");
+    gm, global_triangles, global_triangle_directions, sizeMap, global_singularity_list, "guiding_field");
   if(sbf != 0) {
     Msg::Warning("failed to build background guiding field");
     return -1;
   }
-
-  // CTX::instance()->mesh.lcFactor = 1.; // TODOMX test
 
   return 0;
 }
@@ -711,6 +761,47 @@ bool backgroundMeshAndGuidingFieldExists(GModel *gm)
     if(guiding_field && guiding_field->numComponents() == 3) { bfOk = true; }
   }
   return bgmOk && bfOk;
+}
+
+bool getSingularitiesFromBackgroundField(GFace* gf,
+    std::vector<std::pair<SPoint3, int> >& singularities) {
+  singularities.clear();
+
+  Field* field = nullptr;
+  FieldManager *fields = gf->model()->getFields();
+  if(fields->getBackgroundField() > 0) {
+    Field *guiding_field = fields->get(fields->getBackgroundField());
+    if(guiding_field && guiding_field->numComponents() == 3) { field = guiding_field; }
+  }
+  if (field == nullptr) {
+    Msg::Error("get singularities: face %i, failed to get background field", gf->tag());
+    return false;
+  }
+
+  int viewTag = int(field->options["IView"]->numericalValue());
+  PView* view = PView::getViewByTag(viewTag);
+  if (view == nullptr) {
+    Msg::Error("failed to get view for tag = %i", viewTag);
+    return false;
+  }
+  PViewDataList *d = dynamic_cast<PViewDataList *>(view->getData());
+  if (d == nullptr) {
+    Msg::Error("view type is wrong");
+    return false;
+  }
+
+  size_t nVP = d->VP.size()/6;
+  for (size_t i = 0; i < nVP; ++i) {
+    int gfTag = int(std::round(d->VP[6*i+3] / VIEW_INT_SCALING));
+    if (gfTag != gf->tag()) continue;
+    int index = int(std::round(d->VP[6*i+4] / VIEW_INT_SCALING));
+    double x = d->VP[6*i+0];
+    double y = d->VP[6*i+1];
+    double z = d->VP[6*i+2];
+    singularities.push_back(std::make_pair(SPoint3(x,y,z),index));
+  }
+
+  return true;
 }
 
 void computeBdrVertexIdealValence(const std::vector<MQuadrangle *> &quads,
@@ -1045,6 +1136,7 @@ int improveCornerValences(
       MVertex *v = kv.first;
       GVertex *gv = dynamic_cast<GVertex *>(v->onWhat());
       if(gv == nullptr) continue;
+
       auto it = adj.find(v);
       if(it == adj.end()) continue;
       const std::vector<MElement *> &quads = it->second;
@@ -1073,6 +1165,10 @@ int improveCornerValences(
       }
       if(patch.bdrVertices.size() != 1) {
         Msg::Debug("patch has %li bdr loops, weird", patch.bdrVertices.size());
+        continue;
+      }
+      if (patch.embVertices.size() > 0) {
+        Msg::Debug("patch has %li embedded vertices loops, avoid", patch.embVertices.size());
         continue;
       }
 
@@ -1188,6 +1284,10 @@ int improveCurveValences(
     if(!okp) continue;
     if(patch.bdrVertices.size() != 1) {
       Msg::Debug("patch has %li bdr loops, weird", patch.bdrVertices.size());
+      continue;
+    }
+    if (patch.embVertices.size() > 0) {
+      Msg::Debug("patch has %li embedded vertices loops, avoid", patch.embVertices.size());
       continue;
     }
 
@@ -1349,6 +1449,11 @@ int improveInteriorValences(
     bool okp = patchFromElements(gf, quads, patch);
     if(!okp || patch.bdrVertices.size() != 1) continue;
 
+    if (patch.embVertices.size() > 0) {
+      Msg::Debug("patch has %li embedded vertices loops, avoid", patch.embVertices.size());
+      continue;
+    }
+
     double Ir = irregularityEnergy(gf, quads, qValIdeal, adj);
     if(Ir > 0.) Q.push({Ir, v});
   }
@@ -1488,6 +1593,14 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 
   std::vector<GEdge *> edges = model_edges(gm);
 
+  /* Build custom edgeToFaces because ge->faces() does not work
+   * for embedded edges */
+  std::unordered_map<GEdge*,std::unordered_set<GFace*> > edgeToFaces;
+  for (GFace* gf: model_faces(gm)) {
+    std::vector<GEdge*> fedges = face_edges(gf);
+    for (GEdge* ge: fedges) edgeToFaces[ge].insert(gf);
+  }
+
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -1541,7 +1654,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
       }
 
     /* Update adjacent faces */
-    for(GFace *gf : ge->faces()) {
+    for(GFace *gf : edgeToFaces[ge]) {
       for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
         MElement *e = gf->getMeshElement(i);
         for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
@@ -1886,6 +1999,18 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
 int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
                                          double minimumQualityRequired)
 {
+  if (CTX::instance()->mesh.quadqsTopoOptimMethods != 0
+      && CTX::instance()->mesh.quadqsTopoOptimMethods != 100
+      && CTX::instance()->mesh.quadqsTopoOptimMethods != 101
+      && CTX::instance()->mesh.quadqsTopoOptimMethods != 110
+      && CTX::instance()->mesh.quadqsTopoOptimMethods != 111
+     ) {
+    Msg::Debug("optimize topology of simple CAD faces with patterns: avoided because quadqsTopoOptimMethods = %i",
+        CTX::instance()->mesh.quadqsTopoOptimMethods);
+    return 0;
+  }
+
+
   std::vector<GFace *> faces = model_faces(gm);
   Msg::Info("Pattern-based quad meshing of simple CAD faces ...", faces.size());
 
@@ -1902,6 +2027,7 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
        gf->tag() != CTX::instance()->debugSurface)
       continue;
     if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+    if(gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0) continue;
 
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
     meshFaceWithGlobalPattern(gf, invertNormals, minimumQualityRequired);
@@ -1928,6 +2054,17 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
 
 int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
 {
+  if (CTX::instance()->mesh.quadqsTopoOptimMethods != 0
+      && CTX::instance()->mesh.quadqsTopoOptimMethods !=  10
+      && CTX::instance()->mesh.quadqsTopoOptimMethods !=  11
+      && CTX::instance()->mesh.quadqsTopoOptimMethods != 110
+      && CTX::instance()->mesh.quadqsTopoOptimMethods != 111
+     ) {
+    Msg::Debug("optimize topology with disk quadrangulation remeshing: avoided because quadqsTopoOptimMethods = %i",
+        CTX::instance()->mesh.quadqsTopoOptimMethods);
+    return 0;
+  }
+
   Msg::Info(
     "Optimize topology of quad meshes with disk quadrangulation remeshing ...");
 
@@ -1974,12 +2111,33 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
 
 int optimizeTopologyWithCavityRemeshing(GModel *gm)
 {
+  if (CTX::instance()->mesh.quadqsTopoOptimMethods != 0
+      && CTX::instance()->mesh.quadqsTopoOptimMethods !=   1
+      && CTX::instance()->mesh.quadqsTopoOptimMethods !=  11
+      && CTX::instance()->mesh.quadqsTopoOptimMethods != 101
+      && CTX::instance()->mesh.quadqsTopoOptimMethods != 111
+     ) {
+    Msg::Debug("optimize topology with cavity remeshing: avoided because quadqsTopoOptimMethods = %i",
+        CTX::instance()->mesh.quadqsTopoOptimMethods);
+    return 0;
+  }
+
   std::vector<GFace *> faces = model_faces(gm);
   Msg::Info(
     "Optimize topology of quad meshes with cavity remeshing (%li faces) ...",
     faces.size());
 
   initQuadPatterns();
+
+  if (!backgroudMeshExists(BMESH_NAME)) {
+    Msg::Info("no background mesh, creating one with the current quad mesh");
+    GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
+    int status = bmesh.importGModelMeshes(gm, true);
+    if(status != 0) {
+      Msg::Error("failed to import model mesh in background mesh");
+      return -1;
+    }
+  }
 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
@@ -1996,15 +2154,9 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
     /* Get singularities from global storage */
     std::vector<std::pair<SPoint3, int> > singularities;
-    auto it = global_singularities.find(gf);
-    if(it == global_singularities.end()) {
-      Msg::Warning("optimize topology with cavity remeshing: cross field "
-                   "singularities not found for face %i",
-                   gf->tag());
-      Msg::Warning("TODO: compute cross field on quad mesh !");
-    }
-    else {
-      singularities = it->second;
+    bool okg = getSingularitiesFromBackgroundField(gf, singularities);
+    if (!okg) {
+      Msg::Warning("- Face %i: failed to get singularities from background field", gf->tag());
     }
 
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);

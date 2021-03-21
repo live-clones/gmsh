@@ -313,6 +313,18 @@ bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceM
   std::vector<MVertex*> bdr;
   for (size_t i = 0; i < patch.bdrVertices.size(); ++i) append(bdr, patch.bdrVertices[i]);
   patch.intVertices = difference(patch.intVertices, bdr);
+
+  /* Vertices associated to embedded GVertex/GEdge in GFace */
+  patch.embVertices.clear();
+  for (MVertex* v: patch.intVertices) {
+    if (v->onWhat()->cast2Face() == nullptr) { /* MVertex assigned to GVertex or GEdge */
+      patch.embVertices.push_back(v);
+    }
+  }
+  if (patch.embVertices.size() > 0) {
+    patch.intVertices = difference(patch.intVertices, patch.embVertices);
+  }
+
   patch.elements = elements;
 
   return true;

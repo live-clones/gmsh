@@ -1388,6 +1388,13 @@ StringXNumber MeshOptions_Number[] = {
       "2: cross-field + CAD small features adaptation,"
       "3: from background mesh (e.g. sizes in current triangulation)"
   },
+  { F|O, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
+    "Topology optimization methods in QuadQuasiStructured. 0: default (all),"
+      "100: pattern-based CAD faces,"
+      "010: disk quadrangulation remeshing,"
+      "001: cavity remeshing,"
+      "xxx: combination of multiple methods (e.g. 111 for all)"
+  },
 
   { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. ,
     "Display mesh quadrangles?" },

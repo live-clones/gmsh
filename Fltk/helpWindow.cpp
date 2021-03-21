@@ -462,7 +462,8 @@ helpWindow::helpWindow()
     browser->textsize(FL_NORMAL_SIZE - 2);
     browser->type(FL_MULTI_BROWSER);
     browser->callback(browser_cb);
-    browser->tooltip("Double-click to edit value");
+    browser->tooltip("Double-click to edit value; selected lines are copied "
+                     "to the clipboard");
 
     {
       Fl_Group *g = new Fl_Group(0, height - BH - WB, width, BH);
