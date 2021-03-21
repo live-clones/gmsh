@@ -110,9 +110,8 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
     gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 2,
                                    faceTag);
     std::unordered_map<std::pair<size_t, size_t>, PolyMesh::HalfEdge *,
-                       pair_hash>
-      opposites;
-
+                       pair_hash>   opposites;
+    
     for(size_t i = 0; i < nodeTags.size(); i += 3) {
       size_t currentHE = (*pm)->hedges.size();
       size_t currentF = (*pm)->faces.size();

@@ -35,6 +35,7 @@
 #include "Options.h"
 #include "Generator.h"
 #include "meshQuadQuasiStructured.h"
+#include "meshGFaceBipartiteLabelling.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -1162,6 +1163,7 @@ void RecombineMesh(GModel *m)
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1 ||
                     CTX::instance()->mesh.algoRecombine == 3);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
+    meshGFaceQuadrangulateBipartiteLabelling(gf->tag()); 
     recombineIntoQuads(gf, blossom, topo, true, .01);
   }
 
