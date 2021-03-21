@@ -25,8 +25,6 @@ int main(int argc, char **argv)
 
   gmshOpen(argv[1], &ierr); chk(ierr);
 
-  /* attempts to run a client selected when opening the file (e.g. a .pro
-     file) */
   gmshOnelabRun("", "", &ierr); chk(ierr);
 
   gmshOnelabGet(&json, "json", "", &ierr); chk(ierr);
