@@ -70,23 +70,13 @@ def compute(arg):
     return
 
 
-# create the graphical user interface
-if '-nopopup' not in sys.argv:
-    gmsh.fltk.initialize()
-
-while 1:
-    # check if GUI has been closed
-    if gmsh.fltk.isAvailable() == 0:
-        break
-
-    # wait for an event
-    gmsh.fltk.wait()
-
-    # check if the user clicked on the custom ONELAB button by examining the
-    # value of the "ONELAB/Action" parameter
+def checkForEvent():
+    # check if an action is requested
     action = gmsh.onelab.getString("ONELAB/Action")
+    global stop_computation
     if len(action) < 1:
-        continue
+        # no action requested
+        pass
     elif action[0] == "should compute":
         gmsh.onelab.setString("ONELAB/Action", [""])
         gmsh.onelab.setString("ONELAB/Button", ["Stop!", "should stop"])
@@ -113,6 +103,15 @@ while 1:
     elif action[0] == "check":
         # could perform action here after each change in ONELAB parameters,
         # e.g. rebuild a CAD model, update other parameters, ...
-        continue
+        pass
+    return 1
+
+
+# create the graphical user interface
+if "-nopopup" not in sys.argv:
+    gmsh.fltk.initialize()
+    # wait for events until the GUI is closed
+    while gmsh.fltk.isAvailable() and checkForEvent():
+        gmsh.fltk.wait()
 
 gmsh.finalize()
