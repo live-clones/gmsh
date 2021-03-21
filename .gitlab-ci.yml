@@ -115,7 +115,9 @@ linux64_official_release:
     - VERSION=`cat version.txt`
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz"
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 linux64-sdk_official_snapshot:
   image: onelab/debian.wheezy.64bit
@@ -135,7 +137,9 @@ linux64-sdk_official_release:
     - VERSION=`cat version.txt`
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 linux64-nox-sdk_official_snapshot:
   image: onelab/debian.wheezy.64bit
@@ -163,7 +167,9 @@ linux32_official_release:
     - VERSION=`cat version.txt`
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux32.tgz && ln -s gmsh-${VERSION}-Linux32.tgz gmsh-stable-Linux32.tgz"
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 linux32-sdk_official_snapshot:
   image: onelab/debian.wheezy.32bit
@@ -183,7 +189,9 @@ linux32-sdk_official_release:
     - VERSION=`cat version.txt`
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux32-sdk.tgz && ln -s gmsh-${VERSION}-Linux32-sdk.tgz gmsh-stable-Linux32-sdk.tgz"
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 # --------------------------------------------
 # Official Windows builds (master branch only)
@@ -219,7 +227,9 @@ windows64_official_release:
     - windows64
     - official
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 windows64-sdk_official_snapshot:
   variables:
@@ -242,7 +252,9 @@ windows64-sdk_official_release:
     - windows64
     - official
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 windows32_official_snapshot:
   <<: *windows_official
@@ -263,7 +275,9 @@ windows32_official_release:
     - windows32
     - official
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 windows32-sdk_official_snapshot:
   variables:
@@ -286,7 +300,9 @@ windows32-sdk_official_release:
     - windows32
     - official
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 # ------------------------------------------
 # Official MacOS builds (master branch only)
@@ -324,7 +340,9 @@ macos64_official_release:
     - VERSION=`cat version.txt`
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg"
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 macos64-sdk_official_snapshot:
   variables:
@@ -342,7 +360,9 @@ macos64-sdk_official_release:
     - VERSION=`cat version.txt`
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX-sdk.tgz && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 # ----------------------------------------------
 # Official source snapshots (master branch only)
@@ -378,7 +398,9 @@ source_official_release:
     - VERSION=`cat version.txt`
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source.tgz && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 # ----------------------------------------------
 # Official documentation (master branch only)
@@ -421,7 +443,9 @@ doc_official_release:
     - linux64
     - docker
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
 
 # ----------------------------------------------
 # Cookbook
@@ -469,4 +493,6 @@ pypi_official_release:
     - linux64
     - docker
   only:
-    - /^gmsh_.*$/
+    refs:
+      - tags
+      - /^gmsh_.*$/
