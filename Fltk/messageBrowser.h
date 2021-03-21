@@ -68,6 +68,7 @@ public:
     _browser->textfont(FL_SCREEN);
 #endif
     _browser->type(FL_MULTI_BROWSER);
+    _browser->tooltip("Selected lines are copied to the clipboard");
     _browser->end();
     end();
     resizable(_browser);
