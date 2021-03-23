@@ -25,8 +25,8 @@ private:
   const FuncSpaceData _funcSpaceData;
   bezierBasisRaiser *_raiser;
   fullMatrix<double> _exponents;
-  fullMatrix<double> matrixLag2Bez;
-  fullVector<double> ordered1dBezPoints;
+  fullMatrix<double> _matrixLag2Bez;
+  fullVector<double> _ordered1dBezPoints;
 
   friend class bezierBasisRaiser;
   friend class bezierCoeff;
@@ -41,6 +41,7 @@ public:
   inline int getType() const { return _funcSpaceData.getType(); }
   inline int getOrder() const { return _funcSpaceData.getSpaceOrder(); }
   inline int getDimSimplex() const { return _dimSimplex; }
+  inline int getNumCoeff() const { return _exponents.size1(); }
   inline int getNumLagCoeff() const { return _numLagCoeff; }
   inline FuncSpaceData getFuncSpaceData() const { return _funcSpaceData; }
   const bezierBasisRaiser *getRaiser() const;
@@ -139,10 +140,10 @@ public:
   bezierCoeff(const bezierCoeff &other, bool swap = false);
   // numOfPool is the number of the pool (0 or 1) that should be used. To use
   // this functionality, first call usePools(..) function.
-  bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
-              int numOfPool = -1);
-  bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
-              int numOfPool = -1);
+  bezierCoeff(const FuncSpaceData fsData,
+              const fullVector<double> &orderedLagCoeff, int numOfPool = -1);
+  bezierCoeff(const FuncSpaceData fsData,
+              const fullMatrix<double> &orderedLagCoeff, int numOfPool = -1);
   ~bezierCoeff();
 
   static void usePools(std::size_t size0, std::size_t size1);
