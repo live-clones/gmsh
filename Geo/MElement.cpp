@@ -1746,7 +1746,8 @@ void MElement::writeNEU(FILE *fp, unsigned gambitType, int idAdjust, int phys)
 
   fprintf(fp, "%8lu %2d %2lu ", _num - idAdjust, gambitType, getNumVertices());
   for(std::size_t i = 0; i < getNumVertices(); ++i) {
-    fprintf(fp, "%8ld", getVertex(i)->getIndex());
+    if(i == 7) fprintf(fp, "\n               ");
+    fprintf(fp, "%8ld", getVertexNEU(i)->getIndex());
   }
   fprintf(fp, "\n");
 

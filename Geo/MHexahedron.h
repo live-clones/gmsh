@@ -224,6 +224,11 @@ public:
     return MFace(_v[fSolin[num][0]], _v[fSolin[num][1]],
                  _v[fSolin[num][2]], _v[fSolin[num][3]]);
   }
+  virtual MVertex *getVertexNEU(int num)
+  {
+    static const int map[8] = {0, 1, 3, 2, 4, 5, 7, 6};
+    return getVertex(map[num]);
+  }
 };
 
 /*
