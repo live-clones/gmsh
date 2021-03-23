@@ -120,3 +120,15 @@ bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp = nullptr
  * @return true if success
  */
 bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX);
+
+/**
+ * @brief High-level function which try to make good parameter choices
+ *        automatically.
+ *
+ * @param gf The face containing the quad-tri mesh to smooth
+ * @param sp Surface projector (faster than CAD projection)
+ * @param timeMax Time budget for the smoothing
+ *
+ * @return true if success
+ */
+bool optimizeGeometryQuadTriMesh(GFace* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX);
