@@ -237,12 +237,11 @@ void bezierBasis::_construct()
     return;
   }
 
-  fullMatrix<double> bezSamplingPoints;
-  gmshGenerateOrderedPoints(_funcSpaceData, bezSamplingPoints, true);
+  gmshGenerateOrderedPoints(_funcSpaceData, _samplingPoints, true);
   generateExponents(_funcSpaceData, _exponents);
 
   fullMatrix<double> matBez2Lag =
-    generateBez2LagMatrix(_exponents, bezSamplingPoints, order, _dimSimplex);
+    generateBez2LagMatrix(_exponents, _samplingPoints, order, _dimSimplex);
   matBez2Lag.invert(_matrixLag2Bez);
 
   gmshGenerateOrderedPointsLine(order, _ordered1dBezPoints);
@@ -263,12 +262,11 @@ void bezierBasis::_constructPyr()
   // Note that the sampling points for the Jacobian determinant of pyramids are
   // for z in [0, a] with a < 1. The third coordinate of Bezier points should
   // also be in [0, a]. The same for subpoints.
-  fullMatrix<double> bezierPoints;
-  gmshGenerateOrderedPoints(_funcSpaceData, bezierPoints, true);
+  gmshGenerateOrderedPoints(_funcSpaceData, _samplingPoints, true);
   generateExponents(_funcSpaceData, _exponents);
 
   fullMatrix<double> matBez2Lag =
-    generateBez2LagMatrixPyramid(_exponents, bezierPoints, pyr, nij, nk);
+    generateBez2LagMatrixPyramid(_exponents, _samplingPoints, pyr, nij, nk);
   matBez2Lag.invert(_matrixLag2Bez);
 }
 
@@ -713,6 +711,9 @@ bezierCoeff::bezierCoeff(const bezierCoeff &other, bool swap)
     else {
       _ownData = true;
       _data = new double[_r * _c];
+    }
+    for(int i = 0; i < _r * _c; ++i) {
+      _data[i] = other._data[i];
     }
   }
 }

@@ -33,18 +33,14 @@ void MElementBB(void *a, double *min, double *max)
     }
   }
   else {
-    fullMatrix<double> nodesXYZ(e->getNumVertices(), 3);
-    e->getNodesCoordNonSerendip(nodesXYZ);
+    // fullMatrix<double> nodesXYZ(e->getNumVertices(), 3);
+    // e->getNodesCoord(nodesXYZ);
     // nodesXYZ.print("getNodesCoordNonSerendip");
 
-    FuncSpaceData fsData = e->getFuncSpaceData(e->getPolynomialOrder(), false);
-    bezierCoeff bezNodes(fsData, nodesXYZ);
+    bezierCoeff bezNodes = e->getBezierVerticesCoord();
     // fullMatrix<double> nodes;
     // bezNodes.setMatrixAsProxy(nodes);
     // nodes.print("bezier");
-    // FIXME: We get wrong Bezier coeff. This is because we should provide
-    //  ordered nodes coordinates (order given by gmshGenerateOrderedPoints(..))
-    // to bezierCoeff(..) constructor
 
     min[0] = max[0] = bezNodes(0, 0);
     min[1] = max[1] = bezNodes(0, 1);

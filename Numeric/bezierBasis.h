@@ -25,6 +25,7 @@ private:
   const FuncSpaceData _funcSpaceData;
   bezierBasisRaiser *_raiser;
   fullMatrix<double> _exponents;
+  fullMatrix<double> _samplingPoints;
   fullMatrix<double> _matrixLag2Bez;
   fullVector<double> _ordered1dBezPoints;
 
@@ -45,6 +46,11 @@ public:
   inline int getNumLagCoeff() const { return _numLagCoeff; }
   inline FuncSpaceData getFuncSpaceData() const { return _funcSpaceData; }
   const bezierBasisRaiser *getRaiser() const;
+
+  inline const fullMatrix<double> &getSamplingRefPoints() const
+  {
+    return _samplingPoints;
+  }
 
 private:
   void _construct();
