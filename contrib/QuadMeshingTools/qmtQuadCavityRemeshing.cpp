@@ -1662,6 +1662,8 @@ namespace QMT {
 
         bool oka = addQuads(lquads);
         if (!oka) {
+          // Initialization may be rejected if it includes forbidden vertices or quad edges
+          // (e.g. around the vertex of an embedded line)
           Msg::Debug("cavity remeshing: failed to initialize (%li quads)", lquads.size());
           return false;
         }

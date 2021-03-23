@@ -1698,12 +1698,7 @@ void MElement::writeMATLAB(FILE *fp, int filetype, int elementary, int physical,
 void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 {
   int type = getTypeForUNV();
-  if(!type) {
-    Msg::Warning("Unknown element type for UNV export (MSH type %d) - "
-                 "output file might be invalid",
-                 getTypeForMSH());
-    return;
-  }
+  if(!type) return;
 
   int n = getNumVertices();
   int physical_property = elementary;
@@ -1751,7 +1746,8 @@ void MElement::writeNEU(FILE *fp, unsigned gambitType, int idAdjust, int phys)
 
   fprintf(fp, "%8lu %2d %2lu ", _num - idAdjust, gambitType, getNumVertices());
   for(std::size_t i = 0; i < getNumVertices(); ++i) {
-    fprintf(fp, "%8ld", getVertex(i)->getIndex());
+    if(i == 7) fprintf(fp, "\n               ");
+    fprintf(fp, "%8ld", getVertexNEU(i)->getIndex());
   }
   fprintf(fp, "\n");
 

@@ -379,17 +379,16 @@ static void Mesh1D(GModel *m)
 #pragma omp parallel for schedule(dynamic)
 #endif
     for(size_t K = 0; K < sss; K++) {
+      int localPending = 0;
       GEdge *ed = temp[K];
       if(ed->meshStatistics.status == GEdge::PENDING) {
         ed->mesh(true);
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-        {
-          nPending++;
-        }
+	localPending = ++nPending;
       }
-      if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 1D...");
+      if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
 
     if(!nPending) break;
@@ -530,17 +529,16 @@ static void Mesh2D(GModel *m)
 #pragma omp parallel for schedule(dynamic)
 #endif
       for(size_t K = 0; K < temp.size(); K++) {
+	int localPending = 0;
         if(temp[K]->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
           temp[K]->mesh(true);
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-          {
-            nPending++;
-          }
+	  localPending = ++nPending;
         }
-        if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       }
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we

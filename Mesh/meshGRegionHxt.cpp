@@ -51,6 +51,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
            useInterpolatedSize ? "" : "does not ");
 
   for(size_t i = 0; i < numPts; i++) {
+    HXT_ASSERT_MSG(volume[i] < allGR->size(), "volume ID %u is too big\n", volume[i]);
     GRegion *gr = (*allGR)[volume[i]];
     double lc = std::min(
       lcGlob, BGM_MeshSizeWithoutScaling(gr, 0, 0, pts[4 * i + 0],

@@ -1,4 +1,9 @@
-4.8.1 (Work-in-progress)
+(Work-in-progress): new quasi-structured quad algorithm (replaces the "packing
+of parallelogram" algorithm).
+
+4.8.1 (March 21, 2021): improved performance when transforming many OCC
+entities; fixed regression in high-order meshing of surfaces with singular
+parametrizations; small bug fixes.
 
 4.8.0 (March 2, 2021): new interactive and fully parametrizable definition of
 boundary conditions, materials, etc. through ONELAB variables; new API functions

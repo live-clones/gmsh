@@ -574,6 +574,59 @@ void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag, bool recursive)
   }
 }
 
+void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
+{
+  TopExp_Explorer exp0;
+  for(exp0.Init(shape, TopAbs_SOLID); exp0.More(); exp0.Next()) {
+    TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
+    if(_solidTag.IsBound(solid)) {
+      int tag = _solidTag.Find(solid);
+      _solidTag.UnBind(solid);
+      _tagSolid.UnBind(tag);
+    }
+  }
+  for(exp0.Init(shape, TopAbs_SHELL); exp0.More(); exp0.Next()) {
+    TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
+    if(_shellTag.IsBound(shell)) {
+      int tag = _shellTag.Find(shell);
+      _shellTag.UnBind(shell);
+      _tagShell.UnBind(tag);
+    }
+  }
+  for(exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()) {
+    TopoDS_Face face = TopoDS::Face(exp0.Current());
+    if(_faceTag.IsBound(face)) {
+      int tag = _faceTag.Find(face);
+      _faceTag.UnBind(face);
+      _tagFace.UnBind(tag);
+    }
+  }
+  for(exp0.Init(shape, TopAbs_WIRE); exp0.More(); exp0.Next()) {
+    TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
+    if(_wireTag.IsBound(wire)) {
+      int tag = _wireTag.Find(wire);
+      _wireTag.UnBind(wire);
+      _tagWire.UnBind(tag);
+    }
+  }
+  for(exp0.Init(shape, TopAbs_EDGE); exp0.More(); exp0.Next()) {
+    TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+    if(_edgeTag.IsBound(edge)) {
+      int tag = _edgeTag.Find(edge);
+      _edgeTag.UnBind(edge);
+      _tagEdge.UnBind(tag);
+    }
+  }
+  for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()) {
+    TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+    if(_vertexTag.IsBound(vertex)) {
+      int tag = _vertexTag.Find(vertex);
+      _vertexTag.UnBind(vertex);
+      _tagVertex.UnBind(tag);
+    }
+  }
+}
+
 void OCC_Internals::unbind()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
@@ -3440,7 +3493,7 @@ bool OCC_Internals::booleanOperator(
         Msg::Debug("BOOL (%d,%d) other", dim, tag);
       }
     }
-    for(int dim = -2; dim <= 3; dim++) _recomputeMaxTag(dim);
+    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
     // bind all remaining entities and add the new ones to the returned list
     _multiBind(result, -1, outDimTags, false, true, true);
     _filterTags(outDimTags, minDim);
@@ -3672,11 +3725,26 @@ bool OCC_Internals::_transform(
     return false;
   }
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
-    // FIXME we should implement rebind(object, result, dim) which would
-    // unbind/bind all subshapes to the same tags
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
+#if 0
+    // safe, but slow: unbind() has linear complexity with respect to the number
+    // of entities in the model (due to the dependency checking of upward
+    // adjencencies and the maximum tag update). Using this in a for loop to
+    // translate copies of entities leads to quadratic complexity.
     unbind(inShapes[i], dim, tag, true);
+#else
+    // bypass it by unbinding the shape and all its subshapes without checking
+    // dependencies: this is a bit dangerous, as one could translate e.g. the
+    // face of a cube (this is not allowed!) - which will unbind the face of the
+    // cube. But the original face will actually be re-bound (with a warning) at
+    // the next syncronization point, so it's not too bad...
+    unbindWithoutChecks(inShapes[i]);
+    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
+
+    // FIXME: it would be even better to code a rebind() function to reuse the
+    // tags not only of the shape, but of all the sub-shapes as well
+#endif
     bind(outShapes[i], dim, tag, true);
   }
 

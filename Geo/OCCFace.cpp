@@ -253,7 +253,7 @@ bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
   GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
   if(!proj.NbPoints()) {
     Msg::Debug("Projection of point (%g, %g, %g) on surface %d failed", p[0],
-                 p[1], p[2], tag());
+               p[1], p[2], tag());
     return false;
   }
   proj.LowerDistanceParameters(uv[0], uv[1]);
@@ -294,7 +294,7 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
   if(_project(qp.data(), uv, nullptr))
     return SPoint2(uv[0], uv[1]);
   else
-    return GFace::parFromPoint(qp);
+    return GFace::parFromPoint(qp, onSurface);
 }
 
 GEntity::GeomType OCCFace::geomType() const
