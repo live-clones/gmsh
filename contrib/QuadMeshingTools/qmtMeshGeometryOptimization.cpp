@@ -64,6 +64,7 @@ template <typename Key, typename Hash = robin_hood::hash<Key>, typename KeyEqual
 
 namespace QMT {
   constexpr size_t NO_SIZE_T = (size_t) -1;
+  constexpr uint32_t NO_U32 = (uint32_t) -1;
 
   bool SHOW_QUALITY = false; /* Debug only */
 
@@ -401,14 +402,15 @@ namespace QMT {
     }
 
     v2q.resize(vcount);
-    quads.resize(elements.size());
+    quads.clear();
+    quads.resize(elements.size(),{NO_U32,NO_U32,NO_U32,NO_U32});
     for (size_t f = 0; f < elements.size(); ++f) {
       MElement* q = elements[f];
-      if (q->getNumVertices() != 4) {
-        Msg::Error("buildCondensedStructure: element is not a quad");
+      if (q->getNumVertices() > 4) {
+        Msg::Error("buildCondensedStructure: element with %li vertices not supported", q->getNumVertices());
         return false;
       }
-      for (size_t lv = 0; lv < 4; ++lv) {
+      for (size_t lv = 0; lv < q->getNumVertices(); ++lv) {
         MVertex* v = q->getVertex(lv);
         auto it = old2new.find(v);
         size_t nv;
@@ -436,14 +438,14 @@ namespace QMT {
 
     /* Build the one rings for the free vertices */
     oneRings.resize(freeVertices.size());
-    vector<MElement*> adjQuads;
+    vector<MElement*> adjElts;
     for (size_t v = 0; v < freeVertices.size(); ++v) {
-      adjQuads.resize(v2q[v].size());
+      adjElts.resize(v2q[v].size());
       for (size_t lq = 0; lq < v2q[v].size(); ++lq) {
-        adjQuads[lq] = elements[v2q[v][lq]];
+        adjElts[lq] = elements[v2q[v][lq]];
       }
       std::vector<MVertex*> bnd;
-      bool okb = buildBoundary(adjQuads, bnd);
+      bool okb = buildBoundary(adjElts, bnd);
       if (!okb) {
         Msg::Error("buildCondensedStructure: failed to build boundary for stencil");
         return false;
@@ -454,7 +456,7 @@ namespace QMT {
       /* Start of the stencil */
       MVertex* vp = freeVertices[v];
       MVertex* v0 = NULL;
-      for (MElement* e: adjQuads) {
+      for (MElement* e: adjElts) {
         size_t N = e->getNumVertices();
         for (size_t j = 0; j < N; ++j) {
           MVertex* a = e->getVertex(j);
@@ -482,7 +484,8 @@ namespace QMT {
         Msg::Warning("buildCondensedStructure: wrong start");
         return false;
       }
-      if (bnd.size() < 6 || bnd.size() % 2 != 0) {
+
+      if (bnd.size() < 3) {
         Msg::Warning("buildCondensedStructure: wrong boundary, size %li", bnd.size());
         return false;
       }
@@ -529,6 +532,7 @@ namespace QMT {
       std::vector<SPoint2> quad_uvs = paramOnElement(gf, elements[i]);
       for (size_t lv = 0; lv < 4; ++lv) {
         size_t v = quads[i][lv];
+        if (v == NO_U32) continue;
         if (uvs[v][0] == DBL_MAX) {
           uvs[v][0] = quad_uvs[lv][0];
           uvs[v][1] = quad_uvs[lv][1];
@@ -1180,12 +1184,22 @@ bool movePointWithKernelAndProjection(
   } else { /* irregular vertex */
     std::vector<vec3> stencilIrreg(8);
 
+    bool angleBased = false;
+    if (n > 4 && n % 2 == 0) {
+      angleBased = true;
+    }
+
     /* Extract geometric stencil */
-    constexpr bool oneOverTwo = true; /* angle-based does not use diagonals */
+    bool oneOverTwo = angleBased; /* angle-based does not use diagonals */
     fillStencilIrregular(v, points, one_ring_first, one_ring_values, stencilIrreg, oneOverTwo);
 
     /* Smoothing (in 3D, not on surface) */
-    bool ok = kernelAngleBased(points[v], stencilIrreg, newPos);
+    bool ok = false;
+    if (angleBased) {
+      ok = kernelAngleBased(points[v], stencilIrreg, newPos);
+    } else {
+      ok = kernelLaplacian(stencilIrreg, newPos);
+    }
     if (!ok) return false;
 
     if (project) { /* Projection on surface */
@@ -1476,6 +1490,8 @@ bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp) {
 
 bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
 {
+  // TODO FIXME: replace by optimizeGeometryQuadTriMesh when it works well
+
   if (!gf->haveParametrization() && sp == nullptr) {
     Msg::Error("optimize geometry: face %i, no CAD and no surface projector", gf->tag());
     return false;
@@ -1578,4 +1594,114 @@ bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
   }
 
   return true;
+}
+
+bool optimizeGeometryQuadTriMesh(GFace* gf, SurfaceProjector* sp, double timeMax) {
+  // TODO FIXME: replace by optimizeGeometryQuadMesh when it works well
+
+  if (!gf->haveParametrization() && sp == nullptr) {
+    Msg::Error("optimize geometry: face %i, no CAD and no surface projector", gf->tag());
+    return false;
+  }
+
+  if (gf->quadrangles.size() == 0) {
+    Msg::Error("optimize geometry: face %i, no quads", gf->tag());
+    return false;
+  }
+
+  bool forceEvenIfBadBoundary = true;
+  GFaceMeshPatch patch;
+  std::vector<MElement*> elements = dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles);
+  append(elements, dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles));
+  bool okp = patchFromElements(gf, elements, patch, forceEvenIfBadBoundary);
+  if (!okp) {
+    Msg::Warning("optimize geometry: face %i, failed to build patch", gf->tag());
+    return false;
+  }
+
+  bool debugCreateViews = DBG_VIZU_G;
+  if (Msg::GetVerbosity() >= 999
+      && CTX::instance()->debugSurface == patch.gf->tag()) {
+    debugCreateViews = true;
+  }
+  const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
+
+  int countMax = 3;
+  bool running = true;
+  size_t niter = 50;
+  int count = 0;
+  if (gf->geomType() == GEntity::Plane) {
+    /* Much faster projection, we can smooth */
+    niter = 100;
+  }
+
+  double t0 = Cpu();
+
+  while (running && count < countMax) {
+    running = false;
+    count += 1;
+    if (Cpu() - t0 > timeMax) {
+      Msg::Debug("optimize geometry: face %i, reached time limit", gf->tag());
+      break;
+    }
+
+    PatchGeometryBackup backup(patch);
+
+    double minSICNb = DBL_MAX;
+    double avgSICNb = 0.;
+    computeSICN(patch.elements, minSICNb, avgSICNb);
+
+    if (debugCreateViews) {
+      std::string method = "GFace_K";
+      GeoLog::add(patch.elements, "optim_"+method+"_IN_"+std::to_string(rdi) + "_" + std::to_string(minSICNb));
+    }
+
+    GeomOptimStats stats;
+    GeomOptimOptions opt;
+    opt.sp = sp;
+    opt.outerLoopIterMax = niter;
+    opt.timeMax = timeMax;
+    opt.localLocking = true;
+    opt.dxGlobalMax = 1.e-3;
+    opt.dxLocalMax = 1.e-5;
+    opt.force3DwithProjection = true;
+    opt.withBackup = false;
+    double t1 = Cpu();
+    bool okk = kernelLoopWithProjection(patch, opt, stats);
+    if (!okk) {
+      return false;
+    }
+    double etime = Cpu() - t1;
+
+    double minSICNa = DBL_MAX;
+    double avgSICNa = 0.;
+    computeSICN(patch.elements, minSICNa, avgSICNa);
+
+    bool keep = true;
+    if (minSICNa < minSICNb && avgSICNa < avgSICNb) keep = false;
+    if (minSICNa < 0.1 && minSICNa < minSICNb) keep = false;
+    if (minSICNa < 0.75 * minSICNb) keep = false;
+
+    if (debugCreateViews) {
+      std::string method = "GFace_K";
+      GeoLog::add(patch.elements, "optim_"+method+"_OUT_"+std::to_string(rdi) + "_" + std::to_string(minSICNa) + "_keep=" + std::to_string(keep));
+    }
+
+    if (keep) {
+      Msg::Debug("- Face %i: kernel smoothing (Mix Winslow/Angle, explicit with projections, %li vertices, %li iter max, %.3f sec), SICN min: %f -> %f, avg: %f -> %f",
+          gf->tag(),gf->mesh_vertices.size(), niter,etime,minSICNb,minSICNa,avgSICNb,avgSICNa);
+      if (minSICNa >= minSICNb && 0.99*avgSICNa > avgSICNb && etime < 1) {
+        niter *= 1.5;
+        running = true;
+      }
+    } else {
+      Msg::Debug("- Face %i: worst quality after global smoothing (Mix Winslow/Angle, explicit, %li iter max), roll back (SICN min: %f -> %f, avg: %f -> %f)",
+          gf->tag(),niter,minSICNb,minSICNa,avgSICNb,avgSICNa);
+      backup.restore();
+      break;
+    }
+  }
+
+  return true;
+
 }
