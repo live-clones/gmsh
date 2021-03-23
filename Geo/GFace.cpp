@@ -468,7 +468,7 @@ void GFace::writeGEO(FILE *fp)
       num.push_back((*it)->tag());
     for(auto it = dir.begin(); it != dir.end(); it++)
       ori.push_back((*it) > 0 ? 1 : -1);
-    fprintf(fp, "Line Loop(%d) = ", tag());
+    fprintf(fp, "Curve Loop(%d) = ", tag());
     for(std::size_t i = 0; i < num.size(); i++) {
       if(i)
         fprintf(fp, ", %d", num[i] * ori[i]);

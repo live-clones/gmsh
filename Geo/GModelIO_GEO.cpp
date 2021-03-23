@@ -402,7 +402,7 @@ bool GEO_Internals::addCurveLoop(int &tag, const std::vector<int> &curveTags,
                                  bool reorient)
 {
   if(tag >= 0 && FindEdgeLoop(tag)) {
-    Msg::Error("GEO line loop with tag %d already exists", tag);
+    Msg::Error("GEO curve loop with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(-1) + 1;
@@ -597,7 +597,7 @@ bool GEO_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
   }
   if(tag < 0) tag = getMaxTag(2) + 1;
   if(wireTags.empty()) {
-    Msg::Error("Plane surface requires at least one line loop");
+    Msg::Error("Plane surface requires at least one curve loop");
     return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
@@ -637,13 +637,13 @@ bool GEO_Internals::addSurfaceFilling(int &tag,
   }
   if(tag < 0) tag = getMaxTag(2) + 1;
   if(wireTags.empty()) {
-    Msg::Error("Surface requires at least one line loop");
+    Msg::Error("Surface requires at least one curve loop");
     return false;
   }
   int ll = (int)std::abs(wireTags[0]);
   EdgeLoop *el = FindEdgeLoop(ll);
   if(!el) {
-    Msg::Error("Unknown line loop %d", ll);
+    Msg::Error("Unknown curve loop %d", ll);
     return false;
   }
   int j = List_Nbr(el->Curves), type = MSH_SURF_PLAN;
@@ -1686,7 +1686,7 @@ public:
 
     switch(dim) {
     case 0: fprintf(geo, "Physical Point"); break;
-    case 1: fprintf(geo, "Physical Line"); break;
+    case 1: fprintf(geo, "Physical Curve"); break;
     case 2: fprintf(geo, "Physical Surface"); break;
     case 3: fprintf(geo, "Physical Volume"); break;
     }
