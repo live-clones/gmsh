@@ -17,10 +17,7 @@ void MElementBB(void *a, double *min, double *max)
 {
   MElement *e = static_cast<MElement *>(a);
 
-  // TODO: serendip elements (at least prisms) are not fully supported yet in
-  // bezierBasis; use the (potentially too-small) node-based bounding box for
-  // now
-  if(e->getPolynomialOrder() == 1 || e->getIsOnlySerendipity()) {
+  if(e->getPolynomialOrder() == 1) {
     MVertex *v = e->getVertex(0);
     min[0] = max[0] = v->x();
     min[1] = max[1] = v->y();
@@ -37,9 +34,18 @@ void MElementBB(void *a, double *min, double *max)
   }
   else {
     fullMatrix<double> nodesXYZ(e->getNumVertices(), 3);
-    e->getNodesCoord(nodesXYZ);
+    e->getNodesCoordNonSerendip(nodesXYZ);
+    // nodesXYZ.print("getNodesCoordNonSerendip");
 
-    bezierCoeff bezNodes(e->getFuncSpaceData(), nodesXYZ);
+    FuncSpaceData fsData = e->getFuncSpaceData(e->getPolynomialOrder(), false);
+    bezierCoeff bezNodes(fsData, nodesXYZ);
+    // fullMatrix<double> nodes;
+    // bezNodes.setMatrixAsProxy(nodes);
+    // nodes.print("bezier");
+    // FIXME: We get wrong Bezier coeff. This is because we should provide
+    //  ordered nodes coordinates (order given by gmshGenerateOrderedPoints(..))
+    // to bezierCoeff(..) constructor
+
     min[0] = max[0] = bezNodes(0, 0);
     min[1] = max[1] = bezNodes(0, 1);
     min[2] = max[2] = bezNodes(0, 2);

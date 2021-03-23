@@ -70,7 +70,10 @@ fullMatrix<double>
 gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij, int nk,
                                     bool forSerendipPoints = false);
 
-// Ordered points and monomials
+// Ordered points (and monomials)
+// This order is used for expanding a function into Bezier basis: it allows
+// the efficient conversion of Lagrange coefficients to Bezier coefficients
+// (in method bezierCoeff::_computeCoefficients(..))
 
 void gmshGenerateOrderedPointsLine(int order, fullVector<double> &);
 

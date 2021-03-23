@@ -138,12 +138,16 @@ private:
 public:
   bezierCoeff(){};
   bezierCoeff(const bezierCoeff &other, bool swap = false);
-  // numOfPool is the number of the pool (0 or 1) that should be used. To use
-  // this functionality, first call usePools(..) function.
+
   bezierCoeff(const FuncSpaceData fsData,
               const fullVector<double> &orderedLagCoeff, int numOfPool = -1);
   bezierCoeff(const FuncSpaceData fsData,
               const fullMatrix<double> &orderedLagCoeff, int numOfPool = -1);
+  // [orderedLagCoeff] : the coefficients in the order given by
+  // function gmshGenerateOrderedPoints(..)
+  // [numOfPool] : the number of the pool (0 or 1) that should be used.
+  // To activate this functionality, first call usePools(..) function.
+
   ~bezierCoeff();
 
   static void usePools(std::size_t size0, std::size_t size1);

@@ -372,6 +372,7 @@ public:
   }
   void getSignedJacobian(fullVector<double> &jacobian, int o = -1) const;
   void getNodesCoord(fullMatrix<double> &nodesXYZ) const;
+  void getNodesCoordNonSerendip(fullMatrix<double> &nodesXYZ) const;
   virtual std::size_t getNumShapeFunctions() const { return getNumVertices(); }
   virtual std::size_t getNumPrimaryShapeFunctions() const
   {

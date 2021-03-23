@@ -1066,7 +1066,7 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij,
   return monomials;
 }
 
-// Ordered points and monomials
+// Ordered points (and monomials)
 
 void gmshGenerateOrderedPointsLine(int order, fullVector<double> &points)
 {

@@ -976,6 +976,25 @@ void MElement::getNodesCoord(fullMatrix<double> &nodesXYZ) const
   }
 }
 
+void MElement::getNodesCoordNonSerendip(fullMatrix<double> &nodesXYZ) const
+{
+  int tag = ElementType::getType(getType(), getPolynomialOrder(), false);
+  const nodalBasis *basis = BasisFactory::getNodalBasis(tag);
+  const fullMatrix<double> nodesUVW = basis->getReferenceNodes();
+  nodesXYZ.resize(nodesUVW.size1(), 3, false);
+
+  getNodesCoord(nodesXYZ);
+
+  double *xyz = new double[3];
+  for(int i = getNumVertices(); i < nodesUVW.size1(); ++i) {
+    pnt(nodesUVW(i, 0), nodesUVW(i, 1), nodesUVW(i, 2), xyz);
+    nodesXYZ(i, 0) = xyz[0];
+    nodesXYZ(i, 1) = xyz[1];
+    nodesXYZ(i, 2) = xyz[2];
+  }
+  delete[] xyz;
+}
+
 double MElement::getEigenvaluesMetric(double u, double v, double w,
                                       double values[3]) const
 {
