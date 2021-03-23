@@ -1161,8 +1161,12 @@ void RecombineMesh(GModel *m)
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1 ||
                     CTX::instance()->mesh.algoRecombine == 3);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
+#if 1
+    // TEST OF CHRISTOS's BIPARTITE LABELLING IDEA
     meshGFaceQuadrangulateBipartiteLabelling(gf->tag()); 
+#else
     recombineIntoQuads(gf, blossom, topo, true, .01);
+#endif
   }
 
   double t2 = Cpu(), w2 = TimeOfDay();

@@ -200,8 +200,12 @@ bool discreteFace_rtree_callback(std::pair<MTriangle *, MTriangle *> *t,
 GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                                   SVector3 *normal) const
 {
-  if(_param.empty()) return GPoint();
-
+  if(_param.empty()) {
+    auto pp = GPoint();
+    pp.setNoSuccess();
+    return pp;
+  }
+  
   dfWrapper wrapper(queryPoint);
   do {
     wrapper._distance = 1.e22;
