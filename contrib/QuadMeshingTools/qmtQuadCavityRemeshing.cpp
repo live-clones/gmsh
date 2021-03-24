@@ -15,6 +15,7 @@
 // #include <cmath>
 #include <queue>
 #include <unordered_set>
+#include <cassert>
 // #include <algorithm>
 
 /* Gmsh includes */
@@ -965,6 +966,7 @@ namespace QMT {
   struct GrowingCavity {
     std::vector<bool> quadIsInside;      /* fixed size: farmer.quads.size() */
     std::vector<uint32_t> quadEdgeIsBdr; /* fixed size: 4*farmer.quads.size() */
+    std::vector<uint32_t> vertexValenceInside; /* fixed size: farmer.vertices.size() */
     unordered_set<uint32_t> verticesInt; /* growing with cavity */
     unordered_set<uint32_t> verticesBdr; /* growing with cavity */
     unordered_set<uint32_t> elements;    /* growing with cavity */
@@ -974,6 +976,7 @@ namespace QMT {
     void clear() {
       quadIsInside.clear();
       quadEdgeIsBdr.clear();
+      vertexValenceInside.clear();
       verticesInt.clear();
       verticesBdr.clear();
       elements.clear();
@@ -1003,6 +1006,9 @@ namespace QMT {
       /* growth constraints */
       std::vector<bool> vertexForbidden;
       std::vector<bool> quadEdgeForbidden;
+
+      /* outside allocation for functions */
+      vector<uint32_t> _vertex2pos;
 
     public:
       CavityFarmer(GFace* gf_):gf(gf_) {};
@@ -1234,6 +1240,7 @@ namespace QMT {
             return false;
           }
           for (size_t le = 0; le < 4; ++le) {
+            cav.vertexValenceInside[quads[f][le]] += 1;
             touched.push_back(quads[f][le]);
             uint32_t opp = adjacent[4*f+le];
             if (cav.quadEdgeIsBdr[4*f+le]) {
@@ -1258,8 +1265,9 @@ namespace QMT {
         sort_unique(touched);
 
         for (uint32_t v: touched) {
-          uint32_t valIn, valOut;
-          vertexValence(v, valIn, valOut);
+          uint32_t n = v2q_first[v+1]-v2q_first[v];
+          uint32_t valIn = cav.vertexValenceInside[v];
+          uint32_t valOut = n - valIn;
           if (valOut > 0) {
             cav.verticesBdr.insert(v);
           } else if (valOut == 0 && valIn > 0) {
@@ -1301,9 +1309,10 @@ namespace QMT {
         nConvexCorners = 0;
         double ir = 0.;
         for (uint32_t v: cav.verticesInt) {
-          uint32_t valIn, valOut;
-          vertexValence(v, valIn, valOut);
-          if (valOut) {
+          uint32_t n = v2q_first[v+1]-v2q_first[v];
+          uint32_t valIn = cav.vertexValenceInside[v];
+          uint32_t valOut = n - valIn;
+          if (valOut > 0) {
             Msg::Error("weird: cavity interior vertex has valence-out=%i",valOut);
           }
           if (valIn != 4) {
@@ -1312,8 +1321,8 @@ namespace QMT {
           }
         }
         for (uint32_t v: cav.verticesBdr) {
-          uint32_t valIn, valOut;
-          vertexValence(v, valIn, valOut);
+          uint32_t n = v2q_first[v+1]-v2q_first[v];
+          uint32_t valIn = cav.vertexValenceInside[v];
           if (valIn == 1) {
             nConvexCorners += 1;
           } else if (valIn > 2) {
@@ -1328,8 +1337,9 @@ namespace QMT {
 
       bool isValidConvexCavity() {
         for (uint32_t v: cav.verticesBdr) {
-          uint32_t valIn, valOut;
-          vertexValence(v, valIn, valOut);
+          uint32_t n = v2q_first[v+1]-v2q_first[v];
+          uint32_t valIn = cav.vertexValenceInside[v];
+          uint32_t valOut = n - valIn;
           if (valOut == 1) {
             MVertex* vp = vertices[v];
             GFace* gf = vp->onWhat()->cast2Face();
@@ -1359,12 +1369,16 @@ namespace QMT {
           running = false;
           std::vector<uint32_t> quadsAtConcavities;
           for (uint32_t v: cav.verticesBdr) {
-            uint32_t valIn, valOut;
-            uint32_t qOut = NO_U32;
-            vertexValence(v, valIn, valOut, &qOut);
+            uint32_t n = v2q_first[v+1]-v2q_first[v];
+            uint32_t valIn = cav.vertexValenceInside[v];
+            uint32_t valOut = n - valIn;
+
             /* Add exterior quad if cavity bdr vertex out-valence is one
              * and cavity bdr vertex is inside the GFace */
             if (valOut == 1) {
+              uint32_t qOut = NO_U32;
+              vertexValence(v, valIn, valOut, &qOut);
+              assert(qOut != NO_U32);
               GFace* pgf = vertices[v]->onWhat()->cast2Face();
               if (pgf == nullptr) continue;
               quadsAtConcavities.push_back(qOut);
@@ -1386,7 +1400,10 @@ namespace QMT {
         /* Prepare the cavity boundary edges to make
          * a continuous loop on them */
         vector<uint32_t> pos2vertex;
-        vector<uint32_t> vertex2pos(vertices.size(),NO_U32); /* allocation outside ? */
+        if (_vertex2pos.size() != vertices.size()) {
+          _vertex2pos.resize(vertices.size());
+        }
+        std::fill(_vertex2pos.begin(),_vertex2pos.end(), NO_U32); /* _vertex2pos allocated outside */
         vector<uint32_t> pos2nextVertex;
         vector<bool> isCorner;
         pos2vertex.reserve(cav.verticesBdr.size());
@@ -1405,15 +1422,15 @@ namespace QMT {
                 edgeFound += 1;
                 if (edgeFound == 1) { /* edgeFound >= 2 means non manifold */
                   uint32_t v2 = quads[q][(le+1)%4];
-                  if (vertex2pos[v] != NO_U32) {
+                  if (_vertex2pos[v] != NO_U32) {
                     Msg::Debug("cavity farmer: get sides, vertex already assigned, not manifold bdr loop");
                     return false;
                   }
-                  vertex2pos[v] = pos2vertex.size();
+                  _vertex2pos[v] = pos2vertex.size();
                   pos2vertex.push_back(v);
                   pos2nextVertex.push_back(v2);
-                  uint32_t valIn, valOut;
-                  vertexValence(v, valIn, valOut);
+                  uint32_t n = v2q_first[v+1]-v2q_first[v];
+                  uint32_t valIn = cav.vertexValenceInside[v];
                   if (valIn == 1) {
                     isCorner.push_back(true);
                     Ncorners += 1;
@@ -1471,7 +1488,7 @@ namespace QMT {
             // abort();
           }
 
-          uint32_t pos = vertex2pos[v];
+          uint32_t pos = _vertex2pos[v];
           if (isCorner[pos]) {
             nCornerVisited += 1;
             sides.resize(sides.size()+1);
@@ -1636,6 +1653,7 @@ namespace QMT {
         cavBackup.clear();
         cav.quadIsInside.resize(quads.size(),false);
         cav.quadEdgeIsBdr.resize(4*quads.size(),false);
+        cav.vertexValenceInside.resize(vertices.size(),0);
 
         /* constrain the growth */
         vertexForbidden.clear();

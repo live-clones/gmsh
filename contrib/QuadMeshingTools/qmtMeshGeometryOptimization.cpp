@@ -1295,7 +1295,7 @@ bool kernelLoopWithProjection(
         sum_dx += dx;
         /* Modify the coordinates */
         points[v] = newPos;
-        point_uvs[v] = newUv;
+        if (point_uvs.size()) point_uvs[v] = newUv;
         if (opt.localLocking && dx < opt.dxLocalMax*localAvgSize[v]) {
           locked[v] = true;
         } else {
