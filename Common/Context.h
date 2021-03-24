@@ -50,6 +50,7 @@ struct contextMeshOptions {
   int nLayersPerGap;
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods;
+  double quadqsRemeshingBoldness;
   std::function<double(int, int, double, double, double)> lcCallback;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;

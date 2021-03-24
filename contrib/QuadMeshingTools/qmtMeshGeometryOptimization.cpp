@@ -1151,6 +1151,8 @@ bool movePointWithKernelAndProjection(
     const std::vector<std::array<double,3> >& points,
     const std::vector<size_t>& one_ring_first,
     const std::vector<uint32_t>& one_ring_values,
+    const SmoothingKernel& kernelRegular,
+    const SmoothingKernel& kernelIrregular,
     bool project,
     SurfaceProjector* sp,
     vec3& newPos,
@@ -1164,7 +1166,7 @@ bool movePointWithKernelAndProjection(
   size_t n = one_ring_first[v+1] - one_ring_first[v];
   GPoint proj;
   double stDx = 0.;
-  if (n == 8) { /* regular vertex */
+  if (n == 8 && kernelRegular == SmoothingKernel::WinslowFDM) { /* Winslow for regular vertex */
     /* Extract geometric stencil */
     std::array<vec3,8> stencil = fillStencilRegular(v, points, one_ring_first, one_ring_values);
 
@@ -1186,7 +1188,11 @@ bool movePointWithKernelAndProjection(
 
     bool angleBased = false;
     if (n > 4 && n % 2 == 0) {
-      angleBased = true;
+      if (n == 8 && kernelRegular == AngleBased) {
+        angleBased = true;
+      } else if (kernelIrregular == AngleBased) {
+        angleBased = true;
+      }
     }
 
     /* Extract geometric stencil */
@@ -1289,7 +1295,7 @@ bool kernelLoopWithProjection(
       if (point_uvs.size()) { newUv = point_uvs[v]; }
 
       bool ok = movePointWithKernelAndProjection(v, points, one_ring_first, one_ring_values,
-          project, opt.sp, newPos, newUv);
+          opt.kernelRegular, opt.kernelIrregular, project, opt.sp, newPos, newUv);
       if (ok) {
         double dx = length(newPos - points[v]);
         sum_dx += dx;
@@ -1309,11 +1315,23 @@ bool kernelLoopWithProjection(
     if (iter == 0) {
       sum_dx0 = sum_dx;
     } else {
-      if (sum_dx < opt.dxGlobalMax * sum_dx0) break;
-      if (nMoved == 0) break;
+      if (sum_dx < opt.dxGlobalMax * sum_dx0) {
+        Msg::Debug("kernelLoopWithProjection: stop at iter %li/%li because sum_dx = %f < %f", 
+            iter, opt.outerLoopIterMax, sum_dx, opt.dxGlobalMax*sum_dx0);
+        break;
+      }
+      if (nMoved == 0) {
+        Msg::Debug("kernelLoopWithProjection: stop at iter %li/%li because no point moved", 
+            iter, opt.outerLoopIterMax);
+        break;
+      }
     }
 
-    if (Cpu() - t0 > opt.timeMax) break;
+    if (Cpu() - t0 > opt.timeMax) {
+      Msg::Debug("kernelLoopWithProjection: stop at iter %li/%li because timeout (%f sec)", 
+          iter, opt.outerLoopIterMax, Cpu()-t0);
+      break;
+    }
   }
 
   /* Update the positions */

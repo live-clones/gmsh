@@ -53,6 +53,12 @@ int patchOptimizeGeometryGlobal(
  * - Winslow if regular vertex
  * - Angle-based smoothing is irregular vertex
  */
+enum SmoothingKernel {
+  Laplacian,
+  WinslowFDM,
+  AngleBased
+};
+
 struct GeomOptimOptions {
   double useDmoIfSICNbelow = 0.1; /* use the DMO kernel if SICN quality below threshold */
   size_t outerLoopIterMax = 100; /* maximum number of loops over all vertices */
@@ -68,6 +74,8 @@ struct GeomOptimOptions {
   double qualityRangeMax = 0.8;
   bool withBackup = true; /* save the geometry before, restore if quality decreased */
   bool force3DwithProjection = false;
+  SmoothingKernel kernelRegular = SmoothingKernel::WinslowFDM;
+  SmoothingKernel kernelIrregular = SmoothingKernel::Laplacian;
 };
 
 /**
