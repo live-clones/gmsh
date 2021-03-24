@@ -1066,7 +1066,7 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij,
   return monomials;
 }
 
-// Ordered points and monomials
+// Ordered points (and monomials)
 
 void gmshGenerateOrderedPointsLine(int order, fullVector<double> &points)
 {
@@ -1078,7 +1078,7 @@ void gmshGenerateOrderedPointsLine(int order, fullVector<double> &points)
 }
 
 void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
-                               bool bezierSpace)
+                               bool onBezierDomain)
 {
   gmshGenerateOrderedMonomials(data, points);
   if(points.size1() == 1) return;
@@ -1087,7 +1087,7 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
   const int order = data.getSpaceOrder();
   const bool pyr = data.getPyramidalSpace();
 
-  if(bezierSpace) {
+  if(onBezierDomain) {
     if(type != TYPE_PYR) {
       points.scale(1. / order);
       return;
